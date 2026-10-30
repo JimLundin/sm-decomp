@@ -151,6 +151,7 @@ pub mod animated_tiles {
 }
 pub mod checkpoint_binding;
 pub mod cinematic;
+pub mod cinematic_display;
 pub mod cinematic_objects;
 pub mod enemy_script;
 pub mod gameplay_flag_host;

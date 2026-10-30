@@ -172,6 +172,12 @@ impl MenuRuntime for Game {
     fn enqueue_mode7_rom(&mut self, bank: u8, cursor: u16) {
         crate::game::mode7_transfers::enqueue_rom(bank, cursor, self)
     }
+    fn draw_player_frame(&mut self) {
+        visual_runtime::draw_player_frame(self)
+    }
+    fn draw_projectiles(&mut self) {
+        crate::game::player_projectiles::draw_projectiles(self)
+    }
     fn retire_projectile(&mut self, slot: u16) {
         crate::game::player_projectiles::retire(slot, self)
     }

@@ -349,7 +349,7 @@ pub fn HandleCinematicsTransitions(game: &mut Game) {
 }
 pub fn LoadTitleSequenceGraphics(game: &mut Game) {
     {
-        unsafe { configure_cinematic_display(CinematicDisplay::Title, game) };
+        configure_cinematic_display(CinematicDisplay::Title, game);
         word! { game, 0; cur_irq_handler, irqhandler_next_handler }
         word_transfers!(game, ascending, 256; le(palette_buffer, 0) <- rom(0x8ce1e9, 0));
         unsafe {
@@ -412,7 +412,7 @@ pub fn GameState_37_CeresGoesBoomWithSamus_(game: &mut Game) -> CoroutineRet {
         CinematicBackground.advance(game);
         intro_pages::advance_text_glow(game);
         palette_effects::advance(game);
-        unsafe { draw_intro_sprites(game) };
+        draw_intro_sprites(game);
         update_cinematic_transform(true, game);
         kCoroutineNone as CoroutineRet
     }
@@ -522,7 +522,7 @@ crate::game::callback_dispatch! {
         }
     };
     [9151381] CinematicFunction_Intro_Initial [] {
-        unsafe { configure_cinematic_display(CinematicDisplay::Intro, game) };
+        configure_cinematic_display(CinematicDisplay::Intro, game);
         word! { game, 0; cur_irq_handler, irqhandler_next_handler, area_index }
         word! { game, 16; room_width_in_blocks, room_height_in_blocks }
         initialize_player(game);
@@ -590,7 +590,7 @@ crate::game::callback_dispatch! {
         word!(game.cinematic_function = (0x8ba82bi32) as u16);
     };
     [9157792] CinematicFunction_Intro_Func54 [] {
-        unsafe { configure_cinematic_display(CinematicDisplay::Station, game) };
+        configure_cinematic_display(CinematicDisplay::Station, game);
         clear_cinematic_sprites(game);
         word! { game, 0; cur_irq_handler, irqhandler_next_handler }
         word_transfers!(game, ascending, 256; le(palette_buffer, 0) <- rom(0x8ce5e9, 0));
@@ -601,7 +601,7 @@ crate::game::callback_dispatch! {
         }
         (unsafe { GraphicsAsset::VramLowBytes(0x7f4000, 0x0000, 0x300)
             .load_planes(0x8c, true, game) });
-        unsafe { reset_cinematic_transform(56, 24, game) };
+        reset_cinematic_transform(56, 24, game);
         word! {game; cinematic_var8 = -72i32 as u16; cinematic_var10 = -104i32 as u16;
             cinematic_var5 = 224; cinematic_var6 = 512; }
         palette_effects::clear(game);
@@ -680,7 +680,7 @@ crate::game::callback_dispatch! {
         save_slots::save(word!(game.selected_save_slot), game);
     };
     [9158939] CinematicFunctionBlackoutFromCeres [] {
-        unsafe { configure_cinematic_display(CinematicDisplay::Station, game) };
+        configure_cinematic_display(CinematicDisplay::Station, game);
         word_transfers!(game, descending, 329; native(0x1c1d) <- value(0));
         word! { game, 0; door_def_ptr, layer1_x_pos, layer1_y_pos }
         word_transfers!(game, ascending, 256; le(palette_buffer, 0) <- rom(0x8ce5e9, 0));
@@ -816,7 +816,7 @@ crate::game::callback_dispatch! {
         }
     };
     [9160345] CinematicFunction_Intro_Func86 [] {
-        unsafe { configure_cinematic_display(CinematicDisplay::Landing, game) };
+        configure_cinematic_display(CinematicDisplay::Landing, game);
         word_transfers!(game, descending, 329; native(0x1c1d) <- value(0));
         unsafe {
             GraphicsAsset::Decompress(0x978adb, 0x19000).load(game);
@@ -846,7 +846,7 @@ crate::game::callback_dispatch! {
     };
     [9163904] CinematicFunctionEscapeFromCebes [] {
         word! { game, 0; cur_irq_handler, irqhandler_next_handler }
-        unsafe { configure_cinematic_display(CinematicDisplay::Escape, game) };
+        configure_cinematic_display(CinematicDisplay::Escape, game);
         word_transfers!(game, descending, 329; native(0x1c1d) <- value(0));
         word_transfers!(game, ascending, 256; le(palette_buffer, 0) <- rom(0x8cede9, 0));
         unsafe {
@@ -1051,7 +1051,7 @@ crate::game::callback_dispatch! {
         }
     };
     [9166464] CinematicFunction_Intro_Func126 [] {
-        unsafe { configure_cinematic_display(CinematicDisplay::Credits, game) };
+        configure_cinematic_display(CinematicDisplay::Credits, game);
         clear_cinematic_sprites(game);
         palette_effects::clear(game);
         word_transfers!(game, ascending, 128; le(palette_buffer, 0) <- rom(0x8ce9e9, 0));
@@ -1078,7 +1078,7 @@ crate::game::callback_dispatch! {
         } else {
             unsafe { GraphicsAsset::VramWords(0x7f0000, 0x0000, 0x4000).load(game) };
         }
-        unsafe { reset_cinematic_transform(104, 112, game) };
+        reset_cinematic_transform(104, 112, game);
         word! {game; cinematic_var8 = -8i32 as u16; cinematic_var10 = -24i32 as u16;
             cinematic_var5 = 0; cinematic_var6 = 2304; }
         unsafe { crate::game::display_refresh::enable(true, game) };

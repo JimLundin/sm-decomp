@@ -49,6 +49,9 @@ pub trait MenuRuntime:
     fn enqueue_mode7_rom(&mut self, bank: u8, cursor: u16);
     /// Retire the player projectile in `slot`.
     fn retire_projectile(&mut self, slot: u16);
+    /// Draw Samus's current frame, then (separately) the player projectiles.
+    fn draw_player_frame(&mut self);
+    fn draw_projectiles(&mut self);
     /// The original's `RomPtr_RAM` assertion on a RAM-table address.
     fn assert_ram_pointer(&mut self, address: u16);
     fn enable_display_nmi(&mut self, enabled: bool);

@@ -4,6 +4,9 @@ pub(crate) use crate::game::cinematic::{
     fade_cinematic_colors, prepare_cinematic_palette_fade, queue_cinematic_tilemap,
     set_cinematic_blend, set_cinematic_tilemap_updates,
 };
+pub(crate) use crate::game::cinematic_display::{
+    configure_cinematic_display, draw_intro_sprites, reset_cinematic_transform,
+};
 pub(crate) use crate::game::cinematic_objects::{
     CinematicObjects, advance_cinematic_background_pre, advance_intro_mother_brain,
     draw_cinematic_sprites, execute_cinematic_sprite_instruction, spawn_cinematic_burst,
@@ -45,7 +48,6 @@ pub(crate) use sm_game::cinematic::{
     clear_cinematic_sprites, drift_cinematic_sprite, enable_cinematic_background,
     fade_cinematic_fixed_color, scaled_cinematic_value, set_cinematic_backdrop, set_fixed_color,
 };
-use sm_game::display::control::{Brightness, Layers, MainWindowMask, SubScreen};
 
 use crate::{
     game::{
@@ -1514,187 +1516,6 @@ pub(crate) fn project_cinematic_point_reads(
 }
 
 // Hardware setup remains unsafe: Game construction alone does not attach a PPU.
-pub(crate) unsafe fn configure_cinematic_display(
-    display: sm_game::visual_state::CinematicDisplay,
-    game: &mut Game,
-) {
-    use crate::rtl::{
-        BG1SC, BG2SC, BG3SC, BG4SC, BG12NBA, BG34NBA, BGMODE, CGADSUB, CGWSEL, M7SEL, OBSEL,
-        SETINI, TM, VMAIN,
-    };
-    use sm_game::visual_state::CinematicDisplay::*;
-    let title = display == Title;
-    let intro = display == Intro;
-    let escape = display == Escape;
-    let tiled = matches!(display, Landing | Credits);
-    let sprites = match display {
-        Escape => 0xa3,
-        Credits => 0,
-        _ => 3,
-    };
-    let mode = match display {
-        Intro => 9,
-        Landing | Credits => 1,
-        _ => 7,
-    };
-    let selection = if matches!(display, Title | Station) {
-        0x80
-    } else {
-        0
-    };
-    unsafe {
-        crate::rtl::register_writes! { game;
-            show_mirror(Brightness::BLANK_DARK, 0x51, false); mirror(OBSEL as u16, sprites, 0x52, false);
-            mirror(BGMODE as u16, mode, 0x55, false); mirror(M7SEL as u16, selection, 0x5f, false);
-        }
-        match display {
-            Title | Station | Escape => {
-                game.ram().write_byte(0x58, 0);
-                crate::rtl::register_writes! { game;
-                    mirror(BG1SC as u16, 0, 0x59, false); mirror(BG2SC as u16, 0, 0x5a, false);
-                    mirror(BG3SC as u16, 0, 0x5c, false); mirror(BG4SC as u16, 0, 0x5d, false);
-                    mirror(BG12NBA as u16, 0, 0x5e, false); byte(BG34NBA as u16, 0);
-                }
-            }
-            Intro => {
-                crate::rtl::register_writes! { game;
-                    mirror(BG1SC as u16, 0x50, 0x58, true); mirror(BG2SC as u16, 0x48, 0x59, true);
-                    mirror(BG3SC as u16, 0x4c, 0x5a, true);
-                }
-                game.ram().write_byte(0x5c, 0);
-                crate::rtl::register_writes! { game;
-                    mirror(BG4SC as u16, 0, 0x5d, false); byte(BG12NBA as u16, 0);
-                    mirror(BG34NBA as u16, 4, 0x5e, true);
-                }
-            }
-            Landing => {
-                crate::rtl::write_register_and_mirror(BG1SC as u16, 0x5c, 0x58, true, game);
-                game.ram().write_byte(0x59, 0);
-                crate::rtl::register_writes! { game;
-                    mirror(BG2SC as u16, 0, 0x5a, false); mirror(BG3SC as u16, 0, 0x5c, false);
-                    byte(BG4SC as u16, 0); mirror(BG12NBA as u16, 6, 0x5d, true);
-                    mirror(BG34NBA as u16, 0, 0x5e, true);
-                }
-            }
-            Credits => {
-                crate::rtl::register_writes! { game;
-                    mirror(BG1SC as u16, 0x48, 0x58, true); mirror(BG2SC as u16, 0x4c, 0x59, true);
-                    mirror(BG3SC as u16, 0x24, 0x5a, true); mirror(BG4SC as u16, 0, 0x5c, true);
-                    mirror(BG12NBA as u16, 0x54, 0x5d, true); mirror(BG34NBA as u16, 2, 0x5e, true);
-                }
-            }
-        }
-        let layers = match display {
-            Title => 0x10,
-            Intro => 4,
-            Credits => 1,
-            _ => 0x11,
-        };
-        crate::rtl::register_writes! { game;
-            mirror(TM as u16, layers, 0x69, false); show_mirror(SubScreen(Layers::NONE), 0x6b, false);
-        }
-        if tiled {
-            for at in [0x60, 0x61, 0x62, 0x6c, 0x6d, 0x6f, 0x72] {
-                game.ram().write_byte(at, 0);
-            }
-            if display == Credits {
-                set_fixed_color([32, 64, 0x80], game);
-                word!(game.oam_next_ptr = 0);
-                reset_cinematic_transform(128, 128, game);
-                word! { game; cinematic_var5 = 0; cinematic_var6 = 1; }
-                word! { game, 0;
-                    reg_BG1HOFS, reg_BG1VOFS, reg_BG2HOFS, reg_BG2VOFS,
-                    cinematic_var7, cinematic_var8, cinematic_var9, cinematic_var10,
-                }
-            } else {
-                word! { game, 0; reg_BG1HOFS, reg_BG1VOFS }
-            }
-            return;
-        }
-        crate::rtl::register_writes! { game;
-            show_mirror(MainWindowMask(Layers::NONE), 0x6c, false); byte(VMAIN as u16, 0);
-            mirror(CGWSEL as u16, 0, 0x6e, false); mirror(CGADSUB as u16, 0, 0x71, false);
-        }
-        if escape {
-            game.ram().write_byte(0x6f, 0);
-            game.ram().write_byte(0x72, 0);
-        }
-        crate::game::display_transfers::set_fixed_color(
-            &[sm_game::display::control::FixedColor::all(0)],
-            game,
-        );
-        if display != Station {
-            crate::rtl::write_register_and_mirror(SETINI as u16, 0, 0x77, false, game);
-        }
-    }
-    if !title {
-        if !escape {
-            game.ram().write_byte(0x6f, 0);
-            game.ram().write_byte(0x72, 0);
-        }
-        set_fixed_color([32, 64, 0x80], game);
-        if !escape {
-            game.ram().write_byte(0x57, 0);
-        }
-    }
-    if title || intro {
-        let fill = if title { 0 } else { 0x2f };
-        word_transfers!(game, ascending, 0x3ff; native(0x3000) <- value(fill));
-    }
-    match display {
-        Title => {
-            word! { game, 0;
-                oam_next_ptr, menu_option_index, screen_fade_delay, screen_fade_counter,
-                pausemenu_start_lr_pressed_highlight_timer, pausemenu_lr_animation_timer,
-                pausemenu_item_selector_animation_timer, pausemenu_reserve_tank_animation_timer,
-                UNUSED_word_7E0731, UNUSED_word_7E073D, pausemenu_lr_animation_frame,
-                pausemenu_item_selector_animation_frame, pausemenu_reserve_tank_animation_frame,
-                UNUSED_word_7E0745, pausemenu_shoulder_button_highlight, pausemenu_button_label_mode,
-                pausemenu_equipment_category_item, pausemenu_reserve_tank_delay_ctr, UNUSED_word_7E0759,
-                samus_reserve_health, samus_reserve_missiles, cinematic_var5,
-            }
-        }
-        Intro => {
-            word! { game, 0; oam_next_ptr, cinematic_var5 }
-        }
-        Escape => {
-            word! { game, 0; oam_next_ptr, screen_fade_delay, screen_fade_counter, cinematic_var5 }
-        }
-        _ => {}
-    }
-    if display != Station {
-        word!(game.cinematic_var6 = 256);
-    }
-    word! { game, 0;
-        cinematic_var7, cinematic_var8, cinematic_var9, cinematic_var10, g_word_7E1999,
-        g_word_7E199B, g_word_7E199D, g_word_7E199F,
-    }
-    if matches!(display, Intro | Station) {
-        word!(game.fx_layer_blending_config_a = 0);
-    }
-    if intro {
-        word! { game, 0; reg_BG2HOFS, reg_BG2VOFS, reg_BG3HOFS, reg_BG3VOFS }
-    }
-}
-
-pub(crate) unsafe fn reset_cinematic_transform(x: u16, y: u16, game: &mut Game) {
-    let transform = sm_game::display::control::Mode7Transform::identity(x, y);
-    unsafe { crate::game::display_transfers::set_mode7_transform(transform, game) }
-}
-
-pub(crate) unsafe fn draw_intro_sprites(game: &mut Game) {
-    let samus = word!(game.cinematic_var15);
-    if samus & 0x8000 != 0 {
-        draw_player_frame(game);
-        player_projectiles::draw_projectiles(game);
-    }
-    draw_cinematic_sprites(false, game);
-    if samus != 0 && samus & 0x8000 == 0 {
-        draw_player_frame(game);
-        player_projectiles::draw_projectiles(game);
-    }
-}
-
 /// Position Crocomire's second body part and align its BG2 image with the camera.
 pub(crate) fn align_crocomire_background(game: &mut Game) {
     use crate::game::enemy_layouts::EnemyLayout72 as Crocomire;
