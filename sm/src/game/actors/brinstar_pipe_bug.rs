@@ -6,7 +6,7 @@ use crate::game::enemy_layouts::EnemyLayout72 as Bug;
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
 use crate::ram_map::{slot, word};
-use crate::rtl::{abs16, rom_table_word};
+use crate::rtl::abs16;
 use sm_game::actors::access::ActorKey as Key;
 
 pub(crate) fn initialize(game: &mut Game) {
@@ -28,12 +28,8 @@ fn update_animation(game: &mut Game) {
     let phase = slot!(game, Bug[e].var_E);
     if phase != slot!(game, Bug[e].var_01) {
         slot!(game, Bug[e].var_01 = phase);
-        let table = if slot!(game, Bug[e].parameter_1) != 0 {
-            0xb38833
-        } else {
-            0xb3882b
-        };
-        slot!(game, Bug[e].base; current_instruction = rom_table_word!(game, table, phase as isize), instruction_timer = 1, timer = 0);
+        let alternate = slot!(game, Bug[e].parameter_1) != 0;
+        slot!(game, Bug[e].base; current_instruction = sm_game::enemy_lists::pipe_bug_instruction_list(game, alternate, phase as isize), instruction_timer = 1, timer = 0);
     }
 }
 pub(crate) fn await_view(_: u16, game: &mut Game) {

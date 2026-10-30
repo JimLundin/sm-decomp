@@ -135,6 +135,69 @@ fn records_import_from_the_original_rom() {
             grapple_aim::POINT_ANIMATION_BYTES
         ))
     );
+    check!(
+        "enemy_lists::ORB_INSTRUCTION_LISTS",
+        table::words::<{ enemy_lists::ORB_DIRECTIONS }>(&at(
+            enemy_lists::ORB_INSTRUCTION_LISTS,
+            2 * enemy_lists::ORB_DIRECTIONS
+        ))
+    );
+    check!(
+        "enemy_lists::SPARK_INSTRUCTION_LISTS",
+        table::words::<{ enemy_lists::SPARK_KINDS }>(&at(
+            enemy_lists::SPARK_INSTRUCTION_LISTS,
+            2 * enemy_lists::SPARK_KINDS
+        ))
+    );
+    check!(
+        "enemy_lists::SPARK_FUNCTIONS",
+        table::words::<{ enemy_lists::SPARK_KINDS }>(&at(
+            enemy_lists::SPARK_FUNCTIONS,
+            2 * enemy_lists::SPARK_KINDS
+        ))
+    );
+    check!(
+        "enemy_lists::FACE_BLOCK_GLOW_COLOURS",
+        table::words::<{ enemy_lists::FACE_BLOCK_GLOW_WORDS }>(&at(
+            enemy_lists::FACE_BLOCK_GLOW_COLOURS,
+            2 * enemy_lists::FACE_BLOCK_GLOW_WORDS
+        ))
+    );
+    check!(
+        "enemy_lists::KI_HUNTER_WING_INSTRUCTION_LISTS",
+        table::words::<{ enemy_lists::KI_HUNTER_WING_LISTS }>(&at(
+            enemy_lists::KI_HUNTER_WING_INSTRUCTION_LISTS,
+            2 * enemy_lists::KI_HUNTER_WING_LISTS
+        ))
+    );
+    check!(
+        "enemy_lists::FLOATER_SPIKE_INSTRUCTION_LISTS",
+        table::words::<{ enemy_lists::FLOATER_SPIKE_LISTS }>(&at(
+            enemy_lists::FLOATER_SPIKE_INSTRUCTION_LISTS,
+            2 * enemy_lists::FLOATER_SPIKE_LISTS
+        ))
+    );
+    check!(
+        "enemy_lists::EYE_INSTRUCTION_LISTS",
+        table::words::<{ enemy_lists::EYE_FACINGS }>(&at(
+            enemy_lists::EYE_INSTRUCTION_LISTS,
+            2 * enemy_lists::EYE_FACINGS
+        ))
+    );
+    check!(
+        "enemy_lists::PIPE_BUG_INSTRUCTION_LISTS",
+        table::words::<{ enemy_lists::PIPE_BUG_PHASES }>(&at(
+            enemy_lists::PIPE_BUG_INSTRUCTION_LISTS,
+            2 * enemy_lists::PIPE_BUG_PHASES
+        ))
+    );
+    check!(
+        "enemy_lists::PIPE_BUG_ALTERNATE_INSTRUCTION_LISTS",
+        table::words::<{ enemy_lists::PIPE_BUG_PHASES }>(&at(
+            enemy_lists::PIPE_BUG_ALTERNATE_INSTRUCTION_LISTS,
+            2 * enemy_lists::PIPE_BUG_PHASES
+        ))
+    );
     assert!(
         failures.is_empty(),
         "rejected the original ROM: {failures:?}"

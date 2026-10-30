@@ -71,7 +71,7 @@ pub(crate) fn palette(game: &mut Game) {
     let mut destination = word!(game.variables_for_enemy_graphics_drawn_hook[0]);
     let mut source = 8u16.wrapping_mul(word!(game.variables_for_enemy_graphics_drawn_hook[1]));
     for _ in 0..4 {
-        let color = crate::rtl::rom_table_word!(game, 0xa8e7cc, (source >> 1) as isize);
+        let color = sm_game::enemy_lists::face_block_glow_colour(game, (source >> 1) as isize);
         let at = 0xc112 + usize::from(destination >> 1) * 2;
         game.ram().copy_in(at, &color.to_ne_bytes());
         source = source.wrapping_add(2);

@@ -14,7 +14,7 @@ use sm_game::enemy_projectiles::host::Effects;
 pub(crate) fn initialize(game: &mut Game) {
     let E = word!(game.cur_enemy_index) as i32;
     slot!(game, Orb[E].base; instruction_timer = 1, timer = 0,
-        current_instruction = crate::rtl::rom_table_word!(game, 0xa8e380, slot!(game, Orb[E].parameter_1) as isize));
+        current_instruction = sm_game::enemy_lists::orb_instruction_list(game, slot!(game, Orb[E].parameter_1) as isize));
     let rate = 4 * slot!(game, Orb[E].parameter_2) as isize;
     slot!(game, Orb[E]; var_01 = enemy_speed!(game, Linear, rate),
         var_00 = enemy_speed!(game, Linear, rate + 1),

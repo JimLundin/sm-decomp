@@ -24,12 +24,12 @@ pub(crate) fn initialize(game: &mut Game) {
     let kind = (slot!(game, Spark[E].parameter_1) & 3) as isize;
     slot!(
         game,
-        Spark[E].var_B = crate::rtl::rom_table_word!(game, 0xa8e688, kind)
+        Spark[E].var_B = sm_game::enemy_lists::spark_function(game, kind)
     );
     slot!(game, Spark[E].var_E = slot!(game, Spark[E].parameter_2));
     reload_delay(word!(game.cur_enemy_index), 0, game);
     slot!(game, Spark[E].base; instruction_timer = 1,
-        current_instruction = crate::rtl::rom_table_word!(game, 0xa8e682, kind), timer = 0, instruction_timer = 1);
+        current_instruction = sm_game::enemy_lists::spark_instruction_list(game, kind), timer = 0, instruction_timer = 1);
     if gameplay_flag_runtime::boss_byte_at(word!(game.area_index), game) & 1 == 0 {
         // Seventh packed VRAM entry's destination high byte and the next byte.
         slot!(game, Spark[E].base.properties, |old| old

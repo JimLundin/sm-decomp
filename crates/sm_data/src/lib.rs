@@ -17,6 +17,7 @@ pub mod corpses;
 pub mod credits;
 pub mod crocomire;
 pub mod demo_rooms;
+pub mod enemy_lists;
 pub mod enemy_speeds;
 pub mod equipment_screen;
 pub mod escape_etecoons;

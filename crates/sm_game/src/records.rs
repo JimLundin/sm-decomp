@@ -22,6 +22,7 @@ pub struct RomRecords {
     pub ridley_explosion_tables: crate::ridley_explosion_data::ImportedRidleyExplosion,
     pub ceres_door_tables: crate::ceres_door_data::ImportedCeresDoors,
     pub zebetite_tables: crate::zebetite_data::ImportedZebetites,
+    pub enemy_lists: crate::enemy_lists::ImportedEnemyLists,
 }
 
 /// A host holding the loaded image and its imported records.

@@ -205,7 +205,10 @@ pub(crate) fn advance(mut state: u16, k: u16, game: &mut Game) {
                 if index != 0 {
                     word!(
                         game.enemy_drawing_queue[(drawing + 103)] =
-                            crate::rtl::rom_table_word!(game, 0xa8c599, (index >> 1) as isize)
+                            sm_game::enemy_lists::floater_spike_instruction_list(
+                                game,
+                                (index >> 1) as isize
+                            )
                     );
                     word!(game.enemy_drawing_queue[(drawing + 104)] = 1);
                 }

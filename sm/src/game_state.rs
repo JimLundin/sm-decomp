@@ -1252,6 +1252,7 @@ impl Game {
         self.records.ridley_explosion_tables = sm_game::ridley_explosion_data::import(image);
         self.records.ceres_door_tables = sm_game::ceres_door_data::import(image);
         self.records.zebetite_tables = sm_game::zebetite_data::import(image);
+        self.records.enemy_lists = sm_game::enemy_lists::import(image);
     }
 
     /// Import every record again after the images were patched in place;

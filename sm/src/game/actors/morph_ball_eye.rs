@@ -44,7 +44,7 @@ pub(crate) fn initialize(game: &mut Game) {
         slot!(
             game,
             Eye[E].base.current_instruction =
-                crate::rtl::rom_table_word!(game, 0xa890da, index as isize)
+                sm_game::enemy_lists::eye_instruction_list(game, index as isize)
         );
         word_transfers!(game, descending, 256; native(0x92fe) <- value(255));
     } else {

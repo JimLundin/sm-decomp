@@ -177,7 +177,7 @@ fn wing_origins(game: &mut Game) {
 
 fn paired_animation(k: u16, index: u16, game: &mut Game) {
     for (offset, entry) in [(0, index), (64, index + 1)] {
-        let value = crate::rtl::rom_table_word!(game, 0xa8f3b0, entry as isize);
+        let value = sm_game::enemy_lists::ki_hunter_wing_instruction_list(game, entry as isize);
         Runtime::new(game).write_slice_native(0xf92 + usize::from(k) + offset, value);
     }
     for offset in [0, 64] {
