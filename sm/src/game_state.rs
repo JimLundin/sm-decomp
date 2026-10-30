@@ -2658,6 +2658,12 @@ impl sm_game::cartridge::LoadedImage for Game {
     }
 }
 
+impl sm_game::actors::host::Random for Game {
+    fn next_random(&mut self) -> u16 {
+        Game::next_random(self)
+    }
+}
+
 impl sm_game::cartridge::NativeImage for Game {
     fn native_image(&self) -> crate::rom::RomImage {
         self.capture_native_rom()

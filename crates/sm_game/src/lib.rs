@@ -72,6 +72,7 @@ pub mod actors {
     pub mod layouts;
     pub mod media;
     pub mod overlap;
+    pub mod phantoon_motion;
     pub mod ridley_tables;
     pub mod scene;
     pub mod shaktool;
