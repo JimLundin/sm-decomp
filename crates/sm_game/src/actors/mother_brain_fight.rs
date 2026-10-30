@@ -40,7 +40,7 @@ use crate::menus::prelude::{EnemyData, do_until};
 use crate::mother_brain_tables;
 use crate::palette_copies::{copy_rom_colors_to_palette, copy_rom_colors_to_target_palette};
 use crate::ram::RawRam as _;
-use crate::ram::{slot, word};
+use crate::ram::word;
 use crate::word_transfers;
 
 /// A bank-local address, as the original's `VoidP`.
