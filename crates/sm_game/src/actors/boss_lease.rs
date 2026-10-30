@@ -33,8 +33,6 @@ pub trait BossState:
     fn react_to_shot(&mut self, shot: Shot);
     /// The shared contact reaction for the current actor.
     fn react_to_contact(&mut self, death: Death);
-    /// The shared power bomb reaction for the current actor.
-    fn react_to_power_bomb(&mut self, death: Death);
     /// Where the next enemy projectile spawns.
     fn place_projectile_spawn(&mut self, x: u16, y: u16);
     /// Spawn the room-graphics enemy projectile `definition` with `parameter`.

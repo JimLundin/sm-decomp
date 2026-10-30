@@ -14,12 +14,9 @@ pub trait PlayerPosition {
     fn player_y_fraction(&self) -> u16;
     fn previous_player_x(&self) -> u16;
     fn previous_player_y(&self) -> u16;
-    fn previous_player_x_fraction(&self) -> u16;
-    fn previous_player_y_fraction(&self) -> u16;
     fn set_player_x(&mut self, x: u16);
     fn set_player_y(&mut self, y: u16);
     fn set_player_x_fraction(&mut self, fraction: u16);
-    fn set_player_y_fraction(&mut self, fraction: u16);
     fn set_previous_player_x(&mut self, x: u16);
     fn set_previous_player_y(&mut self, y: u16);
     fn set_previous_player_x_fraction(&mut self, fraction: u16);

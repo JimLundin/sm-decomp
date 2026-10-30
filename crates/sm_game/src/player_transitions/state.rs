@@ -15,12 +15,6 @@ pub enum RequestView {
     Pending(PoseId),
     Inactive { encoded: u16 },
 }
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum RequestChannel {
-    Ordinary,
-    Interrupted,
-    Transitional,
-}
 
 // Selector wrappers preserve invalid values until their original dispatch point.
 // They are different types: no accidental momentum/special/hurt substitution.

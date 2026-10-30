@@ -97,11 +97,6 @@ pub struct PersistentSession {
     pub roles: ContentDescription,
     pub required: Arc<SessionStartRequirements>,
 }
-pub struct IntervalMetadata {
-    pub input: crate::scene::start::InputHistory,
-    pub continuation: crate::scene::start::ContinuationHistory,
-    pub audio: crate::scene::start::InitialAudioIntent,
-}
 
 pub enum SessionSlot {
     Legacy,
@@ -133,65 +128,6 @@ impl PersistentSession {
             .presentation
             .owner_mut()?
             .begin_interval(fresh_entry)
-    }
-    pub fn finish_interval(
-        &mut self,
-        metadata: IntervalMetadata,
-        description: crate::scene::records::SceneDescription,
-        media: Arc<SceneMedia>,
-        effects: &mut impl crate::scene::commit::SettlementEffects,
-    ) -> Result<(), DisplayError> {
-        let current = self.metadata().clone();
-        let next_tick = current
-            .identity
-            .committed_tick
-            .checked_add(1)
-            .ok_or(DisplayError::Identity)?;
-        if description.tick != next_tick
-            || metadata.continuation.next_input_record
-                != current
-                    .identity
-                    .next_input_record
-                    .checked_add(1)
-                    .ok_or(DisplayError::Identity)?
-            || metadata.continuation.primary != *self.gameplay.control.primary()
-            || metadata.continuation.secondary != *self.gameplay.control.secondary()
-            || metadata.continuation.outer != current.continuation.outer
-            || metadata.continuation.music != current.continuation.music
-            || metadata.continuation.message != current.continuation.message
-            || metadata.continuation.auxiliary != current.continuation.auxiliary
-            || metadata.continuation.capture != current.identity.capture
-            || metadata.continuation.observation_policy != current.reference.observation_policy
-            || metadata.continuation.phase != crate::scene::start::CommittedPhase::SettledInterval
-            || metadata.input.capture != current.identity.capture
-            || metadata.input.policy != current.reference.input_policy
-            || metadata.input != current.input_history
-            || metadata.audio.capture != current.identity.capture
-            || metadata.audio.revision != self.required.display.audio_revision
-            || metadata.audio.declarations != self.required.display.audio_programs
-            || metadata.audio.timing_policy != current.reference.audio_timing_policy
-            || metadata.audio != current.audio
-        {
-            return Err(DisplayError::Identity);
-        }
-        let requests = self.gameplay.control.requests()?;
-        if requests.pending_mutation {
-            return Err(DisplayError::Incomplete);
-        }
-        requests.validate_at_tick(&current, &self.required.audio_catalog, next_tick)?;
-        let owner = self.gameplay.presentation.owner_mut()?;
-        owner.refresh()?;
-        owner.begin_settlement()?;
-        owner.settle(effects)?;
-        owner.commit_scene(description, media)?;
-        self.observations.frame = owner.state.nmi.frame_word;
-        let current = self.metadata_mut();
-        current.identity.committed_tick = next_tick;
-        current.identity.next_input_record = metadata.continuation.next_input_record;
-        current.input_history = metadata.input;
-        current.continuation = metadata.continuation;
-        current.audio = metadata.audio;
-        Ok(())
     }
     pub fn checkpoint(&self) -> Result<SessionCheckpoint, DisplayError> {
         self.gameplay.presentation.owner()?.checkpoint_parts()?;

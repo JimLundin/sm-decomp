@@ -5,10 +5,7 @@ use super::{
     media::{AppearanceId, FrameId, VisualResourceId},
 };
 use crate::geometry::Point;
-use crate::{
-    rom::RomImage,
-    room_entry::{content::Capture, world::ResourceId},
-};
+use crate::{rom::RomImage, room_entry::world::ResourceId};
 use std::collections::BTreeMap;
 
 macro_rules! ids { ($($name:ident),+ $(,)?) => { $(
@@ -203,7 +200,6 @@ pub type ActorDefinitionCapture = ActorRecordCapture<SpeciesId>;
 pub type ActorPoseCapture = ActorRecordCapture<PoseId>;
 pub type ActorPartCapture = ActorRecordCapture<PosePartPosition>;
 pub type ActorCollisionCapture = ActorRecordCapture<CollisionPosition>;
-pub type ActorResourceCapture = Capture<VisualResourceId>;
 /// Acquisitions only. Token field reads retain captured allocation and source order.
 pub trait ActorContent {
     fn actor_script_image(&self) -> RomImage;
@@ -238,7 +234,6 @@ pub trait ActorContent {
     fn capture_actor_population(&mut self, cursor: &PopulationCursor) -> ActorPopulationCapture;
     fn capture_actor_definition(&mut self, key: ActorDefinitionKey) -> ActorDefinitionCapture;
     fn capture_actor_pose(&mut self, actor: ActorKey) -> ActorPoseCapture;
-    fn capture_actor_resource(&mut self, resource: VisualResourceId) -> ActorResourceCapture;
     fn actor_spike_mechanism(&mut self, variant: u16) -> u16;
     fn actor_slope_multiplier(&mut self, index: u16) -> u16;
     fn actor_slope_surface(&mut self, index: u16) -> u16;
@@ -277,7 +272,6 @@ pub trait ActorCaptureReads {
         source: &ActorDefinitionCapture,
         routine: DefinitionRoutine,
     ) -> u16;
-    fn population_next(&mut self, source: &ActorPopulationCapture) -> PopulationCursor;
     fn population_terminated(&mut self, source: &ActorPopulationCapture) -> bool;
     fn population_death_quota(&mut self, source: &ActorPopulationCapture) -> u16;
     fn definition_name(&mut self, source: &ActorDefinitionCapture) -> Option<ActorLiveRecord>;

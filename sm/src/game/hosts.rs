@@ -105,12 +105,9 @@ macro_rules! compatibility_player_position {
             fn player_y_fraction(&self) -> u16 { let game = self; sm_game::ram_word!(game.samus_y_subpos) }
             fn previous_player_x(&self) -> u16 { let game = self; sm_game::ram_word!(game.samus_prev_x_pos) }
             fn previous_player_y(&self) -> u16 { let game = self; sm_game::ram_word!(game.samus_prev_y_pos) }
-            fn previous_player_x_fraction(&self) -> u16 { let game = self; sm_game::ram_word!(game.samus_prev_x_subpos) }
-            fn previous_player_y_fraction(&self) -> u16 { let game = self; sm_game::ram_word!(game.samus_prev_y_subpos) }
             fn set_player_x(&mut self, x: u16) { let game = self; sm_game::ram_word!(game.samus_x_pos = x) }
             fn set_player_y(&mut self, y: u16) { let game = self; sm_game::ram_word!(game.samus_y_pos = y) }
             fn set_player_x_fraction(&mut self, fraction: u16) { let game = self; sm_game::ram_word!(game.samus_x_subpos = fraction) }
-            fn set_player_y_fraction(&mut self, fraction: u16) { let game = self; sm_game::ram_word!(game.samus_y_subpos = fraction) }
             fn set_previous_player_x(&mut self, x: u16) { let game = self; sm_game::ram_word!(game.samus_prev_x_pos = x) }
             fn set_previous_player_y(&mut self, y: u16) { let game = self; sm_game::ram_word!(game.samus_prev_y_pos = y) }
             fn set_previous_player_x_fraction(&mut self, fraction: u16) { let game = self; sm_game::ram_word!(game.samus_prev_x_subpos = fraction) }
@@ -151,12 +148,6 @@ impl sm_game::player_position::PlayerPosition for crate::game::session_runtime::
     fn previous_player_y(&self) -> u16 {
         self.owned_player(|player| player.previous_position.y.whole, 0xb14)
     }
-    fn previous_player_x_fraction(&self) -> u16 {
-        self.owned_player(|player| player.previous_position.x.fraction, 0xb12)
-    }
-    fn previous_player_y_fraction(&self) -> u16 {
-        self.owned_player(|player| player.previous_position.y.fraction, 0xb16)
-    }
     fn set_player_x(&mut self, x: u16) {
         self.write_word_le(x, sm_game::ram::words::samus_x_pos)
     }
@@ -165,9 +156,6 @@ impl sm_game::player_position::PlayerPosition for crate::game::session_runtime::
     }
     fn set_player_x_fraction(&mut self, fraction: u16) {
         self.write_word_le(fraction, sm_game::ram::words::samus_x_subpos)
-    }
-    fn set_player_y_fraction(&mut self, fraction: u16) {
-        self.write_word_le(fraction, sm_game::ram::words::samus_y_subpos)
     }
     fn set_previous_player_x(&mut self, x: u16) {
         self.write_word_le(x, 0xb10)

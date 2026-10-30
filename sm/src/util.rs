@@ -2,16 +2,6 @@
 pub use crate::types::{FILE, size_t};
 use core::ffi::{c_char, c_void};
 
-pub type __builtin_va_list = [__va_list_tag; 1];
-crate::typed_struct! {
-    #[derive(Copy, Clone)]
-    #[repr(C)]
-    pub struct __va_list_tag {
-        pub gp_offset, fp_offset: u32;
-        pub overflow_arg_area, reg_save_area: *mut c_void;
-    }
-}
-pub type __gnuc_va_list = __builtin_va_list;
 pub const NULL: *mut c_void = core::ptr::null_mut::<c_void>();
 pub const true_0: i32 = 1;
 pub const false_0: i32 = 0;

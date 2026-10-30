@@ -58,7 +58,6 @@ pub trait Host: SessionAccess {
     fn variable_byte(&self, raw: u16, high: bool) -> u8;
     // Echo overlap and unusual outside selectors require narrowly typed lanes,
     // never an address or arbitrary byte method exposed to gameplay.
-    fn echo_x(&self, index: usize) -> u16;
     fn set_echo_x(&mut self, index: usize, value: u16);
     fn set_echo_y(&mut self, index: usize, value: u16);
     fn set_echo_index_native(&mut self, raw: u16, value: u16);

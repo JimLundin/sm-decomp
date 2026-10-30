@@ -102,7 +102,6 @@ pub trait ImportedAliases {
     );
     // Signed slot -1 is NOT represented by wrapping to raw handle FFFE.
     fn projectile_kind(&self, signed_slot: isize, order: ByteOrder) -> u16;
-    fn saved_graphics_word(&self, index: usize) -> u16;
     fn set_saved_graphics_word(&mut self, index: usize, value: u16, order: StoreOrder);
     fn terrain_word(&self, byte_block: usize, order: ByteOrder) -> u16;
     fn set_terrain_word(&mut self, byte_block: usize, value: u16, order: ByteOrder);

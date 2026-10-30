@@ -650,8 +650,6 @@ crate::type_aliases! {
     pub GLboolean, GLubyte, stbi_uc = c_uchar;
 }
 
-pub type GLchar = c_char;
-
 crate::type_aliases! {
     pub GLint, GLsizei, SDL_JoystickPowerLevel, Sint32, GamepadButton = i32;
 }
@@ -707,12 +705,6 @@ impl SpawnHardcodedPlmArgs {
 }
 
 pub use sm_game::display::hdma_spawn::SpawnHdmaObject_Args;
-
-/// Order in which the four destinations of a block are written.
-pub(crate) enum TileDrawOrder {
-    Rows,
-    Columns,
-}
 
 impl TileTables {}
 

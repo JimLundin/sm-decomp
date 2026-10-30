@@ -282,14 +282,6 @@ impl<E: SettlementEffects> delivery::Effects for DisplayEffects<'_, E> {
     }
 }
 
-#[derive(Clone, Copy)]
-pub enum DeliveryStatus {
-    Nmi,
-    Irq,
-    Beam,
-    CounterGate,
-}
-
 /// Committed continuation data captured by [`OwnedDisplay::checkpoint_parts`].
 pub type CheckpointParts = (
     DisplayState,

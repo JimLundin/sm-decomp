@@ -13,10 +13,7 @@ use sm_game::actors::{
 use std::sync::Arc;
 use {
     crate::game::session_runtime::Runtime,
-    sm_game::room_entry::{
-        content::Capture,
-        world::{ResourceKey, WorldBinding},
-    },
+    sm_game::room_entry::world::{ResourceKey, WorldBinding},
 };
 
 fn live(record: RomRecord) -> ActorLiveRecord {
@@ -348,17 +345,6 @@ impl ActorContent for Runtime<'_> {
             isize::try_from(layer).unwrap(),
         )
     }
-    fn capture_actor_resource(&mut self, resource: VisualResourceId) -> ActorResourceCapture {
-        let world = self.session().world.clone();
-        let (bank, address) = resource_address(&world, resource);
-        let record = self.actor_legacy_record(bank, address);
-        Capture::Legacy {
-            world,
-            image: record.image,
-            base: record.base,
-            access: sm_game::room_entry::content::RecordAccess::Native,
-        }
-    }
     fn actor_spike_mechanism(&mut self, variant: u16) -> u16 {
         let image = self.actor_script_image();
         let at = loaded_table_offset(&image, 0xa0c2da, usize::from(variant) * 2, 2);
@@ -435,22 +421,6 @@ impl ActorCaptureReads for Runtime<'_> {
                 PopulationWord::Parameter2 => 14,
             },
         )
-    }
-    fn population_next(&mut self, captured: &ActorPopulationCapture) -> PopulationCursor {
-        match captured.cursor {
-            PopulationCursor::Legacy { bank, address } => PopulationCursor::Legacy {
-                bank,
-                address: address.wrapping_add(16),
-            },
-            PopulationCursor::Prepared { population, entry } => PopulationCursor::Prepared {
-                population,
-                entry: entry.checked_add(1).expect("population entry extent"),
-            },
-            PopulationCursor::Template { template, part } => PopulationCursor::Template {
-                template,
-                part: part.checked_add(1).expect("template part extent"),
-            },
-        }
     }
     fn population_terminated(&mut self, captured: &ActorPopulationCapture) -> bool {
         self.population_definition(captured) == 0xffff

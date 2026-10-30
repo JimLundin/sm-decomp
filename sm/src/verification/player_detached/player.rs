@@ -113,9 +113,6 @@ impl Host for Composed {
             .variable
             .to_le_bytes()[usize::from(high)]
     }
-    fn echo_x(&self, index: usize) -> u16 {
-        self.world.player.projectiles.echoes.x[index]
-    }
     fn set_echo_x(&mut self, index: usize, value: u16) {
         self.world.player.projectiles.echoes.x[index] = value;
     }

@@ -8,9 +8,6 @@ pub(crate) struct RoomRecord {
 use super::game::room_mechanisms::host::*;
 
 impl ImportedAliases for Composed {
-    fn saved_graphics_word(&self, index: usize) -> u16 {
-        panic!("unprepared saved graphics alias")
-    }
     fn set_saved_graphics_word(&mut self, index: usize, value: u16, order: StoreOrder) {
         panic!("unprepared saved graphics alias")
     }

@@ -30,9 +30,6 @@ impl BossState for Game {
     fn react_to_contact(&mut self, handling: Death) {
         ActorRuntime::contact_reaction(self, handling);
     }
-    fn react_to_power_bomb(&mut self, handling: Death) {
-        ActorRuntime::power_bomb_reaction(self, handling);
-    }
     fn place_projectile_spawn(&mut self, x: u16, y: u16) {
         BossEffects::set_projectile_spawn_point(self, x, y);
     }
@@ -88,9 +85,6 @@ impl BossState for Runtime<'_> {
     }
     fn react_to_contact(&mut self, handling: Death) {
         combat::contact_reaction(self, death(handling));
-    }
-    fn react_to_power_bomb(&mut self, handling: Death) {
-        combat::power_bomb_reaction(self, death(handling));
     }
     fn place_projectile_spawn(&mut self, x: u16, y: u16) {
         self.session_mut().enemy_projectiles.spawn.point = Point { x, y };

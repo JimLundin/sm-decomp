@@ -123,9 +123,6 @@ impl ImportedAliases for Runtime<'_> {
     fn signal_turret(&mut self, association: u16) {
         self.write_slice_native(usize::from(association), 1);
     }
-    fn saved_graphics_word(&self, index: usize) -> u16 {
-        self.word(0x1c2f + index * 2)
-    }
     fn set_saved_graphics_word(&mut self, index: usize, value: u16, order: StoreOrder) {
         let at = 0x1c2f + index * 2;
         match order {

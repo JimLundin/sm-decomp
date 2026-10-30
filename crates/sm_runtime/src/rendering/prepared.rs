@@ -1,8 +1,6 @@
 //! A prepared indexed-media consumer of the same scanline implementation.
 use super::*;
 
-pub const HEIGHT: usize = 224;
-
 pub use sm_data::raster::{IndexedImage, PreparedMosaic, PreparedSprites};
 
 impl IndexedSource for IndexedImage {

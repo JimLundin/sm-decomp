@@ -182,25 +182,6 @@ pub fn deliver_output(state: &mut DisplayState, field: Output, value: u8) {
     }
 }
 
-/// Safe disable changes only the existing full staged enable word at84/85.
-pub fn owned_disable(state: &mut DisplayState) {
-    disable(&mut OwnedControls { state });
-}
-
-pub fn owned_enable<E: OwnedIrqEffects>(
-    state: &mut DisplayState,
-    immediate: bool,
-    effects: &mut E,
-) -> Result<(), DisplayError> {
-    enable(
-        &mut OwnedHost {
-            controls: OwnedControls { state },
-            effects,
-        },
-        immediate,
-    )
-}
-
 pub fn owned_advance<E: OwnedIrqEffects>(
     state: &mut DisplayState,
     effects: &mut E,

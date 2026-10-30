@@ -934,9 +934,6 @@ impl Host for Runtime<'_> {
     fn variable_byte(&self, raw: u16, high: bool) -> u8 {
         self.byte(0xc7c + usize::from(raw) + usize::from(high))
     }
-    fn echo_x(&self, index: usize) -> u16 {
-        self.word(0xab0 + index * 2)
-    }
     fn set_echo_x(&mut self, index: usize, value: u16) {
         self.store(0xab0 + index * 2, value, Store::PrefixLe);
     }
