@@ -148,8 +148,8 @@ pub fn shake_crocomire<H: SessionView + ?Sized>(h: &mut H) {
         let shift = h.resolve_actor(legs, Native).variables[3];
         h.write_word_le(
             shift
-                .wrapping_add(h.word(fields::bg1_y_offset))
-                .wrapping_add(h.word(fields::layer1_y_pos)),
+                .wrapping_add(h.session().room.camera.bg1_offset[1])
+                .wrapping_add(h.session().room.camera.layer1[1]),
             fields::reg_BG1VOFS,
         );
     } else if h.resolve_actor(body, Native).variables[1] & 0x400 != 0 {
@@ -174,14 +174,15 @@ pub fn shake_crocomire<H: SessionView + ?Sized>(h: &mut H) {
             actor.variables[3] = actor.variables[3].wrapping_sub(1);
             actor.variables[3]
         });
-        let x = h.word(fields::layer1_x_pos);
-        h.write_word_le(
+        let x = h.session().room.camera.layer1[0];
+        crate::camera::set_layer1(
+            h,
+            0,
             if timer & 1 != 0 {
                 x.wrapping_sub(4)
             } else {
                 x.wrapping_add(4)
             },
-            fields::layer1_x_pos,
         );
     }
 }

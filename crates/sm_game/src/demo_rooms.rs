@@ -156,15 +156,22 @@ pub fn load<H: crate::menus::host::Host + crate::runtime_access::RuntimeAccess +
         runtime.session_mut().set_room_key(room.room);
         runtime.session_mut().set_exit_key(room.door);
     }
-    word!(game.layer1_x_pos = room.layer1_x);
-    word!(game.bg1_x_offset = word!(game.layer1_x_pos));
-    word!(game.layer1_y_pos = room.layer1_y);
-    word!(game.bg1_y_offset = word!(game.layer1_y_pos));
-    game.set_player_y(word!(game.layer1_y_pos).wrapping_add(room.samus_y_offset));
+    let layer1 = {
+        use crate::camera::{set_bg1_offset, set_layer1};
+        let mut runtime = game.runtime();
+        set_layer1(&mut runtime, 0, room.layer1_x);
+        let x = runtime.session().room.camera.layer1[0];
+        set_bg1_offset(&mut runtime, 0, x);
+        set_layer1(&mut runtime, 1, room.layer1_y);
+        let y = runtime.session().room.camera.layer1[1];
+        runtime.session_mut().room.camera.bg1_offset[1] = y;
+        runtime.session().room.camera.layer1
+    };
+    game.set_player_y(layer1[1].wrapping_add(room.samus_y_offset));
     game.set_previous_player_y(game.player_y());
     game.set_player_x(
         room.samus_x_offset
-            .wrapping_add(word!(game.layer1_x_pos))
+            .wrapping_add(layer1[0])
             .wrapping_add(128),
     );
     game.set_previous_player_x(game.player_x());

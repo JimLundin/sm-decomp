@@ -2,8 +2,8 @@
 #![forbid(unsafe_code)]
 use crate::display_refresh::enqueue_readback;
 use crate::player_transitions::xray::BlendPhase;
-use crate::ram::{RawRam, word, words as fields};
-use crate::runtime_access::{RuntimeAccess, SessionRam, SessionView};
+use crate::ram::{RawRam, word};
+use crate::runtime_access::{RuntimeAccess, SessionView};
 use crate::session_access::SessionAccess;
 use crate::visual_host::{Content, Record, Source};
 use crate::word_transfers;
@@ -43,6 +43,10 @@ fn behavior<R: SessionView>(h: &R, block: i32) -> u8 {
     }
 }
 
+fn camera<H: Host + ?Sized>(game: &mut H) -> crate::camera::Camera {
+    game.runtime().session().room.camera
+}
+
 fn mult8x8(a: u8, b: u8) -> u16 {
     (a as i32 * b as i32) as u16
 }
@@ -69,11 +73,9 @@ fn write_block<R: SessionView>(destination: u16, tile: u16, offsets: [usize; 4],
 }
 
 fn copy_background<H: Host + ?Sized>(game: &mut H) {
-    let mut origin = (4
-        * ((word!(game.layer1_y_pos) as u32 + word!(game.bg1_y_offset) as u32) & 0xf0)
-        + (((word!(game.layer1_x_pos) as u32 + word!(game.bg1_x_offset) as u32) & 0xf0) >> 3)
-        + 4 * ((word!(game.layer1_x_pos) as u32 + word!(game.bg1_x_offset) as u32) & 0x100))
-        as u16;
+    let camera = camera(game);
+    let [x, y] = [0, 1].map(|axis| camera.layer1[axis] as u32 + camera.bg1_offset[axis] as u32);
+    let mut origin = (4 * (y & 0xf0) + ((x & 0xf0) >> 3) + 4 * (x & 0x100)) as u16;
     let corners = [0usize, 1, 32, 33];
     for row in 0..16 {
         let mut screen_row = origin & 0x7e0;
@@ -124,16 +126,16 @@ pub fn capture_bg1_left<H: Host + ?Sized>(game: &mut H) {
 }
 pub fn build_overlay<H: Host + ?Sized>(game: &mut H) {
     copy_background(game);
-    if (word!(game.layer1_y_pos) >> 12) != 0 {
+    if (camera(game).layer1[1] >> 12) != 0 {
         game.overlay_origin_assertion();
     }
     {
         let h = &mut game.runtime();
         let mut r34: u16 = (mult8x8(
-            (h.word(fields::layer1_y_pos) >> 4) as u8,
+            (h.session().room.camera.layer1[1] >> 4) as u8,
             h.session().room.width as u8,
         ) as i32
-            + (h.word(fields::layer1_x_pos) as i32 >> 4)) as u16;
+            + (h.session().room.camera.layer1[0] as i32 >> 4)) as u16;
         let mut r22: u16 = 0;
         let mut m = 16;
         loop {
@@ -339,8 +341,9 @@ pub fn reveal_block<R: SessionView>(r18: u16, r22: u16, r36: u16, game: &mut R) 
 }
 
 pub fn reveal_room_block<R: SessionView>(a: u16, k: u16, j: u16, game: &mut R) {
-    let r24: u16 = (k as i32 - (game.word(fields::layer1_x_pos) as i32 >> 4)) as u16;
-    let r26: u16 = (j as i32 - (game.word(fields::layer1_y_pos) as i32 >> 4)) as u16;
+    let layer1 = game.session().room.camera.layer1;
+    let r24: u16 = (k as i32 - (layer1[0] as i32 >> 4)) as u16;
+    let r26: u16 = (j as i32 - (layer1[1] as i32 >> 4)) as u16;
     if r24 & 0x8000 == 0
         && r24 as i32 - 16i32 & 0x8000 != 0
         && r26 & 0x8000 == 0
@@ -354,9 +357,10 @@ pub fn reveal_room_block<R: SessionView>(a: u16, k: u16, j: u16, game: &mut R) {
 pub fn capture_bg2_right<H: Host + ?Sized>(game: &mut H) {
     if can_reveal_blocks(game) {
         if word!(game.earthquake_timer) != 0 {
+            let camera = camera(game);
             word! { game;
-                reg_BG1HOFS = (word!(game.layer1_x_pos)).wrapping_add(word!(game.bg1_x_offset));
-                reg_BG1VOFS = (word!(game.layer1_y_pos)).wrapping_add(word!(game.bg1_y_offset));
+                reg_BG1HOFS = camera.layer1[0].wrapping_add(camera.bg1_offset[0]);
+                reg_BG1VOFS = camera.layer1[1].wrapping_add(camera.bg1_offset[1]);
             }
         }
         word!(game.reg_BG2HOFS = (word!(game.reg_BG1HOFS)) & (0xfu16));
