@@ -1,11 +1,7 @@
 //! Liquid setup, rising motion, tide and background HDMA tables.
-// The original's names and assignment shapes are kept.
-#![allow(non_snake_case, non_upper_case_globals, unused_mut, unused_assignments)]
 use crate::constants::bank_87::{addr_kAnimtiles_Acid, addr_kAnimtiles_Lava};
 use crate::hdma::HdmaObject;
 use crate::menus::prelude::*;
-#[allow(unused_imports)]
-use crate::ram::RawRam as _;
 
 pub const WATER_WAVE: [i16; 16] = [0, 1, 1, 0, 0, -1, -1, 0, 0, 1, 1, 0, 0, -1, -1, 0];
 
@@ -106,7 +102,7 @@ fn table_height(position: u16, camera: u16, water: bool) -> u16 {
     }
 }
 
-static kLavaSoundEffects: [u8; 8] = [0x12, 0x13, 0x14, 0x12, 0x13, 0x14, 0x12, 0x13];
+static LAVA_SOUND_EFFECTS: [u8; 8] = [0x12, 0x13, 0x14, 0x12, 0x13, 0x14, 0x12, 0x13];
 #[forbid(unsafe_code)]
 pub fn lava_surface<H>(object: &mut HdmaObject, game: &mut H)
 where
@@ -130,7 +126,7 @@ where
                 object.c = 112;
                 game.queue_sound(
                     1,
-                    (kLavaSoundEffects[(word!(game.random_number) as i32 & 7) as usize] as u16)
+                    (LAVA_SOUND_EFFECTS[(word!(game.random_number) as i32 & 7) as usize] as u16)
                         as u8,
                     6,
                 );
