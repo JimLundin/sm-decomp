@@ -58,7 +58,8 @@ impl Content for Runtime<'_> {
 
 impl ImportedCollisionReads for Runtime<'_> {
     fn imported_level_word(&self, byte_offset: usize) -> u16 {
-        self.word(0x10002 + byte_offset)
+        let [low, high] = sm_game::player_collision::geometry::level_word_bytes(byte_offset);
+        u16::from_le_bytes([self.byte(low), self.byte(high)])
     }
 
     fn imported_behavior_byte(&self, index: usize) -> u8 {

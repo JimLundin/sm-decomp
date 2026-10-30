@@ -59,12 +59,20 @@ fn set_player_fraction(player: &mut Player, axis: Axis, value: u16) {
         Axis::Y => player.y_fraction = value,
     }
 }
+/// $94's `LDA $7F0002,x` takes X = block * 2 from a 16-bit `ASL`, so the
+/// level word read wraps the block to 15 bits.
 pub fn level(h: &impl Host, block: u16) -> u16 {
-    if let Some(cell) = h.session().room.terrain.cells().get(usize::from(block)) {
+    let x = block.wrapping_mul(2);
+    if let Some(cell) = h.session().room.terrain.cells().get(usize::from(x / 2)) {
         cell.level
     } else {
-        h.imported_level_word(usize::from(block) * 2)
+        h.imported_level_word(usize::from(x))
     }
+}
+/// The work-RAM bytes of the level word at `byte_offset` (X <= $FFFE): the long
+/// indexed read carries from bank $7F into bank $80, whose start mirrors $7E.
+pub fn level_word_bytes(byte_offset: usize) -> [usize; 2] {
+    [0, 1].map(|lane| (0x10002 + byte_offset + lane) & 0x1ffff)
 }
 pub fn behavior(h: &impl Host, block: u16) -> u8 {
     if let Some(cell) = h.session().room.terrain.cells().get(usize::from(block)) {
