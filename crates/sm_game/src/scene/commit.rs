@@ -290,6 +290,15 @@ pub enum DeliveryStatus {
     CounterGate,
 }
 
+/// Committed continuation data captured by [`OwnedDisplay::checkpoint_parts`].
+pub type CheckpointParts = (
+    DisplayState,
+    ResidentDisplayDescription,
+    Scene,
+    Arc<SceneMedia>,
+    Arc<HdmaCatalog>,
+);
+
 #[derive(Clone, Debug, PartialEq)]
 pub struct OwnedDisplay {
     pub state: DisplayState,
@@ -588,18 +597,7 @@ impl OwnedDisplay {
         Ok(())
     }
     /// Capture committed continuation data without rendering or advancing G.
-    pub fn checkpoint_parts(
-        &self,
-    ) -> Result<
-        (
-            DisplayState,
-            ResidentDisplayDescription,
-            Scene,
-            Arc<SceneMedia>,
-            Arc<HdmaCatalog>,
-        ),
-        DisplayError,
-    > {
+    pub fn checkpoint_parts(&self) -> Result<CheckpointParts, DisplayError> {
         if self.state.phase != DisplayPhase::Committed {
             return Err(DisplayError::Phase);
         }

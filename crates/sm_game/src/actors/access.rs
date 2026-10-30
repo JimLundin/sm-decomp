@@ -63,6 +63,10 @@ pub trait ActorAccess: SessionAccess {
         edit: impl for<'edit> FnOnce(&'edit mut Actor) -> R,
     ) -> R;
 }
+/// Writes one compatibility RAM byte through the host.
+type WriteByte<H> = fn(&mut H, usize, u8);
+/// Commits an edited projection, given its original and edited values.
+type CommitEdit<H, T> = fn(&mut H, ActorKey, AccessMode, &T, &T, WriteByte<H>);
 /// Only this guard retains a projected mutable value; the whole host is borrowed.
 struct ProjectedEdit<'a, H: SessionAccess + ?Sized, T> {
     host: &'a mut H,
@@ -70,8 +74,8 @@ struct ProjectedEdit<'a, H: SessionAccess + ?Sized, T> {
     mode: AccessMode,
     original: T,
     edited: T,
-    commit: fn(&mut H, ActorKey, AccessMode, &T, &T, fn(&mut H, usize, u8)),
-    write_byte: fn(&mut H, usize, u8),
+    commit: CommitEdit<H, T>,
+    write_byte: WriteByte<H>,
 }
 
 // Canonical state encodes words little-endian. Native access may borrow it

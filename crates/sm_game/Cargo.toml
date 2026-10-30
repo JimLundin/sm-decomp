@@ -20,7 +20,3 @@ warnings = { level = "deny", priority = -1 }
 unsafe_code = "forbid"
 # Verifier builds of sm pass the same configuration to this package.
 unexpected_cfgs = { level = "warn", check-cfg = ["cfg(sm_verify_dll)"] }
-
-[lints.clippy]
-# Complex types still mirror the original routines.
-type_complexity = "allow"
