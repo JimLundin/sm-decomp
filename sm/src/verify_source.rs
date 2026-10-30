@@ -1480,6 +1480,10 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("../../crates/sm_game/src/grapple_origins.rs"),
     ),
     (
+        "crates/sm_game/src/grapple_swing.rs",
+        include_bytes!("../../crates/sm_game/src/grapple_swing.rs"),
+    ),
+    (
         "sm/src/game/grapple_swing.rs",
         include_bytes!("game/grapple_swing.rs"),
     ),
@@ -2081,6 +2085,10 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "crates/sm_game/src/records.rs",
         include_bytes!("../../crates/sm_game/src/records.rs"),
+    ),
+    (
+        "crates/sm_game/src/runtime_access.rs",
+        include_bytes!("../../crates/sm_game/src/runtime_access.rs"),
     ),
     (
         "crates/sm_game/src/visual_host.rs",

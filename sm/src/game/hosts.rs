@@ -32,3 +32,22 @@ impl sm_game::explosion_window::Host for Game {
         self.k_out = row;
     }
 }
+
+impl sm_game::runtime_access::RuntimeAccess for Game {
+    type Runtime<'a> = crate::game::session_runtime::Runtime<'a>;
+    fn runtime(&mut self) -> Self::Runtime<'_> {
+        crate::game::session_runtime::Runtime::new(self)
+    }
+}
+
+impl sm_game::grapple_swing::Host for Game {
+    fn multiply_with_scratch(&mut self, a: u16, b: u16) -> u32 {
+        Game::multiply_with_scratch(self, a, b)
+    }
+    fn player_bottom(&self) -> u16 {
+        crate::game::session_runtime::player_bottom(self)
+    }
+    fn settle_grapple(&mut self) {
+        crate::game::session_runtime::settle_grapple(self)
+    }
+}
