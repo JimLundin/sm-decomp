@@ -1,5 +1,5 @@
-use crate::config::g_config;
-use crate::platform::glsl_shader::{GlslShader, GlslShader_CreateFromFile, GlslShader_Render};
+use crate::config::CONFIG;
+use crate::platform::glsl_shader::{GlslShader, glsl_shader_create_from_file, glsl_shader_render};
 use sdl2_sys::SDL_GLattr::{
     SDL_GL_CONTEXT_MAJOR_VERSION, SDL_GL_CONTEXT_MINOR_VERSION, SDL_GL_CONTEXT_PROFILE_MASK,
 };
@@ -68,7 +68,7 @@ unsafe fn compile_display_shader(stage: u32, source: &CStr) -> u32 {
     }
 }
 
-unsafe extern "C-unwind" fn OpenGLRenderer_Init(window: *mut SDL_Window) -> bool {
+unsafe extern "C-unwind" fn opengl_renderer_init(window: *mut SDL_Window) -> bool {
     PRESENTER.with(|presenter| {
         let mut state = presenter.borrow_mut();
         unsafe {
@@ -136,19 +136,19 @@ unsafe extern "C-unwind" fn OpenGLRenderer_Init(window: *mut SDL_Window) -> bool
                 gl::GetProgramInfoLog(state.program, 512, null_mut(), log.as_mut_ptr());
                 printf(c"%s\n".as_ptr(), log.as_ptr());
             }
-            if !g_config.shader.is_null() {
-                state.shader = GlslShader_CreateFromFile(g_config.shader);
+            if !CONFIG.shader.is_null() {
+                state.shader = glsl_shader_create_from_file(CONFIG.shader);
             }
             true
         }
     })
 }
 
-extern "C-unwind" fn OpenGLRenderer_Destroy() {
+extern "C-unwind" fn opengl_renderer_destroy() {
     PRESENTER.with(|presenter| presenter.borrow_mut().pixels = Vec::new());
 }
 
-unsafe extern "C-unwind" fn OpenGLRenderer_BeginDraw(
+unsafe extern "C-unwind" fn opengl_renderer_begin_draw(
     width: i32,
     height: i32,
     pixels: *mut *mut u8,
@@ -172,7 +172,7 @@ unsafe extern "C-unwind" fn OpenGLRenderer_BeginDraw(
     })
 }
 
-unsafe extern "C-unwind" fn OpenGLRenderer_EndDraw() {
+unsafe extern "C-unwind" fn opengl_renderer_end_draw() {
     PRESENTER.with(|presenter| {
         let mut state = presenter.borrow_mut();
         unsafe {
@@ -181,7 +181,7 @@ unsafe extern "C-unwind" fn OpenGLRenderer_EndDraw() {
             SDL_GL_GetDrawableSize(state.window, &mut drawable_width, &mut drawable_height);
             let mut width = drawable_width;
             let mut height = drawable_height;
-            if !g_config.ignore_aspect_ratio {
+            if !CONFIG.ignore_aspect_ratio {
                 if width * state.height < height * state.width {
                     height = width * state.height / state.width;
                 } else {
@@ -226,7 +226,7 @@ unsafe extern "C-unwind" fn OpenGLRenderer_EndDraw() {
             if state.shader.is_null() {
                 gl::Viewport(x, y, width, height);
                 gl::UseProgram(state.program);
-                let filter = if g_config.linear_filtering {
+                let filter = if CONFIG.linear_filtering {
                     gl::LINEAR
                 } else {
                     gl::NEAREST
@@ -236,7 +236,7 @@ unsafe extern "C-unwind" fn OpenGLRenderer_EndDraw() {
                 gl::BindVertexArray(state.vao);
                 gl::DrawArrays(gl::TRIANGLE_STRIP, 0, 4);
             } else {
-                GlslShader_Render(state.shader, &mut state.texture, x, y, width, height);
+                glsl_shader_render(state.shader, &mut state.texture, x, y, width, height);
             }
             SDL_GL_SwapWindow(state.window);
         }
@@ -244,7 +244,7 @@ unsafe extern "C-unwind" fn OpenGLRenderer_EndDraw() {
 }
 
 #[unsafe(export_name = "sm_host_OpenGLRenderer_Create")]
-pub unsafe extern "C-unwind" fn OpenGLRenderer_Create(funcs: *mut RendererFuncs) {
+pub unsafe extern "C-unwind" fn opengl_renderer_create(funcs: *mut RendererFuncs) {
     unsafe {
         SDL_GL_SetAttribute(
             SDL_GL_CONTEXT_PROFILE_MASK,
@@ -253,10 +253,10 @@ pub unsafe extern "C-unwind" fn OpenGLRenderer_Create(funcs: *mut RendererFuncs)
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
         *funcs = RendererFuncs {
-            Initialize: Some(OpenGLRenderer_Init),
-            Destroy: Some(OpenGLRenderer_Destroy),
-            BeginDraw: Some(OpenGLRenderer_BeginDraw),
-            EndDraw: Some(OpenGLRenderer_EndDraw),
+            Initialize: Some(opengl_renderer_init),
+            Destroy: Some(opengl_renderer_destroy),
+            BeginDraw: Some(opengl_renderer_begin_draw),
+            EndDraw: Some(opengl_renderer_end_draw),
         };
     }
 }

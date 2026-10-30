@@ -1,13 +1,6 @@
 #![deny(unsafe_op_in_unsafe_fn)]
-#![allow(
-    dead_code,
-    non_camel_case_types,
-    non_snake_case,
-    non_upper_case_globals,
-    unused_imports
-)]
-use core::ffi::{c_char, c_long, c_void};
-use core::ptr::{null, null_mut};
+use core::ffi::{c_char, c_void};
+use core::ptr::null_mut;
 use sdl2_sys::SDL_MessageBoxFlags::{SDL_MESSAGEBOX_ERROR, SDL_MESSAGEBOX_WARNING};
 use sdl2_sys::{
     SDL_CreateMutex, SDL_DestroyMutex, SDL_LockMutex, SDL_ShowSimpleMessageBox, SDL_UnlockMutex,
@@ -19,31 +12,22 @@ use sm::c_library::{exit, fprintf, memcpy};
 use sm::game_state::{Game, GameOwner};
 use sm::host::Die;
 use sm::rtl::*;
-use sm::types::{FILE, RendererFuncs, Snes, size_t};
+use sm::types::{FILE, RendererFuncs, size_t};
 /// Config file parsing.
 mod config;
 /// Window, renderer and OpenGL output.
 mod platform {
     pub mod glsl_shader;
     pub mod opengl;
-    mod sdl_constants;
     mod texture_png;
 }
-
-macro_rules! type_aliases {
-    ($visibility:vis $($name:ident),+ = $target:ty;) => {
-        $($visibility type $name = $target;)+
-    };
-}
-pub(crate) use type_aliases;
 
 // The replay runner is shared with the sm_verify host.
 #[path = "../../../sm/src/verify.rs"]
 mod verify;
-const kWindowTitle: &[u8] = b"SuperMet\0";
-const NULL: *mut c_void = null_mut();
-static mut g_pixels: [u8; 245760] = [0; 245760];
-static mut g_my_pixels: [u8; 245760] = [0; 245760];
+const WINDOW_TITLE: &[u8] = b"SuperMet\0";
+static mut PIXELS: [u8; 245760] = [0; 245760];
+static mut MY_PIXELS: [u8; 245760] = [0; 245760];
 
 #[link(name = "sm_desktop", kind = "static", modifiers = "-bundle")]
 unsafe extern "C-unwind" {
@@ -90,7 +74,7 @@ unsafe fn host_die(error: *const c_char) {
     unsafe {
         SDL_ShowSimpleMessageBox(
             SDL_MESSAGEBOX_ERROR as i32 as Uint32,
-            kWindowTitle.as_ptr().cast(),
+            WINDOW_TITLE.as_ptr().cast(),
             error,
             null_mut::<SDL_Window>(),
         );
@@ -103,7 +87,7 @@ unsafe fn host_warning(error: *const c_char) {
     unsafe {
         SDL_ShowSimpleMessageBox(
             SDL_MESSAGEBOX_WARNING as i32 as Uint32,
-            kWindowTitle.as_ptr().cast(),
+            WINDOW_TITLE.as_ptr().cast(),
             error,
             null_mut::<SDL_Window>(),
         );
@@ -133,7 +117,7 @@ sm::forward_calls! { unsafe fn ();
     host_apu_unlock => SDL_UnlockMutex(g_audio_mutex);
 }
 
-pub unsafe fn RtlDrawPpuFrame(
+pub unsafe fn rtl_draw_ppu_frame(
     pixel_buffer: *mut u8,
     pitch: size_t,
     _render_flags: u32,
@@ -141,9 +125,9 @@ pub unsafe fn RtlDrawPpuFrame(
 ) {
     unsafe {
         let ppu_pixels = if game.g_other_image as i32 != 0 {
-            &raw mut g_my_pixels as *mut u8
+            &raw mut MY_PIXELS as *mut u8
         } else {
-            &raw mut g_pixels as *mut u8
+            &raw mut PIXELS as *mut u8
         };
         for y in 0usize..240 {
             memcpy(
@@ -169,16 +153,16 @@ unsafe extern "C-unwind" fn sm_host_stderr() -> *mut FILE {
 #[unsafe(no_mangle)]
 unsafe extern "C-unwind" fn sm_host_parse_config(config: *mut c_void, name: *const c_char) {
     unsafe {
-        crate::config::ParseConfigFile(name, &mut *config.cast::<crate::config::ConfigOwner>());
+        crate::config::parse_config_file(name, &mut *config.cast::<crate::config::ConfigOwner>());
     }
 }
 #[unsafe(no_mangle)]
 unsafe extern "C-unwind" fn sm_host_find_key(key: i32, modifiers: i32) -> i32 {
-    unsafe { crate::config::FindCmdForSdlKey(key, modifiers as _) }
+    unsafe { crate::config::find_cmd_for_sdl_key(key, modifiers as _) }
 }
 #[unsafe(no_mangle)]
 unsafe extern "C-unwind" fn sm_host_find_button(button: i32, modifiers: u32) -> i32 {
-    unsafe { crate::config::FindCmdForGamepadButton(button, modifiers) }
+    unsafe { crate::config::find_cmd_for_gamepad_button(button, modifiers) }
 }
 #[unsafe(no_mangle)]
 unsafe extern "C-unwind" fn sm_host_debug(owner: *const GameOwner) {
@@ -249,8 +233,8 @@ unsafe extern "C-unwind" fn sm_host_prepare_pixels(owner: *const GameOwner) {
     unsafe {
         (*owner).with(|game| {
             let snes = game.g_snes;
-            sm::snes::ppu::PpuBeginDrawing((*snes).snes_ppu, (&raw mut g_pixels).cast(), 1024, 0);
-            sm::snes::ppu::PpuBeginDrawing((*snes).my_ppu, (&raw mut g_my_pixels).cast(), 1024, 0);
+            sm::snes::ppu::PpuBeginDrawing((*snes).snes_ppu, (&raw mut PIXELS).cast(), 1024, 0);
+            sm::snes::ppu::PpuBeginDrawing((*snes).my_ppu, (&raw mut MY_PIXELS).cast(), 1024, 0);
         });
     }
 }
@@ -328,7 +312,7 @@ unsafe extern "C-unwind" fn sm_host_copy_frame(
     flags: u32,
 ) {
     unsafe {
-        RtlDrawPpuFrame(pixels, pitch, flags, &mut *game);
+        rtl_draw_ppu_frame(pixels, pitch, flags, &mut *game);
     }
 }
 #[unsafe(no_mangle)]

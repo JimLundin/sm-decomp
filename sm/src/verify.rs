@@ -945,13 +945,13 @@ pub(super) unsafe fn begin_verifier_drawing(game: &mut Game) {
         let snes = game.g_snes;
         sm::snes::ppu::PpuBeginDrawing(
             (*snes).snes_ppu.cast(),
-            (&raw mut super::g_pixels).cast(),
+            (&raw mut super::PIXELS).cast(),
             1024,
             0,
         );
         sm::snes::ppu::PpuBeginDrawing(
             (*snes).my_ppu.cast(),
-            (&raw mut super::g_my_pixels).cast(),
+            (&raw mut super::MY_PIXELS).cast(),
             1024,
             0,
         );
@@ -990,8 +990,8 @@ unsafe fn prepared_checkpoint(
             .ok_or("prepared checkpoint check requires a continuation input frame")?;
         checkpoint::save(path, game, origin, inputs, completed)?;
         let mut expected_audio = [[0; 2]; 534];
-        core::ptr::write_bytes(&raw mut super::g_pixels, 0, 1);
-        core::ptr::write_bytes(&raw mut super::g_my_pixels, 0, 1);
+        core::ptr::write_bytes(&raw mut super::PIXELS, 0, 1);
+        core::ptr::write_bytes(&raw mut super::MY_PIXELS, 0, 1);
         sm::rtl::RtlRunFrame(i32::from(pad), game);
         sm::rtl::RtlRenderAudio(&mut expected_audio, game);
         let continuation = checkpoint::capture(game)?;
@@ -1002,8 +1002,8 @@ unsafe fn prepared_checkpoint(
             return Err("prepared checkpoint did not round-trip the complete capture".into());
         }
         let mut restored_audio = [[0; 2]; 534];
-        core::ptr::write_bytes(&raw mut super::g_pixels, 0, 1);
-        core::ptr::write_bytes(&raw mut super::g_my_pixels, 0, 1);
+        core::ptr::write_bytes(&raw mut super::PIXELS, 0, 1);
+        core::ptr::write_bytes(&raw mut super::MY_PIXELS, 0, 1);
         sm::rtl::RtlRunFrame(i32::from(pad), game);
         sm::rtl::RtlRenderAudio(&mut restored_audio, game);
         if restored_audio != expected_audio || checkpoint::capture(game)? != continuation {
@@ -1360,8 +1360,8 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
             // Undrawn rows must not retain a prior mismatch or stale pixels.
             // No frame is running; keep access raw while each PPU retains
             // its pointer to the array. Each write clears one whole array.
-            core::ptr::write_bytes(&raw mut super::g_pixels, 0, 1);
-            core::ptr::write_bytes(&raw mut super::g_my_pixels, 0, 1);
+            core::ptr::write_bytes(&raw mut super::PIXELS, 0, 1);
+            core::ptr::write_bytes(&raw mut super::MY_PIXELS, 0, 1);
             sm::rtl::RtlRunFrame(i32::from(pad), game);
             // Advance the music driver once per frame without playing audio.
             sm::rtl::RtlRenderAudio(&mut discarded_audio, game);

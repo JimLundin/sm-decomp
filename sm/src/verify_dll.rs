@@ -119,8 +119,8 @@ pub extern "C" fn sm_verify_util_source_matches() -> bool {
     sm::util::native_source_matches()
 }
 
-static mut g_pixels: [u8; 245760] = [0; 245760];
-static mut g_my_pixels: [u8; 245760] = [0; 245760];
+static mut PIXELS: [u8; 245760] = [0; 245760];
+static mut MY_PIXELS: [u8; 245760] = [0; 245760];
 static STARTED: AtomicBool = AtomicBool::new(false);
 
 /// The launcher stamps the source contents when it builds this host.

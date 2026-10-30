@@ -53,7 +53,7 @@ fn check_dependency() {
     });
 }
 
-pub unsafe fn GlslShader_CreateFromFile(filename: *const c_char) -> *mut GlslShader {
+pub unsafe fn glsl_shader_create_from_file(filename: *const c_char) -> *mut GlslShader {
     unsafe {
         check_dependency();
         sm_shader_create(filename, false)
@@ -69,14 +69,14 @@ impl Drop for HeapOwner {
     }
 }
 
-pub unsafe fn GlslShader_Destroy(shader: *mut GlslShader) {
+pub unsafe fn glsl_shader_destroy(shader: *mut GlslShader) {
     unsafe {
         let _heap = HeapOwner(shader);
         sm_shader_destroy_gl(shader);
     }
 }
 
-pub unsafe fn GlslShader_Render(
+pub unsafe fn glsl_shader_render(
     shader: *mut GlslShader,
     texture: *mut GlTextureWithSize,
     x: i32,
@@ -93,7 +93,7 @@ pub unsafe fn GlslShader_Render(
 #[unsafe(no_mangle)]
 unsafe extern "C-unwind" fn sm_shader_destroy(shader: *mut GlslShader) {
     unsafe {
-        GlslShader_Destroy(shader);
+        glsl_shader_destroy(shader);
     }
 }
 
@@ -243,7 +243,7 @@ unsafe extern "C-unwind" fn sm_shader_number(value: *const c_char) -> f32 {
 
 #[unsafe(no_mangle)]
 unsafe extern "C-unwind" fn sm_shader_linear_filtering() -> bool {
-    unsafe { crate::config::g_config.linear_filtering }
+    unsafe { crate::config::CONFIG.linear_filtering }
 }
 
 #[unsafe(no_mangle)]

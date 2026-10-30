@@ -40,13 +40,13 @@ pub unsafe extern "C" fn sm_verify_room_world_case(
                 let snes = game.g_snes;
                 sm::snes::ppu::PpuBeginDrawing(
                     (*snes).snes_ppu.cast(),
-                    (&raw mut g_pixels).cast(),
+                    (&raw mut PIXELS).cast(),
                     1024,
                     0,
                 );
                 sm::snes::ppu::PpuBeginDrawing(
                     (*snes).my_ppu.cast(),
-                    (&raw mut g_my_pixels).cast(),
+                    (&raw mut MY_PIXELS).cast(),
                     1024,
                     0,
                 );
