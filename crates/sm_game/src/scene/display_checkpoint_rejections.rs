@@ -100,7 +100,7 @@ fn display_body(
     required: &t::DisplayStartRequirements,
 ) {
     use super::super::component::DisplayCheckpoint;
-    assert_eq!(&bytes[..8], b"SMDISPL\x02");
+    assert_eq!(&bytes[..8], b"SMDISPL\x03");
     // Schema 2: 8-byte magic, u64 binding length, binding, 32-byte Revision, phase.
     let binding = usize::try_from(u64::from_le_bytes(bytes[8..16].try_into().unwrap())).unwrap();
     let body = 16 + binding;

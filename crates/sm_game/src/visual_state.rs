@@ -34,11 +34,28 @@ pub struct AnimatedTiles {
     pub selected: u16,
     pub last_instruction: u16,
 }
+/// A palette fade from `colors` toward `targets` ($C400..$C405): the step
+/// reached, the fade's duration in steps and the colour the native loops
+/// publish as they go.
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub struct PaletteFade {
+    pub step: u16,
+    pub duration: u16,
+    pub cursor: u16,
+}
+/// The screen brightness fade's frames per step and countdown ($0723, $0725).
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub struct ScreenFade {
+    pub delay: u16,
+    pub counter: u16,
+}
 #[derive(Clone, Debug, PartialEq)]
 pub struct Visuals {
     pub fireflea: FirefleaLighting,
     pub colors: [u16; 256],
     pub targets: [u16; 256],
+    pub palette_fade: PaletteFade,
+    pub screen_fade: ScreenFade,
     pub palette_effects: PaletteEffects,
     pub animated_tiles: AnimatedTiles,
 }
@@ -48,6 +65,8 @@ impl Default for Visuals {
             fireflea: Default::default(),
             colors: [0; 256],
             targets: [0; 256],
+            palette_fade: PaletteFade::default(),
+            screen_fade: ScreenFade::default(),
             palette_effects: PaletteEffects::default(),
             animated_tiles: AnimatedTiles::default(),
         }

@@ -498,10 +498,18 @@ record!(v::AnimatedTiles {
     selected,
     last_instruction
 });
+record!(v::PaletteFade {
+    step,
+    duration,
+    cursor
+});
+record!(v::ScreenFade { delay, counter });
 record!(v::Visuals {
     fireflea,
     colors,
     targets,
+    palette_fade,
+    screen_fade,
     palette_effects,
     animated_tiles
 });
@@ -1377,7 +1385,7 @@ pub fn encode(
     required: &t::DisplayStartRequirements,
 ) -> Result<Vec<u8>, String> {
     let binding = binding(media, metadata, required)?;
-    let mut bytes = Vec::from(b"SMDISPL\x02".as_slice());
+    let mut bytes = Vec::from(b"SMDISPL\x03".as_slice());
     binding.put(&mut bytes);
     description.put(&mut bytes);
     resident.put(&mut bytes);
@@ -1394,7 +1402,7 @@ pub fn decode(
 ) -> Result<t::ValidatedDisplayStart, String> {
     let expected = binding(&media, metadata, required)?;
     let mut read = CheckpointReader(bytes);
-    if read.bytes(8)? != b"SMDISPL\x02" {
+    if read.bytes(8)? != b"SMDISPL\x03" {
         return Err("unsupported display checkpoint schema".into());
     }
     let binding_length = usize::get(&mut read)?;

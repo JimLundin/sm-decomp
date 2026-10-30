@@ -40,6 +40,8 @@ pub fn supplied_visuals(
         },
         colors,
         targets,
+        palette_fade: Default::default(),
+        screen_fade: Default::default(),
         palette_effects,
         animated_tiles,
     }

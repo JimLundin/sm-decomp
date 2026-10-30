@@ -485,6 +485,11 @@ macro_rules! scalar_words {
         for index in 0..256 {
             $f(0xc200+index*2,$($borrow)* presentation_ref!($s, visual, ($($borrow)*)).targets[index]);
         }
+        $f(0xc400,$($borrow)* presentation_ref!($s, visual, ($($borrow)*)).palette_fade.step);
+        $f(0xc402,$($borrow)* presentation_ref!($s, visual, ($($borrow)*)).palette_fade.duration);
+        $f(0xc404,$($borrow)* presentation_ref!($s, visual, ($($borrow)*)).palette_fade.cursor);
+        $f(0x723,$($borrow)* presentation_ref!($s, visual, ($($borrow)*)).screen_fade.delay);
+        $f(0x725,$($borrow)* presentation_ref!($s, visual, ($($borrow)*)).screen_fade.counter);
         for index in 0..8 {
             $f(0x1e7d+index*2,$($borrow)* presentation_ref!($s, visual, ($($borrow)*)).palette_effects.slots[index].definition);
             $f(0x1e8d+index*2,$($borrow)* presentation_ref!($s, visual, ($($borrow)*)).palette_effects.slots[index].color_offset);
