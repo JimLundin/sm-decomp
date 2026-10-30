@@ -15,6 +15,16 @@ use crate::constants::bank_81::{
     addr_kMenuTilemap_SamusData, addr_kMenuTilemap_TIME,
 };
 use crate::imported::Imported;
+
+/// Bank $82 equipment screen tilemap offsets for each category, and the
+/// blank icon tilemap.
+const WEAPON_OFFSETS: u32 = crate::constants::bank_82::addr_kEquipmentTilemapOffs_Weapons;
+const SUIT_OFFSETS: u32 = crate::constants::bank_82::addr_kEquipmentTilemapOffs_Suits;
+const BOOT_OFFSETS: u32 = crate::constants::bank_82::addr_kEquipmentTilemapOffs_Boots;
+const BLANK_ICON_TILEMAP: u16 =
+    crate::constants::bank_82::addr_kEquipmentScreenTilemap_Blank as u16;
+const _: () = assert!(WEAPON_OFFSETS == 0xc06c && SUIT_OFFSETS == 0xc076 && BOOT_OFFSETS == 0xc082);
+const _: () = assert!(BLANK_ICON_TILEMAP == 0xc01a);
 use crate::ram::{checked_word as at, word, words as fields};
 use sm_data::area_select_palettes::{
     ADDRESS as AREA_PALETTES, AreaSelectPalettes, BYTES as AREA_PALETTE_BYTES, INACTIVE_OFFSET,
@@ -401,7 +411,9 @@ pub fn reserve_arrow<H: Host + ?Sized>(mode: ReserveArrow, game: &mut H) {
         word!(game.palette_buffer[102] = RESERVE_ARROW_COLORS[index]);
         word!(game.palette_buffer[107] = RESERVE_ARROW_SHADOWS[index]);
     } else {
-        word! {game; palette_buffer[107] = 926; palette_buffer[102] = 342; }
+        // The idle arrow holds the cycle's first entries, in the opposite slots.
+        word! {game; palette_buffer[107] = RESERVE_ARROW_COLORS[0];
+        palette_buffer[102] = RESERVE_ARROW_SHADOWS[0]; }
     }
     reserve_arrow_tiles(lit, game);
 }
@@ -456,12 +468,12 @@ pub fn equipment_icons<H: Host + ?Sized>(game: &mut H) {
         }
     }
     for (offsets, count, masks, tiles) in [
-        (0xc06c, 6, 0x82c04c, 0x82c08c),
-        (0xc076, 6, 0x82c056, 0x82c096),
-        (0xc082, 3, 0x82c062, 0x82c0a2),
+        (WEAPON_OFFSETS, 6, 0x82c04c, 0x82c08c),
+        (SUIT_OFFSETS, 6, 0x82c056, 0x82c096),
+        (BOOT_OFFSETS, 3, 0x82c062, 0x82c0a2),
     ] {
         let destinations = native_record(0x820000 | offsets, game);
-        let weapons = offsets == 0xc06c;
+        let weapons = offsets == WEAPON_OFFSETS;
         let hyper = weapons && word!(game.hyper_beam_flag) != 0;
         let (collected, equipped, bytes) = if weapons {
             (fields::collected_beams, fields::equipped_beams, 10)
@@ -486,7 +498,7 @@ pub fn equipment_icons<H: Host + ?Sized>(game: &mut H) {
                     recolor_native(destination, bg_tile::palette(3), bytes / 2, game);
                 }
             } else {
-                copy_native_tiles(destination, 0xc01a, bytes, game);
+                copy_native_tiles(destination, BLANK_ICON_TILEMAP, bytes, game);
             }
         }
     }
