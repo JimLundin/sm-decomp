@@ -57,8 +57,14 @@ fn initialize<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
         game.queue_music_delayed8(0);
         game.queue_music_delayed8(0xff03);
         word! {game; menu_selection_missile_animation_timer = 1; menu_selection_missile_animation_frame = 0; }
-        crate::word_transfers!(game, ascending, 1024; native(0x3600) <- value(15));
-        menu_tilemap::upload(2048, 0x7e3600, 0, true, game);
+        crate::word_transfers!(game, ascending, 1024; native(menu_tilemap::MENU_TILEMAP) <- value(menu_tilemap::BLANK_TILE));
+        menu_tilemap::upload(
+            menu_tilemap::MENU_TILEMAP_BYTES,
+            menu_tilemap::MENU_TILEMAP_SOURCE,
+            0,
+            true,
+            game,
+        );
         menu_tilemap::set_palette(0, game);
         for (destination, text) in [
             (0x156, addr_kMenuTilemap_GameOver),

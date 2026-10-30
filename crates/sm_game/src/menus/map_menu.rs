@@ -101,7 +101,13 @@ fn fade_to_options<H: Host + ?Sized>(game: &mut H) {
 }
 fn prepare<H: Host + ?Sized>(game: &mut H) {
     menu_tilemap::clear(game);
-    menu_tilemap::upload(2048, 0x7e3600, 1, true, game);
+    menu_tilemap::upload(
+        menu_tilemap::MENU_TILEMAP_BYTES,
+        menu_tilemap::MENU_TILEMAP_SOURCE,
+        1,
+        true,
+        game,
+    );
     word! {game; palette_change_num = 0; }
     menu_tilemap::load_palette(game);
     crate::word_transfers!(game, ascending, 32; le(target_palettes, 0) <- le(palette_buffer, 0));
