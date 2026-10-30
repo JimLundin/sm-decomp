@@ -909,7 +909,7 @@ pub fn release_walljump<H: Host + ?Sized>(game: &mut H) {
 }
 
 pub fn release_swing<H: Host + ?Sized>(game: &mut H) {
-    game.queue_sound(0, (7) as u8, 15);
+    game.queue_sound(0, 7_u8, 15);
     if game.session().player.swing.angular_velocity & 0x8000 == 0 {
         word!(game.samus_new_pose_transitional = kPose_52_FaceL_Jump_NoAim_MoveF as u16);
     } else {

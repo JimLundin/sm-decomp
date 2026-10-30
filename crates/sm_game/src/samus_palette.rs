@@ -44,7 +44,7 @@ fn copy_colors<const N: usize>(
             PaletteBuffer::Target => &mut h.session_mut().presentation.visual_mut().targets,
         }
     }
-    for (i, pair) in bytes.chunks_exact(2).enumerate() {
+    for (i, pair) in bytes.as_chunks::<2>().0.iter().enumerate() {
         #[cfg(sm_verify_dll)]
         let observed_before = if h.palette_publications_observed() {
             colors(h, buffer)[first + i]

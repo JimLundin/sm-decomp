@@ -404,15 +404,15 @@ fn confirm_choice<const COPY: bool, H: Host + ?Sized>(game: &mut H) {
     word! {game; menu_selection_missile_y_pos = y; menu_selection_missile_x_pos = 94; }
 }
 fn animate_copy_arrow<H: Host + ?Sized>(game: &mut H) {
-    if word!(game.file_copy_arrow_palette_timer) != 0 {
-        if word!(game.file_copy_arrow_palette_timer -= 1, reread) == 0 {
-            word!(game.file_copy_arrow_palette_timer = 4);
-            // Rotate the arrow's six colours, 145..151, by one entry.
-            let first: u16 = word!(game.palette_buffer[145]);
-            crate::word_transfers!(game, ascending, 6;
+    if word!(game.file_copy_arrow_palette_timer) != 0
+        && word!(game.file_copy_arrow_palette_timer -= 1, reread) == 0
+    {
+        word!(game.file_copy_arrow_palette_timer = 4);
+        // Rotate the arrow's six colours, 145..151, by one entry.
+        let first: u16 = word!(game.palette_buffer[145]);
+        crate::word_transfers!(game, ascending, 6;
                 native(PALETTE_BUFFER + 2 * 145) <- native(PALETTE_BUFFER + 2 * 146));
-            word!(game.palette_buffer[151] = first);
-        }
+        word!(game.palette_buffer[151] = first);
     }
 }
 fn copy_slot<H: Host + ?Sized>(game: &mut H) {

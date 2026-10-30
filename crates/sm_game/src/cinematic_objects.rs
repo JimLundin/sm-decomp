@@ -296,12 +296,12 @@ pub fn execute_cinematic_sprite_instruction<H: crate::menus::host::Host + ?Sized
             word! { game, 32; cinematic_var14, cinematic_var17 }
             capture_cinematic_palette(game);
             prepare_cinematic_palette_fade(game);
-            game.queue_sound(0, (0x22) as u8, 15);
+            game.queue_sound(0, 0x22_u8, 15);
                 },
             9172561 => {
             word! {game; samus_y_subspeed = 0; samus_y_speed = -16i32 as u16; }
                 },
-            9152792 => { spawn_cinematic_burst(0xcecd, 0..6, 6, game); game.queue_sound(1, (0xb) as u8, 6); },
+            9152792 => { spawn_cinematic_burst(0xcecd, 0..6, 6, game); game.queue_sound(1, 0xb_u8, 6); },
             9159684 => { spawn_cinematic_burst(0xcebb, 0..5, 0, game); },
             9159948 => { spawn_cinematic_burst(0xcec7, 0..4, 0, game); },
             9157153 => { spawn_cinematic_burst(0xcf21, 0..2, 0, game); },

@@ -59,7 +59,7 @@ impl EnemySpeeds {
                 .try_into()
                 .map_err(|_| ImportError::Length(bytes.len()))?,
         );
-        for (index, entry) in bytes.chunks_exact(ENTRY).enumerate() {
+        for (index, entry) in bytes.as_chunks::<ENTRY>().0.iter().enumerate() {
             let w = |i: usize| u32::from(u16::from_le_bytes([entry[2 * i], entry[2 * i + 1]]));
             let (table, entry_index, speed, negated) = if index * ENTRY < QUADRATIC_START {
                 (
@@ -120,7 +120,7 @@ impl Speeds32 {
                 .try_into()
                 .map_err(|_| ImportError::Length(bytes.len()))?,
         );
-        for (entry, pair) in bytes.chunks_exact(ENTRY).enumerate() {
+        for (entry, pair) in bytes.as_chunks::<ENTRY>().0.iter().enumerate() {
             let word = |at: usize| {
                 u32::from_le_bytes([pair[at], pair[at + 1], pair[at + 2], pair[at + 3]])
             };

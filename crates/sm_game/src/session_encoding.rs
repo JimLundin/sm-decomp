@@ -780,7 +780,7 @@ pub fn visit(s: &Session, mut visit: impl FnMut(usize, u16)) {
     // These signals formerly published immediately, before a fallible export.
     let mut emit = |at, word: &u16| visit(at, *word);
     botwoon_death_words!(s, emit, (&));
-    for (index, pair) in s.minimap.explored.chunks_exact(2).enumerate() {
+    for (index, pair) in s.minimap.explored.as_chunks::<2>().0.iter().enumerate() {
         visit(0x7f7 + 2 * index, u16::from_le_bytes([pair[0], pair[1]]));
     }
     crate::actors::codec::visit_common(s, &mut visit);
@@ -820,7 +820,7 @@ pub fn visit(s: &Session, mut visit: impl FnMut(usize, u16)) {
         (0xd870, s.gameplay_flags.collected_locations.as_slice()),
         (0xd8b0, s.gameplay_flags.opened_doors.as_slice()),
     ] {
-        for (index, pair) in flags.chunks_exact(2).enumerate() {
+        for (index, pair) in flags.as_chunks::<2>().0.iter().enumerate() {
             visit(base + index * 2, u16::from_le_bytes([pair[0], pair[1]]));
         }
     }

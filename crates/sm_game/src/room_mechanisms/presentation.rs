@@ -116,9 +116,8 @@ pub fn draw(h: &mut impl Host, k: u16) {
         let mut skip = 0u16;
         let mut left = x;
         let mut trailing;
-        let first;
-        let second;
-        if vertical {
+
+        let (first, second) = if vertical {
             if !(h.inputs().camera_x as i32 >> 4 == x as i32
                 || (((h.inputs().camera_x as i32 >> 4) - x as i32) as i16) < 0)
             {
@@ -162,8 +161,7 @@ pub fn draw(h: &mut impl Host, k: u16) {
             ) else {
                 return;
             };
-            first = targets.first;
-            second = targets.second;
+            (targets.first, targets.second)
         } else {
             if (y as i32 - top as i32) & 0x8000 != 0 {
                 return;
@@ -202,9 +200,8 @@ pub fn draw(h: &mut impl Host, k: u16) {
             else {
                 return;
             };
-            first = targets.first;
-            second = targets.second;
-        }
+            (targets.first, targets.second)
+        };
         let mut cursor = skip
             .wrapping_mul(2)
             .wrapping_add(command_address)

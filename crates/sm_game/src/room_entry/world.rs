@@ -79,7 +79,7 @@ impl WorldBinding {
         }
         // Process-local revision evidence, not a cryptographic or portable file identifier.
         let mut revision = [0; 32];
-        for (lane, bytes) in revision.chunks_exact_mut(8).enumerate() {
+        for (lane, bytes) in revision.as_chunks_mut::<8>().0.iter_mut().enumerate() {
             let mut hasher = DefaultHasher::new();
             ("room-entry-world-v1", lane as u64, &world, &keys).hash(&mut hasher);
             bytes.copy_from_slice(&hasher.finish().to_le_bytes());
@@ -120,7 +120,14 @@ impl WorldBinding {
             return Err(WorldDefinitionError::TableCatalogMismatch);
         }
         let original = owned.revision;
-        for (lane, bytes) in owned.revision.0.chunks_exact_mut(8).enumerate() {
+        for (lane, bytes) in owned
+            .revision
+            .0
+            .as_chunks_mut::<8>()
+            .0
+            .iter_mut()
+            .enumerate()
+        {
             let mut hasher = DefaultHasher::new();
             (
                 "room-entry-tables-v1",

@@ -340,7 +340,7 @@ fn media_revision(
 ) -> MediaRevision {
     use std::hash::{DefaultHasher, Hash, Hasher};
     let mut revision = [0; 32];
-    for (lane, bytes) in revision.chunks_exact_mut(8).enumerate() {
+    for (lane, bytes) in revision.as_chunks_mut::<8>().0.iter_mut().enumerate() {
         let mut hash = DefaultHasher::new();
         ("actor-media-v1", lane as u64).hash(&mut hash);
         for (id, appearance) in &definitions.appearances {

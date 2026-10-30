@@ -262,7 +262,7 @@ impl Fingerprint {
     }
     fn finish(self) -> [u8; 32] {
         let mut result = [0; 32];
-        for (chunk, lane) in result.chunks_exact_mut(8).zip(self.0) {
+        for (chunk, lane) in result.as_chunks_mut::<8>().0.iter_mut().zip(self.0) {
             chunk.copy_from_slice(&lane.to_le_bytes());
         }
         result

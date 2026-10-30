@@ -248,7 +248,7 @@ where
 {
     let slot = 2 * index as u16;
     let Some(&(_, target)) = HDMA_PRE_ACTIONS.iter().find(|(at, _)| *at == address) else {
-        it.foreign(|game| crate::menus::host::MenuRuntime::rtl_unreachable(game));
+        it.foreign(crate::menus::host::MenuRuntime::rtl_unreachable);
         return;
     };
     use HdmaPreAction::*;
