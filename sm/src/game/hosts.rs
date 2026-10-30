@@ -1077,3 +1077,10 @@ impl sm_game::hud::HudPlayer for Game {
         sm_game::ram_word!(game.grapple_beam_function)
     }
 }
+
+impl sm_game::hud::HudFrameHost for Game {
+    fn raw_frame_counter_byte(&self) -> u8 {
+        self.ram()
+            .read_byte(sm_game::ram::bytes::nmi_frame_counter_byte)
+    }
+}
