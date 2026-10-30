@@ -364,11 +364,10 @@ pub fn falling<H: LeaseActors + ?Sized>(raw: u16, game: &mut H) {
     let runtime = &mut lease;
     let key = Key::from_legacy(raw);
     let crawler = i32::from(raw);
-    let velocity = (u32::from(session_slot!(runtime, Crawler[crawler].falling_y_velocity)) << 16)
-        | u32::from(session_slot!(
-            runtime,
-            Crawler[crawler].falling_y_subvelocity
-        ));
+    let velocity = session_slot!(
+        runtime,
+        Crawler[crawler](falling_y_velocity, falling_y_subvelocity)
+    );
     if api::move_vertical(runtime, key, velocity as i32) == MovementResult::Blocked {
         runtime.edit_actor(key, Native, |actor| {
             if actor.parameters[0] == KEEP_SPEED {

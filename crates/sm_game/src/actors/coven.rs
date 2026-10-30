@@ -242,8 +242,7 @@ fn fade_from_white(runtime: &mut impl ActorLease) {
 /// the timer runs out, then dematerialise.
 fn materialised(runtime: &mut impl ActorLease, key: Key) {
     let coven = i32::from(key.byte_index());
-    let speed = (u32::from(session_slot!(runtime, Coven[coven].hover_y_velocity)) << 16)
-        | u32::from(session_slot!(runtime, Coven[coven].hover_y_subvelocity));
+    let speed = session_slot!(runtime, Coven[coven](hover_y_velocity, hover_y_subvelocity));
     runtime.edit_actor(key, Native, |actor| actor.y.advance(speed as i32));
     let above = (runtime.resolve_actor(key, Native).y.whole as i16)
         .wrapping_sub(session_slot!(runtime, Coven[coven].hover_centre_y) as i16)

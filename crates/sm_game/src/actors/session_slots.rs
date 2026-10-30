@@ -127,6 +127,11 @@ macro_rules! session_slot {
             }
         }
     };
+    // A split-word pair's value: the high word then the low word below it.
+    ($h:ident, $layout:ident[$slot:expr] $(.$prefix:ident)* ($hi:ident, $lo:ident)) => {
+        (::core::primitive::u32::from($crate::session_slot!($h, $layout[$slot] $(.$prefix)* .$hi)) << 16)
+            | ::core::primitive::u32::from($crate::session_slot!($h, $layout[$slot] $(.$prefix)* .$lo))
+    };
     // Ordered word stores to several fields; the slot is re-evaluated per store.
     ($h:ident, $layout:ident[$slot:expr] $(.$prefix:ident)*; $($stores:tt)+) => {
         $crate::session_slot!(@stores $h, $layout[$slot] ($($prefix)*); $($stores)+)

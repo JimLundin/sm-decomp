@@ -138,8 +138,7 @@ fn velocity(runtime: &impl ActorLease, key: Key) -> u32 {
 /// Alcoon Y acceleration ($A8:DD55); the new Y velocity.
 fn accelerate(runtime: &mut impl ActorLease, key: Key) -> u16 {
     let alcoon = i32::from(key.byte_index());
-    let amount = (u32::from(session_slot!(runtime, Alcoon[alcoon].y_acceleration)) << 16)
-        | u32::from(session_slot!(runtime, Alcoon[alcoon].y_subacceleration));
+    let amount = session_slot!(runtime, Alcoon[alcoon](y_acceleration, y_subacceleration));
     add_pair(runtime, Y_VELOCITY + usize::from(key.byte_index()), amount)
 }
 fn drift(runtime: &mut impl ActorLease, key: Key) {
