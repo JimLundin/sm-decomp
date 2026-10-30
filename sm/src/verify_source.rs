@@ -486,6 +486,10 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/actors/ridley_tables.rs"),
     ),
     (
+        "sm/src/game/actors/runtime_host.rs",
+        include_bytes!("game/actors/runtime_host.rs"),
+    ),
+    (
         "sm/src/game/actors/phantoon_motion.rs",
         include_bytes!("game/actors/phantoon_motion.rs"),
     ),
@@ -2842,6 +2846,10 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "crates/sm_game/src/actors/mother_brain_effects.rs",
         include_bytes!("../../crates/sm_game/src/actors/mother_brain_effects.rs"),
+    ),
+    (
+        "crates/sm_game/src/actors/norfair_lava_man.rs",
+        include_bytes!("../../crates/sm_game/src/actors/norfair_lava_man.rs"),
     ),
     (
         "crates/sm_game/src/actors/phantoon_actions.rs",
