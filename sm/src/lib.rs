@@ -402,7 +402,6 @@ pub mod game {
     pub(crate) mod goofball;
     pub(crate) mod gunship;
     pub(crate) mod hosts;
-    pub(crate) mod mini_crocomire;
     pub use sm_game::progress as progress_flags;
     pub(crate) mod room_backgrounds;
     pub mod room_entry;

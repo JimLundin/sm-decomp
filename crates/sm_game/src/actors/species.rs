@@ -13,10 +13,11 @@ use crate::actors::{
     ceres_doors, ceres_ridley, choot, covern, crawlers, crocomire_reactions, dachora_run,
     draygon_death, draygon_eye, draygon_flight, draygon_grab, draygon_host, draygon_sweep,
     elevator, escape_critters, etecoon, evir, fire_arc, fireflea, flies, fune, gamet, geega,
-    geruta, kago, kihunter, kraid, magdollite, metroid, mini_kraid, mochtroid, morph_ball_eye,
-    multiviola, oum, phantoon, phantoon_actions, polyp, powamp, puyo, reflec, ridley, rinka, rio,
-    rippers, roach, shaktool, sidehopper, skree, skultera, space_pirates, squeept, statues, tatori,
-    torizo, tripper, work_robot, wrecked_ship_spark, yapping_maw, yard, zeb, zebetites, zoa,
+    geruta, kago, kihunter, kraid, magdollite, metroid, mini_crocomire, mini_kraid, mochtroid,
+    morph_ball_eye, multiviola, oum, phantoon, phantoon_actions, polyp, powamp, puyo, reflec,
+    ridley, rinka, rio, rippers, roach, shaktool, sidehopper, skree, skultera, space_pirates,
+    squeept, statues, tatori, torizo, tripper, work_robot, wrecked_ship_spark, yapping_maw, yard,
+    zeb, zebetites, zoa,
 };
 use crate::enemy_script::EnemyScript;
 use crate::ram::word;
@@ -679,6 +680,7 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
             pre_instruction(geruta::function(game), game);
         }
         10661995 => flies::initialize(game),
+        10652077 => mini_crocomire::initialize(game),
         _ => game.native_ai(ea),
     }
 }
@@ -863,6 +865,8 @@ pub fn pre_instruction<H: PreInstructionHost>(ea: u32, game: &mut H) {
         10662268 => flies::circle(k, true, game),
         10662314 => flies::dive(k, false, game),
         10662354 => flies::dive(k, true, game),
+        10652227 => mini_crocomire::patrol(false, game),
+        10652252 => mini_crocomire::patrol(true, game),
         _ => game.native_pre_instruction(ea, k),
     }
 }
@@ -1272,6 +1276,8 @@ pub fn instruction<H: InstructionHost>(
             squeept::set_animation_finished(game);
             j
         }
+        10652048 => mini_crocomire::set_moving(false, j, game),
+        10652061 => mini_crocomire::set_moving(true, j, game),
         _ => game.native_instruction(ea, k, j),
     }
 }
