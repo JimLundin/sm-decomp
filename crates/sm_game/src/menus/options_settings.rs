@@ -92,12 +92,12 @@ pub fn finish_start<H: Host + ?Sized>(game: &mut H) {
     } else if word!(game.loading_game_state) != 0 {
         word!(game.game_state = word!(game.loading_game_state));
         if word!(game.loading_game_state) == 34 {
-            word!(game.cinematic_function = 0xc11b);
+            crate::flow::set(game, crate::flow::Word::CinematicFunction, 0xc11b);
         }
         word! { game, 0; menu_option_index, game_options_screen_index }
     } else {
         word!(game.game_state = 30);
-        word!(game.cinematic_function = 0xa395);
+        crate::flow::set(game, crate::flow::Word::CinematicFunction, 0xa395);
         word! { game, 0; menu_option_index, screen_fade_delay, screen_fade_counter }
     }
 }

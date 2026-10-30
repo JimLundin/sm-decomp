@@ -89,10 +89,14 @@ pub fn start_title_pan<H: crate::menus::host::Host + ?Sized>(
         (function::ZOOM_OUT, 67, 0, 0),
     ][stage];
     game.ram().write_byte(crate::ram::mirror::TM, 17);
-    word! {game; cinematic_function = next; cinematic_var6 = zoom;
-    cinematic_var8 = x; cinematic_var7 = 0; cinematic_var10 = y; cinematic_var9 = 0;
-    g_word_7E199B = if stage < 2 { -2i16 as u16 } else { 0 };
-    g_word_7E1999 = if stage < 2 { 0x8000 } else { 0 }; }
+    crate::flow::set(game, crate::flow::Word::CinematicFunction, next);
+    word!(game.cinematic_var6 = zoom);
+    word!(game.cinematic_var8 = x);
+    word!(game.cinematic_var7 = 0);
+    word!(game.cinematic_var10 = y);
+    word!(game.cinematic_var9 = 0);
+    word!(game.g_word_7E199B = if stage < 2 { -2i16 as u16 } else { 0 });
+    word!(game.g_word_7E1999 = if stage < 2 { 0x8000 } else { 0 });
     if stage >= 2 {
         word! {game; g_word_7E199F = u16::from(stage == 2);
         g_word_7E199D = if stage == 2 { 0x8000 } else { 0 }; }
@@ -116,7 +120,7 @@ pub fn advance_title_pan<H: crate::menus::host::Host + ?Sized>(stage: usize, gam
     // The vertical pan ends on the opposite side of its cutoff.
     if negative != (stage == 2) {
         game.ram().write_byte(crate::ram::mirror::TM, 16);
-        word!(game.cinematic_function = function::IDLE);
+        crate::flow::set(game, crate::flow::Word::CinematicFunction, function::IDLE);
         let definition = [
             scrolling_text::NINTENDO,
             scrolling_text::PRESENTS,
@@ -130,7 +134,8 @@ pub fn advance_title_pan<H: crate::menus::host::Host + ?Sized>(stage: usize, gam
 
 pub fn request_title_skip<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     // Before the title screen: the original adds the function's negation plus one.
-    if word!(game.cinematic_function) as i32 + (function::TITLE_SCREEN.wrapping_neg() as i32 + 1)
+    if crate::flow::current(game).cinematic_function as i32
+        + (function::TITLE_SCREEN.wrapping_neg() as i32 + 1)
         & 0x8000
         != 0
         && word!(game.joypad1_newkeys) & CONFIRM_BUTTONS != 0
@@ -141,14 +146,27 @@ pub fn request_title_skip<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
 }
 
 pub fn advance_title_wait<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    let expired = word!(game.demo_timer -= 1, reread) & 0x8000 != 0;
-    if word!(game.demo_timer) == 0 || expired {
-        word!(game.cinematic_function = function::TO_DEMOS);
+    let expired = {
+        let flow_word = crate::flow::current(game).demo_timer.wrapping_sub(1);
+        crate::flow::set(game, crate::flow::Word::DemoTimer, flow_word);
+        flow_word
+    } & 0x8000
+        != 0;
+    if crate::flow::current(game).demo_timer == 0 || expired {
+        crate::flow::set(
+            game,
+            crate::flow::Word::CinematicFunction,
+            function::TO_DEMOS,
+        );
     } else {
         if word!(game.joypad1_newkeys) & CONFIRM_BUTTONS == 0 {
             return;
         }
-        word!(game.cinematic_function = function::TO_FILE_SELECT);
+        crate::flow::set(
+            game,
+            crate::flow::Word::CinematicFunction,
+            function::TO_FILE_SELECT,
+        );
     }
     word! { game, 2; screen_fade_delay, screen_fade_counter }
 }

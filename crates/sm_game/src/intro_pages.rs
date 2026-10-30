@@ -177,7 +177,7 @@ pub fn spawn_marker<H: crate::menus::host::Host + ?Sized>(
             return j;
         }
     }
-    word!(game.cinematic_function = next);
+    crate::flow::set(game, crate::flow::Word::CinematicFunction, next);
     j
 }
 
@@ -309,11 +309,13 @@ pub fn wait_for_scene<H: crate::menus::host::Host + ?Sized>(scene: Scene, game: 
     set_cinematic_blend(6, 17, 2, 0, game);
     game.spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0, 0x31, 0xec03));
     hide_caret(game);
-    word!(
-        game.cinematic_function = match palette {
+    crate::flow::set(
+        game,
+        crate::flow::Word::CinematicFunction,
+        match palette {
             Palette::Gameplay => 0xb250,
             Palette::Scientist => 0xb2d2,
-        }
+        },
     );
     crate::word_transfers!(game, ascending, 256; native(0x2200) <- rom(0x8ce3e9, 0));
     prepare_cinematic_palette_fade(game);
@@ -333,7 +335,11 @@ pub fn fade_to_scene<H: crate::menus::host::Host + ?Sized>(palette: Palette, gam
         game.ram().write_byte(0x6f, 0);
         crate::word_transfers!(game, ascending, 640; pause_map(128) <- value(47));
         clear_japanese_tiles(game);
-        word!(game.cinematic_function = (0x8ba391i32) as u16);
+        crate::flow::set(
+            game,
+            crate::flow::Word::CinematicFunction,
+            (0x8ba391i32) as u16,
+        );
         if matches!(palette, Palette::Gameplay) && (word!(game.cinematic_var15) & 0x8000) != 0 {
             game.spawn_palette_effect(addr_kPalfx_E1BC as u16);
         }
@@ -342,7 +348,7 @@ pub fn fade_to_scene<H: crate::menus::host::Host + ?Sized>(palette: Palette, gam
 
 pub fn wait_for_music<H: crate::menus::host::Host + ?Sized>(next: u16, game: &mut H) {
     if game.has_queued_music() & 1 == 0 {
-        word!(game.cinematic_function = next);
+        crate::flow::set(game, crate::flow::Word::CinematicFunction, next);
         if next == 0xa64c {
             word!(game.cinematic_var4 = 240);
         } else {
@@ -364,7 +370,7 @@ pub fn wait_for_fade<H: crate::menus::host::Host + ?Sized>(
     game: &mut H,
 ) {
     if advance_cinematic_fade(fade, game) {
-        word!(game.cinematic_function = next);
+        crate::flow::set(game, crate::flow::Word::CinematicFunction, next);
         if next == 0xa5f8 {
             word!(game.cinematic_var4 = 60);
             if word!(game.japanese_text_flag) != 0 {
@@ -375,7 +381,7 @@ pub fn wait_for_fade<H: crate::menus::host::Host + ?Sized>(
 }
 
 pub fn start_page<H: crate::menus::host::Host + ?Sized>(next: u16, j: u16, game: &mut H) -> u16 {
-    word!(game.cinematic_function = next);
+    crate::flow::set(game, crate::flow::Word::CinematicFunction, next);
     set_cinematic_tilemap_updates(false, game);
     clear_japanese_tiles(game);
     queue_cinematic_tilemap(CinematicTilemap::Japanese, game);
@@ -384,7 +390,7 @@ pub fn start_page<H: crate::menus::host::Host + ?Sized>(next: u16, j: u16, game:
 
 pub fn show_page<H: crate::menus::host::Host + ?Sized>(object: u16, next: u16, game: &mut H) {
     CinematicObjects::Background.spawn(object, 0x4c00, game);
-    word!(game.cinematic_function = next);
+    crate::flow::set(game, crate::flow::Word::CinematicFunction, next);
     setup_page_palettes(game);
 }
 
@@ -400,7 +406,11 @@ pub fn fade_to_page<H: crate::menus::host::Host + ?Sized>(palette: Palette, game
         if matches!(palette, Palette::Scientist) {
             crate::word_transfers!(game, ascending, 7; native(0xc1c0) <- rom(0x8ce3e9, 224));
         }
-        word!(game.cinematic_function = (0x8ba391i32) as u16);
+        crate::flow::set(
+            game,
+            crate::flow::Word::CinematicFunction,
+            (0x8ba391i32) as u16,
+        );
     }
 }
 
@@ -471,7 +481,7 @@ pub fn wait_after_japanese_text<H: crate::menus::host::Host + ?Sized>(
     game: &mut H,
 ) -> u16 {
     set_cinematic_tilemap_updates(true, game);
-    word!(game.cinematic_function = next);
+    crate::flow::set(game, crate::flow::Word::CinematicFunction, next);
     j
 }
 
@@ -479,7 +489,11 @@ pub fn show_final_page<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     set_cinematic_tilemap_updates(true, game);
     clear_english_text(game);
     CinematicObjects::Background.spawn(addr_kCinematicBgObjectDef_8BCF5D as u16, 0x4c00, game);
-    word!(game.cinematic_function = (0x8ba390i32) as u16);
+    crate::flow::set(
+        game,
+        crate::flow::Word::CinematicFunction,
+        (0x8ba390i32) as u16,
+    );
     reset_caret(game);
     game.queue_music_delayed8(0);
 }
@@ -488,7 +502,11 @@ pub fn wait_for_final_page<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     if page_input_ready(game) {
         word!(game.cinematic_var13 = 127);
         if word!(game.japanese_text_flag) != 0 {
-            word!(game.cinematic_function = (0x8bb207i32) as u16);
+            crate::flow::set(
+                game,
+                crate::flow::Word::CinematicFunction,
+                (0x8bb207i32) as u16,
+            );
             set_cinematic_tilemap_updates(false, game);
             clear_japanese_tiles(game);
             queue_cinematic_tilemap(CinematicTilemap::Japanese, game);
@@ -525,7 +543,11 @@ pub fn fade_out_to_ceres<H: crate::menus::host::Host + ?Sized>(restore_samus: bo
             reg_BG3VOFS, cinematic_var5,
         }
         crate::word_transfers!(game, descending, 329; native(0x1c1d) <- value(0));
-        word!(game.cinematic_function = if restore_samus { 0xbca0 } else { 0xc100 });
+        crate::flow::set(
+            game,
+            crate::flow::Word::CinematicFunction,
+            if restore_samus { 0xbca0 } else { 0xc100 },
+        );
         if restore_samus {
             crate::menus::controller_input::restore_cinematic_bindings(game);
             word! { game, 0; samus_max_missiles, samus_missiles }
@@ -535,7 +557,11 @@ pub fn fade_out_to_ceres<H: crate::menus::host::Host + ?Sized>(restore_samus: bo
 
 pub fn finish_pages<H: crate::menus::host::Host + ?Sized>(j: u16, game: &mut H) -> u16 {
     {
-        word!(game.cinematic_function = (0x8bb72fi32) as u16);
+        crate::flow::set(
+            game,
+            crate::flow::Word::CinematicFunction,
+            (0x8bb72fi32) as u16,
+        );
         word! { game, 1; screen_fade_delay, screen_fade_counter }
         j
     }

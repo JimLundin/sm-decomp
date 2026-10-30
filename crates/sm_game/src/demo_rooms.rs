@@ -53,9 +53,14 @@ fn scene<H: crate::menus::host::Host + ?Sized>(game: &H, address: u16) -> Option
 
 pub fn reset<H: crate::menus::host::Host + ?Sized>(game: &mut H) -> u8 {
     word! { game, 0; UNUSED_word_7E0DF8, UNUSED_word_7E0DFA, UNUSED_word_7E0DFC }
-    word! {game; cinematic_function = ((0x8b9b68i32) as u16); demo_set = 0; }
-    if word!(game.num_demo_sets) == 4 {
-        word!(game.demo_set = 3);
+    crate::flow::set(
+        game,
+        crate::flow::Word::CinematicFunction,
+        (0x8b9b68i32) as u16,
+    );
+    crate::flow::set(game, crate::flow::Word::DemoSet, 0);
+    if crate::flow::current(game).num_demo_sets == 4 {
+        crate::flow::set(game, crate::flow::Word::DemoSet, 3);
     }
     word!(game.game_state += 1);
     0
@@ -82,8 +87,14 @@ pub fn play<H: crate::menus::host::Host + ?Sized>(
                     word!(game.substate = 1);
                     break 'finish_demo;
                 }
-                word!(game.demo_timer -= 1);
-                if !(word!(game.demo_timer) == 0 || (word!(game.demo_timer) & 0x8000) != 0) {
+                crate::flow::set(
+                    game,
+                    crate::flow::Word::DemoTimer,
+                    crate::flow::current(game).demo_timer.wrapping_sub(1),
+                );
+                if !(crate::flow::current(game).demo_timer == 0
+                    || (crate::flow::current(game).demo_timer & 0x8000) != 0)
+                {
                     break 'done;
                 }
                 word! {game; substate = 0; my_counter = 90; }
@@ -110,19 +121,25 @@ pub fn play<H: crate::menus::host::Host + ?Sized>(
 }
 
 pub fn advance_set<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    let base = set_start(game, word!(game.demo_set));
-    let address = base.wrapping_add(word!(game.demo_scene).wrapping_mul(18));
+    let base = set_start(game, crate::flow::current(game).demo_set);
+    let address = base.wrapping_add(crate::flow::current(game).demo_scene.wrapping_mul(18));
     let ended = match entry(game, address) {
         Some(entry) => entry == DemoEntry::End,
         None => native_record(0x820000 | u32::from(address), game).word(0) == 0xffff,
     };
     if ended {
         word!(game.substate = 0);
-        let next = word!(game.demo_set).wrapping_add(1);
-        word! { game;
-            demo_set = if next >= word!(game.num_demo_sets) { 0 } else { next };
-            demo_scene = 0;
-        }
+        let next = crate::flow::current(game).demo_set.wrapping_add(1);
+        crate::flow::set(
+            game,
+            crate::flow::Word::DemoSet,
+            if next >= crate::flow::current(game).num_demo_sets {
+                0
+            } else {
+                next
+            },
+        );
+        crate::flow::set(game, crate::flow::Word::DemoScene, 0);
     } else {
         word!(game.substate = 0x8000);
     }
@@ -134,8 +151,8 @@ pub fn load<H: crate::menus::host::Host + crate::runtime_access::RuntimeAccess +
     use crate::session_access::SessionAccess;
     game.runtime().session_mut().set_exit_key(0);
     // Loading reads the scene before the set table; the resumed hook does the reverse.
-    let offset = 18 * i32::from(word!(game.demo_scene));
-    let base = set_start(game, word!(game.demo_set));
+    let offset = 18 * i32::from(crate::flow::current(game).demo_scene);
+    let base = set_start(game, crate::flow::current(game).demo_set);
     let address = (offset + i32::from(base)) as u16;
     let room = scene(game, address).unwrap_or_else(|| {
         let record = native_record(0x820000 | u32::from(address), game);
@@ -175,7 +192,7 @@ pub fn load<H: crate::menus::host::Host + crate::runtime_access::RuntimeAccess +
             .wrapping_add(128),
     );
     game.set_previous_player_x(game.player_x());
-    word!(game.demo_timer = room.timer);
+    crate::flow::set(game, crate::flow::Word::DemoTimer, room.timer);
     let room_key = game.runtime().session().room_key();
     let value = native_record(0x8f0000 | u32::from(room_key), game).byte(1);
     // The original stores only the area's low byte.
@@ -184,7 +201,11 @@ pub fn load<H: crate::menus::host::Host + crate::runtime_access::RuntimeAccess +
     *area = *area & 0xff00 | u16::from(value);
     drop(runtime);
     word! { game, 0; reg_BG1HOFS, reg_BG1VOFS }
-    word!(game.demo_scene += 1);
+    crate::flow::set(
+        game,
+        crate::flow::Word::DemoScene,
+        crate::flow::current(game).demo_scene.wrapping_add(1),
+    );
     crate::word_transfers!(game, ascending, 4;
         native(0xd830) <- value(u16::MAX),
         native(0xd870) <- value(u16::MAX),
@@ -209,8 +230,9 @@ pub fn load<H: crate::menus::host::Host + crate::runtime_access::RuntimeAccess +
 }
 
 pub fn finish_setup<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    let base = set_start(game, word!(game.demo_set));
-    let address = (i32::from(base) + 18 * (i32::from(word!(game.demo_scene)) - 1)) as u16;
+    let base = set_start(game, crate::flow::current(game).demo_set);
+    let address =
+        (i32::from(base) + 18 * (i32::from(crate::flow::current(game).demo_scene) - 1)) as u16;
     let hook = scene(game, address).map_or_else(
         || native_record(0x820000 | u32::from(address), game).word(16),
         |scene| scene.hook,

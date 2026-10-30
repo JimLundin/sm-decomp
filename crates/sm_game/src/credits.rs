@@ -76,8 +76,9 @@ pub fn advance_credit_roll<H: crate::menus::host::Host + ?Sized>(game: &mut H) -
                 word! { game, 0;
                     screen_fade_delay, screen_fade_counter, cinematic_var9, cinematic_var10,
                 }
-                word! {game; eproj_pre_instr[1] = 1; cinematic_function = 0xe0f4;
-                cinematic_var4 = 60; }
+                word!(game.eproj_pre_instr[1] = 1);
+                crate::flow::set(game, crate::flow::Word::CinematicFunction, 0xe0f4);
+                word!(game.cinematic_var4 = 60);
             }
             _ => return false,
         }

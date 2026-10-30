@@ -103,9 +103,13 @@ pub fn advance_ending_gunship_spin<H: crate::menus::host::Host + ?Sized>(
         return false;
     }
     if slow {
-        word! {game; cinematic_function = 0xddcd; cinematic_var14 = 0x8000; cinematic_var13 = 0; }
+        crate::flow::set(game, crate::flow::Word::CinematicFunction, 0xddcd);
+        word!(game.cinematic_var14 = 0x8000);
+        word!(game.cinematic_var13 = 0);
     } else {
-        word! {game; cinematic_var13 = 1; cinematic_var14 = 0; cinematic_function = 0xdd42; }
+        word!(game.cinematic_var13 = 1);
+        word!(game.cinematic_var14 = 0);
+        crate::flow::set(game, crate::flow::Word::CinematicFunction, 0xdd42);
     }
     true
 }
@@ -185,7 +189,8 @@ pub fn advance_postcredits_samus_reveal<H: crate::menus::host::Host + ?Sized>(
         game.ram().write_byte(crate::ram::mirror::M7SEL, 0x80);
         game.ram().write_byte(crate::ram::mirror::BG1SC, 0);
         game.ram().write_byte(crate::ram::mirror::BG12NBA, 0);
-        word! {game; cinematic_function = 0xdb9d; cinematic_var14 = 0; }
+        crate::flow::set(game, crate::flow::Word::CinematicFunction, 0xdb9d);
+        word!(game.cinematic_var14 = 0);
     }
     let under_three = word!(game.game_time_hours) as i32 - 3 & 0x8000 != 0;
     let under_ten = under_three || word!(game.game_time_hours) as i32 - 10 & 0x8000 != 0;
@@ -206,7 +211,7 @@ pub fn advance_postcredits_samus_reveal<H: crate::menus::host::Host + ?Sized>(
     }
     if initial {
         if !under_ten {
-            word!(game.cinematic_function = 0xe293);
+            crate::flow::set(game, crate::flow::Word::CinematicFunction, 0xe293);
             set_cinematic_blend(16, 0, 0, 0, game);
         } else {
             if !under_three {
@@ -215,7 +220,7 @@ pub fn advance_postcredits_samus_reveal<H: crate::menus::host::Host + ?Sized>(
             clear_cinematic_colors(0x1a0, 0x10, game);
             compose_cinematic_palette(game);
             set_cinematic_blend(2, 16, 2, 34, game);
-            word!(game.cinematic_function = 0xe265);
+            crate::flow::set(game, crate::flow::Word::CinematicFunction, 0xe265);
         }
     }
 }
@@ -232,7 +237,8 @@ pub fn advance_postcredits_samus_message<H: crate::menus::host::Host + ?Sized>(
         crate::word_transfers!(game, ascending, 64; pause_map(384) <- rom(0x8cdedb, 0));
         queue_cinematic_tilemap(CinematicTilemap::FullText, game);
         set_cinematic_blend(1, 0, 0, 0, game);
-        word! {game; cinematic_var13 = 180; cinematic_function = 0xe2dd; }
+        word!(game.cinematic_var13 = 180);
+        crate::flow::set(game, crate::flow::Word::CinematicFunction, 0xe2dd);
     }
 }
 
@@ -343,8 +349,10 @@ pub fn advance_postcredits_zoom<H: crate::menus::host::Host + ?Sized>(zooming: b
         word!(game.cinematic_var5 = u16::from((word!(game.cinematic_var5) as u8).wrapping_sub(8)));
         word!(game.cinematic_var6 -= 64);
         if word!(game.cinematic_var6) as i32 - 24 & 0x8000 != 0 {
-            word! {game; cinematic_var6 = 24; cinematic_function = 0xe48a;
-            cinematic_var4 = 180; cinematic_var14 = 0; }
+            word!(game.cinematic_var6 = 24);
+            crate::flow::set(game, crate::flow::Word::CinematicFunction, 0xe48a);
+            word!(game.cinematic_var4 = 180);
+            word!(game.cinematic_var14 = 0);
         }
         return;
     }
@@ -358,7 +366,8 @@ pub fn advance_postcredits_zoom<H: crate::menus::host::Host + ?Sized>(zooming: b
         game.ram().write_byte(crate::ram::mirror::BG12NBA, 84);
         crate::word_transfers!(game, ascending, 16; le(palette_buffer, 192) <- rom(0x8ce7e9, 192));
         word! { game, 0; cinematic_var8, cinematic_var10 }
-        word! {game; cinematic_function = 0xe504; cinematic_var4 = 32; }
+        crate::flow::set(game, crate::flow::Word::CinematicFunction, 0xe504);
+        word!(game.cinematic_var4 = 32);
         enable_cinematic_background(game);
         set_cinematic_tilemap_updates(true, game);
         word!(game.cinematicbg_var3 = 19456);

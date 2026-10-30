@@ -237,7 +237,7 @@ pub fn advance_title_gradient<H: crate::menus::host::Host + ?Sized>(backdrop: bo
     if backdrop {
         refresh_title_gradient(game);
     }
-    if checked_word!(game.cinematic_function) == 0x9b68 {
+    if crate::flow::current(game).cinematic_function == 0x9b68 {
         game.hdma_effect(HdmaEffect::AdvanceProgram, 0);
     }
 }

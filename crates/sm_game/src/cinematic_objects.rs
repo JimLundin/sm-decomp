@@ -201,129 +201,132 @@ pub fn execute_cinematic_sprite_instruction<H: crate::menus::host::Host + ?Sized
     };
     use CinematicObjects::Sprites as CinematicSprites;
     crate::game_callback_dispatch!(@body [checked] {
-    match address {
-        9150157 => {
-        let v0: u16 = 0x9ecd;
-        CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BA113 as u16, v0, game);
-        },
-        9150192 => {
-        word!(game.cinematicbg_arr9[(k >> 1)] = 0);
-        CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BA113 as u16, 0, game);
-        },
-        9150233 => {
-        word! {game; demo_timer = 900; cinematic_function = ((0x8b9f29i32) as u16); }
-        },
-        9158818 => {
-        word!(game.cinematic_function = (0x8bc0c5i32) as u16);
-        word! { game, 1; screen_fade_delay, screen_fade_counter }
-        },
-        9172253 => {
-        spawn_cinematic_sprite_at(addr_kCinematicSpriteObjectDef_8BEF3F as u16, 0, 0, game);
-        },
-        9172308 => {
-        if word!(game.game_time_hours) as i32 - 10i32 & 0x8000 != 0 {
-            spawn_cinematic_sprite_at(addr_kCinematicSpriteObjectDef_8BEF7B as u16, 2, 0, game);
-        } else {
-            spawn_cinematic_sprite_at(addr_kCinematicSpriteObjectDef_8BEF75 as u16, 2, 0, game);
+        match address {
+            9150157 => {
+            let v0: u16 = 0x9ecd;
+            CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BA113 as u16, v0, game);
+            },
+            9150192 => {
+            word!(game.cinematicbg_arr9[(k >> 1)] = 0);
+            CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BA113 as u16, 0, game);
+            },
+            9150233 => {
+            crate::flow::set(game, crate::flow::Word::DemoTimer, 900);
+    crate::flow::set(game, crate::flow::Word::CinematicFunction, (0x8b9f29i32) as u16);
+            },
+            9158818 => {
+            crate::flow::set(game, crate::flow::Word::CinematicFunction, (0x8bc0c5i32) as u16);
+            word! { game, 1; screen_fade_delay, screen_fade_counter }
+            },
+            9172253 => {
+            spawn_cinematic_sprite_at(addr_kCinematicSpriteObjectDef_8BEF3F as u16, 0, 0, game);
+            },
+            9172308 => {
+            if word!(game.game_time_hours) as i32 - 10i32 & 0x8000 != 0 {
+                spawn_cinematic_sprite_at(addr_kCinematicSpriteObjectDef_8BEF7B as u16, 2, 0, game);
+            } else {
+                spawn_cinematic_sprite_at(addr_kCinematicSpriteObjectDef_8BEF75 as u16, 2, 0, game);
+            }
+            spawn_cinematic_sprite_at(addr_kCinematicSpriteObjectDef_8BEF6F as u16, 0, 0, game);
+            },
+            9158806 => {
+            if word!(game.japanese_text_flag) == 0 {
+                j = (j).wrapping_add(6);
+            }
+            },
+            9161125 => { game.spawn_palette_effect(addr_kPalfx_E1B0 as u16);         },
+            9161135 => {
+            if word!(game.japanese_text_flag) != 0 {
+                CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BCEB5 as u16,
+                    word!(game.japanese_text_flag),
+                    game,
+                );
+            }
+                },
+            9161149 => { game.spawn_palette_effect(addr_loc_8BE1B4 as u16);         },
+            9171550 => {
+            set_cinematic_blend(3, 16, 2, 34, game);
+            game.ram().write_byte(0x5d, 100);
+            game.ram().write_byte(0x59, 84);
+            word!(game.cinematic_var4 = 0);
+    crate::flow::set(game, crate::flow::Word::CinematicFunction, (0x8be58ai32) as u16);
+                },
+            9171588 => {
+            game.spawn_palette_effect(addr_kPalfx_E1C4 as u16);
+            word!(game.palette_buffer[254] = 1);
+                },
+            9171605 => {
+            CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BEEB5 as u16, 0xf295, game);
+            word!(game.palette_buffer[0] = 0x7fff);
+                },
+            9171639 => {
+            set_cinematic_blend(17, 2, 2, 17, game);
+            game.ram().write_byte(0x59, 124);
+            spawn_cinematic_sprite_at(addr_kCinematicSpriteObjectDef_8BEEBB as u16, 0, 0xf27c, game);
+            spawn_cinematic_sprite_at(addr_kCinematicSpriteObjectDef_8BEEF7 as u16, 2, 2, game);
+            game.spawn_palette_effect(addr_kPalfx_E1C8 as u16);
+            game.spawn_palette_effect(addr_kPalfx_E1D0 as u16);
+            game.spawn_palette_effect(addr_kPalfx_E1E8 as u16);
+                },
+            9171706 => {
+            set_cinematic_blend(3, 18, 2, 51, game);
+            game.ram().write_byte(0x58, 116);
+            game.ram().write_byte(0x59, 120);
+            game.spawn_palette_effect(addr_kPalfx_E1CC as u16);
+            spawn_cinematic_sprite_at(addr_kCinematicSpriteObjectDef_8BEEC1 as u16, 6, 6, game);
+                },
+            9171755 => {
+            game.ram().write_byte(0x69, 0);
+            game.ram().write_byte(0x6b, 0);
+            word! { game, 0x7fff; palette_buffer[0], palette_buffer[128] }
+            crate::word_transfers!(game, descending, 16; le(palette_buffer, 31) <- value(0x7fff));
+            crate::flow::set(game, crate::flow::Word::CinematicFunction, (0x8bdb9ei32) as u16);
+    word!(game.cinematic_var4 = 120);
+                },
+            9172040 => {
+            word! { game, 0; screen_fade_delay, screen_fade_counter }
+            crate::flow::set(game, crate::flow::Word::CinematicFunction, (0x8bde64i32) as u16);
+                },
+            9172484 => {
+            word!(game.cinematicbg_arr9[(k >> 1)] = 3584);
+            crate::flow::set(game, crate::flow::Word::CinematicFunction, (0x8be3aei32) as u16);
+            set_cinematic_blend(17, 16, 2, -127i32 as u8, game);
+            word! {game; cinematic_var8 = -4i32 as u16; cinematic_var10 = -8i32 as u16;
+                cinematic_var4 = 16; }
+            word! { game, 32; cinematic_var14, cinematic_var17 }
+            capture_cinematic_palette(game);
+            prepare_cinematic_palette_fade(game);
+            game.queue_sound(0, (0x22) as u8, 15);
+                },
+            9172561 => {
+            word! {game; samus_y_subspeed = 0; samus_y_speed = -16i32 as u16; }
+                },
+            9152792 => { spawn_cinematic_burst(0xcecd, 0..6, 6, game); game.queue_sound(1, (0xb) as u8, 6); },
+            9159684 => { spawn_cinematic_burst(0xcebb, 0..5, 0, game); },
+            9159948 => { spawn_cinematic_burst(0xcec7, 0..4, 0, game); },
+            9157153 => { spawn_cinematic_burst(0xcf21, 0..2, 0, game); },
+            9157174 => { spawn_cinematic_burst(0xcf21, 2..4, 0, game); },
+            9171888 => { CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BEECD as u16, 0xf3b0, game); },
+            9171918 => { CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BEEFD as u16, 0xf3ce, game); prepare_ending_time(game); },
+            9171995 | 9172004 | 9172013 | 9172022 | 9172031 => {
+                let digit = ((address - 9171995) / 9) as u16;
+                CinematicSprites.spawn(0xef03 + 6 * digit, 0xf41b + 9 * digit, game);
+            },
+            9161159 => { crate::intro_objects::advance_zebes_flight(0, game); },
+            9172375 => j = crate::ending_screens::position_ending_samus_head(k, false, j, game),
+            9172410 => j = crate::ending_screens::position_ending_samus_head(k, true, j, game),
+            9149665 => j = crate::title_screen::start_title_pan(0, j, game),
+            9149789 => j = crate::title_screen::start_title_pan(1, j, game),
+            9149910 => j = crate::title_screen::start_title_pan(2, j, game),
+            9156805 => j = start_intro_rinka(k, j, game),
+            9155382 => j = crate::intro_pages::start_page(0xb35f, j, game),
+            9155390 => j = crate::intro_pages::start_page(0xb370, j, game),
+            9155398 => j = crate::intro_pages::start_page(0xb381, j, game),
+            9155406 => j = crate::intro_pages::start_page(0xb392, j, game),
+            _ => return None,
         }
-        spawn_cinematic_sprite_at(addr_kCinematicSpriteObjectDef_8BEF6F as u16, 0, 0, game);
-        },
-        9158806 => {
-        if word!(game.japanese_text_flag) == 0 {
-            j = (j).wrapping_add(6);
-        }
-        },
-        9161125 => { game.spawn_palette_effect(addr_kPalfx_E1B0 as u16);         },
-        9161135 => {
-        if word!(game.japanese_text_flag) != 0 {
-            CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BCEB5 as u16,
-                word!(game.japanese_text_flag),
-                game,
-            );
-        }
-            },
-        9161149 => { game.spawn_palette_effect(addr_loc_8BE1B4 as u16);         },
-        9171550 => {
-        set_cinematic_blend(3, 16, 2, 34, game);
-        game.ram().write_byte(0x5d, 100);
-        game.ram().write_byte(0x59, 84);
-        word! {game; cinematic_var4 = 0; cinematic_function = ((0x8be58ai32) as u16); }
-            },
-        9171588 => {
-        game.spawn_palette_effect(addr_kPalfx_E1C4 as u16);
-        word!(game.palette_buffer[254] = 1);
-            },
-        9171605 => {
-        CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BEEB5 as u16, 0xf295, game);
-        word!(game.palette_buffer[0] = 0x7fff);
-            },
-        9171639 => {
-        set_cinematic_blend(17, 2, 2, 17, game);
-        game.ram().write_byte(0x59, 124);
-        spawn_cinematic_sprite_at(addr_kCinematicSpriteObjectDef_8BEEBB as u16, 0, 0xf27c, game);
-        spawn_cinematic_sprite_at(addr_kCinematicSpriteObjectDef_8BEEF7 as u16, 2, 2, game);
-        game.spawn_palette_effect(addr_kPalfx_E1C8 as u16);
-        game.spawn_palette_effect(addr_kPalfx_E1D0 as u16);
-        game.spawn_palette_effect(addr_kPalfx_E1E8 as u16);
-            },
-        9171706 => {
-        set_cinematic_blend(3, 18, 2, 51, game);
-        game.ram().write_byte(0x58, 116);
-        game.ram().write_byte(0x59, 120);
-        game.spawn_palette_effect(addr_kPalfx_E1CC as u16);
-        spawn_cinematic_sprite_at(addr_kCinematicSpriteObjectDef_8BEEC1 as u16, 6, 6, game);
-            },
-        9171755 => {
-        game.ram().write_byte(0x69, 0);
-        game.ram().write_byte(0x6b, 0);
-        word! { game, 0x7fff; palette_buffer[0], palette_buffer[128] }
-        crate::word_transfers!(game, descending, 16; le(palette_buffer, 31) <- value(0x7fff));
-        word! {game; cinematic_function = ((0x8bdb9ei32) as u16); cinematic_var4 = 120; }
-            },
-        9172040 => {
-        word! { game, 0; screen_fade_delay, screen_fade_counter }
-        word!(game.cinematic_function = (0x8bde64i32) as u16);
-            },
-        9172484 => {
-        word!(game.cinematicbg_arr9[(k >> 1)] = 3584);
-        word!(game.cinematic_function = (0x8be3aei32) as u16);
-        set_cinematic_blend(17, 16, 2, -127i32 as u8, game);
-        word! {game; cinematic_var8 = -4i32 as u16; cinematic_var10 = -8i32 as u16;
-            cinematic_var4 = 16; }
-        word! { game, 32; cinematic_var14, cinematic_var17 }
-        capture_cinematic_palette(game);
-        prepare_cinematic_palette_fade(game);
-        game.queue_sound(0, (0x22) as u8, 15);
-            },
-        9172561 => {
-        word! {game; samus_y_subspeed = 0; samus_y_speed = -16i32 as u16; }
-            },
-        9152792 => { spawn_cinematic_burst(0xcecd, 0..6, 6, game); game.queue_sound(1, (0xb) as u8, 6); },
-        9159684 => { spawn_cinematic_burst(0xcebb, 0..5, 0, game); },
-        9159948 => { spawn_cinematic_burst(0xcec7, 0..4, 0, game); },
-        9157153 => { spawn_cinematic_burst(0xcf21, 0..2, 0, game); },
-        9157174 => { spawn_cinematic_burst(0xcf21, 2..4, 0, game); },
-        9171888 => { CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BEECD as u16, 0xf3b0, game); },
-        9171918 => { CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BEEFD as u16, 0xf3ce, game); prepare_ending_time(game); },
-        9171995 | 9172004 | 9172013 | 9172022 | 9172031 => {
-            let digit = ((address - 9171995) / 9) as u16;
-            CinematicSprites.spawn(0xef03 + 6 * digit, 0xf41b + 9 * digit, game);
-        },
-        9161159 => { crate::intro_objects::advance_zebes_flight(0, game); },
-        9172375 => j = crate::ending_screens::position_ending_samus_head(k, false, j, game),
-        9172410 => j = crate::ending_screens::position_ending_samus_head(k, true, j, game),
-        9149665 => j = crate::title_screen::start_title_pan(0, j, game),
-        9149789 => j = crate::title_screen::start_title_pan(1, j, game),
-        9149910 => j = crate::title_screen::start_title_pan(2, j, game),
-        9156805 => j = start_intro_rinka(k, j, game),
-        9155382 => j = crate::intro_pages::start_page(0xb35f, j, game),
-        9155390 => j = crate::intro_pages::start_page(0xb370, j, game),
-        9155398 => j = crate::intro_pages::start_page(0xb381, j, game),
-        9155406 => j = crate::intro_pages::start_page(0xb392, j, game),
-        _ => return None,
-    }
-    Some(j)
-    })
+        Some(j)
+        })
 }
 
 pub fn spawn_cinematic_sprite_at<H: crate::menus::host::Host + ?Sized>(
@@ -654,7 +657,8 @@ pub fn advance_cinematic_background_pre<H: crate::menus::host::Host + ?Sized>(
     match command {
         0x8b93d9 => {}
         0x8bb4bc => {
-            if word!(game.cinematic_function) == 0xb207 || word!(game.cinematic_function) == 0xa390
+            if crate::flow::current(game).cinematic_function == 0xb207
+                || crate::flow::current(game).cinematic_function == 0xa390
             {
                 word!(game.cinematicbg_instr_ptr[(object >> 1)] = 0xd613);
                 word!(game.cinematicbg_instr_timer[(object >> 1)] = 1);
@@ -763,7 +767,7 @@ fn cinematic_background_command<H: crate::menus::host::Host + ?Sized>(
             }
             9168768 => {
                 crate::word_transfers!(game, descending, 64; native(0x363e) <- value(127));
-                word!(game.cinematic_function = 0xe797);
+                crate::flow::set(game, crate::flow::Word::CinematicFunction, 0xe797);
             }
             9154115 | 9154169 | 9154676 | 9154739 | 9154971 | 9155112 => {
                 let definition = match command {
@@ -818,7 +822,11 @@ pub fn draw_cinematic_sprites<H: crate::menus::host::Host + ?Sized>(ending: bool
         }
     }
     if ending
-        && word!(game.cinematic_function).wrapping_sub(0xda02) & 0x8000 != 0
+        && crate::flow::current(game)
+            .cinematic_function
+            .wrapping_sub(0xda02)
+            & 0x8000
+            != 0
         && word!(game.oam_next_ptr) < 0x200
     {
         let first = usize::from(word!(game.oam_next_ptr) >> 2);
