@@ -18,6 +18,7 @@ pub mod decompression;
 pub mod demo_rooms;
 pub mod dialogue;
 pub mod dialogue_ram;
+pub mod dispatch;
 pub mod drop_rules;
 pub mod effects;
 pub mod enemy_population;

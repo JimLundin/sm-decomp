@@ -114,21 +114,25 @@ fn WriteMessageBoxTilemapRow(mut word: u16, tiles: &[u16], game: &mut Game) {
         word = word.wrapping_add(1);
     }
 }
-crate::game::callback_dispatch! {
-    unsafe fn CallMsgBoxDraw(ea: u32, game: &mut Game) => ea;
-    call (game); default { Unreachable(game); };
-    @body checked;
-    @functions [fn (game: &mut Game)];
-    [8749658] WriteLargeMessageBoxTilemap [] {
-        WriteMessageBoxTilemapRow(0, composition::border(composition::BoxSize::Large), game);
-        let end = WriteMessageTilemap(game);
-        WriteMessageBoxTilemapRow(end, composition::border(composition::BoxSize::Large), game);
-    };
-    [8749705] WriteSmallMessageBoxTilemap [] {
-        WriteMessageBoxTilemapRow(0, composition::border(composition::BoxSize::Small), game);
-        let end = WriteMessageTilemap(game);
-        WriteMessageBoxTilemapRow(end, composition::border(composition::BoxSize::Small), game);
-    };
+fn WriteLargeMessageBoxTilemap(game: &mut Game) {
+    WriteMessageBoxTilemapRow(0, composition::border(composition::BoxSize::Large), game);
+    let end = WriteMessageTilemap(game);
+    WriteMessageBoxTilemapRow(end, composition::border(composition::BoxSize::Large), game);
+}
+fn WriteSmallMessageBoxTilemap(game: &mut Game) {
+    WriteMessageBoxTilemapRow(0, composition::border(composition::BoxSize::Small), game);
+    let end = WriteMessageTilemap(game);
+    WriteMessageBoxTilemapRow(end, composition::border(composition::BoxSize::Small), game);
+}
+/// The original's draw table, keyed by routine address.
+unsafe fn CallMsgBoxDraw(ea: u32, game: &mut Game) {
+    match ea {
+        8749658 => WriteLargeMessageBoxTilemap(game),
+        8749705 => WriteSmallMessageBoxTilemap(game),
+        _ => {
+            Unreachable(game);
+        }
+    }
 }
 fn MsgBoxMakeHdmaTable(game: &mut Game) {
     let radius = u16::from_le_bytes([game.ram().read_byte(0x5a2), game.ram().read_byte(0x5a3)]);
@@ -185,21 +189,41 @@ unsafe fn DrawSpecialButtonAndSetupPpuForLargeMessageBox(a: u16, game: &mut Game
         SetupPpuForActiveMessageBox(composition::map_offset(composition::BoxSize::Large), game);
     }
 }
-crate::game::callback_dispatch! {
-    unsafe fn CallMsgBoxModify(ea: u32, game: &mut Game) => ea;
-    call (game); default { Unreachable(game); };
-    @functions [unsafe fn (game: &mut Game)];
-    [8750021] DrawShootButtonAndSetupPpuForLargeMessageBox [] {
+unsafe fn DrawShootButtonAndSetupPpuForLargeMessageBox(game: &mut Game) {
+    unsafe {
         let button = u16::from_le_bytes([game.ram().read_byte(0x9b2), game.ram().read_byte(0x9b3)]);
         DrawSpecialButtonAndSetupPpuForLargeMessageBox(button, game);
-    };
-    [8750028] DrawRunButtonAndSetupPpuForLargeMessageBox [] {
+    }
+}
+unsafe fn DrawRunButtonAndSetupPpuForLargeMessageBox(game: &mut Game) {
+    unsafe {
         let button = u16::from_le_bytes([game.ram().read_byte(0x9b6), game.ram().read_byte(0x9b7)]);
         DrawSpecialButtonAndSetupPpuForLargeMessageBox(button, game);
+    }
+}
+unsafe fn SetupPpuForSmallMessageBox(game: &mut Game) {
+    unsafe {
+        SetupPpuForActiveMessageBox(composition::map_offset(composition::BoxSize::Small), game)
     };
-    @forward [unsafe fn (game: &mut Game)];
-    [8750134] SetupPpuForSmallMessageBox => SetupPpuForActiveMessageBox(composition::map_offset(composition::BoxSize::Small), game);
-    [8750145] SetupPpuForLargeMessageBox => SetupPpuForActiveMessageBox(composition::map_offset(composition::BoxSize::Large), game);
+}
+unsafe fn SetupPpuForLargeMessageBox(game: &mut Game) {
+    unsafe {
+        SetupPpuForActiveMessageBox(composition::map_offset(composition::BoxSize::Large), game)
+    };
+}
+/// The original's modify table, keyed by routine address.
+unsafe fn CallMsgBoxModify(ea: u32, game: &mut Game) {
+    unsafe {
+        match ea {
+            8750021 => DrawShootButtonAndSetupPpuForLargeMessageBox(game),
+            8750028 => DrawRunButtonAndSetupPpuForLargeMessageBox(game),
+            8750134 => SetupPpuForSmallMessageBox(game),
+            8750145 => SetupPpuForLargeMessageBox(game),
+            _ => {
+                Unreachable(game);
+            }
+        }
+    }
 }
 unsafe fn InitializeMessageBox(game: &mut Game) {
     unsafe {
