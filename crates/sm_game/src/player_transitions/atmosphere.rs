@@ -272,3 +272,64 @@ impl<H: crate::visual_host::Host> crate::scene::atmosphere::AdvanceHost for Nati
         self.0.probe(name);
     }
 }
+
+/// A session lease's view of the atmospheric tiles: slots from the Session,
+/// the OAM cursor, camera and entries through the lease's RAM projection.
+pub struct SessionTiles<'a, H>(pub &'a mut H);
+impl<H> crate::scene::atmosphere::Host for SessionTiles<'_, H>
+where
+    H: crate::runtime_access::SessionRam
+        + crate::session_access::SessionAccess
+        + crate::visual_host::Content<Record = sm_data::cartridge::RomRecord>,
+{
+    type Error = std::convert::Infallible;
+    fn frame_and_kind(&mut self, slot: usize) -> Result<u16, Self::Error> {
+        Ok(self.0.atmospheric().slots[slot].frame_and_kind)
+    }
+    fn cursor(&mut self) -> Result<u16, Self::Error> {
+        Ok(self.0.word(0x590))
+    }
+    fn x(&mut self, slot: usize) -> Result<u16, Self::Error> {
+        Ok(self.0.atmospheric().slots[slot].x)
+    }
+    fn camera_x(&mut self) -> Result<u16, Self::Error> {
+        Ok(self.0.word(0x911))
+    }
+    fn y(&mut self, slot: usize) -> Result<u16, Self::Error> {
+        Ok(self.0.atmospheric().slots[slot].y)
+    }
+    fn camera_y(&mut self) -> Result<u16, Self::Error> {
+        Ok(self.0.word(0x915))
+    }
+    fn write_x(&mut self, entry: usize, value: u8) -> Result<(), Self::Error> {
+        self.0.set_byte(0x370 + entry, value);
+        Ok(())
+    }
+    fn write_y(&mut self, entry: usize, value: u8) -> Result<(), Self::Error> {
+        self.0.set_byte(0x371 + entry, value);
+        Ok(())
+    }
+    fn tile_pointer(&mut self, kind: u16) -> Result<u16, Self::Error> {
+        use crate::visual_host::{Record, Source};
+        Ok(self
+            .0
+            .table(Source::Loaded, 0x908bff)
+            .native_word(2 * usize::from(kind)))
+    }
+    fn read_tile(&mut self, address: u16) -> Result<u16, Self::Error> {
+        use crate::visual_host::Record;
+        Ok(self.0.legacy_native_record(0x90, address).native_word(0))
+    }
+    fn write_tile(&mut self, entry: usize, value: u16) -> Result<(), Self::Error> {
+        self.0.write_slice_native(0x372 + entry, value);
+        Ok(())
+    }
+    fn publish_cursor(&mut self, value: u16) -> Result<(), Self::Error> {
+        self.0.write_word_le(value, 0x590);
+        Ok(())
+    }
+    fn written(&mut self) -> Result<(), Self::Error> {
+        self.0.probe("atmosphere.tile.written");
+        Ok(())
+    }
+}

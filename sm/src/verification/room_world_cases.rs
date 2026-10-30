@@ -329,7 +329,9 @@ unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
             // The direct native Host accepts usize entries; a u16 draw cursor cannot reach this tail.
             g.ram().write_byte(0x1ffff, 0xcc);
             let result = catch_unwind(AssertUnwindSafe(|| {
-                Host::write_tile(&mut Runtime::new(g), 0x1fc8d, 0xa55a).unwrap();
+                let mut runtime = Runtime::new(g);
+                let mut tiles = sm_game::player_transitions::atmosphere::SessionTiles(&mut runtime);
+                Host::write_tile(&mut tiles, 0x1fc8d, 0xa55a).unwrap();
             }));
             assert!(result.is_err(), "atmosphere.native-word-preflight");
             assert_eq!(

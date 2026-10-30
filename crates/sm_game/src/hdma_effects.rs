@@ -2,30 +2,14 @@
 #![forbid(unsafe_code)]
 use crate::actors::access::{AccessMode::LittleEndian as Le, ActorAccess, ActorKey as Key};
 use crate::player_projectiles::access::Store;
+use crate::runtime_access::SessionRam;
 use crate::session_access::SessionAccess;
 use crate::visual_host::{Content, Record, Source};
 use crate::visual_state::{EyeBeamPhase, HazePhase, HdmaWave, Weather};
 
-/// The session view these effects read and write. Its bytes are the live
-/// projection of RAM and the owned Session, as the compatibility Runtime keeps it.
-pub trait Host: SessionAccess + ActorAccess + Content {
-    fn byte(&self, at: usize) -> u8;
-    fn set_byte(&mut self, at: usize, value: u8);
-    /// Store `bytes` in order through the projection.
-    fn write_slice(&mut self, at: usize, bytes: &[u8]);
-    fn store(&mut self, at: usize, value: u16, store: Store);
-    fn word(&self, at: usize) -> u16 {
-        u16::from_le_bytes([self.byte(at), self.byte(at + 1)])
-    }
-    fn native_word(&self, at: usize) -> u16 {
-        u16::from_ne_bytes([self.byte(at), self.byte(at + 1)])
-    }
-    fn write_slice_le(&mut self, at: usize, value: u16) {
-        self.write_slice(at, &value.to_le_bytes());
-    }
-    fn write_slice_native(&mut self, at: usize, value: u16) {
-        self.write_slice(at, &value.to_ne_bytes());
-    }
+/// The session view these effects read and write: the lease's live RAM and
+/// Session projection, plus the eye beam's window table outside it.
+pub trait Host: SessionRam + SessionAccess + ActorAccess + Content {
     /// Build the eye beam's window table outside the session view.
     fn calculate_xray_window(
         &mut self,
@@ -199,7 +183,7 @@ pub trait HdmaEffects: Host {
             let offset = hdma_wave_offset(sample, low, high);
             phase = phase.wrapping_add(step) & 0x1ff;
             let value = self.word(scroll).wrapping_add(offset);
-            self.store(table + 2 * usize::from(row), value, store);
+            store_word(self, table + 2 * usize::from(row), value, store);
         }
         // Phantoon samples its mode again after the first half is published.
         let narrow = phantoon && self.resolve_actor(controller, Native).parameters[0] & 1 == 0;
@@ -212,7 +196,7 @@ pub trait HdmaEffects: Host {
                 self.word(table + 2 * row)
             };
             let value = origin.wrapping_sub(sample);
-            self.store(table + 2 * (rows + row), value, store);
+            store_word(self, table + 2 * (rows + row), value, store);
         }
     }
 
@@ -433,5 +417,14 @@ fn hdma_wave_offset(sample: i16, amplitude_low: u8, amplitude_high: u8) -> u16 {
         offset.wrapping_neg()
     } else {
         offset
+    }
+}
+
+/// One table word through the projection, in the store's byte order.
+fn store_word<H: Host + ?Sized>(h: &mut H, at: usize, value: u16, store: Store) {
+    match store {
+        Store::PrefixLe => h.write_word_le(value, at),
+        Store::SliceLe => h.write_slice_le(at, value),
+        Store::SliceNative => h.write_slice_native(at, value),
     }
 }

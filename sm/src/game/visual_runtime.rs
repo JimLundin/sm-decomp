@@ -139,58 +139,6 @@ impl visual_host::Aliases for Runtime<'_> {
         self.write_word_le(value, at);
     }
 }
-impl sm_game::scene::atmosphere::Host for Runtime<'_> {
-    type Error = std::convert::Infallible;
-    fn frame_and_kind(&mut self, slot: usize) -> Result<u16, Self::Error> {
-        Ok(sm_game::session_access::SessionAccess::atmospheric(self).slots[slot].frame_and_kind)
-    }
-    fn cursor(&mut self) -> Result<u16, Self::Error> {
-        Ok(self.word(0x590))
-    }
-    fn x(&mut self, slot: usize) -> Result<u16, Self::Error> {
-        Ok(sm_game::session_access::SessionAccess::atmospheric(self).slots[slot].x)
-    }
-    fn camera_x(&mut self) -> Result<u16, Self::Error> {
-        Ok(self.word(0x911))
-    }
-    fn y(&mut self, slot: usize) -> Result<u16, Self::Error> {
-        Ok(sm_game::session_access::SessionAccess::atmospheric(self).slots[slot].y)
-    }
-    fn camera_y(&mut self) -> Result<u16, Self::Error> {
-        Ok(self.word(0x915))
-    }
-    fn write_x(&mut self, entry: usize, value: u8) -> Result<(), Self::Error> {
-        self.set_byte(0x370 + entry, value);
-        Ok(())
-    }
-    fn write_y(&mut self, entry: usize, value: u8) -> Result<(), Self::Error> {
-        self.set_byte(0x371 + entry, value);
-        Ok(())
-    }
-    fn tile_pointer(&mut self, kind: u16) -> Result<u16, Self::Error> {
-        use visual_host::{Content, Record};
-        Ok(self
-            .table(Source::Loaded, 0x908bff)
-            .native_word(2 * usize::from(kind)))
-    }
-    fn read_tile(&mut self, address: u16) -> Result<u16, Self::Error> {
-        use visual_host::Record;
-        Ok(self.legacy_native_record(0x90, address).native_word(0))
-    }
-    fn write_tile(&mut self, entry: usize, value: u16) -> Result<(), Self::Error> {
-        self.write_slice_native(0x372 + entry, value);
-        Ok(())
-    }
-    fn publish_cursor(&mut self, value: u16) -> Result<(), Self::Error> {
-        self.write_word_le(value, 0x590);
-        Ok(())
-    }
-    fn written(&mut self) -> Result<(), Self::Error> {
-        sm_game::session_access::SessionAccess::probe(self, "atmosphere.tile.written");
-        Ok(())
-    }
-}
-
 impl visual_host::Effects for Runtime<'_> {
     #[cfg(sm_verify_dll)]
     fn samus_palette_event(&mut self, kind: &'static str, argument: u16) {
@@ -227,7 +175,12 @@ impl visual_host::Effects for Runtime<'_> {
         self.foreign(|game| sprite_output::samus(index, (x, y), game, &mut sprite_output::Native));
     }
     fn draw_atmospheric_tile(&mut self, slot: usize, kind: u16) {
-        sm_game::scene::atmosphere::draw_tile(self, slot, kind).unwrap();
+        sm_game::scene::atmosphere::draw_tile(
+            &mut sm_game::player_transitions::atmosphere::SessionTiles(self),
+            slot,
+            kind,
+        )
+        .unwrap();
     }
 
     fn sound(&mut self, channel: u8, limit: u8, sound: u16) {
@@ -281,30 +234,6 @@ impl visual_host::Composition for Runtime<'_> {
 impl visual_host::Host for Runtime<'_> {}
 
 impl sm_game::hdma_effects::Host for Runtime<'_> {
-    fn byte(&self, at: usize) -> u8 {
-        Runtime::byte(self, at)
-    }
-    fn set_byte(&mut self, at: usize, value: u8) {
-        Runtime::set_byte(self, at, value)
-    }
-    fn write_slice(&mut self, at: usize, bytes: &[u8]) {
-        Runtime::write_slice(self, at, bytes)
-    }
-    fn store(&mut self, at: usize, value: u16, store: sm_game::player_projectiles::access::Store) {
-        Runtime::store(self, at, value, store)
-    }
-    fn word(&self, at: usize) -> u16 {
-        Runtime::word(self, at)
-    }
-    fn native_word(&self, at: usize) -> u16 {
-        Runtime::native_word(self, at)
-    }
-    fn write_slice_le(&mut self, at: usize, value: u16) {
-        Runtime::write_slice_le(self, at, value)
-    }
-    fn write_slice_native(&mut self, at: usize, value: u16) {
-        Runtime::write_slice_native(self, at, value)
-    }
     fn calculate_xray_window(
         &mut self,
         x: u16,
