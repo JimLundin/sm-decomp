@@ -172,8 +172,14 @@ impl MenuRuntime for Game {
     fn spawn_cinematic_sprite_at(&mut self, definition: u16, slot: u16, parameter: u16) -> u8 {
         visual_runtime::spawn_cinematic_sprite_at(definition, slot, parameter, self)
     }
-    fn advance_ending_graphics(&mut self, graphics: sm_game::visual_state::EndingGraphics) {
-        visual_runtime::advance_ending_graphics(graphics, self)
+    fn assert_ram_pointer(&mut self, address: u16) {
+        // SAFETY: the failure path reports through the C assertion binding and does not return.
+        unsafe {
+            crate::native_assertion! {
+                '_c2rust_label: address < 0x2000;
+                b"addr < 0x2000\0", b"src/sm_rtl.h\0", 51, b"uint8 *RomPtr_RAM(uint16_t)\0"
+            };
+        }
     }
     fn advance_cinematic_background_pre(&mut self, command: u32, object: u16) {
         visual_runtime::advance_cinematic_background_pre(command, object, self)

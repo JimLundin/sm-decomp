@@ -115,7 +115,7 @@ pub fn advance_ending_samus_jump<H: crate::menus::host::Host + ?Sized>(
     game: &mut H,
 ) {
     if phase == 2 {
-        game.advance_ending_graphics(EndingGraphics::Samus);
+        crate::ending_graphics::advance_ending_graphics(EndingGraphics::Samus, game);
     }
     let low = ram_words::samus_y_subspeed;
     add_native_pair(low + 2, low, 0x3800, game);
@@ -346,7 +346,7 @@ pub fn advance_postcredits_zoom<H: crate::menus::host::Host + ?Sized>(zooming: b
         }
         return;
     }
-    game.advance_ending_graphics(EndingGraphics::Background);
+    crate::ending_graphics::advance_ending_graphics(EndingGraphics::Background, game);
     if word!(game.cinematic_var4 -= 1, reread) == 0 {
         game.ram().write_byte(crate::ram::mirror::BGMODE, 1);
         set_cinematic_blend(17, 0, 0, 49, game);

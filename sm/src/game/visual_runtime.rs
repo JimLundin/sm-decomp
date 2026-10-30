@@ -5,6 +5,9 @@ pub(crate) use crate::game::cinematic::{
     resume_cinematic_sprite, set_cinematic_blend, set_cinematic_tilemap_updates,
 };
 pub(crate) use crate::game::credits::{advance_credits, prepare_credit_roll};
+pub(crate) use crate::game::ending_graphics::{
+    advance_ending_logo_palette, draw_cinematic_item_percentage,
+};
 pub(crate) use crate::game::ending_screens::{
     advance_ending_gunship_spin, advance_ending_samus_jump, advance_ending_sprite_pair,
     advance_postcredits_samus_message, advance_postcredits_samus_reveal, advance_postcredits_zoom,
@@ -12,7 +15,7 @@ pub(crate) use crate::game::ending_screens::{
     initialize_ending_sprite_pair, initialize_ending_time_glyph, move_ending_cloud,
     position_ending_samus_head, prepare_ending_time, update_ending_critters, wait_ending_cloud,
 };
-use crate::game::imported::{Imported, grid_word, load, word as table_word};
+use crate::game::imported::word as table_word;
 pub(crate) use crate::game::intro_objects::{
     advance_ceres_station, advance_intro_baby_pursuit, advance_intro_landing_mosaic,
     advance_intro_rinka, advance_zebes_destruction_zoom, advance_zebes_flight, advance_zebes_stars,
@@ -34,11 +37,6 @@ use crate::game::{
 };
 use crate::ram_map::{checked_word, word};
 use crate::rtl::Unreachable;
-use sm_data::credits::{
-    BEAM_BIT_ADDRESS, BEAM_DESTINATION_ADDRESS, BEAM_SOURCE_ADDRESS, CAPACITY_ADDRESS,
-    CAPACITY_DIVISOR_ADDRESS, DIGIT_TILE_ADDRESS, ICON_PALETTE_ADDRESS, ICON_TRANSFER_ADDRESS,
-    ITEM_BIT_ADDRESS,
-};
 use sm_data::hdma_objects::BG3_X_VELOCITY_ADDRESS;
 use sm_data::shooting_stars::TILE_ADDRESS as STAR_TILE_ADDRESS;
 use sm_data::title_screen::GRADIENT_ADDRESS;
@@ -62,8 +60,8 @@ use crate::{
         session_runtime::Runtime,
         visual_host::{self, AnimationMember, PaletteMember, Source, StatueProjectile},
         visual_state::{
-            CeresExplosion, EndingGraphics, EyeBeamPhase, HazePhase, HdmaWave, PaletteBuffer,
-            TourianStatuePhase, Upload, Weather,
+            CeresExplosion, EyeBeamPhase, HazePhase, HdmaWave, PaletteBuffer, TourianStatuePhase,
+            Upload, Weather,
         },
     },
     game_state::Game,
@@ -1893,30 +1891,6 @@ pub(crate) fn execute_cinematic_sprite_instruction(
 }
 
 // Cloud setup reads its parameter after the first position store, even for aliased slots.
-pub(crate) fn advance_ending_logo_palette(game: &mut Game) -> bool {
-    let pair = (word!(game.cinematic_var4).wrapping_mul(4) >> 1) as isize;
-    let step = Imported::read(
-        &game.visual_tables.icon_palettes,
-        game,
-        |steps| steps.row(crate::game::imported::row_of(pair, 2)?),
-        |rom| sm_data::credits::IconPalettes {
-            first: load(rom, ICON_PALETTE_ADDRESS, pair),
-            second: load(rom, ICON_PALETTE_ADDRESS, pair + 1),
-        },
-    );
-    let (first, second) = (step.first, step.second);
-    for (mut source, offset) in [(first, 16usize), (second, 240)] {
-        for index in (0..16).rev() {
-            let color = cinematic_native_record::<0x8c>(source, game).word(0);
-            // The second band originally wrote native RAM words.
-            let color = if offset == 16 { color } else { color.to_le() };
-            word!(game.palette_buffer[offset + index] = color);
-            source = source.wrapping_sub(2);
-        }
-    }
-    word!(game.cinematic_var4 += 1, reread) as i32 - 16 & 0x8000 == 0
-}
-
 pub(crate) fn spawn_cinematic_sprite_at(
     definition: u16,
     slot: u16,
@@ -2324,64 +2298,6 @@ fn draw_cinematic_background(object: u16, position: u16, game: &mut Game) {
     }
 }
 
-unsafe fn draw_cinematic_item_percentage(game: &mut Game) {
-    let mut count = 0u16;
-    for index in (0..=4).rev() {
-        let address = table_word(
-            &game.visual_tables.capacities,
-            game,
-            CAPACITY_ADDRESS,
-            index,
-        );
-        unsafe {
-            crate::native_assertion! {
-                '_c2rust_label: address < 0x2000;
-                b"addr < 0x2000\0", b"src/sm_rtl.h\0", 51, b"uint8 *RomPtr_RAM(uint16_t)\0"
-            };
-        }
-        count = count.wrapping_add(crate::rtl::SnesDivide(
-            u16::from_le(checked_word!(game, usize::from(address);)),
-            table_word(
-                &game.visual_tables.capacity_divisors,
-                game,
-                CAPACITY_DIVISOR_ADDRESS,
-                index,
-            ) as u8,
-        ));
-    }
-    for index in (0..=10).rev() {
-        if table_word(&game.visual_tables.item_bits, game, ITEM_BIT_ADDRESS, index)
-            & word!(game.collected_items)
-            != 0
-        {
-            count = count.wrapping_add(1);
-        }
-    }
-    for index in (0..=4).rev() {
-        if table_word(&game.visual_tables.beam_bits, game, BEAM_BIT_ADDRESS, index)
-            & word!(game.collected_beams)
-            != 0
-        {
-            count = count.wrapping_add(1);
-        }
-    }
-    for (column, digit, visible) in [
-        (462, count / 100, count >= 100),
-        (463, count / 10 % 10, count >= 10),
-        (464, count % 10, true),
-    ] {
-        if visible {
-            let index = (digit.wrapping_mul(4) >> 1) as isize;
-            for row in 0..2 {
-                word_transfers!(game, ascending, 1; pause_map(column + row * 32) <- value(
-                    grid_word(&game.visual_tables.digit_tiles, game, DIGIT_TILE_ADDRESS, index + row)
-                ));
-            }
-        }
-    }
-    word_transfers!(game, ascending, 1; pause_map(465) <- value(14442), pause_map(497) <- value(14458));
-}
-
 unsafe fn cinematic_background_command(
     command: u32,
     object: u16,
@@ -2389,7 +2305,7 @@ unsafe fn cinematic_background_command(
     game: &mut Game,
 ) -> u16 {
     use crate::game::{intro_pages, sm_8b as bank};
-    unsafe {
+    {
         match command {
             9154004 => intro_pages::reset_text_marker(game),
             9168423 => draw_cinematic_item_percentage(game),
@@ -2432,71 +2348,6 @@ unsafe fn cinematic_background_command(
         }
     }
     operand
-}
-
-pub(crate) fn advance_ending_graphics(graphics: EndingGraphics, game: &mut Game) {
-    use EndingGraphics::*;
-    let limit = if matches!(graphics, Samus) { 16 } else { 6 };
-    if (matches!(graphics, Background) && word!(game.cinematic_var17) != 0)
-        || (i32::from(word!(game.cinematic_var14)) - limit) & 0x8000 == 0
-    {
-        return;
-    }
-    let frame = word!(game.cinematic_var14);
-    let index = match graphics {
-        Background => 4 * i32::from(frame),
-        Samus => i32::from(frame.wrapping_mul(2) >> 1),
-    };
-    let tail = word!(game.vram_write_queue_tail);
-    // Each ROM word stays between the preceding queue stores; bank indices wrap separately.
-    for field in [0u16, 2, 4, 5] {
-        let value = match (graphics, field) {
-            (Background, _) => {
-                let word = match field {
-                    0 => index,
-                    2 => index + 1,
-                    4 => i32::from(frame.wrapping_mul(4)) + 2,
-                    _ => index + 3,
-                } as isize;
-                Imported::read(
-                    &game.visual_tables.icon_transfers,
-                    game,
-                    |transfers| {
-                        let transfer = transfers.row(usize::from(frame))?;
-                        Some(match field {
-                            0 => transfer.size,
-                            2 => transfer.source,
-                            4 => transfer.bank,
-                            _ => transfer.destination,
-                        })
-                    },
-                    |rom| load(rom, ICON_TRANSFER_ADDRESS, word),
-                )
-            }
-            (Samus, 0) => 2048,
-            (Samus, 2) => table_word(
-                &game.visual_tables.beam_sources,
-                game,
-                BEAM_SOURCE_ADDRESS,
-                index as isize,
-            ),
-            (Samus, 4) => 127,
-            (Samus, _) => table_word(
-                &game.visual_tables.beam_destinations,
-                game,
-                BEAM_DESTINATION_ADDRESS,
-                index as isize,
-            ),
-        };
-        let destination = 0xd0 + usize::from(tail.wrapping_add(field));
-        if field == 4 {
-            game.ram().write_byte(destination, value as u8);
-        } else {
-            word_transfers!(game, ascending, 1; native(destination) <- value(value));
-        }
-    }
-    word!(game.vram_write_queue_tail = tail.wrapping_add(7));
-    word!(game.cinematic_var14 += 1);
 }
 
 pub(crate) fn project_cinematic_point(
