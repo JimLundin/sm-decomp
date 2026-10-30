@@ -1,15 +1,11 @@
 //! Message boxes, input confirmation, animation and saved-game feedback.
-// The original's names and assignment shapes are kept.
-#![allow(non_snake_case, non_upper_case_globals, unused_mut, unused_assignments)]
 pub use crate::constants::bank_60::*;
 pub use crate::menus::prelude::*;
 use crate::message_composition as composition;
-#[allow(unused_imports)]
-use crate::ram::RawRam as _;
 
 const MESSAGE_CONFIG_BASE: usize = sm_data::cartridge::lorom_offset(0x85869b) as usize;
 
-fn InitializePpuForMessageBoxes<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+fn initialize_ppu_for_message_boxes<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     {
         game.ram().fill(0x5f9..0x5fb, 0);
         crate::display::sequence::register_writes! { game;
@@ -47,7 +43,7 @@ fn InitializePpuForMessageBoxes<H: crate::menus::host::Host + ?Sized>(game: &mut
         }
     }
 }
-fn ClearMessageBoxBg3Tilemap<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+fn clear_message_box_bg3_tilemap<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     {
         crate::word_transfers!(game, ascending, 896; little(0x3800) <- value(14));
         crate::display::sequence::register_writes! { game;
@@ -77,7 +73,7 @@ fn message_tile<H: crate::menus::host::Host + ?Sized>(
 }
 
 #[forbid(unsafe_code)]
-fn WriteMessageTilemap<H: crate::menus::host::Host + ?Sized>(game: &mut H) -> u16 {
+fn write_message_tilemap<H: crate::menus::host::Host + ?Sized>(game: &mut H) -> u16 {
     game.ram().copy_in(0x5a6, &112u16.to_le_bytes());
     game.ram().copy_in(0x5a4, &124u16.to_le_bytes());
     game.ram().fill(0x5a2..0x5a4, 0);
@@ -103,7 +99,7 @@ fn WriteMessageTilemap<H: crate::menus::host::Host + ?Sized>(game: &mut H) -> u1
     }
     cursor.word
 }
-fn WriteMessageBoxTilemapRow<H: crate::menus::host::Host + ?Sized>(
+fn write_message_box_tilemap_row<H: crate::menus::host::Host + ?Sized>(
     mut word: u16,
     tiles: &[u16],
     game: &mut H,
@@ -116,27 +112,27 @@ fn WriteMessageBoxTilemapRow<H: crate::menus::host::Host + ?Sized>(
         word = word.wrapping_add(1);
     }
 }
-fn WriteLargeMessageBoxTilemap<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    WriteMessageBoxTilemapRow(0, composition::border(composition::BoxSize::Large), game);
-    let end = WriteMessageTilemap(game);
-    WriteMessageBoxTilemapRow(end, composition::border(composition::BoxSize::Large), game);
+fn write_large_message_box_tilemap<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+    write_message_box_tilemap_row(0, composition::border(composition::BoxSize::Large), game);
+    let end = write_message_tilemap(game);
+    write_message_box_tilemap_row(end, composition::border(composition::BoxSize::Large), game);
 }
-fn WriteSmallMessageBoxTilemap<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    WriteMessageBoxTilemapRow(0, composition::border(composition::BoxSize::Small), game);
-    let end = WriteMessageTilemap(game);
-    WriteMessageBoxTilemapRow(end, composition::border(composition::BoxSize::Small), game);
+fn write_small_message_box_tilemap<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+    write_message_box_tilemap_row(0, composition::border(composition::BoxSize::Small), game);
+    let end = write_message_tilemap(game);
+    write_message_box_tilemap_row(end, composition::border(composition::BoxSize::Small), game);
 }
 /// The original's draw table, keyed by routine address.
-fn CallMsgBoxDraw<H: crate::menus::host::Host + ?Sized>(ea: u32, game: &mut H) {
+fn call_msg_box_draw<H: crate::menus::host::Host + ?Sized>(ea: u32, game: &mut H) {
     match ea {
-        8749658 => WriteLargeMessageBoxTilemap(game),
-        8749705 => WriteSmallMessageBoxTilemap(game),
+        8749658 => write_large_message_box_tilemap(game),
+        8749705 => write_small_message_box_tilemap(game),
         _ => {
             game.rtl_unreachable();
         }
     }
 }
-fn MsgBoxMakeHdmaTable<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+fn msg_box_make_hdma_table<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     let radius = u16::from_le_bytes([game.ram().read_byte(0x5a2), game.ram().read_byte(0x5a3)]);
     let values = composition::radius_values(radius);
     for at in (0x30bc..0x30f8).step_by(2) {
@@ -152,7 +148,7 @@ fn MsgBoxMakeHdmaTable<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     game.ram().copy_in(0x5a8, &values.scratch[2].to_le_bytes());
     game.ram().copy_in(0x5aa, &values.scratch[3].to_le_bytes());
 }
-fn SetupMessageBoxBg3YscrollHdma<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+fn setup_message_box_bg3_yscroll_hdma<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     {
         game.ram().copy_in(0x3380, &composition::HDMA_DESCRIPTOR);
         crate::display::sequence::register_writes! { game;
@@ -163,13 +159,13 @@ fn SetupMessageBoxBg3YscrollHdma<H: crate::menus::host::Host + ?Sized>(game: &mu
             byte(A2A6L as u16, 0); byte(A2A6H as u16, 0);
             byte(NTRL6 as u16, 0);
         }
-        MsgBoxMakeHdmaTable(game);
+        msg_box_make_hdma_table(game);
         game.write_register(HDMAEN as u16, 0x40);
     }
 }
-fn SetupPpuForActiveMessageBox<H: crate::menus::host::Host + ?Sized>(r52: u16, game: &mut H) {
+fn setup_ppu_for_active_message_box<H: crate::menus::host::Host + ?Sized>(r52: u16, game: &mut H) {
     {
-        SetupMessageBoxBg3YscrollHdma(game);
+        setup_message_box_bg3_yscroll_hdma(game);
         crate::display::sequence::register_writes! { game;
             word(VMADDL as u16, r52.wrapping_add(0x5800)); word(DMAP1 as u16, 0x1801);
             word(A1T1L as u16, 0x3200); word(A1B1 as u16, 0x7e);
@@ -179,7 +175,7 @@ fn SetupPpuForActiveMessageBox<H: crate::menus::host::Host + ?Sized>(r52: u16, g
         }
     }
 }
-fn DrawSpecialButtonAndSetupPpuForLargeMessageBox<H: crate::menus::host::Host + ?Sized>(
+fn draw_special_button_and_setup_ppu_for_large_message_box<H: crate::menus::host::Host + ?Sized>(
     a: u16,
     game: &mut H,
 ) {
@@ -191,44 +187,49 @@ fn DrawSpecialButtonAndSetupPpuForLargeMessageBox<H: crate::menus::host::Host + 
                 - 1;
         let offset = composition::special_button_offset(message);
         game.ram().copy_in(0x3200 + offset, &tile.to_le_bytes());
-        SetupPpuForActiveMessageBox(composition::map_offset(composition::BoxSize::Large), game);
+        setup_ppu_for_active_message_box(
+            composition::map_offset(composition::BoxSize::Large),
+            game,
+        );
     }
 }
-fn DrawShootButtonAndSetupPpuForLargeMessageBox<H: crate::menus::host::Host + ?Sized>(
+fn draw_shoot_button_and_setup_ppu_for_large_message_box<H: crate::menus::host::Host + ?Sized>(
     game: &mut H,
 ) {
     {
         let button = u16::from_le_bytes([game.ram().read_byte(0x9b2), game.ram().read_byte(0x9b3)]);
-        DrawSpecialButtonAndSetupPpuForLargeMessageBox(button, game);
+        draw_special_button_and_setup_ppu_for_large_message_box(button, game);
     }
 }
-fn DrawRunButtonAndSetupPpuForLargeMessageBox<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+fn draw_run_button_and_setup_ppu_for_large_message_box<H: crate::menus::host::Host + ?Sized>(
+    game: &mut H,
+) {
     {
         let button = u16::from_le_bytes([game.ram().read_byte(0x9b6), game.ram().read_byte(0x9b7)]);
-        DrawSpecialButtonAndSetupPpuForLargeMessageBox(button, game);
+        draw_special_button_and_setup_ppu_for_large_message_box(button, game);
     }
 }
-fn SetupPpuForSmallMessageBox<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    SetupPpuForActiveMessageBox(composition::map_offset(composition::BoxSize::Small), game);
+fn setup_ppu_for_small_message_box<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+    setup_ppu_for_active_message_box(composition::map_offset(composition::BoxSize::Small), game);
 }
-fn SetupPpuForLargeMessageBox<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    SetupPpuForActiveMessageBox(composition::map_offset(composition::BoxSize::Large), game);
+fn setup_ppu_for_large_message_box<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+    setup_ppu_for_active_message_box(composition::map_offset(composition::BoxSize::Large), game);
 }
 /// The original's modify table, keyed by routine address.
-fn CallMsgBoxModify<H: crate::menus::host::Host + ?Sized>(ea: u32, game: &mut H) {
+fn call_msg_box_modify<H: crate::menus::host::Host + ?Sized>(ea: u32, game: &mut H) {
     {
         match ea {
-            8750021 => DrawShootButtonAndSetupPpuForLargeMessageBox(game),
-            8750028 => DrawRunButtonAndSetupPpuForLargeMessageBox(game),
-            8750134 => SetupPpuForSmallMessageBox(game),
-            8750145 => SetupPpuForLargeMessageBox(game),
+            8750021 => draw_shoot_button_and_setup_ppu_for_large_message_box(game),
+            8750028 => draw_run_button_and_setup_ppu_for_large_message_box(game),
+            8750134 => setup_ppu_for_small_message_box(game),
+            8750145 => setup_ppu_for_large_message_box(game),
             _ => {
                 game.rtl_unreachable();
             }
         }
     }
 }
-fn InitializeMessageBox<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+fn initialize_message_box<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     {
         let index = u16::from_le_bytes([game.ram().read_byte(0x1c1f), game.ram().read_byte(0x1c20)])
             as isize
@@ -236,18 +237,18 @@ fn InitializeMessageBox<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
         let draw = game
             .native_image()
             .table_word(MESSAGE_CONFIG_BASE, 3 * index + 1);
-        CallMsgBoxDraw(0x850000 | u32::from(draw), game);
+        call_msg_box_draw(0x850000 | u32::from(draw), game);
         let modify = game
             .native_image()
             .table_word(MESSAGE_CONFIG_BASE, 3 * index);
-        CallMsgBoxModify(0x850000 | u32::from(modify), game);
+        call_msg_box_modify(0x850000 | u32::from(modify), game);
     }
 }
-fn DrawSaveConfirmationSelection<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+fn draw_save_confirmation_selection<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     {
         let selection =
             u16::from_le_bytes([game.ram().read_byte(0x5f9), game.ram().read_byte(0x5fa)]);
-        WriteMessageBoxTilemapRow(128, composition::selection_row(selection), game);
+        write_message_box_tilemap_row(128, composition::selection_row(selection), game);
         crate::display::sequence::register_writes! { game;
             word(VMADDL as u16, addr_unk_6059A0 as u16); word(DMAP1 as u16, 0x1801);
             word(A1T1L as u16, 0x3200); word(A1B1 as u16, 0x7e);
@@ -257,7 +258,7 @@ fn DrawSaveConfirmationSelection<H: crate::menus::host::Host + ?Sized>(game: &mu
         }
     }
 }
-fn RestorePpuForMessageBox<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+fn restore_ppu_for_message_box<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     {
         crate::display::sequence::register_writes! { game;
             word(VMADDL as u16, addr_unk_605880 as u16); word(DMAP1 as u16, 0x1801);
@@ -303,16 +304,16 @@ impl<H: crate::menus::host::Host + ?Sized> crate::dialogue::Context for LegacyDi
                         self.0.queue_sound(channel, sound, 6);
                     }
                 }
-                PrepareDisplay => InitializePpuForMessageBoxes(self.0),
-                ClearDisplay => ClearMessageBoxBg3Tilemap(self.0),
-                PrepareMessage => InitializeMessageBox(self.0),
+                PrepareDisplay => initialize_ppu_for_message_boxes(self.0),
+                ClearDisplay => clear_message_box_bg3_tilemap(self.0),
+                PrepareMessage => initialize_message_box(self.0),
                 SaveSound => self.0.queue_sound(0, 0x2e, 6),
                 AdvanceAudio => advance_audio(self.0),
-                RestoreDisplay => RestorePpuForMessageBox(self.0),
+                RestoreDisplay => restore_ppu_for_message_box(self.0),
                 ResumeMovementSound => self.0.restore_movement_sound(),
                 SelectPause => dialogue_ram::select_pause(self.0),
-                DrawRadius => MsgBoxMakeHdmaTable(self.0),
-                DrawSelection => DrawSaveConfirmationSelection(self.0),
+                DrawRadius => msg_box_make_hdma_table(self.0),
+                DrawSelection => draw_save_confirmation_selection(self.0),
                 SelectionSound => self.0.queue_sound(0, 0x37, 6),
             }
         }
