@@ -33,7 +33,6 @@ pub trait MenuRuntime {
     ) -> u16;
     /// Upload `bytes` from `source` to VRAM word address `destination`.
     fn load_vram_words(&mut self, source: u32, destination: u16, bytes: u16);
-    fn decompress_to_ram(&mut self, source: u32, destination: usize) -> usize;
     fn file_select_fade(&mut self) -> u8;
     fn boss_byte(&mut self, area: u16) -> u8;
     /// Begin entering the room at the current load station.
@@ -59,6 +58,7 @@ pub trait Host:
     + DisplayRefresh
     + crate::sprite_output::SpriteHost
     + crate::cartridge::NativeDiagnostics
+    + crate::decompression::DecompressionHost
     + MenuRuntime
 {
     type Sram: SaveRam + ?Sized;

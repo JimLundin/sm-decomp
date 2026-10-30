@@ -14,6 +14,7 @@ pub mod cartridge;
 pub mod combat_rules;
 pub mod constants;
 pub mod contact_rules;
+pub mod decompression;
 pub mod dialogue;
 pub mod drop_rules;
 pub mod effects;

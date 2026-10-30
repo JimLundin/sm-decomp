@@ -76,9 +76,6 @@ impl MenuRuntime for Game {
                 .load(self)
         }
     }
-    fn decompress_to_ram(&mut self, source: u32, destination: usize) -> usize {
-        crate::game::decompression::decompress_to_ram(source, destination, self)
-    }
     fn file_select_fade(&mut self) -> u8 {
         crate::game::palette_effects::fading::file_select(self)
     }
@@ -138,5 +135,20 @@ impl Host for Game {
 impl sm_game::cartridge::NativeDiagnostics for Game {
     fn native_rom_diagnostic(&mut self, address: u32) {
         crate::game::session_runtime::native_rom_diagnostic(address, self)
+    }
+}
+
+impl sm_game::decompression::DecompressionHost for Game {
+    fn decompress_source(&self) -> u32 {
+        self.decompress_src
+    }
+    fn set_decompress_source(&mut self, source: u32) {
+        self.decompress_src = source;
+    }
+    fn report_invalid_rom_address(&mut self, address: u32) {
+        crate::rtl::report_invalid_rom_address(address, self)
+    }
+    fn read_rom_byte(&self, address: u32, offset: usize) -> u8 {
+        Game::read_rom_byte(self, address, offset)
     }
 }

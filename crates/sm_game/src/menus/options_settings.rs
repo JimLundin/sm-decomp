@@ -19,7 +19,7 @@ pub fn initialize<H: Host + ?Sized>(game: &mut H, upload: fn(&mut H)) {
         .into_iter()
         .enumerate()
     {
-        game.decompress_to_ram(source, 0x1c000 + index * 0x800);
+        crate::decompression::decompress_to_ram(source, 0x1c000 + index * 0x800, game);
     }
     copy_screen(0x1c7fe, false, game);
     // The ROM keeps the final copied tile in A through the object clear.
