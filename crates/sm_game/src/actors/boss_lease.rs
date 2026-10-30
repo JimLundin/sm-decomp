@@ -27,6 +27,7 @@ pub trait BossState:
     + crate::records::Records
     + crate::player_position::PlayerPosition
     + crate::actors::host::ActorRuntime
+    + crate::word_transfers::LoadedRom
 {
     /// The shared shot reaction for the current actor.
     fn react_to_shot(&mut self, shot: Shot);
