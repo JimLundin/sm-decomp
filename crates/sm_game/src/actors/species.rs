@@ -16,7 +16,7 @@ use crate::actors::{
     kihunter, kraid, magdollite, metroid, mini_kraid, mochtroid, morph_ball_eye, oum, phantoon,
     phantoon_actions, puyo, reflec, ridley, rinka, roach, shaktool, sidehopper, skree, skultera,
     space_pirates, statues, tatori, torizo, tripper, work_robot, wrecked_ship_spark, yapping_maw,
-    zeb, zebetites, zoa,
+    yard, zeb, zebetites, zoa,
 };
 use crate::enemy_script::EnemyScript;
 use crate::ram::word;
@@ -553,6 +553,13 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         11065545 => bull::initialize(game),
         11065611 => bull::main_ai(game),
         11066132 => bull::shot(game),
+        10735074 => yard::initialize(game),
+        10735204 => {
+            let function = yard::prepare(game);
+            pre_instruction(function, game);
+        }
+        10736560 => yard::touch(game),
+        10736745 => yard::shot(game),
         11071880 => kihunter::initialize(game),
         11072020 => kihunter::initialize_wings(game),
         11072092 | 11072098 => kihunter::main_ai(game),
@@ -668,6 +675,16 @@ pub fn pre_instruction<H: PreInstructionHost>(ea: u32, game: &mut H) {
         10669926 => oum::bounce(false, k, game),
         10669993 => oum::bounce(true, k, game),
         10657722 => cacatac::moving(false, game),
+        10735526 => yard::crawl(k, crate::actors::api::Axis::Y, 0xa3cce2, game),
+        10735543 => yard::crawl(k, crate::actors::api::Axis::X, 0xa3ccea, game),
+        10735549 => yard::crawl(k, crate::actors::api::Axis::Y, 0xa3ccf2, game),
+        10735566 => yard::crawl(k, crate::actors::api::Axis::X, 0xa3ccfa, game),
+        10735572 => yard::crawl(k, crate::actors::api::Axis::Y, 0xa3cd02, game),
+        10735589 => yard::crawl(k, crate::actors::api::Axis::X, 0xa3cd0a, game),
+        10735595 => yard::crawl(k, crate::actors::api::Axis::Y, 0xa3cd12, game),
+        10735612 => yard::crawl(k, crate::actors::api::Axis::X, 0xa3cd1a, game),
+        10735456 => yard::hiding(k, game),
+        10736051 => yard::airborne(k, game),
         10657772 => cacatac::moving(true, game),
         10649723 => (),
         10652277 => (),
@@ -819,6 +836,7 @@ pub fn instruction<H: InstructionHost>(
         10725992 => sidehopper::queue_sound(j, game),
         10657941 => cacatac::resume_moving(k, j, game),
         11068957 | 11068970 => wrecked_ship_spark::set_intangible(game, ea == 11068957, j),
+        10734646 | 10734655 | 10734664 | 10734687 | 10734712 => yard::instruction(ea, k, j, game),
         11072806 | 11072996 | 11073151 | 11073234 | 11073240 => {
             kihunter::instruction(game, ea, k, j)
         }

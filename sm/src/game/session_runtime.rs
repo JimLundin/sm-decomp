@@ -1,5 +1,5 @@
 //! One aggregate authority for player, projectiles, mechanisms and their room.
-use crate::game::actors::{bang, maridia_snail, reflec};
+use crate::game::actors::{bang, reflec};
 use crate::game::enemy_speeds::SpeedTable;
 use crate::{
     game_state::Game,
@@ -1166,9 +1166,6 @@ crate::game::callback_dispatch! {
         10715151 => [crate::game::actors::combat::select_frozen_ai(&mut Runtime::new(game))];
 
         10715201 => [crate::game::actors::scheduling::update_frozen_enemy(&mut Runtime::new(game))];
-        10735074 => maridia_snail::initialize;
-        10735204 => [{ let phase = maridia_snail::prepare(game); actor_species_pre_instruction(phase, game); }];
-        10736560 => maridia_snail::touch; 10736745 => maridia_snail::shot;
 
 
 
@@ -1306,15 +1303,6 @@ crate::game::address_dispatch! {
     {
 
 
-        10735526 => [maridia_snail::crawl(k, actor_api::Axis::Y, 0xa3cce2, game)];
-        10735543 => [maridia_snail::crawl(k, actor_api::Axis::X, 0xa3ccea, game)];
-        10735549 => [maridia_snail::crawl(k, actor_api::Axis::Y, 0xa3ccf2, game)];
-        10735566 => [maridia_snail::crawl(k, actor_api::Axis::X, 0xa3ccfa, game)];
-        10735572 => [maridia_snail::crawl(k, actor_api::Axis::Y, 0xa3cd02, game)];
-        10735589 => [maridia_snail::crawl(k, actor_api::Axis::X, 0xa3cd0a, game)];
-        10735595 => [maridia_snail::crawl(k, actor_api::Axis::Y, 0xa3cd12, game)];
-        10735612 => [maridia_snail::crawl(k, actor_api::Axis::X, 0xa3cd1a, game)];
-        10735456 => [maridia_snail::probe_edge(k, game)]; 10736051 => [maridia_snail::falling(k, game)];
 
         11047153 | 11047214 | 11047264 | 11047374 => [{
             if crate::game::actors::morph_ball_eye::run_function(ea as u16, k, game) {
@@ -1389,11 +1377,6 @@ crate::game::callback_dispatch! {
 
         10651845 => [j];
         10716899 => crate::game::waver::Waver_Instr_1;
-        10734646 => [maridia_snail::instruction(k, 0, j, game)];
-        10734655 => [maridia_snail::instruction(k, 1, j, game)];
-        10734664 => [maridia_snail::instruction(k, 2, j, game)];
-        10734687 => [maridia_snail::instruction(k, 3, j, game)];
-        10734712 => [maridia_snail::instruction(k, 4, j, game)];
         11056990 => [j];
         11128756 => [sm_game::actors::baby_metroid_cutscene::go_to_initial(k, j)];
         11128778 => [sm_game::actors::baby_metroid_cutscene::go_to_draining_mother_brain(k, j)];

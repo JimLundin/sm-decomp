@@ -12,7 +12,6 @@ pub(crate) mod baby_metroid;
 pub(crate) mod escape_critters;
 pub(in crate::game) mod fireflea;
 pub(crate) use sm_game::actors::identity;
-pub(in crate::game) mod maridia_snail;
 #[cfg(sm_verify_dll)]
 #[path = "../../verification/actor_movement_candidate.rs"]
 pub(crate) mod movement_verification;

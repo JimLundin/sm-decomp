@@ -206,6 +206,7 @@ pub mod actors {
     pub mod work_robot;
     pub mod wrecked_ship_spark;
     pub mod yapping_maw;
+    pub mod yard;
     pub mod zeb;
     pub mod zebetites;
     pub mod zoa;
