@@ -104,8 +104,7 @@ fn set_target(runtime: &mut impl ActorLease, key: Key, colours: impl IntoIterato
 }
 /// Initialisation AI - Covern ($A8:9AEE).
 pub fn initialize<H: LeaseActors + ?Sized>(game: &mut H) {
-    let mut lease = game.lease();
-    let runtime = &mut lease;
+    let runtime = &mut game.lease();
     let key = selected(runtime);
     runtime.edit_actor(key, Native, |actor| {
         actor.properties |= INITIAL_PROPERTIES;
@@ -391,8 +390,7 @@ fn awake(runtime: &mut impl ActorLease, key: Key) {
 }
 /// Main AI - coven ($A8:9B3C): run its function. Was `advance`.
 pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
-    let mut lease = game.lease();
-    let runtime = &mut lease;
+    let runtime = &mut game.lease();
     let key = selected(runtime);
     match runtime.resolve_actor(key, Native).variables[lane::FUNCTION] {
         function::FADE_TO_WHITE => fade_to_white(runtime, key),

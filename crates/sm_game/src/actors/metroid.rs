@@ -118,8 +118,7 @@ fn bombed_off(runtime: &mut impl ActorLease) {
 }
 /// Initialisation AI - metroid ($A3:EA4F): create its electricity and shell.
 pub fn initialize<H: LeaseActors + ?Sized>(game: &mut H) {
-    let mut lease = game.lease();
-    let runtime = &mut lease;
+    let runtime = &mut game.lease();
     let key = combat::current(runtime);
     let metroid = current_slot(runtime);
     runtime.edit_actor(key, Native, |actor| actor.instruction = LISTS[0]);
@@ -134,8 +133,7 @@ pub fn initialize<H: LeaseActors + ?Sized>(game: &mut H) {
 }
 /// Frozen AI - metroid ($A3:EAE6): flash while bombed off, and freeze its sprites.
 pub fn frozen<H: LeaseActors + ?Sized>(game: &mut H) {
-    let mut lease = game.lease();
-    let runtime = &mut lease;
+    let runtime = &mut game.lease();
     scheduling::update_frozen_enemy(runtime);
     let key = combat::current(runtime);
     runtime.edit_actor(key, Native, |actor| {
@@ -152,8 +150,7 @@ pub fn frozen<H: LeaseActors + ?Sized>(game: &mut H) {
 }
 /// Hurt AI - metroid ($A3:EB33): flash its sprites with it.
 pub fn hurt<H: LeaseActors + ?Sized>(game: &mut H) {
-    let mut lease = game.lease();
-    let runtime = &mut lease;
+    let runtime = &mut game.lease();
     let actor = runtime.resolve_actor(combat::current(runtime), Native);
     let appearance = [0, actor.palette][usize::from(actor.flash & 2 != 0)];
     for handle in sprites(runtime, current_slot(runtime)) {
@@ -163,8 +160,7 @@ pub fn hurt<H: LeaseActors + ?Sized>(game: &mut H) {
 }
 /// Main AI - metroid ($A3:EB98): run its function, and carry its sprites.
 pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
-    let mut lease = game.lease();
-    let runtime = &mut lease;
+    let runtime = &mut game.lease();
     let key = combat::current(runtime);
     let target_y = runtime.session().player.y.wrapping_sub(8);
     match runtime.resolve_actor(key, Native).pre_instruction {
@@ -227,8 +223,7 @@ fn drain(runtime: &mut impl ActorLease, metroid: i32) {
 }
 /// Enemy touch - metroid ($A3:EDEB): knocked back, or drain Samus and latch on within 8 px.
 pub fn touch<H: LeaseActors + ?Sized>(game: &mut H) {
-    let mut lease = game.lease();
-    let runtime = &mut lease;
+    let runtime = &mut game.lease();
     let key = combat::current(runtime);
     let metroid = current_slot(runtime);
     let target_y = runtime.session().player.y.wrapping_sub(8);
@@ -271,8 +266,7 @@ fn retire_sprites(runtime: &mut impl ActorLease, metroid: i32) -> u16 {
 }
 /// Power bomb reaction - metroid ($A3:F042).
 pub fn power_bomb<H: LeaseActors + ?Sized>(game: &mut H) {
-    let mut lease = game.lease();
-    let runtime = &mut lease;
+    let runtime = &mut game.lease();
     let key = combat::current(runtime);
     let metroid = current_slot(runtime);
     combat::power_bomb_reaction(runtime, DeathHandling::Finalize);
@@ -283,8 +277,7 @@ pub fn power_bomb<H: LeaseActors + ?Sized>(game: &mut H) {
 }
 /// Enemy shot - metroid ($A3:EF07): shattered, bombed off Samus, or recoil and freeze.
 pub fn shot<H: LeaseActors + ?Sized>(game: &mut H) {
-    let mut lease = game.lease();
-    let runtime = &mut lease;
+    let runtime = &mut game.lease();
     let projectile = usize::from(runtime.session().room.collision_detection_index);
     let kind = runtime.word(word_arrays::PROJECTILE_TYPE + 2 * projectile);
     let key = combat::current(runtime);
@@ -340,8 +333,7 @@ pub fn draining_sound<H: LeaseActors + ?Sized>(script: EnemyScript, game: &mut H
 }
 /// Instruction - play random Metroid cry ($A3:EAB1).
 pub fn random_cry<H: LeaseActors + ?Sized>(script: EnemyScript, game: &mut H) -> EnemyScript {
-    let mut lease = game.lease();
-    let runtime = &mut lease;
+    let runtime = &mut game.lease();
     let index = runtime.next_random() & 7;
     let cry = table(runtime, CRIES, index as isize);
     runtime.queue_sound(2, 6, cry);

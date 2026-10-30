@@ -48,8 +48,7 @@ pub(crate) fn set_velocities(runtime: &mut impl ActorLease, speed: u16) {
 }
 /// Initialisation AI - cacatac ($A2:9F48).
 pub fn initialize<H: LeaseActors + ?Sized>(game: &mut H) {
-    let mut lease = game.lease();
-    let runtime = &mut lease;
+    let runtime = &mut game.lease();
     let cacatac = current_slot(runtime);
     session_slot!(runtime, Cacatac[cacatac].base.spritemap_pointer = 0x804d);
     set_instruction_list(runtime, false);
@@ -139,8 +138,7 @@ pub mod owtch {
     }
     /// Initialisation AI - owtch ($A2:A3F9).
     pub fn initialize<H: LeaseActors + ?Sized>(game: &mut H) {
-        let mut lease = game.lease();
-        let runtime = &mut lease;
+        let runtime = &mut game.lease();
         let owtch = current_slot(runtime);
         session_slot!(runtime, Owtch[owtch].base.spritemap_pointer = 0x804d);
         let index = session_slot!(runtime, Owtch[owtch].parameter_1) & 0xff;
@@ -160,8 +158,7 @@ pub mod owtch {
     }
     /// Main AI - owtch ($A2:A47E): run its function index.
     pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
-        let mut lease = game.lease();
-        let runtime = &mut lease;
+        let runtime = &mut game.lease();
         let owtch = current_slot(runtime);
         let index = session_slot!(runtime, Owtch[owtch].function_index) as i16;
         match index {
@@ -210,8 +207,7 @@ pub mod owtch {
     }
     /// Enemy shot - owtch ($A2:A579): hurt only while moving.
     pub fn shot<H: LeaseActors + ?Sized>(game: &mut H) {
-        let mut lease = game.lease();
-        let runtime = &mut lease;
+        let runtime = &mut game.lease();
         let owtch = current_slot(runtime);
         if session_slot!(runtime, Owtch[owtch].function_index).wrapping_sub(1) & 0x8000 != 0 {
             combat::shot_reaction(runtime, ShotHandling::Finalize);

@@ -92,8 +92,7 @@ fn set_instruction_list(runtime: &mut impl ActorLease) {
 }
 /// Initialisation AI - bang ($A3:BAB3).
 pub fn initialize<H: LeaseActors + ?Sized>(game: &mut H) {
-    let mut lease = game.lease();
-    let runtime = &mut lease;
+    let runtime = &mut game.lease();
     let key = combat::current(runtime);
     let bang = current_slot(runtime);
     runtime.edit_actor(key, Native, |actor| {
@@ -135,8 +134,7 @@ pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) -> u32 {
 }
 /// Bang movement function - movement delay ($A3:BCA5). Was `wait`.
 pub fn movement_delay<H: LeaseActors + ?Sized>(game: &mut H) {
-    let mut lease = game.lease();
-    let runtime = &mut lease;
+    let runtime = &mut game.lease();
     let bang = current_slot(runtime);
     let remaining = session_slot!(runtime, Bang[bang].movement_delay_timer).wrapping_sub(1);
     session_slot!(runtime, Bang[bang].movement_delay_timer = remaining);
@@ -158,8 +156,7 @@ fn angle_to_samus(runtime: &impl ActorLease) -> u16 {
 }
 /// Bang movement function - target Samus ($A3:BCC5). Was `aim`.
 pub fn target_samus<H: LeaseActors + ?Sized>(game: &mut H) {
-    let mut lease = game.lease();
-    let runtime = &mut lease;
+    let runtime = &mut game.lease();
     let angle = angle_to_samus(runtime);
     let bang = current_slot(runtime);
     session_slot!(runtime, Bang[bang].angle = angle);
@@ -174,8 +171,7 @@ pub fn target_samus<H: LeaseActors + ?Sized>(game: &mut H) {
 /// $A3:BDB9), then accelerate ($A3:BD4F) and trigger deceleration if too far
 /// off target ($A3:BCF1), or decelerate ($A3:BD89). Was `fly`.
 pub fn fly<H: LeaseActors + ?Sized>(decelerating: bool, game: &mut H) {
-    let mut lease = game.lease();
-    let runtime = &mut lease;
+    let runtime = &mut game.lease();
     for (x, adjustment) in [(true, QUARTER_TURN), (false, 0)] {
         let bang = current_slot(runtime);
         let angle = (session_slot!(runtime, Bang[bang].angle) as u8).wrapping_add(adjustment);
@@ -260,8 +256,7 @@ pub fn fly<H: LeaseActors + ?Sized>(decelerating: bool, game: &mut H) {
 }
 /// Enemy shot - bang ($A3:BEFD): knock the bang away and grow it.
 pub fn shot<H: LeaseActors + ?Sized>(game: &mut H) {
-    let mut lease = game.lease();
-    let runtime = &mut lease;
+    let runtime = &mut game.lease();
     let key = combat::current(runtime);
     let bang = current_slot(runtime);
     if runtime.resolve_actor(key, Native).pre_instruction != function::NO_MOVEMENT {
@@ -299,8 +294,7 @@ pub fn set_finished_growing<H: LeaseActors + ?Sized>(
     cursor: EnemyScript,
     game: &mut H,
 ) -> EnemyScript {
-    let mut lease = game.lease();
-    let runtime = &mut lease;
+    let runtime = &mut game.lease();
     let bang = current_slot(runtime);
     session_slot!(runtime, Bang[bang].finished_growing = 1);
     cursor

@@ -54,8 +54,7 @@ fn set_instruction_list(runtime: &mut impl ActorLease, oum: i32) {
 }
 /// Initialisation AI - oum ($A2:CCD4).
 pub fn initialize<H: LeaseActors + ?Sized>(game: &mut H) {
-    let mut lease = game.lease();
-    let runtime = &mut lease;
+    let runtime = &mut game.lease();
     let oum = current_slot(runtime);
     session_slot!(runtime, Oum[oum]; y_speed_index = 0, direction = 0, new_list_index = 0, list_index = 0,
         animation_finished = 0, attack_rotates = 0, var_0a = 0, bounces = BOUNCES, attack_cooldown = ATTACK_COOLDOWN);
@@ -231,8 +230,7 @@ pub fn main_ai<H: LeaseActors + PreInstructionHost + SpeciesHost>(game: &mut H) 
 }
 /// Oum bounce function - falling ($A2:CF66) or rising ($A2:CFA9), for enemy `k`.
 pub fn bounce<H: LeaseActors + ?Sized>(rising: bool, k: u16, game: &mut H) {
-    let mut lease = game.lease();
-    let runtime = &mut lease;
+    let runtime = &mut game.lease();
     let oum = i32::from(k);
     let step = if rising { 0xfe80 } else { 0x180 };
     let mut index = session_slot!(runtime, Oum[oum].y_speed_index).wrapping_add(step);
@@ -256,8 +254,7 @@ pub fn bounce<H: LeaseActors + ?Sized>(rising: bool, k: u16, game: &mut H) {
 }
 /// Enemy touch - oum - hurts Samus ($A2:D388) or doesn't ($A2:D38C): push her aside 4 px.
 pub fn touch<H: LeaseActors + ?Sized>(hurts: bool, game: &mut H) {
-    let mut lease = game.lease();
-    let runtime = &mut lease;
+    let runtime = &mut game.lease();
     if hurts {
         combat::contact_reaction(runtime, DeathHandling::Finalize);
     }
@@ -280,8 +277,7 @@ pub fn shot<H: LeaseActors + ?Sized>(game: &mut H) {
 /// Instructions - set animation finished flag ($A2:CCB3), and attack allowing rotation
 /// flag = 1 ($A2:CCBE) or 0 ($A2:CCC9).
 pub fn instruction<H: LeaseActors + ?Sized>(ea: u32, j: EnemyScript, game: &mut H) -> EnemyScript {
-    let mut lease = game.lease();
-    let runtime = &mut lease;
+    let runtime = &mut game.lease();
     let oum = current_slot(runtime);
     let rotates = u16::from(ea == 0xa2_ccbe);
     match ea {

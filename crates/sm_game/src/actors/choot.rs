@@ -45,8 +45,7 @@ fn speed(runtime: &impl ActorLease, index: usize) -> u32 {
 }
 /// Initialisation AI - choot ($A2:DF76).
 pub fn initialize<H: LeaseActors + ?Sized>(game: &mut H) {
-    let mut lease = game.lease();
-    let runtime = &mut lease;
+    let runtime = &mut game.lease();
     set_instruction_list(runtime, IDLE_LIST);
     let choot = current_slot(runtime);
     let (x, y) = (
@@ -77,8 +76,7 @@ pub fn initialize<H: LeaseActors + ?Sized>(game: &mut H) {
 }
 /// Main AI - choot ($A2:E02E): run its function.
 pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
-    let mut lease = game.lease();
-    let runtime = &mut lease;
+    let runtime = &mut game.lease();
     let choot = current_slot(runtime);
     match session_slot!(runtime, Choot[choot].function) {
         WAIT_FOR_SAMUS => {

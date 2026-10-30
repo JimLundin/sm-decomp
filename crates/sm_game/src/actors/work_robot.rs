@@ -43,8 +43,7 @@ fn cooldown(runtime: &mut impl ActorLease) {
 }
 /// Enemy graphics drawn hook - work robot - periodically cycle between palettes ($A8:CC67).
 pub fn palette<H: LeaseActors + ?Sized>(game: &mut H) {
-    let mut lease = game.lease();
-    let runtime = &mut lease;
+    let runtime = &mut game.lease();
     let door = runtime.word(W::DOOR_TRANSITION_FLAG_ENEMIES) != 0;
     if door || runtime.word(W::WORK_ROBOT_PALANIM_TIMER) == 0 {
         return;
@@ -72,8 +71,7 @@ pub fn initialize<H: LeaseActors + EnemyHost + ?Sized>(game: &mut H) {
     if !powered(game) {
         return initialize_deactivated(game);
     }
-    let mut lease = game.lease();
-    let runtime = &mut lease;
+    let runtime = &mut game.lease();
     runtime.set_slot_byte(GFX_DRAWN_HOOK_BANK, 0xa8);
     runtime.write_slice_native(GFX_DRAWN_HOOK, 0xcc67);
     let key = combat::current(runtime);
@@ -92,8 +90,7 @@ pub fn initialize<H: LeaseActors + EnemyHost + ?Sized>(game: &mut H) {
 }
 /// Initialisation AI - work robot deactivated ($A8:CBCC).
 pub fn initialize_deactivated<H: LeaseActors + ?Sized>(game: &mut H) {
-    let mut lease = game.lease();
-    let runtime = &mut lease;
+    let runtime = &mut game.lease();
     let key = combat::current(runtime);
     let pose = runtime.edit_actor(key, Native, |actor| {
         if actor.parameters[0] & 0x8000 != 0 || (actor.parameters[0].wrapping_sub(4) as i16) >= 0 {
@@ -120,8 +117,7 @@ pub fn initialize_deactivated<H: LeaseActors + ?Sized>(game: &mut H) {
 }
 /// Main AI - work robot ($A8:CC36): fall, accelerating.
 pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
-    let mut lease = game.lease();
-    let runtime = &mut lease;
+    let runtime = &mut game.lease();
     let key = combat::current(runtime);
     let actor = runtime.resolve_actor(key, Native);
     let speed = ((u32::from(actor.pre_instruction) << 16) | u32::from(actor.variables[4])) as i32;
@@ -137,8 +133,7 @@ pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
 }
 /// Enemy touch - work robot ($A8:D174): push Samus away 4 px.
 pub fn touch<H: LeaseActors + ?Sized>(game: &mut H) {
-    let mut lease = game.lease();
-    let runtime = &mut lease;
+    let runtime = &mut game.lease();
     let key = combat::current(runtime);
     let x = runtime.resolve_actor(key, Native).x.whole;
     let left = (x as i16).wrapping_sub(runtime.word(W::SAMUS_X_POS) as i16) < 0;
@@ -153,8 +148,7 @@ pub fn shot<H: LeaseActors + EnemyHost + ?Sized>(game: &mut H) {
     if !powered(game) {
         return;
     }
-    let mut lease = game.lease();
-    let runtime = &mut lease;
+    let runtime = &mut game.lease();
     combat::shot_reaction(runtime, ShotHandling::Finalize);
     let key = combat::current(runtime);
     let actor = runtime.resolve_actor(key, Native);
@@ -237,8 +231,7 @@ pub fn instruction<H: LeaseActors + ?Sized>(
         0xa8_d0c2 => return EnemyScript::jump(0xc6e9),
         _ => {}
     }
-    let mut lease = game.lease();
-    let runtime = &mut lease;
+    let runtime = &mut game.lease();
     match ea {
         // Instruction - queue work robot sound effect if on screen ($A8:D091).
         0xa8_d091 => {

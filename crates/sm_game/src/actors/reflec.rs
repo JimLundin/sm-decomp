@@ -50,8 +50,7 @@ const SIGN: u16 = 0x8000;
 /// Enemy graphics drawn hook - reflec - periodically cycle between palettes
 /// ($A3:DB0C). Was `palette`.
 pub fn cycle_palette<H: LeaseActors + ?Sized>(game: &mut H) {
-    let mut lease = game.lease();
-    let runtime = &mut lease;
+    let runtime = &mut game.lease();
     let hook = word_arrays::VARIABLES_FOR_ENEMY_GRAPHICS_DRAWN_HOOK;
     if runtime.word(words::DOOR_TRANSITION_FLAG_ENEMIES) != 0 {
         return;
@@ -83,8 +82,7 @@ pub fn cycle_palette<H: LeaseActors + ?Sized>(game: &mut H) {
 }
 /// Initialisation AI - reflec ($A3:DBD3).
 pub fn initialize<H: LeaseActors + ?Sized>(game: &mut H) {
-    let mut lease = game.lease();
-    let runtime = &mut lease;
+    let runtime = &mut game.lease();
     let key = combat::current(runtime);
     runtime.edit_actor(key, Native, |actor| actor.properties |= BLOCK_PLASMA);
     let axis = runtime.resolve_actor(key, Native).parameters[0];
@@ -109,8 +107,7 @@ pub fn initialize<H: LeaseActors + ?Sized>(game: &mut H) {
 /// target. A redirected target requires the retained native diagnostic
 /// before absorption. Was `prepare_shot`.
 pub fn reflect_shot<H: LeaseActors + ?Sized>(game: &mut H) -> Option<u16> {
-    let mut lease = game.lease();
-    let runtime = &mut lease;
+    let runtime = &mut game.lease();
     let raw = runtime
         .word(words::COLLISION_DETECTION_INDEX)
         .wrapping_mul(2);
@@ -144,8 +141,7 @@ pub fn reflect_shot<H: LeaseActors + ?Sized>(game: &mut H) -> Option<u16> {
 /// Enemy shot - reflec, its second half: the shot hurts it, and at zero
 /// health it shows its health reached zero instruction list. Was `absorb`.
 pub fn absorb_shot<H: LeaseActors + ?Sized>(raw: u16, game: &mut H) {
-    let mut lease = game.lease();
-    let runtime = &mut lease;
+    let runtime = &mut game.lease();
     let target = Key::from_legacy(raw);
     if runtime.resolve_actor(target, Native).health != 0 {
         combat::shot_reaction(runtime, ShotHandling::ReactionOnly);

@@ -202,8 +202,7 @@ fn reverse(runtime: &mut impl ActorLease) {
 }
 /// Initialisation AI - roach ($A3:A14D).
 pub fn initialize<H: LeaseActors + ?Sized>(game: &mut H) {
-    let mut lease = game.lease();
-    let runtime = &mut lease;
+    let runtime = &mut game.lease();
     let key = combat::current(runtime);
     let roach = current_slot(runtime);
     session_slot!(runtime, Roach[roach]; instruction_list = 0, new_instruction_list = 0);
@@ -245,8 +244,7 @@ pub fn initialize<H: LeaseActors + ?Sized>(game: &mut H) {
 }
 /// Main AI - roach ($A3:A2D0): run its function. Was `advance`.
 pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
-    let mut lease = game.lease();
-    let runtime = &mut lease;
+    let runtime = &mut game.lease();
     let key = combat::current(runtime);
     let roach = current_slot(runtime);
     let function = runtime.resolve_actor(key, Native).variables[lane::FUNCTION];

@@ -50,8 +50,7 @@ const KAGO_BUG: u16 = 0xd02e;
 
 /// Initialisation AI - Kago ($A8:AB46).
 pub fn initialize<H: LeaseActors + ?Sized>(game: &mut H) {
-    let mut lease = game.lease();
-    let runtime = &mut lease;
+    let runtime = &mut game.lease();
     let index = runtime.word(words::CUR_ENEMY_INDEX);
     let key = Key::from_legacy(index);
     runtime.edit_actor(key, Native, |actor| {
@@ -82,8 +81,7 @@ pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
 /// Enemy shot - Kago ($A8:AB83): shake the screen, speed up, count the hit,
 /// die at the last, and release a bug.
 pub fn shot<H: LeaseActors + ?Sized>(game: &mut H) {
-    let mut lease = game.lease();
-    let runtime = &mut lease;
+    let runtime = &mut game.lease();
     combat::shot_reaction(runtime, ShotHandling::Finalize);
     runtime.write_slice_le(EARTHQUAKE_TYPE, DIAGONAL_1PX);
     runtime.write_slice_le(EARTHQUAKE_TIMER, SHAKE_FRAMES);

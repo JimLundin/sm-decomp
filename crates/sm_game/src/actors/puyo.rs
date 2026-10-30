@@ -46,8 +46,7 @@ fn set_instruction_list(runtime: &mut impl ActorLease, list: u16) {
 }
 /// Initialisation AI - puyo ($A2:9A3F).
 pub fn initialize<H: LeaseActors + ?Sized>(game: &mut H) {
-    let mut lease = game.lease();
-    let runtime = &mut lease;
+    let runtime = &mut game.lease();
     let puyo = current_slot(runtime);
     session_slot!(runtime, Puyo[puyo].base.spritemap_pointer = 0x804d);
     session_slot!(runtime, Puyo[puyo].var_a = 0);
@@ -219,8 +218,7 @@ fn land(runtime: &mut impl ActorLease, puyo: i32, landing: Landing) {
 }
 /// Main AI - puyo ($A2:9A7D); false for an unknown function, as the source fails.
 pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) -> bool {
-    let mut lease = game.lease();
-    let runtime = &mut lease;
+    let runtime = &mut game.lease();
     let puyo = current_slot(runtime);
     match session_slot!(runtime, Puyo[puyo].function) {
         GROUNDED => grounded(runtime, puyo),

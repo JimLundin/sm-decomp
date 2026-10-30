@@ -164,8 +164,7 @@ pub fn initialize<H: LeaseActors + ?Sized>(child: bool, game: &mut H) {
 }
 /// Main AI - tatori ($A2:8DD2) or mini-tatori ($A2:912E); false for an unknown function.
 pub fn main_ai<H: LeaseActors + ?Sized>(child: bool, game: &mut H) -> bool {
-    let mut lease = game.lease();
-    let runtime = &mut lease;
+    let runtime = &mut game.lease();
     let key = combat::current(runtime);
     if child {
         let parent = runtime.resolve_actor(key, Le).variables[1];
@@ -422,8 +421,7 @@ fn run_function(runtime: &mut impl ActorLease, raw: u16, function: u16) -> bool 
 }
 /// Enemy touch - tatori ($A2:9281) or mini-tatori ($A2:929F).
 pub fn touch<H: LeaseActors + ?Sized>(child: bool, game: &mut H) {
-    let mut lease = game.lease();
-    let runtime = &mut lease;
+    let runtime = &mut game.lease();
     let key = combat::current(runtime);
     let slot = current_slot(runtime);
     if !child {
@@ -479,8 +477,7 @@ pub fn shot<H: LeaseActors + ?Sized>(game: &mut H) {
 }
 /// The tatori instructions ($A2:9381-$A2:94C7).
 pub fn instruction<H: LeaseActors + ?Sized>(ea: u32, j: EnemyScript, game: &mut H) -> EnemyScript {
-    let mut lease = game.lease();
-    let runtime = &mut lease;
+    let runtime = &mut game.lease();
     let key = combat::current(runtime);
     match ea {
         // Instruction - mini-tatori - crawl ($A2:9381): over the sleeping tatori's shell.

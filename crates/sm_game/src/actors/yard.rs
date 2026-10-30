@@ -218,8 +218,7 @@ fn move_axis(runtime: &mut impl ActorLease, key: Key, axis: usize, amount: i32) 
 /// Yard movement function - crawling ($A3:CFA6-$A3:CFFC), by its turn data at
 /// `turn`: Yard crawling movement - vertical ($A3:D002) or horizontal ($A3:D07E).
 pub fn crawl<H: LeaseActors + ?Sized>(raw: u16, axis: Axis, turn: u32, game: &mut H) {
-    let mut lease = game.lease();
-    let runtime = &mut lease;
+    let runtime = &mut game.lease();
     let key = Key::from_legacy(raw);
     let axis = usize::from(axis == Axis::Y);
     let turn = if axis == 1 && session_slot!(runtime, Yard[slot(key)].turn_disabled) != 0 {
@@ -263,8 +262,7 @@ pub fn crawl<H: LeaseActors + ?Sized>(raw: u16, axis: Axis, turn: u32, game: &mu
 }
 /// Initialisation AI - yard ($A3:CDE2).
 pub fn initialize<H: LeaseActors + ?Sized>(game: &mut H) {
-    let mut lease = game.lease();
-    let runtime = &mut lease;
+    let runtime = &mut game.lease();
     let key = combat::current(runtime);
     runtime.edit_actor(key, Native, |actor| {
         actor.pre_instruction = NO_MOVEMENT;
@@ -336,8 +334,7 @@ fn set_solidity(runtime: &mut impl ActorLease, key: Key) {
 /// Main AI - yard ($A3:CE64): drop it on a super missile quake ($A3:CE73), handle
 /// hiding and solidity; its movement function, which runs next.
 pub fn prepare<H: LeaseActors + ?Sized>(game: &mut H) -> u32 {
-    let mut lease = game.lease();
-    let runtime = &mut lease;
+    let runtime = &mut game.lease();
     let key = combat::current(runtime);
     let feedback = &runtime.session().feedback;
     let quake = feedback.earthquake_timer == 30 && feedback.earthquake_kind == 20;
@@ -354,8 +351,7 @@ pub fn prepare<H: LeaseActors + ?Sized>(game: &mut H) -> u32 {
 }
 /// Yard movement function - hiding ($A3:CF60): drop when nothing is ahead of it.
 pub fn hiding<H: LeaseActors + ?Sized>(raw: u16, game: &mut H) {
-    let mut lease = game.lease();
-    let runtime = &mut lease;
+    let runtime = &mut game.lease();
     let key = Key::from_legacy(raw);
     let axis = usize::from(session_slot!(runtime, Yard[slot(key)].direction) >= 4);
     let amount = velocity(runtime, key, axis, 7);
@@ -377,8 +373,7 @@ fn bounce_sound(runtime: &mut impl ActorLease) {
 }
 /// Yard movement function - airborne ($A3:D1B3): fly, bouncing off walls, then land.
 pub fn airborne<H: LeaseActors + ?Sized>(raw: u16, game: &mut H) {
-    let mut lease = game.lease();
-    let runtime = &mut lease;
+    let runtime = &mut game.lease();
     let key = Key::from_legacy(raw);
     let yard = slot(key);
     let x_at = crate::ram_slot!(@at Yard, yard, x_subvelocity);
@@ -460,8 +455,7 @@ fn kick(runtime: &mut impl ActorLease, key: Key) {
 /// Enemy touch - yard ($A3:D3B0): kicked when Samus runs into it or it is airborne;
 /// otherwise it hurts her and turns.
 pub fn touch<H: LeaseActors + ?Sized>(game: &mut H) {
-    let mut lease = game.lease();
-    let runtime = &mut lease;
+    let runtime = &mut game.lease();
     let key = combat::current(runtime);
     let yard = slot(key);
     let function = runtime.resolve_actor(key, Native).pre_instruction;
@@ -489,8 +483,7 @@ pub fn touch<H: LeaseActors + ?Sized>(game: &mut H) {
 /// Enemy shot - yard ($A3:D469): power bombs and bombs hurt it; anything else shoots it
 /// into the air ($A3:D557).
 pub fn shot<H: LeaseActors + ?Sized>(game: &mut H) {
-    let mut lease = game.lease();
-    let runtime = &mut lease;
+    let runtime = &mut game.lease();
     let index = usize::from(runtime.word(words::COLLISION_DETECTION_INDEX));
     let kind = runtime.word(word_arrays::PROJECTILE_TYPE + 2 * index) & 0xff00;
     if kind == 0x300 || kind == 0x500 {
@@ -519,8 +512,7 @@ pub fn instruction<H: LeaseActors + ?Sized>(
     j: EnemyScript,
     game: &mut H,
 ) -> EnemyScript {
-    let mut lease = game.lease();
-    let runtime = &mut lease;
+    let runtime = &mut game.lease();
     let key = Key::from_legacy(k);
     match ea {
         0xa3_cc36 | 0xa3_cc3f => {

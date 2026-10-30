@@ -105,8 +105,7 @@ fn handle_arms(runtime: &mut impl ActorLease, evir: i32) {
 }
 /// Initialisation AI - evir ($A8:87E0): the body or its arms.
 pub fn initialize<H: LeaseActors + ?Sized>(game: &mut H) {
-    let mut lease = game.lease();
-    let runtime = &mut lease;
+    let runtime = &mut game.lease();
     let evir = current_slot(runtime);
     if session_slot!(runtime, Evir[evir].parameter_1) != 0 {
         handle_arms(runtime, evir);
@@ -129,8 +128,7 @@ pub fn initialize<H: LeaseActors + ?Sized>(game: &mut H) {
 }
 /// Initialisation AI - evir projectile ($A8:88B0).
 pub fn initialize_projectile<H: LeaseActors + ?Sized>(game: &mut H) {
-    let mut lease = game.lease();
-    let runtime = &mut lease;
+    let runtime = &mut game.lease();
     let evir = current_slot(runtime);
     set_instruction_list(runtime, evir, PROJECTILE_LIST);
     let palette = session_slot!(runtime, Evir[evir - 2 * SLOT].base.palette_index);
@@ -232,8 +230,7 @@ pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
 /// Main AI - evir projectile ($A8:899E): unless frozen, keep its moving or regrowing list,
 /// or shoot; then run its function.
 pub fn projectile_main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
-    let mut lease = game.lease();
-    let runtime = &mut lease;
+    let runtime = &mut game.lease();
     let evir = current_slot(runtime);
     if session_slot!(runtime, Evir[evir].base.frozen_timer) == 0 {
         if session_slot!(runtime, Evir[evir].moving) != 0 {
@@ -250,8 +247,7 @@ pub fn projectile_main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
 /// reaction ($A8:8B16): a dead body takes its parts with it, and a frozen one freezes its
 /// arms and its projectile unless that is in flight.
 pub fn react<H: LeaseActors + ?Sized>(address: u32, game: &mut H) {
-    let mut lease = game.lease();
-    let runtime = &mut lease;
+    let runtime = &mut game.lease();
     match address {
         routine::SHOT => combat::contact_reaction(runtime, Finalize),
         routine::POWER_BOMB => combat::power_bomb_reaction(runtime, Finalize),
@@ -284,8 +280,7 @@ pub fn instruction<H: LeaseActors + ?Sized>(
     script: EnemyScript,
     game: &mut H,
 ) -> EnemyScript {
-    let mut lease = game.lease();
-    let runtime = &mut lease;
+    let runtime = &mut game.lease();
     let evir = current_slot(runtime);
     match address {
         routine::QUEUE_SPIT_SOUND => runtime.queue_sound(2, 6, SPIT_SOUND),

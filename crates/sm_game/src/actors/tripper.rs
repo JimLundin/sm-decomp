@@ -100,8 +100,7 @@ fn set_vertical_motion(runtime: &mut impl ActorLease, moving: bool) {
 /// Initialisation AI - suspensor platform ($A3:9C9F, `suspensor`) or tripper
 /// ($A3:9CBA), and their common initialisation AI ($A3:9CCC).
 pub fn initialize<H: LeaseActors + ?Sized>(suspensor: bool, game: &mut H) {
-    let mut lease = game.lease();
-    let runtime = &mut lease;
+    let runtime = &mut game.lease();
     let key = combat::current(runtime);
     let platform = current_slot(runtime);
     if suspensor {
@@ -229,8 +228,7 @@ fn move_y(runtime: &mut impl ActorLease, sinking: bool) {
 /// on it, else rise, moving sideways; a change of direction restarts the
 /// speed. Was `advance`.
 pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
-    let mut lease = game.lease();
-    let runtime = &mut lease;
+    let runtime = &mut game.lease();
     let key = combat::current(runtime);
     let platform = current_slot(runtime);
     session_slot!(runtime, Platform[platform].y_movement_function = 0);
@@ -262,8 +260,7 @@ pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
 }
 /// Enemy shot - tripper ($A3:9F08): frozen, it keeps its facing spritemap.
 pub fn shot<H: LeaseActors + ?Sized>(game: &mut H) {
-    let mut lease = game.lease();
-    let runtime = &mut lease;
+    let runtime = &mut game.lease();
     combat::shot_reaction(runtime, ShotHandling::Finalize);
     let key = combat::current(runtime);
     if runtime.resolve_actor(key, Native).frozen != 0 {
@@ -281,8 +278,7 @@ pub fn set_x_movement<H: LeaseActors + ?Sized>(
     script: EnemyScript,
     game: &mut H,
 ) -> EnemyScript {
-    let mut lease = game.lease();
-    let runtime = &mut lease;
+    let runtime = &mut game.lease();
     let platform = current_slot(runtime);
     session_slot!(
         runtime,

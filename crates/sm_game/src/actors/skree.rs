@@ -100,8 +100,7 @@ const SUPER_MISSILE: u16 = 0x200;
 
 /// Initialisation AI - metaree ($A3:8960) or skree ($A3:C6AE).
 pub fn initialize<H: LeaseActors + ?Sized>(kind: Kind, game: &mut H) {
-    let mut lease = game.lease();
-    let runtime = &mut lease;
+    let runtime = &mut game.lease();
     let key = combat::current(runtime);
     let profile = kind.profile();
     runtime.edit_actor(key, Native, |actor| {
@@ -139,8 +138,7 @@ fn burst(runtime: &mut impl ActorLease, profile: &Profile, mut parameter: u16, c
 /// Main AI - metaree ($A3:8979) or skree ($A3:C6C7): run its function. Was
 /// `advance`.
 pub fn main_ai<H: LeaseActors + ?Sized>(kind: Kind, game: &mut H) {
-    let mut lease = game.lease();
-    let runtime = &mut lease;
+    let runtime = &mut game.lease();
     let key = combat::current(runtime);
     let profile = kind.profile();
     let function = runtime.resolve_actor(key, Native).variables[lane::FUNCTION];
@@ -249,16 +247,14 @@ pub fn main_ai<H: LeaseActors + ?Sized>(kind: Kind, game: &mut H) {
 }
 /// Instruction - set attack ready flag ($A3:8956, $A3:C6A4). Was `ready`.
 pub fn set_attack_ready<H: LeaseActors + ?Sized>(script: EnemyScript, game: &mut H) -> EnemyScript {
-    let mut lease = game.lease();
-    let runtime = &mut lease;
+    let runtime = &mut game.lease();
     let key = combat::current(runtime);
     runtime.edit_actor(key, Native, |actor| actor.variables[lane::ATTACK_READY] = 1);
     script
 }
 /// Enemy shot - metaree ($A3:8B0F) or skree ($A3:C7F5): burst on death.
 pub fn shot<H: LeaseActors + ?Sized>(kind: Kind, game: &mut H) {
-    let mut lease = game.lease();
-    let runtime = &mut lease;
+    let runtime = &mut game.lease();
     let profile = kind.profile();
     if kind == Kind::Metaree {
         let key = combat::current(runtime);

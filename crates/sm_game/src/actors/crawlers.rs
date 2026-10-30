@@ -139,8 +139,7 @@ pub fn common_initialisation<H: LeaseActors + ?Sized>(raw: u16, game: &mut H) {
 /// orange Geemer ($A3:E043), Zeela ($A3:E2D4), Sova ($A3:E59C) and Geemer
 /// ($A3:E669).
 pub fn initialize<H: LeaseActors + ?Sized>(kind: Kind, game: &mut H) {
-    let mut lease = game.lease();
-    let runtime = &mut lease;
+    let runtime = &mut game.lease();
     let key = combat::current(runtime);
     // The initial instruction list pointers, and the instruction list table
     // offset some kinds set.
@@ -294,8 +293,7 @@ fn slope_x_velocity(runtime: &mut impl ActorLease) -> i32 {
 /// along the surface, turning at corners and falling off edges. Was `crawl`.
 pub fn crawl<H: LeaseActors + ?Sized>(raw: u16, axis: Axis, orange: bool, game: &mut H) {
     let axis = usize::from(axis == Axis::Y);
-    let mut lease = game.lease();
-    let runtime = &mut lease;
+    let runtime = &mut game.lease();
     let key = Key::from_legacy(raw);
     let crawler = i32::from(raw);
     if runtime.session().feedback.earthquake_timer == SHAKE_TIMER
@@ -356,8 +354,7 @@ pub fn crawl<H: LeaseActors + ?Sized>(raw: u16, axis: Axis, orange: bool, game: 
 /// Crawler function - falling ($A3:E785): fall until landing, then
 /// return to crawling. Was `falling`.
 pub fn falling<H: LeaseActors + ?Sized>(raw: u16, game: &mut H) {
-    let mut lease = game.lease();
-    let runtime = &mut lease;
+    let runtime = &mut game.lease();
     let key = Key::from_legacy(raw);
     let crawler = i32::from(raw);
     let velocity = session_slot!(

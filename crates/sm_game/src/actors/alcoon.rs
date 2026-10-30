@@ -159,8 +159,7 @@ fn direction(left: bool) -> u16 {
 /// Initialisation AI - Alcoon ($A8:DCCD): simulate a jump to find the
 /// landing Y position.
 pub fn initialize<H: LeaseActors + ?Sized>(game: &mut H) {
-    let mut lease = game.lease();
-    let runtime = &mut lease;
+    let runtime = &mut game.lease();
     let key = selected(runtime);
     let alcoon = i32::from(key.byte_index());
     session_slot!(runtime, Alcoon[alcoon].step_counter = 0);
@@ -196,8 +195,7 @@ pub fn initialize<H: LeaseActors + ?Sized>(game: &mut H) {
 }
 /// Main AI - Alcoon ($A8:DD6B): run its function. Was `advance`.
 pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
-    let mut lease = game.lease();
-    let runtime = &mut lease;
+    let runtime = &mut game.lease();
     let key = selected(runtime);
     let alcoon = i32::from(key.byte_index());
     let function = runtime.resolve_actor(key, Native).variables[lane::FUNCTION];
@@ -328,8 +326,7 @@ pub fn instruction<H: LeaseActors + ?Sized>(
     game: &mut H,
 ) -> EnemyScript {
     use instruction::*;
-    let mut lease = game.lease();
-    let runtime = &mut lease;
+    let runtime = &mut game.lease();
     let key = selected(runtime);
     let alcoon = i32::from(key.byte_index());
     match address {

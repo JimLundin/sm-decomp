@@ -94,8 +94,7 @@ fn reverse(runtime: &mut impl ActorLease, beetom: i32) {
 }
 /// Initialisation AI - beetom ($A8:B776).
 pub fn initialize<H: LeaseActors + ?Sized>(game: &mut H) {
-    let mut lease = game.lease();
-    let runtime = &mut lease;
+    let runtime = &mut game.lease();
     let beetom = current_slot(runtime);
     session_slot!(runtime, Beetom[beetom]; function_timer = 0, function = 0, falling = 0, attached = 0,
         var_a = 0, button_counter = BUTTON_PRESSES);
@@ -216,8 +215,7 @@ fn drain(runtime: &mut impl ActorLease, beetom: i32, push_left: bool) {
 /// Main AI - beetom ($A8:B80D): run its function.
 pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
     use function::*;
-    let mut lease = game.lease();
-    let runtime = &mut lease;
+    let runtime = &mut game.lease();
     let beetom = current_slot(runtime);
     let function = session_slot!(runtime, Beetom[beetom].function);
     match function {
@@ -312,8 +310,7 @@ pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
 /// Enemy touch - beetom ($A8:BE2E): latch on, and hurt Samus every 40h frames.
 pub fn touch<H: LeaseActors + ?Sized>(game: &mut H) {
     use function::*;
-    let mut lease = game.lease();
-    let runtime = &mut lease;
+    let runtime = &mut game.lease();
     let beetom = current_slot(runtime);
     if session_slot!(runtime, Beetom[beetom].attached) == 0 {
         let start = [START_DRAINING_FACING_LEFT, START_DRAINING_FACING_RIGHT];
@@ -344,8 +341,7 @@ pub fn touch<H: LeaseActors + ?Sized>(game: &mut H) {
 /// Enemy shot - beetom ($A8:BEAC): a frozen beetom drops off Samus.
 pub fn shot<H: LeaseActors + ?Sized>(game: &mut H) {
     use function::*;
-    let mut lease = game.lease();
-    let runtime = &mut lease;
+    let runtime = &mut game.lease();
     combat::shot_reaction(runtime, ShotHandling::Finalize);
     let beetom = current_slot(runtime);
     let function = session_slot!(runtime, Beetom[beetom].function);
