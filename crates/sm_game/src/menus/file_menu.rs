@@ -91,18 +91,22 @@ pub fn advance<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
         fade_to_title::<H>,
     ];
     states[crate::menu!(game.MenuIndex) as usize](game);
-    0
+    super::pending_wait(game)
 }
 fn border<H: Host + ?Sized>(sprite: u16, game: &mut H) {
     let x = if sprite == 0x4a { 0x7c } else { 0x80 };
     crate::sprite_output::menu(sprite, x, 0x10, 3584, game);
 }
 fn prepare<H: Host + ?Sized>(game: &mut H) {
-    game.fade(false);
-    if (game.ram().read_byte(crate::ram::mirror::INIDISP) & 0xf) != 0 {
+    if !super::resuming(game) {
+        game.fade(false);
+        if (game.ram().read_byte(crate::ram::mirror::INIDISP) & 0xf) != 0 {
+            return;
+        }
+    }
+    if super::blank_and_wait(true, game) {
         return;
     }
-    game.set_blank(true);
     game.queue_sound(2, 1_u8, 6);
     game.set_hdma_enabled(false);
     game.clear_hdma();
@@ -133,10 +137,18 @@ fn fade_to_title<H: Host + ?Sized>(game: &mut H) {
     }
 }
 fn fade_from_main<H: Host + ?Sized>(game: &mut H) {
-    crate::sprite_output::menu_selection(game);
+    if !super::resuming(game) {
+        crate::sprite_output::menu_selection(game);
+    }
     fade_to_main(game);
 }
 fn fade_to_main<H: Host + ?Sized>(game: &mut H) {
+    if (super::resuming(game) || fade_out_mosaic(game)) && !super::blank_and_wait(true, game) {
+        crate::menu!(game.MenuIndex += 1);
+    }
+}
+/// Fade out with the mosaic growing as the brightness falls; true once black.
+fn fade_out_mosaic<H: Host + ?Sized>(game: &mut H) -> bool {
     game.fade(false);
     game.ram().write_byte(
         crate::ram::mirror::MOSAIC,
@@ -144,10 +156,7 @@ fn fade_to_main<H: Host + ?Sized>(game: &mut H) {
             | (16 * (game.ram().read_byte(crate::ram::mirror::INIDISP) as i32 & 0xf)) ^ 0xf0)
             as u8,
     );
-    if (game.ram().read_byte(crate::ram::mirror::INIDISP) & 0xf) == 0 {
-        game.set_blank(true);
-        crate::menu!(game.MenuIndex += 1);
-    }
+    (game.ram().read_byte(crate::ram::mirror::INIDISP) & 0xf) == 0
 }
 fn restore_cursor<H: Host + ?Sized>(game: &mut H) {
     crate::sprite_output::file_menu_cursor(game);
@@ -583,7 +592,9 @@ fn load_background<H: Host + ?Sized>(game: &mut H) {
     restart_missile(game);
 }
 fn initialize<H: Host + ?Sized>(game: &mut H) {
-    word!(game.SELECTED_SAVE_SLOT = save_slots::last_selected(game));
+    if !super::resuming(game) {
+        word!(game.SELECTED_SAVE_SLOT = save_slots::last_selected(game));
+    }
     menu_tilemap::main_menu(game);
 }
 fn fade_in_main<H: Host + ?Sized>(game: &mut H) {

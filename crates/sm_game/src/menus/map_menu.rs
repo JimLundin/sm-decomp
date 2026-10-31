@@ -87,7 +87,7 @@ pub fn advance<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
         fade_to_options::<H>,
     ];
     states[crate::menu!(game.MenuIndex) as usize](game);
-    0
+    super::pending_wait(game)
 }
 fn fade_to_options<H: Host + ?Sized>(game: &mut H) {
     draw_area_labels(game);
@@ -638,10 +638,14 @@ fn fade_room<H: Host + ?Sized>(game: &mut H) {
     }
 }
 fn start_game<H: Host + ?Sized>(game: &mut H) {
-    let timer = enemy_data::FIRST + enemy_data::X_POS;
-    set_native_word(timer, native_word(timer, game).wrapping_sub(1), game);
-    if native_word(timer, game) == 0 {
-        game.set_blank(true);
+    if !super::resuming(game) {
+        let timer = enemy_data::FIRST + enemy_data::X_POS;
+        set_native_word(timer, native_word(timer, game).wrapping_sub(1), game);
+        if native_word(timer, game) != 0 {
+            return;
+        }
+    }
+    if !super::blank_and_wait(true, game) {
         word!(game.GAME_STATE += 1);
         crate::menu!(game.MenuIndex = 0);
     }
