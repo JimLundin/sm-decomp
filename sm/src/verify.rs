@@ -1044,6 +1044,8 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
     #[cfg(sm_verify_dll)]
     let mut divergence_report: Option<&String> = None;
     #[cfg(sm_verify_dll)]
+    let mut single = sm::observation::SingleOptions::default();
+    #[cfg(sm_verify_dll)]
     let mut prepared_checkpoint_check = None;
     #[cfg(sm_verify_dll)]
     let mut prepared_checkpoint_reject = None;
@@ -1070,6 +1072,22 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
             #[cfg(sm_verify_dll)]
             "--divergence-report" if divergence_report.is_none() => {
                 divergence_report = Some(options.next().ok_or("missing divergence report path")?);
+            }
+            #[cfg(sm_verify_dll)]
+            "--engine-only" if !single.engine_only => single.engine_only = true,
+            #[cfg(sm_verify_dll)]
+            "--untyped" if !single.untyped => single.untyped = true,
+            #[cfg(sm_verify_dll)]
+            "--trace-out" if single.trace_out.is_none() => {
+                single.trace_out = Some(options.next().ok_or("missing trace output path")?);
+            }
+            #[cfg(sm_verify_dll)]
+            "--lock-out" if single.lock_out.is_none() => {
+                single.lock_out = Some(options.next().ok_or("missing lock output path")?);
+            }
+            #[cfg(sm_verify_dll)]
+            "--free-run" if single.free_run.is_none() => {
+                single.free_run = Some(options.next().ok_or("missing reference trace path")?);
             }
             "--audio-trace" if audio_trace_path.is_none() => {
                 audio_trace_path = Some(options.next().ok_or("missing audio trace path")?);
@@ -1194,19 +1212,23 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
     if checkpoint_out.is_some_and(|path| std::path::Path::new(path).exists()) {
         return Err("checkpoint output already exists; choose a new path".into());
     }
+    #[cfg(sm_verify_dll)]
+    let records = single.trace_out.is_some() || single.lock_out.is_some();
+    #[cfg(not(sm_verify_dll))]
+    let records = false;
     // A checkpoint of the original game's state for rows whose native code does
-    // not yet follow it: only the oracle runs, so nothing is compared.
+    // not yet follow it, or the oracle's trace or lock entry: only the oracle
+    // runs, so nothing is compared. A recording also shows the expectations.
     if oracle_only
-        && (checkpoint_out.is_none() || !required_probes.is_empty() || !expected.is_empty())
+        && (!required_probes.is_empty()
+            || (!records && (checkpoint_out.is_none() || !expected.is_empty())))
     {
         return Err(
-            "--oracle-only only produces a checkpoint, without probes or expectations".into(),
+            "--oracle-only produces a checkpoint, trace or lock entry, without probes".into(),
         );
     }
     #[cfg(sm_verify_dll)]
-    if oracle_only && divergence_report.is_some() {
-        return Err("--oracle-only runs no comparison to report".into());
-    }
+    let single = single.open(oracle_only, divergence_report.map(std::path::PathBuf::from))?;
     if audio_trace_path.is_some()
         && (!game.supports_legacy_persistence()
             || std::env::var_os("SM_VERIFY_PHYSICAL_AUDIO").is_none())
@@ -1393,12 +1415,23 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
             )),
             None => None,
         };
-        // Typed observations compare beside RAM on every paired frame.
+        // Typed observations compare beside RAM on every paired frame, or a
+        // single-side run records or compares its own.
         #[cfg(sm_verify_dll)]
-        if !oracle_only {
-            game.observation = Some(Box::new(sm::observation::Lockstep::new(
-                divergence_report.map(std::path::PathBuf::from),
-            )));
+        let engine_only = single
+            .as_ref()
+            .is_some_and(|run| run.side == sm::observation::Side::Engine);
+        #[cfg(not(sm_verify_dll))]
+        let engine_only = false;
+        #[cfg(sm_verify_dll)]
+        {
+            game.observation = match single {
+                Some(run) => Some(Box::new(sm::observation::Observer::single(run))),
+                None if !oracle_only => Some(Box::new(sm::observation::Observer::lockstep(
+                    divergence_report.map(std::path::PathBuf::from),
+                ))),
+                None => None,
+            };
         }
         let mut completed = 0;
         let mut hit_tail_complete = after_hits.is_none();
@@ -1417,6 +1450,11 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
                 // Set per frame: restoring --checkpoint-in brings back the paired mode.
                 game.g_runmode = sm::cpu_infra::RM_THEIRS as u8;
             }
+            if engine_only {
+                game.g_runmode = sm::cpu_infra::RM_MINE as u8;
+                #[cfg(sm_verify_dll)]
+                sm::observation::begin_engine_tick(game);
+            }
             sm::oracle_mode::set_next_frame_input(inputs.get(index + 1).copied());
             sm::rtl::rtl_run_frame(
                 sm::rtl::TickInput {
@@ -1425,6 +1463,9 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
                 game,
             );
             sm::oracle_mode::set_next_frame_input(None);
+            #[cfg(sm_verify_dll)]
+            sm::observation::single_tick(game, index)
+                .map_err(|error| format!("input frame {index}: {error}"))?;
             if let Some(file) = positions.as_mut() {
                 use std::io::Write as _;
                 let word = |at| ReplayCoverage::word(game, at);
@@ -1486,17 +1527,23 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
             }
         }
         super::finish_verify_audio();
-        let failures = game.VERIFY_FAILURES;
+        #[cfg(sm_verify_dll)]
+        let (observed, free_run_failures) = match game.observation.take() {
+            Some(observer) => observer.finish()?,
+            None => (Vec::new(), None),
+        };
+        #[cfg(not(sm_verify_dll))]
+        let free_run_failures: Option<u64> = None;
+        // A free run fails on the Ticks it diverged; nothing else is compared.
+        let failures = free_run_failures.unwrap_or(game.VERIFY_FAILURES);
         coverage.report();
         println!(
             "Verified {completed} frames: {failures} failing frames ({:.2}s)",
             start.elapsed().as_secs_f64()
         );
         #[cfg(sm_verify_dll)]
-        if let Some(mut lockstep) = game.observation.take() {
-            for line in lockstep.finish()? {
-                eprintln!("{line}");
-            }
+        for line in observed {
+            eprintln!("{line}");
         }
         let probes = sm::verify_probe::report();
         let expectations = coverage.report_expectations();
@@ -1544,9 +1591,9 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
             if checkpoint::origin(&rom, seed_in.map(std::path::Path::new))? != origin {
                 return Err("seed changed during replay".into());
             }
-            if oracle_only {
-                // The checkpoint resumes a paired replay; the oracle's state is
-                // already adopted into the Game after every frame.
+            if oracle_only || engine_only {
+                // The checkpoint resumes a paired replay; the side's state is
+                // already in the Game after every frame.
                 game.g_runmode = sm::cpu_infra::RM_BOTH as u8;
             }
             checkpoint::save(std::path::Path::new(path), game, origin, &inputs, end)?;

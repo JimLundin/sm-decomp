@@ -36,6 +36,40 @@ pub struct Projection {
     pub domains: Domains,
 }
 
+/// The engine's Tick as the frame leases release its Session. While the
+/// Session is not retained between frames, the Tick's last lease is the
+/// engine's typed state at the end of the Tick.
+#[derive(Default)]
+pub struct Leases {
+    capturing: bool,
+    captured: Option<Projection>,
+    /// Time spent projecting leases.
+    pub elapsed: std::time::Duration,
+}
+
+impl Leases {
+    /// The engine's Tick starts: capture the leases it releases.
+    pub fn begin_tick(&mut self) {
+        self.capturing = true;
+        self.captured = None;
+    }
+
+    /// Project a frame lease's Session as it is released, inside the engine's Tick.
+    pub fn capture(&mut self, session: &Session) {
+        if self.capturing {
+            let start = std::time::Instant::now();
+            self.captured = Some(project(session));
+            self.elapsed += start.elapsed();
+        }
+    }
+
+    /// The engine's Tick ends; return the last lease's projection.
+    pub fn end_tick(&mut self) -> Option<Projection> {
+        self.capturing = false;
+        self.captured.take()
+    }
+}
+
 /// Project every domain `session` owns as typed fields.
 pub fn project(session: &Session) -> Projection {
     let mut domains = Domains::default();

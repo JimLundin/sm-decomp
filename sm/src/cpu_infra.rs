@@ -427,21 +427,18 @@ fn brightness_cache_is_valid(ppu: &Ppu) -> bool {
             .enumerate()
             .all(|(i, value)| *value == scaled(i / 2))
 }
+/// Which side's bytes a normalized RAM range takes.
+#[derive(Clone, Copy)]
+pub(crate) enum Source {
+    Mine,
+    Theirs,
+}
 // LEGACY(verifier): RAM the comparison does not check, copied from one side to the other
 // before comparing. Each range, why it differs and what would retire it is in docs/LEGACY.md.
-// These ranges belong to disjoint snapshot RAM fields, not live RAM.
-fn normalize_snapshot_ram(
-    mine: &mut [u8; 0x20000],
-    theirs: &mut [u8; 0x20000],
-    session_mine: &mut SessionSnapshotPayload,
-    session_theirs: &mut SessionSnapshotPayload,
-) -> Result<(), String> {
-    enum Source {
-        Mine,
-        Theirs,
-    }
+// These ranges belong to disjoint snapshot RAM fields, not live RAM. Free run masks them.
+pub(crate) const NORMALIZED_RAM: [(Source, core::ops::Range<usize>); 31] = {
     use Source::{Mine, Theirs};
-    for (source, range) in [
+    [
         (Theirs, 0x0000..0x0051),
         (Theirs, 0x1f5b..0x2000),
         (Theirs, 0x00ad..0x00b1),
@@ -473,15 +470,23 @@ fn normalize_snapshot_ram(
         (Theirs, 0x1966..0x196c),
         (Mine, 0xef74..0xef78),
         (Mine, 0xf37a..0xf380),
-    ] {
+    ]
+};
+fn normalize_snapshot_ram(
+    mine: &mut [u8; 0x20000],
+    theirs: &mut [u8; 0x20000],
+    session_mine: &mut SessionSnapshotPayload,
+    session_theirs: &mut SessionSnapshotPayload,
+) -> Result<(), String> {
+    for (source, range) in NORMALIZED_RAM {
         match source {
-            Mine => {
+            Source::Mine => {
                 theirs[range.clone()].copy_from_slice(&mine[range.clone()]);
                 session_theirs
                     .normalize_from(session_mine, range)
                     .map_err(|error| format!("{error:?}"))?;
             }
-            Theirs => {
+            Source::Theirs => {
                 mine[range.clone()].copy_from_slice(&theirs[range.clone()]);
                 session_mine
                     .normalize_from(session_theirs, range)
@@ -841,7 +846,7 @@ unsafe fn verify_snapshots_eq(
 // Snapshot storage is separate from the live emulator allocations. Narrow
 // borrows let the compiler retain that distinction across the bulk copies.
 // RAM must be the selected backend's stable binding at both capture and restore.
-unsafe fn make_snapshot_with_player_owner(
+pub(crate) unsafe fn make_snapshot_with_player_owner(
     s: &mut Snapshot,
     snes: &Snes,
     c: &Cpu,
