@@ -2,11 +2,13 @@
 //! the Samus authority: the owned display when it draws, otherwise the
 //! native body tables captured through the compatibility runtime.
 use crate::runtime_access::SessionRam;
+use crate::scene::objects::Host as _;
 use crate::scene::samus_body::{self, Body, Half};
 use crate::scene::samus_content::{CapturedBytes, PreparedBytes, Registration, Role, RoleLease};
 use crate::scene::samus_native_content::CapturedRom;
 use crate::scene::samus_position_tiles::{self, TileTable};
 use crate::session_access::SessionAccess;
+use crate::sprite_drawing::SessionObjects;
 use crate::visual_host::{Content, Effects, Record as _, Source};
 use core::convert::Infallible;
 use sm_data::cartridge::RomRecord;
@@ -107,9 +109,136 @@ pub trait Authority: SessionAccess + SessionRam + Content<Record = RomRecord> + 
     -> RoleTable;
     /// The role's mapped base in the prepared Samus content.
     fn role_base(&self, role: Role, registration: Registration) -> usize;
-    /// Samus's sprite position for the doubled pose offset.
-    fn sprite_position(&mut self, doubled: u16) -> (u16, u16);
-    fn bottom_visible(&mut self) -> bool;
+    /// The prepared native position-offset table for `role`, when the
+    /// prepared content supplies it.
+    fn native_offsets(&self, role: Role) -> Option<RoleTable>;
+}
+
+/// The bottom-half and sprite-position protocols on the lease's Session,
+/// with the OAM staging as the session view projects it.
+struct LeaseBody<'a, A>(&'a mut A);
+impl<A: Authority> samus_body::BottomHost for LeaseBody<'_, A> {
+    type Error = Infallible;
+    fn pose(&mut self) -> Result<u16, Infallible> {
+        Ok(self.0.session().player.pose)
+    }
+    fn animation_frame(&mut self) -> Result<u16, Infallible> {
+        Ok(self.0.session().player.animation_clock.frame)
+    }
+    fn movement(&mut self) -> Result<u8, Infallible> {
+        Ok(self.0.session().player.movement_and_facing.to_le_bytes()[1])
+    }
+    fn clear_bottom(&mut self) -> Result<(), Infallible> {
+        self.0.session_mut().player.bottom_sprite = 0;
+        Ok(())
+    }
+    fn cursor(&mut self) -> Result<u16, Infallible> {
+        SessionObjects(&mut *self.0).read_little_word(544)
+    }
+    fn player_x(&mut self) -> Result<u16, Infallible> {
+        Ok(self.0.session().player.x)
+    }
+    fn player_y(&mut self) -> Result<u16, Infallible> {
+        Ok(self.0.session().player.y)
+    }
+    fn camera_x(&mut self) -> Result<u16, Infallible> {
+        Ok(self.0.session().room.camera.layer1[0])
+    }
+    fn camera_y(&mut self) -> Result<u16, Infallible> {
+        Ok(self.0.session().room.camera.layer1[1])
+    }
+    fn marker_word(&mut self, entry: usize, value: u16) -> Result<(), Infallible> {
+        SessionObjects(&mut *self.0).write_native_bytes(entry, value)
+    }
+    fn publish_cursor(&mut self, value: u16) -> Result<(), Infallible> {
+        let [low, high] = value.to_le_bytes();
+        SessionObjects(&mut *self.0).write_byte(544, low)?;
+        SessionObjects(&mut *self.0).write_byte(545, high)
+    }
+    fn marker_written(&mut self, _: usize, _: u16, _: u16) -> Result<(), Infallible> {
+        Ok(())
+    }
+}
+impl<A: Authority> samus_position_tiles::PositionHost for LeaseBody<'_, A> {
+    type Error = Infallible;
+    fn ceres(&mut self) -> Result<u16, Infallible> {
+        Ok(self.0.session().room.ceres_status)
+    }
+    fn player_x(&mut self) -> Result<u16, Infallible> {
+        Ok(self.0.session().player.x)
+    }
+    fn player_y(&mut self) -> Result<u16, Infallible> {
+        Ok(self.0.session().player.y)
+    }
+    fn set_player_x(&mut self, value: u16) -> Result<(), Infallible> {
+        self.0.session_mut().player.x = value;
+        Ok(())
+    }
+    fn set_player_y(&mut self, value: u16) -> Result<(), Infallible> {
+        self.0.session_mut().player.y = value;
+        Ok(())
+    }
+    fn project(&mut self, x: u16, y: u16) -> Result<(u16, u16), Infallible> {
+        let point = crate::cinematic::project_cinematic_point_reads(
+            crate::geometry::Point { x, y },
+            |at| self.0.word(at),
+        );
+        Ok((point.x, point.y))
+    }
+    fn frame(&mut self) -> Result<u16, Infallible> {
+        Ok(self.0.session().player.animation_clock.frame)
+    }
+    fn movement(&mut self) -> Result<u8, Infallible> {
+        samus_body::BottomHost::movement(self)
+    }
+    fn landing_word(&self, bytes: [u8; 2]) -> u16 {
+        u16::from_ne_bytes(bytes)
+    }
+    fn landing_offset(&mut self, offset: usize) -> Result<u16, Infallible> {
+        Ok(match self.0.native_offsets(Role::Landing) {
+            Some(table) => table.word(offset, false),
+            None => self.landing_word(samus_position_tiles::default_landing_bytes(offset)),
+        })
+    }
+    fn crouching_offset(&mut self, offset: usize) -> Result<i8, Infallible> {
+        Ok(match self.0.native_offsets(Role::Crouching) {
+            Some(table) => table.byte(offset) as i8,
+            None => samus_position_tiles::default_crouching_byte(offset),
+        })
+    }
+    fn drained_offset(&mut self, offset: usize) -> Result<i8, Infallible> {
+        Ok(match self.0.native_offsets(Role::Drained) {
+            Some(table) => table.byte(offset) as i8,
+            None => samus_position_tiles::default_drained_byte(offset),
+        })
+    }
+    fn fallback_byte(&mut self, offset: usize) -> Result<u8, Infallible> {
+        let record = self.0.table(Source::Native, 0x91b629);
+        let table = self
+            .0
+            .captured_role(Role::PositionFallback, Registration::Native, record);
+        Ok(table.byte(offset))
+    }
+    fn camera_x(&mut self) -> Result<u16, Infallible> {
+        samus_body::BottomHost::camera_x(self)
+    }
+    fn camera_y(&mut self) -> Result<u16, Infallible> {
+        samus_body::BottomHost::camera_y(self)
+    }
+    fn set_body_x(&mut self, value: u16) -> Result<(), Infallible> {
+        self.0.session_mut().player.body_position.x = value;
+        Ok(())
+    }
+    fn set_body_y(&mut self, value: u16) -> Result<(), Infallible> {
+        self.0.session_mut().player.body_position.y = value;
+        Ok(())
+    }
+}
+fn sprite_position<A: Authority>(h: &mut A, doubled: u16) -> (u16, u16) {
+    samus_position_tiles::sprite_position(&mut LeaseBody(h), doubled).unwrap()
+}
+fn bottom_visible<A: Authority>(h: &mut A) -> bool {
+    samus_body::bottom_is_visible(&mut LeaseBody(h)).unwrap()
 }
 
 fn loaded_role<A: Authority>(h: &mut A, role: Role, address: u32) -> RoleTable {
@@ -157,7 +286,7 @@ impl<A: Authority> samus_body::Host for BodyHost<'_, A> {
         Ok(())
     }
     fn sprite_position(&mut self, doubled: u16) -> Result<(u16, u16), Self::Error> {
-        Ok(self.0.sprite_position(doubled))
+        Ok(sprite_position(self.0, doubled))
     }
     fn body_x(&mut self) -> Result<u16, Self::Error> {
         Ok(self.0.word(0xb04))
@@ -176,7 +305,7 @@ impl<A: Authority> samus_body::Host for BodyHost<'_, A> {
         Ok(())
     }
     fn bottom_visible(&mut self) -> Result<bool, Self::Error> {
-        Ok(self.0.bottom_visible())
+        Ok(bottom_visible(self.0))
     }
     fn queue_tiles(&mut self) -> Result<(), Self::Error> {
         queue_body_tiles(self.0);
@@ -268,7 +397,7 @@ pub fn draw_shinespark_crash_echoes<A: Authority>(k: u16, h: &mut A) {
     if if h.has_owned_display() {
         h.owned_bottom_visible()
     } else {
-        h.bottom_visible()
+        bottom_visible(h)
     } {
         let pose = h.session().player.pose;
         let bottom = sprite_index(h, Half::Bottom, pose, false);
