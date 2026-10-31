@@ -73,8 +73,6 @@ pub trait MenuRuntime:
     fn write_dma_register(&mut self, register: u16, value: u8);
     /// Advance the music queue, as the HDMA update did first each frame.
     fn handle_music_queue(&mut self);
-    /// Spawn an enemy projectile that uses the room's graphics; returns its slot.
-    fn spawn_room_enemy_projectile(&mut self, definition: u16, parameter: u16) -> u16;
     /// The original's `RomPtr_RAM` assertion on a RAM-table address.
     fn assert_ram_pointer(&mut self, address: u16);
     /// The message box DMA length the original kept outside RAM.

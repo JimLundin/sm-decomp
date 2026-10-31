@@ -101,7 +101,11 @@ pub fn execute_setup_code<H: ScriptHost + ?Sized>(script: u16, game: &mut H) {
         // Spawn pre-Phantoon room enemy projectile.
         0xc8c8 => {
             use crate::constants::bank_86::ADDR_K_EPROJ_PRE_PHANTOM_ROOM;
-            game.spawn_room_enemy_projectile(ADDR_K_EPROJ_PRE_PHANTOM_ROOM as u16, 0xc8c8);
+            crate::enemy_projectiles::lifecycle::spawn_room_leased(
+                ADDR_K_EPROJ_PRE_PHANTOM_ROOM as u16,
+                0xc8c8,
+                game,
+            );
         }
         // Shaktool's room.
         0xc8d3 => spawn_hardcoded(0, 0, 0xb8eb, game),

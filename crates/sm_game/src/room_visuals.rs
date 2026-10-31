@@ -161,9 +161,10 @@ pub fn advance_tourian_statue<H: crate::menus::host::Host + ?Sized>(
                 // returned slot.
                 let mut parameter = EARTHQUAKE_TIMER;
                 for _ in 0..4 {
-                    parameter = game.spawn_room_enemy_projectile(
+                    parameter = crate::enemy_projectiles::lifecycle::spawn_room_leased(
                         ADDR_K_EPROJ_TOURIAN_STATUE_DUST_CLOUDS as u16,
                         parameter,
+                        game,
                     );
                 }
                 advance_statue_program(object);
