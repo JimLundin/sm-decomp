@@ -219,6 +219,9 @@ macro_rules! mother_brain_owned {
             CollidingEnemy(direction) => $($reference)* $session.actors.schedule.colliding[direction],
             Bg2TilemapSize => $($reference)* $session.actors.drawing.tilemap_size,
             Bg2TilemapPending => $($reference)* $session.actors.drawing.tilemap_pending,
+            TimerStatus => $($reference)* $session.timing.timer_status,
+            JapaneseText => $($reference)* $session.options.japanese_text,
+            FxBlending => $($reference)* $session.room.fx_blending,
             PaletteFadeStep | Bg2Scroll(_) => unreachable!("presentation words go through its owner"),
             Color(_) => unreachable!("colours go through the visual owner"),
         }

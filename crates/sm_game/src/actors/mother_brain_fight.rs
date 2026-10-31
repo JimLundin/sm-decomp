@@ -808,6 +808,9 @@ owned_words! {
     Bg2TilemapPending => words::NMI_FLAG_BG2_ENEMY_VRAM_TRANSFER,
     PaletteFadeStep => words::PALETTE_CHANGE_NUM,
     Bg2Scroll(axis) => words::REG_BG2HOFS + 2 * axis,
+    TimerStatus => words::TIMER_STATUS,
+    JapaneseText => words::JAPANESE_TEXT_FLAG,
+    FxBlending => words::FX_LAYER_BLENDING_CONFIG_A,
 }
 
 /// The Session-owned words: the typed field inside a lease, the RAM image's
@@ -1106,7 +1109,7 @@ crate::dispatch::callback_dispatch! {
         session_slot!(game, MotherBrainBrain[BRAIN].unpause_hook = 1);
     };
     [11111753] fake_death_ascent_set_up_phase2_brain [] {
-        word!(game.FX_LAYER_BLENDING_CONFIG_A = 52);
+        game.set_owned(OwnedWord::FxBlending, 52);
         let e: i32 = BRAIN;
         session_slot!(game, MotherBrainBrain[e].function = function::BRAIN_SET_UP_BRAIN_AND_NECK_TO_BE_DRAWN);
         let e0: i32 = 0;
@@ -1217,7 +1220,7 @@ crate::dispatch::callback_dispatch! {
             game.foreign(escape_typewriter::set_up_zebes);
             session_slot!(game, MotherBrainBody[BODY].function_timer = 32);
             let mut v1: u16 = function::PHASE_3_DEATH_SPAWN_TIME_BOMB_SET_JAPANESE_TEXT;
-            if word!(game.JAPANESE_TEXT_FLAG) == 0 {
+            if game.owned(OwnedWord::JapaneseText) == 0 {
                 v1 = function::PHASE_3_DEATH_TYPE_OUT_ZEBES_ESCAPE_TEXT;
             }
             session_slot!(game, MotherBrainBody[BODY].function = v1);
@@ -1234,7 +1237,7 @@ crate::dispatch::callback_dispatch! {
         session_slot!(game, MotherBrainBody[BODY].function_timer, |old| old.wrapping_sub(1));
         if (session_slot!(game, MotherBrainBody[BODY].function_timer) & 0x8000) != 0 {
             run_samus_command(samus_command::ENABLE_TIMER_HANDLING, game);
-            word!(game.TIMER_STATUS = 2);
+            game.set_owned(OwnedWord::TimerStatus, 2);
             set_boss_bit_for_current_area(2, game);
             set_event_happened(event::ZEBES_TIMEBOMB_SET, game);
             session_slot!(game, MotherBrainBody[BODY].function = function::PHASE_3_DEATH_BLOW_UP_ESCAPE_DOOR);

@@ -20,6 +20,7 @@ use std::sync::Arc;
 pub struct AuxiliaryGameplayCheckpoint {
     pub botwoon_death: crate::actors::botwoon_death::DeathProtocol,
     pub timing: crate::session::Timing,
+    pub options: crate::session::Options,
     pub flow: crate::flow::Flow,
     pub menu: crate::menu_state::MenuState,
     pub gameplay_flags: crate::gameplay_flag_state::GameplayFlags,
@@ -1493,7 +1494,9 @@ checkpoint_fields!(checkpoint_spawn_scratch, checkpoint_read_spawn_scratch, Spaw
     argument: checkpoint_word/checkpoint_read_word);
 checkpoint_fields!(checkpoint_timing, checkpoint_read_timing, Timing,
     frame_counter: checkpoint_word/checkpoint_read_word, random_number: checkpoint_word/checkpoint_read_word,
-    time_frozen: checkpoint_word/checkpoint_read_word);
+    time_frozen: checkpoint_word/checkpoint_read_word, timer_status: checkpoint_word/checkpoint_read_word);
+checkpoint_fields!(checkpoint_options, checkpoint_read_options, crate::session::Options,
+    japanese_text: checkpoint_word/checkpoint_read_word);
 checkpoint_fields!(checkpoint_menu, checkpoint_read_menu, crate::menu_state::MenuState,
     menu_index: checkpoint_word/checkpoint_read_word, pausemenu_start_lr_pressed_highlight_timer: checkpoint_word/checkpoint_read_word, pausemenu_lr_animation_timer: checkpoint_word/checkpoint_read_word, pausemenu_item_selector_animation_timer: checkpoint_word/checkpoint_read_word, pausemenu_reserve_tank_animation_timer: checkpoint_word/checkpoint_read_word, unused_word_7e0731: checkpoint_word/checkpoint_read_word, pausemenu_uparrow_animation_timer: checkpoint_word/checkpoint_read_word, pausemenu_downarrow_animation_timer: checkpoint_word/checkpoint_read_word, pausemenu_rightarrow_animation_timer: checkpoint_word/checkpoint_read_word, pausemenu_leftarrow_animation_timer: checkpoint_word/checkpoint_read_word, pausemenu_palette_animation_timer: checkpoint_word/checkpoint_read_word, unused_word_7e073d: checkpoint_word/checkpoint_read_word, pausemenu_lr_animation_frame: checkpoint_word/checkpoint_read_word, pausemenu_item_selector_animation_frame: checkpoint_word/checkpoint_read_word, pausemenu_reserve_tank_animation_frame: checkpoint_word/checkpoint_read_word, unused_word_7e0745: checkpoint_word/checkpoint_read_word, pausemenu_uparrow_animation_frame: checkpoint_word/checkpoint_read_word, pausemenu_downarrow_animation_frame: checkpoint_word/checkpoint_read_word, pausemenu_rightarrow_animation_frame: checkpoint_word/checkpoint_read_word, pausemenu_leftarrow_animation_frame: checkpoint_word/checkpoint_read_word, pausemenu_palette_animation_frame: checkpoint_word/checkpoint_read_word, pausemenu_shoulder_button_highlight: checkpoint_word/checkpoint_read_word, pausemenu_button_label_mode: checkpoint_word/checkpoint_read_word, pausemenu_equipment_category_item: checkpoint_word/checkpoint_read_word, pausemenu_reserve_tank_delay_ctr: checkpoint_word/checkpoint_read_word, unused_word_7e0759: checkpoint_word/checkpoint_read_word, unused_word_7e075b: checkpoint_word/checkpoint_read_word, unused_word_7e075d: checkpoint_word/checkpoint_read_word, unused_word_7e075f: checkpoint_word/checkpoint_read_word, unused_word_7e0761: checkpoint_word/checkpoint_read_word, pause_screen_mode: checkpoint_word/checkpoint_read_word);
 checkpoint_fields!(checkpoint_flow, checkpoint_read_flow, crate::flow::Flow,
@@ -1581,6 +1584,7 @@ fn checkpoint_read_hdma(
 checkpoint_auxiliary!(
     botwoon_death: checkpoint_botwoon_death/checkpoint_read_botwoon_death,
     timing: checkpoint_timing/checkpoint_read_timing,
+    options: checkpoint_options/checkpoint_read_options,
     flow: checkpoint_flow/checkpoint_read_flow,
     menu: checkpoint_menu/checkpoint_read_menu,
     gameplay_flags: checkpoint_flags/checkpoint_read_flags,
@@ -1983,6 +1987,7 @@ checkpoint_fields!(checkpoint_room, checkpoint_read_room, Room,
     height: checkpoint_word/checkpoint_read_word, scroll_width: checkpoint_word/checkpoint_read_word,
     scroll_height: checkpoint_word/checkpoint_read_word, size_bytes: checkpoint_word/checkpoint_read_word,
     collision_cursor: checkpoint_word/checkpoint_read_word, liquid_options: checkpoint_word/checkpoint_read_word,
+    fx_blending: checkpoint_word/checkpoint_read_word,
     liquid_height: checkpoint_word/checkpoint_read_word, liquid_target: checkpoint_word/checkpoint_read_word,
     liquid_velocity: checkpoint_word/checkpoint_read_word, liquid_delay: checkpoint_word/checkpoint_read_word,
     liquid: checkpoint_liquid/checkpoint_read_liquid,
@@ -2038,7 +2043,7 @@ impl Room {
         }
         let topology = checkpoint_world_binding(binding)?;
         checkpoint_validate_room(self, binding)?;
-        let mut bytes = Vec::from(b"SMROOMS\x03".as_slice());
+        let mut bytes = Vec::from(b"SMROOMS\x04".as_slice());
         let source = observation_binding(metadata);
         checkpoint_count(&mut bytes, source.len());
         bytes.extend_from_slice(&source);
@@ -2053,7 +2058,7 @@ impl Room {
         expected: &world::WorldBinding,
     ) -> Result<Self, String> {
         let mut read = CheckpointReader(bytes);
-        if read.bytes(8)? != b"SMROOMS\x03" {
+        if read.bytes(8)? != b"SMROOMS\x04" {
             return Err("unsupported room checkpoint schema".into());
         }
         let size = usize::try_from(read.counter()?)
@@ -2191,6 +2196,7 @@ impl NumericGameplayCheckpoint {
         let AuxiliaryGameplayCheckpoint {
             botwoon_death,
             timing,
+            options,
             flow,
             menu,
             gameplay_flags,
@@ -2216,6 +2222,7 @@ impl NumericGameplayCheckpoint {
             actors: self.actors,
             botwoon_death,
             timing,
+            options,
             flow,
             menu,
             world: self.world,
