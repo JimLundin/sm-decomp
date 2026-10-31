@@ -3,8 +3,13 @@
 //!
 //! A write decodes exactly as the SNES PPU latches it: the shared scroll latch
 //! (BGnHOFS/BGnVOFS), the Mode 7 write latch (M7A-M7Y and M7HOFS/M7VOFS) and
-//! the colour data channel selects. VRAM, CGRAM and OAM ports, the counters and
-//! the beam-timed mosaic start line are outside this model.
+//! the colour data channel selects. VRAM, CGRAM and OAM ports and the counters
+//! are outside this model.
+//!
+//! The mosaic start line is the first line a mosaic size applies from. It is
+//! line 1 from each frame's start (`begin_frame`), and a MOSAIC write restarts
+//! it at line 0, as the renderer applies register writes at the frame's top
+//! rather than at their beam position.
 use super::{Affine, Background, ColorMath, Routing, Window, Windows};
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -20,11 +25,19 @@ pub struct Registers {
     pub forced_blank: bool,
     pub layers: [Layer; 4],
     pub mosaic_size: u8,
+    pub mosaic_start_line: u8,
     pub windows: Windows,
     pub routing: Routing,
     pub affine: Affine,
     pub color: ColorMath,
     pub direct_color: bool,
+    /// SETINI ($2133): screen and sprite interlace, overscan, pseudo-hires and
+    /// Mode 7 EXTBG.
+    pub interlace: bool,
+    pub sprite_interlace: bool,
+    pub overscan: bool,
+    pub pseudo_hires: bool,
+    pub extended_background: bool,
     /// The low byte each BGnHOFS/BGnVOFS write leaves for the next one.
     pub scroll_latch: u8,
     /// BGnHOFS's own copy of the latch, which supplies the low three bits.
@@ -68,6 +81,7 @@ impl Registers {
                     layer.mosaic = bit(value, 1 << index);
                 }
                 self.mosaic_size = (value >> 4) + 1;
+                self.mosaic_start_line = 0;
             }
             0x07..=0x0a => {
                 let background = &mut self.layers[usize::from(address - 7)].background;
@@ -161,8 +175,20 @@ impl Registers {
                     }
                 }
             }
+            0x33 => {
+                self.interlace = bit(value, 1);
+                self.sprite_interlace = bit(value, 2);
+                self.overscan = bit(value, 4);
+                self.pseudo_hires = bit(value, 8);
+                self.extended_background = bit(value, 0x40);
+            }
             _ => {}
         }
+    }
+
+    /// The renderer's start-of-frame reset of the mosaic start line.
+    pub fn begin_frame(&mut self) {
+        self.mosaic_start_line = 1;
     }
 
     fn affine_word(&mut self, value: u8) -> i16 {
@@ -198,6 +224,7 @@ impl Default for Registers {
             forced_blank: true,
             layers: [Layer::default(); 4],
             mosaic_size: 1,
+            mosaic_start_line: 1,
             windows: Windows {
                 first: [0; 2],
                 second: [0; 2],
@@ -226,6 +253,11 @@ impl Default for Registers {
                 brightness: 0,
             },
             direct_color: false,
+            interlace: false,
+            sprite_interlace: false,
+            overscan: false,
+            pseudo_hires: false,
+            extended_background: false,
             scroll_latch: 0,
             horizontal_scroll_latch: 0,
             affine_latch: 0,
@@ -283,6 +315,22 @@ mod tests {
         assert_eq!(registers.windows.native_flags, 0xa600);
         let logic: Vec<u8> = layers.iter().map(|window| window.logic).collect();
         assert_eq!(logic, [0, 1, 2, 3, 2, 1]);
+    }
+
+    #[test]
+    fn mosaic_restarts_at_line_zero_until_the_next_frame() {
+        let mut registers = written(&[(0x06, 0x31)]);
+        assert_eq!((registers.mosaic_size, registers.mosaic_start_line), (4, 0));
+        assert!(registers.layers[0].mosaic);
+        registers.begin_frame();
+        assert_eq!(registers.mosaic_start_line, 1);
+    }
+
+    #[test]
+    fn setini_flags() {
+        let registers = written(&[(0x33, 0x43)]);
+        assert!(registers.interlace && registers.sprite_interlace && registers.extended_background);
+        assert!(!registers.overscan && !registers.pseudo_hires);
     }
 
     #[test]
