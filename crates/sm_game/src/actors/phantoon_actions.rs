@@ -8,7 +8,6 @@ use crate::actors::layouts::{EnemyBase, EnemyLayout8 as Part, same_words};
 use crate::actors::session_slots::session_slot;
 use crate::cartridge::native_record;
 use crate::cartridge::rom_table_word;
-use crate::ram::word;
 
 /// What Phantoon's actions need beyond the common actor host.
 pub trait Host: crate::actors::host::ActorHost + crate::effects::SoundEffects {}
@@ -39,13 +38,6 @@ const BANK: u8 = 0xa7;
 /// The mouth's slot.
 pub const MOUTH: i32 = 0xc0;
 
-/// Controller 1's Y button.
-const BUTTON_Y: u16 = 0x4000;
-/// $A7:9030, a word the debug toggle flips and nothing reads: the high byte of
-/// the Y position in the extended spritemap at $A7:902D.
-const UNREAD_WORD: u16 = 0x902d;
-const UNREAD_WORD_OFFSET: usize = 3;
-
 /// Flame projectile parameters: the spiral's 600h, flame rain's 400h, with the
 /// rain's fall time in bits 4-7.
 const SPIRAL: u16 = 0x600;
@@ -65,18 +57,6 @@ const HEALTH_STEPS: i32 = 7;
 /// $A7:DC4A: the palette of each health step.
 const HEALTH_PALETTES: u32 = 0xa7_dc4a;
 const SIGN: i32 = 0x8000;
-
-/// Broken nothingness ($A7:CF0C): newly pressing Y toggles a ROM word nothing
-/// reads; the original forgot its $7E bank. Was `debug_toggle_sprite_map`.
-pub fn broken_nothingness(k: u16, game: &mut (impl BossState + ?Sized)) {
-    if k == 0 && word!(game.JOYPAD1_NEWKEYS) & BUTTON_Y != 0 {
-        let map = native_record(BANK, UNREAD_WORD, game);
-        map.set_word(
-            UNREAD_WORD_OFFSET,
-            u16::from(map.word(UNREAD_WORD_OFFSET) == 0),
-        );
-    }
-}
 
 /// Grow/shrink Phantoon wave amplitude ($A7:CF27) by the delta in `amount`'s
 /// low word, growing up to the maximum in its high word; 1 once shrinking has
