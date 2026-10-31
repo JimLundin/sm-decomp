@@ -22,17 +22,17 @@ fn matches_original(game: &Game, original: &[u8], address: u32, length: usize) -
                 .all(|(i, b)| image.read(start + i) == *b)
     })
 }
-// SnesInit installs a one-byte FixBugHook at the OAM emitter's original entry.
-// Borrow that exact allocation and restore only its original-file byte for this
-// capture. Snapshot restoration does not cover cartridge cells.
+// SnesInit installs a one-byte FixBugHook at the OAM emitter's original entry
+// in the cartridge. Borrow the cartridge and restore only its original-file byte
+// for this capture. Snapshot restoration does not cover cartridge cells.
 struct OriginalOamEntry {
-    image: crate::rom::RomImage,
+    cartridge: crate::snes::cart::CartRom,
     at: usize,
     initialized: u8,
 }
 impl Drop for OriginalOamEntry {
     fn drop(&mut self) {
-        self.image.write(self.at, self.initialized);
+        self.cartridge.write(self.at, self.initialized);
     }
 }
 unsafe fn original_oam_entry(game: &Game, original: &[u8]) -> Result<OriginalOamEntry, String> {
@@ -52,12 +52,13 @@ unsafe fn original_oam_entry(game: &Game, original: &[u8]) -> Result<OriginalOam
         {
             return Err("sprite oracle requires shared initialized cartridge bindings".into());
         }
+        let cartridge = (*cart).rom.clone();
         let at = offset(0x818ab8);
         let original_byte = *original.get(at).ok_or("short original OAM entry")?;
-        if at >= image.len() {
+        if at >= cartridge.len() {
             return Err("short initialized OAM entry".into());
         }
-        let initialized = image.read(at);
+        let initialized = cartridge.read(at);
         // This is the third FixBugHook registration in PatchBugs(mode=1).
         // Unknown differences are never normalized away.
         if initialized != original_byte
@@ -68,11 +69,11 @@ unsafe fn original_oam_entry(game: &Game, original: &[u8]) -> Result<OriginalOam
             return Err("unexpected initialized OAM entry; not the saved startup hook".into());
         }
         let restore = OriginalOamEntry {
-            image,
+            cartridge,
             at,
             initialized,
         };
-        restore.image.write(at, original_byte);
+        restore.cartridge.write(at, original_byte);
         Ok(restore)
     }
 }

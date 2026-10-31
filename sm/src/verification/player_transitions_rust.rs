@@ -169,7 +169,6 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
         let return_before = game.g_calling_asm_from_c_ret;
         let fail_before = game.g_fail;
         let queue_before = crate::audio_snapshot::ApuQueueSnapshot::capture(game);
-        let mut restored_bytes = Vec::new();
         let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
             game.ram().fill(0..game.ram().len(), 0);
             game.ram().write_byte(0x1ffff, 1);
@@ -211,6 +210,10 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
             let mut identity = id.to_le_bytes().to_vec();
             identity.push(u8::from(id >= 7));
             record(&mut output, 0, &identity);
+            // Authored spans go into a copy the case installs as both images.
+            let mut patched = (0..image.len())
+                .map(|at| image.read(at))
+                .collect::<Vec<_>>();
             if id >= 7 {
                 // Real logical data placement, not native allocation realignment.
                 let address: u32 = if id == 10 { 0x91b401 } else { 0x91b400 };
@@ -221,11 +224,8 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
                     authored.extend_from_slice(&at.to_le_bytes());
                     authored.extend_from_slice(&(bytes.len() as u32).to_le_bytes());
                     authored.extend_from_slice(bytes);
-                    for (i, value) in bytes.iter().enumerate() {
-                        let at = offset(at) + i;
-                        restored_bytes.push((at, image.read(at)));
-                        image.write(at, *value);
-                    }
+                    let at = offset(at);
+                    patched[at..at + bytes.len()].copy_from_slice(bytes);
                 }
                 record(&mut output, 8, &authored);
             }
@@ -241,7 +241,10 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
                 exclude(0x12, 0x14, 2);
             }
             record(&mut output, 9, &exclusions);
-            eligibility(id, game, &native)?;
+            let patched = crate::rom::RomImage::from(patched);
+            game.loaded_rom = Some(patched.clone());
+            game.register_native_rom(patched.clone());
+            eligibility(id, game, &patched)?;
             let mut excluded = vec![(usize::from(STACK_TOP - stack_bytes(id) + 1), 0x2000)];
             if id >= 7 {
                 excluded.extend([(0, 3), (0x12, 0x14)]);
@@ -258,8 +261,8 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
             }
             observer::observe(11, game);
             if game.actor_identity_is_with_session()
-                || game.capture_native_rom().as_mut_ptr() != native.as_mut_ptr()
-                || game.loaded_rom.as_ref().unwrap().as_mut_ptr() != image.as_mut_ptr()
+                || game.capture_native_rom().as_mut_ptr() != patched.as_mut_ptr()
+                || game.loaded_rom.as_ref().unwrap().as_mut_ptr() != patched.as_mut_ptr()
             {
                 return Err("Rust call retained ownership or replaced fixture allocation".into());
             }
@@ -271,9 +274,8 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
         }));
         // Disarm on success, returned failure, or panic before restoring host.
         let _ = observer::finish();
-        for (at, byte) in restored_bytes {
-            image.write(at, byte);
-        }
+        game.loaded_rom = Some(image);
+        game.register_native_rom(native);
         {
             let snapshot_snes = game.g_snes;
             let snapshot_cpu = game.g_cpu;

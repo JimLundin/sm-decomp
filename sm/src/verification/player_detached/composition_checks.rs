@@ -1,7 +1,7 @@
 //! Actual producer/consumer checks: there is no codec or refresh between calls.
 use super::{Event, game::player_projectiles as player, player_checks::prepared, room};
 
-pub(super) fn missile_content(h: &super::Composed) {
+pub(super) fn missile_content(h: &mut super::Composed) {
     // Actual projectile table index 1, direction-right launch record.
     for (cursor, value) in [
         (0x83f3, 0x8900),
@@ -16,7 +16,7 @@ pub(super) fn missile_content(h: &super::Composed) {
 }
 fn pickup_then_missile() {
     let mut h = prepared();
-    missile_content(&h);
+    missile_content(&mut h);
     h.word(0x84, 0x9800, 5);
     room::command(&mut h, 8685993, 0x9800, 0);
     assert_eq!(
@@ -69,7 +69,7 @@ fn pickup_then_beam() {
 }
 fn refill_then_missile() {
     let mut h = prepared();
-    missile_content(&h);
+    missile_content(&mut h);
     h.world.player.inventory.ammunition[0].maximum = 7;
     room::command(&mut h, 8686800, 0x9800, 0);
     assert_eq!(h.world.player.messages.queued, 0x16);
@@ -119,7 +119,7 @@ fn plant_then_launch() {
 }
 fn pickup_yield_resume_then_spend() {
     let mut h = prepared();
-    missile_content(&h);
+    missile_content(&mut h);
     h.word(0x84, 0x9800, 8685993u32 as u16);
     h.word(0x84, 0x9802, 5);
     h.word(0x84, 0x9804, 8685236u32 as u16);
