@@ -41,7 +41,11 @@ pub fn scatter(source: DropSource, index: u16, h: &mut impl Host) {
 }
 
 pub fn select(index: u16, h: &mut impl Host) -> u16 {
-    let definition = enemy!(h, (index >> 1) as isize, drop_definition);
+    roll(enemy!(h, (index >> 1) as isize, drop_definition), h)
+}
+
+/// The random drop routine ($86:F106) for an enemy header pointer.
+fn roll(definition: u16, h: &mut impl Host) -> u16 {
     if definition == 0 {
         return 6;
     }
@@ -170,8 +174,14 @@ pub fn initialize(index: u16, h: &mut impl Host) {
     enemy!(h, h.session().enemy_projectiles.spawn.point.x => (slot) as isize, x);
     enemy!(h, h.session().enemy_projectiles.spawn.point.y => (slot) as isize, y);
     enemy!(h, 0 => (slot) as isize, graphics);
-    enemy!(h, h.session().enemy_projectiles.spawn.drop_definition => (slot) as isize, drop_definition);
-    let kind = { select(index, h) };
+    // $86:EF3E stores the enemy header pointer with X still the projectile ID
+    // $F337, not the slot: it lands at $7F:E6FF, where the drop roll reads it
+    // back with the same X, and the slot keeps its stale header pointer.
+    let header = h.session().enemy_projectiles.spawn.drop_definition;
+    for (offset, byte) in (0xf337..).zip(header.to_le_bytes()) {
+        enemy_byte!(h, offset, drop_definition = byte);
+    }
+    let kind = { roll(header, h) };
     if kind != 0 && kind.wrapping_sub(6) & 0x8000 != 0 {
         begin_pickup(slot, kind, h);
         enemy!(h, 0xffff => (slot) as isize, killed_enemy);

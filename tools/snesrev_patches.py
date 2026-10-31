@@ -525,7 +525,7 @@ CARRY = [
 
 # patch_bugs_parts (sm/src/cpu_infra.rs): compatibility actions.
 BUG_HOOKS = [
-    (0x86EF35, 'b', 'state', 'removed', 'patched',
+    (0x86EF35, 'b', 'state', 'removed', 'follows',
      'Initialisation AI - enemy projectile $F337 (pickup)',
      'Sets X = projectile index. On hardware X is still the projectile ID $F337, so STA $7EF3C8,x writes the enemy header pointer to $7F:E6FF (layer-2 level data buffer) instead of the projectile slot; the drop roll at $F106 reads the same stray address back, so the drop is unchanged and the effect is a 2-byte RAM corruption'),
     (0x86EF45, 'a', 'none', 'removed', 'patched',

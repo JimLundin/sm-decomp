@@ -98,6 +98,8 @@ enum Event {
     SamusSprite(u16, u16, u16),
     EnemySound(u8, u8, u16),
     EnemyRandom,
+    /// A byte stored through an enemy projectile member past the slots.
+    EnemyAlias(game::enemy_projectiles::host::EnemyMember, isize, u8),
     EnemyGrapple,
     RoomSound(u8, u8, u16),
     RoomMessage(u16, u16),

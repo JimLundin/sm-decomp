@@ -291,6 +291,8 @@ fn native_drop_then_missile() {
     h.world.player.enemy_projectiles.drop_bias = 1;
     h.world.player.enemy_projectiles.spawn.point.x = 67;
     h.world.player.enemy_projectiles.spawn.point.y = 81;
+    // The slot keeps the header pointer an earlier projectile left there.
+    h.world.player.enemy_projectiles.slots[17].drop.enemy_definition = 0x9700;
     definition(&h, 0xf337, 8843049, 0);
     h.word(0xa0, 0x983a, 0x9900);
     for (offset, value) in [0, 0, 255, 0, 0, 0].into_iter().enumerate() {
@@ -309,11 +311,13 @@ fn native_drop_then_missile() {
             item.behavior_b,
             item.program
         ),
-        (67, 81, 0x9800, 8, 400, 0x9640),
+        (67, 81, 0x9700, 8, 400, 0x9640),
         "1058 native point feeds actual drop initializer"
     );
     assert_eq!(h.world.player.enemy_projectiles.drop_bias, 0);
-    assert_eq!(h.events, [Event::EnemyRandom]);
+    // The new header pointer goes to $7F:E6FF ($7E:F3C8 + $F337), not the slot.
+    let alias = |offset, byte| Event::EnemyAlias(enemy::host::EnemyMember::DropDefinition, offset, byte);
+    assert_eq!(h.events, [alias(0xf337, 0x00), alias(0xf338, 0x98), Event::EnemyRandom]);
     h.world.player.player.x = 67;
     h.world.player.player.y = 81;
     enemy::collect(&mut h, 34);

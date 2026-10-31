@@ -13,7 +13,8 @@ impl ImportedAliases for Composed {
         panic!("unprepared enemy operation: enemy_byte")
     }
     fn set_enemy_byte(&mut self, member: EnemyMember, byte_index: isize, value: u8) {
-        panic!("unprepared enemy operation: set_enemy_byte")
+        self.events
+            .push(Event::EnemyAlias(member, byte_index, value));
     }
     fn shot_word(&self, member: ShotMember, signed_slot: isize) -> u16 {
         panic!("unprepared enemy operation: shot_word")
