@@ -1409,24 +1409,27 @@ pub unsafe fn rtl_cheat(c: c_char, game: &mut Game) {
         }
     }
 }
+/// The desktop's SRAM image.
+const SAVE_FILE: &str = "saves/sm.srm";
+
 pub unsafe fn rtl_read_sram(game: &mut Game) {
     unsafe {
         if !game.supports_legacy_persistence() {
             eprintln!("RtlReadSram: legacy persistence is unavailable for a prepared world");
             return;
         }
-        if let Ok(mut f) = File::open("saves/sm.srm") {
+        use sm_runtime::save_storage::{SaveFile, SaveStorage};
+        let size = crate::recording::BASE_SRAM_SIZE;
+        if let Some(stored) = SaveFile::new(SAVE_FILE).load(size) {
             game.preflight_samus_runtime()
                 .expect("Samus SRAM entry rejected");
             let mut mutation = game.samus_mutation();
             let game = mutation.game();
-            let mut bytes = game.g_sram.bytes(0..crate::recording::BASE_SRAM_SIZE);
-            let count = crate::util::read_up_to(&mut f, &mut bytes[..]);
-            game.g_sram.write_bytes(0, &bytes);
-            if count != crate::recording::BASE_SRAM_SIZE {
+            let count = stored.len();
+            game.g_sram.write_bytes(0, &stored);
+            if count != size {
                 fprintf(stderr, c"Error reading saves/sm.srm\n".as_ptr());
             }
-            drop(f);
             synchronize_whole_state(game, count == crate::recording::BASE_SRAM_SIZE);
             recording_allocation(
                 game.state_recorder
@@ -1453,12 +1456,10 @@ pub unsafe fn rtl_write_sram(game: &mut Game) {
             eprintln!("RtlWriteSram: legacy persistence is unavailable for a prepared world");
             return;
         }
-        let _ = std::fs::rename("saves/sm.srm", "saves/sm.srm.bak");
-        if let Ok(mut f) = File::create("saves/sm.srm") {
-            let bytes = game.g_sram.bytes(0..crate::recording::BASE_SRAM_SIZE);
-            let _ = f.write_all(&bytes);
-        } else {
+        use sm_runtime::save_storage::{SaveFile, SaveStorage};
+        let bytes = game.g_sram.bytes(0..crate::recording::BASE_SRAM_SIZE);
+        if !SaveFile::new(SAVE_FILE).store(&bytes) {
             fprintf(stderr, c"Unable to write saves/sm.srm\n".as_ptr());
-        };
+        }
     }
 }

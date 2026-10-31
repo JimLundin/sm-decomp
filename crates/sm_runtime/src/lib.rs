@@ -5,3 +5,4 @@ pub mod rendering;
 pub mod scene;
 
 pub mod message;
+pub mod save_storage;
