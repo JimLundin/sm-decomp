@@ -105,3 +105,10 @@ $0641, $0D1E and $1790 never differed there and are no longer normalized.
 To retire a row: model the range so it stops differing on the chain and
 corpus, then delete it from `normalize_snapshot_ram` and from this table in
 the same change.
+
+Free run (docs/SCENARIO_HARNESS.md) masks the same ranges in its WRAM digest, and
+one more, `ORACLE_RAM` in `sm/src/verification/observation/machine.rs`:
+
+| Range | What it holds | Why | What would retire it | Owner |
+| --- | --- | --- | --- | --- |
+| $00C2-$00C3 | snesrev's bug-fix counter, the oracle's patch selector; the original never uses it | only an oracle frame writes it; lockstep's sides share RAM, so only free run sees it (from the first Tick of a seeded row) | the oracle keeping its patch selector outside game RAM | verifier |
