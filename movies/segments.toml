@@ -1535,3 +1535,43 @@ start_frame = 0
 frames = 471
 expect = ["room:91F8"]
 require_hit = ["special_beam.plasma"]
+
+# Terrain and grapple rows from 100% chain rooms (the full route's seeds and
+# aligned movie inputs): sinking into and standing on sand, releasing the
+# grapple, and a beam reflected back.
+
+[[segment]]
+id = "terrain-quicksand"
+seed = "100-input-phase:253"
+seed_sha256 = "2172e0e644a420ca625dd83d058fd23e1b1751d112b00a69d19a6c4637b9d046"
+inputs = "seed-quicksand-d5ec.inputs"
+input_sha256 = "7aaeac6d3fcd24f25c6f2285a67fcae82b13845fed65a16742bceb1db3226b94"
+start_frame = 0
+frames = 450
+expect = ["room:D9FE"]
+require_hit = ["contact_physics.sinking", "contact_physics.surface", "contact_physics.sand_floor"]
+pending = "awaiting the seeds-v1-terrain-grapple-c77a6dd6e1e0de4e ci-data upload"
+
+[[segment]]
+id = "samus-grapple-release"
+seed = "100-input-phase:257"
+seed_sha256 = "ce4115b7f605815c7416913920048cb54e5d5911d8dddc2d411cf8958e1fd83f"
+inputs = "seed-grapple-release-d72a.inputs"
+input_sha256 = "42577603b4decf2850b56d223937a434ded51d97afc90c5fa24b6f42dea16b43"
+start_frame = 0
+frames = 488
+expect = ["room:D78F"]
+require_hit = ["grapple.after_release"]
+pending = "awaiting the seeds-v1-terrain-grapple-c77a6dd6e1e0de4e ci-data upload"
+
+[[segment]]
+id = "beam-reflect"
+seed = "100-input-phase:115"
+seed_sha256 = "3cc7ebb5a17f149413bfd508c8e54e12e9b1da95e7fad8eba8692892b7848895"
+inputs = "seed-beam-reflect-b62b.inputs"
+input_sha256 = "8a045e7d5fbead4f1a55810b9d890fc5850fd5c86b23f1bd91c7c32ddc2c879e"
+start_frame = 0
+frames = 572
+expect = ["room:B482"]
+require_hit = ["player_projectiles.reflect"]
+pending = "awaiting the seeds-v1-terrain-grapple-c77a6dd6e1e0de4e ci-data upload"
