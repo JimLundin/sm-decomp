@@ -153,6 +153,7 @@ pub trait Host:
     + Registers
     + SoundEffects
     + DisplayRefresh
+    + crate::display_refresh::DisplayOwner
     + crate::sprite_output::SpriteHost
     + crate::cartridge::NativeDiagnostics
     + crate::decompression::DecompressionHost

@@ -211,9 +211,12 @@ pub fn advance_cinematic_coordinate<H: crate::menus::host::Host + ?Sized>(
     add_native_pair(0x1a7d + offset, 0x1add + offset, velocity, game);
 }
 
-pub fn set_fixed_color<H: crate::menus::host::Host + ?Sized>(channels: [u8; 3], game: &mut H) {
+pub fn set_fixed_color<H>(channels: [u8; 3], game: &mut H)
+where
+    H: crate::display_refresh::DisplayOwner + ?Sized,
+{
     for (channel, value) in channels.into_iter().enumerate() {
-        game.ram().write_byte(0x74 + channel, value);
+        game.write_owned_byte(0x74 + channel, value);
     }
 }
 
