@@ -26,14 +26,6 @@ pub(crate) fn spawn_drop(h: &mut impl Host, definition: u16, enemy: u16, paramet
     drops::spawn(definition, enemy, h);
 }
 
-
-// Match the production parent's pure imports required by maintained sibling cores.
-
-// Maintained numeric dispatch identities from the production parent module.
-const fnEprojPreInstr_nullsub_83: u32 = 8815867;
-const fnEproj_Init_0x8bde_SkreeDownLeft: u32 = 8817429;
-const fnEprojPreInstr_Empty: i32 = 0x86efdf;
-
 // Expose the maintained command dispatcher, without reimplementing its spawn rule.
 pub(crate) fn sprite_command(h: &mut impl Host, k: u16, address: u16) {
     let script = EnemyScript::at(h.script_image(), 0x28000 + usize::from(address));
