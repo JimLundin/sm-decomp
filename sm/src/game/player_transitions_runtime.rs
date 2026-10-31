@@ -1,4 +1,5 @@
 //! Legacy content and effect adapters for owned player transitions.
+use crate::game::player_transitions::landing;
 use crate::game::player_transitions::state::DrawMode;
 use crate::game::player_transitions::xray::{self, BeamPhase, BlendPhase};
 use crate::{
@@ -15,8 +16,6 @@ use crate::{
     },
     rom::RomRecord,
 };
-
-static CRATERIA_LANDING_FLAGS: [u8; 17] = [1, 0, 0, 0, 0, 2, 0, 4, 0, 4, 4, 4, 4, 0, 4, 0, 0];
 
 impl Content for Runtime<'_> {
     fn loaded_pose_table(&mut self) -> RomRecord {
@@ -49,48 +48,10 @@ impl Content for Runtime<'_> {
         self.legacy_native_record(0x91, cursor)
     }
     fn landing_region(&self) -> LandingRegion {
-        use LandingRegion::*;
-        [
-            Crateria, Brinstar, Dust, Dust, WaterSpray, Tourian, Clear, Clear,
-        ][usize::from(self.session().room.area)]
+        landing::area_region(self.session().room.area)
     }
     fn landing_room_rule(&self, region: LandingRegion) -> LandingRule {
-        let room = self.session().room.entry.room_index;
-        match region {
-            LandingRegion::Clear => LandingRule::Clear,
-            LandingRegion::Dust => LandingRule::Dust,
-            LandingRegion::WaterSpray => LandingRule::WaterSpray,
-            LandingRegion::Crateria => {
-                // Core asks for this room policy only after cinematic==0.
-                if room == 28 {
-                    return LandingRule::Dust;
-                }
-                if (room as i16).wrapping_sub(16) < 0 {
-                    // Retain the actual source table and full exceptional index.
-                    let flags = CRATERIA_LANDING_FLAGS[usize::from(room)];
-                    if flags & 1 != 0 {
-                        return LandingRule::WaterSprayWhenFxTen;
-                    }
-                    if flags & 2 != 0 {
-                        return LandingRule::WaterSprayAtOrBelow944;
-                    }
-                    if flags & 4 != 0 {
-                        return LandingRule::WaterSpray;
-                    }
-                }
-                LandingRule::Clear
-            }
-            LandingRegion::Brinstar if room == 8 => LandingRule::Dust,
-            LandingRegion::Brinstar | LandingRegion::Tourian => {
-                if room.wrapping_sub(5) & 0x8000 == 0
-                    && (room.wrapping_sub(9) & 0x8000 != 0 || room == 11)
-                {
-                    LandingRule::Dust
-                } else {
-                    LandingRule::Clear
-                }
-            }
-        }
+        landing::room_rule(region, self.session().room.entry.room_index)
     }
 }
 pub(crate) fn command(a: u16, game: &mut crate::game_state::Game) -> u16 {
@@ -146,38 +107,10 @@ impl Runtime<'_> {
         self.foreign(|game| crate::game::visual_runtime::spawn_hdma(0x91, &args, game));
     }
 
-    pub(crate) fn initialize_suit_pickup_hdma(&mut self) {
-        for (address, value) in [
-            (0x69, 19),
-            (0x6c, 19),
-            (0x6b, 4),
-            (0x6d, 4),
-            (0x6e, 16),
-            (0x60, 0),
-            (0x61, 2),
-            (0x62, 32),
-            (0x71, 51),
-        ] {
-            self.set_byte(address, value);
-        }
-        self.publish_suit_colors();
-        for (address, value) in [(0xa88, 0x9800e4u32), (0xa8b, 0x98c8e4), (0xa8e, 0x999098)] {
-            self.write_slice_native(address, value as u16);
-            self.set_byte(address + 2, (value >> 16) as u8);
-        }
-        self.write_slice_le(crate::ram_map::words::XRAY_HDMA_TABLE_END, 0);
-    }
-
-    fn publish_suit_colors(&mut self) {
-        for lane in 0..3 {
-            self.set_byte(0x74 + lane, self.byte(0xdf0 + lane));
-        }
-    }
-
     pub(crate) fn advance_suit_pickup(&mut self, gravity: bool) {
         use crate::ram_map::{word_arrays as arrays, words as ram};
         if crate::game::player_transitions::suit::advance(self, gravity, xray::set_window_word) {
-            self.publish_suit_colors();
+            crate::game::player_transitions::suit::publish_colors(self);
             self.write_slice_le(ram::FX_LAYER_BLENDING_CONFIG_C, 18);
             return;
         }
@@ -319,10 +252,8 @@ pub(crate) fn initialize(game: &mut crate::game_state::Game) {
             rt.write_slice_le(ram::DEBUG_INVINCIBILITY, debug_invincibility);
         }
     }
-    rt.session_mut()
-        .player
-        .transitions
-        .invalidate_pose_requests();
+    let transitions = &mut rt.session_mut().player.transitions;
+    transitions.invalidate_pose_requests();
     rt.session_mut().player.transitions.frame_gamma = if rt.session().room.area == 6 {
         FrameGammaMode::EscapeTimer
     } else {
@@ -506,16 +437,7 @@ impl Runtime<'_> {
 }
 
 pub(crate) fn damage_player(amount: u16, game: &mut crate::game_state::Game) {
-    Runtime::new(game).apply_contact_damage(amount);
-}
-
-impl Runtime<'_> {
-    pub(crate) fn apply_contact_damage(&mut self, amount: u16) {
-        let frozen = self.inputs().frozen;
-        if sm_game::samus_periodic_damage::direct(self.session_mut(), frozen, amount).is_err() {
-            sm_game::player_projectiles::host::Host::invalid_damage(self);
-        }
-    }
+    sm_game::samus_periodic_damage::contact(&mut Runtime::new(game), amount);
 }
 
 pub(crate) fn finish_player_frame(h: &mut Runtime<'_>) {

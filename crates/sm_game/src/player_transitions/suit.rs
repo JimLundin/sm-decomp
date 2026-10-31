@@ -213,3 +213,30 @@ pub fn advance<H: Host>(h: &mut H, gravity: bool, write_window: fn(&mut H, u16, 
     }
     true
 }
+pub fn publish_colors(h: &mut (impl crate::runtime_access::SessionRam + ?Sized)) {
+    for lane in 0..3 {
+        h.set_byte(0x74 + lane, h.byte(0xdf0 + lane));
+    }
+}
+/// Set up the suit pickup's window, blending and HDMA tables; copy its colours.
+pub fn initialize_hdma(h: &mut (impl crate::runtime_access::SessionRam + ?Sized)) {
+    for (address, value) in [
+        (0x69, 19),
+        (0x6c, 19),
+        (0x6b, 4),
+        (0x6d, 4),
+        (0x6e, 16),
+        (0x60, 0),
+        (0x61, 2),
+        (0x62, 32),
+        (0x71, 51),
+    ] {
+        h.set_byte(address, value);
+    }
+    publish_colors(h);
+    for (address, value) in [(0xa88, 0x9800e4u32), (0xa8b, 0x98c8e4), (0xa8e, 0x999098)] {
+        h.write_slice_native(address, value as u16);
+        h.set_byte(address + 2, (value >> 16) as u8);
+    }
+    h.write_slice_le(crate::ram::words::XRAY_HDMA_TABLE_END, 0);
+}

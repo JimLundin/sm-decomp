@@ -86,3 +86,47 @@ fn particles(h: &mut impl Host, water: bool) {
     h.atmospheric_created(3)
         .expect("atmospheric producer allocation");
 }
+pub fn area_region(area: u16) -> LandingRegion {
+    use LandingRegion::*;
+    [
+        Crateria, Brinstar, Dust, Dust, WaterSpray, Tourian, Clear, Clear,
+    ][usize::from(area)]
+}
+static CRATERIA_LANDING_FLAGS: [u8; 17] = [1, 0, 0, 0, 0, 2, 0, 4, 0, 4, 4, 4, 4, 0, 4, 0, 0];
+pub fn room_rule(region: LandingRegion, room: u16) -> LandingRule {
+    match region {
+        LandingRegion::Clear => LandingRule::Clear,
+        LandingRegion::Dust => LandingRule::Dust,
+        LandingRegion::WaterSpray => LandingRule::WaterSpray,
+        LandingRegion::Crateria => {
+            // Core asks for this room policy only after cinematic==0.
+            if room == 28 {
+                return LandingRule::Dust;
+            }
+            if (room as i16).wrapping_sub(16) < 0 {
+                // Retain the actual source table and full exceptional index.
+                let flags = CRATERIA_LANDING_FLAGS[usize::from(room)];
+                if flags & 1 != 0 {
+                    return LandingRule::WaterSprayWhenFxTen;
+                }
+                if flags & 2 != 0 {
+                    return LandingRule::WaterSprayAtOrBelow944;
+                }
+                if flags & 4 != 0 {
+                    return LandingRule::WaterSpray;
+                }
+            }
+            LandingRule::Clear
+        }
+        LandingRegion::Brinstar if room == 8 => LandingRule::Dust,
+        LandingRegion::Brinstar | LandingRegion::Tourian => {
+            if room.wrapping_sub(5) & 0x8000 == 0
+                && (room.wrapping_sub(9) & 0x8000 != 0 || room == 11)
+            {
+                LandingRule::Dust
+            } else {
+                LandingRule::Clear
+            }
+        }
+    }
+}
