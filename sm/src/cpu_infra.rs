@@ -1634,6 +1634,12 @@ pub unsafe fn rtl_run_frame_compare(input: u16, _run_what: i32, native_game: &mu
             game.audio_output.enter_execution(position);
             run_one_frame_of_game_emulated(game);
             draw_frame_to_ppu(game);
+            // The host-owned soft reset, as run_one_frame_of_game_both applies it.
+            if word!(game.GAME_STATE) as i32 == 0xffff {
+                (*(*game.g_snes).cpu).k = 0x80;
+                (*(*game.g_snes).cpu).pc = 0x8459;
+                game.ram().write_byte(0x611, 3);
+            }
         } else if game.g_runmode as i32 == RM_MINE as i32 {
             (*game.g_snes).runningWhichVersion = 0xff;
             let position = game.audio_execution_position();
