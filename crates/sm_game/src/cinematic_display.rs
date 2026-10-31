@@ -1,8 +1,9 @@
 //! Cinematic display setup: PPU modes, layers and mirrors per scene, the Mode 7 reset and intro sprite order.
 use crate::cinematic::set_fixed_color;
 use crate::cinematic_objects::draw_cinematic_sprites;
+use crate::cinematic_state::cinematic;
 use crate::display::control::{Brightness, Layers, MainWindowMask, SubScreen};
-use crate::menus::prelude::{options_menu, owned};
+use crate::menus::prelude::{options_menu, owned, scroll};
 use crate::ram::RawRam as _;
 use crate::ram::word;
 
@@ -98,13 +99,11 @@ pub fn configure_cinematic_display<H: crate::menus::host::Host + ?Sized>(
             set_fixed_color([32, 64, 0x80], game);
             crate::sprite_drawing::reset_cursor(game);
             reset_cinematic_transform(128, 128, game);
-            word! { game; MODE7_ANGLE = 0; MODE7_ZOOM = 1; }
-            word! { game, 0;
-                REG_BG1HOFS, REG_BG1VOFS, REG_BG2HOFS, REG_BG2VOFS,
-                CINEMATIC_X_SUB, CINEMATIC_X, CINEMATIC_Y_SUB, CINEMATIC_Y,
-            }
+            cinematic! { game; Mode7Angle = 0; Mode7Zoom = 1; }
+            scroll!(game, 0; Bg1H, Bg1V, Bg2H, Bg2V);
+            cinematic!(game, 0; XSub, X, YSub, Y);
         } else {
-            word! { game, 0; REG_BG1HOFS, REG_BG1VOFS }
+            scroll! { game, 0; Bg1H, Bg1V }
         }
         return;
     }
@@ -159,31 +158,30 @@ pub fn configure_cinematic_display<H: crate::menus::host::Host + ?Sized>(
             crate::menu!(game.UnusedWord7e0759 = 0);
             crate::inventory::set(game, crate::inventory::Word::ReserveHealth, 0);
             crate::inventory::set(game, crate::inventory::Word::ReserveMissiles, 0);
-            word!(game.MODE7_ANGLE = 0);
+            cinematic!(game.Mode7Angle = 0);
         }
         Intro => {
             crate::sprite_drawing::reset_cursor(game);
-            word!(game.MODE7_ANGLE = 0);
+            cinematic!(game.Mode7Angle = 0);
         }
         Escape => {
             crate::sprite_drawing::reset_cursor(game);
             crate::screen_fade::set_both(game, 0, 0);
-            word!(game.MODE7_ANGLE = 0);
+            cinematic!(game.Mode7Angle = 0);
         }
         _ => {}
     }
     if display != Station {
-        word!(game.MODE7_ZOOM = 256);
+        cinematic!(game.Mode7Zoom = 256);
     }
-    word! { game, 0;
-        CINEMATIC_X_SUB, CINEMATIC_X, CINEMATIC_Y_SUB, CINEMATIC_Y, CINEMATIC_X_SUBSPEED,
-        CINEMATIC_X_SPEED, CINEMATIC_Y_SUBSPEED, CINEMATIC_Y_SPEED,
+    cinematic! { game, 0;
+        XSub, X, YSub, Y, XSubspeed, XSpeed, YSubspeed, YSpeed,
     }
     if matches!(display, Intro | Station) {
         word!(game.FX_LAYER_BLENDING_CONFIG_A = 0);
     }
     if intro {
-        word! { game, 0; REG_BG2HOFS, REG_BG2VOFS, REG_BG3HOFS, REG_BG3VOFS }
+        scroll! { game, 0; Bg2H, Bg2V, Bg3H, Bg3V }
     }
 }
 
@@ -220,7 +218,7 @@ fn set_mode7_transform<H: crate::menus::host::Host + ?Sized>(
 }
 
 pub fn draw_intro_sprites<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    let samus = word!(game.INTRO_SAMUS_DISPLAY);
+    let samus = cinematic!(game.IntroSamusDisplay);
     if samus & 0x8000 != 0 {
         game.draw_player_frame();
         game.draw_projectiles();
