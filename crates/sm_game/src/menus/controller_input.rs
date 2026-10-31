@@ -1,4 +1,5 @@
 //! Controller sampling, repeat edges, menu filtering and action bindings.
+use super::options_objects::objects::{self as bindings, Array};
 use super::prelude::*;
 use crate::constants::buttons::{
     K_BUTTON_A, K_BUTTON_B, K_BUTTON_DOWN, K_BUTTON_L, K_BUTTON_LEFT, K_BUTTON_R, K_BUTTON_RIGHT,
@@ -165,7 +166,7 @@ pub fn load_binding_choices<H: Host + ?Sized>(game: &mut H) {
             .iter()
             .position(|button| binding & button != 0)
             .unwrap_or(0);
-        word!(game.OPTIONS_CONTROLLER_BINDINGS[index] = choice as u16);
+        bindings::set_at(game, Array::ControllerBindings, index, choice as u16);
     }
 }
 
@@ -179,7 +180,8 @@ pub fn reset_binding_choices<H: Host + ?Sized>(game: &mut H) {
 
 pub fn store_binding_choices<H: Host + ?Sized>(game: &mut H) -> u8 {
     for index in 0..7 {
-        let binding = BINDING_BUTTONS[word!(game.OPTIONS_CONTROLLER_BINDINGS[index]) as usize];
+        let binding =
+            BINDING_BUTTONS[bindings::get_at(game, Array::ControllerBindings, index) as usize];
         let address = crate::menu_lists::binding_address(game, index);
         crate::word_transfers!(game, ascending, 1; native(address) <- value(binding));
     }
@@ -200,12 +202,7 @@ pub fn remap_binding<H: Host + ?Sized>(game: &mut H) {
     }
     // Malformed choice lists retain the cursor after the sixth unsuccessful advance.
     for _ in 0..6 {
-        let address = 0x1b23 + 2 * ((next as usize >> 1) + 13);
-        if u16::from_ne_bytes([
-            game.ram().read_byte(address),
-            game.ram().read_byte(address + 1),
-        ]) == choice as u16
-        {
+        if bindings::get_at(game, Array::ControllerBindings, next >> 1) == choice as u16 {
             break;
         }
         next = next.wrapping_add(2);
@@ -214,10 +211,8 @@ pub fn remap_binding<H: Host + ?Sized>(game: &mut H) {
         }
     }
     let selected = word!(game.MENU_OPTION_INDEX) as i32;
-    let previous = word!(game.OPTIONS_CONTROLLER_BINDINGS[selected]);
-    word!(game.OPTIONS_CONTROLLER_BINDINGS[selected] = choice as u16);
-    crate::word_transfers!(game, ascending, 1;
-        native(crate::ram::word_arrays::OPTIONS_CONTROLLER_BINDINGS as isize + 2 * (next as isize >> 1))
-            <- value(previous));
+    let previous = bindings::get_at(game, Array::ControllerBindings, selected);
+    bindings::set_at(game, Array::ControllerBindings, selected, choice as u16);
+    bindings::set_at(game, Array::ControllerBindings, next >> 1, previous);
     super::menu_tilemap::controller_bindings(game);
 }

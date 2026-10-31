@@ -74,6 +74,7 @@ const MENU_SPRITE_TILES: u32 = 0xb6_c000;
 const AREA_SELECT_BG3_TILES: u32 = 0x8e_d600;
 /// $8E:E400: the menu palettes.
 const MENU_PALETTES: u32 = 0x8e_e400;
+use super::options_objects::objects::{self as bindings, Array};
 use crate::ram::word;
 use sm_data::area_select_palettes::{
     ADDRESS as AREA_PALETTES, AreaSelectPalettes, BYTES as AREA_PALETTE_BYTES, INACTIVE_OFFSET,
@@ -418,7 +419,7 @@ pub fn controller_bindings<H: Host + ?Sized>(game: &mut H) {
         let address = 0x820000
             | u32::from(crate::menu_lists::binding_button_tilemap(
                 game,
-                word!(game.OPTIONS_CONTROLLER_BINDINGS[index]) as isize,
+                bindings::get_at(game, Array::ControllerBindings, index) as isize,
             ));
         if address & 0x8000 == 0 {
             game.invalid_window(address);
@@ -436,8 +437,8 @@ pub fn controller_bindings<H: Host + ?Sized>(game: &mut H) {
     let cleared_hint = [0, 0xe, 0xe, 0x10, 0x1f, 0x1f];
     let hints = [cell(20, 23), cell(23, 23)].map(|at| OPTIONS_TILEMAP + at);
     for (index, destination) in hints.into_iter().enumerate() {
-        if word!(game.OPTIONS_CONTROLLER_BINDINGS[index + 5]) != 5
-            && word!(game.OPTIONS_CONTROLLER_BINDINGS[index + 5]) != 6
+        if bindings::get_at(game, Array::ControllerBindings, index + 5) != 5
+            && bindings::get_at(game, Array::ControllerBindings, index + 5) != 6
         {
             crate::word_transfers!(game, ascending, 3;
                 native(destination) <- table(cleared_hint, 0));
