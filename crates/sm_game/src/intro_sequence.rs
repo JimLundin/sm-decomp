@@ -116,8 +116,6 @@ pub const NEXT_PAGE_ARROW: usize = 0x371e;
 const NEXT_PAGE_ARROW_TILES: u32 = 472456233;
 /// $7E:9800+: the BG copy the intro's background objects read.
 const BG_SOURCE: usize = 0x197fe;
-/// $7E:1C1D, the cinematic object RAM.
-const CINEMATIC_OBJECTS: usize = 0x1c1d;
 /// Songs, and the queueing delay before them.
 const NO_MUSIC: u16 = 0;
 const INTRO_MUSIC_DATA: u16 = 0xff3f;
@@ -164,7 +162,7 @@ fn load_space_graphics<H: Host + ?Sized>(game: &mut H) {
 }
 
 fn clear_cinematic_objects<H: Host + ?Sized>(game: &mut H) {
-    crate::word_transfers!(game, descending, 329; native(CINEMATIC_OBJECTS) <- value(0));
+    crate::cinematic_state::clear(game);
 }
 
 fn sprites<H: Host + ?Sized>(game: &mut H, definition: u16, parameter: u16) {
@@ -544,7 +542,9 @@ pub fn boom_fade_out<H: Host + ?Sized>(game: &mut H) {
             game.ram().write_byte(mirror::BGMODE, 9);
             options_menu!(game.ScreenIndex = 0);
             crate::menu!(game.MenuIndex = 0);
-            crate::word_transfers!(game, descending, 128; le(CINEMATICBG_ARR7, 135) <- value(0));
+            for index in (8..=135).rev() {
+                cinematic!(game.BgArr7[index] = 0);
+            }
             word!(game.GAME_STATE = SAMUS_NO_HEALTH);
         } else {
             flow::set(game, CinematicFunction, function::ZEBES_INITIAL);

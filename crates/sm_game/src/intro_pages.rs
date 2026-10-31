@@ -526,7 +526,7 @@ pub fn fade_out_to_ceres<H: crate::menus::host::Host + ?Sized>(restore_samus: bo
         crate::screen_fade::set_both(game, 0, 0);
         scroll!(game, 0; Bg2H, Bg3H, Bg2V, Bg3V);
         cinematic!(game.Mode7Angle = 0);
-        crate::word_transfers!(game, descending, 329; native(0x1c1d) <- value(0));
+        cinematic_state::clear(game);
         crate::flow::set(
             game,
             crate::flow::Word::CinematicFunction,

@@ -110,8 +110,6 @@ const GUNSHIP_GREY: [u16; 16] = [
     0, 0x6f7b, 0x4a52, 0x1ce7, 0, 0x5ad6, 0x4a52, 0x35ad, 0x2529, 0x7fff, 0x56b5, 0x294a, 0x4210,
     0x2d6b, 0x18c6, 0x7fff,
 ];
-/// $7E:1C1D, the cinematic object RAM.
-const CINEMATIC_OBJECTS: usize = 0x1c1d;
 /// $7F:4300: the Mode 7 tilemap fill.
 const MODE7_TILEMAP: usize = 0x14300;
 const MODE7_FILL: u16 = 0x8c8c;
@@ -158,7 +156,7 @@ pub fn setup<H: Host + ?Sized>(game: &mut H) {
         return;
     }
     crate::cinematic_display::configure_cinematic_display(CinematicDisplay::Escape, game);
-    crate::word_transfers!(game, descending, 329; native(CINEMATIC_OBJECTS) <- value(0));
+    crate::cinematic_state::clear(game);
     crate::word_transfers!(game, ascending, 256; le(PALETTE_BUFFER, 0) <- rom(ESCAPE_PALETTES, 0));
     GraphicsAsset::Decompress(0x98bcd6, 0x10000).load(game);
     GraphicsAsset::Decompress(0x99a56f, 0x14000).load(game);

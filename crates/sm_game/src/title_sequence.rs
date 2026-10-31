@@ -59,8 +59,6 @@ const FILE_SELECT_MENUS: u16 = 4;
 const TRANSITION_TO_DEMO: u16 = 40;
 /// The title screen waits 900 frames before the demos.
 const DEMO_DELAY: u16 = 900;
-/// $7E:1C1D, the cinematic object RAM the finish clears.
-const CINEMATIC_OBJECTS: usize = 0x1c1d;
 
 /// The cinematic transition states in `skip_to_title_index`.
 fn run_transition<H: Host + ?Sized>(state: u16, game: &mut H) {
@@ -200,7 +198,7 @@ fn finish<H: Host + ?Sized>(next: u16, game: &mut H, clear_index: impl FnOnce(&m
     flow::set(game, CinematicFunction, function::SETUP);
     crate::palette_effects::execution::leased::set_enabled(false, game);
     crate::palette_effects::execution::leased::clear(game);
-    crate::word_transfers!(game, descending, 329; native(CINEMATIC_OBJECTS) <- value(0));
+    crate::cinematic_state::clear(game);
     crate::word_transfers!(game, descending, 256; le(HDMA_TABLE_1, 255) <- value(0));
     word!(game.GAME_STATE = next);
     clear_index(game);

@@ -211,6 +211,14 @@ pub fn at<I: TryInto<isize>>(array: Array, index: I) -> usize {
         .expect("word address outside RAM")
 }
 
+/// Clear every cinematic object word, $7E:1C1D down to $7E:198D, a word at a
+/// time, as the cinematics' 329-word clear did.
+pub fn clear<H: CompatibilityRam + ?Sized>(h: &mut H) {
+    for at in (Word::Mode7Angle as usize..=0x1c1d).rev().step_by(2) {
+        crate::projection::set_word(h, at, 0);
+    }
+}
+
 /// The word `offset` bytes into `array`, for tables their objects index by
 /// byte offset.
 pub fn get_offset<H: CompatibilityRam + ?Sized>(h: &H, array: Array, offset: usize) -> u16 {
