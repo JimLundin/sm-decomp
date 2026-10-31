@@ -215,51 +215,6 @@ pub struct MapScreenState {
     pub indicator_loop_counter: u16,
 }
 
-/// The map screen words through the host's projected bytes, by RAM address.
-pub mod map_screen {
-    use crate::ram::CompatibilityRam;
-
-    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-    pub enum Word {
-        MinXScroll = 0x5ac,
-        MaxXScroll = 0x5ae,
-        MinYScroll = 0x5b0,
-        MaxYScroll = 0x5b2,
-        GearSwitchTimer = 0x5fb,
-        ScrollingDirection = 0x5fd,
-        ScrollingSpeedIndex = 0x5ff,
-        IndicatorFrame = 0x776,
-        IndicatorTimer = 0x778,
-        IndicatorLoopCounter = 0x77a,
-    }
-
-    const _: () = {
-        use crate::ram::words as ram;
-        assert!(ram::MAP_MIN_X_SCROLL == Word::MinXScroll as usize);
-        assert!(ram::MAP_MAX_X_SCROLL == Word::MaxXScroll as usize);
-        assert!(ram::MAP_MIN_Y_SCROLL == Word::MinYScroll as usize);
-        assert!(ram::MAP_MAX_Y_SCROLL == Word::MaxYScroll as usize);
-        assert!(ram::MAP_SCROLLING_GEAR_SWITCH_TIMER == Word::GearSwitchTimer as usize);
-        assert!(ram::MAP_SCROLLING_DIRECTION == Word::ScrollingDirection as usize);
-        assert!(ram::MAP_SCROLLING_SPEED_INDEX == Word::ScrollingSpeedIndex as usize);
-        assert!(ram::SAMUS_POSITION_INDICATOR_ANIMATION_FRAME == Word::IndicatorFrame as usize);
-        assert!(ram::SAMUS_POSITION_INDICATOR_ANIMATION_TIMER == Word::IndicatorTimer as usize);
-        assert!(
-            ram::SAMUS_POSITION_INDICATOR_ANIMATION_LOOP_COUNTER
-                == Word::IndicatorLoopCounter as usize
-        );
-    };
-
-    /// `word` as the host's projection holds it, low byte then high.
-    pub fn get<H: CompatibilityRam + ?Sized>(h: &H, word: Word) -> u16 {
-        crate::projection::word(h, word as usize)
-    }
-    /// Store `value` to `word`, low byte then high, as the named word store did.
-    pub fn set<H: CompatibilityRam + ?Sized>(h: &mut H, word: Word, value: u16) {
-        crate::projection::set_word(h, word as usize, value);
-    }
-}
-
 /// The save slot and map station selection: the file select map's unread
 /// flag, the current area's collected map and the load station index
 /// ($0787..$078C), the file select map area, the selected save slot and the

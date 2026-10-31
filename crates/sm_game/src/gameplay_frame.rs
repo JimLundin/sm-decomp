@@ -374,7 +374,9 @@ fn initialize<H: Host>(game: &mut H) -> CoroutineRet {
             } else if loading == K_LOADING_GAME_STATE_22_ESCAPING_CERES {
                 game.runtime().session_mut().room.area = 0;
                 save_selection!(game.LoadStation = 18);
-                save_slots::load_area_map(game);
+                session_cohort::with(game, |game, selection| {
+                    save_slots::load_area_map(selection, game)
+                });
             }
         }
         display_refresh::initialize_gameplay(game);

@@ -10,7 +10,8 @@
 //! the named word stores did.
 //!
 //! The function must not reach the group's words by any other path while it
-//! holds the copy; code it calls takes the copy instead.
+//! holds the copy; code it calls takes the copy instead. The verify build
+//! checks that no projection access reaches a held copy's words.
 use crate::ram::CompatibilityRam;
 use crate::runtime_access::RuntimeAccess;
 use crate::session::Session;
@@ -75,9 +76,47 @@ where
 {
     let before = load::<C, H>(game);
     let mut cohort = before.clone();
+    #[cfg(sm_verify_dll)]
+    let held = hold(&mut cohort);
     let result = action(game, &mut cohort);
+    #[cfg(sm_verify_dll)]
+    release(held);
     store(game, &before, cohort);
     result
+}
+
+#[cfg(sm_verify_dll)]
+std::thread_local! {
+    /// The RAM addresses of the words of every copy `with` holds.
+    static HELD: core::cell::RefCell<Vec<usize>> = const { core::cell::RefCell::new(Vec::new()) };
+}
+
+/// Mark `cohort`'s words held; returns the previous held count.
+#[cfg(sm_verify_dll)]
+fn hold<C: Cohort>(cohort: &mut C) -> usize {
+    HELD.with(|held| {
+        let mut held = held.borrow_mut();
+        let previous = held.len();
+        cohort.words(|at, _| held.push(at));
+        previous
+    })
+}
+
+#[cfg(sm_verify_dll)]
+fn release(previous: usize) {
+    HELD.with(|held| held.borrow_mut().truncate(previous));
+}
+
+/// Fail when byte `at` belongs to a word of a copy `with` holds.
+#[cfg(sm_verify_dll)]
+pub fn check_not_held(at: usize) {
+    HELD.with(|held| {
+        let held = held.borrow();
+        assert!(
+            !held.iter().any(|&word| at == word || at == word + 1),
+            "byte ${at:04X} of a held Session copy was reached through the projection"
+        );
+    });
 }
 
 #[cfg(test)]

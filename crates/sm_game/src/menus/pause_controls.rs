@@ -1,8 +1,10 @@
 //! Pause-screen lifecycle, input and saved graphics; RAM remains authoritative.
 use super::prelude::*;
 use super::{equipment_menu, map_menu, menu_tilemap};
+use crate::menu_state::MenuScreens;
 use crate::ram::RawRam as _;
 use crate::ram::{word, words as fields};
+use crate::session_cohort;
 
 pub fn hook_address<H: crate::menus::host::Host + ?Sized>(pausing: bool, game: &H) -> u32 {
     let offset = if pausing { 0x601 } else { 0x604 };
@@ -13,16 +15,19 @@ pub fn hook_address<H: crate::menus::host::Host + ?Sized>(pausing: bool, game: &
 }
 
 pub fn initialize<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    map_menu::reset_animations(game);
-    menu_tilemap::equipment_icons(game);
-    menu_tilemap::pause_labels(0, game);
-    menu_tilemap::queue_pause_labels(game);
-    map_menu::scroll_limits(game);
-    map_menu::center_map(0x80, game);
-    crate::screen_fade::set_both(game, 1, 1);
-    crate::menu!(game.PausemenuLeftarrowAnimationFrame = 0);
-    crate::menu!(game.PausemenuPaletteAnimationTimer = 1);
-    map_screen! { game, 0; ScrollingDirection, ScrollingSpeedIndex }
+    session_cohort::with(game, |game, screens: &mut MenuScreens| {
+        map_menu::reset_animations(&mut screens.map, game);
+        menu_tilemap::equipment_icons(game);
+        menu_tilemap::pause_labels(0, game);
+        menu_tilemap::queue_pause_labels(game);
+        map_menu::scroll_limits(screens, game);
+        map_menu::center_map(0x80, &screens.map, game);
+        crate::screen_fade::set_both(game, 1, 1);
+        crate::menu!(game.PausemenuLeftarrowAnimationFrame = 0);
+        crate::menu!(game.PausemenuPaletteAnimationTimer = 1);
+        screens.map.scrolling_direction = 0;
+        screens.map.scrolling_speed_index = 0;
+    });
     crate::display_refresh::queue_fx_clear(game);
     word!(game.GAME_STATE += 1);
 }
@@ -31,7 +36,7 @@ pub fn fade_in<H: crate::menus::host::Host + ?Sized>(game: &mut H) -> u8 {
     if crate::menu!(game.MenuIndex) != 0 {
         draw_equipment(game);
     } else {
-        draw_map(game);
+        session_cohort::with(game, draw_map);
     }
     game.fade(true);
     if game.ram().read_byte(crate::ram::mirror::INIDISP) == 15 {
@@ -43,9 +48,11 @@ pub fn fade_in<H: crate::menus::host::Host + ?Sized>(game: &mut H) -> u8 {
 
 pub fn update_map<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     advance(game);
-    map_menu::scroll_arrows(map_menu::MapScreen::Pause, game);
-    map_menu::scroll(game);
-    draw_map(game);
+    session_cohort::with(game, |game, screens: &mut MenuScreens| {
+        map_menu::scroll_arrows(map_menu::MapScreen::Pause, &mut screens.map, game);
+        map_menu::scroll(&mut screens.map, game);
+        draw_map(game, screens);
+    });
     crate::menu!(game.PauseScreenMode = 0);
 }
 
@@ -60,7 +67,7 @@ pub fn fade_tab<const EQUIPMENT: bool, H: crate::menus::host::Host + ?Sized>(gam
     if EQUIPMENT {
         draw_equipment(game);
     } else {
-        draw_map(game);
+        session_cohort::with(game, draw_map);
     }
     crate::menu!(game.PauseScreenMode = u16::from(EQUIPMENT));
     game.fade(true);
@@ -82,9 +89,11 @@ pub fn fade_out_tab<H: crate::menus::host::Host + ?Sized>(
     if equipment {
         draw_equipment(game);
     } else {
-        map_menu::display_elevator_destinations(game);
-        map_menu::draw_player_marker(game);
-        map_menu::draw_icons(map_menu::IconMode::Pause, game);
+        session_cohort::with(game, |game, screens: &mut MenuScreens| {
+            map_menu::display_elevator_destinations(game);
+            map_menu::draw_player_marker(&mut screens.map, game);
+            map_menu::draw_icons(map_menu::IconMode::Pause, screens, game);
+        });
     }
     draw_shoulder(game);
     // Equipment fade preserves this mode; map fade resets it after drawing.
@@ -125,9 +134,9 @@ pub fn load_tab<H: crate::menus::host::Host + ?Sized>(
     crate::menu!(game.MenuIndex += 1);
 }
 
-fn draw_map<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    map_menu::draw_player_marker(game);
-    map_menu::draw_icons(map_menu::IconMode::Pause, game);
+fn draw_map<H: crate::menus::host::Host + ?Sized>(game: &mut H, screens: &mut MenuScreens) {
+    map_menu::draw_player_marker(&mut screens.map, game);
+    map_menu::draw_icons(map_menu::IconMode::Pause, screens, game);
     map_menu::display_elevator_destinations(game);
 }
 
@@ -143,9 +152,11 @@ pub fn draw_unpause<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
         draw_shoulder(game);
     } else {
         // Unpause keeps the opposite icon/marker order from the active map.
-        map_menu::display_elevator_destinations(game);
-        map_menu::draw_icons(map_menu::IconMode::Pause, game);
-        map_menu::draw_player_marker(game);
+        session_cohort::with(game, |game, screens: &mut MenuScreens| {
+            map_menu::display_elevator_destinations(game);
+            map_menu::draw_icons(map_menu::IconMode::Pause, screens, game);
+            map_menu::draw_player_marker(&mut screens.map, game);
+        });
     }
 }
 

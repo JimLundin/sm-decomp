@@ -12,6 +12,7 @@ use crate::constants::bank_81::{
     ADDR_K_MENU_TILEMAP_NO, ADDR_K_MENU_TILEMAP_YES,
 };
 use crate::save_file::header;
+use crate::session_cohort;
 
 use crate::enemy_projectiles::table::with_file_select as file_select;
 
@@ -558,7 +559,7 @@ fn clear_slot<H: Host + ?Sized>(game: &mut H) {
     save_slots::load(copy_source(game), game);
     let source = copy_source(game);
     crate::room_view::set(game, crate::room_view::Word::Area, source);
-    load_area_map(game);
+    session_cohort::with(game, |game, selection| load_area_map(selection, game));
     crate::word_transfers!(game, ascending, 288; native(0x3b00) <- value(15));
     save_selection!(game.NonemptySlots &= (BIT_SHL_NOT[copy_source(game) as usize]));
     menu_tilemap::set_palette(0, game);
@@ -688,7 +689,7 @@ fn choose_main<H: Host + ?Sized>(game: &mut H) {
                 save_slots::initialize(game);
                 save_selection!(game.HasAreaMap = 0);
             } else {
-                load_area_map(game);
+                session_cohort::with(game, |game, selection| load_area_map(selection, game));
             }
         } else {
             if save_selection!(game.SelectedSlot) == 3 {

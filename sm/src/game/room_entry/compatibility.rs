@@ -121,7 +121,9 @@ impl EntryEffects for Runtime<'_> {
                     sm_game::menus::save_slots::save_area_map(game);
                 }
                 LeafEffect::LoadExploredMap => {
-                    sm_game::menus::save_slots::load_area_map(game);
+                    sm_game::session_cohort::with(game, |game, selection| {
+                        sm_game::menus::save_slots::load_area_map(selection, game)
+                    });
                 }
                 LeafEffect::MarkElevatorsUsed => {
                     sm_game::menus::save_slots::mark_elevator(game);

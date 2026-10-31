@@ -15,11 +15,15 @@ use crate::ram::{CompatibilityRam, RawRam as _, WorkRamAccess};
 
 /// Byte `at` as the host's projection holds it.
 pub fn byte<H: CompatibilityRam + ?Sized>(h: &H, at: usize) -> u8 {
+    #[cfg(sm_verify_dll)]
+    crate::session_cohort::check_not_held(at);
     h.compatibility_byte(at)
 }
 
 /// Store byte `at` through the host's projection.
 pub fn set_byte<H: CompatibilityRam + ?Sized>(h: &mut H, at: usize, value: u8) {
+    #[cfg(sm_verify_dll)]
+    crate::session_cohort::check_not_held(at);
     h.compatibility_write_byte(at, value);
 }
 

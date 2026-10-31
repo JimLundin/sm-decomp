@@ -1,6 +1,7 @@
 //! Save-slot serialization over the original SRAM format and ordered RAM projections.
 use super::prelude::*;
 use crate::imported::Imported;
+use crate::menu_state::SaveSelection;
 use crate::ram::checked_word as word;
 use crate::ram::word as game_word;
 use crate::save_file::{self, SaveHost};
@@ -190,16 +191,16 @@ fn area_map_words(area: u16) -> impl Iterator<Item = (usize, u16)> {
         .enumerate()
 }
 
-pub fn load_area_map<H: Host + ?Sized>(game: &mut H) {
+/// Load the current area's explored map, and whether its map station was
+/// used, into `selection`.
+pub fn load_area_map<H: Host + ?Sized>(selection: &mut SaveSelection, game: &mut H) {
     for (active, saved) in area_map_words(crate::room_view::current(game).area) {
         crate::word_transfers!(game, ascending, 1; native(0x7f7 + active * 2) <- le(EXPLORED_MAP_TILES_SAVED, saved));
     }
-    save_selection!(
-        game.HasAreaMap = game.ram().read_byte(
-            crate::ram::bytes::MAP_STATION_BYTE_ARRAY
-                + usize::from(crate::room_view::current(game).area)
-        ) as u16
-    );
+    selection.has_area_map = u16::from(game.ram().read_byte(
+        crate::ram::bytes::MAP_STATION_BYTE_ARRAY
+            + usize::from(crate::room_view::current(game).area),
+    ));
 }
 
 pub fn save_area_map<H: Host + ?Sized>(game: &mut H) {
