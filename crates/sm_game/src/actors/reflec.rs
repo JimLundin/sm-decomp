@@ -49,8 +49,7 @@ const SIGN: u16 = 0x8000;
 
 /// Enemy graphics drawn hook - reflec - periodically cycle between palettes
 /// ($A3:DB0C). Was `palette`.
-pub fn cycle_palette<H: LeaseActors + ?Sized>(game: &mut H) {
-    let runtime = &mut game.lease();
+pub fn cycle_palette(runtime: &mut impl ActorLease) {
     let hook = word_arrays::VARIABLES_FOR_ENEMY_GRAPHICS_DRAWN_HOOK;
     if runtime.word(words::DOOR_TRANSITION_FLAG_ENEMIES) != 0 {
         return;

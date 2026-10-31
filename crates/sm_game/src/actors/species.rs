@@ -84,10 +84,11 @@ pub trait TouchHost:
 
 /// An enemy species' contact reaction, keyed by its address.
 pub fn touch<H: TouchHost>(ea: u32, game: &mut H) {
+    if lease_touch(ea, game) {
+        return;
+    }
     match ea {
         10518563 => game.contact_reaction(Death::Finalize),
-        10670984 => oum::touch(true, game),
-        10670988 => oum::touch(false, game),
         10780707 => game.contact_reaction(Death::Finalize),
         10795325 => crocomire_reactions::touch(game),
         10795344 => (),
@@ -137,11 +138,13 @@ pub trait ShotHost:
 
 /// An enemy species' shot reaction, keyed by its address; `j` is the projectile.
 pub fn shot<H: ShotHost>(ea: u32, j: u16, game: &mut H) {
+    if lease_shot(ea, game) {
+        return;
+    }
     match ea {
         10518573 => game.shot_reaction(Shot::Finalize),
         10846278 => game.native_shot(NativeShot::Dud),
         10649676 => (),
-        10671028 => oum::shot(game),
         10780717 => game.shot_reaction(Shot::Finalize),
         10795345 => crocomire_reactions::count_hit(game),
         10795368 => crocomire_reactions::impact(game),
@@ -186,14 +189,15 @@ pub trait DrawHookHost: SpeciesHost + LeaseActors + magdollite::Host + draygon_h
 
 /// An enemy species' graphics draw hook, keyed by its address.
 pub fn draw_hook<H: DrawHookHost>(ea: u32, game: &mut H) {
+    if lease_draw_hook(ea, game) {
+        return;
+    }
     match ea {
         10518604 => (),
-        10738444 => reflec::cycle_palette(game),
         10851138 => draygon_flight::set_bg2_scroll(game),
         10920690 => game.native_draw_hook(NativeDrawHook::CeresRidleyBabyMetroidAndWings),
         11042892 => (),
         11055282 => magdollite::cycle_palette(game),
-        11062375 => work_robot::palette(game),
         11069550 => game.native_draw_hook(NativeDrawHook::BlueFaceBlockPalette),
         11110278 => (),
         11110345 => game.native_draw_hook(NativeDrawHook::MotherBrainBrainAndNeck),
@@ -453,6 +457,8 @@ pub fn lease_ai<H: LeaseScope + ?Sized>(ea: u32, game: &mut H) -> bool {
         10654479 => game.with_lease(tatori::shot),
         10728522 => game.with_lease(zoa::initialize),
         10728572 => game.with_lease(zoa::main_ai),
+        10670988 => game.with_lease(|runtime| oum::touch(false, runtime)),
+        10671028 => game.with_lease(oum::shot),
         _ => return false,
     }
     true
@@ -486,6 +492,38 @@ pub fn lease_instruction<H: LeaseScope + ?Sized>(
         10728511 => game.with_lease(|runtime| zoa::set_x_speed_index(12, j, runtime)),
         _ => return Err(j),
     })
+}
+
+/// The contact reactions that run on one actor lease, keyed by address. False when `ea` is
+/// not one of them.
+pub fn lease_touch<H: LeaseScope + ?Sized>(ea: u32, game: &mut H) -> bool {
+    match ea {
+        10670984 => game.with_lease(|runtime| oum::touch(true, runtime)),
+        10670988 => game.with_lease(|runtime| oum::touch(false, runtime)),
+        _ => return false,
+    }
+    true
+}
+
+/// The shot reactions that run on one actor lease, keyed by address. False when `ea` is not
+/// one of them.
+pub fn lease_shot<H: LeaseScope + ?Sized>(ea: u32, game: &mut H) -> bool {
+    match ea {
+        10671028 => game.with_lease(oum::shot),
+        _ => return false,
+    }
+    true
+}
+
+/// The graphics drawn hooks that run on one actor lease, keyed by address. False when `ea` is
+/// not one of them.
+pub fn lease_draw_hook<H: LeaseScope + ?Sized>(ea: u32, game: &mut H) -> bool {
+    match ea {
+        10738444 => game.with_lease(reflec::cycle_palette),
+        11062375 => game.with_lease(work_robot::palette),
+        _ => return false,
+    }
+    true
 }
 
 /// An enemy species' AI routine, keyed by its address. Arms not here are in
@@ -752,8 +790,6 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
             }
         }
         10669331 => oum::main_ai(game),
-        10670988 => oum::touch(false, game),
-        10671028 => oum::shot(game),
         10658809 => cacatac::owtch::initialize(game),
         10658942 => cacatac::owtch::main_ai(game),
         10659193 => cacatac::owtch::shot(game),

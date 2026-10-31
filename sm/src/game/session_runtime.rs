@@ -1145,13 +1145,22 @@ impl Runtime<'_> {
         }
     }
     pub(crate) fn actor_touch_legacy(&mut self, routine: u32) {
-        self.foreign(|game| sm_game::actors::species::touch(routine, game));
+        use sm_game::actors::species;
+        if !species::lease_touch(routine, self) {
+            self.foreign(|game| species::touch(routine, game));
+        }
     }
     pub(crate) fn actor_shot_legacy(&mut self, routine: u32, argument: u16) {
-        self.foreign(|game| sm_game::actors::species::shot(routine, argument, game));
+        use sm_game::actors::species;
+        if !species::lease_shot(routine, self) {
+            self.foreign(|game| species::shot(routine, argument, game));
+        }
     }
     pub(crate) fn actor_hook_legacy(&mut self, routine: u32) {
-        self.foreign(|game| sm_game::actors::species::draw_hook(routine, game));
+        use sm_game::actors::species;
+        if !species::lease_draw_hook(routine, self) {
+            self.foreign(|game| species::draw_hook(routine, game));
+        }
     }
     pub(crate) fn produce_player_scene(&mut self) {
         self.owned_player_call(|runtime| {

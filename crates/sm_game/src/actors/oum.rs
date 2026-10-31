@@ -8,7 +8,6 @@ use crate::actors::combat::{self, current_slot};
 use crate::actors::host::{ActorLease, LeaseActors};
 use crate::actors::layouts::part_view;
 use crate::actors::species::{PreInstructionHost, SpeciesHost, pre_instruction};
-use crate::enemy_projectiles::host::Effects as _;
 use crate::enemy_script::EnemyScript;
 use crate::player_projectiles::content::table;
 use crate::ram::words;
@@ -252,8 +251,7 @@ pub fn bounce<H: LeaseActors + ?Sized>(rising: bool, k: u16, game: &mut H) {
     }
 }
 /// Enemy touch - oum - hurts Samus ($A2:D388) or doesn't ($A2:D38C): push her aside 4 px.
-pub fn touch<H: LeaseActors + ?Sized>(hurts: bool, game: &mut H) {
-    let runtime = &mut game.lease();
+pub fn touch(hurts: bool, runtime: &mut impl ActorLease) {
     if hurts {
         combat::contact_reaction(runtime, DeathHandling::Finalize);
     }
@@ -268,9 +266,8 @@ pub fn touch<H: LeaseActors + ?Sized>(hurts: bool, game: &mut H) {
     }
 }
 /// Enemy shot - oum ($A2:D3B4).
-pub fn shot<H: LeaseActors + ?Sized>(game: &mut H) {
-    let mut lease = game.lease();
-    combat::shot_reaction(&mut lease, ShotHandling::Finalize);
+pub fn shot(lease: &mut impl ActorLease) {
+    combat::shot_reaction(lease, ShotHandling::Finalize);
     lease.queue_sound(2, 6, 0x57);
 }
 /// Instructions - set animation finished flag ($A2:CCB3), and attack allowing rotation

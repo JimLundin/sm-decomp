@@ -42,8 +42,7 @@ fn cooldown(runtime: &mut impl ActorLease) {
     });
 }
 /// Enemy graphics drawn hook - work robot - periodically cycle between palettes ($A8:CC67).
-pub fn palette<H: LeaseActors + ?Sized>(game: &mut H) {
-    let runtime = &mut game.lease();
+pub fn palette(runtime: &mut impl ActorLease) {
     let door = runtime.word(W::DOOR_TRANSITION_FLAG_ENEMIES) != 0;
     if door || runtime.word(W::WORK_ROBOT_PALANIM_TIMER) == 0 {
         return;
