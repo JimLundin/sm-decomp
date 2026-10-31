@@ -37,7 +37,7 @@ pub(crate) static CHANGED_ROM_PATCHES: &[u32] = &[0x859650];
 pub(crate) static FOLLOWS_CARRY: &[u32] = &[];
 
 /// bug hooks: The Rust engine follows the original game here; the default oracle drops them.
-pub(crate) static FOLLOWS_BUG_HOOKS: &[u32] = &[0x9085aa, 0x94a85b];
+pub(crate) static FOLLOWS_BUG_HOOKS: &[u32] = &[0x9085aa, 0x91da89, 0x94a85b];
 
 /// other hooks: The Rust engine follows the original game here; the default oracle drops them.
 pub(crate) static FOLLOWS_OTHER_HOOKS: &[u32] = &[];
