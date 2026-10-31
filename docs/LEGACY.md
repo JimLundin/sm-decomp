@@ -33,7 +33,7 @@ rejected, and where execution stopped), not the words.
 | `sm/src/verification/native_content_checks.rs` | 7 |
 | `sm/src/verification/player_movement_edges.rs` | 4 |
 | `sm/src/verification/{actor_population_animation_cases,collision_mechanism_checks,player_minimap_edges}.rs` | 2 each |
-| `sm/src/verify.rs` | 2 |
+| `sm/src/verify.rs` | 1 |
 | `sm/src/verification/{actor_movement_cases,player_minimap_boss,room_background_cases,room_contact_start_cases,room_reference_cases,room_world_cases,room_world_dll,samus_game_binding_cases}.rs` | 1 each |
 
 To retire an entry: change the check to assert the failure kind, then replace

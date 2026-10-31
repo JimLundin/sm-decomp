@@ -845,13 +845,12 @@ unsafe fn make_snapshot_with_player_owner(
     s: &mut Snapshot,
     snes: &Snes,
     c: &Cpu,
-    player: *mut crate::types::SpcPlayer,
     owner: Option<&mut crate::spc_player::NativePlayer>,
     ram: &WorkRam,
     backend: &crate::snes::snes::Backend,
 ) {
     unsafe {
-        s.player.capture_with_owner(owner, player);
+        s.player.capture_from(owner.as_deref());
         s.audio.capture(snes);
         s.ppu = *snes.ppu;
         s.cpu = *c;
@@ -1273,9 +1272,8 @@ pub unsafe fn run_one_frame_of_game_both(native_game: &mut Game) {
         {
             let snes = game.g_snes;
             let cpu = game.g_cpu;
-            let player = game.g_spc_player;
             let (backend, ram, _, _, before, owner) = game.ram_and_owned_snapshots();
-            make_snapshot_with_player_owner(before, &*snes, &*cpu, player, owner, ram, backend);
+            make_snapshot_with_player_owner(before, &*snes, &*cpu, owner, ram, backend);
         }
         game.actor_snapshots.before = Some(game.capture_actor_snapshot());
         let samus_before = game.capture_samus_snapshot();
@@ -1298,9 +1296,8 @@ pub unsafe fn run_one_frame_of_game_both(native_game: &mut Game) {
             {
                 let snes = game.g_snes;
                 let cpu = game.g_cpu;
-                let player = game.g_spc_player;
                 let (backend, ram, _, theirs, _, owner) = game.ram_and_owned_snapshots();
-                make_snapshot_with_player_owner(theirs, &*snes, &*cpu, player, owner, ram, backend);
+                make_snapshot_with_player_owner(theirs, &*snes, &*cpu, owner, ram, backend);
             }
             game.actor_snapshots.theirs = Some(game.capture_actor_snapshot());
             let samus_theirs = game.capture_samus_snapshot();
@@ -1348,9 +1345,8 @@ pub unsafe fn run_one_frame_of_game_both(native_game: &mut Game) {
             {
                 let snes = game.g_snes;
                 let cpu = game.g_cpu;
-                let player = game.g_spc_player;
                 let (backend, ram, mine, _, _, owner) = game.ram_and_owned_snapshots();
-                make_snapshot_with_player_owner(mine, &*snes, &*cpu, player, owner, ram, backend);
+                make_snapshot_with_player_owner(mine, &*snes, &*cpu, owner, ram, backend);
             }
             game.actor_snapshots.mine = Some(game.capture_actor_snapshot());
             let _samus_mine = game.capture_samus_snapshot();
@@ -1449,9 +1445,8 @@ pub unsafe fn run_one_frame_of_game_both(native_game: &mut Game) {
                 }
                 save_bug_snapshot(game);
                 {
-                    let player = game.g_spc_player;
                     let (_, _, mine, _, _, owner) = game.ram_and_owned_snapshots();
-                    mine.player.capture_with_owner(owner, player);
+                    mine.player.capture_from(owner.as_deref());
                 }
                 // Saving music copies the custom player's state into the physical APU.
                 game.g_snapshot_before.audio.restore(game.g_snes);

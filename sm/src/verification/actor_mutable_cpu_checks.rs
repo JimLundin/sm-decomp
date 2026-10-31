@@ -6,7 +6,7 @@ use crate::{game::actors::mutable_content_checks as fixture, game_state::Game};
 pub(crate) unsafe fn run(game: &mut Game) -> Vec<u8> {
     unsafe {
         assert!(
-            !game.g_snes.is_null() && !game.g_cpu.is_null() && !game.g_spc_player.is_null(),
+            !game.g_snes.is_null() && !game.g_cpu.is_null() && !game.native_player.is_none(),
             "actor.mutable.initialized_hardware_required"
         );
         let snes = game.g_snes;
@@ -29,13 +29,11 @@ pub(crate) unsafe fn run(game: &mut Game) -> Vec<u8> {
         {
             let snapshot_snes = snes;
             let snapshot_cpu = game.g_cpu;
-            let snapshot_player = game.g_spc_player;
             let (backend, ram, _, _, before, owner) = game.ram_and_owned_snapshots();
             super::make_snapshot_with_player_owner(
                 before,
                 &*snapshot_snes,
                 &*snapshot_cpu,
-                snapshot_player,
                 owner,
                 ram,
                 backend,

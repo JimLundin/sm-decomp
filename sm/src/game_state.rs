@@ -183,7 +183,8 @@ pub enum PlayerSnapshotSource<'a> {
 /// stable RAM allocation independently of this Game's address.
 pub struct Game {
     backend: Option<crate::snes::snes::Backend>,
-    _native_player: Option<crate::spc_player::NativePlayer>,
+    /// The native sound driver, once created.
+    pub native_player: Option<crate::spc_player::NativePlayer>,
     actor_identity: Option<crate::game::actors::identity::ActorIdentityState>,
     pub(crate) actor_snapshots: sm_game::actors::snapshot::ActorSnapshotSidecars,
     world: Arc<WorldBinding>,
@@ -265,7 +266,6 @@ pub struct Game {
     pub currently_installed_bug_fix_counter: u16,
     pub VERIFY_ACTIVE: bool,
     pub VERIFY_FAILURES: u64,
-    pub g_spc_player: *mut SpcPlayer,
     pub g_got_mismatch_count: c_int,
     pub g_other_image: bool,
     pub g_debug_flag: bool,
@@ -295,14 +295,6 @@ macro_rules! ram_word_accessors {
             }
         )*
     };
-}
-
-/// The owned native player, when it is the one the game currently selects.
-fn selected_player(
-    player: &mut Option<crate::spc_player::NativePlayer>,
-    selected: *mut SpcPlayer,
-) -> Option<&mut crate::spc_player::NativePlayer> {
-    player.as_mut().filter(|player| player.view() == selected)
 }
 
 // Oracle snapshots own separate allocations, keeping construction stack usage bounded.
@@ -436,7 +428,7 @@ impl Game {
             &mut self.g_snapshot_mine,
             &mut self.g_snapshot_theirs,
             &mut self.g_snapshot_before,
-            self._native_player.as_mut(),
+            self.native_player.as_mut(),
         )
     }
 
@@ -524,118 +516,58 @@ impl Game {
         self.backend = Some(backend);
     }
 
-    /// Allocate the complete replacement before publishing its borrowed view.
-    /// Existing raw views become invalid. Code dereferencing native/audio views
-    /// must keep their owner live and stop before replacement or Game destruction.
-    /// Foreign DSP/history links stay borrowed; creation never dereferences them.
-    #[forbid(unsafe_code)]
+    /// Create the native sound driver, replacing any earlier one.
     pub fn create_native_player(&mut self) {
-        let player = crate::spc_player::NativePlayer::new();
-        self.g_spc_player = player.view();
-        self._native_player = Some(player);
+        self.native_player = Some(crate::spc_player::NativePlayer::new());
     }
 
-    /// Initialize the current player at the original caller's lifecycle phase.
-    /// # Safety
-    /// Native/audio users must be exclusive, stopped for reset and non-reentrant;
-    /// imported DSP/history allocations retain their original disjoint lifetimes.
-    pub unsafe fn initialize_native_player(&mut self) {
-        unsafe {
-            if let Some(player) = selected_player(&mut self._native_player, self.g_spc_player) {
-                if player.try_initialize() {
-                    return;
-                }
-            }
-            crate::spc_player::spc_player_initialize(self.g_spc_player);
-        }
+    /// The native player; panics before `create_native_player`.
+    pub fn native_player_mut(&mut self) -> &mut crate::spc_player::NativePlayer {
+        self.native_player
+            .as_mut()
+            .expect("native audio requires the native player")
     }
 
-    /// Export current fields and optional queued ports into this player's RAM.
-    /// # Safety
-    /// Hold the existing APU lock with exclusive non-reentrant native views.
-    pub unsafe fn save_native_audio_variables(&mut self, include_queued_commands: bool) {
-        unsafe {
-            if let Some(player) = selected_player(&mut self._native_player, self.g_spc_player) {
-                player.save_state(include_queued_commands.then_some(&self.apu_queue));
-            } else {
-                if include_queued_commands {
-                    self.apu_queue
-                        .apply_queued(&mut (*self.g_spc_player).state.input_ports);
-                }
-                crate::spc_player::spc_player_copy_variables_to_ram(self.g_spc_player);
-            }
-        }
+    /// Initialize the player at the original caller's lifecycle phase.
+    pub fn initialize_native_player(&mut self) {
+        self.native_player_mut().initialize();
+    }
+
+    /// Export the driver's variables and optional queued ports into its RAM.
+    pub fn save_native_audio_variables(&mut self, include_queued_commands: bool) {
+        let queued = include_queued_commands.then_some(self.apu_queue);
+        self.native_player_mut().save_state(queued.as_ref());
     }
 
     /// Import the actual current RAM image before resuming sequencing.
-    /// # Safety
-    /// Hold the existing APU lock with exclusive non-reentrant native views.
-    pub unsafe fn load_native_audio_variables(&mut self) {
-        unsafe {
-            if let Some(player) = selected_player(&mut self._native_player, self.g_spc_player) {
-                player.load_state();
-            } else {
-                crate::spc_player::spc_player_copy_variables_from_ram(self.g_spc_player);
-            }
-        }
+    pub fn load_native_audio_variables(&mut self) {
+        self.native_player_mut().load_state();
     }
 
-    /// Capture the actual selected player into separate snapshot storage.
-    /// # Safety
-    /// Snapshot and native allocations must be disjoint, stopped and exclusive;
-    /// retained foreign DSP/history views stay live and non-reentrant.
-    pub unsafe fn capture_native_player_snapshot(
+    /// Capture the player into separate snapshot storage; none leaves it invalid.
+    pub fn capture_native_player_snapshot(
         &mut self,
         snapshot: &mut crate::audio_snapshot::PlayerSnapshot,
     ) {
-        unsafe {
-            snapshot.capture_with_owner(self._native_player.as_mut(), self.g_spc_player);
-        }
+        snapshot.capture_from(self.native_player.as_ref());
     }
-    /// Restore the selected completed image; allocation links stay destination-owned.
-    /// # Safety
-    /// Keep the same native/snapshot disjointness, history topology and quiescence.
-    pub unsafe fn restore_native_player_snapshot(&mut self, source: PlayerSnapshotSource<'_>) {
-        unsafe {
-            let snapshot = match source {
-                PlayerSnapshotSource::Before => &self.g_snapshot_before.player,
-                PlayerSnapshotSource::Mine => &self.g_snapshot_mine.player,
-                PlayerSnapshotSource::Theirs => &self.g_snapshot_theirs.player,
-                PlayerSnapshotSource::Local(snapshot) => snapshot,
-            };
-            snapshot.restore_with_owner(self._native_player.as_mut(), self.g_spc_player);
-        }
+    /// Restore a valid captured image into the player.
+    pub fn restore_native_player_snapshot(&mut self, source: PlayerSnapshotSource<'_>) {
+        let snapshot = match source {
+            PlayerSnapshotSource::Before => &self.g_snapshot_before.player,
+            PlayerSnapshotSource::Mine => &self.g_snapshot_mine.player,
+            PlayerSnapshotSource::Theirs => &self.g_snapshot_theirs.player,
+            PlayerSnapshotSource::Local(snapshot) => snapshot,
+        };
+        snapshot.restore_into(self.native_player.as_mut());
     }
 
-    /// Call under the existing APU lock with exclusive native/audio users.
-    pub(crate) unsafe fn apply_native_audio_ports(&mut self, writes: [u8; 4]) {
-        unsafe {
-            if let Some(player) = selected_player(&mut self._native_player, self.g_spc_player) {
-                player.apply_ports(writes);
-            } else {
-                crate::apu_queue::ApuQueue::apply_ports(
-                    writes,
-                    &mut (*self.g_spc_player).state.input_ports,
-                );
-            }
-        }
+    pub(crate) fn apply_native_audio_ports(&mut self, writes: [u8; 4]) {
+        self.native_player_mut().apply_ports(writes);
     }
 
-    /// The APU lock, stopped replacement/Drop and disjoint non-reentrant native
-    /// views/history remain required; selected external players retain the bridge.
-    pub(crate) unsafe fn render_native_audio(&mut self, samples: &mut [[i16; 2]]) {
-        unsafe {
-            if let Some(player) = selected_player(&mut self._native_player, self.g_spc_player) {
-                if player.try_render_samples(samples) {
-                    return;
-                }
-            }
-            // The owned borrow ended before selected/history/imported playback.
-            crate::spc_player::spc_player_generate_samples(self.g_spc_player);
-            (*(*self.g_spc_player).state.dsp)
-                .state
-                .write_samples(samples);
-        }
+    pub(crate) fn render_native_audio(&mut self, samples: &mut [[i16; 2]]) {
+        self.native_player_mut().render_samples(samples);
     }
 
     #[cfg(sm_verify_dll)]
@@ -972,7 +904,7 @@ impl Game {
         };
         Box::new(Self {
             backend: None,
-            _native_player: None,
+            native_player: None,
             world,
             actor_identity: Some(crate::game::actors::identity::ActorIdentityState::empty()),
             actor_snapshots: Default::default(),
@@ -1039,7 +971,6 @@ impl Game {
             currently_installed_bug_fix_counter: 0,
             VERIFY_ACTIVE: false,
             VERIFY_FAILURES: 0,
-            g_spc_player: core::ptr::null_mut(),
             g_got_mismatch_count: 0,
             g_other_image: false,
             g_debug_flag: false,

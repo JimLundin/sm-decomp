@@ -102,10 +102,6 @@ unsafe fn initialize_verify_audio(game: &mut Game) -> Result<(), String> {
             return Err("unable to create audio mutex".into());
         }
         game.create_native_player();
-        if game.g_spc_player.is_null() {
-            SDL_DestroyMutex(g_audio_mutex);
-            return Err("unable to initialize sound driver".into());
-        }
         game.initialize_native_player();
         Ok(())
     }

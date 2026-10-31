@@ -36,7 +36,7 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
             || original.len() != 0x300000
             || game.g_cpu.is_null()
             || game.g_snes.is_null()
-            || game.g_spc_player.is_null()
+            || game.native_player.is_none()
         {
             return Err("pose fixture requires admitted ID and initialized original host".into());
         }
@@ -52,13 +52,11 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
         {
             let snapshot_snes = game.g_snes;
             let snapshot_cpu = game.g_cpu;
-            let snapshot_player = game.g_spc_player;
             let (backend, ram, _, _, _, owner) = game.ram_and_owned_snapshots();
             make_snapshot_with_player_owner(
                 &mut before,
                 &*snapshot_snes,
                 &*snapshot_cpu,
-                snapshot_player,
                 owner,
                 ram,
                 backend,

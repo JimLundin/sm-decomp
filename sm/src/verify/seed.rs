@@ -337,8 +337,8 @@ pub(super) unsafe fn load(
                 ppu_registers(ppu, &r)?;
             }
             (*snes.apu).ram.copy_from(&apuram);
-            (*game.g_spc_player).ram.copy_from(&apuram);
-            sm::spc_player::spc_player_copy_variables_from_ram(game.g_spc_player);
+            game.native_player_mut().ram.copy_from(&apuram);
+            game.load_native_audio_variables();
             let cpu = &mut *snes.cpu;
             cpu.a = r.get("a")? as u16;
             cpu.x = r.get("x")? as u16;

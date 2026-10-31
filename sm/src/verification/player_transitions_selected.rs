@@ -218,7 +218,7 @@ pub fn capture(id: u32, original: &[u8], g: &mut Game) -> Result<Vec<u8>, String
         || original.len() != 0x300000
         || g.g_snes.is_null()
         || g.g_cpu.is_null()
-        || g.g_spc_player.is_null()
+        || g.native_player.is_none()
     {
         return Err("PT30 requires admitted ID and initialized host".into());
     }

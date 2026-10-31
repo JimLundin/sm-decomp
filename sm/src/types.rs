@@ -445,9 +445,7 @@ crate::typed_struct! {
     }
 
     pub struct NativePlayerState {
-        pub reg_write_history: *mut DspRegWriteHistory;
         pub timer_cycles: u8;
-        pub dsp: *mut Dsp;
         pub port_to_snes, last_value_from_snes: [u8; 4];
         pub counter_sf0c, always_zero, temp_accum: u16;
         pub ttt, did_affect_volumepitch_flag: u8;
@@ -474,7 +472,6 @@ crate::typed_struct! {
         pub sfx_chans_2, sfx_chans_3: [SfxChan; 2];
         pub last_written_edl: u8;
         pub input_ports: [u8; 4];
-        pub ram: *mut u8;
     }
 
     pub struct Timer {
@@ -584,6 +581,15 @@ impl DspRegWriteHistory {
         addr: [0; 256],
         val: [0; 256],
     };
+    /// Record a register write; the first 256 are kept.
+    pub fn record(&mut self, address: u8, value: u8) {
+        let index = self.count as usize;
+        if index < 256 {
+            self.count += 1;
+            self.addr[index] = address;
+            self.val[index] = value;
+        }
+    }
 }
 
 impl SpawnHardcodedPlmArgs {
@@ -673,14 +679,6 @@ pub struct Apu {
     pub ram: crate::apu_ram::ApuRam,
     pub registers: ApuRegisters,
 }
-
-// The C music interface sees only the first field. RAM ownership stays in Rust.
-#[repr(C)]
-pub struct SpcPlayer {
-    pub state: NativePlayerState,
-    pub ram: crate::apu_ram::ApuRam,
-}
-const _: () = assert!(core::mem::offset_of!(SpcPlayer, state) == 0);
 
 pub use sm_runtime::audio::dsp::{Dsp, DspChannel, DspState};
 

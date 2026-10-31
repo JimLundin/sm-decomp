@@ -164,11 +164,11 @@ pub(super) fn run() -> i32 {
         bank_upload_physical_timeout_boundaries,
         sfx_native_note_keeps_captured_slot_and_literal_programming,
         sfx_native_reset_rejection_keeps_history_and_reset_prefix,
-        sfx_native_pan_origin_failure_keeps_programmed_instrument_prefix,
+        sfx_native_pan_note_keeps_programmed_instrument_prefix,
         owned_player_render_matches_native_schedule_and_failure_prefixes,
         owned_player_initialization_and_transfers_preserve_native_boundaries,
-        owned_player_creation_replacement_and_drop_keep_borrowed_allocations,
-        owned_player_snapshots_restore_selected_allocations_and_failure_prefixes,
+        owned_player_creation_replacement_starts_fresh,
+        owned_player_snapshots_restore_state_ram_and_dsp,
     ];
     let mut failed = 0usize;
     for (name, test) in &tests {
@@ -10246,7 +10246,6 @@ fn sfx_groups_first_outside_flat_allocation_keeps_exact_initialization_failure_p
             (state.last_written_edl, state.input_ports),
             (0x77, [0x11, 0x22, 0x33, 0x44])
         );
-        assert!(state.ram.is_null());
     }
 }
 

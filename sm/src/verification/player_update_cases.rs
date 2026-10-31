@@ -145,7 +145,7 @@ pub unsafe fn capture(id: u32, original: &[u8], g: &mut Game) -> Result<Vec<u8>,
             || original.len() != 0x300000
             || g.g_cpu.is_null()
             || g.g_snes.is_null()
-            || g.g_spc_player.is_null()
+            || g.native_player.is_none()
         {
             return Err("player update requires admitted ID and initialized host".into());
         }
@@ -162,13 +162,11 @@ pub unsafe fn capture(id: u32, original: &[u8], g: &mut Game) -> Result<Vec<u8>,
         {
             let snapshot_snes = g.g_snes;
             let snapshot_cpu = g.g_cpu;
-            let snapshot_player = g.g_spc_player;
             let (backend, ram, _, _, _, owner) = g.ram_and_owned_snapshots();
             make_snapshot_with_player_owner(
                 &mut before,
                 &*snapshot_snes,
                 &*snapshot_cpu,
-                snapshot_player,
                 owner,
                 ram,
                 backend,

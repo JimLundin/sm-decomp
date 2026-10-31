@@ -446,13 +446,11 @@ unsafe fn snapshot(g: &mut Game, out: &mut Vec<u8>) {
         {
             let snapshot_snes = snes;
             let snapshot_cpu = g.g_cpu;
-            let snapshot_player = g.g_spc_player;
             let (backend, ram, _, _, before, owner) = g.ram_and_owned_snapshots();
             super::make_snapshot_with_player_owner(
                 before,
                 &*snapshot_snes,
                 &*snapshot_cpu,
-                snapshot_player,
                 owner,
                 ram,
                 backend,
@@ -466,7 +464,7 @@ unsafe fn snapshot(g: &mut Game, out: &mut Vec<u8>) {
     }
     record(out, 1, 0, g);
     queue.restore(g);
-    unsafe { g.restore_native_player_snapshot(crate::game_state::PlayerSnapshotSource::Before) };
+    g.restore_native_player_snapshot(crate::game_state::PlayerSnapshotSource::Before);
     let restore = g
         .actor_snapshots
         .before
@@ -568,7 +566,7 @@ fn foreign_unwind(g: &mut Game, out: &mut Vec<u8>) {
 pub(crate) unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
     assert!(id < COUNT, "collision.owner.case_id");
     assert!(
-        !g.g_snes.is_null() && !g.g_cpu.is_null() && !g.g_spc_player.is_null(),
+        !g.g_snes.is_null() && !g.g_cpu.is_null() && !g.native_player.is_none(),
         "collision.owner.initialized_backend"
     );
     // Fixture setup, not a claimed reset. Backend allocations and cartridge remain real.

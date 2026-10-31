@@ -412,7 +412,7 @@ fields!(NativePlayerState {
     echo_volume_fade_ticks, echo_volume_fade_target_left, echo_volume_fade_target_right,
     p_echoBuffer, memset_ptr, memset_ctr, disable_sfx2, byte_4B1, channel, sfx1, sfx2,
     sfx3, sfx_chans_1, sfx_chans_2, sfx_chans_3, last_written_edl, input_ports
-} skip { reg_write_history, dsp, ram });
+} skip { });
 
 fields!(Timer {
     cycles, divider, target, counter, enabled
@@ -574,9 +574,9 @@ machine_state! { game, archive, snes;
         apu: Apu = *(*snes).apu => state,
         spc: Spc = *(*(*snes).apu).spc => state,
         apu_dsp: DspState = (*(*(*snes).apu).dsp).state => state,
-        player: NativePlayerState = (*game.g_spc_player).state => state,
-        player_ram: crate::apu_ram::ApuRam = (*game.g_spc_player).ram => state,
-        player_dsp: DspState = (*(*game.g_spc_player).state.dsp).state => state,
+        player: NativePlayerState = game.native_player_mut().state => state,
+        player_ram: crate::apu_ram::ApuRam = game.native_player_mut().ram => state,
+        player_dsp: DspState = game.native_player_mut().dsp.state => state,
         sram: [u8; crate::recording::BASE_SRAM_SIZE] = game.g_sram => sram
     }
 }
@@ -610,7 +610,7 @@ pub(crate) unsafe fn capture_with_sources(
         if game.actor_identity_is_with_session() {
             return Err("checkpoint requires a Game-owned committed interval".into());
         }
-        if game.g_snes.is_null() || game.g_spc_player.is_null() {
+        if game.g_snes.is_null() || game.native_player.is_none() {
             return Err("full checkpoint requires the initialized native verifier backend".into());
         }
         if !game.VERIFY_ACTIVE
@@ -622,7 +622,10 @@ pub(crate) unsafe fn capture_with_sources(
             || game.g_calling_asm_from_c
             || (!game.supports_legacy_persistence() && game.snes_frame_counter <= 0)
             || game.state_recorder.replay_mode
-            || !(*game.g_spc_player).state.reg_write_history.is_null()
+            || game
+                .native_player
+                .as_ref()
+                .is_some_and(|player| player.history.is_some())
             || (*(*game.g_snes).cart).ramSize != crate::recording::BASE_SRAM_SIZE as u32
         {
             return Err("checkpoint requires a successful, idle committed verifier frame".into());
@@ -725,7 +728,7 @@ pub unsafe fn load_with_sources(
         if game.actor_identity_is_with_session() {
             return Err("checkpoint requires a Game-owned committed interval".into());
         }
-        if game.g_snes.is_null() || game.g_spc_player.is_null() {
+        if game.g_snes.is_null() || game.native_player.is_none() {
             return Err("full checkpoint requires the initialized native verifier backend".into());
         }
         let bytes = std::fs::read(path).map_err(|e| format!("{}: {e}", path.display()))?;
@@ -814,7 +817,7 @@ pub(crate) unsafe fn restore_capture_with_sources(
         if game.actor_identity_is_with_session() {
             return Err("checkpoint requires a Game-owned committed interval".into());
         }
-        if game.g_snes.is_null() || game.g_spc_player.is_null() {
+        if game.g_snes.is_null() || game.native_player.is_none() {
             return Err("full checkpoint requires the initialized native verifier backend".into());
         }
         let size = payload

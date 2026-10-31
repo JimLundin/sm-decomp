@@ -178,14 +178,9 @@ unsafe fn __acrt_iob_func(index: u32) -> *mut c_void {
 }
 
 unsafe fn initialize_verify_audio(game: &mut Game) -> Result<(), String> {
-    unsafe {
-        game.create_native_player();
-        if game.g_spc_player.is_null() {
-            return Err("unable to initialize sound driver".into());
-        }
-        game.initialize_native_player();
-        Ok(())
-    }
+    game.create_native_player();
+    game.initialize_native_player();
+    Ok(())
 }
 
 fn finish_verify_audio() {}

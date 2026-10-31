@@ -1558,613 +1558,434 @@ mod coverage_checks;
 #[cfg(any(test, sm_verify_dll))]
 #[cfg_attr(test, test)]
 fn sfx_native_note_keeps_captured_slot_and_literal_programming() {
-    use sm::{spc_player::sfx1_process, types::DspRegWriteHistory};
-    let mut game = Game::new();
-    let mut history = Box::new(DspRegWriteHistory::EMPTY);
-    // The existing owner keeps player, DSP and RAM live and disjoint; no device or callback reentry.
-    unsafe {
-        game.create_native_player();
-        let p = game.g_spc_player;
-        let ram = (*p).ram.clone();
-        (*p).state.reg_write_history = &raw mut *history;
-        let state = &mut (*p).state;
-        state.sfx1.init_flag = 255;
-        state.is_chan_on = 4;
-        state.cur_chan_bit = 255;
-        state.reg_NON = 255;
-        state.key_ON = 0x80;
-        state.key_OFF = 0x20;
-        for s in &mut state.sfx_chans_1 {
-            s.disable = 255;
-        }
-        let s = &mut state.sfx_chans_1[0];
-        s.disable = 0;
-        s.ptr = 0x0200;
-        s.instr_timer = 1;
-        s.release_flag = 255;
-        s.release_timer = 1;
-        s.voice_index = 4;
-        s.voice_bitset = 4;
-        s.channel_mask = 0xfb;
-        state.channel[2].index = 1;
-        state.channel[2].instrument_id = 9;
-        state.channel[2].instrument_pitch_base = 0x2222;
-        state.channel[1].instrument_pitch_base = 0x3333;
-        state.channel[1].final_volume = 0x44;
-        for (i, v) in [3, 0x81, 0x23, 0x45, 1, 0].into_iter().enumerate() {
-            ram.write(0x6c0c + i as u16, v);
-        }
-        for (i, v) in [2, 128, 10, 24, 7].into_iter().enumerate() {
-            ram.write(0x0200 + i as u16, v);
-        }
-        sfx1_process(p);
-        assert_eq!(history.count, 8);
-        assert_eq!(
-            &history.addr[..8],
-            &[0x14, 0x15, 0x16, 0x17, 0x10, 0x11, 0x12, 0x13]
-        );
-        assert_eq!(&history.val[..8], &[3, 0x81, 0x23, 0x45, 40, 40, 11, 1]);
-        let state = &(*p).state;
-        let c = &state.channel[2];
-        assert_eq!(
-            (c.index, c.instrument_id, c.instrument_pitch_base),
-            (1, 9, 256)
-        );
-        assert_eq!((c.final_volume, c.pan_flag_with_phase_invert), (128, 0));
-        assert_eq!(
-            (
-                state.channel[1].instrument_pitch_base,
-                state.channel[1].final_volume
-            ),
-            (0x3333, 0x44)
-        );
-        let s = &state.sfx_chans_1[0];
-        assert_eq!(
-            (s.ptr_idx, s.note, s.subnote, s.instr_timer, s.release_flag),
-            (5, 24, 0, 7, 0)
-        );
-        assert_eq!(
-            (
-                state.key_ON,
-                state.key_OFF,
-                state.cur_chan_bit,
-                state.reg_NON,
-                state.is_chan_on
-            ),
-            (0x84, 0x20, 0xfb, 0xfb, 4)
-        );
-        let dsp = &(*state.dsp).state;
-        let voice = &dsp.channel[1];
-        assert_eq!(
-            (voice.srcn, voice.volume_l, voice.volume_r, voice.pitch),
-            (3, 40, 40, 267)
-        );
-        assert_eq!(&dsp.ram[0x14..0x18], &[3, 0x81, 0x23, 0x45]);
+    use sm::spc_player::{DspRegWriteHistory, NativePlayer};
+    let mut player = NativePlayer::new();
+    player.history = Some(DspRegWriteHistory::EMPTY);
+    let ram = player.ram.clone();
+    let state = &mut player.state;
+    state.sfx1.init_flag = 255;
+    state.is_chan_on = 4;
+    state.cur_chan_bit = 255;
+    state.reg_NON = 255;
+    state.key_ON = 0x80;
+    state.key_OFF = 0x20;
+    for s in &mut state.sfx_chans_1 {
+        s.disable = 255;
     }
+    let s = &mut state.sfx_chans_1[0];
+    s.disable = 0;
+    s.ptr = 0x0200;
+    s.instr_timer = 1;
+    s.release_flag = 255;
+    s.release_timer = 1;
+    s.voice_index = 4;
+    s.voice_bitset = 4;
+    s.channel_mask = 0xfb;
+    state.channel[2].index = 1;
+    state.channel[2].instrument_id = 9;
+    state.channel[2].instrument_pitch_base = 0x2222;
+    state.channel[1].instrument_pitch_base = 0x3333;
+    state.channel[1].final_volume = 0x44;
+    for (i, v) in [3, 0x81, 0x23, 0x45, 1, 0].into_iter().enumerate() {
+        ram.write(0x6c0c + i as u16, v);
+    }
+    for (i, v) in [2, 128, 10, 24, 7].into_iter().enumerate() {
+        ram.write(0x0200 + i as u16, v);
+    }
+    player.process_sound_effects(0);
+    let history = player.history.as_ref().unwrap();
+    assert_eq!(history.count, 8);
+    assert_eq!(
+        &history.addr[..8],
+        &[0x14, 0x15, 0x16, 0x17, 0x10, 0x11, 0x12, 0x13]
+    );
+    assert_eq!(&history.val[..8], &[3, 0x81, 0x23, 0x45, 40, 40, 11, 1]);
+    let state = &player.state;
+    let c = &state.channel[2];
+    assert_eq!(
+        (c.index, c.instrument_id, c.instrument_pitch_base),
+        (1, 9, 256)
+    );
+    assert_eq!((c.final_volume, c.pan_flag_with_phase_invert), (128, 0));
+    assert_eq!(
+        (
+            state.channel[1].instrument_pitch_base,
+            state.channel[1].final_volume
+        ),
+        (0x3333, 0x44)
+    );
+    let s = &state.sfx_chans_1[0];
+    assert_eq!(
+        (s.ptr_idx, s.note, s.subnote, s.instr_timer, s.release_flag),
+        (5, 24, 0, 7, 0)
+    );
+    assert_eq!(
+        (
+            state.key_ON,
+            state.key_OFF,
+            state.cur_chan_bit,
+            state.reg_NON,
+            state.is_chan_on
+        ),
+        (0x84, 0x20, 0xfb, 0xfb, 4)
+    );
+    let dsp = &player.dsp.state;
+    let voice = &dsp.channel[1];
+    assert_eq!(
+        (voice.srcn, voice.volume_l, voice.volume_r, voice.pitch),
+        (3, 40, 40, 267)
+    );
+    assert_eq!(&dsp.ram[0x14..0x18], &[3, 0x81, 0x23, 0x45]);
 }
 
 // Movies cannot restore DSP selector255 and inspect the history-first checked reset failure before restoration finishes.
 #[cfg(any(test, sm_verify_dll))]
 #[cfg_attr(test, test)]
 fn sfx_native_reset_rejection_keeps_history_and_reset_prefix() {
-    use sm::{spc_player::sfx1_process, types::DspRegWriteHistory};
+    use sm::spc_player::{DspRegWriteHistory, NativePlayer};
     use std::panic::{AssertUnwindSafe, catch_unwind};
-    let mut game = Game::new();
-    let mut history = Box::new(DspRegWriteHistory::EMPTY);
-    unsafe {
-        game.create_native_player();
-        let p = game.g_spc_player;
-        let ram = (*p).ram.clone();
-        (*p).state.reg_write_history = &raw mut *history;
-        let state = &mut (*p).state;
-        state.sfx1.init_flag = 255;
-        state.sfx1.cur_sound = 9;
-        state.sfx1.priority = 7;
-        state.sfx1.enabled_voices = 4;
-        state.is_chan_on = 4;
-        state.cur_chan_bit = 0;
-        state.key_OFF = 0x20;
-        state.key_ON = 0x80;
-        for s in &mut state.sfx_chans_1 {
-            s.disable = 255;
-        }
-        let s = &mut state.sfx_chans_1[0];
-        s.disable = 0;
-        s.ptr = 0x0200;
-        s.instr_timer = 1;
-        s.legato = 1;
-        s.update_adsr = 255;
-        s.voice_index = 4;
-        s.voice_bitset = 4;
-        s.channel_mask = 0xfb;
-        s.volume = 0x66;
-        s.phase_invert = 0x80;
-        let c = &mut state.channel[2];
-        c.index = 255;
-        c.instrument_id = 2;
-        c.instrument_pitch_base = 0x2222;
-        c.final_volume = 0x33;
-        c.pan_flag_with_phase_invert = 0x40;
-        ram.write(0x0200, 255);
-        ram.write(0x6c0c, 3);
-        let dsp_before = (*state.dsp).state;
-        let fault = catch_unwind(AssertUnwindSafe(|| sfx1_process(p)))
-            .expect_err("native reset rejects DSP selector255");
-        let text = fault.downcast_ref::<String>().expect("bounds failure text");
-        // LEGACY(message-text): asserts on panic or Die text; should assert the failure kind instead.
-        assert!(text.contains("len is 128") && text.contains("index is 244"));
-        assert_eq!(
-            (history.count, history.addr[0], history.val[0]),
-            (1, 0xf4, 3)
-        );
-        let state = &(*p).state;
-        let s = &state.sfx_chans_1[0];
-        assert_eq!(
-            (s.disable, s.update_adsr, s.ptr_idx, s.instr_timer),
-            (255, 0, 1, 0)
-        );
-        assert_eq!(
-            (
-                state.is_chan_on,
-                state.cur_chan_bit,
-                state.key_OFF,
-                state.key_ON
-            ),
-            (0, 4, 0x24, 0x80)
-        );
-        assert_eq!(
-            (
-                state.sfx1.enabled_voices,
-                state.sfx1.cur_sound,
-                state.sfx1.priority,
-                state.sfx1.init_flag
-            ),
-            (0, 9, 7, 255)
-        );
-        let c = &state.channel[2];
-        assert_eq!(
-            (
-                c.instrument_id,
-                c.instrument_pitch_base,
-                c.final_volume,
-                c.pan_flag_with_phase_invert
-            ),
-            (2, 0x2222, 0x33, 0x40)
-        );
-        let dsp = &(*state.dsp).state;
-        assert_eq!(dsp.ram, dsp_before.ram);
-        assert_eq!(
-            (dsp.channel[7].srcn, dsp.channel[7].pitch),
-            (dsp_before.channel[7].srcn, dsp_before.channel[7].pitch)
-        );
+    let mut player = NativePlayer::new();
+    player.history = Some(DspRegWriteHistory::EMPTY);
+    let ram = player.ram.clone();
+    let state = &mut player.state;
+    state.sfx1.init_flag = 255;
+    state.sfx1.cur_sound = 9;
+    state.sfx1.priority = 7;
+    state.sfx1.enabled_voices = 4;
+    state.is_chan_on = 4;
+    state.cur_chan_bit = 0;
+    state.key_OFF = 0x20;
+    state.key_ON = 0x80;
+    for s in &mut state.sfx_chans_1 {
+        s.disable = 255;
     }
+    let s = &mut state.sfx_chans_1[0];
+    s.disable = 0;
+    s.ptr = 0x0200;
+    s.instr_timer = 1;
+    s.legato = 1;
+    s.update_adsr = 255;
+    s.voice_index = 4;
+    s.voice_bitset = 4;
+    s.channel_mask = 0xfb;
+    s.volume = 0x66;
+    s.phase_invert = 0x80;
+    let c = &mut state.channel[2];
+    c.index = 255;
+    c.instrument_id = 2;
+    c.instrument_pitch_base = 0x2222;
+    c.final_volume = 0x33;
+    c.pan_flag_with_phase_invert = 0x40;
+    ram.write(0x0200, 255);
+    ram.write(0x6c0c, 3);
+    let dsp_before = player.dsp.state;
+    let fault = catch_unwind(AssertUnwindSafe(|| player.process_sound_effects(0)))
+        .expect_err("native reset rejects DSP selector255");
+    let text = fault.downcast_ref::<String>().expect("bounds failure text");
+    // LEGACY(message-text): asserts on panic or Die text; should assert the failure kind instead.
+    assert!(text.contains("len is 128") && text.contains("index is 244"));
+    let history = player.history.as_ref().unwrap();
+    assert_eq!(
+        (history.count, history.addr[0], history.val[0]),
+        (1, 0xf4, 3)
+    );
+    let state = &player.state;
+    let s = &state.sfx_chans_1[0];
+    assert_eq!(
+        (s.disable, s.update_adsr, s.ptr_idx, s.instr_timer),
+        (255, 0, 1, 0)
+    );
+    assert_eq!(
+        (
+            state.is_chan_on,
+            state.cur_chan_bit,
+            state.key_OFF,
+            state.key_ON
+        ),
+        (0, 4, 0x24, 0x80)
+    );
+    assert_eq!(
+        (
+            state.sfx1.enabled_voices,
+            state.sfx1.cur_sound,
+            state.sfx1.priority,
+            state.sfx1.init_flag
+        ),
+        (0, 9, 7, 255)
+    );
+    let c = &state.channel[2];
+    assert_eq!(
+        (
+            c.instrument_id,
+            c.instrument_pitch_base,
+            c.final_volume,
+            c.pan_flag_with_phase_invert
+        ),
+        (2, 0x2222, 0x33, 0x40)
+    );
+    let dsp = &player.dsp.state;
+    assert_eq!(dsp.ram, dsp_before.ram);
+    assert_eq!(
+        (dsp.channel[7].srcn, dsp.channel[7].pitch),
+        (dsp_before.channel[7].srcn, dsp_before.channel[7].pitch)
+    );
 }
 
-// Movies cannot choose a live tail-byte RAM origin and contrast lazy pan bounds failure with the table-only native path.
+// Movies cannot inspect the register writes a sound effect's note programs, with its instrument and pan.
 #[cfg(any(test, sm_verify_dll))]
 #[cfg_attr(test, test)]
-fn sfx_native_pan_origin_failure_keeps_programmed_instrument_prefix() {
-    use sm::{spc_player::sfx1_process, types::DspRegWriteHistory};
-    use std::panic::{AssertUnwindSafe, catch_unwind};
-    for pan in [21, 10] {
-        let mut game = Game::new();
-        let mut history = Box::new(DspRegWriteHistory::EMPTY);
-        unsafe {
-            game.create_native_player();
-            let p = game.g_spc_player;
-            let ram = (*p).ram.clone();
-            (*p).state.reg_write_history = &raw mut *history;
-            let state = &mut (*p).state;
-            // This is a live in-allocation pointer used only as address metadata, never dereferenced here.
-            state.ram = ram.as_mut_ptr().wrapping_add(0xffff);
-            state.sfx1.init_flag = 255;
-            state.key_ON = 0x80;
-            for s in &mut state.sfx_chans_1 {
-                s.disable = 255;
-            }
-            let s = &mut state.sfx_chans_1[0];
-            s.disable = 0;
-            s.ptr = 0x0200;
-            s.instr_timer = 1;
-            s.legato = 1;
-            s.voice_index = 4;
-            s.voice_bitset = 4;
-            s.note = 0x31;
-            s.subnote = 0x22;
-            let c = &mut state.channel[2];
-            c.index = 1;
-            c.instrument_id = 9;
-            c.instrument_pitch_base = 0x2222;
-            c.pan_flag_with_phase_invert = 0x80;
-            for (i, v) in [3, 0x81, 0x23, 0x45, 1, 0].into_iter().enumerate() {
-                ram.write(0x6c0c + i as u16, v);
-            }
-            for (i, v) in [2, 128, pan, 24, 7].into_iter().enumerate() {
-                ram.write(0x0200 + i as u16, v);
-            }
-            let result = catch_unwind(AssertUnwindSafe(|| sfx1_process(p)));
-            assert_eq!(result.is_err(), pan == 21);
-            if pan == 21 {
-                let fault = result.expect_err("native pan reaches the checked tail-origin read");
-                let text = fault.downcast_ref::<String>().expect("bounds failure text");
-                // LEGACY(message-text): asserts on panic or Die text; should assert the failure kind instead.
-                assert!(text.contains("len is 65536") && text.contains("index is 73265"));
-            }
-            let count = history.count as usize;
-            let writes: Vec<_> = history.addr[..count]
-                .iter()
-                .copied()
-                .zip(history.val.iter().copied())
-                .collect();
-            let expected = [
-                (0x14, 3),
-                (0x15, 0x81),
-                (0x16, 0x23),
-                (0x17, 0x45),
-                (0x10, 40),
-                (0x11, 40),
-                (0x12, 11),
-                (0x13, 1),
-            ];
-            assert_eq!(writes, expected[..if pan == 21 { 4 } else { 8 }]);
-            let state = &(*p).state;
-            let c = &state.channel[2];
-            assert_eq!(
-                (
-                    c.instrument_id,
-                    c.instrument_pitch_base,
-                    c.final_volume,
-                    c.pan_flag_with_phase_invert
-                ),
-                (9, 256, 128, 0)
-            );
-            let s = &state.sfx_chans_1[0];
-            assert_eq!(
-                (s.ptr_idx, s.note, s.subnote, s.instr_timer, state.key_ON),
-                if pan == 21 {
-                    (3, 0x31, 0x22, 0, 0x80)
-                } else {
-                    (5, 24, 0, 7, 0x80)
-                }
-            );
-            assert_eq!(
-                &(&(*state.dsp).state.ram)[0x14..0x18],
-                &[3, 0x81, 0x23, 0x45]
-            );
-        }
+fn sfx_native_pan_note_keeps_programmed_instrument_prefix() {
+    use sm::spc_player::{DspRegWriteHistory, NativePlayer};
+    let mut player = NativePlayer::new();
+    player.history = Some(DspRegWriteHistory::EMPTY);
+    let ram = player.ram.clone();
+    let state = &mut player.state;
+    state.sfx1.init_flag = 255;
+    state.key_ON = 0x80;
+    for s in &mut state.sfx_chans_1 {
+        s.disable = 255;
     }
+    let s = &mut state.sfx_chans_1[0];
+    s.disable = 0;
+    s.ptr = 0x0200;
+    s.instr_timer = 1;
+    s.legato = 1;
+    s.voice_index = 4;
+    s.voice_bitset = 4;
+    s.note = 0x31;
+    s.subnote = 0x22;
+    let c = &mut state.channel[2];
+    c.index = 1;
+    c.instrument_id = 9;
+    c.instrument_pitch_base = 0x2222;
+    c.pan_flag_with_phase_invert = 0x80;
+    for (i, v) in [3, 0x81, 0x23, 0x45, 1, 0].into_iter().enumerate() {
+        ram.write(0x6c0c + i as u16, v);
+    }
+    for (i, v) in [2, 128, 10, 24, 7].into_iter().enumerate() {
+        ram.write(0x0200 + i as u16, v);
+    }
+    player.process_sound_effects(0);
+    let history = player.history.as_ref().unwrap();
+    let count = history.count as usize;
+    let writes: Vec<_> = history.addr[..count]
+        .iter()
+        .copied()
+        .zip(history.val.iter().copied())
+        .collect();
+    assert_eq!(
+        writes,
+        [
+            (0x14, 3),
+            (0x15, 0x81),
+            (0x16, 0x23),
+            (0x17, 0x45),
+            (0x10, 40),
+            (0x11, 40),
+            (0x12, 11),
+            (0x13, 1),
+        ]
+    );
+    let state = &player.state;
+    let c = &state.channel[2];
+    assert_eq!(
+        (
+            c.instrument_id,
+            c.instrument_pitch_base,
+            c.final_volume,
+            c.pan_flag_with_phase_invert
+        ),
+        (9, 256, 128, 0)
+    );
+    let s = &state.sfx_chans_1[0];
+    assert_eq!(
+        (s.ptr_idx, s.note, s.subnote, s.instr_timer, state.key_ON),
+        (5, 24, 0, 7, 0x80)
+    );
+    assert_eq!(&player.dsp.state.ram[0x14..0x18], &[3, 0x81, 0x23, 0x45]);
 }
 
-// Movies do not call device rendering or inject its full-buffer, history/rebound and cycle-failure entries.
+// Movies do not call device rendering or inject its full-buffer, history and cycle-failure entries.
 #[cfg(any(test, sm_verify_dll))]
 #[cfg_attr(test, test)]
 fn owned_player_render_matches_native_schedule_and_failure_prefixes() {
-    use sm::spc_player::*;
+    use sm::spc_player::DspRegWriteHistory;
     use std::panic::{AssertUnwindSafe, catch_unwind};
-    for mode in 0..6 {
+    for mode in 0..5 {
         let (offset, timer) = match mode {
             0 | 3 => (0, 0),
             1 => (531, 63),
             _ => (534, 64),
         };
-        let mut history = [DspRegWriteHistory::EMPTY; 2];
-        let mut games: [_; 4] = std::array::from_fn(|_| Game::new());
-        unsafe {
-            for game in &mut games {
-                game.create_native_player();
-                spc_player_initialize(game.g_spc_player);
+        let mut games: [_; 2] = std::array::from_fn(|_| Game::new());
+        for game in &mut games {
+            game.create_native_player();
+            game.initialize_native_player();
+            let player = game.native_player_mut();
+            let s = &mut player.state;
+            s.timer_cycles = timer;
+            s.sfx_timer_accum = 224;
+            s.main_tempo_accum = 240;
+            (s.sfx1.cur_sound, s.sfx1.voices_to_setup) = (1, 1);
+            let dsp = &mut player.dsp;
+            dsp.state.sample_offset = offset;
+            for pair in dsp.state.sample_buffer.chunks_exact_mut(2) {
+                pair.copy_from_slice(&[17, -23]);
             }
-            let players = games.each_ref().map(|game| game.g_spc_player);
-            let owned_dsp = players.map(|player| (*player).state.dsp);
-            for (index, game) in games[..2].iter_mut().enumerate() {
-                let s = &mut (*players[index]).state;
-                s.timer_cycles = timer;
-                s.sfx_timer_accum = 224;
-                s.main_tempo_accum = 240;
-                (s.sfx1.cur_sound, s.sfx1.voices_to_setup) = (1, 1);
-                let dsp = &mut *s.dsp;
-                dsp.state.sample_offset = offset;
-                for pair in dsp.state.sample_buffer.chunks_exact_mut(2) {
-                    pair.copy_from_slice(&[17, -23]);
-                }
-                if mode == 3 {
-                    dsp.state.channel[0].adsr_state = 255;
-                    dsp.state.channel[0].pitch = 1;
-                    dsp.state.reset = false;
-                }
-                if mode == 4 {
-                    s.reg_write_history = &raw mut history[index];
-                }
-                if mode == 5 {
-                    let rebound = &mut *owned_dsp[index + 2];
-                    rebound.state = dsp.state;
-                    s.dsp = rebound;
-                }
-                game.apu_queue.pending = [0xf0, 255, 255, 255];
-                game.apu_queue.push(false);
-            }
-            let mut pcm = [[[i16::MIN; 2]; 534]; 2];
-            let got = catch_unwind(AssertUnwindSafe(|| {
-                sm::rtl::rtl_render_audio(&mut pcm[0], &mut games[0])
-            }));
-            let writes = games[1].apu_queue.pop().unwrap();
-            sm::apu_queue::ApuQueue::apply_ports(writes, &mut (*players[1]).state.input_ports);
-            let want = catch_unwind(AssertUnwindSafe(|| {
-                spc_player_generate_samples(players[1]);
-                (*(*players[1]).state.dsp).state.write_samples(&mut pcm[1]);
-            }));
-            assert_eq!((got.is_err(), want.is_err()), (mode == 3, mode == 3));
-            assert_eq!(pcm[0], pcm[1]);
-            assert_eq!(games[0].apu_queue.to_bytes(), games[1].apu_queue.to_bytes());
-            let mut ram = [[0u8; 65536]; 2];
-            for (index, &p) in players[..2].iter().enumerate() {
-                spc_player_copy_variables_to_ram(p);
-                (*p).ram.copy_to(&mut ram[index]);
-            }
-            assert_eq!(ram[0], ram[1]);
-            let [a, b] = [0, 1].map(|i| &(*(*players[i]).state.dsp).state);
-            assert_eq!(a.ram, b.ram);
-            assert_eq!(a.sample_offset, b.sample_offset);
-            assert_eq!(a.even_cycle, b.even_cycle);
             if mode == 3 {
-                assert_eq!((*players[0]).state.timer_cycles, 64);
-                assert_eq!((a.sample_offset, a.channel[0].pitch_counter), (0, 1));
-            }
-            if offset == 534 {
-                assert_eq!(pcm[0], [[17, -23]; 534]);
-                assert_eq!((*players[0]).state.timer_cycles, 0);
+                dsp.state.channel[0].adsr_state = 255;
+                dsp.state.channel[0].pitch = 1;
+                dsp.state.reset = false;
             }
             if mode == 4 {
-                assert!(history[0].count > 0);
-                assert_eq!(history[0].count, history[1].count);
-                assert_eq!(history[0].addr, history[1].addr);
-                assert_eq!(history[0].val, history[1].val);
+                player.history = Some(DspRegWriteHistory::EMPTY);
             }
-            for (&p, dsp) in players.iter().zip(owned_dsp) {
-                (*p).state.reg_write_history = core::ptr::null_mut();
-                (*p).state.dsp = dsp;
-            }
+            game.apu_queue.pending = [0xf0, 255, 255, 255];
+            game.apu_queue.push(false);
+        }
+        // The frame's audio path applies the queued ports, then renders.
+        let mut pcm = [[[i16::MIN; 2]; 534]; 2];
+        let got = catch_unwind(AssertUnwindSafe(|| unsafe {
+            sm::rtl::rtl_render_audio(&mut pcm[0], &mut games[0])
+        }));
+        let writes = games[1].apu_queue.pop().unwrap();
+        let player = games[1].native_player_mut();
+        player.apply_ports(writes);
+        let want = catch_unwind(AssertUnwindSafe(|| player.render_samples(&mut pcm[1])));
+        assert_eq!((got.is_err(), want.is_err()), (mode == 3, mode == 3));
+        assert_eq!(pcm[0], pcm[1]);
+        assert_eq!(games[0].apu_queue.to_bytes(), games[1].apu_queue.to_bytes());
+        let mut ram = [[0u8; 65536]; 2];
+        for (index, game) in games.iter_mut().enumerate() {
+            game.save_native_audio_variables(false);
+            game.native_player_mut().ram.copy_to(&mut ram[index]);
+        }
+        assert_eq!(ram[0], ram[1]);
+        let [a, b] = [0, 1].map(|i| games[i].native_player.as_ref().unwrap());
+        assert_eq!(a.dsp.state.ram, b.dsp.state.ram);
+        assert_eq!(a.dsp.state.sample_offset, b.dsp.state.sample_offset);
+        assert_eq!(a.dsp.state.even_cycle, b.dsp.state.even_cycle);
+        if mode == 3 {
+            assert_eq!(a.state.timer_cycles, 64);
+            assert_eq!(
+                (
+                    a.dsp.state.sample_offset,
+                    a.dsp.state.channel[0].pitch_counter
+                ),
+                (0, 1)
+            );
+        }
+        if offset == 534 {
+            assert_eq!(pcm[0], [[17, -23]; 534]);
+            assert_eq!(a.state.timer_cycles, 0);
+        }
+        if mode == 4 {
+            let [ha, hb] = [a, b].map(|player| player.history.as_ref().unwrap());
+            assert!(ha.count > 0);
+            assert_eq!((ha.count, ha.addr, ha.val), (hb.count, hb.addr, hb.val));
         }
     }
 }
 
-// Movies cannot inject live history/rebound DSP links and arbitrary RAM during player initialization and queued state transfers.
+// Movies cannot inject a write history and arbitrary RAM during player initialization and queued state transfers.
 #[cfg(any(test, sm_verify_dll))]
 #[cfg_attr(test, test)]
 fn owned_player_initialization_and_transfers_preserve_native_boundaries() {
-    use sm::spc_player::*;
-    for mode in 0..4 {
-        let mut history = [DspRegWriteHistory::EMPTY; 2];
-        let mut games: [_; 4] = std::array::from_fn(|_| Game::new());
-        unsafe {
-            for game in &mut games {
-                game.create_native_player();
-            }
-            let players = games.each_ref().map(|game| game.g_spc_player);
-            let owned_dsp = players.map(|player| (*player).state.dsp);
-            for (i, &p) in players[..2].iter().enumerate() {
-                (*p).ram.fill(0x5a);
-                if mode == 1 {
-                    (*p).state.reg_write_history = &raw mut history[i];
-                }
-                if mode == 2 {
-                    (*p).state.dsp = owned_dsp[i + 2];
-                }
-                if mode == 3 {
-                    (*p).state.ram = (*p).ram.as_mut_ptr().wrapping_add(1);
-                }
-            }
-            games[0].initialize_native_player();
-            spc_player_initialize(players[1]);
-            let links =
-                players.map(|p| ((*p).state.dsp, (*p).state.reg_write_history, (*p).state.ram));
-            games[0].save_native_audio_variables(false);
-            spc_player_copy_variables_to_ram(players[1]);
-            let mut ram = [[0; 65536]; 2];
-            for (i, &p) in players[..2].iter().enumerate() {
-                (*p).ram.copy_to(&mut ram[i]);
-            }
-            assert_eq!(ram[0], ram[1]);
-            let r = &ram[0];
-            assert_eq!((r[0x500], r[0x14ff], r[0x1500]), (0, 0, 0x5a));
-            let [a, b] = [0, 1].map(|i| &(*(*players[i]).state.dsp).state);
-            assert_eq!(a.ram, b.ram);
-            assert_eq!((a.ram[0x0c], a.ram[0x1c], a.ram[0x5d]), (0x60, 0x60, 0x6d));
-            let s = &(*players[0]).state;
-            assert_eq!((s.tempo, s.timer_cycles), (0x105a, 0));
-            for &p in &players[..2] {
-                (*p).ram.write(0, 0xa7);
-                (*p).ram.write(0x52, 0x34);
-                (*p).ram.write(0x53, 0x12);
-            }
-            games[0].load_native_audio_variables();
-            spc_player_copy_variables_from_ram(players[1]);
-            for (i, &p) in players[..2].iter().enumerate() {
-                let s = &(*p).state;
-                assert_eq!((s.dsp, s.reg_write_history, s.ram), links[i]);
-                assert_eq!((s.input_ports[0], s.tempo), (0xa7, 0x1234));
-                for (j, channel) in s.channel.iter().enumerate() {
-                    assert_eq!(channel.index, j as u8);
-                }
-            }
-            for game in &mut games[..2] {
-                game.apu_queue.pending = [0xf0, 255, 255, 255];
-                game.apu_queue.push(false);
-            }
-            games[0].save_native_audio_variables(true);
-            games[1]
-                .apu_queue
-                .apply_queued(&mut (*players[1]).state.input_ports);
-            spc_player_copy_variables_to_ram(players[1]);
-            for (i, &p) in players[..2].iter().enumerate() {
-                (*p).ram.copy_to(&mut ram[i]);
-            }
-            assert_eq!(ram[0], ram[1]);
-            assert_eq!(ram[0][0], 0xf0);
-            assert_eq!(games[0].apu_queue.to_bytes(), games[1].apu_queue.to_bytes());
-            if mode == 1 {
-                assert!(history[0].count > 0);
-                assert_eq!(history[0].count, history[1].count);
-                assert_eq!(history[0].addr, history[1].addr);
-                assert_eq!(history[0].val, history[1].val);
-            }
-            for (&p, dsp) in players.iter().zip(owned_dsp) {
-                (*p).state.reg_write_history = core::ptr::null_mut();
-                (*p).state.dsp = dsp;
-            }
-        }
-    }
-}
-
-// Movies cannot retain raw player selections and borrowed foreign links across owner replacement and destruction.
-#[cfg(any(test, sm_verify_dll))]
-#[cfg_attr(test, test)]
-fn owned_player_creation_replacement_and_drop_keep_borrowed_allocations() {
     use sm::spc_player::DspRegWriteHistory;
-    let mut game = Game::new();
-    let mut foreign = Game::new();
-    assert!(game.g_spc_player.is_null());
-    game.create_native_player();
-    foreign.create_native_player();
-    let mut history = DspRegWriteHistory::EMPTY;
-    unsafe {
-        let old = game.g_spc_player;
-        let old_dsp = (*old).state.dsp;
-        let old_ram = (*old).ram.clone();
-        assert_eq!((*old).state.ram, old_ram.as_mut_ptr());
-        assert!((*old).state.reg_write_history.is_null());
-        assert_eq!(((*old).state.tempo, (*old).state.timer_cycles), (0, 0));
-        old_ram.write(0x1234, 0x5a);
-        game.g_spc_player = foreign.g_spc_player;
+    for mode in 0..2 {
+        let mut game = Game::new();
         game.create_native_player();
-        let player = game.g_spc_player;
-        assert_ne!(player, old);
-        assert_ne!((*player).state.dsp, old_dsp);
-        assert_ne!((*player).state.ram, old_ram.as_mut_ptr());
-        assert_eq!(old_ram.read(0x1234), 0x5a);
-        assert_eq!((*player).ram.read(0x1234), 0);
+        let player = game.native_player_mut();
+        player.ram.fill(0x5a);
+        if mode == 1 {
+            player.history = Some(DspRegWriteHistory::EMPTY);
+        }
+        game.initialize_native_player();
+        game.save_native_audio_variables(false);
+        let mut ram = [0; 65536];
+        let player = game.native_player_mut();
+        player.ram.copy_to(&mut ram);
+        assert_eq!((ram[0x500], ram[0x14ff], ram[0x1500]), (0, 0, 0x5a));
+        let dsp = &player.dsp.state;
         assert_eq!(
-            ((*player).state.tempo, (*player).state.timer_cycles),
-            (0, 0)
+            (dsp.ram[0x0c], dsp.ram[0x1c], dsp.ram[0x5d]),
+            (0x60, 0x60, 0x6d)
         );
-        let retained_ram = (*player).ram.clone();
-        retained_ram.write(0x4321, 0xa7);
-        let foreign_player = foreign.g_spc_player;
-        let foreign_dsp = (*foreign_player).state.dsp;
-        let foreign_ram = (*foreign_player).ram.clone();
-        foreign_ram.write(0x3456, 0xc3);
-        (*foreign_dsp).state.ram[0x0c] = 0x47;
-        (*player).state.dsp = foreign_dsp;
-        (*player).state.ram = foreign_ram.as_mut_ptr();
-        (*player).state.reg_write_history = &raw mut history;
-        let mut moved = vec![game];
-        let game = moved.pop().unwrap();
-        assert_eq!(game.g_spc_player, player);
-        assert_eq!((*player).state.ram, foreign_ram.as_mut_ptr());
-        drop(game);
-        assert_eq!(retained_ram.read(0x4321), 0xa7);
-        assert_eq!(foreign_ram.read(0x3456), 0xc3);
-        assert_eq!((*foreign_player).state.dsp, foreign_dsp);
-        assert_eq!((*foreign_dsp).state.ram[0x0c], 0x47);
-        assert_eq!(history.count, 0);
-        assert_eq!(history.addr, [0; 256]);
-        assert_eq!(history.val, [0; 256]);
-        drop(foreign);
-        assert_eq!(foreign_ram.read(0x3456), 0xc3);
-        assert_eq!(old_ram.read(0x1234), 0x5a);
-        assert_eq!(retained_ram.read(0x4321), 0xa7);
+        assert_eq!((player.state.tempo, player.state.timer_cycles), (0x105a, 0));
+        if mode == 1 {
+            // Initialization writes the master volumes, directory and committed registers.
+            let history = player.history.as_ref().unwrap();
+            let writes: Vec<_> = (0..history.count as usize)
+                .map(|i| (history.addr[i], history.val[i]))
+                .collect();
+            assert!(writes.contains(&(0x0c, 0x60)));
+            assert!(writes.contains(&(0x1c, 0x60)));
+            assert!(writes.contains(&(0x5d, 0x6d)));
+        }
+        player.ram.write(0, 0xa7);
+        player.ram.write(0x52, 0x34);
+        player.ram.write(0x53, 0x12);
+        game.load_native_audio_variables();
+        let s = &game.native_player_mut().state;
+        assert_eq!((s.input_ports[0], s.tempo), (0xa7, 0x1234));
+        for (j, channel) in s.channel.iter().enumerate() {
+            assert_eq!(channel.index, j as u8);
+        }
+        game.apu_queue.pending = [0xf0, 255, 255, 255];
+        game.apu_queue.push(false);
+        let queued = game.apu_queue.to_bytes();
+        game.save_native_audio_variables(true);
+        assert_eq!(game.native_player_mut().ram.read(0), 0xf0);
+        // Saving applies the queued ports without consuming the queue.
+        assert_eq!(game.apu_queue.to_bytes(), queued);
     }
 }
 
-// Movies cannot attach snapshot history/rebound DSP links or request invalid restores and mismatched history topology.
+// Movies cannot replace the player mid-run and inspect the replacement's fresh state.
 #[cfg(any(test, sm_verify_dll))]
 #[cfg_attr(test, test)]
-fn owned_player_snapshots_restore_selected_allocations_and_failure_prefixes() {
-    use sm::{game_state::PlayerSnapshotSource as Source, spc_player::*};
-    for mode in 0..3 {
-        let mut history = [DspRegWriteHistory {
-            count: 2,
-            addr: [17; 256],
-            val: [23; 256],
-        }; 2];
-        let mut games: [_; 4] = std::array::from_fn(|_| Game::new());
-        for game in &mut games {
-            game.create_native_player();
-        }
-        let players = games.each_ref().map(|game| game.g_spc_player);
-        let mut snapshots = [games[0].g_snapshot_before.player; 2];
-        unsafe {
-            let dsps = players.map(|p| (*p).state.dsp);
-            games[1].g_spc_player = players[2];
-            for (i, p) in [players[0], players[2]].into_iter().enumerate() {
-                (*p).ram.fill(0x5a);
-                (*p).state.tempo = 0x4567;
-                (*p).state.ram = (*p).ram.as_mut_ptr().wrapping_add(1);
-                if mode == 1 {
-                    (*p).state.reg_write_history = &raw mut history[i];
-                }
-                if mode == 2 {
-                    (*p).state.dsp = [dsps[1], dsps[3]][i];
-                }
-                (*(*p).state.dsp).state.ram[0x0c] = 0x47;
-            }
-            games[0].capture_native_player_snapshot(&mut snapshots[0]);
-            games[1].capture_native_player_snapshot(&mut snapshots[1]);
-            for p in [players[0], players[2]] {
-                (*p).ram.fill(0xc3);
-                (*p).state.tempo = 0xeeee;
-                (*(*p).state.dsp).state.ram[0x0c] = 0x99;
-            }
-            if mode == 1 {
-                (*players[0]).state.reg_write_history = core::ptr::null_mut();
-                assert!(
-                    std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-                        games[0].restore_native_player_snapshot(Source::Local(&snapshots[0]));
-                    }))
-                    .is_err()
-                );
-                assert_eq!(
-                    ((*players[0]).state.tempo, (*players[0]).ram.read(0)),
-                    (0xeeee, 0xc3)
-                );
-                assert_eq!((*dsps[0]).state.ram[0x0c], 0x99);
-                (*players[0]).state.reg_write_history = &raw mut history[0];
-                for h in &mut history {
-                    h.count = 9;
-                    h.val.fill(0xa7);
-                }
-            }
-            games[0].restore_native_player_snapshot(Source::Local(&snapshots[0]));
-            games[1].restore_native_player_snapshot(Source::Local(&snapshots[1]));
-            for (i, p) in [players[0], players[2]].into_iter().enumerate() {
-                assert_eq!(((*p).state.tempo, (*p).ram.read(0)), (0x4567, 0x5a));
-                assert_eq!((*p).state.ram, (*p).ram.as_mut_ptr());
-                assert_eq!(
-                    (*p).state.dsp,
-                    if mode == 2 {
-                        [dsps[1], dsps[3]][i]
-                    } else {
-                        [dsps[0], dsps[2]][i]
-                    }
-                );
-                assert_eq!((*(*p).state.dsp).state.ram[0x0c], 0x47);
-                if mode == 1 {
-                    assert_eq!(history[i].count, 2);
-                    assert_eq!(history[i].val, [23; 256]);
-                }
-            }
-            games[0].g_spc_player = core::ptr::null_mut();
-            games[0].capture_native_player_snapshot(&mut snapshots[0]);
-            games[0].g_spc_player = core::ptr::NonNull::<SpcPlayer>::dangling().as_ptr();
-            games[0].restore_native_player_snapshot(Source::Local(&snapshots[0]));
-            games[0].g_spc_player = players[0];
-            assert_eq!((*players[0]).state.tempo, 0x4567);
-            for (p, dsp) in players.into_iter().zip(dsps) {
-                (*p).state.reg_write_history = core::ptr::null_mut();
-                (*p).state.dsp = dsp;
-            }
-        }
-    }
+fn owned_player_creation_replacement_starts_fresh() {
+    let mut game = Game::new();
+    assert!(game.native_player.is_none());
+    game.create_native_player();
+    let player = game.native_player_mut();
+    assert_eq!((player.state.tempo, player.state.timer_cycles), (0, 0));
+    assert!(player.history.is_none());
+    player.ram.write(0x1234, 0x5a);
+    player.state.tempo = 0x99;
+    game.create_native_player();
+    let player = game.native_player_mut();
+    assert_eq!(player.ram.read(0x1234), 0);
+    assert_eq!((player.state.tempo, player.state.timer_cycles), (0, 0));
+}
+
+// Movies cannot capture a player snapshot, change the player, restore it and request restores without a player.
+#[cfg(any(test, sm_verify_dll))]
+#[cfg_attr(test, test)]
+fn owned_player_snapshots_restore_state_ram_and_dsp() {
+    use sm::game_state::PlayerSnapshotSource as Source;
+    let mut game = Game::new();
+    game.create_native_player();
+    let mut snapshot = game.g_snapshot_before.player;
+    let player = game.native_player_mut();
+    player.ram.fill(0x5a);
+    player.state.tempo = 0x4567;
+    player.dsp.state.ram[0x0c] = 0x47;
+    game.capture_native_player_snapshot(&mut snapshot);
+    let player = game.native_player_mut();
+    player.ram.fill(0xc3);
+    player.state.tempo = 0xeeee;
+    player.dsp.state.ram[0x0c] = 0x99;
+    game.restore_native_player_snapshot(Source::Local(&snapshot));
+    let player = game.native_player_mut();
+    assert_eq!((player.state.tempo, player.ram.read(0)), (0x4567, 0x5a));
+    assert_eq!(player.dsp.state.ram[0x0c], 0x47);
+    // Without a player the capture is invalid, and restoring it changes nothing.
+    let mut empty = Game::new();
+    empty.capture_native_player_snapshot(&mut snapshot);
+    player.state.tempo = 0x1111;
+    game.restore_native_player_snapshot(Source::Local(&snapshot));
+    assert_eq!(game.native_player_mut().state.tempo, 0x1111);
 }
 
 // Consume actual owned sink outputs. Only one input's oracle operations are

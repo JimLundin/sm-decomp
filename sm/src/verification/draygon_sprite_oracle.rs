@@ -139,7 +139,7 @@ unsafe fn observe(output: &mut Vec<u8>, tag: u8, game: &Game, full_ram: bool) {
 /// actual-CPU cases; Result::Err never means verification passed.
 pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u8>, String> {
     unsafe {
-        if game.g_cpu.is_null() || game.g_snes.is_null() || game.g_spc_player.is_null() {
+        if game.g_cpu.is_null() || game.g_snes.is_null() || game.native_player.is_none() {
             return Err("Draygon capture requires initialized emulator/audio".into());
         }
         for &(start, end) in WINDOWS {
@@ -154,13 +154,11 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
         {
             let snapshot_snes = game.g_snes;
             let snapshot_cpu = game.g_cpu;
-            let snapshot_player = game.g_spc_player;
             let (backend, ram, _, _, _, owner) = game.ram_and_owned_snapshots();
             make_snapshot_with_player_owner(
                 &mut before,
                 &*snapshot_snes,
                 &*snapshot_cpu,
-                snapshot_player,
                 owner,
                 ram,
                 backend,
