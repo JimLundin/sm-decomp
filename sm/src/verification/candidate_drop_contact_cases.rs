@@ -26,19 +26,18 @@ mod projectile_contact {
 }
 use crate::game_state::Game;
 use crate::ram_map::{word_arrays as a, words as w};
-use crate::rom::RomImage;
 use crate::types::{EnemyDef, EprojDef};
 use core::mem::offset_of;
 
 pub(super) const CASES: u32 = 100;
-fn rom_word(image: &RomImage, address: u32, offset: usize, value: u16) {
+fn rom_word(image: &mut [u8], address: u32, offset: usize, value: u16) {
     bytes(
         image,
         crate::rtl::lorom_offset(address) as usize + offset,
         &value.to_le_bytes(),
     );
 }
-pub(super) unsafe fn execute(id: u32, game: &mut Game, image: &RomImage) -> Option<usize> {
+pub(super) unsafe fn execute(id: u32, game: &mut Game, image: &mut [u8]) -> Option<usize> {
     assert!(id < CASES);
     let variant = id as usize % 16;
     let index = [0, 1, 32, 34][variant % 4];
@@ -92,6 +91,7 @@ pub(super) unsafe fn execute(id: u32, game: &mut Game, image: &RomImage) -> Opti
         for kind in 0..7 {
             rom_word(image, 0x86ef04, kind * 2, 0x9100 + kind as u16 * 4);
         }
+        super::install(game, image);
         {
             return match id / 16 {
                 0 => Some(drops::select(index, game) as usize),
@@ -148,6 +148,7 @@ pub(super) unsafe fn execute(id: u32, game: &mut Game, image: &RomImage) -> Opti
         // Successful allocations use the actual pickup initializer; zero chance
         // pointers in synthetic enemy records choose its explicit dismiss path.
         definition(image, 0xf337, 8843049u32 as u16);
+        super::install(game, image);
         for handle in (0..36).step_by(2) {
             slot(game, a::EPROJ_ID, handle, 0);
         }
@@ -177,6 +178,7 @@ pub(super) unsafe fn execute(id: u32, game: &mut Game, image: &RomImage) -> Opti
         offset_of!(EprojDef, shot_instruction_list),
         0x9234,
     );
+    super::install(game, image);
     if n < 12 {
         put(game, w::SAMUS_HEALTH, 999);
         put(game, w::EQUIPPED_ITEMS, [0, 1, 0x20][n % 3]);
