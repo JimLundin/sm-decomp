@@ -1,5 +1,5 @@
 use crate::execution::{Execution, HostContext};
-use crate::game::gameplay::{self, Entry};
+use crate::game::gameplay;
 use crate::game_state::{Game, PlayerSnapshotSource, WorkRam};
 use crate::ram_map::{slot, word};
 use crate::rom_patches::RomPatches;
@@ -1419,7 +1419,9 @@ pub unsafe fn run_one_frame_of_game_both(native_game: &mut Game) {
             (*game.g_snes).runningWhichVersion = 2;
             let position = game.audio_execution_position();
             game.audio_output.enter_execution(position);
-            gameplay::advance(Entry::Frame, game);
+            // The engine's frame reads the controller the oracle frame was given.
+            let buttons = game.input1_mut().currentState.reverse_bits();
+            gameplay::tick(gameplay::TickInput { buttons }, game);
             draw_frame_to_ppu(game);
             let queue_mine = crate::audio_snapshot::ApuQueueSnapshot::capture(game);
             {
@@ -1626,7 +1628,9 @@ pub unsafe fn rtl_run_frame_compare(input: u16, _run_what: i32, native_game: &mu
             .expect("Samus frame entry rejected");
         let mut mutation = game.samus_mutation();
         let game = mutation.game();
-        game.input1_mut().currentState = input;
+        if game.g_runmode as i32 != RM_MINE as i32 {
+            game.input1_mut().currentState = input;
+        }
         if game.g_runmode as i32 == RM_THEIRS as i32 {
             let position = game.audio_execution_position();
             game.audio_output.enter_execution(position);
@@ -1642,7 +1646,8 @@ pub unsafe fn rtl_run_frame_compare(input: u16, _run_what: i32, native_game: &mu
             (*game.g_snes).runningWhichVersion = 0xff;
             let position = game.audio_execution_position();
             game.audio_output.enter_execution(position);
-            gameplay::advance(Entry::Frame, game);
+            let buttons = input.reverse_bits();
+            gameplay::tick(gameplay::TickInput { buttons }, game);
             draw_frame_to_ppu(game);
             (*game.g_snes).runningWhichVersion = 0;
         } else {

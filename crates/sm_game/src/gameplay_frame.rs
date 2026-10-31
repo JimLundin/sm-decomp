@@ -63,6 +63,8 @@ pub trait Host:
     + crate::samus_death::Host
     + RuntimeAccess
 {
+    /// Present controller 1 to this frame's joypad reads, as $4218 reads it.
+    fn latch_controller(&mut self, buttons: u16);
     /// Admit the owned Session for this frame; `fresh` when no pass is resuming.
     fn begin_session_interval(&mut self, fresh: bool);
     /// The gameplay pass resume byte ($7E:0612).
@@ -229,6 +231,19 @@ pub enum Entry {
 /// Advances through completion or a suspension, returning the callee's exact
 /// yield byte. Nested PLM/message continuations remain owned by those modules.
 /// Entry stays fixed even when callbacks change the live game state.
+/// One frame's input from the device shell.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct TickInput {
+    /// Controller 1, as the joypad register ($4218) reads it.
+    pub buttons: u16,
+}
+
+/// Run one frame on `input`: the shell's step into the game.
+pub fn tick<H: Host>(input: TickInput, game: &mut H) -> CoroutineRet {
+    game.latch_controller(input.buttons);
+    advance(Entry::Frame, game)
+}
+
 pub fn advance<H: Host>(entry: Entry, game: &mut H) -> CoroutineRet {
     match entry {
         Entry::Frame => frame(game),

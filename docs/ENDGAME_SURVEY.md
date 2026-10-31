@@ -60,8 +60,8 @@ oracle (target `sm_tools`). They don't block a native build:
 | 9 | **Save data and persistence** | SRAM saves (`save_ram.rs`), legacy snapshots (`snapshot_io.rs`, `rtl` save/load) and `persistent_session.rs` live in `sm`. `sm_game` has `save_file.rs` and the session checkpoint format. A native build needs save files written from the Session through `sm_runtime` storage. | E (menus/save) |
 | 10 | **Remaining CPU-executed gameplay** | Bang's main AI still calls ROM code via `cpu_infra::call_routine`, which is the only remaining caller. It needs a native port before the CPU can go. | G |
 
-Inputs are close: `sm_game::external_inputs` exists, and `rtl_run_frame`
-only latches `input1.currentState` for the frame.
+Inputs are close: `sm_game::external_inputs` exists, and the frame takes
+controller 1 as `gameplay_frame::TickInput` (see item 6 below).
 
 ### Item 5: what still reads the ROM (2026-10-31)
 
@@ -98,6 +98,46 @@ Run-time reads fall in three families. Counts are call sites in `sm_game`.
 
 A native build therefore needs family 2 first. Family 1 is cheap and nearly
 done, and family 3 follows.
+
+### Item 6: the frame driver (2026-10-31)
+
+`sm_app` calls `rtl_run_frame(inputs, game)` once per frame. Around the
+gameplay step, it still does these things in `sm`:
+
+| Step | Where | What a native driver does instead |
+| --- | --- | --- |
+| Refuse CPU-mode frames for a prepared world; check Samus's binding (`preflight_samus_runtime`) | `rtl.rs` | The Session opens only on a validated binding (done: `scene::samus_binding`) |
+| Open a Samus mutation interval, then adopt its result (`samus_mutation`, `finish_current`) | `rtl.rs`, `cpu_infra.rs` | Not needed once nothing outside the Session mutates the ROM or RAM |
+| Cancel opposite d-pad directions (`0x30`, `0xc0`) unless verifying | `rtl.rs` | Host input policy: `sm_app` maps devices to `TickInput` |
+| Replay or record the input word, snapshot flags | `rtl.rs` (`StateRecorder`) | `sm_app`'s input journal (CONTRACTS: Tick admission) |
+| The bug-fix counter at `$C2` and its ROM patches | `rtl.rs` | Removed: snesrev patch selection, not gameplay |
+| Bracket the frame's audio input (`begin_input`/`complete_input`), push the APU queue | `rtl.rs` | `TickOutput` cues to the `sm_runtime` sequencer |
+| Run the frame: latch controller 1, `gameplay_frame::advance(Entry::Frame)` on `Game`, then `draw_frame_to_ppu` | `cpu_infra.rs` (`RM_MINE`) | `gameplay_frame::tick(input, session)`, then Scene to the `sm_runtime` renderer |
+| Reconcile Session native adoption (`reconcile_current`) | `session_native_adoption.rs` | Not needed once Game holds no Session copy |
+| Present the PPU frame (`sm_desktop_DrawPpuFrameWithPerf`) and read SDL input | `sm_app` with the `native_*.c` shell | `winit`/`wgpu` presenting the Scene |
+
+The input side is small: the frame reads controller 1 only through
+`menus::host::Host::nmi_controller_word`, the joypad register in NMI, and
+the driver sets nothing else. The output side is the hard part. Display is
+items 2–3 (the emulated PPU and beam), and audio is item 4 (the SPC700).
+
+**Plan.**
+
+1. Done in this change: `gameplay_frame::TickInput { buttons }` and
+   `gameplay_frame::tick`. The tick latches controller 1 through
+   `Host::latch_controller`, then runs the frame. Both of `sm`'s native
+   frame paths (`RM_MINE` and the verifier's both-mode) call it.
+2. G: one frame-level Runtime lease spans the whole tick, so the per-family
+   lease borrows become borrows of that one lease (item 7). This starts
+   after step 1 and G's family conversions.
+3. Move the recorder, the opposite-direction policy and the input journal
+   into `sm_app`, which hands `rtl_run_frame` a `TickInput`. The bug-fix
+   counter stays oracle-only.
+4. Return a `TickOutput` from `tick`: the frame's queued sound cues (already
+   Session state) and the owned Display's Scene. `sm_app` then drives
+   `sm_runtime` with them. This depends on items 2–4.
+5. With items 1, 5 and 7 done, `tick` runs on the Session with no `Game`,
+   and the Samus mutation and native adoption steps go away.
 
 ## Suggested order
 

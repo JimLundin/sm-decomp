@@ -8,9 +8,13 @@ use crate::game::session_runtime::Runtime;
 use sm_game::gameplay_frame::{NativeState, PauseHook, UnpauseHook};
 use sm_game::room_entry::api::EntrySignal;
 
-pub(crate) use sm_game::gameplay_frame::{Entry, advance};
+pub(crate) use sm_game::gameplay_frame::{TickInput, tick};
 
 impl sm_game::gameplay_frame::Host for Game {
+    fn latch_controller(&mut self, buttons: u16) {
+        // The emulated joypad register reads the controller state bit-reversed.
+        self.input1_mut().currentState = buttons.reverse_bits();
+    }
     fn begin_session_interval(&mut self, fresh: bool) {
         Game::begin_session_interval(self, fresh).expect("Session interval entry");
     }
