@@ -443,8 +443,11 @@ impl crate::game::scene::hdma::HdmaHost for NativeHdmaHost<'_, '_> {
 /// and the B-bus writes the beam-driven HDMA then makes are compared pass by
 /// pass. `SM_HDMA_TABLE_LOG` receives each frame whose writes differ from its
 /// table (frame, first differing pass, planned and actual write counts there).
-/// A difference means the frame's tables or channels changed after they were
-/// planned, so a beam-free renderer would need that change as an input.
+/// The plan applies the frame's planned scanline interrupt control stores
+/// (`scanline_irq::table_check`) from the pass after their line, since a
+/// table can read the work RAM they write. Any other difference means the
+/// frame's tables or channels changed after they were planned, so a beam-free
+/// renderer would need that change as an input.
 #[cfg(sm_verify_dll)]
 mod table_check {
     use super::{Dma, NativeHdmaHost};
@@ -472,10 +475,31 @@ mod table_check {
         *ENABLED.get_or_init(|| std::env::var_os("SM_HDMA_TABLE").is_some())
     }
 
-    /// A scratch copy of the channels and timer that reads tables from the live bus.
+    /// A scratch copy of the channels and timer that reads tables from the live
+    /// bus, as overlaid by the interrupt stores made so far in the frame.
     struct Scratch<'a, 'execution> {
         dma: Dma,
         bus: NativeHdmaHost<'a, 'execution>,
+        /// Work RAM bytes the frame's interrupts have stored, by offset.
+        stored: Vec<(usize, u8)>,
+    }
+
+    impl Scratch<'_, '_> {
+        fn store(&mut self, offset: usize, value: u8) {
+            match self.stored.iter_mut().find(|(at, _)| *at == offset) {
+                Some(entry) => entry.1 = value,
+                None => self.stored.push((offset, value)),
+            }
+        }
+    }
+
+    /// The work RAM offset a bus address reads, if it is work RAM.
+    fn work_ram(bank: u8, address: u16) -> Option<usize> {
+        match bank {
+            0x7e | 0x7f => Some((usize::from(bank & 1) << 16) | usize::from(address)),
+            0x00..=0x3f | 0x80..=0xbf if address < 0x2000 => Some(usize::from(address)),
+            _ => None,
+        }
     }
 
     impl HdmaHost for Scratch<'_, '_> {
@@ -557,7 +581,10 @@ mod table_check {
             bank: u8,
             address: u16,
         ) -> Result<u8, Self::Error> {
-            self.bus.read_source(channel, source, bank, address)
+            let value = self.bus.read_source(channel, source, bank, address)?;
+            let stored = work_ram(bank, address)
+                .and_then(|offset| self.stored.iter().find(|(at, _)| *at == offset));
+            Ok(stored.map_or(value, |&(_, value)| value))
         }
         fn write_source(
             &mut self,
@@ -612,8 +639,25 @@ mod table_check {
             let mut scratch = Scratch {
                 dma,
                 bus: unsafe { NativeHdmaHost::new(execution) },
+                stored: Vec::new(),
             };
-            let planned = match hdma::frame_table(&mut scratch, STEPS) {
+            let mut interrupts = crate::game::scanline_irq::table_check::planned_stores()
+                .into_iter()
+                .peekable();
+            // An interrupt at line N runs after line pass N + 1.
+            let between = |scratch: &mut Scratch<'_, '_>, pass: usize| {
+                while let Some((_, stores)) =
+                    interrupts.next_if(|(line, _)| usize::from(*line) + 2 <= pass)
+                {
+                    for (field, value) in stores {
+                        let offset = sm_game::display_refresh::control_word(field);
+                        let [low, high] = value.to_le_bytes();
+                        scratch.store(offset, low);
+                        scratch.store(offset + 1, high);
+                    }
+                }
+            };
+            let planned = match hdma::frame_table(&mut scratch, STEPS, between) {
                 Ok(planned) => planned,
                 Err(never) => match never {},
             };

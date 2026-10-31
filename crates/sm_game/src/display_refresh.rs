@@ -275,6 +275,15 @@ pub fn enable<H: Registers + CompatibilityRam + DisplayOwner + ?Sized>(
 /// and registers: the owned display state's words where the Session owns the
 /// presentation, RAM otherwise, as a lease or the compatibility game holds them.
 pub struct ScanlineIrq<'a, H: ?Sized>(pub &'a mut H);
+
+/// The work RAM word a scanline interrupt control store writes.
+pub fn control_word(field: irq::Store) -> usize {
+    match field {
+        irq::Store::Current => words::CUR_IRQ_HANDLER,
+        irq::Store::Pending => words::IRQHANDLER_NEXT_HANDLER,
+        irq::Store::Enable => 0x84,
+    }
+}
 impl<H: CompatibilityRam + ?Sized> irq::Controls for ScanlineIrq<'_, H> {
     fn read_control(&mut self, field: irq::Control) -> u16 {
         crate::projection::word(
@@ -290,12 +299,7 @@ impl<H: CompatibilityRam + ?Sized> irq::Controls for ScanlineIrq<'_, H> {
         )
     }
     fn write_control(&mut self, field: irq::Store, value: u16) {
-        let at = match field {
-            irq::Store::Current => words::CUR_IRQ_HANDLER,
-            irq::Store::Pending => words::IRQHANDLER_NEXT_HANDLER,
-            irq::Store::Enable => 0x84,
-        };
-        crate::projection::set_word(self.0, at, value);
+        crate::projection::set_word(self.0, control_word(field), value);
     }
 }
 impl<H: CompatibilityRam + Registers + ?Sized> irq::Display for ScanlineIrq<'_, H> {

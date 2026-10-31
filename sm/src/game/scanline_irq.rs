@@ -13,6 +13,8 @@ impl irq::Controls for NativeIrqHost<'_> {
         irq::Controls::read_control(&mut self.0, field)
     }
     fn write_control(&mut self, field: irq::Store, value: u16) {
+        #[cfg(sm_verify_dll)]
+        table_check::store(field, value);
         irq::Controls::write_control(&mut self.0, field, value);
     }
 }
@@ -86,6 +88,25 @@ pub(crate) mod table_check {
         *ENABLED.get_or_init(|| std::env::var_os("SM_IRQ_TABLE").is_some())
     }
 
+    /// The HDMA table check plans with the interrupts' control stores too.
+    fn planning() -> bool {
+        static PLANNING: OnceLock<bool> = OnceLock::new();
+        *PLANNING.get_or_init(|| enabled() || std::env::var_os("SM_HDMA_TABLE").is_some())
+    }
+
+    /// The planned interrupts' lines and control stores for the frame that is
+    /// settling, if it has a plan.
+    pub(crate) fn planned_stores() -> Vec<(u16, Vec<(irq::Store, u16)>)> {
+        FRAME.with_borrow(|frame| {
+            frame
+                .planned
+                .iter()
+                .flatten()
+                .map(|pass| (pass.line, pass.stores.clone()))
+                .collect()
+        })
+    }
+
     /// A copy of the interrupt controls and display mirrors as the frame settles.
     struct Scratch {
         controls: [u16; 6],
@@ -148,7 +169,7 @@ pub(crate) mod table_check {
     }
 
     pub(crate) fn begin_frame(game: &mut Game) {
-        if !enabled() {
+        if !planning() {
             return;
         }
         let mut live = ScanlineIrq(&mut *game);
@@ -184,11 +205,12 @@ pub(crate) mod table_check {
     }
 
     pub(crate) fn begin_pass(line: u16) {
-        if enabled() {
+        if planning() {
             FRAME.with_borrow_mut(|frame| {
                 frame.actual.push(irq::IrqPass {
                     line,
                     writes: Vec::new(),
+                    stores: Vec::new(),
                     resumed: false,
                 })
             });
@@ -196,7 +218,7 @@ pub(crate) mod table_check {
     }
 
     pub(crate) fn record(field: irq::Output, value: u8) {
-        if enabled() {
+        if planning() {
             FRAME.with_borrow_mut(|frame| {
                 if let Some(pass) = frame.actual.last_mut() {
                     pass.writes.push((field, value));
@@ -205,8 +227,18 @@ pub(crate) mod table_check {
         }
     }
 
+    pub(crate) fn store(field: irq::Store, value: u16) {
+        if planning() {
+            FRAME.with_borrow_mut(|frame| {
+                if let Some(pass) = frame.actual.last_mut() {
+                    pass.stores.push((field, value));
+                }
+            });
+        }
+    }
+
     pub(crate) fn resumed() {
-        if enabled() {
+        if planning() {
             FRAME.with_borrow_mut(|frame| {
                 if let Some(pass) = frame.actual.last_mut() {
                     pass.resumed = true;
