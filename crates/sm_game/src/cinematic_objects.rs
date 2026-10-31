@@ -623,7 +623,7 @@ fn advance_cinematic_object<const BANK: u8>(
     drop(payload);
     match objects {
         Sprites => word!(game.CINEMATICSPR_WHATTODRAW[(selected >> 1)] = value),
-        Mode7 => game.enqueue_mode7_rom(0x8b, value),
+        Mode7 => crate::display::transfer::enqueue_mode7_rom(0x8b, value, game),
         Background => draw_cinematic_background(selected, value, game),
     }
     let size = if matches!(objects, Background) { 6 } else { 4 };
