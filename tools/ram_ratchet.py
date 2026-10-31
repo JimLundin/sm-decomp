@@ -3,7 +3,8 @@
 
 docs/REVIEW.md's Phase 2 ratchets: no landing may raise cycle_report's
 sm_game_ram total sites or coupled files, and moves are line-neutral or
-smaller in production lines (crates/*/src plus sm/src outside verification).
+smaller in production lines (crates/*/src plus sm/src outside verification;
+#[cfg(test)] items inside crates/*/src are tests, not production).
 The baseline below only moves down: run with --update after a landing that
 lowers a measure, and commit the result with that landing.
 
@@ -16,12 +17,44 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import cycle_report  # noqa: E402
 
-# Lowered with batch 10 (2026-10-30); first measured on main 91d0bcce.
+# Lowered with batch 10 (2026-10-30); first measured on main 91d0bcce. The
+# production line baseline dropped by the 685 #[cfg(test)] lines it stopped
+# counting (2026-10-31).
 BASELINE = {
     "sm_game_ram_sites": 3663,
     "sm_game_coupled_files": 101,
-    "production_lines": 174191,
+    "production_lines": 173506,
 }
+
+
+CFG_TEST = re.compile(r"^\s*#\[cfg\(test\)\]\s*$")
+ATTRIBUTE = re.compile(r"^\s*#\[.*\]\s*$")
+# Strings, character literals and line comments, which may hold unbalanced braces.
+NOT_CODE = re.compile(r'"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])\'|//.*')
+
+
+def test_lines(lines):
+    """The lines of #[cfg(test)] items: from the attribute through the item's end."""
+    count = 0
+    index = 0
+    while index < len(lines):
+        if not CFG_TEST.match(lines[index]):
+            index += 1
+            continue
+        end = index + 1
+        while end < len(lines) and ATTRIBUTE.match(lines[end]):
+            end += 1
+        depth, opened = 0, False
+        while end < len(lines):
+            code = NOT_CODE.sub("", lines[end])
+            depth += code.count("{") - code.count("}")
+            opened = opened or "{" in code
+            if (opened and depth == 0) or (not opened and code.rstrip().endswith(";")):
+                break
+            end += 1
+        count += end + 1 - index
+        index = end + 1
+    return count
 
 
 def production_lines():
@@ -36,7 +69,10 @@ def production_lines():
             for name in names:
                 if name.endswith(".rs"):
                     with open(os.path.join(root, name), "rb") as source:
-                        total += source.read().count(b"\n")
+                        text = source.read().decode("utf-8")
+                    total += text.count("\n")
+                    if top == "crates":
+                        total -= test_lines(text.split("\n"))
     return total
 
 
