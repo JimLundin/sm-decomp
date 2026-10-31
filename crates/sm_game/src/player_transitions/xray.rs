@@ -3,6 +3,8 @@ use super::{
     effects::Host,
     state::{InputMode, MovementMode, PoseRequestWord},
 };
+use crate::ram::words as ram;
+use crate::runtime_access::SessionRam;
 use crate::{session::Session, visual_host::Record};
 
 pub fn request(h: &mut impl Host) -> bool {
@@ -160,4 +162,91 @@ pub fn widen(demo: &mut super::demo::DemoInput) {
         demo.held = 10;
         demo.pre_action = demo.pre_action.wrapping_add(1);
     }
+}
+
+/// Store word `index` of the X-ray and suit-pickup HDMA window table ($7E:9800).
+pub fn set_window_word<H: SessionRam + ?Sized>(h: &mut H, index: u16, value: u16) {
+    h.write_slice_le(0x9800 + usize::from(index) * 2, value);
+}
+
+/// Fill the window table with the closed window, last row first.
+pub fn clear_window(h: &mut (impl SessionRam + ?Sized)) {
+    for row in (0..256).rev() {
+        set_window_word(h, row, 255);
+    }
+}
+
+/// The beam's blend layer: BG3 in FX $24, BG2 in some rooms and boss fights, else BG1.
+pub fn blend_mask(h: &(impl SessionRam + ?Sized)) -> u16 {
+    if h.word(ram::FX_TYPE) == 0x24 {
+        0x1000
+    } else if matches!(h.word(ram::ROOM_PTR), 0xa66a | 0xcefb)
+        || matches!(h.word(ram::BOSS_ID), 3 | 6 | 7 | 8 | 10)
+    {
+        0x2000
+    } else {
+        0x4000
+    }
+}
+
+/// Set the beam's blend layer and, for BG1 (or BG3 in a dark haze), its colour.
+pub fn apply_blending(h: &mut (impl SessionRam + ?Sized), phase: BlendPhase) {
+    let mask = blend_mask(h);
+    let update_colors = match phase {
+        BlendPhase::Restore => false,
+        BlendPhase::Beam => mask == 0x4000,
+        BlendPhase::Setup => mask == 0x4000 || (mask == 0x1000 && (h.byte(0x74) & 0x1f) < 7),
+    };
+    if update_colors {
+        // Preserve the overlapping native words, including the final zero byte.
+        for (offset, value) in [(0x74, 0x27), (0x75, 0x47), (0x76, 0x87)] {
+            h.write_slice_native(offset, value);
+        }
+    }
+    h.write_slice_le(
+        ram::FX_LAYER_BLENDING_CONFIG_C,
+        h.word(ram::FX_LAYER_BLENDING_CONFIG_C) | mask,
+    );
+}
+
+/// Turn the scope when the direction Samus faces away from is held.
+pub fn handle_input(h: &mut (impl Host + SessionRam)) {
+    let binding = if h.session().player.movement_and_facing as u8 == 4 {
+        ram::BUTTON_CONFIG_RIGHT
+    } else {
+        ram::BUTTON_CONFIG_LEFT
+    };
+    let held = h.word(binding) & h.inputs().held != 0;
+    turn(h, held);
+}
+
+/// Start the scope if Samus can: freeze time, close the window, set up its HDMA.
+pub fn initialize(h: &mut (impl Host + SessionRam)) -> bool {
+    if !request(h) {
+        return false;
+    }
+    h.write_slice_le(ram::TIME_IS_FROZEN_FLAG, 1);
+    h.session_mut().player.transitions.interruption = super::state::InterruptionAction::from_raw(5);
+    clear_window(h);
+    set_world_running(h.session_mut(), false);
+    h.write_slice_native(0xa88, 1);
+    h.set_byte(0xa8a, 0x98);
+    h.write_slice_native(0xa8b, 0);
+    h.session_mut().player.demo.previous_held = 0x98c8;
+    h.write_slice_native(0xa8e, 0x9098);
+    h.set_byte(0xa90, 0x99);
+    h.write_slice_le(ram::XRAY_HDMA_TABLE_END, 0);
+    let demo = &mut h.session_mut().player.demo;
+    demo.pre_action = 0;
+    demo.delay = 0;
+    demo.program = 0;
+    demo.held = 0;
+    demo.pressed = 0;
+    h.session_mut().player.transitions.xray_angle =
+        if h.session().player.movement_and_facing as u8 == 4 {
+            192
+        } else {
+            64
+        };
+    true
 }

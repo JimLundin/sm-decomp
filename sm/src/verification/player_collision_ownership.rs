@@ -268,7 +268,10 @@ unsafe fn sequence(g: &mut Game, out: &mut Vec<u8>) {
     record(out, 0, 0, g);
     let result = {
         let mut rt = Runtime::new(g);
-        crate::game::player_transitions::suit::expand(&mut rt, Runtime::suit_window_word);
+        crate::game::player_transitions::suit::expand(
+            &mut rt,
+            sm_game::player_transitions::xray::set_window_word,
+        );
         let result = 1u8;
         assert_eq!(rt.word(0xdec), 4, "collision.owner.sequence.stage_reread");
         assert_eq!(

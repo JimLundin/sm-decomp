@@ -9,10 +9,10 @@ pub(crate) use sm_game::xray_background::{
 
 impl sm_game::xray_background::Host for Game {
     fn xray_blend_mask(&mut self) -> u16 {
-        Runtime::new(self).xray_blend_mask()
+        sm_game::player_transitions::xray::blend_mask(&Runtime::new(self))
     }
     fn apply_xray_blending(&mut self, phase: BlendPhase) {
-        Runtime::new(self).apply_xray_blending(phase);
+        sm_game::player_transitions::xray::apply_blending(&mut Runtime::new(self), phase);
     }
     fn finish_xray(&mut self) {
         crate::game::session_runtime::finish_xray(self);
