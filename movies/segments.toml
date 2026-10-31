@@ -1276,7 +1276,6 @@ require_hit = ["draygon_grab.repelled_by_grapple", "draygon_grab.flail_tail_and_
 
 [[segment]]
 id = "samus-shinespark-up"
-pending = "awaiting the seeds-v1-tricks-95f7c4352cb18fbe ci-data upload"
 seed = "100-input-phase:305"
 seed_sha256 = "1563be3787a3edca0cc6821a8db4967c2318e41a7ae6a50dc9a5d0a5288ad07c"
 inputs = "authored-samus-shinespark-up.inputs"
@@ -1288,7 +1287,6 @@ require_hit = ["shinespark.store", "shinespark.vertical"]
 
 [[segment]]
 id = "samus-shinespark-right"
-pending = "awaiting the seeds-v1-tricks-95f7c4352cb18fbe ci-data upload"
 seed = "100-input-phase:305"
 seed_sha256 = "1563be3787a3edca0cc6821a8db4967c2318e41a7ae6a50dc9a5d0a5288ad07c"
 inputs = "authored-samus-shinespark-right.inputs"
@@ -1300,7 +1298,6 @@ require_hit = ["shinespark.store", "shinespark.horizontal"]
 
 [[segment]]
 id = "samus-shinespark-left"
-pending = "awaiting the seeds-v1-tricks-95f7c4352cb18fbe ci-data upload"
 seed = "100-input-phase:305"
 seed_sha256 = "1563be3787a3edca0cc6821a8db4967c2318e41a7ae6a50dc9a5d0a5288ad07c"
 inputs = "authored-samus-shinespark-left.inputs"
@@ -1312,7 +1309,6 @@ require_hit = ["shinespark.store", "shinespark.horizontal"]
 
 [[segment]]
 id = "samus-shinespark-up-right"
-pending = "awaiting the seeds-v1-tricks-95f7c4352cb18fbe ci-data upload"
 seed = "100-input-phase:305"
 seed_sha256 = "1563be3787a3edca0cc6821a8db4967c2318e41a7ae6a50dc9a5d0a5288ad07c"
 inputs = "authored-samus-shinespark-up-right.inputs"
@@ -1324,7 +1320,6 @@ require_hit = ["shinespark.store", "shinespark.diagonal"]
 
 [[segment]]
 id = "samus-shinespark-up-left"
-pending = "awaiting the seeds-v1-tricks-95f7c4352cb18fbe ci-data upload"
 seed = "100-input-phase:305"
 seed_sha256 = "1563be3787a3edca0cc6821a8db4967c2318e41a7ae6a50dc9a5d0a5288ad07c"
 inputs = "authored-samus-shinespark-up-left.inputs"
@@ -1336,7 +1331,6 @@ require_hit = ["shinespark.store", "shinespark.diagonal"]
 
 [[segment]]
 id = "samus-walljump-16"
-pending = "awaiting the seeds-v1-tricks-95f7c4352cb18fbe ci-data upload"
 seed = "100-input-phase:305"
 seed_sha256 = "1563be3787a3edca0cc6821a8db4967c2318e41a7ae6a50dc9a5d0a5288ad07c"
 inputs = "authored-samus-walljump-16.inputs"
@@ -1348,7 +1342,6 @@ require_hit = ["samus.jump.wall"]
 
 [[segment]]
 id = "samus-walljump-22"
-pending = "awaiting the seeds-v1-tricks-95f7c4352cb18fbe ci-data upload"
 seed = "100-input-phase:305"
 seed_sha256 = "1563be3787a3edca0cc6821a8db4967c2318e41a7ae6a50dc9a5d0a5288ad07c"
 inputs = "authored-samus-walljump-22.inputs"
@@ -1360,7 +1353,6 @@ require_hit = ["samus.jump.wall"]
 
 [[segment]]
 id = "samus-walljump-28"
-pending = "awaiting the seeds-v1-tricks-95f7c4352cb18fbe ci-data upload"
 seed = "100-input-phase:305"
 seed_sha256 = "1563be3787a3edca0cc6821a8db4967c2318e41a7ae6a50dc9a5d0a5288ad07c"
 inputs = "authored-samus-walljump-28.inputs"
@@ -1372,7 +1364,6 @@ require_hit = ["samus.jump.wall"]
 
 [[segment]]
 id = "samus-crystal-flash"
-pending = "awaiting the seeds-v1-tricks-95f7c4352cb18fbe ci-data upload"
 seed = "scenario-crystal-flash:305"
 seed_sha256 = "66215813a01a15b73637bdd5d79e6992c4eb9138e4cab5d26e78cb1efa4efe4e"
 inputs = "authored-crystal-flash.inputs"
@@ -1384,7 +1375,6 @@ require_hit = ["crystal_flash.start"]
 
 [[segment]]
 id = "xray-scan-91f8"
-pending = "awaiting the seeds-v1-tricks-95f7c4352cb18fbe ci-data upload"
 seed = "100-input-phase:305"
 seed_sha256 = "1563be3787a3edca0cc6821a8db4967c2318e41a7ae6a50dc9a5d0a5288ad07c"
 inputs = "authored-xray-scan-305.inputs"
@@ -1396,7 +1386,6 @@ require_hit = ["xray.window"]
 
 [[segment]]
 id = "xray-scan-96ba"
-pending = "awaiting the seeds-v1-tricks-95f7c4352cb18fbe ci-data upload"
 seed = "100-input-phase:297"
 seed_sha256 = "361668acd582f80fecd528270a8cad1a3d83563372b7d1c274a17287a318fb9e"
 inputs = "authored-xray-scan-297.inputs"
