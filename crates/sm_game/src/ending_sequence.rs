@@ -459,7 +459,7 @@ pub fn credits_setup<H: Host + ?Sized>(game: &mut H) {
     game.ram().write_byte(mirror::INIDISP, 15);
     word!(game.LAYER1_X_POS = 0);
     word!(game.LAYER1_Y_POS = 0);
-    game.set_hdma_enabled(true);
+    crate::hdma_objects::set_hdma_enabled(true, game);
     crate::word_transfers!(game, descending, 256; le(HDMA_TABLE_1, 255) <- value(0));
     crate::shooting_star_motion::initialize_shooting_stars(game);
     GraphicsAsset::Decompress(0x97eeff, 0x10000).load(game);

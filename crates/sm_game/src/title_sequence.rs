@@ -139,7 +139,7 @@ pub fn load_graphics<H: Host + ?Sized>(game: &mut H) {
     crate::cinematic_display::reset_cinematic_transform(128, 128, game);
     game.enable_display_nmi(true);
     crate::screen_fade::set_both(game, 1, 1);
-    game.set_hdma_enabled(true);
+    crate::hdma_objects::set_hdma_enabled(true, game);
     game.set_palette_effects_enabled(true);
     word!(game.FX_LAYER_BLENDING_CONFIG_A = 0);
     game.spawn_palette_effect(TITLE_GLOW_1);

@@ -398,7 +398,7 @@ fn initialize<H: Host>(game: &mut H) -> CoroutineRet {
         enemy_projectiles::lifecycle::set_enabled(&mut game.runtime(), true);
         set_mechanisms_enabled(game, true);
         palette_effects::set_enabled(game.runtime().session_mut(), true);
-        game.set_hdma_enabled(true);
+        crate::hdma_objects::set_hdma_enabled(true, game);
         animated_tiles::set_enabled(game.runtime().session_mut(), true);
         crate::player_movement::speed::set_liquid_physics(&mut game.runtime());
         stage = if u32::from(word!(game.GAME_STATE)) == K_GAME_STATE_40_TRANSITION_TO_DEMO {
@@ -466,7 +466,7 @@ fn stop_demo<H: Host>(game: &mut H) -> CoroutineRet {
     game.enable_display_nmi(true);
     word!(game.GAME_STATE += 1);
     crate::screen_fade::set_both(game, 0, 0);
-    game.clear_hdma();
+    crate::hdma_objects::clear_hdma(game);
     game.disable_scanline_irq();
     word! { game, 0;
         FX_LAYER_BLENDING_CONFIG_A, CUR_IRQ_HANDLER, IRQHANDLER_NEXT_HANDLER,
@@ -498,7 +498,7 @@ fn next_demo<H: Host>(game: &mut H) -> CoroutineRet {
 
 /// Pause phase: enter the pause screen.
 fn setup_pause<H: Host>(game: &mut H) -> CoroutineRet {
-    game.set_hdma_enabled(false);
+    crate::hdma_objects::set_hdma_enabled(false, game);
     write_register_and_mirror(game, HDMAEN as u16, 0, 0x85, true);
     animated_tiles::set_enabled(game.runtime().session_mut(), false);
     display_refresh::capture_pause_background(game);
@@ -589,7 +589,7 @@ fn setup_unpause<H: Host>(game: &mut H) -> CoroutineRet {
             game.ram().write_byte(0x612, 1);
             return yielded;
         }
-        game.set_hdma_enabled(true);
+        crate::hdma_objects::set_hdma_enabled(true, game);
         animated_tiles::set_enabled(game.runtime().session_mut(), true);
         game.restore_movement_sound();
         word!(game.GAME_STATE += 1);
@@ -753,7 +753,7 @@ fn upload_options_tiles<H: Host>(game: &mut H) {
 
 /// Clear HDMA and the scanline IRQ, then reset the gameplay layers.
 fn finish_gameplay<H: Host>(clear_current_irq: bool, game: &mut H) {
-    game.clear_hdma();
+    crate::hdma_objects::clear_hdma(game);
     game.disable_scanline_irq();
     display_refresh::reset_gameplay_layers(clear_current_irq, game);
 }
