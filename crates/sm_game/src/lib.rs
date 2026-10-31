@@ -246,6 +246,7 @@ pub mod cinematic_dispatch;
 pub mod cinematic_display;
 pub mod cinematic_host;
 pub mod cinematic_objects;
+pub mod cinematic_state;
 pub mod cinematic_states;
 pub mod enemy_script;
 pub mod gameplay_flag_host;

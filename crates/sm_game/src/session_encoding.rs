@@ -818,6 +818,7 @@ macro_rules! scalar_words {
             $f(0x1950+index*2,$($borrow)* $s.hdma.objects[index].f);
         }
         $f(0x198d,$($borrow)* $s.enemy_projectiles.flags);
+        $f(0x198f,$($borrow)* $s.enemy_projectiles.zoom);
         $f(0x1991,$($borrow)* $s.enemy_projectiles.selected);
         $f(0x1993,$($borrow)* $s.enemy_projectiles.spawn.primary);
         $f(0x1995,$($borrow)* $s.enemy_projectiles.spawn.secondary);

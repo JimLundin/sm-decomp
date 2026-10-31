@@ -688,6 +688,7 @@ fn enemy_projectile_lanes() -> Vec<Lane> {
     const SLOTS: usize = 18;
     let mut lanes: Vec<Lane> = vec![
         (0x198d, 0, |s, _| &mut s.enemy_projectiles.flags),
+        (0x198f, 0, |s, _| &mut s.enemy_projectiles.zoom),
         (0x1991, 0, |s, _| &mut s.enemy_projectiles.selected),
         (0x1993, 0, |s, _| &mut s.enemy_projectiles.spawn.primary),
         (0x1995, 0, |s, _| &mut s.enemy_projectiles.spawn.secondary),

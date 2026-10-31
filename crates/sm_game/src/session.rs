@@ -607,6 +607,9 @@ pub struct SpawnContext {
 pub struct EnemyProjectiles {
     pub slots: [EnemyProjectile; 18],
     pub flags: u16,
+    /// $198F, which the projectile code leaves unused: the cinematics' Mode 7
+    /// zoom, as `flags` is their Mode 7 angle.
+    pub zoom: u16,
     pub selected: u16,
     pub spawn: SpawnContext,
     pub drop_bias: u16,
