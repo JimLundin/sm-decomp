@@ -1499,11 +1499,7 @@ mod coverage_checks;
 fn sfx_native_note_keeps_captured_slot_and_literal_programming() {
     use sm::{spc_player::sfx1_process, types::DspRegWriteHistory};
     let mut game = Game::new();
-    let mut history = Box::new(DspRegWriteHistory {
-        count: 0,
-        addr: [0; 256],
-        val: [0; 256],
-    });
+    let mut history = Box::new(DspRegWriteHistory::EMPTY);
     // The existing owner keeps player, DSP and RAM live and disjoint; no device or callback reentry.
     unsafe {
         game.create_native_player();
@@ -1593,11 +1589,7 @@ fn sfx_native_reset_rejection_keeps_history_and_reset_prefix() {
     use sm::{spc_player::sfx1_process, types::DspRegWriteHistory};
     use std::panic::{AssertUnwindSafe, catch_unwind};
     let mut game = Game::new();
-    let mut history = Box::new(DspRegWriteHistory {
-        count: 0,
-        addr: [0; 256],
-        val: [0; 256],
-    });
+    let mut history = Box::new(DspRegWriteHistory::EMPTY);
     unsafe {
         game.create_native_player();
         let p = game.g_spc_player;
@@ -1695,11 +1687,7 @@ fn sfx_native_pan_origin_failure_keeps_programmed_instrument_prefix() {
     use std::panic::{AssertUnwindSafe, catch_unwind};
     for pan in [21, 10] {
         let mut game = Game::new();
-        let mut history = Box::new(DspRegWriteHistory {
-            count: 0,
-            addr: [0; 256],
-            val: [0; 256],
-        });
+        let mut history = Box::new(DspRegWriteHistory::EMPTY);
         unsafe {
             game.create_native_player();
             let p = game.g_spc_player;
@@ -1798,11 +1786,7 @@ fn owned_player_render_matches_native_schedule_and_failure_prefixes() {
             1 => (531, 63),
             _ => (534, 64),
         };
-        let mut history = [DspRegWriteHistory {
-            count: 0,
-            addr: [0; 256],
-            val: [0; 256],
-        }; 2];
+        let mut history = [DspRegWriteHistory::EMPTY; 2];
         let mut games: [_; 4] = std::array::from_fn(|_| Game::new());
         unsafe {
             for game in &mut games {
@@ -1891,11 +1875,7 @@ fn owned_player_render_matches_native_schedule_and_failure_prefixes() {
 fn owned_player_initialization_and_transfers_preserve_native_boundaries() {
     use sm::spc_player::*;
     for mode in 0..4 {
-        let mut history = [DspRegWriteHistory {
-            count: 0,
-            addr: [0; 256],
-            val: [0; 256],
-        }; 2];
+        let mut history = [DspRegWriteHistory::EMPTY; 2];
         let mut games: [_; 4] = std::array::from_fn(|_| Game::new());
         unsafe {
             for game in &mut games {
@@ -1987,11 +1967,7 @@ fn owned_player_creation_replacement_and_drop_keep_borrowed_allocations() {
     assert!(game.g_spc_player.is_null());
     game.create_native_player();
     foreign.create_native_player();
-    let mut history = DspRegWriteHistory {
-        count: 0,
-        addr: [0; 256],
-        val: [0; 256],
-    };
+    let mut history = DspRegWriteHistory::EMPTY;
     unsafe {
         let old = game.g_spc_player;
         let old_dsp = (*old).state.dsp;
