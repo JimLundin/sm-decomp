@@ -91,10 +91,15 @@ pub fn shake_room_with_sound<H: crate::menus::host::Host + ?Sized>(kind: u16, ga
             sound = SOUNDS[0];
         }
         game.queue_sound(1, (sound) as u8, 6);
+        // The timer add ($88:B245) takes the HDMA object handler's carry: clear after its
+        // CPX #$0C, but for the first object the one the handler was entered with. The main game
+        // loop's PLP restores that every frame from power-on, where loading the save slots
+        // ($80:8261) leaves it set.
+        let carry = u16::from(word!(game.HDMA_OBJECT_INDEX) == 0 && game.hdma_handler_carry());
         word!(
             game.EARTHQUAKE_SFX_TIMER = SOUNDS[usize::from(index >> 1) + 1]
-                .wrapping_add(index & 1)
                 .wrapping_add(word!(game.RANDOM_NUMBER) & 3)
+                .wrapping_add(carry)
         );
         word!(game.EARTHQUAKE_SFX_INDEX = index.wrapping_add(4));
     }

@@ -84,6 +84,9 @@ pub trait MenuRuntime:
     fn advance_dialogue_sound_effects(&mut self);
     /// Run the HDMA object handler, which also handles the music queue ($88:84B9).
     fn run_hdma_objects(&mut self);
+    /// The carry the HDMA object handler ($88:84B9) is running with: the main game loop's, set
+    /// from power-on, except while a message box restores the display, where it is clear.
+    fn hdma_handler_carry(&self) -> bool;
     /// Restore Samus's movement sound after a message box.
     fn restore_movement_sound(&mut self);
     /// Wait for the next display refresh; nonzero yields to the frame loop.

@@ -265,6 +265,8 @@ pub struct Game {
     pub eproj_spawn_pt: Point16U,
     pub eproj_spawn_varE24: u16,
     pub message_box_das0l_value: u16,
+    /// Whether a message box is running the HDMA object handler.
+    pub message_box_hdma: bool,
     pub k_out: u16,
 
     pub g_sram: crate::save_ram::SaveRam,
@@ -1414,6 +1416,7 @@ impl Game {
             eproj_spawn_pt: Point16U { x: 0, y: 0 },
             eproj_spawn_varE24: 0,
             message_box_das0l_value: 0,
+            message_box_hdma: false,
             k_out: 0,
             g_sram: Default::default(),
             g_rtl_memory_ptr: core::ptr::null_mut(),
