@@ -7,7 +7,6 @@ use crate::actors::host::{ActorLease, ActorRuntime as _, LeaseActors, abs16};
 use crate::actors::layouts::part_view;
 use crate::enemy_projectiles::host::Effects as _;
 use crate::enemy_script::EnemyScript;
-use crate::player_position::PlayerPosition as _;
 use crate::ram::words as W;
 use crate::session_slot;
 
@@ -156,8 +155,7 @@ fn direction(left: bool) -> u16 {
 }
 /// Initialisation AI - Alcoon ($A8:DCCD): simulate a jump to find the
 /// landing Y position.
-pub fn initialize<H: LeaseActors + ?Sized>(game: &mut H) {
-    let runtime = &mut game.lease();
+pub fn initialize(runtime: &mut impl ActorLease) {
     let key = selected(runtime);
     let alcoon = i32::from(key.byte_index());
     session_slot!(runtime, Alcoon[alcoon].step_counter = 0);
@@ -192,8 +190,7 @@ pub fn initialize<H: LeaseActors + ?Sized>(game: &mut H) {
     runtime.edit_actor(key, Native, |actor| actor.y.whole = actor.pre_instruction);
 }
 /// Main AI - Alcoon ($A8:DD6B): run its function. Was `advance`.
-pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
-    let runtime = &mut game.lease();
+pub fn main_ai(runtime: &mut impl ActorLease) {
     let key = selected(runtime);
     let alcoon = i32::from(key.byte_index());
     let function = runtime.resolve_actor(key, Native).variables[lane::FUNCTION];

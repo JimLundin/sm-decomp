@@ -333,8 +333,7 @@ pub fn draining_sound<H: LeaseActors + ?Sized>(script: EnemyScript, game: &mut H
     script
 }
 /// Instruction - play random Metroid cry ($A3:EAB1).
-pub fn random_cry<H: LeaseActors + ?Sized>(script: EnemyScript, game: &mut H) -> EnemyScript {
-    let runtime = &mut game.lease();
+pub fn random_cry(script: EnemyScript, runtime: &mut impl ActorLease) -> EnemyScript {
     let index = runtime.next_random() & 7;
     let cry = table(runtime, CRIES, index as isize);
     runtime.queue_sound(2, 6, cry);

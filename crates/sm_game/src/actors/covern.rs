@@ -1,10 +1,9 @@
 //! Covern, the Wrecked Ship ghost, which materialises near Samus once she has
 //! moved one way or stood still long enough, hovers, and fades away again
 //! (bank $A8:99AC-$A8:9F4F). Was `wrecked_ship_ghost`.
-use crate::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
-use crate::actors::host::{ActorLease, LeaseActors};
+use crate::actors::access::{AccessMode::Native, ActorKey as Key};
+use crate::actors::host::ActorLease;
 use crate::actors::layouts::part_view;
-use crate::enemy_projectiles::host::Effects as _;
 use crate::ram::{word_arrays as A, words as W};
 use crate::session_slot;
 
@@ -102,8 +101,7 @@ fn set_target(runtime: &mut impl ActorLease, key: Key, colours: impl IntoIterato
     }
 }
 /// Initialisation AI - Covern ($A8:9AEE).
-pub fn initialize<H: LeaseActors + ?Sized>(game: &mut H) {
-    let runtime = &mut game.lease();
+pub fn initialize(runtime: &mut impl ActorLease) {
     let key = selected(runtime);
     runtime.edit_actor(key, Native, |actor| {
         actor.properties |= INITIAL_PROPERTIES;
@@ -388,8 +386,7 @@ fn awake(runtime: &mut impl ActorLease, key: Key) {
     }
 }
 /// Main AI - coven ($A8:9B3C): run its function. Was `advance`.
-pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
-    let runtime = &mut game.lease();
+pub fn main_ai(runtime: &mut impl ActorLease) {
     let key = selected(runtime);
     match runtime.resolve_actor(key, Native).variables[lane::FUNCTION] {
         function::FADE_TO_WHITE => fade_to_white(runtime, key),

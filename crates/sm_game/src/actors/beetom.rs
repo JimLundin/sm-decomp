@@ -5,7 +5,7 @@ use crate::actors::combat::{self, current_slot};
 use crate::actors::host::{ActorLease, LeaseActors};
 use crate::actors::{layouts::part_view, sidehopper::initial_hop_phase};
 use crate::enemy_projectiles::host::Effects as _;
-use crate::player_projectiles::{content::table, host::Host as _};
+use crate::player_projectiles::content::table;
 use crate::ram::words;
 use crate::session_slot;
 
@@ -92,8 +92,7 @@ fn reverse(runtime: &mut impl ActorLease, beetom: i32) {
     set_function(runtime, beetom, function::START_DROPPING);
 }
 /// Initialisation AI - beetom ($A8:B776).
-pub fn initialize<H: LeaseActors + ?Sized>(game: &mut H) {
-    let runtime = &mut game.lease();
+pub fn initialize(runtime: &mut impl ActorLease) {
     let beetom = current_slot(runtime);
     session_slot!(runtime, Beetom[beetom]; function_timer = 0, function = 0, falling = 0, attached = 0,
         var_a = 0, button_counter = BUTTON_PRESSES);

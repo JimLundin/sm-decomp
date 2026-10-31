@@ -48,8 +48,7 @@ const BIG_EXPLOSION: u16 = 4;
 const KAGO_BUG: u16 = 0xd02e;
 
 /// Initialisation AI - Kago ($A8:AB46).
-pub fn initialize<H: LeaseActors + ?Sized>(game: &mut H) {
-    let runtime = &mut game.lease();
+pub fn initialize(runtime: &mut impl ActorLease) {
     let index = runtime.word(words::CUR_ENEMY_INDEX);
     let key = Key::from_legacy(index);
     runtime.edit_actor(key, Native, |actor| {

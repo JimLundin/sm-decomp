@@ -375,9 +375,54 @@ pub fn lease_ai<H: LeaseScope + ?Sized>(ea: u32, game: &mut H) -> bool {
         10679322 => game.with_lease(|runtime| {
             shutters::reaction(Kind::HorizontalShutter, Event::PowerBomb, runtime)
         }),
+        11066573 => game.with_lease(alcoon::initialize),
+        11066731 => game.with_lease(alcoon::main_ai),
+        10730163 => game.with_lease(bang::initialize),
+        10731261 => game.with_lease(bang::shot),
+        11057014 => game.with_lease(beetom::initialize),
+        10657608 => game.with_lease(cacatac::initialize),
+        10674038 => game.with_lease(choot::initialize),
+        10674222 => game.with_lease(choot::main_ai),
+        11049710 => game.with_lease(covern::initialize),
+        11049788 => game.with_lease(covern::main_ai),
+        10720995 => {
+            game.with_lease(|runtime| crawlers::initialize(crawlers::Kind::Sciser, runtime))
+        }
+        10721595 => game.with_lease(|runtime| crawlers::initialize(crawlers::Kind::Zero, runtime)),
+        10729071 => game.with_lease(|runtime| crawlers::initialize(crawlers::Kind::Viola, runtime)),
+        10739779 => {
+            game.with_lease(|runtime| crawlers::initialize(crawlers::Kind::OrangeGeemer, runtime))
+        }
+        10740436 => game.with_lease(|runtime| crawlers::initialize(crawlers::Kind::Zeela, runtime)),
+        10741148 => game.with_lease(|runtime| crawlers::initialize(crawlers::Kind::Sova, runtime)),
+        10741353 => {
+            game.with_lease(|runtime| crawlers::initialize(crawlers::Kind::Geemer, runtime))
+        }
+        11044832 => game.with_lease(evir::initialize),
+        11045040 => game.with_lease(evir::initialize_projectile),
+        11045278 => game.with_lease(evir::projectile_main_ai),
+        11045638 | 11045644 | 11045650 => game.with_lease(|runtime| evir::react(ea, runtime)),
+        11053894 => game.with_lease(kago::initialize),
         _ => return false,
     }
     true
+}
+
+/// The instructions that run on one actor lease, keyed by address; `j` is the script
+/// position, handed back unrun when `ea` is not one of them.
+pub fn lease_instruction<H: LeaseScope + ?Sized>(
+    ea: u32,
+    j: EnemyScript,
+    game: &mut H,
+) -> Result<EnemyScript, EnemyScript> {
+    Ok(match ea {
+        10730152 => game.with_lease(|runtime| bang::set_finished_growing(j, runtime)),
+        11044751 | 11044763 | 11044790 | 11044811 => {
+            game.with_lease(|runtime| evir::instruction(ea, j, runtime))
+        }
+        10742449 => game.with_lease(|runtime| metroid::random_cry(j, runtime)),
+        _ => return Err(j),
+    })
 }
 
 /// An enemy species' AI routine, keyed by its address. Arms not here are in
@@ -602,20 +647,11 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         10725245 => mochtroid::initialize(game),
         10725264 => mochtroid::main_ai(game),
         10725715 => mochtroid::touch(game),
-        10720995 => crawlers::initialize(crawlers::Kind::Sciser, game),
-        10721595 => crawlers::initialize(crawlers::Kind::Zero, game),
-        10729071 => crawlers::initialize(crawlers::Kind::Viola, game),
-        10739779 => crawlers::initialize(crawlers::Kind::OrangeGeemer, game),
-        10740436 => crawlers::initialize(crawlers::Kind::Zeela, game),
-        10741148 => crawlers::initialize(crawlers::Kind::Sova, game),
-        10741353 => crawlers::initialize(crawlers::Kind::Geemer, game),
         10739851 | 10741442 => {
             let function = crawlers::main_ai(game);
             pre_instruction(function, game);
         }
-        10730163 => bang::initialize(game),
         10730277 => bang::main_ai(game),
-        10731261 => bang::shot(game),
         10738643 => reflec::initialize(game),
         10723661 => roach::initialize(game),
         10724048 => roach::main_ai(game),
@@ -684,12 +720,9 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         10669331 => oum::main_ai(game),
         10670988 => oum::touch(false, game),
         10671028 => oum::shot(game),
-        10657608 => cacatac::initialize(game),
         10658809 => cacatac::owtch::initialize(game),
         10658942 => cacatac::owtch::main_ai(game),
         10659193 => cacatac::owtch::shot(game),
-        10674038 => choot::initialize(game),
-        10674222 => choot::main_ai(game),
         10742351 => metroid::initialize(game),
         10742502 => metroid::frozen(game),
         10742579 => metroid::hurt(game),
@@ -705,13 +738,8 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         10733255 => skree::main_ai(skree::Kind::Skree, game),
         10733557 => skree::shot(skree::Kind::Skree, game),
         // Bank $A8.
-        11044832 => evir::initialize(game),
-        11045040 => evir::initialize_projectile(game),
         11045147 => evir::main_ai(game),
-        11045278 => evir::projectile_main_ai(game),
-        11045638 | 11045644 | 11045650 => evir::react(ea, game),
         11047000 => morph_ball_eye::initialize(game),
-        11057014 => beetom::initialize(game),
         11057165 => beetom::main_ai(game),
         11058734 => beetom::touch(game),
         11058860 => beetom::shot(game),
@@ -722,13 +750,8 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         }
         11048675 => fune::initialize(game),
         11048752 => fune::main_ai(game),
-        11049710 => covern::initialize(game),
-        11049788 => covern::main_ai(game),
-        11053894 => kago::initialize(game),
         11053941 => kago::main_ai(game),
         11053955 => kago::shot(game),
-        11066573 => alcoon::initialize(game),
-        11066731 => alcoon::main_ai(game),
         11068296 => atomic::initialize(game),
         11068355 => atomic::main_ai(game),
         11069486 => blue_brinstar_face_block::initialize(game),
@@ -1029,6 +1052,10 @@ pub fn instruction<H: InstructionHost>(
     j: EnemyScript,
     game: &mut H,
 ) -> EnemyScript {
+    let j = match lease_instruction(ea, j, game) {
+        Ok(script) => return script,
+        Err(j) => j,
+    };
     match ea {
         // Instruction - enemy $0FB2 = [[Y]] ($AA:806B, $B3:806B) and = RTS ($AA:8074, $B3:8074).
         11173995 | 11174004 | 11763819 | 11763828 => {
@@ -1125,8 +1152,6 @@ pub fn instruction<H: InstructionHost>(
         10669235 | 10669246 | 10669257 => oum::instruction(ea, j, game),
         10659181 | 10659185 => cacatac::owtch::set_function_index(ea, k, j, game),
         10742437 => metroid::draining_sound(j, game),
-        10742449 => metroid::random_cry(j, game),
-        11044751 | 11044763 | 11044790 | 11044811 => evir::instruction(ea, j, game),
         10726142 => sidehopper::ready_to_hop(j, game),
         10728489 => zoa::set_x_speed_index(4, j, game),
         10728500 => zoa::set_x_speed_index(8, j, game),
@@ -1136,7 +1161,6 @@ pub fn instruction<H: InstructionHost>(
             game.queue_sound(1, 0x56, 6);
             j
         }
-        10730152 => bang::set_finished_growing(j, game),
         10738632 => reflec::set_reflection_axis(k, j, game),
         10741344 | 10739650 => crawlers::set_function(k, j, game),
         10719382 | 10719392 | 10719402 => skultera::instruction(ea, j, game),

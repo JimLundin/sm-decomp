@@ -3,9 +3,8 @@
 use crate::actors::access::AccessMode::Native;
 use crate::actors::api::{self, Axis};
 use crate::actors::combat::{self, current_slot};
-use crate::actors::host::{ActorLease, LeaseActors};
+use crate::actors::host::ActorLease;
 use crate::actors::layouts::part_view;
-use crate::enemy_projectiles::host::Effects as _;
 use crate::player_projectiles::content::table;
 use crate::session_slot;
 use sm_data::enemy_speeds::SpeedTable::Quadratic;
@@ -43,8 +42,7 @@ fn speed(runtime: &impl ActorLease, index: usize) -> u32 {
     (u32::from(high) << 16) | u32::from(runtime.lease_enemy_speed(Quadratic, index as isize))
 }
 /// Initialisation AI - choot ($A2:DF76).
-pub fn initialize<H: LeaseActors + ?Sized>(game: &mut H) {
-    let runtime = &mut game.lease();
+pub fn initialize(runtime: &mut impl ActorLease) {
     set_instruction_list(runtime, IDLE_LIST);
     let choot = current_slot(runtime);
     let (x, y) = (
@@ -74,8 +72,7 @@ pub fn initialize<H: LeaseActors + ?Sized>(game: &mut H) {
     session_slot!(runtime, Choot[choot]; falling_y = falling_y, falling_x = falling_x, y_speed_index = index);
 }
 /// Main AI - choot ($A2:E02E): run its function.
-pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
-    let runtime = &mut game.lease();
+pub fn main_ai(runtime: &mut impl ActorLease) {
     let choot = current_slot(runtime);
     match session_slot!(runtime, Choot[choot].function) {
         WAIT_FOR_SAMUS => {

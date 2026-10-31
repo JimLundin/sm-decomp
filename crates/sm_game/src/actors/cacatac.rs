@@ -46,8 +46,7 @@ pub(crate) fn set_velocities(runtime: &mut impl ActorLease, speed: u16) {
         right_subvelocity = speeds[1], left_velocity = speeds[2], left_subvelocity = speeds[3]);
 }
 /// Initialisation AI - cacatac ($A2:9F48).
-pub fn initialize<H: LeaseActors + ?Sized>(game: &mut H) {
-    let runtime = &mut game.lease();
+pub fn initialize(runtime: &mut impl ActorLease) {
     let cacatac = current_slot(runtime);
     session_slot!(runtime, Cacatac[cacatac].base.spritemap_pointer = 0x804d);
     set_instruction_list(runtime, false);

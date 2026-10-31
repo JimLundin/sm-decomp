@@ -1138,7 +1138,11 @@ impl Runtime<'_> {
         actor: u16,
         script: EnemyScript,
     ) -> EnemyScript {
-        self.foreign(|game| sm_game::actors::species::instruction(routine, actor, script, game))
+        use sm_game::actors::species;
+        match species::lease_instruction(routine, script, self) {
+            Ok(script) => script,
+            Err(script) => self.foreign(|game| species::instruction(routine, actor, script, game)),
+        }
     }
     pub(crate) fn actor_touch_legacy(&mut self, routine: u32) {
         self.foreign(|game| sm_game::actors::species::touch(routine, game));

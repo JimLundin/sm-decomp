@@ -5,7 +5,6 @@ use crate::actors::api::{self, Axis, DeathHandling::Finalize, ShotHandling};
 use crate::actors::combat::{self, current_slot};
 use crate::actors::host::{ActorLease, BossEffects as _, LeaseActors};
 use crate::actors::layouts::part_view;
-use crate::enemy_projectiles::host::Effects as _;
 use crate::enemy_script::EnemyScript;
 use crate::session_slot;
 use sm_data::enemy_speeds::SpeedTable::Linear;
@@ -104,8 +103,7 @@ fn handle_arms(runtime: &mut impl ActorLease, evir: i32) {
     set_instruction_list(runtime, evir, ARMS_LISTS[right]);
 }
 /// Initialisation AI - evir ($A8:87E0): the body or its arms.
-pub fn initialize<H: LeaseActors + ?Sized>(game: &mut H) {
-    let runtime = &mut game.lease();
+pub fn initialize(runtime: &mut impl ActorLease) {
     let evir = current_slot(runtime);
     if session_slot!(runtime, Evir[evir].parameter_1) != 0 {
         handle_arms(runtime, evir);
@@ -127,8 +125,7 @@ pub fn initialize<H: LeaseActors + ?Sized>(game: &mut H) {
         function = function::HANDLE_BODY_OR_ARMS);
 }
 /// Initialisation AI - evir projectile ($A8:88B0).
-pub fn initialize_projectile<H: LeaseActors + ?Sized>(game: &mut H) {
-    let runtime = &mut game.lease();
+pub fn initialize_projectile(runtime: &mut impl ActorLease) {
     let evir = current_slot(runtime);
     set_instruction_list(runtime, evir, PROJECTILE_LIST);
     let palette = session_slot!(runtime, Evir[evir - 2 * SLOT].base.palette_index);
@@ -230,8 +227,7 @@ pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
 }
 /// Main AI - evir projectile ($A8:899E): unless frozen, keep its moving or regrowing list,
 /// or shoot; then run its function.
-pub fn projectile_main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
-    let runtime = &mut game.lease();
+pub fn projectile_main_ai(runtime: &mut impl ActorLease) {
     let evir = current_slot(runtime);
     if session_slot!(runtime, Evir[evir].base.frozen_timer) == 0 {
         if session_slot!(runtime, Evir[evir].moving) != 0 {
@@ -247,8 +243,7 @@ pub fn projectile_main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
 /// Enemy shot, power bomb reaction or enemy touch - evir, then the evir shared contact
 /// reaction ($A8:8B16): a dead body takes its parts with it, and a frozen one freezes its
 /// arms and its projectile unless that is in flight.
-pub fn react<H: LeaseActors + ?Sized>(address: u32, game: &mut H) {
-    let runtime = &mut game.lease();
+pub fn react(address: u32, runtime: &mut impl ActorLease) {
     match address {
         routine::SHOT => combat::contact_reaction(runtime, Finalize),
         routine::POWER_BOMB => combat::power_bomb_reaction(runtime, Finalize),
@@ -276,12 +271,11 @@ fn freeze(runtime: &mut impl ActorLease, part: i32, frozen: u16) {
 }
 /// The evir instructions: queue the spit sound, set or advance the regeneration X offset
 /// away from the body's facing, and finish regrowing.
-pub fn instruction<H: LeaseActors + ?Sized>(
+pub fn instruction(
     address: u32,
     script: EnemyScript,
-    game: &mut H,
+    runtime: &mut impl ActorLease,
 ) -> EnemyScript {
-    let runtime = &mut game.lease();
     let evir = current_slot(runtime);
     match address {
         routine::QUEUE_SPIT_SOUND => runtime.queue_sound(2, 6, SPIT_SOUND),

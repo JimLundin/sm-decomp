@@ -136,8 +136,7 @@ pub fn common_initialisation<H: LeaseActors + ?Sized>(raw: u16, game: &mut H) {
 /// Initialisation AI - Sciser ($A3:96E3), Zero ($A3:993B), Viola ($A3:B66F),
 /// orange Geemer ($A3:E043), Zeela ($A3:E2D4), Sova ($A3:E59C) and Geemer
 /// ($A3:E669).
-pub fn initialize<H: LeaseActors + ?Sized>(kind: Kind, game: &mut H) {
-    let runtime = &mut game.lease();
+pub fn initialize(kind: Kind, runtime: &mut impl ActorLease) {
     let key = combat::current(runtime);
     // The initial instruction list pointers, and the instruction list table
     // offset some kinds set.

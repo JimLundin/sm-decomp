@@ -1,6 +1,6 @@
 //! Bang, the electric orb that grows as it is shot and flies at Samus (bank
 //! $A3:B702-$A3:BF2F): its movement functions and shot reaction.
-use crate::actors::access::{AccessMode::Native, ActorAccess};
+use crate::actors::access::AccessMode::Native;
 use crate::actors::api::{self, DeathKind};
 use crate::actors::combat::{self, current_slot};
 use crate::actors::host::{ActorLease, BossEffects as _, LeaseActors, sign_extend8};
@@ -11,7 +11,6 @@ use crate::enemy_script::EnemyScript;
 use crate::player_projectiles::content::{self, table};
 use crate::player_projectiles::motion;
 use crate::ram::words as W;
-use crate::session_access::SessionAccess as _;
 use crate::session_slot;
 use crate::shot;
 
@@ -109,8 +108,7 @@ fn set_instruction_list(runtime: &mut impl ActorLease) {
     }
 }
 /// Initialisation AI - bang ($A3:BAB3).
-pub fn initialize<H: LeaseActors + ?Sized>(game: &mut H) {
-    let runtime = &mut game.lease();
+pub fn initialize(runtime: &mut impl ActorLease) {
     let key = combat::current(runtime);
     let bang = current_slot(runtime);
     runtime.edit_actor(key, Native, |actor| {
@@ -374,8 +372,7 @@ fn move_bang(decelerating: bool, runtime: &mut impl ActorLease) {
     }
 }
 /// Enemy shot - bang ($A3:BEFD): knock the bang away and grow it.
-pub fn shot<H: LeaseActors + ?Sized>(game: &mut H) {
-    let runtime = &mut game.lease();
+pub fn shot(runtime: &mut impl ActorLease) {
     let key = combat::current(runtime);
     let bang = current_slot(runtime);
     if runtime.resolve_actor(key, Native).pre_instruction != function::NO_MOVEMENT {
@@ -409,11 +406,7 @@ pub fn shot<H: LeaseActors + ?Sized>(game: &mut H) {
     }
 }
 /// Instruction - enemy finished growing flag = 1 ($A3:BAA8). Was `arm`.
-pub fn set_finished_growing<H: LeaseActors + ?Sized>(
-    cursor: EnemyScript,
-    game: &mut H,
-) -> EnemyScript {
-    let runtime = &mut game.lease();
+pub fn set_finished_growing(cursor: EnemyScript, runtime: &mut impl ActorLease) -> EnemyScript {
     let bang = current_slot(runtime);
     session_slot!(runtime, Bang[bang].finished_growing = 1);
     cursor
