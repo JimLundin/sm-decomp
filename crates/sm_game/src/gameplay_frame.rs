@@ -13,8 +13,9 @@ use crate::display::sequence::{register_writes, write_register_and_mirror};
 use crate::display_refresh;
 use crate::enemy_projectiles;
 use crate::gameplay_rules::{finish_frame, finish_health_and_time};
+use crate::menu_state::{DeathSequence, MenuScreens};
 use crate::menus::prelude::{
-    CoroutineRet, death_sequence, options_menu, owned, power_bomb, save_selection, session_word,
+    CoroutineRet, options_menu, owned, power_bomb, save_selection, session_word,
 };
 use crate::menus::{
     controller_input, file_menu, game_over, map_menu, options_settings, pause_controls,
@@ -27,6 +28,7 @@ use crate::room_entry::content::LoadMode;
 use crate::room_scrolls::{advance_camera, debug_position, fill_viewport, update_scrolls};
 use crate::runtime_access::RuntimeAccess;
 use crate::session_access::SessionAccess;
+use crate::session_cohort;
 use crate::word_transfers;
 use crate::{escape_timer, hud, message_boxes, samus_death, sprite_drawing};
 
@@ -777,6 +779,19 @@ fn set_mechanisms_enabled<H: Host>(game: &mut H, enabled: bool) {
     };
 }
 
+/// Start the death sequence's progress: its first phase after a three-frame
+/// delay, with the death pose's flash timer at `flash_timer`.
+fn begin_death_sequence<H: Host>(game: &mut H, flash_timer: u16) {
+    session_cohort::with(game, |_, screens: &mut MenuScreens| {
+        screens.options_menu.screen_index = 3;
+        screens.death = DeathSequence {
+            index: 0,
+            counter: 0,
+            flash_timer,
+        };
+    });
+}
+
 /// Per-state work after a completed gameplay pass.
 fn finish_pass<H: Host>(entry: Entry, game: &mut H) {
     match entry {
@@ -804,12 +819,9 @@ fn finish_pass<H: Host>(entry: Entry, game: &mut H) {
             if fading::all(if death { 6 } else { 8 }, game) != 0 {
                 if death {
                     finish_gameplay(true, game);
-                    options_menu! { game, 0; ScreenIndex }
+                    begin_death_sequence(game, 16);
                     crate::screen_fade::set_both(game, 0, 0);
                     word_transfers!(game, descending, 128; le(EPROJ_Y_SUBPOS, 142) <- value(0));
-                    death_sequence!(game.FlashTimer = 16);
-                    options_menu!(game.ScreenIndex = 3);
-                    death_sequence! { game, 0; Index, Counter }
                     word!(game.GAME_STATE += 1);
                     power_bomb!(game.ExplosionStatus = 0);
                     cancel_sound_effects(game, 15);
@@ -830,8 +842,7 @@ fn finish_pass<H: Host>(entry: Entry, game: &mut H) {
             word_transfers!(game, descending, 192; le(TARGET_PALETTES, 191) <- value(0));
             word_transfers!(game, descending, 48; le(TARGET_PALETTES, 255) <- value(0));
             word_transfers!(game, descending, 16; le(TARGET_PALETTES, 207) <- le(PALETTE_BUFFER, 207));
-            options_menu!(game.ScreenIndex = 3);
-            death_sequence! { game, 0; Index, Counter, FlashTimer }
+            begin_death_sequence(game, 0);
             session_word! { game, 0;
                 HudItemIndex, SamusAutoCancelHudItemIndex, SamusInvincibilityTimer, SamusKnockbackTimer,
             }

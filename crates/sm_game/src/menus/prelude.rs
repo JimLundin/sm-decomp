@@ -80,9 +80,6 @@ pub(crate) use options_menu;
 /// The power bomb's words ([`crate::explosion_window::power_bomb::Word`]).
 macro_rules! power_bomb { ($($t:tt)*) => { owned!([$crate::explosion_window::power_bomb] $($t)*) }; }
 pub(crate) use power_bomb;
-/// [`crate::menu_state::death_sequence::Word`].
-macro_rules! death_sequence { ($($t:tt)*) => { owned!([$crate::menu_state::death_sequence] $($t)*) }; }
-pub(crate) use death_sequence;
 /// The Session-owned words ([`crate::session_words::Word`]).
 macro_rules! session_word { ($($t:tt)*) => { owned!([$crate::session_words] $($t)*) }; }
 pub(crate) use session_word;
