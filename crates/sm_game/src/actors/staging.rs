@@ -101,13 +101,18 @@ pub fn load_graphics<H: ActorHost + Host>(
     }
 }
 
+/// The long pointer $A0:804C (an RTL) as the two words $804C and $00A0.
+const RTL_HOOK: [u8; 4] = [0x4c, 0x80, 0xa0, 0x00];
+
 pub fn prepare_room_assets<H: ActorHost + Host>(h: &mut H) {
     h.session_mut()
         .actor_identity
         .clear_actor_palette_residency();
     h.session_mut().actors.diagnostics.freeze = 0;
-    h.session_mut().actors.drawing.hook_address[2] = 0xa0;
-    h.session_mut().actors.drawing.hook_address[..2].copy_from_slice(&0x804cu16.to_ne_bytes());
+    // $A0:8A31-$A0:8A46: the graphics drawn hook ($178C) and the never-read long pointer at
+    // $1790 both become the RTL at $A0:804C, each stored as two words.
+    h.session_mut().actors.drawing.hook_address = RTL_HOOK;
+    h.session_mut().actors.compatibility.post_hook = RTL_HOOK;
     h.session_mut().actors.drawing.tilemap_size = 2048;
     h.session_mut().actors.schedule.compatibility_179e[0] = 0;
     h.session_mut().actors.schedule.compatibility_179e[1] = 0;
