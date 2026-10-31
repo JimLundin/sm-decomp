@@ -111,13 +111,6 @@ pub(crate) fn run_a7_function(address: u32, game: &mut Game) {
     unsafe { actor_species_pre_instruction(address, game) };
 }
 
-/// The steam's next script at `bank:address`, as the original ROM pointer.
-/// Was in bank $A6.
-pub(crate) fn steam_script(bank: u8, address: u16, game: &mut Game) -> EnemyScript {
-    let record = unsafe { crate::rtl::rom_record(bank, address, game) };
-    EnemyScript::at(record.image, record.base)
-}
-
 /// Every pre-instruction enters through the sm_game table, which reads the
 /// current enemy once and falls back to the compatibility arms.
 pub(crate) unsafe fn actor_species_pre_instruction(ea: u32, game: &mut Game) {
@@ -1172,6 +1165,10 @@ impl Runtime<'_> {
             10920584 => self.owned_call(sm_game::actors::ceres_ridley::main),
             10920659 => self.owned_call(sm_game::actors::ceres_ridley::hurt),
             10924583 => self.owned_call(sm_game::actors::ridley::main),
+            10940337 => self.owned_call(sm_game::actors::ceres_doors::initialize_steam),
+            10940429 => self.owned_call(sm_game::actors::ceres_doors::steam_main),
+            10942149 => self.owned_call(sm_game::actors::ceres_doors::initialize_door),
+            10942309 => self.owned_call(sm_game::actors::ceres_doors::door_main),
             10924682 => self.owned_call(sm_game::actors::ridley::time_frozen),
             10924695 => self.owned_call(sm_game::actors::ridley::hurt),
             10929814 => self.owned_call(sm_game::actors::ridley::explosion_init),
@@ -1209,6 +1206,20 @@ impl Runtime<'_> {
                 sm_game::actors::corpses::sidehopper_corpse_end_hop(actor, script, runtime)
             });
         }
+        match routine {
+            10940711 => {
+                return self.owned_call(|runtime| {
+                    sm_game::actors::ceres_doors::steam_activate(actor, script, runtime)
+                });
+            }
+            10940701 | 10940725 | 10942014 | 10942058 | 10942072 | 10942091 | 10942101
+            | 10942111 | 10942118 | 10942128 | 10942131 | 10942141 => {
+                return self.owned_call(|runtime| {
+                    sm_game::actors::ceres_doors::instruction(routine, actor, script, runtime)
+                });
+            }
+            _ => {}
+        }
         if routine >> 16 == 0xa6 {
             match self.owned_call(|runtime| ridley::instruction(routine, script, runtime)) {
                 Ok(next) => return next,
@@ -1219,7 +1230,9 @@ impl Runtime<'_> {
     }
     pub(crate) fn actor_touch_legacy(&mut self, routine: u32) {
         use sm_game::actors::species;
-        if !species::lease_touch(routine, self) {
+        if routine == 10940479 {
+            self.owned_call(sm_game::actors::ceres_doors::steam_touch);
+        } else if !species::lease_touch(routine, self) {
             self.foreign(|game| species::touch(routine, game));
         }
     }

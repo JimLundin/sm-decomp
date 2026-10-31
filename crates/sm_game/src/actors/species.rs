@@ -14,14 +14,14 @@ use crate::actors::host::{
 use crate::actors::spore_spawn::instruction as spore;
 use crate::actors::{
     alcoon, atomic, bang, beetom, blue_brinstar_face_block, botwoon, boulder, boyon, bull, cacatac,
-    ceres_doors, choot, covern, crawlers, crocomire_reactions, dachora_run, dragon, draygon_death,
-    draygon_eye, draygon_flight, draygon_grab, draygon_host, draygon_sweep, elevator,
-    escape_critters, etecoon, evir, fire_arc, fire_pillar, fireflea, flies, fune, gamet, geega,
-    geruta, gunship, kago, kihunter, kraid, magdollite, metroid, mini_crocomire, mini_kraid,
-    mochtroid, morph_ball_eye, multiviola, oum, phantoon, phantoon_actions, polyp, powamp, puyo,
-    reflec, rinka, rio, rippers, roach, shaktool, shutters, sidehopper, skree, skultera,
-    space_pirates, spike_platform, spore_spawn, squeept, statues, tatori, torizo, tripper, waver,
-    work_robot, wrecked_ship_spark, yapping_maw, yard, zeb, zebetites, zoa,
+    choot, covern, crawlers, crocomire_reactions, dachora_run, dragon, draygon_death, draygon_eye,
+    draygon_flight, draygon_grab, draygon_host, draygon_sweep, elevator, escape_critters, etecoon,
+    evir, fire_arc, fire_pillar, fireflea, flies, fune, gamet, geega, geruta, gunship, kago,
+    kihunter, kraid, magdollite, metroid, mini_crocomire, mini_kraid, mochtroid, morph_ball_eye,
+    multiviola, oum, phantoon, phantoon_actions, polyp, powamp, puyo, reflec, rinka, rio, rippers,
+    roach, shaktool, shutters, sidehopper, skree, skultera, space_pirates, spike_platform,
+    spore_spawn, squeept, statues, tatori, torizo, tripper, waver, work_robot, wrecked_ship_spark,
+    yapping_maw, yard, zeb, zebetites, zoa,
 };
 use crate::combat_rules::LatchMode;
 use crate::enemy_projectiles::host::Effects as _;
@@ -76,7 +76,6 @@ pub trait TouchHost:
     + statues::Host
     + kraid::Host
     + phantoon::Host
-    + ceres_doors::Host
     + spore_spawn::Host
 {
     fn native_touch(&mut self, touch: NativeTouch);
@@ -97,7 +96,6 @@ pub fn touch<H: TouchHost>(ea: u32, game: &mut H) {
         10874348 => spore_spawn::touch(game),
         // Ridley's contact leaves the death pending.
         10936153 => game.contact_reaction(Death::LeavePending),
-        10940479 => ceres_doors::steam_touch(game),
         10977356 => (),
         10982539 => kraid::touch_arm_or_foot(game),
         10982544 => kraid::arm_touch(game),
@@ -268,7 +266,6 @@ pub trait AiHost:
     + etecoon::Host
     + dachora_run::Host
     + boulder::Host
-    + ceres_doors::Host
     + fire_arc::Host
     + mini_kraid::Host
     + zebetites::Host
@@ -647,10 +644,6 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         10918594 => mini_kraid::main_ai(game),
         10918946 => mini_kraid::touch(game),
         10918969 => mini_kraid::shot(game),
-        10940337 => ceres_doors::initialize_steam(game),
-        10940429 => ceres_doors::steam_main(game),
-        10942149 => ceres_doors::initialize_door(game),
-        10942309 => ceres_doors::door_main(game),
         10943346 => zebetites::initialize(game),
         10943539 => zebetites::main_ai(game),
         10943911 => zebetites::touch(game),
@@ -1056,7 +1049,6 @@ pub trait InstructionHost:
     + statues::Host
     + kraid::Host
     + phantoon::Host
-    + ceres_doors::Host
     + mini_kraid::Host
     + skultera::Host
     + crate::actors::host::EnemyHost
@@ -1228,9 +1220,6 @@ pub fn instruction<H: InstructionHost>(
             mini_kraid::spit_right(game);
             j
         }
-        10940711 => ceres_doors::steam_activate(k, j, game),
-        10940701 | 10940725 | 10942014 | 10942058 | 10942072 | 10942091 | 10942101 | 10942111
-        | 10942118 | 10942128 | 10942131 | 10942141 => ceres_doors::instruction(ea, k, j, game),
         // Bank $A7: Kraid's steps and the calls into Phantoon's functions; Kraid's
         // identity instruction returns the script unchanged.
         10977418 => {

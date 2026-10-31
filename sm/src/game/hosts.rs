@@ -388,19 +388,16 @@ impl sm_game::actors::fire_arc::Host for Game {
     }
 }
 
-impl sm_game::actors::ceres_doors::Host for Game {
-    fn rom_script(&mut self, bank: u8, address: u16) -> sm_game::enemy_script::EnemyScript {
-        crate::game::session_runtime::steam_script(bank, address, self)
-    }
-
-    fn project_cinematic_point(&mut self, x: u16, y: u16) -> (u16, u16) {
-        let point =
-            sm_game::cinematic::project_cinematic_point(sm_game::geometry::Point { x, y }, self);
-        (point.x, point.y)
+impl sm_game::actors::ceres_doors::Lease for crate::game::session_runtime::Runtime<'_> {
+    fn area_boss_flags(&mut self) -> u8 {
+        self.foreign(|game| {
+            let area = crate::ram_map::word!(game.AREA_INDEX);
+            crate::game::gameplay_flag_runtime::boss_byte_at(area, game)
+        })
     }
 
     fn queue_mode7_transfer(&mut self, bank: u8, list: u16) {
-        crate::game::mode7_transfers::enqueue_rom(bank, list, self);
+        self.foreign(|game| crate::game::mode7_transfers::enqueue_rom(bank, list, game));
     }
 }
 

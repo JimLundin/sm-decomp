@@ -4,25 +4,21 @@
 //! animations.
 //!
 //! Was `CeresSteam_*` and `CeresDoor_*` in the original decompilation.
-use crate::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
-use crate::actors::host::abs16;
+use crate::actors::boss_lease::BossLease;
+use crate::actors::host::{BossEffects, Death, abs16};
 use crate::actors::layouts::{EnemyBase, same_words};
 use crate::constants::enemy_properties::{
     K_ENEMY_PROPS_DISABLE_SAMUS_COLL, K_ENEMY_PROPS_INVISIBLE, K_ENEMY_PROPS_TANGIBLE,
 };
 use crate::enemy_script::EnemyScript;
 use crate::palette_copies::{copy_rom_colors_to_palette, copy_rom_colors_to_target_palette};
-use crate::player_position::PlayerPosition as _;
-use crate::ram::RawRam as _;
 use crate::ram::word;
 use crate::session_slot;
 
-/// What the steam and doors need beyond the shared boss effects.
-pub trait Host: crate::actors::host::EnemyHost + crate::actors::host::LeaseActors {
-    /// The script at bank `bank`, `address`, as the original's ROM pointer.
-    fn rom_script(&mut self, bank: u8, address: u16) -> EnemyScript;
-    /// (`x`, `y`) as projected by the rotating elevator room's mode 7.
-    fn project_cinematic_point(&mut self, x: u16, y: u16) -> (u16, u16);
+/// The lease the steam and doors run on, with what they still reach in the game.
+pub trait Lease: BossLease<Game: BossEffects> {
+    /// The current area's boss bits.
+    fn area_boss_flags(&mut self) -> u8;
     /// Queue the bank `bank` mode 7 transfer list at `list`.
     fn queue_mode7_transfer(&mut self, bank: u8, list: u16);
 }
@@ -113,16 +109,15 @@ const ENEMY_SPAWN_DATA: usize = 0x7000;
 const SPAWN_GRAPHICAL_X_OFFSET: usize = 0x10;
 const SPAWN_GRAPHICAL_Y_OFFSET: usize = 0x12;
 
-fn current<H: Host + ?Sized>(game: &H) -> i32 {
+fn current<L: Lease + ?Sized>(game: &L) -> i32 {
     i32::from(game.current_enemy())
 }
 
-/// Set and then clear enemy `k`'s property bits, through its actor record.
-fn change_properties<H: Host + ?Sized>(k: u16, set: u16, clear: u16, game: &mut H) {
-    game.lease()
-        .edit_actor(Key::from_legacy(k), Native, |actor| {
-            actor.properties = (actor.properties & !clear) | set;
-        });
+/// Set and then clear enemy `k`'s property bits.
+fn change_properties<L: Lease + ?Sized>(k: u16, set: u16, clear: u16, game: &mut L) {
+    let e = i32::from(k);
+    let properties = session_slot!(game, Door[e].base.properties);
+    session_slot!(game, Door[e].base.properties = (properties & !clear) | set);
 }
 
 fn branch(taken: bool, script: EnemyScript) -> EnemyScript {
@@ -137,11 +132,11 @@ fn branch(taken: bool, script: EnemyScript) -> EnemyScript {
 /// ($A6:F63E-$A6:F6C4): go to [[Y]] if Samus is not within 30h pixels, if the area boss is
 /// alive or if Ceres Ridley has not escaped; set intangible, tangible, invisible or visible;
 /// set or clear the drawn by Ridley flag; queue the door opening sound.
-pub fn instruction<H: Host + ?Sized>(
+pub fn instruction<L: Lease + ?Sized>(
     ea: u32,
     k: u16,
     script: EnemyScript,
-    game: &mut H,
+    game: &mut L,
 ) -> EnemyScript {
     const INTANGIBLE: u16 = K_ENEMY_PROPS_TANGIBLE as u16;
     const INVISIBLE: u16 = K_ENEMY_PROPS_INVISIBLE as u16;
@@ -149,10 +144,11 @@ pub fn instruction<H: Host + ?Sized>(
         0xa6_f11d => change_properties(k, VANISH, 0, game),
         0xa6_f135 => change_properties(k, 0, VANISH, game),
         0xa6_f63e => {
-            let runtime = game.lease();
-            let actor = runtime.resolve_actor(Key::from_legacy(k), Native);
-            let far = abs16(actor.x.whole.wrapping_sub(runtime.player_x())) >= 0x30
-                || abs16(actor.y.whole.wrapping_sub(runtime.player_y())) >= 0x30;
+            let e = i32::from(k);
+            let x = session_slot!(game, Door[e].base.x_pos);
+            let y = session_slot!(game, Door[e].base.y_pos);
+            let far = abs16(x.wrapping_sub(game.player_x())) >= 0x30
+                || abs16(y.wrapping_sub(game.player_y())) >= 0x30;
             return branch(far, script);
         }
         0xa6_f66a => return branch((game.area_boss_flags() & 1) == 0, script),
@@ -163,10 +159,7 @@ pub fn instruction<H: Host + ?Sized>(
         0xa6_f6b3 => change_properties(k, 0, INVISIBLE, game),
         0xa6_f69f | 0xa6_f6b0 => {
             let drawn = u16::from(ea == 0xa6_f69f);
-            game.lease()
-                .edit_actor(Key::from_legacy(k), Native, |actor| {
-                    actor.variables[1] = drawn
-                });
+            session_slot!(game, Door[i32::from(k)].drawn_by_ridley = drawn);
             if drawn == 0 {
                 change_properties(k, 0, INVISIBLE, game);
             }
@@ -177,26 +170,21 @@ pub fn instruction<H: Host + ?Sized>(
 }
 
 /// Enemy touch - enemy $E1FF (steam) ($A6:F03F): kept at full health, then the normal reaction.
-pub fn steam_touch<H: Host + ?Sized>(game: &mut H) {
-    let mut runtime = game.lease();
-    let key = crate::actors::combat::current(&runtime);
-    runtime.edit_actor(key, Native, |actor| actor.health = 0x7fff);
-    crate::actors::combat::contact_reaction(
-        &mut runtime,
-        crate::actors::api::DeathHandling::Finalize,
-    );
+pub fn steam_touch<L: Lease + ?Sized>(game: &mut L) {
+    session_slot!(game, Steam[current(game)].base.health = 0x7fff);
+    game.react_to_contact(Death::Finalize);
 }
 
-fn store_word<H: Host + ?Sized>(game: &H, at: usize, value: u16) {
+fn store_word<L: Lease + ?Sized>(game: &mut L, at: usize, value: u16) {
     let bytes = value.to_ne_bytes();
-    game.ram().write_byte(at, bytes[0]);
-    game.ram().write_byte(at + 1, bytes[1]);
+    game.set_slot_byte(at, bytes[0]);
+    game.set_slot_byte(at + 1, bytes[1]);
 }
 
 /// Initialisation AI - enemy $E1FF (steam) ($A6:EFB1): its kind picks the
 /// instruction list and function; it waits 1 to 20h frames to start. Was
 /// `CeresSteam_Init`.
-pub fn initialize_steam<H: Host + ?Sized>(game: &mut H) {
+pub fn initialize_steam<L: Lease + ?Sized>(game: &mut L) {
     let e = current(game);
     session_slot!(game, Steam[e].base; vram_tiles_index = 0,
         properties = session_slot!(game, Steam[e].base.properties) | K_ENEMY_PROPS_DISABLE_SAMUS_COLL as u16,
@@ -204,7 +192,7 @@ pub fn initialize_steam<H: Host + ?Sized>(game: &mut H) {
         timer = 0, palette_index = 2560, );
     session_slot!(
         game,
-        Steam[e].activation_timer = (game.next_random() & 0x1f) + 1
+        Steam[e].activation_timer = (game.roll_random() & 0x1f) + 1
     );
     let kind = crate::ceres_door_data::steam(game, session_slot!(game, Steam[e].kind) as isize);
     session_slot!(
@@ -216,25 +204,27 @@ pub fn initialize_steam<H: Host + ?Sized>(game: &mut H) {
 
 /// Main AI - enemy $E1FF (steam) ($A6:F00D), at full health. Was
 /// `CeresSteam_Main`.
-pub fn steam_main<H: Host + ?Sized>(game: &mut H) {
+pub fn steam_main<L: Lease + ?Sized>(game: &mut L) {
     let e = current(game);
     session_slot!(game, Steam[e].base.health = 0x7fff);
     let k = game.current_enemy();
     match session_slot!(game, Steam[e].function) {
         steam_function::NONE => (),
         steam_function::CALCULATE_ROTATING_ELEVATOR_OFFSET => steam_rotating_offset(k, game),
-        _ => game.unreachable(),
+        _ => game.foreign(|game| game.unreachable()),
     }
 }
 
 /// Steam function - calculate graphical offset in rotating elevator room
 /// ($A6:F019), into the enemy's spawn record. Was `CeresSteam_Func_1`.
-pub fn steam_rotating_offset<H: Host + ?Sized>(k: u16, game: &mut H) {
+pub fn steam_rotating_offset<L: Lease + ?Sized>(k: u16, game: &mut L) {
     let e = i32::from(k);
-    let (x, y) = game.project_cinematic_point(
-        session_slot!(game, Steam[e].base.x_pos),
-        session_slot!(game, Steam[e].base.y_pos),
-    );
+    let point = crate::geometry::Point {
+        x: session_slot!(game, Steam[e].base.x_pos),
+        y: session_slot!(game, Steam[e].base.y_pos),
+    };
+    let crate::geometry::Point { x, y } =
+        crate::cinematic::project_cinematic_point_reads(point, |at| game.slot_word(at));
     let record = ENEMY_SPAWN_DATA + usize::from(game.current_enemy());
     let x_offset = x.wrapping_sub(session_slot!(game, Steam[e].base.x_pos));
     store_word(game, record + SPAWN_GRAPHICAL_X_OFFSET, x_offset);
@@ -245,14 +235,15 @@ pub fn steam_rotating_offset<H: Host + ?Sized>(k: u16, game: &mut H) {
 /// Instruction - decrement activation timer and go to [[Y]] if non-zero,
 /// otherwise show enemy and go to [[Y] + 2] ($A6:F127). Was
 /// `CeresSteam_Instr_2`.
-pub fn steam_activate<H: Host + ?Sized>(k: u16, script: EnemyScript, game: &mut H) -> EnemyScript {
+pub fn steam_activate<L: Lease + ?Sized>(k: u16, script: EnemyScript, game: &mut L) -> EnemyScript {
     let e = i32::from(k);
     let timer = session_slot!(game, Steam[e].activation_timer);
     session_slot!(game, Steam[e].activation_timer = timer.wrapping_sub(1));
     if timer != 1 {
         return EnemyScript::jump(script.word(0));
     }
-    let next = game.rom_script(0xa6, script.word(2));
+    let record = game.actor_record(0xa6, script.word(2));
+    let next = EnemyScript::at(record.image, record.base);
     change_properties(k, 0, VANISH, game);
     next
 }
@@ -263,7 +254,7 @@ pub const VANISH: u16 = 0x0400 | 0x0100;
 /// Initialisation AI - enemy $E23F (Ceres door) ($A6:F6C5): its kind picks
 /// the function and instruction list; the palette depends on the escape.
 /// Was `CeresDoor_Init`.
-pub fn initialize_door<H: Host + ?Sized>(game: &mut H) {
+pub fn initialize_door<L: Lease + ?Sized>(game: &mut L) {
     let e = current(game);
     session_slot!(game, Door[e].base; spritemap_pointer = DOOR_SPRITEMAP, instruction_timer = 1);
     session_slot!(game, Door[e].base; timer = 0, vram_tiles_index = 0);
@@ -294,7 +285,7 @@ pub fn initialize_door<H: Host + ?Sized>(game: &mut H) {
 
 /// Load rotating elevator room pre-explosion door overlay tiles if needed
 /// ($A6:F739): queue $B0:C400..C7FF to VRAM $7000. Was `CeresDoor_Func_1`.
-pub fn load_overlay_tiles<H: Host + ?Sized>(k: u16, game: &mut H) {
+pub fn load_overlay_tiles<L: Lease + ?Sized>(k: u16, game: &mut L) {
     if session_slot!(game, Door[i32::from(k)].kind) != ELEVATOR_DOOR_OVERLAY {
         return;
     }
@@ -308,7 +299,7 @@ pub fn load_overlay_tiles<H: Host + ?Sized>(k: u16, game: &mut H) {
 }
 
 /// Main AI - enemy $E23F (Ceres door) ($A6:F765). Was `CeresDoor_Main`.
-pub fn door_main<H: Host + ?Sized>(game: &mut H) {
+pub fn door_main<L: Lease + ?Sized>(game: &mut L) {
     let e = current(game);
     let k = game.current_enemy();
     match session_slot!(game, Door[e].function) {
@@ -318,13 +309,13 @@ pub fn door_main<H: Host + ?Sized>(game: &mut H) {
         door_function::ELEVATOR_DEFAULT => elevator_default(k, game),
         door_function::RUMBLING_AND_EXPLOSIONS => rumbling_and_explosions(k, game),
         door_function::ELEVATOR_ANIMATIONS => elevator_animations(game),
-        _ => game.unreachable(),
+        _ => game.foreign(|game| game.unreachable()),
     }
 }
 
 /// Handle Ceres door earthquake during escape ($A6:F773): a rare stronger
 /// earthquake type replaces `earthquake`. Was `escape_rumble`.
-pub fn escape_rumble<H: Host + ?Sized>(earthquake: u16, game: &mut H) {
+pub fn escape_rumble<L: Lease + ?Sized>(earthquake: u16, game: &mut L) {
     if word!(game.CERES_STATUS) >= ESCAPE_STARTED && word!(game.EARTHQUAKE_TIMER) == 0 {
         if (word!(game.RANDOM_NUMBER) & 0xfff) < 0x80 {
             word! {game; EARTHQUAKE_TIMER = 4; EARTHQUAKE_TYPE = earthquake.wrapping_add(6); }
@@ -336,7 +327,7 @@ pub fn escape_rumble<H: Host + ?Sized>(earthquake: u16, game: &mut H) {
 
 /// Ceres door function - Ridley escape mode 7 wall ($A6:F7A5): visible only
 /// during the getaway cutscene. Was `CeresDoor_Func_4`.
-pub fn mode7_wall<H: Host + ?Sized>(game: &mut H) {
+pub fn mode7_wall<L: Lease + ?Sized>(game: &mut L) {
     change_properties(
         game.current_enemy(),
         K_ENEMY_PROPS_INVISIBLE as u16,
@@ -357,7 +348,7 @@ pub fn mode7_wall<H: Host + ?Sized>(game: &mut H) {
 /// Ceres door function - rotating elevator room - default ($A6:F7BD): the
 /// elevator animates; once the escape starts, 48 frames of rumbling. Was
 /// `CeresDoor_Func_5`.
-pub fn elevator_default<H: Host + ?Sized>(k: u16, game: &mut H) {
+pub fn elevator_default<L: Lease + ?Sized>(k: u16, game: &mut L) {
     elevator_animations(game);
     if word!(game.CERES_STATUS) >= ESCAPE_STARTED {
         let e = i32::from(k);
@@ -373,7 +364,7 @@ pub fn elevator_default<H: Host + ?Sized>(k: u16, game: &mut H) {
 /// Ceres door function - rotating elevator room - rumbling and explosions
 /// ($A6:F7DC): an explosion or smoke at the next of four offsets every five
 /// frames, then the elevator room rotates. Was `CeresDoor_Func_6`.
-pub fn rumbling_and_explosions<H: Host + ?Sized>(k: u16, game: &mut H) {
+pub fn rumbling_and_explosions<L: Lease + ?Sized>(k: u16, game: &mut L) {
     let e = i32::from(k);
     session_slot!(game, Door[e].rumbling_timer, |old| old.wrapping_sub(1));
     if (session_slot!(game, Door[e].rumbling_timer) & 0x8000) != 0 {
@@ -397,19 +388,19 @@ pub fn rumbling_and_explosions<H: Host + ?Sized>(k: u16, game: &mut H) {
         .wrapping_add(crate::ceres_door_data::explosion_offset(game, pair));
     let y = session_slot!(game, Door[e].base.y_pos)
         .wrapping_add(crate::ceres_door_data::explosion_offset(game, pair + 1));
-    game.set_projectile_spawn_point(x, y);
-    let kind = if game.next_random() < 0x4000 {
+    game.place_projectile_spawn(x, y);
+    let kind = if game.roll_random() < 0x4000 {
         SMOKE
     } else {
         SMALL_EXPLOSION
     };
-    game.spawn_room_projectile(DUST_CLOUD, kind);
+    game.spawn_room_eproj(DUST_CLOUD, kind);
     game.queue_sound(1, BIG_EXPLOSION_SOUND, 6);
 }
 
 /// Set Ceres elevator room to rotate if Ridley has escaped ($A6:F67F). Was
 /// `finish_door_explosion`.
-pub fn start_elevator_rotation<H: Host + ?Sized>(game: &mut H) {
+pub fn start_elevator_rotation<L: Lease + ?Sized>(game: &mut L) {
     if word!(game.CERES_STATUS) != 0 {
         word!(game.CERES_STATUS = ELEVATOR_ROTATING);
     }
@@ -418,7 +409,7 @@ pub fn start_elevator_rotation<H: Host + ?Sized>(game: &mut H) {
 /// Ceres door function - rotating elevator room - handle Ceres elevator
 /// animations ($A6:F850): the platform, and the beacon palette every eighth
 /// frame. Was `CeresDoor_Func_7`.
-pub fn elevator_animations<H: Host + ?Sized>(game: &mut H) {
+pub fn elevator_animations<L: Lease + ?Sized>(game: &mut L) {
     animate_elevator_platform(game);
     if word!(game.PALETTE_CHANGE_NUM) == 0 {
         let frame = 2 * (word!(game.NMI_FRAME_COUNTER_WORD) & 0x38);
@@ -428,7 +419,7 @@ pub fn elevator_animations<H: Host + ?Sized>(game: &mut H) {
 
 /// Animate Ceres elevator platform ($A6:F8F1): light and dark frames, two
 /// frames each. Was `CeresDoor_Func_8`.
-pub fn animate_elevator_platform<H: Host + ?Sized>(game: &mut H) {
+pub fn animate_elevator_platform<L: Lease + ?Sized>(game: &mut L) {
     let frame = ((word!(game.NMI_FRAME_COUNTER_WORD) & 2) >> 1) as isize;
     let list = crate::ceres_door_data::platform_frame(game, frame);
     game.queue_mode7_transfer(0xa6, list);
