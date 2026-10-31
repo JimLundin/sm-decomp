@@ -18,9 +18,12 @@ use crate::display::registers::{
 };
 use crate::display::sequence::{Registers, register_writes, write_register_and_mirror};
 use crate::display::transfer::{ScrollingLayout, setup_transfer};
+use crate::ram::words;
 use crate::ram::{CompatibilityRam, RawRam, checked_word, checked_word as at, word, word_arrays};
+use crate::scene::irq;
 use crate::scene::state::DisplayError;
 use crate::word_transfers;
+use core::convert::Infallible;
 
 /// Stores to the display's RAM mirrors, which the owned display state holds
 /// when the Session owns the presentation.
@@ -261,10 +264,82 @@ pub fn enable<H: Registers + CompatibilityRam + DisplayOwner + ?Sized>(
     game: &mut H,
 ) {
     let mask = if enabled { 0x80 } else { 0 };
-    let value = game.compatibility_byte(0x84) & 0x7f | mask;
-    game.write_register(NMITIMEN as u16, game.compatibility_byte(0x84) & 0x7f | mask);
+    let value = (game.compatibility_byte(0x84) & 0x7f) | mask;
+    game.write_register(NMITIMEN as u16, value);
     // The hardware write may change RAM; publish the value captured before it.
     game.write_owned_byte(0x84, value);
+}
+
+/// The scanline interrupt's controls and display through a host's projection
+/// and registers: the owned display state's words where the Session owns the
+/// presentation, RAM otherwise, as a lease or the compatibility game holds them.
+pub struct ScanlineIrq<'a, H: ?Sized>(pub &'a mut H);
+impl<H: CompatibilityRam + ?Sized> irq::Controls for ScanlineIrq<'_, H> {
+    fn read_control(&mut self, field: irq::Control) -> u16 {
+        crate::projection::word(
+            &*self.0,
+            match field {
+                irq::Control::Current => words::CUR_IRQ_HANDLER,
+                irq::Control::Pending => words::IRQHANDLER_NEXT_HANDLER,
+                irq::Control::Enable => 0x84,
+                irq::Control::PreviousCre => words::PREVIOUS_CRE_BITSET,
+                irq::Control::CurrentCre => words::CRE_BITSET,
+                irq::Control::TransitionFlag => words::DOOR_TRANSITION_FLAG,
+            },
+        )
+    }
+    fn write_control(&mut self, field: irq::Store, value: u16) {
+        let at = match field {
+            irq::Store::Current => words::CUR_IRQ_HANDLER,
+            irq::Store::Pending => words::IRQHANDLER_NEXT_HANDLER,
+            irq::Store::Enable => 0x84,
+        };
+        crate::projection::set_word(self.0, at, value);
+    }
+}
+impl<H: CompatibilityRam + Registers + ?Sized> irq::Display for ScanlineIrq<'_, H> {
+    type Error = Infallible;
+
+    fn read_mirror(&mut self, field: irq::Mirror) -> u8 {
+        crate::projection::byte(
+            &*self.0,
+            match field {
+                irq::Mirror::Background3Map => 0x5b,
+                irq::Mirror::ColorWindow => 0x70,
+                irq::Mirror::ColorArithmetic => 0x73,
+                irq::Mirror::MainLayers => 0x6a,
+                irq::Mirror::InterruptEnable => 0x84,
+            },
+        )
+    }
+    fn write_display(&mut self, field: irq::Output, value: u8) -> Result<(), Infallible> {
+        let register = match field {
+            irq::Output::Background3Map => BG3SC,
+            irq::Output::ColorWindow => CGWSEL,
+            irq::Output::ColorArithmetic => CGADSUB,
+            irq::Output::MainLayers => TM,
+            irq::Output::VerticalLow => VTIMEL,
+            irq::Output::VerticalHigh => VTIMEL + 1,
+            irq::Output::HorizontalLow => HTIMEL,
+            irq::Output::HorizontalHigh => HTIMEL + 1,
+            irq::Output::InterruptEnable => NMITIMEN,
+        };
+        self.0.write_register(register as u16, value);
+        Ok(())
+    }
+}
+
+/// Enable the scanline interrupt through `game`'s projection and registers.
+pub fn enable_scanline_irq<H: CompatibilityRam + Registers + ?Sized>(
+    immediate: bool,
+    game: &mut H,
+) {
+    let Ok(()) = irq::enable(&mut ScanlineIrq(game), immediate);
+}
+
+/// Disable the scanline interrupt in `game`'s projected enable mirror.
+pub fn disable_scanline_irq<H: CompatibilityRam + ?Sized>(game: &mut H) {
+    irq::disable(&mut ScanlineIrq(game));
 }
 
 fn upload_latches<H: Host + ?Sized>(register: u16, source: usize, count: u16, game: &mut H) {

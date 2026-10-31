@@ -493,14 +493,14 @@ unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
             put(g, 0x84, 0xa5cf);
             (*snes).hTimer = 0x145;
             (*snes).vTimer = 0x1ee;
-            scanline_irq::enable(false, g);
+            sm_game::display_refresh::enable_scanline_irq(false, g);
             assert_eq!(word(g, 0x84), 0xa5ff, "irq.full-enable-word");
             assert_eq!(((*snes).vTimer, (*snes).hTimer), (0, 152));
             assert!(!(*snes).hIrqEnabled && !(*snes).vIrqEnabled);
-            scanline_irq::enable(true, g);
+            sm_game::display_refresh::enable_scanline_irq(true, g);
             assert!((*snes).hIrqEnabled && (*snes).vIrqEnabled);
             assert_eq!(word(g, 0x84), 0xa5ff);
-            scanline_irq::disable(g);
+            sm_game::display_refresh::disable_scanline_irq(g);
             assert_eq!(word(g, 0x84), 0xa5cf, "irq.high-hdma-byte-preserved");
             assert!((*snes).hIrqEnabled && (*snes).vIrqEnabled);
             put(g, 0xa7, 0xfedc);
