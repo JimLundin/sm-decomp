@@ -573,7 +573,7 @@ BUG_HOOKS = [
     (0x80AD77, 'b', 'visual', 'removed', 'follows',
      'Door transition scrolling setup - left',
      'With layer-2 scroll X = 1, hardware sets layer 2 X position to garbage $xx01 + 100h; the hook uses layer2_x_pos'),
-    (0x9381DB, 'b', 'visual', 'removed', 'patched',
+    (0x9381DB, 'b', 'visual', 'removed', 'follows',
      '$16 = projectile trail frame',
      'Hardware always reads [instruction pointer - 8]+6, which for newly started instructions or lists points at the previous or an invalid entry; when the timer is 1 the hook reads the current entry, changing the beam-trail frame'),
     (0x86B701, 'b', 'crash', 'removed', 'patched',

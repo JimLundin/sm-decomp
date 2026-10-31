@@ -97,14 +97,9 @@ pub fn advance(h: &mut impl Host) {
         }
     }
 }
+/// $93:81D1: the trail frame of the entry before the instruction pointer, even
+/// when a new instruction or list has just started there.
 pub fn trail_frame(h: &mut impl Host, slot: u16) -> u16 {
-    let cursor = shot!(h, slot, cursor);
-    let upcoming = shot!(h, slot, remaining) == 1 && h.record(0x93, cursor).word(0) & 0x8000 == 0;
-    let cursor = if upcoming {
-        cursor
-    } else {
-        cursor.wrapping_sub(8)
-    };
-    // A diagnostic on the first lookup can replace the loaded allocation.
+    let cursor = shot!(h, slot, cursor).wrapping_sub(8);
     h.record(0x93, cursor).word(6)
 }
