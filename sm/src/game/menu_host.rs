@@ -130,7 +130,13 @@ impl MenuRuntime for Game {
         self.capture_native_rom_binding()
     }
     fn run_hdma_objects(&mut self) {
-        crate::game::visual_runtime::update_hdma(self)
+        // Closing the box ($85:8589) ends on a borrow, and nothing up to the handler sets C.
+        self.message_box_hdma = true;
+        crate::game::visual_runtime::update_hdma(self);
+        self.message_box_hdma = false;
+    }
+    fn hdma_handler_carry(&self) -> bool {
+        !self.message_box_hdma
     }
     fn advance_dialogue_sound_effects(&mut self) {
         crate::game::music::advance_sound_effects(self, |channel, value, meaning, game| {
