@@ -635,8 +635,8 @@ pub fn move_by_movement_data<L: Lease + ?Sized>(game: &mut L) {
         }
         session_slot!(
             game,
-            Botwoon[e].movement_data_pointer =
-                (i32::from(session_slot!(game, Botwoon[e].movement_data_pointer)) + step) as u16
+            Botwoon[e].movement_data_pointer,
+            |old| (i32::from(old) + step) as u16
         );
         remaining -= 1;
         if remaining == 0 {

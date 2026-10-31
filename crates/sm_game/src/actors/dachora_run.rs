@@ -119,11 +119,8 @@ fn gravity<L: Lease>(game: &L) -> u32 {
 /// Initialisation AI: a dachora idles, an echo waits. Was `Dachora_Init`.
 pub fn initialize<L: Lease>(game: &mut L) {
     let me = game.current_enemy() as i32;
-    session_slot!(
-        game,
-        Dachora[me].base.properties = (session_slot!(game, Dachora[me].base.properties))
-            | (K_ENEMY_PROPS_DISABLE_SAMUS_COLL as u16)
-    );
+    session_slot!(game, Dachora[me].base.properties, |old| old
+        | (K_ENEMY_PROPS_DISABLE_SAMUS_COLL as u16));
     session_slot!(
         game,
         Dachora[me].base.spritemap_pointer = list::NOTHING_SPRITEMAP
@@ -257,11 +254,7 @@ pub fn running_right<L: Lease>(game: &mut L, k: u16) {
             );
             session_slot!(game, Dachora[me]; function = function::ACTIVATE_SHINESPARK,
                 speed = CHARGE_FRAMES);
-            session_slot!(
-                game,
-                Dachora[me].base.y_pos =
-                    (session_slot!(game, Dachora[me].base.y_pos)).wrapping_add(8)
-            );
+            session_slot!(game, Dachora[me].base.y_pos, |old| old.wrapping_add(8));
             game.queue_sound(1, CHARGE_SOUND, 6);
         } else {
             return;
@@ -386,20 +379,14 @@ pub fn echo<L: Lease>(game: &mut L, k: u16) {
             odd_frame
         };
         if !keep_hidden {
-            session_slot!(
-                game,
-                Echo[me].base.properties = (session_slot!(game, Echo[me].base.properties) as i32
-                    & !(K_ENEMY_PROPS_INVISIBLE as i32))
-                    as u16
-            );
+            session_slot!(game, Echo[me].base.properties, |old| (old as i32
+                & !(K_ENEMY_PROPS_INVISIBLE as i32))
+                as u16);
             return;
         }
     }
-    session_slot!(
-        game,
-        Echo[me].base.properties =
-            (session_slot!(game, Echo[me].base.properties)) | (K_ENEMY_PROPS_INVISIBLE as u16)
-    );
+    session_slot!(game, Echo[me].base.properties, |old| old
+        | (K_ENEMY_PROPS_INVISIBLE as u16));
 }
 
 /// Speeds the run up to the top speed, shining once there, while falling
@@ -437,12 +424,8 @@ fn accelerate<L: Lease>(game: &mut L, k: u16) -> i32 {
     if (session_slot!(game, Dachora[me].speed) == 4 || session_slot!(game, Dachora[me].speed) == 8)
         && session_slot!(game, Dachora[me].subspeed) == 0
     {
-        session_slot!(
-            game,
-            Dachora[me].base.current_instruction =
-                (session_slot!(game, Dachora[me].base.current_instruction))
-                    .wrapping_add(FASTER_RUN_STEP)
-        );
+        session_slot!(game, Dachora[me].base.current_instruction, |old| old
+            .wrapping_add(FASTER_RUN_STEP));
     }
     (((session_slot!(game, Dachora[me].speed) as u32) << 16)
         | session_slot!(game, Dachora[me].subspeed) as u32) as i32

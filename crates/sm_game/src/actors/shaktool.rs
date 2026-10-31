@@ -277,11 +277,8 @@ pub fn initialize<L: Lease>(game: &mut L) {
     session_slot!(game, Piece[piece]; facing_angle = 0, direction = 0);
     let offset: u16 = session_slot!(game, Piece[piece].piece_index);
     let data = crate::shaktool_tables::piece(game, (offset as i32 >> 1) as isize);
-    session_slot!(
-        game,
-        Piece[piece].base.properties =
-            (session_slot!(game, Piece[piece].base.properties)) | data.properties
-    );
+    session_slot!(game, Piece[piece].base.properties, |old| old
+        | data.properties);
     session_slot!(
         game,
         Piece[piece].primary_piece = (game.current_enemy()).wrapping_sub(data.ram_offset)
@@ -387,11 +384,7 @@ pub fn arm_piece<L: Lease>(k: u16, game: &mut L) {
     position_relative_to_previous(k, game);
     let piece = i32::from(k);
     let delta: u16 = if (session_slot!(game, Piece[piece].movement_options) & CURLED) != 0 {
-        session_slot!(
-            game,
-            Piece[piece].facing_angle =
-                (session_slot!(game, Piece[piece].facing_angle)).wrapping_add(256)
-        );
+        session_slot!(game, Piece[piece].facing_angle, |old| old.wrapping_add(256));
         256
     } else {
         session_slot!(game, Piece[piece].neighbour_angle_delta)
@@ -501,11 +494,7 @@ pub fn final_piece<L: Lease>(mut k: u16, game: &mut L) {
     } else {
         session_slot!(game, Piece[piece].base; x_pos = target_x, y_pos = target_y);
         if (session_slot!(game, Piece[piece].movement_options) & CURLED) != 0 {
-            session_slot!(
-                game,
-                Piece[piece].facing_angle =
-                    (session_slot!(game, Piece[piece].facing_angle)).wrapping_add(256)
-            );
+            session_slot!(game, Piece[piece].facing_angle, |old| old.wrapping_add(256));
         } else {
             if ((session_slot!(game, Piece[piece].facing_angle)
                 ^ session_slot!(game, Piece[piece].neighbour_angle))

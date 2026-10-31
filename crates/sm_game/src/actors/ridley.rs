@@ -621,22 +621,16 @@ fn move_with_velocity<L: Lease + ?Sized>(game: &mut L) {
     let carry = session_slot!(byte game, Explosion[e].base.x_subpos[1]) as i32
         + x_velocity.to_ne_bytes()[0] as i32;
     session_slot!(byte game, Explosion[e].base.x_subpos[1] = carry as u8);
-    session_slot!(
-        game,
-        Explosion[e].base.x_pos = (session_slot!(game, Explosion[e].base.x_pos) as i32
-            + ((x_velocity >> 8) as i8 as i32 + (carry >> 8)))
-            as u16
-    );
+    session_slot!(game, Explosion[e].base.x_pos, |old| (old as i32
+        + ((x_velocity >> 8) as i8 as i32 + (carry >> 8)))
+        as u16);
     let y_velocity = session_slot!(game, Explosion[e].y_velocity);
     let carry = session_slot!(byte game, Explosion[e].base.y_subpos[1]) as i32
         + y_velocity.to_ne_bytes()[0] as i32;
     session_slot!(byte game, Explosion[e].base.y_subpos[1] = carry as u8);
-    session_slot!(
-        game,
-        Explosion[e].base.y_pos = (session_slot!(game, Explosion[e].base.y_pos) as i32
-            + ((y_velocity >> 8) as i8 as i32 + (carry >> 8)))
-            as u16
-    );
+    session_slot!(game, Explosion[e].base.y_pos, |old| (old as i32
+        + ((y_velocity >> 8) as i8 as i32 + (carry >> 8)))
+        as u16);
 }
 
 /// Handle baby metroid ($A6:A2DC): run its function, then hook the Ceres
@@ -1281,10 +1275,7 @@ pub fn set_pogo_x_direction<L: Lease + ?Sized>(game: &mut L) {
     } else if facing_away == (word!(game.RANDOM_NUMBER) < 0x555) {
         return;
     }
-    session_slot!(
-        game,
-        Ridley[RIDLEY].x_velocity = -(session_slot!(game, Ridley[RIDLEY].x_velocity) as i32) as u16
-    );
+    session_slot!(game, Ridley[RIDLEY].x_velocity, |old| -(old as i32) as u16);
 }
 
 /// Move Samus with Ridley's feet ($A6:B9E1): the grabbed offsets settle 4px
@@ -1406,11 +1397,7 @@ pub fn lunge<L: Lease + ?Sized>(game: &mut L) {
         h: 12,
     };
     if samus_in_rect(rect, game) {
-        session_slot!(
-            game,
-            Ridley[RIDLEY].y_velocity =
-                -(session_slot!(game, Ridley[RIDLEY].y_velocity) as i32) as u16
-        );
+        session_slot!(game, Ridley[RIDLEY].y_velocity, |old| -(old as i32) as u16);
         if session_slot!(game, Ridley[RIDLEY].base.health) != 0 {
             if word!(game.POWER_BOMB_FLAG) != 0 {
                 grab_samus(game);
@@ -1823,12 +1810,9 @@ pub fn baby_metroid_falling<L: Lease + ?Sized>(game: &mut L) {
     let subpixel = session_slot!(byte game, Ridley[RIDLEY].baby_metroid_y_subpixel[1]) as i32
         + (velocity as i32 & 0xff);
     session_slot!(byte game, Ridley[RIDLEY].baby_metroid_y_subpixel[1] = subpixel as u8);
-    session_slot!(
-        game,
-        Ridley[RIDLEY].baby_metroid_y = (session_slot!(game, Ridley[RIDLEY].baby_metroid_y) as i32
-            + ((velocity >> 8) as i8 as i32 + (subpixel >> 8)))
-            as u16
-    );
+    session_slot!(game, Ridley[RIDLEY].baby_metroid_y, |old| (old as i32
+        + ((velocity >> 8) as i8 as i32 + (subpixel >> 8)))
+        as u16);
     if !below(session_slot!(game, Ridley[RIDLEY].baby_metroid_y), 192) {
         session_slot!(game, Ridley[RIDLEY].baby_metroid_y = 192);
         session_slot!(
@@ -2968,17 +2952,14 @@ pub fn accelerate_with_force<L: Lease + ?Sized>(
     let e = i32::from(k);
     let position = session_slot!(game, Ridley[e].base.y_pos);
     if position != y {
-        session_slot!(
-            game,
-            Ridley[e].y_velocity = chained_homing_velocity(
-                position,
-                y,
-                session_slot!(game, Ridley[e].y_velocity),
-                divisor,
-                Deceleration::Force(force),
-                1280,
-            )
-        );
+        session_slot!(game, Ridley[e].y_velocity, |old| chained_homing_velocity(
+            position,
+            y,
+            old,
+            divisor,
+            Deceleration::Force(force),
+            1280,
+        ));
     }
 }
 
@@ -2992,17 +2973,14 @@ pub fn accelerate_x<L: Lease + ?Sized>(k: u16, x: u16, divisor: u16, force: u16,
     let e = i32::from(k);
     let position = session_slot!(game, Ridley[e].base.x_pos);
     if position != x {
-        session_slot!(
-            game,
-            Ridley[e].x_velocity = chained_homing_velocity(
-                position,
-                x,
-                session_slot!(game, Ridley[e].x_velocity),
-                divisor as u8,
-                Deceleration::Force(force),
-                1280,
-            )
-        );
+        session_slot!(game, Ridley[e].x_velocity, |old| chained_homing_velocity(
+            position,
+            x,
+            old,
+            divisor as u8,
+            Deceleration::Force(force),
+            1280,
+        ));
     }
 }
 
@@ -3019,17 +2997,14 @@ pub fn ceres_accelerate<L: Lease + ?Sized>(k: u16, inertia: u16, x: u16, y: u16,
     let e = i32::from(k);
     let position = session_slot!(game, Ridley[e].base.y_pos);
     if position != y {
-        session_slot!(
-            game,
-            Ridley[e].y_velocity = chained_homing_velocity(
-                position,
-                y,
-                session_slot!(game, Ridley[e].y_velocity),
-                divisor,
-                Deceleration::DoubleStep,
-                1280,
-            )
-        );
+        session_slot!(game, Ridley[e].y_velocity, |old| chained_homing_velocity(
+            position,
+            y,
+            old,
+            divisor,
+            Deceleration::DoubleStep,
+            1280,
+        ));
     }
 }
 
@@ -3038,17 +3013,14 @@ pub fn ceres_accelerate_x<L: Lease + ?Sized>(k: u16, x: u16, divisor: u16, game:
     let e = i32::from(k);
     let position = session_slot!(game, Ridley[e].base.x_pos);
     if position != x {
-        session_slot!(
-            game,
-            Ridley[e].x_velocity = chained_homing_velocity(
-                position,
-                x,
-                session_slot!(game, Ridley[e].x_velocity),
-                divisor as u8,
-                Deceleration::DoubleStep,
-                1280,
-            )
-        );
+        session_slot!(game, Ridley[e].x_velocity, |old| chained_homing_velocity(
+            position,
+            x,
+            old,
+            divisor as u8,
+            Deceleration::DoubleStep,
+            1280,
+        ));
     }
 }
 

@@ -472,13 +472,9 @@ pub fn hit<L: Lease + ?Sized>(game: &mut L) {
             session_slot!(game, Crocomire[0].base.instruction_timer, |old| old
                 .wrapping_add(delay));
         }
-        session_slot!(
-            game,
-            Crocomire[0].fight_flags = count
-                | session_slot!(game, Crocomire[0].fight_flags)
-                    & !(flag::HIT_COUNT | flag::DAMAGED | flag::SAMUS_HIT_BY_CLAW)
-                | flag::DAMAGED
-        );
+        session_slot!(game, Crocomire[0].fight_flags, |old| count
+            | old & !(flag::HIT_COUNT | flag::DAMAGED | flag::SAMUS_HIT_BY_CLAW)
+            | flag::DAMAGED);
         session_slot!(game, Crocomire[0].y_velocity = 10);
     }
     session_slot!(game, Crocomire[0].base.flash_timer, |old| old
@@ -811,7 +807,7 @@ fn update_wall<L: Lease + ?Sized>(game: &mut L) {
             crate::word_transfers!(game, ascending, 1; native(CRUMBLING_BRIDGE_INDEX) <- value(0));
             game.foreign(|game| game.spawn_plm(0x4e, WALL_ROW, CREATE_INVISIBLE_WALL));
             session_slot!(game, Crocomire[ek].base; current_instruction = ADDR_K_CROCOMIRE_ILIST_BFB0 as u16, instruction_timer = 1);
-            session_slot!(game, Crocomire[ek].base.properties, |old| (old)
+            session_slot!(game, Crocomire[ek].base.properties, |old| old
                 | ((K_ENEMY_PROPS_TANGIBLE) as u16));
             let e1: i32 = game.current_enemy() as i32 + 64;
             session_slot!(game, Crocomire[e1].base; instruction_timer = 0x7fff, current_instruction = ADDR_K_CROCOMIRE_ILIST_BF62 as u16);
@@ -1509,7 +1505,7 @@ pub fn initialize_tongue<L: Lease + ?Sized>(game: &mut L) {
             game,
             Crocomire[e].base.current_instruction = ADDR_K_CROCOMIRE_ILIST_BE56 as u16
         );
-        session_slot!(game, Crocomire[e].base.extra_properties, |old| (old)
+        session_slot!(game, Crocomire[e].base.extra_properties, |old| old
             | (0x404u16));
         session_slot!(game, Crocomire[e].base.instruction_timer = 1);
         session_slot!(game, Crocomire[e].death_sequence_index = 23);

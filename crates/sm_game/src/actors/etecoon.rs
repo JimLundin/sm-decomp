@@ -136,11 +136,8 @@ fn freeze_if_quake<L: Lease>(game: &mut L, k: u16) {
             game,
             Etecoon[me].route = (session_slot!(byte game, Etecoon[me].route[0]) as u16) | 0x8000
         );
-        session_slot!(
-            game,
-            Etecoon[me].base.instruction_timer =
-                (session_slot!(game, Etecoon[me].base.instruction_timer)).wrapping_add(128)
-        );
+        session_slot!(game, Etecoon[me].base.instruction_timer, |old| old
+            .wrapping_add(128));
     }
 }
 
@@ -169,11 +166,8 @@ fn move_vertically<L: Lease>(game: &mut L, k: u16) -> bool {
 /// Initialisation AI. Was `Etecoon_Init`.
 pub fn initialize<L: Lease>(game: &mut L) {
     let me = game.current_enemy() as i32;
-    session_slot!(
-        game,
-        Etecoon[me].base.properties = (session_slot!(game, Etecoon[me].base.properties))
-            | (K_ENEMY_PROPS_DISABLE_SAMUS_COLL as u16)
-    );
+    session_slot!(game, Etecoon[me].base.properties, |old| old
+        | (K_ENEMY_PROPS_DISABLE_SAMUS_COLL as u16));
     session_slot!(
         game,
         Etecoon[me].base.spritemap_pointer = list::NOTHING_SPRITEMAP
@@ -420,11 +414,8 @@ fn run_to_right_run_up<L: Lease>(game: &mut L, me: i32) {
 /// Was `Etecoon_Func_15`.
 fn hop_at_centre_run_up<L: Lease>(game: &mut L, me: i32) {
     session_slot!(game, Etecoon[me].function = function::HOPPING_TOP);
-    session_slot!(
-        game,
-        Etecoon[me].base.current_instruction =
-            (session_slot!(game, Etecoon[me].base.current_instruction)).wrapping_add(2)
-    );
+    session_slot!(game, Etecoon[me].base.current_instruction, |old| old
+        .wrapping_add(2));
     set_run(game, me, RUN_RIGHT_SPEED);
 }
 
@@ -543,11 +534,8 @@ pub fn start_hop_top<L: Lease>(game: &mut L, k: u16) {
             (session_slot!(game, Etecoon[me].route) & 2) != 0
         } {
             session_slot!(game, Etecoon[me].function = function::HOPPING_TOP);
-            session_slot!(
-                game,
-                Etecoon[me].base.current_instruction =
-                    (session_slot!(game, Etecoon[me].base.current_instruction)).wrapping_add(2)
-            );
+            session_slot!(game, Etecoon[me].base.current_instruction, |old| old
+                .wrapping_add(2));
         } else {
             session_slot!(
                 game,
@@ -582,11 +570,8 @@ pub fn hop_until_samus_near<L: Lease>(game: &mut L, k: u16) {
             );
         } else {
             set_hop(game, me);
-            session_slot!(
-                game,
-                Etecoon[me].base.current_instruction =
-                    (session_slot!(game, Etecoon[me].base.current_instruction)).wrapping_add(2)
-            );
+            session_slot!(game, Etecoon[me].base.current_instruction, |old| old
+                .wrapping_add(2));
             session_slot!(game, Etecoon[me].function = function::HOPPING_TOP);
             sound_near_samus(game, HOP_SOUND);
         }

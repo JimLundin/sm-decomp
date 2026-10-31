@@ -107,11 +107,9 @@ fn move_down(game: &mut impl Lease, me: i32, amount: u16) {
     let carry: i32 =
         session_slot!(byte game, Tube[me].base.y_subpos[1]) as i32 + amount.to_ne_bytes()[0] as i32;
     session_slot!(byte game, Tube[me].base.y_subpos[1] = carry as u8);
-    session_slot!(
-        game,
-        Tube[me].base.y_pos = (session_slot!(game, Tube[me].base.y_pos) as i32
-            + ((amount >> 8) as i8 as i32 + (carry >> 8))) as u16
-    );
+    session_slot!(game, Tube[me].base.y_pos, |old| (old as i32
+        + ((amount >> 8) as i8 as i32 + (carry >> 8)))
+        as u16);
 }
 
 /// Speeds up and falls, trailing smoke until the tube reaches its burst height.

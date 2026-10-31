@@ -422,13 +422,9 @@ pub fn fleeing(game: &mut impl Lease) {
     if crate::actors::baby_metroid::separated_from_rect(game.current_enemy(), rect, game) == 0 {
         let e: i32 = game.current_enemy() as i32;
         session_slot! { game, BabyMetroid[e]; x_velocity = 0, y_velocity = 0 }
-        session_slot!(
-            game,
-            BabyMetroid[e].base.properties = (session_slot!(game, BabyMetroid[e].base.properties)
-                as i32
-                & !(K_ENEMY_PROPS_DISABLE_SAMUS_COLL as i32 | K_ENEMY_PROPS_INVISIBLE as i32))
-                as u16
-        );
+        session_slot!(game, BabyMetroid[e].base.properties, |old| (old as i32
+            & !(K_ENEMY_PROPS_DISABLE_SAMUS_COLL as i32 | K_ENEMY_PROPS_INVISIBLE as i32))
+            as u16);
         session_slot!(game, BabyMetroid[e].function = function::DISAPPEARED);
     }
 }
@@ -624,25 +620,17 @@ crate::dispatch::instruction_callbacks! { pub fn (_k: u16, _jp: EnemyScript) -> 
 pub fn initialize(game: &mut impl State) {
     word_transfers!(game, descending, 2048; le(TILEMAP_STUFF, 2047) <- value(0));
     let e: i32 = game.current_enemy() as i32;
-    session_slot!(
-        game,
-        BabyMetroid[e].base.properties = (session_slot!(game, BabyMetroid[e].base.properties)
-            as i32
-            | (K_ENEMY_PROPS_DISABLE_SAMUS_COLL as i32 | K_ENEMY_PROPS_BLOCK_PLASMA_BEAM as i32))
-            as u16
-    );
+    session_slot!(game, BabyMetroid[e].base.properties, |old| (old as i32
+        | (K_ENEMY_PROPS_DISABLE_SAMUS_COLL as i32 | K_ENEMY_PROPS_BLOCK_PLASMA_BEAM as i32))
+        as u16);
     session_slot!(game, BabyMetroid[e].base.palette_index = 1024);
     session_slot! { game, BabyMetroid[e].base; current_instruction = ADDR_K_BABY_METROID_ILIST_F90E as u16, instruction_timer = 1 }
     session_slot!(game, BabyMetroid[e].base.timer = 0);
     let mut v2: u16 = function::WAIT_FOR_CAMERA;
     if (crate::camera::current(game).layer1[0] & 0x8000) != 0 {
-        session_slot!(
-            game,
-            BabyMetroid[e].base.properties = (session_slot!(game, BabyMetroid[e].base.properties)
-                as i32
-                | (K_ENEMY_PROPS_TANGIBLE as i32 | K_ENEMY_PROPS_INVISIBLE as i32))
-                as u16
-        );
+        session_slot!(game, BabyMetroid[e].base.properties, |old| (old as i32
+            | (K_ENEMY_PROPS_TANGIBLE as i32 | K_ENEMY_PROPS_INVISIBLE as i32))
+            as u16);
         v2 = function::DISAPPEARED;
     }
     session_slot! { game, BabyMetroid[e]; function = v2, x_velocity = 0, y_velocity = 0, palette_handler_delay = 10 }
@@ -707,16 +695,10 @@ pub fn touch(game: &mut impl State) {
                     (game.player_y()).wrapping_sub(session_slot!(game, BabyMetroid[e].base.y_pos)),
                 ) as i32
                 + 0x80) as u8 as u16;
-            session_slot!(
-                game,
-                BabyMetroid[e].x_velocity = (session_slot!(game, BabyMetroid[e].x_velocity))
-                    .wrapping_add(x_velocity_at_angle(0x40, r18))
-            );
-            session_slot!(
-                game,
-                BabyMetroid[e].y_velocity = (session_slot!(game, BabyMetroid[e].y_velocity))
-                    .wrapping_add(y_velocity_at_angle(0x40, r18))
-            );
+            session_slot!(game, BabyMetroid[e].x_velocity, |old| old
+                .wrapping_add(x_velocity_at_angle(0x40, r18)));
+            session_slot!(game, BabyMetroid[e].y_velocity, |old| old
+                .wrapping_add(y_velocity_at_angle(0x40, r18)));
         } else if session_slot!(game, BabyMetroid[e].function) == function::LATCH_ONTO_SAMUS {
             if accelerate_towards_point(
                 game.current_enemy(),
@@ -757,16 +739,10 @@ pub fn shot(game: &mut impl State) {
         if v1 >= 0xf0 {
             v1 = 240;
         }
-        session_slot!(
-            game,
-            BabyMetroid[e].x_velocity = (session_slot!(game, BabyMetroid[e].x_velocity))
-                .wrapping_add(x_velocity_at_angle(v1, r18))
-        );
-        session_slot!(
-            game,
-            BabyMetroid[e].y_velocity = (session_slot!(game, BabyMetroid[e].y_velocity))
-                .wrapping_add(y_velocity_at_angle(v1, r18))
-        );
+        session_slot!(game, BabyMetroid[e].x_velocity, |old| old
+            .wrapping_add(x_velocity_at_angle(v1, r18)));
+        session_slot!(game, BabyMetroid[e].y_velocity, |old| old
+            .wrapping_add(y_velocity_at_angle(v1, r18)));
     }
 }
 pub fn branch_or_queue_remorse_sound(

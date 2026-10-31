@@ -1118,7 +1118,7 @@ crate::dispatch::callback_dispatch! {
         let e: i32 = BRAIN;
         session_slot!(game, MotherBrainBrain[e].function = function::BRAIN_SET_UP_BRAIN_AND_NECK_TO_BE_DRAWN);
         let e0: i32 = 0;
-        session_slot!(game, MotherBrainBody[e0].base.properties = (session_slot!(game, MotherBrainBody[e0].base.properties) as i32 & !(K_ENEMY_PROPS_TANGIBLE as i32)) as u16);
+        session_slot!(game, MotherBrainBody[e0].base.properties, |old| (old as i32 & !(K_ENEMY_PROPS_TANGIBLE as i32)) as u16);
         session_slot!(game, MotherBrainBrain[e].base.properties, |old| old & !(0x400));
         session_slot!(game, MotherBrainBrain[e].base.health = 18000);
         session_slot!(game, MotherBrainBody[e0]; function = function::FAKE_DEATH_ASCENT_PAUSE_FOR_SUSPENSE,
@@ -1642,8 +1642,8 @@ crate::dispatch::callback_dispatch! {
         }
     };
     [11120353] phase3_death_move_to_back_of_room [] {
-        session_slot!(game, MotherBrainBody[e].base.properties = (session_slot!(game, MotherBrainBody[e].base.properties)) | ((K_ENEMY_PROPS_TANGIBLE) as u16));
-        session_slot!(game, MotherBrainBrain[BRAIN].base.properties = (session_slot!(game, MotherBrainBrain[BRAIN].base.properties)) | (0x400u16));
+        session_slot!(game, MotherBrainBody[e].base.properties, |old| old | ((K_ENEMY_PROPS_TANGIBLE) as u16));
+        session_slot!(game, MotherBrainBrain[BRAIN].base.properties, |old| old | (0x400u16));
         session_slot!(game, MotherBrainBody[e].hitboxes = 0);
         if make_walk_backwards(0x28, 6, game) & 1 != 0 {
             session_slot!(game, MotherBrainBody[e]; function = function::PHASE_3_DEATH_IDLE_WHILST_EXPLODING,
@@ -2161,7 +2161,7 @@ crate::dispatch::callback_dispatch! {
     };
     [11111819] fake_death_ascent_prepare_rise {
         session_slot!(game, MotherBrainBody[e].hdma_object = spawn_rising_hdma(game));
-        session_slot!(game, MotherBrainBrain[BRAIN].base.properties = (session_slot!(game, MotherBrainBrain[BRAIN].base.properties)) | (0x100u16));
+        session_slot!(game, MotherBrainBrain[BRAIN].base.properties, |old| old | (0x100u16));
         set_brain_instruction_list(ADDR_STRU_A99C21 as u16, game);
         session_slot!(game, MotherBrainBody[e]; function = function::FAKE_DEATH_ASCENT_LOAD_MOTHER_BRAINS_LEGS_TILES,
             function_timer = 256);
@@ -2221,7 +2221,7 @@ crate::dispatch::callback_dispatch! {
     };
     [11121080] phase3_death_corpse_tips_over {
         session_slot!(game, MotherBrainBody[e].function = function::PHASE_3_DEATH_CORPSE_ROTS_AWAY);
-        session_slot!(game, MotherBrainBrain[BRAIN].base.properties = (session_slot!(game, MotherBrainBrain[BRAIN].base.properties)) | (0x400u16));
+        session_slot!(game, MotherBrainBrain[BRAIN].base.properties, |old| old | (0x400u16));
         session_slot!(game, MotherBrainBody[e].hitboxes = 0);
     };
     [11121169] phase3_death_20_frame_delay {
@@ -3075,22 +3075,16 @@ pub fn move_enemy_with_velocity(game: &mut impl State) {
     let mut carry: i32 = session_slot!(byte game, EnemyData[v0].base.x_subpos[1]) as i32
         + ai_var_b.to_ne_bytes()[0] as i32;
     session_slot!(byte game, EnemyData[v0].base.x_subpos[1] = carry as u8);
-    session_slot!(
-        game,
-        EnemyData[v0].base.x_pos = (session_slot!(game, EnemyData[v0].base.x_pos) as i32
-            + ((ai_var_b >> 8) as i8 as i32 + (carry >> 8)))
-            as u16
-    );
+    session_slot!(game, EnemyData[v0].base.x_pos, |old| (old as i32
+        + ((ai_var_b >> 8) as i8 as i32 + (carry >> 8)))
+        as u16);
     let ai_var_c: u16 = session_slot!(game, EnemyData[v0].ai_var_c);
     carry = session_slot!(byte game, EnemyData[v0].base.y_subpos[1]) as i32
         + ai_var_c.to_ne_bytes()[0] as i32;
     session_slot!(byte game, EnemyData[v0].base.y_subpos[1] = carry as u8);
-    session_slot!(
-        game,
-        EnemyData[v0].base.y_pos = (session_slot!(game, EnemyData[v0].base.y_pos) as i32
-            + ((ai_var_c >> 8) as i8 as i32 + (carry >> 8)))
-            as u16
-    );
+    session_slot!(game, EnemyData[v0].base.y_pos, |old| (old as i32
+        + ((ai_var_c >> 8) as i8 as i32 + (carry >> 8)))
+        as u16);
 }
 pub fn set_body_instruction_list(a: u16, game: &mut impl State) {
     session_slot! { game, MotherBrainBody[BODY].base; current_instruction = a, instruction_timer = 1 }
@@ -3270,11 +3264,11 @@ pub fn initialize_body(game: &mut impl Lease) {
     session_slot!(game, MotherBrainBody[BODY].base.vram_tiles_index = 0);
     session_slot!(
         game,
-        MotherBrainBody[BODY].base.properties =
-            (session_slot!(game, MotherBrainBody[BODY].base.properties) as i32
-                | (K_ENEMY_PROPS_BLOCK_PLASMA_BEAM as i32
-                    | K_ENEMY_PROPS_TANGIBLE as i32
-                    | K_ENEMY_PROPS_INVISIBLE as i32)) as u16
+        MotherBrainBody[BODY].base.properties,
+        |old| (old as i32
+            | (K_ENEMY_PROPS_BLOCK_PLASMA_BEAM as i32
+                | K_ENEMY_PROPS_TANGIBLE as i32
+                | K_ENEMY_PROPS_INVISIBLE as i32)) as u16
     );
     session_slot!(game, MotherBrainBody[BODY].base.palette_index = 0);
     copy_rom_colors_to_target_palette(

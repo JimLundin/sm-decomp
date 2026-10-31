@@ -286,11 +286,8 @@ fn close_eye<S: BossState + ?Sized>(game: &mut S, eye_list: u16) {
         Body[BODY].base.current_instruction = animation::BODY_INVULNERABLE
     );
     session_slot!(game, Eye[EYE].base.current_instruction = eye_list);
-    session_slot!(
-        game,
-        Body[BODY].base.properties =
-            (session_slot!(game, Body[BODY].base.properties)) | (K_ENEMY_PROPS_TANGIBLE as u16)
-    );
+    session_slot!(game, Body[BODY].base.properties, |old| old
+        | (K_ENEMY_PROPS_TANGIBLE as u16));
 }
 
 /// Instruction: the materialisation sound, cycling through three. Was
@@ -313,11 +310,9 @@ pub fn materialisation_sound<S: BossState + ?Sized>(game: &mut S) {
 pub fn open_eye<S: BossState + ?Sized>(game: &mut S) {
     session_slot!(game, Tentacles[TENTACLES].swooping = 0);
     session_slot!(game, Body[BODY].base; instruction_timer = 1, current_instruction = animation::BODY_EYE_HITBOX);
-    session_slot!(
-        game,
-        Body[BODY].base.properties = (session_slot!(game, Body[BODY].base.properties) as i32
-            & !(K_ENEMY_PROPS_TANGIBLE as i32)) as u16
-    );
+    session_slot!(game, Body[BODY].base.properties, |old| (old as i32
+        & !(K_ENEMY_PROPS_TANGIBLE as i32))
+        as u16);
     let roll = (game.roll_random() as i32 & 7) as usize;
     session_slot!(
         game,
@@ -392,21 +387,15 @@ fn swoop<S: BossState + ?Sized>(game: &mut S, k: u16) {
     }
     if (target_x as i16).wrapping_sub((session_slot!(game, Body[BODY].base.x_pos)) as i16) < 0 {
         if (session_slot!(game, Tentacles[TENTACLES].swoop_x_speed) as i32 + 2047) & 0x8000 == 0 {
-            session_slot!(
-                game,
-                Tentacles[TENTACLES].swoop_x_speed =
-                    (session_slot!(game, Tentacles[TENTACLES].swoop_x_speed)).wrapping_sub(32)
-            );
+            session_slot!(game, Tentacles[TENTACLES].swoop_x_speed, |old| old
+                .wrapping_sub(32));
         }
     } else if below(
         session_slot!(game, Tentacles[TENTACLES].swoop_x_speed),
         2048,
     ) {
-        session_slot!(
-            game,
-            Tentacles[TENTACLES].swoop_x_speed =
-                (session_slot!(game, Tentacles[TENTACLES].swoop_x_speed)).wrapping_add(32)
-        );
+        session_slot!(game, Tentacles[TENTACLES].swoop_x_speed, |old| old
+            .wrapping_add(32));
     }
     session_slot!(
         game,
@@ -427,21 +416,15 @@ fn swoop<S: BossState + ?Sized>(game: &mut S, k: u16) {
     };
     if target_y.wrapping_sub((session_slot!(game, Body[BODY].base.y_pos)) as i16) < 0 {
         if (session_slot!(game, Tentacles[TENTACLES].swoop_y_speed) as i32 + 1535) & 0x8000 == 0 {
-            session_slot!(
-                game,
-                Tentacles[TENTACLES].swoop_y_speed =
-                    (session_slot!(game, Tentacles[TENTACLES].swoop_y_speed)).wrapping_sub(64)
-            );
+            session_slot!(game, Tentacles[TENTACLES].swoop_y_speed, |old| old
+                .wrapping_sub(64));
         }
     } else if below(
         session_slot!(game, Tentacles[TENTACLES].swoop_y_speed),
         1536,
     ) {
-        session_slot!(
-            game,
-            Tentacles[TENTACLES].swoop_y_speed =
-                (session_slot!(game, Tentacles[TENTACLES].swoop_y_speed)).wrapping_add(64)
-        );
+        session_slot!(game, Tentacles[TENTACLES].swoop_y_speed, |old| old
+            .wrapping_add(64));
     }
     session_slot!(
         game,
@@ -785,11 +768,7 @@ pub fn hurt<S: BossState + ?Sized>(game: &mut S) {
         } else {
             if session_slot!(byte game, Tentacles[TENTACLES].hurt_flash[1]) == 0 {
                 crate::word_transfers!(game, descending, 16; native(BODY_PALETTE_END) <- value(WHITE));
-                session_slot!(
-                    game,
-                    Tentacles[TENTACLES].hurt_flash =
-                        (session_slot!(game, Tentacles[TENTACLES].hurt_flash)) | 0x100
-                );
+                session_slot!(game, Tentacles[TENTACLES].hurt_flash, |old| old | 0x100);
             }
             return;
         }
@@ -829,11 +808,8 @@ pub fn shot<S: BossState + ?Sized>(game: &mut S) {
     if session_slot!(game, Body[me].base.health) == 0 {
         game.queue_sound(1, HIT_SOUND, 6);
         session_slot!(game, Tentacles[TENTACLES].hurt_flash = 1);
-        session_slot!(
-            game,
-            Body[BODY].base.properties =
-                (session_slot!(game, Body[BODY].base.properties)) | (K_ENEMY_PROPS_TANGIBLE as u16)
-        );
+        session_slot!(game, Body[BODY].base.properties, |old| old
+            | (K_ENEMY_PROPS_TANGIBLE as u16));
         start_dying(game, k);
         return;
     }
@@ -896,11 +872,8 @@ pub fn shot<S: BossState + ?Sized>(game: &mut S) {
                 game,
                 Eye[EYE].base.current_instruction = animation::EYE_CLOSE
             );
-            session_slot!(
-                game,
-                Body[BODY].base.properties = (session_slot!(game, Body[BODY].base.properties))
-                    | (K_ENEMY_PROPS_TANGIBLE as u16)
-            );
+            session_slot!(game, Body[BODY].base.properties, |old| old
+                | (K_ENEMY_PROPS_TANGIBLE as u16));
             session_slot!(game, Eye[EYE].fade_complete = 0);
         }
         session_slot!(game, Tentacles[TENTACLES].hurt_flash = 2);
@@ -959,11 +932,8 @@ pub fn eye_follows_samus<S: BossState + ?Sized>(game: &mut S, k: u16) {
                 game,
                 Eye[EYE].base.current_instruction = animation::EYE_CLOSE_AND_PICK_PATTERN
             );
-            session_slot!(
-                game,
-                Body[BODY].base.properties = (session_slot!(game, Body[BODY].base.properties))
-                    | (K_ENEMY_PROPS_TANGIBLE as u16)
-            );
+            session_slot!(game, Body[BODY].base.properties, |old| old
+                | (K_ENEMY_PROPS_TANGIBLE as u16));
             session_slot!(game, Body[BODY].flame_rain_next = 1);
             return;
         }
@@ -1060,11 +1030,9 @@ pub fn become_solid_after_flame_rain<S: BossState + ?Sized>(game: &mut S, k: u16
 pub fn fade_in_during_flame_rain<S: BossState + ?Sized>(game: &mut S, k: u16) {
     fade_in(game, 1);
     if session_slot!(game, Eye[EYE].fade_complete) != 0 {
-        session_slot!(
-            game,
-            Body[BODY].base.properties = (session_slot!(game, Body[BODY].base.properties) as i32
-                & !(K_ENEMY_PROPS_TANGIBLE as i32)) as u16
-        );
+        session_slot!(game, Body[BODY].base.properties, |old| (old as i32
+            & !(K_ENEMY_PROPS_TANGIBLE as i32))
+            as u16);
         session_slot!(
             game,
             Body[k as i32].function = function::FOLLOW_SAMUS_DURING_FLAME_RAIN
