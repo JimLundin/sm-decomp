@@ -241,7 +241,7 @@ impl<T: Host + explosion_window::Host + xray_background::Host + ?Sized> Dispatch
 /// Run the pre-instruction at `address` for HDMA object `index`. Targets
 /// that own their object's words run on it as typed fields; the rest run on
 /// the compatibility host.
-pub(crate) fn run_pre_action<I>(address: u32, index: usize, it: &mut I)
+pub(crate) fn run_pre_action<I>(address: u32, index: usize, it: &mut I, handler_carry: bool)
 where
     I: crate::hdma_program::Interpreter,
     I::Game: DispatchHost,
@@ -254,9 +254,13 @@ where
     use HdmaPreAction::*;
     match target {
         Nothing => {}
-        LavaSurface => it.with_object(index, liquid_effects::lava_surface),
+        LavaSurface => it.with_object(index, |object, game| {
+            liquid_effects::lava_surface(object, handler_carry, game)
+        }),
         LavaBackground => it.with_object(index, liquid_effects::lava_background),
-        WaterSurface => it.with_object(index, liquid_effects::water_surface),
+        WaterSurface => it.with_object(index, |object, game| {
+            liquid_effects::water_surface(object, handler_carry, game)
+        }),
         WaterBackground => it.with_object(index, liquid_effects::water_background),
         WaterWave => it.with_object(index, liquid_effects::water_wave),
         WaterFlat => it.foreign(liquid_effects::water_flat),
@@ -292,7 +296,7 @@ where
                 _ => TourianStatuePhase::Finished,
             };
             it.with_object(index, |object, game| {
-                room_visuals::advance_tourian_statue(object, phase, game)
+                room_visuals::advance_tourian_statue(object, phase, handler_carry, game)
             })
         }
         _ => it.foreign(|game| host_pre_action(target, slot, game)),

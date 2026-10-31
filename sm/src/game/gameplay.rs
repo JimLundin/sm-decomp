@@ -44,7 +44,8 @@ impl sm_game::gameplay_frame::Host for Game {
         }
     }
     fn update_hdma(&mut self) {
-        crate::game::visual_runtime::update_hdma(self)
+        // The main game loop's PLP restores the carry loading the save slots ($80:8261) set.
+        crate::game::visual_runtime::update_hdma(true, self)
     }
     fn advance_random(&mut self) {
         self.next_random();

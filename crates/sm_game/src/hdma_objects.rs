@@ -285,7 +285,10 @@ where
     }
 }
 
-pub fn update_hdma<H>(game: &mut H)
+/// Run the HDMA object handler ($88:84B9) with `handler_carry`, the carry it
+/// is entered with: the main game loop's, set from power-on, or clear when a
+/// message box restores the display.
+pub fn update_hdma<H>(handler_carry: bool, game: &mut H)
 where
     H: crate::hdma_dispatch::DispatchHost + crate::hdma_program::LeaseHdma + ?Sized,
 {
@@ -299,7 +302,7 @@ where
     }
     checked_word!(game.FX_LAYER_BLENDING_CONFIG_C = checked_word!(game.FX_LAYER_BLENDING_CONFIG_A));
     if checked_word!(game.HDMA_OBJECTS_ENABLE_FLAG) & 0x8000 != 0 {
-        crate::hdma_program::run_objects(game);
+        crate::hdma_program::run_objects(handler_carry, game);
         crate::layer_blending::update(game);
     }
 }
