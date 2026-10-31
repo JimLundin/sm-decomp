@@ -252,24 +252,6 @@ crate::typed_struct! {
         pub bigTiles, mosaicEnabled: bool;
     }
 
-    pub struct Channel {
-        pub pattern_order_ptr_for_chan: u16;
-        pub index, note_ticks_left, note_keyoff_ticks_left, subroutine_num_loops, volume_fade_ticks,
-            pan_num_ticks, pitch_slide_length, pitch_slide_delay_left, vibrato_hold_count,
-            vib_depth, tremolo_hold_count, tremolo_depth, vibrato_change_count, note_length,
-            note_gate_off_fixedpt, channel_volume_master, instrument_id: u8;
-        pub instrument_pitch_base, saved_pattern_ptr, pattern_start_ptr: u16;
-        pub pitch_envelope_num_ticks, pitch_envelope_delay, pitch_envelope_direction,
-            pitch_envelope_slide_value, vibrato_count, vibrato_rate, vibrato_delay_ticks,
-            vibrato_fade_num_ticks, vibrato_fade_add_per_tick, vibrato_depth_target, tremolo_count,
-            tremolo_rate, tremolo_delay_ticks, channel_transposition: u8;
-        pub channel_volume, volume_fade_addpertick: u16;
-        pub volume_fade_target, final_volume: u8;
-        pub pan_value, pan_add_per_tick: u16;
-        pub pan_target_value, pan_flag_with_phase_invert: u8;
-        pub pitch, pitch_add_per_tick: u16;
-        pub pitch_target, fine_tune, cutk: u8;
-    }
 
     pub struct Cpu {
         pub memType: u8;
@@ -308,10 +290,6 @@ crate::typed_struct! {
         pub snapshot_padding3: [u8; 1];
     }
 
-    pub struct DspRegWriteHistory {
-        pub count: u32;
-        pub addr, val: [u8; 256];
-    }
 
     pub struct Input {
         pub type_0: u8;
@@ -386,25 +364,7 @@ crate::typed_struct! {
         pub data: [PpuZbufType; 256];
     }
 
-    pub struct SfxChan {
-        pub voice_bitset, instr_timer, subnote, repeat_pt, note, ptr_idx, voice_index,
-            voice_index_mult8, release_timer, volume, target_note, phase_invert: u8;
-        pub ptr: u16;
-        pub repeat_ctr, enable_pitch_slide, release_flag, enable_pitch_slide_legato: u8;
-        pub adsr_settings: u16;
-        pub channel_mask, legato, disable, subnote_delta, update_adsr: u8;
-    }
 
-    pub struct SfxRegs {
-        pub priority, chan_idx_x2: u8;
-        pub chan_voice_bitset_ptr: u16;
-        pub cur_sound: u8;
-        pub chan_voice_mask_ptr, chan_voice_index_ptr: u16;
-        pub some_value: u8;
-        pub cur_ptr: u16;
-        pub enabled_voices, voices_to_setup, chan_idx, voices_remaining, cur_sound_index, voice_id,
-            init_flag, voice_index: u8;
-    }
 
     pub struct Snes {
         pub cpu: *mut Cpu;
@@ -444,35 +404,6 @@ crate::typed_struct! {
         pub cyclesUsed: u8;
     }
 
-    pub struct NativePlayerState {
-        pub timer_cycles: u8;
-        pub port_to_snes, last_value_from_snes: [u8; 4];
-        pub counter_sf0c, always_zero, temp_accum: u16;
-        pub ttt, did_affect_volumepitch_flag: u8;
-        pub addr0, addr1, lfsr_value: u16;
-        pub is_chan_on, fast_forward: u8;
-        pub word_20, music_ptr_toplevel: u16;
-        pub block_count, sfx_timer_accum, chn, key_on, key_off, cur_chan_bit, reg_flg, reg_non,
-            reg_eon, echo_stored_time, echo_parameter_edl, reg_efb, global_transposition,
-            main_tempo_accum: u8;
-        pub tempo: u16;
-        pub tempo_fade_num_ticks, tempo_fade_final: u8;
-        pub tempo_fade_add, master_volume: u16;
-        pub master_volume_fade_ticks, master_volume_fade_target: u8;
-        pub master_volume_fade_add_per_tick: u16;
-        pub vol_dirty, percussion_base_id: u8;
-        pub echo_volume_left, echo_volume_right, echo_volume_fade_add_left,
-            echo_volume_fade_add_right: u16;
-        pub echo_volume_fade_ticks, echo_volume_fade_target_left, echo_volume_fade_target_right: u8;
-        pub echo_buffer_ptr, memset_ptr: u16;
-        pub memset_ctr, disable_sfx2, byte_4b1: u8;
-        pub channel: [Channel; 8];
-        pub sfx1, sfx2, sfx3: SfxRegs;
-        pub sfx_chans_1: [SfxChan; 4];
-        pub sfx_chans_2, sfx_chans_3: [SfxChan; 2];
-        pub last_written_edl: u8;
-        pub input_ports: [u8; 4];
-    }
 
     pub struct Timer {
         pub cycles, divider, target, counter: u8;
@@ -573,24 +504,6 @@ crate::type_aliases! {
 pub type Sint16 = i16;
 
 pub type BotwoonLayout = sm_game::actors::layouts::EnemyLayout104;
-
-impl DspRegWriteHistory {
-    /// A history with no register writes recorded.
-    pub const EMPTY: Self = Self {
-        count: 0,
-        addr: [0; 256],
-        val: [0; 256],
-    };
-    /// Record a register write; the first 256 are kept.
-    pub fn record(&mut self, address: u8, value: u8) {
-        let index = self.count as usize;
-        if index < 256 {
-            self.count += 1;
-            self.addr[index] = address;
-            self.val[index] = value;
-        }
-    }
-}
 
 impl SpawnHardcodedPlmArgs {
     pub const fn new(block_x: u8, block_y: u8, header: VoidP) -> Self {
@@ -718,3 +631,6 @@ assert_enemy_base_prefix!(
     bank,
     field_2f
 );
+pub use sm_runtime::audio::driver::{
+    Channel, DspRegWriteHistory, NativePlayerState, SfxChan, SfxRegs,
+};

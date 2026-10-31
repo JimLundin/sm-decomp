@@ -564,7 +564,6 @@ pub fn verify_room_level_copy(case: u32) {
 pub mod audio_output;
 pub(crate) mod native_audio;
 pub use native_audio::SampleDelivery;
-mod native_player_ram;
 
 macro_rules! type_aliases {
     ($visibility:vis $($name:ident),+ = $target:ty;) => {

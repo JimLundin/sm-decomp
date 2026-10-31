@@ -1,54 +1,6 @@
 //! Ordered native bank installation and physical upload control.
 #![forbid(unsafe_code)]
-use crate::{apu_ram::ApuRam, types::NativePlayerState};
-
-/// Copy the upload blocks that start at `source`, read byte by byte, into `write`.
-pub fn transfer(
-    mut read: impl FnMut(usize) -> u8,
-    mut source: usize,
-    mut write: impl FnMut(u16, u8),
-) {
-    let mut byte = || {
-        let value = read(source);
-        source = source.checked_add(1).expect("audio upload offset overflow");
-        value
-    };
-    loop {
-        // Retain the native byte order of the original word loads.
-        let count = u16::from_ne_bytes([byte(), byte()]);
-        if count == 0 {
-            return;
-        }
-        let mut target = u16::from_ne_bytes([byte(), byte()]);
-        for _ in 0..count {
-            write(target, byte());
-            target = target.wrapping_add(1);
-        }
-    }
-}
-
-/// Install bytes lazily into the existing APU owner, then commit player state.
-/// Register writes are immediate; a failed read retains every earlier effect.
-pub fn install_bank(
-    state: &mut NativePlayerState,
-    ram: &ApuRam,
-    read: impl FnMut(usize) -> u8,
-    source: usize,
-    mut write: impl FnMut(u8, u8),
-) {
-    write(44, 0);
-    write(60, 0);
-    write(92, 0xff);
-    transfer(read, source, |target, value| ram.write(target, value));
-    state.port_to_snes[0] = 0;
-    state.input_ports[3] = 255;
-    state.input_ports[2] = state.input_ports[3];
-    state.input_ports[1] = state.input_ports[2];
-    state.input_ports[0] = state.input_ports[1];
-    state.music_ptr_toplevel = u16::from_ne_bytes([ram.read_at(0x581e), ram.read_at(0x581f)]);
-    state.counter_sf0c = 2;
-    state.key_off |= !state.is_chan_on;
-}
+pub use sm_runtime::audio::driver::{install_bank, transfer};
 
 /// One synchronous physical observation or store; no routing link is cached.
 pub(crate) enum PhysicalAccess {
