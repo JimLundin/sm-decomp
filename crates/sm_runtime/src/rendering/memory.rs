@@ -102,6 +102,43 @@ impl Ports {
         self.vram_read_buffer = memory.vram(self.vram_address() & 0x7fff);
     }
 
+    /// VMAIN ($2115): the word step (1, 32 or 128), the address translation
+    /// (0-3) and whether the high data byte, not the low one, steps the pointer.
+    pub fn set_vram_mode(&mut self, increment: u16, remap: u8, increment_on_high: bool) {
+        self.vram_increment = increment;
+        self.vram_remap = remap;
+        self.vram_increment_on_high = increment_on_high;
+    }
+
+    /// VMADD ($2116-$2117): point the VRAM port at a word, prefetching it.
+    pub fn set_vram_pointer(&mut self, memory: &impl VideoMemory, word: u16) {
+        self.vram_pointer = word;
+        self.prefetch(memory);
+    }
+
+    /// One byte through VMDATAL or VMDATAH ($2118-$2119).
+    pub fn write_vram_byte(&mut self, memory: &mut impl VideoMemory, high: bool, value: u8) {
+        let target = self.vram_address() & 0x7fff;
+        let mut bytes = memory.vram(target).to_le_bytes();
+        bytes[usize::from(high)] = value;
+        memory.set_vram(target, u16::from_le_bytes(bytes));
+        if high == self.vram_increment_on_high {
+            self.vram_pointer = self.vram_pointer.wrapping_add(self.vram_increment);
+        }
+    }
+
+    /// A DMA to VMDATAL in transfer mode 1: the bytes alternate between the
+    /// low and high data ports, starting with the low one.
+    pub fn upload_vram(
+        &mut self,
+        memory: &mut impl VideoMemory,
+        bytes: impl IntoIterator<Item = u8>,
+    ) {
+        for (index, value) in bytes.into_iter().enumerate() {
+            self.write_vram_byte(memory, index % 2 == 1, value);
+        }
+    }
+
     /// Advance the OAM port after a byte at the high table or a low-table pair.
     fn step_oam(&mut self) {
         if self.oam_second {
@@ -152,31 +189,21 @@ impl Ports {
                 self.step_oam();
                 self.oam_second = !self.oam_second;
             }
-            0x15 => {
-                self.vram_increment = match value & 3 {
+            0x15 => self.set_vram_mode(
+                match value & 3 {
                     0 => 1,
                     1 => 32,
                     _ => 128,
-                };
-                self.vram_remap = (value & 0x0c) >> 2;
-                self.vram_increment_on_high = value & 0x80 != 0;
-            }
+                },
+                (value & 0x0c) >> 2,
+                value & 0x80 != 0,
+            ),
             0x16 | 0x17 => {
                 let mut bytes = self.vram_pointer.to_le_bytes();
                 bytes[usize::from(address - 0x16)] = value;
-                self.vram_pointer = u16::from_le_bytes(bytes);
-                self.prefetch(memory);
+                self.set_vram_pointer(memory, u16::from_le_bytes(bytes));
             }
-            0x18 | 0x19 => {
-                let target = self.vram_address() & 0x7fff;
-                let mut bytes = memory.vram(target).to_le_bytes();
-                let high = address == 0x19;
-                bytes[usize::from(high)] = value;
-                memory.set_vram(target, u16::from_le_bytes(bytes));
-                if high == self.vram_increment_on_high {
-                    self.vram_pointer = self.vram_pointer.wrapping_add(self.vram_increment);
-                }
-            }
+            0x18 | 0x19 => self.write_vram_byte(memory, address == 0x19, value),
             0x21 => {
                 self.cgram_pointer = value;
                 self.cgram_second = false;
@@ -268,6 +295,25 @@ mod tests {
             (memory.vram[0], memory.vram[1], ports.vram_pointer),
             (0x11, 0x22, 2)
         );
+    }
+
+    #[test]
+    fn a_typed_vram_upload_matches_its_port_writes() {
+        let bytes = [0x11, 0x22, 0x33, 0x44, 0x55];
+        let mut writes = vec![(0x15, 0x80), (0x16, 0xfe), (0x17, 0x7f)];
+        writes.extend(
+            bytes
+                .iter()
+                .zip([0x18, 0x19].into_iter().cycle())
+                .map(|(&v, a)| (a, v)),
+        );
+        let expected = run(&writes);
+        let mut ports = Ports::default();
+        let mut memory = OwnedMemory::default();
+        ports.set_vram_mode(1, 0, true);
+        ports.set_vram_pointer(&memory, 0x7ffe);
+        ports.upload_vram(&mut memory, bytes);
+        assert_eq!((ports, memory), expected);
     }
 
     #[test]

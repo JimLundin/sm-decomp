@@ -3,6 +3,7 @@
 #![deny(unsafe_op_in_unsafe_fn)]
 use crate::game_state::Game;
 use crate::ram_map::checked_word as at;
+use crate::rendering::memory::{OwnedMemory, Ports};
 use crate::rtl::{read_reg_word, write_reg, write_reg_word};
 use crate::snes::registers::*;
 use sm_game::display::control::{Brightness, FixedColor};
@@ -175,6 +176,21 @@ struct NativeSamusDescriptor {
 }
 struct NativeSamusUpload<'a>(&'a mut Game);
 impl NativeSamusUpload<'_> {
+    /// Make `ports`' register writes on the emulated PPU, and `native`'s typed
+    /// calls on the native one in their place.
+    fn produce(
+        &mut self,
+        ports: impl FnOnce(&mut Game),
+        native: impl FnOnce(&Game, &mut Ports, &mut OwnedMemory),
+    ) {
+        let ppu = unsafe { (*self.0.g_snes).ppu };
+        crate::snes::ppu::producing(ppu);
+        ports(self.0);
+        let game = &*self.0;
+        crate::snes::ppu::produced(ppu, "samus tiles", |ports, memory| {
+            native(game, ports, memory)
+        });
+    }
     fn table(
         &self,
         address: u32,
@@ -195,7 +211,10 @@ impl sm_game::scene::samus_tile_upload::Host for NativeSamusUpload<'_> {
     type Descriptor = NativeSamusDescriptor;
     type Source = u16;
     fn vmain(&mut self) -> Result<(), Self::Error> {
-        unsafe { write_reg(VMAIN as u16, 0x80, self.0) };
+        self.produce(
+            |game| unsafe { write_reg(VMAIN as u16, 0x80, game) },
+            |_, ports, _| ports.set_vram_mode(1, 0, true),
+        );
         Ok(())
     }
     fn enabled(&mut self, half: sm_game::scene::samus_body::Half) -> Result<u8, Self::Error> {
@@ -245,7 +264,10 @@ impl sm_game::scene::samus_tile_upload::Host for NativeSamusUpload<'_> {
             sm_game::scene::samus_tile_upload::Part::First => d.vram,
             sm_game::scene::samus_tile_upload::Part::Second => d.vram.wrapping_add(0x100),
         };
-        unsafe { write_reg_word(VMADDL as u16, address, self.0) };
+        self.produce(
+            |game| unsafe { write_reg_word(VMADDL as u16, address, game) },
+            |_, ports, memory| ports.set_vram_pointer(memory, address),
+        );
         Ok(())
     }
     fn configure_dma(&mut self) -> Result<(), Self::Error> {
@@ -289,12 +311,24 @@ impl sm_game::scene::samus_tile_upload::Host for NativeSamusUpload<'_> {
     }
     fn dma(
         &mut self,
-        _: Self::Descriptor,
+        d: Self::Descriptor,
         _: sm_game::scene::samus_tile_upload::Part,
-        _: u16,
-        _: u16,
+        count: u16,
+        source: u16,
     ) -> Result<(), Self::Error> {
-        unsafe { write_reg(MDMAEN as u16, 2, self.0) };
+        self.produce(
+            |game| unsafe { write_reg(MDMAEN as u16, 2, game) },
+            |game, ports, memory| {
+                // The tiles are in ROM; a count of zero transfers 64 KiB.
+                let bank = u32::from(game.read_rom_byte(d.address, 2)) << 16;
+                ports.upload_vram(
+                    memory,
+                    (0..=count.wrapping_sub(1)).map(|offset| {
+                        game.read_rom_byte(bank | u32::from(source.wrapping_add(offset)), 0)
+                    }),
+                );
+            },
+        );
         Ok(())
     }
 }
