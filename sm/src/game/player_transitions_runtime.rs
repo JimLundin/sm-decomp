@@ -135,14 +135,9 @@ impl Runtime<'_> {
         });
     }
 
-    /// Ordered compatibility output; the core supplies semantic window-word indices.
-    pub(crate) fn suit_window_word(&mut self, index: u16, value: u16) {
-        self.write_slice_le(0x9800 + usize::from(index) * 2, value);
-    }
-
     pub(crate) fn begin_suit_pickup(&mut self, gravity: bool) {
         use crate::{game::player_transitions::suit, types::HdmaObjectDefinition};
-        suit::prepare(self, gravity, Self::suit_window_word);
+        suit::prepare(self, gravity, xray::set_window_word);
         self.foreign(|game| crate::game::session_runtime::player_command(0x15, game));
         suit::center(self);
         visual_host::Effects::sound(self, 2, 6, 0x56);
@@ -181,7 +176,7 @@ impl Runtime<'_> {
 
     pub(crate) fn advance_suit_pickup(&mut self, gravity: bool) {
         use crate::ram_map::{word_arrays as arrays, words as ram};
-        if crate::game::player_transitions::suit::advance(self, gravity, Self::suit_window_word) {
+        if crate::game::player_transitions::suit::advance(self, gravity, xray::set_window_word) {
             self.publish_suit_colors();
             self.write_slice_le(ram::FX_LAYER_BLENDING_CONFIG_C, 18);
             return;
@@ -202,7 +197,7 @@ impl Runtime<'_> {
         ] {
             self.write_slice_le(address, 0);
         }
-        self.suit_window_word(0, 255);
+        xray::set_window_word(self, 0, 255);
         self.session_mut().shared_sequence.stage = 0;
         self.session_mut().shared_sequence.value = 0;
         self.session_mut().presentation.palette_mut().suit_red_green = 0;
@@ -277,7 +272,7 @@ impl Runtime<'_> {
         if matches!(self.session().player.movement_and_facing >> 8, 5 | 21)
             && self.inputs().frozen != 0
         {
-            self.owned_call(Self::handle_xray_input);
+            self.owned_call(|runtime| xray::handle_input(runtime));
         } else {
             crate::game::player_transitions::handle_input(self);
         }
@@ -350,9 +345,7 @@ pub(crate) fn initialize(game: &mut crate::game_state::Game) {
         fraction: 0,
         whole: 1,
     });
-    for index in (0..256).rev() {
-        rt.suit_window_word(index, 255);
-    }
+    xray::clear_window(&mut rt);
     rt.session_mut().player.contact.y_acceleration.fraction = 0x1c00;
     rt.session_mut().player.contact.y_acceleration.whole = 0;
     rt.session_mut().room.liquid.surface.whole = u16::MAX;
@@ -388,7 +381,7 @@ pub(super) fn dispatch_input(h: &mut Runtime<'_>) {
     match h.session().player.transitions.input_mode {
         InputMode::Normal => h.handle_input(),
         InputMode::Demo => h.handle_demo_input(),
-        InputMode::Xray => h.handle_xray_input(),
+        InputMode::Xray => xray::handle_input(h),
         InputMode::AutoJump => {
             let pressed = h.inputs().pressed;
             let timer = h.session().player.contact.auto_jump;
@@ -428,9 +421,7 @@ impl Runtime<'_> {
         );
         let offscreen = (x as i16) < 0 || x >= 256;
         if (x as i16) < 0 && facing == 4 || (x as i16) >= 256 && facing == 8 {
-            for row in (0..256).rev() {
-                self.suit_window_word(row, 255);
-            }
+            xray::clear_window(self);
             return;
         }
         let angle = player.transitions.xray_angle;
@@ -448,43 +439,10 @@ impl Runtime<'_> {
         });
     }
 
-    pub(crate) fn xray_blend_mask(&self) -> u16 {
-        use crate::ram_map::words as ram;
-        if self.word(ram::FX_TYPE) == 0x24 {
-            0x1000
-        } else if matches!(self.word(ram::ROOM_PTR), 0xa66a | 0xcefb)
-            || matches!(self.word(ram::BOSS_ID), 3 | 6 | 7 | 8 | 10)
-        {
-            0x2000
-        } else {
-            0x4000
-        }
-    }
-
-    pub(crate) fn apply_xray_blending(&mut self, phase: BlendPhase) {
-        use crate::ram_map::words as ram;
-        let mask = self.xray_blend_mask();
-        let update_colors = match phase {
-            BlendPhase::Restore => false,
-            BlendPhase::Beam => mask == 0x4000,
-            BlendPhase::Setup => mask == 0x4000 || mask == 0x1000 && self.byte(0x74) & 0x1f < 7,
-        };
-        if update_colors {
-            // Preserve the overlapping native words, including the final zero byte.
-            for (offset, value) in [(0x74, 0x27), (0x75, 0x47), (0x76, 0x87)] {
-                self.write_slice_native(offset, value);
-            }
-        }
-        self.write_slice_le(
-            ram::FX_LAYER_BLENDING_CONFIG_C,
-            self.word(ram::FX_LAYER_BLENDING_CONFIG_C) | mask,
-        );
-    }
-
     pub(crate) fn advance_xray_background(&mut self) {
         use crate::game::xray_background::{finish_restore, restore_left, restore_right};
         use sm_game::hdma_program::with_current_object;
-        self.apply_xray_blending(BlendPhase::Beam);
+        xray::apply_blending(self, BlendPhase::Beam);
         let stages: [fn(&mut Self); 6] = [
             |r| r.advance_xray_beam(BeamPhase::Initial),
             |r| r.advance_xray_beam(BeamPhase::Widening),
@@ -524,21 +482,10 @@ impl Runtime<'_> {
         }
     }
 
-    fn handle_xray_input(&mut self) {
-        use crate::ram_map::words as ram;
-        let binding = if self.session().player.movement_and_facing as u8 == 4 {
-            ram::BUTTON_CONFIG_RIGHT
-        } else {
-            ram::BUTTON_CONFIG_LEFT
-        };
-        let turn = self.word(binding) & self.inputs().held != 0;
-        crate::game::player_transitions::xray::turn(self, turn);
-    }
-
     pub(crate) fn request_xray(&mut self) {
         if self.inputs().frozen != 0
             || self.inputs().run_button & self.inputs().held == 0
-            || !self.initialize_xray()
+            || !xray::initialize(self)
         {
             return;
         }
@@ -555,42 +502,6 @@ impl Runtime<'_> {
                 game,
             )
         });
-    }
-
-    pub(crate) fn initialize_xray(&mut self) -> bool {
-        use crate::{
-            game::player_transitions::{state::InterruptionAction, xray},
-            ram_map::words as ram,
-        };
-        if !xray::request(self) {
-            return false;
-        }
-        self.write_slice_le(ram::TIME_IS_FROZEN_FLAG, 1);
-        self.session_mut().player.transitions.interruption = InterruptionAction::from_raw(5);
-        for index in (0..256).rev() {
-            self.suit_window_word(index, 255);
-        }
-        xray::set_world_running(self.session_mut(), false);
-        self.write_slice_native(0xa88, 1);
-        self.set_byte(0xa8a, 0x98);
-        self.write_slice_native(0xa8b, 0);
-        self.session_mut().player.demo.previous_held = 0x98c8;
-        self.write_slice_native(0xa8e, 0x9098);
-        self.set_byte(0xa90, 0x99);
-        self.write_slice_le(ram::XRAY_HDMA_TABLE_END, 0);
-        let demo = &mut self.session_mut().player.demo;
-        demo.pre_action = 0;
-        demo.delay = 0;
-        demo.program = 0;
-        demo.held = 0;
-        demo.pressed = 0;
-        self.session_mut().player.transitions.xray_angle =
-            if self.session().player.movement_and_facing as u8 == 4 {
-                192
-            } else {
-                64
-            };
-        true
     }
 }
 
