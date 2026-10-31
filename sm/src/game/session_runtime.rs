@@ -150,9 +150,6 @@ impl sm_game::actors::species::AiHost for Game {
     fn write_multiplicand(&mut self, operand: u8) {
         unsafe { crate::rtl::write_reg(crate::rtl::WRMPYA as u16, operand, self) };
     }
-    fn grapple_kill(&mut self) {
-        actors::combat::die(&mut Runtime::new(self), actors::api::DeathKind::Grapple);
-    }
     fn install_draygon_layers(&mut self) {
         crate::game::visual_runtime::initialize_draygon_layer(self);
     }
@@ -1126,55 +1123,30 @@ impl Runtime<'_> {
     }
 }
 
-use crate::game::actors::{self, api as actor_api};
+use crate::game::actors;
 use crate::game::sm_a9;
-use crate::types::EnemyData;
 use sm_game::actors::access::{AccessMode, ActorAccess, ActorKey as Key};
-use sm_game::combat_rules::LatchMode;
 use sm_game::enemy_script::EnemyScript;
 
 crate::game::callback_dispatch! {
     unsafe fn native_ai(ea: u32, game: &mut Game) => ea;
     call (game); default { crate::rtl::report_unreachable(game); };
     @external {
-        10715136 | 10846208 | 10911744 | 10977280 | 11042816 | 11763712 => [actor_api::resume_ai(&mut Runtime::new(game))];
-        10649605 | 10780677 => [actor_api::latch(&mut Runtime::new(game), LatchMode::Passive)];
-        11042836 => [actor_api::latch(&mut Runtime::new(game), LatchMode::Active)];
-        11763722 => [crate::game::actors::combat::die(&mut Runtime::new(game), actor_api::DeathKind::Grapple)];
-        11763727 => [crate::game::actors::combat::select_frozen_ai(&mut Runtime::new(game))];
-
-        11763777 => [crate::game::actors::scheduling::update_frozen_enemy(&mut Runtime::new(game))];
         10649676 => [{
             #[cfg(sm_verify_dll)]
             crate::game::actors::reference_population_animation::dispatch_noop(game);
         }];
-
         10730277 => [{ let address = bang::main_ai(game); crate::cpu_infra::call_routine(address, game); }];
         10738716 => reflec_shot;
-        10715146 => [crate::game::actors::combat::die(&mut Runtime::new(game), actor_api::DeathKind::Grapple)];
-        10715151 => [crate::game::actors::combat::select_frozen_ai(&mut Runtime::new(game))];
-
-        10715201 => [crate::game::actors::scheduling::update_frozen_enemy(&mut Runtime::new(game))];
-
         10914607 => crate::game::spikey_platforms::initialize; 10914733 => crate::game::spikey_platforms::run;
-
-        11069198 | 11069725 => [crate::ram_map::word!(game.PROJECTILE_DIR[crate::ram_map::word!(game.COLLISION_DETECTION_INDEX)] &= !(0x10))];
         11111301 => [{
                     sm_a9::tubes_falling_main_ai(crate::ram_map::word!(game.CUR_ENEMY_INDEX), game);
                 }];
         11121927 => sm_a9::brain_shot;
-
-        11765499 => [{
-            let e = i32::from(crate::ram_map::word!(game.CUR_ENEMY_INDEX));
-            crate::ram_map::slot!(game, EnemyData[e].properties, |old| old | crate::game::constants::enemy_properties::K_ENEMY_PROPS_DISABLE_SAMUS_COLL as u16);
-            crate::ram_map::slot!(game, EnemyData[e].current_instruction = 0x86a7);
-        }];
-
         11769448 => [actors::botwoon::main_ai(&mut Runtime::new(game))];
         11771903 => [actors::botwoon::contact(false, &mut Runtime::new(game))];
         11771969 => [actors::botwoon::contact(true, &mut Runtime::new(game))];
         11771926 => [actors::botwoon::shot(&mut Runtime::new(game))];
-
         10652144 => [{
             let index = game.cur_enemy_index();
             let preinstruction = Runtime::new(game)
@@ -1189,15 +1161,8 @@ crate::game::callback_dispatch! {
             };
             actor_species_pre_instruction(0xa20000 | u32::from(phase), game);
         }];
-        10649615 => [actors::combat::select_frozen_ai(&mut Runtime::new(game))];
-        10649610 => [actors::combat::die(&mut Runtime::new(game), actors::api::DeathKind::Grapple)];
-        10649665 => [actors::scheduling::update_frozen_enemy(&mut Runtime::new(game))];
-
         0xa30000..=0xa3ffff => [{ crate::rtl::report_unreachable(game); }];
         10783748 => crate::game::visual_runtime::advance_crocomire;
-
-        10780737 => [actors::scheduling::update_frozen_enemy(&mut Runtime::new(game))];
-
         10873386 => [actors::spore_spawn::initialize(game)];
         10873619 => [actors::spore_spawn::main_ai(game)];
         10874202 => [actors::spore_spawn::shot(game)];
@@ -1210,22 +1175,10 @@ crate::game::callback_dispatch! {
     unsafe fn native_instruction(ea: u32, k: u16, j: EnemyScript, game: &mut Game) -> EnemyScript => ea;
     call (k, j, game); default { crate::rtl::report_unreachable(game); EnemyScript::Stop };
     @external {
-        11763819 | 11763828 => [{
-            use crate::types::EnemyData;
-            let value = if ea == 11763819 { j.word(0) } else { 0x807b };
-            crate::ram_map::slot!(game, EnemyData[i32::from(k)].ai_preinstr = value);
-            if ea == 11763819 { j.offset(1) } else { j }
-        }];
-
-        10651845 => [j];
-        11056990 => [j];
         11128756 => [sm_game::actors::baby_metroid_cutscene::go_to_initial(k, j)];
         11128778 => [sm_game::actors::baby_metroid_cutscene::go_to_draining_mother_brain(k, j)];
         11139360 => [sm_game::actors::baby_metroid_encounter::go_to_normal(k, j)]; 11139382 => [sm_game::actors::baby_metroid_encounter::go_to_latched_on(k, j)];
         11139472 => [sm_game::actors::baby_metroid_encounter::go_to_remorse(k, j)];
-        10668907 => [{ crate::game::music::queue_sfx2_max6(0xe, game); j }];
-        10654929 => [{ crate::game::music::queue_sfx2_max6(0x3a, game); j }];
-        10657578 => [{ crate::game::music::queue_sfx2_max6(0x34, game); j }];
         10657959 => [crate::game::enemy_projectiles::spawn_scripted(0xdafe, j, game)];
         10652030 => [crate::game::enemy_projectiles::spawn_scripted(0xdbf2, j, game)];
         0xa30000..=0xa3ffff => [{ crate::rtl::report_unreachable(game); EnemyScript::Stop }];
@@ -1243,20 +1196,13 @@ crate::game::callback_dispatch! {
         10873009 => [{ crate::game::enemy_projectiles::scatter_drop(sm_game::enemy_projectiles::drops::DropSource::SporeSpawn, k, game); j }];
         10852501 => [{ crate::ram_map::word!(game.ROOM_LOADING_IRQ_HANDLER = 12); j }];
         10853514 => [{ crate::ram_map::word!(game.ROOM_LOADING_IRQ_HANDLER = 12); j }];
-        10854240 => [{ crate::game::music::queue_sfx2_max6(j.word(0), game); j.offset(1) }];
-        10854254 => [{ crate::game::music::queue_sfx3_max6(j.word(0), game); j.offset(1) }];
         10852159 => [{ crate::game::sprite_effect_runtime::draygon_random_sprite(21, game); j }];
         10852178 => [{ crate::game::sprite_effect_runtime::draygon_random_sprite(3, game); j }];
         10852197 => [{ crate::game::sprite_effect_runtime::draygon_random_sprite(29, game); j }];
         10852216 => [{ crate::game::sprite_effect_runtime::draygon_random_sprite(24, game); j }];
         10854268 => [{ crate::game::sprite_effect_runtime::draygon_spit(false, game); j }];
         10854318 => [{ crate::game::sprite_effect_runtime::draygon_spit(true, game); j }];
-
         0xa90000..=0xa9ffff => [sm_a9::dispatch_enemy_instr(ea, k, j, game)];
-        11174004 => [{ crate::ram_map::slot!(game, EnemyData[k as i32].ai_preinstr = (0xaa807bi32) as u16); j }];
-        11173995 => [{ crate::ram_map::slot!(game, EnemyData[k as i32].ai_preinstr = j.word(0)); j.offset(1) }];
-
-        11769202 => [{ crate::game::music::queue_sfx2_max6(0x7c, game); j }];
         0xb30000..=0xb3ffff => [{ crate::rtl::report_unreachable(game); EnemyScript::Stop }];
     }
 }

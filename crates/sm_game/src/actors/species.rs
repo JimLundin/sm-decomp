@@ -7,6 +7,7 @@
 //! still run in the compatibility crate go to its host: a named native enum
 //! for the small tables, the same address for the large ones. Moving a
 //! routine here means moving its arm.
+use crate::actors::access::{AccessMode::Native, ActorAccess as _};
 use crate::actors::host::{ActorHost, ActorRuntime, Death, LeaseActors, Shot};
 use crate::actors::{
     alcoon, atomic, bang, beetom, blue_brinstar_face_block, botwoon, boulder, boyon, bull, cacatac,
@@ -19,6 +20,7 @@ use crate::actors::{
     space_pirates, squeept, statues, tatori, torizo, tripper, waver, work_robot,
     wrecked_ship_spark, yapping_maw, yard, zeb, zebetites, zoa,
 };
+use crate::combat_rules::LatchMode;
 use crate::enemy_script::EnemyScript;
 use crate::ram::word;
 
@@ -278,8 +280,6 @@ pub trait AiHost:
 {
     /// An AI routine whose arm is still in the compatibility table.
     fn native_ai(&mut self, ea: u32);
-    /// Kill the current enemy with the grapple, through one lease.
-    fn grapple_kill(&mut self);
     /// Write `operand` to the multiplicand register, for Yapping Maw.
     fn write_multiplicand(&mut self, operand: u8);
     /// Install Draygon's BG layers as its initialisation does.
@@ -335,7 +335,36 @@ pub fn draygon_function<H: AiHost>(ea: u32, k: u16, game: &mut H) {
 /// An enemy species' AI routine, keyed by its address. Arms not here are in
 /// the compatibility table until their routines move.
 pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
+    use crate::actors::combat::{die, latch, resume_ai, select_frozen_ai};
     match ea {
+        // The common enemy AI ($A0:8000-$A0:8041) the enemy banks share: grapple AI - no
+        // interaction, Samus latches on (with or without invincibility), kill enemy and
+        // cancel grapple beam, and the normal enemy frozen AI.
+        10715136 | 10846208 | 10911744 | 10977280 | 11042816 | 11763712 => {
+            resume_ai(&mut LeaseActors::lease(game))
+        }
+        10649605 | 10780677 => latch(&mut LeaseActors::lease(game), LatchMode::Passive),
+        11042836 => latch(&mut LeaseActors::lease(game), LatchMode::Active),
+        10649610 | 10715146 | 11042826 | 11763722 => die(
+            &mut LeaseActors::lease(game),
+            crate::actors::api::DeathKind::Grapple,
+        ),
+        10649615 | 10715151 | 10846223 | 10911759 | 10977295 | 11042831 | 11042846 | 11173903
+        | 11763727 => select_frozen_ai(&mut LeaseActors::lease(game)),
+        10649665 | 10715201 | 10780737 | 10846273 | 10911809 | 10977345 | 11042881 | 11173953
+        | 11763777 => crate::actors::scheduling::update_frozen_enemy(&mut LeaseActors::lease(game)),
+        // Initialisation AI - enemy $F153 (unused spinning turtle eye) ($B3:86FB).
+        11765499 => {
+            let mut runtime = LeaseActors::lease(game);
+            let key = crate::actors::combat::current(&runtime);
+            runtime.edit_actor(key, Native, |actor| {
+                actor.properties |=
+                    crate::constants::enemy_properties::K_ENEMY_PROPS_DISABLE_SAMUS_COLL as u16;
+                actor.instruction = 0x86a7;
+            });
+        }
+        // Enemy shot - Wrecked Ship spark ($A8:E70E) and blue Brinstar face block ($A8:E91D).
+        11069198 | 11069725 => wrecked_ship_spark::pass_shot(game),
         11763747 => game.contact_reaction(Death::Finalize),
         11763757 => game.shot_reaction(Shot::Finalize),
         10518583 | 10649655 | 10715191 | 10780727 | 10846263 | 10911799 | 10977335 | 11042871
@@ -395,10 +424,8 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         10795410 => crocomire_reactions::power_bomb(game),
         // Bank $A6: the boulder, the fire arc, Mini-Kraid, Ceres's steam and
         // doors and the zebetites, with the bank's common reactions.
-        10911759 => crate::actors::combat::select_frozen_ai(&mut LeaseActors::lease(game)),
         10911779 => game.contact_reaction(Death::Finalize),
         10911789 => game.shot_reaction(Shot::Finalize),
-        10911809 => crate::actors::scheduling::update_frozen_enemy(&mut LeaseActors::lease(game)),
         10913525 => boulder::initialize(game),
         10913683 => boulder::main_ai(game),
         10914693 | 10914713 => fire_arc::initialize_spike_platform_bottom(game),
@@ -444,20 +471,13 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         11004224 => etecoon::main_ai(game),
         11007197 => dachora_run::initialize(game),
         11007278 => dachora_run::main_ai(game),
-        10977295 => crate::actors::combat::select_frozen_ai(&mut LeaseActors::lease(game)),
         10977325 => game.shot_reaction(Shot::Finalize),
         10977340 => game.power_bomb_reaction(Death::LeavePending),
-        10977345 => crate::actors::scheduling::update_frozen_enemy(&mut LeaseActors::lease(game)),
         10982559 => kraid::touch(game),
         10992879 | 10992941 => kraid::initialize_fingernail(game),
         // Bank $A8: the common grapple, contact, shot and frozen reactions.
-        11042826 => game.grapple_kill(),
-        11042831 | 11042846 => {
-            crate::actors::combat::select_frozen_ai(&mut LeaseActors::lease(game))
-        }
         11042851 => game.contact_reaction(Death::Finalize),
         11042861 => game.shot_reaction(Shot::Finalize),
-        11042881 => crate::actors::scheduling::update_frozen_enemy(&mut LeaseActors::lease(game)),
         // Bank $AA: the Torizos, Shaktool and the statues.
         11191934 => torizo::hurt(game),
         11192695 => torizo::touch(game),
@@ -475,8 +495,6 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         11192447 => torizo::initialize(game),
         11195241 => torizo::golden_main_ai(game),
         11196007 => torizo::golden_shot(game),
-        11173903 => crate::actors::combat::select_frozen_ai(&mut LeaseActors::lease(game)),
-        11173953 => crate::actors::scheduling::update_frozen_enemy(&mut LeaseActors::lease(game)),
         // Bank $B2: the space pirates.
         0xb20000..=0xb2ffff => space_pirates::dispatch_ai(ea, game),
         // Bank $A5.
@@ -486,10 +504,8 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         10851661 => draygon_death::hurt_ai(game),
         10864025 => draygon_flight::initialize_tail_or_arms(false, game),
         10864045 => draygon_flight::initialize_tail_or_arms(true, game),
-        10846223 => crate::actors::combat::select_frozen_ai(&mut LeaseActors::lease(game)),
         10846243 => game.contact_reaction(Death::Finalize),
         10846253 => game.shot_reaction(Shot::Finalize),
-        10846273 => crate::actors::scheduling::update_frozen_enemy(&mut LeaseActors::lease(game)),
         10851818 => draygon_death::touch(game),
         10851847 => draygon_death::power_bomb(game),
         10863723 => draygon_eye::initialize(game),
@@ -965,6 +981,34 @@ pub fn instruction<H: InstructionHost>(
     game: &mut H,
 ) -> EnemyScript {
     match ea {
+        // Instruction - enemy $0FB2 = [[Y]] ($AA:806B, $B3:806B) and = RTS ($AA:8074, $B3:8074).
+        11173995 | 11174004 | 11763819 | 11763828 => {
+            let given = ea & 0xffff == 0x806b;
+            let value = if given { j.word(0) } else { 0x807b };
+            let key = crate::actors::access::ActorKey::from_legacy(k);
+            LeaseActors::lease(game).edit_actor(key, Native, |actor| actor.pre_instruction = value);
+            if given { j.offset(1) } else { j }
+        }
+        // Instruction - nothing ($A2:88C5, $A8:B75E).
+        10651845 | 11056990 => j,
+        // Instruction - queue the splashed out of water, tatori spinning, cacatac spikes
+        // and Botwoon spit sound effects ($A2:CB6B, $A2:94D1, $A2:9F2A, $B3:9572).
+        10668907 | 10654929 | 10657578 | 11769202 => {
+            let sound = match ea {
+                10668907 => 0xe,
+                10654929 => 0x3a,
+                10657578 => 0x34,
+                _ => 0x7c,
+            };
+            game.queue_sound(1, sound, 6);
+            j
+        }
+        // Instruction - queue sound [[Y]], sound library 2 or 3, max 6 ($A5:9F60, $A5:9F6E).
+        10854240 | 10854254 => {
+            use crate::enemy_projectiles::host::Effects as _;
+            LeaseActors::lease(game).queue_sound(if ea == 10854240 { 2 } else { 3 }, 6, j.word(0));
+            j.offset(1)
+        }
         10717526 | 10733220 => skree::set_attack_ready(j, game),
         10722411 | 10722433 => tripper::set_x_movement(false, j, game),
         10722422 | 10722444 => tripper::set_x_movement(true, j, game),
