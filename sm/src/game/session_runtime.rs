@@ -1,5 +1,5 @@
 //! One aggregate authority for player, projectiles, mechanisms and their room.
-use crate::game::actors::{bang, reflec};
+use crate::game::actors::bang;
 use crate::game::enemy_speeds::SpeedTable;
 use crate::{
     game_state::Game,
@@ -106,15 +106,6 @@ pub(crate) fn run_aa_function(address: u32, game: &mut Game) {
     unsafe { actor_species_pre_instruction(address, game) };
 }
 
-/// Reflec's shot reaction, with the original diagnostic when it cannot tell
-/// which projectile hit it. Was `Reflec_Shot` in bank $A3.
-fn reflec_shot(game: &mut Game) {
-    if let Some(target) = reflec::reflect_shot(game) {
-        unsafe { crate::c_library::printf(c"Possible bug. What is X?\n".as_ptr()) };
-        reflec::absorb_shot(target, game);
-    }
-}
-
 /// Sets the shot AI of Kraid's enemy definition at `enemy_ptr`. Was in bank $A7.
 pub(crate) fn set_kraid_shot_ai(enemy_ptr: u16, shot_ai: u16, game: &mut Game) {
     (unsafe { crate::rtl::rom_record(0xa0, enemy_ptr, game) }).set_word(
@@ -146,6 +137,9 @@ pub(crate) unsafe fn actor_species_pre_instruction(ea: u32, game: &mut Game) {
 impl sm_game::actors::species::AiHost for Game {
     fn native_ai(&mut self, ea: u32) {
         unsafe { native_ai(ea, self) }
+    }
+    fn warn_reflection(&mut self) {
+        unsafe { crate::c_library::printf(c"Possible bug. What is X?\n".as_ptr()) };
     }
     fn write_multiplicand(&mut self, operand: u8) {
         unsafe { crate::rtl::write_reg(crate::rtl::WRMPYA as u16, operand, self) };
@@ -1136,7 +1130,6 @@ crate::game::callback_dispatch! {
             crate::game::actors::reference_population_animation::dispatch_noop(game);
         }];
         10730277 => [{ let address = bang::main_ai(game); crate::cpu_infra::call_routine(address, game); }];
-        10738716 => reflec_shot;
         10914607 => crate::game::spikey_platforms::initialize; 10914733 => crate::game::spikey_platforms::run;
         11111301 => [{
                     sm_a9::tubes_falling_main_ai(crate::ram_map::word!(game.CUR_ENEMY_INDEX), game);

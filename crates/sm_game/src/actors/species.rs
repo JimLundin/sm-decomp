@@ -280,6 +280,8 @@ pub trait AiHost:
 {
     /// An AI routine whose arm is still in the compatibility table.
     fn native_ai(&mut self, ea: u32);
+    /// Print the original's diagnostic when Reflec cannot tell which projectile hit it.
+    fn warn_reflection(&mut self);
     /// Write `operand` to the multiplicand register, for Yapping Maw.
     fn write_multiplicand(&mut self, operand: u8);
     /// Install Draygon's BG layers as its initialisation does.
@@ -371,6 +373,12 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
             let function = runtime.resolve_actor(key, mode).pre_instruction;
             drop(runtime);
             pre_instruction(0xa2_0000 | u32::from(function), game);
+        }
+        10738716 => {
+            if let Some(target) = reflec::reflect_shot(game) {
+                game.warn_reflection();
+                reflec::absorb_shot(target, game);
+            }
         }
         // Enemy shot - Wrecked Ship spark ($A8:E70E) and blue Brinstar face block ($A8:E91D).
         11069198 | 11069725 => wrecked_ship_spark::pass_shot(game),
