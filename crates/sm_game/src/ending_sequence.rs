@@ -16,6 +16,7 @@ use crate::cinematic::{
 };
 use crate::cinematic_host::Host;
 use crate::cinematic_objects::CinematicObjects;
+use crate::cinematic_state::cinematic;
 use crate::display_refresh::GraphicsAsset;
 use crate::flow::{self, Word::CinematicFunction};
 use crate::intro_sequence::countdown;
@@ -177,17 +178,17 @@ pub fn setup<H: Host + ?Sized>(game: &mut H) {
     GraphicsAsset::Decompress(0x99d65b, 0x2000).load(game);
     GraphicsAsset::Decompress(0x99d932, 0x6000).load(game);
     crate::cinematic_display::reset_cinematic_transform(128, 128, game);
-    word!(game.MODE7_ANGLE = 32);
-    word!(game.MODE7_ZOOM = 64);
-    word!(game.CINEMATIC_X = 0);
-    word!(game.CINEMATIC_Y = 0);
+    cinematic!(game.Mode7Angle = 32);
+    cinematic!(game.Mode7Zoom = 64);
+    cinematic!(game.X = 0);
+    cinematic!(game.Y = 0);
     word!(game.DOOR_DEF_PTR = 0);
     word!(game.LAYER1_X_POS = 0);
     word!(game.LAYER1_Y_POS = 0);
     crate::palette_effects::execution::leased::clear(game);
     crate::palette_effects::execution::leased::set_enabled(true, game);
     crate::display_refresh::enable(true, game);
-    word!(game.SHOOTING_STARS_ENABLED = 0);
+    cinematic!(game.ShootingStarsEnabled = 0);
     set_cinematic_blend(17, 1, 2, 17, game);
     for parameter in 0..2 {
         crate::cinematic_objects::spawn_cinematic_burst(
@@ -225,10 +226,10 @@ pub fn scene_1_setup<H: Host + ?Sized>(game: &mut H) {
     clear_cinematic_sprites(game);
     crate::palette_effects::execution::leased::spawn(SCENE_1_GLOW, game);
     crate::cinematic_objects::spawn_cinematic_burst(object::CLOUDS_TOP, [0; 4], 6, game);
-    word!(game.MODE7_ANGLE = 32);
-    word!(game.MODE7_ZOOM = 64);
-    word!(game.CINEMATIC_X = 0);
-    word!(game.CINEMATIC_Y = 0);
+    cinematic!(game.Mode7Angle = 32);
+    cinematic!(game.Mode7Zoom = 64);
+    cinematic!(game.X = 0);
+    cinematic!(game.Y = 0);
     flow::set(game, CinematicFunction, function::SCENE_1_FADING_IN);
 }
 
@@ -255,23 +256,23 @@ pub fn scene_2_setup<H: Host + ?Sized>(game: &mut H) {
     sprites(game, object::LAVA, 0x0e00);
     sprites(game, object::PURPLE_GLOW, 0x0a00);
     sprites(game, object::STARS, 0x0e00);
-    word!(game.MODE7_ANGLE = 0);
-    word!(game.MODE7_ZOOM = 64);
+    cinematic!(game.Mode7Angle = 0);
+    cinematic!(game.Mode7Zoom = 64);
     word!(game.REG_M7A = 256);
     word!(game.REG_M7B = 0);
     word!(game.REG_M7C = 0);
     word!(game.REG_M7D = 256);
     word!(game.REG_M7X = 128);
     word!(game.REG_M7Y = 128);
-    word!(game.CINEMATIC_X = 0);
-    word!(game.CINEMATIC_Y = 0);
+    cinematic!(game.X = 0);
+    cinematic!(game.Y = 0);
     set_cinematic_blend(1, 16, 2, 33, game);
     capture_cinematic_palette(game);
     prepare_cinematic_palette_fade(game);
     clear_cinematic_colors(0x1a0, 0x10, game);
     clear_cinematic_colors(0x1e0, 0x10, game);
     compose_cinematic_palette(game);
-    word!(game.CINEMATIC_FUNCTION_TIMER = 63);
+    cinematic!(game.FunctionTimer = 63);
     flow::set(game, CinematicFunction, function::SCENE_2_FADING_IN);
 }
 
@@ -289,15 +290,15 @@ pub fn scene_2_fading_in<H: Host + ?Sized>(game: &mut H) {
 /// space view ($8B:DA1A): every other frame a fade step; at the end the
 /// space view's display. Was `CinematicFunction_Intro_Func117`.
 pub fn scene_2<H: Host + ?Sized>(game: &mut H) {
-    word!(game.MODE7_ZOOM, wrapping_add(4));
-    if (word!(game.CINEMATIC_FUNCTION_TIMER) & 1) == 0 {
+    cinematic!(game.Mode7Zoom += 4);
+    if (cinematic!(game.FunctionTimer) & 1) == 0 {
         fade_cinematic_colors(0xe0, 0x10, false, game);
         fade_cinematic_colors(0x1a0, 0x10, true, game);
         fade_cinematic_colors(0x1e0, 0x10, true, game);
         compose_cinematic_palette(game);
     }
-    word!(game.CINEMATIC_FUNCTION_TIMER, wrapping_sub(1));
-    if (word!(game.CINEMATIC_FUNCTION_TIMER) & 0x8000) != 0 {
+    cinematic!(game.FunctionTimer -= 1);
+    if (cinematic!(game.FunctionTimer) & 0x8000) != 0 {
         crate::word_transfers!(game, ascending, 128; le(PALETTE_BUFFER, 0) <- rom(SPACE_PALETTES, 0));
         for (at, value) in [
             (mirror::M7SEL, 0),
@@ -321,20 +322,20 @@ pub fn scene_2<H: Host + ?Sized>(game: &mut H) {
         game.write_register(crate::display::registers::COLDATA as u16, 0xe0);
         set_fixed_color([32, 64, 0x80], game);
         game.ram().write_byte(mirror::MOSAIC, 0);
-        word!(game.CINEMATIC_X_SUB = 0);
-        word!(game.CINEMATIC_X = 0);
-        word!(game.CINEMATIC_Y_SUB = 0);
-        word!(game.CINEMATIC_Y = 0);
-        word!(game.CINEMATIC_X_SUBSPEED = 0);
-        word!(game.CINEMATIC_X_SPEED = 0);
-        word!(game.CINEMATIC_Y_SUBSPEED = 0);
-        word!(game.CINEMATIC_Y_SPEED = 0);
+        cinematic!(game.XSub = 0);
+        cinematic!(game.X = 0);
+        cinematic!(game.YSub = 0);
+        cinematic!(game.Y = 0);
+        cinematic!(game.XSubspeed = 0);
+        cinematic!(game.XSpeed = 0);
+        cinematic!(game.YSubspeed = 0);
+        cinematic!(game.YSpeed = 0);
         word!(game.FX_LAYER_BLENDING_CONFIG_A = 0);
         word!(game.REG_BG2HOFS = 0);
         word!(game.REG_BG2VOFS = 0);
         crate::screen_fade::set_both(game, 0, 2);
         flow::set(game, CinematicFunction, function::LOAD_GUNSHIP_BG);
-        word!(game.CINEMATIC_FUNCTION_TIMER = 0);
+        cinematic!(game.FunctionTimer = 0);
     }
 }
 
@@ -366,13 +367,13 @@ pub fn gunship_setup<H: Host + ?Sized>(game: &mut H) {
         crate::palette_effects::execution::leased::spawn(SPACE_GLOW_2, game);
         word!(game.REG_M7X = 56);
         word!(game.REG_M7Y = 24);
-        word!(game.CINEMATIC_X = -72i32 as u16);
-        word!(game.CINEMATIC_Y = -104i32 as u16);
-        word!(game.MODE7_ZOOM = 3072);
-        word!(game.MODE7_ANGLE = -112i32 as u16);
-        word!(game.CINEMATIC_FUNCTION_TIMER = 1);
-        word!(game.CINEMATIC_VAR13 = 192);
-        word!(game.CINEMATIC_VAR14 = 0);
+        cinematic!(game.X = -72i32 as u16);
+        cinematic!(game.Y = -104i32 as u16);
+        cinematic!(game.Mode7Zoom = 3072);
+        cinematic!(game.Mode7Angle = -112i32 as u16);
+        cinematic!(game.FunctionTimer = 1);
+        cinematic!(game.Var13 = 192);
+        cinematic!(game.Var14 = 0);
         flow::set(game, CinematicFunction, function::GUNSHIP_SPINNING_FAST);
     }
 }
@@ -393,21 +394,21 @@ pub fn gunship_spinning_slow<H: Host + ?Sized>(game: &mut H) {
 pub fn gunship_fly_into_camera<H: Host + ?Sized>(game: &mut H) {
     crate::ending_screens::fade_ending_gunship_backdrop(game);
     add_pair!(game, CINEMATIC_VAR13, CINEMATIC_VAR14, -256i32 as u32);
-    let speed = ((word!(game.CINEMATIC_VAR13) as u32) << 16) | word!(game.CINEMATIC_VAR14) as u32;
+    let speed = ((cinematic!(game.Var13) as u32) << 16) | cinematic!(game.Var14) as u32;
     add_pair!(game, CINEMATIC_X, CINEMATIC_X_SUB, speed);
-    if below(word!(game.MODE7_ZOOM), 384)
-        && (word!(game.CINEMATIC_FRAME_COUNTER) & 3) == 0
-        && word!(game.MODE7_ANGLE) != 16
+    if below(cinematic!(game.Mode7Zoom), 384)
+        && (cinematic!(game.FrameCounter) & 3) == 0
+        && cinematic!(game.Mode7Angle) != 16
     {
-        word!(game.MODE7_ANGLE = ((word!(game.MODE7_ANGLE)) as u8).wrapping_add(2) as u16);
+        cinematic!(game.Mode7Angle = (cinematic!(game.Mode7Angle) as u8).wrapping_add(2) as u16);
     }
-    if below(word!(game.MODE7_ZOOM), 32) {
-        let parameter = word!(game.MODE7_ZOOM);
+    if below(cinematic!(game.Mode7Zoom), 32) {
+        let parameter = cinematic!(game.Mode7Zoom);
         sprites(game, object::GUNSHIP_TEXT, parameter);
         flow::set(game, CinematicFunction, function::GUNSHIP_FREEZE_FRAME);
         crate::word_transfers!(game, descending, 16; le(PALETTE_BUFFER, 95) <- table(GUNSHIP_GREY, 15));
     } else {
-        word!(game.MODE7_ZOOM, wrapping_sub(4));
+        cinematic!(game.Mode7Zoom -= 4);
     }
 }
 
@@ -452,10 +453,10 @@ pub fn credits_setup<H: Host + ?Sized>(game: &mut H) {
         GraphicsAsset::VramWords(0x7f0000, 0x0000, 0x4000).load(game);
     }
     crate::cinematic_display::reset_cinematic_transform(104, 112, game);
-    word!(game.CINEMATIC_X = -8i32 as u16);
-    word!(game.CINEMATIC_Y = -24i32 as u16);
-    word!(game.MODE7_ANGLE = 0);
-    word!(game.MODE7_ZOOM = 2304);
+    cinematic!(game.X = -8i32 as u16);
+    cinematic!(game.Y = -24i32 as u16);
+    cinematic!(game.Mode7Angle = 0);
+    cinematic!(game.Mode7Zoom = 2304);
     crate::display_refresh::enable(true, game);
     game.ram().write_byte(mirror::INIDISP, 15);
     word!(game.LAYER1_X_POS = 0);
@@ -475,7 +476,7 @@ pub fn credits_setup<H: Host + ?Sized>(game: &mut H) {
 pub fn blank_screen<H: Host + ?Sized>(game: &mut H) {
     if countdown(game) {
         flow::set(game, CinematicFunction, function::FADE_IN_SHOOTING_STARS);
-        word!(game.CINEMATIC_FUNCTION_TIMER = 120);
+        cinematic!(game.FunctionTimer = 120);
         game.ram().write_byte(mirror::TM, 16);
     }
 }
@@ -491,7 +492,7 @@ pub fn fade_in_shooting_stars<H: Host + ?Sized>(game: &mut H) {
         prepare_cinematic_palette_fade(game);
         clear_cinematic_colors(0x40, 0x10, game);
         compose_cinematic_palette(game);
-        word!(game.CINEMATIC_FUNCTION_TIMER = 32);
+        cinematic!(game.FunctionTimer = 32);
         flow::set(game, CinematicFunction, function::FADE_IN_SAMUS);
     }
 }
@@ -503,7 +504,7 @@ pub fn fade_in_samus<H: Host + ?Sized>(game: &mut H) {
     compose_cinematic_palette(game);
     if countdown(game) {
         set_cinematic_blend(18, 4, 2, 2, game);
-        word!(game.CINEMATIC_FUNCTION_TIMER = 180);
+        cinematic!(game.FunctionTimer = 180);
         flow::set(game, CinematicFunction, function::WAVY_SAMUS);
         crate::room_visuals::initialize_intro_wave(game);
     }
@@ -517,7 +518,7 @@ pub fn wavy_samus<H: Host + ?Sized>(game: &mut H) {
         crate::word_transfers!(game, ascending, 288; pause_map(288) <- rom(DEER_FORCE_TILES, 0));
         queue_cinematic_tilemap(CinematicTilemap::FullText, game);
         set_cinematic_blend(1, 0, 0, 0, game);
-        word!(game.CINEMATIC_FUNCTION_TIMER = 180);
+        cinematic!(game.FunctionTimer = 180);
         flow::set(game, CinematicFunction, function::DEER_FORCE);
         word!(game.WAVY_SAMUS_ENABLED = 0);
     }
@@ -527,9 +528,9 @@ pub fn wavy_samus<H: Host + ?Sized>(game: &mut H) {
 /// second idle Samus, cross-faded out of her suit unless the clear was slow.
 /// Was `CinematicFunction_Intro_Func137`.
 pub fn nintendo_1994<H: Host + ?Sized>(game: &mut H) {
-    word!(game.CINEMATIC_VAR13, wrapping_sub(1));
-    let expired = (word!(game.CINEMATIC_VAR13) & 0x8000) != 0;
-    if word!(game.CINEMATIC_VAR13) == 0 || expired {
+    cinematic!(game.Var13 -= 1);
+    let expired = (cinematic!(game.Var13) & 0x8000) != 0;
+    if cinematic!(game.Var13) == 0 || expired {
         if below(word!(game.GAME_TIME_HOURS), FAST_CLEAR_HOURS)
             || below(word!(game.GAME_TIME_HOURS), CLEAR_HOURS)
         {
@@ -547,7 +548,7 @@ pub fn fade_from_white<H: Host + ?Sized>(game: &mut H) {
     fade_cinematic_fixed_color(game);
     if countdown(game) {
         flow::set(game, CinematicFunction, function::FINISHED);
-        word!(game.CINEMATIC_BG_VRAM_ADDRESS = 20480);
+        cinematic!(game.BgVramAddress = 20480);
         queue_cinematic_tilemap(CinematicTilemap::FullText, game);
         word!(game.LAYER1_X_POS = 256);
         word!(game.LAYER1_Y_POS = 256);
@@ -574,8 +575,8 @@ pub fn grey_out_icon<H: Host + ?Sized>(game: &mut H) {
 /// ($8B:E797): then the percentage, and the completion record. Was
 /// `CinematicFunction_Intro_Func148`.
 pub fn scroll_item_percentage<H: Host + ?Sized>(game: &mut H) {
-    word!(game.CINEMATIC_Y, wrapping_sub(2));
-    if below(word!(game.CINEMATIC_Y), ITEM_PERCENTAGE_STOP) {
+    cinematic!(game.Y -= 2);
+    if below(cinematic!(game.Y), ITEM_PERCENTAGE_STOP) {
         spawn(
             game,
             CinematicObjects::Background,
