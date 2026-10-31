@@ -639,6 +639,8 @@ macro_rules! scalar_words {
         $f(0xa24,$($borrow)* $s.player.history.last_different.pose);
         $f(0x5e9,$($borrow)* $s.multiply_scratch.left);
         $f(0x5eb,$($borrow)* $s.multiply_scratch.right);
+        $f(0x0,$($borrow)* $s.pointer_scratch.address);
+        $f(0x2,$($borrow)* $s.pointer_scratch.bank);
         $f(0xa20,$($borrow)* $s.player.history.previous.pose);
         $f(0xa22,$($borrow)* $s.player.history.previous.movement_and_facing);
         $f(0xa26,$($borrow)* $s.player.history.last_different.movement_and_facing);

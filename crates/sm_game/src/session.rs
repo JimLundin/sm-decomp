@@ -130,6 +130,7 @@ pub struct Session {
     pub compatibility_enemy_scratch: u16,
     pub shared_sequence: crate::player_collision::state::SequenceWorkspace,
     pub multiply_scratch: crate::player_collision::state::MultiplyScratch,
+    pub pointer_scratch: PointerScratch,
 }
 impl Session {
     /// The current room's compatibility key, as $079B encodes it.
@@ -176,6 +177,7 @@ impl Session {
             compatibility_enemy_scratch: 0,
             shared_sequence: Default::default(),
             multiply_scratch: Default::default(),
+            pointer_scratch: Default::default(),
         }
     }
 }
@@ -503,6 +505,27 @@ pub struct SpawnScratch {
     pub header: u16,
     pub coordinates: u16,
     pub argument: u16,
+}
+
+/// The direct-page long pointer scratch ($00-$02) and the byte beside it ($03). Routines leave
+/// their last pointer here, and the Puyo's typo ($A2:9BBF) reads the word at $01.
+#[derive(Clone, Default, Debug, PartialEq)]
+pub struct PointerScratch {
+    /// $00: the pointer's address.
+    pub address: u16,
+    /// $02: the pointer's bank, and $03 above it.
+    pub bank: u16,
+}
+impl PointerScratch {
+    /// The word at $01: the address's high byte and the bank's low byte.
+    pub fn word_at_01(&self) -> u16 {
+        u16::from_le_bytes([self.address.to_le_bytes()[1], self.bank.to_le_bytes()[0]])
+    }
+    /// Point at `address` in bank $00 ($80), as the HUD's digit tiles do; $03 keeps its value.
+    pub fn point_at(&mut self, address: u16) {
+        self.address = address;
+        self.bank &= 0xff00;
+    }
 }
 
 #[derive(Clone, Copy, Default, Debug, PartialEq)]
