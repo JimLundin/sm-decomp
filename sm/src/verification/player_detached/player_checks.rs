@@ -185,6 +185,8 @@ fn trail_definitions(h: &Composed) {
         (0x93, 0x8ffe, 1),
         (0x9b, 0xa4b3, 0xa800),
         (0x9b, 0xa804, 0xb000),
+        (0x9b, 0xb004, 0x0402),
+        (0x9b, 0xb006, 0x0806),
         (0x9b, 0xb008, 0x0806),
         (0x9b, 0xb00a, 0x0c0a),
         (0x9b, 0xb00c, 0x1210),
@@ -307,28 +309,30 @@ fn emission_record_recapture() {
         h.image = super::RomImage::zeroed(0x300000);
         trail_definitions(h);
         h.word(0x93, 0x9000, 0x8239);
-        h.word(0x93, 0x9006, 3);
+        h.word(0x93, 0x8ffe, 3);
         h.world.player.projectiles.selected = 2;
         h.world.player.projectiles.shots[0].x = 150;
         h.world.player.projectiles.shots[0].y = 200;
+        // The recaptured record is the original image's $93:8FF8 entry.
         Some(super::RomRecord {
             image: old,
-            base: 0x99000,
+            base: 0x98ff8,
         })
     });
     player::presentation::emit(&mut h, 0);
+    // $93:81D1 reads the frame of the entry before the pointer ($93:8FFE = 1)
+    // from the record the first lookup returned, not the replaced image's 3.
     let pair = &h.world.player.projectiles.trails[17];
     assert_eq!(
         (pair.left.y, pair.left.x, pair.right.y, pair.right.x),
-        (214, 162, 218, 166)
+        (200, 148, 204, 152)
     );
     assert_eq!(
         h.events,
         [
-            Event::PlayerRecord(0x93, 0x9000),
-            Event::PlayerRecord(0x93, 0x9000),
+            Event::PlayerRecord(0x93, 0x8ff8),
             Event::PlayerRecord(0x9b, 0xa804),
-            Event::PlayerRecord(0x9b, 0xb00c)
+            Event::PlayerRecord(0x9b, 0xb004)
         ]
     );
 }
