@@ -8,13 +8,6 @@ impl ContentSource for Runtime<'_> {
     fn content_image(&self) -> RomImage {
         self.loaded_image().expect("ROM must be loaded")
     }
-    fn content_script_image(&self) -> sm_game::enemy_script::ScriptImage {
-        use sm_game::records::Records as _;
-        sm_game::enemy_script::ScriptImage::for_image(
-            self.records().loaded_program.as_ref(),
-            self.content_image(),
-        )
-    }
     fn native_content_image(&self) -> RomImage {
         self.native_image()
     }
