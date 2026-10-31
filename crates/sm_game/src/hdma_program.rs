@@ -311,13 +311,15 @@ fn execute<I: Interpreter>(handler: u16, index: usize, script: Script, it: &mut 
             it.set_byte(0xcd21, high);
             return script.advance(2);
         }
-        Command::InitializePhantoonWave => {
-            it.foreign(|game| game.hdma_effect(HdmaEffect::InitializePhantoonWave, slot))
+        Command::InitializePhantoonWave => it.foreign(|game| {
+            crate::hdma_effects::apply_leased(HdmaEffect::InitializePhantoonWave, slot, game)
+        }),
+        Command::InitializeEyeBeam => it.foreign(|game| {
+            crate::hdma_effects::apply_leased(HdmaEffect::InitializeEyeBeam, slot, game)
+        }),
+        Command::ResetWave => {
+            it.foreign(|game| crate::hdma_effects::apply_leased(HdmaEffect::ResetWave, slot, game))
         }
-        Command::InitializeEyeBeam => {
-            it.foreign(|game| game.hdma_effect(HdmaEffect::InitializeEyeBeam, slot))
-        }
-        Command::ResetWave => it.foreign(|game| game.hdma_effect(HdmaEffect::ResetWave, slot)),
         Command::RestartTitleGradient => it.foreign(crate::hdma_objects::restart_title_gradient),
     }
     script
