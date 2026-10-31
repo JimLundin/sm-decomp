@@ -674,6 +674,7 @@ fn registers_of(ppu: &Ppu) -> raster::registers::Registers {
             }
         }),
         mosaic_size: ppu.mosaicSize,
+        mosaic_start_line: ppu.mosaicStartLine,
         windows: raster::Windows {
             first: [ppu.window1left, ppu.window1right],
             second: [ppu.window2left, ppu.window2right],
@@ -711,6 +712,11 @@ fn registers_of(ppu: &Ppu) -> raster::registers::Registers {
             brightness: ppu.brightness,
         },
         direct_color: ppu.directColor,
+        interlace: ppu.interlace,
+        sprite_interlace: ppu.objInterlace,
+        overscan: ppu.overscan,
+        pseudo_hires: ppu.pseudoHires,
+        extended_background: ppu.m7extBg,
         scroll_latch: ppu.scrollPrev,
         horizontal_scroll_latch: ppu.scrollPrev2,
         affine_latch: ppu.m7prev,
@@ -781,8 +787,8 @@ pub(crate) unsafe fn native_line_restored(ppu: *mut Ppu) {
 }
 
 /// Step 3 of the native renderer: a PPU state built only from register and port
-/// accesses (`Registers`, `Ports`, `OwnedMemory`), rendering each line with no C
-/// PPU state but the beam-timed mosaic start line and modulo. With
+/// accesses (`Registers`, `Ports`, `OwnedMemory`) and the frame count, rendering
+/// each line with no emulated PPU or beam state. With
 /// `SM_NATIVE_LINES` set, each natively drawn line is drawn again from it and
 /// compared with the emulated PPU's line; `SM_NATIVE_LINES_LOG` receives the
 /// differing lines and each resync. Harness snapshot restores resync it
@@ -804,6 +810,7 @@ mod native_line {
         ports: Ports,
         memory: OwnedMemory,
         overflow: raster::Overflow,
+        even_frame: bool,
         frame: u32,
     }
 
@@ -822,6 +829,7 @@ mod native_line {
                     range: false,
                     time: false,
                 },
+                even_frame: ppu.evenFrame,
                 frame,
             }
         }
@@ -838,6 +846,10 @@ mod native_line {
                 Some("cgram")
             } else if self.memory.oam != ppu.oam || self.memory.high_oam != ppu.highOam {
                 Some("oam")
+            } else if self.even_frame != ppu.evenFrame {
+                Some("frame parity")
+            } else if ppu.mosaicEnabled != 0 || ppu.mosaicModulo != [0; 256] {
+                Some("mosaic cache")
             } else {
                 None
             }
@@ -897,14 +909,19 @@ mod native_line {
         }
         let ppu = unsafe { &*ppu };
         STATES.with_borrow_mut(|states| {
-            let state = states
-                .entry(ppu as *const Ppu as usize)
-                .or_insert_with(|| NativePpu::of(ppu, 0));
+            let key = ppu as *const Ppu as usize;
+            // A PPU seen for the first time starts from the frame it is at.
+            let Some(state) = states.get_mut(&key) else {
+                states.insert(key, NativePpu::of(ppu, 1));
+                return;
+            };
             state.frame += 1;
             state.overflow = raster::Overflow {
                 range: false,
                 time: false,
             };
+            state.even_frame = !state.even_frame;
+            state.registers.begin_frame();
             if let Some(part) = state.divergence(ppu) {
                 log(format_args!("{},resync,{part}\n", state.frame));
                 *state = NativePpu::of(ppu, state.frame);
@@ -971,8 +988,8 @@ mod native_line {
                         .ports
                         .sprite_priority
                         .then_some(state.ports.oam_address),
-                    interlace: ppu.objInterlace,
-                    even_frame: ppu.evenFrame,
+                    interlace: state.registers.sprite_interlace,
+                    even_frame: state.even_frame,
                 };
                 let (has_tiles, overflow) = raster::evaluate_sprites(
                     &Source(state, ppu),
@@ -993,12 +1010,14 @@ mod native_line {
                 windows: registers.windows,
                 routing: registers.routing,
                 affine: registers.affine,
+                // The emulated PPU's native mosaic byte and modulo are renderer
+                // caches nothing writes; lines with mosaic take the per-pixel path.
                 mosaic: raster::Mosaic {
-                    native_enabled: ppu.mosaicEnabled,
+                    native_enabled: 0,
                     background0_enabled: state.registers.layers[0].mosaic,
                     size: state.registers.mosaic_size,
-                    start_line: ppu.mosaicStartLine,
-                    modulo: &ppu.mosaicModulo,
+                    start_line: state.registers.mosaic_start_line,
+                    modulo: &[0; 256],
                     left: 0,
                 },
                 color: registers.color,
