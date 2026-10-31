@@ -395,7 +395,12 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, context: &mut Execution
         record_opcode_history((*cpu).k, (*cpu).pc, context);
         if opcode == 0 {
             let addr = (u32::from((*cpu).k) << 16) | u32::from((*cpu).pc) | 0x800000;
-            opcode = crate::cpu_infra::opcode_hook(context, addr.wrapping_sub(1)) as u8;
+            let hooked = crate::cpu_infra::opcode_hook(context, addr.wrapping_sub(1));
+            if hooked == crate::cpu_infra::REAL_BRK {
+                execute_upstream(cpu, 0x00, context);
+                return;
+            }
+            opcode = hooked as u8;
             match opcode {
                 0x00 => return,
                 0x01 => {
