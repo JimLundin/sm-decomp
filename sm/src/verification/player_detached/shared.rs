@@ -89,7 +89,10 @@ struct Composed {
     events: Vec<Event>,
     fail_upload: bool,
     animation_invalid_result: Option<u16>,
-    late_message: Option<u8>,
+    /// Every room record byte read, as an image offset in read order.
+    room_reads: std::rc::Rc<std::cell::RefCell<Vec<usize>>>,
+    /// How many room record reads preceded the delayed music callback.
+    room_reads_at_music: Option<usize>,
     message_yields: std::collections::VecDeque<u8>,
     on_upload: Option<fn(&mut World)>,
     on_enemy_random: Option<fn(&mut Composed)>,
@@ -119,7 +122,8 @@ impl Composed {
             events: Vec::new(),
             fail_upload: false,
             animation_invalid_result: None,
-            late_message: None,
+            room_reads: Default::default(),
+            room_reads_at_music: None,
             message_yields: Default::default(),
             on_upload: None,
             on_enemy_random: None,
@@ -139,13 +143,15 @@ impl Composed {
             on_player_mechanism: None,
         }
     }
+    /// The image offset of a LoROM bank and cursor.
+    fn offset(bank: u8, cursor: u16) -> usize {
+        usize::from(bank & 0x7f) * 0x8000 + usize::from(cursor & 0x7fff)
+    }
     fn byte(&mut self, bank: u8, cursor: u16, byte: u8) {
-        let base = usize::from(bank & 0x7f) * 0x8000;
-        self.edit(base + usize::from(cursor & 0x7fff), &[byte]);
+        self.edit(Self::offset(bank, cursor), &[byte]);
     }
     fn word(&mut self, bank: u8, cursor: u16, value: u16) {
-        let base = usize::from(bank & 0x7f) * 0x8000 + usize::from(cursor & 0x7fff);
-        self.edit(base, &value.to_ne_bytes());
+        self.edit(Self::offset(bank, cursor), &value.to_ne_bytes());
     }
     /// Replace the image with a copy that holds `bytes` at `at`.
     fn edit(&mut self, at: usize, bytes: &[u8]) {

@@ -4,6 +4,7 @@ use super::{Composed, Event, RomImage};
 pub(crate) struct RoomRecord {
     image: RomImage,
     base: usize,
+    reads: std::rc::Rc<std::cell::RefCell<Vec<usize>>>,
 }
 use super::game::room_mechanisms::host::*;
 
@@ -84,7 +85,8 @@ impl Content for Composed {
         assert_eq!(address.bank, 0x84);
         RoomRecord {
             image: self.image.clone(),
-            base: usize::from(address.bank & 0x7f) * 0x8000 + usize::from(address.offset & 0x7fff),
+            base: Composed::offset(address.bank, address.offset),
+            reads: self.room_reads.clone(),
         }
     }
     fn native_record(&mut self, address: ContentAddress) -> Self::Record {
@@ -162,9 +164,7 @@ impl Effects for Composed {
     fn delayed_room_music(&mut self, frames: u16) {
         assert_eq!(frames, 0x168);
         self.events.push(Event::RoomMusic(frames));
-        if let Some(message) = self.late_message {
-            self.byte(0x84, 0x9802, message);
-        }
+        self.room_reads_at_music = Some(self.room_reads.borrow().len());
     }
     fn display_message(&mut self, request: u16) -> u8 {
         self.events.push(Event::RoomMessage(
@@ -247,11 +247,12 @@ impl Host for Composed {}
 
 impl InstructionRecord for RoomRecord {
     fn byte(&self, offset: isize) -> u8 {
-        self.image.read(
-            self.base
-                .checked_add_signed(offset)
-                .expect("room content offset"),
-        )
+        let at = self
+            .base
+            .checked_add_signed(offset)
+            .expect("room content offset");
+        self.reads.borrow_mut().push(at);
+        self.image.read(at)
     }
     fn word(&self, offset: isize) -> u16 {
         u16::from_ne_bytes([self.byte(offset), self.byte(offset.checked_add(1).unwrap())])

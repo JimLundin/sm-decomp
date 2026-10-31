@@ -48,14 +48,21 @@ fn pickup_then_beam() {
     h.word(0x93, 0x8a00, 43);
     h.word(0x93, 0x8a06, 0x9000);
     h.word(0x84, 0x9800, 1);
-    h.byte(0x84, 0x9802, 9);
-    h.late_message = Some(12);
+    h.byte(0x84, 0x9802, 12);
     room::command(&mut h, 8685744, 0x9800, 0);
     assert_eq!(h.world.player.inventory.beams.active, 1);
-    assert_eq!(
-        h.world.player.messages.queued, 12,
-        "1041 late message operand observes music callback"
-    );
+    assert_eq!(h.world.player.messages.queued, 12, "1041 message operand");
+    {
+        // The cartridge cannot change mid-command, so the reads give the order.
+        let message = super::Composed::offset(0x84, 0x9802);
+        let reads = h.room_reads.borrow();
+        let music = h.room_reads_at_music.expect("music callback");
+        let (before, after) = reads.split_at(music);
+        assert!(
+            !before.contains(&message) && after.contains(&message),
+            "1041 late message operand observes music callback"
+        );
+    }
     assert_eq!(h.events, [Event::RoomVisual(1), Event::RoomMusic(0x168)]);
     player::fire(&mut h);
     assert_eq!(
