@@ -960,7 +960,7 @@ pub(crate) fn capture_case(id: u32) -> Option<Vec<u8>> {
     let image = install(&mut g, &bytes);
     if (66..=81).contains(&id) || id == 63 || id >= 318 {
         assert_eq!(
-            (image.as_mut_ptr() as usize + crate::rtl::lorom_offset(0x84a000) as usize) & 1,
+            (image.as_ptr() as usize + crate::rtl::lorom_offset(0x84a000) as usize) & 1,
             0,
             "native ROM stream alignment"
         );

@@ -120,8 +120,8 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
         let native = game.capture_native_rom();
         let cart = (*game.g_snes).cart;
         if cart.is_null()
-            || image.as_mut_ptr() != (*cart).rom.as_mut_ptr()
-            || image.as_mut_ptr() != native.as_mut_ptr()
+            || image.as_ptr() != (*cart).rom.as_mut_ptr()
+            || image.as_ptr() != native.as_ptr()
         {
             return Err("loaded/native/cartridge allocation mismatch".into());
         }
@@ -261,8 +261,8 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
             }
             observer::observe(11, game);
             if game.actor_identity_is_with_session()
-                || game.capture_native_rom().as_mut_ptr() != patched.as_mut_ptr()
-                || game.loaded_rom.as_ref().unwrap().as_mut_ptr() != patched.as_mut_ptr()
+                || game.capture_native_rom().as_ptr() != patched.as_ptr()
+                || game.loaded_rom.as_ref().unwrap().as_ptr() != patched.as_ptr()
             {
                 return Err("Rust call retained ownership or replaced fixture allocation".into());
             }

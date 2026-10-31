@@ -227,8 +227,8 @@ pub(crate) fn check_case(id: u32) -> bool {
             assert!(!game.g_fail);
         }
         4 => {
-            let first_pointer = first.as_mut_ptr() as *const u8;
-            let second_pointer = second.as_mut_ptr() as *const u8;
+            let first_pointer = first.as_ptr() as *const u8;
+            let second_pointer = second.as_ptr() as *const u8;
             game.register_native_rom(first);
             assert_eq!(game.legacy_native_rom_ptr(), first_pointer);
             game.register_native_rom(second);

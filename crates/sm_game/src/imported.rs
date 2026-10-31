@@ -6,9 +6,6 @@ use sm_data::table::{Rows, grid, words};
 /// A record and the allocation it was imported from.
 pub struct Imported<T> {
     image: RomImage,
-    /// `image.writes()` at import: any later write, such as a bug-fix patch,
-    /// retires the record until the image is imported again.
-    writes: u64,
     record: T,
 }
 
@@ -22,24 +19,19 @@ impl<T> Imported<T> {
         import: impl FnOnce(&[u8]) -> Result<T, E>,
     ) -> Option<Self> {
         let start = lorom_offset(address) as usize;
-        let bytes = (start..start + bytes)
-            .map(|at| (at < image.len()).then(|| image.read(at)))
-            .collect::<Option<Vec<u8>>>()?;
+        let bytes = image.bytes().get(start..start + bytes)?;
         Some(Self {
             image: image.clone(),
-            writes: image.writes(),
-            record: import(&bytes).ok()?,
+            record: import(bytes).ok()?,
         })
     }
 
-    /// The record while `rom` is still the allocation it came from, unwritten
-    /// since the import; callers keep the original ROM read otherwise.
+    /// The record while `rom` is still the allocation it came from; callers
+    /// keep the original ROM read otherwise.
     pub fn from<'a>(imported: &'a Option<Self>, rom: &RomImage) -> Option<&'a T> {
         imported
             .as_ref()
-            .filter(|imported| {
-                imported.image.same_allocation(rom) && imported.writes == rom.writes()
-            })
+            .filter(|imported| imported.image.same_allocation(rom))
             .map(|imported| &imported.record)
     }
 

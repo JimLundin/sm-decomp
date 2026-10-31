@@ -47,8 +47,8 @@ unsafe fn original_oam_entry(game: &Game, original: &[u8]) -> Result<OriginalOam
             .ok_or("sprite oracle missing native image")?;
         let cart = (*game.g_snes).cart;
         if cart.is_null()
-            || image.as_mut_ptr() != (*cart).rom.as_mut_ptr()
-            || image.as_mut_ptr() != native.as_mut_ptr()
+            || image.as_ptr() != (*cart).rom.as_mut_ptr()
+            || image.as_ptr() != native.as_ptr()
         {
             return Err("sprite oracle requires shared initialized cartridge bindings".into());
         }

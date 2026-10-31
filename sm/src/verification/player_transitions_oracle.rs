@@ -223,8 +223,8 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
             .ok_or("ROM must be loaded")?
             .clone();
         // SnesInit normally binds all three to this one allocation. Never shift it.
-        if image.as_mut_ptr() != (*(*game.g_snes).cart).rom.as_mut_ptr()
-            || image.as_mut_ptr() != game.capture_native_rom().as_mut_ptr()
+        if image.as_ptr() != (*(*game.g_snes).cart).rom.as_mut_ptr()
+            || image.as_ptr() != game.capture_native_rom().as_ptr()
         {
             return Err("oracle image bindings differ".into());
         }
