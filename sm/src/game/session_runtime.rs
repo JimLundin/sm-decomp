@@ -1111,6 +1111,9 @@ crate::game::callback_dispatch! {
 }
 impl Runtime<'_> {
     pub(crate) fn actor_ai_legacy(&mut self, routine: u32) {
+        if sm_game::actors::species::lease_ai(routine, self) {
+            return;
+        }
         match routine {
             11769448 => self.owned_call(actors::botwoon::main_ai),
             10920584 => self.owned_call(sm_game::actors::ceres_ridley::main),
@@ -1416,6 +1419,16 @@ impl sm_game::player_position::PlayerFacts for Runtime<'_> {
     }
     fn grapple_mirrored_angle(&self) -> u8 {
         Runtime::byte(self, 0xcfd)
+    }
+}
+/// Actor work the scheduler runs inside this lease stays on it, as an owned call.
+impl<'g> sm_game::actors::host::LeaseScope for Runtime<'g> {
+    type Scoped<'a>
+        = Runtime<'g>
+    where
+        Self: 'a;
+    fn with_lease<'s, R>(&'s mut self, action: impl FnOnce(&mut Self::Scoped<'s>) -> R) -> R {
+        self.owned_call(action)
     }
 }
 impl<'g> sm_game::grapple_swing::Host for Runtime<'g> {

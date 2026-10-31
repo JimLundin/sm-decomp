@@ -3,13 +3,10 @@
 //! shutter. Was `moving_platforms`. Each frame runs on one actor lease.
 use crate::actors::api::{self, Axis, ShotHandling};
 use crate::actors::combat::{self, current_slot};
-use crate::actors::host::{ActorLease, LeaseActors};
+use crate::actors::host::ActorLease;
 use crate::actors::layouts::part_view;
-use crate::enemy_projectiles::host::Effects as _;
-use crate::player_position::PlayerPosition as _;
 use crate::player_projectiles::content::table;
 use crate::ram::words as W;
-use crate::session_access::SessionAccess as _;
 use crate::session_slot;
 use sm_data::enemy_speeds::SpeedTable::Linear;
 
@@ -130,8 +127,7 @@ fn near(runtime: &mut impl ActorLease, distance: u16) -> bool {
 }
 
 /// Initialisation AI ($A2:E9DA, $A2:EE05, $A2:EE12, $A2:F111).
-pub fn initialize<H: LeaseActors + ?Sized>(kind: Kind, game: &mut H) {
-    let runtime = &mut game.lease();
+pub fn initialize(kind: Kind, runtime: &mut impl ActorLease) {
     let e = current_slot(runtime);
     if kind == Kind::GrowingShutter {
         let index = session_slot!(runtime, Growing[e].base.current_instruction) as i32
@@ -218,8 +214,7 @@ pub fn initialize<H: LeaseActors + ?Sized>(kind: Kind, game: &mut H) {
 }
 
 /// Main AI ($A2:EAB6, $A2:EED1, $A2:F1DE).
-pub fn main_ai<H: LeaseActors + ?Sized>(kind: Kind, game: &mut H) {
-    let runtime = &mut game.lease();
+pub fn main_ai(kind: Kind, runtime: &mut impl ActorLease) {
     if kind == Kind::GrowingShutter {
         return grow(runtime);
     }
@@ -449,19 +444,14 @@ fn activate(runtime: &mut impl ActorLease, p: &Motion) {
 }
 
 /// Enemy touch, shot and power bomb reactions ($A2:F09D-$A2:F0B6, $A2:F3D8-$A2:F41A).
-pub fn reaction<H: LeaseActors + ?Sized>(kind: Kind, event: Event, game: &mut H) {
+pub fn reaction(kind: Kind, event: Event, runtime: &mut impl ActorLease) {
     if let Event::Shot = event {
         match kind {
-            Kind::VerticalShutter => {
-                combat::shot_reaction(&mut game.lease(), ShotHandling::Finalize)
-            }
-            Kind::HorizontalShutter => {
-                combat::shot_reaction(&mut game.lease(), ShotHandling::ReactionOnly)
-            }
+            Kind::VerticalShutter => combat::shot_reaction(runtime, ShotHandling::Finalize),
+            Kind::HorizontalShutter => combat::shot_reaction(runtime, ShotHandling::ReactionOnly),
             _ => {}
         }
     }
-    let runtime = &mut game.lease();
     if kind == Kind::HorizontalShutter && matches!(event, Event::Touch) {
         let e = current_slot(runtime);
         if session_slot!(runtime, Mover[e].function) == HORIZONTAL.function(Nothing) {
