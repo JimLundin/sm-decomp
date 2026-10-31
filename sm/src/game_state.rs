@@ -268,6 +268,9 @@ pub struct Game {
     pub currently_installed_bug_fix_counter: u16,
     pub VERIFY_ACTIVE: bool,
     pub VERIFY_FAILURES: u64,
+    /// The lockstep observation comparison, when the verifier enabled it.
+    #[cfg(sm_verify_dll)]
+    pub observation: Option<Box<sm_tools::lockstep::Lockstep>>,
     pub g_got_mismatch_count: c_int,
     pub g_other_image: bool,
     pub g_debug_flag: bool,
@@ -991,6 +994,8 @@ impl Game {
             currently_installed_bug_fix_counter: 0,
             VERIFY_ACTIVE: false,
             VERIFY_FAILURES: 0,
+            #[cfg(sm_verify_dll)]
+            observation: None,
             g_got_mismatch_count: 0,
             g_other_image: false,
             g_debug_flag: false,
@@ -1182,6 +1187,19 @@ impl Game {
     /// suspend its authority; mutable owned writers update that same owner.
     pub(crate) fn compatibility_write_epoch(&self) -> u64 {
         self.ram.write_epoch()
+    }
+    /// The retained Session while it is current with RAM, for observation.
+    #[cfg(sm_verify_dll)]
+    pub(crate) fn observed_session(&self) -> Option<&sm_game::session::Session> {
+        match &self.persistent_session {
+            persistent_session::SessionSlot::Ready(state)
+                if self.persistent_ram_epoch == self.ram.write_epoch()
+                    && self.preflight_samus_runtime().is_ok() =>
+            {
+                Some(&state.gameplay)
+            }
+            _ => None,
+        }
     }
     /// The HDMA object table as `compatibility_byte` projects it: the
     /// retained Session's while it is current, the RAM words otherwise.

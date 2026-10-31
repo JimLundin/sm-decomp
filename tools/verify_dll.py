@@ -234,7 +234,7 @@ def cargo_host(root, rustc, output, source, inventory, frontend=False, retry=Tru
         # changing source contents. The crate root is always a library input.
         # This also works with pre-existing/seeded targets lacking CACHEDIR.TAG.
         (root / "sm/src/lib.rs").touch()
-        for package in ("sm_data", "sm_game", "sm_runtime"):
+        for package in ("sm_data", "sm_game", "sm_runtime", "sm_tools"):
             target_root = root / "crates" / package / "src/lib.rs"
             if target_root.is_file():
                 target_root.touch()
@@ -258,6 +258,8 @@ def build(root, rustc, use_cargo=None, frontend=False):
     data = output / "libsm_data.rlib" if data_root.is_file() else None
     runtime_root = root / "crates/sm_runtime/src/lib.rs"
     runtime = output / "libsm_runtime.rlib" if runtime_root.is_file() else None
+    tools_root = root / "crates/sm_tools/src/lib.rs"
+    tools = output / "libsm_tools.rlib" if tools_root.is_file() else None
     dll = output / HOST_LIBRARY
     sdk = [Path(path) for path in os.environ.get("LIBRARY_PATH", "").split(os.pathsep)
            if path]
@@ -313,14 +315,16 @@ def build(root, rustc, use_cargo=None, frontend=False):
     identity = build_identity()
     if (stamp.exists() and dll.exists() and library.exists() and game.exists()
             and (data is None or data.exists())
-            and (runtime is None or runtime.exists())):
+            and (runtime is None or runtime.exists())
+            and (tools is None or tools.exists())):
         try:
             saved = json.loads(stamp.read_text())
             if saved == {"inputs": identity, "dll": hashlib.sha256(dll.read_bytes()).hexdigest(),
                          "library": hashlib.sha256(library.read_bytes()).hexdigest(),
                          "game": hashlib.sha256(game.read_bytes()).hexdigest(),
                          "data": hashlib.sha256(data.read_bytes()).hexdigest() if data else None,
-                         "runtime": hashlib.sha256(runtime.read_bytes()).hexdigest() if runtime else None}:
+                         "runtime": hashlib.sha256(runtime.read_bytes()).hexdigest() if runtime else None,
+                         "tools": hashlib.sha256(tools.read_bytes()).hexdigest() if tools else None}:
                 checked = subprocess.run(
                     [sys.executable, str(root / "tools/verify_dll.py"), "--check-library", str(dll)],
                     cwd=root, capture_output=True, text=True,
@@ -354,11 +358,23 @@ def build(root, rustc, use_cargo=None, frontend=False):
             cwd=root, check=True,
         )
         runtime_flags = ["--extern", f"sm_runtime={runtime}"]
+    # The verification tooling reads the verifier build's sm_game.
+    tools_flags = []
+    if tools is not None:
+        subprocess.run(
+            common + (["-C", f"incremental={output / 'incremental-sm-tools'}"] if incremental else [])
+            + ["--crate-name", "sm_tools", "--crate-type", "rlib", str(tools_root),
+               "--extern", f"sm_game={game}", *data_flags, "-L", f"dependency={output}",
+               "-o", str(tools)],
+            cwd=root, check=True,
+        )
+        tools_flags = ["--extern", f"sm_tools={tools}"]
     subprocess.run(
         common + (["-C", f"incremental={output / 'incremental-sm'}"] if incremental else [])
         + ["--crate-name", "sm", "--crate-type", "rlib", "--cfg", "sm_verify_dll",
                   "--cfg", "sm_source_inventory",
                   "sm/src/lib.rs", "--extern", f"sm_game={game}", *data_flags, *runtime_flags,
+                  *tools_flags,
                   "-L", f"dependency={output}", "-o", str(library)],
         cwd=root, env=dict(os.environ, SM_VERIFY_SOURCE_INVENTORY=str(inventory)), check=True,
     )
@@ -381,7 +397,8 @@ def build(root, rustc, use_cargo=None, frontend=False):
                                 "library": hashlib.sha256(library.read_bytes()).hexdigest(),
                                 "game": hashlib.sha256(game.read_bytes()).hexdigest(),
                                 "data": hashlib.sha256(data.read_bytes()).hexdigest() if data else None,
-                                "runtime": hashlib.sha256(runtime.read_bytes()).hexdigest() if runtime else None}))
+                                "runtime": hashlib.sha256(runtime.read_bytes()).hexdigest() if runtime else None,
+                                "tools": hashlib.sha256(tools.read_bytes()).hexdigest() if tools else None}))
     return dll
 
 
@@ -692,6 +709,14 @@ def run_corpus(root, args):
         output = directory / f"{name}-{uuid.uuid4().hex}.audio-trace"
         return replay + ["--audio-trace", str(output)]
 
+    def with_divergence_report(replay, name):
+        # One typed-observation divergence record per row, beside its console names.
+        if args.divergence_report_directory is None:
+            return replay
+        directory = args.divergence_report_directory.resolve()
+        directory.mkdir(parents=True, exist_ok=True)
+        return replay + ["--divergence-report", str(directory / f"{name}.toml")]
+
     # Earlier windows can supply checked prefixes to later branches of the same inputs.
     passed = set()
     for segment in sorted(runnable, key=lambda item: (item["start_frame"], str(item["inputs"]))):
@@ -717,7 +742,7 @@ def run_corpus(root, args):
                 replay += ["--seed", str(segment["_seed_path"])]
             if "seed" in segment and not start:
                 print(f"SEGMENT {name}: seed {segment['seed']}, budget {segment['frames']} frames", flush=True)
-                code, _ = corpus_child(with_audio_trace(replay, name), root)
+                code, _ = corpus_child(with_divergence_report(with_audio_trace(replay, name), name), root)
                 if not input_matches(segment):
                     raise RuntimeError("inputs changed during seeded corpus segment")
                 if code:
@@ -733,7 +758,8 @@ def run_corpus(root, args):
                 output = directory / f"segment-{uuid.uuid4().hex}.smvchk"
                 print(f"SEGMENT {name}: start {start}, budget {segment['frames']} frames", flush=True)
                 code, rejected = corpus_child(
-                    with_audio_trace(replay, name) + ["--checkpoint-out", str(output)]
+                    with_divergence_report(with_audio_trace(replay, name), name)
+                    + ["--checkpoint-out", str(output)]
                     + (["--checkpoint-in", str(checkpoint)] if checkpoint else []), root)
                 if code == 0 or not checkpoint or not rejected or attempt:
                     break
@@ -867,6 +893,11 @@ def main():
                         help="stream ordered actual Cue/physical-oracle port outputs to a new file")
     parser.add_argument("--audio-trace-directory", type=Path,
                         help="retain one ordered physical-audio trace per selected corpus row")
+    parser.add_argument("--divergence-report", type=Path, metavar="PATH",
+                        help="write the typed observation comparison's first divergence, with "
+                        "both values, to a TOML file (the console names fields only)")
+    parser.add_argument("--divergence-report-directory", type=Path, metavar="DIR",
+                        help="write one --divergence-report TOML per selected corpus row")
     args = parser.parse_args()
     if args.room_pack_export is not None:
         if len(args.room_pack_export) != 1:
@@ -878,6 +909,11 @@ def main():
         parser.error("--audio-trace requires a direct paired-oracle replay")
     if args.audio_trace_directory is not None and args.corpus is None:
         parser.error("--audio-trace-directory requires --corpus")
+    if args.divergence_report is not None and (args.corpus is not None or args.inputs is None
+                                             or args.oracle_only or args.room_pack is not None):
+        parser.error("--divergence-report requires a direct paired-oracle replay")
+    if args.divergence_report_directory is not None and args.corpus is None:
+        parser.error("--divergence-report-directory requires --corpus")
     if args.audio_trace is not None or args.audio_trace_directory is not None:
         os.environ["SM_VERIFY_PHYSICAL_AUDIO"] = "1"
     if args.oracle is not None:
@@ -981,6 +1017,8 @@ def main():
         replay_args.extend(["--room-pack", str(args.room_pack.resolve())])
     if args.audio_trace is not None:
         replay_args.extend(["--audio-trace", str(args.audio_trace.resolve())])
+    if args.divergence_report is not None:
+        replay_args.extend(["--divergence-report", str(args.divergence_report.resolve())])
     if args.frames is not None:
         replay_args.extend(["--frames", str(args.frames)])
     for probe in args.require_hit:
@@ -1022,7 +1060,8 @@ def main():
         audio_dll_hash = audio_file_hash(dll)
         os.environ["SM_AUDIO_TRACE_DLL_SHA256"] = audio_dll_hash
         audio_identity["dll"] = audio_dll_hash
-    if (args.audio_trace is not None or args.unit_tests or args.room_pack is not None or producer or prepared_checkpoint or prepared_case
+    if (args.audio_trace is not None or args.divergence_report is not None
+            or args.unit_tests or args.room_pack is not None or producer or prepared_checkpoint or prepared_case
             or args.seed is not None or args.checkpoint_in is not None or args.checkpoint_out is not None
             or args.require_hit or args.expect):
         if not hasattr(host, "sm_verify_args"):

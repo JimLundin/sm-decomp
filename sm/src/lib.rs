@@ -10,6 +10,9 @@
 #![deny(unsafe_op_in_unsafe_fn)]
 #![allow(non_snake_case)]
 
+#[cfg(sm_verify_dll)]
+#[path = "verification/observation/mod.rs"]
+pub mod observation;
 #[cfg(any(feature = "frontend", sm_verify_dll))]
 #[path = "verify/checkpoint.rs"]
 pub mod verification_checkpoint;

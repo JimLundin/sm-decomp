@@ -453,6 +453,11 @@ impl<'g> Runtime<'g> {
     }
     fn relinquish(&mut self) {
         if let Some(state) = self.state.take() {
+            // The lockstep observes the engine's typed Session as the lease releases it.
+            #[cfg(sm_verify_dll)]
+            if let Some(lockstep) = self.game.observation.as_mut() {
+                lockstep.capture_lease(&state);
+            }
             if let Some((roles, required)) = self.persistent.take() {
                 let matching = std::sync::Arc::ptr_eq(&state.world, self.game.world())
                     && state.world.revision() == self.game.world().revision();

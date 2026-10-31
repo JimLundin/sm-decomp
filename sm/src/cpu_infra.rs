@@ -1339,6 +1339,8 @@ pub unsafe fn run_one_frame_of_game_both(native_game: &mut Game) {
             game.audio_output.enter_execution(position);
             // The engine's frame reads the controller the oracle frame was given.
             let buttons = game.input1_mut().currentState.reverse_bits();
+            #[cfg(sm_verify_dll)]
+            crate::observation::begin_engine_tick(game);
             crate::game::session_runtime::with_frame_session(game, |game| {
                 gameplay::tick(gameplay::TickInput { buttons }, game)
             });
@@ -1355,6 +1357,9 @@ pub unsafe fn run_one_frame_of_game_both(native_game: &mut Game) {
             let mut session_mine = session_native_adoption::capture(game)
                 .expect("Session Rust result capture rejected");
             (*game.g_snes).runningWhichVersion = 0xff;
+            // Typed observations of both results, beside the RAM comparison below.
+            #[cfg(sm_verify_dll)]
+            let observation_failed = crate::observation::observe(game);
             verify_snapshots_eq(
                 &raw mut *game.g_snapshot_mine,
                 &raw mut *game.g_snapshot_theirs,
@@ -1399,6 +1404,8 @@ pub unsafe fn run_one_frame_of_game_both(native_game: &mut Game) {
             // Select recovery commands; successful physical comparison adopts mine below.
             queue_mine.select_runtime(queue_theirs, game);
             let failed = game.g_fail;
+            #[cfg(sm_verify_dll)]
+            crate::observation::agree(game, observation_failed, failed);
             if failed {
                 if game.VERIFY_ACTIVE {
                     game.VERIFY_FAILURES += 1;
