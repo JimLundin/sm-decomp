@@ -651,7 +651,7 @@ BUG_HOOKS = [
     (0xA7B049, 'b', 'state', 'removed', 'follows',
      "Kraid's mouth / projectile collision handling",
      'After one hit, hardware keeps looping over the remaining projectiles with junk $12/$14 bounds and may register extra hits that frame; the hook sets X=0 to end the loop'),
-    (0xA5A018, 'b', 'visual', 'removed', 'patched',
+    (0xA5A018, 'b', 'visual', 'removed', 'follows',
      'Handle death sequence evir movement',
      'Hardware subtracts the stale temp [$0E24] from the evir sprite object X position when moving left, making the sprites jump; the hook zeroes it'),
     (0xB39DDB, 'a', 'none', 'removed', 'patched',
