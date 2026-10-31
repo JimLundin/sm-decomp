@@ -14,9 +14,6 @@ fn record(out: &mut Vec<u8>, tag: u8, bytes: &[u8]) {
     out.extend_from_slice(&(bytes.len() as u32).to_le_bytes());
     out.extend_from_slice(bytes);
 }
-pub(crate) fn active() -> bool {
-    CASE.with(|id| id.get().is_some())
-}
 fn known(id: u32) -> bool {
     matches!(id, 100..=104 | 300..=304 | 400..=407
         | 500..=509 | 600..=605 | 700..=702

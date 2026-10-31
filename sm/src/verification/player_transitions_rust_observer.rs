@@ -100,12 +100,3 @@ pub(crate) fn projected(name: &str, state: &Session, game: &Game) {
 pub(crate) fn word(game: &Game, at: usize) -> u16 {
     u16::from_le_bytes([game.ram().read_byte(at), game.ram().read_byte(at + 1)])
 }
-pub(crate) fn before(game: &Game, at: usize) -> u16 {
-    if active() { word(game, at) } else { 0 }
-}
-pub(crate) fn published(kind: u16, at: usize, before: u16, game: &Game) {
-    if !active() {
-        return;
-    }
-    publication(kind, at, before, word(game, at));
-}

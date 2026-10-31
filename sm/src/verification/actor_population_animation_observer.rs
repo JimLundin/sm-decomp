@@ -148,19 +148,6 @@ pub(crate) fn opcode(event: u16, address: u32, key: u16, g: &mut Game) {
         }
     });
 }
-pub(crate) fn diagnostic(address: u32, g: &mut Game) {
-    let (_, host) = g.execution_parts();
-    diagnostic_parts(
-        address,
-        host.ram,
-        host.loaded_rom,
-        host.g_fail,
-        host.eproj_spawn_rect,
-        host.eproj_spawn_r22,
-        host.eproj_spawn_pt,
-        host.eproj_spawn_varE24,
-    );
-}
 pub(crate) fn diagnostic_parts(
     address: u32,
     ram: &WorkRam,

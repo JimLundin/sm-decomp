@@ -164,9 +164,7 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
             record(&mut output, 12, &allocation);
             observer::begin(output, game, Vec::new());
             observer::observe(1, game);
-            ACTIVE.with(|active| active.set(true));
             invoke(id, game);
-            ACTIVE.with(|active| active.set(false));
             if game.actor_identity_is_with_session() {
                 return Err("actual caller retained Session authority".into());
             }
@@ -230,7 +228,6 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
             }
             Ok(bytes)
         }));
-        ACTIVE.with(|active| active.set(false));
         let _ = observer::finish();
         game.loaded_rom = loaded_before;
         game.restore_native_rom_binding(native_before);
@@ -259,12 +256,6 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
         game.g_fail = fail_before;
         result.unwrap_or_else(|_| Err("composed invocation unexpectedly panicked".into()))
     }
-}
-
-thread_local! { static ACTIVE: std::cell::Cell<bool> = const { std::cell::Cell::new(false) }; }
-/// Only qualifies actual legacy phase220 observation; does not emit an event.
-pub(crate) fn active() -> bool {
-    ACTIVE.with(std::cell::Cell::get)
 }
 
 fn word(game: &Game, at: usize) -> u16 {

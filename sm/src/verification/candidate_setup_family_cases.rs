@@ -38,7 +38,6 @@ const SETUPS: &[u32] = &[
     8826704, 8826829, 8842338, // landing dust and Maw linked-body producer
 ];
 pub(super) const CASES: u32 = SETUPS.len() as u32 * 8;
-pub(super) const IMAGE_BYTES: usize = 0x200000;
 
 pub(super) unsafe fn execute(id: u32, game: &mut Game, image: &RomImage) -> Option<usize> {
     assert!(id < CASES);
