@@ -1623,4 +1623,3 @@ start_frame = 0
 frames = 1501
 expect = ["room:B32E"]
 require_hit = ["ridley.swoop_velocities"]
-pending = "awaiting the seeds-v1-ridley-swoop-3ac1b65c9164ca03 ci-data upload"
