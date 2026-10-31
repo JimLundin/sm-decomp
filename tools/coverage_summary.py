@@ -180,6 +180,19 @@ def main():
     for (path, line, name), size in sorted(cold.items(), key=lambda item: -item[1])[:150]:
         reached = " (route executes)" if route and route_functions.get((path, line, name), (0, 0))[0] else ""
         out.append(f"- `{path}:{line}` {name} (~{size} lines){reached}")
+    # Samus's movement, collision, weapons and grapple are authored as trick
+    # rows, so list every cold function there, however small.
+    samus = collections.defaultdict(list)
+    for (path, line, name), size in cold.items():
+        if re.search(r"/src/(player_|grapple|samus|projectile|launch_motion|liquid)", path):
+            samus[path].append((line, name, size))
+    out += ["", f"## Never-executed Samus functions in the corpus ({sum(map(len, samus.values()))})",
+            "", "Movement, collision, weapons and grapple sources, by file.", ""]
+    for path, items in sorted(samus.items()):
+        out.append(f"- `{path}`")
+        for line, name, size in sorted(items):
+            reached = " (route executes)" if route and route_functions.get((path, line, name), (0, 0))[0] else ""
+            out.append(f"  - `:{line}` {name} (~{size} lines){reached}")
     with open(output, "w", encoding="utf-8", newline="\n") as handle:
         handle.write("\n".join(out) + "\n")
     print("\n".join(out[:5]))
