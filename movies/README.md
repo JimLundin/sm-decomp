@@ -172,7 +172,9 @@ A row's `require_hit` names the probes it must reach, and the row fails if
 any never runs. Routines a row exists to cover carry a probe named
 `module.routine`, for example `draygon_grab.tail_whip`; add one with
 `crate::probe::hit` (or `crate::verify_probe::hit` in `sm`) inside the
-branch that does the work.
+branch that does the work. Ice physics (`contact_physics.ice`, PLM $B70F,
+Crateria special air with BTS 80h) has no row: no Crateria level the seeds
+capture places it, so retail play never reaches it.
 
 A scenario seed is a recorded room seed with declared edits to its work RAM:
 energy, ammunition, items, beams, the selected item, Samus's position or raw
