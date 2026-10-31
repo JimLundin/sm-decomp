@@ -234,15 +234,13 @@ fn binding() -> Arc<WorldBinding> {
     }
     WorldBinding::prepared_with_actors(world, keys, actors, actor_keys, media).unwrap()
 }
-fn word(image: &RomImage, address: u32, value: u16) {
+fn word(image: &mut [u8], address: u32, value: u16) {
     let at = lorom_offset(address) as usize;
-    for (lane, byte) in value.to_ne_bytes().into_iter().enumerate() {
-        image.write(at + lane, byte);
-    }
+    image[at..at + 2].copy_from_slice(&value.to_ne_bytes());
 }
 fn game() -> Box<Game> {
     let mut game = Game::with_world(binding());
-    let image = RomImage::zeroed(0x200000);
+    let mut image = vec![0; 0x200000];
     // All source bytes initialized, full owned allocation, harmless actual init.
     for (field, value) in [
         (offset_of!(EnemyDef, bank), 0x04a2),
@@ -250,13 +248,14 @@ fn game() -> Box<Game> {
         (offset_of!(EnemyDef, num_parts), 1),
         (offset_of!(EnemyDef, name_ptr), 0),
     ] {
-        word(&image, 0xa0d000 + field as u32, value);
+        word(&mut image, 0xa0d000 + field as u32, value);
     }
     for address in [0xa18000, 0xa18040] {
         for (lane, value) in [0xd000, 51, 80, 0x9000, 0, 0, 0, 0].into_iter().enumerate() {
-            word(&image, address + lane as u32 * 2, value);
+            word(&mut image, address + lane as u32 * 2, value);
         }
     }
+    let image = RomImage::from(image);
     game.register_rom(image.clone());
     game.register_native_rom(image.clone());
     game.ram().copy_in(

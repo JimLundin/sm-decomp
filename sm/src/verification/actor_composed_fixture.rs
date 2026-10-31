@@ -233,11 +233,9 @@ fn bound(reversed: bool, table: Option<u8>) -> Arc<WorldBinding> {
         None => binding,
     }
 }
-fn write(image: &crate::rom::RomImage, address: u32, bytes: &[u8]) {
+fn write(image: &mut [u8], address: u32, bytes: &[u8]) {
     let base = crate::rom::lorom_offset(address) as usize;
-    for (i, &byte) in bytes.iter().enumerate() {
-        image.write(base + i, byte);
-    }
+    image[base..base + bytes.len()].copy_from_slice(bytes);
 }
 fn put(bytes: &mut [u8], at: usize, value: u16) {
     bytes[at..at + 2].copy_from_slice(&value.to_le_bytes());
@@ -276,8 +274,14 @@ pub(crate) fn install(g: &mut Game) {
     crate::room_world_resources::install(g);
     let loaded = g.loaded_rom.clone().expect("initialized loaded image");
     let native = g.capture_native_rom();
+    let shared = loaded.same_allocation(&native);
+    let mut images = [&loaded, &native].map(|image| {
+        (0..image.len())
+            .map(|at| image.read(at))
+            .collect::<Vec<_>>()
+    });
     // Both actual consumer allocations are initialized; do not register only loaded ROM.
-    for image in [&loaded, &native] {
+    for image in &mut images {
         for i in 0..3 {
             write(
                 image,
@@ -302,4 +306,8 @@ pub(crate) fn install(g: &mut Game) {
         write(image, 0xa19200, &[0; 20]);
         write(image, 0xa19400, &[0; 16]);
     }
+    // The authored images replace the initialized ones, keeping their aliasing.
+    let [loaded, native] = images.map(crate::rom::RomImage::from);
+    g.register_native_rom(if shared { loaded.clone() } else { native });
+    g.register_rom(loaded);
 }

@@ -21,11 +21,9 @@ const SHOT: usize = offset_of!(EnemyDef, shot_ai);
 fn put(bytes: &mut [u8], at: usize, value: u16) {
     bytes[at..at + 2].copy_from_slice(&value.to_ne_bytes());
 }
-fn image_word(image: &RomImage, address: u32, offset: usize, value: u16) {
+fn image_word(image: &mut [u8], address: u32, offset: usize, value: u16) {
     let at = lorom_offset(address) as usize + offset;
-    for (lane, byte) in value.to_ne_bytes().into_iter().enumerate() {
-        image.write(at + lane, byte);
-    }
+    image[at..at + 2].copy_from_slice(&value.to_ne_bytes());
 }
 fn bytes(image: &RomImage) -> Vec<u8> {
     (0..image.len()).map(|at| image.read(at)).collect()
@@ -43,29 +41,30 @@ fn native(g: &Game) -> [u16; 8] {
     ]
 }
 pub(crate) fn image() -> RomImage {
-    let image = RomImage::zeroed(0x200000);
-    image_word(&image, 0xa0d000, SHOT, 0x9000); // Nonignored gate; not dispatched by extended contact.
-    image_word(&image, 0xa0d000, offset_of!(EnemyDef, touch_ai), 0x804c);
-    image_word(&image, 0xa7c5e7, 0, 0xffff); // Packed sink table terminator before any callback.
-    for i in 0..32 {
-        image.write(lorom_offset(0xa786c7) as usize + i, 0x40 + i as u8);
+    let mut image = vec![0; 0x200000];
+    image_word(&mut image, 0xa0d000, SHOT, 0x9000); // Nonignored gate; not dispatched by extended contact.
+    image_word(&mut image, 0xa0d000, offset_of!(EnemyDef, touch_ai), 0x804c);
+    image_word(&mut image, 0xa7c5e7, 0, 0xffff); // Packed sink table terminator before any callback.
+    let at = lorom_offset(0xa786c7) as usize;
+    for (i, byte) in image[at..at + 32].iter_mut().enumerate() {
+        *byte = 0x40 + i as u8;
     }
-    image_word(&image, 0xa79000, 0, 1);
+    image_word(&mut image, 0xa79000, 0, 1);
     image_word(
-        &image,
+        &mut image,
         0xa79000,
         2 + offset_of!(ExtendedSpriteMap, hitboxes),
         0x9100,
     );
-    image_word(&image, 0xa79100, 0, 1);
+    image_word(&mut image, 0xa79100, 0, 1);
     for field in [offset_of!(Hitbox, left), offset_of!(Hitbox, top)] {
-        image_word(&image, 0xa79100, 2 + field, 0xfff8);
+        image_word(&mut image, 0xa79100, 2 + field, 0xfff8);
     }
     for field in [offset_of!(Hitbox, right), offset_of!(Hitbox, bottom)] {
-        image_word(&image, 0xa79100, 2 + field, 8);
+        image_word(&mut image, 0xa79100, 2 + field, 8);
     }
-    image_word(&image, 0xa79100, 2 + offset_of!(Hitbox, shot), 0x804c); // Real A7804C no-op.
-    image
+    image_word(&mut image, 0xa79100, 2 + offset_of!(Hitbox, shot), 0x804c); // Real A7804C no-op.
+    RomImage::from(image)
 }
 pub(crate) fn seed(g: &mut Game, image: &RomImage) {
     // This is fixture construction, not a reset claim. Register BOTH owners: legacy

@@ -27,12 +27,11 @@ pub(crate) fn get_parts(ram: &WorkRam, at: usize) -> u16 {
 fn ew(g: &mut Game, k: u16, field: usize, v: u16) {
     put(g, 0xf78 + usize::from(k) + field, v);
 }
-fn rw(r: &RomImage, address: u32, v: u16) {
-    for (i, b) in v.to_ne_bytes().into_iter().enumerate() {
-        r.write(offset(address) + i, b);
-    }
+fn rw(r: &mut [u8], address: u32, v: u16) {
+    let at = offset(address);
+    r[at..at + 2].copy_from_slice(&v.to_ne_bytes());
 }
-fn def(r: &RomImage, address: u32, parts: u16) {
+fn def(r: &mut [u8], address: u32, parts: u16) {
     for (field, v) in [
         (offset_of!(D, x_radius), 13),
         (offset_of!(D, y_radius), 17),
@@ -46,9 +45,9 @@ fn def(r: &RomImage, address: u32, parts: u16) {
     ] {
         rw(r, address + field as u32, v);
     }
-    r.write(offset(address) + offset_of!(D, layer), 3);
+    r[offset(address) + offset_of!(D, layer)] = 3;
 }
-fn population(r: &RomImage, address: u32, definition: u16, x: u16) {
+fn population(r: &mut [u8], address: u32, definition: u16, x: u16) {
     for (i, v) in [definition, x, 0xfff0, 0x9000, 0x2400, 0, 0x6789, 0xabcd]
         .into_iter()
         .enumerate()
@@ -108,11 +107,16 @@ pub(crate) fn run(op: Operation, g: &mut Game) -> Option<u16> {
             Operation::Install => crate::game::actors::reference_population_animation::transfer(g),
             Operation::PrepareInstall => {
                 crate::game::actors::reference_population_animation::prepare(g);
-                // Content changes after actual preparation, before actual installation.
+                // Content changes after actual preparation, before actual installation:
+                // a changed image replaces the prepared one.
                 let image = g.loaded_rom.as_ref().unwrap();
-                population(image, 0xa18000, 0x9100, 0x2468);
-                rw(image, 0xa18010, 0xffff);
-                image.write(offset(0xa18012), 9);
+                let mut bytes = (0..image.len())
+                    .map(|at| image.read(at))
+                    .collect::<Vec<_>>();
+                population(&mut bytes, 0xa18000, 0x9100, 0x2468);
+                rw(&mut bytes, 0xa18010, 0xffff);
+                bytes[offset(0xa18012)] = 9;
+                g.loaded_rom = Some(RomImage::from(bytes));
                 put(g, w::ENEMY_TILE_VRAM_SRC, 0xfffe);
                 crate::game::actors::reference_population_animation::transfer(g);
             }
@@ -136,19 +140,19 @@ pub(crate) fn run(op: Operation, g: &mut Game) -> Option<u16> {
     }
     None
 }
-fn script(r: &RomImage, address: u32, values: &[u16]) {
+fn script(r: &mut [u8], address: u32, values: &[u16]) {
     for (i, v) in values.iter().enumerate() {
         rw(r, address + 2 * i as u32, *v);
     }
 }
-fn fixture(id: u32, g: &mut Game, loaded: &RomImage, native: &RomImage) -> Operation {
+fn fixture(id: u32, g: &mut Game, loaded: &mut [u8], native: &mut [u8]) -> Operation {
     // All bytes initialized; sentinel pattern exposes unintended unrelated writes.
     for i in 0..g.ram().len() {
         g.ram().write_byte(i, (i.wrapping_mul(37) ^ (i >> 8)) as u8);
     }
     g.g_fail = false;
     // Native allocations remain full, distinct and lifetime-owned. No short raw pointers.
-    for r in [loaded, native] {
+    for r in [&mut *loaded, &mut *native] {
         def(r, 0xa09000, 1);
         def(r, 0xa09100, 1);
         def(r, 0xa01000, 1);
@@ -167,7 +171,7 @@ fn fixture(id: u32, g: &mut Game, loaded: &RomImage, native: &RomImage) -> Opera
             );
         }
         rw(r, 0xa18020, 0xffff);
-        r.write(offset(0xa18022), 7);
+        r[offset(0xa18022)] = 7;
         rw(r, 0xb48000, 0x9100);
         rw(r, 0xb48002, 3);
         rw(r, 0xb48004, 0x9000);
@@ -305,9 +309,8 @@ fn fixture(id: u32, g: &mut Game, loaded: &RomImage, native: &RomImage) -> Opera
                     let bytes = [
                         0x4b, 0x81, 0x34, 0x12, 0x78, 0x56, 0xa9, 0xbc, 0x9a, 7, 0, 0x68, 0x24,
                     ];
-                    for (i, b) in bytes.into_iter().enumerate() {
-                        loaded.write(offset(0xaa9000) + i, b);
-                    }
+                    loaded[offset(0xaa9000)..offset(0xaa9000) + bytes.len()]
+                        .copy_from_slice(&bytes);
                 }
                 32 => {
                     script(loaded, 0xa29000, &[0x8173, 0x8123, 0x2468, 7, 0x1357]);
@@ -358,24 +361,19 @@ pub(crate) fn capture_case(
         return catch_unwind(AssertUnwindSafe(spikey_initialization_prefix)).ok();
     }
     let result = catch_unwind(AssertUnwindSafe(|| {
-        let native = RomImage::zeroed(0x200000);
-        let loaded = RomImage::zeroed(0x200000);
+        let mut native = vec![0; 0x200000];
+        let mut loaded = vec![0; 0x200000];
         let mut g = Game::new();
-        g.register_native_rom(native.clone());
-        g.loaded_rom = Some(loaded.clone());
-        let op = fixture(id, &mut g, &loaded, &native);
+        let op = fixture(id, &mut g, &mut loaded, &mut native);
         if matches!(id, 30 | 31) {
-            let len = if id == 30 {
+            loaded.truncate(if id == 30 {
                 offset(0xa29000) + 2
             } else {
                 offset(0xaa9000) + 7
-            };
-            let short = RomImage::zeroed(len);
-            for i in 0..len {
-                short.write(i, loaded.read(i));
-            }
-            g.loaded_rom = Some(short);
+            });
         }
+        g.register_native_rom(RomImage::from(native));
+        g.loaded_rom = Some(RomImage::from(loaded));
         let mut out = b"APAN1".to_vec();
         out.extend_from_slice(&id.to_le_bytes());
         snapshot(&mut out, &g);
@@ -608,13 +606,11 @@ fn spikey_initialization_prefix() -> Vec<u8> {
             0 => None,
             1 => Some(RomImage::zeroed(table + 27)),
             _ => {
-                let image = RomImage::zeroed(0x200000);
+                let mut image = vec![0; 0x200000];
                 for (at, value) in [(table + 24, 0x3344u16), (table + 26, 0x1122)] {
-                    for (lane, byte) in value.to_ne_bytes().into_iter().enumerate() {
-                        image.write(at + lane, byte);
-                    }
+                    image[at..at + 2].copy_from_slice(&value.to_ne_bytes());
                 }
-                Some(image)
+                Some(RomImage::from(image))
             }
         };
         let mut expected = (0..g.ram().len())
