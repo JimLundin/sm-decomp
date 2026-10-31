@@ -1188,10 +1188,14 @@ pub unsafe fn draw_frame_to_ppu(native_game: &mut Game) {
     game.preflight_samus_runtime()
         .expect("Samus settlement entry rejected");
     let mut mutation = game.samus_mutation();
+    #[cfg(sm_verify_dll)]
+    crate::game::scanline_irq::table_check::begin_frame(mutation.game());
     match sm_game::scene::settle::settle(&mut NativeSettlement(mutation.game())) {
         Ok(()) => (),
         Err(never) => match never {},
     }
+    #[cfg(sm_verify_dll)]
+    crate::game::scanline_irq::table_check::end_frame();
     mutation
         .finish_current()
         .expect("Samus settlement adoption rejected");
