@@ -92,14 +92,6 @@ impl sm_game::room_state::fx::FxHost for Runtime<'_> {
     }
 }
 
-pub(crate) fn load_fx_entry(index: u16, game: &mut Game) {
-    sm_game::room_state::fx::load_entry(&mut Runtime::new(game), index);
-}
-
-pub(crate) fn load_fx_header(game: &mut Game) {
-    sm_game::room_state::fx::load_header(&mut Runtime::new(game));
-}
-
 pub(crate) fn advance_room(game: &mut Game) {
     let script = word!(game.ROOM_MAIN_CODE_PTR);
     if script != 0 {

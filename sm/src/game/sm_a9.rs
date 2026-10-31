@@ -327,7 +327,7 @@ impl sm_game::actors::mother_brain_fight::Host for Game {
     }
 
     fn load_fx_entry(&mut self, index: u16) {
-        crate::game::room_state::load_fx_entry(index, self);
+        sm_game::room_state::fx::load_entry(&mut Runtime::new(self), index);
     }
 
     fn native_word(&mut self, offset: usize) -> u16 {

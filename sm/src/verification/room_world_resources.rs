@@ -429,7 +429,10 @@ fn check_fx_assets(world: &WorldDefinition, keys: &CompatibilityKeys, assets: &P
     );
     for index in 0..16u16 {
         game.g_fail = false;
-        crate::game::room_state::load_fx_entry(index, &mut game);
+        sm_game::room_state::fx::load_entry(
+            &mut crate::game::session_runtime::Runtime::new(&mut game),
+            index,
+        );
         let h = crate::game::session_runtime::Runtime::new(&mut game);
         assert_eq!(h.session().room.liquid_height, 0x2000 + (index & 7));
         assert_eq!(h.session().room.liquid_target, 0x3000 + (index & 7));
@@ -445,7 +448,9 @@ fn check_fx_assets(world: &WorldDefinition, keys: &CompatibilityKeys, assets: &P
         crate::ram_map::words::DOOR_DEF_PTR,
         &0x1003u16.to_le_bytes(),
     );
-    crate::game::room_state::load_fx_header(&mut game);
+    sm_game::room_state::fx::load_header(&mut crate::game::session_runtime::Runtime::new(
+        &mut game,
+    ));
     assert_eq!(
         crate::game::session_runtime::Runtime::new(&mut game)
             .session()
