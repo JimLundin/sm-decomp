@@ -1,5 +1,6 @@
 //! Frozen synthetic gameplay-flags scenarios; actual implementation supplied by adapter.
-use crate::{game_state::Game, rom::RomImage, save_ram::SaveRam};
+use crate::{game_state::Game, rom::RomImage};
+use sm_game::save_file::SaveRam;
 use std::panic::{AssertUnwindSafe, catch_unwind};
 pub(crate) const CASES: u32 = 71;
 #[derive(Clone, Copy)]

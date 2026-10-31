@@ -92,7 +92,7 @@ fn load_from_sram(slot: u16, g: &mut Game) -> u8 {
 fn load_entry(case: u32) {
     let mut game = Game::new();
     game.ram().fill(0..game.ram().len(), 0x69);
-    game.g_sram = crate::save_ram::SaveRam::zeroed(8192);
+    game.g_sram = sm_game::save_file::SaveRam::zeroed(8192);
     let image = crate::rom::RomImage::zeroed(0x200000);
     game.loaded_rom = Some(image.clone());
     game.register_native_rom(image.clone());

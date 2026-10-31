@@ -483,7 +483,6 @@ pub use sm_runtime::rendering;
 pub mod rom;
 pub mod rom_patches;
 pub mod room_pack;
-pub mod save_ram;
 pub mod snapshot_io;
 
 /// Execution requirements for focused verifier scenarios.

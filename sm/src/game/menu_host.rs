@@ -2,30 +2,9 @@
 use crate::game::session_runtime::Runtime;
 use crate::game::visual_runtime;
 use crate::game_state::Game;
-use crate::save_ram::SaveRam;
 use sm_game::menus::host::{Host, MenuRuntime};
+use sm_game::save_file::SaveRam;
 use {sm_game::room_entry::api::ArrivalRequest, sm_game::room_entry::api::StartSite};
-
-impl sm_game::menus::host::SaveRam for SaveRam {
-    fn word(&self, at: usize) -> u16 {
-        SaveRam::word(self, at)
-    }
-    fn set_word(&self, at: usize, value: u16) {
-        SaveRam::set_word(self, at, value)
-    }
-    fn bytes(&self, range: core::ops::Range<usize>) -> Vec<u8> {
-        SaveRam::bytes(self, range)
-    }
-    fn write_bytes(&self, at: usize, input: &[u8]) {
-        SaveRam::write_bytes(self, at, input)
-    }
-    fn copy_within(&self, source: core::ops::Range<usize>, destination: usize) {
-        SaveRam::copy_within(self, source, destination)
-    }
-    fn fill(&self, range: core::ops::Range<usize>, value: u8) {
-        SaveRam::fill(self, range, value)
-    }
-}
 
 impl sm_game::sprite_output::SpriteHost for Game {
     fn warn_invalid_rom(&mut self, address: u32) {

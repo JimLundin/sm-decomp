@@ -239,7 +239,7 @@ pub struct Game {
     pub message_box_hdma: bool,
     pub k_out: u16,
 
-    pub g_sram: crate::save_ram::SaveRam,
+    pub g_sram: sm_game::save_file::SaveRam,
     pub g_rtl_memory_ptr: *mut u8,
     pub g_rtl_runframe: Option<RunFrameFunc>,
     pub g_rtl_syncall: Option<SyncAllFunc>,

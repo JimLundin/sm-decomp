@@ -156,3 +156,80 @@ mod tests {
         assert_ne!(load(&mut memory, 1), checksum);
     }
 }
+
+use std::{cell::Cell, ops::Range, rc::Rc};
+
+/// The cartridge's battery-backed SRAM bytes, shared by the cartridge bus,
+/// the save menus and snapshots.
+#[derive(Clone, Default)]
+pub struct SaveRam(Rc<[Cell<u8>]>);
+
+impl SaveRam {
+    pub fn zeroed(length: usize) -> Self {
+        Self((0..length).map(|_| Cell::new(0)).collect())
+    }
+
+    pub fn read(&self, offset: usize) -> u8 {
+        self.0[offset].get()
+    }
+
+    pub fn write(&self, offset: usize, value: u8) {
+        self.0[offset].set(value);
+    }
+
+    pub fn word(&self, offset: usize) -> u16 {
+        u16::from_ne_bytes([self.read(offset), self.read(offset + 1)])
+    }
+
+    pub fn set_word(&self, offset: usize, value: u16) {
+        self.write_bytes(offset, &value.to_ne_bytes());
+    }
+
+    pub fn read_bytes(&self, offset: usize, output: &mut [u8]) {
+        let cells = &self.0[offset..offset + output.len()];
+        for (byte, cell) in output.iter_mut().zip(cells) {
+            *byte = cell.get();
+        }
+    }
+
+    pub fn write_bytes(&self, offset: usize, input: &[u8]) {
+        for (cell, &byte) in self.0[offset..offset + input.len()].iter().zip(input) {
+            cell.set(byte);
+        }
+    }
+
+    pub fn bytes(&self, range: Range<usize>) -> Vec<u8> {
+        self.0[range].iter().map(Cell::get).collect()
+    }
+
+    pub fn fill(&self, range: Range<usize>, value: u8) {
+        for cell in &self.0[range] {
+            cell.set(value);
+        }
+    }
+
+    pub fn copy_within(&self, source: Range<usize>, destination: usize) {
+        self.write_bytes(destination, &self.bytes(source));
+    }
+}
+
+impl crate::menus::host::SaveRam for SaveRam {
+    fn word(&self, at: usize) -> u16 {
+        SaveRam::word(self, at)
+    }
+    fn set_word(&self, at: usize, value: u16) {
+        SaveRam::set_word(self, at, value)
+    }
+    fn bytes(&self, range: Range<usize>) -> Vec<u8> {
+        SaveRam::bytes(self, range)
+    }
+    fn write_bytes(&self, at: usize, input: &[u8]) {
+        SaveRam::write_bytes(self, at, input)
+    }
+    fn copy_within(&self, source: Range<usize>, destination: usize) {
+        SaveRam::copy_within(self, source, destination)
+    }
+    fn fill(&self, range: Range<usize>, value: u8) {
+        SaveRam::fill(self, range, value)
+    }
+}

@@ -65,7 +65,7 @@ impl Backend {
             type_0: 0,
             rom: crate::rom::RomImage::default(),
             rom_size: 0,
-            ram: crate::save_ram::SaveRam::default(),
+            ram: sm_game::save_file::SaveRam::default(),
             ramSize: 0,
         }));
         let input1 = Cell::new(Input {

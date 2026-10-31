@@ -41,10 +41,10 @@ pub unsafe fn cart_load(cart: *mut Cart, type_0: i32, rom: RomImage, ram_size: i
     unsafe {
         (*cart).type_0 = type_0 as u8;
         (*cart).rom = RomImage::default();
-        (*cart).ram = crate::save_ram::SaveRam::default();
+        (*cart).ram = sm_game::save_file::SaveRam::default();
         (*cart).rom = rom;
         (*cart).rom_size = (*cart).rom.len() as u32;
-        (*cart).ram = crate::save_ram::SaveRam::zeroed(ram_size.max(0) as usize);
+        (*cart).ram = sm_game::save_file::SaveRam::zeroed(ram_size.max(0) as usize);
         (*cart).ramSize = ram_size as u32;
     }
 }
