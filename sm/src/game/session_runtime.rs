@@ -1125,7 +1125,6 @@ impl Runtime<'_> {
 
 use crate::game::actors;
 use crate::game::sm_a9;
-use sm_game::actors::access::{AccessMode, ActorAccess, ActorKey as Key};
 use sm_game::enemy_script::EnemyScript;
 
 crate::game::callback_dispatch! {
@@ -1147,20 +1146,6 @@ crate::game::callback_dispatch! {
         11771903 => [actors::botwoon::contact(false, &mut Runtime::new(game))];
         11771969 => [actors::botwoon::contact(true, &mut Runtime::new(game))];
         11771926 => [actors::botwoon::shot(&mut Runtime::new(game))];
-        10652144 => [{
-            let index = game.cur_enemy_index();
-            let preinstruction = Runtime::new(game)
-                .resolve_actor(Key::from_legacy(index), AccessMode::LittleEndian)
-                .pre_instruction;
-            actor_species_pre_instruction(u32::from(preinstruction) | 0xa20000, game);
-        }];
-        10657715 => [{
-            let phase = {
-                let runtime = Runtime::new(game);
-                runtime.resolve_actor(Key::from_legacy(runtime.word(0xe54)), actors::access::AccessMode::Native).pre_instruction
-            };
-            actor_species_pre_instruction(0xa20000 | u32::from(phase), game);
-        }];
         0xa30000..=0xa3ffff => [{ crate::rtl::report_unreachable(game); }];
         10783748 => crate::game::visual_runtime::advance_crocomire;
         10873386 => [actors::spore_spawn::initialize(game)];
@@ -1188,8 +1173,6 @@ crate::game::callback_dispatch! {
         10873198 => [actors::spore_spawn::emit_spore(j, game)];
         10873265 => [actors::spore_spawn::emit_hurt(j, game)];
         10873009 => [{ crate::game::enemy_projectiles::scatter_drop(sm_game::enemy_projectiles::drops::DropSource::SporeSpawn, k, game); j }];
-        10852501 => [{ crate::ram_map::word!(game.ROOM_LOADING_IRQ_HANDLER = 12); j }];
-        10853514 => [{ crate::ram_map::word!(game.ROOM_LOADING_IRQ_HANDLER = 12); j }];
         0xa90000..=0xa9ffff => [sm_a9::dispatch_enemy_instr(ea, k, j, game)];
         0xb30000..=0xb3ffff => [{ crate::rtl::report_unreachable(game); EnemyScript::Stop }];
     }

@@ -7,7 +7,7 @@
 //! still run in the compatibility crate go to its host: a named native enum
 //! for the small tables, the same address for the large ones. Moving a
 //! routine here means moving its arm.
-use crate::actors::access::{AccessMode::Native, ActorAccess as _};
+use crate::actors::access::{AccessMode::LittleEndian, AccessMode::Native, ActorAccess as _};
 use crate::actors::host::{ActorHost, ActorRuntime, Death, LeaseActors, Shot};
 use crate::actors::{
     alcoon, atomic, bang, beetom, blue_brinstar_face_block, botwoon, boulder, boyon, bull, cacatac,
@@ -362,6 +362,15 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
                     crate::constants::enemy_properties::K_ENEMY_PROPS_DISABLE_SAMUS_COLL as u16;
                 actor.instruction = 0x86a7;
             });
+        }
+        // Main AI - mini-Crocomire ($A2:89F0) and cacatac ($A2:9FB3): their function.
+        10652144 | 10657715 => {
+            let runtime = LeaseActors::lease(game);
+            let mode = if ea == 10652144 { LittleEndian } else { Native };
+            let key = crate::actors::combat::current(&runtime);
+            let function = runtime.resolve_actor(key, mode).pre_instruction;
+            drop(runtime);
+            pre_instruction(0xa2_0000 | u32::from(function), game);
         }
         // Enemy shot - Wrecked Ship spark ($A8:E70E) and blue Brinstar face block ($A8:E91D).
         11069198 | 11069725 => wrecked_ship_spark::pass_shot(game),
@@ -1022,6 +1031,13 @@ pub fn instruction<H: InstructionHost>(
         11139360 => crate::actors::baby_metroid_encounter::go_to_normal(k, j),
         11139382 => crate::actors::baby_metroid_encounter::go_to_latched_on(k, j),
         11139472 => crate::actors::baby_metroid_encounter::go_to_remorse(k, j),
+        // Instruction - room loading interrupt command = Draygon's room - begin HUD drawing.
+        10852501 | 10853514 => {
+            use crate::actors::host::ActorLease as _;
+            LeaseActors::lease(game)
+                .write_slice_le(crate::ram::words::ROOM_LOADING_IRQ_HANDLER, 12);
+            j
+        }
         10852159 => draygon_death::spawn_dying_sprite(21, j, game),
         10852178 => draygon_death::spawn_dying_sprite(3, j, game),
         10852197 => draygon_death::spawn_dying_sprite(29, j, game),
