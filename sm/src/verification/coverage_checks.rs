@@ -5747,8 +5747,6 @@ fn scene_samus_ceres_literal_events() -> Vec<(&'static str, usize, usize)> {
         ("player_x", 0xfff0, 0),
         ("camera_x", 0x30, 0),
         ("set_body_x", 0xffc0, 0),
-        ("body_x", 0xffc0, 0),
-        ("body_y", 0xffef, 0),
         ("set_player_y", 0x2345, 0),
         ("set_player_x", 0x1234, 0),
     ]
@@ -5784,10 +5782,8 @@ fn scene_samus_ceres_failures_preserve_each_completed_prefix() {
         (12, [0xfff0, 0x10], [0x4567, 0xffef]),
         (13, [0xfff0, 0x10], [0x4567, 0xffef]),
         (14, [0xfff0, 0x10], [0xffc0, 0xffef]),
-        (15, [0xfff0, 0x10], [0xffc0, 0xffef]),
-        (16, [0xfff0, 0x10], [0xffc0, 0xffef]),
-        (17, [0xfff0, 0x2345], [0xffc0, 0xffef]),
-        (18, [0x1234, 0x2345], [0xffc0, 0xffef]),
+        (15, [0xfff0, 0x2345], [0xffc0, 0xffef]),
+        (16, [0x1234, 0x2345], [0xffc0, 0xffef]),
     ] {
         let (result, player, body, events) = sm::verify_samus_ceres_position(failure);
         assert_eq!(result, Err(failure));

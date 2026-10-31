@@ -318,12 +318,6 @@ impl samus_position_tiles::PositionHost for Game {
         word!(self.SAMUS_SPRITEMAP_Y_POS = value);
         Ok(())
     }
-    fn body_x(&mut self) -> Result<u16, Self::Error> {
-        Ok(word!(self.SAMUS_SPRITEMAP_X_POS))
-    }
-    fn body_y(&mut self) -> Result<u16, Self::Error> {
-        Ok(word!(self.SAMUS_SPRITEMAP_Y_POS))
-    }
 }
 impl samus_position_tiles::Table for NativeTable {
     type Error = std::convert::Infallible;

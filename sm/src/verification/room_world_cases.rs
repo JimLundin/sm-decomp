@@ -1847,12 +1847,6 @@ impl vm_tiles::PositionHost for VerificationPositionHost {
         self.body[1] = value;
         self.event("set_body_y", usize::from(value), 0)
     }
-    fn body_x(&mut self) -> Result<u16, usize> {
-        self.read("body_x", self.body[0])
-    }
-    fn body_y(&mut self) -> Result<u16, usize> {
-        self.read("body_y", self.body[1])
-    }
 }
 
 // Movies cannot inject table-bound panics while retaining the actual full-frame query prefix.

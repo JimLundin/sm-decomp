@@ -31,8 +31,6 @@ pub trait PositionHost {
     fn camera_y(&mut self) -> Result<u16, Self::Error>;
     fn set_body_x(&mut self, value: u16) -> Result<(), Self::Error>;
     fn set_body_y(&mut self, value: u16) -> Result<(), Self::Error>;
-    fn body_x(&mut self) -> Result<u16, Self::Error>;
-    fn body_y(&mut self) -> Result<u16, Self::Error>;
 }
 pub fn default_landing_bytes(offset: usize) -> [u8; 2] {
     static LANDING: [u8; 16] = [3, 6, 0, 0, 3, 6, 0, 0, 3, 3, 6, 0, 3, 3, 6, 0];
@@ -94,8 +92,6 @@ pub fn calculate_sprite_position<H: PositionHost>(
     host.set_body_y(y)?;
     let x = host.player_x()?.wrapping_sub(host.camera_x()?);
     host.set_body_x(x)?;
-    let x = host.body_x()?;
-    let y = host.body_y()?;
     Ok((x, y))
 }
 pub fn sprite_position<H: PositionHost>(
@@ -376,12 +372,6 @@ impl<I: Inputs> PositionHost for Owned<'_, I> {
     }
     fn set_body_y(&mut self, v: u16) -> Result<(), DisplayError> {
         self.inputs.set_body_y(self.state, v)
-    }
-    fn body_x(&mut self) -> Result<u16, DisplayError> {
-        self.inputs.body_x()
-    }
-    fn body_y(&mut self) -> Result<u16, DisplayError> {
-        self.inputs.body_y()
     }
 }
 impl<I: Inputs> TileHost for Owned<'_, I> {
