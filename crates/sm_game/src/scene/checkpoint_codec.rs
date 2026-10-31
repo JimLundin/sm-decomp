@@ -109,6 +109,14 @@ impl<T: Field> Field for Arc<[T]> {
         Ok(Vec::<T>::get(read)?.into())
     }
 }
+impl<T: Field> Field for Box<T> {
+    fn put(&self, bytes: &mut Vec<u8>) {
+        self.as_ref().put(bytes);
+    }
+    fn get(read: &mut CheckpointReader<'_>) -> Result<Self, String> {
+        Ok(Box::new(T::get(read)?))
+    }
+}
 impl<T: Field> Field for Arc<T> {
     fn put(&self, bytes: &mut Vec<u8>) {
         self.as_ref().put(bytes);
@@ -174,6 +182,37 @@ macro_rules! choices {
                 match u8::get(read)? { $($tag => Ok(Self::$variant),)+ _ => Err("unknown display checkpoint variant".into()) }
             }
         }
+    };
+}
+/// A tagged enum: a byte tag, then the variant's fields in order. Tuple fields
+/// are named only to count them.
+macro_rules! variants {
+    ($kind:path, $what:literal {
+        $($tag:literal => $variant:ident $(($($item:ident),+))? $({ $($field:ident),+ })?),+ $(,)?
+    }) => {
+        impl Field for $kind {
+            fn put(&self, bytes: &mut Vec<u8>) {
+                match self {
+                    $(Self::$variant $(($($item),+))? $({ $($field),+ })? => {
+                        let tag: u8 = $tag;
+                        tag.put(bytes);
+                        $($($item.put(bytes);)+)?
+                        $($($field.put(bytes);)+)?
+                    })+
+                }
+            }
+            fn get(read: &mut CheckpointReader<'_>) -> Result<Self, String> {
+                match u8::get(read)? {
+                    $($tag => Ok(Self::$variant
+                        $(($(variants!(@get $item, read)),+))?
+                        $({ $($field: Field::get(read)?),+ })?),)+
+                    _ => Err(concat!("unknown display checkpoint ", $what).into()),
+                }
+            }
+        }
+    };
+    (@get $item:ident, $read:ident) => {
+        Field::get($read)?
     };
 }
 identity!(r::AssetId, u32);
@@ -246,47 +285,14 @@ record!(r::VisualPart {
 record!(r::VisualFrame { parts });
 record!(r::Visual { reference, frames });
 record!(r::Font { reference, atlas });
-impl Field for r::SceneAsset {
-    fn put(&self, bytes: &mut Vec<u8>) {
-        match self {
-            Self::Atlas(value) => {
-                0u8.put(bytes);
-                value.put(bytes);
-            }
-            Self::Map(value) => {
-                1u8.put(bytes);
-                value.put(bytes);
-            }
-            Self::Palette(value) => {
-                2u8.put(bytes);
-                value.put(bytes);
-            }
-            Self::Visual(value) => {
-                3u8.put(bytes);
-                value.put(bytes);
-            }
-            Self::Font(value) => {
-                4u8.put(bytes);
-                value.put(bytes);
-            }
-            Self::Room(value) => {
-                5u8.put(bytes);
-                value.put(bytes);
-            }
-        }
-    }
-    fn get(read: &mut CheckpointReader<'_>) -> Result<Self, String> {
-        match u8::get(read)? {
-            0 => Ok(Self::Atlas(Field::get(read)?)),
-            1 => Ok(Self::Map(Field::get(read)?)),
-            2 => Ok(Self::Palette(Box::new(Field::get(read)?))),
-            3 => Ok(Self::Visual(Field::get(read)?)),
-            4 => Ok(Self::Font(Field::get(read)?)),
-            5 => Ok(Self::Room(Field::get(read)?)),
-            _ => Err("unknown display checkpoint asset".into()),
-        }
-    }
-}
+variants!(r::SceneAsset, "asset" {
+    0 => Atlas(value),
+    1 => Map(value),
+    2 => Palette(value),
+    3 => Visual(value),
+    4 => Font(value),
+    5 => Room(value),
+});
 record!(r::PaletteIncarnation { reference, colors });
 record!(r::AtlasBinding {
     atlas,
@@ -402,26 +408,7 @@ record!(r::ScenePixelation {
     origin,
     modulo
 });
-impl Field for r::SceneMode {
-    fn put(&self, bytes: &mut Vec<u8>) {
-        match self {
-            Self::TilePlanes => 0u8.put(bytes),
-            Self::AffinePlane { extended } => {
-                1u8.put(bytes);
-                extended.put(bytes);
-            }
-        }
-    }
-    fn get(read: &mut CheckpointReader<'_>) -> Result<Self, String> {
-        match u8::get(read)? {
-            0 => Ok(Self::TilePlanes),
-            1 => Ok(Self::AffinePlane {
-                extended: Field::get(read)?,
-            }),
-            _ => Err("unknown display checkpoint mode".into()),
-        }
-    }
-}
+variants!(r::SceneMode, "mode" { 0 => TilePlanes, 1 => AffinePlane { extended } });
 record!(r::SignedObjectPixel { x, value });
 record!(r::SceneLine {
     media,
@@ -586,32 +573,11 @@ record!(h::HdmaProgramDefinition {
     schema,
     bytes
 });
-impl Field for h::HdmaDefinition {
-    fn put(&self, bytes: &mut Vec<u8>) {
-        match self {
-            Self::Table(value) => {
-                0u8.put(bytes);
-                value.put(bytes);
-            }
-            Self::Indirect(value) => {
-                1u8.put(bytes);
-                value.put(bytes);
-            }
-            Self::Program(value) => {
-                2u8.put(bytes);
-                value.put(bytes);
-            }
-        }
-    }
-    fn get(read: &mut CheckpointReader<'_>) -> Result<Self, String> {
-        match u8::get(read)? {
-            0 => Ok(Self::Table(Field::get(read)?)),
-            1 => Ok(Self::Indirect(Field::get(read)?)),
-            2 => Ok(Self::Program(Field::get(read)?)),
-            _ => Err("unknown display checkpoint HDMA definition".into()),
-        }
-    }
-}
+variants!(h::HdmaDefinition, "HDMA definition" {
+    0 => Table(value),
+    1 => Indirect(value),
+    2 => Program(value),
+});
 impl Field for h::HdmaCatalog {
     fn put(&self, bytes: &mut Vec<u8>) {
         self.gameplay().put(bytes);
@@ -637,71 +603,21 @@ record!(h::BankWindow {
     length
 });
 choices!(h::HdmaVariable { 0 => A, 1 => B, 2 => C, 3 => D, 4 => E, 5 => F });
-impl Field for h::LiveOwner {
-    fn put(&self, bytes: &mut Vec<u8>) {
-        match self {
-            Self::MessageDescriptor => 0u8.put(bytes),
-            Self::MessageScanlines => 1u8.put(bytes),
-            Self::HdmaTable1 => 2u8.put(bytes),
-            Self::HdmaTable2 => 3u8.put(bytes),
-            Self::WindowLeft => 4u8.put(bytes),
-            Self::WindowRight => 5u8.put(bytes),
-            Self::SkyBg2 => 6u8.put(bytes),
-            Self::CrocomireBg2 => 7u8.put(bytes),
-            Self::ObjectVariable { object, variable } => {
-                8u8.put(bytes);
-                object.put(bytes);
-                variable.put(bytes);
-            }
-        }
-    }
-    fn get(read: &mut CheckpointReader<'_>) -> Result<Self, String> {
-        match u8::get(read)? {
-            0 => Ok(Self::MessageDescriptor),
-            1 => Ok(Self::MessageScanlines),
-            2 => Ok(Self::HdmaTable1),
-            3 => Ok(Self::HdmaTable2),
-            4 => Ok(Self::WindowLeft),
-            5 => Ok(Self::WindowRight),
-            6 => Ok(Self::SkyBg2),
-            7 => Ok(Self::CrocomireBg2),
-            8 => Ok(Self::ObjectVariable {
-                object: Field::get(read)?,
-                variable: Field::get(read)?,
-            }),
-            _ => Err("unknown display checkpoint live owner".into()),
-        }
-    }
-}
-impl Field for h::HdmaRegionSource {
-    fn put(&self, bytes: &mut Vec<u8>) {
-        match self {
-            Self::Buffer { storage, offset } => {
-                0u8.put(bytes);
-                storage.put(bytes);
-                offset.put(bytes);
-            }
-            Self::ObjectVariable { object, variable } => {
-                1u8.put(bytes);
-                object.put(bytes);
-                variable.put(bytes);
-            }
-        }
-    }
-    fn get(read: &mut CheckpointReader<'_>) -> Result<Self, String> {
-        match u8::get(read)? {
-            0 => Ok(Self::Buffer {
-                storage: Field::get(read)?,
-                offset: Field::get(read)?,
-            }),
-            1 => Ok(Self::ObjectVariable {
-                object: Field::get(read)?,
-                variable: Field::get(read)?,
-            }),
-            _ => Err("unknown display checkpoint HDMA region".into()),
-        }
-    }
-}
+variants!(h::LiveOwner, "live owner" {
+    0 => MessageDescriptor,
+    1 => MessageScanlines,
+    2 => HdmaTable1,
+    3 => HdmaTable2,
+    4 => WindowLeft,
+    5 => WindowRight,
+    6 => SkyBg2,
+    7 => CrocomireBg2,
+    8 => ObjectVariable { object, variable },
+});
+variants!(h::HdmaRegionSource, "HDMA region" {
+    0 => Buffer { storage, offset },
+    1 => ObjectVariable { object, variable },
+});
 record!(h::HdmaLiveRegion {
     owner,
     source,
@@ -729,37 +645,11 @@ impl Field for h::HdmaLiveDescription {
         .map_err(|error| format!("display checkpoint HDMA live topology: {error:?}"))
     }
 }
-impl Field for h::SourceBinding {
-    fn put(&self, bytes: &mut Vec<u8>) {
-        match self {
-            Self::Prepared { reference, windows } => {
-                0u8.put(bytes);
-                reference.put(bytes);
-                windows.put(bytes);
-            }
-            Self::LiveOwner { owner, windows } => {
-                1u8.put(bytes);
-                owner.put(bytes);
-                windows.put(bytes);
-            }
-            Self::Unbound => 2u8.put(bytes),
-        }
-    }
-    fn get(read: &mut CheckpointReader<'_>) -> Result<Self, String> {
-        match u8::get(read)? {
-            0 => Ok(Self::Prepared {
-                reference: Field::get(read)?,
-                windows: Field::get(read)?,
-            }),
-            1 => Ok(Self::LiveOwner {
-                owner: Field::get(read)?,
-                windows: Field::get(read)?,
-            }),
-            2 => Ok(Self::Unbound),
-            _ => Err("unknown display checkpoint source binding".into()),
-        }
-    }
-}
+variants!(h::SourceBinding, "source binding" {
+    0 => Prepared { reference, windows },
+    1 => LiveOwner { owner, windows },
+    2 => Unbound,
+});
 
 choices!(d::WordOrder { 0 => Little, 1 => Big });
 record!(d::SourceSpan {
@@ -767,61 +657,13 @@ record!(d::SourceSpan {
     bytes,
     offset
 });
-impl Field for d::TransferSource {
-    fn put(&self, bytes: &mut Vec<u8>) {
-        match self {
-            Self::Asset(value) => {
-                0u8.put(bytes);
-                value.put(bytes);
-            }
-            Self::Hud { offset } => {
-                1u8.put(bytes);
-                offset.put(bytes);
-            }
-            Self::Objects { offset } => {
-                2u8.put(bytes);
-                offset.put(bytes);
-            }
-            Self::ActorTilemap { offset } => {
-                3u8.put(bytes);
-                offset.put(bytes);
-            }
-            Self::Scroll {
-                slot,
-                half,
-                wrapped,
-                offset,
-            } => {
-                4u8.put(bytes);
-                slot.put(bytes);
-                half.put(bytes);
-                wrapped.put(bytes);
-                offset.put(bytes);
-            }
-        }
-    }
-    fn get(read: &mut CheckpointReader<'_>) -> Result<Self, String> {
-        match u8::get(read)? {
-            0 => Ok(Self::Asset(Field::get(read)?)),
-            1 => Ok(Self::Hud {
-                offset: Field::get(read)?,
-            }),
-            2 => Ok(Self::Objects {
-                offset: Field::get(read)?,
-            }),
-            3 => Ok(Self::ActorTilemap {
-                offset: Field::get(read)?,
-            }),
-            4 => Ok(Self::Scroll {
-                slot: Field::get(read)?,
-                half: Field::get(read)?,
-                wrapped: Field::get(read)?,
-                offset: Field::get(read)?,
-            }),
-            _ => Err("unknown display checkpoint transfer source".into()),
-        }
-    }
-}
+variants!(d::TransferSource, "transfer source" {
+    0 => Asset(value),
+    1 => Hud { offset },
+    2 => Objects { offset },
+    3 => ActorTilemap { offset },
+    4 => Scroll { slot, half, wrapped, offset },
+});
 choices!(d::ByteLanes { 0 => Both, 1 => Low, 2 => High });
 record!(d::TileDestination {
     word,
@@ -884,29 +726,7 @@ record!(d::ScrollTransfer {
     wrapped_bytes
 });
 record!(d::QueuedUpload { cursor, transfer });
-impl Field for d::Mode7Target {
-    fn put(&self, bytes: &mut Vec<u8>) {
-        match self {
-            Self::Tiles(value) => {
-                0u8.put(bytes);
-                value.put(bytes);
-            }
-            Self::Palette { first_color } => {
-                1u8.put(bytes);
-                first_color.put(bytes);
-            }
-        }
-    }
-    fn get(read: &mut CheckpointReader<'_>) -> Result<Self, String> {
-        match u8::get(read)? {
-            0 => Ok(Self::Tiles(Field::get(read)?)),
-            1 => Ok(Self::Palette {
-                first_color: Field::get(read)?,
-            }),
-            _ => Err("unknown display checkpoint mode7 target".into()),
-        }
-    }
-}
+variants!(d::Mode7Target, "mode7 target" { 0 => Tiles(value), 1 => Palette { first_color } });
 record!(d::Mode7Upload {
     cursor,
     source,
@@ -1242,24 +1062,7 @@ record!(t::ProgramAnchor {
     phase,
     timing_policy
 });
-impl Field for t::OngoingMusic {
-    fn put(&self, bytes: &mut Vec<u8>) {
-        match self {
-            Self::Silent => 0u8.put(bytes),
-            Self::Playing(value) => {
-                1u8.put(bytes);
-                value.put(bytes);
-            }
-        }
-    }
-    fn get(read: &mut CheckpointReader<'_>) -> Result<Self, String> {
-        match u8::get(read)? {
-            0 => Ok(Self::Silent),
-            1 => Ok(Self::Playing(Field::get(read)?)),
-            _ => Err("unknown display checkpoint music".into()),
-        }
-    }
-}
+variants!(t::OngoingMusic, "music" { 0 => Silent, 1 => Playing(value) });
 record!(t::InitialAudioIntent {
     capture,
     revision,
