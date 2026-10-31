@@ -10,6 +10,8 @@
 //! Brain's shared helpers come from `mother_brain_fight`.
 use crate::actors::host::{Death, Slopes};
 use crate::actors::layouts::part_view;
+use crate::actors::mother_brain_fight::OwnedWord;
+use crate::actors::mother_brain_fight::random_number;
 use crate::actors::mother_brain_fight::{
     BANK, BANK_BASE, Lease as FightLease, State, cgram, sound,
 };
@@ -449,22 +451,22 @@ crate::dispatch::instruction_callbacks! {
     @prefix {};
     torizo_corpse_rotting_finished [] {
         {
-            let (x, y) = (((word!(game.RANDOM_NUMBER) as i32 & 0x1f) + 272) as u16, 188);
+            let (x, y) = (((random_number(game) as i32 & 0x1f) + 272) as u16, 188);
             game.foreign(|game| crate::actors::host::BossEffects::set_projectile_spawn_point(game, x, y));
         }
         spawn_room_projectile(ADDR_K_EPROJ_DUST_CLOUD_EXPLOSION as u16, 0xa, game);
-        if (word!(game.RANDOM_ENEMY_COUNTER) & 7) == 0 {
+        if (game.owned(OwnedWord::RandomEnemyCounter) & 7) == 0 {
             queue_sfx2_max6(sound::LAVA_ACID_DAMAGE, game);
         }
     };
     normal_corpse_rotting_finished [] {
         let v0: i32 = game.current_enemy() as i32;
         {
-            let (x, y) = ((session_slot!(game, Corpse[v0].base.x_pos) as i32 + (word!(game.RANDOM_NUMBER) as i32 & 0x1a) - 14i32) as u16, ((session_slot!(game, Corpse[v0].base.y_pos)).wrapping_add(16)));
+            let (x, y) = ((session_slot!(game, Corpse[v0].base.x_pos) as i32 + (random_number(game) as i32 & 0x1a) - 14i32) as u16, ((session_slot!(game, Corpse[v0].base.y_pos)).wrapping_add(16)));
             game.foreign(|game| crate::actors::host::BossEffects::set_projectile_spawn_point(game, x, y));
         }
         spawn_room_projectile(ADDR_K_EPROJ_DUST_CLOUD_EXPLOSION as u16, 0xa, game);
-        if (word!(game.RANDOM_ENEMY_COUNTER) & 7) == 0 {
+        if (game.owned(OwnedWord::RandomEnemyCounter) & 7) == 0 {
             queue_sfx2_max3(sound::LAVA_ACID_DAMAGE, game);
         }
     };

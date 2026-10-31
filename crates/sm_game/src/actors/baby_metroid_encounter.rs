@@ -10,6 +10,7 @@ use crate::actors::baby_metroid::BabyMetroid;
 use crate::actors::corpses::Corpse;
 use crate::actors::host::abs16;
 use crate::actors::mother_brain_fight::OwnedWord;
+use crate::actors::mother_brain_fight::random_number;
 use crate::actors::mother_brain_fight::{
     BANK, BANK_BASE, Lease as FightLease, State, cgram, music, samus_command, sound,
 };
@@ -307,7 +308,7 @@ crate::dispatch::callback_dispatch! {
                 v5 = game.player_y();
             } else {
                 v5 = 80;
-                if (word!(game.RANDOM_NUMBER) & 0xfff) >= 0xfe0 {
+                if (random_number(game) & 0xfff) >= 0xfe0 {
                     session_slot!(game, BabyMetroid[e].aggro_timer = 32);
                 }
             }
@@ -469,7 +470,7 @@ pub fn gradually_accelerate_towards_samus(k: u16, game: &mut impl Lease) -> u8 {
             v5 = (game.player_y()).wrapping_sub(18);
         } else {
             v5 = 80;
-            if (word!(game.RANDOM_NUMBER) & 0xfff) >= 0xfe0 {
+            if (random_number(game) & 0xfff) >= 0xfe0 {
                 session_slot!(game, BabyMetroid[e].aggro_timer = 32);
             }
         }
@@ -750,7 +751,7 @@ pub fn branch_or_queue_remorse_sound(
     jp: EnemyScript,
     game: &mut impl State,
 ) -> EnemyScript {
-    if (word!(game.RANDOM_NUMBER) & 0x8000) == 0 {
+    if (random_number(game) & 0x8000) == 0 {
         return EnemyScript::jump(jp.word(0));
     }
     queue_sfx2_max6(sound::BABY_METROID_REMORSE, game);
