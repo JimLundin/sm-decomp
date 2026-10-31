@@ -8,7 +8,7 @@ must match. The [README](../README.md#verification) lists what this does not
 cover.
 
 [segments.toml](segments.toml) defines the scenarios (rows), their inputs and
-required events: 115 rows, 201,906 selected frames. Follow the
+required events: 118 rows, 212,770 selected frames. Follow the
 [build guide](../docs/ITERATION.md) first; commands below run from the
 repository root with Python 3.11+ (`python3` on systems without `python`).
 You need your own unheadered ROM at `rom/sm.smc`. The verifier builds only on

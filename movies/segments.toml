@@ -699,7 +699,6 @@ after_expectations = 120
 
 [[segment]]
 id = "save-death-reload"
-pending = "awaiting the seeds-v1-realigned-ef199d44b0070294 ci-data upload"
 checkpoint = "save-in-kago-69400.smvchk"
 checkpoint_sha256 = "7c2af1918857b0008cfe536313d932df7dc55acecf7f608f0c4c93db67ee3fb9"
 inputs = "corpus-save-death-continue.inputs"
@@ -720,7 +719,6 @@ after_expectations = 120
 # harness will replace it.
 [[segment]]
 id = "save-memory"
-pending = "awaiting the seeds-v1-realigned-ef199d44b0070294 ci-data upload"
 checkpoint = "save-in-kago-69400.smvchk"
 checkpoint_sha256 = "7c2af1918857b0008cfe536313d932df7dc55acecf7f608f0c4c93db67ee3fb9"
 inputs = "corpus-speed-booster.inputs"
@@ -737,7 +735,6 @@ after_expectations = 120
 # hit fatal.
 [[segment]]
 id = "death"
-pending = "awaiting the seeds-v1-realigned-ef199d44b0070294 ci-data upload"
 seed = "scenario-one-energy-crocomire:142"
 seed_sha256 = "63f0a5d9f7f38da95e78ec31ff64c94f2108f92b44c4652bcdf9661cb598d624"
 inputs = "seed-death.inputs"
