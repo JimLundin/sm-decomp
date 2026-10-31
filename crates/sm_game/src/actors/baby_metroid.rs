@@ -5,11 +5,12 @@ use crate::actors::host::abs16;
 use crate::actors::layouts::part_view;
 use crate::actors::session_slots::{SlotAccess, session_slot};
 use crate::effects::SoundEffects;
-use crate::ram::{CompatibilityRam, RawRam as _, WorkRamAccess, word};
+use crate::ram::{CompatibilityRam, RawRam as _, WorkRamAccess};
 
-/// What the baby Metroid needs beyond work RAM and sound: hardcoded PLM spawns.
+/// What the baby Metroid needs beyond a boss's state steps and work RAM:
+/// hardcoded PLM spawns.
 pub trait Host:
-    WorkRamAccess + CompatibilityRam + SoundEffects + crate::runtime_access::RuntimeAccess + SlotAccess
+    WorkRamAccess + crate::actors::boss_lease::BossState + crate::runtime_access::RuntimeAccess
 {
     /// Spawn the PLM with `header` at block (`block_x`, `block_y`).
     fn spawn_hardcoded_plm(&mut self, block_x: u8, block_y: u8, header: u16);
@@ -131,7 +132,7 @@ pub fn wait_for_camera(game: &mut impl Host) {
         for (block_x, block_y) in INVISIBLE_WALLS {
             game.spawn_hardcoded_plm(block_x, block_y, INVISIBLE_WALL);
         }
-        let e = word!(game.CUR_ENEMY_INDEX) as i32;
+        let e = game.current_enemy() as i32;
         session_slot!(game, BabyMetroid[e]; function = LET_SIDEHOPPER_LIVE, cry_enabled = 1);
     }
 }
