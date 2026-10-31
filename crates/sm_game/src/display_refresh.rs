@@ -22,6 +22,13 @@ use crate::ram::{CompatibilityRam, RawRam, checked_word, checked_word as at, wor
 use crate::scene::state::DisplayError;
 use crate::word_transfers;
 
+/// Stores to the display's RAM mirrors, which the owned display state holds
+/// when the Session owns the presentation.
+pub trait DisplayOwner {
+    /// Store `value` at `at` through the owned display state.
+    fn write_owned_byte(&mut self, at: usize, value: u8);
+}
+
 /// What the display refresh needs besides RAM, registers and the cartridge:
 /// owned display stores and the uploads the compatibility runtime still owns.
 pub trait Host:
@@ -32,9 +39,8 @@ pub trait Host:
     + crate::cartridge::LoadedImage
     + crate::decompression::DecompressionHost
     + crate::records::Records
+    + DisplayOwner
 {
-    /// Store `value` at `at` through the owned display state.
-    fn write_owned_byte(&mut self, at: usize, value: u8);
     /// The HDMA object table as the compatibility projection reads it.
     fn hdma_objects(&self) -> crate::hdma::HdmaObjects;
     /// Start the channel-1 graphics DMA for a load from `source`, reading the
@@ -250,7 +256,10 @@ pub fn wait<H: Host + ?Sized>(update: bool, game: &mut H) -> u8 {
     1
 }
 
-pub fn enable<H: Host + ?Sized>(enabled: bool, game: &mut H) {
+pub fn enable<H: Registers + CompatibilityRam + DisplayOwner + ?Sized>(
+    enabled: bool,
+    game: &mut H,
+) {
     let mask = if enabled { 0x80 } else { 0 };
     let value = game.compatibility_byte(0x84) & 0x7f | mask;
     game.write_register(NMITIMEN as u16, game.compatibility_byte(0x84) & 0x7f | mask);

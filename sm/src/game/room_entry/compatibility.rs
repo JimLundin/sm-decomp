@@ -57,6 +57,8 @@ impl EntryEffects for Runtime<'_> {
                 game::samus_palette::load_suit(self, game::visual_state::PaletteBuffer::Target)
             }
             LeafEffect::LoadFxHeader => sm_game::room_state::fx::load_header(self),
+            LeafEffect::EnableNmi => sm_game::display_refresh::enable(true, self),
+            LeafEffect::DisableNmi => sm_game::display_refresh::enable(false, self),
             _ => self.foreign(|game| unsafe {
                 match effect {
                     LeafEffect::QueueDoorSound => {
@@ -118,12 +120,6 @@ impl EntryEffects for Runtime<'_> {
                     LeafEffect::MarkElevatorsUsed => {
                         sm_game::menus::save_slots::mark_elevator(game);
                     }
-                    LeafEffect::EnableNmi => {
-                        crate::game::display_refresh::enable(true, game);
-                    }
-                    LeafEffect::DisableNmi => {
-                        crate::game::display_refresh::enable(false, game);
-                    }
                     LeafEffect::EnableIrq | LeafEffect::WaitVblankEnableIrq => {
                         let immediate = matches!(effect, LeafEffect::WaitVblankEnableIrq);
                         if !immediate || game.ram().read_byte(0x84) & 0x30 != 0x30 {
@@ -144,7 +140,9 @@ impl EntryEffects for Runtime<'_> {
                     | LeafEffect::InitializeEnemies
                     | LeafEffect::LoadRoomAssets
                     | LeafEffect::LoadSuitTargetPalette
-                    | LeafEffect::LoadFxHeader => {
+                    | LeafEffect::LoadFxHeader
+                    | LeafEffect::EnableNmi
+                    | LeafEffect::DisableNmi => {
                         unreachable!("leaf runs on the lease")
                     }
                 }

@@ -4,6 +4,7 @@ use crate::{
     game_state::Game,
     rom::{RomImage, RomRecord},
 };
+use sm_game::display::sequence::Registers;
 use sm_game::player_projectiles::{
     access::{ShotLane, Store},
     content,
@@ -1372,6 +1373,28 @@ impl sm_game::ram::CompatibilityRam for Runtime<'_> {
     }
     fn compatibility_write_byte(&mut self, at: usize, value: u8) {
         Runtime::set_byte(self, at, value)
+    }
+}
+// A register write may read or change RAM (DMA, the WRAM port), so each one
+// runs on the exported game and the lease re-imports what it left.
+impl Registers for Runtime<'_> {
+    fn write_register(&mut self, register: u16, value: u8) {
+        self.foreign(|game| Registers::write_register(game, register, value));
+    }
+    fn write_register_word(&mut self, register: u16, value: u16) {
+        self.foreign(|game| Registers::write_register_word(game, register, value));
+    }
+    fn read_register_word(&mut self, register: u16) -> u16 {
+        self.foreign(|game| Registers::read_register_word(game, register))
+    }
+    fn read_register(&mut self, register: u16) -> u8 {
+        self.foreign(|game| Registers::read_register(game, register))
+    }
+}
+// The lease's projection stores display mirrors in the owned display state.
+impl sm_game::display_refresh::DisplayOwner for Runtime<'_> {
+    fn write_owned_byte(&mut self, at: usize, value: u8) {
+        Runtime::set_byte(self, at, value);
     }
 }
 impl sm_game::effects::SoundEffects for Runtime<'_> {

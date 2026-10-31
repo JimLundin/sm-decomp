@@ -10,12 +10,15 @@ pub(crate) use sm_game::display_refresh::{
     set_native_word, wait,
 };
 
+impl refresh::DisplayOwner for Game {
+    fn write_owned_byte(&mut self, at: usize, value: u8) {
+        self.compatibility_write_owned_byte(at, value);
+    }
+}
+
 impl refresh::Host for Game {
     fn hdma_objects(&self) -> sm_game::hdma::HdmaObjects {
         self.projected_hdma_objects()
-    }
-    fn write_owned_byte(&mut self, at: usize, value: u8) {
-        self.compatibility_write_owned_byte(at, value);
     }
     fn start_graphics_dma(&mut self, source: u32) {
         let assets = if source == 0x9ab200 {
