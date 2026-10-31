@@ -150,14 +150,14 @@ after_expectations = 120
 
 [[segment]]
 id = "boss-bomb-torizo"
+pending = "inputs were aligned to snesrev's shorter message boxes; since the boxes take the original's lag frames the path drifts after a box (frames still match). Re-aligned by lane T in batch 13"
 seed = "100-input-phase:27"
 seed_sha256 = "c402c17601f3ac1b274a8c1914e306ed304371b8e65031975d5b67947591528c"
 inputs = "authored-bomb-torizo.inputs"
 input_sha256 = "cb1badc64cca3aa72364677aa8c6d9ce2c827b42eca8e2712ad03deb5561dfe4"
 start_frame = 1441
 frames = 2491
-# deferred: inputs were aligned to snesrev's shorter message boxes; since 96b667a43 the boxes take the original's lag frames, so the path drifts (frames still match). Re-align, then restore:
-# expect = ["boss:bomb-torizo"]
+expect = ["boss:bomb-torizo"]
 after_expectations = 120
 
 [[segment]]
@@ -377,16 +377,16 @@ after_expectations = 120
 
 [[segment]]
 id = "item-charge"
+pending = "inputs were aligned to snesrev's shorter message boxes; since the boxes take the original's lag frames the path drifts after a box (frames still match). Re-aligned by lane T in batch 13"
 seed = "100-input-phase:55"
 seed_sha256 = "36262820f622d995ea44ad6162fa8bace23adb165f3d26b06cf4104761297808"
 inputs = "seed-item-charge.inputs"
 input_sha256 = "57341da0bba3efb76d84775b8c377ad22136a6a063eaa8d29b012e6bf7dfc54c"
 start_frame = 700
 frames = 1119
-# deferred: inputs were aligned to snesrev's shorter message boxes; since 96b667a43 the boxes take the original's lag frames, so the path drifts (frames still match). Re-align, then restore:
-# require_hit = ["coroutine.plm.message.completed"]
+require_hit = ["coroutine.plm.message.completed"]
 after_hits = 120
-# expect = ["item:charge", "room:9D19"]
+expect = ["item:charge", "room:9D19"]
 after_expectations = 120
 
 [[segment]]
@@ -696,43 +696,43 @@ after_expectations = 120
 
 [[segment]]
 id = "save-death-reload"
+pending = "inputs were aligned to snesrev's shorter message boxes; since the boxes take the original's lag frames the path drifts after a box (frames still match). Re-aligned by lane T in batch 13"
 checkpoint = "save-before-kago.smvchk"
 checkpoint_sha256 = "f4defb320e0d34dc9edbd7a536320bd95b1021dd094666111a0bcca6ae673e0f"
 inputs = "corpus-save-death-continue.inputs"
 input_sha256 = "af79d24c791c1414cd4b1b83f040da0787a2a69bd0d2c4d6b73fc667b7d74467"
 start_frame = 70000
 frames = 6064
-# deferred: inputs were aligned to snesrev's shorter message boxes; since 96b667a43 the boxes take the original's lag frames, so the path drifts (frames still match). Re-align, then restore:
-# require_hit = ["save.sram.committed", "save.continue.restored"]
+require_hit = ["save.sram.committed", "save.continue.restored"]
 after_hits = 120
-# expect = ["save-death-continue"]
+expect = ["save-death-continue"]
 after_expectations = 120
 
 # Additional diagnostic; does not satisfy the required save-death-reload scenario.
 [[segment]]
 id = "save-memory"
+pending = "inputs were aligned to snesrev's shorter message boxes; since the boxes take the original's lag frames the path drifts after a box (frames still match). Re-aligned by lane T in batch 13"
 checkpoint = "save-before-kago.smvchk"
 checkpoint_sha256 = "f4defb320e0d34dc9edbd7a536320bd95b1021dd094666111a0bcca6ae673e0f"
 inputs = "corpus-speed-booster.inputs"
 input_sha256 = "bc907fc429252418216b7f575e26be148f7cf863a71c3947b4ffa3c6c6027de6"
 start_frame = 70000
 frames = 1800
-# deferred: inputs were aligned to snesrev's shorter message boxes; since 96b667a43 the boxes take the original's lag frames, so the path drifts (frames still match). Re-align, then restore:
-# require_hit = ["save.sram.committed"]
+require_hit = ["save.sram.committed"]
 after_hits = 120
-# expect = ["room:A201"]
+expect = ["room:A201"]
 after_expectations = 120
 
 [[segment]]
 id = "death"
+pending = "inputs were aligned to snesrev's shorter message boxes; since the boxes take the original's lag frames the path drifts after a box (frames still match). Re-aligned by lane T in batch 13"
 seed = "100-input-phase:142"
 seed_sha256 = "a1bdb9e6425c23be82d5047185c0aa619532c5e062a3329753c27320ad32df1f"
 inputs = "seed-death.inputs"
 input_sha256 = "b18179aff9ea5b427af9b1cdeb4efab9bf632a2a9d5da5daddd3a645e44ae307"
 start_frame = 3000
 frames = 1000
-# deferred: inputs were aligned to snesrev's shorter message boxes; since 96b667a43 the boxes take the original's lag frames, so the path drifts (frames still match). Re-align, then restore:
-# expect = ["death"]
+expect = ["death"]
 after_expectations = 120
 
 [[segment]]
@@ -807,15 +807,15 @@ expect = ["room:E0B5"]
 # Vertical bomb-jump lifecycle and subsequent gameplay.
 [[segment]]
 id = "samus-bomb-jump-vertical"
+pending = "inputs were aligned to snesrev's shorter message boxes; since the boxes take the original's lag frames the path drifts after a box (frames still match). Re-aligned by lane T in batch 13"
 seed = "100-input-phase:27"
 seed_sha256 = "c402c17601f3ac1b274a8c1914e306ed304371b8e65031975d5b67947591528c"
 inputs = "authored-bomb-jump.inputs"
 input_sha256 = "65a524cd11d5b4a35bf9add300b091d64ce39888083e529633210eac5ced2d3c"
 start_frame = 6762
 frames = 800
-# deferred: inputs were aligned to snesrev's shorter message boxes; since 96b667a43 the boxes take the original's lag frames, so the path drifts (frames still match). Re-align, then restore:
-# require_hit = ["samus.jump.bomb"]
-# expect = ["area:crateria"]
+require_hit = ["samus.jump.bomb"]
+expect = ["area:crateria"]
 
 # Onscreen dust writes its last bound before the following Crocomire spit drop.
 [[segment]]
@@ -1065,14 +1065,14 @@ expect = ["area:crateria", "room:91F8"]
 # Fixed window starts at the authenticated Stone Zoomer movement mismatch.
 [[segment]]
 id = "wall-crawler-slope-step"
+pending = "inputs were aligned to snesrev's shorter message boxes; since the boxes take the original's lag frames the path drifts after a box (frames still match). Re-aligned by lane T in batch 13"
 seed = "100-input-phase:27"
 seed_sha256 = "c402c17601f3ac1b274a8c1914e306ed304371b8e65031975d5b67947591528c"
 inputs = "authored-bomb-jump.inputs"
 input_sha256 = "65a524cd11d5b4a35bf9add300b091d64ce39888083e529633210eac5ced2d3c"
 start_frame = 6762
 frames = 8
-# deferred: inputs were aligned to snesrev's shorter message boxes; since 96b667a43 the boxes take the original's lag frames, so the path drifts (frames still match). Re-align, then restore:
-# expect = ["area:crateria", "room:92FD"]
+expect = ["area:crateria", "room:92FD"]
 
 # Original item words through frame666, then authored standing/select/run/release input.
 # Fixed2131 frames retain activation and the return to the normal pose after release.
@@ -1253,15 +1253,15 @@ require_hit = ["kraid_pause.unpause_dead", "kraid_pause.transfer_top_half"]
 
 [[segment]]
 id = "boss-kraid-pause-1960"
+pending = "inputs were aligned to snesrev's shorter message boxes; since the boxes take the original's lag frames the path drifts after a box (frames still match). Re-aligned by lane T in batch 13"
 seed = "100-input-phase:73"
 seed_sha256 = "2edce9c97864f0c38c41e0cc24e88a3b3e228aa2b22d03fa2a93f7d593c0fee4"
 inputs = "authored-boss-kraid-pause-1960.inputs"
 input_sha256 = "027b7113e118f7d8fb38b4427cf8f97889caef16063aba0cdf9505865cf7f367"
 start_frame = 0
 frames = 2572
-# deferred: inputs were aligned to snesrev's shorter message boxes; since 96b667a43 the boxes take the original's lag frames, so the path drifts (frames still match). Re-align, then restore:
-# expect = ["room:A59F", "state:18"]
-# require_hit = ["kraid.dead_hook", "kraid_pause.unpause_dead", "kraid_pause.transfer_top_half"]
+expect = ["room:A59F", "state:18"]
+require_hit = ["kraid.dead_hook", "kraid_pause.unpause_dead", "kraid_pause.transfer_top_half"]
 
 # The first scenario-seed row (tools/scenario_seeds.py draygon-repel: the
 # boss-draygon seed with full energy and reserves). The boss-draygon words to
