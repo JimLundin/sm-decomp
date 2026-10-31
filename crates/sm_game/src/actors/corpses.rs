@@ -477,31 +477,29 @@ crate::dispatch::callback_dispatch! {
     @body checked;
     @functions [pub fn (game: &mut impl Lease)];
     [11129800] torizo_corpse_pre_rot_delay [] {
-        let e: i32 = 0;
-        let v1: u16 = (session_slot!(game, DeadTorizo[e].pre_rot_delay)).wrapping_add(1);
-        session_slot!(game, DeadTorizo[e].pre_rot_delay = v1);
+        let v1: u16 = (session_slot!(game, DeadTorizo[0i32].pre_rot_delay)).wrapping_add(1);
+        session_slot!(game, DeadTorizo[0i32].pre_rot_delay = v1);
         if v1 >= 0x10 {
-            session_slot!(game, DeadTorizo[e].base.properties, |old| old | ((K_ENEMY_PROPS_TANGIBLE) as u16));
-            session_slot!(game, DeadTorizo[e].function = function::TORIZO_ROTTING);
+            session_slot!(game, DeadTorizo[0i32].base.properties, |old| old | ((K_ENEMY_PROPS_TANGIBLE) as u16));
+            session_slot!(game, DeadTorizo[0i32].function = function::TORIZO_ROTTING);
             torizo_corpse_rotting(game);
         }
     };
     [11129830] torizo_corpse_rotting [] {
-        let e: i32 = 0;
-        let v1: u16 = (session_slot!(game, DeadTorizo[e].rot_timer)).wrapping_add(1);
-        session_slot!(game, DeadTorizo[e].rot_timer = v1);
+        let v1: u16 = (session_slot!(game, DeadTorizo[0i32].rot_timer)).wrapping_add(1);
+        session_slot!(game, DeadTorizo[0i32].rot_timer = v1);
         if v1 >= 0xf {
-            session_slot!(game, DeadTorizo[e].rot_timer = 0);
-            let sand_heap_lines: u16 = session_slot!(game, DeadTorizo[e].sand_heap_lines);
+            session_slot!(game, DeadTorizo[0i32].rot_timer = 0);
+            let sand_heap_lines: u16 = session_slot!(game, DeadTorizo[0i32].sand_heap_lines);
             if sand_heap_lines != 0 {
                 copy_line_of_sand_heap_tile_data(sand_heap_lines, game);
-                session_slot!(game, DeadTorizo[e].sand_heap_lines, |old| old.wrapping_sub(1));
+                session_slot!(game, DeadTorizo[0i32].sand_heap_lines, |old| old.wrapping_sub(1));
             }
         }
-        session_slot!(game, DeadTorizo[e].y_velocity, |old| old.wrapping_add(1));
+        session_slot!(game, DeadTorizo[0i32].y_velocity, |old| old.wrapping_add(1));
         move_enemy_with_velocity(game);
         if process_corpse_rotting(0, game) & 1 == 0 {
-            session_slot!(game, DeadTorizo[e].function = function::TORIZO_ROTTED);
+            session_slot!(game, DeadTorizo[0i32].function = function::TORIZO_ROTTED);
         }
     };
     @external {
@@ -553,9 +551,8 @@ macro_rules! queue_dead_torizo_tile_transfers {
 }
 
 pub fn process_torizo_corpse_rotting_vram_transfers(game: &mut impl State) {
-    let e: i32 = 0;
-    let v1: u16 = (session_slot!(game, DeadTorizo[e].tile_frame)).wrapping_add(1);
-    session_slot!(game, DeadTorizo[e].tile_frame = v1);
+    let v1: u16 = (session_slot!(game, DeadTorizo[0i32].tile_frame)).wrapping_add(1);
+    session_slot!(game, DeadTorizo[0i32].tile_frame = v1);
     let mut v3: u16 = word!(game.VRAM_WRITE_QUEUE_TAIL);
     if v1 & 1 != 0 {
         queue_dead_torizo_tile_transfers!(game, torizo_corpse_tables::Frame::Odd, v3);
@@ -829,12 +826,11 @@ pub fn process_corpse_rotting(k: u16, game: &mut impl Lease) -> u8 {
                     );
                 }
             } else {
-                let e: i32 = 0;
-                let r18_0: u16 = session_slot!(game, Corpse[e].active_move_function);
+                let r18_0: u16 = session_slot!(game, Corpse[0i32].active_move_function);
                 let v11: usize = rot_entry_at as usize;
                 copy_move_corpse_rotting_rot_entry(
                     native_record(
-                        BANK_BASE | u32::from(session_slot!(game, Corpse[e].active_row_offsets)),
+                        BANK_BASE | u32::from(session_slot!(game, Corpse[0i32].active_row_offsets)),
                         game,
                     ),
                     native_word(v11, game),
@@ -842,11 +838,11 @@ pub fn process_corpse_rotting(k: u16, game: &mut impl Lease) -> u8 {
                     game,
                 );
                 let v12: u16 = (native_word(v11, game)).wrapping_add(2);
-                if v12 < session_slot!(game, Corpse[e].active_last_row) {
+                if v12 < session_slot!(game, Corpse[0i32].active_last_row) {
                     set_native_word(v11, v12, game);
                 } else {
                     run_rot_entry_finished_hook(
-                        ((session_slot!(game, Corpse[e].active_finished_hook)) as u32)
+                        ((session_slot!(game, Corpse[0i32].active_finished_hook)) as u32)
                             | (BANK_BASE),
                         game,
                     );
@@ -867,15 +863,14 @@ pub fn process_corpse_rotting(k: u16, game: &mut impl Lease) -> u8 {
     0
 }
 pub fn copy_move_corpse_rotting_rot_entry(r20: RomRecord, a: u16, r18: u16, game: &mut impl Lease) {
-    let e: i32 = 0;
-    session_slot!(game, Corpse[e].rot_entry = a);
+    session_slot!(game, Corpse[0i32].rot_entry = a);
     let v1: u16 = ((a) & (0xfff8u16)) >> 2;
     let v2: u16 = (a) & (7u16);
     let v6: u16 = (r20.table_word((v1 >> 1) as isize) as i32 + 2 * v2 as i32) as u16;
     if v2 >= 6 {
         run_rot_entry_copy_or_move(
             ((r18) as u32) | (BANK_BASE),
-            (session_slot!(game, Corpse[e].active_next_row_offset)).wrapping_add(v6),
+            (session_slot!(game, Corpse[0i32].active_next_row_offset)).wrapping_add(v6),
             v6,
             game,
         );
@@ -1008,15 +1003,15 @@ fn transfer_corpse_tiles(
 }
 pub fn initialize_torizo_corpse(game: &mut impl Lease) {
     word_transfers!(game, descending, 2048; le(TILEMAP_STUFF, 2047) <- value(0));
-    let e: i32 = 0;
     session_slot!(
         game,
-        DeadTorizo[e].function = function::TORIZO_WAIT_FOR_SAMUS_COLLISION
+        DeadTorizo[0i32].function = function::TORIZO_WAIT_FOR_SAMUS_COLLISION
     );
-    session_slot!(game, DeadTorizo[e].base.properties, |old| old | (0xa000u16));
-    session_slot! { game, DeadTorizo[e].base; current_instruction = ADDR_K_DEAD_TORIZO_ILIST_D6DC as u16, instruction_timer = 1 }
-    session_slot!(game, DeadTorizo[e].base; timer = 0, palette_index = 512);
-    session_slot! { game, DeadTorizo[e]; x_velocity = 0, y_velocity = 8, pre_rot_delay = 0, sand_heap_lines = 15, rot_timer = 0 };
+    session_slot!(game, DeadTorizo[0i32].base.properties, |old| old
+        | (0xa000u16));
+    session_slot! { game, DeadTorizo[0i32].base; current_instruction = ADDR_K_DEAD_TORIZO_ILIST_D6DC as u16, instruction_timer = 1 }
+    session_slot!(game, DeadTorizo[0i32].base; timer = 0, palette_index = 512);
+    session_slot! { game, DeadTorizo[0i32]; x_velocity = 0, y_velocity = 8, pre_rot_delay = 0, sand_heap_lines = 15, rot_timer = 0 };
     initialize_enemy_corpse_rotting(0, ADDR_STRU_A9DD58 as u16, game);
 }
 /// Main AI - Torizo corpse: the frame runs on one lease.
@@ -1024,18 +1019,18 @@ pub fn torizo_corpse_main_ai(game: &mut impl Host) {
     torizo_corpse_frame(&mut game.lease());
 }
 fn torizo_corpse_frame(game: &mut impl Lease) {
-    let e: i32 = 0;
-    if (session_slot!(game, DeadTorizo[e].base.properties) as i32 & K_ENEMY_PROPS_TANGIBLE as i32)
+    if (session_slot!(game, DeadTorizo[0i32].base.properties) as i32
+        & K_ENEMY_PROPS_TANGIBLE as i32)
         == 0
         && game.foreign(|game| game.dead_torizo_contact())
     {
-        session_slot!(game, DeadTorizo[e].base.properties, |old| old
+        session_slot!(game, DeadTorizo[0i32].base.properties, |old| old
             | ((K_ENEMY_PROPS_TANGIBLE) as u16));
-        session_slot!(game, DeadTorizo[e].function = function::TORIZO_ROTTING);
+        session_slot!(game, DeadTorizo[0i32].function = function::TORIZO_ROTTING);
     }
     set_graphics_drawn_hook(DRAW_DEAD_TORIZO_HOOK, game);
     run_torizo_corpse_function(
-        ((session_slot!(game, DeadTorizo[e].function)) as u32) | (BANK_BASE),
+        ((session_slot!(game, DeadTorizo[0i32].function)) as u32) | (BANK_BASE),
         game,
     );
     process_torizo_corpse_rotting_vram_transfers(game);
@@ -1049,10 +1044,9 @@ pub fn torizo_corpse_power_bomb_reaction(game: &mut impl State) {
     }
 }
 pub fn torizo_corpse_touch_or_shot(game: &mut impl State) {
-    let e: i32 = 0;
-    session_slot!(game, DeadTorizo[e].base.properties, |old| old
+    session_slot!(game, DeadTorizo[0i32].base.properties, |old| old
         | ((K_ENEMY_PROPS_TANGIBLE) as u16));
-    session_slot!(game, DeadTorizo[e].function = function::TORIZO_ROTTING);
+    session_slot!(game, DeadTorizo[0i32].function = function::TORIZO_ROTTING);
 }
 pub fn initialize_sidehopper_corpse(game: &mut impl Lease) {
     let dsr_parameter_1: u16 = session_slot!(game, Corpse[game.current_enemy() as i32].parameter_1);
