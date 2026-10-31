@@ -20,7 +20,7 @@ use crate::constants::enemy_properties::{
     K_ENEMY_PROPS_BLOCK_PLASMA_BEAM, K_ENEMY_PROPS_DELETED, K_ENEMY_PROPS_INVISIBLE,
     K_ENEMY_PROPS_TANGIBLE,
 };
-use crate::menus::prelude::{owned, scroll};
+use crate::menus::prelude::{boss, owned, scroll};
 use crate::palette_copies::{copy_rom_colors_to_palette, copy_rom_colors_to_target_palette};
 use crate::projectile_geometry::SINE_COSINE;
 use crate::ram::word;
@@ -279,7 +279,7 @@ pub fn transition_to_flying<L: Lease + ?Sized>(game: &mut L) {
 /// Ridley function - initial ($A6:A35B): after the door transition, wait to
 /// fade in, shorter in Norfair. Was `CeresRidley_Func_3`.
 pub fn initial<L: Lease + ?Sized>(game: &mut L) {
-    if word!(game.DOOR_TRANSITION_FLAG_ENEMIES) == 0 {
+    if boss!(game.DoorTransitionEnemies) == 0 {
         session_slot!(
             game,
             Ridley[RIDLEY].function = ceres_function::WAIT_TO_FADE_IN
