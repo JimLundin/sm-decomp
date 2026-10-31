@@ -8,6 +8,7 @@ holds the first pieces:
 | Module | Contents |
 | --- | --- |
 | `rendering/` | The shared scanline core and its bounded input records; `prepared` drives it from prepared indexed media |
+| `rendering/registers` | The PPU's line-rendering registers as a typed model; the verifier checks it against every emulated PPU write |
 | `scene` | A read-only consumer of committed Scene history |
 | `message` | Rendering of an extracted, prepared message display |
 

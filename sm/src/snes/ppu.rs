@@ -420,6 +420,11 @@ pub unsafe fn ppu_read(ppu: *mut Ppu, adr: u8) -> u8 {
 
 pub unsafe fn ppu_write(ppu: *mut Ppu, adr: u8, val: u8) {
     unsafe {
+        // The verifier checks the native register model against every write.
+        #[cfg(sm_verify_dll)]
+        let mut model = registers_of(&*ppu);
+        #[cfg(sm_verify_dll)]
+        model.write(adr, val);
         // The native renderer caches complete register bytes, including unused bits.
         match adr {
             0x23..=0x25 => {
@@ -432,6 +437,78 @@ pub unsafe fn ppu_write(ppu: *mut Ppu, adr: u8, val: u8) {
             _ => {}
         }
         sm_backend_ppu_write(ppu, adr, val);
+        #[cfg(sm_verify_dll)]
+        assert_eq!(
+            model,
+            registers_of(&*ppu),
+            "native PPU register model differs after ${adr:02X} = ${val:02X}"
+        );
+    }
+}
+
+/// The emulated PPU's line registers in the native renderer's model.
+#[cfg(sm_verify_dll)]
+fn registers_of(ppu: &Ppu) -> raster::registers::Registers {
+    use raster::registers::{Layer, Registers};
+    Registers {
+        mode: ppu.mode,
+        forced_blank: ppu.forcedBlank,
+        layers: core::array::from_fn(|index| {
+            let bg = &ppu.bgLayer[index];
+            Layer {
+                background: raster::Background {
+                    horizontal_scroll: bg.hScroll,
+                    vertical_scroll: bg.vScroll,
+                    map_words: bg.tilemapAdr,
+                    tile_words: bg.tileAdr,
+                    wider: bg.tilemapWider,
+                    higher: bg.tilemapHigher,
+                },
+                big_tiles: bg.bigTiles,
+                mosaic: bg.mosaicEnabled,
+            }
+        }),
+        mosaic_size: ppu.mosaicSize,
+        windows: raster::Windows {
+            first: [ppu.window1left, ppu.window1right],
+            second: [ppu.window2left, ppu.window2right],
+            native_flags: ppu.windowsel,
+            layers: core::array::from_fn(|index| {
+                let window = &ppu.windowLayer[index];
+                raster::Window {
+                    first_enabled: window.window1enabled,
+                    first_inverted: window.window1inversed,
+                    second_enabled: window.window2enabled,
+                    second_inverted: window.window2inversed,
+                    logic: window.maskLogic,
+                }
+            }),
+        },
+        routing: raster::Routing {
+            enabled: ppu.screenEnabled,
+            windowed: ppu.screenWindowed,
+        },
+        affine: raster::Affine {
+            matrix: ppu.m7matrix,
+            horizontal_flip: ppu.m7xFlip,
+            vertical_flip: ppu.m7yFlip,
+            large_field: ppu.m7largeField,
+            character_fill: ppu.m7charFill,
+        },
+        color: raster::ColorMath {
+            clip: ppu.clipMode,
+            prevent: ppu.preventMathMode,
+            enabled: ppu.mathEnabled,
+            add_subscreen: ppu.addSubscreen,
+            subtract: ppu.subtractColor,
+            half: ppu.halfColor,
+            fixed: [ppu.fixedColorR, ppu.fixedColorG, ppu.fixedColorB],
+            brightness: ppu.brightness,
+        },
+        direct_color: ppu.directColor,
+        scroll_latch: ppu.scrollPrev,
+        horizontal_scroll_latch: ppu.scrollPrev2,
+        affine_latch: ppu.m7prev,
     }
 }
 pub fn ppu_get_current_render_scale(_ppu: *mut Ppu, _render_flags: u32) -> i32 {

@@ -1,6 +1,7 @@
 //! Shared owned scanline computation; acquisition and publication belong to callers.
 
 pub mod prepared;
+pub mod registers;
 
 mod records;
 pub use records::*;

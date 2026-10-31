@@ -17,7 +17,7 @@ pub enum RasterFault {
     EnabledMosaic(usize),
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct Background {
     pub horizontal_scroll: u16,
     pub vertical_scroll: u16,
