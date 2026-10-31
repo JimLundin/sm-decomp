@@ -48,6 +48,13 @@ fn allocate(h: &mut impl Host, definition: u16, graphics: u16) -> Option<u16> {
     h.probe("eproj.spawn.initialized");
     Some(handle)
 }
+/// Spawn `definition` with the room's graphics on a fresh lease of `game`.
+pub fn spawn_room_leased<H>(definition: u16, parameter: u16, game: &mut H) -> u16
+where
+    H: crate::runtime_access::RuntimeAccess + ?Sized,
+{
+    spawn_room(&mut game.runtime(), definition, parameter)
+}
 pub fn spawn_room(h: &mut impl Host, definition: u16, parameter: u16) -> u16 {
     h.session_mut().enemy_projectiles.spawn.primary = parameter;
     allocate(h, definition, 0).unwrap_or_else(|| enemy!(h, 0, definition))

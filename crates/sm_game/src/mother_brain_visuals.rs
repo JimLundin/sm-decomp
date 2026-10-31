@@ -126,7 +126,11 @@ pub fn lights_off<H: VisualsHost + ?Sized>(game: &mut H) {
 pub fn seal_wall<H: VisualsHost + ?Sized>(game: &mut H) {
     for y in [72, 152] {
         game.set_projectile_spawn_point(248, y);
-        game.spawn_room_enemy_projectile(ADDR_K_EPROJ_DUST_CLOUD_EXPLOSION as u16, 9);
+        crate::enemy_projectiles::lifecycle::spawn_room_leased(
+            ADDR_K_EPROJ_DUST_CLOUD_EXPLOSION as u16,
+            9,
+            game,
+        );
     }
     for y in [4, 9] {
         crate::room_mechanisms::creation::spawn_hardcoded(0xf, y, 0xb673, game);
