@@ -260,12 +260,16 @@ pub type PassWrites = Vec<(u8, u8)>;
 
 /// A frame's HDMA as per-pass register tables: the initialization pass, then
 /// `steps` line passes. `host` must be a scratch copy of the channel and timer
-/// state; its source reads must see the tables as they stand. Returns `None`
-/// if a channel transfers from the B bus to memory, which needs the PPU's
-/// values at each line and so has no table.
+/// state; its source reads must see the tables as they stand. Before each line
+/// pass, `between(host, pass)` (`pass` from 1) applies to the scratch memory
+/// whatever the frame's scanline interrupts have stored by then, since HDMA
+/// can read the memory an interrupt writes. Returns `None` if a channel
+/// transfers from the B bus to memory, which needs the PPU's values at each
+/// line and so has no table.
 pub fn frame_table<H: HdmaHost>(
     host: &mut H,
     steps: usize,
+    mut between: impl FnMut(&mut H, usize),
 ) -> Result<Option<Vec<PassWrites>>, H::Error> {
     let mut recorder = Recorder {
         host,
@@ -274,7 +278,8 @@ pub fn frame_table<H: HdmaHost>(
     };
     initialize(&mut recorder)?;
     let mut passes = vec![std::mem::take(&mut recorder.writes)];
-    for _ in 0..steps {
+    for pass in 1..=steps {
+        between(&mut *recorder.host, pass);
         step(&mut recorder)?;
         passes.push(std::mem::take(&mut recorder.writes));
     }
@@ -456,7 +461,7 @@ mod tests {
             timer: 0,
             memory,
         };
-        let table = frame_table(&mut host, 6).unwrap().unwrap();
+        let table = frame_table(&mut host, 6, |_, _| {}).unwrap().unwrap();
         let lines: Vec<&[(u8, u8)]> = table.iter().map(Vec::as_slice).collect();
         assert_eq!(
             lines,

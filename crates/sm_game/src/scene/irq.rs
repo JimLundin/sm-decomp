@@ -329,11 +329,13 @@ pub fn advance<H: Host>(host: &mut H) -> Result<(), H::Error> {
 }
 
 /// One interrupt of a frame: the vertical timer line it fired at, its display
-/// writes in order, and whether it polled a door transition's resume.
+/// writes and control stores in order, and whether it polled a door
+/// transition's resume.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct IrqPass {
     pub line: u16,
     pub writes: Vec<(Output, u8)>,
+    pub stores: Vec<(Store, u16)>,
     pub resumed: bool,
 }
 
@@ -354,6 +356,7 @@ pub fn frame_table<H: Host>(
     let mut recorder = TableRecorder {
         host,
         writes: Vec::new(),
+        stores: Vec::new(),
         vertical_timer,
         vertical_enabled,
         resumed: false,
@@ -369,6 +372,7 @@ pub fn frame_table<H: Host>(
         passes.push(IrqPass {
             line,
             writes: std::mem::take(&mut recorder.writes),
+            stores: std::mem::take(&mut recorder.stores),
             resumed: std::mem::take(&mut recorder.resumed),
         });
         after = Some(line);
@@ -376,10 +380,12 @@ pub fn frame_table<H: Host>(
     Ok(passes)
 }
 
-/// Records display writes and follows the vertical timer and its enable.
+/// Records display writes and control stores, and follows the vertical timer
+/// and its enable.
 struct TableRecorder<'a, H> {
     host: &'a mut H,
     writes: Vec<(Output, u8)>,
+    stores: Vec<(Store, u16)>,
     vertical_timer: u16,
     vertical_enabled: bool,
     resumed: bool,
@@ -390,6 +396,7 @@ impl<H: Host> Controls for TableRecorder<'_, H> {
         self.host.read_control(field)
     }
     fn write_control(&mut self, field: Store, value: u16) {
+        self.stores.push((field, value));
         self.host.write_control(field, value);
     }
 }
