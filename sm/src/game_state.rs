@@ -739,9 +739,6 @@ impl Game {
     fn import_native_records(&mut self, image: &crate::rom::RomImage) {
         self.enemy_speeds32 = crate::game::enemy_speeds::import32(image);
         self.demo_scenes = sm_game::demo_rooms::import_scenes(image);
-        self.records.native_program = Some(std::rc::Rc::new(
-            sm_data::program_image::ProgramImage::prepare(image),
-        ));
     }
 
     /// Import the `sm_data` records read from the loaded image.
@@ -792,9 +789,6 @@ impl Game {
             sm_game::program_banks::import(image, sm_game::program_banks::Bank::Sprite);
         self.records.gameplay_tables = sm_game::gameplay_tables::import(image);
         self.records.enemy_lists = sm_game::enemy_lists::import(image);
-        self.records.loaded_program = Some(std::rc::Rc::new(
-            sm_data::program_image::ProgramImage::prepare(image),
-        ));
     }
 
     pub(crate) fn register_rom(&mut self, image: crate::rom::RomImage) {

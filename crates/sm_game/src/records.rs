@@ -31,9 +31,6 @@ pub struct RomRecords {
     pub palette_programs: Option<crate::imported::Imported<sm_data::program_bank::ProgramBank>>,
     pub animated_programs: Option<crate::imported::Imported<sm_data::program_bank::ProgramBank>>,
     pub sprite_programs: Option<crate::imported::Imported<sm_data::program_bank::ProgramBank>>,
-    /// The script interpreters' prepared copies of the loaded and native images.
-    pub loaded_program: Option<std::rc::Rc<sm_data::program_image::ProgramImage>>,
-    pub native_program: Option<std::rc::Rc<sm_data::program_image::ProgramImage>>,
 }
 
 /// A host holding the loaded image and its imported records.

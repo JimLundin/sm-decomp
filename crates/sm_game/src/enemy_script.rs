@@ -1,49 +1,10 @@
 //! Owned enemy-script positions and explicit interpreter control results.
 use sm_data::cartridge::RomImage;
-use sm_data::program_image::ProgramImage;
-use std::rc::Rc;
-
-/// What a script cursor reads: the prepared program image, or the live
-/// cartridge image where none serves it.
-#[derive(Clone)]
-pub enum ScriptImage {
-    Prepared(Rc<ProgramImage>),
-    Live(RomImage),
-}
-
-impl ScriptImage {
-    /// `prepared` while it serves `image`, otherwise `image` itself.
-    pub fn for_image(prepared: Option<&Rc<ProgramImage>>, image: RomImage) -> Self {
-        match prepared {
-            Some(prepared) if prepared.serves(&image) => Self::Prepared(prepared.clone()),
-            _ => Self::Live(image),
-        }
-    }
-    pub fn read(&self, offset: usize) -> u8 {
-        match self {
-            Self::Prepared(prepared) => prepared.read(offset),
-            Self::Live(image) => image.read(offset),
-        }
-    }
-    /// The cartridge image the script belongs to.
-    pub fn source(&self) -> &RomImage {
-        match self {
-            Self::Prepared(prepared) => prepared.source(),
-            Self::Live(image) => image,
-        }
-    }
-}
-
-impl From<RomImage> for ScriptImage {
-    fn from(image: RomImage) -> Self {
-        Self::Live(image)
-    }
-}
 
 #[derive(Clone)]
 pub enum EnemyScript {
     // Sequential movement retains this allocation across callbacks.
-    At { image: ScriptImage, position: usize },
+    At { image: RomImage, position: usize },
     // Numeric targets resolve against the interpreter's captured bank and image.
     Jump(u16),
     Stop,
@@ -54,11 +15,8 @@ pub fn bank_base(bank: u8) -> isize {
 }
 
 impl EnemyScript {
-    pub fn at(image: impl Into<ScriptImage>, position: usize) -> Self {
-        Self::At {
-            image: image.into(),
-            position,
-        }
+    pub fn at(image: RomImage, position: usize) -> Self {
+        Self::At { image, position }
     }
     pub fn jump(address: u16) -> Self {
         // A zero jump stops; a linear position at bank address zero does not.
@@ -68,7 +26,7 @@ impl EnemyScript {
             Self::Jump(address)
         }
     }
-    fn cursor(&self) -> (&ScriptImage, usize) {
+    fn cursor(&self) -> (&RomImage, usize) {
         match self {
             Self::At { image, position } => (image, *position),
             _ => panic!("script control result is not a readable position"),
@@ -108,7 +66,7 @@ impl EnemyScript {
     pub fn offset_from(&self, base: isize) -> isize {
         isize::try_from(self.cursor().1).expect("enemy script offset overflow") - base
     }
-    pub fn resolve(self, image: &ScriptImage, base: isize) -> Option<Self> {
+    pub fn resolve(self, image: &RomImage, base: isize) -> Option<Self> {
         match self {
             Self::Stop => None,
             Self::Jump(address) => Some(Self::at(
