@@ -7,4 +7,5 @@
 #![forbid(unsafe_code)]
 
 pub mod engine;
+pub mod lockstep;
 pub mod observation;
