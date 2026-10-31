@@ -19,6 +19,8 @@ pub trait Host: BossEffects + BossLease<Game = Self> {
     fn update_spore_stem(&mut self);
     /// The boss bits of `area`.
     fn boss_bits(&mut self, area: u16) -> u8;
+    /// Scatter Spore Spawn's death drops for enemy `k`.
+    fn scatter_spore_spawn_drop(&mut self, k: u16);
 }
 
 /// A lease on a game with Spore Spawn's effects.
@@ -120,16 +122,18 @@ const OPEN_CEILING: u16 = 0xb78f;
 const DEAD: u16 = 2;
 
 /// Instruction - increase Spore Spawn max X radius ($A5:E75F).
-pub fn increase_max_x_radius<L: Lease + ?Sized>(game: &mut L) {
+pub fn increase_max_x_radius<L: Lease + ?Sized>(script: EnemyScript, game: &mut L) -> EnemyScript {
     if below(session_slot!(game, Spore[0].max_x_radius), RADIUS_LIMIT) {
         session_slot!(game, Spore[0].max_x_radius, |old| old
             .wrapping_add(RADIUS_STEP));
     }
+    script
 }
 
 /// Instruction - clear Spore Spawn damaged flag ($A5:E771).
-pub fn clear_damaged_flag<L: Lease + ?Sized>(game: &mut L) {
+pub fn clear_damaged_flag<L: Lease + ?Sized>(script: EnemyScript, game: &mut L) -> EnemyScript {
     session_slot!(game, Spore[0].damaged = 0);
+    script
 }
 
 /// Instruction - max X radius = [[Y]], angle delta = [[Y] + 2] ($A5:E82D).
@@ -142,15 +146,17 @@ pub fn set_max_x_radius_and_angle_delta<L: Lease + ?Sized>(
 }
 
 /// Instruction - Spore Spawn harden ($A5:E87C).
-pub fn harden<L: Lease + ?Sized>(game: &mut L) {
+pub fn harden<L: Lease + ?Sized>(script: EnemyScript, game: &mut L) -> EnemyScript {
     session_slot!(game, Spore[0].base; x_pos = MIDDLE_X, y_pos = MIDDLE_Y,
         properties = (session_slot!(game, Spore[0].base.properties) & HARD_KEEP) | HARD_SET);
+    script
 }
 
-/// Instruction - enemy function = [[Y]] ($A5:E8BA), given [[Y]].
-pub fn set_function<L: Lease + ?Sized>(function: u16, game: &mut L) {
+/// Instruction - enemy function = [[Y]] ($A5:E8BA).
+pub fn set_function<L: Lease + ?Sized>(script: EnemyScript, game: &mut L) -> EnemyScript {
     let k = game.current_enemy() as i32;
-    session_slot!(game, Spore[k].function = function);
+    session_slot!(game, Spore[k].function = script.word(0));
+    script.offset(1)
 }
 
 /// Initialisation AI ($A5:EA2A): its palettes and stem; dead, it hangs closed

@@ -8,7 +8,8 @@
 //! for the small tables, the same address for the large ones. Moving a
 //! routine here means moving its arm.
 use crate::actors::access::{AccessMode::LittleEndian, AccessMode::Native, ActorAccess as _};
-use crate::actors::host::{ActorHost, ActorRuntime, Death, LeaseActors, Shot};
+use crate::actors::host::{ActorHost, ActorLease as _, ActorRuntime, Death, LeaseActors, Shot};
+use crate::actors::spore_spawn::instruction as spore;
 use crate::actors::{
     alcoon, atomic, bang, beetom, blue_brinstar_face_block, botwoon, boulder, boyon, bull, cacatac,
     ceres_doors, ceres_ridley, choot, covern, crawlers, crocomire_reactions, dachora_run, dragon,
@@ -17,10 +18,11 @@ use crate::actors::{
     geega, geruta, gunship, kago, kihunter, kraid, magdollite, metroid, mini_crocomire, mini_kraid,
     mochtroid, morph_ball_eye, multiviola, oum, phantoon, phantoon_actions, polyp, powamp, puyo,
     reflec, ridley, rinka, rio, rippers, roach, shaktool, shutters, sidehopper, skree, skultera,
-    space_pirates, squeept, statues, tatori, torizo, tripper, waver, work_robot,
+    space_pirates, spore_spawn, squeept, statues, tatori, torizo, tripper, waver, work_robot,
     wrecked_ship_spark, yapping_maw, yard, zeb, zebetites, zoa,
 };
 use crate::combat_rules::LatchMode;
+use crate::enemy_projectiles::host::Effects as _;
 use crate::enemy_script::EnemyScript;
 use crate::ram::word;
 
@@ -57,7 +59,6 @@ impl<T> B3Host for T where
 /// Contact reactions whose routines still run in the compatibility crate.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum NativeTouch {
-    SporeSpawn,
     MotherBrainBrain,
 }
 
@@ -74,6 +75,7 @@ pub trait TouchHost:
     + kraid::Host
     + phantoon::Host
     + ceres_doors::Host
+    + spore_spawn::Host
 {
     fn native_touch(&mut self, touch: NativeTouch);
 }
@@ -89,7 +91,7 @@ pub fn touch<H: TouchHost>(ea: u32, game: &mut H) {
         10795344 => (),
         10846284 => (),
         10851818 => draygon_death::touch(game),
-        10874348 => game.native_touch(NativeTouch::SporeSpawn),
+        10874348 => spore_spawn::touch(game),
         // Ridley's contact leaves the death pending.
         10936153 => game.contact_reaction(Death::LeavePending),
         10940479 => ceres_doors::steam_touch(game),
@@ -109,7 +111,6 @@ pub fn touch<H: TouchHost>(ea: u32, game: &mut H) {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum NativeShot {
     Dud,
-    SporeSpawn,
     Ridley,
     MotherBrainBody,
     MotherBrainBrain,
@@ -127,6 +128,7 @@ pub trait ShotHost:
     + statues::Host
     + kraid::Host
     + phantoon::Host
+    + spore_spawn::Host
 {
     fn native_shot(&mut self, shot: NativeShot);
 }
@@ -146,7 +148,7 @@ pub fn shot<H: ShotHost>(ea: u32, j: u16, game: &mut H) {
         10846253 => game.shot_reaction(Shot::Finalize),
         10846284 => (),
         10851824 => draygon_death::shot(game),
-        10874202 => game.native_shot(NativeShot::SporeSpawn),
+        10874202 => spore_spawn::shot(game),
         10911820 => (),
         10936202 => game.native_shot(NativeShot::Ridley),
         10977356 => (),
@@ -277,6 +279,7 @@ pub trait AiHost:
     + atomic::Host
     + crate::actors::host::EnemyHost
     + crate::effects::SoundEffects
+    + spore_spawn::Host
 {
     /// An AI routine whose arm is still in the compatibility table.
     fn native_ai(&mut self, ea: u32);
@@ -286,9 +289,6 @@ pub trait AiHost:
     fn write_multiplicand(&mut self, operand: u8);
     /// Install Draygon's BG layers as its initialisation does.
     fn install_draygon_layers(&mut self);
-    /// A bank $A5 function Draygon's dispatch shares with Spore Spawn, whose
-    /// routines still run in the compatibility crate.
-    fn native_draygon_function(&mut self, ea: u32, k: u16);
 }
 
 /// The bank $A5 functions Draygon's parts run, keyed by address.
@@ -320,7 +320,6 @@ pub fn draygon_function<H: AiHost>(ea: u32, k: u16, game: &mut H) {
         10849492 => draygon_flight::goop_move_until_in_range(false, game),
         10849198 => draygon_flight::goop_firing(true, game),
         10849584 => draygon_flight::goop_firing(false, game),
-        10846283 => (),
         10849331 => draygon_flight::goop_move_until_off_screen(true, game),
         10849714 => draygon_flight::goop_move_until_off_screen(false, game),
         10850078 => draygon_grab::move_to_target(k, game),
@@ -330,7 +329,13 @@ pub fn draygon_function<H: AiHost>(ea: u32, k: u16, game: &mut H) {
         10850596 => draygon_grab::move_samus_with_draygon(k, game),
         10863757 => draygon_eye::look_at_samus(k, false, game),
         10863891 => draygon_eye::look_at_samus(k, true, game),
-        _ => game.native_draygon_function(ea, k),
+        // Spore Spawn's functions ($A5:EB1A-$A5:EBEE), which the dispatch shares.
+        10846283 | 10873626 => (),
+        10873627 => spore_spawn::descend(game),
+        10873682 => spore_spawn::orbit(k, game),
+        10873755 => spore_spawn::begin_return(game),
+        10873838 => spore_spawn::finish_return(game),
+        _ => game.unknown_routine(),
     }
 }
 
@@ -428,6 +433,10 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         11766625 => gamet::initialize(game),
         11767628 => geega::initialize(game),
         11769219 => botwoon::initialize(game),
+        10873386 => spore_spawn::initialize(game),
+        10873619 => spore_spawn::main_ai(game),
+        10874202 => spore_spawn::shot(game),
+        10874348 => spore_spawn::touch(game),
         11790027 => escape_critters::initialize(false, game),
         11791077 => escape_critters::initialize(true, game),
         11791130 => (),
@@ -973,6 +982,7 @@ pub trait InstructionHost:
     + crate::actors::host::EnemyHost
     + crate::effects::SoundEffects
     + botwoon::Host
+    + spore_spawn::Host
 {
     /// An instruction whose arm is still in the compatibility table.
     fn native_instruction(&mut self, ea: u32, k: u16, j: EnemyScript) -> EnemyScript;
@@ -1022,7 +1032,6 @@ pub fn instruction<H: InstructionHost>(
         }
         // Instruction - queue sound [[Y]], sound library 2 or 3, max 6 ($A5:9F60, $A5:9F6E).
         10854240 | 10854254 => {
-            use crate::enemy_projectiles::host::Effects as _;
             LeaseActors::lease(game).queue_sound(if ea == 10854240 { 2 } else { 3 }, 6, j.word(0));
             j.offset(1)
         }
@@ -1041,11 +1050,34 @@ pub fn instruction<H: InstructionHost>(
         11139472 => crate::actors::baby_metroid_encounter::go_to_remorse(k, j),
         // Instruction - room loading interrupt command = Draygon's room - begin HUD drawing.
         10852501 | 10853514 => {
-            use crate::actors::host::ActorLease as _;
             LeaseActors::lease(game)
                 .write_slice_le(crate::ram::words::ROOM_LOADING_IRQ_HANDLER, 12);
             j
         }
+        spore::INCREASE_MAX_X_RADIUS => spore_spawn::increase_max_x_radius(j, game),
+        spore::CLEAR_DAMAGED_FLAG => spore_spawn::clear_damaged_flag(j, game),
+        spore::SET_MAX_X_RADIUS_AND_ANGLE_DELTA => {
+            spore_spawn::set_max_x_radius_and_angle_delta(j, game)
+        }
+        spore::HARDEN => spore_spawn::harden(j, game),
+        spore::SET_FUNCTION => spore_spawn::set_function(j, game),
+        // Death quake sound timer = [[Y]] ($A5:E872) and queue sound [[Y]] ($A5:E895).
+        10872946 => {
+            let at = crate::ram::words::BOSS_DEATH_QUAKE_SOUND_TIMER;
+            LeaseActors::lease(game).write_slice_le(at, j.word(0));
+            j.offset(1)
+        }
+        10872981 => {
+            LeaseActors::lease(game).queue_sound(2, 6, j.word(0));
+            j.offset(1)
+        }
+        10873009 => {
+            game.scatter_spore_spawn_drop(k);
+            j
+        }
+        10873034 | 10873116 => spore_spawn::fade(ea == 10873116, j, game),
+        10873198 => spore_spawn::emit_spore(j, game),
+        10873265 => spore_spawn::emit_hurt(j, game),
         10852159 => draygon_death::spawn_dying_sprite(21, j, game),
         10852178 => draygon_death::spawn_dying_sprite(3, j, game),
         10852197 => draygon_death::spawn_dying_sprite(29, j, game),
