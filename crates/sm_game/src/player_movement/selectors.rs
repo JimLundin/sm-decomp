@@ -136,6 +136,7 @@ fn spin_jump(h: &mut impl Host) {
                 let history = &mut h.session_mut().projectiles.preparation.aim_history;
                 *history = (*history & 0xff00) | 1;
                 if h.inputs().jump_button & h.inputs().pressed != 0 {
+                    crate::probe::hit("samus.space_jump");
                     transitions::initialize_jump(h, transitions::state::JumpKind::Normal);
                 }
             }

@@ -258,6 +258,17 @@ RECIPES = {
         _ 40; repeat 5 { Select 2; _ 6 }; _ 10
         B 30; Up+B 30; Down+B 30; B 20; _ 60
     """),
+    # Landing site: walk right, jump onto the gunship, walk to its hatch and
+    # board; once the ship has refilled Samus, keep confirming its save prompt.
+    "gunship-save": Recipe("""
+        _ 10; Right 340; Right+A 25; Right 10; _ 20; Right 32; _ 30; Down 2
+        _ 500; repeat 8 { A 2; _ 58 }; _ 300
+    """),
+    # Landing site: spin jump right and keep space jumping every 28 frames.
+    "space-jump-chain": Recipe("_ 20; Right 8; Right+A 10; repeat 8 { Right 24; Right+A 4 }; _ 120"),
+    # Seed 100-input-phase:306: spin back and forth with the screw attack
+    # through the room's enemies.
+    "screw-attack": Recipe("_ 20; repeat 12 { Left 6; Left+A 30; Right 6; Right+A 30 }; _ 60"),
     # Pause, wait for the pause screen, unpause and watch the room resume.
     "pause-resume": Recipe("press Start 150; hold Start 200; _ $tail", {"tail": 240}),
 }
@@ -309,6 +320,9 @@ PINNED = {
     "crystal-flash": "d82453f56f8f0f9a579385961533f2415fe86e47e53e171559334fd8f5e199b6",
     "walljump": "51c1ddb44ada90dc6af96e0dbc0b1bdbed90566eaf1c625e4b9ca8705cc435a1",
     "xray-scan": "5419367a7705c5a3a6ba91985ff47f4f13ddd073ffacab058acc1732807f55ee",
+    "gunship-save": "1c59417aed908dbb468ef711a1955314b2b4cecc8bac14f0e1eec07c6c5493fe",
+    "space-jump-chain": "fc3d13a804e7b28519f9142ac92f57fc4e48884c181e90690d947019f961345d",
+    "screw-attack": "ce49ad2b34eb6e5256cb0a73deb28043b434660b096aaee3ba35974ce51570fe",
     "pause-resume": "6982afc4c06ba2311042798e0c0c2ccdbe47a7dbe599fb50b927ba414c24d077",
 }
 

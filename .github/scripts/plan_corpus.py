@@ -21,6 +21,8 @@ def seed_bundle(row):
                      'mother-brain-baby-metroid-drain', 'mother-brain-baby-metroid-sacrifice',
                      'mother-brain-escape-door'):
         return ('seeds-v1-mb-phases-13dd32bb039004ab.tar.gz.enc', '13dd32bb039004abe6a8a3225cc1dfe14421dab64bea27e8931b987603042caf')
+    if row['id'] in ('samus-gunship-save', 'samus-space-jump-chain', 'samus-screw-attack'):
+        return ('seeds-v1-tricks2-891ceaf012b8dfb4.tar.gz.enc', '891ceaf012b8dfb4728c0707f845b38ec3499448ee7c35e4f9b778cd5fb6f19b')
     if row['id'].startswith(('samus-shinespark-', 'samus-walljump-', 'xray-scan-')) or row['id'] == 'samus-crystal-flash':
         return ('seeds-v1-tricks-95f7c4352cb18fbe.tar.gz.enc', '95f7c4352cb18fbe3a4c31b4da1de269b25b48db0232653e6fb020c832c5bdb3')
     if row['id'] == 'boss-draygon-grapple-repel':

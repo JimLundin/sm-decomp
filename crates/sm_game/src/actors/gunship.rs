@@ -115,6 +115,7 @@ fn entrance(rt: &mut impl ActorLease, index: u16, opening: bool) {
     rt.queue_sound(3, 6, if opening { 0x14 } else { 0x15 });
 }
 fn save(rt: &mut impl ActorLease) {
+    crate::probe::hit("gunship.save");
     let flags = rt.word(USED_SAVE_STATIONS) | 1;
     rt.write_slice_le(USED_SAVE_STATIONS, flags);
     rt.write_slice_le(W::LOAD_STATION_INDEX, 0);
