@@ -15,9 +15,12 @@
 //!
 //! **Consumers.** The cinematic functions run on the compatibility host
 //! outside a lease. They read and store these words with [`cinematic!`],
-//! through the host's projected bytes: the owned Session's projection while
-//! one is installed, the byte image otherwise, with the same bytes and order
-//! as the named words they replace.
+//! through the host's projected bytes: a read sees the owned Session's
+//! projection while one is installed and the byte image otherwise, and a
+//! store writes the byte image, as the named words they replace did. The
+//! view names the words; it does not yet move their access onto the
+//! Session's fields, so `tools/cycle_report.py` still counts its call sites
+//! as RAM coupling.
 use crate::ram::CompatibilityRam;
 
 /// A cinematic word, by its RAM address.
@@ -263,12 +266,13 @@ pub fn set_at<H: CompatibilityRam + ?Sized, I: TryInto<isize>>(
     crate::projection::set_word(h, at(array, index), value);
 }
 
-/// Typed access to the cinematic words, in the shapes the named word accesses
-/// used: `cinematic!(game.Word)` reads and `cinematic!(game.Word = value)`
-/// stores; tables take `Array[index]`. `+=`/`-=`/`&=`/`|=`/`^=` and
-/// `(game.Word, |old| value)` read the old value first (the destination's
+/// Access to the cinematic words by name, through the host's projected RAM
+/// bytes (not yet the Session's fields), in the shapes the named word
+/// accesses used: `cinematic!(host.Word)` reads and `cinematic!(host.Word =
+/// value)` stores; tables take `Array[index]`. `+=`/`-=`/`&=`/`|=`/`^=` and
+/// `(host.Word, |old| value)` read the old value first (the destination's
 /// index before it); a trailing `reread` loads the stored word again. Stores
-/// evaluate the value before the destination's index. `(game; A = x; B[i] =
+/// evaluate the value before the destination's index. `(host; A = x; B[i] =
 /// y;)` stores in order.
 macro_rules! cinematic {
     ($game:ident.$array:ident[$index:expr]) => {

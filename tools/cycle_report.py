@@ -39,6 +39,11 @@ RAM_COUPLINGS = {
     "word transfers (word_transfers!)": re.compile(r"\bword_transfers!"),
     "register writes (register_writes!/write_register)": re.compile(r"\bregister_writes!|\bwrite_register(?:_word)?\("),
     "raw RAM hosts (RawRam/compatibility_byte)": re.compile(r"\bRawRam\b|\bcompatibility_(?:write_)?byte\b"),
+    # The cinematic state view names its words by Session field, but each access
+    # still reads and stores the host's projected RAM bytes; count its call sites.
+    "cinematic state view (cinematic!/cinematic_state::)": re.compile(
+        r"\bcinematic!\s*[({]\s*game\b"
+        r"|\bcinematic_state::(?:get|set|get_at|set_at|get_offset|set_offset|add_pair|clear)\(\s*game\b"),
 }
 
 
