@@ -269,9 +269,9 @@ pub struct Game {
     pub currently_installed_bug_fix_counter: u16,
     pub VERIFY_ACTIVE: bool,
     pub VERIFY_FAILURES: u64,
-    /// The lockstep observation comparison, when the verifier enabled it.
+    /// The verifier's typed observation (lockstep or single-side), when enabled.
     #[cfg(sm_verify_dll)]
-    pub observation: Option<Box<sm_tools::lockstep::Lockstep>>,
+    pub observation: Option<Box<crate::observation::Observer>>,
     pub g_got_mismatch_count: c_int,
     pub g_other_image: bool,
     pub g_debug_flag: bool,
