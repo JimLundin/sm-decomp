@@ -94,6 +94,15 @@ M seams and cycle cuts, B bank retirement.
    fail CI on an increase over a checked-in baseline. (2) A move is line-neutral
    or smaller in production lines; host/lease adapters added to make it compile
    count against it. (3) Each landing's PR description states both deltas.
+
+   **Landing size and reporting (review, 2026-10-31; flagged in three reviews).**
+   (4) A landing PR carries at most ~25 commits; when its CI or corpus fails,
+   land the green prefix rather than holding everything (#116: 94 commits, five
+   red CI runs, main idle 7 h). (5) The Phase 1 exit item, the Cue trace matching
+   the port trace on every corpus row, is still open (`sm/src/verify.rs:1184`
+   requires the physical-audio oracle). Before the next landing, either run it or
+   state the blocker and the plan in #6. Update #6's opening with the current
+   `cycle_report.py` and ratchet numbers at least once a day.
 3. **Gate 1 vertical slice.** Morph room 9E9F: `Session::open` from prepared
    content, the full Morph1200 inputs, `sm_runtime` renderer and sequencer, a
    minimal `sm_app`, headless replay in `sm_tools`, compared to the oracle
