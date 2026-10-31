@@ -431,8 +431,6 @@ const SAMUS_MOVEMENT_TYPE: usize = 0xa1f;
 const SPIN_JUMPING: u8 = 3;
 /// The level data's block words ($7F:0002).
 const LEVEL_DATA: isize = 0x10002;
-/// The OAM buffer.
-const OAM: usize = 0x370;
 /// The VRAM write queue.
 const VRAM_WRITE_QUEUE: usize = 0xd0;
 /// One VRAM write queue entry: size, long source, destination.
@@ -3346,36 +3344,15 @@ pub fn add_spritemap<L: Lease + ?Sized>(
     palette: u16,
     game: &mut L,
 ) {
-    let map = crate::cartridge::native_record(0xa6, spritemap, game);
-    let mut count = map.word(0) as i32;
-    let mut entry = 2;
-    let mut index = word!(game.OAM_NEXT_PTR) as i32;
+    let record = crate::cartridge::native_record(0xa6, spritemap, game);
+    let map = crate::sprite_drawing::SpriteMap {
+        image: record.image,
+        offset: record.base,
+    };
     let layer1 = game.camera().layer1;
-    loop {
-        let screen_y = (y as i32 + map.byte(entry + 2) as i8 as i32 - layer1[1] as i32) as i16;
-        if screen_y >= 0 && below(screen_y as u16, 224) {
-            let screen_x = (x as i32 + map.word(entry) as i32 - layer1[0] as i32) as u16;
-            let at = OAM + index as usize;
-            game.set_slot_byte(at, screen_x as u8);
-            game.set_slot_byte(at + 1, screen_y as u8);
-            let tile = (palette | map.word(entry + 3)).to_ne_bytes();
-            game.set_slot_byte(at + 2, tile[0]);
-            game.set_slot_byte(at + 3, tile[1]);
-            word!(
-                bits_i32,
-                game.OAM_EXT[(index >> 5)] |= (((screen_x as i32 & 0x100) >> 8)
-                    | (((map.word(entry) as i16) < 0) as i32 * 2))
-                    << (2 * (index >> 2 & 7))
-            );
-            index = (index + 4) & 0x1ff;
-        }
-        entry += 5;
-        count -= 1;
-        if count == 0 {
-            break;
-        }
-    }
-    word!(game.OAM_NEXT_PTR = index as u16);
+    let camera = (layer1[0], layer1[1]);
+    let clip = crate::scene::objects::RoomClip::Rows;
+    game.draw_room_spritemap(&map, (x, y), camera, palette, clip);
 }
 
 /// Check if Ridley is on screen ($A6:DE7A): true when he is off it, with a

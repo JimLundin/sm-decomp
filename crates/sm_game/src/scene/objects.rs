@@ -130,18 +130,31 @@ fn extension<H: Host>(
     host.write_native_slice(offset, old | bits)
 }
 
-/// Add a spritemap at room position `origin` to OAM, as Mother Brain's own
-/// routine ($A9:93EE) does: `camera` is the layer 1 position, an entry above
-/// the screen is skipped, `palette` is ORed into each tile word, and each
-/// entry's X takes the carry of its Y subtract. There is no other off-screen
-/// handling, and a zero count draws 65536 entries, as the original's
-/// DEC/BNE loop does. The cursor and high table are little-endian words.
+/// Which entries a room-coordinate spritemap routine skips, and the carry its
+/// X add takes.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum RoomClip {
+    /// Mother Brain's ($A9:93EE): entries above the screen; each X takes the
+    /// carry of its Y subtract.
+    Above,
+    /// Ridley's ($A6:DC13): entries outside the screen's 224 rows; the X add
+    /// takes the clear carry of the CMP #$E0 that let it through.
+    Rows,
+}
+
+/// Add a spritemap at room position `origin` to OAM, as the bosses' own
+/// routines do: `camera` is the layer 1 position, `clip` says which entries
+/// are skipped, and `palette` is ORed into each tile word. There is no other
+/// off-screen handling, and a zero count draws 65536 entries, as the
+/// original's DEC/BNE loop does. The cursor and high table are little-endian
+/// words.
 pub fn draw_room<H: Host>(
     host: &mut H,
     map: &mut impl Geometry<Error = H::Error>,
     origin: (u16, u16),
     camera: (u16, u16),
     palette: u16,
+    clip: RoomClip,
 ) -> Result<(), H::Error> {
     let mut index = usize::from(host.read_little_word(544)?);
     let count = map.count()?;
@@ -153,14 +166,15 @@ pub fn draw_room<H: Host>(
     for record in 0..records {
         let row = origin.1.wrapping_add(map.y(record)? as i8 as u16);
         let y = row.wrapping_sub(camera.1);
-        if y & 0x8000 != 0 {
+        if y & 0x8000 != 0 || clip == RoomClip::Rows && y.wrapping_sub(0xe0) & 0x8000 == 0 {
             continue;
         }
+        let carry = clip == RoomClip::Above && row >= camera.1;
         let entry_x = map.x(record)?;
         let x = origin
             .0
             .wrapping_add(entry_x)
-            .wrapping_add(u16::from(row >= camera.1))
+            .wrapping_add(u16::from(carry))
             .wrapping_sub(camera.0);
         host.write_byte(index, x as u8)?;
         host.write_byte(index + 1, y as u8)?;

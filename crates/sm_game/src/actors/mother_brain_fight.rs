@@ -756,11 +756,18 @@ pub enum Contact {
 /// records and native image, and sound. Routines written against it run on
 /// either.
 pub trait State:
-    crate::actors::boss_lease::BossState + OwnedWords + DisplayObjects + SessionRam
+    crate::actors::boss_lease::BossState
+    + OwnedWords
+    + crate::sprite_drawing::DisplayObjects
+    + SessionRam
 {
 }
 impl<T> State for T where
-    T: crate::actors::boss_lease::BossState + OwnedWords + DisplayObjects + SessionRam + ?Sized
+    T: crate::actors::boss_lease::BossState
+        + OwnedWords
+        + crate::sprite_drawing::DisplayObjects
+        + SessionRam
+        + ?Sized
 {
 }
 
@@ -820,30 +827,6 @@ owned_words! {
 
 /// The Session-owned words: the typed field inside a lease, the RAM image's
 /// word (as `word!` reads and stores it) on the game.
-/// The display's objects, for Mother Brain's own spritemap routine: the
-/// display's staging when the Session owns the display, otherwise the
-/// objects as the session view projects them.
-pub trait DisplayObjects: SessionRam {
-    fn owned_objects(&mut self) -> Option<&mut crate::scene::state::ObjectStaging> {
-        None
-    }
-    /// Add `map` at room position `origin` to OAM, as $A9:93EE does.
-    fn draw_room_spritemap(
-        &mut self,
-        map: &crate::sprite_drawing::SpriteMap,
-        origin: (u16, u16),
-        camera: (u16, u16),
-        palette: u16,
-    ) {
-        use crate::sprite_drawing::{SessionObjects, draw_room};
-        if let Some(objects) = self.owned_objects() {
-            draw_room(objects, map, origin, camera, palette).expect("display objects");
-        } else {
-            let Ok(()) = draw_room(&mut SessionObjects(self), map, origin, camera, palette);
-        }
-    }
-}
-
 pub trait OwnedWords {
     fn owned(&self, word: OwnedWord) -> u16;
     fn set_owned(&mut self, word: OwnedWord, value: u16);
@@ -2588,7 +2571,13 @@ pub fn add_spritemap_to_oam(j: u16, r18: u16, r20: u16, r22: u16, game: &mut imp
         offset: source.base,
     };
     let layer1 = crate::camera::current(game).layer1;
-    game.draw_room_spritemap(&map, (r18, r20), (layer1[0], layer1[1]), r22);
+    game.draw_room_spritemap(
+        &map,
+        (r18, r20),
+        (layer1[0], layer1[1]),
+        r22,
+        crate::scene::objects::RoomClip::Above,
+    );
 }
 pub fn go_to_9cd1(_k: u16) -> u16 {
     ADDR_STRU_A99CD1 as u16

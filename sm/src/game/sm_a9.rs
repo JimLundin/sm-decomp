@@ -215,7 +215,7 @@ impl sm_game::actors::mother_brain_fight::Lease for Game {
 
 // On the game the Session-owned words are their RAM words, read and stored
 // as word! does.
-impl sm_game::actors::mother_brain_fight::DisplayObjects for Game {}
+impl sm_game::sprite_drawing::DisplayObjects for Game {}
 
 impl sm_game::actors::mother_brain_fight::OwnedWords for Game {
     fn owned(&self, word: sm_game::actors::mother_brain_fight::OwnedWord) -> u16 {

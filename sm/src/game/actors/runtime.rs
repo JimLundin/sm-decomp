@@ -244,7 +244,7 @@ fn bg2_scroll(session: &mut sm_game::session::Session, axis: usize) -> &mut u16 
     let display = session.presentation.owner_mut().expect("owned display");
     &mut display.state.controls.scroll_words[2 + axis]
 }
-impl sm_game::actors::mother_brain_fight::DisplayObjects for Runtime<'_> {
+impl sm_game::sprite_drawing::DisplayObjects for Runtime<'_> {
     fn owned_objects(&mut self) -> Option<&mut sm_game::scene::state::ObjectStaging> {
         if !self.display_owned() {
             return None;

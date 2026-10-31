@@ -151,16 +151,49 @@ impl<H: crate::runtime_access::SessionRam + ?Sized> objects::Host for SessionObj
         Ok(())
     }
 }
-/// Mother Brain's room-coordinate spritemap ($A9:93EE) on `host`'s objects.
+/// A boss's room-coordinate spritemap on `host`'s objects; see
+/// `objects::draw_room`.
 pub fn draw_room<H: objects::Host>(
     host: &mut H,
     map: &SpriteMap,
     origin: (u16, u16),
     camera: (u16, u16),
     palette: u16,
+    clip: objects::RoomClip,
 ) -> Result<(), H::Error> {
     let mut geometry = NativeGeometry(map, std::marker::PhantomData);
-    objects::draw_room(host, &mut geometry, origin, camera, palette)
+    objects::draw_room(host, &mut geometry, origin, camera, palette, clip)
+}
+
+/// The display's objects, for the bosses' own spritemap routines: the
+/// display's staging when the Session owns the display, otherwise the
+/// objects as the session view projects them.
+pub trait DisplayObjects: crate::runtime_access::SessionRam {
+    fn owned_objects(&mut self) -> Option<&mut crate::scene::state::ObjectStaging> {
+        None
+    }
+    /// Add `map` at room position `origin` to OAM; see `objects::draw_room`.
+    fn draw_room_spritemap(
+        &mut self,
+        map: &SpriteMap,
+        origin: (u16, u16),
+        camera: (u16, u16),
+        palette: u16,
+        clip: objects::RoomClip,
+    ) {
+        if let Some(objects) = self.owned_objects() {
+            draw_room(objects, map, origin, camera, palette, clip).expect("display objects");
+        } else {
+            let Ok(()) = draw_room(
+                &mut SessionObjects(self),
+                map,
+                origin,
+                camera,
+                palette,
+                clip,
+            );
+        }
+    }
 }
 pub fn finish_frame<H: SpriteHost + ?Sized>(game: &mut H) {
     objects::finish_frame(&mut NativeObjects(game)).unwrap();
