@@ -150,6 +150,7 @@ impl crate::execution::Execution<'_> {
                 && self.backend.dma_state().channel[i].aBank & 0x80 != 0
                 && self.backend.dma_state().channel[i].aAdr & 0x8000 == 0
                 && !*self.host.g_fail
+                && !crate::oracle_mode::models_open_bus()
             {
                 printf(c"Warning! DMA from addr 0x%x\n".as_ptr(), {
                     let channel = self.backend.dma_state().channel[i];
@@ -225,6 +226,27 @@ impl crate::execution::Execution<'_> {
     ) {
         unsafe {
             let address = (u32::from(a_bank) << 16) | u32::from(a_address);
+            if crate::oracle_mode::models_open_bus() {
+                // As bsnes: the A bus cannot reach the B bus or the CPU I/O
+                // registers (reads give 0, writes are dropped), and each byte
+                // passes through the CPU data bus.
+                let valid = a_bank & 0x40 != 0
+                    || !matches!(a_address, 0x2100..=0x21ff | 0x4000..=0x421f | 0x4300..=0x437f);
+                let value = if from_b {
+                    self.read_bbus(b_address)
+                } else if valid {
+                    self.read_with_dma_source(address, source)
+                } else {
+                    0
+                };
+                (*self.snes()).openBus = value;
+                if !from_b {
+                    self.write_bbus(b_address, value);
+                } else if valid {
+                    self.write(address, value);
+                }
+                return;
+            }
             if from_b {
                 let value = self.read_bbus(b_address);
                 self.write(address, value);
