@@ -575,6 +575,12 @@ macro_rules! scalar_words {
         $f(ram::POWER_BOMB_FLAG,$($borrow)* $s.projectiles.power_bomb.flag);
         $f(ram::POWER_BOMB_EXPLOSION_X_POS,$($borrow)* $s.projectiles.power_bomb.x);
         $f(ram::POWER_BOMB_EXPLOSION_Y_POS,$($borrow)* $s.projectiles.power_bomb.y);
+        $f(ram::POWER_BOMB_EXPLOSION_STATUS,$($borrow)* $s.projectiles.power_bomb.explosion_status);
+        $f(ram::POWER_BOMB_EXPLOSION_X_POS_PLUS_0X100,$($borrow)* $s.projectiles.power_bomb.window_x);
+        $f(ram::POWER_BOMB_EXPLOSION_Y_POS_RSUB_0X1FF,$($borrow)* $s.projectiles.power_bomb.window_y);
+        $f(ram::POWER_BOMB_PRE_EXPLOSION_FLASH_RADIUS,$($borrow)* $s.projectiles.power_bomb.pre_flash_radius);
+        $f(ram::POWER_BOMB_PRE_EXPLOSION_RADIUS_SPEED,$($borrow)* $s.projectiles.power_bomb.radius_speed);
+        $f(ram::PRE_SCALED_POWER_BOMB_EXPLOSION_SHAPE_DEF_PTR,$($borrow)* $s.projectiles.power_bomb.shape_definition);
         $f(ram::CUR_BLOCK_INDEX,$($borrow)* $s.room.collision_cursor);
         $f(ram::EARTHQUAKE_TYPE,$($borrow)* $s.feedback.earthquake_kind);
         $f(ram::EARTHQUAKE_TIMER,$($borrow)* $s.feedback.earthquake_timer);

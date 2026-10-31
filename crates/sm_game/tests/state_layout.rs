@@ -461,6 +461,32 @@ fn options_menu_round_trips_every_word() {
     check_owner("options menu", &options_menu_lanes());
 }
 
+/// The power bomb and its explosion window.
+fn power_bomb_lanes() -> Vec<Lane> {
+    vec![
+        (0x592, 0, |s, _| {
+            &mut s.projectiles.power_bomb.explosion_status
+        }),
+        (0xce2, 0, |s, _| &mut s.projectiles.power_bomb.x),
+        (0xce4, 0, |s, _| &mut s.projectiles.power_bomb.y),
+        (0xce6, 0, |s, _| &mut s.projectiles.power_bomb.window_x),
+        (0xce8, 0, |s, _| &mut s.projectiles.power_bomb.window_y),
+        (0xcec, 0, |s, _| {
+            &mut s.projectiles.power_bomb.pre_flash_radius
+        }),
+        (0xcee, 0, |s, _| &mut s.projectiles.power_bomb.flag),
+        (0xcf0, 0, |s, _| &mut s.projectiles.power_bomb.radius_speed),
+        (0xcf2, 0, |s, _| {
+            &mut s.projectiles.power_bomb.shape_definition
+        }),
+    ]
+}
+
+#[test]
+fn power_bomb_round_trips_every_word() {
+    check_owner("power bomb", &power_bomb_lanes());
+}
+
 /// The message box's animation radius and scratch words.
 fn message_box_lanes() -> Vec<Lane> {
     let mut lanes: Vec<Lane> = vec![(0x5a2, 0, |s, _| &mut s.messages.box_radius)];
@@ -1048,6 +1074,7 @@ fn all_owner_lanes() -> Vec<(&'static str, Vec<Lane>)> {
         ("flow", flow_lanes()),
         ("menu_state", menu_lanes()),
         ("map screen", map_screen_lanes()),
+        ("power bomb", power_bomb_lanes()),
         ("options menu", options_menu_lanes()),
         ("save selection", save_selection_lanes()),
         ("room geometry", room_geometry_lanes()),

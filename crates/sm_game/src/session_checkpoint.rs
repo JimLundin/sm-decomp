@@ -841,7 +841,7 @@ impl Projectiles {
         if metadata.identity.reference != metadata.reference.fingerprint {
             return Err("projectile checkpoint Reference identity mismatch".into());
         }
-        let mut bytes = Vec::from(b"SMSHOTS\x01".as_slice());
+        let mut bytes = Vec::from(b"SMSHOTS\x02".as_slice());
         let binding = observation_binding(metadata);
         bytes.extend_from_slice(&(binding.len() as u64).to_le_bytes());
         bytes.extend_from_slice(&binding);
@@ -900,7 +900,17 @@ impl Projectiles {
         {
             bytes.extend_from_slice(&word.to_le_bytes());
         }
-        for word in [self.power_bomb.flag, self.power_bomb.x, self.power_bomb.y] {
+        for word in [
+            self.power_bomb.flag,
+            self.power_bomb.x,
+            self.power_bomb.y,
+            self.power_bomb.explosion_status,
+            self.power_bomb.window_x,
+            self.power_bomb.window_y,
+            self.power_bomb.pre_flash_radius,
+            self.power_bomb.radius_speed,
+            self.power_bomb.shape_definition,
+        ] {
             bytes.extend_from_slice(&word.to_le_bytes());
         }
         for value in self.launch.displacements {
@@ -913,7 +923,7 @@ impl Projectiles {
         metadata: &DisplayStartMetadata,
     ) -> Result<Self, String> {
         let mut read = CheckpointReader(bytes);
-        if read.bytes(8)? != b"SMSHOTS\x01" {
+        if read.bytes(8)? != b"SMSHOTS\x02" {
             return Err("unsupported projectile checkpoint schema".into());
         }
         let binding_size = usize::try_from(read.counter()?)
@@ -976,6 +986,12 @@ impl Projectiles {
             flag: read.word()?,
             x: read.word()?,
             y: read.word()?,
+            explosion_status: read.word()?,
+            window_x: read.word()?,
+            window_y: read.word()?,
+            pre_flash_radius: read.word()?,
+            radius_speed: read.word()?,
+            shape_definition: read.word()?,
         };
         let mut displacements = Vec::with_capacity(4);
         for _ in 0..4 {

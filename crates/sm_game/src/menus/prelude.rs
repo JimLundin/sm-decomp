@@ -77,6 +77,9 @@ pub(crate) use save_selection;
 /// [`crate::menu_state::options_menu::Word`].
 macro_rules! options_menu { ($($t:tt)*) => { owned!([$crate::menu_state::options_menu] $($t)*) }; }
 pub(crate) use options_menu;
+/// The power bomb's words ([`crate::explosion_window::power_bomb::Word`]).
+macro_rules! power_bomb { ($($t:tt)*) => { owned!([$crate::explosion_window::power_bomb] $($t)*) }; }
+pub(crate) use power_bomb;
 /// Crocomire's melt words ([`crate::actors::crocomire_reactions::melt::Word`]).
 macro_rules! melt { ($($t:tt)*) => { owned!([$crate::actors::crocomire_reactions::melt] $($t)*) }; }
 pub(crate) use melt;

@@ -13,7 +13,7 @@ use crate::display::sequence::{register_writes, write_register_and_mirror};
 use crate::display_refresh;
 use crate::enemy_projectiles;
 use crate::gameplay_rules::{finish_frame, finish_health_and_time};
-use crate::menus::prelude::{CoroutineRet, options_menu, owned, save_selection};
+use crate::menus::prelude::{CoroutineRet, options_menu, owned, power_bomb, save_selection};
 use crate::menus::{
     controller_input, file_menu, game_over, map_menu, options_settings, pause_controls,
     reserve_tanks, save_slots,
@@ -808,7 +808,7 @@ fn finish_pass<H: Host>(entry: Entry, game: &mut H) {
                     options_menu!(game.ScreenIndex = 3);
                     word! { game, 0; DEATH_INDEX, DEATH_COUNTER }
                     word!(game.GAME_STATE += 1);
-                    word!(game.POWER_BOMB_EXPLOSION_STATUS = 0);
+                    power_bomb!(game.ExplosionStatus = 0);
                     cancel_sound_effects(game, 15);
                     crate::music_requests::queue_delayed_8(0, game);
                     crate::music_requests::queue_delayed_8(0xff39, game);

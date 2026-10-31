@@ -44,7 +44,7 @@ pub enum HdmaEffect {
     AdvanceRainbowBeam,
 }
 use crate::cinematic::set_fixed_color;
-use crate::menus::prelude::HdmaObjectDefinition;
+use crate::menus::prelude::{HdmaObjectDefinition, owned, power_bomb};
 use sm_data::title_screen::GRADIENT_ADDRESS;
 
 /// Spawn the BG3 scroll object in the last slot.
@@ -239,9 +239,9 @@ where
     crate::room_view::set_effect(game, crate::room_view::EffectWord::StatueFinished, 0);
     crate::room_view::set_effect(game, crate::room_view::EffectWord::EarthquakeTimer, 0);
     word!(game.PHANTOM_RELATED_LAYER_FLAG = 0);
-    word!(game.POWER_BOMB_EXPLOSION_STATUS = 0);
-    word!(game.POWER_BOMB_FLAG = 0);
-    word!(game.POWER_BOMB_EXPLOSION_RADIUS = 0);
+    power_bomb!(game.ExplosionStatus = 0);
+    power_bomb!(game.Flag = 0);
+    power_bomb!(game.Radius = 0);
     crate::liquid::LiquidWords::set(game, |words| &mut words.liquid.tilemap, 0);
     crate::liquid::LiquidWords::set(game, |words| &mut words.liquid.kind, 0);
     crate::liquid::LiquidWords::set(game, |words| &mut words.liquid.base_fraction, 0x8000);
@@ -294,9 +294,9 @@ where
 {
     game.handle_music_queue();
     if checked_word!(game.TIME_IS_FROZEN_FLAG) == 0
-        && checked_word!(game.POWER_BOMB_EXPLOSION_STATUS) & 0x4000 != 0
+        && power_bomb!(game.ExplosionStatus) & 0x4000 != 0
     {
-        checked_word!(game.POWER_BOMB_EXPLOSION_STATUS = 0x8000);
+        power_bomb!(game.ExplosionStatus = 0x8000);
         spawn_hdma(0x88, &HdmaObjectDefinition::new(0x40, 0x28, 0x8ace), game);
         spawn_hdma(0x88, &HdmaObjectDefinition::new(0x40, 0x29, 0x8b80), game);
     }

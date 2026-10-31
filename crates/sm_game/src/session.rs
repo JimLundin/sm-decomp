@@ -95,6 +95,18 @@ pub struct PowerBomb {
     pub flag: u16,
     pub x: u16,
     pub y: u16,
+    /// $0592: the explosion's status; bit 15 while it expands, bit 14 while time is frozen.
+    pub explosion_status: u16,
+    /// $0CE6: the explosion's screen X position plus $100.
+    pub window_x: u16,
+    /// $0CE8: $1FF minus the explosion's screen Y position.
+    pub window_y: u16,
+    /// $0CEC: the pre-explosion flash's radius.
+    pub pre_flash_radius: u16,
+    /// $0CF0: the pre-explosion flash's and the explosion's radius speed.
+    pub radius_speed: u16,
+    /// $0CF2: the pre-scaled explosion shape definition (bank $88).
+    pub shape_definition: u16,
 }
 
 pub use crate::geometry::{FixedMotion, Point, Position, Rectangle, Vector32};
