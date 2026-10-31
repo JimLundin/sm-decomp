@@ -216,6 +216,7 @@ macro_rules! mother_brain_owned {
             RandomNumber => $($reference)* $session.timing.random_number,
             RandomEnemyCounter => $($reference)* $session.actors.controls.phase_counter,
             TimeFrozen => $($reference)* $session.timing.time_frozen,
+            CollidingEnemy(direction) => $($reference)* $session.actors.schedule.colliding[direction],
             Color(_) => unreachable!("colours go through the visual owner"),
         }
     }};
@@ -227,6 +228,7 @@ fn in_owner(word: OwnedWord) -> bool {
     match word {
         ShotX(index) | ShotY(index) | ShotKind(index) | ShotDamage(index) => index < 10,
         Color(index) => index < 256,
+        CollidingEnemy(direction) => direction < 4,
         _ => true,
     }
 }
