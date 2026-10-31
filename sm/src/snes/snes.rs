@@ -9,8 +9,8 @@ use crate::snes::cpu::cpu_saveload;
 use crate::snes::ppu::{
     ppu_checkOverscan, ppu_handleVblank, ppu_read, ppu_reset, ppu_saveload, ppu_write,
 };
+pub use crate::types::Snes;
 use crate::types::{Apu, ApuRegisters, Cart, Cpu, Dma, DmaChannel, Dsp, Input, Ppu, Spc};
-pub use crate::types::{Snes, size_t};
 use std::cell::{Cell, UnsafeCell};
 use std::rc::Rc;
 

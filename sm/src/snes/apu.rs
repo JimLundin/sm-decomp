@@ -4,7 +4,7 @@ use crate::initial_state::InitialState;
 use crate::snes::dsp::{dsp_cycle, dsp_read, dsp_reset, dsp_saveload, dsp_write};
 use crate::snes::spc::{spc_reset, spc_runOpcode, spc_saveload};
 use crate::tracing::getProcessorStateSpc;
-pub use crate::types::{Apu, ApuRegisters, DspRegWriteHistory, Timer, size_t};
+pub use crate::types::{Apu, ApuRegisters, DspRegWriteHistory, Timer};
 use ::core::mem::size_of;
 // Register serialization retains the forty bytes following legacy APU RAM.
 const _: () = {

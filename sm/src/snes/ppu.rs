@@ -4,11 +4,8 @@ use ::core::ffi::{c_char, c_void};
 use ::core::mem::{size_of, transmute};
 
 use crate::c_library::{memcpy, memset};
-pub use crate::types::{Ppu, PpuPixelPrioBufs, PpuZbufType, Snes, size_t};
-crate::type_aliases! {
-    pub C2RustUnnamed_0, C2RustUnnamed_1, C2RustUnnamed_2, C2RustUnnamed_3 = u32;
-}
-pub const PPU_EXTRA_LEFT_RIGHT: C2RustUnnamed_0 = 0;
+pub use crate::types::{Ppu, PpuPixelPrioBufs, PpuZbufType, Snes};
+pub const PPU_EXTRA_LEFT_RIGHT: u32 = 0;
 
 pub const __ASSERT_FUNCTION: [c_char; 43] = unsafe {
     transmute::<[u8; 43], [c_char; 43]>(*b"void PpuDrawBackgrounds(Ppu *, int, _Bool)\0")
@@ -17,12 +14,12 @@ pub const __ASSERT_FUNCTION: [c_char; 43] = unsafe {
 pub unsafe fn ppu_copy(ppu: *mut Ppu, ppu_src: *mut Ppu) {
     unsafe {
         let snes = (*ppu).snes;
-        let pitch: size_t = (*ppu).renderPitch as size_t;
+        let pitch: usize = (*ppu).renderPitch as usize;
         let renderBuffer = (*ppu).renderBuffer;
         memcpy(
             ppu as *mut c_void,
             ppu_src as *const c_void,
-            size_of::<Ppu>() as size_t,
+            size_of::<Ppu>() as usize,
         );
         (*ppu).renderBuffer = renderBuffer;
         (*ppu).renderPitch = pitch as u32;
@@ -70,7 +67,7 @@ pub fn PpuRestoreRenderRouting(ppu: &mut Ppu) {
         ppu.windowsel |= flags << (index * 4);
     }
 }
-pub unsafe fn PpuBeginDrawing(ppu: *mut Ppu, pixels: *mut u8, pitch: size_t, _render_flags: u32) {
+pub unsafe fn PpuBeginDrawing(ppu: *mut Ppu, pixels: *mut u8, pitch: usize, _render_flags: u32) {
     unsafe {
         (*ppu).renderPitch = pitch as u32;
         (*ppu).renderBuffer = pixels;
@@ -260,7 +257,7 @@ unsafe fn PpuDrawWholeLine(ppu: *mut Ppu, y: u32) {
             memset(
                 dst as *mut c_void,
                 0,
-                ((256 + i32::from((*ppu).extraLeftRight) * 2) * 4) as size_t,
+                ((256 + i32::from((*ppu).extraLeftRight) * 2) * 4) as usize,
             );
             return;
         }

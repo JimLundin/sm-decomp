@@ -122,7 +122,7 @@ use crate::snes::ppu::ppu_copy;
 pub use crate::snes::registers::*;
 use crate::spc_player::SpcPlayer_Upload;
 pub use crate::types::Dsp;
-pub use crate::types::{Cpu, FILE, LongPtr, PairU16, Snes, VoidP, size_t};
+pub use crate::types::{Cpu, FILE, LongPtr, PairU16, Snes, VoidP};
 pub use crate::types::{RunFrameFunc, SyncAllFunc};
 use ::core::ffi::{c_char, c_void};
 use ::core::mem::size_of;
@@ -130,15 +130,12 @@ use ::core::ptr::null_mut;
 use std::fs::File;
 use std::io::{BufWriter, Seek, SeekFrom, Write};
 
-pub use crate::types::SaveLoadOperation as C2RustUnnamed_0;
-pub const SAVE_LOAD_REPLAY: C2RustUnnamed_0 = 3;
-pub const SAVE_LOAD_LOAD: C2RustUnnamed_0 = 2;
-pub const SAVE_LOAD_SAVE: C2RustUnnamed_0 = 1;
+pub use crate::types::SaveLoadOperation;
+pub const SAVE_LOAD_REPLAY: SaveLoadOperation = 3;
+pub const SAVE_LOAD_LOAD: SaveLoadOperation = 2;
+pub const SAVE_LOAD_SAVE: SaveLoadOperation = 1;
 
-pub const CURRENT_BUG_FIX_COUNTER: C2RustUnnamed_1 = 1;
-crate::type_aliases! {
-    pub C2RustUnnamed_1 = u32;
-}
+pub const CURRENT_BUG_FIX_COUNTER: u32 = 1;
 pub const NULL: *mut c_void = null_mut::<c_void>();
 
 pub unsafe fn RtlSetupEmuCallbacks(
@@ -251,7 +248,7 @@ unsafe fn finish_load_snes_state(native_game: &mut Game, complete_load: bool) {
 ///
 /// # Safety
 /// `data` must be valid for writing `n` bytes.
-unsafe fn read_file_block(f: &mut File, data: *mut c_void, n: size_t) -> bool {
+unsafe fn read_file_block(f: &mut File, data: *mut c_void, n: usize) -> bool {
     if n == 0 {
         return true;
     }
@@ -332,7 +329,7 @@ unsafe fn state_recorder_load(
         read_complete &= read_file_block(
             f,
             &raw mut hdr as *mut u32 as *mut c_void,
-            (8 as size_t).wrapping_mul(size_of::<u32>() as size_t),
+            (8 as usize).wrapping_mul(size_of::<u32>() as usize),
         );
         if hdr[0i32 as usize] != 2 {
             hdr[8i32 as usize] = hdr[7i32 as usize];
@@ -346,7 +343,7 @@ unsafe fn state_recorder_load(
             read_complete &= read_file_block(
                 f,
                 (&raw mut hdr as *mut u32).offset(8) as *mut c_void,
-                (8 as size_t).wrapping_mul(size_of::<u32>() as size_t),
+                (8 as usize).wrapping_mul(size_of::<u32>() as usize),
             );
         } else {
             crate::native_assertion! {
@@ -386,7 +383,7 @@ unsafe fn state_recorder_load(
             crate::set_fields! {[game.state_recorder]; frames_since_last = 0, last_inputs = 0,
             replay_pos_last_complete = 0, replay_pos = game.state_recorder.replay_pos_last_complete,
             replay_frame_counter = 0, };
-            if game.state_recorder.base_snapshot.size > crate::recording::BASE_SRAM_SIZE as size_t {
+            if game.state_recorder.base_snapshot.size > crate::recording::BASE_SRAM_SIZE as usize {
                 let complete = {
                     let (mut execution, recorder) = game.execution_and_recorder();
                     let mut state = SnapshotIo::Load(recorder.base_snapshot.as_slice());
@@ -403,7 +400,7 @@ unsafe fn state_recorder_load(
                 drop(actor_transition.take());
                 reset(2, game, read_complete);
                 if game.state_recorder.base_snapshot.size
-                    == crate::recording::BASE_SRAM_SIZE as size_t
+                    == crate::recording::BASE_SRAM_SIZE as usize
                 {
                     game.g_sram.write_bytes(
                         0,
@@ -523,9 +520,9 @@ pub unsafe fn StateRecorder_Save(
         game.execution().save_load(&mut SnapshotIo::Save(&mut arr));
         let sr = &game.state_recorder;
         crate::native_assertion! {
-            '_c2rust_label: sr.base_snapshot.size == 0 as size_t
+            '_c2rust_label: sr.base_snapshot.size == 0 as usize
                 || sr.base_snapshot.size == arr.size
-                || sr.base_snapshot.size == crate::recording::BASE_SRAM_SIZE as size_t;
+                || sr.base_snapshot.size == crate::recording::BASE_SRAM_SIZE as usize;
             b"sr->base_snapshot.size == 0 || sr->base_snapshot.size == arr.size || sr->base_snapshot.size == 8192\0",
             b"src/sm_rtl.c\0", 260, b"void StateRecorder_Save(StateRecorder *, FILE *, _Bool)\0"
         };
@@ -587,7 +584,7 @@ pub unsafe fn StateRecorder_ClearKeyLog(native_game: &mut Game) {
             .expect("Samus mutation rejected");
         let game = mutation.game();
         printf(c"Clearing key log!\n".as_ptr());
-        game.state_recorder.base_snapshot.size = 0 as size_t;
+        game.state_recorder.base_snapshot.size = 0 as usize;
         game.state_recorder.has_base_audio_queue = true;
         game.state_recorder.base_audio_queue =
             crate::audio_snapshot::ApuQueueSnapshot::capture(game).to_bytes();
@@ -681,7 +678,7 @@ pub unsafe fn StateRecorder_ReadNextReplayState(game: &mut Game) -> u16 {
                 }
             }
             game.state_recorder.replay_pos_last_complete = replay_pos as u32;
-            if replay_pos as size_t >= game.state_recorder.log.size {
+            if replay_pos as usize >= game.state_recorder.log.size {
                 game.state_recorder.replay_pos = replay_pos as u32;
                 game.state_recorder.replay_next_cmd_at = 0xffffffff as u32;
                 break;

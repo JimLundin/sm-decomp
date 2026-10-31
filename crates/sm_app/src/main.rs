@@ -12,7 +12,7 @@ use sm::c_library::{exit, fprintf, memcpy};
 use sm::game_state::{Game, GameOwner};
 use sm::host::Die;
 use sm::rtl::*;
-use sm::types::{FILE, RendererFuncs, size_t};
+use sm::types::{FILE, RendererFuncs};
 /// Config file parsing.
 mod config;
 /// Window, renderer and OpenGL output.
@@ -119,7 +119,7 @@ sm::forward_calls! { unsafe fn ();
 
 pub unsafe fn rtl_draw_ppu_frame(
     pixel_buffer: *mut u8,
-    pitch: size_t,
+    pitch: usize,
     _render_flags: u32,
     game: &mut Game,
 ) {
@@ -132,9 +132,9 @@ pub unsafe fn rtl_draw_ppu_frame(
         for y in 0usize..240 {
             memcpy(
                 (pixel_buffer).offset(y.wrapping_mul(pitch) as isize) as *mut c_void,
-                ppu_pixels.offset(y.wrapping_mul(256 as size_t).wrapping_mul(4 as size_t) as isize)
+                ppu_pixels.offset(y.wrapping_mul(256 as usize).wrapping_mul(4 as usize) as isize)
                     as *const c_void,
-                (256 * 4) as size_t,
+                (256 * 4) as usize,
             );
         }
     }

@@ -13,11 +13,11 @@ pub(crate) use crate::ram_map::word;
 pub(crate) use crate::rtl::{MakePairU16, ReadRegWord, Unreachable, abs16};
 pub use crate::snes::registers::*;
 pub use crate::types::{
-    Buttons, CheckEnemyColl_Result, CheckSolidEnemyColl_Result, CoroutineRet, DoorDef, EnemyBase,
-    EnemyData, EnemyDef, EnemySpawnData, EnemyTileset, EprojDef, ExpandingSquareTransitionHdma,
-    ExtendedSpriteMap, ExtraEnemyRam7800, ExtraEnemyRam8000, Func_U8, Func_V, Func_Y_V, Func_Y_Y,
-    HdmaObjectDefinition, Hitbox, LongPtr, MapIconDataPointers, MapScrollArrowData, OamEnt,
-    Pair_Bool_Amt, PairU16, Point16U, Ram3000, Ram3800, Ram4000, Ram8000_Default, Rect16U,
-    RoomDefHeader, RoomDefRoomstate, SamusPose, SamusPoseParams, SnesRegs, SpawnHardcodedPlmArgs,
-    TileTable, TileTables, VoidP, VramWriteEntry, Vulnerability, size_t,
+    Buttons, CheckSolidEnemyColl_Result, CoroutineRet, DoorDef, EnemyBase, EnemyData, EnemyDef,
+    EnemySpawnData, EnemyTileset, EprojDef, ExpandingSquareTransitionHdma, ExtendedSpriteMap,
+    ExtraEnemyRam7800, ExtraEnemyRam8000, HdmaObjectDefinition, Hitbox, LongPtr,
+    MapIconDataPointers, MapScrollArrowData, OamEnt, Pair_Bool_Amt, PairU16, Point16U, Ram3000,
+    Ram3800, Ram4000, Ram8000_Default, Rect16U, RoomDefHeader, RoomDefRoomstate, SamusPose,
+    SamusPoseParams, SnesRegs, SpawnHardcodedPlmArgs, TileTable, TileTables, VoidP, VramWriteEntry,
+    Vulnerability,
 };

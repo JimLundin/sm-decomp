@@ -2,7 +2,7 @@ use crate::c_library::{memcpy, memset, printf};
 use crate::game_state::Game;
 use crate::native_rom::NativeRomPointer;
 use crate::snes::cart::cart_load;
-pub use crate::types::{Snes, size_t};
+pub use crate::types::Snes;
 use ::core::ffi::{c_char, c_void};
 use ::core::mem::size_of;
 crate::typed_struct! {
@@ -60,7 +60,7 @@ pub unsafe fn snes_loadRom(mut data: *const u8, mut length: i32, game: &mut Game
         memset(
             &raw mut headers as *mut CartHeader as *mut c_void,
             0,
-            size_of::<[CartHeader; 4]>() as size_t,
+            size_of::<[CartHeader; 4]>() as usize,
         );
         for i in 0i32..4 {
             headers[i as usize].score = -50i16;
@@ -120,7 +120,7 @@ pub unsafe fn snes_loadRom(mut data: *const u8, mut length: i32, game: &mut Game
         memcpy(
             newData as *mut c_void,
             data as *const c_void,
-            length as size_t,
+            length as usize,
         );
         let mut test: i32 = 1;
         while length != newLength {
@@ -128,7 +128,7 @@ pub unsafe fn snes_loadRom(mut data: *const u8, mut length: i32, game: &mut Game
                 memcpy(
                     newData.offset(length as isize) as *mut c_void,
                     newData.offset(length as isize).offset(-(test as isize)) as *const c_void,
-                    test as size_t,
+                    test as usize,
                 );
                 length += test;
             }

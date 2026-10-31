@@ -8,7 +8,6 @@
 //! Gameplay and runtime state is owned by `game_state::Game` and passed
 //! explicitly through Rust calls; C ABI remains at external boundaries.
 #![deny(unsafe_op_in_unsafe_fn)]
-#![allow(non_camel_case_types)]
 #![allow(non_snake_case)]
 
 #[cfg(any(feature = "frontend", sm_verify_dll))]

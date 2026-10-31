@@ -1,7 +1,7 @@
 use ::core::ffi::{c_char, c_void};
 use ::core::ptr::null_mut;
 use sm::c_library::strtol;
-pub use sm::types::{Config, SDL_Keycode, SDL_Keymod};
+pub use sm::types::{Config, SdlKeycode, SdlKeymod};
 use std::ffi::CStr;
 
 #[link(name = "sm_config", kind = "static", modifiers = "-bundle")]
@@ -10,7 +10,7 @@ unsafe extern "C-unwind" {
     pub static mut CONFIG: Config;
     fn sm_config_parse_file(owner: *mut c_void, filename: *const c_char);
     fn sm_config_parse_one_file(owner: *mut c_void, filename: *const c_char, depth: i32) -> bool;
-    fn sm_config_find_key(code: SDL_Keycode, modifiers: SDL_Keymod) -> i32;
+    fn sm_config_find_key(code: SdlKeycode, modifiers: SdlKeymod) -> i32;
     fn sm_config_find_button(button: i32, modifiers: u32) -> i32;
     fn sm_config_matches_source(index: u32, bytes: *const u8, length: usize) -> bool;
 }
@@ -123,7 +123,7 @@ unsafe extern "C-unwind" fn sm_config_include(
     }
 }
 
-pub unsafe fn find_cmd_for_sdl_key(code: SDL_Keycode, modifiers: SDL_Keymod) -> i32 {
+pub unsafe fn find_cmd_for_sdl_key(code: SdlKeycode, modifiers: SdlKeymod) -> i32 {
     unsafe {
         check_dependency();
         sm_config_find_key(code, modifiers)

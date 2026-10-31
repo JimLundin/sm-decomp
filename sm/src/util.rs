@@ -1,5 +1,5 @@
 //! File and lexical helpers from the pinned native utility dependency.
-pub use crate::types::{FILE, size_t};
+pub use crate::types::FILE;
 use core::ffi::{c_char, c_void};
 
 pub const NULL: *mut c_void = core::ptr::null_mut::<c_void>();
