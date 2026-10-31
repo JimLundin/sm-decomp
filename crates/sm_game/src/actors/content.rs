@@ -201,7 +201,7 @@ pub type ActorPartCapture = ActorRecordCapture<PosePartPosition>;
 pub type ActorCollisionCapture = ActorRecordCapture<CollisionPosition>;
 /// Acquisitions only. Token field reads retain captured allocation and source order.
 pub trait ActorContent {
-    fn actor_script_image(&self) -> RomImage;
+    fn actor_script_image(&self) -> crate::enemy_script::ScriptImage;
     fn actor_pose_count(&mut self, source: &ActorPoseCapture, width: ActorCountWidth) -> u16;
     fn capture_actor_part_at(
         &mut self,

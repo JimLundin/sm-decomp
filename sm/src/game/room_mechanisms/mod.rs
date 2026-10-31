@@ -139,7 +139,7 @@ pub(crate) mod checks {
         let displacement = isize::try_from(position).unwrap() - isize::try_from(anchor).unwrap();
         let p = content::Script::new(
             RomRecord {
-                image,
+                image: image.source().clone(),
                 base: anchor,
             },
             0x8000,

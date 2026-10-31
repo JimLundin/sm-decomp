@@ -374,8 +374,8 @@ impl<H: crate::hdma_dispatch::DispatchHost + ?Sized> crate::hdma_program::Interp
     fn set_byte(&mut self, at: usize, value: u8) {
         self.game.ram().write_byte(at, value);
     }
-    fn image(&self) -> sm_data::cartridge::RomImage {
-        self.game.native_image()
+    fn image(&self) -> crate::enemy_script::ScriptImage {
+        self.game.native_image().into()
     }
     fn foreign<T>(&mut self, action: impl FnOnce(&mut H) -> T) -> T {
         self.store();

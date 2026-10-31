@@ -40,6 +40,7 @@ pub mod palette_programs;
 pub mod pause_menu;
 pub mod phantoon;
 pub mod program_bank;
+pub mod program_image;
 pub mod raster;
 pub mod ridley;
 pub mod ridley_explosion;

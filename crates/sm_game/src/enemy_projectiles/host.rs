@@ -1,7 +1,6 @@
 //! Enemy gameplay interfaces over the shared Session and explicit external effects.
 use crate::geometry::Vector32;
 use crate::session_access::SessionAccess;
-use sm_data::cartridge::RomImage;
 
 #[derive(Clone, Copy)]
 pub enum DefinitionField {
@@ -28,7 +27,7 @@ pub trait Content {
     type Loaded: LoadedRecord;
     type Native: NativeRecord;
     // Capture loaded allocation for script frame; no low-window diagnostic.
-    fn script_image(&self) -> RomImage;
+    fn script_image(&self) -> crate::enemy_script::ScriptImage;
     // Diagnostic before loaded/native allocation capture for low bank window.
     fn loaded_record(&mut self, bank: u8, bank_address: u16) -> Self::Loaded;
     fn native_record(&mut self, bank: u8, bank_address: u16) -> Self::Native;

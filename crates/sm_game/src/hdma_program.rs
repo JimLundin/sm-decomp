@@ -15,7 +15,6 @@ use crate::hdma_dispatch::DispatchHost;
 use crate::hdma_objects::Bridged;
 use crate::hdma_objects::HdmaEffect;
 use crate::menus::host::{Host, MenuRuntime as _};
-use sm_data::cartridge::RomImage;
 
 /// The owned-Session view the interpreter runs on.
 pub trait HdmaLease:
@@ -24,6 +23,10 @@ pub trait HdmaLease:
     + crate::cartridge::NativeImage
 {
     type Game: DispatchHost + ?Sized;
+    /// What HDMA programs read: the native image, or its prepared copy.
+    fn script_image(&self) -> crate::enemy_script::ScriptImage {
+        self.native_image().into()
+    }
     /// Run `action` on the compatibility host with the Session published.
     fn foreign<T>(&mut self, action: impl FnOnce(&mut Self::Game) -> T) -> T;
 }
@@ -57,7 +60,7 @@ pub(crate) trait Interpreter {
     /// Work RAM outside the object table.
     fn byte(&self, at: usize) -> u8;
     fn set_byte(&mut self, at: usize, value: u8);
-    fn image(&self) -> RomImage;
+    fn image(&self) -> crate::enemy_script::ScriptImage;
     fn foreign<T>(&mut self, action: impl FnOnce(&mut Self::Game) -> T) -> T;
     fn word(&self, at: usize) -> u16 {
         u16::from_le_bytes([self.byte(at), self.byte(at + 1)])
@@ -95,8 +98,8 @@ impl<L: HdmaLease> Interpreter for Leased<L> {
     fn set_byte(&mut self, at: usize, value: u8) {
         self.0.set_byte(at, value);
     }
-    fn image(&self) -> RomImage {
-        self.0.native_image()
+    fn image(&self) -> crate::enemy_script::ScriptImage {
+        self.0.script_image()
     }
     fn foreign<T>(&mut self, action: impl FnOnce(&mut L::Game) -> T) -> T {
         self.0.foreign(action)

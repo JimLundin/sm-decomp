@@ -302,13 +302,12 @@ impl Graphics for Composed {
 }
 impl Host for Composed {}
 
-use super::RomImage;
 use super::game::enemy_projectiles::content;
 impl Content for Composed {
     type Loaded = content::LoadedRecord;
     type Native = content::NativeRecord;
-    fn script_image(&self) -> RomImage {
-        self.image.clone()
+    fn script_image(&self) -> sm_game::enemy_script::ScriptImage {
+        self.image.clone().into()
     }
     fn loaded_record(&mut self, bank: u8, address: u16) -> Self::Loaded {
         assert!(address & 0x8000 != 0, "unprepared enemy low-window record");

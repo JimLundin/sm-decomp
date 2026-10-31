@@ -49,7 +49,7 @@ fn captured(position: EnemyScript) -> Script<RomRecord> {
     let origin = (position as isize - bank_base(0x84)) as u16;
     Script::new(
         RomRecord {
-            image,
+            image: image.source().clone(),
             base: position,
         },
         origin,

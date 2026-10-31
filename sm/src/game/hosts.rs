@@ -37,6 +37,13 @@ impl sm_game::hdma_program::LeaseHdma for Game {
 
 impl sm_game::hdma_program::HdmaLease for crate::game::session_runtime::Runtime<'_> {
     type Game = Game;
+    fn script_image(&self) -> sm_game::enemy_script::ScriptImage {
+        use sm_game::records::Records as _;
+        sm_game::enemy_script::ScriptImage::for_image(
+            self.records().native_program.as_ref(),
+            self.native_image(),
+        )
+    }
     fn foreign<T>(&mut self, action: impl FnOnce(&mut Game) -> T) -> T {
         crate::game::session_runtime::Runtime::foreign(self, action)
     }

@@ -11,6 +11,10 @@ use std::sync::Arc;
 /// the record at a bank address, as the original actor read it.
 pub trait ContentSource: ActorAccess {
     fn content_image(&self) -> RomImage;
+    /// What actor scripts read: the loaded image, or its prepared copy.
+    fn content_script_image(&self) -> crate::enemy_script::ScriptImage {
+        self.content_image().into()
+    }
     fn native_content_image(&self) -> RomImage;
     fn content_record(&mut self, bank: u8, address: u16) -> RomRecord;
 }
@@ -179,8 +183,8 @@ fn prepared_collision(source: &ActorCollisionCapture) -> Option<&CollisionPart> 
 }
 
 impl<T: ContentSource + ?Sized> ActorContent for T {
-    fn actor_script_image(&self) -> RomImage {
-        self.content_image()
+    fn actor_script_image(&self) -> crate::enemy_script::ScriptImage {
+        self.content_script_image()
     }
     fn capture_actor_population(&mut self, cursor: &PopulationCursor) -> ActorPopulationCapture {
         let world = self.session().world.clone();
@@ -378,23 +382,23 @@ impl<T: ContentSource + ?Sized> ActorContent for T {
         self.content_record(bank, address).word(0)
     }
     fn actor_draw_queue_base(&self, layer: u16) -> u16 {
-        self.actor_script_image().table_word(
+        self.content_image().table_word(
             cartridge::lorom_offset(0xa0b133) as usize,
             isize::try_from(layer).unwrap(),
         )
     }
     fn actor_spike_mechanism(&mut self, variant: u16) -> u16 {
-        let image = self.actor_script_image();
+        let image = self.content_image();
         let at = loaded_table_offset(&image, 0xa0c2da, usize::from(variant) * 2, 2);
         u16::from_le_bytes([image.read(at), image.read(at + 1)])
     }
     fn actor_slope_multiplier(&mut self, index: u16) -> u16 {
-        let image = self.actor_script_image();
+        let image = self.content_image();
         let at = loaded_table_offset(&image, 0xa0c49f, usize::from(index) * 2, 2);
         u16::from_le_bytes([image.read(at), image.read(at + 1)])
     }
     fn actor_slope_surface(&mut self, index: u16) -> u16 {
-        let image = self.actor_script_image();
+        let image = self.content_image();
         u16::from(image.read(loaded_table_offset(&image, 0x948b2b, usize::from(index), 1)))
     }
     fn actor_slope_surface_native(&mut self, index: u16) -> u8 {
@@ -402,7 +406,7 @@ impl<T: ContentSource + ?Sized> ActorContent for T {
             .read(cartridge::lorom_offset(0x948b2b) as usize + usize::from(index))
     }
     fn actor_sine_sample(&mut self, phase: u8) -> u8 {
-        let image = self.actor_script_image();
+        let image = self.content_image();
         image.read(loaded_table_offset(
             &image,
             0xa0b143,
