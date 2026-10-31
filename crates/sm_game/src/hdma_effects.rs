@@ -463,6 +463,15 @@ fn store_word<H: Host + ?Sized>(h: &mut H, at: usize, value: u16, store: Store) 
     }
 }
 
+/// Run HDMA object effect `effect` for the object in `slot` on a fresh
+/// lease of `game`.
+pub fn apply_leased<H>(effect: crate::hdma_objects::HdmaEffect, slot: u16, game: &mut H)
+where
+    H: crate::runtime_access::RuntimeAccess + ?Sized,
+{
+    apply(effect, slot, &mut game.runtime());
+}
+
 /// Run HDMA object effect `effect` for the object in `slot`, through the
 /// owned-Session view.
 pub fn apply<H>(effect: crate::hdma_objects::HdmaEffect, slot: u16, h: &mut H)

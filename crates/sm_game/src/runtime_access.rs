@@ -100,6 +100,8 @@ impl<
 }
 pub trait RuntimeAccess {
     type Runtime<'a>: PlayerLease
+        + crate::hdma_effects::HdmaEffects
+        + crate::actors::mother_brain_rainbow::Host
     where
         Self: 'a;
     /// A fresh owned-Session view; publication happens when it is dropped.

@@ -1,10 +1,8 @@
 //! The compatibility runtime as the `sm_game::menus` host.
-use crate::game::session_runtime::Runtime;
 use crate::game::visual_runtime;
 use crate::game_state::Game;
 use sm_game::menus::host::{Host, MenuRuntime};
 use sm_game::save_file::SaveRam;
-use {sm_game::room_entry::api::ArrivalRequest, sm_game::room_entry::api::StartSite};
 
 impl sm_game::sprite_output::SpriteHost for Game {
     fn warn_invalid_rom(&mut self, address: u32) {
@@ -29,12 +27,6 @@ impl MenuRuntime for Game {
     fn load_vram_words(&mut self, source: u32, destination: u16, bytes: u16) {
         crate::game::display_refresh::GraphicsAsset::VramWords(source, destination, bytes)
             .load(self)
-    }
-    fn enter_load_station(&mut self) {
-        sm_game::room_entry::selection::begin(
-            &mut Runtime::new(self),
-            ArrivalRequest::Start(StartSite::CurrentLoadStation),
-        );
     }
     fn update_beam_tiles_and_palette(&mut self) {
         crate::game::visual_runtime::update_beam_tiles_and_palette(self)
@@ -115,9 +107,6 @@ impl MenuRuntime for Game {
     fn handle_music_queue(&mut self) {
         // SAFETY: HDMA updates run from the frame loop with the backend installed.
         unsafe { crate::game::music::handle_music_queue(self) }
-    }
-    fn hdma_effect(&mut self, effect: sm_game::hdma_objects::HdmaEffect, slot: u16) {
-        sm_game::hdma_effects::apply(effect, slot, &mut Runtime::new(self));
     }
     fn request_reset(&mut self) {
         Game::request_reset(self)

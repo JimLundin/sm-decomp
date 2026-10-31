@@ -235,7 +235,7 @@ pub fn initialize_phantoon_motion<H: crate::menus::host::Host + ?Sized>(
     speed: u16,
     game: &mut H,
 ) {
-    game.hdma_effect(HdmaEffect::SetPhantoonMotion { direction, speed }, 0);
+    crate::hdma_effects::apply_leased(HdmaEffect::SetPhantoonMotion { direction, speed }, 0, game);
     spawn_hdma(0x88, &HdmaObjectDefinition::new(0x42, 0xf, 0xe4a8), game);
 }
 
@@ -243,12 +243,13 @@ pub fn initialize_intro_wave<H: crate::menus::host::Host + ?Sized>(game: &mut H)
     word!(game.WAVY_SAMUS_ENABLED = 1);
     crate::word_transfers!(game, ascending, 1; native(0xd9e) <- value(0x4000));
     word!(game.LOOP_COUNTER_TRANSFER_ENEMIES_TO_VRAM = 8);
-    game.hdma_effect(
+    crate::hdma_effects::apply_leased(
         HdmaEffect::InitializeWavePair {
             base: 0xd82,
             primary: 0x9800,
         },
         0,
+        game,
     );
     spawn_hdma(0x88, &HdmaObjectDefinition::new(0x42, 0x11, 0xec8a), game);
 }
@@ -264,7 +265,7 @@ pub fn scroll_weather<H: crate::menus::host::Host + ?Sized>(
     if checked_word!(game.TIME_IS_FROZEN_FLAG) != 0 {
         return;
     }
-    game.hdma_effect(HdmaEffect::ScrollWeather(weather), slot);
+    crate::hdma_effects::apply_leased(HdmaEffect::ScrollWeather(weather), slot, game);
 }
 
 /// Crocomire's phase step, its scroll HDMA, Samus's collision and its palette.

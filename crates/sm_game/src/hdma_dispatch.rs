@@ -2,6 +2,7 @@
 //! address the original dispatch matched maps to a named target, and an
 //! unknown address keeps the original unreachable failure.
 use crate::explosion_window::{self, Phase};
+use crate::hdma_effects::apply_leased;
 use crate::hdma_objects::{self, HdmaEffect};
 use crate::menus::host::Host;
 use crate::player_transitions::xray::BeamPhase;
@@ -191,7 +192,7 @@ where
     };
     use HdmaCall::*;
     match target {
-        InitializeRainbowBeam => game.hdma_effect(HdmaEffect::InitializeRainbowBeam, k),
+        InitializeRainbowBeam => apply_leased(HdmaEffect::InitializeRainbowBeam, k, game),
         BeginPreFlash => explosion_window::begin_pre_flash(game),
         BeginPrescaledPreFlash => explosion_window::begin_prescaled_pre_flash(game),
         BeginExplosion => explosion_window::begin_explosion(game),
@@ -208,7 +209,7 @@ where
         UploadLeft => xray_background::upload_left(game),
         UploadRight => xray_background::upload_right(game),
         SetBackdrop => xray_background::set_backdrop(game),
-        InitializeSuitPickup => game.hdma_effect(HdmaEffect::InitializeSuitPickup, k),
+        InitializeSuitPickup => apply_leased(HdmaEffect::InitializeSuitPickup, k, game),
     }
 }
 
@@ -324,10 +325,10 @@ fn host_pre_action<H: DispatchHost + ?Sized>(target: HdmaPreAction, k: u16, game
         | PowerBombPrescaled
         | PreFlashPrescaled => unreachable!("run_pre_action runs {target:?}"),
         SetupXrayBlending => xray_background::setup_blending(k, game),
-        AdvanceXrayBackground => game.hdma_effect(HdmaEffect::AdvanceXrayBackground, k),
-        XrayBeamInitial => game.hdma_effect(HdmaEffect::AdvanceXrayBeam(BeamPhase::Initial), k),
-        XrayBeamWidening => game.hdma_effect(HdmaEffect::AdvanceXrayBeam(BeamPhase::Widening), k),
-        XrayBeamFull => game.hdma_effect(HdmaEffect::AdvanceXrayBeam(BeamPhase::Full), k),
+        AdvanceXrayBackground => apply_leased(HdmaEffect::AdvanceXrayBackground, k, game),
+        XrayBeamInitial => apply_leased(HdmaEffect::AdvanceXrayBeam(BeamPhase::Initial), k, game),
+        XrayBeamWidening => apply_leased(HdmaEffect::AdvanceXrayBeam(BeamPhase::Widening), k, game),
+        XrayBeamFull => apply_leased(HdmaEffect::AdvanceXrayBeam(BeamPhase::Full), k, game),
         RestoreRight => xray_background::restore_right(game),
         PowerBombBlending => explosion_window::set_power_bomb_blending(k, game),
         CrystalFlashBlending => explosion_window::set_crystal_flash_blending(k, game),
@@ -339,23 +340,25 @@ fn host_pre_action<H: DispatchHost + ?Sized>(target: HdmaPreAction, k: u16, game
         Spores => room_visuals::scroll_weather(k, Weather::Spores, game),
         Fog => room_visuals::scroll_weather(k, Weather::Fog, game),
         StatueBlending => word!(game.FX_LAYER_BLENDING_CONFIG_C = 44),
-        BeginBrightHaze => game.hdma_effect(HdmaEffect::BeginHaze { color: 0x80 }, k),
-        BeginDimHaze => game.hdma_effect(HdmaEffect::BeginHaze { color: 0x20 }, k),
-        HazeFadingIn => game.hdma_effect(HdmaEffect::AdvanceHaze(HazePhase::FadingIn), k),
-        HazeFadedIn => game.hdma_effect(HdmaEffect::AdvanceHaze(HazePhase::FadedIn), k),
-        HazeFadingOut => game.hdma_effect(HdmaEffect::AdvanceHaze(HazePhase::FadingOut), k),
-        DraygonLayer => game.hdma_effect(HdmaEffect::SelectDraygonLayer, k),
-        SuitPickup => game.hdma_effect(HdmaEffect::AdvanceSuitPickup { gravity: false }, k),
-        GravitySuitPickup => game.hdma_effect(HdmaEffect::AdvanceSuitPickup { gravity: true }, k),
-        PhantoonLayer => game.hdma_effect(HdmaEffect::SelectPhantoonLayer, k),
-        PhantoonWave => game.hdma_effect(HdmaEffect::AdvanceWave(HdmaWave::Phantoon), k),
-        RainbowBeam => game.hdma_effect(HdmaEffect::AdvanceRainbowBeam, k),
-        EyeBeamWidening => game.hdma_effect(HdmaEffect::AdvanceEyeBeam(EyeBeamPhase::Widening), k),
-        EyeBeamFull => game.hdma_effect(HdmaEffect::AdvanceEyeBeam(EyeBeamPhase::Full), k),
-        EyeBeamFading => game.hdma_effect(HdmaEffect::AdvanceEyeBeam(EyeBeamPhase::Fading), k),
+        BeginBrightHaze => apply_leased(HdmaEffect::BeginHaze { color: 0x80 }, k, game),
+        BeginDimHaze => apply_leased(HdmaEffect::BeginHaze { color: 0x20 }, k, game),
+        HazeFadingIn => apply_leased(HdmaEffect::AdvanceHaze(HazePhase::FadingIn), k, game),
+        HazeFadedIn => apply_leased(HdmaEffect::AdvanceHaze(HazePhase::FadedIn), k, game),
+        HazeFadingOut => apply_leased(HdmaEffect::AdvanceHaze(HazePhase::FadingOut), k, game),
+        DraygonLayer => apply_leased(HdmaEffect::SelectDraygonLayer, k, game),
+        SuitPickup => apply_leased(HdmaEffect::AdvanceSuitPickup { gravity: false }, k, game),
+        GravitySuitPickup => apply_leased(HdmaEffect::AdvanceSuitPickup { gravity: true }, k, game),
+        PhantoonLayer => apply_leased(HdmaEffect::SelectPhantoonLayer, k, game),
+        PhantoonWave => apply_leased(HdmaEffect::AdvanceWave(HdmaWave::Phantoon), k, game),
+        RainbowBeam => apply_leased(HdmaEffect::AdvanceRainbowBeam, k, game),
+        EyeBeamWidening => {
+            apply_leased(HdmaEffect::AdvanceEyeBeam(EyeBeamPhase::Widening), k, game)
+        }
+        EyeBeamFull => apply_leased(HdmaEffect::AdvanceEyeBeam(EyeBeamPhase::Full), k, game),
+        EyeBeamFading => apply_leased(HdmaEffect::AdvanceEyeBeam(EyeBeamPhase::Fading), k, game),
         TitleGradientBackdrop => hdma_objects::advance_title_gradient(true, game),
         TitleGradient => hdma_objects::advance_title_gradient(false, game),
         IntroCrossfade => hdma_objects::advance_intro_crossfade(game),
-        IntroWave => game.hdma_effect(HdmaEffect::AdvanceWave(HdmaWave::Intro), k),
+        IntroWave => apply_leased(HdmaEffect::AdvanceWave(HdmaWave::Intro), k, game),
     }
 }
