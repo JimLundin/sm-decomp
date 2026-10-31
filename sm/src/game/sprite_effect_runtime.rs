@@ -1,8 +1,6 @@
 //! Legacy entry and backend boundary for the shared owned sprite-effect core.
-use crate::game::enemy_projectiles::spawn_with_enemy_gfx;
 use crate::game_state::Game;
-use crate::ram_map::{slot, word};
-use crate::types::Point16U;
+use crate::ram_map::slot;
 use sm_game::actors::layouts::EnemyLayout104 as Draygon;
 use sm_game::geometry::Point;
 use sm_game::sprite_drawing::Clip;
@@ -150,31 +148,3 @@ pub(crate) fn draygon_spawn_trails(game: &mut Game) {
 
 // These compatibility entrypoints retain native actor observations until the
 // remaining boss controller joins the actor owner. Sprite lifetime stays owned.
-#[forbid(unsafe_code)]
-pub(crate) fn draygon_random_sprite(definition: u16, game: &mut Game) {
-    game.next_random();
-    let dx = (word!(game.RANDOM_NUMBER) & 0x7f).wrapping_sub(64);
-    let dy = ((word!(game.RANDOM_NUMBER) >> 8) & 0x7f).wrapping_sub(64);
-    let x = slot!(game, Draygon[0].base.x_pos).wrapping_add(dx);
-    let y = slot!(game, Draygon[0].base.y_pos).wrapping_add(dy);
-    create_sprite(x, y, definition, 0, game);
-}
-#[forbid(unsafe_code)]
-pub(crate) fn draygon_death_bubble(game: &mut Game) {
-    if word!(game.NMI_FRAME_COUNTER_WORD) & 7 == 0 {
-        let x = (game.next_random() & 0x7f) + 192;
-        let y = ((word!(game.RANDOM_NUMBER) >> 8) & 0x3f) + 400;
-        create_sprite(x, y, 21, 0, game);
-    }
-}
-#[forbid(unsafe_code)]
-pub(crate) fn draygon_spit(right: bool, game: &mut Game) {
-    let dx = if right { 24 } else { 0u16.wrapping_sub(28) };
-    game.eproj_spawn_pt = Point16U {
-        x: slot!(game, Draygon[0].base.x_pos).wrapping_add(dx),
-        y: slot!(game, Draygon[0].base.y_pos).wrapping_sub(16),
-    };
-    let direction = if right { 192 } else { 128 };
-    word!(game.CINEMATIC_Y_SUB = (game.next_random() & 0x3f) + direction);
-    spawn_with_enemy_gfx(2, word!(game.CUR_ENEMY_INDEX), 0x8e50, game);
-}

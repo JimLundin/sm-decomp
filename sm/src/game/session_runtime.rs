@@ -1190,12 +1190,6 @@ crate::game::callback_dispatch! {
         10873009 => [{ crate::game::enemy_projectiles::scatter_drop(sm_game::enemy_projectiles::drops::DropSource::SporeSpawn, k, game); j }];
         10852501 => [{ crate::ram_map::word!(game.ROOM_LOADING_IRQ_HANDLER = 12); j }];
         10853514 => [{ crate::ram_map::word!(game.ROOM_LOADING_IRQ_HANDLER = 12); j }];
-        10852159 => [{ crate::game::sprite_effect_runtime::draygon_random_sprite(21, game); j }];
-        10852178 => [{ crate::game::sprite_effect_runtime::draygon_random_sprite(3, game); j }];
-        10852197 => [{ crate::game::sprite_effect_runtime::draygon_random_sprite(29, game); j }];
-        10852216 => [{ crate::game::sprite_effect_runtime::draygon_random_sprite(24, game); j }];
-        10854268 => [{ crate::game::sprite_effect_runtime::draygon_spit(false, game); j }];
-        10854318 => [{ crate::game::sprite_effect_runtime::draygon_spit(true, game); j }];
         0xa90000..=0xa9ffff => [sm_a9::dispatch_enemy_instr(ea, k, j, game)];
         0xb30000..=0xb3ffff => [{ crate::rtl::report_unreachable(game); EnemyScript::Stop }];
     }

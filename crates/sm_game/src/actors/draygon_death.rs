@@ -7,10 +7,11 @@ use crate::actors::draygon_host::{
     ARMS, BANK, BODY, DELETE, Draygon, EYE, GRAPPLE_DROPPED, Host, SIGN, TAIL, abs16, function,
     instruction_list as list,
 };
-use crate::actors::host::{BossEffects as _, Death, Shot};
+use crate::actors::host::{ActorLease as _, BossEffects as _, Death, LeaseActors, Shot};
 use crate::actors::queries::angle_from_delta;
 use crate::actors::session_slots::session_slot;
-use crate::ram::word;
+use crate::enemy_script::EnemyScript;
+use crate::ram::{word, words::EPROJ_INIT_PARAM_2};
 
 /// $A5:96AF: four colours of BG1/2 palette 5 for each health step, and
 /// $A5:96EF: the health below which each step starts.
@@ -230,10 +231,42 @@ pub fn drift_to_death_spot<L: Lease>(game: &mut L) {
     facing_animation(BODY, EYE, [list::EYE_LEFT_DEAD, list::EYE_RIGHT_DEAD], game);
     session_slot!(game, Draygon[EYE].function = function::NONE);
 }
+/// Handle dying Draygon smoke ($A5:92EA): every 8 frames, a big dust cloud low in the room.
+fn dying_smoke<H: Host + ?Sized>(game: &mut H) {
+    if game.frame() & 7 == 0 {
+        let random = game.roll_random();
+        game.create_sprite((random & 0x7f) + 192, ((random >> 8) & 0x3f) + 400, 21, 0);
+    }
+}
+/// Instruction - spawn dying Draygon sprite object `kind` within 40h px ($A5:973F-$A5:9778).
+pub fn spawn_dying_sprite<H: Host>(kind: u16, script: EnemyScript, game: &mut H) -> EnemyScript {
+    let random = game.roll_random();
+    let [dx, dy] = [random, random >> 8].map(|value| (value & 0x7f).wrapping_sub(64));
+    let x = session_slot!(game, Draygon[BODY].base.x_pos).wrapping_add(dx);
+    let y = session_slot!(game, Draygon[BODY].base.y_pos).wrapping_add(dy);
+    game.create_sprite(x, y, kind, 0);
+    script
+}
+/// Instruction - spawn Draygon goop - leftwards ($A5:9F7C) or rightwards ($A5:9FAE).
+pub fn spawn_goop<H: Host + LeaseActors>(
+    right: bool,
+    script: EnemyScript,
+    game: &mut H,
+) -> EnemyScript {
+    let dx = if right { 24 } else { 0xffe4 };
+    let x = session_slot!(game, Draygon[BODY].base.x_pos).wrapping_add(dx);
+    let y = session_slot!(game, Draygon[BODY].base.y_pos).wrapping_sub(16);
+    game.place_projectile_spawn(x, y);
+    let angle = (game.roll_random() & 0x3f) + if right { 192 } else { 128 };
+    LeaseActors::lease(game).write_slice_le(EPROJ_INIT_PARAM_2, angle);
+    let enemy = crate::actors::boss_lease::BossState::current_enemy(game);
+    game.spawn_actor_eproj(2, enemy, 0x8e50);
+    script
+}
 /// Draygon body function - death sequence - wait for evirs ($A5:9294). Was
 /// `ring`.
 pub fn wait_for_evirs<L: Lease>(game: &mut L) {
-    game.foreign(|game| game.draygon_death_bubble());
+    game.foreign(dying_smoke);
     session_slot!(game, Draygon[BODY].function_timer, |old| old
         .wrapping_sub(1));
     if session_slot!(game, Draygon[BODY].function_timer) != 0 {
@@ -251,7 +284,7 @@ pub fn wait_for_evirs<L: Lease>(game: &mut L) {
 /// until buried, then delete Draygon, set its boss bit and drop its rewards.
 /// Was `sink`.
 pub fn buried_by_evirs<L: Lease>(game: &mut L) {
-    game.foreign(|game| game.draygon_death_bubble());
+    game.foreign(dying_smoke);
     let bias = word!(game.REMOVED_VAR_E24);
     game.foreign(|game| game.draygon_motion(bias));
     session_slot!(game, Draygon[BODY].base.y_pos, |old| old.wrapping_add(1));

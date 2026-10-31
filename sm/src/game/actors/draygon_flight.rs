@@ -82,10 +82,6 @@ impl Host for Game {
         sprites::draygon_spawn_ring(self);
     }
 
-    fn draygon_death_bubble(&mut self) {
-        sprites::draygon_death_bubble(self);
-    }
-
     fn draygon_motion(&mut self, horizontal_bias: u16) {
         sprites::draygon_motion(horizontal_bias, self);
     }
