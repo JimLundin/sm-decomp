@@ -12,11 +12,9 @@ pub(crate) const COUNT: usize = 6;
 fn put(bytes: &mut [u8], at: usize, value: u16) {
     bytes[at..at + 2].copy_from_slice(&value.to_le_bytes());
 }
-fn rom_bytes(image: &RomImage, address: u32, bytes: &[u8]) {
+fn rom_bytes(image: &mut [u8], address: u32, bytes: &[u8]) {
     let at = crate::rom::lorom_offset(address) as usize;
-    for (i, b) in bytes.iter().copied().enumerate() {
-        image.write(at + i, b);
-    }
+    image[at..at + bytes.len()].copy_from_slice(bytes);
 }
 fn one(g: &mut Game, case: usize) {
     g.ram().fill(0..g.ram().len(), 0);
@@ -51,13 +49,13 @@ fn one(g: &mut Game, case: usize) {
             .ram()
             .copy_in(w::ROOM_HEIGHT_IN_BLOCKS, &16u16.to_le_bytes()),
         _ => {
-            let loaded = RomImage::zeroed(0x200000);
-            let native = RomImage::zeroed(0x200000);
+            let mut loaded = vec![0; 0x200000];
+            let mut native = vec![0; 0x200000];
             // Legacy mask pointer is Loaded, but mask data is Native bank82.
-            rom_bytes(&loaded, 0x829717, &0x9000u16.to_le_bytes());
-            rom_bytes(&native, 0x829000, &[0xff; 256]);
+            rom_bytes(&mut loaded, 0x829717, &0x9000u16.to_le_bytes());
+            rom_bytes(&mut native, 0x829000, &[0xff; 256]);
             // Tile24 pointer is Native, including its fourth read byte (zero).
-            rom_bytes(&native, 0x82964a, &[0x00, 0x80, 0x90, 0x00]);
+            rom_bytes(&mut native, 0x82964a, &[0x00, 0x80, 0x90, 0x00]);
             for (index, value) in [
                 (32, 0xc001u16),
                 (33, 0xc002),
@@ -75,10 +73,10 @@ fn one(g: &mut Game, case: usize) {
                 (99, 0x800e),
                 (100, 0x800f),
             ] {
-                rom_bytes(&native, 0x908000 + 2 * index, &value.to_le_bytes());
+                rom_bytes(&mut native, 0x908000 + 2 * index, &value.to_le_bytes());
             }
-            g.register_rom(loaded);
-            g.register_native_rom(native);
+            g.register_rom(RomImage::from(loaded));
+            g.register_native_rom(RomImage::from(native));
         }
     }
     let before = (0..g.ram().len())

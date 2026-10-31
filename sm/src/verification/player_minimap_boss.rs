@@ -20,10 +20,8 @@ pub(crate) const COUNT: usize = 6;
 fn put(bytes: &mut [u8], at: usize, value: u16) {
     bytes[at..at + 2].copy_from_slice(&value.to_le_bytes());
 }
-fn rom_word(image: &RomImage, offset: usize, value: u16) {
-    for (i, byte) in value.to_ne_bytes().into_iter().enumerate() {
-        image.write(offset + i, byte);
-    }
+fn rom_word(image: &mut [u8], offset: usize, value: u16) {
+    image[offset..offset + 2].copy_from_slice(&value.to_ne_bytes());
 }
 fn payload_text(payload: &(dyn std::any::Any + Send)) -> Option<&str> {
     payload
@@ -98,45 +96,46 @@ fn one(g: &mut Game, case: usize) {
         5 => coordinates + 7,  // Second coordinate lacks its final Y byte.
         _ => unreachable!(),
     };
-    let native = RomImage::zeroed(length);
+    let mut native = vec![0; length];
     // Nonmatching pointer values remain zero (invalid low-window addresses).
     // No-match and reverse-scan cases must not dereference those pointers.
     for index in 0..6 {
         let at = descriptors + 4 * index;
         if at + 1 < length {
-            rom_word(&native, at, 0x100 + index as u16);
+            rom_word(&mut native, at, 0x100 + index as u16);
         }
     }
     if case == 3 {
-        native.write(descriptors + 20, 7);
+        native[descriptors + 20] = 7;
     } else if case != 0 {
         let selected = if case == 2 { 0 } else { 5 };
-        rom_word(&native, descriptors + 4 * selected, 7);
+        rom_word(&mut native, descriptors + 4 * selected, 7);
         if case == 4 {
-            native.write(descriptors + 22, 1);
+            native[descriptors + 22] = 1;
         } else {
-            rom_word(&native, descriptors + 4 * selected + 2, 0xa901);
+            rom_word(&mut native, descriptors + 4 * selected + 2, 0xa901);
         }
         if case == 1 {
             // Both endpoints match. Reverse order must choose descriptor 5;
             // descriptor 0's poisoned pointer must remain unused.
-            rom_word(&native, descriptors, 7);
+            rom_word(&mut native, descriptors, 7);
             for (index, value) in [0x0055, 0x00aa, 0x0155, 0x01aa, 0x2055, 0x02aa, 0x8000]
                 .into_iter()
                 .enumerate()
             {
-                rom_word(&native, coordinates + 2 * index, value);
+                rom_word(&mut native, coordinates + 2 * index, value);
             }
         } else if case == 2 {
             // Sentinel is the last complete word: its Y must never be read.
-            rom_word(&native, coordinates, 0x8000);
+            rom_word(&mut native, coordinates, 0x8000);
         } else if case == 5 {
             for (index, value) in [0x0055, 0x00aa, 0x0155].into_iter().enumerate() {
-                rom_word(&native, coordinates + 2 * index, value);
+                rom_word(&mut native, coordinates + 2 * index, value);
             }
-            native.write(coordinates + 6, 0xaa);
+            native[coordinates + 6] = 0xaa;
         }
     }
+    let native = RomImage::from(native);
     g.loaded_rom = None;
     g.register_native_rom(native.clone());
     let before = (0..g.ram().len())

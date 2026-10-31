@@ -12,13 +12,13 @@ pub(crate) const COUNT: usize = 4;
 fn put(bytes: &mut [u8], at: usize, value: u16) {
     bytes[at..at + 2].copy_from_slice(&value.to_le_bytes());
 }
-fn rom_bytes(image: &RomImage, address: u32, bytes: &[u8]) {
+fn rom_bytes(image: &mut [u8], address: u32, bytes: &[u8]) {
     let at = crate::rom::lorom_offset(address) as usize;
-    for (i, byte) in bytes.iter().copied().enumerate() {
-        image.write(at + i, byte);
-    }
+    image[at..at + bytes.len()].copy_from_slice(bytes);
 }
-fn seed(g: &mut Game, x: u16, map_x: u16, native_length: usize) -> RomImage {
+/// Seeds RAM and the loaded image; the caller authors the native bytes, then
+/// registers them with `install`.
+fn seed(g: &mut Game, x: u16, map_x: u16, native_length: usize) -> Vec<u8> {
     g.ram().fill(0..g.ram().len(), 0);
     g.g_fail = false;
     for index in 0..96 {
@@ -37,23 +37,25 @@ fn seed(g: &mut Game, x: u16, map_x: u16, native_length: usize) -> RomImage {
         g.ram().copy_in(at, &(value as u16).to_le_bytes());
     }
     g.ram().write_byte(0x5b5, 8);
-    let loaded = RomImage::zeroed(0x200000);
-    let native = RomImage::zeroed(native_length);
-    rom_bytes(&loaded, 0x829717, &0x9000u16.to_le_bytes());
-    rom_bytes(&native, 0x82964a, &[0, 0x80, 0x90, 0]);
-    g.register_rom(loaded);
-    g.register_native_rom(native.clone());
+    let mut loaded = vec![0; 0x200000];
+    let mut native = vec![0; native_length];
+    rom_bytes(&mut loaded, 0x829717, &0x9000u16.to_le_bytes());
+    rom_bytes(&mut native, 0x82964a, &[0, 0x80, 0x90, 0]);
+    g.register_rom(RomImage::from(loaded));
     native
 }
+fn install(g: &mut Game, native: Vec<u8>) {
+    g.register_native_rom(RomImage::from(native));
+}
 fn check_half_crossing(g: &mut Game, reverse: bool) {
-    let native = seed(g, 128, if reverse { 32 } else { 31 }, 0x200000);
+    let mut native = seed(g, 128, if reverse { 32 } else { 31 }, 0x200000);
     let (columns, expected_tiles) = if reverse {
         // Columns30,31 are in the previous half;32,33,34 are in the current half.
         for offset in [7, 11, 15] {
-            rom_bytes(&native, 0x829000 + offset, &[3]);
+            rom_bytes(&mut native, 0x829000 + offset, &[3]);
         }
         for offset in [132, 136, 140] {
-            rom_bytes(&native, 0x829000 + offset, &[0xe0]);
+            rom_bytes(&mut native, 0x829000 + offset, &[0xe0]);
         }
         for (offset, byte) in [(7, 1), (11, 2), (15, 3)] {
             g.ram().write_byte(0x7f7 + offset, byte);
@@ -69,10 +71,10 @@ fn check_half_crossing(g: &mut Game, reverse: bool) {
     } else {
         // Columns29,30,31 precede the source-row wrap;32,33 follow it.
         for offset in [7, 11, 15] {
-            rom_bytes(&native, 0x829000 + offset, &[7]);
+            rom_bytes(&mut native, 0x829000 + offset, &[7]);
         }
         for offset in [132, 136, 140] {
-            rom_bytes(&native, 0x829000 + offset, &[0xc0]);
+            rom_bytes(&mut native, 0x829000 + offset, &[0xc0]);
         }
         for (offset, byte) in [(132, 0x40), (136, 0x80), (140, 0xc0)] {
             g.ram().write_byte(0x7f7 + offset, byte);
@@ -90,12 +92,13 @@ fn check_half_crossing(g: &mut Game, reverse: bool) {
         for column in 0..5 {
             let index = columns[column] + 32 * row;
             rom_bytes(
-                &native,
+                &mut native,
                 0x908000 + 2 * index as u32,
                 &(0x4001u16 + (row * 5 + column) as u16).to_le_bytes(),
             );
         }
     }
+    install(g, native);
     let mut expected = (0..g.ram().len())
         .map(|at| g.ram().read_byte(at))
         .collect::<Vec<u8>>();
@@ -131,11 +134,12 @@ fn check_lazy_tiles(g: &mut Game, fail_visited: bool) {
     // exceed this allocation; an eager row/tile copy is observably wrong.
     let tile_base = crate::rom::lorom_offset(0x908000) as usize;
     let length = tile_base + if fail_visited { 133 } else { 134 };
-    let native = seed(g, 512, 0, length);
-    native.write(tile_base + 132, 6);
+    let mut native = seed(g, 512, 0, length);
+    native[tile_base + 132] = 6;
     if !fail_visited {
-        native.write(tile_base + 133, 0x40);
+        native[tile_base + 133] = 0x40;
     }
+    install(g, native);
     let mut expected = (0..g.ram().len())
         .map(|at| g.ram().read_byte(at))
         .collect::<Vec<u8>>();
