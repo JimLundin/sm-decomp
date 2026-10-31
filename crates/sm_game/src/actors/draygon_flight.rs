@@ -2,6 +2,7 @@
 //! instructions its body scripts call (bank $A5:8687-$A5:9E0A).
 //! Extended motion words stay native compatibility state until the whole boss migrates.
 use crate::actors::boss_lease::BossState;
+use crate::actors::boss_lease::bg2_staging;
 use crate::actors::draygon_host::Lease;
 use crate::actors::draygon_host::{
     ARMS, BANK, BODY, Draygon, EYE, Host, INTANGIBLE, SIGN, TAIL, abs16, function,
@@ -165,7 +166,7 @@ pub fn fight_intro<L: Lease>(first: bool, game: &mut L) {
 /// completion surround the existing synchronous HDMA install seam.
 pub fn initialize<L: Lease>(install_layers: impl FnOnce(&mut L), game: &mut L) {
     crate::word_transfers!(game, descending, 25; le(TARGET_PALETTES, 168) <- rom(TARGET_PALETTES, 24));
-    crate::word_transfers!(game, descending, 2048; le(TILEMAP_STUFF, 2047) <- value(824));
+    bg2_staging::fill(game, (0..=2047).rev(), 824);
     session_slot!(
         game,
         Draygon[game.current_enemy() as i32].base.palette_index = PALETTE_7

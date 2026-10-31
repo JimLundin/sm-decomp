@@ -73,15 +73,16 @@ pub struct CrocomireMelt {
 /// slot, the original's `var_00`..`var_5f`, as the words of each block in RAM
 /// order (40h bytes per slot). It lives beside the slot records rather than in
 /// `Actor`, because clearing or spawning a slot leaves it untouched, as the
-/// original does. A fourth block holds the bosses' shared RAM ($7E:9000..$7E:97DB).
+/// original does. A fourth block holds the bosses' shared RAM ($7E:9000..$7E:97DB)
+/// and the last two the BG2 tilemap staging RAM ($7E:2000..$7E:2FFF).
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExtendedRam {
-    pub blocks: [[u16; 1024]; 4],
+    pub blocks: [[u16; 1024]; 6],
 }
 impl Default for ExtendedRam {
     fn default() -> Self {
         Self {
-            blocks: [[0; 1024]; 4],
+            blocks: [[0; 1024]; 6],
         }
     }
 }

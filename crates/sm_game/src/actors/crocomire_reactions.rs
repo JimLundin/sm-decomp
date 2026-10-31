@@ -4,6 +4,7 @@
 //! Hardware effects remain in the visual owner; RAM remains authoritative.
 use crate::actors::access::{AccessMode, ActorAccess, ActorKey as Key};
 use crate::actors::boss_lease::BossLease;
+use crate::actors::boss_lease::bg2_staging;
 use crate::actors::crocomire_attack::{Crocomire, flag, lane};
 use crate::actors::host::{ActorLease, BossEffects, Death, LeaseActors, Slopes};
 use crate::actors::session_slots::session_slot;
@@ -197,7 +198,7 @@ pub fn melt_down<L: Lease + ?Sized>(game: &mut L) {
     if (session_slot!(game, Crocomire[key].base.y_pos) as i32 - 280) & 0x8000 != 0 {
         let mut cursor = (8 * ((scroll!(game.Bg2V) as i32 + 288) & 0xfff8)) as u16;
         for _ in 0..32 {
-            word!(game.TILEMAP_STUFF[cursor >> 1] = 824);
+            bg2_staging::set(game, usize::from(cursor >> 1), 824);
             cursor = cursor.wrapping_add(2);
         }
         boss!(game.EnemyTilemapPending = 1);
@@ -577,7 +578,7 @@ fn load_melt_tilemap<L: Lease + ?Sized>(table: u32, game: &mut L) {
     // allocation; otherwise the original loads scan for the $FFFF end.
     if let Some(tiles) = game.foreign(|game| game.crocomire_melt_tilemap(table)) {
         for (index, tile) in tiles.into_iter().enumerate() {
-            word!(game.TILEMAP_STUFF[(index + 32)] = tile);
+            bg2_staging::set(game, index + 32, tile);
         }
         queue_tilemap_upload((2 * MELT_TILES + 1024) as u16, 0xfc, game);
         return;
@@ -588,9 +589,11 @@ fn load_melt_tilemap<L: Lease + ?Sized>(table: u32, game: &mut L) {
         if crate::cartridge::rom_table_word!(game, table, index as isize) == 0xffff {
             break;
         }
-        word!(
-            game.TILEMAP_STUFF[(index + 32)] =
-                crate::cartridge::rom_table_word!(game, table, index as isize)
+        let tile = crate::cartridge::rom_table_word!(game, table, index as isize);
+        bg2_staging::set(
+            game,
+            usize::try_from(index + 32).expect("melt tile index"),
+            tile,
         );
         i += 2;
     }
@@ -638,7 +641,7 @@ pub fn hop_6_load_melting_tilemap<L: Lease + ?Sized>(game: &mut L) {
         game,
         Crocomire[e].base.current_instruction = ADDR_K_CROCOMIRE_ILIST_BF7E as u16
     );
-    crate::word_transfers!(game, ascending, 1024; le(TILEMAP_STUFF, 0) <- value(824));
+    bg2_staging::fill(game, 0..1024, 824);
     load_melt_tilemap(SKELETON_TILEMAP_ADDRESS, game);
 }
 
@@ -1059,7 +1062,7 @@ fn erase_melt_columns<L: Lease + ?Sized>(game: &mut L) -> u16 {
 /// Initializes the defeated or active boss room with the original ordered effects.
 pub fn initialize<L: Lease + ?Sized>(game: &mut L) {
     boss!(game.BossId = 6);
-    crate::word_transfers!(game, ascending, 2048; le(TILEMAP_STUFF, 0) <- value(824));
+    bg2_staging::fill(game, 0..2048, 824);
     if ({
         let area = game.area();
         game.foreign(|game| game.boss_word_native(area))
@@ -1443,7 +1446,7 @@ fn clear_tilemap<L: Lease + ?Sized>(game: &mut L) {
     let e: i32 = game.current_enemy() as i32;
     session_slot!(game, Crocomire[e]; y_velocity = 0, projectile_counter = 0);
     session_slot!(game, Crocomire[e].step_counter = 2048);
-    crate::word_transfers!(game, descending, 2048; le(TILEMAP_STUFF, 2047) <- value(824));
+    bg2_staging::fill(game, (0..=2047).rev(), 824);
     queue_tilemap_upload(2048, 0xfe, game);
     game.foreign(advance_death_sequence);
 }

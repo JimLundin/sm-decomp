@@ -792,6 +792,18 @@ fn boss_ram_lanes() -> Vec<Lane> {
 }
 
 #[test]
+fn bg2_staging_round_trips_every_word() {
+    check_owner("BG2 staging", &bg2_staging_lanes());
+}
+
+fn bg2_staging_lanes() -> Vec<Lane> {
+    array(0x2000, 2, 0x800, |s, index| {
+        &mut s.actors.extended.blocks[4 + index / 0x400][index % 0x400]
+    })
+    .collect()
+}
+
+#[test]
 fn botwoon_death_words_round_trip() {
     check_owner(
         "Botwoon death",
@@ -959,6 +971,7 @@ fn all_owner_lanes() -> Vec<(&'static str, Vec<Lane>)> {
         ("actor speed scratch", actor_scratch_lanes()),
         ("Crocomire melt", crocomire_melt_lanes()),
         ("boss RAM", boss_ram_lanes()),
+        ("BG2 staging", bg2_staging_lanes()),
     ]
 }
 

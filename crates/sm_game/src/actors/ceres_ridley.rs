@@ -8,6 +8,7 @@
 //! movement and drawing in `ridley`; the intro (`initial` to
 //! `roar_before_flying`) and `init` serve both fights.
 #![forbid(unsafe_code)]
+use crate::actors::boss_lease::bg2_staging;
 use crate::actors::boss_lease::{BossLease, BossState as _};
 use crate::actors::host::BossEffects as _;
 use crate::actors::host::{abs16, below};
@@ -123,7 +124,7 @@ pub fn init<L: Lease + ?Sized>(game: &mut L) {
             | K_ENEMY_PROPS_INVISIBLE as u16);
         return;
     }
-    crate::word_transfers!(game, descending, 2048; le(TILEMAP_STUFF, 2047) <- value(0));
+    bg2_staging::fill(game, (0..=2047).rev(), 0);
     game.foreign(|game| game.disable_minimap_for_boss());
     session_slot!(game, Ridley[RIDLEY]; parameter_1 = 0, parameter_2 = 0);
     ridley::set_instruction_list(ceres_instruction_list::INITIAL, game);
@@ -155,7 +156,7 @@ pub fn init<L: Lease + ?Sized>(game: &mut L) {
         session_slot!(game, Ridley[RIDLEY].base; x_pos = 186, y_pos = 169);
         word!(game.CERES_STATUS = 0);
         session_slot!(game, Ridley[RIDLEY]; facing = ridley::FACING_LEFT, movement_enabled = 0);
-        word!(game.TILEMAP_STUFF[tail::IDLE_WHIP] = 1);
+        bg2_staging::set(game, tail::IDLE_WHIP, 1);
         session_slot!(game, Ridley[RIDLEY]; tail_damage = 15, function = ceres_function::INITIAL);
         session_slot!(game, Ridley[RIDLEY]; x_velocity = 0, y_velocity = 0);
         session_slot!(game, Ridley[RIDLEY]; min_y = -32i32 as u16, max_y = 176, min_x = 40,
@@ -256,8 +257,10 @@ fn run_ceres_function<L: Lease + ?Sized>(game: &mut L, function: u16) -> bool {
 /// angle, 8 to 17h, one frame in 256. Was `CeresRidley_Func_1`.
 pub fn randomize_tail_curliness<L: Lease + ?Sized>(game: &mut L) {
     if word!(game.RANDOM_NUMBER) >= 0xff00 {
-        word!(
-            game.TILEMAP_STUFF[tail::IDEAL_SEGMENT_ANGLE] = (word!(game.RANDOM_NUMBER) & 0xf) + 8
+        bg2_staging::set(
+            game,
+            tail::IDEAL_SEGMENT_ANGLE,
+            (word!(game.RANDOM_NUMBER) & 0xf) + 8,
         );
     }
 }
@@ -406,7 +409,7 @@ pub fn roar_before_flying<L: Lease + ?Sized>(game: &mut L) {
     ridley::set_instruction_list(ceres_instruction_list::TRANSITION_TO_FLYING, game);
     session_slot!(game, Ridley[RIDLEY]; wings_timer_delta = 8, wings_timer = 8);
     ridley::activate_tail_segments(game);
-    word!(game.TILEMAP_STUFF[tail::FUNCTION] = 1);
+    bg2_staging::set(game, tail::FUNCTION, 1);
     session_slot!(
         game,
         Ridley[RIDLEY].function = ceres_function::TRANSITION_TO_FLYING
@@ -586,7 +589,7 @@ pub fn swoop_setup<L: Lease + ?Sized>(game: &mut L) {
         Ridley[RIDLEY].function = ceres_function::SWOOP_MOVE_TO_POSITION
     );
     session_slot!(game, Ridley[RIDLEY]; function_timer = 10, swoop_angle = 0);
-    word!(game.TILEMAP_STUFF[tail::IDLE_WHIP] = 0);
+    bg2_staging::set(game, tail::IDLE_WHIP, 0);
     swoop_move_to_position(game);
 }
 
@@ -630,7 +633,7 @@ pub fn swoop_aiming_down<L: Lease + ?Sized>(game: &mut L) {
 /// whip. Was `CeresRidley_Func_19`.
 pub fn swoop_aiming_left<L: Lease + ?Sized>(game: &mut L) {
     if swoop_stage(game, -512, -16384, ceres_function::SWOOP_AIMING_UP, 28) {
-        word!(game.TILEMAP_STUFF[tail::WHIP_REQUEST] = 1);
+        bg2_staging::set(game, tail::WHIP_REQUEST, 1);
     }
 }
 
@@ -652,7 +655,7 @@ pub fn swoop_aiming_up_faster<L: Lease + ?Sized>(game: &mut L) {
     ridley::calculate_swoop_velocities(-768i32 as u16, -30720i32 as u16, 768, game);
     if timer_expired(game) {
         session_slot!(game, Ridley[RIDLEY]; function = ceres_function::HOVERING, timer = 0);
-        word!(game.TILEMAP_STUFF[tail::IDLE_WHIP] = 1);
+        bg2_staging::set(game, tail::IDLE_WHIP, 1);
     }
 }
 
@@ -682,7 +685,7 @@ pub fn write_palettes_and_spawn_walls<L: Lease + ?Sized>(game: &mut L) {
     if timer_expired(game) {
         spawn_getaway_walls(game);
         session_slot!(game, Ridley[RIDLEY]; x_velocity = 0, y_velocity = 0);
-        word!(game.TILEMAP_STUFF[tail::FUNCTION] = 0);
+        bg2_staging::set(game, tail::FUNCTION, 0);
         session_slot!(
             game,
             Ridley[RIDLEY].function = ceres_function::SET_UP_GETAWAY

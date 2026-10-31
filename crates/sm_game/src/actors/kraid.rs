@@ -9,6 +9,7 @@
 //! function in its `function` word; the views below name the slot words over
 //! the same RAM bytes as `KraidLayout`. The pause and unpause hooks are in
 //! `kraid_pause`.
+use crate::actors::boss_lease::bg2_staging;
 use crate::actors::boss_lease::{BossLease, BossState};
 use crate::actors::deaths::Deaths as _;
 use crate::actors::host::BossEffects as _;
@@ -466,13 +467,14 @@ fn load_bg2<S: BossState + ?Sized>(game: &mut S, priority: u16) {
     game.decompress_into_ram(BG2_TILEMAP, 0x2000);
     session_slot!(game, Body[BODY]; hurt_frame = 0, hurt_frame_timer = 0);
     for v1 in (0u16..1536).step_by(2) {
-        let value = (word!(game.TILEMAP_STUFF[(v1 >> 1)])) & 0xdfff;
+        let value = bg2_staging::get(game, usize::from(v1 >> 1)) & 0xdfff;
         let at = usize::try_from(0x2000 + (((v1 as i32 >> 1) + 1024) as isize) * 2)
             .expect("native word outside RAM");
         set_native_word(game, at, value);
     }
     for v2 in 0u16..1024 {
-        word!(game.TILEMAP_STUFF[v2] = priority & native_word(game, 0x4000 + v2 as usize * 2));
+        let value = priority & native_word(game, 0x4000 + v2 as usize * 2);
+        bg2_staging::set(game, usize::from(v2), value);
     }
 }
 
@@ -1199,7 +1201,8 @@ fn break_ceiling<L: Lease + ?Sized>(game: &mut L) {
 /// Was `Kraid_GetsBig_SetBG2TilemapPrioBits`.
 fn set_bg2_priority<L: Lease + ?Sized>(game: &mut L) {
     for v0 in (0u16..4096).step_by(2) {
-        word!(game.TILEMAP_STUFF[(v0 >> 1)] |= 0x2000);
+        let index = usize::from(v0 >> 1);
+        bg2_staging::set(game, index, bg2_staging::get(game, index) | 0x2000);
     }
     session_slot!(game, Part[ARM].base.properties, |old| old & !(0x400));
     session_slot!(
@@ -1550,7 +1553,7 @@ pub fn sink_through_floor<L: Lease + ?Sized>(game: &mut L) {
 fn fade_in_clear_bg2_top<L: Lease + ?Sized>(game: &mut L) {
     game.set_slot_byte(BG2_TILEMAP_BASE, 72);
     game.foreign(|game| {
-        crate::word_transfers!(game, descending, 1024; le(TILEMAP_STUFF, 1023) <- value(BLANK_BG2_TILE));
+        bg2_staging::fill(game, (0..=1023).rev(), BLANK_BG2_TILE);
     });
     queue_vram(game, 1024, 0x2000, QueueBank::Word(126), |_| 18432);
     session_slot!(
@@ -2021,7 +2024,7 @@ pub fn initialize<L: Lease + ?Sized>(game: &mut L) {
             crate::word_transfers!(game, ascending, 16; le(TARGET_PALETTES, 96) <- rom(ROOM_BG_PALETTE, 0));
         });
         game.foreign(|game| {
-            crate::word_transfers!(game, descending, 1024; le(TILEMAP_STUFF, 1023) <- value(BLANK_BG2_TILE));
+            bg2_staging::fill(game, (0..=1023).rev(), BLANK_BG2_TILE);
         });
         session_slot!(game, Body[BODY].unread_7804 = 0);
         queue_room_bg(game);

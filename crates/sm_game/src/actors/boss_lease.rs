@@ -115,3 +115,23 @@ pub mod boss_ram {
         h.set_slot_byte(word as usize + 1, high);
     }
 }
+
+/// The BG2 tilemap staging RAM ($7E:2000..$7E:2FFF) by word index, which the
+/// Session holds as `actors.extended`'s last two blocks and Ridley keeps its
+/// tail in, through the lease's projected bytes.
+pub mod bg2_staging {
+    use crate::actors::session_slots::SlotAccess;
+    const BASE: usize = 0x2000;
+    pub fn get<H: SlotAccess + ?Sized>(h: &H, index: usize) -> u16 {
+        h.slot_word(BASE + 2 * index)
+    }
+    pub fn set<H: SlotAccess + ?Sized>(h: &mut H, index: usize, value: u16) {
+        h.set_slot_word(BASE + 2 * index, value);
+    }
+    /// Store `value` to each word index in `words`, in its order.
+    pub fn fill<H: SlotAccess + ?Sized>(h: &mut H, words: impl Iterator<Item = usize>, value: u16) {
+        for index in words {
+            set(h, index, value);
+        }
+    }
+}

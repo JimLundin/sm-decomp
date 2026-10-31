@@ -7,6 +7,7 @@
 //! bytes as `EnemyLayout8`; the figure-8 flight and the flames stay in
 //! `phantoon_motion` and `phantoon_actions`.
 use crate::actors::api::PlayerDirection;
+use crate::actors::boss_lease::bg2_staging;
 use crate::actors::boss_lease::{BossLease, BossState};
 use crate::actors::deaths::Deaths as _;
 use crate::actors::host::BossEffects as _;
@@ -636,7 +637,7 @@ fn divide(dividend: i32, divisor: u8) -> u16 {
 /// Sets up the fight: blank BG2, the semi-transparency HDMA and the parts.
 /// Was `Phantoon_Init`.
 pub fn initialize<H: Host + ?Sized>(game: &mut H) {
-    crate::word_transfers!(game, descending, 2048; le(TILEMAP_STUFF, 2047) <- value(BLANK_BG2_TILE));
+    bg2_staging::fill(game, (0..=2047).rev(), BLANK_BG2_TILE);
     crate::word_transfers!(game, descending, 1024; native(BG2_HDMA_DATA_END) <- value(0));
     crate::word_transfers!(game, descending, 16; native(SPRITE_PALETTE_7_END) <- value(0));
     word!(game.ENEMY_BG2_TILEMAP_SIZE = BG2_TILEMAP_SIZE);
@@ -1214,7 +1215,7 @@ pub fn almost_dead<S: BossState + ?Sized>(game: &mut S, k: u16) {
     session_slot!(game, Body[k as i32]; function = function::DEAD, timer = 60);
     session_slot!(game, Eye[EYE].fade_complete = 0);
     session_slot!(game, Body[BODY].base; x_pos = 384, y_pos = 128);
-    crate::word_transfers!(game, descending, 512; le(TILEMAP_STUFF, 511) <- value(BLANK_BG2_TILE));
+    bg2_staging::fill(game, (0..=511).rev(), BLANK_BG2_TILE);
     // A VRAM write queue entry: 400h bytes from $7E:2000 to VRAM $4800.
     let queue = 0xd0;
     let mut tail: u16 = word!(game.VRAM_WRITE_QUEUE_TAIL);
