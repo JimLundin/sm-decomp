@@ -296,13 +296,24 @@ unsafe fn sequence(g: &mut Game, out: &mut Vec<u8>) {
     );
     record(out, 1, u32::from(result), g);
 }
+/// The multiply's shared operand stores, made on the compat game.
+fn multiply_with_scratch(g: &mut Game, a: u16, b: u16) -> u32 {
+    g.compatibility_copy_in(0x5e9, &a.to_le_bytes());
+    g.compatibility_copy_in(0x5eb, &b.to_le_bytes());
+    u32::from(a) * u32::from(b)
+}
 unsafe fn multiply(g: &mut Game, out: &mut Vec<u8>) {
     seed_lanes(g);
     let mut expected = (0..g.ram().len())
         .map(|at| g.ram().read_byte(at))
         .collect::<Vec<_>>();
     record(out, 0, 0, g);
-    let result = g.multiply_with_scratch(0xf123, 0x0123);
+    let result = {
+        Runtime::new(g)
+            .session_mut()
+            .multiply_scratch
+            .multiply(0xf123, 0x0123)
+    };
     assert_eq!(result, 0x01121ac9, "collision.owner.multiply.product");
     put(&mut expected, 0x5e9, 0xf123);
     put(&mut expected, 0x5eb, 0x0123);
@@ -514,7 +525,7 @@ fn foreign_unwind(g: &mut Game, out: &mut Vec<u8>) {
     let error = catch_unwind(AssertUnwindSafe(|| {
         let mut rt = Runtime::new(g);
         rt.foreign(|g| {
-            g.multiply_with_scratch(0x1234, 0x5678);
+            multiply_with_scratch(g, 0x1234, 0x5678);
             g.ram().write_byte(0xdc7, 0xe1);
             panic!("collision ownership controlled foreign unwind");
         });

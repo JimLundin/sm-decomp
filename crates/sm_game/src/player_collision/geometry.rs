@@ -288,12 +288,14 @@ fn nonsquare(h: &mut impl Host, s: &mut Scan, axis: Axis, block: u16) -> u8 {
         } else {
             shifted
         };
-        h.session_mut().multiply_scratch.left = multiplicand;
-        h.session_mut().multiply_scratch.right = factor as u16;
+        let product = h
+            .session_mut()
+            .multiply_scratch
+            .multiply(multiplicand, factor as u16) as i32;
         s.displacement = if displacement >= 0 {
-            (u32::from(shifted) * factor) as i32
+            product
         } else {
-            ((u32::from(shifted.wrapping_neg()) * factor) as i32).wrapping_neg()
+            product.wrapping_neg()
         };
         return 0;
     }

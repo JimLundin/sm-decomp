@@ -131,8 +131,6 @@ pub trait BossEffects:
     fn command_player(&mut self, command: u16) -> u16;
     /// Reset projectile data.
     fn reset_player_projectiles(&mut self);
-    /// `a` times `b` through the hardware multiplier's scratch words.
-    fn scratch_multiply(&mut self, a: u16, b: u16) -> u32;
     fn correct_previous_position(&mut self);
     /// Contact damage `amount` after Samus's suit.
     fn suit_damage(&mut self, amount: u16) -> u16;

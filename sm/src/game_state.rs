@@ -688,13 +688,6 @@ impl Game {
         result
     }
 
-    pub(crate) fn multiply_with_scratch(&mut self, a: u16, b: u16) -> u32 {
-        self.compatibility_copy_in(0x5e9, &a.to_le_bytes());
-        self.compatibility_copy_in(0x5eb, &b.to_le_bytes());
-        let result: u32 = (a as u32).wrapping_mul(b as u32);
-        result
-    }
-
     pub(crate) fn request_reset(&mut self) {
         crate::ram_map::word!(self.GAME_STATE = u16::MAX);
     }

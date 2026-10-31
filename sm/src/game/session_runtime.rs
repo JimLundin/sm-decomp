@@ -1446,11 +1446,6 @@ impl<'g> sm_game::grapple_swing::Host for Runtime<'g> {
         // The command runs on this lease; no export, nested lease or re-import.
         player_transitions_runtime::command_in(self, command)
     }
-    fn multiply_with_scratch(&mut self, a: u16, b: u16) -> u32 {
-        self.write_slice(0x5e9, &a.to_le_bytes());
-        self.write_slice(0x5eb, &b.to_le_bytes());
-        (a as u32).wrapping_mul(b as u32)
-    }
     fn player_bottom(&self) -> u16 {
         use sm_game::player_position::PlayerPosition as _;
         let y = self.player_y();

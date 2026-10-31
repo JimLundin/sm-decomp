@@ -61,3 +61,12 @@ pub struct MultiplyScratch {
     pub left: u16,
     pub right: u16,
 }
+impl MultiplyScratch {
+    /// `left` times `right` as the 16-bit multiply routine ($80:82D6), which
+    /// leaves its operands at $05E9/$05EB.
+    pub fn multiply(&mut self, left: u16, right: u16) -> u32 {
+        self.left = left;
+        self.right = right;
+        u32::from(left) * u32::from(right)
+    }
+}
