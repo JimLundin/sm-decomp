@@ -203,6 +203,10 @@ impl crate::execution::Execution<'_> {
 
     /// Requires the original live, exclusive retained backend for all bus effects.
     pub(crate) unsafe fn initialize_hdma(&mut self) {
+        #[cfg(sm_verify_dll)]
+        unsafe {
+            table_check::begin_frame(self)
+        };
         let mut host = unsafe { NativeHdmaHost::new(self) };
         match crate::game::scene::hdma::initialize(&mut host) {
             Ok(()) => {}
@@ -212,6 +216,8 @@ impl crate::execution::Execution<'_> {
 
     /// Requires the original live, exclusive retained backend for all bus effects.
     pub(crate) unsafe fn step_hdma(&mut self) {
+        #[cfg(sm_verify_dll)]
+        table_check::begin_pass();
         let mut host = unsafe { NativeHdmaHost::new(self) };
         match crate::game::scene::hdma::step(&mut host) {
             Ok(()) => {}
@@ -424,7 +430,212 @@ impl crate::game::scene::hdma::HdmaHost for NativeHdmaHost<'_, '_> {
         Ok(unsafe { self.0.read_bbus(destination) })
     }
     fn write_destination(&mut self, destination: u8, value: u8) -> Result<(), Self::Error> {
+        #[cfg(sm_verify_dll)]
+        table_check::record(destination, value);
         unsafe { self.0.write_bbus(destination, value) };
         Ok(())
+    }
+}
+
+/// HDMA as per-line register tables (native renderer step 4). With
+/// `SM_HDMA_TABLE` set, each frame's HDMA is planned at its initialization
+/// from a scratch copy of the channel state with `display::hdma::frame_table`,
+/// and the B-bus writes the beam-driven HDMA then makes are compared pass by
+/// pass. `SM_HDMA_TABLE_LOG` receives each frame whose writes differ from its
+/// table (frame, first differing pass, planned and actual write counts there).
+/// A difference means the frame's tables or channels changed after they were
+/// planned, so a beam-free renderer would need that change as an input.
+#[cfg(sm_verify_dll)]
+mod table_check {
+    use super::{Dma, NativeHdmaHost};
+    use crate::game::scene::hdma::{self, ChannelByte, ChannelFlag, ChannelWord, HdmaHost};
+    use std::cell::RefCell;
+    use std::io::Write as _;
+    use std::sync::OnceLock;
+
+    /// Lines with an HDMA pass: the beam steps HDMA on rows 0 to 224.
+    const STEPS: usize = 225;
+
+    #[derive(Default)]
+    struct Frame {
+        number: u32,
+        planned: Option<Vec<hdma::PassWrites>>,
+        actual: Vec<hdma::PassWrites>,
+    }
+
+    thread_local! {
+        static FRAME: RefCell<Frame> = RefCell::new(Frame::default());
+    }
+
+    fn enabled() -> bool {
+        static ENABLED: OnceLock<bool> = OnceLock::new();
+        *ENABLED.get_or_init(|| std::env::var_os("SM_HDMA_TABLE").is_some())
+    }
+
+    /// A scratch copy of the channels and timer that reads tables from the live bus.
+    struct Scratch<'a, 'execution> {
+        dma: Dma,
+        bus: NativeHdmaHost<'a, 'execution>,
+    }
+
+    impl HdmaHost for Scratch<'_, '_> {
+        type Error = std::convert::Infallible;
+
+        fn flag(&self, channel: usize, field: ChannelFlag) -> bool {
+            let state = &self.dma.channel[channel];
+            match field {
+                ChannelFlag::Active => state.hdmaActive,
+                ChannelFlag::Terminated => state.terminated,
+                ChannelFlag::DoTransfer => state.doTransfer,
+                ChannelFlag::Indirect => state.indirect,
+                ChannelFlag::FromDestination => state.fromB,
+                ChannelFlag::DmaActive => state.dmaActive,
+            }
+        }
+        fn byte(&self, channel: usize, field: ChannelByte) -> u8 {
+            let state = &self.dma.channel[channel];
+            match field {
+                ChannelByte::Mode => state.mode,
+                ChannelByte::RepeatCount => state.repCount,
+                ChannelByte::SourceBank => state.aBank,
+                ChannelByte::IndirectBank => state.indBank,
+                ChannelByte::Destination => state.bAdr,
+                ChannelByte::TransferCursor => state.offIndex,
+            }
+        }
+        fn word(&self, channel: usize, field: ChannelWord) -> u16 {
+            let state = &self.dma.channel[channel];
+            match field {
+                ChannelWord::SourceAddress => state.aAdr,
+                ChannelWord::TableCursor => state.tableAdr,
+                ChannelWord::IndirectCursor => state.size,
+            }
+        }
+        fn set_flag(&mut self, channel: usize, field: ChannelFlag, value: bool) {
+            let state = &mut self.dma.channel[channel];
+            match field {
+                ChannelFlag::Active => state.hdmaActive = value,
+                ChannelFlag::Terminated => state.terminated = value,
+                ChannelFlag::DoTransfer => state.doTransfer = value,
+                ChannelFlag::Indirect => state.indirect = value,
+                ChannelFlag::FromDestination => state.fromB = value,
+                ChannelFlag::DmaActive => state.dmaActive = value,
+            }
+        }
+        fn set_byte(&mut self, channel: usize, field: ChannelByte, value: u8) {
+            let state = &mut self.dma.channel[channel];
+            match field {
+                ChannelByte::Mode => state.mode = value,
+                ChannelByte::RepeatCount => state.repCount = value,
+                ChannelByte::SourceBank => state.aBank = value,
+                ChannelByte::IndirectBank => state.indBank = value,
+                ChannelByte::Destination => state.bAdr = value,
+                ChannelByte::TransferCursor => state.offIndex = value,
+            }
+        }
+        fn set_word(&mut self, channel: usize, field: ChannelWord, value: u16) {
+            let state = &mut self.dma.channel[channel];
+            match field {
+                ChannelWord::SourceAddress => state.aAdr = value,
+                ChannelWord::TableCursor => state.tableAdr = value,
+                ChannelWord::IndirectCursor => state.size = value,
+            }
+        }
+        fn timer(&self) -> u16 {
+            self.dma.hdmaTimer
+        }
+        fn set_timer(&mut self, value: u16) {
+            self.dma.hdmaTimer = value;
+        }
+        fn invalid_mode(&mut self, mode: u8) -> Self::Error {
+            self.bus.invalid_mode(mode)
+        }
+        fn read_source(
+            &mut self,
+            channel: usize,
+            source: hdma::HdmaSource,
+            bank: u8,
+            address: u16,
+        ) -> Result<u8, Self::Error> {
+            self.bus.read_source(channel, source, bank, address)
+        }
+        fn write_source(
+            &mut self,
+            _channel: usize,
+            _source: hdma::HdmaSource,
+            _bank: u8,
+            _address: u16,
+            _value: u8,
+        ) -> Result<(), Self::Error> {
+            unreachable!("the frame table records from-destination transfers itself")
+        }
+        fn read_destination(&mut self, _destination: u8) -> Result<u8, Self::Error> {
+            unreachable!("the frame table records from-destination transfers itself")
+        }
+        fn write_destination(&mut self, _destination: u8, _value: u8) -> Result<(), Self::Error> {
+            unreachable!("the frame table records its writes itself")
+        }
+    }
+
+    /// Compare the finished frame with its plan, then plan the next one.
+    pub(super) unsafe fn begin_frame(execution: &mut crate::execution::Execution<'_>) {
+        if !enabled() {
+            return;
+        }
+        FRAME.with_borrow_mut(|frame| {
+            if let Some(planned) = &frame.planned {
+                let passes = planned.len().max(frame.actual.len());
+                let empty = Vec::new();
+                let differing = (0..passes).find(|&pass| {
+                    planned.get(pass).unwrap_or(&empty) != frame.actual.get(pass).unwrap_or(&empty)
+                });
+                if let (Some(pass), Some(path)) = (differing, std::env::var_os("SM_HDMA_TABLE_LOG"))
+                {
+                    let count =
+                        |passes: &Vec<hdma::PassWrites>| passes.get(pass).map_or(0, Vec::len);
+                    let mut log = std::fs::OpenOptions::new()
+                        .create(true)
+                        .append(true)
+                        .open(path)
+                        .unwrap();
+                    writeln!(
+                        log,
+                        "{},{pass},{},{}",
+                        frame.number,
+                        count(planned),
+                        count(&frame.actual)
+                    )
+                    .unwrap();
+                }
+            }
+            let dma = execution.backend.dma_state();
+            let mut scratch = Scratch {
+                dma,
+                bus: unsafe { NativeHdmaHost::new(execution) },
+            };
+            let planned = match hdma::frame_table(&mut scratch, STEPS) {
+                Ok(planned) => planned,
+                Err(never) => match never {},
+            };
+            frame.number += 1;
+            frame.planned = planned;
+            frame.actual = vec![Vec::new()];
+        });
+    }
+
+    pub(super) fn begin_pass() {
+        if enabled() {
+            FRAME.with_borrow_mut(|frame| frame.actual.push(Vec::new()));
+        }
+    }
+
+    pub(super) fn record(destination: u8, value: u8) {
+        if enabled() {
+            FRAME.with_borrow_mut(|frame| {
+                if let Some(pass) = frame.actual.last_mut() {
+                    pass.push((destination, value));
+                }
+            });
+        }
     }
 }
