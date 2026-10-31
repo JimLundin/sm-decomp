@@ -195,7 +195,8 @@ jobs:
     timeout-minutes: 60
     env:
       RUSTUP_TOOLCHAIN: stable-x86_64-pc-windows-gnu
-      CARGO_BUILD_JOBS: 1
+      # The hosted runner has four cores; let cargo and rustc's codegen use them.
+      CARGO_BUILD_JOBS: 4
     defaults:
       run:
         shell: pwsh
