@@ -180,9 +180,9 @@ impl NativeSamusUpload<'_> {
         address: u32,
         offset: usize,
         width: usize,
-    ) -> crate::game::samus_animation::NativeTable {
+    ) -> sm_game::samus_drawing::RoleTable {
         let (image, base) = self.0.preflight_loaded_rom(address, offset, width);
-        crate::game::samus_animation::NativeTable::capture(
+        crate::game::samus_animation::capture_table(
             self.0,
             sm_game::scene::samus_content::Role::UploadDescriptor,
             sm_game::scene::samus_content::Registration::Loaded,
@@ -221,7 +221,7 @@ impl sm_game::scene::samus_tile_upload::Host for NativeSamusUpload<'_> {
         }
         if self.0.samus_execution().unwrap().is_some() {
             let image = self.0.capture_native_rom();
-            let _ = crate::game::samus_animation::NativeTable::capture(
+            let _ = crate::game::samus_animation::capture_table(
                 self.0,
                 sm_game::scene::samus_content::Role::UploadDescriptor,
                 sm_game::scene::samus_content::Registration::Native,
