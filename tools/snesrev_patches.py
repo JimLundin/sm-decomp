@@ -657,7 +657,7 @@ BUG_HOOKS = [
     (0xB39DDB, 'a', 'none', 'removed', 'patched',
      'Botwoon head function - moving around',
      'The angle routine $A0:C0B1 only replaces $12/$14 with their absolute values, so the following $12=0 and $14=0 test gives the same result and nothing else reads them'),
-    (0xB39E13, 'b', 'visual', 'removed', 'patched',
+    (0xB39E13, 'b', 'visual', 'removed', 'follows',
      'Botwoon head function - moving around',
      "snesrev-added hysteresis not in the original: it smooths the head angle (writes var_45 and $16), so the head instruction list (facing graphic) differs from hardware's raw angle"),
 ]
