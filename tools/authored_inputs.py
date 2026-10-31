@@ -71,13 +71,25 @@ def _morph():
     return "press Down 4; press Down 4"
 
 
+def _spark(direction):
+    """Release a stored shinespark: straight up, or from a jump sideways or
+    diagonally (holding the aim-up button R)."""
+    turn = "Left 3; _ 10; " if "left" in direction else ""
+    side = "Left" if "left" in direction else "Right"
+    if direction == "up":
+        return "A 10"
+    aim = "+R" if direction.startswith("up-") else ""
+    return f"{turn}A 4; _ 8; {side}{aim}+A 10"
+
+
 def _toggle_twice():
     return "press A; press A; press Down"
 
 
 # Named moves: each takes its arguments as words and returns language text.
 MOVES = {"walljump": _walljump, "mockball": _mockball, "short-charge": _short_charge,
-         "charge-shot": _charge_shot, "morph": _morph, "toggle-twice": _toggle_twice}
+         "charge-shot": _charge_shot, "morph": _morph, "toggle-twice": _toggle_twice,
+         "spark": _spark}
 
 
 def tokens(text):
@@ -227,6 +239,25 @@ RECIPES = {
         _ 820; press Y 6; repeat 4 { press Select 6 }; _ 82
         X 60; _ 1700
     """),
+    # Landing site (seed 100-input-phase:305): run right until the speed
+    # booster charges, crouch to store the charge, then release it.
+    "shinespark": Recipe("Right+B 150; Right+B+Down 2; _ 30; spark $direction; _ 200",
+                         {"direction": "up"}),
+    # Landing site with crystal flash conditions (scenario crystal-flash):
+    # morph, select the power bombs, lay one and hold L+R+Down+shoot until it
+    # ends.
+    "crystal-flash": Recipe("""
+        _ 40; Down 2; _ 6; Down 2; _ 6; repeat 3 { Select 2; _ 6 }; _ 20
+        X 2; Down+L+R+X 500; _ 300
+    """),
+    # Landing site: walk to the left wall, spin jump into it for $hold
+    # frames, then kick off to the right.
+    "walljump": Recipe("_ 20; Left 8; Left+A $hold; Right 2; Right+A 10; _ 100", {"hold": 22}),
+    # Select the X-ray scope, hold it and sweep the beam up and down.
+    "xray-scan": Recipe("""
+        _ 40; repeat 5 { Select 2; _ 6 }; _ 10
+        B 30; Up+B 30; Down+B 30; B 20; _ 60
+    """),
     # Pause, wait for the pause screen, unpause and watch the room resume.
     "pause-resume": Recipe("press Start 150; hold Start 200; _ $tail", {"tail": 240}),
 }
@@ -237,6 +268,21 @@ SWEEPS = {
     "draygon-release": Sweep(
         recipe="release", row="boss-draygon-release", seed="low-input-phase:129",
         values={"prefix_frames": [1880, 1902], "frames": [1600]}, expect=["room:DA60"]),
+    # Release a stored shinespark in each direction.
+    "shinespark": Sweep(
+        recipe="shinespark", row="samus-shinespark", seed="100-input-phase:305",
+        values={"direction": ["up", "right", "left", "up-right", "up-left"]},
+        expect=["room:91F8"],
+        hits={"up": ["shinespark.store", "shinespark.vertical"],
+              "right": ["shinespark.store", "shinespark.horizontal"],
+              "left": ["shinespark.store", "shinespark.horizontal"],
+              "up-right": ["shinespark.store", "shinespark.diagonal"],
+              "up-left": ["shinespark.store", "shinespark.diagonal"]}),
+    # Wall jumps after spinning into the wall for several lengths of time.
+    "walljump": Sweep(
+        recipe="walljump", row="samus-walljump", seed="100-input-phase:305",
+        values={"hold": [16, 22, 28]}, expect=["room:91F8"],
+        hits={str(hold): ["samus.jump.wall"] for hold in (16, 22, 28)}),
     # Pause the boss-kraid words while Kraid is alive (400), sinking (950),
     # dead in the fight (1030) and dead after the room reloads on Samus's
     # return from the Varia Suit room (1960); each unpause runs that hook.
@@ -259,6 +305,10 @@ PINNED = {
     "release": "47a5f51e76c59f0f2b1f2b336b18e249cf9337d58fdb5fff6074b2ebea876071",
     "long-release": "5e93dfb35fefa55b112c3503c95292700424e13106b27eea5f248a0649e593a2",
     "grapple-repel": "875864d6999f51b0782c478dc115064e830ec019168817fbf2aefcee32c93cff",
+    "shinespark": "ab22c119c7303e4d4e6c99e68c7fd21af4bab44336a2888d0b87fd04a9901ef1",
+    "crystal-flash": "d82453f56f8f0f9a579385961533f2415fe86e47e53e171559334fd8f5e199b6",
+    "walljump": "51c1ddb44ada90dc6af96e0dbc0b1bdbed90566eaf1c625e4b9ca8705cc435a1",
+    "xray-scan": "5419367a7705c5a3a6ba91985ff47f4f13ddd073ffacab058acc1732807f55ee",
     "pause-resume": "6982afc4c06ba2311042798e0c0c2ccdbe47a7dbe599fb50b927ba414c24d077",
 }
 
@@ -336,7 +386,8 @@ def check():
             continue
         raise SystemExit(f"language accepted invalid text: {text}")
     for name in MOVES:
-        args = {"walljump": ["Left"], "mockball": ["Right"], "short-charge": ["Right"]}
+        args = {"walljump": ["Left"], "mockball": ["Right"], "short-charge": ["Right"],
+                "spark": ["up-left"]}
         compile_recipe(" ".join([name, *args.get(name, [])]))
     print(f"{len(PINNED)} pinned recipes and {len(cases)} language cases match")
 

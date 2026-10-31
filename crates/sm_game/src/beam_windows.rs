@@ -296,6 +296,7 @@ pub struct XrayWindow {
 
 /// Fill `window.table` with the beam's per-row window words.
 pub fn calculate_xray_window<H: BeamHost + ?Sized>(window: XrayWindow, game: &mut H) {
+    crate::probe::hit("xray.window");
     use XrayBeamDirection::*;
     let XrayWindow {
         x,

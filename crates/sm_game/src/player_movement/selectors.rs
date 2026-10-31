@@ -154,6 +154,10 @@ fn spin_jump(h: &mut impl Host) {
     speed::spin_jumping(h);
 }
 fn grounded_ball(h: &mut impl Host, spring: bool) {
+    // A ball that kept a jump's momentum (acceleration mode 2): the mockball.
+    if h.session().player.contact.acceleration_mode == 2 {
+        crate::probe::hit("morph.rolling_with_momentum");
+    }
     if h.session().player.contact.acceleration_mode == 0 {
         let pose = if h.session().player.movement_and_facing as u8 == 4 {
             if spring { 0x7a } else { 0x41 }

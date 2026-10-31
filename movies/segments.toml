@@ -1269,3 +1269,163 @@ start_frame = 0
 frames = 4182
 expect = ["room:DA60"]
 require_hit = ["draygon_grab.repelled_by_grapple", "draygon_grab.flail_tail_and_fly_straight_up"]
+
+# Trick and scope rows (tools/authored_inputs.py recipes and sweeps, from the
+# landing site and other late-game 100% seeds; the crystal flash uses the
+# crystal-flash scenario seed). Each requires the probe on its routine.
+
+[[segment]]
+id = "samus-shinespark-up"
+pending = "awaiting the seeds-v1-tricks-95f7c4352cb18fbe ci-data upload"
+seed = "100-input-phase:305"
+seed_sha256 = "1563be3787a3edca0cc6821a8db4967c2318e41a7ae6a50dc9a5d0a5288ad07c"
+inputs = "authored-samus-shinespark-up.inputs"
+input_sha256 = "a4429d79f24b25cc2977799e1bcedeca03b0f61470a0c10d86412ae3b7cbc6e8"
+start_frame = 0
+frames = 393
+expect = ["room:91F8"]
+require_hit = ["shinespark.store", "shinespark.vertical"]
+
+[[segment]]
+id = "samus-shinespark-right"
+pending = "awaiting the seeds-v1-tricks-95f7c4352cb18fbe ci-data upload"
+seed = "100-input-phase:305"
+seed_sha256 = "1563be3787a3edca0cc6821a8db4967c2318e41a7ae6a50dc9a5d0a5288ad07c"
+inputs = "authored-samus-shinespark-right.inputs"
+input_sha256 = "dffc2c1447fc1ac2cde5d6592b0c71f1209520a607ea6f7035a975b6ed27dc4d"
+start_frame = 0
+frames = 405
+expect = ["room:91F8"]
+require_hit = ["shinespark.store", "shinespark.horizontal"]
+
+[[segment]]
+id = "samus-shinespark-left"
+pending = "awaiting the seeds-v1-tricks-95f7c4352cb18fbe ci-data upload"
+seed = "100-input-phase:305"
+seed_sha256 = "1563be3787a3edca0cc6821a8db4967c2318e41a7ae6a50dc9a5d0a5288ad07c"
+inputs = "authored-samus-shinespark-left.inputs"
+input_sha256 = "c38365247750d18d739b2831f4dc98e6bd52f5d1f9b14674b795b2ee09efbd1a"
+start_frame = 0
+frames = 418
+expect = ["room:91F8"]
+require_hit = ["shinespark.store", "shinespark.horizontal"]
+
+[[segment]]
+id = "samus-shinespark-up-right"
+pending = "awaiting the seeds-v1-tricks-95f7c4352cb18fbe ci-data upload"
+seed = "100-input-phase:305"
+seed_sha256 = "1563be3787a3edca0cc6821a8db4967c2318e41a7ae6a50dc9a5d0a5288ad07c"
+inputs = "authored-samus-shinespark-up-right.inputs"
+input_sha256 = "376e75b98950583ec734a76acf7b89610242025df62ce144017e3f6ae2884d2a"
+start_frame = 0
+frames = 405
+expect = ["room:91F8"]
+require_hit = ["shinespark.store", "shinespark.diagonal"]
+
+[[segment]]
+id = "samus-shinespark-up-left"
+pending = "awaiting the seeds-v1-tricks-95f7c4352cb18fbe ci-data upload"
+seed = "100-input-phase:305"
+seed_sha256 = "1563be3787a3edca0cc6821a8db4967c2318e41a7ae6a50dc9a5d0a5288ad07c"
+inputs = "authored-samus-shinespark-up-left.inputs"
+input_sha256 = "09ec3a5afcd42d6d8a1130064bb0493c4ddfa7b4be8bd8dbaaa8b008a1bb94b0"
+start_frame = 0
+frames = 418
+expect = ["room:91F8"]
+require_hit = ["shinespark.store", "shinespark.diagonal"]
+
+[[segment]]
+id = "samus-walljump-16"
+pending = "awaiting the seeds-v1-tricks-95f7c4352cb18fbe ci-data upload"
+seed = "100-input-phase:305"
+seed_sha256 = "1563be3787a3edca0cc6821a8db4967c2318e41a7ae6a50dc9a5d0a5288ad07c"
+inputs = "authored-samus-walljump-16.inputs"
+input_sha256 = "c5bc20d60a6e07732c48bd9b7297f888b563519a70c304b4a9773ca35dae7d48"
+start_frame = 0
+frames = 157
+expect = ["room:91F8"]
+require_hit = ["samus.jump.wall"]
+
+[[segment]]
+id = "samus-walljump-22"
+pending = "awaiting the seeds-v1-tricks-95f7c4352cb18fbe ci-data upload"
+seed = "100-input-phase:305"
+seed_sha256 = "1563be3787a3edca0cc6821a8db4967c2318e41a7ae6a50dc9a5d0a5288ad07c"
+inputs = "authored-samus-walljump-22.inputs"
+input_sha256 = "1f85556c93573636b405fdaa40b7d8d72406c697dd28cfa38834574cda8aaf03"
+start_frame = 0
+frames = 163
+expect = ["room:91F8"]
+require_hit = ["samus.jump.wall"]
+
+[[segment]]
+id = "samus-walljump-28"
+pending = "awaiting the seeds-v1-tricks-95f7c4352cb18fbe ci-data upload"
+seed = "100-input-phase:305"
+seed_sha256 = "1563be3787a3edca0cc6821a8db4967c2318e41a7ae6a50dc9a5d0a5288ad07c"
+inputs = "authored-samus-walljump-28.inputs"
+input_sha256 = "7498790845006368be4b86119f42dd528458792163eef68024d224c773f9f15e"
+start_frame = 0
+frames = 169
+expect = ["room:91F8"]
+require_hit = ["samus.jump.wall"]
+
+[[segment]]
+id = "samus-crystal-flash"
+pending = "awaiting the seeds-v1-tricks-95f7c4352cb18fbe ci-data upload"
+seed = "scenario-crystal-flash:305"
+seed_sha256 = "66215813a01a15b73637bdd5d79e6992c4eb9138e4cab5d26e78cb1efa4efe4e"
+inputs = "authored-crystal-flash.inputs"
+input_sha256 = "2a639c88ac8ed2affb5cba9a4812d2f7c0eaafd2df3b07a2fd34afeb4622f666"
+start_frame = 0
+frames = 903
+expect = ["room:91F8"]
+require_hit = ["crystal_flash.start"]
+
+[[segment]]
+id = "xray-scan-91f8"
+pending = "awaiting the seeds-v1-tricks-95f7c4352cb18fbe ci-data upload"
+seed = "100-input-phase:305"
+seed_sha256 = "1563be3787a3edca0cc6821a8db4967c2318e41a7ae6a50dc9a5d0a5288ad07c"
+inputs = "authored-xray-scan-305.inputs"
+input_sha256 = "89a05f8ca28cb02556f38ff91b80171b2e6d587e43697c7efe5a9c154acd3c87"
+start_frame = 0
+frames = 261
+expect = ["room:91F8"]
+require_hit = ["xray.window"]
+
+[[segment]]
+id = "xray-scan-96ba"
+pending = "awaiting the seeds-v1-tricks-95f7c4352cb18fbe ci-data upload"
+seed = "100-input-phase:297"
+seed_sha256 = "361668acd582f80fecd528270a8cad1a3d83563372b7d1c274a17287a318fb9e"
+inputs = "authored-xray-scan-297.inputs"
+input_sha256 = "461cfb694047f5f584360bc92321d987ea89979bf44c7f19386fe1bdf92afdca"
+start_frame = 0
+frames = 261
+expect = ["room:96BA"]
+require_hit = ["xray.window"]
+
+[[segment]]
+id = "xray-scan-92fd"
+pending = "X-ray window HDMA_TABLE_1 edge byte is 00, not FF, from input frame 138 (beam at the right screen edge)"
+seed = "100-input-phase:300"
+seed_sha256 = "f920d0d23ef3f12b9c87959c3c317f90f0321f4b3503d8a914700a9b6777a20d"
+inputs = "authored-xray-scan-300.inputs"
+input_sha256 = "6224de335f4a52a40fa0b9d9edec551d3ec2d806260d7c2fb3176a323cfde1ec"
+start_frame = 0
+frames = 261
+expect = ["room:92FD"]
+require_hit = ["xray.window"]
+
+[[segment]]
+id = "xray-scan-9a44"
+pending = "X-ray window HDMA_TABLE_1 edge byte is 00, not FF, from input frame 138 (beam at the right screen edge)"
+seed = "100-input-phase:303"
+seed_sha256 = "cbcebcf17718dc609535549e2418f47201e1ef76db49952cda452fc54084dd50"
+inputs = "authored-xray-scan-303.inputs"
+input_sha256 = "391e26c5e57299a2618349fdcc7c0e3e26cbd866409161c7934720bb67c6daae"
+start_frame = 0
+frames = 261
+expect = ["room:9A44"]
+require_hit = ["xray.window"]

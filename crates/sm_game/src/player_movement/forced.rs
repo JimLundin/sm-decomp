@@ -281,6 +281,7 @@ pub fn initialize_crystal_flash(h: &mut impl Host) -> bool {
     if h.session().player.movement_and_facing >> 8 != 27 {
         return false;
     }
+    crate::probe::hit("crystal_flash.start");
     let s = h.session_mut();
     transitions::record_pose_history(s);
     let p = &mut s.player;
@@ -359,6 +360,7 @@ pub fn shinespark_windup(h: &mut impl Host) {
                 203
             });
         s.player.movement_handler = MovementMode::ShinesparkVertical;
+        crate::probe::hit("shinespark.vertical");
         s.player.transitions.input_mode = InputMode::Disabled;
         s.projectiles.echoes.index = 0;
         s.projectiles.echoes.x_speed[0] = 0;

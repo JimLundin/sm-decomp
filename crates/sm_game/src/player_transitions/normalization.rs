@@ -251,6 +251,7 @@ fn crouch_transition(h: &mut impl Host) -> bool {
 }
 fn crouch(h: &mut impl Host) -> bool {
     if (i32::from(h.session().player.contact.speed_boost & 0xff00) - 1024) & 0x8000 == 0 {
+        crate::probe::hit("shinespark.store");
         let p = &mut h.session_mut().player;
         p.shine_timer = 180;
         p.shine_tick = 1;
@@ -397,6 +398,11 @@ fn shinespark(h: &mut impl Host) -> bool {
             MovementMode::ShinesparkDiagonal,
         ];
         let mode = modes[(i32::from(pose) - 0xc9) as usize];
+        crate::probe::hit(match mode {
+            MovementMode::ShinesparkHorizontal => "shinespark.horizontal",
+            MovementMode::ShinesparkVertical => "shinespark.vertical",
+            _ => "shinespark.diagonal",
+        });
         let s = h.session_mut();
         s.player.movement_handler = mode;
         s.player.transitions.input_mode = InputMode::Disabled;
