@@ -31,7 +31,7 @@ pub fn blank_and_wait<H: host::Host + ?Sized>(blank: bool, game: &mut H) -> bool
     if !resuming(game) {
         game.set_blank(blank);
     }
-    let waiting = game.display_wait(true) != 0;
+    let waiting = crate::display_refresh::wait(true, game) != 0;
     game.ram().write_byte(BLANK_WAIT, u8::from(waiting));
     waiting
 }
