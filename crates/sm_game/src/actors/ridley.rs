@@ -3720,3 +3720,40 @@ pub fn start_norfair_liftoff<L: Lease + ?Sized>(script: EnemyScript, game: &mut 
     session_slot!(game, Ridley[RIDLEY]; function = function::LIFTOFF, y_velocity = -352i32 as u16);
     script
 }
+
+// The named bank $A6 functions are the decompilation's; the two RTS
+// terminators are its locret labels.
+const _: () = {
+    use crate::actors::ridley::{baby_metroid_function as b, function as f};
+    const fn at(word: u16) -> u32 {
+        0xa6_0000 | word as u32
+    }
+    assert!(at(f::LIFTOFF) == 10924787 && at(f::DECIDE_ACTION) == 10924833);
+    assert!(at(f::LUNGE_MISSED) == 10925036 && at(f::LUNGE_MISSED_MOVE_TO_POSITION) == 10925048);
+    assert!(at(f::SWOOP) == 10925121 && at(f::SWOOP_MOVE_TO_POSITION) == 10925141);
+    assert!(at(f::SWOOP_AIMING_DOWN) == 10925203 && at(f::SWOOP_AIMING_HORIZONTAL) == 10925265);
+    assert!(at(f::SWOOP_AIMING_UP) == 10925334 && at(f::SWOOP_AIMING_UP_FASTER) == 10925396);
+    assert!(at(f::SWOOP_DECELERATE) == 10925460 && at(f::HOVER) == 10925508);
+    assert!(at(f::HOVER_TO_WALL_BEHIND) == 10925541 && at(f::HOVER_TO_WALL_IN_FRONT) == 10925587);
+    assert!(at(f::POGO_FLY_TO_POSITION) == 10925735 && at(f::POGO_WAIT_AT_POSITION) == 10925789);
+    assert!(at(f::POGO_DESCENDING) == 10925838 && at(f::POGO_ASCENDING) == 10926009);
+    assert!(at(f::LUNGE) == 10926775 && at(f::GRABBED_SAMUS) == 10926991);
+    assert!(at(f::GRABBED_SAMUS_RISING) == 10927044);
+    assert!(at(f::GRABBED_SAMUS_RISING_TO_MIDDLE) == 10927089);
+    assert!(at(f::GRABBED_SAMUS_RELEASE) == 10927150 && at(f::DODGE_POWER_BOMB) == 10927438);
+    assert!(at(f::FAKE_RETREAT_MOVE_TO_POSITION) == 10927514);
+    assert!(at(f::FAKE_RETREAT_RISING) == 10927548 && at(f::DROP_BABY_METROID) == 10927602);
+    assert!(at(f::RETRIEVE_BABY_METROID) == 10927619 && at(b::HELD) == 10927772);
+    assert!(at(b::HELD_BY_FEET) == 10927795 && at(b::START_FALLING) == 10927818);
+    assert!(at(b::FALLING) == 10927836 && at(f::DYING_GRABBED_SAMUS) == 10929464);
+    assert!(at(f::DEATH_ROAR) == 10929470 && at(f::DEATH_MOVE_TO_DEATH_SPOT) == 10929489);
+    assert!(at(f::LOWER_ACID_AND_RELEASE_SAMUS) == 10929544);
+    assert!(at(f::START_FALLING_APART) == 10929576 && at(f::FALLING_APART) == 10929608);
+    assert!(at(f::STILL_FALLING_APART) == 10929626);
+    assert!(
+        at(b::NOTHING) == 10927897
+            && f::DEAD == crate::constants::bank_a6::ADDR_LOCRET_A6C600 as u16
+    );
+    assert!(at(f::CERES_LIFTOFF_ACCELERATING) == 10921647);
+    assert!(at(f::CERES_REAL_RETREAT_RISING) == 10922353);
+};

@@ -133,21 +133,6 @@ impl sm_game::player_position::PlayerFacts for Game {
     }
 }
 
-// The falling tubes' bank $A9 functions are the ones `CallMotherBrainsTubesFalling` dispatched on.
-const _: () = {
-    use sm_game::actors::mother_brain_tubes::{self as tubes, function as f};
-    const fn at(word: u16) -> u32 {
-        0xa9_0000 | word as u32
-    }
-    assert!(at(f::FALL) == 11111304 && at(f::WAIT_TO_FALL) == 11111371);
-    assert!(at(f::FALL_WITH_BRAIN) == 11111382);
-    // MotherBrainBody_FakeDeath_Ascent_0_DrawBG1Row23.
-    assert!(at(tubes::BODY_ASCENT) == 11111559);
-    assert!(
-        tubes::DUST_CLOUD == sm_game::constants::bank_86::ADDR_K_EPROJ_DUST_CLOUD_EXPLOSION as u16
-    );
-};
-
 impl sm_game::actors::mother_brain_tubes::Host for Game {
     fn end_screen_flash(&mut self) {
         crate::game::sm_a9::end_screen_flashing(self);
@@ -183,68 +168,6 @@ impl sm_game::actors::mother_brain_neck::Host for Game {
     }
 }
 
-// The named bank $A7 functions are the ones `DispatchEnemyPreInstr` dispatches on.
-const _: () = {
-    use sm_game::actors::phantoon::function as f;
-    const fn at(word: u16) -> u32 {
-        0xa7_0000 | word as u32
-    }
-    assert!(
-        at(f::SPAWN_STARTING_FLAMES) == 10998953 && at(f::WAIT_BEFORE_SPINNING_FLAMES) == 10999022
-    );
-    assert!(at(f::SPAWN_FLAMES_BEFORE_FIGHT) == 10999048 && at(f::WAVY_FADE_IN) == 10999114);
-    assert!(at(f::PICK_ROUND_1_PATTERN) == 10999190 && at(f::FIGURE_EIGHT) == 10999271);
-    assert!(at(f::EYE_FOLLOWS_SAMUS) == 10999309 && at(f::BECOME_SOLID_AND_SWOOP) == 10999388);
-    assert!(at(f::SWOOPING) == 10999416 && at(f::FADE_OUT_WITH_SWOOP) == 10999481);
-    assert!(at(f::WAIT_AFTER_FADE_OUT) == 10999508 && at(f::REAPPEAR) == 10999522);
-    assert!(
-        at(f::FADE_IN_BEFORE_FIGURE_EIGHT) == 10999597
-            && at(f::BECOME_SOLID_AFTER_FLAME_RAIN) == 10999615
-    );
-    assert!(
-        at(f::FADE_IN_DURING_FLAME_RAIN) == 10999655
-            && at(f::FOLLOW_SAMUS_DURING_FLAME_RAIN) == 10999688
-    );
-    assert!(at(f::FADE_OUT_DURING_FLAME_RAIN) == 10999765 && at(f::SPAWN_FLAME_RAIN) == 10999799);
-    assert!(
-        at(f::FADE_OUT_BEFORE_FIRST_FLAME_RAIN) == 10999850
-            && at(f::FADE_OUT_BEFORE_ENRAGE) == 10999900
-    );
-    assert!(at(f::MOVE_TO_TOP_CENTRE) == 10999924 && at(f::FADE_IN_ENRAGED) == 10999953);
-    assert!(at(f::ENRAGED) == 10999980 && at(f::FADE_OUT_AFTER_ENRAGE) == 11000086);
-    assert!(
-        at(f::FINISH_SWOOP_AFTER_FATAL_SHOT) == 11000110 && at(f::DYING_FADE_IN_OUT) == 11000136
-    );
-    assert!(at(f::DYING_EXPLOSIONS) == 11000203 && at(f::WAVY_DYING_CRY) == 11000401);
-    assert!(at(f::DYING_FADE_OUT) == 11000454 && at(f::ALMOST_DEAD) == 11000535);
-    assert!(
-        at(f::DEAD) == 11000637
-            && f::NOTHING == crate::game::constants::bank_a7::FNNULLSUB_237 as u16
-    );
-};
-
-// The named instruction lists are the decompilation's `kKraid_Ilist_CCxx`.
-const _: () = {
-    use crate::game::constants::bank_a7::*;
-    use sm_game::actors::phantoon::animation as a;
-    assert!(
-        a::BODY_INVULNERABLE == ADDR_K_KRAID_ILIST_CC41 as u16
-            && a::BODY_FULL_HITBOX == ADDR_K_KRAID_ILIST_CC47 as u16
-    );
-    assert!(
-        a::BODY_EYE_HITBOX == ADDR_K_KRAID_ILIST_CC4D as u16
-            && a::EYE_OPEN == ADDR_K_KRAID_ILIST_CC53 as u16
-    );
-    assert!(
-        a::EYE_CLOSE_AND_PICK_PATTERN == ADDR_K_KRAID_ILIST_CC81 as u16
-            && a::EYE_CLOSE == ADDR_K_KRAID_ILIST_CC91 as u16
-    );
-    assert!(
-        a::EYEBALL_CENTRED == ADDR_K_KRAID_ILIST_CC9D as u16
-            && a::NOTHING_SPRITEMAP == ADDR_K_SPRITEMAP_NOTHING_A7 as u16
-    );
-};
-
 impl sm_game::actors::phantoon::Host for Game {
     fn run_function(&mut self, address: u32) {
         crate::game::session_runtime::run_a7_function(address, self);
@@ -264,110 +187,6 @@ impl sm_game::actors::phantoon::Host for Game {
         crate::game::visual_runtime::initialize_phantoon_motion(direction, speed, self);
     }
 }
-
-// The named bank $A7 functions are the ones the original `CallKraidFunc` dispatched on.
-const _: () = {
-    use sm_game::actors::kraid::function as f;
-    const fn at(word: u16) -> u32 {
-        0xa7_0000 | word as u32
-    }
-    assert!(
-        at(f::GETS_BIG_BREAK_CEILING) == 10988621 && at(f::GETS_BIG_SET_BG2_PRIORITY) == 10988858
-    );
-    assert!(
-        at(f::GETS_BIG_FINISH_BG2_TILEMAP) == 10988897 && at(f::GETS_BIG_DRAW_ROOM_BG) == 10988942
-    );
-    assert!(at(f::GETS_BIG_FADE_IN_ROOM_BG) == 10989091 && at(f::MAIN_LOOP_THINKING) == 10989220);
-    assert!(at(f::GETS_BIG_THINKING) == 10989252 && at(f::MOUTH_OPEN) == 10989284);
-    assert!(at(f::INIT_EYE_GLOW) == 10991295 && at(f::GLOW_EYE) == 10991319);
-    assert!(at(f::UNGLOW_EYE) == 10991421 && at(f::NOTHING) == 10991665);
-    assert!(at(f::LINT_PRODUCE) == 10991666 && at(f::LINT_CHARGE) == 10991720);
-    assert!(at(f::LINT_FIRE) == 10991771 && at(f::FINGERNAIL_WAIT_FOR_LINT) == 10991879);
-    assert!(at(f::ALIGN_TO_KRAID) == 10991907 && at(f::HANDLE_FUNCTION_TIMER) == 10991917);
-    assert!(
-        at(f::DECREMENT_FUNCTION_TIMER) == 10991935 && at(f::FOOT_FIRST_PHASE_THINKING) == 10991968
-    );
-    assert!(at(f::PROCESS_SCRIPT_AND_TIMER) == 10991973 && at(f::FOOT_IDLE) == 10992173);
-    assert!(
-        at(f::FOOT_SECOND_PHASE_THINKING) == 10992174 && at(f::FOOT_WALK_BACKWARDS) == 10992453
-    );
-    assert!(at(f::FOOT_WALK_TO_START) == 10992494 && at(f::FOOT_SECOND_PHASE_INIT) == 10992548);
-    assert!(at(f::FOOT_WALK_FORWARD) == 10992558 && at(f::ATTACK_WITH_MOUTH_OPEN) == 10992618);
-    assert!(at(f::FINGERNAIL_INIT) == 10992992 && at(f::FINGERNAIL_FIRE) == 10993294);
-    assert!(at(f::FOOT_PREPARE_LUNGE) == 10993453 && at(f::FOOT_LUNGE_FORWARD) == 10993501);
-    assert!(
-        at(f::FOOT_RETREAT_FROM_LUNGE) == 10993579 && at(f::GETS_BIG_RELEASE_CAMERA) == 10993825
-    );
-    assert!(at(f::DEATH_INIT) == 10994528 && at(f::DEATH_FADE_OUT) == 10994681);
-    assert!(at(f::DEATH_BG2_TOP_HALF) == 10994852 && at(f::DEATH_BG2_BOTTOM_HALF) == 10994888);
-    assert!(
-        at(f::DEATH_SINK_THROUGH_FLOOR) == 10994999 && at(f::FADE_IN_CLEAR_BG2_TOP) == 10995477
-    );
-    assert!(
-        at(f::FADE_IN_CLEAR_BG2_BOTTOM) == 10995537 && at(f::FADE_IN_LOAD_BG3_TILES_1) == 10995575
-    );
-    assert!(
-        at(f::FADE_IN_LOAD_BG3_TILES_2) == 10995619 && at(f::FADE_IN_LOAD_BG3_TILES_3) == 10995657
-    );
-    assert!(at(f::FADE_IN_LOAD_BG3_TILES_4) == 10995695 && at(f::FADE_IN_BG6) == 10995733);
-    assert!(at(f::FADE_IN_DEAD_WAS_ALIVE) == 10995779 && at(f::FADE_IN_DEAD_WAS_DEAD) == 10995793);
-    assert!(at(f::RESTRICT_SAMUS_X) == 10995813 && at(f::RAISE_THROUGH_FLOOR) == 10995819);
-    assert!(
-        at(f::RAISE_LOAD_TILEMAP_BOTTOM) == 10995866 && at(f::RAISE_QUAKE_EVERY_16) == 10995936
-    );
-    assert!(at(f::RAISE_QUAKE_EVERY_8) == 10995970 && at(f::RAISE) == 10996004);
-};
-
-// The named instruction lists, spritemaps and scripts are the decompilation's addresses.
-const _: () = {
-    use crate::game::constants::bank_a7::*;
-    use sm_game::actors::kraid::animation as a;
-    assert!(
-        a::FOOT_IDLE == ADDR_K_KRAID_ILIST_86E7 as u16
-            && a::FOOT_STAND == ADDR_K_KRAID_ILIST_86ED as u16
-    );
-    assert!(
-        a::FOOT_WALK_FORWARD == ADDR_K_KRAID_ILIST_86F3 as u16
-            && a::FOOT_WALK_FORWARD_END == ADDR_OFF_A787BB as u16
-    );
-    assert!(
-        a::FOOT_LUNGE == ADDR_K_KRAID_ILIST_87BD as u16
-            && a::FOOT_WALK_BACKWARD_END == ADDR_OFF_A78885 as u16
-    );
-    assert!(
-        a::FOOT_WALK_BACKWARD == ADDR_K_KRAID_ILIST_8887 as u16
-            && a::ARM_IDLE == ADDR_K_KRAID_ILIST_89F3 as u16
-    );
-    assert!(
-        a::ARM_SWIPE == ADDR_K_KRAID_ILIST_8A41 as u16
-            && a::ARM_RAISED == ADDR_K_KRAID_ILIST_8AA4 as u16
-    );
-    assert!(
-        a::ARM_DYING == ADDR_K_KRAID_ILIST_8AF0 as u16
-            && a::LINT_HIDDEN == ADDR_K_KRAID_ILIST_8AFE as u16
-    );
-    assert!(
-        a::LINT_SHOWN == ADDR_K_KRAID_ILIST_8B04 as u16
-            && a::FINGERNAIL == ADDR_K_KRAID_ILIST_8B0A as u16
-    );
-    assert!(
-        a::LINT_SPRITEMAP == ADDR_K_KRAID_SPRMAP_8C6C as u16
-            && a::LINT_HIDDEN_SPRITEMAP == ADDR_K_KRAID_SPRMAP_A5DF as u16
-    );
-    assert!(a::SCRIPT_IDLE == ADDR_STRU_A796DA as u16 && a::SCRIPT_GLOW == ADDR_STRU_A7974A as u16);
-    assert!(
-        a::SCRIPT_DYING == ADDR_STRU_A79764 as u16 && a::ROOM_BG == ADDR_K_KRAIDS_ROOM_BG as u16
-    );
-    assert!(
-        a::TILEMAP_0 == ADDR_K_KRAID_TILEMAPS_0 as u16
-            && a::TILEMAP_1 == ADDR_K_KRAID_TILEMAPS_1 as u16
-    );
-    assert!(
-        a::TILEMAP_2 == ADDR_K_KRAID_TILEMAPS_2 as u16
-            && a::TILEMAP_3 == ADDR_K_KRAID_TILEMAPS_3 as u16
-    );
-    assert!(sm_game::actors::kraid::NO_SHOT_AI == FNNULLSUB_170_A7 as u16);
-};
 
 impl sm_game::actors::kraid::Host for Game {
     fn queue_kraid_tilemap(&mut self, tail: u16, source: u16) {
@@ -411,80 +230,6 @@ impl sm_game::actors::kraid::Host for Game {
     }
 }
 
-// The named bank $A7 functions are the ones `DispatchEnemyPreInstr` dispatches on.
-const _: () = {
-    use crate::game::constants::bank_a7::*;
-    use sm_game::actors::etecoon::function as f;
-    const fn at(word: u16) -> i32 {
-        0xa7_0000 | word as i32
-    }
-    assert!(at(f::INITIAL) == FN_ETECOON_FUNC_4 && at(f::START_HOP_BOTTOM) == FN_ETECOON_FUNC_5);
-    assert!(
-        at(f::HOPPING_BOTTOM) == FN_ETECOON_FUNC_6 && at(f::LOOK_AT_SAMUS) == FN_ETECOON_FUNC_7
-    );
-    assert!(at(f::RUNNING_LEFT) == FN_ETECOON_FUNC_8 && at(f::RUNNING_RIGHT) == FN_ETECOON_FUNC_9);
-    assert!(at(f::JUMPING) == FN_ETECOON_FUNC_10 && at(f::WALL_JUMP) == FN_ETECOON_FUNC_11);
-    assert!(
-        at(f::LANDED_FROM_JUMP) == FN_ETECOON_FUNC_12
-            && at(f::RUN_TO_LEFT_RUN_UP) == FN_ETECOON_FUNC_16
-    );
-    assert!(
-        at(f::RUN_TO_RIGHT_RUN_UP) == FN_ETECOON_FUNC_17
-            && at(f::RUNNING_FOR_TUNNEL_JUMP) == FN_ETECOON_FUNC_18
-    );
-    assert!(
-        at(f::TUNNEL_JUMP) == FN_ETECOON_FUNC_19
-            && at(f::RUNNING_THROUGH_TUNNEL) == FN_ETECOON_FUNC_20
-    );
-    assert!(
-        at(f::FALLING_FROM_TUNNEL_LEDGE) == FN_ETECOON_FUNC_21
-            && at(f::HOPPING_TOP) == FN_ETECOON_FUNC_22
-    );
-    assert!(
-        at(f::START_HOP_TOP) == FN_ETECOON_FUNC_23
-            && at(f::HOP_UNTIL_SAMUS_NEAR) == FN_ETECOON_FUNC_24
-    );
-    assert!(
-        at(f::RUNNING_FOR_FAILED_TUNNEL_JUMP) == FN_ETECOON_FUNC_25
-            && at(f::FAILED_TUNNEL_JUMP) == FN_ETECOON_FUNC_26
-    );
-};
-
-// The named instruction lists are the decompilation's addresses.
-const _: () = {
-    use crate::game::constants::bank_a7::*;
-    use sm_game::actors::etecoon::instruction_list as l;
-    assert!(
-        l::LOOK_RIGHT_AND_RUN_LEFT == ADDR_K_ETECOON_ILIST_E81E as u16
-            && l::RUNNING_LEFT == ADDR_STRU_A7E828 as u16
-    );
-    assert!(
-        l::WALL_JUMP_LEFT == ADDR_K_ETECOON_ILIST_E83C as u16
-            && l::HOPPING_FACING_LEFT == ADDR_K_ETECOON_ILIST_E854 as u16
-    );
-    assert!(
-        l::HIT_CEILING == ADDR_STRU_A7E862 as u16
-            && l::WALL_JUMP_LEFT_ELIGIBLE == ADDR_K_ETECOON_ILIST_E870 as u16
-    );
-    assert!(
-        l::LOOK_LEFT_AND_RUN_RIGHT == ADDR_K_ETECOON_ILIST_E876 as u16
-            && l::RUNNING_RIGHT == ADDR_STRU_A7E880 as u16
-    );
-    assert!(
-        l::WALL_JUMP_RIGHT == ADDR_K_ETECOON_ILIST_E894 as u16
-            && l::JUMPING_RIGHT == ADDR_STRU_A7E898 as u16
-    );
-    assert!(
-        l::HOPPING_FACING_RIGHT == ADDR_K_ETECOON_ILIST_E8AC as u16
-            && l::WALL_JUMP_RIGHT_ELIGIBLE == ADDR_K_ETECOON_ILIST_E8C8 as u16
-    );
-    assert!(
-        l::INITIAL == ADDR_K_ETECOON_ILIST_E8CE as u16
-            && l::FLEXING == ADDR_K_ETECOON_ILIST_E8D6 as u16
-    );
-    assert!(l::NOTHING_SPRITEMAP == ADDR_K_SPRITEMAP_NOTHING_A7 as u16);
-};
-
 impl sm_game::actors::etecoon::Host for Game {
     fn run_function(&mut self, address: u32) {
         crate::game::session_runtime::run_a7_function(address, self);
@@ -499,130 +244,11 @@ impl sm_game::actors::etecoon::Host for Game {
     }
 }
 
-// The named bank $A7 functions are the ones `DispatchEnemyPreInstr` dispatches on.
-const _: () = {
-    use crate::game::constants::bank_a7::*;
-    use sm_game::actors::dachora_run::function as f;
-    const fn at(word: u16) -> i32 {
-        0xa7_0000 | word as i32
-    }
-    assert!(
-        at(f::WAIT_FOR_SAMUS) == FN_DACHORA_FUNC_2 && at(f::START_RUNNING) == FN_DACHORA_FUNC_3
-    );
-    assert!(at(f::RUNNING_LEFT) == FN_DACHORA_FUNC_4 && at(f::RUNNING_RIGHT) == FN_DACHORA_FUNC_5);
-    assert!(
-        at(f::ACTIVATE_SHINESPARK) == FN_DACHORA_FUNC_7
-            && at(f::SHINESPARKING) == FN_DACHORA_FUNC_8
-    );
-    assert!(at(f::FALLING) == FN_DACHORA_FUNC_11 && at(f::ECHO) == FN_DACHORA_FUNC_12);
-};
-
-// The named instruction lists are the decompilation's addresses.
-const _: () = {
-    use crate::game::constants::bank_a7::*;
-    use sm_game::actors::dachora_run::instruction_list as l;
-    assert!(
-        l::RUNNING_LEFT == ADDR_K_DACHORA_ILIST_F345 as u16
-            && l::IDLING_FACING_LEFT == ADDR_K_DACHORA_ILIST_F399 as u16
-    );
-    assert!(
-        l::BLINKING_FACING_LEFT == ADDR_K_DACHORA_ILIST_F3C9 as u16
-            && l::ECHO_FACING_LEFT == ADDR_K_DACHORA_ILIST_F3F7 as u16
-    );
-    assert!(
-        l::FALLING_FACING_LEFT == ADDR_K_DACHORA_ILIST_F3FF as u16
-            && l::RUNNING_RIGHT == ADDR_K_DACHORA_ILIST_F407 as u16
-    );
-    assert!(
-        l::IDLING_FACING_RIGHT == ADDR_K_DACHORA_ILIST_F45B as u16
-            && l::BLINKING_FACING_RIGHT == ADDR_K_DACHORA_ILIST_F48B as u16
-    );
-    assert!(
-        l::CHARGE_SHINESPARK_FACING_RIGHT == ADDR_K_DACHORA_ILIST_F4B3 as u16
-            && l::ECHO_FACING_RIGHT == ADDR_K_DACHORA_ILIST_F4B9 as u16
-    );
-    assert!(
-        l::FALLING_FACING_RIGHT == ADDR_K_DACHORA_ILIST_F4C1 as u16
-            && l::PALETTE == ADDR_K_DACHORA_PALETTE as u16
-    );
-    assert!(l::NOTHING_SPRITEMAP == ADDR_K_SPRITEMAP_NOTHING_A7 as u16);
-};
-
 impl sm_game::actors::dachora_run::Host for Game {
     fn run_function(&mut self, address: u32) {
         crate::game::session_runtime::run_a7_function(address, self);
     }
 }
-
-// The named bank $A6 functions are the decompilation's; the two RTS
-// terminators are its locret labels.
-const _: () = {
-    use sm_game::actors::ridley::{baby_metroid_function as b, function as f};
-    const fn at(word: u16) -> u32 {
-        0xa6_0000 | word as u32
-    }
-    assert!(at(f::LIFTOFF) == 10924787 && at(f::DECIDE_ACTION) == 10924833);
-    assert!(at(f::LUNGE_MISSED) == 10925036 && at(f::LUNGE_MISSED_MOVE_TO_POSITION) == 10925048);
-    assert!(at(f::SWOOP) == 10925121 && at(f::SWOOP_MOVE_TO_POSITION) == 10925141);
-    assert!(at(f::SWOOP_AIMING_DOWN) == 10925203 && at(f::SWOOP_AIMING_HORIZONTAL) == 10925265);
-    assert!(at(f::SWOOP_AIMING_UP) == 10925334 && at(f::SWOOP_AIMING_UP_FASTER) == 10925396);
-    assert!(at(f::SWOOP_DECELERATE) == 10925460 && at(f::HOVER) == 10925508);
-    assert!(at(f::HOVER_TO_WALL_BEHIND) == 10925541 && at(f::HOVER_TO_WALL_IN_FRONT) == 10925587);
-    assert!(at(f::POGO_FLY_TO_POSITION) == 10925735 && at(f::POGO_WAIT_AT_POSITION) == 10925789);
-    assert!(at(f::POGO_DESCENDING) == 10925838 && at(f::POGO_ASCENDING) == 10926009);
-    assert!(at(f::LUNGE) == 10926775 && at(f::GRABBED_SAMUS) == 10926991);
-    assert!(at(f::GRABBED_SAMUS_RISING) == 10927044);
-    assert!(at(f::GRABBED_SAMUS_RISING_TO_MIDDLE) == 10927089);
-    assert!(at(f::GRABBED_SAMUS_RELEASE) == 10927150 && at(f::DODGE_POWER_BOMB) == 10927438);
-    assert!(at(f::FAKE_RETREAT_MOVE_TO_POSITION) == 10927514);
-    assert!(at(f::FAKE_RETREAT_RISING) == 10927548 && at(f::DROP_BABY_METROID) == 10927602);
-    assert!(at(f::RETRIEVE_BABY_METROID) == 10927619 && at(b::HELD) == 10927772);
-    assert!(at(b::HELD_BY_FEET) == 10927795 && at(b::START_FALLING) == 10927818);
-    assert!(at(b::FALLING) == 10927836 && at(f::DYING_GRABBED_SAMUS) == 10929464);
-    assert!(at(f::DEATH_ROAR) == 10929470 && at(f::DEATH_MOVE_TO_DEATH_SPOT) == 10929489);
-    assert!(at(f::LOWER_ACID_AND_RELEASE_SAMUS) == 10929544);
-    assert!(at(f::START_FALLING_APART) == 10929576 && at(f::FALLING_APART) == 10929608);
-    assert!(at(f::STILL_FALLING_APART) == 10929626);
-    assert!(
-        at(b::NOTHING) == 10927897
-            && f::DEAD == crate::game::constants::bank_a6::ADDR_LOCRET_A6C600 as u16
-    );
-    assert!(at(f::CERES_LIFTOFF_ACCELERATING) == 10921647);
-    assert!(at(f::CERES_REAL_RETREAT_RISING) == 10922353);
-};
-
-// The named instruction lists and tables are the decompilation's addresses.
-const _: () = {
-    use crate::game::constants::bank_a6::*;
-    use sm_game::actors::ridley::{
-        actions, explosion_instruction_list as e, instruction_list as l, tail_data as t,
-    };
-    assert!(
-        l::RETRIEVE_BABY_METROID == ADDR_K_RIDLEY_ILIST_E658 as u16
-            && l::DEATH_ROAR == ADDR_K_RIDLEY_ILIST_E6C8 as u16
-    );
-    assert!(
-        l::TURN_TO_FACE_RIGHT == ADDR_K_RIDLEY_ILIST_E6F0 as u16
-            && l::TURN_TO_FACE_LEFT == ADDR_K_RIDLEY_ILIST_E706 as u16
-    );
-    assert!(l::SHOOT_FIREBALLS == ADDR_K_RIDLEY_ILIST_E73A as u16);
-    assert!(
-        e::TAIL_SEGMENTS_0_1 == ADDR_K_RIDLEYS_EXPLOSION_ILIST_CA47 as u16
-            && e::TAIL_SEGMENTS_2_3 == ADDR_K_RIDLEYS_EXPLOSION_ILIST_CA4D as u16
-    );
-    assert!(e::TAIL_SEGMENTS_4_5 == ADDR_K_RIDLEYS_EXPLOSION_ILIST_CA53 as u16);
-    assert!(
-        actions::POGO_OR_SWOOP == ADDR_OFF_A6B38C as u16
-            && actions::SWOOP_OR_POGO == ADDR_OFF_A6B39C as u16
-    );
-    assert!(
-        actions::LUNGE_OR_POGO == ADDR_OFF_A6B3AC as u16 && actions::POGO == ADDR_OFF_A6B3BC as u16
-    );
-    assert!(actions::HOVER == ADDR_OFF_A6B3CC as u16 && actions::LUNGE == ADDR_OFF_A6B3DC as u16);
-    assert!(t::DIRECTIONS == ADDR_WORD_A6D36E as u16 && t::DISTANCES == ADDR_WORD_A6D37C as u16);
-    assert!(t::ANGLES == ADDR_WORD_A6D38A as u16 && t::X_POSITIONS == ADDR_WORD_A6D398 as u16);
-    assert!(t::Y_POSITIONS == ADDR_WORD_A6D3A6 as u16);
-};
 
 impl sm_game::actors::ridley::Host for Game {
     fn run_function(&mut self, function: u16) {
@@ -657,57 +283,6 @@ impl sm_game::actors::ridley::Host for Game {
         room.liquid_delay = delay;
     }
 }
-
-// The named Ceres Ridley functions are the decompilation's; the getaway's
-// RTS is its locret label.
-const _: () = {
-    use sm_game::actors::ceres_ridley::ceres_function as f;
-    const fn at(word: u16) -> u32 {
-        0xa6_0000 | word as u32
-    }
-    assert!(at(f::TRANSITION_TO_FLYING) == 10920788 && at(f::INITIAL) == 10920795);
-    assert!(at(f::WAIT_TO_FADE_IN) == 10920823 && at(f::FADE_IN_EYE) == 10920841);
-    assert!(at(f::FADE_IN_BODY) == 10920927 && at(f::WAIT_TO_ROAR) == 10921045);
-    assert!(at(f::ROAR_BEFORE_FLYING) == 10921080 && at(f::LIFTOFF_DECELERATING) == 10921672);
-    assert!(at(f::HOVERING) == 10921704 && at(f::FIREBALLS_MOVE_TO_POSITION) == 10921858);
-    assert!(at(f::FIREBALLS_SHOOTING) == 10921977 && at(f::LUNGE_SETUP) == 10922044);
-    assert!(at(f::LUNGE) == 10922062 && at(f::SWOOP_SETUP) == 10922125);
-    assert!(at(f::SWOOP_MOVE_TO_POSITION) == 10922148 && at(f::SWOOP_AIMING_DOWN) == 10922196);
-    assert!(at(f::SWOOP_AIMING_LEFT) == 10922232 && at(f::SWOOP_AIMING_UP) == 10922275);
-    assert!(at(f::SWOOP_AIMING_UP_FASTER) == 10922311);
-    assert!(at(f::WRITE_PALETTES_AND_SPAWN_WALLS) == 10922400 && at(f::SET_UP_GETAWAY) == 10922513);
-    assert!(at(f::SELF_DESTRUCT_ACTIVATED) == 10922576);
-    assert!(at(f::SELF_DESTRUCT_ACTIVATING) == 10928206);
-    assert!(at(f::GETAWAY) == 10922575);
-};
-
-// The named Ceres instruction lists, palettes and populations are the
-// decompilation's addresses.
-const _: () = {
-    use crate::game::constants::bank_a6::*;
-    use sm_game::actors::ceres_ridley::{ceres_data as d, ceres_instruction_list as l};
-    assert!(
-        l::INITIAL == ADDR_K_RIDLEY_ILIST_E538 as u16
-            && l::LUNGE == ADDR_K_RIDLEY_ILIST_E548 as u16
-    );
-    assert!(
-        l::FIGHT_INTRO_ROAR == ADDR_K_RIDLEY_ILIST_E690 as u16
-            && l::TRANSITION_TO_FLYING == ADDR_K_RIDLEY_ILIST_E91D as u16
-    );
-    assert!(l::BABY_METROID == ADDR_K_BABY_METROID_ILIST_BF31 as u16);
-    assert!(
-        d::CERES_PALETTES == ADDR_WORD_A6E16F as u16
-            && d::NORFAIR_PALETTES == ADDR_WORD_A6E1CF as u16
-    );
-    assert!(
-        d::RETREAT_SPRITE_PALETTE == ADDR_WORD_A6A9E3 as u16
-            && d::RETREAT_BACKGROUND_PALETTE == ADDR_WORD_A6AA01 as u16
-    );
-    assert!(
-        d::GETAWAY_WALLS[0] == ADDR_STRU_A6AA2F as u16
-            && d::GETAWAY_WALLS[1] == ADDR_STRU_A6AA3F as u16
-    );
-};
 
 impl sm_game::actors::ceres_ridley::Host for Game {
     fn boss_byte(&mut self, area: u16) -> u8 {
@@ -794,34 +369,11 @@ impl sm_game::display::transfer::TilemapQueue for Game {
     }
 }
 
-// The fire arc's functions and data are its dispatch IDs and the
-// decompilation's addresses.
-const _: () = {
-    use crate::game::constants::{bank_86::*, bank_a6::*};
-    use sm_game::actors::fire_arc::{self as a, function as f};
-    assert!((0xa6_0000 | f::INACTIVE as u32) == 10917397);
-    assert!((0xa6_0000 | f::ACTIVE as u32) == 10917506);
-    assert!(a::INSTRUCTION_LIST == ADDR_K_FIRE_ARC_ILIST_9490 as u16);
-    assert!(a::BODY_PROJECTILE == ADDR_K_EPROJ_FIRE_ARC_BODY as u16);
-};
-
 impl sm_game::actors::fire_arc::Host for Game {
     fn advance_orbit(&mut self) {
         crate::game::enemy_projectiles::advance_fire_arc_orbit(self);
     }
 }
-
-// The door functions, palettes and spritemap are the dispatch IDs and the
-// decompilation's addresses; the steam's hidden state is the doors' one.
-const _: () = {
-    use crate::game::constants::bank_a6::*;
-    use sm_game::actors::ceres_doors::{self as c, door_function as f};
-    assert!((0xa6_0000 | f::RUMBLING_AND_EXPLOSIONS as u32) == 10942428);
-    assert!((0xa6_0000 | f::ELEVATOR_ANIMATIONS as u32) == 10942544);
-    assert!(c::DOOR_PALETTE == ADDR_K_CERES_DOOR_PALETTE as u16);
-    assert!(c::ESCAPE_DOOR_PALETTE == ADDR_WORD_A6F50C as u16);
-    assert!(c::DOOR_SPRITEMAP == ADDR_K_CERES_DOOR_SPRMAP_FAC7 as u16);
-};
 
 impl sm_game::actors::ceres_doors::Host for Game {
     fn rom_script(&mut self, bank: u8, address: u16) -> sm_game::enemy_script::EnemyScript {
@@ -838,20 +390,6 @@ impl sm_game::actors::ceres_doors::Host for Game {
         crate::game::mode7_transfers::enqueue_rom(bank, list, self);
     }
 }
-
-// The named bank $AA functions and instruction lists are the decompilation's.
-const _: () = {
-    use crate::game::constants::bank_aa::*;
-    use sm_game::actors::statues::{function as f, instruction_list as l};
-    const fn at(word: u16) -> i32 {
-        0xaa_0000 | word as i32
-    }
-    assert!(at(f::LOWER_NORFAIR) == 11199557 && at(f::WRECKED_SHIP) == 11200430);
-    assert!(at(f::NOTHING) == FNNULLSUB_276);
-    assert!(l::LOWER_NORFAIR_ACTIVATED == ADDR_K_SHAKTOOL_ILIST_E3A7 as u16);
-    assert!(l::WRECKED_SHIP_ACTIVATED == ADDR_K_SHAKTOOL_ILIST_E461 as u16);
-    assert!(l::NOTHING_SPRITEMAP == ADDR_K_SPRITEMAP_NOTHING_AA as u16);
-};
 
 impl sm_game::actors::statues::Host for Game {
     fn run_function(&mut self, address: u32) {

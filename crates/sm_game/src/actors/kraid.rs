@@ -2267,3 +2267,56 @@ pub fn lunge_right<L: Lease + ?Sized>(game: &mut L) {
         session_slot!(game, Part[FOOT].base.x_pos = x);
     }
 }
+
+// The named bank $A7 functions are the ones the original `CallKraidFunc` dispatched on.
+const _: () = {
+    use crate::actors::kraid::function as f;
+    const fn at(word: u16) -> u32 {
+        0xa7_0000 | word as u32
+    }
+    assert!(
+        at(f::GETS_BIG_BREAK_CEILING) == 10988621 && at(f::GETS_BIG_SET_BG2_PRIORITY) == 10988858
+    );
+    assert!(
+        at(f::GETS_BIG_FINISH_BG2_TILEMAP) == 10988897 && at(f::GETS_BIG_DRAW_ROOM_BG) == 10988942
+    );
+    assert!(at(f::GETS_BIG_FADE_IN_ROOM_BG) == 10989091 && at(f::MAIN_LOOP_THINKING) == 10989220);
+    assert!(at(f::GETS_BIG_THINKING) == 10989252 && at(f::MOUTH_OPEN) == 10989284);
+    assert!(at(f::INIT_EYE_GLOW) == 10991295 && at(f::GLOW_EYE) == 10991319);
+    assert!(at(f::UNGLOW_EYE) == 10991421 && at(f::NOTHING) == 10991665);
+    assert!(at(f::LINT_PRODUCE) == 10991666 && at(f::LINT_CHARGE) == 10991720);
+    assert!(at(f::LINT_FIRE) == 10991771 && at(f::FINGERNAIL_WAIT_FOR_LINT) == 10991879);
+    assert!(at(f::ALIGN_TO_KRAID) == 10991907 && at(f::HANDLE_FUNCTION_TIMER) == 10991917);
+    assert!(
+        at(f::DECREMENT_FUNCTION_TIMER) == 10991935 && at(f::FOOT_FIRST_PHASE_THINKING) == 10991968
+    );
+    assert!(at(f::PROCESS_SCRIPT_AND_TIMER) == 10991973 && at(f::FOOT_IDLE) == 10992173);
+    assert!(
+        at(f::FOOT_SECOND_PHASE_THINKING) == 10992174 && at(f::FOOT_WALK_BACKWARDS) == 10992453
+    );
+    assert!(at(f::FOOT_WALK_TO_START) == 10992494 && at(f::FOOT_SECOND_PHASE_INIT) == 10992548);
+    assert!(at(f::FOOT_WALK_FORWARD) == 10992558 && at(f::ATTACK_WITH_MOUTH_OPEN) == 10992618);
+    assert!(at(f::FINGERNAIL_INIT) == 10992992 && at(f::FINGERNAIL_FIRE) == 10993294);
+    assert!(at(f::FOOT_PREPARE_LUNGE) == 10993453 && at(f::FOOT_LUNGE_FORWARD) == 10993501);
+    assert!(
+        at(f::FOOT_RETREAT_FROM_LUNGE) == 10993579 && at(f::GETS_BIG_RELEASE_CAMERA) == 10993825
+    );
+    assert!(at(f::DEATH_INIT) == 10994528 && at(f::DEATH_FADE_OUT) == 10994681);
+    assert!(at(f::DEATH_BG2_TOP_HALF) == 10994852 && at(f::DEATH_BG2_BOTTOM_HALF) == 10994888);
+    assert!(
+        at(f::DEATH_SINK_THROUGH_FLOOR) == 10994999 && at(f::FADE_IN_CLEAR_BG2_TOP) == 10995477
+    );
+    assert!(
+        at(f::FADE_IN_CLEAR_BG2_BOTTOM) == 10995537 && at(f::FADE_IN_LOAD_BG3_TILES_1) == 10995575
+    );
+    assert!(
+        at(f::FADE_IN_LOAD_BG3_TILES_2) == 10995619 && at(f::FADE_IN_LOAD_BG3_TILES_3) == 10995657
+    );
+    assert!(at(f::FADE_IN_LOAD_BG3_TILES_4) == 10995695 && at(f::FADE_IN_BG6) == 10995733);
+    assert!(at(f::FADE_IN_DEAD_WAS_ALIVE) == 10995779 && at(f::FADE_IN_DEAD_WAS_DEAD) == 10995793);
+    assert!(at(f::RESTRICT_SAMUS_X) == 10995813 && at(f::RAISE_THROUGH_FLOOR) == 10995819);
+    assert!(
+        at(f::RAISE_LOAD_TILEMAP_BOTTOM) == 10995866 && at(f::RAISE_QUAKE_EVERY_16) == 10995936
+    );
+    assert!(at(f::RAISE_QUAKE_EVERY_8) == 10995970 && at(f::RAISE) == 10996004);
+};
