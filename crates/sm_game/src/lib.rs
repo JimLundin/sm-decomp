@@ -212,6 +212,7 @@ pub mod actors {
     pub mod snapshot;
     pub mod space_pirates;
     pub mod species;
+    pub mod spike_platform;
     pub mod spore_spawn;
     pub mod squeept;
     pub mod staging;
