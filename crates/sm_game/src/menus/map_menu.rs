@@ -296,9 +296,9 @@ fn select_area<H: Host + ?Sized>(game: &mut H) {
         crate::room_view::set(
             game,
             crate::room_view::Word::Area,
-            word!(game.SRAM_AREA_INDEX),
+            save_selection!(game.SaveArea),
         );
-        save_selection!(game.LoadStation = word!(game.SRAM_SAVE_STATION_INDEX));
+        save_selection!(game.LoadStation = save_selection!(game.SaveStation));
         draw_area_labels(game);
         return;
     }
@@ -817,7 +817,7 @@ pub fn draw_icons<H: Host + ?Sized>(mode: IconMode, game: &mut H) {
     }
     match mode {
         IconMode::Pause => {
-            if crate::room_view::current(game).area == word!(game.SRAM_AREA_INDEX) {
+            if crate::room_view::current(game).area == save_selection!(game.SaveArea) {
                 let bits = station_bits(0, game);
                 let mut bytes = bits.to_ne_bytes();
                 bytes[0] = bits as u8

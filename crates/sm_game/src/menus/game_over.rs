@@ -146,8 +146,8 @@ fn choose<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
         if save_selection!(game.MapAreaIndex) != 0 {
             crate::menu!(game.MenuIndex = 7);
         } else {
-            if word!(game.LOADING_GAME_STATE) == K_GAME_STATE_31_SET_UP_NEW_GAME as u16 {
-                word!(game.GAME_STATE = word!(game.LOADING_GAME_STATE));
+            if save_selection!(game.LoadingGameState) == K_GAME_STATE_31_SET_UP_NEW_GAME as u16 {
+                word!(game.GAME_STATE = save_selection!(game.LoadingGameState));
             } else {
                 crate::menu!(game.MenuIndex += 1);
             }

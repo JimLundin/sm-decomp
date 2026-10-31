@@ -66,8 +66,8 @@ pub fn save<H: Host + ?Sized>(slot: u16, game: &mut H) {
     game.observe_flags_save(2);
     transfer_map(Direction::Save, game);
     game.observe_flags_save(3);
-    word!(game.SRAM_SAVE_STATION_INDEX = save_selection!(game.LoadStation));
-    word!(game.SRAM_AREA_INDEX = crate::room_view::current(game).area);
+    save_selection!(game.SaveStation = save_selection!(game.LoadStation));
+    save_selection!(game.SaveArea = crate::room_view::current(game).area);
     game.observe_flags_save(4);
     let checksum = save_file::save(&mut SaveFile(game), slot);
     game.observe_flags_save(5);
@@ -81,11 +81,11 @@ pub fn load<H: Host + ?Sized>(slot: u16, game: &mut H) -> u8 {
     if save_file::checksum_matches(&SaveFile(game), slot, checksum) {
         crate::word_transfers!(game, descending, 48; native(0xa00) <- le(PLAYER_DATA_SAVED, 47));
         transfer_map(Direction::Load, game);
-        save_selection!(game.LoadStation = word!(game.SRAM_SAVE_STATION_INDEX));
+        save_selection!(game.LoadStation = save_selection!(game.SaveStation));
         crate::room_view::set(
             game,
             crate::room_view::Word::Area,
-            word!(game.SRAM_AREA_INDEX),
+            save_selection!(game.SaveArea),
         );
         0
     } else {

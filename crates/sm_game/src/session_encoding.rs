@@ -748,6 +748,9 @@ macro_rules! scalar_words {
         $f(ram::FILE_SELECT_MAP_AREA_INDEX,$($borrow)* $s.menu_screens.save_selection.map_area_index);
         $f(ram::SELECTED_SAVE_SLOT,$($borrow)* $s.menu_screens.save_selection.selected_slot);
         $f(ram::NONEMPTY_SAVE_SLOTS,$($borrow)* $s.menu_screens.save_selection.nonempty_slots);
+        $f(ram::LOADING_GAME_STATE,$($borrow)* $s.menu_screens.save_selection.loading_game_state);
+        $f(ram::SRAM_SAVE_STATION_INDEX,$($borrow)* $s.menu_screens.save_selection.save_station);
+        $f(ram::SRAM_AREA_INDEX,$($borrow)* $s.menu_screens.save_selection.save_area);
         $f(ram::MENU_OPTION_INDEX,$($borrow)* $s.menu_screens.options_menu.menu_option_index);
         $f(ram::DEBUG_INVINCIBILITY,$($borrow)* $s.menu_screens.options_menu.debug_invincibility);
         $f(ram::GAME_OPTIONS_SCREEN_INDEX,$($borrow)* $s.menu_screens.options_menu.screen_index);

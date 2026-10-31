@@ -71,7 +71,7 @@ pub fn main_menu<H: Host + ?Sized>(game: &mut H) {
 
 fn start<H: Host + ?Sized>(game: &mut H) {
     if word!(game.ENABLE_DEBUG) != 0 && game.observed_inputs().held & K_BUTTON_L as u16 == 0
-        || word!(game.LOADING_GAME_STATE) == 5
+        || save_selection!(game.LoadingGameState) == 5
     {
         options_menu!(game.ScreenIndex = 4);
     } else {
@@ -84,13 +84,13 @@ pub fn finish_start<H: Host + ?Sized>(game: &mut H) {
     options_menu!(game.ScreenIndex = 0);
     if word!(game.ENABLE_DEBUG) != 0 && (game.observed_inputs().held & 0x20) == 0 {
         word!(game.GAME_STATE = 5);
-        if word!(game.LOADING_GAME_STATE) != 5 {
-            word!(game.LOADING_GAME_STATE = 5);
+        if save_selection!(game.LoadingGameState) != 5 {
+            save_selection!(game.LoadingGameState = 5);
             super::save_slots::save(save_selection!(game.SelectedSlot), game);
         }
-    } else if word!(game.LOADING_GAME_STATE) != 0 {
-        word!(game.GAME_STATE = word!(game.LOADING_GAME_STATE));
-        if word!(game.LOADING_GAME_STATE) == 34 {
+    } else if save_selection!(game.LoadingGameState) != 0 {
+        word!(game.GAME_STATE = save_selection!(game.LoadingGameState));
+        if save_selection!(game.LoadingGameState) == 34 {
             crate::flow::set(game, crate::flow::Word::CinematicFunction, 0xc11b);
         }
         options_menu! { game, 0; MenuOptionIndex, ScreenIndex }

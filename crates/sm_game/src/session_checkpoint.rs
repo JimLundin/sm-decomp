@@ -1521,7 +1521,7 @@ checkpoint_fields!(checkpoint_menu, checkpoint_read_menu, crate::menu_state::Men
 checkpoint_fields!(checkpoint_map_screen, checkpoint_read_map_screen, crate::menu_state::MapScreenState,
     min_x_scroll: checkpoint_word/checkpoint_read_word, max_x_scroll: checkpoint_word/checkpoint_read_word, min_y_scroll: checkpoint_word/checkpoint_read_word, max_y_scroll: checkpoint_word/checkpoint_read_word, gear_switch_timer: checkpoint_word/checkpoint_read_word, scrolling_direction: checkpoint_word/checkpoint_read_word, scrolling_speed_index: checkpoint_word/checkpoint_read_word, indicator_frame: checkpoint_word/checkpoint_read_word, indicator_timer: checkpoint_word/checkpoint_read_word, indicator_loop_counter: checkpoint_word/checkpoint_read_word);
 checkpoint_fields!(checkpoint_save_selection, checkpoint_read_save_selection, crate::menu_state::SaveSelection,
-    map_unread: checkpoint_word/checkpoint_read_word, has_area_map: checkpoint_word/checkpoint_read_word, load_station: checkpoint_word/checkpoint_read_word, map_area_index: checkpoint_word/checkpoint_read_word, selected_slot: checkpoint_word/checkpoint_read_word, nonempty_slots: checkpoint_word/checkpoint_read_word);
+    map_unread: checkpoint_word/checkpoint_read_word, has_area_map: checkpoint_word/checkpoint_read_word, load_station: checkpoint_word/checkpoint_read_word, map_area_index: checkpoint_word/checkpoint_read_word, selected_slot: checkpoint_word/checkpoint_read_word, nonempty_slots: checkpoint_word/checkpoint_read_word, loading_game_state: checkpoint_word/checkpoint_read_word, save_station: checkpoint_word/checkpoint_read_word, save_area: checkpoint_word/checkpoint_read_word);
 checkpoint_fields!(checkpoint_options_menu, checkpoint_read_options_menu, crate::menu_state::OptionsMenu,
     menu_option_index: checkpoint_word/checkpoint_read_word, debug_invincibility: checkpoint_word/checkpoint_read_word, screen_index: checkpoint_word/checkpoint_read_word);
 checkpoint_fields!(checkpoint_death, checkpoint_read_death, crate::menu_state::DeathSequence,
@@ -1552,7 +1552,7 @@ macro_rules! checkpoint_auxiliary {
                 if metadata.identity.reference != metadata.reference.fingerprint {
                     return Err("auxiliary gameplay checkpoint Reference identity mismatch".into());
                 }
-                let mut bytes = Vec::from(b"SMAUXGS\x0b".as_slice());
+                let mut bytes = Vec::from(b"SMAUXGS\x0c".as_slice());
                 let binding = observation_binding(metadata);
                 bytes.extend_from_slice(&(binding.len() as u64).to_le_bytes());
                 bytes.extend_from_slice(&binding);
@@ -1561,7 +1561,7 @@ macro_rules! checkpoint_auxiliary {
             }
             pub fn decode_auxiliary_checkpoint(bytes: &[u8], metadata: &DisplayStartMetadata) -> Result<AuxiliaryGameplayCheckpoint, String> {
                 let mut read = CheckpointReader(bytes);
-                if read.bytes(8)? != b"SMAUXGS\x0b" { return Err("unsupported auxiliary gameplay checkpoint schema".into()); }
+                if read.bytes(8)? != b"SMAUXGS\x0c" { return Err("unsupported auxiliary gameplay checkpoint schema".into()); }
                 let size = usize::try_from(read.counter()?).map_err(|_| "auxiliary gameplay checkpoint binding length overflow")?;
                 if metadata.identity.reference != metadata.reference.fingerprint || read.bytes(size)? != observation_binding(metadata) {
                     return Err("auxiliary gameplay checkpoint source identity or Reference changed".into());

@@ -175,8 +175,9 @@ pub mod map_screen {
 
 /// The save slot and map station selection: the file select map's unread
 /// flag, the current area's collected map and the load station index
-/// ($0787..$078C), and the file select map area, the selected save slot and
-/// the empty-slot bits ($0950..$0955).
+/// ($0787..$078C), the file select map area, the selected save slot and the
+/// empty-slot bits ($0950..$0955), and the loading game state with the saved
+/// station and area ($D914..$D919), which the save file carries.
 #[derive(Clone, Copy, Default, Debug, PartialEq, Eq)]
 pub struct SaveSelection {
     pub map_unread: u16,
@@ -185,6 +186,9 @@ pub struct SaveSelection {
     pub map_area_index: u16,
     pub selected_slot: u16,
     pub nonempty_slots: u16,
+    pub loading_game_state: u16,
+    pub save_station: u16,
+    pub save_area: u16,
 }
 
 /// The save selection words through the host's projected bytes, by RAM address.
@@ -199,6 +203,9 @@ pub mod save_selection {
         MapAreaIndex = 0x950,
         SelectedSlot = 0x952,
         NonemptySlots = 0x954,
+        LoadingGameState = 0xd914,
+        SaveStation = 0xd916,
+        SaveArea = 0xd918,
     }
 
     const _: () = {
@@ -209,6 +216,9 @@ pub mod save_selection {
         assert!(ram::FILE_SELECT_MAP_AREA_INDEX == Word::MapAreaIndex as usize);
         assert!(ram::SELECTED_SAVE_SLOT == Word::SelectedSlot as usize);
         assert!(ram::NONEMPTY_SAVE_SLOTS == Word::NonemptySlots as usize);
+        assert!(ram::LOADING_GAME_STATE == Word::LoadingGameState as usize);
+        assert!(ram::SRAM_SAVE_STATION_INDEX == Word::SaveStation as usize);
+        assert!(ram::SRAM_AREA_INDEX == Word::SaveArea as usize);
     };
 
     /// `word` as the host's projection holds it, low byte then high.

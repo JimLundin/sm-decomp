@@ -387,7 +387,7 @@ pub fn ceres_flying_into_ceres<H: Host + ?Sized>(game: &mut H) {
 /// Cinematic function - fly to Ceres - start game at Ceres ($8B:C100). Was
 /// `CinematicFunction_Intro_Func73`.
 pub fn start_game_at_ceres<H: Host + ?Sized>(game: &mut H) {
-    word!(game.LOADING_GAME_STATE = SET_UP_NEW_GAME);
+    save_selection!(game.LoadingGameState = SET_UP_NEW_GAME);
     word!(game.GAME_STATE = SET_UP_NEW_GAME);
     crate::room_view::set(game, crate::room_view::Word::Area, CERES);
     save_selection!(game.LoadStation = 0);

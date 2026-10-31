@@ -364,7 +364,7 @@ fn initialize<H: Host>(game: &mut H) -> CoroutineRet {
     if stage == 0 {
         let demo = u32::from(word!(game.GAME_STATE)) == K_GAME_STATE_40_TRANSITION_TO_DEMO;
         if !demo {
-            let loading = u32::from(word!(game.LOADING_GAME_STATE));
+            let loading = u32::from(save_selection!(game.LoadingGameState));
             if loading == K_LOADING_GAME_STATE_1F_STARTING_AT_CERES {
                 game.runtime().session_mut().room.area = 6;
                 save_selection!(game.LoadStation = 0);
@@ -404,7 +404,7 @@ fn initialize<H: Host>(game: &mut H) -> CoroutineRet {
         crate::player_movement::speed::set_liquid_physics(&mut game.runtime());
         stage = if u32::from(word!(game.GAME_STATE)) == K_GAME_STATE_40_TRANSITION_TO_DEMO {
             2
-        } else if u32::from(word!(game.LOADING_GAME_STATE))
+        } else if u32::from(save_selection!(game.LoadingGameState))
             == K_LOADING_GAME_STATE_22_ESCAPING_CERES
         {
             crate::music_requests::queue_delayed_8(5, game);
@@ -445,7 +445,7 @@ fn initialize<H: Host>(game: &mut H) -> CoroutineRet {
         }
         word_transfers!(game, ascending, 256; native(0xc000) <- le(TARGET_PALETTES, 0));
         if stage == 4 {
-            if u32::from(word!(game.LOADING_GAME_STATE))
+            if u32::from(save_selection!(game.LoadingGameState))
                 == K_LOADING_GAME_STATE_1F_STARTING_AT_CERES
             {
                 word!(game.PALETTE_BUFFER[223] = 0);
@@ -845,7 +845,9 @@ fn finish_pass<H: Host>(entry: Entry, game: &mut H) {
                 finish_gameplay(ceres, game);
                 crate::screen_fade::set_both(game, 0, 0);
                 if ceres {
-                    word!(game.LOADING_GAME_STATE = K_LOADING_GAME_STATE_22_ESCAPING_CERES as u16);
+                    save_selection!(
+                        game.LoadingGameState = K_LOADING_GAME_STATE_22_ESCAPING_CERES as u16
+                    );
                     word!(game.GAME_STATE = 34);
                     save_slots::save(save_selection!(game.SelectedSlot), game);
                     crate::flow::set(game, crate::flow::Word::CinematicFunction, 0xc11b);

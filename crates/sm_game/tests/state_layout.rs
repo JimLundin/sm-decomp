@@ -433,6 +433,15 @@ fn save_selection_lanes() -> Vec<Lane> {
         (0x954, 0, |s, _| {
             &mut s.menu_screens.save_selection.nonempty_slots
         }),
+        (0xd914, 0, |s, _| {
+            &mut s.menu_screens.save_selection.loading_game_state
+        }),
+        (0xd916, 0, |s, _| {
+            &mut s.menu_screens.save_selection.save_station
+        }),
+        (0xd918, 0, |s, _| {
+            &mut s.menu_screens.save_selection.save_area
+        }),
     ]
 }
 
