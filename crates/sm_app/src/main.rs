@@ -282,7 +282,21 @@ unsafe extern "C-unwind" fn sm_host_command(owner: *const GameOwner, command: u3
 }
 #[unsafe(no_mangle)]
 unsafe extern "C-unwind" fn sm_host_run_frame(owner: *const GameOwner, inputs: i32) -> bool {
-    unsafe { (*owner).with(|game| rtl_run_frame(inputs, game)) }
+    let input = TickInput {
+        buttons: (without_opposite_directions(inputs) as u16).reverse_bits(),
+    };
+    unsafe { (*owner).with(|game| rtl_run_frame(input, game)) }
+}
+/// The desktop's input policy: a pad never holds both of two opposite
+/// directions, so when both are held, neither is. Recorded inputs, which the
+/// verifier replays, keep every button.
+fn without_opposite_directions(mut inputs: i32) -> i32 {
+    for pair in [0x30, 0xc0] {
+        if inputs & pair == pair {
+            inputs ^= pair;
+        }
+    }
+    inputs
 }
 #[unsafe(no_mangle)]
 unsafe extern "C-unwind" fn sm_host_present(

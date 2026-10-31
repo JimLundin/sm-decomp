@@ -42,7 +42,7 @@ pub unsafe fn checkpoint(
         for remove in [true, false, true] {
             checks::checkpoint_spawn(&mut Runtime::new(&mut producer), request.clone(), remove);
         }
-        crate::rtl::rtl_run_frame(0, &mut producer);
+        crate::rtl::rtl_run_frame(crate::rtl::TickInput::default(), &mut producer);
         crate::rtl::rtl_render_audio(&mut [[0; 2]; 534], &mut producer);
         let resource = fixture::PALETTES[1];
         let sources = [(resource, custom)];
@@ -103,7 +103,7 @@ pub unsafe fn checkpoint(
                 .unwrap()
                 .unwrap();
             drop(runtime);
-            crate::rtl::rtl_run_frame(0, game);
+            crate::rtl::rtl_run_frame(crate::rtl::TickInput::default(), game);
             crate::rtl::rtl_render_audio(samples, game);
         }
         assert_eq!(audio[0], audio[1]);
@@ -251,7 +251,7 @@ pub(crate) unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
         let mut done = false;
         for frame in 0..768 {
             crate::verify_probe::begin_frame(192 + frame);
-            crate::rtl::rtl_run_frame(0, g);
+            crate::rtl::rtl_run_frame(crate::rtl::TickInput::default(), g);
             assert!(!g.g_fail, "composed.door.no-diagnostic-{frame}");
             if word(g, 0x998) == 8 {
                 done = true;

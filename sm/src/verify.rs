@@ -992,7 +992,12 @@ unsafe fn prepared_checkpoint(
         let mut expected_audio = [[0; 2]; 534];
         core::ptr::write_bytes(&raw mut super::PIXELS, 0, 1);
         core::ptr::write_bytes(&raw mut super::MY_PIXELS, 0, 1);
-        sm::rtl::rtl_run_frame(i32::from(pad), game);
+        sm::rtl::rtl_run_frame(
+            sm::rtl::TickInput {
+                buttons: pad.reverse_bits(),
+            },
+            game,
+        );
         sm::rtl::rtl_render_audio(&mut expected_audio, game);
         let continuation = checkpoint::capture(game)?;
         checkpoint::reset_retaining_prepared_world(game)?;
@@ -1004,7 +1009,12 @@ unsafe fn prepared_checkpoint(
         let mut restored_audio = [[0; 2]; 534];
         core::ptr::write_bytes(&raw mut super::PIXELS, 0, 1);
         core::ptr::write_bytes(&raw mut super::MY_PIXELS, 0, 1);
-        sm::rtl::rtl_run_frame(i32::from(pad), game);
+        sm::rtl::rtl_run_frame(
+            sm::rtl::TickInput {
+                buttons: pad.reverse_bits(),
+            },
+            game,
+        );
         sm::rtl::rtl_render_audio(&mut restored_audio, game);
         if restored_audio != expected_audio || checkpoint::capture(game)? != continuation {
             return Err("prepared checkpoint continuation differs".into());
@@ -1391,7 +1401,12 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
                 game.g_runmode = sm::cpu_infra::RM_THEIRS as u8;
             }
             sm::oracle_mode::set_next_frame_input(inputs.get(index + 1).copied());
-            sm::rtl::rtl_run_frame(i32::from(pad), game);
+            sm::rtl::rtl_run_frame(
+                sm::rtl::TickInput {
+                    buttons: pad.reverse_bits(),
+                },
+                game,
+            );
             sm::oracle_mode::set_next_frame_input(None);
             if let Some(file) = positions.as_mut() {
                 use std::io::Write as _;

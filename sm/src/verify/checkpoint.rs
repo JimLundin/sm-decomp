@@ -923,7 +923,7 @@ pub(crate) unsafe fn check_prepared_palette_checkpoint(game: &mut Game) {
             AssetSource::Bound(AssetRef::Prepared(crate::room_world_fixture::PALETTE)),
             InstallBuffer::Palette,
         );
-        crate::rtl::rtl_run_frame(0, game);
+        crate::rtl::rtl_run_frame(crate::rtl::TickInput::default(), game);
         crate::rtl::rtl_render_audio(&mut [[0; 2]; 534], game);
         let first = crate::verification_checkpoint::capture(game).unwrap();
         assert!(
@@ -943,7 +943,7 @@ pub(crate) unsafe fn check_prepared_palette_checkpoint(game: &mut Game) {
             "room.assets.palette-preflight-no-adoption"
         );
         let mut audio = [[[0; 2]; 534]; 2];
-        crate::rtl::rtl_run_frame(0, game);
+        crate::rtl::rtl_run_frame(crate::rtl::TickInput::default(), game);
         crate::rtl::rtl_render_audio(&mut audio[0], game);
         let continued = crate::verification_checkpoint::capture(game).unwrap();
         crate::verification_checkpoint::restore_capture_with_sources(&first, game, &[]).unwrap();
@@ -951,7 +951,7 @@ pub(crate) unsafe fn check_prepared_palette_checkpoint(game: &mut Game) {
             crate::verification_checkpoint::capture(game).unwrap(),
             first
         );
-        crate::rtl::rtl_run_frame(0, game);
+        crate::rtl::rtl_run_frame(crate::rtl::TickInput::default(), game);
         crate::rtl::rtl_render_audio(&mut audio[1], game);
         assert_eq!(audio[0], audio[1]);
         assert_eq!(

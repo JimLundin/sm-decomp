@@ -571,7 +571,7 @@ unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
         assert!(Arc::ptr_eq(g.world(), &world), "room.world.reset-binding");
         if id == 8 {
             let before = g.snes_frame_counter;
-            crate::rtl::rtl_run_frame(0, g);
+            crate::rtl::rtl_run_frame(crate::rtl::TickInput::default(), g);
             assert_eq!(
                 g.snes_frame_counter,
                 before + 1,
@@ -732,7 +732,7 @@ unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
                 let frames_before = g.snes_frame_counter;
                 let mut done = false;
                 for frame in 0..768 {
-                    crate::rtl::rtl_run_frame(0, g);
+                    crate::rtl::rtl_run_frame(crate::rtl::TickInput::default(), g);
                     assert!(!g.g_fail, "room.world.door-no-diagnostic-{frame}");
                     if word(g, 0x998) == 8 {
                         done = true;

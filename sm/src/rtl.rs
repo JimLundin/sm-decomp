@@ -702,13 +702,18 @@ pub unsafe fn state_recorder_read_next_replay_state(game: &mut Game) -> u16 {
     }
 }
 
+pub use sm_game::gameplay_frame::TickInput;
 crate::forward_calls! { pub unsafe fn (game: &mut Game);
     rtl_clear_key_log => state_recorder_clear_key_log(game);
 }
 pub fn rtl_stop_replay(game: &mut Game) {
     game.state_recorder.stop();
 }
-pub unsafe fn rtl_run_frame(mut inputs: i32, native_game: &mut Game) -> bool {
+/// Run one frame on `input`, through the recorder (replay or record) and the
+/// selected run mode.
+pub unsafe fn rtl_run_frame(input: TickInput, native_game: &mut Game) -> bool {
+    // The recorder and the frame's controller latch keep snesrev's bit order.
+    let mut inputs = i32::from(input.buttons.reverse_bits());
     let game = &mut *native_game;
     unsafe {
         if !game.supports_legacy_persistence()
@@ -721,15 +726,6 @@ pub unsafe fn rtl_run_frame(mut inputs: i32, native_game: &mut Game) -> bool {
             .expect("Samus frame entry rejected");
         let mut mutation = game.samus_mutation();
         let game = mutation.game();
-        // TAS verification preserves every recorded button, including opposites.
-        if !game.VERIFY_ACTIVE {
-            if inputs & 0x30 == 0x30 {
-                inputs ^= 0x30;
-            }
-            if inputs & 0xc0 == 0xc0 {
-                inputs ^= 0xc0;
-            }
-        }
         let is_replay: bool = game.state_recorder.replay_mode;
         if is_replay {
             inputs = state_recorder_read_next_replay_state(game) as i32;

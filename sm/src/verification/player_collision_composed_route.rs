@@ -150,7 +150,7 @@ pub(crate) unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
         let mut done = false;
         for frame in 0..768 {
             crate::verify_probe::begin_frame(192 + frame);
-            crate::rtl::rtl_run_frame(0, g);
+            crate::rtl::rtl_run_frame(crate::rtl::TickInput::default(), g);
             assert!(!g.g_fail, "composed.door.no-diagnostic-{frame}");
             if word(g, 0x998) == 8 {
                 done = true;
