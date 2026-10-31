@@ -379,6 +379,9 @@ pub struct Room {
     pub enemy_processing_stage: u16,
     pub collision_detection_index: u16,
     pub slope_behavior: u16,
+    /// The Ceres status ($7E:093F): 0 normally, then the elevator room
+    /// rotating (sign bit), the escape started and Ridley escaping.
+    pub ceres_status: u16,
     /// The room main code's variables at $07E1..$07E9, as the little-endian
     /// words of the byte image. Rooms give them their own meanings.
     pub main_variables: [u16; 4],
@@ -461,6 +464,7 @@ impl Room {
             enemy_processing_stage: 0,
             collision_detection_index: 0,
             slope_behavior: 0,
+            ceres_status: 0,
             main_variables: [0; 4],
             camera: Default::default(),
         }
