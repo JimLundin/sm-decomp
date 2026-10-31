@@ -403,15 +403,42 @@ pub fn lease_ai<H: LeaseScope + ?Sized>(ea: u32, game: &mut H) -> bool {
         11045278 => game.with_lease(evir::projectile_main_ai),
         11045638 | 11045644 | 11045650 => game.with_lease(|runtime| evir::react(ea, runtime)),
         11053894 => game.with_lease(kago::initialize),
+        10669268 => game.with_lease(oum::initialize),
+        10656319 => game.with_lease(puyo::initialize),
+        10738643 => game.with_lease(reflec::initialize),
+        10663426 => game.with_lease(rinka::initialize),
+        10664233 => game.with_lease(rinka::frozen),
+        10664275 => game.with_lease(rinka::power_bomb),
+        10664263 | 10664269 => game.with_lease(|runtime| rinka::react(ea == 10664269, runtime)),
+        10723661 => game.with_lease(roach::initialize),
+        10724048 => game.with_lease(roach::main_ai),
+        10726153 => game.with_lease(sidehopper::initialize),
+        10717536 => game.with_lease(|runtime| skree::initialize(skree::Kind::Metaree, runtime)),
+        10733230 => game.with_lease(|runtime| skree::initialize(skree::Kind::Skree, runtime)),
+        10717561 => game.with_lease(|runtime| skree::main_ai(skree::Kind::Metaree, runtime)),
+        10733255 => game.with_lease(|runtime| skree::main_ai(skree::Kind::Skree, runtime)),
+        10717967 => game.with_lease(|runtime| skree::shot(skree::Kind::Metaree, runtime)),
+        10733557 => game.with_lease(|runtime| skree::shot(skree::Kind::Skree, runtime)),
+        10654337 | 10654367 => game.with_lease(|runtime| tatori::touch(ea == 10654367, runtime)),
+        10722463 => game.with_lease(|runtime| tripper::initialize(true, runtime)),
+        10722490 => game.with_lease(|runtime| tripper::initialize(false, runtime)),
+        10722582 => game.with_lease(tripper::main_ai),
+        10723080 => game.with_lease(tripper::shot),
+        11062326 => game.with_lease(work_robot::main_ai),
+        11063668 => game.with_lease(work_robot::touch),
+        10735074 => game.with_lease(yard::initialize),
+        10736560 => game.with_lease(yard::touch),
+        10736745 => game.with_lease(yard::shot),
         _ => return false,
     }
     true
 }
 
-/// The instructions that run on one actor lease, keyed by address; `j` is the script
-/// position, handed back unrun when `ea` is not one of them.
+/// The instructions that run on one actor lease, keyed by address; `k` is the enemy and `j`
+/// the script position, handed back unrun when `ea` is not one of them.
 pub fn lease_instruction<H: LeaseScope + ?Sized>(
     ea: u32,
+    k: u16,
     j: EnemyScript,
     game: &mut H,
 ) -> Result<EnemyScript, EnemyScript> {
@@ -421,6 +448,15 @@ pub fn lease_instruction<H: LeaseScope + ?Sized>(
             game.with_lease(|runtime| evir::instruction(ea, j, runtime))
         }
         10742449 => game.with_lease(|runtime| metroid::random_cry(j, runtime)),
+        10664371 | 10664381 | 10664391 => {
+            game.with_lease(|runtime| rinka::instruction(ea, k, j, runtime))
+        }
+        10726142 => game.with_lease(|runtime| sidehopper::ready_to_hop(j, runtime)),
+        10717526 | 10733220 => game.with_lease(|runtime| skree::set_attack_ready(j, runtime)),
+        10722411 | 10722433 => {
+            game.with_lease(|runtime| tripper::set_x_movement(false, j, runtime))
+        }
+        10722422 | 10722444 => game.with_lease(|runtime| tripper::set_x_movement(true, j, runtime)),
         _ => return Err(j),
     })
 }
@@ -628,9 +664,6 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         10851847 => draygon_death::power_bomb(game),
         10863723 => draygon_eye::initialize(game),
         // Bank $A3: the crawlers, divers, platforms, bugs and fish.
-        10717536 => skree::initialize(skree::Kind::Metaree, game),
-        10717561 => skree::main_ai(skree::Kind::Metaree, game),
-        10717967 => skree::shot(skree::Kind::Metaree, game),
         10718509 => fireflea::initialize(game),
         10718702 => fireflea::main_ai(game),
         10718827 => fireflea::touch(game),
@@ -640,10 +673,6 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         10719531 => skultera::main_ai(game),
         10720486 => elevator::initialize(game),
         10720554 => elevator::main_ai(game),
-        10722463 => tripper::initialize(true, game),
-        10722490 => tripper::initialize(false, game),
-        10722582 => tripper::main_ai(game),
-        10723080 => tripper::shot(game),
         10725245 => mochtroid::initialize(game),
         10725264 => mochtroid::main_ai(game),
         10725715 => mochtroid::touch(game),
@@ -652,10 +681,6 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
             pre_instruction(function, game);
         }
         10730277 => bang::main_ai(game),
-        10738643 => reflec::initialize(game),
-        10723661 => roach::initialize(game),
-        10724048 => roach::main_ai(game),
-        10656319 => puyo::initialize(game),
         10656381 => {
             if !puyo::main_ai(game) {
                 game.unknown_routine();
@@ -667,13 +692,9 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
                 game.unknown_routine();
             }
         }
-        10654337 | 10654367 => tatori::touch(ea == 10654367, game),
         10654479 => tatori::shot(game),
-        10663426 => rinka::initialize(game),
         11062135 => work_robot::initialize(game),
         11062220 => work_robot::initialize_deactivated(game),
-        11062326 => work_robot::main_ai(game),
-        11063668 => work_robot::touch(game),
         10914607 => spike_platform::initialize(game),
         10914733 => spike_platform::run(game),
         10659396 => gunship::initialize_top(game),
@@ -687,13 +708,10 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         11065545 => bull::initialize(game),
         11065611 => bull::main_ai(game),
         11066132 => bull::shot(game),
-        10735074 => yard::initialize(game),
         10735204 => {
             let function = yard::prepare(game);
             pre_instruction(function, game);
         }
-        10736560 => yard::touch(game),
-        10736745 => yard::shot(game),
         11059657 => powamp::initialize(game),
         11059740 => {
             let function = powamp::function(game);
@@ -713,10 +731,6 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
                 game.unknown_routine();
             }
         }
-        10664233 => rinka::frozen(game),
-        10664263 | 10664269 => rinka::react(ea == 10664269, game),
-        10664275 => rinka::power_bomb(game),
-        10669268 => oum::initialize(game),
         10669331 => oum::main_ai(game),
         10670988 => oum::touch(false, game),
         10671028 => oum::shot(game),
@@ -730,13 +744,9 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         10743275 => metroid::touch(game),
         10743559 => metroid::shot(game),
         10743874 => metroid::power_bomb(game),
-        10726153 => sidehopper::initialize(game),
         10726351 => sidehopper::main_ai(game),
         10728522 => zoa::initialize(game),
         10728572 => zoa::main_ai(game),
-        10733230 => skree::initialize(skree::Kind::Skree, game),
-        10733255 => skree::main_ai(skree::Kind::Skree, game),
-        10733557 => skree::shot(skree::Kind::Skree, game),
         // Bank $A8.
         11045147 => evir::main_ai(game),
         11047000 => morph_ball_eye::initialize(game),
@@ -1052,7 +1062,7 @@ pub fn instruction<H: InstructionHost>(
     j: EnemyScript,
     game: &mut H,
 ) -> EnemyScript {
-    let j = match lease_instruction(ea, j, game) {
+    let j = match lease_instruction(ea, k, j, game) {
         Ok(script) => return script,
         Err(j) => j,
     };
@@ -1132,9 +1142,6 @@ pub fn instruction<H: InstructionHost>(
         10852197 => draygon_death::spawn_dying_sprite(29, j, game),
         10852216 => draygon_death::spawn_dying_sprite(24, j, game),
         10854268 | 10854318 => draygon_death::spawn_goop(ea == 10854318, j, game),
-        10717526 | 10733220 => skree::set_attack_ready(j, game),
-        10722411 | 10722433 => tripper::set_x_movement(false, j, game),
-        10722422 | 10722444 => tripper::set_x_movement(true, j, game),
         10725992 => sidehopper::queue_sound(j, game),
         10657941 => cacatac::resume_moving(k, j, game),
         11068957 | 11068970 => wrecked_ship_spark::set_intangible(game, ea == 11068957, j),
@@ -1148,11 +1155,9 @@ pub fn instruction<H: InstructionHost>(
         10654593 | 10654738 | 10654791 | 10654801 | 10654827 | 10654853 | 10654881 | 10654919 => {
             tatori::instruction(ea, j, game)
         }
-        10664371 | 10664381 | 10664391 => rinka::instruction(ea, k, j, game),
         10669235 | 10669246 | 10669257 => oum::instruction(ea, j, game),
         10659181 | 10659185 => cacatac::owtch::set_function_index(ea, k, j, game),
         10742437 => metroid::draining_sound(j, game),
-        10726142 => sidehopper::ready_to_hop(j, game),
         10728489 => zoa::set_x_speed_index(4, j, game),
         10728500 => zoa::set_x_speed_index(8, j, game),
         10728511 => zoa::set_x_speed_index(12, j, game),

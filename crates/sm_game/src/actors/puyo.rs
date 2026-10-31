@@ -44,8 +44,7 @@ fn set_instruction_list(runtime: &mut impl ActorLease, list: u16) {
     runtime.edit_actor(key, Native, |actor| actor.restart_animation(list));
 }
 /// Initialisation AI - puyo ($A2:9A3F).
-pub fn initialize<H: LeaseActors + ?Sized>(game: &mut H) {
-    let runtime = &mut game.lease();
+pub fn initialize(runtime: &mut impl ActorLease) {
     let puyo = current_slot(runtime);
     session_slot!(runtime, Puyo[puyo].base.spritemap_pointer = 0x804d);
     session_slot!(runtime, Puyo[puyo].var_a = 0);

@@ -1,15 +1,13 @@
 //! The roach, the Brinstar bug that scuttles at Samus in one of seven ways
 //! (bank $A3:A051-$A3:A611).
-use crate::actors::access::{AccessMode::Native, ActorAccess};
+use crate::actors::access::AccessMode::Native;
 use crate::actors::api::{self, Axis, MovementResult, SlopePolicy};
 use crate::actors::combat::{self, current_slot};
-use crate::actors::host::{ActorLease, BossEffects as _, LeaseActors};
+use crate::actors::host::{ActorLease, BossEffects as _};
 use crate::actors::layouts::part_view;
 use crate::actors::session_slots::SlotAccess as _;
-use crate::enemy_projectiles::host::Effects as _;
 use crate::geometry::Vector32;
 use crate::player_projectiles::content::table;
-use crate::session_access::SessionAccess as _;
 use crate::session_slot;
 
 part_view! {
@@ -200,8 +198,7 @@ fn reverse(runtime: &mut impl ActorLease) {
     face(runtime, roach, index);
 }
 /// Initialisation AI - roach ($A3:A14D).
-pub fn initialize<H: LeaseActors + ?Sized>(game: &mut H) {
-    let runtime = &mut game.lease();
+pub fn initialize(runtime: &mut impl ActorLease) {
     let key = combat::current(runtime);
     let roach = current_slot(runtime);
     session_slot!(runtime, Roach[roach]; instruction_list = 0, new_instruction_list = 0);
@@ -242,8 +239,7 @@ pub fn initialize<H: LeaseActors + ?Sized>(game: &mut H) {
     });
 }
 /// Main AI - roach ($A3:A2D0): run its function. Was `advance`.
-pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
-    let runtime = &mut game.lease();
+pub fn main_ai(runtime: &mut impl ActorLease) {
     let key = combat::current(runtime);
     let roach = current_slot(runtime);
     let function = runtime.resolve_actor(key, Native).variables[lane::FUNCTION];

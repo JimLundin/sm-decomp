@@ -420,8 +420,7 @@ fn run_function(runtime: &mut impl ActorLease, raw: u16, function: u16) -> bool 
     true
 }
 /// Enemy touch - tatori ($A2:9281) or mini-tatori ($A2:929F).
-pub fn touch<H: LeaseActors + ?Sized>(child: bool, game: &mut H) {
-    let runtime = &mut game.lease();
+pub fn touch(child: bool, runtime: &mut impl ActorLease) {
     let key = combat::current(runtime);
     let slot = current_slot(runtime);
     if !child {

@@ -232,8 +232,7 @@ fn react_to_death(runtime: &mut impl ActorLease, index: u16) {
     });
 }
 /// Initialisation AI - rinka ($A2:B602).
-pub fn initialize<H: LeaseActors + ?Sized>(game: &mut H) {
-    let runtime = &mut game.lease();
+pub fn initialize(runtime: &mut impl ActorLease) {
     let key = combat::current(runtime);
     let properties = if mother_brains(runtime, key) {
         select_spawn(runtime, key.byte_index());
@@ -306,8 +305,7 @@ pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) -> bool {
     true
 }
 /// Frozen AI - rinka ($A2:B929): thaw off screen; go once Mother Brain's room is finished.
-pub fn frozen<H: LeaseActors + ?Sized>(game: &mut H) {
-    let runtime = &mut game.lease();
+pub fn frozen(runtime: &mut impl ActorLease) {
     let key = combat::current(runtime);
     if off_screen(runtime, key) {
         runtime.edit_actor(key, Native, |actor| actor.frozen = 0);
@@ -320,8 +318,7 @@ pub fn frozen<H: LeaseActors + ?Sized>(game: &mut H) {
     }
 }
 /// Power bomb reaction - rinka ($A2:B953), only when visible.
-pub fn power_bomb<H: LeaseActors + ?Sized>(game: &mut H) {
-    let runtime = &mut game.lease();
+pub fn power_bomb(runtime: &mut impl ActorLease) {
     let key = combat::current(runtime);
     if runtime.resolve_actor(key, Native).properties & INVISIBLE == 0 {
         combat::power_bomb_reaction(runtime, DeathHandling::LeavePending);
@@ -329,8 +326,7 @@ pub fn power_bomb<H: LeaseActors + ?Sized>(game: &mut H) {
     }
 }
 /// Enemy touch ($A2:B947) or shot ($A2:B94D) - rinka.
-pub fn react<H: LeaseActors + ?Sized>(shot: bool, game: &mut H) {
-    let runtime = &mut game.lease();
+pub fn react(shot: bool, runtime: &mut impl ActorLease) {
     if shot {
         combat::shot_reaction(runtime, ShotHandling::ReactionOnly);
     } else {
@@ -341,13 +337,7 @@ pub fn react<H: LeaseActors + ?Sized>(shot: bool, game: &mut H) {
 }
 /// Instructions - set enemy as intangible and invisible ($A2:B9B3), also active off
 /// screen ($A2:B9BD), or fire rinka ($A2:B9C7), for enemy `k`.
-pub fn instruction<H: LeaseActors + ?Sized>(
-    ea: u32,
-    k: u16,
-    j: EnemyScript,
-    game: &mut H,
-) -> EnemyScript {
-    let runtime = &mut game.lease();
+pub fn instruction(ea: u32, k: u16, j: EnemyScript, runtime: &mut impl ActorLease) -> EnemyScript {
     let key = Key::from_legacy(k);
     if ea == 0xa2_b9c7 {
         runtime.edit_actor(key, Native, |actor| {

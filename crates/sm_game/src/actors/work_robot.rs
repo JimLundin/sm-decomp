@@ -116,8 +116,7 @@ pub fn initialize_deactivated<H: LeaseActors + ?Sized>(game: &mut H) {
     }
 }
 /// Main AI - work robot ($A8:CC36): fall, accelerating.
-pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
-    let runtime = &mut game.lease();
+pub fn main_ai(runtime: &mut impl ActorLease) {
     let key = combat::current(runtime);
     let actor = runtime.resolve_actor(key, Native);
     let speed = ((u32::from(actor.pre_instruction) << 16) | u32::from(actor.variables[4])) as i32;
@@ -132,8 +131,7 @@ pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
     }
 }
 /// Enemy touch - work robot ($A8:D174): push Samus away 4 px.
-pub fn touch<H: LeaseActors + ?Sized>(game: &mut H) {
-    let runtime = &mut game.lease();
+pub fn touch(runtime: &mut impl ActorLease) {
     let key = combat::current(runtime);
     let x = runtime.resolve_actor(key, Native).x.whole;
     let left = (x as i16).wrapping_sub(runtime.word(W::SAMUS_X_POS) as i16) < 0;

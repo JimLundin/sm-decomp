@@ -265,8 +265,7 @@ pub fn crawl<H: LeaseActors + ?Sized>(raw: u16, axis: Axis, turn: u32, game: &mu
     }
 }
 /// Initialisation AI - yard ($A3:CDE2).
-pub fn initialize<H: LeaseActors + ?Sized>(game: &mut H) {
-    let runtime = &mut game.lease();
+pub fn initialize(runtime: &mut impl ActorLease) {
     let key = combat::current(runtime);
     runtime.edit_actor(key, Native, |actor| {
         actor.pre_instruction = NO_MOVEMENT;
@@ -458,8 +457,7 @@ fn kick(runtime: &mut impl ActorLease, key: Key) {
 }
 /// Enemy touch - yard ($A3:D3B0): kicked when Samus runs into it or it is airborne;
 /// otherwise it hurts her and turns.
-pub fn touch<H: LeaseActors + ?Sized>(game: &mut H) {
-    let runtime = &mut game.lease();
+pub fn touch(runtime: &mut impl ActorLease) {
     let key = combat::current(runtime);
     let yard = slot(key);
     let function = runtime.resolve_actor(key, Native).pre_instruction;
@@ -486,8 +484,7 @@ pub fn touch<H: LeaseActors + ?Sized>(game: &mut H) {
 }
 /// Enemy shot - yard ($A3:D469): power bombs and bombs hurt it; anything else shoots it
 /// into the air ($A3:D557).
-pub fn shot<H: LeaseActors + ?Sized>(game: &mut H) {
-    let runtime = &mut game.lease();
+pub fn shot(runtime: &mut impl ActorLease) {
     let index = usize::from(runtime.word(words::COLLISION_DETECTION_INDEX));
     let kind = runtime.word(word_arrays::PROJECTILE_TYPE + 2 * index) & 0xff00;
     if kind == 0x300 || kind == 0x500 {

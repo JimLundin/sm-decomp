@@ -81,8 +81,7 @@ pub fn cycle_palette<H: LeaseActors + ?Sized>(game: &mut H) {
     );
 }
 /// Initialisation AI - reflec ($A3:DBD3).
-pub fn initialize<H: LeaseActors + ?Sized>(game: &mut H) {
-    let runtime = &mut game.lease();
+pub fn initialize(runtime: &mut impl ActorLease) {
     let key = combat::current(runtime);
     runtime.edit_actor(key, Native, |actor| actor.properties |= BLOCK_PLASMA);
     let axis = runtime.resolve_actor(key, Native).parameters[0];

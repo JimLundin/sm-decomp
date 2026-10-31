@@ -1,14 +1,13 @@
 //! The skree and the metaree, the ceiling divers that drop on Samus and burst
 //! into particles on the ground (bank $A3:88F0-$A3:8B65, $A3:C63E-$A3:C82F).
 //! Was `diving_enemies`.
-use crate::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key, SpawnAccess};
+use crate::actors::access::{AccessMode::Native, ActorKey as Key};
 use crate::actors::api::{self, DeathKind, MovementResult, ShotHandling, VerticalProbeEdge};
 use crate::actors::combat;
-use crate::actors::host::{ActorLease, LeaseActors, abs16};
-use crate::enemy_projectiles::host::{Effects as _, ImportedAliases as _, ShotMember};
+use crate::actors::host::{ActorLease, abs16};
+use crate::enemy_projectiles::host::ShotMember;
 use crate::enemy_projectiles::lifecycle::spawn_from_enemy;
 use crate::enemy_script::EnemyScript;
-use crate::session_access::SessionAccess as _;
 
 /// Which diver.
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -99,8 +98,7 @@ const KIND_BITS: u16 = 0xf00;
 const SUPER_MISSILE: u16 = 0x200;
 
 /// Initialisation AI - metaree ($A3:8960) or skree ($A3:C6AE).
-pub fn initialize<H: LeaseActors + ?Sized>(kind: Kind, game: &mut H) {
-    let runtime = &mut game.lease();
+pub fn initialize(kind: Kind, runtime: &mut impl ActorLease) {
     let key = combat::current(runtime);
     let profile = kind.profile();
     runtime.edit_actor(key, Native, |actor| {
@@ -137,8 +135,7 @@ fn burst(runtime: &mut impl ActorLease, profile: &Profile, mut parameter: u16, c
 }
 /// Main AI - metaree ($A3:8979) or skree ($A3:C6C7): run its function. Was
 /// `advance`.
-pub fn main_ai<H: LeaseActors + ?Sized>(kind: Kind, game: &mut H) {
-    let runtime = &mut game.lease();
+pub fn main_ai(kind: Kind, runtime: &mut impl ActorLease) {
     let key = combat::current(runtime);
     let profile = kind.profile();
     let function = runtime.resolve_actor(key, Native).variables[lane::FUNCTION];
@@ -246,15 +243,13 @@ pub fn main_ai<H: LeaseActors + ?Sized>(kind: Kind, game: &mut H) {
     }
 }
 /// Instruction - set attack ready flag ($A3:8956, $A3:C6A4). Was `ready`.
-pub fn set_attack_ready<H: LeaseActors + ?Sized>(script: EnemyScript, game: &mut H) -> EnemyScript {
-    let runtime = &mut game.lease();
+pub fn set_attack_ready(script: EnemyScript, runtime: &mut impl ActorLease) -> EnemyScript {
     let key = combat::current(runtime);
     runtime.edit_actor(key, Native, |actor| actor.variables[lane::ATTACK_READY] = 1);
     script
 }
 /// Enemy shot - metaree ($A3:8B0F) or skree ($A3:C7F5): burst on death.
-pub fn shot<H: LeaseActors + ?Sized>(kind: Kind, game: &mut H) {
-    let runtime = &mut game.lease();
+pub fn shot(kind: Kind, runtime: &mut impl ActorLease) {
     let profile = kind.profile();
     if kind == Kind::Metaree {
         let key = combat::current(runtime);

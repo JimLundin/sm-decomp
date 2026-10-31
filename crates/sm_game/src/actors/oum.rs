@@ -53,8 +53,7 @@ fn set_instruction_list(runtime: &mut impl ActorLease, oum: i32) {
     }
 }
 /// Initialisation AI - oum ($A2:CCD4).
-pub fn initialize<H: LeaseActors + ?Sized>(game: &mut H) {
-    let runtime = &mut game.lease();
+pub fn initialize(runtime: &mut impl ActorLease) {
     let oum = current_slot(runtime);
     session_slot!(runtime, Oum[oum]; y_speed_index = 0, direction = 0, new_list_index = 0, list_index = 0,
         animation_finished = 0, attack_rotates = 0, var_0a = 0, bounces = BOUNCES, attack_cooldown = ATTACK_COOLDOWN);

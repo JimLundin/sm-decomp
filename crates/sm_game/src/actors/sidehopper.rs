@@ -8,7 +8,6 @@ use crate::actors::layouts::part_view;
 use crate::enemy_projectiles::host::Effects as _;
 use crate::enemy_script::EnemyScript;
 use crate::player_projectiles::content::{self, table};
-use crate::player_projectiles::host::Host as _;
 use crate::session_slot;
 use sm_data::{cartridge::RomImage, enemy_speeds::SpeedTable::Quadratic};
 
@@ -92,14 +91,14 @@ pub fn initial_hop_phase(height: u16, step: u16, image: RomImage) -> u16 {
     }
 }
 /// Initialisation AI - sidehopper / desgeega / super variants ($A3:AB09).
-pub fn initialize<H: LeaseActors + ?Sized>(game: &mut H) {
-    let runtime = &mut game.lease();
+pub fn initialize(runtime: &mut impl ActorLease) {
     runtime.write_slice_le(crate::ram::words::RANDOM_NUMBER, RANDOM_SEED);
     runtime.next_random();
     let hopper = current_slot(runtime);
     session_slot!(runtime, Sidehopper[hopper]; falling = 0, ready_to_hop = 0, hop_table_index = 0);
     let definition = session_slot!(runtime, Sidehopper[hopper].base.enemy_ptr);
-    let variant = runtime.record(0xa0, definition).word(0x2a);
+    let variant =
+        crate::player_projectiles::host::Host::record(runtime, 0xa0, definition).word(0x2a);
     let index = variant.wrapping_mul(2);
     session_slot!(runtime, Sidehopper[hopper].variant_index = index);
     let lists = LANDED_LISTS[upside_down(runtime, hopper)];
@@ -263,8 +262,7 @@ pub fn queue_sound<H: LeaseActors + ?Sized>(script: EnemyScript, game: &mut H) -
     script.offset(1)
 }
 /// Instruction - ready to hop ($A3:AAFE).
-pub fn ready_to_hop<H: LeaseActors + ?Sized>(script: EnemyScript, game: &mut H) -> EnemyScript {
-    let runtime = &mut game.lease();
+pub fn ready_to_hop(script: EnemyScript, runtime: &mut impl ActorLease) -> EnemyScript {
     session_slot!(runtime, Sidehopper[current_slot(runtime)].ready_to_hop = 1);
     script
 }

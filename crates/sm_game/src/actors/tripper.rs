@@ -1,10 +1,10 @@
 //! The tripper and the suspensor platform, the floating platforms that sink
 //! under Samus and rise again (bank $A3:9B7B-$A3:9F2F). Was
 //! `falling_platforms`.
-use crate::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
+use crate::actors::access::{AccessMode::Native, ActorKey as Key};
 use crate::actors::api::{self, MovementResult, ShotHandling, SlopePolicy};
 use crate::actors::combat::{self, current_slot};
-use crate::actors::host::{ActorLease, LeaseActors};
+use crate::actors::host::ActorLease;
 use crate::actors::layouts::part_view;
 use crate::enemy_script::EnemyScript;
 use crate::session_slot;
@@ -99,8 +99,7 @@ fn set_vertical_motion(runtime: &mut impl ActorLease, moving: bool) {
 }
 /// Initialisation AI - suspensor platform ($A3:9C9F, `suspensor`) or tripper
 /// ($A3:9CBA), and their common initialisation AI ($A3:9CCC).
-pub fn initialize<H: LeaseActors + ?Sized>(suspensor: bool, game: &mut H) {
-    let runtime = &mut game.lease();
+pub fn initialize(suspensor: bool, runtime: &mut impl ActorLease) {
     let key = combat::current(runtime);
     let platform = current_slot(runtime);
     if suspensor {
@@ -227,8 +226,7 @@ fn move_y(runtime: &mut impl ActorLease, sinking: bool) {
 /// Main AI - tripper / suspensor platform ($A3:9D16): sink while Samus stands
 /// on it, else rise, moving sideways; a change of direction restarts the
 /// speed. Was `advance`.
-pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
-    let runtime = &mut game.lease();
+pub fn main_ai(runtime: &mut impl ActorLease) {
     let key = combat::current(runtime);
     let platform = current_slot(runtime);
     session_slot!(runtime, Platform[platform].y_movement_function = 0);
@@ -259,8 +257,7 @@ pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
     );
 }
 /// Enemy shot - tripper ($A3:9F08): frozen, it keeps its facing spritemap.
-pub fn shot<H: LeaseActors + ?Sized>(game: &mut H) {
-    let runtime = &mut game.lease();
+pub fn shot(runtime: &mut impl ActorLease) {
     combat::shot_reaction(runtime, ShotHandling::Finalize);
     let key = combat::current(runtime);
     if runtime.resolve_actor(key, Native).frozen != 0 {
@@ -273,12 +270,11 @@ pub fn shot<H: LeaseActors + ?Sized>(game: &mut H) {
 }
 /// Instruction - set moving left or right X movement ($A3:9C6B-$A3:9C8C).
 /// Was `direction`.
-pub fn set_x_movement<H: LeaseActors + ?Sized>(
+pub fn set_x_movement(
     right: bool,
     script: EnemyScript,
-    game: &mut H,
+    runtime: &mut impl ActorLease,
 ) -> EnemyScript {
-    let runtime = &mut game.lease();
     let platform = current_slot(runtime);
     session_slot!(
         runtime,
