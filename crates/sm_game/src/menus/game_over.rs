@@ -41,8 +41,8 @@ fn prepare<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
         return;
     }
     game.queue_sound(2, 1_u8, 6);
-    game.set_hdma_enabled(false);
-    game.clear_hdma();
+    crate::hdma_objects::set_hdma_enabled(false, game);
+    crate::hdma_objects::clear_hdma(game);
     crate::word_transfers!(game, ascending, 256; pause_map(384) <- le(PALETTE_BUFFER, 0));
     crate::word_transfers!(game, ascending, 27; pause_map(640) <- native(0x51));
     menu_tilemap::prepare_graphics(game);
@@ -100,9 +100,9 @@ fn draw_menu<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     let color = u16::from(game.ram().read_byte(crate::ram::bytes::GAMEPLAY_CGWSEL)) << 8;
     game.ram()
         .copy_in(crate::ram::mirror::CGWSEL, &color.to_ne_bytes());
-    game.set_hdma_enabled(false);
-    game.clear_hdma();
-    game.set_hdma_enabled(true);
+    crate::hdma_objects::set_hdma_enabled(false, game);
+    crate::hdma_objects::clear_hdma(game);
+    crate::hdma_objects::set_hdma_enabled(true, game);
     for (register, script) in [(0x32, 0x927d), (0x31, 0x928d)] {
         game.spawn_hdma(0x81, &HdmaObjectDefinition::new(0, register, script));
     }
@@ -177,8 +177,8 @@ fn place_missile<H: Host + ?Sized>(y: u16, game: &mut H) {
 }
 
 fn load_map<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    game.set_hdma_enabled(false);
-    game.clear_hdma();
+    crate::hdma_objects::set_hdma_enabled(false, game);
+    crate::hdma_objects::clear_hdma(game);
     word!(game.GAME_STATE = K_GAME_STATE_5_FILE_SELECT_MAP as u16);
     crate::menu!(game.MenuIndex = 0);
 }

@@ -108,8 +108,8 @@ fn prepare<H: Host + ?Sized>(game: &mut H) {
         return;
     }
     game.queue_sound(2, 1_u8, 6);
-    game.set_hdma_enabled(false);
-    game.clear_hdma();
+    crate::hdma_objects::set_hdma_enabled(false, game);
+    crate::hdma_objects::clear_hdma(game);
     crate::menu!(game.MenuIndex += 1);
     menu_tilemap::prepare_graphics(game);
     scroll! { game, 0; Bg1H, Bg2H, Bg3H, Bg1V, Bg2V, Bg3V }

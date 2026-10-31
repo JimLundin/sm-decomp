@@ -205,7 +205,7 @@ pub fn initial<H: Host + ?Sized>(game: &mut H) {
     GraphicsAsset::Decompress(0x95d713, 0x1a000).load(game);
     game.enable_display_nmi(true);
     crate::screen_fade::set_both(game, 3, 3);
-    game.set_hdma_enabled(true);
+    crate::hdma_objects::set_hdma_enabled(true, game);
     game.clear_palette_effects();
     game.set_palette_effects_enabled(true);
     word!(game.DOOR_DEF_PTR = 0);
@@ -413,8 +413,8 @@ pub fn boom_initial<H: Host + ?Sized>(game: &mut H) {
     word!(game.CINEMATIC_Y = -112i32 as u16);
     word!(game.MODE7_ANGLE = 0);
     word!(game.MODE7_ZOOM = 256);
-    game.set_hdma_enabled(false);
-    game.clear_hdma();
+    crate::hdma_objects::set_hdma_enabled(false, game);
+    crate::hdma_objects::clear_hdma(game);
     game.clear_palette_effects();
     game.set_palette_effects_enabled(true);
     clear_cinematic_background(0x2f, game);
@@ -477,7 +477,7 @@ pub fn boom_explosions<H: Host + ?Sized>(game: &mut H) {
             game.POWER_BOMB_EXPLOSION_Y_POS =
                 (word!(game.REG_M7Y)).wrapping_sub(word!(game.CINEMATIC_Y))
         );
-        game.set_hdma_enabled(true);
+        crate::hdma_objects::set_hdma_enabled(true, game);
         game.spawn_power_bomb();
         game.ram().write_byte(0x6f, 16);
         game.ram().write_byte(0x72, 55);
@@ -531,7 +531,7 @@ pub fn boom_fade_out<H: Host + ?Sized>(game: &mut H) {
             word!(game.SAMUS_AUTO_CANCEL_HUD_ITEM_INDEX = 0);
             game.set_invincibility_timer(0);
             game.set_knockback_timer(0);
-            game.clear_hdma();
+            crate::hdma_objects::clear_hdma(game);
             game.disable_scanline_irq();
             word!(game.FX_LAYER_BLENDING_CONFIG_A = 0);
             game.ram().write_byte(0x6e, 0);
@@ -566,8 +566,8 @@ pub fn zebes_initial<H: Host + ?Sized>(game: &mut H) {
     word!(game.CINEMATIC_Y = 0);
     word!(game.MODE7_ANGLE = 0);
     word!(game.MODE7_ZOOM = 256);
-    game.set_hdma_enabled(false);
-    game.clear_hdma();
+    crate::hdma_objects::set_hdma_enabled(false, game);
+    crate::hdma_objects::clear_hdma(game);
     game.clear_palette_effects();
     game.set_palette_effects_enabled(true);
     game.ram().write_byte(mirror::MOSAIC, 0x81);
