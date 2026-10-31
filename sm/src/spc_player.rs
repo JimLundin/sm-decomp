@@ -205,7 +205,7 @@ mod sequencer {
             })
             .setup_echo(1);
             finish_initialization(
-                &mut self.state.reg_FLG,
+                &mut self.state.reg_flg,
                 &mut self.state.tempo,
                 &mut self.state.timer_cycles,
                 |register, value| Self::write(dsp, register, value),
@@ -233,16 +233,16 @@ mod sequencer {
             self.dsp.get_mut().dsp.state.write_samples(samples);
         }
         fn commit_registers(&mut self) {
-            Self::write(&self.dsp, super::KOF as u8, self.state.key_OFF);
+            Self::write(&self.dsp, super::KOF as u8, self.state.key_off);
             Self::write(&self.dsp, super::PMON as u8, 0);
-            Self::write(&self.dsp, super::NON as u8, self.state.reg_NON);
+            Self::write(&self.dsp, super::NON as u8, self.state.reg_non);
             Self::write(&self.dsp, super::KOF as u8, 0);
-            Self::write(&self.dsp, super::KON as u8, self.state.key_ON);
+            Self::write(&self.dsp, super::KON as u8, self.state.key_on);
             if self.state.echo_stored_time & 0x80 == 0 {
-                Self::write(&self.dsp, super::FLG as u8, self.state.reg_FLG);
-                if self.state.echo_stored_time == self.state.echo_parameter_EDL {
-                    Self::write(&self.dsp, super::EON as u8, self.state.reg_EON);
-                    Self::write(&self.dsp, super::EFB as u8, self.state.reg_EFB);
+                Self::write(&self.dsp, super::FLG as u8, self.state.reg_flg);
+                if self.state.echo_stored_time == self.state.echo_parameter_edl {
+                    Self::write(&self.dsp, super::EON as u8, self.state.reg_eon);
+                    Self::write(&self.dsp, super::EFB as u8, self.state.reg_efb);
                     Self::write(
                         &self.dsp,
                         super::EVOLR as u8,
@@ -255,8 +255,8 @@ mod sequencer {
                     );
                 }
             }
-            self.state.key_ON = 0;
-            self.state.key_OFF = self.state.key_ON;
+            self.state.key_on = 0;
+            self.state.key_off = self.state.key_on;
         }
         fn advance(&mut self, ticks: u8) {
             let mut total =
@@ -266,7 +266,7 @@ mod sequencer {
                 for group in 0..3 {
                     self.command(group);
                 }
-                if self.state.echo_stored_time != self.state.echo_parameter_EDL {
+                if self.state.echo_stored_time != self.state.echo_parameter_edl {
                     self.state.echo_stored_time = self.state.echo_stored_time.wrapping_add(1);
                 }
             }
@@ -489,7 +489,7 @@ mod sequencer {
                 let mask = 1u8 << voice;
                 state.is_chan_on |= mask;
                 state.cur_chan_bit &= !mask;
-                state.reg_EON &= !mask;
+                state.reg_eon &= !mask;
                 Self::regs(state, group).enabled_voices |= mask;
                 Self::allocated_channel(state, group, index).voice_bitset = mask;
                 Self::allocated_channel(state, group, index).channel_mask = !mask;
@@ -686,7 +686,7 @@ mod sequencer {
                 sr,
                 &mut state.is_chan_on,
                 &mut state.cur_chan_bit,
-                &mut state.key_OFF,
+                &mut state.key_off,
             ))
         }
         pub(super) fn begin_slot(
@@ -704,9 +704,9 @@ mod sequencer {
             Self::begin(
                 ram,
                 s,
-                &mut state.key_OFF,
+                &mut state.key_off,
                 &mut state.cur_chan_bit,
-                &mut state.reg_NON,
+                &mut state.reg_non,
             )
         }
         pub(super) fn restore_voice(
@@ -765,7 +765,7 @@ mod sequencer {
                 2 => &state.sfx_chans_3[index],
                 _ => unreachable!(),
             };
-            Self::finish_note(s, &mut state.key_ON, write);
+            Self::finish_note(s, &mut state.key_on, write);
         }
 
         pub fn reset(
@@ -1029,8 +1029,8 @@ mod sequencer {
             value,
             state.percussion_base_id,
             state.is_chan_on & state.cur_chan_bit != 0,
-            &mut state.reg_FLG,
-            &mut state.reg_NON,
+            &mut state.reg_flg,
+            &mut state.reg_non,
             state.cur_chan_bit,
             || state.channel[channel].index,
             write,
@@ -1165,7 +1165,7 @@ mod sequencer {
             next_byte(self.ram, self.origin, &mut self.state.channel[channel])
         }
         pub fn setup_echo(&mut self, mut value: u8) {
-            self.state.echo_parameter_EDL = value;
+            self.state.echo_parameter_edl = value;
             if value != self.state.last_written_edl {
                 value = (self.state.last_written_edl & 0xf) ^ 0xff;
                 if self.state.echo_stored_time & 0x80 != 0 {
@@ -1176,13 +1176,13 @@ mod sequencer {
                 (self.write)(13, 0);
                 (self.write)(60, 0);
                 (self.write)(44, 0);
-                (self.write)(108, self.state.reg_FLG | 0x20);
-                self.state.last_written_edl = self.state.echo_parameter_EDL;
-                (self.write)(125, self.state.echo_parameter_EDL);
+                (self.write)(108, self.state.reg_flg | 0x20);
+                self.state.last_written_edl = self.state.echo_parameter_edl;
+                (self.write)(125, self.state.echo_parameter_edl);
             }
             (self.write)(
                 109,
-                ((u16::from(self.state.echo_parameter_EDL) * 8 ^ 0xff) + 0x16) as u8,
+                ((u16::from(self.state.echo_parameter_edl) * 8 ^ 0xff) + 0x16) as u8,
             );
         }
         fn write_volume(&mut self, channel: usize, value: u16) {
@@ -1269,9 +1269,9 @@ mod sequencer {
             }
             if effect == 0xf7 {
                 self.setup_echo(arg);
-                self.state.reg_EFB = self.byte(channel);
+                self.state.reg_efb = self.byte(channel);
                 let selector = self.byte(channel);
-                self.state.byte_4B1 = selector;
+                self.state.byte_4b1 = selector;
                 // The SPC indexes live APU RAM with the low byte of selector * 8.
                 let mut offset = selector.wrapping_mul(8);
                 for tap in 0..8 {
@@ -1365,15 +1365,15 @@ mod sequencer {
                 0xf3 => c.pitch_envelope_num_ticks = 0,
                 0xf4 => c.fine_tune = arg,
                 0xf5 => {
-                    p.reg_EON = arg;
+                    p.reg_eon = arg;
                     p.echo_volume_left = u16::from(next_byte(ram, origin, c)) << 8;
                     p.echo_volume_right = u16::from(next_byte(ram, origin, c)) << 8;
-                    p.reg_FLG &= !0x20;
+                    p.reg_flg &= !0x20;
                 }
                 0xf6 => {
                     p.echo_volume_left = 0;
                     p.echo_volume_right = 0;
-                    p.reg_FLG |= 0x20;
+                    p.reg_flg |= 0x20;
                 }
                 0xf8 => {
                     p.echo_volume_fade_ticks = arg;
@@ -1403,11 +1403,11 @@ mod sequencer {
                 0xfc => c.cutk = arg.wrapping_add(1),
                 0xfd => {
                     p.fast_forward = arg.wrapping_add(1);
-                    p.key_OFF |= !p.is_chan_on;
+                    p.key_off |= !p.is_chan_on;
                 }
                 0xfe => {
                     p.fast_forward = arg;
-                    p.key_OFF |= !p.is_chan_on;
+                    p.key_off |= !p.is_chan_on;
                 }
                 _ => unreachable!(), // Invalid indices already fail in effect_length.
             }
@@ -1634,7 +1634,7 @@ mod sequencer {
             c.tremolo_count = 0;
             c.tremolo_hold_count = 0;
             self.state.vol_dirty |= self.state.cur_chan_bit;
-            self.state.key_ON |= self.state.cur_chan_bit;
+            self.state.key_on |= self.state.cur_chan_bit;
             c.pitch_slide_length = c.pitch_envelope_num_ticks;
             if c.pitch_slide_length != 0 {
                 c.pitch_slide_delay_left = c.pitch_envelope_delay;
@@ -1653,7 +1653,7 @@ mod sequencer {
             self.state.music_ptr_toplevel =
                 self.word((0x5820 + (i32::from(song) - 1) * 2) as usize);
             self.state.counter_sf0c = 2;
-            self.state.key_OFF |= self.state.is_chan_on ^ 0xff;
+            self.state.key_off |= self.state.is_chan_on ^ 0xff;
         }
         fn next_phrase(&mut self) -> bool {
             let mut table;
@@ -1711,7 +1711,7 @@ mod sequencer {
             let command = self.state.input_ports[0];
             self.state.input_ports[0] = 255;
             if command == 0xf0 {
-                self.state.key_OFF |= !self.state.is_chan_on;
+                self.state.key_off |= !self.state.is_chan_on;
                 return;
             }
             if command != 0xf1 && command != 255 && command != self.state.port_to_snes[0] {

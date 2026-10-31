@@ -42,7 +42,7 @@ pub fn install_bank(
     state.input_ports[0] = state.input_ports[1];
     state.music_ptr_toplevel = u16::from_ne_bytes([ram.read_at(0x581e), ram.read_at(0x581f)]);
     state.counter_sf0c = 2;
-    state.key_OFF |= !state.is_chan_on;
+    state.key_off |= !state.is_chan_on;
 }
 
 /// One synchronous physical observation or store; no routing link is cached.

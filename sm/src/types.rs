@@ -452,8 +452,8 @@ crate::typed_struct! {
         pub addr0, addr1, lfsr_value: u16;
         pub is_chan_on, fast_forward: u8;
         pub word_20, music_ptr_toplevel: u16;
-        pub block_count, sfx_timer_accum, chn, key_ON, key_OFF, cur_chan_bit, reg_FLG, reg_NON,
-            reg_EON, echo_stored_time, echo_parameter_EDL, reg_EFB, global_transposition,
+        pub block_count, sfx_timer_accum, chn, key_on, key_off, cur_chan_bit, reg_flg, reg_non,
+            reg_eon, echo_stored_time, echo_parameter_edl, reg_efb, global_transposition,
             main_tempo_accum: u8;
         pub tempo: u16;
         pub tempo_fade_num_ticks, tempo_fade_final: u8;
@@ -464,8 +464,8 @@ crate::typed_struct! {
         pub echo_volume_left, echo_volume_right, echo_volume_fade_add_left,
             echo_volume_fade_add_right: u16;
         pub echo_volume_fade_ticks, echo_volume_fade_target_left, echo_volume_fade_target_right: u8;
-        pub p_echoBuffer, memset_ptr: u16;
-        pub memset_ctr, disable_sfx2, byte_4B1: u8;
+        pub echo_buffer_ptr, memset_ptr: u16;
+        pub memset_ctr, disable_sfx2, byte_4b1: u8;
         pub channel: [Channel; 8];
         pub sfx1, sfx2, sfx3: SfxRegs;
         pub sfx_chans_1: [SfxChan; 4];

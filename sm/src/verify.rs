@@ -1566,9 +1566,9 @@ fn sfx_native_note_keeps_captured_slot_and_literal_programming() {
     state.sfx1.init_flag = 255;
     state.is_chan_on = 4;
     state.cur_chan_bit = 255;
-    state.reg_NON = 255;
-    state.key_ON = 0x80;
-    state.key_OFF = 0x20;
+    state.reg_non = 255;
+    state.key_on = 0x80;
+    state.key_off = 0x20;
     for s in &mut state.sfx_chans_1 {
         s.disable = 255;
     }
@@ -1621,10 +1621,10 @@ fn sfx_native_note_keeps_captured_slot_and_literal_programming() {
     );
     assert_eq!(
         (
-            state.key_ON,
-            state.key_OFF,
+            state.key_on,
+            state.key_off,
             state.cur_chan_bit,
-            state.reg_NON,
+            state.reg_non,
             state.is_chan_on
         ),
         (0x84, 0x20, 0xfb, 0xfb, 4)
@@ -1654,8 +1654,8 @@ fn sfx_native_reset_rejection_keeps_history_and_reset_prefix() {
     state.sfx1.enabled_voices = 4;
     state.is_chan_on = 4;
     state.cur_chan_bit = 0;
-    state.key_OFF = 0x20;
-    state.key_ON = 0x80;
+    state.key_off = 0x20;
+    state.key_on = 0x80;
     for s in &mut state.sfx_chans_1 {
         s.disable = 255;
     }
@@ -1699,8 +1699,8 @@ fn sfx_native_reset_rejection_keeps_history_and_reset_prefix() {
         (
             state.is_chan_on,
             state.cur_chan_bit,
-            state.key_OFF,
-            state.key_ON
+            state.key_off,
+            state.key_on
         ),
         (0, 4, 0x24, 0x80)
     );
@@ -1741,7 +1741,7 @@ fn sfx_native_pan_note_keeps_programmed_instrument_prefix() {
     let ram = player.ram.clone();
     let state = &mut player.state;
     state.sfx1.init_flag = 255;
-    state.key_ON = 0x80;
+    state.key_on = 0x80;
     for s in &mut state.sfx_chans_1 {
         s.disable = 255;
     }
@@ -1799,7 +1799,7 @@ fn sfx_native_pan_note_keeps_programmed_instrument_prefix() {
     );
     let s = &state.sfx_chans_1[0];
     assert_eq!(
-        (s.ptr_idx, s.note, s.subnote, s.instr_timer, state.key_ON),
+        (s.ptr_idx, s.note, s.subnote, s.instr_timer, state.key_on),
         (5, 24, 0, 7, 0x80)
     );
     assert_eq!(&player.dsp.state.ram[0x14..0x18], &[3, 0x81, 0x23, 0x45]);
