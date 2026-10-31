@@ -9,16 +9,17 @@ use std::panic::{AssertUnwindSafe, catch_unwind};
 pub(crate) fn capture(run: fn(Operation, &mut Game) -> Option<u8>) -> Option<Vec<u8>> {
     let result = catch_unwind(AssertUnwindSafe(|| unsafe {
         let mut game = initialized();
-        let image = RomImage::zeroed(0x400000);
+        let mut image = vec![0; 0x400000];
         // Two literal bytes followed by an absolute two-byte reference to the
         // decoder's starting byte offset (5000 for the actual CRE VRAM load).
         bytes(
-            &image,
+            &mut image,
             0xb98000,
             &[0x01, 0x91, 0x92, 0x81, 0x00, 0x00, 0xff],
         );
-        literal(&image, 0x808000, &[0xa1, 0xa2]);
-        literal(&image, 0x809000, &[0xb1, 0xb2]);
+        literal(&mut image, 0x808000, &[0xa1, 0xa2]);
+        literal(&mut image, 0x809000, &[0xb1, 0xb2]);
+        let image = RomImage::from(image);
         game.loaded_rom = Some(image.clone());
         game.ram().copy_in(0x7c3, &[0x00, 0x80, 0x80]);
         game.ram().copy_in(0x7c6, &[0x00, 0x90, 0x80]);
@@ -51,14 +52,7 @@ pub(crate) fn capture(run: fn(Operation, &mut Game) -> Option<u8>) -> Option<Vec
         let mut output = b"RMBG1".to_vec();
         output.extend_from_slice(&37u32.to_le_bytes());
         record(&mut output, 0, &snapshot(&mut game));
-        crate::room_background_observer::begin(
-            37,
-            writes,
-            Vec::new(),
-            image.clone(),
-            image,
-            Vec::new(),
-        );
+        crate::room_background_observer::begin(37, writes, Vec::new(), image, Vec::new());
         let actual = catch_unwind(AssertUnwindSafe(|| run(Operation::Tiles, &mut game)));
         let trace = crate::room_background_observer::finish();
         let returned = actual.expect("actual initial tiles call failed");
