@@ -176,10 +176,6 @@ impl BossEffects for Game {
         crate::game::player_projectiles::reset(self);
     }
 
-    fn scratch_multiply(&mut self, a: u16, b: u16) -> u32 {
-        Game::multiply_with_scratch(self, a, b)
-    }
-
     fn correct_previous_position(&mut self) {
         correct_previous_position(self);
     }

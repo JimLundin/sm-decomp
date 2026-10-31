@@ -6,7 +6,7 @@
 use crate::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 use crate::actors::api::{self, Axis, MovementResult, SlopePolicy};
 use crate::actors::combat;
-use crate::actors::host::{ActorLease, BossEffects as _, LeaseActors};
+use crate::actors::host::{ActorLease, LeaseActors};
 use crate::actors::layouts::part_view;
 use crate::enemy_script::EnemyScript;
 use crate::geometry::Point;
@@ -280,7 +280,10 @@ fn slope_x_velocity(runtime: &mut impl ActorLease) -> i32 {
         } else {
             speed
         };
-        let product = runtime.foreign(|game| game.scratch_multiply(magnitude, scale)) as i32;
+        let product = runtime
+            .session_mut()
+            .multiply_scratch
+            .multiply(magnitude, scale) as i32;
         if speed & SIGN != 0 { -product } else { product }
     } else {
         i32::from(runtime.resolve_actor(key, Native).variables[0] as i16) << 8

@@ -43,8 +43,6 @@ pub trait Host:
     fn grapple_unreachable(&mut self) -> bool;
     /// Run a Samus pose command, as the original's command call.
     fn grapple_pose_command(&mut self, command: u16) -> u16;
-    /// Multiply through the hardware scratch words at $05E9/$05EB.
-    fn multiply_with_scratch(&mut self, a: u16, b: u16) -> u32;
     /// Samus's bottom edge under the current pose.
     fn player_bottom(&self) -> u16;
     /// Settle the owned grapple state after the beam connects or releases.
@@ -497,7 +495,11 @@ pub fn advance_swing<H: Host + ?Sized>(game: &mut H) -> u8 {
     } else {
         velocity
     };
-    let distance = (game.multiply_with_scratch(magnitude, scale) >> 8) as u16;
+    let distance = (game
+        .session_mut()
+        .multiply_scratch
+        .multiply(magnitude, scale)
+        >> 8) as u16;
     if distance == 0 {
         return 0;
     }
@@ -567,7 +569,10 @@ pub fn launch_from_swing<H: Host + ?Sized>(game: &mut H) {
         2u16.wrapping_mul(game.session().player.swing.angular_velocity)
     };
     let sample = SINE_COSINE[usize::from(game.grapple_angle()) + 64];
-    let vertical = game.multiply_with_scratch(sample.unsigned_abs(), magnitude);
+    let vertical = game
+        .session_mut()
+        .multiply_scratch
+        .multiply(sample.unsigned_abs(), magnitude);
     word_transfers!(game, ascending, 1;
         native(ram_words::SAMUS_Y_SUBSPEED) <- value(vertical as u16),
         native(ram_words::SAMUS_Y_SPEED) <- value((vertical >> 16) as u16));
@@ -577,7 +582,10 @@ pub fn launch_from_swing<H: Host + ?Sized>(game: &mut H) {
     let sample = abs16(
         SINE_COSINE[usize::from(game.grapple_angle().wrapping_sub(adjustment as u8)) + 64] as u16,
     );
-    let horizontal = game.multiply_with_scratch(sample, magnitude);
+    let horizontal = game
+        .session_mut()
+        .multiply_scratch
+        .multiply(sample, magnitude);
     word_transfers!(game, ascending, 1;
         native(ram_words::SAMUS_X_BASE_SUBSPEED) <- value(horizontal as u16),
         native(ram_words::SAMUS_X_BASE_SPEED) <- value((horizontal >> 16) as u16));
