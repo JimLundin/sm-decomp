@@ -141,12 +141,16 @@ pub trait TileHost {
     fn request_flag(&mut self, half: Half) -> Result<(), Self::Error>;
     fn request_written(&mut self, half: Half, pointer: u16) -> Result<(), Self::Error>;
 }
-pub fn queue_body_tiles<H: TileHost>(host: &mut H) -> Result<(), H::Error> {
+/// The tiles definition of Samus's current pose and animation frame ($92:8000).
+pub fn definition<H: TileHost>(host: &mut H) -> Result<H::Table, H::Error> {
     let table = host.table(TileTable::Pose)?;
     let pose = host.pose()?;
     let base = table.native_word(usize::from(pose) * 2)?;
     let cursor = base.wrapping_add(host.frame()?.wrapping_mul(4));
-    let definition = host.definition(cursor)?;
+    host.definition(cursor)
+}
+pub fn queue_body_tiles<H: TileHost>(host: &mut H) -> Result<(), H::Error> {
+    let definition = definition(host)?;
     let top_offset = u16::from(definition.byte(1)?) * 7;
     let top_table = host.table(TileTable::Top)?;
     let top_index = definition.byte(0)?;

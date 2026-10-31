@@ -186,7 +186,8 @@ pub fn close_door(c: &mut (impl Host + crate::room_entry::content::EntryContent)
         let door = c.capture_closing_door(&exit);
         c.session_mut().spawn_scratch.coordinates =
             u16::from_le_bytes(door.closing_coordinates_native().to_ne_bytes());
-        c.session_mut().spawn_scratch.argument = 0;
+        // The spawn reads its room argument from $8F:0016, the direct-page scratch word $16,
+        // which still holds whatever its last writer left there.
         spawn(
             c,
             SpawnSource::Room {
