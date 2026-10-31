@@ -206,7 +206,6 @@ start_frame = 0
 frames = 3987
 expect = ["boss:crocomire", "room:A98D", "state:8"]
 after_expectations = 120
-pending = "awaiting the seeds-v1-reseeded-bf1451e13f4e2680 ci-data upload"
 
 [[segment]]
 id = "boss-phantoon"
@@ -476,7 +475,6 @@ input_sha256 = "98d50c95f90c4bbd829fad9d16ccb58776dd20f7ea8f73f443a60fca3e6d283b
 start_frame = 0
 frames = 1470
 expect = ["door:A8B9", "door:A75D", "door:A815", "door:A7DE"]
-pending = "awaiting the seeds-v1-reseeded-bf1451e13f4e2680 ci-data upload"
 
 # Optional navigation rows; Power Bomb acquisition is covered by the required item row.
 # They split the old any% window's doors over 100% seeds. The elevator up from
@@ -491,7 +489,6 @@ input_sha256 = "1ec2b020f79e3f5e8feca667f7f9727b95c1181d6972b0825d9a7f7358133b85
 start_frame = 0
 frames = 345
 expect = ["door:A6A1"]
-pending = "awaiting the seeds-v1-reseeded-bf1451e13f4e2680 ci-data upload"
 
 # Red Tower's bottom (seed 176; recipe red-tower-refill-door) into the refill room:
 [[segment]]
@@ -503,7 +500,6 @@ input_sha256 = "644ad5b2703895704516c4476d079b0be4ab23a3659bf475f8555be875010ac3
 start_frame = 0
 frames = 413
 expect = ["door:A618"]
-pending = "awaiting the seeds-v1-reseeded-bf1451e13f4e2680 ci-data upload"
 
 # The Power Bomb room's door (seed 178; release --prefix-frames 328 --set frames=60):
 [[segment]]
@@ -515,7 +511,6 @@ input_sha256 = "b386b720f57d268554f805a8651ef0c49315d24fabc81d9a9447fc285c6308d8
 start_frame = 0
 frames = 388
 expect = ["door:A3AE"]
-pending = "awaiting the seeds-v1-reseeded-bf1451e13f4e2680 ci-data upload"
 
 [[segment]]
 id = "item-wave"
@@ -700,7 +695,6 @@ start_frame = 0
 frames = 1110
 require_hit = ["coroutine.plm.message.completed"]
 expect = ["pickup:reserve", "room:AC5A"]
-pending = "awaiting the seeds-v1-reseeded-bf1451e13f4e2680 ci-data upload"
 
 # Ceres (seed 5; recipe ceres-ridley-door): through the door to Ridley's room.
 [[segment]]
@@ -713,7 +707,6 @@ start_frame = 0
 frames = 373
 expect = ["door:E0B5"]
 after_expectations = 120
-pending = "awaiting the seeds-v1-reseeded-bf1451e13f4e2680 ci-data upload"
 
 [[segment]]
 id = "elevator-traversal"
@@ -880,7 +873,6 @@ start_frame = 3851
 frames = 4
 require_hit = ["eproj.pre.executed", "eproj.spawn.initialized"]
 expect = ["room:A98D", "state:8"]
-pending = "awaiting the seeds-v1-reseeded-bf1451e13f4e2680 ci-data upload"
 
 # The melt's second frame, as the old any% window at 169057.
 [[segment]]
@@ -892,7 +884,6 @@ input_sha256 = "96a08b0ea95ab531661b800c84e3544a003cc059f0335ef26088482a89485a32
 start_frame = 1890
 frames = 4
 expect = ["room:A98D", "state:8"]
-pending = "awaiting the seeds-v1-reseeded-bf1451e13f4e2680 ci-data upload"
 
 # The wall's eight debris projectiles spawn at step 3525.
 [[segment]]
@@ -905,7 +896,6 @@ start_frame = 3525
 frames = 4
 expect = ["room:A98D", "state:8"]
 require_hit = ["eproj.spawn.initialized"]
-pending = "awaiting the seeds-v1-reseeded-bf1451e13f4e2680 ci-data upload"
 
 # Preserve the room setup accumulator in the projectile spawn parameter.
 # Explicit seed and distributed checkpoint fields cannot be combined; compatible internal checkpoints may be reused.
@@ -1169,7 +1159,6 @@ input_sha256 = "c4aae665775e64a687d8cf980bd5494715a5f278fa7df4285ae388a241220dc3
 start_frame = 0
 frames = 1060
 expect = ["state:8"]
-pending = "awaiting the seeds-v1-reseeded-bf1451e13f4e2680 ci-data upload"
 
 # Coverage rows for gameplay the 100% room chain does not reach.
 # tools/authored_inputs.py writes the authored inputs; see its recipes.
