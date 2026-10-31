@@ -56,9 +56,8 @@ def selected_rows(args):
         if (not isinstance(row.get("checkpoint"), str)
                 or not re.fullmatch(r"[A-Za-z0-9_-]+\.smvchk", row["checkpoint"])
                 or not isinstance(row.get("checkpoint_sha256"), str)
-                or not re.fullmatch(r"[0-9a-f]{64}", row["checkpoint_sha256"])
-                or "seed" in row or "seed_sha256" in row):
-            raise ValueError("invalid checkpoint name/hash pair or combined seed: " + row["id"])
+                or not re.fullmatch(r"[0-9a-f]{64}", row["checkpoint_sha256"])):
+            raise ValueError("invalid checkpoint name/hash pair: " + row["id"])
     return selected
 
 

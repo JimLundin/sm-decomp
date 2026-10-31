@@ -470,8 +470,8 @@ def run_corpus(root, args):
                     or not isinstance(digest, str) or len(digest) != 64
                     or any(c not in "0123456789abcdef" for c in digest)):
                 raise ValueError(f"corpus {name}: checkpoint requires a flat slug.smvchk and lowercase SHA-256")
-            if "seed" in segment or "seed_sha256" in segment:
-                raise ValueError(f"corpus {name}: checkpoint requires boot-authored inputs, not a seed")
+            # A seeded checkpoint binds its seed payload: the DLL rejects it under any other
+            # seed, and a rejected one regenerates its prefix from the seed, not from boot.
         if "pending" in segment:
             if not isinstance(segment["pending"], str) or not segment["pending"]:
                 raise ValueError(f"corpus {name}: pending requires a reason")
