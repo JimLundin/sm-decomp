@@ -54,7 +54,8 @@ fn calculate_swoop_y_positions<L: Lease>(game: &mut L) {
     session_slot!(game, Draygon[BODY](x_speed, x_subspeed) = speed);
     write_y_position(index, session_slot!(game, Draygon[BODY].base.y_pos), game);
     session_slot!(game, Draygon[BODY]; function_timer = index, swoop_duration = index);
-    word!(game.REMOVED_VAR_E26 = index);
+    // The swoop's speed, last Y position and index stay in $0E22..$0E26.
+    word! {game; REMOVED_VAR_E22 = velocity; REMOVED_VAR_E24 = height; REMOVED_VAR_E26 = index;}
 }
 /// Draygon body function - swoop right ($A5:87F4) or left ($A5:89B3) - setup.
 /// Was `begin`.

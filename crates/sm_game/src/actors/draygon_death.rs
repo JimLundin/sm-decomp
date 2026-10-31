@@ -197,6 +197,7 @@ pub fn drift_to_death_spot<L: Lease>(game: &mut L) {
         let angle = u16::from(session_slot!(byte game, Draygon[BODY].death_angle[0]));
         game.direction_step(angle, 1)
     };
+    crate::actors::draygon_grab::store_speeds(vector, game);
     let scratch = u16::from(session_slot!(byte game, Draygon[BODY].death_angle[0]));
     game.set_step_scratch(scratch);
     let angle = u16::from(session_slot!(byte game, Draygon[BODY].death_angle[0]));
@@ -236,7 +237,9 @@ pub fn wait_for_evirs<L: Lease>(game: &mut L) {
     session_slot!(game, Draygon[BODY].function_timer, |old| old
         .wrapping_sub(1));
     if session_slot!(game, Draygon[BODY].function_timer) != 0 {
-        game.foreign(|game| game.draygon_motion(0));
+        // Moving left, the evirs also take $0E24, whatever was left there ($A5:A01C).
+        let bias = word!(game.REMOVED_VAR_E24);
+        game.foreign(|game| game.draygon_motion(bias));
     } else {
         session_slot!(
             game,
@@ -248,10 +251,9 @@ pub fn wait_for_evirs<L: Lease>(game: &mut L) {
 /// until buried, then delete Draygon, set its boss bit and drop its rewards.
 /// Was `sink`.
 pub fn buried_by_evirs<L: Lease>(game: &mut L) {
-    game.foreign(|game| {
-        game.draygon_death_bubble();
-        game.draygon_motion(0);
-    });
+    game.foreign(|game| game.draygon_death_bubble());
+    let bias = word!(game.REMOVED_VAR_E24);
+    game.foreign(|game| game.draygon_motion(bias));
     session_slot!(game, Draygon[BODY].base.y_pos, |old| old.wrapping_add(1));
     if session_slot!(game, Draygon[BODY].base.y_pos).wrapping_sub(BURIED_Y) & SIGN == 0 {
         session_slot!(game, Draygon[BODY].base; current_instruction = list::DELETE, instruction_timer = 1);

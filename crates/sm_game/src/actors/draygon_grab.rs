@@ -64,11 +64,19 @@ const DUST_CLOUD_Y: u16 = 0x10;
 const QUARTER_TURN: u8 = 0x40;
 
 /// Move 2 px a frame along the angle to (`dx`, `dy`).
+/// Leave a step's X and Y speeds in $0E24.$0E26 and $0E28.$0E2A, as the
+/// original passes them to its move routine.
+pub(crate) fn store_speeds<S: BossState>(vector: crate::geometry::Vector32, game: &mut S) {
+    word! {game;
+        REMOVED_VAR_E24 = (vector.x >> 16) as u16; REMOVED_VAR_E26 = vector.x as u16;
+        REMOVED_VAR_E28 = (vector.y >> 16) as u16; REMOVED_VAR_E2_A = vector.y as u16;
+    }
+}
 fn pursue<S: BossState>(dx: u16, dy: u16, game: &mut S) {
     let angle = QUARTER_TURN.wrapping_sub(angle_from_delta(dx, dy) as u8) as u16;
     game.set_step_scratch(angle);
     let vector = game.direction_step(angle, 2);
-    word!(game.REMOVED_VAR_E26 = vector.x as u16);
+    store_speeds(vector, game);
     game.step_along(angle, vector);
 }
 /// While the grapple is connected to a block, flash and run the hurt AI.
