@@ -203,6 +203,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/windows-native
+      - name: Restore the Cargo target directory
+        # Keyed on the native archives' sources as well: those archives are rebuilt
+        # every run, and a checkout's fresh timestamps make Cargo recompile and
+        # relink the workspace crates, so only dependencies and unchanged
+        # incremental code are reused.
+        uses: actions/cache/restore@v4
+        with:
+          path: target
+          key: cargo-target-${{ github.job }}-${{ hashFiles('Cargo.lock', 'rust-toolchain.toml', 'sm/**/*.c', 'sm/**/*.h', 'tools/install_lakesnes.py', 'tools/install_native_*.py', '.github/actions/windows-native/action.yml') }}-${{ github.sha }}
+          restore-keys: cargo-target-${{ github.job }}-${{ hashFiles('Cargo.lock', 'rust-toolchain.toml', 'sm/**/*.c', 'sm/**/*.h', 'tools/install_lakesnes.py', 'tools/install_native_*.py', '.github/actions/windows-native/action.yml') }}-
       - name: Build
         run: |
           foreach ($archive in @('sm_desktop', 'lakesnes_cpu', 'lakesnes_backend', 'sm_config', 'sm_stb_image')) {
@@ -212,6 +222,12 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Cargo build failed' }
           cargo build --release --locked -p sm_app --bin sm
           if ($LASTEXITCODE -ne 0) { throw 'Desktop build failed' }
+      - name: Save the Cargo target directory
+        if: github.event_name != 'pull_request'
+        uses: actions/cache/save@v4
+        with:
+          path: target
+          key: cargo-target-${{ github.job }}-${{ hashFiles('Cargo.lock', 'rust-toolchain.toml', 'sm/**/*.c', 'sm/**/*.h', 'tools/install_lakesnes.py', 'tools/install_native_*.py', '.github/actions/windows-native/action.yml') }}-${{ github.sha }}
 
   verifier:
     # The verifier's Cargo configuration builds the sm library again with its own
@@ -228,6 +244,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/windows-native
+      - name: Restore the Cargo target directory
+        # Keyed on the native archives' sources as well: those archives are rebuilt
+        # every run, and a checkout's fresh timestamps make Cargo recompile and
+        # relink the workspace crates, so only dependencies and unchanged
+        # incremental code are reused.
+        uses: actions/cache/restore@v4
+        with:
+          path: target
+          key: cargo-target-${{ github.job }}-${{ hashFiles('Cargo.lock', 'rust-toolchain.toml', 'sm/**/*.c', 'sm/**/*.h', 'tools/install_lakesnes.py', 'tools/install_native_*.py', '.github/actions/windows-native/action.yml') }}-${{ github.sha }}
+          restore-keys: cargo-target-${{ github.job }}-${{ hashFiles('Cargo.lock', 'rust-toolchain.toml', 'sm/**/*.c', 'sm/**/*.h', 'tools/install_lakesnes.py', 'tools/install_native_*.py', '.github/actions/windows-native/action.yml') }}-
       - name: Check Cargo verifier configuration and actor exports
         run: |
           python tools/verify_dll.py --build-only --cargo
@@ -238,3 +264,9 @@ jobs:
         run: |
           python tools/verify_dll.py --unit-tests --no-build --cargo
           if ($LASTEXITCODE -ne 0) { throw 'Verifier DLL unit tests failed' }
+      - name: Save the Cargo target directory
+        if: github.event_name != 'pull_request'
+        uses: actions/cache/save@v4
+        with:
+          path: target
+          key: cargo-target-${{ github.job }}-${{ hashFiles('Cargo.lock', 'rust-toolchain.toml', 'sm/**/*.c', 'sm/**/*.h', 'tools/install_lakesnes.py', 'tools/install_native_*.py', '.github/actions/windows-native/action.yml') }}-${{ github.sha }}
