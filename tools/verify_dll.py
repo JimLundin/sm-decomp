@@ -157,7 +157,8 @@ def cargo_host(root, rustc, output, source, inventory, frontend=False, retry=Tru
     # set CARGO_BUILD_JOBS to their core count.
     jobs = os.environ.get("CARGO_BUILD_JOBS", "1")
     command = [cargo, "build", "-p", "sm", "--release", "--example", "sm_verify",
-               "--locked", "-j", jobs, "--target-dir", str(root / "target"),
+               "--locked", "--features", "sm/verify", "-j", jobs,
+               "--target-dir", str(root / "target"),
                "--message-format=json"]
     environment = dict(os.environ, RUSTC=rustc, SM_VERIFY_SOURCE_HASH=source,
                        SM_VERIFY_SOURCE_INVENTORY=str(inventory))
