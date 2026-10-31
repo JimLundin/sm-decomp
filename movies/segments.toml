@@ -1213,7 +1213,6 @@ require_hit = ["draygon_grab.final_tail_whips"]
 
 [[segment]]
 id = "boss-kraid-pause-400"
-pending = "awaiting the seeds-v1-kraid-pause-52ba63dc0b528e28 ci-data upload"
 seed = "100-input-phase:73"
 seed_sha256 = "2edce9c97864f0c38c41e0cc24e88a3b3e228aa2b22d03fa2a93f7d593c0fee4"
 inputs = "authored-boss-kraid-pause-400.inputs"
@@ -1225,7 +1224,6 @@ require_hit = ["kraid_pause.unpause_alive", "kraid_pause.transfer_top_half"]
 
 [[segment]]
 id = "boss-kraid-pause-950"
-pending = "awaiting the seeds-v1-kraid-pause-52ba63dc0b528e28 ci-data upload"
 seed = "100-input-phase:73"
 seed_sha256 = "2edce9c97864f0c38c41e0cc24e88a3b3e228aa2b22d03fa2a93f7d593c0fee4"
 inputs = "authored-boss-kraid-pause-950.inputs"
@@ -1237,7 +1235,6 @@ require_hit = ["kraid_pause.unpause_sinking", "kraid_pause.sinking_row_wait", "k
 
 [[segment]]
 id = "boss-kraid-pause-1030"
-pending = "awaiting the seeds-v1-kraid-pause-52ba63dc0b528e28 ci-data upload"
 seed = "100-input-phase:73"
 seed_sha256 = "2edce9c97864f0c38c41e0cc24e88a3b3e228aa2b22d03fa2a93f7d593c0fee4"
 inputs = "authored-boss-kraid-pause-1030.inputs"
@@ -1249,7 +1246,6 @@ require_hit = ["kraid_pause.unpause_dead", "kraid_pause.transfer_top_half"]
 
 [[segment]]
 id = "boss-kraid-pause-1960"
-pending = "awaiting the seeds-v1-kraid-pause-52ba63dc0b528e28 ci-data upload"
 seed = "100-input-phase:73"
 seed_sha256 = "2edce9c97864f0c38c41e0cc24e88a3b3e228aa2b22d03fa2a93f7d593c0fee4"
 inputs = "authored-boss-kraid-pause-1960.inputs"
