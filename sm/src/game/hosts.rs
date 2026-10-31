@@ -227,10 +227,6 @@ impl sm_game::actors::kraid::Host for Game {
         crate::game::gameplay_flag_runtime::set_boss_word_native(area, value, self);
     }
 
-    fn set_shot_ai(&mut self, enemy_ptr: u16, shot_ai: u16) {
-        crate::game::session_runtime::set_kraid_shot_ai(enemy_ptr, shot_ai, self);
-    }
-
     #[cfg(sm_verify_dll)]
     fn observe_kraid_flags(&mut self, step: u8) {
         crate::kraid_flags_observer::observe(step, self);

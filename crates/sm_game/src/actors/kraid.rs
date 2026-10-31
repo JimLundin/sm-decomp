@@ -54,8 +54,6 @@ pub trait Host:
     /// The boss word of `area`, in native byte order.
     fn boss_word_native(&mut self, area: u16) -> u16;
     fn set_boss_word_native(&mut self, area: u16, value: u16);
-    /// Set the shot AI of the enemy definition at `enemy_ptr`.
-    fn set_shot_ai(&mut self, enemy_ptr: u16, shot_ai: u16);
     /// A verifier observation point in the room-cleared fade.
     fn observe_kraid_flags(&mut self, _step: u8) {}
 }
@@ -331,8 +329,6 @@ const CEILING_PLATFORMS: [(u8, u16); 9] = [
     (0xb, CEILING_PLM_AB),
     (0x4, CEILING_PLM_B3),
 ];
-/// The empty shot AI written into Kraid's definition once he is dead.
-pub const NO_SHOT_AI: u16 = 0x804c;
 /// The pause and unpause hooks, as bank $A7 addresses.
 const UNPAUSE_ALIVE: u16 = 0xc24e;
 const UNPAUSE_SINKING: u16 = 0xc2a0;
@@ -1555,7 +1551,9 @@ pub fn sink_through_floor<L: Lease + ?Sized>(game: &mut L) {
             as u16);
         boss!(game.EnemyTilemapSize = 2);
         let enemy_ptr: u16 = session_slot!(game, Body[current(game)].base.enemy_ptr);
-        game.foreign(|game| game.set_shot_ai(enemy_ptr, NO_SHOT_AI));
+        // The original stores an empty shot AI into Kraid's enemy definition
+        // ($A7:C563, STA $A00032,X); that is ROM, so the store does nothing.
+        crate::probe::hit("actors.kraid.shot_ai.disabled");
         let deleted: u16 = (session_slot!(game, Part[ARM].base.properties) as i32
             | K_ENEMY_PROPS_TANGIBLE as i32
             | K_ENEMY_PROPS_DELETED as i32) as u16;

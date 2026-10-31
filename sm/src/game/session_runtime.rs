@@ -106,16 +106,6 @@ pub(crate) fn run_aa_function(address: u32, game: &mut Game) {
     unsafe { actor_species_pre_instruction(address, game) };
 }
 
-/// Sets the shot AI of Kraid's enemy definition at `enemy_ptr`. Was in bank $A7.
-pub(crate) fn set_kraid_shot_ai(enemy_ptr: u16, shot_ai: u16, game: &mut Game) {
-    (unsafe { crate::rtl::rom_record(0xa0, enemy_ptr, game) }).set_word(
-        core::mem::offset_of!(crate::game::prelude::EnemyDef, shot_ai),
-        shot_ai,
-    );
-    #[cfg(sm_verify_dll)]
-    crate::verify_probe::hit("actors.kraid.shot_ai.disabled");
-}
-
 /// Runs the bank $A7 function at `address` for the current enemy. Was in bank $A7.
 pub(crate) fn run_a7_function(address: u32, game: &mut Game) {
     unsafe { actor_species_pre_instruction(address, game) };

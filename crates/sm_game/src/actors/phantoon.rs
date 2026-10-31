@@ -691,8 +691,8 @@ pub fn initialize_part<S: BossState + ?Sized>(game: &mut S) {
 /// Was `Phantoon_Main`.
 pub fn main_ai<L: Lease + ?Sized>(game: &mut L) {
     // The bank $A7 function runs on the lease, the effects that need the
-    // game in grouped foreign calls.
-    phantoon_actions::broken_nothingness(game.current_enemy(), game);
+    // game in grouped foreign calls. The main AI's debug toggle ($A7:CF0C)
+    // stores to ROM, which the cartridge ignores, so it has no effect.
     let me = current(game);
     let function = session_slot!(game, Body[me].function);
     run_function_on(game, function);
