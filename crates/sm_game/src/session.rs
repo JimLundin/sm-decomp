@@ -105,6 +105,7 @@ pub struct Session {
     pub actors: crate::actors::state::Actors,
     pub botwoon_death: crate::actors::botwoon_death::DeathProtocol,
     pub timing: Timing,
+    pub options: Options,
     pub flow: crate::flow::Flow,
     pub menu: crate::menu_state::MenuState,
     pub world: std::sync::Arc<crate::room_entry::world::WorldBinding>,
@@ -154,6 +155,7 @@ impl Session {
             actors: Default::default(),
             botwoon_death: Default::default(),
             timing: Default::default(),
+            options: Default::default(),
             flow: Default::default(),
             menu: Default::default(),
             room: Room::with_world(&world),
@@ -362,6 +364,8 @@ pub struct Room {
     pub size_bytes: u16,
     pub collision_cursor: u16,
     pub liquid_options: u16,
+    /// FX layer blending configuration A ($7E:1982).
+    pub fx_blending: u16,
     pub liquid_height: u16,
     pub liquid_target: u16,
     pub liquid_velocity: u16,
@@ -444,6 +448,7 @@ impl Room {
             size_bytes: 0,
             collision_cursor: 0,
             liquid_options: 0,
+            fx_blending: 0,
             liquid_height: 0,
             liquid_target: 0,
             liquid_velocity: 0,
@@ -578,6 +583,13 @@ pub struct EnemyProjectiles {
     pub drop_bias: u16,
 }
 
+/// The game options the session reads.
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub struct Options {
+    /// Japanese text ($7E:09E2).
+    pub japanese_text: u16,
+}
+
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct Timing {
     pub frame_counter: u16,
@@ -585,4 +597,6 @@ pub struct Timing {
     pub random_number: u16,
     /// Time is frozen ($7E:0A78): enemies and their projectiles pause.
     pub time_frozen: u16,
+    /// The HUD timer's state ($7E:0943): 0 off, then counting phases.
+    pub timer_status: u16,
 }

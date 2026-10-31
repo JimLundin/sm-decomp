@@ -727,6 +727,9 @@ macro_rules! scalar_words {
         $f(0x5f5,$($borrow)* $s.feedback.sound_disabled);
         $f(ram::RANDOM_NUMBER,$($borrow)* $s.timing.random_number);
         $f(ram::TIME_IS_FROZEN_FLAG,$($borrow)* $s.timing.time_frozen);
+        $f(ram::TIMER_STATUS,$($borrow)* $s.timing.timer_status);
+        $f(ram::JAPANESE_TEXT_FLAG,$($borrow)* $s.options.japanese_text);
+        $f(ram::FX_LAYER_BLENDING_CONFIG_A,$($borrow)* $s.room.fx_blending);
         $f(0x5f7,$($borrow)* $s.minimap.disabled);
         for row in 0..3 {
             for column in 0..5 {
