@@ -15,16 +15,12 @@ fn loaded_length(id: u32) -> usize {
         _ => unreachable!(),
     }
 }
-pub(super) fn fixture(id: u32, g: &mut Game, full: &RomImage) -> Operation {
+pub(super) fn fixture(id: u32, g: &mut Game, loaded: &mut Vec<u8>) -> Operation {
     assert!(id < CASES);
-    let operation = super::fixture(REUSED[id as usize], g, full);
-    let short = RomImage::zeroed(loaded_length(id));
-    for at in 0..short.len() {
-        short.write(at, full.read(at));
-    }
+    let operation = super::fixture(REUSED[id as usize], g, loaded);
     // Native allocation stays fully initialized, registered and owned by carrier.
     // No callback mutates content; the short checked allocation exists at entry.
-    g.loaded_rom = Some(short);
+    loaded.truncate(loaded_length(id));
     operation
 }
 pub(super) fn checks(id: u32, g: &Game, before: &[u8], native: &RomImage) {

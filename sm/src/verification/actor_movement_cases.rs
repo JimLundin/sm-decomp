@@ -31,11 +31,9 @@ pub(crate) fn set_actor_word(g: &mut Game, k: u16, field: usize, value: u16) {
 pub(crate) fn actor_word(g: &Game, k: u16, field: usize) -> u16 {
     read(g, 0xf78 + usize::from(k) + field)
 }
-fn rw(image: &RomImage, address: u32, value: u16) {
+fn rw(image: &mut [u8], address: u32, value: u16) {
     let at = offset(address);
-    for (i, b) in value.to_le_bytes().into_iter().enumerate() {
-        image.write(at + i, b);
-    }
+    image[at..at + 2].copy_from_slice(&value.to_le_bytes());
 }
 fn actor(g: &mut Game, k: u16, x: u16, y: u16, radius: u16) {
     let at = 0xf78 + usize::from(k);
@@ -63,13 +61,11 @@ fn room(g: &mut Game, kind: u16, bts: u8) {
         g.ram().write_byte(0x16402 + block, bts);
     }
 }
-fn seed(g: &mut Game, loaded: &RomImage, native: &RomImage) {
+fn seed(g: &mut Game, loaded: &mut [u8], native: &mut [u8]) {
     for i in 0..g.ram().len() {
         g.ram()
             .write_byte(i, (i.wrapping_mul(29) ^ (i >> 7) ^ 0xa3) as u8);
     }
-    g.loaded_rom = Some(loaded.clone());
-    g.register_native_rom(native.clone());
     g.VERIFY_ACTIVE = true;
     g.g_fail = false;
     g.eproj_spawn_rect = Rect16U {
@@ -107,13 +103,17 @@ fn seed(g: &mut Game, loaded: &RomImage, native: &RomImage) {
         put(g, a::PLM_HEADER_PTR + i * 2, 0);
     }
     // Distinct immutable contents make accidental native/loaded selection visible.
-    for i in 0..512 {
-        loaded.write(offset(0x948b2b) + i, 4);
-        native.write(offset(0x948b2b) + i, 27);
-    }
-    for i in 0..128 {
-        loaded.write(offset(0xa0b143) + i, i as u8);
-        native.write(offset(0xa0b143) + i, 127 - i as u8);
+    let at = offset(0x948b2b);
+    loaded[at..at + 512].fill(4);
+    native[at..at + 512].fill(27);
+    let at = offset(0xa0b143);
+    for (i, (loaded_byte, native_byte)) in loaded[at..at + 128]
+        .iter_mut()
+        .zip(&mut native[at..at + 128])
+        .enumerate()
+    {
+        *loaded_byte = i as u8;
+        *native_byte = 127 - i as u8;
     }
     rw(loaded, 0xa0c49f + 22, 128);
     rw(native, 0xa0c49f + 22, 256);
@@ -144,7 +144,7 @@ pub(crate) fn run(op: Operation, g: &mut Game) -> Option<u64> {
     crate::game::actors::movement_verification::run(op, g)
 }
 
-fn fixture(id: u32, g: &mut Game, loaded: &RomImage) -> Operation {
+fn fixture(id: u32, g: &mut Game, loaded: &mut [u8]) -> Operation {
     match id {
         0..=2 => {
             let k = [0, 1, 0xffff][id as usize];
@@ -481,15 +481,19 @@ fn capture_prepared_case(
     id: u32,
     dispatch: fn(Operation, &mut Game) -> Option<u64>,
 ) -> Option<Vec<u8>> {
-    let loaded = RomImage::zeroed(0x200000);
-    let native = RomImage::zeroed(0x200000);
+    let mut loaded = vec![0; 0x200000];
+    let mut native = vec![0; 0x200000];
     let mut g = Game::new();
-    seed(&mut g, &loaded, &native);
+    seed(&mut g, &mut loaded, &mut native);
     let op = if id < CASES {
-        fixture(id, &mut g, &loaded)
+        fixture(id, &mut g, &mut loaded)
     } else {
-        table_cases::fixture(id - CASES, &mut g, &loaded)
+        table_cases::fixture(id - CASES, &mut g, &mut loaded)
     };
+    // Every byte is authored before the images are registered.
+    g.loaded_rom = Some(RomImage::from(loaded));
+    let native = RomImage::from(native);
+    g.register_native_rom(native.clone());
     let before = (0..g.ram().len())
         .map(|at| g.ram().read_byte(at))
         .collect::<Vec<_>>();

@@ -6,7 +6,7 @@ use sm_game::projectile_initialization::Initialization;
 
 pub(crate) const CASES: u32 = 102;
 
-fn reaction_fixture(id: u32, g: &mut Game, loaded: &RomImage) -> (Vec<u8>, u8) {
+fn reaction_fixture(id: u32, g: &mut Game, loaded: &mut [u8]) -> (Vec<u8>, u8) {
     let (block, bts, header, outcome) = [
         (0x4000, 1, 0x8800, 0),
         (0x7000, 1, 0x8820, 0),
@@ -111,8 +111,7 @@ pub(crate) fn capture(id: u32, grapple: impl FnOnce(&mut Game) -> u8) -> Option<
         return None;
     }
     let mut g = Game::new();
-    let loaded = RomImage::zeroed(0x200000);
-    let native = RomImage::zeroed(0x200000);
+    let mut images = Images::new();
     let seed = match id {
         0..=9 | 30..=35 | 44..=91 => 9,
         10..=15 => 77,
@@ -122,14 +121,10 @@ pub(crate) fn capture(id: u32, grapple: impl FnOnce(&mut Game) -> u8) -> Option<
         _ => 73,
     };
     let expected = if id >= 92 {
-        Some(reaction_fixture(id, &mut g, &loaded))
+        Some(reaction_fixture(id, &mut g, &mut images.loaded))
     } else {
-        fixture(seed, &mut g, &loaded, &native);
+        fixture(seed, &mut g, &mut images);
         None
-    };
-    let rw = |address: u32, value: u16| {
-        rom_word(&loaded, address, value);
-        rom_word(&native, address, value);
     };
     let mut limit = None;
     if (82..=91).contains(&id) {
@@ -255,22 +250,22 @@ pub(crate) fn capture(id: u32, grapple: impl FnOnce(&mut Game) -> u8) -> Option<
         g.ram().fill(0xd658..0xd7c0, 0);
         put(&mut g, crate::ram_map::words::PROJECTILE_INDEX, 0);
         put(&mut g, 0xb64, 200); // Both signed-offset trail halves remain visible.
-        rw(0x9393f8, 3);
-        rw(0x9393fe, 1);
-        rw(0x939400, 7);
-        rw(0x939402, 0xa010);
-        rw(0x939404, 0x0905);
-        rw(0x939406, 2);
+        images.word(0x9393f8, 3);
+        images.word(0x9393fe, 1);
+        images.word(0x939400, 7);
+        images.word(0x939402, 0xa010);
+        images.word(0x939404, 0x0905);
+        images.word(0x939406, 2);
         for style in 0..64 {
-            rw(0x90b5bb + style * 2, 0x8100 + style as u16 * 8);
-            rw(0x90b609 + style * 2, 0x8400 + style as u16 * 8);
+            images.word(0x90b5bb + style * 2, 0x8100 + style as u16 * 8);
+            images.word(0x90b609 + style * 2, 0x8400 + style as u16 * 8);
         }
         // The style tables overlap historically. Restore the used style0 rows.
-        rw(0x90b5bb, 0x8100);
-        rw(0x90b609, 0x8400);
+        images.word(0x90b5bb, 0x8100);
+        images.word(0x90b609, 0x8400);
         for cursor in [0x8100, 0x8400, 0x8200, 0x8500, 0x8208, 0x8508] {
-            rw(0x900000 + cursor, 2);
-            rw(0x900002 + cursor, cursor as u16 ^ 0x7777);
+            images.word(0x900000 + cursor, 2);
+            images.word(0x900002 + cursor, cursor as u16 ^ 0x7777);
         }
         for (table, first, second, bias) in [
             (0x9ba4b3, 0xa800u16, 0xb800u16, 0u8),
@@ -279,28 +274,28 @@ pub(crate) fn capture(id: u32, grapple: impl FnOnce(&mut Game) -> u8) -> Option<
         ] {
             for kind in 0..12u16 {
                 let row = first + kind * 32;
-                rw(table + u32::from(kind) * 2, row);
+                images.word(table + u32::from(kind) * 2, row);
                 for direction in 0..10u16 {
                     let offsets = second + kind * 128 + direction * 12;
-                    rw(0x9b0000 + u32::from(row + direction * 2), offsets);
+                    images.word(0x9b0000 + u32::from(row + direction * 2), offsets);
                     for marker in 0..3u16 {
                         let at = 0x9b0000 + u32::from(offsets + marker * 4);
                         let delta = bias + kind as u8 + direction as u8 + marker as u8;
-                        rw(at, u16::from_le_bytes([0x80 + delta, 9 + delta]));
-                        rw(at + 2, u16::from_le_bytes([7 + delta, 0xfd - delta]));
+                        images.word(at, u16::from_le_bytes([0x80 + delta, 9 + delta]));
+                        images.word(at + 2, u16::from_le_bytes([7 + delta, 0xfd - delta]));
                     }
                 }
             }
         }
         match id {
             44 => {
-                rw(0x939400, 0x8239);
-                rw(0x939402, 0x9420);
-                rw(0x939420, 7);
-                rw(0x939422, 0xa000);
-                rw(0x939424, 0x0905);
+                images.word(0x939400, 0x8239);
+                images.word(0x939402, 0x9420);
+                images.word(0x939420, 7);
+                images.word(0x939422, 0xa000);
+                images.word(0x939424, 0x0905);
             }
-            45 | 79 => rw(0x939400, 0),
+            45 | 79 => images.word(0x939400, 0),
             46..=48 => limit = Some(lorom(0x939400) + [2, 4, 5][(id - 46) as usize]),
             49 => {
                 put(&mut g, crate::ram_map::words::PROJECTILE_INDEX, 0xffff);
@@ -310,7 +305,7 @@ pub(crate) fn capture(id: u32, grapple: impl FnOnce(&mut Game) -> u8) -> Option<
             50 => put(&mut g, crate::ram_map::words::PROJECTILE_INDEX, 1),
             51 => {}
             52 => put(&mut g, 0xc54, 2),
-            53 => rw(0x939400, 0x8239),
+            53 => images.word(0x939400, 0x8239),
             54 => put(&mut g, 0xc18, 0x300),
             55 => {
                 for pair in 0..18 {
@@ -365,17 +360,17 @@ pub(crate) fn capture(id: u32, grapple: impl FnOnce(&mut Game) -> u8) -> Option<
                 put(&mut g, 0xd778, 80);
                 put(&mut g, 0xd79c, 81);
                 if id <= 70 {
-                    rw(0x908100, [0xb525, 0xb587, 0xb5b3][((id - 65) % 3) as usize]);
-                    rw(0x908102, 2);
-                    rw(0x908104, 0x2777);
+                    images.word(0x908100, [0xb525, 0xb587, 0xb5b3][((id - 65) % 3) as usize]);
+                    images.word(0x908102, 2);
+                    images.word(0x908104, 0x2777);
                 } else if id == 71 {
-                    rw(0x908100, 0);
+                    images.word(0x908100, 0);
                     limit = Some(lorom(0x908100) + 2);
                 } else if id == 72 {
                     put(&mut g, 0xd6a0, 0xfffe);
-                    rw(0x90fffe, 0xb587);
-                    rw(0x900000, 2);
-                    rw(0x900002, 0x2777);
+                    images.word(0x90fffe, 0xb587);
+                    images.word(0x900000, 2);
+                    images.word(0x900002, 0x2777);
                 } else {
                     limit = Some(lorom(0x908100) + 2);
                 }
@@ -403,7 +398,7 @@ pub(crate) fn capture(id: u32, grapple: impl FnOnce(&mut Game) -> u8) -> Option<
     match id {
         0..=4 => {
             // Echo deliberately uses a negative launch-table selector.
-            rw(0x938403 - 68, 0x9000);
+            images.word(0x938403 - 68, 0x9000);
         }
         5 | 6 => {
             for at in (0xb64..0xccc).step_by(2) {
@@ -413,11 +408,11 @@ pub(crate) fn capture(id: u32, grapple: impl FnOnce(&mut Game) -> u8) -> Option<
             put(&mut g, 0xcd2, 3);
         }
         7 => {
-            rw(0x939400, 0x822f);
+            images.word(0x939400, 0x822f);
         }
         8 => {
-            rw(0x939400, 0x8239);
-            rw(0x939402, 0);
+            images.word(0x939400, 0x8239);
+            images.word(0x939402, 0);
         }
         9 => {
             put(&mut g, 0xc54, 0);
@@ -459,14 +454,14 @@ pub(crate) fn capture(id: u32, grapple: impl FnOnce(&mut Game) -> u8) -> Option<
         21 => put(&mut g, 0xcd0, 14),
         22 => {
             put(&mut g, 0xcd0, 30);
-            native.write(lorom(0x909001), 255);
-            native.write(lorom(0x909000), 3);
+            images.native[lorom(0x909001)] = 255;
+            images.native[lorom(0x909000)] = 3;
         }
         23 => {
             put(&mut g, 0xcd0, 30);
-            native.write(lorom(0x909001), 254);
-            native.write(lorom(0x909002), 1);
-            native.write(lorom(0x909000), 3);
+            images.native[lorom(0x909001)] = 254;
+            images.native[lorom(0x909002)] = 1;
+            images.native[lorom(0x909000)] = 3;
         }
         24..=27 => {
             put(&mut g, crate::ram_map::words::HYPER_BEAM_FLAG, 1);
@@ -481,9 +476,9 @@ pub(crate) fn capture(id: u32, grapple: impl FnOnce(&mut Game) -> u8) -> Option<
         }
         28 => put(&mut g, 0xcd0, 1),
         29 => {
-            native.write(lorom(0x90c488), 254);
-            native.write(lorom(0x90c489), 1);
-            native.write(lorom(0x90c487), 5);
+            images.native[lorom(0x90c488)] = 254;
+            images.native[lorom(0x90c489)] = 1;
+            images.native[lorom(0x90c487)] = 5;
         }
         30 => put(&mut g, crate::ram_map::words::TIME_IS_FROZEN_FLAG, 1),
         31 => {
@@ -525,17 +520,13 @@ pub(crate) fn capture(id: u32, grapple: impl FnOnce(&mut Game) -> u8) -> Option<
         44..=101 => {}
         _ => unreachable!(),
     }
-    g.loaded_rom = Some(if let Some(length) = limit {
-        let short = RomImage::zeroed(length);
-        for at in 0..length {
-            short.write(at, loaded.read(at));
-        }
-        short
-    } else {
-        loaded
-    });
+    let mut loaded = images.loaded;
+    if let Some(length) = limit {
+        loaded.truncate(length);
+    }
+    g.loaded_rom = Some(RomImage::from(loaded));
     // Candidate installation changes only this binding to register_native_rom.
-    g.register_native_rom(native.clone());
+    g.register_native_rom(RomImage::from(images.native));
     let outcome = expected.as_ref().map_or(0, |(_, outcome)| *outcome);
     let result = catch_unwind(AssertUnwindSafe(|| match id {
         92..=99 => assert_eq!(grapple(&mut g), outcome, "grapple.bridge.result.{id}"),

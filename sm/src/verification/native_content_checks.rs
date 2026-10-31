@@ -22,13 +22,7 @@ fn panics_with(operation: impl FnOnce(), expected: &str) {
 }
 fn check_record_boundary(id: u32) {
     use super::content::NativeRecord;
-    let image = RomImage::zeroed(8);
-    for (index, value) in [0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0]
-        .into_iter()
-        .enumerate()
-    {
-        image.write(index, value);
-    }
+    let image = RomImage::from(vec![0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0]);
     let record = NativeRecord::new(image.clone(), 2);
     match id {
         6 => {
@@ -188,13 +182,13 @@ pub(crate) fn check_case(id: u32) -> bool {
         return true;
     }
     let mut game = Game::new();
-    let first = RomImage::zeroed(0x40000);
-    let second = RomImage::zeroed(0x40000);
     let at = crate::rtl::lorom_offset(0x868000) as usize;
+    let (mut first, mut second) = (vec![0; 0x40000], vec![0; 0x40000]);
     for (n, byte) in [0x12, 0x34, 0x56, 0x78].into_iter().enumerate() {
-        first.write(at + n, byte);
-        second.write(at + n, byte ^ 0xff);
+        first[at + n] = byte;
+        second[at + n] = byte ^ 0xff;
     }
+    let (first, second) = (RomImage::from(first), RomImage::from(second));
     game.loaded_rom = Some(second.clone());
     match id {
         0 => {
@@ -210,9 +204,9 @@ pub(crate) fn check_case(id: u32) -> bool {
             game.register_native_rom(first.clone());
             let captured = Runtime::new(&mut game).native_record(0x86, 0x8000);
             game.register_native_rom(second.clone());
-            first.write(at, 0x9a);
             drop(first);
-            assert_eq!(captured.word_le(0), 0x349a);
+            // The captured record keeps its allocation after the rebinding.
+            assert_eq!(captured.word_le(0), 0x3412);
             let current = Runtime::new(&mut game).native_record(0x86, 0x8000);
             assert_eq!(current.word_le(0), 0xcbed);
         }

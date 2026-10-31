@@ -11,16 +11,29 @@ fn lorom(a: u32) -> usize {
 fn put(g: &mut Game, a: usize, v: u16) {
     g.ram().copy_in(a, &v.to_le_bytes());
 }
-fn rom_word(image: &RomImage, address: u32, value: u16) {
-    for (offset, byte) in value.to_le_bytes().into_iter().enumerate() {
-        image.write(lorom(address) + offset, byte);
+fn rom_word(image: &mut [u8], address: u32, value: u16) {
+    let at = lorom(address);
+    image[at..at + 2].copy_from_slice(&value.to_le_bytes());
+}
+/// The loaded and native images' bytes while a case authors them.
+struct Images {
+    loaded: Vec<u8>,
+    native: Vec<u8>,
+}
+impl Images {
+    fn new() -> Self {
+        Self {
+            loaded: vec![0; 0x200000],
+            native: vec![0; 0x200000],
+        }
+    }
+    /// Write `value` at `address` in both images.
+    fn word(&mut self, address: u32, value: u16) {
+        rom_word(&mut self.loaded, address, value);
+        rom_word(&mut self.native, address, value);
     }
 }
-fn fixture(id: u32, g: &mut Game, loaded: &RomImage, native: &RomImage) {
-    let rw = |address: u32, value: u16| {
-        rom_word(loaded, address, value);
-        rom_word(native, address, value);
-    };
+fn fixture(id: u32, g: &mut Game, images: &mut Images) {
     match id {
         0..=2 => {
             for a in (0xb64..0xccc).step_by(2) {
@@ -53,29 +66,29 @@ fn fixture(id: u32, g: &mut Game, loaded: &RomImage, native: &RomImage) {
         7 => {
             put(g, 0xcd0, 15);
             for i in 0..3 {
-                rw(0x90c481 + 2 * i, 0x9000);
+                images.word(0x90c481 + 2 * i, 0x9000);
             }
-            native.write(lorom(0x909001), 7);
-            loaded.write(lorom(0x909001), 99);
-            native.write(lorom(0x91b62c), 255);
+            images.native[lorom(0x909001)] = 7;
+            images.loaded[lorom(0x909001)] = 99;
+            images.native[lorom(0x91b62c)] = 255;
         }
         8 => {
             put(g, 0xcd0, 2);
             put(g, 0xd1c, 256);
-            native.write(lorom(0x90c488), 7);
-            loaded.write(lorom(0x90c488), 99);
+            images.native[lorom(0x90c488)] = 7;
+            images.loaded[lorom(0x90c488)] = 99;
         }
         9..=72 => {
             let family = ((id - 9) / 8) as usize;
             let kind = [0u16, 1, 0x100, 0x200, 0x300, 0x500, 0x700, 0x800][family];
             for base in [0x9383c1, 0x9383d9, 0x9383f1, 0x938413, 0x93842b] {
                 for n in 0..16 {
-                    rw(base + 2 * n, 0x9000);
+                    images.word(base + 2 * n, 0x9000);
                 }
             }
-            rw(0x939000, 20);
+            images.word(0x939000, 20);
             for n in 0..10 {
-                rw(0x939002 + 2 * n, 0x9400);
+                images.word(0x939002 + 2 * n, 0x9400);
             }
             for (a, v) in [
                 (0x939400, 1),
@@ -89,10 +102,10 @@ fn fixture(id: u32, g: &mut Game, loaded: &RomImage, native: &RomImage) {
                 (0x93a004, 0x7700),
                 (0x93a006, 0x22),
             ] {
-                rw(a, v);
+                images.word(a, v);
             }
             for a in [0x93867b, 0x93867f, 0x938693, 0x938683] {
-                rw(a, 0x9400);
+                images.word(a, 0x9400);
             }
             for (a, v) in [
                 (0xb64, 100),
@@ -116,8 +129,8 @@ fn fixture(id: u32, g: &mut Game, loaded: &RomImage, native: &RomImage) {
             }
             for side in 0..2 {
                 let script = 0x8100 + side * 0x20;
-                rw(0x900000 + script, 2);
-                rw(0x900002 + script, 0x2777 + side as u16);
+                images.word(0x900000 + script, 2);
+                images.word(0x900002 + script, 0x2777 + side as u16);
                 put(g, 0xd658 + side as usize * 36, 1);
                 put(g, 0xd6a0 + side as usize * 36, script as u16);
                 put(g, 0xd730 + side as usize * 36, 90);
@@ -125,7 +138,7 @@ fn fixture(id: u32, g: &mut Game, loaded: &RomImage, native: &RomImage) {
             }
         }
         73..=88 => {
-            fixture(9, g, loaded, native);
+            fixture(9, g, images);
             g.ram().fill(0xb64..0xce2, 0);
             g.ram().fill(0xd658..0xd7c0, 0);
             for (a, v) in [
@@ -156,9 +169,9 @@ fn fixture(id: u32, g: &mut Game, loaded: &RomImage, native: &RomImage) {
             ] {
                 put(g, a, v);
             }
-            for image in [loaded, native] {
-                image.write(lorom(0x91b629) + 8 + 3, 2);
-                image.write(lorom(0x91b629) + 8 + 6, 16);
+            for image in [&mut images.loaded, &mut images.native] {
+                image[lorom(0x91b629) + 8 + 3] = 2;
+                image[lorom(0x91b629) + 8 + 6] = 16;
             }
             let mode = (id - 73) % 8;
             match mode {
@@ -184,12 +197,12 @@ fn fixture(id: u32, g: &mut Game, loaded: &RomImage, native: &RomImage) {
         }
         89..=98 => {
             if id <= 96 {
-                fixture(73, g, loaded, native);
+                fixture(73, g, images);
                 put(g, 0x9a6, 0x1000 | [1, 2, 4, 8][((id - 89) % 4) as usize]);
                 put(g, 0x9d2, 3);
                 put(g, 0xcd0, 120);
             } else {
-                fixture(79, g, loaded, native);
+                fixture(79, g, images);
                 put(g, 0xcd0, 120);
             }
         }
@@ -300,9 +313,7 @@ const OLD_DELTAS: &[&[(usize, u8)]] = &[
 fn native_entries() {
     for id in 0..9 {
         let mut g = Game::new();
-        let loaded = RomImage::zeroed(0x200000);
-        let native = RomImage::zeroed(0x200000);
-        fixture(id, &mut g, &loaded, &native);
+        fixture(id, &mut g, &mut Images::new());
         let mut expected = (0..g.ram().len())
             .map(|at| g.ram().read_byte(at))
             .collect::<Vec<u8>>();
@@ -734,8 +745,7 @@ pub(crate) fn capture_case(id: u32) -> Option<Vec<u8>> {
         return None;
     }
     let mut g = Game::new();
-    let loaded = RomImage::zeroed(0x200000);
-    let native = RomImage::zeroed(0x200000);
+    let mut images = Images::new();
     let seed = match id {
         99 | 102 => 79,
         100 => 80,
@@ -743,9 +753,9 @@ pub(crate) fn capture_case(id: u32) -> Option<Vec<u8>> {
         103 => 77,
         _ => id,
     };
-    fixture(seed, &mut g, &loaded, &native);
-    g.loaded_rom = Some(loaded);
-    g.register_native_rom(native.clone());
+    fixture(seed, &mut g, &mut images);
+    g.loaded_rom = Some(RomImage::from(images.loaded));
+    g.register_native_rom(RomImage::from(images.native));
     // Real bus dependencies reached by Power Bomb's HDMA allocation.
     let hardware = if id == 100 {
         g.ensure_backend();

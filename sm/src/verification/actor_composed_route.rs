@@ -25,12 +25,11 @@ pub unsafe fn checkpoint(
         initialize(&mut producer)?;
         run(12, &mut producer);
         let loaded = producer.loaded_rom.clone().unwrap();
-        let detached = crate::rom::RomImage::zeroed(loaded.len());
-        let custom = crate::rom::RomImage::zeroed(loaded.len());
-        for at in 0..loaded.len() {
-            detached.write(at, loaded.read(at));
-            custom.write(at, loaded.read(at));
-        }
+        let bytes = (0..loaded.len())
+            .map(|at| loaded.read(at))
+            .collect::<Vec<_>>();
+        let detached = crate::rom::RomImage::from(bytes.as_slice());
+        let custom = crate::rom::RomImage::from(bytes);
         for (image, tilesets) in [(detached, 0x9000), (loaded.clone(), 0x9200)] {
             producer.register_rom(image);
             checks::checkpoint_stage_tilesets(&mut Runtime::new(&mut producer), tilesets);

@@ -18,10 +18,8 @@ use {
     sm_game::actors::{access::ActorCollections, content::*, media::*, scene::*},
 };
 
-fn write_word(image: &RomImage, at: usize, value: u16) {
-    for (lane, byte) in value.to_ne_bytes().into_iter().enumerate() {
-        image.write(at + lane, byte);
-    }
+fn write_word(image: &mut [u8], at: usize, value: u16) {
+    image[at..at + 2].copy_from_slice(&value.to_ne_bytes());
 }
 fn seed_actor(runtime: &mut Runtime<'_>) -> InstanceHandle {
     let pending = runtime
@@ -74,12 +72,13 @@ pub(crate) fn run_checked() {
 
 fn prepared_sprite_palette_modes_use_actual_oam_emission() {
     let world = sm_game::actors::fixture::binding(false, AppearanceId(20), false);
-    let image = RomImage::zeroed(0x200000);
+    let mut bytes = vec![0; 0x200000];
     let map = lorom_offset(0xa08000) as usize;
-    write_word(&image, map, 1);
-    write_word(&image, map + 2, 3);
-    image.write(map + 4, 4);
-    write_word(&image, map + 5, 0x6a25); // Embedded palette5, plus non-palette flag bits.
+    write_word(&mut bytes, map, 1);
+    write_word(&mut bytes, map + 2, 3);
+    bytes[map + 4] = 4;
+    write_word(&mut bytes, map + 5, 0x6a25); // Embedded palette5, plus non-palette flag bits.
+    let image = RomImage::from(bytes);
     for (mode, palette, expected) in [
         (ActorPaletteMode::Normal, 0, 0x6238),
         (ActorPaletteMode::Flash, 0, 0x6a38),
@@ -134,17 +133,18 @@ fn prepared_sprite_palette_modes_use_actual_oam_emission() {
 
 fn actual_room_palette_decode_clears_obj_receipts_before_dynamic_reselection() {
     let world = sm_game::actors::fixture::binding(false, AppearanceId(20), true);
-    let image = RomImage::zeroed(0x200000);
+    let mut bytes = vec![0; 0x200000];
     let stream = lorom_offset(0xb49000) as usize;
-    image.write(stream, 31); // Two actual literal decode commands,32 bytes each.
-    for i in 0..32 {
-        image.write(stream + 1 + i, 0x20 + i as u8);
+    bytes[stream] = 31; // Two actual literal decode commands,32 bytes each.
+    for (i, byte) in bytes[stream + 1..stream + 33].iter_mut().enumerate() {
+        *byte = 0x20 + i as u8;
     }
-    image.write(stream + 33, 31);
-    for i in 0..32 {
-        image.write(stream + 34 + i, 0x40 + i as u8);
+    bytes[stream + 33] = 31;
+    for (i, byte) in bytes[stream + 34..stream + 66].iter_mut().enumerate() {
+        *byte = 0x40 + i as u8;
     }
-    image.write(stream + 66, 0xff);
+    bytes[stream + 66] = 0xff;
+    let image = RomImage::from(bytes);
     let mut game = Game::with_world(world.clone());
     game.register_rom(image.clone());
     let mut runtime = Runtime::new(&mut game);

@@ -8,16 +8,8 @@ pub(crate) fn capture(id: u32) -> Option<Vec<u8>> {
         return None;
     }
     let mut g = Game::new();
-    let loaded = RomImage::zeroed(0x200000);
-    let native = RomImage::zeroed(0x200000);
-    fixture(if id < 8 { 7 } else { 9 }, &mut g, &loaded, &native);
-    let rw = |address: u32, value: u16| {
-        for image in [&loaded, &native] {
-            for (offset, byte) in value.to_le_bytes().into_iter().enumerate() {
-                image.write(lorom(address) + offset, byte);
-            }
-        }
-    };
+    let mut images = Images::new();
+    fixture(if id < 8 { 7 } else { 9 }, &mut g, &mut images);
     if id < 8 {
         put(&mut g, 0xcd0, 30);
         put(&mut g, 0xaf6, 100);
@@ -26,18 +18,18 @@ pub(crate) fn capture(id: u32) -> Option<Vec<u8>> {
             put(&mut g, 0xcd6 + part * 2, (part * 2) as u16);
             put(&mut g, 0xcdc + part * 2, 2);
         }
-        native.write(lorom(0x91b629) + 3, 2);
-        native.write(lorom(0x91b629) + 4, 4);
+        images.native[lorom(0x91b629) + 3] = 2;
+        images.native[lorom(0x91b629) + 4] = 4;
         // Different loaded pose data proves decisions still use native content.
-        loaded.write(lorom(0x91b629) + 3, 255);
-        loaded.write(lorom(0x91b629) + 4, 90);
+        images.loaded[lorom(0x91b629) + 3] = 255;
+        images.loaded[lorom(0x91b629) + 4] = 90;
         for index in 0..64 {
-            rw(0x93a1a1 + index * 2, 0xa800);
+            images.word(0x93a1a1 + index * 2, 0xa800);
         }
-        rw(0x93a800, 1);
-        rw(0x93a802, 0);
-        rw(0x93a804, 0x7700);
-        rw(0x93a806, 0x22);
+        images.word(0x93a800, 1);
+        images.word(0x93a802, 0);
+        images.word(0x93a804, 0x7700);
+        images.word(0x93a806, 0x22);
         match id {
             0 => {}
             1 => put(&mut g, 0xa1e, 0x0104),
@@ -62,10 +54,10 @@ pub(crate) fn capture(id: u32) -> Option<Vec<u8>> {
                 );
             }
             4 => put(&mut g, 0xafa, 0xff00),
-            5 => native.write(lorom(0x91b629) + 3, 16),
-            6 => native.write(lorom(0x91b629) + 3, 12),
+            5 => images.native[lorom(0x91b629) + 3] = 16,
+            6 => images.native[lorom(0x91b629) + 3] = 12,
             7 => {
-                native.write(lorom(0x91b629) + 3, 12);
+                images.native[lorom(0x91b629) + 3] = 12;
                 put(&mut g, 0xa1e, 0x0100);
             }
             _ => unreachable!(),
@@ -100,15 +92,15 @@ pub(crate) fn capture(id: u32) -> Option<Vec<u8>> {
         );
         put(&mut g, 0x9d2, 3);
         put(&mut g, 0xa04, 3);
-        rw(0x8de1f0, 9291397u32 as u16);
-        rw(0x8de1f2, 0xe300);
+        images.word(0x8de1f0, 9291397u32 as u16);
+        images.word(0x8de1f2, 0xe300);
         for index in 0..16 {
-            rw(0x9b9400 + index * 2, 0x100 + index as u16);
+            images.word(0x9b9400 + index * 2, 0x100 + index as u16);
         }
     }
-    g.loaded_rom = Some(loaded);
+    g.loaded_rom = Some(RomImage::from(images.loaded));
     // Baseline11653c1b binding. Candidate changes only to register_native_rom.
-    g.register_native_rom(native.clone());
+    g.register_native_rom(RomImage::from(images.native));
     let result = catch_unwind(AssertUnwindSafe(|| {
         if id < 8 { flare(&mut g) } else { reset(&mut g) }
     }));

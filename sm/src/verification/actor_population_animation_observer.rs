@@ -190,11 +190,8 @@ pub(crate) fn diagnostic_parts(
                     _ => unreachable!(),
                 };
             let old = loaded_rom.as_ref().unwrap();
-            let short = RomImage::zeroed(end);
-            for i in 0..end {
-                short.write(i, old.read(i));
-            }
-            *loaded_rom = Some(short);
+            let short = (0..end).map(|i| old.read(i)).collect::<Vec<_>>();
+            *loaded_rom = Some(RomImage::from(short));
             append_parts(
                 c,
                 19,
