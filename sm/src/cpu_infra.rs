@@ -440,7 +440,8 @@ fn brightness_cache_is_valid(ppu: &Ppu) -> bool {
             .enumerate()
             .all(|(i, value)| *value == scaled(i / 2))
 }
-// Preserve the existing comparison exceptions in their original copy order.
+// LEGACY(verifier): RAM the comparison does not check, copied from one side to the other
+// before comparing. Each range, why it differs and what would retire it is in docs/LEGACY.md.
 // These ranges belong to disjoint snapshot RAM fields, not live RAM.
 fn normalize_snapshot_ram(
     mine: &mut [u8; 0x20000],
@@ -461,13 +462,11 @@ fn normalize_snapshot_ram(
         (Theirs, 0x05bc..0x05c5),
         (Mine, 0x060b..0x0611),
         (Mine, 0x0611..0x0617),
-        (Theirs, 0x0641..0x0643),
         (Mine, 0x077e..0x0783),
         (Mine, 0x078f..0x0791),
         (Mine, 0x07b7..0x07b9),
         (Mine, 0x0933..0x093d),
         (Theirs, 0x0b24..0x0b28),
-        (Mine, 0x0d1e..0x0d20),
         (Mine, 0x0d82..0x0d8a),
         (Mine, 0x0d9c..0x0d9e),
         (Mine, 0x0dd2..0x0dd8),
@@ -478,7 +477,6 @@ fn normalize_snapshot_ram(
         (Mine, 0x0e4a..0x0e4c),
         (Mine, 0x0e56..0x0e5a),
         (Mine, 0x1784..0x178c),
-        (Mine, 0x1790..0x1794),
         (Mine, 0x17a8..0x17ac),
         (Mine, 0x1834..0x183c),
         (Mine, 0x184a..0x185c),
