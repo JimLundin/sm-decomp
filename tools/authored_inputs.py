@@ -174,7 +174,8 @@ class Sweep:
     seed: str
     values: dict
     expect: list
-    note: str = ""
+    # Probes each variant must reach, keyed by its row suffix.
+    hits: dict = field(default_factory=dict)
 
 
 RECIPES = {
@@ -219,6 +220,8 @@ RECIPES = {
     # movie words: with the gravity suit Samus outlasts the spiral, and
     # Draygon reaches the final tail whips.
     "long-release": Recipe("_ 3000"),
+    # Pause, wait for the pause screen, unpause and watch the room resume.
+    "pause-resume": Recipe("press Start 150; hold Start 200; _ $tail", {"tail": 240}),
 }
 
 SWEEPS = {
@@ -227,6 +230,18 @@ SWEEPS = {
     "draygon-release": Sweep(
         recipe="release", row="boss-draygon-release", seed="low-input-phase:129",
         values={"prefix_frames": [1880, 1902], "frames": [1600]}, expect=["room:DA60"]),
+    # Pause the boss-kraid words while Kraid is alive (400), sinking (950),
+    # dead in the fight (1030) and dead after the room reloads on Samus's
+    # return from the Varia Suit room (1960); each unpause runs that hook.
+    "kraid-pause": Sweep(
+        recipe="pause-resume", row="boss-kraid-pause", seed="100-input-phase:73",
+        values={"prefix_frames": [400, 950, 1030, 1960]}, expect=["room:A59F", "state:18"],
+        hits={"400": ["kraid_pause.unpause_alive", "kraid_pause.transfer_top_half"],
+              "950": ["kraid_pause.unpause_sinking", "kraid_pause.sinking_row_wait",
+                      "kraid_pause.sinking_last_wait"],
+              "1030": ["kraid_pause.unpause_dead", "kraid_pause.transfer_top_half"],
+              "1960": ["kraid.dead_hook", "kraid_pause.unpause_dead",
+                       "kraid_pause.transfer_top_half"]}),
 }
 
 # SHA-256 of each recipe's own words, before any prefix; `check` keeps them.
@@ -236,6 +251,7 @@ PINNED = {
     "volcano-room": "e38317b3da5183e18af6c56257404ffee041db2d87583f8304549b1f5760d6d0",
     "release": "47a5f51e76c59f0f2b1f2b336b18e249cf9337d58fdb5fff6074b2ebea876071",
     "long-release": "5e93dfb35fefa55b112c3503c95292700424e13106b27eea5f248a0649e593a2",
+    "pause-resume": "6982afc4c06ba2311042798e0c0c2ccdbe47a7dbe599fb50b927ba414c24d077",
 }
 
 
@@ -285,6 +301,8 @@ def sweep(name, out_dir, prefix):
               f'seed_sha256 = "{seed_sha256(plan.seed)}"\ninputs = "{stem}.inputs"\n'
               f'input_sha256 = "{hashlib.sha256(encode(data)).hexdigest()}"\n'
               f"start_frame = 0\nframes = {len(data)}\nexpect = [{expect}]")
+        if suffix in plan.hits:
+            print("require_hit = [" + ", ".join(f'"{hit}"' for hit in plan.hits[suffix]) + "]")
 
 
 def check():

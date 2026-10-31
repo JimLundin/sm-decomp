@@ -35,6 +35,7 @@ const KRAID_TOP_HALF_TILEMAP: u32 = 0x7e_2000;
 /// Unpause hook - Kraid is dead ($A7:C1FB): the room background and the
 /// standard BG3 tiles, then his top half. Was `UnpauseHook_Kraid_IsDead`.
 pub fn unpause_dead<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
+    crate::probe::hit("kraid_pause.unpause_dead");
     if game.ram().read_byte(HOOK_STATE) != 3 {
         let yielded = blank_and_wait(true, 2, game);
         if yielded != 0 {
@@ -52,6 +53,7 @@ pub fn unpause_dead<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
 /// The tile base isn't masked, which works because BG1's base is 0. Was
 /// `UnpauseHook_Kraid_IsAlive`.
 pub fn unpause_alive<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
+    crate::probe::hit("kraid_pause.unpause_alive");
     if game.ram().read_byte(HOOK_STATE) != 3 {
         let yielded = blank_and_wait(true, 2, game);
         if yielded != 0 {
@@ -83,6 +85,7 @@ fn load_kraid_tiles<H: Host + ?Sized>(game: &mut H) {
 /// Transfer Kraid top half tilemap to VRAM ($A7:C278), then clear forced
 /// blank and wait for NMI. Was `Kraid_TransferTopHalfToVram`.
 pub fn transfer_top_half<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
+    crate::probe::hit("kraid_pause.transfer_top_half");
     if game.ram().read_byte(HOOK_STATE) != 3 {
         let tilemap = ((game.ram().read_byte(BG2_TILEMAP_BASE) & 0xfc) as u16) << 8;
         GraphicsAsset::VramWords(KRAID_TOP_HALF_TILEMAP, tilemap, 0x800).load(game);
@@ -95,6 +98,7 @@ pub fn transfer_top_half<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
 /// yields, and the next call resumes erasing. Was
 /// `Kraid_UnpauseHook_IsSinking`.
 pub fn unpause_sinking<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
+    crate::probe::hit("kraid_pause.unpause_sinking");
     'done: {
         let mut queue_transfer = match game.ram().read_byte(HOOK_STATE) {
             0 | 2 => {
@@ -129,6 +133,7 @@ pub fn unpause_sinking<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
             }
             let yielded = wait(true, game);
             if yielded != 0 {
+                crate::probe::hit("kraid_pause.sinking_row_wait");
                 game.ram().write_byte(HOOK_STATE, 1);
                 return yielded;
             }
@@ -137,6 +142,7 @@ pub fn unpause_sinking<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
         }
     }
     // The last forced-blank wait ($A7:C31F) leaves the screen blank.
+    crate::probe::hit("kraid_pause.sinking_last_wait");
     blank_and_wait(true, 4, game)
 }
 

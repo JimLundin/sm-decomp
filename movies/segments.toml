@@ -1206,3 +1206,55 @@ start_frame = 0
 frames = 4480
 expect = ["room:DA60", "death"]
 require_hit = ["draygon_grab.final_tail_whips"]
+
+# Kraid pause rows: the boss-kraid words to a frame, then the pause-resume
+# recipe (tools/authored_inputs.py sweep kraid-pause). Each unpause runs
+# the hook for Kraid alive, sinking or dead; require_hit names it.
+
+[[segment]]
+id = "boss-kraid-pause-400"
+pending = "awaiting the seeds-v1-kraid-pause-52ba63dc0b528e28 ci-data upload"
+seed = "100-input-phase:73"
+seed_sha256 = "2edce9c97864f0c38c41e0cc24e88a3b3e228aa2b22d03fa2a93f7d593c0fee4"
+inputs = "authored-boss-kraid-pause-400.inputs"
+input_sha256 = "258ecc2135a3e0933ca3a87434a08fbff4e63bded460b4589881329671fdb3ff"
+start_frame = 0
+frames = 1012
+expect = ["room:A59F", "state:18"]
+require_hit = ["kraid_pause.unpause_alive", "kraid_pause.transfer_top_half"]
+
+[[segment]]
+id = "boss-kraid-pause-950"
+pending = "awaiting the seeds-v1-kraid-pause-52ba63dc0b528e28 ci-data upload"
+seed = "100-input-phase:73"
+seed_sha256 = "2edce9c97864f0c38c41e0cc24e88a3b3e228aa2b22d03fa2a93f7d593c0fee4"
+inputs = "authored-boss-kraid-pause-950.inputs"
+input_sha256 = "ba4fdcbf9ebb2a1e4b8ab18d63f1f9b1a1b4e04e0f3fe2b14bf13d6a580a8c14"
+start_frame = 0
+frames = 1562
+expect = ["room:A59F", "state:18"]
+require_hit = ["kraid_pause.unpause_sinking", "kraid_pause.sinking_row_wait", "kraid_pause.sinking_last_wait"]
+
+[[segment]]
+id = "boss-kraid-pause-1030"
+pending = "awaiting the seeds-v1-kraid-pause-52ba63dc0b528e28 ci-data upload"
+seed = "100-input-phase:73"
+seed_sha256 = "2edce9c97864f0c38c41e0cc24e88a3b3e228aa2b22d03fa2a93f7d593c0fee4"
+inputs = "authored-boss-kraid-pause-1030.inputs"
+input_sha256 = "b26751a216f06daf946517c8429743991f069b6918da975fab65d7d89cab196a"
+start_frame = 0
+frames = 1642
+expect = ["room:A59F", "state:18"]
+require_hit = ["kraid_pause.unpause_dead", "kraid_pause.transfer_top_half"]
+
+[[segment]]
+id = "boss-kraid-pause-1960"
+pending = "awaiting the seeds-v1-kraid-pause-52ba63dc0b528e28 ci-data upload"
+seed = "100-input-phase:73"
+seed_sha256 = "2edce9c97864f0c38c41e0cc24e88a3b3e228aa2b22d03fa2a93f7d593c0fee4"
+inputs = "authored-boss-kraid-pause-1960.inputs"
+input_sha256 = "027b7113e118f7d8fb38b4427cf8f97889caef16063aba0cdf9505865cf7f367"
+start_frame = 0
+frames = 2572
+expect = ["room:A59F", "state:18"]
+require_hit = ["kraid.dead_hook", "kraid_pause.unpause_dead", "kraid_pause.transfer_top_half"]
