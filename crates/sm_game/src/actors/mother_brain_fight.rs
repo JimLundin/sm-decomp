@@ -33,10 +33,9 @@ use crate::constants::enemy_properties::*;
 use crate::enemy_projectiles::shared_pre::y_velocity_at_angle;
 use crate::enemy_script::EnemyScript;
 use crate::menus::menu_tilemap::native_record;
-use crate::menus::prelude::{EnemyData, do_until};
+use crate::menus::prelude::EnemyData;
 use crate::mother_brain_tables;
 use crate::palette_copies::{copy_rom_colors_to_palette, copy_rom_colors_to_target_palette};
-use crate::ram::word;
 use crate::word_transfers;
 
 /// A bank-local address, as the original's `VoidP`.
@@ -756,8 +755,14 @@ pub enum Contact {
 /// inside a lease, the RAM image's on the game), named RAM words, the ROM
 /// records and native image, and sound. Routines written against it run on
 /// either.
-pub trait State: crate::actors::boss_lease::BossState + OwnedWords + SessionRam {}
-impl<T> State for T where T: crate::actors::boss_lease::BossState + OwnedWords + SessionRam + ?Sized {}
+pub trait State:
+    crate::actors::boss_lease::BossState + OwnedWords + DisplayObjects + SessionRam
+{
+}
+impl<T> State for T where
+    T: crate::actors::boss_lease::BossState + OwnedWords + DisplayObjects + SessionRam + ?Sized
+{
+}
 
 // One table: each owned word and the work RAM word its Session field projects.
 macro_rules! owned_words {
@@ -815,6 +820,30 @@ owned_words! {
 
 /// The Session-owned words: the typed field inside a lease, the RAM image's
 /// word (as `word!` reads and stores it) on the game.
+/// The display's objects, for Mother Brain's own spritemap routine: the
+/// display's staging when the Session owns the display, otherwise the
+/// objects as the session view projects them.
+pub trait DisplayObjects: SessionRam {
+    fn owned_objects(&mut self) -> Option<&mut crate::scene::state::ObjectStaging> {
+        None
+    }
+    /// Add `map` at room position `origin` to OAM, as $A9:93EE does.
+    fn draw_room_spritemap(
+        &mut self,
+        map: &crate::sprite_drawing::SpriteMap,
+        origin: (u16, u16),
+        camera: (u16, u16),
+        palette: u16,
+    ) {
+        use crate::sprite_drawing::{SessionObjects, draw_room};
+        if let Some(objects) = self.owned_objects() {
+            draw_room(objects, map, origin, camera, palette).expect("display objects");
+        } else {
+            let Ok(()) = draw_room(&mut SessionObjects(self), map, origin, camera, palette);
+        }
+    }
+}
+
 pub trait OwnedWords {
     fn owned(&self, word: OwnedWord) -> u16;
     fn set_owned(&mut self, word: OwnedWord, value: u16);
@@ -2550,30 +2579,16 @@ pub fn draw_neck_segment(x: u16, y: u16, game: &mut impl Lease) {
         );
     }
 }
+/// Add spritemap to OAM ($A9:93EE): spritemap `j` in bank $A9 at room
+/// position (`r18`, `r20`) with palette bits `r22`, through the display's objects.
 pub fn add_spritemap_to_oam(j: u16, r18: u16, r20: u16, r22: u16, game: &mut impl Lease) {
     let source = native_record(BANK_BASE | u32::from(j), game);
-    let mut n: i32 = source.word(0) as i32;
-    let mut offset: usize = 2;
-    let mut idx: i32 = word!(game.OAM_NEXT_PTR) as i32;
+    let map = crate::sprite_drawing::SpriteMap {
+        image: source.image,
+        offset: source.base,
+    };
     let layer1 = crate::camera::current(game).layer1;
-    do_until! { n == 0 ;
-        let row = r20.wrapping_add(source.byte(offset + 2) as i8 as u16);
-        let y: i16 = row.wrapping_sub(layer1[1]) as i16;
-        if y >= 0 {
-            let oam: usize = usize::try_from(0x370i32 + idx).expect("OAM entry outside RAM");
-            // The Y subtract ($A9:9409) leaves its no-borrow carry for the X add.
-            let carry = u16::from(row >= layer1[1]);
-            let x: u16 = r18.wrapping_add(source.word(offset)).wrapping_add(carry).wrapping_sub(layer1[0]);
-            SessionRam::set_byte(game, oam, x as u8);
-            SessionRam::set_byte(game, oam + 1, y as u8);
-            set_native_word(oam + 2, r22 | source.word(offset + 3), game);
-            word!(bits_i32, game.OAM_EXT[(idx >> 5)] |= (((x as i32 & 0x100) >> 8) | (((source.word(offset) as i16) < 0) as i32 * 2)) << (2 * (idx >> 2 & 7)));
-            idx = (idx + 4) & 0x1ff;
-        }
-        offset += 5;
-        n -= 1;
-    }
-    word!(game.OAM_NEXT_PTR = idx as u16);
+    game.draw_room_spritemap(&map, (r18, r20), (layer1[0], layer1[1]), r22);
 }
 pub fn go_to_9cd1(_k: u16) -> u16 {
     ADDR_STRU_A99CD1 as u16
