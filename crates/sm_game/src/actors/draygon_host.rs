@@ -19,7 +19,6 @@ pub trait Host: BossEffects + BossLease<Game = Self> {
     fn grab_samus(&mut self, direction: u16);
     fn release_samus(&mut self);
     fn draygon_spawn_ring(&mut self);
-    fn draygon_death_bubble(&mut self);
     /// Draygon's sprite motion with `horizontal_bias`.
     fn draygon_motion(&mut self, horizontal_bias: u16);
     /// Draygon's death drop for `area`.
