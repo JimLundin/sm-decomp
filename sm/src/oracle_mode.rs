@@ -25,7 +25,7 @@ pub fn faithful() -> bool {
 /// The kind of snesrev change, one table per kind in `tools/snesrev_patches.py`.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum PatchKind {
-    /// A `kPatchedCarrys` site: forced carry before ADC/SBC.
+    /// A `PATCHED_CARRIES` site: forced carry before ADC/SBC.
     Carry,
     /// A `patch_bugs_parts` compatibility action.
     BugHook,

@@ -4,7 +4,7 @@ use crate::types::Apu;
 use std::fmt::Write;
 
 #[rustfmt::skip]
-static opcodeNames: [&str; 256] = [
+static OPCODE_NAMES: [&str; 256] = [
     "brk          ", "ora ($%02x,x)  ", "cop #$%02x     ", "ora $%02x,s    ",
     "tsb $%02x      ", "ora $%02x      ", "asl $%02x      ", "ora [$%02x]    ",
     "php          ", "ora #$%04x   ", "asl          ", "phd          ",
@@ -70,7 +70,7 @@ static opcodeNames: [&str; 256] = [
     "sed          ", "sbc $%04x,y  ", "plx          ", "xce          ",
     "jsr ($%04x,x)", "sbc $%04x,x  ", "inc $%04x,x  ", "sbc $%06x,x",
 ];
-static opcodeType: [i32; 256] = [
+static OPCODE_TYPES: [i32; 256] = [
     0, 1, 1, 1, 1, 1, 1, 1, 0, 4, 0, 0, 2, 2, 2, 3, 6, 1, 1, 1, 1, 1, 1, 1, 0, 2, 0, 0, 2, 2, 2, 3,
     2, 1, 3, 1, 1, 1, 1, 1, 0, 4, 0, 0, 2, 2, 2, 3, 6, 1, 1, 1, 1, 1, 1, 1, 0, 2, 0, 0, 2, 2, 2, 3,
     0, 1, 1, 1, 8, 1, 1, 1, 0, 4, 0, 0, 2, 2, 2, 3, 6, 1, 1, 1, 8, 1, 1, 1, 0, 2, 0, 0, 3, 2, 2, 3,
@@ -81,7 +81,7 @@ static opcodeType: [i32; 256] = [
     5, 1, 1, 1, 1, 1, 1, 1, 0, 4, 0, 0, 2, 2, 2, 3, 6, 1, 1, 1, 2, 1, 1, 1, 0, 2, 0, 0, 2, 2, 2, 3,
 ];
 #[rustfmt::skip]
-static opcodeNamesSpc: [&str; 256] = [
+static SPC_OPCODE_NAMES: [&str; 256] = [
     "nop              ", "tcall 0          ", "set1 $%02x.0       ", "bbs $%02x.0, $%04x ",
     "or a, $%02x        ", "or a, $%04x      ", "or a, [X]        ", "or a, [$%02x+x]    ",
     "or a, #$%02x       ", "or $%02x, $%02x      ", "or1 c, $%04x.%01x   ", "asl $%02x          ",
@@ -147,7 +147,7 @@ static opcodeNamesSpc: [&str; 256] = [
     "mov x, $%02x       ", "mov x, $%02x+y     ", "mov $%02x, $%02x     ", "mov y, $%02x+x     ",
     "inc y            ", "mov y, a         ", "dbnz y, $%04x    ", "stop             ",
 ];
-static opcodeTypeSpc: [i32; 256] = [
+static SPC_OPCODE_TYPES: [i32; 256] = [
     0, 0, 1, 5, 1, 2, 0, 1, 1, 4, 6, 1, 2, 0, 2, 0, 3, 0, 1, 5, 1, 2, 2, 1, 4, 0, 1, 1, 0, 0, 2, 2,
     0, 0, 1, 5, 1, 2, 0, 1, 1, 4, 6, 1, 2, 0, 5, 3, 3, 0, 1, 5, 1, 2, 2, 1, 4, 0, 1, 1, 0, 0, 1, 2,
     0, 0, 1, 5, 1, 2, 0, 1, 1, 4, 6, 1, 2, 0, 2, 1, 3, 0, 1, 5, 1, 2, 2, 1, 4, 0, 1, 1, 0, 0, 2, 2,
@@ -275,7 +275,7 @@ unsafe fn getDisassemblyCpu(execution: &mut Execution<'_>, line: &mut [u8; 14]) 
             .pc
             .wrapping_add(3)
             .wrapping_add_signed(word as i16);
-        let kind = opcodeType[usize::from(opcode)];
+        let kind = OPCODE_TYPES[usize::from(opcode)];
         let short = (kind == 4 && (*execution.selected_cpu()).mf)
             || (kind == 5 && (*execution.selected_cpu()).xf);
         let operands = match kind {
@@ -296,7 +296,7 @@ unsafe fn getDisassemblyCpu(execution: &mut Execution<'_>, line: &mut [u8; 14]) 
             8 => [u32::from(byte2), u32::from(byte)],
             _ => unreachable!(),
         };
-        instruction_text(line, opcodeNames[usize::from(opcode)], operands, short);
+        instruction_text(line, OPCODE_NAMES[usize::from(opcode)], operands, short);
     }
 }
 unsafe fn getDisassemblySpc(apu: *mut Apu, line: &mut [u8; 18]) {
@@ -314,7 +314,7 @@ unsafe fn getDisassemblySpc(apu: *mut Apu, line: &mut [u8; 18]) {
             .pc
             .wrapping_add(2)
             .wrapping_add_signed(i16::from(byte2 as i8));
-        let operands = match opcodeTypeSpc[usize::from(opcode)] {
+        let operands = match SPC_OPCODE_TYPES[usize::from(opcode)] {
             0 => [0, 0],
             1 => [u32::from(byte), 0],
             2 => [u32::from(word), 0],
@@ -324,6 +324,6 @@ unsafe fn getDisassemblySpc(apu: *mut Apu, line: &mut [u8; 18]) {
             6 => [u32::from(word & 0x1fff), u32::from(word >> 13)],
             _ => unreachable!(),
         };
-        instruction_text(line, opcodeNamesSpc[usize::from(opcode)], operands, false);
+        instruction_text(line, SPC_OPCODE_NAMES[usize::from(opcode)], operands, false);
     }
 }

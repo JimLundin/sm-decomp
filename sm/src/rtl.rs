@@ -131,11 +131,11 @@ use std::fs::File;
 use std::io::{BufWriter, Seek, SeekFrom, Write};
 
 pub use crate::types::SaveLoadOperation as C2RustUnnamed_0;
-pub const kSaveLoad_Replay: C2RustUnnamed_0 = 3;
-pub const kSaveLoad_Load: C2RustUnnamed_0 = 2;
-pub const kSaveLoad_Save: C2RustUnnamed_0 = 1;
+pub const SAVE_LOAD_REPLAY: C2RustUnnamed_0 = 3;
+pub const SAVE_LOAD_LOAD: C2RustUnnamed_0 = 2;
+pub const SAVE_LOAD_SAVE: C2RustUnnamed_0 = 1;
 
-pub const kCurrentBugFixCounter: C2RustUnnamed_1 = 1;
+pub const CURRENT_BUG_FIX_COUNTER: C2RustUnnamed_1 = 1;
 crate::type_aliases! {
     pub C2RustUnnamed_1 = u32;
 }
@@ -754,16 +754,16 @@ pub unsafe fn RtlRunFrame(mut inputs: i32, native_game: &mut Game) -> bool {
             if game.state_recorder.snapshot_flags & 1 != 0 {
                 game.state_recorder.snapshot_flags &= !(1i32) as u32;
                 inputs = game.state_recorder.last_inputs as i32;
-            } else if word!(game.BUG_FIX_COUNTER) as i32 != kCurrentBugFixCounter as i32 {
+            } else if word!(game.BUG_FIX_COUNTER) as i32 != CURRENT_BUG_FIX_COUNTER as i32 {
                 if game.g_debug_flag {
                     printf(
                         c"bug_fix_counter %d => %d\n".as_ptr(),
                         word!(game.BUG_FIX_COUNTER) as i32,
-                        kCurrentBugFixCounter as i32,
+                        CURRENT_BUG_FIX_COUNTER as i32,
                     );
                 }
-                if (word!(game.BUG_FIX_COUNTER) as i32) < kCurrentBugFixCounter as i32 {
-                    word!(game.BUG_FIX_COUNTER = kCurrentBugFixCounter as i32 as u16);
+                if (word!(game.BUG_FIX_COUNTER) as i32) < CURRENT_BUG_FIX_COUNTER as i32 {
+                    word!(game.BUG_FIX_COUNTER = CURRENT_BUG_FIX_COUNTER as i32 as u16);
                     {
                         let (ram, recorder) = game.ram_and_recorder();
                         recording_allocation(
@@ -838,7 +838,7 @@ pub unsafe fn RtlSaveSnapshot(
             .expect("Session native result adoption rejected");
     }
 }
-static kBugSaves: crate::types::ImmutableCStringPointers<7> = crate::types::immutable_c_strings! {
+static BUG_SAVES: crate::types::ImmutableCStringPointers<7> = crate::types::immutable_c_strings! {
     b"Before Kraid\0", b"Before Golden Torizo\0", b"After Crocomire\0", b"Baby Metroid\0",
     b"Tourian Statue\0", b"Before Ridley\0", b"Enter Mother Brain\0",
 };
@@ -856,7 +856,7 @@ pub unsafe fn RtlSaveLoad(cmd: i32, slot: i32, native_game: &mut Game) {
         let mut name: [c_char; 128] = [0; 128];
         if slot >= 256 {
             let i: i32 = slot - 256i32;
-            if cmd == kSaveLoad_Save as i32
+            if cmd == SAVE_LOAD_SAVE as i32
                 || i as usize
                     >= (size_of::<[*const c_char; 7]>() as usize).wrapping_div(size_of::<
                         *const c_char,
@@ -869,7 +869,7 @@ pub unsafe fn RtlSaveLoad(cmd: i32, slot: i32, native_game: &mut Game) {
             sprintf(
                 &raw mut name as *mut c_char,
                 c"saves/%s.sav".as_ptr(),
-                kBugSaves[i as usize],
+                BUG_SAVES[i as usize],
             );
         } else {
             sprintf(
@@ -880,16 +880,16 @@ pub unsafe fn RtlSaveLoad(cmd: i32, slot: i32, native_game: &mut Game) {
         }
         printf(
             c"*** %s slot %d\n".as_ptr(),
-            if cmd == kSaveLoad_Save as i32 {
+            if cmd == SAVE_LOAD_SAVE as i32 {
                 c"Saving".as_ptr()
-            } else if cmd == kSaveLoad_Load as i32 {
+            } else if cmd == SAVE_LOAD_LOAD as i32 {
                 c"Loading".as_ptr()
             } else {
                 c"Replaying".as_ptr()
             },
             slot,
         );
-        if cmd != kSaveLoad_Save as i32 {
+        if cmd != SAVE_LOAD_SAVE as i32 {
             let Some(mut f) =
                 crate::util::host_path(name.as_ptr()).and_then(|path| File::open(path).ok())
             else {
@@ -907,7 +907,7 @@ pub unsafe fn RtlSaveLoad(cmd: i32, slot: i32, native_game: &mut Game) {
             let game = mutation.game();
             RtlApuLock();
             let complete_load =
-                state_recorder_load(&mut f, cmd == kSaveLoad_Replay as i32, game, true);
+                state_recorder_load(&mut f, cmd == SAVE_LOAD_REPLAY as i32, game, true);
             ppu_copy((*game.g_snes).my_ppu, (*game.g_snes).ppu);
             RtlApuUnlock();
             synchronize_whole_state(game, complete_load);

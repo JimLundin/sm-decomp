@@ -1126,6 +1126,27 @@ IDENTIFIERS = (
      'https://patrickjohnston.org/bank/A9#fC038 $A9:C049, in $A9:C038 Set Mother Brain painful walking function timer'),
     ('style', 'word_86F3D4', 'FALLING_SPARK_VELOCITIES',
      'https://patrickjohnston.org/bank/86#fF391 $86:F3D4, in $86:F391 Initialisation AI - enemy projectile $F498 (falling spark)'),
+    # sm's emulator and harness statics: Rust's SCREAMING_SNAKE_CASE (lane L), no game entity.
+    ('sm/src/cpu_infra.rs', 'kPatchedCarrys', 'PATCHED_CARRIES', "Rust naming; snesrev's forced-carry site table"),
+    ('sm/src/rtl.rs', 'kSaveLoad_Replay', 'SAVE_LOAD_REPLAY', 'Rust naming; snesrev save/load command'),
+    ('sm/src/rtl.rs', 'kSaveLoad_Load', 'SAVE_LOAD_LOAD', 'Rust naming; snesrev save/load command'),
+    ('sm/src/rtl.rs', 'kSaveLoad_Save', 'SAVE_LOAD_SAVE', 'Rust naming; snesrev save/load command'),
+    ('sm/src/rtl.rs', 'kCurrentBugFixCounter', 'CURRENT_BUG_FIX_COUNTER', 'Rust naming; snesrev bug-fix counter'),
+    ('sm/src/rtl.rs', 'kBugSaves', 'BUG_SAVES', 'Rust naming; snesrev bug-save table'),
+    ('sm/src/snes/apu.rs', 'bootRom', 'BOOT_ROM', 'Rust naming; SPC700 IPL boot ROM'),
+    ('sm/src/snes/dma.rs', 'bAdrOffsets', 'B_BUS_OFFSETS', 'Rust naming; DMA B-bus address offsets per transfer mode'),
+    ('sm/src/snes/dma.rs', 'transferLength', 'TRANSFER_LENGTHS', 'Rust naming; DMA transfer unit length per mode'),
+    ('sm/src/snes/ppu.rs', 'kPpuExtraLeftRight', 'PPU_EXTRA_LEFT_RIGHT', 'Rust naming; PPU widescreen margin'),
+    ('sm/src/spc_player.rs', 'kSfx1InstrListPtrs', 'SFX1_INSTRUCTION_LISTS', 'Rust naming; sound library 1 instruction list pointers'),
+    ('sm/src/spc_player.rs', 'kSfx1Conf', 'SFX1_CONFIG', 'Rust naming; sound library 1 channel configuration'),
+    ('sm/src/spc_player.rs', 'kSfx2InstrListPtrs', 'SFX2_INSTRUCTION_LISTS', 'Rust naming; sound library 2 instruction list pointers'),
+    ('sm/src/spc_player.rs', 'kSfx2Conf', 'SFX2_CONFIG', 'Rust naming; sound library 2 channel configuration'),
+    ('sm/src/spc_player.rs', 'kSfx3InstrListPtrs', 'SFX3_INSTRUCTION_LISTS', 'Rust naming; sound library 3 instruction list pointers'),
+    ('sm/src/spc_player.rs', 'kSfx3Conf', 'SFX3_CONFIG', 'Rust naming; sound library 3 channel configuration'),
+    ('sm/src/tracing.rs', 'opcodeNames', 'OPCODE_NAMES', 'Rust naming; 65816 trace mnemonics'),
+    ('sm/src/tracing.rs', 'opcodeType', 'OPCODE_TYPES', 'Rust naming; 65816 trace operand kinds'),
+    ('sm/src/tracing.rs', 'opcodeNamesSpc', 'SPC_OPCODE_NAMES', 'Rust naming; SPC700 trace mnemonics'),
+    ('sm/src/tracing.rs', 'opcodeTypeSpc', 'SPC_OPCODE_TYPES', 'Rust naming; SPC700 trace operand kinds'),
 )
 
 LOCALS = (
@@ -1191,6 +1212,9 @@ ALLOW_REMOVALS = (
     ('crates/sm_game/src/menu_state.rs', 'non_snake_case'),
     ('crates/sm_game/src/menus/prelude.rs', 'non_snake_case'),
     ('crates/sm_game/src/lib.rs', 'non_upper_case_globals'),
+    ('sm/src/lib.rs', 'non_upper_case_globals'),
+    ('sm/src/verify_dll.rs', 'non_upper_case_globals'),
+    ('sm/src/verification/player_detached/main.rs', 'non_upper_case_globals'),
 )
 
 CONSTANTS = (

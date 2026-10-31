@@ -8,7 +8,7 @@ pub use crate::types::{Ppu, PpuPixelPrioBufs, PpuZbufType, Snes, size_t};
 crate::type_aliases! {
     pub C2RustUnnamed_0, C2RustUnnamed_1, C2RustUnnamed_2, C2RustUnnamed_3 = u32;
 }
-pub const kPpuExtraLeftRight: C2RustUnnamed_0 = 0;
+pub const PPU_EXTRA_LEFT_RIGHT: C2RustUnnamed_0 = 0;
 
 pub const __ASSERT_FUNCTION: [c_char; 43] = unsafe {
     transmute::<[u8; 43], [c_char; 43]>(*b"void PpuDrawBackgrounds(Ppu *, int, _Bool)\0")
@@ -137,7 +137,7 @@ impl raster::SpritePixels for NativeRasterSource {
                 .objBuffer
                 .data
                 .as_ptr()
-                .offset((x + kPpuExtraLeftRight as i32) as isize))
+                .offset((x + PPU_EXTRA_LEFT_RIGHT as i32) as isize))
         }
     }
 }

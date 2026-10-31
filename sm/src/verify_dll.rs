@@ -1,7 +1,7 @@
 //! Headless verifier host (Windows DLL, Linux shared object), built by Cargo or rustc and loaded by Python.
 //! Each process runs one replay with explicitly owned Game state.
 #![deny(unsafe_op_in_unsafe_fn)]
-#![allow(non_snake_case, non_upper_case_globals)]
+#![allow(non_snake_case)]
 
 use sm::game_state::{Game, GameOwner};
 use std::ffi::{CStr, c_char, c_int, c_void};
