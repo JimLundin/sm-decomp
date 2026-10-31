@@ -15,6 +15,7 @@ use crate::actors::host::abs16;
 use crate::actors::layouts::part_view;
 use crate::actors::mother_brain::{BODY, BRAIN, MotherBrainBody, MotherBrainBrain};
 use crate::actors::mother_brain_fight::OwnedWord;
+use crate::actors::mother_brain_fight::random_number;
 use crate::actors::mother_brain_fight::{
     BANK, BANK_BASE, Lease as FightLease, State, cgram, music, samus_command, sound,
 };
@@ -36,7 +37,6 @@ use crate::enemy_projectiles::shared_pre::{x_velocity_at_angle, y_velocity_at_an
 use crate::enemy_script::EnemyScript;
 use crate::menus::menu_tilemap::native_record;
 use crate::palette_copies::copy_rom_colors_to_palette;
-use crate::ram::word;
 
 /// What the cutscene reaches beyond the baby Metroid's encounter.
 pub trait Host: crate::actors::baby_metroid_encounter::Host {
@@ -465,7 +465,7 @@ crate::dispatch::callback_dispatch! {
     };
     [11127235] move_to_samus [] {
         session_slot! { game, BabyMetroidInCutscene[e]; cry_enabled = 0, health_palette_enabled = 1 }
-        if (word!(game.RANDOM_NUMBER) & 0xfff) >= 0xfa0 {
+        if (random_number(game) & 0xfff) >= 0xfa0 {
             queue_sfx2_max6(sound::BABY_METROID_REMORSE, game);
         }
         let movement: u16 = session_slot!(game, BabyMetroidInCutscene[e].movement);

@@ -581,4 +581,8 @@ pub struct EnemyProjectiles {
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct Timing {
     pub frame_counter: u16,
+    /// The last random number ($7E:05E5).
+    pub random_number: u16,
+    /// Time is frozen ($7E:0A78): enemies and their projectiles pause.
+    pub time_frozen: u16,
 }

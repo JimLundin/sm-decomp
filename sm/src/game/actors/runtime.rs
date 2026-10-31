@@ -213,6 +213,9 @@ macro_rules! mother_brain_owned {
             CollisionIndex => $($reference)* $session.room.collision_detection_index,
             EarthquakeType => $($reference)* $session.feedback.earthquake_kind,
             EarthquakeTimer => $($reference)* $session.feedback.earthquake_timer,
+            RandomNumber => $($reference)* $session.timing.random_number,
+            RandomEnemyCounter => $($reference)* $session.actors.controls.phase_counter,
+            TimeFrozen => $($reference)* $session.timing.time_frozen,
             Color(_) => unreachable!("colours go through the visual owner"),
         }
     }};
