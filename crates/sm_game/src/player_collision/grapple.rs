@@ -238,6 +238,13 @@ pub fn react_beam(
         }
     }
 }
+/// $0D82..$0D8F, the grapple beam collision temporaries; extension keeps its
+/// X and Y quarter velocities in the first eight bytes.
+const COLLISION_TEMPORARIES: usize = 0xd82;
+/// Firing the beam clears the collision temporaries ($9B:C651).
+pub fn clear_temporaries(h: &mut impl crate::runtime_access::SessionRam) {
+    h.write_slice(COLLISION_TEMPORARIES, &[0; 14]);
+}
 /// Four signed fixed-point substeps; each setup callback can change the next one.
 /// $94:A85B's quarter velocity: it stores `velocity` at `at + 1`, rotates the
 /// two words at `at` right twice (carry chained between them, so the stale
@@ -276,8 +283,8 @@ pub fn extend_beam(
 ) -> u8 {
     let velocity = h.session().player.grapple_velocity;
     let velocity = [
-        quarter_velocity(h, 0xd82, velocity.x),
-        quarter_velocity(h, 0xd86, velocity.y),
+        quarter_velocity(h, COLLISION_TEMPORARIES, velocity.x),
+        quarter_velocity(h, COLLISION_TEMPORARIES + 4, velocity.y),
     ];
     let mut result = 0;
     for _ in 0..4 {
