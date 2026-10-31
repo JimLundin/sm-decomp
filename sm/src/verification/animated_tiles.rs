@@ -1,5 +1,6 @@
 //! Synthetic actual-code observations; no cartridge-derived fixtures.
 use crate::ram_map::{word_arrays as a, words as w};
+use crate::snes::cart::CartRom;
 use crate::{game_state::Game, rom::RomImage};
 use std::panic::{AssertUnwindSafe, catch_unwind};
 const COMMANDS: [u32; 24] = [
@@ -322,7 +323,6 @@ fn dma_case(n: u32, g: &mut Game, image: &RomImage, trace: &mut Vec<u8>) -> u16 
     let (ppu, cart) = unsafe { ((*snes).ppu, (*snes).cart) };
     unsafe {
         (*cart).type_0 = 1;
-        (*cart).rom = image.clone();
         (*cart).rom_size = image.len() as u32;
         let ppu = &mut *ppu;
         ppu.vramIncrement = 32;
@@ -333,6 +333,8 @@ fn dma_case(n: u32, g: &mut Game, image: &RomImage, trace: &mut Vec<u8>) -> u16 
         }
     }
     let outcome = catch_unwind(AssertUnwindSafe(|| {
+        // The cartridge serves the image's final bytes to the upload's DMA.
+        let mut short_cart = None;
         for at in 0..0x100 {
             image.write(
                 crate::rtl::lorom_offset(0x878000) as usize + at,
@@ -404,11 +406,22 @@ fn dma_case(n: u32, g: &mut Game, image: &RomImage, trace: &mut Vec<u8>) -> u16 
             clear(g);
             slot(g, a::ANIMTILES_IDS, 10, 0x8000);
             let at = crate::rtl::lorom_offset(0x878000) as usize;
-            unsafe {
-                (*cart).rom = RomImage::zeroed(at + (n % 3) as usize);
-            }
+            short_cart = Some(at + (n % 3) as usize);
             slot(g, a::ANIMTILES_SIZES, 10, if n >= 20 { 0 } else { 8 });
             slot(g, a::ANIMTILES_SRC_PTR, 10, 0x8000);
+        }
+        let cart_rom = short_cart.map_or_else(
+            || {
+                CartRom::from(
+                    (0..image.len())
+                        .map(|at| image.read(at))
+                        .collect::<Vec<_>>(),
+                )
+            },
+            CartRom::zeroed,
+        );
+        unsafe {
+            (*cart).rom = cart_rom;
         }
         let result = catch_unwind(AssertUnwindSafe(|| upload(g)));
         let mut hardware = crate::recording::RecordingBytes::default();

@@ -19,13 +19,13 @@ fn words(output: &mut [u16], input: &[u8]) {
 // Original mid-frame seeds precede the patched scheduler's return stack.
 // Restore its original wait JSL for one opcode; never leave the patch removed.
 struct OriginalWaitCall {
-    image: sm::rom::RomImage,
+    image: sm::snes::cart::CartRom,
     offset: usize,
     patched: [u8; 4],
 }
 
 impl OriginalWaitCall {
-    fn new(image: sm::rom::RomImage, original: &[u8]) -> Result<Self, String> {
+    fn new(image: sm::snes::cart::CartRom, original: &[u8]) -> Result<Self, String> {
         let offset = sm::rom::lorom_offset(0x82897a) as usize;
         if original.get(offset..offset + 4) != Some(&[0x22, 0x38, 0x83, 0x80])
             || image.len() < offset + 4

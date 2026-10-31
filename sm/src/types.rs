@@ -577,7 +577,7 @@ crate::typed_struct! {
     #[repr(C)]
     pub struct Cart {
         pub type_0: u8;
-        pub rom: crate::rom::RomImage;
+        pub rom: crate::snes::cart::CartRom;
         pub rom_size: u32;
         pub ram: sm_game::save_file::SaveRam;
         pub ramSize: u32;

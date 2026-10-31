@@ -1,6 +1,5 @@
 use crate::c_library::{memcpy, memset, printf};
 use crate::game_state::Game;
-use crate::native_rom::NativeRomPointer;
 use crate::snes::cart::cart_load;
 pub use crate::types::Snes;
 use ::core::ffi::{c_char, c_void};
@@ -115,7 +114,7 @@ pub unsafe fn snes_load_rom(mut data: *const u8, mut length: i32, game: &mut Gam
         while length > new_length {
             new_length *= 2;
         }
-        let image = crate::rom::RomImage::zeroed(new_length as usize);
+        let image = crate::snes::cart::CartRom::zeroed(new_length as usize);
         let new_data = image.as_mut_ptr();
         memcpy(
             new_data as *mut c_void,

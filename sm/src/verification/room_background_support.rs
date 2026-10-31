@@ -24,12 +24,12 @@ pub(crate) unsafe fn initialized_with_world(
         for i in 0..0x1000 {
             image.write(offset(0x9ab200) + i, (i.wrapping_mul(7) ^ 0xd3) as u8);
         }
-        let cart_image = RomImage::zeroed(image.len());
-        for i in 0..image.len() {
-            cart_image.write(i, image.read(i));
-        }
+        let cart_image = crate::snes::cart::CartRom::from(
+            (0..image.len()).map(|i| image.read(i)).collect::<Vec<_>>(),
+        );
         crate::snes::cart::cart_load((*g.g_snes).cart, 1, cart_image, 8192);
-        g.register_native_rom((*(*g.g_snes).cart).rom.clone());
+        // The engine reads its own copy, as snes_init registers it.
+        g.register_native_rom(image);
         g.g_sram = (*(*g.g_snes).cart).ram.clone();
         g.execution().reset(true);
         for i in 0..g.ram().len() {

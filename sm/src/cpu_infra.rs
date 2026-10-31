@@ -1008,10 +1008,7 @@ pub unsafe fn snes_init(filename: *const c_char, game: &mut Game) -> *mut Snes {
         // The engine reads an unpatched copy, as hardware reads the cartridge;
         // the oracle's compatibility patches rewrite only its own cartridge.
         let cartridge = (*(*game.g_snes).cart).rom.clone();
-        let engine = crate::rom::RomImage::zeroed(cartridge.len());
-        for at in 0..cartridge.len() {
-            engine.write(at, cartridge.read(at));
-        }
+        let engine = cartridge.to_rom_image();
         game.cartridge_rom = Some(cartridge);
         game.register_native_rom(engine.clone());
         game.register_rom(engine);
