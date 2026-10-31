@@ -759,77 +759,55 @@ pub enum Contact {
 pub trait State: crate::actors::boss_lease::BossState + OwnedWords + SessionRam {}
 impl<T> State for T where T: crate::actors::boss_lease::BossState + OwnedWords + SessionRam + ?Sized {}
 
-/// A word Mother Brain's code reads or writes that the Session owns: the
-/// player's health, reserve, invincibility, knockback, speed and palette
-/// frame, the projectiles' cooldown, bombs and shots, the collision index,
-/// the earthquake and the palette colours.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum OwnedWord {
-    SamusHealth,
-    MaxReserveHealth,
-    ReserveHealth,
-    Invincibility,
-    KnockbackTimer,
-    KnockbackDirection,
-    SpeedDivisor,
-    SamusYSpeed,
-    SamusPaletteFrame,
-    Cooldown,
-    BombCounter,
-    PowerBomb,
-    ShotX(usize),
-    ShotY(usize),
-    ShotKind(usize),
-    ShotDamage(usize),
-    CollisionIndex,
-    EarthquakeType,
-    EarthquakeTimer,
-    Color(usize),
-    RandomNumber,
-    RandomEnemyCounter,
-    TimeFrozen,
-    CollidingEnemy(usize),
-    Bg2TilemapSize,
-    Bg2TilemapPending,
-    PaletteFadeStep,
-    Bg2Scroll(usize),
-}
-
-impl OwnedWord {
-    /// The work RAM word the Session field projects.
-    pub fn address(self) -> usize {
-        use crate::ram::{word_arrays as arrays, words};
-        match self {
-            Self::SamusHealth => words::SAMUS_HEALTH,
-            Self::MaxReserveHealth => words::SAMUS_MAX_RESERVE_HEALTH,
-            Self::ReserveHealth => words::SAMUS_RESERVE_HEALTH,
-            Self::Invincibility => words::SAMUS_INVINCIBILITY_TIMER,
-            Self::KnockbackTimer => words::SAMUS_KNOCKBACK_TIMER,
-            Self::KnockbackDirection => words::KNOCKBACK_X_DIR,
-            Self::SpeedDivisor => words::SAMUS_X_SPEED_DIVISOR,
-            Self::SamusYSpeed => words::SAMUS_Y_SPEED,
-            Self::SamusPaletteFrame => words::SPECIAL_SAMUS_PALETTE_FRAME,
-            Self::Cooldown => words::COOLDOWN_TIMER,
-            Self::BombCounter => words::BOMB_COUNTER,
-            Self::PowerBomb => words::POWER_BOMB_FLAG,
-            Self::ShotX(index) => arrays::PROJECTILE_X_POS + 2 * index,
-            Self::ShotY(index) => arrays::PROJECTILE_Y_POS + 2 * index,
-            Self::ShotKind(index) => arrays::PROJECTILE_TYPE + 2 * index,
-            Self::ShotDamage(index) => arrays::PROJECTILE_DAMAGE + 2 * index,
-            Self::CollisionIndex => words::COLLISION_DETECTION_INDEX,
-            Self::EarthquakeType => words::EARTHQUAKE_TYPE,
-            Self::EarthquakeTimer => words::EARTHQUAKE_TIMER,
-            Self::Color(index) => arrays::PALETTE_BUFFER + 2 * index,
-            Self::RandomNumber => words::RANDOM_NUMBER,
-            Self::RandomEnemyCounter => words::RANDOM_ENEMY_COUNTER,
-            Self::TimeFrozen => words::TIME_IS_FROZEN_FLAG,
-            Self::CollidingEnemy(direction) => arrays::ENEMY_INDEX_COLLIDING_DIRS + 2 * direction,
-            Self::Bg2TilemapSize => words::ENEMY_BG2_TILEMAP_SIZE,
-            Self::Bg2TilemapPending => words::NMI_FLAG_BG2_ENEMY_VRAM_TRANSFER,
-            Self::PaletteFadeStep => words::PALETTE_CHANGE_NUM,
-            Self::Bg2Scroll(axis) => words::REG_BG2HOFS + 2 * axis,
+// One table: each owned word and the work RAM word its Session field projects.
+macro_rules! owned_words {
+    ($($word:ident $(($index:ident))? => $address:expr,)+) => {
+        /// A word Mother Brain's code reads or writes that the Session owns.
+        #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+        pub enum OwnedWord {
+            $($word $((owned_words!(@index $index)))?,)+
         }
-    }
+        impl OwnedWord {
+            /// The work RAM word the Session field projects.
+            pub fn address(self) -> usize {
+                use crate::ram::{word_arrays as arrays, words};
+                match self {
+                    $(Self::$word $(($index))? => $address,)+
+                }
+            }
+        }
+    };
+    (@index $index:ident) => { usize };
+}
+owned_words! {
+    SamusHealth => words::SAMUS_HEALTH,
+    MaxReserveHealth => words::SAMUS_MAX_RESERVE_HEALTH,
+    ReserveHealth => words::SAMUS_RESERVE_HEALTH,
+    Invincibility => words::SAMUS_INVINCIBILITY_TIMER,
+    KnockbackTimer => words::SAMUS_KNOCKBACK_TIMER,
+    KnockbackDirection => words::KNOCKBACK_X_DIR,
+    SpeedDivisor => words::SAMUS_X_SPEED_DIVISOR,
+    SamusYSpeed => words::SAMUS_Y_SPEED,
+    SamusPaletteFrame => words::SPECIAL_SAMUS_PALETTE_FRAME,
+    Cooldown => words::COOLDOWN_TIMER,
+    BombCounter => words::BOMB_COUNTER,
+    PowerBomb => words::POWER_BOMB_FLAG,
+    ShotX(index) => arrays::PROJECTILE_X_POS + 2 * index,
+    ShotY(index) => arrays::PROJECTILE_Y_POS + 2 * index,
+    ShotKind(index) => arrays::PROJECTILE_TYPE + 2 * index,
+    ShotDamage(index) => arrays::PROJECTILE_DAMAGE + 2 * index,
+    CollisionIndex => words::COLLISION_DETECTION_INDEX,
+    EarthquakeType => words::EARTHQUAKE_TYPE,
+    EarthquakeTimer => words::EARTHQUAKE_TIMER,
+    Color(index) => arrays::PALETTE_BUFFER + 2 * index,
+    RandomNumber => words::RANDOM_NUMBER,
+    RandomEnemyCounter => words::RANDOM_ENEMY_COUNTER,
+    TimeFrozen => words::TIME_IS_FROZEN_FLAG,
+    CollidingEnemy(direction) => arrays::ENEMY_INDEX_COLLIDING_DIRS + 2 * direction,
+    Bg2TilemapSize => words::ENEMY_BG2_TILEMAP_SIZE,
+    Bg2TilemapPending => words::NMI_FLAG_BG2_ENEMY_VRAM_TRANSFER,
+    PaletteFadeStep => words::PALETTE_CHANGE_NUM,
+    Bg2Scroll(axis) => words::REG_BG2HOFS + 2 * axis,
 }
 
 /// The Session-owned words: the typed field inside a lease, the RAM image's
