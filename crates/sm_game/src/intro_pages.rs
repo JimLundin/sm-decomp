@@ -338,7 +338,7 @@ pub fn fade_to_scene<H: crate::menus::host::Host + ?Sized>(palette: Palette, gam
 }
 
 pub fn wait_for_music<H: crate::menus::host::Host + ?Sized>(next: u16, game: &mut H) {
-    if game.has_queued_music() & 1 == 0 {
+    if crate::music_requests::has_queued_music(game) & 1 == 0 {
         crate::flow::set(game, crate::flow::Word::CinematicFunction, next);
         if next == 0xa64c {
             word!(game.CINEMATIC_FUNCTION_TIMER = 240);
@@ -478,7 +478,7 @@ pub fn show_final_page<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     CinematicObjects::Background.spawn(ADDR_CINEMATIC_BG_OBJECT_DEF_8BCF5D as u16, 0x4c00, game);
     crate::flow::set(game, crate::flow::Word::CinematicFunction, 0xa390);
     reset_caret(game);
-    game.queue_music_delayed8(0);
+    crate::music_requests::queue_delayed_8(0, game);
 }
 
 pub fn wait_for_final_page<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
