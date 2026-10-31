@@ -3,10 +3,9 @@
 pub(in crate::game) use sm_game::actors::access;
 pub(in crate::game) use sm_game::actors::api;
 pub(in crate::game) use sm_game::actors::bang;
+pub(crate) mod baby_metroid;
 pub(in crate::game) mod boss_lease;
 pub(crate) mod botwoon;
-pub(in crate::game) use sm_game::actors::botwoon_death;
-pub(crate) mod baby_metroid;
 pub(crate) mod escape_critters;
 pub(in crate::game) mod fireflea;
 pub(crate) use sm_game::actors::identity;

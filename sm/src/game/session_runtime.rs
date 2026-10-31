@@ -698,28 +698,6 @@ impl<'g> Runtime<'g> {
         )
     }
 }
-impl actors::botwoon_death::Host for Runtime<'_> {
-    fn native_death_signal(&self, enemy: u16, signal: actors::botwoon_death::Signal) -> u16 {
-        self.native_word(signal.address(enemy))
-    }
-    fn set_native_death_signal(
-        &mut self,
-        enemy: u16,
-        signal: actors::botwoon_death::Signal,
-        value: u16,
-    ) {
-        let at = signal.address(enemy);
-        let [low, high] = value.to_ne_bytes();
-        self.set_byte(at, low);
-        self.set_byte(at + 1, high);
-    }
-    fn set_collapse_delay(&mut self, enemy: u16, value: u16) {
-        let at = actors::botwoon_death::collapse_delay_address(enemy);
-        let [low, high] = value.to_ne_bytes();
-        self.set_byte(at, low);
-        self.set_byte(at + 1, high);
-    }
-}
 
 impl crate::game_state::persistent_session::AudioHost for Runtime<'_> {
     fn audio_byte(&self, at: usize) -> u8 {
@@ -1120,10 +1098,6 @@ crate::game::callback_dispatch! {
                     sm_a9::tubes_falling_main_ai(crate::ram_map::word!(game.CUR_ENEMY_INDEX), game);
                 }];
         11121927 => sm_a9::brain_shot;
-        11769448 => [actors::botwoon::main_ai(&mut Runtime::new(game))];
-        11771903 => [actors::botwoon::contact(false, &mut Runtime::new(game))];
-        11771969 => [actors::botwoon::contact(true, &mut Runtime::new(game))];
-        11771926 => [actors::botwoon::shot(&mut Runtime::new(game))];
         10783748 => crate::game::visual_runtime::advance_crocomire;
         0xa90000..=0xa9ffff => [sm_a9::dispatch_enemy_ai(ea, game)];
     }

@@ -118,11 +118,3 @@ impl Host for Game {
         enemy_projectiles::advance_botwoon_history(self);
     }
 }
-
-impl RuntimeHost for Runtime<'_> {
-    type Game = Game;
-
-    fn foreign<T>(&mut self, action: impl FnOnce(&mut Game) -> T) -> T {
-        Runtime::foreign(self, action)
-    }
-}
