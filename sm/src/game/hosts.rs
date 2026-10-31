@@ -768,20 +768,9 @@ const _: () = {
     assert!(c::DOOR_PALETTE == ADDR_K_CERES_DOOR_PALETTE as u16);
     assert!(c::ESCAPE_DOOR_PALETTE == ADDR_WORD_A6F50C as u16);
     assert!(c::DOOR_SPRITEMAP == ADDR_K_CERES_DOOR_SPRMAP_FAC7 as u16);
-    assert!(c::VANISH == crate::game::ceres_doors::TANGIBLE | crate::game::ceres_doors::INVISIBLE);
 };
 
 impl sm_game::actors::ceres_doors::Host for Game {
-    fn change_properties(&mut self, k: u16, set: u16, clear: u16) {
-        crate::game::ceres_doors::change_properties(
-            k,
-            set,
-            clear,
-            sm_game::enemy_script::EnemyScript::Stop,
-            self,
-        );
-    }
-
     fn rom_script(&mut self, bank: u8, address: u16) -> sm_game::enemy_script::EnemyScript {
         crate::game::session_runtime::steam_script(bank, address, self)
     }

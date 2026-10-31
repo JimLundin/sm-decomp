@@ -420,7 +420,6 @@ pub mod game {
     pub(crate) mod visual_runtime;
     pub(crate) use sm_game::visual_state;
 
-    pub(crate) mod ceres_doors;
     pub use sm_game::combat_rules;
     pub use sm_game::contact_rules;
     pub use sm_game::drop_rules;

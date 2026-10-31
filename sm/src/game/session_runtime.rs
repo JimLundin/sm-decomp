@@ -1286,18 +1286,6 @@ crate::game::callback_dispatch! {
         10852216 => [{ crate::game::sprite_effect_runtime::draygon_random_sprite(24, game); j }];
         10854268 => [{ crate::game::sprite_effect_runtime::draygon_spit(false, game); j }];
         10854318 => [{ crate::game::sprite_effect_runtime::draygon_spit(true, game); j }];
-        10940701 => [crate::game::ceres_doors::change_properties(k, sm_game::actors::ceres_doors::VANISH, 0, j, game)];
-        10940725 => [crate::game::ceres_doors::change_properties(k, 0, sm_game::actors::ceres_doors::VANISH, j, game)];
-        10942014 => crate::game::ceres_doors::branch_unless_samus_near;
-        10942058 => [crate::game::ceres_doors::branch_unless_boss_defeated(j, game)];
-        10942072 => [crate::game::ceres_doors::branch_unless_escape(j, game)];
-        10942091 => [crate::game::ceres_doors::change_properties(k, crate::game::ceres_doors::TANGIBLE, 0, j, game)];
-        10942101 => [crate::game::ceres_doors::change_properties(k, 0, crate::game::ceres_doors::TANGIBLE, j, game)];
-        10942111 => [crate::game::ceres_doors::mark_open(k, true, j, game)];
-        10942118 => [crate::game::ceres_doors::change_properties(k, crate::game::ceres_doors::INVISIBLE, 0, j, game)];
-        10942128 => [crate::game::ceres_doors::mark_open(k, false, j, game)];
-        10942131 => [crate::game::ceres_doors::change_properties(k, 0, crate::game::ceres_doors::INVISIBLE, j, game)];
-        10942141 => [crate::game::ceres_doors::play_open_sound(j, game)];
 
         0xa90000..=0xa9ffff => [sm_a9::DispatchEnemyInstr(ea, k, j, game)];
         11174004 => [{ crate::ram_map::slot!(game, EnemyData[k as i32].ai_preinstr = (0xaa807bi32) as u16); j }];
