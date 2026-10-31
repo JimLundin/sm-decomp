@@ -12,16 +12,14 @@ fn read(g: &Game, at: usize) -> u16 {
 fn check(g: &Game, at: usize, value: u16, label: &str) {
     assert_eq!(read(g, at), value, "{label}: word {at:04x}");
 }
-fn pose(image: &RomImage, key: u16, movement: u8, shots: u8) {
+fn pose(image: &mut [u8], key: u16, movement: u8, shots: u8) {
     let at = crate::rtl::lorom_offset(0x91b629) as usize + usize::from(key) * 8;
-    image.write(at + 1, movement);
-    image.write(at + 3, shots);
+    image[at + 1] = movement;
+    image[at + 3] = shots;
 }
-fn transition(image: &RomImage, index: usize, value: u16) {
+fn transition(image: &mut [u8], index: usize, value: u16) {
     let at = crate::rtl::lorom_offset(0x91eb74) as usize + index * 2;
-    for (i, byte) in value.to_ne_bytes().into_iter().enumerate() {
-        image.write(at + i, byte);
-    }
+    image[at..at + 2].copy_from_slice(&value.to_ne_bytes());
 }
 fn actor(g: &mut Game, x: u16) {
     for (field, value) in [
@@ -51,22 +49,22 @@ fn snapshot(out: &mut Vec<u8>, g: &Game) {
 /// Locals0..8 append globals88..96; root retains its initialized hardware host.
 pub(crate) unsafe fn run(local: u32, g: &mut Game) -> Vec<u8> {
     assert!(local < COUNT);
-    let loaded = RomImage::zeroed(0x200000);
-    let native = RomImage::zeroed(0x200000);
+    let mut loaded = vec![0; 0x200000];
+    let mut native = vec![0; 0x200000];
     // Both lookup sites use loaded EB74, but index through native B629.
     // Early site uses CURRENT2/index4; late site uses PENDING3/index6.
-    pose(&native, 2, 0, 4);
-    pose(&native, 3, if local == 5 { 0 } else { 1 }, 6);
-    pose(&loaded, 2, 0, 9);
-    pose(&loaded, 3, 0, 9);
-    transition(&loaded, 4, 0x0123);
-    transition(&loaded, 6, 0x0234);
-    transition(&loaded, 9, 0x0345);
-    transition(&native, 4, 0x0456);
-    transition(&native, 6, 0x0567);
+    pose(&mut native, 2, 0, 4);
+    pose(&mut native, 3, if local == 5 { 0 } else { 1 }, 6);
+    pose(&mut loaded, 2, 0, 9);
+    pose(&mut loaded, 3, 0, 9);
+    transition(&mut loaded, 4, 0x0123);
+    transition(&mut loaded, 6, 0x0234);
+    transition(&mut loaded, 9, 0x0345);
+    transition(&mut native, 4, 0x0456);
+    transition(&mut native, 6, 0x0567);
     g.ram().fill(0..g.ram().len(), 0);
-    g.register_rom(loaded);
-    g.register_native_rom(native);
+    g.register_rom(RomImage::from(loaded));
+    g.register_native_rom(RomImage::from(native));
     g.g_fail = false;
     g.VERIFY_ACTIVE = true;
     let left = local >= 6;

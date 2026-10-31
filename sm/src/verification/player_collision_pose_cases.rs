@@ -28,9 +28,31 @@ fn check(g: &Game, expected: &[(usize, u16)], label: &str) {
         assert_eq!(read(g, at), value, "{label}: word {at:04x}");
     }
 }
-fn pose_radius(image: &RomImage, pose: u16, radius: u8) {
+fn pose_radius(image: &mut [u8], pose: u16, radius: u8) {
     let at = crate::rtl::lorom_offset(0x91b629) as usize + usize::from(pose) * 8 + 6;
-    image.write(at, radius);
+    image[at] = radius;
+}
+/// Case `id`'s loaded and native pose radii.
+fn images(id: u32) -> (RomImage, RomImage) {
+    let mut loaded = vec![0; 0x200000];
+    let mut native = vec![0; 0x200000];
+    for (pose, radius) in [(1, 6), (2, 10), (3, 14), (0x27, 6), (0x28, 6)] {
+        pose_radius(&mut native, pose, radius);
+        // Wrong source reverses the old/new-radius comparison and must fail case13.
+        pose_radius(&mut loaded, pose, if pose == 1 { 20 } else { 2 });
+    }
+    match id {
+        12 => {
+            pose_radius(&mut native, 1, 10);
+            pose_radius(&mut native, 2, 6);
+        }
+        19 => {
+            pose_radius(&mut native, 1, 8);
+            pose_radius(&mut native, 2, 12);
+        }
+        _ => {}
+    }
+    (RomImage::from(loaded), RomImage::from(native))
 }
 fn actor(g: &mut Game, slot: usize, x: u16, y: u16) {
     let key = slot * 64;
@@ -94,11 +116,6 @@ fn seed(id: u32, g: &mut Game, loaded: &RomImage, native: &RomImage) {
     ] {
         put(g, at, value);
     }
-    for (pose, radius) in [(1, 6), (2, 10), (3, 14), (0x27, 6), (0x28, 6)] {
-        pose_radius(native, pose, radius);
-        // Wrong source reverses the old/new-radius comparison and must fail case13.
-        pose_radius(loaded, pose, if pose == 1 { 20 } else { 2 });
-    }
     if id <= 10 || matches!(id, 20 | 21) {
         put(g, Y + 2, 0x2222);
     }
@@ -136,11 +153,7 @@ fn seed(id: u32, g: &mut Game, loaded: &RomImage, native: &RomImage) {
         }
         10 => put(g, 0xa1e, 0),
         11 => put(g, 0xa1c, 0),
-        12 => {
-            pose_radius(native, 1, 10);
-            pose_radius(native, 2, 6);
-            put(g, RADIUS, 10);
-        }
+        12 => put(g, RADIUS, 10),
         13 => {}
         14 => actor(g, 0, 136, 122),
         15 => actor(g, 0, 136, 150),
@@ -151,8 +164,6 @@ fn seed(id: u32, g: &mut Game, loaded: &RomImage, native: &RomImage) {
         17 => solid_row(g, 7),
         18 => solid_row(g, 9),
         19 => {
-            pose_radius(native, 1, 8);
-            pose_radius(native, 2, 12);
             put(g, RADIUS, 8);
             solid_row(g, 7);
             solid_row(g, 9);
@@ -382,8 +393,7 @@ fn snapshot(out: &mut Vec<u8>, g: &Game) {
 /// This must be linked only to the real predecessor source, never declaration stubs.
 pub(crate) unsafe fn run(local_id: u32, g: &mut Game) -> Vec<u8> {
     assert!(local_id < COUNT);
-    let loaded = RomImage::zeroed(0x200000);
-    let native = RomImage::zeroed(0x200000);
+    let (loaded, native) = images(local_id);
     seed(local_id, g, &loaded, &native);
     let mut out = b"PCPOSE1".to_vec();
     out.extend_from_slice(&local_id.to_le_bytes());
