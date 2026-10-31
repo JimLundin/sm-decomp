@@ -1,63 +1,10 @@
-//! Checked, ordered byte transfers for the existing save-state format.
+//! The hardware records of the save-state format, over sm_runtime's transfers.
 #![forbid(unsafe_code)]
-use crate::recording::RecordingBytes;
+#[cfg(any(feature = "frontend", sm_verify_dll))]
+pub(crate) use sm_runtime::snapshot::state_layout;
+pub use sm_runtime::snapshot::{Block, SnapshotIo, State, TransferError};
+use sm_runtime::snapshot::{Fields, SnapshotOutput};
 use std::collections::TryReserveError;
-
-pub enum SnapshotIo<'a> {
-    Save(&'a mut RecordingBytes),
-    Load(&'a [u8]),
-}
-
-pub(crate) enum Block<'a> {
-    Save(&'a mut [u8]),
-    Load(&'a [u8]),
-}
-
-#[derive(Debug)]
-pub enum TransferError {
-    Truncated,
-    Allocation(TryReserveError),
-}
-
-impl SnapshotIo<'_> {
-    pub fn remaining(&self) -> usize {
-        match self {
-            Self::Load(bytes) => bytes.len(),
-            Self::Save(_) => 0,
-        }
-    }
-
-    pub fn transfer(&mut self, state: &mut [u8]) -> Result<(), TransferError> {
-        self.block(state.len(), |block| match block {
-            Block::Save(output) => output.copy_from_slice(state),
-            Block::Load(input) => state.copy_from_slice(input),
-        })
-    }
-
-    pub(crate) fn block(
-        &mut self,
-        size: usize,
-        transfer: impl FnOnce(Block<'_>),
-    ) -> Result<(), TransferError> {
-        match self {
-            Self::Save(output) => {
-                let start = output.size;
-                output
-                    .resize(start + size)
-                    .map_err(TransferError::Allocation)?;
-                transfer(Block::Save(&mut output.as_mut_slice()[start..]));
-            }
-            Self::Load(input) => {
-                let (head, tail) = input
-                    .split_at_checked(size)
-                    .ok_or(TransferError::Truncated)?;
-                transfer(Block::Load(head));
-                *input = tail;
-            }
-        }
-        Ok(())
-    }
-}
 
 // Hardware values are serialized field by field. Explicit padding fields retain
 // the original byte format without interpreting a Rust allocation as a byte slice.
@@ -66,135 +13,33 @@ use crate::types::{
     Timer, WindowLayer,
 };
 
-pub(crate) struct Fields<'a> {
-    block: Block<'a>,
-    position: usize,
-}
-
-impl Fields<'_> {
-    fn bytes(&mut self, bytes: &mut [u8]) {
-        let end = self.position + bytes.len();
-        match &mut self.block {
-            Block::Save(output) => output[self.position..end].copy_from_slice(bytes),
-            Block::Load(input) => bytes.copy_from_slice(&input[self.position..end]),
-        }
-        self.position = end;
+impl SnapshotOutput for crate::recording::RecordingBytes {
+    fn append(&mut self, size: usize) -> Result<&mut [u8], TryReserveError> {
+        let start = self.size;
+        self.resize(start + size)?;
+        Ok(&mut self.as_mut_slice()[start..])
     }
 }
 
-pub(crate) trait State {
-    const SIZE: usize;
-    #[cfg(any(feature = "frontend", sm_verify_dll))]
-    fn layout(layout: &mut String);
-    fn transfer(&mut self, fields: &mut Fields<'_>);
-}
-
-// Static projections infer declared field types without constructing hardware values.
-#[cfg(any(feature = "frontend", sm_verify_dll))]
-pub(crate) fn state_layout<T: State>(layout: &mut String, name: &str) {
-    layout.push_str(name);
-    layout.push(':');
-    T::layout(layout);
-}
-#[cfg(any(feature = "frontend", sm_verify_dll))]
-fn field_layout<S, T: State>(layout: &mut String, name: &str, _field: fn(&S) -> &T) {
-    state_layout::<T>(layout, name);
-}
-
-impl SnapshotIo<'_> {
-    pub(crate) fn state<T: State>(&mut self, state: &mut T) -> Result<(), TransferError> {
-        self.block(T::SIZE, |block| {
-            let mut fields = Fields { block, position: 0 };
-            state.transfer(&mut fields);
-            assert_eq!(fields.position, T::SIZE);
-        })
-    }
-}
-
-macro_rules! scalar_state {
-    ($($ty:ty),* $(,)?) => {$(
-        impl State for $ty {
-            const SIZE: usize = core::mem::size_of::<Self>();
-            #[cfg(any(feature = "frontend", sm_verify_dll))]
-            fn layout(layout: &mut String) {
-                layout.push_str(concat!(stringify!($ty), "-ne-"));
-                layout.push_str(if cfg!(target_endian = "little") { "le;" } else { "be;" });
-            }
-            fn transfer(&mut self, fields: &mut Fields<'_>) {
-                let mut bytes = self.to_ne_bytes();
-                fields.bytes(&mut bytes);
-                *self = Self::from_ne_bytes(bytes);
-            }
-        }
-    )*};
-}
-scalar_state!(u8, i8, u16, i16, u32, i32, f64);
-
-impl State for bool {
-    const SIZE: usize = 1;
-    #[cfg(any(feature = "frontend", sm_verify_dll))]
-    fn layout(layout: &mut String) {
-        layout.push_str("bool-u8-nonzero;");
-    }
-    fn transfer(&mut self, fields: &mut Fields<'_>) {
-        let mut byte = u8::from(*self);
-        byte.transfer(fields);
-        *self = byte != 0;
-    }
-}
-
-impl<T: State, const N: usize> State for [T; N] {
-    const SIZE: usize = T::SIZE * N;
-    #[cfg(any(feature = "frontend", sm_verify_dll))]
-    fn layout(layout: &mut String) {
-        layout.push_str(&format!("array[{N}]{{"));
-        T::layout(layout);
-        layout.push('}');
-    }
-    fn transfer(&mut self, fields: &mut Fields<'_>) {
-        for value in self {
-            value.transfer(fields);
-        }
-    }
-}
-
-macro_rules! state_record {
-    ($ty:ty, $size:literal, { $($field:ident),* } skip { $($skip:ident),* }) => {
-        impl State for $ty {
-            const SIZE: usize = $size;
-            #[cfg(any(feature = "frontend", sm_verify_dll))]
-            fn layout(layout: &mut String) {
-                layout.push_str(concat!(stringify!($ty), "{"));
-                $(field_layout::<Self, _>(layout, stringify!($field), |state| &state.$field);)*
-                layout.push('}');
-            }
-            fn transfer(&mut self, fields: &mut Fields<'_>) {
-                let Self { $($field,)* $($skip: _,)* } = self;
-                $($field.transfer(fields);)*
-            }
-        }
-    };
-}
-
-state_record!(Cpu, 27, {
+sm_runtime::state_record!(Cpu, 27, {
     a, x, y, sp, pc, dp, k, db, c, z, v, n, i, d, xf, mf, e, irqWanted, nmiWanted, waiting,
     stopped
 } skip {
     memType, cyclesUsed, spBreakpoint, in_emu
 });
 
-state_record!(Spc, 15, {
+sm_runtime::state_record!(Spc, 15, {
     a, x, y, sp, pc, c, z, v, n, i, h, p, b, stopped
 } skip {
     apu, cyclesUsed
 });
 
-state_record!(Dma, 224, {
+sm_runtime::state_record!(Dma, 224, {
     channel, hdmaTimer, snapshot_padding0, dmaTimer, dmaBusy, pad
 } skip {
 });
 
-state_record!(DspState, 3024, {
+sm_runtime::state_record!(DspState, 3024, {
     ram, channel, dirPage, evenCycle, mute, reset, masterVolumeL, masterVolumeR,
     snapshot_padding0, noiseSample, noiseRate, noiseCounter, echoWrites, echoVolumeL,
     echoVolumeR, feedbackVolume, echoBufferAdr, echoDelay, echoRemain, echoBufferIndex,
@@ -204,7 +49,7 @@ state_record!(DspState, 3024, {
     apu_ram
 });
 
-state_record!(Ppu, 67305, {
+sm_runtime::state_record!(Ppu, 67305, {
     vram, vramPointer, vramIncrementOnHigh, snapshot_padding0, vramIncrement, vramRemapMode,
     snapshot_padding1, vramReadBuffer, cgram, cgramPointer, cgramSecondWrite, cgramBuffer,
     snapshot_padding2, oam, highOam, oamAdr, oamAdrWritten, oamInHigh, oamInHighWritten,
@@ -223,7 +68,7 @@ state_record!(Ppu, 67305, {
     objBuffer, renderPitch, renderBuffer, brightnessMult, brightnessMultHalf, mosaicModulo
 });
 
-state_record!(Snes, 54, {
+sm_runtime::state_record!(Snes, 54, {
     hPos, vPos, frames, cpuCyclesLeft, cpuMemOps, padpad, apuCatchupCycles, hIrqEnabled,
     vIrqEnabled, nmiEnabled, snapshot_padding0, hTimer, vTimer, inNmi, inIrq, inVblank,
     snapshot_padding1, portAutoReadX, autoJoyRead, snapshot_padding2, autoJoyTimer, ppuLatch,
@@ -233,7 +78,7 @@ state_record!(Snes, 54, {
     disableRender, runningWhichVersion, ramAdr, padx
 });
 
-state_record!(DmaChannel, 26, {
+sm_runtime::state_record!(DmaChannel, 26, {
     bAdr, snapshot_padding0, aAdr, aBank, snapshot_padding1, size, indBank, snapshot_padding2,
     tableAdr, repCount, unusedByte, dmaActive, hdmaActive, mode, fixed, decrement, indirect,
     fromB, unusedBit, doTransfer, terminated, offIndex, snapshot_padding3
@@ -241,7 +86,7 @@ state_record!(DmaChannel, 26, {
 
 });
 
-state_record!(DspChannel, 86, {
+sm_runtime::state_record!(DspChannel, 86, {
     pitch, pitchCounter, pitchModulation, snapshot_padding0, decodeBuffer, srcn,
     snapshot_padding1, decodeOffset, previousFlags, snapshot_padding2, old, older, useNoise,
     snapshot_padding3, adsrRates, rateCounter, adsrState, snapshot_padding4, sustainLevel,
@@ -251,19 +96,19 @@ state_record!(DspChannel, 86, {
 
 });
 
-state_record!(BgLayer, 12, {
+sm_runtime::state_record!(BgLayer, 12, {
     hScroll, vScroll, tilemapWider, tilemapHigher, tilemapAdr, tileAdr, bigTiles, mosaicEnabled
 } skip {
 
 });
 
-state_record!(Layer, 4, {
+sm_runtime::state_record!(Layer, 4, {
     mainScreenEnabled, subScreenEnabled, mainScreenWindowed, subScreenWindowed
 } skip {
 
 });
 
-state_record!(WindowLayer, 5, {
+sm_runtime::state_record!(WindowLayer, 5, {
     window1enabled, window2enabled, window1inversed, window2inversed, maskLogic
 } skip {
 
@@ -271,7 +116,6 @@ state_record!(WindowLayer, 5, {
 
 impl State for crate::apu_ram::ApuRam {
     const SIZE: usize = 65536;
-    #[cfg(any(feature = "frontend", sm_verify_dll))]
     fn layout(layout: &mut String) {
         <[u8; Self::SIZE]>::layout(layout);
     }
@@ -283,8 +127,8 @@ impl State for crate::apu_ram::ApuRam {
         }
     }
 }
-state_record!(Apu, 65576, { ram, registers } skip { spc, dsp });
-state_record!(ApuRegisters, 40, {
+sm_runtime::state_record!(Apu, 65576, { ram, registers } skip { spc, dsp });
+sm_runtime::state_record!(ApuRegisters, 40, {
     romReadable, dspAdr, snapshot_padding0, cycles, inPorts, outPorts, timer, cpuCyclesLeft, pad
 } skip { history });
-state_record!(Timer, 5, { cycles, divider, target, counter, enabled } skip { });
+sm_runtime::state_record!(Timer, 5, { cycles, divider, target, counter, enabled } skip { });

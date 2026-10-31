@@ -6,3 +6,4 @@ pub mod scene;
 
 pub mod message;
 pub mod save_storage;
+pub mod snapshot;
