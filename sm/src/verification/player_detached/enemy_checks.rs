@@ -3,7 +3,7 @@ use super::game::{enemy_projectiles as enemy, player_projectiles as player};
 use super::{Composed, Event, composition_checks::missile_content, player_checks::prepared, room};
 use std::panic::{AssertUnwindSafe, catch_unwind};
 
-fn definition(h: &Composed, address: u16, initialize: u32, properties: u16) {
+fn definition(h: &mut Composed, address: u16, initialize: u32, properties: u16) {
     // Packed definition words: init, pre, program, radius, properties, hit, shot.
     for (offset, value) in [
         (0, initialize as u16),
@@ -65,7 +65,7 @@ fn observe_eye_sound(h: &mut Composed) {
 }
 fn room_enemy_room() {
     let mut h = prepared();
-    definition(&h, 0xb743, 8828461, 0);
+    definition(&mut h, 0xb743, 8828461, 0);
     scheduler_fixture(&mut h, 8705914, Some(0));
     h.on_room_sound = Some(observe_eye_sound);
     let mut pass = room::host::Pass::Instructions;
@@ -102,7 +102,7 @@ fn smoke_rng(h: &mut Composed) {
 }
 fn nested_selection() {
     let mut h = prepared();
-    definition(&h, 0xe517, 8840358, 0);
+    definition(&mut h, 0xe517, 8840358, 0);
     // primary0B chooses table word11; high byte0 selects mask/offset row0.
     h.word(0x86, 0xe442, 0x9600);
     for (at, value) in [(0xe47e, 0), (0xe480, 0), (0xe482, 3), (0xe484, 4)] {
@@ -141,7 +141,7 @@ fn shot_contact() {
             h.word(0x93, 0x8a06, 0x9000);
         }
         player::fire(&mut h);
-        definition(&h, 0x9700, 0, 0x8000);
+        definition(&mut h, 0x9700, 0, 0x8000);
         let item = &mut h.world.player.enemy_projectiles.slots[17];
         item.definition = 0x9700;
         item.properties = 0x8000;
@@ -198,7 +198,7 @@ fn award_sound(h: &mut Composed) {
 fn drop_then_missile() {
     for (before, awarded, spent) in [(0, 2, 1), (6, 7, 6)] {
         let mut h = prepared();
-        missile_content(&h);
+        missile_content(&mut h);
         h.world.player.player.contact.x_radius = 8;
         h.world.player.player.contact.radius = 8;
         h.world.player.inventory.ammunition[0].current = before;
@@ -247,7 +247,7 @@ fn contact_failure_prefix() {
     h.world.player.inventory.health.current = 50;
     h.world.player.inventory.health.maximum = 99;
     h.world.player.projectiles.controls.protection = 0x1234;
-    definition(&h, 0x9700, 0, 0x400a);
+    definition(&mut h, 0x9700, 0, 0x400a);
     let item = &mut h.world.player.enemy_projectiles.slots[17];
     item.definition = 0x9700;
     item.properties = 0x400a;
@@ -277,12 +277,12 @@ fn native_drop_then_missile() {
     let mut h = prepared();
     // This case also writes A0:983A and B4:9900..9905. Keep the default
     // fixtures intact; ensure bank B4 fits without shrinking a larger image.
-    let image = super::RomImage::zeroed(h.image.len().max(0x1a8000));
-    for offset in 0..h.image.len() {
-        image.write(offset, h.image.read(offset));
-    }
-    h.image = image;
-    missile_content(&h);
+    let mut image = (0..h.image.len())
+        .map(|offset| h.image.read(offset))
+        .collect::<Vec<_>>();
+    image.resize(image.len().max(0x1a8000), 0);
+    h.image = super::RomImage::from(image);
+    missile_content(&mut h);
     h.world.player.player.contact.x_radius = 8;
     h.world.player.player.contact.radius = 8;
     h.world.player.inventory.health.current = 99;
@@ -293,7 +293,7 @@ fn native_drop_then_missile() {
     h.world.player.enemy_projectiles.spawn.point.y = 81;
     // The slot keeps the header pointer an earlier projectile left there.
     h.world.player.enemy_projectiles.slots[17].drop.enemy_definition = 0x9700;
-    definition(&h, 0xf337, 8843049, 0);
+    definition(&mut h, 0xf337, 8843049, 0);
     h.word(0xa0, 0x983a, 0x9900);
     for (offset, value) in [0, 0, 255, 0, 0, 0].into_iter().enumerate() {
         h.byte(0xb4, 0x9900 + offset as u16, value);

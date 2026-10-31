@@ -18,15 +18,13 @@ fn record(out: &mut Vec<u8>, tag: u8, bytes: &[u8]) {
     out.extend_from_slice(&(bytes.len() as u32).to_le_bytes());
     out.extend_from_slice(bytes);
 }
-fn author(image: &RomImage, address: u32, bytes: &[u8], manifest: &mut Vec<u8>) {
+fn author(image: &mut [u8], address: u32, bytes: &[u8], manifest: &mut Vec<u8>) {
     let at = offset(address);
     assert!(at + bytes.len() <= image.len());
     manifest.extend_from_slice(&address.to_le_bytes());
     manifest.extend_from_slice(&(bytes.len() as u32).to_le_bytes());
     manifest.extend_from_slice(bytes);
-    for (index, value) in bytes.iter().copied().enumerate() {
-        image.write(at + index, value);
-    }
+    image[at..at + bytes.len()].copy_from_slice(bytes);
 }
 
 /// Caller supplies the same freshly initialized host required by existing captures.
@@ -73,8 +71,8 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
             game.ram().fill(0..game.ram().len(), 0);
             game.ram().write_byte(0x1ffff, 1);
             game.g_fail = false;
-            let loaded = RomImage::zeroed(IMAGE_LENGTH);
-            let native = RomImage::zeroed(IMAGE_LENGTH);
+            let mut loaded = vec![0; IMAGE_LENGTH];
+            let mut native = vec![0; IMAGE_LENGTH];
             let mut loaded_manifest = Vec::new();
             let mut native_manifest = Vec::new();
             use crate::ram_map::words as ram;
@@ -84,10 +82,10 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
             let mut poses = vec![0; 24];
             poses[8] = 8;
             poses[8 + 6] = 2;
-            author(&loaded, 0x91b629, &poses, &mut loaded_manifest);
-            author(&native, 0x91b629, &poses, &mut native_manifest);
+            author(&mut loaded, 0x91b629, &poses, &mut loaded_manifest);
+            author(&mut native, 0x91b629, &poses, &mut native_manifest);
             author(
-                &loaded,
+                &mut loaded,
                 0x91d727,
                 &0x9000u16.to_ne_bytes(),
                 &mut loaded_manifest,
@@ -96,7 +94,9 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
             for color in 0..16u16 {
                 palette.extend_from_slice(&(0x2000 + color).to_le_bytes());
             }
-            author(&native, 0x9b9000, &palette, &mut native_manifest);
+            author(&mut native, 0x9b9000, &palette, &mut native_manifest);
+            let loaded = RomImage::from(loaded);
+            let native = RomImage::from(native);
             game.register_rom(loaded.clone());
             game.register_native_rom(native.clone());
             for (at, value) in [
