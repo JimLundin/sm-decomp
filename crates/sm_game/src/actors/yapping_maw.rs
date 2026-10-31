@@ -93,10 +93,7 @@ const COOLDOWN_FRAMES: u16 = 0x40;
 const REACH: u16 = 0x20;
 const MAX_LENGTH: u16 = 0x40;
 const INTANGIBLE_FRAMES: u16 = 0x30;
-/// $A0:B1C3: the sine table; $A8:A097: the attack instruction lists, and
 /// $A8:A0A7: Samus's offsets when grabbed, by direction.
-const SINE: u32 = 0xa0_b1c3;
-const ATTACK_INSTRUCTION_LISTS: u32 = 0xa8_a097;
 const SAMUS_X_OFFSETS: u32 = 0xa8_a0a7;
 const SAMUS_Y_OFFSETS: u32 = 0xa8_a0a9;
 /// `instruction_list_index` values for the diagonals: up-right and up-left (or
@@ -215,7 +212,7 @@ fn project<L: Lease>(
     write_operand: &mut impl FnMut(u8, &mut L),
     game: &mut L,
 ) -> u16 {
-    let sine = rom_table_word!(game, SINE, -(angle as i32) as u8 as isize) as i16;
+    let sine = crate::gameplay_tables::enemy_sine(game, -(angle as i32) as u8 as isize) as i16;
     let magnitude = if sine < 0 {
         -(sine as i32) as i16
     } else {
@@ -256,7 +253,7 @@ fn attack<L: Lease>(write_operand: &mut impl FnMut(u8, &mut L), game: &mut L) {
     let direction =
         2 * ((session_slot!(game, Maw[maw].target_angle) as u8).wrapping_add(16) as u16 >> 5);
     session_slot!(game, Maw[maw].instruction_list_index = direction);
-    session_slot!(game, Maw[maw].base; current_instruction = rom_table_word!(game, ATTACK_INSTRUCTION_LISTS, (direction >> 1) as isize), instruction_timer = 1, timer = 0);
+    session_slot!(game, Maw[maw].base; current_instruction = crate::actor_tables::word(game, |t| &t.maw_attack_lists, (direction >> 1) as isize), instruction_timer = 1, timer = 0);
     // These offsets use the native binding; animation above uses the loaded image.
     let x = game.native_image().table_word(
         sm_data::cartridge::lorom_offset(SAMUS_X_OFFSETS) as usize,

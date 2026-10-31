@@ -13,10 +13,6 @@ use crate::actors::session_slots::session_slot;
 use crate::enemy_script::EnemyScript;
 use crate::ram::{word, words::EPROJ_INIT_PARAM_2};
 
-/// $A5:96AF: four colours of BG1/2 palette 5 for each health step, and
-/// $A5:96EF: the health below which each step starts.
-const HEALTH_PALETTES: u32 = 0xa5_96af;
-const HEALTH_THRESHOLDS: u32 = 0xa5_96ef;
 /// Colours 9-12 of BG1/2 palette 5, as palette words and in RAM at $7E:C000.
 const HEALTH_COLOURS: core::ops::Range<usize> = 89..93;
 const PALETTE_RAM: usize = 0xc000;
@@ -57,7 +53,7 @@ pub fn write_health_palette<L: Lease>(native: bool, game: &mut L) {
     let mut cursor = session_slot!(game, Draygon[BODY].health_palette).wrapping_mul(4);
     for index in HEALTH_COLOURS {
         let value =
-            crate::cartridge::rom_table_word!(game, HEALTH_PALETTES, (cursor >> 1) as isize);
+            crate::actor_tables::word(game, |t| &t.draygon_health_palettes, (cursor >> 1) as isize);
         if native {
             let bytes = value.to_ne_bytes();
             let at = PALETTE_RAM + index * 2;
@@ -105,7 +101,11 @@ pub fn hurt_ai<L: Lease>(game: &mut L) {
 fn update_health_palette<L: Lease>(game: &mut L) {
     let mut cursor: i32 = 0;
     while (session_slot!(game, Draygon[BODY].base.health) as i16).wrapping_sub(
-        crate::cartridge::rom_table_word!(game, HEALTH_THRESHOLDS, (cursor >> 1) as isize) as i16,
+        crate::actor_tables::word(
+            game,
+            |t| &t.draygon_health_thresholds,
+            (cursor >> 1) as isize,
+        ) as i16,
     ) < 0
     {
         cursor += 2;

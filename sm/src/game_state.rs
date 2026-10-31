@@ -832,6 +832,7 @@ impl Game {
         self.records.menu_lists = sm_game::menu_lists::import(image);
         self.records.boss_lists = sm_game::boss_lists::import(image);
         self.records.samus_palettes = sm_game::samus_palette::import(image);
+        self.records.actor_tables = sm_game::actor_tables::import(image);
         self.records.gameplay_tables = sm_game::gameplay_tables::import(image);
         self.records.enemy_lists = sm_game::enemy_lists::import(image);
     }

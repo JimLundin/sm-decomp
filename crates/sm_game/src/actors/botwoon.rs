@@ -9,7 +9,6 @@ use crate::actors::host::{BossEffects as _, Random as _};
 use crate::actors::layouts::{EnemyBase, same_words};
 use crate::actors::session_slots::session_slot;
 use crate::actors::{combat, queries};
-use crate::cartridge::rom_table_word;
 use crate::constants::{bank_86::*, enemy_properties::*};
 use crate::enemy_script::EnemyScript;
 use crate::ram::RawRam as _;
@@ -193,10 +192,6 @@ const MOVEMENT_TABLE: u16 = 0xe150;
 const END_OF_DATA: u16 = 0xff80;
 /// Offsets to the target hole are clamped to +/-FFh.
 const MAX_OFFSET: u16 = 255;
-/// $B3:946B: the head's instruction lists by angle, and from $B3:948B, its
-/// spit instruction lists.
-const HEAD_INSTRUCTION_LISTS: u32 = 0xb3_946b;
-const SPIT_INSTRUCTION_LISTS: u32 = 0xb3_948b;
 /// Hidden, the head is drawn behind the background (layer 7); shown, layer 2.
 const HIDDEN_LAYER: u16 = 7;
 const SHOWN_LAYER: u16 = 2;
@@ -291,19 +286,23 @@ fn initialize_living<L: Lease + ?Sized>(e: i32, game: &mut L) {
 fn health_palette<R: RuntimeHost>(game: &mut R) {
     let e = i32::from(word!(game.CUR_ENEMY_INDEX));
     if session_slot!(game, Botwoon[e].health_palette_index) != LAST_HEALTH_PALETTE
-        && (session_slot!(game, Botwoon[e].base.health) as i16).wrapping_sub(rom_table_word!(
-            game,
-            HEALTH_THRESHOLDS,
-            (session_slot!(game, Botwoon[e].health_palette_index) >> 1) as isize
-        ) as i16)
-            < 0
+        && (session_slot!(game, Botwoon[e].base.health) as i16).wrapping_sub(
+            crate::cartridge::rom_table_word!(
+                game,
+                HEALTH_THRESHOLDS,
+                (session_slot!(game, Botwoon[e].health_palette_index) >> 1) as isize,
+            ) as i16,
+        ) < 0
     {
         let mut source = 16u16.wrapping_mul(session_slot!(game, Botwoon[e].health_palette_index));
         let mut target = session_slot!(game, Botwoon[e].palette_data_offset);
         loop {
             word!(
-                game.PALETTE_BUFFER[target >> 1] =
-                    rom_table_word!(game, HEALTH_PALETTES, (source >> 1) as isize)
+                game.PALETTE_BUFFER[target >> 1] = crate::cartridge::rom_table_word!(
+                    game,
+                    HEALTH_PALETTES,
+                    (source >> 1) as isize
+                )
             );
             source = source.wrapping_add(2);
             target = target.wrapping_add(2);
@@ -682,7 +681,7 @@ pub fn head_moving_around<L: Lease + ?Sized>(game: &mut L) {
             session_slot!(game, Botwoon[e].base.layer = SHOWN_LAYER);
             session_slot!(game, Botwoon[e].base.properties, |old| old & !INTANGIBLE);
             // The original faces the raw angle; snesrev smoothed it.
-            rom_table_word!(game, HEAD_INSTRUCTION_LISTS, (angle >> 5) as isize)
+            crate::actor_tables::word(game, |t| &t.botwoon_head_lists, (angle >> 5) as isize)
         };
         if instruction != session_slot!(game, Botwoon[e].instruction_list) {
             set_instruction_list(e, instruction, game);
@@ -701,10 +700,10 @@ pub fn head_set_spit_angle<L: Lease + ?Sized>(game: &mut L) -> u32 {
     let actor = game.current_enemy();
     let angle = game.foreign(|game| game.angle_to_player(actor));
     session_slot!(game, Botwoon[e].spit_angle = angle);
-    let instruction = rom_table_word!(
+    let instruction = crate::actor_tables::word(
         game,
-        SPIT_INSTRUCTION_LISTS,
-        ((angle as u8).wrapping_add(16) >> 5) as isize
+        |t| &t.botwoon_spit_lists,
+        ((angle as u8).wrapping_add(16) >> 5) as isize,
     );
     set_instruction_list(e, instruction, game);
     session_slot!(game, Botwoon[e];

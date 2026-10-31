@@ -100,6 +100,7 @@ pub mod display {
     pub mod transfer;
 }
 
+pub mod actor_tables;
 pub mod actors {
     pub mod access;
     pub mod alcoon;

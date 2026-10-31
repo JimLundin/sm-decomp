@@ -2,21 +2,13 @@
 use crate::actors::host::ActorHost;
 use crate::actors::ridley::Ridley;
 use crate::cartridge::native_record;
-use crate::cartridge::rom_table_word;
 use crate::ram::RawRam as _;
 use crate::ram::{slot, word};
 
 const BANK: u8 = 0xa6;
 const RIDLEY: i32 = 0;
-/// $A6:B965 and $A6:B96D: four pointers each to rows of X and Y velocities,
-/// picked at random.
-const X_VELOCITY_ROWS: u32 = 0xa6_b965;
-const Y_VELOCITY_ROWS: u32 = 0xa6_b96d;
+/// The random pick among the four rows of X and Y velocity pointers.
 const ROW_CHOICES: u16 = 3;
-/// $A6:B94D and $A6:B959: the pogo's upwards and downwards Y accelerations,
-/// by acceleration index.
-const UPWARDS_ACCELERATIONS: u32 = 0xa6_b94d;
-const DOWNWARDS_ACCELERATIONS: u32 = 0xa6_b959;
 /// $7E:200E and $7E:200C: the pogo's upwards and downwards Y accelerations.
 const UPWARDS_ACCELERATION: usize = 7;
 const DOWNWARDS_ACCELERATION: usize = 6;
@@ -29,19 +21,19 @@ const SIGN: u16 = 0x8000;
 /// accelerations for Ridley's acceleration index, then the Y velocity from
 /// its row and the X velocity, keeping its sign, from the other, each through
 /// its own native fetch. Was `Ridley_Func_29`.
-pub fn set_pogo_speeds(game: &mut (impl ActorHost + ?Sized)) {
+pub fn set_pogo_speeds(game: &mut (impl ActorHost + crate::records::Records + ?Sized)) {
     let pick = (word!(game.RANDOM_NUMBER) & ROW_CHOICES) as isize;
-    let x_row = rom_table_word!(game, X_VELOCITY_ROWS, pick);
-    let y_row = rom_table_word!(game, Y_VELOCITY_ROWS, pick);
+    let x_row = crate::actor_tables::word(game, |t| &t.ridley_x_velocities, pick);
+    let y_row = crate::actor_tables::word(game, |t| &t.ridley_y_velocities, pick);
     let offset = (2 * (i32::from(slot!(game, Ridley[RIDLEY].acceleration_index)) + 2)) as u16;
     let step = (offset >> 1) as isize;
     word!(
         game.TILEMAP_STUFF[UPWARDS_ACCELERATION] =
-            rom_table_word!(game, UPWARDS_ACCELERATIONS, step)
+            crate::actor_tables::word(game, |t| &t.ridley_upwards, step)
     );
     word!(
         game.TILEMAP_STUFF[DOWNWARDS_ACCELERATION] =
-            rom_table_word!(game, DOWNWARDS_ACCELERATIONS, step)
+            crate::actor_tables::word(game, |t| &t.ridley_downwards, step)
     );
     slot!(
         game,

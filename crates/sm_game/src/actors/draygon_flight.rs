@@ -23,10 +23,6 @@ const FOAM_Y: u16 = 0x10;
 /// Sprite object 18h: a bubble.
 const BUBBLE: u16 = 0x18;
 const BUBBLE_OFFSET: u16 = 0x10;
-/// $A5:87DC: each wall turret's projectile spawn position; the turrets fire
-/// Draygon's wall turret projectile ($86:8E5E) at 3 px a frame, every 40h
-/// frames.
-const TURRET_POSITIONS: u32 = 0xa5_87dc;
 const TURRET_PROJECTILE: u16 = 0x8e5e;
 const TURRET_SPEED: u16 = 3;
 const TURRET_FRAMES: u16 = 0x3f;
@@ -98,8 +94,9 @@ pub fn fire_wall_turret<S: BossState>(game: &mut S) -> Option<u16> {
     }
     let index = 2 * ((game.roll_random() & 3) + 2);
     if session_slot!(game, Draygon[index as i32].turret_destroyed) == 0 {
-        let x = crate::cartridge::rom_table_word!(game, TURRET_POSITIONS, index as isize);
-        let y = crate::cartridge::rom_table_word!(game, TURRET_POSITIONS, index as isize + 1);
+        let x = crate::actor_tables::word(game, |t| &t.draygon_turret_positions, index as isize);
+        let y =
+            crate::actor_tables::word(game, |t| &t.draygon_turret_positions, index as isize + 1);
         game.place_projectile_spawn(x, y);
         game.spawn_actor_eproj(TURRET_SPEED, index, TURRET_PROJECTILE);
     }

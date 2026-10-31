@@ -5,6 +5,7 @@
 //! RAM or backend type crosses this boundary.
 #![forbid(unsafe_code)]
 
+pub mod actor_tables;
 pub mod area_select_palettes;
 pub mod baby_metroid;
 pub mod beam_gradients;
