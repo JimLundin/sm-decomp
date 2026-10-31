@@ -52,15 +52,13 @@ fn seed_lanes(g: &mut Game) {
             .copy_in(at, &(0x4100 + 13 * index as u16).to_le_bytes());
     }
 }
-fn synthetic_radius_image(g: &mut Game, pose: u16, radius: u8) -> RomImage {
-    let image = RomImage::zeroed(0x200000);
-    image.write(
-        lorom_offset(0x91b629) as usize + usize::from(pose) * 8 + 6,
-        radius,
-    );
+/// Install one image, loaded and native, whose only content is `pose`'s Y radius.
+fn install_radius_image(g: &mut Game, pose: u16, radius: u8) {
+    let mut bytes = vec![0; 0x200000];
+    bytes[lorom_offset(0x91b629) as usize + usize::from(pose) * 8 + 6] = radius;
+    let image = RomImage::from(bytes);
     g.register_native_rom(image.clone());
-    g.register_rom(image.clone());
-    image
+    g.register_rom(image);
 }
 fn history(g: &mut Game, out: &mut Vec<u8>) {
     g.ram().copy_in(
@@ -92,7 +90,7 @@ fn history(g: &mut Game, out: &mut Vec<u8>) {
 }
 fn radius(g: &mut Game, out: &mut Vec<u8>) {
     let pose = 7;
-    let image = synthetic_radius_image(g, pose, 19);
+    install_radius_image(g, pose, 19);
     g.ram().copy_in(0xa1c, &(pose as u16).to_le_bytes());
     g.ram().copy_in(0xafe, &(0x4567 as u16).to_le_bytes());
     g.ram().copy_in(0xb00, &(0x89ab as u16).to_le_bytes());
@@ -105,10 +103,8 @@ fn radius(g: &mut Game, out: &mut Vec<u8>) {
     put(&mut expected, 0xb00, 19);
     assert_ram(g, &expected, "collision.owner.radius.first_live_content");
     record(out, 1, 0, g);
-    image.write(
-        lorom_offset(0x91b629) as usize + usize::from(pose) * 8 + 6,
-        31,
-    );
+    // New content arrives as a newly installed image.
+    install_radius_image(g, pose, 31);
     {
         let mut rt = Runtime::new(g);
         rt.foreign(crate::game::session_runtime::set_player_radius);

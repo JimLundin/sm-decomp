@@ -12,11 +12,9 @@ fn word(g: &Game, at: usize) -> u16 {
         bytes
     })
 }
-fn write(image: &crate::rom::RomImage, address: u32, bytes: &[u8]) {
+fn write(image: &mut [u8], address: u32, bytes: &[u8]) {
     let at = crate::rom::lorom_offset(address) as usize;
-    for (i, &byte) in bytes.iter().enumerate() {
-        image.write(at + i, byte);
-    }
+    image[at..at + bytes.len()].copy_from_slice(bytes);
 }
 /// Synthetic header only: invokes the real supported CollisionSurface setup,
 /// then the real delete instruction if a subsequent mechanism tick reaches it.
@@ -27,12 +25,25 @@ pub(crate) fn install_surface_content(g: &mut Game) {
         .clone()
         .expect("collision.composed.loaded-image");
     let native = g.capture_native_rom();
-    for image in [&loaded, &native] {
-        write(image, 0x949139, &0xf100u16.to_le_bytes());
+    let author = |image: &crate::rom::RomImage| {
+        let mut bytes = (0..image.len())
+            .map(|at| image.read(at))
+            .collect::<Vec<_>>();
+        write(&mut bytes, 0x949139, &0xf100u16.to_le_bytes());
         let setup = (8697028u32 as u16).to_le_bytes();
-        write(image, 0x84f100, &[setup[0], setup[1], 0x10, 0xf1]);
-        write(image, 0x84f110, &(8685244u32 as u16).to_le_bytes());
-    }
+        write(&mut bytes, 0x84f100, &[setup[0], setup[1], 0x10, 0xf1]);
+        write(&mut bytes, 0x84f110, &(8685244u32 as u16).to_le_bytes());
+        crate::rom::RomImage::from(bytes)
+    };
+    // The authored images replace the initialized ones, keeping their aliasing.
+    let authored = author(&loaded);
+    let authored_native = if native.same_allocation(&loaded) {
+        authored.clone()
+    } else {
+        author(&native)
+    };
+    g.register_native_rom(authored_native);
+    g.register_rom(authored);
 }
 fn cell(g: &mut Game, x: u16, y: u16, level: u16, bts: u8) {
     let index = usize::from(y >> 4) * 96 + usize::from(x >> 4);
