@@ -38,14 +38,18 @@ fn put(g: &mut Game, at: usize, value: u16) {
 fn slot(g: &mut Game, column: usize, k: u16, value: u16) {
     put(g, column + usize::from(k & !1), value);
 }
-fn rw(image: &RomImage, bank: u8, cursor: u16, offset: usize, value: u16) {
+fn rw(image: &mut [u8], bank: u8, cursor: u16, offset: usize, value: u16) {
     let at =
         crate::rtl::lorom_offset((u32::from(bank) << 16) | u32::from(cursor)) as usize + offset;
-    for (i, b) in value.to_ne_bytes().into_iter().enumerate() {
-        image.write(at + i, b);
-    }
+    image[at..at + 2].copy_from_slice(&value.to_ne_bytes());
 }
-fn seed(g: &mut Game, image: &RomImage) {
+/// Register an image of the case's synthetic bytes as both loaded and native ROM.
+fn install(g: &mut Game, bytes: &[u8]) {
+    let image = RomImage::from(bytes);
+    g.loaded_rom = Some(image.clone());
+    g.register_native_rom(image);
+}
+fn seed(g: &mut Game, image: &mut [u8]) {
     for at in 0x1ef1..0x1f51 {
         let value = (at * 37) as u8;
         g.ram().write_byte(at, value);
@@ -82,7 +86,7 @@ fn seed(g: &mut Game, image: &RomImage) {
         );
     }
 }
-fn operands(image: &RomImage, cursor: u16, cmd: usize, v: u32) {
+fn operands(image: &mut [u8], cursor: u16, cmd: usize, v: u32) {
     let value = match cmd {
         16 | 17 => (v % 4) as u16 * 2,
         22 => 0x8000,
@@ -94,7 +98,8 @@ fn operands(image: &RomImage, cursor: u16, cmd: usize, v: u32) {
     rw(image, 0x87, cursor, 0, value);
     rw(image, 0x87, cursor, 2, 0x9256);
 }
-fn execute(id: u32, g: &mut Game, image: &RomImage, trace: &mut Vec<u8>) -> u16 {
+// Cases that author more bytes install an image of them before the engine reads it.
+fn execute(id: u32, g: &mut Game, image: &mut [u8], trace: &mut Vec<u8>) -> u16 {
     match id {
         0..=15 => {
             for k in (0..12).step_by(2) {
@@ -129,11 +134,9 @@ fn execute(id: u32, g: &mut Game, image: &RomImage, trace: &mut Vec<u8>) -> u16 
                     clear(g);
                     let len = (id - 11) as usize;
                     let at = crate::rtl::lorom_offset(0x878000) as usize;
-                    let short = RomImage::zeroed(at + len);
-                    for i in 0..len {
-                        short.write(at + i, [0, 0x90, 4, 0, 0x23][i]);
-                    }
-                    g.loaded_rom = Some(short);
+                    let mut short = vec![0; at + len];
+                    short[at..].copy_from_slice(&[0, 0x90, 4, 0, 0x23][..len]);
+                    g.loaded_rom = Some(RomImage::from(short));
                     spawn(0x8000, g);
                 }
                 _ => unreachable!(),
@@ -161,6 +164,7 @@ fn execute(id: u32, g: &mut Game, image: &RomImage, trace: &mut Vec<u8>) -> u16 
             put(g, 0xd828, if v & 1 != 0 { 0xffff } else { 0 });
             put(g, 0xd820, if v & 1 != 0 { 0xffff } else { 0 });
             operands(image, cursor, cmd, v);
+            install(g, image);
             return command(COMMANDS[cmd], k, cursor, g);
         }
         304..=327 => {
@@ -180,15 +184,13 @@ fn execute(id: u32, g: &mut Game, image: &RomImage, trace: &mut Vec<u8>) -> u16 
                 for (offset, value) in [(0, 0x9000), (2, 4), (4, 0x123)] {
                     rw(image, 0x87, 0x8000, offset, value);
                 }
+                install(g, image);
                 clear(g);
                 spawn(0x8000, g);
                 advance(g);
-                for i in 0..4 {
-                    image.write(
-                        crate::rtl::lorom_offset(0x879234) as usize + i,
-                        0x80 + i as u8,
-                    );
-                }
+                let at = crate::rtl::lorom_offset(0x879234) as usize;
+                image[at..at + 4].copy_from_slice(&[0x80, 0x81, 0x82, 0x83]);
+                install(g, image);
             }
             if n >= 16 {
                 slot(g, a::ANIMTILES_INSTR_TIMERS, k, 1);
@@ -202,6 +204,7 @@ fn execute(id: u32, g: &mut Game, image: &RomImage, trace: &mut Vec<u8>) -> u16 
                 rw(image, 0x87, 0x9000, 2, 0x0307);
                 rw(image, 0x87, 0x9000, 4, 0x3400);
                 rw(image, 0x87, 0x9000, 6, 0x0092);
+                install(g, image);
             }
             process(g);
         }
@@ -235,6 +238,7 @@ fn execute(id: u32, g: &mut Game, image: &RomImage, trace: &mut Vec<u8>) -> u16 
             rw(image, 0x87, 0x9000, 2, 0x0300);
             rw(image, 0x87, 0x9000, 4, 0x3400);
             rw(image, 0x87, 0x9000, 6, 0x0092);
+            install(g, image);
             advance(g);
         }
         352..=375 => {
@@ -242,11 +246,9 @@ fn execute(id: u32, g: &mut Game, image: &RomImage, trace: &mut Vec<u8>) -> u16 
             let cmd = [1, 3, 4, 5, 10, 21, 22, 23][(n / 3) as usize];
             let len = (n % 3) as usize;
             let at = crate::rtl::lorom_offset(0x879000) as usize;
-            let short = RomImage::zeroed(at + len);
-            for i in 0..len {
-                short.write(at + i, 1);
-            }
-            g.loaded_rom = Some(short);
+            let mut short = vec![0; at + len];
+            short[at..].fill(1);
+            g.loaded_rom = Some(RomImage::from(short));
             slot(g, a::ANIMTILES_TIMERS, 1, if n < 6 { 1 } else { 2 });
             return command(COMMANDS[cmd], 1, 0x9000, g);
         }
@@ -292,6 +294,7 @@ fn execute(id: u32, g: &mut Game, image: &RomImage, trace: &mut Vec<u8>) -> u16 
                 if n == 2 || n == 4 { 1 } else { 2 },
             );
             rw(image, 0x87, 0x9000, 0, 1);
+            install(g, image);
             return command(COMMANDS[cmd], 1, 0x1000, g);
         }
         424..=431 => {
@@ -303,6 +306,7 @@ fn execute(id: u32, g: &mut Game, image: &RomImage, trace: &mut Vec<u8>) -> u16 
             // Counter-byte aliases retain their exact odd/even byte lane.
             let k = [12, 13, 72, 73, 74][(id - 432) as usize];
             rw(image, 0x87, 0x9000, 0, 0xa5);
+            install(g, image);
             return command(COMMANDS[5], k, 0x9000, g);
         }
         437 => {
@@ -316,7 +320,7 @@ fn execute(id: u32, g: &mut Game, image: &RomImage, trace: &mut Vec<u8>) -> u16 
     }
     0
 }
-fn dma_case(n: u32, g: &mut Game, image: &RomImage, trace: &mut Vec<u8>) -> u16 {
+fn dma_case(n: u32, g: &mut Game, image: &mut [u8], trace: &mut Vec<u8>) -> u16 {
     let previous_cpu = g.g_cpu;
     g.ensure_backend();
     let snes = g.g_snes;
@@ -335,12 +339,11 @@ fn dma_case(n: u32, g: &mut Game, image: &RomImage, trace: &mut Vec<u8>) -> u16 
     let outcome = catch_unwind(AssertUnwindSafe(|| {
         // The cartridge serves the image's final bytes to the upload's DMA.
         let mut short_cart = None;
-        for at in 0..0x100 {
-            image.write(
-                crate::rtl::lorom_offset(0x878000) as usize + at,
-                (at * 11) as u8,
-            );
+        let start = crate::rtl::lorom_offset(0x878000) as usize;
+        for (at, byte) in image[start..start + 0x100].iter_mut().enumerate() {
+            *byte = (at * 11) as u8;
         }
+        install(g, image);
         for k in (0..12).step_by(2) {
             slot(g, a::ANIMTILES_IDS, k, 0x8000 + k);
             slot(g, a::ANIMTILES_SRC_PTR, k, 0x8000 + k * 8);
@@ -390,15 +393,13 @@ fn dma_case(n: u32, g: &mut Game, image: &RomImage, trace: &mut Vec<u8>) -> u16 
             for (offset, value) in [(0, 0x9000), (2, 4), (4, 0x123)] {
                 rw(image, 0x87, 0x8000, offset, value);
             }
+            install(g, image);
             clear(g);
             spawn(0x8000, g);
             advance(g);
-            for i in 0..4 {
-                image.write(
-                    crate::rtl::lorom_offset(0x879234) as usize + i,
-                    0x80 + i as u8,
-                );
-            }
+            let at = crate::rtl::lorom_offset(0x879234) as usize;
+            image[at..at + 4].copy_from_slice(&[0x80, 0x81, 0x82, 0x83]);
+            install(g, image);
         }
         if n >= 16 {
             // Short cart allocation forces a Rust panic during real DMA after
@@ -410,16 +411,7 @@ fn dma_case(n: u32, g: &mut Game, image: &RomImage, trace: &mut Vec<u8>) -> u16 
             slot(g, a::ANIMTILES_SIZES, 10, if n >= 20 { 0 } else { 8 });
             slot(g, a::ANIMTILES_SRC_PTR, 10, 0x8000);
         }
-        let cart_rom = short_cart.map_or_else(
-            || {
-                CartRom::from(
-                    (0..image.len())
-                        .map(|at| image.read(at))
-                        .collect::<Vec<_>>(),
-                )
-            },
-            CartRom::zeroed,
-        );
+        let cart_rom = short_cart.map_or_else(|| CartRom::from(image.to_vec()), CartRom::zeroed);
         unsafe {
             (*cart).rom = cart_rom;
         }
@@ -450,12 +442,13 @@ pub(crate) fn capture_case(id: u32) -> Option<Vec<u8>> {
         return None;
     }
     let mut g = Game::new();
-    let image = RomImage::zeroed(0x80000);
-    seed(&mut g, &image);
-    g.loaded_rom = Some(image.clone());
-    g.register_native_rom(image.clone());
+    let mut rom = vec![0; 0x80000];
+    seed(&mut g, &mut rom);
+    install(&mut g, &rom);
     let mut trace = Vec::new();
-    let result = catch_unwind(AssertUnwindSafe(|| execute(id, &mut g, &image, &mut trace)));
+    let result = catch_unwind(AssertUnwindSafe(|| {
+        execute(id, &mut g, &mut rom, &mut trace)
+    }));
     let panicked = result.is_err();
     let mut bytes = (0..g.ram().len())
         .map(|at| g.ram().read_byte(at))

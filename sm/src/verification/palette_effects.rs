@@ -20,16 +20,20 @@ fn put(g: &mut Game, address: usize, value: u16) {
     let _ = &[(); 0x20000][address..address + 2];
     g.ram().copy_in(address, &value.to_le_bytes());
 }
-fn rw(image: &RomImage, cursor: u16, value: u16) {
+fn rw(image: &mut [u8], cursor: u16, value: u16) {
     let at = crate::rtl::lorom_offset(0x8d0000 | u32::from(cursor)) as usize;
-    for (i, byte) in value.to_ne_bytes().into_iter().enumerate() {
-        image.write(at + i, byte);
-    }
+    image[at..at + 2].copy_from_slice(&value.to_ne_bytes());
+}
+/// Register an image of the case's synthetic bytes as both loaded and native ROM.
+fn install(g: &mut Game, bytes: &[u8]) {
+    let image = RomImage::from(bytes);
+    g.loaded_rom = Some(image.clone());
+    g.register_native_rom(image);
 }
 fn slot(g: &mut Game, k: u16, column: usize, value: u16) {
     put(g, column + usize::from(k & !1), value);
 }
-fn seed(g: &mut Game, image: &RomImage) {
+fn seed(g: &mut Game, image: &mut [u8]) {
     for address in 0x1e79..0x1ef1 {
         let value = (address * 37) as u8;
         g.ram().write_byte(address, value);
@@ -95,7 +99,8 @@ fn branches(g: &mut Game, variant: u32) {
         if variant == 0 { 1 } else { 0 },
     );
 }
-fn execute(id: u32, g: &mut Game, image: &RomImage) -> (u16, u16) {
+// Cases that author more bytes install an image of them before the engine reads it.
+fn execute(id: u32, g: &mut Game, image: &mut [u8]) -> (u16, u16) {
     match id {
         0..=7 => {
             for k in (0..16).step_by(2) {
@@ -124,6 +129,7 @@ fn execute(id: u32, g: &mut Game, image: &RomImage) -> (u16, u16) {
                         slot(g, 2, a::PALETTEFX_IDS, 0);
                     }
                     rw(image, 0x8000, SETUPS[(id - 3) as usize] as u16);
+                    install(g, image);
                     branches(g, id - 3);
                     palette::spawn(0x8000, g);
                 }
@@ -190,6 +196,7 @@ fn execute(id: u32, g: &mut Game, image: &RomImage) -> (u16, u16) {
             if n == 9 {
                 rw(image, 0x900c, COMMANDS[7] as u16);
             }
+            install(g, image);
             if n == 12 {
                 palette::set_enabled(false, g);
             }
@@ -211,14 +218,15 @@ fn execute(id: u32, g: &mut Game, image: &RomImage) -> (u16, u16) {
                         rw(image, table + index * 2, 0x9000);
                     }
                 }
+                install(g, image);
             }
             palette::advance(g);
             if n == 10 || n == 11 {
-                let replacement = RomImage::zeroed(image.len());
+                let mut replacement = vec![0; image.len()];
                 for (at, value) in [(0x9100, 5), (0x9102, 0x345), (0x9104, COMMANDS[0] as u16)] {
-                    rw(&replacement, at, value);
+                    rw(&mut replacement, at, value);
                 }
-                g.loaded_rom = Some(replacement);
+                g.loaded_rom = Some(RomImage::from(replacement));
                 put(g, w::PALETTEFX_INDEX, k);
                 slot(g, k, a::PALETTEFX_INSTR_TIMERS, 1);
                 slot(g, k, a::PALETTEFX_INSTR_LIST_PTRS, 0x9100);
@@ -228,14 +236,10 @@ fn execute(id: u32, g: &mut Game, image: &RomImage) -> (u16, u16) {
         472..=483 => {
             let n = id - 472;
             let length = [0, 1, 2][(n % 3) as usize];
-            let short = RomImage::zeroed(crate::rtl::lorom_offset(0x8d9000) as usize + length);
-            if length != 0 {
-                short.write(short.len() - length, 0x34);
-            }
-            if length == 2 {
-                short.write(short.len() - 1, 0x92);
-            }
-            g.loaded_rom = Some(short);
+            let mut short = vec![0; crate::rtl::lorom_offset(0x8d9000) as usize + length];
+            let end = short.len();
+            short[end - length..].copy_from_slice(&[0x34, 0x92][..length]);
+            g.loaded_rom = Some(RomImage::from(short));
             slot(g, 1, a::PALETTEFX_TIMERS, if n / 3 == 0 { 1 } else { 0 });
             let ea = [COMMANDS[11], COMMANDS[11], COMMANDS[12], COMMANDS[15]][(n / 3) as usize];
             let result = palette::checks::command(ea, 1, 0x9000, g);
@@ -252,6 +256,7 @@ fn execute(id: u32, g: &mut Game, image: &RomImage) -> (u16, u16) {
         488..=506 => {
             slot(g, 0xffff, a::PALETTEFX_TIMERS, 2);
             rw(image, 0xfffe, 0x9234);
+            install(g, image);
             put(g, w::PALETTEFX_INDEX, 0xffff);
             let result = palette::checks::command(COMMANDS[(id - 488) as usize], 0xffff, 0xfffe, g);
             return (result.k, result.j);
@@ -281,6 +286,7 @@ fn execute(id: u32, g: &mut Game, image: &RomImage) -> (u16, u16) {
             ] {
                 rw(image, at, value);
             }
+            install(g, image);
             palette::advance(g);
         }
         _ => unreachable!(),
@@ -292,11 +298,10 @@ pub(crate) fn capture_case(id: u32) -> Option<Vec<u8>> {
         return None;
     }
     let mut game = Game::new();
-    let image = RomImage::zeroed(0x80000);
-    seed(&mut game, &image);
-    game.loaded_rom = Some(image.clone());
-    game.register_native_rom(image.clone());
-    let result = catch_unwind(AssertUnwindSafe(|| execute(id, &mut game, &image)));
+    let mut image = vec![0; 0x80000];
+    seed(&mut game, &mut image);
+    install(&mut game, &image);
+    let result = catch_unwind(AssertUnwindSafe(|| execute(id, &mut game, &mut image)));
     let expected_panic = id == 7 || matches!(id, 475 | 476 | 478 | 481 | 482);
     assert_eq!(result.is_err(), expected_panic, "palette scenario {id}");
     assert_eq!(

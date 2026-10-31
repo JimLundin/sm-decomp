@@ -93,11 +93,10 @@ fn load_entry(case: u32) {
     let mut game = Game::new();
     game.ram().fill(0..game.ram().len(), 0x69);
     game.g_sram = sm_game::save_file::SaveRam::zeroed(8192);
-    let image = crate::rom::RomImage::zeroed(0x200000);
-    game.loaded_rom = Some(image.clone());
-    game.register_native_rom(image.clone());
+    let mut image = vec![0; 0x200000];
     game.VERIFY_ACTIVE = true;
-    let slot = crate::flags_cases::seed_load(case, &mut game, &image);
+    let slot = crate::flags_cases::seed_load(case, &mut game, &mut image);
+    crate::flags_cases::install(&mut game, &image);
     assert_eq!(slot, 0);
     let payload = game.g_sram.bytes(0x10..0x10 + 0x65c);
     let flags = &payload[0x60..0x130]; // D820..D8EF within D7C0 payload.
