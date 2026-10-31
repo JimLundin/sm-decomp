@@ -82,11 +82,6 @@ impl Effects for Runtime<'_> {
     }
 }
 impl Host for Runtime<'_> {}
-impl sm_game::runtime_access::OwnedCall for Runtime<'_> {
-    fn owned_call<R>(&mut self, action: impl FnOnce(&mut Self) -> R) -> R {
-        Runtime::owned_call(self, action)
-    }
-}
 pub(crate) use sm_game::player_transitions::input::dispatch_input;
 pub(crate) use sm_game::player_transitions::input::finish_frame as finish_player_frame;
 
