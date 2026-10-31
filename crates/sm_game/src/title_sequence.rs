@@ -10,6 +10,7 @@
 use crate::cinematic::{advance_cinematic_fade, clear_cinematic_sprites, set_cinematic_backdrop};
 use crate::cinematic_host::Host;
 use crate::cinematic_objects::CinematicObjects;
+use crate::cinematic_state::cinematic;
 use crate::display_refresh::GraphicsAsset;
 use crate::flow::{self, Word::CinematicFunction};
 use crate::menus::prelude::{options_menu, owned};
@@ -75,8 +76,8 @@ fn run_transition<H: Host + ?Sized>(state: u16, game: &mut H) {
 /// Steps the current transition between the title and the demos. Was
 /// `HandleCinematicsTransitions`.
 pub fn handle_transitions<H: Host + ?Sized>(game: &mut H) {
-    if word!(game.SKIP_TO_TITLE_INDEX) != 0 {
-        let state = word!(game.SKIP_TO_TITLE_INDEX);
+    if cinematic!(game.SkipToTitleIndex) != 0 {
+        let state = cinematic!(game.SkipToTitleIndex);
         run_transition(state, game);
     }
 }
@@ -84,7 +85,7 @@ pub fn handle_transitions<H: Host + ?Sized>(game: &mut H) {
 /// Was `HandleCinematicsTransitions_1`.
 fn fade_out_to_demo<H: Host + ?Sized>(game: &mut H) {
     if advance_cinematic_fade(CinematicFade::FastOut, game) {
-        word!(game.SKIP_TO_TITLE_INDEX = 2);
+        cinematic!(game.SkipToTitleIndex = 2);
         flow::set(game, CinematicFunction, function::WAITING);
         crate::music_requests::queue_delayed_8(DEMO_MUSIC, game);
     }
@@ -97,16 +98,16 @@ fn start_demo_logo<H: Host + ?Sized>(game: &mut H) {
     // The palette the first sprite initializer leaves in A.
     spawn(game, CinematicObjects::Sprites, object::DEMO_LOGO, 0x0400);
     crate::screen_fade::set_both(game, 0, 2);
-    word!(game.MODE7_ZOOM = 256);
-    word!(game.CINEMATIC_X = 0);
-    word!(game.CINEMATIC_X_SUB = 0);
-    word!(game.CINEMATIC_Y = 0);
-    word!(game.CINEMATIC_Y_SUB = 0);
-    word!(game.CINEMATIC_X_SPEED = 0);
-    word!(game.CINEMATIC_X_SUBSPEED = 0);
-    word!(game.CINEMATIC_Y_SPEED = 0);
-    word!(game.CINEMATIC_Y_SUBSPEED = 0);
-    word!(game.SKIP_TO_TITLE_INDEX = 3);
+    cinematic!(game.Mode7Zoom = 256);
+    cinematic!(game.X = 0);
+    cinematic!(game.XSub = 0);
+    cinematic!(game.Y = 0);
+    cinematic!(game.YSub = 0);
+    cinematic!(game.XSpeed = 0);
+    cinematic!(game.XSubspeed = 0);
+    cinematic!(game.YSpeed = 0);
+    cinematic!(game.YSubspeed = 0);
+    cinematic!(game.SkipToTitleIndex = 3);
     crate::word_transfers!(game, ascending, 128; le(PALETTE_BUFFER, 128) <- rom(TITLE_PALETTES, 128));
     word!(game.PALETTE_BUFFER[201] = 0x7fff);
     word!(game.PALETTE_BUFFER[202] = 32128);
@@ -121,7 +122,7 @@ fn start_demo_logo<H: Host + ?Sized>(game: &mut H) {
 /// Was `HandleCinematicsTransitions_3`.
 fn fade_in_title<H: Host + ?Sized>(game: &mut H) {
     if advance_cinematic_fade(CinematicFade::FastIn, game) {
-        word!(game.SKIP_TO_TITLE_INDEX = 0);
+        cinematic!(game.SkipToTitleIndex = 0);
         flow::set(game, flow::Word::DemoTimer, DEMO_DELAY);
         flow::set(game, CinematicFunction, function::TITLE_SCREEN);
     }
@@ -170,10 +171,10 @@ pub fn setup<H: Host + ?Sized>(game: &mut H) {
 /// `CinematicFunc_Func7`.
 pub fn zooming_out<H: Host + ?Sized>(game: &mut H) {
     if (word!(game.NMI_FRAME_COUNTER_WORD) & 1) == 0 {
-        if ((word!(game.MODE7_ZOOM)).wrapping_sub(256) as i16) < 0 {
-            word!(game.MODE7_ZOOM, wrapping_add(1));
+        if ((cinematic!(game.Mode7Zoom)).wrapping_sub(256) as i16) < 0 {
+            cinematic!(game.Mode7Zoom += 1);
         } else {
-            word!(game.MODE7_ZOOM = 256);
+            cinematic!(game.Mode7Zoom = 256);
             flow::set(game, CinematicFunction, function::WAITING);
             spawn(
                 game,
@@ -195,7 +196,7 @@ fn finish<H: Host + ?Sized>(next: u16, game: &mut H, clear_index: impl FnOnce(&m
     word!(game.REG_BG3HOFS = 0);
     word!(game.REG_BG2VOFS = 0);
     word!(game.REG_BG3VOFS = 0);
-    word!(game.MODE7_ANGLE = 0);
+    cinematic!(game.Mode7Angle = 0);
     flow::set(game, CinematicFunction, function::SETUP);
     crate::palette_effects::execution::leased::set_enabled(false, game);
     crate::palette_effects::execution::leased::clear(game);
@@ -229,7 +230,7 @@ pub fn to_demos<H: Host + ?Sized>(game: &mut H) {
 /// ($8B:9CCF): full brightness, once. Was `sub_8B9CCF`.
 pub fn scrolling_1994<H: Host + ?Sized>(k: u16, game: &mut H) {
     game.ram().write_byte(crate::ram::mirror::INIDISP, 15);
-    word!(game.CINEMATICSPR_PREINSTR_FUNC[(k >> 1)] = NO_PRE_INSTRUCTION);
+    cinematic!(game.SprPreInstruction[k >> 1] = NO_PRE_INSTRUCTION);
 }
 
 /// Instruction - start the title's scene 3 pan ($8B:9E58), with its
