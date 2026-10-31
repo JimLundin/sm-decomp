@@ -53,7 +53,11 @@ pub(crate) static FOLLOWS_BUG_HOOKS: &[u32] = &[
 pub(crate) static FOLLOWS_OTHER_HOOKS: &[u32] = &[];
 
 /// rom patches: The Rust engine follows the original game here; the default oracle drops them.
-pub(crate) static FOLLOWS_ROM_PATCHES: &[u32] = &[0x80837b, 0x80838e, 0xa7b03a, 0xa7ff82];
+pub(crate) static FOLLOWS_ROM_PATCHES: &[u32] = &[
+    0x80837b, 0x80838e, 0x858096, 0x8580b4, 0x858148, 0x8581b2, 0x8581ea, 0x858203, 0x858236,
+    0x8582b8, 0x858321, 0x85835a, 0x8583ba, 0x8584cc, 0x858532, 0x85856b, 0x85861c, 0x858651,
+    0x858692, 0x858696, 0x859660, 0xa7b03a, 0xa7ff82,
+];
 
 /// Every bug-hook site; its byte depends on the policy (see `rom_patches`).
 pub(crate) static SITES_BUG_HOOKS: &[u32] = &[

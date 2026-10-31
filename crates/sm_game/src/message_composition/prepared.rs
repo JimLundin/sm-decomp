@@ -18,6 +18,9 @@ pub struct InputSample {
 pub enum Effect {
     CancelSounds,
     AdvanceAudio,
+    AdvanceSoundEffects,
+    /// The HDMA object handler, which also handles the music queue.
+    UpdateHdma,
     SaveSound,
     SelectionSound,
     ResumeMovementSound,
@@ -381,7 +384,6 @@ impl PreparedOwner {
         let length = usize::from(dma_length((message.text.len() * 2) as u16)) / 2;
         let first = message.upload_offset();
         self.state.map[first..first + length].copy_from_slice(&self.state.tiles[..length]);
-        self.state.drawn_scroll = radius_values(0);
         Ok(())
     }
     fn event(&mut self, effect: Effect) {
@@ -405,30 +407,38 @@ impl d::Context for PreparedOwner {
         }
         match effect {
             d::Effect::CancelSounds => self.event(Effect::CancelSounds),
-            d::Effect::PrepareDisplay => {
-                self.state.visible = true;
-                state.selection = d::Selection::Accept;
-            }
-            d::Effect::ClearDisplay => self.state.map.fill(0x000e),
-            d::Effect::PrepareMessage => {
-                state.radius = 0;
+            d::Effect::ClearSelection => state.selection = d::Selection::Accept,
+            d::Effect::PrepareDisplay => self.state.visible = true,
+            // The map holds VRAM, so only the uploads change it.
+            d::Effect::SaveBackground
+            | d::Effect::FillBackground
+            | d::Effect::DrawTopBorder
+            | d::Effect::PrepareScroll
+            | d::Effect::EnableScroll => {}
+            d::Effect::UploadBackground => self.state.map.fill(0x000e),
+            d::Effect::WriteMessage => state.radius = 0,
+            d::Effect::UploadMessage => {
                 if let Err(fault) = self.prepare(state.message) {
                     self.fault = Some(fault);
                 }
             }
             d::Effect::SaveSound => self.event(Effect::SaveSound),
             d::Effect::AdvanceAudio => self.event(Effect::AdvanceAudio),
+            d::Effect::AdvanceSoundEffects => self.event(Effect::AdvanceSoundEffects),
+            d::Effect::UpdateHdma => self.event(Effect::UpdateHdma),
+            d::Effect::RestoreBackground => self.state.map = self.state.backup,
             d::Effect::RestoreDisplay => {
-                self.state.map = self.state.backup;
                 self.state.visible = false;
                 self.state.restored = true;
             }
             d::Effect::ResumeMovementSound => self.event(Effect::ResumeMovementSound),
             d::Effect::SelectPause => self.event(Effect::SelectPause),
             d::Effect::DrawRadius => self.state.drawn_scroll = radius_values(state.radius),
-            d::Effect::DrawSelection => {
+            d::Effect::StageSelection => {
                 self.state.tiles[128..160]
                     .copy_from_slice(selection_row(selection(state.selection)));
+            }
+            d::Effect::UploadSelection => {
                 let first = 0x5800 + usize::from(map_offset(BoxSize::Large)) - MAP_BASE;
                 self.state.map[first..first + 192].copy_from_slice(&self.state.tiles[..192]);
             }
