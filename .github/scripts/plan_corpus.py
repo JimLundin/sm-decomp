@@ -36,7 +36,7 @@ def seed_bundle(row):
     if row['id'] in ('pickup-reserve', 'save-death-reload', 'save-memory', 'music-fir-selector10'):
         return ('layout150-checkpoints-147-93986acd14dc9d66.tar.gz.enc', '8c8f84e903917a06d996624358a1783e80920e9fa2084c438eaa950843d68517')
     if 'checkpoint' in row:
-        return ('layout150-f158-full22.tar.gz.enc', '723ccef6ac6df45f31d5179ba5d9569184de0fb5c678266365d3eaf62d3c10b9')
+        return ('layout150-f158-faithful2-d4050aa32a965168.tar.gz.enc', 'd4050aa32a965168653e68a2389145af6aa6f2cd5666bec5eec7c737ffef874b')
     # Match exact seed identities, not capture prefixes: pickups and the
     # general bundle contain different subsets of 100-input-phase.
     seed = row.get('seed')
