@@ -44,114 +44,109 @@ impl EntryEffects for Runtime<'_> {
         }
     }
     fn call(&mut self, effect: LeafEffect) {
-        self.foreign(|game| unsafe {
-            match effect {
-                LeafEffect::QueueDoorSound => {
-                    game::music::queue_sfx2_max15(0x71, game);
-                }
-                LeafEffect::ResetSoundQueues => {
-                    game::music::clear_sound_queues(game);
-                }
-                LeafEffect::ClearTransitionSounds => {
-                    game::session_runtime::player_command(0x1d, game);
-                }
-                LeafEffect::SelectEnemies => {
-                    actors::scheduling::select(&mut Runtime::new(game));
-                }
-                LeafEffect::RunEnemies => {
-                    actors::scheduling::advance_selected(&mut Runtime::new(game));
-                }
-                LeafEffect::DrawScene => {
-                    actors::drawing::draw_scene(&mut Runtime::new(game));
-                }
-                LeafEffect::EnsureSamusDrawn => {
-                    if crate::ram_map::word!(game.ELEVATOR_FLAGS) == 0 {
-                        game::samus_animation::samus_draw_when_not_animating_or_dying(game);
-                    }
-                }
-                LeafEffect::QueueEnemyTiles => {
-                    actors::staging::queue_actor_tiles(&mut Runtime::new(game));
-                }
-                LeafEffect::DrawTimer => {
-                    sm_game::escape_timer::draw(game);
-                }
-                LeafEffect::SpinJumpSound => {
-                    game::session_runtime::player_command(0x1c, game);
-                }
-                LeafEffect::SetLiquidPhysics => {
-                    game::player_movement::speed::set_liquid_physics(&mut Runtime::new(game));
-                }
-                LeafEffect::StopHdmaEffects => {
-                    game::visual_runtime::clear_hdma_channels(game);
-                }
-                LeafEffect::InitializeRoomSpecialEffects => {
-                    game::visual_runtime::initialize_room_effects(game);
-                }
-                LeafEffect::LoadFxHeader => {
-                    game::room_state::load_fx_header(game);
-                }
-                LeafEffect::InitializeEnemies => {
-                    actors::population::install_population(&mut Runtime::new(game));
-                }
-                LeafEffect::LoadEnemyGraphics => {
-                    sm_game::room_state::load_enemy_graphics(game);
-                }
-                LeafEffect::LoadRoomMusic => {
-                    game::music::load_room_music(game);
-                }
-                LeafEffect::UpdateMusicTrack => {
-                    game::music::update_music_track_index(game);
-                }
-                LeafEffect::LoadChangedMusic => {
-                    game::music::load_new_music_track_if_changed(game);
-                }
-                LeafEffect::UpdateBeamTilesAndPalette => {
-                    game::visual_runtime::update_beam_tiles_and_palette(game);
-                }
-                LeafEffect::LoadSpritePalettes => {
-                    game::room_state::load_sprite_palettes(game);
-                }
-                LeafEffect::LoadRoomAssets => {
-                    actors::staging::prepare_room_assets(&mut Runtime::new(game));
-                }
-                LeafEffect::LoadSuitTargetPalette => {
-                    game::samus_palette::load_suit(
-                        &mut Runtime::new(game),
-                        game::visual_state::PaletteBuffer::Target,
-                    );
-                }
-                LeafEffect::SpawnBg3ScrollHdma => {
-                    game::visual_runtime::spawn_bg3_scroll(game);
-                }
-                LeafEffect::SaveExploredMap => {
-                    sm_game::menus::save_slots::save_area_map(game);
-                }
-                LeafEffect::LoadExploredMap => {
-                    sm_game::menus::save_slots::load_area_map(game);
-                }
-                LeafEffect::MarkElevatorsUsed => {
-                    sm_game::menus::save_slots::mark_elevator(game);
-                }
-                LeafEffect::EnableNmi => {
-                    crate::game::display_refresh::enable(true, game);
-                }
-                LeafEffect::DisableNmi => {
-                    crate::game::display_refresh::enable(false, game);
-                }
-                LeafEffect::EnableIrq | LeafEffect::WaitVblankEnableIrq => {
-                    let immediate = matches!(effect, LeafEffect::WaitVblankEnableIrq);
-                    if !immediate || game.ram().read_byte(0x84) & 0x30 != 0x30 {
-                        game::scanline_irq::enable(immediate, game);
-                    }
-                }
-                LeafEffect::DisableIrq => {
-                    game::scanline_irq::disable(game);
-                }
-                LeafEffect::WaitVblankClearHdma => {
-                    game::visual_runtime::clear_hdma(game);
-                }
+        // Leaves whose rules run on a lease take this one; the rest run on the exported game.
+        match effect {
+            LeafEffect::SelectEnemies => actors::scheduling::select(self),
+            LeafEffect::RunEnemies => actors::scheduling::advance_selected(self),
+            LeafEffect::DrawScene => actors::drawing::draw_scene(self),
+            LeafEffect::QueueEnemyTiles => actors::staging::queue_actor_tiles(self),
+            LeafEffect::SetLiquidPhysics => game::player_movement::speed::set_liquid_physics(self),
+            LeafEffect::InitializeEnemies => actors::population::install_population(self),
+            LeafEffect::LoadRoomAssets => actors::staging::prepare_room_assets(self),
+            LeafEffect::LoadSuitTargetPalette => {
+                game::samus_palette::load_suit(self, game::visual_state::PaletteBuffer::Target)
             }
-        });
+            LeafEffect::LoadFxHeader => sm_game::room_state::fx::load_header(self),
+            _ => self.foreign(|game| unsafe {
+                match effect {
+                    LeafEffect::QueueDoorSound => {
+                        game::music::queue_sfx2_max15(0x71, game);
+                    }
+                    LeafEffect::ResetSoundQueues => {
+                        game::music::clear_sound_queues(game);
+                    }
+                    LeafEffect::ClearTransitionSounds => {
+                        game::session_runtime::player_command(0x1d, game);
+                    }
+                    LeafEffect::EnsureSamusDrawn => {
+                        if crate::ram_map::word!(game.ELEVATOR_FLAGS) == 0 {
+                            game::samus_animation::samus_draw_when_not_animating_or_dying(game);
+                        }
+                    }
+                    LeafEffect::DrawTimer => {
+                        sm_game::escape_timer::draw(game);
+                    }
+                    LeafEffect::SpinJumpSound => {
+                        game::session_runtime::player_command(0x1c, game);
+                    }
+                    LeafEffect::StopHdmaEffects => {
+                        game::visual_runtime::clear_hdma_channels(game);
+                    }
+                    LeafEffect::InitializeRoomSpecialEffects => {
+                        game::visual_runtime::initialize_room_effects(game);
+                    }
+                    LeafEffect::LoadEnemyGraphics => {
+                        sm_game::room_state::load_enemy_graphics(game);
+                    }
+                    LeafEffect::LoadRoomMusic => {
+                        game::music::load_room_music(game);
+                    }
+                    LeafEffect::UpdateMusicTrack => {
+                        game::music::update_music_track_index(game);
+                    }
+                    LeafEffect::LoadChangedMusic => {
+                        game::music::load_new_music_track_if_changed(game);
+                    }
+                    LeafEffect::UpdateBeamTilesAndPalette => {
+                        game::visual_runtime::update_beam_tiles_and_palette(game);
+                    }
+                    LeafEffect::LoadSpritePalettes => {
+                        game::room_state::load_sprite_palettes(game);
+                    }
+                    LeafEffect::SpawnBg3ScrollHdma => {
+                        game::visual_runtime::spawn_bg3_scroll(game);
+                    }
+                    LeafEffect::SaveExploredMap => {
+                        sm_game::menus::save_slots::save_area_map(game);
+                    }
+                    LeafEffect::LoadExploredMap => {
+                        sm_game::menus::save_slots::load_area_map(game);
+                    }
+                    LeafEffect::MarkElevatorsUsed => {
+                        sm_game::menus::save_slots::mark_elevator(game);
+                    }
+                    LeafEffect::EnableNmi => {
+                        crate::game::display_refresh::enable(true, game);
+                    }
+                    LeafEffect::DisableNmi => {
+                        crate::game::display_refresh::enable(false, game);
+                    }
+                    LeafEffect::EnableIrq | LeafEffect::WaitVblankEnableIrq => {
+                        let immediate = matches!(effect, LeafEffect::WaitVblankEnableIrq);
+                        if !immediate || game.ram().read_byte(0x84) & 0x30 != 0x30 {
+                            game::scanline_irq::enable(immediate, game);
+                        }
+                    }
+                    LeafEffect::DisableIrq => {
+                        game::scanline_irq::disable(game);
+                    }
+                    LeafEffect::WaitVblankClearHdma => {
+                        game::visual_runtime::clear_hdma(game);
+                    }
+                    LeafEffect::SelectEnemies
+                    | LeafEffect::RunEnemies
+                    | LeafEffect::DrawScene
+                    | LeafEffect::QueueEnemyTiles
+                    | LeafEffect::SetLiquidPhysics
+                    | LeafEffect::InitializeEnemies
+                    | LeafEffect::LoadRoomAssets
+                    | LeafEffect::LoadSuitTargetPalette
+                    | LeafEffect::LoadFxHeader => {
+                        unreachable!("leaf runs on the lease")
+                    }
+                }
+            }),
+        }
     }
     fn camera_call(&mut self, effect: CameraEffect) -> u8 {
         use game::room_scrolls::{self, door};
