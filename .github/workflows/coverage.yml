@@ -263,7 +263,6 @@ jobs:
     runs-on: ubuntu-24.04
     outputs:
       matrix: ${{ steps.plan.outputs.matrix }}
-      asset: ${{ steps.plan.outputs.asset }}
     steps:
       - uses: actions/checkout@v4
       - id: plan
@@ -297,7 +296,8 @@ jobs:
           "LIBRARY_PATH=$((Resolve-Path verifier/sdk/lib).Path)" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
       - name: Restore the ROM and the encrypted room seeds and inputs
         env:
-          ASSET: ${{ needs.route-plan.outputs.asset }}
+          ASSET: ${{ matrix.asset }}
+          FULL_ROUTE: ${{ matrix.route }}
           ROM_00: ${{ secrets.SM_ROM_00 }}
           ROM_01: ${{ secrets.SM_ROM_01 }}
           ROM_02: ${{ secrets.SM_ROM_02 }}
@@ -355,6 +355,7 @@ jobs:
         env:
           LLVM_PROFILE_FILE: ${{ github.workspace }}/profiles/%p-%m.profraw
         run: |
+          $env:FULL_ROUTE = '${{ matrix.route }}'
           python -B .github/scripts/full_route.py run ${{ matrix.index }} 2>&1 | Tee-Object -FilePath rooms.log
           $code = $LASTEXITCODE
           "### ${{ matrix.name }}" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
