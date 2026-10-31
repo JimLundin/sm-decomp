@@ -268,17 +268,16 @@ fn queue_tile_rows<H: crate::menus::host::Host + ?Sized>(address: u32, game: &mu
         for row in 0..4 {
             crate::word_transfers!(game, ascending, 1; native(v1 + row * stride) <- value(64));
         }
-        let mut tt: i32 = (layer1_y as i32 & 0x7f8) - 16i32;
-        if tt & 0x8000 != 0 {
-            tt = 0;
-        }
-        let v2: i32 = 8 * tt as u8 as i32;
-        let y1: i32 = (tt >> 8) as u8 as i32;
-        let y2: i32 = ((tt >> 8) + 1) as u8 as i32;
-        let v3: VoidP = (src.table_word(base, y1 as isize) as i32 + v2) as VoidP;
+        // Each row indexes the table by its own high byte ($88:AFC5/$AFE8), so near the top of
+        // the room the upper row reads past the table and the lower row reads its entry 0.
+        let source = |row: u16| {
+            src.table_word(base, isize::from(row.to_be_bytes()[0]))
+                .wrapping_add((row & 0xff) * 8)
+        };
+        let v3: VoidP = source((layer1_y & 0x7f8).wrapping_sub(16));
         crate::word_transfers!(game, ascending, 1; native(v1 + 2) <- value(v3));
         crate::word_transfers!(game, ascending, 1; native(v1 + stride + 2) <- value(v3.wrapping_add(64)));
-        let v5: VoidP = (src.table_word(base, y2 as isize) as i32 + v2) as VoidP;
+        let v5: VoidP = source((layer1_y & 0x7f8) + 0xf0);
         crate::word_transfers!(game, ascending, 1; native(v1 + 2 * stride + 2) <- value(v5));
         crate::word_transfers!(game, ascending, 1; native(v1 + 3 * stride + 2) <- value(v5.wrapping_add(64)));
         for row in 0..4 {

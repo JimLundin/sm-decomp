@@ -146,9 +146,12 @@ impl crate::execution::Execution<'_> {
                 }
                 i
             };
+            // A source in the low half of a high bank is not ROM. The WRAM mirror below $2000
+            // reads like any RAM (the original's scrolling sky reads it near the top of a room);
+            // the rest is registers or open bus.
             if !self.backend.dma_state().channel[i].fromB
                 && self.backend.dma_state().channel[i].aBank & 0x80 != 0
-                && self.backend.dma_state().channel[i].aAdr & 0x8000 == 0
+                && (0x2000..0x8000).contains(&self.backend.dma_state().channel[i].aAdr)
                 && !*self.host.g_fail
                 && !crate::oracle_mode::models_open_bus()
             {
