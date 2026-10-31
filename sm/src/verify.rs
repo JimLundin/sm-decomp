@@ -1183,7 +1183,9 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
     if oracle_only
         && (checkpoint_out.is_none() || !required_probes.is_empty() || !expected.is_empty())
     {
-        return Err("--oracle-only only produces a checkpoint, without probes or expectations".into());
+        return Err(
+            "--oracle-only only produces a checkpoint, without probes or expectations".into(),
+        );
     }
     if audio_trace_path.is_some()
         && (!game.supports_legacy_persistence()
