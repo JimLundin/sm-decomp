@@ -70,7 +70,10 @@ impl EntryEffects for Runtime<'_> {
                     }
                     LeafEffect::EnsureSamusDrawn => {
                         if crate::ram_map::word!(game.ELEVATOR_FLAGS) == 0 {
-                            game::samus_animation::samus_draw_when_not_animating_or_dying(game);
+                            sm_game::samus_drawing::draw_body(
+                                &mut Runtime::new(game),
+                                sm_game::scene::samus_body::Body::Frozen,
+                            );
                         }
                     }
                     LeafEffect::DrawTimer => {

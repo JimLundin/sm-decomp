@@ -37,20 +37,6 @@ pub(super) fn capture_table(
     });
     RoleTable::captured(record, bound)
 }
-impl sm_game::samus_death::Host for Game {
-    fn draw_samus(&mut self, body: Body) {
-        draw_body(self, body);
-    }
-}
-
-fn draw_body(game: &mut Game, mode: Body) {
-    samus_drawing::draw_body(&mut Runtime::new(game), mode);
-}
-
-pub fn samus_draw_when_not_animating_or_dying(game: &mut Game) {
-    draw_body(game, Body::Frozen);
-}
-
 impl samus_drawing::Authority for Runtime<'_> {
     fn frame_counter(&self) -> u16 {
         self.inputs().frame

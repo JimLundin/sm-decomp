@@ -80,7 +80,7 @@ pub trait SessionRam {
 }
 
 pub trait RuntimeAccess {
-    type Runtime<'a>: SessionView
+    type Runtime<'a>: SessionView + crate::samus_drawing::Authority
     where
         Self: 'a;
     /// A fresh owned-Session view; publication happens when it is dropped.
