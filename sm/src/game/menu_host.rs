@@ -316,6 +316,13 @@ impl Host for Game {
     fn area_select_palettes(&self) -> &Option<sm_game::menus::menu_tilemap::ImportedAreaPalettes> {
         &self.area_select_palettes
     }
+    fn nmi_controller_word(&mut self) -> u16 {
+        crate::oracle_mode::nmi_input()
+            .map(u16::reverse_bits)
+            .unwrap_or_else(|| {
+                sm_game::display::sequence::Registers::read_register_word(self, 0x4218)
+            })
+    }
 }
 
 impl sm_game::cartridge::NativeDiagnostics for Game {
