@@ -84,6 +84,33 @@ fn run_function<H: Host + ?Sized>(game: &mut H) {
     crate::cinematic_dispatch::run_function(address, game);
 }
 
+/// $0612: the NMIs a cinematic function still waits for.
+const NMI_WAITS: usize = 0x612;
+
+/// Whether the cinematic function resumes after a wait for NMIs.
+pub fn resuming<H: Host + ?Sized>(game: &H) -> bool {
+    game.ram().read_byte(NMI_WAITS) != 0
+}
+
+/// Wait for `count` NMIs inside a cinematic function (`LDX #count-1;
+/// JSL $808338; DEX; BPL`): true while the function must return and the
+/// game state yield; the next frame's call of the same function resumes here.
+pub fn wait_for_nmis<H: Host + ?Sized>(count: u8, game: &mut H) -> bool {
+    let mut left = game.ram().read_byte(NMI_WAITS);
+    if left == 0 {
+        left = count;
+    }
+    while game.display_wait(true) == 0 {
+        left -= 1;
+        if left == 0 {
+            game.ram().write_byte(NMI_WAITS, 0);
+            return false;
+        }
+    }
+    game.ram().write_byte(NMI_WAITS, left);
+    true
+}
+
 /// The intro and ending's frame counters.
 fn count_frames<H: Host + ?Sized>(game: &mut H) {
     if (word!(game.INTRO_FRAME_COUNTER) & 0x8000) == 0 {
@@ -259,6 +286,9 @@ pub fn handle_samus_during_intro<H: Host + ?Sized>(game: &mut H) {
 /// `GameState_37_CeresGoesBoomWithSamus_`.
 pub fn intro<H: Host + ?Sized>(game: &mut H) -> u8 {
     run_function(game);
+    if resuming(game) {
+        return 1;
+    }
     count_frames(game);
     handle_samus_during_intro(game);
     CinematicObjects::Sprites.advance(game);
@@ -275,6 +305,9 @@ pub fn intro<H: Host + ?Sized>(game: &mut H) -> u8 {
 /// `GameState_39_EndingAndCredits_`.
 pub fn ending_and_credits<H: Host + ?Sized>(game: &mut H) -> u8 {
     run_function(game);
+    if resuming(game) {
+        return 1;
+    }
     count_frames(game);
     CinematicObjects::Sprites.advance(game);
     advance_final_screen_background(game);
