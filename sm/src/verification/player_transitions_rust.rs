@@ -131,7 +131,7 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
         if image.len() != allocated_length
             || native.len() != allocated_length
             || (*cart).rom.len() != allocated_length
-            || (*cart).romSize as usize != allocated_length
+            || (*cart).rom_size as usize != allocated_length
         {
             return Err("requires exact loader cartridge allocation extent".into());
         }

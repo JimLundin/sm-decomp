@@ -253,10 +253,10 @@ pub unsafe extern "C-unwind" fn opengl_renderer_create(funcs: *mut RendererFuncs
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
         *funcs = RendererFuncs {
-            Initialize: Some(opengl_renderer_init),
-            Destroy: Some(opengl_renderer_destroy),
-            BeginDraw: Some(opengl_renderer_begin_draw),
-            EndDraw: Some(opengl_renderer_end_draw),
+            initialize: Some(opengl_renderer_init),
+            destroy: Some(opengl_renderer_destroy),
+            begin_draw: Some(opengl_renderer_begin_draw),
+            end_draw: Some(opengl_renderer_end_draw),
         };
     }
 }

@@ -38,8 +38,8 @@ crate::typed_struct! {
     }
 
     pub struct EnemySpawnData {
-        pub some_flag, cause_of_death, field_4, vram_tiles_index, palette_index, field_A, field_C,
-            field_E, xpos2, ypos2, field_14, field_16, field_18, field_1A, field_1c, id, x_pos,
+        pub some_flag, cause_of_death, field_4, vram_tiles_index, palette_index, field_a, field_c,
+            field_e, xpos2, ypos2, field_14, field_16, field_18, field_1a, field_1c, id, x_pos,
             y_pos, init_param, properties, extra_properties, param_1, param_2: u16;
         pub name: [u8; 18];
     }
@@ -85,7 +85,7 @@ crate::typed_struct! {
     pub struct Ram3000_Misc {
         pub field_0: [u8; 472];
         pub pause_screen_samus_witeframe_tilemap: [u16; 264];
-        pub field_3E8: [u8; 24];
+        pub field_3e8: [u8; 24];
     }
 
     pub struct Ram3000_MsgBox {
@@ -570,10 +570,10 @@ crate::typed_struct! {
     }
 
     pub struct RendererFuncs {
-        pub Initialize: Option<unsafe extern "C-unwind" fn(*mut SDL_Window) -> bool>;
-        pub Destroy: Option<unsafe extern "C-unwind" fn() -> ()>;
-        pub BeginDraw: Option<unsafe extern "C-unwind" fn(i32, i32, *mut *mut u8, *mut i32) -> ()>;
-        pub EndDraw: Option<unsafe extern "C-unwind" fn() -> ()>;
+        pub initialize: Option<unsafe extern "C-unwind" fn(*mut SDL_Window) -> bool>;
+        pub destroy: Option<unsafe extern "C-unwind" fn() -> ()>;
+        pub begin_draw: Option<unsafe extern "C-unwind" fn(i32, i32, *mut *mut u8, *mut i32) -> ()>;
+        pub end_draw: Option<unsafe extern "C-unwind" fn() -> ()>;
     }
 }
 
@@ -702,7 +702,7 @@ crate::typed_struct! {
     pub struct Cart {
         pub type_0: u8;
         pub rom: crate::rom::RomImage;
-        pub romSize: u32;
+        pub rom_size: u32;
         pub ram: crate::save_ram::SaveRam;
         pub ramSize: u32;
     }

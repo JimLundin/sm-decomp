@@ -195,7 +195,7 @@ unsafe extern "C-unwind" fn sm_host_initialize_renderer(
     window: *mut SDL_Window,
 ) -> bool {
     unsafe {
-        (*owner).with(|_game| (*funcs).Initialize.expect("non-null function pointer")(window))
+        (*owner).with(|_game| (*funcs).initialize.expect("non-null function pointer")(window))
     }
 }
 #[unsafe(no_mangle)]
@@ -207,13 +207,13 @@ unsafe extern "C-unwind" fn sm_host_begin_draw(
     pitch: *mut i32,
 ) {
     unsafe {
-        (*funcs).BeginDraw.expect("non-null function pointer")(width, height, pixels, pitch);
+        (*funcs).begin_draw.expect("non-null function pointer")(width, height, pixels, pitch);
     }
 }
 #[unsafe(no_mangle)]
 unsafe extern "C-unwind" fn sm_host_end_draw(funcs: *const RendererFuncs) {
     unsafe {
-        (*funcs).EndDraw.expect("non-null function pointer")();
+        (*funcs).end_draw.expect("non-null function pointer")();
     }
 }
 #[unsafe(no_mangle)]
