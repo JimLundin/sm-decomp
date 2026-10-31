@@ -21,6 +21,8 @@ def seed_bundle(row):
                      'mother-brain-baby-metroid-drain', 'mother-brain-baby-metroid-sacrifice',
                      'mother-brain-escape-door'):
         return ('seeds-v1-mb-phases-13dd32bb039004ab.tar.gz.enc', '13dd32bb039004abe6a8a3225cc1dfe14421dab64bea27e8931b987603042caf')
+    if row['id'] == 'boss-draygon-grapple-repel':
+        return ('seeds-v1-scenario-repel-ccb2329f0fbbd52c.tar.gz.enc', 'ccb2329f0fbbd52cca0d799cceb106f4ab32b716ac49ed75d17ab5fe074cb924')
     if row['id'].startswith('boss-kraid-pause-'):
         return ('seeds-v1-kraid-pause-52ba63dc0b528e28.tar.gz.enc', '52ba63dc0b528e2849dc880c7407afdb0365a28c0264c0e2e896585a883bddee')
     if row['id'] == 'boss-draygon-final-whips':

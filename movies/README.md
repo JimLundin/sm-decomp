@@ -174,6 +174,14 @@ any never runs. Routines a row exists to cover carry a probe named
 `crate::probe::hit` (or `crate::verify_probe::hit` in `sm`) inside the
 branch that does the work.
 
+A scenario seed is a recorded room seed with declared edits to its work RAM:
+energy, ammunition, items, beams, the selected item, Samus's position or raw
+words such as a boss phase. [scenario_seeds.py](../tools/scenario_seeds.py)
+holds the recipes; `write NAME` creates `target/seeds/scenario-NAME/` with
+fresh region hashes and prints the row's `seed` and `seed_sha256`. Both
+engines load the edited seed, so the original game still decides what
+follows. Scenario seeds stay local and go to CI in encrypted bundles.
+
 Keep ROMs, movies, input files, memory dumps, checkpoints and capture logs local
 and ignored by Git. Publish only permitted metadata or encrypted bundles;
 include no ROM, derived game data or decryption password in commits or logs.

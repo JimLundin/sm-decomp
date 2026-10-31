@@ -1254,3 +1254,19 @@ start_frame = 0
 frames = 2572
 expect = ["room:A59F", "state:18"]
 require_hit = ["kraid.dead_hook", "kraid_pause.unpause_dead", "kraid_pause.transfer_top_half"]
+
+# The first scenario-seed row (tools/scenario_seeds.py draygon-repel: the
+# boss-draygon seed with full energy and reserves). The boss-draygon words to
+# 1,480, then the grapple-repel recipe: the grapple fired as Draygon reaches
+# Samus repels his grab, and he flails his tail and flies off.
+[[segment]]
+id = "boss-draygon-grapple-repel"
+pending = "awaiting the seeds-v1-scenario-repel-ccb2329f0fbbd52c ci-data upload"
+seed = "scenario-draygon-repel:259"
+seed_sha256 = "78783af693fd02b771ad003bd135e6e7ad338026acdaf70008ece4ddad03a531"
+inputs = "authored-draygon-grapple-repel.inputs"
+input_sha256 = "87ddaf9f508c6bc741511154695472ce71f0e8fcfd17448679bfeb89414ae99f"
+start_frame = 0
+frames = 4182
+expect = ["room:DA60"]
+require_hit = ["draygon_grab.repelled_by_grapple", "draygon_grab.flail_tail_and_fly_straight_up"]
