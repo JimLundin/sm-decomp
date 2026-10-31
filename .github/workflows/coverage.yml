@@ -392,13 +392,15 @@ jobs:
         with:
           pattern: profiles-*
           path: profiles
-          merge-multiple: true
+          # One directory per job: jobs reuse process ids, so merged
+          # %p-%m.profraw names collide and overwrite each other.
+          merge-multiple: false
       - uses: actions/download-artifact@v4
         if: inputs.full_route
         with:
           pattern: route-profiles-*
           path: route-profiles
-          merge-multiple: true
+          merge-multiple: false
       - name: Install the LLVM tools matching the build compiler
         env:
           RUST_VERSION: ${{ needs.build.outputs.rust }}
