@@ -715,7 +715,7 @@ impl Game {
     #[forbid(unsafe_code)]
     pub(crate) fn legacy_native_rom_ptr(&self) -> *const u8 {
         self.native_rom.as_ref().map_or(core::ptr::null(), |image| {
-            crate::native_rom::NativeRomPointer::as_mut_ptr(image).cast_const()
+            crate::native_rom::NativeRomPointer::as_ptr(image)
         })
     }
 
@@ -795,17 +795,6 @@ impl Game {
         self.records.loaded_program = Some(std::rc::Rc::new(
             sm_data::program_image::ProgramImage::prepare(image),
         ));
-    }
-
-    /// Import every record again after the images were patched in place;
-    /// until then the patched images serve their original reads.
-    pub(crate) fn refresh_rom_records(&mut self) {
-        if let Some(image) = self.native_rom.clone() {
-            self.import_native_records(&image);
-        }
-        if let Some(image) = self.loaded_rom.clone() {
-            self.import_loaded_records(&image);
-        }
     }
 
     pub(crate) fn register_rom(&mut self, image: crate::rom::RomImage) {

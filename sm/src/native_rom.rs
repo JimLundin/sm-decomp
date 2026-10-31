@@ -4,13 +4,12 @@ use crate::rom::RomImage;
 
 /// Callers name this boundary explicitly; owned code reads through `RomImage`.
 pub(crate) trait NativeRomPointer {
-    fn as_mut_ptr(&self) -> *mut u8;
+    fn as_ptr(&self) -> *const u8;
 }
 
 impl NativeRomPointer for RomImage {
-    // Legacy cartridge and patch consumers borrow this allocation. Cell keeps
-    // its bytes mutable while shared owners exist; access is serialized by Game.
-    fn as_mut_ptr(&self) -> *mut u8 {
-        self.cells().as_ptr().cast::<u8>().cast_mut()
+    // Legacy consumers only read this allocation; the image is immutable.
+    fn as_ptr(&self) -> *const u8 {
+        self.bytes().as_ptr()
     }
 }

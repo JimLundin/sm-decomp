@@ -1062,7 +1062,7 @@ pub(crate) unsafe fn rom_ptr_parts(addr: u32, host: &mut HostContext<'_>) -> *co
         host.native_rom
             .as_ref()
             .map_or(core::ptr::null(), |image| {
-                crate::native_rom::NativeRomPointer::as_mut_ptr(image).cast_const()
+                crate::native_rom::NativeRomPointer::as_ptr(image)
             })
             .offset(crate::rtl::lorom_offset(addr))
     }

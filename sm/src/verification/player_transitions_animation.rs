@@ -46,11 +46,11 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
     }
     if image.len() != 0x400000
         || native.len() != 0x400000
-        || image.as_mut_ptr() != native.as_mut_ptr()
+        || image.as_ptr() != native.as_ptr()
         || unsafe {
             (*cart).rom.len() != 0x400000
                 || (*cart).rom_size != 0x400000
-                || (*cart).rom.as_mut_ptr() != image.as_mut_ptr()
+                || image.as_ptr() != (*cart).rom.as_mut_ptr()
         }
     {
         return Err("requires unchanged original loader 4 MiB allocation".into());
@@ -253,11 +253,11 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
                 });
             }
         }
-        if game.capture_native_rom().as_mut_ptr() != patched.as_mut_ptr()
+        if game.capture_native_rom().as_ptr() != patched.as_ptr()
             || game
                 .loaded_rom
                 .as_ref()
-                .is_none_or(|loaded| loaded.as_mut_ptr() != patched.as_mut_ptr())
+                .is_none_or(|loaded| loaded.as_ptr() != patched.as_ptr())
             || game.actor_identity_is_with_session()
         {
             return Err("animation fixture unexpectedly changed ownership/binding".into());

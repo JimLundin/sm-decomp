@@ -199,13 +199,13 @@ fn check_outcome(id: u32, before: &[u8], g: &Game, loaded: &RomImage, native: &R
         g.loaded_rom
             .as_ref()
             .expect("PT30 loaded binding missing")
-            .as_mut_ptr(),
-        loaded.as_mut_ptr(),
+            .as_ptr(),
+        loaded.as_ptr(),
         "PT30 loaded binding"
     );
     assert_eq!(
-        g.capture_native_rom().as_mut_ptr(),
-        native.as_mut_ptr(),
+        g.capture_native_rom().as_ptr(),
+        native.as_ptr(),
         "PT30 native binding"
     );
 }
