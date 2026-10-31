@@ -20,6 +20,7 @@ pub use sm_data::scene as records;
 pub mod owned_samus;
 pub mod resident_media;
 pub mod samus;
+pub mod samus_binding;
 pub mod samus_body;
 pub mod samus_position_tiles;
 pub mod samus_tile_upload;
