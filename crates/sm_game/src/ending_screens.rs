@@ -1,7 +1,7 @@
 //! Ending and post-credits screens: sprite pairs, gunship, Samus, clouds, time and zoom.
 use crate::cinematic::*;
 use crate::cinematic_objects::CinematicObjects;
-use crate::cinematic_state::cinematic;
+use crate::cinematic_state::{self, Word, cinematic};
 use crate::menus::prelude::words;
 use crate::ram::RawRam as _;
 use crate::ram::{word, words as ram_words};
@@ -159,8 +159,7 @@ pub fn advance_ending_gunship_spin<H: crate::menus::host::Host + ?Sized>(
     } else {
         [1i32, 1, 1, 1, -1, -1, 1, 1, 1, 1, -1, -1, 1, 1, -1, -1][index] * 0x8000
     };
-    let fraction = ram_words::CINEMATIC_X_SUB;
-    add_native_pair(fraction + 2, fraction, velocity as u32, game);
+    cinematic_state::add_pair(game, Word::X, Word::XSub, velocity as u32);
     cinematic!(game.Var14 = cinematic!(game.Var14).wrapping_add(1) & mask);
     cinematic!(game.Mode7Zoom -= if slow { 2 } else { 8 });
     if (cinematic!(game.Mode7Zoom) as i32 - (if slow { 1184 } else { 1456 })) & 0x8000 == 0 {

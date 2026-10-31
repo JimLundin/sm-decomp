@@ -16,7 +16,7 @@ use crate::cinematic::{
 };
 use crate::cinematic_host::Host;
 use crate::cinematic_objects::CinematicObjects;
-use crate::cinematic_state::cinematic;
+use crate::cinematic_state::{self, Word, cinematic};
 use crate::display_refresh::GraphicsAsset;
 use crate::flow::{self, Word::CinematicFunction};
 use crate::intro_sequence::countdown;
@@ -128,17 +128,6 @@ const FAST_CLEAR_HOURS: u16 = 3;
 const CLEAR_HOURS: u16 = 10;
 /// The item percentage stops scrolling at Y -79.
 const ITEM_PERCENTAGE_STOP: u16 = -79i32 as u16;
-
-/// Adds `value` to the 16.16 pair `high`:`low`, low word first.
-macro_rules! add_pair {
-    ($game:ident, $high:ident, $low:ident, $value:expr) => {{
-        let low = word!($game.$low) as u32;
-        let high = word!($game.$high) as u32;
-        let sum = (low | (high << 16)).wrapping_add($value as u32);
-        word!($game.$low = sum as u16);
-        word!($game.$high = (sum >> 16) as u16);
-    }};
-}
 
 fn sprites<H: Host + ?Sized>(game: &mut H, definition: u16, parameter: u16) {
     spawn(game, CinematicObjects::Sprites, definition, parameter);
@@ -392,9 +381,9 @@ pub fn gunship_spinning_slow<H: Host + ?Sized>(game: &mut H) {
 /// camera ($8B:DDCD). Was `CinematicFunction_Intro_Func124`.
 pub fn gunship_fly_into_camera<H: Host + ?Sized>(game: &mut H) {
     crate::ending_screens::fade_ending_gunship_backdrop(game);
-    add_pair!(game, CINEMATIC_VAR13, CINEMATIC_VAR14, -256i32 as u32);
+    cinematic_state::add_pair(game, Word::Var13, Word::Var14, -256i32 as u32);
     let speed = ((cinematic!(game.Var13) as u32) << 16) | cinematic!(game.Var14) as u32;
-    add_pair!(game, CINEMATIC_X, CINEMATIC_X_SUB, speed);
+    cinematic_state::add_pair(game, Word::X, Word::XSub, speed);
     if below(cinematic!(game.Mode7Zoom), 384)
         && (cinematic!(game.FrameCounter) & 3) == 0
         && cinematic!(game.Mode7Angle) != 16

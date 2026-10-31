@@ -14,10 +14,10 @@ use crate::cinematic::{
 };
 use crate::cinematic_host::Host;
 use crate::cinematic_objects::CinematicObjects;
-use crate::cinematic_state::cinematic;
+use crate::cinematic_state::{self, Word, cinematic};
 use crate::display_refresh::GraphicsAsset;
 use crate::flow::{self, Word::CinematicFunction};
-use crate::inventory::{self, Word};
+use crate::inventory;
 use crate::menus::prelude::{options_menu, owned, save_selection, scroll};
 use crate::ram::RawRam as _;
 use crate::ram::mirror;
@@ -137,17 +137,6 @@ const BOOM_WITH_SAMUS: u16 = 37;
 const CERES: u16 = 6;
 const HATCH_SOUND: u8 = 0x23;
 
-/// Adds `value` to the 16.16 pair `high`:`low`, low word first.
-macro_rules! add_pair {
-    ($game:ident, $high:ident, $low:ident, $value:expr) => {{
-        let low = word!($game.$low) as u32;
-        let high = word!($game.$high) as u32;
-        let sum = (low | (high << 16)).wrapping_add($value as u32);
-        word!($game.$low = sum as u16);
-        word!($game.$high = (sum >> 16) as u16);
-    }};
-}
-
 /// Counts down `cinematic_function_timer`; true when it reaches zero or below.
 pub fn countdown<H: Host + ?Sized>(game: &mut H) -> bool {
     cinematic!(game.FunctionTimer -= 1);
@@ -181,8 +170,8 @@ pub fn initial<H: Host + ?Sized>(game: &mut H) {
     crate::room_view::set(game, crate::room_view::Word::Height, 16);
     game.initialize_player();
     game.update_beam_tiles_and_palette();
-    inventory::set(game, Word::MaxMissiles, INTRO_MISSILES);
-    inventory::set(game, Word::Missiles, INTRO_MISSILES);
+    inventory::set(game, inventory::Word::MaxMissiles, INTRO_MISSILES);
+    inventory::set(game, inventory::Word::Missiles, INTRO_MISSILES);
     cinematic!(game.IntroSamusDisplay = 0);
     word!(game.SAMUS_DRAW_HANDLER = DEFAULT_DRAW_HANDLER);
     crate::menus::controller_input::use_cinematic_bindings(game);
@@ -364,7 +353,7 @@ pub fn ceres_flying_into_camera<H: Host + ?Sized>(game: &mut H) {
 /// in on Ceres, then show its background. Was `CinematicFunction_Intro_Func67`.
 pub fn ceres_flying_into_ceres<H: Host + ?Sized>(game: &mut H) {
     fade_cinematic_fixed_color(game);
-    add_pair!(game, CINEMATIC_X, CINEMATIC_X_SUB, -0x2000i32 as u32);
+    cinematic_state::add_pair(game, Word::X, Word::XSub, -0x2000i32 as u32);
     if below(cinematic!(game.Mode7Zoom), 3072) {
         cinematic!(game.Mode7Zoom += 16);
     } else if below(cinematic!(game.Mode7Zoom), 0x2000) {
@@ -453,8 +442,8 @@ pub fn boom_wait_for_music<H: Host + ?Sized>(game: &mut H) {
 /// Cinematic function - Ceres goes boom - small Ceres explosions - fading in
 /// ($8B:C2F1). Was `CinematicFunction_Intro_Func75`.
 pub fn boom_small_explosions<H: Host + ?Sized>(game: &mut H) {
-    add_pair!(game, CINEMATIC_Y, CINEMATIC_Y_SUB, 4096u32);
-    add_pair!(game, CINEMATIC_X, CINEMATIC_X_SUB, -0x4000i32 as u32);
+    cinematic_state::add_pair(game, Word::Y, Word::YSub, 4096u32);
+    cinematic_state::add_pair(game, Word::X, Word::XSub, -0x4000i32 as u32);
     cinematic!(game.Mode7Zoom += 1);
     crate::display_refresh::fade(true, game);
     if game.ram().read_byte(mirror::INIDISP) == 15 {
@@ -469,8 +458,8 @@ pub fn boom_small_explosions<H: Host + ?Sized>(game: &mut H) {
 /// zoom out, then the power bomb blast and the gunship. Was
 /// `CinematicFunction_Intro_Func76`.
 pub fn boom_explosions<H: Host + ?Sized>(game: &mut H) {
-    add_pair!(game, CINEMATIC_Y, CINEMATIC_Y_SUB, 4096u32);
-    add_pair!(game, CINEMATIC_X, CINEMATIC_X_SUB, -0x4000i32 as u32);
+    cinematic_state::add_pair(game, Word::Y, Word::YSub, 4096u32);
+    cinematic_state::add_pair(game, Word::X, Word::XSub, -0x4000i32 as u32);
     if below(cinematic!(game.Mode7Zoom), 640) {
         cinematic!(game.Mode7Zoom += 1);
     } else {
@@ -592,7 +581,11 @@ pub fn zebes_load_game_data<H: Host + ?Sized>(game: &mut H) {
     game.ram().write_byte(mirror::INIDISP, 0x80);
     clear_cinematic_objects(game);
     word!(game.GAME_STATE = LOADING_GAME_DATA);
-    inventory::set(game, Word::Health, inventory::get(game, Word::MaxHealth));
+    inventory::set(
+        game,
+        inventory::Word::Health,
+        inventory::get(game, inventory::Word::MaxHealth),
+    );
 }
 
 /// Pre-instruction - the confused baby metroid waits for its egg to hatch

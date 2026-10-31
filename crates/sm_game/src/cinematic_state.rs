@@ -211,6 +211,15 @@ pub fn at<I: TryInto<isize>>(array: Array, index: I) -> usize {
         .expect("word address outside RAM")
 }
 
+/// Add `value` to the 16.16 pair `high`:`low`, reading and then storing the
+/// low word first.
+pub fn add_pair<H: CompatibilityRam + ?Sized>(h: &mut H, high: Word, low: Word, value: u32) {
+    let pair = u32::from(get(h, low)) | (u32::from(get(h, high)) << 16);
+    let [low_0, low_1, high_0, high_1] = pair.wrapping_add(value).to_le_bytes();
+    set(h, low, u16::from_le_bytes([low_0, low_1]));
+    set(h, high, u16::from_le_bytes([high_0, high_1]));
+}
+
 /// Clear every cinematic object word, $7E:1C1D down to $7E:198D, a word at a
 /// time, as the cinematics' 329-word clear did.
 pub fn clear<H: CompatibilityRam + ?Sized>(h: &mut H) {

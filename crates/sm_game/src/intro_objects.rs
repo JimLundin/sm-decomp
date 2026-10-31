@@ -4,7 +4,7 @@ use crate::cinematic_objects::CinematicObjects;
 use crate::cinematic_state::{self, Word, cinematic};
 use crate::menus::prelude::{owned, scroll};
 use crate::ram::RawRam as _;
-use crate::ram::{word, words as ram_words};
+use crate::ram::word;
 use crate::visual_state::{CeresExplosion, CinematicFade};
 
 const RINKA_POSITIONS: [(u16, u16); 4] = [(112, 72), (192, 56), (128, 48), (232, 80)];
@@ -223,8 +223,8 @@ pub fn advance_ceres_station<H: crate::menus::host::Host + ?Sized>(object: u16, 
         let velocity = ((cinematic!(game.SprGotoTimer[slot]) as i16 as i32) << 8) as u32;
         advance_cinematic_coordinate(object, true, velocity, game);
         advance_cinematic_coordinate(object, false, velocity, game);
-        for low in [ram_words::CINEMATIC_X_SUB, ram_words::CINEMATIC_Y_SUB] {
-            add_native_pair(low + 2, low, velocity, game);
+        for (high, low) in [(Word::X, Word::XSub), (Word::Y, Word::YSub)] {
+            cinematic_state::add_pair(game, high, low, velocity);
         }
     }
 }
@@ -243,8 +243,8 @@ pub fn advance_zebes_flight<H: crate::menus::host::Host + ?Sized>(stage: u8, gam
         (0xffff8000, Word::X, -128, 16, 0xca85),
         (0x2000, Word::Mode7Zoom, 0x2000, 32, 0xcad0),
     ][usize::from(stage - 1)];
-    add_native_pair(0x1997, 0x1995, 0x2000, game);
-    add_native_pair(0x1993, 0x1991, horizontal, game);
+    cinematic_state::add_pair(game, Word::Y, Word::YSub, 0x2000);
+    cinematic_state::add_pair(game, Word::X, Word::XSub, horizontal);
     let negative = (cinematic_state::get(game, threshold) as i32 - limit) & 0x8000 != 0;
     if negative == (stage == 2) {
         if stage == 3 {
