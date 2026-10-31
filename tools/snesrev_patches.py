@@ -642,7 +642,7 @@ BUG_HOOKS = [
     (0xA99F60, 'b', 'state', 'removed', 'patched',
      'Instruction - spawn Mother Brain laser enemy projectile',
      'The laser init at $86:A009 picks its direction from $16 (0 = left); hardware leaves $16 as whatever earlier code left, so the laser can fire left/away, while the hook sets $16=1 (right)'),
-    (0x94A85B, 'b', 'state', 'removed', 'patched',
+    (0x94A85B, 'b', 'state', 'removed', 'follows',
      'Grapple beam block collision detection',
      'The quarter-velocity setup only writes $0D83-84/$0D87-88, so stale bytes in $0D82/$0D85/$0D86/$0D89 leak into the 32-bit quarter velocities and shift the grapple collision test points on hardware; the hook zeroes them first'),
     (0xA0A35C, 'b', 'state', 'removed', 'patched',
