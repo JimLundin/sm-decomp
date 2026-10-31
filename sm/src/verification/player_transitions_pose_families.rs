@@ -18,15 +18,13 @@ fn record(out: &mut Vec<u8>, tag: u8, bytes: &[u8]) {
     out.extend_from_slice(&(bytes.len() as u32).to_le_bytes());
     out.extend_from_slice(bytes);
 }
-fn author(image: &RomImage, address: u32, bytes: &[u8], manifest: &mut Vec<u8>) {
+fn author(image: &mut [u8], address: u32, bytes: &[u8], manifest: &mut Vec<u8>) {
     let at = offset(address);
     assert!(at + bytes.len() <= image.len());
     manifest.extend_from_slice(&address.to_le_bytes());
     manifest.extend_from_slice(&(bytes.len() as u32).to_le_bytes());
     manifest.extend_from_slice(bytes);
-    for (index, value) in bytes.iter().copied().enumerate() {
-        image.write(at + index, value);
-    }
+    image[at..at + bytes.len()].copy_from_slice(bytes);
 }
 
 /// Caller supplies the same freshly initialized host required by existing captures.
@@ -73,38 +71,40 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
             game.ram().fill(0..game.ram().len(), 0);
             game.ram().write_byte(0x1ffff, 1);
             game.g_fail = false;
-            let loaded = RomImage::zeroed(IMAGE_LENGTH);
-            let native = RomImage::zeroed(IMAGE_LENGTH);
-            if loaded.same_allocation(&native) {
-                return Err("authored L/N allocations must be distinct".into());
-            }
+            let mut loaded = vec![0; IMAGE_LENGTH];
+            let mut native = vec![0; IMAGE_LENGTH];
             let mut loaded_manifest = Vec::new();
             let mut native_manifest = Vec::new();
             let (current_radius, previous_radius) = if id == 2102 { (4, 9) } else { (9, 4) };
             author(
-                &loaded,
+                &mut loaded,
                 0x91b629 + 2 * 8,
                 &[8, 0, 0, 0, 0, 0, current_radius, 0],
                 &mut loaded_manifest,
             );
             author(
-                &loaded,
+                &mut loaded,
                 0x91b629 + 3 * 8,
                 &[4, 0, 0, 0, 0, 0, previous_radius, 0],
                 &mut loaded_manifest,
             );
             author(
-                &native,
+                &mut native,
                 0x91b629 + 2 * 8,
                 &[8, 0, 0, 0, 0, 0, 33, 0],
                 &mut native_manifest,
             );
             author(
-                &native,
+                &mut native,
                 0x91b629 + 3 * 8,
                 &[4, 0, 0, 0, 0, 0, 1, 0],
                 &mut native_manifest,
             );
+            let loaded = RomImage::from(loaded);
+            let native = RomImage::from(native);
+            if loaded.same_allocation(&native) {
+                return Err("authored L/N allocations must be distinct".into());
+            }
             game.register_rom(loaded.clone());
             game.register_native_rom(native.clone());
             for (at, value) in [

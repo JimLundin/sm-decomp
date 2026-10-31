@@ -1,13 +1,13 @@
 //! Real maintained enemy controller fixtures; no replacement controller logic.
 #![forbid(unsafe_code)]
 use super::sprite_effect_cases::{Operation, put, word};
-use crate::{game_state::Game, ram_map::words as w, rom::RomImage, types::EnemyBase};
+use crate::{game_state::Game, ram_map::words as w, types::EnemyBase};
 use core::mem::offset_of;
 use sm_game::actors::layouts::{EnemyLayout40 as Metroid, EnemyLayout104 as Boss};
 fn field(g: &mut Game, offset: usize, value: u16) {
     put(g, 0xf78 + offset, value);
 }
-pub(crate) fn seed(id: u32, g: &mut Game, image: &RomImage) -> Operation {
+pub(crate) fn seed(id: u32, g: &mut Game, image: &mut [u8]) -> Operation {
     put(g, w::CUR_ENEMY_INDEX, 0);
     field(g, offset_of!(EnemyBase, x_pos), 0x234);
     field(g, offset_of!(EnemyBase, y_pos), 0x345);

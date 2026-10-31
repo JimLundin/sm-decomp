@@ -1,10 +1,10 @@
 //! Explicit injected diagnostic/draw transitions for actual predecessor execution.
 #![forbid(unsafe_code)]
 use super::sprite_effect_cases::{Operation, put, word};
-use crate::{game_state::Game, rom::RomImage};
+use crate::game_state::Game;
 use std::cell::RefCell;
 #[cfg(sm_verify_dll)]
-use {super::sprite_effect_cases::put_parts, crate::game_state::WorkRam};
+use {super::sprite_effect_cases::put_parts, crate::game_state::WorkRam, crate::rom::RomImage};
 struct Capture {
     id: u32,
     diagnostics: usize,
@@ -42,10 +42,12 @@ pub(crate) fn finish() -> Vec<u8> {
     captured.bytes
 }
 #[cfg(sm_verify_dll)]
-fn replacement(address: u32, value: u16) -> RomImage {
-    let image = RomImage::zeroed(0x200000);
-    word(&image, address, value);
-    image
+fn replacement(words: &[(u32, u16)]) -> RomImage {
+    let mut image = vec![0; 0x200000];
+    for &(address, value) in words {
+        word(&mut image, address, value);
+    }
+    RomImage::from(image)
 }
 #[cfg(sm_verify_dll)]
 pub(crate) fn diagnostic_parts(address: u32, ram: &WorkRam, loaded_rom: &mut Option<RomImage>) {
@@ -65,31 +67,32 @@ pub(crate) fn diagnostic_parts(address: u32, ram: &WorkRam, loaded_rom: &mut Opt
             (111, 0) => {
                 assert_eq!(address, 0xb40010);
                 put_parts(ram, 0x1844, 58);
-                *loaded_rom = Some(replacement(0xb48010, 7));
+                *loaded_rom = Some(replacement(&[(0xb48010, 7)]));
             }
             (112, 0) => {
                 assert_eq!(address, 0xb41000);
                 put_parts(ram, 0x1844, 58);
-                *loaded_rom = Some(replacement(0xb49002, 0x1200));
+                *loaded_rom = Some(replacement(&[(0xb49002, 0x1200)]));
             }
             (112, 1) => {
                 assert_eq!(address, 0xb41200);
                 put_parts(ram, 0x1844, 54);
-                *loaded_rom = Some(replacement(0xb49200, 9));
+                *loaded_rom = Some(replacement(&[(0xb49200, 9)]));
             }
             (113, 0) => {
                 assert_eq!(address, 0xb41000);
                 put_parts(ram, 0x1844, 58);
-                *loaded_rom = Some(replacement(0xb49000, 11));
+                *loaded_rom = Some(replacement(&[(0xb49000, 11)]));
             }
             (115, 0) => {
                 assert_eq!(address, 0xb41000);
-                let next = replacement(0xb49002, 0xa100);
-                word(&next, 0xb4a100, 1);
-                word(&next, 0xb4a102, 6);
-                word(&next, 0xb4a104, 2);
-                word(&next, 0xb4a105, 0x15);
-                *loaded_rom = Some(next);
+                *loaded_rom = Some(replacement(&[
+                    (0xb49002, 0xa100),
+                    (0xb4a100, 1),
+                    (0xb4a102, 6),
+                    (0xb4a104, 2),
+                    (0xb4a105, 0x15),
+                ]));
             }
             _ => panic!("unexpected sprite diagnostic transition"),
         }
@@ -124,7 +127,7 @@ pub(crate) fn draw(map: u16, x: u16, y: u16, palette: u16, tile: u16, g: &mut Ga
         c.draws += 1;
     });
 }
-pub(crate) fn seed(id: u32, g: &mut Game, image: &RomImage) -> Operation {
+pub(crate) fn seed(id: u32, g: &mut Game, image: &mut [u8]) -> Operation {
     match id {
         111 => {
             put(g, 0xef78 + 62, 0xc);

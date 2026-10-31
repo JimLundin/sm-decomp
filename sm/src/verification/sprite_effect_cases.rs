@@ -31,11 +31,9 @@ pub(crate) fn put_parts(ram: &WorkRam, at: usize, value: u16) {
     let _ = &[(); 0x20000][at..at + 2];
     ram.copy_in(at, &value.to_le_bytes());
 }
-pub(crate) fn word(image: &RomImage, address: u32, value: u16) {
+pub(crate) fn word(image: &mut [u8], address: u32, value: u16) {
     let at = crate::rtl::lorom_offset(address) as usize;
-    for (i, b) in value.to_ne_bytes().into_iter().enumerate() {
-        image.write(at + i, b);
-    }
+    image[at..at + 2].copy_from_slice(&value.to_ne_bytes());
 }
 fn slot(g: &mut Game, column: usize, index: usize, value: u16) {
     put(g, column + 2 * index, value);
@@ -50,22 +48,22 @@ fn seed(id: u32, g: &mut Game) -> Operation {
     }
     put(g, 0x1844, 0xbeef);
     put(g, 0xf378, 0xcafe);
-    let image = RomImage::zeroed(0x200000);
+    let mut image = vec![0; 0x200000];
     for selector in 0..64 {
-        word(&image, 0xb4bda8 + 2 * selector, 0x9000);
+        word(&mut image, 0xb4bda8 + 2 * selector, 0x9000);
     }
     for address in [0x9000u16, 0x9100, 0x9200] {
-        word(&image, 0xb40000 | u32::from(address), 7);
-        word(&image, 0xb40000 | u32::from(address + 2), 0xa000);
+        word(&mut image, 0xb40000 | u32::from(address), 7);
+        word(&mut image, 0xb40000 | u32::from(address + 2), 0xa000);
     }
     // One actual backend spritemap record. OAM bytes expose submission order.
-    word(&image, 0xb4a000, 1);
-    word(&image, 0xb4a002, 0);
-    image.write(crate::rtl::lorom_offset(0xb4a004) as usize, 0);
-    word(&image, 0xb4a005, 3);
-    g.loaded_rom = Some(image.clone());
-    g.register_native_rom(image.clone());
-    match id {
+    word(&mut image, 0xb4a000, 1);
+    word(&mut image, 0xb4a002, 0);
+    image[crate::rtl::lorom_offset(0xb4a004) as usize] = 0;
+    word(&mut image, 0xb4a005, 3);
+    // A case may replace the loaded image the fixture installs.
+    let mut loaded = None;
+    let operation = match id {
         0 => {
             slot(g, 0xef78, 0, 0xa55a);
             Operation::PopulationClear
@@ -98,19 +96,18 @@ fn seed(id: u32, g: &mut Game) -> Operation {
             }
         }
         8..=11 => {
-            if id == 8 {
-                g.loaded_rom = None;
+            loaded = Some(if id == 8 {
+                None
             } else if id == 9 {
-                g.loaded_rom = Some(RomImage::zeroed(
+                Some(RomImage::zeroed(
                     crate::rtl::lorom_offset(0xb4bda8) as usize + 1,
-                ));
+                ))
             } else {
-                let short = RomImage::zeroed(
-                    crate::rtl::lorom_offset(0xb4f000) as usize + (id - 10) as usize,
-                );
-                word(&short, 0xb4bda8, 0xf000);
-                g.loaded_rom = Some(short);
-            }
+                let mut short =
+                    vec![0; crate::rtl::lorom_offset(0xb4f000) as usize + (id - 10) as usize];
+                word(&mut short, 0xb4bda8, 0xf000);
+                Some(RomImage::from(short))
+            });
             Operation::Spawn
         }
         12..=15 => {
@@ -125,7 +122,7 @@ fn seed(id: u32, g: &mut Game) -> Operation {
                 },
                 if id & 1 == 0 { 1 } else { 0x8000 },
             );
-            g.loaded_rom = None;
+            loaded = Some(None);
             Operation::Update
         }
         16..=39 => {
@@ -140,14 +137,14 @@ fn seed(id: u32, g: &mut Game) -> Operation {
             slot(g, 0xef78, 31, 0x9000);
             slot(g, 0xeff8, 31, 0xbd12);
             slot(g, 0xf2f8, 31, 0);
-            word(&image, 0xb49002, if n >= 4 { 0x9100 } else { 0x9200 });
+            word(&mut image, 0xb49002, if n >= 4 { 0x9100 } else { 0x9200 });
             word(
-                &image,
+                &mut image,
                 if n >= 4 { 0xb49100 } else { 0xb49200 },
                 [7, 0xbcf0, 0xbd07, 1][(n % 4) as usize],
             );
             if n == 7 {
-                word(&image, 0xb49104, 0xbd07);
+                word(&mut image, 0xb49104, 0xbd07);
             }
             if n >= 4 {
                 Operation::UpdateTwice
@@ -185,7 +182,7 @@ fn seed(id: u32, g: &mut Game) -> Operation {
             slot(g, 0xf0f8, 31, 30);
             slot(g, 0xf1f8, 31, if id == 73 { 0xffff } else { 272 });
             if id == 75 {
-                g.loaded_rom = None;
+                loaded = Some(None);
             }
             Operation::Draw
         }
@@ -196,7 +193,7 @@ fn seed(id: u32, g: &mut Game) -> Operation {
             Operation::Draw
         }
         77 => {
-            word(&image, 0xb4bda8, 0x1000);
+            word(&mut image, 0xb4bda8, 0x1000);
             Operation::Spawn
         }
         78 => {
@@ -209,13 +206,20 @@ fn seed(id: u32, g: &mut Game) -> Operation {
             slot(g, 0xef78, 31, 0x1000);
             slot(g, 0xeff8, 31, 0xbd12);
             slot(g, 0xf2f8, 31, 0);
-            word(&image, 0xb49002, 0x1200);
+            word(&mut image, 0xb49002, 0x1200);
             Operation::Update
         }
-        80..=110 => super::sprite_controller_cases::seed(id, g, &image),
-        111..=116 => super::sprite_effect_observer::seed(id, g, &image),
+        80..=110 => super::sprite_controller_cases::seed(id, g, &mut image),
+        111..=116 => super::sprite_effect_observer::seed(id, g, &mut image),
         _ => unreachable!(),
+    };
+    let image = RomImage::from(image);
+    g.loaded_rom = Some(image.clone());
+    g.register_native_rom(image);
+    if let Some(loaded) = loaded {
+        g.loaded_rom = loaded;
     }
+    operation
 }
 pub(crate) fn capture_case(id: u32, run: fn(Operation, &mut Game) -> u16) -> Option<Vec<u8>> {
     if id >= CASES {
