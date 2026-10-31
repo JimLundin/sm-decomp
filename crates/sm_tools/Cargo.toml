@@ -1,0 +1,16 @@
+[package]
+name = "sm_tools"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+publish = false
+description = "Super Metroid verification tooling: scenario observations, their comparison and reports"
+
+# Verification tooling over the target packages. CI rejects any dependency on
+# sm, and any target package depending on this one.
+[dependencies]
+sm_game = { path = "../sm_game" }
+
+[lints.rust]
+warnings = { level = "deny", priority = -1 }
+unsafe_code = "forbid"
