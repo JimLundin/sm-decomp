@@ -47,19 +47,20 @@ impl Geometry for SpriteMap {
         self.word(5 + 5 * record)
     }
 }
-struct NativeGeometry<'a, G>(&'a G);
-impl<G: Geometry> objects::Geometry for NativeGeometry<'_, G> {
-    type Error = Infallible;
-    fn count(&mut self) -> Result<u16, Infallible> {
+/// ROM geometry for a host whose errors are `E`; reading it cannot fail.
+struct NativeGeometry<'a, G, E = Infallible>(&'a G, std::marker::PhantomData<E>);
+impl<G: Geometry, E> objects::Geometry for NativeGeometry<'_, G, E> {
+    type Error = E;
+    fn count(&mut self) -> Result<u16, E> {
         Ok(self.0.count())
     }
-    fn x(&mut self, record: usize) -> Result<u16, Infallible> {
+    fn x(&mut self, record: usize) -> Result<u16, E> {
         Ok(self.0.x(record))
     }
-    fn y(&mut self, record: usize) -> Result<u8, Infallible> {
+    fn y(&mut self, record: usize) -> Result<u8, E> {
         Ok(self.0.y(record))
     }
-    fn tile(&mut self, record: usize) -> Result<u16, Infallible> {
+    fn tile(&mut self, record: usize) -> Result<u16, E> {
         Ok(self.0.tile(record))
     }
 }
@@ -115,12 +116,51 @@ pub fn draw<H: SpriteHost + ?Sized>(
 ) {
     objects::draw(
         &mut NativeObjects(game),
-        &mut NativeGeometry(map),
+        &mut NativeGeometry(map, std::marker::PhantomData),
         position,
         clip,
         |word| Ok(tile_word(word)),
     )
     .unwrap();
+}
+/// Object staging as the host's session view projects it ($7E:0370..$0591).
+pub struct SessionObjects<'a, H: ?Sized>(pub &'a mut H);
+impl<H: crate::runtime_access::SessionRam + ?Sized> objects::Host for SessionObjects<'_, H> {
+    type Error = Infallible;
+    fn read_native_word(&mut self, offset: usize) -> Result<u16, Infallible> {
+        Ok(self.0.native_word(0x370 + offset))
+    }
+    fn read_little_word(&mut self, offset: usize) -> Result<u16, Infallible> {
+        Ok(self.0.word(0x370 + offset))
+    }
+    fn write_byte(&mut self, offset: usize, value: u8) -> Result<(), Infallible> {
+        self.0.set_byte(0x370 + offset, value);
+        Ok(())
+    }
+    fn write_native_slice(&mut self, offset: usize, value: u16) -> Result<(), Infallible> {
+        self.0.write_slice_native(0x370 + offset, value);
+        Ok(())
+    }
+    fn write_native_bytes(&mut self, offset: usize, value: u16) -> Result<(), Infallible> {
+        let [first, second] = value.to_ne_bytes();
+        self.0.set_byte(0x370 + offset, first);
+        self.0.set_byte(0x371 + offset, second);
+        Ok(())
+    }
+    fn started(&mut self, _clip: Clip) -> Result<(), Infallible> {
+        Ok(())
+    }
+}
+/// Mother Brain's room-coordinate spritemap ($A9:93EE) on `host`'s objects.
+pub fn draw_room<H: objects::Host>(
+    host: &mut H,
+    map: &SpriteMap,
+    origin: (u16, u16),
+    camera: (u16, u16),
+    palette: u16,
+) -> Result<(), H::Error> {
+    let mut geometry = NativeGeometry(map, std::marker::PhantomData);
+    objects::draw_room(host, &mut geometry, origin, camera, palette)
 }
 pub fn finish_frame<H: SpriteHost + ?Sized>(game: &mut H) {
     objects::finish_frame(&mut NativeObjects(game)).unwrap();

@@ -130,6 +130,55 @@ fn extension<H: Host>(
     host.write_native_slice(offset, old | bits)
 }
 
+/// Add a spritemap at room position `origin` to OAM, as Mother Brain's own
+/// routine ($A9:93EE) does: `camera` is the layer 1 position, an entry above
+/// the screen is skipped, `palette` is ORed into each tile word, and each
+/// entry's X takes the carry of its Y subtract. There is no other off-screen
+/// handling, and a zero count draws 65536 entries, as the original's
+/// DEC/BNE loop does. The cursor and high table are little-endian words.
+pub fn draw_room<H: Host>(
+    host: &mut H,
+    map: &mut impl Geometry<Error = H::Error>,
+    origin: (u16, u16),
+    camera: (u16, u16),
+    palette: u16,
+) -> Result<(), H::Error> {
+    let mut index = usize::from(host.read_little_word(544)?);
+    let count = map.count()?;
+    let records = if count == 0 {
+        0x10000
+    } else {
+        usize::from(count)
+    };
+    for record in 0..records {
+        let row = origin.1.wrapping_add(map.y(record)? as i8 as u16);
+        let y = row.wrapping_sub(camera.1);
+        if y & 0x8000 != 0 {
+            continue;
+        }
+        let entry_x = map.x(record)?;
+        let x = origin
+            .0
+            .wrapping_add(entry_x)
+            .wrapping_add(u16::from(row >= camera.1))
+            .wrapping_sub(camera.0);
+        host.write_byte(index, x as u8)?;
+        host.write_byte(index + 1, y as u8)?;
+        let tile = palette | map.tile(record)?;
+        host.write_native_bytes(index + 2, tile)?;
+        let offset = 512 + 2 * (index >> 5);
+        let bits =
+            (((x & 0x100) >> 8) | (u16::from((entry_x as i16) < 0) * 2)) << (2 * (index >> 2 & 7));
+        let [low, high] = (host.read_little_word(offset)? | bits).to_le_bytes();
+        host.write_byte(offset, low)?;
+        host.write_byte(offset + 1, high)?;
+        index = (index + 4) & 0x1ff;
+    }
+    let [low, high] = (index as u16).to_le_bytes();
+    host.write_byte(544, low)?;
+    host.write_byte(545, high)
+}
+
 pub fn finish_frame<H: Host>(host: &mut H) -> Result<(), H::Error> {
     let first = host.read_little_word(544)? >> 2;
     for sprite in first..128 {
