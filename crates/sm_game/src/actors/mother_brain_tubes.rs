@@ -145,11 +145,8 @@ fn trail_smoke(game: &mut impl Lease, k: u16) {
 /// Deletes the tube and bursts it into dust. Was `MotherBrainsTubesFalling_Explode`.
 fn burst(game: &mut impl Lease, k: u16) {
     let me = k as i32;
-    session_slot!(
-        game,
-        Tube[me].base.properties =
-            session_slot!(game, Tube[me].base.properties) | K_ENEMY_PROPS_DELETED as u16
-    );
+    session_slot!(game, Tube[me].base.properties, |old| old
+        | K_ENEMY_PROPS_DELETED as u16);
     let x = session_slot!(game, Tube[me].base.x_pos);
     let y = session_slot!(game, Tube[me].base.y_pos);
     game.foreign(|game| {
@@ -180,11 +177,8 @@ fn fall_with_brain(game: &mut impl Lease, k: u16) {
     move_down(game, me, speed);
     let y = session_slot!(game, Tube[me].base.y_pos);
     if (y as i32 - HIDE_Y as i32) & 0x8000 == 0 {
-        session_slot!(
-            game,
-            Tube[me].base.properties =
-                session_slot!(game, Tube[me].base.properties) | K_ENEMY_PROPS_INVISIBLE as u16
-        );
+        session_slot!(game, Tube[me].base.properties, |old| old
+            | K_ENEMY_PROPS_INVISIBLE as u16);
     }
     session_slot!(game, Tube[BRAIN].base.y_pos = y.wrapping_sub(BRAIN_OFFSET));
     if (session_slot!(game, Tube[BRAIN].base.y_pos) as i32 - BRAIN_LANDING_Y as i32) & 0x8000 != 0 {

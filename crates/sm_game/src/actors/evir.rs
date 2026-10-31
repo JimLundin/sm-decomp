@@ -212,7 +212,8 @@ fn run_function(runtime: &mut impl ActorLease, evir: i32) {
         {
             follow_body(runtime, evir, 2, PROJECTILE_DROP);
             let offset = session_slot!(runtime, Evir[evir].regeneration_x_offset);
-            session_slot!(runtime, Evir[evir].base.x_pos, |x| x.wrapping_add(offset));
+            session_slot!(runtime, Evir[evir].base.x_pos, |old| old
+                .wrapping_add(offset));
         }
         function::PROJECTILE_REGENERATING => {
             set_instruction_list(runtime, evir, PROJECTILE_LIST);

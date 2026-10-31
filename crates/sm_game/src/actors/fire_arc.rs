@@ -207,10 +207,7 @@ pub fn main_ai<H: Host + ?Sized>(game: &mut H) {
 /// off-screen. Was `NuclearWaffle_Func_1`.
 pub fn inactive<H: Host + ?Sized>(game: &mut H) {
     let e = current(game);
-    slot!(
-        game,
-        FireArc[e].inactive_timer = slot!(game, FireArc[e].inactive_timer).wrapping_sub(1)
-    );
+    slot!(game, FireArc[e].inactive_timer, |old| old.wrapping_sub(1));
     if (slot!(game, FireArc[e].inactive_timer) & 0x8000) == 0 {
         return;
     }
@@ -223,11 +220,8 @@ pub fn inactive<H: Host + ?Sized>(game: &mut H) {
     slot!(game, FireArc[e].head_explosion = 0);
     clear_words(game, slot!(@at FireArc, e, projectile_explosions), 8);
     clear_words(game, slot!(@at FireArc, e, sprite_explosions), 8);
-    slot!(
-        game,
-        FireArc[e].base.properties =
-            slot!(game, FireArc[e].base.properties) | K_ENEMY_PROPS_PROCESSED_OFFSCREEN as u16
-    );
+    slot!(game, FireArc[e].base.properties, |old| old
+        | K_ENEMY_PROPS_PROCESSED_OFFSCREEN as u16);
 }
 
 /// Zero `count` words from `at`, in order.

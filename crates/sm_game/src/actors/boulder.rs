@@ -325,10 +325,7 @@ fn bounce_fall<H: Host + ?Sized>(game: &mut H) {
                 Boulder[me].fall_speed =
                     BOUNCE_SPEEDS[(slot!(game, Boulder[me].bounces_left) as i32 - 1i32) as usize]
             );
-            slot!(
-                game,
-                Boulder[me].bounces_left = slot!(game, Boulder[me].bounces_left).wrapping_sub(1)
-            );
+            slot!(game, Boulder[me].bounces_left, |old| old.wrapping_sub(1));
             if (slot!(game, Boulder[me].bounces_left) & 0x8000) != 0 {
                 slot!(
                     game,

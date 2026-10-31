@@ -191,20 +191,14 @@ fn move_in_figure_eight(reversed: bool, game: &mut (impl BossState + ?Sized)) {
 fn handle_casual_flames(object: u16, game: &mut (impl BossState + ?Sized)) {
     let mouth = i32::from(object) + MOUTH_OFFSET;
     let expired = session_slot!(game, Mouth[mouth].casual_flame_timer) == 1;
-    session_slot!(
-        game,
-        Mouth[mouth].casual_flame_timer,
-        |casual_flame_timer| casual_flame_timer.wrapping_sub(1)
-    );
+    session_slot!(game, Mouth[mouth].casual_flame_timer, |old| old
+        .wrapping_sub(1));
     let underflow = session_slot!(game, Mouth[mouth].casual_flame_timer) & SIGN != 0;
     if expired || underflow {
         if session_slot!(game, Mouth[mouth].casual_flame_pattern_index) & SIGN == 0 {
             let expired = session_slot!(game, Mouth[mouth].casual_flame_pattern_index) == 1;
-            session_slot!(
-                game,
-                Mouth[mouth].casual_flame_pattern_index,
-                |casual_flame_pattern_index| casual_flame_pattern_index.wrapping_sub(1)
-            );
+            session_slot!(game, Mouth[mouth].casual_flame_pattern_index, |old| old
+                .wrapping_sub(1));
             let underflow =
                 session_slot!(game, Mouth[mouth].casual_flame_pattern_index) & SIGN != 0;
             let address = if expired || underflow {

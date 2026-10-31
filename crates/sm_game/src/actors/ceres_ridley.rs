@@ -119,13 +119,10 @@ const ESCAPE_STARTED: u16 = 2;
 /// a defeated Ridley is deleted. Was `CeresRidley_Init`.
 pub fn init<L: Lease + ?Sized>(game: &mut L) {
     if (game.foreign(|game| game.boss_byte(game.area())) & 1) != 0 {
-        session_slot!(
-            game,
-            Ridley[RIDLEY].base.properties = session_slot!(game, Ridley[RIDLEY].base.properties)
-                | K_ENEMY_PROPS_TANGIBLE as u16
-                | K_ENEMY_PROPS_DELETED as u16
-                | K_ENEMY_PROPS_INVISIBLE as u16
-        );
+        session_slot!(game, Ridley[RIDLEY].base.properties, |old| old
+            | K_ENEMY_PROPS_TANGIBLE as u16
+            | K_ENEMY_PROPS_DELETED as u16
+            | K_ENEMY_PROPS_INVISIBLE as u16);
         return;
     }
     crate::word_transfers!(game, descending, 2048; le(TILEMAP_STUFF, 2047) <- value(0));
@@ -134,21 +131,14 @@ pub fn init<L: Lease + ?Sized>(game: &mut L) {
     ridley::set_instruction_list(ceres_instruction_list::INITIAL, game);
     session_slot!(game, Ridley[RIDLEY].base.palette_index = 3584);
     session_slot!(game, Ridley[RIDLEY].palette = 3584);
-    session_slot!(
-        game,
-        Ridley[RIDLEY].base.extra_properties =
-            session_slot!(game, Ridley[RIDLEY].base.extra_properties) | 4
-    );
+    session_slot!(game, Ridley[RIDLEY].base.extra_properties, |old| old | 4);
     session_slot!(game, Ridley[RIDLEY]; fight_mode = 0, hit_counter = 0);
     word! { game, 0; EARTHQUAKE_TYPE, EARTHQUAKE_TIMER }
     ridley::initialise_tail(game);
     ridley::initialise_ribs(game);
-    session_slot!(
-        game,
-        Ridley[RIDLEY].base.properties = session_slot!(game, Ridley[RIDLEY].base.properties)
-            | K_ENEMY_PROPS_BLOCK_PLASMA_BEAM as u16
-            | K_ENEMY_PROPS_TANGIBLE as u16
-    );
+    session_slot!(game, Ridley[RIDLEY].base.properties, |old| old
+        | K_ENEMY_PROPS_BLOCK_PLASMA_BEAM as u16
+        | K_ENEMY_PROPS_TANGIBLE as u16);
     if game.area() == NORFAIR {
         session_slot!(game, Ridley[RIDLEY].base.x_pos = 96);
         session_slot!(game, Ridley[RIDLEY].base.y_pos = 394);
@@ -379,11 +369,8 @@ pub fn fade_in_body<L: Lease + ?Sized>(game: &mut L) {
         if game.area() == NORFAIR {
             session_slot!(game, Ridley[RIDLEY].base.layer = 2);
         }
-        session_slot!(
-            game,
-            Ridley[RIDLEY].base.properties = session_slot!(game, Ridley[RIDLEY].base.properties)
-                & !(K_ENEMY_PROPS_TANGIBLE as u16)
-        );
+        session_slot!(game, Ridley[RIDLEY].base.properties, |old| old
+            & !(K_ENEMY_PROPS_TANGIBLE as u16));
         session_slot!(game, Ridley[RIDLEY].fade_index = 0);
         session_slot!(game, Ridley[RIDLEY].function = ceres_function::WAIT_TO_ROAR);
         session_slot!(game, Ridley[RIDLEY].function_timer = 4);

@@ -124,10 +124,7 @@ pub fn set_neighbour_angles<L: Lease>(k: u16, a: u16, game: &mut L) {
 pub fn flip<L: Lease>(k: u16, game: &mut L) {
     let primary: u16 = session_slot!(game, Piece[k as i32].primary_piece);
     let head = i32::from(primary) + HEAD;
-    session_slot!(
-        game,
-        Piece[head].direction = session_slot!(game, Piece[head].direction) ^ FLIPPED
-    );
+    session_slot!(game, Piece[head].direction, |old| old ^ FLIPPED);
     for near_offset in [PIECE, 2 * PIECE, HEAD] {
         let far = i32::from(primary) + 7 * PIECE - near_offset;
         let far_angle: u16 = session_slot!(game, Piece[far].neighbour_angle);

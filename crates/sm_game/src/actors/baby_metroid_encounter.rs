@@ -228,7 +228,7 @@ crate::dispatch::callback_dispatch! {
             game,
         );
         let e: i32 = game.current_enemy() as i32;
-        session_slot!(game, BabyMetroid[e].function_timer, |timer| timer.wrapping_sub(1));
+        session_slot!(game, BabyMetroid[e].function_timer, |old| old.wrapping_sub(1));
         if (session_slot!(game, BabyMetroid[e].function_timer) & 0x8000) != 0 {
             queue_sfx2_max6(sound::BABY_METROID_GUILTY, game);
             session_slot! { game, BabyMetroid[e]; function = function::GO_LEFT_GUILTILY, function_timer = 88 }
@@ -263,7 +263,7 @@ crate::dispatch::callback_dispatch! {
         session_slot!(game, BabyMetroid[e].base.x_pos = (session_slot!(game, BabyMetroid[e1].base.x_pos)).wrapping_add((SHAKE_X_OFFSETS[v2 as usize]) as u16));
         session_slot!(game, BabyMetroid[e].base.y_pos = (session_slot!(game, BabyMetroid[e1].base.y_pos) as i32 + SHAKE_Y_OFFSETS[v2 as usize] as i32 - 32i32) as u16);
         let fresh13: u16 = session_slot!(game, BabyMetroid[e].function_timer);
-        session_slot!(game, BabyMetroid[e].function_timer, |timer| timer.wrapping_sub(1));
+        session_slot!(game, BabyMetroid[e].function_timer, |old| old.wrapping_sub(1));
         if fresh13 == 1 {
             session_slot!(game, BabyMetroid[e].function = function::MAKE_SIDEHOPPER_ROTTABLE);
             session_slot! { game, BabyMetroid[e].base; current_instruction = ADDR_K_BABY_METROID_ILIST_F906 as u16, instruction_timer = 1 }
@@ -273,7 +273,7 @@ crate::dispatch::callback_dispatch! {
     };
     [11137336] move_up_and_unlock_camera [] {
         gradually_accelerate_towards_point_400h(k, 0, session_slot!(game, BabyMetroid[e].base.x_pos), 104, game);
-        session_slot!(game, BabyMetroid[e].function_timer, |timer| timer.wrapping_sub(1));
+        session_slot!(game, BabyMetroid[e].function_timer, |old| old.wrapping_sub(1));
         if (session_slot!(game, BabyMetroid[e].function_timer) & 0x8000) != 0 {
             session_slot! { game, BabyMetroid[e]; function = function::STARE_DOWN_SAMUS, contact_enabled = 1 }
             { let at: usize = crate::ram::bytes::SCROLLS; let bytes: [u8; 2] = ((u16::from_le_bytes([SessionRam::byte(game, at), SessionRam::byte(game, at + 1)])) | (0x100u16)).to_le_bytes(); SessionRam::set_byte(game, at, bytes[0]); SessionRam::set_byte(game, at + 1, bytes[1]); }
@@ -351,7 +351,7 @@ crate::dispatch::callback_dispatch! {
         heel_realisation(k, game);
     };
     [11137955] samus_recovering [] {
-        session_slot!(game, BabyMetroid[e].function_timer, |timer| timer.wrapping_sub(1));
+        session_slot!(game, BabyMetroid[e].function_timer, |old| old.wrapping_sub(1));
         if (session_slot!(game, BabyMetroid[e].function_timer) & 0x8000) != 0 {
             player_mother_brain(2, game);
             session_slot! { game, BabyMetroid[e]; contact_enabled = 1, function = function::REMORSE }
@@ -363,7 +363,7 @@ crate::dispatch::callback_dispatch! {
     @countdown [pub fn (k: u16, game: &mut impl Lease)];
     before {
         let e: i32 = k as i32;
-        session_slot!(game, BabyMetroid[e].function_timer, |timer| timer.wrapping_sub(1));
+        session_slot!(game, BabyMetroid[e].function_timer, |old| old.wrapping_sub(1));
     }
     when (session_slot!(game, BabyMetroid[e].function_timer) & 0x8000) != 0;
     [11137079] queue_battle_music {

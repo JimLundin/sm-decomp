@@ -174,7 +174,8 @@ pub mod owtch {
                 // Owtch function index 3 - sinking ($A2:A517) or 4 - rising ($A2:A53E).
                 let sinking = index as u16 == SINKING;
                 let step = if sinking { 1 } else { u16::MAX };
-                session_slot!(runtime, Owtch[owtch].base.y_pos, |y| y.wrapping_add(step));
+                session_slot!(runtime, Owtch[owtch].base.y_pos, |old| old
+                    .wrapping_add(step));
                 let previous = session_slot!(runtime, Owtch[owtch].sink_offset);
                 let offset = previous.wrapping_add(step);
                 session_slot!(runtime, Owtch[owtch].sink_offset = offset);

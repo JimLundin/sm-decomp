@@ -150,7 +150,8 @@ fn crawl(runtime: &mut impl ActorLease, beetom: i32, left: bool) {
         }
     } else {
         set_function(runtime, beetom, turn);
-        session_slot!(runtime, Beetom[beetom].base.y_pos, |y| y.wrapping_sub(1));
+        session_slot!(runtime, Beetom[beetom].base.y_pos, |old| old
+            .wrapping_sub(1));
         session_slot!(runtime, Beetom[beetom].base.x_pos, |x| x
             .wrapping_sub(ahead));
     }

@@ -1518,11 +1518,8 @@ pub fn grabbed_samus_release<L: Lease + ?Sized>(game: &mut L) {
 /// Grab Samus ($A6:BC68). Was `Ridley_Func_37`.
 pub fn grab_samus<L: Lease + ?Sized>(game: &mut L) {
     set_grabbed_samus_offset(game);
-    session_slot!(
-        game,
-        Ridley[RIDLEY].base.properties =
-            session_slot!(game, Ridley[RIDLEY].base.properties) | K_ENEMY_PROPS_TANGIBLE as u16
-    );
+    session_slot!(game, Ridley[RIDLEY].base.properties, |old| old
+        | K_ENEMY_PROPS_TANGIBLE as u16);
     session_slot!(game, Ridley[RIDLEY].holding_samus = 1);
     game.foreign(|game| game.command_player(LOCK_SAMUS));
     draw_feet(true, game);
@@ -1949,11 +1946,8 @@ pub fn lower_acid_and_release_samus<L: Lease + ?Sized>(game: &mut L) {
 pub fn start_falling_apart<L: Lease + ?Sized>(game: &mut L) {
     spawn_small_explosion(game);
     session_slot!(game, Ridley[RIDLEY].movement_enabled = 0);
-    session_slot!(
-        game,
-        Ridley[RIDLEY].base.properties =
-            session_slot!(game, Ridley[RIDLEY].base.properties) | K_ENEMY_PROPS_INVISIBLE as u16
-    );
+    session_slot!(game, Ridley[RIDLEY].base.properties, |old| old
+        | K_ENEMY_PROPS_INVISIBLE as u16);
     session_slot!(game, Ridley[RIDLEY].function = function::FALLING_APART);
     session_slot!(game, Ridley[RIDLEY].function_timer = 32);
 }
@@ -1981,11 +1975,8 @@ pub fn still_falling_apart<L: Lease + ?Sized>(game: &mut L) {
             game.scatter_enemy_drop(DropSource::Ridley, 0);
             game.queue_music_delayed(3);
         });
-        session_slot!(
-            game,
-            Ridley[RIDLEY].base.properties =
-                session_slot!(game, Ridley[RIDLEY].base.properties) | K_ENEMY_PROPS_DELETED as u16
-        );
+        session_slot!(game, Ridley[RIDLEY].base.properties, |old| old
+            | K_ENEMY_PROPS_DELETED as u16);
         session_slot!(game, Ridley[RIDLEY].function = function::DEAD);
     }
 }
@@ -3356,11 +3347,9 @@ pub fn baby_metroid_spritemap<L: Lease + ?Sized>(game: &mut L) -> Option<u16> {
     let mut instruction = entry.word(0) & 0x8000 != 0;
     if !instruction {
         if session_slot!(game, Ridley[RIDLEY].baby_metroid_instruction_timer) != entry.word(0) {
-            session_slot!(
-                game,
-                Ridley[RIDLEY].baby_metroid_instruction_timer,
-                |baby_metroid_instruction_timer| baby_metroid_instruction_timer.wrapping_add(1)
-            );
+            session_slot!(game, Ridley[RIDLEY].baby_metroid_instruction_timer, |old| {
+                old.wrapping_add(1)
+            });
             return Some(entry.word(2));
         }
         cursor = cursor.wrapping_add(4);

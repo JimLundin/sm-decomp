@@ -2038,18 +2038,12 @@ fn death_init<L: Lease + ?Sized>(game: &mut L) {
         );
         let _actor: u16 = game.current_enemy();
         let saved: u16 = game.current_enemy();
-        session_slot!(
-            game,
-            Part[GOOD_FINGERNAIL].base.properties =
-                session_slot!(game, Part[GOOD_FINGERNAIL].base.properties) & !(0x4000)
-        );
+        session_slot!(game, Part[GOOD_FINGERNAIL].base.properties, |old| old
+            & !(0x4000));
         word!(game.CUR_ENEMY_INDEX = 384);
         game.foreign(|game| game.normal_death(0x180));
-        session_slot!(
-            game,
-            Part[BAD_FINGERNAIL].base.properties =
-                session_slot!(game, Part[BAD_FINGERNAIL].base.properties) & !(0x4000)
-        );
+        session_slot!(game, Part[BAD_FINGERNAIL].base.properties, |old| old
+            & !(0x4000));
         word!(game.CUR_ENEMY_INDEX = 448);
         game.foreign(|game| game.normal_death(0x1c0));
         word!(game.CUR_ENEMY_INDEX = 128);
@@ -2226,11 +2220,8 @@ pub fn arm_main<L: Lease + ?Sized>(game: &mut L) {
     let copied = session_slot!(game, Body[BODY].base.x_pos);
     session_slot!(game, Part[ARM].base.x_pos = copied);
     if session_slot!(byte game, Body[BODY].mouth_flags[1]) != 0 {
-        session_slot!(
-            game,
-            Part[ARM].base.instruction_timer,
-            |instruction_timer| instruction_timer.wrapping_add(1)
-        );
+        session_slot!(game, Part[ARM].base.instruction_timer, |old| old
+            .wrapping_add(1));
     }
 }
 

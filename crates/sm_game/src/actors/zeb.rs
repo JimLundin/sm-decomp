@@ -86,10 +86,7 @@ pub fn rise<H: ActorHost + ActorRuntime + LeaseActors + crate::records::Records 
 ) {
     let e = i32::from(k);
     let previous = slot!(game, Bug[e].base.y_subpos);
-    slot!(
-        game,
-        Bug[e].base.y_subpos = slot!(game, Bug[e].base.y_subpos).wrapping_sub(1)
-    );
+    slot!(game, Bug[e].base.y_subpos, |old| old.wrapping_sub(1));
     slot!(
         game,
         Bug[e].base.y_pos =
@@ -117,10 +114,7 @@ pub fn fly<H: ActorHost + ActorRuntime + LeaseActors + crate::records::Records +
         game,
         Bug[e].base.x_subpos = slot!(game, Bug[e].base.x_subpos)
     );
-    slot!(
-        game,
-        Bug[e].base.x_pos = slot!(game, Bug[e].base.x_pos).wrapping_add(step)
-    );
+    slot!(game, Bug[e].base.x_pos, |old| old.wrapping_add(step));
     if queries::leaving_screen(&game.lease(), Key::from_legacy(k)) as u8 & 1 != 0 {
         slot!(game, Bug[e].base; x_pos = slot!(game, Bug[e].var_b), x_subpos = 0);
         let y = slot!(game, Bug[e].var_c);
@@ -138,10 +132,7 @@ pub fn cooldown<H: ActorHost + ActorRuntime + LeaseActors + crate::records::Reco
 ) {
     let e = i32::from(k);
     let previous = slot!(game, Bug[e].var_d);
-    slot!(
-        game,
-        Bug[e].var_d = slot!(game, Bug[e].var_d).wrapping_sub(1)
-    );
+    slot!(game, Bug[e].var_d, |old| old.wrapping_sub(1));
     if previous == 1 {
         slot!(game, Bug[e].var_f = 0x8890);
     }
