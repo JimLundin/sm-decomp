@@ -65,6 +65,11 @@ for r in rows:
         kind = 'checkpoint' if 'checkpoint' in r else ('seed' if 'seed' in r else ('route' if r['inputs'].startswith('corpus-') else 'captured'))
         identity = seed_bundle(r)[0] if kind in ('seed', 'checkpoint') else r['inputs']
         groups.setdefault((kind, identity), []).append(r)
+def cost(kind, row):
+    # Replay frames, plus, for a checkpoint row, the boot prefix it regenerates
+    # when its checkpoint is rejected; that prefix replays about 5 times faster.
+    return row.get('frames', 0) + (row.get('start_frame', 0) // 5 if kind == 'checkpoint' else 0)
+
 def chunks(kind, members):
     # A rejected configured checkpoint regenerates its own complete boot prefix,
     # so bound that cold work per row. Seed groups share only a seconds-long
@@ -89,13 +94,13 @@ for (kind, identity), members in sorted(groups.items()):
         inputs = chunk[0]['inputs']
         asset, digest = seed_bundle(chunk[0]) if kind != 'route' else ('', '')
         name = identity.removeprefix('layout150-').removeprefix('seeds-v1-').split('-')[0] if kind in ('seed', 'checkpoint') else identity.removesuffix('.inputs')
-        shards.append({'name': f"{kind}-{name}-{i}", 'frames': sum(r.get('frames', 0) for r in chunk),
+        shards.append({'name': f"{kind}-{name}-{i}", 'cost': sum(cost(kind, r) for r in chunk),
                        'kind': kind, 'inputs': inputs,
                        'seed_asset': asset, 'seed_sha256': digest,
                        'route': inputs.removeprefix('corpus-').removesuffix('.inputs') if kind == 'route' else '',
                        'segments': ' '.join(r['id'] for r in chunk)})
 # Start the heaviest shards first: the matrix runs at most six at a time.
-shards.sort(key=lambda shard: -shard['frames'])
+shards.sort(key=lambda shard: -shard['cost'])
 if not shards:
     raise SystemExit('no runnable rows selected')
 with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as out:
