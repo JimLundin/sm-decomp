@@ -2,8 +2,9 @@
 
 Status: **accepted by Jim, 2026-10-31; admitted under
 [REVIEW's lane S conditions](REVIEW.md#scenario-harness-lane-s-jim-2026-10-31);
-step 1 landed; step 2 in progress (free run, determinism and the lock format;
-the standalone recorder is open).** It expands
+steps 1 and 2 landed (the standalone recorder is open); step 3 in progress: engine-only
+free run against the committed oracle digest lock is the frequent gate (Jim, 2026-10-31,
+Decision 4).** It expands
 [Validation · Verification strategy](target-architecture/VALIDATION.md#verification-strategy)
 into a concrete design. It is PLAN's one runner: the harness grows inside the current
 verifier and then replaces it, and never runs beside it as a second framework. Its code
@@ -231,3 +232,12 @@ ground (VALIDATION.md).
    conditions).
 2. No tolerances: every divergence is fixed or listed in [LEGACY.md](LEGACY.md), as now.
 3. Step 1 starts now as its own lane, in parallel with the moves into the crates.
+4. **Free run against the lock is the frequent gate.** Engine-only free run against
+   the committed oracle digest lock runs on every pull request and push, even though
+   on the five step-1 rooms it measured only about 1.4x faster than lockstep. This
+   overrides the 2x adoption bar in REVIEW's lane S condition 8. A locked scenario
+   needs only its digests, runs deterministically, and costs no oracle frames, and
+   scenarios will keep being added. Engine optimization is expected to widen the gap.
+   Lockstep stays: it localises a fault and confirms a failure (a lock mismatch reruns
+   its failing 1,000-Tick span in lockstep), and the corpus and route lockstep jobs keep
+   running. Which events lockstep runs on is decided later.
