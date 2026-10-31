@@ -1109,7 +1109,7 @@ pub fn pogo_wait_at_position<L: Lease + ?Sized>(game: &mut L) {
     );
     if timer_expired(game) {
         set_up_pogo_tail(game);
-        game.foreign(set_pogo_speeds);
+        set_pogo_speeds(game);
         session_slot!(game, Ridley[RIDLEY].function = function::POGO_DESCENDING);
         session_slot!(
             game,
@@ -1141,14 +1141,8 @@ pub fn pogo_descending<L: Lease + ?Sized>(game: &mut L) {
         game.queue_sound(1, 0x76, 6);
         boss!(game; EarthquakeType = 13; EarthquakeTimer = 4;);
         set_pogo_x_direction(game);
-        game.foreign(|game| {
-            set_pogo_speeds(game);
-            set_tail_segments_from_list(
-                tail_address(tail::distance(0)),
-                tail_data::DISTANCES,
-                game,
-            );
-        });
+        set_pogo_speeds(game);
+        set_tail_segments_from_list(tail_address(tail::distance(0)), tail_data::DISTANCES, game);
         for segment in 0..7 {
             bg2_staging::set(game, tail::target_distance(segment), 3072);
         }
@@ -1851,7 +1845,7 @@ pub fn baby_metroid_goto_if_still<L: Lease + ?Sized>(k: u16, game: &mut L) -> u1
 /// `BabyMetroid_Instr_3`.
 pub fn baby_metroid_load_palette<L: Lease + ?Sized>(k: u16, game: &mut L) -> u16 {
     let colours = crate::cartridge::native_record(0xa6, k, game).word(0);
-    game.foreign(|game| copy_rom_colors_to_palette(0x162, 0xa6, colours, 0xf, game));
+    copy_rom_colors_to_palette(0x162, 0xa6, colours, 0xf, game);
     k.wrapping_add(2)
 }
 
@@ -2841,19 +2835,15 @@ pub fn initialise_tail<L: Lease + ?Sized>(game: &mut L) {
     for segment in 0..7 {
         bg2_staging::set(game, tail::stagger_angle(segment), 17);
     }
-    game.foreign(|game| {
-        set_tail_segments_from_list(
-            tail_address(tail::direction(0)),
-            tail_data::DIRECTIONS,
-            game,
-        )
-    });
-    game.foreign(|game| {
-        set_tail_segments_from_list(tail_address(tail::distance(0)), tail_data::DISTANCES, game);
-        set_tail_segments_from_list(tail_address(tail::angle(0)), tail_data::ANGLES, game);
-        set_tail_segments_from_list(tail_address(tail::x(0)), tail_data::X_POSITIONS, game);
-        set_tail_segments_from_list(tail_address(tail::y(0)), tail_data::Y_POSITIONS, game);
-    });
+    set_tail_segments_from_list(
+        tail_address(tail::direction(0)),
+        tail_data::DIRECTIONS,
+        game,
+    );
+    set_tail_segments_from_list(tail_address(tail::distance(0)), tail_data::DISTANCES, game);
+    set_tail_segments_from_list(tail_address(tail::angle(0)), tail_data::ANGLES, game);
+    set_tail_segments_from_list(tail_address(tail::x(0)), tail_data::X_POSITIONS, game);
+    set_tail_segments_from_list(tail_address(tail::y(0)), tail_data::Y_POSITIONS, game);
     set_tail_segment_flags(0, game);
 }
 
@@ -2872,9 +2862,7 @@ pub fn set_tail_segment_flags<L: Lease + ?Sized>(flags: u16, game: &mut L) {
 /// Flip Ridley tail ($A6:D3F9): mirror every segment's angle and turn it
 /// anticlockwise. Was `Ridley_Func_96`.
 pub fn flip_tail<L: Lease + ?Sized>(game: &mut L) {
-    game.foreign(|game| {
-        set_tail_segments_from_list(tail_address(tail::distance(0)), tail_data::DISTANCES, game)
-    });
+    set_tail_segments_from_list(tail_address(tail::distance(0)), tail_data::DISTANCES, game);
     for segment in 0..7 {
         bg2_staging::set(
             game,
@@ -2934,7 +2922,7 @@ pub fn load_health_palette<L: Lease + ?Sized>(index: u16, game: &mut L) {
     const HEALTH_PALETTES: u16 = 0xe46a;
     if boss!(game.PaletteChangeNum) == 0 {
         let colours = HEALTH_PALETTES.wrapping_add(index.wrapping_mul(28));
-        game.foreign(|game| copy_rom_colors_to_palette(0x1e2, 0xa6, colours, 0xe, game));
+        copy_rom_colors_to_palette(0x1e2, 0xa6, colours, 0xe, game);
     }
 }
 
