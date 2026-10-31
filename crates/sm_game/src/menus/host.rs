@@ -37,7 +37,6 @@ pub trait MenuRuntime:
     ) -> u16;
     /// Upload `bytes` from `source` to VRAM word address `destination`.
     fn load_vram_words(&mut self, source: u32, destination: u16, bytes: u16);
-    fn file_select_fade(&mut self) -> u8;
     fn boss_byte(&mut self, area: u16) -> u8;
     /// Begin entering the room at the current load station.
     fn enter_load_station(&mut self);

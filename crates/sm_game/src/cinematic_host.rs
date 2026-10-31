@@ -10,7 +10,6 @@ pub trait Host: crate::menus::host::Host + crate::display_refresh::Host {
     fn spawn_power_bomb(&mut self);
     /// Set up Samus for the intro.
     fn initialize_player(&mut self);
-    fn use_cinematic_bindings(&mut self);
     fn disable_scanline_irq(&mut self);
     /// Queue the ending's next Mode 7 tile upload.
     fn advance_ending_tile_upload(&mut self);

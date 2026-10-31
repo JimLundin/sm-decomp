@@ -113,7 +113,7 @@ fn prepare<H: Host + ?Sized>(game: &mut H) {
     crate::menu!(game.MenuIndex += 1);
 }
 fn fade_palette<H: Host + ?Sized>(game: &mut H) {
-    if game.file_select_fade() != 0 {
+    if crate::palette_effects::fading::file_select(game) != 0 {
         scroll! { game, 0; Bg1V, Bg1H, Bg2V, Bg2H }
         word!(game.FILE_SELECT_MAP_AREA_INDEX = area_selection(game).unwrap_or(0) as u16);
         for area in 0..6 {

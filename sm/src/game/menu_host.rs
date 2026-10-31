@@ -56,9 +56,6 @@ impl MenuRuntime for Game {
         crate::game::display_refresh::GraphicsAsset::VramWords(source, destination, bytes)
             .load(self)
     }
-    fn file_select_fade(&mut self) -> u8 {
-        sm_game::palette_effects::fading::file_select(self)
-    }
     fn boss_byte(&mut self, area: u16) -> u8 {
         crate::game::gameplay_flag_runtime::boss_byte_at(area, self)
     }
@@ -332,10 +329,6 @@ impl sm_game::cinematic_host::Host for Game {
 
     fn initialize_player(&mut self) {
         crate::game::session_runtime::initialize_player(self);
-    }
-
-    fn use_cinematic_bindings(&mut self) {
-        sm_game::menus::controller_input::use_cinematic_bindings(self);
     }
 
     fn disable_scanline_irq(&mut self) {

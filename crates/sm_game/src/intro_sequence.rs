@@ -184,7 +184,7 @@ pub fn initial<H: Host + ?Sized>(game: &mut H) {
     inventory::set(game, Word::Missiles, INTRO_MISSILES);
     word!(game.INTRO_SAMUS_DISPLAY = 0);
     word!(game.SAMUS_DRAW_HANDLER = DEFAULT_DRAW_HANDLER);
-    game.use_cinematic_bindings();
+    crate::menus::controller_input::use_cinematic_bindings(game);
     game.set_invincibility_timer(0);
     game.set_knockback_timer(0);
     clear_cinematic_objects(game);
