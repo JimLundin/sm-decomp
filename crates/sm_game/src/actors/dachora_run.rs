@@ -128,8 +128,7 @@ pub fn initialize<L: Lease>(game: &mut L) {
         game,
         Dachora[me].base.spritemap_pointer = list::NOTHING_SPRITEMAP
     );
-    session_slot!(game, Dachora[me].base.instruction_timer = 1);
-    session_slot!(game, Dachora[me].base.timer = 0);
+    session_slot!(game, Dachora[me].base; instruction_timer = 1, timer = 0);
     let kind: i16 = session_slot!(game, Dachora[me].facing_right) as i16;
     if kind < 0 {
         if (kind as u16 & 1) != 0 {
@@ -184,8 +183,7 @@ pub fn wait_for_samus<L: Lease>(game: &mut L, k: u16) {
             );
         }
         session_slot!(game, Dachora[me].base.instruction_timer = 1);
-        session_slot!(game, Dachora[me].function = function::START_RUNNING);
-        session_slot!(game, Dachora[me].speed = BLINK_FRAMES);
+        session_slot!(game, Dachora[me]; function = function::START_RUNNING, speed = BLINK_FRAMES);
         game.queue_sound(1, BLINK_SOUND, 15);
     }
 }
@@ -257,8 +255,8 @@ pub fn running_right<L: Lease>(game: &mut L, k: u16) {
                 game,
                 Dachora[me].base.current_instruction = list::CHARGE_SHINESPARK_FACING_RIGHT
             );
-            session_slot!(game, Dachora[me].function = function::ACTIVATE_SHINESPARK);
-            session_slot!(game, Dachora[me].speed = CHARGE_FRAMES);
+            session_slot!(game, Dachora[me]; function = function::ACTIVATE_SHINESPARK,
+                speed = CHARGE_FRAMES);
             session_slot!(
                 game,
                 Dachora[me].base.y_pos =
@@ -432,8 +430,7 @@ fn accelerate<L: Lease>(game: &mut L, k: u16) -> i32 {
     if !below(session_slot!(game, Dachora[me].speed), TOP_SPEED)
         && (session_slot!(game, Dachora[me].subspeed) as i16) >= 0
     {
-        session_slot!(game, Dachora[me].speed = TOP_SPEED);
-        session_slot!(game, Dachora[me].subspeed = 0);
+        session_slot!(game, Dachora[me]; speed = TOP_SPEED, subspeed = 0);
         return ((TOP_SPEED as u32) << 16) as i32;
     }
     session_slot!(game, Dachora[me](speed, subspeed) += RUN_ACCELERATION);

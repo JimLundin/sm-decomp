@@ -120,13 +120,11 @@ fn sound_near_samus<L: Lease>(game: &mut L, sound: u8) {
 }
 
 fn set_hop<L: Lease>(game: &mut L, me: i32) {
-    session_slot!(game, Etecoon[me].y_speed = HOP_SPEED);
-    session_slot!(game, Etecoon[me].y_subspeed = 0);
+    session_slot!(game, Etecoon[me]; y_speed = HOP_SPEED, y_subspeed = 0);
 }
 
 fn set_run<L: Lease>(game: &mut L, me: i32, speed: u16) {
-    session_slot!(game, Etecoon[me].x_speed = speed);
-    session_slot!(game, Etecoon[me].x_subspeed = 0);
+    session_slot!(game, Etecoon[me]; x_speed = speed, x_subspeed = 0);
 }
 
 /// Freezes the etecoon for 128 frames while a quake shakes the room. Was
@@ -180,11 +178,9 @@ pub fn initialize<L: Lease>(game: &mut L) {
         game,
         Etecoon[me].base.spritemap_pointer = list::NOTHING_SPRITEMAP
     );
-    session_slot!(game, Etecoon[me].base.instruction_timer = 1);
-    session_slot!(game, Etecoon[me].base.timer = 0);
-    session_slot!(game, Etecoon[me].base.current_instruction = list::INITIAL);
-    session_slot!(game, Etecoon[me].function = function::INITIAL);
-    session_slot!(game, Etecoon[me].timer = 0xffff);
+    session_slot!(game, Etecoon[me].base; instruction_timer = 1, timer = 0,
+        current_instruction = list::INITIAL);
+    session_slot!(game, Etecoon[me]; function = function::INITIAL, timer = 0xffff);
 }
 
 /// Main AI: count down a quake freeze, else run the function. Was
@@ -210,8 +206,7 @@ pub fn initial<L: Lease>(game: &mut L, k: u16) {
                     game,
                     Etecoon[me].base.current_instruction = list::HOPPING_FACING_LEFT
                 );
-                session_slot!(game, Etecoon[me].function = function::START_HOP_BOTTOM);
-                session_slot!(game, Etecoon[me].timer = 11);
+                session_slot!(game, Etecoon[me]; function = function::START_HOP_BOTTOM, timer = 11);
             }
         } else if game.player_within(k, Axis::Y, 0x80) {
             if (session_slot!(game, Etecoon[me].route) & 3) == 0 {
@@ -268,8 +263,7 @@ pub fn hopping_bottom<L: Lease>(game: &mut L, k: u16) {
                 session_slot!(game, Etecoon[me].base.instruction_timer = 1);
                 session_slot!(game, Etecoon[me].function = function::LOOK_AT_SAMUS);
             } else {
-                session_slot!(game, Etecoon[me].timer = 11);
-                session_slot!(game, Etecoon[me].function = function::START_HOP_BOTTOM);
+                session_slot!(game, Etecoon[me]; timer = 11, function = function::START_HOP_BOTTOM);
                 session_slot!(game, Etecoon[me].base; instruction_timer = 1, current_instruction = list::HOPPING_FACING_LEFT);
             }
         } else {
@@ -342,8 +336,7 @@ pub fn jumping<L: Lease>(game: &mut L, k: u16) {
             session_slot!(game, Etecoon[me].facing = 1);
         }
         session_slot!(game, Etecoon[me].base.instruction_timer = 1);
-        session_slot!(game, Etecoon[me].function = function::WALL_JUMP);
-        session_slot!(game, Etecoon[me].timer = 8);
+        session_slot!(game, Etecoon[me]; function = function::WALL_JUMP, timer = 8);
         sound_near_samus(game, WALL_JUMP_SOUND);
     } else if move_vertically(game, k) {
         let me = k as i32;
@@ -436,8 +429,7 @@ fn hop_at_centre_run_up<L: Lease>(game: &mut L, me: i32) {
 }
 
 fn start_top_hops<L: Lease>(game: &mut L, me: i32) {
-    session_slot!(game, Etecoon[me].timer = 11);
-    session_slot!(game, Etecoon[me].function = function::START_HOP_TOP);
+    session_slot!(game, Etecoon[me]; timer = 11, function = function::START_HOP_TOP);
     session_slot!(game, Etecoon[me].base; instruction_timer = 1, current_instruction = list::HOPPING_FACING_LEFT);
 }
 
@@ -465,9 +457,8 @@ pub fn running_for_tunnel_jump<L: Lease>(game: &mut L, k: u16) {
     move_horizontally(game, k);
     let me = k as i32;
     if !below(session_slot!(game, Etecoon[me].base.x_pos), RIGHT_RUN_UP_X) {
-        session_slot!(game, Etecoon[me].function = function::TUNNEL_JUMP);
-        session_slot!(game, Etecoon[me].y_speed = TUNNEL_JUMP_SPEED);
-        session_slot!(game, Etecoon[me].y_subspeed = 0);
+        session_slot!(game, Etecoon[me]; function = function::TUNNEL_JUMP,
+            y_speed = TUNNEL_JUMP_SPEED, y_subspeed = 0);
         session_slot!(game, Etecoon[me].base; instruction_timer = 1, current_instruction = list::JUMPING_RIGHT);
     }
 }
@@ -496,8 +487,7 @@ pub fn running_through_tunnel<L: Lease>(game: &mut L, k: u16) {
             game,
             Etecoon[me].function = function::FALLING_FROM_TUNNEL_LEDGE
         );
-        session_slot!(game, Etecoon[me].y_speed = 0xffff);
-        session_slot!(game, Etecoon[me].y_subspeed = 0);
+        session_slot!(game, Etecoon[me]; y_speed = 0xffff, y_subspeed = 0);
     }
 }
 

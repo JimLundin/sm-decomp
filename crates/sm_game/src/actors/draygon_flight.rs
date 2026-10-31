@@ -460,8 +460,8 @@ pub fn set_instruction_lists<S: BossState>(script: EnemyScript, game: &mut S) ->
 /// Instruction - displace Draygon body graphics [[Y]] px left, [[Y] + 2] px
 /// down ($A5:9E0A). Was `layer_offsets`.
 pub fn displace_graphics<S: BossState>(script: EnemyScript, game: &mut S) -> EnemyScript {
-    session_slot!(game, Draygon[BODY].graphics_x_displacement = script.word(0));
-    session_slot!(game, Draygon[BODY].graphics_y_displacement = script.word(2));
+    session_slot!(game, Draygon[BODY]; graphics_x_displacement = script.word(0),
+        graphics_y_displacement = script.word(2));
     script.offset(2)
 }
 /// Instruction - paralyse Draygon tail and arms ($A5:98D3). Was `hide_parts`.

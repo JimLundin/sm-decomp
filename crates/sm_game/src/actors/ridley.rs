@@ -820,8 +820,7 @@ pub fn liftoff<L: Lease + ?Sized>(game: &mut L) {
     };
     accelerate(0, 14, rect.x, rect.y, game);
     if !separated_from_rect(0, rect, game) {
-        session_slot!(game, Ridley[RIDLEY].fight_mode = 1);
-        session_slot!(game, Ridley[RIDLEY].function = function::DECIDE_ACTION);
+        session_slot!(game, Ridley[RIDLEY]; fight_mode = 1, function = function::DECIDE_ACTION);
         decide_action(game);
     }
 }
@@ -905,8 +904,7 @@ pub fn swoop<L: Lease + ?Sized>(game: &mut L) {
         game,
         Ridley[RIDLEY].function = function::SWOOP_MOVE_TO_POSITION
     );
-    session_slot!(game, Ridley[RIDLEY].timer = 10);
-    session_slot!(game, Ridley[RIDLEY].swoop_angle = 0);
+    session_slot!(game, Ridley[RIDLEY]; timer = 10, swoop_angle = 0);
     swoop_move_to_position(game);
 }
 
@@ -925,9 +923,8 @@ pub fn swoop_move_to_position<L: Lease + ?Sized>(game: &mut L) {
     };
     accelerate(0, 1, rect.x, rect.y, game);
     if !separated_from_rect(0, rect, game) {
-        session_slot!(game, Ridley[RIDLEY].function = function::SWOOP_AIMING_DOWN);
-        session_slot!(game, Ridley[RIDLEY].timer = 32);
-        session_slot!(game, Ridley[RIDLEY].swoop_angle = 0);
+        session_slot!(game, Ridley[RIDLEY]; function = function::SWOOP_AIMING_DOWN, timer = 32,
+            swoop_angle = 0);
     }
 }
 
@@ -974,8 +971,7 @@ pub fn swoop_aiming_down<L: Lease + ?Sized>(game: &mut L) {
 /// `Ridley_Func_10`.
 pub fn swoop_aiming_horizontal<L: Lease + ?Sized>(game: &mut L) {
     if swoop_stage(game, 320, 0x4000, 1280) {
-        session_slot!(game, Ridley[RIDLEY].function = function::SWOOP_AIMING_UP);
-        session_slot!(game, Ridley[RIDLEY].timer = 16);
+        session_slot!(game, Ridley[RIDLEY]; function = function::SWOOP_AIMING_UP, timer = 16);
         word!(game.TILEMAP_STUFF[tail::WHIP_REQUEST] = 1);
     }
 }
@@ -996,8 +992,7 @@ pub fn swoop_aiming_up<L: Lease + ?Sized>(game: &mut L) {
 /// `Ridley_Func_12`.
 pub fn swoop_aiming_up_faster<L: Lease + ?Sized>(game: &mut L) {
     if swoop_stage(game, 1024, 30720, 768) {
-        session_slot!(game, Ridley[RIDLEY].function = function::SWOOP_DECELERATE);
-        session_slot!(game, Ridley[RIDLEY].timer = 32);
+        session_slot!(game, Ridley[RIDLEY]; function = function::SWOOP_DECELERATE, timer = 32);
         face_room_middle(game);
     }
 }
@@ -1054,8 +1049,7 @@ fn hover_movement<L: Lease + ?Sized>(game: &mut L, x: u16, timeout: u16) {
     if hover_towards(x, game) {
         set_up_pogo_from_hover(game);
     } else if timer_expired(game) {
-        session_slot!(game, Ridley[RIDLEY].function = timeout);
-        session_slot!(game, Ridley[RIDLEY].function_timer = 128);
+        session_slot!(game, Ridley[RIDLEY]; function = timeout, function_timer = 128);
         face_room_middle(game);
     }
 }
@@ -1170,8 +1164,8 @@ pub fn pogo_descending<L: Lease + ?Sized>(game: &mut L) {
             }
             bounces = 0;
         }
-        session_slot!(game, Ridley[RIDLEY].pogo_bounces = bounces);
-        session_slot!(game, Ridley[RIDLEY].function = function::POGO_ASCENDING);
+        session_slot!(game, Ridley[RIDLEY]; pogo_bounces = bounces,
+            function = function::POGO_ASCENDING);
     }
 }
 
@@ -1198,8 +1192,8 @@ pub fn pogo_ascending<L: Lease + ?Sized>(game: &mut L) {
                 word!(game.TILEMAP_STUFF[tail::POGO_UP_ACCELERATION]).wrapping_add(y_velocity)
         );
         if !rising {
-            session_slot!(game, Ridley[RIDLEY].y_velocity = 0);
-            session_slot!(game, Ridley[RIDLEY].function = function::POGO_DESCENDING);
+            session_slot!(game, Ridley[RIDLEY]; y_velocity = 0,
+                function = function::POGO_DESCENDING);
         }
     }
 }
@@ -1661,8 +1655,8 @@ pub fn fake_retreat_rising<L: Lease + ?Sized>(game: &mut L) {
             game,
             Ridley[RIDLEY].baby_metroid_function = baby_metroid_function::START_FALLING
         );
-        session_slot!(game, Ridley[RIDLEY].function = function::DROP_BABY_METROID);
-        session_slot!(game, Ridley[RIDLEY].function_timer = 21);
+        session_slot!(game, Ridley[RIDLEY]; function = function::DROP_BABY_METROID,
+            function_timer = 21);
     }
 }
 
@@ -1948,8 +1942,7 @@ pub fn start_falling_apart<L: Lease + ?Sized>(game: &mut L) {
     session_slot!(game, Ridley[RIDLEY].movement_enabled = 0);
     session_slot!(game, Ridley[RIDLEY].base.properties, |old| old
         | K_ENEMY_PROPS_INVISIBLE as u16);
-    session_slot!(game, Ridley[RIDLEY].function = function::FALLING_APART);
-    session_slot!(game, Ridley[RIDLEY].function_timer = 32);
+    session_slot!(game, Ridley[RIDLEY]; function = function::FALLING_APART, function_timer = 32);
 }
 
 /// Ridley function - death sequence - falling apart ($A6:C5C8). Was
@@ -2039,8 +2032,7 @@ pub fn explosion_init<L: Lease + ?Sized>(game: &mut L) {
     } else {
         random as i32 & 0x130
     };
-    session_slot!(game, Explosion[e].x_velocity = drift as u16);
-    session_slot!(game, Explosion[e].y_velocity = 0);
+    session_slot!(game, Explosion[e]; x_velocity = drift as u16, y_velocity = 0);
     match part {
         0 | 2 | 4 | 6 | 8 | 10 => {
             // Ridley explosion initialisation - index = 0..Ah (tail segments 0..5).
@@ -3238,8 +3230,7 @@ pub fn wings_animation_timer<S: State + ?Sized>(game: &mut S) {
 
 /// Initialise Ridley ribs animation ($A6:D9FD). Was `Ridley_Func_117`.
 pub fn initialise_ribs<L: Lease + ?Sized>(game: &mut L) {
-    session_slot!(game, Ridley[RIDLEY].ribs_pointer = RIBS_ANIMATION);
-    session_slot!(game, Ridley[RIDLEY].ribs_timer = 1);
+    session_slot!(game, Ridley[RIDLEY]; ribs_pointer = RIBS_ANIMATION, ribs_timer = 1);
 }
 
 /// Handle Ridley ribs animation ($A6:DA0C): when the timer runs out, follow
@@ -3366,8 +3357,8 @@ pub fn baby_metroid_spritemap<L: Lease + ?Sized>(game: &mut L) -> Option<u16> {
             instruction = true;
         }
     }
-    session_slot!(game, Ridley[RIDLEY].baby_metroid_instruction_timer = 1);
-    session_slot!(game, Ridley[RIDLEY].baby_metroid_instruction = cursor);
+    session_slot!(game, Ridley[RIDLEY]; baby_metroid_instruction_timer = 1,
+        baby_metroid_instruction = cursor);
     Some(entry.word(2))
 }
 
@@ -3754,7 +3745,6 @@ pub fn start_ceres_liftoff<L: Lease + ?Sized>(script: EnemyScript, game: &mut L)
 /// Instruction - start liftoff - Norfair Ridley ($A6:E976). Was
 /// `Ridley_Instr_16`.
 pub fn start_norfair_liftoff<L: Lease + ?Sized>(script: EnemyScript, game: &mut L) -> EnemyScript {
-    session_slot!(game, Ridley[RIDLEY].function = function::LIFTOFF);
-    session_slot!(game, Ridley[RIDLEY].y_velocity = -352i32 as u16);
+    session_slot!(game, Ridley[RIDLEY]; function = function::LIFTOFF, y_velocity = -352i32 as u16);
     script
 }

@@ -244,8 +244,7 @@ fn animate_baby<H: crate::menus::host::Host + ?Sized>(game: &mut H, invalid: imp
 }
 
 fn start_baby<H: crate::menus::host::Host + ?Sized>(cursor: u16, timer: u16, game: &mut H) -> u16 {
-    slot!(game, EnemyBase[0].current_instruction = cursor);
-    slot!(game, EnemyBase[0].instruction_timer = timer);
+    slot!(game, EnemyBase[0]; current_instruction = cursor, instruction_timer = timer);
     timer
 }
 

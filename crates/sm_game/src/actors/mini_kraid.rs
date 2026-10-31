@@ -109,23 +109,19 @@ fn face_samus<H: Host + ?Sized>(game: &mut H, me: i32) {
 pub fn initialize<H: Host + ?Sized>(game: &mut H) {
     let mut steps: u16 = ((word!(game.RANDOM_NUMBER) as i32 & 3) + 2) as u16;
     let me = current(game);
-    slot!(game, MiniKraid[me].steps_until_turn = steps);
-    slot!(game, MiniKraid[me].cycles_until_spit = steps);
+    slot!(game, MiniKraid[me]; steps_until_turn = steps, cycles_until_spit = steps);
     steps = steps.wrapping_add(64);
     slot!(game, MiniKraid[me].spike_timer = steps);
     steps = steps.wrapping_add(32);
-    slot!(game, MiniKraid[me].spike_timer_1 = steps);
-    slot!(game, MiniKraid[me].spike_timer_2 = steps.wrapping_sub(48));
-    slot!(game, MiniKraid[me].spike_cycle = 0);
+    slot!(game, MiniKraid[me]; spike_timer_1 = steps, spike_timer_2 = steps.wrapping_sub(48),
+        spike_cycle = 0);
     slot!(
         game,
         MiniKraid[me].base.properties = (slot!(game, MiniKraid[me].base.properties))
             | (K_ENEMY_PROPS_DISABLE_SAMUS_COLL as u16)
     );
-    slot!(game, MiniKraid[me].base.instruction_timer = 1);
-    slot!(game, MiniKraid[me].base.timer = 0);
-    slot!(game, MiniKraid[me].walk_speed = FACING_LEFT);
-    slot!(game, MiniKraid[me].facing = FACING_LEFT);
+    slot!(game, MiniKraid[me].base; instruction_timer = 1, timer = 0);
+    slot!(game, MiniKraid[me]; walk_speed = FACING_LEFT, facing = FACING_LEFT);
     let mut walk = animation::WALK_FORWARD_LEFT;
     if ((slot!(game, MiniKraid[me].base.x_pos)) as i16).wrapping_sub((game.player_x()) as i16) < 0 {
         slot!(game, MiniKraid[me]; walk_speed = FACING_RIGHT, facing = FACING_RIGHT);

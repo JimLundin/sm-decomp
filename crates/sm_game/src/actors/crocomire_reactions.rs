@@ -867,8 +867,7 @@ pub fn behind_wall_no_more_rumbling<L: Lease + ?Sized>(game: &mut L) {
             word!(game.CROCO_MELT_ERASE_TARGET = ((v3) as u16).wrapping_add(2));
         }
     } else {
-        session_slot!(game, Crocomire[e].base.x_pos = 480);
-        session_slot!(game, Crocomire[e].base.y_pos = 54);
+        session_slot!(game, Crocomire[e].base; x_pos = 480, y_pos = 54);
         session_slot!(game, Crocomire[0x80i32].step_counter = 80);
         session_slot!(game, Crocomire[e]; y_velocity = 0, projectile_counter = 0);
         game.foreign(|game| {

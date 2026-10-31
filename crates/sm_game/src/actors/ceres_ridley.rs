@@ -140,8 +140,7 @@ pub fn init<L: Lease + ?Sized>(game: &mut L) {
         | K_ENEMY_PROPS_BLOCK_PLASMA_BEAM as u16
         | K_ENEMY_PROPS_TANGIBLE as u16);
     if game.area() == NORFAIR {
-        session_slot!(game, Ridley[RIDLEY].base.x_pos = 96);
-        session_slot!(game, Ridley[RIDLEY].base.y_pos = 394);
+        session_slot!(game, Ridley[RIDLEY].base; x_pos = 96, y_pos = 394);
         session_slot!(game, Ridley[RIDLEY].function = ceres_function::INITIAL);
         session_slot!(game, Ridley[RIDLEY]; x_velocity = 0, y_velocity = 0);
         session_slot!(game, Ridley[RIDLEY].base.layer = 5);
@@ -155,18 +154,14 @@ pub fn init<L: Lease + ?Sized>(game: &mut L) {
             le(TARGET_PALETTES, 241) <- value(0),
         );
     } else {
-        session_slot!(game, Ridley[RIDLEY].base.x_pos = 186);
-        session_slot!(game, Ridley[RIDLEY].base.y_pos = 169);
+        session_slot!(game, Ridley[RIDLEY].base; x_pos = 186, y_pos = 169);
         word!(game.CERES_STATUS = 0);
         session_slot!(game, Ridley[RIDLEY]; facing = ridley::FACING_LEFT, movement_enabled = 0);
         word!(game.TILEMAP_STUFF[tail::IDLE_WHIP] = 1);
-        session_slot!(game, Ridley[RIDLEY].tail_damage = 15);
-        session_slot!(game, Ridley[RIDLEY].function = ceres_function::INITIAL);
+        session_slot!(game, Ridley[RIDLEY]; tail_damage = 15, function = ceres_function::INITIAL);
         session_slot!(game, Ridley[RIDLEY]; x_velocity = 0, y_velocity = 0);
-        session_slot!(game, Ridley[RIDLEY].min_y = -32i32 as u16);
-        session_slot!(game, Ridley[RIDLEY].max_y = 176);
-        session_slot!(game, Ridley[RIDLEY].min_x = 40);
-        session_slot!(game, Ridley[RIDLEY].max_x = 224);
+        session_slot!(game, Ridley[RIDLEY]; min_y = -32i32 as u16, max_y = 176, min_x = 40,
+            max_x = 224);
         game.foreign(|game| {
             copy_rom_colors_to_target_palette(0xa6, 0x140, ceres_data::CERES_PALETTES, 0x20, game)
         });
@@ -331,9 +326,8 @@ pub fn fade_in_eye<L: Lease + ?Sized>(game: &mut L) {
         .native_image()
         .read(lorom_offset(EYE_FADE_STEPS) as usize + usize::from(index));
     if step == 0xff {
-        session_slot!(game, Ridley[RIDLEY].fade_index = 0);
-        session_slot!(game, Ridley[RIDLEY].function = ceres_function::FADE_IN_BODY);
-        session_slot!(game, Ridley[RIDLEY].movement_enabled = 1);
+        session_slot!(game, Ridley[RIDLEY]; fade_index = 0, function = ceres_function::FADE_IN_BODY,
+            movement_enabled = 1);
     } else {
         session_slot!(game, Ridley[RIDLEY].fade_index = index.wrapping_add(1));
         let colour = 3 * isize::from(step);
@@ -371,9 +365,8 @@ pub fn fade_in_body<L: Lease + ?Sized>(game: &mut L) {
         }
         session_slot!(game, Ridley[RIDLEY].base.properties, |old| old
             & !(K_ENEMY_PROPS_TANGIBLE as u16));
-        session_slot!(game, Ridley[RIDLEY].fade_index = 0);
-        session_slot!(game, Ridley[RIDLEY].function = ceres_function::WAIT_TO_ROAR);
-        session_slot!(game, Ridley[RIDLEY].function_timer = 4);
+        session_slot!(game, Ridley[RIDLEY]; fade_index = 0, function = ceres_function::WAIT_TO_ROAR,
+            function_timer = 4);
         game.foreign(|game| game.queue_music_delayed(5));
     } else {
         session_slot!(game, Ridley[RIDLEY].fade_index = index);
@@ -451,8 +444,7 @@ pub fn liftoff_accelerating<L: Lease + ?Sized>(game: &mut L) {
 pub fn liftoff_decelerating<L: Lease + ?Sized>(game: &mut L) {
     session_slot!(game, Ridley[RIDLEY].y_velocity, |old| old.wrapping_add(20));
     if below(session_slot!(game, Ridley[RIDLEY].base.y_pos), 80) {
-        session_slot!(game, Ridley[RIDLEY].function = ceres_function::HOVERING);
-        session_slot!(game, Ridley[RIDLEY].fight_mode = 1);
+        session_slot!(game, Ridley[RIDLEY]; function = ceres_function::HOVERING, fight_mode = 1);
     }
 }
 
@@ -481,8 +473,7 @@ pub fn hovering<L: Lease + ?Sized>(game: &mut L) {
     } {
         let attack =
             crate::ceres_ridley_tables::attack(game, (word!(game.RANDOM_NUMBER) & 0xf) as isize);
-        session_slot!(game, Ridley[RIDLEY].function = attack);
-        session_slot!(game, Ridley[RIDLEY].timer = 0);
+        session_slot!(game, Ridley[RIDLEY]; function = attack, timer = 0);
     }
 }
 
@@ -555,16 +546,14 @@ pub fn fireballs_shooting<L: Lease + ?Sized>(game: &mut L) {
     let timer = (session_slot!(game, Ridley[RIDLEY].timer) as i16).wrapping_sub(1);
     session_slot!(game, Ridley[RIDLEY].timer = timer as u16);
     if timer < 0 {
-        session_slot!(game, Ridley[RIDLEY].timer = 0);
-        session_slot!(game, Ridley[RIDLEY].function = ceres_function::HOVERING);
+        session_slot!(game, Ridley[RIDLEY]; timer = 0, function = ceres_function::HOVERING);
     }
 }
 
 /// Ridley function - lunge - setup ($A6:A83C). Was `CeresRidley_Func_14`.
 pub fn lunge_setup<L: Lease + ?Sized>(game: &mut L) {
     ridley::set_instruction_list(ceres_instruction_list::LUNGE, game);
-    session_slot!(game, Ridley[RIDLEY].function = ceres_function::LUNGE);
-    session_slot!(game, Ridley[RIDLEY].function_timer = 64);
+    session_slot!(game, Ridley[RIDLEY]; function = ceres_function::LUNGE, function_timer = 64);
     lunge(game);
 }
 
@@ -587,8 +576,7 @@ pub fn lunge<L: Lease + ?Sized>(game: &mut L) {
         });
         expired
     } {
-        session_slot!(game, Ridley[RIDLEY].timer = 0);
-        session_slot!(game, Ridley[RIDLEY].function = ceres_function::HOVERING);
+        session_slot!(game, Ridley[RIDLEY]; timer = 0, function = ceres_function::HOVERING);
     }
 }
 
@@ -599,8 +587,7 @@ pub fn swoop_setup<L: Lease + ?Sized>(game: &mut L) {
         game,
         Ridley[RIDLEY].function = ceres_function::SWOOP_MOVE_TO_POSITION
     );
-    session_slot!(game, Ridley[RIDLEY].function_timer = 10);
-    session_slot!(game, Ridley[RIDLEY].swoop_angle = 0);
+    session_slot!(game, Ridley[RIDLEY]; function_timer = 10, swoop_angle = 0);
     word!(game.TILEMAP_STUFF[tail::IDLE_WHIP] = 0);
     swoop_move_to_position(game);
 }
@@ -614,8 +601,7 @@ pub fn swoop_move_to_position<L: Lease + ?Sized>(game: &mut L) {
             game,
             Ridley[RIDLEY].function = ceres_function::SWOOP_AIMING_DOWN
         );
-        session_slot!(game, Ridley[RIDLEY].function_timer = 10);
-        session_slot!(game, Ridley[RIDLEY].swoop_angle = 0);
+        session_slot!(game, Ridley[RIDLEY]; function_timer = 10, swoop_angle = 0);
     }
 }
 
@@ -630,8 +616,7 @@ fn swoop_stage<L: Lease + ?Sized>(
 ) -> bool {
     ridley::calculate_swoop_velocities(angle_step as u16, target_angle as u16, 768, game);
     if timer_expired(game) {
-        session_slot!(game, Ridley[RIDLEY].function = next);
-        session_slot!(game, Ridley[RIDLEY].function_timer = frames);
+        session_slot!(game, Ridley[RIDLEY]; function = next, function_timer = frames);
         return true;
     }
     false
@@ -668,8 +653,7 @@ pub fn swoop_aiming_up<L: Lease + ?Sized>(game: &mut L) {
 pub fn swoop_aiming_up_faster<L: Lease + ?Sized>(game: &mut L) {
     ridley::calculate_swoop_velocities(-768i32 as u16, -30720i32 as u16, 768, game);
     if timer_expired(game) {
-        session_slot!(game, Ridley[RIDLEY].function = ceres_function::HOVERING);
-        session_slot!(game, Ridley[RIDLEY].timer = 0);
+        session_slot!(game, Ridley[RIDLEY]; function = ceres_function::HOVERING, timer = 0);
         word!(game.TILEMAP_STUFF[tail::IDLE_WHIP] = 1);
     }
 }
@@ -749,13 +733,11 @@ pub fn set_up_mode7<L: Lease + ?Sized>(game: &mut L) {
     word! { game, 256; REG_M7A, REG_M7B, REG_M7C, REG_M7D }
     word! { game, 64; REG_M7X, REG_M7Y }
     session_slot!(game, Ridley[RIDLEY]; getaway_finished = 0, getaway_index = 0);
-    session_slot!(game, Ridley[RIDLEY].swoop_angle = 1);
-    session_slot!(game, Ridley[RIDLEY].mode7_x = -128i32 as u16);
+    session_slot!(game, Ridley[RIDLEY]; swoop_angle = 1, mode7_x = -128i32 as u16);
     scroll!(game.Bg1H = -128i32 as u16);
     session_slot!(game, Ridley[RIDLEY].mode7_y = 32);
     scroll!(game.Bg1V = 32);
-    session_slot!(game, Ridley[RIDLEY].mode7_zoom = 2048);
-    session_slot!(game, Ridley[RIDLEY].unread_8022 = 1024);
+    session_slot!(game, Ridley[RIDLEY]; mode7_zoom = 2048, unread_8022 = 1024);
 }
 
 /// Handle Ceres Ridley getaway cutscene if active ($A6:AAAF). Was

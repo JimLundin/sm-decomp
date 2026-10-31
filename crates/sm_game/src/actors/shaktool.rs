@@ -273,10 +273,8 @@ pub fn main_ai<L: Lease>(game: &mut L) {
 /// placed from the previous piece. Was `Shaktool_Init`.
 pub fn initialize<L: Lease>(game: &mut L) {
     let piece = i32::from(game.current_enemy());
-    session_slot!(game, Piece[piece].base.instruction_timer = 1);
-    session_slot!(game, Piece[piece].base.timer = 0);
-    session_slot!(game, Piece[piece].facing_angle = 0);
-    session_slot!(game, Piece[piece].direction = 0);
+    session_slot!(game, Piece[piece].base; instruction_timer = 1, timer = 0);
+    session_slot!(game, Piece[piece]; facing_angle = 0, direction = 0);
     let offset: u16 = session_slot!(game, Piece[piece].piece_index);
     let data = crate::shaktool_tables::piece(game, (offset as i32 >> 1) as isize);
     session_slot!(
@@ -448,8 +446,7 @@ pub fn final_piece<L: Lease>(mut k: u16, game: &mut L) {
     arm_piece(k, game);
     let target_y: u16 = session_slot!(game, Piece[piece].base.y_pos);
     let target_x: u16 = session_slot!(game, Piece[piece].base.x_pos);
-    session_slot!(game, Piece[piece].base.x_pos = x);
-    session_slot!(game, Piece[piece].base.y_pos = y);
+    session_slot!(game, Piece[piece].base; x_pos = x, y_pos = y);
     if game.move_horizontal(
         k,
         (((target_x as i16).wrapping_sub(x as i16)) as i32) << 16,
@@ -465,8 +462,7 @@ pub fn final_piece<L: Lease>(mut k: u16, game: &mut L) {
                 game,
             );
         } else {
-            session_slot!(game, Piece[piece].base.x_pos = x);
-            session_slot!(game, Piece[piece].base.y_pos = y);
+            session_slot!(game, Piece[piece].base; x_pos = x, y_pos = y);
             flip(k, game);
             set_movement_options(
                 game.current_enemy(),
@@ -503,8 +499,7 @@ pub fn final_piece<L: Lease>(mut k: u16, game: &mut L) {
             k = k.wrapping_sub(PIECE as u16);
         }
     } else {
-        session_slot!(game, Piece[piece].base.x_pos = target_x);
-        session_slot!(game, Piece[piece].base.y_pos = target_y);
+        session_slot!(game, Piece[piece].base; x_pos = target_x, y_pos = target_y);
         if (session_slot!(game, Piece[piece].movement_options) & CURLED) != 0 {
             session_slot!(
                 game,

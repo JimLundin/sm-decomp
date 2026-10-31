@@ -220,8 +220,8 @@ crate::dispatch::callback_dispatch! {
         let e: i32 = k as i32;
         session_slot!(game, BabyMetroidInCutscene[e].function_timer, |old| old.wrapping_sub(1));
         if (session_slot!(game, BabyMetroidInCutscene[e].function_timer) & 0x8000) != 0 {
-            session_slot!(game, BabyMetroidInCutscene[e].function = function::GET_RIGHT_UP_IN_MOTHER_BRAINS_FACE);
-            session_slot!(game, BabyMetroidInCutscene[e].function_timer = 9);
+            session_slot!(game, BabyMetroidInCutscene[e]; function = function::GET_RIGHT_UP_IN_MOTHER_BRAINS_FACE,
+                function_timer = 9);
         }
     };
     [11126801] get_in_mother_brains_face [] {
@@ -263,11 +263,11 @@ crate::dispatch::callback_dispatch! {
         {
             let e: i32 = k as i32;
             session_slot! { game, BabyMetroidInCutscene[e]; x_velocity = 0, y_velocity = 0 }
-            session_slot!(game, BabyMetroidInCutscene[e].base.x_pos = session_slot!(game, MotherBrainBrain[BRAIN].base.x_pos));
-            session_slot!(game, BabyMetroidInCutscene[e].base.y_pos = (session_slot!(game, MotherBrainBrain[BRAIN].base.y_pos)).wrapping_sub(24));
+            session_slot!(game, BabyMetroidInCutscene[e].base; x_pos = session_slot!(game, MotherBrainBrain[BRAIN].base.x_pos),
+                y_pos = (session_slot!(game, MotherBrainBrain[BRAIN].base.y_pos)).wrapping_sub(24));
             set_enemy_instruction_list(k, ADDR_K_BABY_METROID_ILIST_CFB8 as u16, game);
-            session_slot!(game, BabyMetroidInCutscene[e].function = function::WAIT_FOR_MOTHER_BRAIN_TO_TURN_TO_CORPSE);
-            session_slot!(game, BabyMetroidInCutscene[e].palette_handler_delay = 1);
+            session_slot!(game, BabyMetroidInCutscene[e]; function = function::WAIT_FOR_MOTHER_BRAIN_TO_TURN_TO_CORPSE,
+                palette_handler_delay = 1);
             let e0: i32 = 0;
             session_slot!(game, MotherBrainBody[e0].function = function::MOTHER_BRAIN_DRAINED_BY_BABY_METROID_TAKEN_ABACK);
             queue_sfx1_max6(sound::RAINBOW_BEAM, game);
@@ -276,13 +276,13 @@ crate::dispatch::callback_dispatch! {
     };
     [11127061] stop_draining [] {
         let e: i32 = k as i32;
-        session_slot!(game, BabyMetroidInCutscene[e].base.x_pos = session_slot!(game, MotherBrainBrain[BRAIN].base.x_pos));
-        session_slot!(game, BabyMetroidInCutscene[e].base.y_pos = (session_slot!(game, MotherBrainBrain[BRAIN].base.y_pos)).wrapping_sub(24));
+        session_slot!(game, BabyMetroidInCutscene[e].base; x_pos = session_slot!(game, MotherBrainBrain[BRAIN].base.x_pos),
+            y_pos = (session_slot!(game, MotherBrainBrain[BRAIN].base.y_pos)).wrapping_sub(24));
         session_slot!(game, BabyMetroidInCutscene[e].function_timer, |old| old.wrapping_sub(1));
         if (session_slot!(game, BabyMetroidInCutscene[e].function_timer) & 0x8000) != 0 {
             set_enemy_instruction_list(k, ADDR_K_BABY_METROID_ILIST_CFA2 as u16, game);
-            session_slot!(game, BabyMetroidInCutscene[e].palette_handler_delay = 10);
-            session_slot!(game, BabyMetroidInCutscene[e].function = function::LET_GO_AND_SPAWN_DUST_CLOUDS);
+            session_slot!(game, BabyMetroidInCutscene[e]; palette_handler_delay = 10,
+                function = function::LET_GO_AND_SPAWN_DUST_CLOUDS);
             session_slot! { game, BabyMetroidInCutscene[e]; function_timer = 32, x_velocity = 0, y_velocity = 0 }
         }
     };
@@ -292,8 +292,8 @@ crate::dispatch::callback_dispatch! {
         if crate::actors::baby_metroid::separated_from_rect(k, rect, game) == 0 {
             player_mother_brain(4, game);
             let e: i32 = k as i32;
-            session_slot!(game, BabyMetroidInCutscene[e].function = function::MOVE_TO_SAMUS);
-            session_slot!(game, BabyMetroidInCutscene[e].movement = ADDR_STRU_A9CA24 as u16);
+            session_slot!(game, BabyMetroidInCutscene[e]; function = function::MOVE_TO_SAMUS,
+                movement = ADDR_STRU_A9CA24 as u16);
         }
     };
     [11127398] latch_onto_samus [] {
@@ -379,10 +379,10 @@ crate::dispatch::callback_dispatch! {
             session_slot! { game, BabyMetroidInCutscene[e]; x_velocity = 0, y_velocity = 0 }
             session_slot!(game, MotherBrainBody[0i32].function = ADDR_LOCRET_A9C18D as u16);
             queue_music(music::STOP, game);
-            session_slot!(game, BabyMetroidInCutscene[e].function = function::BABY_METROID_TAKES_FATAL_BLOW);
-            session_slot!(game, BabyMetroidInCutscene[e].function_timer = 16);
-            session_slot!(game, BabyMetroidInCutscene[e].shake_origin_x = session_slot!(game, BabyMetroidInCutscene[e].base.x_pos));
-            session_slot!(game, BabyMetroidInCutscene[e].shake_origin_y = session_slot!(game, BabyMetroidInCutscene[e].base.y_pos));
+            session_slot!(game, BabyMetroidInCutscene[e]; function = function::BABY_METROID_TAKES_FATAL_BLOW,
+                function_timer = 16,
+                shake_origin_x = session_slot!(game, BabyMetroidInCutscene[e].base.x_pos),
+                shake_origin_y = session_slot!(game, BabyMetroidInCutscene[e].base.y_pos));
             take_fatal_blow(k, game);
         }
     };
@@ -391,10 +391,10 @@ crate::dispatch::callback_dispatch! {
         let e: i32 = k as i32;
         session_slot!(game, BabyMetroidInCutscene[e].function_timer, |old| old.wrapping_sub(1));
         if (session_slot!(game, BabyMetroidInCutscene[e].function_timer) & 0x8000) != 0 {
-            session_slot!(game, BabyMetroidInCutscene[e].base.x_pos = session_slot!(game, BabyMetroidInCutscene[e].shake_origin_x));
-            session_slot!(game, BabyMetroidInCutscene[e].base.y_pos = session_slot!(game, BabyMetroidInCutscene[e].shake_origin_y));
-            session_slot!(game, BabyMetroidInCutscene[e].function = function::PLAY_SAMUS_THEME);
-            session_slot!(game, BabyMetroidInCutscene[e].function_timer = 56);
+            session_slot!(game, BabyMetroidInCutscene[e].base; x_pos = session_slot!(game, BabyMetroidInCutscene[e].shake_origin_x),
+                y_pos = session_slot!(game, BabyMetroidInCutscene[e].shake_origin_y));
+            session_slot!(game, BabyMetroidInCutscene[e]; function = function::PLAY_SAMUS_THEME,
+                function_timer = 56);
             play_samus_theme(k, game);
         }
     };
@@ -404,8 +404,8 @@ crate::dispatch::callback_dispatch! {
         if (session_slot!(game, BabyMetroidInCutscene[e].function_timer) & 0x8000) != 0 {
             queue_music(music::SAMUS_THEME_DATA, game);
             queue_music(music::SONG_0, game);
-            session_slot!(game, BabyMetroidInCutscene[e].function = function::PREPARE_SAMUS_FOR_HYPER_BEAM_ACQUISITION);
-            session_slot!(game, BabyMetroidInCutscene[e].function_timer = 12);
+            session_slot!(game, BabyMetroidInCutscene[e]; function = function::PREPARE_SAMUS_FOR_HYPER_BEAM_ACQUISITION,
+                function_timer = 12);
             prepare_samus_for_hyper_beam_acquisition(k, game);
         }
     };
@@ -415,8 +415,8 @@ crate::dispatch::callback_dispatch! {
         if fade_to_black(k, game) & 1 != 0 {
             let e: i32 = k as i32;
             session_slot!(game, BabyMetroidInCutscene[e].base.properties = (session_slot!(game, BabyMetroidInCutscene[e].base.properties)) | ((K_ENEMY_PROPS_INVISIBLE) as u16));
-            session_slot!(game, BabyMetroidInCutscene[e].function = function::UNLOAD_BABY_METROID_TILES);
-            session_slot!(game, BabyMetroidInCutscene[e].function_timer = 128);
+            session_slot!(game, BabyMetroidInCutscene[e]; function = function::UNLOAD_BABY_METROID_TILES,
+                function_timer = 128);
         } else {
             handle_death_explosions(k, game);
             handle_enemy_blinking(k, game);
@@ -428,8 +428,8 @@ crate::dispatch::callback_dispatch! {
         session_slot!(game, BabyMetroidInCutscene[e].function_timer, |old| old.wrapping_sub(1));
         let v2: bool = (session_slot!(game, BabyMetroidInCutscene[e].function_timer) & 0x8000) != 0;
         if v2 && queue_mother_brain_sprite_tiles(BANK, ADDR_STRU_A98FC7 as u16, game) != 0 {
-            session_slot!(game, BabyMetroidInCutscene[e].function = function::LET_SAMUS_RAINBOW_SOME_MORE);
-            session_slot!(game, BabyMetroidInCutscene[e].function_timer = 176);
+            session_slot!(game, BabyMetroidInCutscene[e]; function = function::LET_SAMUS_RAINBOW_SOME_MORE,
+                function_timer = 176);
             let_samus_rainbow_some_more(k, game);
         }
     };
@@ -449,8 +449,8 @@ crate::dispatch::callback_dispatch! {
     @prefix { let e: i32 = k as i32; };
     [11127010] wait_for_brain_to_turn_to_corpse [] {
         let v2: i32 = (session_slot!(game, BabyMetroidInCutscene[e].base.frame_counter) as i32 & 6) >> 1;
-        session_slot!(game, BabyMetroidInCutscene[e].base.x_pos = (session_slot!(game, MotherBrainBrain[BRAIN].base.x_pos)).wrapping_add((SHAKE_X_OFFSETS[v2 as usize]) as u16));
-        session_slot!(game, BabyMetroidInCutscene[e].base.y_pos = (session_slot!(game, MotherBrainBrain[BRAIN].base.y_pos) as i32 + SHAKE_Y_OFFSETS[v2 as usize] as i32 - 24i32) as u16);
+        session_slot!(game, BabyMetroidInCutscene[e].base; x_pos = (session_slot!(game, MotherBrainBrain[BRAIN].base.x_pos)).wrapping_add((SHAKE_X_OFFSETS[v2 as usize]) as u16),
+            y_pos = (session_slot!(game, MotherBrainBrain[BRAIN].base.y_pos) as i32 + SHAKE_Y_OFFSETS[v2 as usize] as i32 - 24i32) as u16);
         if session_slot!(game, MotherBrainBody[0i32].corpse_state) != 0 {
             session_slot! { game, BabyMetroidInCutscene[e]; function = function::STOP_DRAINING, function_timer = 64 }
         }
@@ -492,12 +492,12 @@ crate::dispatch::callback_dispatch! {
         session_slot!(game, BabyMetroidInCutscene[e].cry_enabled = 0);
         handle_cry(game);
         let v2: i32 = (session_slot!(game, BabyMetroidInCutscene[e].base.frame_counter) as i32 & 6) >> 1;
-        session_slot!(game, BabyMetroidInCutscene[e].base.x_pos = (game.player_x()).wrapping_add((SHAKE_X_OFFSETS[v2 as usize]) as u16));
-        session_slot!(game, BabyMetroidInCutscene[e].base.y_pos = (game.player_y() as i32 + SHAKE_Y_OFFSETS[v2 as usize] as i32 - 20i32) as u16);
+        session_slot!(game, BabyMetroidInCutscene[e].base; x_pos = (game.player_x()).wrapping_add((SHAKE_X_OFFSETS[v2 as usize]) as u16),
+            y_pos = (game.player_y() as i32 + SHAKE_Y_OFFSETS[v2 as usize] as i32 - 20i32) as u16);
         if !game.foreign(|game| game.heal_by_baby_metroid()) {
             game.set_owned(OwnedWord::ReserveHealth, game.owned(OwnedWord::MaxReserveHealth));
-            session_slot!(game, BabyMetroidInCutscene[e].function = function::IDLE_UNTIL_RUN_OUT_OF_HEALTH);
-            session_slot!(game, BabyMetroidInCutscene[e].palette_function = function::PALETTE_NONE);
+            session_slot!(game, BabyMetroidInCutscene[e]; function = function::IDLE_UNTIL_RUN_OUT_OF_HEALTH,
+                palette_function = function::PALETTE_NONE);
         }
     };
     handle_death_explosions [] {
@@ -562,8 +562,8 @@ crate::dispatch::callback_dispatch! {
     shake [] {
         session_slot!(game, BabyMetroidInCutscene[e].y_velocity, |old| old.wrapping_sub(1));
         let v2: i32 = (session_slot!(game, BabyMetroidInCutscene[e].base.frame_counter) as i32 & 6) >> 1;
-        session_slot!(game, BabyMetroidInCutscene[e].base.x_pos = (session_slot!(game, BabyMetroidInCutscene[e].shake_origin_x)).wrapping_add((SHAKE_X_OFFSETS[v2 as usize]) as u16));
-        session_slot!(game, BabyMetroidInCutscene[e].base.y_pos = (session_slot!(game, BabyMetroidInCutscene[e].shake_origin_y)).wrapping_add((SHAKE_Y_OFFSETS[v2 as usize]) as u16));
+        session_slot!(game, BabyMetroidInCutscene[e].base; x_pos = (session_slot!(game, BabyMetroidInCutscene[e].shake_origin_x)).wrapping_add((SHAKE_X_OFFSETS[v2 as usize]) as u16),
+            y_pos = (session_slot!(game, BabyMetroidInCutscene[e].shake_origin_y)).wrapping_add((SHAKE_Y_OFFSETS[v2 as usize]) as u16));
     };
     @countdown [pub fn (k: u16, game: &mut impl Lease)];
     before {
@@ -573,8 +573,8 @@ crate::dispatch::callback_dispatch! {
     when (session_slot!(game, BabyMetroidInCutscene[e].function_timer) & 0x8000) != 0;
     [11126732] dash_onto_screen {
         session_slot! { game, BabyMetroidInCutscene[e]; angle = -10240i32 as u16, speed = 2560 }
-        session_slot!(game, BabyMetroidInCutscene[e].function = function::CURVE_TOWARDS_MOTHER_BRAIN_BRAIN);
-        session_slot!(game, BabyMetroidInCutscene[e].function_timer = 10);
+        session_slot!(game, BabyMetroidInCutscene[e]; function = function::CURVE_TOWARDS_MOTHER_BRAIN_BRAIN,
+            function_timer = 10);
         curve_towards_brain(k, game);
     };
     [11127935] prepare_samus_for_hyper_beam_acquisition {

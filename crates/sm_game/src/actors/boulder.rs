@@ -107,15 +107,13 @@ fn current<H: Host + ?Sized>(game: &H) -> i32 {
 pub fn initialize<H: Host + ?Sized>(game: &mut H) {
     let me = current(game);
     slot!(game, Boulder[me]; fall_speed = 0, roll_speed = 0);
-    slot!(game, Boulder[me].bounces_left = 2);
-    slot!(game, Boulder[me].state = state::WAIT_FOR_SAMUS);
+    slot!(game, Boulder[me]; bounces_left = 2, state = state::WAIT_FOR_SAMUS);
     slot!(
         game,
         Boulder[me].home_x = slot!(game, Boulder[me].base.x_pos)
     );
     let y_pos: u16 = slot!(game, Boulder[me].base.y_pos);
-    slot!(game, Boulder[me].ground_y = y_pos);
-    slot!(game, Boulder[me].previous_y = y_pos);
+    slot!(game, Boulder[me]; ground_y = y_pos, previous_y = y_pos);
     slot!(
         game,
         Boulder[me].previous_y_subpos = slot!(game, Boulder[me].base.y_subpos)
@@ -277,8 +275,7 @@ fn fall<H: Host + ?Sized>(game: &mut H) {
             game,
             Boulder[me].base.y_pos = slot!(game, Boulder[me].ground_y)
         );
-        slot!(game, Boulder[me].state = state::BOUNCE_RISE);
-        slot!(game, Boulder[me].fall_speed = 0x2000);
+        slot!(game, Boulder[me]; state = state::BOUNCE_RISE, fall_speed = 0x2000);
     }
 }
 
@@ -294,8 +291,7 @@ fn bounce_rise<H: Host + ?Sized>(game: &mut H) {
     if speed >= 0 {
         roll_step(game, me);
     } else {
-        slot!(game, Boulder[me].fall_speed = 0);
-        slot!(game, Boulder[me].state = state::BOUNCE_FALL);
+        slot!(game, Boulder[me]; fall_speed = 0, state = state::BOUNCE_FALL);
     }
 }
 

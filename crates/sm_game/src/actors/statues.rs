@@ -117,9 +117,7 @@ const UNLOCK_SAMUS: u16 = 1;
 /// Phantoon. Was `TourianEntranceStatue_Init`.
 pub fn initialize_tourian_statue<H: Host + ?Sized>(game: &mut H) {
     let me = word!(game.CUR_ENEMY_INDEX) as i32;
-    slot!(game, Decoration[me].base.palette_index = 0);
-    slot!(game, Decoration[me].base.instruction_timer = 1);
-    slot!(game, Decoration[me].base.timer = 0);
+    slot!(game, Decoration[me].base; palette_index = 0, instruction_timer = 1, timer = 0);
     let list =
         statue_tables::tourian_statue(game, (slot!(game, Decoration[me].kind) >> 1) as isize)
             .instruction_list;
@@ -158,10 +156,8 @@ pub fn initialize_chozo_statue<H: Host + ?Sized>(game: &mut H) {
         game,
         Statue[me].base.spritemap_pointer = list::NOTHING_SPRITEMAP
     );
-    slot!(game, Statue[me].base.instruction_timer = 1);
-    slot!(game, Statue[me].base.timer = 0);
-    slot!(game, Statue[me].function = function::NOTHING);
-    slot!(game, Statue[me].activated = 0);
+    slot!(game, Statue[me].base; instruction_timer = 1, timer = 0);
+    slot!(game, Statue[me]; function = function::NOTHING, activated = 0);
     slot!(game, Statue[me].base.palette_index = 0);
     // The original clears slot 0's layer, not the statue's.
     slot!(game, Statue[0].base.layer = 0);
@@ -220,8 +216,7 @@ pub fn wrecked_ship<H: Host + ?Sized>(game: &mut H, k: u16) {
             );
             slot!(game, Statue[me].base.instruction_timer = 1);
             // Never read.
-            slot!(game, Statue[me].var_a = 0xff00);
-            slot!(game, Statue[me].var_b = 256);
+            slot!(game, Statue[me]; var_a = 0xff00, var_b = 256);
         }
     }
 }

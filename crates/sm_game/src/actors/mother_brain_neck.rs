@@ -81,8 +81,7 @@ const RETRACT_SPEED: u16 = 80;
 
 /// Starts a brain instruction list. Was `MotherBrain_SetBrainInstrs`.
 fn set_brain_instructions(game: &mut impl Lease, list: u16) {
-    session_slot!(game, Body[BODY].brain_instructions = list);
-    session_slot!(game, Body[BODY].brain_instruction_timer = 1);
+    session_slot!(game, Body[BODY]; brain_instructions = list, brain_instruction_timer = 1);
 }
 
 /// Moves both joints, then places the five segments along them.
@@ -265,18 +264,15 @@ pub fn setup_for_fake_ascent(game: &mut impl Lease) {
     session_slot!(game, Brain[BRAIN].segment_1_length = 2);
     session_slot!(game, Brain[BRAIN]; segment_2_length = 10, segment_4_length = 10);
     session_slot!(game, Brain[BRAIN]; segment_3_length = 20, segment_5_length = 20);
-    session_slot!(game, Brain[BRAIN].lower_angle = 0x4800);
-    session_slot!(game, Brain[BRAIN].upper_angle = 0x5000);
-    session_slot!(game, Brain[BRAIN].neck_speed = 0x100);
+    session_slot!(game, Brain[BRAIN]; lower_angle = 0x4800, upper_angle = 0x5000,
+        neck_speed = 0x100);
 }
 
 /// Pulls the head back: raises the lower joint and lowers the upper one.
 /// Was `MotherBrain_RetractHead`.
 pub fn retract_head(game: &mut impl Lease) {
-    session_slot!(game, Brain[BRAIN].neck_speed = RETRACT_SPEED);
-    session_slot!(game, Brain[BRAIN].neck_moving = 1);
-    session_slot!(game, Brain[BRAIN].lower_motion = motion::RAISE);
-    session_slot!(game, Brain[BRAIN].upper_motion = motion::LOWER);
+    session_slot!(game, Brain[BRAIN]; neck_speed = RETRACT_SPEED, neck_moving = 1,
+        lower_motion = motion::RAISE, upper_motion = motion::LOWER);
 }
 
 /// Runs the third phase's neck function. Was `MotherBrain_Phase3_NeckHandler`.
@@ -302,11 +298,10 @@ fn phase3_normal(game: &mut impl Lease) {
 
 /// Lowers both joints fast after a hit. Was `MotherBrain_Phase3_Neck_SetupRecoilRecovery`.
 fn phase3_setup_recoil_recovery(game: &mut impl Lease) {
-    session_slot!(game, Brain[BRAIN].neck_moving = 1);
-    session_slot!(game, Brain[BRAIN].neck_speed = RECOIL_SPEED);
+    session_slot!(game, Brain[BRAIN]; neck_moving = 1, neck_speed = RECOIL_SPEED);
     session_slot!(game, Brain[BRAIN]; lower_motion = motion::LOWER, upper_motion = motion::LOWER);
-    session_slot!(game, Brain[BRAIN].neck_function = function::RECOIL_RECOVERY);
-    session_slot!(game, Brain[BRAIN].neck_timer = RECOIL_FRAMES);
+    session_slot!(game, Brain[BRAIN]; neck_function = function::RECOIL_RECOVERY,
+        neck_timer = RECOIL_FRAMES);
     phase3_recoil_recovery(game);
 }
 
@@ -326,8 +321,8 @@ fn phase3_setup_hyper_beam_recoil(game: &mut impl Lease) {
     session_slot!(game, Brain[BRAIN].neck_moving = 1);
     session_slot!(game, Body[BODY].attacks_disabled = 1);
     set_brain_instructions(game, animation::HYPER_BEAM_HIT);
-    session_slot!(game, Brain[BRAIN].shake_timer = HYPER_BEAM_FLASH);
-    session_slot!(game, Brain[BRAIN].neck_speed = HYPER_BEAM_SPEED);
+    session_slot!(game, Brain[BRAIN]; shake_timer = HYPER_BEAM_FLASH,
+        neck_speed = HYPER_BEAM_SPEED);
     session_slot!(game, Brain[BRAIN]; lower_motion = motion::RAISE, upper_motion = motion::RAISE);
     session_slot!(
         game,

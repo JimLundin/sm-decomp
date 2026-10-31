@@ -267,8 +267,7 @@ fn attack<L: Lease>(write_operand: &mut impl FnMut(u8, &mut L), game: &mut L) {
         sm_data::cartridge::lorom_offset(SAMUS_Y_OFFSETS) as usize,
         direction as isize,
     );
-    session_slot!(game, Maw[maw].samus_y_offset = y);
-    session_slot!(game, Maw[maw].function = function::ATTACKING);
+    session_slot!(game, Maw[maw]; samus_y_offset = y, function = function::ATTACKING);
 }
 fn reorient_segment<L: Lease>(part: i32, write_operand: &mut impl FnMut(u8, &mut L), game: &mut L) {
     let maw = game.current_enemy() as i32;

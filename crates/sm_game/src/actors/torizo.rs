@@ -468,9 +468,8 @@ fn jump_forwards<L: Lease>(k: u16, game: &mut L) {
     } else {
         -512
     };
-    session_slot!(game, TorizoSlot[e].x_velocity = speed as u16);
-    session_slot!(game, TorizoSlot[e].y_velocity = -1472i32 as u16);
-    session_slot!(game, TorizoSlot[e].gravity = GRAVITY);
+    session_slot!(game, TorizoSlot[e]; x_velocity = speed as u16, y_velocity = -1472i32 as u16,
+        gravity = GRAVITY);
     session_slot!(game, TorizoSlot[e].base.instruction_timer = 1);
 }
 
@@ -482,9 +481,8 @@ fn jump_backwards<L: Lease>(k: u16, game: &mut L) {
     } else {
         768
     };
-    session_slot!(game, TorizoSlot[e].x_velocity = speed as u16);
-    session_slot!(game, TorizoSlot[e].y_velocity = -1152i32 as u16);
-    session_slot!(game, TorizoSlot[e].gravity = GRAVITY);
+    session_slot!(game, TorizoSlot[e]; x_velocity = speed as u16, y_velocity = -1152i32 as u16,
+        gravity = GRAVITY);
     session_slot!(game, TorizoSlot[e].base.instruction_timer = 1);
 }
 
@@ -531,10 +529,9 @@ fn walk_or_turn<L: Lease>(k: u16, game: &mut L, turn_left: u16, turn_right: u16)
             } else {
                 list::FALLING_FACING_LEFT
             };
-            session_slot!(game, TorizoSlot[e].base.current_instruction = falling);
-            session_slot!(game, TorizoSlot[e].base.instruction_timer = 1);
-            session_slot!(game, TorizoSlot[e].y_velocity = LANDED_Y_VELOCITY);
-            session_slot!(game, TorizoSlot[e].x_velocity = 0);
+            session_slot!(game, TorizoSlot[e].base; current_instruction = falling,
+                instruction_timer = 1);
+            session_slot!(game, TorizoSlot[e]; y_velocity = LANDED_Y_VELOCITY, x_velocity = 0);
         }
     } else {
         session_slot!(game, TorizoSlot[e].turn_around_timer = 0);
@@ -543,8 +540,7 @@ fn walk_or_turn<L: Lease>(k: u16, game: &mut L, turn_left: u16, turn_right: u16)
         } else {
             turn_right
         };
-        session_slot!(game, TorizoSlot[e].base.current_instruction = turn);
-        session_slot!(game, TorizoSlot[e].base.instruction_timer = 1);
+        session_slot!(game, TorizoSlot[e].base; current_instruction = turn, instruction_timer = 1);
     }
 }
 
@@ -589,8 +585,8 @@ pub fn jumping_or_falling<L: Lease>(k: u16, game: &mut L) {
     let amount = (session_slot!(game, TorizoSlot[e].y_velocity) as i16 as i32) << 8;
     if game.move_vertical(k, amount) {
         let copied = session_slot!(game, TorizoSlot[e].link);
-        session_slot!(game, TorizoSlot[e].base.current_instruction = copied);
-        session_slot!(game, TorizoSlot[e].base.instruction_timer = 1);
+        session_slot!(game, TorizoSlot[e].base; current_instruction = copied,
+            instruction_timer = 1);
         session_slot!(game, TorizoSlot[e].y_velocity = LANDED_Y_VELOCITY);
         quake(game);
     } else {
@@ -777,12 +773,10 @@ pub fn initialize<L: Lease>(game: &mut L) {
         TorizoSlot[e].base.extra_properties =
             (session_slot!(game, TorizoSlot[e].base.extra_properties)) | 4
     );
-    session_slot!(game, TorizoSlot[e].base.x_width = START_X_RADIUS[torizo]);
-    session_slot!(game, TorizoSlot[e].base.y_height = START_Y_RADIUS[torizo]);
+    session_slot!(game, TorizoSlot[e].base; x_width = START_X_RADIUS[torizo],
+        y_height = START_Y_RADIUS[torizo]);
     session_slot!(game, TorizoSlot[e].function = function::SIMPLE_MOVEMENT);
-    session_slot!(game, TorizoSlot[e].base.instruction_timer = 1);
-    session_slot!(game, TorizoSlot[e].base.timer = 0);
-    session_slot!(game, TorizoSlot[e].base.palette_index = 0);
+    session_slot!(game, TorizoSlot[e].base; instruction_timer = 1, timer = 0, palette_index = 0);
     session_slot!(game, TorizoSlot[e].movement = movement::NOTHING);
     session_slot!(
         game,
@@ -793,10 +787,8 @@ pub fn initialize<L: Lease>(game: &mut L) {
         game,
         TorizoSlot[e].base.spritemap_pointer = list::EXTENDED_SPRITEMAP
     );
-    session_slot!(game, TorizoSlot[e].base.x_pos = START_X[torizo]);
-    session_slot!(game, TorizoSlot[e].base.y_pos = START_Y[torizo]);
-    session_slot!(game, TorizoSlot[e].x_velocity = 0);
-    session_slot!(game, TorizoSlot[e].y_velocity = LANDED_Y_VELOCITY);
+    session_slot!(game, TorizoSlot[e].base; x_pos = START_X[torizo], y_pos = START_Y[torizo]);
+    session_slot!(game, TorizoSlot[e]; x_velocity = 0, y_velocity = LANDED_Y_VELOCITY);
     game.foreign(|game| game.initialize_palette_targets());
     if game.area() != 0 {
         game.foreign(|game| game.set_palette_targets(Palettes::GoldenStart));
@@ -975,8 +967,7 @@ pub fn low_health_explosions<L: Lease>(k: u16, jp: EnemyScript, game: &mut L) ->
         game,
         TorizoSlot[e].base.current_instruction = list_address(game, k, jp.offset(1))
     );
-    session_slot!(game, TorizoSlot[e].base.flash_timer = 40);
-    session_slot!(game, TorizoSlot[e].base.instruction_timer = 40);
+    session_slot!(game, TorizoSlot[e].base; flash_timer = 40, instruction_timer = 40);
     EnemyScript::Stop
 }
 
@@ -989,8 +980,7 @@ pub fn death_explosion<L: Lease>(k: u16, jp: EnemyScript, game: &mut L) -> Enemy
         game,
         TorizoSlot[e].base.current_instruction = list_address(game, k, jp)
     );
-    session_slot!(game, TorizoSlot[e].base.flash_timer = 1);
-    session_slot!(game, TorizoSlot[e].base.instruction_timer = 1);
+    session_slot!(game, TorizoSlot[e].base; flash_timer = 1, instruction_timer = 1);
     EnemyScript::Stop
 }
 
@@ -1201,8 +1191,7 @@ pub fn golden_palettes<L: Lease>(game: &mut L) {
 pub fn start_golden_fight<L: Lease>(k: u16, game: &mut L) {
     game.foreign(|game| game.queue_music_delayed(FIGHT_MUSIC));
     let e = i32::from(k);
-    session_slot!(game, TorizoSlot[e].base.x_width = 18);
-    session_slot!(game, TorizoSlot[e].base.y_height = 48);
+    session_slot!(game, TorizoSlot[e].base; x_width = 18, y_height = 48);
     game.foreign(|game| game.spawn_palette_effect(GOLDEN_BELLY_GLOW));
 }
 

@@ -459,8 +459,7 @@ fn swoop<S: BossState + ?Sized>(game: &mut S, k: u16) {
 fn begin_swoop<S: BossState + ?Sized>(game: &mut S, k: u16) {
     session_slot!(game, Tentacles[TENTACLES]; swoop_x_speed = 1024, swoop_y_speed = 1024);
     session_slot!(game, Tentacles[TENTACLES].swoop_target_x = 0);
-    session_slot!(game, Body[k as i32].function = function::SWOOPING);
-    session_slot!(game, Body[k as i32].timer = 360);
+    session_slot!(game, Body[k as i32]; function = function::SWOOPING, timer = 360);
 }
 
 /// Points the eyeball at Samus. Was `Phantoon_ChangeEyeSpriteBasedOnSamusDist`.
@@ -681,8 +680,7 @@ pub fn initialize_part<S: BossState + ?Sized>(game: &mut S) {
         game,
         Body[me].base.spritemap_pointer = animation::NOTHING_SPRITEMAP
     );
-    session_slot!(game, Body[me].base.instruction_timer = 1);
-    session_slot!(game, Body[me].base.timer = 0);
+    session_slot!(game, Body[me].base; instruction_timer = 1, timer = 0);
     let copied = session_slot!(game, Body[BODY].base.palette_index);
     session_slot!(game, Body[me].base.palette_index = copied);
     let copied = session_slot!(game, Body[BODY].base.vram_tiles_index);
@@ -695,8 +693,8 @@ pub fn initialize_part<S: BossState + ?Sized>(game: &mut S) {
         )
     );
     session_slot!(game, Body[me].function = function::SPAWN_STARTING_FLAMES);
-    session_slot!(game, Mouth[MOUTH].semi_transparency = 0);
-    session_slot!(game, Mouth[MOUTH].casual_flame_pattern_index = -1i32 as u16);
+    session_slot!(game, Mouth[MOUTH]; semi_transparency = 0,
+        casual_flame_pattern_index = -1i32 as u16);
 }
 
 /// Runs the current function; the body carries the other parts and BG2.
@@ -1108,8 +1106,7 @@ pub fn fade_out_before_first_flame_rain<S: BossState + ?Sized>(game: &mut S, k: 
 pub fn fade_out_before_enrage<S: BossState + ?Sized>(game: &mut S, k: u16) {
     fade_out(game, FADE_STEPS);
     if session_slot!(game, Eye[EYE].fade_complete) != 0 {
-        session_slot!(game, Body[k as i32].function = function::MOVE_TO_TOP_CENTRE);
-        session_slot!(game, Body[k as i32].timer = 120);
+        session_slot!(game, Body[k as i32]; function = function::MOVE_TO_TOP_CENTRE, timer = 120);
     }
 }
 
@@ -1192,8 +1189,7 @@ pub fn dying_fade_in_out<S: BossState + ?Sized>(game: &mut S, k: u16) {
     let fades: u16 = (session_slot!(game, Eye[EYE].movement_reversed)).wrapping_add(1);
     session_slot!(game, Eye[EYE].movement_reversed = fades);
     if !below(fades, 10) {
-        session_slot!(game, Body[k as i32].function = function::DYING_EXPLOSIONS);
-        session_slot!(game, Body[k as i32].timer = 15);
+        session_slot!(game, Body[k as i32]; function = function::DYING_EXPLOSIONS, timer = 15);
         session_slot!(game, Tentacles[TENTACLES].explosion = 0);
         session_slot!(game, Body[BODY].movement_index = 0);
     }
@@ -1228,8 +1224,7 @@ pub fn dying_fade_out<S: BossState + ?Sized>(game: &mut S, k: u16) {
         }
     } else if (game.frame() & 0xf) == 0 {
         if session_slot!(byte game, Eye[EYE].movement_reversed[0]) == 0xf2 {
-            session_slot!(game, Eye[EYE].movement_reversed = -1i32 as u16);
-            session_slot!(game, Eye[EYE].fade_complete = 0);
+            session_slot!(game, Eye[EYE]; movement_reversed = -1i32 as u16, fade_complete = 0);
         } else {
             let brightness: u8 =
                 (session_slot!(byte game, Eye[EYE].movement_reversed[0])).wrapping_add(16);
@@ -1245,11 +1240,9 @@ pub fn almost_dead<S: BossState + ?Sized>(game: &mut S, k: u16) {
     session_slot!(game, Eye[EYE].background_held = 0);
     word!(game.PHANTOM_RELATED_LAYER_FLAG &= !HIDE_BG2);
     session_slot!(game, Mouth[MOUTH].semi_transparency = -1i32 as u16);
-    session_slot!(game, Body[k as i32].function = function::DEAD);
-    session_slot!(game, Body[k as i32].timer = 60);
+    session_slot!(game, Body[k as i32]; function = function::DEAD, timer = 60);
     session_slot!(game, Eye[EYE].fade_complete = 0);
-    session_slot!(game, Body[BODY].base.x_pos = 384);
-    session_slot!(game, Body[BODY].base.y_pos = 128);
+    session_slot!(game, Body[BODY].base; x_pos = 384, y_pos = 128);
     crate::word_transfers!(game, descending, 512; le(TILEMAP_STUFF, 511) <- value(BLANK_BG2_TILE));
     // A VRAM write queue entry: 400h bytes from $7E:2000 to VRAM $4800.
     let queue = 0xd0;
@@ -1316,8 +1309,7 @@ pub fn countdown<L: Lease + ?Sized>(game: &mut L, k: u16, function: u16) {
     match function {
         function::SPAWN_STARTING_FLAMES => spawn_starting_flame(game, k),
         function::WAIT_BEFORE_SPINNING_FLAMES => {
-            session_slot!(game, Body[k as i32].timer = 240);
-            session_slot!(game, Body[k as i32].speed_subpixel = 1);
+            session_slot!(game, Body[k as i32]; timer = 240, speed_subpixel = 1);
             session_slot!(
                 game,
                 Body[k as i32].function = function::SPAWN_FLAMES_BEFORE_FIGHT
@@ -1332,8 +1324,7 @@ pub fn countdown<L: Lease + ?Sized>(game: &mut L, k: u16, function: u16) {
         function::SPAWN_FLAME_RAIN => spawn_flame_rain(game, k),
         function::MOVE_TO_TOP_CENTRE => {
             session_slot!(game, Body[k as i32].function = function::FADE_IN_ENRAGED);
-            session_slot!(game, Body[BODY].base.x_pos = 128);
-            session_slot!(game, Body[BODY].base.y_pos = 32);
+            session_slot!(game, Body[BODY].base; x_pos = 128, y_pos = 32);
             session_slot!(game, Eye[EYE].fade_complete = 0);
         }
         function::DYING_EXPLOSIONS => death_explosion(game, k),
@@ -1431,8 +1422,7 @@ fn spawn_flame_rain<S: BossState + ?Sized>(game: &mut S, k: u16) {
         game,
         Body[BODY].movement_index = position.figure_eight_index
     );
-    session_slot!(game, Body[BODY].base.x_pos = position.x_position);
-    session_slot!(game, Body[BODY].base.y_pos = position.y_position);
+    session_slot!(game, Body[BODY].base; x_pos = position.x_position, y_pos = position.y_position);
     session_slot!(game, Eye[EYE].movement_reversed = 0);
     session_slot!(
         game,
