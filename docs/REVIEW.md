@@ -161,12 +161,56 @@ VALIDATION Gate 2. (b) Step 1 starts now as its own lane.
    comparison; structured divergence report; no new `sm_game_ram` sites.
    *Exit:* chain rooms 1, 6, 100, 200 and 320 pass, and a one-field mutant is
    reported at the right tick, domain and field.
-   Step 2: free-run and determinism modes. Step 3: scenarios as data with
-   `cut`/`lock`; PLAN's regression rows become scenarios. Step 4 onward:
+   Step 2: free-run and determinism modes, and the recorder with its cached
+   reference (condition 8), measured on those five rooms.
+   Step 3: free run against the cache becomes the corpus gate (condition 8's
+   switch), plus the landing replay job. Step 4: scenarios as data with
+   `cut`/`lock`; PLAN's regression rows become scenarios. Step 5 onward:
    retire whole-RAM comparison domain by domain, as in condition 1.
 7. **Nothing else waits.** The Cue-trace answer (ratchet 5) is still due before
    the next landing; the harness's Cue domain replaces that one-off run later.
    M does not wait for lane S, and lane S does not outrank M.
+8. **Cached oracle reference (Jim, 2026-10-31 evening).** The oracle runs once
+   per oracle identity, not once per commit. A recorder plays each scenario on
+   the oracle and writes a reference trace: per tick, the typed observations
+   plus digests of what lockstep compares today (WRAM, SRAM, VRAM, CGRAM, OAM,
+   PPU registers, APU ports), with the `normalize_snapshot_ram` ranges masked.
+   The trace is delta-coded, compressed, encrypted with the ci-data key and kept
+   in the Actions cache. CI then runs only the engine against it.
+   - *Free run only.* Lockstep restarts the engine from the oracle's whole
+     machine state every frame (`restore_snapshot(theirs)` in `cpu_infra.rs`),
+     about 260 KB per tick or ~120 GB raw per oracle mode, so it is not cached.
+     It stays live and runs only on segments the cached check failed, to locate
+     the fault and confirm the failure.
+   - *Size.* About 463k ticks per oracle mode (corpus 217k, 100% route 140k,
+     any% route 106k). At an estimated 100–250 bytes per tick compressed, that
+     is ~50–120 MB per mode. Video is one digest per frame plus 16 band digests,
+     not one per line. Step 2 measures the real figure.
+   - *Key: oracle identity only.* ROM digest, LakeSnes source, the snesrev patch
+     set and verdicts, recorder and oracle-projection source (with `ram_map.rs`),
+     the mask list, the trace format version and the scenario's input digests.
+     Never `sm/**` or `crates/**` wholesale: that is the source-text fingerprint
+     Phase 0 removed. The recorder therefore builds as its own binary from an
+     explicit file list, and CI checks that list reaches no engine code.
+   - *Cache rules.* Traces are recorded and saved only on main (on a key change,
+     plus a scheduled refresh ahead of the 7-day eviction) or by dispatch; PRs
+     restore main's entries. A miss records live in the same job, as today, and
+     never fails the job. The cache is an accelerator; the encrypted assets stay
+     the source of truth. Fork PRs can neither decrypt nor write it.
+   - *Landing replay.* With the oracle cached, a commit costs one incremental
+     build plus engine-only frames. One job replays each commit of a landing
+     (at most 25) in order against the same traces and names the first red
+     commit, which gives ratchet (4)'s green prefix directly.
+   - *Adopt on measurement.* On the five step-1 rooms, report bytes per tick and
+     engine-only replay time against lockstep. Adopt if replay is at least 2x
+     faster per row and each mode's traces fit in 1 GB; otherwise post the
+     numbers in #6 and keep lockstep.
+   - *Switching the gate.* Free run against the cache becomes the corpus gate
+     only once it is green on the whole corpus and both routes, with every
+     divergence fixed or listed in LEGACY. Free run is stricter than lockstep:
+     masked scratch that later changes behaviour shows up. Until the switch,
+     lockstep stays authoritative, and the scheduled corpus keeps one full live
+     lockstep run until projections retire the RAM comparison.
 
 ### Current publication and acceptance
 
