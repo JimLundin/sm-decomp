@@ -384,6 +384,11 @@ fn draw_confirmation<H: Host + ?Sized>(game: &mut H) {
     menu_tilemap::file_rows(menu_tilemap::FileRowEmphasis::Confirmation, game);
 }
 fn confirm_choice<const COPY: bool, H: Host + ?Sized>(game: &mut H) {
+    crate::probe::hit(if COPY {
+        "file_menu.confirm_copy"
+    } else {
+        "file_menu.confirm_clear"
+    });
     border(if COPY { 0x49 } else { 0x4a }, game);
     crate::sprite_output::menu_selection(game);
     if COPY {
@@ -448,6 +453,7 @@ fn animate_copy_arrow<H: Host + ?Sized>(game: &mut H) {
     }
 }
 fn copy_slot<H: Host + ?Sized>(game: &mut H) {
+    crate::probe::hit("file_menu.copy_slot");
     static BIT_SHL_16BIT: [u16; 3] = [1, 2, 4];
     border(0x49, game);
     crate::sprite_output::menu_selection(game);
@@ -530,6 +536,7 @@ fn reset_clear<H: Host + ?Sized>(game: &mut H) {
     crate::sprite_output::file_slot_cursor(211, game);
 }
 fn clear_slot<H: Host + ?Sized>(game: &mut H) {
+    crate::probe::hit("file_menu.clear_slot");
     static BIT_SHL_NOT: [u16; 3] = [0xfffe, 0xfffd, 0xfffb];
     border(0x4a, game);
     let source = copy_source(game);
