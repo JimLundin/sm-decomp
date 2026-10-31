@@ -5,62 +5,49 @@ use crate::game::session_runtime::Runtime;
 use sm_game::samus_drawing;
 use sm_game::scene::owned_samus::SamusSources as _;
 use sm_game::scene::samus_body::{self, Body};
-use sm_game::scene::samus_content::{PreparedBytes, Registration, Role, RoleLease};
+use sm_game::scene::samus_content::{CapturedBytes, PreparedBytes, Registration, Role, RoleLease};
 use sm_game::scene::samus_native_content::CapturedRom;
 use sm_game::visual_host::Record;
 
 pub use crate::game::prelude::*;
 use sm_game::cinematic::project_cinematic_point;
 
-fn bottom_is_visible(game: &mut Game) -> u8 {
-    u8::from(samus_body::bottom_is_visible(&mut NativeBottom(game)).unwrap())
-}
-
-struct NativeBottom<'a>(&'a mut Game);
-impl samus_body::BottomHost for NativeBottom<'_> {
+impl samus_body::BottomHost for Game {
     type Error = std::convert::Infallible;
     fn pose(&mut self) -> Result<u16, Self::Error> {
-        Ok(self.0.samus_pose())
+        Ok(self.samus_pose())
     }
     fn animation_frame(&mut self) -> Result<u16, Self::Error> {
-        Ok(self.0.samus_anim_frame())
+        Ok(self.samus_anim_frame())
     }
     fn movement(&mut self) -> Result<u8, Self::Error> {
-        Ok(self.0.samus_movement_type() as u8)
+        Ok(self.samus_movement_type())
     }
     fn clear_bottom(&mut self) -> Result<(), Self::Error> {
-        let game = &mut *self.0;
-        word!(game.SAMUS_BOTTOM_HALF_SPRITEMAP_INDEX = 0);
+        word!(self.SAMUS_BOTTOM_HALF_SPRITEMAP_INDEX = 0);
         Ok(())
     }
     fn cursor(&mut self) -> Result<u16, Self::Error> {
-        let game = &mut *self.0;
-        Ok(word!(game.OAM_NEXT_PTR))
+        Ok(word!(self.OAM_NEXT_PTR))
     }
     fn player_x(&mut self) -> Result<u16, Self::Error> {
-        let game = &mut *self.0;
-        Ok(word!(game.SAMUS_X_POS))
+        Ok(word!(self.SAMUS_X_POS))
     }
     fn player_y(&mut self) -> Result<u16, Self::Error> {
-        let game = &mut *self.0;
-        Ok(word!(game.SAMUS_Y_POS))
+        Ok(word!(self.SAMUS_Y_POS))
     }
     fn camera_x(&mut self) -> Result<u16, Self::Error> {
-        let game = &mut *self.0;
-        Ok(word!(game.LAYER1_X_POS))
+        Ok(word!(self.LAYER1_X_POS))
     }
     fn camera_y(&mut self) -> Result<u16, Self::Error> {
-        let game = &mut *self.0;
-        Ok(word!(game.LAYER1_Y_POS))
+        Ok(word!(self.LAYER1_Y_POS))
     }
     fn marker_word(&mut self, entry: usize, value: u16) -> Result<(), Self::Error> {
-        let game = &mut *self.0;
-        word_transfers!(game, ascending, 1; native(0x370 + entry) <- value(value));
+        word_transfers!(self, ascending, 1; native(0x370 + entry) <- value(value));
         Ok(())
     }
     fn publish_cursor(&mut self, value: u16) -> Result<(), Self::Error> {
-        let game = &mut *self.0;
-        word!(game.OAM_NEXT_PTR = value);
+        word!(self.OAM_NEXT_PTR = value);
         Ok(())
     }
     fn marker_written(&mut self, _: usize, _: u16, _: u16) -> Result<(), Self::Error> {
@@ -150,20 +137,18 @@ impl NativeTable {
                 .as_ref()
                 .expect("native Samus record")
                 .native_word(offset),
-            Some(BoundTable::Native(table)) => if little {
-                table.little_word(offset)
-            } else {
-                table.native_word(offset)
-            }
-            .unwrap(),
-            Some(BoundTable::Prepared(table)) => if little {
-                table.little_word(offset)
-            } else {
-                table.native_word(offset)
-            }
-            .unwrap(),
+            Some(BoundTable::Native(table)) => lease_word(table, offset, little),
+            Some(BoundTable::Prepared(table)) => lease_word(table, offset, little),
         }
     }
+}
+fn lease_word<B: CapturedBytes>(table: &RoleLease<B>, offset: usize, little: bool) -> u16 {
+    if little {
+        table.little_word(offset)
+    } else {
+        table.native_word(offset)
+    }
+    .unwrap()
 }
 impl samus_body::Table for NativeTable {
     type Error = std::convert::Infallible;
@@ -251,139 +236,109 @@ impl samus_drawing::Authority for Runtime<'_> {
             .unwrap()
     }
     fn sprite_position(&mut self, doubled: u16) -> (u16, u16) {
-        let position = self.foreign(|game| sprite_position(doubled, game));
-        (position.k, position.j)
+        self.foreign(|game| samus_position_tiles::sprite_position(game, doubled).unwrap())
     }
     fn bottom_visible(&mut self) -> bool {
-        self.foreign(bottom_is_visible) & 1 != 0
+        self.foreign(|game| samus_body::bottom_is_visible(game).unwrap())
     }
 }
 
-fn sprite_position(k: u16, game: &mut Game) -> PairU16 {
-    let (x, y) = samus_position_tiles::sprite_position(&mut NativePosition(game), k).unwrap();
-    make_pair_u16(x, y)
-}
-struct NativePosition<'a>(&'a mut Game);
-impl samus_position_tiles::PositionHost for NativePosition<'_> {
+impl samus_position_tiles::PositionHost for Game {
     type Error = std::convert::Infallible;
     fn ceres(&mut self) -> Result<u16, Self::Error> {
-        let game = &mut *self.0;
-        Ok(word!(game.CERES_STATUS))
+        Ok(word!(self.CERES_STATUS))
     }
     fn player_x(&mut self) -> Result<u16, Self::Error> {
-        let game = &mut *self.0;
-        Ok(word!(game.SAMUS_X_POS))
+        Ok(word!(self.SAMUS_X_POS))
     }
     fn player_y(&mut self) -> Result<u16, Self::Error> {
-        let game = &mut *self.0;
-        Ok(word!(game.SAMUS_Y_POS))
+        Ok(word!(self.SAMUS_Y_POS))
     }
     fn set_player_x(&mut self, value: u16) -> Result<(), Self::Error> {
-        let game = &mut *self.0;
-        word!(game.SAMUS_X_POS = value);
+        word!(self.SAMUS_X_POS = value);
         Ok(())
     }
     fn set_player_y(&mut self, value: u16) -> Result<(), Self::Error> {
-        let game = &mut *self.0;
-        word!(game.SAMUS_Y_POS = value);
+        word!(self.SAMUS_Y_POS = value);
         Ok(())
     }
     fn project(&mut self, x: u16, y: u16) -> Result<(u16, u16), Self::Error> {
-        let point = project_cinematic_point(sm_game::geometry::Point { x, y }, self.0);
+        let point = project_cinematic_point(sm_game::geometry::Point { x, y }, self);
         Ok((point.x, point.y))
     }
     fn frame(&mut self) -> Result<u16, Self::Error> {
-        Ok(self.0.samus_anim_frame())
+        Ok(self.samus_anim_frame())
     }
     fn movement(&mut self) -> Result<u8, Self::Error> {
-        Ok(self.0.samus_movement_type() as u8)
+        Ok(self.samus_movement_type())
     }
     fn landing_word(&self, bytes: [u8; 2]) -> u16 {
         u16::from_ne_bytes(bytes)
     }
     fn landing_offset(&mut self, offset: usize) -> Result<u16, Self::Error> {
-        Ok(
-            match self
-                .0
-                .prepared_samus_role(Role::Landing, Registration::Native, 0)
-                .unwrap()
-            {
-                Some(table) => table.native_word(offset).unwrap(),
-                None => self.landing_word(samus_position_tiles::default_landing_bytes(offset)),
-            },
-        )
+        Ok(match self.native_offsets(Role::Landing) {
+            Some(table) => table.native_word(offset).unwrap(),
+            None => self.landing_word(samus_position_tiles::default_landing_bytes(offset)),
+        })
     }
     fn crouching_offset(&mut self, offset: usize) -> Result<i8, Self::Error> {
-        Ok(
-            match self
-                .0
-                .prepared_samus_role(Role::Crouching, Registration::Native, 0)
-                .unwrap()
-            {
-                Some(table) => table.byte(offset).unwrap() as i8,
-                None => samus_position_tiles::default_crouching_byte(offset),
-            },
-        )
+        Ok(match self.native_offsets(Role::Crouching) {
+            Some(table) => table.byte(offset).unwrap() as i8,
+            None => samus_position_tiles::default_crouching_byte(offset),
+        })
     }
     fn drained_offset(&mut self, offset: usize) -> Result<i8, Self::Error> {
-        Ok(
-            match self
-                .0
-                .prepared_samus_role(Role::Drained, Registration::Native, 0)
-                .unwrap()
-            {
-                Some(table) => table.byte(offset).unwrap() as i8,
-                None => samus_position_tiles::default_drained_byte(offset),
-            },
-        )
+        Ok(match self.native_offsets(Role::Drained) {
+            Some(table) => table.byte(offset).unwrap() as i8,
+            None => samus_position_tiles::default_drained_byte(offset),
+        })
     }
     fn fallback_byte(&mut self, offset: usize) -> Result<u8, Self::Error> {
-        let image = self.0.capture_native_rom();
+        let image = self.capture_native_rom();
         let record = crate::rom::RomRecord {
             image,
             base: crate::rtl::lorom_offset(0x91b629) as usize,
         };
         Ok(
-            NativeTable::capture(self.0, Role::PositionFallback, Registration::Native, record)
+            NativeTable::capture(self, Role::PositionFallback, Registration::Native, record)
                 .byte(offset),
         )
     }
     fn camera_x(&mut self) -> Result<u16, Self::Error> {
-        let game = &mut *self.0;
-        Ok(word!(game.LAYER1_X_POS))
+        Ok(word!(self.LAYER1_X_POS))
     }
     fn camera_y(&mut self) -> Result<u16, Self::Error> {
-        let game = &mut *self.0;
-        Ok(word!(game.LAYER1_Y_POS))
+        Ok(word!(self.LAYER1_Y_POS))
     }
     fn set_body_x(&mut self, value: u16) -> Result<(), Self::Error> {
-        let game = &mut *self.0;
-        word!(game.SAMUS_SPRITEMAP_X_POS = value);
+        word!(self.SAMUS_SPRITEMAP_X_POS = value);
         Ok(())
     }
     fn set_body_y(&mut self, value: u16) -> Result<(), Self::Error> {
-        let game = &mut *self.0;
-        word!(game.SAMUS_SPRITEMAP_Y_POS = value);
+        word!(self.SAMUS_SPRITEMAP_Y_POS = value);
         Ok(())
     }
     fn body_x(&mut self) -> Result<u16, Self::Error> {
-        let game = &mut *self.0;
-        Ok(word!(game.SAMUS_SPRITEMAP_X_POS))
+        Ok(word!(self.SAMUS_SPRITEMAP_X_POS))
     }
     fn body_y(&mut self) -> Result<u16, Self::Error> {
-        let game = &mut *self.0;
-        Ok(word!(game.SAMUS_SPRITEMAP_Y_POS))
+        Ok(word!(self.SAMUS_SPRITEMAP_Y_POS))
     }
 }
 impl samus_position_tiles::Table for NativeTable {
     type Error = std::convert::Infallible;
-    fn validate_source(&self, _: crate::game::scene::records::Revision) -> Result<(), Self::Error> {
-        Ok(())
-    }
     fn native_word(&self, offset: usize) -> Result<u16, Self::Error> {
         Ok(self.word(offset, false))
     }
     fn byte(&self, offset: usize) -> Result<u8, Self::Error> {
         Ok(self.byte(offset))
+    }
+}
+
+impl Game {
+    /// A prepared native Samus offset table, when the prepared content supplies it.
+    fn native_offsets(&self, role: Role) -> Option<RoleLease<PreparedBytes>> {
+        self.prepared_samus_role(role, Registration::Native, 0)
+            .unwrap()
     }
 }

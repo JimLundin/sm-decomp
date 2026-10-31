@@ -944,10 +944,6 @@ pub unsafe fn rtl_save_load(cmd: i32, slot: i32, native_game: &mut Game) {
         };
     }
 }
-pub fn make_pair_u16(k: u16, j: u16) -> PairU16 {
-    let r: PairU16 = PairU16 { k, j };
-    r
-}
 pub fn invalid_interrupt(_game: &mut Game) {
     unreachable_failure(true)
 }
