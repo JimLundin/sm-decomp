@@ -28,11 +28,16 @@ pub(crate) const CASES: u32 = 1038;
 fn put(g: &mut Game, a: usize, v: u16) {
     g.ram().copy_in(a, &v.to_le_bytes());
 }
-fn rom_word(image: &RomImage, address: u32, value: u16) {
+fn rom_word(image: &mut [u8], address: u32, value: u16) {
     let a = crate::rtl::lorom_offset(address) as usize;
-    for (i, b) in value.to_le_bytes().into_iter().enumerate() {
-        image.write(a + i, b);
-    }
+    image[a..a + 2].copy_from_slice(&value.to_le_bytes());
+}
+/// Register an image of the case's synthetic bytes as both loaded and native ROM.
+fn install(g: &mut Game, bytes: &[u8]) -> RomImage {
+    let image = RomImage::from(bytes);
+    g.loaded_rom = Some(image.clone());
+    g.register_native_rom(image.clone());
+    image
 }
 fn slot(g: &mut Game, k: usize, header: u16) {
     for (a, v) in [
@@ -51,7 +56,7 @@ fn slot(g: &mut Game, k: usize, header: u16) {
         put(g, a + 2 * k, v);
     }
 }
-fn seed(g: &mut Game, image: &RomImage) {
+fn seed(g: &mut Game, image: &mut [u8]) {
     for (a, v) in [
         (0x7a5, 16),
         (0x7a9, 8),
@@ -103,7 +108,7 @@ fn result(script: EnemyScript) -> (u8, u16) {
     }
 }
 // All unsafe calls below are actual current production entries, never modeled effects.
-unsafe fn execute(id: u32, g: &mut Game, image: &RomImage) -> (u8, u16) {
+unsafe fn execute(id: u32, g: &mut Game, bytes: &mut [u8], image: &RomImage) -> (u8, u16) {
     unsafe {
         match id {
             0..=11 => {
@@ -187,13 +192,15 @@ unsafe fn execute(id: u32, g: &mut Game, image: &RomImage) -> (u8, u16) {
                     2 => put(g, 0xde1c + 78, 0),
                     3 => put(g, 0xde1c + 78, 2),
                     4 => {
-                        rom_word(image, 0x849000, 8685390u32 as u16);
-                        image.write(crate::rtl::lorom_offset(0x849002) as usize, 7);
-                        rom_word(image, 0x849003, 8685236u32 as u16);
+                        rom_word(bytes, 0x849000, 8685390u32 as u16);
+                        bytes[crate::rtl::lorom_offset(0x849002) as usize] = 7;
+                        rom_word(bytes, 0x849003, 8685236u32 as u16);
+                        install(g, bytes);
                     }
                     5 => {
-                        rom_word(image, 0x849000, 1);
-                        rom_word(image, 0x849002, 0xa000);
+                        rom_word(bytes, 0x849000, 1);
+                        rom_word(bytes, 0x849002, 0xa000);
+                        install(g, bytes);
                     }
                     6 => g.ram().write_byte(0x613, 2),
                     _ => g.ram().write_byte(0x613, 255),
@@ -205,11 +212,12 @@ unsafe fn execute(id: u32, g: &mut Game, image: &RomImage) -> (u8, u16) {
                 slot(g, 0, 0x8000);
                 let vertical = mode & 1 != 0;
                 let flags = ((mode >> 1) & 3) as u16 * 0x400;
-                rom_word(image, 0x84a000, if vertical { 0x8003 } else { 3 });
+                rom_word(bytes, 0x84a000, if vertical { 0x8003 } else { 3 });
                 for i in 0..3 {
-                    rom_word(image, 0x84a002 + 2 * i, 0x123 | flags);
+                    rom_word(bytes, 0x84a002 + 2 * i, 0x123 | flags);
                 }
-                rom_word(image, 0x84a008, 0);
+                rom_word(bytes, 0x84a008, 0);
+                install(g, bytes);
                 if mode >= 8 {
                     for (a, v) in [
                         (0x1800, if vertical { 0x8003 } else { 3 }),
@@ -242,8 +250,7 @@ unsafe fn execute(id: u32, g: &mut Game, image: &RomImage) -> (u8, u16) {
             82..=85 => {
                 slot(g, 0, 0x8000);
                 put(g, 0x1c2d, 6);
-                let short = RomImage::zeroed(1);
-                short.write(0, 7);
+                let short = RomImage::from(vec![7]);
                 result(mechanisms::checks::command(
                     [8685249, 8685390, 8685412, 8685541][(id - 82) as usize],
                     EnemyScript::at(short, 0),
@@ -353,7 +360,7 @@ const PRE_END: u32 = 660;
 
 // Full effect allocation pools here deliberately exercise allocation exhaustion.
 // Successful native effects and bus observations have separate scenarios.
-fn dispatch_seed(g: &mut Game, image: &RomImage, variant: usize) {
+fn dispatch_seed(g: &mut Game, image: &mut [u8], variant: usize) {
     use crate::ram_map::words as ram;
     for i in 0..40 {
         slot(g, i, 0x8000);
@@ -414,10 +421,11 @@ fn dispatch_seed(g: &mut Game, image: &RomImage, variant: usize) {
         rom_word(image, 0x90a000 + 2 * i, 0x1234 + i as u16);
     }
 }
-unsafe fn pre_case(id: u32, g: &mut Game, image: &RomImage) -> (u8, u16) {
+unsafe fn pre_case(id: u32, g: &mut Game, bytes: &mut [u8]) -> (u8, u16) {
     let n = id - 318;
     let variant = (n % 6) as usize;
-    dispatch_seed(g, image, variant);
+    dispatch_seed(g, bytes, variant);
+    install(g, bytes);
     let ea = PRE_ACTIONS[(n / 6) as usize];
     put(g, 0x1d77, [0, 1, 0x100, 0x200, 0x300, 0xff][variant]);
     if ea == 0x84b846 {
@@ -435,10 +443,11 @@ unsafe fn pre_case(id: u32, g: &mut Game, image: &RomImage) -> (u8, u16) {
     };
     (0, 0)
 }
-unsafe fn command_case(id: u32, g: &mut Game, image: &RomImage) -> (u8, u16) {
+unsafe fn command_case(id: u32, g: &mut Game, bytes: &mut [u8]) -> (u8, u16) {
     let n = id - PRE_END;
     let variant = (n % 2) as usize;
-    dispatch_seed(g, image, variant);
+    dispatch_seed(g, bytes, variant);
+    let image = &install(g, bytes);
     let ea = MORE_COMMANDS[(n / 2) as usize];
     put(g, 0x1d77, if variant == 0 { 0 } else { 1 });
     if matches!(ea, 0x848b55 | 0x848b93) {
@@ -465,7 +474,7 @@ unsafe fn command_case(id: u32, g: &mut Game, image: &RomImage) -> (u8, u16) {
     })
 }
 
-unsafe fn native_effect_case(id: u32, g: &mut Game, image: &RomImage) -> (u8, u16) {
+unsafe fn native_effect_case(id: u32, g: &mut Game, image: &mut [u8]) -> (u8, u16) {
     let n = id - 864;
     dispatch_seed(g, image, (n & 1) as usize);
     for i in 0..18 {
@@ -473,7 +482,7 @@ unsafe fn native_effect_case(id: u32, g: &mut Game, image: &RomImage) -> (u8, u1
     }
     put(g, 0x1c27, if n & 1 == 0 { 0 } else { 78 });
     put(g, 0x1c87 + 78, 0x482);
-    let definition = |address: u32, init: u32| {
+    let mut definition = |address: u32, init: u32| {
         for (offset, value) in [
             (0, init as u16),
             (2, 0x8000),
@@ -489,6 +498,7 @@ unsafe fn native_effect_case(id: u32, g: &mut Game, image: &RomImage) -> (u8, u1
     if n < 4 {
         definition(0x86e659, 8840661);
         definition(0x86e675, 8840666);
+        install(g, image);
         let value = {
             mechanisms::checks::setup_entry(
                 if n < 2 { 8701630 } else { 8701643 },
@@ -529,10 +539,11 @@ unsafe fn native_effect_case(id: u32, g: &mut Game, image: &RomImage) -> (u8, u1
         put(g, 0x5e5, 0x3456);
         if n & 1 == 0 { 8705951 } else { 8705974 }
     };
+    let image = install(g, image);
     let returned = result(unsafe {
         mechanisms::checks::command(
             opcode,
-            EnemyScript::at(image.clone(), (bank_base(0x84) + 0x9100) as usize),
+            EnemyScript::at(image, (bank_base(0x84) + 0x9100) as usize),
             0,
             g,
         )
@@ -549,7 +560,7 @@ unsafe fn native_effect_case(id: u32, g: &mut Game, image: &RomImage) -> (u8, u1
 
 // Actual message presentation and scheduler suspension with real bus objects.
 // Each call records RAM, serialized PPU/DMA/SNES fields and the ordered APU queue.
-unsafe fn message_case(id: u32, g: &mut Game, image: &RomImage, trace: &mut Vec<u8>) -> (u8, u16) {
+unsafe fn message_case(id: u32, g: &mut Game, image: &mut [u8], trace: &mut Vec<u8>) -> (u8, u16) {
     let door = (1009..=1011).contains(&id);
     let variant = if (1020..=1021).contains(&id) {
         id - 1014
@@ -589,6 +600,7 @@ unsafe fn message_case(id: u32, g: &mut Game, image: &RomImage, trace: &mut Vec<
         rom_word(image, 0x849002, 8685390u32 as u16); // SetTimer 7; Sleep.
         rom_word(image, 0x849004, 0xb407);
         rom_word(image, 0x849006, 0x0086);
+        install(g, image);
         assert_eq!(
             crate::ram_map::checked_word!(g.MUSIC_QUEUE_READ_POS),
             crate::ram_map::checked_word!(g.MUSIC_QUEUE_WRITE_POS)
@@ -668,11 +680,11 @@ unsafe fn message_case(id: u32, g: &mut Game, image: &RomImage, trace: &mut Vec<
                         put(g, 0xdc8, 21);
                     }
                     4 => {
-                        let replaced = RomImage::zeroed(0x200000);
-                        rom_word(&replaced, 0x849002, 8685390u32 as u16);
-                        rom_word(&replaced, 0x849004, 0xb409);
-                        rom_word(&replaced, 0x849006, 0x0086);
-                        g.loaded_rom = Some(replaced);
+                        let mut replaced = vec![0; 0x200000];
+                        rom_word(&mut replaced, 0x849002, 8685390u32 as u16);
+                        rom_word(&mut replaced, 0x849004, 0xb409);
+                        rom_word(&mut replaced, 0x849006, 0x0086);
+                        g.loaded_rom = Some(RomImage::from(replaced));
                     }
                     5 => {
                         g.ram().write_byte(0x614, 255);
@@ -731,7 +743,7 @@ unsafe fn message_case(id: u32, g: &mut Game, image: &RomImage, trace: &mut Vec<
     }
 }
 
-unsafe fn consumer_case(id: u32, g: &mut Game, image: &RomImage) -> (u8, u16) {
+unsafe fn consumer_case(id: u32, g: &mut Game, image: &mut [u8]) -> (u8, u16) {
     use crate::ram_map::words as ram;
     let n = id - 886;
     if n < 6 {
@@ -744,6 +756,7 @@ unsafe fn consumer_case(id: u32, g: &mut Game, image: &RomImage) -> (u8, u16) {
         rom_word(image, 0x83a004, 0x0203);
         rom_word(image, 0x8fe68a, if n == 5 { 0 } else { 0x8000 });
         rom_word(image, 0x848004, 0x9300);
+        install(g, image);
         if matches!(n, 1 | 2 | 3) {
             slot(g, 3, 0x8000);
             put(g, 0x1c87 + 6, 70);
@@ -810,6 +823,7 @@ unsafe fn consumer_case(id: u32, g: &mut Game, image: &RomImage) -> (u8, u16) {
         }
         rom_word(image, 0x84839d, 0xa000);
         rom_word(image, 0x84a002, if v == 5 { 0x923 } else { 0x123 });
+        install(g, image);
         unsafe { crate::game::xray_background::reveal_room_items(g) };
     }
     (0, 0)
@@ -895,7 +909,7 @@ unsafe fn displacement_alias_case(id: u32, g: &mut Game) -> (u8, u16) {
 
 // Opposite map bytes distinguish the two persistent-flag query identities.
 // PrepareBitAccess is observable even though the queries do not change flags.
-unsafe fn distinct_flag_query_case(id: u32, g: &mut Game, image: &RomImage) -> (u8, u16) {
+unsafe fn distinct_flag_query_case(id: u32, g: &mut Game, bytes: &mut [u8]) -> (u8, u16) {
     let object_query = id < 1035;
     let taken = id == 1033 || id == 1035;
     let selected_base = if object_query { 0xd830 } else { 0xd870 };
@@ -907,7 +921,8 @@ unsafe fn distinct_flag_query_case(id: u32, g: &mut Game, image: &RomImage) -> (
         .write_byte(selected_base + 2, if taken { 0x20 } else { 0x40 });
     g.ram()
         .write_byte(other_base + 2, if taken { 0x40 } else { 0x20 });
-    rom_word(image, 0x849100, 0x9234);
+    rom_word(bytes, 0x849100, 0x9234);
+    let image = &install(g, bytes);
     let mut expected_ram = ram_bytes(&g);
     expected_ram[0x5e7..0x5e9].copy_from_slice(&0x20u16.to_le_bytes());
     let returned = result(unsafe {
@@ -939,13 +954,13 @@ pub(crate) fn capture_case(id: u32) -> Option<Vec<u8>> {
         return None;
     }
     let mut g = Game::new();
-    let image = RomImage::zeroed(0x200000);
-    seed(&mut g, &image);
-    g.loaded_rom = Some(image.clone());
-    g.register_native_rom(image.clone());
+    let mut bytes = vec![0; 0x200000];
+    seed(&mut g, &mut bytes);
+    // Cases that author more bytes install an image of them before reading it.
+    let image = install(&mut g, &bytes);
     if (66..=81).contains(&id) || id == 63 || id >= 318 {
         assert_eq!(
-            (image.as_mut_ptr() as usize + crate::rtl::lorom_offset(0x84a000) as usize) & 1,
+            (image.as_ptr() as usize + crate::rtl::lorom_offset(0x84a000) as usize) & 1,
             0,
             "native ROM stream alignment"
         );
@@ -954,11 +969,11 @@ pub(crate) fn capture_case(id: u32) -> Option<Vec<u8>> {
     let mut trace = Vec::new();
     let outcome = catch_unwind(AssertUnwindSafe(|| unsafe {
         if id >= 1033 {
-            distinct_flag_query_case(id, &mut g, &image)
+            distinct_flag_query_case(id, &mut g, &mut bytes)
         } else if id >= 1022 {
-            drawing_extended::run(id, &mut g, &image, &mut trace)
+            drawing_extended::run(id, &mut g, &mut bytes, &mut trace)
         } else if id >= 1020 {
-            message_case(id, &mut g, &image, &mut trace)
+            message_case(id, &mut g, &mut bytes, &mut trace)
         } else if id == 1019 {
             assert!(mechanisms::qualified_checks(&mut g));
             (5, 2)
@@ -970,25 +985,25 @@ pub(crate) fn capture_case(id: u32) -> Option<Vec<u8>> {
         } else if id >= 1012 {
             nonreturn_case(id, &mut g)
         } else if id >= 1009 {
-            message_case(id, &mut g, &image, &mut trace)
+            message_case(id, &mut g, &mut bytes, &mut trace)
         } else if id >= 914 {
             boundary_case(id, &mut g, &image)
         } else if id >= 886 {
-            consumer_case(id, &mut g, &image)
+            consumer_case(id, &mut g, &mut bytes)
         } else if id >= 880 {
-            message_case(id, &mut g, &image, &mut trace)
+            message_case(id, &mut g, &mut bytes, &mut trace)
         } else if id >= 864 {
-            native_effect_case(id, &mut g, &image)
+            native_effect_case(id, &mut g, &mut bytes)
         } else if id >= PRE_END {
-            command_case(id, &mut g, &image)
+            command_case(id, &mut g, &mut bytes)
         } else if id >= 318 {
-            pre_case(id, &mut g, &image)
+            pre_case(id, &mut g, &mut bytes)
         } else if id >= 90 {
             let (returned, movement) = setup_case(id, &mut g);
             displacement = Some(movement);
             (4, u16::from(returned))
         } else {
-            execute(id, &mut g, &image)
+            execute(id, &mut g, &mut bytes, &image)
         }
     }));
     assert_eq!(

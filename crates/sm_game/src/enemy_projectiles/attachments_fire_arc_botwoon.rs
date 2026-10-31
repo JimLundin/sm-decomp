@@ -70,6 +70,7 @@ fn orbit_component(phase: u16, amplitude: u16, quarter_turn: u16, ctx: &mut impl
 }
 
 pub fn advance_fire_arc_orbit(ctx: &mut impl Host) {
+    crate::probe::hit("fire_arc.orbit");
     let enemy = usize::from(ctx.inputs().current_enemy);
     let radius = ctx.fire_arc_field(enemy, W::Radius);
     let (stage, sprite) = classify_phase(ctx.fire_arc_field(enemy, W::Phase), ctx);

@@ -170,7 +170,7 @@ fn unsupported_does_not_succeed() {
 }
 
 // Captured records and synchronous callbacks in the existing composed Host.
-fn trail_definitions(h: &Composed) {
+fn trail_definitions(h: &mut Composed) {
     for (bank, cursor, value) in [
         (0x90, 0xb5bb, 0x8100),
         (0x90, 0xb609, 0x8400),
@@ -197,7 +197,7 @@ fn trail_definitions(h: &Composed) {
 }
 fn trail_host() -> Composed {
     let mut h = prepared();
-    trail_definitions(&h);
+    trail_definitions(&mut h);
     h.world.player.projectiles.selected = 0;
     let shot = &mut h.world.player.projectiles.shots[0];
     shot.kind = 0;

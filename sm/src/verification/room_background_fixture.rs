@@ -2,10 +2,9 @@
 use crate::{
     game_state::{Game, WorkRam},
     recording::RecordingBytes,
-    rom::RomImage,
     room_background_support::*,
 };
-pub(crate) fn rw(r: &RomImage, a: u32, v: u16) {
+pub(crate) fn rw(r: &mut [u8], a: u32, v: u16) {
     bytes(r, a, &v.to_ne_bytes());
 }
 pub(crate) fn put(g: &mut Game, a: usize, v: u16) {
@@ -14,7 +13,7 @@ pub(crate) fn put(g: &mut Game, a: usize, v: u16) {
 pub(crate) fn exp(e: &mut [u8], a: usize, v: u16) {
     e[a..a + 2].copy_from_slice(&v.to_le_bytes());
 }
-pub(crate) fn literal(r: &RomImage, a: u32, v: &[u8]) {
+pub(crate) fn literal(r: &mut [u8], a: u32, v: &[u8]) {
     assert!(!v.is_empty() && v.len() <= 32);
     bytes(r, a, &[(v.len() - 1) as u8]);
     bytes(r, a + 1, v);

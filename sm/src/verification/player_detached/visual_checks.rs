@@ -6,12 +6,12 @@ use super::game::{
 use super::{Composed, Event, World, animated, colors, room};
 use std::panic::{AssertUnwindSafe, catch_unwind};
 
-fn words(h: &Composed, bank: u8, values: &[(u16, u16)]) {
+fn words(h: &mut Composed, bank: u8, values: &[(u16, u16)]) {
     for &(cursor, value) in values {
         h.word(bank, cursor, value);
     }
 }
-fn palette_script(h: &Composed, definition: u16, program: u16, offset: u16, value: u16) {
+fn palette_script(h: &mut Composed, definition: u16, program: u16, offset: u16, value: u16) {
     words(
         h,
         0x8d,
@@ -30,7 +30,7 @@ fn eye_then_palette() {
     let mut h = Composed::new();
     // Real EyeGlow initializer8829070 writes colors249..252 from maintained table.
     words(
-        &h,
+        &mut h,
         0x86,
         &[
             (0xba6a, 8829070u32 as u16),
@@ -41,7 +41,7 @@ fn eye_then_palette() {
         ],
     );
     words(
-        &h,
+        &mut h,
         0x87,
         &[
             (0x8100, 0xa100),
@@ -55,7 +55,7 @@ fn eye_then_palette() {
             (0xa10a, 0xa200),
         ],
     );
-    palette_script(&h, 0x8200, 0x9400, 500, 0x4321);
+    palette_script(&mut h, 0x8200, 0x9400, 500, 0x4321);
     animated::set_enabled(&mut h.world.player, true);
     colors::set_enabled(&mut h.world.player, true);
     animated::spawn(&mut h, 0x8100);
@@ -83,7 +83,7 @@ fn eye_then_palette() {
 }
 fn palette_timer_alias() {
     let mut h = Composed::new();
-    palette_script(&h, 0x8100, 0x9500, 0x1e1c, 1);
+    palette_script(&mut h, 0x8100, 0x9500, 0x1e1c, 1);
     h.world.player.mechanisms.flags = 0x8000;
     let room_slot = &mut h.world.player.mechanisms.slots[0];
     room_slot.header = 1;
@@ -91,7 +91,7 @@ fn palette_timer_alias() {
     room_slot.pre_action = 8684649u32 as u16;
     room_slot.program = 0x9800;
     words(
-        &h,
+        &mut h,
         0x84,
         &[
             (0x9800, 8685249u32 as u16),
@@ -157,7 +157,7 @@ fn heat_callback() {
         .palette_effects
         .previous_heat = 0;
     words(
-        &h,
+        &mut h,
         0x8d,
         &[
             (0xe3e6, 0x9700),
@@ -283,7 +283,7 @@ fn upload_failure() {
         "visual.composition.upload_failure_effect_retained"
     );
 }
-fn fill_suit(h: &Composed, address: u16, first: u16) {
+fn fill_suit(h: &mut Composed, address: u16, first: u16) {
     for i in 0..16 {
         h.word(0x9b, address + i * 2, first + i);
     }
@@ -294,7 +294,7 @@ fn samus_shared_paths() {
     // Actual inventory choice feeds both suit index and real current/target copies.
     h.world.player.inventory.equipment.active = 0x20;
     samus::update_suit_index(&mut h.world.player);
-    fill_suit(&h, 0x9800, 0x100);
+    fill_suit(&mut h, 0x9800, 0x100);
     samus::load_suit(&mut h, PaletteBuffer::Current);
     samus::load_suit(&mut h, PaletteBuffer::Target);
     assert_eq!(h.world.player.presentation.palette().suit_index, 4);
@@ -310,8 +310,8 @@ fn samus_shared_paths() {
     // Real player charge decisions call actual Samus output and native suit copy.
     h.world.player.projectiles.controls.charge = 60;
     h.world.player.projectiles.controls.charge_palette = 2;
-    words(&h, 0x91, &[(0xd7d9, 0x9000), (0x9002, 0x9900)]);
-    fill_suit(&h, 0x9900, 0x200);
+    words(&mut h, 0x91, &[(0xd7d9, 0x9000), (0x9002, 0x9900)]);
+    fill_suit(&mut h, 0x9900, 0x200);
     assert_eq!(samus::charge_feedback(&mut h), 0);
     assert_eq!(
         h.world.player.presentation.visual().colors[192],
@@ -342,9 +342,9 @@ fn samus_carry() {
     h.world.player.player.shine_tick = 2;
     h.world.player.presentation.palette_mut().hurt_flash = 0x803b;
     h.word(0x91, 0xd727, 0x9300);
-    fill_suit(&h, 0x9300, 0x0600);
-    fill_suit(&h, 0xa380, 0x0700);
-    fill_suit(&h, 0x9400, 0x0800);
+    fill_suit(&mut h, 0x9300, 0x0600);
+    fill_suit(&mut h, 0xa380, 0x0700);
+    fill_suit(&mut h, 0x9400, 0x0800);
     samus::advance(&mut h);
     // First misc returns unsigned carry Set despite negative subtraction branch.
     // Second misc independently loads9400, so final color alone cannot show whether
@@ -369,7 +369,7 @@ fn samus_carry() {
     h.world.player.player.shine_tick = 2;
     h.world.player.presentation.palette_mut().hurt_flash = 8;
     h.word(0x91, 0xd727, 0x9300);
-    fill_suit(&h, 0x9300, 0x0600);
+    fill_suit(&mut h, 0x9300, 0x0600);
     samus::advance(&mut h);
     assert_eq!(
         (
@@ -421,7 +421,7 @@ fn charge_fixture() -> Composed {
         .targets
         .fill(0x5555);
     words(
-        &h,
+        &mut h,
         0x91,
         &[
             (0xd7d9, 0x9000),
@@ -441,7 +441,7 @@ fn charge_fixture() -> Composed {
     h.image = super::RomImage::zeroed(0x100000);
     // Wrong Native indirection stays valid, so provenance faults reach assertions.
     words(
-        &h,
+        &mut h,
         0x91,
         &[
             (0x9002, 0x9820),
@@ -458,7 +458,7 @@ fn charge_fixture() -> Composed {
         (0x9880, 0x600),
         (0x98a0, 0x700),
     ] {
-        fill_suit(&h, address, first);
+        fill_suit(&mut h, address, first);
     }
     h
 }

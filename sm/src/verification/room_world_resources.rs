@@ -9,10 +9,10 @@ use sm_game::room_entry::{
 };
 use std::sync::Arc;
 
-fn write(image: &RomImage, address: u32, bytes: &[u8]) {
+fn write(image: &mut [u8], address: u32, bytes: &[u8]) {
     let base = crate::rtl::lorom_offset(address) as usize;
     for (offset, &byte) in bytes.iter().enumerate() {
-        image.write(base + offset, byte);
+        image[base + offset] = byte;
     }
 }
 fn fill_commands(count: usize, value: u8, out: &mut Vec<u8>) {
@@ -33,39 +33,55 @@ fn level(tile: u16) -> Vec<u8> {
     bytes.push(0xff);
     bytes
 }
+/// Register copies of the loaded and native images that carry the synthetic
+/// resources, keeping one allocation for both where SnesInit shared one.
 pub(crate) fn install(game: &mut Game) {
     assert!(!game.g_snes.is_null(), "room.world.hardware-initialized");
     let loaded = game.loaded_rom.clone().expect("real SnesInit loaded ROM");
     let native = game.capture_native_rom();
-    for image in [&loaded, &native] {
-        for (address, tile) in [(0xc08000, 0x0101), (0xc08100, 0x0202), (0xc08200, 0x0303)] {
-            write(image, address, &level(tile));
-        }
-        for (address, count) in [(0xc08300, 6144), (0xc08400, 4096), (0xc08500, 512)] {
-            let mut bytes = Vec::new();
-            fill_commands(count, 0, &mut bytes);
-            bytes.push(0xff);
-            write(image, address, &bytes);
-        }
-        if game
-            .world()
-            .prepared_table(&AssetSource::Shared(SharedAsset::CreTileTable))
-            .is_some()
-        {
-            write(image, 0xb9a09d, &table_stream(2048, 0));
-            write(image, 0xc08302, &[0x55]);
-            write(image, 0xb9a09f, &[0x55]);
-        }
-        if game.world().prepared_room_assets().is_some() {
-            // Complete packs remain authoritative after the mutable source changes.
-            for address in [0xc08000, 0xc08100, 0xc08200, 0xc08400, 0xc08500, 0xb98000] {
-                write(image, address, &[0xff]);
-            }
-        }
-        // Both retained enemy-list consumers stop onFFFF; quota follows population.
-        write(image, 0xa19000, &[0xff, 0xff, 0]);
-        write(image, 0xb49000, &[0xff, 0xff]);
+    let shared = loaded.same_allocation(&native);
+    let loaded = RomImage::from(with_resources(game, &loaded));
+    let native = if shared {
+        loaded.clone()
+    } else {
+        RomImage::from(with_resources(game, &native))
+    };
+    game.register_native_rom(native);
+    game.register_rom(loaded);
+}
+
+fn with_resources(game: &Game, source: &RomImage) -> Vec<u8> {
+    let mut image = (0..source.len())
+        .map(|at| source.read(at))
+        .collect::<Vec<_>>();
+    for (address, tile) in [(0xc08000, 0x0101), (0xc08100, 0x0202), (0xc08200, 0x0303)] {
+        write(&mut image, address, &level(tile));
     }
+    for (address, count) in [(0xc08300, 6144), (0xc08400, 4096), (0xc08500, 512)] {
+        let mut bytes = Vec::new();
+        fill_commands(count, 0, &mut bytes);
+        bytes.push(0xff);
+        write(&mut image, address, &bytes);
+    }
+    if game
+        .world()
+        .prepared_table(&AssetSource::Shared(SharedAsset::CreTileTable))
+        .is_some()
+    {
+        write(&mut image, 0xb9a09d, &table_stream(2048, 0));
+        write(&mut image, 0xc08302, &[0x55]);
+        write(&mut image, 0xb9a09f, &[0x55]);
+    }
+    if game.world().prepared_room_assets().is_some() {
+        // Complete packs remain authoritative over different source bytes.
+        for address in [0xc08000, 0xc08100, 0xc08200, 0xc08400, 0xc08500, 0xb98000] {
+            write(&mut image, address, &[0xff]);
+        }
+    }
+    // Both retained enemy-list consumers stop onFFFF; quota follows population.
+    write(&mut image, 0xa19000, &[0xff, 0xff, 0]);
+    write(&mut image, 0xb49000, &[0xff, 0xff]);
+    image
 }
 
 fn table_stream(count: usize, value: u8) -> Vec<u8> {

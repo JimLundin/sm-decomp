@@ -17,19 +17,18 @@ use {
     },
 };
 
-fn native(image: &RomImage, address: u32, offset: usize, value: u16) {
+fn native(image: &mut [u8], address: u32, offset: usize, value: u16) {
     let at = lorom_offset(address) as usize + offset;
-    for (lane, byte) in value.to_ne_bytes().into_iter().enumerate() {
-        image.write(at + lane, byte);
-    }
+    image[at..at + 2].copy_from_slice(&value.to_ne_bytes());
 }
 pub(crate) fn run_checked() {
     direct_touch_body_publishes_stage_before_aliased_map();
     same_behavior_pose_two_appearances_have_identical_actual_shot_contact();
 }
 fn direct_touch_body_publishes_stage_before_aliased_map() {
-    let image = RomImage::zeroed(0x200000);
-    native(&image, 0xa0d000, offset_of!(EnemyDef, touch_ai), 0x804c);
+    let mut bytes = vec![0; 0x200000];
+    native(&mut bytes, 0xa0d000, offset_of!(EnemyDef, touch_ai), 0x804c);
+    let image = RomImage::from(bytes);
     let mut game = Game::new();
     game.register_native_rom(image.clone());
     game.register_rom(image);
@@ -118,16 +117,17 @@ fn stage_materials(runtime: &mut Runtime<'_>, image: &RomImage) {
 }
 fn same_behavior_pose_two_appearances_have_identical_actual_shot_contact() {
     let world = collision_world();
-    let image = RomImage::zeroed(0x200000);
-    native(&image, 0xa0d000, offset_of!(EnemyDef, shot_ai), 0x8040);
-    native(&image, 0xa0d000, offset_of!(EnemyDef, touch_ai), 0x804c);
+    let mut bytes = vec![0; 0x200000];
+    native(&mut bytes, 0xa0d000, offset_of!(EnemyDef, shot_ai), 0x8040);
+    native(&mut bytes, 0xa0d000, offset_of!(EnemyDef, touch_ai), 0x804c);
     // The imported part/hitbox pointers stay bounded even though gameplay geometry is prepared.
-    native(&image, 0xa0c000, 0, 1);
-    native(&image, 0xa0c000, 2, 0);
-    native(&image, 0xa0c000, 4, 0);
-    native(&image, 0xa0c000, 6, 0xe000);
-    native(&image, 0xa0c000, 8, 0xe100);
-    native(&image, 0xa0e100, 0, 1);
+    native(&mut bytes, 0xa0c000, 0, 1);
+    native(&mut bytes, 0xa0c000, 2, 0);
+    native(&mut bytes, 0xa0c000, 4, 0);
+    native(&mut bytes, 0xa0c000, 6, 0xe000);
+    native(&mut bytes, 0xa0c000, 8, 0xe100);
+    native(&mut bytes, 0xa0e100, 0, 1);
+    let image = RomImage::from(bytes);
     let mut game = Game::with_world(world.clone());
     game.register_native_rom(image.clone());
     game.register_rom(image.clone());

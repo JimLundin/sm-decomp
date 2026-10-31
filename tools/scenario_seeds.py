@@ -89,6 +89,26 @@ SCENARIOS = {
         base="100-input-phase:305",
         edits={"energy": 40, "reserve_energy": 0, "power_bombs": 11},
         note="crystal flash conditions at the landing site"),
+    # The 100% movie's Oum room with Samus moved beside the first Oum, which
+    # the route never approaches.
+    "oum-roll": Scenario(
+        base="100-input-phase:256",
+        edits={"x": 540, "y": 590},
+        note="Samus beside the first Oum"),
+    # The 100% movie's Tatori room, where the movie arrives with one energy,
+    # with full energy so Samus survives the turtles' touch.
+    "tatori-touch": Scenario(
+        base="100-input-phase:221",
+        edits={"energy": 999},
+        note="Tatori room with full energy"),
+    # The 100% movie's Ridley fight with full energy and reserves and Ridley's
+    # health (enemy slot 0) down to 9000, where he swoops, which the movie's
+    # quick fight never sees.
+    "ridley-swoop": Scenario(
+        base="100-boundary:118",
+        edits={"energy": 699, "reserve_energy": 200},
+        words={0x0F8C: 9000},
+        note="Ridley fight at half health with full energy"),
     # The landing site with the charge beam and one other beam equipped and
     # the power bombs selected, so a released charge fires that beam's
     # special attack.

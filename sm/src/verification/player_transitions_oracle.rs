@@ -26,31 +26,30 @@ const WINDOWS: &[(u32, u32)] = &[
     (0x9b9400, 0x9b9420),
 ];
 
-// SnesInit's eighth FixBugHook changes one cell inside the speed helper.
-// Restore the recognized original-file cell only for this capture; Drop also
-// covers window rejection and unwinding, which Snapshot cannot do for ROM.
+// SnesInit's eighth FixBugHook changes one cartridge cell inside the speed
+// helper. Restore the recognized original-file cell only for this capture; Drop
+// also covers window rejection and unwinding, which Snapshot cannot do for ROM.
 struct OriginalSpeedHook {
-    image: crate::rom::RomImage,
+    cartridge: crate::snes::cart::CartRom,
     at: usize,
     initialized: u8,
 }
 impl Drop for OriginalSpeedHook {
     fn drop(&mut self) {
-        self.image.write(self.at, self.initialized);
+        self.cartridge.write(self.at, self.initialized);
     }
 }
-fn original_speed_hook(game: &Game, original: &[u8]) -> Result<OriginalSpeedHook, String> {
-    let image = game
-        .loaded_rom
-        .as_ref()
-        .ok_or("missing oracle image")?
-        .clone();
+fn original_speed_hook(
+    game: &Game,
+    original: &[u8],
+    cartridge: crate::snes::cart::CartRom,
+) -> Result<OriginalSpeedHook, String> {
     let at = offset(0x9085aa);
     let original_byte = *original.get(at).ok_or("short original speed hook")?;
-    if at >= image.len() {
+    if at >= cartridge.len() {
         return Err("short initialized speed hook".into());
     }
-    let initialized = image.read(at);
+    let initialized = cartridge.read(at);
     if initialized != original_byte
         && !(initialized == 0
             && game.hookmode == 1
@@ -60,11 +59,11 @@ fn original_speed_hook(game: &Game, original: &[u8]) -> Result<OriginalSpeedHook
         return Err("unexpected speed hook; not the saved startup hook".into());
     }
     let restore = OriginalSpeedHook {
-        image,
+        cartridge,
         at,
         initialized,
     };
-    restore.image.write(at, original_byte);
+    restore.cartridge.write(at, original_byte);
     Ok(restore)
 }
 
@@ -224,12 +223,14 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
             .ok_or("ROM must be loaded")?
             .clone();
         // SnesInit normally binds all three to this one allocation. Never shift it.
-        if image.as_mut_ptr() != (*(*game.g_snes).cart).rom.as_mut_ptr()
-            || image.as_mut_ptr() != game.capture_native_rom().as_mut_ptr()
+        if image.as_ptr() != (*(*game.g_snes).cart).rom.as_mut_ptr()
+            || image.as_ptr() != game.capture_native_rom().as_ptr()
         {
             return Err("oracle image bindings differ".into());
         }
-        let _original_speed_hook = original_speed_hook(game, original)?;
+        // The original CPU executes the cartridge, so its authored bytes go there.
+        let cartridge = (*(*game.g_snes).cart).rom.clone();
+        let _original_speed_hook = original_speed_hook(game, original, cartridge.clone())?;
         for &(start, end) in WINDOWS {
             if !original_matches(game, original, start, (end - start) as usize) {
                 return Err(format!("oracle original window differs at {start:06x}"));
@@ -323,8 +324,8 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
                     authored.extend_from_slice(bytes);
                     for (i, value) in bytes.iter().enumerate() {
                         let at = offset(at) + i;
-                        restored_bytes.push((at, image.read(at)));
-                        image.write(at, *value);
+                        restored_bytes.push((at, cartridge.read(at)));
+                        cartridge.write(at, *value);
                     }
                 }
                 record(&mut output, 8, &authored);
@@ -499,7 +500,7 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
             Err("player transition instruction budget exhausted".into())
         }));
         for (at, byte) in restored_bytes {
-            image.write(at, byte);
+            cartridge.write(at, byte);
         }
         {
             let snapshot_snes = game.g_snes;

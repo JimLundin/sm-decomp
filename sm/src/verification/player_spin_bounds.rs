@@ -44,15 +44,13 @@ pub(crate) fn run(g: &mut Game) -> usize {
     let native = g.capture_native_rom_binding();
     let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
         // Only speed calculation reads content: actual Native movement3 record.
-        let content = RomImage::zeroed(0x200000);
+        let mut content = vec![0; 0x200000];
         let at = crate::rom::lorom_offset(0x90e024) as usize;
         for (i, value) in [0u16, 0, 8, 0, 2, 0].into_iter().enumerate() {
-            for (lane, byte) in value.to_le_bytes().into_iter().enumerate() {
-                content.write(at + i * 2 + lane, byte);
-            }
+            content[at + i * 2..at + i * 2 + 2].copy_from_slice(&value.to_le_bytes());
         }
         g.loaded_rom = None;
-        g.register_native_rom(content);
+        g.register_native_rom(RomImage::from(content));
         let mut checked = 0;
         for (middle, air, liquid) in CASES {
             // Independent verification of the authored truth table uses unsigned

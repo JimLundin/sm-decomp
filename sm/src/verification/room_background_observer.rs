@@ -14,7 +14,6 @@ struct Capture {
     at: usize,
     diagnostics: Vec<u32>,
     diag_at: usize,
-    a: RomImage,
     b: RomImage,
     mutations: Vec<usize>,
     bytes: Vec<u8>,
@@ -24,7 +23,6 @@ pub(crate) fn begin(
     id: u32,
     writes: Vec<(u16, u8)>,
     diagnostics: Vec<u32>,
-    a: RomImage,
     b: RomImage,
     mutations: Vec<usize>,
 ) {
@@ -36,7 +34,6 @@ pub(crate) fn begin(
             at: 0,
             diagnostics,
             diag_at: 0,
-            a,
             b,
             mutations,
             bytes: Vec::new(),
@@ -91,26 +88,10 @@ pub(crate) fn written_parts(
                 &snapshot_parts(ram, fail, decompress_src, &mut observe),
             );
             *loaded_rom = Some(c.b.clone());
-            let source = if c.id == 4 && address == 0x4311 {
-                0x6200
-            } else {
-                0x6100
-            };
-            rw(&c.a, 0x8fa002, source);
-            bytes(&c.a, 0x8fa004, &[0x7e]);
-            rw(&c.a, 0x8fa005, 0x7777);
-            rw(&c.a, 0x8fa007, if source == 0x6200 { 8 } else { 6 });
             record(
                 &mut c.bytes,
                 4,
                 &snapshot_parts(ram, fail, decompress_src, &mut observe),
-            );
-            record(
-                &mut c.bytes,
-                5,
-                &(0..9)
-                    .map(|i| c.a.read(offset(0x8fa002) + i))
-                    .collect::<Vec<_>>(),
             );
         }
     });

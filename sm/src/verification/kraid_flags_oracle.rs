@@ -26,8 +26,8 @@ pub(crate) unsafe fn guard(game: &Game, original: &[u8]) -> Result<(), String> {
         let native = game
             .capture_native_rom_binding()
             .ok_or("missing Kraid native ROM")?;
-        if loaded.as_mut_ptr() != native.as_mut_ptr()
-            || loaded.as_mut_ptr() != (*(*game.g_snes).cart).rom.as_mut_ptr()
+        if loaded.as_ptr() != native.as_ptr()
+            || loaded.as_ptr() != (*(*game.g_snes).cart).rom.as_mut_ptr()
         {
             return Err("Kraid requires shared original cartridge binding".into());
         }

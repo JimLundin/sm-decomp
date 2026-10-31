@@ -434,6 +434,106 @@ def corpus_child(command, root):
     return result, result == 2 and not replayed and len(errors) == 1 and errors[0] in rejected
 
 
+def lock_entry_text(entry):
+    """One `[[scenario]]` table of an oracle digest lock."""
+    def inline(table):
+        return "{ " + ", ".join(f'"{key}" = "{value}"' for key, value in table.items()) + " }"
+    lines = ["[[scenario]]"]
+    for key in ("id", "oracle", "start", "inputs"):
+        lines.append(f'{key} = "{entry[key]}"')
+    for key in ("frames", "format", "ticks"):
+        lines.append(f"{key} = {entry[key]}")
+    lines.append(f'combined = "{entry["combined"]}"')
+    lines.append(f"digests = {inline(entry['digests'])}")
+    lines.append(f"marks = {inline(entry['marks'])}")
+    return "\n".join(lines) + "\n"
+
+
+def compare_lock(locked, run):
+    """The streams whose running digest differs and the last mark both runs share."""
+    if locked["format"] != run["format"]:
+        return ["format"], None
+    differing = sorted(name for name in locked["digests"].keys() & run["digests"].keys()
+                       if locked["digests"][name] != run["digests"][name])
+    if locked["ticks"] != run["ticks"]:
+        differing.append("ticks")
+    if locked["combined"] != run["combined"]:
+        differing.append("combined")
+    matching = [int(mark) for mark, digest in locked["marks"].items()
+                if run["marks"].get(mark) == digest]
+    last = 0
+    for mark in sorted(int(mark) for mark in locked["marks"]):
+        if mark not in matching:
+            break
+        last = mark
+    return differing, last
+
+
+def run_single_side(root, args, segment, replay, report, tomllib):
+    """One seeded or boot row in a single-side mode (docs/SCENARIO_HARNESS.md):
+    free run against a fresh oracle trace, determinism of the engine against
+    its own trace, or the oracle digest lock (REVIEW lane S condition 8)."""
+    import tempfile
+    name = segment["id"]
+    with tempfile.TemporaryDirectory(prefix="sm-single-") as work:
+        work = Path(work)
+        def child(extra):
+            return corpus_child(replay + extra, root)[0]
+        if args.mode == "free-run":
+            trace = work / "oracle.trace"
+            code = child(["--oracle-only", "--trace-out", str(trace)])
+            if code:
+                print(f"{name}: oracle recording failed", flush=True)
+                return code
+            print(f"{name}: oracle trace {trace.stat().st_size} bytes", flush=True)
+            return child(["--engine-only", "--free-run", str(trace)] + report)
+        if args.mode == "determinism":
+            # Whole run with observation on; then the first half with it off,
+            # which saves a checkpoint, and the second half resumed from it.
+            trace = work / "engine.trace"
+            code = child(["--engine-only", "--trace-out", str(trace)])
+            if code:
+                return code
+            frames = segment["frames"]
+            half = max(1, frames // 2)
+            base = [part for part in replay if part not in ("--expect", *segment["expect"])]
+            base[base.index("--frames") + 1] = str(half)
+            checkpoint = work / "half.smvchk"
+            code = corpus_child(base + ["--engine-only", "--untyped", "--free-run", str(trace),
+                                        "--checkpoint-out", str(checkpoint)], root)[0]
+            if code or half == frames:
+                return code
+            base[base.index("--frames") + 1] = str(frames - half)
+            return corpus_child(base + ["--engine-only", "--free-run", str(trace),
+                                        "--checkpoint-in", str(checkpoint)] + report, root)[0]
+        entry = work / "entry.toml"
+        side = "--oracle-only" if args.mode == "lock" else "--engine-only"
+        code = child([side, "--lock-out", str(entry)])
+        if code:
+            return code
+        with entry.open("rb") as file:
+            run = tomllib.load(file)
+        key = {"id": name, "oracle": "faithful",
+               "start": f"seed:{segment['seed_sha256']}" if "seed" in segment else "boot",
+               "inputs": segment["input_sha256"], "frames": segment["frames"]}
+        if args.mode == "lock":
+            args.lock_entries[name] = key | run
+            print(f"LOCK {name}: {run['ticks']} ticks, {len(run['digests'])} streams", flush=True)
+            return 0
+        locked = args.lock_entries.get(name)
+        if locked is None or any(locked.get(field) != value for field, value in key.items()):
+            print(f"{name}: no current lock entry for this start, inputs and budget", flush=True)
+            return 1
+        differing, mark = compare_lock(locked, run)
+        if differing:
+            print(f"{name}: lock mismatch in {', '.join(differing)}; last matching mark "
+                  f"{mark} ticks; rerun in lockstep to name the first tick and field", flush=True)
+            return 1
+        compared = len(locked["digests"].keys() & run["digests"].keys())
+        print(f"{name}: lock matches ({run['ticks']} ticks, {compared} streams)", flush=True)
+        return 0
+
+
 def run_corpus(root, args):
     import csv
     import re
@@ -710,13 +810,21 @@ def run_corpus(root, args):
         output = directory / f"{name}-{uuid.uuid4().hex}.audio-trace"
         return replay + ["--audio-trace", str(output)]
 
-    def with_divergence_report(replay, name):
+    def report_option(name):
         # One typed-observation divergence record per row, beside its console names.
         if args.divergence_report_directory is None:
-            return replay
+            return []
         directory = args.divergence_report_directory.resolve()
         directory.mkdir(parents=True, exist_ok=True)
-        return replay + ["--divergence-report", str(directory / f"{name}.toml")]
+        return ["--divergence-report", str(directory / f"{name}.toml")]
+
+    def with_divergence_report(replay, name):
+        return replay + report_option(name)
+
+    args.lock_entries = {}
+    if args.mode == "check-lock":
+        with args.lock.open("rb") as file:
+            args.lock_entries = {entry["id"]: entry for entry in tomllib.load(file).get("scenario", [])}
 
     # Earlier windows can supply checked prefixes to later branches of the same inputs.
     passed = set()
@@ -741,6 +849,19 @@ def run_corpus(root, args):
                     replay += ["--" + key.replace("_", "-"), str(segment[key])]
             if "seed" in segment:
                 replay += ["--seed", str(segment["_seed_path"])]
+            if args.mode != "lockstep":
+                if start:
+                    raise RuntimeError(f"--mode {args.mode} takes seeded or boot rows only")
+                print(f"SEGMENT {name}: {args.mode}, budget {segment['frames']} frames", flush=True)
+                code = run_single_side(root, args, segment, replay,
+                                       report_option(name), tomllib)
+                if code:
+                    failures.add(name)
+                    print(f"FAIL {name}: {args.mode} exit {code}", flush=True)
+                else:
+                    passed.add(name)
+                    print(f"PASS {name}", flush=True)
+                continue
             if "seed" in segment and not start:
                 print(f"SEGMENT {name}: seed {segment['seed']}, budget {segment['frames']} frames", flush=True)
                 code, _ = corpus_child(with_divergence_report(with_audio_trace(replay, name), name), root)
@@ -781,6 +902,18 @@ def run_corpus(root, args):
         except (OSError, RuntimeError, ValueError) as error:
             failures.add(name)
             print(f"FAIL {name}: {error}", flush=True)
+    if args.mode == "lock" and not failures:
+        merged = {}
+        if args.lock.exists():
+            with args.lock.open("rb") as file:
+                merged = {entry["id"]: entry for entry in tomllib.load(file).get("scenario", [])}
+        merged.update(args.lock_entries)
+        args.lock.write_text(
+            "# Oracle digest lock (REVIEW lane S condition 8): the faithful oracle's running\n"
+            "# digests per scenario. Written by tools/verify_dll.py --mode lock; never edit.\n\n"
+            + "\n".join(lock_entry_text(merged[name]) for name in sorted(merged)),
+            encoding="utf-8", newline="\n")
+        print(f"Lock: wrote {len(args.lock_entries)} entries to {args.lock}", flush=True)
     print(f"Corpus {'PARTIAL' if partial else 'FULL'}: {len(passed)}/{len(selected)} selected passed; "
           f"{len(passed.intersection(required))}/{len(required)} required passed", flush=True)
     return 1 if failures else 0
@@ -899,7 +1032,35 @@ def main():
                         "both values, to a TOML file (the console names fields only)")
     parser.add_argument("--divergence-report-directory", type=Path, metavar="DIR",
                         help="write one --divergence-report TOML per selected corpus row")
+    parser.add_argument("--mode", default="lockstep",
+                        choices=("lockstep", "free-run", "determinism", "lock", "check-lock"),
+                        help="corpus run mode: paired lockstep (default); free run of the engine "
+                        "against a fresh oracle trace; engine determinism; write (faithful oracle) "
+                        "or check (engine only) the --lock oracle digest lock")
+    parser.add_argument("--lock", type=Path, metavar="TOML",
+                        help="the oracle digest lock --mode lock writes and --mode check-lock reads")
+    single = parser.add_argument_group("single-side direct replay")
+    single.add_argument("--engine-only", action="store_true",
+                        help="run only the engine (no oracle, no comparison unless --free-run)")
+    single.add_argument("--untyped", action="store_true",
+                        help="take only the machine streams, without typed observation")
+    single.add_argument("--trace-out", type=Path, metavar="PATH",
+                        help="write the single-side run's per-Tick trace (a run artifact)")
+    single.add_argument("--lock-out", type=Path, metavar="PATH",
+                        help="write the single-side run's lock entry (running digests)")
+    single.add_argument("--free-run", type=Path, metavar="TRACE",
+                        help="compare the single-side run with a reference trace, Tick by Tick")
     args = parser.parse_args()
+    single_side = (args.engine_only or args.untyped or args.trace_out is not None
+                   or args.lock_out is not None or args.free_run is not None)
+    if args.mode != "lockstep" and args.corpus is None:
+        parser.error("--mode requires --corpus")
+    if (args.lock is not None) != (args.mode in ("lock", "check-lock")):
+        parser.error("--lock goes with --mode lock or check-lock")
+    if args.mode == "lock" and os.environ.get("SM_ORACLE") != "faithful" and args.oracle != "faithful":
+        parser.error("--mode lock records the faithful oracle (--oracle faithful)")
+    if single_side and (args.corpus is not None or args.inputs is None):
+        parser.error("single-side options take a direct replay (corpus rows use --mode)")
     if args.room_pack_export is not None:
         if len(args.room_pack_export) != 1:
             parser.error("duplicate --room-pack-export request")
@@ -911,8 +1072,9 @@ def main():
     if args.audio_trace_directory is not None and args.corpus is None:
         parser.error("--audio-trace-directory requires --corpus")
     if args.divergence_report is not None and (args.corpus is not None or args.inputs is None
-                                             or args.oracle_only or args.room_pack is not None):
-        parser.error("--divergence-report requires a direct paired-oracle replay")
+                                             or (args.oracle_only and args.free_run is None)
+                                             or args.room_pack is not None):
+        parser.error("--divergence-report requires a direct paired-oracle replay or --free-run")
     if args.divergence_report_directory is not None and args.corpus is None:
         parser.error("--divergence-report-directory requires --corpus")
     if args.audio_trace is not None or args.audio_trace_directory is not None:
@@ -977,9 +1139,12 @@ def main():
                            or args.after_hits is not None or args.expect
                            or args.after_expectations is not None or args.corpus is not None):
         parser.error("--build-only cannot request replay frames, checkpoints or probes")
-    if args.oracle_only and (args.checkpoint_out is None or args.corpus is not None or args.require_hit
-                             or args.expect or args.seed is not None or args.room_pack is not None):
-        parser.error("--oracle-only takes inputs, --frames and --checkpoint-out (optionally --checkpoint-in)")
+    records = args.trace_out is not None or args.lock_out is not None
+    if args.oracle_only and (args.corpus is not None or args.require_hit or args.room_pack is not None
+                             or (not records and (args.checkpoint_out is None or args.expect
+                                                  or args.seed is not None))):
+        parser.error("--oracle-only takes inputs, --frames and --checkpoint-out (optionally "
+                     "--checkpoint-in), or records a --trace-out/--lock-out")
     if args.frames is not None and not 1 <= args.frames <= 2**64 - 1:
         parser.error("--frames must be a positive u64")
     if args.after_hits is not None:
@@ -1032,6 +1197,14 @@ def main():
         replay_args.extend(["--after-expectations", str(args.after_expectations)])
     if args.oracle_only:
         replay_args.append("--oracle-only")
+    if args.engine_only:
+        replay_args.append("--engine-only")
+    if args.untyped:
+        replay_args.append("--untyped")
+    for option, path in (("--trace-out", args.trace_out), ("--lock-out", args.lock_out),
+                         ("--free-run", args.free_run)):
+        if path is not None:
+            replay_args.extend([option, str(path.resolve())])
     for option, path in (("--checkpoint-in", args.checkpoint_in),
                          ("--checkpoint-out", args.checkpoint_out), ("--seed", args.seed),
                          ("--prepared-checkpoint-check", args.prepared_checkpoint_check),
@@ -1061,8 +1234,8 @@ def main():
         audio_dll_hash = audio_file_hash(dll)
         os.environ["SM_AUDIO_TRACE_DLL_SHA256"] = audio_dll_hash
         audio_identity["dll"] = audio_dll_hash
-    if (args.audio_trace is not None or args.divergence_report is not None
-            or args.unit_tests or args.room_pack is not None or producer or prepared_checkpoint or prepared_case
+    if (args.audio_trace is not None or args.divergence_report is not None or single_side
+            or args.oracle_only or args.unit_tests or args.room_pack is not None or producer or prepared_checkpoint or prepared_case
             or args.seed is not None or args.checkpoint_in is not None or args.checkpoint_out is not None
             or args.require_hit or args.expect):
         if not hasattr(host, "sm_verify_args"):

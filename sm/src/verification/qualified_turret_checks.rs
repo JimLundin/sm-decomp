@@ -15,9 +15,10 @@ pub(crate) fn check_case(id: u32) -> bool {
     if id >= CASES {
         return false;
     }
-    let image = RomImage::zeroed(0x200000);
+    let mut image = vec![0; 0x200000];
     let mut game = Game::new();
-    seed(&mut game, &image);
+    seed(&mut game, &mut image);
+    let image = RomImage::from(image);
     game.loaded_rom = Some(image.clone());
     game.register_native_rom(image);
     let handles = [0u16, 1, 34, 0xffff];

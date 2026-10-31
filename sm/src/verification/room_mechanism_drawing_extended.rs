@@ -1,6 +1,6 @@
 //! Additional actual-old rendering observations. Expectations describe emitted
 //! tiles and packed transfers independently of the production renderer.
-use super::{put, rom_word};
+use super::{install, put, rom_word};
 use crate::room_background_support::ram_span;
 use crate::{game_state::Game, rom::RomImage};
 use {crate::game::room_mechanisms as mechanisms, sm_game::enemy_script::EnemyScript};
@@ -9,14 +9,12 @@ fn word(game: &Game, at: usize) -> u16 {
     u16::from_le_bytes([game.ram().read_byte(at), game.ram().read_byte(at + 1)])
 }
 
-fn prepare(game: &mut Game, image: &RomImage) {
+fn prepare(game: &mut Game) {
     game.ram().fill(0..game.ram().len(), 0);
     put(game, 0x7a5, 16);
     put(game, 0x7a9, 16);
     put(game, 0x1c87, 34);
     put(game, 0xde6c, 0xa000);
-    game.loaded_rom = Some(image.clone());
-    game.register_native_rom(image.clone());
     for (block, tiles) in [
         (1, [0x1101, 0x1102, 0x1103, 0x1104]),
         (2, [0x2201, 0x2202, 0x2203, 0x2204]),
@@ -27,7 +25,7 @@ fn prepare(game: &mut Game, image: &RomImage) {
     }
 }
 
-fn stream(image: &RomImage, address: u32, command: u16, blocks: &[u16]) {
+fn stream(image: &mut [u8], address: u32, command: u16, blocks: &[u16]) {
     rom_word(image, address, command);
     for (i, block) in blocks.iter().enumerate() {
         rom_word(image, address + 2 + i as u32 * 2, *block);
@@ -61,18 +59,20 @@ fn pair(game: &Game, destination: u16) {
 pub(super) unsafe fn run(
     id: u32,
     game: &mut Game,
-    image: &RomImage,
+    image: &mut [u8],
     trace: &mut Vec<u8>,
 ) -> (u8, u16) {
-    prepare(game, image);
+    // The case's image is installed once its bytes are complete.
+    prepare(game);
     match id {
         1022 => {
             // Terrain captures loaded content; rendering reads the independent
             // native binding. Both streams are valid and deliberately disagree.
             stream(image, 0x84a000, 1, &[1]);
-            let native = RomImage::zeroed(0x200000);
-            stream(&native, 0x84a000, 1, &[2]);
-            game.register_native_rom(native);
+            install(game, image);
+            let mut native = vec![0; 0x200000];
+            stream(&mut native, 0x84a000, 1, &[2]);
+            game.register_native_rom(RomImage::from(native));
             mechanisms::checks::process_draw(0, game);
             mechanisms::calculate_coordinates(0, game);
             unsafe { mechanisms::checks::draw(0, game) };
@@ -81,9 +81,10 @@ pub(super) unsafe fn run(
         }
         1023 => {
             stream(image, 0x84a000, 1, &[1]);
-            let replacement = RomImage::zeroed(0x200000);
-            stream(&replacement, 0x84a000, 1, &[2]);
-            super::callback_edges::begin_native(replacement);
+            install(game, image);
+            let mut replacement = vec![0; 0x200000];
+            stream(&mut replacement, 0x84a000, 1, &[2]);
+            super::callback_edges::begin_native(RomImage::from(replacement));
             mechanisms::calculate_coordinates(0, game);
             unsafe { mechanisms::checks::draw(0, game) };
             let addresses = super::callback_edges::finish_native();
@@ -98,6 +99,7 @@ pub(super) unsafe fn run(
             // Horizontal corner order is 0,2,1,3: the first two writes replace
             // the source words that the last two reads must subsequently see.
             stream(image, 0x84a000, 1, &[0]);
+            install(game, image);
             for (i, value) in [0x1111, 0x2222, 0x3333, 0x4444, 0x5555]
                 .into_iter()
                 .enumerate()
@@ -133,8 +135,10 @@ pub(super) unsafe fn run(
                 stream(image, 0x84a010, 1, &[1]);
                 rom_word(image, if id == 1027 { 0x84e061 } else { 0x84e079 }, 0xa010);
             }
-            let script =
-                EnemyScript::at(image.clone(), crate::rtl::lorom_offset(0x849000) as usize);
+            let script = EnemyScript::at(
+                install(game, image),
+                crate::rtl::lorom_offset(0x849000) as usize,
+            );
             let result = unsafe { mechanisms::checks::command(opcode, script, 0, game) };
             assert!(matches!(result, EnemyScript::Stop));
             assert_eq!(word(game, 0x10024), if id <= 1026 { 0x123 } else { 1 });
@@ -149,20 +153,20 @@ pub(super) unsafe fn run(
             put(game, 0xde6c, 0xfffe);
             let start = sm_game::enemy_script::bank_base(0x84) as usize + 0xfffe;
             for (i, value) in [1u16, 0x345, 0].into_iter().enumerate() {
-                for (lane, byte) in value.to_ne_bytes().into_iter().enumerate() {
-                    image.write(start + i * 2 + lane, byte);
-                }
+                let at = start + i * 2;
+                image[at..at + 2].copy_from_slice(&value.to_ne_bytes());
             }
             // A wrapping mutant reads these different words instead.
             let wrapped = sm_game::enemy_script::bank_base(0x84) as usize;
-            image.write(wrapped, 0x89);
-            image.write(wrapped + 1, 0x07);
+            image[wrapped..wrapped + 2].copy_from_slice(&[0x89, 0x07]);
+            install(game, image);
             mechanisms::checks::process_draw(0, game);
             assert_eq!(word(game, 0x10024), 0x345);
         }
         1030 => {
             // Horizontal row crosses the screen's sixteen-block page boundary.
             stream(image, 0x84a000, 2, &[1, 2]);
+            install(game, image);
             put(game, 0x1c87, 30); // block x15, y0.
             mechanisms::calculate_coordinates(0, game);
             unsafe { mechanisms::checks::draw(0, game) };
@@ -182,6 +186,7 @@ pub(super) unsafe fn run(
         }
         1031 => {
             stream(image, 0x84a000, 0x8002, &[1, 2]);
+            install(game, image);
             mechanisms::calculate_coordinates(0, game);
             unsafe { mechanisms::checks::draw(0, game) };
             assert_eq!(word(game, 0x1c25), 16);

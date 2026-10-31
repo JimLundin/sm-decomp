@@ -27,12 +27,10 @@ pub(crate) fn check_case(id: u32) -> bool {
         9 => (8830095, 0x8000, 64, Some([504, 512])),
         _ => unreachable!(),
     };
-    let image = RomImage::zeroed(0x200000);
-    let raw = RomImage::zeroed(0x200000);
+    let mut image = vec![0; 0x200000];
+    let mut raw = vec![0; 0x200000];
     let mut game = Game::new();
-    seed(&mut game, &image);
-    game.loaded_rom = Some(image.clone());
-    game.register_native_rom(raw.clone());
+    seed(&mut game, &mut image);
     let handle = [0u16, 1, 34, 0xffff][id as usize % 4];
     let offset = usize::from(handle & !1);
     let x = if id == 10 { 300 } else { 128 };
@@ -61,10 +59,13 @@ pub(crate) fn check_case(id: u32) -> bool {
             // differs and supplies only the sampled high word stored into F.
             let delta = if n == 0 { 1u32 } else { 0x00020003 };
             let loaded = if n == 0 { 0xabcd7654u32 } else { 0x1234fedc };
-            bytes(&raw, at, &delta.to_le_bytes());
-            bytes(&image, at, &loaded.to_le_bytes());
+            bytes(&mut raw, at, &delta.to_le_bytes());
+            bytes(&mut image, at, &loaded.to_le_bytes());
         }
     }
+    // Every byte is authored before the images are registered.
+    game.loaded_rom = Some(RomImage::from(image));
+    game.register_native_rom(RomImage::from(raw));
     let mut expected = (0..game.ram().len())
         .map(|at| game.ram().read_byte(at))
         .collect::<Vec<_>>();

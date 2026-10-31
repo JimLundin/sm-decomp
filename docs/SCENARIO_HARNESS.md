@@ -2,7 +2,8 @@
 
 Status: **accepted by Jim, 2026-10-31; admitted under
 [REVIEW's lane S conditions](REVIEW.md#scenario-harness-lane-s-jim-2026-10-31);
-step 1 in progress.** It expands
+step 1 landed; step 2 in progress (free run, determinism and the lock format;
+the standalone recorder is open).** It expands
 [Validation · Verification strategy](target-architecture/VALIDATION.md#verification-strategy)
 into a concrete design. It is PLAN's one runner: the harness grows inside the current
 verifier and then replaces it, and never runs beside it as a second framework. Its code
@@ -88,6 +89,19 @@ When a free run diverges, the harness automatically re-runs that stretch in lock
 from the nearest checkpoint, so the report says both where the run *first* drifted
 and which routine is wrong.
 
+In the verifier today (step 2), each side runs alone in its own process
+(`--oracle-only` or `--engine-only`), taking one record per Tick: a digest of each
+machine stream lockstep compares (WRAM with the normalized ranges masked, SRAM,
+VRAM, CGRAM, OAM, PPU registers, the rendered frame, the APU ports) and the typed
+observation. `verify_dll.py --corpus R --mode M` runs seeded and boot rows:
+
+- `free-run`: the oracle records a trace; the engine runs against it Tick by Tick.
+- `determinism`: the engine records its own trace, then reruns the first half with
+  typed observation off, saving a checkpoint, and the second half from it.
+- `lock --oracle faithful --lock F` writes the oracle digest lock (REVIEW, lane S
+  condition 8); `check-lock --lock F` runs only the engine against it and names the
+  differing streams and the last matching 1,000-Tick mark.
+
 ## Turning divergences into scenarios
 
 `scenario cut <run> --at <tick> --window <n>` writes a new scenario. Its Start is a
@@ -128,9 +142,13 @@ files and CI logs carry ticks, domain and field names and hashes, never values.
   encrypted ci-data assets (PLAN: never commit movies or derived data); `scenario cut`
   and `scenario lock` update them through that route.
 - **Observation trace** (only on demand or on divergence): a binary file with a header
-  holding the schema version and the field table, then fixed-width records per Tick
-  per domain. A `trace show` command renders it as text or CSV. Traces are artifacts
-  and are never committed.
+  holding the format version, then one length-prefixed record per Tick: input frame,
+  Tick, machine stream digests and the encoded typed observation
+  (`sm_tools::trace`). A `trace show` command will render it as text or CSV. Traces
+  are artifacts and are never committed.
+- **Oracle digest lock:** per scenario, its oracle-side start and input digests, the
+  format version, the Tick count, one running digest per stream and the combined
+  machine digest every 1,000 Ticks: under a kilobyte, revealing nothing.
 - **Divergence report:** a TOML artifact per scenario (tick, domain, field, oracle
   value, engine value, last equal tick, coverage per domain, agreement with the RAM
   comparison), written to a path the run names (`verify_dll.py --divergence-report`,

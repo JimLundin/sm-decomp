@@ -21,22 +21,20 @@ fn record(out: &mut Vec<u8>, tag: u8, data: &[u8]) {
     out.extend_from_slice(&(data.len() as u32).to_le_bytes());
     out.extend_from_slice(data);
 }
-fn author(r: &RomImage, address: u32, data: &[u8], manifest: &mut Vec<u8>) {
+fn author(r: &mut [u8], address: u32, data: &[u8], manifest: &mut Vec<u8>) {
     let at = crate::rtl::lorom_offset(address) as usize;
     assert!(at + data.len() <= r.len());
     manifest.extend_from_slice(&address.to_le_bytes());
     manifest.extend_from_slice(&(data.len() as u32).to_le_bytes());
     manifest.extend_from_slice(data);
-    for (i, b) in data.iter().copied().enumerate() {
-        r.write(at + i, b);
-    }
+    r[at..at + data.len()].copy_from_slice(data);
 }
 fn seed(id: u32, g: &mut Game) -> (RomImage, RomImage, Vec<u8>, Vec<u8>) {
     g.ram().fill(0..g.ram().len(), 0);
     g.ram().write_byte(0x1ffff, 1);
     g.g_fail = false;
-    let loaded = RomImage::zeroed(0x200000);
-    let native = RomImage::zeroed(0x200000);
+    let mut loaded = vec![0; 0x200000];
+    let mut native = vec![0; 0x200000];
     let mut lm = Vec::new();
     let mut nm = Vec::new();
     let mut poses = vec![0; 256 * 8];
@@ -44,7 +42,7 @@ fn seed(id: u32, g: &mut Game) -> (RomImage, RomImage, Vec<u8>, Vec<u8>) {
         pose[0] = 8;
         pose[6] = 3;
     }
-    for (image, manifest, max) in [(&loaded, &mut lm, 6u16), (&native, &mut nm, 8u16)] {
+    for (image, manifest, max) in [(&mut loaded, &mut lm, 6u16), (&mut native, &mut nm, 8u16)] {
         author(image, 0x91b629, &poses, manifest);
         for start in [0x90e000, 0x909f49, 0x90a08d, 0x90a1dd] {
             let mut table = Vec::new();
@@ -62,10 +60,8 @@ fn seed(id: u32, g: &mut Game) -> (RomImage, RomImage, Vec<u8>, Vec<u8>) {
         author(image, 0x9b9800, &palette, manifest);
     }
     // Raw bank90 spin-splash table is Native; Loaded intentionally disagrees.
-    author(&native, 0x90a514, &[1; 10], &mut nm);
-    author(&loaded, 0x90a514, &[0; 10], &mut lm);
-    g.register_rom(loaded.clone());
-    g.register_native_rom(native.clone());
+    author(&mut native, 0x90a514, &[1; 10], &mut nm);
+    author(&mut loaded, 0x90a514, &[0; 10], &mut lm);
     let seed_id = match id {
         4049 => 4030,
         4050 => 4031,
@@ -217,8 +213,12 @@ fn seed(id: u32, g: &mut Game) -> (RomImage, RomImage, Vec<u8>, Vec<u8>) {
         _ => {}
     }
     if id >= 4049 {
-        atmosphere_seed(id, g, &loaded, &native, &mut lm, &mut nm);
+        atmosphere_seed(id, g, &mut loaded, &mut native, &mut lm, &mut nm);
     }
+    // Every authored byte precedes installation; the seed above only writes RAM.
+    let (loaded, native) = (RomImage::from(loaded), RomImage::from(native));
+    g.register_rom(loaded.clone());
+    g.register_native_rom(native.clone());
     (loaded, native, lm, nm)
 }
 fn check(id: u32, g: &Game, before: &[u8]) {
@@ -388,8 +388,8 @@ fn check(id: u32, g: &Game, before: &[u8]) {
 fn atmosphere_seed(
     id: u32,
     g: &mut Game,
-    loaded: &RomImage,
-    native: &RomImage,
+    loaded: &mut [u8],
+    native: &mut [u8],
     lm: &mut Vec<u8>,
     nm: &mut Vec<u8>,
 ) {

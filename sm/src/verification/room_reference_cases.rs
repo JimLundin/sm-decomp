@@ -29,18 +29,19 @@ fn exp(e: &mut [u8], at: usize, v: u16) {
 fn offset(a: u32) -> usize {
     crate::rtl::lorom_offset(a) as usize
 }
-pub(crate) fn bytes(r: &RomImage, a: u32, v: &[u8]) {
-    for (i, b) in v.iter().enumerate() {
-        r.write(offset(a) + i, *b);
+pub(crate) fn bytes(r: &mut [u8], a: u32, v: &[u8]) {
+    // Byte by byte, so a short image fails at its first missing byte.
+    for (i, &b) in v.iter().enumerate() {
+        r[offset(a) + i] = b;
     }
 }
-fn rw(r: &RomImage, a: u32, v: u16) {
+fn rw(r: &mut [u8], a: u32, v: u16) {
     bytes(r, a, &v.to_ne_bytes());
 }
-fn header(r: &RomImage, a: u32) {
+fn header(r: &mut [u8], a: u32) {
     bytes(r, a, &[7, 1, 3, 4, 17, 18, 5, 6, 0, 0x34, 0x92]);
 }
-fn state(r: &RomImage) {
+fn state(r: &mut [u8]) {
     bytes(
         r,
         0x8f9000,
@@ -109,13 +110,14 @@ pub(crate) fn capture_case(
             35 => offset(0x8f9012),
             _ => 0x100000,
         };
-        let r = RomImage::zeroed(length);
+        let mut r = vec![0; length];
         let mut g = Game::new();
         for i in 0..g.ram().len() {
             g.ram()
                 .write_byte(i, (i.wrapping_mul(37) ^ (i >> 8) ^ 0x5a) as u8);
         }
-        g.loaded_rom = Some(r.clone());
+        // The image is installed once its bytes are complete.
+        let mut loaded_present = true;
         g.g_fail = false;
         g.VERIFY_ACTIVE = true;
         put(&mut g, 0x5e7, 0xa534);
@@ -136,11 +138,11 @@ pub(crate) fn capture_case(
         let mut scratch = None;
         match id {
             0 => {
-                g.loaded_rom = None;
+                loaded_present = false;
                 selected = Some(0x9000);
             }
             1 => {
-                g.loaded_rom = None;
+                loaded_present = false;
                 op = Operation::Entry(DEFAULT, 0);
                 selected = Some(0);
             }
@@ -155,14 +157,14 @@ pub(crate) fn capture_case(
                 let taken = id % 2 == 0;
                 op = Operation::Entry(code, 0x9000);
                 if code == BOSS1 {
-                    rw(&r, 0x8f9000, 0xabcd);
+                    rw(&mut r, 0x8f9000, 0xabcd);
                     scratch = Some(0xa501);
                     if taken {
                         g.ram().write_byte(0xd828, 1);
                     }
                 } else {
-                    bytes(&r, 0x8f9000, &[if code == EVENT { 6 } else { 4 }]);
-                    rw(&r, 0x8f9001, 0xabcd);
+                    bytes(&mut r, 0x8f9000, &[if code == EVENT { 6 } else { 4 }]);
+                    rw(&mut r, 0x8f9001, 0xabcd);
                     scratch = Some(if code == EVENT { 0x40 } else { 0xa504 });
                     if taken {
                         g.ram().write_byte(
@@ -182,10 +184,10 @@ pub(crate) fn capture_case(
                 put(&mut g, 0x9a4, if id == 8 { 0 } else { 4 });
                 put(&mut g, 0x9c8, if id == 9 { 0 } else { 5 });
                 if id == 10 {
-                    rw(&r, 0x8f9000, 0xabcd);
+                    rw(&mut r, 0x8f9000, 0xabcd);
                     selected = Some(0xabcd);
                 } else {
-                    g.loaded_rom = None;
+                    loaded_present = false;
                     return_value = Some(0x9002);
                 }
             }
@@ -193,16 +195,16 @@ pub(crate) fn capture_case(
                 op = Operation::Entry(POWER, 0x9000);
                 if id == 12 {
                     put(&mut g, 0x9d0, 7);
-                    rw(&r, 0x8f9000, 0xabcd);
+                    rw(&mut r, 0x8f9000, 0xabcd);
                     selected = Some(0xabcd);
                 } else {
-                    g.loaded_rom = None;
+                    loaded_present = false;
                     return_value = Some(0x9002);
                 }
             }
             13 | 14 => {
                 op = Operation::Entry(EVENT, 0x9000);
-                bytes(&r, 0x8f9000, &[6]);
+                bytes(&mut r, 0x8f9000, &[6]);
                 scratch = Some(0x40);
                 if id == 14 {
                     g.ram().write_byte(0xd820, 0x40);
@@ -213,14 +215,14 @@ pub(crate) fn capture_case(
             }
             15 | 17 => {
                 op = Operation::Entry(BOSS1, if id == 15 { 0x9000 } else { 0xfffe });
-                g.loaded_rom = None;
+                loaded_present = false;
                 scratch = Some(0xa501);
                 return_value = Some(if id == 15 { 0x9002 } else { 0 });
             }
             16 | 18 => {
                 let cursor = if id == 16 { 0xfffd } else { 0xffff };
                 op = Operation::Entry(EVENT, cursor);
-                bytes(&r, 0x8f0000 | u32::from(cursor), &[6]);
+                bytes(&mut r, 0x8f0000 | u32::from(cursor), &[6]);
                 scratch = Some(0x40);
                 return_value = Some(if id == 16 { 0 } else { 2 });
             }
@@ -229,34 +231,34 @@ pub(crate) fn capture_case(
                 return_value = None;
                 let mut a = 0x8f900b;
                 for code in [EVENT, BOSS, BOSS1, MORPH, POWER] {
-                    rw(&r, a, code as u16);
+                    rw(&mut r, a, code as u16);
                     a += 2;
                     if code == EVENT || code == BOSS {
-                        bytes(&r, a, &[6]);
-                        rw(&r, a + 1, 0xabcd);
+                        bytes(&mut r, a, &[6]);
+                        rw(&mut r, a + 1, 0xabcd);
                         a += 3;
                     } else {
-                        rw(&r, a, 0xabcd);
+                        rw(&mut r, a, 0xabcd);
                         a += 2;
                     }
                 }
-                rw(&r, a, DEFAULT as u16);
+                rw(&mut r, a, DEFAULT as u16);
                 selected = Some((a + 2) as u16);
                 scratch = Some(1);
             }
             20 => {
                 op = Operation::Select(0xfff3);
                 return_value = None;
-                rw(&r, 0x8ffffe, DEFAULT as u16);
+                rw(&mut r, 0x8ffffe, DEFAULT as u16);
                 selected = Some(0);
             }
             21 | 22 => {
                 op = Operation::Header;
                 return_value = None;
-                header(&r, 0x8f9000);
-                rw(&r, 0x8f900b, BOSS1 as u16);
-                rw(&r, 0x8f900d, 0xabcd);
-                rw(&r, 0x8f900f, DEFAULT as u16);
+                header(&mut r, 0x8f9000);
+                rw(&mut r, 0x8f900b, BOSS1 as u16);
+                rw(&mut r, 0x8f900d, 0xabcd);
+                rw(&mut r, 0x8f900f, DEFAULT as u16);
                 g.ram().write_byte(0xd828, if id == 21 { 1 } else { 0 });
                 g.ram().write_byte(0xd829, if id == 22 { 1 } else { 0 });
                 scratch = Some(0xa501);
@@ -265,17 +267,17 @@ pub(crate) fn capture_case(
             23 => {
                 op = Operation::Header;
                 return_value = None;
-                bytes(&r, 0x8f9000, &[7, 1]);
+                bytes(&mut r, 0x8f9000, &[7, 1]);
                 panics = true;
             }
             24..=26 | 32 => {
                 op = Operation::State;
                 return_value = None;
                 put(&mut g, 0x7bb, 0x9000);
-                state(&r);
+                state(&mut r);
                 if id != 26 {
                     rw(
-                        &r,
+                        &mut r,
                         0x8fe7a7,
                         if id == 25 {
                             0xffff
@@ -287,10 +289,10 @@ pub(crate) fn capture_case(
                     );
                 }
                 if id == 24 {
-                    bytes(&r, 0x8fa000, &ASSETS);
+                    bytes(&mut r, 0x8fa000, &ASSETS);
                 }
                 if id == 25 {
-                    bytes(&r, 0x8fffff, &ASSETS[..3]);
+                    bytes(&mut r, 0x8fffff, &ASSETS[..3]);
                 }
                 panics = id == 25 || id == 26;
             }
@@ -298,13 +300,13 @@ pub(crate) fn capture_case(
                 op = Operation::Door;
                 return_value = None;
                 if id == 31 {
-                    bytes(&r, 0x839000, &[0x34, 0x92, 0x80]);
+                    bytes(&mut r, 0x839000, &[0x34, 0x92, 0x80]);
                     panics = true;
                 } else {
                     let dir = if id == 28 { 2 } else { 0 };
-                    bytes(&r, 0x839000, &[0x34, 0x92, 0x80, dir, 0x55, 0x66, 7, 9]);
+                    bytes(&mut r, 0x839000, &[0x34, 0x92, 0x80, dir, 0x55, 0x66, 7, 9]);
                     rw(
-                        &r,
+                        &mut r,
                         0x839008,
                         if id <= 28 {
                             0xffff
@@ -325,9 +327,9 @@ pub(crate) fn capture_case(
             34 => {
                 op = Operation::Select(0x9000);
                 return_value = None;
-                rw(&r, 0x8f900b, EVENT as u16);
-                bytes(&r, 0x8f900d, &[6]);
-                rw(&r, 0x8f900e, 0xabcd);
+                rw(&mut r, 0x8f900b, EVENT as u16);
+                bytes(&mut r, 0x8f900d, &[6]);
+                rw(&mut r, 0x8f900e, 0xabcd);
                 g.ram().write_byte(0xd820, 0x40);
                 scratch = Some(0x40);
                 selected = Some(0xabcd);
@@ -335,15 +337,16 @@ pub(crate) fn capture_case(
             35 => {
                 op = Operation::Select(0x9000);
                 return_value = None;
-                rw(&r, 0x8f900b, EVENT as u16);
-                bytes(&r, 0x8f900d, &[6]);
-                rw(&r, 0x8f900e, 0xabcd);
-                rw(&r, 0x8f9010, BOSS as u16);
+                rw(&mut r, 0x8f900b, EVENT as u16);
+                bytes(&mut r, 0x8f900d, &[6]);
+                rw(&mut r, 0x8f900e, 0xabcd);
+                rw(&mut r, 0x8f9010, BOSS as u16);
                 scratch = Some(0x40);
                 panics = true;
             }
             _ => unreachable!(),
         }
+        g.loaded_rom = loaded_present.then(|| RomImage::from(r));
         let mut expected = ram_bytes(&g);
         if let Some(v) = selected {
             exp(&mut expected, 0x7bb, v);
@@ -490,14 +493,14 @@ pub(crate) fn run(op: Operation, g: &mut Game) -> Option<u16> {
 }
 #[cfg(sm_verify_dll)]
 pub(crate) fn replacement(id: u32) -> RomImage {
-    let r = RomImage::zeroed(0x100000);
+    let mut r = vec![0; 0x100000];
     if id == 32 {
-        bytes(&r, 0x8f0010, &ASSETS);
-        bytes(&r, 0x8f9000, &[0xee; 20]);
+        bytes(&mut r, 0x8f0010, &ASSETS);
+        bytes(&mut r, 0x8f9000, &[0xee; 20]);
     } else {
-        header(&r, 0x8f0010);
-        rw(&r, 0x8f001b, DEFAULT as u16);
-        rw(&r, 0x8fa00b, DEFAULT as u16);
+        header(&mut r, 0x8f0010);
+        rw(&mut r, 0x8f001b, DEFAULT as u16);
+        rw(&mut r, 0x8fa00b, DEFAULT as u16);
     }
-    r
+    RomImage::from(r)
 }

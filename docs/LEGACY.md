@@ -55,6 +55,7 @@ Session would retire the list.
 | `$82:831E` BG3/sprite tile DMA size | `samus-scripted-intro` @8256, `demo-attract-setup` @2619, route `chain-0011` @2054, any% chain room 11 (`chain-any-0011-DF45`) @2055 | WRAM $0000-$11FF in sprite VRAM $7700-$7FFF, overwritten before display |
 | `$84:8243`, `$84:EFD3` unpause item-GFX load | `pause-menu-tour` @1378, `boss-kraid-pause-400` @588, `-950` @1138, `-1030` @1218, `-1960` @2148, route `chain-0211` @368 | garbage transfers into empty item-GFX slots |
 | `$80:9AF3` broken mini-map init | `samus-scripted-intro` @8316, any% chain room 11 (`chain-any-0011-DF45`) @2115 | one frame of HUD mini-map tiles from scratch, while blanked |
+| not yet identified (gameplay-visible) | `enemy-fire-arc` @119, in B3A5 before the fire arc's room | an enemy the engine kills survives (NUM_ENEMIES_KILLED_IN_ROOM 1, not 2): a snesrev patch decides the kill and the engine follows it, pending an oracle-fidelity fix |
 
 ## `LEGACY(verifier)`: RAM the frame comparison does not check
 
@@ -105,3 +106,10 @@ $0641, $0D1E and $1790 never differed there and are no longer normalized.
 To retire a row: model the range so it stops differing on the chain and
 corpus, then delete it from `normalize_snapshot_ram` and from this table in
 the same change.
+
+Free run (docs/SCENARIO_HARNESS.md) masks the same ranges in its WRAM digest, and
+one more, `ORACLE_RAM` in `sm/src/verification/observation/machine.rs`:
+
+| Range | What it holds | Why | What would retire it | Owner |
+| --- | --- | --- | --- | --- |
+| $00C2-$00C3 | snesrev's bug-fix counter, the oracle's patch selector; the original never uses it | only an oracle frame writes it; lockstep's sides share RAM, so only free run sees it (from the first Tick of a seeded row) | the oracle keeping its patch selector outside game RAM | verifier |

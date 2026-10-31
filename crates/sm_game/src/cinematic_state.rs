@@ -195,6 +195,27 @@ pub enum Array {
     ProjectileType = 0x0c18,
 }
 
+/// The cinematic words as the Session's `enemy_projectiles` fields, by their
+/// RAM names, for code that runs on the owned table rather than the bytes.
+pub struct Cinematic<'a>(pub &'a mut crate::session::EnemyProjectiles);
+
+impl Cinematic<'_> {
+    /// $1A49: `cinematic_function_timer`.
+    pub fn function_timer(&mut self) -> &mut u16 {
+        &mut self.0.slots[17].x.fraction
+    }
+}
+
+/// Run `action` on the cinematic words as Session fields: the owned
+/// Session's under one lease when one can open, otherwise a copy of the
+/// table decoded from RAM and stored back if it changed.
+pub fn with_fields<H, T>(game: &mut H, action: impl FnOnce(&mut Cinematic<'_>) -> T) -> T
+where
+    H: crate::ram::WorkRamAccess + crate::runtime_access::RuntimeAccess + ?Sized,
+{
+    crate::enemy_projectiles::table::with_projectiles(game, |table| action(&mut Cinematic(table)))
+}
+
 /// `word` as the host's projection holds it, low byte then high.
 pub fn get<H: CompatibilityRam + ?Sized>(h: &H, word: Word) -> u16 {
     crate::projection::word(h, word as usize)

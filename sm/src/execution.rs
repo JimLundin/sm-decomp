@@ -29,7 +29,7 @@ pub(crate) struct HostContext<'a> {
     pub(crate) ram: &'a WorkRam,
     pub(crate) loaded_rom: &'a mut Option<RomImage>,
     pub(crate) native_rom: &'a Option<RomImage>,
-    pub(crate) cartridge_rom: &'a Option<RomImage>,
+    pub(crate) cartridge_rom: &'a Option<crate::snes::cart::CartRom>,
     pub(crate) g_fail: &'a mut bool,
     pub(crate) hookmode: &'a mut u32,
     pub(crate) hookcnt: &'a mut u32,

@@ -86,17 +86,17 @@ fn put(game: &mut Game, at: usize, value: u16) {
 fn slot(game: &mut Game, base: usize, index: u16, value: u16) {
     put(game, base + usize::from(index & !1), value);
 }
-fn bytes(image: &RomImage, at: usize, values: &[u8]) {
+fn bytes(image: &mut [u8], at: usize, values: &[u8]) {
     for (offset, value) in values.iter().copied().enumerate() {
-        if at + offset < image.len() {
-            image.write(at + offset, value);
+        if let Some(byte) = image.get_mut(at + offset) {
+            *byte = value;
         }
     }
 }
-fn script_word(image: &RomImage, at: u16, value: u16) {
+fn script_word(image: &mut [u8], at: u16, value: u16) {
     bytes(image, 0x28000 + usize::from(at), &value.to_ne_bytes());
 }
-fn definition(image: &RomImage, at: u16, setup: u16) {
+fn definition(image: &mut [u8], at: u16, setup: u16) {
     let base = crate::rtl::lorom_offset(0x860000 | u32::from(at)) as usize;
     for (offset, value) in [setup, 0x8170, 0x9000, 0x0705, 0xa345, 0, 0]
         .into_iter()
@@ -105,7 +105,7 @@ fn definition(image: &RomImage, at: u16, setup: u16) {
         bytes(image, base + offset * 2, &value.to_ne_bytes());
     }
 }
-fn seed(game: &mut Game, image: &RomImage) {
+fn seed(game: &mut Game, image: &mut [u8]) {
     for at in 0..game.ram().len() {
         game.ram()
             .write_byte(at, (at.wrapping_mul(37) ^ (at >> 8)) as u8);
@@ -159,8 +159,66 @@ fn seed(game: &mut Game, image: &RomImage) {
     script_word(image, 0x9000, 3);
     script_word(image, 0x9002, 0x1234);
 }
+/// Freeze a case's authored bytes and install them where the carrier installed
+/// its image: as the loaded image (unless the case removed it) and the native one.
+fn install(game: &mut Game, bytes: &[u8]) -> RomImage {
+    let image = RomImage::from(bytes);
+    if game.loaded_rom.is_some() {
+        game.loaded_rom = Some(image.clone());
+    }
+    game.register_native_rom(image.clone());
+    image
+}
+/// The ROM content an original case authors on top of the seed, before the
+/// images are registered.
+fn author(id: u32, image: &mut [u8]) {
+    match id {
+        23 => definition(image, 0x8000, 8822936u32 as u16),
+        18 => script_word(image, 0x9000, 8814932u32 as u16),
+        19 => script_word(image, 0x9000, 8814937u32 as u16),
+        20 => {
+            script_word(image, 0x9000, 8815019u32 as u16);
+            script_word(image, 0x9002, 0xfffe);
+            script_word(image, 0xfffe, 4);
+            bytes(image, 0x38000, &0x1234u16.to_ne_bytes());
+        }
+        21 => {
+            script_word(image, 0x9000, 8815357u32 as u16);
+            bytes(image, 0x31002, &[0]);
+            script_word(image, 0x9003, 3);
+            script_word(image, 0x9005, 0x1234);
+        }
+        22 => {
+            script_word(image, 0x9000, 8815024u32 as u16);
+            bytes(image, 0x31002, &[2]);
+            script_word(image, 0x9004, 3);
+            script_word(image, 0x9006, 0x1234);
+        }
+        CORE..QUEUE_START => {
+            let variant = ((id - CORE) % 6) as usize;
+            let cursor: u16 = [0x9000, 0x9001, 0xfffe, 0, 0x9000, 0x9000][variant];
+            let operand: u16 = [0, 0x9234, 0xffff, 1, 0x7fff, 0xff80][variant];
+            for offset in 0..6 {
+                bytes(
+                    image,
+                    0x28000 + usize::from(cursor) + offset * 2,
+                    &operand.wrapping_add(offset as u16).to_ne_bytes(),
+                );
+            }
+        }
+        QUEUE_START..MOTION_START => {
+            let cursor: u16 = if (id - QUEUE_START) % 4 == 3 {
+                0xffff
+            } else {
+                0x9000
+            };
+            bytes(image, 0x28000 + usize::from(cursor), &[0x23]);
+        }
+        _ => {}
+    }
+}
 
-unsafe fn core_case(id: u32, game: &mut Game, image: &RomImage) -> Option<usize> {
+unsafe fn core_case(id: u32, game: &mut Game) -> Option<usize> {
     {
         match id {
             0 => enable_eprojs(game),
@@ -179,9 +237,6 @@ unsafe fn core_case(id: u32, game: &mut Game, image: &RomImage) -> Option<usize>
                 }
                 if id == 9 || id == 10 {
                     game.loaded_rom = None;
-                }
-                if id == 23 {
-                    definition(image, 0x8000, 8822936u32 as u16);
                 }
                 return Some(if id == 6 {
                     spawn_with_enemy_gfx(0x4321, 0, 0x8000, game)
@@ -205,34 +260,12 @@ unsafe fn core_case(id: u32, game: &mut Game, image: &RomImage) -> Option<usize>
                 if id == 15 {
                     slot(game, a::EPROJ_INSTR_TIMERS, 34, 0);
                 }
-                if id == 18 {
-                    script_word(image, 0x9000, 8814932u32 as u16);
-                }
-                if id == 19 {
-                    script_word(image, 0x9000, 8814937u32 as u16);
-                }
-                if id == 20 {
-                    script_word(image, 0x9000, 8815019u32 as u16);
-                    script_word(image, 0x9002, 0xfffe);
-                    script_word(image, 0xfffe, 4);
-                    bytes(image, 0x38000, &0x1234u16.to_ne_bytes());
-                }
                 if id == 21 {
                     put(
                         game,
                         w::MUSIC_QUEUE_WRITE_POS,
                         (w::EPROJ_INDEX - a::MUSIC_QUEUE_TRACK) as u16,
                     );
-                    script_word(image, 0x9000, 8815357u32 as u16);
-                    bytes(image, 0x31002, &[0]);
-                    script_word(image, 0x9003, 3);
-                    script_word(image, 0x9005, 0x1234);
-                }
-                if id == 22 {
-                    script_word(image, 0x9000, 8815024u32 as u16);
-                    bytes(image, 0x31002, &[2]);
-                    script_word(image, 0x9004, 3);
-                    script_word(image, 0x9006, 0x1234);
                 }
                 eproj_run_all(game);
             }
@@ -242,12 +275,12 @@ unsafe fn core_case(id: u32, game: &mut Game, image: &RomImage) -> Option<usize>
     }
 }
 
-unsafe fn execute(id: u32, game: &mut Game, image: &RomImage) -> Option<usize> {
+unsafe fn execute(id: u32, game: &mut Game, image: &RomImage, bytes: &mut [u8]) -> Option<usize> {
     if id >= ORIGINAL_CASES {
         let id = id - ORIGINAL_CASES;
         unsafe {
             if id < family_cases::CASES {
-                return family_cases::execute(id, game, image);
+                return family_cases::execute(id, game, bytes);
             }
             let id = id - family_cases::CASES;
             if id < attachment_cases::CASES {
@@ -255,15 +288,15 @@ unsafe fn execute(id: u32, game: &mut Game, image: &RomImage) -> Option<usize> {
             }
             let id = id - attachment_cases::CASES;
             if id < drop_contact_cases::CASES {
-                return drop_contact_cases::execute(id, game, image);
+                return drop_contact_cases::execute(id, game, bytes);
             }
             let id = id - drop_contact_cases::CASES;
             if id < waffle_cases::CASES {
-                return waffle_cases::execute(id, game, image);
+                return waffle_cases::execute(id, game, bytes);
             }
             let id = id - waffle_cases::CASES;
             if id < respawn_cases::CASES {
-                return respawn_cases::execute(id, game, image);
+                return respawn_cases::execute(id, game, bytes);
             }
             let id = id - respawn_cases::CASES;
             if id < pre_family_cases::CASES {
@@ -271,9 +304,9 @@ unsafe fn execute(id: u32, game: &mut Game, image: &RomImage) -> Option<usize> {
             }
             let id = id - pre_family_cases::CASES;
             if id < collision_cases::CASES {
-                return collision_cases::execute(id, game, image);
+                return collision_cases::execute(id, game, bytes);
             }
-            return setup_family_cases::execute(id - collision_cases::CASES, game, image);
+            return setup_family_cases::execute(id - collision_cases::CASES, game, bytes);
         }
     }
     unsafe { original_execute(id, game, image) }
@@ -281,21 +314,13 @@ unsafe fn execute(id: u32, game: &mut Game, image: &RomImage) -> Option<usize> {
 unsafe fn original_execute(id: u32, game: &mut Game, image: &RomImage) -> Option<usize> {
     unsafe {
         if id < CORE {
-            return core_case(id, game, image);
+            return core_case(id, game);
         }
         if id < QUEUE_START {
             let n = id - CORE;
             let variant = (n % 6) as usize;
             let index: u16 = [0, 1, 34, 0xffff, 2, 4][variant];
             let cursor: u16 = [0x9000, 0x9001, 0xfffe, 0, 0x9000, 0x9000][variant];
-            let operand: u16 = [0, 0x9234, 0xffff, 1, 0x7fff, 0xff80][variant];
-            for offset in 0..6 {
-                bytes(
-                    image,
-                    0x28000 + usize::from(cursor) + offset * 2,
-                    &operand.wrapping_add(offset as u16).to_ne_bytes(),
-                );
-            }
             slot(
                 game,
                 a::EPROJ_TIMERS,
@@ -316,7 +341,6 @@ unsafe fn original_execute(id: u32, game: &mut Game, image: &RomImage) -> Option
             let n = id - QUEUE_START;
             let variant = n % 4;
             let cursor: u16 = if variant == 3 { 0xffff } else { 0x9000 };
-            bytes(image, 0x28000 + usize::from(cursor), &[0x23]);
             if variant == 1 {
                 put(game, w::GAME_STATE, 40);
             }
@@ -363,10 +387,11 @@ unsafe fn original_execute(id: u32, game: &mut Game, image: &RomImage) -> Option
             8815046, 8815046, 8815061, 8815019, 8815024, 8814932, 8814937, 8815357,
         ][n as usize];
         slot(game, a::EPROJ_TIMERS, 1, if n == 0 { 1 } else { 0 });
-        let short = RomImage::zeroed(0x31000 + if n == 4 || n == 7 { 1 } else { 0 });
-        if short.len() > 0x31000 {
-            short.write(0x31000, 0xff);
+        let mut short = vec![0; 0x31000];
+        if n == 4 || n == 7 {
+            short.push(0xff);
         }
+        let short = RomImage::from(short);
         // The executor captures its instruction image separately from Game.
         call_eproj_instr(
             command,
@@ -381,18 +406,24 @@ pub(crate) fn capture_case(id: u32) -> Option<Vec<u8>> {
     if id >= CASES {
         return None;
     }
-    let image = RomImage::zeroed(match id {
-        11 => 0x30005,
-        12 => 0x30009,
-        _ if id >= ORIGINAL_CASES => family_cases::IMAGE_BYTES,
-        _ => 0x80000,
-    });
+    let mut image = vec![
+        0;
+        match id {
+            11 => 0x30005,
+            12 => 0x30009,
+            _ if id >= ORIGINAL_CASES => family_cases::IMAGE_BYTES,
+            _ => 0x80000,
+        }
+    ];
     let mut game = Game::new();
-    seed(&mut game, &image);
+    seed(&mut game, &mut image);
+    author(id, &mut image);
+    let mut bytes = image;
+    let image = RomImage::from(bytes.as_slice());
     game.loaded_rom = Some(image.clone());
     game.register_native_rom(image.clone());
     let result = catch_unwind(AssertUnwindSafe(|| unsafe {
-        execute(id, &mut game, &image)
+        execute(id, &mut game, &image, &mut bytes)
     }));
     let expected_panic =
         matches!(id, 10 | 11 | 12 | 16) || (SHORT_START + 1..=SHORT_START + 3).contains(&id);

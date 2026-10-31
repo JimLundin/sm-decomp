@@ -54,7 +54,7 @@ pub(crate) fn run(op: Operation, g: &mut Game) -> Option<u8> {
         }
     }
 }
-fn transfer(r: &RomImage, at: u16, opcode: u16) {
+fn transfer(r: &mut [u8], at: u16, opcode: u16) {
     rw(r, 0x8f0000 | u32::from(at), opcode);
     let p = 0x8f0000 | u32::from(at) + 2;
     bytes(r, p, &[0, 0x60, 0x7e, 0x23, 0x31, 4, 0]);
@@ -67,7 +67,7 @@ fn fill_words(e: &mut [u8], start: usize, end: usize, value: u16) {
         exp(e, a, value);
     }
 }
-fn state(r: &RomImage, scroll: u16) {
+fn state(r: &mut [u8], scroll: u16) {
     for a in [0x8f9000, 0x8f9100] {
         bytes(r, a, &[0; 26]);
     }
@@ -93,9 +93,8 @@ pub(crate) fn capture_case(
             28 => offset(0x8ffff0) + 7,
             _ => 0x400000,
         };
-        let a = RomImage::zeroed(len);
-        let b = RomImage::zeroed(0x400000);
-        g.loaded_rom = Some(a.clone());
+        let mut a = vec![0; len];
+        let mut b = vec![0; 0x400000];
         put(&mut g, 0x7bb, 0x9000);
         put(&mut g, 0x78d, 0x8000);
         put(&mut g, 0x1964, 0);
@@ -124,13 +123,13 @@ pub(crate) fn capture_case(
         let mut expected_source = 0xabcdef;
         let mut panic_text: Option<String> = None;
         let mut panic_kind = 2;
-        state(&a, 0);
-        state(&b, 0);
+        state(&mut a, 0);
+        state(&mut b, 0);
         if id < 24 {
             // Selected-state background defaults to0; command cases override it.
             if !matches!(id, 0 | 1 | 8 | 9 | 20 | 21) {
                 rw(
-                    &a,
+                    &mut a,
                     0x8f9016,
                     if matches!(id, 10 | 11) {
                         0xfff7
@@ -147,57 +146,57 @@ pub(crate) fn capture_case(
             }
             match id {
                 2..=5 | 16 => {
-                    transfer(&a, 0xa000, if id == 16 { 9 } else { 3 });
-                    rw(&a, 0x8fa009, if id == 4 || id == 5 { 16 } else { 0 });
-                    rw(&b, 0x8fa009, 0);
+                    transfer(&mut a, 0xa000, if id == 16 { 9 } else { 3 });
+                    rw(&mut a, 0x8fa009, if id == 4 || id == 5 { 16 } else { 0 });
+                    rw(&mut b, 0x8fa009, 0);
                 }
                 6 | 7 => {
-                    rw(&a, 0x8feffe, 2);
-                    rw(&a, 0x8f9016, 0xeffe);
-                    bytes(&a, 0x8ff000, &[0, 0x60, 0x7e, 0x23, 0x31]);
+                    rw(&mut a, 0x8feffe, 2);
+                    rw(&mut a, 0x8f9016, 0xeffe);
+                    bytes(&mut a, 0x8ff000, &[0, 0x60, 0x7e, 0x23, 0x31]);
                     panic_text = Some("ROM read outside loaded allocation".into());
                 }
                 8 | 9 => {
                     put(&mut g, 0x7bb, 0x10);
-                    bytes(&a, 0x8f0010, &[0; 26]);
+                    bytes(&mut a, 0x8f0010, &[0; 26]);
                     if id == 8 {
                         diagnostics.push(0x8f0010);
                     } else {
                         panic_text = Some("ROM address must select a LoROM window".into());
                     }
                 }
-                10 | 11 => transfer(&a, 0xfff7, 2),
-                12 => rw(&a, 0x8fa000, 1),
+                10 | 11 => transfer(&mut a, 0xfff7, 2),
+                12 => rw(&mut a, 0x8fa000, 1),
                 13 => {
-                    rw(&a, 0x8ffff5, 14);
-                    rw(&a, 0x8ffff7, 0x8123);
+                    rw(&mut a, 0x8ffff5, 14);
+                    rw(&mut a, 0x8ffff7, 0x8123);
                 }
                 14 => {
-                    rw(&a, 0x8ffffe, 14);
-                    rw(&a, 0x8f0000, 0x8000);
+                    rw(&mut a, 0x8ffffe, 14);
+                    rw(&mut a, 0x8f0000, 0x8000);
                     diagnostics.push(0x8f0000);
                     panic_text = Some("ROM address must select a LoROM window".into());
                 }
                 15 => {
-                    rw(&a, 0x8fa000, 5);
-                    bytes(&a, 0x8fa002, &[0, 0xa0, 0x80, 0, 0x60]);
-                    literal(&a, 0x80a000, &[0xe1, 0xe2]);
-                    rw(&a, 0x8fa007, 0);
+                    rw(&mut a, 0x8fa000, 5);
+                    bytes(&mut a, 0x8fa002, &[0, 0xa0, 0x80, 0, 0x60]);
+                    literal(&mut a, 0x80a000, &[0xe1, 0xe2]);
+                    rw(&mut a, 0x8fa007, 0);
                     expected_source = 0x80a004;
                 }
                 17 | 18 => {
-                    rw(&a, 0x8fa000, 12);
-                    rw(&a, 0x8fa002, 0);
+                    rw(&mut a, 0x8fa000, 12);
+                    rw(&mut a, 0x8fa002, 0);
                 }
                 19 => {
-                    rw(&a, 0x8fa000, 16);
+                    rw(&mut a, 0x8fa000, 16);
                     panic_kind = 1;
                     panic_text = Some("invalid room background command: 0x10".into());
                 }
                 20 | 21 => put(&mut g, 0x1964, 0x9000),
                 22 | 23 => {
-                    transfer(&a, 0xfff9, 2);
-                    rw(&a, 0x8f0002, 0);
+                    transfer(&mut a, 0xfff9, 2);
+                    rw(&mut a, 0x8f0002, 0);
                     if id == 22 {
                         diagnostics.push(0x8f0002);
                     } else {
@@ -209,31 +208,31 @@ pub(crate) fn capture_case(
         } else if id < 33 {
             asset(&mut g, 0x7bd, 0x808000);
             asset(&mut g, 0x7c0, 0x809000);
-            literal(&a, 0x808000, &[2, 0, 0xa1, 0xa2, 0xb1, 0xc1, 0xc2]);
-            literal(&a, 0x809000, &[0xd1, 0xd2]);
+            literal(&mut a, 0x808000, &[2, 0, 0xa1, 0xa2, 0xb1, 0xc1, 0xc2]);
+            literal(&mut a, 0x809000, &[0xd1, 0xd2]);
             expected_source = 0x809004;
             if matches!(id, 26 | 27 | 29) {
-                rw(&a, 0x8f900e, 0xfffe);
-                rw(&a, 0x8ffffe, 0x1100);
+                rw(&mut a, 0x8f900e, 0xfffe);
+                rw(&mut a, 0x8ffffe, 0x1100);
                 for i in 0..24 {
-                    rw(&a, 0x8f0000 + 2 * i, 0x1101 + i as u16);
-                    rw(&b, 0x8f0000 + 2 * i, 0x2201 + i as u16);
+                    rw(&mut a, 0x8f0000 + 2 * i, 0x1101 + i as u16);
+                    rw(&mut b, 0x8f0000 + 2 * i, 0x2201 + i as u16);
                     diagnostics.push(0x8f0000 + 2 * i);
                 }
                 if id == 29 {
-                    rw(&a, 0x8f9014, 0x40);
-                    rw(&b, 0x8f0040, 0);
+                    rw(&mut a, 0x8f9014, 0x40);
+                    rw(&mut b, 0x8f0040, 0);
                     diagnostics.push(0x8f0040);
-                    bytes(&b, 0x8f0080, &[0; 26]);
+                    bytes(&mut b, 0x8f0080, &[0; 26]);
                     diagnostics.push(0x8f0080);
                 }
             }
             if id == 28 {
-                rw(&a, 0x8f900e, 0xfff0);
+                rw(&mut a, 0x8f900e, 0xfff0);
                 for i in 0..3 {
-                    rw(&a, 0x8ffff0 + 2 * i, 0x3300 + i as u16);
+                    rw(&mut a, 0x8ffff0 + 2 * i, 0x3300 + i as u16);
                 }
-                bytes(&a, 0x8ffff6, &[0x44]);
+                bytes(&mut a, 0x8ffff6, &[0x44]);
                 panic_kind = 1;
                 panic_text = Some(format!(
                     // LEGACY(message-text): asserts on panic or Die text; should assert the failure kind instead.
@@ -243,14 +242,14 @@ pub(crate) fn capture_case(
             if id >= 30 {
                 put(&mut g, 0x79f, 0);
                 put(&mut g, 0x7b3, if id == 31 { 2 } else { 0 });
-                literal(&a, 0xb9a09d, &[0xc3, 0xc4]);
+                literal(&mut a, 0xb9a09d, &[0xc3, 0xc4]);
             }
         } else {
             asset(&mut g, 0x7c3, 0x808000);
             asset(&mut g, 0x7c6, 0x809000);
-            literal(&a, 0xb98000, &[0x91, 0x92]);
-            literal(&a, 0x808000, &[0xa1, 0xa2]);
-            literal(&a, 0x809000, &[0xb1, 0xb2]);
+            literal(&mut a, 0xb98000, &[0x91, 0x92]);
+            literal(&mut a, 0x808000, &[0xa1, 0xa2]);
+            literal(&mut a, 0x809000, &[0xb1, 0xb2]);
             expected_source = 0x809004;
             if id >= 34 {
                 put(&mut g, 0x78d, if id == 34 { 0x947a } else { 0x9000 });
@@ -301,16 +300,14 @@ pub(crate) fn capture_case(
             if matches!(id, 2 | 3 | 4 | 5 | 6 | 7 | 10 | 11 | 16 | 22 | 23) {
                 let base = writes.len();
                 if initial_mode {
+                    // The source moves to another image mid-command; the
+                    // command's fields still come from the image it started in.
                     direct(
                         &mut writes,
                         0x3123,
-                        if id == 4 { 0x6200 } else { 0x6000 },
-                        if id == 4 { 0x777e } else { 0x237e },
-                        if id == 6 {
-                            None
-                        } else {
-                            Some(if id == 4 { 8 } else { 4 })
-                        },
+                        0x6000,
+                        0x237e,
+                        if id == 6 { None } else { Some(4) },
                     );
                     if id == 4 {
                         mutations.extend([base + 1, base + 3]);
@@ -322,9 +319,7 @@ pub(crate) fn capture_case(
                     }
                 }
                 if id != 6 && id != 7 {
-                    let start = if id == 4 { 0x6200 } else { 0x6000 };
-                    let n = if id == 4 { 8 } else { 4 };
-                    vram_bytes(&mut vram, 0x3123, &expected[start..start + n]);
+                    vram_bytes(&mut vram, 0x3123, &expected[0x6000..0x6004]);
                 }
                 if id == 16 {
                     expected[0x5e] = 2;
@@ -455,7 +450,14 @@ pub(crate) fn capture_case(
         let mut out = b"RMBG1".to_vec();
         out.extend_from_slice(&id.to_le_bytes());
         record(&mut out, 0, &snapshot(&mut g));
-        crate::room_background_observer::begin(id, writes, diagnostics, a, b, mutations);
+        g.loaded_rom = Some(RomImage::from(a));
+        crate::room_background_observer::begin(
+            id,
+            writes,
+            diagnostics,
+            RomImage::from(b),
+            mutations,
+        );
         let actual = catch_unwind(AssertUnwindSafe(|| run(op, &mut g)));
         let trace = crate::room_background_observer::finish();
         match actual {

@@ -26,11 +26,9 @@ fn put(game: &mut Game, at: usize, value: u16) {
     let _ = &[(); 0x20000][at..at + 2];
     game.ram().copy_in(at, &value.to_le_bytes());
 }
-fn word(image: &RomImage, address: u32, value: u16) {
+fn word(image: &mut [u8], address: u32, value: u16) {
     let at = crate::rtl::lorom_offset(address) as usize;
-    for (i, byte) in value.to_ne_bytes().into_iter().enumerate() {
-        image.write(at + i, byte);
-    }
+    image[at..at + 2].copy_from_slice(&value.to_ne_bytes());
 }
 fn seed(id: u32, game: &mut Game) -> Operation {
     game.ram().fill(0..game.ram().len(), 0);
@@ -39,35 +37,36 @@ fn seed(id: u32, game: &mut Game) -> Operation {
     for at in (0xc000..0xc400).step_by(2) {
         put(game, at, 0x7777);
     }
-    let image = RomImage::zeroed(0x100000);
+    let mut image = vec![0; 0x100000];
     // Every color has a distinct value, including all fixed suit sources.
     for at in (0x9b8000..0x9bfffe).step_by(2) {
-        word(&image, at, (at as u16).rotate_left(3) ^ 0x1357);
+        word(&mut image, at, (at as u16).rotate_left(3) ^ 0x1357);
     }
     for table in [0x91d727, 0x91d998, 0x91d99e, 0x91dc28] {
         for i in 0..16 {
-            word(&image, table + 2 * i, 0x9000 + 32 * i as u16);
+            word(&mut image, table + 2 * i, 0x9000 + 32 * i as u16);
         }
     }
     // Indirect animation tables use one native bank91 row, distinct from colors.
     for table in [0x91da4a, 0x91daa9, 0x91db10, 0x91db75, 0x91d7d5, 0x91d7ff] {
         for i in 0..3 {
-            word(&image, table + 2 * i, 0x9100 + 32 * i as u16);
+            word(&mut image, table + 2 * i, 0x9100 + 32 * i as u16);
         }
     }
     for i in 0..48 {
-        word(&image, 0x919100 + 2 * i, 0x9000 + 32 * (i % 16) as u16);
+        word(&mut image, 0x919100 + 2 * i, 0x9000 + 32 * (i % 16) as u16);
     }
     for i in 0..10 {
-        word(&image, 0x91dc00 + 4 * i, 0x9400 + 32 * i as u16);
-        word(&image, 0x91dc02 + 4 * i, 3 + i as u16);
+        word(&mut image, 0x91dc00 + 4 * i, 0x9400 + 32 * i as u16);
+        word(&mut image, 0x91dc02 + 4 * i, 3 + i as u16);
     }
     for i in 0..16 {
-        word(&image, 0x90c3c9 + 2 * i, 0x9600 + 32 * i as u16);
+        word(&mut image, 0x90c3c9 + 2 * i, 0x9600 + 32 * i as u16);
     }
     for at in (0x909600..0x909820).step_by(2) {
-        word(&image, at, (at as u16).rotate_left(5) ^ 0x2468);
+        word(&mut image, at, (at as u16).rotate_left(5) ^ 0x2468);
     }
+    let image = RomImage::from(image);
     game.loaded_rom = Some(image.clone());
     game.register_native_rom(image);
     for (at, value) in [

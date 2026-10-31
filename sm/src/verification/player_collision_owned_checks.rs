@@ -332,9 +332,9 @@ pub(crate) fn transition_a7_single_commit(
     invoke: impl FnOnce(&mut crate::game_state::Game),
 ) {
     use crate::rom::{RomImage, lorom_offset};
-    let image = RomImage::zeroed(0x200000);
-    image.write(lorom_offset(0x91b629) as usize + 0xf1 * 8 + 6, 8);
-    g.register_native_rom(image);
+    let mut image = vec![0; 0x200000];
+    image[lorom_offset(0x91b629) as usize + 0xf1 * 8 + 6] = 8;
+    g.register_native_rom(RomImage::from(image));
     for (at, value) in [
         (0xa1c, 0x00f1u16),
         (0xaf6, 100),

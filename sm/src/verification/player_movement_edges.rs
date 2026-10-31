@@ -26,13 +26,9 @@ fn seed(g: &mut Game) {
 fn content(g: &mut Game, words: &[u16]) {
     let base = crate::rom::lorom_offset(0x90e000) as usize;
     assert_eq!(base, 548864);
-    let image = RomImage::zeroed(base + words.len() * 2);
-    for (i, value) in words.iter().enumerate() {
-        for (lane, byte) in value.to_ne_bytes().into_iter().enumerate() {
-            image.write(base + i * 2 + lane, byte);
-        }
-    }
-    g.register_native_rom(image);
+    let mut image = vec![0; base];
+    image.extend(words.iter().flat_map(|value| value.to_ne_bytes()));
+    g.register_native_rom(RomImage::from(image));
 }
 fn caught(message: &'static str, action: impl FnOnce()) -> Result<(), Box<dyn Any + Send>> {
     let previous = Arc::new(std::panic::take_hook());

@@ -24,15 +24,17 @@ use {
     },
 };
 
+const IMAGE: [u8; 8] = [0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x7a, 0x8b];
+
 pub(crate) fn image() -> RomImage {
-    let image = RomImage::zeroed(8);
-    for (at, byte) in [0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x7a, 0x8b]
-        .into_iter()
-        .enumerate()
-    {
-        image.write(at, byte);
-    }
-    image
+    RomImage::from(IMAGE.as_slice())
+}
+
+/// The fixture image with one byte changed.
+fn image_with(at: usize, byte: u8) -> RomImage {
+    let mut bytes = IMAGE;
+    bytes[at] = byte;
+    RomImage::from(bytes.as_slice())
 }
 
 fn description(
@@ -145,15 +147,12 @@ pub fn samus_game_native_capture_retains_allocation() {
         .unwrap()
         .unwrap();
     assert_eq!(lease.native_word(0), Ok(0x4433));
-    selected.write(2, 0xa7);
-    assert_eq!(lease.native_word(0), Ok(0x44a7));
-    let replacement = image();
+    let replacement = image_with(2, 0xa7);
     game.register_native_rom(replacement.clone());
     assert_eq!(game.samus_authority(), Revoked);
     assert_eq!(game.samus_execution(), Ok(Some(RetainedNative)));
-    native.write(3, 0xbc);
-    assert_eq!(lease.native_word(0), Ok(0xbca7));
-    assert_eq!(replacement.read(2), 0x33);
+    // The lease keeps reading its captured allocation, not the replacement.
+    assert_eq!(lease.native_word(0), Ok(0x4433));
     assert_eq!(
         game.capture_samus_role(PositionFallback, Native, 0, &selected)
             .err(),
@@ -187,40 +186,6 @@ pub fn samus_game_prepared_replacement_is_rejected() {
     );
 }
 
-// Movies cannot mutate a registered source between preparation and the final install check.
-pub fn samus_game_failed_install_preserves_binding() {
-    let (mut game, _, native) = installed(Prepared);
-    let owner = game.samus_spritemaps().unwrap().unwrap();
-    let media = game.samus_request_media().unwrap().unwrap();
-    let expected = description(&game, fixture::expected(), Prepared);
-    let candidate = game
-        .prepare_samus_binding(description(&game, fixture::supplied(), Prepared), &expected)
-        .unwrap();
-    native.write(2, 0xa7);
-    assert_eq!(
-        game.install_samus_binding(candidate),
-        Err(DisplayError::Source)
-    );
-    assert_eq!(game.samus_authority(), Available);
-    assert_eq!(game.samus_execution(), Ok(Some(Prepared)));
-    assert!(Arc::ptr_eq(
-        &owner,
-        &game.samus_spritemaps().unwrap().unwrap()
-    ));
-    assert!(Arc::ptr_eq(
-        &media,
-        &game.samus_request_media().unwrap().unwrap()
-    ));
-    assert_eq!(native.read(2), 0xa7);
-    assert_eq!(
-        game.prepared_samus_role(PositionFallback, Native, 0)
-            .unwrap()
-            .unwrap()
-            .native_word(0),
-        Ok(0x4433)
-    );
-}
-
 // Movies cannot nest a normal Runtime callback inside an imported reference allocation.
 pub fn samus_game_reference_import_keeps_revoked_scope() {
     let (mut game, _, native) = installed(RetainedNative);
@@ -229,8 +194,6 @@ pub fn samus_game_reference_import_keeps_revoked_scope() {
         let mut runtime = crate::game::session_runtime::Runtime::new(game);
         let result = runtime.foreign(|game| {
             assert_eq!(game.samus_authority(), Revoked);
-            native.write(2, 0xa7);
-            assert_eq!(game.capture_native_rom().read(2), 0xa7);
             0x6au16
         });
         assert!(runtime.has_session_for_verification());
@@ -243,18 +206,16 @@ pub fn samus_game_reference_import_keeps_revoked_scope() {
     assert_eq!(game.samus_authority(), Revoked);
     assert_eq!(game.preflight_samus_runtime(), Err(DisplayError::Poisoned));
     assert!(game.capture_native_rom().same_allocation(&native));
-    assert_eq!(native.read(2), 0xa7);
 }
 
-// Movies cannot inject a panic after this callback's RAM and same-allocation ROM prefix.
+// Movies cannot inject a panic after this callback's RAM prefix.
 pub fn samus_game_panicking_callback_keeps_prefix() {
-    let (mut game, _, native) = installed(RetainedNative);
+    let (mut game, _, _) = installed(RetainedNative);
     let mut runtime = crate::game::session_runtime::Runtime::new(&mut game);
     let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
         runtime.foreign(|game| -> () {
             game.ram().write_byte(0xaf6, 0xd1);
             game.ram().write_byte(0xaf7, 0xe2);
-            native.write(2, 0xa7);
             panic!("Samus callback prefix");
         });
     }));
@@ -269,7 +230,6 @@ pub fn samus_game_panicking_callback_keeps_prefix() {
     assert_eq!(game.preflight_samus_runtime(), Err(DisplayError::Poisoned));
     assert_eq!(game.ram().read_byte(0xaf6), 0xd1);
     assert_eq!(game.ram().read_byte(0xaf7), 0xe2);
-    assert_eq!(native.read(2), 0xa7);
 }
 
 // Movies cannot supply distinct before/selected registrations while a competing image is live.
@@ -290,14 +250,13 @@ pub fn samus_game_adoption_uses_captured_target() {
         assert_eq!(game.samus_authority(), Revoked);
         game.capture_samus_snapshot()
     });
-    let competing_loaded = image();
-    let competing_native = image();
-    competing_loaded.write(0, 0xe2);
-    competing_native.write(2, 0xf4);
+    let competing_loaded = image_with(0, 0xe2);
+    let competing_native = image_with(2, 0xf4);
     game.register_rom(competing_loaded.clone());
     game.register_native_rom(competing_native.clone());
     let before_ready = game.prepare_samus_adoption(&before).unwrap();
-    let selected_ready = game.prepare_samus_adoption(&selected).unwrap();
+    // Preparing the selected adoption with competing images live captures its target.
+    game.prepare_samus_adoption(&selected).unwrap();
     assert!(
         game.loaded_rom
             .as_ref()
@@ -306,22 +265,6 @@ pub fn samus_game_adoption_uses_captured_target() {
     );
     assert!(game.capture_native_rom().same_allocation(&competing_native));
     assert_eq!(game.samus_authority(), Revoked);
-
-    selected_native.write(2, 0xa7);
-    assert_eq!(
-        game.commit_samus_adoption(selected_ready),
-        Err(DisplayError::Source)
-    );
-    assert!(
-        game.loaded_rom
-            .as_ref()
-            .unwrap()
-            .same_allocation(&competing_loaded)
-    );
-    assert!(game.capture_native_rom().same_allocation(&competing_native));
-    assert_eq!(game.samus_execution(), Err(DisplayError::Poisoned));
-    assert_eq!(competing_loaded.read(0), 0xe2);
-    assert_eq!(competing_native.read(2), 0xf4);
 
     game.commit_samus_adoption(before_ready).unwrap();
     assert!(
@@ -337,7 +280,6 @@ pub fn samus_game_adoption_uses_captured_target() {
     ));
     assert_eq!(game.samus_authority(), Available);
 
-    selected_native.write(2, 0x33);
     let selected_ready = game.prepare_samus_adoption(&selected).unwrap();
     game.commit_samus_adoption(selected_ready).unwrap();
     assert!(

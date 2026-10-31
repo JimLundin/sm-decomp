@@ -1,36 +1,33 @@
-//! Shared ownership of the one mutable cartridge image, the source that
-//! content importers read from. Bug-fix patches write it in place.
-use std::cell::Cell;
+//! Shared ownership of the engine's cartridge image, the source that content
+//! importers read from. The image is immutable, as the cartridge is to the
+//! game; the oracle's patched cartridge is a separate copy.
 use std::rc::Rc;
 
-#[derive(Clone, Default)]
-pub struct RomImage(Rc<Shared>);
+#[derive(Clone)]
+pub struct RomImage(Rc<[u8]>);
 
-#[derive(Default)]
-struct Shared {
-    cells: Box<[Cell<u8>]>,
-    /// Counts writes so imported records can tell they are stale.
-    writes: Cell<u64>,
+/// An empty image is still its own allocation.
+impl Default for RomImage {
+    fn default() -> Self {
+        Self::zeroed(0)
+    }
 }
 
 impl RomImage {
     pub fn zeroed(length: usize) -> Self {
-        Self(Rc::new(Shared {
-            cells: (0..length).map(|_| Cell::new(0)).collect(),
-            writes: Cell::new(0),
-        }))
+        Self::from(vec![0; length])
     }
 
     pub fn len(&self) -> usize {
-        self.0.cells.len()
+        self.0.len()
     }
 
     pub fn is_empty(&self) -> bool {
-        self.0.cells.is_empty()
+        self.0.is_empty()
     }
 
     pub fn read(&self, offset: usize) -> u8 {
-        self.0.cells[offset].get()
+        self.0[offset]
     }
 
     // Table offsets are signed words in the allocation, not wrapping bank addresses.
@@ -43,19 +40,21 @@ impl RomImage {
         u16::from_ne_bytes([self.read(offset), self.read(offset + 1)])
     }
 
-    pub fn write(&self, offset: usize, value: u8) {
-        self.0.cells[offset].set(value);
-        self.0.writes.set(self.0.writes.get().wrapping_add(1));
+    /// The image's bytes; `native_rom::NativeRomPointer` derives the legacy pointer.
+    pub fn bytes(&self) -> &[u8] {
+        &self.0
     }
+}
 
-    /// The shared bytes; `native_rom::NativeRomPointer` derives the legacy pointer.
-    pub fn cells(&self) -> &[Cell<u8>] {
-        &self.0.cells
+impl From<&[u8]> for RomImage {
+    fn from(bytes: &[u8]) -> Self {
+        Self(Rc::from(bytes))
     }
+}
 
-    /// How many bytes have been written since the image was created.
-    pub fn writes(&self) -> u64 {
-        self.0.writes.get()
+impl From<Vec<u8>> for RomImage {
+    fn from(bytes: Vec<u8>) -> Self {
+        Self(Rc::from(bytes))
     }
 }
 
@@ -82,16 +81,6 @@ impl RomRecord {
         u16::from_ne_bytes([self.byte(offset), self.byte(offset + 1)])
     }
 
-    pub fn set_word(&self, offset: usize, value: u16) {
-        let start = self
-            .base
-            .checked_add(offset)
-            .expect("ROM record offset overflow");
-        for (index, byte) in value.to_ne_bytes().into_iter().enumerate() {
-            self.image.write(start + index, byte);
-        }
-    }
-
     // Load24 includes the adjacent fourth byte in a native read before masking.
     pub fn load24(&self, offset: usize) -> u32 {
         u32::from_ne_bytes(core::array::from_fn(|i| self.byte(offset + i))) & 0xffffff
@@ -106,7 +95,7 @@ pub const fn lorom_offset(address: u32) -> isize {
 }
 
 impl RomImage {
-    /// Allocation provenance only; mutable ROM contents are not copied or compared.
+    /// Allocation provenance only; contents are not compared.
     pub fn same_allocation(&self, other: &Self) -> bool {
         std::rc::Rc::ptr_eq(&self.0, &other.0)
     }

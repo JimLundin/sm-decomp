@@ -21,7 +21,7 @@ pub(super) fn run() -> i32 {
     macro_rules! cases {
             ($($test:ident),+ $(,)?) => { [$( (stringify!($test), $test as fn()), )+] };
         }
-    let tests: [(&str, fn()); 148] = cases![
+    let tests: [(&str, fn()); 147] = cases![
         checkpoint_serialized_schema_matches_actual_compiled_codecs,
         seeded_checkpoint_origin_binds_its_seed_payload,
         prepared_message_pixels_delay_queue_and_checkpoint,
@@ -67,7 +67,6 @@ pub(super) fn run() -> i32 {
         samus_game_rejected_expectation_preserves_binding,
         samus_game_native_capture_retains_allocation,
         samus_game_prepared_replacement_is_rejected,
-        samus_game_failed_install_preserves_binding,
         samus_game_reference_import_keeps_revoked_scope,
         samus_game_panicking_callback_keeps_prefix,
         samus_game_adoption_uses_captured_target,
@@ -6278,13 +6277,6 @@ fn samus_game_prepared_replacement_is_rejected() {
     sm::samus_game_prepared_replacement_is_rejected();
 }
 
-// Movies cannot author independent Game admission and captured-allocation failures.
-#[cfg(sm_verify_dll)]
-#[cfg_attr(test, test)]
-fn samus_game_failed_install_preserves_binding() {
-    sm::samus_game_failed_install_preserves_binding();
-}
-
 // Movies cannot author independent owner mutation, unwind and selected-adoption cases.
 #[cfg(sm_verify_dll)]
 #[cfg_attr(test, test)]
@@ -10451,9 +10443,8 @@ fn music_fir_live_ram_wrap_and_writer_failures_keep_literal_coefficients_and_pre
 // Movies cannot inject native install failures or independently inspect its success-only canonical-RAM postamble.
 #[cfg_attr(test, test)]
 fn bank_upload_native_installation_prefixes() {
-    use sm::{
-        apu_ram::ApuRam, audio_upload::install_bank, rom::RomImage, types::NativePlayerState,
-    };
+    use sm::{apu_ram::ApuRam, audio_upload::install_bank, types::NativePlayerState};
+    use std::cell::Cell;
     use std::panic::{AssertUnwindSafe, catch_unwind};
     for (length, failure) in [
         (2, None),
@@ -10467,10 +10458,12 @@ fn bank_upload_native_installation_prefixes() {
         image_bytes.extend(0xffffu16.to_ne_bytes());
         image_bytes.extend([0x11, 0x22, 0, 0]);
         image_bytes[..2].fill(0);
-        let image = RomImage::zeroed(length);
-        for (offset, &value) in image_bytes[..length].iter().enumerate() {
-            image.write(offset, value);
-        }
+        // The upload's source bank, which the register writer rewrites mid-install.
+        let image: Vec<Cell<u8>> = image_bytes[..length]
+            .iter()
+            .copied()
+            .map(Cell::new)
+            .collect();
         let ram = ApuRam::new();
         ram.write(0, 0x77);
         ram.write(0xffff, 0x88);
@@ -10488,7 +10481,7 @@ fn bank_upload_native_installation_prefixes() {
             install_bank(
                 &mut state,
                 &ram,
-                |at| image.read(at),
+                |at| image[at].get(),
                 0,
                 |reg, value| {
                     writes.push((reg, value));
@@ -10498,9 +10491,9 @@ fn bank_upload_native_installation_prefixes() {
                     if reg == 92 {
                         if length > 4 {
                             let count = 2u16.to_ne_bytes();
-                            image.write(0, count[0]);
-                            image.write(1, count[1]);
-                            image.write(4, 0x99);
+                            image[0].set(count[0]);
+                            image[1].set(count[1]);
+                            image[4].set(0x99);
                         }
                         ram.write(0x581f, 0x56);
                     }

@@ -231,22 +231,21 @@ unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
             // Movies cannot make atmospheric OAM X/Y overwrite the camera used by this draw.
             use crate::{game::visual_host::Effects, rom::RomImage};
             crate::rtl::rtl_reset(2, g);
-            let loaded = RomImage::zeroed(0x90000);
-            let native = RomImage::zeroed(0x90000);
-            for (image, address, value) in [
-                (&loaded, 0x908c01, 0x9400u16),
-                (&native, 0x908c01, 0x9600),
-                (&loaded, 0x909402, 0xdead),
-                (&native, 0x909402, 0xa55a),
-                (&native, 0x909602, 0xbeef),
+            let mut loaded = vec![0; 0x90000];
+            let mut native = vec![0; 0x90000];
+            for (is_native, address, value) in [
+                (false, 0x908c01, 0x9400u16),
+                (true, 0x908c01, 0x9600),
+                (false, 0x909402, 0xdead),
+                (true, 0x909402, 0xa55a),
+                (true, 0x909602, 0xbeef),
             ] {
+                let image = if is_native { &mut native } else { &mut loaded };
                 let at = crate::rtl::lorom_offset(address) as usize;
-                for (lane, byte) in value.to_ne_bytes().into_iter().enumerate() {
-                    image.write(at + lane, byte);
-                }
+                image[at..at + 2].copy_from_slice(&value.to_ne_bytes());
             }
-            g.register_rom(loaded);
-            g.register_native_rom(native);
+            g.register_rom(RomImage::from(loaded));
+            g.register_native_rom(RomImage::from(native));
             for (at, value) in [
                 (0xaec, 0x0101),
                 (0xadc, 136),
@@ -293,17 +292,16 @@ unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
                 }
                 g.ram().fill(0x370..0x374, 0xcc);
                 if phase >= 3 {
-                    let loaded = RomImage::zeroed(table_at + if phase == 3 { 1 } else { 2 });
-                    loaded.write(table_at, 0);
+                    let mut loaded = vec![0; table_at + if phase == 3 { 1 } else { 2 }];
                     if phase != 3 {
-                        loaded.write(table_at + 1, 0x94);
+                        loaded[table_at + 1] = 0x94;
                     }
-                    g.register_rom(loaded);
+                    g.register_rom(RomImage::from(loaded));
                 }
                 if phase == 5 {
-                    let native = RomImage::zeroed(tile_at + 1);
-                    native.write(tile_at, 0x5a);
-                    g.register_native_rom(native);
+                    let mut native = vec![0; tile_at + 1];
+                    native[tile_at] = 0x5a;
+                    g.register_native_rom(RomImage::from(native));
                 }
                 let result = catch_unwind(AssertUnwindSafe(|| {
                     Effects::draw_atmospheric_tile(&mut Runtime::new(g), 0, 1);

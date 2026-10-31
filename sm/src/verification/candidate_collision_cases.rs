@@ -4,7 +4,7 @@ use super::super::collision::{
     EprojPowerBombCollision, move_horizontally_with_block_collision,
     move_vertically_with_block_collision,
 };
-use super::{bytes, put, slot};
+use super::{put, slot};
 use crate::game_state::Game;
 use crate::ram_map::{word_arrays as a, words as w};
 use crate::rom::RomImage;
@@ -41,7 +41,7 @@ unsafe fn move_one(horizontal: bool, handle: u16, game: &mut Game) -> Option<usi
         })
     }))
 }
-pub(super) unsafe fn execute(id: u32, game: &mut Game, image: &RomImage) -> Option<usize> {
+pub(super) unsafe fn execute(id: u32, game: &mut Game, image: &mut [u8]) -> Option<usize> {
     assert!(id < CASES);
     let n = id as usize;
     if n < 32 {
@@ -84,15 +84,15 @@ pub(super) unsafe fn execute(id: u32, game: &mut Game, image: &RomImage) -> Opti
         projectile(game, handle, radius, orientation & 2 != 0);
         projectile(game, selected, radius, orientation & 2 != 0);
         put(game, w::EPROJ_INDEX, selected);
-        let raw = RomImage::zeroed(image.len());
+        let mut raw = vec![0; image.len()];
         let table = crate::rtl::lorom_offset(0x948b2b) as usize;
-        for index in 0..512 {
-            bytes(&raw, table + index, &[height]);
-            bytes(image, table + index, &[31 - height]);
-        }
-        game.register_native_rom(raw.clone());
+        raw[table..table + 512].fill(height);
+        image[table..table + 512].fill(31 - height);
+        let image = RomImage::from(&*image);
+        game.loaded_rom = Some(image.clone());
+        game.register_native_rom(RomImage::from(raw));
         let result = unsafe { move_one(false, handle, game) };
-        game.register_native_rom(image.clone());
+        game.register_native_rom(image);
         return result;
     }
     if n < 172 {

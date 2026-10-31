@@ -63,7 +63,7 @@ impl Backend {
         }));
         let cart = Rc::new(UnsafeCell::new(Cart {
             type_0: 0,
-            rom: crate::rom::RomImage::default(),
+            rom: crate::snes::cart::CartRom::default(),
             rom_size: 0,
             ram: sm_game::save_file::SaveRam::default(),
             ramSize: 0,

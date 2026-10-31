@@ -39,18 +39,15 @@ fn word(g: &Game, at: usize) -> u16 {
 fn seed(g: &mut Game) -> (RomImage, RomImage) {
     g.ram().fill(0..g.ram().len(), 0);
     g.g_fail = false;
-    let loaded = RomImage::zeroed(0x200000);
-    let native = RomImage::zeroed(0x200000);
+    let mut loaded = vec![0; 0x200000];
+    let mut native = vec![0; 0x200000];
     for pose in [2usize] {
-        loaded.write(
-            crate::rom::lorom_offset(0x91b629) as usize + pose * 8 + 6,
-            2,
-        );
-        native.write(
-            crate::rom::lorom_offset(0x91b629) as usize + pose * 8 + 6,
-            7,
-        );
+        let radius = crate::rom::lorom_offset(0x91b629) as usize + pose * 8 + 6;
+        loaded[radius] = 2;
+        native[radius] = 7;
     }
+    let loaded = RomImage::from(loaded);
+    let native = RomImage::from(native);
     g.register_rom(loaded.clone());
     g.register_native_rom(native.clone());
     for (at, v) in [
@@ -202,13 +199,13 @@ fn check_outcome(id: u32, before: &[u8], g: &Game, loaded: &RomImage, native: &R
         g.loaded_rom
             .as_ref()
             .expect("PT30 loaded binding missing")
-            .as_mut_ptr(),
-        loaded.as_mut_ptr(),
+            .as_ptr(),
+        loaded.as_ptr(),
         "PT30 loaded binding"
     );
     assert_eq!(
-        g.capture_native_rom().as_mut_ptr(),
-        native.as_mut_ptr(),
+        g.capture_native_rom().as_ptr(),
+        native.as_ptr(),
         "PT30 native binding"
     );
 }

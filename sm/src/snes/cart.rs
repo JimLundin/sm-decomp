@@ -6,7 +6,53 @@ use crate::rtl::words;
 pub use crate::types::{Cart, Snes};
 use ::core::ffi::c_void;
 use ::core::ptr::null_mut;
+use std::cell::Cell;
+use std::rc::Rc;
 pub const NULL: *mut c_void = null_mut::<c_void>();
+
+/// The oracle cartridge's ROM. Patches write it in place while the cartridge,
+/// `Game::cartridge_rom` and the patch installers share it.
+#[derive(Clone, Default)]
+pub struct CartRom(Rc<[Cell<u8>]>);
+
+impl CartRom {
+    pub fn zeroed(length: usize) -> Self {
+        Self((0..length).map(|_| Cell::new(0)).collect())
+    }
+
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
+
+    pub fn read(&self, offset: usize) -> u8 {
+        self.0[offset].get()
+    }
+
+    pub fn write(&self, offset: usize, value: u8) {
+        self.0[offset].set(value);
+    }
+
+    /// The legacy loader's pointer to the shared bytes.
+    pub fn as_mut_ptr(&self) -> *mut u8 {
+        self.0.as_ptr().cast::<u8>().cast_mut()
+    }
+
+    /// The engine's image: a copy of the bytes as they are now.
+    pub fn to_rom_image(&self) -> RomImage {
+        RomImage::from(self.0.iter().map(Cell::get).collect::<Vec<_>>())
+    }
+}
+
+impl From<Vec<u8>> for CartRom {
+    fn from(bytes: Vec<u8>) -> Self {
+        Self(bytes.into_iter().map(Cell::new).collect())
+    }
+}
+
 pub unsafe fn cart_reset(_cart: *mut Cart) {}
 // The variable cartridge extent remains an external count, with no wire prefix.
 macro_rules! cart_snapshot {
@@ -37,10 +83,10 @@ macro_rules! cart_snapshot {
 }
 cart_snapshot! { cart, io; ramSize: u32 }
 // Adopt the actual prepared allocation; cartridge and native views share its lifetime.
-pub unsafe fn cart_load(cart: *mut Cart, type_0: i32, rom: RomImage, ram_size: i32) {
+pub unsafe fn cart_load(cart: *mut Cart, type_0: i32, rom: CartRom, ram_size: i32) {
     unsafe {
         (*cart).type_0 = type_0 as u8;
-        (*cart).rom = RomImage::default();
+        (*cart).rom = CartRom::default();
         (*cart).ram = sm_game::save_file::SaveRam::default();
         (*cart).rom = rom;
         (*cart).rom_size = (*cart).rom.len() as u32;

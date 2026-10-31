@@ -9,12 +9,13 @@ pub(crate) const CASES: u32 = 20;
 pub(crate) fn offset(address: u32) -> usize {
     crate::rtl::lorom_offset(address) as usize
 }
-fn bytes(r: &RomImage, address: u32, value: &[u8]) {
-    for (i, b) in value.iter().enumerate() {
-        r.write(offset(address) + i, *b);
+fn bytes(r: &mut [u8], address: u32, value: &[u8]) {
+    // Byte by byte, so a short image fails at its first missing byte.
+    for (i, &b) in value.iter().enumerate() {
+        r[offset(address) + i] = b;
     }
 }
-fn rw(r: &RomImage, address: u32, value: u16) {
+fn rw(r: &mut [u8], address: u32, value: u16) {
     bytes(r, address, &value.to_ne_bytes());
 }
 fn put(g: &mut Game, at: usize, value: u16) {
@@ -71,7 +72,7 @@ pub(crate) fn run(operation: Operation, g: &mut Game) -> Option<i32> {
         }
     }
 }
-fn station(r: &RomImage, cursor: u16, room: u16, wrap: bool) {
+fn station(r: &mut [u8], cursor: u16, room: u16, wrap: bool) {
     let values = [
         room,
         0xa246,
@@ -94,21 +95,24 @@ pub(crate) fn capture_case(
     }
     let result = catch_unwind(AssertUnwindSafe(|| {
         // Native pointer-producing paths always retain a full distinct allocation.
-        let native = RomImage::zeroed(0x100000);
-        let loaded = if id == 9 {
-            RomImage::zeroed(offset(0x8f9000) + 1)
-        } else if id == 17 {
-            RomImage::zeroed(offset(0x80c4b5) + 1)
-        } else {
-            RomImage::zeroed(0x100000)
-        };
+        let mut native = vec![0; 0x100000];
+        let mut loaded = vec![
+            0;
+            if id == 9 {
+                offset(0x8f9000) + 1
+            } else if id == 17 {
+                offset(0x80c4b5) + 1
+            } else {
+                0x100000
+            }
+        ];
         let mut g = Game::new();
         for i in 0..g.ram().len() {
             g.ram()
                 .write_byte(i, (i.wrapping_mul(29) ^ (i >> 7) ^ 0xa3) as u8);
         }
-        g.register_native_rom(native.clone());
-        g.loaded_rom = Some(loaded.clone());
+        // Both images are installed once their bytes are complete.
+        let mut loaded_present = true;
         g.g_fail = false;
         g.VERIFY_ACTIVE = true;
         put(&mut g, 0x79f, 0);
@@ -164,21 +168,21 @@ pub(crate) fn capture_case(
             };
             expected_door = if id == 7 || id == 10 { 0x10 } else { 0xa000 };
             if id == 9 {
-                bytes(&loaded, list_address, &[0]);
+                bytes(&mut loaded, list_address, &[0]);
             } else {
-                rw(&loaded, list_address, expected_door);
+                rw(&mut loaded, list_address, expected_door);
                 rw(
-                    &loaded,
+                    &mut loaded,
                     0x838000 | u32::from(expected_door),
                     if matches!(id, 1 | 2 | 4) { 0 } else { 0x9234 },
                 );
                 if id == 5 {
-                    rw(&loaded, 0x8f9000, 0xb000);
-                    rw(&loaded, 0x83b000, 0);
+                    rw(&mut loaded, 0x8f9000, 0xb000);
+                    rw(&mut loaded, 0x83b000, 0);
                 }
             }
             if id == 8 {
-                g.loaded_rom = None;
+                loaded_present = false;
             }
         } else {
             if id == 13 {
@@ -211,34 +215,36 @@ pub(crate) fn capture_case(
             };
             let room = if id == 19 { 0x0010 } else { 0x9234 };
             if id != 17 {
-                rw(&loaded, 0x80c4b5 + 2 * area, table);
+                rw(&mut loaded, 0x80c4b5 + 2 * area, table);
             } else {
-                bytes(&loaded, 0x80c4b5, &[0]);
+                bytes(&mut loaded, 0x80c4b5, &[0]);
             }
-            station(&native, cursor, room, id == 12);
+            station(&mut native, cursor, room, id == 12);
             // Full packed header allocated; only its source area byte is material here.
             bytes(
-                &native,
+                &mut native,
                 0x8f0000 | u32::from(room),
                 &[0x66, 7, 0x55, 0x44, 1, 2, 3, 4, 5, 6, 7],
             );
             if id == 14 {
-                station(&native, 0x9000, 0xabcd, false);
+                station(&mut native, 0x9000, 0xabcd, false);
             }
             if id == 18 {
                 // If table is wrongly read from native, it selects a decoy station.
-                rw(&native, 0x80c4b5, 0xa000);
-                station(&native, 0xa000, 0xabcd, false);
+                rw(&mut native, 0x80c4b5, 0xa000);
+                station(&mut native, 0xa000, 0xabcd, false);
                 // If station/header is wrongly read from loaded, all result fields differ.
-                station(&loaded, 0x9100, 0xb123, true);
-                bytes(&loaded, 0x8fb123, &[0, 0x88, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
-                bytes(&loaded, 0x8f9234, &[0, 0x99, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+                station(&mut loaded, 0x9100, 0xb123, true);
+                bytes(&mut loaded, 0x8fb123, &[0, 0x88, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+                bytes(&mut loaded, 0x8f9234, &[0, 0x99, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
             }
             if id == 16 {
-                g.loaded_rom = None;
+                loaded_present = false;
             }
             expected_area = 7;
         }
+        g.register_native_rom(RomImage::from(native));
+        g.loaded_rom = loaded_present.then(|| RomImage::from(loaded));
         let initial = ram_bytes(&g);
         let mut expected = initial.clone();
         if id <= 10 {

@@ -195,7 +195,7 @@ pub struct Game {
     native_rom: Option<crate::rom::RomImage>,
     /// The oracle's cartridge ROM, which its compatibility patches rewrite;
     /// the engine's images are an unpatched copy, as hardware reads.
-    pub(crate) cartridge_rom: Option<crate::rom::RomImage>,
+    pub(crate) cartridge_rom: Option<crate::snes::cart::CartRom>,
     /// Imported from `loaded_rom` by `register_rom`; see game::enemy_speeds.
     pub(crate) enemy_speeds: Option<crate::game::enemy_speeds::ImportedSpeeds>,
     /// Imported from `native_rom` by `register_native_rom`; see game::enemy_speeds.
@@ -269,9 +269,9 @@ pub struct Game {
     pub currently_installed_bug_fix_counter: u16,
     pub VERIFY_ACTIVE: bool,
     pub VERIFY_FAILURES: u64,
-    /// The lockstep observation comparison, when the verifier enabled it.
+    /// The verifier's typed observation (lockstep or single-side), when enabled.
     #[cfg(sm_verify_dll)]
-    pub observation: Option<Box<sm_tools::lockstep::Lockstep>>,
+    pub observation: Option<Box<crate::observation::Observer>>,
     pub g_got_mismatch_count: c_int,
     pub g_other_image: bool,
     pub g_debug_flag: bool,
@@ -715,7 +715,7 @@ impl Game {
     #[forbid(unsafe_code)]
     pub(crate) fn legacy_native_rom_ptr(&self) -> *const u8 {
         self.native_rom.as_ref().map_or(core::ptr::null(), |image| {
-            crate::native_rom::NativeRomPointer::as_mut_ptr(image).cast_const()
+            crate::native_rom::NativeRomPointer::as_ptr(image)
         })
     }
 
@@ -739,9 +739,6 @@ impl Game {
     fn import_native_records(&mut self, image: &crate::rom::RomImage) {
         self.enemy_speeds32 = crate::game::enemy_speeds::import32(image);
         self.demo_scenes = sm_game::demo_rooms::import_scenes(image);
-        self.records.native_program = Some(std::rc::Rc::new(
-            sm_data::program_image::ProgramImage::prepare(image),
-        ));
     }
 
     /// Import the `sm_data` records read from the loaded image.
@@ -792,20 +789,6 @@ impl Game {
             sm_game::program_banks::import(image, sm_game::program_banks::Bank::Sprite);
         self.records.gameplay_tables = sm_game::gameplay_tables::import(image);
         self.records.enemy_lists = sm_game::enemy_lists::import(image);
-        self.records.loaded_program = Some(std::rc::Rc::new(
-            sm_data::program_image::ProgramImage::prepare(image),
-        ));
-    }
-
-    /// Import every record again after the images were patched in place;
-    /// until then the patched images serve their original reads.
-    pub(crate) fn refresh_rom_records(&mut self) {
-        if let Some(image) = self.native_rom.clone() {
-            self.import_native_records(&image);
-        }
-        if let Some(image) = self.loaded_rom.clone() {
-            self.import_loaded_records(&image);
-        }
     }
 
     pub(crate) fn register_rom(&mut self, image: crate::rom::RomImage) {

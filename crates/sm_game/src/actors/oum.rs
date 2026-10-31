@@ -104,6 +104,7 @@ fn pushed(runtime: &impl ActorLease, oum: i32) -> bool {
 }
 /// Oum rolling, unless stopped: attack Samus near, or roll on, turning at a wall.
 fn roll(runtime: &mut impl ActorLease, oum: i32) {
+    crate::probe::hit("oum.roll");
     if session_slot!(runtime, Oum[oum].stop) != 0 {
         return;
     }

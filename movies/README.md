@@ -8,7 +8,7 @@ must match. The [README](../README.md#verification) lists what this does not
 cover.
 
 [segments.toml](segments.toml) defines the scenarios (rows), their inputs and
-required events: 129 rows, 219,592 selected frames. Follow the
+required events: 133 rows, 223,348 selected frames. Follow the
 [build guide](../docs/ITERATION.md) first; commands below run from the
 repository root with Python 3.11+ (`python3` on systems without `python`).
 You need your own unheadered ROM at `rom/sm.smc`. The verifier builds only on
@@ -172,7 +172,11 @@ A row's `require_hit` names the probes it must reach, and the row fails if
 any never runs. Routines a row exists to cover carry a probe named
 `module.routine`, for example `draygon_grab.tail_whip`; add one with
 `crate::probe::hit` (or `crate::verify_probe::hit` in `sm`) inside the
-branch that does the work.
+branch that does the work. Ice physics (`contact_physics.ice`, PLM $B70F,
+Crateria special air with BTS 80h) has no row: no Crateria level the seeds
+capture places it, so retail play never reaches it. Neither do Bang's movement
+(no room places a Bang) or the scrolling sky's horizontal HDMA (FX type 22h,
+unused).
 
 A scenario seed is a recorded room seed with declared edits to its work RAM:
 energy, ammunition, items, beams, the selected item, Samus's position or raw

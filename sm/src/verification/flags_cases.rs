@@ -45,13 +45,18 @@ pub(crate) fn word(g: &Game, at: usize) -> u16 {
         u16::from_le_bytes(bytes)
     }
 }
-pub(crate) fn rom_word(image: &RomImage, address: u32, value: u16) {
+pub(crate) fn rom_word(image: &mut [u8], address: u32, value: u16) {
     let at = crate::rtl::lorom_offset(address) as usize;
-    for (i, b) in value.to_ne_bytes().into_iter().enumerate() {
-        image.write(at + i, b);
-    }
+    image[at..at + 2].copy_from_slice(&value.to_ne_bytes());
 }
-fn seed(g: &mut Game, image: &RomImage) {
+/// Register an image of the synthetic bytes as both loaded and native ROM.
+pub(crate) fn install(g: &mut Game, bytes: &[u8]) -> RomImage {
+    let image = RomImage::from(bytes);
+    g.loaded_rom = Some(image.clone());
+    g.register_native_rom(image.clone());
+    image
+}
+fn seed(g: &mut Game, image: &mut [u8]) {
     for i in 0..g.ram().len() {
         let value = (i.wrapping_mul(37) ^ (i >> 8) ^ 0x5a) as u8;
         g.ram().write_byte(i, value);
@@ -60,8 +65,6 @@ fn seed(g: &mut Game, image: &RomImage) {
     for i in 0..8192 {
         g.g_sram.write(i, (i.wrapping_mul(19) ^ 0xa7) as u8);
     }
-    g.loaded_rom = Some(image.clone());
-    g.register_native_rom(image.clone());
     g.VERIFY_ACTIVE = true;
     g.g_fail = false;
     put(g, 0x5e7, 0xa534);
@@ -85,7 +88,8 @@ fn observe(out: &mut Vec<u8>, phase: u8, returned: Returned, g: &Game) {
 }
 /// Seed actual LoadFromSram without invoking SaveToSram. Safe also for Runtime guards.
 /// 63 primary valid;64 backup valid;65 both sums bad;66 primary complement bad.
-pub(crate) fn seed_load(id: u32, g: &mut Game, image: &RomImage) -> u16 {
+/// Authors the ROM tables into `image`; the caller installs it afterwards.
+pub(crate) fn seed_load(id: u32, g: &mut Game, image: &mut [u8]) -> u16 {
     assert!((63..=66).contains(&id));
     let slot = if id & 1 == 0 { 2u16 } else { 0u16 };
     let start = if slot == 0 { 0x10 } else { 0xcc8 };
@@ -94,13 +98,10 @@ pub(crate) fn seed_load(id: u32, g: &mut Game, image: &RomImage) -> u16 {
     }
     // Positive map counts avoid do-until zero-count paths. One real byte perarea.
     for area in 0..6 {
-        image.write(crate::rtl::lorom_offset(0x818131) as usize + area, 1);
+        image[crate::rtl::lorom_offset(0x818131) as usize + area] = 1;
         rom_word(image, 0x818138 + area as u32 * 2, area as u16);
         rom_word(image, 0x8182d6 + area as u32 * 2, 0x9000 + area as u16);
-        image.write(
-            crate::rtl::lorom_offset(0x819000) as usize + area,
-            (7 + area) as u8,
-        );
+        image[crate::rtl::lorom_offset(0x819000) as usize + area] = (7 + area) as u8;
     }
     for i in 0..0x65c {
         g.g_sram.write(start + i, (i.wrapping_mul(13) ^ 0xc3) as u8);
@@ -132,7 +133,7 @@ pub(crate) fn seed_load(id: u32, g: &mut Game, image: &RomImage) -> u16 {
     put(g, 0x5e7, 0xa534);
     slot
 }
-fn seed_demo(g: &mut Game, image: &RomImage) {
+fn seed_demo(g: &mut Game, image: &mut [u8]) {
     put(g, crate::ram_map::words::DEMO_SET, 0);
     put(g, crate::ram_map::words::DEMO_SCENE, 0);
     rom_word(image, 0x82876c, 0x9000);
@@ -142,7 +143,7 @@ fn seed_demo(g: &mut Game, image: &RomImage) {
     {
         rom_word(image, 0x829000 + i as u32 * 2, v);
     }
-    image.write(crate::rtl::lorom_offset(0x8f9100) as usize + 1, 2);
+    image[crate::rtl::lorom_offset(0x8f9100) as usize + 1] = 2;
 }
 pub(crate) fn capture_case(
     id: u32,
@@ -152,9 +153,10 @@ pub(crate) fn capture_case(
         return None;
     }
     let result = catch_unwind(AssertUnwindSafe(|| {
-        let image = RomImage::zeroed(0x200000);
+        // The image is installed once its bytes are complete.
+        let mut image = vec![0; 0x200000];
         let mut g = Game::new();
-        seed(&mut g, &image);
+        seed(&mut g, &mut image);
         let mut operations = Vec::new();
         match id {
             0..=5 => {
@@ -209,16 +211,16 @@ pub(crate) fn capture_case(
                 g.ram().write_byte(at, value);
                 let value = 0x5a;
                 g.ram().write_byte(at + 1, value);
-                image.write(crate::rtl::lorom_offset(0x849100) as usize, 1);
-                rom_word(&image, 0x849101, 0x9234);
+                image[crate::rtl::lorom_offset(0x849100) as usize] = 1;
+                rom_word(&mut image, 0x849101, 0x9234);
                 operations.push(Operation::Plm(8686225));
             }
             44..=49 => {
                 let bit = [0, 7, 63, 64, 511, 65535][(id - 44) as usize];
                 let value = 0;
                 g.ram().write_byte(0xd820 + usize::from(bit >> 3), value);
-                rom_word(&image, 0x849100, bit);
-                rom_word(&image, 0x879100, bit);
+                rom_word(&mut image, 0x849100, bit);
+                rom_word(&mut image, 0x879100, bit);
                 operations.extend([Operation::Plm(8685630), Operation::Animated(8880447)]);
             }
             50..=59 => {
@@ -235,12 +237,12 @@ pub(crate) fn capture_case(
             }
             60 => operations.push(Operation::NewSave),
             61 => {
-                seed_demo(&mut g, &image);
+                seed_demo(&mut g, &mut image);
                 operations.push(Operation::Demo);
             }
             62 => operations.push(Operation::DemoBoss),
             63..=66 => {
-                let slot = seed_load(id, &mut g, &image);
+                let slot = seed_load(id, &mut g, &mut image);
                 operations.push(Operation::Load(slot));
             }
             67..=70 => {
@@ -255,6 +257,7 @@ pub(crate) fn capture_case(
             }
             _ => unreachable!(),
         }
+        let image = install(&mut g, &image);
         let initial = (0..g.ram().len())
             .map(|at| g.ram().read_byte(at))
             .collect::<Vec<_>>();

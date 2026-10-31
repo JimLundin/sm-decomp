@@ -26,11 +26,9 @@ fn read(g: &Game, at: usize) -> u16 {
 fn put(bytes: &mut [u8], at: usize, value: u16) {
     bytes[at..at + 2].copy_from_slice(&value.to_le_bytes());
 }
-fn author(r: &RomImage, address: u32, bytes: &[u8]) {
+fn author(r: &mut [u8], address: u32, bytes: &[u8]) {
     let at = crate::rom::lorom_offset(address) as usize;
-    for (i, value) in bytes.iter().copied().enumerate() {
-        r.write(at + i, value);
-    }
+    r[at..at + bytes.len()].copy_from_slice(bytes);
 }
 fn explored(byte: usize) -> u8 {
     (byte as u8).wrapping_mul(73).wrapping_add(0x81)
@@ -99,19 +97,19 @@ pub(crate) fn map_write(g: &Game, byte: usize, index: usize, stage: u8) {
 fn map(g: &mut Game) {
     g.ram().fill(0..g.ram().len(), 0);
     g.g_fail = false;
-    let loaded = RomImage::zeroed(0x200000);
-    let native = RomImage::zeroed(0x200000);
-    author(&loaded, 0x829717, &0x9000u16.to_le_bytes());
-    author(&native, 0x82964a, &[0x00, 0x80, 0x90, 0x00]);
+    let mut loaded = vec![0; 0x200000];
+    let mut native = vec![0; 0x200000];
+    author(&mut loaded, 0x829717, &0x9000u16.to_le_bytes());
+    author(&mut native, 0x82964a, &[0x00, 0x80, 0x90, 0x00]);
     for index in 0..2048 {
         author(
-            &native,
+            &mut native,
             0x908000 + index as u32 * 2,
             &tile(index).to_le_bytes(),
         );
     }
-    g.register_rom(loaded);
-    g.register_native_rom(native);
+    g.register_rom(RomImage::from(loaded));
+    g.register_native_rom(RomImage::from(native));
     for byte in 0..256 {
         g.ram().write_byte(0x7f7 + byte, explored(byte));
     }

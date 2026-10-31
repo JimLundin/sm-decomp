@@ -200,14 +200,10 @@ impl ActorIdentityState {
         {
             return Err("actor owned checkpoint source identity or Reference changed".into());
         }
-        let prepared = ActorCheckpointPayload::prepare_occupancy(
-            read.0,
-            current,
-            world,
-            images,
-            &|index| actors.slots[index].definition != 0,
-            None,
-        )?;
+        let prepared =
+            ActorCheckpointPayload::prepare_occupancy(read.0, current, world, images, &|index| {
+                actors.slots[index].definition != 0
+            })?;
         Ok(Self::from_checkpoint(
             prepared.next_live_epoch,
             prepared.timeline,
@@ -771,19 +767,11 @@ impl ActorCheckpointPayload {
         world: &Arc<WorldBinding>,
         images: CheckpointImages<'_>,
         ram: &impl Fn(usize) -> u8,
-        loaded_after_patch: Option<&sm_data::cartridge::RomImage>,
     ) -> Result<PreparedActorRestore, String> {
-        Self::prepare_occupancy(
-            bytes,
-            current,
-            world,
-            images,
-            &|index| {
-                let at = 0xf78 + index * 64;
-                [ram(at), ram(at + 1)] != [0, 0]
-            },
-            loaded_after_patch,
-        )
+        Self::prepare_occupancy(bytes, current, world, images, &|index| {
+            let at = 0xf78 + index * 64;
+            [ram(at), ram(at + 1)] != [0, 0]
+        })
     }
 
     fn prepare_occupancy(
@@ -792,7 +780,6 @@ impl ActorCheckpointPayload {
         world: &Arc<WorldBinding>,
         images: CheckpointImages<'_>,
         live: &impl Fn(usize) -> bool,
-        loaded_after_patch: Option<&sm_data::cartridge::RomImage>,
     ) -> Result<PreparedActorRestore, String> {
         let CheckpointImages {
             loaded,
@@ -908,16 +895,11 @@ impl ActorCheckpointPayload {
                 }
                 let index = usize::from(class);
                 let image = image.ok_or("checkpoint allocation is unavailable")?;
-                let content = if loaded.is_some_and(|loaded| loaded.same_allocation(image)) {
-                    loaded_after_patch.unwrap_or(image)
-                } else {
-                    image
-                };
                 let is_loaded = loaded.is_some_and(|loaded| loaded.same_allocation(image));
                 if index >= count
-                    || content.len() != data[index].len()
+                    || image.len() != data[index].len()
                     || data[index].iter().enumerate().any(|(at, byte)| {
-                        content.read(at) != *byte && !(is_loaded && policy_dependent(at))
+                        image.read(at) != *byte && !(is_loaded && policy_dependent(at))
                     })
                 {
                     return Err("checkpoint allocation content differs".into());
@@ -946,15 +928,9 @@ impl ActorCheckpointPayload {
         // Detached classes are separate owned allocations even if their bytes equal live sources.
         let images: Vec<_> = bound
             .into_iter()
-            .enumerate()
-            .map(|(index, image)| {
-                image.unwrap_or_else(|| {
-                    let image = sm_data::cartridge::RomImage::zeroed(data[index].len());
-                    for (at, byte) in data[index].iter().enumerate() {
-                        image.write(at, *byte);
-                    }
-                    image
-                })
+            .zip(data)
+            .map(|(image, bytes)| {
+                image.unwrap_or_else(|| sm_data::cartridge::RomImage::from(bytes))
             })
             .collect();
         let residency =

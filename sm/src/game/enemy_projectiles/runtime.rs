@@ -3,16 +3,13 @@
 use super::host::*;
 use crate::game::session_runtime::{Runtime, invalid_window};
 use crate::ram_map::word_arrays as A;
+use crate::rom::RomImage;
 impl Host for Runtime<'_> {}
 impl Content for Runtime<'_> {
     type Loaded = super::content::LoadedRecord;
     type Native = super::content::NativeRecord;
-    fn script_image(&self) -> sm_game::enemy_script::ScriptImage {
-        use sm_game::records::Records as _;
-        sm_game::enemy_script::ScriptImage::for_image(
-            self.records().loaded_program.as_ref(),
-            self.loaded_image().expect("ROM loaded"),
-        )
+    fn script_image(&self) -> RomImage {
+        self.loaded_image().expect("ROM loaded")
     }
     fn loaded_record(&mut self, bank: u8, bank_address: u16) -> Self::Loaded {
         let address = (u32::from(bank) << 16) | u32::from(bank_address);

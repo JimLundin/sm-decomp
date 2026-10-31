@@ -279,6 +279,12 @@ RECIPES = {
     # special-beam-*): keep shooting held past a full charge, which fires the
     # beam's special attack, then watch it run.
     "special-beam": Recipe("_ 20; X 150; _ 300"),
+    # Oum room with Samus beside the first Oum (scenario oum-roll): walk into
+    # it, so it rolls and pushes her back into the pit.
+    "oum-roll": Recipe("_ 30; Right 60; _ 300"),
+    # Tatori room with full energy (scenario tatori-touch): hop right across
+    # the sleeping turtle and its young.
+    "tatori-touch": Recipe("_ 10; repeat 10 { Right 30; Right+A 15 }; _ 300"),
     # Pause, wait for the pause screen, unpause and watch the room resume.
     "pause-resume": Recipe("press Start 150; hold Start 200; _ $tail", {"tail": 240}),
 }
@@ -335,6 +341,8 @@ PINNED = {
     "screw-attack": "ce49ad2b34eb6e5256cb0a73deb28043b434660b096aaee3ba35974ce51570fe",
     "mockball": "24739893dc7f2f9fdf11b50d828e83e6a75107d6929e1cde14e626cb46c0d3f9",
     "special-beam": "52d64f88295f3755852b633a417da2b0525cc712979c8a9c78e7e66486f74f73",
+    "oum-roll": "1ee33e3559e0d647c919181f1b70ad8d1bac9ac4ba331444264b04c5598d4441",
+    "tatori-touch": "f557eb7d7d0ff9172bb4e0e2c865f139eb92d20b12ca62b4315dfe0581e1c7d1",
     "pause-resume": "6982afc4c06ba2311042798e0c0c2ccdbe47a7dbe599fb50b927ba414c24d077",
 }
 

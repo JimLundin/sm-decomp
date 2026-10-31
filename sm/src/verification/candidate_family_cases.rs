@@ -14,7 +14,6 @@ fn move_along_angle(k: u16, game: &mut Game) {
 }
 use crate::game_state::Game;
 use crate::ram_map::{word_arrays as a, words as w};
-use crate::rom::RomImage;
 use crate::types::EnemyData;
 
 pub(super) const CASES: u32 = 92;
@@ -22,7 +21,7 @@ pub(super) const IMAGE_BYTES: usize = 0x200000;
 
 // Caller seeds the original carrier's Game and image, then invokes this inside
 // its existing catch_unwind and captures the same complete output projection.
-pub(super) unsafe fn execute(id: u32, game: &mut Game, image: &RomImage) -> Option<usize> {
+pub(super) unsafe fn execute(id: u32, game: &mut Game, image: &mut [u8]) -> Option<usize> {
     assert!(id < CASES);
     let index = [0, 1, 32, 34][id as usize % 4];
     let enemy = if id & 1 == 0 { 0 } else { 64 };
@@ -61,6 +60,7 @@ pub(super) unsafe fn execute(id: u32, game: &mut Game, image: &RomImage) -> Opti
             let sample = ((offset * 251 + 137) & 0x7fff) as u16;
             bytes(image, table + offset * 2, &sample.to_le_bytes());
         }
+        super::install(game, image);
         game.ram()
             .write_byte(0x60b, [0, 63, 64, 127, 128, 191, 192, 255][variant / 4]);
         put(

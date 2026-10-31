@@ -6,9 +6,10 @@ use crate::{
 pub(crate) fn offset(a: u32) -> usize {
     crate::rtl::lorom_offset(a) as usize
 }
-pub(crate) fn bytes(r: &RomImage, a: u32, v: &[u8]) {
-    for (i, b) in v.iter().enumerate() {
-        r.write(offset(a) + i, *b);
+pub(crate) fn bytes(r: &mut [u8], a: u32, v: &[u8]) {
+    // Byte by byte, so a short image fails at its first missing byte.
+    for (i, &b) in v.iter().enumerate() {
+        r[offset(a) + i] = b;
     }
 }
 pub(crate) unsafe fn initialized_with_world(
@@ -17,19 +18,22 @@ pub(crate) unsafe fn initialized_with_world(
     unsafe {
         let mut g = Game::with_world(world);
         g.initialize_backend();
-        let image = RomImage::zeroed(0x400000);
+        let mut image = vec![0; 0x400000];
         for (a, v) in [(0x80a2f7, 0x4e), (0x80a2f8, 0x18), (0x80a29a, 0x38)] {
-            bytes(&image, a, &[v]);
+            bytes(&mut image, a, &[v]);
         }
-        for i in 0..0x1000 {
-            image.write(offset(0x9ab200) + i, (i.wrapping_mul(7) ^ 0xd3) as u8);
+        for (i, byte) in image[offset(0x9ab200)..][..0x1000].iter_mut().enumerate() {
+            *byte = (i.wrapping_mul(7) ^ 0xd3) as u8;
         }
-        let cart_image = RomImage::zeroed(image.len());
-        for i in 0..image.len() {
-            cart_image.write(i, image.read(i));
-        }
-        crate::snes::cart::cart_load((*g.g_snes).cart, 1, cart_image, 8192);
-        g.register_native_rom((*(*g.g_snes).cart).rom.clone());
+        // The engine reads its own copy, as snes_init registers it.
+        let native = RomImage::from(image.as_slice());
+        crate::snes::cart::cart_load(
+            (*g.g_snes).cart,
+            1,
+            crate::snes::cart::CartRom::from(image),
+            8192,
+        );
+        g.register_native_rom(native);
         g.g_sram = (*(*g.g_snes).cart).ram.clone();
         g.execution().reset(true);
         for i in 0..g.ram().len() {

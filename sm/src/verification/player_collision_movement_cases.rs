@@ -34,11 +34,9 @@ fn get(g: &Game, at: usize) -> u16 {
 fn expect(g: &Game, at: usize, value: u16, why: &str) {
     assert_eq!(get(g, at), value, "{why} at {at:04x}");
 }
-fn rom_word(r: &RomImage, address: u32, value: u16) {
+fn rom_word(r: &mut [u8], address: u32, value: u16) {
     let at = crate::rtl::lorom_offset(address) as usize;
-    for (i, b) in value.to_le_bytes().into_iter().enumerate() {
-        r.write(at + i, b);
-    }
+    r[at..at + 2].copy_from_slice(&value.to_le_bytes());
 }
 fn block(g: &mut Game, at: usize, kind: u16, bts: u8) {
     put(g, 0x10002 + 2 * at, kind << 12);
@@ -57,11 +55,32 @@ fn actor(g: &mut Game, key: u16, x: u16, y: u16) {
         put(g, at + field, v);
     }
 }
-fn seed(g: &mut Game) -> (RomImage, RomImage) {
+fn seed(id: u32, g: &mut Game) -> (RomImage, RomImage) {
     // Host hardware remains initialized; every byte of both replacement ROM
     // allocations is initialized, including raw/native table consumers.
-    let loaded = RomImage::zeroed(0x200000);
-    let native = RomImage::zeroed(0x200000);
+    let mut loaded = vec![0; 0x200000];
+    let mut native = vec![0; 0x200000];
+    for r in [&mut loaded, &mut native] {
+        rom_word(r, 0x949139, 0x9000);
+        rom_word(r, 0x849000, 0xb4c4);
+        rom_word(r, 0x849002, 0x8888);
+        // Actual SamusSpeedTableEntry: accel/sub,max/sub,decel/sub.
+        for address in (0x90e000..0x90e12c).step_by(12).chain([0x909f31]) {
+            for (i, v) in [0, 0, 8, 0, 2, 0].into_iter().enumerate() {
+                rom_word(r, address + (i * 2) as u32, v);
+            }
+        }
+    }
+    for i in 0..16 {
+        rom_word(&mut native, 0x9b9800 + 2 * i, 0x4100 + i as u16);
+        rom_word(&mut loaded, 0x9b9800 + 2 * i, 0x6200 + i as u16);
+    }
+    if id == 14 {
+        // Case 14 also reads authored $8F and $83 content.
+        rom_word(&mut loaded, 0x8f9000, 0xa000);
+        rom_word(&mut loaded, 0x83a000, 0x9234);
+    }
+    let (loaded, native) = (RomImage::from(loaded), RomImage::from(native));
     g.loaded_rom = Some(loaded.clone());
     g.register_native_rom(native.clone());
     g.ram().fill(0..g.ram().len(), 0);
@@ -86,21 +105,6 @@ fn seed(g: &mut Game) -> (RomImage, RomImage) {
     g.ram().write_byte(0xa1e, 8);
     for at in (0xdaa..0xdba).step_by(2) {
         put(g, at, 0x7777);
-    }
-    for r in [&loaded, &native] {
-        rom_word(r, 0x949139, 0x9000);
-        rom_word(r, 0x849000, 0xb4c4);
-        rom_word(r, 0x849002, 0x8888);
-        // Actual SamusSpeedTableEntry: accel/sub,max/sub,decel/sub.
-        for address in (0x90e000..0x90e12c).step_by(12).chain([0x909f31]) {
-            for (i, v) in [0, 0, 8, 0, 2, 0].into_iter().enumerate() {
-                rom_word(r, address + (i * 2) as u32, v);
-            }
-        }
-    }
-    for i in 0..16 {
-        rom_word(&native, 0x9b9800 + 2 * i, 0x4100 + i as u16);
-        rom_word(&loaded, 0x9b9800 + 2 * i, 0x6200 + i as u16);
     }
     (loaded, native)
 }
@@ -132,7 +136,7 @@ fn publication(g: &Game, direction: u32, amount: i32) {
 /// Return bytes: full WRAM, optional return marker/u32, g_fail, cancellation trace.
 pub(crate) unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
     assert!(id < COUNT);
-    let (_loaded, _native) = seed(g);
+    let (_loaded, _native) = seed(id, g);
     let mut returned = None::<u32>;
     let mut checkpoints = Vec::new();
     CANCEL_VALUES.with_borrow_mut(Vec::clear);
@@ -284,8 +288,6 @@ pub(crate) unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
                 put(g, 0x7b5, 0x9000);
                 put(g, w::SAMUS_POSE, 8);
                 put(g, 0x998, 8);
-                rom_word(&_loaded, 0x8f9000, 0xa000);
-                rom_word(&_loaded, 0x83a000, 0x9234);
                 put(g, w::CUR_BLOCK_INDEX, 0xbeef);
                 put(g, w::SAMUS_HAS_MOMENTUM_FLAG, 1);
                 put(g, w::SPEED_BOOST_COUNTER, 0x401);

@@ -10,9 +10,8 @@
 //! values. Console text names only ticks, domains and fields, never values,
 //! because values can be derived from the ROM.
 
-use crate::engine::{self, Projection};
+use crate::engine::Projection;
 use crate::observation::{Difference, Domain, Observation};
-use sm_game::session::Session;
 use std::fmt::Write as _;
 use std::path::PathBuf;
 use std::time::Duration;
@@ -64,8 +63,6 @@ pub struct Lockstep {
     ram_only: (u64, Option<i32>),
     observation_only: (u64, Option<i32>),
     report_error: Option<String>,
-    capturing: bool,
-    captured: Option<Projection>,
     /// Time spent projecting and comparing.
     pub elapsed: Duration,
 }
@@ -77,28 +74,6 @@ impl Lockstep {
             report,
             ..Self::default()
         }
-    }
-
-    /// The engine's Tick starts: capture the leases it releases.
-    pub fn begin_engine_tick(&mut self) {
-        self.capturing = true;
-        self.captured = None;
-    }
-
-    /// Project a frame lease's Session as it is released. Only the engine's
-    /// Tick is captured; the last lease of the Tick is the one compared.
-    pub fn capture_lease(&mut self, session: &Session) {
-        if self.capturing {
-            let start = std::time::Instant::now();
-            self.captured = Some(engine::project(session));
-            self.elapsed += start.elapsed();
-        }
-    }
-
-    /// The engine's Tick ends; return the last lease's projection.
-    pub fn end_engine_tick(&mut self) -> Option<Projection> {
-        self.capturing = false;
-        self.captured.take()
     }
 
     /// Compare one Tick; true when a projected domain differs.

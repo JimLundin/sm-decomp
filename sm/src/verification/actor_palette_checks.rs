@@ -116,13 +116,7 @@ fn unknown_overwrite_revokes_and_rebind_rejects_equal_bytes_in_another_allocatio
         )
     };
     assert_eq!(check(&identity, &image), Ok(()));
-    image.write(crate::rom::lorom_offset(0xb48000) as usize, 0x5a); // A live edit keeps allocation identity.
-    assert_eq!(
-        check(&identity, &image),
-        Ok(()),
-        "actor.palette.live_allocation_edit_keeps_receipt"
-    );
-    replacement.write(crate::rom::lorom_offset(0xb48000) as usize, 0x5a); // Equal bytes are not the same source allocation.
+    // Equal bytes are not the same source allocation.
     assert_eq!(
         check(&identity, &replacement),
         Err(ActorContentError::PaletteNotResident(MaterialId(50))),

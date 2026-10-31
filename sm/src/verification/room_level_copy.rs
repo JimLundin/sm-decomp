@@ -33,11 +33,8 @@ pub(crate) fn check_level_copy(case: u32) {
         compressed.extend_from_slice(chunk);
     }
     compressed.push(0xff);
-    let rom = RomImage::zeroed(0x100000);
-    for (i, b) in compressed.into_iter().enumerate() {
-        rom.write(i, b);
-    }
-    game.loaded_rom = Some(rom);
+    compressed.resize(0x100000, 0);
+    game.loaded_rom = Some(RomImage::from(compressed));
     game.ram().copy_in(0x7bd, &0x808000u32.to_ne_bytes());
     let mut expected = ram_bytes(&game);
     expected[0x10000..0x10000 + raw.len()].copy_from_slice(&raw);
