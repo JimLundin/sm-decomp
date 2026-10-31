@@ -474,11 +474,14 @@ unsafe fn random_explosions(mask: u16, check_tile: bool, h: &mut Runtime<'_>) {
         let layer1 = h.session().room.camera.layer1;
         let x = layer1[0].wrapping_add(random as u8 as u16);
         let y = layer1[1].wrapping_add(u16::from(random.to_ne_bytes()[1]));
+        // X on entry to $8F:C1A9: 0 from the room main ASM dispatch, or the
+        // block index the tile check ($8F:C131) left.
+        let mut entry_x = 0;
         if check_tile {
             let row =
                 u16::from((y >> 4) as u8) * u16::from(h.word(ram::ROOM_WIDTH_IN_BLOCKS) as u8);
-            if h.native_word(0x10002 + 2 * (usize::from(row) + usize::from(x >> 4))) & 0x3ff == 255
-            {
+            entry_x = row.wrapping_add(x >> 4).wrapping_mul(2);
+            if h.native_word(0x10002 + usize::from(entry_x)) & 0x3ff == 255 {
                 return;
             }
         }
@@ -489,7 +492,10 @@ unsafe fn random_explosions(mask: u16, check_tile: bool, h: &mut Runtime<'_>) {
                 h.foreign(|game| crate::game::music::queue_sfx2_max6(sound, game));
             }
         }
-        let sprite = [3, 3, 9, 12, 12, 18, 18, 21][usize::from(random & 7)];
+        // $8F:C1B5 loads X only for a random value below 8; otherwise the
+        // sprite object ID comes from the X it entered with.
+        let index = if random < 8 { random } else { entry_x & 7 };
+        let sprite = [3, 3, 9, 12, 12, 18, 18, 21][usize::from(index)];
         h.foreign(|game| crate::game::sprite_effect_runtime::create_sprite(x, y, sprite, 0, game));
     }
 }
