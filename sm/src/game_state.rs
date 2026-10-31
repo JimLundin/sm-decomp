@@ -1925,13 +1925,24 @@ impl Game {
     }
 }
 
+/// The ROM image a Samus registration reads.
+fn registered_image<'a>(
+    registration: content::Registration,
+    loaded: &'a Option<crate::rom::RomImage>,
+    native: &'a Option<crate::rom::RomImage>,
+) -> Result<&'a crate::rom::RomImage, DisplayError> {
+    match registration {
+        content::Registration::Loaded => loaded,
+        content::Registration::Native => native,
+    }
+    .as_ref()
+    .ok_or(DisplayError::Identity)
+}
+
 #[forbid(unsafe_code)]
 impl Game {
     fn samus_rom(&self, registration: content::Registration) -> Option<&crate::rom::RomImage> {
-        match registration {
-            content::Registration::Loaded => self.loaded_rom.as_ref(),
-            content::Registration::Native => self.native_rom.as_ref(),
-        }
+        registered_image(registration, &self.loaded_rom, &self.native_rom).ok()
     }
     fn check_samus_registration_metadata(
         &self,
@@ -1945,18 +1956,11 @@ impl Game {
         loaded: &Option<crate::rom::RomImage>,
         native: &Option<crate::rom::RomImage>,
     ) -> Result<(), DisplayError> {
-        if !Arc::ptr_eq(&binding.world, self.world())
-            || binding.world.revision() != self.world().revision()
-        {
+        if !Arc::ptr_eq(&binding.world, self.world()) {
             return Err(DisplayError::Identity);
         }
         for (&(registration, identity), admitted) in &binding.registrations {
-            let image = match registration {
-                content::Registration::Loaded => loaded,
-                content::Registration::Native => native,
-            }
-            .as_ref()
-            .ok_or(DisplayError::Identity)?;
+            let image = registered_image(registration, loaded, native)?;
             let declaration = &binding.roles.description().allocations[&identity];
             if image.len() != declaration.extent {
                 return Err(DisplayError::Source);
@@ -1977,12 +1981,7 @@ impl Game {
         self.check_samus_registration_images(binding, loaded, native)?;
         if binding.execution == SamusExecution::Prepared {
             for &(registration, identity) in binding.registrations.keys() {
-                let image = match registration {
-                    content::Registration::Loaded => loaded,
-                    content::Registration::Native => native,
-                }
-                .as_ref()
-                .ok_or(DisplayError::Identity)?;
+                let image = registered_image(registration, loaded, native)?;
                 let declaration = &binding.roles.description().allocations[&identity];
                 native_content::RegisteredRom::admit(
                     registration,
@@ -2001,7 +2000,6 @@ impl Game {
     ) -> Result<PreparedSamusBinding, DisplayError> {
         if !Arc::ptr_eq(&supplied.world, &expected.world)
             || !Arc::ptr_eq(&supplied.world, self.world())
-            || supplied.world.revision() != expected.world.revision()
         {
             return Err(DisplayError::Identity);
         }
@@ -2186,9 +2184,7 @@ impl Game {
         &self,
         payload: &SamusSnapshotPayload,
     ) -> Result<PreparedSamusAdoption, DisplayError> {
-        if !Arc::ptr_eq(&payload.world, self.world())
-            || payload.world.revision() != self.world().revision()
-        {
+        if !Arc::ptr_eq(&payload.world, self.world()) {
             return Err(DisplayError::Identity);
         }
         if !payload.admitted {
@@ -2223,9 +2219,7 @@ impl Game {
         let Some(binding) = &self.samus_binding else {
             return Ok(None);
         };
-        if !Arc::ptr_eq(&binding.world, self.world())
-            || binding.world.revision() != self.world().revision()
-        {
+        if !Arc::ptr_eq(&binding.world, self.world()) {
             return Err(DisplayError::Identity);
         }
         if binding.execution == SamusExecution::Prepared
@@ -2237,6 +2231,10 @@ impl Game {
             self.check_samus_registration_metadata(binding)?;
         }
         Ok(Some(binding.execution))
+    }
+    /// The Samus binding, once `samus_execution` admits it.
+    fn admitted_samus_binding(&self) -> Result<Option<&SamusBinding>, DisplayError> {
+        Ok(self.samus_execution()?.and(self.samus_binding.as_deref()))
     }
     /// The caller performs this observation's original width/diagnostic preflight first.
     /// Displacement is linear from the sealed role base; no consumer supplies an identity.
@@ -2287,12 +2285,9 @@ impl Game {
     }
     #[cfg(sm_verify_dll)]
     pub(crate) fn samus_request_media(&self) -> Result<Option<Arc<SceneMedia>>, DisplayError> {
-        if self.samus_execution()?.is_none() {
-            return Ok(None);
-        }
-        Ok(Some(
-            self.samus_binding.as_ref().unwrap().request_media.clone(),
-        ))
+        Ok(self
+            .admitted_samus_binding()?
+            .map(|binding| binding.request_media.clone()))
     }
 }
 
@@ -2384,12 +2379,10 @@ impl sm_game::scene::owned_samus::SamusSources for Game {
         role: content::Role,
         registration: content::Registration,
     ) -> Result<Option<usize>, DisplayError> {
-        if self.samus_execution()?.is_none() {
+        let Some(binding) = self.admitted_samus_binding()? else {
             return Ok(None);
-        }
-        self.samus_binding
-            .as_ref()
-            .unwrap()
+        };
+        binding
             .roles
             .description()
             .roles
@@ -2402,23 +2395,14 @@ impl sm_game::scene::owned_samus::SamusSources for Game {
         half: sm_game::scene::samus_body::Half,
         pointer: u16,
     ) -> Result<Option<TileRequest>, DisplayError> {
-        if self.samus_execution()?.is_none() {
-            return Ok(None);
-        }
-        self.samus_binding
-            .as_ref()
-            .unwrap()
-            .roles
-            .request(half, pointer)
-            .map(Some)
+        self.admitted_samus_binding()?
+            .map(|binding| binding.roles.request(half, pointer))
+            .transpose()
     }
     fn samus_spritemaps(&self) -> Result<Option<Arc<SamusCatalog>>, DisplayError> {
-        if self.samus_execution()?.is_none() {
-            return Ok(None);
-        }
-        Ok(Some(
-            self.samus_binding.as_ref().unwrap().spritemaps.clone(),
-        ))
+        Ok(self
+            .admitted_samus_binding()?
+            .map(|binding| binding.spritemaps.clone()))
     }
 }
 
