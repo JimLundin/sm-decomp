@@ -366,6 +366,8 @@ pub struct Room {
     pub liquid_options: u16,
     /// FX layer blending configuration A ($7E:1982).
     pub fx_blending: u16,
+    /// FX layer 3 layer blending configuration ($7E:1984).
+    pub fx_layer3_blending: u16,
     pub liquid_height: u16,
     pub liquid_target: u16,
     pub liquid_velocity: u16,
@@ -452,6 +454,7 @@ impl Room {
             collision_cursor: 0,
             liquid_options: 0,
             fx_blending: 0,
+            fx_layer3_blending: 0,
             liquid_height: 0,
             liquid_target: 0,
             liquid_velocity: 0,

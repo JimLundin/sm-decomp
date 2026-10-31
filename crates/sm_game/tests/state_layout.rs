@@ -386,6 +386,20 @@ fn room_effect_lanes() -> Vec<Lane> {
     ]
 }
 
+/// The room's FX blending configurations and the Ceres status.
+fn room_state_lanes() -> Vec<Lane> {
+    vec![
+        (0x1982, 0, |s, _| &mut s.room.fx_blending),
+        (0x1984, 0, |s, _| &mut s.room.fx_layer3_blending),
+        (0x093f, 0, |s, _| &mut s.room.ceres_status),
+    ]
+}
+
+#[test]
+fn room_state_words_round_trip() {
+    check_owner("room state", &room_state_lanes());
+}
+
 #[test]
 fn room_view_round_trips_every_field() {
     check_owner("room geometry", &room_geometry_lanes());
