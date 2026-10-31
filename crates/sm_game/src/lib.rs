@@ -99,6 +99,7 @@ pub mod display {
     pub mod registers;
     pub mod sequence;
     pub mod transfer;
+    pub mod video;
 }
 
 pub mod actor_tables;

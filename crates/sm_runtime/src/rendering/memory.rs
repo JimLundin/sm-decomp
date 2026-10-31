@@ -139,6 +139,77 @@ impl Ports {
         }
     }
 
+    /// OAMADD ($2102-$2103) as one word: the low table word (or high table
+    /// pair, with bit 8) to start at, and bit 15's priority rotation.
+    pub fn set_oam_address(&mut self, word: u16) {
+        let [address, high] = word.to_le_bytes();
+        self.oam_address = address;
+        self.oam_address_written = address;
+        self.sprite_priority = high & 0x80 != 0;
+        self.oam_high = high & 1 != 0;
+        self.oam_high_written = self.oam_high;
+        self.oam_second = false;
+    }
+
+    /// One byte through OAMDATA ($2104): low-table bytes are written in pairs.
+    pub fn write_oam_byte(&mut self, memory: &mut impl VideoMemory, value: u8) {
+        if self.oam_high {
+            let index = ((self.oam_address & 15) << 1) | u8::from(self.oam_second);
+            memory.set_high_oam(index, value);
+        } else if self.oam_second {
+            memory.set_oam(
+                self.oam_address,
+                u16::from_le_bytes([self.oam_buffer, value]),
+            );
+        } else {
+            self.oam_buffer = value;
+        }
+        self.step_oam();
+        self.oam_second = !self.oam_second;
+    }
+
+    /// A DMA to OAMDATA in transfer mode 0.
+    pub fn upload_oam(
+        &mut self,
+        memory: &mut impl VideoMemory,
+        bytes: impl IntoIterator<Item = u8>,
+    ) {
+        for value in bytes {
+            self.write_oam_byte(memory, value);
+        }
+    }
+
+    /// CGADD ($2121): the palette entry to write next.
+    pub fn set_cgram_pointer(&mut self, index: u8) {
+        self.cgram_pointer = index;
+        self.cgram_second = false;
+    }
+
+    /// One byte through CGDATA ($2122): entries are written in byte pairs.
+    pub fn write_cgram_byte(&mut self, memory: &mut impl VideoMemory, value: u8) {
+        if self.cgram_second {
+            memory.set_cgram(
+                self.cgram_pointer,
+                u16::from_le_bytes([self.cgram_buffer, value]),
+            );
+            self.cgram_pointer = self.cgram_pointer.wrapping_add(1);
+        } else {
+            self.cgram_buffer = value;
+        }
+        self.cgram_second = !self.cgram_second;
+    }
+
+    /// A DMA to CGDATA in transfer mode 0.
+    pub fn upload_cgram(
+        &mut self,
+        memory: &mut impl VideoMemory,
+        bytes: impl IntoIterator<Item = u8>,
+    ) {
+        for value in bytes {
+            self.write_cgram_byte(memory, value);
+        }
+    }
+
     /// Advance the OAM port after a byte at the high table or a low-table pair.
     fn step_oam(&mut self) {
         if self.oam_second {
@@ -174,21 +245,7 @@ impl Ports {
                 self.oam_address = self.oam_address_written;
                 self.oam_second = false;
             }
-            0x04 => {
-                if self.oam_high {
-                    let index = ((self.oam_address & 15) << 1) | u8::from(self.oam_second);
-                    memory.set_high_oam(index, value);
-                } else if self.oam_second {
-                    memory.set_oam(
-                        self.oam_address,
-                        u16::from_le_bytes([self.oam_buffer, value]),
-                    );
-                } else {
-                    self.oam_buffer = value;
-                }
-                self.step_oam();
-                self.oam_second = !self.oam_second;
-            }
+            0x04 => self.write_oam_byte(memory, value),
             0x15 => self.set_vram_mode(
                 match value & 3 {
                     0 => 1,
@@ -204,22 +261,8 @@ impl Ports {
                 self.set_vram_pointer(memory, u16::from_le_bytes(bytes));
             }
             0x18 | 0x19 => self.write_vram_byte(memory, address == 0x19, value),
-            0x21 => {
-                self.cgram_pointer = value;
-                self.cgram_second = false;
-            }
-            0x22 => {
-                if self.cgram_second {
-                    memory.set_cgram(
-                        self.cgram_pointer,
-                        u16::from_le_bytes([self.cgram_buffer, value]),
-                    );
-                    self.cgram_pointer = self.cgram_pointer.wrapping_add(1);
-                } else {
-                    self.cgram_buffer = value;
-                }
-                self.cgram_second = !self.cgram_second;
-            }
+            0x21 => self.set_cgram_pointer(value),
+            0x22 => self.write_cgram_byte(memory, value),
             _ => {}
         }
     }
@@ -313,6 +356,22 @@ mod tests {
         ports.set_vram_mode(1, 0, true);
         ports.set_vram_pointer(&memory, 0x7ffe);
         ports.upload_vram(&mut memory, bytes);
+        assert_eq!((ports, memory), expected);
+    }
+
+    #[test]
+    fn typed_oam_and_cgram_uploads_match_their_port_writes() {
+        let bytes = [0x11, 0x22, 0x33, 0x44, 0x55];
+        let mut writes = vec![(0x02, 0xfe), (0x03, 0x80), (0x21, 0x40)];
+        writes.extend(bytes.iter().map(|&value| (0x04, value)));
+        writes.extend(bytes.iter().map(|&value| (0x22, value)));
+        let expected = run(&writes);
+        let mut ports = Ports::default();
+        let mut memory = OwnedMemory::default();
+        ports.set_oam_address(0x80fe);
+        ports.set_cgram_pointer(0x40);
+        ports.upload_oam(&mut memory, bytes);
+        ports.upload_cgram(&mut memory, bytes);
         assert_eq!((ports, memory), expected);
     }
 
