@@ -65,6 +65,7 @@ impl sm_game::display::video::Video for Game {
         assert!(!self.g_snes.is_null(), "SNES backend must be installed");
         // SAFETY: as for `producing`.
         let ppu = unsafe { (*self.g_snes).ppu };
+        let self_ref = &*self;
         let ram = self.ram();
         let bytes = |source: usize, count: u16| {
             (source..source + usize::from(count)).map(|at| ram.read_byte(at))
@@ -88,9 +89,35 @@ impl sm_game::display::video::Video for Game {
                         ports.set_cgram_pointer(index);
                         ports.upload_cgram(memory, bytes(source, count));
                     }
+                    Upload::Tiles {
+                        address,
+                        increment,
+                        source,
+                        bytes: count,
+                    } => {
+                        ports.set_vram_mode(increment, 0, true);
+                        ports.set_vram_pointer(memory, address);
+                        ports.upload_vram(
+                            memory,
+                            (0..=count.wrapping_sub(1)).map(|offset| {
+                                bus_byte(self_ref, source.bank, source.address.wrapping_add(offset))
+                            }),
+                        );
+                    }
                 }
             }
         });
+    }
+}
+
+/// A byte a DMA reads from the CPU bus: work RAM or the cartridge.
+fn bus_byte(game: &Game, bank: u8, address: u16) -> u8 {
+    match bank {
+        0x7e | 0x7f => game
+            .ram()
+            .read_byte((usize::from(bank & 1) << 16) | usize::from(address)),
+        0x00..=0x3f | 0x80..=0xbf if address < 0x2000 => game.ram().read_byte(usize::from(address)),
+        _ => game.read_rom_byte((u32::from(bank) << 16) | u32::from(address), 0),
     }
 }
 

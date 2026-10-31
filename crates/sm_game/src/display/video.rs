@@ -3,7 +3,10 @@
 //! values, so a host whose video memory takes typed calls can apply them in
 //! place of the register writes.
 
-/// One upload from work RAM, `source` being its offset there.
+use super::transfer::Source;
+
+/// One upload. Objects and palettes come from work RAM, `source` being the
+/// offset there; tiles come from anywhere on the CPU bus.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Upload {
     /// OAM from the OAMADD word `address`: the low table, then the high table.
@@ -16,6 +19,15 @@ pub enum Upload {
     Palette {
         index: u8,
         source: usize,
+        bytes: u16,
+    },
+    /// VRAM from word `address`, its bytes alternating low and high and the
+    /// address stepping by `increment` words after each high byte. A `bytes`
+    /// of zero transfers 64 KiB, as the DMA does.
+    Tiles {
+        address: u16,
+        increment: u16,
+        source: Source,
         bytes: u16,
     },
 }

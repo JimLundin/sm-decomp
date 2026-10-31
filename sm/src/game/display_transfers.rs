@@ -66,6 +66,8 @@ unsafe fn read_vram(readback: VramReadback, game: &mut Game) {
 /// Requires a live, exclusively accessed SNES backend. DMAP1 was set once for
 /// the whole queue by the caller.
 unsafe fn upload_tilemap(upload: TilemapUpload, game: &mut Game) {
+    use sm_game::display::video::{Upload, Video as _};
+    game.producing();
     unsafe {
         write_reg_word(DAS1L as u16, upload.bytes, game);
         write_reg_word(A1T1L as u16, upload.source.address, game);
@@ -75,6 +77,15 @@ unsafe fn upload_tilemap(upload: TilemapUpload, game: &mut Game) {
         write_reg_word(VMADDL as u16, upload.vram_address, game);
         write_reg(MDMAEN as u16, 2, game);
     }
+    game.produced(
+        "tilemaps",
+        &[Upload::Tiles {
+            address: upload.vram_address,
+            increment: if upload.column { 32 } else { 1 },
+            source: upload.source,
+            bytes: upload.bytes,
+        }],
+    );
 }
 
 /// A queue read from raw work RAM, as the Mode 7 and readback drains read it.
