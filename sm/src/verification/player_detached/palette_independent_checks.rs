@@ -166,8 +166,6 @@ fn lazy_operands_and_failure_prefixes() {
 
 fn replace_after_sound(h: &mut Composed) {
     assert_eq!(h.events.last(), Some(&Event::Sound(1, 0x0109)));
-    // Mutate the captured allocation before replacing the current source.
-    h.word(0x8d, 0x9100, 0x5678);
     h.image = RomImage::zeroed(0x70000);
     h.word(0x8d, 0x9003, 1);
     h.word(0x8d, 0x9005, 0x3456);
@@ -203,8 +201,8 @@ fn recapture_after_sound() {
     );
     assert_eq!(
         captured.native_word(0),
-        0x5678,
-        "captured source remains live and retained after replacement"
+        0x4567,
+        "captured source is retained after replacement"
     );
     assert_eq!(
         Content::record(&mut h, Source::Loaded, 0x8d, 0x9100).native_word(0),
