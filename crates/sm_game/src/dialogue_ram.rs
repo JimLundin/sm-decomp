@@ -43,7 +43,6 @@ pub fn import<H: crate::ram::RamHost + ?Sized>(game: &H) -> Dialogue<u16> {
             10 => Waiting(Running(Script::Saving)),
             11 => Waiting(Running(Script::Feedback)),
             12 => Waiting(Running(Script::Close)),
-            13 => Waiting(Running(Script::CloseGunship)),
             value => Invalid(value),
         },
         delay_remaining: read(game, ram::MY_COUNTER),
@@ -120,7 +119,6 @@ pub fn publish<H: crate::ram::RamHost + ?Sized>(state: Dialogue<u16>, game: &mut
             Waiting(Running(Script::Saving)) => 10,
             Waiting(Running(Script::Feedback)) => 11,
             Waiting(Running(Script::Close)) => 12,
-            Waiting(Running(Script::CloseGunship)) => 13,
             Invalid(value) => value,
         },
     );

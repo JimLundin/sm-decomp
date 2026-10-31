@@ -127,12 +127,10 @@ pub enum Script {
     Open,
     /// Clear BG3 and start the saving sound before the 160-frame delay.
     Saving,
-    /// Draw the "save completed" message.
+    /// Draw the "save completed" message and play 2 lag frames.
     Feedback,
     /// Clear BG3, restore the PPU, then play 2 lag frames.
     Close,
-    /// The gunship's close, still without its 2 lag frames ($85:80F2).
-    CloseGunship,
 }
 #[derive(Clone, Copy)]
 enum Step {
@@ -190,10 +188,8 @@ impl Script {
         match self {
             Self::Open => &[PREPARE, CLEAR, MESSAGE, PAUSE],
             Self::Saving => &[CLEAR, SAVING],
-            // The gunship's 2 lag frames before it opens ($85:80DC) are still patched.
-            Self::Feedback => &[MESSAGE],
+            Self::Feedback => &[MESSAGE, PAUSE],
             Self::Close => &[CLEAR, RESTORE, PAUSE],
-            Self::CloseGunship => &[CLEAR, RESTORE],
         }
     }
 }
@@ -234,7 +230,7 @@ pub fn run<C: Context>(
             Running(Script::Open) => Opening(Cycle::Message),
             Running(Script::Saving) => FeedbackDelay,
             Running(Script::Feedback) => Opening(Cycle::SaveFeedback),
-            Running(Script::Close | Script::CloseGunship) => break,
+            Running(Script::Close) => break,
             Opening(cycle) => Interacting(cycle),
             Interacting(cycle) => Closing(cycle),
             Closing(Cycle::Message) => match state.message {
@@ -242,12 +238,11 @@ pub fn run<C: Context>(
                     state.message = Message::Saved;
                     Running(Script::Saving)
                 }
-                Message::SavePrompt => Running(Script::CloseGunship),
                 _ => Running(Script::Close),
             },
             Closing(Cycle::SaveFeedback) => {
                 state.message = Message::SavePrompt;
-                Running(Script::CloseGunship)
+                Running(Script::Close)
             }
             FeedbackDelay => {
                 state.delay_remaining = state.delay_remaining.wrapping_sub(1);
