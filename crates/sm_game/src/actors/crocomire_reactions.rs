@@ -16,6 +16,7 @@ use crate::constants::{
     bank_a4::*,
     enemy_properties::K_ENEMY_PROPS_TANGIBLE,
 };
+use crate::display::transfer::{Source, TilemapUpload, queue_tilemap};
 use crate::enemy_script::EnemyScript;
 use crate::menus::prelude::{boss, do_until, melt, owned, scroll};
 use crate::ram::RawRam as _;
@@ -555,18 +556,20 @@ pub fn hop_1_2_rising<L: Lease + ?Sized>(game: &mut L) {
 }
 
 pub fn queue_tilemap_upload<L: Lease + ?Sized>(size: u16, bg_mask: u8, game: &mut L) {
-    let tail = word!(game.VRAM_WRITE_QUEUE_TAIL);
-    let entry = 0xd0 + usize::from(word!(game.VRAM_WRITE_QUEUE_TAIL));
-    // The native bank word overlaps the first destination byte, including on BE.
-    crate::word_transfers!(game, ascending, 1;
-        native(entry) <- value(size),
-        native(entry + 2) <- value(0x2000),
-        native(entry + 4) <- value(126),
+    let vram_address = u16::from(game.slot_byte(0x59) & bg_mask) << 8;
+    let source = Source {
+        address: 0x2000,
+        bank: 0x7e,
+    };
+    queue_tilemap(
+        game,
+        TilemapUpload {
+            bytes: size,
+            source,
+            column: false,
+            vram_address,
+        },
     );
-    crate::word_transfers!(game, ascending, 1;
-        native(entry + 5) <- value(u16::from(game.slot_byte(0x59) & bg_mask) << 8),
-    );
-    word!(game.VRAM_WRITE_QUEUE_TAIL = tail.wrapping_add(7));
 }
 
 fn load_melt_tilemap<L: Lease + ?Sized>(table: u32, game: &mut L) {
@@ -647,25 +650,34 @@ macro_rules! native_graphics_word {
     }};
 }
 
+/// Queue the melting tiles record at `offset`: its size (at the current
+/// subindex if `live_size`), source and VRAM destination.
 pub fn queue_melt_graphics<L: Lease + ?Sized>(offset: u16, live_size: bool, game: &mut L) {
-    let entry = 0xd0 + usize::from(word!(game.VRAM_WRITE_QUEUE_TAIL));
-    for (source, destination) in [(0, 0), (6, 2), (4, 4), (2, 5)] {
-        let value = native_graphics_word!(game, MELTING_TILES_SOURCE + source, {
-            if source == 0 && live_size {
-                melt!(game.Subindex)
-            } else {
-                offset
-            }
-        });
-        crate::word_transfers!(game, ascending, 1; native(entry + destination) <- value(value));
-    }
+    let size_offset = if live_size {
+        melt!(game.Subindex)
+    } else {
+        offset
+    };
+    let bytes = native_graphics_word!(game, MELTING_TILES_SOURCE, size_offset);
+    let address = native_graphics_word!(game, MELTING_TILES_SOURCE + 6, offset);
+    let bank = native_graphics_word!(game, MELTING_TILES_SOURCE + 4, offset) as u8;
+    let vram_address = native_graphics_word!(game, MELTING_TILES_SOURCE + 2, offset);
+    let source = Source { address, bank };
+    queue_tilemap(
+        game,
+        TilemapUpload {
+            bytes,
+            source,
+            column: false,
+            vram_address,
+        },
+    );
 }
 
 /// Crocomire main AI - death sequence index 14h/30h - hop 3/6 - uploading to VRAM ($A4:94B6). Was
 /// `advance_melt_upload`.
 pub fn upload_melting_tiles<L: Lease + ?Sized>(game: &mut L) {
     let offset = melt!(game.Subindex);
-    let tail = word!(game.VRAM_WRITE_QUEUE_TAIL);
     if native_graphics_word!(game, MELTING_TILES_SOURCE, melt!(game.Subindex)) == 0xffff {
         let e: i32 = game.current_enemy() as i32;
         next_death_step(e, game);
@@ -673,7 +685,6 @@ pub fn upload_melting_tiles<L: Lease + ?Sized>(game: &mut L) {
     } else {
         queue_melt_graphics(offset, true, game);
         melt!(game.Subindex = offset.wrapping_add(8));
-        word!(game.VRAM_WRITE_QUEUE_TAIL = tail.wrapping_add(7));
     };
 }
 
@@ -873,20 +884,23 @@ pub fn behind_wall_no_more_rumbling<L: Lease + ?Sized>(game: &mut L) {
         let tile =
             game.foreign(|game| game.crocomire_table_word(SPIKE_WALL_TILE_ADDRESS, v4 as isize));
         if tile != 0xffff {
-            let v5: u16 = word!(game.VRAM_WRITE_QUEUE_TAIL);
-            let entry = 0xd0 + usize::from(word!(game.VRAM_WRITE_QUEUE_TAIL));
-            crate::word_transfers!(game, ascending, 1; native(entry) <- value(512));
-            crate::word_transfers!(game, ascending, 1;
-                native(entry + 2) <- value(game.foreign(|game| game.crocomire_table_word(SPIKE_WALL_DESTINATION_ADDRESS, v4 as isize,
-                ))),
+            let address = game.foreign(|game| {
+                game.crocomire_table_word(SPIKE_WALL_DESTINATION_ADDRESS, v4 as isize)
+            });
+            let vram_address = tile.wrapping_add(u16::from(game.slot_byte(0x52) & 7) << 13);
+            let source = Source {
+                address,
+                bank: 0xad,
+            };
+            queue_tilemap(
+                game,
+                TilemapUpload {
+                    bytes: 512,
+                    source,
+                    column: false,
+                    vram_address,
+                },
             );
-            crate::word_transfers!(game, ascending, 1; native(entry + 4) <- value(173));
-            crate::word_transfers!(game, ascending, 1;
-                native(entry + 5) <- value((game.foreign(|game| game.crocomire_table_word(SPIKE_WALL_TILE_ADDRESS, v4 as isize,
-                )) as i32
-                    + ((game.slot_byte(0x52) as i32 & 7) << 13)) as u16),
-            );
-            word!(game.VRAM_WRITE_QUEUE_TAIL = (v5).wrapping_add(7));
             melt!(game.EraseTarget = ((v3) as u16).wrapping_add(2));
         }
     } else {
@@ -1030,16 +1044,14 @@ fn erase_melt_columns<L: Lease + ?Sized>(game: &mut L) -> u16 {
         game.set_slot_byte(at, game.slot_byte(at).wrapping_add(1));
         n -= 1;
     }
-    let (v7, v8) = loop {
+    let v7 = loop {
         let v7 = (melt!(game.Subindex)).wrapping_add(melt!(game.Index));
-        let v8 = word!(game.VRAM_WRITE_QUEUE_TAIL);
         if native_graphics_word!(game, MELTING_TILES_SOURCE, v7) != 0xffff {
-            break (v7, v8);
+            break v7;
         }
         melt!(game.Subindex = 0);
     };
     queue_melt_graphics(v7, false, game);
-    word!(game.VRAM_WRITE_QUEUE_TAIL = (v8).wrapping_add(7));
     melt!(game.Subindex += 8);
     1
 }
