@@ -30,7 +30,7 @@ jobs:
           crlf=$(git ls-files --eol | awk '$1 == "i/crlf" || $1 == "i/mixed" { print $NF }')
           if [ -n "$crlf" ]; then echo "Committed with CRLF line endings:"; echo "$crlf"; exit 1; fi
       - name: Lint target packages
-        run: cargo clippy --locked -p sm_data -p sm_game -p sm_runtime --all-targets --no-deps
+        run: cargo clippy --locked -p sm_data -p sm_game -p sm_runtime -p sm_tools --all-targets --no-deps
       - name: Progress
         run: |
           sh tools/progress.sh
@@ -57,14 +57,23 @@ jobs:
           # sm_data holds content records only and depends on nothing.
           deps=$(cargo tree -p sm_data -e normal --prefix none --format '{p}' | tail -n +2 || true)
           if [ -n "$deps" ]; then echo "sm_data has forbidden dependencies:"; echo "$deps"; exit 1; fi
+          # The verification tooling reads the target packages, never sm.
+          deps=$(cargo tree -p sm_tools -e normal --prefix none --format '{p}' | tail -n +2 | grep -Ev '^(sm_data|sm_game|sm_runtime) ' || true)
+          if [ -n "$deps" ]; then echo "sm_tools has forbidden dependencies:"; echo "$deps"; exit 1; fi
+          # No target package depends on the verification tooling.
+          for package in sm_data sm_game sm_runtime sm_app; do
+            if cargo tree -p $package -e normal --prefix none --format '{p}' | grep -q '^sm_tools '; then
+              echo "$package depends on sm_tools"; exit 1
+            fi
+          done
       - name: Test target packages
         # Unit, integration (tests/*.rs) and doc tests of all three packages.
         # The summary lists every test binary and fails if one expected from
         # the packages' sources did not run, so an unbuilt test file shows up.
         run: |
-          if cargo test --locked -p sm_data -p sm_game -p sm_runtime --no-fail-fast > test.log 2>&1; then status=0; else status=$?; fi
+          if cargo test --locked -p sm_data -p sm_game -p sm_runtime -p sm_tools --no-fail-fast > test.log 2>&1; then status=0; else status=$?; fi
           cat test.log
-          python3 .github/scripts/test_summary.py test.log crates/sm_data crates/sm_game crates/sm_runtime || status=1
+          python3 .github/scripts/test_summary.py test.log crates/sm_data crates/sm_game crates/sm_runtime crates/sm_tools || status=1
           exit $status
       - name: Check every sm_data record imports from the original ROM
         # A record that rejects the cartridge leaves the game on its original ROM

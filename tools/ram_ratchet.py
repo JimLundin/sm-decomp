@@ -4,7 +4,9 @@
 docs/REVIEW.md's Phase 2 ratchets: no landing may raise cycle_report's
 sm_game_ram total sites or coupled files, and moves are line-neutral or
 smaller in production lines (crates/*/src plus sm/src outside verification;
-#[cfg(test)] items inside crates/*/src are tests, not production).
+#[cfg(test)] items inside crates/*/src are tests, not production). The
+scenario harness (crates/sm_tools and sm/src/verification/observation) is
+verification, reported separately (REVIEW, lane S condition 1).
 The baseline below only moves down: run with --update after a landing that
 lowers a measure, and commit the result with that landing.
 
@@ -69,7 +71,7 @@ def production_lines():
             parts = root.replace("\\", "/").split("/")
             if top == "crates" and "src" not in parts:
                 continue
-            if "verification" in parts:
+            if "verification" in parts or "sm_tools" in parts:
                 continue
             for name in names:
                 if name.endswith(".rs"):
@@ -78,6 +80,19 @@ def production_lines():
                     total += text.count("\n")
                     if top == "crates":
                         total -= test_lines(text.split("\n"))
+    return total
+
+
+def harness_lines():
+    """Lines of the scenario harness, which count as verification."""
+    total = 0
+    for top in [os.path.join("crates", "sm_tools", "src"),
+                os.path.join("sm", "src", "verification", "observation")]:
+        for root, dirs, names in os.walk(top):
+            for name in names:
+                if name.endswith(".rs"):
+                    with open(os.path.join(root, name), "rb") as source:
+                        total += source.read().decode("utf-8").count("\n")
     return total
 
 
@@ -100,6 +115,7 @@ def main():
                 print(f"advisory: {name} is over its baseline")
             else:
                 over.append(name)
+    print(f"scenario harness lines (verification, reported separately): {harness_lines()}")
     if "--update" in sys.argv:
         path = os.path.abspath(__file__)
         text = open(path, encoding="utf-8").read()

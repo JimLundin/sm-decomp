@@ -65,6 +65,7 @@ dependencies = [
  "sm_data",
  "sm_game",
  "sm_runtime",
+ "sm_tools",
 ]
 
 [[package]]
@@ -92,6 +93,13 @@ name = "sm_runtime"
 version = "0.1.0"
 dependencies = [
  "sm_data",
+]
+
+[[package]]
+name = "sm_tools"
+version = "0.1.0"
+dependencies = [
+ "sm_game",
 ]
 
 [[package]]
