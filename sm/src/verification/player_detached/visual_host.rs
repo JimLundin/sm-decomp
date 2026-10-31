@@ -144,4 +144,17 @@ impl Composition for Composed {
         super::game::enemy_projectiles::spawn_room(self, definition, parameter);
     }
 }
+impl sm_game::cartridge::LoadedImage for Composed {
+    fn loaded_image(&self) -> &sm_data::cartridge::RomImage {
+        self.transition_contract
+            .loaded_image
+            .as_ref()
+            .unwrap_or(&self.image)
+    }
+}
+impl sm_game::records::Records for Composed {
+    fn records(&self) -> &sm_game::records::RomRecords {
+        &self.records
+    }
+}
 impl Host for Composed {}
