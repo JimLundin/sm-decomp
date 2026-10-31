@@ -677,11 +677,11 @@ impl Game {
     }
 
     pub(crate) fn next_random(&mut self) -> u16 {
-        let mut product = (u16::from(self.compatibility_byte(0x5e5)) * 5).to_ne_bytes();
-        let carry =
-            u16::from(product[1]) + u16::from(self.compatibility_byte(0x5e6).wrapping_mul(5)) + 1;
-        product[1] = carry as u8;
-        let result = u16::from_ne_bytes(product).wrapping_add(17 + (carry >> 8));
+        let seed = u16::from_le_bytes([
+            self.compatibility_byte(0x5e5),
+            self.compatibility_byte(0x5e6),
+        ]);
+        let result = sm_game::random::next(seed);
         crate::ram_map::checked_word!(self.RANDOM_NUMBER = result);
         #[cfg(sm_verify_dll)]
         crate::cpu_infra::player_transitions_composed::random_after(self);
