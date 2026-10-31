@@ -15,8 +15,7 @@ const GRAPPLE_LAUNCH_MOVEMENT: MovementMode = MovementMode::from_raw(0x946e);
 use crate::actors::host::abs16;
 use crate::projectile_geometry::SINE_COSINE;
 use crate::projectile_room::Axis;
-use crate::ram::{word, words as ram_words};
-use crate::word_transfers;
+use crate::ram::word;
 
 /// What the grapple controller needs from the runtime besides named RAM,
 /// sound, the cartridge images and the owned-Session view.
@@ -100,7 +99,7 @@ fn multiply_8x8(a: u8, b: u8) -> u16 {
 /// change the live block index before requesting another reaction.
 fn react_to_block<H: Host + ?Sized>(game: &mut H, mut react: impl FnMut(u16, &mut H) -> u8) -> u8 {
     loop {
-        let offset = 0x10002 + usize::from(word!(game.CUR_BLOCK_INDEX)) * 2;
+        let offset = 0x10002 + usize::from(game.session().room.collision_cursor) * 2;
         let block = u16::from_le_bytes([
             game.compatibility_byte(offset),
             game.compatibility_byte(offset + 1),
@@ -155,9 +154,9 @@ fn contact<H: Host + ?Sized>(game: &mut H) -> u8 {
     let x = game.session().player.swing.probe_block.x;
     let row = multiply_8x8(
         game.session().player.swing.probe_block.y as u8,
-        word!(game.ROOM_WIDTH_IN_BLOCKS) as u8,
+        game.session().room.width as u8,
     );
-    word!(game.CUR_BLOCK_INDEX = row.wrapping_add(x));
+    game.session_mut().room.collision_cursor = row.wrapping_add(x);
     react_to_block(game, |block_type, game| match block_type {
         0 | 3 | 4 | 6 | 7 => 0,
         1 | 8 | 9 | 11 | 12 | 14 | 15 => 1,
@@ -175,7 +174,7 @@ static SOLID_DAMAGE: [u16; 16] = [60, 16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 fn spike_contact<H: Host + ?Sized>(solid: bool, game: &mut H) -> u8 {
     if game.session().player.invincibility == 0 {
         // The original reads a word spanning adjacent BTS bytes, not just one byte.
-        let kind = game.block_behavior_word(usize::from(word!(game.CUR_BLOCK_INDEX)));
+        let kind = game.block_behavior_word(usize::from(game.session().room.collision_cursor));
         if kind >= 0 {
             let damage = if solid {
                 SOLID_DAMAGE[kind as usize]
@@ -187,9 +186,8 @@ fn spike_contact<H: Host + ?Sized>(solid: bool, game: &mut H) -> u8 {
                 let (low, high) = game.periodic_damage();
                 let (low, high) = (low as u32, high as u32);
                 let sum = (low | (high << 16)).wrapping_add(amount);
-                word_transfers!(game, ascending, 1;
-                    native(0xa4e) <- value(sum as u16),
-                    native(0xa50) <- value((sum >> 16) as u16));
+                game.session_mut().player.periodic_damage_fraction = sum as u16;
+                game.session_mut().player.periodic_damage = (sum >> 16) as u16;
                 game.session_mut().player.invincibility = 60;
                 game.session_mut().player.knockback_timer = 10;
             }
@@ -237,7 +235,9 @@ pub fn connect_beam<H: Host + ?Sized>(game: &mut H) {
         game.session_mut().player.swing.length_delta = 0;
     } else {
         let v1: i32 = 2 * game.session().player.grapple_direction as i32;
-        let set = if word!(game.SAMUS_Y_SPEED) != 0 || word!(game.SAMUS_Y_SUBSPEED) != 0 {
+        let set = if game.session().player.contact.y_speed.whole != 0
+            || game.session().player.contact.y_speed.fraction != 0
+        {
             ConnectionSet::Airborne
         } else if game.movement_type() == 5 {
             ConnectionSet::Crouching
@@ -524,7 +524,7 @@ pub fn advance_swing<H: Host + ?Sized>(game: &mut H) -> u8 {
                 || word!(game.GRAPPLE_COLLISION_DISTANCE) == 5)
                 && game.session().player.grapple_length == 8
             {
-                word!(game.GRAPPLE_SPECIAL_ANGLE_FLAG |= 0x8000);
+                game.session_mut().player.grapple_direction_compatibility |= 0x8000;
                 game.session_mut().player.swing.angular_velocity = 0;
                 game.session_mut().player.swing.extra_angular_velocity = 0;
             } else {
@@ -541,7 +541,7 @@ pub fn advance_swing<H: Host + ?Sized>(game: &mut H) -> u8 {
     game.session_mut().player.grapple_angle =
         game.session().player.grapple_angle.wrapping_add(delta);
     game.session_mut().player.swing.mirrored_angle = game.session().player.grapple_angle;
-    word!(game.GRAPPLE_SPECIAL_ANGLE_FLAG &= !0x8000);
+    game.session_mut().player.grapple_direction_compatibility &= !0x8000;
     if {
         game.session_mut().player.swing.kick_cooldown =
             game.session().player.swing.kick_cooldown.wrapping_sub(1);
@@ -573,9 +573,8 @@ pub fn launch_from_swing<H: Host + ?Sized>(game: &mut H) {
         .session_mut()
         .multiply_scratch
         .multiply(sample.unsigned_abs(), magnitude);
-    word_transfers!(game, ascending, 1;
-        native(ram_words::SAMUS_Y_SUBSPEED) <- value(vertical as u16),
-        native(ram_words::SAMUS_Y_SPEED) <- value((vertical >> 16) as u16));
+    game.session_mut().player.contact.y_speed.fraction = vertical as u16;
+    game.session_mut().player.contact.y_speed.whole = (vertical >> 16) as u16;
     game.session_mut().player.contact.y_direction = if (sample < 0) == backwards { 2 } else { 1 };
     game.session_mut().player.contact.acceleration_mode = 2;
     let adjustment = 64u16.wrapping_sub((3 * (i32::from(magnitude) >> 9)) as u16);
@@ -586,16 +585,15 @@ pub fn launch_from_swing<H: Host + ?Sized>(game: &mut H) {
         .session_mut()
         .multiply_scratch
         .multiply(sample, magnitude);
-    word_transfers!(game, ascending, 1;
-        native(ram_words::SAMUS_X_BASE_SUBSPEED) <- value(horizontal as u16),
-        native(ram_words::SAMUS_X_BASE_SPEED) <- value((horizontal >> 16) as u16));
+    game.session_mut().player.contact.base_run.fraction = horizontal as u16;
+    game.session_mut().player.contact.base_run.whole = (horizontal >> 16) as u16;
 }
 
 macro_rules! initialize_grapple_endpoints {
     ($game:ident, $set:ident, $pose_index:ident, $y_adjustment:ident $(,)?) => {
         let origin = grapple_origins::origin($game, OriginSet::$set, $pose_index as isize);
-        word!($game.GRAPPLE_BEAM_ORIGIN_X_OFFSET = origin.x);
-        word!($game.GRAPPLE_BEAM_ORIGIN_Y_OFFSET = origin.y.wrapping_sub($y_adjustment));
+        $game.session_mut().player.grapple_origin_offset.x = origin.x;
+        $game.session_mut().player.grapple_origin_offset.y = origin.y.wrapping_sub($y_adjustment);
         $game.session_mut().player.grapple_endpoint.x = origin.x.wrapping_add($game.player_x());
         $game.session_mut().player.swing.start.x = $game.session().player.grapple_endpoint.x;
         word!(
@@ -769,7 +767,7 @@ pub fn cancel_incompatible_pose<H: Host + ?Sized>(game: &mut H) {
                 if v0 as i32 == game.session().player.grapple_direction as i32 {
                     return;
                 }
-                if word!(game.GRAPPLE_AUTO_FIRE_TIMER) != 0 {
+                if game.session().player.grapple_delay != 0 {
                     game.queue_sound(0, 7_u8, 6);
                     game.session_mut().player.grapple = (0x9bc51ei32) as u16;
                     return;
@@ -805,11 +803,11 @@ pub fn start_firing<H: Host + ?Sized>(game: &mut H) {
     game.session_mut().player.grapple_direction = v0 as u16;
     let v1: i32 = v0;
     let extension = grapple_aim::extension(game, v1 as isize);
-    word!(game.GRAPPLE_BEAM_EXTENSION_X_VELOCITY = extension.x_velocity);
-    word!(game.GRAPPLE_BEAM_EXTENSION_Y_VELOCITY = extension.y_velocity);
+    game.session_mut().player.grapple_velocity.x = extension.x_velocity;
+    game.session_mut().player.grapple_velocity.y = extension.y_velocity;
     game.session_mut().player.grapple_angle = extension.angle;
     game.session_mut().player.swing.mirrored_angle = game.session().player.grapple_angle;
-    word!(game.GRAPPLE_AUTO_FIRE_TIMER = 10);
+    game.session_mut().player.grapple_delay = 10;
     if game.session().player.pose as i32 == K_POSE_49_FACE_L_MOONWALK as i32
         || game.session().player.pose as i32 == K_POSE_4A_FACE_R_MOONWALK as i32
         || game.movement_type() != 1
@@ -818,12 +816,12 @@ pub fn start_firing<H: Host + ?Sized>(game: &mut H) {
     } else {
         initialize_grapple_endpoints!(game, Running, v1, r22);
     }
-    word!(game.GRAPPLE_BEAM_END_X_SUBPOS = 0);
-    word!(game.GRAPPLE_BEAM_END_Y_SUBPOS = 0);
-    word!(game.GRAPPLE_BEAM_END_X_SUBOFFSET = 0);
-    word!(game.GRAPPLE_BEAM_END_X_OFFSET = 0);
-    word!(game.GRAPPLE_BEAM_END_Y_SUBOFFSET = 0);
-    word!(game.GRAPPLE_BEAM_END_Y_OFFSET = 0);
+    game.session_mut().player.grapple_endpoint_fraction.x = 0;
+    game.session_mut().player.grapple_endpoint_fraction.y = 0;
+    game.session_mut().player.grapple_offset[0].fraction = 0;
+    game.session_mut().player.grapple_offset[0].whole = 0;
+    game.session_mut().player.grapple_offset[1].fraction = 0;
+    game.session_mut().player.grapple_offset[1].whole = 0;
     game.session_mut().player.grapple_flags = 0;
     game.session_mut().player.swing.length_delta = 12;
     game.session_mut().player.grapple_length = 0;
@@ -833,8 +831,8 @@ pub fn start_firing<H: Host + ?Sized>(game: &mut H) {
     game.session_mut().player.swing.rising_deceleration = 0;
     game.session_mut().player.swing.extra_angular_velocity = 0;
     game.session_mut().player.swing.kick_cooldown = 0;
-    word!(game.OFFSCREEN_BEAM_HDMA_INDEX = 0);
-    word!(game.GRAPPLE_BEAM_UNK_D20 = 0);
+    game.session_mut().player.grapple_extension_compatibility.x = 0;
+    game.session_mut().player.grapple_extension_compatibility.y = 0;
     game.session_mut().player.swing.start_marks[0] = 2;
     game.session_mut().player.swing.start_marks[1] = 0;
     game.session_mut().player.swing.start_animation_timer = 5;
@@ -843,7 +841,7 @@ pub fn start_firing<H: Host + ?Sized>(game: &mut H) {
     game.with_lease(crate::player_collision::grapple::clear_temporaries);
     game.session_mut().player.swing.probe.x = 0;
     game.session_mut().player.swing.failed_movement_counter = 0;
-    word!(game.GRAPPLE_SPECIAL_ANGLE_FLAG = 0);
+    game.session_mut().player.grapple_direction_compatibility = 0;
     game.session_mut().player.grapple_slow_scrolling = 0;
     start_rope_animation(game);
     game.session_mut().player.transitions.draw_handler = DrawMode::Grapple;
@@ -853,7 +851,7 @@ pub fn start_firing<H: Host + ?Sized>(game: &mut H) {
     game.session_mut().player.grapple = (0x9bc703i32) as u16;
     game.queue_sound(0, 5_u8, 1);
     game.session_mut().projectiles.controls.charge = 1;
-    word!(game.PLAY_RESUME_CHARGING_BEAM_SFX = 0);
+    game.session_mut().projectiles.controls.resume_sound = 0;
     if game.session().player.movement_handler == GRAPPLE_LAUNCH_MOVEMENT {
         game.session_mut().player.movement_handler = MovementMode::Normal;
     }
@@ -895,10 +893,11 @@ pub fn release_stationary<H: Host + ?Sized>(game: &mut H) {
     };
     game.session_mut().player.transitions.transitional = PoseRequestWord::from_raw(pose);
     game.session_mut().player.transitions.hurt = HurtAction::from_raw(0);
-    word!(game.INPUT_TO_POSE_CALC = 1);
-    word! { game, 0;
-        SAMUS_X_BASE_SPEED, SAMUS_X_BASE_SUBSPEED, SAMUS_Y_SUBSPEED, SAMUS_Y_SPEED,
-    }
+    game.session_mut().player.collision.pose_input = 1;
+    game.session_mut().player.contact.base_run.whole = 0;
+    game.session_mut().player.contact.base_run.fraction = 0;
+    game.session_mut().player.contact.y_speed.fraction = 0;
+    game.session_mut().player.contact.y_speed.whole = 0;
     finish_release(game);
 }
 
@@ -913,16 +912,25 @@ pub fn release_walljump<H: Host + ?Sized>(game: &mut H) {
     }
     game.session_mut().player.transitions.hurt = HurtAction::from_raw(6);
     game.session_mut().player.contact.acceleration_mode = 0;
-    word!(game.SAMUS_COLLIDES_WITH_SOLID_ENEMY = 0);
-    word!(game.SAMUS_IS_FALLING_FLAG = 0);
-    word!(game.UNUSED_WORD_7E0B1A = 0);
-    word!(game.UNUSED_WORD_7E0B2A = 0);
-    word!(game.SAMUS_Y_SUBSPEED = 0);
-    word!(game.SAMUS_Y_SPEED = 0);
+    game.session_mut().player.collision.solid_actor_flags = 0;
+    game.session_mut().player.transitions.falling = 0;
+    game.session_mut()
+        .player
+        .transitions
+        .landing_motion_compatibility = 0;
+    game.session_mut()
+        .player
+        .transitions
+        .vertical_motion_compatibility = 0;
+    game.session_mut().player.contact.y_speed.fraction = 0;
+    game.session_mut().player.contact.y_speed.whole = 0;
     game.session_mut().player.contact.y_direction = 0;
-    word!(game.UNUSED_WORD_7E0B38 = 0);
-    word!(game.SAMUS_X_BASE_SPEED = 0);
-    word!(game.SAMUS_X_BASE_SUBSPEED = 0);
+    game.session_mut()
+        .player
+        .transitions
+        .vertical_auxiliary_compatibility = 0;
+    game.session_mut().player.contact.base_run.whole = 0;
+    game.session_mut().player.contact.base_run.fraction = 0;
     finish_release(game);
 }
 
@@ -940,13 +948,13 @@ pub fn release_swing<H: Host + ?Sized>(game: &mut H) {
 }
 
 fn finish_release<H: Host + ?Sized>(game: &mut H) {
-    word!(game.OFFSCREEN_BEAM_HDMA_INDEX = 0);
-    word!(game.GRAPPLE_BEAM_UNK_D20 = 0);
+    game.session_mut().player.grapple_extension_compatibility.x = 0;
+    game.session_mut().player.grapple_extension_compatibility.y = 0;
     game.session_mut().player.grapple_direction = 0;
-    word!(game.GRAPPLE_SPECIAL_ANGLE_FLAG = 0);
+    game.session_mut().player.grapple_direction_compatibility = 0;
     game.session_mut().player.transitions.grapple_walljump_timer = 0;
     game.session_mut().player.grapple_slow_scrolling = 0;
-    word!(game.GRAPPLE_AUTO_FIRE_TIMER = 0);
+    game.session_mut().player.grapple_delay = 0;
     game.session_mut().player.grapple_flags = 0;
     game.session_mut().projectiles.controls.charge = 0;
     game.session_mut().projectiles.controls.flare_frames[0] = 0;
@@ -960,8 +968,9 @@ fn finish_release<H: Host + ?Sized>(game: &mut H) {
     game.session_mut().player.grapple = (0x9bc4f0i32) as u16;
     game.session_mut().player.transitions.draw_handler = DrawMode::Normal;
     game.settle_grapple();
-    if word!(game.SAMUS_AUTO_CANCEL_HUD_ITEM_INDEX) != 0 {
-        word! { game, 0; HUD_ITEM_INDEX, SAMUS_AUTO_CANCEL_HUD_ITEM_INDEX }
+    if game.session().projectiles.controls.automatic_weapon != 0 {
+        game.session_mut().projectiles.controls.selected_weapon = 0;
+        game.session_mut().projectiles.controls.automatic_weapon = 0;
     }
 }
 
@@ -976,9 +985,8 @@ pub fn start_rope_animation<H: Host + ?Sized>(game: &mut H) {
 }
 
 fn connected_to_block<H: Host + ?Sized>(game: &mut H) -> bool {
-    word! { game, 0;
-        GRAPPLE_BEAM_EXTENSION_X_VELOCITY, GRAPPLE_BEAM_EXTENSION_Y_VELOCITY,
-    }
+    game.session_mut().player.grapple_velocity.x = 0;
+    game.session_mut().player.grapple_velocity.y = 0;
     let connected = react_beam(game) & 1 != 0;
     if connected {
         game.session_mut().player.grapple_interaction_flags = 1;
@@ -1031,8 +1039,8 @@ pub fn update_tiles<
 
 pub fn update<H: Host + ?Sized>(game: &mut H) {
     let r18: u16;
-    if word!(game.GRAPPLE_AUTO_FIRE_TIMER) != 0 {
-        word!(game.GRAPPLE_AUTO_FIRE_TIMER -= 1);
+    if game.session().player.grapple_delay != 0 {
+        game.session_mut().player.grapple_delay -= 1;
     }
     game.session_mut().player.grapple_interaction_flags =
         game.session().player.grapple_interaction_flags & (!(1));
@@ -1044,12 +1052,12 @@ pub fn update<H: Host + ?Sized>(game: &mut H) {
     if game.session().player.grapple as i32 != 0x9bc4f0 & 0xffff
         && (game.session().player.grapple as i32 - (0x9bc856 & 0xffff)) & 0x8000 != 0
         && (word!(game.SAMUS_SUIT_PALETTE_INDEX) & 4) == 0
-        && word!(game.FX_TYPE) != 0
+        && game.session().room.liquid.kind != 0
         && {
             r18 = game.player_bottom();
-            (word!(game.FX_Y_POS) & 0x8000) == 0
+            (game.session().room.liquid.surface.whole & 0x8000) == 0
         }
-        && (word!(game.FX_Y_POS) as i32 - r18 as i32) & 0x8000 != 0
+        && (game.session().room.liquid.surface.whole as i32 - r18 as i32) & 0x8000 != 0
     {
         game.session_mut().player.grapple_flags = game.session().player.grapple_flags | (1u16);
     } else {
@@ -1152,7 +1160,7 @@ fn dispatch<H: Host + ?Sized>(ea: u32, game: &mut H) {
                 accelerate(&mut game.session_mut().player);
                 rebound_jump(game);
                 advance_swing(game);
-                if (word!(game.GRAPPLE_SPECIAL_ANGLE_FLAG) & 0x8000) != 0
+                if (game.session().player.grapple_direction_compatibility & 0x8000) != 0
                     && apply_special_angle(game) & 1 != 0
                 {
                     return;
