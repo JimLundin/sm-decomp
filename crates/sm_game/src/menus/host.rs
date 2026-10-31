@@ -62,8 +62,6 @@ pub trait MenuRuntime:
 {
     /// Upload `bytes` from `source` to VRAM word address `destination`.
     fn load_vram_words(&mut self, source: u32, destination: u16, bytes: u16);
-    /// Begin entering the room at the current load station.
-    fn enter_load_station(&mut self);
     fn request_reset(&mut self);
     /// Run bank $8B's cinematic sprite pre-instruction `pre` for `object`.
     fn cinematic_sprite_pre_instruction(&mut self, pre: u32, object: u16);
@@ -75,8 +73,6 @@ pub trait MenuRuntime:
     fn write_dma_register(&mut self, register: u16, value: u8);
     /// Advance the music queue, as the HDMA update did first each frame.
     fn handle_music_queue(&mut self);
-    /// Run an HDMA effect through the session view.
-    fn hdma_effect(&mut self, effect: crate::hdma_objects::HdmaEffect, slot: u16);
     /// Spawn the hardcoded PLM `id` at block (`x`, `y`).
     fn spawn_hardcoded_plm(&mut self, x: u8, y: u8, id: u16);
     /// Spawn an enemy projectile that uses the room's graphics; returns its slot.

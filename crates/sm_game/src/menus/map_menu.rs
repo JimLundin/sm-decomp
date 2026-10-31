@@ -493,7 +493,12 @@ fn open_room_window<H: Host + ?Sized>(game: &mut H) {
 fn initialize_room<H: Host + ?Sized>(game: &mut H) {
     load_area_map(game);
     draw_room_map(game);
-    game.enter_load_station();
+    crate::room_entry::selection::begin(
+        &mut game.runtime(),
+        crate::room_entry::api::ArrivalRequest::Start(
+            crate::room_entry::api::StartSite::CurrentLoadStation,
+        ),
+    );
     crate::hdma_objects::set_hdma_enabled(false, game);
     crate::hdma_objects::clear_hdma(game);
     let header = crate::projection::word(game, crate::ram::words::ROOM_PTR);

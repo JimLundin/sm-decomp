@@ -326,13 +326,13 @@ pub fn advance_title_gradient<H: crate::menus::host::Host + ?Sized>(backdrop: bo
         refresh_title_gradient(game);
     }
     if crate::flow::current(game).cinematic_function == 0x9b68 {
-        game.hdma_effect(HdmaEffect::AdvanceProgram, 0);
+        crate::hdma_effects::apply_leased(HdmaEffect::AdvanceProgram, 0, game);
     }
 }
 
 pub fn advance_intro_crossfade<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     if checked_word!(game.EPROJ_X_POS[0]) == 1 {
-        game.hdma_effect(HdmaEffect::AdvanceProgram, 0);
+        crate::hdma_effects::apply_leased(HdmaEffect::AdvanceProgram, 0, game);
     }
 }
 
