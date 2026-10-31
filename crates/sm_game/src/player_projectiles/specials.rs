@@ -95,6 +95,12 @@ pub fn create(h: &mut impl Host, attack: Attack) -> u8 {
     {
         return 0;
     }
+    crate::probe::hit(match attack {
+        Attack::Wave => "special_beam.wave",
+        Attack::Ice => "special_beam.ice",
+        Attack::Spazer => "special_beam.spazer",
+        Attack::Plasma => "special_beam.plasma",
+    });
     for index in (0..4).rev() {
         let slot = 2 * index as u16;
         let initialization = match attack {
