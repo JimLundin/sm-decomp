@@ -6,8 +6,8 @@
 use crate::actors::host::{Axis, Slopes};
 use crate::actors::layouts::{EnemyBase, EnemyLayout40};
 use crate::constants::enemy_properties::{K_ENEMY_PROPS_DELETED, K_ENEMY_PROPS_INVISIBLE};
-use crate::ram::RawRam as _;
-use crate::ram::{slot, word};
+use crate::ram::word;
+use crate::session_slot;
 use sm_data::enemy_speeds::SpeedTable;
 
 /// What the boulder needs beyond the shared boss effects: the 32-bit speeds.
@@ -106,65 +106,65 @@ fn current<H: Host + ?Sized>(game: &H) -> i32 {
 /// Sets up a boulder from its parameters. Was `Boulder_Init`.
 pub fn initialize<H: Host + ?Sized>(game: &mut H) {
     let me = current(game);
-    slot!(game, Boulder[me]; fall_speed = 0, roll_speed = 0);
-    slot!(game, Boulder[me]; bounces_left = 2, state = state::WAIT_FOR_SAMUS);
-    slot!(
+    session_slot!(game, Boulder[me]; fall_speed = 0, roll_speed = 0);
+    session_slot!(game, Boulder[me]; bounces_left = 2, state = state::WAIT_FOR_SAMUS);
+    session_slot!(
         game,
-        Boulder[me].home_x = slot!(game, Boulder[me].base.x_pos)
+        Boulder[me].home_x = session_slot!(game, Boulder[me].base.x_pos)
     );
-    let y_pos: u16 = slot!(game, Boulder[me].base.y_pos);
-    slot!(game, Boulder[me]; ground_y = y_pos, previous_y = y_pos);
-    slot!(
+    let y_pos: u16 = session_slot!(game, Boulder[me].base.y_pos);
+    session_slot!(game, Boulder[me]; ground_y = y_pos, previous_y = y_pos);
+    session_slot!(
         game,
-        Boulder[me].previous_y_subpos = slot!(game, Boulder[me].base.y_subpos)
+        Boulder[me].previous_y_subpos = session_slot!(game, Boulder[me].base.y_subpos)
     );
-    let mut drop_height: i16 = slot!(byte game, Boulder[me].parameter_2[1]) as i16;
-    if slot!(byte game, Boulder[me].parameter_2[1]) == 0 {
+    let mut drop_height: i16 = session_slot!(byte game, Boulder[me].parameter_2[1]) as i16;
+    if session_slot!(byte game, Boulder[me].parameter_2[1]) == 0 {
         drop_height = 1;
-        slot!(game, Boulder[me].starts_rolling = 1);
+        session_slot!(game, Boulder[me].starts_rolling = 1);
     }
-    slot!(
+    session_slot!(
         game,
         Boulder[me].base.y_pos =
-            (slot!(game, Boulder[me].ground_y)).wrapping_sub(drop_height as u16)
+            (session_slot!(game, Boulder[me].ground_y)).wrapping_sub(drop_height as u16)
     );
-    slot!(
+    session_slot!(
         game,
         Boulder[me].trigger_distance =
-            -(slot!(byte game, Boulder[me].parameter_2[0]) as i32) as u16
+            -(session_slot!(byte game, Boulder[me].parameter_2[0]) as i32) as u16
     );
-    slot!(
+    session_slot!(
         game,
         Boulder[me].trigger_height =
-            slot!(byte game, Boulder[me].base.current_instruction[0]) as u16
+            session_slot!(byte game, Boulder[me].base.current_instruction[0]) as u16
     );
-    slot!(
+    session_slot!(
         game,
         Boulder[me].base.current_instruction = animation::ROLL_LEFT
     );
-    let kind: u16 = slot!(byte game, Boulder[me].parameter_1[1]) as u16;
-    slot!(game, Boulder[me].kind = kind);
+    let kind: u16 = session_slot!(byte game, Boulder[me].parameter_1[1]) as u16;
+    session_slot!(game, Boulder[me].kind = kind);
     if kind == kind::ROLL_RIGHT {
-        slot!(
+        session_slot!(
             game,
             Boulder[me].trigger_distance =
-                -(slot!(game, Boulder[me].trigger_distance) as i32) as u16
+                -(session_slot!(game, Boulder[me].trigger_distance) as i32) as u16
         );
-        slot!(
+        session_slot!(
             game,
             Boulder[me].base.current_instruction = animation::ROLL_RIGHT
         );
     }
-    slot!(game, Boulder[me].roll_lift = 2);
-    if slot!(byte game, Boulder[me].parameter_1[0]) != 0 {
-        slot!(game, Boulder[me].roll_lift = 5);
+    session_slot!(game, Boulder[me].roll_lift = 2);
+    if session_slot!(byte game, Boulder[me].parameter_1[0]) != 0 {
+        session_slot!(game, Boulder[me].roll_lift = 5);
     }
 }
 
 /// Runs the current state. Was `Boulder_Main`.
 pub fn main_ai<H: Host + ?Sized>(game: &mut H) {
     let me = current(game);
-    match slot!(game, Boulder[me].state) {
+    match session_slot!(game, Boulder[me].state) {
         state::WAIT_FOR_SAMUS => wait_for_samus(game),
         state::FALL => fall(game),
         state::BOUNCE_RISE => bounce_rise(game),
@@ -177,9 +177,9 @@ pub fn main_ai<H: Host + ?Sized>(game: &mut H) {
 
 /// The state that follows a release: a drop, or a roll when on the ground.
 fn release<H: Host + ?Sized>(game: &mut H, me: i32) {
-    slot!(game, Boulder[me].state = state::FALL);
-    if slot!(game, Boulder[me].starts_rolling) != 0 {
-        slot!(game, Boulder[me].state = state::ROLL);
+    session_slot!(game, Boulder[me].state = state::FALL);
+    if session_slot!(game, Boulder[me].starts_rolling) != 0 {
+        session_slot!(game, Boulder[me].state = state::ROLL);
     }
 }
 
@@ -192,14 +192,15 @@ fn wait_for_samus<H: Host + ?Sized>(game: &mut H) {
     } as i16;
     if below >= 0 {
         let me = current(game);
-        if below.wrapping_sub(slot!(game, Boulder[me].trigger_height) as i16) < 0 {
-            if slot!(game, Boulder[me].kind) != kind::ROLL_RIGHT {
+        if below.wrapping_sub(session_slot!(game, Boulder[me].trigger_height) as i16) < 0 {
+            if session_slot!(game, Boulder[me].kind) != kind::ROLL_RIGHT {
                 let beside: i16 = {
                     let actor = word!(game.CUR_ENEMY_INDEX);
                     game.player_delta(actor, Axis::X)
                 } as i16;
                 if beside < 0
-                    && beside.wrapping_sub(slot!(game, Boulder[me].trigger_distance) as i16) >= 0
+                    && beside.wrapping_sub(session_slot!(game, Boulder[me].trigger_distance) as i16)
+                        >= 0
                 {
                     release(game, me);
                 }
@@ -209,7 +210,8 @@ fn wait_for_samus<H: Host + ?Sized>(game: &mut H) {
                     game.player_delta(actor, Axis::X)
                 } as i16;
                 if beside >= 0
-                    && beside.wrapping_sub(slot!(game, Boulder[me].trigger_distance) as i16) < 0
+                    && beside.wrapping_sub(session_slot!(game, Boulder[me].trigger_distance) as i16)
+                        < 0
                 {
                     release(game, me);
                 }
@@ -221,21 +223,21 @@ fn wait_for_samus<H: Host + ?Sized>(game: &mut H) {
 /// Speeds up `speed` by `step`, holding it at `cap`.
 fn accelerate<H: Host + ?Sized>(game: &mut H, me: i32, roll: bool, step: u16, cap: u16) {
     let speed = if roll {
-        slot!(game, Boulder[me].roll_speed)
+        session_slot!(game, Boulder[me].roll_speed)
     } else {
-        slot!(game, Boulder[me].fall_speed)
+        session_slot!(game, Boulder[me].fall_speed)
     }
     .wrapping_add(step);
     if roll {
-        slot!(game, Boulder[me].roll_speed = speed);
+        session_slot!(game, Boulder[me].roll_speed = speed);
     } else {
-        slot!(game, Boulder[me].fall_speed = speed);
+        session_slot!(game, Boulder[me].fall_speed = speed);
     }
     if (speed as i32 - cap as i32) & 0x8000 == 0 {
         if roll {
-            slot!(game, Boulder[me].roll_speed = cap);
+            session_slot!(game, Boulder[me].roll_speed = cap);
         } else {
-            slot!(game, Boulder[me].fall_speed = cap);
+            session_slot!(game, Boulder[me].fall_speed = cap);
         }
     }
 }
@@ -244,9 +246,9 @@ fn accelerate<H: Host + ?Sized>(game: &mut H, me: i32, roll: bool, step: u16, ca
 /// negated speed, moving up or left.
 fn row<H: Host + ?Sized>(game: &H, me: i32, roll: bool) -> u16 {
     let speed = if roll {
-        slot!(byte game, Boulder[me].roll_speed[1])
+        session_slot!(byte game, Boulder[me].roll_speed[1])
     } else {
-        slot!(byte game, Boulder[me].fall_speed[1])
+        session_slot!(byte game, Boulder[me].fall_speed[1])
     };
     8u16.wrapping_mul(speed as u16)
 }
@@ -254,7 +256,7 @@ fn row<H: Host + ?Sized>(game: &H, me: i32, roll: bool) -> u16 {
 /// Rolls one frame at the current rolling speed. Was part of `Boulder_Func_3`.
 fn roll_step<H: Host + ?Sized>(game: &mut H, me: i32) {
     let mut row = row(game, me, true);
-    if slot!(game, Boulder[me].kind) != kind::ROLL_RIGHT {
+    if session_slot!(game, Boulder[me].kind) != kind::ROLL_RIGHT {
         row = row.wrapping_add(4);
     }
     move_x(game, row);
@@ -265,17 +267,17 @@ fn roll_step<H: Host + ?Sized>(game: &mut H, me: i32) {
 fn fall<H: Host + ?Sized>(game: &mut H) {
     let me = current(game);
     move_y(game, row(game, me, false));
-    if ((slot!(game, Boulder[me].base.y_pos)) as i16)
-        .wrapping_sub((slot!(game, Boulder[me].ground_y)) as i16)
+    if ((session_slot!(game, Boulder[me].base.y_pos)) as i16)
+        .wrapping_sub((session_slot!(game, Boulder[me].ground_y)) as i16)
         < 0
     {
         accelerate(game, me, false, 256, FALL_SPEED_CAP);
     } else {
-        slot!(
+        session_slot!(
             game,
-            Boulder[me].base.y_pos = slot!(game, Boulder[me].ground_y)
+            Boulder[me].base.y_pos = session_slot!(game, Boulder[me].ground_y)
         );
-        slot!(game, Boulder[me]; state = state::BOUNCE_RISE, fall_speed = 0x2000);
+        session_slot!(game, Boulder[me]; state = state::BOUNCE_RISE, fall_speed = 0x2000);
     }
 }
 
@@ -284,14 +286,14 @@ fn bounce_rise<H: Host + ?Sized>(game: &mut H) {
     let me = current(game);
     move_y(
         game,
-        (8 * slot!(byte game, Boulder[me].fall_speed[1]) as i32 + 4) as u16,
+        (8 * session_slot!(byte game, Boulder[me].fall_speed[1]) as i32 + 4) as u16,
     );
-    let speed: i16 = ((slot!(game, Boulder[me].fall_speed)) as i16).wrapping_sub(256);
-    slot!(game, Boulder[me].fall_speed = speed as u16);
+    let speed: i16 = ((session_slot!(game, Boulder[me].fall_speed)) as i16).wrapping_sub(256);
+    session_slot!(game, Boulder[me].fall_speed = speed as u16);
     if speed >= 0 {
         roll_step(game, me);
     } else {
-        slot!(game, Boulder[me]; fall_speed = 0, state = state::BOUNCE_FALL);
+        session_slot!(game, Boulder[me]; fall_speed = 0, state = state::BOUNCE_FALL);
     }
 }
 
@@ -299,7 +301,7 @@ fn bounce_rise<H: Host + ?Sized>(game: &mut H) {
 /// final roll, or shatters. Was `Boulder_Func_4`.
 fn bounce_fall<H: Host + ?Sized>(game: &mut H) {
     let me = current(game);
-    let row: i32 = (8 * slot!(byte game, Boulder[me].fall_speed[1]) as i32) >> 1;
+    let row: i32 = (8 * session_slot!(byte game, Boulder[me].fall_speed[1]) as i32) >> 1;
     let landed = {
         let actor = word!(game.CUR_ENEMY_INDEX);
         let amount = game.enemy_speed32(4 * (row >> 1) as usize) as i32;
@@ -307,37 +309,38 @@ fn bounce_fall<H: Host + ?Sized>(game: &mut H) {
     };
     if landed {
         game.queue_sound(1, LAND_SOUND, 6);
-        if slot!(game, Boulder[me].kind) == kind::SHATTER {
-            slot!(
+        if session_slot!(game, Boulder[me].kind) == kind::SHATTER {
+            session_slot!(
                 game,
-                Boulder[me].base.properties =
-                    (slot!(game, Boulder[me].base.properties)) | (K_ENEMY_PROPS_DELETED as u16)
+                Boulder[me].base.properties = (session_slot!(game, Boulder[me].base.properties))
+                    | (K_ENEMY_PROPS_DELETED as u16)
             );
             shatter_dust(game, me);
         } else {
-            slot!(game, Boulder[me].state = state::BOUNCE_RISE);
-            slot!(
+            session_slot!(game, Boulder[me].state = state::BOUNCE_RISE);
+            session_slot!(
                 game,
-                Boulder[me].fall_speed =
-                    BOUNCE_SPEEDS[(slot!(game, Boulder[me].bounces_left) as i32 - 1i32) as usize]
+                Boulder[me].fall_speed = BOUNCE_SPEEDS
+                    [(session_slot!(game, Boulder[me].bounces_left) as i32 - 1i32) as usize]
             );
-            slot!(game, Boulder[me].bounces_left, |old| old.wrapping_sub(1));
-            if (slot!(game, Boulder[me].bounces_left) & 0x8000) != 0 {
-                slot!(
+            session_slot!(game, Boulder[me].bounces_left, |old| old.wrapping_sub(1));
+            if (session_slot!(game, Boulder[me].bounces_left) & 0x8000) != 0 {
+                session_slot!(
                     game,
-                    Boulder[me].previous_y = slot!(game, Boulder[me].base.y_pos)
+                    Boulder[me].previous_y = session_slot!(game, Boulder[me].base.y_pos)
                 );
-                slot!(
+                session_slot!(
                     game,
-                    Boulder[me].previous_y_subpos = slot!(game, Boulder[me].base.y_subpos)
+                    Boulder[me].previous_y_subpos = session_slot!(game, Boulder[me].base.y_subpos)
                 );
-                slot!(game, Boulder[me].state = state::ROLL);
+                session_slot!(game, Boulder[me].state = state::ROLL);
             }
         }
     } else {
-        slot!(
+        session_slot!(
             game,
-            Boulder[me].fall_speed = (slot!(game, Boulder[me].fall_speed)).wrapping_add(256)
+            Boulder[me].fall_speed =
+                (session_slot!(game, Boulder[me].fall_speed)).wrapping_add(256)
         );
         roll_step(game, me);
     }
@@ -352,16 +355,16 @@ fn roll<H: Host + ?Sized>(game: &mut H) {
         let actor = word!(game.CUR_ENEMY_INDEX);
         let amount = game
             .enemy_speed32(4 * (index >> 1) as usize)
-            .wrapping_add(((slot!(game, Boulder[me].roll_lift) as i32) << 16) as u32)
+            .wrapping_add(((session_slot!(game, Boulder[me].roll_lift) as i32) << 16) as u32)
             as i32;
         game.move_vertical(actor, amount);
     }
-    slot!(
+    session_slot!(
         game,
-        Boulder[me].base.y_pos =
-            (slot!(game, Boulder[me].base.y_pos)).wrapping_sub(slot!(game, Boulder[me].roll_lift))
+        Boulder[me].base.y_pos = (session_slot!(game, Boulder[me].base.y_pos))
+            .wrapping_sub(session_slot!(game, Boulder[me].roll_lift))
     );
-    if slot!(game, Boulder[me].kind) != kind::ROLL_RIGHT {
+    if session_slot!(game, Boulder[me].kind) != kind::ROLL_RIGHT {
         row = row.wrapping_add(4);
     }
     let index: i32 = row as i32 >> 1;
@@ -371,37 +374,39 @@ fn roll<H: Host + ?Sized>(game: &mut H) {
         game.move_horizontal(actor, amount, Slopes::Ignore)
     };
     if blocked {
-        slot!(
+        session_slot!(
             game,
-            Boulder[me].base.properties = (slot!(game, Boulder[me].base.properties))
+            Boulder[me].base.properties = (session_slot!(game, Boulder[me].base.properties))
                 | ((K_ENEMY_PROPS_INVISIBLE | K_ENEMY_PROPS_DELETED) as u16)
         );
-        slot!(game, Boulder[me].state = state::STOPPED);
+        session_slot!(game, Boulder[me].state = state::STOPPED);
         game.queue_sound(1, LAND_SOUND, 6);
         shatter_dust(game, me);
     } else {
         accelerate(game, me, true, 64, ROLL_SPEED_CAP);
-        if slot!(game, Boulder[me].base.y_pos) == slot!(game, Boulder[me].previous_y)
-            && slot!(game, Boulder[me].base.y_subpos) == slot!(game, Boulder[me].previous_y_subpos)
+        if session_slot!(game, Boulder[me].base.y_pos)
+            == session_slot!(game, Boulder[me].previous_y)
+            && session_slot!(game, Boulder[me].base.y_subpos)
+                == session_slot!(game, Boulder[me].previous_y_subpos)
         {
-            slot!(game, Boulder[me].roll_lift = 0);
+            session_slot!(game, Boulder[me].roll_lift = 0);
         }
     }
-    slot!(
+    session_slot!(
         game,
-        Boulder[me].previous_y = slot!(game, Boulder[me].base.y_pos)
+        Boulder[me].previous_y = session_slot!(game, Boulder[me].base.y_pos)
     );
-    slot!(
+    session_slot!(
         game,
-        Boulder[me].previous_y_subpos = slot!(game, Boulder[me].base.y_subpos)
+        Boulder[me].previous_y_subpos = session_slot!(game, Boulder[me].base.y_subpos)
     );
 }
 
 /// A dust cloud where the boulder is, and the breaking sound.
 fn shatter_dust<H: Host + ?Sized>(game: &mut H, me: i32) {
     let (x, y) = (
-        slot!(game, Boulder[me].base.x_pos),
-        slot!(game, Boulder[me].base.y_pos),
+        session_slot!(game, Boulder[me].base.x_pos),
+        session_slot!(game, Boulder[me].base.y_pos),
     );
     game.set_projectile_spawn_point(x, y);
     game.spawn_room_projectile(DUST_CLOUD, DUST_CLOUD_PARAMETER);
@@ -420,7 +425,7 @@ fn quadratic<H: Host + ?Sized>(game: &H, row: u16) -> u32 {
 /// collision. Was `Boulder_Func_7`.
 fn move_x<H: Host + ?Sized>(game: &mut H, row: u16) {
     let me = current(game);
-    slot!(
+    session_slot!(
         game,
         Boulder[me].base(x_pos, x_subpos) += quadratic(game, row)
     );
@@ -430,7 +435,7 @@ fn move_x<H: Host + ?Sized>(game: &mut H, row: u16) {
 /// collision. Was `Boulder_Func_9`.
 fn move_y<H: Host + ?Sized>(game: &mut H, row: u16) {
     let me = current(game);
-    slot!(
+    session_slot!(
         game,
         Boulder[me].base(y_pos, y_subpos) += quadratic(game, row)
     );

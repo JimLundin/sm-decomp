@@ -14,7 +14,8 @@ use crate::constants::enemy_properties::{
 };
 use crate::enemy_script::EnemyScript;
 use crate::ram::RawRam as _;
-use crate::ram::{slot, word};
+use crate::ram::word;
+use crate::session_slot;
 use crate::statue_tables;
 
 /// What the statues need beyond the shared boss effects.
@@ -117,12 +118,14 @@ const UNLOCK_SAMUS: u16 = 1;
 /// Phantoon. Was `TourianEntranceStatue_Init`.
 pub fn initialize_tourian_statue<H: Host + ?Sized>(game: &mut H) {
     let me = word!(game.CUR_ENEMY_INDEX) as i32;
-    slot!(game, Decoration[me].base; palette_index = 0, instruction_timer = 1, timer = 0);
-    let list =
-        statue_tables::tourian_statue(game, (slot!(game, Decoration[me].kind) >> 1) as isize)
-            .instruction_list;
-    slot!(game, Decoration[me].base.current_instruction = list);
-    if slot!(game, Decoration[me].kind) == 0 {
+    session_slot!(game, Decoration[me].base; palette_index = 0, instruction_timer = 1, timer = 0);
+    let list = statue_tables::tourian_statue(
+        game,
+        (session_slot!(game, Decoration[me].kind) >> 1) as isize,
+    )
+    .instruction_list;
+    session_slot!(game, Decoration[me].base.current_instruction = list);
+    if session_slot!(game, Decoration[me].kind) == 0 {
         // The spawns take their initialisation parameter from A: the
         // instruction list just stored, then each spawn's returned slot.
         let base = game.spawn_room_projectile(BASE_DECORATION, list);
@@ -145,24 +148,24 @@ pub fn initialize_tube_cracks<H: Host + ?Sized>(game: &mut H) {
 /// palettes and slope and spike blocks. Was `ChozoStatue_Init`.
 pub fn initialize_chozo_statue<H: Host + ?Sized>(game: &mut H) {
     let me = word!(game.CUR_ENEMY_INDEX) as i32;
-    slot!(
+    session_slot!(
         game,
-        Statue[me].base.properties = (slot!(game, Statue[me].base.properties) as i32
+        Statue[me].base.properties = (session_slot!(game, Statue[me].base.properties) as i32
             | (K_ENEMY_PROPS_DISABLE_SAMUS_COLL as i32
                 | K_ENEMY_PROPS_PROCESSED_OFFSCREEN as i32
                 | 0x8000)) as u16
     );
-    slot!(
+    session_slot!(
         game,
         Statue[me].base.spritemap_pointer = list::NOTHING_SPRITEMAP
     );
-    slot!(game, Statue[me].base; instruction_timer = 1, timer = 0);
-    slot!(game, Statue[me]; function = function::NOTHING, activated = 0);
-    slot!(game, Statue[me].base.palette_index = 0);
+    session_slot!(game, Statue[me].base; instruction_timer = 1, timer = 0);
+    session_slot!(game, Statue[me]; function = function::NOTHING, activated = 0);
+    session_slot!(game, Statue[me].base.palette_index = 0);
     // The original clears slot 0's layer, not the statue's.
-    slot!(game, Statue[0].base.layer = 0);
-    let variant: u16 = slot!(game, Statue[me].variant);
-    slot!(
+    session_slot!(game, Statue[0].base.layer = 0);
+    let variant: u16 = session_slot!(game, Statue[me].variant);
+    session_slot!(
         game,
         Statue[me].base.current_instruction =
             statue_tables::chozo_statue(game, (variant >> 1) as isize).instruction_list
@@ -186,7 +189,7 @@ pub fn initialize_chozo_statue<H: Host + ?Sized>(game: &mut H) {
 /// Main AI - chozo statue ($AA:E7A7): the function. Was `ChozoStatue_Main`.
 pub fn main_ai<H: Host + ?Sized>(game: &mut H) {
     let me = word!(game.CUR_ENEMY_INDEX) as i32;
-    let address = (BANK << 16) | slot!(game, Statue[me].function) as u32;
+    let address = (BANK << 16) | session_slot!(game, Statue[me].function) as u32;
     game.run_function(address);
 }
 
@@ -194,12 +197,12 @@ pub fn main_ai<H: Host + ?Sized>(game: &mut H) {
 /// Samus down. Was `sub_AAE445`.
 pub fn lower_norfair<H: Host + ?Sized>(game: &mut H, k: u16) {
     let me = k as i32;
-    if slot!(game, Statue[me].activated) != 0 {
-        slot!(
+    if session_slot!(game, Statue[me].activated) != 0 {
+        session_slot!(
             game,
             Statue[me].base.current_instruction = list::LOWER_NORFAIR_ACTIVATED
         );
-        slot!(game, Statue[me].base.instruction_timer = 1);
+        session_slot!(game, Statue[me].base.instruction_timer = 1);
     }
 }
 
@@ -209,14 +212,14 @@ pub fn wrecked_ship<H: Host + ?Sized>(game: &mut H, k: u16) {
     let area = word!(game.AREA_INDEX);
     if (game.boss_word_native(area) & 1) != 0 {
         let me = k as i32;
-        if slot!(game, Statue[me].activated) != 0 {
-            slot!(
+        if session_slot!(game, Statue[me].activated) != 0 {
+            session_slot!(
                 game,
                 Statue[me].base.current_instruction = list::WRECKED_SHIP_ACTIVATED
             );
-            slot!(game, Statue[me].base.instruction_timer = 1);
+            session_slot!(game, Statue[me].base.instruction_timer = 1);
             // Never read.
-            slot!(game, Statue[me]; var_a = 0xff00, var_b = 256);
+            session_slot!(game, Statue[me]; var_a = 0xff00, var_b = 256);
         }
     }
 }
@@ -258,8 +261,8 @@ pub fn spike_clearing_footstep<H: Host + ?Sized>(
 ) -> EnemyScript {
     let me = k as i32;
     let offset: u16 = jp.word(0);
-    let x = (slot!(game, Statue[me].base.x_pos)).wrapping_add(offset);
-    let y = (slot!(game, Statue[me].base.y_pos)).wrapping_add(28);
+    let x = (session_slot!(game, Statue[me].base.x_pos)).wrapping_add(offset);
+    let y = (session_slot!(game, Statue[me].base.y_pos)).wrapping_add(28);
     game.select_block_at(x, y);
     // The block below the selected one.
     let index = word!(game.ROOM_WIDTH_IN_BLOCKS) as i32 + word!(game.CUR_BLOCK_INDEX) as i32;
@@ -276,16 +279,26 @@ pub fn spike_clearing_footstep<H: Host + ?Sized>(
 /// statue and carry Samus with it. Was `Shaktool_Instr_7`.
 pub fn movement<H: Host + ?Sized>(game: &mut H, k: u16, jp: EnemyScript) -> EnemyScript {
     let me = k as i32;
-    slot!(game, Statue[me].movement = jp.word(0));
-    let step = statue_tables::movement(game, (slot!(game, Statue[me].movement) >> 1) as isize);
+    session_slot!(game, Statue[me].movement = jp.word(0));
+    let step = statue_tables::movement(
+        game,
+        (session_slot!(game, Statue[me].movement) >> 1) as isize,
+    );
     game.move_horizontal(k, (step.x_velocity as i16 as i32) << 8, Slopes::Ignore);
-    let step = statue_tables::movement(game, (slot!(game, Statue[me].movement) >> 1) as isize);
+    let step = statue_tables::movement(
+        game,
+        (session_slot!(game, Statue[me].movement) >> 1) as isize,
+    );
     game.move_vertical(k, (abs16(step.x_velocity) as i16 as i32) << 8);
     game.snap_to_slopes(k);
-    let index = slot!(game, Statue[me].movement) as i32 >> 1;
+    let index = session_slot!(game, Statue[me].movement) as i32 >> 1;
     let step = statue_tables::movement(game, index as isize);
-    game.set_player_x((step.samus_x_offset).wrapping_add(slot!(game, Statue[me].base.x_pos)));
-    game.set_player_y((step.samus_y_offset).wrapping_add(slot!(game, Statue[me].base.y_pos)));
+    game.set_player_x(
+        (step.samus_x_offset).wrapping_add(session_slot!(game, Statue[me].base.x_pos)),
+    );
+    game.set_player_y(
+        (step.samus_y_offset).wrapping_add(session_slot!(game, Statue[me].base.y_pos)),
+    );
     jp.offset(1)
 }
 

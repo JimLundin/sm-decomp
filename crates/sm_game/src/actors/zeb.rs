@@ -6,53 +6,58 @@ use crate::actors::host::abs16;
 use crate::actors::host::{ActorHost, ActorRuntime, Axis};
 use crate::actors::layouts::EnemyLayout72 as Bug;
 use crate::actors::queries;
-use crate::ram::RawRam as _;
-use crate::ram::{slot, word};
+use crate::actors::session_slots::SlotAccess;
+use crate::ram::word;
+use crate::session_slot;
 
-pub fn initialize<H: ActorHost + ActorRuntime + LeaseActors + crate::records::Records + ?Sized>(
+pub fn initialize<
+    H: ActorHost + ActorRuntime + SlotAccess + LeaseActors + crate::records::Records + ?Sized,
+>(
     game: &mut H,
 ) {
     let e = i32::from(word!(game.CUR_ENEMY_INDEX));
-    slot!(game, Bug[e].var_b = slot!(game, Bug[e].base.x_pos));
-    let y = slot!(game, Bug[e].base.y_pos);
-    slot!(game, Bug[e]; var_c = y, var_00 = y.wrapping_sub(16), var_f = 0x8880, var_d = 48, var_e = 0, var_01 = 0);
-    slot!(game, Bug[e].base.current_instruction = 0x87ab);
-    if slot!(game, Bug[e].parameter_1) != 0 {
-        slot!(game, Bug[e].base.current_instruction = 0x8a1d);
+    session_slot!(game, Bug[e].var_b = session_slot!(game, Bug[e].base.x_pos));
+    let y = session_slot!(game, Bug[e].base.y_pos);
+    session_slot!(game, Bug[e]; var_c = y, var_00 = y.wrapping_sub(16), var_f = 0x8880, var_d = 48, var_e = 0, var_01 = 0);
+    session_slot!(game, Bug[e].base.current_instruction = 0x87ab);
+    if session_slot!(game, Bug[e].parameter_1) != 0 {
+        session_slot!(game, Bug[e].base.current_instruction = 0x8a1d);
     }
 }
 pub fn state_address<
-    H: ActorHost + ActorRuntime + LeaseActors + crate::records::Records + ?Sized,
+    H: ActorHost + ActorRuntime + SlotAccess + LeaseActors + crate::records::Records + ?Sized,
 >(
     game: &H,
 ) -> u32 {
     let e = i32::from(word!(game.CUR_ENEMY_INDEX));
-    0xb30000 | u32::from(slot!(game, Bug[e].var_f))
+    0xb30000 | u32::from(session_slot!(game, Bug[e].var_f))
 }
 fn update_animation<
-    H: ActorHost + ActorRuntime + LeaseActors + crate::records::Records + ?Sized,
+    H: ActorHost + ActorRuntime + SlotAccess + LeaseActors + crate::records::Records + ?Sized,
 >(
     game: &mut H,
 ) {
     let e = i32::from(word!(game.CUR_ENEMY_INDEX));
-    let phase = slot!(game, Bug[e].var_e);
-    if phase != slot!(game, Bug[e].var_01) {
-        slot!(game, Bug[e].var_01 = phase);
-        let alternate = slot!(game, Bug[e].parameter_1) != 0;
-        slot!(game, Bug[e].base; current_instruction = crate::enemy_lists::pipe_bug_instruction_list(game, alternate, phase as isize), instruction_timer = 1, timer = 0);
+    let phase = session_slot!(game, Bug[e].var_e);
+    if phase != session_slot!(game, Bug[e].var_01) {
+        session_slot!(game, Bug[e].var_01 = phase);
+        let alternate = session_slot!(game, Bug[e].parameter_1) != 0;
+        session_slot!(game, Bug[e].base; current_instruction = crate::enemy_lists::pipe_bug_instruction_list(game, alternate, phase as isize), instruction_timer = 1, timer = 0);
     }
 }
-pub fn await_view<H: ActorHost + ActorRuntime + LeaseActors + crate::records::Records + ?Sized>(
+pub fn await_view<
+    H: ActorHost + ActorRuntime + SlotAccess + LeaseActors + crate::records::Records + ?Sized,
+>(
     _: u16,
     game: &mut H,
 ) {
     if !game.current_outside_screen() {
         let current = i32::from(word!(game.CUR_ENEMY_INDEX));
-        slot!(game, Bug[current].var_f = 0x8890);
+        session_slot!(game, Bug[current].var_f = 0x8890);
     }
 }
 pub fn await_player<
-    H: ActorHost + ActorRuntime + LeaseActors + crate::records::Records + ?Sized,
+    H: ActorHost + ActorRuntime + SlotAccess + LeaseActors + crate::records::Records + ?Sized,
 >(
     k: u16,
     game: &mut H,
@@ -61,16 +66,16 @@ pub fn await_player<
     let dy = game.player_delta(k, Axis::Y) as i16;
     if dy < 0 && (i32::from(dy) + 96) & 0x8000 == 0 {
         let dx = game.player_delta(k, Axis::X);
-        slot!(game, Bug[e].var_a, |direction| direction & 0x7fff
+        session_slot!(game, Bug[e].var_a, |direction| direction & 0x7fff
             | dx & 0x8000);
-        if abs16(slot!(game, Bug[e].base.x_pos).wrapping_sub(game.player_x())) < 0x40 {
-            slot!(game, Bug[e].var_f = 0x88e3);
-            slot!(game, Bug[e].base.properties, |properties| properties
+        if abs16(session_slot!(game, Bug[e].base.x_pos).wrapping_sub(game.player_x())) < 0x40 {
+            session_slot!(game, Bug[e].var_f = 0x88e3);
+            session_slot!(game, Bug[e].base.properties, |properties| properties
                 & !0x100);
-            slot!(game, Bug[e].base.timer = 0);
-            slot!(
+            session_slot!(game, Bug[e].base.timer = 0);
+            session_slot!(
                 game,
-                Bug[e].var_e = if slot!(game, Bug[e].var_a) & 0x8000 != 0 {
+                Bug[e].var_e = if session_slot!(game, Bug[e].var_a) & 0x8000 != 0 {
                     0
                 } else {
                     2
@@ -80,60 +85,69 @@ pub fn await_player<
         }
     }
 }
-pub fn rise<H: ActorHost + ActorRuntime + LeaseActors + crate::records::Records + ?Sized>(
+pub fn rise<
+    H: ActorHost + ActorRuntime + SlotAccess + LeaseActors + crate::records::Records + ?Sized,
+>(
     k: u16,
     game: &mut H,
 ) {
     let e = i32::from(k);
-    let previous = slot!(game, Bug[e].base.y_subpos);
-    slot!(game, Bug[e].base.y_subpos, |old| old.wrapping_sub(1));
-    slot!(
+    let previous = session_slot!(game, Bug[e].base.y_subpos);
+    session_slot!(game, Bug[e].base.y_subpos, |old| old.wrapping_sub(1));
+    session_slot!(
         game,
-        Bug[e].base.y_pos =
-            (i32::from(slot!(game, Bug[e].base.y_pos)) + i32::from(previous != 0) - 2) as u16
+        Bug[e].base.y_pos = (i32::from(session_slot!(game, Bug[e].base.y_pos))
+            + i32::from(previous != 0)
+            - 2) as u16
     );
-    if (slot!(game, Bug[e].var_00) as i16).wrapping_sub(slot!(game, Bug[e].base.y_pos) as i16) >= 0
-        && slot!(game, Bug[e].base.y_pos) < game.player_y()
+    if (session_slot!(game, Bug[e].var_00) as i16)
+        .wrapping_sub(session_slot!(game, Bug[e].base.y_pos) as i16)
+        >= 0
+        && session_slot!(game, Bug[e].base.y_pos) < game.player_y()
     {
-        slot!(game, Bug[e].var_e, |phase| phase | 1);
+        session_slot!(game, Bug[e].var_e, |phase| phase | 1);
         update_animation(game);
-        slot!(game, Bug[e].var_f = 0x891c);
+        session_slot!(game, Bug[e].var_f = 0x891c);
     }
 }
-pub fn fly<H: ActorHost + ActorRuntime + LeaseActors + crate::records::Records + ?Sized>(
+pub fn fly<
+    H: ActorHost + ActorRuntime + SlotAccess + LeaseActors + crate::records::Records + ?Sized,
+>(
     k: u16,
     game: &mut H,
 ) {
     let e = i32::from(k);
-    let step = if slot!(game, Bug[e].var_a) & 0x8000 == 0 {
+    let step = if session_slot!(game, Bug[e].var_a) & 0x8000 == 0 {
         2
     } else {
         0xfffe
     };
-    slot!(
+    session_slot!(
         game,
-        Bug[e].base.x_subpos = slot!(game, Bug[e].base.x_subpos)
+        Bug[e].base.x_subpos = session_slot!(game, Bug[e].base.x_subpos)
     );
-    slot!(game, Bug[e].base.x_pos, |old| old.wrapping_add(step));
+    session_slot!(game, Bug[e].base.x_pos, |old| old.wrapping_add(step));
     if queries::leaving_screen(&game.lease(), Key::from_legacy(k)) as u8 & 1 != 0 {
-        slot!(game, Bug[e].base; x_pos = slot!(game, Bug[e].var_b), x_subpos = 0);
-        let y = slot!(game, Bug[e].var_c);
-        slot!(game, Bug[e].base; y_pos = y, y_subpos = y);
-        slot!(game, Bug[e].var_e = 0);
+        session_slot!(game, Bug[e].base; x_pos = session_slot!(game, Bug[e].var_b), x_subpos = 0);
+        let y = session_slot!(game, Bug[e].var_c);
+        session_slot!(game, Bug[e].base; y_pos = y, y_subpos = y);
+        session_slot!(game, Bug[e].var_e = 0);
         update_animation(game);
-        slot!(game, Bug[e].base.properties, |properties| properties
+        session_slot!(game, Bug[e].base.properties, |properties| properties
             | 0x100);
-        slot!(game, Bug[e]; var_d = 48, var_f = 0x897e);
+        session_slot!(game, Bug[e]; var_d = 48, var_f = 0x897e);
     }
 }
-pub fn cooldown<H: ActorHost + ActorRuntime + LeaseActors + crate::records::Records + ?Sized>(
+pub fn cooldown<
+    H: ActorHost + ActorRuntime + SlotAccess + LeaseActors + crate::records::Records + ?Sized,
+>(
     k: u16,
     game: &mut H,
 ) {
     let e = i32::from(k);
-    let previous = slot!(game, Bug[e].var_d);
-    slot!(game, Bug[e].var_d, |old| old.wrapping_sub(1));
+    let previous = session_slot!(game, Bug[e].var_d);
+    session_slot!(game, Bug[e].var_d, |old| old.wrapping_sub(1));
     if previous == 1 {
-        slot!(game, Bug[e].var_f = 0x8890);
+        session_slot!(game, Bug[e].var_f = 0x8890);
     }
 }

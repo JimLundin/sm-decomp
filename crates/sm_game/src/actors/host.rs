@@ -90,6 +90,7 @@ pub trait ActorRuntime {
 /// flags, music, PLMs and the original failure path.
 pub trait BossEffects:
     ActorHost
+    + crate::actors::session_slots::SlotAccess
     + ActorRuntime
     + crate::effects::SoundEffects
     + crate::word_transfers::LoadedRom

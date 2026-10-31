@@ -14,7 +14,8 @@ use crate::enemy_script::EnemyScript;
 use crate::palette_copies::{copy_rom_colors_to_palette, copy_rom_colors_to_target_palette};
 use crate::player_position::PlayerPosition as _;
 use crate::ram::RawRam as _;
-use crate::ram::{slot, word};
+use crate::ram::word;
+use crate::session_slot;
 
 /// What the steam and doors need beyond the shared boss effects.
 pub trait Host: crate::actors::host::EnemyHost + crate::actors::host::LeaseActors {
@@ -197,29 +198,29 @@ fn store_word<H: Host + ?Sized>(game: &H, at: usize, value: u16) {
 /// `CeresSteam_Init`.
 pub fn initialize_steam<H: Host + ?Sized>(game: &mut H) {
     let e = current(game);
-    slot!(game, Steam[e].base; vram_tiles_index = 0,
-        properties = slot!(game, Steam[e].base.properties) | K_ENEMY_PROPS_DISABLE_SAMUS_COLL as u16,
-        extra_properties = slot!(game, Steam[e].base.extra_properties) | 4, instruction_timer = 1,
+    session_slot!(game, Steam[e].base; vram_tiles_index = 0,
+        properties = session_slot!(game, Steam[e].base.properties) | K_ENEMY_PROPS_DISABLE_SAMUS_COLL as u16,
+        extra_properties = session_slot!(game, Steam[e].base.extra_properties) | 4, instruction_timer = 1,
         timer = 0, palette_index = 2560, );
-    slot!(
+    session_slot!(
         game,
         Steam[e].activation_timer = (game.next_random() & 0x1f) + 1
     );
-    let kind = crate::ceres_door_data::steam(game, slot!(game, Steam[e].kind) as isize);
-    slot!(
+    let kind = crate::ceres_door_data::steam(game, session_slot!(game, Steam[e].kind) as isize);
+    session_slot!(
         game,
         Steam[e].base.current_instruction = kind.instruction_list
     );
-    slot!(game, Steam[e].function = kind.function);
+    session_slot!(game, Steam[e].function = kind.function);
 }
 
 /// Main AI - enemy $E1FF (steam) ($A6:F00D), at full health. Was
 /// `CeresSteam_Main`.
 pub fn steam_main<H: Host + ?Sized>(game: &mut H) {
     let e = current(game);
-    slot!(game, Steam[e].base.health = 0x7fff);
+    session_slot!(game, Steam[e].base.health = 0x7fff);
     let k = game.current_enemy();
-    match slot!(game, Steam[e].function) {
+    match session_slot!(game, Steam[e].function) {
         steam_function::NONE => (),
         steam_function::CALCULATE_ROTATING_ELEVATOR_OFFSET => steam_rotating_offset(k, game),
         _ => game.unreachable(),
@@ -231,13 +232,13 @@ pub fn steam_main<H: Host + ?Sized>(game: &mut H) {
 pub fn steam_rotating_offset<H: Host + ?Sized>(k: u16, game: &mut H) {
     let e = i32::from(k);
     let (x, y) = game.project_cinematic_point(
-        slot!(game, Steam[e].base.x_pos),
-        slot!(game, Steam[e].base.y_pos),
+        session_slot!(game, Steam[e].base.x_pos),
+        session_slot!(game, Steam[e].base.y_pos),
     );
     let record = ENEMY_SPAWN_DATA + usize::from(game.current_enemy());
-    let x_offset = x.wrapping_sub(slot!(game, Steam[e].base.x_pos));
+    let x_offset = x.wrapping_sub(session_slot!(game, Steam[e].base.x_pos));
     store_word(game, record + SPAWN_GRAPHICAL_X_OFFSET, x_offset);
-    let y_offset = y.wrapping_sub(slot!(game, Steam[e].base.y_pos));
+    let y_offset = y.wrapping_sub(session_slot!(game, Steam[e].base.y_pos));
     store_word(game, record + SPAWN_GRAPHICAL_Y_OFFSET, y_offset);
 }
 
@@ -246,8 +247,8 @@ pub fn steam_rotating_offset<H: Host + ?Sized>(k: u16, game: &mut H) {
 /// `CeresSteam_Instr_2`.
 pub fn steam_activate<H: Host + ?Sized>(k: u16, script: EnemyScript, game: &mut H) -> EnemyScript {
     let e = i32::from(k);
-    let timer = slot!(game, Steam[e].activation_timer);
-    slot!(game, Steam[e].activation_timer = timer.wrapping_sub(1));
+    let timer = session_slot!(game, Steam[e].activation_timer);
+    session_slot!(game, Steam[e].activation_timer = timer.wrapping_sub(1));
     if timer != 1 {
         return EnemyScript::jump(script.word(0));
     }
@@ -264,37 +265,37 @@ pub const VANISH: u16 = 0x0400 | 0x0100;
 /// Was `CeresDoor_Init`.
 pub fn initialize_door<H: Host + ?Sized>(game: &mut H) {
     let e = current(game);
-    slot!(game, Door[e].base; spritemap_pointer = DOOR_SPRITEMAP, instruction_timer = 1);
-    slot!(game, Door[e].base; timer = 0, vram_tiles_index = 0);
-    slot!(game, Door[e].base.palette_index = 1024);
-    let kind = slot!(game, Door[e].kind) as isize;
-    slot!(
+    session_slot!(game, Door[e].base; spritemap_pointer = DOOR_SPRITEMAP, instruction_timer = 1);
+    session_slot!(game, Door[e].base; timer = 0, vram_tiles_index = 0);
+    session_slot!(game, Door[e].base.palette_index = 1024);
+    let kind = session_slot!(game, Door[e].kind) as isize;
+    session_slot!(
         game,
         Door[e].function = crate::ceres_door_data::door_function(game, kind)
     );
-    slot!(
+    session_slot!(
         game,
         Door[e].base.current_instruction = crate::ceres_door_data::door_instructions(game, kind)
     );
-    slot!(game, Door[e].drawn_by_ridley = 0);
+    session_slot!(game, Door[e].drawn_by_ridley = 0);
     load_overlay_tiles(game.current_enemy(), game);
     let palette = if word!(game.CERES_STATUS) != 0 {
         ESCAPE_DOOR_PALETTE.wrapping_add(2)
     } else {
-        if slot!(game, Door[e].kind) == RIDLEYS_ROOM_FACING_RIGHT {
+        if session_slot!(game, Door[e].kind) == RIDLEYS_ROOM_FACING_RIGHT {
             copy_rom_colors_to_target_palette(0xa6, 0x142, DOOR_PALETTE.wrapping_add(2), 0xf, game);
             return;
         }
         DOOR_PALETTE.wrapping_add(2)
     };
-    slot!(game, Door[current(game)].base.palette_index = 3584);
+    session_slot!(game, Door[current(game)].base.palette_index = 3584);
     copy_rom_colors_to_target_palette(0xa6, 0x1e2, palette, 0xf, game);
 }
 
 /// Load rotating elevator room pre-explosion door overlay tiles if needed
 /// ($A6:F739): queue $B0:C400..C7FF to VRAM $7000. Was `CeresDoor_Func_1`.
 pub fn load_overlay_tiles<H: Host + ?Sized>(k: u16, game: &mut H) {
-    if slot!(game, Door[i32::from(k)].kind) != ELEVATOR_DOOR_OVERLAY {
+    if session_slot!(game, Door[i32::from(k)].kind) != ELEVATOR_DOOR_OVERLAY {
         return;
     }
     let tail = word!(game.VRAM_WRITE_QUEUE_TAIL);
@@ -310,7 +311,7 @@ pub fn load_overlay_tiles<H: Host + ?Sized>(k: u16, game: &mut H) {
 pub fn door_main<H: Host + ?Sized>(game: &mut H) {
     let e = current(game);
     let k = game.current_enemy();
-    match slot!(game, Door[e].function) {
+    match session_slot!(game, Door[e].function) {
         door_function::HANDLE_ESCAPE_EARTHQUAKE => escape_rumble(0x14, game),
         door_function::HANDLE_RIDLEYS_ROOM_ESCAPE_EARTHQUAKE => escape_rumble(0x1d, game),
         door_function::RIDLEY_ESCAPE_MODE7_WALL => mode7_wall(game),
@@ -343,7 +344,7 @@ pub fn mode7_wall<H: Host + ?Sized>(game: &mut H) {
         game,
     );
     if word!(game.CERES_STATUS) & RIDLEY_ESCAPING != 0 {
-        slot!(game, Door[current(game)].base.palette_index = 3584);
+        session_slot!(game, Door[current(game)].base.palette_index = 3584);
         change_properties(
             game.current_enemy(),
             0,
@@ -360,12 +361,12 @@ pub fn elevator_default<H: Host + ?Sized>(k: u16, game: &mut H) {
     elevator_animations(game);
     if word!(game.CERES_STATUS) >= ESCAPE_STARTED {
         let e = i32::from(k);
-        slot!(
+        session_slot!(
             game,
             Door[e].function = door_function::RUMBLING_AND_EXPLOSIONS
         );
-        slot!(game, Door[e].rumbling_timer = 48);
-        slot!(game, Door[0]; rumble_timer = 0, rumble_index = 0);
+        session_slot!(game, Door[e].rumbling_timer = 48);
+        session_slot!(game, Door[0]; rumble_timer = 0, rumble_index = 0);
     }
 }
 
@@ -374,27 +375,27 @@ pub fn elevator_default<H: Host + ?Sized>(k: u16, game: &mut H) {
 /// frames, then the elevator room rotates. Was `CeresDoor_Func_6`.
 pub fn rumbling_and_explosions<H: Host + ?Sized>(k: u16, game: &mut H) {
     let e = i32::from(k);
-    slot!(game, Door[e].rumbling_timer, |old| old.wrapping_sub(1));
-    if (slot!(game, Door[e].rumbling_timer) & 0x8000) != 0 {
-        slot!(game, Door[e].base.properties, |old| old
+    session_slot!(game, Door[e].rumbling_timer, |old| old.wrapping_sub(1));
+    if (session_slot!(game, Door[e].rumbling_timer) & 0x8000) != 0 {
+        session_slot!(game, Door[e].base.properties, |old| old
             | K_ENEMY_PROPS_INVISIBLE as u16);
-        slot!(game, Door[e].function = door_function::ELEVATOR_ANIMATIONS);
+        session_slot!(game, Door[e].function = door_function::ELEVATOR_ANIMATIONS);
         start_elevator_rotation(game);
         return;
     }
-    slot!(game, Door[0].rumble_timer, |old| old.wrapping_sub(1));
-    if (slot!(game, Door[0].rumble_timer) & 0x8000) == 0 {
+    session_slot!(game, Door[0].rumble_timer, |old| old.wrapping_sub(1));
+    if (session_slot!(game, Door[0].rumble_timer) & 0x8000) == 0 {
         return;
     }
-    slot!(game, Door[0].rumble_timer = 4);
-    slot!(game, Door[0].rumble_index, |old| old.wrapping_sub(1));
-    if (slot!(game, Door[0].rumble_index) & 0x8000) != 0 {
-        slot!(game, Door[0].rumble_index = 3);
+    session_slot!(game, Door[0].rumble_timer = 4);
+    session_slot!(game, Door[0].rumble_index, |old| old.wrapping_sub(1));
+    if (session_slot!(game, Door[0].rumble_index) & 0x8000) != 0 {
+        session_slot!(game, Door[0].rumble_index = 3);
     }
-    let pair = (2 * slot!(game, Door[0].rumble_index)) as isize;
-    let x = slot!(game, Door[e].base.x_pos)
+    let pair = (2 * session_slot!(game, Door[0].rumble_index)) as isize;
+    let x = session_slot!(game, Door[e].base.x_pos)
         .wrapping_add(crate::ceres_door_data::explosion_offset(game, pair));
-    let y = slot!(game, Door[e].base.y_pos)
+    let y = session_slot!(game, Door[e].base.y_pos)
         .wrapping_add(crate::ceres_door_data::explosion_offset(game, pair + 1));
     game.set_projectile_spawn_point(x, y);
     let kind = if game.next_random() < 0x4000 {

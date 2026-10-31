@@ -7,7 +7,8 @@
 use crate::actors::layouts::{EnemyBase, EnemyLayout8, same_words};
 use crate::constants::enemy_properties::K_ENEMY_PROPS_PROCESSED_OFFSCREEN;
 use crate::ram::RawRam as _;
-use crate::ram::{slot, word};
+use crate::ram::word;
+use crate::session_slot;
 use sm_data::enemy_speeds::SpeedTable;
 
 /// What the fire arc needs beyond the shared boss effects.
@@ -105,86 +106,87 @@ fn current<H: Host + ?Sized>(game: &H) -> i32 {
 /// `NuclearWaffle_Init`.
 pub fn initialize<H: Host + ?Sized>(game: &mut H) {
     let e = current(game);
-    slot!(game, FireArc[e].base.current_instruction = INSTRUCTION_LIST);
-    slot!(
+    session_slot!(game, FireArc[e].base.current_instruction = INSTRUCTION_LIST);
+    session_slot!(
         game,
-        FireArc[e].speed_index = slot!(byte game, FireArc[e].parameter_1[0]) as u16
+        FireArc[e].speed_index = session_slot!(byte game, FireArc[e].parameter_1[0]) as u16
     );
-    slot!(
+    session_slot!(
         game,
-        FireArc[e].radius = slot!(byte game, FireArc[e].parameter_1[1]) as u16
+        FireArc[e].radius = session_slot!(byte game, FireArc[e].parameter_1[1]) as u16
     );
-    slot!(
+    session_slot!(
         game,
-        FireArc[e].direction = slot!(byte game, FireArc[e].parameter_2[0]) as u16
+        FireArc[e].direction = session_slot!(byte game, FireArc[e].parameter_2[0]) as u16
     );
-    let inactive = slot!(byte game, FireArc[e].parameter_2[1]) as u16;
-    slot!(game, FireArc[e]; inactive_reset = inactive, inactive_timer = inactive,
+    let inactive = session_slot!(byte game, FireArc[e].parameter_2[1]) as u16;
+    session_slot!(game, FireArc[e]; inactive_reset = inactive, inactive_timer = inactive,
         function = function::INACTIVE);
-    let pair = 2 * usize::from(slot!(game, FireArc[e].direction));
+    let pair = 2 * usize::from(session_slot!(game, FireArc[e].direction));
     let start = START_AND_FINISH[pair];
-    slot!(game, FireArc[e]; start_angle = start, angle = start,
+    session_slot!(game, FireArc[e]; start_angle = start, angle = start,
         finish_angle = START_AND_FINISH[pair + 1], part_angle_2x = PART_ANGLES[pair],
         part_angle = PART_ANGLES[pair + 1], rising_explosion_angle = EXPLOSION_ANGLES[pair],
         falling_explosion_angle = EXPLOSION_ANGLES[pair + 1], );
     // Linear speed table rows are 8 bytes; the second half negates the speed.
-    let mut speed = 8u16.wrapping_mul(slot!(game, FireArc[e].speed_index));
-    if slot!(game, FireArc[e].direction) == 0 {
+    let mut speed = 8u16.wrapping_mul(session_slot!(game, FireArc[e].speed_index));
+    if session_slot!(game, FireArc[e].direction) == 0 {
         speed = speed.wrapping_add(4);
     }
     let speed = (speed >> 1) as isize;
-    slot!(
+    session_slot!(
         game,
         FireArc[e].angle_delta = game.enemy_speed(SpeedTable::Linear, speed)
     );
-    slot!(
+    session_slot!(
         game,
         FireArc[e].angle_delta_subpixel = game.enemy_speed(SpeedTable::Linear, speed + 1)
     );
-    slot!(
+    session_slot!(
         game,
-        FireArc[e].origin_x = slot!(game, FireArc[e].base.x_pos)
+        FireArc[e].origin_x = session_slot!(game, FireArc[e].base.x_pos)
     );
-    slot!(
+    session_slot!(
         game,
-        FireArc[e].origin_y = slot!(game, FireArc[e].base.y_pos)
+        FireArc[e].origin_y = session_slot!(game, FireArc[e].base.y_pos)
     );
-    let x = slot!(game, FireArc[e].origin_x).wrapping_add(game.actor_cosine(
-        slot!(game, FireArc[e].start_angle),
-        slot!(game, FireArc[e].radius),
+    let x = session_slot!(game, FireArc[e].origin_x).wrapping_add(game.actor_cosine(
+        session_slot!(game, FireArc[e].start_angle),
+        session_slot!(game, FireArc[e].radius),
     ));
-    slot!(game, FireArc[e].spawn_x = x);
-    slot!(game, FireArc[e].base.x_pos = x);
-    let y = slot!(game, FireArc[e].origin_y).wrapping_add(game.actor_sine(
-        slot!(game, FireArc[e].start_angle),
-        slot!(game, FireArc[e].radius),
+    session_slot!(game, FireArc[e].spawn_x = x);
+    session_slot!(game, FireArc[e].base.x_pos = x);
+    let y = session_slot!(game, FireArc[e].origin_y).wrapping_add(game.actor_sine(
+        session_slot!(game, FireArc[e].start_angle),
+        session_slot!(game, FireArc[e].radius),
     ));
-    slot!(game, FireArc[e].spawn_y = y);
-    slot!(game, FireArc[e].base.y_pos = y);
+    session_slot!(game, FireArc[e].spawn_y = y);
+    session_slot!(game, FireArc[e].base.y_pos = y);
     // Body indices 8 down to 2 are projectiles; 6 down to 2 also sprite objects.
     let mut index = 8;
-    slot!(game, FireArc[e].body_index = 8);
+    session_slot!(game, FireArc[e].body_index = 8);
     loop {
         game.spawn_projectile(index, word!(game.CUR_ENEMY_INDEX), BODY_PROJECTILE);
-        index = slot!(game, FireArc[e].body_index).wrapping_sub(2);
-        slot!(game, FireArc[e].body_index = index);
+        index = session_slot!(game, FireArc[e].body_index).wrapping_sub(2);
+        session_slot!(game, FireArc[e].body_index = index);
         if index == 0 {
             break;
         }
     }
-    slot!(game, FireArc[e].body_index = 6);
+    session_slot!(game, FireArc[e].body_index = 6);
     loop {
-        let graphics = slot!(game, FireArc[e].base.vram_tiles_index)
-            | slot!(game, FireArc[e].base.palette_index);
-        slot!(game, FireArc[e].graphics = graphics);
-        let x = slot!(game, FireArc[e].base.x_pos);
-        let y = slot!(game, FireArc[e].base.y_pos);
+        let graphics = session_slot!(game, FireArc[e].base.vram_tiles_index)
+            | session_slot!(game, FireArc[e].base.palette_index);
+        session_slot!(game, FireArc[e].graphics = graphics);
+        let x = session_slot!(game, FireArc[e].base.x_pos);
+        let y = session_slot!(game, FireArc[e].base.y_pos);
         let sprite = game.create_sprite(x, y, BODY_SPRITE, graphics);
         // The sprite object words are indexed by the body index's bytes.
-        let part = word!(game.CUR_ENEMY_INDEX) as i32 + slot!(game, FireArc[e].body_index) as i32;
-        slot!(game, FireArc[part].sprite_object = sprite);
-        let index = slot!(game, FireArc[e].body_index).wrapping_sub(2);
-        slot!(game, FireArc[e].body_index = index);
+        let part =
+            word!(game.CUR_ENEMY_INDEX) as i32 + session_slot!(game, FireArc[e].body_index) as i32;
+        session_slot!(game, FireArc[part].sprite_object = sprite);
+        let index = session_slot!(game, FireArc[e].body_index).wrapping_sub(2);
+        session_slot!(game, FireArc[e].body_index = index);
         if index == 0 {
             break;
         }
@@ -194,7 +196,7 @@ pub fn initialize<H: Host + ?Sized>(game: &mut H) {
 /// Main AI - enemy $E0BF (fire arc) ($A6:960E). Was `NuclearWaffle_Main`.
 pub fn main_ai<H: Host + ?Sized>(game: &mut H) {
     let e = current(game);
-    match slot!(game, FireArc[e].function) {
+    match session_slot!(game, FireArc[e].function) {
         function::INACTIVE => inactive(game),
         function::ACTIVE => game.advance_orbit(),
         _ => game.unreachable(),
@@ -206,19 +208,23 @@ pub fn main_ai<H: Host + ?Sized>(game: &mut H) {
 /// off-screen. Was `NuclearWaffle_Func_1`.
 pub fn inactive<H: Host + ?Sized>(game: &mut H) {
     let e = current(game);
-    slot!(game, FireArc[e].inactive_timer, |old| old.wrapping_sub(1));
-    if (slot!(game, FireArc[e].inactive_timer) & 0x8000) == 0 {
+    session_slot!(game, FireArc[e].inactive_timer, |old| old.wrapping_sub(1));
+    if (session_slot!(game, FireArc[e].inactive_timer) & 0x8000) == 0 {
         return;
     }
-    slot!(
+    session_slot!(
         game,
-        FireArc[e].inactive_timer = slot!(game, FireArc[e].inactive_reset)
+        FireArc[e].inactive_timer = session_slot!(game, FireArc[e].inactive_reset)
     );
-    slot!(game, FireArc[e]; angle = slot!(game, FireArc[e].start_angle),
+    session_slot!(game, FireArc[e]; angle = session_slot!(game, FireArc[e].start_angle),
         function = function::ACTIVE, head_explosion = 0);
-    clear_words(game, slot!(@at FireArc, e, projectile_explosions), 8);
-    clear_words(game, slot!(@at FireArc, e, sprite_explosions), 8);
-    slot!(game, FireArc[e].base.properties, |old| old
+    clear_words(
+        game,
+        crate::ram_slot!(@at FireArc, e, projectile_explosions),
+        8,
+    );
+    clear_words(game, crate::ram_slot!(@at FireArc, e, sprite_explosions), 8);
+    session_slot!(game, FireArc[e].base.properties, |old| old
         | K_ENEMY_PROPS_PROCESSED_OFFSCREEN as u16);
 }
 
@@ -234,14 +240,14 @@ fn clear_words<H: Host + ?Sized>(game: &mut H, at: usize, count: usize) {
 /// below the top half, the enemy before it. Was `SpikeyPlatform2ndEnemy_Init`.
 pub fn initialize_spike_platform_bottom<H: Host + ?Sized>(game: &mut H) {
     let e = current(game);
-    slot!(
+    session_slot!(
         game,
-        EnemyLayout8[e].base.x_pos = slot!(game, EnemyLayout8[e - 0x40].base.x_pos)
+        EnemyLayout8[e].base.x_pos = session_slot!(game, EnemyLayout8[e - 0x40].base.x_pos)
     );
-    slot!(
+    session_slot!(
         game,
         EnemyLayout8[e].base.y_pos =
-            slot!(game, EnemyLayout8[e - 0x40].base.y_pos).wrapping_add(12)
+            session_slot!(game, EnemyLayout8[e - 0x40].base.y_pos).wrapping_add(12)
     );
 }
 

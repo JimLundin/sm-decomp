@@ -8,8 +8,8 @@ use crate::actors::layouts::{EnemyBase, EnemyLayout40};
 use crate::constants::enemy_properties::K_ENEMY_PROPS_DISABLE_SAMUS_COLL;
 use crate::enemy_projectiles::drops::DropSource;
 use crate::enemy_script::EnemyScript;
-use crate::ram::RawRam as _;
-use crate::ram::{slot, word};
+use crate::ram::word;
+use crate::session_slot;
 
 /// What Mini Kraid needs: the shared boss effects, dying and its drop.
 pub trait Host: crate::actors::host::BossEffects + crate::actors::deaths::Deaths {}
@@ -99,9 +99,12 @@ fn current<H: Host + ?Sized>(game: &H) -> i32 {
 
 /// Face Samus.
 fn face_samus<H: Host + ?Sized>(game: &mut H, me: i32) {
-    slot!(game, MiniKraid[me].facing = FACING_LEFT);
-    if ((slot!(game, MiniKraid[me].base.x_pos)) as i16).wrapping_sub((game.player_x()) as i16) < 0 {
-        slot!(game, MiniKraid[me].facing = FACING_RIGHT);
+    session_slot!(game, MiniKraid[me].facing = FACING_LEFT);
+    if ((session_slot!(game, MiniKraid[me].base.x_pos)) as i16)
+        .wrapping_sub((game.player_x()) as i16)
+        < 0
+    {
+        session_slot!(game, MiniKraid[me].facing = FACING_RIGHT);
     }
 }
 
@@ -109,36 +112,39 @@ fn face_samus<H: Host + ?Sized>(game: &mut H, me: i32) {
 pub fn initialize<H: Host + ?Sized>(game: &mut H) {
     let mut steps: u16 = ((word!(game.RANDOM_NUMBER) as i32 & 3) + 2) as u16;
     let me = current(game);
-    slot!(game, MiniKraid[me]; steps_until_turn = steps, cycles_until_spit = steps);
+    session_slot!(game, MiniKraid[me]; steps_until_turn = steps, cycles_until_spit = steps);
     steps = steps.wrapping_add(64);
-    slot!(game, MiniKraid[me].spike_timer = steps);
+    session_slot!(game, MiniKraid[me].spike_timer = steps);
     steps = steps.wrapping_add(32);
-    slot!(game, MiniKraid[me]; spike_timer_1 = steps, spike_timer_2 = steps.wrapping_sub(48),
+    session_slot!(game, MiniKraid[me]; spike_timer_1 = steps, spike_timer_2 = steps.wrapping_sub(48),
         spike_cycle = 0);
-    slot!(
+    session_slot!(
         game,
-        MiniKraid[me].base.properties = (slot!(game, MiniKraid[me].base.properties))
+        MiniKraid[me].base.properties = (session_slot!(game, MiniKraid[me].base.properties))
             | (K_ENEMY_PROPS_DISABLE_SAMUS_COLL as u16)
     );
-    slot!(game, MiniKraid[me].base; instruction_timer = 1, timer = 0);
-    slot!(game, MiniKraid[me]; walk_speed = FACING_LEFT, facing = FACING_LEFT);
+    session_slot!(game, MiniKraid[me].base; instruction_timer = 1, timer = 0);
+    session_slot!(game, MiniKraid[me]; walk_speed = FACING_LEFT, facing = FACING_LEFT);
     let mut walk = animation::WALK_FORWARD_LEFT;
-    if ((slot!(game, MiniKraid[me].base.x_pos)) as i16).wrapping_sub((game.player_x()) as i16) < 0 {
-        slot!(game, MiniKraid[me]; walk_speed = FACING_RIGHT, facing = FACING_RIGHT);
+    if ((session_slot!(game, MiniKraid[me].base.x_pos)) as i16)
+        .wrapping_sub((game.player_x()) as i16)
+        < 0
+    {
+        session_slot!(game, MiniKraid[me]; walk_speed = FACING_RIGHT, facing = FACING_RIGHT);
         walk = animation::WALK_FORWARD_RIGHT;
     }
-    slot!(game, MiniKraid[me].base.current_instruction = walk);
+    session_slot!(game, MiniKraid[me].base.current_instruction = walk);
 }
 
 /// Checks the next belly spike timer. Was `FakeKraid_Main`.
 pub fn main_ai<H: Host + ?Sized>(game: &mut H) {
     let me = current(game);
-    let spike = slot!(game, MiniKraid[me].spike_cycle);
+    let spike = session_slot!(game, MiniKraid[me].spike_cycle);
     let mut next = spike.wrapping_add(2);
     if (spike as i32 - 4i32) & 0x8000 == 0 {
         next = 0;
     }
-    slot!(game, MiniKraid[me].spike_cycle = next);
+    session_slot!(game, MiniKraid[me].spike_cycle = next);
     fire_spikes_when_ready(game, word!(game.CUR_ENEMY_INDEX), spike);
 }
 
@@ -147,18 +153,18 @@ pub fn main_ai<H: Host + ?Sized>(game: &mut H) {
 /// Was `FakeKraid_Func_1`.
 fn fire_spikes_when_ready<H: Host + ?Sized>(game: &mut H, k: u16, spike: u16) {
     let timer: i32 = k as i32 + spike as i32;
-    let left = slot!(game, MiniKraid[timer].spike_timer);
+    let left = session_slot!(game, MiniKraid[timer].spike_timer);
     if left != 0 {
-        slot!(game, MiniKraid[timer].spike_timer = left.wrapping_sub(1));
+        session_slot!(game, MiniKraid[timer].spike_timer = left.wrapping_sub(1));
     } else {
-        slot!(
+        session_slot!(
             game,
             MiniKraid[timer].spike_timer = ((word!(game.RANDOM_NUMBER) as i32 & 0x3f) + 16) as u16
         );
         let me = k as i32;
-        slot!(game, MiniKraid[me].last_spike = spike);
+        session_slot!(game, MiniKraid[me].last_spike = spike);
         let mut spikes = projectile::SPIKES_LEFT;
-        let facing: i16 = slot!(game, MiniKraid[me].facing) as i16;
+        let facing: i16 = session_slot!(game, MiniKraid[me].facing) as i16;
         if facing >= 0 {
             spikes = projectile::SPIKES_RIGHT;
         }
@@ -175,21 +181,21 @@ fn fire_spikes_when_ready<H: Host + ?Sized>(game: &mut H, k: u16, spike: u16) {
 fn spit<H: Host + ?Sized>(game: &mut H, row: u16, offset: u16) {
     let k: u16 = word!(game.CUR_ENEMY_INDEX);
     let me = current(game);
-    slot!(game, MiniKraid[me].spit_x_offset = offset);
+    session_slot!(game, MiniKraid[me].spit_x_offset = offset);
     let index: i32 = row as i32 >> 1;
-    slot!(
+    session_slot!(
         game,
         MiniKraid[me].spit_x_velocity = SPIT_VELOCITIES[index as usize]
     );
     let y_velocity: u16 = SPIT_VELOCITIES[(index + 1) as usize];
-    slot!(game, MiniKraid[me].spit_y_velocity = y_velocity);
+    session_slot!(game, MiniKraid[me].spit_y_velocity = y_velocity);
     game.spawn_projectile(y_velocity, word!(game.CUR_ENEMY_INDEX), projectile::SPIT);
-    slot!(
+    session_slot!(
         game,
         MiniKraid[me].spit_x_velocity = SPIT_VELOCITIES[(index + 2) as usize]
     );
     let y_velocity: u16 = SPIT_VELOCITIES[(index + 3) as usize];
-    slot!(game, MiniKraid[me].spit_y_velocity = y_velocity);
+    session_slot!(game, MiniKraid[me].spit_y_velocity = y_velocity);
     game.spawn_projectile(y_velocity, k, projectile::SPIT);
 }
 
@@ -197,28 +203,29 @@ fn spit<H: Host + ?Sized>(game: &mut H, row: u16, offset: u16) {
 /// blocks it, then faces Samus. Was `FakeKraid_Instr_2`.
 pub fn step<H: Host + ?Sized>(game: &mut H) {
     let me = current(game);
-    if slot!(game, MiniKraid[me].cycles_until_spit) != 0 {
-        slot!(game, MiniKraid[me].cycles_until_spit, |old| old
+    if session_slot!(game, MiniKraid[me].cycles_until_spit) != 0 {
+        session_slot!(game, MiniKraid[me].cycles_until_spit, |old| old
             .wrapping_sub(1));
     }
-    let steps = slot!(game, MiniKraid[me].steps_until_turn);
-    slot!(game, MiniKraid[me].steps_until_turn, |old| old
+    let steps = session_slot!(game, MiniKraid[me].steps_until_turn);
+    session_slot!(game, MiniKraid[me].steps_until_turn, |old| old
         .wrapping_sub(1));
     let turn_around: bool = if steps == 1 {
-        slot!(
+        session_slot!(
             game,
             MiniKraid[me].steps_until_turn = ((word!(game.RANDOM_NUMBER) as i32 & 3) + 7) as u16
         );
         true
     } else {
         let actor = word!(game.CUR_ENEMY_INDEX);
-        let amount = (slot!(game, MiniKraid[me].walk_speed) as i16 as i32) << 16;
+        let amount = (session_slot!(game, MiniKraid[me].walk_speed) as i16 as i32) << 16;
         game.move_horizontal(actor, amount, Slopes::Ignore)
     };
     if turn_around {
-        slot!(
+        session_slot!(
             game,
-            MiniKraid[me].walk_speed = -(slot!(game, MiniKraid[me].walk_speed) as i32) as u16
+            MiniKraid[me].walk_speed =
+                -(session_slot!(game, MiniKraid[me].walk_speed) as i32) as u16
         );
     }
     face_samus(game, me);
@@ -228,24 +235,24 @@ pub fn step<H: Host + ?Sized>(game: &mut H) {
 /// walks, or a spit once enough walk cycles have passed. Was `FakeKraid_Instr_1`.
 pub fn choose_animation<H: Host + ?Sized>(game: &mut H) -> EnemyScript {
     let me = current(game);
-    if slot!(game, MiniKraid[me].cycles_until_spit) != 0 {
-        if (slot!(game, MiniKraid[me].facing) & 0x8000) != 0 {
-            if (slot!(game, MiniKraid[current(game)].walk_speed) & 0x8000) == 0 {
+    if session_slot!(game, MiniKraid[me].cycles_until_spit) != 0 {
+        if (session_slot!(game, MiniKraid[me].facing) & 0x8000) != 0 {
+            if (session_slot!(game, MiniKraid[current(game)].walk_speed) & 0x8000) == 0 {
                 return EnemyScript::jump(animation::WALK_BACKWARD_LEFT);
             }
             EnemyScript::jump(animation::WALK_FORWARD_LEFT)
         } else {
-            if (slot!(game, MiniKraid[me].walk_speed) & 0x8000) != 0 {
+            if (session_slot!(game, MiniKraid[me].walk_speed) & 0x8000) != 0 {
                 return EnemyScript::jump(animation::WALK_BACKWARD_RIGHT);
             }
             EnemyScript::jump(animation::WALK_FORWARD_RIGHT)
         }
     } else {
-        slot!(
+        session_slot!(
             game,
             MiniKraid[me].cycles_until_spit = ((word!(game.RANDOM_NUMBER) as i32 & 3) + 3) as u16
         );
-        if (slot!(game, MiniKraid[me].facing) & 0x8000) != 0 {
+        if (session_slot!(game, MiniKraid[me].facing) & 0x8000) != 0 {
             return EnemyScript::jump(animation::SPIT_LEFT);
         }
         EnemyScript::jump(animation::SPIT_RIGHT)
@@ -272,8 +279,12 @@ pub fn spit_right<H: Host + ?Sized>(game: &mut H) {
 /// Where a death's drops start.
 fn mark_drop_origin<H: Host + ?Sized>(game: &mut H) {
     let me = current(game);
-    word!(game.SPECIAL_DEATH_ITEM_DROP_X_ORIGIN_POS = slot!(game, MiniKraid[me].base.x_pos));
-    word!(game.SPECIAL_DEATH_ITEM_DROP_Y_ORIGIN_POS = slot!(game, MiniKraid[me].base.y_pos));
+    word!(
+        game.SPECIAL_DEATH_ITEM_DROP_X_ORIGIN_POS = session_slot!(game, MiniKraid[me].base.x_pos)
+    );
+    word!(
+        game.SPECIAL_DEATH_ITEM_DROP_Y_ORIGIN_POS = session_slot!(game, MiniKraid[me].base.y_pos)
+    );
 }
 
 /// Touched by Samus. Was `FakeKraid_Touch`.
@@ -292,7 +303,7 @@ pub fn shot<H: Host + ?Sized>(game: &mut H) {
 
 /// Dies with its drop once out of health. Was `FakeKraid_9C50`.
 fn die_when_out_of_health<H: Host + ?Sized>(game: &mut H) {
-    if slot!(
+    if session_slot!(
         game,
         MiniKraid[word!(game.CUR_ENEMY_INDEX) as i32].base.health
     ) == 0
