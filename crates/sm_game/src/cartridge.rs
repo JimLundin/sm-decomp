@@ -10,6 +10,10 @@ pub trait NativeImage {
     /// The exact native allocation; panics with "native ROM must be
     /// registered" when none is.
     fn native_image(&self) -> RomImage;
+    /// The registered native image, if any, without the missing-image panic.
+    fn native_image_binding(&self) -> Option<RomImage> {
+        Some(self.native_image())
+    }
 }
 
 /// The native image with the original's invalid-address diagnostic.
