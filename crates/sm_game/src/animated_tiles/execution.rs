@@ -126,49 +126,31 @@ pub fn spawn(host: &mut impl Host, definition: u16) {
     else {
         return;
     };
-    host.session_mut()
+    let entry = &mut host
+        .session_mut()
         .presentation
         .visual_mut()
         .animated_tiles
-        .slots[slot]
-        .definition = definition;
-    host.session_mut()
-        .presentation
-        .visual_mut()
-        .animated_tiles
-        .slots[slot]
-        .counter = 0;
+        .slots[slot];
+    entry.definition = definition;
+    entry.counter = 0;
     let data = host.record(Source::Loaded, 0x87, definition);
-    host.session_mut()
+    let (program, size, vram) = (
+        data.native_word(0),
+        data.native_word(2),
+        data.native_word(4),
+    );
+    let entry = &mut host
+        .session_mut()
         .presentation
         .visual_mut()
         .animated_tiles
-        .slots[slot]
-        .program = data.native_word(0);
-    host.session_mut()
-        .presentation
-        .visual_mut()
-        .animated_tiles
-        .slots[slot]
-        .source = 0;
-    host.session_mut()
-        .presentation
-        .visual_mut()
-        .animated_tiles
-        .slots[slot]
-        .size = data.native_word(2);
-    host.session_mut()
-        .presentation
-        .visual_mut()
-        .animated_tiles
-        .slots[slot]
-        .vram = data.native_word(4);
-    host.session_mut()
-        .presentation
-        .visual_mut()
-        .animated_tiles
-        .slots[slot]
-        .delay = 1;
+        .slots[slot];
+    entry.program = program;
+    entry.source = 0;
+    entry.size = size;
+    entry.vram = vram;
+    entry.delay = 1;
     host.probe("animated_tiles.spawn.initialized");
 }
 pub fn advance(host: &mut impl Host) {
