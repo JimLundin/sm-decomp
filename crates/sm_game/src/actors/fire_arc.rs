@@ -105,6 +105,7 @@ fn current<H: Host + ?Sized>(game: &H) -> i32 {
 /// projectiles and sprite objects spawn at the arc's start. Was
 /// `NuclearWaffle_Init`.
 pub fn initialize<H: Host + ?Sized>(game: &mut H) {
+    crate::probe::hit("fire_arc.initialize");
     let e = current(game);
     session_slot!(game, FireArc[e].base.current_instruction = INSTRUCTION_LIST);
     session_slot!(
