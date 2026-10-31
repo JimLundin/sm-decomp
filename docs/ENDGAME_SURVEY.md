@@ -60,6 +60,8 @@ oracle (target `sm_tools`). They don't block a native build:
 | 9 | **Save data and persistence** | SRAM saves (`save_ram.rs`), legacy snapshots (`snapshot_io.rs`, `rtl` save/load) and `persistent_session.rs` live in `sm`. `sm_game` has `save_file.rs` and the session checkpoint format. A native build needs save files written from the Session through `sm_runtime` storage. | E (menus/save) |
 | 10 | **Remaining CPU-executed gameplay** | Bang's main AI still calls ROM code via `cpu_infra::call_routine`, which is the only remaining caller. It needs a native port before the CPU can go. | G |
 
+Item 8 (menus): `MenuRuntime::message_box_das0l_value` is blocked on the checkpoint layout. It is a `raw` field of the checkpoint's `machine_state`, so it stays on `Game` until the checkpoint format is next bumped.
+
 Inputs are close: `sm_game::external_inputs` exists, and the frame takes
 controller 1 as `gameplay_frame::TickInput` (see item 6 below).
 
