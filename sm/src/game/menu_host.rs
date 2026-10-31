@@ -129,11 +129,12 @@ impl MenuRuntime for Game {
     fn native_image_binding(&self) -> Option<crate::rom::RomImage> {
         self.capture_native_rom_binding()
     }
-    fn advance_dialogue_audio(&mut self) {
-        // SAFETY: the dialogue runs from the frame loop with the backend installed.
-        unsafe { crate::game::music::HandleMusicQueue(self) };
+    fn run_hdma_objects(&mut self) {
+        crate::game::visual_runtime::update_hdma(self)
+    }
+    fn advance_dialogue_sound_effects(&mut self) {
         crate::game::music::advance_sound_effects(self, |channel, value, meaning, game| {
-            // SAFETY: as above; the Cue sink writes the installed APU queue.
+            // SAFETY: the dialogue runs from the frame loop; the Cue sink writes the installed APU queue.
             unsafe {
                 crate::native_audio::emit(
                     crate::native_audio::sound_cue(

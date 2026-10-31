@@ -1243,6 +1243,20 @@ fn prepared_message_waits(
         .unwrap()
 }
 
+fn prepared_message_step(
+    owner: &mut PreparedOwner,
+    interval: u64,
+    sample: InputSample,
+    effects: &[Effect],
+) -> StepOutput<MessageFrame> {
+    let step = owner
+        .resume(interval, sample, sm_runtime::message::render)
+        .unwrap();
+    assert_eq!(step.outcome, Outcome::Suspended);
+    assert_eq!(step.effects, effects);
+    step
+}
+
 // Shared movie pixels cannot prove saved-map recovery, 360 waits or stale-completion ownership.
 #[cfg_attr(test, test)]
 fn prepared_message_pixels_delay_queue_and_checkpoint() {
@@ -1264,12 +1278,10 @@ fn prepared_message_pixels_delay_queue_and_checkpoint() {
         Some(Fault::NoRequest)
     );
     owner.queue(MessageId(1)).unwrap();
-    let mut step = owner
-        .resume(1, sample, sm_runtime::message::render)
-        .unwrap();
-    assert_eq!(step.outcome, Outcome::Suspended);
-    assert_eq!(step.effects, [Effect::CancelSounds]);
-    prepared_message_pixels(&step.frame, [[0; 4]; 2], 0..224);
+    // The original prepares the box over 8 lag frames before it opens.
+    let step = prepared_message_step(&mut owner, 1, sample, &[Effect::CancelSounds]);
+    prepared_message_pixels(&step.frame, [[0, 255, 0, 0], [0, 0, 255, 0]], 0..224);
+    prepared_message_step(&mut owner, 2, sample, &[]);
     let checkpoint = owner.checkpoint().unwrap();
     (owner, _) = PreparedOwner::reopen(
         definitions.clone(),
@@ -1278,15 +1290,17 @@ fn prepared_message_pixels_delay_queue_and_checkpoint() {
         sm_runtime::message::render,
     )
     .unwrap();
-    step = prepared_message_waits(&mut owner, sample, 2..=14);
+    let mut step = prepared_message_waits(&mut owner, sample, 3..=4);
+    prepared_message_pixels(&step.frame, [[0; 4]; 2], 0..224);
+    step = prepared_message_waits(&mut owner, sample, 5..=22);
     prepared_message_pixels(&step.frame, [[0, 0, 255, 0], [16, 239, 140, 0]], 119..127);
     assert_eq!(
-        owner.resume(14, sample, sm_runtime::message::render).err(),
+        owner.resume(22, sample, sm_runtime::message::render).err(),
         Some(Fault::Interval)
     );
     assert_eq!(owner.poll(MessageId(2)).unwrap(), None);
     owner.queue(MessageId(999)).unwrap();
-    step = prepared_message_waits(&mut owner, sample, 15..=214);
+    step = prepared_message_waits(&mut owner, sample, 23..=222);
     let checkpoint = owner.checkpoint().unwrap();
     let reopened = PreparedOwner::reopen(
         definitions.clone(),
@@ -1297,68 +1311,58 @@ fn prepared_message_pixels_delay_queue_and_checkpoint() {
     .unwrap();
     assert_eq!(reopened.1.pixels, step.frame.pixels);
     owner = reopened.0;
-    prepared_message_waits(&mut owner, sample, 215..=374);
+    prepared_message_waits(&mut owner, sample, 223..=382);
     let dismiss = InputSample {
         held_keys: 1,
         ..sample
     };
-    for (interval, input) in [(375, sample), (376, dismiss)] {
-        step = owner
-            .resume(interval, input, sm_runtime::message::render)
-            .unwrap();
-        assert_eq!(step.outcome, Outcome::Suspended);
-        assert!(step.effects.is_empty());
-    }
-    prepared_message_waits(&mut owner, sample, 377..=388);
+    prepared_message_step(&mut owner, 383, sample, &[]);
+    prepared_message_step(&mut owner, 384, dismiss, &[]);
+    // Closing clears BG3, restores the PPU over 2 lag frames, then plays 2 more.
+    let restoring = [
+        Effect::UpdateHdma,
+        Effect::AdvanceSoundEffects,
+        Effect::ResumeMovementSound,
+    ];
+    prepared_message_waits(&mut owner, sample, 385..=398);
+    prepared_message_step(&mut owner, 399, sample, &[]);
+    prepared_message_step(&mut owner, 400, sample, &restoring);
+    prepared_message_waits(&mut owner, sample, 401..=401);
     step = owner
-        .resume(389, sample, sm_runtime::message::render)
+        .resume(402, sample, sm_runtime::message::render)
         .unwrap();
     assert_eq!(step.outcome, Outcome::Complete);
-    assert_eq!(
-        step.effects,
-        [Effect::AdvanceAudio, Effect::ResumeMovementSound]
-    );
+    assert_eq!(step.effects, [Effect::AdvanceAudio]);
     prepared_message_pixels(&step.frame, [[255, 0, 0, 0], [0, 255, 0, 0]], 0..224);
     assert_eq!(
-        owner.resume(390, sample, sm_runtime::message::render).err(),
+        owner.resume(403, sample, sm_runtime::message::render).err(),
         Some(Fault::NoRequest)
     );
     owner.queue(MessageId(2)).unwrap();
-    step = owner
-        .resume(390, sample, sm_runtime::message::render)
-        .unwrap();
-    assert_eq!(step.outcome, Outcome::Suspended);
-    assert_eq!(step.effects, [Effect::CancelSounds]);
+    prepared_message_step(&mut owner, 403, sample, &[Effect::CancelSounds]);
     assert_eq!(owner.poll(MessageId(1)).unwrap(), Some(0));
     owner.queue(MessageId(999)).unwrap();
-    prepared_message_waits(&mut owner, sample, 391..=413);
+    prepared_message_step(&mut owner, 404, sample, &[]);
+    prepared_message_waits(&mut owner, sample, 405..=434);
+    prepared_message_step(&mut owner, 435, dismiss, &[]);
+    prepared_message_waits(&mut owner, sample, 436..=449);
+    prepared_message_step(&mut owner, 450, sample, &[]);
+    prepared_message_step(&mut owner, 451, sample, &restoring);
+    prepared_message_waits(&mut owner, sample, 452..=452);
     step = owner
-        .resume(414, dismiss, sm_runtime::message::render)
-        .unwrap();
-    assert_eq!(step.outcome, Outcome::Suspended);
-    assert!(step.effects.is_empty());
-    prepared_message_waits(&mut owner, sample, 415..=426);
-    step = owner
-        .resume(427, sample, sm_runtime::message::render)
+        .resume(453, sample, sm_runtime::message::render)
         .unwrap();
     assert_eq!(step.outcome, Outcome::Complete);
-    assert_eq!(
-        step.effects,
-        [
-            Effect::AdvanceAudio,
-            Effect::ResumeMovementSound,
-            Effect::SelectPause
-        ]
-    );
+    assert_eq!(step.effects, [Effect::AdvanceAudio, Effect::SelectPause]);
     prepared_message_pixels(&step.frame, [[255, 0, 0, 0], [0, 255, 0, 0]], 0..224);
     assert_eq!(owner.poll(MessageId(2)).unwrap(), Some(0));
     assert_eq!(
-        owner.resume(428, sample, sm_runtime::message::render).err(),
+        owner.resume(454, sample, sm_runtime::message::render).err(),
         Some(Fault::NoRequest)
     );
     owner.queue(MessageId(999)).unwrap();
     assert_eq!(
-        owner.resume(428, sample, sm_runtime::message::render).err(),
+        owner.resume(454, sample, sm_runtime::message::render).err(),
         Some(Fault::MissingMessage(MessageId(999)))
     );
 }

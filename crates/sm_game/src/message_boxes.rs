@@ -2,52 +2,55 @@
 pub use crate::constants::bank_60::*;
 pub use crate::menus::prelude::*;
 use crate::message_composition as composition;
+use composition::BoxSize;
 
 const MESSAGE_CONFIG_BASE: usize = sm_data::cartridge::lorom_offset(0x85869b) as usize;
 
-fn initialize_ppu_for_message_boxes<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    {
-        game.ram().fill(0x5f9..0x5fb, 0);
-        crate::display::sequence::register_writes! { game;
-            byte(HDMAEN as u16, 0); byte(CGADD as u16, 0x19);
-            byte(CGDATA as u16, 0xb1); byte(CGDATA as u16, 0x0b);
-            byte(CGDATA as u16, 0x1f); byte(CGDATA as u16, 0);
-        }
-        game.ram().write_byte(0x33ea, game.ram().read_byte(0x85));
-        game.ram().write_byte(0x33eb, game.ram().read_byte(0x5b));
-        game.ram().write_byte(0x5b, 88);
-        game.ram().write_byte(0x6a, 23);
-        game.ram().write_byte(0x70, 0);
-        game.ram().write_byte(0x73, 0);
-        use crate::display::control::FixedColor;
-        // One COLDATA write per colour, in order, as the compat sink did.
-        crate::display::sequence::register_writes! { game;
-            show(FixedColor::red(0)); show(FixedColor::green(0)); show(FixedColor::blue(0));
-        }
-        game.read_register(BG3HOFS as u16);
-        crate::display::sequence::register_writes! { game;
-            byte(BG3HOFS as u16, 0); byte(BG3HOFS as u16, 0);
-        }
-        game.read_register(BG3VOFS as u16);
-        crate::display::sequence::register_writes! { game;
-            byte(BG3VOFS as u16, 0); byte(BG3VOFS as u16, 0);
-        }
-        game.ram().fill(0x3000..0x3082, 0);
-        game.write_register_word(VMADDL as u16, ADDR_UNK_605880 as u16);
-        game.read_register_word(RDVRAML as u16);
-        crate::display::sequence::register_writes! { game;
-            word(DMAP1 as u16, 0x3981); word(A1T1L as u16, 0x4100);
-            word(A1B1 as u16, 0x7e); word(DAS1L as u16, 0x700);
-            word(DAS10 as u16, 0); word(A2A1H as u16, 0);
-            byte(VMAIN as u16, 0x80); byte(MDMAEN as u16, 2);
-        }
+/// The first half of "Initialise PPU for message boxes" ($85:8143), after its
+/// first lag frame: save and replace the BG3 and blending registers.
+fn prepare_display<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+    crate::display::sequence::register_writes! { game;
+        byte(HDMAEN as u16, 0); byte(CGADD as u16, 0x19);
+        byte(CGDATA as u16, 0xb1); byte(CGDATA as u16, 0x0b);
+        byte(CGDATA as u16, 0x1f); byte(CGDATA as u16, 0);
+    }
+    game.ram().write_byte(0x33ea, game.ram().read_byte(0x85));
+    game.ram().write_byte(0x33eb, game.ram().read_byte(0x5b));
+    game.ram().write_byte(0x5b, 88);
+    game.ram().write_byte(0x6a, 23);
+    game.ram().write_byte(0x70, 0);
+    game.ram().write_byte(0x73, 0);
+    use crate::display::control::FixedColor;
+    // One COLDATA write per colour, in order, as the compat sink did.
+    crate::display::sequence::register_writes! { game;
+        show(FixedColor::red(0)); show(FixedColor::green(0)); show(FixedColor::blue(0));
+    }
+    game.read_register(BG3HOFS as u16);
+    crate::display::sequence::register_writes! { game;
+        byte(BG3HOFS as u16, 0); byte(BG3HOFS as u16, 0);
+    }
+    game.read_register(BG3VOFS as u16);
+    crate::display::sequence::register_writes! { game;
+        byte(BG3VOFS as u16, 0); byte(BG3VOFS as u16, 0);
+    }
+    game.ram().fill(0x3000..0x3082, 0);
+}
+/// Read the BG3 tilemap the box covers back to $7E:4100.
+fn save_background<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+    game.write_register_word(VMADDL as u16, ADDR_UNK_605880 as u16);
+    game.read_register_word(RDVRAML as u16);
+    crate::display::sequence::register_writes! { game;
+        word(DMAP1 as u16, 0x3981); word(A1T1L as u16, 0x4100);
+        word(A1B1 as u16, 0x7e); word(DAS1L as u16, 0x700);
+        word(DAS10 as u16, 0); word(A2A1H as u16, 0);
+        byte(VMAIN as u16, 0x80); byte(MDMAEN as u16, 2);
     }
 }
-fn clear_message_box_bg3_tilemap<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    crate::word_transfers!(game, ascending, 896; little(0x3800) <- value(14));
+/// DMA the BG3 tilemap at `source` to VRAM $5880.
+fn upload_background<H: crate::menus::host::Host + ?Sized>(source: u16, game: &mut H) {
     crate::display::sequence::register_writes! { game;
         word(VMADDL as u16, ADDR_UNK_605880 as u16); word(DMAP1 as u16, 0x1801);
-        word(A1T1L as u16, 0x3800); word(A1B1 as u16, 0x7e);
+        word(A1T1L as u16, source); word(A1B1 as u16, 0x7e);
         word(DAS1L as u16, 0x700); word(DAS10 as u16, 0);
         word(A2A1H as u16, 0); byte(VMAIN as u16, 0x80);
         byte(MDMAEN as u16, 2);
@@ -108,24 +111,82 @@ fn write_message_box_tilemap_row<H: crate::menus::host::Host + ?Sized>(
         word = word.wrapping_add(1);
     }
 }
-fn write_large_message_box_tilemap<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    write_message_box_tilemap_row(0, composition::border(composition::BoxSize::Large), game);
-    let end = write_message_tilemap(game);
-    write_message_box_tilemap_row(end, composition::border(composition::BoxSize::Large), game);
+/// The message's routine from its configuration row: 0 modifies, 1 draws.
+fn message_routine<H: crate::menus::host::Host + ?Sized>(column: isize, game: &H) -> u32 {
+    let index = u16::from_le_bytes([game.ram().read_byte(0x1c1f), game.ram().read_byte(0x1c20)])
+        as isize
+        - 1;
+    let routine = game
+        .native_image()
+        .table_word(MESSAGE_CONFIG_BASE, 3 * index + column);
+    0x850000 | u32::from(routine)
 }
-fn write_small_message_box_tilemap<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    write_message_box_tilemap_row(0, composition::border(composition::BoxSize::Small), game);
-    let end = write_message_tilemap(game);
-    write_message_box_tilemap_row(end, composition::border(composition::BoxSize::Small), game);
-}
-/// The original's draw table, keyed by routine address.
-fn call_msg_box_draw<H: crate::menus::host::Host + ?Sized>(ea: u32, game: &mut H) {
-    match ea {
-        8749658 => write_large_message_box_tilemap(game),
-        8749705 => write_small_message_box_tilemap(game),
+/// The box size from the original's draw table, keyed by routine address.
+fn drawn_size<H: crate::menus::host::Host + ?Sized>(game: &mut H) -> Option<BoxSize> {
+    match message_routine(1, game) {
+        0x85825a => Some(BoxSize::Large),
+        0x858289 => Some(BoxSize::Small),
         _ => {
             game.rtl_unreachable();
+            None
         }
+    }
+}
+/// The original's modify table: its button letter and the size it uploads.
+fn modified_size<H: crate::menus::host::Host + ?Sized>(
+    game: &mut H,
+) -> Option<(Option<usize>, BoxSize)> {
+    match message_routine(0, game) {
+        0x8583c5 => Some((Some(0x9b2), BoxSize::Large)),
+        0x8583cc => Some((Some(0x9b6), BoxSize::Large)),
+        0x858436 => Some((None, BoxSize::Small)),
+        0x858441 => Some((None, BoxSize::Large)),
+        _ => {
+            game.rtl_unreachable();
+            None
+        }
+    }
+}
+fn draw_top_border<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+    if let Some(size) = drawn_size(game) {
+        write_message_box_tilemap_row(0, composition::border(size), game);
+    }
+}
+fn write_message<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+    if let Some(size) = drawn_size(game) {
+        let end = write_message_tilemap(game);
+        write_message_box_tilemap_row(end, composition::border(size), game);
+    }
+}
+/// Draw the bound button's letter, then set up the BG3 Y scroll HDMA channel
+/// ($85:8363) before its table.
+fn prepare_scroll<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+    let Some((button, _)) = modified_size(game) else {
+        return;
+    };
+    if let Some(binding) = button {
+        let buttons = u16::from_le_bytes([
+            game.ram().read_byte(binding),
+            game.ram().read_byte(binding + 1),
+        ]);
+        let message =
+            u16::from_le_bytes([game.ram().read_byte(0x1c1f), game.ram().read_byte(0x1c20)])
+                as isize
+                - 1;
+        let offset = composition::special_button_offset(message);
+        game.ram().copy_in(
+            0x3200 + offset,
+            &composition::button_letter(buttons).to_le_bytes(),
+        );
+    }
+    game.ram().copy_in(0x3380, &composition::HDMA_DESCRIPTOR);
+    crate::display::sequence::register_writes! { game;
+        byte(DMAP6 as u16, 0x42); byte(BBAD6 as u16, 0x12);
+        byte(A1T6L as u16, 0x80); byte(DAS6L as u16, 0x80);
+        byte(A1T6H as u16, 0x33); byte(DAS6H as u16, 0x33);
+        byte(A1B6 as u16, 0x7e); byte(DAS60 as u16, 0x7e);
+        byte(A2A6L as u16, 0); byte(A2A6H as u16, 0);
+        byte(NTRL6 as u16, 0);
     }
 }
 fn msg_box_make_hdma_table<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
@@ -144,112 +205,31 @@ fn msg_box_make_hdma_table<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     game.ram().copy_in(0x5a8, &values.scratch[2].to_le_bytes());
     game.ram().copy_in(0x5aa, &values.scratch[3].to_le_bytes());
 }
-fn setup_message_box_bg3_yscroll_hdma<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    game.ram().copy_in(0x3380, &composition::HDMA_DESCRIPTOR);
+/// DMA the composed box from $7E:3200 to its BG3 rows ($85:831E).
+fn upload_message<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+    let Some((_, size)) = modified_size(game) else {
+        return;
+    };
+    let destination = composition::map_offset(size).wrapping_add(0x5800);
     crate::display::sequence::register_writes! { game;
-        byte(DMAP6 as u16, 0x42); byte(BBAD6 as u16, 0x12);
-        byte(A1T6L as u16, 0x80); byte(DAS6L as u16, 0x80);
-        byte(A1T6H as u16, 0x33); byte(DAS6H as u16, 0x33);
-        byte(A1B6 as u16, 0x7e); byte(DAS60 as u16, 0x7e);
-        byte(A2A6L as u16, 0); byte(A2A6H as u16, 0);
-        byte(NTRL6 as u16, 0);
-    }
-    msg_box_make_hdma_table(game);
-    game.write_register(HDMAEN as u16, 0x40);
-}
-fn setup_ppu_for_active_message_box<H: crate::menus::host::Host + ?Sized>(r52: u16, game: &mut H) {
-    setup_message_box_bg3_yscroll_hdma(game);
-    crate::display::sequence::register_writes! { game;
-        word(VMADDL as u16, r52.wrapping_add(0x5800)); word(DMAP1 as u16, 0x1801);
+        word(VMADDL as u16, destination); word(DMAP1 as u16, 0x1801);
         word(A1T1L as u16, 0x3200); word(A1B1 as u16, 0x7e);
         word(DAS1L as u16, game.message_box_das0l_value()); word(DAS10 as u16, 0);
         word(A2A1H as u16, 0); byte(VMAIN as u16, 0x80);
         byte(MDMAEN as u16, 2);
     }
 }
-fn draw_special_button_and_setup_ppu_for_large_message_box<H: crate::menus::host::Host + ?Sized>(
-    a: u16,
-    game: &mut H,
-) {
-    {
-        let tile = composition::button_letter(a);
-        let message =
-            u16::from_le_bytes([game.ram().read_byte(0x1c1f), game.ram().read_byte(0x1c20)])
-                as isize
-                - 1;
-        let offset = composition::special_button_offset(message);
-        game.ram().copy_in(0x3200 + offset, &tile.to_le_bytes());
-        setup_ppu_for_active_message_box(
-            composition::map_offset(composition::BoxSize::Large),
-            game,
-        );
-    }
-}
-fn draw_shoot_button_and_setup_ppu_for_large_message_box<H: crate::menus::host::Host + ?Sized>(
-    game: &mut H,
-) {
-    let button = u16::from_le_bytes([game.ram().read_byte(0x9b2), game.ram().read_byte(0x9b3)]);
-    draw_special_button_and_setup_ppu_for_large_message_box(button, game);
-}
-fn draw_run_button_and_setup_ppu_for_large_message_box<H: crate::menus::host::Host + ?Sized>(
-    game: &mut H,
-) {
-    let button = u16::from_le_bytes([game.ram().read_byte(0x9b6), game.ram().read_byte(0x9b7)]);
-    draw_special_button_and_setup_ppu_for_large_message_box(button, game);
-}
-fn setup_ppu_for_small_message_box<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    setup_ppu_for_active_message_box(composition::map_offset(composition::BoxSize::Small), game);
-}
-fn setup_ppu_for_large_message_box<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    setup_ppu_for_active_message_box(composition::map_offset(composition::BoxSize::Large), game);
-}
-/// The original's modify table, keyed by routine address.
-fn call_msg_box_modify<H: crate::menus::host::Host + ?Sized>(ea: u32, game: &mut H) {
-    match ea {
-        8750021 => draw_shoot_button_and_setup_ppu_for_large_message_box(game),
-        8750028 => draw_run_button_and_setup_ppu_for_large_message_box(game),
-        8750134 => setup_ppu_for_small_message_box(game),
-        8750145 => setup_ppu_for_large_message_box(game),
-        _ => {
-            game.rtl_unreachable();
-        }
-    }
-}
-fn initialize_message_box<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    let index = u16::from_le_bytes([game.ram().read_byte(0x1c1f), game.ram().read_byte(0x1c20)])
-        as isize
-        - 1;
-    let draw = game
-        .native_image()
-        .table_word(MESSAGE_CONFIG_BASE, 3 * index + 1);
-    call_msg_box_draw(0x850000 | u32::from(draw), game);
-    let modify = game
-        .native_image()
-        .table_word(MESSAGE_CONFIG_BASE, 3 * index);
-    call_msg_box_modify(0x850000 | u32::from(modify), game);
-}
-fn draw_save_confirmation_selection<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    {
-        let selection =
-            u16::from_le_bytes([game.ram().read_byte(0x5f9), game.ram().read_byte(0x5fa)]);
-        write_message_box_tilemap_row(128, composition::selection_row(selection), game);
-        crate::display::sequence::register_writes! { game;
-            word(VMADDL as u16, ADDR_UNK_6059A0 as u16); word(DMAP1 as u16, 0x1801);
-            word(A1T1L as u16, 0x3200); word(A1B1 as u16, 0x7e);
-            word(DAS1L as u16, 0x180); word(DAS10 as u16, 0);
-            word(A2A1H as u16, 0); byte(VMAIN as u16, 0x80);
-            byte(MDMAEN as u16, 2);
-        }
-    }
-}
-fn restore_ppu_for_message_box<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+fn upload_selection<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     crate::display::sequence::register_writes! { game;
-        word(VMADDL as u16, ADDR_UNK_605880 as u16); word(DMAP1 as u16, 0x1801);
-        word(A1T1L as u16, 0x4100); word(A1B1 as u16, 0x7e);
-        word(DAS1L as u16, 0x700); word(DAS10 as u16, 0);
+        word(VMADDL as u16, ADDR_UNK_6059A0 as u16); word(DMAP1 as u16, 0x1801);
+        word(A1T1L as u16, 0x3200); word(A1B1 as u16, 0x7e);
+        word(DAS1L as u16, 0x180); word(DAS10 as u16, 0);
         word(A2A1H as u16, 0); byte(VMAIN as u16, 0x80);
         byte(MDMAEN as u16, 2);
     }
+}
+/// The second half of "Restore PPU" ($85:861A), after its second lag frame.
+fn restore_display<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     game.ram().write_byte(0x85, game.ram().read_byte(0x33ea));
     game.write_register(HDMAEN as u16, game.ram().read_byte(0x33ea));
     game.ram().write_byte(0x5b, game.ram().read_byte(0x33eb));
@@ -261,9 +241,6 @@ fn restore_ppu_for_message_box<H: crate::menus::host::Host + ?Sized>(game: &mut 
         byte(CGDATA as u16, game.ram().read_byte(0xc033)); byte(CGDATA as u16, game.ram().read_byte(0xc034));
         byte(CGDATA as u16, game.ram().read_byte(0xc035));
     }
-}
-fn advance_audio<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    game.advance_dialogue_audio();
 }
 
 // Only this bridge enters the remaining unsafe presentation/input implementation.
@@ -277,23 +254,44 @@ impl<H: crate::menus::host::Host + ?Sized> crate::dialogue::Context for LegacyDi
     ) -> crate::dialogue::Dialogue<u16> {
         use {crate::dialogue::Effect::*, crate::dialogue_ram};
         dialogue_ram::publish(state, self.0);
+        let game = &mut *self.0;
         match effect {
             CancelSounds => {
                 for (channel, sound) in [2, 0x71, 1].into_iter().enumerate() {
-                    self.0.queue_sound(channel, sound, 6);
+                    game.queue_sound(channel, sound, 6);
                 }
             }
-            PrepareDisplay => initialize_ppu_for_message_boxes(self.0),
-            ClearDisplay => clear_message_box_bg3_tilemap(self.0),
-            PrepareMessage => initialize_message_box(self.0),
-            SaveSound => self.0.queue_sound(0, 0x2e, 6),
-            AdvanceAudio => advance_audio(self.0),
-            RestoreDisplay => restore_ppu_for_message_box(self.0),
-            ResumeMovementSound => self.0.restore_movement_sound(),
-            SelectPause => dialogue_ram::select_pause(self.0),
-            DrawRadius => msg_box_make_hdma_table(self.0),
-            DrawSelection => draw_save_confirmation_selection(self.0),
-            SelectionSound => self.0.queue_sound(0, 0x37, 6),
+            ClearSelection => game.ram().fill(0x5f9..0x5fb, 0),
+            PrepareDisplay => prepare_display(game),
+            SaveBackground => save_background(game),
+            FillBackground => {
+                crate::word_transfers!(game, ascending, 896; little(0x3800) <- value(14));
+            }
+            UploadBackground => upload_background(0x3800, game),
+            DrawTopBorder => draw_top_border(game),
+            WriteMessage => write_message(game),
+            PrepareScroll => prepare_scroll(game),
+            EnableScroll => game.write_register(HDMAEN as u16, 0x40),
+            UploadMessage => upload_message(game),
+            SaveSound => game.queue_sound(0, 0x2e, 6),
+            AdvanceAudio => {
+                game.handle_music_queue();
+                game.advance_dialogue_sound_effects();
+            }
+            AdvanceSoundEffects => game.advance_dialogue_sound_effects(),
+            RestoreBackground => upload_background(0x4100, game),
+            RestoreDisplay => restore_display(game),
+            UpdateHdma => game.run_hdma_objects(),
+            ResumeMovementSound => game.restore_movement_sound(),
+            SelectPause => dialogue_ram::select_pause(game),
+            DrawRadius => msg_box_make_hdma_table(game),
+            StageSelection => {
+                let selection =
+                    u16::from_le_bytes([game.ram().read_byte(0x5f9), game.ram().read_byte(0x5fa)]);
+                write_message_box_tilemap_row(128, composition::selection_row(selection), game);
+            }
+            UploadSelection => upload_selection(game),
+            SelectionSound => game.queue_sound(0, 0x37, 6),
         }
         dialogue_ram::import(self.0)
     }

@@ -80,8 +80,10 @@ pub trait MenuRuntime:
     /// The message box DMA length the original kept outside RAM.
     fn message_box_das0l_value(&self) -> u16;
     fn set_message_box_das0l_value(&mut self, value: u16);
-    /// Advance the music queue and emit the queued dialogue sound effects as Cues.
-    fn advance_dialogue_audio(&mut self);
+    /// Emit the queued dialogue sound effects as Cues.
+    fn advance_dialogue_sound_effects(&mut self);
+    /// Run the HDMA object handler, which also handles the music queue ($88:84B9).
+    fn run_hdma_objects(&mut self);
     /// Restore Samus's movement sound after a message box.
     fn restore_movement_sound(&mut self);
     /// Wait for the next display refresh; nonzero yields to the frame loop.

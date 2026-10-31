@@ -1,9 +1,12 @@
 //! Compatibility encoding only; effects consume the model before touching RAM.
 use crate::dialogue::{
-    ChildContinuation, Continuation, Cycle, Dialogue, Input, Message, Phase, Selection,
+    ChildContinuation, Continuation, Cycle, Dialogue, Input, Message, Phase, Script, Selection,
 };
 use crate::ram::RawRam as _;
 use crate::ram::words as ram;
+
+/// Script steps encode above the child's named continuations.
+const STEPS: u8 = 16;
 
 pub fn message(id: u16) -> Message<u16> {
     match id {
@@ -36,6 +39,11 @@ pub fn import<H: crate::ram::RamHost + ?Sized>(game: &H) -> Dialogue<u16> {
             6 => Waiting(Interacting(Cycle::SaveFeedback)),
             7 => Waiting(Closing(Cycle::SaveFeedback)),
             8 => Waiting(FeedbackDelay),
+            9 => Waiting(Running(Script::Open)),
+            10 => Waiting(Running(Script::Saving)),
+            11 => Waiting(Running(Script::Feedback)),
+            12 => Waiting(Running(Script::Close)),
+            13 => Waiting(Running(Script::CloseGunship)),
             value => Invalid(value),
         },
         delay_remaining: read(game, ram::MY_COUNTER),
@@ -44,6 +52,9 @@ pub fn import<H: crate::ram::RamHost + ?Sized>(game: &H) -> Dialogue<u16> {
             1 => ChildContinuation::Waiting,
             2 => ChildContinuation::ReadingDelay,
             3 => ChildContinuation::Dismissing,
+            4 => ChildContinuation::Polling,
+            5 => ChildContinuation::Toggling,
+            value @ STEPS.. => ChildContinuation::Step(value - STEPS),
             value => ChildContinuation::Invalid(value),
         },
         radius: read(game, ram::MESSAGE_BOX_ANIMATION_Y_RADIUS),
@@ -88,6 +99,9 @@ pub fn publish<H: crate::ram::RamHost + ?Sized>(state: Dialogue<u16>, game: &mut
             ChildContinuation::Waiting => 1,
             ChildContinuation::ReadingDelay => 2,
             ChildContinuation::Dismissing => 3,
+            ChildContinuation::Polling => 4,
+            ChildContinuation::Toggling => 5,
+            ChildContinuation::Step(step) => STEPS + step,
             ChildContinuation::Invalid(value) => value,
         },
     );
@@ -102,6 +116,11 @@ pub fn publish<H: crate::ram::RamHost + ?Sized>(state: Dialogue<u16>, game: &mut
             Waiting(Interacting(Cycle::SaveFeedback)) => 6,
             Waiting(Closing(Cycle::SaveFeedback)) => 7,
             Waiting(FeedbackDelay) => 8,
+            Waiting(Running(Script::Open)) => 9,
+            Waiting(Running(Script::Saving)) => 10,
+            Waiting(Running(Script::Feedback)) => 11,
+            Waiting(Running(Script::Close)) => 12,
+            Waiting(Running(Script::CloseGunship)) => 13,
             Invalid(value) => value,
         },
     );

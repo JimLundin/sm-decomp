@@ -21,6 +21,7 @@ pub enum Phase {
     Interacting(Cycle),
     Closing(Cycle),
     FeedbackDelay,
+    Running(Script),
 }
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Continuation {
@@ -36,6 +37,12 @@ pub enum ChildContinuation {
     Waiting,
     ReadingDelay,
     Dismissing,
+    /// The confirmation's second lag frame before it reads input.
+    Polling,
+    /// The toggled selection waits a lag frame before its upload.
+    Toggling,
+    /// The next step of a running script.
+    Step(u8),
     Invalid(u8),
 }
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -70,16 +77,34 @@ pub struct Dialogue<Id> {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Effect {
     CancelSounds,
+    /// Select "yes" before the first lag frame.
+    ClearSelection,
+    /// Save and replace the BG3, blending and scroll registers.
     PrepareDisplay,
-    ClearDisplay,
-    PrepareMessage,
+    /// Read the BG3 tilemap the box covers back from VRAM.
+    SaveBackground,
+    FillBackground,
+    UploadBackground,
+    DrawTopBorder,
+    /// The message text and bottom border; the radius starts at 0.
+    WriteMessage,
+    /// The button letter and the BG3 Y scroll HDMA channel.
+    PrepareScroll,
+    EnableScroll,
+    UploadMessage,
     SaveSound,
+    /// Music queue, then sound effects.
     AdvanceAudio,
+    AdvanceSoundEffects,
+    RestoreBackground,
     RestoreDisplay,
+    /// The HDMA object handler, which also handles the music queue.
+    UpdateHdma,
     ResumeMovementSound,
     SelectPause,
     DrawRadius,
-    DrawSelection,
+    StageSelection,
+    UploadSelection,
     SelectionSound,
 }
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -94,22 +119,97 @@ pub trait Context {
     fn wait(&mut self, state: Dialogue<Self::Id>) -> (Dialogue<Self::Id>, Outcome);
     fn input(&mut self, state: Dialogue<Self::Id>) -> (Dialogue<Self::Id>, Input);
 }
+
+/// The original's straight-line stretches of the message box routine ($85:8080).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Script {
+    /// Initialise the PPU, clear BG3, draw the message and play 2 lag frames.
+    Open,
+    /// Clear BG3 and start the saving sound before the 160-frame delay.
+    Saving,
+    /// Draw the "save completed" message.
+    Feedback,
+    /// Clear BG3, restore the PPU, then play 2 lag frames.
+    Close,
+    /// The gunship's close, still without its 2 lag frames ($85:80F2).
+    CloseGunship,
+}
+#[derive(Clone, Copy)]
+enum Step {
+    Do(Effect),
+    /// Wait for a lag frame ($85:8136).
+    Wait,
+    /// A lag frame, then the music queue and sound effects.
+    Lag,
+    Delay(u16),
+}
+mod steps {
+    use super::{Effect::*, Step::*, *};
+    pub(super) const PREPARE: &[Step] = &[
+        Do(CancelSounds),
+        Do(ClearSelection),
+        Wait,
+        Do(PrepareDisplay),
+        Wait,
+        Do(SaveBackground),
+        Do(AdvanceAudio),
+    ];
+    pub(super) const CLEAR: &[Step] = &[
+        Do(FillBackground),
+        Wait,
+        Do(UploadBackground),
+        Do(AdvanceAudio),
+    ];
+    pub(super) const MESSAGE: &[Step] = &[
+        Do(DrawTopBorder),
+        Lag,
+        Do(WriteMessage),
+        Do(PrepareScroll),
+        Lag,
+        Do(DrawRadius),
+        Do(EnableScroll),
+        Wait,
+        Do(UploadMessage),
+        Do(AdvanceAudio),
+    ];
+    pub(super) const PAUSE: &[Step] = &[Lag, Lag];
+    pub(super) const SAVING: &[Step] = &[Do(SaveSound), Delay(160), Do(AdvanceAudio)];
+    pub(super) const RESTORE: &[Step] = &[
+        Wait,
+        Do(RestoreBackground),
+        Wait,
+        Do(RestoreDisplay),
+        Do(UpdateHdma),
+        Do(AdvanceSoundEffects),
+        Do(ResumeMovementSound),
+    ];
+}
+impl Script {
+    fn segments(self) -> &'static [&'static [Step]] {
+        use steps::*;
+        match self {
+            Self::Open => &[PREPARE, CLEAR, MESSAGE, PAUSE],
+            Self::Saving => &[CLEAR, SAVING],
+            // The gunship's 2 lag frames before it opens ($85:80DC) are still patched.
+            Self::Feedback => &[MESSAGE],
+            Self::Close => &[CLEAR, RESTORE, PAUSE],
+            Self::CloseGunship => &[CLEAR, RESTORE],
+        }
+    }
+}
+
 pub fn run<C: Context>(
     mut state: Dialogue<C::Id>,
     requested: Message<C::Id>,
     context: &mut C,
 ) -> (Dialogue<C::Id>, Outcome) {
-    use Effect::*;
     use Phase::*;
     // The invocation captures its phase. Imported writes to the saved cursor
     // remain observable, but redirect only the next invocation.
     let mut phase = match state.continuation {
         Continuation::Start => {
             state.message = requested;
-            for effect in [CancelSounds, PrepareDisplay, ClearDisplay, PrepareMessage] {
-                state = context.effect(state, effect);
-            }
-            Opening(Cycle::Message)
+            Running(Script::Open)
         }
         Continuation::Waiting(phase) => phase,
         Continuation::Invalid(_) => {
@@ -123,6 +223,7 @@ pub fn run<C: Context>(
             Closing(_) => animate(state, false, context),
             Interacting(_) => interact(state, context),
             FeedbackDelay => context.wait(state),
+            Running(script) => run_script(state, script, context),
         };
         state = next;
         if let Outcome::Suspended(_) = outcome {
@@ -130,44 +231,77 @@ pub fn run<C: Context>(
             return (state, outcome);
         }
         phase = match phase {
+            Running(Script::Open) => Opening(Cycle::Message),
+            Running(Script::Saving) => FeedbackDelay,
+            Running(Script::Feedback) => Opening(Cycle::SaveFeedback),
+            Running(Script::Close | Script::CloseGunship) => break,
             Opening(cycle) => Interacting(cycle),
             Interacting(cycle) => Closing(cycle),
-            Closing(Cycle::Message) => {
-                if !matches!(state.message, Message::SavePrompt)
-                    || state.selection == Selection::Decline
-                {
-                    break;
+            Closing(Cycle::Message) => match state.message {
+                Message::SavePrompt if state.selection != Selection::Decline => {
+                    state.message = Message::Saved;
+                    Running(Script::Saving)
                 }
-                state.message = Message::Saved;
-                state = context.effect(state, ClearDisplay);
-                state = context.effect(state, SaveSound);
-                state.delay_remaining = 160;
-                state = context.effect(state, AdvanceAudio);
-                FeedbackDelay
-            }
+                Message::SavePrompt => Running(Script::CloseGunship),
+                _ => Running(Script::Close),
+            },
             Closing(Cycle::SaveFeedback) => {
                 state.message = Message::SavePrompt;
-                break;
+                Running(Script::CloseGunship)
             }
             FeedbackDelay => {
                 state.delay_remaining = state.delay_remaining.wrapping_sub(1);
                 if state.delay_remaining == 0 {
-                    state = context.effect(state, PrepareMessage);
-                    Opening(Cycle::SaveFeedback)
+                    Running(Script::Feedback)
                 } else {
-                    state = context.effect(state, AdvanceAudio);
+                    state = context.effect(state, Effect::AdvanceAudio);
                     FeedbackDelay
                 }
             }
         };
     }
-    for effect in [ClearDisplay, RestoreDisplay, ResumeMovementSound] {
-        state = context.effect(state, effect);
-    }
     if matches!(state.message, Message::MapAcquired) {
-        state = context.effect(state, SelectPause);
+        state = context.effect(state, Effect::SelectPause);
     }
     state.continuation = Continuation::Start;
+    (state, Outcome::Complete)
+}
+
+fn run_script<C: Context>(
+    mut state: Dialogue<C::Id>,
+    script: Script,
+    context: &mut C,
+) -> (Dialogue<C::Id>, Outcome) {
+    let steps = || script.segments().iter().flat_map(|segment| segment.iter());
+    let first = match state.child {
+        ChildContinuation::Start => 0,
+        ChildContinuation::Step(step) if usize::from(step) < steps().count() => usize::from(step),
+        _ => {
+            state.child = ChildContinuation::Start;
+            return (state, Outcome::Complete);
+        }
+    };
+    for (index, step) in steps().enumerate().skip(first) {
+        match *step {
+            Step::Do(effect) => state = context.effect(state, effect),
+            Step::Delay(frames) => state.delay_remaining = frames,
+            Step::Wait | Step::Lag => {
+                let (next, outcome) = context.wait(state);
+                state = next;
+                if let Outcome::Suspended(_) = outcome {
+                    // Resume at the wait itself: the next invocation completes it.
+                    state.child = ChildContinuation::Step(
+                        u8::try_from(index).expect("scripts have fewer than 256 steps"),
+                    );
+                    return (state, outcome);
+                }
+                if let Step::Lag = step {
+                    state = context.effect(state, Effect::AdvanceAudio);
+                }
+            }
+        }
+    }
+    state.child = ChildContinuation::Start;
     (state, Outcome::Complete)
 }
 
@@ -240,8 +374,8 @@ pub fn interact<C: Context>(
                 ReadingDelay
             }
         }
-        Waiting | ReadingDelay | Dismissing => state.child,
-        Invalid(_) => {
+        Waiting | Polling | Toggling | ReadingDelay | Dismissing => state.child,
+        Step(_) | Invalid(_) => {
             state.child = Start;
             return (state, Outcome::Complete);
         }
@@ -253,11 +387,13 @@ pub fn interact<C: Context>(
             state.child = phase;
             return (state, outcome);
         }
-        if phase != Dismissing {
+        if !matches!(phase, Dismissing | Toggling) {
             state = context.effect(state, Effect::AdvanceAudio);
         }
         match phase {
-            Waiting => {
+            // The confirmation reads input every second lag frame.
+            Waiting => phase = Polling,
+            Polling => {
                 let (next, input) = context.input(state);
                 state = next;
                 if input.confirm {
@@ -267,11 +403,22 @@ pub fn interact<C: Context>(
                     state.selection = Selection::Decline;
                     break;
                 }
+                phase = Waiting;
                 if input.toggle {
                     state.selection = state.selection.toggle();
-                    state = context.effect(state, Effect::DrawSelection);
-                    state = context.effect(state, Effect::SelectionSound);
+                    state = context.effect(state, Effect::StageSelection);
+                    phase = Toggling;
                 }
+            }
+            Toggling => {
+                for effect in [
+                    Effect::UploadSelection,
+                    Effect::AdvanceAudio,
+                    Effect::SelectionSound,
+                ] {
+                    state = context.effect(state, effect);
+                }
+                phase = Waiting;
             }
             ReadingDelay => {
                 state.delay_remaining = state.delay_remaining.wrapping_sub(1);
