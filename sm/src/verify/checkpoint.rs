@@ -833,22 +833,6 @@ pub(crate) unsafe fn restore_capture_with_sources(
             .ok_or("truncated checkpoint RAM")?
             .try_into()
             .unwrap();
-        // Compare the bytes the existing post-load patch will publish, without
-        // changing live allocations before the complete machine/actor preflight.
-        let loaded_after_patch = game.loaded_rom.as_ref().and_then(|loaded| {
-            // Short images retain the original post-machine patch failure prefix.
-            // $85:9650's 16 bytes are the updater's highest addressed range.
-            if loaded.len() < crate::rom::lorom_offset(0x859650) as usize + 16 {
-                return None;
-            }
-            let projected = crate::rom::RomImage::zeroed(loaded.len());
-            for at in 0..loaded.len() {
-                projected.write(at, loaded.read(at));
-            }
-            crate::rom_patches::RomPatches::new(projected.clone())
-                .update_bugfix(u16::from_le_bytes([ram[0xc2], ram[0xc3]]));
-            Some(projected)
-        });
         let restore = sm_game::actors::snapshot::ActorCheckpointPayload::prepare(
             actor_bytes,
             game.actor_identity(),
@@ -860,7 +844,6 @@ pub(crate) unsafe fn restore_capture_with_sources(
                 policy_dependent: &crate::rom_patches::policy_dependent,
             },
             &|at| ram[at],
-            loaded_after_patch.as_ref(),
         )?;
         let failure = game
             .actor_identity()
