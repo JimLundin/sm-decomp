@@ -47,7 +47,10 @@ fn close_rows(write: &mut impl FnMut(i32, u16), mut position: u16, down: bool) {
 }
 
 /// Rasterize two edges row by row from `position`, closing the remaining rows
-/// once both edges leave the screen on the same side.
+/// once both edges leave the screen on the same side. With `open_crossing`,
+/// the row where the left edge leaves past the right of the screen keeps
+/// x = 255 to the right edge open, as the on-screen up-right beam ($91:C71C)
+/// fills that row's left byte with FFh and closes only the rows after it.
 fn rasterize_xray_edges(
     write: &mut impl FnMut(i32, u16),
     mut position: i32,
@@ -55,6 +58,7 @@ fn rasterize_xray_edges(
     mut edges: [u32; 2],
     steps: [u32; 2],
     finish_adjustment: i32,
+    mut open_crossing: bool,
 ) {
     let outside_rows = |position| {
         if row_step < 0 {
@@ -65,7 +69,9 @@ fn rasterize_xray_edges(
     };
     loop {
         let packed = advance_window_edges(&mut edges, steps, false);
-        let hidden = (edges[1] as i32) < 0 || edges[0] as i32 >= 65536;
+        let left_past = edges[0] as i32 >= 65536;
+        let hidden = (edges[1] as i32) < 0 || (left_past && !open_crossing);
+        open_crossing &= !left_past;
         let finished = edges[0] & !65535 != 0
             && edges[1] & !65535 != 0
             && (((steps[0] ^ edges[0]) | (steps[1] ^ edges[1])) >> 31) == 0;
@@ -406,7 +412,7 @@ pub fn calculate_xray_window<H: BeamHost + ?Sized>(window: XrayWindow, game: &mu
             } else {
                 ([0, edge], [u32::MAX, increment])
             };
-            rasterize_xray_edges(&mut write, start, step, edges, steps, -step);
+            rasterize_xray_edges(&mut write, start, step, edges, steps, -step, false);
         }
     } else {
         let up = matches!(direction, Up);
@@ -433,6 +439,7 @@ pub fn calculate_xray_window<H: BeamHost + ?Sized>(window: XrayWindow, game: &mu
             [left.0, right.0],
             [left.1, right.1],
             if up && !positive_right { 2 } else { 0 },
+            up && positive_left && !off_screen,
         );
         close_rows(
             &mut write,
