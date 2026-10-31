@@ -80,7 +80,7 @@ unsafe fn patch_image(address: u32, host: &mut HostContext<'_>) -> RomPatches {
             *host.g_fail = true;
         }
         RomPatches::new(
-            host.loaded_rom
+            host.cartridge_rom
                 .as_ref()
                 .expect("ROM must be loaded")
                 .clone(),
@@ -983,7 +983,7 @@ pub fn rtl_update_snes_patch_for_bugfix(game: &mut Game) {
     let counter = u16::from_le_bytes([game.ram().read_byte(0xc2), game.ram().read_byte(0xc3)]);
     game.currently_installed_bug_fix_counter = counter;
     RomPatches::new(
-        game.loaded_rom
+        game.cartridge_rom
             .as_ref()
             .expect("ROM must be loaded")
             .clone(),
@@ -1000,8 +1000,16 @@ pub unsafe fn snes_init(filename: *const c_char, game: &mut Game) -> *mut Snes {
             return null_mut::<Snes>();
         }
         game.g_sram = (*(*game.g_snes).cart).ram.clone();
-        game.register_native_rom((*(*game.g_snes).cart).rom.clone());
-        game.register_rom((*(*game.g_snes).cart).rom.clone());
+        // The engine reads an unpatched copy, as hardware reads the cartridge;
+        // the oracle's compatibility patches rewrite only its own cartridge.
+        let cartridge = (*(*game.g_snes).cart).rom.clone();
+        let engine = crate::rom::RomImage::zeroed(cartridge.len());
+        for at in 0..cartridge.len() {
+            engine.write(at, cartridge.read(at));
+        }
+        game.cartridge_rom = Some(cartridge);
+        game.register_native_rom(engine.clone());
+        game.register_rom(engine);
         rtl_setup_emu_callbacks(
             null_mut::<u8>(),
             Some(rtl_run_frame_compare as unsafe fn(u16, i32, &mut Game) -> ()),
@@ -1010,7 +1018,7 @@ pub unsafe fn snes_init(filename: *const c_char, game: &mut Game) -> *mut Snes {
         );
         game.ram().write_byte(0x611, 1);
         RomPatches::new(
-            game.loaded_rom
+            game.cartridge_rom
                 .as_ref()
                 .expect("ROM must be loaded")
                 .clone(),
