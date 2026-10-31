@@ -88,6 +88,8 @@ jobs:
       SM_NATIVE_LINES: ${{ github.event_name == 'schedule' && '1' || '' }}
       # Plan each frame's HDMA as a table at its start and compare the beam's writes.
       SM_HDMA_TABLE: '1'
+      # Plan each frame's scanline interrupts as a table and compare the beam's.
+      SM_IRQ_TABLE: '1'
     timeout-minutes: 60
     strategy:
       fail-fast: false
@@ -176,6 +178,7 @@ jobs:
           $env:SM_CROSS_RENDER_LOG = Join-Path $env:RUNNER_TEMP 'cross-render.csv'
           $env:SM_NATIVE_LINES_LOG = Join-Path $env:RUNNER_TEMP 'native-lines.csv'
           $env:SM_HDMA_TABLE_LOG = Join-Path $env:RUNNER_TEMP 'hdma-table.csv'
+          $env:SM_IRQ_TABLE_LOG = Join-Path $env:RUNNER_TEMP 'irq-table.csv'
           if (-not $env:SM_NATIVE_LINES) { Remove-Item Env:SM_NATIVE_LINES -ErrorAction SilentlyContinue }
           python -B .github/scripts/full_route.py run ${{ matrix.index }} 2>&1 | Tee-Object -FilePath rooms.log
           $code = $LASTEXITCODE
@@ -197,6 +200,13 @@ jobs:
             # Frame, first differing pass, planned and actual write counts.
             $lines = Get-Content $env:SM_HDMA_TABLE_LOG
             "HDMA tables: $($lines.Count) frames differ from their frame-start table:"
+            $lines | Select-Object -First 20
+            if ($code -eq 0) { $code = 1 }
+          }
+          if (Test-Path $env:SM_IRQ_TABLE_LOG) {
+            # Frame, planned and actual interrupt lines.
+            $lines = Get-Content $env:SM_IRQ_TABLE_LOG
+            "IRQ tables: $($lines.Count) frames differ from their planned interrupts:"
             $lines | Select-Object -First 20
             if ($code -eq 0) { $code = 1 }
           }
