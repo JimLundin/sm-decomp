@@ -183,8 +183,8 @@ pub fn setup<H: Host + ?Sized>(game: &mut H) {
     word!(game.DOOR_DEF_PTR = 0);
     word!(game.LAYER1_X_POS = 0);
     word!(game.LAYER1_Y_POS = 0);
-    game.clear_palette_effects();
-    game.set_palette_effects_enabled(true);
+    crate::palette_effects::execution::leased::clear(game);
+    crate::palette_effects::execution::leased::set_enabled(true, game);
     crate::display_refresh::enable(true, game);
     word!(game.SHOOTING_STARS_ENABLED = 0);
     set_cinematic_blend(17, 1, 2, 17, game);
@@ -207,8 +207,8 @@ pub fn setup<H: Host + ?Sized>(game: &mut H) {
 /// `CinematicFunction_Intro_Func109`.
 pub fn wait_for_music<H: Host + ?Sized>(game: &mut H) {
     if crate::music_requests::has_queued_music(game) & 1 == 0 {
-        game.spawn_palette_effect(ZEBES_GLOW_1);
-        game.spawn_palette_effect(ZEBES_GLOW_2);
+        crate::palette_effects::execution::leased::spawn(ZEBES_GLOW_1, game);
+        crate::palette_effects::execution::leased::spawn(ZEBES_GLOW_2, game);
         word!(game.CINEMATIC_FUNCTION = function::SCENE_0_FADING_IN);
     }
 }
@@ -220,9 +220,9 @@ pub fn scene_1_setup<H: Host + ?Sized>(game: &mut H) {
     GraphicsAsset::VramWords(0x7e2000, 0x2000, 0x4000).load(game);
     GraphicsAsset::Decompress(0x98ed4f, 0x2000).load(game);
     GraphicsAsset::VramHighBytes(0x7e2000, 0x0000, 0x4000).load(game);
-    game.clear_palette_effects();
+    crate::palette_effects::execution::leased::clear(game);
     clear_cinematic_sprites(game);
-    game.spawn_palette_effect(SCENE_1_GLOW);
+    crate::palette_effects::execution::leased::spawn(SCENE_1_GLOW, game);
     crate::cinematic_objects::spawn_cinematic_burst(object::CLOUDS_TOP, [0; 4], 6, game);
     word!(game.MODE7_ANGLE = 32);
     word!(game.MODE7_ZOOM = 64);
@@ -245,7 +245,7 @@ pub fn scene_2_setup<H: Host + ?Sized>(game: &mut H) {
     GraphicsAsset::VramWords(0x7ff800, 0x7c00, 0x800).load(game);
     GraphicsAsset::VramWords(0x7ea000, 0x5000, 0x1000).load(game);
     game.ram().write_byte(mirror::OBSEL, 2);
-    game.clear_palette_effects();
+    crate::palette_effects::execution::leased::clear(game);
     clear_cinematic_sprites(game);
     crate::word_transfers!(game, ascending, 128; le(PALETTE_BUFFER, 128) <- rom(SPACE_PALETTES, 128));
     // The palette copy and each initializer leave A for the next spawn.
@@ -361,8 +361,8 @@ pub fn gunship_setup<H: Host + ?Sized>(game: &mut H) {
         word!(game.PALETTE_BUFFER[0] = 0);
         word!(game.PALETTE_BUFFER[16] = 0);
         word!(game.PALETTE_BUFFER[128] = 0);
-        game.spawn_palette_effect(SPACE_GLOW_1);
-        game.spawn_palette_effect(SPACE_GLOW_2);
+        crate::palette_effects::execution::leased::spawn(SPACE_GLOW_1, game);
+        crate::palette_effects::execution::leased::spawn(SPACE_GLOW_2, game);
         word!(game.REG_M7X = 56);
         word!(game.REG_M7Y = 24);
         word!(game.CINEMATIC_X = -72i32 as u16);
@@ -427,7 +427,7 @@ pub fn transition_to_credits<H: Host + ?Sized>(game: &mut H) {
 pub fn credits_setup<H: Host + ?Sized>(game: &mut H) {
     crate::cinematic_display::configure_cinematic_display(CinematicDisplay::Credits, game);
     clear_cinematic_sprites(game);
-    game.clear_palette_effects();
+    crate::palette_effects::execution::leased::clear(game);
     crate::word_transfers!(game, ascending, 128; le(PALETTE_BUFFER, 0) <- rom(CREDITS_PALETTES, 0));
     GraphicsAsset::Decompress(0x979803, 0x10000).load(game);
     GraphicsAsset::Decompress(0x97b957, 0x2000).load(game);
@@ -591,7 +591,7 @@ pub fn scroll_item_percentage<H: Host + ?Sized>(game: &mut H) {
 pub fn icon_s_top<H: Host + ?Sized>(k: u16, game: &mut H) {
     let slot = (k as i32 >> 1) as usize;
     if crate::ending_screens::advance_ending_sprite_pair(slot, true, game) {
-        game.spawn_palette_effect(ICON_GLOW);
+        crate::palette_effects::execution::leased::spawn(ICON_GLOW, game);
     }
 }
 
