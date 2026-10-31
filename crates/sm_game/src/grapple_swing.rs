@@ -84,6 +84,8 @@ pub struct SwingState {
     pub probe: crate::geometry::Point,
     /// $0D94/$0D96: the swing collision probe's block ($94:A957).
     pub probe_block: crate::geometry::Point,
+    /// $0D98: the clearance check's remaining samples ($94:ABE6).
+    pub collision_distance: u16,
     /// $0D3E: the beam start animation timer.
     pub start_animation_timer: u16,
     /// $0D40: the beam start animation's tile pointer (bank $9A).
@@ -196,7 +198,7 @@ fn spike_contact<H: Host + ?Sized>(solid: bool, game: &mut H) -> u8 {
     solid as u8
 }
 fn check_clearance<H: Host + ?Sized>(angle: u16, game: &mut H) -> u8 {
-    word!(game.GRAPPLE_COLLISION_DISTANCE = 6);
+    game.session_mut().player.swing.collision_distance = 6;
     let mut length = game.session().player.grapple_length.wrapping_add(8);
     loop {
         place_sample(angle, length, game);
@@ -205,7 +207,9 @@ fn check_clearance<H: Host + ?Sized>(angle: u16, game: &mut H) -> u8 {
             return blocked;
         }
         length = length.wrapping_add(8);
-        if word!(game.GRAPPLE_COLLISION_DISTANCE -= 1, reread) == 0 {
+        let remaining = &mut game.session_mut().player.swing.collision_distance;
+        *remaining = remaining.wrapping_sub(1);
+        if *remaining == 0 {
             return 0;
         }
     }
@@ -520,8 +524,8 @@ pub fn advance_swing<H: Host + ?Sized>(game: &mut H) -> u8 {
             let stopped = ((angle >> 1) << 8) | 0x80;
             game.session_mut().player.grapple_angle = stopped;
             game.session_mut().player.swing.mirrored_angle = stopped;
-            if (word!(game.GRAPPLE_COLLISION_DISTANCE) == 6
-                || word!(game.GRAPPLE_COLLISION_DISTANCE) == 5)
+            if (game.session().player.swing.collision_distance == 6
+                || game.session().player.swing.collision_distance == 5)
                 && game.session().player.grapple_length == 8
             {
                 game.session_mut().player.grapple_direction_compatibility |= 0x8000;

@@ -400,6 +400,7 @@ macro_rules! scalar_words {
         $f(0x0d92,$($borrow)* $s.player.swing.probe.y);
         $f(0x0d94,$($borrow)* $s.player.swing.probe_block.x);
         $f(0x0d96,$($borrow)* $s.player.swing.probe_block.y);
+        $f(ram::GRAPPLE_COLLISION_DISTANCE,$($borrow)* $s.player.swing.collision_distance);
         for i in 0..16 {
             $f(0x0d42 + 2*i,$($borrow)* $s.player.grapple_animation_delay[i]);
             $f(0x0d62 + 2*i,$($borrow)* $s.player.grapple_animation_program[i]);
@@ -1338,6 +1339,7 @@ mod player_lane_tests {
         (0xd92, |s| &mut s.player.swing.probe.y),
         (0xd94, |s| &mut s.player.swing.probe_block.x),
         (0xd96, |s| &mut s.player.swing.probe_block.y),
+        (0xd98, |s| &mut s.player.swing.collision_distance),
         (0xcd0, |s| &mut s.projectiles.controls.charge),
         (0x9c0, |s| &mut s.inventory.reserve_mode),
         (0x9c2, |s| &mut s.inventory.health.current),
