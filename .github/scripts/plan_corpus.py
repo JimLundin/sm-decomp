@@ -25,6 +25,8 @@ def seed_bundle(row):
         return ('seeds-v1-tricks2-891ceaf012b8dfb4.tar.gz.enc', '891ceaf012b8dfb4728c0707f845b38ec3499448ee7c35e4f9b778cd5fb6f19b')
     if row['id'].startswith(('samus-shinespark-', 'samus-walljump-', 'xray-scan-')) or row['id'] == 'samus-crystal-flash':
         return ('seeds-v1-tricks-95f7c4352cb18fbe.tar.gz.enc', '95f7c4352cb18fbe3a4c31b4da1de269b25b48db0232653e6fb020c832c5bdb3')
+    if row['id'] == 'samus-mockball':
+        return ('seeds-v1-mockball-4447309c78721b0b.tar.gz.enc', '4447309c78721b0b2a04d7ca70570f9d8b894aac59e5b8aee674275fb373bf7a')
     if row['id'] == 'boss-draygon-grapple-repel':
         return ('seeds-v1-scenario-repel-ccb2329f0fbbd52c.tar.gz.enc', 'ccb2329f0fbbd52cca0d799cceb106f4ab32b716ac49ed75d17ab5fe074cb924')
     if row['id'].startswith('boss-kraid-pause-'):

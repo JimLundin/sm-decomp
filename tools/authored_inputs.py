@@ -52,10 +52,14 @@ def _walljump(toward, wait="10"):
     return f"{toward}+{JUMP} 12; {toward} 3; {away} 1; {away}+{JUMP} {wait}"
 
 
-def _mockball(direction, run="40"):
+def _mockball(direction, run="40", air="19"):
+    """Run, spin jump and, just before landing, morph without forward: Down
+    aims down, a frame of jump alone keeps that pose (any other button would
+    fall back and drop the extra run speed) and a fresh Down morphs. The ball
+    lands still morphing and rolls on with the jump's momentum."""
     move = f"{direction}+{RUN}"
-    return (f"{move} {run}; {move}+{JUMP} 6; {move} 8; {move}+Down 2; {move} 2; "
-            f"{move}+Down 2; {direction} 30")
+    return (f"{move} {run}; {move}+{JUMP} 6; {move} {air}; {RUN}+Down 1; {JUMP} 1; "
+            f"{RUN}+Down 1; {direction} 40")
 
 
 def _short_charge(direction, taps="4"):
@@ -269,6 +273,8 @@ RECIPES = {
     # Seed 100-input-phase:306: spin back and forth with the screw attack
     # through the room's enemies.
     "screw-attack": Recipe("_ 20; repeat 12 { Left 6; Left+A 30; Right 6; Right+A 30 }; _ 60"),
+    # Landing site: mockball to the right (the ball keeps the extra run speed).
+    "mockball": Recipe("mockball Right; _ 20"),
     # Pause, wait for the pause screen, unpause and watch the room resume.
     "pause-resume": Recipe("press Start 150; hold Start 200; _ $tail", {"tail": 240}),
 }
@@ -323,6 +329,7 @@ PINNED = {
     "gunship-save": "1c59417aed908dbb468ef711a1955314b2b4cecc8bac14f0e1eec07c6c5493fe",
     "space-jump-chain": "fc3d13a804e7b28519f9142ac92f57fc4e48884c181e90690d947019f961345d",
     "screw-attack": "ce49ad2b34eb6e5256cb0a73deb28043b434660b096aaee3ba35974ce51570fe",
+    "mockball": "24739893dc7f2f9fdf11b50d828e83e6a75107d6929e1cde14e626cb46c0d3f9",
     "pause-resume": "6982afc4c06ba2311042798e0c0c2ccdbe47a7dbe599fb50b927ba414c24d077",
 }
 
