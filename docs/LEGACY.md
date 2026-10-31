@@ -52,9 +52,9 @@ Session would retire the list.
 
 | Patch | Faithful rows and first failure | What hardware shows |
 | --- | --- | --- |
-| `$82:831E` BG3/sprite tile DMA size | `samus-scripted-intro` @8256, `demo-attract-setup` @2619 | WRAM $0000-$11FF in sprite VRAM $7700-$7FFF, overwritten before display |
+| `$82:831E` BG3/sprite tile DMA size | `samus-scripted-intro` @8256, `demo-attract-setup` @2619, any% chain room 11 (`chain-any-0011-DF45`) @2055 | WRAM $0000-$11FF in sprite VRAM $7700-$7FFF, overwritten before display |
 | `$84:8243`, `$84:EFD3` unpause item-GFX load | `pause-menu-tour` @1378, `boss-kraid-pause-400` @588, `-950` @1138, `-1030` @1218, `-1960` @2148 | garbage transfers into empty item-GFX slots |
-| `$80:9AF3` broken mini-map init | `samus-scripted-intro` @8316 | one frame of HUD mini-map tiles from scratch, while blanked |
+| `$80:9AF3` broken mini-map init | `samus-scripted-intro` @8316, any% chain room 11 (`chain-any-0011-DF45`) @2115 | one frame of HUD mini-map tiles from scratch, while blanked |
 
 ## `LEGACY(verifier)`: RAM the frame comparison does not check
 
