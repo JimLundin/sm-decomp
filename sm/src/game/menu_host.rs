@@ -194,7 +194,7 @@ impl MenuRuntime for Game {
         crate::game::gameplay_flag_runtime::mark_event(event, self)
     }
     fn boss_bit_for_current_area(&mut self, bit: u16) -> u8 {
-        crate::game::gameplay_flag_runtime::CheckBossBitForCurArea(bit, self)
+        crate::game::gameplay_flag_runtime::check_boss_bit_for_cur_area(bit, self)
     }
     fn spawn_hardcoded_plm(&mut self, x: u8, y: u8, id: u16) {
         crate::game::room_mechanisms::spawn_hardcoded(

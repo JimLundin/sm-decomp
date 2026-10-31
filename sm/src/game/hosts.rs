@@ -84,7 +84,7 @@ impl sm_game::actors::zebetites::Host for Game {
         crate::game::gameplay_flag_runtime::mark_event(event, self);
     }
     fn clear_event(&mut self, event: u16) {
-        crate::game::gameplay_flag_runtime::ClearEventHappened(event, self);
+        crate::game::gameplay_flag_runtime::clear_event_happened(event, self);
     }
     fn spawn_population(&mut self, bank: u8, population: u16) -> u16 {
         crate::game::actors::population::spawn_legacy(

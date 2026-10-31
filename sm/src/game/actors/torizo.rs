@@ -34,7 +34,7 @@ impl Ai for Game {
     }
 
     fn boss_bit(&mut self, bit: u16) -> u16 {
-        crate::game::gameplay_flag_runtime::CheckBossBitForCurArea(bit, self) as u16
+        crate::game::gameplay_flag_runtime::check_boss_bit_for_cur_area(bit, self) as u16
     }
 
     fn set_boss_bit(&mut self, bit: u16) {

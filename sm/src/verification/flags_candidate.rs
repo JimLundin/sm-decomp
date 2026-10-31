@@ -13,10 +13,10 @@ fn run(operation: Operation, image: &RomImage, g: &mut Game) -> Returned {
         match operation {
             Operation::EventQuery(bit) => return Returned::word(flags::event_has_happened(bit, g)),
             Operation::EventSet(bit) => flags::mark_event(bit, g),
-            Operation::EventClear(bit) => flags::ClearEventHappened(bit, g),
-            Operation::Prepare(bit) => return Returned::word(flags::PrepareBitAccess(bit, g)),
+            Operation::EventClear(bit) => flags::clear_event_happened(bit, g),
+            Operation::Prepare(bit) => return Returned::word(flags::prepare_bit_access(bit, g)),
             Operation::BossQuery(mask) => {
-                return Returned::word(u16::from(flags::CheckBossBitForCurArea(mask, g)));
+                return Returned::word(u16::from(flags::check_boss_bit_for_cur_area(mask, g)));
             }
             Operation::BossSet(mask) => flags::set_boss_bits_for_current_area(mask, g),
             Operation::Plm(address) => {
