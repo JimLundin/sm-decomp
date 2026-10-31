@@ -414,7 +414,7 @@ crate::dispatch::callback_dispatch! {
         accelerate_downwards(k, game);
         if fade_to_black(k, game) & 1 != 0 {
             let e: i32 = k as i32;
-            session_slot!(game, BabyMetroidInCutscene[e].base.properties = (session_slot!(game, BabyMetroidInCutscene[e].base.properties)) | ((K_ENEMY_PROPS_INVISIBLE) as u16));
+            session_slot!(game, BabyMetroidInCutscene[e].base.properties, |old| old | ((K_ENEMY_PROPS_INVISIBLE) as u16));
             session_slot!(game, BabyMetroidInCutscene[e]; function = function::UNLOAD_BABY_METROID_TILES,
                 function_timer = 128);
         } else {
@@ -484,7 +484,7 @@ crate::dispatch::callback_dispatch! {
             if v4 < 0 {
                 session_slot!(game, BabyMetroidInCutscene[e].function = v4 as u16);
             } else {
-                session_slot!(game, BabyMetroidInCutscene[e].movement = (session_slot!(game, BabyMetroidInCutscene[e].movement)).wrapping_add(8));
+                session_slot!(game, BabyMetroidInCutscene[e].movement, |old| old.wrapping_add(8));
             }
         }
     };
@@ -702,17 +702,12 @@ pub fn handle_enemy_blinking(k: u16, game: &mut impl State) {
     if (session_slot!(game, BabyMetroidInCutscene[e].base.frame_counter) & 1) != 0 {
         session_slot!(
             game,
-            BabyMetroidInCutscene[e].base.properties =
-                (session_slot!(game, BabyMetroidInCutscene[e].base.properties) as i32
-                    & !(K_ENEMY_PROPS_INVISIBLE as i32)) as u16
+            BabyMetroidInCutscene[e].base.properties,
+            |old| (old as i32 & !(K_ENEMY_PROPS_INVISIBLE as i32)) as u16
         );
     } else {
-        session_slot!(
-            game,
-            BabyMetroidInCutscene[e].base.properties =
-                (session_slot!(game, BabyMetroidInCutscene[e].base.properties))
-                    | ((K_ENEMY_PROPS_INVISIBLE) as u16)
-        );
+        session_slot!(game, BabyMetroidInCutscene[e].base.properties, |old| old
+            | ((K_ENEMY_PROPS_INVISIBLE) as u16));
     };
 }
 pub fn accelerate_downwards(k: u16, game: &mut impl State) {
@@ -724,18 +719,15 @@ pub fn accelerate_downwards(k: u16, game: &mut impl State) {
     }
     session_slot!(
         game,
-        BabyMetroidInCutscene[e].x_velocity =
-            (if session_slot!(game, BabyMetroidInCutscene[e].x_velocity) & 0x8000 != 0 {
-                -(v2 as i32)
-            } else {
-                v2 as i32
-            }) as u16
+        BabyMetroidInCutscene[e].x_velocity,
+        |old| (if old & 0x8000 != 0 {
+            -(v2 as i32)
+        } else {
+            v2 as i32
+        }) as u16
     );
-    session_slot!(
-        game,
-        BabyMetroidInCutscene[e].y_velocity =
-            (session_slot!(game, BabyMetroidInCutscene[e].y_velocity)).wrapping_add(2)
-    );
+    session_slot!(game, BabyMetroidInCutscene[e].y_velocity, |old| old
+        .wrapping_add(2));
 }
 pub fn update_speed_and_angle(k: u16, mut r18: u16, r20: u16, r22: u16, game: &mut impl State) {
     {
@@ -795,10 +787,10 @@ pub fn initialize(game: &mut impl State) {
     let e: i32 = game.current_enemy() as i32;
     session_slot!(
         game,
-        BabyMetroidInCutscene[e].base.properties =
-            (session_slot!(game, BabyMetroidInCutscene[e].base.properties) as i32
-                | (K_ENEMY_PROPS_DISABLE_SAMUS_COLL as i32
-                    | K_ENEMY_PROPS_BLOCK_PLASMA_BEAM as i32)) as u16
+        BabyMetroidInCutscene[e].base.properties,
+        |old| (old as i32
+            | (K_ENEMY_PROPS_DISABLE_SAMUS_COLL as i32 | K_ENEMY_PROPS_BLOCK_PLASMA_BEAM as i32))
+            as u16
     );
     session_slot!(game, BabyMetroidInCutscene[e].base.palette_index = 3584);
     session_slot! { game, BabyMetroidInCutscene[e].base; current_instruction = ADDR_K_BABY_METROID_ILIST_CFA2 as u16, instruction_timer = 1 }

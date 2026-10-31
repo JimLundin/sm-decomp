@@ -498,11 +498,8 @@ pub fn handle_falling<L: Lease>(k: u16, game: &mut L) {
             session_slot!(game, TorizoSlot[e].y_velocity = LANDED_Y_VELOCITY);
         }
     } else {
-        session_slot!(
-            game,
-            TorizoSlot[e].y_velocity =
-                (session_slot!(game, TorizoSlot[e].y_velocity)).wrapping_add(GRAVITY)
-        );
+        session_slot!(game, TorizoSlot[e].y_velocity, |old| old
+            .wrapping_add(GRAVITY));
     }
 }
 
@@ -662,17 +659,10 @@ pub fn shot<L: Lease>(game: &mut L) {
                     TorizoSlot[e].base.current_instruction = instruction_list::DEATH_SEQUENCE
                 );
                 session_slot!(game, TorizoSlot[e].base.instruction_timer = 1);
-                session_slot!(
-                    game,
-                    TorizoSlot[e].damage =
-                        (session_slot!(game, TorizoSlot[e].damage)) | GUT_AND_FACE_BLOWN_UP
-                );
-                session_slot!(
-                    game,
-                    TorizoSlot[e].base.properties =
-                        (session_slot!(game, TorizoSlot[e].base.properties))
-                            | (K_ENEMY_PROPS_TANGIBLE as u16)
-                );
+                session_slot!(game, TorizoSlot[e].damage, |old| old
+                    | GUT_AND_FACE_BLOWN_UP);
+                session_slot!(game, TorizoSlot[e].base.properties, |old| old
+                    | (K_ENEMY_PROPS_TANGIBLE as u16));
             }
         }
     }
@@ -755,24 +745,14 @@ pub fn golden_main_ai<L: Lease>(game: &mut L) {
 pub fn initialize<L: Lease>(game: &mut L) {
     let e = game.current_enemy() as i32;
     if game.foreign(|game| game.boss_bit(TORIZO_DEAD)) & 1 != 0 {
-        session_slot!(
-            game,
-            TorizoSlot[e].base.properties = (session_slot!(game, TorizoSlot[e].base.properties))
-                | (K_ENEMY_PROPS_DELETED as u16)
-        );
+        session_slot!(game, TorizoSlot[e].base.properties, |old| old
+            | (K_ENEMY_PROPS_DELETED as u16));
         return;
     }
     let torizo = (game.area() as i32 >> 1) as usize;
-    session_slot!(
-        game,
-        TorizoSlot[e].base.properties =
-            (session_slot!(game, TorizoSlot[e].base.properties)) | START_PROPERTIES[torizo]
-    );
-    session_slot!(
-        game,
-        TorizoSlot[e].base.extra_properties =
-            (session_slot!(game, TorizoSlot[e].base.extra_properties)) | 4
-    );
+    session_slot!(game, TorizoSlot[e].base.properties, |old| old
+        | START_PROPERTIES[torizo]);
+    session_slot!(game, TorizoSlot[e].base.extra_properties, |old| old | 4);
     session_slot!(game, TorizoSlot[e].base; x_width = START_X_RADIUS[torizo],
         y_height = START_Y_RADIUS[torizo]);
     session_slot!(game, TorizoSlot[e].function = function::SIMPLE_MOVEMENT);
@@ -848,21 +828,16 @@ pub fn blow_up_face<L: Lease>(k: u16, game: &mut L) {
 /// Instruction - set enemy as visible ($AA:B224). Was `Torizo_Instr_36`.
 pub fn set_visible<L: Lease>(k: u16, game: &mut L) {
     let e = i32::from(k);
-    session_slot!(
-        game,
-        TorizoSlot[e].base.properties = (session_slot!(game, TorizoSlot[e].base.properties) as i32
-            & !(K_ENEMY_PROPS_INVISIBLE as i32)) as u16
-    );
+    session_slot!(game, TorizoSlot[e].base.properties, |old| (old as i32
+        & !(K_ENEMY_PROPS_INVISIBLE as i32))
+        as u16);
 }
 
 /// Instruction - set enemy as invisible ($AA:B22E). Was `Torizo_Instr_37`.
 pub fn set_invisible<L: Lease>(k: u16, game: &mut L) {
     let e = i32::from(k);
-    session_slot!(
-        game,
-        TorizoSlot[e].base.properties =
-            (session_slot!(game, TorizoSlot[e].base.properties)) | (K_ENEMY_PROPS_INVISIBLE as u16)
-    );
+    session_slot!(game, TorizoSlot[e].base.properties, |old| old
+        | (K_ENEMY_PROPS_INVISIBLE as u16));
 }
 
 /// Instruction - set up palette transition to black ($AA:B238). Was
@@ -1024,16 +999,11 @@ pub fn stepped<L: Lease>(k: u16, game: &mut L, state: u16) {
 pub fn stand_up<L: Lease>(k: u16, jp: EnemyScript, game: &mut L) -> EnemyScript {
     let step: u16 = jp.word(0);
     let e = i32::from(k);
-    session_slot!(
-        game,
-        TorizoSlot[e].base.x_pos = (session_slot!(game, TorizoSlot[e].base.x_pos))
-            .wrapping_add((STAND_UP_X[(step >> 1) as usize]) as u16)
-    );
-    session_slot!(
-        game,
-        TorizoSlot[e].base.y_pos = (session_slot!(game, TorizoSlot[e].base.y_pos))
-            .wrapping_add((STAND_UP_Y[((step as i32 & 0xf) >> 1) as usize]) as u16)
-    );
+    session_slot!(game, TorizoSlot[e].base.x_pos, |old| old
+        .wrapping_add((STAND_UP_X[(step >> 1) as usize]) as u16));
+    session_slot!(game, TorizoSlot[e].base.y_pos, |old| old.wrapping_add(
+        (STAND_UP_Y[((step as i32 & 0xf) >> 1) as usize]) as u16
+    ));
     jp.offset(1)
 }
 
@@ -1041,16 +1011,11 @@ pub fn stand_up<L: Lease>(k: u16, jp: EnemyScript, game: &mut L) -> EnemyScript 
 pub fn sit_down<L: Lease>(k: u16, jp: EnemyScript, game: &mut L) -> EnemyScript {
     let step: u16 = jp.word(0);
     let e = i32::from(k);
-    session_slot!(
-        game,
-        TorizoSlot[e].base.x_pos = (session_slot!(game, TorizoSlot[e].base.x_pos))
-            .wrapping_sub((SIT_DOWN_X[(step >> 1) as usize]) as u16)
-    );
-    session_slot!(
-        game,
-        TorizoSlot[e].base.y_pos = (session_slot!(game, TorizoSlot[e].base.y_pos))
-            .wrapping_sub((SIT_DOWN_Y[((step as i32 & 0xf) >> 1) as usize]) as u16)
-    );
+    session_slot!(game, TorizoSlot[e].base.x_pos, |old| old
+        .wrapping_sub((SIT_DOWN_X[(step >> 1) as usize]) as u16));
+    session_slot!(game, TorizoSlot[e].base.y_pos, |old| old.wrapping_sub(
+        (SIT_DOWN_Y[((step as i32 & 0xf) >> 1) as usize]) as u16
+    ));
     jp.offset(1)
 }
 

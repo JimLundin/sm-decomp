@@ -479,7 +479,7 @@ crate::dispatch::callback_dispatch! {
         let v1: u16 = (session_slot!(game, DeadTorizo[e].pre_rot_delay)).wrapping_add(1);
         session_slot!(game, DeadTorizo[e].pre_rot_delay = v1);
         if v1 >= 0x10 {
-            session_slot!(game, DeadTorizo[e].base.properties = (session_slot!(game, DeadTorizo[e].base.properties)) | ((K_ENEMY_PROPS_TANGIBLE) as u16));
+            session_slot!(game, DeadTorizo[e].base.properties, |old| old | ((K_ENEMY_PROPS_TANGIBLE) as u16));
             session_slot!(game, DeadTorizo[e].function = function::TORIZO_ROTTING);
             torizo_corpse_rotting(game);
         }
@@ -576,19 +576,14 @@ pub fn copy_line_of_sand_heap_tile_data(a: u16, game: &mut impl State) {
 }
 pub fn initialize_alive_sidehopper_corpse(game: &mut impl Lease) {
     let e: i32 = game.current_enemy() as i32;
-    session_slot!(
-        game,
-        Corpse[e].base.properties = (session_slot!(game, Corpse[e].base.properties) as i32 & 0x77ff
-            | K_ENEMY_PROPS_PROCESSED_OFFSCREEN as i32) as u16
-    );
+    session_slot!(game, Corpse[e].base.properties, |old| (old as i32 & 0x77ff
+        | K_ENEMY_PROPS_PROCESSED_OFFSCREEN as i32)
+        as u16);
     if (session_slot!(game, Corpse[0i32].base.properties) as i32 & K_ENEMY_PROPS_INVISIBLE as i32)
         != 0
     {
-        session_slot!(
-            game,
-            Corpse[e].base.properties =
-                (session_slot!(game, Corpse[e].base.properties)) | ((K_ENEMY_PROPS_DELETED) as u16)
-        );
+        session_slot!(game, Corpse[e].base.properties, |old| old
+            | ((K_ENEMY_PROPS_DELETED) as u16));
     }
     session_slot! { game, Corpse[e]; drained_palette_index = 0, x_velocity = 96, y_velocity = 256 }
     session_slot!(game, Corpse[e].base; x_pos = 488, y_pos = 184);
@@ -654,7 +649,7 @@ crate::dispatch::callback_dispatch! {
     [11131121] sidehopper_corpse_hopping [] {
         if sidehopper_corpse_movement(k, game) & 1 != 0 {
             let e: i32 = k as i32;
-            session_slot!(game, Corpse[e].hop = ((session_slot!(game, Corpse[e].hop) as i32 + 1) & 3) as u16);
+            session_slot!(game, Corpse[e].hop, |old| ((old as i32 + 1) & 3) as u16);
             set_enemy_instruction_list(k, ADDR_K_DEAD_MONSTERS_ILIST_ECAC as u16, game);
             session_slot!(game, Corpse[e].function = function::SIDEHOPPER_HOPPING_IDLE);
         }
@@ -772,11 +767,9 @@ pub fn sidehopper_corpse_horizontal_movement(k: u16, a: u16, game: &mut impl Lea
         let full: i32 =
             session_slot!(byte game, Corpse[e].base.x_subpos[1]) as i32 + a.to_ne_bytes()[0] as i32;
         session_slot!(byte game, Corpse[e].base.x_subpos[1] = full as u8);
-        session_slot!(
-            game,
-            Corpse[e].base.x_pos = (session_slot!(game, Corpse[e].base.x_pos) as i32
-                + ((a >> 8) as i8 as i32 + (full >> 8))) as u16
-        );
+        session_slot!(game, Corpse[e].base.x_pos, |old| (old as i32
+            + ((a >> 8) as i8 as i32 + (full >> 8)))
+            as u16);
     } else {
         {
             let (actor, amount) = (k, (a as i16 as i32) << 8);
@@ -795,11 +788,8 @@ pub fn corpse_pre_rot_delay(k: u16, j: u16, game: &mut impl State) {
         .wrapping_add(1));
     if session_slot!(game, Corpse[e].pre_rot_delay) >= 0x10 {
         session_slot!(game, Corpse[e].function = j);
-        session_slot!(
-            game,
-            Corpse[e].base.properties = (session_slot!(game, Corpse[e].base.properties))
-                | ((K_ENEMY_PROPS_TANGIBLE) as u16)
-        );
+        session_slot!(game, Corpse[e].base.properties, |old| old
+            | ((K_ENEMY_PROPS_TANGIBLE) as u16));
     }
 }
 pub use self::geemer_rotting as ripper_corpse_rotting;
@@ -947,12 +937,9 @@ pub fn sidehopper_corpse_rottable_contact(game: &mut impl State) {
 pub fn corpse_contact_reaction(a: u16, game: &mut impl State) {
     let e: i32 = game.current_enemy() as i32;
     session_slot!(game, Corpse[e].function = a);
-    session_slot!(
-        game,
-        Corpse[e].base.properties = (session_slot!(game, Corpse[e].base.properties) as i32
-            | (K_ENEMY_PROPS_PROCESSED_OFFSCREEN as i32 | K_ENEMY_PROPS_TANGIBLE as i32))
-            as u16
-    );
+    session_slot!(game, Corpse[e].base.properties, |old| (old as i32
+        | (K_ENEMY_PROPS_PROCESSED_OFFSCREEN as i32 | K_ENEMY_PROPS_TANGIBLE as i32))
+        as u16);
 }
 fn initialize_corpse_tiles(
     rom_address: u16,
@@ -1025,11 +1012,7 @@ pub fn initialize_torizo_corpse(game: &mut impl Lease) {
         game,
         DeadTorizo[e].function = function::TORIZO_WAIT_FOR_SAMUS_COLLISION
     );
-    session_slot!(
-        game,
-        DeadTorizo[e].base.properties =
-            (session_slot!(game, DeadTorizo[e].base.properties)) | (0xa000u16)
-    );
+    session_slot!(game, DeadTorizo[e].base.properties, |old| old | (0xa000u16));
     session_slot! { game, DeadTorizo[e].base; current_instruction = ADDR_K_DEAD_TORIZO_ILIST_D6DC as u16, instruction_timer = 1 }
     session_slot!(game, DeadTorizo[e].base; timer = 0, palette_index = 512);
     session_slot! { game, DeadTorizo[e]; x_velocity = 0, y_velocity = 8, pre_rot_delay = 0, sand_heap_lines = 15, rot_timer = 0 };
@@ -1045,11 +1028,8 @@ fn torizo_corpse_frame(game: &mut impl Lease) {
         == 0
         && game.foreign(|game| game.dead_torizo_contact())
     {
-        session_slot!(
-            game,
-            DeadTorizo[e].base.properties = (session_slot!(game, DeadTorizo[e].base.properties))
-                | ((K_ENEMY_PROPS_TANGIBLE) as u16)
-        );
+        session_slot!(game, DeadTorizo[e].base.properties, |old| old
+            | ((K_ENEMY_PROPS_TANGIBLE) as u16));
         session_slot!(game, DeadTorizo[e].function = function::TORIZO_ROTTING);
     }
     set_graphics_drawn_hook(DRAW_DEAD_TORIZO_HOOK, game);
@@ -1069,11 +1049,8 @@ pub fn torizo_corpse_power_bomb_reaction(game: &mut impl State) {
 }
 pub fn torizo_corpse_touch_or_shot(game: &mut impl State) {
     let e: i32 = 0;
-    session_slot!(
-        game,
-        DeadTorizo[e].base.properties = (session_slot!(game, DeadTorizo[e].base.properties))
-            | ((K_ENEMY_PROPS_TANGIBLE) as u16)
-    );
+    session_slot!(game, DeadTorizo[e].base.properties, |old| old
+        | ((K_ENEMY_PROPS_TANGIBLE) as u16));
     session_slot!(game, DeadTorizo[e].function = function::TORIZO_ROTTING);
 }
 pub fn initialize_sidehopper_corpse(game: &mut impl Lease) {

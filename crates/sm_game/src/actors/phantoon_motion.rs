@@ -111,14 +111,11 @@ fn update_speed(reversed: bool, game: &mut (impl BossState + ?Sized)) {
     };
     if reached {
         session_slot!(game, Body[BODY]; speed = clamp, speed_subpixel = 0);
-        session_slot!(
-            game,
-            Body[BODY].movement_stage = if restart {
-                0
-            } else {
-                session_slot!(game, Body[BODY].movement_stage).wrapping_add(1)
-            }
-        );
+        session_slot!(game, Body[BODY].movement_stage, |old| if restart {
+            0
+        } else {
+            old.wrapping_add(1)
+        });
     }
 }
 
@@ -147,22 +144,16 @@ fn move_in_figure_eight(reversed: bool, game: &mut (impl BossState + ?Sized)) {
             game,
         );
         // Each position read precedes its lazy ROM byte; X is stored before Y.
-        session_slot!(
-            game,
-            Body[BODY].base.x_pos = offset_position(
-                session_slot!(game, Body[BODY].base.x_pos),
-                record.byte(0),
-                reversed
-            )
-        );
-        session_slot!(
-            game,
-            Body[BODY].base.y_pos = offset_position(
-                session_slot!(game, Body[BODY].base.y_pos),
-                record.byte(1),
-                reversed
-            )
-        );
+        session_slot!(game, Body[BODY].base.x_pos, |old| offset_position(
+            old,
+            record.byte(0),
+            reversed
+        ));
+        session_slot!(game, Body[BODY].base.y_pos, |old| offset_position(
+            old,
+            record.byte(1),
+            reversed
+        ));
         session_slot!(
             game,
             Body[BODY].movement_index = if reversed {

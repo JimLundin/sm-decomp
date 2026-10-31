@@ -631,11 +631,7 @@ fn mouth_shots<S: BossState + ?Sized>(game: &mut S) {
                     let kind: u16 = word!(game.PROJECTILE_TYPE[p]);
                     let skip = (kind & 0xf00) == 0
                         && ((kind & 0x10) == 0 || {
-                            session_slot!(
-                                game,
-                                Body[BODY].mouth_flags =
-                                    (session_slot!(game, Body[BODY].mouth_flags)) | 1
-                            );
+                            session_slot!(game, Body[BODY].mouth_flags, |old| old | 1);
                             false
                         });
                     if !skip {
@@ -666,19 +662,13 @@ fn mouth_shots<S: BossState + ?Sized>(game: &mut S) {
             )
         {
             session_slot!(game, Body[BODY]; function = function::DEATH_INIT, mouth_flags = 0);
-            session_slot!(
-                game,
-                Body[BODY].base.properties = (session_slot!(game, Body[BODY].base.properties))
-                    | (K_ENEMY_PROPS_TANGIBLE as u16)
-            );
+            session_slot!(game, Body[BODY].base.properties, |old| old
+                | (K_ENEMY_PROPS_TANGIBLE as u16));
             load_bg2(game, !(0x2000i32) as u16);
             for part in (0u16..384).step_by(64) {
                 let p = part as i32;
-                session_slot!(
-                    game,
-                    Part[p].base.properties = (session_slot!(game, Part[p].base.properties))
-                        | (K_ENEMY_PROPS_TANGIBLE as u16)
-                );
+                session_slot!(game, Part[p].base.properties, |old| old
+                    | (K_ENEMY_PROPS_TANGIBLE as u16));
             }
             if below(
                 session_slot!(game, Body[BODY].script),
@@ -802,18 +792,12 @@ fn fire_lint<L: Lease + ?Sized>(game: &mut L, k: u16) {
     let me = k as i32;
     session_slot!(game, Part[me].base(x_pos, x_subpos) += -LINT_SPEED as u32);
     if below(session_slot!(game, Part[me].base.x_pos), 56) {
-        session_slot!(
-            game,
-            Part[me].base.properties =
-                (session_slot!(game, Part[me].base.properties)) | (K_ENEMY_PROPS_TANGIBLE as u16)
-        );
+        session_slot!(game, Part[me].base.properties, |old| old
+            | (K_ENEMY_PROPS_TANGIBLE as u16));
     }
     if below(session_slot!(game, Part[me].base.x_pos), 32) {
-        session_slot!(
-            game,
-            Part[me].base.properties =
-                (session_slot!(game, Part[me].base.properties)) | (K_ENEMY_PROPS_INVISIBLE as u16)
-        );
+        session_slot!(game, Part[me].base.properties, |old| old
+            | (K_ENEMY_PROPS_INVISIBLE as u16));
         session_slot!(game, Part[me]; function = function::ALIGN_TO_KRAID, timer = 300,
             next = function::LINT_PRODUCE, progress = 0);
     }
@@ -887,15 +871,8 @@ fn fire_fingernail<L: Lease + ?Sized>(game: &mut L, k: u16) {
     let x_speed = (((session_slot!(game, Fingernail[me].x_speed) as u32) << 16)
         | session_slot!(game, Fingernail[me].x_subspeed) as u32) as i32;
     if game.move_horizontal(k, x_speed, Slopes::Ignore) {
-        session_slot!(
-            game,
-            Fingernail[me].x_subspeed =
-                -(session_slot!(game, Fingernail[me].x_subspeed) as i32) as u16
-        );
-        session_slot!(
-            game,
-            Fingernail[me].x_speed = -(session_slot!(game, Fingernail[me].x_speed) as i32) as u16
-        );
+        session_slot!(game, Fingernail[me].x_subspeed, |old| -(old as i32) as u16);
+        session_slot!(game, Fingernail[me].x_speed, |old| -(old as i32) as u16);
     } else {
         let mut row: i32 = 0;
         loop {
@@ -917,16 +894,8 @@ fn fire_fingernail<L: Lease + ?Sized>(game: &mut L, k: u16) {
             == 0
             && (session_slot!(game, Fingernail[me].x_speed) & 0x8000) == 0
         {
-            session_slot!(
-                game,
-                Fingernail[me].x_subspeed =
-                    -(session_slot!(game, Fingernail[me].x_subspeed) as i32) as u16
-            );
-            session_slot!(
-                game,
-                Fingernail[me].x_speed =
-                    -(session_slot!(game, Fingernail[me].x_speed) as i32) as u16
-            );
+            session_slot!(game, Fingernail[me].x_subspeed, |old| -(old as i32) as u16);
+            session_slot!(game, Fingernail[me].x_speed, |old| -(old as i32) as u16);
         }
     }
     let y_speed = (((session_slot!(game, Fingernail[me].y_speed) as u32) << 16)
@@ -1394,13 +1363,9 @@ fn initialize_fingernail_attack<L: Lease + ?Sized>(game: &mut L) {
     let speeds = native_record(BANK, pattern, game);
     let me = current(game);
     session_slot!(game, Fingernail[me]; x_subspeed = speeds.word(0), x_speed = speeds.word(2), y_subspeed = speeds.word(4), y_speed = speeds.word(6), launched = 1);
-    session_slot!(
-        game,
-        Fingernail[me].base.properties = (session_slot!(game, Fingernail[me].base.properties)
-            as i32
-            & !(K_ENEMY_PROPS_TANGIBLE as i32 | K_ENEMY_PROPS_INVISIBLE as i32))
-            as u16
-    );
+    session_slot!(game, Fingernail[me].base.properties, |old| (old as i32
+        & !(K_ENEMY_PROPS_TANGIBLE as i32 | K_ENEMY_PROPS_INVISIBLE as i32))
+        as u16);
     session_slot!(game, Fingernail[me].base; instruction_timer = 1, current_instruction = animation::FINGERNAIL);
     session_slot!(game, Fingernail[me].function = function::FINGERNAIL_FIRE);
     let at_kraid: bool = ((word!(game.RANDOM_NUMBER) & 1) == 0)
@@ -1420,13 +1385,9 @@ fn initialize_fingernail_attack<L: Lease + ?Sized>(game: &mut L) {
                         Fingernail[me].function = function::FINGERNAIL_WAIT_FOR_LINT
                     );
                     session_slot!(game, Fingernail[me].next = function::FINGERNAIL_FIRE);
-                    session_slot!(
-                        game,
-                        Fingernail[me].base.properties =
-                            (session_slot!(game, Fingernail[me].base.properties) as i32
-                                | (K_ENEMY_PROPS_TANGIBLE as i32 | K_ENEMY_PROPS_INVISIBLE as i32))
-                                as u16
-                    );
+                    session_slot!(game, Fingernail[me].base.properties, |old| (old as i32
+                        | (K_ENEMY_PROPS_TANGIBLE as i32 | K_ENEMY_PROPS_INVISIBLE as i32))
+                        as u16);
                     false
                 })
         });
@@ -1562,11 +1523,9 @@ pub fn sink_through_floor<L: Lease + ?Sized>(game: &mut L) {
     handle_sinking(game);
     session_slot!(game, Body[BODY].base.y_pos, |old| old.wrapping_add(1));
     if !below(session_slot!(game, Body[BODY].base.y_pos), 608) {
-        session_slot!(
-            game,
-            Body[BODY].base.properties = (session_slot!(game, Body[BODY].base.properties) as i32
-                & !(K_ENEMY_PROPS_TANGIBLE as i32)) as u16
-        );
+        session_slot!(game, Body[BODY].base.properties, |old| (old as i32
+            & !(K_ENEMY_PROPS_TANGIBLE as i32))
+            as u16);
         word!(game.ENEMY_BG2_TILEMAP_SIZE = 2);
         let enemy_ptr: u16 = session_slot!(game, Body[current(game)].base.enemy_ptr);
         game.foreign(|game| game.set_shot_ai(enemy_ptr, NO_SHOT_AI));
@@ -1790,11 +1749,7 @@ fn body_shots<S: BossState + ?Sized>(game: &mut S) {
                     let p: i32 = i >> 1;
                     word!(game.PROJECTILE_DIR[p] |= 0x10);
                     if (word!(game.PROJECTILE_TYPE[p]) & 0x10) != 0 {
-                        session_slot!(
-                            game,
-                            Body[BODY].mouth_flags =
-                                (session_slot!(game, Body[BODY].mouth_flags)) | 1
-                        );
+                        session_slot!(game, Body[BODY].mouth_flags, |old| old | 1);
                     }
                     hits = hits.wrapping_add(1);
                 }
@@ -1988,11 +1943,7 @@ fn first_phase<L: Lease + ?Sized>(game: &mut L) -> bool {
         session_slot!(game, Part[FOOT].function = function::FOOT_IDLE);
         session_slot!(game, Part[ARM].base; current_instruction = animation::ARM_IDLE, instruction_timer = 1);
         for lint in [TOP_LINT, MIDDLE_LINT, BOTTOM_LINT] {
-            session_slot!(
-                game,
-                Part[lint].base.properties =
-                    (session_slot!(game, Part[lint].base.properties)) | 0x100
-            );
+            session_slot!(game, Part[lint].base.properties, |old| old | 0x100);
         }
         session_slot!(game, Part[ARM].base.properties, |old| old | 0x400);
     }
@@ -2242,12 +2193,9 @@ pub fn fingernail_touch<L: Lease + ?Sized>(game: &mut L) {
 /// `KraidsGoodFingernail_Main` and `KraidsBadFingernail_Main`.
 pub fn fingernail_main<L: Lease + ?Sized>(game: &mut L, nail: i32) {
     if below(session_slot!(game, Part[BODY].base.health), 1) {
-        session_slot!(
-            game,
-            Part[nail].base.properties = (session_slot!(game, Part[nail].base.properties) as i32
-                | (K_ENEMY_PROPS_DELETED as i32 | K_ENEMY_PROPS_INVISIBLE as i32))
-                as u16
-        );
+        session_slot!(game, Part[nail].base.properties, |old| (old as i32
+            | (K_ENEMY_PROPS_DELETED as i32 | K_ENEMY_PROPS_INVISIBLE as i32))
+            as u16);
     } else {
         run_function(game, session_slot!(game, Part[nail].function));
     }
@@ -2293,20 +2241,14 @@ pub fn stomp_sound<L: Lease + ?Sized>(game: &mut L) {
 
 /// Instruction: Kraid steps back. Was `Kraid_Instr_XposMinus3`/`3b`.
 pub fn step_back<L: Lease + ?Sized>(game: &mut L) {
-    session_slot!(
-        game,
-        Body[BODY].base.x_pos =
-            (session_slot!(game, Body[BODY].base.x_pos)).wrapping_sub(FOOT_STEP_BACK)
-    );
+    session_slot!(game, Body[BODY].base.x_pos, |old| old
+        .wrapping_sub(FOOT_STEP_BACK));
 }
 
 /// Instruction: Kraid steps forward. Was `Kraid_Instr_XposPlus3`.
 pub fn step_forward<L: Lease + ?Sized>(game: &mut L) {
-    session_slot!(
-        game,
-        Body[BODY].base.x_pos =
-            (session_slot!(game, Body[BODY].base.x_pos)).wrapping_add(FOOT_STEP_FORWARD)
-    );
+    session_slot!(game, Body[BODY].base.x_pos, |old| old
+        .wrapping_add(FOOT_STEP_FORWARD));
 }
 
 /// Instruction: Kraid lunges right until blocked, shaking the room. Was
