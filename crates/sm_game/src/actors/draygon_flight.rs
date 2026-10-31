@@ -89,17 +89,20 @@ pub fn foam_at_mouth<L: Lease>(k: u16, frame_mask: u16, game: &mut L) {
     }
 }
 /// Handle firing wall turret ($A5:87AA): every 40h frames, a random turret of
-/// the last four fires unless destroyed. Was `turret`.
-pub fn fire_wall_turret<S: BossState>(game: &mut S) {
-    if game.frame() & TURRET_FRAMES == 0 {
-        let index = 2 * ((game.roll_random() & 3) + 2);
-        if session_slot!(game, Draygon[index as i32].turret_destroyed) == 0 {
-            let x = crate::cartridge::rom_table_word!(game, TURRET_POSITIONS, index as isize);
-            let y = crate::cartridge::rom_table_word!(game, TURRET_POSITIONS, index as isize + 1);
-            game.place_projectile_spawn(x, y);
-            game.spawn_actor_eproj(TURRET_SPEED, index, TURRET_PROJECTILE);
-        }
+/// the last four fires unless destroyed. Returns the turret index it then
+/// leaves in X, which the breath bubbles read after it. Was `turret`.
+pub fn fire_wall_turret<S: BossState>(game: &mut S) -> Option<u16> {
+    if game.frame() & TURRET_FRAMES != 0 {
+        return None;
     }
+    let index = 2 * ((game.roll_random() & 3) + 2);
+    if session_slot!(game, Draygon[index as i32].turret_destroyed) == 0 {
+        let x = crate::cartridge::rom_table_word!(game, TURRET_POSITIONS, index as isize);
+        let y = crate::cartridge::rom_table_word!(game, TURRET_POSITIONS, index as isize + 1);
+        game.place_projectile_spawn(x, y);
+        game.spawn_actor_eproj(TURRET_SPEED, index, TURRET_PROJECTILE);
+    }
+    Some(index)
 }
 /// Draygon body function - fight intro: the initial delay ($A5:871B, with
 /// `first`) or the dance ($A5:878B). Was `opening`.
@@ -347,9 +350,10 @@ pub fn goop_setup<S: BossState>(right: bool, game: &mut S) {
     session_slot!(game, Draygon[BODY].facing_right = u16::from(right));
 }
 /// Every 128 frames of the current part, a bubble (sprite object 18h) 10h px
-/// left of and above the body.
-pub fn body_bubble<L: Lease>(game: &mut L) {
-    let k = game.current_enemy() as i32;
+/// left of and above the body. The original reads the frame counter at X, so
+/// after a turret pick it reads the body's words at that index ($A5:931C).
+pub fn body_bubble<L: Lease>(turret: Option<u16>, game: &mut L) {
+    let k = i32::from(turret.unwrap_or_else(|| game.current_enemy()));
     if session_slot!(game, Draygon[k].base.frame_counter) & 0x7f == 0 {
         let x = session_slot!(game, Draygon[BODY].base.x_pos).wrapping_sub(BUBBLE_OFFSET);
         let y = session_slot!(game, Draygon[BODY].base.y_pos).wrapping_sub(BUBBLE_OFFSET);
@@ -359,8 +363,8 @@ pub fn body_bubble<L: Lease>(game: &mut L) {
 /// Draygon body function - goop right ($A5:8B52) or left ($A5:8CD4) - move
 /// until Samus in range. Was `approach`.
 pub fn goop_move_until_in_range<L: Lease>(right: bool, game: &mut L) {
-    fire_wall_turret(game);
-    body_bubble(game);
+    let turret = fire_wall_turret(game);
+    body_bubble(turret, game);
     let distance =
         abs16(session_slot!(game, Draygon[BODY].base.x_pos).wrapping_sub(game.player_x()));
     if distance.wrapping_sub(GOOP_RANGE) & SIGN != 0 {
@@ -412,7 +416,7 @@ pub fn goop_firing<S: BossState>(right: bool, game: &mut S) {
 /// Draygon body function - goop right ($A5:8C33) or left ($A5:8DB2) - move
 /// until off-screen. Was `exit`.
 pub fn goop_move_until_off_screen<L: Lease>(right: bool, game: &mut L) {
-    body_bubble(game);
+    body_bubble(None, game);
     if !right && word!(game.SAMUS_X_SPEED_DIVISOR) != 0 {
         session_slot!(game, Draygon[BODY].function = function::CHASE_SAMUS);
         return;
