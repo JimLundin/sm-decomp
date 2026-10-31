@@ -32,8 +32,8 @@ use sm_data::cartridge::lorom_offset;
 pub use crate::actors::ridley::Lease;
 
 /// What Ceres Ridley needs beyond Ridley's host: the boss flags, the mode 7
-/// transfers, the getaway push and the escape sequence's tiles and text.
-pub trait Host: ridley::Host + crate::escape_typewriter::Host {
+/// transfers, the getaway push and the escape sequence's tiles.
+pub trait Host: ridley::Host {
     /// The boss bits for `area`.
     fn boss_byte(&mut self, area: u16) -> u8;
     /// Queue the bank `bank` mode 7 transfer list at `list`.
@@ -980,7 +980,7 @@ pub fn japanese_text_appears<L: Lease + ?Sized>(game: &mut L) {
 /// text ($A6:C104). Was `Ridley_C104`.
 pub fn type_self_destruct_text<L: Lease + ?Sized>(game: &mut L) {
     ridley::emergency_text_glow(game);
-    if game.foreign(|game| crate::escape_typewriter::handle_text(game, ESCAPE_TEXT_TILES)) {
+    if crate::escape_typewriter::handle_text(game, ESCAPE_TEXT_TILES) {
         next_step(game);
     }
 }

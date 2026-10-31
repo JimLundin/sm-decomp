@@ -118,7 +118,7 @@ impl Host for World {
     fn set_colour(&mut self, index: usize, value: u16) {
         self.colours[index] = value;
     }
-    fn area(&self) -> u16 {
+    fn area_index(&self) -> u16 {
         self.area
     }
 }

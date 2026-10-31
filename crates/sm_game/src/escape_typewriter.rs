@@ -46,8 +46,8 @@ pub trait Host:
     /// Palette colour `index`.
     fn colour(&self, index: usize) -> u16;
     fn set_colour(&mut self, index: usize, value: u16);
-    /// The current area ($079F).
-    fn area(&self) -> u16;
+    /// The current area index ($079F).
+    fn area_index(&self) -> u16;
 }
 
 /// Typewriter text - Zebes escape timer ($A6:C49C).
@@ -136,7 +136,7 @@ pub fn handle_text<H: Host + ?Sized>(game: &mut H, tiles: u16) -> bool {
     session_slot!(game, Typewriter[0].stroke_timer = strokes);
     if strokes.wrapping_sub(2) & 0x8000 == 0 {
         session_slot!(game, Typewriter[0].stroke_timer = 0);
-        match game.area() {
+        match game.area_index() {
             CERES => game.queue_sound(1, 0x45, 3),
             _ => game.queue_sound(2, 0xd, 3),
         }

@@ -365,8 +365,20 @@ impl sm_game::escape_typewriter::Host for Game {
     fn set_colour(&mut self, index: usize, value: u16) {
         crate::ram_map::word!(self.PALETTE_BUFFER[index] = value);
     }
-    fn area(&self) -> u16 {
+    fn area_index(&self) -> u16 {
         crate::ram_map::word!(self.AREA_INDEX)
+    }
+}
+
+impl sm_game::escape_typewriter::Host for crate::game::session_runtime::Runtime<'_> {
+    fn colour(&self, index: usize) -> u16 {
+        self.word(sm_game::ram::word_arrays::PALETTE_BUFFER + 2 * index)
+    }
+    fn set_colour(&mut self, index: usize, value: u16) {
+        self.write_slice_le(sm_game::ram::word_arrays::PALETTE_BUFFER + 2 * index, value);
+    }
+    fn area_index(&self) -> u16 {
+        self.session().room.area
     }
 }
 

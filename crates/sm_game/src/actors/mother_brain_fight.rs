@@ -834,7 +834,7 @@ pub trait OwnedWords {
 
 /// A lease on the game for one frame of an AI: the state steps run on it, and
 /// `foreign` runs the rest on the game it leases.
-pub trait Lease: State {
+pub trait Lease: State + escape_typewriter::Host {
     type Game: Host;
     fn foreign<T>(&mut self, action: impl FnOnce(&mut Self::Game) -> T) -> T;
 }
@@ -848,7 +848,6 @@ pub trait Host:
     + crate::records::Records
     + crate::cartridge::NativeImage
     + SlotAccess
-    + escape_typewriter::Host
     + OwnedWords
 {
     /// The original's unreachable-state failure. Was `Unreachable`.
@@ -1229,7 +1228,7 @@ crate::dispatch::callback_dispatch! {
             spawn_palette_effect(ADDR_K_PALFX_FFD1 as u16, game);
             spawn_palette_effect(ADDR_K_PALFX_FFD5 as u16, game);
             session_slot!(game, MotherBrainBrain[BRAIN].unpause_hook = 0);
-            game.foreign(escape_typewriter::set_up_zebes);
+            escape_typewriter::set_up_zebes(game);
             session_slot!(game, MotherBrainBody[BODY].function_timer = 32);
             let mut v1: u16 = function::PHASE_3_DEATH_SPAWN_TIME_BOMB_SET_JAPANESE_TEXT;
             if game.owned(OwnedWord::JapaneseText) == 0 {
@@ -1239,7 +1238,7 @@ crate::dispatch::callback_dispatch! {
         }
     };
     [11121379] phase3_death_type_out_zebes_escape_text [] {
-        if game.foreign(|game| escape_typewriter::handle_text(game, 0x2610)) {
+        if escape_typewriter::handle_text(game, 0x2610) {
             session_slot!(game, MotherBrainBody[BODY]; function = function::PHASE_3_DEATH_ESCAPE_DOOR_IS_EXPLODING_START_ESCAPE_TIMER,
                 function_timer = 32);
         }

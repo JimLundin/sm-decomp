@@ -41,9 +41,16 @@ use sm_data::ridley_explosion::{
     HAND_ADDRESS, LEGS_ADDRESS, MOUTH_ADDRESS, TORSO_ADDRESS, WINGS_ADDRESS,
 };
 
-/// A lease on a game with Ridley's effects, Norfair's and Ceres's.
-pub trait Lease: BossLease<Game: crate::actors::ceres_ridley::Host> {}
-impl<T: BossLease<Game: crate::actors::ceres_ridley::Host> + ?Sized> Lease for T {}
+/// A lease on a game with Ridley's effects, Norfair's and Ceres's, that
+/// types the self destruct text.
+pub trait Lease:
+    BossLease<Game: crate::actors::ceres_ridley::Host> + crate::escape_typewriter::Host
+{
+}
+impl<T> Lease for T where
+    T: BossLease<Game: crate::actors::ceres_ridley::Host> + crate::escape_typewriter::Host + ?Sized
+{
+}
 
 /// What Ridley needs beyond the shared boss effects, deaths and sprites.
 pub trait Host:
