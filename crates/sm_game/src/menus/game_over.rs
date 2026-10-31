@@ -27,15 +27,19 @@ pub fn advance<H: crate::menus::host::Host + ?Sized>(game: &mut H) -> CoroutineR
         fade_to_title::<H>,
     ];
     states[crate::menu!(game.MenuIndex) as usize](game);
-    0
+    super::pending_wait(game)
 }
 
 fn prepare<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    game.fade(false);
-    if game.ram().read_byte(crate::ram::mirror::INIDISP) & 0xf != 0 {
+    if !super::resuming(game) {
+        game.fade(false);
+        if game.ram().read_byte(crate::ram::mirror::INIDISP) & 0xf != 0 {
+            return;
+        }
+    }
+    if super::blank_and_wait(true, game) {
         return;
     }
-    game.set_blank(true);
     game.queue_sound(2, 1_u8, 6);
     game.set_hdma_enabled(false);
     game.clear_hdma();
@@ -48,6 +52,20 @@ fn prepare<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
 }
 
 fn initialize<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+    if !super::resuming(game) {
+        draw_menu(game);
+    }
+    if super::blank_and_wait(false, game) {
+        return;
+    }
+    crate::menu!(game.MenuIndex += 1);
+    crate::screen_fade::set_both(game, 0, 0);
+    word! { game, 0; FILE_SELECT_MAP_AREA_INDEX }
+    place_missile(FIRST_CHOICE_ROW, game);
+}
+
+/// Index 1 up to the clear-forced-blank wait: the menu, the baby and the gradient.
+fn draw_menu<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     for (at, value) in [(0x69, 17), (0x74, 32), (0x75, 64), (0x76, 0x80)] {
         game.ram().write_byte(at, value);
     }
@@ -88,11 +106,6 @@ fn initialize<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     for (register, script) in [(0x32, 0x927d), (0x31, 0x928d)] {
         game.spawn_hdma(0x81, &HdmaObjectDefinition::new(0, register, script));
     }
-    game.set_blank(false);
-    crate::menu!(game.MenuIndex += 1);
-    crate::screen_fade::set_both(game, 0, 0);
-    word! { game, 0; FILE_SELECT_MAP_AREA_INDEX }
-    place_missile(FIRST_CHOICE_ROW, game);
 }
 
 fn wait_for_music<H: crate::menus::host::Host + ?Sized>(game: &mut H) {

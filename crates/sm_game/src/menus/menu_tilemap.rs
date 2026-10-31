@@ -134,6 +134,22 @@ pub fn file_rows<H: Host + ?Sized>(emphasis: FileRowEmphasis, game: &mut H) {
 
 /// Requires the native file-menu definitions for its text and tile reads.
 pub fn main_menu<H: Host + ?Sized>(game: &mut H) {
+    if !super::resuming(game) {
+        draw_main_menu(game);
+    }
+    if super::blank_and_wait(false, game) {
+        return;
+    }
+    crate::menu!(game.MenuIndex += 1);
+    with_file_select(game, |menu| {
+        *menu.file_copy_selection() = 0;
+        *menu.file_copy_source_slot() = 0;
+        *menu.file_copy_destination_slot() = 0;
+    });
+}
+
+/// $81:9EF3 up to the clear-forced-blank wait: the file rows and the cursor.
+fn draw_main_menu<H: Host + ?Sized>(game: &mut H) {
     clear(game);
     word!(game.NONEMPTY_SAVE_SLOTS = u16::MAX);
     set_palette(0, game);
@@ -180,13 +196,6 @@ pub fn main_menu<H: Host + ?Sized>(game: &mut H) {
         }
     });
     crate::screen_fade::set_both(game, 1, 1);
-    game.set_blank(false);
-    crate::menu!(game.MenuIndex += 1);
-    with_file_select(game, |menu| {
-        *menu.file_copy_selection() = 0;
-        *menu.file_copy_source_slot() = 0;
-        *menu.file_copy_destination_slot() = 0;
-    });
 }
 
 /// The slot helmets' x, and their y beside each save slot's row.
