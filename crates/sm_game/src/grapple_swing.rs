@@ -832,6 +832,7 @@ pub fn start_firing<H: Host + ?Sized>(game: &mut H) {
     game.session_mut().player.swing.start_animation_timer = 5;
     game.session_mut().player.swing.start_animation_tiles =
         grapple_aim::point_animation(game).first;
+    game.with_lease(crate::player_collision::grapple::clear_temporaries);
     game.session_mut().player.swing.probe.x = 0;
     game.session_mut().player.swing.failed_movement_counter = 0;
     word!(game.GRAPPLE_SPECIAL_ANGLE_FLAG = 0);
