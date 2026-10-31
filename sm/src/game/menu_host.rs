@@ -93,9 +93,6 @@ impl MenuRuntime for Game {
         // SAFETY: HDMA updates run from the frame loop with the backend installed.
         unsafe { crate::game::music::handle_music_queue(self) }
     }
-    fn request_reset(&mut self) {
-        Game::request_reset(self)
-    }
     fn flush_sram(&mut self) {
         unsafe { crate::rtl::rtl_write_sram(self) }
     }
@@ -119,6 +116,12 @@ impl MenuRuntime for Game {
     #[cfg(sm_verify_dll)]
     fn observe_selected_continue(&mut self, load_result: u8) {
         crate::flags_save_observer::selected_continue(load_result)
+    }
+}
+
+impl sm_game::menus::host::ResetRequest for Game {
+    fn request_reset(&mut self) {
+        Game::request_reset(self)
     }
 }
 
