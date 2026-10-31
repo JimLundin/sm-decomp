@@ -131,10 +131,10 @@ fn set_hopping_list(runtime: &mut impl ActorLease, puyo: i32, falling: bool) {
     let left = session_slot!(runtime, Puyo[puyo].direction) != 0;
     set_instruction_list(runtime, HOPPING_LISTS[usize::from(left ^ falling)][level]);
 }
-/// Bounce off a wall or ceiling: turn round next hop and drop.
-fn start_dropping(runtime: &mut impl ActorLease, puyo: i32) {
+/// Bounce off a wall or ceiling: turn round next hop if `invert` is nonzero, and drop.
+fn start_dropping(runtime: &mut impl ActorLease, puyo: i32, invert: u16) {
     let inverted = session_slot!(runtime, Puyo[puyo].direction) ^ 1;
-    session_slot!(runtime, Puyo[puyo]; invert_direction = 1, inverted_direction = inverted);
+    session_slot!(runtime, Puyo[puyo]; invert_direction = invert, inverted_direction = inverted);
     session_slot!(runtime, Puyo[puyo]; hop_type = DROPPING_HOP, airborne_function = DROPPING);
 }
 /// Puyo movement ($A2:9B88): rise or fall, then move sideways.
@@ -153,7 +153,9 @@ fn hop(runtime: &mut impl ActorLease, puyo: i32) {
         if falling {
             session_slot!(runtime, Puyo[puyo].function = GROUNDED);
         } else {
-            start_dropping(runtime, puyo);
+            // The original loads the scratch word at $01 here ($A2:9BBF), not #$0001.
+            let invert = runtime.session().pointer_scratch.word_at_01();
+            start_dropping(runtime, puyo, invert);
         }
         session_slot!(runtime, Puyo[puyo].hopping = 0);
         return;
@@ -183,7 +185,7 @@ fn hop(runtime: &mut impl ActorLease, puyo: i32) {
         SlopePolicy::Ignore,
     ) == Blocked
     {
-        start_dropping(runtime, puyo);
+        start_dropping(runtime, puyo, 1);
         session_slot!(runtime, Puyo[puyo].hopping = 0);
     }
 }
