@@ -1094,28 +1094,29 @@ pub unsafe fn SnesInit(filename: *const c_char, game: &mut Game) -> *mut Snes {
         )
         .install_startup(game.g_use_my_apu_code);
         RtlUpdateSnesPatchForBugfix(game);
-        let mut i: size_t = 0 as size_t;
-        while i != kPatchedCarrys.len() {
-            // A site the oracle does not install keeps its hardware carry.
-            if !crate::oracle_mode::installs(
-                crate::oracle_mode::PatchKind::Carry,
-                kPatchedCarrys[i as usize],
-            ) {
-                i = i.wrapping_add(1);
+        // Every site keeps its original byte, installed or not, so checkpoints
+        // (which store these bytes) do not depend on the patch policy.
+        let originals = kPatchedCarrys
+            .map(|address| patch_image(address, &mut game.execution_parts().1).byte(address));
+        for ((original, &address), &byte) in game
+            .kPatchedCarrysOrg
+            .iter_mut()
+            .zip(&kPatchedCarrys)
+            .zip(&originals)
+        {
+            if byte == 0 {
+                printf(c"0x%x double patched!\n".as_ptr(), address);
                 continue;
             }
-            let t_84: u8 = patch_image(kPatchedCarrys[i as usize], &mut game.execution_parts().1)
-                .byte(kPatchedCarrys[i as usize]);
-            if t_84 != 0 {
-                game.kPatchedCarrysOrg[i as usize] = t_84;
-                FixupCarry(kPatchedCarrys[i as usize], game);
-            } else {
-                printf(
-                    c"0x%x double patched!\n".as_ptr(),
-                    kPatchedCarrys[i as usize],
-                );
+            *original = byte;
+        }
+        for &address in &kPatchedCarrys {
+            // A site the oracle does not install keeps its hardware carry.
+            if crate::oracle_mode::installs(crate::oracle_mode::PatchKind::Carry, address)
+                && patch_image(address, &mut game.execution_parts().1).byte(address) != 0
+            {
+                FixupCarry(address, game);
             }
-            i = i.wrapping_add(1);
         }
         install_startup_bug_hooks(&mut game.execution_parts().1);
         game.refresh_rom_records();
