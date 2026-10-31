@@ -381,7 +381,7 @@ pub fn gunship_setup<H: Host + ?Sized>(game: &mut H) {
 /// `CinematicFunction_Intro_Func123`.
 pub fn gunship_spinning_slow<H: Host + ?Sized>(game: &mut H) {
     if crate::ending_screens::advance_ending_gunship_spin(true, game)
-        && game.event_happened(CRITTERS_ESCAPED) != 0
+        && crate::progress::leased::event_has_happened(CRITTERS_ESCAPED, game) != 0
     {
         spawn_at(game, object::CRITTERS_ESCAPE, 4, 4);
     }
