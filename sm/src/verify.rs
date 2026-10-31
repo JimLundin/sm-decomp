@@ -1363,6 +1363,16 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
         let mut coverage = ReplayCoverage::new(game, expected);
         // Optional console diagnostics share the normal CLI and DLL replay path.
         let trace = std::env::var_os("SM_VERIFY_TRACE").is_some();
+        // SM_VERIFY_POSITIONS=path appends `step,x,y,game_state,room` after
+        // each step, for comparing a replay with a hardware capture. A seeded
+        // row's step i is the capture's i-th row with emulator_lag = 0 after
+        // the seed's next_input_index, less one: the import skips lag frames.
+        let mut positions = match std::env::var_os("SM_VERIFY_POSITIONS") {
+            Some(path) => Some(std::io::BufWriter::new(
+                std::fs::File::create(path).map_err(|error| format!("positions: {error}"))?,
+            )),
+            None => None,
+        };
         let mut completed = 0;
         let mut hit_tail_complete = after_hits.is_none();
         let mut expectation_tail_complete = after_expectations.is_none();
@@ -1383,6 +1393,19 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
             sm::oracle_mode::set_next_frame_input(inputs.get(index + 1).copied());
             sm::rtl::rtl_run_frame(i32::from(pad), game);
             sm::oracle_mode::set_next_frame_input(None);
+            if let Some(file) = positions.as_mut() {
+                use std::io::Write as _;
+                let word = |at| ReplayCoverage::word(game, at);
+                writeln!(
+                    file,
+                    "{index},{},{},{},{:04X}",
+                    word(0x0af6),
+                    word(0x0afa),
+                    word(0x0998),
+                    word(0x079b)
+                )
+                .map_err(|error| format!("positions: {error}"))?;
+            }
             // Advance the music driver once per frame without playing audio.
             sm::rtl::rtl_render_audio(&mut discarded_audio, game);
             if audio_trace.is_some() {
