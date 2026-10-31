@@ -139,15 +139,21 @@ impl Composed {
             on_player_mechanism: None,
         }
     }
-    fn byte(&self, bank: u8, cursor: u16, byte: u8) {
+    fn byte(&mut self, bank: u8, cursor: u16, byte: u8) {
         let base = usize::from(bank & 0x7f) * 0x8000;
-        self.image.write(base + usize::from(cursor & 0x7fff), byte);
+        self.edit(base + usize::from(cursor & 0x7fff), &[byte]);
     }
-    fn word(&self, bank: u8, cursor: u16, value: u16) {
+    fn word(&mut self, bank: u8, cursor: u16, value: u16) {
         let base = usize::from(bank & 0x7f) * 0x8000 + usize::from(cursor & 0x7fff);
-        for (offset, byte) in value.to_ne_bytes().into_iter().enumerate() {
-            self.image.write(base + offset, byte);
-        }
+        self.edit(base, &value.to_ne_bytes());
+    }
+    /// Replace the image with a copy that holds `bytes` at `at`.
+    fn edit(&mut self, at: usize, bytes: &[u8]) {
+        let mut image = (0..self.image.len())
+            .map(|offset| self.image.read(offset))
+            .collect::<Vec<_>>();
+        image[at..at + bytes.len()].copy_from_slice(bytes);
+        self.image = RomImage::from(image);
     }
     fn tick(&mut self) {
         animated::advance(self);

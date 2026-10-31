@@ -1,7 +1,7 @@
 //! Authored corrected-predecessor animation fixtures; no independent CPU claim.
 //! Source-only lane. Root supplies the shared export and initialized host.
 use crate::native_rom::NativeRomPointer;
-use crate::{game_state::Game, player_transitions_rust_observer as observer};
+use crate::{game_state::Game, player_transitions_rust_observer as observer, rom::RomImage};
 use std::cell::Cell;
 thread_local! {
     static CASE: Cell<Option<u32>> = const { Cell::new(None) };
@@ -59,7 +59,6 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
         .map(|at| game.ram().read_byte(at))
         .collect::<Vec<u8>>();
     let fail_before = game.g_fail;
-    let mut restored = Vec::new();
     let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
         game.ram().fill(0..game.ram().len(), 0);
         game.g_fail = false;
@@ -193,20 +192,21 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
         identity.push(2); // authored predecessor family, not the original11 CPU mapping
         record(&mut output, 0, &identity);
         let mut authored = Vec::new();
+        // The authored spans go into a copy the case installs as both images.
+        let mut patched = (0..image.len())
+            .map(|at| image.read(at))
+            .collect::<Vec<_>>();
         let mut write = |address: u32, at: usize, values: &[u8]| -> Result<(), String> {
-            if at
+            let Some(end) = at
                 .checked_add(values.len())
-                .is_none_or(|end| end > 0x300000 || end > image.len())
-            {
+                .filter(|&end| end <= 0x300000 && end <= patched.len())
+            else {
                 return Err("authored span outside original prefix".into());
-            }
+            };
             authored.extend_from_slice(&address.to_le_bytes());
             authored.extend_from_slice(&(values.len() as u32).to_le_bytes());
             authored.extend_from_slice(values);
-            for (i, &value) in values.iter().enumerate() {
-                restored.push((at + i, image.read(at + i)));
-                image.write(at + i, value);
-            }
+            patched[at..end].copy_from_slice(values);
             Ok(())
         };
         for (at, values) in &bytes {
@@ -222,6 +222,9 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
             crate::rtl::lorom_offset(pointer_address) as usize,
             &(program as u16).to_le_bytes(),
         )?;
+        let patched = RomImage::from(patched);
+        game.loaded_rom = Some(patched.clone());
+        game.register_native_rom(patched.clone());
         record(&mut output, 8, &authored);
         record(&mut output, 9, &[]); // corrected predecessor: no CPU-only exclusions
         CASE.with(|state| state.set(Some(id)));
@@ -250,11 +253,11 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
                 });
             }
         }
-        if game.capture_native_rom().as_mut_ptr() != native.as_mut_ptr()
+        if game.capture_native_rom().as_mut_ptr() != patched.as_mut_ptr()
             || game
                 .loaded_rom
                 .as_ref()
-                .is_none_or(|loaded| loaded.as_mut_ptr() != image.as_mut_ptr())
+                .is_none_or(|loaded| loaded.as_mut_ptr() != patched.as_mut_ptr())
             || game.actor_identity_is_with_session()
         {
             return Err("animation fixture unexpectedly changed ownership/binding".into());
@@ -267,10 +270,8 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
     }));
     CASE.with(|state| state.set(None));
     let _ = observer::finish();
-    // Reverse order also correctly restores deliberately overlapping authored bytes.
-    for (at, value) in restored.into_iter().rev() {
-        image.write(at, value);
-    }
+    game.loaded_rom = Some(image);
+    game.register_native_rom(native);
     game.ram().copy_in(0, &ram_before);
     game.g_fail = fail_before;
     result.unwrap_or_else(|_| Err("eligible animation predecessor panicked".into()))

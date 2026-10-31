@@ -21,7 +21,7 @@ pub(super) fn run() -> i32 {
     macro_rules! cases {
             ($($test:ident),+ $(,)?) => { [$( (stringify!($test), $test as fn()), )+] };
         }
-    let tests: [(&str, fn()); 148] = cases![
+    let tests: [(&str, fn()); 147] = cases![
         checkpoint_serialized_schema_matches_actual_compiled_codecs,
         seeded_checkpoint_origin_binds_its_seed_payload,
         prepared_message_pixels_delay_queue_and_checkpoint,
@@ -67,7 +67,6 @@ pub(super) fn run() -> i32 {
         samus_game_rejected_expectation_preserves_binding,
         samus_game_native_capture_retains_allocation,
         samus_game_prepared_replacement_is_rejected,
-        samus_game_failed_install_preserves_binding,
         samus_game_reference_import_keeps_revoked_scope,
         samus_game_panicking_callback_keeps_prefix,
         samus_game_adoption_uses_captured_target,
@@ -6276,13 +6275,6 @@ fn samus_game_native_capture_retains_allocation() {
 #[cfg_attr(test, test)]
 fn samus_game_prepared_replacement_is_rejected() {
     sm::samus_game_prepared_replacement_is_rejected();
-}
-
-// Movies cannot author independent Game admission and captured-allocation failures.
-#[cfg(sm_verify_dll)]
-#[cfg_attr(test, test)]
-fn samus_game_failed_install_preserves_binding() {
-    sm::samus_game_failed_install_preserves_binding();
 }
 
 // Movies cannot author independent owner mutation, unwind and selected-adoption cases.

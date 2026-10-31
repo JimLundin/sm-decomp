@@ -11,7 +11,7 @@ fn request() -> SpriteSpawn {
         appearance: 0xaffe,
     }
 }
-fn prepare(h: &Composed) {
+fn prepare(h: &mut Composed) {
     h.word(0xb4, 0xbda8, 0x9000);
     h.word(0xb4, 0x9000, 1);
     h.word(0xb4, 0x9002, 0xa000);
@@ -146,7 +146,7 @@ fn clears() {
 }
 fn lifecycle() {
     let mut h = Composed::new();
-    prepare(&h);
+    prepare(&mut h);
     assert_eq!(
         sprites::legacy_result(sprites::spawn(&mut h, request())).0,
         62,
@@ -209,13 +209,15 @@ fn lifecycle() {
 }
 fn draw_live() {
     let mut h = Composed::new();
-    prepare(&h);
+    prepare(&mut h);
     for i in [30, 31] {
         h.world.player.sprite_effects.active[i].instruction = 0x9000;
         h.world.player.sprite_effects.active[i].x.whole = 32;
         h.world.player.sprite_effects.active[i].y.whole = 48;
     }
     h.world.player.sprite_effects.active[31].appearance = 0xaffe;
+    // The live next instruction's map; nothing reads it before the callback.
+    h.word(0xb4, 0x9102, 0xa222);
     h.on_sprite_draw = Some(|h| {
         h.on_sprite_draw = None;
         let s = &mut h.world.player.sprite_effects.active[30];
@@ -223,7 +225,6 @@ fn draw_live() {
         s.x.whole = 40;
         s.y.whole = 60;
         s.appearance = 0x1234;
-        h.word(0xb4, 0x9102, 0xa222);
     });
     sprites::draw(&mut h);
     assert_eq!(
@@ -237,7 +238,7 @@ fn draw_live() {
 }
 fn clips() {
     let mut h = Composed::new();
-    prepare(&h);
+    prepare(&mut h);
     h.world.player_inputs.camera_x = 8;
     for (i, x, y) in [(31, 0xfff8, 271), (30, 0xfff7, 271), (29, 8, 272)] {
         let s = &mut h.world.player.sprite_effects.active[i];
@@ -273,7 +274,7 @@ fn alias() {
 }
 fn enemy_spawn() {
     let mut h = Composed::new();
-    prepare(&h);
+    prepare(&mut h);
     h.word(0x86, 0x9200, 0);
     h.world.player.enemy_projectiles.slots[0].x.whole = 100;
     h.world.player.enemy_projectiles.slots[0].y.whole = 100;
@@ -372,7 +373,7 @@ fn actor_alias() {
 // E0DC + F9E = F07A: slot1 appearance supplies the actual actor timer read.
 fn maw_grouping(timer: u16, initial: u16, expected: u16, tile: u16, label: &str) {
     let mut h = Composed::new();
-    prepare(&h);
+    prepare(&mut h);
     let slot = &mut h.world.player.sprite_effects.active[0];
     slot.instruction = 0x9000;
     slot.x.whole = 32;
