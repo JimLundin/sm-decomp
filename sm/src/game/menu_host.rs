@@ -65,9 +65,6 @@ impl MenuRuntime for Game {
     fn queue_fx_clear(&mut self) {
         crate::game::display_refresh::queue_fx_clear(self)
     }
-    fn player_command(&mut self, command: u16) -> u16 {
-        crate::game::session_runtime::player_command(command, self)
-    }
     fn update_beam_tiles_and_palette(&mut self) {
         crate::game::visual_runtime::update_beam_tiles_and_palette(self)
     }
@@ -123,9 +120,6 @@ impl MenuRuntime for Game {
             }
         });
     }
-    fn restore_movement_sound(&mut self) {
-        crate::game::player_projectiles::restore_sound(self)
-    }
     fn message_box_das0l_value(&self) -> u16 {
         self.message_box_das0l_value
     }
@@ -149,12 +143,6 @@ impl MenuRuntime for Game {
     }
     fn enqueue_mode7_rom(&mut self, bank: u8, cursor: u16) {
         crate::game::mode7_transfers::enqueue_rom(bank, cursor, self)
-    }
-    fn draw_player_frame(&mut self) {
-        visual_runtime::draw_player_frame(self)
-    }
-    fn draw_projectiles(&mut self) {
-        crate::game::player_projectiles::draw_projectiles(self)
     }
     fn event_happened(&mut self, event: u16) -> u16 {
         crate::game::gameplay_flag_runtime::event_has_happened(event, self)
@@ -184,23 +172,11 @@ impl MenuRuntime for Game {
     fn hdma_effect(&mut self, effect: sm_game::hdma_objects::HdmaEffect, slot: u16) {
         sm_game::hdma_effects::apply(effect, slot, &mut Runtime::new(self));
     }
-    fn retire_projectile(&mut self, slot: u16) {
-        crate::game::player_projectiles::retire(slot, self)
-    }
     fn spawn_palette_effect(&mut self, definition: u16) {
         crate::game::palette_effects::spawn(definition, self)
     }
     fn enable_display_nmi(&mut self, enabled: bool) {
         crate::game::display_refresh::enable(enabled, self)
-    }
-    fn finish_pose_change(&mut self) {
-        crate::game::player_transitions::finish_pose_change(&mut Runtime::new(self));
-    }
-    fn demo_start(&mut self) {
-        crate::game::player_transitions::demo::start(Runtime::new(self).session_mut());
-    }
-    fn demo_load(&mut self, mode: u16, input: u16) {
-        crate::game::player_transitions::demo::load(&mut Runtime::new(self), mode, input);
     }
     fn request_reset(&mut self) {
         Game::request_reset(self)

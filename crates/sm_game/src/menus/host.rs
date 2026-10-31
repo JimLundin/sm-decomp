@@ -17,9 +17,48 @@ pub trait SaveRam {
     fn fill(&self, range: core::ops::Range<usize>, value: u8);
 }
 
+/// Samus's rules the menus and frame phases run, each on the game's own lease.
+pub trait PlayerRuntime: crate::runtime_access::RuntimeAccess {
+    /// Draw Samus's current frame.
+    fn draw_player_frame(&mut self) {
+        use crate::lease::Lease as _;
+        self.runtime()
+            .owned_player_call(crate::player_drawing::draw_player_frame);
+    }
+    /// Draw the player projectiles.
+    fn draw_projectiles(&mut self) {
+        crate::player_projectiles::presentation::draw_projectiles(&mut self.runtime());
+    }
+    /// Restore Samus's movement sound after a message box.
+    fn restore_movement_sound(&mut self) {
+        crate::player_projectiles::feedback::restore_sound(&mut self.runtime());
+    }
+    /// Retire the player projectile in `slot`.
+    fn retire_projectile(&mut self, slot: u16) {
+        crate::player_projectiles::lifecycle::retire(&mut self.runtime(), slot);
+    }
+    /// Run Samus's pose command `command`; returns the original's result.
+    fn player_command(&mut self, command: u16) -> u16 {
+        use crate::player_transitions::commands::finish_ceres_arrival;
+        crate::player_transitions::command(&mut self.runtime(), command, finish_ceres_arrival)
+    }
+    /// Samus's pending pose change, as the intro's demo applies it.
+    fn finish_pose_change(&mut self) {
+        crate::player_transitions::finish_pose_change(&mut self.runtime());
+    }
+    fn demo_start(&mut self) {
+        use crate::session_access::SessionAccess as _;
+        crate::player_transitions::demo::start(self.runtime().session_mut());
+    }
+    fn demo_load(&mut self, mode: u16, input: u16) {
+        crate::player_transitions::demo::load(&mut self.runtime(), mode, input);
+    }
+}
+impl<T: crate::runtime_access::RuntimeAccess + ?Sized> PlayerRuntime for T {}
+
 /// The runtime operations the menus call.
 pub trait MenuRuntime:
-    crate::player_position::PlayerPosition + crate::player_position::PlayerFacts
+    crate::player_position::PlayerPosition + crate::player_position::PlayerFacts + PlayerRuntime
 {
     fn set_hdma_enabled(&mut self, enabled: bool);
     fn clear_hdma(&mut self);
@@ -46,8 +85,6 @@ pub trait MenuRuntime:
     fn cinematic_sprite_instruction(&mut self, command: u32, object: u16, operand: u16) -> u16;
     /// Append a ROM Mode 7 transfer list to the Mode 7 queue.
     fn enqueue_mode7_rom(&mut self, bank: u8, cursor: u16);
-    /// Retire the player projectile in `slot`.
-    fn retire_projectile(&mut self, slot: u16);
     /// Write a DMA channel register on the owned backend.
     fn write_dma_register(&mut self, register: u16, value: u8);
     /// Advance the music queue, as the HDMA update did first each frame.
@@ -62,16 +99,9 @@ pub trait MenuRuntime:
     fn spawn_hardcoded_plm(&mut self, x: u8, y: u8, id: u16);
     /// Spawn an enemy projectile that uses the room's graphics; returns its slot.
     fn spawn_room_enemy_projectile(&mut self, definition: u16, parameter: u16) -> u16;
-    /// Draw Samus's current frame, then (separately) the player projectiles.
-    fn draw_player_frame(&mut self);
-    fn draw_projectiles(&mut self);
     /// The original's `RomPtr_RAM` assertion on a RAM-table address.
     fn assert_ram_pointer(&mut self, address: u16);
     fn enable_display_nmi(&mut self, enabled: bool);
-    /// Samus's pending pose change, as the intro's demo applies it.
-    fn finish_pose_change(&mut self);
-    fn demo_start(&mut self);
-    fn demo_load(&mut self, mode: u16, input: u16);
     /// The message box DMA length the original kept outside RAM.
     fn message_box_das0l_value(&self) -> u16;
     fn set_message_box_das0l_value(&mut self, value: u16);
@@ -82,8 +112,6 @@ pub trait MenuRuntime:
     /// The carry the HDMA object handler ($88:84B9) is running with: the main game loop's, set
     /// from power-on, except while a message box restores the display, where it is clear.
     fn hdma_handler_carry(&self) -> bool;
-    /// Restore Samus's movement sound after a message box.
-    fn restore_movement_sound(&mut self);
     /// Wait for the next display refresh; nonzero yields to the frame loop.
     fn display_wait(&mut self, update: bool) -> u8;
     fn set_boss_byte(&mut self, area: u16, value: u8);
@@ -102,8 +130,6 @@ pub trait MenuRuntime:
     /// The original's unreachable-state failure.
     fn rtl_unreachable(&mut self) -> bool;
     fn queue_fx_clear(&mut self);
-    /// Run Samus's pose command `command`; returns the original's result.
-    fn player_command(&mut self, command: u16) -> u16;
     fn update_beam_tiles_and_palette(&mut self);
     fn flush_sram(&mut self);
     fn invalid_window(&mut self, address: u32);

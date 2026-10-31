@@ -79,8 +79,27 @@ pub trait SessionRam {
     }
 }
 
+/// The owned-Session view Samus's drawing, projectiles and pose rules run on.
+pub trait PlayerLease:
+    SessionView
+    + crate::player_drawing::Host
+    + crate::player_projectiles::host::Host
+    + crate::player_transitions::effects::Host
+    + crate::player_transitions::effects::SamusLease
+{
+}
+impl<
+    T: SessionView
+        + crate::player_drawing::Host
+        + crate::player_projectiles::host::Host
+        + crate::player_transitions::effects::Host
+        + crate::player_transitions::effects::SamusLease
+        + ?Sized,
+> PlayerLease for T
+{
+}
 pub trait RuntimeAccess {
-    type Runtime<'a>: SessionView + crate::samus_drawing::Authority
+    type Runtime<'a>: PlayerLease
     where
         Self: 'a;
     /// A fresh owned-Session view; publication happens when it is dropped.

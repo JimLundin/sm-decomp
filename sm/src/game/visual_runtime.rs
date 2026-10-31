@@ -10,7 +10,7 @@ pub(crate) use sm_game::room_visuals::{
     initialize_room_haze, initialize_tourian_statue, initialize_weather, shake_room_with_sound,
 };
 
-pub(crate) use crate::game::hosts::{draw_player_frame, update_beam_tiles_and_palette};
+pub(crate) use crate::game::hosts::update_beam_tiles_and_palette;
 pub(crate) use crate::game::visual_checks::{
     check_animation_guard, check_palette_guard, samus_observer,
 };

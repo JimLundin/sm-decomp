@@ -513,11 +513,6 @@ pub(crate) fn update_beam_tiles_and_palette(game: &mut Game) {
 }
 
 /// Draw Samus's frame on a fresh lease, inside the player driver's owned call.
-pub(crate) fn draw_player_frame(game: &mut Game) {
-    crate::game::session_runtime::Runtime::new(game)
-        .owned_player_call(sm_game::player_drawing::draw_player_frame);
-}
-
 /// The HUD's values on the game: the inventory view over the projected bytes,
 /// and the named words for the HUD items and grapple, read the same way.
 impl sm_game::hud::HudPlayer for Game {

@@ -72,9 +72,6 @@ pub(crate) fn flare(game: &mut Game) {
 pub(crate) fn grapple_flare(game: &mut Game) {
     feedback::grapple_flare(&mut Runtime::new(game));
 }
-pub(crate) fn restore_sound(game: &mut Game) {
-    feedback::restore_sound(&mut Runtime::new(game));
-}
 pub(crate) fn initialize(
     slot: u16,
     kind: sm_game::projectile_initialization::Initialization,
