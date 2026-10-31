@@ -740,6 +740,10 @@ macro_rules! scalar_words {
             }
         }
         $f(0xdc8,$($borrow)* $s.messages.queued);
+        $f(ram::MESSAGE_BOX_ANIMATION_Y_RADIUS,$($borrow)* $s.messages.box_radius);
+        for index in 0..4 {
+            $f(0x5a4+2*index,$($borrow)* $s.messages.box_scratch[index]);
+        }
         $f(0x1e75,$($borrow)* $s.mechanisms.save_locked);
         $f(0x1c23,$($borrow)* $s.mechanisms.flags);
         $f(0x1c25,$($borrow)* $s.mechanisms.draw_cursor);

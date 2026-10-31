@@ -485,6 +485,11 @@ pub struct Feedback {
 #[derive(Clone, Default, Debug, PartialEq)]
 pub struct MessageRequests {
     pub queued: u16,
+    /// The message box's animation Y radius ($7E:05A2).
+    pub box_radius: u16,
+    /// The message box's animation scratch words ($7E:05A4..$7E:05AB), which
+    /// Crocomire's melt also borrows ($05A6).
+    pub box_scratch: [u16; 4],
 }
 
 impl Default for Terrain {

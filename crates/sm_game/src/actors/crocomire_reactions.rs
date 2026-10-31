@@ -969,12 +969,12 @@ pub fn melting<L: Lease + ?Sized>(game: &mut L) {
             let mut v6: u16 =
                 (2 * (session_slot!(game, Crocomire[e1].base.y_pos) as i32 - 72i32)) as u16;
             let mut v7: u16 = melt!(game.YOffset);
-            word!(game.MESSAGE_BOX_ANIMATION_Y1 = melt!(game.YOffset));
+            boss!(game.MessageBoxScratch1 = melt!(game.YOffset));
             do_until! { ((v7) as i16).wrapping_sub((melt!(game.MaxY)) as i16) >= 0 ;
                 word!(
                     game.CROCOMIRE_BG2_SCROLL_HDMA_DATA[(v6 >> 1)] =
                         (scroll!(game.Bg2V) as i32 + v7 as i32
-                            - word!(game.MESSAGE_BOX_ANIMATION_Y1) as i32)
+                            - boss!(game.MessageBoxScratch1) as i32)
                             as u16
                 );
                 let v8: bool = u16::overflowing_add(melt!(game.Displacement), r18).1;
@@ -982,7 +982,7 @@ pub fn melting<L: Lease + ?Sized>(game: &mut L) {
                 if !v8 {
                     v7 = v7.wrapping_add(1);
                 }
-                word!(game.MESSAGE_BOX_ANIMATION_Y1 += 1);
+                boss!(game.MessageBoxScratch1 += 1);
                 v6 = (v6).wrapping_add(2);
             }
             if ((v6) as i16).wrapping_sub(512) < 0 {

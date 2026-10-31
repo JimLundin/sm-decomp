@@ -57,7 +57,7 @@ pub fn import<H: crate::ram::RamHost + ?Sized>(game: &H) -> Dialogue<u16> {
             value @ STEPS.. => ChildContinuation::Step(value - STEPS),
             value => ChildContinuation::Invalid(value),
         },
-        radius: read(game, ram::MESSAGE_BOX_ANIMATION_Y_RADIUS),
+        radius: message_box::get(game, message_box::Word::Radius),
         selection: match read(game, ram::SAVE_CONFIRMATION_SELECTION) {
             0 => Selection::Accept,
             2 => Selection::Decline,
@@ -82,7 +82,7 @@ pub fn publish<H: crate::ram::RamHost + ?Sized>(state: Dialogue<u16>, game: &mut
         },
     );
     write(game, ram::MY_COUNTER, state.delay_remaining);
-    write(game, ram::MESSAGE_BOX_ANIMATION_Y_RADIUS, state.radius);
+    message_box::set(game, message_box::Word::Radius, state.radius);
     write(
         game,
         ram::SAVE_CONFIRMATION_SELECTION,
@@ -142,4 +142,32 @@ pub fn input<H: crate::ram::RamHost + ?Sized>(game: &H) -> Input {
 }
 pub fn select_pause<H: crate::ram::RamHost + ?Sized>(game: &mut H) {
     write(game, ram::GAME_STATE, 12);
+}
+
+/// The message box's animation words, which the Session holds as
+/// `messages.box_radius` and `messages.box_scratch`, read and stored through
+/// the host's projected bytes.
+pub mod message_box {
+    use crate::ram::CompatibilityRam;
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    pub enum Word {
+        Radius = 0x5a2,
+        Scratch0 = 0x5a4,
+        Scratch1 = 0x5a6,
+        Scratch2 = 0x5a8,
+        Scratch3 = 0x5aa,
+    }
+    /// The scratch words in RAM order.
+    pub const SCRATCH: [Word; 4] = [
+        Word::Scratch0,
+        Word::Scratch1,
+        Word::Scratch2,
+        Word::Scratch3,
+    ];
+    pub fn get<H: CompatibilityRam + ?Sized>(h: &H, word: Word) -> u16 {
+        crate::projection::word(h, word as usize)
+    }
+    pub fn set<H: CompatibilityRam + ?Sized>(h: &mut H, word: Word, value: u16) {
+        crate::projection::set_word(h, word as usize, value);
+    }
 }

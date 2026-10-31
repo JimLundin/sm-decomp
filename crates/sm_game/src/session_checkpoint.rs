@@ -1488,7 +1488,8 @@ checkpoint_fields!(checkpoint_feedback, checkpoint_read_feedback, Feedback,
     earthquake_kind: checkpoint_word/checkpoint_read_word, earthquake_timer: checkpoint_word/checkpoint_read_word,
     sound_disabled: checkpoint_word/checkpoint_read_word);
 checkpoint_fields!(checkpoint_messages, checkpoint_read_messages, MessageRequests,
-    queued: checkpoint_word/checkpoint_read_word);
+    queued: checkpoint_word/checkpoint_read_word, box_radius: checkpoint_word/checkpoint_read_word,
+    box_scratch: checkpoint_words/audio_words);
 checkpoint_fields!(checkpoint_spawn_scratch, checkpoint_read_spawn_scratch, SpawnScratch,
     header: checkpoint_word/checkpoint_read_word, coordinates: checkpoint_word/checkpoint_read_word,
     argument: checkpoint_word/checkpoint_read_word);
@@ -1523,7 +1524,7 @@ macro_rules! checkpoint_auxiliary {
                 if metadata.identity.reference != metadata.reference.fingerprint {
                     return Err("auxiliary gameplay checkpoint Reference identity mismatch".into());
                 }
-                let mut bytes = Vec::from(b"SMAUXGS\x06".as_slice());
+                let mut bytes = Vec::from(b"SMAUXGS\x07".as_slice());
                 let binding = observation_binding(metadata);
                 bytes.extend_from_slice(&(binding.len() as u64).to_le_bytes());
                 bytes.extend_from_slice(&binding);
@@ -1532,7 +1533,7 @@ macro_rules! checkpoint_auxiliary {
             }
             pub fn decode_auxiliary_checkpoint(bytes: &[u8], metadata: &DisplayStartMetadata) -> Result<AuxiliaryGameplayCheckpoint, String> {
                 let mut read = CheckpointReader(bytes);
-                if read.bytes(8)? != b"SMAUXGS\x06" { return Err("unsupported auxiliary gameplay checkpoint schema".into()); }
+                if read.bytes(8)? != b"SMAUXGS\x07" { return Err("unsupported auxiliary gameplay checkpoint schema".into()); }
                 let size = usize::try_from(read.counter()?).map_err(|_| "auxiliary gameplay checkpoint binding length overflow")?;
                 if metadata.identity.reference != metadata.reference.fingerprint || read.bytes(size)? != observation_binding(metadata) {
                     return Err("auxiliary gameplay checkpoint source identity or Reference changed".into());

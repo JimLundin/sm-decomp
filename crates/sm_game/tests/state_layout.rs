@@ -387,6 +387,18 @@ fn room_effect_lanes() -> Vec<Lane> {
     ]
 }
 
+/// The message box's animation radius and scratch words.
+fn message_box_lanes() -> Vec<Lane> {
+    let mut lanes: Vec<Lane> = vec![(0x5a2, 0, |s, _| &mut s.messages.box_radius)];
+    lanes.extend(array(0x5a4, 2, 4, |s, i| &mut s.messages.box_scratch[i]));
+    lanes
+}
+
+#[test]
+fn message_box_round_trips_every_word() {
+    check_owner("message box", &message_box_lanes());
+}
+
 /// The room's FX blending configurations and the Ceres status.
 fn room_state_lanes() -> Vec<Lane> {
     vec![
@@ -973,6 +985,7 @@ fn all_owner_lanes() -> Vec<(&'static str, Vec<Lane>)> {
         ("actor speed scratch", actor_scratch_lanes()),
         ("Crocomire melt", crocomire_melt_lanes()),
         ("boss RAM", boss_ram_lanes()),
+        ("message box", message_box_lanes()),
         ("BG2 staging", bg2_staging_lanes()),
     ]
 }

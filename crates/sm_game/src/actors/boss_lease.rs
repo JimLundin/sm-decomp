@@ -109,6 +109,8 @@ pub mod boss_ram {
         Random = 0x05e5,
         /// `room.fx_layer_flags`.
         FxLayerFlags = 0x1988,
+        /// `messages.box_scratch[1]`, which Crocomire's melt borrows.
+        MessageBoxScratch1 = 0x05a6,
         /// `REMOVED_R18`.
         RemovedR18 = 0x0012,
         /// `REMOVED_R20`.
