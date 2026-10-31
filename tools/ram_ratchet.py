@@ -8,6 +8,10 @@ smaller in production lines (crates/*/src plus sm/src outside verification;
 The baseline below only moves down: run with --update after a landing that
 lowers a measure, and commit the result with that landing.
 
+The production line count is advisory for now (Jim, 2026-10-31: shipping
+faster comes first; strict code-volume reduction comes later). It is still
+reported, but only the RAM coupling measures fail the check.
+
 Run from the repository root: python3 tools/ram_ratchet.py [--update]
 """
 import os
@@ -25,6 +29,7 @@ BASELINE = {
     "sm_game_coupled_files": 101,
     "production_lines": 173506,
 }
+ADVISORY = {"production_lines"}
 
 
 CFG_TEST = re.compile(r"^\s*#\[cfg\(test\)\]\s*$")
@@ -91,7 +96,10 @@ def main():
     for name, base in BASELINE.items():
         print(f"{name}: {now[name]} (baseline {base}, delta {now[name] - base:+d})")
         if now[name] > base:
-            over.append(name)
+            if name in ADVISORY:
+                print(f"advisory: {name} is over its baseline")
+            else:
+                over.append(name)
     if "--update" in sys.argv:
         path = os.path.abspath(__file__)
         text = open(path, encoding="utf-8").read()
