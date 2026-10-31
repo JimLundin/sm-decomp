@@ -534,7 +534,7 @@ BUG_HOOKS = [
     (0x818AB8, 'b', 'visual', 'removed', 'patched',
      'Add spritemap to OAM with base tile number - no off-screen handling',
      'With a null spritemap pointer (Y=0), hardware reads the entry count from DB:0000 (the WRAM $0000 mirror) and draws garbage OAM entries; the hook returns early'),
-    (0xA794BA, 'b', 'state', 'removed', 'patched',
+    (0xA794BA, 'b', 'state', 'removed', 'follows',
      'Enemy shot - Kraid arm',
      'On hardware Y is $E509 after the explosion spawn, so the mark-for-deletion read-modify-write goes to ROM $A7:F10D and does nothing; the shot keeps flying, while the hook deletes it'),
     (0xA7B968, 'b', 'state', 'removed', 'follows',
