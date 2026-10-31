@@ -157,7 +157,6 @@ after_expectations = 120
 # 96b667a43^, the last build whose replay of these inputs reached the events.
 [[segment]]
 id = "boss-bomb-torizo"
-pending = "awaiting the seeds-v1-seeded-checkpoints-f4e03e50190ab6dd ci-data upload"
 seed = "100-input-phase:27"
 seed_sha256 = "c402c17601f3ac1b274a8c1914e306ed304371b8e65031975d5b67947591528c"
 checkpoint = "bomb-torizo-seeded-1441.smvchk"
@@ -821,7 +820,6 @@ expect = ["room:E0B5"]
 # Vertical bomb-jump lifecycle and subsequent gameplay.
 [[segment]]
 id = "samus-bomb-jump-vertical"
-pending = "awaiting the seeds-v1-seeded-checkpoints-f4e03e50190ab6dd ci-data upload"
 seed = "100-input-phase:27"
 seed_sha256 = "c402c17601f3ac1b274a8c1914e306ed304371b8e65031975d5b67947591528c"
 checkpoint = "bomb-jump-seeded-6762.smvchk"
@@ -1081,7 +1079,6 @@ expect = ["area:crateria", "room:91F8"]
 # Fixed window starts at the authenticated Stone Zoomer movement mismatch.
 [[segment]]
 id = "wall-crawler-slope-step"
-pending = "awaiting the seeds-v1-seeded-checkpoints-f4e03e50190ab6dd ci-data upload"
 seed = "100-input-phase:27"
 seed_sha256 = "c402c17601f3ac1b274a8c1914e306ed304371b8e65031975d5b67947591528c"
 checkpoint = "bomb-jump-seeded-6762.smvchk"
