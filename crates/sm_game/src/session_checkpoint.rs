@@ -1989,6 +1989,7 @@ checkpoint_fields!(checkpoint_room, checkpoint_read_room, Room,
     collision_cursor: checkpoint_word/checkpoint_read_word, liquid_options: checkpoint_word/checkpoint_read_word,
     fx_blending: checkpoint_word/checkpoint_read_word,
     fx_layer3_blending: checkpoint_word/checkpoint_read_word,
+    fx_layer_flags: checkpoint_word/checkpoint_read_word,
     liquid_height: checkpoint_word/checkpoint_read_word, liquid_target: checkpoint_word/checkpoint_read_word,
     liquid_velocity: checkpoint_word/checkpoint_read_word, liquid_delay: checkpoint_word/checkpoint_read_word,
     liquid: checkpoint_liquid/checkpoint_read_liquid,
@@ -2046,7 +2047,7 @@ impl Room {
         }
         let topology = checkpoint_world_binding(binding)?;
         checkpoint_validate_room(self, binding)?;
-        let mut bytes = Vec::from(b"SMROOMS\x07".as_slice());
+        let mut bytes = Vec::from(b"SMROOMS\x08".as_slice());
         let source = observation_binding(metadata);
         checkpoint_count(&mut bytes, source.len());
         bytes.extend_from_slice(&source);
@@ -2061,7 +2062,7 @@ impl Room {
         expected: &world::WorldBinding,
     ) -> Result<Self, String> {
         let mut read = CheckpointReader(bytes);
-        if read.bytes(8)? != b"SMROOMS\x07" {
+        if read.bytes(8)? != b"SMROOMS\x08" {
             return Err("unsupported room checkpoint schema".into());
         }
         let size = usize::try_from(read.counter()?)

@@ -107,6 +107,8 @@ pub mod boss_ram {
         CameraDistance = 0x0941,
         /// `timing.random_number`.
         Random = 0x05e5,
+        /// `room.fx_layer_flags`.
+        FxLayerFlags = 0x1988,
         /// `REMOVED_R18`.
         RemovedR18 = 0x0012,
         /// `REMOVED_R20`.

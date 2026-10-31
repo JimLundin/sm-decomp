@@ -392,6 +392,7 @@ fn room_state_lanes() -> Vec<Lane> {
     vec![
         (0x1982, 0, |s, _| &mut s.room.fx_blending),
         (0x1984, 0, |s, _| &mut s.room.fx_layer3_blending),
+        (0x1988, 0, |s, _| &mut s.room.fx_layer_flags),
         (0x093f, 0, |s, _| &mut s.room.ceres_status),
     ]
 }

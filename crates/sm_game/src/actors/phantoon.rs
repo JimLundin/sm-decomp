@@ -26,7 +26,7 @@ use crate::enemy_projectiles::drops::DropSource;
 use crate::menus::prelude::{boss, owned, scroll};
 use crate::phantoon_tables::{self, Timer};
 use crate::ram::RawRam as _;
-use crate::ram::{slot, word};
+use crate::ram::slot;
 
 /// A lease on a game with Phantoon's effects.
 pub trait Lease: BossLease<Game: Host> {}
@@ -488,7 +488,7 @@ fn start_dying<S: BossState + ?Sized>(game: &mut S, k: u16) {
             scroll,
         );
     }
-    word!(game.PHANTOM_RELATED_LAYER_FLAG |= HIDE_BG2);
+    boss!(game.FxLayerFlags |= HIDE_BG2);
     session_slot!(game, Mouth[MOUTH].shot_roll = 1);
 }
 
@@ -874,7 +874,7 @@ pub fn shot<S: BossState + ?Sized>(game: &mut S) {
             session_slot!(game, Body[me].timer = 0);
             session_slot!(game, Tentacles[TENTACLES].swooping = 0);
             session_slot!(game, Tentacles[k as i32 + TENTACLES].damage_taken = 0);
-            word!(game.PHANTOM_RELATED_LAYER_FLAG |= HIDE_BG2);
+            boss!(game.FxLayerFlags |= HIDE_BG2);
             session_slot!(game, Body[BODY].base.instruction_timer = 1);
             session_slot!(game, Eye[EYE].base.instruction_timer = 1);
             session_slot!(
@@ -969,7 +969,7 @@ pub fn swooping<S: BossState + ?Sized>(game: &mut S, k: u16) {
             game,
             Body[k as i32].function = function::FADE_OUT_WITH_SWOOP
         );
-        word!(game.PHANTOM_RELATED_LAYER_FLAG |= HIDE_BG2);
+        boss!(game.FxLayerFlags |= HIDE_BG2);
         close_eye(game, animation::EYE_CLOSE);
         session_slot!(game, Eye[EYE].fade_complete = 0);
         session_slot!(game, Tentacles[k as i32 + TENTACLES].damage_taken = 0);
@@ -1022,7 +1022,7 @@ pub fn fade_in_before_figure_eight<S: BossState + ?Sized>(game: &mut S) {
 /// Was `Phantoon_BecomeSolidAfterRainingFireballs`.
 pub fn become_solid_after_flame_rain<S: BossState + ?Sized>(game: &mut S, k: u16) {
     session_slot!(game, Eye[EYE].fade_complete = 0);
-    word!(game.PHANTOM_RELATED_LAYER_FLAG &= !HIDE_BG2);
+    boss!(game.FxLayerFlags &= !HIDE_BG2);
     session_slot!(game, Body[BODY].base.instruction_timer = 1);
     session_slot!(game, Eye[EYE].base.instruction_timer = 1);
     session_slot!(
@@ -1222,7 +1222,7 @@ pub fn dying_fade_out<S: BossState + ?Sized>(game: &mut S, k: u16) {
 pub fn almost_dead<S: BossState + ?Sized>(game: &mut S, k: u16) {
     game.set_slot_byte(MOSAIC, 0);
     session_slot!(game, Eye[EYE].background_held = 0);
-    word!(game.PHANTOM_RELATED_LAYER_FLAG &= !HIDE_BG2);
+    boss!(game.FxLayerFlags &= !HIDE_BG2);
     session_slot!(game, Mouth[MOUTH].semi_transparency = -1i32 as u16);
     session_slot!(game, Body[k as i32]; function = function::DEAD, timer = 60);
     session_slot!(game, Eye[EYE].fade_complete = 0);
@@ -1276,7 +1276,7 @@ pub fn dead<L: Lease + ?Sized>(game: &mut L, k: u16) {
 /// Looks at Samus and starts the swoop. Was `Phantoon_BecomesSolidAndBodyVuln`.
 pub fn become_solid_and_swoop<S: BossState + ?Sized>(game: &mut S, k: u16) {
     look_at_samus(game);
-    word!(game.PHANTOM_RELATED_LAYER_FLAG &= !HIDE_BG2);
+    boss!(game.FxLayerFlags &= !HIDE_BG2);
     begin_swoop(game, k);
     session_slot!(game, Body[BODY].base; instruction_timer = 1, current_instruction = animation::BODY_FULL_HITBOX);
 }
@@ -1340,7 +1340,7 @@ fn spawn_starting_flame<L: Lease + ?Sized>(game: &mut L, k: u16) {
 /// `Phantoon_SpawnFireballsBeforeFight`.
 fn start_fight<L: Lease + ?Sized>(game: &mut L, k: u16) {
     session_slot!(game, Body[k as i32].speed_subpixel = 0);
-    word!(game.PHANTOM_RELATED_LAYER_FLAG |= HIDE_BG2);
+    boss!(game.FxLayerFlags |= HIDE_BG2);
     session_slot!(game, Body[k as i32].function = function::WAVY_FADE_IN);
     session_slot!(game, Mouth[MOUTH].semi_transparency = -32767i32 as u16);
     session_slot!(game, Body[k as i32].timer = 120);
@@ -1389,7 +1389,7 @@ fn end_flame_rain_window<S: BossState + ?Sized>(game: &mut S, k: u16) {
         );
         session_slot!(game, Eye[EYE].fade_complete = 0);
         close_eye(game, animation::EYE_CLOSE);
-        word!(game.PHANTOM_RELATED_LAYER_FLAG |= HIDE_BG2);
+        boss!(game.FxLayerFlags |= HIDE_BG2);
     }
 }
 

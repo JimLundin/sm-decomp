@@ -368,6 +368,8 @@ pub struct Room {
     pub fx_blending: u16,
     /// FX layer 3 layer blending configuration ($7E:1984).
     pub fx_layer3_blending: u16,
+    /// FX layer flags ($7E:1988): 4000h hides BG2 behind Phantoon's room effects.
+    pub fx_layer_flags: u16,
     pub liquid_height: u16,
     pub liquid_target: u16,
     pub liquid_velocity: u16,
@@ -455,6 +457,7 @@ impl Room {
             liquid_options: 0,
             fx_blending: 0,
             fx_layer3_blending: 0,
+            fx_layer_flags: 0,
             liquid_height: 0,
             liquid_target: 0,
             liquid_velocity: 0,
