@@ -788,6 +788,7 @@ pub enum OwnedWord {
     RandomNumber,
     RandomEnemyCounter,
     TimeFrozen,
+    CollidingEnemy(usize),
 }
 
 impl OwnedWord {
@@ -818,6 +819,7 @@ impl OwnedWord {
             Self::RandomNumber => words::RANDOM_NUMBER,
             Self::RandomEnemyCounter => words::RANDOM_ENEMY_COUNTER,
             Self::TimeFrozen => words::TIME_IS_FROZEN_FLAG,
+            Self::CollidingEnemy(direction) => arrays::ENEMY_INDEX_COLLIDING_DIRS + 2 * direction,
         }
     }
 }

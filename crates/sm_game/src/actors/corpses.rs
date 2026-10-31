@@ -516,7 +516,7 @@ pub fn torizo_corpse_graphics_drawn_hook(game: &mut impl Lease) {
 }
 /// Whether Samus collided with enemy `k` from any direction this frame.
 fn collided_with_samus(k: u16, game: &impl State) -> bool {
-    (0..4).any(|direction| k == word!(game.ENEMY_INDEX_COLLIDING_DIRS[direction]))
+    (0..4).any(|direction| k == game.owned(OwnedWord::CollidingEnemy(direction)))
 }
 pub fn torizo_corpse_wait_for_samus_collision(k: u16, game: &mut impl State) {
     if collided_with_samus(k, game) {
