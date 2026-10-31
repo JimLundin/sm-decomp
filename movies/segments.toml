@@ -1587,7 +1587,6 @@ start_frame = 0
 frames = 1103
 expect = ["room:B457", "room:B4AD"]
 require_hit = ["fire_arc.initialize", "fire_arc.orbit"]
-pending = "awaiting the seeds-v1-enemies-dd825e69ee36457f ci-data upload"
 
 [[segment]]
 id = "enemy-oum-roll"
@@ -1599,7 +1598,6 @@ start_frame = 0
 frames = 391
 expect = ["room:D913"]
 require_hit = ["oum.roll"]
-pending = "awaiting the seeds-v1-enemies-dd825e69ee36457f ci-data upload"
 
 [[segment]]
 id = "enemy-tatori-touch"
@@ -1611,4 +1609,3 @@ start_frame = 0
 frames = 761
 expect = ["room:D055"]
 require_hit = ["tatori.touch"]
-pending = "awaiting the seeds-v1-enemies-dd825e69ee36457f ci-data upload"
