@@ -239,24 +239,52 @@ pub fn react_beam(
     }
 }
 /// Four signed fixed-point substeps; each setup callback can change the next one.
+/// $94:A85B's quarter velocity: it stores `velocity` at `at + 1`, rotates the
+/// two words at `at` right twice (carry chained between them, so the stale
+/// bytes at `at` and `at + 3` shift in), then sign-extends a negative velocity.
+/// The words stay in RAM for the next extension; returns the 32-bit step.
+fn quarter_velocity(
+    h: &mut impl crate::runtime_access::SessionRam,
+    at: usize,
+    velocity: u16,
+) -> u32 {
+    let [velocity_low, velocity_high] = velocity.to_le_bytes();
+    let mut low = u16::from_le_bytes([h.byte(at), velocity_low]);
+    let mut high = u16::from_le_bytes([velocity_high, h.byte(at + 3)]);
+    let mut carry = false;
+    for _ in 0..2 {
+        for word in [&mut high, &mut low] {
+            let out = *word & 1 != 0;
+            *word = (*word >> 1) | (u16::from(carry) << 15);
+            carry = out;
+        }
+    }
+    if velocity & 0x8000 != 0 {
+        high |= 0xffc0;
+    }
+    h.write_word_le(low, at);
+    h.write_word_le(high, at + 2);
+    (u32::from(high) << 16) | u32::from(low)
+}
 pub fn extend_beam(
     h: &mut (
              impl crate::player_projectiles::host::Host
              + crate::room_mechanisms::host::Host
              + crate::projectile_block_reactions::Definitions
+             + crate::runtime_access::SessionRam
          ),
 ) -> u8 {
     let velocity = h.session().player.grapple_velocity;
     let velocity = [
-        i32::from(velocity.x as i16) << 6,
-        i32::from(velocity.y as i16) << 6,
+        quarter_velocity(h, 0xd82, velocity.x),
+        quarter_velocity(h, 0xd86, velocity.y),
     ];
     let mut result = 0;
     for _ in 0..4 {
         for (axis, &speed) in velocity.iter().enumerate() {
             let offset = &mut h.session_mut().player.grapple_offset[axis];
-            let sum = ((u32::from(offset.whole) << 16) | u32::from(offset.fraction))
-                .wrapping_add(speed as u32);
+            let sum =
+                ((u32::from(offset.whole) << 16) | u32::from(offset.fraction)).wrapping_add(speed);
             offset.fraction = sum as u16;
             offset.whole = (sum >> 16) as u16;
         }
