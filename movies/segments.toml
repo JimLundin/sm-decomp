@@ -1474,3 +1474,18 @@ start_frame = 0
 frames = 945
 expect = ["room:93AA"]
 require_hit = ["contact.screw"]
+
+# Mockball (tools/authored_inputs.py mockball): the ball lands still morphing
+# and keeps the spin jump's extra run speed.
+
+[[segment]]
+id = "samus-mockball"
+seed = "100-input-phase:305"
+seed_sha256 = "1563be3787a3edca0cc6821a8db4967c2318e41a7ae6a50dc9a5d0a5288ad07c"
+inputs = "authored-samus-mockball.inputs"
+input_sha256 = "0bd0c69be87f155c9a467cf1d1990f752d30fd376d6b214734000a180bdc6cd1"
+start_frame = 0
+frames = 129
+expect = ["room:91F8"]
+require_hit = ["morph.rolling_with_momentum"]
+pending = "awaiting the seeds-v1-mockball-4447309c78721b0b ci-data upload"
