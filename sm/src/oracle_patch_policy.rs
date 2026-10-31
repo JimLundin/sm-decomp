@@ -43,7 +43,7 @@ pub(crate) static FOLLOWS_CARRY: &[u32] = &[
 
 /// bug hooks: The Rust engine follows the original game here; the default oracle drops them.
 pub(crate) static FOLLOWS_BUG_HOOKS: &[u32] = &[
-    0x80ad4d, 0x80ad77, 0x80ada4, 0x80add9, 0x9085aa, 0x91da89, 0x94a85b,
+    0x80ad4d, 0x80ad77, 0x80ada4, 0x80add9, 0x88afcf, 0x88aff2, 0x9085aa, 0x91da89, 0x94a85b,
 ];
 
 /// other hooks: The Rust engine follows the original game here; the default oracle drops them.
