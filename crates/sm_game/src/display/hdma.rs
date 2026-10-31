@@ -254,3 +254,221 @@ fn transfer_byte<H: HdmaHost>(
         host.write_destination(destination, value)
     }
 }
+
+/// The B-bus writes of one HDMA pass, in order: (destination, value).
+pub type PassWrites = Vec<(u8, u8)>;
+
+/// A frame's HDMA as per-pass register tables: the initialization pass, then
+/// `steps` line passes. `host` must be a scratch copy of the channel and timer
+/// state; its source reads must see the tables as they stand. Returns `None`
+/// if a channel transfers from the B bus to memory, which needs the PPU's
+/// values at each line and so has no table.
+pub fn frame_table<H: HdmaHost>(
+    host: &mut H,
+    steps: usize,
+) -> Result<Option<Vec<PassWrites>>, H::Error> {
+    let mut recorder = Recorder {
+        host,
+        writes: Vec::new(),
+        from_destination: false,
+    };
+    initialize(&mut recorder)?;
+    let mut passes = vec![std::mem::take(&mut recorder.writes)];
+    for _ in 0..steps {
+        step(&mut recorder)?;
+        passes.push(std::mem::take(&mut recorder.writes));
+    }
+    Ok((!recorder.from_destination).then_some(passes))
+}
+
+/// Records B-bus writes instead of performing them, over a scratch host.
+struct Recorder<'a, H> {
+    host: &'a mut H,
+    writes: PassWrites,
+    from_destination: bool,
+}
+
+impl<H: HdmaHost> HdmaHost for Recorder<'_, H> {
+    type Error = H::Error;
+
+    fn flag(&self, channel: usize, field: ChannelFlag) -> bool {
+        self.host.flag(channel, field)
+    }
+    fn byte(&self, channel: usize, field: ChannelByte) -> u8 {
+        self.host.byte(channel, field)
+    }
+    fn word(&self, channel: usize, field: ChannelWord) -> u16 {
+        self.host.word(channel, field)
+    }
+    fn set_flag(&mut self, channel: usize, field: ChannelFlag, value: bool) {
+        self.host.set_flag(channel, field, value);
+    }
+    fn set_byte(&mut self, channel: usize, field: ChannelByte, value: u8) {
+        self.host.set_byte(channel, field, value);
+    }
+    fn set_word(&mut self, channel: usize, field: ChannelWord, value: u16) {
+        self.host.set_word(channel, field, value);
+    }
+    fn timer(&self) -> u16 {
+        self.host.timer()
+    }
+    fn set_timer(&mut self, value: u16) {
+        self.host.set_timer(value);
+    }
+    fn invalid_mode(&mut self, mode: u8) -> Self::Error {
+        self.host.invalid_mode(mode)
+    }
+    fn read_source(
+        &mut self,
+        channel: usize,
+        source: HdmaSource,
+        bank: u8,
+        address: u16,
+    ) -> Result<u8, Self::Error> {
+        self.host.read_source(channel, source, bank, address)
+    }
+    fn write_source(
+        &mut self,
+        _channel: usize,
+        _source: HdmaSource,
+        _bank: u8,
+        _address: u16,
+        _value: u8,
+    ) -> Result<(), Self::Error> {
+        self.from_destination = true;
+        Ok(())
+    }
+    fn read_destination(&mut self, _destination: u8) -> Result<u8, Self::Error> {
+        self.from_destination = true;
+        Ok(0)
+    }
+    fn write_destination(&mut self, destination: u8, value: u8) -> Result<(), Self::Error> {
+        self.writes.push((destination, value));
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// One channel over a flat 64 KiB table bank.
+    struct Scratch {
+        active: bool,
+        terminated: bool,
+        do_transfer: bool,
+        mode: u8,
+        repeat: u8,
+        destination: u8,
+        source: u16,
+        cursor: u16,
+        timer: u16,
+        memory: Vec<u8>,
+    }
+
+    impl HdmaHost for Scratch {
+        type Error = ();
+        fn flag(&self, channel: usize, field: ChannelFlag) -> bool {
+            channel == 0
+                && match field {
+                    ChannelFlag::Active => self.active,
+                    ChannelFlag::Terminated => self.terminated,
+                    ChannelFlag::DoTransfer => self.do_transfer,
+                    _ => false,
+                }
+        }
+        fn byte(&self, _: usize, field: ChannelByte) -> u8 {
+            match field {
+                ChannelByte::Mode => self.mode,
+                ChannelByte::RepeatCount => self.repeat,
+                ChannelByte::Destination => self.destination,
+                _ => 0,
+            }
+        }
+        fn word(&self, _: usize, field: ChannelWord) -> u16 {
+            match field {
+                ChannelWord::SourceAddress => self.source,
+                ChannelWord::TableCursor => self.cursor,
+                ChannelWord::IndirectCursor => 0,
+            }
+        }
+        fn set_flag(&mut self, channel: usize, field: ChannelFlag, value: bool) {
+            if channel == 0 {
+                match field {
+                    ChannelFlag::Terminated => self.terminated = value,
+                    ChannelFlag::DoTransfer => self.do_transfer = value,
+                    _ => {}
+                }
+            }
+        }
+        fn set_byte(&mut self, channel: usize, field: ChannelByte, value: u8) {
+            if channel == 0 && field == ChannelByte::RepeatCount {
+                self.repeat = value;
+            }
+        }
+        fn set_word(&mut self, channel: usize, field: ChannelWord, value: u16) {
+            if channel == 0 && field == ChannelWord::TableCursor {
+                self.cursor = value;
+            }
+        }
+        fn timer(&self) -> u16 {
+            self.timer
+        }
+        fn set_timer(&mut self, value: u16) {
+            self.timer = value;
+        }
+        fn invalid_mode(&mut self, _: u8) {}
+        fn read_source(&mut self, _: usize, _: HdmaSource, _: u8, address: u16) -> Result<u8, ()> {
+            Ok(self.memory[usize::from(address)])
+        }
+        fn write_source(
+            &mut self,
+            _: usize,
+            _: HdmaSource,
+            _: u8,
+            _: u16,
+            _: u8,
+        ) -> Result<(), ()> {
+            Err(())
+        }
+        fn read_destination(&mut self, _: u8) -> Result<u8, ()> {
+            Err(())
+        }
+        fn write_destination(&mut self, _: u8, _: u8) -> Result<(), ()> {
+            Err(())
+        }
+    }
+
+    #[test]
+    fn a_direct_table_becomes_one_write_per_line() {
+        let mut memory = vec![0; 0x10000];
+        // 2 lines that write 3 once, 1 line of 9, a 2-line repeat entry writing 5 then 6, the end.
+        memory[0x100..0x108].copy_from_slice(&[2, 3, 1, 9, 0x82, 5, 6, 0]);
+        let mut host = Scratch {
+            active: true,
+            terminated: false,
+            do_transfer: false,
+            mode: 0,
+            repeat: 0,
+            destination: 0x00,
+            source: 0x100,
+            cursor: 0,
+            timer: 0,
+            memory,
+        };
+        let table = frame_table(&mut host, 6).unwrap().unwrap();
+        let lines: Vec<&[(u8, u8)]> = table.iter().map(Vec::as_slice).collect();
+        assert_eq!(
+            lines,
+            [
+                &[][..],
+                &[(0, 3)],
+                &[],
+                &[(0, 9)],
+                &[(0, 5)],
+                &[(0, 6)],
+                &[]
+            ]
+        );
+    }
+}
