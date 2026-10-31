@@ -1172,13 +1172,20 @@ pub fn run_function<L: Lease + ?Sized>(game: &mut L, function: u16) {
         function::FINGERNAIL_WAIT_FOR_LINT => fingernail_wait_for_lint(game, k),
         function::ALIGN_TO_KRAID => align_to_kraid(game, k),
         function::HANDLE_FUNCTION_TIMER => handle_function_timer(game, k),
+        // Getting big ($A7:C005) or processing the script ($A7:AF3D) leaves X
+        // at Kraid's script pointer, so the timer handler then reads and
+        // writes ROM: the timer misses that frame ($A7:B963, $A7:B968).
         function::FOOT_FIRST_PHASE_THINKING => {
-            first_phase(game);
-            handle_function_timer(game, k);
+            if !first_phase(game) {
+                handle_function_timer(game, k);
+            }
         }
         function::PROCESS_SCRIPT_AND_TIMER => {
+            let processes = session_slot!(game, Body[BODY].script_delay) == 1;
             process_script(game);
-            handle_function_timer(game, k);
+            if !processes {
+                handle_function_timer(game, k);
+            }
         }
         function::FINGERNAIL_FIRE => fire_fingernail(game, k),
         function::RESTRICT_SAMUS_X => {
@@ -1968,11 +1975,12 @@ fn foot_walk_forward<L: Lease + ?Sized>(game: &mut L) {
 
 /// Below six eighths of his health, Kraid stands up for the second phase. Was
 /// `Kraid_HandleFirstPhase`.
-fn first_phase<L: Lease + ?Sized>(game: &mut L) {
-    if ((session_slot!(game, Body[BODY].base.health)) as i16)
+/// True when Kraid gets big this frame.
+fn first_phase<L: Lease + ?Sized>(game: &mut L) -> bool {
+    let big = ((session_slot!(game, Body[BODY].base.health)) as i16)
         .wrapping_sub(health_eighth(game, BODY, 6) as i16)
-        < 0
-    {
+        < 0;
+    if big {
         session_slot!(
             game,
             Body[BODY].function = function::PROCESS_SCRIPT_AND_TIMER
@@ -2013,6 +2021,7 @@ fn first_phase<L: Lease + ?Sized>(game: &mut L) {
         }
         session_slot!(game, Part[ARM].base.properties, |old| old | 0x400);
     }
+    big
 }
 
 /// Once the hurt flash ends: the dying palette, the parts die and the spikes
