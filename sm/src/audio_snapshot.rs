@@ -67,7 +67,6 @@ impl PlayerSnapshot {
         self.player.dsp = core::ptr::null_mut();
         self.player.ram = core::ptr::null_mut();
         self.player.reg_write_history = core::ptr::null_mut();
-        self.dsp.apu_ram = core::ptr::null_mut();
     }
 
     // Capture destination identities before the first restore effect. Returned
@@ -241,7 +240,6 @@ impl AudioSnapshot {
             &self.dsp,
             &other.dsp,
             [
-                apu_ram,
                 channel,
                 snapshot_padding0,
                 snapshot_padding1,
@@ -339,7 +337,6 @@ impl AudioSnapshot {
             self.catchup_cycles = (*snes).apuCatchupCycles;
             // These links belong to the live emulator, never to a snapshot.
             self.spc.apu = core::ptr::null_mut();
-            self.dsp.apu_ram = core::ptr::null_mut();
         }
     }
 

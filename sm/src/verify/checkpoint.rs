@@ -322,7 +322,7 @@ fields!(DspState {
     noiseSample, noiseRate, noiseCounter, echoWrites, echoVolumeL, echoVolumeR,
     feedbackVolume, echoBufferAdr, echoDelay, echoRemain, echoBufferIndex,
     firBufferIndex, firValues, firBufferL, firBufferR, sampleBuffer, sampleOffset
-} skip { apu_ram, snapshot_padding0, snapshot_padding1, snapshot_padding2 });
+} skip { snapshot_padding0, snapshot_padding1, snapshot_padding2 });
 
 fields!(DspChannel {
     pitch, pitchCounter, pitchModulation, decodeBuffer, srcn, decodeOffset,

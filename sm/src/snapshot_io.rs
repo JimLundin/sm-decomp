@@ -46,7 +46,6 @@ sm_runtime::state_record!(DspState, 3024, {
     firBufferIndex, firValues, snapshot_padding1, firBufferL, firBufferR, sampleBuffer,
     sampleOffset, snapshot_padding2
 } skip {
-    apu_ram
 });
 
 sm_runtime::state_record!(Ppu, 67305, {

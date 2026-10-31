@@ -4,19 +4,16 @@ use core::mem::size_of;
 
 const _: () = {
     assert!(size_of::<crate::types::DspChannel>() == 86);
-    assert!(core::mem::offset_of!(DspState, channel) == 136);
-    assert!(core::mem::offset_of!(DspState, sampleBuffer) == 892);
-    assert!(size_of::<DspState>() == 3032);
+    assert!(core::mem::offset_of!(DspState, channel) == 128);
+    assert!(core::mem::offset_of!(DspState, sampleBuffer) == 884);
+    assert!(size_of::<DspState>() == 3024);
 };
 
 #[forbid(unsafe_code)]
 impl Dsp {
     pub(crate) fn new(ram: crate::apu_ram::ApuRam) -> Self {
         Self {
-            state: DspState {
-                apu_ram: ram.as_mut_ptr(),
-                ..DspState::new()
-            },
+            state: DspState::new(),
             apu_memory: ram,
         }
     }
@@ -502,7 +499,6 @@ impl DspState {
             };
         }
         *self = Self {
-            apu_ram: self.apu_ram,
             ram: self.ram,
             channel: self.channel,
             snapshot_padding0: self.snapshot_padding0,
@@ -533,7 +529,6 @@ impl DspState {
 impl Dsp {
     pub(crate) fn restore_state(&mut self, source: &DspState) {
         self.state = *source;
-        self.state.apu_ram = self.apu_memory.as_mut_ptr();
     }
 
     pub(crate) fn copy_state_from(&mut self, source: &Self) {

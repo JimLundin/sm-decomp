@@ -115,7 +115,7 @@ pub(super) fn run() -> i32 {
         dsp_key_registers_apply_immediately_with_wrapped_apu_directory,
         dsp_invalid_register_addresses_reject_before_state_or_memory_effects,
         dsp_reset_clears_every_dirty_voice_field_and_preserves_each_padding_byte,
-        dsp_reset_restores_native_globals_without_changing_apu_memory_pointer_or_padding,
+        dsp_reset_restores_native_globals_without_changing_apu_memory_or_padding,
         dsp_cycle_brr_gaussian_and_envelope_have_independent_literal_samples,
         dsp_cycle_noise_signed_mixing_and_full_buffer_keep_ordered_progress,
         dsp_cycle_echo_fir_signed_clip_and_wrapped_writeback_are_independent,
@@ -6991,16 +6991,13 @@ fn dsp_reset_clears_every_dirty_voice_field_and_preserves_each_padding_byte() {
     assert_eq!(state.channel.map(padding), before_padding);
 }
 
-// Movies cannot dirty all DSP globals, pointer and pads and inspect reset without native execution.
+// Movies cannot dirty all DSP globals and pads and inspect reset without native execution.
 #[cfg_attr(test, test)]
-fn dsp_reset_restores_native_globals_without_changing_apu_memory_pointer_or_padding() {
+fn dsp_reset_restores_native_globals_without_changing_apu_memory_or_padding() {
     use sm::snes::dsp::{DspState, dsp_read};
     let ram = sm::apu_ram::ApuRam::new();
     ram.fill(0x67);
-    let pointer = ram.as_mut_ptr();
-    assert!(!pointer.is_null());
     let mut state = DspState::new();
-    state.apu_ram = pointer;
     state.ram = [0xa5; 128];
     state.dirPage = 0xffff;
     state.evenCycle = true;
@@ -7066,7 +7063,6 @@ fn dsp_reset_restores_native_globals_without_changing_apu_memory_pointer_or_padd
     assert_eq!(state.firBufferL, [0; 8]);
     assert_eq!(state.firBufferR, [0; 8]);
     assert_eq!(state.sampleBuffer, [0; 1068]);
-    assert_eq!(state.apu_ram, pointer);
     assert_eq!(state.snapshot_padding0, [0xaa]);
     assert_eq!(state.snapshot_padding1, [0xbb]);
     assert_eq!(state.snapshot_padding2, [0xcc, 0xdd]);

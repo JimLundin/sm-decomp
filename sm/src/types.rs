@@ -309,7 +309,6 @@ crate::typed_struct! {
     }
 
     pub struct DspState {
-        pub apu_ram: *mut u8;
         pub ram: [u8; 128];
         pub channel: [DspChannel; 8];
         pub dirPage: u16;

@@ -1862,9 +1862,7 @@ fn owned_player_render_matches_native_schedule_and_failure_prefixes() {
                 }
                 if mode == 5 {
                     let rebound = &mut *owned_dsp[index + 2];
-                    let ram = rebound.state.apu_ram;
                     rebound.state = dsp.state;
-                    rebound.state.apu_ram = ram;
                     s.dsp = rebound;
                 }
                 game.apu_queue.pending = [0xf0, 255, 255, 255];
@@ -2019,7 +2017,6 @@ fn owned_player_creation_replacement_and_drop_keep_borrowed_allocations() {
         let old_dsp = (*old).state.dsp;
         let old_ram = (*old).ram.clone();
         assert_eq!((*old).state.ram, old_ram.as_mut_ptr());
-        assert_eq!((*old_dsp).state.apu_ram, old_ram.as_mut_ptr());
         assert!((*old).state.reg_write_history.is_null());
         assert_eq!(((*old).state.tempo, (*old).state.timer_cycles), (0, 0));
         old_ram.write(0x1234, 0x5a);
