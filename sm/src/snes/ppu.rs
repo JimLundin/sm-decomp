@@ -219,6 +219,10 @@ pub(crate) unsafe fn ppu_run_line(ppu: *mut Ppu, line: i32, new_ppu: &bool) {
         if line == 0 {
             set_fields! {[(*ppu)]; mosaicStartLine = 1, rangeOver = false,
             timeOver = false, evenFrame = !(*ppu).evenFrame, };
+            #[cfg(sm_verify_dll)]
+            model_check::begin_frame();
+            #[cfg(sm_verify_dll)]
+            native_line::begin_frame(ppu);
         } else {
             if (*ppu).brightness != (*ppu).lastBrightnessMult {
                 let brightness = (*ppu).brightness;
@@ -238,6 +242,8 @@ pub(crate) unsafe fn ppu_run_line(ppu: *mut Ppu, line: i32, new_ppu: &bool) {
                 ppu_draw_whole_line(ppu, line as u32);
                 #[cfg(sm_verify_dll)]
                 cross_render::check(ppu, line);
+                #[cfg(sm_verify_dll)]
+                native_line::check(ppu, line);
             } else {
                 if (*ppu).mode as i32 == 7 {
                     ppu_calculate_mode7_starts(ppu, line);
@@ -388,9 +394,7 @@ unsafe extern "C" {
 pub unsafe fn ppu_read(ppu: *mut Ppu, adr: u8) -> u8 {
     unsafe {
         #[cfg(sm_verify_dll)]
-        let mut ports = ports_of(&*ppu);
-        #[cfg(sm_verify_dll)]
-        let expected = ports.read(&MemoryView::new(&*ppu), adr, (*ppu).ppu2openBus);
+        let checked = model_check::before_read(&*ppu, adr);
         // Only open-bus reads and counter latching access the host SNES pointer.
         let (h_pos, v_pos, bus) = match adr {
             0x37 => (
@@ -420,18 +424,12 @@ pub unsafe fn ppu_read(ppu: *mut Ppu, adr: u8) -> u8 {
             | 0x38..=0x3f => (0, 0, 0),
             _ => (0, 0, (*(*ppu).snes).openBus),
         };
+        #[cfg(sm_verify_dll)]
+        native_line::read(ppu, adr);
         let value = sm_backend_ppu_read(ppu, adr, h_pos, v_pos, bus);
         #[cfg(sm_verify_dll)]
-        {
-            assert!(
-                expected.is_none_or(|expected| expected == value),
-                "native PPU port model read differs at ${adr:02X}"
-            );
-            assert_eq!(
-                ports,
-                ports_of(&*ppu),
-                "native PPU port model differs after reading ${adr:02X}"
-            );
+        if let Some(checked) = checked {
+            model_check::after_read(&*ppu, adr, value, checked);
         }
         value
     }
@@ -439,19 +437,8 @@ pub unsafe fn ppu_read(ppu: *mut Ppu, adr: u8) -> u8 {
 
 pub unsafe fn ppu_write(ppu: *mut Ppu, adr: u8, val: u8) {
     unsafe {
-        // The verifier checks the native register model against every write.
         #[cfg(sm_verify_dll)]
-        let mut model = registers_of(&*ppu);
-        #[cfg(sm_verify_dll)]
-        model.write(adr, val);
-        #[cfg(sm_verify_dll)]
-        let mut ports = ports_of(&*ppu);
-        #[cfg(sm_verify_dll)]
-        let mut view = MemoryView::new(&*ppu);
-        #[cfg(sm_verify_dll)]
-        ports.write(&mut view, adr, val);
-        #[cfg(sm_verify_dll)]
-        let store = view.store;
+        let checked = model_check::before_write(&*ppu, adr, val);
         // The native renderer caches complete register bytes, including unused bits.
         match adr {
             0x23..=0x25 => {
@@ -465,27 +452,112 @@ pub unsafe fn ppu_write(ppu: *mut Ppu, adr: u8, val: u8) {
         }
         sm_backend_ppu_write(ppu, adr, val);
         #[cfg(sm_verify_dll)]
+        native_line::write(ppu, adr, val);
+        #[cfg(sm_verify_dll)]
+        if let Some(checked) = checked {
+            model_check::after_write(&*ppu, adr, val, checked);
+        }
+    }
+}
+
+/// The verifier's per-access check of the native register and port models
+/// against the emulated PPU: before an access each model is rebuilt from the
+/// emulated state and applies it, and afterwards both must agree.
+/// `SM_PPU_MODEL_CHECK=N` checks the accesses of every Nth frame (0 or unset
+/// disables it), since a check on every access slows DMA-heavy replays.
+#[cfg(sm_verify_dll)]
+mod model_check {
+    use super::{MemoryView, Ppu, Store, ports_of, raster, registers_of};
+    use std::sync::OnceLock;
+    use std::sync::atomic::{AtomicU32, Ordering};
+
+    static FRAMES: AtomicU32 = AtomicU32::new(0);
+
+    fn interval() -> u32 {
+        static INTERVAL: OnceLock<u32> = OnceLock::new();
+        *INTERVAL.get_or_init(|| {
+            std::env::var("SM_PPU_MODEL_CHECK")
+                .ok()
+                .and_then(|value| value.parse().ok())
+                .unwrap_or(0)
+        })
+    }
+
+    pub(super) fn begin_frame() {
+        FRAMES.fetch_add(1, Ordering::Relaxed);
+    }
+
+    fn sampled() -> bool {
+        let every = interval();
+        every != 0 && FRAMES.load(Ordering::Relaxed) % every == 0
+    }
+
+    pub(super) struct Write {
+        registers: raster::registers::Registers,
+        ports: raster::memory::Ports,
+        store: Option<Store>,
+    }
+
+    pub(super) fn before_write(ppu: &Ppu, adr: u8, val: u8) -> Option<Write> {
+        if !sampled() {
+            return None;
+        }
+        let mut registers = registers_of(ppu);
+        registers.write(adr, val);
+        let mut ports = ports_of(ppu);
+        let mut view = MemoryView::new(ppu);
+        ports.write(&mut view, adr, val);
+        Some(Write {
+            registers,
+            ports,
+            store: view.store,
+        })
+    }
+
+    pub(super) fn after_write(ppu: &Ppu, adr: u8, val: u8, expected: Write) {
         assert_eq!(
-            model,
-            registers_of(&*ppu),
+            expected.registers,
+            registers_of(ppu),
             "native PPU register model differs after ${adr:02X} = ${val:02X}"
         );
-        #[cfg(sm_verify_dll)]
-        {
+        assert_eq!(
+            expected.ports,
+            ports_of(ppu),
+            "native PPU port model differs after ${adr:02X} = ${val:02X}"
+        );
+        if let Some(store) = expected.store {
             assert_eq!(
-                ports,
-                ports_of(&*ppu),
-                "native PPU port model differs after ${adr:02X} = ${val:02X}"
+                store,
+                store.reread(&MemoryView::new(ppu)),
+                "native PPU memory store differs after ${adr:02X} = ${val:02X}"
             );
-            let view = MemoryView::new(&*ppu);
-            if let Some(store) = store {
-                assert_eq!(
-                    store,
-                    store.reread(&view),
-                    "native PPU memory store differs after ${adr:02X} = ${val:02X}"
-                );
-            }
         }
+    }
+
+    pub(super) struct Read {
+        ports: raster::memory::Ports,
+        value: Option<u8>,
+    }
+
+    pub(super) fn before_read(ppu: &Ppu, adr: u8) -> Option<Read> {
+        if !sampled() {
+            return None;
+        }
+        let mut ports = ports_of(ppu);
+        let value = ports.read(&MemoryView::new(ppu), adr, ppu.ppu2openBus);
+        Some(Read { ports, value })
+    }
+
+    pub(super) fn after_read(ppu: &Ppu, adr: u8, value: u8, expected: Read) {
+        assert!(
+            expected.value.is_none_or(|expected| expected == value),
+            "native PPU port model read differs at ${adr:02X}"
+        );
+        assert_eq!(
+            expected.ports,
+            ports_of(ppu),
+            "native PPU port model differs after reading ${adr:02X}"
+        );
     }
 }
 
@@ -699,6 +771,256 @@ unsafe fn ppu_render_pixel<const NATIVE: bool>(ppu: *mut Ppu, x: i32, y: i32, st
             (*ppu).renderBuffer.offset(offset as isize),
             4,
         );
+    }
+}
+
+/// Resync the native line state after a harness snapshot restore.
+#[cfg(sm_verify_dll)]
+pub(crate) unsafe fn native_line_restored(ppu: *mut Ppu) {
+    unsafe { native_line::restored(ppu) }
+}
+
+/// Step 3 of the native renderer: a PPU state built only from register and port
+/// accesses (`Registers`, `Ports`, `OwnedMemory`), rendering each line with no C
+/// PPU state but the beam-timed mosaic start line and modulo. With
+/// `SM_NATIVE_LINES` set, each natively drawn line is drawn again from it and
+/// compared with the emulated PPU's line; `SM_NATIVE_LINES_LOG` receives the
+/// differing lines and each resync. Harness snapshot restores resync it
+/// explicitly; any other frame whose start finds the emulated PPU's state
+/// differing from the native one is logged as a resync, since it means some
+/// path loaded PPU state without its ports.
+#[cfg(sm_verify_dll)]
+mod native_line {
+    use super::{Ppu, ports_of, raster, registers_of};
+    use raster::memory::{OwnedMemory, Ports, VideoMemory};
+    use raster::registers::Registers;
+    use std::cell::RefCell;
+    use std::collections::HashMap;
+    use std::io::Write as _;
+    use std::sync::OnceLock;
+
+    struct NativePpu {
+        registers: Registers,
+        ports: Ports,
+        memory: OwnedMemory,
+        overflow: raster::Overflow,
+        frame: u32,
+    }
+
+    impl NativePpu {
+        fn of(ppu: &Ppu, frame: u32) -> Self {
+            Self {
+                registers: registers_of(ppu),
+                ports: ports_of(ppu),
+                memory: OwnedMemory {
+                    vram: Box::new(ppu.vram),
+                    cgram: ppu.cgram,
+                    oam: ppu.oam,
+                    high_oam: ppu.highOam,
+                },
+                overflow: raster::Overflow {
+                    range: false,
+                    time: false,
+                },
+                frame,
+            }
+        }
+
+        /// The first part of the state the emulated PPU no longer shares, if any.
+        fn divergence(&self, ppu: &Ppu) -> Option<&'static str> {
+            if self.registers != registers_of(ppu) {
+                Some("registers")
+            } else if self.ports != ports_of(ppu) {
+                Some("ports")
+            } else if *self.memory.vram != ppu.vram {
+                Some("vram")
+            } else if self.memory.cgram != ppu.cgram {
+                Some("cgram")
+            } else if self.memory.oam != ppu.oam || self.memory.high_oam != ppu.highOam {
+                Some("oam")
+            } else {
+                None
+            }
+        }
+    }
+
+    /// The native renderer's memory, with the emulated PPU's alias words past
+    /// VRAM (its port fields, then CGRAM) for out-of-range tile reads.
+    struct Source<'a>(&'a NativePpu, &'a Ppu);
+
+    impl raster::IndexedSource for Source<'_> {
+        fn word(&self, index: usize) -> Result<u16, raster::RasterFault> {
+            let (native, ppu) = (self.0, self.1);
+            let ports = &native.ports;
+            Ok(match index {
+                0..=0x7fff => native.memory.vram[index],
+                0x8000 => ports.vram_pointer,
+                0x8001 => u16::from_ne_bytes([
+                    u8::from(ports.vram_increment_on_high),
+                    ppu.snapshot_padding0[0],
+                ]),
+                0x8002 => ports.vram_increment,
+                0x8003 => u16::from_ne_bytes([ports.vram_remap, ppu.snapshot_padding1[0]]),
+                0x8004 => ports.vram_read_buffer,
+                0x8005..=0x801e => native.memory.cgram[index - 0x8005],
+                _ => return Err(raster::RasterFault::Word(index)),
+            })
+        }
+        fn palette(&self, index: u8) -> Result<u16, raster::RasterFault> {
+            Ok(self.0.memory.cgram(index))
+        }
+    }
+
+    thread_local! {
+        static STATES: RefCell<HashMap<usize, NativePpu>> = RefCell::new(HashMap::new());
+    }
+
+    fn enabled() -> bool {
+        static ENABLED: OnceLock<bool> = OnceLock::new();
+        *ENABLED.get_or_init(|| std::env::var_os("SM_NATIVE_LINES").is_some())
+    }
+
+    fn log(row: std::fmt::Arguments<'_>) {
+        if let Some(path) = std::env::var_os("SM_NATIVE_LINES_LOG") {
+            let mut file = std::fs::OpenOptions::new()
+                .create(true)
+                .append(true)
+                .open(path)
+                .unwrap();
+            file.write_fmt(row).unwrap();
+        }
+    }
+
+    pub(super) unsafe fn begin_frame(ppu: *mut Ppu) {
+        if !enabled() {
+            return;
+        }
+        let ppu = unsafe { &*ppu };
+        STATES.with_borrow_mut(|states| {
+            let state = states
+                .entry(ppu as *const Ppu as usize)
+                .or_insert_with(|| NativePpu::of(ppu, 0));
+            state.frame += 1;
+            state.overflow = raster::Overflow {
+                range: false,
+                time: false,
+            };
+            if let Some(part) = state.divergence(ppu) {
+                log(format_args!("{},resync,{part}\n", state.frame));
+                *state = NativePpu::of(ppu, state.frame);
+            }
+        });
+    }
+
+    /// The harness loaded the emulated PPU from a snapshot without its ports.
+    pub(super) unsafe fn restored(ppu: *mut Ppu) {
+        if !enabled() {
+            return;
+        }
+        let ppu = unsafe { &*ppu };
+        STATES.with_borrow_mut(|states| {
+            if let Some(state) = states.get_mut(&(ppu as *const Ppu as usize)) {
+                let frame = state.frame;
+                *state = NativePpu::of(ppu, frame);
+            }
+        });
+    }
+
+    pub(super) unsafe fn write(ppu: *mut Ppu, address: u8, value: u8) {
+        if !enabled() {
+            return;
+        }
+        STATES.with_borrow_mut(|states| {
+            if let Some(state) = states.get_mut(&(ppu as usize)) {
+                state.registers.write(address, value);
+                state.ports.write(&mut state.memory, address, value);
+            }
+        });
+    }
+
+    pub(super) unsafe fn read(ppu: *mut Ppu, address: u8) {
+        if !enabled() {
+            return;
+        }
+        let open_bus = unsafe { (*ppu).ppu2openBus };
+        STATES.with_borrow_mut(|states| {
+            if let Some(state) = states.get_mut(&(ppu as usize)) {
+                state.ports.read(&state.memory, address, open_bus);
+            }
+        });
+    }
+
+    pub(super) unsafe fn check(ppu: *mut Ppu, line: i32) {
+        if !enabled() {
+            return;
+        }
+        let ppu = unsafe { &*ppu };
+        STATES.with_borrow_mut(|states| {
+            let Some(state) = states.get_mut(&(ppu as *const Ppu as usize)) else {
+                return;
+            };
+            let registers = state.registers.line();
+            let mut sprites = raster::SpriteLine::cleared(state.overflow);
+            if !registers.forced_blank {
+                let input = raster::SpriteInput {
+                    words: &state.memory.oam,
+                    extension: &state.memory.high_oam,
+                    tile_words: state.ports.sprite_tile_words,
+                    size: state.ports.sprite_size,
+                    rotation: state
+                        .ports
+                        .sprite_priority
+                        .then_some(state.ports.oam_address),
+                    interlace: ppu.objInterlace,
+                    even_frame: ppu.evenFrame,
+                };
+                let (has_tiles, overflow) = raster::evaluate_sprites(
+                    &Source(state, ppu),
+                    &input,
+                    line - 1,
+                    &mut sprites.pixels,
+                    sprites.overflow,
+                )
+                .unwrap_or_else(|fault| panic!("native line {line} sprites: {fault:?}"));
+                sprites.has_tiles = has_tiles;
+                sprites.overflow = overflow;
+            }
+            let brightness = raster::BrightnessTables::for_level(registers.color.brightness);
+            let config = raster::LineConfig {
+                mode: registers.mode,
+                forced_blank: registers.forced_blank,
+                backgrounds: registers.backgrounds,
+                windows: registers.windows,
+                routing: registers.routing,
+                affine: registers.affine,
+                mosaic: raster::Mosaic {
+                    native_enabled: ppu.mosaicEnabled,
+                    background0_enabled: state.registers.layers[0].mosaic,
+                    size: state.registers.mosaic_size,
+                    start_line: ppu.mosaicStartLine,
+                    modulo: &ppu.mosaicModulo,
+                    left: 0,
+                },
+                color: registers.color,
+                brightness: brightness.borrowed(),
+                has_sprites: sprites.has_tiles,
+            };
+            let mut pixels = [[0; 4]; raster::WIDTH];
+            raster::render_line(&Source(state, ppu), &config, &sprites, line, &mut pixels)
+                .unwrap_or_else(|fault| panic!("native line {line}: {fault:?}"));
+            state.overflow = sprites.overflow;
+            let start = ((line - 1) as u32).wrapping_mul(ppu.renderPitch) as usize
+                + usize::from(ppu.extraLeftRight) * 4;
+            let row = unsafe { core::slice::from_raw_parts(ppu.renderBuffer.add(start), 256 * 4) };
+            let mut differing = (0..256).filter(|&x| pixels[x][..] != row[x * 4..x * 4 + 4]);
+            if let Some(first) = differing.next() {
+                let count = 1 + differing.count();
+                log(format_args!(
+                    "{},{line},{},{count},{first}\n",
+                    state.frame, registers.mode
+                ));
+            }
+        });
     }
 }
 

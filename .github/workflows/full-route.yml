@@ -81,6 +81,11 @@ jobs:
       # Redraw every 30th frame with LakeSnes's per-pixel layer selection and
       # log lines where it disagrees with the native rasterizer.
       SM_CROSS_RENDER: '30'
+      # Check the native PPU register and port models on every frame nightly and
+      # on every 30th frame for pull requests, and render each line from native
+      # PPU state nightly (snes/ppu.rs).
+      SM_PPU_MODEL_CHECK: ${{ github.event_name == 'schedule' && '1' || '30' }}
+      SM_NATIVE_LINES: ${{ github.event_name == 'schedule' && '1' || '' }}
     timeout-minutes: 60
     strategy:
       fail-fast: false
@@ -167,6 +172,8 @@ jobs:
         run: |
           $env:FULL_ROUTE = '${{ matrix.route }}'
           $env:SM_CROSS_RENDER_LOG = Join-Path $env:RUNNER_TEMP 'cross-render.csv'
+          $env:SM_NATIVE_LINES_LOG = Join-Path $env:RUNNER_TEMP 'native-lines.csv'
+          if (-not $env:SM_NATIVE_LINES) { Remove-Item Env:SM_NATIVE_LINES -ErrorAction SilentlyContinue }
           python -B .github/scripts/full_route.py run ${{ matrix.index }} 2>&1 | Tee-Object -FilePath rooms.log
           $code = $LASTEXITCODE
           if (Test-Path $env:SM_CROSS_RENDER_LOG) {
@@ -174,6 +181,13 @@ jobs:
             $lines = Get-Content $env:SM_CROSS_RENDER_LOG
             "Cross-renderer: $($lines.Count) lines differ (frame,line,mode,pixels,first x):"
             $lines | Select-Object -First 20 | ForEach-Object { ($_ -split ',')[0..4] -join ',' }
+            if ($code -eq 0) { $code = 1 }
+          }
+          if (Test-Path $env:SM_NATIVE_LINES_LOG) {
+            # Frame, line, mode, pixel count and first x, or a resync's frame and part.
+            $lines = Get-Content $env:SM_NATIVE_LINES_LOG
+            "Native PPU lines: $($lines.Count) differing lines or resyncs:"
+            $lines | Select-Object -First 20
             if ($code -eq 0) { $code = 1 }
           }
           "### ${{ matrix.name }}" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8

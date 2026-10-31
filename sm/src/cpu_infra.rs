@@ -950,6 +950,8 @@ unsafe fn restore_snapshot(
             oamSecondWrite, oamBuffer, objPriority, objTileAdr1, objTileAdr2, objSize,
         }
         ppu.objPixelBufferXX[..19].copy_from_slice(&s.ppu.objPixelBufferXX[..19]);
+        #[cfg(sm_verify_dll)]
+        crate::snes::ppu::native_line_restored(snes.ppu);
     }
 }
 unsafe fn load_rom(name: *const c_char, game: &mut Game) -> bool {
