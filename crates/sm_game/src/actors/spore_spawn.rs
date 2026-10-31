@@ -5,13 +5,15 @@
 //! `clear_grab_rotation`, `grab_timers`, `place_grab_start` and `set_state`.
 #![forbid(unsafe_code)]
 use crate::actors::boss_lease::BossLease;
+use crate::actors::boss_lease::boss_ram;
 use crate::actors::host::{BossEffects, Death, Shot, abs16, below};
 use crate::actors::layouts::{EnemyBase, same_words};
 use crate::actors::queries::angle_from_delta;
 use crate::actors::session_slots::session_slot;
 use crate::enemy_script::EnemyScript;
 use crate::geometry::Vector32;
-use crate::ram::{word, word_arrays};
+use crate::menus::prelude::{boss, owned};
+use crate::ram::word_arrays;
 
 /// What Spore Spawn needs beyond the shared boss effects.
 pub trait Host: BossEffects + BossLease<Game = Self> {
@@ -183,13 +185,13 @@ pub fn initialize<L: Lease + ?Sized>(game: &mut L) {
             game.update_spore_stem();
             game.spawn_plm(7, 30, CLOSE_CEILING);
         });
-        word!(game.SCROLLING_FINISHED_HOOK = 0);
+        boss!(game.ScrollingFinishedHook = 0);
     } else {
         session_slot!(game, Spore[0].base.current_instruction = list::FIGHT_INTRO);
-        word!(game.FLAG_PROCESS_ALL_ENEMIES = 0xffff);
+        boss!(game.FlagProcessAllEnemies = 0xffff);
         let spawn_key = game.current_enemy();
         session_slot!(game, Spore[k].function = function::NOTHING);
-        word!(game.SCROLLING_FINISHED_HOOK = 0x9589);
+        boss!(game.ScrollingFinishedHook = 0x9589);
         session_slot!(game, Spore[k].base.y_pos, |old| old.wrapping_sub(128));
         for part in 0..4 {
             game.spawn_actor_eproj(part, spawn_key, SPORE_SPAWNERS);
@@ -307,7 +309,7 @@ pub fn after_damage<L: Lease + ?Sized>(game: &mut L) {
         let bits = game.boss_word(area);
         game.set_boss_word(area, bits | DEAD);
     });
-    word!(game.SCROLLING_FINISHED_HOOK = 0);
+    boss!(game.ScrollingFinishedHook = 0);
     game.foreign(|game| game.spawn_plm(7, 30, OPEN_CEILING));
 }
 
@@ -320,8 +322,12 @@ pub fn touch<L: Lease + ?Sized>(game: &mut L) {
 /// Shot AI ($A5:ED5A): only charged shots and missiles hurt it; the first hit
 /// of a swing reverses it, and its palette darkens with health.
 pub fn shot<L: Lease + ?Sized>(game: &mut L) {
-    let _projectile = word!(game.COLLISION_DETECTION_INDEX).wrapping_mul(2);
-    let kind = word!(game.PROJECTILE_TYPE[word!(game.COLLISION_DETECTION_INDEX)]);
+    let _projectile = boss!(game.CollisionDetectionIndex).wrapping_mul(2);
+    let kind = boss_ram::get_at(
+        game,
+        boss_ram::Array::ProjectileType,
+        boss!(game.CollisionDetectionIndex),
+    );
     if kind & 0x700 == 0 && kind & 0x10 == 0 {
         return;
     }
@@ -353,7 +359,7 @@ pub fn shot<L: Lease + ?Sized>(game: &mut L) {
             for index in 144..160 {
                 let colour =
                     crate::gameplay_tables::spore_spawn_colour(game, (cursor >> 1) as isize);
-                word!(game.PALETTE_BUFFER[index] = colour);
+                boss_ram::set_at(game, boss_ram::Array::PaletteBuffer, index, colour);
                 cursor = cursor.wrapping_add(2);
             }
         }

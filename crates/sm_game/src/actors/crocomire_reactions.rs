@@ -5,6 +5,7 @@
 use crate::actors::access::{AccessMode, ActorAccess, ActorKey as Key};
 use crate::actors::boss_lease::BossLease;
 use crate::actors::boss_lease::bg2_staging;
+use crate::actors::boss_lease::boss_ram;
 use crate::actors::crocomire_attack::{Crocomire, flag, lane};
 use crate::actors::host::{ActorLease, BossEffects, Death, LeaseActors, Slopes};
 use crate::actors::session_slots::session_slot;
@@ -297,7 +298,7 @@ pub fn update_background<L: Lease + ?Sized>(k: u16, game: &mut L) {
 pub fn update_palette<L: Lease + ?Sized>(game: &mut L) {
     if boss!(game.DoorTransitionEnemies) == 0 {
         if session_slot!(game, Crocomire[0].base.flash_timer) != 0
-            && (word!(game.RANDOM_ENEMY_COUNTER) & 2) != 0
+            && (boss!(game.RandomEnemyCounter) & 2) != 0
         {
             crate::word_transfers!(game, descending, 8; native(BG_PALETTE_7_RAM) <- value(0x7fff));
         } else {
@@ -386,7 +387,7 @@ pub fn play_acid_damage_sound<L: Lease + ?Sized>(game: &mut L) {
 fn contact_edge<L: Lease + ?Sized>(game: &mut L) -> i32 {
     session_slot!(game, Crocomire[0].base.x_pos) as i32
         - session_slot!(game, Crocomire[0].base.x_width) as i32
-        - word!(game.SAMUS_X_RADIUS) as i32
+        - boss!(game.SamusXRadius) as i32
 }
 fn contact<L: Lease + ?Sized>(game: &mut L) {
     game.contact_reaction(Death::Finalize);
@@ -396,7 +397,7 @@ pub fn touch<L: Lease + ?Sized>(game: &mut L) {
     contact(game);
     session_slot!(game, Crocomire[0].fight_flags, |flags| flags
         | flag::SAMUS_HIT_BY_CLAW);
-    word!(game.EXTRA_SAMUS_X_DISPLACEMENT = -4i32 as u16);
+    boss!(game.ExtraSamusXDisplacement = -4i32 as u16);
 }
 /// Crocomire / Samus collision handling ($A4:8C95). Was `push_player`.
 pub fn samus_collision<L: Lease + ?Sized>(game: &mut L) {
@@ -406,7 +407,7 @@ pub fn samus_collision<L: Lease + ?Sized>(game: &mut L) {
         session_slot!(game, Crocomire[0].base.x_width),
         true,
     );
-    let (edge, carry) = sbc(edge, word!(game.SAMUS_X_RADIUS), carry);
+    let (edge, carry) = sbc(edge, boss!(game.SamusXRadius), carry);
     if session_slot!(game, Crocomire[0].death_sequence_index) == 0
         && (sbc(edge, game.player_x(), carry).0 as i16) < 0
     {
@@ -414,8 +415,8 @@ pub fn samus_collision<L: Lease + ?Sized>(game: &mut L) {
         let edge = contact_edge(game) as u16;
         game.set_player_x(edge);
         game.set_previous_player_x(game.player_x());
-        word!(game.EXTRA_SAMUS_X_DISPLACEMENT = -4i32 as u16);
-        word!(game.EXTRA_SAMUS_Y_DISPLACEMENT = -1i32 as u16);
+        boss!(game.ExtraSamusXDisplacement = -4i32 as u16);
+        boss!(game.ExtraSamusYDisplacement = -1i32 as u16);
     }
 }
 fn next_hit_count(flags: u16) -> u16 {
@@ -428,11 +429,12 @@ pub fn count_hit<L: Lease + ?Sized>(game: &mut L) {
 }
 /// Enemy shot - Crocomire - spawn shot explosion ($A4:B968, $A4:BAB4).
 pub fn impact<L: Lease + ?Sized>(game: &mut L) {
-    let index = word!(game.COLLISION_DETECTION_INDEX) as i32;
-    let x = word!(game.PROJECTILE_X_POS[index]);
-    let y = word!(game.PROJECTILE_Y_POS[index]);
+    let index = boss!(game.CollisionDetectionIndex) as i32;
+    let x = boss_ram::get_at(game, boss_ram::Array::ProjectileXPos, index);
+    let y = boss_ram::get_at(game, boss_ram::Array::ProjectileYPos, index);
     game.place_projectile_spawn(x, y);
-    let appearance = if word!(game.PROJECTILE_TYPE[index]) & 0x200 == 0 {
+    let appearance = if boss_ram::get_at(game, boss_ram::Array::ProjectileType, index) & 0x200 == 0
+    {
         6
     } else {
         29
@@ -448,7 +450,11 @@ pub fn hit<L: Lease + ?Sized>(game: &mut L) {
         - game.camera().layer1[0] as i32) as i16)
         >= 0;
     if !advance {
-        let projectile = word!(game.PROJECTILE_TYPE[word!(game.COLLISION_DETECTION_INDEX)]);
+        let projectile = boss_ram::get_at(
+            game,
+            boss_ram::Array::ProjectileType,
+            boss!(game.CollisionDetectionIndex),
+        );
         if projectile & 0xf10 == 0 {
             session_slot!(game, Crocomire[0].base.instruction_timer = 8);
             impact(game);

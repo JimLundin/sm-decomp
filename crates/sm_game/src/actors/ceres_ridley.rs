@@ -9,6 +9,7 @@
 //! `roar_before_flying`) and `init` serve both fights.
 #![forbid(unsafe_code)]
 use crate::actors::boss_lease::bg2_staging;
+use crate::actors::boss_lease::boss_ram;
 use crate::actors::boss_lease::{BossLease, BossState as _};
 use crate::actors::host::BossEffects as _;
 use crate::actors::host::{abs16, below};
@@ -132,7 +133,7 @@ pub fn init<L: Lease + ?Sized>(game: &mut L) {
     session_slot!(game, Ridley[RIDLEY].palette = 3584);
     session_slot!(game, Ridley[RIDLEY].base.extra_properties, |old| old | 4);
     session_slot!(game, Ridley[RIDLEY]; fight_mode = 0, hit_counter = 0);
-    word! { game, 0; EARTHQUAKE_TYPE, EARTHQUAKE_TIMER }
+    boss!(game, 0; EarthquakeType, EarthquakeTimer);
     ridley::initialise_tail(game);
     ridley::initialise_ribs(game);
     session_slot!(game, Ridley[RIDLEY].base.properties, |old| old
@@ -154,7 +155,7 @@ pub fn init<L: Lease + ?Sized>(game: &mut L) {
         );
     } else {
         session_slot!(game, Ridley[RIDLEY].base; x_pos = 186, y_pos = 169);
-        word!(game.CERES_STATUS = 0);
+        boss!(game.CeresStatus = 0);
         session_slot!(game, Ridley[RIDLEY]; facing = ridley::FACING_LEFT, movement_enabled = 0);
         bg2_staging::set(game, tail::IDLE_WHIP, 1);
         session_slot!(game, Ridley[RIDLEY]; tail_damage = 15, function = ceres_function::INITIAL);
@@ -188,7 +189,7 @@ pub fn main<L: Lease + ?Sized>(game: &mut L) {
     session_slot!(game, Ridley[RIDLEY].base.health = 0x7fff);
     let function = session_slot!(game, Ridley[RIDLEY].function);
     run_function(game, function);
-    if word!(game.CERES_STATUS) == 0 {
+    if boss!(game.CeresStatus) == 0 {
         let moving = session_slot!(game, Ridley[RIDLEY].movement_enabled) != 0;
         if moving {
             ridley::hurt_flash(game);
@@ -460,7 +461,7 @@ pub fn hovering<L: Lease + ?Sized>(game: &mut L) {
             Ridley[RIDLEY].function = function::FAKE_RETREAT_MOVE_TO_POSITION
         );
         ridley::fake_retreat_move_to_position(game);
-    } else if below(word!(game.SAMUS_HEALTH), 30) {
+    } else if below(boss!(game.SamusHealth), 30) {
         session_slot!(game, Ridley[RIDLEY].fight_mode = 0);
         session_slot!(
             game,
@@ -707,7 +708,7 @@ pub fn write_palettes_and_spawn_walls<L: Lease + ?Sized>(game: &mut L) {
 /// `CeresRidley_Func_24`.
 pub fn set_up_getaway<L: Lease + ?Sized>(game: &mut L) {
     session_slot!(game, Ridley[RIDLEY].function = ceres_function::GETAWAY);
-    word!(game.CERES_STATUS = RIDLEY_ESCAPING);
+    boss!(game.CeresStatus = RIDLEY_ESCAPING);
     set_up_mode7(game);
 }
 
@@ -759,7 +760,7 @@ pub fn handle_getaway<L: Lease + ?Sized>(game: &mut L) {
     }
     if index == 208 {
         game.foreign(|game| game.begin_ceres_push());
-        word! {game; EARTHQUAKE_TYPE = 35; EARTHQUAKE_TIMER = 64; }
+        boss!(game; EarthquakeType = 35; EarthquakeTimer = 64;);
     }
     let step = (index >> 1) as isize;
     if crate::ceres_ridley_tables::getaway_zoom(game, step) == 0xffff {
@@ -894,10 +895,30 @@ fn next_step<L: Lease + ?Sized>(game: &mut L) {
 /// Self destruct sequence function index 0 - load text colours ($A6:C062).
 /// Was `Ridley_Func_55`.
 pub fn load_text_colours<L: Lease + ?Sized>(game: &mut L) {
-    word!(game.PALETTE_BUFFER[97] = word!(game.PALETTE_BUFFER[1]));
-    word!(game.PALETTE_BUFFER[99] = word!(game.PALETTE_BUFFER[3]));
-    word!(game.PALETTE_BUFFER[81] = word!(game.PALETTE_BUFFER[17]));
-    word!(game.PALETTE_BUFFER[83] = word!(game.PALETTE_BUFFER[19]));
+    boss_ram::set_at(
+        game,
+        boss_ram::Array::PaletteBuffer,
+        97,
+        boss_ram::get_at(game, boss_ram::Array::PaletteBuffer, 1),
+    );
+    boss_ram::set_at(
+        game,
+        boss_ram::Array::PaletteBuffer,
+        99,
+        boss_ram::get_at(game, boss_ram::Array::PaletteBuffer, 3),
+    );
+    boss_ram::set_at(
+        game,
+        boss_ram::Array::PaletteBuffer,
+        81,
+        boss_ram::get_at(game, boss_ram::Array::PaletteBuffer, 17),
+    );
+    boss_ram::set_at(
+        game,
+        boss_ram::Array::PaletteBuffer,
+        83,
+        boss_ram::get_at(game, boss_ram::Array::PaletteBuffer, 19),
+    );
     // The escape timer sprite tile transfer entries ($A6:C4CB).
     session_slot!(game, Ridley[RIDLEY].fade_index = 0xc4cb);
     next_step(game);
@@ -939,7 +960,7 @@ pub fn emergency_text_appears<L: Lease + ?Sized>(game: &mut L) {
         session_slot!(game, Ridley[RIDLEY]; typewriter_tilemap = 0, typewriter_timer = 0,
             typewriter_timer_reset = 0, typewriter_stroke_timer = 0);
         session_slot!(game, Ridley[RIDLEY].fade_index = 32);
-        if word!(game.JAPANESE_TEXT_FLAG) == 0 {
+        if boss!(game.JapaneseTextFlag) == 0 {
             next_step(game);
         }
         next_step(game);
@@ -978,7 +999,7 @@ pub fn start_escape<L: Lease + ?Sized>(game: &mut L) {
         game,
         Ridley[RIDLEY].function = ceres_function::SELF_DESTRUCT_ACTIVATED
     );
-    word! {game; TIMER_STATUS = 1; CERES_STATUS = ESCAPE_STARTED; }
+    boss!(game; TimerStatus = 1; CeresStatus = ESCAPE_STARTED;);
     game.foreign(|game| game.set_boss_bit(1));
 }
 

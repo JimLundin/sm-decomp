@@ -13,6 +13,7 @@
 use crate::actors::api::angle_from_delta;
 use crate::actors::boss_lease::BossLease;
 use crate::actors::boss_lease::bg2_staging;
+use crate::actors::boss_lease::boss_ram;
 use crate::actors::deaths::Deaths as _;
 use crate::actors::host::BossEffects as _;
 use crate::actors::host::{Death, Shot, abs16, below};
@@ -522,7 +523,7 @@ fn queue_tile_pair<L: Lease + ?Sized>(
     destinations: [u16; 2],
     size: u16,
 ) {
-    let tail = word!(game.VRAM_WRITE_QUEUE_TAIL);
+    let tail = boss!(game.VramWriteQueueTail);
     let entry = |n: usize| VRAM_WRITE_QUEUE + usize::from(tail) + n * usize::from(VRAM_WRITE_ENTRY);
     let store = |game: &mut L, at: usize, value: u16| {
         let bytes = value.to_ne_bytes();
@@ -541,7 +542,7 @@ fn queue_tile_pair<L: Lease + ?Sized>(
     for n in 0..2 {
         store(game, entry(n), size);
     }
-    word!(game.VRAM_WRITE_QUEUE_TAIL = tail.wrapping_add(2 * VRAM_WRITE_ENTRY));
+    boss!(game.VramWriteQueueTail = tail.wrapping_add(2 * VRAM_WRITE_ENTRY));
     store(game, entry(2), 0);
 }
 
@@ -653,11 +654,11 @@ pub fn handle_baby_metroid<L: Lease + ?Sized>(game: &mut L) {
 pub fn draw_baby_metroid_and_door<L: Lease + ?Sized>(game: &mut L) {
     /// Ceres Ridley door X offsets during earthquake ($A6:A321).
     const EARTHQUAKE_X_OFFSETS: [i16; 4] = [0, -1024, -4, -1];
-    if word!(game.CERES_STATUS) == 0 {
+    if boss!(game.CeresStatus) == 0 {
         draw_baby_metroid(game);
     }
     if session_slot!(game, CeresDoor[CERES_DOOR].drawn_by_ridley) != 0 {
-        let offset = EARTHQUAKE_X_OFFSETS[(word!(game.EARTHQUAKE_TIMER) & 3) as usize];
+        let offset = EARTHQUAKE_X_OFFSETS[(boss!(game.EarthquakeTimer) & 3) as usize];
         let x = session_slot!(game, CeresDoor[CERES_DOOR].base.x_pos).wrapping_add(offset as u16);
         let y = session_slot!(game, CeresDoor[CERES_DOOR].base.y_pos);
         game.foreign(|game| {
@@ -1140,7 +1141,7 @@ pub fn pogo_descending<L: Lease + ?Sized>(game: &mut L) {
         game.place_projectile_spawn(x, y);
         game.spawn_room_projectile(DUST_CLOUD, 9);
         game.queue_sound(1, 0x76, 6);
-        word! {game; EARTHQUAKE_TYPE = 13; EARTHQUAKE_TIMER = 4; }
+        boss!(game; EarthquakeType = 13; EarthquakeTimer = 4;);
         set_pogo_x_direction(game);
         game.foreign(|game| {
             set_pogo_speeds(game);
@@ -1291,16 +1292,13 @@ pub fn move_samus_with_feet<L: Lease + ?Sized>(game: &mut L) {
     if let Some(offset) = settle_offset(session_slot!(game, Ridley[RIDLEY].grabbed_y_offset)) {
         session_slot!(game, Ridley[RIDLEY].grabbed_y_offset = offset);
     }
-    word! { game;
-        SAMUS_X_POS = (session_slot!(game, Ridley[RIDLEY].grabbed_x_offset) as i32
+    boss!(game; SamusXPos = (session_slot!(game, Ridley[RIDLEY].grabbed_x_offset) as i32
             + session_slot!(game, Ridley[RIDLEY].base.x_pos) as i32
             + ridley_data::feet_x(game, session_slot!(game, Ridley[RIDLEY].facing) as isize) as i32)
-            as u16;
-        SAMUS_Y_POS = (session_slot!(game, Ridley[RIDLEY].grabbed_y_offset) as i32
+            as u16; SamusYPos = (session_slot!(game, Ridley[RIDLEY].grabbed_y_offset) as i32
             + session_slot!(game, Ridley[RIDLEY].base.y_pos) as i32
             + ridley_data::feet_y(game, (session_slot!(game, Ridley[RIDLEY].feet_distance_index) >> 1) as isize) as i32)
-            as u16;
-    }
+            as u16;);
 }
 
 /// A grabbed offset 4px closer to 0, or `None` when it is already 0. Was
@@ -1343,7 +1341,7 @@ pub fn set_grabbed_samus_offset<L: Lease + ?Sized>(game: &mut L) {
 /// ten lunges at no health, die. Was `Ridley_Func_32`.
 pub fn lunge_missed_samus<L: Lease + ?Sized>(game: &mut L) {
     if below(session_slot!(game, Ridley[RIDLEY].death_lunges), 10) {
-        if word!(game.POWER_BOMB_FLAG) != 0 {
+        if boss!(game.PowerBombFlag) != 0 {
             session_slot!(game, Ridley[RIDLEY].function = function::DODGE_POWER_BOMB);
             dodge_power_bomb(game);
         } else {
@@ -1403,7 +1401,7 @@ pub fn lunge<L: Lease + ?Sized>(game: &mut L) {
     if samus_in_rect(rect, game) {
         session_slot!(game, Ridley[RIDLEY].y_velocity, |old| -(old as i32) as u16);
         if session_slot!(game, Ridley[RIDLEY].base.health) != 0 {
-            if word!(game.POWER_BOMB_FLAG) != 0 {
+            if boss!(game.PowerBombFlag) != 0 {
                 grab_samus(game);
                 session_slot!(game, Ridley[RIDLEY].function = function::DODGE_POWER_BOMB);
                 dodge_power_bomb(game);
@@ -1592,7 +1590,7 @@ pub fn lunge_if_power_bomb<S: State + ?Sized>(game: &mut S) {
     let mode = session_slot!(game, Ridley[RIDLEY].fight_mode) as i16;
     if mode > 0
         && mode != 2
-        && word!(game.POWER_BOMB_FLAG) != 0
+        && boss!(game.PowerBombFlag) != 0
         && session_slot!(game, Ridley[RIDLEY].holding_samus) == 0
     {
         set_neutral_tail(game);
@@ -1603,14 +1601,14 @@ pub fn lunge_if_power_bomb<S: State + ?Sized>(game: &mut S) {
 /// Ridley function - dodging power bomb ($A6:BD4E): to the corner away from
 /// the explosion, then back to the fight. Was `Ridley_Func_43`.
 pub fn dodge_power_bomb<L: Lease + ?Sized>(game: &mut L) {
-    if word!(game.POWER_BOMB_FLAG) != 0 {
+    if boss!(game.PowerBombFlag) != 0 {
         session_slot!(game, Ridley[RIDLEY].fight_mode = 2);
-        let x = if below(word!(game.POWER_BOMB_EXPLOSION_X_POS), 128) {
+        let x = if below(boss!(game.PowerBombExplosionXPos), 128) {
             192
         } else {
             80
         };
-        let y = if below(word!(game.POWER_BOMB_EXPLOSION_Y_POS), 256) {
+        let y = if below(boss!(game.PowerBombExplosionYPos), 256) {
             384
         } else {
             192
@@ -2150,7 +2148,7 @@ pub fn spawn_explosions<L: Lease + ?Sized>(game: &mut L) {
 /// without a palette change or door transition, the next of 16 glow steps.
 /// Was `Ridley_Func_61`.
 pub fn emergency_text_glow<L: Lease + ?Sized>(game: &mut L) {
-    if boss!(game.DoorTransitionEnemies) | word!(game.PALETTE_CHANGE_NUM) == 0
+    if boss!(game.DoorTransitionEnemies) | boss!(game.PaletteChangeNum) == 0
         && (game.frame() & 3) == 0
     {
         let mut step = session_slot!(game, Ridley[RIDLEY].emergency_glow_index).wrapping_add(1);
@@ -2189,7 +2187,7 @@ pub fn handle_tail<L: Lease + ?Sized>(game: &mut L) {
     calculate_tail_segment_positions(game);
     update_tail_segment_distances(game);
     if session_slot!(game, Ridley[RIDLEY].holding_samus)
-        | (word!(game.SAMUS_INVINCIBILITY_TIMER)
+        | (boss!(game.SamusInvincibilityTimer)
             | session_slot!(game, Ridley[RIDLEY].base.properties) & K_ENEMY_PROPS_TANGIBLE as u16)
         == 0
     {
@@ -2771,7 +2769,7 @@ pub fn missile_near_tail<L: Lease + ?Sized>(game: &mut L) -> Option<Point> {
         w: 64,
         h: 64,
     };
-    if word!(game.PROJECTILE_COUNTER) == 0 {
+    if boss!(game.ProjectileCounter) == 0 {
         return None;
     }
     let found = (0..5).find(|&n| {
@@ -2779,8 +2777,8 @@ pub fn missile_near_tail<L: Lease + ?Sized>(game: &mut L) -> Option<Point> {
         (kind == MISSILE || kind == SUPER_MISSILE) && projectile_overlaps(game, n, rect)
     })?;
     Some(Point {
-        x: word!(game.PROJECTILE_X_POS[found]),
-        y: word!(game.PROJECTILE_Y_POS[found]),
+        x: boss_ram::get_at(game, boss_ram::Array::ProjectileXPos, found),
+        y: boss_ram::get_at(game, boss_ram::Array::ProjectileYPos, found),
     })
 }
 
@@ -2791,13 +2789,22 @@ fn projectile_kind<L: Lease + ?Sized>(game: &L, n: usize) -> u8 {
 
 /// Whether projectile `n`'s hitbox overlaps `rect`.
 fn projectile_overlaps<L: Lease + ?Sized>(game: &L, n: usize, rect: Rect) -> bool {
-    let dx = abs16(word!(game.PROJECTILE_X_POS[n]).wrapping_sub(rect.x));
-    if dx < word!(game.PROJECTILE_X_RADIUS[n])
-        || dx.wrapping_sub(word!(game.PROJECTILE_X_RADIUS[n])) < rect.w
+    let dx = abs16(boss_ram::get_at(game, boss_ram::Array::ProjectileXPos, n).wrapping_sub(rect.x));
+    if dx < boss_ram::get_at(game, boss_ram::Array::ProjectileXRadius, n)
+        || dx.wrapping_sub(boss_ram::get_at(
+            game,
+            boss_ram::Array::ProjectileXRadius,
+            n,
+        )) < rect.w
     {
-        let dy = abs16(word!(game.PROJECTILE_Y_POS[n]).wrapping_sub(rect.y));
-        if dy < word!(game.PROJECTILE_Y_RADIUS[n])
-            || dy.wrapping_sub(word!(game.PROJECTILE_Y_RADIUS[n])) < rect.h
+        let dy =
+            abs16(boss_ram::get_at(game, boss_ram::Array::ProjectileYPos, n).wrapping_sub(rect.y));
+        if dy < boss_ram::get_at(game, boss_ram::Array::ProjectileYRadius, n)
+            || dy.wrapping_sub(boss_ram::get_at(
+                game,
+                boss_ram::Array::ProjectileYRadius,
+                n,
+            )) < rect.h
         {
             return true;
         }
@@ -2924,7 +2931,7 @@ pub fn health_palette<L: Lease + ?Sized>(game: &mut L) {
 pub fn load_health_palette<L: Lease + ?Sized>(index: u16, game: &mut L) {
     /// Ridley health-based palettes ($A6:E46A), 14 colours each.
     const HEALTH_PALETTES: u16 = 0xe46a;
-    if word!(game.PALETTE_CHANGE_NUM) == 0 {
+    if boss!(game.PaletteChangeNum) == 0 {
         let colours = HEALTH_PALETTES.wrapping_add(index.wrapping_mul(28));
         game.foreign(|game| copy_rom_colors_to_palette(0x1e2, 0xa6, colours, 0xe, game));
     }
@@ -2950,7 +2957,7 @@ pub fn ceres_health_palette<L: Lease + ?Sized>(game: &mut L) {
 pub fn hurt_flash<S: State + ?Sized>(game: &mut S) {
     let mut palette = 3584;
     if session_slot!(game, Ridley[RIDLEY].base.flash_timer) >= 2
-        && ((word!(game.RANDOM_ENEMY_COUNTER) as i32 + 1) & 2) != 0
+        && ((boss!(game.RandomEnemyCounter) as i32 + 1) & 2) != 0
     {
         palette = 0;
     }
@@ -3116,8 +3123,8 @@ pub fn calculate_swoop_velocities<L: Lease + ?Sized>(
 /// top, 8 bottom). Was `Ridley_Func_112`.
 pub fn move_ridley<S: State + ?Sized>(game: &mut S) {
     session_slot!(game, Ridley[RIDLEY].hit_boundary = 0);
-    let k = word!(game.CUR_ENEMY_INDEX);
-    let e = word!(game.CUR_ENEMY_INDEX) as i32;
+    let k = boss!(game.CurEnemyIndex);
+    let e = boss!(game.CurEnemyIndex) as i32;
     let carry = session_slot!(byte game, Ridley[e].base.x_subpos[1]) as i32
         + session_slot!(byte game, Ridley[e].x_velocity[0]) as i32;
     session_slot!(byte game, Ridley[e].base.x_subpos[1] = carry as u8);
@@ -3163,17 +3170,17 @@ pub fn move_ridley<S: State + ?Sized>(game: &mut S) {
 /// hitting the left wall at 280h or more, outside Norfair. Was
 /// `Ridley_Func_113`.
 pub fn ceres_earthquake<S: State + ?Sized>(k: u16, game: &mut S) {
-    if word!(game.AREA_INDEX) != NORFAIR {
+    if boss!(game.AreaIndex) != NORFAIR {
         let e = i32::from(k);
         let speed = abs16(session_slot!(game, Ridley[e].x_velocity))
             .max(abs16(session_slot!(game, Ridley[e].y_velocity)));
         if speed >= 0x280 {
-            let kind = if word!(game.AREA_INDEX) == NORFAIR {
+            let kind = if boss!(game.AreaIndex) == NORFAIR {
                 24
             } else {
                 33
             };
-            word! {game; EARTHQUAKE_TYPE = kind; EARTHQUAKE_TIMER = 12; }
+            boss!(game; EarthquakeType = kind; EarthquakeTimer = 12;);
         }
     }
 }
@@ -3417,26 +3424,31 @@ pub fn off_screen<S: State + ?Sized>(game: &mut S) -> bool {
 /// Samus's beams (types below 3) in `rect`, which moves to its centre and
 /// is marked deflected. Was `Ridley_Func_122`.
 pub fn projectile_in_rect<L: Lease + ?Sized>(rect: Rect, game: &mut L) -> Option<usize> {
-    if word!(game.PROJECTILE_COUNTER) == 0 {
+    if boss!(game.ProjectileCounter) == 0 {
         return None;
     }
     let n = (0..5).find(|&n| {
-        let kind = word!(game.PROJECTILE_TYPE[n]) as i16;
+        let kind = boss_ram::get_at(game, boss_ram::Array::ProjectileType, n) as i16;
         kind < 0
             && ((kind.to_ne_bytes()[1] as i32 & 0xf) - 3) & 0x8000 != 0
             && projectile_overlaps(game, n, rect)
     })?;
     word! {game; PROJECTILE_X_POS[n] = rect.x; PROJECTILE_Y_POS[n] = rect.y; }
-    word!(game.PROJECTILE_DIR[n] |= 0x10u16);
+    boss_ram::set_at(
+        game,
+        boss_ram::Array::ProjectileDir,
+        n,
+        boss_ram::get_at(game, boss_ram::Array::ProjectileDir, n) | 0x10u16,
+    );
     Some(n)
 }
 
 /// Check for Samus collision with rectangle ($A6:DF29). Was `Ridley_Func_124`.
 pub fn samus_in_rect<L: Lease + ?Sized>(rect: Rect, game: &mut L) -> bool {
     let dx = abs16(game.player_x().wrapping_sub(rect.x));
-    if dx < word!(game.SAMUS_X_RADIUS) || dx.wrapping_sub(word!(game.SAMUS_X_RADIUS)) < rect.w {
+    if dx < boss!(game.SamusXRadius) || dx.wrapping_sub(boss!(game.SamusXRadius)) < rect.w {
         let dy = abs16(game.player_y().wrapping_sub(rect.y));
-        if dy < word!(game.SAMUS_Y_RADIUS) || dy.wrapping_sub(word!(game.SAMUS_Y_RADIUS)) < rect.h {
+        if dy < boss!(game.SamusYRadius) || dy.wrapping_sub(boss!(game.SamusYRadius)) < rect.h {
             return true;
         }
     }
@@ -3501,10 +3513,10 @@ pub fn tail_samus_collision<L: Lease + ?Sized>(game: &mut L) {
             let amount = game.suit_damage(session_slot!(game, Ridley[RIDLEY].tail_damage));
             game.damage_player(amount);
         });
-        word!(game.SAMUS_INVINCIBILITY_TIMER = 96);
-        word!(game.SAMUS_KNOCKBACK_TIMER = 5);
-        word!(
-            game.KNOCKBACK_X_DIR = ((word!(game.SAMUS_X_POS) as i16)
+        boss!(game.SamusInvincibilityTimer = 96);
+        boss!(game.SamusKnockbackTimer = 5);
+        boss!(
+            game.KnockbackXDir = ((boss!(game.SamusXPos) as i16)
                 .wrapping_sub(bg2_staging::get(game, tail::x(6)) as i16)
                 >= 0) as u16
         );
@@ -3535,8 +3547,8 @@ pub fn tail_projectile_collision<L: Lease + ?Sized>(game: &mut L) {
     }) else {
         return;
     };
-    let x = word!(game.PROJECTILE_X_POS[n]);
-    let y = word!(game.PROJECTILE_Y_POS[n]);
+    let x = boss_ram::get_at(game, boss_ram::Array::ProjectileXPos, n);
+    let y = boss_ram::get_at(game, boss_ram::Array::ProjectileYPos, n);
     game.place_projectile_spawn(x, y);
     let mut kind = 12;
     if projectile_kind(game, n) == MISSILE {
@@ -3565,7 +3577,7 @@ pub fn goto_if_samus_health_low<L: Lease + ?Sized>(
     script: EnemyScript,
     game: &mut L,
 ) -> EnemyScript {
-    if game.area() == NORFAIR || !below(word!(game.SAMUS_HEALTH), 30) {
+    if game.area() == NORFAIR || !below(boss!(game.SamusHealth), 30) {
         return script.offset(1);
     }
     session_slot!(game, Ridley[RIDLEY].timer = 8);
@@ -3598,8 +3610,8 @@ pub fn goto_if_not_holding_samus<L: Lease + ?Sized>(
 /// Instruction - Ridley feet distance index = [[Y]] ($A6:E501); Samus's
 /// previous position catches up. Was `Ridley_Instr_2`.
 pub fn set_feet_distance<L: Lease + ?Sized>(script: EnemyScript, game: &mut L) -> EnemyScript {
-    game.set_previous_player_x(word!(game.SAMUS_X_POS));
-    game.set_previous_player_y(word!(game.SAMUS_Y_POS));
+    game.set_previous_player_x(boss!(game.SamusXPos));
+    game.set_previous_player_y(boss!(game.SamusYPos));
     session_slot!(game, Ridley[RIDLEY].feet_distance_index = script.word(0));
     script.offset(1)
 }
@@ -3715,7 +3727,7 @@ pub fn spawn_fireball<L: Lease + ?Sized>(
     afterburn: u16,
     game: &mut L,
 ) -> EnemyScript {
-    word!(game.EPROJ_INIT_PARAM_2 = afterburn);
+    boss!(game.EprojInitParam2 = afterburn);
     game.spawn_room_projectile(FIREBALL, session_slot!(game, Ridley[RIDLEY].facing));
     script
 }

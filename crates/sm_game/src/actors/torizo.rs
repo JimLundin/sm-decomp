@@ -6,6 +6,7 @@
 //! movement functions are dispatched by the compat host, so their ids are
 //! unchanged.
 use crate::actors::boss_lease::BossLease;
+use crate::actors::boss_lease::boss_ram;
 use crate::actors::deaths::Deaths;
 use crate::actors::host::{BossEffects, Shot, Slopes};
 use crate::actors::layouts::part_view;
@@ -162,7 +163,12 @@ pub fn golden_damaged_shot_reaction<L: Lease>(game: &mut L) {
 /// Golden Torizo shot reaction - normal - missile ($AA:D6D1): dodge it. Was
 /// `Torizo_D6D1`.
 pub fn golden_missile_reaction<L: Lease>(k: u16, j: u16, game: &mut L) {
-    word!(game.PROJECTILE_DIR[(j >> 1)] &= !DELETE_PROJECTILE);
+    boss_ram::set_at(
+        game,
+        boss_ram::Array::ProjectileDir,
+        j >> 1,
+        boss_ram::get_at(game, boss_ram::Array::ProjectileDir, j >> 1) & !DELETE_PROJECTILE,
+    );
     let e = i32::from(k);
     session_slot!(game, TorizoSlot[e].function = NO_FUNCTION);
     session_slot!(game, TorizoSlot[e].base.instruction_timer = 1);
@@ -181,7 +187,12 @@ pub fn golden_super_missile_reaction<L: Lease>(k: u16, j: u16, game: &mut L) {
     if facing_against_samus(k, game) & SIGN as u16 == 0 {
         session_slot!(game, TorizoSlot[e].damage, |old| old | CAUGHT_SUPER_MISSILE);
         session_slot!(game, TorizoSlot[e].function = NO_FUNCTION);
-        word!(game.PROJECTILE_DIR[(j >> 1)] |= DELETE_PROJECTILE);
+        boss_ram::set_at(
+            game,
+            boss_ram::Array::ProjectileDir,
+            j >> 1,
+            boss_ram::get_at(game, boss_ram::Array::ProjectileDir, j >> 1) | DELETE_PROJECTILE,
+        );
         session_slot!(game, TorizoSlot[e].base.instruction_timer = 1);
         let parameter = session_slot!(game, TorizoSlot[e].direction);
         let list = match (
@@ -356,8 +367,8 @@ const SIT_DOWN_X: [i16; 16] = [-9, -6, -7, 5, -16, -7, 0, 0, 9, 6, 7, -5, 16, 7,
 const SIT_DOWN_Y: [i16; 8] = [0, -6, -6, -7, 0, 0, 0, 0];
 
 fn quake<L: Lease>(game: &mut L) {
-    word!(game.EARTHQUAKE_TYPE = 4);
-    word!(game.EARTHQUAKE_TIMER = 32);
+    boss!(game.EarthquakeType = 4);
+    boss!(game.EarthquakeTimer = 32);
 }
 
 /// Whether Samus is at least `distance` px from Torizo `k` horizontally.
@@ -699,9 +710,12 @@ pub fn golden_shot<L: Lease>(game: &mut L) {
         }
         let stunned: bool =
             ((session_slot!(game, TorizoSlot[e].damage) & CAUGHT_SUPER_MISSILE) != 0) || {
-                let j: u16 = 2u16.wrapping_mul(word!(game.COLLISION_DETECTION_INDEX));
-                let kind: u16 =
-                    (word!(game.PROJECTILE_TYPE[word!(game.COLLISION_DETECTION_INDEX)])) & 0xf00;
+                let j: u16 = 2u16.wrapping_mul(boss!(game.CollisionDetectionIndex));
+                let kind: u16 = (boss_ram::get_at(
+                    game,
+                    boss_ram::Array::ProjectileType,
+                    boss!(game.CollisionDetectionIndex),
+                )) & 0xf00;
                 session_slot!(game, TorizoSlot[e].shot_kind = kind);
                 if kind == 0x100 {
                     golden_missile_reaction(game.current_enemy(), j, game);
@@ -730,7 +744,7 @@ pub fn main_ai<L: Lease>(game: &mut L) {
 /// `GoldTorizo_Main`.
 pub fn golden_main_ai<L: Lease>(game: &mut L) {
     let e = game.current_enemy() as i32;
-    if SPACE_JUMP_POSES.contains(&word!(game.SAMUS_POSE)) {
+    if SPACE_JUMP_POSES.contains(&boss!(game.SamusPose)) {
         session_slot!(game, TorizoSlot[e].space_jump_frames, |old| old
             .wrapping_add(1));
     } else {
@@ -774,20 +788,20 @@ pub fn initialize<L: Lease>(game: &mut L) {
     if game.area() != 0 {
         game.foreign(|game| game.set_palette_targets(Palettes::GoldenStart));
         if word!(game.JOYPAD1_LASTKEYS) == DEBUG_KEYS {
-            word!(game.SAMUS_HEALTH = 700);
-            word!(game.SAMUS_MAX_HEALTH = 700);
-            word!(game.SAMUS_MAX_RESERVE_HEALTH = 300);
-            word!(game.SAMUS_RESERVE_HEALTH = 300);
-            word!(game.SAMUS_MISSILES = 100);
-            word!(game.SAMUS_MAX_MISSILES = 100);
-            word!(game.SAMUS_SUPER_MISSILES = 20);
-            word!(game.SAMUS_MAX_SUPER_MISSILES = 20);
-            word!(game.SAMUS_POWER_BOMBS = 20);
-            word!(game.SAMUS_MAX_POWER_BOMBS = 20);
-            word!(game.EQUIPPED_ITEMS = -3273i32 as u16);
-            word!(game.COLLECTED_ITEMS = -3273i32 as u16);
-            word!(game.EQUIPPED_BEAMS = 4111);
-            word!(game.COLLECTED_BEAMS = 4111);
+            boss!(game.SamusHealth = 700);
+            boss!(game.SamusMaxHealth = 700);
+            boss!(game.SamusMaxReserveHealth = 300);
+            boss!(game.SamusReserveHealth = 300);
+            boss!(game.SamusMissiles = 100);
+            boss!(game.SamusMaxMissiles = 100);
+            boss!(game.SamusSuperMissiles = 20);
+            boss!(game.SamusMaxSuperMissiles = 20);
+            boss!(game.SamusPowerBombs = 20);
+            boss!(game.SamusMaxPowerBombs = 20);
+            boss!(game.EquippedItems = -3273i32 as u16);
+            boss!(game.CollectedItems = -3273i32 as u16);
+            boss!(game.EquippedBeams = 4111);
+            boss!(game.CollectedBeams = 4111);
         }
     } else {
         game.foreign(|game| {
@@ -1071,7 +1085,7 @@ fn choose_attack<L: Lease>(k: u16, jp: EnemyScript, game: &mut L, missiles: u16)
         game,
         TorizoSlot[k as i32].link = list_address(game, k, jp.offset(2))
     );
-    if word!(game.SAMUS_MISSILES) < missiles
+    if boss!(game.SamusMissiles) < missiles
         || ((game.frame() as i32 + (game.player_x() as i32 & 1) + (game.player_x() as i32 >> 1))
             & 8)
             != 0
@@ -1245,7 +1259,7 @@ pub fn branch_if_samus_rolling_behind<L: Lease>(
     if (facing_against_samus(k, game) & 0x8000) == 0
         || !samus_at_least(game, k, 4)
         || samus_at_least(game, k, 0x28)
-        || !ROLLING_POSES.contains(&word!(game.SAMUS_POSE))
+        || !ROLLING_POSES.contains(&boss!(game.SamusPose))
     {
         return jp.offset(1);
     }

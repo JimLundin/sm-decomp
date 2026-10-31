@@ -12,8 +12,6 @@ use crate::actors::host::BossEffects as _;
 use crate::actors::session_slots::session_slot;
 use crate::enemy_script::EnemyScript;
 use crate::menus::prelude::{boss, owned, scroll};
-use crate::ram::CompatibilityRam as _;
-use crate::ram::word;
 
 /// Sprite object 3Dh: Draygon foaming at the mouth, 20h px ahead of and 10h
 /// px above the body.
@@ -110,7 +108,7 @@ pub fn fight_intro<L: Lease>(first: bool, game: &mut L) {
     if session_slot!(game, Draygon[BODY].function_timer).wrapping_sub(limit) & SIGN != 0 {
         if first {
             if session_slot!(game, Draygon[BODY].function_timer) == 0 {
-                let at = VRAM_WRITE_QUEUE + usize::from(word!(game.VRAM_WRITE_QUEUE_TAIL));
+                let at = VRAM_WRITE_QUEUE + usize::from(boss!(game.VramWriteQueueTail));
                 let [size, source, bank, destination] = INTRO_TRANSFER;
                 // The native bank word deliberately overlaps the destination's low byte.
                 game.foreign(|game| {
@@ -120,7 +118,7 @@ pub fn fight_intro<L: Lease>(first: bool, game: &mut L) {
                         (at + 4, bank),
                         (at + 5, destination),
                     ]);
-                    word!(game.VRAM_WRITE_QUEUE_TAIL += QUEUE_ENTRY_BYTES);
+                    boss!(game.VramWriteQueueTail += QUEUE_ENTRY_BYTES);
                     game.draygon_spawn_trails();
                 });
             }
@@ -172,7 +170,7 @@ pub fn initialize<L: Lease>(install_layers: impl FnOnce(&mut L), game: &mut L) {
     crate::word_transfers!(game, ascending, 1;
         native(GRAPHICS_DRAWN_HOOK_BANK) <- value(u16::from(BANK)),
         native(GRAPHICS_DRAWN_HOOK) <- value(SET_BG2_SCROLL_HOOK));
-    word!(game.FLAG_PROCESS_ALL_ENEMIES = 0xffff);
+    boss!(game.FlagProcessAllEnemies = 0xffff);
     for (k, instruction) in [
         (BODY, list::BODY_LEFT_IDLE),
         (EYE, list::EYE_LEFT_IDLE),
@@ -181,7 +179,7 @@ pub fn initialize<L: Lease>(install_layers: impl FnOnce(&mut L), game: &mut L) {
     ] {
         session_slot!(game, Draygon[k].base.current_instruction = instruction);
     }
-    word!(game.ENEMY_BG2_TILEMAP_SIZE = BG2_TILEMAP_SIZE);
+    boss!(game.EnemyTilemapSize = BG2_TILEMAP_SIZE);
     session_slot!(
         game,
         Draygon[game.current_enemy() as i32].function = function::FIGHT_INTRO_INITIAL_DELAY
@@ -377,7 +375,7 @@ pub fn goop_firing<S: BossState>(right: bool, game: &mut S) {
     if right {
         fire_wall_turret(game);
     }
-    if word!(game.SAMUS_X_SPEED_DIVISOR) == 0 {
+    if boss!(game.SamusXSpeedDivisor) == 0 {
         let mut leave = false;
         if boss!(game.Random) & GOOP_CHANCE == 0 {
             let remaining = session_slot!(game, Draygon[BODY].goop_counter).wrapping_sub(1);
@@ -396,7 +394,7 @@ pub fn goop_firing<S: BossState>(right: bool, game: &mut S) {
                 return;
             }
         }
-        if word!(game.SAMUS_X_SPEED_DIVISOR) == 0 {
+        if boss!(game.SamusXSpeedDivisor) == 0 {
             session_slot!(game, Draygon[ARMS].base; current_instruction = if right { list::ARMS_RIGHT_IDLE } else { list::ARMS_LEFT_IDLE }, instruction_timer = 1);
             session_slot!(
                 game,
@@ -415,7 +413,7 @@ pub fn goop_firing<S: BossState>(right: bool, game: &mut S) {
 /// until off-screen. Was `exit`.
 pub fn goop_move_until_off_screen<L: Lease>(right: bool, game: &mut L) {
     body_bubble(None, game);
-    if !right && word!(game.SAMUS_X_SPEED_DIVISOR) != 0 {
+    if !right && boss!(game.SamusXSpeedDivisor) != 0 {
         session_slot!(game, Draygon[BODY].function = function::CHASE_SAMUS);
         return;
     }

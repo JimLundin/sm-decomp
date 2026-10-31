@@ -4,6 +4,7 @@
 use crate::actors::access::{AccessMode::Native, ActorKey as Key};
 use crate::actors::api::{DeathHandling, ShotHandling};
 use crate::actors::boss_lease::BossLease;
+use crate::actors::boss_lease::boss_ram;
 use crate::actors::botwoon_death;
 use crate::actors::host::{BossEffects as _, Random as _};
 use crate::actors::layouts::{EnemyBase, same_words};
@@ -11,9 +12,10 @@ use crate::actors::session_slots::session_slot;
 use crate::actors::{combat, queries};
 use crate::constants::{bank_86::*, enemy_properties::*};
 use crate::enemy_script::EnemyScript;
+use crate::menus::prelude::{boss, owned};
 use crate::ram::RawRam as _;
-use crate::ram::{CompatibilityRam as _, WorkRamAccess as _};
-use crate::ram::{slot, word};
+use crate::ram::WorkRamAccess as _;
+use crate::ram::slot;
 use sm_data::botwoon_holes::Hole;
 use sm_data::botwoon_speeds::BotwoonSpeed;
 use sm_data::enemy_speeds::SpeedTable;
@@ -284,7 +286,7 @@ fn initialize_living<L: Lease + ?Sized>(e: i32, game: &mut L) {
 }
 /// Botwoon health-based palette handling ($B3:982B).
 fn health_palette<R: RuntimeHost>(game: &mut R) {
-    let e = i32::from(word!(game.CUR_ENEMY_INDEX));
+    let e = i32::from(boss!(game.CurEnemyIndex));
     if session_slot!(game, Botwoon[e].health_palette_index) != LAST_HEALTH_PALETTE
         && (session_slot!(game, Botwoon[e].base.health) as i16).wrapping_sub(
             crate::cartridge::rom_table_word!(
@@ -297,12 +299,11 @@ fn health_palette<R: RuntimeHost>(game: &mut R) {
         let mut source = 16u16.wrapping_mul(session_slot!(game, Botwoon[e].health_palette_index));
         let mut target = session_slot!(game, Botwoon[e].palette_data_offset);
         loop {
-            word!(
-                game.PALETTE_BUFFER[target >> 1] = crate::cartridge::rom_table_word!(
-                    game,
-                    HEALTH_PALETTES,
-                    (source >> 1) as isize
-                )
+            boss_ram::set_at(
+                game,
+                boss_ram::Array::PaletteBuffer,
+                target >> 1,
+                crate::cartridge::rom_table_word!(game, HEALTH_PALETTES, (source >> 1) as isize),
             );
             source = source.wrapping_add(2);
             target = target.wrapping_add(2);
@@ -317,7 +318,7 @@ fn health_palette<R: RuntimeHost>(game: &mut R) {
 /// Botwoon function - initial ($B3:9878): wait, then go through a hole. Was
 /// `wait_entry`.
 fn initial<R: RuntimeHost>(game: &mut R) {
-    let e = i32::from(word!(game.CUR_ENEMY_INDEX));
+    let e = i32::from(boss!(game.CurEnemyIndex));
     let delay = session_slot!(game, Botwoon[e].initial_delay).wrapping_sub(1);
     session_slot!(game, Botwoon[e].initial_delay = delay);
     if delay == 0 {
@@ -388,13 +389,13 @@ fn spitting<R: RuntimeHost>(e: i32, runtime: &mut R) -> bool {
     } else {
         session_slot!(runtime, Botwoon[e]; hole_collision_disabled = 0, target_history_index = u16::MAX);
     }
-    runtime.foreign(|game| choose_movement_path(word!(game.CUR_ENEMY_INDEX), game));
+    runtime.foreign(|game| choose_movement_path(boss!(game.CurEnemyIndex), game));
     false
 }
 /// Botwoon function - death sequence - pre-death delay ($B3:9A46). Was
 /// `wait_collapse`.
 fn pre_death_delay<R: RuntimeHost>(game: &mut R) {
-    let e = i32::from(word!(game.CUR_ENEMY_INDEX));
+    let e = i32::from(boss!(game.CurEnemyIndex));
     let delay = session_slot!(game, Botwoon[e].pre_death_counter).wrapping_add(1);
     session_slot!(game, Botwoon[e].pre_death_counter = delay);
     if (i32::from(delay) - PRE_DEATH_FRAMES) & SIGN == 0 {
@@ -830,7 +831,7 @@ pub fn main_ai<R: RuntimeHost>(runtime: &mut R) {
     match state {
         function::INITIAL => initial(runtime),
         function::GO_THROUGH_HOLE | function::MOVING_AROUND => runtime.foreign(|game| {
-            let e = i32::from(word!(game.CUR_ENEMY_INDEX));
+            let e = i32::from(boss!(game.CurEnemyIndex));
             let changed = if state == function::GO_THROUGH_HOLE {
                 leave_hole(e, game)
             } else {
@@ -839,7 +840,7 @@ pub fn main_ai<R: RuntimeHost>(runtime: &mut R) {
             if !changed {
                 step_body(e, game);
                 if state == function::GO_THROUGH_HOLE {
-                    hole_collision(word!(game.CUR_ENEMY_INDEX), game);
+                    hole_collision(boss!(game.CurEnemyIndex), game);
                 }
             }
         }),
@@ -848,7 +849,7 @@ pub fn main_ai<R: RuntimeHost>(runtime: &mut R) {
             if spitting(e, runtime) {
                 runtime.foreign(|game| {
                     let address = BANK << 16 | u32::from(slot!(game, Botwoon[e].head_function));
-                    let k = word!(game.CUR_ENEMY_INDEX);
+                    let k = boss!(game.CurEnemyIndex);
                     game.b3_pre_instruction(address, k);
                 });
             }
@@ -893,7 +894,7 @@ fn step_body<L: Lease + ?Sized>(e: i32, game: &mut L) {
         game.follow_botwoon_history();
         game.b3_pre_instruction(
             BANK << 16 | u32::from(session_slot!(game, Botwoon[e].head_function)),
-            word!(game.CUR_ENEMY_INDEX),
+            boss!(game.CurEnemyIndex),
         );
         game.orient_botwoon_body();
         game.advance_botwoon_history();

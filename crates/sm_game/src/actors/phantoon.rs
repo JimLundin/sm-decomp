@@ -8,6 +8,7 @@
 //! `phantoon_motion` and `phantoon_actions`.
 use crate::actors::api::PlayerDirection;
 use crate::actors::boss_lease::bg2_staging;
+use crate::actors::boss_lease::boss_ram;
 use crate::actors::boss_lease::{BossLease, BossState};
 use crate::actors::deaths::Deaths as _;
 use crate::actors::host::BossEffects as _;
@@ -519,13 +520,16 @@ fn fade_step_toward_target<S: BossState + ?Sized>(game: &mut S) -> u8 {
         >= session_slot!(game, Eye[EYE].fade_step)
     {
         for i in (0i32..32).step_by(2) {
-            word!(
-                game.PALETTE_BUFFER[((i >> 1) + 112)] = transition_color(
+            boss_ram::set_at(
+                game,
+                boss_ram::Array::PaletteBuffer,
+                (i >> 1) + 112,
+                transition_color(
                     session_slot!(game, Eye[EYE].fade_step),
                     native_word(game, palette_source((i >> 1) + 112)),
                     crate::boss_lists::fade_out_target_colour(game, (i >> 1) as isize),
                     game,
-                )
+                ),
             );
         }
         session_slot!(game, Eye[EYE].fade_step, |old| old.wrapping_add(1));
@@ -564,13 +568,16 @@ fn fade_step_toward_powered_on<S: BossState + ?Sized>(game: &mut S) -> u8 {
         >= session_slot!(game, Eye[EYE].fade_step)
     {
         for i in (0i32..224).step_by(2) {
-            word!(
-                game.PALETTE_BUFFER[(i >> 1)] = transition_color(
+            boss_ram::set_at(
+                game,
+                boss_ram::Array::PaletteBuffer,
+                i >> 1,
+                transition_color(
                     session_slot!(game, Eye[EYE].fade_step),
-                    word!(game.PALETTE_BUFFER[(i >> 1)]),
+                    boss_ram::get_at(game, boss_ram::Array::PaletteBuffer, i >> 1),
                     crate::boss_lists::wrecked_ship_powered_on_colour(game, (i >> 1) as isize),
                     game,
-                )
+                ),
             );
         }
         session_slot!(game, Eye[EYE].fade_step, |old| old.wrapping_add(1));
@@ -640,7 +647,7 @@ pub fn initialize<H: Host + ?Sized>(game: &mut H) {
     bg2_staging::fill(game, (0..=2047).rev(), BLANK_BG2_TILE);
     crate::word_transfers!(game, descending, 1024; native(BG2_HDMA_DATA_END) <- value(0));
     crate::word_transfers!(game, descending, 16; native(SPRITE_PALETTE_7_END) <- value(0));
-    word!(game.ENEMY_BG2_TILEMAP_SIZE = BG2_TILEMAP_SIZE);
+    boss!(game.EnemyTilemapSize = BG2_TILEMAP_SIZE);
     game.disable_minimap_for_boss();
     let me = current(game);
     slot!(game, Body[me].timer = 120);
@@ -825,7 +832,11 @@ pub fn shot<S: BossState + ?Sized>(game: &mut S) {
             }
             health = health.wrapping_sub(session_slot!(game, Body[me].base.health));
             if below(health, ENRAGE_DAMAGE)
-                || (word!(game.PROJECTILE_TYPE[word!(game.COLLISION_DETECTION_INDEX)]) & 0xf00)
+                || (boss_ram::get_at(
+                    game,
+                    boss_ram::Array::ProjectileType,
+                    boss!(game.CollisionDetectionIndex),
+                ) & 0xf00)
                     != SUPER_MISSILE
             {
                 let tentacles = k as i32 + TENTACLES;
@@ -1218,12 +1229,8 @@ pub fn almost_dead<S: BossState + ?Sized>(game: &mut S, k: u16) {
     bg2_staging::fill(game, (0..=511).rev(), BLANK_BG2_TILE);
     // A VRAM write queue entry: 400h bytes from $7E:2000 to VRAM $4800.
     let queue = 0xd0;
-    let mut tail: u16 = word!(game.VRAM_WRITE_QUEUE_TAIL);
-    set_native_word(
-        game,
-        queue + word!(game.VRAM_WRITE_QUEUE_TAIL) as isize,
-        1024,
-    );
+    let mut tail: u16 = boss!(game.VramWriteQueueTail);
+    set_native_word(game, queue + boss!(game.VramWriteQueueTail) as isize, 1024);
     tail = tail.wrapping_add(2);
     set_native_word(game, queue + tail as isize, 0x2000);
     tail = tail.wrapping_add(2);
@@ -1232,7 +1239,7 @@ pub fn almost_dead<S: BossState + ?Sized>(game: &mut S, k: u16) {
     let at = usize::try_from(queue + bank_at as isize).expect("VRAM entry outside RAM");
     game.set_slot_byte(at, 126);
     set_native_word(game, queue + tail as isize, 18432);
-    word!(game.VRAM_WRITE_QUEUE_TAIL = tail.wrapping_add(2));
+    boss!(game.VramWriteQueueTail = tail.wrapping_add(2));
 }
 
 /// Fades the room to its powered-on colours, then dies: the drop, the boss

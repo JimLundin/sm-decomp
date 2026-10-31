@@ -52,6 +52,8 @@ macro_rules! owned {
     (@op $old:ident += $value:expr) => { $old.wrapping_add($value) };
     (@op $old:ident -= $value:expr) => { $old.wrapping_sub($value) };
     (@op $old:ident &= $value:expr) => { $old & $value };
+    (@op $old:ident |= $value:expr) => { $old | $value };
+    (@op $old:ident ^= $value:expr) => { $old ^ $value };
     ($view:tt $game:ident, $value:expr; $($word:ident),+ $(,)?) => {
         $(owned!($view $game.$word = $value);)+
     };

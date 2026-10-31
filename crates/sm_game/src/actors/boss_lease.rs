@@ -107,6 +107,114 @@ pub mod boss_ram {
         CameraDistance = 0x0941,
         /// `timing.random_number`.
         Random = 0x05e5,
+        /// `REMOVED_R18`.
+        RemovedR18 = 0x0012,
+        /// `REMOVED_R20`.
+        RemovedR20 = 0x0014,
+        /// `REMOVED_R22`.
+        RemovedR22 = 0x0016,
+        /// `REG_M7A`.
+        RegM7a = 0x0078,
+        /// `REG_BG1HOFS`.
+        RegBg1hofs = 0x00b1,
+        /// `VRAM_WRITE_QUEUE_TAIL`.
+        VramWriteQueueTail = 0x0330,
+        /// `AREA_INDEX`.
+        AreaIndex = 0x079f,
+        /// `ROOM_WIDTH_IN_BLOCKS`.
+        RoomWidthInBlocks = 0x07a5,
+        /// `SCROLLING_FINISHED_HOOK`.
+        ScrollingFinishedHook = 0x07e9,
+        /// `CERES_STATUS`.
+        CeresStatus = 0x093f,
+        /// `TIMER_STATUS`.
+        TimerStatus = 0x0943,
+        /// `EQUIPPED_ITEMS`.
+        EquippedItems = 0x09a2,
+        /// `COLLECTED_ITEMS`.
+        CollectedItems = 0x09a4,
+        /// `EQUIPPED_BEAMS`.
+        EquippedBeams = 0x09a6,
+        /// `COLLECTED_BEAMS`.
+        CollectedBeams = 0x09a8,
+        /// `SAMUS_HEALTH`.
+        SamusHealth = 0x09c2,
+        /// `SAMUS_MAX_HEALTH`.
+        SamusMaxHealth = 0x09c4,
+        /// `SAMUS_MISSILES`.
+        SamusMissiles = 0x09c6,
+        /// `SAMUS_MAX_MISSILES`.
+        SamusMaxMissiles = 0x09c8,
+        /// `SAMUS_SUPER_MISSILES`.
+        SamusSuperMissiles = 0x09ca,
+        /// `SAMUS_MAX_SUPER_MISSILES`.
+        SamusMaxSuperMissiles = 0x09cc,
+        /// `SAMUS_POWER_BOMBS`.
+        SamusPowerBombs = 0x09ce,
+        /// `SAMUS_MAX_POWER_BOMBS`.
+        SamusMaxPowerBombs = 0x09d0,
+        /// `SAMUS_MAX_RESERVE_HEALTH`.
+        SamusMaxReserveHealth = 0x09d4,
+        /// `SAMUS_RESERVE_HEALTH`.
+        SamusReserveHealth = 0x09d6,
+        /// `JAPANESE_TEXT_FLAG`.
+        JapaneseTextFlag = 0x09e2,
+        /// `SAMUS_POSE`.
+        SamusPose = 0x0a1c,
+        /// `KNOCKBACK_X_DIR`.
+        KnockbackXDir = 0x0a54,
+        /// `SAMUS_GRAPPLE_FLAGS`.
+        SamusGrappleFlags = 0x0a64,
+        /// `SAMUS_X_SPEED_DIVISOR`.
+        SamusXSpeedDivisor = 0x0a66,
+        /// `SAMUS_X_POS`.
+        SamusXPos = 0x0af6,
+        /// `SAMUS_Y_POS`.
+        SamusYPos = 0x0afa,
+        /// `SAMUS_X_RADIUS`.
+        SamusXRadius = 0x0afe,
+        /// `SAMUS_Y_RADIUS`.
+        SamusYRadius = 0x0b00,
+        /// `EXTRA_SAMUS_X_SUBDISPLACEMENT`.
+        ExtraSamusXSubdisplacement = 0x0b56,
+        /// `EXTRA_SAMUS_X_DISPLACEMENT`.
+        ExtraSamusXDisplacement = 0x0b58,
+        /// `EXTRA_SAMUS_Y_DISPLACEMENT`.
+        ExtraSamusYDisplacement = 0x0b5c,
+        /// `PROJECTILE_COUNTER`.
+        ProjectileCounter = 0x0cce,
+        /// `POWER_BOMB_EXPLOSION_X_POS`.
+        PowerBombExplosionXPos = 0x0ce2,
+        /// `POWER_BOMB_EXPLOSION_Y_POS`.
+        PowerBombExplosionYPos = 0x0ce4,
+        /// `POWER_BOMB_FLAG`.
+        PowerBombFlag = 0x0cee,
+        /// `GRAPPLE_BEAM_FUNCTION`.
+        GrappleBeamFunction = 0x0d32,
+        /// `REMOVED_VAR_E22`.
+        RemovedVarE22 = 0x0e22,
+        /// `REMOVED_VAR_E2_A`.
+        RemovedVarE2A = 0x0e2a,
+        /// `RANDOM_ENEMY_COUNTER`.
+        RandomEnemyCounter = 0x0e44,
+        /// `CUR_ENEMY_INDEX`.
+        CurEnemyIndex = 0x0e54,
+        /// `FLAG_PROCESS_ALL_ENEMIES`.
+        FlagProcessAllEnemies = 0x183c,
+        /// `EARTHQUAKE_TYPE`.
+        EarthquakeType = 0x183e,
+        /// `EARTHQUAKE_TIMER`.
+        EarthquakeTimer = 0x1840,
+        /// `COLLISION_DETECTION_INDEX`.
+        CollisionDetectionIndex = 0x18a6,
+        /// `SAMUS_INVINCIBILITY_TIMER`.
+        SamusInvincibilityTimer = 0x18a8,
+        /// `SAMUS_KNOCKBACK_TIMER`.
+        SamusKnockbackTimer = 0x18aa,
+        /// `EPROJ_INIT_PARAM_2`.
+        EprojInitParam2 = 0x1995,
+        /// `PALETTE_CHANGE_NUM`.
+        PaletteChangeNum = 0xc400,
     }
     /// `word` as the lease's projection holds it, low byte then high.
     pub fn get<H: SlotAccess + ?Sized>(h: &H, word: Word) -> u16 {
@@ -118,6 +226,41 @@ pub mod boss_ram {
         h.set_slot_byte(word as usize, low);
         h.set_slot_byte(word as usize + 1, high);
     }
+    /// A named Session-owned word array, by its RAM address.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    pub enum Array {
+        ProjectileXPos = 0x0b64,
+        ProjectileYPos = 0x0b78,
+        ProjectileXRadius = 0x0bb4,
+        ProjectileYRadius = 0x0bc8,
+        ProjectileDir = 0x0c04,
+        ProjectileType = 0x0c18,
+        PaletteBuffer = 0xc000,
+    }
+    fn at<I: TryInto<usize, Error: core::fmt::Debug>>(array: Array, index: I) -> usize {
+        array as usize + 2 * index.try_into().expect("word array index")
+    }
+    /// Word `index` of `array`, as the lease's projection holds it.
+    pub fn get_at<H: SlotAccess + ?Sized, I: TryInto<usize, Error: core::fmt::Debug>>(
+        h: &H,
+        array: Array,
+        index: I,
+    ) -> u16 {
+        let at = at(array, index);
+        u16::from_le_bytes([h.slot_byte(at), h.slot_byte(at + 1)])
+    }
+    /// Store `value` to word `index` of `array`.
+    pub fn set_at<H: SlotAccess + ?Sized, I: TryInto<usize, Error: core::fmt::Debug>>(
+        h: &mut H,
+        array: Array,
+        index: I,
+        value: u16,
+    ) {
+        let at = at(array, index);
+        let [low, high] = value.to_le_bytes();
+        h.set_slot_byte(at, low);
+        h.set_slot_byte(at + 1, high);
+    }
 }
 
 /// The BG2 tilemap staging RAM ($7E:2000..$7E:2FFF) by word index, which the
@@ -126,11 +269,16 @@ pub mod boss_ram {
 pub mod bg2_staging {
     use crate::actors::session_slots::SlotAccess;
     const BASE: usize = 0x2000;
+    /// Word `index`, low byte then high, as the named word read it.
     pub fn get<H: SlotAccess + ?Sized>(h: &H, index: usize) -> u16 {
-        h.slot_word(BASE + 2 * index)
+        let at = BASE + 2 * index;
+        u16::from_le_bytes([h.slot_byte(at), h.slot_byte(at + 1)])
     }
+    /// Store `value` to word `index`, low byte then high.
     pub fn set<H: SlotAccess + ?Sized>(h: &mut H, index: usize, value: u16) {
-        h.set_slot_word(BASE + 2 * index, value);
+        let [low, high] = value.to_le_bytes();
+        h.set_slot_byte(BASE + 2 * index, low);
+        h.set_slot_byte(BASE + 2 * index + 1, high);
     }
     /// Store `value` to each word index in `words`, in its order.
     pub fn fill<H: SlotAccess + ?Sized>(h: &mut H, words: impl Iterator<Item = usize>, value: u16) {
