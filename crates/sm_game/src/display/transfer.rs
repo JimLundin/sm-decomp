@@ -71,6 +71,42 @@ pub trait TransferHost {
 /// ended by a tag without bits 6 or 7.
 pub const MODE7_QUEUE: usize = 0x2d0;
 
+/// Append bank `bank`'s Mode 7 record list at `cursor` to the queue, each
+/// record's terminating sentinel stored before its bytes.
+pub fn enqueue_mode7_rom<H>(bank: u8, cursor: u16, game: &mut H)
+where
+    H: crate::ram::CompatibilityRam + crate::decompression::DecompressionHost + ?Sized,
+{
+    use crate::ram::{RawRam as _, checked_word as word};
+    let address = (u32::from(bank) << 16) | u32::from(cursor);
+    if address & 0x8000 == 0 {
+        game.report_invalid_rom_address(address);
+    }
+    let address = address | 0x8000;
+    let mut source = 0;
+    let mut destination = MODE7_QUEUE + usize::from(word!(game.MODE7_VRAM_WRITE_QUEUE_TAIL));
+    loop {
+        let tag = game.read_rom_byte(address, source);
+        let length = if tag & 0x80 != 0 {
+            9
+        } else if tag & 0x40 != 0 {
+            7
+        } else {
+            break;
+        };
+        // The sentinel precedes the copy. Both cursors advance linearly, without
+        // the per-record u16 wrap used by the direct cinematic producers.
+        game.ram().write_byte(destination + length, 0);
+        for index in 0..length {
+            let value = game.read_rom_byte(address, source + index);
+            game.ram().write_byte(destination + index, value);
+        }
+        source += length;
+        destination += length;
+    }
+    word!(game.MODE7_VRAM_WRITE_QUEUE_TAIL = (destination - MODE7_QUEUE) as u16);
+}
+
 pub fn drain_mode7(host: &mut (impl TransferHost + ?Sized)) {
     let mut entry = MODE7_QUEUE;
     loop {

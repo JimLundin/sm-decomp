@@ -89,9 +89,6 @@ impl MenuRuntime for Game {
     fn cinematic_sprite_instruction(&mut self, command: u32, object: u16, operand: u16) -> u16 {
         sm_game::cinematic_states::run_sprite_instruction(command, object, operand, self)
     }
-    fn enqueue_mode7_rom(&mut self, bank: u8, cursor: u16) {
-        crate::game::mode7_transfers::enqueue_rom(bank, cursor, self)
-    }
     fn write_dma_register(&mut self, register: u16, value: u8) {
         crate::rtl::write_dma_register(register, value, self)
     }
