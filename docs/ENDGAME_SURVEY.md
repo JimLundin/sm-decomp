@@ -63,6 +63,42 @@ oracle (target `sm_tools`). They don't block a native build:
 Inputs are close: `sm_game::external_inputs` exists, and `rtl_run_frame`
 only latches `input1.currentState` for the frame.
 
+### Item 5: what still reads the ROM (2026-10-31)
+
+Run-time reads fall in three families. Counts are call sites in `sm_game`.
+
+1. **Fixed tables.** These are `rom_table_word!`, `Content::table` and table
+   pointers indexed by suit, frame, area or angle (about 60 sites). Each one
+   becomes an `sm_data` constant pair (address, length), imported once in
+   `register_rom` through `ImportedWords`/`ImportedGrid` and held in
+   `RomRecords`. An index past the table, or an image other than the imported
+   allocation (a patched oracle ROM), keeps the original load, so behaviour
+   stays exact. About 40 tables are converted this way already (the
+   `*_tables.rs`, `menu_lists`, `boss_lists` and `gameplay_tables` modules;
+   their remaining "reads" are those fallbacks). Samus's palette pointer
+   tables are the latest. Still raw: Samus's pose table ($91:B629, bytes per
+   pose), the arm cannon offsets ($90:C7DF, $90:C7A5), the beam trail
+   ($90:C3B1), the atmosphere table ($90:8BFF), demo inputs ($91:8000), sprite
+   object tables ($B4:BDA8) and the HDMA wave ($88:EA8B).
+2. **Pointer-chased content.** These are `native_record`, `Content::record`
+   and `RomRecord` at an address taken from RAM or another table (about 220
+   sites). They read palettes ($9B), spritemaps, tilemaps, room headers, map
+   data, and the instruction lists of PLMs, enemies, sprite objects, palette
+   effects, animated tiles and HDMA objects. Fixed tables cannot cover these.
+   They need typed content keyed by the original address, such as a palette
+   bank (`address → [u16; 16]`) or a decoded instruction-list arena per
+   interpreter, imported once. The biggest consumers are `actors` (138 sites),
+   `menus` (69), `player_projectiles` (33), `animated_tiles` and
+   `palette_effects` (14 and 13). Each interpreter's lists are one
+   conversion, and that conversion should replace the per-step decoder rather
+   than wrap it.
+3. **Image-identity hosts.** `native_image()` (42 sites) and `loaded_image()`
+   (76 sites) mostly pass the image to families 1 and 2, or check which
+   allocation is loaded. They go away with the two families above.
+
+A native build therefore needs family 2 first. Family 1 is cheap and nearly
+done, and family 3 follows.
+
 ## Suggested order
 
 1. Items 1 and 7 together. The Session owns state, and leases become borrows. Everything else depends on this.
