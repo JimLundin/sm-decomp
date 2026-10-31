@@ -35,7 +35,9 @@ def seed_bundle(row):
         return ('seeds-v1-offroute-4b5962a5bc7f6aaa.tar.gz.enc', '4b5962a5bc7f6aaa5050bd5f7d6abfb046e1b078c26b4242d82489300c7f044a')
     if row['id'] in ('pause-menu-tour', 'options-menu-tour', 'boss-draygon-grab', 'credits-ending'):
         return ('seeds-v1-coverage-54f838bfd8146bf7.tar.gz.enc', '54f838bfd8146bf76d631d567299b0721adbc1c4065584e9de5f3e19632ccb21')
-    if row['id'] in ('pickup-reserve', 'save-death-reload', 'save-memory', 'music-fir-selector10'):
+    if row['id'] in ('save-death-reload', 'save-memory', 'death'):
+        return ('seeds-v1-realigned-ef199d44b0070294.tar.gz.enc', 'ef199d44b0070294bcbac363aaa3577304a3cbbc7a1122a6f488329d41441e52')
+    if row['id'] in ('pickup-reserve', 'music-fir-selector10'):
         return ('layout150-checkpoints-147-93986acd14dc9d66.tar.gz.enc', '8c8f84e903917a06d996624358a1783e80920e9fa2084c438eaa950843d68517')
     if 'checkpoint' in row:
         return ('layout150-f158-faithful2-d4050aa32a965168.tar.gz.enc', 'd4050aa32a965168653e68a2389145af6aa6f2cd5666bec5eec7c737ffef874b')

@@ -78,6 +78,13 @@ SCENARIOS = {
     # The 100% movie's landing site late in the game, with energy and
     # ammunition set for a crystal flash: under 51 energy, empty reserves and
     # at least ten of each kind of ammunition once the bomb is laid.
+    # The 100% movie's Crocomire room with one energy and no reserves: the
+    # movie words now play out as on hardware, where Samus is never killed, so
+    # the death row takes its first hit as fatal.
+    "one-energy-crocomire": Scenario(
+        base="100-input-phase:142",
+        edits={"energy": 1, "reserve_energy": 0},
+        note="death at the first hit in Crocomire's room"),
     "crystal-flash": Scenario(
         base="100-input-phase:305",
         edits={"energy": 40, "reserve_energy": 0, "power_bombs": 11},
