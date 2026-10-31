@@ -178,8 +178,8 @@ impl Effects for Runtime<'_> {
     }
     fn suit_pickup(&mut self, pickup: SuitPickup) {
         self.owned_call(|runtime| match pickup {
-            SuitPickup::Varia => runtime.begin_suit_pickup(false),
-            SuitPickup::Gravity => runtime.begin_suit_pickup(true),
+            SuitPickup::Varia => sm_game::player_transitions::suit::begin_pickup(runtime, false),
+            SuitPickup::Gravity => sm_game::player_transitions::suit::begin_pickup(runtime, true),
             SuitPickup::Unknown(_) => {
                 runtime.foreign(|game| crate::rtl::Unreachable(game));
             }

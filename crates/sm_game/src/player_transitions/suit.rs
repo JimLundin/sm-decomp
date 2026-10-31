@@ -1,5 +1,6 @@
 //! Shared Varia/Gravity acquisition and light-beam sequence.
 use super::{effects::Host, state::LandingBounce};
+use crate::player_transitions::effects::SamusLease;
 use crate::{
     samus_palette,
     session::Session,
@@ -239,4 +240,53 @@ pub fn initialize_hdma(h: &mut (impl crate::runtime_access::SessionRam + ?Sized)
         h.set_byte(address + 2, (value >> 16) as u8);
     }
     h.write_slice_le(crate::ram::words::XRAY_HDMA_TABLE_END, 0);
+}
+/// Start a suit pickup: close the window, centre Samus and spawn its HDMA.
+pub fn begin_pickup<H: SamusLease>(h: &mut H, gravity: bool) {
+    use crate::{display::hdma_spawn::HdmaObjectDefinition, player_transitions::xray};
+    prepare(h, gravity, xray::set_window_word);
+    h.pose_command(0x15);
+    center(h);
+    crate::visual_host::Effects::sound(h, 2, 6, 0x56);
+    let program = if gravity { 0xd67a } else { 0xd5a2 };
+    h.spawn_hdma_object(&HdmaObjectDefinition::new(0x41, 0x26, program));
+}
+/// Advance the suit pickup's window, then end it and release Samus.
+pub fn advance_pickup<H: SamusLease>(h: &mut H, gravity: bool) {
+    use crate::{
+        player_transitions::xray,
+        ram::{word_arrays as arrays, words as ram},
+    };
+    if advance(h, gravity, xray::set_window_word) {
+        publish_colors(h);
+        h.write_slice_le(ram::FX_LAYER_BLENDING_CONFIG_C, 18);
+        return;
+    }
+    if !gravity {
+        crate::visual_host::Effects::music_delayed8(h, 3);
+    }
+    for (address, value) in [(0x76, 0x80), (0x75, 64), (0x74, 32)] {
+        h.set_byte(address, value);
+    }
+    h.write_slice_native(0xa88, 1);
+    h.set_byte(0xa8a, 0x98);
+    h.write_slice_native(0xa8b, 0);
+    for address in [
+        ram::DEMO_INPUT_PREV,
+        ram::DEMO_INPUT_PREV_NEW,
+        ram::DEMO_BACKUP_PREV_CONTROLLER_INPUT,
+    ] {
+        h.write_slice_le(address, 0);
+    }
+    xray::set_window_word(h, 0, 255);
+    h.session_mut().shared_sequence.stage = 0;
+    h.session_mut().shared_sequence.value = 0;
+    let palette = h.session_mut().presentation.palette_mut();
+    palette.suit_red_green = 0;
+    palette.crystal_flash_delay = 0;
+    let offset = usize::from(h.word(ram::HDMA_OBJECT_INDEX) >> 1) * 2;
+    let program = arrays::HDMA_OBJECT_INSTRUCTION_LIST_POINTERS + offset;
+    h.write_slice_le(program, h.word(program).wrapping_add(2));
+    h.write_slice_le(arrays::HDMA_OBJECT_INSTRUCTION_TIMERS + offset, 1);
+    h.pose_command(0xb);
 }

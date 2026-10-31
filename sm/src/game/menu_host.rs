@@ -4,7 +4,7 @@ use crate::game::visual_runtime;
 use crate::game_state::Game;
 use crate::save_ram::SaveRam;
 use sm_game::menus::host::{Host, MenuRuntime};
-use sm_game::player_transitions::suit;
+use sm_game::player_transitions::{suit, xray};
 use {sm_game::room_entry::api::ArrivalRequest, sm_game::room_entry::api::StartSite};
 
 impl sm_game::menus::host::SaveRam for SaveRam {
@@ -231,10 +231,10 @@ impl MenuRuntime for Game {
             SelectPhantoonLayer => runtime.select_phantoon_layer(),
             AdvanceWave(wave) => runtime.advance_hdma_wave(slot, wave),
             AdvanceEyeBeam(phase) => runtime.advance_eye_beam(slot, phase),
-            AdvanceXrayBackground => runtime.advance_xray_background(),
-            AdvanceXrayBeam(phase) => runtime.advance_xray_beam(phase),
+            AdvanceXrayBackground => xray::advance_background(&mut runtime),
+            AdvanceXrayBeam(phase) => xray::advance_beam(&mut runtime, phase),
             InitializeSuitPickup => suit::initialize_hdma(&mut runtime),
-            AdvanceSuitPickup { gravity } => runtime.advance_suit_pickup(gravity),
+            AdvanceSuitPickup { gravity } => suit::advance_pickup(&mut runtime, gravity),
         }
     }
     fn retire_projectile(&mut self, slot: u16) {
