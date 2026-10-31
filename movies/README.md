@@ -174,7 +174,9 @@ any never runs. Routines a row exists to cover carry a probe named
 `crate::probe::hit` (or `crate::verify_probe::hit` in `sm`) inside the
 branch that does the work. Ice physics (`contact_physics.ice`, PLM $B70F,
 Crateria special air with BTS 80h) has no row: no Crateria level the seeds
-capture places it, so retail play never reaches it.
+capture places it, so retail play never reaches it. Neither do Bang's movement
+(no room places a Bang) or the scrolling sky's horizontal HDMA (FX type 22h,
+unused).
 
 A scenario seed is a recorded room seed with declared edits to its work RAM:
 energy, ammunition, items, beams, the selected item, Samus's position or raw
