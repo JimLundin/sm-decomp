@@ -177,7 +177,7 @@ def jobs():
 
     Each room replays from its own seed, so a group need not be contiguous.
     Rooms go heaviest first into the lightest group; the matrix runs at most
-    six jobs at a time, so the heaviest groups start first.
+    nine jobs at a time, so the heaviest groups start first.
     """
     groups = [[] for _ in range(JOBS)]
     for entry in sorted(chain(), key=lambda entry: -int(entry["steps"])):
