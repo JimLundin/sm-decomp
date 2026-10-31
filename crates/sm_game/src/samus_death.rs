@@ -11,17 +11,29 @@ use crate::sprite_output;
 use crate::visual_host::{Content, Record, Source};
 use crate::word_transfers;
 
-/// The death sequence draws Samus through the host, which chooses between
-/// the owned display and the native body tables.
+/// What the death sequence needs from the game.
 pub trait Host:
     crate::menus::host::Host + crate::display_refresh::Host + crate::records::Records + RuntimeAccess
 {
-    fn draw_samus(&mut self, body: Body);
+}
+impl<
+    T: crate::menus::host::Host
+        + crate::display_refresh::Host
+        + crate::records::Records
+        + RuntimeAccess
+        + ?Sized,
+> Host for T
+{
+}
+/// Draw Samus's body on the game's lease, which chooses between the owned
+/// display and the native body tables.
+fn draw_samus<H: Host + ?Sized>(game: &mut H, body: Body) {
+    crate::samus_drawing::draw_body(&mut game.runtime(), body);
 }
 
 pub fn advance_death_pose<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
     pt::animation::advance_animation(&mut game.runtime(), pt::state::AnimationStep::Death);
-    game.draw_samus(Body::Death);
+    draw_samus(game, Body::Death);
     let expired = word!(game.DEATH_FLASH_TIMER -= 1, reread) & 0x8000 != 0;
     if word!(game.DEATH_FLASH_TIMER) == 0 || expired {
         word!(game.GAME_STATE += 1);
@@ -31,7 +43,7 @@ pub fn advance_death_pose<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
 
 // Death phases share palette selection and the native upload queue with live drawing.
 pub fn begin_death<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
-    game.draw_samus(Body::Frozen);
+    draw_samus(game, Body::Frozen);
     if game.has_queued_music() == 0 {
         const FRAMES: [u8; 28] = [
             5, 5, 5, 5, 1, 5, 5, 0, 1, 0, 5, 5, 5, 5, 5, 5, 5, 1, 1, 1, 5, 5, 5, 5, 5, 5, 5, 5,
@@ -76,7 +88,7 @@ pub fn flash_death<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
             }
             death_palette(Some(word!(game.DEATH_INDEX).wrapping_mul(2)), game);
         }
-        game.draw_samus(Body::Death);
+        draw_samus(game, Body::Death);
     } else {
         death_palette(None, game);
         queue_death_tiles(8, game);
