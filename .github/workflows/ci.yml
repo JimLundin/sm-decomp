@@ -203,6 +203,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/windows-native
+      - name: Probe the direct-build stamp inputs
+        run: |
+          "PATH=$env:PATH"
+          "LIBRARY_PATH=$env:LIBRARY_PATH"
+          Get-ChildItem -Path ($env:LIBRARY_PATH -split ';') -Filter *.a | ForEach-Object { "{0} {1}" -f (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash, $_.FullName }
+          rustc -vV
       - name: Build
         run: |
           foreach ($archive in @('sm_desktop', 'lakesnes_cpu', 'lakesnes_backend', 'sm_config', 'sm_stb_image')) {
