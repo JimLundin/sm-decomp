@@ -71,6 +71,8 @@ pub trait Value {
     const ZERO: Self;
     /// Visit each element with its index, widened to a word.
     fn elements(&self, visit: &mut dyn FnMut(usize, u16));
+    /// Read the elements back, in `elements` order, from their words.
+    fn load(next: &mut dyn FnMut() -> u16) -> Self;
 }
 
 impl Value for u16 {
@@ -79,6 +81,9 @@ impl Value for u16 {
     fn elements(&self, visit: &mut dyn FnMut(usize, u16)) {
         visit(0, *self);
     }
+    fn load(next: &mut dyn FnMut() -> u16) -> Self {
+        next()
+    }
 }
 
 impl Value for u8 {
@@ -86,6 +91,9 @@ impl Value for u8 {
     const ZERO: Self = 0;
     fn elements(&self, visit: &mut dyn FnMut(usize, u16)) {
         visit(0, u16::from(*self));
+    }
+    fn load(next: &mut dyn FnMut() -> u16) -> Self {
+        next().to_le_bytes()[0]
     }
 }
 
@@ -97,6 +105,9 @@ impl<const N: usize> Value for [u8; N] {
             visit(index, u16::from(element));
         }
     }
+    fn load(next: &mut dyn FnMut() -> u16) -> Self {
+        core::array::from_fn(|_| u8::load(next))
+    }
 }
 
 /// A fixed set of fields with a table describing them.
@@ -104,6 +115,8 @@ pub trait Record {
     const FIELDS: &'static [Field];
     /// Visit each field element in table order: field index, element index, value.
     fn visit(&self, visit: &mut dyn FnMut(usize, usize, u16));
+    /// Read a record back from its values in `visit` order.
+    fn load(next: &mut dyn FnMut() -> u16) -> Self;
 }
 
 // One declaration produces the struct, its field table and its visitor.
@@ -142,6 +155,9 @@ macro_rules! record {
                     let field = fields.next().unwrap_or_default();
                     self.$field.elements(&mut |element, value| visit(field, element, value));
                 )*
+            }
+            fn load(next: &mut dyn FnMut() -> u16) -> Self {
+                Self { $($field: <$ty as Value>::load(next),)* }
             }
         }
     };
@@ -529,6 +545,47 @@ impl Observation {
         values
     }
 
+    /// Every domain's values in table order, two little-endian bytes each:
+    /// the trace record `decode` reads back.
+    pub fn encode(&self, out: &mut Vec<u8>) {
+        for domain in Domain::ALL {
+            self.visit(domain, &mut |_, value| out.extend(value.to_le_bytes()));
+        }
+    }
+
+    /// Read an `encode`d observation from the front of `bytes`.
+    pub fn decode(bytes: &mut &[u8]) -> Option<Self> {
+        let mut truncated = false;
+        let mut next = || match bytes.split_first_chunk::<2>() {
+            Some((word, rest)) => {
+                *bytes = rest;
+                u16::from_le_bytes(*word)
+            }
+            None => {
+                truncated = true;
+                0
+            }
+        };
+        fn list<T: Record>(next: &mut dyn FnMut() -> u16) -> Vec<T> {
+            (0..next()).map(|_| T::load(next)).collect()
+        }
+        let observation = Observation {
+            input: Input::load(&mut next),
+            samus: Samus::load(&mut next),
+            camera: Camera::load(&mut next),
+            room: Room::load(&mut next),
+            progress: Progress::load(&mut next),
+            actors: Actors {
+                enemies: list(&mut next),
+            },
+            effects: Effects {
+                sounds: list(&mut next),
+                music: list(&mut next),
+            },
+        };
+        (!truncated).then_some(observation)
+    }
+
     /// A 64-bit FNV-1a hash of `domain`'s values and their locations.
     pub fn hash(&self, domain: Domain) -> u64 {
         const OFFSET: u64 = 0xcbf2_9ce4_8422_2325;
@@ -666,6 +723,24 @@ mod tests {
                 .iter()
                 .all(|name| name.starts_with("actors.enemies[1]."))
         );
+    }
+
+    #[test]
+    fn an_encoded_observation_decodes_to_itself() {
+        let mut observation = Observation::default();
+        observation.samus.x = 0x1234;
+        observation.progress.items[63] = 0x80;
+        observation.actors.enemies.push(Actor {
+            ai_e: 7,
+            ..Actor::default()
+        });
+        observation.effects.music.push(Music { track: 5, delay: 9 });
+        let mut bytes = Vec::new();
+        observation.encode(&mut bytes);
+        let mut rest = bytes.as_slice();
+        assert_eq!(Observation::decode(&mut rest), Some(observation));
+        assert!(rest.is_empty());
+        assert_eq!(Observation::decode(&mut &bytes[..bytes.len() - 1]), None);
     }
 
     #[test]
