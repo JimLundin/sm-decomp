@@ -725,6 +725,8 @@ macro_rules! scalar_words {
         flow_words!(($s.flow), $f, ($($borrow)*));
         menu_words!(($s.menu), $f, ($($borrow)*));
         $f(0x5f5,$($borrow)* $s.feedback.sound_disabled);
+        $f(ram::RANDOM_NUMBER,$($borrow)* $s.timing.random_number);
+        $f(ram::TIME_IS_FROZEN_FLAG,$($borrow)* $s.timing.time_frozen);
         $f(0x5f7,$($borrow)* $s.minimap.disabled);
         for row in 0..3 {
             for column in 0..5 {

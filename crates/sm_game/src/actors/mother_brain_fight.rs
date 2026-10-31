@@ -24,7 +24,6 @@ use crate::escape_typewriter;
 use crate::runtime_access::SessionRam;
 // The game's traits, for the calls made on it through `foreign`.
 use crate::actors::host::{ActorRuntime as _, BossEffects as _, Random as _};
-use crate::ram::CompatibilityRam as _;
 
 use crate::constants::bank_8d::*;
 use crate::constants::bank_86::*;
@@ -786,6 +785,9 @@ pub enum OwnedWord {
     EarthquakeType,
     EarthquakeTimer,
     Color(usize),
+    RandomNumber,
+    RandomEnemyCounter,
+    TimeFrozen,
 }
 
 impl OwnedWord {
@@ -813,6 +815,9 @@ impl OwnedWord {
             Self::EarthquakeType => words::EARTHQUAKE_TYPE,
             Self::EarthquakeTimer => words::EARTHQUAKE_TIMER,
             Self::Color(index) => arrays::PALETTE_BUFFER + 2 * index,
+            Self::RandomNumber => words::RANDOM_NUMBER,
+            Self::RandomEnemyCounter => words::RANDOM_ENEMY_COUNTER,
+            Self::TimeFrozen => words::TIME_IS_FROZEN_FLAG,
         }
     }
 }
@@ -841,6 +846,7 @@ pub trait Host:
     + crate::cartridge::NativeImage
     + SlotAccess
     + escape_typewriter::Host
+    + OwnedWords
 {
     /// The original's unreachable-state failure. Was `Unreachable`.
     fn bank_unreachable(&mut self) -> bool;
@@ -963,13 +969,13 @@ pub fn corpse_rotting_finished(game: &mut impl Lease) {
         crate::actors::host::BossEffects::set_projectile_spawn_point(
             game,
             (session_slot!(game, MotherBrainBrain[BRAIN].base.x_pos) as i32
-                + (word!(game.RANDOM_NUMBER) as i32 & 0x1f)
+                + (random_number(game) as i32 & 0x1f)
                 - 16i32) as u16,
             (session_slot!(game, MotherBrainBrain[BRAIN].base.y_pos)).wrapping_add(16),
         )
     });
     spawn_room_projectile(ADDR_K_EPROJ_DUST_CLOUD_EXPLOSION as u16, 0xa, game);
-    if (word!(game.RANDOM_ENEMY_COUNTER) & 7) == 0 {
+    if (game.owned(OwnedWord::RandomEnemyCounter) & 7) == 0 {
         queue_sfx2_max3(sound::LAVA_ACID_DAMAGE, game);
     }
 }
@@ -980,7 +986,7 @@ crate::dispatch::callback_dispatch! {
     @body checked;
     @functions [pub fn (game: &mut impl Lease)];
     [11110306] set_up_brain_and_neck_to_draw [] {
-        if word!(game.TIME_IS_FROZEN_FLAG) == 0 {
+        if game.owned(OwnedWord::TimeFrozen) == 0 {
             handle_neck(game);
         }
         session_slot!(game, MotherBrainBrain[BRAIN].base; x_pos = session_slot!(game, MotherBrainBrain[BRAIN].segment_5_x),
@@ -1258,12 +1264,12 @@ crate::dispatch::callback_dispatch! {
         }
     };
     [11122561] firing_bomb_decide_on_walking [] {
-        if word!(game.RANDOM_NUMBER) >= 0xff80 {
+        if random_number(game) >= 0xff80 {
             firing_bomb_decide_on_crouching(game);
             return;
         }
         let mut v0: u16 = 64;
-        if word!(game.RANDOM_NUMBER) < 0x6000 {
+        if random_number(game) < 0x6000 {
             v0 = 96;
         }
         if ((v0) as i16).wrapping_sub((session_slot!(game, MotherBrainBody[BODY].base.x_pos)) as i16) >= 0 || {
@@ -1429,7 +1435,7 @@ crate::dispatch::callback_dispatch! {
         let v0: u16 = { let amount = 0x50; game.foreign(|game| game.suit_damage(amount)) };
         if ((4 * v0 as i32 + 20 - game.owned(OwnedWord::SamusHealth) as i32) as i16) >= 0 {
             session_slot!(game, MotherBrainBody[0i32].function = function::PHASE_2_FINISH_SAMUS_OFF_STAND_UP);
-        } else if (word!(game.RANDOM_NUMBER) & 0xfff) < 0xfa0 {
+        } else if (random_number(game) & 0xfff) < 0xfa0 {
             if (session_slot!(game, MotherBrainBody[0i32].base.frame_counter) & 0x1f) == 0 {
                 maybe_stand_up_or_lean_down(game);
             }
@@ -1440,7 +1446,7 @@ crate::dispatch::callback_dispatch! {
                 >= 0
                 || {
                     v1 = animation::BRAIN_BOMB_PHASE_2;
-                    (word!(game.RANDOM_NUMBER) & 0xfff) < 0xff0
+                    (random_number(game) & 0xfff) < 0xff0
                 }
             {
                 v1 = animation::BRAIN_TWO_BLUE_RINGS_PHASE_2;
@@ -1499,7 +1505,7 @@ crate::dispatch::callback_dispatch! {
     };
     [11125084] phase2_murder_baby_metroid_attack [] {
         maybe_stand_up_or_lean_down(game);
-        if (word!(game.RANDOM_NUMBER) & 0x8000) != 0 {
+        if (random_number(game) & 0x8000) != 0 {
             let mut v0: u16 = animation::BRAIN_FOUR_BLUE_RINGS_PHASE_3;
             if session_slot!(game, MotherBrainBrain[BRAIN].baby_metroid) != 0 {
                 v0 = animation::BRAIN_ATTACKING_BABY_METROID;
@@ -1522,9 +1528,9 @@ crate::dispatch::callback_dispatch! {
         if session_slot!(game, MotherBrainBrain[BRAIN].base.health) != 0 {
             phase3_neck_handler(game);
             phase3_walking_handler(game);
-            if session_slot!(game, MotherBrainBody[BODY].pose) == 0 && session_slot!(game, MotherBrainBody[BODY].attacks_disabled) == 0 && (word!(game.RANDOM_NUMBER) & 0x8000) != 0 {
+            if session_slot!(game, MotherBrainBody[BODY].pose) == 0 && session_slot!(game, MotherBrainBody[BODY].attacks_disabled) == 0 && (random_number(game) & 0x8000) != 0 {
                 let mut v1: u16 = animation::BRAIN_BOMB_PHASE_3;
-                if (word!(game.RANDOM_NUMBER) as u8) >= 0x80 {
+                if (random_number(game) as u8) >= 0x80 {
                     v1 = animation::BRAIN_FOUR_BLUE_RINGS_PHASE_3;
                 }
                 set_brain_instruction_list(v1, game);
@@ -1604,7 +1610,7 @@ crate::dispatch::callback_dispatch! {
             let v3: i32 = ((4u16).wrapping_mul((v2) as u16)) as i32 >> 1;
             let explosion = mother_brain_tables::fake_death_explosion(game, (v3 >> 1) as isize);
             game.foreign(|game| crate::actors::host::BossEffects::set_projectile_spawn_point(game, explosion.x, explosion.y));
-            let v4: u16 = (if word!(game.RANDOM_NUMBER) < 0x4000 {
+            let v4: u16 = (if random_number(game) < 0x4000 {
                 12
             } else {
                 3
@@ -1719,10 +1725,10 @@ crate::dispatch::callback_dispatch! {
         }
         if session_slot!(game, MotherBrainBody[e].pose) == 0 {
             let keep_walking: bool = if (session_slot!(game, MotherBrainBrain[BRAIN].base.health) as i32 - 4500i32) & 0x8000 == 0 {
-                word!(game.RANDOM_NUMBER) >= 0x1000
-            } else if word!(game.RANDOM_NUMBER) < 0x2000 {
+                random_number(game) >= 0x1000
+            } else if random_number(game) < 0x2000 {
                 true
-            } else if word!(game.RANDOM_NUMBER) >= 0xa000 {
+            } else if random_number(game) >= 0xa000 {
                 false
             } else {
                 session_slot!(game, MotherBrainBody[e].function = function::PHASE_2_FIRING_HAND_BEAM);
@@ -1764,11 +1770,11 @@ crate::dispatch::callback_dispatch! {
             }
             let mut v4: u16 = 0;
             let v5 = crate::cartridge::native_record(BANK, v2, game);
-            if (word!(game.RANDOM_NUMBER) as u8) >= v5.byte(0) {
+            if (random_number(game) as u8) >= v5.byte(0) {
                 v4 = 2;
-                if (word!(game.RANDOM_NUMBER) as u8) >= v5.byte(1) {
+                if (random_number(game) as u8) >= v5.byte(1) {
                     v4 = 4;
-                    if (word!(game.RANDOM_NUMBER) as u8) >= v5.byte(2) {
+                    if (random_number(game) as u8) >= v5.byte(2) {
                         v4 = 6;
                     }
                 }
@@ -1916,7 +1922,7 @@ crate::dispatch::callback_dispatch! {
                 let v4: u16 = (session_slot!(game, MotherBrainBody[e].base.x_pos)).wrapping_add(1);
                 session_slot!(game, MotherBrainBrain[BRAIN].target_x = v4);
                 if make_walk_forwards(
-                    ((word!(game.RANDOM_NUMBER) as i32 & 2) + 4) as u16,
+                    ((random_number(game) as i32 & 2) + 4) as u16,
                     session_slot!(game, MotherBrainBrain[BRAIN].target_x),
                     game,
                 ) & 1
@@ -1954,7 +1960,7 @@ crate::dispatch::callback_dispatch! {
                 }
                 true
             };
-            if can_pause_walk && ((word!(game.RANDOM_NUMBER) as i32 & 0xfff) - 4032i32) & 0x8000 != 0 {
+            if can_pause_walk && ((random_number(game) as i32 & 0xfff) - 4032i32) & 0x8000 != 0 {
                 return;
             }
             session_slot!(game, MotherBrainBody[e].walk_counter = 128);
@@ -2379,18 +2385,18 @@ crate::dispatch::callback_dispatch! {
     @functions [pub fn (_k: u16, game: &mut impl Lease) -> u16];
     [11115621] go_to_9c5f_or_occasionally_9c47 [result] {
         let result: u16 = ADDR_STRU_A99C5F as u16;
-        if (word!(game.RANDOM_NUMBER) & 0xfff) >= 0xfe0 {
+        if (random_number(game) & 0xfff) >= 0xfe0 {
             return ADDR_STRU_A99C47 as u16;
         }
     };
     @functions [pub fn (k: u16, game: &mut impl Lease) -> u16];
     [11115693] likely_go_to_9c9f [k] {
-        if word!(game.RANDOM_NUMBER) < 0xf000 {
+        if random_number(game) < 0xf000 {
             return ADDR_STRU_A99C9F as u16;
         }
     };
     [11115789] likely_go_to_9cd1 [k] {
-        if (word!(game.RANDOM_NUMBER) & 0xfff) < 0xec0 {
+        if (random_number(game) & 0xfff) < 0xec0 {
             return go_to_9cd1(k);
         }
     };
@@ -2467,7 +2473,7 @@ pub fn process_brain_instruction_list(game: &mut impl Lease) -> i32 {
         return -1i32;
     }
     let mut p = native_record(BANK_BASE | u32::from(pc), game);
-    if word!(game.TIME_IS_FROZEN_FLAG) != 0 {
+    if game.owned(OwnedWord::TimeFrozen) != 0 {
         return p.word(2) as i32;
     }
     let mut v5: u16 = p.word(0);
@@ -2696,6 +2702,10 @@ pub fn phase2_or_phase3_shot_reaction(game: &mut impl State) {
 pub fn determine_shot_reaction_type(game: &mut impl State) -> u16 {
     SHOT_REACTION_BY_PROJECTILE[usize::from((collided_shot_kind(game) >> 8) & 7)] as u16
 }
+/// The last random number, as the Session holds it.
+pub(crate) fn random_number(game: &(impl OwnedWords + ?Sized)) -> u16 {
+    game.owned(OwnedWord::RandomNumber)
+}
 /// The kind of the shot that hit the current enemy.
 pub(crate) fn collided_shot_kind(game: &impl State) -> u16 {
     let shot = usize::from(game.owned(OwnedWord::CollisionIndex));
@@ -2720,7 +2730,7 @@ pub fn decide_phase2_attack_strategy(game: &mut impl Lease) -> u8 {
         [SessionRam::byte(game, crate::ram::bytes::SAMUS_MOVEMENT_TYPE) as usize]
         != 0
     {
-        if (word!(game.RANDOM_NUMBER) as u8 as i32 - 128i32) & 0x8000 != 0 {
+        if (random_number(game) as u8 as i32 - 128i32) & 0x8000 != 0 {
             0
         } else {
             if (session_slot!(game, MotherBrainBrain[BRAIN].bombs) as i32 - 1i32) & 0x8000 != 0 {
@@ -2734,7 +2744,7 @@ pub fn decide_phase2_attack_strategy(game: &mut impl Lease) -> u8 {
             0
         }
     } else {
-        if (word!(game.RANDOM_NUMBER) as u8 as i32 - 128i32) & 0x8000 != 0 {
+        if (random_number(game) as u8 as i32 - 128i32) & 0x8000 != 0 {
             session_slot!(
                 game,
                 MotherBrainBody[0i32].function =
@@ -2908,10 +2918,10 @@ crate::dispatch::callback_dispatch! {
 pub fn maybe_stand_up_or_lean_down(game: &mut impl State) {
     let mbn_var_02: u16 = session_slot!(game, MotherBrainBody[0i32].pose);
     if mbn_var_02 != 0 {
-        if mbn_var_02 == 6 && (word!(game.RANDOM_NUMBER) as u8) >= 0xc0 {
+        if mbn_var_02 == 6 && (random_number(game) as u8) >= 0xc0 {
             make_stand_up(game);
         }
-    } else if (word!(game.RANDOM_NUMBER) as u8) >= 0xc0 {
+    } else if (random_number(game) as u8) >= 0xc0 {
         make_lean_down(game);
     }
 }
@@ -2958,16 +2968,16 @@ crate::dispatch::callback_dispatch! {
         game.foreign(|game| crate::actors::host::BossEffects::set_projectile_spawn_point(game, FAKE_DEATH_EXPLOSION_X[session_slot!(game, MotherBrainBrain[e].subfunction_timer) as usize], 212));
         spawn_room_projectile(
             ADDR_K_EPROJ_DUST_CLOUD_EXPLOSION as u16,
-            FAKE_DEATH_EXPLOSION_TYPES[(((word!(game.RANDOM_NUMBER)) & (0x100u16)) >> 8) as usize] as u16,
+            FAKE_DEATH_EXPLOSION_TYPES[(((random_number(game)) & (0x100u16)) >> 8) as usize] as u16,
             game,
         );
         queue_sfx2_max3(sound::RISING_INTO_PHASE_2, game);
     };
     draw_brain [] {
-        if session_slot!(game, MotherBrainBrain[e].breath_enabled) != 0 && session_slot!(game, MotherBrainBrain[e].breath_active) == 0 && (word!(game.RANDOM_NUMBER) & 0x8000) == 0 {
+        if session_slot!(game, MotherBrainBrain[e].breath_enabled) != 0 && session_slot!(game, MotherBrainBrain[e].breath_active) == 0 && (random_number(game) & 0x8000) == 0 {
             spawn_room_projectile(
                 ADDR_K_EPROJ_MOTHER_BRAIN_PURPLE_BREATH_SMALL as u16,
-                word!(game.RANDOM_NUMBER),
+                random_number(game),
                 game,
             );
         }
