@@ -4,6 +4,7 @@ use crate::game::visual_runtime;
 use crate::game_state::Game;
 use crate::save_ram::SaveRam;
 use sm_game::menus::host::{Host, MenuRuntime};
+use sm_game::player_transitions::suit;
 use {sm_game::room_entry::api::ArrivalRequest, sm_game::room_entry::api::StartSite};
 
 impl sm_game::menus::host::SaveRam for SaveRam {
@@ -231,7 +232,7 @@ impl MenuRuntime for Game {
             AdvanceEyeBeam(phase) => runtime.advance_eye_beam(slot, phase),
             AdvanceXrayBackground => runtime.advance_xray_background(),
             AdvanceXrayBeam(phase) => runtime.advance_xray_beam(phase),
-            InitializeSuitPickup => runtime.initialize_suit_pickup_hdma(),
+            InitializeSuitPickup => suit::initialize_hdma(&mut runtime),
             AdvanceSuitPickup { gravity } => runtime.advance_suit_pickup(gravity),
         }
     }

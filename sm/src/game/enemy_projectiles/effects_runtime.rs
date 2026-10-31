@@ -16,7 +16,7 @@ impl Effects for Runtime<'_> {
         self.foreign(|game| super::legacy::calculate_angle_from_xy(x, y, game))
     }
     fn damage_player(&mut self, damage: u16) -> () {
-        self.owned_call(|runtime| runtime.apply_contact_damage(damage))
+        self.owned_call(|runtime| sm_game::samus_periodic_damage::contact(runtime, damage))
     }
     fn ridley_offscreen(&mut self, x: u16, y: u16) -> u8 {
         self.foreign(|game| super::legacy::ridley_offscreen(x, y, game))

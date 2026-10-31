@@ -47,3 +47,9 @@ pub fn apply(session: &mut Session, frozen: u16) -> Result<(), InvalidDamage> {
     session.player.periodic_damage = 0;
     Ok(())
 }
+pub fn contact(h: &mut impl crate::player_projectiles::host::Host, amount: u16) {
+    let frozen = h.inputs().frozen;
+    if direct(h.session_mut(), frozen, amount).is_err() {
+        h.invalid_damage();
+    }
+}
