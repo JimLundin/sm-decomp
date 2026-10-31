@@ -138,6 +138,69 @@ items 2–3 (the emulated PPU and beam), and audio is item 4 (the SPC700).
    `sm_runtime` with them. This depends on items 2–4.
 5. With items 1, 5 and 7 done, `tick` runs on the Session with no `Game`,
    and the Samus mutation and native adoption steps go away.
+### Item 2: video (2026-10-31)
+
+**How a frame is drawn today.** `draw_frame_to_ppu` (`sm/src/cpu_infra.rs`)
+settles the frame with `sm_game::scene::settle::settle`. That steps the
+emulated beam four positions per row; at each row the emulated PPU runs the
+line, `snes/dma.rs` runs HDMA, and `scanline_irq` handles the vertical IRQ.
+The pieces are already split three ways:
+
+| Piece | Where it lives | Native already? |
+| --- | --- | --- |
+| Scanline rasterization: sprite evaluation, BG modes 1 and 7, windows, mosaic, colour math, brightness | `sm_runtime::rendering` (`render_line`, `evaluate_sprites`, `affine_*`) | Yes. `snes/ppu.rs` only builds a `LineConfig` from PPU fields and calls it. |
+| Register decoding ($21xx writes) | upstream LakeSnes `ppu_write`, linked as C (`snes/backend.c`) | No |
+| VRAM, CGRAM and OAM storage and their ports | the C `Ppu` struct (`types.rs`), written by `display_transfers.rs`, DMA and `rtl` `WriteReg` | No |
+| Per-row register changes (HDMA) and IRQ splits | `snes/dma.rs`, `scanline_irq.rs`, driven by the beam | No |
+| A per-line Scene renderer | `sm_game::scene::commit::OwnedDisplay` commits `sm_data::scene` lines; `sm_runtime::scene::render` draws them | Yes, but only the verifier's room cases drive it |
+
+So "a native renderer" is not a new rasterizer. The rasterizer is done and
+shared. What is missing is the state it reads: a typed PPU state model in
+`sm_runtime`, fed by `sm_game`'s typed display writes instead of $21xx
+register pokes into an emulated chip.
+
+**Plan.** Each step lands with its own differential check against the
+emulated PPU, which stays as the oracle until the last step.
+
+1. **Register model** (done; see below). `sm_runtime::rendering::registers`
+   decodes every line-rendering register write ($2100, $2105-$2114,
+   $211A-$2120, $2123-$2133), including the shared scroll latch, the Mode 7
+   write latch and the colour data channel selects, and produces the line's
+   `LineRegisters`. In verifier builds, every PPU write is applied to the
+   model too and the decoded state must equal the C PPU's.
+2. **Video memory model.** VRAM (with the $2115 increment and remap modes),
+   CGRAM and OAM (with its low/high table write latch) as owned arrays with
+   the same port semantics, in `sm_runtime::rendering::memory`. Verified the
+   same way: per-write equality with the C `Ppu` arrays. With 1 and 2 the
+   whole PPU input is native, so a `NativePpu` can implement `IndexedSource`
+   and `SpriteInput` and render a line with no C state.
+3. **Native line driver.** Replace `ppu_run_line`'s use of the C struct with
+   `NativePpu`, still stepped by the existing beam and HDMA. The check is the
+   one the verifier already has: rendered frames compare pixel for pixel with
+   the oracle, now from independent state. Mosaic start line and sprite
+   overflow, the two beam-timed values, move here.
+4. **Typed producers.** `sm_game`'s display owners (`display_transfers`,
+   `display_refresh`, the `Registers` trait users, HDMA objects) write
+   `NativePpu` through typed calls instead of $21xx addresses. HDMA becomes a
+   per-line table of register values that the line driver applies before
+   each row, with no beam. Each producer converts with its own differential
+   check, so the $21xx path and the typed path are compared while both exist.
+5. **Frame without the beam.** `settle` runs over the native line driver and
+   the IRQ handler's per-line register changes. The emulated PPU, `snes/dma.rs`
+   and the LakeSnes backend are then oracle-only (`sm_tools`).
+
+**Evidence caveat.** The oracle renders with the same `sm_runtime`
+rasterizer, so pixel equality checks the state, not the rasterizer. Two
+independent checks would close that: bsnes or lsnes screenshots at chain
+seed frames (the capture already exists), or a frame-hash comparison against
+the LakeSnes C renderer (`sm_backend_ppu_pixel`), which is still linked.
+
+**Step 1 as landed.** The `registers` module is about 230 lines, with unit
+tests for the latches, the window selects and the colour channels. The
+verifier check is in `snes/ppu.rs` `ppu_write` under `cfg(sm_verify_dll)`.
+It rebuilds the model from the C PPU before each write, applies the write
+to both, and asserts that the two agree, so it covers every corpus and chain
+row with no new runner.
 
 ## Suggested order
 
