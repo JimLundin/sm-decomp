@@ -169,8 +169,8 @@ part_view! {
             next_row_offset,
             // $7E:8836: the rot entry finished hook.
             finished_hook,
-            var_5c, var_5d, var_5e, var_5f,
         ],
+        _: [u16; 4],
     }
 }
 
@@ -188,12 +188,8 @@ part_view! {
             sand_heap_lines, rot_timer,
             // $7E:7808: frames before rotting starts.
             pre_rot_delay,
-            var_05, var_06, var_07, var_08, var_09, var_0a, var_0b,
-            var_0c, var_0d, var_0e, var_0f, var_10, var_11,
-            var_12, var_13, var_14, var_15, var_16, var_17,
-            var_18, var_19, var_1a, var_1b, var_1c, var_1d,
-            var_1e, var_1f,
         ],
+        _: [u16; 27],
     }
 }
 
@@ -204,13 +200,9 @@ part_view! {
         words: [var_a, var_b, var_c, var_d, var_e, var_f, parameter_1, parameter_2],
         pad2: [u8; 28744],
         words: [
-            var_20, var_21, sprite_tile_transfer, var_23, var_24, var_25,
-            var_26, var_27, var_28, var_29, var_2a, var_2b,
-            var_2c, var_2d, var_2e, var_2f, var_30, var_31,
-            var_32, var_33, var_34, var_35, var_36, var_37,
-            var_38, var_39, var_3a, var_3b, var_3c, var_3d,
-            var_3e, var_3f,
+            var_20, var_21, sprite_tile_transfer,
         ],
+        _: [u16; 29],
     }
 }
 

@@ -16,10 +16,9 @@ part_view! {
         words: [
             hover_centre_y, hover_y_subvelocity, hover_y_velocity, var_03, var_04,
             previous_x_direction, previous_samus_x, zone_left, zone_right, previous_y_direction,
-            previous_samus_y, zone_top, zone_bottom, lock_on_timer, directed_movement_timer, var_0f,
-            var_10, var_11, var_12, var_13, var_14, var_15, var_16, var_17, var_18, var_19, var_1a,
-            var_1b, var_1c, var_1d, var_1e, var_1f,
+            previous_samus_y, zone_top, zone_bottom, lock_on_timer, directed_movement_timer,
         ],
+        _: [u16; 17],
     }
 }
 

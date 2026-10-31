@@ -18,8 +18,8 @@ part_view! {
         pad1: [u8; 26696],
         words: [angular_velocity_cap, var_01, angular_velocity, angular_subvelocity, angular_acceleration,
             angular_subacceleration, x_subvelocity, x_velocity, y_subvelocity, y_velocity, min_y, max_y, spawn_x,
-            spawn_y, swipe_trigger_angle, thinking_timer, swipe, arc_radius_x, arc_radius_y, var_13, wingless,
-            var_15, var_16, var_17, var_18, var_19, var_1a, var_1b, var_1c, var_1d, var_1e, var_1f],
+            spawn_y, swipe_trigger_angle, thinking_timer, swipe, arc_radius_x, arc_radius_y, var_13, wingless],
+        _: [u16; 11],
     }
 }
 part_view! {
@@ -28,9 +28,8 @@ part_view! {
         words: [function, speed_table_index, var_c, fall_phase, var_e, arc_angle, parameter_1, parameter_2],
         pad1: [u8; 26696],
         words: [falling_function, right_offset_x, right_offset_y, left_offset_x, left_offset_y, arc_start_x,
-            arc_start_y, fall_start_y, fall_start_x, var_09, speed_table_reset, arc_top_offset, var_0c, var_0d,
-            var_0e, var_0f, var_10, var_11, var_12, var_13, var_14, var_15, var_16, var_17, var_18, var_19, var_1a,
-            var_1b, var_1c, var_1d, var_1e, var_1f],
+            arc_start_y, fall_start_y, fall_start_x, var_09, speed_table_reset, arc_top_offset],
+        _: [u16; 20],
     }
 }
 

@@ -18,9 +18,9 @@ part_view! {
         words: [
             movement_direction, instruction_list, new_instruction_list, down_subvelocity, down_velocity,
             up_subvelocity, up_velocity, x_velocity, x_subvelocity, y_velocity, y_subvelocity, moving,
-            regenerating, var_0d, var_0e, var_0f, var_10, var_11, var_12, var_13, var_14, var_15, var_16,
-            var_17, var_18, var_19, var_1a, var_1b, var_1c, var_1d, var_1e, var_1f,
+            regenerating,
         ],
+        _: [u16; 19],
     }
 }
 

@@ -30,10 +30,9 @@ part_view! {
             var_00,
             // $7E:7802: frames left chasing Samus's Y; $7E:7804: how long it
             // has hovered over her.
-            aggro_timer, proximity_counter, var_03, cry_enabled, cry_timer, var_06, var_07, var_08, var_09,
-            var_0a, var_0b, var_0c, var_0d, var_0e, var_0f, var_10, var_11, var_12, var_13, var_14,
-            var_15, var_16, var_17, var_18, var_19, var_1a, var_1b, var_1c, var_1d, var_1e, var_1f,
+            aggro_timer, proximity_counter, var_03, cry_enabled, cry_timer,
         ],
+        _: [u16; 26],
     }
 }
 

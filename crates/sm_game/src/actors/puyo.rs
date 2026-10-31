@@ -12,9 +12,8 @@ part_view! {
     Puyo: EnemyLayout40 {
         words: [var_a, y_speed_index, hop_cooldown, function, airborne_function, hop_table_index, parameter_1, parameter_2],
         pad1: [u8; 26696],
-        words: [hop_type, hopping, direction, falling, invert_direction, inverted_direction, three_quarter_speed, half_speed,
-            var_08, var_09, var_0a, var_0b, var_0c, var_0d, var_0e, var_0f, var_10, var_11, var_12, var_13, var_14, var_15,
-            var_16, var_17, var_18, var_19, var_1a, var_1b, var_1c, var_1d, var_1e, var_1f],
+        words: [hop_type, hopping, direction, falling, invert_direction, inverted_direction, three_quarter_speed, half_speed],
+        _: [u16; 24],
     }
 }
 

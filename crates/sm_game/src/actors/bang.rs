@@ -29,11 +29,9 @@ part_view! {
         ],
         pad2: [u8; 1984],
         words: [
-            new_instruction_list_index, instruction_list_index, finished_growing, var_23, var_24,
-            var_25, var_26, var_27, var_28, var_29, var_2a, var_2b, var_2c, var_2d, var_2e, var_2f,
-            var_30, var_31, var_32, var_33, var_34, var_35, var_36, var_37, var_38, var_39, var_3a,
-            var_3b, var_3c, var_3d, var_3e, var_3f,
+            new_instruction_list_index, instruction_list_index, finished_growing,
         ],
+        _: [u16; 29],
     }
 }
 
