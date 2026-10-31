@@ -13,12 +13,12 @@ pub fn begin<H: Host + ?Sized>(game: &mut H) {
     let direction = game.session().room.entry.direction & 3;
     let backwards = matches!(direction, 0 | 2);
     let block_delta = if backwards { u16::MAX } else { 1 };
-    layer2_position(Axis::X, game);
+    // The dispatch leaves A = direction * 2 when the X calculation starts.
+    let x = layer2_accumulator(Axis::X, direction * 2, game);
     match direction {
         0 | 1 => {
             let offset = if backwards { 0xff00 } else { 256 };
-            game.session_mut().room.camera.layer2[0] =
-                game.session().room.camera.layer2[0].wrapping_add(offset);
+            game.session_mut().room.camera.layer2[0] = x.wrapping_add(offset);
             layer2_position(Axis::Y, game);
             set_layer1(
                 game,
@@ -27,9 +27,8 @@ pub fn begin<H: Host + ?Sized>(game: &mut H) {
             );
         }
         2 => {
-            layer2_position(Axis::Y, game);
-            game.session_mut().room.camera.layer2[1] =
-                game.session().room.camera.layer2[1].wrapping_sub(224);
+            let y = layer2_accumulator(Axis::Y, x, game);
+            game.session_mut().room.camera.layer2[1] = y.wrapping_sub(224);
             set_layer1(
                 game,
                 1,
@@ -38,14 +37,10 @@ pub fn begin<H: Host + ?Sized>(game: &mut H) {
         }
         _ => {
             let previous_y = game.session().room.camera.layer1[1];
-            set_layer1(
-                game,
-                1,
-                game.session().room.camera.layer1[1].wrapping_add(31),
-            );
-            layer2_position(Axis::Y, game);
-            game.session_mut().room.camera.layer2[1] =
-                game.session().room.camera.layer2[1].wrapping_add(224);
+            let lowered = previous_y.wrapping_add(31);
+            set_layer1(game, 1, lowered);
+            let y = layer2_accumulator(Axis::Y, lowered, game);
+            game.session_mut().room.camera.layer2[1] = y.wrapping_add(224);
             set_layer1(game, 1, previous_y.wrapping_add(256));
         }
     }
@@ -80,6 +75,21 @@ pub fn begin<H: Host + ?Sized>(game: &mut H) {
             );
             up(game);
         }
+    }
+}
+
+/// The accumulator the original's layer-2 calculation ($80:A2F9/$A33A) returns: the new
+/// position, or for a layer locked to the screen (scroll value 1) the locked value in the low
+/// byte under the high byte of `entry`, the accumulator it was called with.
+fn layer2_accumulator<H: Host + ?Sized>(axis: Axis, entry: u16, game: &mut H) -> u16 {
+    let index = match axis {
+        Axis::X => 0,
+        Axis::Y => 1,
+    };
+    if layer2_position(axis, game) == 0 {
+        game.session().room.camera.layer2[index]
+    } else {
+        (entry & 0xff00) | 1
     }
 }
 
