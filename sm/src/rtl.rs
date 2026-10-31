@@ -951,9 +951,6 @@ pub fn MakePairU16(k: u16, j: u16) -> PairU16 {
     let r: PairU16 = PairU16 { k, j };
     r
 }
-pub unsafe fn Load24(src: *const LongPtr) -> u32 {
-    unsafe { *(src as *mut u32) & 0xffffff }
-}
 pub fn invalid_interrupt(_game: &mut Game) {
     unreachable_failure(true)
 }

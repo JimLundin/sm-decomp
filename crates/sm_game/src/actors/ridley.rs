@@ -545,46 +545,6 @@ fn queue_tile_pair<L: Lease + ?Sized>(
     store(game, entry(2), 0);
 }
 
-/// The two-direction homing reversal of the Ridley and baby Metroid accelerations.
-pub enum HomingReversal {
-    ExtraForce(u16),
-    DoubleStep,
-}
-
-/// One axis of the homing accelerations. Distance, acceleration and the limit
-/// tests wrap at sixteen bits; in particular, the limit is a signed-difference
-/// test, not an ordinary clamp.
-pub fn homing_velocity(
-    distance: i16,
-    mut velocity: u16,
-    divisor: u8,
-    reversal: HomingReversal,
-    limit: u16,
-) -> u16 {
-    let step = snes_divide(distance.unsigned_abs(), divisor).max(1);
-    let reversing = (velocity as i16 >= 0) == (distance > 0);
-    let extra = if reversing {
-        match reversal {
-            HomingReversal::ExtraForce(force) => step.wrapping_add(force),
-            HomingReversal::DoubleStep => step.wrapping_mul(2),
-        }
-    } else {
-        0
-    };
-    if distance > 0 {
-        velocity = velocity.wrapping_sub(extra).wrapping_sub(step);
-        if velocity.wrapping_add(limit) & 0x8000 != 0 {
-            velocity = 0u16.wrapping_sub(limit);
-        }
-    } else {
-        velocity = velocity.wrapping_add(extra).wrapping_add(step);
-        if velocity.wrapping_sub(limit) & 0x8000 == 0 {
-            velocity = limit;
-        }
-    }
-    velocity
-}
-
 /// How Ridley's accelerations decelerate: by `force` + 8 more, or by a doubled
 /// step at Ceres.
 #[derive(Clone, Copy)]
@@ -597,8 +557,9 @@ enum Deceleration {
 /// original chains through it: the position comparison's carry feeds the
 /// first step add or subtract that no `CLC`/`SEC` precedes, and each one's
 /// carry the next. So a step takes or adds one more when `position` and
-/// `target` compare differently signed and unsigned. The limit is the
-/// signed-difference test of [`homing_velocity`].
+/// `target` compare differently signed and unsigned. Distance, acceleration
+/// and the limit test wrap at sixteen bits; the limit is a signed-difference
+/// test, not an ordinary clamp.
 fn chained_homing_velocity(
     position: u16,
     target: u16,
