@@ -726,6 +726,9 @@ pub unsafe fn rtl_run_frame(input: TickInput, native_game: &mut Game) -> bool {
             .expect("Samus frame entry rejected");
         let mut mutation = game.samus_mutation();
         let game = mutation.game();
+        // snesrev's bug-fix counter ($C2, which the original never uses) selects
+        // the ROM patches the oracle CPU runs; only an oracle frame needs it.
+        let oracle = u32::from(game.g_runmode) != crate::cpu_infra::RM_MINE;
         let is_replay: bool = game.state_recorder.replay_mode;
         if is_replay {
             inputs = state_recorder_read_next_replay_state(game) as i32;
@@ -733,7 +736,8 @@ pub unsafe fn rtl_run_frame(input: TickInput, native_game: &mut Game) -> bool {
             if game.state_recorder.snapshot_flags & 1 != 0 {
                 game.state_recorder.snapshot_flags &= !(1i32) as u32;
                 inputs = game.state_recorder.last_inputs as i32;
-            } else if word!(game.BUG_FIX_COUNTER) as i32 != CURRENT_BUG_FIX_COUNTER as i32 {
+            } else if oracle && word!(game.BUG_FIX_COUNTER) as i32 != CURRENT_BUG_FIX_COUNTER as i32
+            {
                 if game.g_debug_flag {
                     printf(
                         c"bug_fix_counter %d => %d\n".as_ptr(),
@@ -756,7 +760,9 @@ pub unsafe fn rtl_run_frame(input: TickInput, native_game: &mut Game) -> bool {
             }
             recording_allocation(game.state_recorder.record(inputs as u16));
         }
-        if word!(game.BUG_FIX_COUNTER) as i32 != game.currently_installed_bug_fix_counter as i32 {
+        if oracle
+            && word!(game.BUG_FIX_COUNTER) as i32 != game.currently_installed_bug_fix_counter as i32
+        {
             rtl_update_snes_patch_for_bugfix(game);
         }
         let admitted_input = if is_replay {
