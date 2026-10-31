@@ -1,4 +1,5 @@
 //! Cinematic palettes, fades, tilemap queueing and sprite resumption over RAM.
+use crate::cinematic_state::cinematic;
 use crate::ram::RawRam as _;
 use crate::ram::word;
 
@@ -141,7 +142,7 @@ pub fn queue_cinematic_tilemap<H: crate::menus::host::Host + ?Sized>(
             Eyes => 18848,
             Japanese => 16768,
             JapaneseIntro => 20192,
-            _ => word!(game.CINEMATIC_BG_VRAM_ADDRESS),
+            _ => cinematic!(game.BgVramAddress),
         },
         game,
     );
@@ -164,7 +165,7 @@ pub fn set_cinematic_tilemap_updates<H: crate::menus::host::Host + ?Sized>(
     enabled: bool,
     game: &mut H,
 ) {
-    word!(game.CINEMATIC_ENABLE_BG_TILEMAP, |old| (old & 0x7fff)
+    cinematic!(game.EnableBgTilemap, |old| (old & 0x7fff)
         | (u16::from(enabled) << 15));
 }
 
@@ -173,8 +174,8 @@ pub fn resume_cinematic_sprite<H: crate::menus::host::Host + ?Sized>(
     instruction: u16,
     game: &mut H,
 ) {
-    word!(game.CINEMATICSPR_INSTR_TIMER[slot] = 1);
-    word!(game.CINEMATICSPR_INSTR_PTR[slot] = instruction);
+    cinematic!(game.SprInstructionTimer[slot] = 1);
+    cinematic!(game.SprInstructionPointer[slot] = instruction);
 }
 
 pub fn cinematic_color_indices(mut offset: u16, count: u16) -> impl Iterator<Item = usize> {
@@ -235,9 +236,9 @@ pub fn place_cinematic_sprite<H: crate::menus::host::Host + ?Sized>(
     game: &mut H,
 ) {
     let slot = usize::from(object >> 1);
-    word!(game.CINEMATICBG_ARR7[slot] = position.0);
-    word!(game.CINEMATICBG_ARR8[slot] = position.1);
-    word!(game.CINEMATICBG_ARR9[slot] = palette);
+    cinematic!(game.BgArr7[slot] = position.0);
+    cinematic!(game.BgArr8[slot] = position.1);
+    cinematic!(game.BgArr9[slot] = palette);
 }
 
 pub fn drift_cinematic_sprite<H: crate::menus::host::Host + ?Sized>(
@@ -252,7 +253,7 @@ pub fn drift_cinematic_sprite<H: crate::menus::host::Host + ?Sized>(
     }
     advance_cinematic_coordinate(object, false, horizontal, game);
     if wrap_horizontal {
-        word!(game.CINEMATICBG_ARR7[(object >> 1)] &= 0x1ff);
+        cinematic!(game.BgArr7[object >> 1] &= 0x1ff);
     }
 }
 
@@ -273,7 +274,7 @@ pub fn fade_cinematic_fixed_color<H: crate::menus::host::Host + ?Sized>(game: &m
 }
 
 pub fn enable_cinematic_background<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    word!(game.CINEMATIC_ENABLE_OBJS |= 0x8000);
+    cinematic!(game.EnableObjects |= 0x8000);
 }
 
 pub fn clear_cinematic_sprites<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
@@ -289,7 +290,7 @@ pub fn clear_cinematic_background<H: crate::menus::host::Host + ?Sized>(fill: u1
         le(CINEMATICBG_ARR1, 3) <- value(0),
         le(CINEMATICBG_INSTR_PTR, 3) <- value(0),
     );
-    word!(game.INTRO_TEXT_CLICK_FLAG = 0);
+    cinematic!(game.IntroTextClickFlag = 0);
 }
 
 pub fn scaled_cinematic_value(value: u16, scale: u16) -> u16 {
