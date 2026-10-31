@@ -3,23 +3,21 @@
 //! doors' functions, the escape's rumbling and explosions and the elevator
 //! animations.
 //!
-//! Was `CeresSteam_*` and `CeresDoor_*` in the original decompilation. The
-//! doors' and steam's shared script steps stay with the compatibility actor
-//! records in the host.
+//! Was `CeresSteam_*` and `CeresDoor_*` in the original decompilation.
+use crate::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
+use crate::actors::host::abs16;
 use crate::actors::layouts::{EnemyBase, same_words};
 use crate::constants::enemy_properties::{
     K_ENEMY_PROPS_DISABLE_SAMUS_COLL, K_ENEMY_PROPS_INVISIBLE,
 };
 use crate::enemy_script::EnemyScript;
 use crate::palette_copies::{copy_rom_colors_to_palette, copy_rom_colors_to_target_palette};
+use crate::player_position::PlayerPosition as _;
 use crate::ram::RawRam as _;
 use crate::ram::{slot, word};
 
 /// What the steam and doors need beyond the shared boss effects.
-pub trait Host: crate::actors::host::BossEffects + crate::records::Records {
-    /// Set and then clear the property bits of enemy `k`, through its actor
-    /// record.
-    fn change_properties(&mut self, k: u16, set: u16, clear: u16);
+pub trait Host: crate::actors::host::EnemyHost + crate::actors::host::LeaseActors {
     /// The script at bank `bank`, `address`, as the original's ROM pointer.
     fn rom_script(&mut self, bank: u8, address: u16) -> EnemyScript;
     /// (`x`, `y`) as projected by the rotating elevator room's mode 7.
@@ -115,7 +113,77 @@ const SPAWN_GRAPHICAL_X_OFFSET: usize = 0x10;
 const SPAWN_GRAPHICAL_Y_OFFSET: usize = 0x12;
 
 fn current<H: Host + ?Sized>(game: &H) -> i32 {
-    word!(game.CUR_ENEMY_INDEX) as i32
+    i32::from(game.current_enemy())
+}
+
+/// Set and then clear enemy `k`'s property bits, through its actor record.
+fn change_properties<H: Host + ?Sized>(k: u16, set: u16, clear: u16, game: &mut H) {
+    game.lease()
+        .edit_actor(Key::from_legacy(k), Native, |actor| {
+            actor.properties = (actor.properties & !clear) | set;
+        });
+}
+
+fn branch(taken: bool, script: EnemyScript) -> EnemyScript {
+    if taken {
+        EnemyScript::jump(script.word(0))
+    } else {
+        script.offset(1)
+    }
+}
+
+/// Instruction - hide and show enemy ($A6:F11D, $A6:F135), and the Ceres door instructions
+/// ($A6:F63E-$A6:F6C4): go to [[Y]] if Samus is not within 30h pixels, if the area boss is
+/// alive or if Ceres Ridley has not escaped; set intangible, tangible, invisible or visible;
+/// set or clear the drawn by Ridley flag; queue the door opening sound.
+pub fn instruction<H: Host + ?Sized>(
+    ea: u32,
+    k: u16,
+    script: EnemyScript,
+    game: &mut H,
+) -> EnemyScript {
+    const INTANGIBLE: u16 = K_ENEMY_PROPS_DISABLE_SAMUS_COLL as u16;
+    const INVISIBLE: u16 = K_ENEMY_PROPS_INVISIBLE as u16;
+    match ea {
+        0xa6_f11d => change_properties(k, VANISH, 0, game),
+        0xa6_f135 => change_properties(k, 0, VANISH, game),
+        0xa6_f63e => {
+            let runtime = game.lease();
+            let actor = runtime.resolve_actor(Key::from_legacy(k), Native);
+            let far = abs16(actor.x.whole.wrapping_sub(runtime.player_x())) >= 0x30
+                || abs16(actor.y.whole.wrapping_sub(runtime.player_y())) >= 0x30;
+            return branch(far, script);
+        }
+        0xa6_f66a => return branch((game.area_boss_flags() & 1) == 0, script),
+        0xa6_f678 => return branch(word!(game.CERES_STATUS) == 0, script),
+        0xa6_f68b => change_properties(k, INTANGIBLE, 0, game),
+        0xa6_f695 => change_properties(k, 0, INTANGIBLE, game),
+        0xa6_f6a6 => change_properties(k, INVISIBLE, 0, game),
+        0xa6_f6b3 => change_properties(k, 0, INVISIBLE, game),
+        0xa6_f69f | 0xa6_f6b0 => {
+            let drawn = u16::from(ea == 0xa6_f69f);
+            game.lease()
+                .edit_actor(Key::from_legacy(k), Native, |actor| {
+                    actor.variables[1] = drawn
+                });
+            if drawn == 0 {
+                change_properties(k, 0, INVISIBLE, game);
+            }
+        }
+        _ => game.queue_sound(2, 0x2c, 6),
+    }
+    script
+}
+
+/// Enemy touch - enemy $E1FF (steam) ($A6:F03F): kept at full health, then the normal reaction.
+pub fn steam_touch<H: Host + ?Sized>(game: &mut H) {
+    let mut runtime = game.lease();
+    let key = crate::actors::combat::current(&runtime);
+    runtime.edit_actor(key, Native, |actor| actor.health = 0x7fff);
+    crate::actors::combat::contact_reaction(
+        &mut runtime,
+        crate::actors::api::DeathHandling::Finalize,
+    );
 }
 
 fn store_word<H: Host + ?Sized>(game: &H, at: usize, value: u16) {
@@ -150,7 +218,7 @@ pub fn initialize_steam<H: Host + ?Sized>(game: &mut H) {
 pub fn steam_main<H: Host + ?Sized>(game: &mut H) {
     let e = current(game);
     slot!(game, Steam[e].base.health = 0x7fff);
-    let k = word!(game.CUR_ENEMY_INDEX);
+    let k = game.current_enemy();
     match slot!(game, Steam[e].function) {
         steam_function::NONE => (),
         steam_function::CALCULATE_ROTATING_ELEVATOR_OFFSET => steam_rotating_offset(k, game),
@@ -166,7 +234,7 @@ pub fn steam_rotating_offset<H: Host + ?Sized>(k: u16, game: &mut H) {
         slot!(game, Steam[e].base.x_pos),
         slot!(game, Steam[e].base.y_pos),
     );
-    let record = ENEMY_SPAWN_DATA + usize::from(word!(game.CUR_ENEMY_INDEX));
+    let record = ENEMY_SPAWN_DATA + usize::from(game.current_enemy());
     let x_offset = x.wrapping_sub(slot!(game, Steam[e].base.x_pos));
     store_word(game, record + SPAWN_GRAPHICAL_X_OFFSET, x_offset);
     let y_offset = y.wrapping_sub(slot!(game, Steam[e].base.y_pos));
@@ -184,7 +252,7 @@ pub fn steam_activate<H: Host + ?Sized>(k: u16, script: EnemyScript, game: &mut 
         return EnemyScript::jump(script.word(0));
     }
     let next = game.rom_script(0xa6, script.word(2));
-    game.change_properties(k, 0, VANISH);
+    change_properties(k, 0, VANISH, game);
     next
 }
 
@@ -209,7 +277,7 @@ pub fn initialize_door<H: Host + ?Sized>(game: &mut H) {
         Door[e].base.current_instruction = crate::ceres_door_data::door_instructions(game, kind)
     );
     slot!(game, Door[e].drawn_by_ridley = 0);
-    load_overlay_tiles(word!(game.CUR_ENEMY_INDEX), game);
+    load_overlay_tiles(game.current_enemy(), game);
     let palette = if word!(game.CERES_STATUS) != 0 {
         ESCAPE_DOOR_PALETTE.wrapping_add(2)
     } else {
@@ -241,7 +309,7 @@ pub fn load_overlay_tiles<H: Host + ?Sized>(k: u16, game: &mut H) {
 /// Main AI - enemy $E23F (Ceres door) ($A6:F765). Was `CeresDoor_Main`.
 pub fn door_main<H: Host + ?Sized>(game: &mut H) {
     let e = current(game);
-    let k = word!(game.CUR_ENEMY_INDEX);
+    let k = game.current_enemy();
     match slot!(game, Door[e].function) {
         door_function::HANDLE_ESCAPE_EARTHQUAKE => escape_rumble(0x14, game),
         door_function::HANDLE_RIDLEYS_ROOM_ESCAPE_EARTHQUAKE => escape_rumble(0x1d, game),
@@ -268,17 +336,19 @@ pub fn escape_rumble<H: Host + ?Sized>(earthquake: u16, game: &mut H) {
 /// Ceres door function - Ridley escape mode 7 wall ($A6:F7A5): visible only
 /// during the getaway cutscene. Was `CeresDoor_Func_4`.
 pub fn mode7_wall<H: Host + ?Sized>(game: &mut H) {
-    game.change_properties(
-        word!(game.CUR_ENEMY_INDEX),
+    change_properties(
+        game.current_enemy(),
         K_ENEMY_PROPS_INVISIBLE as u16,
         0,
+        game,
     );
     if word!(game.CERES_STATUS) & RIDLEY_ESCAPING != 0 {
         slot!(game, Door[current(game)].base.palette_index = 3584);
-        game.change_properties(
-            word!(game.CUR_ENEMY_INDEX),
+        change_properties(
+            game.current_enemy(),
             0,
             K_ENEMY_PROPS_INVISIBLE as u16,
+            game,
         );
     }
 }

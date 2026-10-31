@@ -39,7 +39,6 @@ impl sm_game::actors::species::TouchHost for Game {
         use sm_game::actors::species::NativeTouch::*;
         match touch {
             SporeSpawn => actors::spore_spawn::touch(self),
-            CeresSteam => crate::game::ceres_doors::steam_touch(self),
             MotherBrainBrain => sm_a9::brain_touch(self),
         }
     }

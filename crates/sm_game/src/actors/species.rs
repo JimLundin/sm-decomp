@@ -56,7 +56,6 @@ impl<T> B3Host for T where
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum NativeTouch {
     SporeSpawn,
-    CeresSteam,
     MotherBrainBrain,
 }
 
@@ -72,6 +71,7 @@ pub trait TouchHost:
     + statues::Host
     + kraid::Host
     + phantoon::Host
+    + ceres_doors::Host
 {
     fn native_touch(&mut self, touch: NativeTouch);
 }
@@ -90,7 +90,7 @@ pub fn touch<H: TouchHost>(ea: u32, game: &mut H) {
         10874348 => game.native_touch(NativeTouch::SporeSpawn),
         // Ridley's contact leaves the death pending.
         10936153 => game.contact_reaction(Death::LeavePending),
-        10940479 => game.native_touch(NativeTouch::CeresSteam),
+        10940479 => ceres_doors::steam_touch(game),
         10977356 => (),
         10982539 => kraid::touch_arm_or_foot(game),
         10982544 => kraid::arm_touch(game),
@@ -1029,6 +1029,8 @@ pub fn instruction<H: InstructionHost>(
             j
         }
         10940711 => ceres_doors::steam_activate(k, j, game),
+        10940701 | 10940725 | 10942014 | 10942058 | 10942072 | 10942091 | 10942101 | 10942111
+        | 10942118 | 10942128 | 10942131 | 10942141 => ceres_doors::instruction(ea, k, j, game),
         // Bank $A7: Kraid's steps and the calls into Phantoon's functions; Kraid's
         // identity instruction returns the script unchanged.
         10977418 => {
