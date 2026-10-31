@@ -593,7 +593,10 @@ BUG_HOOKS = [
      "Hardware leaves A's high byte = $8A, so the 16-bit STA puts $8A in the Draygon cannon PLM room argument's high byte; only the low byte is compared and the slot is later overwritten with FFFFh (RAM-only difference)"),
     (0xA7CEB2, 'b', 'state', 'removed', 'follows',
      'Main AI - enemy $E4BF (Phantoon)',
-     'The main AI copies the body position to the other parts and updates BG2 only when the function returns X = 0; "almost dead" ($DAD7) returns X = the VRAM queue tail, so on that frame hardware skips both (boss-phantoon frame 1820). The hook forced X = 0'),
+     'The main AI copies the body position to the other parts and updates BG2 only when the function returns X = 0; "almost dead" ($DAD7) returns X = the VRAM queue tail, so on that frame hardware skips both (boss-phantoon frame 1820). The hook forced X = 0. '
+     'Static audit of all 32 functions ($D4A8-$DB3D): only $DAD7 writes X. "Dead" ($DB3D) brackets its paths with PHX/PLX. Every callee preserves X or reloads the enemy index: '
+     '$86:8027/8097, $80:8FC1/90CB/914D, $84:83D7, $88:E487 and $A0:BA0B (PHX/PLX); $A0:AE29 and its helpers (LDX $0E54); $80:8111 (none or PHX/PLX); '
+     '$A7:D464/D486 (PHX/PLX); $A7:CF27/CF70/CF8B/CFCA/D076/D0F1 (with D114/D193/D215/D271)/D2D1/D3E1/D3FA (no X writes)'),
     (0x91CD44, 'b', 'visual', 'removed', 'patched',
      'Load right half of revealed 2xN block',
      'When block index [$22] = 0, hardware uses X = -1 and loads a revealed-block command for a nonexistent block, garbling the x-ray BG2 tilemap; the hook skips that path'),
