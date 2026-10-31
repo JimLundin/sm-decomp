@@ -116,15 +116,6 @@ impl NativeTable {
         }
     }
     pub(super) fn word(&self, offset: usize, little: bool) -> u16 {
-        if little && self.bound.is_some() && self.record.is_some() {
-            let record = self.record.as_ref().expect("native Samus record");
-            let start = record
-                .base
-                .checked_add(offset)
-                .expect("ROM copy offset overflow");
-            let end = start.checked_add(2).expect("ROM copy extent overflow");
-            assert!(end <= record.image.len(), "ROM copy source extent");
-        }
         match &self.bound {
             None if little => u16::from_le_bytes(
                 self.record
