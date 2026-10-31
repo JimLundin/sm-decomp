@@ -268,10 +268,6 @@ impl sm_game::actors::dachora_run::Host for Game {
 }
 
 impl sm_game::actors::ridley::Host for Game {
-    fn run_function(&mut self, function: u16) {
-        sm_game::actors::ceres_ridley::run_function(self, function);
-    }
-
     fn spawn_population(&mut self, bank: u8, population: u16) -> u16 {
         crate::game::actors::population::spawn_legacy(
             &mut crate::game::session_runtime::Runtime::new(self),

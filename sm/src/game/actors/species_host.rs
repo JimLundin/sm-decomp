@@ -48,7 +48,6 @@ impl sm_game::actors::species::ShotHost for Game {
         use sm_game::actors::species::NativeShot::*;
         match shot {
             Dud => api::create_dud(&mut Runtime::new(self)),
-            Ridley => sm_game::actors::ridley::shot(self),
             MotherBrainBody => sm_a9::body_shot(self),
             MotherBrainBrain => sm_a9::brain_shot(self),
         }
@@ -59,9 +58,6 @@ impl sm_game::actors::species::DrawHookHost for Game {
     fn native_draw_hook(&mut self, hook: sm_game::actors::species::NativeDrawHook) {
         use sm_game::actors::species::NativeDrawHook::*;
         match hook {
-            CeresRidleyBabyMetroidAndWings => {
-                sm_game::actors::ridley::draw_baby_metroid_and_door(self)
-            }
             BlueFaceBlockPalette => sm_game::actors::blue_brinstar_face_block::cycle_palette(self),
             MotherBrainBrainAndNeck => sm_a9::draw_brain_and_neck_hook(self),
             MotherBrainBrain => sm_a9::draw_brain_hook(self),

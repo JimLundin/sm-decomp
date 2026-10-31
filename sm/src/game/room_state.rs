@@ -56,7 +56,7 @@ impl sm_game::room_state::MainCodeHost for Runtime<'_> {
         });
     }
     fn handle_ceres_getaway(&mut self) {
-        self.foreign(sm_game::actors::ceres_ridley::handle_getaway_if_active);
+        sm_game::actors::ceres_ridley::handle_getaway_if_active(self);
     }
 }
 

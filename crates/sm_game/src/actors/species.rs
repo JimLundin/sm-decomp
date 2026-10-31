@@ -14,12 +14,12 @@ use crate::actors::host::{
 use crate::actors::spore_spawn::instruction as spore;
 use crate::actors::{
     alcoon, atomic, bang, beetom, blue_brinstar_face_block, botwoon, boulder, boyon, bull, cacatac,
-    ceres_doors, ceres_ridley, choot, covern, crawlers, crocomire_reactions, dachora_run, dragon,
-    draygon_death, draygon_eye, draygon_flight, draygon_grab, draygon_host, draygon_sweep,
-    elevator, escape_critters, etecoon, evir, fire_arc, fire_pillar, fireflea, flies, fune, gamet,
-    geega, geruta, gunship, kago, kihunter, kraid, magdollite, metroid, mini_crocomire, mini_kraid,
+    ceres_doors, choot, covern, crawlers, crocomire_reactions, dachora_run, dragon, draygon_death,
+    draygon_eye, draygon_flight, draygon_grab, draygon_host, draygon_sweep, elevator,
+    escape_critters, etecoon, evir, fire_arc, fire_pillar, fireflea, flies, fune, gamet, geega,
+    geruta, gunship, kago, kihunter, kraid, magdollite, metroid, mini_crocomire, mini_kraid,
     mochtroid, morph_ball_eye, multiviola, oum, phantoon, phantoon_actions, polyp, powamp, puyo,
-    reflec, ridley, rinka, rio, rippers, roach, shaktool, shutters, sidehopper, skree, skultera,
+    reflec, rinka, rio, rippers, roach, shaktool, shutters, sidehopper, skree, skultera,
     space_pirates, spike_platform, spore_spawn, squeept, statues, tatori, torizo, tripper, waver,
     work_robot, wrecked_ship_spark, yapping_maw, yard, zeb, zebetites, zoa,
 };
@@ -114,7 +114,6 @@ pub fn touch<H: TouchHost>(ea: u32, game: &mut H) {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum NativeShot {
     Dud,
-    Ridley,
     MotherBrainBody,
     MotherBrainBrain,
 }
@@ -155,7 +154,6 @@ pub fn shot<H: ShotHost>(ea: u32, j: u16, game: &mut H) {
         10851824 => draygon_death::shot(game),
         10874202 => spore_spawn::shot(game),
         10911820 => (),
-        10936202 => game.native_shot(NativeShot::Ridley),
         10977356 => (),
         10982581 => (),
         10982582 => kraid::arm_shot(game, j),
@@ -175,7 +173,6 @@ pub fn shot<H: ShotHost>(ea: u32, j: u16, game: &mut H) {
 /// Graphics draw hooks whose routines still run in the compatibility crate.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum NativeDrawHook {
-    CeresRidleyBabyMetroidAndWings,
     BlueFaceBlockPalette,
     MotherBrainBrainAndNeck,
     MotherBrainBrain,
@@ -195,7 +192,6 @@ pub fn draw_hook<H: DrawHookHost>(ea: u32, game: &mut H) {
     match ea {
         10518604 => (),
         10851138 => draygon_flight::set_bg2_scroll(game),
-        10920690 => game.native_draw_hook(NativeDrawHook::CeresRidleyBabyMetroidAndWings),
         11042892 => (),
         11055282 => magdollite::cycle_palette(game),
         11069550 => game.native_draw_hook(NativeDrawHook::BlueFaceBlockPalette),
@@ -262,7 +258,6 @@ pub fn b3_pre_instruction<H: B3Host>(ea: u32, k: u16, game: &mut H) {
 /// What the AI table needs beyond its actors' own hosts.
 pub trait AiHost:
     B3Host
-    + ceres_ridley::Host
     + DrawHookHost
     + yapping_maw::Host
     + crocomire_reactions::Host
@@ -817,16 +812,6 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         11068355 => atomic::main_ai(game),
         11069486 => blue_brinstar_face_block::initialize(game),
         11069614 => blue_brinstar_face_block::main_ai(game),
-        10920181 => ceres_ridley::init(game),
-        10920584 => ceres_ridley::main(game),
-        10920659 => ceres_ridley::hurt(game),
-        10924583 => ridley::main(game),
-        10924682 => ridley::time_frozen(game),
-        10924695 => ridley::hurt(game),
-        10929814 => ridley::explosion_init(game),
-        10930388 => ridley::explosion_main(game),
-        10936202 => ridley::shot(game),
-        10936242 => ridley::power_bomb(game),
         11051537 => {
             if !yapping_maw::main_ai(game, |operand, game| game.write_multiplicand(operand)) {
                 game.unknown_routine();
@@ -1061,7 +1046,6 @@ pub fn pre_instruction<H: PreInstructionHost>(ea: u32, game: &mut H) {
 /// What the instruction table needs beyond its actors' own hosts.
 pub trait InstructionHost:
     SpeciesHost
-    + ridley::Host
     + crocomire_reactions::Host
     + yapping_maw::Host
     + magdollite::Host
@@ -1515,10 +1499,6 @@ pub fn instruction<H: InstructionHost>(
         10854231 => draygon_eye::set_function(0, j, game),
         10863739 => draygon_eye::set_function(0x40, j, game),
         10915247 | 10915347..=10915793 => fire_pillar::instruction(ea, j, game),
-        0xa60000..=0xa6ffff => match ridley::instruction(ea, j, game) {
-            Ok(next) => next,
-            Err(j) => game.native_instruction(ea, k, j),
-        },
         11769031 | 11769095 | 11769111 | 11769175 => botwoon::set_hitbox(8, 16, j, game),
         11769047 | 11769079 | 11769127 | 11769159 => botwoon::set_hitbox(12, 12, j, game),
         11769063 | 11769143 => botwoon::set_hitbox(16, 8, j, game),

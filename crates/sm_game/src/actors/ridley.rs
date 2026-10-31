@@ -8,7 +8,7 @@
 //! three extra RAM blocks at $7E:7800, $7E:8000 and $7E:8800 over the same
 //! bytes as `EnemyLayout104`. The tail is seven segments of ten words in
 //! `tilemap_stuff` ($7E:2000), named in `tail`. Ceres Ridley's own functions
-//! and its escape sequence are in `ceres_ridley`; `Host::run_function`
+//! and its escape sequence are in `ceres_ridley`, whose `run_function`
 //! dispatches both through the bank's function table.
 use crate::actors::api::angle_from_delta;
 use crate::actors::boss_lease::BossLease;
@@ -41,9 +41,9 @@ use sm_data::ridley_explosion::{
     HAND_ADDRESS, LEGS_ADDRESS, MOUTH_ADDRESS, TORSO_ADDRESS, WINGS_ADDRESS,
 };
 
-/// A lease on a game with Ridley's effects.
-pub trait Lease: BossLease<Game: Host> {}
-impl<T: BossLease<Game: Host> + ?Sized> Lease for T {}
+/// A lease on a game with Ridley's effects, Norfair's and Ceres's.
+pub trait Lease: BossLease<Game: crate::actors::ceres_ridley::Host> {}
+impl<T: BossLease<Game: crate::actors::ceres_ridley::Host> + ?Sized> Lease for T {}
 
 /// What Ridley needs beyond the shared boss effects, deaths and sprites.
 pub trait Host:
@@ -54,8 +54,6 @@ pub trait Host:
     + crate::sprite_output::SpriteHost
     + BossLease<Game = Self>
 {
-    /// Run the bank $A6 Ridley function at `function`, Norfair's or Ceres's.
-    fn run_function(&mut self, function: u16);
     /// Spawn the enemy population at `bank:population`.
     fn spawn_population(&mut self, bank: u8, population: u16) -> u16;
     /// Mark the current area's boss bits `mask` as defeated.
@@ -672,8 +670,8 @@ pub fn draw_baby_metroid_and_door<L: Lease + ?Sized>(game: &mut L) {
 
 /// Main AI - enemy $E17F (Ridley) ($A6:B227). Was `Ridley_Main`.
 pub fn main<L: Lease + ?Sized>(lease: &mut L) {
-    // The state steps and Ridley's function run on the lease, the tail,
-    // drawing and ribs in one trip to the game.
+    // The state steps, Ridley's function, the tail, drawing and ribs run on
+    // the lease.
     let mut lag = (session_slot!(lease, Ridley[RIDLEY].grabbed_lag_timer) as i16).wrapping_sub(4);
     if lag < 0 {
         lag = 0;
@@ -682,23 +680,19 @@ pub fn main<L: Lease + ?Sized>(lease: &mut L) {
     set_tangibility(lease);
     lunge_if_power_bomb(lease);
     let function = session_slot!(lease, Ridley[RIDLEY].function);
-    if !run_ridley_function(lease, function) {
-        lease.foreign(|game| game.run_function(function));
-    }
+    crate::actors::ceres_ridley::run_function(lease, function);
     if session_slot!(lease, Ridley[RIDLEY].movement_enabled) != 0 {
         hurt_flash(lease);
         move_ridley(lease);
         update_wings(lease);
-        lease.foreign(|game| {
-            handle_tail(game);
-            tail_projectile_collision(game);
-            draw_tail(game);
-            draw_wings(game);
-            handle_ribs(game);
-            if session_slot!(game, Ridley[RIDLEY].holding_samus) != 0 {
-                move_samus_with_feet(game);
-            }
-        });
+        handle_tail(lease);
+        tail_projectile_collision(lease);
+        draw_tail(lease);
+        draw_wings(lease);
+        handle_ribs(lease);
+        if session_slot!(lease, Ridley[RIDLEY].holding_samus) != 0 {
+            move_samus_with_feet(lease);
+        }
     }
     health_palette(lease);
 }
@@ -764,7 +758,8 @@ pub fn hurt<L: Lease + ?Sized>(game: &mut L) {
     } else {
         set_tangibility(game);
         lunge_if_power_bomb(game);
-        game.foreign(|game| game.run_function(session_slot!(game, Ridley[RIDLEY].function)));
+        let function = session_slot!(game, Ridley[RIDLEY].function);
+        crate::actors::ceres_ridley::run_function(game, function);
         if session_slot!(game, Ridley[RIDLEY].movement_enabled) != 0 {
             move_ridley(game);
             update_wings(game);
@@ -823,7 +818,7 @@ pub fn decide_action<L: Lease + ?Sized>(game: &mut L) {
     let choice = 2 * (game.roll_random() & 7) as usize;
     let next = crate::cartridge::native_record(0xa6, choices, game).word(choice);
     session_slot!(game, Ridley[RIDLEY].function = next);
-    game.foreign(|game| game.run_function(session_slot!(game, Ridley[RIDLEY].function)));
+    crate::actors::ceres_ridley::run_function(game, next);
 }
 
 /// Get fight action choices ($A6:B335). Was `Ridley_Func_4`.
@@ -2694,10 +2689,13 @@ pub fn update_tail_segment_angle<L: Lease + ?Sized>(segment: usize, game: &mut L
             .slot_byte(TAIL_RAM + 2 * tail::angle(segment - 1))
             .wrapping_add(total as u8) as u16;
     }
-    let length_at = TAIL_RAM + 2 * tail::distance(segment) + 1;
-    let x = game.foreign(|game| game.hardware_sine(game.slot_byte(length_at) as u16, total));
+    let length = u16::from(game.slot_byte(TAIL_RAM + 2 * tail::distance(segment) + 1));
+    // The PPU multiplier is the game's, once for both products.
+    let (x, y) = game.foreign(|game| {
+        let x = game.hardware_sine(length, total);
+        (x, game.hardware_cosine(length, total))
+    });
     bg2_staging::set(game, tail::x_offset(segment), x);
-    let y = game.foreign(|game| game.hardware_cosine(game.slot_byte(length_at) as u16, total));
     bg2_staging::set(game, tail::y_offset(segment), y);
 }
 

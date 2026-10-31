@@ -8,9 +8,9 @@
 //! movement and drawing in `ridley`; the intro (`initial` to
 //! `roar_before_flying`) and `init` serve both fights.
 #![forbid(unsafe_code)]
+use crate::actors::boss_lease::BossState as _;
 use crate::actors::boss_lease::bg2_staging;
 use crate::actors::boss_lease::boss_ram;
-use crate::actors::boss_lease::{BossLease, BossState as _};
 use crate::actors::host::BossEffects as _;
 use crate::actors::host::{abs16, below};
 use crate::actors::ridley::Host as _;
@@ -28,9 +28,8 @@ use crate::projectile_geometry::SINE_COSINE;
 use crate::ram::word;
 use sm_data::cartridge::lorom_offset;
 
-/// A lease on a game with Ceres Ridley's effects.
-pub trait Lease: BossLease<Game: Host> {}
-impl<T: BossLease<Game: Host> + ?Sized> Lease for T {}
+/// A lease on a game with Ceres Ridley's effects: Ridley's.
+pub use crate::actors::ridley::Lease;
 
 /// What Ceres Ridley needs beyond Ridley's host: the boss flags, the mode 7
 /// transfers, the getaway push and the escape sequence's tiles and text.
@@ -184,8 +183,8 @@ pub fn init<L: Lease + ?Sized>(game: &mut L) {
 /// getaway it moves, animates and draws as Norfair Ridley does. Was
 /// `CeresRidley_Main`.
 pub fn main<L: Lease + ?Sized>(game: &mut L) {
-    // The state steps and the function run on the lease, the tail, drawing,
-    // ribs and baby metroid in one trip to the game.
+    // The state steps, the function, the tail, drawing, ribs and baby metroid
+    // run on the lease.
     session_slot!(game, Ridley[RIDLEY].base.health = 0x7fff);
     let function = session_slot!(game, Ridley[RIDLEY].function);
     run_function(game, function);
@@ -197,16 +196,14 @@ pub fn main<L: Lease + ?Sized>(game: &mut L) {
             ridley::update_wings(game);
             randomize_tail_curliness(game);
         }
-        game.foreign(|game| {
-            if moving {
-                ridley::handle_tail(game);
-                ridley::ceres_health_palette(game);
-                ridley::handle_ribs(game);
-                ridley::draw_tail(game);
-                ridley::draw_wings(game);
-            }
-            ridley::handle_baby_metroid(game);
-        });
+        if moving {
+            ridley::handle_tail(game);
+            ridley::ceres_health_palette(game);
+            ridley::handle_ribs(game);
+            ridley::draw_tail(game);
+            ridley::draw_wings(game);
+        }
+        ridley::handle_baby_metroid(game);
     }
 }
 

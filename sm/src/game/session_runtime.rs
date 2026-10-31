@@ -1168,8 +1168,16 @@ impl Runtime<'_> {
         }
         match routine {
             11769448 => self.owned_call(actors::botwoon::main_ai),
+            10920181 => self.owned_call(sm_game::actors::ceres_ridley::init),
             10920584 => self.owned_call(sm_game::actors::ceres_ridley::main),
+            10920659 => self.owned_call(sm_game::actors::ceres_ridley::hurt),
             10924583 => self.owned_call(sm_game::actors::ridley::main),
+            10924682 => self.owned_call(sm_game::actors::ridley::time_frozen),
+            10924695 => self.owned_call(sm_game::actors::ridley::hurt),
+            10929814 => self.owned_call(sm_game::actors::ridley::explosion_init),
+            10930388 => self.owned_call(sm_game::actors::ridley::explosion_main),
+            10936202 => self.owned_call(sm_game::actors::ridley::shot),
+            10936242 => self.owned_call(sm_game::actors::ridley::power_bomb),
             10988577 => self.owned_call(sm_game::actors::kraid::main_ai),
             10997414 => self.owned_call(sm_game::actors::phantoon::main_ai),
             11191972 => self.owned_call(sm_game::actors::torizo::main_ai),
@@ -1191,11 +1199,18 @@ impl Runtime<'_> {
         actor: u16,
         script: EnemyScript,
     ) -> EnemyScript {
-        use sm_game::actors::species;
-        match species::lease_instruction(routine, actor, script, self) {
-            Ok(script) => script,
-            Err(script) => self.foreign(|game| species::instruction(routine, actor, script, game)),
+        use sm_game::actors::{ridley, species};
+        let mut script = match species::lease_instruction(routine, actor, script, self) {
+            Ok(script) => return script,
+            Err(script) => script,
+        };
+        if routine >> 16 == 0xa6 {
+            match self.owned_call(|runtime| ridley::instruction(routine, script, runtime)) {
+                Ok(next) => return next,
+                Err(unrun) => script = unrun,
+            }
         }
+        self.foreign(|game| species::instruction(routine, actor, script, game))
     }
     pub(crate) fn actor_touch_legacy(&mut self, routine: u32) {
         use sm_game::actors::species;
@@ -1205,13 +1220,17 @@ impl Runtime<'_> {
     }
     pub(crate) fn actor_shot_legacy(&mut self, routine: u32, argument: u16) {
         use sm_game::actors::species;
-        if !species::lease_shot(routine, self) {
+        if routine == 10936202 {
+            self.owned_call(sm_game::actors::ridley::shot);
+        } else if !species::lease_shot(routine, self) {
             self.foreign(|game| species::shot(routine, argument, game));
         }
     }
     pub(crate) fn actor_hook_legacy(&mut self, routine: u32) {
         use sm_game::actors::species;
-        if !species::lease_draw_hook(routine, self) {
+        if routine == 10920690 {
+            self.owned_call(sm_game::actors::ridley::draw_baby_metroid_and_door);
+        } else if !species::lease_draw_hook(routine, self) {
             self.foreign(|game| species::draw_hook(routine, game));
         }
     }
