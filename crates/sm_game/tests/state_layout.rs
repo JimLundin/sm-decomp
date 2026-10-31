@@ -1081,6 +1081,18 @@ fn inputs_read_every_observation_from_its_address() {
     }
 }
 
+#[test]
+fn session_words_are_projected() {
+    let s = session();
+    for &word in sm_game::session_words::Word::ALL {
+        let at = word as usize;
+        assert!(
+            projected_word(&s, at).is_some(),
+            "{word:?} at {at:#x} is not projected"
+        );
+    }
+}
+
 /// Every owner's table, for the cross-owner overlap check.
 fn all_owner_lanes() -> Vec<(&'static str, Vec<Lane>)> {
     vec![

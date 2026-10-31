@@ -18,6 +18,7 @@ use crate::display::registers::{
 };
 use crate::display::sequence::{Registers, register_writes, write_register_and_mirror};
 use crate::display::transfer::{ScrollingLayout, setup_transfer};
+use crate::menus::prelude::{owned, session_word};
 use crate::ram::words;
 use crate::ram::{CompatibilityRam, RawRam, checked_word, checked_word as at, word, word_arrays};
 use crate::scene::irq;
@@ -203,7 +204,7 @@ fn room_area<H: crate::runtime_access::RuntimeAccess + ?Sized>(game: &mut H) -> 
 }
 
 pub fn reset_gameplay_layers<H: Host + ?Sized>(clear_current_irq: bool, game: &mut H) {
-    word!(game.FX_LAYER_BLENDING_CONFIG_A = 0);
+    session_word!(game.FxLayerBlendingConfigA = 0);
     if clear_current_irq {
         word!(game.CUR_IRQ_HANDLER = 0);
     }

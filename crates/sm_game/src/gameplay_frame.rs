@@ -14,7 +14,7 @@ use crate::display_refresh;
 use crate::enemy_projectiles;
 use crate::gameplay_rules::{finish_frame, finish_health_and_time};
 use crate::menus::prelude::{
-    CoroutineRet, death_sequence, options_menu, owned, power_bomb, save_selection,
+    CoroutineRet, death_sequence, options_menu, owned, power_bomb, save_selection, session_word,
 };
 use crate::menus::{
     controller_input, file_menu, game_over, map_menu, options_settings, pause_controls,
@@ -461,7 +461,7 @@ fn initialize<H: Host>(game: &mut H) -> CoroutineRet {
 
 /// Demo phase: leave a finished demo.
 fn stop_demo<H: Host>(game: &mut H) -> CoroutineRet {
-    if word!(game.SUBSTATE) != 1 {
+    if session_word!(game.Substate) != 1 {
         demo_rooms::advance_set(game);
     }
     crate::display_refresh::enable(true, game);
@@ -483,15 +483,15 @@ fn stop_demo<H: Host>(game: &mut H) -> CoroutineRet {
 /// Demo phase: choose the next demo or title step.
 fn next_demo<H: Host>(game: &mut H) -> CoroutineRet {
     word!(game.GAME_STATE = K_GAME_STATE_1_OPENING_CINEMATIC as u16);
-    if (word!(game.SUBSTATE) & 0x8000) != 0 {
+    if (session_word!(game.Substate) & 0x8000) != 0 {
         word!(game.GAME_STATE = K_GAME_STATE_40_TRANSITION_TO_DEMO as u16);
-    } else if word!(game.SUBSTATE) != 0 {
+    } else if session_word!(game.Substate) != 0 {
         game.load_title_sequence_graphics();
         word!(game.EPROJ_X_POS[4] = 2);
         crate::flow::set(game, crate::flow::Word::CinematicFunction, 0x9a47);
     } else {
         crate::music_requests::queue_delayed_8(0, game);
-        word!(game.DEBUG_DISABLE_SOUNDS = 0);
+        session_word!(game.DebugDisableSounds = 0);
         crate::flow::set(game, crate::flow::Word::CinematicFunction, 0x9b68);
     }
     0
@@ -611,7 +611,7 @@ fn fade_out<H: Host>(entry: Entry, game: &mut H) -> CoroutineRet {
         word!(game.GAME_STATE += 1);
         if matches!(entry, Entry::GameOverFadeOut) {
             crate::menu!(game.MenuIndex = 0);
-            word!(game.DEBUG_DISABLE_SOUNDS = 0);
+            session_word!(game.DebugDisableSounds = 0);
         }
     }
     0
@@ -624,7 +624,7 @@ fn exit_time_up<H: Host>(game: &mut H) -> CoroutineRet {
         crate::display_refresh::enable(true, game);
         finish_gameplay(true, game);
         crate::screen_fade::set_both(game, 0, 0);
-        word! { game, 0; CERES_STATUS, TIMER_STATUS }
+        session_word! { game, 0; CeresStatus, TimerStatus }
         cancel_sound_effects(game, 15);
         if crate::progress::event_happened(&mut game.runtime(), 0xe) {
             options_menu!(game.ScreenIndex = 0);
@@ -642,7 +642,8 @@ fn exit_time_up<H: Host>(game: &mut H) -> CoroutineRet {
 /// States that run the gameplay pass: their pre-pass work, the pass and,
 /// once it completes, their per-state finish.
 fn pass<H: Host>(entry: Entry, game: &mut H) -> CoroutineRet {
-    if matches!(entry, Entry::CeresElevator | Entry::CeresBlackout) && word!(game.TIMER_STATUS) != 0
+    if matches!(entry, Entry::CeresElevator | Entry::CeresBlackout)
+        && session_word!(game.TimerStatus) != 0
     {
         escape_timer::draw(game);
     }
@@ -669,21 +670,21 @@ fn advance_gameplay<H: Host>(game: &mut H) -> CoroutineRet {
         actors::scheduling::select(&mut game.runtime());
         palette_effects::advance(&mut game.runtime());
         prepare_player_projectiles(game);
-        if word!(game.DEBUG_DISABLE_SPRITE_INTERACT) == 0 {
+        if session_word!(game.DebugDisableSpriteInteract) == 0 {
             game.player_projectiles_hit_samus();
         }
         actors::scheduling::advance_selected(&mut game.runtime());
     }
     // Read the queue after enemy callbacks, even when they changed it this pass.
     if resume == ResumePoint::EnemyMessage
-        || (resume == ResumePoint::Start && word!(game.QUEUED_MESSAGE_BOX_INDEX) != 0)
+        || (resume == ResumePoint::Start && session_word!(game.QueuedMessageBoxIndex) != 0)
     {
-        let yielded = message_boxes::display(word!(game.QUEUED_MESSAGE_BOX_INDEX), game);
+        let yielded = message_boxes::display(session_word!(game.QueuedMessageBoxIndex), game);
         if yielded != 0 {
             game.set_resume_point(ResumePoint::EnemyMessage as u8);
             return yielded;
         }
-        word!(game.QUEUED_MESSAGE_BOX_INDEX = 0);
+        session_word!(game.QueuedMessageBoxIndex = 0);
     }
     if matches!(resume, ResumePoint::Start | ResumePoint::EnemyMessage) {
         game.advance_player();
@@ -697,7 +698,7 @@ fn advance_gameplay<H: Host>(game: &mut H) -> CoroutineRet {
         }
         animated_tiles::advance(&mut game.runtime());
         // This is a new read: earlier callbacks may change interaction policy.
-        if word!(game.DEBUG_DISABLE_SPRITE_INTERACT) == 0 {
+        if session_word!(game.DebugDisableSpriteInteract) == 0 {
             enemy_projectiles::contact::enemy_projectiles_hit_samus(&mut game.runtime());
             enemy_projectiles::contact::shoot_enemy_projectiles(&mut game.runtime());
             actors::contacts::apply_power_bomb_to_enemies(&mut game.runtime());
@@ -792,8 +793,8 @@ fn finish_pass<H: Host>(entry: Entry, game: &mut H) {
         }
         Entry::CeresElevator => {
             let negative =
-                (word!(game.REACHED_CERES_ELEVATOR_FADE_TIMER -= 1, reread) & 0x8000) != 0;
-            if word!(game.REACHED_CERES_ELEVATOR_FADE_TIMER) == 0 || negative {
+                (session_word!(game.ReachedCeresElevatorFadeTimer -= 1, reread) & 0x8000) != 0;
+            if session_word!(game.ReachedCeresElevatorFadeTimer) == 0 || negative {
                 word!(game.GAME_STATE += 1);
                 crate::screen_fade::set_both(game, 0, 0);
             }
@@ -831,9 +832,8 @@ fn finish_pass<H: Host>(entry: Entry, game: &mut H) {
             word_transfers!(game, descending, 16; le(TARGET_PALETTES, 207) <- le(PALETTE_BUFFER, 207));
             options_menu!(game.ScreenIndex = 3);
             death_sequence! { game, 0; Index, Counter, FlashTimer }
-            word! { game, 0;
-                HUD_ITEM_INDEX, SAMUS_AUTO_CANCEL_HUD_ITEM_INDEX, SAMUS_INVINCIBILITY_TIMER,
-                SAMUS_KNOCKBACK_TIMER,
+            session_word! { game, 0;
+                HudItemIndex, SamusAutoCancelHudItemIndex, SamusInvincibilityTimer, SamusKnockbackTimer,
             }
             word!(game.GAME_STATE += 1);
         }
@@ -849,11 +849,11 @@ fn finish_pass<H: Host>(entry: Entry, game: &mut H) {
                     word!(game.GAME_STATE = 34);
                     save_slots::save(save_selection!(game.SelectedSlot), game);
                     crate::flow::set(game, crate::flow::Word::CinematicFunction, 0xc11b);
-                    word! { game, 0; CERES_STATUS, TIMER_STATUS }
+                    session_word! { game, 0; CeresStatus, TimerStatus }
                 } else {
                     word!(game.GAME_STATE = K_GAME_STATE_39_ENDING_AND_CREDITS as u16);
                     crate::flow::set(game, crate::flow::Word::CinematicFunction, 0xd480);
-                    word!(game.TIMER_STATUS = 0);
+                    session_word!(game.TimerStatus = 0);
                 }
                 crate::music_requests::queue_delayed_8(0, game);
                 cancel_sound_effects(game, 15);

@@ -83,6 +83,9 @@ pub(crate) use power_bomb;
 /// [`crate::menu_state::death_sequence::Word`].
 macro_rules! death_sequence { ($($t:tt)*) => { owned!([$crate::menu_state::death_sequence] $($t)*) }; }
 pub(crate) use death_sequence;
+/// The Session-owned words ([`crate::session_words::Word`]).
+macro_rules! session_word { ($($t:tt)*) => { owned!([$crate::session_words] $($t)*) }; }
+pub(crate) use session_word;
 /// Crocomire's melt words ([`crate::actors::crocomire_reactions::melt::Word`]).
 macro_rules! melt { ($($t:tt)*) => { owned!([$crate::actors::crocomire_reactions::melt] $($t)*) }; }
 pub(crate) use melt;

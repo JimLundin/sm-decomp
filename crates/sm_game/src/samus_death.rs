@@ -1,7 +1,7 @@
 //! Samus's death sequence: the frozen pose, the death pose, the suit flash
 //! and the suit explosion, with their palettes and tile uploads.
 use crate::constants::buttons::{K_BUTTON_A, K_BUTTON_L, K_BUTTON_R};
-use crate::menus::prelude::{CoroutineRet, death_sequence, options_menu, owned};
+use crate::menus::prelude::{CoroutineRet, death_sequence, options_menu, owned, session_word};
 use crate::player_transitions as pt;
 use crate::ram::{RawRam, word};
 use crate::runtime_access::RuntimeAccess;
@@ -98,8 +98,8 @@ pub fn flash_death<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
         options_menu!(game.ScreenIndex = u16::from(delay));
         death_sequence! { game, 0; Index, Counter }
         advance_suit_explosion(game);
-        word!(
-            game.SUBSTATE = (word!(game.JOYPAD2_LAST) as i32 & 0xb0
+        session_word!(
+            game.Substate = (word!(game.JOYPAD2_LAST) as i32 & 0xb0
                 == K_BUTTON_A as i32 | K_BUTTON_L as i32 | K_BUTTON_R as i32)
                 as u16
         );
@@ -112,7 +112,7 @@ fn death_palette<H: Host + ?Sized>(frame: Option<u16>, game: &mut H) {
     let pointer = crate::gameplay_tables::death_palette(
         game,
         frame.is_some(),
-        (word!(game.SAMUS_SUIT_PALETTE_INDEX) >> 1) as isize,
+        (session_word!(game.SamusSuitPaletteIndex) >> 1) as isize,
     )
     .wrapping_add(frame.unwrap_or(0));
     let address = game
@@ -150,7 +150,7 @@ fn queue_death_tiles<H: Host + ?Sized>(frame: u16, game: &mut H) {
 }
 
 fn whiten_death_palette<H: Host + ?Sized>(game: &mut H) {
-    if word!(game.SUBSTATE) == 0 && death_sequence!(game.Index) != 0 {
+    if session_word!(game.Substate) == 0 && death_sequence!(game.Index) != 0 {
         const SHADES: [u16; 22] = [
             0x421, 0xc63, 0x14a5, 0x1ce7, 0x2529, 0x2d6b, 0x35ad, 0x4210, 0x4a52, 0x4e73, 0x5294,
             0x56b5, 0x5ad6, 0x5ef7, 0x6318, 0x6739, 0x6b5a, 0x6f7b, 0x739c, 0x77bd, 0x7bde, 0x7fff,
@@ -179,11 +179,11 @@ fn advance_suit_explosion<H: Host + ?Sized>(game: &mut H) -> bool {
         if (death_sequence!(game.Index += 1, reread) as i32 - 9i32) & 0x8000 == 0 {
             death_sequence!(game.Counter = 21);
             whiten_death_palette(game);
-            word!(game.SUBSTATE = 0);
+            session_word!(game.Substate = 0);
             return true;
         }
-        let recolor =
-            word!(game.SUBSTATE) == 0 || (death_sequence!(game.Index) as i32 - 2i32) & 0x8000 != 0;
+        let recolor = session_word!(game.Substate) == 0
+            || (death_sequence!(game.Index) as i32 - 2i32) & 0x8000 != 0;
         // Each read captures the native table afresh; the frame index is a RAM
         // read, so taking it first leaves the captured bytes unchanged.
         let index = 2 * usize::from(death_sequence!(game.Index));

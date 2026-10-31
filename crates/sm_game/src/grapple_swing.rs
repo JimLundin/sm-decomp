@@ -13,6 +13,7 @@ use crate::player_transitions::state::{
 /// Samus's movement handler after a grapple launch ($90:946E).
 const GRAPPLE_LAUNCH_MOVEMENT: MovementMode = MovementMode::from_raw(0x946e);
 use crate::actors::host::abs16;
+use crate::menus::prelude::{owned, session_word};
 use crate::projectile_geometry::SINE_COSINE;
 use crate::projectile_room::Axis;
 use crate::ram::word;
@@ -1009,20 +1010,20 @@ pub fn update_tiles<
 >(
     game: &mut H,
 ) {
-    if (word!(game.GRAPPLE_POINT_ANIM_TIMER -= 1, reread) & 0x8000) != 0 {
-        word!(game.GRAPPLE_POINT_ANIM_TIMER = 5);
-        word!(game.GRAPPLE_POINT_ANIM_PTR += 512);
-        if ((word!(game.GRAPPLE_POINT_ANIM_PTR)) as i16)
+    if (session_word!(game.GrapplePointAnimTimer -= 1, reread) & 0x8000) != 0 {
+        session_word!(game.GrapplePointAnimTimer = 5);
+        session_word!(game.GrapplePointAnimPtr += 512);
+        if ((session_word!(game.GrapplePointAnimPtr)) as i16)
             .wrapping_sub(grapple_aim::point_animation(game).end as i16)
             >= 0
         {
-            word!(game.GRAPPLE_POINT_ANIM_PTR = grapple_aim::point_animation(game).first);
+            session_word!(game.GrapplePointAnimPtr = grapple_aim::point_animation(game).first);
         }
     }
     let cursor = crate::display_refresh::queue_native_transfer(
         word!(game.VRAM_WRITE_QUEUE_TAIL),
         32,
-        |game: &H| word!(game.GRAPPLE_POINT_ANIM_PTR),
+        |game: &H| session_word!(game.GrapplePointAnimPtr),
         0x9a,
         |_: &H| 0x6200,
         game,
@@ -1036,8 +1037,8 @@ pub fn update_tiles<
         |_: &H| 0x6210,
         game,
     );
-    if (word!(game.FLARE_COUNTER) as i32 - 120i32) & 0x8000 != 0 {
-        word!(game.FLARE_COUNTER += 1);
+    if (session_word!(game.FlareCounter) as i32 - 120i32) & 0x8000 != 0 {
+        session_word!(game.FlareCounter += 1);
     }
 }
 
@@ -1055,7 +1056,7 @@ pub fn update<H: Host + ?Sized>(game: &mut H) {
     );
     if game.session().player.grapple as i32 != 0x9bc4f0 & 0xffff
         && (game.session().player.grapple as i32 - (0x9bc856 & 0xffff)) & 0x8000 != 0
-        && (word!(game.SAMUS_SUIT_PALETTE_INDEX) & 4) == 0
+        && (session_word!(game.SamusSuitPaletteIndex) & 4) == 0
         && game.session().room.liquid.kind != 0
         && {
             r18 = game.player_bottom();

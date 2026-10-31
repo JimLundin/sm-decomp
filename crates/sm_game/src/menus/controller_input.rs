@@ -120,7 +120,7 @@ fn debug_controls<H: Host + ?Sized>(game: &mut H) {
             word!(game.JOYPAD2_NEW_KEYS &= (0x10u16));
         }
     } else {
-        word!(game.DEBUG_DISABLE_SOUNDS = 0);
+        session_word!(game.DebugDisableSounds = 0);
         game.request_reset();
     }
 }
