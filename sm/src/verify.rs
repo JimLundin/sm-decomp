@@ -1029,6 +1029,7 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
     let mut checkpoint_in = None;
     let mut seed_in = None;
     let mut checkpoint_out = None;
+    let mut oracle_only = false;
     let mut audio_trace_path = None;
     #[cfg(sm_verify_dll)]
     let mut prepared_checkpoint_check = None;
@@ -1107,6 +1108,7 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
             "--checkpoint-out" if checkpoint_out.is_none() => {
                 checkpoint_out = Some(options.next().ok_or("missing checkpoint output path")?);
             }
+            "--oracle-only" if !oracle_only => oracle_only = true,
             "--require-hit" => {
                 required_probes.push(options.next().ok_or("missing probe name")?.clone());
             }
@@ -1176,6 +1178,13 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
     if checkpoint_out.is_some_and(|path| std::path::Path::new(path).exists()) {
         return Err("checkpoint output already exists; choose a new path".into());
     }
+    // A checkpoint of the original game's state for rows whose native code does
+    // not yet follow it: only the oracle runs, so nothing is compared.
+    if oracle_only
+        && (checkpoint_out.is_none() || !required_probes.is_empty() || !expected.is_empty())
+    {
+        return Err("--oracle-only only produces a checkpoint, without probes or expectations".into());
+    }
     if audio_trace_path.is_some()
         && (!game.supports_legacy_persistence()
             || std::env::var_os("SM_VERIFY_PHYSICAL_AUDIO").is_none())
@@ -1243,6 +1252,9 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
     let start = Instant::now();
     unsafe {
         let _snes = initialize_checkpoint_machine(game, &filename)?;
+        if oracle_only && !game.supports_legacy_persistence() {
+            return Err("--oracle-only requires the CPU oracle".into());
+        }
         if let Some(saved_sram) = saved_sram {
             sm::rtl::RtlReadSram(game);
             if game.g_sram.bytes(0..8192) != saved_sram {
@@ -1362,6 +1374,10 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
             // its pointer to the array. Each write clears one whole array.
             core::ptr::write_bytes(&raw mut super::PIXELS, 0, 1);
             core::ptr::write_bytes(&raw mut super::MY_PIXELS, 0, 1);
+            if oracle_only {
+                // Set per frame: restoring --checkpoint-in brings back the paired mode.
+                game.g_runmode = sm::cpu_infra::RM_THEIRS as u8;
+            }
             sm::oracle_mode::set_next_frame_input(inputs.get(index + 1).copied());
             sm::rtl::RtlRunFrame(i32::from(pad), game);
             sm::oracle_mode::set_next_frame_input(None);
@@ -1464,6 +1480,11 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
             let end = first + completed;
             if checkpoint::origin(&rom, seed_in.map(std::path::Path::new))? != origin {
                 return Err("seed changed during replay".into());
+            }
+            if oracle_only {
+                // The checkpoint resumes a paired replay; the oracle's state is
+                // already adopted into the Game after every frame.
+                game.g_runmode = sm::cpu_infra::RM_BOTH as u8;
             }
             checkpoint::save(std::path::Path::new(path), game, origin, &inputs, end)?;
             eprintln!("Saved verifier checkpoint before input frame {end}: {path}");

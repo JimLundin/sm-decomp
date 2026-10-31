@@ -149,10 +149,12 @@ def pack(args):
                 if f"target/seeds/{capture}/{name}" not in files:
                     raise ValueError("capture is missing original logs")
     for row in rows:
-        if "checkpoint" in row:
-            name = "target/checkpoints/" + row["checkpoint"]
+        for key in ("checkpoint", "faithful_checkpoint"):
+            if key not in row:
+                continue
+            name = "target/checkpoints/" + row[key]
             path = regular_path(args.root, name)
-            if digest(path) != row["checkpoint_sha256"]:
+            if digest(path) != row[key + "_sha256"]:
                 raise ValueError("checkpoint hash mismatch: " + row["id"])
             files[name] = path
         if not runtime_only and row["inputs"].startswith("corpus-") and "checkpoint" not in row:
@@ -200,8 +202,8 @@ def restore(args):
     runtime_only = getattr(args, "runtime_only", False)
     inputs = {"movies/" + row["inputs"] for row in rows
               if runtime_only or not row["inputs"].startswith("corpus-") or "checkpoint" in row}
-    checkpoints = {"target/checkpoints/" + row["checkpoint"]
-                   for row in rows if "checkpoint" in row}
+    checkpoints = {"target/checkpoints/" + row[key]
+                   for row in rows for key in ("checkpoint", "faithful_checkpoint") if key in row}
     if any(not valid_name(name) for name in inputs):
         raise ValueError("invalid corpus input name")
     captures = {row["seed"].split(":")[0] for row in rows if "seed" in row}
@@ -255,9 +257,11 @@ def restore(args):
             name = "movies/" + row["inputs"]
             if name in inputs and digest(args.root / name) != row["input_sha256"]:
                 raise ValueError("restored corpus input hash mismatch: " + row["id"])
-            if "checkpoint" in row:
-                path = args.root / "target/checkpoints" / row["checkpoint"]
-                if digest(path) != row["checkpoint_sha256"]:
+            for key in ("checkpoint", "faithful_checkpoint"):
+                if key not in row:
+                    continue
+                path = args.root / "target/checkpoints" / row[key]
+                if digest(path) != row[key + "_sha256"]:
                     raise ValueError("restored checkpoint hash mismatch: " + row["id"])
     finally:
         process.stdout.close()

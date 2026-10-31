@@ -439,9 +439,18 @@ def run_corpus(root, args):
     for segment in recipe.get("segment", []):
         allowed = {"id", "inputs", "input_sha256", "start_frame", "frames", "require_hit",
                    "after_hits", "expect", "after_expectations", "pending", "seed", "seed_sha256",
-                   "checkpoint", "checkpoint_sha256"}
+                   "checkpoint", "checkpoint_sha256", "faithful_checkpoint", "faithful_checkpoint_sha256"}
         if not isinstance(segment, dict) or set(segment) - allowed:
             raise ValueError("corpus segment has unknown fields")
+        # The faithful oracle starts checkpoint rows from its own original-game
+        # checkpoint; the patched oracle keeps the snesrev-patched one.
+        faithful = {key: segment.pop(key) for key in ("faithful_checkpoint", "faithful_checkpoint_sha256")
+                    if key in segment}
+        if faithful and ("checkpoint" not in segment or len(faithful) != 2):
+            raise ValueError(f"corpus {segment.get('id')}: faithful_checkpoint needs its SHA-256 and a checkpoint")
+        if faithful and os.environ.get("SM_ORACLE", "patched") == "faithful":
+            segment["checkpoint"] = faithful["faithful_checkpoint"]
+            segment["checkpoint_sha256"] = faithful["faithful_checkpoint_sha256"]
         name = segment.get("id")
         if not isinstance(name, str) or not name or name in segments:
             raise ValueError("corpus segment IDs must be distinct nonempty strings")
@@ -815,6 +824,8 @@ def main():
                           help="reject a checkpoint from a changed selected world without changing capture")
     parser.add_argument("--checkpoint-in", type=Path,
                         help="resume a local verifier checkpoint; --frames counts from that point")
+    parser.add_argument("--oracle-only", action="store_true",
+                        help="run only the oracle to save its --checkpoint-out state (no comparison)")
     parser.add_argument("--checkpoint-out", type=Path,
                         help="save a new local verifier checkpoint after the last frame")
     parser.add_argument("--require-hit", action="append", default=[], metavar="PROBE",
@@ -916,6 +927,9 @@ def main():
                            or args.after_hits is not None or args.expect
                            or args.after_expectations is not None or args.corpus is not None):
         parser.error("--build-only cannot request replay frames, checkpoints or probes")
+    if args.oracle_only and (args.checkpoint_out is None or args.corpus is not None or args.require_hit
+                             or args.expect or args.seed is not None or args.room_pack is not None):
+        parser.error("--oracle-only takes inputs, --frames and --checkpoint-out (optionally --checkpoint-in)")
     if args.frames is not None and not 1 <= args.frames <= 2**64 - 1:
         parser.error("--frames must be a positive u64")
     if args.after_hits is not None:
@@ -964,6 +978,8 @@ def main():
         replay_args.extend(["--expect", expectation])
     if args.after_expectations is not None:
         replay_args.extend(["--after-expectations", str(args.after_expectations)])
+    if args.oracle_only:
+        replay_args.append("--oracle-only")
     for option, path in (("--checkpoint-in", args.checkpoint_in),
                          ("--checkpoint-out", args.checkpoint_out), ("--seed", args.seed),
                          ("--prepared-checkpoint-check", args.prepared_checkpoint_check),
