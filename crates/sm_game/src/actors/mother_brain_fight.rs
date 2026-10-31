@@ -789,6 +789,10 @@ pub enum OwnedWord {
     RandomEnemyCounter,
     TimeFrozen,
     CollidingEnemy(usize),
+    Bg2TilemapSize,
+    Bg2TilemapPending,
+    PaletteFadeStep,
+    Bg2Scroll(usize),
 }
 
 impl OwnedWord {
@@ -820,6 +824,10 @@ impl OwnedWord {
             Self::RandomEnemyCounter => words::RANDOM_ENEMY_COUNTER,
             Self::TimeFrozen => words::TIME_IS_FROZEN_FLAG,
             Self::CollidingEnemy(direction) => arrays::ENEMY_INDEX_COLLIDING_DIRS + 2 * direction,
+            Self::Bg2TilemapSize => words::ENEMY_BG2_TILEMAP_SIZE,
+            Self::Bg2TilemapPending => words::NMI_FLAG_BG2_ENEMY_VRAM_TRANSFER,
+            Self::PaletteFadeStep => words::PALETTE_CHANGE_NUM,
+            Self::Bg2Scroll(axis) => words::REG_BG2HOFS + 2 * axis,
         }
     }
 }
@@ -1116,7 +1124,7 @@ crate::dispatch::callback_dispatch! {
             game,
         );
         session_slot!(game, MotherBrainBody[0i32].function = function::FAKE_DEATH_ASCENT_SET_UP_MOTHER_BRAIN_PHASE_2_BRAIN);
-        word!(game.NMI_FLAG_BG2_ENEMY_VRAM_TRANSFER = 1);
+        game.set_owned(OwnedWord::Bg2TilemapPending, 1);
         session_slot!(game, MotherBrainBrain[BRAIN].unpause_hook = 1);
     };
     [11111753] fake_death_ascent_set_up_phase2_brain [] {
@@ -1143,7 +1151,7 @@ crate::dispatch::callback_dispatch! {
         let e0: i32 = 0;
         session_slot!(game, MotherBrainBody[e0].base; properties = (session_slot!(game, MotherBrainBody[e0].base.properties) as i32 & !(K_ENEMY_PROPS_INVISIBLE as i32)) as u16,
             x_pos = 59, y_pos = 279);
-        word! {game; REG_BG2HOFS = -27i32 as u16; REG_BG2VOFS = -217i32 as u16; }
+        set_bg2_scroll(-27i32 as u16, -217i32 as u16, game);
         queue_music(music::SONG_0, game);
         { game.set_owned(OwnedWord::EarthquakeType, 2); game.set_owned(OwnedWord::EarthquakeTimer, 256); }
         session_slot! { game, MotherBrainBrain[BRAIN]; neck_speed = 80, neck_moving = 1, lower_motion = 8, upper_motion = 6 };
@@ -1167,9 +1175,9 @@ crate::dispatch::callback_dispatch! {
             let v2: u16 = (session_slot!(game, MotherBrainBody[BODY].grey_transition)).wrapping_add(1);
             session_slot!(game, MotherBrainBody[BODY].grey_transition = v2);
             if game.foreign(|game| game.fade(Fade::ToBlack, (v2).wrapping_sub(1))) & 1 != 0 {
-                word!(game.ENEMY_BG2_TILEMAP_SIZE = 710);
+                game.set_owned(OwnedWord::Bg2TilemapSize, 710);
                 word_transfers!(game, descending, 356; le(TILEMAP_STUFF, 355) <- value(824));
-                word!(game.NMI_FLAG_BG2_ENEMY_VRAM_TRANSFER = 1);
+                game.set_owned(OwnedWord::Bg2TilemapPending, 1);
                 session_slot!(game, MotherBrainBody[BODY].base.properties, |old| old & 0xdeff | 0x100);
                 session_slot!(game, MotherBrainBody[BODY].base.extra_properties = 0);
                 session_slot!(game, MotherBrainBody[BODY]; function = function::PHASE_3_DEATH_FINAL_FEW_EXPLOSIONS,
@@ -1626,12 +1634,12 @@ crate::dispatch::callback_dispatch! {
     [11112013] fake_death_ascent_raise [] {
         if !((game.frame() & 3) != 0 || {
             spawn_dust_clouds_for_ascent(game);
-            word!(game.REG_BG2VOFS += 2);
+            game.set_owned(OwnedWord::Bg2Scroll(1), game.owned(OwnedWord::Bg2Scroll(1)).wrapping_add(2));
             let v1: u16 = (session_slot!(game, MotherBrainBody[e].base.y_pos)).wrapping_sub(2);
             session_slot!(game, MotherBrainBody[e].base.y_pos = v1);
             v1 >= 0xbd
         }) {
-            word!(game.ENEMY_BG2_TILEMAP_SIZE = 320);
+            game.set_owned(OwnedWord::Bg2TilemapSize, 320);
             session_slot!(game, MotherBrainBody[e].base.y_pos = 188);
             game.set_owned(OwnedWord::EarthquakeTimer, 0);
             game.foreign(|game| crate::hdma_objects::free_hdma_object(session_slot!(game, MotherBrainBody[e].hdma_object), game));
@@ -2175,7 +2183,7 @@ crate::dispatch::callback_dispatch! {
     };
     [11111875] fake_death_ascent_continue_pause {
         session_slot!(game, MotherBrainBody[e].base; x_pos = 59, y_pos = 279);
-        word! {game; REG_BG2HOFS = -27i32 as u16; REG_BG2VOFS = -217i32 as u16; }
+        set_bg2_scroll(-27i32 as u16, -217i32 as u16, game);
         session_slot!(game, MotherBrainBody[e]; hitboxes = 7,
             function = function::FAKE_DEATH_ASCENT_START_MUSIC_AND_EARTHQUAKE);
     };
@@ -2317,7 +2325,8 @@ pub fn body_unpause_hook(game: &mut impl State) -> CoroutineRet {
         queue_sfx1_max6(sound::RAINBOW_BEAM, game);
     }
     if (session_slot!(game, MotherBrainBody[BODY].base.extra_properties) & 4) != 0 {
-        word! {game; ENEMY_BG2_TILEMAP_SIZE = 2048; NMI_FLAG_BG2_ENEMY_VRAM_TRANSFER = 1; }
+        game.set_owned(OwnedWord::Bg2TilemapSize, 2048);
+        game.set_owned(OwnedWord::Bg2TilemapPending, 1);
     }
     COROUTINE_NONE as CoroutineRet
 }
@@ -2703,6 +2712,11 @@ pub fn phase2_or_phase3_shot_reaction(game: &mut impl State) {
 }
 pub fn determine_shot_reaction_type(game: &mut impl State) -> u16 {
     SHOT_REACTION_BY_PROJECTILE[usize::from((collided_shot_kind(game) >> 8) & 7)] as u16
+}
+/// Mother Brain's body (BG2) scroll: horizontal, then vertical.
+fn set_bg2_scroll(x: u16, y: u16, game: &mut impl State) {
+    game.set_owned(OwnedWord::Bg2Scroll(0), x);
+    game.set_owned(OwnedWord::Bg2Scroll(1), y);
 }
 /// The last random number, as the Session holds it.
 pub(crate) fn random_number(game: &(impl OwnedWords + ?Sized)) -> u16 {
