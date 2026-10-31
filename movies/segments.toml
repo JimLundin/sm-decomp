@@ -1488,3 +1488,54 @@ start_frame = 0
 frames = 129
 expect = ["room:91F8"]
 require_hit = ["morph.rolling_with_momentum"]
+
+# Special beam attacks (tools/authored_inputs.py special-beam): one beam with
+# charge and the power bombs selected (scenario seeds special-beam-*).
+
+[[segment]]
+id = "special-beam-wave"
+seed = "scenario-special-beam-wave:305"
+seed_sha256 = "10781bc61e3a0a6b73a48110fca1b2c0df54606478b1c4dfc25f9ab4a1fc95e8"
+inputs = "authored-special-beam.inputs"
+input_sha256 = "407f8362380ffcddbeaa020c91b8bd434e60e25c4618c4640c85ffe8ddaa0e5b"
+start_frame = 0
+frames = 471
+expect = ["room:91F8"]
+require_hit = ["special_beam.wave"]
+pending = "awaiting the seeds-v1-special-beam-42ef643c82c0b3e4 ci-data upload"
+
+[[segment]]
+id = "special-beam-ice"
+seed = "scenario-special-beam-ice:305"
+seed_sha256 = "5fc2d0e767a96ec53f66a2eaf1f88fd8b60c698331e95c969dd4a413e98b6103"
+inputs = "authored-special-beam.inputs"
+input_sha256 = "407f8362380ffcddbeaa020c91b8bd434e60e25c4618c4640c85ffe8ddaa0e5b"
+start_frame = 0
+frames = 471
+expect = ["room:91F8"]
+require_hit = ["special_beam.ice"]
+pending = "awaiting the seeds-v1-special-beam-42ef643c82c0b3e4 ci-data upload"
+
+[[segment]]
+id = "special-beam-spazer"
+seed = "scenario-special-beam-spazer:305"
+seed_sha256 = "3e7e85f71df2d6ffe4ebdad4352c2682a84cebd7b4cafba1febe453b6b546062"
+inputs = "authored-special-beam.inputs"
+input_sha256 = "407f8362380ffcddbeaa020c91b8bd434e60e25c4618c4640c85ffe8ddaa0e5b"
+start_frame = 0
+frames = 471
+expect = ["room:91F8"]
+require_hit = ["special_beam.spazer"]
+pending = "awaiting the seeds-v1-special-beam-42ef643c82c0b3e4 ci-data upload"
+
+[[segment]]
+id = "special-beam-plasma"
+seed = "scenario-special-beam-plasma:305"
+seed_sha256 = "76ea60b721af309f8e4fac4f922341263055bfb9cbd3898e079d7ccdc4e0cf6f"
+inputs = "authored-special-beam.inputs"
+input_sha256 = "407f8362380ffcddbeaa020c91b8bd434e60e25c4618c4640c85ffe8ddaa0e5b"
+start_frame = 0
+frames = 471
+expect = ["room:91F8"]
+require_hit = ["special_beam.plasma"]
+pending = "awaiting the seeds-v1-special-beam-42ef643c82c0b3e4 ci-data upload"
