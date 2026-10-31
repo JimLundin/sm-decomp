@@ -50,13 +50,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/windows-native
-      - name: Reuse a verifier built from the same sources
-        # verify_dll.py rebuilds unless the cached DLL's stamp matches these sources,
-        # the compiler, its options and the native archives byte for byte.
-        uses: actions/cache@v4
-        with:
-          path: target/verify-dll
-          key: verifier-direct-${{ hashFiles('crates/**', 'sm/**', 'Cargo.lock', 'rust-toolchain.toml', 'tools/verify_dll.py', 'tools/install_native_*.py', '.github/actions/windows-native/action.yml') }}
       - name: Build the verifier DLL (direct, as the local Fast loop does)
         run: |
           python tools/verify_dll.py --build-only --direct
