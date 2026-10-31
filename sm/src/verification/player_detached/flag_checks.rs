@@ -13,7 +13,7 @@ fn plm_visual() {
     );
     h.byte(0x87, 0x9200, 1);
     h.word(0x87, 0x9201, 0x9800);
-    let branch = animated::command(&mut h, 8880416, 0, 0x9200);
+    let branch = animated::command(&mut h, 0x8120, 0, 0x9200);
     assert_eq!(
         (branch, h.world.player.gameplay_flags.bosses_by_area[0]),
         (0x9800, 1),
@@ -21,7 +21,7 @@ fn plm_visual() {
     );
     h.world.player.flag_compatibility.bitmask = 0xa534;
     h.byte(0x87, 0x9300, 2);
-    animated::command(&mut h, 8880435, 0, 0x9300);
+    animated::command(&mut h, 0x8133, 0, 0x9300);
     assert_eq!(
         h.world.player.flag_compatibility.bitmask, 0xa502,
         "flags.scratch.boss_low_only"

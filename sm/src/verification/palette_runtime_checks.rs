@@ -36,7 +36,7 @@ pub(super) fn run(game: &mut Game) -> bool {
                 .slots[0]
                 .counter = 2;
             runtime.session_mut().presentation.visual_mut().colors[5] = 0x1234;
-            execution::command(&mut runtime, 9291321, 0, 0x9000);
+            execution::command(&mut runtime, 0xc639, 0, 0x9000);
         }));
         assert!(failed.is_err());
         assert_eq!(
@@ -53,7 +53,7 @@ pub(super) fn run(game: &mut Game) -> bool {
         let failed = catch_unwind(AssertUnwindSafe(|| {
             let mut runtime = Runtime::new(game);
             execution::set_enabled(runtime.session_mut(), true);
-            execution::command(&mut runtime, 9291358, 0, 0x9000);
+            execution::command(&mut runtime, 0xc65e, 0, 0x9000);
         }));
         assert!(failed.is_err());
         assert_eq!(

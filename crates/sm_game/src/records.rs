@@ -28,6 +28,8 @@ pub struct RomRecords {
     pub enemy_lists: crate::enemy_lists::ImportedEnemyLists,
     pub samus_palettes: crate::samus_palette::ImportedPaletteTables,
     pub actor_tables: crate::actor_tables::ImportedActorTables,
+    pub palette_programs: Option<crate::imported::Imported<sm_data::program_bank::ProgramBank>>,
+    pub animated_programs: Option<crate::imported::Imported<sm_data::program_bank::ProgramBank>>,
 }
 
 /// A host holding the loaded image and its imported records.

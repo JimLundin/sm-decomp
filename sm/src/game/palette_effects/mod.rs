@@ -33,7 +33,9 @@ pub(crate) mod checks {
         execution::process(&mut Runtime::new(game), k);
     }
     pub(crate) fn command(ea: u32, k: u16, j: u16, game: &mut Game) -> crate::types::PairU16 {
-        let (k, j) = execution::command(&mut Runtime::new(game), ea, k, j);
+        // Only bank $8D holds palette commands; any other bank decodes as none.
+        let handler = if ea >> 16 == 0x8d { ea as u16 } else { 0 };
+        let (k, j) = execution::command(&mut Runtime::new(game), handler, k, j);
         crate::types::PairU16 { k, j }
     }
 }

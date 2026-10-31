@@ -80,7 +80,7 @@ fn lazy_operands_and_failure_prefixes() {
         .counter = 2;
     assert!(
         catch_unwind(AssertUnwindSafe(|| colors::command(
-            &mut h, 9291321, 0, 0x9000
+            &mut h, 0xc639, 0, 0x9000
         )))
         .is_err()
     );
@@ -97,7 +97,7 @@ fn lazy_operands_and_failure_prefixes() {
         "missing jump operand retains countdown prefix"
     );
     assert!(h.events.is_empty());
-    assert_eq!(colors::command(&mut h, 9291321, 0, 0x9000), (0, 0x9002));
+    assert_eq!(colors::command(&mut h, 0xc639, 0, 0x9000), (0, 0x9002));
     expected
         .player
         .presentation
@@ -112,7 +112,7 @@ fn lazy_operands_and_failure_prefixes() {
     colors::set_enabled(&mut h.world.player, true);
     assert!(
         catch_unwind(AssertUnwindSafe(|| colors::command(
-            &mut h, 9291358, 0, 0x9000
+            &mut h, 0xc65e, 0, 0x9000
         )))
         .is_err()
     );

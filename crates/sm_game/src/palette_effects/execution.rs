@@ -1,10 +1,19 @@
 //! Palette instructions on the sole shared gameplay Session.
+use crate::program_banks::{self, Bank};
 use crate::{
     gameplay_flag_host::BossWordOrder,
     progress_flags,
     session::Session,
-    visual_host::{Host, PaletteMember, Record, Source},
+    visual_host::{Host, PaletteMember},
 };
+use sm_data::palette_programs::Command;
+
+fn program_word(host: &mut impl Host, cursor: u16, displacement: usize) -> u16 {
+    program_banks::word(host, Bank::Palette, cursor, displacement)
+}
+fn program_byte(host: &mut impl Host, cursor: u16, displacement: usize) -> u8 {
+    program_banks::byte(host, Bank::Palette, cursor, displacement)
+}
 
 // Only exceptional handles use a semantic selector. Valid slots access members directly.
 macro_rules! alias_member {
@@ -169,12 +178,12 @@ pub fn spawn(host: &mut impl Host, definition: u16) {
     put!(host, definition, slot, definition);
     put!(host, color_offset, slot, 0);
     put!(host, pre_action, slot, 0xc526);
-    let data = host.record(Source::Loaded, 0x8d, definition);
-    put!(host, program, slot, data.native_word(2));
+    let program = program_word(host, definition, 2);
+    put!(host, program, slot, program);
     put!(host, delay, slot, 1);
     put!(host, counter, slot, 0);
-    let data = host.record(Source::Loaded, 0x8d, definition);
-    setup(host, 0x8d0000 | u32::from(data.native_word(0)), slot);
+    let setup_routine = program_word(host, definition, 0);
+    setup(host, 0x8d0000 | u32::from(setup_routine), slot);
 }
 pub fn advance(host: &mut impl Host) {
     if host.session().presentation.visual().palette_effects.flags & 0x8000 != 0 {
@@ -213,17 +222,11 @@ pub fn process(host: &mut impl Host, k: u16) {
     }
     let mut cursor = field!(host, program, slot);
     let duration = loop {
-        let data = host.record(Source::Loaded, 0x8d, cursor);
-        let instruction = data.native_word(0);
+        let instruction = program_word(host, cursor, 0);
         if instruction & 0x8000 == 0 {
             break instruction;
         }
-        (slot, cursor) = command(
-            host,
-            0x8d0000 | u32::from(instruction),
-            slot,
-            cursor.wrapping_add(2),
-        );
+        (slot, cursor) = command(host, instruction, slot, cursor.wrapping_add(2));
         if cursor == 0 {
             return;
         }
@@ -233,8 +236,7 @@ pub fn process(host: &mut impl Host, k: u16) {
     let mut destination = field!(host, color_offset, slot);
     loop {
         let instruction = loop {
-            let data = host.record(Source::Loaded, 0x8d, cursor);
-            let value = data.native_word(2);
+            let value = program_word(host, cursor, 2);
             if value & 0x8000 != 0 {
                 break value;
             }
@@ -242,8 +244,7 @@ pub fn process(host: &mut impl Host, k: u16) {
             destination = destination.wrapping_add(2);
             cursor = cursor.wrapping_add(2);
         };
-        (destination, cursor) =
-            command(host, 0x8d0000 | u32::from(instruction), destination, cursor);
+        (destination, cursor) = command(host, instruction, destination, cursor);
         if cursor == 0 {
             return;
         }
@@ -307,8 +308,8 @@ pub fn pre(host: &mut impl Host, ea: u32, k: u16) {
                 } else {
                     0xe420
                 };
-                let data = host.record(Source::Loaded, 0x8d, table);
-                put!(host, program, k, data.native_word(usize::from(offset)));
+                let program = program_word(host, table, usize::from(offset));
+                put!(host, program, k, program);
             }
         }
         9301081 | 9301380 => {
@@ -338,10 +339,16 @@ pub fn pre(host: &mut impl Host, ea: u32, k: u16) {
         _ => host.invalid_palette_instruction(),
     }
 }
-pub fn command(host: &mut impl Host, ea: u32, k: u16, j: u16) -> (u16, u16) {
+/// Runs the command whose handler is at $8D:`handler` with colour offset or
+/// slot `k` and cursor `j`; returns them updated, cursor 0 to stop the phase.
+pub fn command(host: &mut impl Host, handler: u16, k: u16, j: u16) -> (u16, u16) {
     host.probe("palette.command");
-    match ea {
-        9291157 => {
+    let Some(command) = Command::decode(handler) else {
+        host.invalid_palette_instruction();
+        return (0, 0);
+    };
+    match command {
+        Command::Done => {
             let selected = host
                 .session()
                 .presentation
@@ -352,79 +359,57 @@ pub fn command(host: &mut impl Host, ea: u32, k: u16, j: u16) -> (u16, u16) {
             host.probe("palette.continuation.save");
             (0, 0)
         }
-        9291161 => (k.wrapping_add(4), j.wrapping_add(2)),
-        9291170 => (k.wrapping_add(6), j.wrapping_add(2)),
-        9291179 => (k.wrapping_add(8), j.wrapping_add(2)),
-        9291188 => (k.wrapping_add(16), j.wrapping_add(2)),
-        9291197 => (k.wrapping_add(18), j.wrapping_add(2)),
-        9291206 => (k.wrapping_add(30), j.wrapping_add(2)),
-        9291215 => {
+        Command::Skip { colours } => (k.wrapping_add(2 * colours), j.wrapping_add(2)),
+        Command::Delete => {
             put!(host, definition, k, 0);
             (k, 0)
         }
-        9291220 => {
-            let data = host.record(Source::Loaded, 0x8d, j);
-            put!(host, pre_action, k, data.native_word(0));
+        Command::SetPreInstruction => {
+            let pre_action = program_word(host, j, 0);
+            put!(host, pre_action, k, pre_action);
             (k, j.wrapping_add(2))
         }
-        9291229 => {
+        Command::ClearPreInstruction => {
             put!(host, pre_action, k, 0xc5e3);
             (k, j)
         }
-        9291294 => {
-            let data = host.record(Source::Loaded, 0x8d, j);
-            (k, data.native_word(0))
-        }
-        9291321 => {
+        Command::Goto => (k, program_word(host, j, 0)),
+        Command::DecrementGoto => {
             let cursor = if decrement!(host, counter, k) == 1 {
                 j.wrapping_add(2)
             } else {
-                let data = host.record(Source::Loaded, 0x8d, j);
-                data.native_word(0)
+                program_word(host, j, 0)
             };
             (k, cursor)
         }
-        9291336 => {
-            let data = host.record(Source::Loaded, 0x8d, j);
-            counter_byte(host, k, data.byte(0));
+        Command::SetCounter => {
+            let counter = program_byte(host, j, 0);
+            counter_byte(host, k, counter);
             (k, j.wrapping_add(1))
         }
-        9291349 => {
-            let data = host.record(Source::Loaded, 0x8d, j);
-            put!(host, color_offset, k, data.native_word(0));
+        Command::SetColourIndex => {
+            let colour_offset = program_word(host, j, 0);
+            put!(host, color_offset, k, colour_offset);
             (k, j.wrapping_add(2))
         }
-        9291358 => {
-            let data = host.record(Source::Loaded, 0x8d, j);
-            host.music_delayed8(u16::from(data.byte(0)));
+        Command::QueueMusic => {
+            let track = program_byte(host, j, 0);
+            host.music_delayed8(u16::from(track));
             (k, j.wrapping_add(1))
         }
-        9291370 | 9291379 | 9291388 => {
-            let data = host.record(Source::Loaded, 0x8d, j);
-            let sound = data.native_word(0);
-            host.sound(
-                match ea {
-                    9291370 => 1,
-                    9291379 => 2,
-                    _ => 3,
-                },
-                6,
-                sound,
-            );
+        Command::QueueSound { library } => {
+            let sound = program_word(host, j, 0);
+            host.sound(library, 6, sound);
             (k, j.wrapping_add(1))
         }
-        9302470 => {
-            let data = host.record(Source::Loaded, 0x8d, j);
+        Command::SetHeat => {
+            let heat = program_byte(host, j, 0);
             host.session_mut()
                 .presentation
                 .visual_mut()
                 .palette_effects
-                .heat = u16::from(data.byte(0));
+                .heat = u16::from(heat);
             (k, j.wrapping_add(1))
-        }
-        _ => {
-            host.invalid_palette_instruction();
-            (0, 0)
         }
     }
 }

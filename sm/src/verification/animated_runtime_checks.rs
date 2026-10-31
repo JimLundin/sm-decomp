@@ -34,7 +34,7 @@ pub(super) fn run(game: &mut Game) -> bool {
                     .animated_tiles
                     .slots[0]
                     .counter = 2;
-                execution::command(&mut runtime, 8880340, 0, 0x9000);
+                execution::command(&mut runtime, 0x80d4, 0, 0x9000);
             }))
             .is_err()
         );
@@ -55,7 +55,7 @@ pub(super) fn run(game: &mut Game) -> bool {
                 .animated_tiles
                 .slots[0]
                 .counter = 0xabcd;
-            execution::command(&mut runtime, 8880306, 12, 0);
+            execution::command(&mut runtime, 0x80b2, 12, 0);
             assert_eq!(
                 runtime.session().presentation.visual().animated_tiles.slots[0].counter,
                 0

@@ -1,10 +1,19 @@
 //! Animated-tile execution over the shared visual Session.
 use crate::{
+    program_banks::{self, Bank},
     progress_flags,
     session::Session,
-    visual_host::{AnimationMember, Host, Record, Source, StatueProjectile},
+    visual_host::{AnimationMember, Host, StatueProjectile},
     visual_state::{PaletteBuffer, Upload},
 };
+use sm_data::animated_programs::Command;
+
+fn program_word(host: &mut impl Host, cursor: u16, displacement: usize) -> u16 {
+    program_banks::word(host, Bank::Animated, cursor, displacement)
+}
+fn program_byte(host: &mut impl Host, cursor: u16, displacement: usize) -> u8 {
+    program_banks::byte(host, Bank::Animated, cursor, displacement)
+}
 
 macro_rules! member {
     (definition) => {
@@ -134,21 +143,25 @@ pub fn spawn(host: &mut impl Host, definition: u16) {
         .slots[slot];
     entry.definition = definition;
     entry.counter = 0;
-    let data = host.record(Source::Loaded, 0x87, definition);
-    let entry = &mut host
+    // Each store precedes the next read, so a short record leaves the stores
+    // before it, as the original's do.
+    let program = program_word(host, definition, 0);
+    slot_mut(host, slot).program = program;
+    slot_mut(host, slot).source = 0;
+    let size = program_word(host, definition, 2);
+    slot_mut(host, slot).size = size;
+    let vram = program_word(host, definition, 4);
+    slot_mut(host, slot).vram = vram;
+    slot_mut(host, slot).delay = 1;
+    host.probe("animated_tiles.spawn.initialized");
+}
+fn slot_mut(host: &mut impl Host, slot: usize) -> &mut crate::visual_state::AnimationSlot {
+    &mut host
         .session_mut()
         .presentation
         .visual_mut()
         .animated_tiles
-        .slots[slot];
-    // Each store precedes the next record read, so a short record leaves the
-    // stores before it, as the original's do.
-    entry.program = data.native_word(0);
-    entry.source = 0;
-    entry.size = data.native_word(2);
-    entry.vram = data.native_word(4);
-    entry.delay = 1;
-    host.probe("animated_tiles.spawn.initialized");
+        .slots[slot]
 }
 pub fn advance(host: &mut impl Host) {
     if host.session().presentation.visual().animated_tiles.flags & 0x8000 != 0 {
@@ -168,7 +181,7 @@ pub fn advance(host: &mut impl Host) {
     }
 }
 fn goto(host: &mut impl Host, cursor: u16) -> u16 {
-    host.record(Source::Loaded, 0x87, cursor).native_word(0)
+    program_word(host, cursor, 0)
 }
 fn goto_relative(host: &mut impl Host, cursor: u16) -> u16 {
     host.session_mut()
@@ -176,19 +189,23 @@ fn goto_relative(host: &mut impl Host, cursor: u16) -> u16 {
         .visual_mut()
         .animated_tiles
         .last_instruction = cursor;
-    cursor.wrapping_add(host.record(Source::Loaded, 0x87, cursor).byte(0) as i8 as u16)
+    cursor.wrapping_add(program_byte(host, cursor, 0) as i8 as u16)
 }
-pub fn command(host: &mut impl Host, address: u32, index: u16, cursor: u16) -> u16 {
+/// Runs the command whose handler is at $87:`handler` for animation
+/// `index`; returns the next cursor, 0 to stop the frame.
+pub fn command(host: &mut impl Host, handler: u16, index: u16, cursor: u16) -> u16 {
     host.probe("animated_tiles.command.dispatched");
-    match address {
-        8880306 => {
+    let Some(command) = Command::decode(handler) else {
+        return host.invalid_animation_instruction();
+    };
+    match command {
+        Command::Delete => {
             animation!(host, index, definition = 0);
             0
         }
-        8880311 => goto(host, cursor),
-        8880316 => goto_relative(host, cursor),
-        8880340 | 8880348 => {
-            let relative = address == 8880348;
+        Command::Goto => goto(host, cursor),
+        Command::GotoRelative => goto_relative(host, cursor),
+        Command::DecrementGoto { relative } => {
             if decrement_counter(host, index) == 1 {
                 cursor.wrapping_add(if relative { 1 } else { 2 })
             } else if relative {
@@ -197,34 +214,39 @@ pub fn command(host: &mut impl Host, address: u32, index: u16, cursor: u16) -> u
                 goto(host, cursor)
             }
         }
-        8880355 => {
-            let data = host.record(Source::Loaded, 0x87, cursor);
-            counter_byte(host, index, data.byte(0));
+        Command::SetCounter => {
+            let counter = program_byte(host, cursor, 0);
+            counter_byte(host, index, counter);
             cursor.wrapping_add(1)
         }
-        8880368 | 8880380 | 8880392 | 8880404 => {
-            let data = host.record(Source::Loaded, 0x87, cursor);
-            let sound = u16::from(data.byte(0));
-            match address {
-                8880368 => host.music_delayed8(sound),
-                8880380 => _ = host.sound(1, 6, sound),
-                8880392 => _ = host.sound(2, 6, sound),
-                _ => _ = host.sound(3, 6, sound),
-            }
+        Command::QueueMusic => {
+            let track = program_byte(host, cursor, 0);
+            host.music_delayed8(u16::from(track));
             cursor.wrapping_add(1)
         }
-        8880416 | 8880447 | 8880899 => {
-            let data = host.record(Source::Loaded, 0x87, cursor);
-            let (width, taken) = match address {
-                8880416 => (
-                    1,
-                    progress_flags::boss_defeated(host, u16::from(data.native_word(0) as u8)),
-                ),
-                8880447 => (2, progress_flags::event_happened(host, data.native_word(0))),
-                _ => (
-                    2,
-                    data.byte(0) & progress_flags::boss_byte_at(host, u16::from(data.byte(1))) != 0,
-                ),
+        Command::QueueSound { library } => {
+            let sound = program_byte(host, cursor, 0);
+            _ = host.sound(library, 6, u16::from(sound));
+            cursor.wrapping_add(1)
+        }
+        Command::GotoIfBossDefeated | Command::GotoIfEvent | Command::GotoIfBossBits => {
+            let (width, taken) = match command {
+                Command::GotoIfBossDefeated => {
+                    let boss = program_word(host, cursor, 0) as u8;
+                    (1, progress_flags::boss_defeated(host, u16::from(boss)))
+                }
+                Command::GotoIfEvent => {
+                    let event = program_word(host, cursor, 0);
+                    (2, progress_flags::event_happened(host, event))
+                }
+                _ => {
+                    let bits = program_byte(host, cursor, 0);
+                    let area = program_byte(host, cursor, 1);
+                    (
+                        2,
+                        bits & progress_flags::boss_byte_at(host, u16::from(area)) != 0,
+                    )
+                }
             };
             let next = cursor.wrapping_add(width);
             if taken {
@@ -233,17 +255,17 @@ pub fn command(host: &mut impl Host, address: u32, index: u16, cursor: u16) -> u
                 next.wrapping_add(2)
             }
         }
-        8880435 | 8880464 => {
-            let data = host.record(Source::Loaded, 0x87, cursor);
-            if address == 8880435 {
-                progress_flags::mark_boss_defeated(host, u16::from(data.byte(0)));
-                cursor.wrapping_add(1)
-            } else {
-                progress_flags::set_event(host, data.native_word(0));
-                cursor.wrapping_add(2)
-            }
+        Command::MarkBossDefeated => {
+            let boss = program_byte(host, cursor, 0);
+            progress_flags::mark_boss_defeated(host, u16::from(boss));
+            cursor.wrapping_add(1)
         }
-        8880570 => {
+        Command::SetEvent => {
+            let event = program_word(host, cursor, 0);
+            progress_flags::set_event(host, event);
+            cursor.wrapping_add(2)
+        }
+        Command::WaitForBoss => {
             if !progress_flags::boss_defeated(host, 1) {
                 animation!(host, index, delay = 1);
                 0
@@ -251,52 +273,48 @@ pub fn command(host: &mut impl Host, address: u32, index: u16, cursor: u16) -> u
                 cursor
             }
         }
-        8880928 | 8880943 => {
-            let data = host.record(Source::Loaded, 0x87, cursor);
-            let kind = if address == 8880928 {
+        Command::SpawnEyeGlow | Command::SpawnSoul => {
+            let kind = if command == Command::SpawnEyeGlow {
                 StatueProjectile::EyeGlow
             } else {
                 StatueProjectile::Soul
             };
-            let parameter = data.native_word(0);
+            let parameter = program_word(host, cursor, 0);
             host.spawn_statue_projectile(kind, parameter);
             cursor.wrapping_add(2)
         }
-        8880958 => {
+        Command::GotoIfStatueAnimating => {
             if host.session().mechanisms.statue_animation & 0x8000 == 0 {
                 cursor.wrapping_add(2)
             } else {
                 goto(host, cursor)
             }
         }
-        8880969 | 8880978 => {
+        Command::SetStatueBits | Command::ClearStatueBits => {
             let previous = host.session().mechanisms.statue_animation;
-            let data = host.record(Source::Loaded, 0x87, cursor);
-            let mask = data.native_word(0);
-            host.session_mut().mechanisms.statue_animation = if address == 8880969 {
+            let mask = program_word(host, cursor, 0);
+            host.session_mut().mechanisms.statue_animation = if command == Command::SetStatueBits {
                 previous | mask
             } else {
                 previous & !mask
             };
             cursor.wrapping_add(2)
         }
-        8880987 => {
-            let data = host.record(Source::Loaded, 0x87, cursor);
-            let first = usize::from(data.native_word(0) >> 1);
+        Command::ClearColours => {
+            let first = usize::from(program_word(host, cursor, 0) >> 1);
             // Widen once: the last two writes do not wrap the original displacement.
             for offset in 0..3 {
                 write_color(host, PaletteBuffer::Current, first + offset, 0);
             }
             cursor.wrapping_add(2)
         }
-        8881010 => {
-            let data = host.record(Source::Loaded, 0x87, cursor);
-            host.spawn_palette(data.native_word(0));
+        Command::SpawnPaletteEffect => {
+            let effect = program_word(host, cursor, 0);
+            host.spawn_palette(effect);
             cursor.wrapping_add(2)
         }
-        8881023 => {
-            let data = host.record(Source::Loaded, 0x87, cursor);
-            let mut color = data.native_word(0);
+        Command::WriteStatuePalette => {
+            let mut color = program_word(host, cursor, 0);
             for value in [
                 0x3800, 0x7f58, 0x6ed5, 0x5a71, 0x49ee, 0x356a, 0x24e7, 0x1083,
             ] {
@@ -305,7 +323,6 @@ pub fn command(host: &mut impl Host, address: u32, index: u16, cursor: u16) -> u
             }
             cursor.wrapping_add(2)
         }
-        _ => host.invalid_animation_instruction(),
     }
 }
 pub fn process(host: &mut impl Host) {
@@ -315,8 +332,7 @@ pub fn process(host: &mut impl Host) {
     }
     let mut cursor = animation!(host, index, program);
     let duration = loop {
-        let data = host.record(Source::Loaded, 0x87, cursor);
-        let instruction = data.native_word(0);
+        let instruction = program_word(host, cursor, 0);
         if instruction & 0x8000 == 0 {
             break instruction;
         }
@@ -325,19 +341,14 @@ pub fn process(host: &mut impl Host) {
             .visual_mut()
             .animated_tiles
             .last_instruction = instruction;
-        cursor = command(
-            host,
-            0x870000 | u32::from(instruction),
-            index,
-            cursor.wrapping_add(2),
-        );
+        cursor = command(host, instruction, index, cursor.wrapping_add(2));
         if cursor == 0 {
             return;
         }
     };
     animation!(host, index, delay = duration);
-    let data = host.record(Source::Loaded, 0x87, cursor);
-    animation!(host, index, source = data.native_word(2));
+    let source = program_word(host, cursor, 2);
+    animation!(host, index, source = source);
     animation!(host, index, program = cursor.wrapping_add(4));
     host.probe("animated_tiles.frame.requested");
 }

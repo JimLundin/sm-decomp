@@ -6,6 +6,7 @@
 #![forbid(unsafe_code)]
 
 pub mod actor_tables;
+pub mod animated_programs;
 pub mod area_select_palettes;
 pub mod baby_metroid;
 pub mod beam_gradients;
@@ -34,8 +35,10 @@ pub mod magdollite;
 pub mod menu_lists;
 pub mod message;
 pub mod mother_brain;
+pub mod palette_programs;
 pub mod pause_menu;
 pub mod phantoon;
+pub mod program_bank;
 pub mod raster;
 pub mod ridley;
 pub mod ridley_explosion;

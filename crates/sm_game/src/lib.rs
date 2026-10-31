@@ -68,6 +68,7 @@ pub mod palette_copies;
 pub mod persistent_session;
 pub mod player_drawing;
 pub mod probe;
+pub mod program_banks;
 pub mod progress;
 pub mod projectile_block_reactions;
 pub mod projectile_geometry;
