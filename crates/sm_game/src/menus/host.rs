@@ -67,8 +67,6 @@ pub trait MenuRuntime:
     fn cinematic_sprite_pre_instruction(&mut self, pre: u32, object: u16);
     /// Run bank $8B's cinematic sprite instruction; returns the next script cursor.
     fn cinematic_sprite_instruction(&mut self, command: u32, object: u16, operand: u16) -> u16;
-    /// Append a ROM Mode 7 transfer list to the Mode 7 queue.
-    fn enqueue_mode7_rom(&mut self, bank: u8, cursor: u16);
     /// Write a DMA channel register on the owned backend.
     fn write_dma_register(&mut self, register: u16, value: u8);
     /// Advance the music queue, as the HDMA update did first each frame.
