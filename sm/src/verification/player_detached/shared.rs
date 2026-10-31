@@ -29,47 +29,6 @@ pub(crate) mod ram_map;
 pub(crate) mod rom;
 #[path = "../../verify_probe.rs"]
 pub(crate) mod verify_probe;
-pub(crate) mod types {
-    // These scalar aliases match types.rs:641; constants are actual source.
-    pub(crate) type Buttons = u32;
-    pub(crate) type Consts60 = u32;
-    pub(crate) type Consts81 = u32;
-    pub(crate) type Consts82 = u32;
-    pub(crate) type Consts84 = u32;
-    pub(crate) type Consts86 = u32;
-    pub(crate) type Consts87 = u32;
-    pub(crate) type Consts8D = u32;
-    pub(crate) type Consts8F = u32;
-    pub(crate) type Consts90 = u32;
-    pub(crate) type Consts91 = u32;
-    pub(crate) type Consts9B = u32;
-    pub(crate) type ConstsA0 = u32;
-    pub(crate) type ConstsA4 = u32;
-    pub(crate) type ConstsA6 = u32;
-    pub(crate) type ConstsA9 = u32;
-    pub(crate) type ConstsB4 = u32;
-    pub(crate) type EnemyProps = u32;
-    pub(crate) type GameState = u32;
-    pub(crate) type LoadingGameState = u32;
-    pub(crate) type ProjectileType = u32;
-    pub(crate) type SamusMovementType = u32;
-    pub(crate) type SamusPose = u32;
-
-    // Exact numeric Hitbox layout from types.rs, for shared contact_rules offsets.
-    #[repr(C, packed)]
-    pub(crate) struct Hitbox {
-        pub left: u16,
-        pub top: u16,
-        pub right: u16,
-        pub bottom: u16,
-        pub func_ptr: u16,
-        pub func_ptrA: u16,
-    }
-    pub(crate) struct LongPtr {
-        pub addr: u16,
-        pub bank: u8,
-    }
-}
 use animation::execution as animated;
 use game::visual_state::Upload;
 use palette::execution as colors;
@@ -114,7 +73,6 @@ enum Event {
     Beam(u16, u16, u16),
     PaletteSpawn(u16),
     Color(usize, u16),
-    Target(usize, u16),
     Music(u16),
     Sound(u8, u16),
     Projectile(game::visual_host::StatueProjectile, u16),

@@ -43,14 +43,6 @@ pub(crate) struct CollisionContract {
     external: BTreeMap<usize, u8>,
 }
 impl Composed {
-    pub(crate) fn prepare_collision_external(&mut self, at: usize, byte: u8) {
-        assert!(at < 0x20000, "collision fixture outside physical RAM");
-        assert!(
-            crate::game::session_encoding::projected_byte(&self.world.player, at).is_none(),
-            "collision fixture must edit actual owner"
-        );
-        self.collision_contract.external.insert(at, byte);
-    }
     fn collision_byte(&self, at: usize) -> u8 {
         assert!(
             at < 0x20000,
