@@ -193,6 +193,9 @@ pub struct Game {
     ram: WorkRam,
     pub(crate) loaded_rom: Option<crate::rom::RomImage>,
     native_rom: Option<crate::rom::RomImage>,
+    /// The oracle's cartridge ROM, which its compatibility patches rewrite;
+    /// the engine's images are an unpatched copy, as hardware reads.
+    pub(crate) cartridge_rom: Option<crate::rom::RomImage>,
     /// Imported from `loaded_rom` by `register_rom`; see game::enemy_speeds.
     pub(crate) enemy_speeds: Option<crate::game::enemy_speeds::ImportedSpeeds>,
     /// Imported from `native_rom` by `register_native_rom`; see game::enemy_speeds.
@@ -323,6 +326,7 @@ impl Game {
             ram,
             loaded_rom,
             native_rom,
+            cartridge_rom,
             g_fail,
             hookmode,
             hookcnt,
@@ -931,6 +935,7 @@ impl Game {
             frame_session: Default::default(),
             ram: WorkRam::new(),
             loaded_rom: None,
+            cartridge_rom: None,
             native_rom: None,
             enemy_speeds: None,
             enemy_speeds32: None,
