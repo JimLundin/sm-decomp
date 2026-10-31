@@ -3,6 +3,7 @@
 //! native body tables captured through the compatibility runtime.
 use crate::runtime_access::SessionRam;
 use crate::scene::objects::Host as _;
+use crate::scene::owned_samus::{SamusExecution, SamusSources};
 use crate::scene::samus_body::{self, Body, Half};
 use crate::scene::samus_content::{CapturedBytes, PreparedBytes, Registration, Role, RoleLease};
 use crate::scene::samus_native_content::CapturedRom;
@@ -97,21 +98,79 @@ pub trait Authority: SessionAccess + SessionRam + Content<Record = RomRecord> + 
     /// The original diagnostic for a Samus source below $8000 in its bank.
     fn samus_source_diagnostic(&mut self, address: u32);
     fn samus_request_written(&mut self, half: Half, pointer: u16);
+    /// The bound Samus content the role tables come from.
+    type Sources: SamusSources + ?Sized;
+    fn samus_sources(&self) -> &Self::Sources;
     /// The prepared role table at `displacement` from the role's base.
     fn prepared_role(
         &self,
         role: Role,
         registration: Registration,
         displacement: usize,
-    ) -> RoleTable;
+    ) -> RoleTable {
+        let lease = self
+            .samus_sources()
+            .prepared_samus_role(role, registration, displacement)
+            .expect("Samus prepared role")
+            .expect("supplied Samus role");
+        RoleTable::prepared(lease)
+    }
     /// The role table bound over the native `record`.
-    fn captured_role(&self, role: Role, registration: Registration, record: RomRecord)
-    -> RoleTable;
+    fn captured_role(
+        &self,
+        role: Role,
+        registration: Registration,
+        record: RomRecord,
+    ) -> RoleTable {
+        capture_table(self.samus_sources(), role, registration, record)
+    }
     /// The role's mapped base in the prepared Samus content.
-    fn role_base(&self, role: Role, registration: Registration) -> usize;
+    fn role_base(&self, role: Role, registration: Registration) -> usize {
+        self.samus_sources()
+            .samus_role_base(role, registration)
+            .unwrap()
+            .unwrap()
+    }
     /// The prepared native position-offset table for `role`, when the
     /// prepared content supplies it.
-    fn native_offsets(&self, role: Role) -> Option<RoleTable>;
+    fn native_offsets(&self, role: Role) -> Option<RoleTable> {
+        self.samus_sources()
+            .prepared_samus_role(role, Registration::Native, 0)
+            .unwrap()
+            .map(RoleTable::prepared)
+    }
+}
+
+/// The role table over the native `record`, bound to its role lease when
+/// Samus content is bound.
+pub fn capture_table<G: SamusSources + ?Sized>(
+    sources: &G,
+    role: Role,
+    source: Registration,
+    record: RomRecord,
+) -> RoleTable {
+    let bound = sources.samus_execution().unwrap().map(|execution| {
+        let base = sources.samus_role_base(role, source).unwrap().unwrap();
+        let displacement = record
+            .base
+            .checked_sub(base)
+            .expect("Samus role mapped base");
+        match execution {
+            SamusExecution::Prepared => BoundTable::Prepared(
+                sources
+                    .prepared_samus_role(role, source, displacement)
+                    .unwrap()
+                    .unwrap(),
+            ),
+            SamusExecution::RetainedNative => BoundTable::Native(
+                sources
+                    .capture_samus_role(role, source, displacement, &record.image)
+                    .unwrap()
+                    .unwrap(),
+            ),
+        }
+    });
+    RoleTable::captured(record, bound)
 }
 
 /// The bottom-half and sprite-position protocols on the lease's Session,

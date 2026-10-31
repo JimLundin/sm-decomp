@@ -20,11 +20,7 @@ use std::ops::Range;
 use std::rc::Rc;
 use std::sync::Arc;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(crate) enum SamusExecution {
-    Prepared,
-    RetainedNative,
-}
+pub(crate) use sm_game::scene::owned_samus::SamusExecution;
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum SamusAuthority {
     LegacyUnrouted,
@@ -1974,6 +1970,18 @@ impl sm_game::effects::DisplayRefresh for Game {
 }
 
 impl sm_game::scene::owned_samus::SamusSources for Game {
+    fn samus_execution(&self) -> Result<Option<SamusExecution>, DisplayError> {
+        Game::samus_execution(self)
+    }
+    fn capture_samus_role(
+        &self,
+        role: content::Role,
+        registration: content::Registration,
+        displacement: usize,
+        selected: &crate::rom::RomImage,
+    ) -> Result<Option<content::RoleLease<native_content::CapturedRom>>, DisplayError> {
+        Game::capture_samus_role(self, role, registration, displacement, selected)
+    }
     fn prepared_samus_role(
         &self,
         role: content::Role,
