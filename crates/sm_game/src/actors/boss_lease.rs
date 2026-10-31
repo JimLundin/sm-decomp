@@ -72,3 +72,30 @@ pub trait BossLease: BossState {
     type Game: ?Sized;
     fn foreign<T>(&mut self, action: impl FnOnce(&mut Self::Game) -> T) -> T;
 }
+
+/// The bosses' shared RAM words, which the Session holds as `actors.extended`'s
+/// last block,
+/// read and stored through the lease's projected bytes.
+pub mod boss_ram {
+    use crate::actors::session_slots::SlotAccess;
+    /// A named boss RAM word, by its RAM address.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    pub enum Word {
+        QuakeSoundTimer = 0x9000,
+        CrocomireBridge1 = 0x9002,
+        CrocomireBridge2 = 0x9006,
+        CrocomireUnread = 0x900a,
+        CrocomireAcidSmoke = 0x9018,
+        PhantoonMaterialisationSound = 0x9032,
+    }
+    /// `word` as the lease's projection holds it, low byte then high.
+    pub fn get<H: SlotAccess + ?Sized>(h: &H, word: Word) -> u16 {
+        u16::from_le_bytes([h.slot_byte(word as usize), h.slot_byte(word as usize + 1)])
+    }
+    /// Store `value` to `word`, low byte then high, as the named word store did.
+    pub fn set<H: SlotAccess + ?Sized>(h: &mut H, word: Word, value: u16) {
+        let [low, high] = value.to_le_bytes();
+        h.set_slot_byte(word as usize, low);
+        h.set_slot_byte(word as usize + 1, high);
+    }
+}

@@ -69,6 +69,9 @@ pub(crate) use scroll;
 /// Crocomire's melt words ([`crate::actors::crocomire_reactions::melt::Word`]).
 macro_rules! melt { ($($t:tt)*) => { owned!([$crate::actors::crocomire_reactions::melt] $($t)*) }; }
 pub(crate) use melt;
+/// The bosses' shared RAM words ([`crate::actors::boss_lease::boss_ram::Word`]).
+macro_rules! boss { ($($t:tt)*) => { owned!([$crate::actors::boss_lease::boss_ram] $($t)*) }; }
+pub(crate) use boss;
 
 /// A word pair addressed as an enemy-slot record, as the original's `PairU16`.
 #[derive(Copy, Clone)]

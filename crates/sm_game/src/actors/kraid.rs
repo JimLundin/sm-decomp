@@ -23,6 +23,7 @@ use crate::constants::enemy_properties::{
 };
 use crate::enemy_projectiles::drops::DropSource;
 use crate::kraid_tables;
+use crate::menus::prelude::{boss, owned};
 use crate::palette_effects::fading::background6;
 use crate::ram::CompatibilityRam as _;
 use crate::ram::{slot, word};
@@ -915,10 +916,10 @@ fn crumble<L: Lease + ?Sized>(game: &mut L, rock: u16, block_x: u8, plm: u16) {
 }
 
 fn sound_every_half_second<L: Lease + ?Sized>(game: &mut L) {
-    word!(game.BOSS_DEATH_QUAKE_SOUND_TIMER, wrapping_sub(1));
-    if word!(game.BOSS_DEATH_QUAKE_SOUND_TIMER) == 0 {
+    boss!(game.QuakeSoundTimer -= 1);
+    if boss!(game.QuakeSoundTimer) == 0 {
         game.queue_sound(2, ROCKS_SOUND, 6);
-        word!(game.BOSS_DEATH_QUAKE_SOUND_TIMER = 30);
+        boss!(game.QuakeSoundTimer = 30);
     }
 }
 
@@ -1505,7 +1506,7 @@ fn death_bg2_bottom_half<L: Lease + ?Sized>(game: &mut L) {
         game,
         Body[BODY].function = function::DEATH_SINK_THROUGH_FLOOR
     );
-    word!(game.BOSS_DEATH_QUAKE_SOUND_TIMER = 43);
+    boss!(game.QuakeSoundTimer = 43);
     session_slot!(game, Body[BODY].base.properties, |old| old | 0x8000);
     word!(game.EARTHQUAKE_TYPE = 1);
     word!(game.EARTHQUAKE_TIMER = 256);
