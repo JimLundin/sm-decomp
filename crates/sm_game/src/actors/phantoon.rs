@@ -20,7 +20,7 @@ use crate::constants::enemy_properties::{
 };
 use crate::display::hdma_spawn::HdmaObjectDefinition;
 use crate::enemy_projectiles::drops::DropSource;
-use crate::menus::prelude::{owned, scroll};
+use crate::menus::prelude::{boss, owned, scroll};
 use crate::phantoon_tables::{self, Timer};
 use crate::ram::RawRam as _;
 use crate::ram::{slot, word};
@@ -295,14 +295,14 @@ fn close_eye<S: BossState + ?Sized>(game: &mut S, eye_list: u16) {
 pub fn materialisation_sound<S: BossState + ?Sized>(game: &mut S) {
     let sound = crate::boss_lists::phantoon_materialisation_sound(
         game,
-        word!(game.PHANTOON_MATERIALISATION_SOUND_INDEX) as isize,
+        boss!(game.PhantoonMaterialisationSound) as isize,
     );
     game.queue_sound(1, sound as u8, 6);
-    let mut next: u16 = (word!(game.PHANTOON_MATERIALISATION_SOUND_INDEX)).wrapping_add(1);
-    if !below(word!(game.PHANTOON_MATERIALISATION_SOUND_INDEX), 2) {
+    let mut next: u16 = (boss!(game.PhantoonMaterialisationSound)).wrapping_add(1);
+    if !below(boss!(game.PhantoonMaterialisationSound), 2) {
         next = 0;
     }
-    word!(game.PHANTOON_MATERIALISATION_SOUND_INDEX = next);
+    boss!(game.PhantoonMaterialisationSound = next);
 }
 
 /// Instruction: opens the eye for the figure-8's vulnerable window. Was
@@ -644,7 +644,7 @@ pub fn initialize<H: Host + ?Sized>(game: &mut H) {
     let me = current(game);
     slot!(game, Body[me].timer = 120);
     slot!(game, Body[me]; movement_index = 0, speed_subpixel = 0);
-    word!(game.PHANTOON_MATERIALISATION_SOUND_INDEX = 0);
+    boss!(game.PhantoonMaterialisationSound = 0);
     slot!(game, Eye[EYE]; background_held = 0, parameter_2 = 0);
     slot!(
         game,

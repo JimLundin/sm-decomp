@@ -17,7 +17,7 @@ use crate::constants::{
     enemy_properties::K_ENEMY_PROPS_TANGIBLE,
 };
 use crate::enemy_script::EnemyScript;
-use crate::menus::prelude::{do_until, melt, owned, scroll};
+use crate::menus::prelude::{boss, do_until, melt, owned, scroll};
 use crate::ram::RawRam as _;
 use crate::ram::{checked_word, slot, word, words as ram};
 use sm_data::crocomire::{
@@ -515,8 +515,8 @@ pub fn hop_3_4_5_sinking<L: Lease + ?Sized>(game: &mut L) {
 }
 
 pub fn emit_lava_plume<L: Lease + ?Sized>(game: &mut L) {
-    if word!(game.CROCOMIRE_ACID_SMOKE_TIMER -= 1, reread) == 0 {
-        word!(game.CROCOMIRE_ACID_SMOKE_TIMER = 6);
+    if boss!(game.CrocomireAcidSmoke -= 1, reread) == 0 {
+        boss!(game.CrocomireAcidSmoke = 6);
         let mut v0: u16 = (word!(game.RANDOM_NUMBER)) & (0x3fu16);
         if (word!(game.RANDOM_NUMBER) & 2) == 0 {
             v0 = !(v0 as i32) as u16;
@@ -760,18 +760,18 @@ pub fn not_started<L: Lease + ?Sized>(game: &mut L) {
 fn update_wall<L: Lease + ?Sized>(game: &mut L) {
     let e0: i32 = 0;
     if (session_slot!(game, Crocomire[e0].base.x_pos) as i32 - 1536i32) & 0x8000 != 0 {
-        word! { game, 0; BOSS_DEATH_QUAKE_SOUND_TIMER, CROCOMIRE_BRIDGE_1_CRUMBLED, CROCOMIRE_BRIDGE_2_CRUMBLED, CROCOMIRE_UNREAD_900A }
+        boss!(game, 0; QuakeSoundTimer, CrocomireBridge1, CrocomireBridge2, CrocomireUnread);
     } else if (session_slot!(game, Crocomire[e0].base.x_pos) as i32 - 1552i32) & 0x8000 != 0 {
-        if word!(game.BOSS_DEATH_QUAKE_SOUND_TIMER) == 0 {
-            word!(game.BOSS_DEATH_QUAKE_SOUND_TIMER = 1);
+        if boss!(game.QuakeSoundTimer) == 0 {
+            boss!(game.QuakeSoundTimer = 1);
             game.place_projectile_spawn(1536, 176);
             game.spawn_room_projectile(ADDR_K_EPROJ_DUST_CLOUD_EXPLOSION as u16, 0x15);
         }
     } else if (session_slot!(game, Crocomire[e0].base.x_pos) as i32 - 1552i32) & 0x8000 != 0 {
-        word! { game, 0; CROCOMIRE_BRIDGE_1_CRUMBLED, CROCOMIRE_BRIDGE_2_CRUMBLED, CROCOMIRE_UNREAD_900A }
+        boss!(game, 0; CrocomireBridge1, CrocomireBridge2, CrocomireUnread);
     } else if (session_slot!(game, Crocomire[e0].base.x_pos) as i32 - 1568i32) & 0x8000 != 0 {
-        if word!(game.CROCOMIRE_BRIDGE_1_CRUMBLED) == 0 {
-            word!(game.CROCOMIRE_BRIDGE_1_CRUMBLED = 1);
+        if boss!(game.CrocomireBridge1) == 0 {
+            boss!(game.CrocomireBridge1 = 1);
             game.foreign(|game| game.spawn_plm(0x61, BRIDGE_ROW, CRUMBLE_BRIDGE_BLOCK));
             game.place_projectile_spawn(1568, 176);
             game.spawn_room_projectile(ADDR_K_EPROJ_DUST_CLOUD_EXPLOSION as u16, 0x15);
@@ -779,10 +779,10 @@ fn update_wall<L: Lease + ?Sized>(game: &mut L) {
     } else {
         let x_pos: u16 = session_slot!(game, Crocomire[e0].base.x_pos);
         if (x_pos as i32 - 1568i32) & 0x8000 != 0 {
-            word! { game, 0; CROCOMIRE_BRIDGE_2_CRUMBLED, CROCOMIRE_UNREAD_900A }
+            boss!(game, 0; CrocomireBridge2, CrocomireUnread);
         } else if (x_pos as i32 - 1584i32) & 0x8000 != 0 {
-            if word!(game.CROCOMIRE_BRIDGE_2_CRUMBLED) == 0 {
-                word!(game.CROCOMIRE_BRIDGE_2_CRUMBLED = 1);
+            if boss!(game.CrocomireBridge2) == 0 {
+                boss!(game.CrocomireBridge2 = 1);
                 game.foreign(|game| {
                     game.spawn_plm(0x62, BRIDGE_ROW, CRUMBLE_BRIDGE_BLOCK);
                     game.spawn_plm(0x63, BRIDGE_ROW, CRUMBLE_BRIDGE_BLOCK);
@@ -793,7 +793,7 @@ fn update_wall<L: Lease + ?Sized>(game: &mut L) {
         } else if ((x_pos) as i16).wrapping_sub((1600u16) as i16) >= 0 {
             demolish_wall(game);
             session_slot!(game, Crocomire[e0].acid_damage_sound_timer = 1);
-            word!(game.CROCOMIRE_ACID_SMOKE_TIMER = 1);
+            boss!(game.CrocomireAcidSmoke = 1);
             let _v3: u16 = game.current_enemy();
             let ek: i32 = game.current_enemy() as i32;
             skip_death_step(ek, game);
