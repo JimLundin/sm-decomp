@@ -66,7 +66,7 @@ pub struct Botwoon {
     pub movement_data_pointer: u16,
     pad_8806: [u16; 1],
     pub movement_direction: u16,
-    pub smoothed_angle: u16,
+    pub unused_880a: u16,
     pad_880c: [u16; 5],
     pub unused_8816: u16,
     pad_8818: [u16; 2],
@@ -99,7 +99,7 @@ same_words!(Botwoon: EnemyLayout104 {
     target_hole = var_37, speed = var_38, unread_hole_angle = var_39, target_hole_angle = var_3a,
     instruction_list = var_3b, going_through_hole = var_3c, spit_angle = var_3d,
     speed_table_index = var_3f, movement_table_index = var_40, unused_8802 = var_41,
-    movement_data_pointer = var_42, movement_direction = var_44, smoothed_angle = var_45,
+    movement_data_pointer = var_42, movement_direction = var_44, unused_880a = var_45,
     unused_8816 = var_4b, palette_data_offset = var_4e, health_palette_index = var_4f,
     x_1_frame_ago = var_50, y_1_frame_ago = var_51, x_2_frames_ago = var_52,
     y_2_frames_ago = var_53, x_3_frames_ago = var_54, y_3_frames_ago = var_55,
@@ -675,21 +675,8 @@ pub fn head_moving_around<L: Lease + ?Sized>(game: &mut L) {
         } else {
             session_slot!(game, Botwoon[e].base.layer = SHOWN_LAYER);
             session_slot!(game, Botwoon[e].base.properties, |old| old & !INTANGIBLE);
-            session_slot!(
-                game,
-                Botwoon[e].smoothed_angle =
-                    (i32::from(session_slot!(game, Botwoon[e].smoothed_angle))
-                        + i32::from(
-                            (angle as i8)
-                                .wrapping_sub(session_slot!(game, Botwoon[e].smoothed_angle) as i8)
-                        ) * 3
-                            / 4) as u8 as u16
-            );
-            rom_table_word!(
-                game,
-                HEAD_INSTRUCTION_LISTS,
-                (session_slot!(game, Botwoon[e].smoothed_angle) >> 5) as isize
-            )
+            // The original faces the raw angle; snesrev smoothed it.
+            rom_table_word!(game, HEAD_INSTRUCTION_LISTS, (angle >> 5) as isize)
         };
         if instruction != session_slot!(game, Botwoon[e].instruction_list) {
             set_instruction_list(e, instruction, game);
