@@ -1,5 +1,6 @@
 //! Ending graphics: logo palette steps, icon and beam transfers, and the item percentage.
 use crate::cinematic::cinematic_native_record;
+use crate::cinematic_state::cinematic;
 use crate::imported::{Imported, grid_word, load, word as table_word};
 use crate::ram::RawRam as _;
 use crate::ram::{checked_word, word};
@@ -11,7 +12,7 @@ use sm_data::credits::{
 };
 
 pub fn advance_ending_logo_palette<H: crate::menus::host::Host + ?Sized>(game: &mut H) -> bool {
-    let pair = (word!(game.CINEMATIC_FUNCTION_TIMER).wrapping_mul(4) >> 1) as isize;
+    let pair = (cinematic!(game.FunctionTimer).wrapping_mul(4) >> 1) as isize;
     let step = Imported::read(
         &game.visual_tables().icon_palettes,
         game,
@@ -31,7 +32,7 @@ pub fn advance_ending_logo_palette<H: crate::menus::host::Host + ?Sized>(game: &
             source = source.wrapping_sub(2);
         }
     }
-    (word!(game.CINEMATIC_FUNCTION_TIMER += 1, reread) as i32 - 16) & 0x8000 == 0
+    (cinematic!(game.FunctionTimer += 1, reread) as i32 - 16) & 0x8000 == 0
 }
 
 pub fn advance_ending_graphics<H: crate::menus::host::Host + ?Sized>(
@@ -40,12 +41,12 @@ pub fn advance_ending_graphics<H: crate::menus::host::Host + ?Sized>(
 ) {
     use EndingGraphics::*;
     let limit = if matches!(graphics, Samus) { 16 } else { 6 };
-    if (matches!(graphics, Background) && word!(game.CINEMATIC_VAR17) != 0)
-        || (i32::from(word!(game.CINEMATIC_VAR14)) - limit) & 0x8000 == 0
+    if (matches!(graphics, Background) && cinematic!(game.Var17) != 0)
+        || (i32::from(cinematic!(game.Var14)) - limit) & 0x8000 == 0
     {
         return;
     }
-    let frame = word!(game.CINEMATIC_VAR14);
+    let frame = cinematic!(game.Var14);
     let index = match graphics {
         Background => 4 * i32::from(frame),
         Samus => i32::from(frame.wrapping_mul(2) >> 1),
@@ -99,7 +100,7 @@ pub fn advance_ending_graphics<H: crate::menus::host::Host + ?Sized>(
         }
     }
     word!(game.VRAM_WRITE_QUEUE_TAIL = tail.wrapping_add(7));
-    word!(game.CINEMATIC_VAR14 += 1);
+    cinematic!(game.Var14 += 1);
 }
 
 pub fn draw_cinematic_item_percentage<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
