@@ -42,7 +42,6 @@ pub enum XrayRestore {
 }
 /// Game-side calls the Samus rules make outside the lease, as the original's.
 pub trait GameEffects {
-    fn pose_command(&mut self, command: u16);
     /// Spawn a bank $91 HDMA object.
     fn spawn_hdma_object(&mut self, definition: &crate::display::hdma_spawn::HdmaObjectDefinition);
     /// Rebuild the beam tiles and palette for the equipped beams.
