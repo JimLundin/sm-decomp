@@ -152,9 +152,7 @@ unsafe fn synchronize_whole_state(native_game: &mut Game, complete_load: bool) {
     let game = &mut *native_game;
     unsafe {
         if let Some(sync) = game.g_rtl_syncall {
-            let mut mutation = game
-                .begin_samus_mutation()
-                .expect("Samus mutation rejected");
+            let mut mutation = game.samus_mutation();
             sync(mutation.game());
             if complete_load {
                 mutation
@@ -206,9 +204,7 @@ pub unsafe fn finish_complete_load(game: &mut Game) {
 unsafe fn finish_load_snes_state(native_game: &mut Game, complete_load: bool) {
     let game = &mut *native_game;
     unsafe {
-        let mut mutation = game
-            .begin_samus_mutation()
-            .expect("Samus mutation rejected");
+        let mut mutation = game.samus_mutation();
         let game = mutation.game();
         crate::snes::ppu::ppu_restore_render_routing(&mut *(*game.g_snes).ppu);
         (*(*game.g_snes).cpu).e = false;
@@ -272,9 +268,7 @@ unsafe fn reset(mode: i32, native_game: &mut Game, complete_load: bool) {
         let payload = game.capture_samus_snapshot();
         game.prepare_samus_adoption(&payload)
             .expect("Samus reset preflight rejected");
-        let mut mutation = game
-            .begin_samus_mutation()
-            .expect("Samus mutation rejected");
+        let mut mutation = game.samus_mutation();
         let game = mutation.game();
         game.snes_frame_counter = 0;
         game.execution().reset(true);
@@ -356,9 +350,7 @@ unsafe fn state_recorder_load(
         let payload = game.capture_samus_snapshot();
         game.prepare_samus_adoption(&payload)
             .expect("Samus load preflight rejected");
-        let mut mutation = game
-            .begin_samus_mutation()
-            .expect("Samus mutation rejected");
+        let mut mutation = game.samus_mutation();
         let game = mutation.game();
         game.state_recorder.total_frames = hdr[1i32 as usize];
         recording_allocation(game.state_recorder.log.resize(hdr[2] as usize));
@@ -511,9 +503,7 @@ pub unsafe fn state_recorder_save(
         }
         game.preflight_samus_runtime()
             .expect("Samus save entry rejected");
-        let mut mutation = game
-            .begin_samus_mutation()
-            .expect("Samus mutation rejected");
+        let mut mutation = game.samus_mutation();
         let game = mutation.game();
         let mut hdr: [u32; 16] = [0i32 as u32, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
         let mut arr = RecordingBytes::default();
@@ -579,9 +569,7 @@ pub unsafe fn state_recorder_clear_key_log(native_game: &mut Game) {
         }
         game.preflight_samus_runtime()
             .expect("Samus recorder entry rejected");
-        let mut mutation = game
-            .begin_samus_mutation()
-            .expect("Samus mutation rejected");
+        let mut mutation = game.samus_mutation();
         let game = mutation.game();
         printf(c"Clearing key log!\n".as_ptr());
         game.state_recorder.base_snapshot.size = 0 as usize;
@@ -731,9 +719,7 @@ pub unsafe fn rtl_run_frame(mut inputs: i32, native_game: &mut Game) -> bool {
         }
         game.preflight_samus_runtime()
             .expect("Samus frame entry rejected");
-        let mut mutation = game
-            .begin_samus_mutation()
-            .expect("Samus mutation rejected");
+        let mut mutation = game.samus_mutation();
         let game = mutation.game();
         // TAS verification preserves every recorded button, including opposites.
         if !game.VERIFY_ACTIVE {
@@ -818,9 +804,7 @@ pub unsafe fn rtl_save_snapshot(
         let mut f = BufWriter::new(file);
         game.preflight_samus_runtime()
             .expect("Samus save entry rejected");
-        let mut mutation = game
-            .begin_samus_mutation()
-            .expect("Samus mutation rejected");
+        let mut mutation = game.samus_mutation();
         let game = mutation.game();
         rtl_apu_lock();
         rtl_save_music_state_to_ram_locked(game, true);
@@ -898,9 +882,7 @@ pub unsafe fn rtl_save_load(cmd: i32, slot: i32, native_game: &mut Game) {
             };
             game.preflight_samus_runtime()
                 .expect("Samus load entry rejected");
-            let mut mutation = game
-                .begin_samus_mutation()
-                .expect("Samus mutation rejected");
+            let mut mutation = game.samus_mutation();
             let game = mutation.game();
             rtl_apu_lock();
             let complete_load =
@@ -1443,9 +1425,7 @@ pub unsafe fn rtl_read_sram(game: &mut Game) {
         if let Ok(mut f) = File::open("saves/sm.srm") {
             game.preflight_samus_runtime()
                 .expect("Samus SRAM entry rejected");
-            let mut mutation = game
-                .begin_samus_mutation()
-                .expect("Samus mutation rejected");
+            let mut mutation = game.samus_mutation();
             let game = mutation.game();
             let mut bytes = game.g_sram.bytes(0..crate::recording::BASE_SRAM_SIZE);
             let count = crate::util::read_up_to(&mut f, &mut bytes[..]);

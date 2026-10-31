@@ -2103,6 +2103,11 @@ impl Game {
             self.revoke_samus_authority();
         }
     }
+    /// [`Self::begin_samus_mutation`] where a rejection is a broken invariant.
+    pub(crate) fn samus_mutation(&mut self) -> SamusMutation<'_> {
+        self.begin_samus_mutation()
+            .expect("Samus mutation rejected")
+    }
     pub(crate) fn begin_samus_mutation(&mut self) -> Result<SamusMutation<'_>, DisplayError> {
         // A supplied Prepared owner cannot enter unrestricted native mutation.
         // Native compatibility remains available for the legacy/reference path.
@@ -2128,9 +2133,7 @@ impl Game {
     /// Legacy reference imports have no supplied semantic content payload. Keep
     /// their whole load/patch/restore interval revoked, including callback drops.
     pub fn with_reference_import<R>(&mut self, action: impl FnOnce(&mut Game) -> R) -> R {
-        let mut mutation = self
-            .begin_samus_mutation()
-            .expect("Samus mutation rejected");
+        let mut mutation = self.samus_mutation();
         action(mutation.game())
     }
     pub(crate) fn preflight_samus_runtime(&self) -> Result<(), DisplayError> {

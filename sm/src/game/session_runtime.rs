@@ -413,10 +413,7 @@ impl<'g> Runtime<'g> {
     pub fn foreign<R>(&mut self, action: impl FnOnce(&mut Game) -> R) -> R {
         assert!(self.persistent_is_current(), "Session lease is dirty");
         preflight_export(self.session(), self.game);
-        let mut mutation = self
-            .game
-            .begin_samus_mutation()
-            .expect("Samus mutation rejected");
+        let mut mutation = self.game.samus_mutation();
         let state = self
             .state
             .take()
