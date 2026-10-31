@@ -1,5 +1,4 @@
 //! Retained fixed clear/DMA leaves for room entry; command execution is owned.
-use crate::game::display_refresh::copy_to_vram_now;
 use crate::game::prelude::*;
 use sm_game::room_entry::content::LoadMode;
 
@@ -11,7 +10,7 @@ pub(crate) unsafe fn clear_fx(mode: LoadMode, game: &mut Game) {
                 word_transfers!(game, descending, 960;
                     little(0x477e) <- value(6222), little(0x4efe) <- value(6222),
                 );
-                copy_to_vram_now(0x5880, 0x7e4000, 0xf00, game);
+                sm_game::display::transfer::copy_to_vram_now(0x5880, 0x7e4000, 0xf00, None, game);
             }
         }
     }
@@ -24,7 +23,7 @@ pub(crate) unsafe fn clear_bg2(mode: LoadMode, game: &mut Game) {
                 word_transfers!(game, descending, 1024;
                     little(0x47fe) <- value(824), little(0x4ffe) <- value(824),
                 );
-                copy_to_vram_now(0x4800, 0x7e4000, 0x1000, game);
+                sm_game::display::transfer::copy_to_vram_now(0x4800, 0x7e4000, 0x1000, None, game);
             }
         }
     }

@@ -1023,13 +1023,6 @@ unsafe fn rom_record_parts(
     }
 }
 
-pub(crate) unsafe fn rom_bank_record<const BANK: u8>(
-    addr: u16,
-    game: &mut Game,
-) -> crate::rom::RomRecord {
-    unsafe { rom_record(BANK, addr, game) }
-}
-
 /// Resolve a word address in a fixed ROM bank through the maintained validator.
 #[inline]
 pub(crate) unsafe fn rom_bank_ptr<const BANK: u8>(addr: u16, game: &mut Game) -> *const u8 {
