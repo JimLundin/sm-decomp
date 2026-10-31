@@ -24,7 +24,7 @@ pub(crate) unsafe fn run(game: &mut Game) -> Vec<u8> {
         let before_ram = (0..game.ram().len())
             .map(|at| game.ram().read_byte(at))
             .collect::<Vec<_>>();
-        fixture::consume_checked(game, false, "hardware_before_writer_positive_control");
+        fixture::consume_checked(game, "hardware_before_writer");
         game.ram().copy_in(0, &before_ram);
         {
             let snapshot_snes = snes;
@@ -41,9 +41,8 @@ pub(crate) unsafe fn run(game: &mut Game) -> Vec<u8> {
         };
         game.actor_snapshots.before = Some(game.capture_actor_snapshot());
         let queue = crate::audio_snapshot::ApuQueueSnapshot::capture(game);
-        let expected_image = fixture::written_image(&image);
         fixture::write_checked(game, &image);
-        fixture::consume_checked(game, true, "hardware_after_writer");
+        fixture::consume_checked(game, "hardware_after_writer");
 
         // Match actual before-sidecar restoration order, including queue/player.
         queue.restore(game);
@@ -81,8 +80,8 @@ pub(crate) unsafe fn run(game: &mut Game) -> Vec<u8> {
             game.actor_snapshots.before.as_ref().unwrap().clone(),
             "actor.mutable.actual_cpu_restores_actor_payload"
         );
-        fixture::assert_image(game, &image, &expected_image, "actual_cpu_restore");
-        fixture::consume_checked(game, true, "after_actual_cpu_restore");
+        fixture::assert_image(game, &image, "actual_cpu_restore");
+        fixture::consume_checked(game, "after_actual_cpu_restore");
 
         crate::rtl::rtl_reset(2, game);
         assert_eq!(
@@ -98,12 +97,11 @@ pub(crate) unsafe fn run(game: &mut Game) -> Vec<u8> {
             game.snes_frame_counter, 0,
             "actor.mutable.actual_reset_frame_counter"
         );
-        fixture::assert_image(game, &image, &expected_image, "actual_rtl_reset");
-        fixture::consume_checked(game, true, "after_actual_rtl_reset");
-        fixture::assert_image(game, &image, &expected_image, "after_actual_reset_consumer");
-        let mut output = b"AKMC1".to_vec();
+        fixture::assert_image(game, &image, "actual_rtl_reset");
+        fixture::consume_checked(game, "after_actual_rtl_reset");
+        fixture::assert_image(game, &image, "after_actual_reset_consumer");
+        let mut output = b"AKMC2".to_vec();
         output.extend((0..game.ram().len()).map(|at| game.ram().read_byte(at)));
-        output.extend_from_slice(&[0x4c, 0x80]);
         output
     }
 }

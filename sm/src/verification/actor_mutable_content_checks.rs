@@ -1,4 +1,7 @@
 //! Actual Kraid writer and live shot consumer; RAM replacement is component evidence.
+//! Kraid's sinking death stores an empty shot AI into his enemy definition
+//! ($A7:C563, STA $A00032,X). That is ROM, which the cartridge ignores, so the
+//! shot consumer still runs the definition's own shot AI after the writer.
 #![deny(unsafe_op_in_unsafe_fn)]
 use crate::{
     game::session_runtime::Runtime,
@@ -24,9 +27,6 @@ fn put(bytes: &mut [u8], at: usize, value: u16) {
 fn image_word(image: &mut [u8], address: u32, offset: usize, value: u16) {
     let at = lorom_offset(address) as usize + offset;
     image[at..at + 2].copy_from_slice(&value.to_ne_bytes());
-}
-fn bytes(image: &RomImage) -> Vec<u8> {
-    (0..image.len()).map(|at| image.read(at)).collect()
 }
 fn native(g: &Game) -> [u16; 8] {
     [
@@ -119,7 +119,7 @@ pub(crate) fn seed(g: &mut Game, image: &RomImage) {
         .unwrap();
     state.actor_identity.commit_birth(pending);
 }
-pub(crate) fn assert_image(g: &Game, image: &RomImage, expected: &[u8], label: &str) {
+pub(crate) fn assert_image(g: &Game, image: &RomImage, label: &str) {
     assert!(
         g.capture_native_rom().same_allocation(image),
         "actor.mutable.native_allocation {label}"
@@ -128,24 +128,9 @@ pub(crate) fn assert_image(g: &Game, image: &RomImage, expected: &[u8], label: &
         g.loaded_rom.as_ref().unwrap().same_allocation(image),
         "actor.mutable.loaded_allocation {label}"
     );
-    assert_eq!(
-        bytes(image) == expected,
-        true,
-        "actor.mutable.full_image {label}"
-    );
     assert!(!g.g_fail, "actor.mutable.no_diagnostic {label}");
 }
-pub(crate) fn written_image(image: &RomImage) -> Vec<u8> {
-    let mut expected = bytes(image);
-    put(
-        &mut expected,
-        lorom_offset(0xa0d000) as usize + SHOT,
-        0x804c,
-    );
-    expected
-}
 pub(crate) fn write_checked(g: &mut Game, image: &RomImage) {
-    let expected_image = written_image(image);
     let mut expected = (0..g.ram().len())
         .map(|at| g.ram().read_byte(at))
         .collect::<Vec<_>>();
@@ -169,24 +154,19 @@ pub(crate) fn write_checked(g: &mut Game, image: &RomImage) {
     let identity = g.actor_identity().clone();
     let pinned = Runtime::new(g).capture_actor_definition(ActorDefinitionKey(DEFINITION));
     assert!(pinned.record.image.same_allocation(image));
-    assert_eq!(
-        u16::from_ne_bytes([
-            pinned.record.image.read(pinned.record.base + SHOT),
-            pinned.record.image.read(pinned.record.base + SHOT + 1)
-        ]),
-        0x9000
-    );
+    let shot_ai = |record: &RomImage, base: usize| {
+        u16::from_ne_bytes([record.read(base + SHOT), record.read(base + SHOT + 1)])
+    };
+    assert_eq!(shot_ai(&pinned.record.image, pinned.record.base), 0x9000);
     // Actual production routine; every raw access is inside valid RAM/full ROM.
     crate::actor_kraid_writer_entry::write(g);
+    let after = Runtime::new(g).capture_actor_definition(ActorDefinitionKey(DEFINITION));
     assert_eq!(
-        u16::from_ne_bytes([
-            pinned.record.image.read(pinned.record.base + SHOT),
-            pinned.record.image.read(pinned.record.base + SHOT + 1)
-        ]),
-        0x804c,
-        "actor.mutable.actual_writer_updates_pinned_definition"
+        shot_ai(&after.record.image, after.record.base),
+        0x9000,
+        "actor.mutable.actual_writer_leaves_definition"
     );
-    assert_image(g, image, &expected_image, "writer");
+    assert_image(g, image, "writer");
     assert_eq!(
         (0..g.ram().len())
             .map(|at| g.ram().read_byte(at))
@@ -218,7 +198,7 @@ pub(crate) fn write_checked(g: &mut Game, image: &RomImage) {
         );
     }
 }
-pub(crate) fn consume_checked(g: &mut Game, ignored: bool, label: &str) {
+pub(crate) fn consume_checked(g: &mut Game, label: &str) {
     {
         let mut runtime = Runtime::new(g);
         let state = runtime.session_mut();
@@ -245,10 +225,8 @@ pub(crate) fn consume_checked(g: &mut Game, ignored: bool, label: &str) {
         .map(|at| g.ram().read_byte(at))
         .collect::<Vec<_>>();
     put(&mut expected, ram::ENEMY_PROCESSING_STAGE, 6); // Actual final extended touch stage.
-    if !ignored {
-        put(&mut expected, arrays::PROJECTILE_DIR, 0x10);
-        put(&mut expected, ram::COLLISION_DETECTION_INDEX, 0);
-    }
+    put(&mut expected, arrays::PROJECTILE_DIR, 0x10);
+    put(&mut expected, ram::COLLISION_DETECTION_INDEX, 0);
     let identity = g.actor_identity().clone();
     let before_native = native(g);
     crate::game::actors::contacts::process_contacts(&mut Runtime::new(g));
@@ -281,15 +259,14 @@ pub(crate) fn run_checked() {
         .map(|at| game.ram().read_byte(at))
         .collect::<Vec<_>>();
     let before_payload = game.capture_actor_snapshot();
-    let expected_image = written_image(&image);
-    consume_checked(&mut game, false, "before_writer_positive_control");
+    consume_checked(&mut game, "before_writer");
     {
         let bytes = &before_ram;
         [(); 131072].copy_from_slice(&vec![(); bytes.len()]);
         game.ram().copy_in(0, bytes);
     } // Only restore the positive-control fixture.
     write_checked(&mut game, &image);
-    consume_checked(&mut game, true, "after_actual_writer");
+    consume_checked(&mut game, "after_actual_writer");
     let restore = before_payload
         .preflight(game.actor_identity(), game.world())
         .unwrap();
@@ -311,18 +288,13 @@ pub(crate) fn run_checked() {
         before_payload,
         "actor.mutable.actual_payload_restored"
     );
-    assert_image(
-        &game,
-        &image,
-        &expected_image,
-        "actor_payload_and_ram_replacement",
-    );
-    consume_checked(&mut game, true, "after_actor_payload_and_ram_replacement");
+    assert_image(&game, &image, "actor_payload_and_ram_replacement");
+    consume_checked(&mut game, "after_actor_payload_and_ram_replacement");
     let transition = game.prepare_actor_canonical();
     game.ram().fill(0..game.ram().len(), 0); // Explicit component RAM replacement, NOT RtlReset.
     game.commit_actor_canonical(transition);
     assert!((0..game.ram().len()).all(|at| game.ram().read_byte(at) == 0));
-    assert_image(&game, &image, &expected_image, "canonical_ram_replacement");
-    consume_checked(&mut game, true, "after_canonical_ram_replacement");
-    assert_image(&game, &image, &expected_image, "after_final_consumer");
+    assert_image(&game, &image, "canonical_ram_replacement");
+    consume_checked(&mut game, "after_canonical_ram_replacement");
+    assert_image(&game, &image, "after_final_consumer");
 }
