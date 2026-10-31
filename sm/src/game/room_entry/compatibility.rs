@@ -94,7 +94,7 @@ impl EntryEffects for Runtime<'_> {
                     actors::population::install_population(&mut Runtime::new(game));
                 }
                 LeafEffect::LoadEnemyGraphics => {
-                    game::room_state::load_enemy_graphics(game);
+                    sm_game::room_state::load_enemy_graphics(game);
                 }
                 LeafEffect::LoadRoomMusic => {
                     game::music::load_room_music(game);
@@ -399,8 +399,8 @@ impl EntryEffects for Runtime<'_> {
             self.session().world.prepared_room_assets()
         };
         let source = source.compatibility_address(&self.session().world);
-        self.foreign(|game| unsafe {
-            game::display_refresh::copy_to_vram_with_source(
+        self.foreign(|game| {
+            sm_game::display::transfer::copy_to_vram_now(
                 destination,
                 source,
                 bytes,
