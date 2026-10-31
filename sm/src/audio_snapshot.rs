@@ -51,7 +51,7 @@ impl PlayerSnapshot {
     /// Capture `player`; without one the snapshot is invalid.
     pub(crate) fn capture_from(&mut self, player: Option<&crate::spc_player::NativePlayer>) {
         match player {
-            Some(player) => player.capture_snapshot(self),
+            Some(player) => self.capture(&player.state, &player.ram, &player.dsp.state),
             None => self.valid = false,
         }
     }
@@ -68,7 +68,7 @@ impl PlayerSnapshot {
     /// Restore a valid snapshot into `player`; an invalid one, or no player, changes nothing.
     pub(crate) fn restore_into(&self, player: Option<&mut crate::spc_player::NativePlayer>) {
         if let (true, Some(player)) = (self.valid, player) {
-            player.restore_snapshot(self);
+            self.restore(&mut player.state, &player.ram, &mut player.dsp);
         }
     }
 }

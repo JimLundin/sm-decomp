@@ -69,6 +69,8 @@ pub struct NativePlayer {
     pub dsp: Dsp,
     /// While set, records each DSP register write (verification only).
     pub history: Option<DspRegWriteHistory>,
+    /// Told the name of each driver path as it runs, for replay coverage.
+    pub probe: fn(&str),
 }
 impl Default for NativePlayer {
     fn default() -> Self {
@@ -83,6 +85,7 @@ impl NativePlayer {
             dsp: Dsp::new(ram.clone()),
             ram,
             history: None,
+            probe: |_| {},
         }
     }
 
@@ -92,29 +95,26 @@ impl NativePlayer {
             &self.ram,
             &mut self.dsp,
             self.history.as_mut(),
+            self.probe,
         )
     }
 
+    /// Write the four CPU-to-APU ports; $FF leaves a port unchanged.
     pub fn apply_ports(&mut self, writes: [u8; 4]) {
-        crate::apu_queue::ApuQueue::apply_ports(writes, &mut self.state.input_ports);
+        for (port, value) in self.state.input_ports.iter_mut().zip(writes) {
+            if value != 0xff {
+                *port = value;
+            }
+        }
     }
 
-    /// Copy the driver's variables into its RAM, after any queued port commands.
-    pub fn save_state(&mut self, queued: Option<&crate::apu_queue::ApuQueue>) {
-        if let Some(queued) = queued {
-            queued.apply_queued(&mut self.state.input_ports);
-        }
+    /// Copy the driver's variables into its RAM.
+    pub fn save_state(&mut self) {
         crate::native_player_ram::save(&self.state, &self.ram);
     }
     /// Read the driver's variables back from its RAM.
     pub fn load_state(&mut self) {
         crate::native_player_ram::load(&mut self.state, &self.ram);
-    }
-    pub(crate) fn capture_snapshot(&self, snapshot: &mut crate::audio_snapshot::PlayerSnapshot) {
-        snapshot.capture(&self.state, &self.ram, &self.dsp.state);
-    }
-    pub(crate) fn restore_snapshot(&mut self, snapshot: &crate::audio_snapshot::PlayerSnapshot) {
-        snapshot.restore(&mut self.state, &self.ram, &mut self.dsp);
     }
     /// Reset the DSP and start the driver, as its reset vector does.
     pub fn initialize(&mut self) {
@@ -136,15 +136,16 @@ impl NativePlayer {
     pub fn process_sound_effects(&mut self, group: usize) {
         self.owner().process(group);
     }
-    /// Install an uploaded bank from the cartridge at `source`.
-    pub fn upload(&mut self, image: crate::rom::RomImage, source: usize) {
+    /// Install the upload that starts at `source`, read byte by byte from the cartridge.
+    pub fn upload(&mut self, read: impl FnMut(usize) -> u8, source: usize) {
         let Self {
             state,
             ram,
             dsp,
             history,
+            ..
         } = self;
-        crate::audio_upload::install_bank(state, ram, image, source, |reg, value| {
+        crate::audio_upload::install_bank(state, ram, read, source, |reg, value| {
             if let Some(history) = history.as_mut() {
                 history.record(reg, value);
             }
@@ -171,6 +172,7 @@ mod sequencer {
         state: &'a mut NativePlayerState,
         ram: &'a ApuRam,
         dsp: RefCell<Output<'a>>,
+        probe: fn(&str),
     }
     struct Output<'a> {
         dsp: &'a mut Dsp,
@@ -182,11 +184,13 @@ mod sequencer {
             ram: &'a ApuRam,
             dsp: &'a mut Dsp,
             history: Option<&'a mut super::DspRegWriteHistory>,
+            probe: fn(&str),
         ) -> Self {
             Self {
                 state,
                 ram,
                 dsp: RefCell::new(Output { dsp, history }),
+                probe,
             }
         }
         fn write(output: &RefCell<Output<'_>>, register: u8, value: u8) {
@@ -305,7 +309,7 @@ mod sequencer {
             }
         }
         fn command(&mut self, group: usize) {
-            crate::verify_probe::hit(["sfx.command.1", "sfx.command.2", "sfx.command.3"][group]);
+            (self.probe)(["sfx.command.1", "sfx.command.2", "sfx.command.3"][group]);
             let count = SfxGroups::fields(self.state, group).1.len();
             let sound = match SfxGroups::take_command(self.state, group) {
                 SfxGroupAction::Idle => return,
@@ -315,7 +319,7 @@ mod sequencer {
                 }
                 SfxGroupAction::Start(sound) => sound,
             };
-            crate::verify_probe::hit(["sfx.start.1", "sfx.start.2", "sfx.start.3"][group]);
+            (self.probe)(["sfx.start.1", "sfx.start.2", "sfx.start.3"][group]);
             if SfxGroups::begin_replace(SfxGroups::fields(self.state, group).0) {
                 for index in 0..count {
                     let dsp = &self.dsp;
@@ -338,10 +342,10 @@ mod sequencer {
             }
         }
         pub(super) fn process(&mut self, group: usize) {
-            crate::verify_probe::hit(["sfx.process.1", "sfx.process.2", "sfx.process.3"][group]);
+            (self.probe)(["sfx.process.1", "sfx.process.2", "sfx.process.3"][group]);
             let count = SfxGroups::fields(self.state, group).1.len();
             if SfxGroups::needs_initialize(SfxGroups::fields(self.state, group).0) {
-                crate::verify_probe::hit(["sfx.init.1", "sfx.init.2", "sfx.init.3"][group]);
+                (self.probe)(["sfx.init.1", "sfx.init.2", "sfx.init.3"][group]);
                 SfxGroups::initialize(self.state, group);
                 SfxGroups::install_pointers(self.state, self.ram, group);
             }

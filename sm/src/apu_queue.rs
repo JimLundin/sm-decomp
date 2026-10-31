@@ -167,10 +167,16 @@ impl ApuQueue {
         }
     }
 
+    /// The queued port writes, oldest first.
+    pub fn queued(&self) -> impl Iterator<Item = [u8; 4]> + '_ {
+        (1..=self.size)
+            .rev()
+            .map(|remaining| self.entries[usize::from(self.position.wrapping_sub(remaining) & 15)])
+    }
+
     pub fn apply_queued(&self, ports: &mut [u8]) {
-        for remaining in (1..=self.size).rev() {
-            let index = self.position.wrapping_sub(remaining) & 15;
-            Self::apply_ports(self.entries[usize::from(index)], ports);
+        for writes in self.queued() {
+            Self::apply_ports(writes, ports);
         }
     }
 }

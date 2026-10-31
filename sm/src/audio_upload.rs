@@ -1,10 +1,15 @@
 //! Ordered native bank installation and physical upload control.
 #![forbid(unsafe_code)]
-use crate::{apu_ram::ApuRam, rom::RomImage, types::NativePlayerState};
+use crate::{apu_ram::ApuRam, types::NativePlayerState};
 
-pub fn transfer(image: RomImage, mut source: usize, mut write: impl FnMut(u16, u8)) {
+/// Copy the upload blocks that start at `source`, read byte by byte, into `write`.
+pub fn transfer(
+    mut read: impl FnMut(usize) -> u8,
+    mut source: usize,
+    mut write: impl FnMut(u16, u8),
+) {
     let mut byte = || {
-        let value = image.read(source);
+        let value = read(source);
         source = source.checked_add(1).expect("audio upload offset overflow");
         value
     };
@@ -27,14 +32,14 @@ pub fn transfer(image: RomImage, mut source: usize, mut write: impl FnMut(u16, u
 pub fn install_bank(
     state: &mut NativePlayerState,
     ram: &ApuRam,
-    image: RomImage,
+    read: impl FnMut(usize) -> u8,
     source: usize,
     mut write: impl FnMut(u8, u8),
 ) {
     write(44, 0);
     write(60, 0);
     write(92, 0xff);
-    transfer(image, source, |target, value| ram.write(target, value));
+    transfer(read, source, |target, value| ram.write(target, value));
     state.port_to_snes[0] = 0;
     state.input_ports[3] = 255;
     state.input_ports[2] = state.input_ports[3];

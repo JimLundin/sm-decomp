@@ -520,7 +520,10 @@ impl Game {
 
     /// Create the native sound driver, replacing any earlier one.
     pub fn create_native_player(&mut self) {
-        self.native_player = Some(crate::spc_player::NativePlayer::new());
+        self.native_player = Some(crate::spc_player::NativePlayer {
+            probe: crate::verify_probe::hit,
+            ..crate::spc_player::NativePlayer::new()
+        });
     }
 
     /// The native player; panics before `create_native_player`.
@@ -537,8 +540,14 @@ impl Game {
 
     /// Export the driver's variables and optional queued ports into its RAM.
     pub fn save_native_audio_variables(&mut self, include_queued_commands: bool) {
-        let queued = include_queued_commands.then_some(self.apu_queue);
-        self.native_player_mut().save_state(queued.as_ref());
+        let queue = self.apu_queue;
+        let player = self.native_player_mut();
+        if include_queued_commands {
+            for writes in queue.queued() {
+                player.apply_ports(writes);
+            }
+        }
+        player.save_state();
     }
 
     /// Import the actual current RAM image before resuming sequencing.
