@@ -4,8 +4,6 @@
 #![allow(non_camel_case_types)]
 #![allow(non_snake_case)]
 #![allow(non_upper_case_globals)]
-#![allow(unused_assignments)]
-#![allow(unused_mut)]
 // The detached harness replaces the compat Game; the DLL verifier's adapters
 // (session_runtime, game_state) only exist in the sm library.
 #[cfg(sm_verify_dll)]

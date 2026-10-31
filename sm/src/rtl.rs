@@ -646,7 +646,7 @@ pub unsafe fn StateRecorder_ReadNextReplayState(game: &mut Game) -> u16 {
                     if nb == log_format::PATCH_LENGTH_ESCAPE {
                         do_until! { t as i32 != log_format::EXTENSION as i32 ;
                             crate::update_place! { previous fresh3 = replay_pos => replay_pos + 1; }
-                            let mut t: u8 = game.state_recorder.log.byte(fresh3 as usize);
+                            let t: u8 = game.state_recorder.log.byte(fresh3 as usize);
                             nb += t as i32;
                         }
                     }
@@ -697,7 +697,7 @@ pub unsafe fn StateRecorder_ReadNextReplayState(game: &mut Game) -> u16 {
                 if frames == mask {
                     do_until! { t_0 as i32 != log_format::EXTENSION as i32 ;
                         crate::update_place! { previous fresh8 = replay_pos => replay_pos + 1; }
-                        let mut t_0: u8 = game.state_recorder.log.byte(fresh8 as usize);
+                        let t_0: u8 = game.state_recorder.log.byte(fresh8 as usize);
                         frames += t_0 as i32;
                     }
                 }

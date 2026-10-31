@@ -473,7 +473,7 @@ unsafe fn native_effect_case(id: u32, g: &mut Game, image: &RomImage) -> (u8, u1
     }
     put(g, 0x1c27, if n & 1 == 0 { 0 } else { 78 });
     put(g, 0x1c87 + 78, 0x482);
-    let mut definition = |address: u32, init: u32| {
+    let definition = |address: u32, init: u32| {
         for (offset, value) in [
             (0, init as u16),
             (2, 0x8000),

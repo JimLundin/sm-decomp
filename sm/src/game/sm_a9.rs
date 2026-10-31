@@ -23,7 +23,7 @@ pub use sm_game::actors::mother_brain_fight::*;
 pub unsafe fn MotherBrain_MoveSamusVerticallyTowardsCeilingFloor(a: u16, game: &mut Game) -> u8 {
     move_samus_vertically_towards_ceiling_floor(a, game)
 }
-pub(crate) fn move_samus_vertically_towards_ceiling_floor(mut a: u16, game: &mut Game) -> u8 {
+pub(crate) fn move_samus_vertically_towards_ceiling_floor(a: u16, game: &mut Game) -> u8 {
     {
         let carry: i32 = game.ram().read_byte(0xafc + 1) as i32 + a.to_ne_bytes()[0] as i32;
         {
@@ -38,7 +38,7 @@ pub(crate) fn move_samus_vertically_towards_ceiling_floor(mut a: u16, game: &mut
         };
         let v4: u16 =
             (word!(game.SAMUS_Y_POS) as i32 + (a >> 8) as i8 as i32 + (carry >> 8)) as u16;
-        let mut v6: u16 = if v4 as i32 - 48i32 & 0x8000 != 0 {
+        let v6: u16 = if v4 as i32 - 48i32 & 0x8000 != 0 {
             48
         } else {
             if v4 as i32 - 192i32 & 0x8000 != 0 {
@@ -76,7 +76,7 @@ pub(crate) fn move_samus_vertically_towards_ceiling_floor(mut a: u16, game: &mut
 pub unsafe fn MotherBrain_MoveSamusHorizTowardsWall(a: u16, game: &mut Game) -> u8 {
     move_samus_horizontally_towards_wall(a, game)
 }
-pub(crate) fn move_samus_horizontally_towards_wall(mut a: u16, game: &mut Game) -> u8 {
+pub(crate) fn move_samus_horizontally_towards_wall(a: u16, game: &mut Game) -> u8 {
     {
         let carry: i32 = game.ram().read_byte(0xaf8 + 1) as i32 + a.to_ne_bytes()[0] as i32;
         {
@@ -107,7 +107,7 @@ crate::forward_calls! { pub fn (a: u16, r18: u16, game: &mut Game) -> u16;
 }
 pub fn sub_A9C46C(a: u16, j: u16, game: &mut Game) -> u16 {
     {
-        let mut v2: u16 = kSinCosTable8bit_Sext[((a as i32 & 0xff) + 64) as usize] as u16;
+        let v2: u16 = kSinCosTable8bit_Sext[((a as i32 & 0xff) + 64) as usize] as u16;
         // Hardware multiply through the PPU's Mode 7 registers.
         unsafe {
             crate::rtl::register_writes! { game;
