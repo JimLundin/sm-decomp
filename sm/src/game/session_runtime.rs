@@ -184,9 +184,13 @@ impl<'g> Runtime<'g> {
                 game,
             };
         }
+        let (state, inputs) = reuse_frame_session(game).unwrap_or_else(|| {
+            let state = import_session(game);
+            (state, encoding::inputs(&|at| game.ram().read_byte(at)))
+        });
         Self {
-            state: Some(import_session(game)),
-            inputs: encoding::inputs(&|at| game.ram().read_byte(at)),
+            state: Some(state),
+            inputs,
             persistent: None,
             persistent_epoch: None,
             game,
@@ -499,7 +503,14 @@ impl<'g> Runtime<'g> {
                 && self.game.actor_identity_is_with_session()
                 && self.game.preflight_samus_runtime().is_ok()
             {
+                let kept = self.game.frame_session.active.then(|| state.clone());
                 export_session_preflighted(state, self.game);
+                if let Some(mut kept) = kept {
+                    kept.actor_identity =
+                        crate::game::actors::identity::ActorIdentityState::empty();
+                    let epoch = self.game.compatibility_write_epoch();
+                    self.game.frame_session.kept = Some((kept, self.inputs.clone(), epoch));
+                }
             } else if self.game.actor_identity_is_with_session() {
                 // A rejected foreign call retains this Runtime's identity owner;
                 // discard invalid byte/native publication rather than panic again.
@@ -945,6 +956,53 @@ pub(crate) fn run_mechanisms(
     }
 }
 
+/// The Session a frame's last lease exported, kept while nothing has written the compatibility
+/// RAM since, so the frame's next lease borrows it rather than decoding the RAM again. Only a
+/// frame tick (`with_frame_session`) keeps one.
+#[derive(Default)]
+pub(crate) struct FrameSession {
+    active: bool,
+    kept: Option<(Session, ExternalInputs, u64)>,
+}
+
+/// Run a frame tick with its leases sharing one Session while the RAM is unchanged.
+pub(crate) fn with_frame_session<R>(game: &mut Game, tick: impl FnOnce(&mut Game) -> R) -> R {
+    game.frame_session.active = true;
+    let result = tick(game);
+    game.frame_session = FrameSession::default();
+    result
+}
+
+/// The kept Session for a new lease, when the RAM, world and Samus state still admit it; it
+/// takes the native spawn fields and actor identity as an import would.
+fn reuse_frame_session(game: &mut Game) -> Option<(Session, ExternalInputs)> {
+    let (mut state, inputs, epoch) = game.frame_session.kept.take()?;
+    let same_world = std::sync::Arc::ptr_eq(&state.world, game.world())
+        && state.world.revision() == game.world().revision();
+    if epoch != game.compatibility_write_epoch() || !same_world {
+        return None;
+    }
+    game.preflight_samus_runtime()
+        .expect("Samus import rejected");
+    #[cfg(sm_verify_dll)]
+    player_normal_transfers::record(game, 1);
+    import_native_spawn(&mut state, game);
+    #[cfg(sm_verify_dll)]
+    {
+        let mut fresh = encoding::decode(
+            &|at| game.ram().read_byte(at),
+            0x20000,
+            game.world().clone(),
+        );
+        import_native_spawn(&mut fresh, game);
+        assert!(
+            fresh == state,
+            "the kept frame Session differs from its RAM projection"
+        );
+    }
+    state.actor_identity = game.take_actor_identity();
+    Some((state, inputs))
+}
 pub(crate) fn import_session(game: &mut Game) -> Session {
     game.preflight_samus_runtime()
         .expect("Samus import rejected");

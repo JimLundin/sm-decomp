@@ -187,6 +187,8 @@ pub struct Game {
     pub native_player: Option<crate::spc_player::NativePlayer>,
     actor_identity: Option<crate::game::actors::identity::ActorIdentityState>,
     pub(crate) actor_snapshots: sm_game::actors::snapshot::ActorSnapshotSidecars,
+    /// The Session the frame's last lease exported; see `session_runtime::FrameSession`.
+    pub(crate) frame_session: crate::game::session_runtime::FrameSession,
     world: Arc<WorldBinding>,
     ram: WorkRam,
     pub(crate) loaded_rom: Option<crate::rom::RomImage>,
@@ -916,6 +918,7 @@ impl Game {
             world,
             actor_identity: Some(crate::game::actors::identity::ActorIdentityState::empty()),
             actor_snapshots: Default::default(),
+            frame_session: Default::default(),
             ram: WorkRam::new(),
             loaded_rom: None,
             native_rom: None,
