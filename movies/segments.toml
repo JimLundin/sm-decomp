@@ -1426,7 +1426,6 @@ require_hit = ["xray.window"]
 
 [[segment]]
 id = "samus-gunship-save"
-pending = "awaiting the seeds-v1-tricks2-891ceaf012b8dfb4 ci-data upload"
 seed = "100-input-phase:305"
 seed_sha256 = "1563be3787a3edca0cc6821a8db4967c2318e41a7ae6a50dc9a5d0a5288ad07c"
 inputs = "authored-gunship-save.inputs"
@@ -1438,7 +1437,6 @@ require_hit = ["gunship.save"]
 
 [[segment]]
 id = "samus-space-jump-chain"
-pending = "awaiting the seeds-v1-tricks2-891ceaf012b8dfb4 ci-data upload"
 seed = "100-input-phase:305"
 seed_sha256 = "1563be3787a3edca0cc6821a8db4967c2318e41a7ae6a50dc9a5d0a5288ad07c"
 inputs = "authored-space-jump-chain.inputs"
@@ -1450,7 +1448,6 @@ require_hit = ["samus.space_jump"]
 
 [[segment]]
 id = "samus-screw-attack"
-pending = "awaiting the seeds-v1-tricks2-891ceaf012b8dfb4 ci-data upload"
 seed = "100-input-phase:306"
 seed_sha256 = "f2e7aa08e0dc81cf18ea13b8e0bfd240b4773ec9911d9b4d4d049f08797451f2"
 inputs = "authored-screw-attack.inputs"
