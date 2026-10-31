@@ -1,5 +1,4 @@
 //! Initial entry, door continuations and the scroll-completion interrupt.
-#![forbid(unsafe_code)]
 use super::{
     api::{EntryPoll, EntrySignal, EntryWait},
     background,
