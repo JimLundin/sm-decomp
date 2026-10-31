@@ -297,7 +297,7 @@ pub fn advance_postcredits_samus_reveal<H: crate::menus::host::Host + ?Sized>(
     // decomposition its last blue delta ($7E:2FFE); each later one the
     // palette index the previous initializer loaded.
     let mut parameter = if initial && under_ten {
-        word!(game.TILEMAP_STUFF[2047])
+        cinematic!(game.TilemapStuff[2047])
     } else {
         word!(game.GAME_TIME_HOURS)
     };

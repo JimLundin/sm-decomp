@@ -66,7 +66,7 @@ pub fn clear_cinematic_colors<H: crate::menus::host::Host + ?Sized>(
 ) {
     for index in cinematic_color_indices(offset, count) {
         for plane in [256, 512, 768, 1024] {
-            word!(game.TILEMAP_STUFF[index + plane] = 0);
+            cinematic!(game.TilemapStuff[index + plane] = 0);
         }
     }
 }
@@ -75,11 +75,11 @@ pub fn compose_cinematic_palette<H: crate::menus::host::Host + ?Sized>(game: &mu
     for index in 0..256 {
         // Red uses the physical high byte, independently of native word endianness.
         let red = u16::from(game.ram().read_byte(0x2401 + 2 * index) & 31);
-        let green = (word!(game.TILEMAP_STUFF[index + 768]) >> 3) & 0x3e0;
-        let blue = (word!(game.TILEMAP_STUFF[index + 1024]) << 2) & 0x7c00;
+        let green = (cinematic!(game.TilemapStuff[index + 768]) >> 3) & 0x3e0;
+        let blue = (cinematic!(game.TilemapStuff[index + 1024]) << 2) & 0x7c00;
         let color = red | green | blue;
-        word!(game.TILEMAP_STUFF[index] = color);
-        word!(game.PALETTE_BUFFER[index] = color);
+        cinematic!(game.TilemapStuff[index] = color);
+        cinematic!(game.PaletteBuffer[index] = color);
     }
 }
 
@@ -93,13 +93,15 @@ pub fn fade_cinematic_colors<H: crate::menus::host::Host + ?Sized>(
         for plane in [512, 768, 1024] {
             let current = index + plane;
             if increasing {
-                let step = word!(game.TILEMAP_STUFF[current + 768]);
-                word!(
-                    game.TILEMAP_STUFF[current] =
-                        step.wrapping_add(word!(game.TILEMAP_STUFF[current])) & 0x1fff
+                let step = cinematic!(game.TilemapStuff[current + 768]);
+                cinematic!(
+                    game.TilemapStuff[current] =
+                        step.wrapping_add(cinematic!(game.TilemapStuff[current])) & 0x1fff
                 );
             } else {
-                word!(game.TILEMAP_STUFF[current] -= word!(game.TILEMAP_STUFF[current + 768]));
+                cinematic!(
+                    game.TilemapStuff[current] -= cinematic!(game.TilemapStuff[current + 768])
+                );
             }
         }
     }
@@ -107,12 +109,12 @@ pub fn fade_cinematic_colors<H: crate::menus::host::Host + ?Sized>(
 
 pub fn prepare_cinematic_palette_fade<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     for index in 0..256 {
-        let color = word!(game.TILEMAP_STUFF[index + 256]);
+        let color = cinematic!(game.TilemapStuff[index + 256]);
         for channel in 0..3 {
             let component = (color >> (5 * channel)) & 31;
             let current = index + 512 + 256 * channel;
-            word!(game.TILEMAP_STUFF[current] = component << 8);
-            word!(game.TILEMAP_STUFF[current + 768] = component << 3);
+            cinematic!(game.TilemapStuff[current] = component << 8);
+            cinematic!(game.TilemapStuff[current + 768] = component << 3);
         }
     }
 }

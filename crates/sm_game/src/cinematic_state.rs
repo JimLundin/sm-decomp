@@ -7,7 +7,11 @@
 //! projectile table's bytes outside gameplay, so the Session holds them as
 //! `enemy_projectiles`' fields: each [`Word`] and [`Array`] names the field
 //! its RAM bytes encode. The Mode 7 zoom ($198F), which the projectile code
-//! leaves unused, is `enemy_projectiles.zoom`.
+//! leaves unused, is `enemy_projectiles.zoom`. The view also names the words
+//! and tables of other Session owners the cinematics read and store (the
+//! Japanese text option, the layer 1 position, Samus's and her projectiles'
+//! words, the palette and the enemy BG2 tilemap they borrow), by the field
+//! that holds them.
 //!
 //! **Consumers.** The cinematic functions run on the compatibility host
 //! outside a lease. They read and store these words with [`cinematic!`],
@@ -93,6 +97,37 @@ pub enum Word {
     IntroTextClickFlag = 0x1ba1,
     /// `INTRO_JAPANESE_TEXT_TIMER`: `enemy_projectiles.slots[10].delay`.
     IntroJapaneseTextTimer = 0x1ba3,
+    // Other owners' words the cinematics share.
+    /// `JAPANESE_TEXT_FLAG`: `options.japanese_text`.
+    JapaneseText = 0x09e2,
+    /// `LAYER1_X_POS`: `room.camera.layer1[0]`.
+    Layer1X = 0x0911,
+    /// `LAYER1_Y_POS`: `room.camera.layer1[1]`.
+    Layer1Y = 0x0915,
+    /// `DOOR_DEF_PTR`: `room.entry.exit`, by its compatibility key, ``.
+    DoorExit = 0x078d,
+    /// `FX_LAYER_BLENDING_CONFIG_A`: `room.fx_blending`.
+    FxBlending = 0x1982,
+    /// `HUD_ITEM_INDEX`: `projectiles.controls.selected_weapon`.
+    SelectedWeapon = 0x09d2,
+    /// `SAMUS_AUTO_CANCEL_HUD_ITEM_INDEX`: `projectiles.controls.automatic_weapon`.
+    AutomaticWeapon = 0x0a04,
+    /// `POWER_BOMB_EXPLOSION_X_POS`: `projectiles.power_bomb.x`.
+    PowerBombX = 0x0ce2,
+    /// `POWER_BOMB_EXPLOSION_Y_POS`: `projectiles.power_bomb.y`.
+    PowerBombY = 0x0ce4,
+    /// `SUBSTATE`: `shared_sequence.stage`.
+    SequenceStage = 0x0dec,
+    /// `SUIT_PICKUP_LIGHT_BEAM_POS`: `shared_sequence.value`.
+    SequenceValue = 0x0dee,
+    /// `SAMUS_POSE`: `player.pose`.
+    SamusPose = 0x0a1c,
+    /// `KNOCKBACK_X_DIR`: `player.knockback_x_direction`.
+    KnockbackXDirection = 0x0a54,
+    /// `SAMUS_Y_SUBSPEED`: `player.contact.y_speed.fraction`.
+    SamusYSubspeed = 0x0b2c,
+    /// `SAMUS_Y_SPEED`: `player.contact.y_speed.whole`.
+    SamusYSpeed = 0x0b2e,
 }
 
 /// A cinematic word table, by the RAM address of its first word.
@@ -146,6 +181,15 @@ pub enum Array {
     SprInstructionTimer = 0x1b5d,
     /// `CINEMATICSPR_GOTO_TIMER`, 16 words from `enemy_projectiles.slots[9].spritemap`.
     SprGotoTimer = 0x1b7d,
+    // Other owners' tables the cinematics share.
+    /// `PALETTE_BUFFER`, 256 words: the presentation's colours.
+    PaletteBuffer = 0xc000,
+    /// `TILEMAP_STUFF`, 2048 words: `actors.extended.blocks[4..6]`.
+    TilemapStuff = 0x2000,
+    /// `PROJECTILE_X_POS`, 10 words: `projectiles.shots[i].x`.
+    ProjectileX = 0x0b64,
+    /// `PROJECTILE_TYPE`, 10 words: `projectiles.shots[i].kind`.
+    ProjectileType = 0x0c18,
 }
 
 /// `word` as the host's projection holds it, low byte then high.
@@ -318,6 +362,21 @@ mod tests {
             IntroFrameCounter,
             IntroTextClickFlag,
             IntroJapaneseTextTimer,
+            JapaneseText,
+            Layer1X,
+            Layer1Y,
+            DoorExit,
+            FxBlending,
+            SelectedWeapon,
+            AutomaticWeapon,
+            PowerBombX,
+            PowerBombY,
+            SequenceStage,
+            SequenceValue,
+            SamusPose,
+            KnockbackXDirection,
+            SamusYSubspeed,
+            SamusYSpeed,
         ];
         let tables = [
             (Array::Mode7InstructionPointer, 2),
@@ -344,6 +403,10 @@ mod tests {
             (Array::SprPreInstruction, 16),
             (Array::SprInstructionTimer, 16),
             (Array::SprGotoTimer, 16),
+            (Array::PaletteBuffer, 256),
+            (Array::TilemapStuff, 2048),
+            (Array::ProjectileX, 10),
+            (Array::ProjectileType, 10),
         ];
         let addresses = words.map(|word| word as usize).into_iter().chain(
             tables

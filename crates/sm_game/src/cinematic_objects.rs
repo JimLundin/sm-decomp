@@ -171,11 +171,11 @@ pub fn advance_intro_mother_brain<H: crate::menus::host::Host + ?Sized>(
         }
     }
     if stage == 0 {
-        let Some(projectile) = (0..5).rfind(|&i| word!(game.PROJECTILE_TYPE[i]) & 0xfff == 256)
+        let Some(projectile) = (0..5).rfind(|&i| cinematic!(game.ProjectileType[i]) & 0xfff == 256)
         else {
             return;
         };
-        if (word!(game.PROJECTILE_X_POS[projectile]) as i32 - 84) & 0x8000 == 0 {
+        if (cinematic!(game.ProjectileX[projectile]) as i32 - 84) & 0x8000 == 0 {
             return;
         }
         game.retire_projectile(2 * projectile as u16);
@@ -268,11 +268,11 @@ pub fn execute_cinematic_sprite_instruction<H: crate::menus::host::Host + ?Sized
                 },
             9171588 => {
             crate::palette_effects::execution::leased::spawn(ending_effect::ZEBES_FADE_OUT, game);
-            word!(game.PALETTE_BUFFER[254] = 1);
+            cinematic!(game.PaletteBuffer[254] = 1);
                 },
             9171605 => {
             CinematicSprites.spawn(ending::ZEBES_SILHOUETTE, 0xf295, game);
-            word!(game.PALETTE_BUFFER[0] = 0x7fff);
+            cinematic!(game.PaletteBuffer[0] = 0x7fff);
                 },
             9171639 => {
             set_cinematic_blend(17, 2, 2, 17, game);
@@ -293,7 +293,7 @@ pub fn execute_cinematic_sprite_instruction<H: crate::menus::host::Host + ?Sized
             9171755 => {
             game.ram().write_byte(0x69, 0);
             game.ram().write_byte(0x6b, 0);
-            word! { game, 0x7fff; PALETTE_BUFFER[0], PALETTE_BUFFER[128] }
+            cinematic! { game, 0x7fff; PaletteBuffer[0], PaletteBuffer[128] }
             crate::word_transfers!(game, descending, 16; le(PALETTE_BUFFER, 31) <- value(0x7fff));
             crate::flow::set(game, crate::flow::Word::CinematicFunction, 0xdb9e);
     cinematic!(game.FunctionTimer = 120);

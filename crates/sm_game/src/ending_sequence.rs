@@ -252,7 +252,7 @@ pub fn scene_2_setup<H: Host + ?Sized>(game: &mut H) {
     clear_cinematic_sprites(game);
     crate::word_transfers!(game, ascending, 128; le(PALETTE_BUFFER, 128) <- rom(SPACE_PALETTES, 128));
     // The palette copy and each initializer leave A for the next spawn.
-    let palette_tail = word!(game.PALETTE_BUFFER[255]);
+    let palette_tail = cinematic!(game.PaletteBuffer[255]);
     sprites(game, object::EXPLODING_ZEBES, palette_tail);
     sprites(game, object::LAVA, 0x0e00);
     sprites(game, object::PURPLE_GLOW, 0x0a00);
@@ -361,9 +361,9 @@ pub fn gunship_setup<H: Host + ?Sized>(game: &mut H) {
         set_fixed_color([63, 95, 0x9f], game);
         game.ram().write_byte(mirror::BG1SC, 0);
         game.ram().write_byte(mirror::BG12NBA, 0);
-        word!(game.PALETTE_BUFFER[0] = 0);
-        word!(game.PALETTE_BUFFER[16] = 0);
-        word!(game.PALETTE_BUFFER[128] = 0);
+        cinematic!(game.PaletteBuffer[0] = 0);
+        cinematic!(game.PaletteBuffer[16] = 0);
+        cinematic!(game.PaletteBuffer[128] = 0);
         crate::palette_effects::execution::leased::spawn(SPACE_GLOW_1, game);
         crate::palette_effects::execution::leased::spawn(SPACE_GLOW_2, game);
         word!(game.REG_M7X = 56);

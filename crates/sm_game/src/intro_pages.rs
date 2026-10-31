@@ -439,7 +439,7 @@ pub fn draw_japanese_text<H: crate::menus::host::Host + ?Sized>(
     set_cinematic_tilemap_updates(false, game);
     if restore_palette {
         for color in 17..20 {
-            word!(game.PALETTE_BUFFER[color] = intro_color(game, color));
+            cinematic!(game.PaletteBuffer[color] = intro_color(game, color));
         }
     }
     clear_japanese_tiles(game);

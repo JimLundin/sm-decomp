@@ -109,8 +109,8 @@ fn start_demo_logo<H: Host + ?Sized>(game: &mut H) {
     cinematic!(game.YSubspeed = 0);
     cinematic!(game.SkipToTitleIndex = 3);
     crate::word_transfers!(game, ascending, 128; le(PALETTE_BUFFER, 128) <- rom(TITLE_PALETTES, 128));
-    word!(game.PALETTE_BUFFER[201] = 0x7fff);
-    word!(game.PALETTE_BUFFER[202] = 32128);
+    cinematic!(game.PaletteBuffer[201] = 0x7fff);
+    cinematic!(game.PaletteBuffer[202] = 32128);
     crate::palette_effects::execution::leased::clear(game);
     crate::palette_effects::execution::leased::spawn(TITLE_GLOW_1, game);
     crate::palette_effects::execution::leased::spawn(TITLE_GLOW_2, game);
