@@ -236,6 +236,8 @@ pub(crate) unsafe fn ppu_run_line(ppu: *mut Ppu, line: i32, new_ppu: &bool) {
             let mosaic = (*ppu).mosaicSize > 1 && (*ppu).bgLayer.iter().any(|bg| bg.mosaicEnabled);
             if *new_ppu && !((*ppu).mode == 7 && (*ppu).m7extBg) && !mosaic {
                 ppu_draw_whole_line(ppu, line as u32);
+                #[cfg(sm_verify_dll)]
+                cross_render::check(ppu, line);
             } else {
                 if (*ppu).mode as i32 == 7 {
                     ppu_calculate_mode7_starts(ppu, line);
@@ -697,6 +699,83 @@ unsafe fn ppu_render_pixel<const NATIVE: bool>(ppu: *mut Ppu, x: i32, y: i32, st
             (*ppu).renderBuffer.offset(offset as isize),
             4,
         );
+    }
+}
+
+/// An independent check of the native line rasterizer: on sampled frames each
+/// natively drawn line is drawn again by LakeSnes's per-pixel layer selection
+/// (`sm_backend_ppu_pixel`), and differing pixels are logged. Colour math,
+/// windows and brightness are shared, so this covers layer and priority
+/// selection, Mode 7 sampling and sprite composition, not the shading.
+///
+/// `SM_CROSS_RENDER=N` samples every Nth frame (0 or unset disables it) and
+/// `SM_CROSS_RENDER_LOG` names the CSV of differing lines.
+#[cfg(sm_verify_dll)]
+mod cross_render {
+    use super::{Ppu, ppu_calculate_mode7_starts, ppu_render_pixel};
+    use std::io::Write as _;
+    use std::sync::OnceLock;
+    use std::sync::atomic::{AtomicU32, Ordering};
+
+    static FRAMES: AtomicU32 = AtomicU32::new(0);
+
+    fn interval() -> u32 {
+        static INTERVAL: OnceLock<u32> = OnceLock::new();
+        *INTERVAL.get_or_init(|| {
+            std::env::var("SM_CROSS_RENDER")
+                .ok()
+                .and_then(|value| value.parse().ok())
+                .unwrap_or(0)
+        })
+    }
+
+    pub(super) unsafe fn check(ppu: *mut Ppu, line: i32) {
+        let every = interval();
+        if every == 0 {
+            return;
+        }
+        if line == 1 {
+            FRAMES.fetch_add(1, Ordering::Relaxed);
+        }
+        let frame = FRAMES.load(Ordering::Relaxed);
+        if frame % every != 0 || unsafe { (*ppu).forcedBlank } {
+            return;
+        }
+        unsafe {
+            let start = ((line - 1) as u32).wrapping_mul((*ppu).renderPitch) as usize
+                + usize::from((*ppu).extraLeftRight) * 4;
+            let row = core::slice::from_raw_parts_mut((*ppu).renderBuffer.add(start), 256 * 4);
+            let native = row.to_vec();
+            if (*ppu).mode == 7 {
+                ppu_calculate_mode7_starts(ppu, line);
+            }
+            for x in 0..256 {
+                ppu_render_pixel::<false>(ppu, x, line, (0, 0));
+            }
+            let row = core::slice::from_raw_parts_mut((*ppu).renderBuffer.add(start), 256 * 4);
+            let differing: Vec<usize> = (0..256)
+                .filter(|&x| native[x * 4..x * 4 + 4] != row[x * 4..x * 4 + 4])
+                .collect();
+            if let (Some(&first), Some(path)) =
+                (differing.first(), std::env::var_os("SM_CROSS_RENDER_LOG"))
+            {
+                let mut log = std::fs::OpenOptions::new()
+                    .create(true)
+                    .append(true)
+                    .open(path)
+                    .unwrap();
+                writeln!(
+                    log,
+                    "{frame},{line},{},{},{first},{:02x?},{:02x?}",
+                    (*ppu).mode,
+                    differing.len(),
+                    &native[first * 4..first * 4 + 4],
+                    &row[first * 4..first * 4 + 4],
+                )
+                .unwrap();
+            }
+            row.copy_from_slice(&native);
+        }
     }
 }
 

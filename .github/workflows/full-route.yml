@@ -78,6 +78,9 @@ jobs:
     runs-on: windows-2022
     env:
       SM_ORACLE: ${{ inputs.oracle || 'patched' }}
+      # Redraw every 30th frame with LakeSnes's per-pixel layer selection and
+      # log lines where it disagrees with the native rasterizer.
+      SM_CROSS_RENDER: '30'
     timeout-minutes: 60
     strategy:
       fail-fast: false
@@ -163,8 +166,16 @@ jobs:
         timeout-minutes: 55
         run: |
           $env:FULL_ROUTE = '${{ matrix.route }}'
+          $env:SM_CROSS_RENDER_LOG = Join-Path $env:RUNNER_TEMP 'cross-render.csv'
           python -B .github/scripts/full_route.py run ${{ matrix.index }} 2>&1 | Tee-Object -FilePath rooms.log
           $code = $LASTEXITCODE
+          if (Test-Path $env:SM_CROSS_RENDER_LOG) {
+            # Only frame, line, mode, pixel count and first x: pixel values are ROM-derived.
+            $lines = Get-Content $env:SM_CROSS_RENDER_LOG
+            "Cross-renderer: $($lines.Count) lines differ (frame,line,mode,pixels,first x):"
+            $lines | Select-Object -First 20 | ForEach-Object { ($_ -split ',')[0..4] -join ',' }
+            if ($code -eq 0) { $code = 1 }
+          }
           "### ${{ matrix.name }}" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
           '```' | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
           Select-String -Path rooms.log -Pattern '^(job|PASS|FAIL|Corpus)' | ForEach-Object { $_.Line } | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
