@@ -1362,7 +1362,9 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
             // its pointer to the array. Each write clears one whole array.
             core::ptr::write_bytes(&raw mut super::PIXELS, 0, 1);
             core::ptr::write_bytes(&raw mut super::MY_PIXELS, 0, 1);
+            sm::oracle_mode::set_next_frame_input(inputs.get(index + 1).copied());
             sm::rtl::RtlRunFrame(i32::from(pad), game);
+            sm::oracle_mode::set_next_frame_input(None);
             // Advance the music driver once per frame without playing audio.
             sm::rtl::RtlRenderAudio(&mut discarded_audio, game);
             if audio_trace.is_some() {

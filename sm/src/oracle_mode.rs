@@ -101,3 +101,30 @@ pub(crate) fn models_open_bus() -> bool {
                 .any(|&address| !installs(PatchKind::BugHook, address))
     })
 }
+
+thread_local! {
+    static NEXT_FRAME_INPUT: std::cell::Cell<Option<u16>> = const { std::cell::Cell::new(None) };
+}
+
+/// Supply the controller word of the frame after the one about to run.
+///
+/// On hardware the NMI that ends a frame latches the input the next frame's
+/// logic reads. An oracle that reads the controller there gets the next
+/// frame's word for that NMI from the replay; `None` keeps the current one.
+pub fn set_next_frame_input(input: Option<u16>) {
+    NEXT_FRAME_INPUT.set(input);
+}
+
+/// Whether the oracle's NMI reads the controller, as the original game does,
+/// instead of snesrev's main loop.
+pub fn nmi_reads_controller() -> bool {
+    static NMI: OnceLock<bool> = OnceLock::new();
+    *NMI.get_or_init(|| !installs(PatchKind::Rom, 0x8095e1))
+}
+
+/// The controller word the oracle's end-of-frame NMI latches.
+pub(crate) fn nmi_input() -> Option<u16> {
+    nmi_reads_controller()
+        .then(|| NEXT_FRAME_INPUT.get())
+        .flatten()
+}

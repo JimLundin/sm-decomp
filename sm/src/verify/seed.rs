@@ -407,8 +407,12 @@ pub(super) unsafe fn load(
                         {
                             return Err("controller state changed during seed normalization".into());
                         }
-                        for (at, value) in INPUT_WORDS.into_iter().zip(input.before) {
-                            game.ram().copy_in(at, &value.to_le_bytes());
+                        // snesrev's main loop reads the controller again at its top;
+                        // an oracle that reads it in NMI keeps the NMI's latch.
+                        if !sm::oracle_mode::nmi_reads_controller() {
+                            for (at, value) in INPUT_WORDS.into_iter().zip(input.before) {
+                                game.ram().copy_in(at, &value.to_le_bytes());
+                            }
                         }
                     }
                     eprintln!("Imported room seed; completed recorded CPU phase at ${pc:06X}");
@@ -419,10 +423,15 @@ pub(super) unsafe fn load(
                     // The capture importer proves this normalization read equals
                     // the first replay word; preserve all 16 hardware input bits.
                     game.input1_mut().currentState = first_input.reverse_bits();
-                    Some(OriginalWaitCall::new(
-                        (*(*game.g_snes).cart).rom.clone(),
-                        original_rom,
-                    )?)
+                    // Without snesrev's main loop the original wait call is installed.
+                    if sm::oracle_mode::nmi_reads_controller() {
+                        None
+                    } else {
+                        Some(OriginalWaitCall::new(
+                            (*(*game.g_snes).cart).rom.clone(),
+                            original_rom,
+                        )?)
+                    }
                 } else {
                     None
                 };

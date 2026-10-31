@@ -220,7 +220,8 @@ unsafe fn finish_load_snes_state(native_game: &mut Game, complete_load: bool) {
             | (ram.read_byte(((*(*game.g_snes).cpu).sp as i32 + 4) as usize) as i32) << 8
             | (ram.read_byte(((*(*game.g_snes).cpu).sp as i32 + 5) as usize) as i32) << 16)
             + 1) as u32;
-        if next == 0x82897e {
+        // A load inside the original main loop's wait resumes snesrev's loop.
+        if next == 0x82897e && !crate::oracle_mode::nmi_reads_controller() {
             ram.write_byte(
                 ((*(*game.g_snes).cpu).sp as i32 + 3) as usize,
                 (0xf71b - 1i32 & 0xff) as u8,
