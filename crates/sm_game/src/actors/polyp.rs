@@ -30,6 +30,7 @@ pub fn initialize<H: LeaseActors + ?Sized>(game: &mut H) {
 
 /// Main AI ($A2:B58F): Samus within 40h px, a random rock ($A2:B550/30), random cooldown ($A2:B520).
 pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
+    crate::probe::hit("polyp.main_ai");
     let mut runtime = game.lease();
     let key = current(&runtime);
     match runtime.resolve_actor(key, Native).variables[0] {
