@@ -366,8 +366,9 @@ fn emission_caller_reload() {
             }
         );
         assert_eq!(h.world.player.projectiles.shots[0].trail_time, 4);
+        // $93:81D1 takes frame 1 from $93:8FFE, the entry before the pointer.
         let pair = &h.world.player.projectiles.trails[17];
-        assert_eq!((pair.left.x, pair.left.y), (52, 64));
+        assert_eq!((pair.left.x, pair.left.y), (48, 60));
     }
 }
 fn trail_frame_recapture_and_unknown() {
