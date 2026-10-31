@@ -41,15 +41,14 @@ BUNDLE_SHA256 = "72e0f64e0d47b53d5110cb8c31e13571c14bc95684696aa8ce7f62c05a6f6dc
 # Rooms that stay in lockstep but whose aligned inputs never leave the room;
 # they are reported, not replayed, until the cause is known. Every other room
 # must pass.
-KNOWN_FAILURES = {
-    6: "Ceres Ridley (E0B5): lockstep agrees, but the seeded inputs never reach E06B",
-    324: "Mother Brain (DD58): lockstep agrees, but the seeded inputs never reach DE4D",
-}
+KNOWN_FAILURES = {}
 # Rooms that once exposed sm_game bugs; they must keep passing.
 REGRESSIONS = {
+    6: "Ceres Ridley's acceleration carry chain times the getaway as on hardware",
     246: "D387 out-of-room level word wraps like $94's long indexed read",
     311: "Tourian statue init passes $D7B9 and returned handles as $1993",
     312: "Tourian statue dust clouds pass $20 and returned handles as $1993",
+    324: "the original sound-clear delay times the escape door as on hardware",
     328: "escape wall explosion passes A = 1 as $1993",
     329: "escape wall explosion passes A = 1 as $1993",
 }
