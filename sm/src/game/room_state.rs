@@ -1,11 +1,7 @@
 //! Compatibility entry adapters and retained level/graphics backend leaves.
-use crate::game::display_refresh::copy_to_vram_now;
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
 use crate::ram_map::{checked_word, word, words as ram};
-use crate::rtl::rom_bank_record;
-use crate::types::{EnemyDef, EnemyTileset};
-use core::mem::offset_of;
 use sm_game::decompression::decompress_to_ram;
 
 pub(crate) fn pause_draygon(game: &mut Game) {
@@ -25,38 +21,10 @@ pub(crate) fn decompress_level(source: u32, game: &mut Game) {
     copy_level_planes(game);
 }
 
-pub(crate) unsafe fn load_enemy_graphics(game: &mut Game) {
-    unsafe {
-        let mut cursor = i32::from(checked_word!(game.ROOM_ENEMY_TILESETS_PTR));
-        if cursor == 0 {
-            return;
-        }
-        let mut next_tile = 0x7000u16;
-        loop {
-            // Reacquire each bank address: this list wraps, unlike initial staging.
-            let enemy = rom_bank_record::<0xb4>(cursor as u16, game)
-                .word(offset_of!(EnemyTileset, enemy_def));
-            if enemy == 0xffff {
-                return;
-            }
-            let definition = rom_bank_record::<0xa0>(enemy, game);
-            let size = definition.word(offset_of!(EnemyDef, tile_data_size));
-            let destination = if size & 0x8000 != 0 {
-                let tileset = rom_bank_record::<0xb4>(cursor as u16, game);
-                (tileset.word(offset_of!(EnemyTileset, vram_dst)) & 0xf000) >> 4 | 0x6000
-            } else {
-                let destination = next_tile;
-                next_tile = next_tile.wrapping_add(size >> 1);
-                destination
-            };
-            copy_to_vram_now(
-                destination,
-                definition.load24(offset_of!(EnemyDef, tile_data)),
-                size & 0x7fff,
-                game,
-            );
-            cursor += 4;
-        }
+impl sm_game::room_state::EnemyGraphicsHost for Game {
+    fn rom_record(&mut self, bank: u8, address: u16) -> crate::rom::RomRecord {
+        // SAFETY: room loading runs with the backend installed.
+        unsafe { crate::rtl::rom_record(bank, address, self) }
     }
 }
 

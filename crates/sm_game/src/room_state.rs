@@ -534,3 +534,47 @@ pub fn shake_ridley<H: SessionView + ?Sized>(h: &mut H) {
         }
     }
 }
+
+/// What loading the room's enemy graphics needs: named RAM, immediate DMA,
+/// and the original's RomPtr fetches with their observations.
+pub trait EnemyGraphicsHost:
+    crate::ram::CompatibilityRam + crate::display::transfer::RoomDma
+{
+    fn rom_record(&mut self, bank: u8, address: u16) -> sm_data::cartridge::RomRecord;
+}
+
+/// Load enemy GFX to VRAM ($82:DFD1): each of the room's enemy tilesets
+/// (bank $B4) to its fixed VRAM slot, or packed from $7000 when the size's
+/// top bit is clear.
+pub fn load_enemy_graphics<H: EnemyGraphicsHost + ?Sized>(game: &mut H) {
+    use crate::actors::content_records::EnemyDef;
+    use core::mem::offset_of;
+    // Enemy tileset entries ($B4): the enemy definition, then its VRAM slot.
+    const ENEMY_DEF: usize = 0;
+    const VRAM_DESTINATION: usize = 2;
+    let mut cursor = i32::from(checked_word!(game.ROOM_ENEMY_TILESETS_PTR));
+    if cursor == 0 {
+        return;
+    }
+    let mut next_tile = 0x7000u16;
+    loop {
+        // Reacquire each bank address: this list wraps, unlike initial staging.
+        let enemy = game.rom_record(0xb4, cursor as u16).word(ENEMY_DEF);
+        if enemy == 0xffff {
+            return;
+        }
+        let definition = game.rom_record(0xa0, enemy);
+        let size = definition.word(offset_of!(EnemyDef, tile_data_size));
+        let destination = if (size & 0x8000) != 0 {
+            let tileset = game.rom_record(0xb4, cursor as u16);
+            ((tileset.word(VRAM_DESTINATION) & 0xf000) >> 4) | 0x6000
+        } else {
+            let destination = next_tile;
+            next_tile = next_tile.wrapping_add(size >> 1);
+            destination
+        };
+        let source = definition.load24(offset_of!(EnemyDef, tile_data));
+        crate::display::transfer::copy_to_vram_now(destination, source, size & 0x7fff, None, game);
+        cursor += 4;
+    }
+}

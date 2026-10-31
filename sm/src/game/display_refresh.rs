@@ -2,8 +2,7 @@
 //! still owns, plus unsafe entries for callers with a live backend.
 use crate::game::{animated_tiles, mode7_transfers, vram_read_queue};
 use crate::game_state::Game;
-use crate::rtl::{DMAP1, MDMAEN, VMADDL, VMAIN, write_reg, write_reg_word};
-use sm_game::display::control::Brightness;
+use crate::rtl::{DMAP1, MDMAEN, VMAIN, write_reg, write_reg_word};
 pub(crate) use sm_game::display::transfer::ScrollingLayout as ScrollingDmaLayout;
 use sm_game::display_refresh as refresh;
 pub(crate) use sm_game::display_refresh::{
@@ -102,11 +101,6 @@ pub(crate) fn run(game: &mut Game) {
     refresh::run(game);
 }
 
-/// Ordered channel-1 DMA setup.
-pub(crate) fn setup_transfer(mode: u16, source: u32, bytes: u16, game: &mut Game) {
-    sm_game::display::transfer::setup_transfer(mode, source, bytes, game)
-}
-
 pub(crate) use sm_game::display_refresh::GraphicsAsset;
 
 pub(crate) unsafe fn start_room_dma(
@@ -129,28 +123,10 @@ pub(crate) unsafe fn start_room_dma(
     }
 }
 
-pub unsafe fn copy_to_vram_now(vram_dst: u16, src: u32, size: u16, game: &mut Game) {
-    unsafe {
-        copy_to_vram_with_source(vram_dst, src, size, None, game);
-    }
-}
-pub(crate) unsafe fn copy_to_vram_with_source(
-    vram_dst: u16,
-    src: u32,
-    size: u16,
-    assets: Option<&super::room_entry::PreparedRoomAssets>,
-    game: &mut Game,
-) {
-    unsafe {
-        crate::rtl::register_writes! { game;
-            show(Brightness::BLANK_DARK); word(VMADDL as u16, vram_dst);
-        }
-        setup_transfer(0x1801, src, size, game);
-        crate::rtl::register_writes! { game;
-            byte(VMAIN as u16, 0x80);
-        }
-        start_room_dma(2, assets, game);
-        crate::game::display_transfers::set_brightness(Brightness::FULL, game);
+impl sm_game::display::transfer::RoomDma for Game {
+    fn start_room_dma(&mut self, mask: u8, assets: Option<&super::room_entry::PreparedRoomAssets>) {
+        // SAFETY: immediate copies run from the frame loop with the backend installed.
+        unsafe { start_room_dma(mask, assets, self) }
     }
 }
 
