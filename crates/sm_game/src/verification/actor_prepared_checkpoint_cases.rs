@@ -304,11 +304,9 @@ fn changed_palette_source(
     let native_data = (0..native.len())
         .map(|at| native.read(at))
         .collect::<Vec<_>>();
-    let changed = RomImage::zeroed(data.len());
-    for (at, byte) in data.iter().enumerate() {
-        changed.write(at, *byte);
-    }
-    changed.write(0, data[0] ^ 0x5a);
+    let mut changed = data.clone();
+    changed[0] ^= 0x5a;
+    let changed = RomImage::from(changed);
     let sources = [(ResourceId(3), changed.clone())];
     // All World/gameplay/media declarations remain exactly those originally supplied.
     let mut valid_changed = current.clone();

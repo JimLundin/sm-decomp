@@ -42,10 +42,9 @@ struct World {
 
 impl World {
     fn new(text: &[u8]) -> Self {
-        let rom = RomImage::zeroed(0x20_0000);
-        for (offset, &byte) in text.iter().enumerate() {
-            rom.write(TEXT_OFFSET + offset, byte);
-        }
+        let mut rom = vec![0; 0x20_0000];
+        rom[TEXT_OFFSET..TEXT_OFFSET + text.len()].copy_from_slice(text);
+        let rom = RomImage::from(rom);
         let mut world = Self {
             ram: vec![0; 0x2_0000],
             rom,

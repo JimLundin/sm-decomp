@@ -946,15 +946,9 @@ impl ActorCheckpointPayload {
         // Detached classes are separate owned allocations even if their bytes equal live sources.
         let images: Vec<_> = bound
             .into_iter()
-            .enumerate()
-            .map(|(index, image)| {
-                image.unwrap_or_else(|| {
-                    let image = sm_data::cartridge::RomImage::zeroed(data[index].len());
-                    for (at, byte) in data[index].iter().enumerate() {
-                        image.write(at, *byte);
-                    }
-                    image
-                })
+            .zip(data)
+            .map(|(image, bytes)| {
+                image.unwrap_or_else(|| sm_data::cartridge::RomImage::from(bytes))
             })
             .collect();
         let residency =
