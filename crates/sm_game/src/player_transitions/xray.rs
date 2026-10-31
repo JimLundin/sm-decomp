@@ -3,6 +3,7 @@ use super::{
     effects::Host,
     state::{InputMode, MovementMode, PoseRequestWord},
 };
+use crate::player_transitions::effects::SamusLease;
 use crate::ram::words as ram;
 use crate::runtime_access::SessionRam;
 use crate::{session::Session, visual_host::Record};
@@ -249,4 +250,81 @@ pub fn initialize(h: &mut (impl Host + SessionRam)) -> bool {
             64
         };
     true
+}
+/// Draw the beam's window around Samus, or close it when she faces off screen.
+pub fn draw_window<H: SamusLease>(h: &mut H) {
+    let player = &h.session().player;
+    let facing = player.movement_and_facing as u8;
+    let x = player
+        .x
+        .wrapping_sub(h.inputs().camera_x)
+        .wrapping_add(if facing == 4 { 65533 } else { 3 });
+    let crouched = player.movement_and_facing >> 8 == 5;
+    let y = player
+        .y
+        .wrapping_sub(h.inputs().camera_y)
+        .wrapping_sub(if crouched { 12 } else { 16 });
+    let off_screen = (x as i16) < 0 || x >= 256;
+    if ((x as i16) < 0 && facing == 4) || ((x as i16) >= 256 && facing == 8) {
+        clear_window(h);
+        return;
+    }
+    let (angle, width) = (player.transitions.xray_angle, player.demo.held);
+    let window = crate::beam_windows::XrayWindow {
+        x,
+        y,
+        angle,
+        width,
+        off_screen,
+        table: 0x9800,
+    };
+    h.draw_xray_window_table(window);
+}
+/// The X-ray background step: blend, then the beam's or the restore's stage.
+pub fn advance_background<H: SamusLease>(h: &mut H) {
+    use super::effects::XrayRestore;
+    apply_blending(h, BlendPhase::Beam);
+    let stages: [fn(&mut H); 6] = [
+        |h| advance_beam(h, BeamPhase::Initial),
+        |h| advance_beam(h, BeamPhase::Widening),
+        |h| advance_beam(h, BeamPhase::Full),
+        |h| h.restore_xray_background(XrayRestore::Left),
+        |h| h.restore_xray_background(XrayRestore::Right),
+        |h| h.restore_xray_background(XrayRestore::Finish),
+    ];
+    // Retain the six-entry bounds check after the blending writes.
+    stages[usize::from(h.session().player.demo.pre_action)](h);
+}
+/// Widen or steer the beam while run is held, and redraw its window.
+pub fn advance_beam<H: SamusLease>(h: &mut H, phase: BeamPhase) {
+    if h.inputs().run_button & h.inputs().held == 0 {
+        let demo = &mut h.session_mut().player.demo;
+        demo.pre_action = if phase == BeamPhase::Full {
+            demo.pre_action.wrapping_add(1)
+        } else {
+            3
+        };
+        return;
+    }
+    if phase == BeamPhase::Widening {
+        widen(&mut h.session_mut().player.demo);
+    } else if phase == BeamPhase::Full {
+        let up = h.word(ram::BUTTON_CONFIG_UP) & h.inputs().held != 0;
+        if up || h.word(ram::BUTTON_CONFIG_DOWN) & h.inputs().held != 0 {
+            let player = &mut h.session_mut().player;
+            steer(&mut player.transitions.xray_angle, player.demo.held, up);
+        }
+    }
+    draw_window(h);
+    if phase == BeamPhase::Initial {
+        let demo = &mut h.session_mut().player.demo;
+        demo.pre_action = demo.pre_action.wrapping_add(1);
+    }
+}
+/// Run held and time running: start the scope and spawn its HDMA.
+pub fn request_scope<H: SamusLease>(h: &mut H) {
+    if h.inputs().frozen != 0 || h.inputs().run_button & h.inputs().held == 0 || !initialize(h) {
+        return;
+    }
+    h.spawn_xray_scope_hdma();
 }

@@ -3,6 +3,7 @@ use super::{
     effects::Host, finish_pose_change, record_pose_history, refresh_pose, refresh_pose_rules,
     state::*,
 };
+use crate::player_transitions::effects::SamusLease;
 use {
     crate::player_projectiles,
     crate::{
@@ -295,4 +296,14 @@ pub fn cancel_grapple(h: &mut impl Host) {
     samus_palette::write_beam_palette(h, beams & 0xfff);
     h.session_mut().player.grapple = 0xc4f0;
     h.session_mut().player.transitions.draw_handler = DrawMode::Normal;
+}
+/// The Ceres arrival: elevator projectiles, the map back on and the room music.
+pub fn finish_ceres_arrival<H: SamusLease>(h: &mut H) {
+    h.owned_call(|h| {
+        use crate::{enemy_projectiles::lifecycle, room_mechanisms::host::Effects};
+        let parameter = lifecycle::spawn_from_enemy(h, 0, 0, 0xa387);
+        lifecycle::spawn_from_enemy(h, parameter, 0, 0xa395);
+        h.session_mut().minimap.disabled = 0;
+        Effects::delayed_room_music(h, 32);
+    });
 }

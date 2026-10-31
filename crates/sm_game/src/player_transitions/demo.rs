@@ -18,6 +18,7 @@ use super::{
     effects::Host,
     state::{DrawMode, FrameAlphaMode, FrameBetaMode, InputMode},
 };
+use crate::player_transitions::effects::SamusLease;
 use crate::{
     session::Session,
     visual_host::{Content, Record, Source},
@@ -225,4 +226,40 @@ pub fn advance(h: &mut impl Host) -> bool {
         }
     }
     true
+}
+/// Load the demo's scene and Samus's demo setup, and the demo button layout.
+pub fn load_demo<H: SamusLease>(h: &mut H) {
+    use crate::ram::words as ram;
+    let scene = h.word(ram::DEMO_SCENE);
+    let set = h.word(ram::DEMO_SET);
+    load_data(h, set, scene);
+    let set = h.word(ram::DEMO_SET);
+    let scene = h.word(ram::DEMO_SCENE);
+    if initialize_scene(h, set, scene) {
+        h.owned_call(super::equipment::face_forward);
+        h.session_mut().player.transitions.draw_handler = super::state::DrawMode::Normal;
+    }
+    finish_setup(h);
+    h.update_beam_graphics();
+    for (field, value) in [
+        (ram::BUTTON_CONFIG_UP, 0x0800),
+        (ram::BUTTON_CONFIG_DOWN, 0x0400),
+        (ram::BUTTON_CONFIG_LEFT, 0x0200),
+        (ram::BUTTON_CONFIG_RIGHT, 0x0100),
+        (ram::BUTTON_CONFIG_SHOOT_X, 0x0040),
+        (ram::BUTTON_CONFIG_JUMP_A, 0x0080),
+        (ram::BUTTON_CONFIG_RUN_B, 0x8000),
+        (ram::BUTTON_CONFIG_ITEMCANCEL_Y, 0x4000),
+        (ram::BUTTON_CONFIG_ITEMSWITCH, 0x2000),
+        (ram::BUTTON_CONFIG_AIM_UP_R, 0x0010),
+        (ram::BUTTON_CONFIG_AIM_DOWN_L, 0x0020),
+        (ram::UNUSED_WORD_7E09E8, 1),
+        (ram::DEBUG_FLAG, 1),
+        (ram::MOONWALK_FLAG, 0),
+        (ram::UNUSED_WORD_7E0DF8, 0),
+        (ram::UNUSED_WORD_7E0DFA, 0),
+        (ram::UNUSED_WORD_7E0DFC, 0),
+    ] {
+        h.write_slice_le(field, value);
+    }
 }
