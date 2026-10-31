@@ -59,6 +59,11 @@ fn direction_data(runtime: &impl ActorLease, direction: u16, field: isize) -> u1
     let record = content::captured(runtime.native_image(), DIRECTIONS);
     record.table_word(isize::try_from(direction).unwrap() * 4 + field)
 }
+/// A crawling speed with its velocity sign pair from $A3:CD82: (0, 0) keeps it positive
+/// and (FFFFh, 1) negates it, as speed XOR the first plus the second.
+pub fn signed_speed(speed: u16, [flip, add]: [u16; 2]) -> u16 {
+    (speed ^ flip).wrapping_add(add)
+}
 /// Set yard crawling velocities ($A3:CE27).
 fn set_velocities(runtime: &mut impl ActorLease, key: Key, offset: u16) {
     let index = isize::try_from(offset >> 1).unwrap();
@@ -66,7 +71,7 @@ fn set_velocities(runtime: &mut impl ActorLease, key: Key, offset: u16) {
     for axis in 0..2 {
         let parameter = runtime.resolve_actor(key, Native).parameters[0];
         let speed = table(runtime, SPEEDS, parameter as isize);
-        let value = signs[axis * 2 + 1].wrapping_add(signs[axis * 2] ^ speed);
+        let value = signed_speed(speed, [signs[axis * 2], signs[axis * 2 + 1]]);
         runtime.edit_actor(key, Native, |actor| actor.variables[axis] = value);
     }
 }

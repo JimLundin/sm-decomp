@@ -51,18 +51,31 @@ fn spawn_spikes(game: &mut impl EnemyHost, k: u16) {
 fn place_balloon(game: &mut impl EnemyHost, body: i32) {
     let balloon = body - BALLOON_SLOT;
     let list = session_slot!(game, Balloon[balloon].base.current_instruction);
-    let (bias, offsets) = if (list as i32 + 0x3e6f) & 0x8000 != 0 {
-        (15997, [-12i16, -16, -20])
-    } else {
-        (15983, [-20i16, -16, -12])
-    };
-    let mut index = (list as i32 - 4 + bias) as u16 >> 1;
-    if (index as i32 - 6) & 0x8000 == 0 {
-        index = 0;
-    }
-    let y = (offsets[(index >> 1) as usize] as u16)
-        .wrapping_add(session_slot!(game, Powamp[body].base.y_pos));
+    let y = balloon_offset(list).wrapping_add(session_slot!(game, Powamp[body].base.y_pos));
     session_slot!(game, Balloon[balloon].base.y_pos = y);
+}
+/// Instruction lists - balloon - inflate ($A8:C183) and deflate ($A8:C191).
+pub const INFLATE: u16 = 0xc183;
+pub const DEFLATE: u16 = 0xc191;
+/// Balloon Y offsets by animation frame into the inflate ($A8:C277) and deflate ($A8:C27D)
+/// instruction lists: -12, -16, -20 and back.
+const INFLATE_OFFSETS: [u16; 3] = [0xfff4, 0xfff0, 0xffec];
+const DEFLATE_OFFSETS: [u16; 3] = [0xffec, 0xfff0, 0xfff4];
+/// The balloon's Y offset from the body for its instruction list pointer `list`
+/// ($A8:C234): by its frame into the inflate list, or into the deflate list from $C191
+/// on, and the first offset past the third frame.
+pub fn balloon_offset(list: u16) -> u16 {
+    let (start, offsets) = match list.wrapping_sub(DEFLATE) & 0x8000 != 0 {
+        true => (INFLATE, INFLATE_OFFSETS),
+        false => (DEFLATE, DEFLATE_OFFSETS),
+    };
+    let frame = list.wrapping_sub(4).wrapping_sub(start) >> 1;
+    let frame = if frame.wrapping_sub(6) & 0x8000 == 0 {
+        0
+    } else {
+        frame
+    };
+    offsets[usize::from(frame >> 1)]
 }
 /// Wiggle the body each 5 frames; true only when a requested stop at the centre is reached.
 fn wiggle(game: &mut impl EnemyHost, body: i32, stop_at_centre: bool) -> bool {
@@ -107,8 +120,7 @@ fn move_vertically(game: &mut (impl EnemyHost + LeaseActors), body: i32) -> bool
 }
 fn begin_deflating(game: &mut impl EnemyHost, body: i32) {
     session_slot!(game, Powamp[body]; function = DEFLATING, function_timer = 10);
-    // Instruction list - balloon - deflate ($A8:C191).
-    session_slot!(game, Balloon[body - BALLOON_SLOT].base; instruction_timer = 1, current_instruction = 0xc191);
+    session_slot!(game, Balloon[body - BALLOON_SLOT].base; instruction_timer = 1, current_instruction = DEFLATE);
 }
 /// Main AI - powamp ($A8:C21C): its function, run next through the pre-instruction table.
 pub fn function(game: &mut impl EnemyHost) -> u32 {
@@ -133,8 +145,7 @@ pub fn run(game: &mut (impl EnemyHost + LeaseActors), mut function: u16, k: u16)
             }
             match function {
                 DEFLATED_RESTING => {
-                    // Instruction list - balloon - inflate ($A8:C183).
-                    session_slot!(game, Balloon[balloon].base; instruction_timer = 1, current_instruction = 0xc183);
+                    session_slot!(game, Balloon[balloon].base; instruction_timer = 1, current_instruction = INFLATE);
                     session_slot!(game, Powamp[body]; function = INFLATING, function_timer = 10);
                 }
                 INFLATING => {
