@@ -33,7 +33,7 @@ CHAIN = pathlib.Path("movies/full-route-chain.csv")
 RECIPE = pathlib.Path("movies/full-route-chain.generated.toml")
 MOVIE = pathlib.Path("movies/super-metroid-100-4010.lsmv")
 MOVIE_FRAMES = 222788
-JOBS = 12
+JOBS = 9
 REGIONS = ("wram", "sram", "vram", "cgram", "oam", "apuram")
 # Encrypted release asset (ci-data) holding the seeds and inputs; set when published.
 BUNDLE_ASSET = "full-route-chain-v1-72e0f64e0d47b53d.tar.gz.enc"
