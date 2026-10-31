@@ -342,12 +342,16 @@ fn attacking<L: Lease>(write_operand: &mut impl FnMut(u8, &mut L), game: &mut L)
     for part in 0..4 {
         reorient_segment(part, write_operand, game);
     }
+    // The original adds after one CLC ($A8:A532), so each add's carry
+    // reaches the next offset.
+    let mut carry = false;
     for field in 0..8 {
-        session_slot!(game, Maw[maw + 2 * field].segment_x_offset, |old| old
-            .wrapping_add(session_slot!(
-                game,
-                Maw[maw + 2 * field].segment_x_velocity
-            )));
+        let velocity = session_slot!(game, Maw[maw + 2 * field].segment_x_velocity);
+        let offset = session_slot!(game, Maw[maw + 2 * field].segment_x_offset);
+        let (sum, first) = offset.overflowing_add(velocity);
+        let (sum, second) = sum.overflowing_add(u16::from(carry));
+        carry = first || second;
+        session_slot!(game, Maw[maw + 2 * field].segment_x_offset = sum);
     }
     session_slot!(
         game,
