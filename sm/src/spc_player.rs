@@ -418,11 +418,7 @@ impl NativePlayer {
             &player.ram,
             || dsp.state,
             || false,
-            || DspRegWriteHistory {
-                count: 0,
-                addr: [0; 256],
-                val: [0; 256],
-            },
+            || DspRegWriteHistory::EMPTY,
         );
         true
     }

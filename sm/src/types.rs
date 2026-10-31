@@ -629,6 +629,15 @@ pub type Sint16 = i16;
 
 pub type BotwoonLayout = sm_game::actors::layouts::EnemyLayout104;
 
+impl DspRegWriteHistory {
+    /// A history with no register writes recorded.
+    pub const EMPTY: Self = Self {
+        count: 0,
+        addr: [0; 256],
+        val: [0; 256],
+    };
+}
+
 impl SpawnHardcodedPlmArgs {
     pub const fn new(block_x: u8, block_y: u8, header: VoidP) -> Self {
         Self {
