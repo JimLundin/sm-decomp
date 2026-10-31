@@ -18,7 +18,7 @@ use crate::display::registers::{
 };
 use crate::display::sequence::{Registers, register_writes, write_register_and_mirror};
 use crate::display::transfer::{ScrollingLayout, setup_transfer};
-
+use crate::display::video::Upload;
 use crate::ram::words;
 use crate::ram::{CompatibilityRam, RawRam, checked_word, checked_word as at, word, word_arrays};
 use crate::scene::irq;
@@ -44,6 +44,7 @@ pub trait Host:
     + crate::decompression::DecompressionHost
     + crate::records::Records
     + DisplayOwner
+    + crate::display::video::Video
 {
     /// The HDMA object table as the compatibility projection reads it.
     fn hdma_objects(&self) -> crate::hdma::HdmaObjects;
@@ -397,6 +398,7 @@ fn upload_registers<H: Host + ?Sized>(game: &mut H) {
 }
 
 fn upload_palette_and_oam<H: Host + ?Sized>(game: &mut H) {
+    game.producing();
     // Channel 0 uploads the OAM entries and their high table from RAM.
     register_writes! { game;
         word(DMAP0 as u16, 0x0400); word(A1T0L as u16, 0x0370);
@@ -409,6 +411,21 @@ fn upload_palette_and_oam<H: Host + ?Sized>(game: &mut H) {
     register_writes! { game;
         byte(CGADD as u16, 0); byte(MDMAEN as u16, 3);
     }
+    game.produced(
+        "palette and objects",
+        &[
+            Upload::Objects {
+                address: 0,
+                source: 0x0370,
+                bytes: 0x0220,
+            },
+            Upload::Palette {
+                index: 0,
+                source: 0xc000,
+                bytes: 0x0200,
+            },
+        ],
+    );
     crate::probe::hit("palette.dma.uploaded");
 }
 

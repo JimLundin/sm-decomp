@@ -4,6 +4,7 @@ use crate::game::{animated_tiles, mode7_transfers, vram_read_queue};
 use crate::game_state::Game;
 use crate::rtl::{DMAP1, MDMAEN, VMAIN, write_reg, write_reg_word};
 pub(crate) use sm_game::display::transfer::ScrollingLayout as ScrollingDmaLayout;
+use sm_game::display::video::Upload;
 use sm_game::display_refresh as refresh;
 pub(crate) use sm_game::display_refresh::{
     fade, native_word, queue_native_transfer, queue_scrolling_tiles, set_blank, set_native_word,
@@ -51,6 +52,45 @@ impl refresh::Host for Game {
     fn fill_vram_low_bytes(&mut self, fill: u8, word_reset: bool) {
         // SAFETY: as for `start_graphics_dma`.
         unsafe { crate::game::display_transfers::fill_vram_low_bytes(fill, word_reset, self) }
+    }
+}
+
+impl sm_game::display::video::Video for Game {
+    fn producing(&mut self) {
+        assert!(!self.g_snes.is_null(), "SNES backend must be installed");
+        // SAFETY: the backend is installed, and `&mut self` excludes other access.
+        crate::snes::ppu::producing(unsafe { (*self.g_snes).ppu });
+    }
+    fn produced(&mut self, producer: &'static str, uploads: &[Upload]) {
+        assert!(!self.g_snes.is_null(), "SNES backend must be installed");
+        // SAFETY: as for `producing`.
+        let ppu = unsafe { (*self.g_snes).ppu };
+        let ram = self.ram();
+        let bytes = |source: usize, count: u16| {
+            (source..source + usize::from(count)).map(|at| ram.read_byte(at))
+        };
+        crate::snes::ppu::produced(ppu, producer, |ports, memory| {
+            for &upload in uploads {
+                match upload {
+                    Upload::Objects {
+                        address,
+                        source,
+                        bytes: count,
+                    } => {
+                        ports.set_oam_address(address);
+                        ports.upload_oam(memory, bytes(source, count));
+                    }
+                    Upload::Palette {
+                        index,
+                        source,
+                        bytes: count,
+                    } => {
+                        ports.set_cgram_pointer(index);
+                        ports.upload_cgram(memory, bytes(source, count));
+                    }
+                }
+            }
+        });
     }
 }
 
