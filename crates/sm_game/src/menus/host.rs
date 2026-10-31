@@ -149,4 +149,7 @@ pub trait Host:
     fn read_rom_word(&self, address: u32, offset: usize) -> u16;
     fn visual_tables(&self) -> &crate::visual_tables::ImportedTables;
     fn area_select_palettes(&self) -> &Option<super::menu_tilemap::ImportedAreaPalettes>;
+    /// Controller 1's word as auto-joypad read latches it at this vblank: the
+    /// live controller, or the next recorded frame's word during a replay.
+    fn nmi_controller_word(&mut self) -> u16;
 }

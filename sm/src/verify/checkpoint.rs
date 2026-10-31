@@ -744,7 +744,52 @@ pub unsafe fn load_with_sources(
             return Err("checkpoint payload is corrupt".into());
         }
         restore_capture_with_sources(&bytes[56..], game, sources)?;
+        if crate::oracle_mode::nmi_reads_controller() {
+            resume_original_main_loop(game, inputs.get(completed).copied());
+        }
         Ok(completed)
+    }
+}
+
+/// Resume a checkpoint cut inside snesrev's rebuilt main loop ($82:F713) in the
+/// original loop, for an oracle that reads the controller in NMI. The outer
+/// wait's return moves from $82:F71F to $82:897D above the loop's saved P, a
+/// body call's return to $82:F71B is dropped, and after a requested NMI the
+/// controller word of the next frame is latched as that NMI would have.
+unsafe fn resume_original_main_loop(game: &mut Game, next: Option<u16>) {
+    unsafe {
+        let cpu = game.g_cpu;
+        let ram = game.ram();
+        let sp = usize::from((*cpu).sp);
+        let byte = |at: usize| ram.read_byte(at);
+        let Some(frame) = (sp + 1..0x1fff).rev().find(|&at| {
+            [byte(at), byte(at + 1)] == [0x1b, 0xf7]
+                || (at <= 0x1ffd && [byte(at), byte(at + 1), byte(at + 2)] == [0x1f, 0xf7, 0x82])
+        }) else {
+            return;
+        };
+        if byte(frame) == 0x1f {
+            // Make room for the original loop's saved P above its wait return.
+            for at in sp + 1..frame {
+                ram.write_byte(at - 1, byte(at));
+            }
+            for (offset, value) in [0x7d, 0x89, 0x82, 0x00].into_iter().enumerate() {
+                ram.write_byte(frame - 1 + offset, value);
+            }
+            (*cpu).sp = (*cpu).sp.wrapping_sub(1);
+        } else {
+            // The original body runs inline: drop the call's return address.
+            for at in (sp + 1..frame).rev() {
+                ram.write_byte(at + 2, byte(at));
+            }
+            (*cpu).sp = (*cpu).sp.wrapping_add(2);
+        }
+        let pc = (u32::from((*cpu).k) << 16) | u32::from((*cpu).pc);
+        if pc == 0x80834a {
+            crate::oracle_mode::set_next_frame_input(next);
+            sm_game::menus::controller_input::sample_latched(game);
+            crate::oracle_mode::set_next_frame_input(None);
+        }
     }
 }
 

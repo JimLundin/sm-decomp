@@ -278,7 +278,6 @@ fn frame<H: Host>(game: &mut H) -> CoroutineRet {
             for offset in (0x612..0x616).rev() {
                 game.ram().write_byte(offset, 0);
             }
-            controller_input::sample(game);
             game.update_hdma();
             game.advance_random();
             sprite_drawing::clear_high_table(game);
@@ -332,7 +331,12 @@ fn frame<H: Host>(game: &mut H) -> CoroutineRet {
     if returned == 0 {
         game.ram().write_byte(0x5b4, 1);
     }
+    // A requested NMI ends the frame by latching the controller, as on hardware.
+    let requested = game.ram().read_byte(0x5b4) != 0;
     display_refresh::run(game);
+    if requested {
+        controller_input::sample_latched(game);
+    }
     returned
 }
 

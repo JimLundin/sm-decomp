@@ -53,6 +53,17 @@ pub fn filter<H: Host + ?Sized>(delay: u16, game: &mut H) {
 /// Requires a live, exclusively accessed SNES backend for controller register reads.
 pub fn sample<H: Host + ?Sized>(game: &mut H) {
     let first = { game.read_register_word(JOY1L as u16) };
+    sample_word(first, game);
+}
+
+/// Sample the controller as a requested NMI does: from the word auto-read
+/// latched at this vblank, which the next frame's logic reads.
+pub fn sample_latched<H: Host + ?Sized>(game: &mut H) {
+    let first = game.nmi_controller_word();
+    sample_word(first, game);
+}
+
+fn sample_word<H: Host + ?Sized>(first: u16, game: &mut H) {
     repeat(0, first, game);
     if word!(game.ENABLE_DEBUG) != 0 {
         let second = { game.read_register_word(JOY2L as u16) };
