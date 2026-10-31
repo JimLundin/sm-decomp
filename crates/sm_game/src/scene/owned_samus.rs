@@ -9,8 +9,26 @@ use crate::scene::{samus, samus_body, samus_position_tiles as positions};
 use crate::session_owners::SamusPublications;
 use std::sync::Arc;
 
+/// How the bound Samus content executes: from its prepared bytes, or over
+/// the retained native ROM.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum SamusExecution {
+    Prepared,
+    RetainedNative,
+}
 /// The bound Samus content a persistent Session draws from.
 pub trait SamusSources: crate::cartridge::NativeDiagnostics {
+    /// How the bound content executes; `None` when no content is bound.
+    fn samus_execution(&self) -> Result<Option<SamusExecution>, DisplayError>;
+    /// The native role lease at `displacement` from the role's base, over the
+    /// `selected` ROM image, when retained native content is bound.
+    fn capture_samus_role(
+        &self,
+        role: Role,
+        registration: Registration,
+        displacement: usize,
+        selected: &sm_data::cartridge::RomImage,
+    ) -> Result<Option<RoleLease<crate::scene::samus_native_content::CapturedRom>>, DisplayError>;
     fn prepared_samus_role(
         &self,
         role: Role,
