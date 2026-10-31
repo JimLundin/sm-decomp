@@ -75,6 +75,13 @@ SCENARIOS = {
         base="100-boundary:259",
         edits={"energy": 1099, "reserve_energy": 300, "selected_item": "grapple"},
         note="Draygon grab with the grapple ready"),
+    # The 100% movie's landing site late in the game, with energy and
+    # ammunition set for a crystal flash: under 51 energy, empty reserves and
+    # at least ten of each kind of ammunition once the bomb is laid.
+    "crystal-flash": Scenario(
+        base="100-input-phase:305",
+        edits={"energy": 40, "reserve_energy": 0, "power_bombs": 11},
+        note="crystal flash conditions at the landing site"),
 }
 
 
