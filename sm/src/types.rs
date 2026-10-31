@@ -2,6 +2,7 @@
 
 use crate::game_state::Game;
 use ::core::ffi::{c_char, c_double, c_long, c_uchar, c_ushort, c_void};
+pub use sm_game::actors::content_records::{EnemyDef, ExtendedSpriteMap, Hitbox, LongPtr};
 pub use sm_game::actors::layouts::EnemyBase;
 
 crate::type_aliases! {
@@ -13,11 +14,6 @@ crate::typed_struct! {
         #[derive(Copy, Clone)]
         #[repr(C, packed)]
     ];
-    pub struct LongPtr {
-        pub addr: VoidP;
-        pub bank: u8;
-    }
-
     pub struct VramWriteEntry {
         pub size: u16;
         pub src: LongPtr;
@@ -41,24 +37,6 @@ crate::typed_struct! {
             u16;
     }
 
-    pub struct EnemyDef {
-        pub tile_data_size: u16;
-        pub palette_ptr: VoidP;
-        pub health, damage, x_radius, y_radius: u16;
-        pub bank, hurt_ai_time: u8;
-        pub hurt_sfx, boss_fight_value: u16;
-        pub ai_init: VoidP;
-        pub num_parts, field_16: u16;
-        pub main_ai, grapple_ai, hurt_ai, frozen_ai, time_is_frozen_ai: VoidP;
-        pub death_anim, field_24, field_26: u16;
-        pub powerbomb_reaction, field_2A: VoidP;
-        pub field_2C, field_2e: u16;
-        pub touch_ai, shot_ai, field_34: VoidP;
-        pub tile_data: LongPtr;
-        pub layer: u8;
-        pub item_drop_chances_ptr, vulnerability_ptr, name_ptr: VoidP;
-    }
-
     pub struct EnemySpawnData {
         pub some_flag, cause_of_death, field_4, vram_tiles_index, palette_index, field_A, field_C,
             field_E, xpos2, ypos2, field_14, field_16, field_18, field_1A, field_1c, id, x_pos,
@@ -79,16 +57,6 @@ crate::typed_struct! {
 
     pub struct ExpandingSquareTransitionHdma {
         pub field_0, field_1, field_2: u8;
-    }
-
-    pub struct ExtendedSpriteMap {
-        pub xpos, ypos: u16;
-        pub spritemap, hitbox_ptr_: VoidP;
-    }
-
-    pub struct Hitbox {
-        pub left, top, right, bottom: u16;
-        pub func_ptr, func_ptrA: VoidP;
     }
 
     pub struct MapIconDataPointers {

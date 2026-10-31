@@ -54,7 +54,7 @@ pub(crate) fn image() -> RomImage {
     image_word(
         &image,
         0xa79000,
-        2 + offset_of!(ExtendedSpriteMap, hitbox_ptr_),
+        2 + offset_of!(ExtendedSpriteMap, hitboxes),
         0x9100,
     );
     image_word(&image, 0xa79100, 0, 1);
@@ -64,7 +64,7 @@ pub(crate) fn image() -> RomImage {
     for field in [offset_of!(Hitbox, right), offset_of!(Hitbox, bottom)] {
         image_word(&image, 0xa79100, 2 + field, 8);
     }
-    image_word(&image, 0xa79100, 2 + offset_of!(Hitbox, func_ptrA), 0x804c); // Real A7804C no-op.
+    image_word(&image, 0xa79100, 2 + offset_of!(Hitbox, shot), 0x804c); // Real A7804C no-op.
     image
 }
 pub(crate) fn seed(g: &mut Game, image: &RomImage) {
