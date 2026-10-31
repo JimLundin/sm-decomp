@@ -8,6 +8,7 @@ stale or when the inventory and the Rust patch sites disagree.
 import argparse
 import pathlib
 import re
+import subprocess
 import sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
@@ -50,14 +51,17 @@ def rust_sites():
 
 
 def declaration(name, values):
-    """A u32 list laid out as rustfmt lays it out (100 columns)."""
-    items = [f"0x{value:06x}" for value in sorted(values)]
-    head = f"pub(crate) static {name}: &[u32] = &["
-    single = head + ", ".join(items) + "];"
-    if len(single) <= 100:
-        return [single]
-    rows = [items[start:start + 9] for start in range(0, len(items), 9)]
-    return [head] + ["    " + ", ".join(row) + "," for row in rows] + ["];"]
+    items = ", ".join(f"0x{value:06x}" for value in sorted(values))
+    return [f"pub(crate) static {name}: &[u32] = &[{items}];"]
+
+
+def rustfmt(text):
+    """Lay the table out exactly as `cargo fmt` does."""
+    result = subprocess.run(["rustfmt", "--edition", "2024"], input=text, cwd=ROOT,
+                            capture_output=True, text=True, encoding="utf-8")
+    if result.returncode != 0:
+        raise SystemExit(f"rustfmt failed: {result.stderr.strip()}")
+    return result.stdout.replace("\r\n", "\n")
 
 
 def render(tables):
@@ -79,7 +83,10 @@ def render(tables):
             lines.append("")
             lines.append(f"/// {table.replace('_', ' ').lower()}: {doc}")
             lines.extend(declaration(f"{policy}_{table}", sites))
-    return "\n".join(lines) + "\n"
+    lines.append("")
+    lines.append("/// Every bug-hook site; its byte depends on the policy (see `rom_patches`).")
+    lines.extend(declaration("SITES_BUG_HOOKS", [entry[0] for entry in tables["BUG_HOOKS"]]))
+    return rustfmt("\n".join(lines) + "\n")
 
 
 def main():
