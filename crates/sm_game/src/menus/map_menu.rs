@@ -909,7 +909,8 @@ fn explored<H: Host + ?Sized>(x: u16, y: u16, game: &mut H) -> bool {
 }
 
 fn boss_icons<H: Host + ?Sized>(sprite: u16, table: u16, game: &mut H) {
-    let mut bits = game.boss_byte(crate::room_view::current(game).area) as i32;
+    let mut bits =
+        crate::progress::leased::boss_byte_at(crate::room_view::current(game).area, game) as i32;
     let cursor = map_record(
         (i32::from(table) + 2 * i32::from(crate::room_view::current(game).area)) as u16,
         game,

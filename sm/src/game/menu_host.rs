@@ -30,9 +30,6 @@ impl MenuRuntime for Game {
         crate::game::display_refresh::GraphicsAsset::VramWords(source, destination, bytes)
             .load(self)
     }
-    fn boss_byte(&mut self, area: u16) -> u8 {
-        crate::game::gameplay_flag_runtime::boss_byte_at(area, self)
-    }
     fn enter_load_station(&mut self) {
         sm_game::room_entry::selection::begin(
             &mut Runtime::new(self),
@@ -50,9 +47,6 @@ impl MenuRuntime for Game {
     }
     fn shake_room_with_sound(&mut self, kind: u16) {
         visual_runtime::shake_room_with_sound(kind, self)
-    }
-    fn set_boss_byte(&mut self, area: u16, value: u8) {
-        crate::game::gameplay_flag_runtime::set_boss_byte_at(area, value, self)
     }
     fn native_image_binding(&self) -> Option<crate::rom::RomImage> {
         self.capture_native_rom_binding()
@@ -105,15 +99,6 @@ impl MenuRuntime for Game {
     }
     fn enqueue_mode7_rom(&mut self, bank: u8, cursor: u16) {
         crate::game::mode7_transfers::enqueue_rom(bank, cursor, self)
-    }
-    fn event_happened(&mut self, event: u16) -> u16 {
-        crate::game::gameplay_flag_runtime::event_has_happened(event, self)
-    }
-    fn set_event_happened(&mut self, event: u16) {
-        crate::game::gameplay_flag_runtime::mark_event(event, self)
-    }
-    fn boss_bit_for_current_area(&mut self, bit: u16) -> u8 {
-        crate::game::gameplay_flag_runtime::check_boss_bit_for_cur_area(bit, self)
     }
     fn spawn_hardcoded_plm(&mut self, x: u8, y: u8, id: u16) {
         crate::game::room_mechanisms::spawn_hardcoded(

@@ -17,7 +17,7 @@ pub fn initialize_bomb_torizo_haze<H: crate::menus::host::Host + ?Sized>(game: &
 }
 
 pub fn initialize_room_haze<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    let program = if game.boss_bit_for_current_area(1) & 1 != 0 {
+    let program = if crate::progress::leased::check_boss_bit_for_cur_area(1, game) & 1 != 0 {
         0xdeeb
     } else {
         0xded3
@@ -112,7 +112,7 @@ pub fn shake_room_with_sound<H: crate::menus::host::Host + ?Sized>(kind: u16, ga
 }
 
 pub fn initialize_tourian_statue<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    if game.event_happened(0xa) & 1 != 0 {
+    if crate::progress::leased::event_has_happened(0xa, game) & 1 != 0 {
         game.spawn_hardcoded_plm(6, 12, 0xb777);
         crate::word_transfers!(game, ascending, 1; native(0xcd20) <- value(514));
     }
@@ -139,7 +139,9 @@ pub fn advance_tourian_statue<H: crate::menus::host::Host + ?Sized>(
     }
     match phase {
         Waiting => {
-            if (6..=9).all(|event| game.event_happened(event) & 1 != 0) {
+            if (6..=9)
+                .all(|event| crate::progress::leased::event_has_happened(event, game) & 1 != 0)
+            {
                 crate::room_view::set_effect(
                     game,
                     crate::room_view::EffectWord::StatueAnimation,
@@ -177,7 +179,7 @@ pub fn advance_tourian_statue<H: crate::menus::host::Host + ?Sized>(
             object.b = (position >> 16) as u16;
             if object.b == 0xff10 {
                 game.spawn_hardcoded_plm(6, 12, 0xb773);
-                game.set_event_happened(0xa);
+                crate::progress::leased::mark_event(0xa, game);
                 advance_statue_program(object);
             }
         }
