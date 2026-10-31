@@ -55,6 +55,7 @@ Session would retire the list.
 | `$82:831E` BG3/sprite tile DMA size | `samus-scripted-intro` @8256, `demo-attract-setup` @2619, route `chain-0011` @2054, any% chain room 11 (`chain-any-0011-DF45`) @2055 | WRAM $0000-$11FF in sprite VRAM $7700-$7FFF, overwritten before display |
 | `$84:8243`, `$84:EFD3` unpause item-GFX load | `pause-menu-tour` @1378, `boss-kraid-pause-400` @588, `-950` @1138, `-1030` @1218, `-1960` @2148, route `chain-0211` @368 | garbage transfers into empty item-GFX slots |
 | `$80:9AF3` broken mini-map init | `samus-scripted-intro` @8316, any% chain room 11 (`chain-any-0011-DF45`) @2115 | one frame of HUD mini-map tiles from scratch, while blanked |
+| not yet identified (gameplay-visible) | `enemy-fire-arc` @119, in B3A5 before the fire arc's room | an enemy the engine kills survives (NUM_ENEMIES_KILLED_IN_ROOM 1, not 2): a snesrev patch decides the kill and the engine follows it, pending an oracle-fidelity fix |
 
 ## `LEGACY(verifier)`: RAM the frame comparison does not check
 
