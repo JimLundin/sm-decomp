@@ -426,7 +426,8 @@ pub fn apply_power_bomb_to_enemies<H: ActorHost + EprojHost>(h: &mut H) {
     if width == 0 {
         return;
     }
-    h.session_mut().spawn_scratch.coordinates = (width + (width >> 1)) >> 1;
+    // The LSR at $A0:A31A leaves the radius's bit 0 in the carry, and the ADC adds it.
+    h.session_mut().spawn_scratch.coordinates = (width + (width >> 1) + (width & 1)) >> 1;
     for index in (0..32u16).rev() {
         let offset = index * 64;
         let key = ActorKey::from_legacy(offset);

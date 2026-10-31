@@ -395,7 +395,7 @@ CARRY = [
     (0xA9DCDB, 'a', 'none', 'removed', 'patched',
      'Process corpse rotting VRAM transfers',
      "The preceding CLC'd VRAM table pointer + 7 cannot carry"),
-    (0xA0A31B, 'b', 'state', 'removed', 'patched',
+    (0xA0A31B, 'b', 'state', 'removed', 'follows',
      'Process enemy power bomb interaction',
      "C is bit 0 of the power bomb X radius from the LSR, so when the radius is 1 mod 4 hardware's Y radius ($14) comes out 1 larger, which changes which enemies the power bomb hits"),
     (0x91D064, 'a', 'none', 'removed', 'patched',
