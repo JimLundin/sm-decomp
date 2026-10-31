@@ -186,8 +186,7 @@ fn run_program<I: Interpreter>(index: usize, it: &mut I) {
         usize::try_from(position).expect("HDMA program outside ROM"),
     );
     while script.word(0) & 0x8000 != 0 {
-        let opcode = u32::from(script.word(0)) | 0x880000;
-        let next = execute(opcode, index, script.advance(2), it);
+        let next = execute(script.word(0), index, script.advance(2), it);
         let Some(next) = next.resolve(&image, base) else {
             return;
         };
@@ -203,30 +202,38 @@ fn set_low_byte(word: &mut u16, value: u8) {
     *word = (*word & 0xff00) | u16::from(value);
 }
 
-fn execute<I: Interpreter>(opcode: u32, index: usize, script: Script, it: &mut I) -> Script {
+fn execute<I: Interpreter>(handler: u16, index: usize, script: Script, it: &mut I) -> Script {
     use crate::display::registers::{A1B0, BBAD0, DAS00, DMAP0};
+    use sm_data::hdma_programs::{ChannelRegister, Command};
     let slot = 2 * index as u16;
-    match opcode {
-        8969006 => {}
-        8947049 => {
+    let Some(command) = Command::decode(handler) else {
+        it.foreign(|game| game.rtl_unreachable());
+        return Script::Stop;
+    };
+    match command {
+        Command::Nothing => {}
+        Command::Delete => {
             it.objects().objects[index].channels = 0;
             return Script::Stop;
         }
-        8947056 => {
+        Command::SetPreInstruction => {
             let object = &mut it.objects().objects[index];
             object.pre_instruction = script.word(0);
             set_low_byte(&mut object.pre_instruction_bank, script.byte(2));
             return script.advance(3);
         }
-        8947076 => it.objects().objects[index].pre_instruction = 0x858a,
-        8947124 => {
+        Command::ClearPreInstruction => it.objects().objects[index].pre_instruction = 0x858a,
+        Command::Call => {
             let address = script.load24(0);
             crate::hdma_dispatch::run_call(address, index, it);
             return script.advance(3);
         }
-        8947180 | 8947185 | 8947207 | 8947215 => {
-            let relative = matches!(opcode, 8947185 | 8947215);
-            if matches!(opcode, 8947207 | 8947215) {
+        Command::Goto | Command::GotoRelative | Command::DecrementGoto { .. } => {
+            let relative = matches!(
+                command,
+                Command::GotoRelative | Command::DecrementGoto { relative: true }
+            );
+            if let Command::DecrementGoto { .. } = command {
                 let object = &mut it.objects().objects[index];
                 let timer = object.timer;
                 object.timer = timer.wrapping_sub(1);
@@ -240,16 +247,16 @@ fn execute<I: Interpreter>(opcode: u32, index: usize, script: Script, it: &mut I
                 Script::jump(script.word(0))
             };
         }
-        8947222 => {
+        Command::SetTimer => {
             set_low_byte(&mut it.objects().objects[index].timer, script.byte(0));
             return script.advance(1);
         }
-        8947234 | 8947255 | 8947285 | 8947306 => {
-            let register = match opcode {
-                8947234 => DMAP0,
-                8947255 => BBAD0,
-                8947285 => A1B0,
-                _ => DAS00,
+        Command::SetChannelRegister(register) => {
+            let register = match register {
+                ChannelRegister::Control => DMAP0,
+                ChannelRegister::Target => BBAD0,
+                ChannelRegister::TableBank => A1B0,
+                ChannelRegister::IndirectBank => DAS00,
             } as u16;
             let channel = it.objects().objects[index].bank_slot & 0xff;
             let value = script.byte(0);
@@ -258,19 +265,19 @@ fn execute<I: Interpreter>(opcode: u32, index: usize, script: Script, it: &mut I
             });
             return script.advance(1);
         }
-        8947276 => {
+        Command::SetTable => {
             it.objects().objects[index].table = script.word(0);
             return script.advance(2);
         }
-        8947330 => {
+        Command::Sleep => {
             let base = bank_base((it.objects().objects[index].bank_slot >> 8) as u8);
             it.objects().objects[index].instruction_list = (script.offset_from(base) - 2) as u16;
             return Script::Stop;
         }
-        8955500 | 8959182 | 8963175 | 8963458 => it.objects().objects[index].b = 1,
-        8958889 => it.objects().objects[index].c = 112,
-        8968470 | 8968521 => it.set_word(crate::ram::words::HDMA_DATA_TABLE_IN_CERES, 9),
-        8968577 => {
+        Command::SetVariableB => it.objects().objects[index].b = 1,
+        Command::SetVariableC => it.objects().objects[index].c = 112,
+        Command::SelectCeresTable => it.set_word(crate::ram::words::HDMA_DATA_TABLE_IN_CERES, 9),
+        Command::PickBg3Velocity => {
             let random = it.word(crate::ram::words::RANDOM_NUMBER);
             let velocity = it.foreign(|game| {
                 crate::imported::word(
@@ -282,7 +289,7 @@ fn execute<I: Interpreter>(opcode: u32, index: usize, script: Script, it: &mut I
             });
             it.objects().objects[index].d = velocity;
         }
-        8969419 => {
+        Command::EventScroll => {
             let object = &mut it.objects().objects[index];
             object.c = 0;
             object.a = 0;
@@ -300,14 +307,14 @@ fn execute<I: Interpreter>(opcode: u32, index: usize, script: Script, it: &mut I
             it.set_byte(0xcd21, high);
             return script.advance(2);
         }
-        8971453 => it.foreign(|game| game.hdma_effect(HdmaEffect::InitializePhantoonWave, slot)),
-        0x88e917 => it.foreign(|game| game.hdma_effect(HdmaEffect::InitializeEyeBeam, slot)),
-        8973471 => it.foreign(|game| game.hdma_effect(HdmaEffect::ResetWave, slot)),
-        8973215 => it.foreign(crate::hdma_objects::restart_title_gradient),
-        _ => {
-            it.foreign(|game| game.rtl_unreachable());
-            return Script::Stop;
+        Command::InitializePhantoonWave => {
+            it.foreign(|game| game.hdma_effect(HdmaEffect::InitializePhantoonWave, slot))
         }
+        Command::InitializeEyeBeam => {
+            it.foreign(|game| game.hdma_effect(HdmaEffect::InitializeEyeBeam, slot))
+        }
+        Command::ResetWave => it.foreign(|game| game.hdma_effect(HdmaEffect::ResetWave, slot)),
+        Command::RestartTitleGradient => it.foreign(crate::hdma_objects::restart_title_gradient),
     }
     script
 }

@@ -29,6 +29,7 @@ pub mod gameplay_tables;
 pub mod grapple_aim;
 pub mod grapple_origins;
 pub mod hdma_objects;
+pub mod hdma_programs;
 pub mod intro_palette;
 pub mod kraid;
 pub mod magdollite;
