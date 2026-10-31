@@ -159,6 +159,7 @@ fn contact_without_death<H: ActorHost + EprojHost + MechanismEffects>(h: &mut H)
         return;
     }
     let (offset, base_damage) = rules::contact_attack(mode);
+    crate::probe::hit(["contact.other", "contact.screw"][usize::from(mode == 3)]);
     if mode == 4 {
         h.player_control(4);
     }

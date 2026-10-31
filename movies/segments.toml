@@ -1420,3 +1420,42 @@ start_frame = 0
 frames = 261
 expect = ["room:9A44"]
 require_hit = ["xray.window"]
+
+# More trick rows (tools/authored_inputs.py): the gunship save, a space-jump
+# chain and the screw attack through enemies. Each requires its probe.
+
+[[segment]]
+id = "samus-gunship-save"
+pending = "awaiting the seeds-v1-tricks2-891ceaf012b8dfb4 ci-data upload"
+seed = "100-input-phase:305"
+seed_sha256 = "1563be3787a3edca0cc6821a8db4967c2318e41a7ae6a50dc9a5d0a5288ad07c"
+inputs = "authored-gunship-save.inputs"
+input_sha256 = "1c64d2a3e8d29f61c09f3e3f4f57d0c87e5c70eba91ad265b992a9af698764b2"
+start_frame = 0
+frames = 1750
+expect = ["room:91F8"]
+require_hit = ["gunship.save"]
+
+[[segment]]
+id = "samus-space-jump-chain"
+pending = "awaiting the seeds-v1-tricks2-891ceaf012b8dfb4 ci-data upload"
+seed = "100-input-phase:305"
+seed_sha256 = "1563be3787a3edca0cc6821a8db4967c2318e41a7ae6a50dc9a5d0a5288ad07c"
+inputs = "authored-space-jump-chain.inputs"
+input_sha256 = "3bad6e7699de2080826da490870de503ef6a431d93f854233df25e6868f3e82f"
+start_frame = 0
+frames = 383
+expect = ["room:91F8"]
+require_hit = ["samus.space_jump"]
+
+[[segment]]
+id = "samus-screw-attack"
+pending = "awaiting the seeds-v1-tricks2-891ceaf012b8dfb4 ci-data upload"
+seed = "100-input-phase:306"
+seed_sha256 = "f2e7aa08e0dc81cf18ea13b8e0bfd240b4773ec9911d9b4d4d049f08797451f2"
+inputs = "authored-screw-attack.inputs"
+input_sha256 = "d1ae2eb63ccb58655d4a788ca571bace49c9fbea2a61929fb2a821569480f2ec"
+start_frame = 0
+frames = 945
+expect = ["room:93AA"]
+require_hit = ["contact.screw"]
