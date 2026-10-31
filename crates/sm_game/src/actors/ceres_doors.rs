@@ -8,7 +8,7 @@ use crate::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 use crate::actors::host::abs16;
 use crate::actors::layouts::{EnemyBase, same_words};
 use crate::constants::enemy_properties::{
-    K_ENEMY_PROPS_DISABLE_SAMUS_COLL, K_ENEMY_PROPS_INVISIBLE,
+    K_ENEMY_PROPS_DISABLE_SAMUS_COLL, K_ENEMY_PROPS_INVISIBLE, K_ENEMY_PROPS_TANGIBLE,
 };
 use crate::enemy_script::EnemyScript;
 use crate::palette_copies::{copy_rom_colors_to_palette, copy_rom_colors_to_target_palette};
@@ -142,7 +142,7 @@ pub fn instruction<H: Host + ?Sized>(
     script: EnemyScript,
     game: &mut H,
 ) -> EnemyScript {
-    const INTANGIBLE: u16 = K_ENEMY_PROPS_DISABLE_SAMUS_COLL as u16;
+    const INTANGIBLE: u16 = K_ENEMY_PROPS_TANGIBLE as u16;
     const INVISIBLE: u16 = K_ENEMY_PROPS_INVISIBLE as u16;
     match ea {
         0xa6_f11d => change_properties(k, VANISH, 0, game),
