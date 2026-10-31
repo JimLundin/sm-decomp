@@ -1,6 +1,7 @@
 //! Options sprites: allocation, script execution and drawing in their original order.
 use super::menu_tilemap::native_record;
 use super::prelude::*;
+use crate::menu_state::OptionsMenu;
 use objects::{Array, Word};
 
 /// Game options menu object definitions in bank $82 ($F4B8): a setup, a
@@ -232,14 +233,14 @@ fn end_script<H: Host + ?Sized>(slot: u16, game: &mut H) {
 }
 
 fn before_script<H: Host + ?Sized>(slot: u16, game: &mut H) {
+    let options = crate::session_cohort::load::<OptionsMenu, _>(game);
     match objects::get_at(game, Array::PreInstructions, slot) {
         preinstruction::MENU_SELECTION_MISSILE => {
             if game.observed_inputs().transitions.game_state == 2 {
-                let screen = options_menu!(game.ScreenIndex);
+                let screen = options.screen_index;
                 let table = crate::menu_lists::options_screen_objects(game, screen as isize);
                 if table != 0 {
-                    let address =
-                        table.wrapping_add(options_menu!(game.MenuOptionIndex).wrapping_mul(4));
+                    let address = table.wrapping_add(options.menu_option_index.wrapping_mul(4));
                     let record = native_record(BANK | u32::from(address), game);
                     objects::set_at(game, Array::XPositions, slot, record.word(0));
                     objects::set_at(game, Array::YPositions, slot, record.word(2));
@@ -253,13 +254,13 @@ fn before_script<H: Host + ?Sized>(slot: u16, game: &mut H) {
         }
         preinstruction::OPTION_MODE_BORDER => {
             if game.observed_inputs().transitions.game_state != 2
-                || options_menu!(game.ScreenIndex) == 6
+                || options.screen_index == 6
                     && game.ram().read_byte(crate::ram::mirror::INIDISP) == 0x80
             {
                 end_script(slot, game);
             }
         }
-        preinstruction::CONTROLLER_SETTING_MODE_BORDER => match options_menu!(game.ScreenIndex) {
+        preinstruction::CONTROLLER_SETTING_MODE_BORDER => match options.screen_index {
             6 if game.ram().read_byte(crate::ram::mirror::INIDISP) == 0x80 => {
                 end_script(slot, game)
             }
@@ -274,7 +275,7 @@ fn before_script<H: Host + ?Sized>(slot: u16, game: &mut H) {
             _ => {}
         },
         preinstruction::SPECIAL_SETTING_MODE_BORDER => {
-            if options_menu!(game.ScreenIndex) == 6
+            if options.screen_index == 6
                 && game.ram().read_byte(crate::ram::mirror::INIDISP) == 0x80
             {
                 end_script(slot, game);

@@ -353,6 +353,7 @@ pub mod scrolling_sky;
 pub mod session;
 pub mod session_access;
 pub mod session_checkpoint;
+pub mod session_cohort;
 pub mod session_encoding;
 pub mod session_owners;
 pub mod session_words;

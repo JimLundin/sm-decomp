@@ -112,4 +112,10 @@ pub trait RuntimeAccess {
     fn runtime_admissible(&self) -> bool {
         true
     }
+    /// Whether a retained persistent Session is current, so that stores made
+    /// on `runtime` keep it current. Without one a lease decodes the Session
+    /// from RAM, and code holding a typed copy stores to RAM instead.
+    fn session_retained(&self) -> bool {
+        false
+    }
 }

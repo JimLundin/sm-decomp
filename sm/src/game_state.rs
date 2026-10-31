@@ -1341,6 +1341,13 @@ impl Game {
                 SessionSlot::Leased | SessionSlot::Failed(_) => false,
             }
     }
+    /// Whether a retained persistent Session is installed and current.
+    pub(crate) fn persistent_session_current(&self) -> bool {
+        matches!(
+            self.persistent_session,
+            persistent_session::SessionSlot::Ready(_)
+        ) && self.session_lease_admissible()
+    }
     pub(crate) fn lease_persistent_session(
         &mut self,
     ) -> Result<Option<persistent_session::PersistentSession>, DisplayError> {

@@ -29,6 +29,9 @@
 //! runs under a reference import. No `word_transfers!`, WRAM DMA, decompression,
 //! message box clear or save file transfer reaches the range.
 use crate::ram::CompatibilityRam;
+use crate::ram::words as ram;
+use crate::session::Session;
+use crate::session_cohort::Cohort;
 
 macro_rules! menu_state {
     ($($field:ident: $variant:ident = $ram:ident),+ $(,)?) => {
@@ -109,6 +112,90 @@ pub struct MenuScreens {
     pub save_selection: SaveSelection,
     pub options_menu: OptionsMenu,
     pub death: DeathSequence,
+}
+
+impl Cohort for MenuScreens {
+    fn words(&mut self, mut visit: impl FnMut(usize, &mut u16)) {
+        self.map.words(&mut visit);
+        self.save_selection.words(&mut visit);
+        self.options_menu.words(&mut visit);
+        self.death.words(&mut visit);
+    }
+    fn of(session: &mut Session) -> &mut Self {
+        &mut session.menu_screens
+    }
+}
+
+impl Cohort for MapScreenState {
+    fn words(&mut self, mut visit: impl FnMut(usize, &mut u16)) {
+        visit(ram::MAP_MIN_X_SCROLL, &mut self.min_x_scroll);
+        visit(ram::MAP_MAX_X_SCROLL, &mut self.max_x_scroll);
+        visit(ram::MAP_MIN_Y_SCROLL, &mut self.min_y_scroll);
+        visit(ram::MAP_MAX_Y_SCROLL, &mut self.max_y_scroll);
+        visit(
+            ram::MAP_SCROLLING_GEAR_SWITCH_TIMER,
+            &mut self.gear_switch_timer,
+        );
+        visit(ram::MAP_SCROLLING_DIRECTION, &mut self.scrolling_direction);
+        visit(
+            ram::MAP_SCROLLING_SPEED_INDEX,
+            &mut self.scrolling_speed_index,
+        );
+        visit(
+            ram::SAMUS_POSITION_INDICATOR_ANIMATION_FRAME,
+            &mut self.indicator_frame,
+        );
+        visit(
+            ram::SAMUS_POSITION_INDICATOR_ANIMATION_TIMER,
+            &mut self.indicator_timer,
+        );
+        visit(
+            ram::SAMUS_POSITION_INDICATOR_ANIMATION_LOOP_COUNTER,
+            &mut self.indicator_loop_counter,
+        );
+    }
+    fn of(session: &mut Session) -> &mut Self {
+        &mut session.menu_screens.map
+    }
+}
+
+impl Cohort for SaveSelection {
+    fn words(&mut self, mut visit: impl FnMut(usize, &mut u16)) {
+        visit(ram::FILE_SELECT_MAP_UNREAD, &mut self.map_unread);
+        visit(ram::HAS_AREA_MAP, &mut self.has_area_map);
+        visit(ram::LOAD_STATION_INDEX, &mut self.load_station);
+        visit(ram::FILE_SELECT_MAP_AREA_INDEX, &mut self.map_area_index);
+        visit(ram::SELECTED_SAVE_SLOT, &mut self.selected_slot);
+        visit(ram::NONEMPTY_SAVE_SLOTS, &mut self.nonempty_slots);
+        visit(ram::LOADING_GAME_STATE, &mut self.loading_game_state);
+        visit(ram::SRAM_SAVE_STATION_INDEX, &mut self.save_station);
+        visit(ram::SRAM_AREA_INDEX, &mut self.save_area);
+    }
+    fn of(session: &mut Session) -> &mut Self {
+        &mut session.menu_screens.save_selection
+    }
+}
+
+impl Cohort for OptionsMenu {
+    fn words(&mut self, mut visit: impl FnMut(usize, &mut u16)) {
+        visit(ram::MENU_OPTION_INDEX, &mut self.menu_option_index);
+        visit(ram::DEBUG_INVINCIBILITY, &mut self.debug_invincibility);
+        visit(ram::GAME_OPTIONS_SCREEN_INDEX, &mut self.screen_index);
+    }
+    fn of(session: &mut Session) -> &mut Self {
+        &mut session.menu_screens.options_menu
+    }
+}
+
+impl Cohort for DeathSequence {
+    fn words(&mut self, mut visit: impl FnMut(usize, &mut u16)) {
+        visit(ram::DEATH_INDEX, &mut self.index);
+        visit(ram::DEATH_COUNTER, &mut self.counter);
+        visit(ram::DEATH_FLASH_TIMER, &mut self.flash_timer);
+    }
+    fn of(session: &mut Session) -> &mut Self {
+        &mut session.menu_screens.death
+    }
 }
 
 /// The pause and file select map screens' scrolling and marker: the scroll

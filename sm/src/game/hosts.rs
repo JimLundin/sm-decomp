@@ -26,6 +26,9 @@ impl sm_game::runtime_access::RuntimeAccess for Game {
     fn runtime_admissible(&self) -> bool {
         self.session_lease_admissible()
     }
+    fn session_retained(&self) -> bool {
+        self.persistent_session_current()
+    }
 }
 
 impl sm_game::hdma_objects::HdmaTable for Game {
