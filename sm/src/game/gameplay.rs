@@ -85,10 +85,10 @@ impl sm_game::gameplay_frame::Host for Game {
         sm_game::title_sequence::load_graphics(self);
     }
     fn disable_scanline_irq(&mut self) {
-        crate::game::scanline_irq::disable(self);
+        sm_game::display_refresh::disable_scanline_irq(self);
     }
     fn enable_scanline_irq(&mut self, immediate: bool) {
-        unsafe { crate::game::scanline_irq::enable(immediate, self) }
+        sm_game::display_refresh::enable_scanline_irq(immediate, self)
     }
 
     fn pause_hook(&mut self, hook: PauseHook) {

@@ -1,44 +1,13 @@
-//! Native access for the shared scanline interrupt decisions and effects.
+//! Native access for the shared scanline interrupt's per-line handler.
 use crate::game_state::Game;
-use crate::ram_map::{checked_word as at, word};
-use crate::rtl::{BG3SC, CGADSUB, CGWSEL, HTIMEL, NMITIMEN, TM, VTIMEL, write_reg};
 use std::convert::Infallible;
 use {
     crate::game::{room_entry, session_runtime},
     sm_game::scene::irq,
 };
 
-struct NativeControls<'a>(&'a mut Game);
-impl irq::Controls for NativeControls<'_> {
-    fn read_control(&mut self, field: irq::Control) -> u16 {
-        let game = &mut *self.0;
-        match field {
-            irq::Control::Current => word!(game.CUR_IRQ_HANDLER),
-            irq::Control::Pending => word!(game.IRQHANDLER_NEXT_HANDLER),
-            irq::Control::Enable => at!(game, 0x84;),
-            irq::Control::PreviousCre => word!(game.PREVIOUS_CRE_BITSET),
-            irq::Control::CurrentCre => word!(game.CRE_BITSET),
-            irq::Control::TransitionFlag => word!(game.DOOR_TRANSITION_FLAG),
-        }
-    }
-    fn write_control(&mut self, field: irq::Store, value: u16) {
-        let game = &mut *self.0;
-        match field {
-            irq::Store::Current => word!(game.CUR_IRQ_HANDLER = value),
-            irq::Store::Pending => word!(game.IRQHANDLER_NEXT_HANDLER = value),
-            irq::Store::Enable => at!(game, 0x84; = value),
-        }
-    }
-}
-
-/// Constructed only while the caller holds a live, exclusive native backend.
-struct NativeIrqHost<'a>(NativeControls<'a>);
-impl<'a> NativeIrqHost<'a> {
-    /// The native backend must remain live and exclusive for this host's lifetime.
-    unsafe fn new(game: &'a mut Game) -> Self {
-        Self(NativeControls(game))
-    }
-}
+/// The projected controls and registers, plus the door resume a handler polls.
+struct NativeIrqHost<'a>(sm_game::display_refresh::ScanlineIrq<'a, Game>);
 impl irq::Controls for NativeIrqHost<'_> {
     fn read_control(&mut self, field: irq::Control) -> u16 {
         irq::Controls::read_control(&mut self.0, field)
@@ -47,51 +16,21 @@ impl irq::Controls for NativeIrqHost<'_> {
         irq::Controls::write_control(&mut self.0, field, value);
     }
 }
-impl irq::Host for NativeIrqHost<'_> {
+impl irq::Display for NativeIrqHost<'_> {
     type Error = Infallible;
 
     fn read_mirror(&mut self, field: irq::Mirror) -> u8 {
-        self.0.0.ram().read_byte(match field {
-            irq::Mirror::Background3Map => 0x5b,
-            irq::Mirror::ColorWindow => 0x70,
-            irq::Mirror::ColorArithmetic => 0x73,
-            irq::Mirror::MainLayers => 0x6a,
-            irq::Mirror::InterruptEnable => 0x84,
-        })
+        irq::Display::read_mirror(&mut self.0, field)
     }
     fn write_display(&mut self, field: irq::Output, value: u8) -> Result<(), Infallible> {
-        let register = match field {
-            irq::Output::Background3Map => BG3SC,
-            irq::Output::ColorWindow => CGWSEL,
-            irq::Output::ColorArithmetic => CGADSUB,
-            irq::Output::MainLayers => TM,
-            irq::Output::VerticalLow => VTIMEL,
-            irq::Output::VerticalHigh => VTIMEL + 1,
-            irq::Output::HorizontalLow => HTIMEL,
-            irq::Output::HorizontalHigh => HTIMEL + 1,
-            irq::Output::InterruptEnable => NMITIMEN,
-        };
-        // The private host keeps the construction invariant across ordered effects.
-        unsafe { write_reg(register as u16, value, self.0.0) };
-        Ok(())
+        irq::Display::write_display(&mut self.0, field, value)
     }
+}
+impl irq::Host for NativeIrqHost<'_> {
     fn follow_transition(&mut self) -> Result<(), Infallible> {
         // One resume poll, with the same live native capability as the caller.
         unsafe { follow_transition(self.0.0) };
         Ok(())
-    }
-}
-
-pub(crate) fn disable(game: &mut Game) {
-    irq::disable(&mut NativeControls(game));
-}
-
-/// Requires a live, exclusively accessed SNES backend.
-pub(crate) unsafe fn enable(immediate: bool, game: &mut Game) {
-    let mut host = unsafe { NativeIrqHost::new(game) };
-    match irq::enable(&mut host, immediate) {
-        Ok(()) => {}
-        Err(never) => match never {},
     }
 }
 
@@ -105,9 +44,7 @@ pub(crate) unsafe fn follow_transition(game: &mut Game) {
 
 /// Requires a live, exclusively accessed SNES backend for the entire interrupt.
 pub(crate) unsafe fn advance(game: &mut Game) {
-    let mut host = unsafe { NativeIrqHost::new(game) };
-    match irq::advance(&mut host) {
-        Ok(()) => {}
-        Err(never) => match never {},
-    }
+    let Ok(()) = irq::advance(&mut NativeIrqHost(sm_game::display_refresh::ScanlineIrq(
+        game,
+    )));
 }
