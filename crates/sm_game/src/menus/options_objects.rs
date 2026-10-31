@@ -200,12 +200,12 @@ pub fn spawn<H: Host + ?Sized>(parameter: u16, address: u16, game: &mut H) -> u8
     0
 }
 
-pub fn advance_and_draw<H: Host + ?Sized>(game: &mut H) {
+pub fn advance_and_draw<H: Host + ?Sized>(options: &OptionsMenu, game: &mut H) {
     let mut index = 14i32;
     while index >= 0 {
         objects::set(game, Word::Index, index as u16);
         if objects::get_at(game, Array::InstructionLists, index >> 1) != 0 {
-            advance(index as u16, game);
+            advance(index as u16, options, game);
             index = i32::from(objects::get(game, Word::Index));
         }
         index -= 2;
@@ -232,8 +232,7 @@ fn end_script<H: Host + ?Sized>(slot: u16, game: &mut H) {
     objects::set_at(game, Array::InstructionLists, slot, DELETE_LIST);
 }
 
-fn before_script<H: Host + ?Sized>(slot: u16, game: &mut H) {
-    let options = crate::session_cohort::load::<OptionsMenu, _>(game);
+fn before_script<H: Host + ?Sized>(slot: u16, options: &OptionsMenu, game: &mut H) {
     match objects::get_at(game, Array::PreInstructions, slot) {
         preinstruction::MENU_SELECTION_MISSILE => {
             if game.observed_inputs().transitions.game_state == 2 {
@@ -331,8 +330,8 @@ fn instruction<H: Host + ?Sized>(opcode: u16, slot: u16, address: u16, game: &mu
     }
 }
 
-fn advance<H: Host + ?Sized>(index: u16, game: &mut H) {
-    before_script(index >> 1, game);
+fn advance<H: Host + ?Sized>(index: u16, options: &OptionsMenu, game: &mut H) {
+    before_script(index >> 1, options, game);
     let index = objects::get(game, Word::Index);
     let slot = objects::get(game, Word::Index) >> 1;
     let timer = objects::get_at(game, Array::InstructionTimers, slot);

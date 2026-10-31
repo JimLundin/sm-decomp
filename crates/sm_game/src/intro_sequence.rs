@@ -18,8 +18,9 @@ use crate::cinematic_state::{self, Word, cinematic};
 use crate::display_refresh::GraphicsAsset;
 use crate::flow::{self, Word::CinematicFunction};
 use crate::inventory;
+use crate::menu_state::OptionsMenu;
 use crate::menu_state::SaveSelection;
-use crate::menus::prelude::{options_menu, owned, scroll};
+use crate::menus::prelude::{owned, scroll};
 use crate::ram::RawRam as _;
 use crate::ram::mirror;
 use crate::ram::word;
@@ -535,7 +536,9 @@ pub fn boom_fade_out<H: Host + ?Sized>(game: &mut H) {
             game.ram().write_byte(mirror::TMW, 0);
             game.ram().write_byte(mirror::TSW, 0);
             game.ram().write_byte(mirror::BGMODE, 9);
-            options_menu!(game.ScreenIndex = 0);
+            crate::session_cohort::with(game, |_, options: &mut OptionsMenu| {
+                options.screen_index = 0
+            });
             crate::menu!(game.MenuIndex = 0);
             for index in (8..=135).rev() {
                 cinematic!(game.BgArr7[index] = 0);

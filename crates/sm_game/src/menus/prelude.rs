@@ -68,9 +68,6 @@ pub(crate) use inventory;
 /// The BG scroll mirrors ([`crate::display::sequence::scroll::Word`]).
 macro_rules! scroll { ($($t:tt)*) => { owned!([$crate::display::sequence::scroll] $($t)*) }; }
 pub(crate) use scroll;
-/// [`crate::menu_state::options_menu::Word`].
-macro_rules! options_menu { ($($t:tt)*) => { owned!([$crate::menu_state::options_menu] $($t)*) }; }
-pub(crate) use options_menu;
 /// The power bomb's words ([`crate::explosion_window::power_bomb::Word`]).
 macro_rules! power_bomb { ($($t:tt)*) => { owned!([$crate::explosion_window::power_bomb] $($t)*) }; }
 pub(crate) use power_bomb;

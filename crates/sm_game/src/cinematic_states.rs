@@ -14,7 +14,7 @@ use crate::cinematic_state::cinematic;
 use crate::display::registers as reg;
 use crate::display_refresh::GraphicsAsset;
 use crate::flow;
-use crate::menus::prelude::{options_menu, owned};
+use crate::menu_state::OptionsMenu;
 use crate::ram::RawRam as _;
 use crate::ram::mirror;
 use crate::ram::word;
@@ -205,7 +205,9 @@ pub fn nintendo_logo<H: Host + ?Sized>(game: &mut H) -> u8 {
                 return yielded;
             }
             match stage {
-                2 => options_menu!(game.ScreenIndex = LOGO_HOLD),
+                2 => crate::session_cohort::with(game, |_, options: &mut OptionsMenu| {
+                    options.screen_index = LOGO_HOLD
+                }),
                 4 => {
                     crate::screen_fade::set_both(game, 1, 1);
                 }
@@ -236,11 +238,11 @@ pub fn nintendo_logo<H: Host + ?Sized>(game: &mut H) -> u8 {
             }
             2 | 3 => {
                 crate::probe::hit("coroutine.logo.hold");
-                if options_menu!(game.ScreenIndex -= 1, reread) == 0 {
-                    4
-                } else {
-                    3
-                }
+                let held = crate::session_cohort::with(game, |_, options: &mut OptionsMenu| {
+                    options.screen_index = options.screen_index.wrapping_sub(1);
+                    options.screen_index
+                });
+                if held == 0 { 4 } else { 3 }
             }
             _ => {
                 crate::probe::hit("coroutine.logo.out");

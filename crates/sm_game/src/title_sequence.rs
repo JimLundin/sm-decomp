@@ -13,7 +13,8 @@ use crate::cinematic_objects::CinematicObjects;
 use crate::cinematic_state::cinematic;
 use crate::display_refresh::GraphicsAsset;
 use crate::flow::{self, Word::CinematicFunction};
-use crate::menus::prelude::{options_menu, owned, scroll};
+use crate::menu_state::OptionsMenu;
+use crate::menus::prelude::{owned, scroll};
 use crate::ram::RawRam as _;
 use crate::ram::word;
 use crate::visual_state::{CinematicDisplay, CinematicFade};
@@ -209,7 +210,9 @@ fn finish<H: Host + ?Sized>(next: u16, game: &mut H, clear_index: impl FnOnce(&m
 pub fn to_file_select<H: Host + ?Sized>(game: &mut H) {
     if advance_cinematic_fade(CinematicFade::SlowOut, game) {
         finish(FILE_SELECT_MENUS, game, |game| {
-            options_menu!(game.ScreenIndex = 0)
+            crate::session_cohort::with(game, |_, options: &mut OptionsMenu| {
+                options.screen_index = 0
+            })
         });
     }
 }

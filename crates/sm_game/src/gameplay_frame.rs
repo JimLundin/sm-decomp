@@ -13,8 +13,8 @@ use crate::display::sequence::{register_writes, write_register_and_mirror};
 use crate::display_refresh;
 use crate::enemy_projectiles;
 use crate::gameplay_rules::{finish_frame, finish_health_and_time};
-use crate::menu_state::{DeathSequence, MenuScreens, SaveSelection};
-use crate::menus::prelude::{CoroutineRet, options_menu, owned, power_bomb, session_word};
+use crate::menu_state::{DeathSequence, MenuScreens, OptionsMenu, SaveSelection};
+use crate::menus::prelude::{CoroutineRet, owned, power_bomb, session_word};
 use crate::menus::{
     controller_input, file_menu, game_over, map_menu, options_settings, pause_controls,
     reserve_tanks, save_slots,
@@ -629,7 +629,9 @@ fn exit_time_up<H: Host>(game: &mut H) -> CoroutineRet {
         session_word! { game, 0; CeresStatus, TimerStatus }
         cancel_sound_effects(game, 15);
         if crate::progress::event_happened(&mut game.runtime(), 0xe) {
-            options_menu!(game.ScreenIndex = 0);
+            session_cohort::with(game, |_, options: &mut OptionsMenu| {
+                options.screen_index = 0
+            });
             crate::menu!(game.MenuIndex = 0);
             word_transfers!(game, descending, 128; le(EPROJ_Y_SUBPOS, 142) <- value(0));
             word!(game.GAME_STATE = K_GAME_STATE_25_SAMUS_NO_HEALTH as u16);

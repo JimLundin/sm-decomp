@@ -188,7 +188,7 @@ pub fn store_binding_choices<H: Host + ?Sized>(game: &mut H) -> u8 {
     0
 }
 
-pub fn remap_binding<H: Host + ?Sized>(game: &mut H) {
+pub fn remap_binding<H: Host + ?Sized>(selected: u16, game: &mut H) {
     crate::probe::hit("controller_input.remap_binding");
     let Some(choice) = BINDING_BUTTONS[..7]
         .iter()
@@ -196,8 +196,8 @@ pub fn remap_binding<H: Host + ?Sized>(game: &mut H) {
     else {
         return;
     };
-    let mut next = (2 * options_menu!(game.MenuOptionIndex) as i32 + 2) as u16;
-    if (2 * options_menu!(game.MenuOptionIndex) as i32 - 12) & 0x8000 == 0 {
+    let mut next = (2 * i32::from(selected) + 2) as u16;
+    if (2 * i32::from(selected) - 12) & 0x8000 == 0 {
         next = 0;
     }
     // Malformed choice lists retain the cursor after the sixth unsuccessful advance.
@@ -210,7 +210,7 @@ pub fn remap_binding<H: Host + ?Sized>(game: &mut H) {
             next = 0;
         }
     }
-    let selected = options_menu!(game.MenuOptionIndex) as i32;
+    let selected = i32::from(selected);
     let previous = bindings::get_at(game, Array::ControllerBindings, selected);
     bindings::set_at(game, Array::ControllerBindings, selected, choice as u16);
     bindings::set_at(game, Array::ControllerBindings, next >> 1, previous);

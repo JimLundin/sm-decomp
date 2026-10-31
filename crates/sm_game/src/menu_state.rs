@@ -243,34 +243,6 @@ pub struct OptionsMenu {
     pub screen_index: u16,
 }
 
-/// The options menu words through the host's projected bytes, by RAM address.
-pub mod options_menu {
-    use crate::ram::CompatibilityRam;
-
-    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-    pub enum Word {
-        MenuOptionIndex = 0x99e,
-        DebugInvincibility = 0xde0,
-        ScreenIndex = 0xde2,
-    }
-
-    const _: () = {
-        use crate::ram::words as ram;
-        assert!(ram::MENU_OPTION_INDEX == Word::MenuOptionIndex as usize);
-        assert!(ram::DEBUG_INVINCIBILITY == Word::DebugInvincibility as usize);
-        assert!(ram::GAME_OPTIONS_SCREEN_INDEX == Word::ScreenIndex as usize);
-    };
-
-    /// `word` as the host's projection holds it, low byte then high.
-    pub fn get<H: CompatibilityRam + ?Sized>(h: &H, word: Word) -> u16 {
-        crate::projection::word(h, word as usize)
-    }
-    /// Store `value` to `word`, low byte then high, as the named word store did.
-    pub fn set<H: CompatibilityRam + ?Sized>(h: &mut H, word: Word, value: u16) {
-        crate::projection::set_word(h, word as usize, value);
-    }
-}
-
 /// Samus's death sequence and the game over menu's progress: the death
 /// sequence index, its counter and the flash timer ($0DE4..$0DE9).
 #[derive(Clone, Copy, Default, Debug, PartialEq, Eq)]
