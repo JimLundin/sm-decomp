@@ -14,12 +14,10 @@ pub(crate) fn check_case(id: u32) -> bool {
     if id >= CASES {
         return false;
     }
-    let image = RomImage::zeroed(0x200000);
-    let raw = RomImage::zeroed(0x200000);
+    let mut image = vec![0; 0x200000];
+    let mut raw = vec![0; 0x200000];
     let mut game = Game::new();
-    seed(&mut game, &image);
-    game.loaded_rom = Some(image.clone());
-    game.register_native_rom(raw.clone());
+    seed(&mut game, &mut image);
     let handle = if id == 3 { 10 } else { 34 };
     let offset = usize::from(handle);
     put(&mut game, w::GAME_STATE, 40);
@@ -42,10 +40,13 @@ pub(crate) fn check_case(id: u32) -> bool {
     // 0001:FFFF + 0000:0002 has a fraction carry; here the position starts
     // at 100:FFFF or 199:FFFF, hence the expected 102:0001 / 201:0001.
     bytes(
-        &raw,
+        &mut raw,
         crate::rtl::lorom_offset(0xa0cbc7) as usize + 144,
         &[2, 0, 1, 0],
     );
+    // Every byte is authored before the images are registered.
+    game.loaded_rom = Some(RomImage::from(image));
+    game.register_native_rom(RomImage::from(raw));
     let mut expected = (0..game.ram().len())
         .map(|at| game.ram().read_byte(at))
         .collect::<Vec<_>>();

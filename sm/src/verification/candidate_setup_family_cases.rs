@@ -6,7 +6,6 @@ fn call_eproj_init(ea: u32, k: u16, game: &mut Game) {
 use super::{bytes, put, slot};
 use crate::game_state::Game;
 use crate::ram_map::{word_arrays as a, words as w};
-use crate::rom::RomImage;
 use crate::types::{EnemyData, Point16U};
 
 const SETUPS: &[u32] = &[
@@ -39,7 +38,7 @@ const SETUPS: &[u32] = &[
 ];
 pub(super) const CASES: u32 = SETUPS.len() as u32 * 8;
 
-pub(super) unsafe fn execute(id: u32, game: &mut Game, image: &RomImage) -> Option<usize> {
+pub(super) unsafe fn execute(id: u32, game: &mut Game, image: &mut [u8]) -> Option<usize> {
     assert!(id < CASES);
     let setup = SETUPS[id as usize / 8];
     let variant = id as usize % 8;
@@ -150,6 +149,7 @@ pub(super) unsafe fn execute(id: u32, game: &mut Game, image: &RomImage) -> Opti
             &((row % 8) as u16).to_le_bytes(),
         );
     }
+    super::install(game, image);
     {
         call_eproj_init(setup, index, game)
     };

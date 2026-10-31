@@ -178,9 +178,7 @@ fn callback(game: &mut Game, published: &[u8], callback_ram: &[u8], trace: &mut 
         [(); 131072].copy_from_slice(&vec![(); bytes.len()]);
         game.ram().copy_in(0, bytes);
     }
-    let image = RomImage::zeroed(3);
-    image.write(0, 0x92);
-    game.loaded_rom = Some(image);
+    game.loaded_rom = Some(RomImage::from(vec![0x92, 0, 0]));
     record(2, CALLBACK, trace);
 }
 fn intentional_unwind(result: Result<(), Box<dyn std::any::Any + Send>>, message: &str) {
@@ -211,8 +209,7 @@ fn capture_checked(id: u32) -> Vec<u8> {
     }
     set_native_game(&mut game, INITIAL.native);
     game.ram().write_byte(0x613, 0x77);
-    let old_image = RomImage::zeroed(2);
-    old_image.write(0, 0x31);
+    let old_image = RomImage::from(vec![0x31, 0]);
     game.loaded_rom = Some(old_image.clone());
     let published = expected_ram(
         &(0..game.ram().len())

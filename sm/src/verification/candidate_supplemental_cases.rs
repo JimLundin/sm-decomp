@@ -27,11 +27,9 @@ pub(crate) fn capture_case(id: u32) -> Option<Vec<u8>> {
     if id >= 20 {
         return restore_cases::capture_case(id - 20);
     }
-    let image = RomImage::zeroed(0x200000);
+    let mut image = vec![0; 0x200000];
     let mut game = Game::new();
-    seed(&mut game, &image);
-    game.loaded_rom = Some(image.clone());
-    game.register_native_rom(image.clone());
+    seed(&mut game, &mut image);
     let handle = [0u16, 1, 34, 0xffff][id as usize % 4];
     put(&mut game, w::EPROJ_INDEX, handle);
     put(&mut game, w::LAYER1_X_POS, 0);
@@ -71,15 +69,19 @@ pub(crate) fn capture_case(id: u32) -> Option<Vec<u8>> {
         put(&mut game, a::SPRITE_INSTR_LIST_PTRS + index * 2, 0);
     }
     bytes(
-        &image,
+        &mut image,
         crate::rtl::lorom_offset(0xb4bda8) as usize + 48 * 2,
         &0x9000u16.to_le_bytes(),
     );
     bytes(
-        &image,
+        &mut image,
         crate::rtl::lorom_offset(0xb49000) as usize,
         &7u16.to_le_bytes(),
     );
+    // Every byte is authored before the image is registered.
+    let image = RomImage::from(image);
+    game.loaded_rom = Some(image.clone());
+    game.register_native_rom(image);
     {
         if id < 16 {
             call_eproj_pre_instr(8844272, handle, &mut game);

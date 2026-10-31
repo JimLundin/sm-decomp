@@ -5,11 +5,10 @@ fn respawn_from_drop(k: u16, game: &mut Game) {
 }
 use crate::game_state::Game;
 use crate::ram_map::{word_arrays as a, words as w};
-use crate::rom::RomImage;
 use crate::types::EnemyDef;
 use core::mem::offset_of;
 pub(super) const CASES: u32 = 8;
-pub(super) unsafe fn execute(id: u32, game: &mut Game, image: &RomImage) -> Option<usize> {
+pub(super) unsafe fn execute(id: u32, game: &mut Game, image: &mut [u8]) -> Option<usize> {
     assert!(id < CASES);
     let marker = [0u16, 1, 0x7fff, 0xffff, 0x8000, 0x8040, 0x8001, 0xfffe][id as usize];
     let projectile = if id & 1 == 0 { 0 } else { 34 };
@@ -37,6 +36,7 @@ pub(super) unsafe fn execute(id: u32, game: &mut Game, image: &RomImage) -> Opti
         bytes(image, definition + offset, &value.to_le_bytes());
     }
     bytes(image, definition + offset_of!(EnemyDef, layer), &[3]);
+    super::install(game, image);
     {
         respawn_from_drop(projectile, game)
     };

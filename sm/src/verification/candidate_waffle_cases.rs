@@ -7,13 +7,12 @@ fn call_nuclear_waffle_func(ea: u32, game: &mut Game) {
 }
 use crate::game_state::Game;
 use crate::ram_map::{word_arrays as a, words as w};
-use crate::rom::RomImage;
 use core::mem::offset_of;
 pub(super) const CASES: u32 = 24;
 fn field(game: &mut Game, enemy: usize, offset: usize, value: u16) {
     put(game, 0xf78 + enemy + offset, value);
 }
-pub(super) unsafe fn execute(id: u32, game: &mut Game, image: &RomImage) -> Option<usize> {
+pub(super) unsafe fn execute(id: u32, game: &mut Game, image: &mut [u8]) -> Option<usize> {
     assert!(id < CASES);
     let n = id as usize;
     let reverse = n / 6 % 2 != 0;
@@ -32,6 +31,7 @@ pub(super) unsafe fn execute(id: u32, game: &mut Game, image: &RomImage) -> Opti
         crate::rtl::lorom_offset(0xb49000) as usize,
         &7u16.to_le_bytes(),
     );
+    super::install(game, image);
     for slot in 0..32 {
         put(
             game,
