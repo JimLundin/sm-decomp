@@ -14,45 +14,21 @@ use crate::initial_state::InitialState;
 use crate::rtl::StateRecorder;
 use crate::types::*;
 use std::cell::Cell;
-use std::collections::BTreeMap;
 use std::ffi::c_int;
 use std::ops::Range;
 use std::rc::Rc;
 use std::sync::Arc;
 
 pub(crate) use sm_game::scene::owned_samus::SamusExecution;
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(crate) enum SamusAuthority {
-    LegacyUnrouted,
-    Available,
-    Revoked,
-}
-/// Supplied initialization, independently expected before the selection is published.
-pub(crate) struct SamusBindingDescription {
-    pub world: Arc<WorldBinding>,
-    pub roles: content::ContentDescription,
-    pub spritemaps: Arc<SamusCatalog>,
-    pub request_media: Arc<SceneMedia>,
-    pub execution: SamusExecution,
-}
-struct SamusBinding {
-    world: Arc<WorldBinding>,
-    roles: Arc<content::ValidatedContent>,
-    expected_roles: Arc<content::ContentDescription>,
-    spritemaps: Arc<SamusCatalog>,
-    #[cfg(sm_verify_dll)]
-    request_media: Arc<SceneMedia>,
-    registrations:
-        BTreeMap<(content::Registration, content::AllocationId), native_content::RegisteredRom>,
-    execution: SamusExecution,
-}
-/// Unpublished; only Game can construct or install this complete replacement.
-pub(crate) struct PreparedSamusBinding(Arc<SamusBinding>);
+pub(crate) use sm_game::scene::samus_binding::{
+    PreparedSamusBinding, SamusAuthority, SamusBinding, SamusBindingDescription, SamusImages,
+    SamusOwner,
+};
 /// A branch observation, not a second live selector or a copy of mutable ROM bytes.
 #[derive(Clone)]
 pub(crate) struct SamusSnapshotPayload {
     world: Arc<WorldBinding>,
-    binding: Option<Arc<SamusBinding>>,
+    binding: Option<Rc<SamusBinding>>,
     loaded: Option<crate::rom::RomImage>,
     native: Option<crate::rom::RomImage>,
     authority: SamusAuthority,
@@ -81,12 +57,12 @@ impl SamusMutation<'_> {
     /// A known incomplete legacy load must finish its original callbacks. Its
     /// enclosing load retains revocation and will also skip adoption on this status.
     pub(crate) fn defer_incomplete(mut self) {
-        self.completed = self.game.samus_mutation_depth > 1;
+        self.completed = self.game.samus.mutation_depth() > 1;
     }
 }
 impl Drop for SamusMutation<'_> {
     fn drop(&mut self) {
-        self.game.samus_mutation_depth -= 1;
+        self.game.samus.end_mutation();
         if !self.completed {
             self.game.revoke_samus_authority();
         }
@@ -249,9 +225,7 @@ pub struct Game {
     pub(crate) area_select_palettes: Option<sm_game::menus::menu_tilemap::ImportedAreaPalettes>,
     /// Imported from `loaded_rom` by `register_rom`; see sm_game::records.
     pub(crate) records: sm_game::records::RomRecords,
-    samus_binding: Option<Arc<SamusBinding>>,
-    samus_authority: SamusAuthority,
-    samus_mutation_depth: usize,
+    samus: SamusOwner,
     persistent_session: persistent_session::SessionSlot,
     persistent_ram_epoch: u64,
     pending_supplied_start: Option<persistent_session::SuppliedSessionStart>,
@@ -1017,9 +991,7 @@ impl Game {
             mother_brain_visuals: Default::default(),
             escape_etecoons: Default::default(),
             records: Default::default(),
-            samus_binding: None,
-            samus_authority: SamusAuthority::LegacyUnrouted,
-            samus_mutation_depth: 0,
+            samus: SamusOwner::default(),
             persistent_session: persistent_session::SessionSlot::Legacy,
             persistent_ram_epoch: 0,
             pending_supplied_start: None,
@@ -1342,11 +1314,14 @@ impl Game {
     ) -> Result<(), persistent_session::SessionStartError> {
         use persistent_session::{SessionSlot, SessionStartError};
         if matches!(self.persistent_session, SessionSlot::Leased)
-            || (!scoped_adoption && self.samus_mutation_depth != 0)
+            || (!scoped_adoption && self.samus.mutation_depth() != 0)
         {
             return Err(SessionStartError::Phase);
         }
-        self.check_samus_binding(&prepared.binding.0)
+        prepared
+            .binding
+            .binding()
+            .check(self.samus_images())
             .map_err(SessionStartError::Binding)?;
         if prepared.gameplay.actor_identity.is_poisoned() {
             return Err(SessionStartError::Binding(DisplayError::Poisoned));
@@ -1359,8 +1334,7 @@ impl Game {
             self.ram.copy_in(at, bytes)
         });
         crate::game::session_runtime::export_native_spawn(&session.gameplay, self);
-        self.samus_binding = Some(binding.0);
-        self.samus_authority = SamusAuthority::Available;
+        self.samus.install(binding);
         self.actor_identity = None;
         self.persistent_ram_epoch = self.ram.write_epoch();
         self.persistent_session = SessionSlot::Ready(Box::new(session));
@@ -1413,7 +1387,7 @@ impl Game {
             self.persistent_ram_epoch = admitted_epoch;
             SessionSlot::Ready(Box::new(session))
         } else {
-            self.samus_authority = SamusAuthority::Revoked;
+            self.samus.force_revoke();
             session.poison();
             SessionSlot::Failed(Some(Box::new(session)))
         };
@@ -1543,161 +1517,22 @@ impl Game {
     }
 }
 
-/// The ROM image a Samus registration reads.
-fn registered_image<'a>(
-    registration: content::Registration,
-    loaded: &'a Option<crate::rom::RomImage>,
-    native: &'a Option<crate::rom::RomImage>,
-) -> Result<&'a crate::rom::RomImage, DisplayError> {
-    match registration {
-        content::Registration::Loaded => loaded,
-        content::Registration::Native => native,
-    }
-    .as_ref()
-    .ok_or(DisplayError::Identity)
-}
-
 #[forbid(unsafe_code)]
 impl Game {
-    fn samus_rom(&self, registration: content::Registration) -> Option<&crate::rom::RomImage> {
-        registered_image(registration, &self.loaded_rom, &self.native_rom).ok()
-    }
-    fn check_samus_registration_metadata(
-        &self,
-        binding: &SamusBinding,
-    ) -> Result<(), DisplayError> {
-        self.check_samus_registration_images(binding, &self.loaded_rom, &self.native_rom)
-    }
-    fn check_samus_registration_images(
-        &self,
-        binding: &SamusBinding,
-        loaded: &Option<crate::rom::RomImage>,
-        native: &Option<crate::rom::RomImage>,
-    ) -> Result<(), DisplayError> {
-        if !Arc::ptr_eq(&binding.world, self.world()) {
-            return Err(DisplayError::Identity);
+    /// The world and ROM images Samus's registrations read.
+    fn samus_images(&self) -> SamusImages<'_> {
+        SamusImages {
+            world: &self.world,
+            loaded: &self.loaded_rom,
+            native: &self.native_rom,
         }
-        for (&(registration, identity), admitted) in &binding.registrations {
-            let image = registered_image(registration, loaded, native)?;
-            let declaration = &binding.roles.description().allocations[&identity];
-            if image.len() != declaration.extent {
-                return Err(DisplayError::Source);
-            }
-            admitted.capture(registration, image)?;
-        }
-        Ok(())
-    }
-    fn check_samus_binding(&self, binding: &SamusBinding) -> Result<(), DisplayError> {
-        self.check_samus_binding_images(binding, &self.loaded_rom, &self.native_rom)
-    }
-    fn check_samus_binding_images(
-        &self,
-        binding: &SamusBinding,
-        loaded: &Option<crate::rom::RomImage>,
-        native: &Option<crate::rom::RomImage>,
-    ) -> Result<(), DisplayError> {
-        self.check_samus_registration_images(binding, loaded, native)?;
-        if binding.execution == SamusExecution::Prepared {
-            for &(registration, identity) in binding.registrations.keys() {
-                let image = registered_image(registration, loaded, native)?;
-                let declaration = &binding.roles.description().allocations[&identity];
-                native_content::RegisteredRom::admit(
-                    registration,
-                    image.clone(),
-                    declaration.clone(),
-                    &binding.expected_roles.allocations[&identity],
-                )?;
-            }
-        }
-        Ok(())
     }
     pub(crate) fn prepare_samus_binding(
         &self,
         supplied: SamusBindingDescription,
         expected: &SamusBindingDescription,
     ) -> Result<PreparedSamusBinding, DisplayError> {
-        if !Arc::ptr_eq(&supplied.world, &expected.world)
-            || !Arc::ptr_eq(&supplied.world, self.world())
-        {
-            return Err(DisplayError::Identity);
-        }
-        if supplied.execution != expected.execution {
-            return Err(DisplayError::Incomplete);
-        }
-        supplied
-            .request_media
-            .validate()
-            .map_err(|_| DisplayError::Scene)?;
-        if supplied.request_media != expected.request_media {
-            return Err(DisplayError::Incomplete);
-        }
-        supplied.spritemaps.validate(&supplied.request_media)?;
-        supplied
-            .spritemaps
-            .validate_expected(&expected.spritemaps)?;
-        let mut expected_requests = expected.roles.requests.iter();
-        let roles = Arc::new(content::ValidatedContent::construct(
-            supplied.roles,
-            &expected.roles,
-            |request| {
-                request.validate(
-                    expected_requests
-                        .next()
-                        .ok_or(DisplayError::Incomplete)?
-                        .request
-                        .pointer,
-                    &supplied.request_media,
-                )
-            },
-        )?);
-        let mut registrations = BTreeMap::new();
-        for (&(role, registration), declaration) in &roles.description().roles {
-            if registration == content::Registration::Native
-                && matches!(
-                    role,
-                    content::Role::Landing | content::Role::Crouching | content::Role::Drained
-                )
-            {
-                continue;
-            }
-            let key = (registration, declaration.allocation);
-            if registrations.contains_key(&key) {
-                continue;
-            }
-            let allocation = roles
-                .description()
-                .allocations
-                .get(&declaration.allocation)
-                .ok_or(DisplayError::Incomplete)?;
-            let expected_allocation = expected
-                .roles
-                .allocations
-                .get(&declaration.allocation)
-                .ok_or(DisplayError::Incomplete)?;
-            let image = self
-                .samus_rom(registration)
-                .ok_or(DisplayError::Identity)?
-                .clone();
-            registrations.insert(
-                key,
-                native_content::RegisteredRom::admit(
-                    registration,
-                    image,
-                    allocation.clone(),
-                    expected_allocation,
-                )?,
-            );
-        }
-        Ok(PreparedSamusBinding(Arc::new(SamusBinding {
-            world: supplied.world,
-            roles,
-            expected_roles: Arc::new(expected.roles.clone()),
-            spritemaps: supplied.spritemaps,
-            #[cfg(sm_verify_dll)]
-            request_media: supplied.request_media,
-            registrations,
-            execution: supplied.execution,
-        })))
+        SamusBinding::prepare(supplied, expected, self.samus_images())
     }
     #[cfg(sm_verify_dll)]
     pub(crate) fn install_samus_binding(
@@ -1707,36 +1542,21 @@ impl Game {
         if self.actor_identity_is_with_session() {
             return Err(DisplayError::Phase);
         }
-        self.check_samus_binding(&prepared.0)?;
-        self.samus_binding = Some(prepared.0);
-        self.samus_authority = SamusAuthority::Available;
+        prepared.binding().check(self.samus_images())?;
+        self.samus.install(prepared);
         Ok(())
     }
     pub(crate) fn samus_authority(&self) -> SamusAuthority {
-        if self.samus_binding.is_some() && self.samus_mutation_depth != 0 {
-            return SamusAuthority::Revoked;
-        }
-        if self.samus_authority == SamusAuthority::Available {
-            if let Some(binding) = &self.samus_binding {
-                if binding.execution == SamusExecution::Prepared
-                    && self.check_samus_registration_metadata(binding).is_err()
-                {
-                    return SamusAuthority::Revoked;
-                }
-            }
-        }
-        self.samus_authority
+        self.samus.authority(self.samus_images())
     }
     pub(crate) fn revoke_samus_authority(&mut self) {
         self.poison_persistent_session();
-        if self.samus_binding.is_some() {
-            self.samus_authority = SamusAuthority::Revoked;
-        }
+        self.samus.revoke();
     }
     /// Unscoped backend/ROM writers invalidate resumption. Scoped writers remain
     /// revoked until their guard successfully adopts the actual selected state.
     pub(crate) fn note_samus_external_mutation(&mut self) {
-        if self.samus_mutation_depth == 0 {
+        if self.samus.mutation_depth() == 0 {
             self.revoke_samus_authority();
         }
     }
@@ -1746,22 +1566,12 @@ impl Game {
             .expect("Samus mutation rejected")
     }
     pub(crate) fn begin_samus_mutation(&mut self) -> Result<SamusMutation<'_>, DisplayError> {
-        // A supplied Prepared owner cannot enter unrestricted native mutation.
         // Native compatibility remains available for the legacy/reference path.
-        if !matches!(
+        let legacy = matches!(
             self.persistent_session,
             persistent_session::SessionSlot::Legacy
-        ) && self
-            .samus_binding
-            .as_ref()
-            .is_some_and(|binding| binding.execution == SamusExecution::Prepared)
-        {
-            return Err(DisplayError::Phase);
-        }
-        self.samus_mutation_depth = self
-            .samus_mutation_depth
-            .checked_add(1)
-            .ok_or(DisplayError::Phase)?;
+        );
+        self.samus.begin_mutation(legacy)?;
         Ok(SamusMutation {
             game: self,
             completed: false,
@@ -1774,29 +1584,16 @@ impl Game {
         action(mutation.game())
     }
     pub(crate) fn preflight_samus_runtime(&self) -> Result<(), DisplayError> {
-        let Some(binding) = &self.samus_binding else {
-            return Ok(());
-        };
-        if self.samus_authority != SamusAuthority::Available {
-            return Err(DisplayError::Poisoned);
-        }
-        self.check_samus_registration_metadata(binding)?;
-        // A fresh numeric compatibility interval inside a retained native call is
-        // permitted; it never promotes prepared authority during an outer load.
-        if self.samus_mutation_depth != 0 && binding.execution == SamusExecution::Prepared {
-            return Err(DisplayError::Phase);
-        }
-        Ok(())
+        self.samus.preflight(self.samus_images())
     }
     pub(crate) fn capture_samus_snapshot(&self) -> SamusSnapshotPayload {
         SamusSnapshotPayload {
             world: self.world.clone(),
-            binding: self.samus_binding.clone(),
+            binding: self.samus.binding().cloned(),
             loaded: self.loaded_rom.clone(),
             native: self.native_rom.clone(),
             authority: self.samus_authority(),
-            admitted: self.samus_binding.is_none()
-                || self.samus_authority == SamusAuthority::Available,
+            admitted: self.samus.admitted(),
         }
     }
     /// Validate the payload's own registrations before a restore. A target branch
@@ -1812,7 +1609,11 @@ impl Game {
             return Err(DisplayError::Poisoned);
         }
         if let Some(binding) = &payload.binding {
-            self.check_samus_binding_images(binding, &payload.loaded, &payload.native)?;
+            binding.check(SamusImages {
+                world: &self.world,
+                loaded: &payload.loaded,
+                native: &payload.native,
+            })?;
         } else if payload.authority != SamusAuthority::LegacyUnrouted {
             return Err(DisplayError::Incomplete);
         }
@@ -1828,87 +1629,15 @@ impl Game {
         let payload = prepared.0;
         self.loaded_rom = payload.loaded;
         self.native_rom = payload.native;
-        self.samus_binding = payload.binding;
-        self.samus_authority = if self.samus_binding.is_some() {
-            SamusAuthority::Available
-        } else {
-            SamusAuthority::LegacyUnrouted
-        };
+        self.samus.adopt(payload.binding);
         Ok(())
     }
     pub(crate) fn samus_execution(&self) -> Result<Option<SamusExecution>, DisplayError> {
-        let Some(binding) = &self.samus_binding else {
-            return Ok(None);
-        };
-        if !Arc::ptr_eq(&binding.world, self.world()) {
-            return Err(DisplayError::Identity);
-        }
-        if binding.execution == SamusExecution::Prepared
-            && (self.samus_authority == SamusAuthority::Revoked || self.samus_mutation_depth != 0)
-        {
-            return Err(DisplayError::Poisoned);
-        }
-        if binding.execution == SamusExecution::Prepared {
-            self.check_samus_registration_metadata(binding)?;
-        }
-        Ok(Some(binding.execution))
-    }
-    /// The Samus binding, once `samus_execution` admits it.
-    fn admitted_samus_binding(&self) -> Result<Option<&SamusBinding>, DisplayError> {
-        Ok(self.samus_execution()?.and(self.samus_binding.as_deref()))
-    }
-    /// The caller performs this observation's original width/diagnostic preflight first.
-    /// Displacement is linear from the sealed role base; no consumer supplies an identity.
-    pub(crate) fn capture_samus_role(
-        &self,
-        role: content::Role,
-        registration: content::Registration,
-        displacement: usize,
-        selected: &crate::rom::RomImage,
-    ) -> Result<Option<content::RoleLease<native_content::CapturedRom>>, DisplayError> {
-        let Some(execution) = self.samus_execution()? else {
-            return Ok(None);
-        };
-        if execution != SamusExecution::RetainedNative {
-            return Err(DisplayError::Phase);
-        }
-        let binding = self.samus_binding.as_ref().unwrap();
-        let declaration = binding
-            .roles
-            .description()
-            .roles
-            .get(&(role, registration))
-            .ok_or(DisplayError::Incomplete)?;
-        let image = self.samus_rom(registration).ok_or(DisplayError::Identity)?;
-        if !image.same_allocation(selected)
-            || image.len()
-                != binding.roles.description().allocations[&declaration.allocation].extent
-        {
-            return Err(DisplayError::Identity);
-        }
-        let admitted = binding
-            .registrations
-            .get(&(registration, declaration.allocation))
-            .ok_or(DisplayError::Incomplete)?;
-        let capsule = admitted.capture(registration, selected)?;
-        if capsule.registration() != registration {
-            return Err(DisplayError::Identity);
-        }
-        match registration {
-            content::Registration::Loaded => {
-                binding.roles.acquire_loaded(role, displacement, capsule)
-            }
-            content::Registration::Native => {
-                binding.roles.acquire_native(role, displacement, capsule)
-            }
-        }
-        .map(Some)
+        self.samus.execution(self.samus_images())
     }
     #[cfg(sm_verify_dll)]
     pub(crate) fn samus_request_media(&self) -> Result<Option<Arc<SceneMedia>>, DisplayError> {
-        Ok(self
-            .admitted_samus_binding()?
-            .map(|binding| binding.request_media.clone()))
+        self.samus.request_media(self.samus_images())
     }
 }
 
@@ -1980,7 +1709,13 @@ impl sm_game::scene::owned_samus::SamusSources for Game {
         displacement: usize,
         selected: &crate::rom::RomImage,
     ) -> Result<Option<content::RoleLease<native_content::CapturedRom>>, DisplayError> {
-        Game::capture_samus_role(self, role, registration, displacement, selected)
+        self.samus.capture_role(
+            self.samus_images(),
+            role,
+            registration,
+            displacement,
+            selected,
+        )
     }
     fn prepared_samus_role(
         &self,
@@ -1988,54 +1723,26 @@ impl sm_game::scene::owned_samus::SamusSources for Game {
         registration: content::Registration,
         displacement: usize,
     ) -> Result<Option<content::RoleLease<content::PreparedBytes>>, DisplayError> {
-        let Some(execution) = self.samus_execution()? else {
-            return Ok(None);
-        };
-        if execution == SamusExecution::RetainedNative
-            && !(registration == content::Registration::Native
-                && matches!(
-                    role,
-                    content::Role::Landing | content::Role::Crouching | content::Role::Drained
-                ))
-        {
-            return Err(DisplayError::Phase);
-        }
-        self.samus_binding
-            .as_ref()
-            .unwrap()
-            .roles
-            .acquire_prepared(role, registration, displacement)
-            .map(Some)
+        self.samus
+            .prepared_role(self.samus_images(), role, registration, displacement)
     }
     fn samus_role_base(
         &self,
         role: content::Role,
         registration: content::Registration,
     ) -> Result<Option<usize>, DisplayError> {
-        let Some(binding) = self.admitted_samus_binding()? else {
-            return Ok(None);
-        };
-        binding
-            .roles
-            .description()
-            .roles
-            .get(&(role, registration))
-            .map(|declaration| Some(declaration.mapped_base))
-            .ok_or(DisplayError::Incomplete)
+        self.samus
+            .role_base(self.samus_images(), role, registration)
     }
     fn samus_request(
         &self,
         half: sm_game::scene::samus_body::Half,
         pointer: u16,
     ) -> Result<Option<TileRequest>, DisplayError> {
-        self.admitted_samus_binding()?
-            .map(|binding| binding.roles.request(half, pointer))
-            .transpose()
+        self.samus.request(self.samus_images(), half, pointer)
     }
     fn samus_spritemaps(&self) -> Result<Option<Arc<SamusCatalog>>, DisplayError> {
-        Ok(self
-            .admitted_samus_binding()?
-            .map(|binding| binding.spritemaps.clone()))
+        self.samus.spritemaps(self.samus_images())
     }
 }
 
