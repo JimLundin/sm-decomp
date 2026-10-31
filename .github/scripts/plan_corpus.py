@@ -99,7 +99,7 @@ for (kind, identity), members in sorted(groups.items()):
                        'seed_asset': asset, 'seed_sha256': digest,
                        'route': inputs.removeprefix('corpus-').removesuffix('.inputs') if kind == 'route' else '',
                        'segments': ' '.join(r['id'] for r in chunk)})
-# Start the heaviest shards first: the matrix runs at most six at a time.
+# Start the heaviest shards first: the matrix runs at most eight at a time.
 shards.sort(key=lambda shard: -shard['cost'])
 if not shards:
     raise SystemExit('no runnable rows selected')
