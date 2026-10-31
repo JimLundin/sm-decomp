@@ -1055,6 +1055,7 @@ pub fn run_function<L: Lease + ?Sized>(game: &mut L, function: u16) {
         }
         function::FADE_IN_LOAD_BG3_TILES_1 => {
             set_native_word(game, UNPAUSE_HOOK, UNPAUSE_DEAD);
+            crate::probe::hit("kraid.dead_hook");
             session_slot!(
                 game,
                 Body[BODY].function = function::FADE_IN_LOAD_BG3_TILES_2
@@ -1538,6 +1539,7 @@ fn death_bg2_bottom_half<L: Lease + ?Sized>(game: &mut L) {
     process_script(game);
     game.set_slot_byte(UNPAUSE_HOOK + 2, BANK);
     set_native_word(game, UNPAUSE_HOOK, UNPAUSE_SINKING);
+    crate::probe::hit("kraid.sinking_hook");
     session_slot!(
         game,
         Body[BODY].function = function::DEATH_SINK_THROUGH_FLOOR
