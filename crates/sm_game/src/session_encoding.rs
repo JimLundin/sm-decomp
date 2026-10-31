@@ -791,6 +791,7 @@ macro_rules! scalar_words {
         $f(ram::ENEMY_PROCESSING_STAGE,$($borrow)* $s.room.enemy_processing_stage);
         $f(ram::COLLISION_DETECTION_INDEX,$($borrow)* $s.room.collision_detection_index);
         $f(ram::CURRENT_SLOPE_BTS,$($borrow)* $s.room.slope_behavior);
+        $f(ram::CERES_STATUS,$($borrow)* $s.room.ceres_status);
         $f(ram::TOURIAN_ENTRANCE_STATUE_FINISHED,$($borrow)* $s.mechanisms.statue_finished);
         for index in 0..18 {
             $f(0x1997+index*2,$($borrow)* $s.enemy_projectiles.slots[index].definition);
