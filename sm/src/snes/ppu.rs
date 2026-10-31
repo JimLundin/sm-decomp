@@ -786,6 +786,28 @@ pub(crate) unsafe fn native_line_restored(ppu: *mut Ppu) {
     unsafe { native_line::restored(ppu) }
 }
 
+/// A typed producer's port writes begin: until `produced`, they reach only the
+/// emulated PPU, not the native one.
+pub(crate) fn producing(ppu: *mut Ppu) {
+    #[cfg(sm_verify_dll)]
+    native_line::producing(ppu);
+    #[cfg(not(sm_verify_dll))]
+    let _ = ppu;
+}
+
+/// A typed producer's port writes are done: the native PPU takes `native`, the
+/// producer's typed calls, in their place (see `native_line::produced`).
+pub(crate) fn produced(
+    ppu: *mut Ppu,
+    producer: &'static str,
+    native: impl FnOnce(&mut raster::memory::Ports, &mut raster::memory::OwnedMemory),
+) {
+    #[cfg(sm_verify_dll)]
+    native_line::produced(ppu, producer, native);
+    #[cfg(not(sm_verify_dll))]
+    let _ = (ppu, producer, native);
+}
+
 /// Step 3 of the native renderer: a PPU state built only from register and port
 /// accesses (`Registers`, `Ports`, `OwnedMemory`) and the frame count, rendering
 /// each line with no emulated PPU or beam state. With
@@ -795,15 +817,29 @@ pub(crate) unsafe fn native_line_restored(ppu: *mut Ppu) {
 /// explicitly; any other frame whose start finds the emulated PPU's state
 /// differing from the native one is logged as a resync, since it means some
 /// path loaded PPU state without its ports.
+///
+/// Step 4's typed producers feed it through typed calls in place of their port
+/// writes, which still reach the emulated PPU; after each producer the two
+/// PPUs' ports and memory must agree, and a differing producer is logged
+/// (frame, `typed`, producer, part) and the native ports and memory resynced.
 #[cfg(sm_verify_dll)]
 mod native_line {
     use super::{Ppu, ports_of, raster, registers_of};
     use raster::memory::{OwnedMemory, Ports, VideoMemory};
     use raster::registers::Registers;
-    use std::cell::RefCell;
+    use std::cell::{Cell, RefCell};
     use std::collections::HashMap;
     use std::io::Write as _;
     use std::sync::OnceLock;
+
+    fn memory_of(ppu: &Ppu) -> OwnedMemory {
+        OwnedMemory {
+            vram: Box::new(ppu.vram),
+            cgram: ppu.cgram,
+            oam: ppu.oam,
+            high_oam: ppu.highOam,
+        }
+    }
 
     struct NativePpu {
         registers: Registers,
@@ -819,12 +855,7 @@ mod native_line {
             Self {
                 registers: registers_of(ppu),
                 ports: ports_of(ppu),
-                memory: OwnedMemory {
-                    vram: Box::new(ppu.vram),
-                    cgram: ppu.cgram,
-                    oam: ppu.oam,
-                    high_oam: ppu.highOam,
-                },
+                memory: memory_of(ppu),
                 overflow: raster::Overflow {
                     range: false,
                     time: false,
@@ -885,6 +916,55 @@ mod native_line {
 
     thread_local! {
         static STATES: RefCell<HashMap<usize, NativePpu>> = RefCell::new(HashMap::new());
+        /// The PPU whose port writes a typed producer is making, if any.
+        static PRODUCING: Cell<Option<usize>> = const { Cell::new(None) };
+    }
+
+    /// Port accesses the native PPU takes: none of a typed producer's.
+    fn feeds(ppu: *mut Ppu) -> bool {
+        enabled() && PRODUCING.get() != Some(ppu as usize)
+    }
+
+    pub(super) fn producing(ppu: *mut Ppu) {
+        if enabled() {
+            PRODUCING.set(Some(ppu as usize));
+        }
+    }
+
+    pub(super) fn produced(
+        ppu: *mut Ppu,
+        producer: &'static str,
+        native: impl FnOnce(&mut Ports, &mut OwnedMemory),
+    ) {
+        if !enabled() {
+            return;
+        }
+        PRODUCING.set(None);
+        let ppu = unsafe { &*ppu };
+        STATES.with_borrow_mut(|states| {
+            let Some(state) = states.get_mut(&(ppu as *const Ppu as usize)) else {
+                return;
+            };
+            native(&mut state.ports, &mut state.memory);
+            let part = if state.ports != ports_of(ppu) {
+                "ports"
+            } else if *state.memory.vram != ppu.vram {
+                "vram"
+            } else if state.memory.cgram != ppu.cgram {
+                "cgram"
+            } else if state.memory.oam != ppu.oam || state.memory.high_oam != ppu.highOam {
+                "oam"
+            } else {
+                return;
+            };
+            log(format_args!(
+                "{},typed,{producer},{part}
+",
+                state.frame
+            ));
+            state.ports = ports_of(ppu);
+            state.memory = memory_of(ppu);
+        });
     }
 
     fn enabled() -> bool {
@@ -944,7 +1024,7 @@ mod native_line {
     }
 
     pub(super) unsafe fn write(ppu: *mut Ppu, address: u8, value: u8) {
-        if !enabled() {
+        if !feeds(ppu) {
             return;
         }
         STATES.with_borrow_mut(|states| {
@@ -956,7 +1036,7 @@ mod native_line {
     }
 
     pub(super) unsafe fn read(ppu: *mut Ppu, address: u8) {
-        if !enabled() {
+        if !feeds(ppu) {
             return;
         }
         let open_bus = unsafe { (*ppu).ppu2openBus };
