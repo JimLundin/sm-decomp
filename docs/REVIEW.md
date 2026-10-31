@@ -186,15 +186,25 @@ VALIDATION Gate 2. (b) Step 1 starts now as its own lane.
    - *On a mismatch,* the differing domain and the last matching 1,000-tick mark
      are already known. CI reruns that span live in lockstep, which names the
      first tick and field, and confirms the failure.
-   - *Maintenance.* `scenario lock` writes the file and records the oracle
-     identity it came from: ROM digest, LakeSnes source, snesrev patch set and
-     verdicts, recorder and oracle-projection source (with `ram_map.rs`), the
-     mask list, the digest format version and the input digests. A commit that
-     changes any of these, such as flipping a patch to `follows`, updates the lock
-     in the same commit. CI fails on a stale lock rather than re-recording.
-     Never key on `sm/**` or `crates/**` wholesale (the Phase 0 lesson), so the
-     recorder builds from an explicit file list and CI checks that list reaches
-     no engine code.
+   - *Oracle independence (Jim, 2026-10-31).* Engine work never changes the lock.
+     (i) Lock against the **faithful** oracle, the real game. The patched oracle
+     still applies 174 entries the engine reproduces (39 gameplay-visible), and
+     every native fix flips one, so its output moves with engine work. A row
+     whose engine still reproduces a gameplay-visible patch is listed in LEGACY
+     and stays on live patched lockstep until that entry `follows`; the list only
+     shrinks. (ii) Key each scenario on the oracle's start (seed digest, or boot
+     plus input-prefix digest), never on a checkpoint file: checkpoints serialize
+     engine State and are regenerated when its layout changes. (iii) The recorder
+     builds from an explicit file list (LakeSnes, the faithful patch subset, the
+     recorder and oracle projection with `ram_map.rs`), never `sm/**` or
+     `crates/**` wholesale, and CI checks that list reaches no engine code.
+     (iv) Digests are per domain, so adding a projection adds digests and
+     retiring a mask refreshes only that domain.
+   - *Maintenance.* `scenario lock` writes the file and records that identity
+     plus the digest format version. Only a change to the oracle side, the
+     scenario's inputs, or a deliberate verifier change (a mask or projection)
+     updates the lock, in that same commit. CI fails on a stale lock rather than
+     re-recording.
    - *Landing replay.* A commit costs one incremental build plus engine-only
      frames, so one job replays each commit of a landing (at most 25) in order
      and names the first red commit: ratchet (4)'s green prefix.
