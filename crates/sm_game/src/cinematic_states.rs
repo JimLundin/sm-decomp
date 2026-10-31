@@ -87,9 +87,9 @@ fn run_function<H: Host + ?Sized>(game: &mut H) {
 /// The intro and ending's frame counters.
 fn count_frames<H: Host + ?Sized>(game: &mut H) {
     if (word!(game.INTRO_FRAME_COUNTER) & 0x8000) == 0 {
-        word!(game.INTRO_FRAME_COUNTER = word!(game.INTRO_FRAME_COUNTER).wrapping_add(1));
+        word!(game.INTRO_FRAME_COUNTER, wrapping_add(1));
     }
-    word!(game.CINEMATIC_FRAME_COUNTER = word!(game.CINEMATIC_FRAME_COUNTER).wrapping_add(1));
+    word!(game.CINEMATIC_FRAME_COUNTER, wrapping_add(1));
 }
 
 /// Draws the Nintendo logo. Was `AddNintentoLogoToOam`.
@@ -374,10 +374,7 @@ pub fn egg_particle<H: Host + ?Sized>(k: u16, game: &mut H) {
         PARTICLE_FUNCTION,
     );
     if ((word!(game.CINEMATICBG_ARR8[slot])).wrapping_sub(PARTICLE_FLOOR) as i16) < 0 {
-        word!(
-            game.CINEMATICSPR_GOTO_TIMER[slot] =
-                word!(game.CINEMATICSPR_GOTO_TIMER[slot]).wrapping_add(256)
-        );
+        word!(game.CINEMATICSPR_GOTO_TIMER[slot], wrapping_add(256));
     } else {
         word!(game.CINEMATICSPR_INSTR_TIMER[slot] = 1);
         word!(game.CINEMATICSPR_INSTR_PTR[slot] = PARTICLE_LANDED);
@@ -424,9 +421,6 @@ pub fn slime_drop<H: Host + ?Sized>(k: u16, game: &mut H) {
         word!(game.CINEMATICSPR_INSTR_PTR[slot] = SLIME_LANDED);
         word!(game.CINEMATICSPR_PREINSTR_FUNC[slot] = NO_PRE_INSTRUCTION);
     } else {
-        word!(
-            game.CINEMATICSPR_GOTO_TIMER[slot] =
-                word!(game.CINEMATICSPR_GOTO_TIMER[slot]).wrapping_add(256)
-        );
+        word!(game.CINEMATICSPR_GOTO_TIMER[slot], wrapping_add(256));
     }
 }

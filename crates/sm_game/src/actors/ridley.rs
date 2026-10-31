@@ -477,11 +477,9 @@ fn current<L: Lease + ?Sized>(game: &L) -> i32 {
 
 /// Count down Ridley's function timer; true once it is negative.
 fn timer_expired<L: Lease + ?Sized>(game: &mut L) -> bool {
-    session_slot!(
-        game,
-        Ridley[RIDLEY].function_timer =
-            session_slot!(game, Ridley[RIDLEY].function_timer).wrapping_sub(1)
-    );
+    session_slot!(game, Ridley[RIDLEY].function_timer, |function_timer| {
+        function_timer.wrapping_sub(1)
+    });
     (session_slot!(game, Ridley[RIDLEY].function_timer) & 0x8000) != 0
 }
 
@@ -884,11 +882,9 @@ pub fn fight_action_choices<L: Lease + ?Sized>(game: &mut L) -> u16 {
     }
     let health = session_slot!(game, Ridley[RIDLEY].base.health);
     if health == 0 {
-        session_slot!(
-            game,
-            Ridley[RIDLEY].death_lunges =
-                session_slot!(game, Ridley[RIDLEY].death_lunges).wrapping_add(1)
-        );
+        session_slot!(game, Ridley[RIDLEY].death_lunges, |death_lunges| {
+            death_lunges.wrapping_add(1)
+        });
         actions::LUNGE
     } else if below(health, 14400) {
         actions::POGO_OR_SWOOP
@@ -1223,11 +1219,9 @@ pub fn pogo_ascending<L: Lease + ?Sized>(game: &mut L) {
     if !samus_in_pogo_zone(game) || {
         let expired =
             (session_slot!(game, Ridley[RIDLEY].function_timer) as i16).wrapping_sub(1) < 0;
-        session_slot!(
-            game,
-            Ridley[RIDLEY].function_timer =
-                session_slot!(game, Ridley[RIDLEY].function_timer).wrapping_sub(1)
-        );
+        session_slot!(game, Ridley[RIDLEY].function_timer, |function_timer| {
+            function_timer.wrapping_sub(1)
+        });
         expired
     } {
         set_neutral_tail(game);
@@ -3403,9 +3397,8 @@ pub fn baby_metroid_spritemap<L: Lease + ?Sized>(game: &mut L) -> Option<u16> {
         if session_slot!(game, Ridley[RIDLEY].baby_metroid_instruction_timer) != entry.word(0) {
             session_slot!(
                 game,
-                Ridley[RIDLEY].baby_metroid_instruction_timer =
-                    session_slot!(game, Ridley[RIDLEY].baby_metroid_instruction_timer)
-                        .wrapping_add(1)
+                Ridley[RIDLEY].baby_metroid_instruction_timer,
+                |baby_metroid_instruction_timer| baby_metroid_instruction_timer.wrapping_add(1)
             );
             return Some(entry.word(2));
         }
@@ -3540,11 +3533,8 @@ pub fn shot<L: Lease + ?Sized>(game: &mut L) {
         13
     };
     session_slot!(game, Ridley[RIDLEY].base.flash_timer = flash);
-    session_slot!(
-        game,
-        Ridley[RIDLEY].hit_counter =
-            session_slot!(game, Ridley[RIDLEY].hit_counter).wrapping_add(1)
-    );
+    session_slot!(game, Ridley[RIDLEY].hit_counter, |hit_counter| hit_counter
+        .wrapping_add(1));
 }
 
 /// Power bomb reaction - enemy $E13F/$E17F (Ridley) ($A6:DFB2). Was
@@ -3701,16 +3691,10 @@ pub fn goto_if_not_facing_left<L: Lease + ?Sized>(
 /// Instruction - move Ridley ([[Y]], [[Y] + 2]) pixels ($A6:E51F). Was
 /// `Ridley_Instr_14`.
 pub fn move_by<L: Lease + ?Sized>(script: EnemyScript, game: &mut L) -> EnemyScript {
-    session_slot!(
-        game,
-        Ridley[RIDLEY].base.x_pos =
-            session_slot!(game, Ridley[RIDLEY].base.x_pos).wrapping_add(script.word(0))
-    );
-    session_slot!(
-        game,
-        Ridley[RIDLEY].base.y_pos =
-            session_slot!(game, Ridley[RIDLEY].base.y_pos).wrapping_add(script.word(2))
-    );
+    session_slot!(game, Ridley[RIDLEY].base.x_pos, |x_pos| x_pos
+        .wrapping_add(script.word(0)));
+    session_slot!(game, Ridley[RIDLEY].base.y_pos, |y_pos| y_pos
+        .wrapping_add(script.word(2)));
     script.offset(2)
 }
 

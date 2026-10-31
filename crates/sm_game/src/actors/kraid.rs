@@ -956,10 +956,7 @@ fn crumble<L: Lease + ?Sized>(game: &mut L, rock: u16, block_x: u8, plm: u16) {
 }
 
 fn sound_every_half_second<L: Lease + ?Sized>(game: &mut L) {
-    word!(
-        game.BOSS_DEATH_QUAKE_SOUND_TIMER =
-            word!(game.BOSS_DEATH_QUAKE_SOUND_TIMER).wrapping_sub(1)
-    );
+    word!(game.BOSS_DEATH_QUAKE_SOUND_TIMER, wrapping_sub(1));
     if word!(game.BOSS_DEATH_QUAKE_SOUND_TIMER) == 0 {
         game.queue_sound(2, ROCKS_SOUND, 6);
         word!(game.BOSS_DEATH_QUAKE_SOUND_TIMER = 30);
@@ -1845,11 +1842,8 @@ fn palette<S: BossState + ?Sized>(game: &mut S) {
                 (left == 0)
                     && ({
                         session_slot!(game, Body[BODY].hurt_frame_timer = 2);
-                        session_slot!(
-                            game,
-                            Body[BODY].hurt_frame =
-                                session_slot!(game, Body[BODY].hurt_frame).wrapping_sub(1)
-                        );
+                        session_slot!(game, Body[BODY].hurt_frame, |hurt_frame| hurt_frame
+                            .wrapping_sub(1));
                         true
                     })
             });
@@ -1880,12 +1874,12 @@ fn unglow_eye<L: Lease + ?Sized>(game: &mut L) {
         let s: i32 = source as i32 >> 1;
         if kraid_tables::bg_color(game, (s + 1) as usize) & 0x1f != part {
             fading = fading.wrapping_add(1);
-            word!(game.PALETTE_BUFFER[c] = word!(game.PALETTE_BUFFER[c]).wrapping_sub(1));
+            word!(game.PALETTE_BUFFER[c], wrapping_sub(1));
         }
         part = (word!(game.PALETTE_BUFFER[c])) & 0x3e0;
         if kraid_tables::bg_color(game, (s + 1) as usize) & 0x3e0 != part {
             fading = fading.wrapping_add(1);
-            word!(game.PALETTE_BUFFER[c] = word!(game.PALETTE_BUFFER[c]).wrapping_sub(32));
+            word!(game.PALETTE_BUFFER[c], wrapping_sub(32));
         }
         colour = colour.wrapping_add(2);
         source = source.wrapping_add(2);
@@ -2234,8 +2228,8 @@ pub fn arm_main<L: Lease + ?Sized>(game: &mut L) {
     if session_slot!(byte game, Body[BODY].mouth_flags[1]) != 0 {
         session_slot!(
             game,
-            Part[ARM].base.instruction_timer =
-                session_slot!(game, Part[ARM].base.instruction_timer).wrapping_add(1)
+            Part[ARM].base.instruction_timer,
+            |instruction_timer| instruction_timer.wrapping_add(1)
         );
     }
 }

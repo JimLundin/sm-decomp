@@ -149,7 +149,7 @@ macro_rules! add_pair {
 
 /// Counts down `cinematic_function_timer`; true when it reaches zero or below.
 pub fn countdown<H: Host + ?Sized>(game: &mut H) -> bool {
-    word!(game.CINEMATIC_FUNCTION_TIMER = word!(game.CINEMATIC_FUNCTION_TIMER).wrapping_sub(1));
+    word!(game.CINEMATIC_FUNCTION_TIMER, wrapping_sub(1));
     let expired = (word!(game.CINEMATIC_FUNCTION_TIMER) & 0x8000) != 0;
     word!(game.CINEMATIC_FUNCTION_TIMER) == 0 || expired
 }
@@ -351,7 +351,7 @@ pub fn ceres_flying_into_camera<H: Host + ?Sized>(game: &mut H) {
         game.spawn_palette_effect(CERES_GLOW_1);
         game.spawn_palette_effect(CERES_GLOW_2);
     } else {
-        word!(game.MODE7_ZOOM = word!(game.MODE7_ZOOM).wrapping_sub(16));
+        word!(game.MODE7_ZOOM, wrapping_sub(16));
     }
 }
 
@@ -361,9 +361,9 @@ pub fn ceres_flying_into_ceres<H: Host + ?Sized>(game: &mut H) {
     fade_cinematic_fixed_color(game);
     add_pair!(game, CINEMATIC_X, CINEMATIC_X_SUB, -0x2000i32 as u32);
     if below(word!(game.MODE7_ZOOM), 3072) {
-        word!(game.MODE7_ZOOM = word!(game.MODE7_ZOOM).wrapping_add(16));
+        word!(game.MODE7_ZOOM, wrapping_add(16));
     } else if below(word!(game.MODE7_ZOOM), 0x2000) {
-        word!(game.MODE7_ZOOM = word!(game.MODE7_ZOOM).wrapping_add(32));
+        word!(game.MODE7_ZOOM, wrapping_add(32));
     } else {
         game.ram().write_byte(mirror::TM, 17);
         game.ram().write_byte(mirror::BGMODE, 1);
@@ -447,7 +447,7 @@ pub fn boom_wait_for_music<H: Host + ?Sized>(game: &mut H) {
 pub fn boom_small_explosions<H: Host + ?Sized>(game: &mut H) {
     add_pair!(game, CINEMATIC_Y, CINEMATIC_Y_SUB, 4096u32);
     add_pair!(game, CINEMATIC_X, CINEMATIC_X_SUB, -0x4000i32 as u32);
-    word!(game.MODE7_ZOOM = word!(game.MODE7_ZOOM).wrapping_add(1));
+    word!(game.MODE7_ZOOM, wrapping_add(1));
     crate::display_refresh::fade(true, game);
     if game.ram().read_byte(mirror::INIDISP) == 15 {
         crate::screen_fade::set_both(game, 0, 0);
@@ -464,7 +464,7 @@ pub fn boom_explosions<H: Host + ?Sized>(game: &mut H) {
     add_pair!(game, CINEMATIC_Y, CINEMATIC_Y_SUB, 4096u32);
     add_pair!(game, CINEMATIC_X, CINEMATIC_X_SUB, -0x4000i32 as u32);
     if below(word!(game.MODE7_ZOOM), 640) {
-        word!(game.MODE7_ZOOM = word!(game.MODE7_ZOOM).wrapping_add(1));
+        word!(game.MODE7_ZOOM, wrapping_add(1));
     } else {
         word!(
             game.POWER_BOMB_EXPLOSION_X_POS =
@@ -495,13 +495,13 @@ pub fn boom_explosions<H: Host + ?Sized>(game: &mut H) {
 pub fn boom_gunship_flying_away<H: Host + ?Sized>(game: &mut H) {
     game.ram().write_byte(0x6f, 16);
     game.ram().write_byte(0x72, 55);
-    word!(game.CINEMATIC_X = word!(game.CINEMATIC_X).wrapping_add(2));
+    word!(game.CINEMATIC_X, wrapping_add(2));
     word!(game.MODE7_ANGLE = ((word!(game.MODE7_ANGLE)) as u8).wrapping_sub(1) as u16);
     if below(word!(game.MODE7_ZOOM), 16) {
         word!(game.CINEMATIC_FUNCTION = function::BOOM_WAIT_C0H_FRAMES);
         word!(game.CINEMATIC_FUNCTION_TIMER = 192);
     } else {
-        word!(game.MODE7_ZOOM = word!(game.MODE7_ZOOM).wrapping_sub(16));
+        word!(game.MODE7_ZOOM, wrapping_sub(16));
     }
 }
 
@@ -624,7 +624,7 @@ pub fn baby_hatched<H: Host + ?Sized>(k: u16, game: &mut H) {
 /// Pre-instruction - confused baby metroid - idling ($8B:BB0D): then dance.
 /// Was `CinematicFunction_Intro_Func52`.
 pub fn baby_idling<H: Host + ?Sized>(k: u16, game: &mut H) {
-    word!(game.CINEMATIC_VAR14 = word!(game.CINEMATIC_VAR14).wrapping_sub(1));
+    word!(game.CINEMATIC_VAR14, wrapping_sub(1));
     let expired = (word!(game.CINEMATIC_VAR14) & 0x8000) != 0;
     if word!(game.CINEMATIC_VAR14) == 0 || expired {
         let slot = (k as i32 >> 1) as usize;
