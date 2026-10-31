@@ -327,3 +327,159 @@ pub fn advance<H: Host>(host: &mut H) -> Result<(), H::Error> {
     };
     schedule(host, next, next_vertical, next_horizontal)
 }
+
+/// One interrupt of a frame: the vertical timer line it fired at, its display
+/// writes in order, and whether it polled a door transition's resume.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct IrqPass {
+    pub line: u16,
+    pub writes: Vec<(Output, u8)>,
+    pub resumed: bool,
+}
+
+/// The last vertical timer line whose interrupt fires before vblank.
+pub const LAST_IRQ_LINE: u16 = 224;
+
+/// A frame's scanline interrupts as a table: starting from the vertical timer
+/// and its enable as the frame begins, run each interrupt the timer reaches in
+/// line order over `host`, a scratch copy of the controls and mirrors, and
+/// record its writes. A door transition's resume poll is recorded, not run:
+/// the table holds for the frame only if the resume leaves the interrupt
+/// controls as they were.
+pub fn frame_table<H: Host>(
+    host: &mut H,
+    vertical_timer: u16,
+    vertical_enabled: bool,
+) -> Result<Vec<IrqPass>, H::Error> {
+    let mut recorder = TableRecorder {
+        host,
+        writes: Vec::new(),
+        vertical_timer,
+        vertical_enabled,
+        resumed: false,
+    };
+    let mut passes = Vec::new();
+    let mut after: Option<u16> = None;
+    while recorder.vertical_enabled
+        && recorder.vertical_timer <= LAST_IRQ_LINE
+        && after.is_none_or(|line| recorder.vertical_timer > line)
+    {
+        let line = recorder.vertical_timer;
+        advance(&mut recorder)?;
+        passes.push(IrqPass {
+            line,
+            writes: std::mem::take(&mut recorder.writes),
+            resumed: std::mem::take(&mut recorder.resumed),
+        });
+        after = Some(line);
+    }
+    Ok(passes)
+}
+
+/// Records display writes and follows the vertical timer and its enable.
+struct TableRecorder<'a, H> {
+    host: &'a mut H,
+    writes: Vec<(Output, u8)>,
+    vertical_timer: u16,
+    vertical_enabled: bool,
+    resumed: bool,
+}
+
+impl<H: Host> Controls for TableRecorder<'_, H> {
+    fn read_control(&mut self, field: Control) -> u16 {
+        self.host.read_control(field)
+    }
+    fn write_control(&mut self, field: Store, value: u16) {
+        self.host.write_control(field, value);
+    }
+}
+
+impl<H: Host> Display for TableRecorder<'_, H> {
+    type Error = H::Error;
+
+    fn read_mirror(&mut self, field: Mirror) -> u8 {
+        self.host.read_mirror(field)
+    }
+    fn write_display(&mut self, field: Output, value: u8) -> Result<(), H::Error> {
+        let [low, high] = self.vertical_timer.to_le_bytes();
+        match field {
+            Output::VerticalLow => self.vertical_timer = u16::from_le_bytes([value, high]),
+            Output::VerticalHigh => self.vertical_timer = u16::from_le_bytes([low, value & 1]),
+            Output::InterruptEnable => self.vertical_enabled = value & 0x20 != 0,
+            _ => {}
+        }
+        self.writes.push((field, value));
+        Ok(())
+    }
+}
+
+impl<H: Host> Host for TableRecorder<'_, H> {
+    fn follow_transition(&mut self) -> Result<(), H::Error> {
+        self.resumed = true;
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod table_tests {
+    use super::*;
+
+    /// Controls and mirrors for a gameplay frame with the HUD split.
+    struct Scratch {
+        current: u16,
+        pending: u16,
+        enable: u16,
+    }
+
+    impl Controls for Scratch {
+        fn read_control(&mut self, field: Control) -> u16 {
+            match field {
+                Control::Current => self.current,
+                Control::Pending => self.pending,
+                Control::Enable => self.enable,
+                _ => 0,
+            }
+        }
+        fn write_control(&mut self, field: Store, value: u16) {
+            match field {
+                Store::Current => self.current = value,
+                Store::Pending => self.pending = value,
+                Store::Enable => self.enable = value,
+            }
+        }
+    }
+
+    impl Display for Scratch {
+        type Error = ();
+        fn read_mirror(&mut self, _: Mirror) -> u8 {
+            0x13
+        }
+        fn write_display(&mut self, _: Output, _: u8) -> Result<(), ()> {
+            Err(())
+        }
+    }
+
+    impl Host for Scratch {
+        fn follow_transition(&mut self) -> Result<(), ()> {
+            Err(())
+        }
+    }
+
+    #[test]
+    fn the_gameplay_hud_split_is_two_interrupts() {
+        // Handler 4 (start of gameplay HUD) at line 0, then handler 5 at line 31.
+        let mut host = Scratch {
+            current: 8,
+            pending: 0,
+            enable: 0x30,
+        };
+        let table = frame_table(&mut host, 0, true).unwrap();
+        let lines: Vec<u16> = table.iter().map(|pass| pass.line).collect();
+        assert_eq!(lines, [0, 31]);
+        assert!(table[0].writes.contains(&(Output::MainLayers, 4)));
+        // No CRE layer in either room: BG1, BG2 and sprites.
+        assert!(table[1].writes.contains(&(Output::MainLayers, 0x11)));
+        // The second pass re-arms line 0, which this frame has passed.
+        assert_eq!(host.current, 8);
+    }
+}
