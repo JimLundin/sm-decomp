@@ -35,6 +35,8 @@ def seed_bundle(row):
         return ('seeds-v1-offroute-4b5962a5bc7f6aaa.tar.gz.enc', '4b5962a5bc7f6aaa5050bd5f7d6abfb046e1b078c26b4242d82489300c7f044a')
     if row['id'] in ('pause-menu-tour', 'options-menu-tour', 'boss-draygon-grab', 'credits-ending'):
         return ('seeds-v1-coverage-54f838bfd8146bf7.tar.gz.enc', '54f838bfd8146bf76d631d567299b0721adbc1c4065584e9de5f3e19632ccb21')
+    if row['id'] in ('boss-bomb-torizo', 'samus-bomb-jump-vertical', 'wall-crawler-slope-step'):
+        return ('seeds-v1-seeded-checkpoints-f4e03e50190ab6dd.tar.gz.enc', 'f4e03e50190ab6dd9acfd595ddb544b93b36eef2e7231e1599dff3199d8e0631')
     if row['id'] in ('save-death-reload', 'save-memory', 'death'):
         return ('seeds-v1-realigned-ef199d44b0070294.tar.gz.enc', 'ef199d44b0070294bcbac363aaa3577304a3cbbc7a1122a6f488329d41441e52')
     if row['id'] in ('pickup-reserve', 'music-fir-selector10'):
