@@ -108,6 +108,7 @@ pub struct MenuScreens {
     pub map: MapScreenState,
     pub save_selection: SaveSelection,
     pub options_menu: OptionsMenu,
+    pub death: DeathSequence,
 }
 
 /// The pause and file select map screens' scrolling and marker: the scroll
@@ -246,6 +247,43 @@ pub mod options_menu {
         assert!(ram::MENU_OPTION_INDEX == Word::MenuOptionIndex as usize);
         assert!(ram::DEBUG_INVINCIBILITY == Word::DebugInvincibility as usize);
         assert!(ram::GAME_OPTIONS_SCREEN_INDEX == Word::ScreenIndex as usize);
+    };
+
+    /// `word` as the host's projection holds it, low byte then high.
+    pub fn get<H: CompatibilityRam + ?Sized>(h: &H, word: Word) -> u16 {
+        crate::projection::word(h, word as usize)
+    }
+    /// Store `value` to `word`, low byte then high, as the named word store did.
+    pub fn set<H: CompatibilityRam + ?Sized>(h: &mut H, word: Word, value: u16) {
+        crate::projection::set_word(h, word as usize, value);
+    }
+}
+
+/// Samus's death sequence and the game over menu's progress: the death
+/// sequence index, its counter and the flash timer ($0DE4..$0DE9).
+#[derive(Clone, Copy, Default, Debug, PartialEq, Eq)]
+pub struct DeathSequence {
+    pub index: u16,
+    pub counter: u16,
+    pub flash_timer: u16,
+}
+
+/// The death sequence words through the host's projected bytes, by RAM address.
+pub mod death_sequence {
+    use crate::ram::CompatibilityRam;
+
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    pub enum Word {
+        Index = 0xde4,
+        Counter = 0xde6,
+        FlashTimer = 0xde8,
+    }
+
+    const _: () = {
+        use crate::ram::words as ram;
+        assert!(ram::DEATH_INDEX == Word::Index as usize);
+        assert!(ram::DEATH_COUNTER == Word::Counter as usize);
+        assert!(ram::DEATH_FLASH_TIMER == Word::FlashTimer as usize);
     };
 
     /// `word` as the host's projection holds it, low byte then high.

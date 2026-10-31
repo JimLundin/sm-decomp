@@ -487,6 +487,20 @@ fn power_bomb_round_trips_every_word() {
     check_owner("power bomb", &power_bomb_lanes());
 }
 
+/// Death sequence.
+fn death_sequence_lanes() -> Vec<Lane> {
+    vec![
+        (0xde4, 0, |s, _| &mut s.menu_screens.death.index),
+        (0xde6, 0, |s, _| &mut s.menu_screens.death.counter),
+        (0xde8, 0, |s, _| &mut s.menu_screens.death.flash_timer),
+    ]
+}
+
+#[test]
+fn death_sequence_round_trips_every_word() {
+    check_owner("death sequence", &death_sequence_lanes());
+}
+
 /// The message box's animation radius and scratch words.
 fn message_box_lanes() -> Vec<Lane> {
     let mut lanes: Vec<Lane> = vec![(0x5a2, 0, |s, _| &mut s.messages.box_radius)];
@@ -1074,6 +1088,7 @@ fn all_owner_lanes() -> Vec<(&'static str, Vec<Lane>)> {
         ("flow", flow_lanes()),
         ("menu_state", menu_lanes()),
         ("map screen", map_screen_lanes()),
+        ("death sequence", death_sequence_lanes()),
         ("power bomb", power_bomb_lanes()),
         ("options menu", options_menu_lanes()),
         ("save selection", save_selection_lanes()),

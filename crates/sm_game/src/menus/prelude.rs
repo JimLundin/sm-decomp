@@ -80,6 +80,9 @@ pub(crate) use options_menu;
 /// The power bomb's words ([`crate::explosion_window::power_bomb::Word`]).
 macro_rules! power_bomb { ($($t:tt)*) => { owned!([$crate::explosion_window::power_bomb] $($t)*) }; }
 pub(crate) use power_bomb;
+/// [`crate::menu_state::death_sequence::Word`].
+macro_rules! death_sequence { ($($t:tt)*) => { owned!([$crate::menu_state::death_sequence] $($t)*) }; }
+pub(crate) use death_sequence;
 /// Crocomire's melt words ([`crate::actors::crocomire_reactions::melt::Word`]).
 macro_rules! melt { ($($t:tt)*) => { owned!([$crate::actors::crocomire_reactions::melt] $($t)*) }; }
 pub(crate) use melt;

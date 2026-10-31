@@ -13,7 +13,9 @@ use crate::display::sequence::{register_writes, write_register_and_mirror};
 use crate::display_refresh;
 use crate::enemy_projectiles;
 use crate::gameplay_rules::{finish_frame, finish_health_and_time};
-use crate::menus::prelude::{CoroutineRet, options_menu, owned, power_bomb, save_selection};
+use crate::menus::prelude::{
+    CoroutineRet, death_sequence, options_menu, owned, power_bomb, save_selection,
+};
 use crate::menus::{
     controller_input, file_menu, game_over, map_menu, options_settings, pause_controls,
     reserve_tanks, save_slots,
@@ -804,9 +806,9 @@ fn finish_pass<H: Host>(entry: Entry, game: &mut H) {
                     options_menu! { game, 0; ScreenIndex }
                     crate::screen_fade::set_both(game, 0, 0);
                     word_transfers!(game, descending, 128; le(EPROJ_Y_SUBPOS, 142) <- value(0));
-                    word!(game.DEATH_FLASH_TIMER = 16);
+                    death_sequence!(game.FlashTimer = 16);
                     options_menu!(game.ScreenIndex = 3);
-                    word! { game, 0; DEATH_INDEX, DEATH_COUNTER }
+                    death_sequence! { game, 0; Index, Counter }
                     word!(game.GAME_STATE += 1);
                     power_bomb!(game.ExplosionStatus = 0);
                     cancel_sound_effects(game, 15);
@@ -828,9 +830,10 @@ fn finish_pass<H: Host>(entry: Entry, game: &mut H) {
             word_transfers!(game, descending, 48; le(TARGET_PALETTES, 255) <- value(0));
             word_transfers!(game, descending, 16; le(TARGET_PALETTES, 207) <- le(PALETTE_BUFFER, 207));
             options_menu!(game.ScreenIndex = 3);
+            death_sequence! { game, 0; Index, Counter, FlashTimer }
             word! { game, 0;
-                DEATH_INDEX, DEATH_COUNTER, DEATH_FLASH_TIMER, HUD_ITEM_INDEX,
-                SAMUS_AUTO_CANCEL_HUD_ITEM_INDEX, SAMUS_INVINCIBILITY_TIMER, SAMUS_KNOCKBACK_TIMER,
+                HUD_ITEM_INDEX, SAMUS_AUTO_CANCEL_HUD_ITEM_INDEX, SAMUS_INVINCIBILITY_TIMER,
+                SAMUS_KNOCKBACK_TIMER,
             }
             word!(game.GAME_STATE += 1);
         }
