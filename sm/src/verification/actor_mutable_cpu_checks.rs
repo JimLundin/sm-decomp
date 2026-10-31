@@ -121,23 +121,13 @@ fn cpu_writer_admission(world: std::sync::Arc<sm_game::room_entry::world::WorldB
                 .map(|at| g.ram().read_byte(at))
                 .collect::<Vec<_>>();
             let identity = g.actor_identity().clone();
-            for direct in [false, true] {
+            {
                 let rejected = catch_unwind(AssertUnwindSafe(|| {
                     let mut runtime = Runtime::new(g);
-                    runtime.foreign(|g| {
-                        if direct {
-                            super::run_asm_code(0, 0, 0, 0, 0, g);
-                        } else {
-                            super::call_routine(0, g);
-                        }
-                    });
+                    runtime.foreign(|g| super::run_asm_code(0, 0, 0, 0, 0, g));
                 }))
                 .unwrap_err();
-                let expected = if direct {
-                    "RunAsmCode: CPU authority is unavailable for a prepared world"
-                } else {
-                    "Call: CPU authority is unavailable for a prepared world"
-                };
+                let expected = "RunAsmCode: CPU authority is unavailable for a prepared world";
                 assert_eq!(rejected.downcast_ref::<&str>(), Some(&expected));
                 assert!(g.g_cpu.is_null() && g.g_snes.is_null());
                 assert_eq!(

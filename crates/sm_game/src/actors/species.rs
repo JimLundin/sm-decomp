@@ -614,6 +614,7 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
             pre_instruction(function, game);
         }
         10730163 => bang::initialize(game),
+        10730277 => bang::main_ai(game),
         10731261 => bang::shot(game),
         10738643 => reflec::initialize(game),
         10723661 => roach::initialize(game),

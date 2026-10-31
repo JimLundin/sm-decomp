@@ -35,6 +35,22 @@ pub enum PlayerDirection {
     Left,
     UpLeft,
 }
+impl PlayerDirection {
+    /// The projectile direction Determine direction of Samus from enemy ($A0:AE29)
+    /// returns: 0 up, 1 to 3 right, 4 down, 6 to 8 left.
+    pub fn projectile_direction(self) -> u16 {
+        match self {
+            Self::Up => 0,
+            Self::UpRight => 1,
+            Self::Right => 2,
+            Self::DownRight => 3,
+            Self::Down => 4,
+            Self::DownLeft => 6,
+            Self::Left => 7,
+            Self::UpLeft => 8,
+        }
+    }
+}
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct DistanceDirection {
     pub distance: u16,

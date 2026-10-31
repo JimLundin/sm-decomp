@@ -1,5 +1,4 @@
 //! One aggregate authority for player, projectiles, mechanisms and their room.
-use crate::game::actors::bang;
 use crate::game::enemy_speeds::SpeedTable;
 use crate::{
     game_state::Game,
@@ -1093,7 +1092,6 @@ crate::game::callback_dispatch! {
             #[cfg(sm_verify_dll)]
             crate::game::actors::reference_population_animation::dispatch_noop(game);
         }];
-        10730277 => [{ let address = bang::main_ai(game); crate::cpu_infra::call_routine(address, game); }];
         11111301 => [{
                     sm_a9::tubes_falling_main_ai(crate::ram_map::word!(game.CUR_ENEMY_INDEX), game);
                 }];

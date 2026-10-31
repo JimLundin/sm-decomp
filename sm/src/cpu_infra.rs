@@ -72,19 +72,6 @@ unsafe fn get_projectile_instr(a: u16, game: &mut HookContext<'_, '_>) -> *mut P
         crate::rtl::rom_ptr_parts((0x930000 | a as i32) as u32, game.host) as *mut ProjectileInstr
     }
 }
-pub unsafe fn call_routine(addr: u32, game: &mut Game) {
-    unsafe {
-        assert!(
-            game.supports_legacy_persistence(),
-            "Call: CPU authority is unavailable for a prepared world"
-        );
-        crate::native_assertion! {
-            '_c2rust_label: addr & 0x8000 != 0;
-            b"addr & 0x8000\0", b"src/sm_cpu_infra.c\0", 54, b"void Call(uint32)\0"
-        };
-        run_asm_code(addr, 0, 0, 0, 0, game);
-    }
-}
 // The native diagnostic is the remaining unsafe boundary; ROM access is checked.
 unsafe fn patch_image(address: u32, host: &mut HostContext<'_>) -> RomPatches {
     unsafe {
