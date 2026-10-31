@@ -90,7 +90,8 @@ macro_rules! spawn_word {
 // extended RAM 7800..9000 is owned here except the five Botwoon death words
 // (801E, 8020, 803C, 8818, 883E), which keep their own cohort; 9000..97DC is
 // not owned, and the angles 97DC..9800 stay with eproj.
-const COMMON_RANGES: [(usize, usize); 24] = [
+const COMMON_RANGES: [(usize, usize); 25] = [
+    (0x0688, 0x071c),
     (0x0e12, 0x0e14),
     (0x0e1c, 0x0e20),
     (0x0e22, 0x0e2c),
@@ -128,6 +129,7 @@ macro_rules! common_word {
             0x801e | 0x8020 | 0x803c | 0x8818 | 0x883e => None,
             at @ 0x7800..=0x8ffe => Some($($borrow)* $s.actors.extended.blocks[(at - 0x7800) / 0x800]
                 [(at - 0x7800) % 0x800 / 2]),
+            at @ 0x0688..=0x069a => Some($($borrow)* $s.actors.crocomire_melt.words[(at - 0x0688) / 2]),
             0x0e12 => Some($($borrow)* $s.actors.diagnostics.sprite_contacts_disabled),
             0x0e1c => Some($($borrow)* $s.actors.controls.shake_request),
             0x0e1e => Some($($borrow)* $s.actors.drawing.tilemap_pending),
@@ -196,6 +198,7 @@ macro_rules! common_byte {
                 Some($($borrow)* $s.actors.slots[(at - 0x0f78) / 64].hurt_time),
             at @ 0x7000..=0x77ff if (at - 0x7000) % 64 >= 0x2e =>
                 Some($($borrow)* $s.actors.saved[(at - 0x7000) / 64].name[(at - 0x7000) % 64 - 0x2e]),
+            at @ 0x069c..=0x071b => Some($($borrow)* $s.actors.crocomire_melt.column_heights[(at - 0x069c) / 32][(at - 0x069c) % 32]),
             at @ 0x0e5a..=0x0e79 => Some($($borrow)* $s.actors.staging.descriptor_prefix[at - 0x0e5a]),
             at @ 0x0e80..=0x0e83 => Some($($borrow)* $s.actors.staging.gap[at - 0x0e80]),
             at @ 0x1784..=0x178b => Some($($borrow)* $s.actors.compatibility.pre_hook[at - 0x1784]),

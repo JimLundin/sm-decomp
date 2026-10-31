@@ -60,6 +60,14 @@ pub struct Actors {
     pub compatibility: ActorCompatibility,
     pub diagnostics: ActorDiagnostics,
     pub extended: ExtendedRam,
+    pub crocomire_melt: CrocomireMelt,
+}
+/// Crocomire's melt ($7E:0688..$7E:071B): the words of
+/// `crocomire_reactions::melt::Word` by address, then each pixel column's height.
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct CrocomireMelt {
+    pub words: [u16; 10],
+    pub column_heights: [[u8; 32]; 4],
 }
 /// The slots' extended RAM ($7E:7800..$7E:8FFF): three blocks of 32 words per
 /// slot, the original's `var_00`..`var_5f`, as the words of each block in RAM
@@ -204,6 +212,7 @@ impl Clone for Actors {
             compatibility: self.compatibility,
             diagnostics: self.diagnostics,
             extended: self.extended.clone(),
+            crocomire_melt: self.crocomire_melt.clone(),
         }
     }
 }

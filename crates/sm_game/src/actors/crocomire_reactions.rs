@@ -17,7 +17,7 @@ use crate::constants::{
     enemy_properties::K_ENEMY_PROPS_TANGIBLE,
 };
 use crate::enemy_script::EnemyScript;
-use crate::menus::prelude::{do_until, owned, scroll};
+use crate::menus::prelude::{do_until, melt, owned, scroll};
 use crate::ram::RawRam as _;
 use crate::ram::{checked_word, slot, word, words as ram};
 use sm_data::crocomire::{
@@ -26,6 +26,35 @@ use sm_data::crocomire::{
 };
 
 /// A lease on a game with Crocomire's effects.
+/// Crocomire's melt words, which the Session holds as `actors.crocomire_melt`,
+/// read and stored through the host's projected bytes.
+pub mod melt {
+    use crate::ram::CompatibilityRam;
+    /// A melt word, by its RAM address.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    pub enum Word {
+        EraseTarget = 0x688,
+        Subindex = 0x68a,
+        Words = 0x68e,
+        Column = 0x690,
+        Displacement = 0x692,
+        YOffset = 0x694,
+        Unread = 0x696,
+        MaxY = 0x698,
+        Index = 0x69a,
+    }
+    /// `word` as the host's projection holds it, low byte then high.
+    pub fn get<H: CompatibilityRam + ?Sized>(h: &H, word: Word) -> u16 {
+        let at = word as usize;
+        u16::from_le_bytes([h.compatibility_byte(at), h.compatibility_byte(at + 1)])
+    }
+    /// Store `value` to `word`, low byte then high, as the named word store did.
+    pub fn set<H: CompatibilityRam + ?Sized>(h: &mut H, word: Word, value: u16) {
+        let [low, high] = value.to_le_bytes();
+        h.compatibility_write_byte(word as usize, low);
+        h.compatibility_write_byte(word as usize + 1, high);
+    }
+}
 pub trait Lease: BossLease<Game: Host> {}
 impl<T: BossLease<Game: Host> + ?Sized> Lease for T {}
 
@@ -573,7 +602,7 @@ fn load_melt_tilemap<L: Lease + ?Sized>(table: u32, game: &mut L) {
 /// `prepare_flesh_tilemap`.
 pub fn hop_3_load_melting_tilemap<L: Lease + ?Sized>(game: &mut L) {
     game.set_slot_byte(PIXELS_TO_ERASE, 48);
-    word!(game.CROCO_MELT_ERASE_TARGET = 48);
+    melt!(game.EraseTarget = 48);
     let e: i32 = game.current_enemy() as i32;
     next_death_step(e, game);
     session_slot!(game, Crocomire[e].base; current_instruction = ADDR_K_CROCOMIRE_ILIST_BF64 as u16, instruction_timer = 1);
@@ -605,7 +634,7 @@ pub fn hop_6_load_melting_tilemap<L: Lease + ?Sized>(game: &mut L) {
     next_death_step(e, game);
     session_slot!(game, Crocomire[e].base.instruction_timer = 1);
     game.set_slot_byte(PIXELS_TO_ERASE, 48);
-    word!(game.CROCO_MELT_ERASE_TARGET = 48);
+    melt!(game.EraseTarget = 48);
     session_slot!(
         game,
         Crocomire[e].base.current_instruction = ADDR_K_CROCOMIRE_ILIST_BF7E as u16
@@ -627,7 +656,7 @@ pub fn queue_melt_graphics<L: Lease + ?Sized>(offset: u16, live_size: bool, game
     for (source, destination) in [(0, 0), (6, 2), (4, 4), (2, 5)] {
         let value = native_graphics_word!(game, MELTING_TILES_SOURCE + source, {
             if source == 0 && live_size {
-                word!(game.CROCO_MELT_SUBINDEX)
+                melt!(game.Subindex)
             } else {
                 offset
             }
@@ -639,16 +668,15 @@ pub fn queue_melt_graphics<L: Lease + ?Sized>(offset: u16, live_size: bool, game
 /// Crocomire main AI - death sequence index 14h/30h - hop 3/6 - uploading to VRAM ($A4:94B6). Was
 /// `advance_melt_upload`.
 pub fn upload_melting_tiles<L: Lease + ?Sized>(game: &mut L) {
-    let offset = word!(game.CROCO_MELT_SUBINDEX);
+    let offset = melt!(game.Subindex);
     let tail = word!(game.VRAM_WRITE_QUEUE_TAIL);
-    if native_graphics_word!(game, MELTING_TILES_SOURCE, word!(game.CROCO_MELT_SUBINDEX)) == 0xffff
-    {
+    if native_graphics_word!(game, MELTING_TILES_SOURCE, melt!(game.Subindex)) == 0xffff {
         let e: i32 = game.current_enemy() as i32;
         next_death_step(e, game);
-        word!(game.CROCO_MELT_SUBINDEX = 0);
+        melt!(game.Subindex = 0);
     } else {
         queue_melt_graphics(offset, true, game);
-        word!(game.CROCO_MELT_SUBINDEX = offset.wrapping_add(8));
+        melt!(game.Subindex = offset.wrapping_add(8));
         word!(game.VRAM_WRITE_QUEUE_TAIL = tail.wrapping_add(7));
     };
 }
@@ -658,31 +686,30 @@ pub fn upload_melting_tiles<L: Lease + ?Sized>(game: &mut L) {
 pub fn load_melting_tiles<L: Lease + ?Sized>(game: &mut L) {
     let e: i32 = game.current_enemy() as i32;
     skip_death_step(e, game);
-    word! { game;
-        CROCO_MELT_DISPLACEMENT = 256;
-        CROCO_CUR_VLINE_IDX = 0;
-        CROCO_MELT_MAX_Y = native_graphics_word!(game, MELTING_TILES_SOURCE, word!(game.CROCO_MELT_INDEX));
-        CROCO_MELT_Y_OFFSET = word!(game.CROCO_MELT_MAX_Y);
-        CROCO_MELT_UNREAD = native_graphics_word!(game, MELTING_TILES_DESTINATION, word!(game.CROCO_MELT_INDEX));
-        CROCO_MELT_WORDS = native_graphics_word!(game, MELTING_TILES_SIZE, word!(game.CROCO_MELT_INDEX));
-    }
-    let bank: u8 =
-        native_graphics_word!(game, MELTING_TILES_BANK, word!(game.CROCO_MELT_INDEX)) as u8;
-    let mut i: i32 = word!(game.CROCO_MELT_INDEX) as i32 + 8;
+    melt!(game;
+        Displacement = 256;
+        Column = 0;
+        MaxY = native_graphics_word!(game, MELTING_TILES_SOURCE, melt!(game.Index));
+        YOffset = melt!(game.MaxY);
+        Unread = native_graphics_word!(game, MELTING_TILES_DESTINATION, melt!(game.Index));
+        Words = native_graphics_word!(game, MELTING_TILES_SIZE, melt!(game.Index));
+    );
+    let bank: u8 = native_graphics_word!(game, MELTING_TILES_BANK, melt!(game.Index)) as u8;
+    let mut i: i32 = melt!(game.Index) as i32 + 8;
     loop {
         let mut v2: u16 = native_graphics_word!(game, MELTING_TILES_SOURCE, i);
         if v2 == 0xffff {
             break;
         }
         let mut v3: u16 = native_graphics_word!(game, MELTING_TILES_DESTINATION, i);
-        for _ in 0..=word!(game.CROCO_MELT_WORDS) {
+        for _ in 0..=melt!(game.Words) {
             crate::word_transfers!(game, ascending, 1; native(v3) <- value(native_graphics_word!(game, (u32::from(bank) << 16) | u32::from(v2), 0)));
             v3 = (v3).wrapping_add(2);
             v2 = (v2).wrapping_add(2);
         }
         i = i as u16 as i32 + 4;
     }
-    word! {game; CROCO_MELT_INDEX = (i + 2) as u16; CROCO_MELT_SUBINDEX = (i + 2) as u16; }
+    melt!(game; Index = (i + 2) as u16; Subindex = (i + 2) as u16;);
     crate::word_transfers!(game, descending, 65; native(0x71c) <- value(0));
 }
 
@@ -845,8 +872,8 @@ pub fn behind_wall_no_more_rumbling<L: Lease + ?Sized>(game: &mut L) {
     let counter: u16 = session_slot!(game, Crocomire[e].step_counter);
     if counter != 0 {
         session_slot!(game, Crocomire[e].step_counter = (counter).wrapping_sub(1));
-        let v3: i16 = word!(game.CROCO_MELT_ERASE_TARGET) as i16;
-        let v4: i32 = word!(game.CROCO_MELT_ERASE_TARGET) as i32 >> 1;
+        let v3: i16 = melt!(game.EraseTarget) as i16;
+        let v4: i32 = melt!(game.EraseTarget) as i32 >> 1;
         let tile =
             game.foreign(|game| game.crocomire_table_word(SPIKE_WALL_TILE_ADDRESS, v4 as isize));
         if tile != 0xffff {
@@ -864,7 +891,7 @@ pub fn behind_wall_no_more_rumbling<L: Lease + ?Sized>(game: &mut L) {
                     + ((game.slot_byte(0x52) as i32 & 7) << 13)) as u16),
             );
             word!(game.VRAM_WRITE_QUEUE_TAIL = (v5).wrapping_add(7));
-            word!(game.CROCO_MELT_ERASE_TARGET = ((v3) as u16).wrapping_add(2));
+            melt!(game.EraseTarget = ((v3) as u16).wrapping_add(2));
         }
     } else {
         session_slot!(game, Crocomire[e].base; x_pos = 480, y_pos = 54);
@@ -905,36 +932,35 @@ pub fn melting<L: Lease + ?Sized>(game: &mut L) {
     session_slot!(game, Crocomire[e0].base.x_pos = counter);
     if erase_melt_columns(game) != 0 {
         update_background(game.current_enemy(), game);
-        let mut v4: u16 = (word!(game.CROCO_MELT_Y_OFFSET)).wrapping_sub(3);
-        let skip_tilemap_update: bool = ((word!(game.CROCO_MELT_Y_OFFSET) as i32 - 19i32) & 0x8000
-            != 0)
-            && ((((word!(game.CROCO_MELT_DISPLACEMENT)) as i16).wrapping_sub(20480) >= 0)
+        let mut v4: u16 = (melt!(game.YOffset)).wrapping_sub(3);
+        let skip_tilemap_update: bool = ((melt!(game.YOffset) as i32 - 19i32) & 0x8000 != 0)
+            && ((((melt!(game.Displacement)) as i16).wrapping_sub(20480) >= 0)
                 || ({
                     v4 = 16;
                     false
                 }));
         if skip_tilemap_update {
         } else {
-            word!(game.CROCO_MELT_Y_OFFSET = v4);
-            let mut v5: u16 = (word!(game.CROCO_MELT_DISPLACEMENT)).wrapping_add(384);
-            if (word!(game.CROCO_MELT_DISPLACEMENT) as i32 - 20096i32) & 0x8000 == 0 {
+            melt!(game.YOffset = v4);
+            let mut v5: u16 = (melt!(game.Displacement)).wrapping_add(384);
+            if (melt!(game.Displacement) as i32 - 20096i32) & 0x8000 == 0 {
                 v5 = 20480;
             }
-            word!(game.CROCO_MELT_DISPLACEMENT = v5);
+            melt!(game.Displacement = v5);
             let mut r18: u16 = 0;
             let mut v6: u16 =
                 (2 * (session_slot!(game, Crocomire[e1].base.y_pos) as i32 - 72i32)) as u16;
-            let mut v7: u16 = word!(game.CROCO_MELT_Y_OFFSET);
-            word!(game.MESSAGE_BOX_ANIMATION_Y1 = word!(game.CROCO_MELT_Y_OFFSET));
-            do_until! { ((v7) as i16).wrapping_sub((word!(game.CROCO_MELT_MAX_Y)) as i16) >= 0 ;
+            let mut v7: u16 = melt!(game.YOffset);
+            word!(game.MESSAGE_BOX_ANIMATION_Y1 = melt!(game.YOffset));
+            do_until! { ((v7) as i16).wrapping_sub((melt!(game.MaxY)) as i16) >= 0 ;
                 word!(
                     game.CROCOMIRE_BG2_SCROLL_HDMA_DATA[(v6 >> 1)] =
                         (scroll!(game.Bg2V) as i32 + v7 as i32
                             - word!(game.MESSAGE_BOX_ANIMATION_Y1) as i32)
                             as u16
                 );
-                let v8: bool = u16::overflowing_add(word!(game.CROCO_MELT_DISPLACEMENT), r18).1;
-                r18 = (r18).wrapping_add(word!(game.CROCO_MELT_DISPLACEMENT));
+                let v8: bool = u16::overflowing_add(melt!(game.Displacement), r18).1;
+                r18 = (r18).wrapping_add(melt!(game.Displacement));
                 if !v8 {
                     v7 = v7.wrapping_add(1);
                 }
@@ -953,11 +979,11 @@ pub fn melting<L: Lease + ?Sized>(game: &mut L) {
     }
     let ek: i32 = game.current_enemy() as i32;
     skip_death_step(ek, game);
-    let mut i: i32 = word!(game.CROCO_MELT_INDEX) as i32;
+    let mut i: i32 = melt!(game.Index) as i32;
     while native_graphics_word!(game, MELTING_TILES_SOURCE, i) != 0xffff {
         i += 8;
     }
-    word!(game.CROCO_MELT_INDEX = (i + 2) as u16);
+    melt!(game.Index = (i + 2) as u16);
     game.foreign(|game| {
         crate::hdma_objects::free_hdma_object(
             session_slot!(game, Crocomire[e0].melting_hdma_object),
@@ -969,28 +995,28 @@ pub fn melting<L: Lease + ?Sized>(game: &mut L) {
 fn erase_melt_columns<L: Lease + ?Sized>(game: &mut L) -> u16 {
     let mut n: i32 = game.slot_byte(PIXELS_TO_ERASE) as i32;
     loop {
-        if word!(game.CROCO_CUR_VLINE_IDX) > 48 {
+        if melt!(game.Column) > 48 {
             return 1;
         }
         let rr: i32 = game.native_image().read(
             sm_data::cartridge::lorom_offset(MELTING_X_OFFSETS) as usize
-                + usize::from(word!(game.CROCO_CUR_VLINE_IDX)),
+                + usize::from(melt!(game.Column)),
         ) as i32;
         if (game.slot_byte(MELTING_Y_OFFSETS + rr as usize) as i8)
-            .wrapping_sub((word!(game.CROCO_MELT_ERASE_TARGET)) as i8)
+            .wrapping_sub((melt!(game.EraseTarget)) as i8)
             < 0
         {
             break;
         }
-        if word!(game.CROCO_CUR_VLINE_IDX += 1, reread) >= 128 {
-            word!(game.CROCO_CUR_VLINE_IDX = 0);
+        if melt!(game.Column += 1, reread) >= 128 {
+            melt!(game.Column = 0);
             return 0;
         }
     }
     // The top-of-loop return dominates this break; intervening reads do not change the index.
     let vline_idx: i32 = game.native_image().read(
         sm_data::cartridge::lorom_offset(MELTING_X_OFFSETS) as usize
-            + usize::from(word!(game.CROCO_CUR_VLINE_IDX)),
+            + usize::from(melt!(game.Column)),
     ) as i32;
     let mask: u8 = !(0x80u8 >> (vline_idx & 7));
     do_until! { n == 0 ;
@@ -1009,16 +1035,16 @@ fn erase_melt_columns<L: Lease + ?Sized>(game: &mut L) -> u16 {
         n -= 1;
     }
     let (v7, v8) = loop {
-        let v7 = (word!(game.CROCO_MELT_SUBINDEX)).wrapping_add(word!(game.CROCO_MELT_INDEX));
+        let v7 = (melt!(game.Subindex)).wrapping_add(melt!(game.Index));
         let v8 = word!(game.VRAM_WRITE_QUEUE_TAIL);
         if native_graphics_word!(game, MELTING_TILES_SOURCE, v7) != 0xffff {
             break (v7, v8);
         }
-        word!(game.CROCO_MELT_SUBINDEX = 0);
+        melt!(game.Subindex = 0);
     };
     queue_melt_graphics(v7, false, game);
     word!(game.VRAM_WRITE_QUEUE_TAIL = (v8).wrapping_add(7));
-    word!(game.CROCO_MELT_SUBINDEX += 8);
+    melt!(game.Subindex += 8);
     1
 }
 
@@ -1034,7 +1060,7 @@ pub fn initialize<L: Lease + ?Sized>(game: &mut L) {
     {
         crate::word_transfers!(game, ascending, 1; native(SCROLLS_0_1) <- value(257));
         crate::word_transfers!(game, ascending, 1; native(SCROLLS_2_3) <- value(257));
-        word!(game.CROCO_MELT_ERASE_TARGET = 0);
+        melt!(game.EraseTarget = 0);
         let e: i32 = 0;
         session_slot!(game, Crocomire[e].base.properties, |old| old & 0x7bff
             | 0x400);
@@ -1053,7 +1079,7 @@ pub fn initialize<L: Lease + ?Sized>(game: &mut L) {
         queue_tilemap_upload(2048, 0xfc, game);
     } else {
         game.foreign(|game| game.disable_minimap_for_boss());
-        word!(game.CROCO_MELT_INDEX = 0);
+        melt!(game.Index = 0);
         let e_0: i32 = game.current_enemy() as i32;
         session_slot!(game, Crocomire[e_0]; death_sequence_index = 0, y_velocity = 0);
         crate::word_transfers!(game, ascending, 1; native(SCROLLS_0_1) <- value(0));
@@ -1092,7 +1118,8 @@ pub fn hop_6_sinking<L: Lease + ?Sized>(game: &mut L) {
             | (0x200u16));
 
         game.foreign(|game| game.spawn_plm(0x4e, WALL_ROW, CLEAR_INVISIBLE_WALL));
-        word! { game, 0; CAMERA_DISTANCE_INDEX, CROCO_MELT_ERASE_TARGET }
+        word!(game.CAMERA_DISTANCE_INDEX = 0);
+        melt!(game.EraseTarget = 0);
     }
 }
 
