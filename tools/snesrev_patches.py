@@ -692,12 +692,14 @@ ROM_PATCHES = [
     (0x8584B2, 'a', 'none', 'kept', 'patched',
      'Handle message box interaction - LOOP_INPUT',
      'BEQ loop becomes ASL A; ASL A, but this code is unreachable once $85:84A3 becomes JSR $9650; RTS'),
-    (0x84EFD3, 'b', 'visual', 'removed', 'patched',
+    (0x84EFD3, 'a', 'visual', 'removed', 'patched',
      'Free space (new code: skip item GFX load when Y=0)',
-     'CPY #0; BEQ RTS; JSR $8764: unpausing no longer loads item GFX for empty slots (no garbage DMA from $89:[$0000], no tile-table writes, no $7EDF0C clobber of PLMs at those indices)'),
-    (0x848243, 'b', 'visual', 'removed', 'patched',
+     'CPY #0; BEQ RTS; JSR $8764: unpausing no longer loads item GFX for empty slots (no garbage DMA from $89:[$0000], no tile-table writes, no $7EDF0C clobber of PLMs at those indices). '
+     'Kept: the DMA source and tile entries come from direct-page scratch $00-$09 the engine does not model, and land in empty item-GFX slots nothing draws '
+     '(pause-menu-tour @1378, boss-kraid-pause-* differ in the VRAM queue only); the deterministic $7EDF0C,X/$1C2D writes go with them'),
+    (0x848243, 'a', 'visual', 'removed', 'patched',
      'Load room PLM GFX (unpause)',
-     'JSR $8764 retargeted to the $EFD3 guard; fixes the item-PLM GFX/DF0C corruption from empty slots after unpausing'),
+     'JSR $8764 retargeted to the $EFD3 guard; fixes the item-PLM GFX/DF0C corruption from empty slots after unpausing. Kept with $84:EFD3'),
     (0x86F4A6, 'b', 'state', 'removed', 'patched',
      'Free space (new code: LDY $1991; JMP $8676)',
      'Loads the enemy projectile index into Y before the vertical-slope-square reaction; the original single-block branch reads $1A4B,y with garbage Y (wrong slope X-flip)'),
@@ -923,15 +925,19 @@ ROM_PATCHES = [
     (0x828A67, 'b', 'audio', 'removed', 'follows',
      'Sound state 1 - delay before clearing sound',
      "Delay 2 becomes 6, so each queued sound takes 8 frames instead of the original 4 with the native-audio acknowledgements. Gameplay-visible: door transitions wait for the sound queues ($82:E29E). The Mother Brain room's escape door (DD58 to DE4D, chain row 324) took 116 frames with 6; with the original 2 it takes 105, as in the bsnes capture (1+18+86, oracle 1+17+87: the capture samples the room change one frame later, as in row 6's door, which has no sound pending). The native sound handler uses 2"),
-    (0x82831E, 'b', 'visual', 'removed', 'patched',
+    (0x82831E, 'a', 'visual', 'removed', 'patched',
      'Load standard BG3 tiles and sprite tiles, clear tilemaps',
-     'DMA size 4000h becomes 2E00h, stopping at $9A:FFFF instead of wrapping into the WRAM mirror $9A:0000..11FF; VRAM $7700..7FFF no longer gets RAM contents'),
+     'DMA size 4000h becomes 2E00h, stopping at $9A:FFFF instead of wrapping into the WRAM mirror $9A:0000..11FF; VRAM $7700..7FFF no longer gets RAM contents. '
+     'Kept: those sprite tiles hold low-WRAM scratch (direct page, stack) the engine does not model, and are overwritten before anything draws them '
+     '(samus-scripted-intro @8256 and demo-attract-setup @2619 differ in VRAM only, never in the rendered frame)'),
     (0x91C234, 'b', 'visual', 'removed', 'patched',
      'X-ray / morph ball eye beam HDMA table - up-left, off screen',
      'LDA $23 becomes LDA $25 (the intended [$24]/100h byte); changes the beam HDMA window data'),
-    (0x809AF3, 'b', 'visual', 'removed', 'patched',
+    (0x809AF3, 'a', 'visual', 'removed', 'patched',
      'Initialise HUD',
-     'Removes JSL $90A8EF (broken mini-map init using uninitialised scratch); the HUD mini-map tilemap and $12-$16 differ until the next mini-map update'),
+     'Removes JSL $90A8EF (broken mini-map init using uninitialised scratch); the HUD mini-map tilemap and $12-$16 differ until the next mini-map update. '
+     'Kept: its tail ($90:AA43) reads direct-page scratch $18-$2A the engine does not model; the result lasts one frame while the screen is blanked '
+     '(samus-scripted-intro @8316, HUD_TILEMAP in RAM only)'),
     (0xA7FF82, 'b', 'state', 'removed', 'follows',
      'Free space (save $12/$14/$16; JSL $A0A6A7; restore)',
      'Preserves Kraid hitbox scratch across the enemy-shot AI call, which clobbers it on hardware'),

@@ -39,3 +39,19 @@ rejected, and where execution stopped), not the words.
 To retire an entry: change the check to assert the failure kind, then replace
 the held text with whatever reads best (a plain slice index, an `assert!` with
 its own message, or a typed error) and delete the tags.
+
+## Faithful-oracle known divergences
+
+`SM_ORACLE=faithful` runs the original game without snesrev's patches. Some
+original behaviour copies uninitialised low-WRAM scratch (the direct page
+$00-$50, the stack) into VRAM or RAM tables. The engine does not model that
+scratch, and the effect has no gameplay consequence, so these patches stay
+installed (verdict "a" in `tools/snesrev_patches.py`) and these faithful rows
+are expected to fail at the listed frame. Owning the direct-page scratch in the
+Session would retire the list.
+
+| Patch | Faithful rows and first failure | What hardware shows |
+| --- | --- | --- |
+| `$82:831E` BG3/sprite tile DMA size | `samus-scripted-intro` @8256, `demo-attract-setup` @2619 | WRAM $0000-$11FF in sprite VRAM $7700-$7FFF, overwritten before display |
+| `$84:8243`, `$84:EFD3` unpause item-GFX load | `pause-menu-tour` @1378, `boss-kraid-pause-400` @588, `-950` @1138, `-1030` @1218, `-1960` @2148 | garbage transfers into empty item-GFX slots |
+| `$80:9AF3` broken mini-map init | `samus-scripted-intro` @8316 | one frame of HUD mini-map tiles from scratch, while blanked |
