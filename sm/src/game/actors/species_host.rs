@@ -1,7 +1,7 @@
 //! The compatibility side of the enemy species tables in `sm_game::actors::species`:
 //! the routines that still run here, by name.
 #![forbid(unsafe_code)]
-use crate::game::actors::{self, api};
+use crate::game::actors::api;
 use crate::game::session_runtime::Runtime;
 use crate::game::sm_a9;
 use crate::game_state::Game;
@@ -38,7 +38,6 @@ impl sm_game::actors::species::TouchHost for Game {
     fn native_touch(&mut self, touch: sm_game::actors::species::NativeTouch) {
         use sm_game::actors::species::NativeTouch::*;
         match touch {
-            SporeSpawn => actors::spore_spawn::touch(self),
             MotherBrainBrain => sm_a9::brain_touch(self),
         }
     }
@@ -49,7 +48,6 @@ impl sm_game::actors::species::ShotHost for Game {
         use sm_game::actors::species::NativeShot::*;
         match shot {
             Dud => api::create_dud(&mut Runtime::new(self)),
-            SporeSpawn => actors::spore_spawn::shot(self),
             Ridley => sm_game::actors::ridley::shot(self),
             MotherBrainBody => sm_a9::body_shot(self),
             MotherBrainBrain => sm_a9::brain_shot(self),
