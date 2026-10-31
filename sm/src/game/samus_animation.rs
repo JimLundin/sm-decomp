@@ -2,12 +2,10 @@
 #![forbid(unsafe_code)]
 use crate::game::scene::samus_position_tiles;
 use crate::game::session_runtime::Runtime;
-use sm_game::samus_drawing;
+use sm_game::samus_drawing::{self, BoundTable, RoleTable};
 use sm_game::scene::owned_samus::SamusSources as _;
 use sm_game::scene::samus_body::{self, Body};
-use sm_game::scene::samus_content::{CapturedBytes, PreparedBytes, Registration, Role, RoleLease};
-use sm_game::scene::samus_native_content::CapturedRom;
-use sm_game::visual_host::Record;
+use sm_game::scene::samus_content::{PreparedBytes, Registration, Role, RoleLease};
 
 pub use crate::game::prelude::*;
 use sm_game::cinematic::project_cinematic_point;
@@ -55,100 +53,34 @@ impl samus_body::BottomHost for Game {
     }
 }
 
-enum BoundTable {
-    Native(RoleLease<CapturedRom>),
-    Prepared(RoleLease<PreparedBytes>),
-}
-pub struct NativeTable {
-    record: Option<crate::rom::RomRecord>,
-    bound: Option<BoundTable>,
-}
-impl NativeTable {
-    pub(super) fn capture(
-        game: &Game,
-        role: Role,
-        source: Registration,
-        record: crate::rom::RomRecord,
-    ) -> Self {
-        let bound = game.samus_execution().unwrap().map(|execution| {
-            let base = game.samus_role_base(role, source).unwrap().unwrap();
-            let displacement = record
-                .base
-                .checked_sub(base)
-                .expect("Samus role mapped base");
-            match execution {
-                crate::game_state::SamusExecution::Prepared => BoundTable::Prepared(
-                    game.prepared_samus_role(role, source, displacement)
-                        .unwrap()
-                        .unwrap(),
-                ),
-                crate::game_state::SamusExecution::RetainedNative => BoundTable::Native(
-                    game.capture_samus_role(role, source, displacement, &record.image)
-                        .unwrap()
-                        .unwrap(),
-                ),
-            }
-        });
-        Self {
-            record: Some(record),
-            bound,
-        }
-    }
-    fn prepared(game: &Game, role: Role, source: Registration, displacement: usize) -> Self {
-        let bound = game
-            .prepared_samus_role(role, source, displacement)
-            .expect("Samus prepared role")
-            .expect("supplied Samus role");
-        Self {
-            record: None,
-            bound: Some(BoundTable::Prepared(bound)),
-        }
-    }
-    pub(super) fn byte(&self, offset: usize) -> u8 {
-        match &self.bound {
-            None => self
-                .record
-                .as_ref()
-                .expect("native Samus record")
-                .byte(offset),
-            Some(BoundTable::Native(table)) => table.byte(offset).unwrap(),
-            Some(BoundTable::Prepared(table)) => table.byte(offset).unwrap(),
-        }
-    }
-    pub(super) fn word(&self, offset: usize, little: bool) -> u16 {
-        match &self.bound {
-            None if little => u16::from_le_bytes(
-                self.record
-                    .as_ref()
-                    .expect("native Samus record")
-                    .bytes(offset),
+/// The role table over the native `record`, bound to its role lease when
+/// Samus content is bound.
+pub(super) fn capture_table(
+    game: &Game,
+    role: Role,
+    source: Registration,
+    record: crate::rom::RomRecord,
+) -> RoleTable {
+    let bound = game.samus_execution().unwrap().map(|execution| {
+        let base = game.samus_role_base(role, source).unwrap().unwrap();
+        let displacement = record
+            .base
+            .checked_sub(base)
+            .expect("Samus role mapped base");
+        match execution {
+            crate::game_state::SamusExecution::Prepared => BoundTable::Prepared(
+                game.prepared_samus_role(role, source, displacement)
+                    .unwrap()
+                    .unwrap(),
             ),
-            None => self
-                .record
-                .as_ref()
-                .expect("native Samus record")
-                .native_word(offset),
-            Some(BoundTable::Native(table)) => lease_word(table, offset, little),
-            Some(BoundTable::Prepared(table)) => lease_word(table, offset, little),
+            crate::game_state::SamusExecution::RetainedNative => BoundTable::Native(
+                game.capture_samus_role(role, source, displacement, &record.image)
+                    .unwrap()
+                    .unwrap(),
+            ),
         }
-    }
-}
-fn lease_word<B: CapturedBytes>(table: &RoleLease<B>, offset: usize, little: bool) -> u16 {
-    if little {
-        table.little_word(offset)
-    } else {
-        table.native_word(offset)
-    }
-    .unwrap()
-}
-impl samus_body::Table for NativeTable {
-    type Error = std::convert::Infallible;
-    fn little_word(&self, offset: usize) -> Result<u16, Self::Error> {
-        Ok(self.word(offset, true))
-    }
-    fn native_word(&self, offset: usize) -> Result<u16, Self::Error> {
-        Ok(self.word(offset, false))
-    }
+    });
+    RoleTable::captured(record, bound)
 }
 impl sm_game::samus_death::Host for Game {
     fn draw_samus(&mut self, body: Body) {
@@ -164,14 +96,7 @@ pub fn samus_draw_when_not_animating_or_dying(game: &mut Game) {
     draw_body(game, Body::Frozen);
 }
 
-impl samus_drawing::RoleTable for NativeTable {
-    fn byte(&self, offset: usize) -> u8 {
-        NativeTable::byte(self, offset)
-    }
-}
-
 impl samus_drawing::Authority for Runtime<'_> {
-    type Table = NativeTable;
     fn frame_counter(&self) -> u16 {
         self.inputs().frame
     }
@@ -209,16 +134,21 @@ impl samus_drawing::Authority for Runtime<'_> {
         role: Role,
         registration: Registration,
         displacement: usize,
-    ) -> NativeTable {
-        NativeTable::prepared(self.samus_game(), role, registration, displacement)
+    ) -> RoleTable {
+        let lease = self
+            .samus_game()
+            .prepared_samus_role(role, registration, displacement)
+            .expect("Samus prepared role")
+            .expect("supplied Samus role");
+        RoleTable::prepared(lease)
     }
     fn captured_role(
         &self,
         role: Role,
         registration: Registration,
         record: crate::rom::RomRecord,
-    ) -> NativeTable {
-        NativeTable::capture(self.samus_game(), role, registration, record)
+    ) -> RoleTable {
+        capture_table(self.samus_game(), role, registration, record)
     }
     fn role_base(&self, role: Role, registration: Registration) -> usize {
         self.samus_game()
@@ -290,10 +220,7 @@ impl samus_position_tiles::PositionHost for Game {
             image,
             base: crate::rtl::lorom_offset(0x91b629) as usize,
         };
-        Ok(
-            NativeTable::capture(self, Role::PositionFallback, Registration::Native, record)
-                .byte(offset),
-        )
+        Ok(capture_table(self, Role::PositionFallback, Registration::Native, record).byte(offset))
     }
     fn camera_x(&mut self) -> Result<u16, Self::Error> {
         Ok(word!(self.LAYER1_X_POS))
@@ -310,16 +237,6 @@ impl samus_position_tiles::PositionHost for Game {
         Ok(())
     }
 }
-impl samus_position_tiles::Table for NativeTable {
-    type Error = std::convert::Infallible;
-    fn native_word(&self, offset: usize) -> Result<u16, Self::Error> {
-        Ok(self.word(offset, false))
-    }
-    fn byte(&self, offset: usize) -> Result<u8, Self::Error> {
-        Ok(self.byte(offset))
-    }
-}
-
 impl Game {
     /// A prepared native Samus offset table, when the prepared content supplies it.
     fn native_offsets(&self, role: Role) -> Option<RoleLease<PreparedBytes>> {

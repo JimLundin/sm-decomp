@@ -3,24 +3,87 @@
 //! native body tables captured through the compatibility runtime.
 use crate::runtime_access::SessionRam;
 use crate::scene::samus_body::{self, Body, Half};
-use crate::scene::samus_content::{Registration, Role};
+use crate::scene::samus_content::{CapturedBytes, PreparedBytes, Registration, Role, RoleLease};
+use crate::scene::samus_native_content::CapturedRom;
 use crate::scene::samus_position_tiles::{self, TileTable};
 use crate::session_access::SessionAccess;
-use crate::visual_host::{Content, Effects, Source};
+use crate::visual_host::{Content, Effects, Record as _, Source};
 use core::convert::Infallible;
 use sm_data::cartridge::RomRecord;
 
-/// A Samus role table: prepared bytes or a native capture.
-pub trait RoleTable:
-    samus_body::Table<Error = Infallible> + samus_position_tiles::Table<Error = Infallible>
-{
-    fn byte(&self, offset: usize) -> u8;
+/// The role lease a Samus table reads through once Samus content is bound.
+pub enum BoundTable {
+    Native(RoleLease<CapturedRom>),
+    Prepared(RoleLease<PreparedBytes>),
+}
+/// A Samus role table: a native ROM record, read through its bound lease when
+/// Samus content is bound, or prepared bytes alone.
+pub struct RoleTable {
+    record: Option<RomRecord>,
+    bound: Option<BoundTable>,
+}
+impl RoleTable {
+    pub fn captured(record: RomRecord, bound: Option<BoundTable>) -> Self {
+        Self {
+            record: Some(record),
+            bound,
+        }
+    }
+    pub fn prepared(lease: RoleLease<PreparedBytes>) -> Self {
+        Self {
+            record: None,
+            bound: Some(BoundTable::Prepared(lease)),
+        }
+    }
+    fn record(&self) -> &RomRecord {
+        self.record.as_ref().expect("native Samus record")
+    }
+    pub fn byte(&self, offset: usize) -> u8 {
+        match &self.bound {
+            None => self.record().byte(offset),
+            Some(BoundTable::Native(table)) => table.byte(offset).unwrap(),
+            Some(BoundTable::Prepared(table)) => table.byte(offset).unwrap(),
+        }
+    }
+    pub fn word(&self, offset: usize, little: bool) -> u16 {
+        match &self.bound {
+            None if little => u16::from_le_bytes(self.record().bytes(offset)),
+            None => self.record().native_word(offset),
+            Some(BoundTable::Native(table)) => lease_word(table, offset, little),
+            Some(BoundTable::Prepared(table)) => lease_word(table, offset, little),
+        }
+    }
+}
+fn lease_word<B: CapturedBytes>(table: &RoleLease<B>, offset: usize, little: bool) -> u16 {
+    if little {
+        table.little_word(offset)
+    } else {
+        table.native_word(offset)
+    }
+    .unwrap()
+}
+impl samus_body::Table for RoleTable {
+    type Error = Infallible;
+    fn little_word(&self, offset: usize) -> Result<u16, Infallible> {
+        Ok(self.word(offset, true))
+    }
+    fn native_word(&self, offset: usize) -> Result<u16, Infallible> {
+        Ok(self.word(offset, false))
+    }
+}
+impl samus_position_tiles::Table for RoleTable {
+    type Error = Infallible;
+    fn native_word(&self, offset: usize) -> Result<u16, Infallible> {
+        Ok(self.word(offset, false))
+    }
+    fn byte(&self, offset: usize) -> Result<u8, Infallible> {
+        Ok(RoleTable::byte(self, offset))
+    }
 }
 
 /// Who owns Samus's presentation and role tables, as the owned-Session view
 /// sees it.
 pub trait Authority: SessionAccess + SessionRam + Content<Record = RomRecord> + Effects {
-    type Table: RoleTable;
     fn frame_counter(&self) -> u16;
     fn camera(&self) -> (u16, u16);
     fn has_owned_display(&self) -> bool;
@@ -38,14 +101,10 @@ pub trait Authority: SessionAccess + SessionRam + Content<Record = RomRecord> + 
         role: Role,
         registration: Registration,
         displacement: usize,
-    ) -> Self::Table;
+    ) -> RoleTable;
     /// The role table bound over the native `record`.
-    fn captured_role(
-        &self,
-        role: Role,
-        registration: Registration,
-        record: RomRecord,
-    ) -> Self::Table;
+    fn captured_role(&self, role: Role, registration: Registration, record: RomRecord)
+    -> RoleTable;
     /// The role's mapped base in the prepared Samus content.
     fn role_base(&self, role: Role, registration: Registration) -> usize;
     /// Samus's sprite position for the doubled pose offset.
@@ -53,7 +112,7 @@ pub trait Authority: SessionAccess + SessionRam + Content<Record = RomRecord> + 
     fn bottom_visible(&mut self) -> bool;
 }
 
-fn loaded_role<A: Authority>(h: &mut A, role: Role, address: u32) -> A::Table {
+fn loaded_role<A: Authority>(h: &mut A, role: Role, address: u32) -> RoleTable {
     if h.has_owned_display() {
         return h.prepared_role(role, Registration::Loaded, 0);
     }
@@ -64,7 +123,7 @@ fn loaded_role<A: Authority>(h: &mut A, role: Role, address: u32) -> A::Table {
 struct BodyHost<'a, A>(&'a mut A);
 impl<A: Authority> samus_body::Host for BodyHost<'_, A> {
     type Error = Infallible;
-    type Table = A::Table;
+    type Table = RoleTable;
     fn knockback(&mut self) -> Result<u16, Self::Error> {
         Ok(self.0.session().player.knockback_timer)
     }
@@ -83,7 +142,7 @@ impl<A: Authority> samus_body::Host for BodyHost<'_, A> {
     fn animation_frame(&mut self) -> Result<u16, Self::Error> {
         Ok(self.0.session().player.animation_clock.frame)
     }
-    fn table(&mut self, half: Half) -> Result<A::Table, Self::Error> {
+    fn table(&mut self, half: Half) -> Result<RoleTable, Self::Error> {
         let (role, address) = match half {
             Half::Top => (Role::BodyTop, 0x929263),
             Half::Bottom => (Role::BodyBottom, 0x92945d),
@@ -135,7 +194,7 @@ pub fn draw_body<A: Authority>(h: &mut A, mode: Body) {
     // Setting the tiles definitions ($92:8023) leaves the top half's table index in $16, the
     // scratch word the next door-closing PLM takes as its room argument.
     let Ok(definition) = samus_position_tiles::definition(&mut TileHost(h));
-    h.session_mut().spawn_scratch.argument = u16::from(RoleTable::byte(&definition, 0));
+    h.session_mut().spawn_scratch.argument = u16::from(definition.byte(0));
 }
 
 fn sprite_index<A: Authority>(h: &mut A, half: Half, pose: u16, little_endian: bool) -> u16 {
@@ -227,8 +286,8 @@ fn queue_body_tiles<A: Authority>(h: &mut A) {
 struct TileHost<'a, A>(&'a mut A);
 impl<A: Authority> samus_position_tiles::TileHost for TileHost<'_, A> {
     type Error = Infallible;
-    type Table = A::Table;
-    fn table(&mut self, which: TileTable) -> Result<A::Table, Self::Error> {
+    type Table = RoleTable;
+    fn table(&mut self, which: TileTable) -> Result<RoleTable, Self::Error> {
         let (role, address) = match which {
             TileTable::Pose => (Role::TilePose, 0x92d94e),
             TileTable::Top => (Role::TileTop, 0x92d91e),
@@ -242,7 +301,7 @@ impl<A: Authority> samus_position_tiles::TileHost for TileHost<'_, A> {
     fn frame(&mut self) -> Result<u16, Self::Error> {
         Ok(self.0.session().player.animation_clock.frame)
     }
-    fn definition(&mut self, cursor: u16) -> Result<A::Table, Self::Error> {
+    fn definition(&mut self, cursor: u16) -> Result<RoleTable, Self::Error> {
         if self.0.has_owned_display() {
             if cursor & 0x8000 == 0 {
                 self.0.samus_source_diagnostic(0x920000 | u32::from(cursor));
