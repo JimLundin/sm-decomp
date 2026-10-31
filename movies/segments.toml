@@ -192,16 +192,21 @@ after_hits = 120
 expect = ["boss:kraid", "room:A59F"]
 after_expectations = 120
 
+# Crocomire from the 100% route's room entry (seed 142): its movie words to the
+# defeat, then released (tools/authored_inputs.py write release --prefix-frames
+# 3857 --set frames=130). The spit, melt and wall rows below replay windows of
+# the same inputs.
 [[segment]]
 id = "boss-crocomire"
-checkpoint = "crocomire-boss-167285.smvchk"
-checkpoint_sha256 = "6e94858a88844c7281f05515b5bc36bc0b26fd2a91d88a65fc64a459708a29c5"
-inputs = "corpus-crocomire.inputs"
-input_sha256 = "90223d25514f15bb92cfe255402f6561fe598b46dd7a07435dcecff682f3dabe"
-start_frame = 167285
-frames = 4409
+seed = "100-input-phase:142"
+seed_sha256 = "a1bdb9e6425c23be82d5047185c0aa619532c5e062a3329753c27320ad32df1f"
+inputs = "authored-crocomire.inputs"
+input_sha256 = "96a08b0ea95ab531661b800c84e3544a003cc059f0335ef26088482a89485a32"
+start_frame = 0
+frames = 3987
 expect = ["boss:crocomire", "room:A98D", "state:8"]
 after_expectations = 120
+pending = "awaiting the seeds-v1-reseeded-bf1451e13f4e2680 ci-data upload"
 
 [[segment]]
 id = "boss-phantoon"
@@ -459,30 +464,58 @@ after_hits = 120
 expect = ["item:ice", "room:A890"]
 after_expectations = 120
 
-# Optional navigation/refill route; does not satisfy Crocomire or Power Bomb coverage.
-# Run the entire window, including the health drops after the last door.
+# Optional navigation route; does not satisfy Crocomire or Power Bomb coverage.
+# The 100% route back from the Ice Beam room (seed 163) through the four doors:
+# release --prefix-frames 1350 --set frames=120, idle after the last door.
 [[segment]]
 id = "ice-return-business"
-checkpoint = "ice-return-business-161656-478c39.smvchk"
-checkpoint_sha256 = "0427470131a154933d5f6d1cd37568a88fc5ee9fd246989f83b91f082da96ca5"
-inputs = "corpus-ice-return-business.inputs"
-input_sha256 = "4b4090a970f52658d27d4f69fe0e6d30da43739519cf781ef722dacbecdb5721"
-start_frame = 161656
-frames = 4426
+seed = "100-input-phase:163"
+seed_sha256 = "68385c119baf78a520fdb6284702846d6567adffb7b19886411d78719e41d228"
+inputs = "authored-ice-return-business.inputs"
+input_sha256 = "98d50c95f90c4bbd829fad9d16ccb58776dd20f7ea8f73f443a60fca3e6d283b"
+start_frame = 0
+frames = 1470
 expect = ["door:A8B9", "door:A75D", "door:A815", "door:A7DE"]
+pending = "awaiting the seeds-v1-reseeded-bf1451e13f4e2680 ci-data upload"
 
-# Optional navigation route; Power Bomb acquisition is covered by the required item row.
-# Checked on frozen source 992845a379e904fcd08da855e541dde0c0713389f8d37791c1ab04da6af5ad2f.
-# Execute the full window; the frozen navigation build alone does not qualify current main.
+# Optional navigation rows; Power Bomb acquisition is covered by the required item row.
+# They split the old any% window's doors over 100% seeds. The elevator up from
+# Norfair to the warehouse entrance (seed 167; release --prefix-frames 285
+# --set frames=60):
+[[segment]]
+id = "power-bomb-warehouse-elevator-entry"
+seed = "100-input-phase:167"
+seed_sha256 = "6500dc6f8246a79041b290b5f651c476d28c0121fb83c85be07c554983ebdbcf"
+inputs = "authored-warehouse-elevator-entry.inputs"
+input_sha256 = "1ec2b020f79e3f5e8feca667f7f9727b95c1181d6972b0825d9a7f7358133b85"
+start_frame = 0
+frames = 345
+expect = ["door:A6A1"]
+pending = "awaiting the seeds-v1-reseeded-bf1451e13f4e2680 ci-data upload"
+
+# Red Tower's bottom (seed 176; recipe red-tower-refill-door) into the refill room:
+[[segment]]
+id = "power-bomb-red-tower-refill-door"
+seed = "100-input-phase:176"
+seed_sha256 = "91e08780a8255840c590ccb9ce1e4e661e09d8ba07f9fd58d4dc0355a29f4d58"
+inputs = "authored-red-tower-refill-door.inputs"
+input_sha256 = "644ad5b2703895704516c4476d079b0be4ab23a3659bf475f8555be875010ac3"
+start_frame = 0
+frames = 413
+expect = ["door:A618"]
+pending = "awaiting the seeds-v1-reseeded-bf1451e13f4e2680 ci-data upload"
+
+# The Power Bomb room's door (seed 178; release --prefix-frames 328 --set frames=60):
 [[segment]]
 id = "power-bomb-room-entry"
-checkpoint = "power-bomb-room-entry-166082-478c39.smvchk"
-checkpoint_sha256 = "b132be9cfce8540e067ebb63b607bb227dd062a66ed7884653a983fbc88b19b5"
-inputs = "corpus-power-bomb-room-entry.inputs"
-input_sha256 = "34ab4055b6904d0544e490632fbbb81b87f18d163e55c7c6208ee9e5bd2a7dfb"
-start_frame = 166082
-frames = 8910
-expect = ["door:A6A1", "door:A618", "door:A3AE"]
+seed = "100-input-phase:178"
+seed_sha256 = "c9cf0566737a094ed81b23e8637722e01dd572c385531f0a05f57a61f0819c4c"
+inputs = "authored-power-bomb-room-entry.inputs"
+input_sha256 = "b386b720f57d268554f805a8651ef0c49315d24fabc81d9a9447fc285c6308d8"
+start_frame = 0
+frames = 388
+expect = ["door:A3AE"]
+pending = "awaiting the seeds-v1-reseeded-bf1451e13f4e2680 ci-data upload"
 
 [[segment]]
 id = "item-wave"
@@ -654,29 +687,33 @@ start_frame = 0
 frames = 398
 expect = ["room:AC83"]
 
+# Norfair's reserve tank room (seed 93): the movie words through both item
+# messages (the missile's, then the reserve tank's), then released
+# (release --prefix-frames 960 --set frames=150). The full window runs.
 [[segment]]
 id = "pickup-reserve"
-checkpoint = "reserve-147273.smvchk"
-checkpoint_sha256 = "530aa2582855755f433c13d4d5bda9ef6e2e1c6d2876f505d4f3ca00f2fb4230"
-inputs = "corpus-norfair-reserve.inputs"
-input_sha256 = "968f37d5218ea77d18ba81e5022ceca78b0c53be6b22f3602895e08904901c2d"
-start_frame = 147273
-frames = 614
+seed = "100-input-phase:93"
+seed_sha256 = "5ccaf31efc3cce08773ab710409f7ac8464bd8c234fd2074368c86ca7e6f0c33"
+inputs = "authored-pickup-reserve.inputs"
+input_sha256 = "4bd3b6723e1f7c6e7eead3e567356ae8cf9c7c93573e85b5f9d5ef7ba89c3665"
+start_frame = 0
+frames = 1110
 require_hit = ["coroutine.plm.message.completed"]
-after_hits = 120
 expect = ["pickup:reserve", "room:AC5A"]
-after_expectations = 120
+pending = "awaiting the seeds-v1-reseeded-bf1451e13f4e2680 ci-data upload"
 
+# Ceres (seed 5; recipe ceres-ridley-door): through the door to Ridley's room.
 [[segment]]
 id = "door-transition"
-checkpoint = "door-transition-13600-478c39.smvchk"
-checkpoint_sha256 = "36aacbe89501f1fc7b502680387e615e06b0a8943b4eb97c70b543a76945e12c"
-inputs = "corpus-speed-booster.inputs"
-input_sha256 = "bc907fc429252418216b7f575e26be148f7cf863a71c3947b4ffa3c6c6027de6"
-start_frame = 13600
-frames = 290
+seed = "100-input-phase:5"
+seed_sha256 = "a627651fd74a3c99e3a54adee5f7683e70f3bb2946c578d36269f3039b061594"
+inputs = "authored-ceres-ridley-door.inputs"
+input_sha256 = "0508217270fab04efafa863b3685045c8707ae95b9722a375853aba1da410d6f"
+start_frame = 0
+frames = 373
 expect = ["door:E0B5"]
 after_expectations = 120
+pending = "awaiting the seeds-v1-reseeded-bf1451e13f4e2680 ci-data upload"
 
 [[segment]]
 id = "elevator-traversal"
@@ -831,38 +868,44 @@ frames = 800
 require_hit = ["samus.jump.bomb"]
 expect = ["area:crateria"]
 
-# Onscreen dust writes its last bound before the following Crocomire spit drop.
+# Onscreen dust writes its last bound before the following Crocomire drop:
+# dust at step 3852, then the defeat's pickup drops at 3853.
 [[segment]]
 id = "crocomire-spit-drop-scratch"
-checkpoint = "crocomire-spit-167281.smvchk"
-checkpoint_sha256 = "66e5dd1349eeb8d7584422107c4129ef0462e5c870c23411bd84985c3cc4dd3a"
-inputs = "corpus-crocomire-shot.inputs"
-input_sha256 = "e46b9a61eeded83064cc3a9fc29cf05d6a1cd18151c06cd6c9b78930af41766b"
-start_frame = 167281
+seed = "100-input-phase:142"
+seed_sha256 = "a1bdb9e6425c23be82d5047185c0aa619532c5e062a3329753c27320ad32df1f"
+inputs = "authored-crocomire.inputs"
+input_sha256 = "96a08b0ea95ab531661b800c84e3544a003cc059f0335ef26088482a89485a32"
+start_frame = 3851
 frames = 4
 require_hit = ["eproj.pre.executed", "eproj.spawn.initialized"]
 expect = ["room:A98D", "state:8"]
+pending = "awaiting the seeds-v1-reseeded-bf1451e13f4e2680 ci-data upload"
 
+# The melt's second frame, as the old any% window at 169057.
 [[segment]]
 id = "crocomire-melt-graphics-buffer"
-checkpoint = "crocomire-melt-169057.smvchk"
-checkpoint_sha256 = "354c7796d61587a89ca0fc2e0fdac486fba9da97a3a435017a821d03f7c2c1b2"
-inputs = "corpus-crocomire.inputs"
-input_sha256 = "90223d25514f15bb92cfe255402f6561fe598b46dd7a07435dcecff682f3dabe"
-start_frame = 169057
+seed = "100-input-phase:142"
+seed_sha256 = "a1bdb9e6425c23be82d5047185c0aa619532c5e062a3329753c27320ad32df1f"
+inputs = "authored-crocomire.inputs"
+input_sha256 = "96a08b0ea95ab531661b800c84e3544a003cc059f0335ef26088482a89485a32"
+start_frame = 1890
 frames = 4
 expect = ["room:A98D", "state:8"]
+pending = "awaiting the seeds-v1-reseeded-bf1451e13f4e2680 ci-data upload"
 
+# The wall's eight debris projectiles spawn at step 3525.
 [[segment]]
 id = "crocomire-wall-spawn-return"
-checkpoint = "crocomire-wall-171090.smvchk"
-checkpoint_sha256 = "f0dc78fd22cf5ee3330fcbadc585726f60911a901ceb2cf5dccb050d5737c384"
-inputs = "corpus-crocomire.inputs"
-input_sha256 = "90223d25514f15bb92cfe255402f6561fe598b46dd7a07435dcecff682f3dabe"
-start_frame = 171090
+seed = "100-input-phase:142"
+seed_sha256 = "a1bdb9e6425c23be82d5047185c0aa619532c5e062a3329753c27320ad32df1f"
+inputs = "authored-crocomire.inputs"
+input_sha256 = "96a08b0ea95ab531661b800c84e3544a003cc059f0335ef26088482a89485a32"
+start_frame = 3525
 frames = 4
 expect = ["room:A98D", "state:8"]
 require_hit = ["eproj.spawn.initialized"]
+pending = "awaiting the seeds-v1-reseeded-bf1451e13f4e2680 ci-data upload"
 
 # Preserve the room setup accumulator in the projectile spawn parameter.
 # Explicit seed and distributed checkpoint fields cannot be combined; compatible internal checkpoints may be reused.
@@ -1114,16 +1157,19 @@ frames = 1151
 expect = ["item:grapple", "room:AC2B"]
 require_hit = ["coroutine.plm.message.completed"]
 
-# Native FIR selector10 regression: input110076 commits tick110077.
+# Native FIR selector10 regression: entering Kraid's lair's A521 from seed 70,
+# the song's echo command selects FIR 10 at step 1037 (release
+# --prefix-frames 1040 --set frames=20).
 [[segment]]
 id = "music-fir-selector10"
-checkpoint = "music-fir-before-input110076.smvchk"
-checkpoint_sha256 = "e76346a38b9b3aa1f145ac284d60ffdf2bd57524990b50dab25a9c489aae5d25"
-inputs = "corpus-norfair-reserve.inputs"
-input_sha256 = "968f37d5218ea77d18ba81e5022ceca78b0c53be6b22f3602895e08904901c2d"
-start_frame = 110076
-frames = 1
+seed = "100-input-phase:70"
+seed_sha256 = "f3b56c1315f7e5fe3cea69ea817ec8eafe2a33ef1ec9c67835d13499e91b5516"
+inputs = "authored-music-fir-selector10.inputs"
+input_sha256 = "c4aae665775e64a687d8cf980bd5494715a5f278fa7df4285ae388a241220dc3"
+start_frame = 0
+frames = 1060
 expect = ["state:8"]
+pending = "awaiting the seeds-v1-reseeded-bf1451e13f4e2680 ci-data upload"
 
 # Coverage rows for gameplay the 100% room chain does not reach.
 # tools/authored_inputs.py writes the authored inputs; see its recipes.

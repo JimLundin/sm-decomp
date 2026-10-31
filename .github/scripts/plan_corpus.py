@@ -51,8 +51,11 @@ def seed_bundle(row):
         return ('seeds-v1-seeded-checkpoints-f4e03e50190ab6dd.tar.gz.enc', 'f4e03e50190ab6dd9acfd595ddb544b93b36eef2e7231e1599dff3199d8e0631')
     if row['id'] in ('save-death-reload', 'save-memory', 'death'):
         return ('seeds-v1-realigned-ef199d44b0070294.tar.gz.enc', 'ef199d44b0070294bcbac363aaa3577304a3cbbc7a1122a6f488329d41441e52')
-    if row['id'] in ('pickup-reserve', 'music-fir-selector10'):
-        return ('layout150-checkpoints-147-93986acd14dc9d66.tar.gz.enc', '8c8f84e903917a06d996624358a1783e80920e9fa2084c438eaa950843d68517')
+    if row['id'] in ('boss-crocomire', 'crocomire-spit-drop-scratch', 'crocomire-melt-graphics-buffer',
+                     'crocomire-wall-spawn-return', 'ice-return-business', 'power-bomb-warehouse-elevator-entry',
+                     'power-bomb-red-tower-refill-door', 'power-bomb-room-entry', 'pickup-reserve',
+                     'door-transition', 'music-fir-selector10'):
+        return ('seeds-v1-reseeded-bf1451e13f4e2680.tar.gz.enc', 'bf1451e13f4e26806b712234991c78d9d5ed187d0b14a1e9f3f3947be301590c')
     if 'checkpoint' in row:
         return ('layout150-f158-faithful2-d4050aa32a965168.tar.gz.enc', 'd4050aa32a965168653e68a2389145af6aa6f2cd5666bec5eec7c737ffef874b')
     # Match exact seed identities, not capture prefixes: pickups and the

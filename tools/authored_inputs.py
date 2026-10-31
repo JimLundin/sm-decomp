@@ -296,6 +296,13 @@ RECIPES = {
     """),
     # Pause, wait for the pause screen, unpause and watch the room resume.
     "pause-resume": Recipe("press Start 150; hold Start 200; _ $tail", {"tail": 240}),
+    # Ceres seed 100-input-phase:5: run right, open the door to Ridley's room
+    # with a beam shot and keep running into the transition.
+    "ceres-ridley-door": Recipe("Right+B 70; Right+X 2; Right+B 80; _ 220"),
+    # Red Tower's bottom (seed 100-input-phase:176): walk to the left door,
+    # select missiles, open it with two and walk into the refill room.
+    "red-tower-refill-door": Recipe(
+        "Left 70; Select 2; _ 6; X 2; _ 30; X 2; _ 30; Left 120; _ 150"),
 }
 
 SWEEPS = {
@@ -354,6 +361,8 @@ PINNED = {
     "tatori-touch": "f557eb7d7d0ff9172bb4e0e2c865f139eb92d20b12ca62b4315dfe0581e1c7d1",
     "file-copy-clear": "a8d3e69d868ec3373c3edc178a75bf55bf06b68ba8db78af2c161a64307208fe",
     "pause-resume": "6982afc4c06ba2311042798e0c0c2ccdbe47a7dbe599fb50b927ba414c24d077",
+    "ceres-ridley-door": "45991b53cf8828c9542d208c26bc8d30143eb6f8fa1e21f5e590bec33909cb59",
+    "red-tower-refill-door": "73d7fc2e9b32e137867ca292defb27fcf7d9b87316fc4fa004ed442474f4d95d",
 }
 
 

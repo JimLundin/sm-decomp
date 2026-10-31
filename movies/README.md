@@ -35,14 +35,13 @@ OpenSSL and the matching ROM are required to restore them. For Crocomire:
 
 ```powershell
 New-Item -ItemType Directory -Force target | Out-Null
-Invoke-WebRequest 'https://github.com/JimLundin/sm-decomp/releases/download/ci-data/layout150-f158-full22.tar.gz.enc' -OutFile target/checkpoints.enc
-python tools/ci_seed_data.py restore target/checkpoints.enc --rom rom/sm.smc --sha256 723ccef6ac6df45f31d5179ba5d9569184de0fb5c678266365d3eaf62d3c10b9 --segment boss-crocomire
+Invoke-WebRequest 'https://github.com/JimLundin/sm-decomp/releases/download/ci-data/seeds-v1-reseeded-bf1451e13f4e2680.tar.gz.enc' -OutFile target/reseeded.enc
+python tools/ci_seed_data.py restore target/reseeded.enc --rom rom/sm.smc --sha256 bf1451e13f4e26806b712234991c78d9d5ed187d0b14a1e9f3f3947be301590c --segment boss-crocomire
 ```
 
-Fourteen rows start from checkpoints: that bundle holds ten of them and
-`layout150-checkpoints-147` the other four. Original-emulator room seeds use
-separate bundles. The current asset names, hashes and exact row-to-bundle
-mapping are in `seed_bundle` in [plan_corpus.py](../.github/scripts/plan_corpus.py).
+Most rows start from original-emulator room seeds; eight start from verifier
+checkpoints. The current asset names, hashes and exact row-to-bundle mapping
+are in `seed_bundle` in [plan_corpus.py](../.github/scripts/plan_corpus.py).
 Restore each bundle with only its matching `--segment` selections. Restoration
 checks hashes and refuses to replace different existing files.
 Add `--runtime-only` when you only need to replay existing rows; it restores
