@@ -715,102 +715,37 @@ impl Game {
 
     ram_word_accessors! {
         read;
-        /// super_missiles count/capacity in the original RAM layout.
-        samus_super_missiles: 0x9ca;
-        samus_max_super_missiles: 0x9cc;
-        /// power_bombs count/capacity in the original RAM layout.
-        samus_power_bombs: 0x9ce;
-        samus_max_power_bombs: 0x9d0;
         /// Health and reserve fields retain their original byte-backed RAM layout.
         samus_health: 0x9c2;
         /// Low-health sound latch ($7E:0A6A in ram_map).
         samus_health_warning: 0xa6a;
-        /// Missile fields in ram_map at $7E:09C6/09C8/09D8.
-        samus_missiles: 0x9c6;
-        samus_max_missiles: 0x9c8;
-        samus_reserve_missiles: 0x9d8;
-        samus_max_health: 0x9c4;
-        samus_reserve_health: 0x9d6;
-        samus_max_reserve_health: 0x9d4;
-        reserve_health_mode: 0x9c0;
         /// random_number ($7E:05E5 in ram_map).
         random_number: 0x5e5;
-        /// special_death_item_drop_x_origin_pos ($7E:F434 in ram_map).
-        special_death_item_drop_x_origin_pos: 0xf434;
-        /// special_death_item_drop_y_origin_pos ($7E:F436 in ram_map).
-        special_death_item_drop_y_origin_pos: 0xf436;
         /// timer_status ($7E:0943 in ram_map).
         timer_status: 0x943;
-        /// door_transition_function ($7E:099C in ram_map).
-        door_transition_function: 0x99c;
-        /// hdma_objects_enable_flag ($7E:18B0 in ram_map).
-        hdma_objects_enable_flag: 0x18b0;
-        /// room_loading_irq_handler ($7E:00A9 in ram_map).
-        room_loading_irq_handler: 0xa9;
-        layer1_x_pos: 0x911;
         layer1_y_pos: 0x915;
-        /// door_direction ($7E:0791 in ram_map).
-        door_direction: 0x791;
         /// elevator_door_properties_orientation ($7E:0793 in ram_map).
         elevator_door_properties_orientation: 0x793;
         /// elevator_direction ($7E:0799 in ram_map).
         elevator_direction: 0x799;
         /// elevator_flags ($7E:0E16 in ram_map).
         elevator_flags: 0xe16;
-        /// cre_bitset ($7E:07B3 in ram_map).
-        cre_bitset: 0x7b3;
-        /// door_def_ptr ($7E:078D in ram_map).
-        door_def_ptr: 0x78d;
         /// room_ptr ($7E:079B in ram_map).
         room_ptr: 0x79b;
-        /// room_height_in_blocks ($7E:07A7 in ram_map).
-        room_height_in_blocks: 0x7a7;
-        /// room_width_in_scrolls ($7E:07A9 in ram_map).
-        room_width_in_scrolls: 0x7a9;
-        /// room_height_in_scrolls ($7E:07AB in ram_map).
-        room_height_in_scrolls: 0x7ab;
-        /// roomdefroomstate_ptr ($7E:07BB in ram_map).
-        roomdefroomstate_ptr: 0x7bb;
-        /// reg_BG1VOFS ($7E:00B3 in ram_map).
-        reg_bg1vofs: 0xb3;
         /// samus_x_pos ($7E:0AF6 in ram_map).
         samus_x_pos: 0xaf6;
-        /// samus_x_subpos ($7E:0AF8 in ram_map).
-        samus_x_subpos: 0xaf8;
         /// samus_y_pos ($7E:0AFA in ram_map).
         samus_y_pos: 0xafa;
-        /// distance_to_eject_samus_up ($7E:0E08 in ram_map).
-        distance_to_eject_samus_up: 0xe08;
-        /// distance_to_eject_samus_down ($7E:0E0A in ram_map).
-        distance_to_eject_samus_down: 0xe0a;
         /// samus_y_subpos ($7E:0AFC in ram_map).
         samus_y_subpos: 0xafc;
-        /// samus_x_radius ($7E:0AFE in ram_map).
-        samus_x_radius: 0xafe;
-        /// extra_samus_y_displacement ($7E:0B5C in ram_map).
-        extra_samus_y_displacement: 0xb5c;
-        /// samus_y_radius ($7E:0B00 in ram_map).
-        samus_y_radius: 0xb00;
         /// samus_pose ($7E:0A1C in ram_map).
         samus_pose: 0xa1c;
         /// samus_anim_frame ($7E:0A96 in ram_map).
         samus_anim_frame: 0xa96;
-        /// joypad1_lastkeys ($7E:008B in ram_map).
-        joypad1_lastkeys: 0x8b;
-        /// samus_prev_x_pos ($7E:0B10 in ram_map).
-        samus_prev_x_pos: 0xb10;
-        /// samus_prev_y_pos ($7E:0B14 in ram_map).
-        samus_prev_y_pos: 0xb14;
         debug_invincibility: 0xde0;
         /// game_state ($7E:0998 in ram_map).
         game_state: 0x998;
-        /// debug_disable_sounds ($7E:05F5 in ram_map).
-        debug_disable_sounds: 0x5f5;
-        /// power_bomb_explosion_status ($7E:0592 in ram_map).
-        power_bomb_explosion_status: 0x592;
         pausemenu_button_label_mode: 0x753;
-        /// loading_game_state ($7E:D914 in ram_map).
-        loading_game_state: 0xd914;
         /// area_index ($7E:079F in ram_map).
         area_index: 0x79f;
         collected_items: 0x9a4;
@@ -818,53 +753,10 @@ impl Game {
         demo_set: 0x1f55;
         /// demo_scene ($7E:1F57 in ram_map).
         demo_scene: 0x1f57;
-        /// demo_input_pre_instr ($7E:0A7A in ram_map).
-        demo_input_pre_instr: 0xa7a;
-        /// demo_input_instr_timer ($7E:0A7C in ram_map).
-        demo_input_instr_timer: 0xa7c;
-        /// demo_input_instr_ptr ($7E:0A7E in ram_map).
-        demo_input_instr_ptr: 0xa7e;
-        /// demo_input ($7E:0A84 in ram_map).
-        demo_input: 0xa84;
-        /// demo_input_new ($7E:0A86 in ram_map).
-        demo_input_new: 0xa86;
-        /// demo_enable ($7E:0A88 in ram_map), shared with hdma_ptr_1.
-        demo_enable: 0xa88;
-        /// demo_input_prev ($7E:0A8C in ram_map).
-        demo_input_prev: 0xa8c;
-        /// demo_input_prev_new ($7E:0A8E in ram_map), shared with hdma_ptr_3.
-        demo_input_prev_new: 0xa8e;
-        /// button_config_jump_a ($7E:09B4 in ram_map).
-        button_config_jump_a: 0x9b4;
-        /// joypad1_newkeys ($7E:008F in ram_map).
-        joypad1_newkeys: 0x8f;
         /// collision_detection_index ($7E:18A6 in ram_map).
         collision_detection_index: 0x18a6;
-        /// interactive_enemy_indexes_write_ptr ($7E:17A6 in ram_map).
-        interactive_enemy_indexes_write_ptr: 0x17a6;
-        /// samus_collision_direction ($7E:0B02 in ram_map).
-        samus_collision_direction: 0xb02;
-        /// samus_collision_flag ($7E:0DD0 in ram_map).
-        samus_collision_flag: 0xdd0;
-        /// flag_samus_in_quicksand ($7E:1E71 in ram_map).
-        flag_samus_in_quicksand: 0x1e71;
-        /// inside_block_reaction_samus_point ($7E:1E73 in ram_map).
-        inside_block_reaction_samus_point: 0x1e73;
         /// Current collision block index ($7E:0DC4 in ram_map).
         cur_block_index: 0xdc4;
-        current_slope_bts: 0x1e77;
-        /// enemy_tile_vram_src ($7E:0E7C in ram_map).
-        enemy_tile_vram_src: 0xe7c;
-        /// enemy_tile_vram_dst ($7E:0E7E in ram_map).
-        enemy_tile_vram_dst: 0xe7e;
-        /// nmi_flag_bg2_enemy_vram_transfer ($7E:0E1E in ram_map).
-        nmi_flag_bg2_enemy_vram_transfer: 0xe1e;
-        /// enemy_bg2_tilemap_size ($7E:179A in ram_map).
-        enemy_bg2_tilemap_size: 0x179a;
-        /// debug_time_frozen_for_enemies ($7E:185E in ram_map).
-        debug_time_frozen_for_enemies: 0x185e;
-        /// time_is_frozen_flag ($7E:0A78 in ram_map).
-        time_is_frozen_flag: 0xa78;
         /// VRAM write queue byte cursor ($7E:0330 in ram_map).
         vram_write_queue_tail: 0x330;
         /// Room width in blocks ($7E:07A5 in ram_map).
@@ -875,257 +767,12 @@ impl Game {
 
     ram_word_accessors! {
         write;
-        set_samus_super_missiles: 0x9ca;
-        set_samus_power_bombs: 0x9ce;
         set_samus_health_warning: 0xa6a;
-        set_samus_missiles: 0x9c6;
-        set_samus_reserve_missiles: 0x9d8;
-        set_samus_health: 0x9c2;
-        set_samus_reserve_health: 0x9d6;
-        set_reserve_health_mode: 0x9c0;
-        set_door_transition_function: 0x99c;
-        set_hdma_objects_enable_flag: 0x18b0;
-        /// irqhandler_next_handler ($7E:00A7 in ram_map).
-        set_irqhandler_next_handler: 0xa7;
-        /// debug_disable_sounds ($7E:05F5 in ram_map).
-        set_debug_disable_sounds: 0x5f5;
-        /// door_transition_flag_elevator_zebetites ($7E:0795 in ram_map).
-        set_door_transition_flag_elevator_zebetites: 0x795;
-        /// door_transition_flag_enemies ($7E:0797 in ram_map).
-        set_door_transition_flag_enemies: 0x797;
-        /// game_state ($7E:0998 in ram_map).
-        set_game_state: 0x998;
-        /// layer1_x_pos ($7E:0911 in ram_map).
-        set_layer1_x_pos: 0x911;
-        /// layer1_y_pos ($7E:0915 in ram_map).
-        set_layer1_y_pos: 0x915;
-        set_door_direction: 0x791;
-        set_elevator_door_properties_orientation: 0x793;
-        set_elevator_flags: 0xe16;
-        /// previous_cre_bitset ($7E:07B1 in ram_map).
-        set_previous_cre_bitset: 0x7b1;
-        set_cre_bitset: 0x7b3;
-        set_room_ptr: 0x79b;
-        /// room_index ($7E:079D in ram_map).
-        set_room_index: 0x79d;
-        /// area_index ($7E:079F in ram_map).
-        set_area_index: 0x79f;
-        /// room_x_coordinate_on_map ($7E:07A1 in ram_map).
-        set_room_x_coordinate_on_map: 0x7a1;
-        /// room_y_coordinate_on_map ($7E:07A3 in ram_map).
-        set_room_y_coordinate_on_map: 0x7a3;
-        set_room_height_in_blocks: 0x7a7;
-        set_room_width_in_scrolls: 0x7a9;
-        set_room_height_in_scrolls: 0x7ab;
-        /// up_scroller ($7E:07AD in ram_map).
-        set_up_scroller: 0x7ad;
-        /// down_scroller ($7E:07AF in ram_map).
-        set_down_scroller: 0x7af;
-        /// door_list_pointer ($7E:07B5 in ram_map).
-        set_door_list_pointer: 0x7b5;
-        /// room_size_in_blocks ($7E:07B9 in ram_map).
-        set_room_size_in_blocks: 0x7b9;
-        /// room_music_track_index ($7E:07C9 in ram_map).
-        set_room_music_track_index: 0x7c9;
-        /// room_music_data_index ($7E:07CB in ram_map).
-        set_room_music_data_index: 0x7cb;
-        /// room_layer3_asm_ptr ($7E:07CD in ram_map).
-        set_room_layer3_asm_ptr: 0x7cd;
-        /// room_enemy_population_ptr ($7E:07CF in ram_map).
-        set_room_enemy_population_ptr: 0x7cf;
-        /// room_enemy_tilesets_ptr ($7E:07D1 in ram_map).
-        set_room_enemy_tilesets_ptr: 0x7d1;
-        /// room_main_code_ptr ($7E:07DF in ram_map).
-        set_room_main_code_ptr: 0x7df;
-        set_reg_bg1vofs: 0xb3;
-        /// reg_BG2HOFS ($7E:00B5 in ram_map).
-        set_reg_bg2hofs: 0xb5;
-        /// reg_BG2VOFS ($7E:00B7 in ram_map).
-        set_reg_bg2vofs: 0xb7;
-        /// scrolling_finished_hook ($7E:07E9 in ram_map).
-        set_scrolling_finished_hook: 0x7e9;
-        /// door_transition_frame_counter ($7E:0925 in ram_map).
-        set_door_transition_frame_counter: 0x925;
-        /// door_destination_x_pos ($7E:0927 in ram_map).
-        set_door_destination_x_pos: 0x927;
-        /// door_destination_y_pos ($7E:0929 in ram_map).
-        set_door_destination_y_pos: 0x929;
-        /// samus_door_transition_subspeed ($7E:092B in ram_map).
-        set_samus_door_transition_subspeed: 0x92b;
-        /// samus_door_transition_speed ($7E:092D in ram_map).
-        set_samus_door_transition_speed: 0x92d;
-        set_samus_x_pos: 0xaf6;
-        /// door_transition_flag ($7E:0931 in ram_map).
-        set_door_transition_flag: 0x931;
-        set_samus_x_subpos: 0xaf8;
-        set_samus_y_pos: 0xafa;
-        set_samus_y_subpos: 0xafc;
-        set_extra_samus_y_displacement: 0xb5c;
-        /// samus_pose ($7E:0A1C in ram_map).
-        set_samus_pose: 0xa1c;
-        /// samus_prev_pose ($7E:0A20 in ram_map).
-        set_samus_prev_pose: 0xa20;
-        /// samus_last_different_pose ($7E:0A24 in ram_map).
-        set_samus_last_different_pose: 0xa24;
-        /// samus_anim_frame_timer ($7E:0A94 in ram_map).
-        set_samus_anim_frame_timer: 0xa94;
-        set_samus_anim_frame: 0xa96;
-        set_joypad1_lastkeys: 0x8b;
-        /// input_to_pose_calc ($7E:0DC6 in ram_map).
-        set_input_to_pose_calc: 0xdc6;
-        set_samus_prev_x_pos: 0xb10;
-        set_samus_prev_y_pos: 0xb14;
-        /// samus_momentum_routine_index ($7E:0A2E in ram_map).
-        set_samus_momentum_routine_index: 0xa2e;
-        /// samus_special_transgfx_index ($7E:0A30 in ram_map).
-        set_samus_special_transgfx_index: 0xa30;
-        /// samus_hurt_switch_index ($7E:0A32 in ram_map).
-        set_samus_hurt_switch_index: 0xa32;
-        /// absolute_moved_last_frame_x ($7E:0DA2 in ram_map).
-        set_absolute_moved_last_frame_x: 0xda2;
-        /// absolute_moved_last_frame_x_fract ($7E:0DA4 in ram_map).
-        set_absolute_moved_last_frame_x_fract: 0xda4;
-        /// absolute_moved_last_frame_y ($7E:0DA6 in ram_map).
-        set_absolute_moved_last_frame_y: 0xda6;
-        /// absolute_moved_last_frame_y_fract ($7E:0DA8 in ram_map).
-        set_absolute_moved_last_frame_y_fract: 0xda8;
-        /// samus_y_subaccel ($7E:0B32 in ram_map).
-        set_samus_y_subaccel: 0xb32;
-        /// samus_y_accel ($7E:0B34 in ram_map).
-        set_samus_y_accel: 0xb34;
-        /// debug_invincibility ($7E:0DE0 in ram_map).
-        set_debug_invincibility: 0xde0;
-        /// unused_word_7e0a5e ($7E:0A5E in ram_map).
-        set_unused_word_7e0a5e: 0xa5e;
-        /// samus_prev_health_for_flash ($7E:0A12 in ram_map).
-        set_samus_prev_health_for_flash: 0xa12;
-        /// samus_visor_palette_timer_index ($7E:0A72 in ram_map).
-        set_samus_visor_palette_timer_index: 0xa72;
-        /// enable_horiz_slope_coll ($7E:0A46 in ram_map).
-        set_enable_horiz_slope_coll: 0xa46;
-        /// samus_hurt_flash_counter ($7E:0A48 in ram_map).
-        set_samus_hurt_flash_counter: 0xa48;
-        /// samus_special_super_palette_flags ($7E:0A4A in ram_map).
-        set_samus_special_super_palette_flags: 0xa4a;
-        /// fx_y_pos ($7E:195E in ram_map).
-        set_fx_y_pos: 0x195e;
-        /// lava_acid_y_pos ($7E:1962 in ram_map).
-        set_lava_acid_y_pos: 0x1962;
-        /// cinematic_function ($7E:1F51 in ram_map).
-        set_cinematic_function: 0x1f51;
-        /// hud_item_index ($7E:09D2 in ram_map).
-        set_hud_item_index: 0x9d2;
-        /// samus_auto_cancel_hud_item_index ($7E:0A04 in ram_map).
-        set_samus_auto_cancel_hud_item_index: 0xa04;
-        /// samus_invincibility_timer ($7E:18A8 in ram_map).
-        set_samus_invincibility_timer: 0x18a8;
-        /// samus_knockback_timer ($7E:18AA in ram_map).
-        set_samus_knockback_timer: 0x18aa;
         /// has_area_map ($7E:0789 in ram_map).
         set_has_area_map: 0x789;
-        /// collected_items ($7E:09A4 in ram_map).
-        set_collected_items: 0x9a4;
-        /// equipped_items ($7E:09A2 in ram_map).
-        set_equipped_items: 0x9a2;
-        /// samus_max_missiles ($7E:09C8 in ram_map).
-        set_samus_max_missiles: 0x9c8;
-        /// samus_max_super_missiles ($7E:09CC in ram_map).
-        set_samus_max_super_missiles: 0x9cc;
-        /// samus_max_power_bombs ($7E:09D0 in ram_map).
-        set_samus_max_power_bombs: 0x9d0;
-        /// samus_max_health ($7E:09C4 in ram_map).
-        set_samus_max_health: 0x9c4;
-        /// collected_beams ($7E:09A8 in ram_map).
-        set_collected_beams: 0x9a8;
-        /// equipped_beams ($7E:09A6 in ram_map).
-        set_equipped_beams: 0x9a6;
-        /// button_config_up ($7E:09AA in ram_map).
-        set_button_config_up: 0x9aa;
-        /// button_config_down ($7E:09AC in ram_map).
-        set_button_config_down: 0x9ac;
-        /// button_config_left ($7E:09AE in ram_map).
-        set_button_config_left: 0x9ae;
-        /// button_config_right ($7E:09B0 in ram_map).
-        set_button_config_right: 0x9b0;
-        /// button_config_shoot_x ($7E:09B2 in ram_map).
-        set_button_config_shoot_x: 0x9b2;
-        /// button_config_jump_a ($7E:09B4 in ram_map).
-        set_button_config_jump_a: 0x9b4;
-        /// button_config_run_b ($7E:09B6 in ram_map).
-        set_button_config_run_b: 0x9b6;
-        /// button_config_itemcancel_y ($7E:09B8 in ram_map).
-        set_button_config_itemcancel_y: 0x9b8;
-        /// button_config_itemswitch ($7E:09BA in ram_map).
-        set_button_config_itemswitch: 0x9ba;
-        /// button_config_aim_up_r ($7E:09BE in ram_map).
-        set_button_config_aim_up_r: 0x9be;
-        /// button_config_aim_down_l ($7E:09BC in ram_map).
-        set_button_config_aim_down_l: 0x9bc;
-        /// unused_word_7e09e8 ($7E:09E8 in ram_map).
-        set_unused_word_7e09e8: 0x9e8;
-        /// debug_flag ($7E:09E6 in ram_map).
-        set_debug_flag: 0x9e6;
-        /// moonwalk_flag ($7E:09E4 in ram_map).
-        set_moonwalk_flag: 0x9e4;
-        /// unused_word_7e0df8 ($7E:0DF8 in ram_map).
-        set_unused_word_7e0df8: 0xdf8;
-        /// unused_word_7e0dfa ($7E:0DFA in ram_map).
-        set_unused_word_7e0dfa: 0xdfa;
-        /// unused_word_7e0dfc ($7E:0DFC in ram_map).
-        set_unused_word_7e0dfc: 0xdfc;
-        set_demo_input_pre_instr: 0xa7a;
-        set_demo_input_instr_timer: 0xa7c;
-        set_demo_input_instr_ptr: 0xa7e;
-        /// demo_timer_counter ($7E:0A80 in ram_map).
-        set_demo_timer_counter: 0xa80;
-        /// xray_angle ($7E:0A82 in ram_map), also used by demo input objects.
-        set_xray_angle: 0xa82;
-        set_demo_input: 0xa84;
-        set_demo_input_new: 0xa86;
-        set_demo_enable: 0xa88;
-        set_demo_input_prev: 0xa8c;
-        set_demo_input_prev_new: 0xa8e;
-        /// joypad1_input_samusfilter ($7E:0DFE in ram_map).
-        set_joypad1_input_samusfilter: 0xdfe;
-        /// joypad1_newinput_samusfilter ($7E:0E00 in ram_map).
-        set_joypad1_newinput_samusfilter: 0xe00;
-        /// frame_handler_alfa ($7E:0A42 in ram_map).
-        set_frame_handler_alfa: 0xa42;
         /// frame_handler_beta ($7E:0A44 in ram_map).
         set_frame_handler_beta: 0xa44;
-        /// frame_handler_gamma ($7E:0A5A in ram_map).
-        set_frame_handler_gamma: 0xa5a;
-        /// samus_movement_handler ($7E:0A58 in ram_map).
-        set_samus_movement_handler: 0xa58;
-        /// samus_draw_handler ($7E:0A5C in ram_map).
-        set_samus_draw_handler: 0xa5c;
-        /// samus_input_handler ($7E:0A60 in ram_map).
-        set_samus_input_handler: 0xa60;
-        /// grapple_beam_function ($7E:0D32 in ram_map).
-        set_grapple_beam_function: 0xd32;
-        /// samus_new_pose ($7E:0A28 in ram_map).
-        set_samus_new_pose: 0xa28;
-        /// samus_new_pose_interrupted ($7E:0A2A in ram_map).
-        set_samus_new_pose_interrupted: 0xa2a;
-        /// samus_new_pose_transitional ($7E:0A2C in ram_map).
-        set_samus_new_pose_transitional: 0xa2c;
-        set_joypad1_newkeys: 0x8f;
-        set_collision_detection_index: 0x18a6;
-        /// enemy_index_to_shake ($7E:0E1C in ram_map).
-        set_enemy_index_to_shake: 0xe1c;
-        set_samus_collision_direction: 0xb02;
-        set_samus_collision_flag: 0xdd0;
-        set_samus_pos_adjusted_by_slope_flag: 0xdba;
-        set_flag_samus_in_quicksand: 0x1e71;
-        set_inside_block_reaction_samus_point: 0x1e73;
-        set_cur_block_index: 0xdc4;
-        /// BTS saved by horizontal nonsquare slope dispatch ($7E:1E77 in ram_map).
-        set_current_slope_bts: 0x1e77;
-        set_enemy_tile_vram_src: 0xe7c;
-        set_enemy_tile_vram_dst: 0xe7e;
-        set_nmi_flag_bg2_enemy_vram_transfer: 0xe1e;
         set_vram_write_queue_tail: 0x330;
-        set_room_width_in_blocks: 0x7a5;
     }
 
     /// Bind the native source to its sole owner. Loaded-ROM reads retain their
