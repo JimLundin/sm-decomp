@@ -193,6 +193,38 @@ pub fn draw_room<H: Host>(
     host.write_byte(545, high)
 }
 
+/// Point the object cursor ($0590) back at the first entry.
+pub fn reset_cursor<H: Host>(host: &mut H) -> Result<(), H::Error> {
+    host.write_byte(544, 0)?;
+    host.write_byte(545, 0)
+}
+
+/// Hide the entries after the cursor as large sprites at X 80h, Y 0, as the
+/// ending's sprite pass does: their high-table pairs become 01 (large), then
+/// each entry's X/Y word is 0080h. Nothing is done once the cursor has
+/// reached the end of OAM.
+pub fn hide_unused_large<H: Host>(host: &mut H) -> Result<(), H::Error> {
+    let cursor = host.read_little_word(544)?;
+    if cursor >= 0x200 {
+        return Ok(());
+    }
+    let (first, group) = (usize::from(cursor >> 2), usize::from(cursor >> 5));
+    let [low, high] =
+        (host.read_little_word(512 + 2 * group)? | (0x5555u16 << (2 * (first & 7)))).to_le_bytes();
+    host.write_byte(512 + 2 * group, low)?;
+    host.write_byte(513 + 2 * group, high)?;
+    for group in group + 1..16 {
+        host.write_byte(512 + 2 * group, 0x55)?;
+        host.write_byte(513 + 2 * group, 0x55)?;
+    }
+    // The extension writes precede rereading the first unused entry.
+    let first = usize::from(host.read_little_word(544)? >> 2);
+    for entry in first..128 {
+        host.write_native_bytes(4 * entry, 0x80)?;
+    }
+    Ok(())
+}
+
 pub fn finish_frame<H: Host>(host: &mut H) -> Result<(), H::Error> {
     let first = host.read_little_word(544)? >> 2;
     for sprite in first..128 {

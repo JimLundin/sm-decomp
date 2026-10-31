@@ -808,16 +808,7 @@ pub fn draw_cinematic_sprites<H: crate::menus::host::Host + ?Sized>(ending: bool
             .wrapping_sub(0xda02)
             & 0x8000
             != 0
-        && word!(game.OAM_NEXT_PTR) < 0x200
     {
-        let first = usize::from(word!(game.OAM_NEXT_PTR) >> 2);
-        let group = usize::from(word!(game.OAM_NEXT_PTR) >> 5);
-        word!(game.OAM_EXT[group] |= 0x5555u16 << (2 * (first & 7)));
-        for group in group + 1..16 {
-            word!(game.OAM_EXT[group] = 0x5555);
-        }
-        // The extension writes precede rereading the first unused OAM entry.
-        let first = usize::from(word!(game.OAM_NEXT_PTR) >> 2);
-        crate::word_transfers!(game, 4, 128 - first; native(0x370 + 4 * first) <- value(0x80));
+        crate::sprite_drawing::hide_unused_large(game);
     }
 }

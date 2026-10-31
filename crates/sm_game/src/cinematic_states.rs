@@ -145,7 +145,7 @@ pub fn nintendo_logo<H: Host + ?Sized>(game: &mut H) -> u8 {
             mirror::INIDISP,
             false,
         );
-        word!(game.OAM_NEXT_PTR = 0);
+        crate::sprite_drawing::reset_cursor(game);
         crate::sprite_drawing::clear_high_table(game);
         crate::sprite_drawing::finish_frame(game);
         word!(game.NMI_COPY_SAMUS_HALVES = 0);
@@ -220,7 +220,7 @@ pub fn nintendo_logo<H: Host + ?Sized>(game: &mut H) -> u8 {
             }
         }
         crate::sprite_drawing::clear_high_table(game);
-        word!(game.OAM_NEXT_PTR = 0);
+        crate::sprite_drawing::reset_cursor(game);
         draw_nintendo_logo(game);
         stage = match stage {
             0 | 1 => {
