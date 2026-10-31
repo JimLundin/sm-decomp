@@ -957,3 +957,40 @@ ROM_PATCHES = [
      'Handle message box interaction - LOOP_SAVE_INPUT',
      'BNE becomes CLC CLC, so save-confirmation input is polled every lag frame instead of every second one'),
 ]
+
+# Entries that only work together: each group's members share `faithful` and
+# `native`, so they are dropped and flipped in one change.
+# (table, addresses, reason)
+FLIP_GROUPS = [
+    ("ROM_PATCHES", (0x8095E1, 0x828944, 0x82897A, 0x82F713),
+     "the controller read moved from NMI and snesrev's main loop that does it"),
+    ("ROM_PATCHES", (0x84EFD3, 0x848243),
+     "$84:8243 calls the item GFX guard written at $84:EFD3"),
+    ("ROM_PATCHES", (0x86F4A6, 0x8685BD),
+     "$86:85BD jumps to the projectile index load written at $86:F4A6"),
+    ("ROM_PATCHES", (0xA7FF82, 0xA7B03A),
+     "$A7:B03A calls the scratch-preserving wrapper written at $A7:FF82"),
+    ("ROM_PATCHES", (0x859660, 0x8583BA),
+     "$85:83BA calls the HDMA table writer entry written at $85:9660"),
+    ("ROM_PATCHES", (0x859670, 0xA2AB22),
+     "$A2:AB22 jumps to the gunship save confirmation shim at $85:9670"),
+    ("ROM_PATCHES", (0x8584A3, 0x859650),
+     "$85:84A3 calls the message box input poll written at $85:9650"),
+    ("ROM_PATCHES", (0x82896B, 0x82F70F),
+     "$82:896B calls the game state dispatch trampoline at $82:F70F"),
+    ("ROM_PATCHES", (0x8BA362, 0x8BF760),
+     "$8B:A362 returns through the stub written at $8B:F760"),
+    ("ROM_PATCHES", (0x82E526, 0x80D004),
+     "$82:E526 calls the door scroll poll written at $80:D004"),
+    ("ROM_PATCHES", (0x82E400, 0x82F730, 0x8596E0),
+     "$82:E400 calls the door lag-frame wait at $82:F730, which calls $85:96E0"),
+    ("ROM_PATCHES", (0x80D000, 0x82E02C, 0x82E06B, 0x82E50D, 0x82E609),
+     "the synchronous door VRAM updates call $80:D000"),
+    ("ROM_PATCHES", (0x81F000, 0x819027, 0x819112, 0x8194E9),
+     "the soft resets jump to the host-owned reset at $81:F000"),
+    ("ROM_PATCHES", (0x858080, 0x859695, 0x8596A0, 0x828B65, 0x8596C0, 0x8580E5, 0x84EFDC,
+                     0x8485F7, 0x84F000, 0x848CF6, 0x859681),
+     "the deferred message box: the request-only entry and the hooks that run it"),
+    ("CARRY", (0xA8A543, 0xA8A54F, 0xA8A55B, 0xA8A567, 0xA8A573, 0xA8A57F, 0xA8A58B),
+     "the yapping maw's chained segment offset adds"),
+]

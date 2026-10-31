@@ -89,6 +89,23 @@ def render(tables):
     return rustfmt("\n".join(lines) + "\n")
 
 
+def check_groups(tables):
+    """Members of a flip group must exist, share native, and be removable together."""
+    import snesrev_patches
+
+    for table, addresses, reason in snesrev_patches.FLIP_GROUPS:
+        entries = {entry[0]: entry for entry in tables[table]}
+        missing = [f"${address:06X}" for address in addresses if address not in entries]
+        if missing:
+            raise SystemExit(f"flip group ({reason}) names unknown {table} entries {missing}")
+        # Kept and changed entries are both always installed.
+        policies = {(entries[address][3] == "removed", entries[address][4]) for address in addresses}
+        if len(policies) != 1:
+            members = ", ".join(f"${address:06X}={entries[address][3]}/{entries[address][4]}"
+                                for address in addresses)
+            raise SystemExit(f"flip group ({reason}) must flip together: {members}")
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--check", action="store_true", help="fail if the Rust lists are stale")
@@ -100,6 +117,7 @@ def main():
             missing = ", ".join(f"${value:06X}" for value in sorted(sites - listed))
             extra = ", ".join(f"${value:06X}" for value in sorted(listed - sites))
             raise SystemExit(f"{table} disagrees with the Rust sites: missing [{missing}], extra [{extra}]")
+    check_groups(tables)
     text = render(tables)
     if args.check:
         if not OUTPUT.is_file() or OUTPUT.read_text(encoding="utf-8") != text:
