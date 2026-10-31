@@ -204,6 +204,10 @@ impl<'g> Runtime<'g> {
     pub(crate) fn samus_source_diagnostic(&mut self, address: u32) {
         native_rom_diagnostic(address, self.game);
     }
+    /// Whether this lease is current and its Session owns the display.
+    pub(crate) fn display_owned(&self) -> bool {
+        self.persistent_is_current() && self.session().presentation.is_owned()
+    }
     pub(crate) fn has_owned_display(&self) -> bool {
         self.session().presentation.is_owned()
     }

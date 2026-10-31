@@ -28,7 +28,6 @@ use crate::constants::enemy_properties::*;
 use crate::enemy_projectiles::shared_pre::{x_velocity_at_angle, y_velocity_at_angle};
 use crate::enemy_script::EnemyScript;
 use crate::palette_copies::{copy_rom_colors_to_palette, copy_rom_colors_to_target_palette};
-use crate::ram::word;
 use crate::word_transfers;
 
 /// What the baby Metroid reaches beyond Mother Brain's fight and its own helpers.
@@ -681,7 +680,7 @@ fn baby_metroid_frame(game: &mut impl Lease) {
         game,
     );
     move_enemy_with_velocity(game);
-    if word!(game.PALETTE_CHANGE_NUM) == 0 {
+    if game.owned(OwnedWord::PaletteFadeStep) == 0 {
         handle_normal_palette(game);
     }
 }

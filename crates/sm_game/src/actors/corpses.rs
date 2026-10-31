@@ -985,9 +985,8 @@ fn transfer_corpse_tiles(
     } else {
         (k as usize >> 1) * 2
     };
-    let progress_offset = 0xf78 + core::mem::offset_of!(Corpse, rot_entry);
     for (row, &minimum) in row_gates.iter().enumerate() {
-        let progress = || crate::ram::checked_word!(game, progress_offset;);
+        let progress = || session_slot!(game, Corpse[0i32].rot_entry);
         if minimum != 0 && progress() < minimum {
             continue;
         }
