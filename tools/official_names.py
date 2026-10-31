@@ -1147,6 +1147,11 @@ IDENTIFIERS = (
     ('sm/src/tracing.rs', 'opcodeType', 'OPCODE_TYPES', 'Rust naming; 65816 trace operand kinds'),
     ('sm/src/tracing.rs', 'opcodeNamesSpc', 'SPC_OPCODE_NAMES', 'Rust naming; SPC700 trace mnemonics'),
     ('sm/src/tracing.rs', 'opcodeTypeSpc', 'SPC_OPCODE_TYPES', 'Rust naming; SPC700 trace operand kinds'),
+    # sm's C typedef aliases that are still used: Rust's UpperCamelCase (lane L).
+    ('sm/src/types.rs', 'SDL_Keycode', 'SdlKeycode', 'Rust naming; the SDL key code the config lookup takes'),
+    ('sm/src/types.rs', 'SDL_Keymod', 'SdlKeymod', 'Rust naming; the SDL modifier mask the config lookup takes'),
+    ('sm/src/types.rs', 'SDL_GLContext', 'SdlGlContext', 'Rust naming; an SDL OpenGL context handle'),
+    ('sm/src/types.rs', 'Enemy_Botwoon', 'BotwoonLayout', "Rust naming; Botwoon's enemy slot layout"),
 )
 
 LOCALS = (
@@ -1215,6 +1220,8 @@ ALLOW_REMOVALS = (
     ('sm/src/lib.rs', 'non_upper_case_globals'),
     ('sm/src/verify_dll.rs', 'non_upper_case_globals'),
     ('sm/src/verification/player_detached/main.rs', 'non_upper_case_globals'),
+    ('sm/src/lib.rs', 'non_camel_case_types'),
+    ('sm/src/verification/player_detached/main.rs', 'non_camel_case_types'),
 )
 
 CONSTANTS = (

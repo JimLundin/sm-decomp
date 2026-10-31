@@ -1,6 +1,6 @@
 //! Native C-library boundary. Keep the original ABI types and symbols here.
 
-use crate::types::{FILE, size_t, time_t};
+use crate::types::FILE;
 use ::core::ffi::{c_char, c_double, c_long, c_void};
 
 /// The original C assertion failure for NUL-terminated literal diagnostics.
@@ -38,17 +38,17 @@ unsafe extern "C" {
     pub fn exit(__status: i32) -> !;
     pub fn fprintf(__stream: *mut FILE, __format: *const c_char, ...) -> i32;
     pub fn free(__ptr: *mut c_void);
-    pub fn getcwd(__buf: *mut c_char, __size: size_t) -> *mut c_char;
-    pub fn memcmp(__s1: *const c_void, __s2: *const c_void, __n: size_t) -> i32;
-    pub fn memcpy(__dest: *mut c_void, __src: *const c_void, __n: size_t) -> *mut c_void;
-    pub fn memset(__s: *mut c_void, __c: i32, __n: size_t) -> *mut c_void;
+    pub fn getcwd(__buf: *mut c_char, __size: usize) -> *mut c_char;
+    pub fn memcmp(__s1: *const c_void, __s2: *const c_void, __n: usize) -> i32;
+    pub fn memcpy(__dest: *mut c_void, __src: *const c_void, __n: usize) -> *mut c_void;
+    pub fn memset(__s: *mut c_void, __c: i32, __n: usize) -> *mut c_void;
     pub fn printf(__format: *const c_char, ...) -> i32;
     pub fn puts(__s: *const c_char) -> i32;
     pub fn rename(__old: *const c_char, __new: *const c_char) -> i32;
-    pub fn snprintf(__s: *mut c_char, __maxlen: size_t, __format: *const c_char, ...) -> i32;
+    pub fn snprintf(__s: *mut c_char, __maxlen: usize, __format: *const c_char, ...) -> i32;
     pub fn sprintf(__s: *mut c_char, __format: *const c_char, ...) -> i32;
     pub static mut stderr: *mut FILE;
     pub fn strtod(__nptr: *const c_char, __endptr: *mut *mut c_char) -> c_double;
     pub fn strtol(__nptr: *const c_char, __endptr: *mut *mut c_char, __base: i32) -> c_long;
-    pub fn time(__timer: *mut time_t) -> time_t;
+    pub fn time(__timer: *mut core::ffi::c_long) -> core::ffi::c_long;
 }

@@ -1,6 +1,6 @@
 use crate::snes::dsp::{Dsp, dsp_cycle, dsp_reset, dsp_write};
 pub use crate::types::{
-    Channel, DspRegWriteHistory, NativePlayerState, SfxChan, SfxRegs, SpcPlayer, size_t,
+    Channel, DspRegWriteHistory, NativePlayerState, SfxChan, SfxRegs, SpcPlayer,
 };
 pub use sequencer::{
     Music as MusicSequencer, Sfx as SfxChannelSequencer, SfxAction, SfxGroupAction,

@@ -9,7 +9,7 @@ use sdl2_sys::{
 };
 use sm::c_library::printf;
 use sm::host::Die;
-use sm::types::{GlTextureWithSize, RendererFuncs, SDL_GLContext, SDL_Window};
+use sm::types::{GlTextureWithSize, RendererFuncs, SDL_Window, SdlGlContext};
 use std::cell::RefCell;
 use std::ffi::{CStr, c_void};
 use std::ptr::{null, null_mut};
@@ -73,7 +73,7 @@ unsafe extern "C-unwind" fn opengl_renderer_init(window: *mut SDL_Window) -> boo
         let mut state = presenter.borrow_mut();
         unsafe {
             state.window = window;
-            let _context: SDL_GLContext = SDL_GL_CreateContext(window);
+            let _context: SdlGlContext = SDL_GL_CreateContext(window);
             SDL_GL_SetSwapInterval(1);
             crate::platform::glsl_shader::load_with(|name| {
                 sdl2_sys::SDL_GL_GetProcAddress(

@@ -3,7 +3,7 @@ use crate::execution::{DmaRomSource, Execution};
 use crate::host::Die;
 use crate::rom::RomImage;
 use crate::rtl::words;
-pub use crate::types::{Cart, Snes, size_t};
+pub use crate::types::{Cart, Snes};
 use ::core::ffi::c_void;
 use ::core::ptr::null_mut;
 pub const NULL: *mut c_void = null_mut::<c_void>();

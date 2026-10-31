@@ -1,5 +1,5 @@
 use crate::initial_state::InitialState;
-pub use crate::types::{Dsp, DspState, size_t};
+pub use crate::types::{Dsp, DspState};
 use core::mem::size_of;
 
 const _: () = {

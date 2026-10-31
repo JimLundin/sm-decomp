@@ -1,12 +1,12 @@
 //! Shared byte-compatible gameplay, hardware and music types.
 
 use crate::game_state::Game;
-use ::core::ffi::{c_char, c_double, c_long, c_uchar, c_ushort, c_void};
+use ::core::ffi::{c_char, c_double, c_uchar, c_ushort, c_void};
 pub use sm_game::actors::content_records::{EnemyDef, ExtendedSpriteMap, Hitbox, LongPtr};
 pub use sm_game::actors::layouts::EnemyBase;
 
 crate::type_aliases! {
-    pub VoidP, PpuZbufType, Uint16, stbi__uint16 = u16;
+    pub VoidP, PpuZbufType, Uint16 = u16;
 }
 
 crate::typed_struct! {
@@ -251,7 +251,6 @@ crate::typed_struct! {
         pub tilemapAdr, tileAdr: u16;
         pub bigTiles, mosaicEnabled: bool;
     }
-
 
     pub struct Channel {
         pub pattern_order_ptr_for_chan: u16;
@@ -587,10 +586,7 @@ pub use crate::game::constants::{
 };
 
 crate::type_aliases! {
-    pub DspReg, EnemyAiBits, GLSLScaleType, GLbitfield, GLenum,
-        GLuint, LiquidPhysicsType, RunMode, SDL_GLattr,
-        SDL_HitTestResult, SDL_Keymod, SDL_Scancode, SDL_bool, SnesRegs, Uint32, __mode_t, ogl_LoadStatus, stbi__uint32, KeyAction, OutputMethod,
-        SaveLoadOperation = u32;
+    pub DspReg, EnemyAiBits, GLSLScaleType, GLbitfield, GLenum, GLuint, LiquidPhysicsType, RunMode, SdlKeymod, SnesRegs, Uint32, KeyAction, OutputMethod, SaveLoadOperation = u32;
 }
 
 crate::type_aliases! {
@@ -598,27 +594,15 @@ crate::type_aliases! {
 }
 
 crate::type_aliases! {
-    pub FuncXY_V, Func_CalcHdma, Func_SpazerSba_V = unsafe fn(u16, u16, &mut Game) -> ();
+    pub HandlerFunc, SyncAllFunc = unsafe fn(&mut Game) -> ();
 }
 
 crate::type_aliases! {
-    pub Func_U8, Func_V_A = unsafe fn(&mut Game) -> u8;
+    pub GLboolean, GLubyte = c_uchar;
 }
 
 crate::type_aliases! {
-    pub Func_V, HandlerFunc, SyncAllFunc = unsafe fn(&mut Game) -> ();
-}
-
-pub type Func_Y_V = unsafe fn(u16, &mut Game) -> ();
-
-pub type Func_Y_Y = unsafe fn(u16, &mut Game) -> u16;
-
-crate::type_aliases! {
-    pub GLboolean, GLubyte, stbi_uc = c_uchar;
-}
-
-crate::type_aliases! {
-    pub GLint, GLsizei, SDL_JoystickPowerLevel, Sint32, GamepadButton = i32;
+    pub GLint, GLsizei, Sint32, GamepadButton = i32;
 }
 
 crate::type_aliases! {
@@ -626,40 +610,24 @@ crate::type_aliases! {
 }
 
 crate::type_aliases! {
-    pub GLintptr, GLsizeiptr = ptrdiff_t;
+    pub GLintptr, GLsizeiptr = isize;
 }
 
 crate::type_aliases! {
-    pub GLushort, stbi_us = c_ushort;
+    pub GLushort = c_ushort;
 }
 
 pub type RunFrameFunc = unsafe fn(u16, i32, &mut Game) -> ();
 
-crate::type_aliases! {
-    pub SDL_FingerID, SDL_GestureID, SDL_TouchID = Sint64;
-}
-
-pub type SDL_GLContext = *mut c_void;
+pub type SdlGlContext = *mut c_void;
 
 crate::type_aliases! {
-    pub SDL_JoystickID, SDL_Keycode = Sint32;
+    pub SdlKeycode = Sint32;
 }
 
 pub type Sint16 = i16;
 
-crate::type_aliases! {
-    pub __off64_t, __off_t, __time_t = c_long;
-}
-
-pub type ptrdiff_t = isize;
-
-pub type size_t = usize;
-
-pub type time_t = __time_t;
-
-pub type CheckEnemyColl_Result = CheckSolidEnemyColl_Result;
-
-pub type Enemy_Botwoon = sm_game::actors::layouts::EnemyLayout104;
+pub type BotwoonLayout = sm_game::actors::layouts::EnemyLayout104;
 
 impl SpawnHardcodedPlmArgs {
     pub const fn new(block_x: u8, block_y: u8, header: VoidP) -> Self {

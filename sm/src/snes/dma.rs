@@ -5,7 +5,7 @@ use ::core::ffi::c_char;
 use ::core::mem::transmute;
 
 use crate::c_library::printf;
-pub use crate::types::{Dma, Snes, size_t};
+pub use crate::types::{Dma, Snes};
 pub const __ASSERT_FUNCTION: [c_char; 34] =
     unsafe { transmute::<[u8; 34], [c_char; 34]>(*b"uint8_t dma_read(Dma *, uint16_t)\0") };
 static B_BUS_OFFSETS: [[i32; 4]; 8] = [

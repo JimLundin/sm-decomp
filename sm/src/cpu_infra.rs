@@ -19,7 +19,7 @@ use crate::snes::cpu::{cpu_getFlags, cpu_setFlags};
 use crate::snes::snes_other::snes_loadRom;
 use crate::tracing::getProcessorStateCpu;
 pub use crate::types::ProjectileInstr;
-pub use crate::types::{Cpu, Dma, Enemy_Botwoon, Ppu, Snes, size_t, time_t};
+pub use crate::types::{BotwoonLayout, Cpu, Dma, Ppu, Snes};
 // Explicit state previously included by the oversized OAM memory copy.
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub struct SpriteSnapshot {
@@ -327,27 +327,27 @@ unsafe fn patch_bugs_parts(mode: u32, addr: u32, game: &mut HookContext<'_, '_>)
             } else if fix_bug_hook(0xb39ddb, &mut game.host) {
                 let E = word!(game.CUR_ENEMY_INDEX) as i32;
                 word!(
-                    game.REMOVED_R18 = (slot!(game, Enemy_Botwoon[E].base.x_pos) as i32
-                        - slot!(game, Enemy_Botwoon[E].var_56) as i32)
+                    game.REMOVED_R18 = (slot!(game, BotwoonLayout[E].base.x_pos) as i32
+                        - slot!(game, BotwoonLayout[E].var_56) as i32)
                         as u16
                 );
                 word!(
-                    game.REMOVED_R20 = (slot!(game, Enemy_Botwoon[E].base.y_pos) as i32
-                        - slot!(game, Enemy_Botwoon[E].var_57) as i32)
+                    game.REMOVED_R20 = (slot!(game, BotwoonLayout[E].base.y_pos) as i32
+                        - slot!(game, BotwoonLayout[E].var_57) as i32)
                         as u16
                 );
             } else if fix_bug_hook(0xb39e13, &mut game.host) {
                 let E_0 = word!(game.CUR_ENEMY_INDEX) as i32;
                 slot!(
                     game,
-                    Enemy_Botwoon[E_0].var_45 = (slot!(game, Enemy_Botwoon[E_0].var_45) as i32
+                    BotwoonLayout[E_0].var_45 = (slot!(game, BotwoonLayout[E_0].var_45) as i32
                         + (word!(game.REMOVED_R22) as i32
-                            - slot!(game, Enemy_Botwoon[E_0].var_45) as i32)
+                            - slot!(game, BotwoonLayout[E_0].var_45) as i32)
                             as i8 as i32
                             * 3
                             / 4) as u8 as u16
                 );
-                word!(game.REMOVED_R22 = slot!(game, Enemy_Botwoon[E_0].var_45));
+                word!(game.REMOVED_R22 = slot!(game, BotwoonLayout[E_0].var_45));
             }
         }
         0
@@ -381,7 +381,7 @@ pub(crate) unsafe fn opcode_hook(game: &mut Execution<'_>, addr: u32) -> i32 {
 }
 unsafe fn opcode_hook_parts(addr: u32, game: &mut HookContext<'_, '_>) -> i32 {
     unsafe {
-        let mut i: size_t = 0 as size_t;
+        let mut i: usize = 0 as usize;
         while i != (size_of::<[u32; 155]>() as usize).wrapping_div(size_of::<u32>() as usize) {
             if addr == PATCHED_CARRIES[i as usize] {
                 return game.host.kPatchedCarrysOrg[i as usize] as i32;
@@ -766,7 +766,7 @@ unsafe fn VerifySnapshotsEq(
         if memcmp(
             &raw mut (*b).ppu.vram as *mut u16 as *const c_void,
             &raw mut (*a).ppu.vram as *mut u16 as *const c_void,
-            (size_of::<u16>() as size_t).wrapping_mul(0x8000 as size_t),
+            (size_of::<u16>() as usize).wrapping_mul(0x8000 as usize),
         ) != 0
         {
             game.g_fail = true;
@@ -775,7 +775,7 @@ unsafe fn VerifySnapshotsEq(
                 c"@%d: VRAM compare failed (mine != theirs, prev):\n".as_ptr(),
                 game.snes_frame_counter,
             );
-            let mut j_1: size_t = 0 as size_t;
+            let mut j_1: usize = 0 as usize;
             for i_1 in 0usize..32768 {
                 if (*a).ppu.vram[i_1 as usize] as i32 != (*b).ppu.vram[i_1 as usize] as i32 {
                     fprintf(
@@ -788,7 +788,7 @@ unsafe fn VerifySnapshotsEq(
                     );
                     game.g_fail = true;
                     j_1 = j_1.wrapping_add(1);
-                    if j_1 >= 32 as size_t {
+                    if j_1 >= 32 as usize {
                         break;
                     }
                 }
@@ -1287,9 +1287,9 @@ pub unsafe fn SaveBugSnapshot(game: &mut Game) {
             let mut buffer: [c_char; 64] = [0; 64];
             snprintf(
                 &raw mut buffer as *mut c_char,
-                size_of::<[c_char; 64]>() as size_t,
+                size_of::<[c_char; 64]>() as usize,
                 c"saves/bug-%d.sav".as_ptr(),
-                time(null_mut::<time_t>()) as i32,
+                time(null_mut::<core::ffi::c_long>()) as i32,
             );
             RtlSaveSnapshot(&raw mut buffer as *mut c_char, true, game);
         }
