@@ -12,20 +12,6 @@ Do not add new dependencies of these kinds. When a check is changed so it no
 longer needs an entry, remove the held behavior, its tags and its row here in
 the same change.
 
-## `LEGACY(message-text)`: hand-written slice-index panic text
-
-Checks once compared the exact text of panics, so production code spelled out
-`index out of bounds: the len is N but the index is i` by hand. The checks now
-assert the state a failed call leaves; these panics keep only the wording.
-
-| Held in production | What is kept |
-| --- | --- |
-| `crates/sm_game/src/player_projectiles/{weapons,specials,bomb_terrain}.rs` | 11 hand-written slice-index panics |
-| `crates/sm_game/src/actors/mother_brain_fight.rs` | 1 hand-written slice-index panic |
-
-To retire an entry: index the table directly (or use
-`sm_data::table::check_index`) and delete the tags.
-
 ## Faithful-oracle known divergences
 
 `SM_ORACLE=faithful` runs the original game without snesrev's patches. Some

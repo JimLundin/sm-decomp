@@ -134,11 +134,8 @@ fn fire(h: &mut impl Host, charged: bool) {
                 };
                 if wave || shot_native!(h, selected, kind) & super::kinds::TYPE_MASK == 0 {
                     let index = usize::from(shot!(h, selected, kind) & 15);
-                    let motion =
-                        definitions::motion(mode == Mode::Charged, index).unwrap_or_else(|| {
-                            // LEGACY(message-text): hand-written slice-index panic text, kept because verifier cases compare panic text.
-                            panic!("index out of bounds: the len is 12 but the index is {index}")
-                        });
+                    let motion = definitions::motion(mode == Mode::Charged, index)
+                        .expect("beam kind selects a motion");
                     shot!(h, selected, motion = definitions::instruction(motion); SliceLe);
                     super::motion::initialize_beam_speed(h, selected);
                 }
@@ -164,10 +161,7 @@ fn fire(h: &mut impl Host, charged: bool) {
 }
 pub fn initial_collision(h: &mut impl Host, caller: u16, wave: bool) {
     let direction = shot!(h, caller, direction) & 15;
-    if direction >= 10 {
-        // LEGACY(message-text): hand-written slice-index panic text, kept because verifier cases compare panic text.
-        panic!("index out of bounds: the len is 10 but the index is {direction}");
-    }
+    sm_data::table::check_index(usize::from(direction), 10);
     let selected = h.session().projectiles.selected;
     let kind = if wave { Flight::Wave } else { Flight::NonWave };
     match direction {
@@ -191,8 +185,5 @@ pub fn initial_collision(h: &mut impl Host, caller: u16, wave: bool) {
     h.probe("player_projectiles.initial_collision.checked");
 }
 pub fn charged_instruction(index: usize) -> u16 {
-    definitions::instruction(definitions::motion(true, index).unwrap_or_else(|| {
-        // LEGACY(message-text): hand-written slice-index panic text, kept because verifier cases compare panic text.
-        panic!("index out of bounds: the len is 12 but the index is {index}")
-    }))
+    definitions::instruction(definitions::motion(true, index).expect("beam kind selects a motion"))
 }

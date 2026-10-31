@@ -57,14 +57,7 @@ pub fn fire(h: &mut impl Host) -> u8 {
     }
     let selector = usize::from(h.session().inventory.beams.active & 15);
     let costs = [0i16, 1, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0];
-    let Some(&cost) = costs.get(selector) else {
-        // LEGACY(message-text): hand-written slice-index panic text, kept because verifier cases compare panic text.
-        panic!(
-            "index out of bounds: the len is {} but the index is {}",
-            costs.len(),
-            selector
-        );
-    };
+    let cost = costs[selector];
     let remaining = (h.session().inventory.ammunition[2].current as i16)
         .wrapping_sub(cost)
         .max(0) as u16;
@@ -206,16 +199,7 @@ pub fn update(h: &mut impl Host, mut selected: u16, kind: Kind) {
             h.sound(1, 6, if kind == Kind::Wave { 0x29 } else { 0x24 });
         }
         if kind == Kind::Spazer {
-            let paired = [4, 6, 0, 2].get(usize::from(slot >> 1)).copied();
-            let paired = match paired {
-                Some(v) => v,
-                // LEGACY(message-text): hand-written slice-index panic text, kept because verifier cases compare panic text.
-                None => panic!(
-                    "index out of bounds: the len is {} but the index is {}",
-                    4,
-                    usize::from(slot >> 1)
-                ),
-            };
+            let paired = [4, 6, 0, 2][usize::from(slot >> 1)];
             super::motion::clear(h, selected);
             return super::motion::clear(h, paired);
         }
@@ -341,13 +325,7 @@ pub fn depart_plasma(h: &mut impl Host, selected: u16) {
 pub fn advance_spazer(h: &mut impl Host, selected: u16, y: u16) {
     let index = usize::from(selected >> 1);
     let phase = usize::from(shot!(h, selected, auxiliary) >> 1);
-    if phase >= 3 {
-        // LEGACY(message-text): hand-written slice-index panic text, kept because verifier cases compare panic text.
-        panic!(
-            "index out of bounds: the len is {} but the index is {}",
-            3, phase
-        );
-    }
+    sm_data::table::check_index(phase, 3);
     let y = y
         .wrapping_add(h.session().player.y)
         .wrapping_sub(if phase == 0 { 0 } else { 114 });
@@ -361,13 +339,7 @@ pub fn advance_spazer(h: &mut impl Host, selected: u16, y: u16) {
     if phase == 0 {
         if angle == 128 {
             shot!(h, selected, x_speed = 160; SliceLe);
-            let Some(&speed) = [2, 0xfffe, 2, 0xfffe].get(index) else {
-                // LEGACY(message-text): hand-written slice-index panic text, kept because verifier cases compare panic text.
-                panic!(
-                    "index out of bounds: the len is {} but the index is {}",
-                    4, index
-                );
-            };
+            let speed = [2, 0xfffe, 2, 0xfffe][index];
             shot!(h, selected, y_speed = speed; SliceLe);
             shot!(h, selected, direction = 0; SliceLe);
             shot!(h, selected, auxiliary = 2; SliceLe);
@@ -376,13 +348,7 @@ pub fn advance_spazer(h: &mut impl Host, selected: u16, y: u16) {
         let radius = shot!(h, selected, x_speed).wrapping_sub(5);
         shot!(h, selected, x_speed = radius; SliceLe);
         if radius == 0 {
-            let Some(&speed) = [0xfffe, 2, 0xfffe, 2].get(index) else {
-                // LEGACY(message-text): hand-written slice-index panic text, kept because verifier cases compare panic text.
-                panic!(
-                    "index out of bounds: the len is {} but the index is {}",
-                    4, index
-                );
-            };
+            let speed = [0xfffe, 2, 0xfffe, 2][index];
             shot!(h, selected, y_speed = speed; SliceLe);
             let angle = u16::from((shot!(h, selected, variable) as u8).wrapping_add(128));
             shot!(h, selected, variable = angle; SliceLe);
@@ -403,13 +369,7 @@ pub fn finish_spazer(h: &mut impl Host, selected: u16) {
     let index = usize::from(selected >> 1);
     // The compound assignment reads X before demanding the table entry.
     let x = shot!(h, selected, x);
-    let Some(&offset) = [16, 16, 0xfff0, 0xfff0].get(index) else {
-        // LEGACY(message-text): hand-written slice-index panic text, kept because verifier cases compare panic text.
-        panic!(
-            "index out of bounds: the len is {} but the index is {}",
-            4, index
-        );
-    };
+    let offset = [16, 16, 0xfff0, 0xfff0][index];
     shot!(h, selected, x = x.wrapping_add(offset); SliceLe);
     shot!(h, selected, direction = 5; SliceLe);
     shot!(h, selected, trail_time = 4; SliceLe);

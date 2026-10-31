@@ -1312,8 +1312,7 @@ crate::dispatch::callback_dispatch! {
             1 => phase2_firing_hand_beam_wait_for_any_active_bombs(game),
             2 => phase2_firing_hand_beam_idle(game),
             3 => phase2_firing_hand_beam_finish(game),
-            // LEGACY(message-text): hand-written slice-index panic text, kept because verifier cases compare panic text.
-            _ => panic!("index out of bounds: the len is 4 but the index is {}", v0),
+            _ => panic!("hand beam phase {v0} selects no routine"),
         }
     };
     [11122923] phase2_firing_rainbow_beam_extend_neck [] {
