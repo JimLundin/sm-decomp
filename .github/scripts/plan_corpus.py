@@ -65,22 +65,37 @@ for r in rows:
         kind = 'checkpoint' if 'checkpoint' in r else ('seed' if 'seed' in r else ('route' if r['inputs'].startswith('corpus-') else 'captured'))
         identity = seed_bundle(r)[0] if kind in ('seed', 'checkpoint') else r['inputs']
         groups.setdefault((kind, identity), []).append(r)
+def chunks(kind, members):
+    # A rejected configured checkpoint regenerates its own complete boot prefix,
+    # so bound that cold work per row. Seed groups share only a seconds-long
+    # bundle restore, so split one heavier than a twelfth of the corpus.
+    if kind == 'checkpoint':
+        return [[r] for r in members]
+    if kind != 'seed':
+        return [members[i:i + 9] for i in range(0, len(members), 9)]
+    out, current = [], []
+    for r in members:
+        if current and sum(m.get('frames', 0) for m in current) + r.get('frames', 0) > FRAME_CAP:
+            out.append(current)
+            current = []
+        current.append(r)
+    return out + [current]
+
+FRAME_CAP = sum(r.get('frames', 0) for g in groups.values() for r in g) / 12
 shards = []
 for (kind, identity), members in sorted(groups.items()):
     members.sort(key=lambda r: r.get('start_frame', 0))
-    # A rejected configured checkpoint regenerates its own complete boot prefix.
-    # Bound that cold work per row; seed and route groups retain shared setup.
-    width = 1 if kind == 'checkpoint' else (len(members) if kind == 'seed' else 9)
-    for i in range(0, len(members), width):
-        chunk = members[i:i + width]
+    for i, chunk in enumerate(chunks(kind, members)):
         inputs = chunk[0]['inputs']
         asset, digest = seed_bundle(chunk[0]) if kind != 'route' else ('', '')
         name = identity.removeprefix('layout150-').removeprefix('seeds-v1-').split('-')[0] if kind in ('seed', 'checkpoint') else identity.removesuffix('.inputs')
-        shards.append({'name': f"{kind}-{name}-{i // width}",
+        shards.append({'name': f"{kind}-{name}-{i}", 'frames': sum(r.get('frames', 0) for r in chunk),
                        'kind': kind, 'inputs': inputs,
                        'seed_asset': asset, 'seed_sha256': digest,
                        'route': inputs.removeprefix('corpus-').removesuffix('.inputs') if kind == 'route' else '',
                        'segments': ' '.join(r['id'] for r in chunk)})
+# Start the heaviest shards first: the matrix runs at most six at a time.
+shards.sort(key=lambda shard: -shard['frames'])
 if not shards:
     raise SystemExit('no runnable rows selected')
 with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as out:
