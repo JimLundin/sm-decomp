@@ -633,7 +633,7 @@ BUG_HOOKS = [
     (0xA29BC1, 'b', 'state', 'removed', 'patched',
      'Puyo movement',
      'Typo LDA $01 (should be LDA #$0001): hardware stores scratch byte [$01] as the inverted-direction flag; the hook stores 1'),
-    (0x82E910, 'a', 'none', 'removed', 'patched',
+    (0x82E910, 'a', 'none', 'removed', 'follows',
      'Spawn door closing PLM',
      'The spawn reads the PLM room argument from $8F:0016 = WRAM $16 (garbage on hardware); the blue-door and escape-gate closing PLMs never read their room argument (RAM-only difference in $1DC7)'),
     (0x90A4C8, 'b', 'state', 'removed', 'patched',

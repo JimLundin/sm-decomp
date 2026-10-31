@@ -347,13 +347,14 @@ fn calculate_explosion_hdma_table_pointers<H: Host + ?Sized>(
     if (radius & 0xff00) == 0 {
         word!(game.POWER_BOMB_EXPLOSION_Y_POS_RSUB_0X1FF = 0);
     }
-    object.table = (3 * word!(game.POWER_BOMB_EXPLOSION_Y_POS_RSUB_0X1FF) as i32
-        + ADDR_INDIRECT_HDMA_TABLE_POWER_BOMB_EXPLODE_LEFT as i32) as u16;
+    // The table offset passes through the direct-page scratch word $16 ($88:8CB4).
+    let offset = word!(game.POWER_BOMB_EXPLOSION_Y_POS_RSUB_0X1FF).wrapping_mul(3);
+    game.ram().copy_in(0x16, &offset.to_le_bytes());
+    object.table = offset.wrapping_add(ADDR_INDIRECT_HDMA_TABLE_POWER_BOMB_EXPLODE_LEFT as u16);
     // The right half is the next object, which stays on the host.
     word! { game;
         HDMA_OBJECT_TABLE_POINTERS[((k as i32 >> 1) + 1)] =
-            (3 * word!(game.POWER_BOMB_EXPLOSION_Y_POS_RSUB_0X1FF) as i32
-                + ADDR_INDIRECT_HDMA_TABLE_POWER_BOMB_EXPLODE_RIGHT as i32) as u16;
+            offset.wrapping_add(ADDR_INDIRECT_HDMA_TABLE_POWER_BOMB_EXPLODE_RIGHT as u16);
     }
 }
 
