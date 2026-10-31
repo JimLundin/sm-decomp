@@ -70,12 +70,64 @@ enum Policy {
 /// reproduces it, and never in faithful mode.
 pub(crate) fn installs(kind: PatchKind, address: u32) -> bool {
     let listed = |table| kind.sites(table).contains(&address);
-    listed(Policy::Kept) || listed(Policy::Changed) || !(faithful() || listed(Policy::Follows))
+    listed(Policy::Kept) || listed(Policy::Changed) || !drops(kind, address)
 }
 
 /// Whether an installed "changed" patch uses its variant closer to the original.
 pub(crate) fn follows_original(kind: PatchKind, address: u32) -> bool {
-    faithful() || kind.sites(Policy::Follows).contains(&address)
+    drops(kind, address)
+}
+
+/// Whether the oracle drops this removable patch: in faithful mode unless
+/// `SM_ORACLE_KEEP` keeps it, otherwise once the Rust engine follows it.
+fn drops(kind: PatchKind, address: u32) -> bool {
+    if faithful() {
+        !faithful_keeps().contains(&address)
+    } else {
+        kind.sites(Policy::Follows).contains(&address)
+    }
+}
+
+/// The controller read snesrev moved from NMI; these four entries flip together.
+const INPUT_ENTRIES: [u32; 4] = [0x8095e1, 0x828944, 0x82897a, 0x82f713];
+
+/// Entries the faithful oracle still installs, from `SM_ORACLE_KEEP`: comma
+/// separated addresses (`0x8095e1` or `$80:95E1`), or `input` for the four
+/// controller-read entries. Lanes use it to triage faithful mode without
+/// entries whose native work is pending.
+fn faithful_keeps() -> &'static [u32] {
+    static KEEPS: OnceLock<Vec<u32>> = OnceLock::new();
+    KEEPS.get_or_init(|| {
+        let Ok(text) = std::env::var("SM_ORACLE_KEEP") else {
+            return Vec::new();
+        };
+        let mut keeps = Vec::new();
+        for token in text
+            .split(',')
+            .map(str::trim)
+            .filter(|token| !token.is_empty())
+        {
+            if token == "input" {
+                keeps.extend(INPUT_ENTRIES);
+                continue;
+            }
+            let digits: String = token
+                .trim_start_matches("0x")
+                .trim_start_matches('$')
+                .chars()
+                .filter(|&char| char != ':')
+                .collect();
+            match u32::from_str_radix(&digits, 16) {
+                Ok(address) => keeps.push(address),
+                Err(_) => panic!("SM_ORACLE_KEEP entry {token:?} is not an address or `input`"),
+            }
+        }
+        // The controller-read entries only work as a group.
+        if INPUT_ENTRIES.iter().any(|entry| keeps.contains(entry)) {
+            keeps.extend(INPUT_ENTRIES);
+        }
+        keeps
+    })
 }
 
 /// Whether `PEA $C2AE` also clears Y, as snesrev's port needed.

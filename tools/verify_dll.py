@@ -841,6 +841,9 @@ def main():
     parser.add_argument("--oracle", choices=("patched", "faithful"),
                         help="oracle ROM: snesrev's compatibility patches (default) or the "
                         "original game logic (sets SM_ORACLE; see tools/snesrev_patches.py)")
+    parser.add_argument("--oracle-keep", metavar="ENTRIES",
+                        help="with --oracle faithful, still install these snesrev patches: comma "
+                        "separated addresses (0x8095e1 or $80:95E1) or `input` (sets SM_ORACLE_KEEP)")
     parser.add_argument("--audio-trace", type=Path,
                         help="stream ordered actual Cue/physical-oracle port outputs to a new file")
     parser.add_argument("--audio-trace-directory", type=Path,
@@ -860,6 +863,8 @@ def main():
         os.environ["SM_VERIFY_PHYSICAL_AUDIO"] = "1"
     if args.oracle is not None:
         os.environ["SM_ORACLE"] = args.oracle
+    if args.oracle_keep is not None:
+        os.environ["SM_ORACLE_KEEP"] = args.oracle_keep
     if os.environ.get("SM_ORACLE", "patched") not in ("patched", "faithful"):
         parser.error("SM_ORACLE must be patched or faithful")
     producer = args.room_pack_export is not None
