@@ -260,7 +260,14 @@ pub fn run<H: Host>(h: &mut H, ea: u32, p: Script<H::Record>, k: u16) -> Option<
                 mechanism!(h, slot as isize, pre_action = 0x8ae0);
                 p.jump_word(1)
             } else {
-                mechanism!(h, slot as isize, room_argument = u16::from(value));
+                // The 16-bit store ($84:8ADA) writes the 8-bit add under the accumulator's high
+                // byte, which still holds the dispatched instruction pointer's ($8A).
+                let [_, high, ..] = addresses::instructions::INCREMENT_ROOM_ARGUMENT.to_le_bytes();
+                mechanism!(
+                    h,
+                    slot as isize,
+                    room_argument = u16::from_le_bytes([value, high])
+                );
                 Some(p.advance(3))
             }
         }
