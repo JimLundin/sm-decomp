@@ -4,7 +4,7 @@ Data only. Committed data lives in Python or Rust modules, never JSON.
 
 The oracle runs the original ROM, but snesrev's port changes it in four ways:
 
-- CARRY: `kPatchedCarrys` in sm/src/cpu_infra.rs. The opcode becomes BRK and
+- CARRY: `PATCHED_CARRIES` in sm/src/cpu_infra.rs. The opcode becomes BRK and
   the oracle runs the original instruction after forcing the carry (C=1 before
   SBC, C=0 before ADC). Hardware uses the actual carry.
 - BUG_HOOKS: `patch_bugs_parts` in sm/src/cpu_infra.rs. The opcode becomes BRK
@@ -54,7 +54,7 @@ on hardware, and the faithful oracle's E0B5 to E06B door transition matches
 the capture frame for frame.
 """
 
-# kPatchedCarrys (sm/src/cpu_infra.rs): forced carry before ADC/SBC.
+# PATCHED_CARRIES (sm/src/cpu_infra.rs): forced carry before ADC/SBC.
 CARRY = [
     (0xA7AC33, 'a', 'none', 'removed', 'follows',
      'Main AI - enemy $E2BF (Kraid)',

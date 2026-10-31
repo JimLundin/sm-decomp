@@ -38,7 +38,7 @@ def inventory():
 def rust_sites():
     """Patch sites as the Rust oracle installs them."""
     cpu_infra = (ROOT / "sm" / "src" / "cpu_infra.rs").read_text(encoding="utf-8")
-    carry = re.search(r"static kPatchedCarrys: \[u32; \d+\] = \[(.*?)\];", cpu_infra, re.S).group(1)
+    carry = re.search(r"static PATCHED_CARRIES: \[u32; \d+\] = \[(.*?)\];", cpu_infra, re.S).group(1)
     patches = (ROOT / "sm" / "src" / "rom_patches.rs").read_text(encoding="utf-8")
     rom = re.findall(r"\(\s*0x([0-9a-f]{6}),\s*&\[", patches)
     rom += re.findall(r"startup_bytes\(\s*0x([0-9a-f]{6})", patches)

@@ -226,7 +226,7 @@ unsafe fn Sfx_Chan_Reset(p: *mut SpcPlayer, group: usize, index: usize, channel:
         sequencer::Sfx::finish_reset(&mut *sr);
     }
 }
-static kSfx1InstrListPtrs: [u16; 66] = [
+static SFX1_INSTRUCTION_LISTS: [u16; 66] = [
     0x2b71, 0x2baf, 0x2bb7, 0x2bc4, 0x2bd1, 0x2bfc, 0x2c2f, 0x2c37, 0x2cff, 0x2d12, 0x2d1a, 0x2d27,
     0x2d4b, 0x2d5d, 0x2d5f, 0x2d76, 0x2d95, 0x2d97, 0x2d99, 0x2da6, 0x2da8, 0x2daa, 0x2dac, 0x2dc8,
     0x2de7, 0x2dfe, 0x2e00, 0x2e17, 0x2e19, 0x2e1b, 0x2e1d, 0x2e34, 0x2e36, 0x2e38, 0x2e3a, 0x2e68,
@@ -234,12 +234,12 @@ static kSfx1InstrListPtrs: [u16; 66] = [
     0x2fc3, 0x2fdd, 0x2fe5, 0x3040, 0x3048, 0x3055, 0x305d, 0x3065, 0x3070, 0x3078, 0x307b, 0x308b,
     0x309b, 0x30a8, 0x30d6, 0x30e1, 0x312a, 0x313f,
 ];
-static kSfx1Conf: [u8; 66] = [
+static SFX1_CONFIG: [u8; 66] = [
     5, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 2, 0, 0, 2, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 2, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3,
     2, 2,
 ];
-static kSfx2InstrListPtrs: [u16; 127] = [
+static SFX2_INSTRUCTION_LISTS: [u16; 127] = [
     0x3ab1, 0x3ac3, 0x3ad5, 0x3af1, 0x3af3, 0x3af5, 0x3b0c, 0x3b28, 0x3b2a, 0x3b3a, 0x3b42, 0x3b5e,
     0x3b73, 0x3b85, 0x3b92, 0x3ba9, 0x3bb4, 0x3bc1, 0x3be7, 0x3c08, 0x3c33, 0x3c3b, 0x3c43, 0x3c56,
     0x3c90, 0x3cff, 0x3d46, 0x3d4e, 0x3d65, 0x3d81, 0x3d9b, 0x3da8, 0x3dbf, 0x3dd6, 0x3ded, 0x3e04,
@@ -252,19 +252,19 @@ static kSfx2InstrListPtrs: [u16; 127] = [
     0x444e, 0x446f, 0x447f, 0x448f, 0x449c, 0x44a4, 0x44b9, 0x44ce, 0x44ed, 0x4598, 0x459a, 0x4618,
     0x462d, 0x4642, 0x4657, 0x466c, 0x4679, 0x4686, 0x468e,
 ];
-static kSfx2Conf: [u8; 127] = [
+static SFX2_CONFIG: [u8; 127] = [
     1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 2, 2, 0, 1, 0, 3, 1, 0,
     0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 3, 1, 3, 0, 0, 0, 0, 0, 0, 1, 0, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 3, 0, 3, 3, 0, 0, 1, 0, 2, 0, 2, 3, 2, 0, 0, 0, 0, 0, 0,
     0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 0, 0, 3, 3, 3, 3, 0, 3, 2, 2, 2, 2, 1, 1, 1, 2,
 ];
-static kSfx3InstrListPtrs: [u16; 47] = [
+static SFX3_INSTRUCTION_LISTS: [u16; 47] = [
     0x4eed, 0x4ef5, 0x4f00, 0x4f4b, 0x4f5b, 0x4f6b, 0x4f73, 0x4f89, 0x4f9f, 0x4fb6, 0x4fe1, 0x4ff7,
     0x4fff, 0x500c, 0x5047, 0x50a8, 0x50c4, 0x50d1, 0x50d4, 0x50f0, 0x511a, 0x5130, 0x5142, 0x5175,
     0x5178, 0x5188, 0x518b, 0x51b9, 0x51c1, 0x51d4, 0x51f0, 0x51fd, 0x5200, 0x5208, 0x5229, 0x5231,
     0x5239, 0x5241, 0x524e, 0x5256, 0x5277, 0x5293, 0x52a5, 0x52b0, 0x52c6, 0x52f1, 0x530b,
 ];
-static kSfx3Conf: [u8; 47] = [
+static SFX3_CONFIG: [u8; 47] = [
     0, 1, 2, 3, 3, 2, 4, 4, 2, 5, 3, 2, 2, 4, 3, 2, 2, 5, 2, 4, 4, 2, 2, 2, 4, 2, 4, 2, 2, 2, 2, 5,
     5, 2, 2, 5, 2, 2, 2, 2, 2, 2, 2, 4, 2, 4, 2,
 ];
@@ -643,7 +643,8 @@ crate::forward_calls! { pub unsafe fn (p: *mut SpcPlayer);
 mod sequencer {
     use super::{Channel, Dsp, NativePlayerState, SfxChan, SfxRegs};
     use super::{
-        kSfx1Conf, kSfx1InstrListPtrs, kSfx2Conf, kSfx2InstrListPtrs, kSfx3Conf, kSfx3InstrListPtrs,
+        SFX1_CONFIG, SFX1_INSTRUCTION_LISTS, SFX2_CONFIG, SFX2_INSTRUCTION_LISTS, SFX3_CONFIG,
+        SFX3_INSTRUCTION_LISTS,
     };
     use crate::apu_ram::ApuRam;
     use crate::initial_state::InitialState;
@@ -1015,9 +1016,9 @@ mod sequencer {
             }
             regs.cur_sound_index = sound.wrapping_sub(1).wrapping_mul(2);
             let (instructions, configuration): (&[u16], &[u8]) = match group {
-                0 => (&kSfx1InstrListPtrs, &kSfx1Conf),
-                1 => (&kSfx2InstrListPtrs, &kSfx2Conf),
-                _ => (&kSfx3InstrListPtrs, &kSfx3Conf),
+                0 => (&SFX1_INSTRUCTION_LISTS, &SFX1_CONFIG),
+                1 => (&SFX2_INSTRUCTION_LISTS, &SFX2_CONFIG),
+                _ => (&SFX3_INSTRUCTION_LISTS, &SFX3_CONFIG),
             };
             regs.cur_ptr = instructions[usize::from(regs.cur_sound_index >> 1)];
             regs.cur_sound = sound;

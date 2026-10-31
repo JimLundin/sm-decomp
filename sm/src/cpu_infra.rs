@@ -139,7 +139,7 @@ unsafe fn fix_bug_hook(addr: u32, host: &mut HostContext<'_>) -> bool {
         false
     }
 }
-pub(crate) static kPatchedCarrys: [u32; 155] = [
+pub(crate) static PATCHED_CARRIES: [u32; 155] = [
     0xa7ac33, 0xa7ac36, 0xa7ac39, 0xa7ac42, 0xa7ac45, 0xa6d6d1, 0xa6d6d3, 0xa6d6d5, 0xa6d700,
     0xa6d702, 0xa6d704, 0xa6d665, 0xa6d667, 0xa6d669, 0xa6d694, 0xa6d696, 0xa6d698, 0x818b65,
     0x818b6b, 0x818ba7, 0x818bd9, 0x818bdf, 0x86a671, 0x86a680, 0x86a6a9, 0x86a6ba, 0x88b245,
@@ -383,7 +383,7 @@ unsafe fn opcode_hook_parts(addr: u32, game: &mut HookContext<'_, '_>) -> i32 {
     unsafe {
         let mut i: size_t = 0 as size_t;
         while i != (size_of::<[u32; 155]>() as usize).wrapping_div(size_of::<u32>() as usize) {
-            if addr == kPatchedCarrys[i as usize] {
+            if addr == PATCHED_CARRIES[i as usize] {
                 return game.host.kPatchedCarrysOrg[i as usize] as i32;
             }
             i = i.wrapping_add(1);
@@ -1095,12 +1095,12 @@ pub unsafe fn SnesInit(filename: *const c_char, game: &mut Game) -> *mut Snes {
         RtlUpdateSnesPatchForBugfix(game);
         // Every site keeps its original byte, installed or not, so checkpoints
         // (which store these bytes) do not depend on the patch policy.
-        let originals = kPatchedCarrys
+        let originals = PATCHED_CARRIES
             .map(|address| patch_image(address, &mut game.execution_parts().1).byte(address));
         for ((original, &address), &byte) in game
             .kPatchedCarrysOrg
             .iter_mut()
-            .zip(&kPatchedCarrys)
+            .zip(&PATCHED_CARRIES)
             .zip(&originals)
         {
             if byte == 0 {
@@ -1109,7 +1109,7 @@ pub unsafe fn SnesInit(filename: *const c_char, game: &mut Game) -> *mut Snes {
             }
             *original = byte;
         }
-        for &address in &kPatchedCarrys {
+        for &address in &PATCHED_CARRIES {
             // A site the oracle does not install keeps its hardware carry.
             if crate::oracle_mode::installs(crate::oracle_mode::PatchKind::Carry, address)
                 && patch_image(address, &mut game.execution_parts().1).byte(address) != 0

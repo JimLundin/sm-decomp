@@ -8,7 +8,7 @@ use crate::c_library::printf;
 pub use crate::types::{Dma, Snes, size_t};
 pub const __ASSERT_FUNCTION: [c_char; 34] =
     unsafe { transmute::<[u8; 34], [c_char; 34]>(*b"uint8_t dma_read(Dma *, uint16_t)\0") };
-static bAdrOffsets: [[i32; 4]; 8] = [
+static B_BUS_OFFSETS: [[i32; 4]; 8] = [
     [0, 0, 0, 0],
     [0, 1, 0, 1],
     [0, 0, 0, 0],
@@ -18,7 +18,7 @@ static bAdrOffsets: [[i32; 4]; 8] = [
     [0, 0, 0, 0],
     [0, 0, 1, 1],
 ];
-static transferLength: [i32; 8] = [1, 2, 2, 4, 4, 4, 2, 4];
+static TRANSFER_LENGTHS: [i32; 8] = [1, 2, 2, 4, 4, 4, 2, 4];
 
 #[forbid(unsafe_code)]
 impl Backend {
@@ -174,7 +174,7 @@ impl crate::execution::Execution<'_> {
                     channel.aAdr,
                     channel.aBank,
                     channel.bAdr.wrapping_add(
-                        bAdrOffsets[usize::from(channel.mode)][usize::from(fresh0)] as u8,
+                        B_BUS_OFFSETS[usize::from(channel.mode)][usize::from(fresh0)] as u8,
                     ),
                     channel.fromB,
                 )
@@ -392,7 +392,7 @@ impl crate::game::scene::hdma::HdmaHost for NativeHdmaHost<'_, '_> {
     }
     fn invalid_mode(&mut self, mode: u8) -> std::convert::Infallible {
         // Preserve the original native table-index failure at its lookup point.
-        let _ = transferLength[usize::from(mode)];
+        let _ = TRANSFER_LENGTHS[usize::from(mode)];
         unreachable!("HDMA invalid-mode hook requires an out-of-range mode");
     }
     fn read_source(

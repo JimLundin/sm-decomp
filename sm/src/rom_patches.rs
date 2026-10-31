@@ -163,7 +163,7 @@ pub fn policy_dependent(offset: usize) -> bool {
     static OFFSETS: OnceLock<HashSet<usize>> = OnceLock::new();
     OFFSETS
         .get_or_init(|| {
-            let single = crate::cpu_infra::kPatchedCarrys
+            let single = crate::cpu_infra::PATCHED_CARRIES
                 .iter()
                 .chain(crate::oracle_patch_policy::SITES_BUG_HOOKS)
                 .map(|&address| (address, 1));
