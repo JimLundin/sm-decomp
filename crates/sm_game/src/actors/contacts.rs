@@ -418,11 +418,15 @@ pub fn grapple_contact<H: ActorHost + EprojHost + MechanismEffects>(
 }
 pub fn apply_power_bomb_to_enemies<H: ActorHost + EprojHost>(h: &mut H) {
     h.session_mut().room.enemy_processing_stage = 5;
+    // The radii live in the direct-page scratch $12/$14 ($A0:A314, $A0:A31E). A reaction that
+    // kills its enemy leaves the respawn flag in $12, and the enemies after it are tested
+    // against whatever the reactions left there.
     let width = h.session().room.power_bomb_radius >> 8;
-    let height = (width + (width >> 1)) >> 1;
+    h.session_mut().spawn_scratch.header = width;
     if width == 0 {
         return;
     }
+    h.session_mut().spawn_scratch.coordinates = (width + (width >> 1)) >> 1;
     for index in (0..32u16).rev() {
         let offset = index * 64;
         let key = ActorKey::from_legacy(offset);
@@ -441,13 +445,13 @@ pub fn apply_power_bomb_to_enemies<H: ActorHost + EprojHost>(h: &mut H) {
                 h.session().projectiles.power_bomb.x,
                 h.resolve_actor(key, AccessMode::Native).x.whole,
                 0,
-                width,
+                h.session().spawn_scratch.header,
             )
             && axis(
                 h.session().projectiles.power_bomb.y,
                 h.resolve_actor(key, AccessMode::Native).y.whole,
                 0,
-                height,
+                h.session().spawn_scratch.coordinates,
             )
         {
             h.session_mut().actors.controls.selected = offset;

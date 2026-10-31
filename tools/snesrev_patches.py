@@ -648,7 +648,7 @@ BUG_HOOKS = [
     (0x94A85B, 'b', 'state', 'removed', 'follows',
      'Grapple beam block collision detection',
      'The quarter-velocity setup only writes $0D83-84/$0D87-88, so stale bytes in $0D82/$0D85/$0D86/$0D89 leak into the 32-bit quarter velocities and shift the grapple collision test points on hardware; the hook zeroes them first'),
-    (0xA0A35C, 'b', 'state', 'removed', 'patched',
+    (0xA0A35C, 'b', 'state', 'removed', 'follows',
      'Process enemy power bomb interaction',
      'Killing an enemy inside the loop clobbers $12/$14 (power bomb X/Y radius), so later enemies are compared against garbage radii on hardware; the hook recomputes them from [$0CEB]'),
     (0xA7B049, 'b', 'state', 'removed', 'follows',

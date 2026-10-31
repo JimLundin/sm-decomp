@@ -97,7 +97,10 @@ fn death<H: ActorHost + EprojHost>(h: &mut H, animation: u16, limit: u16, actor:
         selected,
         crate::constants::bank_86::ADDR_K_EPROJ_ENEMY_DEATH_EXPLOSION as u16,
     );
-    let preserve = h.resolve_actor(actor, AccessMode::Native).properties & 0x4000 != 0;
+    // Both deaths leave the respawn flag in the scratch word $12 ($A0:A3E6, $A0:A437).
+    let respawn = h.resolve_actor(actor, AccessMode::Native).properties & 0x4000;
+    h.session_mut().spawn_scratch.header = respawn;
+    let preserve = respawn != 0;
     h.edit_actor(actor, AccessMode::Native, |actor| *actor = Actor::default());
     if preserve {
         h.edit_actor(actor, AccessMode::Native, |actor| {
