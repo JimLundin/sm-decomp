@@ -325,6 +325,14 @@ macro_rules! ram_word_accessors {
     };
 }
 
+/// The owned native player, when it is the one the game currently selects.
+fn selected_player(
+    player: &mut Option<crate::spc_player::NativePlayer>,
+    selected: *mut SpcPlayer,
+) -> Option<&mut crate::spc_player::NativePlayer> {
+    player.as_mut().filter(|player| player.view() == selected)
+}
+
 // Oracle snapshots own separate allocations, keeping construction stack usage bounded.
 impl Game {
     fn execution_parts_and_recorder(
@@ -335,9 +343,16 @@ impl Game {
         &mut StateRecorder,
     ) {
         self.note_samus_external_mutation();
-        let Self {
-            backend,
-            state_recorder,
+        // The host context borrows these fields, each once, beside the backend
+        // and recorder.
+        macro_rules! split {
+            ($($field:ident),+) => {{
+                let Self { backend, state_recorder, $($field,)+ .. } = self;
+                let host = crate::execution::HostContext { $($field,)+ };
+                (backend.as_mut(), host, state_recorder)
+            }};
+        }
+        split!(
             ram,
             loaded_rom,
             native_rom,
@@ -360,37 +375,7 @@ impl Game {
             eproj_spawn_rect,
             eproj_spawn_r22,
             eproj_spawn_pt,
-            eproj_spawn_varE24,
-            ..
-        } = self;
-        (
-            backend.as_mut(),
-            crate::execution::HostContext {
-                ram,
-                loaded_rom,
-                native_rom,
-                g_fail,
-                hookmode,
-                hookcnt,
-                hookadr,
-                hook_fixbug_orgbyte,
-                kPatchedCarrysOrg,
-                g_calling_asm_from_c,
-                g_calling_asm_from_c_ret,
-                pc_hist,
-                pc_hist_ctr,
-                snes_frame_counter,
-                apu_queue,
-                audio_output,
-                g_debug_apu_cycles,
-                g_new_ppu,
-                decompress_src,
-                eproj_spawn_rect,
-                eproj_spawn_r22,
-                eproj_spawn_pt,
-                eproj_spawn_varE24,
-            },
-            state_recorder,
+            eproj_spawn_varE24
         )
     }
 
@@ -584,11 +569,7 @@ impl Game {
     /// imported DSP/history allocations retain their original disjoint lifetimes.
     pub unsafe fn initialize_native_player(&mut self) {
         unsafe {
-            if let Some(player) = self
-                ._native_player
-                .as_mut()
-                .filter(|player| player.view() == self.g_spc_player)
-            {
+            if let Some(player) = selected_player(&mut self._native_player, self.g_spc_player) {
                 if player.try_initialize() {
                     return;
                 }
@@ -602,11 +583,7 @@ impl Game {
     /// Hold the existing APU lock with exclusive non-reentrant native views.
     pub unsafe fn save_native_audio_variables(&mut self, include_queued_commands: bool) {
         unsafe {
-            if let Some(player) = self
-                ._native_player
-                .as_mut()
-                .filter(|player| player.view() == self.g_spc_player)
-            {
+            if let Some(player) = selected_player(&mut self._native_player, self.g_spc_player) {
                 player.save_state(include_queued_commands.then_some(&self.apu_queue));
             } else {
                 if include_queued_commands {
@@ -623,11 +600,7 @@ impl Game {
     /// Hold the existing APU lock with exclusive non-reentrant native views.
     pub unsafe fn load_native_audio_variables(&mut self) {
         unsafe {
-            if let Some(player) = self
-                ._native_player
-                .as_mut()
-                .filter(|player| player.view() == self.g_spc_player)
-            {
+            if let Some(player) = selected_player(&mut self._native_player, self.g_spc_player) {
                 player.load_state();
             } else {
                 crate::spc_player::SpcPlayer_CopyVariablesFromRam(self.g_spc_player);
@@ -665,11 +638,7 @@ impl Game {
     /// Call under the existing APU lock with exclusive native/audio users.
     pub(crate) unsafe fn apply_native_audio_ports(&mut self, writes: [u8; 4]) {
         unsafe {
-            if let Some(player) = self
-                ._native_player
-                .as_mut()
-                .filter(|player| player.view() == self.g_spc_player)
-            {
+            if let Some(player) = selected_player(&mut self._native_player, self.g_spc_player) {
                 player.apply_ports(writes);
             } else {
                 crate::apu_queue::ApuQueue::apply_ports(
@@ -684,11 +653,7 @@ impl Game {
     /// views/history remain required; selected external players retain the bridge.
     pub(crate) unsafe fn render_native_audio(&mut self, samples: &mut [[i16; 2]]) {
         unsafe {
-            if let Some(player) = self
-                ._native_player
-                .as_mut()
-                .filter(|player| player.view() == self.g_spc_player)
-            {
+            if let Some(player) = selected_player(&mut self._native_player, self.g_spc_player) {
                 if player.try_render_samples(samples) {
                     return;
                 }
