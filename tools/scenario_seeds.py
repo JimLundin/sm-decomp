@@ -89,6 +89,15 @@ SCENARIOS = {
         base="100-input-phase:305",
         edits={"energy": 40, "reserve_energy": 0, "power_bombs": 11},
         note="crystal flash conditions at the landing site"),
+    # The landing site with the charge beam and one other beam equipped and
+    # the power bombs selected, so a released charge fires that beam's
+    # special attack.
+    **{f"special-beam-{beam}": Scenario(
+        base="100-input-phase:305",
+        edits={"equipped_beams": f"charge+{beam}", "power_bombs": 10,
+               "selected_item": "power-bombs"},
+        note=f"{beam} special beam attack at the landing site")
+       for beam in ("wave", "ice", "spazer", "plasma")},
 }
 
 

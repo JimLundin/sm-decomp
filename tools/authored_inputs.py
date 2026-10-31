@@ -275,6 +275,10 @@ RECIPES = {
     "screw-attack": Recipe("_ 20; repeat 12 { Left 6; Left+A 30; Right 6; Right+A 30 }; _ 60"),
     # Landing site: mockball to the right (the ball keeps the extra run speed).
     "mockball": Recipe("mockball Right; _ 20"),
+    # Landing site with one beam, charge and the power bombs (scenario
+    # special-beam-*): keep shooting held past a full charge, which fires the
+    # beam's special attack, then watch it run.
+    "special-beam": Recipe("_ 20; X 150; _ 300"),
     # Pause, wait for the pause screen, unpause and watch the room resume.
     "pause-resume": Recipe("press Start 150; hold Start 200; _ $tail", {"tail": 240}),
 }
@@ -330,6 +334,7 @@ PINNED = {
     "space-jump-chain": "fc3d13a804e7b28519f9142ac92f57fc4e48884c181e90690d947019f961345d",
     "screw-attack": "ce49ad2b34eb6e5256cb0a73deb28043b434660b096aaee3ba35974ce51570fe",
     "mockball": "24739893dc7f2f9fdf11b50d828e83e6a75107d6929e1cde14e626cb46c0d3f9",
+    "special-beam": "52d64f88295f3755852b633a417da2b0525cc712979c8a9c78e7e66486f74f73",
     "pause-resume": "6982afc4c06ba2311042798e0c0c2ccdbe47a7dbe599fb50b927ba414c24d077",
 }
 
