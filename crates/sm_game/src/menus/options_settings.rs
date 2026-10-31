@@ -2,6 +2,7 @@
 use super::menu_tilemap;
 use super::options_objects::definition;
 use super::prelude::*;
+use crate::menu_state::SaveSelection;
 use crate::ram::word;
 
 /// The options screen's BG tilemap buffer ($7E:3000, `ram3000`).
@@ -71,7 +72,7 @@ pub fn main_menu<H: Host + ?Sized>(game: &mut H) {
 
 fn start<H: Host + ?Sized>(game: &mut H) {
     if word!(game.ENABLE_DEBUG) != 0 && game.observed_inputs().held & K_BUTTON_L as u16 == 0
-        || save_selection!(game.LoadingGameState) == 5
+        || crate::session_cohort::load::<SaveSelection, _>(game).loading_game_state == 5
     {
         options_menu!(game.ScreenIndex = 4);
     } else {
@@ -84,13 +85,19 @@ pub fn finish_start<H: Host + ?Sized>(game: &mut H) {
     options_menu!(game.ScreenIndex = 0);
     if word!(game.ENABLE_DEBUG) != 0 && (game.observed_inputs().held & 0x20) == 0 {
         word!(game.GAME_STATE = 5);
-        if save_selection!(game.LoadingGameState) != 5 {
-            save_selection!(game.LoadingGameState = 5);
-            super::save_slots::save(save_selection!(game.SelectedSlot), game);
+        let slot = crate::session_cohort::with(game, |_, selection: &mut SaveSelection| {
+            let unsaved = selection.loading_game_state != 5;
+            selection.loading_game_state = 5;
+            unsaved.then_some(selection.selected_slot)
+        });
+        if let Some(slot) = slot {
+            super::save_slots::save(slot, game);
         }
-    } else if save_selection!(game.LoadingGameState) != 0 {
-        word!(game.GAME_STATE = save_selection!(game.LoadingGameState));
-        if save_selection!(game.LoadingGameState) == 34 {
+    } else if let loading @ 1.. =
+        crate::session_cohort::load::<SaveSelection, _>(game).loading_game_state
+    {
+        word!(game.GAME_STATE = loading);
+        if loading == 34 {
             crate::flow::set(game, crate::flow::Word::CinematicFunction, 0xc11b);
         }
         options_menu! { game, 0; MenuOptionIndex, ScreenIndex }

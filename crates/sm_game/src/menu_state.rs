@@ -233,46 +233,6 @@ pub struct SaveSelection {
     pub save_area: u16,
 }
 
-/// The save selection words through the host's projected bytes, by RAM address.
-pub mod save_selection {
-    use crate::ram::CompatibilityRam;
-
-    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-    pub enum Word {
-        MapUnread = 0x787,
-        HasAreaMap = 0x789,
-        LoadStation = 0x78b,
-        MapAreaIndex = 0x950,
-        SelectedSlot = 0x952,
-        NonemptySlots = 0x954,
-        LoadingGameState = 0xd914,
-        SaveStation = 0xd916,
-        SaveArea = 0xd918,
-    }
-
-    const _: () = {
-        use crate::ram::words as ram;
-        assert!(ram::FILE_SELECT_MAP_UNREAD == Word::MapUnread as usize);
-        assert!(ram::HAS_AREA_MAP == Word::HasAreaMap as usize);
-        assert!(ram::LOAD_STATION_INDEX == Word::LoadStation as usize);
-        assert!(ram::FILE_SELECT_MAP_AREA_INDEX == Word::MapAreaIndex as usize);
-        assert!(ram::SELECTED_SAVE_SLOT == Word::SelectedSlot as usize);
-        assert!(ram::NONEMPTY_SAVE_SLOTS == Word::NonemptySlots as usize);
-        assert!(ram::LOADING_GAME_STATE == Word::LoadingGameState as usize);
-        assert!(ram::SRAM_SAVE_STATION_INDEX == Word::SaveStation as usize);
-        assert!(ram::SRAM_AREA_INDEX == Word::SaveArea as usize);
-    };
-
-    /// `word` as the host's projection holds it, low byte then high.
-    pub fn get<H: CompatibilityRam + ?Sized>(h: &H, word: Word) -> u16 {
-        crate::projection::word(h, word as usize)
-    }
-    /// Store `value` to `word`, low byte then high, as the named word store did.
-    pub fn set<H: CompatibilityRam + ?Sized>(h: &mut H, word: Word, value: u16) {
-        crate::projection::set_word(h, word as usize, value);
-    }
-}
-
 /// The options menu's selection: the highlighted option ($099E), the debug
 /// invincibility setting ($0DE0) and the options screen index ($0DE2), which
 /// the title, intro, death and gameplay sequences also use as a delay.

@@ -7,6 +7,7 @@ use crate::constants::bank_81::{
     ADDR_K_MENU_TILEMAP_YES_RETURN_TO_GAME,
 };
 use crate::enemy_projectiles::table::with_file_select;
+use crate::menu_state::SaveSelection;
 use crate::menus::menu_tilemap;
 use crate::menus::save_slots;
 use crate::ram::RawRam as _;
@@ -60,7 +61,9 @@ fn initialize<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     }
     crate::menu!(game.MenuIndex += 1);
     crate::screen_fade::set_both(game, 0, 0);
-    save_selection! { game, 0; MapAreaIndex }
+    crate::session_cohort::with(game, |_, selection: &mut SaveSelection| {
+        selection.map_area_index = 0;
+    });
     place_missile(FIRST_CHOICE_ROW, game);
 }
 
@@ -140,23 +143,26 @@ fn choose<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     if game.observed_inputs().pressed & (K_BUTTON_SELECT | K_BUTTON_UP | K_BUTTON_DOWN) as u16 != 0
     {
         game.queue_sound(0, 0x37_u8, 6);
-        save_selection!(game.MapAreaIndex ^= 1);
+        crate::session_cohort::with(game, |_, selection: &mut SaveSelection| {
+            selection.map_area_index ^= 1;
+        });
     } else if game.observed_inputs().pressed & K_BUTTON_A as u16 != 0 {
         session_slot!(game, EnemyBase[0].instruction_timer = 180);
-        if save_selection!(game.MapAreaIndex) != 0 {
+        let selection = crate::session_cohort::load::<SaveSelection, _>(game);
+        if selection.map_area_index != 0 {
             crate::menu!(game.MenuIndex = 7);
         } else {
-            if save_selection!(game.LoadingGameState) == K_GAME_STATE_31_SET_UP_NEW_GAME as u16 {
-                word!(game.GAME_STATE = save_selection!(game.LoadingGameState));
+            if selection.loading_game_state == K_GAME_STATE_31_SET_UP_NEW_GAME as u16 {
+                word!(game.GAME_STATE = selection.loading_game_state);
             } else {
                 crate::menu!(game.MenuIndex += 1);
             }
-            let _load_result = save_slots::load(save_selection!(game.SelectedSlot), game);
-            game.observe_selected_continue(_load_result);
+            let load_result = save_slots::load(selection.selected_slot, game);
+            game.observe_selected_continue(load_result);
         }
         return;
     }
-    let row = if save_selection!(game.MapAreaIndex) != 0 {
+    let row = if crate::session_cohort::load::<SaveSelection, _>(game).map_area_index != 0 {
         SECOND_CHOICE_ROW
     } else {
         FIRST_CHOICE_ROW

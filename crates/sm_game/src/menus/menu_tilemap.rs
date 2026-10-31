@@ -2,6 +2,7 @@
 use super::prelude::*;
 use crate::display::bg_tile;
 use crate::enemy_projectiles::table::with_file_select;
+use crate::menu_state::SaveSelection;
 
 /// The pause menu's map and equipment BG tilemap buffers in work RAM.
 const PAUSE_TILEMAP: usize = 0x3000;
@@ -111,10 +112,12 @@ pub enum FileRowEmphasis {
 }
 
 pub fn file_rows<H: Host + ?Sized>(emphasis: FileRowEmphasis, game: &mut H) {
+    // Loading a slot leaves the nonempty-slot bits as they were.
+    let nonempty = crate::session_cohort::load::<SaveSelection, _>(game).nonempty_slots;
     for slot in 0..3u16 {
         save_slots::load(slot, game);
         let dim = match emphasis {
-            FileRowEmphasis::Occupied => save_selection!(game.NonemptySlots) & (1 << slot) == 0,
+            FileRowEmphasis::Occupied => nonempty & (1 << slot) == 0,
             FileRowEmphasis::Destination => {
                 with_file_select(game, |menu| *menu.file_copy_source_slot() == slot)
             }
@@ -125,16 +128,8 @@ pub fn file_rows<H: Host + ?Sized>(emphasis: FileRowEmphasis, game: &mut H) {
         set_palette(if dim { 1024 } else { 0 }, game);
         let mask = 1 << slot;
         let base = (slot + 2) << 8;
-        health(
-            !save_selection!(game.NonemptySlots) & mask,
-            base + 0x18,
-            game,
-        );
-        time(
-            !save_selection!(game.NonemptySlots) & mask,
-            base + 0x72,
-            game,
-        );
+        health(!nonempty & mask, base + 0x18, game);
+        time(!nonempty & mask, base + 0x72, game);
         load(base + 0x34, ADDR_K_MENU_TILEMAP_TIME as u16, game);
         load(base + 8, FILE_LABELS[usize::from(slot)], game);
     }
@@ -160,7 +155,7 @@ pub fn main_menu<H: Host + ?Sized>(game: &mut H) {
 /// $81:9EF3 up to the clear-forced-blank wait: the file rows and the cursor.
 fn draw_main_menu<H: Host + ?Sized>(game: &mut H) {
     clear(game);
-    save_selection!(game.NonemptySlots = u16::MAX);
+    let mut nonempty = u16::MAX;
     set_palette(0, game);
     load(0x56, ADDR_K_MENU_TILEMAP_SAMUS_DATA as u16, game);
     for (slot, label) in FILE_LABELS.into_iter().enumerate() {
@@ -171,24 +166,16 @@ fn draw_main_menu<H: Host + ?Sized>(game: &mut H) {
         let top = 0x146 + 0x140 * slot as u16;
         load(top, label, game);
         let empty = save_slots::load(slot as u16, game);
-        save_selection!(
-            game.NonemptySlots =
-                (save_selection!(game.NonemptySlots) >> 1) | (u16::from(empty) << 15)
-        );
-        health(
-            save_selection!(game.NonemptySlots) & 0x8000,
-            top + 0x16,
-            game,
-        );
-        time(
-            save_selection!(game.NonemptySlots) & 0x8000,
-            top + 0x6e,
-            game,
-        );
+        nonempty = (nonempty >> 1) | (u16::from(empty) << 15);
+        health(nonempty & 0x8000, top + 0x16, game);
+        time(nonempty & 0x8000, top + 0x6e, game);
         load(top + 0x30, ADDR_K_MENU_TILEMAP_TIME as u16, game);
     }
-    save_selection!(game.NonemptySlots = (!save_selection!(game.NonemptySlots)).swap_bytes() >> 5);
-    if save_selection!(game.NonemptySlots) != 0 {
+    let nonempty = (!nonempty).swap_bytes() >> 5;
+    crate::session_cohort::with(game, |_, selection: &mut SaveSelection| {
+        selection.nonempty_slots = nonempty;
+    });
+    if nonempty != 0 {
         set_palette(0, game);
         load(0x508, ADDR_K_MENU_TILEMAP_DATA_COPY as u16, game);
         set_palette(0, game);

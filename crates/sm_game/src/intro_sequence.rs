@@ -18,7 +18,8 @@ use crate::cinematic_state::{self, Word, cinematic};
 use crate::display_refresh::GraphicsAsset;
 use crate::flow::{self, Word::CinematicFunction};
 use crate::inventory;
-use crate::menus::prelude::{options_menu, owned, save_selection, scroll};
+use crate::menu_state::SaveSelection;
+use crate::menus::prelude::{options_menu, owned, scroll};
 use crate::ram::RawRam as _;
 use crate::ram::mirror;
 use crate::ram::word;
@@ -382,11 +383,14 @@ pub fn ceres_flying_into_ceres<H: Host + ?Sized>(game: &mut H) {
 /// Cinematic function - fly to Ceres - start game at Ceres ($8B:C100). Was
 /// `CinematicFunction_Intro_Func73`.
 pub fn start_game_at_ceres<H: Host + ?Sized>(game: &mut H) {
-    save_selection!(game.LoadingGameState = SET_UP_NEW_GAME);
-    word!(game.GAME_STATE = SET_UP_NEW_GAME);
-    crate::room_view::set(game, crate::room_view::Word::Area, CERES);
-    save_selection!(game.LoadStation = 0);
-    crate::menus::save_slots::save(save_selection!(game.SelectedSlot), game);
+    let slot = crate::session_cohort::with(game, |game, selection: &mut SaveSelection| {
+        selection.loading_game_state = SET_UP_NEW_GAME;
+        word!(game.GAME_STATE = SET_UP_NEW_GAME);
+        crate::room_view::set(game, crate::room_view::Word::Area, CERES);
+        selection.load_station = 0;
+        selection.selected_slot
+    });
+    crate::menus::save_slots::save(slot, game);
 }
 
 /// Cinematic function - Ceres goes boom - initial ($8B:C11B). Was

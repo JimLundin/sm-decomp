@@ -11,6 +11,7 @@ use crate::constants::bank_81::{
     ADDR_K_MENU_TILEMAP_DATA_COPY_MODE, ADDR_K_MENU_TILEMAP_EXIT, ADDR_K_MENU_TILEMAP_IS_THIS_OK,
     ADDR_K_MENU_TILEMAP_NO, ADDR_K_MENU_TILEMAP_YES,
 };
+use crate::menu_state::SaveSelection;
 use crate::save_file::header;
 use crate::session_cohort;
 
@@ -160,7 +161,7 @@ fn fade_out_mosaic<H: Host + ?Sized>(game: &mut H) -> bool {
     (game.ram().read_byte(crate::ram::mirror::INIDISP) & 0xf) == 0
 }
 fn restore_cursor<H: Host + ?Sized>(game: &mut H) {
-    crate::sprite_output::file_menu_cursor(game);
+    crate::sprite_output::file_menu_cursor(selected_slot(game), game);
     fade_in(game);
 }
 fn fade_in<H: Host + ?Sized>(game: &mut H) {
@@ -201,11 +202,16 @@ fn reset_copy<H: Host + ?Sized>(game: &mut H) {
         *menu.file_copy_destination_slot() = 0;
     });
 }
+/// The selected save slot.
+fn selected_slot<H: Host + ?Sized>(game: &H) -> u16 {
+    session_cohort::load::<SaveSelection, _>(game).selected_slot
+}
+/// The nonempty save slots' bits.
+fn nonempty_slots<H: Host + ?Sized>(game: &H) -> u16 {
+    session_cohort::load::<SaveSelection, _>(game).nonempty_slots
+}
 fn select_first_slot<H: Host + ?Sized>(game: &mut H) {
-    set_copy_selection(
-        (save_selection!(game.NonemptySlots) | 8).trailing_zeros() as u16,
-        game,
-    );
+    set_copy_selection((nonempty_slots(game) | 8).trailing_zeros() as u16, game);
 }
 fn next_occupied_slot<H: Host + ?Sized>(game: &mut H) -> Option<u8> {
     let up = if game.observed_inputs().pressed as i32 & K_BUTTON_UP as i32 != 0 {
@@ -216,6 +222,7 @@ fn next_occupied_slot<H: Host + ?Sized>(game: &mut H) -> Option<u8> {
         return None;
     };
     let mut slot = copy_selection(game) as u8;
+    let nonempty = nonempty_slots(game);
     loop {
         if up {
             slot = slot.wrapping_sub(1);
@@ -231,7 +238,7 @@ fn next_occupied_slot<H: Host + ?Sized>(game: &mut H) -> Option<u8> {
                 return Some(slot);
             }
         }
-        if BIT_SHL[slot as usize] as u16 & save_selection!(game.NonemptySlots) != 0 {
+        if u16::from(BIT_SHL[usize::from(slot)]) & nonempty != 0 {
             return Some(slot);
         }
     }
@@ -493,7 +500,10 @@ fn copy_slot<H: Host + ?Sized>(game: &mut H) {
     );
     crate::menu!(game.MenuIndex += 1);
     crate::word_transfers!(game, ascending, 288; native(0x3b00) <- value(15));
-    save_selection!(game.NonemptySlots |= (BIT_SHL_16BIT[copy_destination(game) as usize]));
+    let copied = BIT_SHL_16BIT[usize::from(copy_destination(game))];
+    session_cohort::with(game, |_, slots: &mut SaveSelection| {
+        slots.nonempty_slots |= copied
+    });
     let row = ((4 * i32::from(copy_destination(game)) + 9) << 6) + 24;
     crate::word_transfers!(game, (2), 11;
         native(menu_tilemap::MENU_TILEMAP + row as usize) <- value(menu_tilemap::BLANK_TILE),
@@ -509,17 +519,16 @@ fn complete_operation<const COPY: bool, H: Host + ?Sized>(game: &mut H) {
     if game.observed_inputs().pressed != 0 {
         game.queue_sound(0, 0x37_u8, 6);
         crate::menu!(game.MenuIndex += 1);
-        if COPY {
-            save_selection!(game.SelectedSlot = save_slots::last_selected(game));
+        let selected = if COPY {
+            save_slots::last_selected(game)
         } else {
-            for slot in 0..3 {
-                if save_slots::load(slot, game) == 0 {
-                    save_selection!(game.SelectedSlot = slot);
-                    return;
-                }
-            }
-            save_selection!(game.SelectedSlot = 0);
-        }
+            (0..3)
+                .find(|&slot| save_slots::load(slot, game) == 0)
+                .unwrap_or(0)
+        };
+        session_cohort::with(game, |_, slots: &mut SaveSelection| {
+            slots.selected_slot = selected;
+        });
     }
 }
 fn resume_main<H: Host + ?Sized>(game: &mut H) {
@@ -561,7 +570,10 @@ fn clear_slot<H: Host + ?Sized>(game: &mut H) {
     crate::room_view::set(game, crate::room_view::Word::Area, source);
     session_cohort::with(game, |game, selection| load_area_map(selection, game));
     crate::word_transfers!(game, ascending, 288; native(0x3b00) <- value(15));
-    save_selection!(game.NonemptySlots &= (BIT_SHL_NOT[copy_source(game) as usize]));
+    let cleared = BIT_SHL_NOT[usize::from(copy_source(game))];
+    session_cohort::with(game, |_, slots: &mut SaveSelection| {
+        slots.nonempty_slots &= cleared
+    });
     menu_tilemap::set_palette(0, game);
     menu_tilemap::load(0x500, ADDR_K_MENU_TILEMAP_DATA_CLEARED as u16, game);
     menu_tilemap::file_rows(menu_tilemap::FileRowEmphasis::Confirmation, game);
@@ -601,13 +613,16 @@ fn load_background<H: Host + ?Sized>(game: &mut H) {
 }
 fn initialize<H: Host + ?Sized>(game: &mut H) {
     if !super::resuming(game) {
-        save_selection!(game.SelectedSlot = save_slots::last_selected(game));
+        let selected = save_slots::last_selected(game);
+        session_cohort::with(game, |_, slots: &mut SaveSelection| {
+            slots.selected_slot = selected;
+        });
     }
     menu_tilemap::main_menu(game);
 }
 fn fade_in_main<H: Host + ?Sized>(game: &mut H) {
     crate::sprite_output::file_helmets(false, game);
-    crate::sprite_output::file_menu_cursor(game);
+    crate::sprite_output::file_menu_cursor(selected_slot(game), game);
     crate::sprite_output::menu_selection(game);
     border(0x48, game);
     game.fade(true);
@@ -620,18 +635,17 @@ fn choose_main<H: Host + ?Sized>(game: &mut H) {
     crate::sprite_output::menu_selection(game);
     crate::sprite_output::file_helmets(true, game);
     if game.observed_inputs().pressed as i32 & (K_BUTTON_START as i32 | K_BUTTON_A as i32) == 0 {
-        let selection_unchanged: bool =
+        let selection_unchanged = session_cohort::with(game, |game, slots: &mut SaveSelection| {
+            let occupied = slots.nonempty_slots != 0;
+            let selected = slots.selected_slot;
             if (game.observed_inputs().pressed as i32 & K_BUTTON_UP as i32) != 0 {
-                let occupied = save_selection!(game.NonemptySlots) != 0;
-                let selected = save_selection!(game.SelectedSlot);
-                let previous = if (selected as i16).wrapping_sub(1) < 0 {
+                slots.selected_slot = if (selected as i16).wrapping_sub(1) < 0 {
                     5
                 } else if !occupied && (i32::from(selected) - 5) & 0x8000 == 0 {
                     2
                 } else {
                     selected.wrapping_sub(1)
                 };
-                save_selection!(game.SelectedSlot = previous);
                 false
             } else if (game.observed_inputs().pressed as i32 & K_BUTTON_DOWN as i32) == 0 {
                 if (game.observed_inputs().pressed as i32 & K_BUTTON_B as i32) != 0 {
@@ -641,33 +655,29 @@ fn choose_main<H: Host + ?Sized>(game: &mut H) {
                 }
                 true
             } else {
-                let occupied = save_selection!(game.NonemptySlots) != 0;
-                let mut next = save_selection!(game.SelectedSlot).wrapping_add(1);
-                if (i32::from(save_selection!(game.SelectedSlot)) - (if occupied { 5 } else { 2 }))
-                    & 0x8000
-                    == 0
-                {
-                    next = if !occupied
-                        && (i32::from(save_selection!(game.SelectedSlot)) - 5) & 0x8000 != 0
-                    {
+                let mut next = selected.wrapping_add(1);
+                if (i32::from(selected) - (if occupied { 5 } else { 2 })) & 0x8000 == 0 {
+                    next = if !occupied && (i32::from(selected) - 5) & 0x8000 != 0 {
                         5
                     } else {
                         0
                     };
                 }
-                save_selection!(game.SelectedSlot = next);
+                slots.selected_slot = next;
                 false
-            };
+            }
+        });
         if !(selection_unchanged) {
             game.queue_sound(0, 0x37_u8, 6);
         }
     } else {
-        let mut selection: i16 = save_selection!(game.SelectedSlot) as i16;
-        if (save_selection!(game.SelectedSlot) as i32 - 3i32) & 0x8000 != 0 {
+        let selected = selected_slot(game);
+        let mut selection: i16 = selected as i16;
+        if (selected as i32 - 3i32) & 0x8000 != 0 {
             game.queue_sound(0, 0x2a_u8, 6);
             crate::menu!(game.MenuIndex += 27);
             // Start the selected slot's helmet animation.
-            let helmet = usize::from(save_selection!(game.SelectedSlot));
+            let helmet = usize::from(selected);
             if helmet < 3 {
                 file_select(game, |menu| *menu.helmet_animation_timer(helmet) = 1);
             } else {
@@ -678,26 +688,28 @@ fn choose_main<H: Host + ?Sized>(game: &mut H) {
                     game,
                 );
             }
+            game.sram().set_word(header::LAST_SLOT, selected);
             game.sram()
-                .set_word(header::LAST_SLOT, save_selection!(game.SelectedSlot));
-            game.sram().set_word(
-                header::LAST_SLOT_COMPLEMENT,
-                !(save_selection!(game.SelectedSlot) as i32) as u16,
-            );
+                .set_word(header::LAST_SLOT_COMPLEMENT, !selected);
             game.flush_sram();
-            if save_slots::load(save_selection!(game.SelectedSlot), game) != 0 {
+            let failed = save_slots::load(selected, game) != 0;
+            if failed {
                 save_slots::initialize(game);
-                save_selection!(game.HasAreaMap = 0);
-            } else {
-                session_cohort::with(game, |game, selection| load_area_map(selection, game));
             }
+            session_cohort::with(game, |game, slots: &mut SaveSelection| {
+                if failed {
+                    slots.has_area_map = 0;
+                } else {
+                    load_area_map(slots, game);
+                }
+            });
         } else {
-            if save_selection!(game.SelectedSlot) == 3 {
+            if selected == 3 {
                 game.queue_sound(0, 0x37_u8, 6);
                 crate::menu!(game.MenuIndex += 1);
                 set_native_word(MOSAIC, native_word(MOSAIC, game) & 0xff0c | 3, game);
             } else {
-                if save_selection!(game.SelectedSlot) == 4 {
+                if selected == 4 {
                     game.queue_sound(0, 0x37_u8, 6);
                     crate::menu!(game.MenuIndex += 15);
                     selection = (i32::from(native_word(MOSAIC, game)) & 0xff0c | 3) as i16;
@@ -710,7 +722,7 @@ fn choose_main<H: Host + ?Sized>(game: &mut H) {
             return;
         }
     }
-    crate::sprite_output::file_menu_cursor(game);
+    crate::sprite_output::file_menu_cursor(selected_slot(game), game);
 }
 
 fn native_word<H: Host + ?Sized>(offset: usize, game: &H) -> u16 {

@@ -13,10 +13,8 @@ use crate::display::sequence::{register_writes, write_register_and_mirror};
 use crate::display_refresh;
 use crate::enemy_projectiles;
 use crate::gameplay_rules::{finish_frame, finish_health_and_time};
-use crate::menu_state::{DeathSequence, MenuScreens};
-use crate::menus::prelude::{
-    CoroutineRet, options_menu, owned, power_bomb, save_selection, session_word,
-};
+use crate::menu_state::{DeathSequence, MenuScreens, SaveSelection};
+use crate::menus::prelude::{CoroutineRet, options_menu, owned, power_bomb, session_word};
 use crate::menus::{
     controller_input, file_menu, game_over, map_menu, options_settings, pause_controls,
     reserve_tanks, save_slots,
@@ -366,18 +364,18 @@ fn initialize<H: Host>(game: &mut H) -> CoroutineRet {
     if stage == 0 {
         let demo = u32::from(word!(game.GAME_STATE)) == K_GAME_STATE_40_TRANSITION_TO_DEMO;
         if !demo {
-            let loading = u32::from(save_selection!(game.LoadingGameState));
-            if loading == K_LOADING_GAME_STATE_1F_STARTING_AT_CERES {
-                game.runtime().session_mut().room.area = 6;
-                save_selection!(game.LoadStation = 0);
-                escape_timer::clear(game);
-            } else if loading == K_LOADING_GAME_STATE_22_ESCAPING_CERES {
-                game.runtime().session_mut().room.area = 0;
-                save_selection!(game.LoadStation = 18);
-                session_cohort::with(game, |game, selection| {
-                    save_slots::load_area_map(selection, game)
-                });
-            }
+            session_cohort::with(game, |game, selection: &mut SaveSelection| {
+                let loading = u32::from(selection.loading_game_state);
+                if loading == K_LOADING_GAME_STATE_1F_STARTING_AT_CERES {
+                    game.runtime().session_mut().room.area = 6;
+                    selection.load_station = 0;
+                    escape_timer::clear(game);
+                } else if loading == K_LOADING_GAME_STATE_22_ESCAPING_CERES {
+                    game.runtime().session_mut().room.area = 0;
+                    selection.load_station = 18;
+                    save_slots::load_area_map(selection, game);
+                }
+            });
         }
         display_refresh::initialize_gameplay(game);
         game.initialize_player();
@@ -408,7 +406,7 @@ fn initialize<H: Host>(game: &mut H) -> CoroutineRet {
         crate::player_movement::speed::set_liquid_physics(&mut game.runtime());
         stage = if u32::from(word!(game.GAME_STATE)) == K_GAME_STATE_40_TRANSITION_TO_DEMO {
             2
-        } else if u32::from(save_selection!(game.LoadingGameState))
+        } else if u32::from(session_cohort::load::<SaveSelection, _>(game).loading_game_state)
             == K_LOADING_GAME_STATE_22_ESCAPING_CERES
         {
             crate::music_requests::queue_delayed_8(5, game);
@@ -449,7 +447,7 @@ fn initialize<H: Host>(game: &mut H) -> CoroutineRet {
         }
         word_transfers!(game, ascending, 256; native(0xc000) <- le(TARGET_PALETTES, 0));
         if stage == 4 {
-            if u32::from(save_selection!(game.LoadingGameState))
+            if u32::from(session_cohort::load::<SaveSelection, _>(game).loading_game_state)
                 == K_LOADING_GAME_STATE_1F_STARTING_AT_CERES
             {
                 word!(game.PALETTE_BUFFER[223] = 0);
@@ -858,11 +856,13 @@ fn finish_pass<H: Host>(entry: Entry, game: &mut H) {
                 finish_gameplay(ceres, game);
                 crate::screen_fade::set_both(game, 0, 0);
                 if ceres {
-                    save_selection!(
-                        game.LoadingGameState = K_LOADING_GAME_STATE_22_ESCAPING_CERES as u16
-                    );
+                    let slot = session_cohort::with(game, |_, selection: &mut SaveSelection| {
+                        selection.loading_game_state =
+                            K_LOADING_GAME_STATE_22_ESCAPING_CERES as u16;
+                        selection.selected_slot
+                    });
                     word!(game.GAME_STATE = 34);
-                    save_slots::save(save_selection!(game.SelectedSlot), game);
+                    save_slots::save(slot, game);
                     crate::flow::set(game, crate::flow::Word::CinematicFunction, 0xc11b);
                     session_word! { game, 0; CeresStatus, TimerStatus }
                 } else {

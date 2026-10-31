@@ -68,9 +68,6 @@ pub(crate) use inventory;
 /// The BG scroll mirrors ([`crate::display::sequence::scroll::Word`]).
 macro_rules! scroll { ($($t:tt)*) => { owned!([$crate::display::sequence::scroll] $($t)*) }; }
 pub(crate) use scroll;
-/// [`crate::menu_state::save_selection::Word`].
-macro_rules! save_selection { ($($t:tt)*) => { owned!([$crate::menu_state::save_selection] $($t)*) }; }
-pub(crate) use save_selection;
 /// [`crate::menu_state::options_menu::Word`].
 macro_rules! options_menu { ($($t:tt)*) => { owned!([$crate::menu_state::options_menu] $($t)*) }; }
 pub(crate) use options_menu;
