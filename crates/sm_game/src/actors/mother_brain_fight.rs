@@ -2094,7 +2094,11 @@ crate::dispatch::callback_dispatch! {
     };
     [11120468] phase3_death_disable_brain_effects {
         session_slot! { game, MotherBrainBrain[BRAIN]; lower_motion = 0, upper_motion = 0, drool_enabled = 0, breath_enabled = 0, brain_palette_enabled = 0, health_palette_enabled = 0 }
-        word_transfers!(game, descending, 15; le(PALETTE_BUFFER, 255) <- le(PALETTE_BUFFER, 159));
+        // Sprite palette 7's colours 1-15 from sprite palette 1's, last first.
+        for index in 0..15 {
+            let color = game.owned(OwnedWord::Color(159 - index));
+            game.set_owned(OwnedWord::Color(255 - index), color);
+        }
         game.foreign(|game| game.update_health_palette());
         session_slot!(game, MotherBrainBody[e].brain_palette = 3584);
         session_slot! { game, MotherBrainBrain[BRAIN]; subfunction = 0, subfunction_timer = 0 }
