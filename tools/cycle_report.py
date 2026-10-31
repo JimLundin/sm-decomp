@@ -44,6 +44,17 @@ RAM_COUPLINGS = {
     "cinematic state view (cinematic!/cinematic_state::)": re.compile(
         r"\bcinematic!\s*[({]\s*game\b"
         r"|\bcinematic_state::(?:get|set|get_at|set_at|get_offset|set_offset|add_pair|clear)\(\s*game\b"),
+    # The other views that name RAM words and still resolve to the host's
+    # projected bytes (CompatibilityRam, or SlotAccess for the boss view): count
+    # their call sites, not their definitions (whose receivers are `$game`).
+    "RAM word views (boss!/scroll!/inventory!/melt!/menu!)": re.compile(
+        r"\b(?:boss|scroll|inventory|melt|menu)!\s*[({](?!\s*\$)"),
+    "RAM word view calls (flow/inventory/scroll/message_box/room_view/...)": re.compile(
+        r"\b(?:flow::(?:set|current)|inventory::(?:get|set|current)|scroll::(?:get|set)"
+        r"|message_box::(?:get|set)|room_view::(?:set|set_effect|current|effects|enter_header)"
+        r"|camera::current|menu_state::(?:get|set|current|get_byte|set_byte)"
+        r"|screen_fade::(?:current|set_both|set_counter|set_low)|melt::(?:get|set)"
+        r"|boss_ram::(?:get|set|get_at|set_at|fill)|LiquidWords::(?:read|write))\((?!\s*&?\*?\$)"),
 }
 
 
