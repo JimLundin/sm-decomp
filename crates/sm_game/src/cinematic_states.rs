@@ -12,6 +12,7 @@ use crate::cinematic_host::Host;
 use crate::cinematic_objects::CinematicObjects;
 use crate::display::registers as reg;
 use crate::display_refresh::GraphicsAsset;
+use crate::flow;
 use crate::menus::prelude::{options_menu, owned};
 use crate::ram::RawRam as _;
 use crate::ram::mirror;
@@ -81,7 +82,7 @@ const SLIME_Y_FAST: [i16; 138] = [
 ];
 
 fn run_function<H: Host + ?Sized>(game: &mut H) {
-    let address = (BANK << 16) | u32::from(word!(game.CINEMATIC_FUNCTION));
+    let address = (BANK << 16) | u32::from(flow::current(game).cinematic_function);
     crate::cinematic_dispatch::run_function(address, game);
 }
 
@@ -323,7 +324,8 @@ pub fn ending_and_credits<H: Host + ?Sized>(game: &mut H) -> u8 {
 /// Handle final screen cinematic BG objects ($8B:D474): from the fade from
 /// white on. Was `MaybeHandleCinematicBgObjects`.
 pub fn advance_final_screen_background<H: Host + ?Sized>(game: &mut H) {
-    if !(((word!(game.CINEMATIC_FUNCTION)).wrapping_sub(FINAL_SCREEN) as i16) < 0) {
+    let function = flow::current(game).cinematic_function;
+    if function.wrapping_sub(FINAL_SCREEN) < 0x8000 {
         CinematicObjects::Background.advance(game);
     }
 }

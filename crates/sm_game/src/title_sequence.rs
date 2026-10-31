@@ -11,6 +11,7 @@ use crate::cinematic::{advance_cinematic_fade, clear_cinematic_sprites, set_cine
 use crate::cinematic_host::Host;
 use crate::cinematic_objects::CinematicObjects;
 use crate::display_refresh::GraphicsAsset;
+use crate::flow::{self, Word::CinematicFunction};
 use crate::menus::prelude::{options_menu, owned};
 use crate::ram::RawRam as _;
 use crate::ram::word;
@@ -84,7 +85,7 @@ pub fn handle_transitions<H: Host + ?Sized>(game: &mut H) {
 fn fade_out_to_demo<H: Host + ?Sized>(game: &mut H) {
     if advance_cinematic_fade(CinematicFade::FastOut, game) {
         word!(game.SKIP_TO_TITLE_INDEX = 2);
-        word!(game.CINEMATIC_FUNCTION = function::WAITING);
+        flow::set(game, CinematicFunction, function::WAITING);
         crate::music_requests::queue_delayed_8(DEMO_MUSIC, game);
     }
 }
@@ -121,8 +122,8 @@ fn start_demo_logo<H: Host + ?Sized>(game: &mut H) {
 fn fade_in_title<H: Host + ?Sized>(game: &mut H) {
     if advance_cinematic_fade(CinematicFade::FastIn, game) {
         word!(game.SKIP_TO_TITLE_INDEX = 0);
-        word!(game.DEMO_TIMER = DEMO_DELAY);
-        word!(game.CINEMATIC_FUNCTION = function::TITLE_SCREEN);
+        flow::set(game, flow::Word::DemoTimer, DEMO_DELAY);
+        flow::set(game, CinematicFunction, function::TITLE_SCREEN);
     }
 }
 
@@ -154,7 +155,7 @@ pub fn load_graphics<H: Host + ?Sized>(game: &mut H) {
 pub fn setup<H: Host + ?Sized>(game: &mut H) {
     load_graphics(game);
     crate::music_requests::queue_delayed_8(TITLE_MUSIC_DATA, game);
-    word!(game.CINEMATIC_FUNCTION = function::NOTHING);
+    flow::set(game, CinematicFunction, function::NOTHING);
     spawn(
         game,
         CinematicObjects::Sprites,
@@ -173,7 +174,7 @@ pub fn zooming_out<H: Host + ?Sized>(game: &mut H) {
             word!(game.MODE7_ZOOM, wrapping_add(1));
         } else {
             word!(game.MODE7_ZOOM = 256);
-            word!(game.CINEMATIC_FUNCTION = function::WAITING);
+            flow::set(game, CinematicFunction, function::WAITING);
             spawn(
                 game,
                 CinematicObjects::Sprites,
@@ -195,7 +196,7 @@ fn finish<H: Host + ?Sized>(next: u16, game: &mut H, clear_index: impl FnOnce(&m
     word!(game.REG_BG2VOFS = 0);
     word!(game.REG_BG3VOFS = 0);
     word!(game.MODE7_ANGLE = 0);
-    word!(game.CINEMATIC_FUNCTION = function::SETUP);
+    flow::set(game, CinematicFunction, function::SETUP);
     crate::palette_effects::execution::leased::set_enabled(false, game);
     crate::palette_effects::execution::leased::clear(game);
     crate::word_transfers!(game, descending, 329; native(CINEMATIC_OBJECTS) <- value(0));
@@ -218,7 +219,9 @@ pub fn to_file_select<H: Host + ?Sized>(game: &mut H) {
 /// `CinematicFunc_Func9`.
 pub fn to_demos<H: Host + ?Sized>(game: &mut H) {
     if advance_cinematic_fade(CinematicFade::SlowOut, game) {
-        finish(TRANSITION_TO_DEMO, game, |game| word!(game.DEMO_SCENE = 0));
+        finish(TRANSITION_TO_DEMO, game, |game| {
+            flow::set(game, flow::Word::DemoScene, 0)
+        });
     }
 }
 

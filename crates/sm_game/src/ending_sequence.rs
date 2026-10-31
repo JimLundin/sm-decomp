@@ -17,6 +17,7 @@ use crate::cinematic::{
 use crate::cinematic_host::Host;
 use crate::cinematic_objects::CinematicObjects;
 use crate::display_refresh::GraphicsAsset;
+use crate::flow::{self, Word::CinematicFunction};
 use crate::intro_sequence::countdown;
 use crate::ram::RawRam as _;
 use crate::ram::mirror;
@@ -197,7 +198,7 @@ pub fn setup<H: Host + ?Sized>(game: &mut H) {
         );
     }
     crate::screen_fade::set_both(game, 0, 2);
-    word!(game.CINEMATIC_FUNCTION = function::WAIT_FOR_MUSIC);
+    flow::set(game, CinematicFunction, function::WAIT_FOR_MUSIC);
     crate::music_requests::queue_delayed_8(NO_MUSIC, game);
     crate::music_requests::queue_delayed_8(ESCAPE_MUSIC_DATA, game);
     crate::music_requests::queue_delayed(5, SONG_DELAY, game);
@@ -209,7 +210,7 @@ pub fn wait_for_music<H: Host + ?Sized>(game: &mut H) {
     if crate::music_requests::has_queued_music(game) & 1 == 0 {
         crate::palette_effects::execution::leased::spawn(ZEBES_GLOW_1, game);
         crate::palette_effects::execution::leased::spawn(ZEBES_GLOW_2, game);
-        word!(game.CINEMATIC_FUNCTION = function::SCENE_0_FADING_IN);
+        flow::set(game, CinematicFunction, function::SCENE_0_FADING_IN);
     }
 }
 
@@ -228,7 +229,7 @@ pub fn scene_1_setup<H: Host + ?Sized>(game: &mut H) {
     word!(game.MODE7_ZOOM = 64);
     word!(game.CINEMATIC_X = 0);
     word!(game.CINEMATIC_Y = 0);
-    word!(game.CINEMATIC_FUNCTION = function::SCENE_1_FADING_IN);
+    flow::set(game, CinematicFunction, function::SCENE_1_FADING_IN);
 }
 
 /// Cinematic function - ending - Zebes destruction scene 2 - cross-fade to
@@ -271,7 +272,7 @@ pub fn scene_2_setup<H: Host + ?Sized>(game: &mut H) {
     clear_cinematic_colors(0x1e0, 0x10, game);
     compose_cinematic_palette(game);
     word!(game.CINEMATIC_FUNCTION_TIMER = 63);
-    word!(game.CINEMATIC_FUNCTION = function::SCENE_2_FADING_IN);
+    flow::set(game, CinematicFunction, function::SCENE_2_FADING_IN);
 }
 
 /// Cinematic function - ending - Zebes destruction scene 2 - cross-fade to
@@ -280,7 +281,7 @@ pub fn scene_2_fading_in<H: Host + ?Sized>(game: &mut H) {
     scene_2(game);
     if crate::cinematic::advance_cinematic_fade(CinematicFade::FastIn, game) {
         crate::screen_fade::set_both(game, 2, 2);
-        word!(game.CINEMATIC_FUNCTION = function::SCENE_2);
+        flow::set(game, CinematicFunction, function::SCENE_2);
     }
 }
 
@@ -332,7 +333,7 @@ pub fn scene_2<H: Host + ?Sized>(game: &mut H) {
         word!(game.REG_BG2HOFS = 0);
         word!(game.REG_BG2VOFS = 0);
         crate::screen_fade::set_both(game, 0, 2);
-        word!(game.CINEMATIC_FUNCTION = function::LOAD_GUNSHIP_BG);
+        flow::set(game, CinematicFunction, function::LOAD_GUNSHIP_BG);
         word!(game.CINEMATIC_FUNCTION_TIMER = 0);
     }
 }
@@ -344,7 +345,7 @@ pub fn change_music<H: Host + ?Sized>(game: &mut H) {
         crate::music_requests::queue_delayed_8(NO_MUSIC, game);
         crate::music_requests::queue_delayed_8(CREDITS_MUSIC_DATA, game);
         crate::music_requests::queue_delayed(5, SONG_DELAY, game);
-        word!(game.CINEMATIC_FUNCTION = function::GUNSHIP_SETUP);
+        flow::set(game, CinematicFunction, function::GUNSHIP_SETUP);
     }
 }
 
@@ -372,7 +373,7 @@ pub fn gunship_setup<H: Host + ?Sized>(game: &mut H) {
         word!(game.CINEMATIC_FUNCTION_TIMER = 1);
         word!(game.CINEMATIC_VAR13 = 192);
         word!(game.CINEMATIC_VAR14 = 0);
-        word!(game.CINEMATIC_FUNCTION = function::GUNSHIP_SPINNING_FAST);
+        flow::set(game, CinematicFunction, function::GUNSHIP_SPINNING_FAST);
     }
 }
 
@@ -403,7 +404,7 @@ pub fn gunship_fly_into_camera<H: Host + ?Sized>(game: &mut H) {
     if below(word!(game.MODE7_ZOOM), 32) {
         let parameter = word!(game.MODE7_ZOOM);
         sprites(game, object::GUNSHIP_TEXT, parameter);
-        word!(game.CINEMATIC_FUNCTION = function::GUNSHIP_FREEZE_FRAME);
+        flow::set(game, CinematicFunction, function::GUNSHIP_FREEZE_FRAME);
         crate::word_transfers!(game, descending, 16; le(PALETTE_BUFFER, 95) <- table(GUNSHIP_GREY, 15));
     } else {
         word!(game.MODE7_ZOOM, wrapping_sub(4));
@@ -417,7 +418,7 @@ pub fn transition_to_credits<H: Host + ?Sized>(game: &mut H) {
     if crate::cinematic::advance_cinematic_fade(CinematicFade::FastOut, game) {
         crate::display_refresh::enable(true, game);
         crate::screen_fade::set_both(game, 0, 0);
-        word!(game.CINEMATIC_FUNCTION = function::CREDITS_SETUP);
+        flow::set(game, CinematicFunction, function::CREDITS_SETUP);
     }
 }
 
@@ -466,14 +467,14 @@ pub fn credits_setup<H: Host + ?Sized>(game: &mut H) {
     clear_cinematic_background(0x7f, game);
     let roll = crate::credits::prepare_credit_roll(object::CREDITS, game);
     crate::cinematic_objects::advance_cinematic_background_pre(roll, 0, game);
-    word!(game.CINEMATIC_FUNCTION = function::CREDITS);
+    flow::set(game, CinematicFunction, function::CREDITS);
 }
 
 /// Cinematic function - post-credits - blank screen ($8B:E0F4). Was
 /// `CinematicFunction_Intro_Func129`.
 pub fn blank_screen<H: Host + ?Sized>(game: &mut H) {
     if countdown(game) {
-        word!(game.CINEMATIC_FUNCTION = function::FADE_IN_SHOOTING_STARS);
+        flow::set(game, CinematicFunction, function::FADE_IN_SHOOTING_STARS);
         word!(game.CINEMATIC_FUNCTION_TIMER = 120);
         game.ram().write_byte(mirror::TM, 16);
     }
@@ -491,7 +492,7 @@ pub fn fade_in_shooting_stars<H: Host + ?Sized>(game: &mut H) {
         clear_cinematic_colors(0x40, 0x10, game);
         compose_cinematic_palette(game);
         word!(game.CINEMATIC_FUNCTION_TIMER = 32);
-        word!(game.CINEMATIC_FUNCTION = function::FADE_IN_SAMUS);
+        flow::set(game, CinematicFunction, function::FADE_IN_SAMUS);
     }
 }
 
@@ -503,7 +504,7 @@ pub fn fade_in_samus<H: Host + ?Sized>(game: &mut H) {
     if countdown(game) {
         set_cinematic_blend(18, 4, 2, 2, game);
         word!(game.CINEMATIC_FUNCTION_TIMER = 180);
-        word!(game.CINEMATIC_FUNCTION = function::WAVY_SAMUS);
+        flow::set(game, CinematicFunction, function::WAVY_SAMUS);
         crate::room_visuals::initialize_intro_wave(game);
     }
 }
@@ -517,7 +518,7 @@ pub fn wavy_samus<H: Host + ?Sized>(game: &mut H) {
         queue_cinematic_tilemap(CinematicTilemap::FullText, game);
         set_cinematic_blend(1, 0, 0, 0, game);
         word!(game.CINEMATIC_FUNCTION_TIMER = 180);
-        word!(game.CINEMATIC_FUNCTION = function::DEER_FORCE);
+        flow::set(game, CinematicFunction, function::DEER_FORCE);
         word!(game.WAVY_SAMUS_ENABLED = 0);
     }
 }
@@ -533,9 +534,9 @@ pub fn nintendo_1994<H: Host + ?Sized>(game: &mut H) {
             || below(word!(game.GAME_TIME_HOURS), CLEAR_HOURS)
         {
             set_cinematic_blend(2, 16, 2, 34, game);
-            word!(game.CINEMATIC_FUNCTION = function::IDLE_SAMUS_2_CROSS_FADE);
+            flow::set(game, CinematicFunction, function::IDLE_SAMUS_2_CROSS_FADE);
         } else {
-            word!(game.CINEMATIC_FUNCTION = function::IDLE_SAMUS_2);
+            flow::set(game, CinematicFunction, function::IDLE_SAMUS_2);
         }
     }
 }
@@ -545,7 +546,7 @@ pub fn nintendo_1994<H: Host + ?Sized>(game: &mut H) {
 pub fn fade_from_white<H: Host + ?Sized>(game: &mut H) {
     fade_cinematic_fixed_color(game);
     if countdown(game) {
-        word!(game.CINEMATIC_FUNCTION = function::FINISHED);
+        flow::set(game, CinematicFunction, function::FINISHED);
         word!(game.CINEMATIC_BG_VRAM_ADDRESS = 20480);
         queue_cinematic_tilemap(CinematicTilemap::FullText, game);
         word!(game.LAYER1_X_POS = 256);
@@ -563,7 +564,7 @@ pub fn fade_from_white<H: Host + ?Sized>(game: &mut H) {
 /// ($8B:E58A): then the icon background. Was `CinematicFunction_Intro_Func144`.
 pub fn grey_out_icon<H: Host + ?Sized>(game: &mut H) {
     if crate::ending_graphics::advance_ending_logo_palette(game) {
-        word!(game.CINEMATIC_FUNCTION = function::FINISHED);
+        flow::set(game, CinematicFunction, function::FINISHED);
         clear_cinematic_sprites(game);
         spawn(game, CinematicObjects::Background, object::ICON, 0x4c00);
     }
@@ -581,7 +582,7 @@ pub fn scroll_item_percentage<H: Host + ?Sized>(game: &mut H) {
             object::ITEM_PERCENTAGE,
             0x4c00,
         );
-        word!(game.CINEMATIC_FUNCTION = function::FINISHED);
+        flow::set(game, CinematicFunction, function::FINISHED);
         crate::menus::save_slots::record_completion(game);
     }
 }
