@@ -25,15 +25,7 @@ use host::{Contact, ContactIdentity, SpawnSource};
 pub(crate) use rules::treadmill::{Direction, carry};
 
 pub(crate) fn spawn_hardcoded(args: SpawnHardcodedPlmArgs, game: &mut Game) {
-    creation::spawn(
-        &mut Runtime::new(game),
-        SpawnSource::Hardcoded {
-            x: args.block_x,
-            y: args.block_y,
-            header: args.header,
-        },
-        &mut Contact::Absent,
-    );
+    creation::spawn_hardcoded(args.block_x, args.block_y, args.header, game);
 }
 pub(crate) unsafe fn spawn_room(address: u16, game: &mut Game) {
     creation::spawn(

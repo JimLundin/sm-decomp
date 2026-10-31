@@ -73,8 +73,6 @@ pub trait MenuRuntime:
     fn write_dma_register(&mut self, register: u16, value: u8);
     /// Advance the music queue, as the HDMA update did first each frame.
     fn handle_music_queue(&mut self);
-    /// Spawn the hardcoded PLM `id` at block (`x`, `y`).
-    fn spawn_hardcoded_plm(&mut self, x: u8, y: u8, id: u16);
     /// Spawn an enemy projectile that uses the room's graphics; returns its slot.
     fn spawn_room_enemy_projectile(&mut self, definition: u16, parameter: u16) -> u16;
     /// The original's `RomPtr_RAM` assertion on a RAM-table address.

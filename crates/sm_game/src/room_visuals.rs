@@ -113,7 +113,7 @@ pub fn shake_room_with_sound<H: crate::menus::host::Host + ?Sized>(kind: u16, ga
 
 pub fn initialize_tourian_statue<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     if crate::progress::leased::event_has_happened(0xa, game) & 1 != 0 {
-        game.spawn_hardcoded_plm(6, 12, 0xb777);
+        crate::room_mechanisms::creation::spawn_hardcoded(6, 12, 0xb777, game);
         crate::word_transfers!(game, ascending, 1; native(0xcd20) <- value(514));
     }
     game.ram().write_byte(0x59, 74);
@@ -178,7 +178,7 @@ pub fn advance_tourian_statue<H: crate::menus::host::Host + ?Sized>(
             object.a = position as u16;
             object.b = (position >> 16) as u16;
             if object.b == 0xff10 {
-                game.spawn_hardcoded_plm(6, 12, 0xb773);
+                crate::room_mechanisms::creation::spawn_hardcoded(6, 12, 0xb773, game);
                 crate::progress::leased::mark_event(0xa, game);
                 advance_statue_program(object);
             }
