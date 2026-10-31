@@ -10,6 +10,7 @@
 use crate::cinematic::{advance_cinematic_coordinate, advance_cinematic_fade, set_fixed_color};
 use crate::cinematic_host::Host;
 use crate::cinematic_objects::CinematicObjects;
+use crate::cinematic_state::cinematic;
 use crate::display::registers as reg;
 use crate::display_refresh::GraphicsAsset;
 use crate::flow;
@@ -115,10 +116,10 @@ pub fn wait_for_nmis<H: Host + ?Sized>(count: u8, game: &mut H) -> bool {
 
 /// The intro and ending's frame counters.
 fn count_frames<H: Host + ?Sized>(game: &mut H) {
-    if (word!(game.INTRO_FRAME_COUNTER) & 0x8000) == 0 {
-        word!(game.INTRO_FRAME_COUNTER, wrapping_add(1));
+    if (cinematic!(game.IntroFrameCounter) & 0x8000) == 0 {
+        cinematic!(game.IntroFrameCounter += 1);
     }
-    word!(game.CINEMATIC_FRAME_COUNTER, wrapping_add(1));
+    cinematic!(game.FrameCounter += 1);
 }
 
 /// Draws the Nintendo logo. Was `AddNintentoLogoToOam`.
@@ -272,7 +273,7 @@ pub fn title_sequence<H: Host + ?Sized>(game: &mut H) -> u8 {
 /// Runs Samus during the intro once she is shown, with her timers. Was
 /// `HandleSamusDuringIntro`.
 pub fn handle_samus_during_intro<H: Host + ?Sized>(game: &mut H) {
-    if word!(game.INTRO_SAMUS_DISPLAY) != 0 {
+    if cinematic!(game.IntroSamusDisplay) != 0 {
         game.advance_intro_player();
         if game.invincibility_timer() != 0 {
             game.set_invincibility_timer(game.invincibility_timer() - 1);
@@ -409,11 +410,11 @@ pub fn egg_particle<H: Host + ?Sized>(k: u16, game: &mut H) {
         2392,
         PARTICLE_FUNCTION,
     );
-    if ((word!(game.CINEMATICBG_ARR8[slot])).wrapping_sub(PARTICLE_FLOOR) as i16) < 0 {
-        word!(game.CINEMATICSPR_GOTO_TIMER[slot], wrapping_add(256));
+    if ((cinematic!(game.BgArr8[slot])).wrapping_sub(PARTICLE_FLOOR) as i16) < 0 {
+        cinematic!(game.SprGotoTimer[slot] += 256);
     } else {
-        word!(game.CINEMATICSPR_INSTR_TIMER[slot] = 1);
-        word!(game.CINEMATICSPR_INSTR_PTR[slot] = PARTICLE_LANDED);
+        cinematic!(game.SprInstructionTimer[slot] = 1);
+        cinematic!(game.SprInstructionPointer[slot] = PARTICLE_LANDED);
     }
 }
 
@@ -431,7 +432,7 @@ pub fn slime_drop<H: Host + ?Sized>(k: u16, game: &mut H) {
         2442,
         SLIME_FUNCTION,
     );
-    if (word!(game.CINEMATICSPR_GOTO_TIMER[slot]) & 1) != 0 {
+    if (cinematic!(game.SprGotoTimer[slot]) & 1) != 0 {
         advance_particle_axis(
             game,
             k,
@@ -452,11 +453,11 @@ pub fn slime_drop<H: Host + ?Sized>(k: u16, game: &mut H) {
             SLIME_FUNCTION,
         );
     }
-    if !(((word!(game.CINEMATICBG_ARR8[slot])).wrapping_sub(PARTICLE_FLOOR) as i16) < 0) {
-        word!(game.CINEMATICSPR_INSTR_TIMER[slot] = 1);
-        word!(game.CINEMATICSPR_INSTR_PTR[slot] = SLIME_LANDED);
-        word!(game.CINEMATICSPR_PREINSTR_FUNC[slot] = NO_PRE_INSTRUCTION);
+    if !(((cinematic!(game.BgArr8[slot])).wrapping_sub(PARTICLE_FLOOR) as i16) < 0) {
+        cinematic!(game.SprInstructionTimer[slot] = 1);
+        cinematic!(game.SprInstructionPointer[slot] = SLIME_LANDED);
+        cinematic!(game.SprPreInstruction[slot] = NO_PRE_INSTRUCTION);
     } else {
-        word!(game.CINEMATICSPR_GOTO_TIMER[slot], wrapping_add(256));
+        cinematic!(game.SprGotoTimer[slot] += 256);
     }
 }
