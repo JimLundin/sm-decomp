@@ -137,24 +137,6 @@ crate::game::callback_dispatch! {
         11111221 => sm_game::actors::mother_brain_tubes::initialize;
         11121923 => mother_brain_fight::body_shot;
         11122118 => mother_brain_fight::brain_touch;
-        11129608 => corpses::initialize_torizo_corpse;
-        11129704 => corpses::torizo_corpse_main_ai;
-        11129898 => corpses::torizo_corpse_power_bomb_reaction;
-        11129907 => corpses::torizo_corpse_touch_or_shot;
-        11130806 => corpses::initialize_sidehopper_corpse;
-        11130953 => corpses::initialize_geemer_corpse;
-        11130998 => corpses::initialize_ripper_corpse;
-        11131039 => corpses::initialize_skree_corpse;
-        11131084 => corpses::sidehopper_corpse_power_bomb_reaction;
-        11131099 => corpses::corpse_main_ai;
-        11132141 => corpses::power_bomb_reaction_geemer_corpse;
-        11132152 => corpses::touch_or_shot_geemer_corpse;
-        11132157 => corpses::ripper_corpse_power_bomb_reaction;
-        11132168 => corpses::ripper_corpse_touch_or_shot;
-        11132173 => corpses::skree_corpse_power_bomb_reaction;
-        11132184 => corpses::skree_corpse_touch_or_shot;
-        11132189 => corpses::sidehopper_corpse_shot;
-        11132228 => corpses::sidehopper_corpse_touch;
         11126544 => baby_metroid_cutscene::initialize;
         11126649 => baby_metroid_cutscene::main_ai;
         11128579 => baby_metroid_cutscene::touch;
@@ -173,7 +155,6 @@ crate::game::callback_dispatch! {
         11115208 => mother_brain_fight::spawn_dust_cloud_at_offset;
         11115247 => mother_brain_fight::spawn_hand_beam_projectile;
         11115269 => mother_brain_fight::increment_hand_beam_attack_phase;
-        11136208 => corpses::sidehopper_corpse_end_hop;
         11139476 => baby_metroid_encounter::branch_or_queue_remorse_sound;
     }
 }
@@ -195,6 +176,36 @@ impl baby_metroid_cutscene::Host for Game {
 
     fn heal_by_baby_metroid(&mut self) -> bool {
         vitals::heal_by_baby_metroid(self)
+    }
+}
+
+impl Runtime<'_> {
+    /// The corpses' AI and reactions, on this lease; false when `routine` is
+    /// not one of them.
+    pub(crate) fn corpse_ai(&mut self, routine: u32) -> bool {
+        let action: fn(&mut Self) = match routine {
+            11129608 => corpses::initialize_torizo_corpse,
+            11129704 => corpses::torizo_corpse_main_ai,
+            11129898 => corpses::torizo_corpse_power_bomb_reaction,
+            11129907 => corpses::torizo_corpse_touch_or_shot,
+            11130806 => corpses::initialize_sidehopper_corpse,
+            11130953 => corpses::initialize_geemer_corpse,
+            11130998 => corpses::initialize_ripper_corpse,
+            11131039 => corpses::initialize_skree_corpse,
+            11131084 => corpses::sidehopper_corpse_power_bomb_reaction,
+            11131099 => corpses::corpse_main_ai,
+            11132141 => corpses::power_bomb_reaction_geemer_corpse,
+            11132152 => corpses::touch_or_shot_geemer_corpse,
+            11132157 => corpses::ripper_corpse_power_bomb_reaction,
+            11132168 => corpses::ripper_corpse_touch_or_shot,
+            11132173 => corpses::skree_corpse_power_bomb_reaction,
+            11132184 => corpses::skree_corpse_touch_or_shot,
+            11132189 => corpses::sidehopper_corpse_shot,
+            11132228 => corpses::sidehopper_corpse_touch,
+            _ => return false,
+        };
+        self.owned_call(action);
+        true
     }
 }
 

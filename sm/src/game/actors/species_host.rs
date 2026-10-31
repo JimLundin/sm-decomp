@@ -61,7 +61,6 @@ impl sm_game::actors::species::DrawHookHost for Game {
             BlueFaceBlockPalette => sm_game::actors::blue_brinstar_face_block::cycle_palette(self),
             MotherBrainBrainAndNeck => sm_a9::draw_brain_and_neck_hook(self),
             MotherBrainBrain => sm_a9::draw_brain_hook(self),
-            DeadTorizo => sm_game::actors::corpses::torizo_corpse_graphics_drawn_hook(self),
         }
     }
 }

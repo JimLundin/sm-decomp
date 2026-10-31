@@ -176,7 +176,6 @@ pub enum NativeDrawHook {
     BlueFaceBlockPalette,
     MotherBrainBrainAndNeck,
     MotherBrainBrain,
-    DeadTorizo,
 }
 
 /// What the draw hooks need beyond their actors' own hosts.
@@ -198,7 +197,6 @@ pub fn draw_hook<H: DrawHookHost>(ea: u32, game: &mut H) {
         11110278 => (),
         11110345 => game.native_draw_hook(NativeDrawHook::MotherBrainBrainAndNeck),
         11110365 => game.native_draw_hook(NativeDrawHook::MotherBrainBrain),
-        11129754 => game.native_draw_hook(NativeDrawHook::DeadTorizo),
         _ => game.unknown_routine(),
     }
 }

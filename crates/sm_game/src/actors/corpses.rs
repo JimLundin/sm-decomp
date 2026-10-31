@@ -1014,11 +1014,8 @@ pub fn initialize_torizo_corpse(game: &mut impl Lease) {
     session_slot! { game, DeadTorizo[0i32]; x_velocity = 0, y_velocity = 8, pre_rot_delay = 0, sand_heap_lines = 15, rot_timer = 0 };
     initialize_enemy_corpse_rotting(0, ADDR_STRU_A9DD58 as u16, game);
 }
-/// Main AI - Torizo corpse: the frame runs on one lease.
-pub fn torizo_corpse_main_ai(game: &mut impl Host) {
-    torizo_corpse_frame(&mut game.lease());
-}
-fn torizo_corpse_frame(game: &mut impl Lease) {
+/// Main AI - Torizo corpse.
+pub fn torizo_corpse_main_ai(game: &mut impl Lease) {
     if (session_slot!(game, DeadTorizo[0i32].base.properties) as i32
         & K_ENEMY_PROPS_TANGIBLE as i32)
         == 0

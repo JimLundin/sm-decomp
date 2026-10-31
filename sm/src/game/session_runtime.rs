@@ -1163,7 +1163,7 @@ crate::game::callback_dispatch! {
 }
 impl Runtime<'_> {
     pub(crate) fn actor_ai_legacy(&mut self, routine: u32) {
-        if sm_game::actors::species::lease_ai(routine, self) {
+        if sm_game::actors::species::lease_ai(routine, self) || self.corpse_ai(routine) {
             return;
         }
         match routine {
@@ -1204,6 +1204,11 @@ impl Runtime<'_> {
             Ok(script) => return script,
             Err(script) => script,
         };
+        if routine == 11136208 {
+            return self.owned_call(|runtime| {
+                sm_game::actors::corpses::sidehopper_corpse_end_hop(actor, script, runtime)
+            });
+        }
         if routine >> 16 == 0xa6 {
             match self.owned_call(|runtime| ridley::instruction(routine, script, runtime)) {
                 Ok(next) => return next,
@@ -1230,6 +1235,8 @@ impl Runtime<'_> {
         use sm_game::actors::species;
         if routine == 10920690 {
             self.owned_call(sm_game::actors::ridley::draw_baby_metroid_and_door);
+        } else if routine == 11129754 {
+            self.owned_call(sm_game::actors::corpses::torizo_corpse_graphics_drawn_hook);
         } else if !species::lease_draw_hook(routine, self) {
             self.foreign(|game| species::draw_hook(routine, game));
         }
