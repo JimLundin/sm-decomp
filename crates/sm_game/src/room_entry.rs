@@ -16,6 +16,7 @@ pub mod content_background;
 pub mod content_state;
 pub mod effects;
 pub mod installation;
+pub mod pack;
 pub mod prepared_assets;
 pub mod prepared_tables;
 pub mod protocol;
