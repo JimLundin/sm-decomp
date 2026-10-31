@@ -95,7 +95,7 @@ pub fn configure_cinematic_display<H: crate::menus::host::Host + ?Sized>(
         }
         if display == Credits {
             set_fixed_color([32, 64, 0x80], game);
-            word!(game.OAM_NEXT_PTR = 0);
+            crate::sprite_drawing::reset_cursor(game);
             reset_cinematic_transform(128, 128, game);
             word! { game; MODE7_ANGLE = 0; MODE7_ZOOM = 1; }
             word! { game, 0;
@@ -138,7 +138,7 @@ pub fn configure_cinematic_display<H: crate::menus::host::Host + ?Sized>(
     }
     match display {
         Title => {
-            word!(game.OAM_NEXT_PTR = 0);
+            crate::sprite_drawing::reset_cursor(game);
             word!(game.MENU_OPTION_INDEX = 0);
             crate::screen_fade::set_both(game, 0, 0);
             crate::menu!(game.PausemenuStartLrPressedHighlightTimer = 0);
@@ -161,10 +161,11 @@ pub fn configure_cinematic_display<H: crate::menus::host::Host + ?Sized>(
             word!(game.MODE7_ANGLE = 0);
         }
         Intro => {
-            word! { game, 0; OAM_NEXT_PTR, MODE7_ANGLE }
+            crate::sprite_drawing::reset_cursor(game);
+            word!(game.MODE7_ANGLE = 0);
         }
         Escape => {
-            word!(game.OAM_NEXT_PTR = 0);
+            crate::sprite_drawing::reset_cursor(game);
             crate::screen_fade::set_both(game, 0, 0);
             word!(game.MODE7_ANGLE = 0);
         }

@@ -151,6 +151,15 @@ impl<H: crate::runtime_access::SessionRam + ?Sized> objects::Host for SessionObj
         Ok(())
     }
 }
+/// Point the object cursor back at the first entry, on the projected objects.
+pub fn reset_cursor<H: crate::runtime_access::SessionRam + ?Sized>(game: &mut H) {
+    let Ok(()) = objects::reset_cursor(&mut SessionObjects(game));
+}
+/// The ending's unused-sprite fill, on the projected objects; see
+/// `objects::hide_unused_large`.
+pub fn hide_unused_large<H: crate::runtime_access::SessionRam + ?Sized>(game: &mut H) {
+    let Ok(()) = objects::hide_unused_large(&mut SessionObjects(game));
+}
 /// A boss's room-coordinate spritemap on `host`'s objects; see
 /// `objects::draw_room`.
 pub fn draw_room<H: objects::Host>(
