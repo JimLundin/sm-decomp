@@ -1,6 +1,7 @@
 //! Intro narrative pages, scene entry, crossfades and Japanese text continuations.
 //! Numeric callbacks select these operations; Game retains the cinematic state.
 use crate::cinematic_objects::CinematicObjects;
+use crate::cinematic_state::{self, Array, cinematic};
 use crate::imported::Imported;
 use crate::ram::RawRam as _;
 
@@ -13,7 +14,7 @@ use crate::constants::bank_8d::ADDR_K_PALFX_E1BC;
 use crate::constants::bank_91::{ADDR_STRU_91877E, ADDR_STRU_918784};
 use crate::constants::samus_poses::K_POSE_02_FACE_L_NORMAL;
 use crate::menus::prelude::{HdmaObjectDefinition, do_until};
-use crate::ram::{checked_word, word};
+use crate::ram::word;
 use crate::visual_state::{CinematicFade, CinematicTilemap};
 use sm_data::intro_palette::{
     ADDRESS as INTRO_PALETTE, BYTES as INTRO_PALETTE_BYTES, IntroPalette,
@@ -61,16 +62,16 @@ pub fn advance_scene_sprite<H: crate::menus::host::Host + ?Sized>(
     if scene == 0 {
         if (game.player_x() as i32 - 169) & 0x8000 != 0 {
             crate::cinematic::resume_cinematic_sprite(slot, 0xcb3b, game);
-            word!(game.CINEMATICSPR_PREINSTR_FUNC[slot] = 0x93d9);
+            cinematic!(game.SprPreInstruction[slot] = 0x93d9);
         }
     } else if scene == 1 {
-        if word!(game.INTRO_JAPANESE_TEXT_TIMER) == 59 {
+        if cinematic!(game.IntroJapaneseTextTimer) == 59 {
             crate::cinematic::resume_cinematic_sprite(slot, 0xcc23, game);
         }
-        if word!(game.CINEMATIC_VAR13) == 127 {
+        if cinematic!(game.Var13) == 127 {
             crate::cinematic::resume_cinematic_sprite(slot, 0xce53, game);
         }
-    } else if word!(game.CINEMATICSPR_INSTR_PTR[15]) == 0 {
+    } else if cinematic!(game.SprInstructionPointer[15]) == 0 {
         crate::cinematic::resume_cinematic_sprite(slot, 0xee9b, game);
     }
 }
@@ -80,10 +81,10 @@ pub fn wait_for_scene_end<H: crate::menus::host::Host + ?Sized>(
     stop_samus: bool,
     game: &mut H,
 ) {
-    if word!(game.CINEMATIC_VAR13) == 0 {
+    if cinematic!(game.Var13) == 0 {
         crate::cinematic::resume_cinematic_sprite(usize::from(object >> 1), 0xce53, game);
         if stop_samus {
-            word!(game.INTRO_SAMUS_DISPLAY = 0);
+            cinematic!(game.IntroSamusDisplay = 0);
         }
     }
 }
@@ -94,31 +95,31 @@ pub fn advance_laboratory_baby<H: crate::menus::host::Host + ?Sized>(
     game: &mut H,
 ) {
     let slot = usize::from(object >> 1);
-    if word!(game.CINEMATIC_VAR13) == 0 {
+    if cinematic!(game.Var13) == 0 {
         crate::cinematic::resume_cinematic_sprite(slot, 0xce53, game);
-    } else if word!(game.CINEMATIC_FUNCTION_TIMER) & 3 == 0 {
+    } else if cinematic!(game.FunctionTimer) & 3 == 0 {
         if examined {
-            if (word!(game.CINEMATIC_Y) as i32 - 8) & 0x8000 != 0 {
-                word!(game.CINEMATIC_Y += 1);
-                word!(game.CINEMATICBG_ARR8[slot] -= 1);
+            if (cinematic!(game.Y) as i32 - 8) & 0x8000 != 0 {
+                cinematic!(game.Y += 1);
+                cinematic!(game.BgArr8[slot] -= 1);
             }
-        } else if word!(game.CINEMATIC_X) != 0 {
-            word!(game.CINEMATIC_X -= 1);
-            word!(game.CINEMATICBG_ARR7[slot] += 1);
+        } else if cinematic!(game.X) != 0 {
+            cinematic!(game.X -= 1);
+            cinematic!(game.BgArr7[slot] += 1);
         }
     }
 }
 
 fn hide_caret<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    word!(game.CINEMATICBG_ARR7[15] = 8);
-    word!(game.CINEMATICBG_ARR8[15] = 248);
+    cinematic!(game.BgArr7[15] = 8);
+    cinematic!(game.BgArr8[15] = 248);
 }
 
 pub fn reset_caret<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    word!(game.CINEMATICBG_ARR7[15] = 8);
-    word!(game.CINEMATICBG_ARR8[15] = 24);
-    word!(game.CINEMATICSPR_INSTR_PTR[15] = 0xcbfb);
-    word!(game.CINEMATICSPR_INSTR_TIMER[15] = 1);
+    cinematic!(game.BgArr7[15] = 8);
+    cinematic!(game.BgArr8[15] = 24);
+    cinematic!(game.SprInstructionPointer[15] = 0xcbfb);
+    cinematic!(game.SprInstructionTimer[15] = 1);
 }
 
 pub fn clear_english_text<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
@@ -137,7 +138,7 @@ pub fn create_japanese_text<H: crate::menus::host::Host + ?Sized>(
     j: u16,
     game: &mut H,
 ) -> u16 {
-    word!(game.INTRO_TEXT_CLICK_FLAG = 0);
+    cinematic!(game.IntroTextClickFlag = 0);
     if word!(game.JAPANESE_TEXT_FLAG) != 0 {
         CinematicObjects::Mode7.spawn(object, word!(game.JAPANESE_TEXT_FLAG), game);
     }
@@ -145,8 +146,8 @@ pub fn create_japanese_text<H: crate::menus::host::Host + ?Sized>(
 }
 
 pub fn reset_text_marker<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    word!(game.CINEMATICSPR_INSTR_PTR[15] = 0xcc03);
-    word!(game.CINEMATICSPR_INSTR_TIMER[15] = 1);
+    cinematic!(game.SprInstructionPointer[15] = 0xcc03);
+    cinematic!(game.SprInstructionTimer[15] = 1);
 }
 
 pub fn spawn_marker<H: crate::menus::host::Host + ?Sized>(
@@ -165,7 +166,7 @@ pub fn spawn_marker<H: crate::menus::host::Host + ?Sized>(
         if let Some(object) = continuation {
             // The arrow leaves its palette in A; a full allocator leaves slot zero's instruction.
             let parameter = if failed {
-                word!(game.CINEMATICSPR_INSTR_PTR[0])
+                cinematic!(game.SprInstructionPointer[0])
             } else {
                 0x0c00
             };
@@ -178,8 +179,8 @@ pub fn spawn_marker<H: crate::menus::host::Host + ?Sized>(
 }
 
 fn page_input_ready<H: crate::menus::host::Host + ?Sized>(game: &mut H) -> bool {
-    if word!(game.INTRO_JAPANESE_TEXT_TIMER) != 0 {
-        word!(game.INTRO_JAPANESE_TEXT_TIMER -= 1);
+    if cinematic!(game.IntroJapaneseTextTimer) != 0 {
+        cinematic!(game.IntroJapaneseTextTimer -= 1);
         false
     } else {
         word!(game.JOYPAD1_NEWKEYS) != 0
@@ -239,8 +240,8 @@ pub fn wait_for_scene<H: crate::menus::host::Host + ?Sized>(scene: Scene, game: 
             game.set_previous_player_x(x);
             game.set_player_y(y);
             game.set_previous_player_y(y);
-            word!(game.CINEMATIC_X = 0);
-            word!(game.CINEMATIC_VAR13 = 127);
+            cinematic!(game.X = 0);
+            cinematic!(game.Var13 = 127);
             if mother_brain {
                 // The preceding $1A4B store leaves $007F in the ROM accumulator.
                 crate::cinematic_objects::spawn_cinematic_sprite_at(
@@ -269,7 +270,7 @@ pub fn wait_for_scene<H: crate::menus::host::Host + ?Sized>(scene: Scene, game: 
                     0x0e00,
                     game,
                 );
-                word!(game.INTRO_FRAME_COUNTER = 0);
+                cinematic!(game.IntroFrameCounter = 0);
                 crate::word_transfers!(game, ascending, 384; le(LEVEL_DATA, 0) <- rom(0x8cc083, 0));
                 word!(game.HUD_ITEM_INDEX = 0);
             }
@@ -283,15 +284,15 @@ pub fn wait_for_scene<H: crate::menus::host::Host + ?Sized>(scene: Scene, game: 
             };
             // EnableDemoInput leaves $8000 in the ROM accumulator for the loader.
             game.demo_load(0x8000, input as u16);
-            word!(game.INTRO_SAMUS_DISPLAY = if mother_brain { u16::MAX } else { 1 });
+            cinematic!(game.IntroSamusDisplay = if mother_brain { u16::MAX } else { 1 });
             Palette::Gameplay
         }
         Scene::ScientistPage3 | Scene::ScientistPage4 => {
             let scientist = matches!(scene, Scene::ScientistPage3);
             game.ram().write_byte(0x58, if scientist { 88 } else { 92 });
-            word!(game.CINEMATIC_X = if scientist { 32 } else { 0 });
-            word!(game.CINEMATIC_Y = if scientist { 8 } else { -24i16 as u16 });
-            word!(game.CINEMATIC_VAR13 = 127);
+            cinematic!(game.X = if scientist { 32 } else { 0 });
+            cinematic!(game.Y = if scientist { 8 } else { -24i16 as u16 });
+            cinematic!(game.Var13 = 127);
             let object = if scientist {
                 ADDR_CINEMATIC_SPRITE_OBJECT_DEF_8BCE61
             } else {
@@ -321,17 +322,19 @@ pub fn wait_for_scene<H: crate::menus::host::Host + ?Sized>(scene: Scene, game: 
 }
 
 pub fn fade_to_scene<H: crate::menus::host::Host + ?Sized>(palette: Palette, game: &mut H) {
-    if (word!(game.CINEMATIC_FUNCTION_TIMER) & 3) == 0 {
+    if (cinematic!(game.FunctionTimer) & 3) == 0 {
         palette.crossfade(false, game);
     }
-    if (word!(game.CINEMATIC_FUNCTION_TIMER -= 1, reread) & 0x8000) != 0 {
+    if (cinematic!(game.FunctionTimer -= 1, reread) & 0x8000) != 0 {
         game.ram().write_byte(0x69, 21);
         game.ram().write_byte(0x6b, 0);
         game.ram().write_byte(0x6f, 0);
         crate::word_transfers!(game, ascending, 640; pause_map(128) <- value(47));
         clear_japanese_tiles(game);
         crate::flow::set(game, crate::flow::Word::CinematicFunction, 0xa391);
-        if matches!(palette, Palette::Gameplay) && (word!(game.INTRO_SAMUS_DISPLAY) & 0x8000) != 0 {
+        if matches!(palette, Palette::Gameplay)
+            && (cinematic!(game.IntroSamusDisplay) & 0x8000) != 0
+        {
             crate::palette_effects::execution::leased::spawn(ADDR_K_PALFX_E1BC as u16, game);
         }
     }
@@ -341,7 +344,7 @@ pub fn wait_for_music<H: crate::menus::host::Host + ?Sized>(next: u16, game: &mu
     if crate::music_requests::has_queued_music(game) & 1 == 0 {
         crate::flow::set(game, crate::flow::Word::CinematicFunction, next);
         if next == 0xa64c {
-            word!(game.CINEMATIC_FUNCTION_TIMER = 240);
+            cinematic!(game.FunctionTimer = 240);
         } else {
             crate::screen_fade::set_both(game, 2, 2);
             if next == 0xa84a {
@@ -363,7 +366,7 @@ pub fn wait_for_fade<H: crate::menus::host::Host + ?Sized>(
     if advance_cinematic_fade(fade, game) {
         crate::flow::set(game, crate::flow::Word::CinematicFunction, next);
         if next == 0xa5f8 {
-            word!(game.CINEMATIC_FUNCTION_TIMER = 60);
+            cinematic!(game.FunctionTimer = 60);
             if word!(game.JAPANESE_TEXT_FLAG) != 0 {
                 queue_cinematic_tilemap(CinematicTilemap::JapaneseIntro, game);
             }
@@ -386,10 +389,10 @@ pub fn show_page<H: crate::menus::host::Host + ?Sized>(object: u16, next: u16, g
 }
 
 pub fn fade_to_page<H: crate::menus::host::Host + ?Sized>(palette: Palette, game: &mut H) {
-    if (word!(game.CINEMATIC_VAR13) & 3) == 0 {
+    if (cinematic!(game.Var13) & 3) == 0 {
         palette.crossfade(true, game);
     }
-    if (word!(game.CINEMATIC_VAR13 -= 1, reread) & 0x8000) != 0 {
+    if (cinematic!(game.Var13 -= 1, reread) & 0x8000) != 0 {
         game.ram().write_byte(0x69, 22);
         game.ram().write_byte(0x6b, 0);
         game.ram().write_byte(0x6f, 0);
@@ -455,10 +458,13 @@ pub fn continue_japanese_text<H: crate::menus::host::Host + ?Sized>(
 ) {
     if word!(game.JOYPAD1_NEWKEYS) != 0 {
         let slot = k as usize >> 1;
-        word! {game; MODE7_OBJ_INSTR_PTR[slot] = next; MODE7_OBJ_INSTR_TIMER[slot] = 1;
-        MODE7_OBJ_PREINSTR_FUNC[slot] = 0x93d9; }
+        cinematic! { game;
+            Mode7InstructionPointer[slot] = next;
+            Mode7InstructionTimer[slot] = 1;
+            Mode7PreInstruction[slot] = 0x93d9;
+        }
         draw_japanese_text(lines, false, 0, game);
-        word!(game.INTRO_JAPANESE_TEXT_TIMER = 60);
+        cinematic!(game.IntroJapaneseTextTimer = 60);
     }
 }
 
@@ -483,7 +489,7 @@ pub fn show_final_page<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
 
 pub fn wait_for_final_page<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     if page_input_ready(game) {
-        word!(game.CINEMATIC_VAR13 = 127);
+        cinematic!(game.Var13 = 127);
         if word!(game.JAPANESE_TEXT_FLAG) != 0 {
             crate::flow::set(game, crate::flow::Word::CinematicFunction, 0xb207);
             set_cinematic_tilemap_updates(false, game);
@@ -503,7 +509,7 @@ fn setup_page_palettes<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     clear_cinematic_colors(0x60, 0x10, game);
     clear_cinematic_colors(0x1d2, 6, game);
     compose_cinematic_palette(game);
-    word!(game.CINEMATIC_FUNCTION_TIMER = 127);
+    cinematic!(game.FunctionTimer = 127);
     set_cinematic_tilemap_updates(true, game);
     reset_caret(game);
 }
@@ -539,11 +545,11 @@ pub fn finish_pages<H: crate::menus::host::Host + ?Sized>(j: u16, game: &mut H) 
 }
 
 // The text glow objects' tables, by byte offset (RAM map $19F7..$1A46).
-const GLOW_POINTERS: usize = crate::ram::word_arrays::TEXT_GLOW_INSTRUCTION_POINTERS;
-const GLOW_TIMERS: usize = crate::ram::word_arrays::TEXT_GLOW_TIMERS;
-const GLOW_X: usize = crate::ram::word_arrays::TEXT_GLOW_X_POSITIONS;
-const GLOW_Y: usize = crate::ram::word_arrays::TEXT_GLOW_Y_POSITIONS;
-const GLOW_PALETTES: usize = crate::ram::word_arrays::TEXT_GLOW_PALETTES;
+const GLOW_POINTERS: Array = Array::TextGlowPointers;
+const GLOW_TIMERS: Array = Array::TextGlowTimers;
+const GLOW_X: Array = Array::TextGlowXPositions;
+const GLOW_Y: Array = Array::TextGlowYPositions;
+const GLOW_PALETTES: Array = Array::TextGlowPalettes;
 
 pub fn spawn_text_glow<H: crate::menus::host::Host + ?Sized>(
     definition: u16,
@@ -551,15 +557,14 @@ pub fn spawn_text_glow<H: crate::menus::host::Host + ?Sized>(
     game: &mut H,
 ) {
     for slot in (0..8usize).rev() {
-        let offset = 2 * slot;
-        if checked_word!(game, GLOW_POINTERS + offset;) == 0 {
-            crate::word_transfers!(game, ascending, 1; native(GLOW_POINTERS + offset) <- value(definition));
-            word! {game; TEXT_GLOW_TIMERS[slot] = 1;
-            TEXT_GLOW_X_POSITIONS[slot] = position as u8 as u16; }
-            crate::word_transfers!(game, ascending, 1;
-                native(GLOW_Y + offset) <- value(u16::from(position.to_ne_bytes()[1])),
-                native(GLOW_PALETTES + offset) <- value(0),
-            );
+        if cinematic!(game.TextGlowPointers[slot]) == 0 {
+            cinematic! { game;
+                TextGlowPointers[slot] = definition;
+                TextGlowTimers[slot] = 1;
+                TextGlowXPositions[slot] = position & 0xff;
+                TextGlowYPositions[slot] = position >> 8;
+                TextGlowPalettes[slot] = 0;
+            }
             return;
         }
     }
@@ -568,33 +573,27 @@ pub fn spawn_text_glow<H: crate::menus::host::Host + ?Sized>(
 pub fn advance_text_glow<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     let mut object = 14i32;
     while object >= 0 {
-        word!(game.TEXT_GLOW_OBJECT_INDEX = object as u16);
-        if checked_word!(game, GLOW_POINTERS + object as usize;) != 0 {
+        cinematic!(game.TextGlowObjectIndex = object as u16);
+        if cinematic_state::get_offset(game, GLOW_POINTERS, object as usize) != 0 {
             advance_text_glow_object(game);
-            object = i32::from(word!(game.TEXT_GLOW_OBJECT_INDEX));
+            object = i32::from(cinematic!(game.TextGlowObjectIndex));
         }
         object -= 2;
     }
 }
 
 fn advance_text_glow_object<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    let object = usize::from(word!(game.TEXT_GLOW_OBJECT_INDEX));
-    let timer_at = GLOW_TIMERS + (object & !1);
-    let timer = checked_word!(game, timer_at;);
-    checked_word!(game, timer_at; = timer.wrapping_sub(1));
+    let object = usize::from(cinematic!(game.TextGlowObjectIndex));
+    let timer = cinematic_state::get_offset(game, GLOW_TIMERS, object & !1);
+    cinematic_state::set_offset(game, GLOW_TIMERS, object & !1, timer.wrapping_sub(1));
     if timer != 1 {
         return;
     }
-    let palette = u16::from_ne_bytes([
-        game.ram().read_byte(GLOW_PALETTES + object),
-        game.ram().read_byte(GLOW_PALETTES + object + 1),
-    ]);
-    let definition = u16::from_ne_bytes([
-        game.ram().read_byte(GLOW_POINTERS + object),
-        game.ram().read_byte(GLOW_POINTERS + object + 1),
-    ]);
-    let mut row = 2 * u16::from(game.ram().read_byte(GLOW_X + (object & !1)))
-        + 64 * u16::from(game.ram().read_byte(GLOW_Y + object));
+    let palette = cinematic_state::get_offset(game, GLOW_PALETTES, object);
+    let definition = cinematic_state::get_offset(game, GLOW_POINTERS, object);
+    let [x, _] = cinematic_state::get_offset(game, GLOW_X, object & !1).to_le_bytes();
+    let [y, _] = cinematic_state::get_offset(game, GLOW_Y, object).to_le_bytes();
+    let mut row = 2 * u16::from(x) + 64 * u16::from(y);
     let (width, mut rows) = {
         let definition = crate::menus::menu_tilemap::native_record(
             (0x8cu32 << 16) | u32::from(definition),
@@ -622,16 +621,12 @@ fn advance_text_glow_object<H: crate::menus::host::Host + ?Sized>(game: &mut H) 
         row = row.wrapping_add(64);
     }
     // Retirement rereads the live selector after the ordered tile writes.
-    let selected = usize::from(word!(game.TEXT_GLOW_OBJECT_INDEX));
-    let phase_at = GLOW_PALETTES + selected;
-    if u16::from_ne_bytes([
-        game.ram().read_byte(phase_at),
-        game.ram().read_byte(phase_at + 1),
-    ]) == 3072
-    {
-        crate::word_transfers!(game, ascending, 1; native(GLOW_POINTERS + selected) <- value(0));
+    let selected = usize::from(cinematic!(game.TextGlowObjectIndex));
+    let phase = cinematic_state::get_offset(game, GLOW_PALETTES, selected);
+    if phase == 3072 {
+        cinematic_state::set_offset(game, GLOW_POINTERS, selected, 0);
     } else {
-        checked_word!(game, phase_at; = checked_word!(game, phase_at;).wrapping_add(1024));
-        crate::word_transfers!(game, ascending, 1; native(GLOW_TIMERS + (selected & !1)) <- value(5));
+        cinematic_state::set_offset(game, GLOW_PALETTES, selected, phase.wrapping_add(1024));
+        cinematic_state::set_offset(game, GLOW_TIMERS, selected & !1, 5);
     }
 }

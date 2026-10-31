@@ -116,6 +116,8 @@ pub enum Array {
     BgInstructionTimer = 0x19dd,
     /// `CINEMATICBG_ARR6`, 4 words from `enemy_projectiles.slots[3].counter`.
     BgArr6 = 0x19e5,
+    /// `TEXT_GLOW_INSTRUCTION_POINTERS`, 8 words from `enemy_projectiles.slots[16].counter`.
+    TextGlowPointers = 0x19f7,
     /// `TEXT_GLOW_TIMERS`, 8 words from `enemy_projectiles.slots[2].pre_action`.
     TextGlowTimers = 0x1a07,
     /// `TEXT_GLOW_X_POSITIONS`, 8 words from `enemy_projectiles.slots[10].pre_action`.
@@ -163,6 +165,22 @@ pub fn at<I: TryInto<isize>>(array: Array, index: I) -> usize {
     (array as usize)
         .checked_add_signed(index.checked_mul(2).expect("word index overflow"))
         .expect("word address outside RAM")
+}
+
+/// The word `offset` bytes into `array`, for tables their objects index by
+/// byte offset.
+pub fn get_offset<H: CompatibilityRam + ?Sized>(h: &H, array: Array, offset: usize) -> u16 {
+    crate::projection::word(h, array as usize + offset)
+}
+
+/// Store `value` to the word `offset` bytes into `array`, low byte then high.
+pub fn set_offset<H: CompatibilityRam + ?Sized>(
+    h: &mut H,
+    array: Array,
+    offset: usize,
+    value: u16,
+) {
+    crate::projection::set_word(h, array as usize + offset, value);
 }
 
 /// Word `index` of `array`.
@@ -311,6 +329,7 @@ mod tests {
             (Array::BgPreInstruction, 4),
             (Array::BgInstructionTimer, 4),
             (Array::BgArr6, 4),
+            (Array::TextGlowPointers, 8),
             (Array::TextGlowTimers, 8),
             (Array::TextGlowXPositions, 8),
             (Array::TextGlowYPositions, 8),
