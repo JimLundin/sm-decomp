@@ -633,6 +633,7 @@ pub(crate) unsafe fn capture_with_sources(
                 loaded: game.loaded_rom.as_ref(),
                 native: game.capture_native_rom_binding().as_ref(),
                 sources,
+                policy_dependent: &crate::rom_patches::policy_dependent,
             },
             &|at| machine[at],
         )?;
@@ -810,6 +811,7 @@ pub(crate) unsafe fn restore_capture_with_sources(
                 loaded: game.loaded_rom.as_ref(),
                 native: game.capture_native_rom_binding().as_ref(),
                 sources: sources,
+                policy_dependent: &crate::rom_patches::policy_dependent,
             },
             &|at| ram[at],
             loaded_after_patch.as_ref(),

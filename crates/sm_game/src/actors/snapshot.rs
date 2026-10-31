@@ -600,6 +600,10 @@ pub struct CheckpointImages<'a> {
         crate::room_entry::world::ResourceId,
         sm_data::cartridge::RomImage,
     )],
+    /// Offsets of the loaded image whose bytes depend on the oracle's patch
+    /// policy. Restores skip them when they compare stored content, so a
+    /// checkpoint stays valid when the policy changes.
+    pub policy_dependent: &'a dyn Fn(usize) -> bool,
 }
 fn named_images(
     sources: &[(
@@ -707,6 +711,7 @@ impl ActorCheckpointPayload {
             loaded,
             native,
             sources,
+            policy_dependent: _,
         } = images;
         let world = &self.actors.binding;
         let named = named_images(sources, world)?;
@@ -790,6 +795,7 @@ impl ActorCheckpointPayload {
             loaded,
             native,
             sources,
+            policy_dependent,
         } = images;
         let next_epoch = current
             .checked_next_epoch()
@@ -904,12 +910,12 @@ impl ActorCheckpointPayload {
                 } else {
                     image
                 };
+                let is_loaded = loaded.is_some_and(|loaded| loaded.same_allocation(image));
                 if index >= count
                     || content.len() != data[index].len()
-                    || data[index]
-                        .iter()
-                        .enumerate()
-                        .any(|(at, byte)| content.read(at) != *byte)
+                    || data[index].iter().enumerate().any(|(at, byte)| {
+                        content.read(at) != *byte && !(is_loaded && policy_dependent(at))
+                    })
                 {
                     return Err("checkpoint allocation content differs".into());
                 }
