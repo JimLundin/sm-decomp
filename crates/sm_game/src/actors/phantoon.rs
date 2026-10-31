@@ -706,7 +706,10 @@ pub fn main_ai<L: Lease + ?Sized>(game: &mut L) {
     let me = current(game);
     let function = session_slot!(game, Body[me].function);
     run_function_on(game, function);
-    if game.current_enemy() == 0 {
+    // The main AI carries the parts only when the function returns X = 0
+    // ($A7:CEB2). "Almost dead" returns the VRAM queue's new tail in X, so
+    // that frame the parts and BG2 keep their old positions.
+    if game.current_enemy() == 0 && function != function::ALMOST_DEAD {
         let x: u16 = session_slot!(game, Body[BODY].base.x_pos);
         session_slot!(game, Eye[EYE].base.x_pos = x);
         session_slot!(game, Tentacles[TENTACLES].base.x_pos = x);
