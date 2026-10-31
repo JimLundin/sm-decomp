@@ -21,8 +21,9 @@ pub(super) fn run() -> i32 {
     macro_rules! cases {
             ($($test:ident),+ $(,)?) => { [$( (stringify!($test), $test as fn()), )+] };
         }
-    let tests: [(&str, fn()); 147] = cases![
+    let tests: [(&str, fn()); 148] = cases![
         checkpoint_serialized_schema_matches_actual_compiled_codecs,
+        seeded_checkpoint_origin_binds_its_seed_payload,
         prepared_message_pixels_delay_queue_and_checkpoint,
         prepared_message_rejects_changed_content_and_resets,
         independently_authored_raster_pixels_and_prefixes,
@@ -10544,6 +10545,34 @@ fn bank_upload_native_installation_prefixes() {
         assert_eq!(state.key_off, if success { 0x5b } else { 1 });
         assert_eq!(state.is_chan_on, 0xa5);
     }
+}
+
+// A seeded corpus checkpoint loads only under the seed payload it was cut from:
+// any changed region or register file, or a boot start, gives another origin.
+#[cfg_attr(test, test)]
+fn seeded_checkpoint_origin_binds_its_seed_payload() {
+    let root = std::env::temp_dir().join(format!("sm-seed-origin-{}", std::process::id()));
+    let write = |name: &str, wram: u8, registers: &str| {
+        let directory = root.join(name);
+        std::fs::create_dir_all(&directory).unwrap();
+        for region in ["sram.bin", "vram.bin", "cgram.bin", "oam.bin", "apuram.bin"] {
+            std::fs::write(directory.join(format!("0001-91F8-{region}")), [0u8; 4]).unwrap();
+        }
+        std::fs::write(directory.join("0001-91F8-wram.bin"), [wram; 4]).unwrap();
+        std::fs::write(directory.join("0001-91F8-registers.csv"), registers).unwrap();
+        directory.join("0001-91F8-wram.bin")
+    };
+    let rom = [0x5au8; 64];
+    let seed = write("seed", 1, "name,value\na,0\n");
+    let same = write("same", 1, "name,value\na,0\n");
+    let edited = write("edited", 2, "name,value\na,0\n");
+    let registers = write("registers", 1, "name,value\na,1\n");
+    let origin = |path: Option<&std::path::Path>| checkpoint::origin(&rom, path).unwrap();
+    assert_eq!(origin(Some(&seed)), origin(Some(&same)));
+    assert_ne!(origin(Some(&seed)), origin(Some(&edited)));
+    assert_ne!(origin(Some(&seed)), origin(Some(&registers)));
+    assert_ne!(origin(Some(&seed)), origin(None));
+    std::fs::remove_dir_all(&root).unwrap();
 }
 
 // Movies cannot change compiled field names, types, counts or codec declarations.
