@@ -1,60 +1,39 @@
 //! Untouched original CPU SaveToSram. Never calls the unaligned old Rust save body.
 use super::{Game, Snapshot, make_snapshot_with_player_owner, restore_snapshot};
-use crate::native_rom::NativeRomPointer;
 use crate::{flags_save_case as case, initial_state::InitialState, snes::cpu::cpu_get_flags};
 use std::collections::BTreeSet;
 fn offset(address: u32) -> usize {
     crate::rtl::lorom_offset(address) as usize
 }
-fn matches_original(game: &Game, original: &[u8], address: u32, length: usize) -> bool {
-    let Some(image) = game.loaded_rom.as_ref() else {
-        return false;
-    };
-    let start = offset(address);
-    start.checked_add(length).is_some_and(|end| {
-        end <= original.len()
-            && end <= image.len()
-            && original[start..end]
-                .iter()
-                .enumerate()
-                .all(|(i, b)| image.read(start + i) == *b)
-    })
-}
-pub(crate) unsafe fn guard(game: &Game, original: &[u8]) -> Result<(), String> {
-    unsafe {
-        let loaded = game.loaded_rom.as_ref().ok_or("missing loaded save ROM")?;
-        let native = game
-            .capture_native_rom_binding()
-            .ok_or("missing native save ROM")?;
-        if loaded.as_ptr() != native.as_ptr()
-            || loaded.as_ptr() != (*(*game.g_snes).cart).rom.as_mut_ptr()
-        {
-            return Err("save oracle requires shared initialized ROM bindings".into());
-        }
-        for (address, length) in [(0x818000, 0x85), (0x81812b, 0x1b9), (0x81834b, 0x54)] {
-            if !matches_original(game, original, address, length) {
-                return Err(format!(
-                    "save oracle original window mismatch {address:06x}"
-                ));
-            }
-        }
-        // Each original packing list is read as words before its low byte is used.
-        for area in 0..6usize {
-            let count = original[offset(0x818131) + area] as usize;
-            if count == 0 {
-                return Err("original map packing count must be positive".into());
-            }
-            let at = offset(0x8182d6) + area * 2;
-            let list = u16::from_le_bytes([original[at], original[at + 1]]);
-            if list < 0x8000
-                || usize::from(list) + count + 1 > 0x10000
-                || !matches_original(game, original, 0x810000 | u32::from(list), count + 1)
-            {
-                return Err("original map packing list mismatch".into());
-            }
-        }
-        Ok(())
+pub(crate) fn guard(game: &Game, original: &[u8]) -> Result<(), String> {
+    // The engine reads one unpatched copy of the cartridge, as hardware does.
+    if !game.engine_reads_unpatched(original) {
+        return Err("save oracle requires the engine to read the unpatched cartridge".into());
     }
+    // The original CPU executes these windows from the oracle's cartridge.
+    for (address, length) in [(0x818000, 0x85), (0x81812b, 0x1b9), (0x81834b, 0x54)] {
+        if !game.cartridge_matches(original, address, length) {
+            return Err(format!(
+                "save oracle original window mismatch {address:06x}"
+            ));
+        }
+    }
+    // Each original packing list is read as words before its low byte is used.
+    for area in 0..6usize {
+        let count = original[offset(0x818131) + area] as usize;
+        if count == 0 {
+            return Err("original map packing count must be positive".into());
+        }
+        let at = offset(0x8182d6) + area * 2;
+        let list = u16::from_le_bytes([original[at], original[at + 1]]);
+        if list < 0x8000
+            || usize::from(list) + count + 1 > 0x10000
+            || !game.cartridge_matches(original, 0x810000 | u32::from(list), count + 1)
+        {
+            return Err("original map packing list mismatch".into());
+        }
+    }
+    Ok(())
 }
 pub(crate) unsafe fn with_initialized_state<T>(
     game: &mut Game,
@@ -315,7 +294,7 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
                         return Ok(output);
                     }
                 }
-                if !matches_original(game, original, pc, 4) {
+                if !game.cartridge_matches(original, pc, 4) {
                     return Err(format!("executed save code differs {pc:06x}"));
                 }
                 observe_writes(pc, cpu.sp, cpu.x, cpu.y, &mut abi, &mut ram, &mut sram)?;

@@ -46,12 +46,8 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
     }
     if image.len() != 0x400000
         || native.len() != 0x400000
-        || image.as_ptr() != native.as_ptr()
-        || unsafe {
-            (*cart).rom.len() != 0x400000
-                || (*cart).rom_size != 0x400000
-                || image.as_ptr() != (*cart).rom.as_mut_ptr()
-        }
+        || !game.engine_reads_unpatched(original)
+        || unsafe { (*cart).rom.len() != 0x400000 || (*cart).rom_size != 0x400000 }
     {
         return Err("requires unchanged original loader 4 MiB allocation".into());
     }

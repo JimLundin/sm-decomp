@@ -1,48 +1,24 @@
 //! Original CPU Kraid read and complete palette/music/native-store caller.
 use super::Game;
-use crate::native_rom::NativeRomPointer;
 use crate::{kraid_flags_case as case, snes::cpu::cpu_get_flags};
 use std::collections::BTreeSet;
-fn offset(address: u32) -> usize {
-    crate::rtl::lorom_offset(address) as usize
-}
-fn matches_original(game: &Game, original: &[u8], address: u32, length: usize) -> bool {
-    let Some(image) = game.loaded_rom.as_ref() else {
-        return false;
-    };
-    let start = offset(address);
-    start.checked_add(length).is_some_and(|end| {
-        end <= original.len()
-            && end <= image.len()
-            && original[start..end]
-                .iter()
-                .enumerate()
-                .all(|(i, b)| image.read(start + i) == *b)
-    })
-}
-pub(crate) unsafe fn guard(game: &Game, original: &[u8]) -> Result<(), String> {
-    unsafe {
-        let loaded = game.loaded_rom.as_ref().ok_or("missing Kraid loaded ROM")?;
-        let native = game
-            .capture_native_rom_binding()
-            .ok_or("missing Kraid native ROM")?;
-        if loaded.as_ptr() != native.as_ptr()
-            || loaded.as_ptr() != (*(*game.g_snes).cart).rom.as_mut_ptr()
-        {
-            return Err("Kraid requires shared original cartridge binding".into());
-        }
-        for (address, length) in [
-            (0xa7a92c, 0x17),
-            (0xa7c815, 0x2e),
-            (0x82d96c, 0x19),
-            (0x808fc1, 0x36),
-        ] {
-            if !matches_original(game, original, address, length) {
-                return Err(format!("Kraid original window mismatch {address:06x}"));
-            }
-        }
-        Ok(())
+pub(crate) fn guard(game: &Game, original: &[u8]) -> Result<(), String> {
+    // The engine reads one unpatched copy of the cartridge, as hardware does.
+    if !game.engine_reads_unpatched(original) {
+        return Err("Kraid requires the engine to read the unpatched cartridge".into());
     }
+    // The original CPU executes these windows from the oracle's cartridge.
+    for (address, length) in [
+        (0xa7a92c, 0x17),
+        (0xa7c815, 0x2e),
+        (0x82d96c, 0x19),
+        (0x808fc1, 0x36),
+    ] {
+        if !game.cartridge_matches(original, address, length) {
+            return Err(format!("Kraid original window mismatch {address:06x}"));
+        }
+    }
+    Ok(())
 }
 unsafe fn header(game: &Game) -> [u8; 16] {
     unsafe {
@@ -188,7 +164,7 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
                         return Ok(output);
                     }
                 }
-                if !matches_original(game, original, pc, 4) {
+                if !game.cartridge_matches(original, pc, 4) {
                     return Err(format!("executed Kraid code differs {pc:06x}"));
                 }
                 if pc == 0x82d96c {

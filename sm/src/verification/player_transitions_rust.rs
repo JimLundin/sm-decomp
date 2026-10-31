@@ -119,11 +119,8 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
             .clone();
         let native = game.capture_native_rom();
         let cart = (*game.g_snes).cart;
-        if cart.is_null()
-            || image.as_ptr() != (*cart).rom.as_mut_ptr()
-            || image.as_ptr() != native.as_ptr()
-        {
-            return Err("loaded/native/cartridge allocation mismatch".into());
+        if cart.is_null() || !game.engine_reads_unpatched(original) {
+            return Err("engine image is not the unpatched cartridge".into());
         }
         // snes_loadRom rounds the original 3 MiB payload to a 4 MiB mirrored
         // cartridge. Validate that exact loader extent, not payload equality.

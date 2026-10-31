@@ -2,7 +2,6 @@
 //! No invocation of the legacy Rust alignment-sensitive routines.
 use super::{Game, Snapshot, make_snapshot_with_player_owner, restore_snapshot};
 use crate::initial_state::InitialState;
-use crate::native_rom::NativeRomPointer;
 use crate::snes::cpu::cpu_get_flags;
 
 pub const CASES: u32 = 11;
@@ -69,20 +68,6 @@ fn original_speed_hook(
 
 fn offset(address: u32) -> usize {
     crate::rtl::lorom_offset(address) as usize
-}
-fn original_matches(game: &Game, original: &[u8], address: u32, length: usize) -> bool {
-    let Some(image) = game.loaded_rom.as_ref() else {
-        return false;
-    };
-    let start = offset(address);
-    start.checked_add(length).is_some_and(|end| {
-        end <= original.len()
-            && end <= image.len()
-            && original[start..end]
-                .iter()
-                .enumerate()
-                .all(|(i, b)| image.read(start + i) == *b)
-    })
 }
 fn word(game: &Game, at: usize) -> u16 {
     u16::from_le_bytes([game.ram().read_byte(at), game.ram().read_byte(at + 1)])
@@ -217,22 +202,15 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
                 "player transition oracle requires original 3 MiB ROM and initialized host".into(),
             );
         }
-        let image = game
-            .loaded_rom
-            .as_ref()
-            .ok_or("ROM must be loaded")?
-            .clone();
-        // SnesInit normally binds all three to this one allocation. Never shift it.
-        if image.as_ptr() != (*(*game.g_snes).cart).rom.as_mut_ptr()
-            || image.as_ptr() != game.capture_native_rom().as_ptr()
-        {
-            return Err("oracle image bindings differ".into());
+        // The engine reads one unpatched copy of the cartridge, as hardware does.
+        if !game.engine_reads_unpatched(original) {
+            return Err("oracle engine image is not the unpatched cartridge".into());
         }
         // The original CPU executes the cartridge, so its authored bytes go there.
-        let cartridge = (*(*game.g_snes).cart).rom.clone();
+        let cartridge = game.cartridge_rom.clone().ok_or("ROM must be loaded")?;
         let _original_speed_hook = original_speed_hook(game, original, cartridge.clone())?;
         for &(start, end) in WINDOWS {
-            if !original_matches(game, original, start, (end - start) as usize) {
+            if !game.cartridge_matches(original, start, (end - start) as usize) {
                 return Err(format!("oracle original window differs at {start:06x}"));
             }
         }
@@ -479,7 +457,7 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
                 if overlaps_authored_data(id, pc) {
                     return Err(format!("instruction overlaps authored data at {pc:06x}"));
                 }
-                if !original_matches(game, original, pc, 4) {
+                if !game.cartridge_matches(original, pc, 4) {
                     return Err(format!("executed original instruction differs at {pc:06x}"));
                 }
                 let published = publication(pc).map(|at| (at, word(game, at)));

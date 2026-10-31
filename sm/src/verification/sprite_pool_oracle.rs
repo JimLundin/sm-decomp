@@ -1,26 +1,11 @@
 //! Original 65816 sprite lifecycle and real OAM output. Component oracle, not a movie.
 use super::{Game, Snapshot, make_snapshot_with_player_owner, restore_snapshot};
 use crate::initial_state::InitialState;
-use crate::native_rom::NativeRomPointer;
 use crate::snes::cpu::cpu_get_flags;
 use crate::sprite_pool_case::{self as case, Operation};
 use std::collections::BTreeSet;
 fn offset(address: u32) -> usize {
     crate::rtl::lorom_offset(address) as usize
-}
-fn matches_original(game: &Game, original: &[u8], address: u32, length: usize) -> bool {
-    let Some(image) = game.loaded_rom.as_ref() else {
-        return false;
-    };
-    let start = offset(address);
-    start.checked_add(length).is_some_and(|end| {
-        end <= original.len()
-            && end <= image.len()
-            && original[start..end]
-                .iter()
-                .enumerate()
-                .all(|(i, b)| image.read(start + i) == *b)
-    })
 }
 // SnesInit installs a one-byte FixBugHook at the OAM emitter's original entry
 // in the cartridge. Borrow the cartridge and restore only its original-file byte
@@ -35,47 +20,35 @@ impl Drop for OriginalOamEntry {
         self.cartridge.write(self.at, self.initialized);
     }
 }
-unsafe fn original_oam_entry(game: &Game, original: &[u8]) -> Result<OriginalOamEntry, String> {
-    unsafe {
-        let image = game
-            .loaded_rom
-            .as_ref()
-            .ok_or("sprite oracle missing loaded image")?
-            .clone();
-        let native = game
-            .capture_native_rom_binding()
-            .ok_or("sprite oracle missing native image")?;
-        let cart = (*game.g_snes).cart;
-        if cart.is_null()
-            || image.as_ptr() != (*cart).rom.as_mut_ptr()
-            || image.as_ptr() != native.as_ptr()
-        {
-            return Err("sprite oracle requires shared initialized cartridge bindings".into());
-        }
-        let cartridge = (*cart).rom.clone();
-        let at = offset(0x818ab8);
-        let original_byte = *original.get(at).ok_or("short original OAM entry")?;
-        if at >= cartridge.len() {
-            return Err("short initialized OAM entry".into());
-        }
-        let initialized = cartridge.read(at);
-        // This is the third FixBugHook registration in PatchBugs(mode=1).
-        // Unknown differences are never normalized away.
-        if initialized != original_byte
-            && !(initialized == 0
-                && game.hookcnt >= 3
-                && game.hook_fixbug_orgbyte[2] == original_byte)
-        {
-            return Err("unexpected initialized OAM entry; not the saved startup hook".into());
-        }
-        let restore = OriginalOamEntry {
-            cartridge,
-            at,
-            initialized,
-        };
-        restore.cartridge.write(at, original_byte);
-        Ok(restore)
+fn original_oam_entry(game: &Game, original: &[u8]) -> Result<OriginalOamEntry, String> {
+    // The engine reads one unpatched copy of the cartridge, as hardware does.
+    if !game.engine_reads_unpatched(original) {
+        return Err("sprite oracle requires the engine to read the unpatched cartridge".into());
     }
+    let cartridge = game
+        .cartridge_rom
+        .clone()
+        .ok_or("sprite oracle missing cartridge")?;
+    let at = offset(0x818ab8);
+    let original_byte = *original.get(at).ok_or("short original OAM entry")?;
+    if at >= cartridge.len() {
+        return Err("short initialized OAM entry".into());
+    }
+    let initialized = cartridge.read(at);
+    // This is the third FixBugHook registration in PatchBugs(mode=1).
+    // Unknown differences are never normalized away.
+    if initialized != original_byte
+        && !(initialized == 0 && game.hookcnt >= 3 && game.hook_fixbug_orgbyte[2] == original_byte)
+    {
+        return Err("unexpected initialized OAM entry; not the saved startup hook".into());
+    }
+    let restore = OriginalOamEntry {
+        cartridge,
+        at,
+        initialized,
+    };
+    restore.cartridge.write(at, original_byte);
+    Ok(restore)
 }
 fn original_word(original: &[u8], address: u32) -> Result<u16, String> {
     let at = offset(address);
@@ -90,7 +63,7 @@ fn guard(game: &Game, original: &[u8]) -> Result<(), String> {
         (0x81839f, 0x400),
         (0xb4bdb4, 2),
     ] {
-        if !matches_original(game, original, address, length) {
+        if !game.cartridge_matches(original, address, length) {
             return Err(format!("sprite oracle original mismatch {address:06x}"));
         }
     }
@@ -98,7 +71,7 @@ fn guard(game: &Game, original: &[u8]) -> Result<(), String> {
     if program < 0x8000 || program > 0xffe5 {
         return Err("invalid original dud program".into());
     }
-    if !matches_original(game, original, 0xb40000 | u32::from(program), 26) {
+    if !game.cartridge_matches(original, 0xb40000 | u32::from(program), 26) {
         return Err("sprite oracle program mismatch".into());
     }
     for frame in 0..6u32 {
@@ -116,7 +89,7 @@ fn guard(game: &Game, original: &[u8]) -> Result<(), String> {
         }
         let length = 2 + usize::from(entries) * 5;
         if usize::from(map) + length > 0x10000
-            || !matches_original(game, original, 0xb40000 | u32::from(map), length)
+            || !game.cartridge_matches(original, 0xb40000 | u32::from(map), length)
         {
             return Err("sprite oracle map mismatch".into());
         }
@@ -292,7 +265,7 @@ unsafe fn run_phase(
                 case::mask(output, index, &excluded);
                 return Ok(());
             }
-            if !matches_original(game, original, pc, 4) {
+            if !game.cartridge_matches(original, pc, 4) {
                 return Err(format!("executed sprite code mismatch {pc:06x}"));
             }
             if pc == 0x818ab8 {

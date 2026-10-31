@@ -734,6 +734,36 @@ impl Game {
         self.native_rom = image;
     }
 
+    /// Whether the engine reads `original`, the unpatched cartridge payload, as
+    /// hardware does: its loaded and native images are one allocation holding it.
+    #[forbid(unsafe_code)]
+    pub(crate) fn engine_reads_unpatched(&self, original: &[u8]) -> bool {
+        match (&self.loaded_rom, &self.native_rom) {
+            (Some(loaded), Some(native)) => {
+                loaded.same_allocation(native) && loaded.bytes().starts_with(original)
+            }
+            _ => false,
+        }
+    }
+
+    /// Whether the oracle cartridge, which its CPU executes, holds `original`'s
+    /// `length` bytes from LoROM `address`.
+    #[forbid(unsafe_code)]
+    pub(crate) fn cartridge_matches(&self, original: &[u8], address: u32, length: usize) -> bool {
+        let Some(cartridge) = self.cartridge_rom.as_ref() else {
+            return false;
+        };
+        let start = crate::rtl::lorom_offset(address) as usize;
+        start.checked_add(length).is_some_and(|end| {
+            end <= cartridge.len()
+                && original.get(start..end).is_some_and(|bytes| {
+                    (start..end)
+                        .zip(bytes)
+                        .all(|(at, &b)| cartridge.read(at) == b)
+                })
+        })
+    }
+
     /// Share the cartridge image without copying or borrowing its allocation.
     /// Import the `sm_data` records read from the native image.
     fn import_native_records(&mut self, image: &crate::rom::RomImage) {
