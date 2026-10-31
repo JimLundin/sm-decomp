@@ -6,6 +6,7 @@ use super::{
         VramDestination,
     },
 };
+use crate::display::sequence::scroll;
 
 pub trait EntryHost:
     crate::visual_host::Host
@@ -15,11 +16,34 @@ pub trait EntryHost:
     + EntryEffects
 {
 }
-pub trait EntryEffects {
+pub trait EntryEffects:
+    crate::session_access::SessionAccess
+    + crate::runtime_access::SessionRam
+    + crate::ram::CompatibilityRam
+{
     fn read_external(&mut self, field: ExternalField) -> u16;
     fn write_external(&mut self, field: ExternalField, value: u16);
-    fn read_camera(&mut self, field: CameraField) -> u16;
-    fn write_camera(&mut self, field: CameraField, value: u16);
+    fn read_camera(&mut self, field: CameraField) -> u16 {
+        let camera = &self.session().room.camera;
+        match field.word() {
+            CameraWord::Layer1(axis) => camera.layer1[axis],
+            CameraWord::Layer2(axis) => camera.layer2[axis],
+            CameraWord::Bg1Offset(axis) => camera.bg1_offset[axis],
+            CameraWord::Bg2Scroll(axis) => camera.bg2_scroll[axis],
+            CameraWord::Mirror(word) => scroll::get(self, word),
+        }
+    }
+    fn write_camera(&mut self, field: CameraField, value: u16) {
+        // Layer 1 and BG1's offsets publish through the bytes: they are
+        // also the lease's camera observations.
+        match field.word() {
+            CameraWord::Layer1(axis) => crate::camera::set_layer1(self, axis, value),
+            CameraWord::Bg1Offset(axis) => crate::camera::set_bg1_offset(self, axis, value),
+            CameraWord::Layer2(axis) => self.session_mut().room.camera.layer2[axis] = value,
+            CameraWord::Bg2Scroll(axis) => self.session_mut().room.camera.bg2_scroll[axis] = value,
+            CameraWord::Mirror(word) => scroll::set(self, word, value),
+        }
+    }
     fn call(&mut self, effect: LeafEffect);
     fn camera_call(&mut self, effect: CameraEffect) -> u8;
     fn palette_fade(&mut self) -> u8;
@@ -73,6 +97,33 @@ pub enum CameraField {
     Bg1Vofs,
     Bg2Hofs,
     Bg2Vofs,
+}
+/// The owned camera word a room-entry camera field names, or the BG scroll
+/// register mirror it names.
+enum CameraWord {
+    Layer1(usize),
+    Layer2(usize),
+    Bg1Offset(usize),
+    Bg2Scroll(usize),
+    Mirror(scroll::Word),
+}
+impl CameraField {
+    fn word(self) -> CameraWord {
+        match self {
+            Self::Layer1X => CameraWord::Layer1(0),
+            Self::Layer1Y => CameraWord::Layer1(1),
+            Self::Layer2X => CameraWord::Layer2(0),
+            Self::Layer2Y => CameraWord::Layer2(1),
+            Self::Bg1XOffset => CameraWord::Bg1Offset(0),
+            Self::Bg1YOffset => CameraWord::Bg1Offset(1),
+            Self::Bg2XScroll => CameraWord::Bg2Scroll(0),
+            Self::Bg2YScroll => CameraWord::Bg2Scroll(1),
+            Self::Bg1Hofs => CameraWord::Mirror(scroll::Word::Bg1H),
+            Self::Bg1Vofs => CameraWord::Mirror(scroll::Word::Bg1V),
+            Self::Bg2Hofs => CameraWord::Mirror(scroll::Word::Bg2H),
+            Self::Bg2Vofs => CameraWord::Mirror(scroll::Word::Bg2V),
+        }
+    }
 }
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum CameraEffect {
