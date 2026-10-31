@@ -23,6 +23,7 @@ use crate::cartridge::native_record;
 use crate::constants::enemy_properties::{
     K_ENEMY_PROPS_DELETED, K_ENEMY_PROPS_INVISIBLE, K_ENEMY_PROPS_TANGIBLE,
 };
+use crate::display::transfer::{Source, TilemapUpload, queue_tilemap};
 use crate::enemy_projectiles::drops::DropSource;
 use crate::kraid_tables;
 use crate::menus::prelude::{boss, owned};
@@ -344,7 +345,6 @@ const PAUSE_HOOK: usize = 0x601;
 const BG2_TILEMAP_BASE: usize = 0x59;
 const BG3_TILEMAP_BASE: usize = 0x5d;
 const SCROLL_LIMITS: usize = 0xcd20;
-const VRAM_QUEUE: i32 = 0xd0;
 const BLANK_BG2_TILE: u16 = 824;
 /// The lint fly left at 3.5 pixels a frame; the foot moves 3 or 4.
 const LINT_SPEED: i32 = (3 << 16) | 0x8000;
@@ -389,46 +389,36 @@ fn set_health_eighth<S: BossState + ?Sized>(game: &mut S, slot: i32, index: usiz
     set_native_word(game, at, value);
 }
 
-/// How a VRAM queue entry's source bank is stored.
-enum QueueBank {
-    Byte(u8),
-    /// A word, which the destination's low byte then overwrites.
-    Word(u16),
-}
-
 /// Appends a VRAM write queue entry: `size` bytes from `bank:source` to the
-/// destination `destination` computes after the bank store.
+/// destination `destination` computes.
 fn queue_vram<L: Lease + ?Sized>(
     game: &mut L,
     size: u16,
     source: u16,
-    bank: QueueBank,
+    bank: u8,
     destination: impl FnOnce(&L) -> u16,
 ) {
-    let tail: u16 = boss!(game.VramWriteQueueTail);
-    let entry = VRAM_QUEUE + boss!(game.VramWriteQueueTail) as i32;
-    let at =
-        |offset: isize| usize::try_from(entry as isize + offset).expect("VRAM entry outside RAM");
-    set_native_word(game, at(0), size);
-    set_native_word(game, at(2), source);
-    match bank {
-        QueueBank::Byte(value) => game.set_slot_byte(at(4), value),
-        QueueBank::Word(value) => set_native_word(game, at(4), value),
-    }
-    let destination = destination(game);
-    set_native_word(game, at(5), destination);
-    boss!(game.VramWriteQueueTail = tail.wrapping_add(7));
+    let vram_address = destination(game);
+    let source = Source {
+        address: source,
+        bank,
+    };
+    queue_tilemap(
+        game,
+        TilemapUpload {
+            bytes: size,
+            source,
+            column: false,
+            vram_address,
+        },
+    );
 }
 
 /// The room BG through the BG3 tilemap: Kraid's room background.
 fn queue_room_bg<L: Lease + ?Sized>(game: &mut L) {
-    queue_vram(
-        game,
-        512,
-        animation::ROOM_BG,
-        QueueBank::Byte(BANK),
-        |game| (((game.slot_byte(BG3_TILEMAP_BASE) as i32 & 0xf) << 8) + 16128) as u16,
-    );
+    queue_vram(game, 512, animation::ROOM_BG, BANK, |game| {
+        (((game.slot_byte(BG3_TILEMAP_BASE) as i32 & 0xf) << 8) + 16128) as u16
+    });
 }
 
 /// Contact with the arm or foot. Was `Kraid_Touch_ArmFoot`.
@@ -576,7 +566,6 @@ fn execute_script<L: Lease + ?Sized>(game: &mut L) -> u16 {
                     script = script.wrapping_add(8));
                 let tilemap: u16 = record.word(2);
                 let tail: u16 = boss!(game.VramWriteQueueTail);
-                let _size_tail: u16 = boss!(game.VramWriteQueueTail);
                 game.foreign(|game| game.queue_kraid_tilemap(tail, tilemap));
                 return 1;
             }
@@ -960,14 +949,14 @@ fn handle_sinking<L: Lease + ?Sized>(game: &mut L) {
 
 /// Queues BG2's tilemap top half. Was `Kraid_UpdateBg2TilemapTopHalf`.
 fn queue_bg2_top<L: Lease + ?Sized>(game: &mut L) {
-    queue_vram(game, 2048, 0x2000, QueueBank::Byte(126), |game| {
+    queue_vram(game, 2048, 0x2000, 126, |game| {
         ((game.slot_byte(BG2_TILEMAP_BASE) as i32 & 0xfc) << 8) as u16
     });
 }
 
 /// Queues BG2's tilemap bottom half. Was `Kraid_UpdateBG2TilemapBottomHalf`.
 fn queue_bg2_bottom<L: Lease + ?Sized>(game: &mut L) {
-    queue_vram(game, 2048, 0x2800, QueueBank::Byte(126), |game| {
+    queue_vram(game, 2048, 0x2800, 126, |game| {
         (((game.slot_byte(BG2_TILEMAP_BASE) as i32 & 0xfc) << 8) + 2048) as u16
     });
 }
@@ -1036,7 +1025,7 @@ pub fn run_function<L: Lease + ?Sized>(game: &mut L, function: u16) {
         function::DEATH_SINK_THROUGH_FLOOR => sink_through_floor(game),
         function::FADE_IN_CLEAR_BG2_TOP => fade_in_clear_bg2_top(game),
         function::FADE_IN_CLEAR_BG2_BOTTOM => {
-            queue_vram(game, 1024, 0x2000, QueueBank::Word(126), |_| 18944);
+            queue_vram(game, 1024, 0x2000, 126, |_| 18944);
             session_slot!(
                 game,
                 Body[BODY].function = function::FADE_IN_LOAD_BG3_TILES_1
@@ -1049,25 +1038,25 @@ pub fn run_function<L: Lease + ?Sized>(game: &mut L, function: u16) {
                 game,
                 Body[BODY].function = function::FADE_IN_LOAD_BG3_TILES_2
             );
-            queue_vram(game, 1024, 0xb200, QueueBank::Word(154), |_| 0x4000);
+            queue_vram(game, 1024, 0xb200, 154, |_| 0x4000);
         }
         function::FADE_IN_LOAD_BG3_TILES_2 => {
             session_slot!(
                 game,
                 Body[BODY].function = function::FADE_IN_LOAD_BG3_TILES_3
             );
-            queue_vram(game, 1024, 0xb600, QueueBank::Word(154), |_| 16896);
+            queue_vram(game, 1024, 0xb600, 154, |_| 16896);
         }
         function::FADE_IN_LOAD_BG3_TILES_3 => {
             session_slot!(
                 game,
                 Body[BODY].function = function::FADE_IN_LOAD_BG3_TILES_4
             );
-            queue_vram(game, 1024, 0xba00, QueueBank::Word(154), |_| 17408);
+            queue_vram(game, 1024, 0xba00, 154, |_| 17408);
         }
         function::FADE_IN_LOAD_BG3_TILES_4 => {
             session_slot!(game, Body[BODY].function = function::FADE_IN_BG6);
-            queue_vram(game, 1024, 0xbe00, QueueBank::Word(154), |_| 17920);
+            queue_vram(game, 1024, 0xbe00, 154, |_| 17920);
         }
         // Mostly the game's flags, music and palette fade: run on it.
         function::FADE_IN_BG6 => game.foreign(fade_in_bg6),
@@ -1513,7 +1502,7 @@ fn death_fade_out<L: Lease + ?Sized>(game: &mut L) {
         game.foreign(|game| {
             crate::word_transfers!(game, (4), 128; xray(0) <- value(0), xray(1) <- value(0));
         });
-        queue_vram(game, 512, 0x4000, QueueBank::Byte(126), |game| {
+        queue_vram(game, 512, 0x4000, 126, |game| {
             (((game.slot_byte(BG3_TILEMAP_BASE) as i32 & 0xf) << 8) + 16128) as u16
         });
     }
@@ -1586,7 +1575,7 @@ fn fade_in_clear_bg2_top<L: Lease + ?Sized>(game: &mut L) {
     game.foreign(|game| {
         bg2_staging::fill(game, (0..=1023).rev(), BLANK_BG2_TILE);
     });
-    queue_vram(game, 1024, 0x2000, QueueBank::Word(126), |_| 18432);
+    queue_vram(game, 1024, 0x2000, 126, |_| 18432);
     session_slot!(
         game,
         Body[BODY].function = function::FADE_IN_CLEAR_BG2_BOTTOM

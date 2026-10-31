@@ -21,6 +21,7 @@ use crate::constants::enemy_properties::{
     K_ENEMY_PROPS_TANGIBLE,
 };
 use crate::display::hdma_spawn::HdmaObjectDefinition;
+use crate::display::transfer::{Source, TilemapUpload, queue_tilemap};
 use crate::enemy_projectiles::drops::DropSource;
 use crate::menus::prelude::{boss, owned, scroll};
 use crate::phantoon_tables::{self, Timer};
@@ -1228,18 +1229,19 @@ pub fn almost_dead<S: BossState + ?Sized>(game: &mut S, k: u16) {
     session_slot!(game, Body[BODY].base; x_pos = 384, y_pos = 128);
     bg2_staging::fill(game, (0..=511).rev(), BLANK_BG2_TILE);
     // A VRAM write queue entry: 400h bytes from $7E:2000 to VRAM $4800.
-    let queue = 0xd0;
-    let mut tail: u16 = boss!(game.VramWriteQueueTail);
-    set_native_word(game, queue + boss!(game.VramWriteQueueTail) as isize, 1024);
-    tail = tail.wrapping_add(2);
-    set_native_word(game, queue + tail as isize, 0x2000);
-    tail = tail.wrapping_add(2);
-    let bank_at = tail;
-    tail = tail.wrapping_add(1);
-    let at = usize::try_from(queue + bank_at as isize).expect("VRAM entry outside RAM");
-    game.set_slot_byte(at, 126);
-    set_native_word(game, queue + tail as isize, 18432);
-    boss!(game.VramWriteQueueTail = tail.wrapping_add(2));
+    let source = Source {
+        address: 0x2000,
+        bank: 0x7e,
+    };
+    queue_tilemap(
+        game,
+        TilemapUpload {
+            bytes: 1024,
+            source,
+            column: false,
+            vram_address: 18432,
+        },
+    );
 }
 
 /// Fades the room to its powered-on colours, then dies: the drop, the boss

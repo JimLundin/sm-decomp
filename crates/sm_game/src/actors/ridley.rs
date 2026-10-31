@@ -24,6 +24,7 @@ use crate::carry::{adc, sbc};
 use crate::constants::enemy_properties::{
     K_ENEMY_PROPS_DELETED, K_ENEMY_PROPS_INVISIBLE, K_ENEMY_PROPS_TANGIBLE,
 };
+use crate::display::transfer::{Source, TilemapUpload, queue_tilemap};
 use crate::display_refresh::mult8x8;
 use crate::enemy_projectiles::drops::DropSource;
 use crate::enemy_projectiles::shared_pre::{x_velocity_at_angle, y_velocity_at_angle};
@@ -436,9 +437,8 @@ const LEVEL_DATA: isize = 0x10002;
 /// The VRAM write queue.
 const VRAM_WRITE_QUEUE: usize = 0xd0;
 /// One VRAM write queue entry: size, long source, destination.
-const VRAM_WRITE_ENTRY: u16 = 7;
 /// Ridley's tiles live in bank $B0.
-const TILE_BANK: u16 = 0xb000;
+const TILE_BANK: u8 = 0xb0;
 /// Projectile type bits.
 const MISSILE: u8 = 1;
 const SUPER_MISSILE: u8 = 2;
@@ -514,36 +514,32 @@ fn set_tail_word(game: &mut (impl SlotAccess + ?Sized), index: usize, value: u16
     game.set_slot_byte(at + 1, high);
 }
 
-/// Queue two VRAM transfers of `size` bytes from bank $B0, storing as the
-/// original does: both bank words, both sources, both destinations, both
-/// sizes, then the queue tail and the terminating size.
+/// Queue two VRAM transfers of `size` bytes from bank $B0, then the
+/// terminating size the original stores after them.
 fn queue_tile_pair<L: Lease + ?Sized>(
     game: &mut L,
     sources: [u16; 2],
     destinations: [u16; 2],
     size: u16,
 ) {
-    let tail = boss!(game.VramWriteQueueTail);
-    let entry = |n: usize| VRAM_WRITE_QUEUE + usize::from(tail) + n * usize::from(VRAM_WRITE_ENTRY);
-    let store = |game: &mut L, at: usize, value: u16| {
-        let bytes = value.to_ne_bytes();
-        game.set_slot_byte(at, bytes[0]);
-        game.set_slot_byte(at + 1, bytes[1]);
-    };
-    for n in 0..2 {
-        store(game, entry(n) + 3, TILE_BANK);
+    for (address, vram_address) in sources.into_iter().zip(destinations) {
+        let source = Source {
+            address,
+            bank: TILE_BANK,
+        };
+        queue_tilemap(
+            game,
+            TilemapUpload {
+                bytes: size,
+                source,
+                column: false,
+                vram_address,
+            },
+        );
     }
-    for (n, &source) in sources.iter().enumerate() {
-        store(game, entry(n) + 2, source);
-    }
-    for (n, &destination) in destinations.iter().enumerate() {
-        store(game, entry(n) + 5, destination);
-    }
-    for n in 0..2 {
-        store(game, entry(n), size);
-    }
-    boss!(game.VramWriteQueueTail = tail.wrapping_add(2 * VRAM_WRITE_ENTRY));
-    store(game, entry(2), 0);
+    let end = VRAM_WRITE_QUEUE + usize::from(game.tilemap_queue_tail());
+    game.set_tilemap_queue_byte(end, 0);
+    game.set_tilemap_queue_byte(end + 1, 0);
 }
 
 /// How Ridley's accelerations decelerate: by `force` + 8 more, or by a doubled

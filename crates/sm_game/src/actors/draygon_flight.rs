@@ -10,6 +10,7 @@ use crate::actors::draygon_host::{
 };
 use crate::actors::host::BossEffects as _;
 use crate::actors::session_slots::session_slot;
+use crate::display::transfer::{Source, TilemapUpload, queue_tilemap};
 use crate::enemy_script::EnemyScript;
 use crate::menus::prelude::{boss, owned, scroll};
 
@@ -29,8 +30,6 @@ const INTRO_DELAY: u16 = 0x100;
 const INTRO_DANCE: u16 = 0x4d0;
 /// The intro's VRAM write: 600h bytes from $B1:9400 to VRAM $6D00.
 const INTRO_TRANSFER: [u16; 4] = [0x600, 0x9400, 0xb1, 0x6d00];
-const VRAM_WRITE_QUEUE: usize = 0xd0;
-const QUEUE_ENTRY_BYTES: u16 = 7;
 /// The right side reset X is 2A0h right of the left.
 const RIGHT_RESET_OFFSET: u16 = 0x2a0;
 const INITIAL_SWOOP_Y_ACCELERATION: u16 = 0x18;
@@ -108,19 +107,21 @@ pub fn fight_intro<L: Lease>(first: bool, game: &mut L) {
     if session_slot!(game, Draygon[BODY].function_timer).wrapping_sub(limit) & SIGN != 0 {
         if first {
             if session_slot!(game, Draygon[BODY].function_timer) == 0 {
-                let at = VRAM_WRITE_QUEUE + usize::from(boss!(game.VramWriteQueueTail));
-                let [size, source, bank, destination] = INTRO_TRANSFER;
-                // The native bank word deliberately overlaps the destination's low byte.
-                game.foreign(|game| {
-                    game.write_native_words(&[
-                        (at, size),
-                        (at + 2, source),
-                        (at + 4, bank),
-                        (at + 5, destination),
-                    ]);
-                    boss!(game.VramWriteQueueTail += QUEUE_ENTRY_BYTES);
-                    game.draygon_spawn_trails();
-                });
+                let [bytes, address, bank, vram_address] = INTRO_TRANSFER;
+                let source = Source {
+                    address,
+                    bank: bank as u8,
+                };
+                queue_tilemap(
+                    game,
+                    TilemapUpload {
+                        bytes,
+                        source,
+                        column: false,
+                        vram_address,
+                    },
+                );
+                game.foreign(|game| game.draygon_spawn_trails());
             }
         } else {
             game.foreign(|game| game.draygon_trajectory());
