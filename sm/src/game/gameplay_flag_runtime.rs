@@ -1,6 +1,5 @@
 //! Legacy flag entry adapters over the single aggregate Runtime.
 #![forbid(unsafe_code)]
-#![allow(non_snake_case)]
 use crate::game_state::Game;
 use {
     crate::game::{progress_flags as flags, session_runtime::Runtime},
@@ -58,7 +57,7 @@ impl sm_game::progress::FlagHost for Runtime<'_> {
     }
 }
 impl gameplay_flag_host::Host for Runtime<'_> {}
-pub(crate) fn PrepareBitAccess(bit: u16, game: &mut Game) -> u16 {
+pub(crate) fn prepare_bit_access(bit: u16, game: &mut Game) -> u16 {
     flags::prepare_flag_mask(
         &mut Runtime::new(game).session_mut().flag_compatibility,
         bit,
@@ -67,13 +66,13 @@ pub(crate) fn PrepareBitAccess(bit: u16, game: &mut Game) -> u16 {
 pub(crate) fn set_boss_bits_for_current_area(mask: u16, game: &mut Game) {
     flags::mark_boss_defeated(&mut Runtime::new(game), mask);
 }
-pub(crate) fn CheckBossBitForCurArea(mask: u16, game: &mut Game) -> u8 {
+pub(crate) fn check_boss_bit_for_cur_area(mask: u16, game: &mut Game) -> u8 {
     u8::from(flags::boss_defeated(&mut Runtime::new(game), mask))
 }
 pub(crate) fn mark_event(event: u16, game: &mut Game) {
     flags::set_event(&mut Runtime::new(game), event);
 }
-pub(crate) fn ClearEventHappened(event: u16, game: &mut Game) {
+pub(crate) fn clear_event_happened(event: u16, game: &mut Game) {
     flags::clear_event(&mut Runtime::new(game), event);
 }
 pub(crate) fn event_has_happened(event: u16, game: &mut Game) -> u16 {

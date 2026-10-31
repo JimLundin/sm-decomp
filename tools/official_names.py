@@ -1152,6 +1152,10 @@ IDENTIFIERS = (
     ('sm/src/types.rs', 'SDL_Keymod', 'SdlKeymod', 'Rust naming; the SDL modifier mask the config lookup takes'),
     ('sm/src/types.rs', 'SDL_GLContext', 'SdlGlContext', 'Rust naming; an SDL OpenGL context handle'),
     ('sm/src/types.rs', 'Enemy_Botwoon', 'BotwoonLayout', "Rust naming; Botwoon's enemy slot layout"),
+    # The gameplay flag adapters, the last names behind a file-level non_snake_case allow (lane L).
+    ('sm/src/game/gameplay_flag_runtime.rs', 'PrepareBitAccess', 'prepare_bit_access', 'Rust naming'),
+    ('sm/src/game/gameplay_flag_runtime.rs', 'CheckBossBitForCurArea', 'check_boss_bit_for_cur_area', 'Rust naming'),
+    ('sm/src/game/gameplay_flag_runtime.rs', 'ClearEventHappened', 'clear_event_happened', 'Rust naming'),
     # sm's struct fields outside the snapshot layouts: Rust's snake_case (lane L).
     ('sm/src/snes/cpu.rs', 'intWanted', 'int_wanted', 'Rust naming; emulator or harness field'),
     ('sm/src/snes/cpu.rs', 'intDelay', 'int_delay', 'Rust naming; emulator or harness field'),
@@ -1445,6 +1449,7 @@ ALLOW_REMOVALS = (
     ('sm/src/verification/player_detached/main.rs', 'non_upper_case_globals'),
     ('sm/src/lib.rs', 'non_camel_case_types'),
     ('sm/src/verification/player_detached/main.rs', 'non_camel_case_types'),
+    ('sm/src/game/gameplay_flag_runtime.rs', 'non_snake_case'),
 )
 
 CONSTANTS = (
