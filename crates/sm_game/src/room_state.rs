@@ -1,4 +1,5 @@
 //! Room state rules that run on named RAM and the owned-Session view.
+use crate::enemy_projectiles::host::Effects;
 use crate::ram::RawRam as _;
 use crate::ram::{checked_word, words as fields};
 use crate::runtime_access::SessionView;
@@ -59,10 +60,162 @@ pub fn load_sprite_palettes<H: Host + ?Sized>(game: &mut H) {
 }
 
 /// What the room main code needs beyond the owned-Session view: the Samus
-/// pose command and the imported Ceres rotation table.
+/// pose command, the imported Ceres rotation table, and the sprite object,
+/// sky, projectile and cutscene effects of the compatibility runtime.
 pub trait MainCodeHost: SessionView {
     fn command_player(&mut self, command: u16);
     fn ceres_rotation_step(&mut self, word: isize) -> sm_data::ceres_elevator::RotationStep;
+    /// Create sprite object `kind` at (`x`, `y`) ($B4:BC26).
+    fn create_explosion(&mut self, x: u16, y: u16, kind: u16);
+    /// Update the scrolling sky land or ocean tilemap ($88:AF8D, $88:AF99).
+    fn queue_sky_rows(&mut self, ocean: bool);
+    /// Spawn enemy projectile `definition` with room graphics ($86:8027).
+    fn spawn_room_projectile(&mut self, definition: u16, parameter: u16);
+    /// Handle Ceres Ridley getaway cutscene ($A6:A35A, via $8F:E571).
+    fn handle_ceres_getaway(&mut self);
+}
+
+/// Execute room main ASM ($8F:E8BD): the room's main ASM routine `script`
+/// for this frame. Was `RunRoomMainCode`.
+pub fn execute_main_code<H: MainCodeHost>(script: u16, h: &mut H) {
+    use crate::constants::bank_86::{ADDR_STRU_869734, ADDR_STRU_869742};
+    match script {
+        // Main ASM - scrolling sky land / ocean.
+        0xc116 => h.queue_sky_rows(false),
+        0xc11b => h.queue_sky_rows(true),
+        // Main ASM - scrolling sky land, Zebes timebomb set; and the shake
+        // screen and generate random explosions it continues into.
+        0xc120 | 0xc124 => {
+            if script == 0xc120 {
+                h.queue_sky_rows(false);
+            }
+            random_explosion(1, true, h);
+            h.write_word_le(
+                h.word(fields::EARTHQUAKE_TIMER) | 0x8000,
+                fields::EARTHQUAKE_TIMER,
+            );
+        }
+        // Main ASM - scroll screen right in Dachora room.
+        0xc1e6 => {
+            if h.byte(0xcd2b) == 2
+                && h.session().room.camera.layer1[1] < 0x500
+                && h.session().room.camera.layer1[0] < 0x380
+            {
+                let x = h.session().room.camera.layer1[0] + 3;
+                crate::camera::set_layer1(h, 0, x);
+            }
+        }
+        0xe2b6 => advance_elevatube(h),
+        0xe51f => advance_ceres_elevator(h),
+        0xe524 => {}
+        // Main ASM - spawn Ceres pre elevator hall falling debris.
+        0xe525 => {
+            if h.word(fields::CERES_STATUS) != 0 {
+                let room = &mut h.session_mut().room;
+                room.main_variables[0] = room.main_variables[0].wrapping_sub(1);
+                if (room.main_native(0) as i16) < 0 {
+                    room.main_variables[0] = 8;
+                    let definition = if (h.word(fields::RANDOM_NUMBER) & 0x8000) != 0 {
+                        ADDR_STRU_869742
+                    } else {
+                        ADDR_STRU_869734
+                    } as u16;
+                    let x = [
+                        0x50, 0x60, 0x70, 0x80, 0x90, 0xa0, 0xb0, 0xc0, 0xd0, 0xe0, 0xf0, 0x110,
+                        0x130, 0x150, 0x170, 0x190,
+                    ][usize::from(h.word(fields::RANDOM_NUMBER) & 15)];
+                    h.spawn_room_projectile(definition, x);
+                }
+            }
+        }
+        // Main ASM - handle Ceres Ridley getaway cutscene.
+        0xe571 => {
+            if (h.word(fields::CERES_STATUS) & 1) != 0 {
+                h.handle_ceres_getaway();
+            }
+        }
+        // Main ASM - shake screen switching between light horizontal and
+        // medium diagonal.
+        0xe57c => {
+            if let Some(kind) = select_earthquake(18, 0x200, 23, h) {
+                h.write_word_le(kind, fields::EARTHQUAKE_TYPE);
+            }
+            random_explosion(3, false, h);
+        }
+        // Main ASM - generate random explosion on every fourth frame.
+        0xe5a0 => random_explosion(3, false, h),
+        // Main ASM - shake screen switching between medium horizontal and
+        // strong diagonal.
+        0xe5a4 => {
+            if let Some(kind) = select_earthquake(21, 0x180, 26, h) {
+                h.session_mut().room.set_main_native(1, kind);
+            }
+            h.write_word_le(h.session().room.main_native(1), fields::EARTHQUAKE_TYPE);
+            random_explosion(3, false, h);
+        }
+        0xe8cd => shake_crocomire(h),
+        0xe950 => shake_ridley(h),
+        _ => Effects::unreachable(h),
+    }
+}
+
+/// Generate random explosion on even frames on random non-blank tile
+/// ($8F:C131, `on_tile`) or on every fourth frame ($8F:C183), then at
+/// ([$12], [$14]) ($8F:C1A9).
+fn random_explosion<H: MainCodeHost>(mask: u16, on_tile: bool, h: &mut H) {
+    if h.word(fields::TIME_IS_FROZEN_FLAG) != 0
+        || (h.word(fields::NMI_FRAME_COUNTER_WORD) & mask) != 0
+    {
+        return;
+    }
+    let random = h.next_random();
+    let layer1 = h.session().room.camera.layer1;
+    let x = layer1[0].wrapping_add(random as u8 as u16);
+    let y = layer1[1].wrapping_add(u16::from(random.to_ne_bytes()[1]));
+    // X on entry to $8F:C1A9: 0 from the room main ASM dispatch, or the
+    // block index the tile check ($8F:C131) left.
+    let mut entry_x = 0;
+    if on_tile {
+        let row = u16::from((y >> 4) as u8) * u16::from(h.word(fields::ROOM_WIDTH_IN_BLOCKS) as u8);
+        entry_x = row.wrapping_add(x >> 4).wrapping_mul(2);
+        if (h.native_word(0x10002 + usize::from(entry_x)) & 0x3ff) == 255 {
+            return;
+        }
+    }
+    let random = h.next_random() & 15;
+    if random < 8 {
+        let sound = [0x24, 0, 0, 0x25, 0, 0, 0, 0][usize::from(random)];
+        if sound != 0 {
+            Effects::queue_sound(h, 2, 6, sound);
+        }
+    }
+    // $8F:C1B5 loads X only for a random value below 8; otherwise the
+    // sprite object ID comes from the X it entered with.
+    let index = if random < 8 { random } else { entry_x & 7 };
+    let kind = [3, 3, 9, 12, 12, 18, 18, 21][usize::from(index)];
+    h.create_explosion(x, y, kind);
+}
+
+/// The diagonal earthquake's countdown: when it runs out, the `ending`
+/// earthquake type; when a random number falls below `threshold`, a 2Ah
+/// frame `starting` earthquake.
+fn select_earthquake<H: MainCodeHost>(
+    ending: u16,
+    threshold: u16,
+    starting: u16,
+    h: &mut H,
+) -> Option<u16> {
+    let timer = h.session().room.main_native(0);
+    if timer != 0 {
+        let remaining = timer.wrapping_sub(1);
+        h.session_mut().room.set_main_native(0, remaining);
+        (remaining == 0).then_some(ending)
+    } else if h.next_random() < threshold {
+        h.session_mut().room.main_variables[0] = 42;
+        Some(starting)
+    } else {
+        None
+    }
 }
 
 pub fn advance_ceres_elevator<H: MainCodeHost + ?Sized>(h: &mut H) {

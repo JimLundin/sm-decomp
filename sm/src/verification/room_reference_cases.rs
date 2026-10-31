@@ -455,26 +455,36 @@ pub(crate) fn capture_case(
     }
 }
 pub(crate) fn run(op: Operation, g: &mut Game) -> Option<u16> {
-    use crate::game::room_state as room;
-    {
-        match op {
-            Operation::Entry(a, c) => Some(room::select_entry(a, c, g)),
-            Operation::Select(r) => {
-                room::select(r, g);
-                None
+    use sm_game::room_entry::content::{SelectorCursor, SelectorKind};
+    use sm_game::room_entry::{installation, selection};
+    let mut h = crate::game::session_runtime::Runtime::new(g);
+    match op {
+        Operation::Entry(a, c) => {
+            let kind = SelectorKind::from_legacy(a);
+            match selection::select_entry(&mut h, kind, SelectorCursor::Legacy(c)) {
+                Some(SelectorCursor::Legacy(next)) => Some(next),
+                None => Some(0),
+                Some(SelectorCursor::Prepared(_)) => {
+                    unreachable!("legacy selector returned authored cursor")
+                }
             }
-            Operation::Header => {
-                room::load_header(g);
-                None
-            }
-            Operation::State => {
-                room::load_state(g);
-                None
-            }
-            Operation::Door => {
-                room::load_door(g);
-                None
-            }
+        }
+        Operation::Select(r) => {
+            let room = h.session().world.room_identity(r);
+            selection::select(&mut h, room);
+            None
+        }
+        Operation::Header => {
+            installation::load_header(&mut h);
+            None
+        }
+        Operation::State => {
+            installation::load_state(&mut h);
+            None
+        }
+        Operation::Door => {
+            installation::load_door(&mut h);
+            None
         }
     }
 }

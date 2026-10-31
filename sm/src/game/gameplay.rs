@@ -121,6 +121,6 @@ impl sm_game::gameplay_frame::Host for Game {
         unsafe { crate::game::room_mechanisms::run(self) }
     }
     fn advance_room(&mut self) {
-        unsafe { crate::game::room_state::advance_room(self) }
+        crate::game::room_state::advance_room(self)
     }
 }
