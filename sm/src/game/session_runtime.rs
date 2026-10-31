@@ -1129,7 +1129,6 @@ impl Runtime<'_> {
 }
 
 use crate::game::actors::{self, api as actor_api};
-use crate::game::moving_platforms::{self as mechanisms, Event, Kind};
 use crate::game::sm_a9;
 use crate::types::EnemyData;
 use sm_game::actors::access::{AccessMode, ActorAccess, ActorKey as Key};
@@ -1151,20 +1150,6 @@ crate::game::callback_dispatch! {
             #[cfg(sm_verify_dll)]
             crate::game::actors::reference_population_animation::dispatch_noop(game);
         }];
-        10676698 => [mechanisms::initialize(Kind::TimedShutter, game)];
-        10676918 => [mechanisms::update(Kind::TimedShutter, game)];
-        10677765 => [mechanisms::initialize(Kind::Platform, game)];
-        10677778 => [mechanisms::initialize(Kind::VerticalShutter, game)];
-        10677969 => [mechanisms::update(Kind::Platform, game)];
-        10678429 => [mechanisms::react(Kind::Platform, Event::Touch, game)];
-        10678434 => [mechanisms::react(Kind::Platform, Event::Shot, game)];
-        10678442 => [mechanisms::react(Kind::VerticalShutter, Event::Shot, game)];
-        10678454 => [mechanisms::react(Kind::Platform, Event::PowerBomb, game)];
-        10678545 => [mechanisms::initialize(Kind::HorizontalShutter, game)];
-        10678750 => [mechanisms::update(Kind::HorizontalShutter, game)];
-        10679256 => [mechanisms::react(Kind::HorizontalShutter, Event::Touch, game)];
-        10679310 => [mechanisms::react(Kind::HorizontalShutter, Event::Shot, game)];
-        10679322 => [mechanisms::react(Kind::HorizontalShutter, Event::PowerBomb, game)];
 
         10730277 => [{ let address = bang::main_ai(game); crate::cpu_infra::Call(address, game); }];
         10738716 => reflec_shot;

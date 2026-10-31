@@ -15,7 +15,7 @@ use crate::actors::{
     elevator, escape_critters, etecoon, evir, fire_arc, fire_pillar, fireflea, flies, fune, gamet,
     geega, geruta, kago, kihunter, kraid, magdollite, metroid, mini_crocomire, mini_kraid,
     mochtroid, morph_ball_eye, multiviola, oum, phantoon, phantoon_actions, polyp, powamp, puyo,
-    reflec, ridley, rinka, rio, rippers, roach, shaktool, sidehopper, skree, skultera,
+    reflec, ridley, rinka, rio, rippers, roach, shaktool, shutters, sidehopper, skree, skultera,
     space_pirates, squeept, statues, tatori, torizo, tripper, waver, work_robot,
     wrecked_ship_spark, yapping_maw, yard, zeb, zebetites, zoa,
 };
@@ -690,6 +690,34 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         10676168 | 10676174 | 10676180 => dragon::react(ea, game),
         10915836 => fire_pillar::initialize(game),
         10915875 => fire_pillar::main_ai(game),
+        10676698 => shutters::initialize(shutters::Kind::GrowingShutter, game),
+        10676918 => shutters::main_ai(shutters::Kind::GrowingShutter, game),
+        10677765 => shutters::initialize(shutters::Kind::Platform, game),
+        10677778 => shutters::initialize(shutters::Kind::VerticalShutter, game),
+        10677969 => shutters::main_ai(shutters::Kind::Platform, game),
+        10678429 => shutters::reaction(shutters::Kind::Platform, shutters::Event::Touch, game),
+        10678434 => shutters::reaction(shutters::Kind::Platform, shutters::Event::Shot, game),
+        10678442 => {
+            shutters::reaction(shutters::Kind::VerticalShutter, shutters::Event::Shot, game)
+        }
+        10678454 => shutters::reaction(shutters::Kind::Platform, shutters::Event::PowerBomb, game),
+        10678545 => shutters::initialize(shutters::Kind::HorizontalShutter, game),
+        10678750 => shutters::main_ai(shutters::Kind::HorizontalShutter, game),
+        10679256 => shutters::reaction(
+            shutters::Kind::HorizontalShutter,
+            shutters::Event::Touch,
+            game,
+        ),
+        10679310 => shutters::reaction(
+            shutters::Kind::HorizontalShutter,
+            shutters::Event::Shot,
+            game,
+        ),
+        10679322 => shutters::reaction(
+            shutters::Kind::HorizontalShutter,
+            shutters::Event::PowerBomb,
+            game,
+        ),
         _ => game.native_ai(ea),
     }
 }
