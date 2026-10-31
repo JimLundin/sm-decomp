@@ -125,7 +125,7 @@ pub fn initialize_tourian_statue<H: crate::menus::host::Host + ?Sized>(game: &mu
     );
     game.spawn_hdma(0x88, &HdmaObjectDefinition::new(0x42, 0x11, 0xd856));
     game.spawn_hdma(0x88, &HdmaObjectDefinition::new(0x42, 0x10, 0xdcfa));
-    game.spawn_bg3_scroll();
+    spawn_bg3_scroll(game);
 }
 
 pub fn advance_tourian_statue<H: crate::menus::host::Host + ?Sized>(
@@ -209,7 +209,7 @@ pub fn initialize_weather<H: crate::menus::host::Host + ?Sized>(weather: Weather
     game.ram().write_byte(0x5b, 92);
     game.spawn_hdma(0x88, &HdmaObjectDefinition::new(control, 0x11, program));
     if let Some(tiles) = tiles {
-        game.spawn_bg3_scroll();
+        spawn_bg3_scroll(game);
         game.spawn_animated_tiles(tiles as u16);
     }
 }

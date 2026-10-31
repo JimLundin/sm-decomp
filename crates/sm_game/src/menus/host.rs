@@ -22,8 +22,6 @@ pub trait MenuRuntime:
     crate::player_position::PlayerPosition + crate::player_position::PlayerFacts
 {
     fn set_hdma_enabled(&mut self, enabled: bool);
-    /// Clear the whole HDMA objects flag word, stopping the objects.
-    fn clear_hdma_flags(&mut self);
     fn clear_hdma(&mut self);
     /// Queue a tilemap transfer whose source and destination are read from
     /// the host after the size word is written.
@@ -54,8 +52,6 @@ pub trait MenuRuntime:
     fn write_dma_register(&mut self, register: u16, value: u8);
     /// Advance the music queue, as the HDMA update did first each frame.
     fn handle_music_queue(&mut self);
-    /// Compose this frame's layer blending through the session view.
-    fn update_layer_blending(&mut self);
     /// Run an HDMA effect through the session view.
     fn hdma_effect(&mut self, effect: crate::hdma_objects::HdmaEffect, slot: u16);
     /// Gameplay event and boss flags, as the original's checks return them.
@@ -93,7 +89,6 @@ pub trait MenuRuntime:
     fn set_boss_byte(&mut self, area: u16, value: u8);
     /// The registered native image, if any, without the missing-image panic.
     fn native_image_binding(&self) -> Option<sm_data::cartridge::RomImage>;
-    fn spawn_bg3_scroll(&mut self);
     fn spawn_animated_tiles(&mut self, definition: u16);
     fn shake_room_with_sound(&mut self, kind: u16);
     fn has_queued_music(&mut self) -> u8;
@@ -137,6 +132,7 @@ pub trait Host:
     + crate::decompression::DecompressionHost
     + crate::records::Records
     + MenuRuntime
+    + crate::runtime_access::RuntimeAccess
     + crate::records::Records
 {
     type Sram: SaveRam + ?Sized;

@@ -173,7 +173,7 @@ fn begin_area_window<H: Host + ?Sized>(game: &mut H) {
     super::menu_window::initialize(game);
     crate::display::sequence::write_register_and_mirror(game, HDMAEN as u16, 0xc, 0x85, true);
     configure_area_window(game);
-    game.clear_hdma_flags();
+    crate::hdma_objects::clear_hdma_flags(game);
     crate::menu_state::set_byte(
         game,
         crate::menu_state::Word::MenuIndex,

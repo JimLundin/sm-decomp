@@ -137,9 +137,7 @@ pub fn advance_set<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     }
 }
 
-pub fn load<H: crate::menus::host::Host + crate::runtime_access::RuntimeAccess + ?Sized>(
-    game: &mut H,
-) {
+pub fn load<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     use crate::session_access::SessionAccess;
     game.runtime().session_mut().set_exit_key(0);
     // Loading reads the scene before the set table; the resumed hook does the reverse.

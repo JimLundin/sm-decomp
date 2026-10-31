@@ -163,11 +163,7 @@ pub fn load_pause_assets<H: Host + crate::menus::host::Host + ?Sized>(game: &mut
 }
 
 /// Upload the pause map and the area label.
-pub fn upload_pause_map<
-    H: Host + crate::menus::host::Host + crate::runtime_access::RuntimeAccess + ?Sized,
->(
-    game: &mut H,
-) {
+pub fn upload_pause_map<H: Host + crate::menus::host::Host + ?Sized>(game: &mut H) {
     word! {game; REG_BG1HOFS = word!(game.REG_BG4HOFS); REG_BG1VOFS = word!(game.REG_BG4VOFS); }
     register_writes! { game;
         byte(VMADDL as u16, 0); byte(VMADDH as u16, 0x30);

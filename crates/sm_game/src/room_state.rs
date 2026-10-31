@@ -62,8 +62,8 @@ pub fn load_sprite_palettes<H: Host + ?Sized>(game: &mut H) {
 }
 
 /// What room setup and door ASM need: the menus' runtime and the owned Session.
-pub trait ScriptHost: crate::menus::host::Host + crate::runtime_access::RuntimeAccess {}
-impl<T: crate::menus::host::Host + crate::runtime_access::RuntimeAccess + ?Sized> ScriptHost for T {}
+pub trait ScriptHost: crate::menus::host::Host {}
+impl<T: crate::menus::host::Host + ?Sized> ScriptHost for T {}
 
 /// Execute room setup ASM ($8F:E88F): the room state's setup routine
 /// `script`. Was `RunRoomSetupCode`.

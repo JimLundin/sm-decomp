@@ -32,9 +32,6 @@ impl MenuRuntime for Game {
     fn clear_hdma(&mut self) {
         visual_runtime::clear_hdma(self)
     }
-    fn clear_hdma_flags(&mut self) {
-        sm_game::hdma_objects::clear_hdma_flags(self)
-    }
     fn queue_native_transfer(
         &mut self,
         cursor: u16,
@@ -85,9 +82,6 @@ impl MenuRuntime for Game {
     }
     fn rtl_unreachable(&mut self) -> bool {
         crate::rtl::report_unreachable(self)
-    }
-    fn spawn_bg3_scroll(&mut self) {
-        sm_game::hdma_objects::spawn_bg3_scroll_owned(self)
     }
     fn spawn_animated_tiles(&mut self, definition: u16) {
         crate::game::animated_tiles::spawn(definition, self)
@@ -182,9 +176,6 @@ impl MenuRuntime for Game {
     }
     fn write_dma_register(&mut self, register: u16, value: u8) {
         crate::rtl::write_dma_register(register, value, self)
-    }
-    fn update_layer_blending(&mut self) {
-        sm_game::layer_blending::update(self)
     }
     fn handle_music_queue(&mut self) {
         // SAFETY: HDMA updates run from the frame loop with the backend installed.

@@ -22,7 +22,7 @@ fn initialize_hot<H: crate::menus::host::Host + ?Sized>(tiles: u16, game: &mut H
     static BACKGROUND: HdmaObjectDefinition = HdmaObjectDefinition::new(0x42, 0x10, 0xc3f0);
     game.spawn_hdma(0x88, &SURFACE);
     game.spawn_hdma(0x88, &BACKGROUND);
-    game.spawn_bg3_scroll();
+    crate::hdma_objects::spawn_bg3_scroll(game);
     game.spawn_animated_tiles(tiles);
 }
 pub fn initialize_water<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
@@ -38,16 +38,16 @@ pub fn initialize_water<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     if crate::liquid::LiquidWords::read(game).options & 2 != 0 {
         game.spawn_hdma(0x88, &BACKGROUND);
     }
-    game.spawn_bg3_scroll();
+    crate::hdma_objects::spawn_bg3_scroll(game);
 }
 
 /// One frame of the liquid's motion, tide and surface under one Session lease;
 /// the room shake and an unknown handler's report follow once it is published.
 /// Neither touches liquid state, so their order relative to it is unchanged.
-fn step_liquid<H>(game: &mut H, surface: crate::liquid::Surface)
-where
-    H: crate::menus::host::Host + crate::runtime_access::RuntimeAccess + ?Sized,
-{
+fn step_liquid<H: crate::menus::host::Host + ?Sized>(
+    game: &mut H,
+    surface: crate::liquid::Surface,
+) {
     let effects = with_liquid(game, |words| crate::liquid::step(words, surface));
     if effects.shake {
         game.shake_room_with_sound(21);
@@ -65,7 +65,7 @@ where
 /// the RAM bridge when a lease is not admissible. Both store the same bytes.
 fn with_liquid<H, R>(game: &mut H, update: impl FnOnce(&mut crate::liquid::LiquidWords) -> R) -> R
 where
-    H: crate::menus::host::Host + crate::runtime_access::RuntimeAccess + ?Sized,
+    H: crate::menus::host::Host + ?Sized,
 {
     use crate::liquid::LiquidWords;
     use crate::session_access::SessionAccess;
@@ -111,10 +111,7 @@ fn table_height(position: u16, camera: u16, water: bool) -> u16 {
 }
 
 static LAVA_SOUND_EFFECTS: [u8; 8] = [0x12, 0x13, 0x14, 0x12, 0x13, 0x14, 0x12, 0x13];
-pub fn lava_surface<H>(object: &mut HdmaObject, game: &mut H)
-where
-    H: crate::menus::host::Host + crate::runtime_access::RuntimeAccess + ?Sized,
-{
+pub fn lava_surface<H: crate::menus::host::Host + ?Sized>(object: &mut HdmaObject, game: &mut H) {
     word!(game.FX_LAYER_BLENDING_CONFIG_C = word!(game.FX_LAYER_BLENDING_CONFIG_B));
     if word!(game.TIME_IS_FROZEN_FLAG) == 0 {
         step_liquid(game, crate::liquid::Surface::LavaAcid);
@@ -161,10 +158,7 @@ where
         object.table = (3 * (((v8 as i32 ^ 0x1ff) + 1) & 0x3ff) + 0xb62a) as u16;
     }
 }
-pub fn water_surface<H>(object: &mut HdmaObject, game: &mut H)
-where
-    H: crate::menus::host::Host + crate::runtime_access::RuntimeAccess + ?Sized,
-{
+pub fn water_surface<H: crate::menus::host::Host + ?Sized>(object: &mut HdmaObject, game: &mut H) {
     word!(game.FX_LAYER_BLENDING_CONFIG_C = word!(game.FX_LAYER_BLENDING_CONFIG_B));
     if word!(game.TIME_IS_FROZEN_FLAG) != 0 {
         return;

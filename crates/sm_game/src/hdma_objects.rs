@@ -44,16 +44,8 @@ use crate::cinematic::set_fixed_color;
 use crate::menus::prelude::HdmaObjectDefinition;
 use sm_data::title_screen::GRADIENT_ADDRESS;
 
-/// Spawn the BG3 scroll object in the last slot, through the host.
+/// Spawn the BG3 scroll object in the last slot.
 pub fn spawn_bg3_scroll<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    crate::menus::host::MenuRuntime::spawn_bg3_scroll(game)
-}
-
-/// The host's BG3 scroll spawn on the owned table.
-pub fn spawn_bg3_scroll_owned<H>(game: &mut H)
-where
-    H: crate::menus::host::Host + crate::runtime_access::RuntimeAccess + ?Sized,
-{
     let words = hdma_definition(&HdmaObjectDefinition::new(0x43, 0x11, 0xd8d0));
     place_hdma(Some(5), 0x88, |index| words[index], game);
 }
@@ -75,18 +67,20 @@ pub fn spawn_hdma<H: crate::menus::host::Host + ?Sized>(
 }
 
 /// The host's HDMA spawn on the owned table.
-pub fn spawn_hdma_owned<H>(bank: u8, args: &HdmaObjectDefinition, game: &mut H) -> u16
-where
-    H: crate::menus::host::Host + crate::runtime_access::RuntimeAccess + ?Sized,
-{
+pub fn spawn_hdma_owned<H: crate::menus::host::Host + ?Sized>(
+    bank: u8,
+    args: &HdmaObjectDefinition,
+    game: &mut H,
+) -> u16 {
     let words = hdma_definition(args);
     spawn_hdma_words(bank, |index| words[index], game)
 }
 
-pub fn spawn_hdma_words<H>(bank: u8, read_word: impl Fn(usize) -> u16, game: &mut H) -> u16
-where
-    H: crate::menus::host::Host + crate::runtime_access::RuntimeAccess + ?Sized,
-{
+pub fn spawn_hdma_words<H: crate::menus::host::Host + ?Sized>(
+    bank: u8,
+    read_word: impl Fn(usize) -> u16,
+    game: &mut H,
+) -> u16 {
     place_hdma(None, bank, read_word, game)
 }
 
@@ -115,15 +109,12 @@ where
 /// definition, then its channel's DMA control and target registers once
 /// the table is published. Returns the byte slot, or `u16::MAX` when every
 /// object is busy.
-fn place_hdma<H>(
+fn place_hdma<H: crate::menus::host::Host + ?Sized>(
     slot: Option<usize>,
     bank: u8,
     read_word: impl Fn(usize) -> u16,
     game: &mut H,
-) -> u16
-where
-    H: crate::menus::host::Host + crate::runtime_access::RuntimeAccess + ?Sized,
-{
+) -> u16 {
     let placed = with_table(game, |table| {
         let slot = slot.or_else(|| (0..6).find(|&slot| table.objects[slot].channels == 0))?;
         let object = &mut table.objects[slot];
@@ -156,10 +147,7 @@ fn channel(slot: usize) -> u16 {
 }
 
 /// Set or clear the flag that runs the objects each frame (bit 15).
-pub fn set_hdma_enabled<H>(enabled: bool, game: &mut H)
-where
-    H: crate::menus::host::Host + crate::runtime_access::RuntimeAccess + ?Sized,
-{
+pub fn set_hdma_enabled<H: crate::menus::host::Host + ?Sized>(enabled: bool, game: &mut H) {
     with_table(game, |table| {
         table.enabled = (table.enabled & 0x7fff) | (u16::from(enabled) << 15);
     });
@@ -184,18 +172,12 @@ where
 }
 
 /// Clear the whole flag word, as the map screen does on entry.
-pub fn clear_hdma_flags<H>(game: &mut H)
-where
-    H: crate::menus::host::Host + crate::runtime_access::RuntimeAccess + ?Sized,
-{
+pub fn clear_hdma_flags<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     with_table(game, |table| table.enabled = 0);
 }
 
 /// Free every object and clear the HDMA channel enable mirror.
-pub fn clear_hdma_channels<H>(game: &mut H)
-where
-    H: crate::menus::host::Host + crate::runtime_access::RuntimeAccess + ?Sized,
-{
+pub fn clear_hdma_channels<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     game.ram().write_byte(0x85, 0);
     with_table(game, |table| {
         for object in table.objects.iter_mut().rev() {
@@ -204,10 +186,7 @@ where
     });
 }
 
-pub fn clear_hdma<H>(game: &mut H)
-where
-    H: crate::menus::host::Host + crate::runtime_access::RuntimeAccess + ?Sized,
-{
+pub fn clear_hdma<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     crate::display::sequence::register_writes! { game;
         byte(MDMAEN as u16, 0); byte(HDMAEN as u16, 0);
     }
@@ -308,7 +287,7 @@ where
     checked_word!(game.FX_LAYER_BLENDING_CONFIG_C = checked_word!(game.FX_LAYER_BLENDING_CONFIG_A));
     if checked_word!(game.HDMA_OBJECTS_ENABLE_FLAG) & 0x8000 != 0 {
         crate::hdma_program::run_objects(game);
-        game.update_layer_blending();
+        crate::layer_blending::update(game);
     }
 }
 
