@@ -125,6 +125,7 @@ pub mod actors {
     pub mod combat;
     pub mod contacts;
     pub mod content;
+    pub mod content_records;
     pub mod corpses;
     pub mod covern;
     pub mod crawlers;
