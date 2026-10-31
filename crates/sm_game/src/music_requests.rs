@@ -295,7 +295,8 @@ pub fn advance_sound_effects<H: AudioHost>(
                 let _last_sent = host.audio_byte(0x64d + channel);
                 let value = host.audio_byte(0x649 + channel).wrapping_add(1);
                 host.audio_store_byte(0x649 + channel, value);
-                host.audio_store_byte(0x650 + channel, 6);
+                // The original waits 2 frames before clearing the request.
+                host.audio_store_byte(0x650 + channel, 2);
             }
             2 | 4 => {
                 let previous = host.audio_byte(0x650 + channel);
