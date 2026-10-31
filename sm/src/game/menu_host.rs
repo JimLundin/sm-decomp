@@ -26,12 +26,6 @@ impl sm_game::sprite_output::SpriteHost for Game {
 // SAFETY (all `unsafe` calls below): the menus run from the frame loop with
 // the SNES backend installed, and `&mut self` excludes any other access.
 impl MenuRuntime for Game {
-    fn set_hdma_enabled(&mut self, enabled: bool) {
-        visual_runtime::set_hdma_enabled(enabled, self)
-    }
-    fn clear_hdma(&mut self) {
-        visual_runtime::clear_hdma(self)
-    }
     fn queue_native_transfer(
         &mut self,
         cursor: u16,

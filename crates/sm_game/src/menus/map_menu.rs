@@ -494,8 +494,8 @@ fn initialize_room<H: Host + ?Sized>(game: &mut H) {
     load_area_map(game);
     draw_room_map(game);
     game.enter_load_station();
-    game.set_hdma_enabled(false);
-    game.clear_hdma();
+    crate::hdma_objects::set_hdma_enabled(false, game);
+    crate::hdma_objects::clear_hdma(game);
     let header = crate::projection::word(game, crate::ram::words::ROOM_PTR);
     let room = menu_tilemap::native_record(0x8f0000 | u32::from(header), game);
     crate::room_view::enter_header(game, [1, 2, 3].map(|at| room.byte(at)));

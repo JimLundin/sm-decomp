@@ -124,7 +124,7 @@ fn place_hdma<H: crate::menus::host::Host + ?Sized>(
     read_word: impl Fn(usize) -> u16,
     game: &mut H,
 ) -> u16 {
-    let placed = with_table(game, |table| {
+    let placed = game.with_hdma_table(|table| {
         let slot = slot.or_else(|| (0..6).find(|&slot| table.objects[slot].channels == 0))?;
         let object = &mut table.objects[slot];
         object.pre_instruction = 0x84b8;
@@ -156,8 +156,8 @@ fn channel(slot: usize) -> u16 {
 }
 
 /// Set or clear the flag that runs the objects each frame (bit 15).
-pub fn set_hdma_enabled<H: crate::menus::host::Host + ?Sized>(enabled: bool, game: &mut H) {
-    with_table(game, |table| {
+pub fn set_hdma_enabled<H: HdmaTable + ?Sized>(enabled: bool, game: &mut H) {
+    game.with_hdma_table(|table| {
         table.enabled = (table.enabled & 0x7fff) | (u16::from(enabled) << 15);
     });
 }
@@ -181,8 +181,8 @@ where
 }
 
 /// Clear the whole flag word, as the map screen does on entry.
-pub fn clear_hdma_flags<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    with_table(game, |table| table.enabled = 0);
+pub fn clear_hdma_flags<H: HdmaTable + ?Sized>(game: &mut H) {
+    game.with_hdma_table(|table| table.enabled = 0);
 }
 
 /// Free every object and clear the HDMA channel enable mirror.

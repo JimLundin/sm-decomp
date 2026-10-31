@@ -60,8 +60,6 @@ impl<T: crate::runtime_access::RuntimeAccess + ?Sized> PlayerRuntime for T {}
 pub trait MenuRuntime:
     crate::player_position::PlayerPosition + crate::player_position::PlayerFacts + PlayerRuntime
 {
-    fn set_hdma_enabled(&mut self, enabled: bool);
-    fn clear_hdma(&mut self);
     /// Queue a tilemap transfer whose source and destination are read from
     /// the host after the size word is written.
     fn queue_native_transfer(
@@ -154,6 +152,7 @@ pub trait Host:
     + SoundEffects
     + DisplayRefresh
     + crate::display_refresh::DisplayOwner
+    + crate::hdma_objects::HdmaTable
     + crate::sprite_output::SpriteHost
     + crate::cartridge::NativeDiagnostics
     + crate::decompression::DecompressionHost
