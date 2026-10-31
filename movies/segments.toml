@@ -1572,3 +1572,43 @@ start_frame = 0
 frames = 572
 expect = ["room:B482"]
 require_hit = ["player_projectiles.reflect"]
+
+# Enemy rows for routines no movie runs: the fire arc (low% seed 89 through
+# its room, with the movie words), and authored play beside an Oum and on the
+# Tatori (tools/scenario_seeds.py oum-roll and tatori-touch).
+
+[[segment]]
+id = "enemy-fire-arc"
+seed = "low-input-phase:89"
+seed_sha256 = "ae29af007c08c18496a941361a47845a50c694e5bbf874ebffb9d60325565297"
+inputs = "seed-fire-arc-b457.inputs"
+input_sha256 = "0b0b8a5df937e2a3ba1db56cd742e405564c79ed7a5f29f5c715f79928c025e8"
+start_frame = 0
+frames = 1103
+expect = ["room:B457", "room:B4AD"]
+require_hit = ["fire_arc.initialize", "fire_arc.orbit"]
+pending = "awaiting the seeds-v1-enemies-dd825e69ee36457f ci-data upload"
+
+[[segment]]
+id = "enemy-oum-roll"
+seed = "scenario-oum-roll:256"
+seed_sha256 = "bcf01bb7acfc1a23b6f3365880f08b71ffac34cad498eb0f8d1adfeec64c9ee2"
+inputs = "authored-oum-roll.inputs"
+input_sha256 = "cbb42cd926a9bd99d019e22d442fd862221cd1fd730f4fcbdc0ffd42784235c6"
+start_frame = 0
+frames = 391
+expect = ["room:D913"]
+require_hit = ["oum.roll"]
+pending = "awaiting the seeds-v1-enemies-dd825e69ee36457f ci-data upload"
+
+[[segment]]
+id = "enemy-tatori-touch"
+seed = "scenario-tatori-touch:221"
+seed_sha256 = "93c7b555fc69660c2c1b83d6f2d24c5ec4e4aeb0088cdd6b18a659e171046d8a"
+inputs = "authored-tatori-touch.inputs"
+input_sha256 = "7869003bd5baadcbdad24e24d606bc95b1d4c388bb58b6e41a35318974235fa5"
+start_frame = 0
+frames = 761
+expect = ["room:D055"]
+require_hit = ["tatori.touch"]
+pending = "awaiting the seeds-v1-enemies-dd825e69ee36457f ci-data upload"
