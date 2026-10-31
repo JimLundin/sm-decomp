@@ -75,7 +75,9 @@ jobs:
     timeout-minutes: ${{ matrix.kind == 'checkpoint' && 65 || 120 }}
     strategy:
       fail-fast: false
-      max-parallel: 6
+      # With the route and the corpus both at nine, the two leave two of the account's
+      # twenty hosted runners for PR CI.
+      max-parallel: 9
       matrix: ${{ fromJson(needs.plan.outputs.matrix) }}
     name: ${{ matrix.name }}
     defaults:
