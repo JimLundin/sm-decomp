@@ -13,22 +13,20 @@ fn record(out: &mut Vec<u8>, tag: u8, data: &[u8]) {
     out.extend_from_slice(&(data.len() as u32).to_le_bytes());
     out.extend_from_slice(data);
 }
-fn author(r: &RomImage, address: u32, data: &[u8], manifest: &mut Vec<u8>) {
+fn author(r: &mut [u8], address: u32, data: &[u8], manifest: &mut Vec<u8>) {
     let at = crate::rtl::lorom_offset(address) as usize;
     assert!(at + data.len() <= r.len());
     manifest.extend_from_slice(&address.to_le_bytes());
     manifest.extend_from_slice(&(data.len() as u32).to_le_bytes());
     manifest.extend_from_slice(data);
-    for (i, b) in data.iter().copied().enumerate() {
-        r.write(at + i, b);
-    }
+    r[at..at + data.len()].copy_from_slice(data);
 }
 fn seed(id: u32, g: &mut Game) -> (RomImage, RomImage, Vec<u8>, Vec<u8>, Vec<u8>) {
     g.ram().fill(0..g.ram().len(), 0);
     g.ram().write_byte(0x1ffff, 1);
     g.g_fail = false;
-    let loaded = RomImage::zeroed(0x100000);
-    let native = RomImage::zeroed(0x100000);
+    let mut loaded = vec![0; 0x100000];
+    let mut native = vec![0; 0x100000];
     let mut lm = Vec::new();
     let mut nm = Vec::new();
     let mut poses = vec![0; 256 * 8];
@@ -36,14 +34,15 @@ fn seed(id: u32, g: &mut Game) -> (RomImage, RomImage, Vec<u8>, Vec<u8>, Vec<u8>
         pose[0] = 8;
         pose[6] = 2;
     }
-    author(&loaded, 0x91b629, &poses, &mut lm);
-    author(&native, 0x91b629, &poses, &mut nm);
-    author(&loaded, 0x91d727, &0x9000u16.to_le_bytes(), &mut lm);
+    author(&mut loaded, 0x91b629, &poses, &mut lm);
+    author(&mut native, 0x91b629, &poses, &mut nm);
+    author(&mut loaded, 0x91d727, &0x9000u16.to_le_bytes(), &mut lm);
     let mut palette = Vec::new();
     for color in 0..16u16 {
         palette.extend_from_slice(&(0x2000 + color).to_le_bytes());
     }
-    author(&native, 0x9b9000, &palette, &mut nm);
+    author(&mut native, 0x9b9000, &palette, &mut nm);
+    let (loaded, native) = (RomImage::from(loaded), RomImage::from(native));
     g.register_rom(loaded.clone());
     g.register_native_rom(native.clone());
     let beta = match id {

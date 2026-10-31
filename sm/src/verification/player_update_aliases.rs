@@ -18,24 +18,22 @@ pub(crate) const COUNT: usize = 2;
 fn put(bytes: &mut [u8], at: usize, value: u16) {
     bytes[at..at + 2].copy_from_slice(&value.to_le_bytes());
 }
-fn author(image: &RomImage, address: u32, bytes: &[u8]) {
+fn author(image: &mut [u8], address: u32, bytes: &[u8]) {
     let at = crate::rom::lorom_offset(address) as usize;
-    for (index, &byte) in bytes.iter().enumerate() {
-        image.write(at + index, byte);
-    }
+    image[at..at + bytes.len()].copy_from_slice(bytes);
 }
 fn seed(game: &mut Game, map_x: u16, map_y: u16) {
     game.ram().fill(0..game.ram().len(), 0);
     game.g_fail = false;
-    let loaded = RomImage::zeroed(0x100000);
-    let native = RomImage::zeroed(0x100000);
+    let mut loaded = vec![0; 0x100000];
+    let mut native = vec![0; 0x100000];
     // Authored distinct mask and tile sources, both containing only zeros.
-    author(&loaded, 0x829717, &0xa000u16.to_ne_bytes());
-    author(&native, 0x82964a, &[0x00, 0x80, 0x83, 0x00]);
+    author(&mut loaded, 0x829717, &0xa000u16.to_ne_bytes());
+    author(&mut native, 0x82964a, &[0x00, 0x80, 0x83, 0x00]);
     // The actual settlement palette restores an authored all-zero suit.
-    author(&loaded, 0x91d727, &0x9000u16.to_ne_bytes());
-    game.register_rom(loaded);
-    game.register_native_rom(native);
+    author(&mut loaded, 0x91d727, &0x9000u16.to_ne_bytes());
+    game.register_rom(RomImage::from(loaded));
+    game.register_native_rom(RomImage::from(native));
     for (at, value) in [
         (w::ROOM_X_COORDINATE_ON_MAP, map_x),
         (w::ROOM_Y_COORDINATE_ON_MAP, map_y),
