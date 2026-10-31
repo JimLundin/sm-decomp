@@ -63,7 +63,8 @@ M seams and cycle cuts, B bank retirement.
    the `f158` seed asset; split the checkpoint shard to at most ~60 minutes. Run
    `tools/cycle_report.py` in CI. *Exit:* two consecutive green full-corpus runs
    on main, scheduled or dispatched (Jim, 2026-10-29: the schedule fired only
-   every 4â€“9 h, so dispatched runs count).
+   every 4–9 h, so dispatched runs count). Exited 2026-10-30: scheduled runs
+   green on `7cf2692` and `213c458`.
 1. **Package graph and seams (M).** Add `sm_data`, `sm_game` and `sm_runtime`
    to the workspace; `sm` becomes compat plus oracle tools. Put the CONTRACTS
    types in place: `TickOutput`, a coarse `Scene`, a `Cue` record in `sm_data`.
@@ -106,13 +107,66 @@ M seams and cycle cuts, B bank retirement.
 3. **Gate 1 vertical slice.** Morph room 9E9F: `Session::open` from prepared
    content, the full Morph1200 inputs, `sm_runtime` renderer and sequencer, a
    minimal `sm_app`, headless replay in `sm_tools`, compared to the oracle
-   through semantic projections. *Exit:* VALIDATION Gate 1 evidence.
+   through the scenario harness's projections (lane S, below) in free-run mode.
+   *Exit:* VALIDATION Gate 1 evidence.
 4. **Gates 2–5**, then Map Rando import through the same `sm_data` IDs.
 
 SPC700 CPU and APU bus emulation are frozen compat (unsafe permitted, outside
 the unsafe goal). The N-SPC sequencer (`spc_player.rs`) and S-DSP are the seed
 of `sm_runtime` audio; continue them only once separated from emulator types,
 with verification growth no larger than the production change it covers.
+
+### Scenario harness, lane S (Jim, 2026-10-31)
+
+Jim approved the scenario harness in #6 on 2026-10-31; the design is
+`docs/SCENARIO_HARNESS.md`, landing with lane S's first commit. It replaces
+PLAN's former rule against new process frameworks. It is the comparison Phase 3
+needs ("compared to the oracle through semantic projections") and the projection
+path that VALIDATION's *Verification strategy* already describes. Lane S runs
+beside M and B under the landing rule and ratchets (1) to (5).
+
+**Jim's decisions.** (a) No tolerances: every divergence is fixed or listed in
+`docs/LEGACY.md`. For this harness that overrides "documented tolerances" in
+VALIDATION Gate 2. (b) Step 1 starts now as its own lane.
+
+**Review conditions (reviewer, 2026-10-31).**
+
+1. **It is verification, and it pays for itself.** Harness code counts as
+   verification, reported separately and outside the 100,000-line target. Step 1
+   adds at most ~2,000 lines. Every later landing in which a projection takes over
+   a domain deletes what it supersedes in the same change: that domain's
+   `normalize_snapshot_ram` ranges and `LEGACY(verifier)` rows, and the checks it
+   replaces. By Phase 3's exit, verification is no larger than at `e0b47fe`
+   (57,802 lines).
+2. **One runner.** The harness grows inside the current verifier and then
+   replaces it; it never runs beside it as a second framework. Whole-RAM
+   comparison stays authoritative for a domain until a projection covers it.
+3. **Placement.** The scenario model, observation types, comparison and report
+   live in a new `crates/sm_tools` (forbids unsafe; depends only on `sm_data`,
+   `sm_game` and `sm_runtime`; the CI guard rejects any target package depending
+   on it, and it depending on `sm`). The oracle projection decodes RAM through
+   `ram_map.rs` and stays in `sm` as oracle tooling.
+4. **The engine side reads typed state only.** A domain is projected from the
+   engine only where the Session owns it as typed fields, never through
+   `SessionRam`, `RawRam` or `CompatibilityRam`. Untyped domains stay RAM-compared,
+   and each report lists coverage per domain. Projection coverage therefore
+   follows Phase 2(c); it does not replace it.
+5. **Data and secrecy.** Committed scenario files hold IDs, start references by
+   digest, facts and domains. Input streams, seeds and checkpoints stay in the
+   encrypted ci-data assets (PLAN: never commit movies or derived data), and
+   `scenario cut`/`lock` update them through that route. CI logs and committed
+   files carry tick, domain, field names and hashes, never ROM-derived values.
+6. **Order, each closing on evidence posted in #6.**
+   Step 1: typed observations and both projections next to the unchanged RAM
+   comparison; structured divergence report; no new `sm_game_ram` sites.
+   *Exit:* chain rooms 1, 6, 100, 200 and 320 pass, and a one-field mutant is
+   reported at the right tick, domain and field.
+   Step 2: free-run and determinism modes. Step 3: scenarios as data with
+   `cut`/`lock`; PLAN's regression rows become scenarios. Step 4 onward:
+   retire whole-RAM comparison domain by domain, as in condition 1.
+7. **Nothing else waits.** The Cue-trace answer (ratchet 5) is still due before
+   the next landing; the harness's Cue domain replaces that one-off run later.
+   M does not wait for lane S, and lane S does not outrank M.
 
 ### Current publication and acceptance
 
@@ -123,8 +177,8 @@ strict library/DLL/all147 registered checks/frontend/format pass. Genuine initia
 captures and14 checkpoint rows pass; four fresh-only rejection checks run0 frames.
 Both encrypted packs and complete selected restores are verified.
 Source/native/ROM/input/loader proof stays separate from persisted compatibility;
-old c975 captures must reject and are never restamped. Two consecutive green scheduled
-full-corpus runs remain pending, so Phase 0 is open.
+old c975 captures must reject and are never restamped. Phase 0 closed on
+2026-10-30 after two consecutive green scheduled full-corpus runs.
 The [147 record](https://github.com/JimLundin/sm-decomp/blob/2c2928e725dc30cf6e1df32bfd5070c805bda3ef/docs/PLAN.md#current-work-and-limits) retains prior audio/source/native/runtime limits;
 original15002 compile EXIT101 and bounded DLL disk-cap stop keep their attribution.
 

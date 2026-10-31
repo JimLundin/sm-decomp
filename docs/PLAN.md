@@ -58,8 +58,8 @@ shared Python installers/runtime-only restores are support work, counted separat
 
 ## Current phase and retained evidence
 
-[REVIEW's Milestone plan](REVIEW.md#milestone-plan-2026-10-29) sets the active phase;
-Phase 0 exits on two consecutive green scheduled full-corpus runs.
+[REVIEW's Milestone plan](REVIEW.md#milestone-plan-2026-10-29) sets the active phase
+(Phase 2, with lane S beside it). Phase 0 exited on 2026-10-30.
 
 Schema15003 source622a573e / persisted layout7110b4dec014d09b fingerprints ordered
 State fields/types and complete opaque/manual encodings. Source/native/ROM/input
@@ -69,7 +69,7 @@ captures and14 checkpoint rows pass; four fresh-only rejection checks run0 frame
 Both encrypted packs and complete selected restores are verified.
 CI selects the two layout150 assets by verified digests for all14 checkpoint rows;
 shard names retain distinct f158/checkpoints identities.
-The first two green scheduled full-corpus runs remain pending; Phase 0 stays open.
+Scheduled full corpus passed twice (7cf2692, 213c458); Phase 0 is closed.
 Push CI selects main; full-corpus cron runs at minute17 every3h to avoid the
 hourly scheduling peak. This is a reliability experiment; missed-slot cause is unproved.
 Read [current acceptance](REVIEW.md#current-publication-and-acceptance) before
@@ -112,10 +112,13 @@ work and authorizes no repeated accepted campaign.
 - Keep backend/shader/audio/oracle behavior, masks/PatchBugs and snapshots until actual
   consumers and equivalent checks migrate. Dependencies mean the backend is not retired.
   The611..616 normalization means continuation also needs source proof, not byte comparison alone.
-- Reuse the existing runner; no new production probes/observers/verify cfg blocks,
-  fixture modules/process frameworks/evidence stores/registries. Improve the verifier itself.
-  REVIEW permits a constructed check only for behavior no movie reaches: under100 lines,
-  with the reason in its first line. Otherwise add named missing behavior/order/failure rows.
+- One runner: the existing verifier, growing into the scenario harness under REVIEW's
+  [lane S conditions](REVIEW.md#scenario-harness-lane-s-jim-2026-10-31) (Jim,
+  2026-10-31). No other process framework, evidence store or registry. Target packages
+  get no probes, observers or verify cfg blocks; the engine projection only reads typed
+  Session state. No tolerances: fix a divergence or list it in [LEGACY](LEGACY.md).
+  A constructed code check is allowed only for behavior no movie reaches: under 100
+  lines, with the reason in its first line. Otherwise add a named row or scenario.
 - Architectural progress is behavior in a target package compiled independently of
   compat. Report REVIEW's package/cycle measures; package moves alone are neutral.
 - Count all helpers/tables/adapters/registration/callers/native runtime code. Separate
@@ -152,7 +155,8 @@ work and authorizes no repeated accepted campaign.
    cargo-mutants <=30min; full corpus runs on main AFTER deletion, also at review waypoints.
    Windows uses AST mutants through existing DLL rows; Cargo/nextest cannot run here.
    Stable GNU coverage lacks profiler_builtins (E0463); LLVM tools alone do not fix it.
-4. Every comparison failure gets a checkpoint regression row with its fix; never weaken
+4. Every comparison failure gets a regression row with its fix (a `scenario cut` once
+   the harness has it); never weaken
    comparisons/expectations. Retry a flaky step once; a second failure is real.
 
 For each sequential phase, collect the prior original handle, confirm terminal
