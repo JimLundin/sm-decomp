@@ -558,7 +558,7 @@ BUG_HOOKS = [
     (0xA29051, 'b', 'state', 'removed', 'patched',
      'Tatori function - hovering',
      "A-- followed by the original INC cancels the INC, so the new X velocity differs from hardware's -1-v whenever carry differs (the sub==0 case)"),
-    (0xA5931C, 'b', 'visual', 'removed', 'patched',
+    (0xA5931C, 'b', 'visual', 'removed', 'follows',
      'Handle short Draygon breath bubbles',
      'Every 64 frames $87AA leaves X = 4..10 (turret index), so hardware tests [$0FA4+X] (function pointer, swoop index, speed) instead of the frame counter; breath-bubble sprite objects are skipped or spawned spuriously on those frames'),
     (0x80ADA4, 'b', 'visual', 'removed', 'follows',

@@ -118,9 +118,9 @@ pub fn swoop_apex<S: BossState>(right: bool, game: &mut S) {
 /// $A5:8A00) or, with `ascending`, ascending ($A5:8951, $A5:8A90): follow the
 /// swoop Y positions, then pick the next attack. Was `advance`.
 pub fn swoop<L: Lease>(right: bool, ascending: bool, game: &mut L) {
-    fire_wall_turret(game);
+    let turret = fire_wall_turret(game);
     if !right || !ascending {
-        body_bubble(game);
+        body_bubble(turret, game);
     }
     let index = session_slot!(game, Draygon[BODY].function_timer);
     if index == ARMS_OUT_INDEX {
