@@ -957,19 +957,19 @@ fn queue_bg2_bottom<L: Lease + ?Sized>(game: &mut L) {
 
 /// Rocks and dust while Kraid rises. Was `Kraid_SpawnRandomQuakeProjs`.
 fn quake_rocks<L: Lease + ?Sized>(game: &mut L) {
-    let mut offset: u16 = (word!(game.RANDOM_NUMBER)) & 0x3f;
-    if (word!(game.RANDOM_NUMBER) & 2) == 0 {
+    let mut offset: u16 = (boss!(game.Random)) & 0x3f;
+    if (boss!(game.Random) & 2) == 0 {
         offset = !(offset as i32) as u16;
     }
     let x: u16 = (session_slot!(game, Body[BODY].base.x_pos)).wrapping_add(offset);
-    let y: u16 = (448 - ((word!(game.RANDOM_NUMBER) & 0x3f00) as i32 >> 8)) as u16;
+    let y: u16 = (448 - ((boss!(game.Random) & 0x3f00) as i32 >> 8)) as u16;
     game.foreign(|game| game.create_sprite(x, y, 21, 0));
-    let rocks: u16 = if (word!(game.RANDOM_NUMBER) & 0x10) != 0 {
+    let rocks: u16 = if (boss!(game.Random) & 0x10) != 0 {
         RISING_ROCKS_RIGHT
     } else {
         RISING_ROCKS_LEFT
     };
-    let parameter = (word!(game.RANDOM_NUMBER)) & 0x3f0;
+    let parameter = (boss!(game.Random)) & 0x3f0;
     let k = game.current_enemy();
     game.spawn_projectile(parameter, k, rocks);
 }
@@ -1326,7 +1326,7 @@ fn foot_second_phase_thinking<L: Lease + ?Sized>(game: &mut L) {
             row = 4;
             break;
         }
-        let mut choice: i16 = (word!(game.RANDOM_NUMBER) as i16) & 0x1c;
+        let mut choice: i16 = (boss!(game.Random) as i16) & 0x1c;
         if !below(choice as u16, 16) {
             choice = 16;
         }
@@ -1355,13 +1355,13 @@ fn initialize_fingernail_attack<L: Lease + ?Sized>(game: &mut L) {
         crate::boss_lists::kraid_nail_velocity(
             game,
             true,
-            ((word!(game.RANDOM_NUMBER) as i32 & 6) >> 1) as isize,
+            ((boss!(game.Random) as i32 & 6) >> 1) as isize,
         )
     } else {
         crate::boss_lists::kraid_nail_velocity(
             game,
             false,
-            ((word!(game.RANDOM_NUMBER) as i32 & 6) >> 1) as isize,
+            ((boss!(game.Random) as i32 & 6) >> 1) as isize,
         )
     };
     let speeds = native_record(BANK, pattern, game);
@@ -1372,7 +1372,7 @@ fn initialize_fingernail_attack<L: Lease + ?Sized>(game: &mut L) {
         as u16);
     session_slot!(game, Fingernail[me].base; instruction_timer = 1, current_instruction = animation::FINGERNAIL);
     session_slot!(game, Fingernail[me].function = function::FINGERNAIL_FIRE);
-    let at_kraid: bool = ((word!(game.RANDOM_NUMBER) & 1) == 0)
+    let at_kraid: bool = ((boss!(game.Random) & 1) == 0)
         || ({
             let mut other: u16 = health_eighth(game, GOOD_FINGERNAIL, 1);
             if game.current_enemy() != 448 {
@@ -1543,7 +1543,7 @@ pub fn sink_through_floor<L: Lease + ?Sized>(game: &mut L) {
         session_slot!(game, Part[BOTTOM_LINT].base.properties = hidden);
         session_slot!(game, Part[FOOT].base.properties = hidden);
         session_slot!(game, Body[BODY].function = function::FADE_IN_CLEAR_BG2_TOP);
-        word!(game.CAMERA_DISTANCE_INDEX = 0);
+        boss!(game.CameraDistance = 0);
         game.foreign(|game| game.scatter_enemy_drop(DropSource::Kraid, enemy_ptr));
         draw_room_bg(game);
     }
@@ -1629,8 +1629,8 @@ fn place_lint_and_think<L: Lease + ?Sized>(game: &mut L) {
         Part[BOTTOM_LINT].base.y_pos =
             (session_slot!(game, Body[BODY].base.y_pos)).wrapping_add(112)
     );
-    let mut think: i16 = (word!(game.RANDOM_NUMBER) as i16) & 7;
-    if (word!(game.RANDOM_NUMBER) & 7) == 0 {
+    let mut think: i16 = (boss!(game.Random) as i16) & 7;
+    if (boss!(game.Random) & 7) == 0 {
         think = 2;
     }
     session_slot!(
@@ -1854,9 +1854,9 @@ fn attack_with_mouth_open<L: Lease + ?Sized>(game: &mut L) {
     {
         let parameter = crate::boss_lists::kraid_rock_spit_x_velocity(
             game,
-            ((word!(game.RANDOM_NUMBER) as i32 & 0xe) >> 1) as isize,
+            ((boss!(game.Random) as i32 & 0xe) >> 1) as isize,
         );
-        let k = (word!(game.RANDOM_NUMBER)) & 0xe;
+        let k = (boss!(game.Random)) & 0xe;
         game.spawn_projectile(parameter, k, SPIT_ROCKS);
         game.queue_sound(2, ROCKS_SOUND, 6);
     }
@@ -2033,7 +2033,7 @@ pub fn initialize<L: Lease + ?Sized>(game: &mut L) {
         session_slot!(game, Body[BODY].function = function::FADE_IN_CLEAR_BG2_TOP);
     } else {
         game.set_slot_byte(BG2_TILEMAP_BASE, 67);
-        word!(game.CAMERA_DISTANCE_INDEX = 2);
+        boss!(game.CameraDistance = 2);
         set_native_word(game, SCROLL_LIMITS, 0);
         set_native_word(game, SCROLL_LIMITS + 2, 1);
         session_slot!(game, Body[BODY].min_eject_y = 324);

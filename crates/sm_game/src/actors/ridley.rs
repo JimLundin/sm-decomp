@@ -1018,7 +1018,7 @@ pub fn hover<L: Lease + ?Sized>(game: &mut L) {
     );
     session_slot!(
         game,
-        Ridley[RIDLEY].function_timer = ((word!(game.RANDOM_NUMBER) & 0x1f) + 32)
+        Ridley[RIDLEY].function_timer = ((boss!(game.Random) & 0x1f) + 32)
     );
     hover_to_wall_behind(game);
 }
@@ -1062,7 +1062,7 @@ pub fn hover_towards<L: Lease + ?Sized>(x: u16, game: &mut L) -> bool {
     if game.slot_byte(SAMUS_MOVEMENT_TYPE) != SPIN_JUMPING {
         return true;
     }
-    if (word!(game.RANDOM_NUMBER) as u8) >= 0x80
+    if (boss!(game.Random) as u8) >= 0x80
         && session_slot!(game, Ridley[RIDLEY].roaring) == 0
         && session_slot!(game, Ridley[RIDLEY].facing) != FACING_FORWARD
     {
@@ -1114,7 +1114,7 @@ pub fn pogo_wait_at_position<L: Lease + ?Sized>(game: &mut L) {
         session_slot!(game, Ridley[RIDLEY].function = function::POGO_DESCENDING);
         session_slot!(
             game,
-            Ridley[RIDLEY].function_timer = ((word!(game.RANDOM_NUMBER) & 0x3f) + 128)
+            Ridley[RIDLEY].function_timer = ((boss!(game.Random) & 0x3f) + 128)
         );
     }
 }
@@ -1276,7 +1276,7 @@ pub fn set_pogo_x_direction<L: Lease + ?Sized>(game: &mut L) {
         if (session_slot!(game, Ridley[RIDLEY].x_velocity) & 0x8000) != 0 {
             return;
         }
-    } else if facing_away == (word!(game.RANDOM_NUMBER) < 0x555) {
+    } else if facing_away == (boss!(game.Random) < 0x555) {
         return;
     }
     session_slot!(game, Ridley[RIDLEY].x_velocity, |old| -(old as i32) as u16);
@@ -1843,7 +1843,7 @@ pub fn draw_baby_metroid<L: Lease + ?Sized>(game: &mut L) {
 /// ($A6:BFC9), else the flapping sound. Was `BabyMetroid_Instr_2`.
 pub fn baby_metroid_goto_if_still<L: Lease + ?Sized>(k: u16, game: &mut L) -> u16 {
     if session_slot!(game, Ridley[RIDLEY].baby_metroid_y_velocity) == 0
-        && (word!(game.RANDOM_NUMBER) & 1) != 0
+        && (boss!(game.Random) & 1) != 0
     {
         return baby_metroid_goto(k, game);
     }
@@ -2351,7 +2351,7 @@ pub fn configure_tail_whip<L: Lease + ?Sized>(game: &mut L) -> bool {
         Some(bg2_staging::get(game, tail::WHIP_REQUEST).wrapping_sub(1))
     } else if bg2_staging::get(game, tail::IDLE_WHIP) == 0 {
         None
-    } else if (word!(game.RANDOM_NUMBER) as u8) >= 0xf0 {
+    } else if (boss!(game.Random) as u8) >= 0xf0 {
         Some(bg2_staging::get(game, tail::WHIP_REQUEST).wrapping_sub(1))
     } else if abs16(
         game.player_x()
@@ -2403,7 +2403,7 @@ pub fn configure_spinning_tail_whip<L: Lease + ?Sized>(game: &mut L) -> bool {
 fn pogo_tail_whips<L: Lease + ?Sized>(game: &mut L) -> bool {
     set_tail_angle_extrema(game);
     if all_tail_segments_active(game)
-        && ((word!(game.RANDOM_NUMBER) as u8) >= 0xf0
+        && ((boss!(game.Random) as u8) >= 0xf0
             || abs16(
                 game.player_x()
                     .wrapping_sub(session_slot!(game, Ridley[RIDLEY].base.x_pos)),

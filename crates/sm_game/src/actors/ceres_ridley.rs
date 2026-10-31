@@ -256,11 +256,11 @@ fn run_ceres_function<L: Lease + ?Sized>(game: &mut L, function: u16) -> bool {
 /// Randomly update Ridley tail curliness ($A6:A2BD): the ideal inter-segment
 /// angle, 8 to 17h, one frame in 256. Was `CeresRidley_Func_1`.
 pub fn randomize_tail_curliness<L: Lease + ?Sized>(game: &mut L) {
-    if word!(game.RANDOM_NUMBER) >= 0xff00 {
+    if boss!(game.Random) >= 0xff00 {
         bg2_staging::set(
             game,
             tail::IDEAL_SEGMENT_ANGLE,
-            (word!(game.RANDOM_NUMBER) & 0xf) + 8,
+            (boss!(game.Random) & 0xf) + 8,
         );
     }
 }
@@ -472,8 +472,7 @@ pub fn hovering<L: Lease + ?Sized>(game: &mut L) {
         session_slot!(game, Ridley[RIDLEY].timer = timer);
         timer >= 0x7c
     } {
-        let attack =
-            crate::ceres_ridley_tables::attack(game, (word!(game.RANDOM_NUMBER) & 0xf) as isize);
+        let attack = crate::ceres_ridley_tables::attack(game, (boss!(game.Random) & 0xf) as isize);
         session_slot!(game, Ridley[RIDLEY]; function = attack, timer = 0);
     }
 }
@@ -535,10 +534,10 @@ pub fn fireballs_move_to_position<L: Lease + ?Sized>(game: &mut L) {
 /// Ridley function - shoot fireballs - shooting ($A6:A7F9): jitter around the
 /// shooting spot, then hover. Was `CeresRidley_A7F9`.
 pub fn fireballs_shooting<L: Lease + ?Sized>(game: &mut L) {
-    let jitter = if word!(game.RANDOM_NUMBER) & 0x8000 != 0 {
-        -(word!(game.RANDOM_NUMBER) as i32 & 7)
+    let jitter = if boss!(game.Random) & 0x8000 != 0 {
+        -(boss!(game.Random) as i32 & 7)
     } else {
-        word!(game.RANDOM_NUMBER) as i32 & 7
+        boss!(game.Random) as i32 & 7
     } as u16;
     // The Y add's ADC carries in from the X add, so a negative jitter adds one more.
     let (x, carry) = crate::carry::adc(session_slot!(game, Ridley[RIDLEY].target_x), jitter, false);

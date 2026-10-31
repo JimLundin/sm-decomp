@@ -519,14 +519,13 @@ pub fn hop_3_4_5_sinking<L: Lease + ?Sized>(game: &mut L) {
 pub fn emit_lava_plume<L: Lease + ?Sized>(game: &mut L) {
     if boss!(game.CrocomireAcidSmoke -= 1, reread) == 0 {
         boss!(game.CrocomireAcidSmoke = 6);
-        let mut v0: u16 = (word!(game.RANDOM_NUMBER)) & (0x3fu16);
-        if (word!(game.RANDOM_NUMBER) & 2) == 0 {
+        let mut v0: u16 = (boss!(game.Random)) & (0x3fu16);
+        if (boss!(game.Random) & 2) == 0 {
             v0 = !(v0 as i32) as u16;
         }
         let x: u16 = (session_slot!(game, Crocomire[0i32].base.x_pos)).wrapping_add(v0);
         let y: u16 = (boss!(game.LavaAcidY) as i32 + 16
-            - (((word!(game.RANDOM_NUMBER)) & (0x1f00u16)) as i32 >> 8))
-            as u16;
+            - (((boss!(game.Random)) & (0x1f00u16)) as i32 >> 8)) as u16;
         game.foreign(|game| game.create_sprite(x, y, 21, 0));
     }
 }
@@ -1100,7 +1099,7 @@ pub fn initialize<L: Lease + ?Sized>(game: &mut L) {
         );
         session_slot!(game, Crocomire[e_0].fight_function = 4);
         boss!(game; Unused179E = 16; EnemyTilemapSize = 1024;);
-        word!(game.CAMERA_DISTANCE_INDEX = 2);
+        boss!(game.CameraDistance = 2);
         session_slot!(game, Crocomire[e_0].base; current_instruction = ADDR_K_CROCOMIRE_ILIST_BADE as u16, extra_properties = (session_slot!(game, Crocomire[e_0].base.extra_properties)) | (4u16), instruction_timer = 1);
     }
 }
@@ -1129,7 +1128,7 @@ pub fn hop_6_sinking<L: Lease + ?Sized>(game: &mut L) {
             | (0x200u16));
 
         game.foreign(|game| game.spawn_plm(0x4e, WALL_ROW, CLEAR_INVISIBLE_WALL));
-        word!(game.CAMERA_DISTANCE_INDEX = 0);
+        boss!(game.CameraDistance = 0);
         melt!(game.EraseTarget = 0);
     }
 }
@@ -1169,7 +1168,7 @@ pub fn behind_wall_wait_for_samus<H: Host + ?Sized>(game: &mut H) {
     game.queue_music_delayed(5);
     game.lease().write_slice_native(SCROLLS_3_4, 256);
     game.spawn_plm(0x30, WALL_ROW, CREATE_INVISIBLE_WALL);
-    word!(game.CAMERA_DISTANCE_INDEX = 6);
+    boss!(game.CameraDistance = 6);
     let mut runtime = game.lease();
     // Fixed, disjoint records; no callback or fallible operation between these writes.
     runtime.edit_actor(Key::from_legacy(0), AccessMode::Native, |enemy| {
@@ -1456,7 +1455,7 @@ fn dead_from_room_entry<L: Lease + ?Sized>(game: &mut L) {
     scroll!(game, 0; Bg2H, Bg2V);
 }
 fn spawn_random_dust<L: Lease + ?Sized>(game: &mut L) {
-    let random = word!(game.RANDOM_NUMBER);
+    let random = boss!(game.Random);
     let mut offset = random & 0x1f;
     if (random as i16).wrapping_sub(4096) >= 0 {
         offset = offset.wrapping_neg();
@@ -1487,7 +1486,7 @@ fn walk<L: Lease + ?Sized>(k: u16, pixels: i32, game: &mut L) -> bool {
 /// Was `finish_death`.
 fn mark_event_and_start_music<L: Lease + ?Sized>(game: &mut L) {
     game.foreign(|game| game.queue_music_delayed(6));
-    word!(game.CAMERA_DISTANCE_INDEX = 0);
+    boss!(game.CameraDistance = 0);
     let area = game.area();
     let bits = game.foreign(|game| game.boss_word(area));
     game.foreign(|game| {
@@ -1581,7 +1580,7 @@ pub fn instruction<H: Host + ?Sized>(
                     crate::actors::crocomire_attack::instruction_list::BACK_OFF_FROM_SPIKE_WALL,
                 )
             } else {
-                let random = word!(game.RANDOM_NUMBER);
+                let random = boss!(game.Random);
                 let side = if (random as i16).wrapping_sub(2048) >= 0 {
                     (-32i16) as u16
                 } else {

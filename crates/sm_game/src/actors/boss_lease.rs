@@ -103,6 +103,10 @@ pub mod boss_ram {
         LavaAcidY = 0x1962,
         /// `room.entry.enemy_interlock`.
         DoorTransitionEnemies = 0x0797,
+        /// `room.camera.distance_index`.
+        CameraDistance = 0x0941,
+        /// `timing.random_number`.
+        Random = 0x05e5,
     }
     /// `word` as the lease's projection holds it, low byte then high.
     pub fn get<H: SlotAccess + ?Sized>(h: &H, word: Word) -> u16 {

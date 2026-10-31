@@ -55,6 +55,8 @@ pub struct Camera {
     pub bg2_scroll: [u16; 2],
     /// The layer 1 position the camera follows toward ($0B0A, $0B0E).
     pub ideal_layer1: [u16; 2],
+    /// How far ahead of Samus the camera looks, by table index ($0941).
+    pub distance_index: u16,
 }
 
 /// The camera as the host's projection holds it, for hosts outside a

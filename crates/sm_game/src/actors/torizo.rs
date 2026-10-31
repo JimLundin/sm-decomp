@@ -14,6 +14,7 @@ use crate::constants::enemy_properties::{
     K_ENEMY_PROPS_DELETED, K_ENEMY_PROPS_INVISIBLE, K_ENEMY_PROPS_TANGIBLE,
 };
 use crate::enemy_script::EnemyScript;
+use crate::menus::prelude::{boss, owned};
 use crate::ram::word;
 use crate::records::Records;
 
@@ -122,7 +123,7 @@ pub fn walk<L: Lease>(
 /// Handle low-health initial drool ($AA:C620): in Crateria, now and then
 /// drool while health is low. Was `Torizo_C620`.
 pub fn drool_at_low_health<L: Lease>(k: u16, game: &mut L) {
-    if game.area() == CRATERIA && word!(game.RANDOM_NUMBER) & DROOL_CHANCE == 0 {
+    if game.area() == CRATERIA && boss!(game.Random) & DROOL_CHANCE == 0 {
         let health: u16 = session_slot!(game, TorizoSlot[k as i32].base.health);
         if health != 0 && health < LOW_HEALTH {
             game.spawn_projectile(health, k, LOW_HEALTH_DROOL);

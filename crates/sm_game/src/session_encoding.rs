@@ -21,6 +21,7 @@ macro_rules! camera_words {
             $f(ram::BG2_X_SCROLL+axis*2,$($borrow)* $c.bg2_scroll[axis]);
             $f(ram::IDEAL_LAYER1_XPOS+axis*4,$($borrow)* $c.ideal_layer1[axis]);
         }
+        $f(ram::CAMERA_DISTANCE_INDEX,$($borrow)* $c.distance_index);
     };
 }
 // The room's area and geometry (`crate::room_view`), in `room_view::Word` order.

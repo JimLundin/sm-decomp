@@ -11,6 +11,7 @@ use crate::actors::draygon_host::{
 use crate::actors::host::BossEffects as _;
 use crate::actors::queries::angle_from_delta;
 use crate::actors::session_slots::session_slot;
+use crate::menus::prelude::{boss, owned};
 
 use crate::enemy_script::EnemyScript;
 use crate::ram::word;
@@ -204,7 +205,7 @@ pub fn rising_spiral<L: Lease>(k: u16, game: &mut L) {
     if hurt_by_grapple(game) {
         return;
     }
-    if word!(game.RANDOM_NUMBER) as u8 == 0 {
+    if boss!(game.Random) as u8 == 0 {
         session_slot!(game, Draygon[BODY]; tail_whip_timer = TAIL_WHIP_FRAMES,
             function = function::GRABBED_TAIL_WHIP);
         return;

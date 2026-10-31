@@ -5,6 +5,7 @@ use crate::actors::boss_lease::BossState;
 use crate::actors::draygon_host::Lease;
 use crate::actors::host::BossEffects as _;
 use crate::actors::session_slots::session_slot;
+use crate::menus::prelude::{boss, owned};
 
 use crate::actors::draygon_flight::{body_bubble, fire_wall_turret, move_horizontally};
 use crate::actors::draygon_host::{
@@ -166,13 +167,13 @@ pub fn swoop<L: Lease>(right: bool, ascending: bool, game: &mut L) {
         session_slot!(game, Draygon[BODY].function_timer = 0);
         session_slot!(
             game,
-            Draygon[BODY].function = if word!(game.RANDOM_NUMBER) & 1 != 0 {
+            Draygon[BODY].function = if boss!(game.Random) & 1 != 0 {
                 function::SWOOP_LEFT_SETUP
             } else {
                 function::GOOP_LEFT_SETUP
             }
         );
-    } else if word!(game.RANDOM_NUMBER) & 1 != 0 {
+    } else if boss!(game.Random) & 1 != 0 {
         session_slot!(game, Draygon[BODY]; function = function::SWOOP_RIGHT_SETUP, function_timer = 0);
         session_slot!(game, Draygon[BODY].base; x_pos = session_slot!(game, Draygon[BODY].left_reset_x),
             y_pos = session_slot!(game, Draygon[BODY].reset_y));

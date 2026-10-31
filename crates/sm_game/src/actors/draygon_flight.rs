@@ -11,7 +11,7 @@ use crate::actors::draygon_host::{
 use crate::actors::host::BossEffects as _;
 use crate::actors::session_slots::session_slot;
 use crate::enemy_script::EnemyScript;
-use crate::menus::prelude::{owned, scroll};
+use crate::menus::prelude::{boss, owned, scroll};
 use crate::ram::CompatibilityRam as _;
 use crate::ram::word;
 
@@ -382,7 +382,7 @@ pub fn goop_firing<S: BossState>(right: bool, game: &mut S) {
     }
     if word!(game.SAMUS_X_SPEED_DIVISOR) == 0 {
         let mut leave = false;
-        if word!(game.RANDOM_NUMBER) & GOOP_CHANCE == 0 {
+        if boss!(game.Random) & GOOP_CHANCE == 0 {
             let remaining = session_slot!(game, Draygon[BODY].goop_counter).wrapping_sub(1);
             session_slot!(game, Draygon[BODY].goop_counter = remaining);
             leave = remaining == 0;

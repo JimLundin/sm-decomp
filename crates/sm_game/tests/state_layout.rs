@@ -201,6 +201,7 @@ fn camera_lanes() -> Vec<Lane> {
     lanes.extend(array(0xb0a, 4, 2, |s, i| {
         &mut s.room.camera.ideal_layer1[i]
     }));
+    lanes.push((0x941, 0, |s, _| &mut s.room.camera.distance_index));
     lanes
 }
 
