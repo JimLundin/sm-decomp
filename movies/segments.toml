@@ -1502,7 +1502,6 @@ start_frame = 0
 frames = 471
 expect = ["room:91F8"]
 require_hit = ["special_beam.wave"]
-pending = "awaiting the seeds-v1-special-beam-42ef643c82c0b3e4 ci-data upload"
 
 [[segment]]
 id = "special-beam-ice"
@@ -1514,7 +1513,6 @@ start_frame = 0
 frames = 471
 expect = ["room:91F8"]
 require_hit = ["special_beam.ice"]
-pending = "awaiting the seeds-v1-special-beam-42ef643c82c0b3e4 ci-data upload"
 
 [[segment]]
 id = "special-beam-spazer"
@@ -1526,7 +1524,6 @@ start_frame = 0
 frames = 471
 expect = ["room:91F8"]
 require_hit = ["special_beam.spazer"]
-pending = "awaiting the seeds-v1-special-beam-42ef643c82c0b3e4 ci-data upload"
 
 [[segment]]
 id = "special-beam-plasma"
@@ -1538,4 +1535,3 @@ start_frame = 0
 frames = 471
 expect = ["room:91F8"]
 require_hit = ["special_beam.plasma"]
-pending = "awaiting the seeds-v1-special-beam-42ef643c82c0b3e4 ci-data upload"
