@@ -385,6 +385,10 @@ unsafe extern "C" {
 
 pub unsafe fn ppu_read(ppu: *mut Ppu, adr: u8) -> u8 {
     unsafe {
+        #[cfg(sm_verify_dll)]
+        let mut ports = ports_of(&*ppu);
+        #[cfg(sm_verify_dll)]
+        let expected = ports.read(&MemoryView::new(&*ppu), adr, (*ppu).ppu2openBus);
         // Only open-bus reads and counter latching access the host SNES pointer.
         let (h_pos, v_pos, bus) = match adr {
             0x37 => (
@@ -414,7 +418,20 @@ pub unsafe fn ppu_read(ppu: *mut Ppu, adr: u8) -> u8 {
             | 0x38..=0x3f => (0, 0, 0),
             _ => (0, 0, (*(*ppu).snes).openBus),
         };
-        sm_backend_ppu_read(ppu, adr, h_pos, v_pos, bus)
+        let value = sm_backend_ppu_read(ppu, adr, h_pos, v_pos, bus);
+        #[cfg(sm_verify_dll)]
+        {
+            assert!(
+                expected.is_none_or(|expected| expected == value),
+                "native PPU port model read differs at ${adr:02X}"
+            );
+            assert_eq!(
+                ports,
+                ports_of(&*ppu),
+                "native PPU port model differs after reading ${adr:02X}"
+            );
+        }
+        value
     }
 }
 
@@ -425,6 +442,14 @@ pub unsafe fn ppu_write(ppu: *mut Ppu, adr: u8, val: u8) {
         let mut model = registers_of(&*ppu);
         #[cfg(sm_verify_dll)]
         model.write(adr, val);
+        #[cfg(sm_verify_dll)]
+        let mut ports = ports_of(&*ppu);
+        #[cfg(sm_verify_dll)]
+        let mut view = MemoryView::new(&*ppu);
+        #[cfg(sm_verify_dll)]
+        ports.write(&mut view, adr, val);
+        #[cfg(sm_verify_dll)]
+        let store = view.store;
         // The native renderer caches complete register bytes, including unused bits.
         match adr {
             0x23..=0x25 => {
@@ -443,6 +468,112 @@ pub unsafe fn ppu_write(ppu: *mut Ppu, adr: u8, val: u8) {
             registers_of(&*ppu),
             "native PPU register model differs after ${adr:02X} = ${val:02X}"
         );
+        #[cfg(sm_verify_dll)]
+        {
+            assert_eq!(
+                ports,
+                ports_of(&*ppu),
+                "native PPU port model differs after ${adr:02X} = ${val:02X}"
+            );
+            let view = MemoryView::new(&*ppu);
+            if let Some(store) = store {
+                assert_eq!(
+                    store,
+                    store.reread(&view),
+                    "native PPU memory store differs after ${adr:02X} = ${val:02X}"
+                );
+            }
+        }
+    }
+}
+
+/// The emulated PPU's port state in the native renderer's model.
+#[cfg(sm_verify_dll)]
+fn ports_of(ppu: &Ppu) -> raster::memory::Ports {
+    raster::memory::Ports {
+        sprite_size: ppu.objSize,
+        sprite_tile_words: [ppu.objTileAdr1, ppu.objTileAdr2],
+        sprite_priority: ppu.objPriority,
+        oam_address: ppu.oamAdr,
+        oam_address_written: ppu.oamAdrWritten,
+        oam_high: ppu.oamInHigh,
+        oam_high_written: ppu.oamInHighWritten,
+        oam_second: ppu.oamSecondWrite,
+        oam_buffer: ppu.oamBuffer,
+        vram_pointer: ppu.vramPointer,
+        vram_increment: ppu.vramIncrement,
+        vram_remap: ppu.vramRemapMode,
+        vram_increment_on_high: ppu.vramIncrementOnHigh,
+        vram_read_buffer: ppu.vramReadBuffer,
+        cgram_pointer: ppu.cgramPointer,
+        cgram_second: ppu.cgramSecondWrite,
+        cgram_buffer: ppu.cgramBuffer,
+    }
+}
+
+/// One memory store the port model made, to compare with the emulated PPU's.
+#[cfg(sm_verify_dll)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum Store {
+    Vram(u16, u16),
+    Cgram(u8, u16),
+    Oam(u8, u16),
+    HighOam(u8, u8),
+}
+
+#[cfg(sm_verify_dll)]
+impl Store {
+    fn reread(self, memory: &impl raster::memory::VideoMemory) -> Self {
+        match self {
+            Self::Vram(index, _) => Self::Vram(index, memory.vram(index)),
+            Self::Cgram(index, _) => Self::Cgram(index, memory.cgram(index)),
+            Self::Oam(index, _) => Self::Oam(index, memory.oam(index)),
+            Self::HighOam(index, _) => Self::HighOam(index, memory.high_oam(index)),
+        }
+    }
+}
+
+/// The emulated PPU's memory, read in place; the port model's store is recorded
+/// rather than applied, so the emulated write stays the only one.
+#[cfg(sm_verify_dll)]
+struct MemoryView<'a> {
+    ppu: &'a Ppu,
+    /// A port write makes at most one store.
+    store: Option<Store>,
+}
+
+#[cfg(sm_verify_dll)]
+impl<'a> MemoryView<'a> {
+    fn new(ppu: &'a Ppu) -> Self {
+        Self { ppu, store: None }
+    }
+}
+
+#[cfg(sm_verify_dll)]
+impl raster::memory::VideoMemory for MemoryView<'_> {
+    fn vram(&self, index: u16) -> u16 {
+        self.ppu.vram[usize::from(index & 0x7fff)]
+    }
+    fn set_vram(&mut self, index: u16, value: u16) {
+        self.store = Some(Store::Vram(index & 0x7fff, value));
+    }
+    fn cgram(&self, index: u8) -> u16 {
+        self.ppu.cgram[usize::from(index)]
+    }
+    fn set_cgram(&mut self, index: u8, value: u16) {
+        self.store = Some(Store::Cgram(index, value));
+    }
+    fn oam(&self, index: u8) -> u16 {
+        self.ppu.oam[usize::from(index)]
+    }
+    fn set_oam(&mut self, index: u8, value: u16) {
+        self.store = Some(Store::Oam(index, value));
+    }
+    fn high_oam(&self, index: u8) -> u8 {
+        self.ppu.highOam[usize::from(index & 31)]
+    }
+    fn set_high_oam(&mut self, index: u8, value: u8) {
+        self.store = Some(Store::HighOam(index & 31, value));
     }
 }
 
