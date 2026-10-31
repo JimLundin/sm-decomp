@@ -20,6 +20,7 @@ use crate::cinematic_state::cinematic;
 use crate::display_refresh::GraphicsAsset;
 use crate::flow::{self, Word::CinematicFunction};
 use crate::intro_sequence::countdown;
+use crate::menus::prelude::{owned, scroll};
 use crate::ram::RawRam as _;
 use crate::ram::mirror;
 use crate::ram::word;
@@ -331,8 +332,8 @@ pub fn scene_2<H: Host + ?Sized>(game: &mut H) {
         cinematic!(game.YSubspeed = 0);
         cinematic!(game.YSpeed = 0);
         word!(game.FX_LAYER_BLENDING_CONFIG_A = 0);
-        word!(game.REG_BG2HOFS = 0);
-        word!(game.REG_BG2VOFS = 0);
+        scroll!(game.Bg2H = 0);
+        scroll!(game.Bg2V = 0);
         crate::screen_fade::set_both(game, 0, 2);
         flow::set(game, CinematicFunction, function::LOAD_GUNSHIP_BG);
         cinematic!(game.FunctionTimer = 0);
@@ -513,7 +514,7 @@ pub fn fade_in_samus<H: Host + ?Sized>(game: &mut H) {
 /// Cinematic function - post-credits - wavy Samus ($8B:E190). Was
 /// `CinematicFunction_Intro_Func132`.
 pub fn wavy_samus<H: Host + ?Sized>(game: &mut H) {
-    word!(game.REG_BG3VOFS, wrapping_add(2));
+    scroll!(game.Bg3V += 2);
     if countdown(game) {
         crate::word_transfers!(game, ascending, 288; pause_map(288) <- rom(DEER_FORCE_TILES, 0));
         queue_cinematic_tilemap(CinematicTilemap::FullText, game);

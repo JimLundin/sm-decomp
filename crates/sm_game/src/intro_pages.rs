@@ -13,7 +13,7 @@ use crate::cinematic::{
 use crate::constants::bank_8d::ADDR_K_PALFX_E1BC;
 use crate::constants::bank_91::{ADDR_STRU_91877E, ADDR_STRU_918784};
 use crate::constants::samus_poses::K_POSE_02_FACE_L_NORMAL;
-use crate::menus::prelude::{HdmaObjectDefinition, do_until};
+use crate::menus::prelude::{HdmaObjectDefinition, do_until, owned, scroll};
 use crate::ram::word;
 use crate::visual_state::{CinematicFade, CinematicTilemap};
 use sm_data::intro_palette::{
@@ -524,7 +524,8 @@ pub fn fade_out_to_ceres<H: crate::menus::host::Host + ?Sized>(restore_samus: bo
     if game.ram().read_byte(0x51) == 0x80 {
         crate::display_refresh::enable(true, game);
         crate::screen_fade::set_both(game, 0, 0);
-        word! { game, 0; REG_BG2HOFS, REG_BG3HOFS, REG_BG2VOFS, REG_BG3VOFS, MODE7_ANGLE }
+        scroll!(game, 0; Bg2H, Bg3H, Bg2V, Bg3V);
+        cinematic!(game.Mode7Angle = 0);
         crate::word_transfers!(game, descending, 329; native(0x1c1d) <- value(0));
         crate::flow::set(
             game,

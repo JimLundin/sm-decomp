@@ -18,7 +18,7 @@ use crate::cinematic_state::cinematic;
 use crate::display_refresh::GraphicsAsset;
 use crate::flow::{self, Word::CinematicFunction};
 use crate::inventory::{self, Word};
-use crate::menus::prelude::{options_menu, owned, save_selection};
+use crate::menus::prelude::{options_menu, owned, save_selection, scroll};
 use crate::ram::RawRam as _;
 use crate::ram::mirror;
 use crate::ram::word;
@@ -291,8 +291,8 @@ pub fn set_up_text_page_1<H: Host + ?Sized>(game: &mut H) {
         0x4c00,
     );
     cinematic!(game.Y = 8);
-    word!(game.REG_BG2VOFS = 8);
-    word!(game.REG_BG3VOFS = 8);
+    scroll!(game.Bg2V = 8);
+    scroll!(game.Bg3V = 8);
     crate::intro_pages::clear_english_text(game);
     crate::intro_pages::reset_caret(game);
     crate::music_requests::queue_delayed_8(NO_MUSIC, game);
