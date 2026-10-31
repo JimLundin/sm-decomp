@@ -92,7 +92,3 @@ pub trait RuntimeAccess {
         true
     }
 }
-/// A lease running an owned rule with the foreign entry's preflight and refresh.
-pub trait OwnedCall {
-    fn owned_call<R>(&mut self, action: impl FnOnce(&mut Self) -> R) -> R;
-}

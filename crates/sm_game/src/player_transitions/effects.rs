@@ -1,6 +1,6 @@
 //! Declaration-only finite effects for the proposed player transition owner.
 use super::content::Content;
-use crate::runtime_access::{OwnedCall, SessionView};
+use crate::{lease::Lease, runtime_access::SessionView};
 use crate::{player_collision::effects::Host as CollisionHost, visual_host::Host as VisualHost};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -53,5 +53,5 @@ pub trait GameEffects {
     fn spawn_xray_scope_hdma(&mut self);
 }
 /// A Session lease the Samus rules run on.
-pub trait SamusLease: SessionView + OwnedCall + GameEffects {}
-impl<T: SessionView + OwnedCall + GameEffects> SamusLease for T {}
+pub trait SamusLease: SessionView + Lease + GameEffects {}
+impl<T: SessionView + Lease + GameEffects> SamusLease for T {}

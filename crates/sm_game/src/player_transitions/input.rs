@@ -7,11 +7,11 @@ use super::{
     state::{BombJump, JumpKind, MomentumAction, PoseRequestWord},
 };
 use crate::ram::words as ram;
-use crate::runtime_access::{OwnedCall, SessionView};
 use crate::{
     external_inputs::ExternalInputs,
     visual_host::{Content, Record},
 };
+use crate::{lease::Lease, runtime_access::SessionView};
 
 pub fn handle_input(h: &mut impl Host) {
     let movement = h.session().player.movement_and_facing >> 8;
@@ -134,7 +134,7 @@ pub fn finish_input(s: &mut crate::session::Session, inputs: &ExternalInputs) {
     p.previous_health_for_flash = s.inventory.health.current;
 }
 /// The frame's input step for the current input mode.
-pub fn dispatch_input<H: SessionView + OwnedCall>(h: &mut H) {
+pub fn dispatch_input<H: SessionView + Lease>(h: &mut H) {
     match h.session().player.transitions.input_mode {
         InputMode::Normal => handle_frame_input(h),
         InputMode::Demo => handle_demo_input(h),
@@ -155,7 +155,7 @@ pub fn dispatch_input<H: SessionView + OwnedCall>(h: &mut H) {
     }
 }
 /// Frozen crouch and turn input uses the same owned X-ray transition.
-fn handle_frame_input<H: SessionView + OwnedCall>(h: &mut H) {
+fn handle_frame_input<H: SessionView + Lease>(h: &mut H) {
     if matches!(h.session().player.movement_and_facing >> 8, 5 | 21) && h.inputs().frozen != 0 {
         h.owned_call(|h| super::xray::handle_input(h));
     } else {
@@ -163,7 +163,7 @@ fn handle_frame_input<H: SessionView + OwnedCall>(h: &mut H) {
     }
 }
 /// Play the demo's next input into the joypad words, then handle it.
-fn handle_demo_input<H: SessionView + OwnedCall>(h: &mut H) {
+fn handle_demo_input<H: SessionView + Lease>(h: &mut H) {
     if super::demo::advance(h) {
         // The joypad words do not alias the demo's ($0A84-$0A8E).
         let demo = h.session().player.demo.clone();
@@ -177,7 +177,7 @@ fn handle_demo_input<H: SessionView + OwnedCall>(h: &mut H) {
     handle_frame_input(h);
 }
 /// The player frame's end: filtered input, movement sound, debug, escape state.
-pub fn finish_frame<H: SessionView + OwnedCall>(h: &mut H) {
+pub fn finish_frame<H: SessionView + Lease>(h: &mut H) {
     let inputs = h.inputs().clone();
     finish_input(h.session_mut(), &inputs);
     h.write_slice_le(ram::JOYPAD1_INPUT_SAMUSFILTER, inputs.held);
