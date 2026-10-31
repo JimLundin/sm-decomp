@@ -441,6 +441,26 @@ fn save_selection_round_trips_every_word() {
     check_owner("save selection", &save_selection_lanes());
 }
 
+/// Options menu.
+fn options_menu_lanes() -> Vec<Lane> {
+    vec![
+        (0x99e, 0, |s, _| {
+            &mut s.menu_screens.options_menu.menu_option_index
+        }),
+        (0xde0, 0, |s, _| {
+            &mut s.menu_screens.options_menu.debug_invincibility
+        }),
+        (0xde2, 0, |s, _| {
+            &mut s.menu_screens.options_menu.screen_index
+        }),
+    ]
+}
+
+#[test]
+fn options_menu_round_trips_every_word() {
+    check_owner("options menu", &options_menu_lanes());
+}
+
 /// The message box's animation radius and scratch words.
 fn message_box_lanes() -> Vec<Lane> {
     let mut lanes: Vec<Lane> = vec![(0x5a2, 0, |s, _| &mut s.messages.box_radius)];
@@ -1028,6 +1048,7 @@ fn all_owner_lanes() -> Vec<(&'static str, Vec<Lane>)> {
         ("flow", flow_lanes()),
         ("menu_state", menu_lanes()),
         ("map screen", map_screen_lanes()),
+        ("options menu", options_menu_lanes()),
         ("save selection", save_selection_lanes()),
         ("room geometry", room_geometry_lanes()),
         ("room effects", room_effect_lanes()),

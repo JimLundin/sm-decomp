@@ -12,6 +12,7 @@ use crate::cinematic_host::Host;
 use crate::cinematic_objects::CinematicObjects;
 use crate::display::registers as reg;
 use crate::display_refresh::GraphicsAsset;
+use crate::menus::prelude::{options_menu, owned};
 use crate::ram::RawRam as _;
 use crate::ram::mirror;
 use crate::ram::word;
@@ -202,7 +203,7 @@ pub fn nintendo_logo<H: Host + ?Sized>(game: &mut H) -> u8 {
                 return yielded;
             }
             match stage {
-                2 => word!(game.GAME_OPTIONS_SCREEN_INDEX = LOGO_HOLD),
+                2 => options_menu!(game.ScreenIndex = LOGO_HOLD),
                 4 => {
                     crate::screen_fade::set_both(game, 1, 1);
                 }
@@ -233,7 +234,7 @@ pub fn nintendo_logo<H: Host + ?Sized>(game: &mut H) -> u8 {
             }
             2 | 3 => {
                 crate::probe::hit("coroutine.logo.hold");
-                if word!(game.GAME_OPTIONS_SCREEN_INDEX -= 1, reread) == 0 {
+                if options_menu!(game.ScreenIndex -= 1, reread) == 0 {
                     4
                 } else {
                     3

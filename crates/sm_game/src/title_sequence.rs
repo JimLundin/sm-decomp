@@ -11,6 +11,7 @@ use crate::cinematic::{advance_cinematic_fade, clear_cinematic_sprites, set_cine
 use crate::cinematic_host::Host;
 use crate::cinematic_objects::CinematicObjects;
 use crate::display_refresh::GraphicsAsset;
+use crate::menus::prelude::{options_menu, owned};
 use crate::ram::RawRam as _;
 use crate::ram::word;
 use crate::visual_state::{CinematicDisplay, CinematicFade};
@@ -208,7 +209,7 @@ fn finish<H: Host + ?Sized>(next: u16, game: &mut H, clear_index: impl FnOnce(&m
 pub fn to_file_select<H: Host + ?Sized>(game: &mut H) {
     if advance_cinematic_fade(CinematicFade::SlowOut, game) {
         finish(FILE_SELECT_MENUS, game, |game| {
-            word!(game.GAME_OPTIONS_SCREEN_INDEX = 0)
+            options_menu!(game.ScreenIndex = 0)
         });
     }
 }

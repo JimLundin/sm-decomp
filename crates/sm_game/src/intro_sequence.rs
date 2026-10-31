@@ -16,7 +16,7 @@ use crate::cinematic_host::Host;
 use crate::cinematic_objects::CinematicObjects;
 use crate::display_refresh::GraphicsAsset;
 use crate::inventory::{self, Word};
-use crate::menus::prelude::{owned, save_selection};
+use crate::menus::prelude::{options_menu, owned, save_selection};
 use crate::ram::RawRam as _;
 use crate::ram::mirror;
 use crate::ram::word;
@@ -542,7 +542,7 @@ pub fn boom_fade_out<H: Host + ?Sized>(game: &mut H) {
             game.ram().write_byte(mirror::TMW, 0);
             game.ram().write_byte(mirror::TSW, 0);
             game.ram().write_byte(mirror::BGMODE, 9);
-            word!(game.GAME_OPTIONS_SCREEN_INDEX = 0);
+            options_menu!(game.ScreenIndex = 0);
             crate::menu!(game.MenuIndex = 0);
             crate::word_transfers!(game, descending, 128; le(CINEMATICBG_ARR7, 135) <- value(0));
             word!(game.GAME_STATE = SAMUS_NO_HEALTH);

@@ -20,7 +20,7 @@ pub fn initialize<H: Host + ?Sized>(game: &mut H, upload: fn(&mut H)) {
     }
     upload(game);
     scroll! { game, 0; Bg1H, Bg1V, Bg2H, Bg2V }
-    word!(game.DEBUG_INVINCIBILITY = 0);
+    options_menu!(game.DebugInvincibility = 0);
     crate::word_transfers!(game, descending, 256; le(PALETTE_BUFFER, 255) <- rom(0x8ee400, 255));
     for (index, source) in [0x978df4, 0x978fcd, 0x9791c4, 0x97938d, 0x97953a]
         .into_iter()
@@ -34,25 +34,25 @@ pub fn initialize<H: Host + ?Sized>(game: &mut H, upload: fn(&mut H)) {
         game.ram().read_byte(TILEMAP),
         game.ram().read_byte(TILEMAP + 1),
     ]);
-    word!(game.MENU_OPTION_INDEX = 0);
+    options_menu!(game.MenuOptionIndex = 0);
     super::options_objects::clear(game);
     super::options_objects::spawn(initial_tile, definition::MENU_SELECTION_MISSILE, game);
     // The first initializer leaves its palette $0E00 in A for this call.
     super::options_objects::spawn(0x0e00, definition::OPTION_MODE_BORDER, game);
-    word!(game.GAME_OPTIONS_SCREEN_INDEX += 1);
+    options_menu!(game.ScreenIndex += 1);
     highlight_language(game);
 }
 
 fn navigate<H: Host + ?Sized>(last: u16, game: &mut H) {
     if game.observed_inputs().pressed & K_BUTTON_UP as u16 != 0 {
         game.queue_sound(0, 0x37_u8, 6);
-        if word!(game.MENU_OPTION_INDEX -= 1, reread) & 0x8000 != 0 {
-            word!(game.MENU_OPTION_INDEX = last);
+        if options_menu!(game.MenuOptionIndex -= 1, reread) & 0x8000 != 0 {
+            options_menu!(game.MenuOptionIndex = last);
         }
     } else if game.observed_inputs().pressed & K_BUTTON_DOWN as u16 != 0 {
         game.queue_sound(0, 0x37_u8, 6);
-        if word!(game.MENU_OPTION_INDEX += 1, reread) == last + 1 {
-            word!(game.MENU_OPTION_INDEX = 0);
+        if options_menu!(game.MenuOptionIndex += 1, reread) == last + 1 {
+            options_menu!(game.MenuOptionIndex = 0);
         }
     }
 }
@@ -60,12 +60,12 @@ fn navigate<H: Host + ?Sized>(last: u16, game: &mut H) {
 pub fn main_menu<H: Host + ?Sized>(game: &mut H) {
     navigate(4, game);
     if game.observed_inputs().pressed & K_BUTTON_B as u16 != 0 {
-        word!(game.GAME_OPTIONS_SCREEN_INDEX = 11);
+        options_menu!(game.ScreenIndex = 11);
     } else if game.observed_inputs().pressed & (K_BUTTON_A | K_BUTTON_START) as u16 != 0 {
         game.queue_sound(0, 0x38_u8, 6);
         let actions: [fn(&mut H); 5] =
             [start, toggle_language, toggle_language, dissolve, dissolve];
-        actions[usize::from(word!(game.MENU_OPTION_INDEX))](game);
+        actions[usize::from(options_menu!(game.MenuOptionIndex))](game);
     }
 }
 
@@ -73,15 +73,15 @@ fn start<H: Host + ?Sized>(game: &mut H) {
     if word!(game.ENABLE_DEBUG) != 0 && game.observed_inputs().held & K_BUTTON_L as u16 == 0
         || word!(game.LOADING_GAME_STATE) == 5
     {
-        word!(game.GAME_OPTIONS_SCREEN_INDEX = 4);
+        options_menu!(game.ScreenIndex = 4);
     } else {
         crate::screen_fade::set_both(game, 0, 0);
-        word!(game.GAME_OPTIONS_SCREEN_INDEX = 12);
+        options_menu!(game.ScreenIndex = 12);
     }
 }
 
 pub fn finish_start<H: Host + ?Sized>(game: &mut H) {
-    word!(game.GAME_OPTIONS_SCREEN_INDEX = 0);
+    options_menu!(game.ScreenIndex = 0);
     if word!(game.ENABLE_DEBUG) != 0 && (game.observed_inputs().held & 0x20) == 0 {
         word!(game.GAME_STATE = 5);
         if word!(game.LOADING_GAME_STATE) != 5 {
@@ -93,11 +93,11 @@ pub fn finish_start<H: Host + ?Sized>(game: &mut H) {
         if word!(game.LOADING_GAME_STATE) == 34 {
             crate::flow::set(game, crate::flow::Word::CinematicFunction, 0xc11b);
         }
-        word! { game, 0; MENU_OPTION_INDEX, GAME_OPTIONS_SCREEN_INDEX }
+        options_menu! { game, 0; MenuOptionIndex, ScreenIndex }
     } else {
         word!(game.GAME_STATE = 30);
         crate::flow::set(game, crate::flow::Word::CinematicFunction, 0xa395);
-        word! { game, 0; MENU_OPTION_INDEX }
+        options_menu! { game, 0; MenuOptionIndex }
         crate::screen_fade::set_both(game, 0, 0);
     }
 }
@@ -105,17 +105,17 @@ pub fn finish_start<H: Host + ?Sized>(game: &mut H) {
 fn dissolve<H: Host + ?Sized>(game: &mut H) {
     game.ram().write_byte(crate::ram::mirror::MOSAIC, 3);
     crate::screen_fade::set_both(game, 0, 0);
-    word!(game.GAME_OPTIONS_SCREEN_INDEX = 5);
+    options_menu!(game.ScreenIndex = 5);
 }
 
 fn back<H: Host + ?Sized>(game: &mut H) {
-    word!(game.MENU_OPTION_INDEX = 0);
+    options_menu!(game.MenuOptionIndex = 0);
     dissolve(game);
 }
 
 fn toggle_language<H: Host + ?Sized>(game: &mut H) {
     crate::probe::hit("options_settings.toggle_language");
-    word!(game.MENU_OPTION_INDEX = 0);
+    options_menu!(game.MenuOptionIndex = 0);
     word!(game.JAPANESE_TEXT_FLAG = u16::from(word!(game.JAPANESE_TEXT_FLAG) == 0));
     highlight_language(game);
 }
@@ -143,13 +143,15 @@ pub fn special<H: Host + ?Sized>(game: &mut H) {
     {
         game.queue_sound(0, 0x38_u8, 6);
         let actions: [fn(&mut H); 3] = [toggle_special, toggle_special, back];
-        actions[usize::from(word!(game.MENU_OPTION_INDEX))](game);
+        actions[usize::from(options_menu!(game.MenuOptionIndex))](game);
     }
 }
 
 fn setting_address<H: Host + ?Sized>(game: &mut H) -> usize {
-    let address =
-        crate::menu_lists::option_setting_address(game, word!(game.MENU_OPTION_INDEX) as isize);
+    let address = crate::menu_lists::option_setting_address(
+        game,
+        options_menu!(game.MenuOptionIndex) as isize,
+    );
     if address >= 0x2000 {
         game.legacy_assertion(true);
     }
@@ -172,14 +174,14 @@ pub fn highlight_special<H: Host + ?Sized>(game: &mut H) {
     const ON: [u16; 4] = [0x1e0, 0x220, 0x360, 0x3a0];
     const OFF: [u16; 4] = [0x1ee, 0x22e, 0x36e, 0x3ae];
     // Capture the pair before the pointer lookup; only the first row uses a live index.
-    let pair = usize::from(word!(game.MENU_OPTION_INDEX).wrapping_mul(4) >> 1);
+    let pair = usize::from(options_menu!(game.MenuOptionIndex).wrapping_mul(4) >> 1);
     let address = setting_address(game);
     let enabled = u16::from_ne_bytes([
         game.ram().read_byte(address),
         game.ram().read_byte(address + 1),
     ]) != 0;
     let palette = if enabled { 0 } else { 0x400 };
-    let first = usize::from(word!(game.MENU_OPTION_INDEX).wrapping_mul(4) >> 1);
+    let first = usize::from(options_menu!(game.MenuOptionIndex).wrapping_mul(4) >> 1);
     menu_tilemap::recolor_native(0x3000 + usize::from(ON[first]), palette, 6, game);
     menu_tilemap::recolor_native(0x3000 + usize::from(ON[pair + 1]), palette, 6, game);
     menu_tilemap::recolor_native(0x3000 + usize::from(OFF[pair]), palette ^ 0x400, 6, game);
@@ -194,24 +196,24 @@ pub fn highlight_special<H: Host + ?Sized>(game: &mut H) {
 pub fn controller<H: Host + ?Sized>(game: &mut H) {
     if game.observed_inputs().pressed & K_BUTTON_UP as u16 != 0 {
         game.queue_sound(0, 0x37_u8, 6);
-        let selected = word!(game.MENU_OPTION_INDEX -= 1, reread);
-        if word!(game.MENU_OPTION_INDEX) & 0x8000 != 0 {
-            word! { game; MENU_OPTION_INDEX = 8; GAME_OPTIONS_SCREEN_INDEX = 9; }
+        let selected = options_menu!(game.MenuOptionIndex -= 1, reread);
+        if options_menu!(game.MenuOptionIndex) & 0x8000 != 0 {
+            options_menu! { game; MenuOptionIndex = 8; ScreenIndex = 9; }
         } else if selected == 6 {
-            word!(game.GAME_OPTIONS_SCREEN_INDEX = 10);
+            options_menu!(game.ScreenIndex = 10);
         }
         return;
     }
     if game.observed_inputs().pressed & K_BUTTON_DOWN as u16 != 0 {
         game.queue_sound(0, 0x37_u8, 6);
-        let selected = word!(game.MENU_OPTION_INDEX).wrapping_add(1);
-        word!(game.MENU_OPTION_INDEX = selected);
+        let selected = options_menu!(game.MenuOptionIndex).wrapping_add(1);
+        options_menu!(game.MenuOptionIndex = selected);
         if selected == 7 {
-            word!(game.GAME_OPTIONS_SCREEN_INDEX = 9);
+            options_menu!(game.ScreenIndex = 9);
             return;
         }
         if selected == 9 {
-            word! { game; MENU_OPTION_INDEX = 0; GAME_OPTIONS_SCREEN_INDEX = 10; }
+            options_menu! { game; MenuOptionIndex = 0; ScreenIndex = 10; }
         }
     } else if game.observed_inputs().pressed != 0 {
         game.queue_sound(0, 0x38_u8, 6);
@@ -227,21 +229,21 @@ pub fn controller<H: Host + ?Sized>(game: &mut H) {
             accept_bindings,
             reset_bindings,
         ];
-        actions[usize::from(word!(game.MENU_OPTION_INDEX))](game);
+        actions[usize::from(options_menu!(game.MenuOptionIndex))](game);
     } else if word!(game.JOYPAD2_NEW_KEYS) != 0
-        && word!(game.MENU_OPTION_INDEX) == 8
-        && (i32::from(word!(game.DEBUG_INVINCIBILITY)) - 16) & 0x8000 != 0
+        && options_menu!(game.MenuOptionIndex) == 8
+        && (i32::from(options_menu!(game.DebugInvincibility)) - 16) & 0x8000 != 0
     {
         const CODE: [u16; 16] = [
             0x20, 0x20, 0x20, 0x20, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x4000, 0x40, 0x40, 0x80,
             0x80, 0x80,
         ];
-        if CODE[usize::from(word!(game.DEBUG_INVINCIBILITY))] & word!(game.JOYPAD2_NEW_KEYS)
-            == CODE[usize::from(word!(game.DEBUG_INVINCIBILITY))]
+        if CODE[usize::from(options_menu!(game.DebugInvincibility))] & word!(game.JOYPAD2_NEW_KEYS)
+            == CODE[usize::from(options_menu!(game.DebugInvincibility))]
         {
-            word!(game.DEBUG_INVINCIBILITY += 1);
+            options_menu!(game.DebugInvincibility += 1);
         } else {
-            word!(game.DEBUG_INVINCIBILITY = 0);
+            options_menu!(game.DebugInvincibility = 0);
         }
     }
 }
@@ -268,7 +270,7 @@ pub fn scroll<const DOWN: bool, H: Host + ?Sized>(game: &mut H) {
         scroll!(game.Bg1V -= 2);
     }
     if scroll!(game.Bg1V) == if DOWN { 32 } else { 0 } {
-        word!(game.GAME_OPTIONS_SCREEN_INDEX = 7);
+        options_menu!(game.ScreenIndex = 7);
     }
 }
 
@@ -294,18 +296,18 @@ pub fn fade_out<H: Host + ?Sized>(game: &mut H, screen: u16, enable: fn(&mut H))
     enable(game);
     crate::screen_fade::set_both(game, 0, 0);
     match screen {
-        0 => word!(game.GAME_OPTIONS_SCREEN_INDEX += 1),
+        0 => options_menu!(game.ScreenIndex += 1),
         5 => {
             scroll!(game.Bg1V = 0);
-            word!(game.GAME_OPTIONS_SCREEN_INDEX += 1);
+            options_menu!(game.ScreenIndex += 1);
             replace_screen(game);
         }
         11 => {
             word!(game.GAME_STATE = 4);
             crate::menu!(game.MenuIndex = 0);
-            word!(game.GAME_OPTIONS_SCREEN_INDEX = 0);
+            options_menu!(game.ScreenIndex = 0);
         }
-        _ => word!(game.GAME_OPTIONS_SCREEN_INDEX = 4),
+        _ => options_menu!(game.ScreenIndex = 4),
     }
 }
 
@@ -327,28 +329,28 @@ pub fn fade_in<const DISSOLVE: bool, H: Host + ?Sized>(game: &mut H) {
     }
     crate::screen_fade::set_both(game, 0, 0);
     if !DISSOLVE {
-        word!(game.GAME_OPTIONS_SCREEN_INDEX += 1);
-    } else if word!(game.MENU_OPTION_INDEX) == 0 {
-        word!(game.GAME_OPTIONS_SCREEN_INDEX = 3);
+        options_menu!(game.ScreenIndex += 1);
+    } else if options_menu!(game.MenuOptionIndex) == 0 {
+        options_menu!(game.ScreenIndex = 3);
     } else {
-        word!(
-            game.GAME_OPTIONS_SCREEN_INDEX = 7 + u16::from(word!(game.MENU_OPTION_INDEX) & 4 != 0)
+        options_menu!(
+            game.ScreenIndex = 7 + u16::from(options_menu!(game.MenuOptionIndex) & 4 != 0)
         );
-        word!(game.MENU_OPTION_INDEX = 0);
+        options_menu!(game.MenuOptionIndex = 0);
     }
 }
 
 pub fn replace_screen<H: Host + ?Sized>(game: &mut H) {
     use super::options_objects::spawn;
-    if word!(game.MENU_OPTION_INDEX) != 0 {
-        if word!(game.MENU_OPTION_INDEX) & 4 != 0 {
+    if options_menu!(game.MenuOptionIndex) != 0 {
+        if options_menu!(game.MenuOptionIndex) & 4 != 0 {
             let japanese = word!(game.JAPANESE_TEXT_FLAG) != 0;
             copy_screen(0x1dffe + usize::from(japanese) * 0x800, !japanese, game);
-            word!(game.MENU_OPTION_INDEX = 0);
+            options_menu!(game.MenuOptionIndex = 0);
             highlight_special(game);
-            word!(game.MENU_OPTION_INDEX = 1);
+            options_menu!(game.MenuOptionIndex = 1);
             highlight_special(game);
-            word!(game.MENU_OPTION_INDEX = 4);
+            options_menu!(game.MenuOptionIndex = 4);
             spawn(4, definition::SPECIAL_SETTING_MODE_BORDER, game);
         } else {
             let source = 0x1cffe + usize::from(word!(game.JAPANESE_TEXT_FLAG) != 0) * 0x800;
@@ -382,8 +384,8 @@ pub fn copy_screen<H: Host + ?Sized>(last_word: usize, native: bool, game: &mut 
 
 pub fn advance<H: Host + ?Sized>(game: &mut H, upload: fn(&mut H), enable: fn(&mut H)) -> u8 {
     // Keep the original thirteen-entry bounds failure ahead of all menu effects.
-    let screen = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
-        [usize::from(word!(game.GAME_OPTIONS_SCREEN_INDEX))];
+    let screen =
+        [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12][usize::from(options_menu!(game.ScreenIndex))];
     match screen {
         1 => initialize(game, upload),
         2 => fade_in::<false, H>(game),
@@ -397,7 +399,7 @@ pub fn advance<H: Host + ?Sized>(game: &mut H, upload: fn(&mut H), enable: fn(&m
         _ => fade_out(game, screen, enable),
     }
     super::options_objects::advance_and_draw(game);
-    if (word!(game.GAME_OPTIONS_SCREEN_INDEX) as i32 - 2i32) & 0x8000 == 0 {
+    if (options_menu!(game.ScreenIndex) as i32 - 2i32) & 0x8000 == 0 {
         super::menu_tilemap::queue_options(game);
     }
     0

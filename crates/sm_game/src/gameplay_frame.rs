@@ -13,7 +13,7 @@ use crate::display::sequence::{register_writes, write_register_and_mirror};
 use crate::display_refresh;
 use crate::enemy_projectiles;
 use crate::gameplay_rules::{finish_frame, finish_health_and_time};
-use crate::menus::prelude::{CoroutineRet, owned, save_selection};
+use crate::menus::prelude::{CoroutineRet, options_menu, owned, save_selection};
 use crate::menus::{
     controller_input, file_menu, game_over, map_menu, options_settings, pause_controls,
     reserve_tanks, save_slots,
@@ -625,7 +625,7 @@ fn exit_time_up<H: Host>(game: &mut H) -> CoroutineRet {
         word! { game, 0; CERES_STATUS, TIMER_STATUS }
         cancel_sound_effects(game, 15);
         if crate::progress::event_happened(&mut game.runtime(), 0xe) {
-            word!(game.GAME_OPTIONS_SCREEN_INDEX = 0);
+            options_menu!(game.ScreenIndex = 0);
             crate::menu!(game.MenuIndex = 0);
             word_transfers!(game, descending, 128; le(EPROJ_Y_SUBPOS, 142) <- value(0));
             word!(game.GAME_STATE = K_GAME_STATE_25_SAMUS_NO_HEALTH as u16);
@@ -801,10 +801,11 @@ fn finish_pass<H: Host>(entry: Entry, game: &mut H) {
             if fading::all(if death { 6 } else { 8 }, game) != 0 {
                 if death {
                     finish_gameplay(true, game);
-                    word! { game, 0; GAME_OPTIONS_SCREEN_INDEX }
+                    options_menu! { game, 0; ScreenIndex }
                     crate::screen_fade::set_both(game, 0, 0);
                     word_transfers!(game, descending, 128; le(EPROJ_Y_SUBPOS, 142) <- value(0));
-                    word! {game; DEATH_FLASH_TIMER = 16; GAME_OPTIONS_SCREEN_INDEX = 3; }
+                    word!(game.DEATH_FLASH_TIMER = 16);
+                    options_menu!(game.ScreenIndex = 3);
                     word! { game, 0; DEATH_INDEX, DEATH_COUNTER }
                     word!(game.GAME_STATE += 1);
                     word!(game.POWER_BOMB_EXPLOSION_STATUS = 0);
@@ -826,7 +827,7 @@ fn finish_pass<H: Host>(entry: Entry, game: &mut H) {
             word_transfers!(game, descending, 192; le(TARGET_PALETTES, 191) <- value(0));
             word_transfers!(game, descending, 48; le(TARGET_PALETTES, 255) <- value(0));
             word_transfers!(game, descending, 16; le(TARGET_PALETTES, 207) <- le(PALETTE_BUFFER, 207));
-            word!(game.GAME_OPTIONS_SCREEN_INDEX = 3);
+            options_menu!(game.ScreenIndex = 3);
             word! { game, 0;
                 DEATH_INDEX, DEATH_COUNTER, DEATH_FLASH_TIMER, HUD_ITEM_INDEX,
                 SAMUS_AUTO_CANCEL_HUD_ITEM_INDEX, SAMUS_INVINCIBILITY_TIMER, SAMUS_KNOCKBACK_TIMER,

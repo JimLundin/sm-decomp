@@ -2,6 +2,7 @@
 use crate::cinematic::set_fixed_color;
 use crate::cinematic_objects::draw_cinematic_sprites;
 use crate::display::control::{Brightness, Layers, MainWindowMask, SubScreen};
+use crate::menus::prelude::{options_menu, owned};
 use crate::ram::RawRam as _;
 use crate::ram::word;
 
@@ -139,7 +140,7 @@ pub fn configure_cinematic_display<H: crate::menus::host::Host + ?Sized>(
     match display {
         Title => {
             crate::sprite_drawing::reset_cursor(game);
-            word!(game.MENU_OPTION_INDEX = 0);
+            options_menu!(game.MenuOptionIndex = 0);
             crate::screen_fade::set_both(game, 0, 0);
             crate::menu!(game.PausemenuStartLrPressedHighlightTimer = 0);
             crate::menu!(game.PausemenuLrAnimationTimer = 0);

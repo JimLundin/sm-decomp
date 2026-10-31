@@ -1,7 +1,7 @@
 //! Samus's death sequence: the frozen pose, the death pose, the suit flash
 //! and the suit explosion, with their palettes and tile uploads.
 use crate::constants::buttons::{K_BUTTON_A, K_BUTTON_L, K_BUTTON_R};
-use crate::menus::prelude::CoroutineRet;
+use crate::menus::prelude::{CoroutineRet, options_menu, owned};
 use crate::player_transitions as pt;
 use crate::ram::{RawRam, word};
 use crate::runtime_access::RuntimeAccess;
@@ -79,12 +79,14 @@ pub fn flash_death<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
         queue_death_tiles((2u16).wrapping_mul(word!(game.DEATH_COUNTER)), game);
     }
     if (word!(game.DEATH_COUNTER += 1, reread) as i32 - 60i32) & 0x8000 != 0 {
-        let expired = word!(game.GAME_OPTIONS_SCREEN_INDEX -= 1, reread) & 0x8000 != 0;
-        if word!(game.GAME_OPTIONS_SCREEN_INDEX) == 0 || expired {
+        let expired = options_menu!(game.ScreenIndex -= 1, reread) & 0x8000 != 0;
+        if options_menu!(game.ScreenIndex) == 0 || expired {
             if word!(game.DEATH_INDEX) != 0 {
-                word! { game; DEATH_INDEX = 0; GAME_OPTIONS_SCREEN_INDEX = 3; }
+                word!(game.DEATH_INDEX = 0);
+                options_menu!(game.ScreenIndex = 3);
             } else {
-                word! { game, 1; DEATH_INDEX, GAME_OPTIONS_SCREEN_INDEX }
+                word!(game.DEATH_INDEX = 1);
+                options_menu!(game.ScreenIndex = 1);
             }
             death_palette(Some(word!(game.DEATH_INDEX).wrapping_mul(2)), game);
         }
@@ -93,7 +95,7 @@ pub fn flash_death<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
         death_palette(None, game);
         queue_death_tiles(8, game);
         let delay = game.runtime().table(Source::Native, 0x9bb823).byte(0);
-        word!(game.GAME_OPTIONS_SCREEN_INDEX = u16::from(delay));
+        options_menu!(game.ScreenIndex = u16::from(delay));
         word! { game, 0; DEATH_INDEX, DEATH_COUNTER }
         advance_suit_explosion(game);
         word!(
@@ -172,8 +174,8 @@ pub fn explode_suit<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
 }
 
 fn advance_suit_explosion<H: Host + ?Sized>(game: &mut H) -> bool {
-    let expired = word!(game.GAME_OPTIONS_SCREEN_INDEX -= 1, reread) & 0x8000 != 0;
-    if word!(game.GAME_OPTIONS_SCREEN_INDEX) == 0 || expired {
+    let expired = options_menu!(game.ScreenIndex -= 1, reread) & 0x8000 != 0;
+    if options_menu!(game.ScreenIndex) == 0 || expired {
         if (word!(game.DEATH_INDEX += 1, reread) as i32 - 9i32) & 0x8000 == 0 {
             word!(game.DEATH_COUNTER = 21);
             whiten_death_palette(game);
@@ -186,7 +188,7 @@ fn advance_suit_explosion<H: Host + ?Sized>(game: &mut H) -> bool {
         // read, so taking it first leaves the captured bytes unchanged.
         let index = 2 * usize::from(word!(game.DEATH_INDEX));
         let delay = game.runtime().table(Source::Native, 0x9bb823).byte(index);
-        word!(game.GAME_OPTIONS_SCREEN_INDEX = u16::from(delay));
+        options_menu!(game.ScreenIndex = u16::from(delay));
         if recolor {
             let index = 2 * usize::from(word!(game.DEATH_INDEX)) + 1;
             let frame = game.runtime().table(Source::Native, 0x9bb823).byte(index);

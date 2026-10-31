@@ -1,7 +1,6 @@
 //! Options sprites: allocation, script execution and drawing in their original order.
 use super::menu_tilemap::native_record;
 use super::prelude::*;
-use crate::ram::word;
 use objects::{Array, Word};
 
 /// Game options menu object definitions in bank $82 ($F4B8): a setup, a
@@ -236,10 +235,11 @@ fn before_script<H: Host + ?Sized>(slot: u16, game: &mut H) {
     match objects::get_at(game, Array::PreInstructions, slot) {
         preinstruction::MENU_SELECTION_MISSILE => {
             if game.observed_inputs().transitions.game_state == 2 {
-                let screen = word!(game.GAME_OPTIONS_SCREEN_INDEX);
+                let screen = options_menu!(game.ScreenIndex);
                 let table = crate::menu_lists::options_screen_objects(game, screen as isize);
                 if table != 0 {
-                    let address = table.wrapping_add(word!(game.MENU_OPTION_INDEX).wrapping_mul(4));
+                    let address =
+                        table.wrapping_add(options_menu!(game.MenuOptionIndex).wrapping_mul(4));
                     let record = native_record(BANK | u32::from(address), game);
                     objects::set_at(game, Array::XPositions, slot, record.word(0));
                     objects::set_at(game, Array::YPositions, slot, record.word(2));
@@ -253,30 +253,28 @@ fn before_script<H: Host + ?Sized>(slot: u16, game: &mut H) {
         }
         preinstruction::OPTION_MODE_BORDER => {
             if game.observed_inputs().transitions.game_state != 2
-                || word!(game.GAME_OPTIONS_SCREEN_INDEX) == 6
+                || options_menu!(game.ScreenIndex) == 6
                     && game.ram().read_byte(crate::ram::mirror::INIDISP) == 0x80
             {
                 end_script(slot, game);
             }
         }
-        preinstruction::CONTROLLER_SETTING_MODE_BORDER => {
-            match word!(game.GAME_OPTIONS_SCREEN_INDEX) {
-                6 if game.ram().read_byte(crate::ram::mirror::INIDISP) == 0x80 => {
-                    end_script(slot, game)
-                }
-                9 => {
-                    let y = objects::get_at(game, Array::YPositions, slot);
-                    objects::set_at(game, Array::YPositions, slot, y.wrapping_sub(2));
-                }
-                10 => {
-                    let y = objects::get_at(game, Array::YPositions, slot);
-                    objects::set_at(game, Array::YPositions, slot, y.wrapping_add(2));
-                }
-                _ => {}
+        preinstruction::CONTROLLER_SETTING_MODE_BORDER => match options_menu!(game.ScreenIndex) {
+            6 if game.ram().read_byte(crate::ram::mirror::INIDISP) == 0x80 => {
+                end_script(slot, game)
             }
-        }
+            9 => {
+                let y = objects::get_at(game, Array::YPositions, slot);
+                objects::set_at(game, Array::YPositions, slot, y.wrapping_sub(2));
+            }
+            10 => {
+                let y = objects::get_at(game, Array::YPositions, slot);
+                objects::set_at(game, Array::YPositions, slot, y.wrapping_add(2));
+            }
+            _ => {}
+        },
         preinstruction::SPECIAL_SETTING_MODE_BORDER => {
-            if word!(game.GAME_OPTIONS_SCREEN_INDEX) == 6
+            if options_menu!(game.ScreenIndex) == 6
                 && game.ram().read_byte(crate::ram::mirror::INIDISP) == 0x80
             {
                 end_script(slot, game);
