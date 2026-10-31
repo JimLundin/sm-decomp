@@ -1,4 +1,5 @@
 //! Room state rules that run on named RAM and the owned-Session view.
+pub mod fx;
 use crate::enemy_projectiles::host::Effects;
 use crate::ram::RawRam as _;
 use crate::ram::{checked_word, word, words as fields};
