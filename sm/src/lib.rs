@@ -359,7 +359,6 @@ pub mod game {
     pub(crate) mod menu_host;
     pub mod message_composition;
     pub(crate) mod mode7_transfers;
-    pub(crate) mod moving_platforms;
     pub(crate) mod prelude;
     pub mod scene;
     pub(crate) mod visual_checks;

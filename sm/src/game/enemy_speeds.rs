@@ -44,16 +44,3 @@ pub(crate) fn word32(imported: &Option<ImportedSpeeds32>, native: &RomImage, off
             u32::from_ne_bytes(core::array::from_fn(|i| native.read(start + i)))
         })
 }
-
-/// Borrow only the speed and ROM fields: callers sit inside slot writes.
-macro_rules! enemy_speed {
-    ($game:expr, $table:ident, $index:expr $(,)?) => {
-        $crate::game::enemy_speeds::word(
-            &$game.enemy_speeds,
-            &$game.loaded_rom,
-            $crate::game::enemy_speeds::SpeedTable::$table,
-            $index,
-        )
-    };
-}
-pub(crate) use enemy_speed;

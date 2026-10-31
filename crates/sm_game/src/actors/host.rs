@@ -192,7 +192,7 @@ pub trait ActorLease:
     + crate::actors::session_slots::SessionSlots
     + crate::player_projectiles::host::Host
 {
-    type Game: BossEffects + LeaseActors + ?Sized;
+    type Game: BossEffects + LeaseActors + crate::records::Records + ?Sized;
     /// The compatibility word at `at`, through the session projection.
     fn word(&self, at: usize) -> u16;
     fn foreign<T>(&mut self, action: impl FnOnce(&mut Self::Game) -> T) -> T;
