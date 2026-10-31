@@ -23,6 +23,7 @@ pub struct AuxiliaryGameplayCheckpoint {
     pub options: crate::session::Options,
     pub flow: crate::flow::Flow,
     pub menu: crate::menu_state::MenuState,
+    pub menu_screens: crate::menu_state::MenuScreens,
     pub gameplay_flags: crate::gameplay_flag_state::GameplayFlags,
     pub flag_compatibility: crate::gameplay_flag_state::FlagCompatibility,
     pub sprite_effects: crate::sprite_effect_state::SpriteEffects,
@@ -1500,6 +1501,10 @@ checkpoint_fields!(checkpoint_options, checkpoint_read_options, crate::session::
     japanese_text: checkpoint_word/checkpoint_read_word);
 checkpoint_fields!(checkpoint_menu, checkpoint_read_menu, crate::menu_state::MenuState,
     menu_index: checkpoint_word/checkpoint_read_word, pausemenu_start_lr_pressed_highlight_timer: checkpoint_word/checkpoint_read_word, pausemenu_lr_animation_timer: checkpoint_word/checkpoint_read_word, pausemenu_item_selector_animation_timer: checkpoint_word/checkpoint_read_word, pausemenu_reserve_tank_animation_timer: checkpoint_word/checkpoint_read_word, unused_word_7e0731: checkpoint_word/checkpoint_read_word, pausemenu_uparrow_animation_timer: checkpoint_word/checkpoint_read_word, pausemenu_downarrow_animation_timer: checkpoint_word/checkpoint_read_word, pausemenu_rightarrow_animation_timer: checkpoint_word/checkpoint_read_word, pausemenu_leftarrow_animation_timer: checkpoint_word/checkpoint_read_word, pausemenu_palette_animation_timer: checkpoint_word/checkpoint_read_word, unused_word_7e073d: checkpoint_word/checkpoint_read_word, pausemenu_lr_animation_frame: checkpoint_word/checkpoint_read_word, pausemenu_item_selector_animation_frame: checkpoint_word/checkpoint_read_word, pausemenu_reserve_tank_animation_frame: checkpoint_word/checkpoint_read_word, unused_word_7e0745: checkpoint_word/checkpoint_read_word, pausemenu_uparrow_animation_frame: checkpoint_word/checkpoint_read_word, pausemenu_downarrow_animation_frame: checkpoint_word/checkpoint_read_word, pausemenu_rightarrow_animation_frame: checkpoint_word/checkpoint_read_word, pausemenu_leftarrow_animation_frame: checkpoint_word/checkpoint_read_word, pausemenu_palette_animation_frame: checkpoint_word/checkpoint_read_word, pausemenu_shoulder_button_highlight: checkpoint_word/checkpoint_read_word, pausemenu_button_label_mode: checkpoint_word/checkpoint_read_word, pausemenu_equipment_category_item: checkpoint_word/checkpoint_read_word, pausemenu_reserve_tank_delay_ctr: checkpoint_word/checkpoint_read_word, unused_word_7e0759: checkpoint_word/checkpoint_read_word, unused_word_7e075b: checkpoint_word/checkpoint_read_word, unused_word_7e075d: checkpoint_word/checkpoint_read_word, unused_word_7e075f: checkpoint_word/checkpoint_read_word, unused_word_7e0761: checkpoint_word/checkpoint_read_word, pause_screen_mode: checkpoint_word/checkpoint_read_word);
+checkpoint_fields!(checkpoint_map_screen, checkpoint_read_map_screen, crate::menu_state::MapScreenState,
+    min_x_scroll: checkpoint_word/checkpoint_read_word, max_x_scroll: checkpoint_word/checkpoint_read_word, min_y_scroll: checkpoint_word/checkpoint_read_word, max_y_scroll: checkpoint_word/checkpoint_read_word, gear_switch_timer: checkpoint_word/checkpoint_read_word, scrolling_direction: checkpoint_word/checkpoint_read_word, scrolling_speed_index: checkpoint_word/checkpoint_read_word, indicator_frame: checkpoint_word/checkpoint_read_word, indicator_timer: checkpoint_word/checkpoint_read_word, indicator_loop_counter: checkpoint_word/checkpoint_read_word);
+checkpoint_fields!(checkpoint_menu_screens, checkpoint_read_menu_screens, crate::menu_state::MenuScreens,
+    map: checkpoint_map_screen/checkpoint_read_map_screen);
 checkpoint_fields!(checkpoint_flow, checkpoint_read_flow, crate::flow::Flow,
     cinematic_function: checkpoint_word/checkpoint_read_word, demo_timer: checkpoint_word/checkpoint_read_word,
     demo_set: checkpoint_word/checkpoint_read_word, demo_scene: checkpoint_word/checkpoint_read_word,
@@ -1524,7 +1529,7 @@ macro_rules! checkpoint_auxiliary {
                 if metadata.identity.reference != metadata.reference.fingerprint {
                     return Err("auxiliary gameplay checkpoint Reference identity mismatch".into());
                 }
-                let mut bytes = Vec::from(b"SMAUXGS\x07".as_slice());
+                let mut bytes = Vec::from(b"SMAUXGS\x08".as_slice());
                 let binding = observation_binding(metadata);
                 bytes.extend_from_slice(&(binding.len() as u64).to_le_bytes());
                 bytes.extend_from_slice(&binding);
@@ -1533,7 +1538,7 @@ macro_rules! checkpoint_auxiliary {
             }
             pub fn decode_auxiliary_checkpoint(bytes: &[u8], metadata: &DisplayStartMetadata) -> Result<AuxiliaryGameplayCheckpoint, String> {
                 let mut read = CheckpointReader(bytes);
-                if read.bytes(8)? != b"SMAUXGS\x07" { return Err("unsupported auxiliary gameplay checkpoint schema".into()); }
+                if read.bytes(8)? != b"SMAUXGS\x08" { return Err("unsupported auxiliary gameplay checkpoint schema".into()); }
                 let size = usize::try_from(read.counter()?).map_err(|_| "auxiliary gameplay checkpoint binding length overflow")?;
                 if metadata.identity.reference != metadata.reference.fingerprint || read.bytes(size)? != observation_binding(metadata) {
                     return Err("auxiliary gameplay checkpoint source identity or Reference changed".into());
@@ -1588,6 +1593,7 @@ checkpoint_auxiliary!(
     options: checkpoint_options/checkpoint_read_options,
     flow: checkpoint_flow/checkpoint_read_flow,
     menu: checkpoint_menu/checkpoint_read_menu,
+    menu_screens: checkpoint_menu_screens/checkpoint_read_menu_screens,
     gameplay_flags: checkpoint_flags/checkpoint_read_flags,
     flag_compatibility: checkpoint_flag_compatibility/checkpoint_read_flag_compatibility,
     sprite_effects: checkpoint_sprite_effects/checkpoint_read_sprite_effects,
@@ -2204,6 +2210,7 @@ impl NumericGameplayCheckpoint {
             options,
             flow,
             menu,
+            menu_screens,
             gameplay_flags,
             flag_compatibility,
             sprite_effects,
@@ -2230,6 +2237,7 @@ impl NumericGameplayCheckpoint {
             options,
             flow,
             menu,
+            menu_screens,
             world: self.world,
             control,
             gameplay_flags,

@@ -725,6 +725,16 @@ macro_rules! scalar_words {
         camera_words!(($s.room.camera), $f, ($($borrow)*));
         flow_words!(($s.flow), $f, ($($borrow)*));
         menu_words!(($s.menu), $f, ($($borrow)*));
+        $f(ram::MAP_MIN_X_SCROLL,$($borrow)* $s.menu_screens.map.min_x_scroll);
+        $f(ram::MAP_MAX_X_SCROLL,$($borrow)* $s.menu_screens.map.max_x_scroll);
+        $f(ram::MAP_MIN_Y_SCROLL,$($borrow)* $s.menu_screens.map.min_y_scroll);
+        $f(ram::MAP_MAX_Y_SCROLL,$($borrow)* $s.menu_screens.map.max_y_scroll);
+        $f(ram::MAP_SCROLLING_GEAR_SWITCH_TIMER,$($borrow)* $s.menu_screens.map.gear_switch_timer);
+        $f(ram::MAP_SCROLLING_DIRECTION,$($borrow)* $s.menu_screens.map.scrolling_direction);
+        $f(ram::MAP_SCROLLING_SPEED_INDEX,$($borrow)* $s.menu_screens.map.scrolling_speed_index);
+        $f(ram::SAMUS_POSITION_INDICATOR_ANIMATION_FRAME,$($borrow)* $s.menu_screens.map.indicator_frame);
+        $f(ram::SAMUS_POSITION_INDICATOR_ANIMATION_TIMER,$($borrow)* $s.menu_screens.map.indicator_timer);
+        $f(ram::SAMUS_POSITION_INDICATOR_ANIMATION_LOOP_COUNTER,$($borrow)* $s.menu_screens.map.indicator_loop_counter);
         $f(0x5f5,$($borrow)* $s.feedback.sound_disabled);
         $f(ram::RANDOM_NUMBER,$($borrow)* $s.timing.random_number);
         $f(ram::TIME_IS_FROZEN_FLAG,$($borrow)* $s.timing.time_frozen);

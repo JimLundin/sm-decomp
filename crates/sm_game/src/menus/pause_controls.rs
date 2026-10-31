@@ -22,7 +22,7 @@ pub fn initialize<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     crate::screen_fade::set_both(game, 1, 1);
     crate::menu!(game.PausemenuLeftarrowAnimationFrame = 0);
     crate::menu!(game.PausemenuPaletteAnimationTimer = 1);
-    word! { game, 0; MAP_SCROLLING_DIRECTION, MAP_SCROLLING_SPEED_INDEX }
+    map_screen! { game, 0; ScrollingDirection, ScrollingSpeedIndex }
     crate::display_refresh::queue_fx_clear(game);
     word!(game.GAME_STATE += 1);
 }

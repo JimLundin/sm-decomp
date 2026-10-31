@@ -387,6 +387,31 @@ fn room_effect_lanes() -> Vec<Lane> {
     ]
 }
 
+/// The map screens' scroll bounds, scrolling and position indicator.
+fn map_screen_lanes() -> Vec<Lane> {
+    vec![
+        (0x5ac, 0, |s, _| &mut s.menu_screens.map.min_x_scroll),
+        (0x5ae, 0, |s, _| &mut s.menu_screens.map.max_x_scroll),
+        (0x5b0, 0, |s, _| &mut s.menu_screens.map.min_y_scroll),
+        (0x5b2, 0, |s, _| &mut s.menu_screens.map.max_y_scroll),
+        (0x5fb, 0, |s, _| &mut s.menu_screens.map.gear_switch_timer),
+        (0x5fd, 0, |s, _| &mut s.menu_screens.map.scrolling_direction),
+        (0x5ff, 0, |s, _| {
+            &mut s.menu_screens.map.scrolling_speed_index
+        }),
+        (0x776, 0, |s, _| &mut s.menu_screens.map.indicator_frame),
+        (0x778, 0, |s, _| &mut s.menu_screens.map.indicator_timer),
+        (0x77a, 0, |s, _| {
+            &mut s.menu_screens.map.indicator_loop_counter
+        }),
+    ]
+}
+
+#[test]
+fn map_screen_round_trips_every_word() {
+    check_owner("map screen", &map_screen_lanes());
+}
+
 /// The message box's animation radius and scratch words.
 fn message_box_lanes() -> Vec<Lane> {
     let mut lanes: Vec<Lane> = vec![(0x5a2, 0, |s, _| &mut s.messages.box_radius)];
@@ -973,6 +998,7 @@ fn all_owner_lanes() -> Vec<(&'static str, Vec<Lane>)> {
         ("camera", camera_lanes()),
         ("flow", flow_lanes()),
         ("menu_state", menu_lanes()),
+        ("map screen", map_screen_lanes()),
         ("room geometry", room_geometry_lanes()),
         ("room effects", room_effect_lanes()),
         ("room entry", room_entry_lanes()),

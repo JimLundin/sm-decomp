@@ -99,6 +99,77 @@ menu_state!(
 pub const MENU: usize = 0x727;
 pub const WORDS: usize = 31;
 
+/// The menu screens' words outside the pause menu cohort, owned by
+/// `Session::menu_screens`. Each is the little-endian value of its two RAM
+/// bytes; `session_encoding` projects them and the auxiliary gameplay
+/// checkpoint carries them.
+#[derive(Clone, Copy, Default, Debug, PartialEq, Eq)]
+pub struct MenuScreens {
+    pub map: MapScreenState,
+}
+
+/// The pause and file select map screens' scrolling and marker: the scroll
+/// bounds ($05AC..$05B3), the scrolling gear, direction and speed
+/// ($05FB..$0600), and Samus's position indicator animation ($0776..$077B).
+#[derive(Clone, Copy, Default, Debug, PartialEq, Eq)]
+pub struct MapScreenState {
+    pub min_x_scroll: u16,
+    pub max_x_scroll: u16,
+    pub min_y_scroll: u16,
+    pub max_y_scroll: u16,
+    pub gear_switch_timer: u16,
+    pub scrolling_direction: u16,
+    pub scrolling_speed_index: u16,
+    pub indicator_frame: u16,
+    pub indicator_timer: u16,
+    pub indicator_loop_counter: u16,
+}
+
+/// The map screen words through the host's projected bytes, by RAM address.
+pub mod map_screen {
+    use crate::ram::CompatibilityRam;
+
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    pub enum Word {
+        MinXScroll = 0x5ac,
+        MaxXScroll = 0x5ae,
+        MinYScroll = 0x5b0,
+        MaxYScroll = 0x5b2,
+        GearSwitchTimer = 0x5fb,
+        ScrollingDirection = 0x5fd,
+        ScrollingSpeedIndex = 0x5ff,
+        IndicatorFrame = 0x776,
+        IndicatorTimer = 0x778,
+        IndicatorLoopCounter = 0x77a,
+    }
+
+    const _: () = {
+        use crate::ram::words as ram;
+        assert!(ram::MAP_MIN_X_SCROLL == Word::MinXScroll as usize);
+        assert!(ram::MAP_MAX_X_SCROLL == Word::MaxXScroll as usize);
+        assert!(ram::MAP_MIN_Y_SCROLL == Word::MinYScroll as usize);
+        assert!(ram::MAP_MAX_Y_SCROLL == Word::MaxYScroll as usize);
+        assert!(ram::MAP_SCROLLING_GEAR_SWITCH_TIMER == Word::GearSwitchTimer as usize);
+        assert!(ram::MAP_SCROLLING_DIRECTION == Word::ScrollingDirection as usize);
+        assert!(ram::MAP_SCROLLING_SPEED_INDEX == Word::ScrollingSpeedIndex as usize);
+        assert!(ram::SAMUS_POSITION_INDICATOR_ANIMATION_FRAME == Word::IndicatorFrame as usize);
+        assert!(ram::SAMUS_POSITION_INDICATOR_ANIMATION_TIMER == Word::IndicatorTimer as usize);
+        assert!(
+            ram::SAMUS_POSITION_INDICATOR_ANIMATION_LOOP_COUNTER
+                == Word::IndicatorLoopCounter as usize
+        );
+    };
+
+    /// `word` as the host's projection holds it, low byte then high.
+    pub fn get<H: CompatibilityRam + ?Sized>(h: &H, word: Word) -> u16 {
+        crate::projection::word(h, word as usize)
+    }
+    /// Store `value` to `word`, low byte then high, as the named word store did.
+    pub fn set<H: CompatibilityRam + ?Sized>(h: &mut H, word: Word, value: u16) {
+        crate::projection::set_word(h, word as usize, value);
+    }
+}
+
 /// The menu state as the host's projection holds it.
 pub fn current<H: CompatibilityRam + ?Sized>(h: &H) -> MenuState {
     crate::session_encoding::menu(&crate::projection::reader(h))
