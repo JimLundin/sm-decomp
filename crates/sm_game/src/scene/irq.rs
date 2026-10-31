@@ -77,14 +77,18 @@ pub trait Controls {
     fn write_control(&mut self, field: Store, value: u16);
 }
 
-/// Every access reaches the current authority at the original source point.
-/// A display write or transition may change later reads. No state borrow may
-/// survive either capability, and native callers retain their original contract.
-pub trait Host: Controls {
+/// The staged mirrors and the display outputs that deliver them.
+pub trait Display {
     type Error;
 
     fn read_mirror(&mut self, field: Mirror) -> u8;
     fn write_display(&mut self, field: Output, value: u8) -> Result<(), Self::Error>;
+}
+
+/// Every access reaches the current authority at the original source point.
+/// A display write or transition may change later reads. No state borrow may
+/// survive either capability, and native callers retain their original contract.
+pub trait Host: Controls + Display {
     fn follow_transition(&mut self) -> Result<(), Self::Error>;
 }
 
@@ -118,7 +122,7 @@ impl<E> Controls for OwnedHost<'_, E> {
         self.controls.write_control(field, value);
     }
 }
-impl<E: OwnedIrqEffects> Host for OwnedHost<'_, E> {
+impl<E> Display for OwnedHost<'_, E> {
     type Error = DisplayError;
 
     fn read_mirror(&mut self, field: Mirror) -> u8 {
@@ -135,6 +139,8 @@ impl<E: OwnedIrqEffects> Host for OwnedHost<'_, E> {
         deliver_output(self.controls.state, field, value);
         Ok(())
     }
+}
+impl<E: OwnedIrqEffects> Host for OwnedHost<'_, E> {
     fn follow_transition(&mut self) -> Result<(), DisplayError> {
         self.effects.follow_transition(self.controls.state)
     }
@@ -207,17 +213,17 @@ fn room_layers(host: &mut impl Controls) -> u8 {
     }
 }
 
-fn vertical<H: Host>(host: &mut H, value: u16) -> Result<(), H::Error> {
+fn vertical<H: Display + ?Sized>(host: &mut H, value: u16) -> Result<(), H::Error> {
     host.write_display(Output::VerticalLow, value as u8)?;
     host.write_display(Output::VerticalHigh, (value >> 8) as u8)
 }
 
-fn horizontal<H: Host>(host: &mut H, value: u16) -> Result<(), H::Error> {
+fn horizontal<H: Display + ?Sized>(host: &mut H, value: u16) -> Result<(), H::Error> {
     host.write_display(Output::HorizontalLow, value as u8)?;
     host.write_display(Output::HorizontalHigh, (value >> 8) as u8)
 }
 
-fn schedule<H: Host>(
+fn schedule<H: Controls + Display + ?Sized>(
     host: &mut H,
     next: u16,
     next_vertical: u16,
@@ -234,7 +240,10 @@ pub fn disable(host: &mut impl Controls) {
     host.write_control(Store::Enable, enable & !0x30);
 }
 
-pub fn enable<H: Host>(host: &mut H, immediate: bool) -> Result<(), H::Error> {
+pub fn enable<H: Controls + Display + ?Sized>(
+    host: &mut H,
+    immediate: bool,
+) -> Result<(), H::Error> {
     vertical(host, 0)?;
     horizontal(host, 152)?;
     let enable = host.read_control(Control::Enable);
@@ -246,7 +255,11 @@ pub fn enable<H: Host>(host: &mut H, immediate: bool) -> Result<(), H::Error> {
     Ok(())
 }
 
-fn restore<H: Host>(host: &mut H, mirror: Mirror, output: Output) -> Result<(), H::Error> {
+fn restore<H: Display + ?Sized>(
+    host: &mut H,
+    mirror: Mirror,
+    output: Output,
+) -> Result<(), H::Error> {
     let value = host.read_mirror(mirror);
     host.write_display(output, value)
 }

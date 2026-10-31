@@ -299,7 +299,7 @@ impl sm_game::cinematic_host::Host for Game {
     }
 
     fn disable_scanline_irq(&mut self) {
-        crate::game::scanline_irq::disable(self);
+        sm_game::display_refresh::disable_scanline_irq(self);
     }
 
     fn advance_ending_tile_upload(&mut self) {
