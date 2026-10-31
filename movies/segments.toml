@@ -1488,4 +1488,3 @@ start_frame = 0
 frames = 129
 expect = ["room:91F8"]
 require_hit = ["morph.rolling_with_momentum"]
-pending = "awaiting the seeds-v1-mockball-4447309c78721b0b ci-data upload"
