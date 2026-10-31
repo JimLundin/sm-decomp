@@ -8,7 +8,7 @@ use sdl2_sys::{
     SDL_GL_SwapWindow,
 };
 use sm::c_library::printf;
-use sm::host::Die;
+use sm::host::fatal_error;
 use sm::types::{GlTextureWithSize, RendererFuncs, SDL_Window, SdlGlContext};
 use std::cell::RefCell;
 use std::ffi::{CStr, c_void};
@@ -85,7 +85,7 @@ unsafe extern "C-unwind" fn opengl_renderer_init(window: *mut SDL_Window) -> boo
             gl::GetIntegerv(gl::MAJOR_VERSION, &raw mut gl_major);
             gl::GetIntegerv(gl::MINOR_VERSION, &raw mut gl_minor);
             if (gl_major, gl_minor) < (3, 3) {
-                Die(c"You need OpenGL 3.3".as_ptr());
+                fatal_error(c"You need OpenGL 3.3".as_ptr());
             }
             gl::GenTextures(1, &mut state.texture.gl_texture);
             const VERTICES: [f32; 20] = [

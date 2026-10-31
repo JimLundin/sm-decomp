@@ -7,16 +7,16 @@ mod sm_a5 {
 }
 mod sm_a8 {
     use crate::game_state::Game;
-    pub(super) fn YappingMaw_Func_12(game: &mut Game) {
+    pub(super) fn yapping_maw_func_12(game: &mut Game) {
         super::super::super::update_maw_segment(0, game);
     }
-    pub(super) fn YappingMaw_Func_13(game: &mut Game) {
+    pub(super) fn yapping_maw_func_13(game: &mut Game) {
         super::super::super::update_maw_segment(1, game);
     }
-    pub(super) fn YappingMaw_Func_14(game: &mut Game) {
+    pub(super) fn yapping_maw_func_14(game: &mut Game) {
         super::super::super::update_maw_segment(2, game);
     }
-    pub(super) fn YappingMaw_Func_15(game: &mut Game) {
+    pub(super) fn yapping_maw_func_15(game: &mut Game) {
         super::super::super::update_maw_segment(3, game);
     }
     pub(super) use super::super::super::update_maw_palette as YappingMaw_Func_18;
@@ -89,10 +89,10 @@ pub(super) unsafe fn execute(id: u32, game: &mut Game) -> Option<usize> {
         }
         {
             // Actual caller order, including collisions between repeated handles.
-            sm_a8::YappingMaw_Func_15(game);
-            sm_a8::YappingMaw_Func_14(game);
-            sm_a8::YappingMaw_Func_13(game);
-            sm_a8::YappingMaw_Func_12(game);
+            sm_a8::yapping_maw_func_15(game);
+            sm_a8::yapping_maw_func_14(game);
+            sm_a8::yapping_maw_func_13(game);
+            sm_a8::yapping_maw_func_12(game);
             for handle in handles {
                 sm_a8::YappingMaw_Func_18(handle, game);
             }

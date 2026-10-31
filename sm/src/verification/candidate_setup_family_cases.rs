@@ -1,6 +1,6 @@
 //! Defined-old setup observations; synthetic ROM tables only.
 //! Child of expanded_core_checks, matching family_cases helper conventions.
-fn CallEprojInit(ea: u32, k: u16, game: &mut Game) {
+fn call_eproj_init(ea: u32, k: u16, game: &mut Game) {
     super::super::with_execution(game, |ctx| super::super::setup::dispatch(ea, k, ctx));
 }
 use super::{bytes, put, slot};
@@ -151,7 +151,7 @@ pub(super) unsafe fn execute(id: u32, game: &mut Game, image: &RomImage) -> Opti
         );
     }
     {
-        CallEprojInit(setup, index, game)
+        call_eproj_init(setup, index, game)
     };
     None
 }

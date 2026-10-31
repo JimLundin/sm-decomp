@@ -1,7 +1,7 @@
 //! Owned SPC700 execution with ordered operations through the APU bus.
 
 use crate::initial_state::InitialState;
-use crate::snes::apu::{apu_cpuRead, apu_cpuWrite};
+use crate::snes::apu::{apu_cpu_read, apu_cpu_write};
 use crate::types::Apu;
 pub use crate::types::Spc;
 use core::mem::{offset_of, size_of};
@@ -901,22 +901,22 @@ pub unsafe fn spc_reset(spc: *mut Spc) {
     unsafe {
         let apu = (*spc).apu;
         (*spc).reset(|operation| match operation {
-            BusOperation::Read(address) => apu_cpuRead(apu, address),
+            BusOperation::Read(address) => apu_cpu_read(apu, address),
             BusOperation::Write(address, value) => {
-                apu_cpuWrite(apu, address, value);
+                apu_cpu_write(apu, address, value);
                 0
             }
         });
     }
 }
 
-pub unsafe fn spc_runOpcode(spc: *mut Spc) -> i32 {
+pub unsafe fn spc_run_opcode(spc: *mut Spc) -> i32 {
     unsafe {
         let apu = (*spc).apu;
         i32::from((*spc).run_opcode(|operation| match operation {
-            BusOperation::Read(address) => apu_cpuRead(apu, address),
+            BusOperation::Read(address) => apu_cpu_read(apu, address),
             BusOperation::Write(address, value) => {
-                apu_cpuWrite(apu, address, value);
+                apu_cpu_write(apu, address, value);
                 0
             }
         }))

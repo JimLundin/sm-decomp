@@ -1,7 +1,7 @@
 //! Untouched original CPU SaveToSram. Never calls the unaligned old Rust save body.
-use super::{Game, MakeSnapshotWithPlayerOwner, RestoreSnapshot, Snapshot};
+use super::{Game, Snapshot, make_snapshot_with_player_owner, restore_snapshot};
 use crate::native_rom::NativeRomPointer;
-use crate::{flags_save_case as case, initial_state::InitialState, snes::cpu::cpu_getFlags};
+use crate::{flags_save_case as case, initial_state::InitialState, snes::cpu::cpu_get_flags};
 use std::collections::BTreeSet;
 fn offset(address: u32) -> usize {
     crate::rtl::lorom_offset(address) as usize
@@ -81,7 +81,7 @@ pub(crate) unsafe fn with_initialized_state<T>(
             let snapshot_cpu = game.g_cpu;
             let snapshot_player = game.g_spc_player;
             let (backend, ram, _, _, _, owner) = game.ram_and_owned_snapshots();
-            MakeSnapshotWithPlayerOwner(
+            make_snapshot_with_player_owner(
                 &mut before,
                 &*snapshot_snes,
                 &*snapshot_cpu,
@@ -124,7 +124,7 @@ pub(crate) unsafe fn with_initialized_state<T>(
             let snapshot_snes = game.g_snes;
             let snapshot_cpu = game.g_cpu;
             let (backend, ram, _, _, _, _) = game.ram_and_owned_snapshots();
-            RestoreSnapshot(
+            restore_snapshot(
                 &before,
                 &mut *snapshot_snes,
                 &mut *snapshot_cpu,
@@ -158,7 +158,7 @@ unsafe fn cpu_header(game: &Game) -> [u8; 16] {
         let cpu = &*game.g_cpu;
         let mut out = [0; 16];
         out[..4].copy_from_slice(&(u32::from(cpu.k) << 16 | u32::from(cpu.pc)).to_le_bytes());
-        out[4] = cpu_getFlags(cpu);
+        out[4] = cpu_get_flags(cpu);
         for (i, value) in [cpu.a, cpu.x, cpu.y, cpu.sp, cpu.dp]
             .into_iter()
             .enumerate()
@@ -261,7 +261,7 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
             cpu.stopped = false;
             cpu.spBreakpoint = 0;
             game.g_calling_asm_from_c = false;
-            let flags = cpu_getFlags(&*game.g_cpu);
+            let flags = cpu_get_flags(&*game.g_cpu);
             let mut output = b"FSOR1".to_vec();
             case::record(&mut output, 0, &id.to_le_bytes());
             let mut abi = BTreeSet::new();
@@ -310,7 +310,7 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
                             || cpu.sp != 0x1fff
                             || cpu.dp != 0
                             || cpu.db != 0xa5
-                            || cpu_getFlags(cpu) != flags
+                            || cpu_get_flags(cpu) != flags
                         {
                             return Err("original save failed caller restoration".into());
                         }

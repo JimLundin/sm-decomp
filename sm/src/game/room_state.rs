@@ -1,5 +1,5 @@
 //! Compatibility entry adapters and retained level/graphics backend leaves.
-use crate::game::display_refresh::CopyToVramNow;
+use crate::game::display_refresh::copy_to_vram_now;
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
 use crate::ram_map::{checked_word, word, words as ram};
@@ -106,7 +106,7 @@ pub(crate) fn setup_script(address: u32, game: &mut Game) {
         9408955 | 9408956 | 9408979 | 9408980 | 9408981 | 9408982 | 9409012 | 9409013 | 9409014
         | 9409015 | 9423047 | 9423056 | 9423057 | 9423058 | 9423068 | 9423134 => {}
         _ => {
-            crate::rtl::Unreachable(game);
+            crate::rtl::report_unreachable(game);
         }
     }
 }
@@ -175,7 +175,7 @@ pub(crate) unsafe fn door_script(address: u32, game: &mut Game) {
             }
             _ => {
                 if !crate::game::room_scrolls::apply(address, &mut Runtime::new(game)) {
-                    crate::rtl::Unreachable(game);
+                    crate::rtl::report_unreachable(game);
                 }
             }
         }
@@ -212,7 +212,7 @@ pub(crate) unsafe fn load_enemy_graphics(game: &mut Game) {
                 next_tile = next_tile.wrapping_add(size >> 1);
                 destination
             };
-            CopyToVramNow(
+            copy_to_vram_now(
                 destination,
                 definition.load24(offset_of!(EnemyDef, tile_data)),
                 size & 0x7fff,

@@ -136,7 +136,7 @@ unsafe extern "C-unwind" fn sm_shader_append_line(
     unsafe {
         let output = &mut *source.cast::<Vec<u8>>();
         if output.try_reserve(length + 1).is_err() {
-            sm::host::Die(c"memory allocation failed".as_ptr());
+            sm::host::fatal_error(c"memory allocation failed".as_ptr());
         }
         output.extend_from_slice(std::slice::from_raw_parts(line, length));
         output.push(b'\n');

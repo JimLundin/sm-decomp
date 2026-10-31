@@ -157,7 +157,7 @@ pub(crate) fn advance_frame(game: &mut Game) {
         ResumeRecorder if word!(game.JOYPAD2_NEW_KEYS) & 0x80 != 0 => {
             word!(game.FRAME_HANDLER_ALFA = 0xe695);
             game.set_frame_handler_beta(Gameplay.to_raw());
-            crate::game::enemy_projectiles::EnableEprojs(game);
+            crate::game::enemy_projectiles::enable_eprojs(game);
             word!(game.TIME_IS_FROZEN_FLAG = 0);
         }
         Fanfare => {
@@ -170,8 +170,8 @@ pub(crate) fn advance_frame(game: &mut Game) {
             word!(game.ELEVATOR_STATUS = 0);
             word!(game.SAMUS_PREV_Y_POS = word!(game.SAMUS_Y_POS));
             match word!(game.SUBSTATE) {
-                0 => crate::game::music::QueueMusic_DelayedY(1, 0xe, game),
-                5 => crate::game::music::PlayRoomMusicTrackAfterAFrames(0x168, game),
+                0 => crate::game::music::queue_music_delayed_y(1, 0xe, game),
+                5 => crate::game::music::play_room_music_track_after_aframes(0x168, game),
                 _ => {}
             }
             if (word!(game.SUBSTATE).wrapping_sub(359) as i16) < 0 {
@@ -198,7 +198,7 @@ pub(crate) fn advance_frame(game: &mut Game) {
         LowHealth => low_health(game),
         Frozen | EquipmentFrozen | Drained | ResumeRecorder => {}
         Unknown(_) => {
-            crate::rtl::Unreachable(game);
+            crate::rtl::report_unreachable(game);
         }
     }
 }
@@ -226,9 +226,9 @@ use sm_game::escape_timer;
 crate::game::callback_dispatch! {
     #[allow(unused_unsafe)]
     unsafe fn advance_gamma(ea: u32, game: &mut Game) => ea;
-    call (game); default { crate::rtl::Unreachable(game); };
+    call (game); default { crate::rtl::report_unreachable(game); };
     @functions [pub fn (game: &mut Game)];
-    [9494683] Samus_Func1 [] {
+    [9494683] samus_func1 [] {
         if legacy_word!(game.SAMUS_POSE) as i32 == K_POSE_E9_FACE_L_DRAINED_CROUCH_FALLING as i32
             && legacy_word!(game.SAMUS_ANIM_FRAME) as i32 - 8i32 & 0x8000 == 0
             && (legacy_word!(game.JOYPAD1_NEWKEYS) as i32 & K_BUTTON_UP as i32) != 0
@@ -237,7 +237,7 @@ crate::game::callback_dispatch! {
                 FRAME_HANDLER_GAMMA = ((0x90e90ei32) as u16); }
         }
     };
-    [9494725] Samus_Func2 [] {
+    [9494725] samus_func2 [] {
         if legacy_word!(game.SAMUS_ANIM_FRAME) as i32 - 8i32 & 0x8000 == 0
             && legacy_word!(game.SAMUS_ANIM_FRAME) as i32 - 12i32 & 0x8000 != 0
             && (legacy_word!(game.JOYPAD1_NEWKEYS) as i32 & K_BUTTON_UP as i32) != 0
@@ -245,7 +245,7 @@ crate::game::callback_dispatch! {
             legacy_word! {game; SAMUS_ANIM_FRAME_TIMER = 1; SAMUS_ANIM_FRAME = 18; }
         }
     };
-    [9494758] Samus_Func3 [] {
+    [9494758] samus_func3 [] {
         if escape_timer::advance(game) & 1 != 0 {
             legacy_word!(game.GAME_STATE = K_GAME_STATE_35_TIME_UP as u16);
             word_transfers!(game, descending, 256; le(TARGET_PALETTES, 255) <- value(0x7fff));
@@ -256,7 +256,7 @@ crate::game::callback_dispatch! {
             escape_timer::draw(game);
         }
     };
-    [9494804] DrawTimer_ [] {
+    [9494804] draw_timer [] {
         escape_timer::draw(game);
     };
     @external {

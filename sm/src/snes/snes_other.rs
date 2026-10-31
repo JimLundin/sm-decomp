@@ -24,7 +24,7 @@ crate::typed_struct! {
         pub cartType: u8;
     }
 }
-pub unsafe fn snes_loadRom(mut data: *const u8, mut length: i32, game: &mut Game) -> bool {
+pub unsafe fn snes_load_rom(mut data: *const u8, mut length: i32, game: &mut Game) -> bool {
     unsafe {
         if length < 0x8000 {
             printf(
@@ -66,10 +66,10 @@ pub unsafe fn snes_loadRom(mut data: *const u8, mut length: i32, game: &mut Game
             headers[i as usize].score = -50i16;
         }
         if length >= 0x8000 {
-            readHeader(data, length, 0x7fc0, &raw mut headers as *mut CartHeader);
+            read_header(data, length, 0x7fc0, &raw mut headers as *mut CartHeader);
         }
         if length >= 0x8200 {
-            readHeader(
+            read_header(
                 data,
                 length,
                 0x81c0,
@@ -77,7 +77,7 @@ pub unsafe fn snes_loadRom(mut data: *const u8, mut length: i32, game: &mut Game
             );
         }
         if length >= 0x10000 {
-            readHeader(
+            read_header(
                 data,
                 length,
                 0xffc0,
@@ -85,7 +85,7 @@ pub unsafe fn snes_loadRom(mut data: *const u8, mut length: i32, game: &mut Game
             );
         }
         if length >= 0x10200 {
-            readHeader(
+            read_header(
                 data,
                 length,
                 0x101c0,
@@ -111,23 +111,23 @@ pub unsafe fn snes_loadRom(mut data: *const u8, mut length: i32, game: &mut Game
             );
             return false;
         }
-        let mut newLength: i32 = 0x8000;
-        while length > newLength {
-            newLength *= 2;
+        let mut new_length: i32 = 0x8000;
+        while length > new_length {
+            new_length *= 2;
         }
-        let image = crate::rom::RomImage::zeroed(newLength as usize);
-        let newData = image.as_mut_ptr();
+        let image = crate::rom::RomImage::zeroed(new_length as usize);
+        let new_data = image.as_mut_ptr();
         memcpy(
-            newData as *mut c_void,
+            new_data as *mut c_void,
             data as *const c_void,
             length as usize,
         );
         let mut test: i32 = 1;
-        while length != newLength {
+        while length != new_length {
             if length & test != 0 {
                 memcpy(
-                    newData.offset(length as isize) as *mut c_void,
-                    newData.offset(length as isize).offset(-(test as isize)) as *const c_void,
+                    new_data.offset(length as isize) as *mut c_void,
+                    new_data.offset(length as isize).offset(-(test as isize)) as *const c_void,
                     test as usize,
                 );
                 length += test;
@@ -149,7 +149,7 @@ pub unsafe fn snes_loadRom(mut data: *const u8, mut length: i32, game: &mut Game
         true
     }
 }
-unsafe fn readHeader(data: *const u8, length: i32, location: i32, header: *mut CartHeader) {
+unsafe fn read_header(data: *const u8, length: i32, location: i32, header: *mut CartHeader) {
     unsafe {
         for i in 0i32..21 {
             let ch: u8 = *data.offset((location + i) as isize);
@@ -242,18 +242,18 @@ unsafe fn readHeader(data: *const u8, length: i32, location: i32, header: *mut C
         } else {
             -6i32
         };
-        let resetVector: u16 = (*data.offset((location + 0x3c) as isize) as i32
+        let reset_vector: u16 = (*data.offset((location + 0x3c) as isize) as i32
             | (*data.offset((location + 0x3d) as isize) as i32) << 8)
             as u16;
-        score += if resetVector as i32 >= 0x8000 {
+        score += if reset_vector as i32 >= 0x8000 {
             8
         } else {
             -20i32
         };
-        let opcodeLoc: i32 = location + 0x40 - 0x8000i32 + (resetVector as i32 & 0x7fff);
+        let opcode_loc: i32 = location + 0x40 - 0x8000i32 + (reset_vector as i32 & 0x7fff);
         let mut opcode: u8 = 0xff;
-        if opcodeLoc < length {
-            opcode = *data.offset(opcodeLoc as isize);
+        if opcode_loc < length {
+            opcode = *data.offset(opcode_loc as isize);
         } else {
             score -= 14;
         }

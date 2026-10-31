@@ -1,8 +1,8 @@
 //! Actual 65816 Draygon intro-dance observations; never invokes old Rust Func_46.
 //! Original ROM and captured RAM remain local, outside the repository.
-use super::{Game, MakeSnapshotWithPlayerOwner, RestoreSnapshot, Snapshot};
+use super::{Game, Snapshot, make_snapshot_with_player_owner, restore_snapshot};
 use crate::initial_state::InitialState;
-use crate::snes::cpu::cpu_getFlags;
+use crate::snes::cpu::cpu_get_flags;
 
 const WINDOWS: &[(u32, u32)] = &[
     (0xa5a13e, 0xa5a19f), // Complete dance routine, including delete branch.
@@ -124,7 +124,7 @@ unsafe fn observe(output: &mut Vec<u8>, tag: u8, game: &Game, full_ram: bool) {
         let mut payload = (u32::from(cpu.k) << 16 | u32::from(cpu.pc))
             .to_le_bytes()
             .to_vec();
-        payload.push(cpu_getFlags(cpu));
+        payload.push(cpu_get_flags(cpu));
         for value in [cpu.a, cpu.x, cpu.y, cpu.sp, cpu.dp] {
             payload.extend_from_slice(&value.to_le_bytes());
         }
@@ -156,7 +156,7 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
             let snapshot_cpu = game.g_cpu;
             let snapshot_player = game.g_spc_player;
             let (backend, ram, _, _, _, owner) = game.ram_and_owned_snapshots();
-            MakeSnapshotWithPlayerOwner(
+            make_snapshot_with_player_owner(
                 &mut before,
                 &*snapshot_snes,
                 &*snapshot_cpu,
@@ -274,7 +274,7 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
             let snapshot_snes = game.g_snes;
             let snapshot_cpu = game.g_cpu;
             let (backend, ram, _, _, _, _) = game.ram_and_owned_snapshots();
-            RestoreSnapshot(
+            restore_snapshot(
                 &before,
                 &mut *snapshot_snes,
                 &mut *snapshot_cpu,

@@ -932,7 +932,7 @@ pub(super) unsafe fn initialize_checkpoint_machine(
         if std::env::var_os("SM_VERIFY_PHYSICAL_AUDIO").is_some() {
             game.g_use_my_apu_code = false;
         }
-        let snes = sm::cpu_infra::SnesInit(filename.as_ptr(), game);
+        let snes = sm::cpu_infra::snes_init(filename.as_ptr(), game);
         if snes.is_null() {
             return Err("unable to load ROM".into());
         }
@@ -943,13 +943,13 @@ pub(super) unsafe fn initialize_checkpoint_machine(
 pub(super) unsafe fn begin_verifier_drawing(game: &mut Game) {
     unsafe {
         let snes = game.g_snes;
-        sm::snes::ppu::PpuBeginDrawing(
+        sm::snes::ppu::ppu_begin_drawing(
             (*snes).snes_ppu.cast(),
             (&raw mut super::PIXELS).cast(),
             1024,
             0,
         );
-        sm::snes::ppu::PpuBeginDrawing(
+        sm::snes::ppu::ppu_begin_drawing(
             (*snes).my_ppu.cast(),
             (&raw mut super::MY_PIXELS).cast(),
             1024,
@@ -992,8 +992,8 @@ unsafe fn prepared_checkpoint(
         let mut expected_audio = [[0; 2]; 534];
         core::ptr::write_bytes(&raw mut super::PIXELS, 0, 1);
         core::ptr::write_bytes(&raw mut super::MY_PIXELS, 0, 1);
-        sm::rtl::RtlRunFrame(i32::from(pad), game);
-        sm::rtl::RtlRenderAudio(&mut expected_audio, game);
+        sm::rtl::rtl_run_frame(i32::from(pad), game);
+        sm::rtl::rtl_render_audio(&mut expected_audio, game);
         let continuation = checkpoint::capture(game)?;
         checkpoint::reset_retaining_prepared_world(game)?;
         if checkpoint::load(path, game, origin, inputs)? != completed
@@ -1004,8 +1004,8 @@ unsafe fn prepared_checkpoint(
         let mut restored_audio = [[0; 2]; 534];
         core::ptr::write_bytes(&raw mut super::PIXELS, 0, 1);
         core::ptr::write_bytes(&raw mut super::MY_PIXELS, 0, 1);
-        sm::rtl::RtlRunFrame(i32::from(pad), game);
-        sm::rtl::RtlRenderAudio(&mut restored_audio, game);
+        sm::rtl::rtl_run_frame(i32::from(pad), game);
+        sm::rtl::rtl_render_audio(&mut restored_audio, game);
         if restored_audio != expected_audio || checkpoint::capture(game)? != continuation {
             return Err("prepared checkpoint continuation differs".into());
         }
@@ -1244,7 +1244,7 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
     unsafe {
         let _snes = initialize_checkpoint_machine(game, &filename)?;
         if let Some(saved_sram) = saved_sram {
-            sm::rtl::RtlReadSram(game);
+            sm::rtl::rtl_read_sram(game);
             if game.g_sram.bytes(0..8192) != saved_sram {
                 return Err("loaded SRAM differs from saves/sm.srm".into());
             }
@@ -1363,10 +1363,10 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
             core::ptr::write_bytes(&raw mut super::PIXELS, 0, 1);
             core::ptr::write_bytes(&raw mut super::MY_PIXELS, 0, 1);
             sm::oracle_mode::set_next_frame_input(inputs.get(index + 1).copied());
-            sm::rtl::RtlRunFrame(i32::from(pad), game);
+            sm::rtl::rtl_run_frame(i32::from(pad), game);
             sm::oracle_mode::set_next_frame_input(None);
             // Advance the music driver once per frame without playing audio.
-            sm::rtl::RtlRenderAudio(&mut discarded_audio, game);
+            sm::rtl::rtl_render_audio(&mut discarded_audio, game);
             if audio_trace.is_some() {
                 if let Some(error) = game.audio_output.failure() {
                     return Err(format!("input frame {index}: {error}"));
@@ -1497,7 +1497,7 @@ mod coverage_checks;
 #[cfg(any(test, sm_verify_dll))]
 #[cfg_attr(test, test)]
 fn sfx_native_note_keeps_captured_slot_and_literal_programming() {
-    use sm::{spc_player::Sfx1_Process, types::DspRegWriteHistory};
+    use sm::{spc_player::sfx1_process, types::DspRegWriteHistory};
     let mut game = Game::new();
     let mut history = Box::new(DspRegWriteHistory {
         count: 0,
@@ -1540,7 +1540,7 @@ fn sfx_native_note_keeps_captured_slot_and_literal_programming() {
         for (i, v) in [2, 128, 10, 24, 7].into_iter().enumerate() {
             ram.write(0x0200 + i as u16, v);
         }
-        Sfx1_Process(p);
+        sfx1_process(p);
         assert_eq!(history.count, 8);
         assert_eq!(
             &history.addr[..8],
@@ -1590,7 +1590,7 @@ fn sfx_native_note_keeps_captured_slot_and_literal_programming() {
 #[cfg(any(test, sm_verify_dll))]
 #[cfg_attr(test, test)]
 fn sfx_native_reset_rejection_keeps_history_and_reset_prefix() {
-    use sm::{spc_player::Sfx1_Process, types::DspRegWriteHistory};
+    use sm::{spc_player::sfx1_process, types::DspRegWriteHistory};
     use std::panic::{AssertUnwindSafe, catch_unwind};
     let mut game = Game::new();
     let mut history = Box::new(DspRegWriteHistory {
@@ -1635,7 +1635,7 @@ fn sfx_native_reset_rejection_keeps_history_and_reset_prefix() {
         ram.write(0x0200, 255);
         ram.write(0x6c0c, 3);
         let dsp_before = (*state.dsp).state;
-        let fault = catch_unwind(AssertUnwindSafe(|| Sfx1_Process(p)))
+        let fault = catch_unwind(AssertUnwindSafe(|| sfx1_process(p)))
             .expect_err("native reset rejects DSP selector255");
         let text = fault.downcast_ref::<String>().expect("bounds failure text");
         // LEGACY(message-text): asserts on panic or Die text; should assert the failure kind instead.
@@ -1691,7 +1691,7 @@ fn sfx_native_reset_rejection_keeps_history_and_reset_prefix() {
 #[cfg(any(test, sm_verify_dll))]
 #[cfg_attr(test, test)]
 fn sfx_native_pan_origin_failure_keeps_programmed_instrument_prefix() {
-    use sm::{spc_player::Sfx1_Process, types::DspRegWriteHistory};
+    use sm::{spc_player::sfx1_process, types::DspRegWriteHistory};
     use std::panic::{AssertUnwindSafe, catch_unwind};
     for pan in [21, 10] {
         let mut game = Game::new();
@@ -1733,7 +1733,7 @@ fn sfx_native_pan_origin_failure_keeps_programmed_instrument_prefix() {
             for (i, v) in [2, 128, pan, 24, 7].into_iter().enumerate() {
                 ram.write(0x0200 + i as u16, v);
             }
-            let result = catch_unwind(AssertUnwindSafe(|| Sfx1_Process(p)));
+            let result = catch_unwind(AssertUnwindSafe(|| sfx1_process(p)));
             assert_eq!(result.is_err(), pan == 21);
             if pan == 21 {
                 let fault = result.expect_err("native pan reaches the checked tail-origin read");
@@ -1807,7 +1807,7 @@ fn owned_player_render_matches_native_schedule_and_failure_prefixes() {
         unsafe {
             for game in &mut games {
                 game.create_native_player();
-                SpcPlayer_Initialize(game.g_spc_player);
+                spc_player_initialize(game.g_spc_player);
             }
             let players = games.each_ref().map(|game| game.g_spc_player);
             let owned_dsp = players.map(|player| (*player).state.dsp);
@@ -1842,12 +1842,12 @@ fn owned_player_render_matches_native_schedule_and_failure_prefixes() {
             }
             let mut pcm = [[[i16::MIN; 2]; 534]; 2];
             let got = catch_unwind(AssertUnwindSafe(|| {
-                sm::rtl::RtlRenderAudio(&mut pcm[0], &mut games[0])
+                sm::rtl::rtl_render_audio(&mut pcm[0], &mut games[0])
             }));
             let writes = games[1].apu_queue.pop().unwrap();
             sm::apu_queue::ApuQueue::apply_ports(writes, &mut (*players[1]).state.input_ports);
             let want = catch_unwind(AssertUnwindSafe(|| {
-                SpcPlayer_GenerateSamples(players[1]);
+                spc_player_generate_samples(players[1]);
                 (*(*players[1]).state.dsp).state.write_samples(&mut pcm[1]);
             }));
             assert_eq!((got.is_err(), want.is_err()), (mode == 3, mode == 3));
@@ -1855,7 +1855,7 @@ fn owned_player_render_matches_native_schedule_and_failure_prefixes() {
             assert_eq!(games[0].apu_queue.to_bytes(), games[1].apu_queue.to_bytes());
             let mut ram = [[0u8; 65536]; 2];
             for (index, &p) in players[..2].iter().enumerate() {
-                SpcPlayer_CopyVariablesToRam(p);
+                spc_player_copy_variables_to_ram(p);
                 (*p).ram.copy_to(&mut ram[index]);
             }
             assert_eq!(ram[0], ram[1]);
@@ -1916,11 +1916,11 @@ fn owned_player_initialization_and_transfers_preserve_native_boundaries() {
                 }
             }
             games[0].initialize_native_player();
-            SpcPlayer_Initialize(players[1]);
+            spc_player_initialize(players[1]);
             let links =
                 players.map(|p| ((*p).state.dsp, (*p).state.reg_write_history, (*p).state.ram));
             games[0].save_native_audio_variables(false);
-            SpcPlayer_CopyVariablesToRam(players[1]);
+            spc_player_copy_variables_to_ram(players[1]);
             let mut ram = [[0; 65536]; 2];
             for (i, &p) in players[..2].iter().enumerate() {
                 (*p).ram.copy_to(&mut ram[i]);
@@ -1939,7 +1939,7 @@ fn owned_player_initialization_and_transfers_preserve_native_boundaries() {
                 (*p).ram.write(0x53, 0x12);
             }
             games[0].load_native_audio_variables();
-            SpcPlayer_CopyVariablesFromRam(players[1]);
+            spc_player_copy_variables_from_ram(players[1]);
             for (i, &p) in players[..2].iter().enumerate() {
                 let s = &(*p).state;
                 assert_eq!((s.dsp, s.reg_write_history, s.ram), links[i]);
@@ -1956,7 +1956,7 @@ fn owned_player_initialization_and_transfers_preserve_native_boundaries() {
             games[1]
                 .apu_queue
                 .apply_queued(&mut (*players[1]).state.input_ports);
-            SpcPlayer_CopyVariablesToRam(players[1]);
+            spc_player_copy_variables_to_ram(players[1]);
             for (i, &p) in players[..2].iter().enumerate() {
                 (*p).ram.copy_to(&mut ram[i]);
             }

@@ -2,14 +2,14 @@
 //! Declare as a private child of enemy_projectiles to exercise real production paths.
 //! This first tranche does not cover all setup/pre-action/contact/drawing families.
 use super::{
-    ClearEprojs, DisableEprojs, EnableEprojs, EprojRunAll, spawn_with_enemy_gfx,
+    clear_eprojs, disable_eprojs, enable_eprojs, eproj_run_all, spawn_with_enemy_gfx,
     spawn_with_room_gfx,
 };
 use sm_game::enemy_script::EnemyScript;
 
 // Candidate-only adapters invoke the maintained implementation and publish the
 // exclusive owner on normal return or unwind before the unchanged observations.
-fn CallEprojInstr(ea: u32, k: u16, script: &EnemyScript, game: &mut Game) -> Option<usize> {
+fn call_eproj_instr(ea: u32, k: u16, script: &EnemyScript, game: &mut Game) -> Option<usize> {
     let EnemyScript::At { image, .. } = script else {
         unreachable!()
     };
@@ -163,9 +163,9 @@ fn seed(game: &mut Game, image: &RomImage) {
 unsafe fn core_case(id: u32, game: &mut Game, image: &RomImage) -> Option<usize> {
     {
         match id {
-            0 => EnableEprojs(game),
-            1 => DisableEprojs(game),
-            2 => ClearEprojs(game),
+            0 => enable_eprojs(game),
+            1 => disable_eprojs(game),
+            2 => clear_eprojs(game),
             3 => return Some(spawn_with_room_gfx(0xffff, 0x4321, game) as usize),
             4 => return Some(spawn_with_enemy_gfx(0x4321, 0, 0xffff, game) as usize),
             5..=12 | 23 => {
@@ -234,7 +234,7 @@ unsafe fn core_case(id: u32, game: &mut Game, image: &RomImage) -> Option<usize>
                     script_word(image, 0x9004, 3);
                     script_word(image, 0x9006, 0x1234);
                 }
-                EprojRunAll(game);
+                eproj_run_all(game);
             }
             _ => unreachable!(),
         }
@@ -305,7 +305,7 @@ unsafe fn original_execute(id: u32, game: &mut Game, image: &RomImage) -> Option
             slot(game, a::EPROJ_E, index, (variant * 2) as u16);
             put(game, w::EPROJ_INDEX, if variant == 4 { 34 } else { 0 });
             put(game, w::NMI_FRAME_COUNTER_WORD, (variant & 1) as u16);
-            return CallEprojInstr(
+            return call_eproj_instr(
                 COMMANDS[(n / 6) as usize],
                 index,
                 &EnemyScript::at(image.clone(), 0x28000 + usize::from(cursor as u16)),
@@ -333,7 +333,7 @@ unsafe fn original_execute(id: u32, game: &mut Game, image: &RomImage) -> Option
             if variant == 3 {
                 put(game, w::POWER_BOMB_EXPLOSION_STATUS, 0x8000);
             }
-            return CallEprojInstr(
+            return call_eproj_instr(
                 QUEUES[(n / 4) as usize],
                 34,
                 &EnemyScript::at(image.clone(), 0x28000 + usize::from(cursor as u16)),
@@ -368,7 +368,7 @@ unsafe fn original_execute(id: u32, game: &mut Game, image: &RomImage) -> Option
             short.write(0x31000, 0xff);
         }
         // The executor captures its instruction image separately from Game.
-        CallEprojInstr(
+        call_eproj_instr(
             command,
             1,
             &EnemyScript::at(short, 0x28000 + usize::from(0x9000 as u16)),

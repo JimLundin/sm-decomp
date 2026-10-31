@@ -1,7 +1,7 @@
 //! Focused defined-old Sparks and lavaquake no-sample branches.
 //! Child of the existing verification carrier; preserves all 1362 old fixtures.
 use super::{OUTPUT_BYTES, bytes, put, seed, slot};
-fn CallEprojPreInstr(ea: u32, k: u16, game: &mut Game) {
+fn call_eproj_pre_instr(ea: u32, k: u16, game: &mut Game) {
     super::super::with_execution(game, |ctx| super::super::pre_actions::dispatch(ea, k, ctx));
 }
 fn dispatch_polyp_rock_function(ea: u32, k: u16, game: &mut Game) {
@@ -82,7 +82,7 @@ pub(crate) fn capture_case(id: u32) -> Option<Vec<u8>> {
     );
     {
         if id < 16 {
-            CallEprojPreInstr(8844272, handle, &mut game);
+            call_eproj_pre_instr(8844272, handle, &mut game);
         } else {
             // Func1 y_vel=0/1 changes phase without the old undefined u32 read.
             slot(&mut game, a::EPROJ_Y_VEL, handle, (id & 1) as u16);
@@ -96,7 +96,7 @@ pub(crate) fn capture_case(id: u32) -> Option<Vec<u8>> {
                     handle,
                     if id == 18 { 128 } else { 300 },
                 );
-                CallEprojPreInstr(8829967, handle, &mut game);
+                call_eproj_pre_instr(8829967, handle, &mut game);
             }
         }
     }

@@ -149,7 +149,7 @@ impl Effects for Runtime<'_> {
         self.foreign(crate::game::music::clear_queue);
     }
     fn delayed_room_music(&mut self, frames: u16) {
-        self.foreign(|game| crate::game::music::PlayRoomMusicTrackAfterAFrames(frames, game));
+        self.foreign(|game| crate::game::music::play_room_music_track_after_aframes(frames, game));
     }
     // The verifier's callback edge is unsafe; the plain build calls safe code.
     #[allow(unused_unsafe)]
@@ -181,7 +181,7 @@ impl Effects for Runtime<'_> {
             SuitPickup::Varia => sm_game::player_transitions::suit::begin_pickup(runtime, false),
             SuitPickup::Gravity => sm_game::player_transitions::suit::begin_pickup(runtime, true),
             SuitPickup::Unknown(_) => {
-                runtime.foreign(|game| crate::rtl::Unreachable(game));
+                runtime.foreign(|game| crate::rtl::report_unreachable(game));
             }
         });
     }
@@ -276,9 +276,9 @@ impl Effects for Runtime<'_> {
             Diagnostic::MissingScroll=>loop {},
             Diagnostic::MissingDisplacement=>unsafe{
                 crate::c_library::printf(c"ERROR: PlmSetup_QuicksandSurfaceB is broken!!\n".as_ptr());
-                crate::rtl::Unreachable(game);0
+                crate::rtl::report_unreachable(game);0
             },
-            Diagnostic::Unreachable=>crate::rtl::Unreachable(game) as u8,
+            Diagnostic::Unreachable=>crate::rtl::report_unreachable(game) as u8,
             Diagnostic::UnsupportedSetup=>{
                 unsafe{crate::native_assertion! { '_c2rust_label; b"0\0", b"src/sm_84.c\0", 1370, b"uint8 UNUSED_sub_84B3E3(uint16)\0" };}
             },

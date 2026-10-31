@@ -36,7 +36,7 @@ pub unsafe extern "C" fn sm_verify_sprite_pool_candidate(
             stderr = __acrt_iob_func(2);
             game.VERIFY_ACTIVE = true;
             game.g_runmode = sm::cpu_infra::RM_THEIRS as u8;
-            if sm::cpu_infra::SnesInit(rom, &mut game).is_null() {
+            if sm::cpu_infra::snes_init(rom, &mut game).is_null() {
                 return Err("unable to load oracle ROM".to_owned());
             }
             initialize_verify_audio(&mut game)?;

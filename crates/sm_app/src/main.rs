@@ -10,7 +10,7 @@ use sdl2_sys::{
 use sm::c_library::{__assert_fail, stderr};
 use sm::c_library::{exit, fprintf, memcpy};
 use sm::game_state::{Game, GameOwner};
-use sm::host::Die;
+use sm::host::fatal_error;
 use sm::rtl::*;
 use sm::types::{FILE, RendererFuncs};
 /// Config file parsing.
@@ -143,7 +143,7 @@ pub unsafe fn rtl_draw_ppu_frame(
 #[unsafe(no_mangle)]
 unsafe extern "C-unwind" fn sm_host_die(message: *const c_char) {
     unsafe {
-        Die(message);
+        fatal_error(message);
     }
 }
 #[unsafe(no_mangle)]
@@ -184,7 +184,7 @@ unsafe extern "C-unwind" fn sm_host_start_game(
                 }
                 return true;
             }
-            !sm::cpu_infra::SnesInit(filename, game).is_null()
+            !sm::cpu_infra::snes_init(filename, game).is_null()
         })
     }
 }
@@ -233,15 +233,15 @@ unsafe extern "C-unwind" fn sm_host_prepare_pixels(owner: *const GameOwner) {
     unsafe {
         (*owner).with(|game| {
             let snes = game.g_snes;
-            sm::snes::ppu::PpuBeginDrawing((*snes).snes_ppu, (&raw mut PIXELS).cast(), 1024, 0);
-            sm::snes::ppu::PpuBeginDrawing((*snes).my_ppu, (&raw mut MY_PIXELS).cast(), 1024, 0);
+            sm::snes::ppu::ppu_begin_drawing((*snes).snes_ppu, (&raw mut PIXELS).cast(), 1024, 0);
+            sm::snes::ppu::ppu_begin_drawing((*snes).my_ppu, (&raw mut MY_PIXELS).cast(), 1024, 0);
         });
     }
 }
 #[unsafe(no_mangle)]
 unsafe extern "C-unwind" fn sm_host_read_sram(owner: *const GameOwner) {
     unsafe {
-        (*owner).with(|game| RtlReadSram(game));
+        (*owner).with(|game| rtl_read_sram(game));
     }
 }
 #[unsafe(no_mangle)]
@@ -282,7 +282,7 @@ unsafe extern "C-unwind" fn sm_host_command(owner: *const GameOwner, command: u3
 }
 #[unsafe(no_mangle)]
 unsafe extern "C-unwind" fn sm_host_run_frame(owner: *const GameOwner, inputs: i32) -> bool {
-    unsafe { (*owner).with(|game| RtlRunFrame(inputs, game)) }
+    unsafe { (*owner).with(|game| rtl_run_frame(inputs, game)) }
 }
 #[unsafe(no_mangle)]
 unsafe extern "C-unwind" fn sm_host_present(
@@ -302,7 +302,7 @@ unsafe extern "C-unwind" fn sm_host_present(
 }
 #[unsafe(no_mangle)]
 unsafe extern "C-unwind" fn sm_host_render_scale(game: *mut Game, flags: u32) -> i32 {
-    unsafe { sm::snes::ppu::PpuGetCurrentRenderScale((*(*game).g_snes).ppu, flags) }
+    unsafe { sm::snes::ppu::ppu_get_current_render_scale((*(*game).g_snes).ppu, flags) }
 }
 #[unsafe(no_mangle)]
 unsafe extern "C-unwind" fn sm_host_copy_frame(
@@ -326,13 +326,13 @@ unsafe extern "C-unwind" fn sm_host_fps(value: f32) -> i32 {
 #[unsafe(no_mangle)]
 unsafe extern "C-unwind" fn sm_host_save_load(game: *mut Game, operation: i32, slot: i32) {
     unsafe {
-        RtlSaveLoad(operation, slot, &mut *game);
+        rtl_save_load(operation, slot, &mut *game);
     }
 }
 #[unsafe(no_mangle)]
 unsafe extern "C-unwind" fn sm_host_cheat(game: *mut Game, code: c_char) {
     unsafe {
-        RtlCheat(code, &mut *game);
+        rtl_cheat(code, &mut *game);
     }
 }
 #[unsafe(no_mangle)]
@@ -341,9 +341,9 @@ unsafe extern "C-unwind" fn sm_host_game_command(game: *mut Game, command: u32, 
         let game = &mut *game;
         match command {
             115 => game.g_other_image = !game.g_other_image,
-            116 => RtlClearKeyLog(game),
-            117 => RtlStopReplay(game),
-            119 => RtlReset(1, game),
+            116 => rtl_clear_key_log(game),
+            117 => rtl_stop_replay(game),
+            119 => rtl_reset(1, game),
             127 => game.g_new_ppu = flags & 1 != 0,
             _ => unreachable!(),
         }
@@ -402,7 +402,7 @@ unsafe extern "C" fn sm_host_audio_callback(userdata: *mut c_void, stream: *mut 
             (*audio.samples.get()).deliver_to(
                 length,
                 volume as u8,
-                |block| RtlRenderAudio(block, game),
+                |block| rtl_render_audio(block, game),
                 |index, value| stream.add(index).write(value),
             );
             sm_desktop_end_audio();

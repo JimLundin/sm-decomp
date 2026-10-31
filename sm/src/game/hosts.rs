@@ -175,11 +175,11 @@ const _: () = {
 
 impl sm_game::actors::mother_brain_neck::Host for Game {
     fn sine_times(&mut self, length: u16, angle: u16) -> u16 {
-        crate::game::sm_a9::ComputeSinMult(length, angle, self)
+        crate::game::sm_a9::sin_times(length, angle, self)
     }
 
     fn cosine_times(&mut self, length: u16, angle: u16) -> u16 {
-        crate::game::sm_a9::ComputeCosMult(length, angle, self)
+        crate::game::sm_a9::cos_times(length, angle, self)
     }
 }
 
@@ -642,11 +642,11 @@ impl sm_game::actors::ridley::Host for Game {
     }
 
     fn hardware_sine(&mut self, amplitude: u16, angle: u16) -> u16 {
-        crate::game::sm_a9::ComputeSinMult(amplitude, angle, self)
+        crate::game::sm_a9::sin_times(amplitude, angle, self)
     }
 
     fn hardware_cosine(&mut self, amplitude: u16, angle: u16) -> u16 {
-        crate::game::sm_a9::ComputeCosMult(amplitude, angle, self)
+        crate::game::sm_a9::cos_times(amplitude, angle, self)
     }
 
     fn move_liquid(&mut self, target: u16, velocity: u16, delay: u16) {
@@ -875,7 +875,7 @@ impl sm_game::lease::Lease for crate::game::session_runtime::Runtime<'_> {
     }
     fn native_unreachable(&mut self) {
         self.foreign(|game| {
-            crate::rtl::Unreachable(game);
+            crate::rtl::report_unreachable(game);
         });
     }
     fn native_animation_unreachable(&mut self) -> u16 {

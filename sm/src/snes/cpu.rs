@@ -1,6 +1,6 @@
 use crate::c_library::printf;
 use crate::execution::Execution;
-use crate::host::Die;
+use crate::host::fatal_error;
 use crate::rtl::words;
 use crate::types::Cpu;
 use ::core::ffi::{c_char, c_void};
@@ -98,7 +98,7 @@ unsafe fn fetch_word(cpu: *mut Cpu, context: &mut Execution<'_>) -> u16 {
     }
 }
 
-pub fn cpu_getFlags(cpu: &Cpu) -> u8 {
+pub fn cpu_get_flags(cpu: &Cpu) -> u8 {
     (u8::from(cpu.n) << 7)
         | (u8::from(cpu.v) << 6)
         | (u8::from(cpu.mf) << 5)
@@ -109,7 +109,7 @@ pub fn cpu_getFlags(cpu: &Cpu) -> u8 {
         | u8::from(cpu.c)
 }
 
-pub fn cpu_setFlags(val: u8, cpu: &mut Cpu) {
+pub fn cpu_set_flags(val: u8, cpu: &mut Cpu) {
     set_fields! {[cpu]; n = val & 0x80 != 0, v = val & 0x40 != 0, mf = val & 0x20 != 0,
     xf = val & 0x10 != 0, d = val & 0x08 != 0, i = val & 0x04 != 0, z = val & 0x02 != 0,
     c = val & 0x01 != 0, };
@@ -176,7 +176,7 @@ unsafe fn service_interrupt(cpu: *mut Cpu, irq: bool, context: &mut Execution<'_
             (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
         }
         push_word(cpu, (*cpu).pc, context);
-        let flags = cpu_getFlags(&*cpu);
+        let flags = cpu_get_flags(&*cpu);
         // Bit 4 is the cleared B flag on an emulation-mode hardware interrupt.
         push_byte(cpu, if (*cpu).e { flags & !0x10 } else { flags }, context);
         (*cpu).i = true;
@@ -417,7 +417,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, context: &mut Execution
                 fetch_byte(cpu, context);
                 push_byte(cpu, (*cpu).k, context);
                 push_word(cpu, (*cpu).pc, context);
-                push_byte(cpu, cpu_getFlags(&*cpu), context);
+                push_byte(cpu, cpu_get_flags(&*cpu), context);
                 set_fields! {[(*cpu)]; cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1), i = true,
                 d = false, k = 0_, pc = read_word(0xffe4_, 0xffe5_, context), };
             }
@@ -425,14 +425,14 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, context: &mut Execution
             0x22 => {
                 let address = fetch_long_address(cpu, context);
                 let target = address as u16;
-                let newK = (address >> 16) as u8;
+                let new_k = (address >> 16) as u8;
                 push_byte(cpu, (*cpu).k, context);
                 push_word(cpu, (*cpu).pc.wrapping_sub(1), context);
                 (*cpu).pc = target;
-                (*cpu).k = newK;
+                (*cpu).k = new_k;
             }
             0x40 => {
-                cpu_setFlags(pull_byte(cpu, context), &mut *cpu);
+                cpu_set_flags(pull_byte(cpu, context), &mut *cpu);
                 (*cpu).pc = pull_word(cpu, context);
                 if !(*cpu).e {
                     (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
@@ -492,7 +492,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, context: &mut Execution
                         words!(i32, (*cpu), k, pc),
                     );
                     dump_cpu_history(context);
-                    Die(b"The game has crashed!\n\0" as *const u8 as *const c_char);
+                    fatal_error(b"The game has crashed!\n\0" as *const u8 as *const c_char);
                 }
                 (*cpu).k = target_bank;
                 (*cpu).pc = target;

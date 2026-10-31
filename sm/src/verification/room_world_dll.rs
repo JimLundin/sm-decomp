@@ -32,19 +32,19 @@ pub unsafe extern "C" fn sm_verify_room_world_case(
             let owner = sm::verify_room_world_owner(id);
             owner.with(|game| -> Result<(), String> {
                 game.VERIFY_ACTIVE = true;
-                if sm::cpu_infra::SnesInit(rom, game).is_null() {
+                if sm::cpu_infra::snes_init(rom, game).is_null() {
                     return Err("unable to initialize local original ROM".into());
                 }
                 initialize_verify_audio(game)?;
                 // Match the actual headless host: reset preserves these renderer targets.
                 let snes = game.g_snes;
-                sm::snes::ppu::PpuBeginDrawing(
+                sm::snes::ppu::ppu_begin_drawing(
                     (*snes).snes_ppu.cast(),
                     (&raw mut PIXELS).cast(),
                     1024,
                     0,
                 );
-                sm::snes::ppu::PpuBeginDrawing(
+                sm::snes::ppu::ppu_begin_drawing(
                     (*snes).my_ppu.cast(),
                     (&raw mut MY_PIXELS).cast(),
                     1024,
@@ -163,7 +163,7 @@ unsafe fn returning_die_short_load_case(rom: &CStr, fixture: &CStr) -> Result<()
                 let _scope = ReturningDieReadScope;
                 RETURNING_DIE_READ_CALLS.store(0, Ordering::SeqCst);
                 assert!(!RETURNING_DIE_READ_ACTIVE.swap(true, Ordering::SeqCst));
-                sm::rtl::StateRecorder_Load(&mut file, true, game);
+                sm::rtl::load_state_recording(&mut file, true, game);
                 assert_eq!(RETURNING_DIE_READ_CALLS.load(Ordering::SeqCst), 1);
             });
             assert!(!RETURNING_DIE_READ_ACTIVE.load(Ordering::SeqCst));

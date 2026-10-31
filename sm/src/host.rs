@@ -24,25 +24,25 @@ fn hooks() -> &'static HostHooks {
         .expect("host callbacks must be installed before library use")
 }
 
-pub unsafe fn Die(error: *const c_char) {
+pub unsafe fn fatal_error(error: *const c_char) {
     unsafe {
         (hooks().die)(error);
     }
 }
 
-pub unsafe fn Warning(error: *const c_char) {
+pub unsafe fn report_warning(error: *const c_char) {
     unsafe {
         (hooks().warning)(error);
     }
 }
 
-pub unsafe fn RtlApuLock() {
+pub unsafe fn rtl_apu_lock() {
     unsafe {
         (hooks().apu_lock)();
     }
 }
 
-pub unsafe fn RtlApuUnlock() {
+pub unsafe fn rtl_apu_unlock() {
     unsafe {
         (hooks().apu_unlock)();
     }

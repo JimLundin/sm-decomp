@@ -35,23 +35,23 @@ unsafe fn write_register(hist: *mut DspRegWriteHistory, dsp: *mut Dsp, reg: u8, 
         }
     }
 }
-pub unsafe fn Dsp_Write(p: *mut SpcPlayer, reg: u8, value: u8) {
+pub unsafe fn player_dsp_write(p: *mut SpcPlayer, reg: u8, value: u8) {
     unsafe {
         write_register((*p).state.reg_write_history, (*p).state.dsp, reg, value);
     }
 }
-pub unsafe fn WritePitchInner(p: *mut SpcPlayer, c: *mut Channel, pitch: u16) {
+pub unsafe fn write_pitch_inner(p: *mut SpcPlayer, c: *mut Channel, pitch: u16) {
     unsafe {
         sequencer::pitch(
             (*c).instrument_pitch_base,
             pitch,
             || (*p).state.cur_chan_bit & (*p).state.is_chan_on != 0,
             || (*c).index,
-            &mut |reg, value| Dsp_Write(p, reg, value),
+            &mut |reg, value| player_dsp_write(p, reg, value),
         );
     }
 }
-pub unsafe fn Channel_SetInstrument_NoSetId(p: *mut SpcPlayer, c: *mut Channel, instrument: u8) {
+pub unsafe fn channel_set_instrument_no_set_id(p: *mut SpcPlayer, c: *mut Channel, instrument: u8) {
     unsafe {
         let ram = (*p).ram.clone();
         let (hist, dsp) = ((*p).state.reg_write_history, (*p).state.dsp);
@@ -75,7 +75,7 @@ pub unsafe fn Channel_SetInstrument_NoSetId(p: *mut SpcPlayer, c: *mut Channel, 
         }
     }
 }
-unsafe fn WriteVolumeToDsp(p: *mut SpcPlayer, c: *mut Channel, volume: u16) {
+unsafe fn write_volume_to_dsp(p: *mut SpcPlayer, c: *mut Channel, volume: u16) {
     unsafe {
         let ram = (*p).ram.clone();
         let (hist, dsp) = ((*p).state.reg_write_history, (*p).state.dsp);
@@ -98,7 +98,7 @@ unsafe fn WriteVolumeToDsp(p: *mut SpcPlayer, c: *mut Channel, volume: u16) {
         );
     }
 }
-unsafe fn SetupEchoParameter_EDL(p: *mut SpcPlayer, value: u8) {
+unsafe fn setup_echo_parameter_edl(p: *mut SpcPlayer, value: u8) {
     unsafe {
         let ram = (*p).ram.clone();
         let (hist, dsp) = ((*p).state.reg_write_history, (*p).state.dsp);
@@ -109,7 +109,7 @@ unsafe fn SetupEchoParameter_EDL(p: *mut SpcPlayer, value: u8) {
         .setup_echo(value);
     }
 }
-unsafe fn HandlePanAndSweep(p: *mut SpcPlayer, channel: usize) {
+unsafe fn handle_pan_and_sweep(p: *mut SpcPlayer, channel: usize) {
     unsafe {
         let ram = (*p).ram.clone();
         let (hist, dsp) = ((*p).state.reg_write_history, (*p).state.dsp);
@@ -120,7 +120,7 @@ unsafe fn HandlePanAndSweep(p: *mut SpcPlayer, channel: usize) {
         .pan_and_sweep(channel);
     }
 }
-unsafe fn Music_HandleCmdFromSnes(p: *mut SpcPlayer) {
+unsafe fn music_handle_cmd_from_snes(p: *mut SpcPlayer) {
     unsafe {
         let ram = (*p).ram.clone();
         let (hist, dsp) = ((*p).state.reg_write_history, (*p).state.dsp);
@@ -132,24 +132,24 @@ unsafe fn Music_HandleCmdFromSnes(p: *mut SpcPlayer) {
     }
 }
 
-unsafe fn Spc_Loop_Part1(p: *mut SpcPlayer) {
+unsafe fn spc_loop_part1(p: *mut SpcPlayer) {
     unsafe {
-        Dsp_Write(p, KOF as i32 as u8, (*p).state.key_OFF);
-        Dsp_Write(p, PMON as i32 as u8, 0);
-        Dsp_Write(p, NON as i32 as u8, (*p).state.reg_NON);
-        Dsp_Write(p, KOF as i32 as u8, 0);
-        Dsp_Write(p, KON as i32 as u8, (*p).state.key_ON);
+        player_dsp_write(p, KOF as i32 as u8, (*p).state.key_OFF);
+        player_dsp_write(p, PMON as i32 as u8, 0);
+        player_dsp_write(p, NON as i32 as u8, (*p).state.reg_NON);
+        player_dsp_write(p, KOF as i32 as u8, 0);
+        player_dsp_write(p, KON as i32 as u8, (*p).state.key_ON);
         if (*p).state.echo_stored_time & 0x80 == 0 {
-            Dsp_Write(p, FLG as i32 as u8, (*p).state.reg_FLG);
+            player_dsp_write(p, FLG as i32 as u8, (*p).state.reg_FLG);
             if (*p).state.echo_stored_time as i32 == (*p).state.echo_parameter_EDL as i32 {
-                Dsp_Write(p, EON as i32 as u8, (*p).state.reg_EON);
-                Dsp_Write(p, EFB as i32 as u8, (*p).state.reg_EFB);
-                Dsp_Write(
+                player_dsp_write(p, EON as i32 as u8, (*p).state.reg_EON);
+                player_dsp_write(p, EFB as i32 as u8, (*p).state.reg_EFB);
+                player_dsp_write(
                     p,
                     EVOLR as i32 as u8,
                     ((*p).state.echo_volume_right >> 8) as u8,
                 );
-                Dsp_Write(
+                player_dsp_write(
                     p,
                     EVOLL as i32 as u8,
                     ((*p).state.echo_volume_left >> 8) as u8,
@@ -160,14 +160,14 @@ unsafe fn Spc_Loop_Part1(p: *mut SpcPlayer) {
         (*p).state.key_OFF = (*p).state.key_ON;
     }
 }
-unsafe fn Spc_Loop_Part2(p: *mut SpcPlayer, ticks: u8) {
+unsafe fn spc_loop_part2(p: *mut SpcPlayer, ticks: u8) {
     unsafe {
         let mut t = u16::from((*p).state.sfx_timer_accum) + u16::from(ticks.wrapping_mul(0x20));
         (*p).state.sfx_timer_accum = t as u8;
         if t >= 0x100 {
-            Sfx1_HandleCmdFromSnes(p);
-            Sfx2_HandleCmdFromSnes(p);
-            Sfx3_HandleCmdFromSnes(p);
+            sfx1_handle_cmd_from_snes(p);
+            sfx2_handle_cmd_from_snes(p);
+            sfx3_handle_cmd_from_snes(p);
             if (*p).state.echo_stored_time as i32 != (*p).state.echo_parameter_EDL as i32 {
                 (*p).state.echo_stored_time = (*p).state.echo_stored_time.wrapping_add(1);
             }
@@ -177,7 +177,7 @@ unsafe fn Spc_Loop_Part2(p: *mut SpcPlayer, ticks: u8) {
         (*p).state.main_tempo_accum = t as u8;
         if t >= 256 {
             do_until! { (*p).state.fast_forward == 0 ;
-                Music_HandleCmdFromSnes(p);
+                music_handle_cmd_from_snes(p);
             }
         } else if (*p).state.port_to_snes[0i32 as usize] != 0 {
             let mut channel = 0;
@@ -189,7 +189,7 @@ unsafe fn Spc_Loop_Part2(p: *mut SpcPlayer, ticks: u8) {
                     .to_ne_bytes()[1]
                     != 0
                 {
-                    HandlePanAndSweep(p, channel);
+                    handle_pan_and_sweep(p, channel);
                 }
                 (*p).state.cur_chan_bit = (((*p).state.cur_chan_bit as i32) << 1) as u8;
                 channel += 1;
@@ -197,30 +197,30 @@ unsafe fn Spc_Loop_Part2(p: *mut SpcPlayer, ticks: u8) {
         }
     }
 }
-unsafe fn Vector_Reset_Spc(p: *mut SpcPlayer) {
+unsafe fn vector_reset_spc(p: *mut SpcPlayer) {
     unsafe {
         dsp_reset((*p).state.dsp);
         sequencer::prepare_initialization(&mut (*p).state, &(*p).ram);
-        SetupEchoParameter_EDL(p, 1);
+        setup_echo_parameter_edl(p, 1);
         // These three scalar borrows are disjoint from the live output links.
         // Each write retains the original fresh history/DSP selection.
         sequencer::finish_initialization(
             &mut (*p).state.reg_FLG,
             &mut (*p).state.tempo,
             &mut (*p).state.timer_cycles,
-            |register, value| Dsp_Write(p, register, value),
+            |register, value| player_dsp_write(p, register, value),
         );
     }
 }
 // Only fixed, disjoint SFX group fields reach these private adapters.
 // Off-table Channel effects run after every sequencing-state borrow ends.
 // Only imported off-table resets reach this original native field adapter.
-unsafe fn Sfx_Chan_Reset(p: *mut SpcPlayer, group: usize, index: usize, channel: usize) {
+unsafe fn sfx_chan_reset(p: *mut SpcPlayer, group: usize, index: usize, channel: usize) {
     unsafe {
         let (sr, channels, _) = sound_effect_channels(p, group);
         let s = channels.add(index);
         let c = (&raw mut (*p).state.channel as *mut Channel).offset(channel as isize);
-        Channel_SetInstrument_NoSetId(p, c, (*c).instrument_id);
+        channel_set_instrument_no_set_id(p, c, (*c).instrument_id);
         (*c).final_volume = (*s).volume;
         (*c).pan_flag_with_phase_invert = (*s).phase_invert;
         sequencer::Sfx::finish_reset(&mut *sr);
@@ -268,10 +268,10 @@ static SFX3_CONFIG: [u8; 47] = [
     0, 1, 2, 3, 3, 2, 4, 4, 2, 5, 3, 2, 2, 4, 3, 2, 2, 5, 2, 4, 4, 2, 2, 2, 4, 2, 4, 2, 2, 2, 2, 5,
     5, 2, 2, 5, 2, 2, 2, 2, 2, 2, 2, 4, 2, 4, 2,
 ];
-unsafe fn SfxChan_GetByte(p: *mut SpcPlayer, s: *mut SfxChan) -> u8 {
+unsafe fn sfx_chan_get_byte(p: *mut SpcPlayer, s: *mut SfxChan) -> u8 {
     unsafe { sequencer::Sfx::read_byte(&(*p).ram, &mut *s) }
 }
-unsafe fn Sfx_RunChan(p: *mut SpcPlayer, group: usize, index: usize) {
+unsafe fn sfx_run_chan(p: *mut SpcPlayer, group: usize, index: usize) {
     unsafe {
         let effect = {
             let (state, ram) = (&mut (*p).state, &(*p).ram);
@@ -290,10 +290,10 @@ unsafe fn Sfx_RunChan(p: *mut SpcPlayer, group: usize, index: usize) {
         match effect {
             None => {}
             Some(sequencer::SfxNativeEffect::Reset(channel)) => {
-                Sfx_Chan_Reset(p, group, index, channel);
+                sfx_chan_reset(p, group, index, channel);
             }
             Some(sequencer::SfxNativeEffect::Pitch(channel, pitch)) => {
-                WritePitchInner(
+                write_pitch_inner(
                     p,
                     (&raw mut (*p).state.channel as *mut Channel).offset(channel as isize),
                     pitch,
@@ -305,16 +305,16 @@ unsafe fn Sfx_RunChan(p: *mut SpcPlayer, group: usize, index: usize) {
                     let (_, channels, _) = sound_effect_channels(p, group);
                     let s = channels.add(index);
                     let c = (&raw mut (*p).state.channel as *mut Channel).offset(channel as isize);
-                    Channel_SetInstrument_NoSetId(p, c, a);
-                    (*c).final_volume = SfxChan_GetByte(p, s);
+                    channel_set_instrument_no_set_id(p, c, a);
+                    (*c).final_volume = sfx_chan_get_byte(p, s);
                     (*c).pan_flag_with_phase_invert = 0;
-                    WriteVolumeToDsp(p, c, ((SfxChan_GetByte(p, s) as i32) << 8) as u16);
-                    let note = SfxChan_GetByte(p, s);
+                    write_volume_to_dsp(p, c, ((sfx_chan_get_byte(p, s) as i32) << 8) as u16);
+                    let note = sfx_chan_get_byte(p, s);
                     sequencer::Sfx::set_note(&mut *s, note);
-                    WritePitchInner(p, c, (((*s).note as i32) << 8 | (*s).subnote as i32) as u16);
-                    (*s).instr_timer = SfxChan_GetByte(p, s);
+                    write_pitch_inner(p, c, (((*s).note as i32) << 8 | (*s).subnote as i32) as u16);
+                    (*s).instr_timer = sfx_chan_get_byte(p, s);
                     sequencer::Sfx::finish_note(&*s, &mut (*p).state.key_ON, |reg, value| {
-                        Dsp_Write(p, reg, value)
+                        player_dsp_write(p, reg, value)
                     });
                 }
                 let pitch = {
@@ -329,7 +329,7 @@ unsafe fn Sfx_RunChan(p: *mut SpcPlayer, group: usize, index: usize) {
                     )
                 };
                 if let Some((channel, pitch)) = pitch {
-                    WritePitchInner(
+                    write_pitch_inner(
                         p,
                         (&raw mut (*p).state.channel as *mut Channel).offset(channel as isize),
                         pitch,
@@ -339,15 +339,15 @@ unsafe fn Sfx_RunChan(p: *mut SpcPlayer, group: usize, index: usize) {
         }
     }
 }
-unsafe fn Sfx_Init(p: *mut SpcPlayer, which_sfx: usize) {
+unsafe fn sfx_init(p: *mut SpcPlayer, which_sfx: usize) {
     unsafe {
         sequencer::SfxGroups::initialize(&mut (*p).state, which_sfx);
     }
 }
 crate::forward_calls! { pub unsafe fn (p: *mut SpcPlayer);
-    Sfx1_Init => Sfx_Init(p, 0);
-    Sfx2_Init => Sfx_Init(p, 1);
-    Sfx3_Init => Sfx_Init(p, 2);
+    sfx1_init => sfx_init(p, 0);
+    sfx2_init => sfx_init(p, 1);
+    sfx3_init => sfx_init(p, 2);
 }
 /// Own the native player and its separate DSP without moving initialized nodes.
 /// Raw views borrow these allocations; live native references must be exclusive.
@@ -486,23 +486,23 @@ impl NativePlayer {
     }
 }
 
-pub unsafe fn SpcPlayer_Initialize(p: *mut SpcPlayer) {
+pub unsafe fn spc_player_initialize(p: *mut SpcPlayer) {
     unsafe {
-        Vector_Reset_Spc(p);
-        Spc_Loop_Part1(p);
+        vector_reset_spc(p);
+        spc_loop_part1(p);
     }
 }
-pub unsafe fn SpcPlayer_CopyVariablesToRam(p: *mut SpcPlayer) {
+pub unsafe fn spc_player_copy_variables_to_ram(p: *mut SpcPlayer) {
     unsafe {
         crate::native_player_ram::save(&(*p).state, &(*p).ram);
     }
 }
-pub unsafe fn SpcPlayer_CopyVariablesFromRam(p: *mut SpcPlayer) {
+pub unsafe fn spc_player_copy_variables_from_ram(p: *mut SpcPlayer) {
     unsafe {
         crate::native_player_ram::load(&mut (*p).state, &(*p).ram);
     }
 }
-pub unsafe fn SpcPlayer_GenerateSamples(p: *mut SpcPlayer) {
+pub unsafe fn spc_player_generate_samples(p: *mut SpcPlayer) {
     unsafe {
         crate::native_assertion! {
             '_c2rust_label: (*p).state.timer_cycles as i32 <= 64;
@@ -516,8 +516,8 @@ pub unsafe fn SpcPlayer_GenerateSamples(p: *mut SpcPlayer) {
         };
         do_until! { (*(*p).state.dsp).state.sampleOffset as i32 == 534;
             if (*p).state.timer_cycles as i32 >= 64 {
-                Spc_Loop_Part2(p, (*p).state.timer_cycles >> 6);
-                Spc_Loop_Part1(p);
+                spc_loop_part2(p, (*p).state.timer_cycles >> 6);
+                spc_loop_part1(p);
                 (*p).state.timer_cycles = (*p).state.timer_cycles & 63;
             }
             let mut n: i32 = 534 - (*(*p).state.dsp).state.sampleOffset as i32;
@@ -533,7 +533,7 @@ pub unsafe fn SpcPlayer_GenerateSamples(p: *mut SpcPlayer) {
         }
     }
 }
-pub unsafe fn SpcPlayer_Upload(p: *mut SpcPlayer, image: crate::rom::RomImage, source: usize) {
+pub unsafe fn spc_player_upload(p: *mut SpcPlayer, image: crate::rom::RomImage, source: usize) {
     unsafe {
         let ram = (*p).ram.clone();
         let (hist, dsp) = ((*p).state.reg_write_history, (*p).state.dsp);
@@ -601,7 +601,7 @@ unsafe fn handle_sound_effect_command(p: *mut SpcPlayer, group: usize) {
                     )
                 };
                 if let Some(channel) = channel {
-                    Sfx_Chan_Reset(p, group, i, channel);
+                    sfx_chan_reset(p, group, i, channel);
                 }
             }
         }
@@ -619,22 +619,22 @@ unsafe fn process_sound_effect(p: *mut SpcPlayer, group: usize) {
             sequencer::SfxGroups::fields(&mut (*p).state, group).0,
         ) {
             crate::verify_probe::hit(["sfx.init.1", "sfx.init.2", "sfx.init.3"][group]);
-            Sfx_Init(p, group);
+            sfx_init(p, group);
             sequencer::SfxGroups::install_pointers(&mut (*p).state, &(*p).ram, group);
         }
         for i in 0..count {
-            Sfx_RunChan(p, group, i);
+            sfx_run_chan(p, group, i);
         }
     }
 }
 
 crate::forward_calls! { pub unsafe fn (p: *mut SpcPlayer);
-    Sfx1_HandleCmdFromSnes => handle_sound_effect_command(p, 0);
-    Sfx2_HandleCmdFromSnes => handle_sound_effect_command(p, 1);
-    Sfx3_HandleCmdFromSnes => handle_sound_effect_command(p, 2);
-    Sfx1_Process => process_sound_effect(p, 0);
-    Sfx2_Process => process_sound_effect(p, 1);
-    Sfx3_Process => process_sound_effect(p, 2);
+    sfx1_handle_cmd_from_snes => handle_sound_effect_command(p, 0);
+    sfx2_handle_cmd_from_snes => handle_sound_effect_command(p, 1);
+    sfx3_handle_cmd_from_snes => handle_sound_effect_command(p, 2);
+    sfx1_process => process_sound_effect(p, 0);
+    sfx2_process => process_sound_effect(p, 1);
+    sfx3_process => process_sound_effect(p, 2);
 }
 
 // The compatibility player owns these fields and RAM. Sequencing emits each

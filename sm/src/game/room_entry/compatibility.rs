@@ -93,10 +93,10 @@ impl EntryEffects for Runtime<'_> {
         self.foreign(|game| unsafe {
             match effect {
                 LeafEffect::QueueDoorSound => {
-                    game::music::QueueSfx2_Max15(0x71, game);
+                    game::music::queue_sfx2_max15(0x71, game);
                 }
                 LeafEffect::ResetSoundQueues => {
-                    game::music::ResetSoundQueues(game);
+                    game::music::clear_sound_queues(game);
                 }
                 LeafEffect::ClearTransitionSounds => {
                     game::session_runtime::player_command(0x1d, game);
@@ -112,7 +112,7 @@ impl EntryEffects for Runtime<'_> {
                 }
                 LeafEffect::EnsureSamusDrawn => {
                     if crate::ram_map::word!(game.ELEVATOR_FLAGS) == 0 {
-                        game::samus_animation::Samus_DrawWhenNotAnimatingOrDying(game);
+                        game::samus_animation::samus_draw_when_not_animating_or_dying(game);
                     }
                 }
                 LeafEffect::QueueEnemyTiles => {
@@ -143,13 +143,13 @@ impl EntryEffects for Runtime<'_> {
                     game::room_state::load_enemy_graphics(game);
                 }
                 LeafEffect::LoadRoomMusic => {
-                    game::music::LoadRoomMusic(game);
+                    game::music::load_room_music(game);
                 }
                 LeafEffect::UpdateMusicTrack => {
-                    game::music::UpdateMusicTrackIndex(game);
+                    game::music::update_music_track_index(game);
                 }
                 LeafEffect::LoadChangedMusic => {
-                    game::music::LoadNewMusicTrackIfChanged(game);
+                    game::music::load_new_music_track_if_changed(game);
                 }
                 LeafEffect::UpdateBeamTilesAndPalette => {
                     game::visual_runtime::update_beam_tiles_and_palette(game);
@@ -244,7 +244,7 @@ impl EntryEffects for Runtime<'_> {
                             game::display_refresh::enable(enabled, game)
                         }
                         game::music::MusicWaitEffect::AdvanceQueue => {
-                            game::music::HandleMusicQueue(game)
+                            game::music::handle_music_queue(game)
                         }
                     })
                 }
@@ -261,7 +261,7 @@ impl EntryEffects for Runtime<'_> {
         self.foreign(|game| game.sfx_queue_is_empty(index))
     }
     fn queued_music(&mut self) -> u8 {
-        self.foreign(game::music::HasQueuedMusic)
+        self.foreign(game::music::has_queued_music)
     }
     fn samus_command(&mut self, command: u16) {
         self.foreign(|game| game::session_runtime::player_command(command, game));
@@ -295,14 +295,14 @@ impl EntryEffects for Runtime<'_> {
             DeviceWord::Dma1Count => DAS1L,
             DeviceWord::DmaEnable => MDMAEN,
         };
-        self.foreign(|game| unsafe { crate::rtl::WriteRegWord(reg as u16, value, game) });
+        self.foreign(|game| unsafe { crate::rtl::write_reg_word(reg as u16, value, game) });
     }
     fn device_byte(&mut self, register: DeviceByte, value: u8) {
         let reg = match register {
             DeviceByte::VramIncrement => VMAIN,
             DeviceByte::DmaEnable => MDMAEN,
         };
-        self.foreign(|game| unsafe { crate::rtl::WriteReg(reg as u16, value, game) });
+        self.foreign(|game| unsafe { crate::rtl::write_reg(reg as u16, value, game) });
     }
     fn clear_buffer(&mut self, operation: BufferClear) {
         self.foreign(|game| unsafe {
@@ -333,11 +333,11 @@ impl EntryEffects for Runtime<'_> {
         });
     }
     fn invalid_stage(&mut self, _full_address: u32) -> u8 {
-        self.foreign(|game| crate::rtl::Unreachable(game) as u8)
+        self.foreign(|game| crate::rtl::report_unreachable(game) as u8)
     }
     fn device_vram_address(&mut self, destination: VramDestination) {
         let value = destination.compatibility_word();
-        self.foreign(|game| unsafe { crate::rtl::WriteRegWord(VMADDL as u16, value, game) });
+        self.foreign(|game| unsafe { crate::rtl::write_reg_word(VMADDL as u16, value, game) });
     }
     fn decompress(&mut self, source: AssetSource, destination: InstallBuffer) {
         let palette = matches!(destination, InstallBuffer::Palette);
@@ -434,7 +434,7 @@ impl EntryEffects for Runtime<'_> {
         };
         self.foreign(|game| match prepared {
             Some(stream) => game::display_refresh::decompress_prepared_vram(&stream, target, game),
-            None => game::display_refresh::DecompressToVRAM(legacy.unwrap(), target, game),
+            None => game::display_refresh::decompress_to_vram(legacy.unwrap(), target, game),
         });
     }
     fn copy_vram(&mut self, destination: VramDestination, source: AssetSource, bytes: u16) {

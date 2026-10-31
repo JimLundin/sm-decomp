@@ -14,7 +14,7 @@ the same change.
 
 ## `LEGACY(message-text)`: checks that compare failure text
 
-The verifier asserts on the exact text of panics and `Die` calls. That ties the
+The verifier asserts on the exact text of panics and `fatal_error` calls. That ties the
 engine to wording it does not care about: production code has to spell out
 `index out of bounds: the len is N but the index is i` by hand, and a file read
 still reports `fread failed` after the C stream calls were replaced by
@@ -26,7 +26,7 @@ rejected, and where execution stopped), not the words.
 | `crates/sm_data/src/table.rs` (`check_index`) | slice-index panic text for jump-table selectors |
 | `crates/sm_game/src/player_projectiles/{weapons,specials,bomb_terrain}.rs` | 11 hand-written slice-index panics |
 | `crates/sm_game/src/actors/mother_brain_fight.rs` | 1 hand-written slice-index panic |
-| `sm/src/rtl.rs` (`read_file_block`) | `Die("fread failed\n")` on a short state-file read |
+| `sm/src/rtl.rs` (`read_file_block`) | `fatal_error("fread failed\n")` on a short state-file read |
 
 | Checks that compare the text | Tags |
 | --- | --- |

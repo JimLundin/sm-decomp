@@ -148,7 +148,7 @@ impl sm_game::actors::species::AiHost for Game {
         unsafe { native_ai(ea, self) }
     }
     fn write_multiplicand(&mut self, operand: u8) {
-        unsafe { crate::rtl::WriteReg(crate::rtl::WRMPYA as u16, operand, self) };
+        unsafe { crate::rtl::write_reg(crate::rtl::WRMPYA as u16, operand, self) };
     }
     fn grapple_kill(&mut self) {
         actors::combat::die(&mut Runtime::new(self), actors::api::DeathKind::Grapple);
@@ -171,7 +171,7 @@ fn spore_spawn_function(ea: u32, k: u16, game: &mut Game) {
         10873626 => (),
         10873682 => actors::spore_spawn::orbit(k, game),
         _ => {
-            crate::rtl::Unreachable(game);
+            crate::rtl::report_unreachable(game);
         }
     }
 }
@@ -933,7 +933,7 @@ impl Host for Runtime<'_> {
         self.foreign(|g| crate::rtl::invalid_interrupt(g));
     }
     fn unknown(&mut self) -> bool {
-        self.foreign(|g| crate::rtl::Unreachable(g))
+        self.foreign(|g| crate::rtl::report_unreachable(g))
     }
     fn room_level(&self, cell: u16) -> u16 {
         self.word(0x10002 + usize::from(cell) * 2)
@@ -1137,7 +1137,7 @@ use sm_game::enemy_script::EnemyScript;
 
 crate::game::callback_dispatch! {
     unsafe fn native_ai(ea: u32, game: &mut Game) => ea;
-    call (game); default { crate::rtl::Unreachable(game); };
+    call (game); default { crate::rtl::report_unreachable(game); };
     @external {
         10715136 | 10846208 | 10911744 | 10977280 | 11042816 | 11763712 => [actor_api::resume_ai(&mut Runtime::new(game))];
         10649605 | 10780677 => [actor_api::latch(&mut Runtime::new(game), LatchMode::Passive)];
@@ -1151,7 +1151,7 @@ crate::game::callback_dispatch! {
             crate::game::actors::reference_population_animation::dispatch_noop(game);
         }];
 
-        10730277 => [{ let address = bang::main_ai(game); crate::cpu_infra::Call(address, game); }];
+        10730277 => [{ let address = bang::main_ai(game); crate::cpu_infra::call_routine(address, game); }];
         10738716 => reflec_shot;
         10715146 => [crate::game::actors::combat::die(&mut Runtime::new(game), actor_api::DeathKind::Grapple)];
         10715151 => [crate::game::actors::combat::select_frozen_ai(&mut Runtime::new(game))];
@@ -1201,7 +1201,7 @@ crate::game::callback_dispatch! {
         10649610 => [actors::combat::die(&mut Runtime::new(game), actors::api::DeathKind::Grapple)];
         10649665 => [actors::scheduling::update_frozen_enemy(&mut Runtime::new(game))];
 
-        0xa30000..=0xa3ffff => [{ crate::rtl::Unreachable(game); }];
+        0xa30000..=0xa3ffff => [{ crate::rtl::report_unreachable(game); }];
         10783748 => crate::game::visual_runtime::advance_crocomire;
 
         10780737 => [actors::scheduling::update_frozen_enemy(&mut Runtime::new(game))];
@@ -1210,13 +1210,13 @@ crate::game::callback_dispatch! {
         10873619 => [actors::spore_spawn::main_ai(game)];
         10874202 => [actors::spore_spawn::shot(game)];
         10874348 => [actors::spore_spawn::touch(game)];
-        0xa90000..=0xa9ffff => [sm_a9::DispatchEnemyAi(ea, game)];
-        0xb30000..=0xb3ffff => [{ crate::rtl::Unreachable(game); }];
+        0xa90000..=0xa9ffff => [sm_a9::dispatch_enemy_ai(ea, game)];
+        0xb30000..=0xb3ffff => [{ crate::rtl::report_unreachable(game); }];
     }
 }
 crate::game::address_dispatch! {
     unsafe fn native_pre_instruction(ea: u32, k: u16, game: &mut Game) => ea;
-        call (k, game); default { crate::rtl::Unreachable(game); };
+        call (k, game); default { crate::rtl::report_unreachable(game); };
     {
 
 
@@ -1243,7 +1243,7 @@ crate::game::address_dispatch! {
 }
 crate::game::callback_dispatch! {
     unsafe fn native_instruction(ea: u32, k: u16, j: EnemyScript, game: &mut Game) -> EnemyScript => ea;
-    call (k, j, game); default { crate::rtl::Unreachable(game); EnemyScript::Stop };
+    call (k, j, game); default { crate::rtl::report_unreachable(game); EnemyScript::Stop };
     @external {
         11763819 | 11763828 => [{
             use crate::types::EnemyData;
@@ -1263,7 +1263,7 @@ crate::game::callback_dispatch! {
         10657578 => [{ crate::game::music::queue_sfx2_max6(0x34, game); j }];
         10657959 => [crate::game::enemy_projectiles::spawn_scripted(0xdafe, j, game)];
         10652030 => [crate::game::enemy_projectiles::spawn_scripted(0xdbf2, j, game)];
-        0xa30000..=0xa3ffff => [{ crate::rtl::Unreachable(game); EnemyScript::Stop }];
+        0xa30000..=0xa3ffff => [{ crate::rtl::report_unreachable(game); EnemyScript::Stop }];
         10872671 => [{ actors::spore_spawn::increase_max_x_radius(game); j }];
         10872689 => [{ actors::spore_spawn::clear_damaged_flag(game); j }];
         10872877 => [actors::spore_spawn::set_max_x_radius_and_angle_delta(j, game)];
@@ -1287,12 +1287,12 @@ crate::game::callback_dispatch! {
         10854268 => [{ crate::game::sprite_effect_runtime::draygon_spit(false, game); j }];
         10854318 => [{ crate::game::sprite_effect_runtime::draygon_spit(true, game); j }];
 
-        0xa90000..=0xa9ffff => [sm_a9::DispatchEnemyInstr(ea, k, j, game)];
+        0xa90000..=0xa9ffff => [sm_a9::dispatch_enemy_instr(ea, k, j, game)];
         11174004 => [{ crate::ram_map::slot!(game, EnemyData[k as i32].ai_preinstr = (0xaa807bi32) as u16); j }];
         11173995 => [{ crate::ram_map::slot!(game, EnemyData[k as i32].ai_preinstr = j.word(0)); j.offset(1) }];
 
         11769202 => [{ crate::game::music::queue_sfx2_max6(0x7c, game); j }];
-        0xb30000..=0xb3ffff => [{ crate::rtl::Unreachable(game); EnemyScript::Stop }];
+        0xb30000..=0xb3ffff => [{ crate::rtl::report_unreachable(game); EnemyScript::Stop }];
     }
 }
 impl Runtime<'_> {

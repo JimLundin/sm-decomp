@@ -576,7 +576,7 @@ impl Game {
                     return;
                 }
             }
-            crate::spc_player::SpcPlayer_Initialize(self.g_spc_player);
+            crate::spc_player::spc_player_initialize(self.g_spc_player);
         }
     }
 
@@ -592,7 +592,7 @@ impl Game {
                     self.apu_queue
                         .apply_queued(&mut (*self.g_spc_player).state.input_ports);
                 }
-                crate::spc_player::SpcPlayer_CopyVariablesToRam(self.g_spc_player);
+                crate::spc_player::spc_player_copy_variables_to_ram(self.g_spc_player);
             }
         }
     }
@@ -605,7 +605,7 @@ impl Game {
             if let Some(player) = selected_player(&mut self._native_player, self.g_spc_player) {
                 player.load_state();
             } else {
-                crate::spc_player::SpcPlayer_CopyVariablesFromRam(self.g_spc_player);
+                crate::spc_player::spc_player_copy_variables_from_ram(self.g_spc_player);
             }
         }
     }
@@ -661,7 +661,7 @@ impl Game {
                 }
             }
             // The owned borrow ended before selected/history/imported playback.
-            crate::spc_player::SpcPlayer_GenerateSamples(self.g_spc_player);
+            crate::spc_player::spc_player_generate_samples(self.g_spc_player);
             (*(*self.g_spc_player).state.dsp)
                 .state
                 .write_samples(samples);
@@ -2450,22 +2450,22 @@ impl sm_game::display::sequence::Registers for Game {
     fn write_register(&mut self, register: u16, value: u8) {
         assert!(!self.g_snes.is_null(), "SNES backend must be installed");
         // SAFETY: the backend is installed, and `&mut self` excludes other access.
-        unsafe { crate::rtl::WriteReg(register, value, self) }
+        unsafe { crate::rtl::write_reg(register, value, self) }
     }
     fn write_register_word(&mut self, register: u16, value: u16) {
         assert!(!self.g_snes.is_null(), "SNES backend must be installed");
         // SAFETY: as for `write_register`.
-        unsafe { crate::rtl::WriteRegWord(register, value, self) }
+        unsafe { crate::rtl::write_reg_word(register, value, self) }
     }
     fn read_register_word(&mut self, register: u16) -> u16 {
         assert!(!self.g_snes.is_null(), "SNES backend must be installed");
         // SAFETY: as for `write_register`.
-        unsafe { crate::rtl::ReadRegWord(register, self) }
+        unsafe { crate::rtl::read_reg_word(register, self) }
     }
     fn read_register(&mut self, register: u16) -> u8 {
         assert!(!self.g_snes.is_null(), "SNES backend must be installed");
         // SAFETY: as for `write_register`.
-        unsafe { crate::rtl::ReadReg(register, self) }
+        unsafe { crate::rtl::read_reg(register, self) }
     }
 }
 

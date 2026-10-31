@@ -3,7 +3,7 @@
 #![deny(unsafe_op_in_unsafe_fn)]
 use crate::game_state::Game;
 use crate::ram_map::checked_word as at;
-use crate::rtl::{ReadRegWord, WriteReg, WriteRegWord};
+use crate::rtl::{read_reg_word, write_reg, write_reg_word};
 use crate::snes::registers::*;
 use sm_game::display::control::{Brightness, FixedColor};
 use sm_game::display::transfer::{
@@ -13,26 +13,26 @@ use sm_game::display::transfer::{
 /// Requires a live, exclusively accessed SNES backend.
 unsafe fn upload_mode7(upload: Mode7Upload, game: &mut Game) {
     unsafe {
-        WriteReg(DMAP1 as u16, upload.mode, game);
-        WriteRegWord(A1T1L as u16, upload.source.address, game);
-        WriteReg(A1B1 as u16, upload.source.bank, game);
-        WriteRegWord(DAS1L as u16, upload.bytes, game);
+        write_reg(DMAP1 as u16, upload.mode, game);
+        write_reg_word(A1T1L as u16, upload.source.address, game);
+        write_reg(A1B1 as u16, upload.source.bank, game);
+        write_reg_word(DAS1L as u16, upload.bytes, game);
         match upload.target {
             Mode7Target::Vram {
                 high_byte,
                 address,
                 increment,
             } => {
-                WriteReg(BBAD1 as u16, if high_byte { 0x19 } else { 0x18 }, game);
-                WriteRegWord(VMADDL as u16, address, game);
-                WriteReg(VMAIN as u16, increment, game);
+                write_reg(BBAD1 as u16, if high_byte { 0x19 } else { 0x18 }, game);
+                write_reg_word(VMADDL as u16, address, game);
+                write_reg(VMAIN as u16, increment, game);
             }
             Mode7Target::Cgram { index } => {
-                WriteReg(BBAD1 as u16, 0x22, game);
-                WriteReg(CGADD as u16, index, game);
+                write_reg(BBAD1 as u16, 0x22, game);
+                write_reg(CGADD as u16, index, game);
             }
         }
-        WriteReg(MDMAEN as u16, 2, game);
+        write_reg(MDMAEN as u16, 2, game);
     }
 }
 
@@ -41,24 +41,24 @@ unsafe fn upload_mode7(upload: Mode7Upload, game: &mut Game) {
 unsafe fn read_vram(readback: VramReadback, game: &mut Game) {
     let destination = readback.destination;
     unsafe {
-        WriteRegWord(VMADDL as u16, readback.vram_address, game);
-        ReadRegWord(RDVRAML as u16, game);
-        WriteRegWord(
+        write_reg_word(VMADDL as u16, readback.vram_address, game);
+        read_reg_word(RDVRAML as u16, game);
+        write_reg_word(
             DMAP1 as u16,
             u16::from_le_bytes([readback.control, readback.port]),
             game,
         );
-        WriteRegWord(A1T1L as u16, destination.address, game);
+        write_reg_word(A1T1L as u16, destination.address, game);
         // This overlapping word sets the high address byte again, then the bank.
-        WriteRegWord(
+        write_reg_word(
             A1T1H as u16,
             u16::from_le_bytes([destination.address.to_le_bytes()[1], destination.bank]),
             game,
         );
-        WriteRegWord(DAS1L as u16, readback.bytes, game);
-        WriteRegWord(DAS10 as u16, 0, game);
-        WriteRegWord(A2A1H as u16, 0, game);
-        WriteReg(MDMAEN as u16, 2, game);
+        write_reg_word(DAS1L as u16, readback.bytes, game);
+        write_reg_word(DAS10 as u16, 0, game);
+        write_reg_word(A2A1H as u16, 0, game);
+        write_reg(MDMAEN as u16, 2, game);
     }
 }
 
@@ -66,13 +66,13 @@ unsafe fn read_vram(readback: VramReadback, game: &mut Game) {
 /// the whole queue by the caller.
 unsafe fn upload_tilemap(upload: TilemapUpload, game: &mut Game) {
     unsafe {
-        WriteRegWord(DAS1L as u16, upload.bytes, game);
-        WriteRegWord(A1T1L as u16, upload.source.address, game);
-        WriteReg(A1B1 as u16, upload.source.bank, game);
+        write_reg_word(DAS1L as u16, upload.bytes, game);
+        write_reg_word(A1T1L as u16, upload.source.address, game);
+        write_reg(A1B1 as u16, upload.source.bank, game);
         // This word write also clears VMADDL before the full destination write.
-        WriteRegWord(VMAIN as u16, if upload.column { 0x81 } else { 0x80 }, game);
-        WriteRegWord(VMADDL as u16, upload.vram_address, game);
-        WriteReg(MDMAEN as u16, 2, game);
+        write_reg_word(VMAIN as u16, if upload.column { 0x81 } else { 0x80 }, game);
+        write_reg_word(VMADDL as u16, upload.vram_address, game);
+        write_reg(MDMAEN as u16, 2, game);
     }
 }
 
@@ -153,10 +153,10 @@ pub(crate) unsafe fn upload_scrolling_tilemap(
         }
 
         // Prepare the wrapped source even when there is no wrapped transfer.
-        WriteRegWord(A1T1L as u16, at!(game, parameters + 8;), game);
+        write_reg_word(A1T1L as u16, at!(game, parameters + 8;), game);
         let wrapped_size = at!(game, parameters + 2;);
         if wrapped_size != 0 {
-            WriteRegWord(DAS1L as u16, wrapped_size, game);
+            write_reg_word(DAS1L as u16, wrapped_size, game);
             let wrapped_destination = at!(game, parameters + 6;);
             crate::rtl::register_writes! { game;
                 word(VMADDL as u16, wrapped_destination); byte(MDMAEN as u16, 2);
@@ -195,7 +195,7 @@ impl sm_game::scene::samus_tile_upload::Host for NativeSamusUpload<'_> {
     type Descriptor = NativeSamusDescriptor;
     type Source = u16;
     fn vmain(&mut self) -> Result<(), Self::Error> {
-        unsafe { WriteReg(VMAIN as u16, 0x80, self.0) };
+        unsafe { write_reg(VMAIN as u16, 0x80, self.0) };
         Ok(())
     }
     fn enabled(&mut self, half: sm_game::scene::samus_body::Half) -> Result<u8, Self::Error> {
@@ -245,11 +245,11 @@ impl sm_game::scene::samus_tile_upload::Host for NativeSamusUpload<'_> {
             sm_game::scene::samus_tile_upload::Part::First => d.vram,
             sm_game::scene::samus_tile_upload::Part::Second => d.vram.wrapping_add(0x100),
         };
-        unsafe { WriteRegWord(VMADDL as u16, address, self.0) };
+        unsafe { write_reg_word(VMADDL as u16, address, self.0) };
         Ok(())
     }
     fn configure_dma(&mut self) -> Result<(), Self::Error> {
-        unsafe { WriteRegWord(DMAP1 as u16, 0x1801, self.0) };
+        unsafe { write_reg_word(DMAP1 as u16, 0x1801, self.0) };
         Ok(())
     }
     fn source(&mut self, d: Self::Descriptor) -> Result<u16, Self::Error> {
@@ -259,12 +259,12 @@ impl sm_game::scene::samus_tile_upload::Host for NativeSamusUpload<'_> {
         Ok(s.wrapping_add(c))
     }
     fn write_source(&mut self, s: &u16) -> Result<(), Self::Error> {
-        unsafe { WriteRegWord(A1T1L as u16, *s, self.0) };
+        unsafe { write_reg_word(A1T1L as u16, *s, self.0) };
         Ok(())
     }
     fn bank(&mut self, d: Self::Descriptor) -> Result<(), Self::Error> {
         let bank = self.table(d.address, 2, 1).byte(0);
-        unsafe { WriteReg(A1B1 as u16, bank, self.0) };
+        unsafe { write_reg(A1B1 as u16, bank, self.0) };
         Ok(())
     }
     fn count(
@@ -284,7 +284,7 @@ impl sm_game::scene::samus_tile_upload::Host for NativeSamusUpload<'_> {
             .word(0, true))
     }
     fn write_count(&mut self, c: u16) -> Result<(), Self::Error> {
-        unsafe { WriteRegWord(DAS1L as u16, c, self.0) };
+        unsafe { write_reg_word(DAS1L as u16, c, self.0) };
         Ok(())
     }
     fn dma(
@@ -294,7 +294,7 @@ impl sm_game::scene::samus_tile_upload::Host for NativeSamusUpload<'_> {
         _: u16,
         _: u16,
     ) -> Result<(), Self::Error> {
-        unsafe { WriteReg(MDMAEN as u16, 2, self.0) };
+        unsafe { write_reg(MDMAEN as u16, 2, self.0) };
         Ok(())
     }
 }
@@ -307,29 +307,29 @@ pub(crate) unsafe fn upload_samus(game: &mut Game) {
 /// with `fill` from address 0, resetting the address as one word or two bytes.
 pub(crate) unsafe fn fill_vram_low_bytes(fill: u8, word_reset: bool, game: &mut Game) {
     unsafe {
-        WriteReg(VMAIN as u16, 0, game);
+        write_reg(VMAIN as u16, 0, game);
         if word_reset {
-            WriteRegWord(VMADDL as u16, 0, game);
+            write_reg_word(VMADDL as u16, 0, game);
         } else {
-            WriteReg(VMADDL as u16, 0, game);
-            WriteReg(VMADDH as u16, 0, game);
+            write_reg(VMADDL as u16, 0, game);
+            write_reg(VMADDH as u16, 0, game);
         }
         for _ in 0i16..0x4000i16 {
-            WriteReg(VMDATAL as u16, fill, game);
+            write_reg(VMDATAL as u16, fill, game);
         }
     }
 }
 
 /// Requires a live, exclusively accessed SNES backend.
 pub(crate) unsafe fn set_brightness(brightness: Brightness, game: &mut Game) {
-    unsafe { WriteReg(INIDISP as u16, brightness.byte(), game) }
+    unsafe { write_reg(INIDISP as u16, brightness.byte(), game) }
 }
 
 /// Requires a live, exclusively accessed SNES backend. One COLDATA write per
 /// colour, in order.
 pub(crate) unsafe fn set_fixed_color(colors: &[FixedColor], game: &mut Game) {
     for color in colors {
-        unsafe { WriteReg(COLDATA as u16, color.byte(), game) }
+        unsafe { write_reg(COLDATA as u16, color.byte(), game) }
     }
 }
 

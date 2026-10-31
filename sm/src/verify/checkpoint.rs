@@ -34,7 +34,7 @@ pub fn fingerprint(bytes: &[u8]) -> u64 {
 /// Native and audio users must be stopped while reset mutates their state.
 pub unsafe fn reset_retaining_prepared_world(game: &mut Game) -> Result<(), String> {
     let world = game.world().clone();
-    unsafe { crate::rtl::RtlReset(2, game) };
+    unsafe { crate::rtl::rtl_reset(2, game) };
     if !std::sync::Arc::ptr_eq(game.world(), &world) {
         return Err("prepared reset changed the selected binding".into());
     }
@@ -868,7 +868,7 @@ pub(crate) unsafe fn restore_capture_with_sources(
         let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
             let mut archive = Archive::Load(machine_bytes);
             machine(game, &mut archive)?;
-            crate::cpu_infra::RtlUpdateSnesPatchForBugfix(game);
+            crate::cpu_infra::rtl_update_snes_patch_for_bugfix(game);
             let mut roundtrip = Archive::Save(Vec::new());
             machine(game, &mut roundtrip)?;
             if !matches!(roundtrip, Archive::Save(ref bytes) if bytes == machine_bytes) {
@@ -914,8 +914,8 @@ pub(crate) unsafe fn check_prepared_palette_checkpoint(game: &mut Game) {
             AssetSource::Bound(AssetRef::Prepared(crate::room_world_fixture::PALETTE)),
             InstallBuffer::Palette,
         );
-        crate::rtl::RtlRunFrame(0, game);
-        crate::rtl::RtlRenderAudio(&mut [[0; 2]; 534], game);
+        crate::rtl::rtl_run_frame(0, game);
+        crate::rtl::rtl_render_audio(&mut [[0; 2]; 534], game);
         let first = crate::verification_checkpoint::capture(game).unwrap();
         assert!(
             first.ends_with(&assets.fingerprint()),
@@ -934,16 +934,16 @@ pub(crate) unsafe fn check_prepared_palette_checkpoint(game: &mut Game) {
             "room.assets.palette-preflight-no-adoption"
         );
         let mut audio = [[[0; 2]; 534]; 2];
-        crate::rtl::RtlRunFrame(0, game);
-        crate::rtl::RtlRenderAudio(&mut audio[0], game);
+        crate::rtl::rtl_run_frame(0, game);
+        crate::rtl::rtl_render_audio(&mut audio[0], game);
         let continued = crate::verification_checkpoint::capture(game).unwrap();
         crate::verification_checkpoint::restore_capture_with_sources(&first, game, &[]).unwrap();
         assert_eq!(
             crate::verification_checkpoint::capture(game).unwrap(),
             first
         );
-        crate::rtl::RtlRunFrame(0, game);
-        crate::rtl::RtlRenderAudio(&mut audio[1], game);
+        crate::rtl::rtl_run_frame(0, game);
+        crate::rtl::rtl_render_audio(&mut audio[1], game);
         assert_eq!(audio[0], audio[1]);
         assert_eq!(
             crate::verification_checkpoint::capture(game).unwrap(),

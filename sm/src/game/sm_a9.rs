@@ -20,7 +20,10 @@ pub use crate::types::ConstsB7;
 /// Mother Brain's fight runs in `sm_game::actors::mother_brain_fight`.
 pub use sm_game::actors::mother_brain_fight::*;
 /// Kept unsafe for the player collision ownership checks, which wrap it in an unsafe block.
-pub unsafe fn MotherBrain_MoveSamusVerticallyTowardsCeilingFloor(a: u16, game: &mut Game) -> u8 {
+pub unsafe fn mother_brain_move_samus_vertically_towards_ceiling_floor(
+    a: u16,
+    game: &mut Game,
+) -> u8 {
     move_samus_vertically_towards_ceiling_floor(a, game)
 }
 pub(crate) fn move_samus_vertically_towards_ceiling_floor(a: u16, game: &mut Game) -> u8 {
@@ -73,7 +76,7 @@ pub(crate) fn move_samus_vertically_towards_ceiling_floor(a: u16, game: &mut Gam
     }
 }
 /// Kept unsafe for the player collision ownership checks, which wrap it in an unsafe block.
-pub unsafe fn MotherBrain_MoveSamusHorizTowardsWall(a: u16, game: &mut Game) -> u8 {
+pub unsafe fn mother_brain_move_samus_horiz_towards_wall(a: u16, game: &mut Game) -> u8 {
     move_samus_horizontally_towards_wall(a, game)
 }
 pub(crate) fn move_samus_horizontally_towards_wall(a: u16, game: &mut Game) -> u8 {
@@ -102,10 +105,10 @@ pub(crate) fn move_samus_horizontally_towards_wall(a: u16, game: &mut Game) -> u
     }
 }
 crate::forward_calls! { pub fn (a: u16, r18: u16, game: &mut Game) -> u16;
-    ComputeSinMult => sub_A9C46C(r18, a, game);
-    ComputeCosMult => sub_A9C46C((r18).wrapping_add(64), a, game);
+    sin_times => sin_angle_times(r18, a, game);
+    cos_times => sin_angle_times((r18).wrapping_add(64), a, game);
 }
-pub fn sub_A9C46C(a: u16, j: u16, game: &mut Game) -> u16 {
+pub fn sin_angle_times(a: u16, j: u16, game: &mut Game) -> u16 {
     {
         let v2: u16 = kSinCosTable8bit_Sext[((a as i32 & 0xff) + 64) as usize] as u16;
         // Hardware multiply through the PPU's Mode 7 registers.
@@ -114,17 +117,17 @@ pub fn sub_A9C46C(a: u16, j: u16, game: &mut Game) -> u16 {
                 byte(M7A as u16, v2 as u8); byte(M7A as u16, v2.to_ne_bytes()[1]);
                 byte(M7B as u16, j as u8);
             }
-            ReadRegWord(MPYM as u16, game)
+            read_reg_word(MPYM as u16, game)
         }
     }
 }
 
 crate::game::callback_dispatch! {
-    pub(crate) fn DispatchEnemyAi(ea: u32, game: &mut Game) => ea;
-    call (game); default { crate::rtl::Unreachable(game); };
+    pub(crate) fn dispatch_enemy_ai(ea: u32, game: &mut Game) => ea;
+    call (game); default { crate::rtl::report_unreachable(game); };
     @forward [pub fn (game: &mut Game)];
-    [11108367] Enemy_GrappleReact_CancelBeam_A9 => actors::combat::select_frozen_ai(&mut Runtime::new(game));
-    [11108417] Enemy_NormalFrozenAI_A9 => actors::scheduling::update_frozen_enemy(&mut Runtime::new(game));
+    [11108367] enemy_grapple_react_cancel_beam_a9 => actors::combat::select_frozen_ai(&mut Runtime::new(game));
+    [11108417] enemy_normal_frozen_ai_a9 => actors::scheduling::update_frozen_enemy(&mut Runtime::new(game));
     @external {
         11110023 => mother_brain_fight::initialize_body;
         11110149 => mother_brain_fight::initialize_brain;
@@ -164,8 +167,8 @@ crate::game::callback_dispatch! {
 }
 
 crate::game::callback_dispatch! {
-    pub(crate) fn DispatchEnemyInstr(ea: u32, k: u16, j: EnemyScript, game: &mut Game) -> EnemyScript => ea;
-    call (k, j, game); default { match crate::game::mother_brain_body::dispatch_instruction(ea, j, game) { Some(script) => script, None => { crate::rtl::Unreachable(game); EnemyScript::Stop } } };
+    pub(crate) fn dispatch_enemy_instr(ea: u32, k: u16, j: EnemyScript, game: &mut Game) -> EnemyScript => ea;
+    call (k, j, game); default { match crate::game::mother_brain_body::dispatch_instruction(ea, j, game) { Some(script) => script, None => { crate::rtl::report_unreachable(game); EnemyScript::Stop } } };
     @external {
         11115208 => mother_brain_fight::spawn_dust_cloud_at_offset;
         11115247 => mother_brain_fight::spawn_hand_beam_projectile;
@@ -232,7 +235,7 @@ impl sm_game::actors::mother_brain_fight::Host for Game {
     }
 
     fn bank_unreachable(&mut self) -> bool {
-        crate::rtl::Unreachable(self)
+        crate::rtl::report_unreachable(self)
     }
 
     fn spawn_legacy_population(&mut self, bank: u8, population: u16) -> u16 {

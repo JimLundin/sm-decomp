@@ -8,7 +8,7 @@ pub(crate) unsafe fn upload_bank(addr: u32, game: &mut Game) {
             upload(addr, game);
             return;
         }
-        crate::rtl::RtlApuUpload(addr, game);
+        crate::rtl::rtl_apu_upload(addr, game);
     }
 }
 // A transient bound value; it owns no live queue or competing audio state.
@@ -180,9 +180,9 @@ pub(crate) unsafe fn emit(
             OriginalEffect::Initialize => upload_bank(0xcf8000, game),
             OriginalEffect::Bank(selector) => upload_bank(bank_address(selector, game), game),
             OriginalEffect::Track(selector) => {
-                crate::rtl::RtlApuWrite(crate::snes::registers::APUI00, selector.0, game)
+                crate::rtl::rtl_apu_write(crate::snes::registers::APUI00, selector.0, game)
             }
-            OriginalEffect::Sound(channel, selector) => crate::rtl::RtlApuWrite(
+            OriginalEffect::Sound(channel, selector) => crate::rtl::rtl_apu_write(
                 crate::snes::registers::APUI01 + u32::from(channel),
                 selector.0,
                 game,

@@ -54,7 +54,7 @@ pub(crate) fn capture(id: u32, owner: &GameOwner) -> Option<Vec<u8>> {
 unsafe fn nmi_and_draw(g: &mut Game) {
     unsafe {
         crate::game::display_refresh::run(g);
-        crate::cpu_infra::DrawFrameToPpu(g);
+        crate::cpu_infra::draw_frame_to_ppu(g);
     }
 }
 unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
@@ -62,7 +62,7 @@ unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
         #[cfg(sm_verify_dll)]
         if id == 105 {
             // Movies cannot supply divergent cached/per-layer routing and staged/effective PPU state.
-            crate::rtl::RtlReset(2, g);
+            crate::rtl::rtl_reset(2, g);
             let snes = g.g_snes;
             assert!(!snes.is_null());
             let ppu = (*snes).ppu;
@@ -154,7 +154,7 @@ unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
         #[cfg(sm_verify_dll)]
         if id == 106 {
             // Movies cannot author odd beam positions, high-byte-first counter reads or OAM cursor wrap.
-            crate::rtl::RtlReset(2, g);
+            crate::rtl::rtl_reset(2, g);
             let snes = g.g_snes;
             assert!(!snes.is_null());
             let ppu = (*snes).ppu;
@@ -230,7 +230,7 @@ unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
         if id == 103 {
             // Movies cannot make atmospheric OAM X/Y overwrite the camera used by this draw.
             use crate::{game::visual_host::Effects, rom::RomImage};
-            crate::rtl::RtlReset(2, g);
+            crate::rtl::rtl_reset(2, g);
             let loaded = RomImage::zeroed(0x90000);
             let native = RomImage::zeroed(0x90000);
             for (image, address, value) in [
@@ -274,7 +274,7 @@ unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
                 game::{scene::atmosphere::Host, visual_host::Effects},
                 rom::RomImage,
             };
-            crate::rtl::RtlReset(2, g);
+            crate::rtl::rtl_reset(2, g);
             let table_at = crate::rtl::lorom_offset(0x908bff) as usize + 2;
             let tile_at = crate::rtl::lorom_offset(0x909400) as usize;
             for phase in 0..6 {
@@ -349,7 +349,7 @@ unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
         // Movies cannot author same-bank cursor wrap or dormant flag variants.
         #[cfg(sm_verify_dll)]
         if id == 101 {
-            crate::rtl::RtlReset(2, g);
+            crate::rtl::rtl_reset(2, g);
             let snes = g.g_snes;
             assert!(!snes.is_null());
             g.ram().write_byte(0xffff, 0x81);
@@ -408,7 +408,7 @@ unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
         // Movies cannot force a byte to rewrite its own mode/direction or invalid mode.
         #[cfg(sm_verify_dll)]
         if id == 102 {
-            crate::rtl::RtlReset(2, g);
+            crate::rtl::rtl_reset(2, g);
             let snes = g.g_snes;
             assert!(!snes.is_null());
             (*snes).ramAdr = 0x12340;
@@ -485,7 +485,7 @@ unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
         #[cfg(sm_verify_dll)]
         if id == 100 {
             use crate::game::scanline_irq;
-            crate::rtl::RtlReset(2, g);
+            crate::rtl::rtl_reset(2, g);
             let snes = g.g_snes;
             assert!(!snes.is_null());
             let mut out = b"RMWD1".to_vec();
@@ -566,12 +566,12 @@ unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
         assert!(!g.g_snes.is_null(), "room.world.real-hardware");
         let mut out = b"RMWD1".to_vec();
         out.extend_from_slice(&id.to_le_bytes());
-        crate::rtl::RtlReset(2, g);
+        crate::rtl::rtl_reset(2, g);
         assert!(!g.g_fail, "room.world.reset-no-diagnostic");
         assert!(Arc::ptr_eq(g.world(), &world), "room.world.reset-binding");
         if id == 8 {
             let before = g.snes_frame_counter;
-            crate::rtl::RtlRunFrame(0, g);
+            crate::rtl::rtl_run_frame(0, g);
             assert_eq!(
                 g.snes_frame_counter,
                 before + 1,
@@ -732,7 +732,7 @@ unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
                 let frames_before = g.snes_frame_counter;
                 let mut done = false;
                 for frame in 0..768 {
-                    crate::rtl::RtlRunFrame(0, g);
+                    crate::rtl::rtl_run_frame(0, g);
                     assert!(!g.g_fail, "room.world.door-no-diagnostic-{frame}");
                     if word(g, 0x998) == 8 {
                         done = true;
