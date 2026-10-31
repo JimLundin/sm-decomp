@@ -27,6 +27,7 @@ use crate::enemy_projectiles::drops::DropSource;
 use crate::enemy_projectiles::shared_pre::{x_velocity_at_angle, y_velocity_at_angle};
 use crate::enemy_script::EnemyScript;
 use crate::geometry::Point;
+use crate::menus::prelude::{boss, owned};
 use crate::palette_copies::copy_rom_colors_to_palette;
 use crate::ram::RawRam as _;
 use crate::ram::word;
@@ -2143,7 +2144,7 @@ pub fn spawn_explosions<L: Lease + ?Sized>(game: &mut L) {
 /// without a palette change or door transition, the next of 16 glow steps.
 /// Was `Ridley_Func_61`.
 pub fn emergency_text_glow<L: Lease + ?Sized>(game: &mut L) {
-    if word!(game.DOOR_TRANSITION_FLAG_ENEMIES) | word!(game.PALETTE_CHANGE_NUM) == 0
+    if boss!(game.DoorTransitionEnemies) | word!(game.PALETTE_CHANGE_NUM) == 0
         && (game.frame() & 3) == 0
     {
         let mut step = session_slot!(game, Ridley[RIDLEY].emergency_glow_index).wrapping_add(1);

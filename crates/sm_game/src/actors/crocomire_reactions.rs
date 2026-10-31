@@ -200,7 +200,7 @@ pub fn melt_down<L: Lease + ?Sized>(game: &mut L) {
             word!(game.TILEMAP_STUFF[cursor >> 1] = 824);
             cursor = cursor.wrapping_add(2);
         }
-        word!(game.NMI_FLAG_BG2_ENEMY_VRAM_TRANSFER = 1);
+        boss!(game.EnemyTilemapPending = 1);
         session_slot!(game, Crocomire[0].base.extra_properties, |old| old
             & !0x8000);
         let low = session_slot!(game, Crocomire[key].step_counter) as u8;
@@ -294,7 +294,7 @@ pub fn update_background<L: Lease + ?Sized>(k: u16, game: &mut L) {
     game.foreign(|game| game.align_crocomire_background());
 }
 pub fn update_palette<L: Lease + ?Sized>(game: &mut L) {
-    if word!(game.DOOR_TRANSITION_FLAG_ENEMIES) == 0 {
+    if boss!(game.DoorTransitionEnemies) == 0 {
         if session_slot!(game, Crocomire[0].base.flash_timer) != 0
             && (word!(game.RANDOM_ENEMY_COUNTER) & 2) != 0
         {
@@ -523,7 +523,7 @@ pub fn emit_lava_plume<L: Lease + ?Sized>(game: &mut L) {
             v0 = !(v0 as i32) as u16;
         }
         let x: u16 = (session_slot!(game, Crocomire[0i32].base.x_pos)).wrapping_add(v0);
-        let y: u16 = (word!(game.LAVA_ACID_Y_POS) as i32 + 16
+        let y: u16 = (boss!(game.LavaAcidY) as i32 + 16
             - (((word!(game.RANDOM_NUMBER)) & (0x1f00u16)) as i32 >> 8))
             as u16;
         game.foreign(|game| game.create_sprite(x, y, 21, 0));
@@ -605,7 +605,7 @@ pub fn hop_3_load_melting_tilemap<L: Lease + ?Sized>(game: &mut L) {
     let e: i32 = game.current_enemy() as i32;
     next_death_step(e, game);
     session_slot!(game, Crocomire[e].base; current_instruction = ADDR_K_CROCOMIRE_ILIST_BF64 as u16, instruction_timer = 1);
-    word!(game.NMI_FLAG_BG2_ENEMY_VRAM_TRANSFER = 1);
+    boss!(game.EnemyTilemapPending = 1);
     let e1: i32 = game.current_enemy() as i32 + 64;
     session_slot!(game, Crocomire[e1].base; current_instruction = ADDR_K_CROCOMIRE_ILIST_BF98 as u16, instruction_timer = 1);
     session_slot!(game, Crocomire[e1].base.properties, |old| old & 0xd2ff
@@ -1058,7 +1058,7 @@ fn erase_melt_columns<L: Lease + ?Sized>(game: &mut L) -> u16 {
 
 /// Initializes the defeated or active boss room with the original ordered effects.
 pub fn initialize<L: Lease + ?Sized>(game: &mut L) {
-    word!(game.BOSS_ID = 6);
+    boss!(game.BossId = 6);
     crate::word_transfers!(game, ascending, 2048; le(TILEMAP_STUFF, 0) <- value(824));
     if ({
         let area = game.area();
@@ -1096,8 +1096,8 @@ pub fn initialize<L: Lease + ?Sized>(game: &mut L) {
             le(TARGET_PALETTES, 224) <- rom(PALETTE_TARGET_SPRITE_6, 16),
         );
         session_slot!(game, Crocomire[e_0].fight_function = 4);
-        word! {game; UNUSED_WORD_7E179E = 16; CAMERA_DISTANCE_INDEX = 2;
-        ENEMY_BG2_TILEMAP_SIZE = 1024; }
+        boss!(game; Unused179E = 16; EnemyTilemapSize = 1024;);
+        word!(game.CAMERA_DISTANCE_INDEX = 2);
         session_slot!(game, Crocomire[e_0].base; current_instruction = ADDR_K_CROCOMIRE_ILIST_BADE as u16, extra_properties = (session_slot!(game, Crocomire[e_0].base.extra_properties)) | (4u16), instruction_timer = 1);
     }
 }
@@ -1121,7 +1121,7 @@ pub fn hop_6_sinking<L: Lease + ?Sized>(game: &mut L) {
             Crocomire[e].base.current_instruction = ADDR_K_CROCOMIRE_ILIST_E1D2 as u16
         );
         crate::word_transfers!(game, ascending, 1; native(SCROLLS_4_5) <- value(257));
-        word!(game.DEBUG_DISABLE_MINIMAP = 0);
+        boss!(game.MinimapDisabled = 0);
         session_slot!(game, Crocomire[0x40i32].base.properties, |old| old
             | (0x200u16));
 
