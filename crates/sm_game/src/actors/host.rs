@@ -233,3 +233,21 @@ pub trait LeaseActors {
         Self: 'a;
     fn lease(&mut self) -> Self::Lease<'_>;
 }
+
+/// A host that runs actor work on one lease: a fresh lease per call for a host that
+/// leases its actors, or the lease the work already runs inside.
+pub trait LeaseScope {
+    type Scoped<'a>: ActorLease
+    where
+        Self: 'a;
+    fn with_lease<'s, R>(&'s mut self, action: impl FnOnce(&mut Self::Scoped<'s>) -> R) -> R;
+}
+impl<T: LeaseActors + ?Sized> LeaseScope for T {
+    type Scoped<'a>
+        = T::Lease<'a>
+    where
+        Self: 'a;
+    fn with_lease<'s, R>(&'s mut self, action: impl FnOnce(&mut T::Lease<'s>) -> R) -> R {
+        action(&mut self.lease())
+    }
+}

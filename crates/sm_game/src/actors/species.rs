@@ -8,7 +8,9 @@
 //! for the small tables, the same address for the large ones. Moving a
 //! routine here means moving its arm.
 use crate::actors::access::{AccessMode::LittleEndian, AccessMode::Native, ActorAccess as _};
-use crate::actors::host::{ActorHost, ActorLease as _, ActorRuntime, Death, LeaseActors, Shot};
+use crate::actors::host::{
+    ActorHost, ActorLease as _, ActorRuntime, Death, LeaseActors, LeaseScope, Shot,
+};
 use crate::actors::spore_spawn::instruction as spore;
 use crate::actors::{
     alcoon, atomic, bang, beetom, blue_brinstar_face_block, botwoon, boulder, boyon, bull, cacatac,
@@ -339,9 +341,51 @@ pub fn draygon_function<H: AiHost>(ea: u32, k: u16, game: &mut H) {
     }
 }
 
+/// The AI routines that run on one actor lease, keyed by address: the lease the scheduler
+/// already runs inside, or a fresh one. False when `ea` is not one of them.
+pub fn lease_ai<H: LeaseScope + ?Sized>(ea: u32, game: &mut H) -> bool {
+    use shutters::{Event, Kind};
+    match ea {
+        10676698 => game.with_lease(|runtime| shutters::initialize(Kind::GrowingShutter, runtime)),
+        10676918 => game.with_lease(|runtime| shutters::main_ai(Kind::GrowingShutter, runtime)),
+        10677765 => game.with_lease(|runtime| shutters::initialize(Kind::Platform, runtime)),
+        10677778 => game.with_lease(|runtime| shutters::initialize(Kind::VerticalShutter, runtime)),
+        10677969 => game.with_lease(|runtime| shutters::main_ai(Kind::Platform, runtime)),
+        10678429 => {
+            game.with_lease(|runtime| shutters::reaction(Kind::Platform, Event::Touch, runtime))
+        }
+        10678434 => {
+            game.with_lease(|runtime| shutters::reaction(Kind::Platform, Event::Shot, runtime))
+        }
+        10678454 => {
+            game.with_lease(|runtime| shutters::reaction(Kind::Platform, Event::PowerBomb, runtime))
+        }
+        10678545 => {
+            game.with_lease(|runtime| shutters::initialize(Kind::HorizontalShutter, runtime))
+        }
+        10678750 => game.with_lease(|runtime| shutters::main_ai(Kind::HorizontalShutter, runtime)),
+        10678442 => game
+            .with_lease(|runtime| shutters::reaction(Kind::VerticalShutter, Event::Shot, runtime)),
+        10679256 => game.with_lease(|runtime| {
+            shutters::reaction(Kind::HorizontalShutter, Event::Touch, runtime)
+        }),
+        10679310 => game.with_lease(|runtime| {
+            shutters::reaction(Kind::HorizontalShutter, Event::Shot, runtime)
+        }),
+        10679322 => game.with_lease(|runtime| {
+            shutters::reaction(Kind::HorizontalShutter, Event::PowerBomb, runtime)
+        }),
+        _ => return false,
+    }
+    true
+}
+
 /// An enemy species' AI routine, keyed by its address. Arms not here are in
 /// the compatibility table until their routines move.
 pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
+    if lease_ai(ea, game) {
+        return;
+    }
     use crate::actors::combat::{die, latch, resume_ai, select_frozen_ai};
     match ea {
         // The common enemy AI ($A0:8000-$A0:8041) the enemy banks share: grapple AI - no
@@ -743,34 +787,6 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         10676168 | 10676174 | 10676180 => dragon::react(ea, game),
         10915836 => fire_pillar::initialize(game),
         10915875 => fire_pillar::main_ai(game),
-        10676698 => shutters::initialize(shutters::Kind::GrowingShutter, game),
-        10676918 => shutters::main_ai(shutters::Kind::GrowingShutter, game),
-        10677765 => shutters::initialize(shutters::Kind::Platform, game),
-        10677778 => shutters::initialize(shutters::Kind::VerticalShutter, game),
-        10677969 => shutters::main_ai(shutters::Kind::Platform, game),
-        10678429 => shutters::reaction(shutters::Kind::Platform, shutters::Event::Touch, game),
-        10678434 => shutters::reaction(shutters::Kind::Platform, shutters::Event::Shot, game),
-        10678442 => {
-            shutters::reaction(shutters::Kind::VerticalShutter, shutters::Event::Shot, game)
-        }
-        10678454 => shutters::reaction(shutters::Kind::Platform, shutters::Event::PowerBomb, game),
-        10678545 => shutters::initialize(shutters::Kind::HorizontalShutter, game),
-        10678750 => shutters::main_ai(shutters::Kind::HorizontalShutter, game),
-        10679256 => shutters::reaction(
-            shutters::Kind::HorizontalShutter,
-            shutters::Event::Touch,
-            game,
-        ),
-        10679310 => shutters::reaction(
-            shutters::Kind::HorizontalShutter,
-            shutters::Event::Shot,
-            game,
-        ),
-        10679322 => shutters::reaction(
-            shutters::Kind::HorizontalShutter,
-            shutters::Event::PowerBomb,
-            game,
-        ),
         _ => game.native_ai(ea),
     }
 }
