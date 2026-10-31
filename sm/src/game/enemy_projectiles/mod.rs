@@ -5,7 +5,6 @@ pub(crate) use sm_game::enemy_projectiles::host;
 mod runtime;
 use crate::game::session_runtime::Runtime;
 use host::Effects;
-use sm_game::enemy_script::EnemyScript;
 // Enemy-projectile ownership and complete behavior behind one compatibility boundary.
 // State is exclusive during each operation; legacy effects publish and reacquire it.
 use sm_game::enemy_projectiles::attachments_spore_maw;
@@ -49,12 +48,6 @@ pub fn spawn_with_enemy_gfx(parameter: u16, enemy: u16, definition: u16, game: &
     with_execution(game, |ctx| {
         lifecycle::spawn_from_enemy(ctx, parameter, enemy, definition)
     })
-}
-pub(crate) fn spawn_scripted(definition: u16, script: EnemyScript, game: &mut Game) -> EnemyScript {
-    let parameter = script.word(0);
-    let index = game.cur_enemy_index();
-    spawn_with_enemy_gfx(parameter, index, definition, game);
-    script.offset(1)
 }
 pub fn spawn_with_room_gfx(definition: u16, parameter: u16, game: &mut Game) -> u16 {
     with_execution(game, |ctx| {

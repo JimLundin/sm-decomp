@@ -1175,12 +1175,6 @@ crate::game::callback_dispatch! {
     unsafe fn native_instruction(ea: u32, k: u16, j: EnemyScript, game: &mut Game) -> EnemyScript => ea;
     call (k, j, game); default { crate::rtl::report_unreachable(game); EnemyScript::Stop };
     @external {
-        11128756 => [sm_game::actors::baby_metroid_cutscene::go_to_initial(k, j)];
-        11128778 => [sm_game::actors::baby_metroid_cutscene::go_to_draining_mother_brain(k, j)];
-        11139360 => [sm_game::actors::baby_metroid_encounter::go_to_normal(k, j)]; 11139382 => [sm_game::actors::baby_metroid_encounter::go_to_latched_on(k, j)];
-        11139472 => [sm_game::actors::baby_metroid_encounter::go_to_remorse(k, j)];
-        10657959 => [crate::game::enemy_projectiles::spawn_scripted(0xdafe, j, game)];
-        10652030 => [crate::game::enemy_projectiles::spawn_scripted(0xdbf2, j, game)];
         0xa30000..=0xa3ffff => [{ crate::rtl::report_unreachable(game); EnemyScript::Stop }];
         10872671 => [{ actors::spore_spawn::increase_max_x_radius(game); j }];
         10872689 => [{ actors::spore_spawn::clear_damaged_flag(game); j }];

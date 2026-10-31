@@ -1009,6 +1009,19 @@ pub fn instruction<H: InstructionHost>(
             LeaseActors::lease(game).queue_sound(if ea == 10854240 { 2 } else { 3 }, 6, j.word(0));
             j.offset(1)
         }
+        // Instruction - spawn mini-Crocomire ($A2:897E) or cacatac spike ($A2:A0A7) projectile.
+        10652030 | 10657959 => {
+            let definition = if ea == 10652030 { 0xdbf2 } else { 0xdafe };
+            let enemy = crate::actors::host::EnemyHost::current_enemy(game);
+            game.spawn_projectile(j.word(0), enemy, definition);
+            j.offset(1)
+        }
+        // The baby Metroid's go to instructions ($A9:CFB4, $A9:CFCA, $A9:F920, $A9:F936, $A9:F990).
+        11128756 => crate::actors::baby_metroid_cutscene::go_to_initial(k, j),
+        11128778 => crate::actors::baby_metroid_cutscene::go_to_draining_mother_brain(k, j),
+        11139360 => crate::actors::baby_metroid_encounter::go_to_normal(k, j),
+        11139382 => crate::actors::baby_metroid_encounter::go_to_latched_on(k, j),
+        11139472 => crate::actors::baby_metroid_encounter::go_to_remorse(k, j),
         10717526 | 10733220 => skree::set_attack_ready(j, game),
         10722411 | 10722433 => tripper::set_x_movement(false, j, game),
         10722422 | 10722444 => tripper::set_x_movement(true, j, game),
