@@ -56,13 +56,17 @@ pub trait PlayerRuntime: crate::runtime_access::RuntimeAccess {
 }
 impl<T: crate::runtime_access::RuntimeAccess + ?Sized> PlayerRuntime for T {}
 
+/// The frontend's soft-reset request, as the menus raise it.
+pub trait ResetRequest {
+    fn request_reset(&mut self);
+}
+
 /// The runtime operations the menus call.
 pub trait MenuRuntime:
     crate::player_position::PlayerPosition + crate::player_position::PlayerFacts + PlayerRuntime
 {
     /// Upload `bytes` from `source` to VRAM word address `destination`.
     fn load_vram_words(&mut self, source: u32, destination: u16, bytes: u16);
-    fn request_reset(&mut self);
     /// Run bank $8B's cinematic sprite pre-instruction `pre` for `object`.
     fn cinematic_sprite_pre_instruction(&mut self, pre: u32, object: u16);
     /// Run bank $8B's cinematic sprite instruction; returns the next script cursor.
@@ -123,6 +127,7 @@ pub trait Host:
     + crate::decompression::DecompressionHost
     + crate::records::Records
     + MenuRuntime
+    + ResetRequest
     + crate::runtime_access::RuntimeAccess
     + crate::actors::session_slots::SlotAccess
 {
