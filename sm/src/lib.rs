@@ -721,10 +721,13 @@ pub fn verify_actor_movement_case(id: u32) -> Option<Vec<u8>> {
     actor_movement_cases::capture_case(id, actor_movement_cases::run)
 }
 
+#[cfg(sm_verify_dll)]
 #[path = "verification/room_contact_start_cases.rs"]
 pub(crate) mod room_contact_start_cases;
+#[cfg(sm_verify_dll)]
 #[path = "verification/room_contact_start_observer.rs"]
 pub(crate) mod room_contact_start_observer;
+#[cfg(sm_verify_dll)]
 pub fn verify_room_contact_start_case(id: u32) -> Option<Vec<u8>> {
     room_contact_start_cases::capture_case(id, room_contact_start_cases::run)
 }
@@ -760,15 +763,22 @@ pub use room_world_cases::{
 #[cfg(sm_verify_dll)]
 pub use room_world_resources::verify_room_pack_bytes;
 
+#[cfg(sm_verify_dll)]
 #[path = "verification/room_background_cases.rs"]
 pub(crate) mod room_background_cases;
+#[cfg(sm_verify_dll)]
+#[path = "verification/room_background_fixture.rs"]
+pub(crate) mod room_background_fixture;
+#[cfg(sm_verify_dll)]
 #[path = "verification/room_background_observer.rs"]
 pub(crate) mod room_background_observer;
+#[cfg(sm_verify_dll)]
 #[path = "verification/room_background_offset_case.rs"]
 pub(crate) mod room_background_offset_case;
 #[path = "verification/room_background_support.rs"]
 pub(crate) mod room_background_support;
 
+#[cfg(sm_verify_dll)]
 pub fn verify_room_background_case(id: u32) -> Option<Vec<u8>> {
     if id == 37 {
         room_background_offset_case::capture(room_background_cases::run)

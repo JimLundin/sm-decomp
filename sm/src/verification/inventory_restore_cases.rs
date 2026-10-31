@@ -100,6 +100,7 @@ fn record(
 }
 /// Observer only; never changes the behavior or supplies a restoration result.
 /// The old-reference overlay calls this at each actual restore entry and return.
+#[cfg(sm_verify_dll)]
 pub(crate) fn observe(resource: u8, phase: u8, amount: u16, game: &Game) {
     TRACE.with(|trace| {
         if let Some(trace) = trace.borrow_mut().as_mut() {

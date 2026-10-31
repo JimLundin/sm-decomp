@@ -1,11 +1,10 @@
 //! Explicit injected diagnostic/draw transitions for actual predecessor execution.
 #![forbid(unsafe_code)]
-use super::sprite_effect_cases::{Operation, put, put_parts, word};
-use crate::{
-    game_state::{Game, WorkRam},
-    rom::RomImage,
-};
+use super::sprite_effect_cases::{Operation, put, word};
+use crate::{game_state::Game, rom::RomImage};
 use std::cell::RefCell;
+#[cfg(sm_verify_dll)]
+use {super::sprite_effect_cases::put_parts, crate::game_state::WorkRam};
 struct Capture {
     id: u32,
     diagnostics: usize,
@@ -42,11 +41,13 @@ pub(crate) fn finish() -> Vec<u8> {
     }
     captured.bytes
 }
+#[cfg(sm_verify_dll)]
 fn replacement(address: u32, value: u16) -> RomImage {
     let image = RomImage::zeroed(0x200000);
     word(&image, address, value);
     image
 }
+#[cfg(sm_verify_dll)]
 pub(crate) fn diagnostic_parts(address: u32, ram: &WorkRam, loaded_rom: &mut Option<RomImage>) {
     ACTIVE.with(|a| {
         let mut active = a.borrow_mut();
@@ -94,6 +95,7 @@ pub(crate) fn diagnostic_parts(address: u32, ram: &WorkRam, loaded_rom: &mut Opt
         }
     });
 }
+#[cfg(sm_verify_dll)]
 pub(crate) fn draw(map: u16, x: u16, y: u16, palette: u16, tile: u16, g: &mut Game) {
     ACTIVE.with(|a| {
         let mut active = a.borrow_mut();

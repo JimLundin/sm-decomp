@@ -356,6 +356,7 @@ pub(crate) fn check_assets(game: &mut Game) {
 }
 
 /// Existing external producer: the outer importer supplies normalized independent bytes.
+#[cfg(sm_verify_dll)]
 pub fn verify_room_pack_bytes(
     source: &[u8],
     alternate: bool,

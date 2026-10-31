@@ -478,6 +478,7 @@ pub(crate) fn run(op: Operation, g: &mut Game) -> Option<u16> {
         }
     }
 }
+#[cfg(sm_verify_dll)]
 pub(crate) fn replacement(id: u32) -> RomImage {
     let r = RomImage::zeroed(0x100000);
     if id == 32 {

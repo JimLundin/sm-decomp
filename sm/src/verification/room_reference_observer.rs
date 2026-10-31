@@ -1,4 +1,5 @@
 #![forbid(unsafe_code)]
+#[cfg(sm_verify_dll)]
 use crate::{
     game_state::WorkRam,
     rom::RomImage,
@@ -29,6 +30,7 @@ pub(crate) fn finish() -> Vec<u8> {
         c.bytes
     })
 }
+#[cfg(sm_verify_dll)]
 pub(crate) fn diagnostic_parts(
     address: u32,
     ram: &WorkRam,

@@ -1,6 +1,8 @@
 //! Actual save stages for captures and explicitly requested replay probes.
 #![forbid(unsafe_code)]
-use crate::{flags_save_case as case, game_state::Game};
+use crate::flags_save_case as case;
+#[cfg(sm_verify_dll)]
+use crate::game_state::Game;
 use std::cell::RefCell;
 thread_local! {static CAPTURE:RefCell<Option<(Vec<u8>,u8)>>=const {RefCell::new(None)};}
 pub fn begin(id: u32) {
@@ -10,6 +12,7 @@ pub fn begin(id: u32) {
         *capture.borrow_mut() = Some((output, 0));
     });
 }
+#[cfg(sm_verify_dll)]
 pub fn observe(stage: u8, game: &Game) {
     if stage == 6 {
         // All in-memory save data and both checksum pairs have been written.
@@ -25,6 +28,7 @@ pub fn observe(stage: u8, game: &Game) {
 }
 /// Called only by the selected-slot Yes branch of the Game Over menu.
 /// Slot scans and failed checksums cannot qualify a successful Continue.
+#[cfg(sm_verify_dll)]
 pub fn selected_continue(load_result: u8) {
     if load_result == 0 {
         crate::verify_probe::hit("save.continue.restored");

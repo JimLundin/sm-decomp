@@ -585,6 +585,7 @@ include!("verification/kraid_flags_candidate_dll.rs");
 
 include!("verification/room_reference_dll.rs");
 
+#[cfg(sm_verify_dll)]
 include!("verification/room_contact_start_dll.rs");
 
 include!("verification/room_world_dll.rs");
@@ -593,6 +594,7 @@ pub extern "C" fn sm_verify_room_runtime_guard() -> bool {
     sm::verify_room_runtime_guard()
 }
 
+#[cfg(sm_verify_dll)]
 include!("verification/room_background_dll.rs");
 #[cfg(sm_verify_dll)]
 include!("verification/actor_movement_dll.rs");

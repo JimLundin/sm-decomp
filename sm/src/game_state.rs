@@ -44,6 +44,7 @@ struct SamusBinding {
     roles: Arc<content::ValidatedContent>,
     expected_roles: Arc<content::ContentDescription>,
     spritemaps: Arc<SamusCatalog>,
+    #[cfg(sm_verify_dll)]
     request_media: Arc<SceneMedia>,
     registrations:
         BTreeMap<(content::Registration, content::AllocationId), native_content::RegisteredRom>,
@@ -700,6 +701,7 @@ impl Game {
         }
     }
 
+    #[cfg(sm_verify_dll)]
     pub(crate) fn save_backend_observation(&self, output: &mut crate::recording::RecordingBytes) {
         self.backend
             .as_ref()
@@ -2105,11 +2107,13 @@ impl Game {
             roles,
             expected_roles: Arc::new(expected.roles.clone()),
             spritemaps: supplied.spritemaps,
+            #[cfg(sm_verify_dll)]
             request_media: supplied.request_media,
             registrations,
             execution: supplied.execution,
         })))
     }
+    #[cfg(sm_verify_dll)]
     pub(crate) fn install_samus_binding(
         &mut self,
         prepared: PreparedSamusBinding,
@@ -2311,6 +2315,7 @@ impl Game {
         }
         .map(Some)
     }
+    #[cfg(sm_verify_dll)]
     pub(crate) fn samus_request_media(&self) -> Result<Option<Arc<SceneMedia>>, DisplayError> {
         if self.samus_execution()?.is_none() {
             return Ok(None);

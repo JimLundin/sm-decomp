@@ -8,7 +8,7 @@ use crate::types::{EnemyDef, EnemyTileset};
 use core::mem::offset_of;
 use sm_game::decompression::decompress_to_ram;
 use sm_game::room_entry::{
-    content::{LoadMode, SelectorCursor, SelectorKind},
+    content::{SelectorCursor, SelectorKind},
     installation, selection,
 };
 
@@ -219,11 +219,14 @@ pub(crate) unsafe fn door_script(address: u32, game: &mut Game) {
     }
 }
 
+#[cfg(sm_verify_dll)]
 pub(crate) fn load_tiles_and_palette(game: &mut Game) {
     installation::load_tiles_and_palette(&mut Runtime::new(game));
 }
 
+#[cfg(sm_verify_dll)]
 pub(crate) fn load_level<const INITIAL: bool>(game: &mut Game) {
+    use sm_game::room_entry::content::LoadMode;
     let mode = if INITIAL {
         LoadMode::Initial
     } else {
