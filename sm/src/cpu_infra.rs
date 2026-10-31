@@ -369,6 +369,9 @@ unsafe fn run_patch_bug_hook_parts(addr: u32, game: &mut HookContext<'_, '_>) ->
         -1i32
     }
 }
+/// `opcode_hook` result for a $00 that no hook installed.
+pub(crate) const REAL_BRK: i32 = -1;
+
 pub(crate) unsafe fn opcode_hook(game: &mut Execution<'_>, addr: u32) -> i32 {
     unsafe {
         opcode_hook_parts(
@@ -392,6 +395,10 @@ unsafe fn opcode_hook_parts(addr: u32, game: &mut HookContext<'_, '_>) -> i32 {
         let i_0: i32 = run_patch_bug_hook_parts(addr, game);
         if i_0 >= 0 {
             return i_0;
+        }
+        // The faithful oracle runs a $00 it did not install as the BRK it is.
+        if crate::oracle_mode::faithful() {
+            return REAL_BRK;
         }
         crate::native_assertion! {
             '_c2rust_label;
