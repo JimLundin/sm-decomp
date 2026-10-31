@@ -48,6 +48,16 @@ fn definition_word(
         Definition::Placed(record, _) => record.word(offset as isize),
     }
 }
+/// Spawn the hardcoded PLM `header` at block (`x`, `y`) on a fresh lease of
+/// `game` (SpawnHardcodedPlm).
+pub fn spawn_hardcoded<H>(x: u8, y: u8, header: u16, game: &mut H)
+where
+    H: crate::runtime_access::RuntimeAccess + ?Sized,
+{
+    let source = SpawnSource::Hardcoded { x, y, header };
+    spawn(&mut game.runtime(), source, &mut Contact::Absent);
+}
+
 pub fn spawn(c: &mut impl Host, source: SpawnSource, displacement: &mut Contact<'_>) -> u8 {
     let Some(slot) = (0..40)
         .rev()

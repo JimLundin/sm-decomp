@@ -3,6 +3,7 @@ pub mod fx;
 use crate::enemy_projectiles::host::Effects;
 use crate::ram::RawRam as _;
 use crate::ram::{checked_word, word, words as fields};
+use crate::room_mechanisms::creation::spawn_hardcoded;
 use crate::runtime_access::SessionView;
 use crate::session_access::SessionAccess as _;
 use crate::word_transfers;
@@ -73,12 +74,12 @@ pub fn execute_setup_code<H: ScriptHost + ?Sized>(script: u16, game: &mut H) {
     match script {
         // Clear Crateria mainstreet escape passage if critters escaped and shake screen.
         0x9194 => {
-            game.spawn_hardcoded_plm(0x3d, 0xb, 0xbb30);
+            spawn_hardcoded(0x3d, 0xb, 0xbb30, game);
             word! {game; EARTHQUAKE_TYPE = 24; EARTHQUAKE_TIMER = u16::MAX; }
         }
         // Make old Tourian escape shaft fake wall explode; spawn critters escape block.
-        0x91a9 => game.spawn_hardcoded_plm(0x10, 0x87, 0xb964),
-        0x91b2 => game.spawn_hardcoded_plm(0xf, 0xa, 0xb9ed),
+        0x91a9 => spawn_hardcoded(0x10, 0x87, 0xb964, game),
+        0x91b2 => spawn_hardcoded(0xf, 0xa, 0xb9ed, game),
         // Scrolling sky land, shake screen; scrolling sky land; ocean.
         0x91bd => {
             word! {game; EARTHQUAKE_TYPE = 6; EARTHQUAKE_TIMER = u16::MAX; }
@@ -103,7 +104,7 @@ pub fn execute_setup_code<H: ScriptHost + ?Sized>(script: u16, game: &mut H) {
             game.spawn_room_enemy_projectile(ADDR_K_EPROJ_PRE_PHANTOM_ROOM as u16, 0xc8c8);
         }
         // Shaktool's room.
-        0xc8d3 => game.spawn_hardcoded_plm(0, 0, 0xb8eb),
+        0xc8d3 => spawn_hardcoded(0, 0, 0xb8eb, game),
         // Set pausing code for Draygon: native-order addresses, then the bank.
         0xc8dd => {
             for (at, hook) in [(0x601, 0xc8f6), (0x604, 0xc8fc)] {
@@ -127,7 +128,7 @@ pub fn execute_setup_code<H: ScriptHost + ?Sized>(script: u16, game: &mut H) {
         // Light horizontal shaking; rising acid and medium horizontal shaking.
         0xc933 | 0xc953 => {
             let kind = if script == 0xc953 {
-                game.spawn_hardcoded_plm(0x10, 0x10, 0xb968);
+                spawn_hardcoded(0x10, 0x10, 0xb968, game);
                 21
             } else {
                 18
@@ -147,7 +148,7 @@ pub fn execute_setup_code<H: ScriptHost + ?Sized>(script: u16, game: &mut H) {
         }
         // Ceres door to solid blocks, Ceres haze, BG1/2 tiles base and haze.
         0xc96e => {
-            game.spawn_hardcoded_plm(0xf, 0x26, 0xba48);
+            spawn_hardcoded(0xf, 0x26, 0xba48, game);
             crate::room_visuals::initialize_room_haze(game);
         }
         0xc976 => crate::room_visuals::initialize_room_haze(game),
@@ -177,7 +178,7 @@ pub fn execute_door_code<H: ScriptHost + ?Sized>(script: u16, game: &mut H) {
                 (ADDR_K_ANIMTILES_WRECKED_SHIP_TRADMILL_LEFT, 0xb64f)
             };
             crate::animated_tiles::execution::leased::spawn(animation as u16, game);
-            game.spawn_hardcoded_plm(4, 9, mechanism);
+            spawn_hardcoded(4, 9, mechanism, game);
         }
         // Set up elevatube from south / north.
         0xe26c | 0xe291 => {
@@ -196,7 +197,7 @@ pub fn execute_door_code<H: ScriptHost + ?Sized>(script: u16, game: &mut H) {
                 }
             }
             game.player_command(0);
-            game.spawn_hardcoded_plm(1, 0, 0xb8f9);
+            spawn_hardcoded(1, 0, 0xb8f9, game);
         }
         // Reset elevatube on north / south exit.
         0xe301 | 0xe309 => {

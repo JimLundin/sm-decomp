@@ -92,12 +92,6 @@ impl MenuRuntime for Game {
     fn enqueue_mode7_rom(&mut self, bank: u8, cursor: u16) {
         crate::game::mode7_transfers::enqueue_rom(bank, cursor, self)
     }
-    fn spawn_hardcoded_plm(&mut self, x: u8, y: u8, id: u16) {
-        crate::game::room_mechanisms::spawn_hardcoded(
-            crate::types::SpawnHardcodedPlmArgs::new(x, y, id),
-            self,
-        )
-    }
     fn spawn_room_enemy_projectile(&mut self, definition: u16, parameter: u16) -> u16 {
         crate::game::enemy_projectiles::spawn_with_room_gfx(definition, parameter, self)
     }
