@@ -68,7 +68,12 @@ pub fn mark_shot(h: &mut impl EprojHost, index: isize) {
     let direction = shot_word(h, ShotMember::Direction, index) | 0x10;
     set_shot_direction(h, index, direction);
 }
-fn sprite(h: &mut impl EprojHost, x: u16, y: u16, selector: u16) {
+fn sprite(
+    h: &mut impl EprojHost,
+    x: u16,
+    y: u16,
+    selector: u16,
+) -> crate::sprite_effect_state::SpawnResult {
     sprite_objects::spawn(
         h,
         SpriteSpawn {
@@ -76,7 +81,7 @@ fn sprite(h: &mut impl EprojHost, x: u16, y: u16, selector: u16) {
             definition: LegacySpriteDefinition(selector),
             appearance: 0,
         },
-    );
+    )
 }
 fn death<H: ActorHost + EprojHost>(h: &mut H, animation: u16, limit: u16, actor: ActorKey) {
     let animation = if animation.wrapping_sub(limit) & 0x8000 == 0 {
@@ -229,6 +234,11 @@ fn shot_without_death<H: ActorHost + EprojHost>(h: &mut H) -> bool {
     let selected = current(h);
     let definition = capture_definition(h, selected);
     let address = h.definition_vulnerability_address(&definition);
+    // The shot AI leaves its scratch in $12/$14 ($A0:A6ED, $A0:A700), and a
+    // dud its position, sprite and sprite slot ($A0:A7B6, $B4:BC7B); Kraid's
+    // mouth reads them back as bounds.
+    h.session_mut().spawn_scratch.header = shot.kind;
+    h.session_mut().spawn_scratch.coordinates = address;
     let primary = if let Some((offset, field)) = shot.vulnerability_offset() {
         let source = h.capture_vulnerability_at(address.wrapping_add(offset));
         h.projectile_vulnerability(&source, 0, field)
@@ -250,7 +260,15 @@ fn shot_without_death<H: ActorHost + EprojHost>(h: &mut H) -> bool {
             mark_shot(h, index);
             let x = shot_word(h, ShotMember::X, index);
             let y = shot_word(h, ShotMember::Y, index);
-            sprite(h, x, y, 6);
+            let slot = match sprite(h, x, y, 6) {
+                crate::sprite_effect_state::SpawnResult::Allocated(slot) => u16::from(slot.0) * 2,
+                crate::sprite_effect_state::SpawnResult::Full => x,
+            };
+            h.session_mut().spawn_scratch = crate::session::SpawnScratch {
+                header: slot,
+                coordinates: y,
+                argument: 6,
+            };
             h.queue_sound(1, 3, 0x3d);
             return false;
         }

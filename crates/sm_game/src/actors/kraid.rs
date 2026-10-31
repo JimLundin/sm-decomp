@@ -604,6 +604,9 @@ fn mouth_shots<S: BossState + ?Sized>(game: &mut S) {
         let right: u16 = (session_slot!(game, Body[BODY].base.x_pos)).wrapping_add(hitbox.word(0));
         let top: u16 = (session_slot!(game, Body[BODY].base.y_pos)).wrapping_add(hitbox.word(2));
         let bottom: u16 = (session_slot!(game, Body[BODY].base.y_pos)).wrapping_add(hitbox.word(6));
+        // The bounds live in $16, $14 and $12, where a hit's shot reaction
+        // leaves its own scratch for the later projectiles ($A7:B049).
+        word! {game; REMOVED_R22 = right; REMOVED_R20 = top; REMOVED_R18 = bottom;}
         if word!(game.PROJECTILE_COUNTER) != 0 {
             let mut index: u16 = 2u16.wrapping_mul(word!(game.PROJECTILE_COUNTER));
             loop {
@@ -611,17 +614,17 @@ fn mouth_shots<S: BossState + ?Sized>(game: &mut S) {
                 if !((word!(game.PROJECTILE_Y_POS[p]) as i32
                     - word!(game.PROJECTILE_Y_RADIUS[p]) as i32
                     - 1i32
-                    - bottom as i32)
+                    - word!(game.REMOVED_R18) as i32)
                     & 0x8000
                     == 0
                     || (word!(game.PROJECTILE_Y_RADIUS[p]) as i32
                         + word!(game.PROJECTILE_Y_POS[p]) as i32
-                        - top as i32)
+                        - word!(game.REMOVED_R20) as i32)
                         & 0x8000
                         != 0
                     || (word!(game.PROJECTILE_X_RADIUS[p]) as i32
                         + word!(game.PROJECTILE_X_POS[p]) as i32
-                        - right as i32)
+                        - word!(game.REMOVED_R22) as i32)
                         & 0x8000
                         != 0)
                 {
@@ -640,7 +643,6 @@ fn mouth_shots<S: BossState + ?Sized>(game: &mut S) {
                         game.react_to_shot(Shot::ReactionOnly);
                         word!(game.PROJECTILE_DIR[(index >> 1)] |= 0x10);
                         hit = true;
-                        index = 0;
                     }
                 }
                 index = index.wrapping_sub(2);
