@@ -9,8 +9,7 @@ use std::collections::TryReserveError;
 // Hardware values are serialized field by field. Explicit padding fields retain
 // the original byte format without interpreting a Rust allocation as a byte slice.
 use crate::types::{
-    Apu, ApuRegisters, BgLayer, Cpu, Dma, DmaChannel, DspChannel, DspState, Layer, Ppu, Snes, Spc,
-    Timer, WindowLayer,
+    Apu, ApuRegisters, BgLayer, Cpu, Dma, DmaChannel, Layer, Ppu, Snes, Spc, Timer, WindowLayer,
 };
 
 impl SnapshotOutput for crate::recording::RecordingBytes {
@@ -36,15 +35,6 @@ sm_runtime::state_record!(Spc, 15, {
 
 sm_runtime::state_record!(Dma, 224, {
     channel, hdmaTimer, snapshot_padding0, dmaTimer, dmaBusy, pad
-} skip {
-});
-
-sm_runtime::state_record!(DspState, 3024, {
-    ram, channel, dirPage, evenCycle, mute, reset, masterVolumeL, masterVolumeR,
-    snapshot_padding0, noiseSample, noiseRate, noiseCounter, echoWrites, echoVolumeL,
-    echoVolumeR, feedbackVolume, echoBufferAdr, echoDelay, echoRemain, echoBufferIndex,
-    firBufferIndex, firValues, snapshot_padding1, firBufferL, firBufferR, sampleBuffer,
-    sampleOffset, snapshot_padding2
 } skip {
 });
 
@@ -81,16 +71,6 @@ sm_runtime::state_record!(DmaChannel, 26, {
     bAdr, snapshot_padding0, aAdr, aBank, snapshot_padding1, size, indBank, snapshot_padding2,
     tableAdr, repCount, unusedByte, dmaActive, hdmaActive, mode, fixed, decrement, indirect,
     fromB, unusedBit, doTransfer, terminated, offIndex, snapshot_padding3
-} skip {
-
-});
-
-sm_runtime::state_record!(DspChannel, 86, {
-    pitch, pitchCounter, pitchModulation, snapshot_padding0, decodeBuffer, srcn,
-    snapshot_padding1, decodeOffset, previousFlags, snapshot_padding2, old, older, useNoise,
-    snapshot_padding3, adsrRates, rateCounter, adsrState, snapshot_padding4, sustainLevel,
-    useGain, gainMode, directGain, snapshot_padding5, gainValue, gain, keyOn, keyOff, sampleOut,
-    volumeL, volumeR, echoEnable, snapshot_padding6
 } skip {
 
 });

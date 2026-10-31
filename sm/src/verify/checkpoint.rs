@@ -227,6 +227,21 @@ impl<T: State, const N: usize> State for [T; N] {
 // Exhaustive patterns make newly added hardware fields a compile error until
 // their checkpoint behavior is specified. Allocation pointers and padding are omitted.
 macro_rules! fields {
+    // The checkpoint format stores each field under `$name`.
+    ($ty:ident named { $($field:ident = $name:literal),* $(,)? } skip { $($skip:ident),* $(,)? }) => {
+        impl State for $ty {
+            fn layout(layout: &mut String) {
+                layout.push_str(concat!(stringify!($ty), "{"));
+                $(field_layout::<Self, _>(layout, $name, |state| &state.$field);)*
+                layout.push('}');
+            }
+            fn state(&mut self, archive: &mut Archive<'_>) -> Result<(), String> {
+                let Self { $($field,)* $($skip: _,)* } = self;
+                $(archive.check_field($name)?; $field.state(archive)?;)*
+                Ok(())
+            }
+        }
+    };
     ($ty:ident { $($field:ident),* $(,)? } skip { $($skip:ident),* $(,)? }) => {
         impl State for $ty {
             fn layout(layout: &mut String) {
@@ -317,18 +332,12 @@ fields!(DmaChannel {
     terminated, offIndex
 } skip { snapshot_padding0, snapshot_padding1, snapshot_padding2, snapshot_padding3 });
 
-fields!(DspState {
-    ram, channel, dirPage, evenCycle, mute, reset, masterVolumeL, masterVolumeR,
-    noiseSample, noiseRate, noiseCounter, echoWrites, echoVolumeL, echoVolumeR,
-    feedbackVolume, echoBufferAdr, echoDelay, echoRemain, echoBufferIndex,
-    firBufferIndex, firValues, firBufferL, firBufferR, sampleBuffer, sampleOffset
+fields!(DspState named {
+    ram = "ram", channel = "channel", dir_page = "dirPage", even_cycle = "evenCycle", mute = "mute", reset = "reset", master_volume_l = "masterVolumeL", master_volume_r = "masterVolumeR", noise_sample = "noiseSample", noise_rate = "noiseRate", noise_counter = "noiseCounter", echo_writes = "echoWrites", echo_volume_l = "echoVolumeL", echo_volume_r = "echoVolumeR", feedback_volume = "feedbackVolume", echo_buffer_adr = "echoBufferAdr", echo_delay = "echoDelay", echo_remain = "echoRemain", echo_buffer_index = "echoBufferIndex", fir_buffer_index = "firBufferIndex", fir_values = "firValues", fir_buffer_l = "firBufferL", fir_buffer_r = "firBufferR", sample_buffer = "sampleBuffer", sample_offset = "sampleOffset"
 } skip { snapshot_padding0, snapshot_padding1, snapshot_padding2 });
 
-fields!(DspChannel {
-    pitch, pitchCounter, pitchModulation, decodeBuffer, srcn, decodeOffset,
-    previousFlags, old, older, useNoise, adsrRates, rateCounter, adsrState,
-    sustainLevel, useGain, gainMode, directGain, gainValue, gain, keyOn, keyOff,
-    sampleOut, volumeL, volumeR, echoEnable
+fields!(DspChannel named {
+    pitch = "pitch", pitch_counter = "pitchCounter", pitch_modulation = "pitchModulation", decode_buffer = "decodeBuffer", srcn = "srcn", decode_offset = "decodeOffset", previous_flags = "previousFlags", old = "old", older = "older", use_noise = "useNoise", adsr_rates = "adsrRates", rate_counter = "rateCounter", adsr_state = "adsrState", sustain_level = "sustainLevel", use_gain = "useGain", gain_mode = "gainMode", direct_gain = "directGain", gain_value = "gainValue", gain = "gain", key_on = "keyOn", key_off = "keyOff", sample_out = "sampleOut", volume_l = "volumeL", volume_r = "volumeR", echo_enable = "echoEnable"
 } skip { snapshot_padding0, snapshot_padding1, snapshot_padding2, snapshot_padding3, snapshot_padding4, snapshot_padding5, snapshot_padding6 });
 
 fields!(DspRegWriteHistory {

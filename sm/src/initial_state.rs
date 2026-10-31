@@ -20,6 +20,12 @@ scalars!(
     f64 = 0.0,
     bool = false
 );
+impl InitialState for sm_runtime::audio::dsp::DspState {
+    const INITIAL: Self = Self::INITIAL;
+}
+impl InitialState for sm_runtime::audio::dsp::DspChannel {
+    const INITIAL: Self = Self::INITIAL;
+}
 impl<T> InitialState for *mut T {
     const INITIAL: Self = core::ptr::null_mut();
 }

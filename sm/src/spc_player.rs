@@ -466,7 +466,7 @@ impl NativePlayer {
             || !core::ptr::eq(player.state.dsp, dsp)
             || player.state.ram != player.ram.as_mut_ptr()
             || player.state.timer_cycles > 64
-            || dsp.state.sampleOffset > 534
+            || dsp.state.sample_offset > 534
             || player
                 .state
                 .sfx_chans_1
@@ -506,17 +506,17 @@ pub unsafe fn spc_player_generate_samples(p: *mut SpcPlayer) {
             b"void SpcPlayer_GenerateSamples(SpcPlayer *)\0"
         };
         crate::native_assertion! {
-            '_c2rust_label_0: (*(*p).state.dsp).state.sampleOffset as i32 <= 534;
-            b"p->dsp->sampleOffset <= 534\0", b"src/spc_player.c\0", 1552,
+            '_c2rust_label_0: (*(*p).state.dsp).state.sample_offset as i32 <= 534;
+            b"p->dsp->sample_offset <= 534\0", b"src/spc_player.c\0", 1552,
             b"void SpcPlayer_GenerateSamples(SpcPlayer *)\0"
         };
-        do_until! { (*(*p).state.dsp).state.sampleOffset as i32 == 534;
+        do_until! { (*(*p).state.dsp).state.sample_offset as i32 == 534;
             if (*p).state.timer_cycles as i32 >= 64 {
                 spc_loop_part2(p, (*p).state.timer_cycles >> 6);
                 spc_loop_part1(p);
                 (*p).state.timer_cycles = (*p).state.timer_cycles & 63;
             }
-            let mut n: i32 = 534 - (*(*p).state.dsp).state.sampleOffset as i32;
+            let mut n: i32 = 534 - (*(*p).state.dsp).state.sample_offset as i32;
             if n > 64 - (*p).state.timer_cycles as i32 {
                 n = 64 - (*p).state.timer_cycles as i32;
             }
@@ -668,12 +668,7 @@ mod sequencer {
         fn write(output: &RefCell<&mut Dsp>, register: u8, value: u8) {
             let mut output = output.borrow_mut();
             let output = &mut **output;
-            crate::snes::dsp::write_register(
-                &mut output.state,
-                &output.apu_memory,
-                register,
-                value,
-            );
+            output.write_register(register, value);
         }
         pub(super) fn initialize(mut self) {
             self.dsp.get_mut().state.reset();
@@ -699,13 +694,13 @@ mod sequencer {
                     self.commit_registers();
                     self.state.timer_cycles &= 63;
                 }
-                let count = (534 - self.dsp.get_mut().state.sampleOffset)
+                let count = (534 - self.dsp.get_mut().state.sample_offset)
                     .min(u16::from(64 - self.state.timer_cycles));
                 self.state.timer_cycles += count as u8;
                 for _ in 0..count {
                     self.dsp.get_mut().cycle();
                 }
-                if self.dsp.get_mut().state.sampleOffset == 534 {
+                if self.dsp.get_mut().state.sample_offset == 534 {
                     break;
                 }
             }

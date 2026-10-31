@@ -308,57 +308,6 @@ crate::typed_struct! {
         pub snapshot_padding3: [u8; 1];
     }
 
-    pub struct DspState {
-        pub ram: [u8; 128];
-        pub channel: [DspChannel; 8];
-        pub dirPage: u16;
-        pub evenCycle, mute, reset: bool;
-        pub masterVolumeL, masterVolumeR: i8;
-        pub snapshot_padding0: [u8; 1];
-        pub noiseSample: i16;
-        pub noiseRate, noiseCounter: u16;
-        pub echoWrites: bool;
-        pub echoVolumeL, echoVolumeR, feedbackVolume: i8;
-        pub echoBufferAdr, echoDelay, echoRemain, echoBufferIndex: u16;
-        pub firBufferIndex: u8;
-        pub firValues: [i8; 8];
-        pub snapshot_padding1: [u8; 1];
-        pub firBufferL, firBufferR: [i16; 8];
-        pub sampleBuffer: [i16; 1068];
-        pub sampleOffset: u16;
-        pub snapshot_padding2: [u8; 2];
-    }
-
-    pub struct DspChannel {
-        pub pitch, pitchCounter: u16;
-        pub pitchModulation: bool;
-        pub snapshot_padding0: [u8; 1];
-        pub decodeBuffer: [i16; 19];
-        pub srcn: u8;
-        pub snapshot_padding1: [u8; 1];
-        pub decodeOffset: u16;
-        pub previousFlags: u8;
-        pub snapshot_padding2: [u8; 1];
-        pub old, older: i16;
-        pub useNoise: bool;
-        pub snapshot_padding3: [u8; 1];
-        pub adsrRates: [u16; 4];
-        pub rateCounter: u16;
-        pub adsrState: u8;
-        pub snapshot_padding4: [u8; 1];
-        pub sustainLevel: u16;
-        pub useGain: bool;
-        pub gainMode: u8;
-        pub directGain: bool;
-        pub snapshot_padding5: [u8; 1];
-        pub gainValue, gain: u16;
-        pub keyOn, keyOff: bool;
-        pub sampleOut: i16;
-        pub volumeL, volumeR: i8;
-        pub echoEnable: bool;
-        pub snapshot_padding6: [u8; 1];
-    }
-
     pub struct DspRegWriteHistory {
         pub count: u32;
         pub addr, val: [u8; 256];
@@ -733,13 +682,7 @@ pub struct SpcPlayer {
 }
 const _: () = assert!(core::mem::offset_of!(SpcPlayer, state) == 0);
 
-// The backend sees the state prefix; its RAM allocation stays owned in Rust.
-#[repr(C)]
-pub struct Dsp {
-    pub state: DspState,
-    pub(crate) apu_memory: crate::apu_ram::ApuRam,
-}
-const _: () = assert!(core::mem::offset_of!(Dsp, state) == 0);
+pub use sm_runtime::audio::dsp::{Dsp, DspChannel, DspState};
 
 // EnemyBase, now in sm_game, must remain the prefix of EnemyData.
 macro_rules! assert_enemy_base_prefix {

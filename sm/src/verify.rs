@@ -1621,7 +1621,7 @@ fn sfx_native_note_keeps_captured_slot_and_literal_programming() {
         let dsp = &(*state.dsp).state;
         let voice = &dsp.channel[1];
         assert_eq!(
-            (voice.srcn, voice.volumeL, voice.volumeR, voice.pitch),
+            (voice.srcn, voice.volume_l, voice.volume_r, voice.pitch),
             (3, 40, 40, 267)
         );
         assert_eq!(&dsp.ram[0x14..0x18], &[3, 0x81, 0x23, 0x45]);
@@ -1848,12 +1848,12 @@ fn owned_player_render_matches_native_schedule_and_failure_prefixes() {
                 s.main_tempo_accum = 240;
                 (s.sfx1.cur_sound, s.sfx1.voices_to_setup) = (1, 1);
                 let dsp = &mut *s.dsp;
-                dsp.state.sampleOffset = offset;
-                for pair in dsp.state.sampleBuffer.chunks_exact_mut(2) {
+                dsp.state.sample_offset = offset;
+                for pair in dsp.state.sample_buffer.chunks_exact_mut(2) {
                     pair.copy_from_slice(&[17, -23]);
                 }
                 if mode == 3 {
-                    dsp.state.channel[0].adsrState = 255;
+                    dsp.state.channel[0].adsr_state = 255;
                     dsp.state.channel[0].pitch = 1;
                     dsp.state.reset = false;
                 }
@@ -1889,11 +1889,11 @@ fn owned_player_render_matches_native_schedule_and_failure_prefixes() {
             assert_eq!(ram[0], ram[1]);
             let [a, b] = [0, 1].map(|i| &(*(*players[i]).state.dsp).state);
             assert_eq!(a.ram, b.ram);
-            assert_eq!(a.sampleOffset, b.sampleOffset);
-            assert_eq!(a.evenCycle, b.evenCycle);
+            assert_eq!(a.sample_offset, b.sample_offset);
+            assert_eq!(a.even_cycle, b.even_cycle);
             if mode == 3 {
                 assert_eq!((*players[0]).state.timer_cycles, 64);
-                assert_eq!((a.sampleOffset, a.channel[0].pitchCounter), (0, 1));
+                assert_eq!((a.sample_offset, a.channel[0].pitch_counter), (0, 1));
             }
             if offset == 534 {
                 assert_eq!(pcm[0], [[17, -23]; 534]);

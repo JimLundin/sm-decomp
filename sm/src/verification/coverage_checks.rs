@@ -6563,11 +6563,11 @@ fn dsp_voice_seven_registers_keep_native_signed_pitch_envelope_rules() {
     let ram = sm::apu_ram::ApuRam::new();
     let mut state = DspState::new();
     state.channel[7].pitch = 0xc155;
-    state.channel[7].gainValue = 99;
+    state.channel[7].gain_value = 99;
     write_register(&mut state, &ram, 0x70, 0x80);
     write_register(&mut state, &ram, 0x71, 0xff);
     assert_eq!(
-        (state.channel[7].volumeL, state.channel[7].volumeR),
+        (state.channel[7].volume_l, state.channel[7].volume_r),
         (-128, -1)
     );
     assert_eq!(
@@ -6586,52 +6586,58 @@ fn dsp_voice_seven_registers_keep_native_signed_pitch_envelope_rules() {
     write_register(&mut state, &ram, 0x74, 0xff);
     assert_eq!(state.channel[7].srcn, 0xff);
     write_register(&mut state, &ram, 0x75, 0xf5);
-    assert_eq!(state.channel[7].adsrRates, [192, 2, 0, 0]);
-    assert!(!state.channel[7].useGain);
+    assert_eq!(state.channel[7].adsr_rates, [192, 2, 0, 0]);
+    assert!(!state.channel[7].use_gain);
     write_register(&mut state, &ram, 0x75, 0xff);
-    assert_eq!(state.channel[7].adsrRates, [1, 2, 0, 0]);
+    assert_eq!(state.channel[7].adsr_rates, [1, 2, 0, 0]);
     write_register(&mut state, &ram, 0x75, 0x05);
-    assert_eq!(state.channel[7].adsrRates, [192, 64, 0, 0]);
-    assert!(state.channel[7].useGain);
+    assert_eq!(state.channel[7].adsr_rates, [192, 64, 0, 0]);
+    assert!(state.channel[7].use_gain);
     write_register(&mut state, &ram, 0x76, 0xff);
     assert_eq!(
-        (state.channel[7].adsrRates[2], state.channel[7].sustainLevel),
+        (
+            state.channel[7].adsr_rates[2],
+            state.channel[7].sustain_level
+        ),
         (1, 2048)
     );
     write_register(&mut state, &ram, 0x76, 0x00);
     assert_eq!(
-        (state.channel[7].adsrRates[2], state.channel[7].sustainLevel),
+        (
+            state.channel[7].adsr_rates[2],
+            state.channel[7].sustain_level
+        ),
         (0, 256)
     );
     write_register(&mut state, &ram, 0x77, 0xe3);
     assert_eq!(
-        (state.channel[7].adsrRates[3], state.channel[7].gainMode),
+        (state.channel[7].adsr_rates[3], state.channel[7].gain_mode),
         (1280, 3)
     );
-    assert!(!state.channel[7].directGain);
-    assert_eq!(state.channel[7].gainValue, 99);
+    assert!(!state.channel[7].direct_gain);
+    assert_eq!(state.channel[7].gain_value, 99);
     write_register(&mut state, &ram, 0x77, 0xed);
     assert_eq!(
-        (state.channel[7].adsrRates[3], state.channel[7].gainMode),
+        (state.channel[7].adsr_rates[3], state.channel[7].gain_mode),
         (128, 3)
     );
     write_register(&mut state, &ram, 0x77, 0x7f);
-    assert!(state.channel[7].directGain);
-    assert_eq!(state.channel[7].gainValue, 2032);
+    assert!(state.channel[7].direct_gain);
+    assert_eq!(state.channel[7].gain_value, 2032);
     assert_eq!(
-        (state.channel[7].adsrRates[3], state.channel[7].gainMode),
+        (state.channel[7].adsr_rates[3], state.channel[7].gain_mode),
         (128, 3)
     );
     for (value, rate, mode) in [(0x80, 0, 0), (0xa1, 2048, 1), (0xc2, 1536, 2)] {
         write_register(&mut state, &ram, 0x77, value);
         assert_eq!(
-            (state.channel[7].adsrRates[3], state.channel[7].gainMode),
+            (state.channel[7].adsr_rates[3], state.channel[7].gain_mode),
             (rate, mode)
         );
-        assert!(!state.channel[7].directGain);
-        assert_eq!(state.channel[7].gainValue, 2032);
+        assert!(!state.channel[7].direct_gain);
+        assert_eq!(state.channel[7].gain_value, 2032);
     }
-    assert_eq!((state.channel[0].pitch, state.channel[0].volumeL), (0, 0));
+    assert_eq!((state.channel[0].pitch, state.channel[0].volume_l), (0, 0));
 }
 
 // Movies cannot independently inspect native global/FIR fields or author ignored shadows.
@@ -6650,51 +6656,55 @@ fn dsp_global_registers_keep_native_flags_fir_and_shadow_rules() {
         write_register(&mut state, &ram, address, value);
         assert_eq!(dsp_read(&state, address), value);
     }
-    assert_eq!((state.masterVolumeL, state.masterVolumeR), (-128, 127));
+    assert_eq!((state.master_volume_l, state.master_volume_r), (-128, 127));
     assert_eq!(
-        (state.echoVolumeL, state.echoVolumeR, state.feedbackVolume),
+        (
+            state.echo_volume_l,
+            state.echo_volume_r,
+            state.feedback_volume
+        ),
         (-1, -127, -16)
     );
     write_register(&mut state, &ram, 0x6c, 0xff);
     assert_eq!(
-        (state.reset, state.mute, state.echoWrites, state.noiseRate),
+        (state.reset, state.mute, state.echo_writes, state.noise_rate),
         (true, true, false, 1)
     );
     write_register(&mut state, &ram, 0x6c, 0x00);
     assert_eq!(
-        (state.reset, state.mute, state.echoWrites, state.noiseRate),
+        (state.reset, state.mute, state.echo_writes, state.noise_rate),
         (false, false, true, 0)
     );
     write_register(&mut state, &ram, 0x6c, 0x2d);
     assert_eq!(
-        (state.reset, state.mute, state.echoWrites, state.noiseRate),
+        (state.reset, state.mute, state.echo_writes, state.noise_rate),
         (false, false, false, 128)
     );
     write_register(&mut state, &ram, 0x2d, 0x81);
     assert_eq!(
-        state.channel.map(|c| c.pitchModulation),
+        state.channel.map(|c| c.pitch_modulation),
         [true, false, false, false, false, false, false, true]
     );
     write_register(&mut state, &ram, 0x3d, 0x42);
     assert_eq!(
-        state.channel.map(|c| c.useNoise),
+        state.channel.map(|c| c.use_noise),
         [false, true, false, false, false, false, true, false]
     );
     write_register(&mut state, &ram, 0x4d, 0xa5);
     assert_eq!(
-        state.channel.map(|c| c.echoEnable),
+        state.channel.map(|c| c.echo_enable),
         [true, false, true, false, false, true, false, true]
     );
     write_register(&mut state, &ram, 0x5d, 0xff);
     write_register(&mut state, &ram, 0x6d, 0xaa);
-    assert_eq!((state.dirPage, state.echoBufferAdr), (0xff00, 0xaa00));
-    state.echoRemain = 19;
-    state.echoBufferIndex = 23;
+    assert_eq!((state.dir_page, state.echo_buffer_adr), (0xff00, 0xaa00));
+    state.echo_remain = 19;
+    state.echo_buffer_index = 23;
     write_register(&mut state, &ram, 0x7d, 0xf0);
-    assert_eq!(state.echoDelay, 1);
+    assert_eq!(state.echo_delay, 1);
     write_register(&mut state, &ram, 0x7d, 0xfb);
-    assert_eq!(state.echoDelay, 5632);
-    assert_eq!((state.echoRemain, state.echoBufferIndex), (19, 23));
+    assert_eq!(state.echo_delay, 5632);
+    assert_eq!((state.echo_remain, state.echo_buffer_index), (19, 23));
     for (address, value) in [
         (0x0f, 0x80),
         (0x1f, 0xff),
@@ -6708,12 +6718,12 @@ fn dsp_global_registers_keep_native_flags_fir_and_shadow_rules() {
         write_register(&mut state, &ram, address, value);
         assert_eq!(dsp_read(&state, address), value);
     }
-    assert_eq!(state.firValues, [-128, -1, 0, 127, -2, -127, 1, 85]);
+    assert_eq!(state.fir_values, [-128, -1, 0, 127, -2, -127, 1, 85]);
     state.ram[0x7c] = 0xff;
     write_register(&mut state, &ram, 0x7c, 0x57);
     assert_eq!(dsp_read(&state, 0x7c), 0);
     state.channel[7].gain = 37;
-    state.channel[7].sampleOut = -91;
+    state.channel[7].sample_out = -91;
     for address in [
         0x08, 0x09, 0x0a, 0x0b, 0x0e, 0x1d, 0x78, 0x79, 0x7a, 0x7b, 0x7e,
     ] {
@@ -6721,14 +6731,14 @@ fn dsp_global_registers_keep_native_flags_fir_and_shadow_rules() {
         assert_eq!(dsp_read(&state, address), 0x39);
     }
     assert_eq!(
-        (state.channel[7].gain, state.channel[7].sampleOut),
+        (state.channel[7].gain, state.channel[7].sample_out),
         (37, -91)
     );
     assert_eq!(
-        (state.dirPage, state.echoBufferAdr, state.echoDelay),
+        (state.dir_page, state.echo_buffer_adr, state.echo_delay),
         (0xff00, 0xaa00, 5632)
     );
-    assert_eq!(state.firValues, [-128, -1, 0, 127, -2, -127, 1, 85]);
+    assert_eq!(state.fir_values, [-128, -1, 0, 127, -2, -127, 1, 85]);
 }
 
 // Movies cannot author wrapped APU directories and independently inspect immediate key effects.
@@ -6746,81 +6756,84 @@ fn dsp_key_registers_apply_immediately_with_wrapped_apu_directory() {
     write_register(&mut state, &ram, 0x74, 0xff);
     write_register(&mut state, &ram, 0x75, 0x05);
     for ch in &mut state.channel {
-        ch.keyOn = true;
-        ch.keyOff = true;
-        ch.previousFlags = 7;
-        ch.decodeOffset = 0x3456;
-        ch.decodeBuffer = [11; 19];
+        ch.key_on = true;
+        ch.key_off = true;
+        ch.previous_flags = 7;
+        ch.decode_offset = 0x3456;
+        ch.decode_buffer = [11; 19];
         ch.gain = 513;
-        ch.adsrState = 2;
-        ch.rateCounter = 99;
-        ch.pitchCounter = 77;
+        ch.adsr_state = 2;
+        ch.rate_counter = 99;
+        ch.pitch_counter = 77;
         ch.old = -9;
         ch.older = 8;
     }
     write_register(&mut state, &ram, 0x4c, 0x81);
     assert_eq!(dsp_read(&state, 0x4c), 0x81);
-    assert_eq!(state.channel.map(|c| c.keyOn), [false; 8]);
+    assert_eq!(state.channel.map(|c| c.key_on), [false; 8]);
     assert_eq!(
-        (state.channel[0].decodeOffset, state.channel[7].decodeOffset),
+        (
+            state.channel[0].decode_offset,
+            state.channel[7].decode_offset
+        ),
         (0xabcd, 0x1234)
     );
     assert_eq!(
-        (state.channel[0].adsrState, state.channel[7].adsrState),
+        (state.channel[0].adsr_state, state.channel[7].adsr_state),
         (0, 3)
     );
     for index in [0, 7] {
         let ch = &state.channel[index];
-        assert_eq!((ch.previousFlags, ch.gain), (0, 0));
-        assert_eq!(ch.decodeBuffer, [0; 19]);
+        assert_eq!((ch.previous_flags, ch.gain), (0, 0));
+        assert_eq!(ch.decode_buffer, [0; 19]);
         assert_eq!(
-            (ch.rateCounter, ch.pitchCounter, ch.old, ch.older),
+            (ch.rate_counter, ch.pitch_counter, ch.old, ch.older),
             (99, 77, -9, 8)
         );
-        assert!(ch.keyOff);
+        assert!(ch.key_off);
     }
     assert_eq!(
         (
-            state.channel[1].previousFlags,
+            state.channel[1].previous_flags,
             state.channel[1].gain,
-            state.channel[1].adsrState
+            state.channel[1].adsr_state
         ),
         (7, 513, 2)
     );
-    assert_eq!(state.channel[1].decodeBuffer, [11; 19]);
+    assert_eq!(state.channel[1].decode_buffer, [11; 19]);
     write_register(&mut state, &ram, 0x5c, 0x80);
     assert_eq!(dsp_read(&state, 0x5c), 0x80);
     assert_eq!(
-        state.channel.map(|c| c.keyOff),
+        state.channel.map(|c| c.key_off),
         [false, false, false, false, false, false, false, true]
     );
     assert_eq!(
         (
-            state.channel[0].adsrState,
-            state.channel[1].adsrState,
-            state.channel[7].adsrState
+            state.channel[0].adsr_state,
+            state.channel[1].adsr_state,
+            state.channel[7].adsr_state
         ),
         (0, 2, 4)
     );
     write_register(&mut state, &ram, 0x5c, 0);
-    assert_eq!(state.channel.map(|c| c.keyOff), [false; 8]);
-    assert_eq!(state.channel[7].adsrState, 4);
+    assert_eq!(state.channel.map(|c| c.key_off), [false; 8]);
+    assert_eq!(state.channel[7].adsr_state, 4);
     write_register(&mut state, &ram, 0x5c, 0x80);
     write_register(&mut state, &ram, 0x4c, 0x80);
     assert_eq!(
-        (dsp_read(&state, 0x4c), state.channel[7].adsrState),
+        (dsp_read(&state, 0x4c), state.channel[7].adsr_state),
         (0x80, 3)
     );
-    assert!(state.channel[7].keyOff);
-    assert!(!state.channel[7].keyOn);
+    assert!(state.channel[7].key_off);
+    assert!(!state.channel[7].key_on);
     state.channel[7].gain = 37;
-    state.channel[7].decodeBuffer[0] = 91;
+    state.channel[7].decode_buffer[0] = 91;
     write_register(&mut state, &ram, 0x4c, 0);
     assert_eq!(
         (
             dsp_read(&state, 0x4c),
             state.channel[7].gain,
-            state.channel[7].decodeBuffer[0]
+            state.channel[7].decode_buffer[0]
         ),
         (0, 37, 91)
     );
@@ -6834,38 +6847,43 @@ fn dsp_invalid_register_addresses_reject_before_state_or_memory_effects() {
     let ram = sm::apu_ram::ApuRam::new();
     let mut state = DspState::new();
     state.ram = core::array::from_fn(|i| i as u8 ^ 0xa5);
-    state.channel[7].decodeBuffer = [13; 19];
+    state.channel[7].decode_buffer = [13; 19];
     state.channel[7].pitch = 0x3fed;
     state.channel[7].gain = 509;
-    state.channel[7].gainMode = 3;
-    state.channel[7].keyOn = true;
-    state.channel[7].keyOff = true;
-    state.channel[7].adsrState = 4;
-    state.firValues = [-17; 8];
-    state.sampleBuffer = [23; 1068];
+    state.channel[7].gain_mode = 3;
+    state.channel[7].key_on = true;
+    state.channel[7].key_off = true;
+    state.channel[7].adsr_state = 4;
+    state.fir_values = [-17; 8];
+    state.sample_buffer = [23; 1068];
     ram.fill(0x67);
     let before = state;
     let before_ram: [u8; 65536] = core::array::from_fn(|i| ram.read_at(i));
     let voice = |c: &sm::types::DspChannel| {
         (
-            (c.pitch, c.pitchCounter, c.pitchModulation),
-            (c.decodeBuffer, c.srcn, c.decodeOffset),
-            (c.previousFlags, c.old, c.older, c.useNoise),
-            (c.adsrRates, c.rateCounter, c.adsrState),
-            (c.sustainLevel, c.useGain, c.gainMode, c.directGain),
-            (c.gainValue, c.gain, c.keyOn, c.keyOff),
-            (c.sampleOut, c.volumeL, c.volumeR, c.echoEnable),
+            (c.pitch, c.pitch_counter, c.pitch_modulation),
+            (c.decode_buffer, c.srcn, c.decode_offset),
+            (c.previous_flags, c.old, c.older, c.use_noise),
+            (c.adsr_rates, c.rate_counter, c.adsr_state),
+            (c.sustain_level, c.use_gain, c.gain_mode, c.direct_gain),
+            (c.gain_value, c.gain, c.key_on, c.key_off),
+            (c.sample_out, c.volume_l, c.volume_r, c.echo_enable),
         )
     };
     let globals = |s: &DspState| {
         (
-            (s.dirPage, s.evenCycle, s.mute, s.reset),
-            (s.masterVolumeL, s.masterVolumeR, s.noiseSample),
-            (s.noiseRate, s.noiseCounter, s.echoWrites),
-            (s.echoVolumeL, s.echoVolumeR, s.feedbackVolume),
-            (s.echoBufferAdr, s.echoDelay, s.echoRemain),
-            (s.echoBufferIndex, s.firBufferIndex, s.firValues),
-            (s.firBufferL, s.firBufferR, s.sampleBuffer, s.sampleOffset),
+            (s.dir_page, s.even_cycle, s.mute, s.reset),
+            (s.master_volume_l, s.master_volume_r, s.noise_sample),
+            (s.noise_rate, s.noise_counter, s.echo_writes),
+            (s.echo_volume_l, s.echo_volume_r, s.feedback_volume),
+            (s.echo_buffer_adr, s.echo_delay, s.echo_remain),
+            (s.echo_buffer_index, s.fir_buffer_index, s.fir_values),
+            (
+                s.fir_buffer_l,
+                s.fir_buffer_r,
+                s.sample_buffer,
+                s.sample_offset,
+            ),
         )
     };
     for address in [128, 255] {
@@ -6900,30 +6918,30 @@ fn dsp_reset_clears_every_dirty_voice_field_and_preserves_each_padding_byte() {
     let mut state = DspState::new();
     for (index, voice) in state.channel.iter_mut().enumerate() {
         voice.pitch = 0xffff;
-        voice.pitchCounter = 0xffff;
-        voice.pitchModulation = true;
-        voice.decodeBuffer = [-0x1234; 19];
+        voice.pitch_counter = 0xffff;
+        voice.pitch_modulation = true;
+        voice.decode_buffer = [-0x1234; 19];
         voice.srcn = 0xff;
-        voice.decodeOffset = 0xffff;
-        voice.previousFlags = 0xe5;
+        voice.decode_offset = 0xffff;
+        voice.previous_flags = 0xe5;
         voice.old = -123;
         voice.older = 123;
-        voice.useNoise = true;
-        voice.adsrRates = [123; 4];
-        voice.rateCounter = 0xffff;
-        voice.adsrState = 0xff;
-        voice.sustainLevel = 0xffff;
-        voice.useGain = true;
-        voice.gainMode = 0xff;
-        voice.directGain = true;
-        voice.gainValue = 0xffff;
+        voice.use_noise = true;
+        voice.adsr_rates = [123; 4];
+        voice.rate_counter = 0xffff;
+        voice.adsr_state = 0xff;
+        voice.sustain_level = 0xffff;
+        voice.use_gain = true;
+        voice.gain_mode = 0xff;
+        voice.direct_gain = true;
+        voice.gain_value = 0xffff;
         voice.gain = 0xffff;
-        voice.keyOn = true;
-        voice.keyOff = true;
-        voice.sampleOut = -255;
-        voice.volumeL = -128;
-        voice.volumeR = 127;
-        voice.echoEnable = true;
+        voice.key_on = true;
+        voice.key_off = true;
+        voice.sample_out = -255;
+        voice.volume_l = -128;
+        voice.volume_r = 127;
+        voice.echo_enable = true;
         voice.snapshot_padding0 = [0x10 + index as u8];
         voice.snapshot_padding1 = [0x20 + index as u8];
         voice.snapshot_padding2 = [0x30 + index as u8];
@@ -6949,44 +6967,44 @@ fn dsp_reset_clears_every_dirty_voice_field_and_preserves_each_padding_byte() {
         assert_eq!(
             (
                 voice.pitch,
-                voice.pitchCounter,
+                voice.pitch_counter,
                 voice.srcn,
-                voice.decodeOffset
+                voice.decode_offset
             ),
             (0, 0, 0, 0)
         );
-        assert_eq!((voice.previousFlags, voice.old, voice.older), (0, 0, 0));
-        assert_eq!(voice.decodeBuffer, [0; 19]);
-        assert_eq!(voice.adsrRates, [0; 4]);
+        assert_eq!((voice.previous_flags, voice.old, voice.older), (0, 0, 0));
+        assert_eq!(voice.decode_buffer, [0; 19]);
+        assert_eq!(voice.adsr_rates, [0; 4]);
         assert_eq!(
             (
-                voice.rateCounter,
-                voice.adsrState,
-                voice.sustainLevel,
-                voice.gainMode
+                voice.rate_counter,
+                voice.adsr_state,
+                voice.sustain_level,
+                voice.gain_mode
             ),
             (0, 0, 0, 0)
         );
         assert_eq!(
             (
-                voice.gainValue,
+                voice.gain_value,
                 voice.gain,
-                voice.sampleOut,
-                voice.volumeL,
-                voice.volumeR
+                voice.sample_out,
+                voice.volume_l,
+                voice.volume_r
             ),
             (0, 0, 0, 0, 0)
         );
         assert_eq!(
             [
-                voice.pitchModulation,
-                voice.useNoise,
-                voice.useGain,
-                voice.directGain
+                voice.pitch_modulation,
+                voice.use_noise,
+                voice.use_gain,
+                voice.direct_gain
             ],
             [false; 4]
         );
-        assert_eq!([voice.keyOn, voice.keyOff, voice.echoEnable], [false; 3]);
+        assert_eq!([voice.key_on, voice.key_off, voice.echo_enable], [false; 3]);
     }
     assert_eq!(state.channel.map(padding), before_padding);
 }
@@ -6999,29 +7017,29 @@ fn dsp_reset_restores_native_globals_without_changing_apu_memory_or_padding() {
     ram.fill(0x67);
     let mut state = DspState::new();
     state.ram = [0xa5; 128];
-    state.dirPage = 0xffff;
-    state.evenCycle = true;
+    state.dir_page = 0xffff;
+    state.even_cycle = true;
     state.mute = false;
     state.reset = false;
-    state.masterVolumeL = -128;
-    state.masterVolumeR = 127;
-    state.noiseSample = 1234;
-    state.noiseRate = 0xffff;
-    state.noiseCounter = 0xffff;
-    state.echoWrites = true;
-    state.echoVolumeL = -128;
-    state.echoVolumeR = 127;
-    state.feedbackVolume = -1;
-    state.echoBufferAdr = 0xffff;
-    state.echoDelay = 0xffff;
-    state.echoRemain = 0xffff;
-    state.echoBufferIndex = 0xffff;
-    state.firBufferIndex = 0xff;
-    state.firValues = [-1; 8];
-    state.firBufferL = [-123; 8];
-    state.firBufferR = [123; 8];
-    state.sampleBuffer = [-1; 1068];
-    state.sampleOffset = 0xffff;
+    state.master_volume_l = -128;
+    state.master_volume_r = 127;
+    state.noise_sample = 1234;
+    state.noise_rate = 0xffff;
+    state.noise_counter = 0xffff;
+    state.echo_writes = true;
+    state.echo_volume_l = -128;
+    state.echo_volume_r = 127;
+    state.feedback_volume = -1;
+    state.echo_buffer_adr = 0xffff;
+    state.echo_delay = 0xffff;
+    state.echo_remain = 0xffff;
+    state.echo_buffer_index = 0xffff;
+    state.fir_buffer_index = 0xff;
+    state.fir_values = [-1; 8];
+    state.fir_buffer_l = [-123; 8];
+    state.fir_buffer_r = [123; 8];
+    state.sample_buffer = [-1; 1068];
+    state.sample_offset = 0xffff;
     state.snapshot_padding0 = [0xaa];
     state.snapshot_padding1 = [0xbb];
     state.snapshot_padding2 = [0xcc, 0xdd];
@@ -7032,37 +7050,45 @@ fn dsp_reset_restores_native_globals_without_changing_apu_memory_or_padding() {
     assert_eq!(state.ram, expected_shadow);
     assert_eq!(dsp_read(&state, 0x7c), 0xff);
     assert_eq!(
-        (state.dirPage, state.evenCycle, state.mute, state.reset),
+        (state.dir_page, state.even_cycle, state.mute, state.reset),
         (0, false, true, true)
     );
     assert_eq!(
-        (state.masterVolumeL, state.masterVolumeR, state.noiseSample),
+        (
+            state.master_volume_l,
+            state.master_volume_r,
+            state.noise_sample
+        ),
         (0, 0, -0x4000)
     );
     assert_eq!(
-        (state.noiseRate, state.noiseCounter, state.echoWrites),
+        (state.noise_rate, state.noise_counter, state.echo_writes),
         (0, 0, false)
     );
     assert_eq!(
-        (state.echoVolumeL, state.echoVolumeR, state.feedbackVolume),
+        (
+            state.echo_volume_l,
+            state.echo_volume_r,
+            state.feedback_volume
+        ),
         (0, 0, 0)
     );
     assert_eq!(
-        (state.echoBufferAdr, state.echoDelay, state.echoRemain),
+        (state.echo_buffer_adr, state.echo_delay, state.echo_remain),
         (0, 1, 1)
     );
     assert_eq!(
         (
-            state.echoBufferIndex,
-            state.firBufferIndex,
-            state.sampleOffset
+            state.echo_buffer_index,
+            state.fir_buffer_index,
+            state.sample_offset
         ),
         (0, 0, 0)
     );
-    assert_eq!(state.firValues, [0; 8]);
-    assert_eq!(state.firBufferL, [0; 8]);
-    assert_eq!(state.firBufferR, [0; 8]);
-    assert_eq!(state.sampleBuffer, [0; 1068]);
+    assert_eq!(state.fir_values, [0; 8]);
+    assert_eq!(state.fir_buffer_l, [0; 8]);
+    assert_eq!(state.fir_buffer_r, [0; 8]);
+    assert_eq!(state.sample_buffer, [0; 1068]);
     assert_eq!(state.snapshot_padding0, [0xaa]);
     assert_eq!(state.snapshot_padding1, [0xbb]);
     assert_eq!(state.snapshot_padding2, [0xcc, 0xdd]);
@@ -7116,44 +7142,48 @@ fn dsp_cycle_brr_gaussian_and_envelope_have_independent_literal_samples() {
         {
             ram.write(0xfffdu16.wrapping_add(index as u16), byte);
         }
-        state.masterVolumeL = 127;
-        state.masterVolumeR = -128;
-        state.echoDelay = 1;
-        state.echoRemain = 1;
+        state.master_volume_l = 127;
+        state.master_volume_r = -128;
+        state.echo_delay = 1;
+        state.echo_remain = 1;
         let voice = &mut state.channel[0];
         voice.pitch = 0x0811;
-        voice.pitchCounter = 0xffff;
-        voice.decodeOffset = 0xfffc;
-        voice.decodeBuffer[16..].copy_from_slice(&[-9000, 15000, -7000]);
+        voice.pitch_counter = 0xffff;
+        voice.decode_offset = 0xfffc;
+        voice.decode_buffer[16..].copy_from_slice(&[-9000, 15000, -7000]);
         voice.old = 1000;
         voice.older = -2000;
         voice.gain = 1950;
-        voice.adsrRates = [1; 4];
-        voice.sustainLevel = 2040;
-        voice.volumeL = 64;
-        voice.volumeR = -64;
-        voice.keyOn = true;
-        voice.keyOff = true;
+        voice.adsr_rates = [1; 4];
+        voice.sustain_level = 2040;
+        voice.volume_l = 64;
+        voice.volume_r = -64;
+        voice.key_on = true;
+        voice.key_off = true;
         for expected in [(2047, 1), (2039, 2), (2031, 2)] {
             state.cycle(&ram);
             let voice = &mut state.channel[0];
-            assert_eq!((voice.gain, voice.adsrState), expected);
-            assert_eq!(voice.rateCounter, 0);
+            assert_eq!((voice.gain, voice.adsr_state), expected);
+            assert_eq!(voice.rate_counter, 0);
             voice.pitch = 0;
         }
         let voice = &state.channel[0];
-        assert_eq!(&voice.decodeBuffer[..3], &[-9000, 15000, -7000]);
-        assert_eq!(&voice.decodeBuffer[3..], &decoded);
+        assert_eq!(&voice.decode_buffer[..3], &[-9000, 15000, -7000]);
+        assert_eq!(&voice.decode_buffer[3..], &decoded);
         assert_eq!(
-            (voice.decodeOffset, voice.pitchCounter, voice.previousFlags),
+            (
+                voice.decode_offset,
+                voice.pitch_counter,
+                voice.previous_flags
+            ),
             (5, 0x0810, 0)
         );
         assert_eq!((voice.old, voice.older), (decoded[15], decoded[14]));
-        assert_eq!(voice.sampleOut, pcm[5]);
-        assert_eq!(&state.sampleBuffer[..6], &pcm);
+        assert_eq!(voice.sample_out, pcm[5]);
+        assert_eq!(&state.sample_buffer[..6], &pcm);
         assert_eq!((state.ram[8], state.ram[9]), (126, (pcm[5] >> 7) as u8));
-        assert_eq!((state.sampleOffset, state.evenCycle), (3, true));
-        assert!(voice.keyOn && voice.keyOff);
+        assert_eq!((state.sample_offset, state.even_cycle), (3, true));
+        assert!(voice.key_on && voice.key_off);
     }
 }
 
@@ -7163,14 +7193,14 @@ fn dsp_cycle_noise_signed_mixing_and_full_buffer_keep_ordered_progress() {
     use sm::snes::dsp::DspState;
     let ram = sm::apu_ram::ApuRam::new();
     let mut state = DspState::new();
-    state.sampleBuffer = [23; 1068];
-    state.sampleOffset = 533;
-    state.noiseSample = -16384;
-    state.noiseRate = 1;
-    state.masterVolumeL = -128;
-    state.masterVolumeR = 127;
-    state.echoDelay = 1;
-    state.echoRemain = 1;
+    state.sample_buffer = [23; 1068];
+    state.sample_offset = 533;
+    state.noise_sample = -16384;
+    state.noise_rate = 1;
+    state.master_volume_l = -128;
+    state.master_volume_r = 127;
+    state.echo_delay = 1;
+    state.echo_remain = 1;
     for (voice, (left, right)) in state.channel.iter_mut().zip([
         (-128, 127),
         (-128, 127),
@@ -7181,61 +7211,61 @@ fn dsp_cycle_noise_signed_mixing_and_full_buffer_keep_ordered_progress() {
         (0, 0),
         (0, 0),
     ]) {
-        voice.useNoise = true;
-        voice.useGain = true;
-        voice.directGain = true;
-        voice.gainValue = 2048;
-        voice.volumeL = left;
-        voice.volumeR = right;
+        voice.use_noise = true;
+        voice.use_gain = true;
+        voice.direct_gain = true;
+        voice.gain_value = 2048;
+        voice.volume_l = left;
+        voice.volume_r = right;
     }
     state.cycle(&ram);
-    assert_eq!(&state.sampleBuffer[1066..], &[1, 0]);
+    assert_eq!(&state.sample_buffer[1066..], &[1, 0]);
     assert_eq!(
         (
-            state.sampleOffset,
-            state.evenCycle,
-            state.noiseSample,
-            state.noiseCounter
+            state.sample_offset,
+            state.even_cycle,
+            state.noise_sample,
+            state.noise_counter
         ),
         (534, true, 8192, 0)
     );
-    assert_eq!(state.channel.map(|voice| voice.sampleOut), [-16384; 8]);
+    assert_eq!(state.channel.map(|voice| voice.sample_out), [-16384; 8]);
     assert_eq!((state.ram[8], state.ram[9]), (128, 128));
     state.cycle(&ram);
-    assert_eq!(&state.sampleBuffer[..1066], &[23; 1066]);
-    assert_eq!(&state.sampleBuffer[1066..], &[1, 0]);
+    assert_eq!(&state.sample_buffer[..1066], &[23; 1066]);
+    assert_eq!(&state.sample_buffer[1066..], &[1, 0]);
     assert_eq!(
-        (state.sampleOffset, state.evenCycle, state.noiseSample),
+        (state.sample_offset, state.even_cycle, state.noise_sample),
         (534, false, 4096)
     );
-    assert_eq!(state.channel.map(|voice| voice.sampleOut), [8192; 8]);
-    assert_eq!(state.firBufferIndex, 2);
+    assert_eq!(state.channel.map(|voice| voice.sample_out), [8192; 8]);
+    assert_eq!(state.fir_buffer_index, 2);
     // Negative modulation narrows to u16 before clamping, even with an uncommittable offset.
-    state.sampleOffset = 0xffff;
-    state.noiseSample = -32768;
-    state.channel[1].pitchModulation = true;
+    state.sample_offset = 0xffff;
+    state.noise_sample = -32768;
+    state.channel[1].pitch_modulation = true;
     state.channel[1].pitch = 0x3000;
-    state.channel[1].pitchCounter = 7;
+    state.channel[1].pitch_counter = 7;
     state.cycle(&ram);
-    assert_eq!(state.channel[1].pitchCounter, 0x4006);
-    assert_eq!(state.channel.map(|voice| voice.sampleOut), [-32768; 8]);
+    assert_eq!(state.channel[1].pitch_counter, 0x4006);
+    assert_eq!(state.channel.map(|voice| voice.sample_out), [-32768; 8]);
     assert_eq!(
         (
-            state.sampleOffset,
-            state.evenCycle,
-            state.noiseSample,
-            state.firBufferIndex
+            state.sample_offset,
+            state.even_cycle,
+            state.noise_sample,
+            state.fir_buffer_index
         ),
         (0xffff, true, 0, 3)
     );
-    state.noiseSample = 3;
+    state.noise_sample = 3;
     state.cycle(&ram);
-    assert_eq!(state.noiseSample, 1);
+    assert_eq!(state.noise_sample, 1);
     state.cycle(&ram);
-    assert_eq!(state.noiseSample, -16384);
-    assert_eq!(state.sampleOffset, 0xffff);
-    assert_eq!(&state.sampleBuffer[..1066], &[23; 1066]);
-    assert_eq!(&state.sampleBuffer[1066..], &[1, 0]);
+    assert_eq!(state.noise_sample, -16384);
+    assert_eq!(state.sample_offset, 0xffff);
+    assert_eq!(&state.sample_buffer[..1066], &[23; 1066]);
+    assert_eq!(&state.sample_buffer[1066..], &[1, 0]);
 }
 
 // Movies share the DSP and cannot independently establish signed FIR clip, wrapped echo bytes or mute order.
@@ -7253,63 +7283,66 @@ fn dsp_cycle_echo_fir_signed_clip_and_wrapped_writeback_are_independent() {
         for (address, byte) in [(0xfffe, 0), (0xffff, 0x40), (0, 0), (1, 0xc0)] {
             ram.write(address, byte);
         }
-        state.echoBufferAdr = 0xfffe;
-        state.echoDelay = 3;
-        state.echoRemain = 1;
-        state.firBufferIndex = 7;
-        state.firBufferL = [16000; 8];
-        state.firBufferR = [-16000; 8];
-        state.firValues = [127; 8];
-        state.firValues[7] = last;
-        state.echoVolumeL = 127;
-        state.echoVolumeR = -128;
-        state.feedbackVolume = 63;
-        state.echoWrites = true;
+        state.echo_buffer_adr = 0xfffe;
+        state.echo_delay = 3;
+        state.echo_remain = 1;
+        state.fir_buffer_index = 7;
+        state.fir_buffer_l = [16000; 8];
+        state.fir_buffer_r = [-16000; 8];
+        state.fir_values = [127; 8];
+        state.fir_values[7] = last;
+        state.echo_volume_l = 127;
+        state.echo_volume_r = -128;
+        state.feedback_volume = 63;
+        state.echo_writes = true;
         state.mute = muted;
-        state.noiseSample = 1024;
+        state.noise_sample = 1024;
         let voice = &mut state.channel[0];
-        voice.useNoise = true;
-        voice.useGain = true;
-        voice.directGain = true;
-        voice.gainValue = 2048;
-        voice.volumeL = 64;
-        voice.volumeR = -64;
-        voice.echoEnable = true;
+        voice.use_noise = true;
+        voice.use_gain = true;
+        voice.direct_gain = true;
+        voice.gain_value = 2048;
+        voice.volume_l = 64;
+        voice.volume_r = -64;
+        voice.echo_enable = true;
         state.cycle(&ram);
-        assert_eq!(&state.sampleBuffer[..2], &pcm);
+        assert_eq!(&state.sample_buffer[..2], &pcm);
         assert_eq!(
             [ram.read(0xfffe), ram.read(0xffff), ram.read(0), ram.read(1)],
             bytes
         );
-        assert_eq!((state.firBufferL[7], state.firBufferR[7]), (8192, -8192));
-        assert_eq!(&state.firBufferL[..7], &[16000; 7]);
-        assert_eq!(&state.firBufferR[..7], &[-16000; 7]);
+        assert_eq!(
+            (state.fir_buffer_l[7], state.fir_buffer_r[7]),
+            (8192, -8192)
+        );
+        assert_eq!(&state.fir_buffer_l[..7], &[16000; 7]);
+        assert_eq!(&state.fir_buffer_r[..7], &[-16000; 7]);
         assert_eq!(
             (
-                state.firBufferIndex,
-                state.echoBufferIndex,
-                state.echoRemain
+                state.fir_buffer_index,
+                state.echo_buffer_index,
+                state.echo_remain
             ),
             (0, 0, 3)
         );
-        assert_eq!(state.channel[0].sampleOut, 1024);
-        state.echoWrites = false;
+        assert_eq!(state.channel[0].sample_out, 1024);
+        state.echo_writes = false;
         state.mute = true;
         state.cycle(&ram);
-        assert_eq!(&state.sampleBuffer[2..4], &[0, 0]);
+        assert_eq!(&state.sample_buffer[2..4], &[0, 0]);
         assert_eq!(
             [ram.read(0xfffe), ram.read(0xffff), ram.read(0), ram.read(1)],
             bytes
         );
         assert_eq!(
             (
-                state.firBufferIndex,
-                state.echoBufferIndex,
-                state.echoRemain
+                state.fir_buffer_index,
+                state.echo_buffer_index,
+                state.echo_remain
             ),
             (1, 1, 2)
         );
-        assert_eq!((state.sampleOffset, state.evenCycle), (2, false));
+        assert_eq!((state.sample_offset, state.even_cycle), (2, false));
     }
 }
 
@@ -7320,80 +7353,80 @@ fn dsp_cycle_dirty_adsr_and_fir_failures_preserve_exact_completed_prefixes() {
     let ram = sm::apu_ram::ApuRam::new();
     let mut state = DspState::new();
     state.ram = [0xa5; 128];
-    state.sampleBuffer = [27; 1068];
-    state.sampleOffset = 0xffff;
-    state.evenCycle = true;
-    state.noiseSample = 1024;
-    state.noiseRate = 1;
-    state.echoWrites = true;
-    state.firBufferL = [17; 8];
-    state.firBufferR = [-17; 8];
-    state.channel[0].useNoise = true;
-    state.channel[0].useGain = true;
-    state.channel[0].directGain = true;
-    state.channel[0].gainValue = 1024;
+    state.sample_buffer = [27; 1068];
+    state.sample_offset = 0xffff;
+    state.even_cycle = true;
+    state.noise_sample = 1024;
+    state.noise_rate = 1;
+    state.echo_writes = true;
+    state.fir_buffer_l = [17; 8];
+    state.fir_buffer_r = [-17; 8];
+    state.channel[0].use_noise = true;
+    state.channel[0].use_gain = true;
+    state.channel[0].direct_gain = true;
+    state.channel[0].gain_value = 1024;
     state.channel[1].pitch = 1;
-    state.channel[1].pitchCounter = 5;
+    state.channel[1].pitch_counter = 5;
     let voice = &mut state.channel[2];
     voice.pitch = 1;
-    voice.pitchCounter = 0xffff;
-    voice.decodeOffset = 0xfffc;
-    voice.decodeBuffer[16..].copy_from_slice(&[11, 22, 33]);
-    voice.adsrState = 5;
+    voice.pitch_counter = 0xffff;
+    voice.decode_offset = 0xfffc;
+    voice.decode_buffer[16..].copy_from_slice(&[11, 22, 33]);
+    voice.adsr_state = 5;
     voice.gain = 501;
-    voice.sampleOut = -99;
+    voice.sample_out = -99;
     state.channel[3].pitch = 2;
-    state.channel[3].pitchCounter = 19;
+    state.channel[3].pitch_counter = 19;
     ram.write(0xfffc, 0xd0);
     for index in 0..8 {
         ram.write(0xfffdu16.wrapping_add(index), 0xf1);
     }
     let before_ram: [u8; 65536] = core::array::from_fn(|index| ram.read_at(index));
     assert!(std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| state.cycle(&ram))).is_err());
-    assert_eq!(state.channel[0].sampleOut, 512);
+    assert_eq!(state.channel[0].sample_out, 512);
     assert_eq!((state.ram[8], state.ram[9]), (64, 4));
-    assert_eq!(state.channel[1].pitchCounter, 6);
+    assert_eq!(state.channel[1].pitch_counter, 6);
     let voice = &state.channel[2];
-    assert_eq!((voice.decodeOffset, voice.pitchCounter), (5, 0));
-    assert_eq!(&voice.decodeBuffer[..3], &[11, 22, 33]);
+    assert_eq!((voice.decode_offset, voice.pitch_counter), (5, 0));
+    assert_eq!(&voice.decode_buffer[..3], &[11, 22, 33]);
     assert_eq!(
-        &voice.decodeBuffer[3..],
+        &voice.decode_buffer[3..],
         &[
             -4096, 0, -4096, 0, -4096, 0, -4096, 0, -4096, 0, -4096, 0, -4096, 0, -4096, 0
         ]
     );
     assert_eq!((voice.old, voice.older), (0, -4096));
     assert_eq!(
-        (voice.adsrState, voice.gain, voice.sampleOut),
+        (voice.adsr_state, voice.gain, voice.sample_out),
         (5, 501, -99)
     );
     assert_eq!((state.ram[0x28], state.ram[0x29]), (0xa5, 0xa5));
     assert_eq!((state.ram[0x38], state.ram[0x39]), (0xa5, 0xa5));
-    assert_eq!(state.channel[3].pitchCounter, 19);
-    state.channel[2].adsrState = 4;
+    assert_eq!(state.channel[3].pitch_counter, 19);
+    state.channel[2].adsr_state = 4;
     state.channel[2].gain = 5;
-    state.channel[7].useNoise = true;
-    state.channel[7].useGain = true;
-    state.channel[7].directGain = true;
-    state.channel[7].gainValue = 2048;
-    state.firBufferIndex = 8;
+    state.channel[7].use_noise = true;
+    state.channel[7].use_gain = true;
+    state.channel[7].direct_gain = true;
+    state.channel[7].gain_value = 2048;
+    state.fir_buffer_index = 8;
     assert!(std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| state.cycle(&ram))).is_err());
     assert_eq!(
-        state.channel.map(|voice| voice.sampleOut),
+        state.channel.map(|voice| voice.sample_out),
         [512, 0, 0, 0, 0, 0, 0, 1024]
     );
     assert_eq!(
         (state.ram[0x78], state.ram[0x79], state.channel[2].gain),
         (128, 8, 0)
     );
-    assert_eq!(state.firBufferL, [17; 8]);
-    assert_eq!(state.channel[3].pitchCounter, 21);
-    assert_eq!(state.firBufferR, [-17; 8]);
-    assert_eq!(state.firBufferIndex, 8);
-    assert_eq!((state.echoBufferIndex, state.echoRemain), (0, 0));
-    assert_eq!((state.noiseSample, state.noiseCounter), (1024, 0));
-    assert_eq!((state.sampleOffset, state.evenCycle), (0xffff, true));
-    assert_eq!(state.sampleBuffer, [27; 1068]);
+    assert_eq!(state.fir_buffer_l, [17; 8]);
+    assert_eq!(state.channel[3].pitch_counter, 21);
+    assert_eq!(state.fir_buffer_r, [-17; 8]);
+    assert_eq!(state.fir_buffer_index, 8);
+    assert_eq!((state.echo_buffer_index, state.echo_remain), (0, 0));
+    assert_eq!((state.noise_sample, state.noise_counter), (1024, 0));
+    assert_eq!((state.sample_offset, state.even_cycle), (0xffff, true));
+    assert_eq!(state.sample_buffer, [27; 1068]);
     assert!((0..65536).all(|index| ram.read_at(index) == before_ram[index]));
 }
 
@@ -7519,7 +7552,7 @@ fn apu_bus_preserves_boot_ports_ram_shadow_and_masked_dsp_history() {
         write_register(&mut dsp, &ram, a, v)
     });
     assert_eq!(
-        (dsp.firValues[7], dsp.ram[0x7f], ram.read(0xf3)),
+        (dsp.fir_values[7], dsp.ram[0x7f], ram.read(0xf3)),
         (77, 0x4d, 0x4d)
     );
     assert_eq!(apu.history.count, 2);
@@ -7591,13 +7624,13 @@ fn apu_callback_failures_keep_history_cycle_and_reset_prefixes() {
         (history.count, history.addr[0], history.val[0]),
         (1, 0x7f, 0x44)
     );
-    assert_eq!((dsp.firValues[7], ram.read(0xf3)), (68, 0xa5));
+    assert_eq!((dsp.fir_values[7], ram.read(0xf3)), (68, 0xa5));
     apu.history.count = 256;
     apu.write(&ram, 0xf3, 0x55, |a, v| {
         write_register(&mut dsp, &ram, a, v)
     });
     assert_eq!((apu.history.count, apu.history.val[0]), (256, 0x44));
-    assert_eq!((dsp.firValues[7], ram.read(0xf3)), (85, 0x55));
+    assert_eq!((dsp.fir_values[7], ram.read(0xf3)), (85, 0x55));
     apu.cycles = 32;
     apu.timer[0].divider = 2;
     apu.timer[0].target = 3;
@@ -7612,7 +7645,7 @@ fn apu_callback_failures_keep_history_cycle_and_reset_prefixes() {
     );
     assert_eq!((apu.cpuCyclesLeft, apu.cycles), (8, 32));
     assert_eq!(clocks(apu.timer[0]), (0, 2, 4));
-    assert_eq!((dsp.sampleOffset, dsp.evenCycle), (1, true));
+    assert_eq!((dsp.sample_offset, dsp.even_cycle), (1, true));
     apu.cycle(None, || dsp.cycle(&ram));
     assert_eq!((apu.cpuCyclesLeft, apu.cycles), (7, 33));
     assert_eq!(clocks(apu.timer[0]), (127, 0, 5));
@@ -7621,7 +7654,7 @@ fn apu_callback_failures_keep_history_cycle_and_reset_prefixes() {
     assert_eq!((apu.cpuCyclesLeft, apu.cycles), (255, 0));
     apu.cycle(None, || dsp.cycle(&ram));
     assert_eq!(
-        (apu.cpuCyclesLeft, apu.cycles, dsp.sampleOffset),
+        (apu.cpuCyclesLeft, apu.cycles, dsp.sample_offset),
         (254, 1, 3)
     );
     apu.pad = [0x22; 6];

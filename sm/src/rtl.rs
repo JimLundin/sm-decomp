@@ -1356,7 +1356,7 @@ pub unsafe fn rtl_render_audio(audio_buffer: &mut [[i16; 2]], game: &mut Game) -
         let mut produced = false;
         if !game.g_use_my_apu_code {
             if !game.uploading_apu() {
-                while ((*(*(*game.g_snes).apu).dsp).state.sampleOffset as i32) < 534 {
+                while ((*(*(*game.g_snes).apu).dsp).state.sample_offset as i32) < 534 {
                     game.execution().cycle_apu();
                 }
                 (*(*(*game.g_snes).apu).dsp)

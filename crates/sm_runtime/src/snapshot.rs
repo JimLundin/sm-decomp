@@ -149,6 +149,21 @@ impl<T: State, const N: usize> State for [T; N] {
 /// Serializes the named fields of a record in order, leaving out `skip`.
 #[macro_export]
 macro_rules! state_record {
+    // The snapshot layout names each field `$name`.
+    ($ty:ty, $size:literal, named { $($field:ident = $name:literal),* } skip { $($skip:ident),* }) => {
+        impl $crate::snapshot::State for $ty {
+            const SIZE: usize = $size;
+            fn layout(layout: &mut String) {
+                layout.push_str(concat!(stringify!($ty), "{"));
+                $($crate::snapshot::field_layout::<Self, _>(layout, $name, |state| &state.$field);)*
+                layout.push('}');
+            }
+            fn transfer(&mut self, fields: &mut $crate::snapshot::Fields<'_>) {
+                let Self { $($field,)* $($skip: _,)* } = self;
+                $($crate::snapshot::State::transfer($field, fields);)*
+            }
+        }
+    };
     ($ty:ty, $size:literal, { $($field:ident),* } skip { $($skip:ident),* }) => {
         impl $crate::snapshot::State for $ty {
             const SIZE: usize = $size;
