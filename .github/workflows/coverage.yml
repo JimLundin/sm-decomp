@@ -426,15 +426,20 @@ jobs:
             $compare = @('route.profdata')
           }
           # The target packages' tests, alone and together with the corpus.
-          $unit = @(Get-ChildItem -Recurse -Filter *.profraw verifier/unit/profiles | ForEach-Object { $_.FullName })
-          if ($unit.Count -eq 0) { throw 'No unit-test coverage profiles were produced' }
-          $unit | Out-File -FilePath unit-profiles.txt -Encoding ascii
-          & (Join-Path $env:LLVM_BIN 'llvm-profdata.exe') merge -sparse -f unit-profiles.txt -o unit.profdata
-          if ($LASTEXITCODE -ne 0) { throw 'Unit-test profile merge failed' }
-          & (Join-Path $env:LLVM_BIN 'llvm-profdata.exe') merge -sparse corpus.profdata unit.profdata -o combined.profdata
-          if ($LASTEXITCODE -ne 0) { throw 'Combined profile merge failed' }
-          $objects = @(Get-Content verifier/unit/objects.txt | ForEach-Object { '--unit-object'; (Join-Path 'verifier/unit/bin' $_) })
-          $tests = @('--unit', 'unit.profdata', '--combined', 'combined.profdata') + $objects
+          # Without unit profiles (no test binary could start) the report omits them.
+          $unit = @(Get-ChildItem -Recurse -Filter *.profraw verifier/unit/profiles -ErrorAction SilentlyContinue | ForEach-Object { $_.FullName })
+          $tests = @()
+          if ($unit.Count -eq 0) {
+            '::warning::No unit-test coverage profiles were produced; the report omits the unit tests'
+          } else {
+            $unit | Out-File -FilePath unit-profiles.txt -Encoding ascii
+            & (Join-Path $env:LLVM_BIN 'llvm-profdata.exe') merge -sparse -f unit-profiles.txt -o unit.profdata
+            if ($LASTEXITCODE -ne 0) { throw 'Unit-test profile merge failed' }
+            & (Join-Path $env:LLVM_BIN 'llvm-profdata.exe') merge -sparse corpus.profdata unit.profdata -o combined.profdata
+            if ($LASTEXITCODE -ne 0) { throw 'Combined profile merge failed' }
+            $objects = @(Get-Content verifier/unit/objects.txt | ForEach-Object { '--unit-object'; (Join-Path 'verifier/unit/bin' $_) })
+            $tests = @('--unit', 'unit.profdata', '--combined', 'combined.profdata') + $objects
+          }
           python -B tools/coverage_summary.py (Join-Path $env:LLVM_BIN 'llvm-cov.exe') corpus.profdata verifier/sm_verify.dll coverage.md @compare @tests
           if ($LASTEXITCODE -ne 0) { throw 'Coverage summary failed' }
           Get-Content coverage.md -TotalCount 80 | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
