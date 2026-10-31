@@ -23,7 +23,7 @@ fn put(bytes: &mut [u8], at: usize, value: u16) {
 fn rom_word(image: &mut [u8], offset: usize, value: u16) {
     image[offset..offset + 2].copy_from_slice(&value.to_ne_bytes());
 }
-/// Suppress only a failure raised by the bounded ROM read. Other panics retain
+/// Suppress only a failure raised by the bounded cartridge image read. Other panics retain
 /// their normal diagnostic and cannot satisfy this contract.
 fn bounded_rom_failure(action: impl FnOnce()) {
     let matched_source = Arc::new(AtomicBool::new(false));
@@ -33,7 +33,7 @@ fn bounded_rom_failure(action: impl FnOnce()) {
     std::panic::set_hook(Box::new(move |info| {
         if info
             .location()
-            .is_some_and(|at| at.file().ends_with("rom.rs"))
+            .is_some_and(|at| at.file().ends_with("cartridge.rs"))
         {
             observed.store(true, Ordering::Relaxed);
         } else {
@@ -53,7 +53,7 @@ fn bounded_rom_failure(action: impl FnOnce()) {
     );
     assert!(
         matched_source.load(Ordering::Relaxed),
-        "failure must originate in rom.rs"
+        "failure must originate in the cartridge image read"
     );
 }
 fn one(g: &mut Game, case: usize) {

@@ -166,7 +166,7 @@ fn check_lazy_tiles(g: &mut Game, fail_visited: bool) {
         std::panic::set_hook(Box::new(move |info| {
             if info
                 .location()
-                .is_some_and(|at| at.file().ends_with("rom.rs"))
+                .is_some_and(|at| at.file().ends_with("cartridge.rs"))
             {
                 observed.store(true, Ordering::Relaxed);
             } else {
@@ -196,7 +196,7 @@ fn check_lazy_tiles(g: &mut Game, fail_visited: bool) {
         );
         assert!(
             matched_source.load(Ordering::Relaxed),
-            "visited failure must originate in rom.rs"
+            "visited failure must originate in the cartridge image read"
         );
     } else if let Err(panic) = result {
         std::panic::resume_unwind(panic);
