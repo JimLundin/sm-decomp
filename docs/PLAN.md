@@ -188,7 +188,7 @@ while hosted checks run. Free runners only; Windows full corpus runs every 3h,
 after bank deletion and at review waypoints, at most 6 parallel shards. Checkpoint
 rows have 60-minute replay/65-minute job limits; timeout is failure, not coverage. Routine
 pushes run CI without a separate no-op replay run. Lane S moves the corpus gate to
-engine-only free run against cached oracle traces (REVIEW lane S condition 8); until
+engine-only free run against committed oracle digests (REVIEW lane S condition 8); until
 that switch, live lockstep stays authoritative. Manual row IDs are space-separated;
 unknown IDs fail. Keep seed/lag/source guards; Linux development remains stopped.
 
