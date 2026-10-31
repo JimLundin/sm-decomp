@@ -49,6 +49,12 @@ RAM_COUPLINGS = {
     # their call sites, not their definitions (whose receivers are `$game`).
     "RAM word views (boss!/scroll!/inventory!/melt!/menu!)": re.compile(
         r"\b(?:boss|scroll|inventory|melt|menu)!\s*[({](?!\s*\$)"),
+    # The menu prelude's views of Session-projected words (menu_state's map,
+    # save selection, options and death words, the power bomb's, and
+    # session_words) read and store the host's projected bytes too.
+    "Session word views (map_screen!/save_selection!/options_menu!/...)": re.compile(
+        r"\b(?:map_screen|save_selection|options_menu|death_sequence|power_bomb|session_word)!"
+        r"\s*[({](?!\s*\$)"),
     "RAM word view calls (flow/inventory/scroll/message_box/room_view/...)": re.compile(
         r"\b(?:flow::(?:set|current)|inventory::(?:get|set|current)|scroll::(?:get|set)"
         r"|message_box::(?:get|set)|room_view::(?:set|set_effect|current|effects|enter_header)"
