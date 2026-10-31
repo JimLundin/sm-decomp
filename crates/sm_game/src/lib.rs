@@ -329,6 +329,7 @@ pub mod grapple_swing;
 pub mod kraid_tables;
 pub mod mother_brain_tables;
 pub mod phantoon_tables;
+pub mod random;
 pub mod records;
 pub mod ridley_data;
 pub mod ridley_explosion_data;
