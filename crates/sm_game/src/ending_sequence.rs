@@ -146,8 +146,14 @@ fn sprites<H: Host + ?Sized>(game: &mut H, definition: u16, parameter: u16) {
 /// Cinematic function - ending - setup ($8B:D480): Zebes's destruction,
 /// with its clouds and the escape music. Was `CinematicFunctionEscapeFromCebes`.
 pub fn setup<H: Host + ?Sized>(game: &mut H) {
-    word!(game.CUR_IRQ_HANDLER = 0);
-    word!(game.IRQHANDLER_NEXT_HANDLER = 0);
+    use crate::cinematic_states::{resuming, wait_for_nmis};
+    if !resuming(game) {
+        word!(game.CUR_IRQ_HANDLER = 0);
+        word!(game.IRQHANDLER_NEXT_HANDLER = 0);
+    }
+    if wait_for_nmis(9, game) {
+        return;
+    }
     crate::cinematic_display::configure_cinematic_display(CinematicDisplay::Escape, game);
     crate::word_transfers!(game, descending, 329; native(CINEMATIC_OBJECTS) <- value(0));
     crate::word_transfers!(game, ascending, 256; le(PALETTE_BUFFER, 0) <- rom(ESCAPE_PALETTES, 0));

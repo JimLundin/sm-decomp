@@ -396,6 +396,9 @@ pub fn start_game_at_ceres<H: Host + ?Sized>(game: &mut H) {
 /// Cinematic function - Ceres goes boom - initial ($8B:C11B). Was
 /// `CinematicFunctionBlackoutFromCeres`.
 pub fn boom_initial<H: Host + ?Sized>(game: &mut H) {
+    if crate::cinematic_states::wait_for_nmis(9, game) {
+        return;
+    }
     crate::cinematic_display::configure_cinematic_display(CinematicDisplay::Station, game);
     clear_cinematic_objects(game);
     word!(game.DOOR_DEF_PTR = 0);
