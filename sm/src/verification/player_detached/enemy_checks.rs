@@ -256,11 +256,10 @@ fn contact_failure_prefix() {
     item.y.whole = 32;
     let error = catch_unwind(AssertUnwindSafe(|| enemy::hit_player(&mut h)))
         .expect_err("1054 unprepared damage must fail");
-    let reason = error
-        .downcast_ref::<&str>()
-        .copied()
-        .or_else(|| error.downcast_ref::<String>().map(String::as_str));
-    assert_eq!(reason, Some("unprepared enemy operation: damage_player"));
+    assert!(
+        error.is::<super::enemy_host::DamagePlayerReached>(),
+        "1054 contact reaches damage_player"
+    );
     assert_eq!(
         (
             h.world.player.player.invincibility,

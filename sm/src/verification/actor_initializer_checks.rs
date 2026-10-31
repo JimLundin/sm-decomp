@@ -32,7 +32,9 @@ use {
     },
 };
 
-const UNWIND: &str = "actor initializer fixture deliberate nested dispatch unwind";
+/// The fixture's deliberate nested dispatch unwind, told apart from any engine
+/// panic by its type.
+struct FixtureUnwind;
 #[derive(Clone, Copy, Debug, PartialEq)]
 enum Mode {
     Single,
@@ -74,15 +76,6 @@ impl Drop for ActiveGuard {
         ACTIVE.with(|cell| {
             cell.borrow_mut().take();
         });
-    }
-}
-fn panic_text(error: Box<dyn core::any::Any + Send>) -> String {
-    if let Some(text) = error.downcast_ref::<&str>() {
-        (*text).to_owned()
-    } else if let Some(text) = error.downcast_ref::<String>() {
-        text.clone()
-    } else {
-        "unexpected non-text panic".to_owned()
     }
 }
 
@@ -182,7 +175,7 @@ pub(super) fn dispatch_noop(game: &mut Game) {
     } else if ordinal == 1 && mode == Mode::NestedUnwind {
         // Deliberate injected unwind at a real initializer dispatch, NOT a
         // natural record-bounds failure or predecessor fidelity claim.
-        panic!("{UNWIND}");
+        std::panic::panic_any(FixtureUnwind);
     }
 }
 
@@ -381,13 +374,8 @@ fn run(mode: Mode) {
     let capture = active.finish(); // Clears TLS for expected and unexpected unwinds.
     let returned = if mode == Mode::NestedUnwind {
         assert!(
-            result.is_err(),
+            result.is_err_and(|error| error.is::<FixtureUnwind>()),
             "actor.initializer.deliberate_unwind_reached"
-        );
-        assert_eq!(
-            panic_text(result.unwrap_err()),
-            UNWIND,
-            "actor.initializer.exact_deliberate_unwind"
         );
         None
     } else {

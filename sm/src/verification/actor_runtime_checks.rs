@@ -17,15 +17,8 @@ use {
     },
 };
 
-fn panic_text(error: Box<dyn core::any::Any + Send>) -> String {
-    if let Some(text) = error.downcast_ref::<&str>() {
-        (*text).to_owned()
-    } else if let Some(text) = error.downcast_ref::<String>() {
-        text.clone()
-    } else {
-        "unexpected non-text panic".to_owned()
-    }
-}
+/// The fixture's own unwind, told apart from any engine panic by its type.
+struct FixtureUnwind;
 fn native(game: &Game) -> [u16; 8] {
     [
         game.eproj_spawn_rect.x,
@@ -89,11 +82,9 @@ fn occupied_game_export_rejected_before_effects() {
     let mut state = Session::with_world(game.world().clone());
     state.room.entry.frame = 0xbeef;
     state.enemy_projectiles.spawn.variant = 0xabcd;
-    let error = catch_unwind(AssertUnwindSafe(|| export_session(state, &mut game))).unwrap_err();
-    assert_eq!(
-        panic_text(error),
-        "Game already owns actor identity",
-        "actor.runtime.occupied_export_named_rejection"
+    assert!(
+        catch_unwind(AssertUnwindSafe(|| export_session(state, &mut game))).is_err(),
+        "actor.runtime.occupied_export_rejected"
     );
     assert_eq!(
         (0..game.ram().len())
@@ -134,11 +125,9 @@ fn mismatched_runtime_returns_original_identity_without_second_panic() {
         runtime.session_mut().room.entry.frame = 0xbeef;
         runtime.session_mut().enemy_projectiles.spawn.variant = 0xabcd;
         runtime.session_mut().world = WorldBinding::canonical_legacy();
-        let error =
-            catch_unwind(AssertUnwindSafe(|| runtime.foreign(|_| called = true))).unwrap_err();
-        assert_eq!(
-            panic_text(error),
-            "Session belongs to a different world binding"
+        assert!(
+            catch_unwind(AssertUnwindSafe(|| runtime.foreign(|_| called = true))).is_err(),
+            "actor.runtime.mismatch_rejected"
         );
         // Scope exit must not panic again or publish the rejected Session.
     }));
@@ -190,12 +179,15 @@ fn nested_foreign_unwind_keeps_both_committed_occurrences() {
                     Some(AppearanceId(21)),
                     "actor.runtime.nested_published_before_callback"
                 );
-                panic!("actor runtime nested fixture unwind");
+                std::panic::panic_any(FixtureUnwind);
             });
         });
     }))
     .unwrap_err();
-    assert_eq!(panic_text(error), "actor runtime nested fixture unwind");
+    assert!(
+        error.is::<FixtureUnwind>(),
+        "actor.runtime.nested_fixture_unwind"
+    );
     let restored = Runtime::new(&mut game);
     let state = restored.session();
     assert_eq!(

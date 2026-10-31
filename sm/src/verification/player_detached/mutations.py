@@ -287,7 +287,7 @@ VISUAL_PANIC = re.compile(
 
 def visual_stderr_matches(stderr, label=None, upload_failure=False, assertion_source="visual_checks.rs"):
     text = stderr.replace("\r\n", "\n")
-    expected = [("visual_host.rs", "intentional upload failure")] if upload_failure else []
+    expected = [("visual_host.rs", "Box<dyn Any>")] if upload_failure else []
     if label is not None:
         expected.append((assertion_source, "assertion `left == right` failed: " + label))
     panics = list(VISUAL_PANIC.finditer(text))

@@ -52,11 +52,10 @@ impl SessionAccess for Host {
     }
     fn probe(&self, _: &'static str) {}
 }
-fn assert_named_panic(error: Box<dyn core::any::Any + Send>) {
-    assert_eq!(
-        error.downcast_ref::<&str>(),
-        Some(&"actor guard fixture unwind")
-    );
+/// The fixture's own unwind, told apart from any engine panic by its type.
+struct FixtureUnwind;
+fn assert_fixture_unwind(error: Box<dyn core::any::Any + Send>) {
+    assert!(error.is::<FixtureUnwind>(), "actor.contract.fixture_unwind");
 }
 fn bytes(value: u16, mode: AccessMode) -> [u8; 2] {
     match mode {
@@ -92,11 +91,11 @@ fn actor_edits_publish_only_changed_fields_on_normal_return_and_unwind() {
                     |actor| {
                         actor.health = 0x1267;
                         actor.spritemap = 0x3456;
-                        panic!("actor guard fixture unwind");
+                        std::panic::panic_any(FixtureUnwind);
                     },
                 );
             }));
-            assert_named_panic(result.unwrap_err());
+            assert_fixture_unwind(result.unwrap_err());
             expected[base + 0x14..base + 0x16].copy_from_slice(&bytes(0x1267, mode));
             expected[base + 0x16..base + 0x18].copy_from_slice(&bytes(0x3456, mode));
             assert_eq!(
@@ -139,11 +138,11 @@ fn saved_record_odd_and_broad_edits_publish_words_and_name_bytes_on_unwind() {
                     |saved| {
                         saved.death_cause = 0xcdef;
                         saved.name[17] = 0x37;
-                        panic!("actor guard fixture unwind");
+                        std::panic::panic_any(FixtureUnwind);
                     },
                 );
             }));
-            assert_named_panic(result.unwrap_err());
+            assert_fixture_unwind(result.unwrap_err());
             expected[base + 2..base + 4].copy_from_slice(&bytes(0xcdef, mode));
             expected[base + 63] = 0x37;
             assert_eq!(

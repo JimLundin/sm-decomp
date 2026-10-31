@@ -19,6 +19,8 @@ use std::{
     sync::Arc,
 };
 
+/// The fixture's own unwind, told apart from any engine panic by its type.
+struct FixtureUnwind;
 const RANGES: [(usize, usize); 14] = [
     (0x78d, 0x78f),
     (0x791, 0x79f),
@@ -292,14 +294,11 @@ fn round_trip(world: Arc<WorldBinding>) {
                     *b ^= 0xa5;
                 }
                 set_native(g, original_native);
-                panic!("intentional room foreign unwind");
+                std::panic::panic_any(FixtureUnwind);
             })
         }))
         .expect_err("foreign must panic");
-        assert_eq!(
-            error.downcast_ref::<&str>().copied(),
-            Some("intentional room foreign unwind")
-        );
+        assert!(error.is::<FixtureUnwind>());
         assert!(
             catch_unwind(AssertUnwindSafe(|| {
                 let _ = h.session();

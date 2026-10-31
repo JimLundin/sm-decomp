@@ -181,11 +181,12 @@ fn callback(game: &mut Game, published: &[u8], callback_ram: &[u8], trace: &mut 
     game.loaded_rom = Some(RomImage::from(vec![0x92, 0, 0]));
     record(2, CALLBACK, trace);
 }
-fn intentional_unwind(result: Result<(), Box<dyn std::any::Any + Send>>, message: &str) {
+/// The fixture's own unwind, told apart from any engine panic by its type.
+struct FixtureUnwind;
+fn intentional_unwind(result: Result<(), Box<dyn std::any::Any + Send>>) {
     let error = result.expect_err("native scope must unwind");
-    assert_eq!(
-        error.downcast_ref::<&str>().copied(),
-        Some(message),
+    assert!(
+        error.is::<FixtureUnwind>(),
         "native scope must reach the designated intentional panic"
     );
 }
@@ -272,10 +273,10 @@ fn capture_checked(id: u32) -> Vec<u8> {
                 let unwind = catch_unwind(AssertUnwindSafe(|| {
                     runtime.foreign(|game| {
                         callback(game, &published, &callback_ram, &mut trace);
-                        panic!("intentional native spawn callback unwind");
+                        std::panic::panic_any(FixtureUnwind);
                     });
                 }));
-                intentional_unwind(unwind, "intentional native spawn callback unwind");
+                intentional_unwind(unwind);
                 #[cfg(sm_verify_dll)]
                 assert_eq!(
                     runtime.has_session_for_verification(),
@@ -306,9 +307,9 @@ fn capture_checked(id: u32) -> Vec<u8> {
                 assert_session(runtime.session(), INITIAL, "native acquisition");
                 set_session(runtime.session_mut(), OWNED);
                 assert_session(runtime.session(), OWNED, "native core before panic");
-                panic!("intentional native spawn core unwind");
+                std::panic::panic_any(FixtureUnwind);
             }));
-            intentional_unwind(unwind, "intentional native spawn core unwind");
+            intentional_unwind(unwind);
             assert_native(
                 native_game(&game),
                 OWNED.native,

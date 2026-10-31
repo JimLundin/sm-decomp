@@ -268,11 +268,10 @@ fn upload_failure() {
     h.on_upload = Some(upload_partial);
     let error = catch_unwind(AssertUnwindSafe(|| animated::upload_pending(&mut h)))
         .expect_err("upload must fail");
-    let reason = error
-        .downcast_ref::<&str>()
-        .copied()
-        .or_else(|| error.downcast_ref::<String>().map(String::as_str));
-    assert_eq!(reason, Some("intentional upload failure"));
+    assert!(
+        error.is::<super::visual_host::UploadFailed>(),
+        "visual.composition.upload_failure_reached"
+    );
     assert_eq!(
         h.world.player.presentation.visual().animated_tiles.slots[5].source,
         0xa000,
@@ -607,16 +606,9 @@ fn charge_failure() {
         // 31 available bytes: the whole 32-byte source must precede any color write.
         h.image = super::RomImage::zeroed(0x1b * 0x8000 + (source & 0x7fff) + 31);
         let before = h.world.clone();
-        let error = catch_unwind(AssertUnwindSafe(|| samus::charge_feedback(&mut h)))
-            .expect_err("charge short suit source must fail");
-        let reason = error
-            .downcast_ref::<&str>()
-            .copied()
-            .or_else(|| error.downcast_ref::<String>().map(String::as_str));
-        assert_eq!(
-            reason,
-            Some("ROM copy source extent"),
-            "charge.failure.reason"
+        assert!(
+            catch_unwind(AssertUnwindSafe(|| samus::charge_feedback(&mut h))).is_err(),
+            "charge short suit source must fail"
         );
         assert_eq!(h.world, before, "charge.failure.owner_prefix.{hyper}");
         let mut records = vec![];

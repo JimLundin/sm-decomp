@@ -2,6 +2,8 @@
 #![allow(unused_variables)]
 use super::game::{enemy_projectiles::host::*, session::Vector32};
 use super::{Composed, Event};
+/// The unprepared `damage_player` edge was reached; it stops the core there.
+pub(super) struct DamagePlayerReached;
 impl ImportedAliases for Composed {
     fn enemy_word(&self, member: EnemyMember, signed_slot: isize) -> u16 {
         panic!("unprepared enemy operation: enemy_word")
@@ -234,7 +236,7 @@ impl Effects for Composed {
     }
     fn damage_player(&mut self, damage: u16) -> () {
         assert_eq!(damage, 10, "1054 actual suit damage argument");
-        panic!("unprepared enemy operation: damage_player")
+        std::panic::panic_any(DamagePlayerReached)
     }
 
     fn ridley_offscreen(&mut self, x: u16, y: u16) -> u8 {

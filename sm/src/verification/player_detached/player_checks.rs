@@ -1,6 +1,8 @@
 //! Composed actual firing, collision, animation and palette execution.
 use super::{Composed, Event, World, colors, game::player_projectiles as player};
 use std::panic::{AssertUnwindSafe, catch_unwind};
+/// The fixture's own unwind, told apart from any engine panic by its type.
+struct FixtureUnwind;
 
 pub(super) fn prepared() -> Composed {
     let mut h = Composed::new();
@@ -486,7 +488,7 @@ fn terrain_reaction_owner() {
             h.world.player.room.width = 8;
             h.world.player.projectiles.selected = 2;
             if header == 0x8001 {
-                panic!("terrain.callback.intentional_failure");
+                std::panic::panic_any(FixtureUnwind);
             }
             if header == 0x8000 {
                 player::call_motion(h, 0xafdd, 2);
@@ -509,11 +511,10 @@ fn terrain_reaction_owner() {
         let result = catch_unwind(AssertUnwindSafe(|| player::call_motion(&mut h, 0xaf60, 0)));
         if header == 0x8001 {
             let error = result.expect_err("terrain callback must fail");
-            let reason = error
-                .downcast_ref::<&str>()
-                .copied()
-                .or_else(|| error.downcast_ref::<String>().map(String::as_str));
-            assert_eq!(reason, Some("terrain.callback.intentional_failure"));
+            assert!(
+                error.is::<FixtureUnwind>(),
+                "terrain.callback.intentional_failure"
+            );
             assert_eq!(h.world, expected, "terrain.callback.failure_prefix");
             assert_eq!(h.events, [Event::PlayerMechanism(header)]);
         } else {

@@ -11,6 +11,8 @@ use crate::{
 };
 use std::panic::{AssertUnwindSafe, catch_unwind};
 
+/// The fixture's own unwind, told apart from any engine panic by its type.
+struct FixtureUnwind;
 pub(crate) const COUNT: u32 = 12;
 // This is a future migration address set, NOT a claim that the predecessor owns it.
 const LANES: [usize; 29] = [
@@ -521,13 +523,12 @@ fn foreign_unwind(g: &mut Game, out: &mut Vec<u8>) {
         rt.foreign(|g| {
             multiply_with_scratch(g, 0x1234, 0x5678);
             g.ram().write_byte(0xdc7, 0xe1);
-            panic!("collision ownership controlled foreign unwind");
+            std::panic::panic_any(FixtureUnwind);
         });
     }))
     .expect_err("collision.owner.foreign.expected_unwind");
-    assert_eq!(
-        error.downcast_ref::<&str>().copied(),
-        Some("collision ownership controlled foreign unwind"),
+    assert!(
+        error.is::<FixtureUnwind>(),
         "collision.owner.foreign.exact_panic"
     );
     put(&mut expected, 0x5e9, 0x1234);

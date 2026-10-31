@@ -197,14 +197,11 @@ fn check() {
                     *byte ^= 0xa5;
                 }
                 g.eproj_spawn_pt.x = 0xdead;
-                panic!("intentional sprite foreign unwind");
+                std::panic::panic_any(FixtureUnwind);
             })
         }))
         .expect_err("foreign callback must panic");
-        assert_eq!(
-            error.downcast_ref::<&str>().copied(),
-            Some("intentional sprite foreign unwind")
-        );
+        assert!(error.is::<FixtureUnwind>());
         assert!(
             catch_unwind(AssertUnwindSafe(|| {
                 let _ = h.session();
@@ -243,3 +240,5 @@ fn check() {
         "sprite.guard.new-entry"
     );
 }
+/// The fixture's own unwind, told apart from any engine panic by its type.
+struct FixtureUnwind;

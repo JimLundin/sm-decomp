@@ -49,7 +49,7 @@ snapshot/replay comparisons now include the full shared visual Session.
 Mutation-author contract: `--visual-mutation <case>` runs exactly one selected case
 and prints `visual composition case passed: <case>`. Assertions carry exact
 `visual.composition.*` labels in visual_checks.rs. upload_failure emits the expected
-caught panic `intentional upload failure` from visual_host.rs before success; other
+caught `UploadFailed` panic from visual_host.rs before success; other
 selected cases must not panic. The full run retains its existing success text.
 
 palette_independent_checks.rs and animation_independent_checks.rs preserve the

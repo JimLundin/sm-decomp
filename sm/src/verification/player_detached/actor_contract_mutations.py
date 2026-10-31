@@ -65,7 +65,7 @@ def check_actor_contracts(source, work, run):
                     and "assertion `left != right` failed" not in output)):
             raise RuntimeError(f"{name}: not the intended assertion kill\n{output}")
         panics = re.findall(r"panicked at [^\r\n]+:\r?\n([^\r\n]+)", output)
-        expected_prefixes = ("actor guard fixture unwind", "assertion `left == right` failed", "assertion `left != right` failed")
+        expected_prefixes = ("Box<dyn Any>", "assertion `left == right` failed", "assertion `left != right` failed")
         assertions = [message for message in panics if message.startswith("assertion ")]
         if (len(assertions) != 1 or label not in assertions[0]
                 or any(not message.startswith(expected_prefixes) for message in panics)):

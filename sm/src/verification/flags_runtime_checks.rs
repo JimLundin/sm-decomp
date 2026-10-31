@@ -88,6 +88,8 @@ fn new_save_file(g: &mut Game) {
 fn load_from_sram(slot: u16, g: &mut Game) -> u8 {
     sm_game::menus::save_slots::load(slot, g)
 }
+/// The fixture's own unwind, told apart from any engine panic by its type.
+struct FixtureUnwind;
 #[forbid(unsafe_code)]
 fn load_entry(case: u32) {
     let mut game = Game::new();
@@ -414,14 +416,11 @@ fn check() {
                     *b ^= 0xa5;
                 }
                 set_native_game(g, final_native);
-                panic!("intentional flags foreign unwind");
+                std::panic::panic_any(FixtureUnwind);
             })
         }))
         .expect_err("foreign callback must panic");
-        assert_eq!(
-            error.downcast_ref::<&str>().copied(),
-            Some("intentional flags foreign unwind")
-        );
+        assert!(error.is::<FixtureUnwind>());
         assert!(
             catch_unwind(AssertUnwindSafe(|| {
                 let _ = h.session();

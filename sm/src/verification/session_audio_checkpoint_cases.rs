@@ -268,6 +268,8 @@ pub(super) fn run(owner: &GameOwner, original_contract: &SessionStartContract) {
     assert_current(owner, &expected, &audio, &accepted);
 }
 
+/// The fixture's own unwind, told apart from any engine panic by its type.
+struct FixtureUnwind;
 fn assert_current(
     owner: &GameOwner,
     expected: &AudioRequests,
@@ -617,16 +619,13 @@ fn assert_deliveries(
                         assert_eq!(meaning.unwrap().source_interval, 20);
                         assert_eq!(meaning.unwrap().source_tick, 0);
                         if unwind {
-                            panic!("typed music consumer unwind");
+                            std::panic::panic_any(FixtureUnwind);
                         }
                         Err(DisplayError::Source)
                     })
                 }));
                 if unwind {
-                    assert_eq!(
-                        result.unwrap_err().downcast_ref::<&str>(),
-                        Some(&"typed music consumer unwind")
-                    );
+                    assert!(result.unwrap_err().is::<FixtureUnwind>());
                 } else {
                     assert_eq!(result.unwrap(), Err(DisplayError::Source));
                 }

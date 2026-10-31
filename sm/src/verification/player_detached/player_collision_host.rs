@@ -187,6 +187,8 @@ impl Effects for Composed {
 #[cfg(test)]
 mod checks {
     use super::*;
+    /// The fixture's own unwind, told apart from any engine panic by its type.
+    struct FixtureUnwind;
     use {
         crate::game::player_collision_owned_checks as owned,
         sm_game::actors::access::{AccessMode, ActorAccess, ActorKey},
@@ -448,7 +450,7 @@ mod checks {
         h.collision_contract.on_mechanism = Some(|h, _, _| {
             h.world.player.player.pose = 0x81;
             h.world.player.player.x = 222;
-            std::panic::panic_any("collision.synthetic.partial_owner");
+            std::panic::panic_any(FixtureUnwind);
         });
         let error = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
             operations::displace(
@@ -460,10 +462,7 @@ mod checks {
             );
         }))
         .expect_err("callback must unwind");
-        assert_eq!(
-            error.downcast_ref::<&str>(),
-            Some(&"collision.synthetic.partial_owner")
-        );
+        assert!(error.is::<FixtureUnwind>());
         assert_eq!(
             (h.world.player.player.x, h.world.player.player.pose),
             (222, 0x81),

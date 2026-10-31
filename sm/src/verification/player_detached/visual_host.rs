@@ -5,6 +5,8 @@ use super::game::{
     visual_state::{PaletteBuffer, Upload},
 };
 use super::{Composed, Event, RomRecord, colors};
+/// The fixture's injected upload failure, told apart from any engine panic by its type.
+pub(super) struct UploadFailed;
 impl Content for Composed {
     type Record = RomRecord;
     fn record(&mut self, source: Source, bank: u8, address: u16) -> RomRecord {
@@ -117,7 +119,9 @@ impl Effects for Composed {
         if let Some(update) = self.on_upload.take() {
             update(&mut self.world);
         }
-        assert!(!self.fail_upload, "intentional upload failure");
+        if self.fail_upload {
+            std::panic::panic_any(UploadFailed);
+        }
     }
     fn invalid_palette_instruction(&mut self) {
         panic!("invalid palette command")
