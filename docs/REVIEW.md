@@ -217,6 +217,34 @@ VALIDATION Gate 2. (b) Step 1 starts now as its own lane.
      that later changes behaviour shows up. Until the switch, lockstep stays
      authoritative, and the scheduled corpus keeps one full live lockstep run
      until projections retire the RAM comparison.
+9. **Scenario sources: tricks for Map Rando (Jim, 2026-10-31).** Map Rando's
+   point is the vanilla trick library, so scenarios should cover it. Its own
+   patches are mostly QoL, so its few gameplay changes (suit damage, door
+   timing) wait for a later fidelity profile. Not every strat gets a scenario.
+   - *sm-json-data translation.* An `sm_tools` importer reads a pinned
+     [sm-json-data](https://github.com/vg-json-data/sm-json-data) commit
+     (CC-BY-4.0; credit in `THIRD_PARTY_NOTICES.md`; the data is not copied
+     into the repo) and turns a chosen strat into a scenario skeleton: its
+     stable ID (room, from node, to node, name), the entrance and exit
+     conditions, and the equipment and end node as named facts. On
+     2026-10-31 it held 14,301 strats in 261 rooms, 6,161 with an entrance
+     condition and 4,890 with an exit condition. Choose by tech frequency and
+     by door conditions first (G-mode, shinecharged, runway, spark), because
+     carrying state into rooms that were never neighbours is what Map Rando
+     adds.
+   - *Inputs.* Each scenario needs inputs: authored with
+     `tools/authored_inputs.py`, or extracted from video (next item). A
+     scenario is accepted only when the faithful oracle reaches its end node
+     with its facts; then it is locked (condition 8).
+   - *Video-to-movie trial (after step 4).* Map Rando's 8,500+ strat videos
+     are CC0, captured as uncompressed AVI from accurate emulators with the
+     Practice ROM's input display, and mapped to strats in a public database
+     dump. Trial on 10 strats: read per-frame buttons from the input display;
+     reconstruct the start (room, entry, equipment, position) as a documented
+     constructed start; replay on the faithful oracle. *Success:* the oracle
+     reaches the end node, and frames outside the HUD match the video. Report
+     the hit rate and per-strat cost in #6, then decide whether to scale it.
+     Videos are fetched by pinned digest and never committed.
 
 ### Current publication and acceptance
 
