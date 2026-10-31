@@ -23,27 +23,17 @@ fn put(bytes: &mut [u8], at: usize, value: u16) {
 fn rom_word(image: &mut [u8], offset: usize, value: u16) {
     image[offset..offset + 2].copy_from_slice(&value.to_ne_bytes());
 }
-fn payload_text(payload: &(dyn std::any::Any + Send)) -> Option<&str> {
-    payload
-        .downcast_ref::<&str>()
-        .copied()
-        .or_else(|| payload.downcast_ref::<String>().map(String::as_str))
-}
-/// Suppress only the exact expected bounded-ROM failure. Other panics retain
+/// Suppress only a failure raised by the bounded ROM read. Other panics retain
 /// their normal diagnostic and cannot satisfy this contract.
-fn bounded_rom_failure(length: usize, action: impl FnOnce()) {
-    // LEGACY(message-text): asserts on panic or Die text; should assert the failure kind instead.
-    let message = format!("index out of bounds: the len is {length} but the index is {length}");
-    let wanted = message.clone();
+fn bounded_rom_failure(action: impl FnOnce()) {
     let matched_source = Arc::new(AtomicBool::new(false));
     let observed = matched_source.clone();
     let previous = Arc::new(std::panic::take_hook());
     let forward = previous.clone();
     std::panic::set_hook(Box::new(move |info| {
-        if payload_text(info.payload()) == Some(wanted.as_str())
-            && info
-                .location()
-                .is_some_and(|at| at.file().ends_with("rom.rs"))
+        if info
+            .location()
+            .is_some_and(|at| at.file().ends_with("rom.rs"))
         {
             observed.store(true, Ordering::Relaxed);
         } else {
@@ -57,11 +47,9 @@ fn bounded_rom_failure(length: usize, action: impl FnOnce()) {
             .ok()
             .expect("released scoped panic hook"),
     );
-    let payload = result.expect_err("boss map must reach selected truncated Native read");
-    assert_eq!(
-        payload_text(payload.as_ref()),
-        Some(message.as_str()),
-        "exact bounded ROM failure"
+    assert!(
+        result.is_err(),
+        "boss map must reach selected truncated Native read"
     );
     assert!(
         matched_source.load(Ordering::Relaxed),
@@ -173,7 +161,7 @@ fn one(g: &mut Game, case: usize) {
             "boss map live physical contract case {case}"
         );
     } else {
-        bounded_rom_failure(length, || {
+        bounded_rom_failure(|| {
             let mut runtime = Runtime::new(g);
             assert!(runtime.game.actor_identity_is_with_session());
             player_update::minimap::disable_for_boss(&mut runtime);

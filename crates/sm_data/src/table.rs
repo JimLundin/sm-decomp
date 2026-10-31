@@ -79,13 +79,12 @@ pub fn grid<const WORDS: usize, const ROWS: usize>(
 /// Panics when `index` selects no entry of a `len`-entry table. Jump tables use
 /// it to reject an invalid selector before dispatching, as the original's
 /// checked tables did.
-// LEGACY(message-text): the slice-index wording is kept only because verifier
-// cases compare panic text (player_movement_edges.rs).
 #[track_caller]
 pub fn check_index(index: usize, len: usize) {
-    if index >= len {
-        panic!("index out of bounds: the len is {len} but the index is {index}");
-    }
+    assert!(
+        index < len,
+        "index {index} selects no entry of a {len}-entry table"
+    );
 }
 
 /// One word per entry, for any single-word list.

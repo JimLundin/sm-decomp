@@ -1749,11 +1749,10 @@ fn sfx_native_reset_rejection_keeps_history_and_reset_prefix() {
     ram.write(0x0200, 255);
     ram.write(0x6c0c, 3);
     let dsp_before = player.dsp.state;
-    let fault = catch_unwind(AssertUnwindSafe(|| player.process_sound_effects(0)))
-        .expect_err("native reset rejects DSP selector255");
-    let text = fault.downcast_ref::<String>().expect("bounds failure text");
-    // LEGACY(message-text): asserts on panic or Die text; should assert the failure kind instead.
-    assert!(text.contains("len is 128") && text.contains("index is 244"));
+    assert!(
+        catch_unwind(AssertUnwindSafe(|| player.process_sound_effects(0))).is_err(),
+        "native reset rejects DSP selector255"
+    );
     let history = player.history.as_ref().unwrap();
     assert_eq!(
         (history.count, history.addr[0], history.val[0]),

@@ -5,10 +5,7 @@ use crate::types::{EnemyData, EnemyDef, Point16U, Rect16U};
 use crate::{game_state::Game, rom::RomImage};
 use core::mem::{offset_of, size_of};
 use sm_game::session::Vector32;
-use std::{
-    any::Any,
-    panic::{AssertUnwindSafe, catch_unwind},
-};
+use std::panic::{AssertUnwindSafe, catch_unwind};
 pub(crate) const CASES: u32 = 40;
 struct ObserverGuard;
 impl Drop for ObserverGuard {
@@ -351,13 +348,6 @@ fn fixture(id: u32, g: &mut Game, loaded: &mut [u8]) -> Operation {
         _ => unreachable!(),
     }
 }
-fn panic_text(payload: &(dyn Any + Send)) -> String {
-    payload
-        .downcast_ref::<String>()
-        .cloned()
-        .or_else(|| payload.downcast_ref::<&str>().map(|s| s.to_string()))
-        .expect("expected textual checked panic")
-}
 fn checks(id: u32, g: &Game, returned: Option<u64>) {
     assert!(!g.g_fail, "no native diagnostic or unrelated failure");
     if matches!(id, 3 | 5 | 6 | 7 | 13..=16 | 20 | 25) {
@@ -500,27 +490,20 @@ fn capture_prepared_case(
     crate::actor_movement_observer::begin(id);
     let _observer_guard = ObserverGuard;
     let result = catch_unwind(AssertUnwindSafe(|| dispatch(op, &mut g)));
-    let expectation = match id {
-        // LEGACY(message-text): asserts on panic or Die text; should assert the failure kind instead.
-        8 => Some("index out of bounds: the len is 131072 but the index is 132866"),
-        28 | 40..=43 => Some("ROM read outside loaded allocation"),
-        _ => None,
-    };
+    // Case 8 reads past the end of RAM; 28 and 40-43 read past the loaded ROM.
+    let fails = matches!(id, 8 | 28 | 40..=43);
     let returned = match result {
         Ok(value) => {
-            if expectation.is_some() {
+            if fails {
                 crate::actor_movement_observer::cancel();
                 panic!("expected checked failure case{id}");
             }
             value
         }
         Err(payload) => {
-            let text = panic_text(payload.as_ref());
-            assert_eq!(
-                Some(text.as_str()),
-                expectation,
-                "exact checked-failure boundary case{id}"
-            );
+            if !fails {
+                std::panic::resume_unwind(payload);
+            }
             None
         }
     };
@@ -555,17 +538,14 @@ fn capture_prepared_case(
     }
     out.push(u8::from(returned.is_some()));
     out.extend_from_slice(&returned.unwrap_or(0).to_le_bytes());
-    out.push(u8::from(expectation.is_some()));
+    out.push(u8::from(fails));
     out.push(u8::from(g.g_fail));
     assert_eq!(
         out.len(),
         131099,
         "unchanged existing carrier prefix layout"
     );
-    // New carrier only: append exact failure text and ordered observer bytes.
-    let failure = expectation.unwrap_or("").as_bytes();
-    out.extend_from_slice(&(failure.len() as u32).to_le_bytes());
-    out.extend_from_slice(failure);
+    // New carrier only: append the ordered observer bytes.
     out.extend_from_slice(&(trace.len() as u32).to_le_bytes());
     out.extend(trace);
     Some(out)

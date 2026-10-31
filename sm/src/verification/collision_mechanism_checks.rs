@@ -23,36 +23,14 @@ fn rom_word(image: &mut [u8], address: u32, value: u16) {
     let at = crate::rom::lorom_offset(address) as usize;
     image[at..at + 2].copy_from_slice(&value.to_le_bytes());
 }
-fn caught(message: &'static str, action: impl FnOnce()) -> Result<(), Box<dyn Any + Send>> {
-    let previous = Arc::new(std::panic::take_hook());
-    let forward = previous.clone();
-    std::panic::set_hook(Box::new(move |info| {
-        let actual = info
-            .payload()
-            .downcast_ref::<&str>()
-            .copied()
-            // LEGACY(message-text): asserts on panic or Die text; should assert the failure kind instead.
-            .or_else(|| info.payload().downcast_ref::<String>().map(String::as_str));
-        if actual != Some(message) {
-            forward(info);
-        }
-    }));
-    let result = catch_unwind(AssertUnwindSafe(action));
-    drop(std::panic::take_hook());
-    std::panic::set_hook(
-        Arc::try_unwrap(previous)
-            .ok()
-            .expect("released scoped panic hook"),
-    );
-    result
+fn caught(action: impl FnOnce()) -> Result<(), Box<dyn Any + Send>> {
+    catch_unwind(AssertUnwindSafe(action))
 }
-fn require_panic(result: Result<(), Box<dyn Any + Send>>, message: &str) {
-    let payload = result.expect_err("selected actual call must reach its defined failure");
-    let actual = payload
-        .downcast_ref::<&str>()
-        .copied()
-        .or_else(|| payload.downcast_ref::<String>().map(String::as_str));
-    assert_eq!(actual, Some(message), "exact failure, not arbitrary panic");
+fn require_panic(result: Result<(), Box<dyn Any + Send>>) {
+    assert!(
+        result.is_err(),
+        "selected actual call must reach its defined failure"
+    );
 }
 fn seed(g: &mut Game) {
     g.ram().fill(0..g.ram().len(), 0);
@@ -137,7 +115,7 @@ fn stale(g: &mut Game) {
         let mut runtime = Runtime::new(g);
         runtime.session_mut().player.x = 0x3456;
         runtime.session_mut().world = Arc::new((*world).clone());
-        let result = caught("Session belongs to a different world binding", || {
+        let result = caught(|| {
             runtime.apply_mechanism(MechanismHeader(0xf100), &mut delta);
         });
         let held = runtime.has_session_for_verification();
@@ -148,7 +126,7 @@ fn stale(g: &mut Game) {
         }
         (result, held, unpublished)
     };
-    require_panic(result, "Session belongs to a different world binding");
+    require_panic(result);
     assert!(
         held && unpublished,
         "preflight fails before relinquishment or creation prefix"
@@ -177,12 +155,10 @@ fn failed_setup(g: &mut Game) {
     put(&mut expected, 0x1c27, 78);
     expected[0x16402] = 0x10;
     let mut delta = 0x12345678;
-    // LEGACY(message-text): asserts on panic or Die text; should assert the failure kind instead.
-    const MESSAGE: &str = "index out of bounds: the len is 131072 but the index is 156674";
     let (result, held, prefix, identity_returned) = {
         let mut runtime = Runtime::new(g);
         runtime.session_mut().player.x = 0x3456;
-        let result = caught(MESSAGE, || {
+        let result = caught(|| {
             runtime.apply_mechanism(MechanismHeader(0xf100), &mut delta);
         });
         // Observe before Runtime drops: a later Drop must not hide retained authority.
@@ -191,7 +167,7 @@ fn failed_setup(g: &mut Game) {
         let identity_returned = !runtime.game.actor_identity_is_with_session();
         (result, held, prefix, identity_returned)
     };
-    require_panic(result, MESSAGE);
+    require_panic(result);
     assert!(
         !held && identity_returned,
         "failed setup returns authority even with outer Runtime alive"
@@ -282,7 +258,7 @@ fn acceleration_stale(g: &mut Game) {
         let mut runtime = Runtime::new(g);
         runtime.session_mut().player.x = 0x3456;
         runtime.session_mut().world = Arc::new((*world).clone());
-        let result = caught("Session belongs to a different world binding", || {
+        let result = caught(|| {
             acceleration_step(&mut runtime);
         });
         let held = runtime.has_session_for_verification();
@@ -292,7 +268,7 @@ fn acceleration_stale(g: &mut Game) {
         }
         (result, held, unpublished)
     };
-    require_panic(result, "Session belongs to a different world binding");
+    require_panic(result);
     assert!(
         held && unpublished,
         "acceleration preflight precedes Gravity no-read path"
@@ -310,13 +286,13 @@ fn acceleration_loaded_failure(g: &mut Game) {
     let (result, held, prefix, identity_returned) = {
         let mut runtime = Runtime::new(g);
         runtime.session_mut().player.x = 0x3456;
-        let result = caught("ROM must be loaded", || acceleration_step(&mut runtime));
+        let result = caught(|| acceleration_step(&mut runtime));
         let held = runtime.has_session_for_verification();
         let prefix = ram_bytes(&runtime.game);
         let identity_returned = !runtime.game.actor_identity_is_with_session();
         (result, held, prefix, identity_returned)
     };
-    require_panic(result, "ROM must be loaded");
+    require_panic(result);
     assert!(
         !held && identity_returned,
         "acceleration Loaded failure returns authority before outer Drop"

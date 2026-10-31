@@ -158,26 +158,15 @@ fn check_lazy_tiles(g: &mut Game, fail_visited: bool) {
     if !fail_visited {
         put(&mut expected, 0xc608 + 2 * 60, 0x6806);
     }
-    let expected_failure =
-        // LEGACY(message-text): asserts on panic or Die text; should assert the failure kind instead.
-        format!("index out of bounds: the len is {length} but the index is {length}");
     let matched_source = Arc::new(AtomicBool::new(false));
     let previous_hook = if fail_visited {
         let previous = Arc::new(std::panic::take_hook());
         let forward = previous.clone();
-        let wanted = expected_failure.clone();
         let observed = matched_source.clone();
         std::panic::set_hook(Box::new(move |info| {
-            let text = info
-                .payload()
-                .downcast_ref::<String>()
-                .map(String::as_str)
-                // LEGACY(message-text): asserts on panic or Die text; should assert the failure kind instead.
-                .or_else(|| info.payload().downcast_ref::<&str>().copied());
-            if text == Some(wanted.as_str())
-                && info
-                    .location()
-                    .is_some_and(|at| at.file().ends_with("rom.rs"))
+            if info
+                .location()
+                .is_some_and(|at| at.file().ends_with("rom.rs"))
             {
                 observed.store(true, Ordering::Relaxed);
             } else {
@@ -201,15 +190,9 @@ fn check_lazy_tiles(g: &mut Game, fail_visited: bool) {
         );
     }
     if fail_visited {
-        let panic = result.expect_err("visited content must fail on its missing second byte");
-        let message = panic
-            .downcast_ref::<String>()
-            .map(String::as_str)
-            .or_else(|| panic.downcast_ref::<&str>().copied())
-            .unwrap_or("");
-        assert_eq!(
-            message, expected_failure,
-            "exact visited second-byte failure"
+        assert!(
+            result.is_err(),
+            "visited content must fail on its missing second byte"
         );
         assert!(
             matched_source.load(Ordering::Relaxed),

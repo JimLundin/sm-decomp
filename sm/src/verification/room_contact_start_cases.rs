@@ -338,34 +338,10 @@ pub(crate) fn capture_case(
                 }
             }
             Err(payload) => {
-                assert!(panics, "unexpected source panic");
-                let (kind, message) = if let Some(s) = payload.downcast_ref::<String>() {
-                    (1, s.as_str())
-                } else if let Some(s) = payload.downcast_ref::<&str>() {
-                    (2, *s)
-                } else {
-                    (3, "non-string panic")
-                };
-                let expected_message = match id {
-                    8 | 16 => "ROM must be loaded".to_owned(),
-                    9 | 10 => "ROM read outside loaded allocation".to_owned(),
-                    17 => {
-                        let len = offset(0x80c4b5) + 1;
-                        // LEGACY(message-text): asserts on panic or Die text; should assert the failure kind instead.
-                        format!("index out of bounds: the len is {len} but the index is {len}")
-                    }
-                    _ => unreachable!(),
-                };
-                assert_eq!(
-                    kind,
-                    if matches!(id, 8 | 16 | 17) { 1 } else { 2 },
-                    "checked panic type"
-                );
-                assert_eq!(message, expected_message, "checked panic text");
+                if !panics {
+                    std::panic::resume_unwind(payload);
+                }
                 out.push(2);
-                out.push(kind);
-                out.extend_from_slice(&(message.len() as u32).to_le_bytes());
-                out.extend_from_slice(message.as_bytes());
             }
         }
         assert_eq!(

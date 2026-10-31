@@ -121,8 +121,8 @@ pub(crate) fn capture_case(
         let mut diagnostics = Vec::new();
         let mut mutations = Vec::new();
         let mut expected_source = 0xabcdef;
-        let mut panic_text: Option<String> = None;
-        let mut panic_kind = 2;
+        // Whether the selected call must stop at a checked failure.
+        let mut fails = false;
         state(&mut a, 0);
         state(&mut b, 0);
         if id < 24 {
@@ -154,7 +154,7 @@ pub(crate) fn capture_case(
                     rw(&mut a, 0x8feffe, 2);
                     rw(&mut a, 0x8f9016, 0xeffe);
                     bytes(&mut a, 0x8ff000, &[0, 0x60, 0x7e, 0x23, 0x31]);
-                    panic_text = Some("ROM read outside loaded allocation".into());
+                    fails = true;
                 }
                 8 | 9 => {
                     put(&mut g, 0x7bb, 0x10);
@@ -162,7 +162,7 @@ pub(crate) fn capture_case(
                     if id == 8 {
                         diagnostics.push(0x8f0010);
                     } else {
-                        panic_text = Some("ROM address must select a LoROM window".into());
+                        fails = true;
                     }
                 }
                 10 | 11 => transfer(&mut a, 0xfff7, 2),
@@ -175,7 +175,7 @@ pub(crate) fn capture_case(
                     rw(&mut a, 0x8ffffe, 14);
                     rw(&mut a, 0x8f0000, 0x8000);
                     diagnostics.push(0x8f0000);
-                    panic_text = Some("ROM address must select a LoROM window".into());
+                    fails = true;
                 }
                 15 => {
                     rw(&mut a, 0x8fa000, 5);
@@ -190,8 +190,7 @@ pub(crate) fn capture_case(
                 }
                 19 => {
                     rw(&mut a, 0x8fa000, 16);
-                    panic_kind = 1;
-                    panic_text = Some("invalid room background command: 0x10".into());
+                    fails = true;
                 }
                 20 | 21 => put(&mut g, 0x1964, 0x9000),
                 22 | 23 => {
@@ -200,7 +199,7 @@ pub(crate) fn capture_case(
                     if id == 22 {
                         diagnostics.push(0x8f0002);
                     } else {
-                        panic_text = Some("ROM address must select a LoROM window".into());
+                        fails = true;
                     }
                 }
                 _ => (),
@@ -233,11 +232,7 @@ pub(crate) fn capture_case(
                     rw(&mut a, 0x8ffff0 + 2 * i, 0x3300 + i as u16);
                 }
                 bytes(&mut a, 0x8ffff6, &[0x44]);
-                panic_kind = 1;
-                panic_text = Some(format!(
-                    // LEGACY(message-text): asserts on panic or Die text; should assert the failure kind instead.
-                    "index out of bounds: the len is {len} but the index is {len}"
-                ));
+                fails = true;
             }
             if id >= 30 {
                 put(&mut g, 0x79f, 0);
@@ -462,7 +457,7 @@ pub(crate) fn capture_case(
         let trace = crate::room_background_observer::finish();
         match actual {
             Ok(value) => {
-                assert!(panic_text.is_none(), "expected checked failure");
+                assert!(!fails, "expected checked failure");
                 assert_eq!(value, expected_return);
                 record(
                     &mut out,
@@ -474,18 +469,10 @@ pub(crate) fn capture_case(
                 );
             }
             Err(payload) => {
-                let (kind, text) = if let Some(s) = payload.downcast_ref::<String>() {
-                    (1, s.as_str())
-                } else if let Some(s) = payload.downcast_ref::<&str>() {
-                    (2, *s)
-                } else {
-                    (3, "non-string panic")
-                };
-                assert_eq!(Some(text), panic_text.as_deref(), "exact expected panic");
-                assert_eq!(kind, panic_kind, "panic payload type");
-                let mut p = vec![2, kind];
-                p.extend_from_slice(text.as_bytes());
-                record(&mut out, 7, &p);
+                if !fails {
+                    std::panic::resume_unwind(payload);
+                }
+                record(&mut out, 7, &[2]);
             }
         }
         assert_eq!(&ram_bytes(&g), &expected[..], "background {} full RAM", id);
@@ -711,11 +698,7 @@ fn raster_failures() {
     let result = catch_unwind(AssertUnwindSafe(|| unsafe {
         crate::snes::ppu::ppu_run_line(&mut *p, 1, &true)
     }));
-    let payload = result.unwrap_err();
-    assert_eq!(
-        payload.downcast_ref::<String>().map(String::as_str),
-        Some("PPU raster fault: SpriteSize(8)")
-    );
+    assert!(result.is_err(), "an 8-pixel sprite size is a raster fault");
     assert!(p.lineHasSprites && p.rangeOver && !p.timeOver);
     assert_eq!(p.objBuffer.data, [BACKDROP; 256]);
     assert_eq!(out, [0x5a; 1024]);

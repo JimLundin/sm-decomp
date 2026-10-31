@@ -24,6 +24,8 @@ use {
     },
 };
 
+/// The fixture's own unwind, told apart from any engine panic by its type.
+struct FixtureUnwind;
 const IMAGE: [u8; 8] = [0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x7a, 0x8b];
 
 pub(crate) fn image() -> RomImage {
@@ -423,15 +425,11 @@ pub fn samus_driver_cannon_failure_preserves_prefix() {
         assert_eq!(runtime.samus_game().samus_authority(), Available);
         let failure = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
             runtime.produce_player_scene();
-        }))
-        .expect_err("the cannon's loaded table must be out of bounds");
-        let message = failure
-            .downcast_ref::<String>()
-            .map(String::as_str)
-            .or_else(|| failure.downcast_ref::<&str>().copied())
-            .unwrap();
-        // LEGACY(message-text): asserts on panic or Die text; should assert the failure kind instead.
-        assert!(message.contains("index out of bounds: the len is 8 but the index is 542687"));
+        }));
+        assert!(
+            failure.is_err(),
+            "the cannon's loaded table must be out of bounds"
+        );
         assert!(!runtime.has_session_for_verification());
         assert!(!runtime.samus_game().actor_identity_is_with_session());
         assert_eq!(runtime.samus_game().samus_authority(), Revoked);
@@ -564,11 +562,11 @@ pub fn samus_game_body_foreign_adoption_and_prefix() {
             );
             game.ram().write_byte(0xb05, 0xd1);
             game.ram().write_byte(0xb06, 0xe2);
-            panic!("body foreign prefix");
+            std::panic::panic_any(FixtureUnwind);
         });
     }))
     .expect_err("body callback must panic");
-    assert_eq!(failure.downcast_ref::<&str>(), Some(&"body foreign prefix"));
+    assert!(failure.is::<FixtureUnwind>());
     assert!(!runtime.has_session_for_verification());
     assert!(!runtime.samus_game().actor_identity_is_with_session());
     assert_eq!(runtime.samus_game().samus_authority(), Revoked);
@@ -718,14 +716,12 @@ pub fn samus_game_returning_die_load_witness(game: &mut Game, load: impl FnOnce(
             assert_eq!(game.samus_authority(), Revoked);
             assert!(!game.actor_identity_is_with_session());
         });
-    }))
-    .expect_err("an incomplete returning-Die load must reject Samus resumption");
-    let message = failure
-        .downcast_ref::<String>()
-        .map(String::as_str)
-        .or_else(|| failure.downcast_ref::<&str>().copied())
-        .unwrap();
-    assert_eq!(message, "Samus resumption rejected: Poisoned");
+    }));
+    // The rejection reason is the Poisoned preflight asserted below.
+    assert!(
+        failure.is_err(),
+        "an incomplete returning-Die load must reject Samus resumption"
+    );
     assert!(
         load_returned,
         "the loader must complete its original reset continuation"

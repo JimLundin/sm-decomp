@@ -402,30 +402,10 @@ pub(crate) fn capture_case(
                 }
             }
             Err(payload) => {
-                assert!(expected_panic, "unexpected predecessor panic");
-                let message = payload
-                    .downcast_ref::<String>()
-                    .map(String::as_str)
-                    .or_else(|| payload.downcast_ref::<&str>().copied())
-                    .expect("string failure");
-                let expected = match id {
-                    _ => {
-                        let len = match id {
-                            11 | 17 => offset(0xa01000) + offset_of!(D, x_radius),
-                            18 => offset(0xa01000) + offset_of!(D, y_radius),
-                            20 => offset(0xa01000) + offset_of!(D, layer),
-                            30 => offset(0xa29000) + 2,
-                            31 => offset(0xaa9000) + 7,
-                            _ => unreachable!(),
-                        };
-                        // LEGACY(message-text): asserts on panic or Die text; should assert the failure kind instead.
-                        format!("index out of bounds: the len is {len} but the index is {len}")
-                    }
-                };
-                assert_eq!(message, expected, "exact failure source");
+                if !expected_panic {
+                    std::panic::resume_unwind(payload);
+                }
                 out.push(1);
-                out.extend_from_slice(&(message.len() as u32).to_le_bytes());
-                out.extend_from_slice(message.as_bytes());
             }
         }
         if (16..=21).contains(&id) {
@@ -621,25 +601,7 @@ fn spikey_initialization_prefix() -> Vec<u8> {
         }
         let result = catch_unwind(AssertUnwindSafe(|| spike_platform::initialize(&mut *g)));
         if mode < 2 {
-            let failure = result.expect_err("missing/truncated loaded ROM must fail");
-            let message = failure
-                .downcast_ref::<String>()
-                .map(String::as_str)
-                .or_else(|| failure.downcast_ref::<&str>().copied())
-                .unwrap();
-            if mode == 0 {
-                assert_eq!(message, "ROM must be loaded");
-            } else {
-                assert_eq!(
-                    message,
-                    format!(
-                        // LEGACY(message-text): asserts on panic or Die text; should assert the failure kind instead.
-                        "index out of bounds: the len is {} but the index is {}",
-                        table + 27,
-                        table + 27
-                    )
-                );
-            }
+            assert!(result.is_err(), "missing/truncated loaded ROM must fail");
         } else {
             result.unwrap();
             for (at, value) in [

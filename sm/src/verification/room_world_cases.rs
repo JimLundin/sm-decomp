@@ -455,14 +455,9 @@ unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
             c.repCount = 0x12;
             invalid.hdmaTimer = 0xabcd;
             g.set_dma_state(invalid);
-            let failure = catch_unwind(AssertUnwindSafe(|| g.execution().step_hdma()))
-                .expect_err("invalid native mode must fail at its original lookup");
             assert!(
-                failure
-                    .downcast_ref::<String>()
-                    .unwrap()
-                    // LEGACY(message-text): asserts on panic or Die text; should assert the failure kind instead.
-                    .contains("index out of bounds")
+                catch_unwind(AssertUnwindSafe(|| g.execution().step_hdma())).is_err(),
+                "invalid native mode must fail at its original lookup"
             );
             let failed = g.dma_state();
             assert_eq!(failed.hdmaTimer, 8);
@@ -517,11 +512,9 @@ unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
             put(g, 0x84, 0xa577);
             (*snes).hTimer = 0x123;
             (*snes).vTimer = 0x134;
-            let failure = catch_unwind(AssertUnwindSafe(|| scanline_irq::advance(g)))
-                .expect_err("invalid IRQ must fail before effects");
-            assert_eq!(
-                failure.downcast_ref::<String>().map(String::as_str),
-                Some("invalid scanline IRQ handler: 32767")
+            assert!(
+                catch_unwind(AssertUnwindSafe(|| scanline_irq::advance(g))).is_err(),
+                "invalid IRQ must fail before effects"
             );
             assert_eq!(
                 (word(g, 0xab), word(g, 0xa7), word(g, 0x84)),

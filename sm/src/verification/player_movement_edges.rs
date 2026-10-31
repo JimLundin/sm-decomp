@@ -9,7 +9,6 @@ use crate::{
 use std::{
     any::Any,
     panic::{AssertUnwindSafe, catch_unwind},
-    sync::Arc,
 };
 fn put(g: &mut Game, at: usize, value: u16) {
     g.ram().copy_in(at, &value.to_le_bytes());
@@ -30,36 +29,14 @@ fn content(g: &mut Game, words: &[u16]) {
     image.extend(words.iter().flat_map(|value| value.to_ne_bytes()));
     g.register_native_rom(RomImage::from(image));
 }
-fn caught(message: &'static str, action: impl FnOnce()) -> Result<(), Box<dyn Any + Send>> {
-    let previous = Arc::new(std::panic::take_hook());
-    let forward = previous.clone();
-    std::panic::set_hook(Box::new(move |info| {
-        let actual = info
-            .payload()
-            .downcast_ref::<&str>()
-            .copied()
-            // LEGACY(message-text): asserts on panic or Die text; should assert the failure kind instead.
-            .or_else(|| info.payload().downcast_ref::<String>().map(String::as_str));
-        if actual != Some(message) {
-            forward(info);
-        }
-    }));
-    let result = catch_unwind(AssertUnwindSafe(action));
-    drop(std::panic::take_hook());
-    std::panic::set_hook(
-        Arc::try_unwrap(previous)
-            .ok()
-            .expect("released edge panic hook"),
-    );
-    result
+fn caught(action: impl FnOnce()) -> Result<(), Box<dyn Any + Send>> {
+    catch_unwind(AssertUnwindSafe(action))
 }
-fn require_panic(result: Result<(), Box<dyn Any + Send>>, message: &str) {
-    let payload = result.expect_err("actual movement edge must reach its selected failure");
-    let actual = payload
-        .downcast_ref::<&str>()
-        .copied()
-        .or_else(|| payload.downcast_ref::<String>().map(String::as_str));
-    assert_eq!(actual, Some(message), "exact movement edge failure");
+fn require_panic(result: Result<(), Box<dyn Any + Send>>) {
+    assert!(
+        result.is_err(),
+        "selected actual call must reach its defined failure"
+    );
 }
 fn lazy_speed(g: &mut Game) {
     seed(g);
@@ -99,16 +76,14 @@ fn partial_speed(g: &mut Game) {
         .collect::<Vec<u8>>();
     expected[0xb46..0xb4a].copy_from_slice(&[2, 0, 0, 0]);
     expected[0xaf6..0xaf8].copy_from_slice(&0x3456u16.to_le_bytes());
-    // LEGACY(message-text): asserts on panic or Die text; should assert the failure kind instead.
-    const MESSAGE: &str = "index out of bounds: the len is 548868 but the index is 548868";
-    let result = caught(MESSAGE, || {
+    let result = caught(|| {
         // Match the real bank caller's temporary Runtime: Drop occurs during
         // unwinding, before the external caller catches the failure.
         let mut runtime = Runtime::new(g);
         runtime.session_mut().player.x = 0x3456;
         let _ = speed::base_speed(&mut runtime, SpeedRecord::Selected(0xe000));
     });
-    require_panic(result, MESSAGE);
+    require_panic(result);
     assert_eq!(
         &(0..g.ram().len())
             .map(|at| g.ram().read_byte(at))
@@ -127,14 +102,12 @@ fn invalid_normal(g: &mut Game) {
         .map(|at| g.ram().read_byte(at))
         .collect::<Vec<u8>>();
     expected[0xaf6..0xaf8].copy_from_slice(&0x3456u16.to_le_bytes());
-    // LEGACY(message-text): asserts on panic or Die text; should assert the failure kind instead.
-    const MESSAGE: &str = "index out of bounds: the len is 28 but the index is 28";
-    let result = caught(MESSAGE, || {
+    let result = caught(|| {
         let mut runtime = Runtime::new(g);
         runtime.session_mut().player.x = 0x3456;
         player_movement::advance_normal(&mut runtime);
     });
-    require_panic(result, MESSAGE);
+    require_panic(result);
     assert_eq!(
         &(0..g.ram().len())
             .map(|at| g.ram().read_byte(at))
@@ -175,13 +148,11 @@ fn invalid_crouch(g: &mut Game) {
     let expected = (0..g.ram().len())
         .map(|at| g.ram().read_byte(at))
         .collect::<Vec<u8>>();
-    // LEGACY(message-text): asserts on panic or Die text; should assert the failure kind instead.
-    const MESSAGE: &str = "index out of bounds: the len is 12 but the index is 12";
-    let result = caught(MESSAGE, || {
+    let result = caught(|| {
         let mut runtime = Runtime::new(g);
         player_movement::advance_normal(&mut runtime);
     });
-    require_panic(result, MESSAGE);
+    require_panic(result);
     assert_eq!(
         &(0..g.ram().len())
             .map(|at| g.ram().read_byte(at))

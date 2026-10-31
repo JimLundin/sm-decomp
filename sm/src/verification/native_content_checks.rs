@@ -6,19 +6,44 @@ use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
 use crate::native_rom::NativeRomPointer;
 use crate::rom::RomImage;
-use std::panic::{AssertUnwindSafe, catch_unwind};
+use std::{
+    panic::{AssertUnwindSafe, catch_unwind},
+    sync::{Arc, Mutex},
+};
 pub(crate) const CASES: u32 = 28;
-fn panics_with(operation: impl FnOnce(), expected: &str) {
-    let payload = catch_unwind(AssertUnwindSafe(operation)).expect_err("expected checked failure");
-    let message = payload
-        .downcast_ref::<String>()
-        .map(String::as_str)
-        .or_else(|| payload.downcast_ref::<&str>().copied())
-        .unwrap_or("");
-    assert!(
-        message.contains(expected),
-        "expected {expected:?}, got {message:?}"
+/// Where a checked failure stopped execution: the record's own offset
+/// arithmetic, or the ROM image read it resolved to.
+#[derive(Clone, Copy, Debug, PartialEq)]
+enum Rejected {
+    Offset,
+    Read,
+}
+fn panics_with(operation: impl FnOnce(), expected: Rejected) {
+    let location = Arc::new(Mutex::new(None));
+    let observed = location.clone();
+    let previous = Arc::new(std::panic::take_hook());
+    let forward = previous.clone();
+    std::panic::set_hook(Box::new(move |info| {
+        *observed.lock().unwrap() = info.location().map(|at| at.file().replace('\\', "/"));
+        forward(info);
+    }));
+    let result = catch_unwind(AssertUnwindSafe(operation));
+    drop(std::panic::take_hook());
+    std::panic::set_hook(
+        Arc::try_unwrap(previous)
+            .ok()
+            .expect("released scoped panic hook"),
     );
+    assert!(result.is_err(), "expected checked failure");
+    let file = location.lock().unwrap().take().unwrap_or_default();
+    let actual = if file.ends_with("enemy_projectiles/content.rs") {
+        Some(Rejected::Offset)
+    } else if file.ends_with("sm_data/src/cartridge.rs") {
+        Some(Rejected::Read)
+    } else {
+        None
+    };
+    assert_eq!(actual, Some(expected), "checked failure raised at {file:?}");
 }
 fn check_record_boundary(id: u32) {
     use super::content::NativeRecord;
@@ -44,8 +69,7 @@ fn check_record_boundary(id: u32) {
             || {
                 let _ = record.byte(6);
             },
-            // LEGACY(message-text): asserts on panic or Die text; should assert the failure kind instead.
-            "index out of bounds",
+            Rejected::Read,
         ),
         10 => {
             let record = NativeRecord::new(image, 7);
@@ -53,8 +77,7 @@ fn check_record_boundary(id: u32) {
                 || {
                     let _ = record.word_le(0);
                 },
-                // LEGACY(message-text): asserts on panic or Die text; should assert the failure kind instead.
-                "index out of bounds",
+                Rejected::Read,
             );
         }
         11 => {
@@ -63,8 +86,7 @@ fn check_record_boundary(id: u32) {
                 || {
                     let _ = record.word_le(0);
                 },
-                // LEGACY(message-text): asserts on panic or Die text; should assert the failure kind instead.
-                "index out of bounds",
+                Rejected::Read,
             );
         }
         12..=15 => {
@@ -75,8 +97,7 @@ fn check_record_boundary(id: u32) {
                 || {
                     let _ = record.long_le(0);
                 },
-                // LEGACY(message-text): asserts on panic or Die text; should assert the failure kind instead.
-                "index out of bounds",
+                Rejected::Read,
             );
         }
         16 => {
@@ -85,8 +106,7 @@ fn check_record_boundary(id: u32) {
                 || {
                     let _ = record.byte(0);
                 },
-                // LEGACY(message-text): asserts on panic or Die text; should assert the failure kind instead.
-                "index out of bounds",
+                Rejected::Read,
             );
         }
         17 => {
@@ -95,26 +115,26 @@ fn check_record_boundary(id: u32) {
                 || {
                     let _ = record.byte(1);
                 },
-                "native ROM offset overflow",
+                Rejected::Offset,
             );
         }
         18 => panics_with(
             || {
                 let _ = record.byte(-3);
             },
-            "native ROM offset overflow",
+            Rejected::Offset,
         ),
         19 => panics_with(
             || {
                 let _ = record.word_le(isize::MAX);
             },
-            "native ROM word offset overflow",
+            Rejected::Offset,
         ),
         20 => panics_with(
             || {
                 let _ = record.word_le(isize::MIN);
             },
-            "native ROM word offset overflow",
+            Rejected::Offset,
         ),
         21 => {
             let record = NativeRecord::new(image, usize::MAX);
@@ -122,7 +142,7 @@ fn check_record_boundary(id: u32) {
                 || {
                     let _ = record.word_le(1);
                 },
-                "native ROM offset overflow",
+                Rejected::Offset,
             );
         }
         22 => {
@@ -131,7 +151,7 @@ fn check_record_boundary(id: u32) {
                 || {
                     let _ = record.long_le(1);
                 },
-                "native ROM offset overflow",
+                Rejected::Offset,
             );
         }
         23 => {
@@ -141,34 +161,32 @@ fn check_record_boundary(id: u32) {
                 || {
                     let _ = record.long_le(isize::MAX);
                 },
-                // LEGACY(message-text): asserts on panic or Die text; should assert the failure kind instead.
-                "index out of bounds",
+                Rejected::Read,
             );
         }
         24 => panics_with(
             || {
                 let _ = record.word_le(-2);
             },
-            "native ROM offset overflow",
+            Rejected::Offset,
         ),
         25 => panics_with(
             || {
                 let _ = record.long_le(-3);
             },
-            "native ROM offset overflow",
+            Rejected::Offset,
         ),
         26 => panics_with(
             || {
                 let _ = record.word_le(isize::MAX / 2);
             },
-            // LEGACY(message-text): asserts on panic or Die text; should assert the failure kind instead.
-            "index out of bounds",
+            Rejected::Read,
         ),
         27 => panics_with(
             || {
                 let _ = record.word_le(isize::MIN / 2);
             },
-            "native ROM offset overflow",
+            Rejected::Offset,
         ),
         _ => unreachable!(),
     }
