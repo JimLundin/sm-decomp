@@ -49,7 +49,7 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
         || image.as_mut_ptr() != native.as_mut_ptr()
         || unsafe {
             (*cart).rom.len() != 0x400000
-                || (*cart).romSize != 0x400000
+                || (*cart).rom_size != 0x400000
                 || (*cart).rom.as_mut_ptr() != image.as_mut_ptr()
         }
     {

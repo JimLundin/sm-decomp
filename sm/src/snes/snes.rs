@@ -64,7 +64,7 @@ impl Backend {
         let cart = Rc::new(UnsafeCell::new(Cart {
             type_0: 0,
             rom: crate::rom::RomImage::default(),
-            romSize: 0,
+            rom_size: 0,
             ram: crate::save_ram::SaveRam::default(),
             ramSize: 0,
         }));

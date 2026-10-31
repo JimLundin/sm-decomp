@@ -323,7 +323,7 @@ fn dma_case(n: u32, g: &mut Game, image: &RomImage, trace: &mut Vec<u8>) -> u16 
     unsafe {
         (*cart).type_0 = 1;
         (*cart).rom = image.clone();
-        (*cart).romSize = image.len() as u32;
+        (*cart).rom_size = image.len() as u32;
         let ppu = &mut *ppu;
         ppu.vramIncrement = 32;
         ppu.vramRemapMode = (n % 4) as u8;

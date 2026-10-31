@@ -9,19 +9,19 @@ crate::typed_struct! {
     #[derive(Copy, Clone)]
     #[repr(C)]
     pub struct CartHeader {
-        pub headerVersion: u8;
+        pub header_version: u8;
         pub name: [c_char; 22];
         pub speed, type_0, coprocessor, chips: u8;
-        pub romSize, ramSize: u32;
+        pub rom_size, ramSize: u32;
         pub region, maker, version: u8;
-        pub checksumComplement, checksum: u16;
-        pub makerCode: [c_char; 3];
-        pub gameCode: [c_char; 5];
-        pub flashSize, exRamSize: u32;
-        pub specialVersion, exCoprocessor: u8;
+        pub checksum_complement, checksum: u16;
+        pub maker_code: [c_char; 3];
+        pub game_code: [c_char; 5];
+        pub flash_size, ex_ram_size: u32;
+        pub special_version, ex_coprocessor: u8;
         pub score: i16;
         pub pal: bool;
-        pub cartType: u8;
+        pub cart_type: u8;
     }
 }
 pub unsafe fn snes_load_rom(mut data: *const u8, mut length: i32, game: &mut Game) -> bool {
@@ -34,28 +34,28 @@ pub unsafe fn snes_load_rom(mut data: *const u8, mut length: i32, game: &mut Gam
             return false;
         }
         let mut headers: [CartHeader; 4] = [CartHeader {
-            headerVersion: 0,
+            header_version: 0,
             name: [0; 22],
             speed: 0,
             type_0: 0,
             coprocessor: 0,
             chips: 0,
-            romSize: 0,
+            rom_size: 0,
             ramSize: 0,
             region: 0,
             maker: 0,
             version: 0,
-            checksumComplement: 0,
+            checksum_complement: 0,
             checksum: 0,
-            makerCode: [0; 3],
-            gameCode: [0; 5],
-            flashSize: 0,
-            exRamSize: 0,
-            specialVersion: 0,
-            exCoprocessor: 0,
+            maker_code: [0; 3],
+            game_code: [0; 5],
+            flash_size: 0,
+            ex_ram_size: 0,
+            special_version: 0,
+            ex_coprocessor: 0,
             score: 0,
             pal: false,
-            cartType: 0,
+            cart_type: 0,
         }; 4];
         memset(
             &raw mut headers as *mut CartHeader as *mut c_void,
@@ -104,10 +104,10 @@ pub unsafe fn snes_load_rom(mut data: *const u8, mut length: i32, game: &mut Gam
             data = data.offset(0x200);
             length -= 0x200;
         }
-        if headers[used as usize].cartType as i32 > 2 {
+        if headers[used as usize].cart_type as i32 > 2 {
             printf(
                 c"Failed to load rom: unsupported type (%d)\n".as_ptr(),
-                headers[used as usize].cartType as i32,
+                headers[used as usize].cart_type as i32,
             );
             return false;
         }
@@ -137,7 +137,7 @@ pub unsafe fn snes_load_rom(mut data: *const u8, mut length: i32, game: &mut Gam
         let mut execution = game.execution();
         cart_load(
             (*execution.backend.views().0).cart,
-            headers[used as usize].cartType as i32,
+            headers[used as usize].cart_type as i32,
             image,
             (if headers[used as usize].chips as i32 > 0 {
                 headers[used as usize].ramSize
@@ -164,50 +164,50 @@ unsafe fn read_header(data: *const u8, length: i32, location: i32, header: *mut 
         (*header).type_0 = *data.offset((location + 0x15) as isize) & 0xf;
         (*header).coprocessor = *data.offset((location + 0x16) as isize) >> 4;
         (*header).chips = *data.offset((location + 0x16) as isize) & 0xf;
-        (*header).romSize = ((0x400i32) << *data.offset((location + 0x17) as isize) as i32) as u32;
+        (*header).rom_size = ((0x400i32) << *data.offset((location + 0x17) as isize) as i32) as u32;
         (*header).ramSize = ((0x400i32) << *data.offset((location + 0x18) as isize) as i32) as u32;
         (*header).region = *data.offset((location + 0x19) as isize);
         (*header).maker = *data.offset((location + 0x1a) as isize);
         (*header).version = *data.offset((location + 0x1b) as isize);
-        (*header).checksumComplement = (((*data.offset((location + 0x1d) as isize) as i32) << 8)
+        (*header).checksum_complement = (((*data.offset((location + 0x1d) as isize) as i32) << 8)
             + *data.offset((location + 0x1c) as isize) as i32)
             as u16;
         (*header).checksum = (((*data.offset((location + 0x1f) as isize) as i32) << 8)
             + *data.offset((location + 0x1e) as isize) as i32) as u16;
-        (*header).headerVersion = 1;
+        (*header).header_version = 1;
         if (*header).maker as i32 == 0x33 {
-            (*header).headerVersion = 3;
+            (*header).header_version = 3;
             for i_0 in 0i32..2 {
                 let ch_0: u8 = *data.offset((location - 0x10i32 + i_0) as isize);
                 if ch_0 as i32 >= 0x20 && (ch_0 as i32) < 0x7f {
-                    (*header).makerCode[i_0 as usize] = ch_0 as c_char;
+                    (*header).maker_code[i_0 as usize] = ch_0 as c_char;
                 } else {
-                    (*header).makerCode[i_0 as usize] = '.' as i32 as c_char;
+                    (*header).maker_code[i_0 as usize] = '.' as i32 as c_char;
                 }
             }
-            (*header).makerCode[2i32 as usize] = 0 as c_char;
+            (*header).maker_code[2i32 as usize] = 0 as c_char;
             for i_1 in 0i32..4 {
                 let ch_1: u8 = *data.offset((location - 0xei32 + i_1) as isize);
                 if ch_1 as i32 >= 0x20 && (ch_1 as i32) < 0x7f {
-                    (*header).gameCode[i_1 as usize] = ch_1 as c_char;
+                    (*header).game_code[i_1 as usize] = ch_1 as c_char;
                 } else {
-                    (*header).gameCode[i_1 as usize] = '.' as i32 as c_char;
+                    (*header).game_code[i_1 as usize] = '.' as i32 as c_char;
                 }
             }
-            (*header).gameCode[4i32 as usize] = 0 as c_char;
-            (*header).flashSize =
+            (*header).game_code[4i32 as usize] = 0 as c_char;
+            (*header).flash_size =
                 ((0x400i32) << *data.offset((location - 4i32) as isize) as i32) as u32;
-            (*header).exRamSize =
+            (*header).ex_ram_size =
                 ((0x400i32) << *data.offset((location - 3i32) as isize) as i32) as u32;
-            (*header).specialVersion = *data.offset((location - 2i32) as isize);
-            (*header).exCoprocessor = *data.offset((location - 1i32) as isize);
+            (*header).special_version = *data.offset((location - 2i32) as isize);
+            (*header).ex_coprocessor = *data.offset((location - 1i32) as isize);
         } else if *data.offset((location + 0x14) as isize) as i32 == 0 {
-            (*header).headerVersion = 2;
-            (*header).exCoprocessor = *data.offset((location - 1i32) as isize);
+            (*header).header_version = 2;
+            (*header).ex_coprocessor = *data.offset((location - 1i32) as isize);
         }
         (*header).pal = (*header).region as i32 >= 0x2 && (*header).region as i32 <= 0xc
             || (*header).region as i32 == 0x11;
-        (*header).cartType = (if location < 0x9000 { 1 } else { 2 }) as u8;
+        (*header).cart_type = (if location < 0x9000 { 1 } else { 2 }) as u8;
         let mut score: i32 = 0;
         score += if (*header).speed as i32 == 2 || (*header).speed as i32 == 3 {
             5
@@ -237,7 +237,7 @@ unsafe fn read_header(data: *const u8, length: i32, location: i32, header: *mut 
         } else {
             -2i32
         };
-        score += if (*header).checksum as i32 + (*header).checksumComplement as i32 == 0xffff {
+        score += if (*header).checksum as i32 + (*header).checksum_complement as i32 == 0xffff {
             8
         } else {
             -6i32

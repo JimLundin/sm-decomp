@@ -256,7 +256,7 @@ crate::typed_struct! {
         a, x, y, sp, pc, dp: u16;
         k, db: u8;
         c, z, v, n, i, d, xf, mf, e, waiting, stopped: bool;
-        irqWanted, nmiWanted, intWanted, intDelay, resetWanted: bool;
+        irqWanted, nmiWanted, int_wanted, int_delay, reset_wanted: bool;
     }
 }
 #[link(name = "lakesnes_cpu", kind = "static", modifiers = "-bundle")]

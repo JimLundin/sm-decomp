@@ -43,7 +43,7 @@ pub unsafe fn cart_load(cart: *mut Cart, type_0: i32, rom: RomImage, ram_size: i
         (*cart).rom = RomImage::default();
         (*cart).ram = crate::save_ram::SaveRam::default();
         (*cart).rom = rom;
-        (*cart).romSize = (*cart).rom.len() as u32;
+        (*cart).rom_size = (*cart).rom.len() as u32;
         (*cart).ram = crate::save_ram::SaveRam::zeroed(ram_size.max(0) as usize);
         (*cart).ramSize = ram_size as u32;
     }
@@ -100,7 +100,7 @@ unsafe fn read_lorom_memory(
         bank &= 0x7f;
         if adr >= 0x8000 || bank >= 0x40 {
             let index = ((u32::from(bank) << 15) | u32::from(adr & 0x7fff))
-                & (*cart).romSize.wrapping_sub(1);
+                & (*cart).rom_size.wrapping_sub(1);
             if let Some(value) = source.and_then(|source| source.byte(index as usize)) {
                 return Some(value);
             }
@@ -130,7 +130,7 @@ unsafe fn read_hirom_memory(
         }
         if adr as i32 >= 0x8000 || bank as i32 >= 0x40 {
             let index = (((bank as i32 & 0x3f) << 16 | adr as i32) as u32
-                & (*cart).romSize.wrapping_sub(1)) as usize;
+                & (*cart).rom_size.wrapping_sub(1)) as usize;
             if let Some(value) = source.and_then(|source| source.byte(index)) {
                 return Some(value);
             }
