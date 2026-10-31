@@ -135,21 +135,18 @@ pub fn spawn(host: &mut impl Host, definition: u16) {
     entry.definition = definition;
     entry.counter = 0;
     let data = host.record(Source::Loaded, 0x87, definition);
-    let (program, size, vram) = (
-        data.native_word(0),
-        data.native_word(2),
-        data.native_word(4),
-    );
     let entry = &mut host
         .session_mut()
         .presentation
         .visual_mut()
         .animated_tiles
         .slots[slot];
-    entry.program = program;
+    // Each store precedes the next record read, so a short record leaves the
+    // stores before it, as the original's do.
+    entry.program = data.native_word(0);
     entry.source = 0;
-    entry.size = size;
-    entry.vram = vram;
+    entry.size = data.native_word(2);
+    entry.vram = data.native_word(4);
     entry.delay = 1;
     host.probe("animated_tiles.spawn.initialized");
 }
