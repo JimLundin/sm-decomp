@@ -593,7 +593,7 @@ fn fire_geyser_widened() -> Vec<u8> {
 
 // Movies do not reach missing/truncated ROM or native parameter byte-lane checks.
 fn spikey_initialization_prefix() -> Vec<u8> {
-    use crate::game::spikey_platforms;
+    use sm_game::actors::spike_platform;
     let mut out = b"B6SP1".to_vec();
     let table = offset(0xa28187);
     for mode in 0..3 {
@@ -623,7 +623,7 @@ fn spikey_initialization_prefix() -> Vec<u8> {
         for (at, value) in [(0xf92, 0x8b29u16), (0xfa8, 0x8bb4), (0x7804, 24)] {
             expected[at..at + 2].copy_from_slice(&value.to_ne_bytes());
         }
-        let result = catch_unwind(AssertUnwindSafe(|| spikey_platforms::initialize(&mut g)));
+        let result = catch_unwind(AssertUnwindSafe(|| spike_platform::initialize(&mut *g)));
         if mode < 2 {
             let failure = result.expect_err("missing/truncated loaded ROM must fail");
             let message = failure
@@ -672,7 +672,7 @@ fn spikey_initialization_prefix() -> Vec<u8> {
             for (at, value) in [(0xfa8, 0x8bdcu16), (0x7804, 32)] {
                 expected[at..at + 2].copy_from_slice(&value.to_ne_bytes());
             }
-            spikey_platforms::run(&mut g);
+            spike_platform::run(&mut *g);
             assert_eq!(
                 (0..g.ram().len())
                     .map(|at| g.ram().read_byte(at))

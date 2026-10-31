@@ -425,7 +425,6 @@ pub mod game {
     pub mod projectile_contact;
     pub mod sm_a9;
     pub(crate) mod space_pirates;
-    pub(crate) mod spikey_platforms;
     pub use sm_game::sprite_objects;
 }
 

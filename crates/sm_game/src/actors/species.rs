@@ -18,8 +18,8 @@ use crate::actors::{
     geega, geruta, gunship, kago, kihunter, kraid, magdollite, metroid, mini_crocomire, mini_kraid,
     mochtroid, morph_ball_eye, multiviola, oum, phantoon, phantoon_actions, polyp, powamp, puyo,
     reflec, ridley, rinka, rio, rippers, roach, shaktool, shutters, sidehopper, skree, skultera,
-    space_pirates, spore_spawn, squeept, statues, tatori, torizo, tripper, waver, work_robot,
-    wrecked_ship_spark, yapping_maw, yard, zeb, zebetites, zoa,
+    space_pirates, spike_platform, spore_spawn, squeept, statues, tatori, torizo, tripper, waver,
+    work_robot, wrecked_ship_spark, yapping_maw, yard, zeb, zebetites, zoa,
 };
 use crate::combat_rules::LatchMode;
 use crate::enemy_projectiles::host::Effects as _;
@@ -590,6 +590,8 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         11062220 => work_robot::initialize_deactivated(game),
         11062326 => work_robot::main_ai(game),
         11063668 => work_robot::touch(game),
+        10914607 => spike_platform::initialize(game),
+        10914733 => spike_platform::run(game),
         10659396 => gunship::initialize_top(game),
         10659538 => gunship::initialize_bottom(game),
         10659673 => {
