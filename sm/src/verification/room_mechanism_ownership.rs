@@ -43,8 +43,7 @@ pub(super) fn run(game: &mut Game) -> bool {
         }
         assert_eq!(&ram_bytes(&game), &expected[..]);
 
-        let old_image = RomImage::zeroed(2);
-        old_image.write(0, 0x31);
+        let old_image = RomImage::from(vec![0x31, 0]);
         game.loaded_rom = Some(old_image.clone());
         {
             let mut execution = Runtime::new(game);
@@ -53,9 +52,7 @@ pub(super) fn run(game: &mut Game) -> bool {
                 assert_eq!(&ram_span::<2>(&game, 0x1c37), &[0xef, 0xbe]);
                 game.ram().write_byte(0x1c38, 0x42);
                 game.ram().write_byte(0xc6c8, 0x73);
-                let replacement = RomImage::zeroed(3);
-                replacement.write(0, 0x92);
-                game.loaded_rom = Some(replacement);
+                game.loaded_rom = Some(RomImage::from(vec![0x92, 0, 0]));
                 19
             });
             assert_eq!(returned, 19);

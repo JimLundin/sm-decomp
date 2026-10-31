@@ -11,13 +11,13 @@ use std::panic::{AssertUnwindSafe, catch_unwind};
 fn put(bytes: &mut [u8], at: usize, value: u16) {
     bytes[at..at + 2].copy_from_slice(&value.to_le_bytes());
 }
-fn rom(image: &RomImage, address: u32, bytes: &[u8]) {
+fn rom(image: &mut [u8], address: u32, bytes: &[u8]) {
     let at = crate::rtl::lorom_offset(address) as usize;
-    for (i, b) in bytes.iter().enumerate() {
-        image.write(at + i, *b);
-    }
+    image[at..at + bytes.len()].copy_from_slice(bytes);
 }
-fn prepare(game: &mut Game, image: &RomImage) {
+/// Register the fixture's current bytes as the loaded and native image.
+fn prepare(game: &mut Game, bytes: &[u8]) -> RomImage {
+    let image = RomImage::from(bytes);
     game.ram().fill(0..game.ram().len(), 0);
     ram_word(game.ram(), 0x7a5, 16);
     ram_word(game.ram(), 0x1c87, 34);
@@ -25,15 +25,13 @@ fn prepare(game: &mut Game, image: &RomImage) {
     ram_word(game.ram(), 0x330, 480);
     game.loaded_rom = Some(image.clone());
     game.register_native_rom(image.clone());
+    image
 }
 fn script(image: &RomImage) -> EnemyScript {
     EnemyScript::at(image.clone(), crate::rtl::lorom_offset(0x849000) as usize)
 }
 fn record_call(identity: u32, game: &mut Game) {
     game.ram().copy_in(0x20, &identity.to_le_bytes());
-    // A mutation in the callback must not change the already captured identity.
-    let image = game.loaded_rom.as_ref().unwrap();
-    rom(image, 0x849000, &[0, 0, 0, 0]);
 }
 fn observe_station(game: &mut Game) {
     assert_eq!(&ram_span::<2>(&game, 0xaf6), &[0x30, 0x12]);
@@ -91,11 +89,11 @@ pub(super) fn run(game: &mut Game) -> bool {
     let saved_rom = game.loaded_rom.clone();
     let saved_native = game.capture_native_rom_binding();
     let result = catch_unwind(AssertUnwindSafe(|| {
-        let image = RomImage::zeroed(0x300000);
+        let mut bytes = vec![0; 0x300000];
         // Grey-door selector reads the deliberately odd native table as two bytes.
-        prepare(game, &image);
+        rom(&mut bytes, 0x84be4d, &[0x34, 0x12]);
+        let image = prepare(game, &bytes);
         ram_word(game.ram(), 0x1e17, 2);
-        rom(&image, 0x84be4d, &[0x34, 0x12]);
         let mut expected = ram_bytes(&game);
         put(&mut expected, 0x1cd7, u16::from_ne_bytes([0x34, 0x12]));
         // SAFETY: prepare registered the complete synthetic ROM and initialized
@@ -107,14 +105,14 @@ pub(super) fn run(game: &mut Game) -> bool {
         // for coordinates/drawing. The second selection has a separate valid stream.
         for opcode in [0x848b05, 0x848b17] {
             for selected in [0u16, 2] {
-                prepare(game, &image);
+                rom(&mut bytes, 0x84a020, &1u16.to_ne_bytes());
+                rom(&mut bytes, 0x84a022, &0x999u16.to_ne_bytes());
+                rom(&mut bytes, 0x84a024, &0u16.to_ne_bytes());
+                let image = prepare(game, &bytes);
                 ram_word(game.ram(), 0x1e17, 0x123);
                 ram_word(game.ram(), 0x1c27, selected);
                 ram_word(game.ram(), 0x1c89, 100);
                 ram_word(game.ram(), 0xde6e, 0xa020);
-                rom(&image, 0x84a020, &1u16.to_ne_bytes());
-                rom(&image, 0x84a022, &0x999u16.to_ne_bytes());
-                rom(&image, 0x84a024, &0u16.to_ne_bytes());
                 let mut expected = ram_bytes(&game);
                 for (at, value) in [
                     (0x10024, 0x123),
@@ -138,7 +136,7 @@ pub(super) fn run(game: &mut Game) -> bool {
         }
         // The target pointer overwrites Selected, so the lower row uses slot zero
         // even though the command's captured slot is one.
-        prepare(game, &image);
+        let image = prepare(game, &bytes);
         ram_word(game.ram(), 0x1c87, 98);
         ram_word(game.ram(), 0x1c89, 34);
         ram_word(game.ram(), 0x1e19, 0x1c27);
@@ -166,19 +164,31 @@ pub(super) fn run(game: &mut Game) -> bool {
         for (opcode, table) in [(0x84e04f, 0x84e05f), (0x84e067, 0x84e077)] {
             for graphic in [0u16, 2] {
                 for selected in [0u16, 2] {
-                    prepare(game, &image);
+                    for (address, tile) in [(0xa000u16, 0x321u16), (0xa010, 0x456), (0xa020, 0x999)]
+                    {
+                        rom(
+                            &mut bytes,
+                            0x840000 + u32::from(address),
+                            &1u16.to_ne_bytes(),
+                        );
+                        rom(
+                            &mut bytes,
+                            0x840002 + u32::from(address),
+                            &tile.to_ne_bytes(),
+                        );
+                        rom(
+                            &mut bytes,
+                            0x840004 + u32::from(address),
+                            &0u16.to_ne_bytes(),
+                        );
+                    }
+                    rom(&mut bytes, table, &0xa000u16.to_ne_bytes());
+                    rom(&mut bytes, table + 2, &0xa010u16.to_ne_bytes());
+                    let image = prepare(game, &bytes);
                     ram_word(game.ram(), 0xdf0c, graphic);
                     ram_word(game.ram(), 0x1c27, selected);
                     ram_word(game.ram(), 0x1c89, 100);
                     ram_word(game.ram(), 0xde6e, 0xa020);
-                    for (address, tile) in [(0xa000u16, 0x321u16), (0xa010, 0x456), (0xa020, 0x999)]
-                    {
-                        rom(&image, 0x840000 + u32::from(address), &1u16.to_ne_bytes());
-                        rom(&image, 0x840002 + u32::from(address), &tile.to_ne_bytes());
-                        rom(&image, 0x840004 + u32::from(address), &0u16.to_ne_bytes());
-                    }
-                    rom(&image, table, &0xa000u16.to_ne_bytes());
-                    rom(&image, table + 2, &0xa010u16.to_ne_bytes());
                     let (target, tile) = if graphic == 0 {
                         (0xa000, 0x321)
                     } else {
@@ -206,22 +216,21 @@ pub(super) fn run(game: &mut Game) -> bool {
         // Exercise content extraction with a verification-only recording boundary. Varia and
         // Gravity identity extraction includes and masks the adjacent fourth byte.
         for identity in [0x91d4e4u32, 0x91d5ba] {
-            prepare(game, &image);
-            let bytes = (identity | 0xa5000000).to_ne_bytes();
-            rom(&image, 0x849000, &bytes);
+            rom(&mut bytes, 0x849000, &(identity | 0xa5000000).to_ne_bytes());
+            let image = prepare(game, &bytes);
             let returned = qualified_call_function(game, script(&image), record_call);
             assert_eq!(&ram_span::<4>(&game, 0x20), &identity.to_le_bytes());
             assert_eq!(returned.offset_from(bank_base(0x84)), 0x9003);
         }
         // The fourth byte must be readable even though it is masked out.
-        prepare(game, &image);
+        prepare(game, &bytes);
         let short = RomImage::zeroed(3);
         let failed = catch_unwind(AssertUnwindSafe(|| {
             qualified_call_function(game, EnemyScript::at(short, 0), record_call);
         }));
         assert!(failed.is_err());
         assert_eq!(&ram_span::<4>(&game, 0x20), &[0, 0, 0, 0]);
-        prepare(game, &image);
+        let image = prepare(game, &bytes);
         ram_word(game.ram(), 0xaf6, 0x1229);
         let returned = qualified_place_on_station(game, script(&image), observe_station);
         assert_eq!(returned.offset_from(bank_base(0x84)), 0x9000);

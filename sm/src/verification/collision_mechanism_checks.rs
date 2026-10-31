@@ -19,11 +19,9 @@ use std::{
 fn put(bytes: &mut [u8], at: usize, value: u16) {
     bytes[at..at + 2].copy_from_slice(&value.to_le_bytes());
 }
-fn rom_word(image: &RomImage, address: u32, value: u16) {
+fn rom_word(image: &mut [u8], address: u32, value: u16) {
     let at = crate::rom::lorom_offset(address) as usize;
-    for (i, b) in value.to_le_bytes().into_iter().enumerate() {
-        image.write(at + i, b);
-    }
+    image[at..at + 2].copy_from_slice(&value.to_le_bytes());
 }
 fn caught(message: &'static str, action: impl FnOnce()) -> Result<(), Box<dyn Any + Send>> {
     let previous = Arc::new(std::panic::take_hook());
@@ -63,10 +61,10 @@ fn seed(g: &mut Game) {
     ram_word(g.ram(), crate::ram_map::words::ROOM_HEIGHT_IN_BLOCKS, 1);
     ram_word(g.ram(), crate::ram_map::words::SAMUS_X_POS, 0x120);
     g.ram().write_byte(0x16403, 0x7b);
-    let loaded = RomImage::zeroed(0x200000);
-    rom_word(&loaded, 0x84f100, 0xc6dc);
-    rom_word(&loaded, 0x84f102, 0x9000);
-    g.register_rom(loaded);
+    let mut loaded = vec![0; 0x200000];
+    rom_word(&mut loaded, 0x84f100, 0xc6dc);
+    rom_word(&mut loaded, 0x84f102, 0x9000);
+    g.register_rom(RomImage::from(loaded));
     g.register_native_rom(RomImage::zeroed(0x200000));
 }
 fn full(g: &mut Game) {
