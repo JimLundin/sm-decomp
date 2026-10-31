@@ -977,9 +977,7 @@ pub unsafe fn run_asm_code(
         let actor_transition = game.prepare_actor_canonical();
         game.preflight_samus_runtime()
             .expect("Samus CPU entry rejected");
-        let mut mutation = game
-            .begin_samus_mutation()
-            .expect("Samus mutation rejected");
+        let mut mutation = game.samus_mutation();
         let game = mutation.game();
         let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
             let org_sp: u16 = (*game.g_cpu).sp;
@@ -1195,9 +1193,7 @@ pub unsafe fn run_one_frame_of_game_emulated(native_game: &mut Game) {
         let actor_transition = game.prepare_actor_canonical();
         game.preflight_samus_runtime()
             .expect("Samus CPU entry rejected");
-        let mut mutation = game
-            .begin_samus_mutation()
-            .expect("Samus mutation rejected");
+        let mut mutation = game.samus_mutation();
         let game = mutation.game();
         let bug_fix_bak: u16 = word!(game.BUG_FIX_COUNTER);
         let cpu = (*game.g_snes).cpu;
@@ -1266,9 +1262,7 @@ pub unsafe fn draw_frame_to_ppu(native_game: &mut Game) {
     }
     game.preflight_samus_runtime()
         .expect("Samus settlement entry rejected");
-    let mut mutation = game
-        .begin_samus_mutation()
-        .expect("Samus mutation rejected");
+    let mut mutation = game.samus_mutation();
     match sm_game::scene::settle::settle(&mut NativeSettlement(mutation.game())) {
         Ok(()) => (),
         Err(never) => match never {},
@@ -1347,9 +1341,7 @@ pub unsafe fn run_one_frame_of_game_both(native_game: &mut Game) {
         }
         game.preflight_samus_runtime()
             .expect("Samus paired entry rejected");
-        let mut frame_mutation = game
-            .begin_samus_mutation()
-            .expect("Samus mutation rejected");
+        let mut frame_mutation = game.samus_mutation();
         let game = frame_mutation.game();
         (*game.g_snes).ppu = (*game.g_snes).snes_ppu;
         {
@@ -1406,9 +1398,7 @@ pub unsafe fn run_one_frame_of_game_both(native_game: &mut Game) {
                 .prepare_samus_adoption(&samus_before)
                 .expect("Samus before restore rejected");
             {
-                let mut restore = game
-                    .begin_samus_mutation()
-                    .expect("Samus mutation rejected");
+                let mut restore = game.samus_mutation();
                 let game = restore.game();
                 let snes = game.g_snes;
                 let cpu = game.g_cpu;
@@ -1511,9 +1501,7 @@ pub unsafe fn run_one_frame_of_game_both(native_game: &mut Game) {
                     .prepare_samus_adoption(&samus_before)
                     .expect("Samus recovery restore rejected");
                 {
-                    let mut restore = game
-                        .begin_samus_mutation()
-                        .expect("Samus mutation rejected");
+                    let mut restore = game.samus_mutation();
                     let game = restore.game();
                     let snes = game.g_snes;
                     let cpu = game.g_cpu;
@@ -1566,9 +1554,7 @@ pub unsafe fn run_one_frame_of_game_both(native_game: &mut Game) {
                     .prepare_samus_adoption(&samus_theirs)
                     .expect("Samus selected restore rejected");
                 {
-                    let mut restore = game
-                        .begin_samus_mutation()
-                        .expect("Samus mutation rejected");
+                    let mut restore = game.samus_mutation();
                     let game = restore.game();
                     let snes = game.g_snes;
                     let cpu = game.g_cpu;
@@ -1633,9 +1619,7 @@ pub unsafe fn rtl_run_frame_compare(input: u16, _run_what: i32, native_game: &mu
         }
         game.preflight_samus_runtime()
             .expect("Samus frame entry rejected");
-        let mut mutation = game
-            .begin_samus_mutation()
-            .expect("Samus mutation rejected");
+        let mut mutation = game.samus_mutation();
         let game = mutation.game();
         game.input1_mut().currentState = input;
         if game.g_runmode as i32 == RM_THEIRS as i32 {
