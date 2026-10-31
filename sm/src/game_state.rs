@@ -1334,25 +1334,6 @@ impl Game {
         self.compatibility_byte(0xa1f)
     }
 
-    /// samus_last_different_pose_movement_type ($7E:0A27 in ram_map).
-    pub fn samus_last_different_pose_movement_type(&self) -> u8 {
-        self.compatibility_byte(0xa27)
-    }
-
-    /// samus_pose_x_dir ($7E:0A1E in ram_map); this is a byte, not a word.
-    pub fn samus_pose_x_dir(&self) -> u8 {
-        self.compatibility_byte(0xa1e)
-    }
-
-    /// Live level-data word selected by the collision block index.
-    pub fn current_level_block(&self) -> u16 {
-        let offset = 0x10002 + usize::from(self.cur_block_index()) * 2;
-        u16::from_le_bytes([
-            self.compatibility_byte(offset),
-            self.compatibility_byte(offset + 1),
-        ])
-    }
-
     /// Write a word in the backing VRAM queue, including overlapping fields.
     pub fn write_vram_queue_word(&mut self, cursor: u16, field: usize, value: u16) {
         let offset = 0xd0 + usize::from(cursor) + field;
