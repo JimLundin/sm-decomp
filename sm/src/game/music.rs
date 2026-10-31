@@ -9,19 +9,9 @@ pub fn has_queued_music(game: &mut Game) -> u8 {
     requests::has_queued_music(game)
 }
 
-#[forbid(unsafe_code)]
-fn enqueue(track: u16, delay: u16, reject_full: bool, game: &mut Game) {
-    requests::enqueue(track, delay, reject_full, game).expect("audio enqueue");
-}
-
-#[forbid(unsafe_code)]
-pub fn queue_music_delayed_8(track: u16, game: &mut Game) {
-    enqueue(track, 8, true, game);
-}
-#[forbid(unsafe_code)]
-pub fn queue_music_delayed_y(track: u16, delay: u16, game: &mut Game) {
-    enqueue(track, delay, false, game);
-}
+pub(crate) use requests::{
+    queue_delayed as queue_music_delayed_y, queue_delayed_8 as queue_music_delayed_8,
+};
 
 pub unsafe fn handle_music_queue(game: &mut Game) {
     unsafe {

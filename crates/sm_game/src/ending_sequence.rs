@@ -198,15 +198,15 @@ pub fn setup<H: Host + ?Sized>(game: &mut H) {
     }
     crate::screen_fade::set_both(game, 0, 2);
     word!(game.CINEMATIC_FUNCTION = function::WAIT_FOR_MUSIC);
-    game.queue_music_delayed8(NO_MUSIC);
-    game.queue_music_delayed8(ESCAPE_MUSIC_DATA);
-    game.queue_music_delayed(5, SONG_DELAY);
+    crate::music_requests::queue_delayed_8(NO_MUSIC, game);
+    crate::music_requests::queue_delayed_8(ESCAPE_MUSIC_DATA, game);
+    crate::music_requests::queue_delayed(5, SONG_DELAY, game);
 }
 
 /// Cinematic function - ending - wait for music to change ($8B:D6D7). Was
 /// `CinematicFunction_Intro_Func109`.
 pub fn wait_for_music<H: Host + ?Sized>(game: &mut H) {
-    if game.has_queued_music() & 1 == 0 {
+    if crate::music_requests::has_queued_music(game) & 1 == 0 {
         game.spawn_palette_effect(ZEBES_GLOW_1);
         game.spawn_palette_effect(ZEBES_GLOW_2);
         word!(game.CINEMATIC_FUNCTION = function::SCENE_0_FADING_IN);
@@ -341,9 +341,9 @@ pub fn scene_2<H: Host + ?Sized>(game: &mut H) {
 /// `CinematicFunction_Intro_Func119`.
 pub fn change_music<H: Host + ?Sized>(game: &mut H) {
     if countdown(game) {
-        game.queue_music_delayed8(NO_MUSIC);
-        game.queue_music_delayed8(CREDITS_MUSIC_DATA);
-        game.queue_music_delayed(5, SONG_DELAY);
+        crate::music_requests::queue_delayed_8(NO_MUSIC, game);
+        crate::music_requests::queue_delayed_8(CREDITS_MUSIC_DATA, game);
+        crate::music_requests::queue_delayed(5, SONG_DELAY, game);
         word!(game.CINEMATIC_FUNCTION = function::GUNSHIP_SETUP);
     }
 }
@@ -351,7 +351,7 @@ pub fn change_music<H: Host + ?Sized>(game: &mut H) {
 /// Cinematic function - ending - space view - gunship emergence - setup
 /// ($8B:DBC4). Was `CinematicFunction_Intro_Func120`.
 pub fn gunship_setup<H: Host + ?Sized>(game: &mut H) {
-    if game.has_queued_music() & 1 == 0 {
+    if crate::music_requests::has_queued_music(game) & 1 == 0 {
         game.ram().write_byte(mirror::BGMODE, 7);
         game.ram().write_byte(mirror::M7SEL, 0x80);
         set_cinematic_blend(17, 0, 0, 48, game);

@@ -42,12 +42,6 @@ impl MenuRuntime for Game {
     fn update_beam_tiles_and_palette(&mut self) {
         crate::game::visual_runtime::update_beam_tiles_and_palette(self)
     }
-    fn has_queued_music(&mut self) -> u8 {
-        crate::game::music::has_queued_music(self)
-    }
-    fn queue_music_delayed8(&mut self, track: u16) {
-        crate::game::music::queue_music_delayed_8(track, self)
-    }
     fn spawn_hdma(&mut self, bank: u8, args: &crate::types::HdmaObjectDefinition) -> u16 {
         sm_game::hdma_objects::spawn_hdma_owned(bank, args, self)
     }
@@ -252,10 +246,6 @@ impl sm_game::cinematic_host::Host for Game {
 
     fn set_palette_effects_enabled(&mut self, enabled: bool) {
         crate::game::palette_effects::set_enabled(enabled, self);
-    }
-
-    fn queue_music_delayed(&mut self, track: u16, delay: u16) {
-        crate::game::music::queue_music_delayed_y(track, delay, self);
     }
 
     fn spawn_power_bomb(&mut self) {

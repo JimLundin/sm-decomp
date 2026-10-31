@@ -5,8 +5,6 @@
 pub trait Host: crate::menus::host::Host + crate::display_refresh::Host {
     fn clear_palette_effects(&mut self);
     fn set_palette_effects_enabled(&mut self, enabled: bool);
-    /// Queue music `track` after `delay` frames.
-    fn queue_music_delayed(&mut self, track: u16, delay: u16);
     fn spawn_power_bomb(&mut self);
     /// Set up Samus for the intro.
     fn initialize_player(&mut self);

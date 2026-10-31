@@ -5,18 +5,18 @@ use crate::session_owners::{AudioHost, QueuedMusicMeaning, QueuedSoundMeaning};
 
 // Complete only after a successful numeric prefix. This neither publishes a
 // request nor supplies a meaning for a rejected slot; Legacy skips the closure.
-fn complete(host: &mut impl AudioHost) -> Result<(), DisplayError> {
+fn complete(host: &mut (impl AudioHost + ?Sized)) -> Result<(), DisplayError> {
     host.audio_mutation(|_, _, _| Ok(()))?;
     Ok(())
 }
 
 // The callback receives the actual host; completed stores survive its failure.
 // Normal callbacks never enter the semantic hook through this guard.
-struct CallbackFailure<'a, H: AudioHost> {
+struct CallbackFailure<'a, H: AudioHost + ?Sized> {
     host: &'a mut H,
     completed: bool,
 }
-impl<H: AudioHost> Drop for CallbackFailure<'_, H> {
+impl<H: AudioHost + ?Sized> Drop for CallbackFailure<'_, H> {
     fn drop(&mut self) {
         if !self.completed {
             // Owned hosts retain the pending prefix and poison on this error.
@@ -29,7 +29,7 @@ impl<H: AudioHost> Drop for CallbackFailure<'_, H> {
         }
     }
 }
-fn callback<H: AudioHost>(
+fn callback<H: AudioHost + ?Sized>(
     host: &mut H,
     operation: impl FnOnce(&mut H) -> Result<(), DisplayError>,
 ) -> Result<(), DisplayError> {
@@ -46,7 +46,7 @@ pub fn enqueue(
     track: u16,
     delay: u16,
     reject_full: bool,
-    host: &mut impl AudioHost,
+    host: &mut (impl AudioHost + ?Sized),
 ) -> Result<(), DisplayError> {
     if host.audio_word(0x998) >= 40 {
         return Ok(());
@@ -65,7 +65,7 @@ pub fn enqueue(
     Ok(())
 }
 
-pub fn retire(host: &mut impl AudioHost) -> Result<(), DisplayError> {
+pub fn retire(host: &mut (impl AudioHost + ?Sized)) -> Result<(), DisplayError> {
     let read = host.audio_word(0x63b);
     let slot = usize::from(read >> 1);
     host.audio_store_word(0x619 + 2 * slot, 0);
@@ -75,7 +75,17 @@ pub fn retire(host: &mut impl AudioHost) -> Result<(), DisplayError> {
     Ok(())
 }
 
-pub fn has_queued_music(host: &impl AudioHost) -> u8 {
+/// QueueMusic_Delayed8: queue `track` after 8 frames unless the queue is full.
+pub fn queue_delayed_8(track: u16, host: &mut (impl AudioHost + ?Sized)) {
+    enqueue(track, 8, true, host).expect("audio enqueue");
+}
+
+/// QueueMusic_DelayedY: queue `track` after `delay` frames.
+pub fn queue_delayed(track: u16, delay: u16, host: &mut (impl AudioHost + ?Sized)) {
+    enqueue(track, delay, false, host).expect("audio enqueue");
+}
+
+pub fn has_queued_music(host: &(impl AudioHost + ?Sized)) -> u8 {
     u8::from(
         (0..8)
             .rev()
@@ -83,7 +93,7 @@ pub fn has_queued_music(host: &impl AudioHost) -> u8 {
     )
 }
 
-pub fn reset_delays(host: &mut impl AudioHost) -> Result<(), DisplayError> {
+pub fn reset_delays(host: &mut (impl AudioHost + ?Sized)) -> Result<(), DisplayError> {
     host.audio_store_word(0x63f, 0);
     for slot in 0..8 {
         host.audio_store_word(0x629 + 2 * slot, 0);
@@ -91,7 +101,7 @@ pub fn reset_delays(host: &mut impl AudioHost) -> Result<(), DisplayError> {
     complete(host)
 }
 
-pub fn clear_queue(host: &mut impl AudioHost) -> Result<(), DisplayError> {
+pub fn clear_queue(host: &mut (impl AudioHost + ?Sized)) -> Result<(), DisplayError> {
     for slot in (0..8).rev() {
         host.audio_store_word(0x619 + 2 * slot, 0);
         host.audio_store_word(0x629 + 2 * slot, 0);
@@ -116,7 +126,7 @@ pub enum MusicEffect {
     WriteTrack(u8),
 }
 
-pub fn advance_music<H: AudioHost>(
+pub fn advance_music<H: AudioHost + ?Sized>(
     host: &mut H,
     mut effect: impl FnMut(MusicEffect, Option<&QueuedMusicMeaning>, &mut H) -> Result<(), DisplayError>,
 ) -> Result<(), DisplayError> {
@@ -187,7 +197,7 @@ pub fn queue_sfx(
     channel: usize,
     sound: u8,
     max_queued: u8,
-    host: &mut impl AudioHost,
+    host: &mut (impl AudioHost + ?Sized),
 ) -> Result<u16, DisplayError> {
     let read_pos = 0x643 + channel;
     let write_pos = 0x646 + channel;
@@ -247,7 +257,7 @@ pub fn queue_sfx(
     Ok(u16::from_be_bytes([queued, sound]))
 }
 
-pub fn advance_sound_effects<H: AudioHost>(
+pub fn advance_sound_effects<H: AudioHost + ?Sized>(
     host: &mut H,
     mut write: impl FnMut(u8, u8, Option<&QueuedSoundMeaning>, &mut H) -> Result<(), DisplayError>,
 ) -> Result<(), DisplayError> {
@@ -320,7 +330,7 @@ pub fn advance_sound_effects<H: AudioHost>(
     complete(host)
 }
 
-pub fn reset_sound_queues(host: &mut impl AudioHost) -> Result<(), DisplayError> {
+pub fn reset_sound_queues(host: &mut (impl AudioHost + ?Sized)) -> Result<(), DisplayError> {
     for offset in 0x643..0x64c {
         host.audio_store_byte(offset, 0);
     }

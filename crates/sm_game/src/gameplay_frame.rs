@@ -98,7 +98,6 @@ pub trait Host:
     fn unpause_hook(&mut self, hook: UnpauseHook) -> u8;
 
     // Death phase.
-    fn queue_music_delayed(&mut self, track: u16, delay: u16);
     fn advance_low_health_warning(&mut self);
 
     // Gameplay pass.
@@ -406,7 +405,7 @@ fn initialize<H: Host>(game: &mut H) -> CoroutineRet {
         } else if u32::from(word!(game.LOADING_GAME_STATE))
             == K_LOADING_GAME_STATE_22_ESCAPING_CERES
         {
-            game.queue_music_delayed8(5);
+            crate::music_requests::queue_delayed_8(5, game);
             3
         } else {
             4
@@ -489,7 +488,7 @@ fn next_demo<H: Host>(game: &mut H) -> CoroutineRet {
         word!(game.EPROJ_X_POS[4] = 2);
         crate::flow::set(game, crate::flow::Word::CinematicFunction, 0x9a47);
     } else {
-        game.queue_music_delayed8(0);
+        crate::music_requests::queue_delayed_8(0, game);
         word!(game.DEBUG_DISABLE_SOUNDS = 0);
         crate::flow::set(game, crate::flow::Word::CinematicFunction, 0x9b68);
     }
@@ -810,9 +809,9 @@ fn finish_pass<H: Host>(entry: Entry, game: &mut H) {
                     word!(game.GAME_STATE += 1);
                     word!(game.POWER_BOMB_EXPLOSION_STATUS = 0);
                     cancel_sound_effects(game, 15);
-                    game.queue_music_delayed8(0);
-                    game.queue_music_delayed8(0xff39);
-                    game.queue_music_delayed(5, 0xe);
+                    crate::music_requests::queue_delayed_8(0, game);
+                    crate::music_requests::queue_delayed_8(0xff39, game);
+                    crate::music_requests::queue_delayed(5, 0xe, game);
                 } else {
                     word!(game.GAME_STATE = K_GAME_STATE_36_WHITING_OUT_FROM_TIME_UP as u16);
                     crate::screen_fade::set_both(game, 0, 0);
@@ -852,7 +851,7 @@ fn finish_pass<H: Host>(entry: Entry, game: &mut H) {
                     crate::flow::set(game, crate::flow::Word::CinematicFunction, 0xd480);
                     word!(game.TIMER_STATUS = 0);
                 }
-                game.queue_music_delayed8(0);
+                crate::music_requests::queue_delayed_8(0, game);
                 cancel_sound_effects(game, 15);
             }
         }

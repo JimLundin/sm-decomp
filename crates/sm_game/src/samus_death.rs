@@ -44,7 +44,7 @@ pub fn advance_death_pose<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
 // Death phases share palette selection and the native upload queue with live drawing.
 pub fn begin_death<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
     draw_samus(game, Body::Frozen);
-    if game.has_queued_music() == 0 {
+    if crate::music_requests::has_queued_music(game) == 0 {
         const FRAMES: [u8; 28] = [
             5, 5, 5, 5, 1, 5, 5, 0, 1, 0, 5, 5, 5, 5, 5, 5, 5, 1, 1, 1, 5, 5, 5, 5, 5, 5, 5, 5,
         ];

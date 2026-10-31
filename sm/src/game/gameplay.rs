@@ -108,9 +108,6 @@ impl sm_game::gameplay_frame::Host for Game {
         }
     }
 
-    fn queue_music_delayed(&mut self, track: u16, delay: u16) {
-        crate::game::music::queue_music_delayed_y(track, delay, self);
-    }
     fn advance_low_health_warning(&mut self) {
         crate::game::session_runtime::player_update_runtime::low_health(self);
     }
