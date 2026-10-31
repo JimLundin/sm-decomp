@@ -285,6 +285,15 @@ RECIPES = {
     # Tatori room with full energy (scenario tatori-touch): hop right across
     # the sleeping turtle and its young.
     "tatori-touch": Recipe("_ 10; repeat 10 { Right 30; Right+A 15 }; _ 300"),
+    # After the death row's 1,800 movie words (--prefix-frames 1800): on the
+    # game over menu choose to quit, skip the title, then in the file select
+    # copy the saved file to another slot and clear a file.
+    "file-copy-clear": Recipe("""
+        press Down 20; press A 300; press Start 230; press A 120
+        repeat 3 { press Down 30 }; press A 90; press Up 30
+        press A 60; press A 60; press A 120; press A 120
+        repeat 4 { press Down 30 }; press A 90; press A 60; press A 60; press A 200
+    """),
     # Pause, wait for the pause screen, unpause and watch the room resume.
     "pause-resume": Recipe("press Start 150; hold Start 200; _ $tail", {"tail": 240}),
 }
@@ -343,6 +352,7 @@ PINNED = {
     "special-beam": "52d64f88295f3755852b633a417da2b0525cc712979c8a9c78e7e66486f74f73",
     "oum-roll": "1ee33e3559e0d647c919181f1b70ad8d1bac9ac4ba331444264b04c5598d4441",
     "tatori-touch": "f557eb7d7d0ff9172bb4e0e2c865f139eb92d20b12ca62b4315dfe0581e1c7d1",
+    "file-copy-clear": "a8d3e69d868ec3373c3edc178a75bf55bf06b68ba8db78af2c161a64307208fe",
     "pause-resume": "6982afc4c06ba2311042798e0c0c2ccdbe47a7dbe599fb50b927ba414c24d077",
 }
 
