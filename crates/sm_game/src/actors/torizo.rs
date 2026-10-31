@@ -454,13 +454,13 @@ fn golden_wake<L: Lease>(game: &mut L) {
     if game.player_y() > GOLDEN_WAKE_Y && game.player_x() > GOLDEN_WAKE_X {
         session_slot!(
             game,
-            TorizoSlot[e].base.current_instruction =
-                session_slot!(game, TorizoSlot[e].base.current_instruction).wrapping_add(1)
+            TorizoSlot[e].base.current_instruction,
+            |current_instruction| current_instruction.wrapping_add(1)
         );
         session_slot!(
             game,
-            TorizoSlot[e].base.current_instruction =
-                session_slot!(game, TorizoSlot[e].base.current_instruction).wrapping_add(1)
+            TorizoSlot[e].base.current_instruction,
+            |current_instruction| current_instruction.wrapping_add(1)
         );
         session_slot!(game, TorizoSlot[e].base.instruction_timer = 1);
     }

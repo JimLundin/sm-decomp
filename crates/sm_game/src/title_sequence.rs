@@ -169,7 +169,7 @@ pub fn setup<H: Host + ?Sized>(game: &mut H) {
 pub fn zooming_out<H: Host + ?Sized>(game: &mut H) {
     if (word!(game.NMI_FRAME_COUNTER_WORD) & 1) == 0 {
         if ((word!(game.MODE7_ZOOM)).wrapping_sub(256) as i16) < 0 {
-            word!(game.MODE7_ZOOM = word!(game.MODE7_ZOOM).wrapping_add(1));
+            word!(game.MODE7_ZOOM, wrapping_add(1));
         } else {
             word!(game.MODE7_ZOOM = 256);
             word!(game.CINEMATIC_FUNCTION = function::WAITING);

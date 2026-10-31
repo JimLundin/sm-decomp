@@ -501,10 +501,10 @@ crate::dispatch::callback_dispatch! {
             let sand_heap_lines: u16 = session_slot!(game, DeadTorizo[e].sand_heap_lines);
             if sand_heap_lines != 0 {
                 copy_line_of_sand_heap_tile_data(sand_heap_lines, game);
-                session_slot!(game, DeadTorizo[e].sand_heap_lines = session_slot!(game, DeadTorizo[e].sand_heap_lines).wrapping_sub(1));
+                session_slot!(game, DeadTorizo[e].sand_heap_lines, |sand_heap_lines| sand_heap_lines.wrapping_sub(1));
             }
         }
-        session_slot!(game, DeadTorizo[e].y_velocity = session_slot!(game, DeadTorizo[e].y_velocity).wrapping_add(1));
+        session_slot!(game, DeadTorizo[e].y_velocity, |y_velocity| y_velocity.wrapping_add(1));
         move_enemy_with_velocity(game);
         if process_corpse_rotting(0, game) & 1 == 0 {
             session_slot!(game, DeadTorizo[e].function = function::TORIZO_ROTTED);
@@ -675,7 +675,7 @@ crate::dispatch::callback_dispatch! {
     };
     [11131165] sidehopper_corpse_idling [] {
         let e: i32 = k as i32;
-        session_slot!(game, Corpse[e].function_timer = session_slot!(game, Corpse[e].function_timer).wrapping_sub(1));
+        session_slot!(game, Corpse[e].function_timer, |timer| timer.wrapping_sub(1));
         if (session_slot!(game, Corpse[e].function_timer) & 0x8000) != 0 {
             if session_slot!(game, Corpse[e].drained_palette_index) != 0 {
                 session_slot!(game, Corpse[e].function = function::SIDEHOPPER_BEING_DRAINED);
@@ -801,10 +801,8 @@ pub fn corpse_wait_for_samus_collision(k: u16, j: u16, game: &mut impl State) {
 }
 pub fn corpse_pre_rot_delay(k: u16, j: u16, game: &mut impl State) {
     let e: i32 = k as i32;
-    session_slot!(
-        game,
-        Corpse[e].pre_rot_delay = session_slot!(game, Corpse[e].pre_rot_delay).wrapping_add(1)
-    );
+    session_slot!(game, Corpse[e].pre_rot_delay, |pre_rot_delay| pre_rot_delay
+        .wrapping_add(1));
     if session_slot!(game, Corpse[e].pre_rot_delay) >= 0x10 {
         session_slot!(game, Corpse[e].function = j);
         session_slot!(

@@ -193,8 +193,8 @@ fn handle_casual_flames(object: u16, game: &mut (impl BossState + ?Sized)) {
     let expired = session_slot!(game, Mouth[mouth].casual_flame_timer) == 1;
     session_slot!(
         game,
-        Mouth[mouth].casual_flame_timer =
-            session_slot!(game, Mouth[mouth].casual_flame_timer).wrapping_sub(1)
+        Mouth[mouth].casual_flame_timer,
+        |casual_flame_timer| casual_flame_timer.wrapping_sub(1)
     );
     let underflow = session_slot!(game, Mouth[mouth].casual_flame_timer) & SIGN != 0;
     if expired || underflow {
@@ -202,8 +202,8 @@ fn handle_casual_flames(object: u16, game: &mut (impl BossState + ?Sized)) {
             let expired = session_slot!(game, Mouth[mouth].casual_flame_pattern_index) == 1;
             session_slot!(
                 game,
-                Mouth[mouth].casual_flame_pattern_index =
-                    session_slot!(game, Mouth[mouth].casual_flame_pattern_index).wrapping_sub(1)
+                Mouth[mouth].casual_flame_pattern_index,
+                |casual_flame_pattern_index| casual_flame_pattern_index.wrapping_sub(1)
             );
             let underflow =
                 session_slot!(game, Mouth[mouth].casual_flame_pattern_index) & SIGN != 0;

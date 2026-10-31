@@ -135,10 +135,8 @@ fn fall(game: &mut impl Lease, k: u16) {
 /// Counts down to the next puff of smoke. Was `MotherBrainsTubesFalling_HandleSmoke`.
 fn trail_smoke(game: &mut impl Lease, k: u16) {
     let me = k as i32;
-    session_slot!(
-        game,
-        Tube[me].smoke_timer = session_slot!(game, Tube[me].smoke_timer).wrapping_sub(1)
-    );
+    session_slot!(game, Tube[me].smoke_timer, |smoke_timer| smoke_timer
+        .wrapping_sub(1));
     if session_slot!(game, Tube[me].smoke_timer) & 0x8000 != 0 {
         puff_smoke(game, k);
     }
@@ -164,10 +162,8 @@ fn burst(game: &mut impl Lease, k: u16) {
 /// Waits out the fall delay. Was `MotherBrainsTubesFalling_WaitToFall`.
 fn wait_to_fall(game: &mut impl Lease, k: u16) {
     let me = k as i32;
-    session_slot!(
-        game,
-        Tube[me].fall_delay = session_slot!(game, Tube[me].fall_delay).wrapping_sub(1)
-    );
+    session_slot!(game, Tube[me].fall_delay, |fall_delay| fall_delay
+        .wrapping_sub(1));
     if session_slot!(game, Tube[me].fall_delay) & 0x8000 != 0 {
         session_slot!(game, Tube[me].function = function::FALL_WITH_BRAIN);
         fall_with_brain(game, k);

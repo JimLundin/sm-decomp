@@ -309,11 +309,9 @@ pub fn initial<L: Lease + ?Sized>(game: &mut L) {
 
 /// Count down the function timer; true once it is negative.
 fn timer_expired<L: Lease + ?Sized>(game: &mut L) -> bool {
-    session_slot!(
-        game,
-        Ridley[RIDLEY].function_timer =
-            session_slot!(game, Ridley[RIDLEY].function_timer).wrapping_sub(1)
-    );
+    session_slot!(game, Ridley[RIDLEY].function_timer, |function_timer| {
+        function_timer.wrapping_sub(1)
+    });
     (session_slot!(game, Ridley[RIDLEY].function_timer) & 0x8000) != 0
 }
 
@@ -332,11 +330,9 @@ pub fn fade_in_eye<L: Lease + ?Sized>(game: &mut L) {
         return;
     }
     let index = session_slot!(game, Ridley[RIDLEY].fade_index);
-    session_slot!(
-        game,
-        Ridley[RIDLEY].function_timer =
-            session_slot!(game, Ridley[RIDLEY].function_timer).wrapping_add(1)
-    );
+    session_slot!(game, Ridley[RIDLEY].function_timer, |function_timer| {
+        function_timer.wrapping_add(1)
+    });
     if session_slot!(game, Ridley[RIDLEY].function_timer) == 0 {
         return;
     }
@@ -363,11 +359,9 @@ pub fn fade_in_eye<L: Lease + ?Sized>(game: &mut L) {
 /// body colours, into sprite palettes 1 and 7; then tangible and waiting to
 /// roar. Was `CeresRidley_Func_5`.
 pub fn fade_in_body<L: Lease + ?Sized>(game: &mut L) {
-    session_slot!(
-        game,
-        Ridley[RIDLEY].function_timer =
-            session_slot!(game, Ridley[RIDLEY].function_timer).wrapping_add(1)
-    );
+    session_slot!(game, Ridley[RIDLEY].function_timer, |function_timer| {
+        function_timer.wrapping_add(1)
+    });
     if session_slot!(game, Ridley[RIDLEY].function_timer) < 2 {
         return;
     }
@@ -601,11 +595,9 @@ pub fn lunge<L: Lease + ?Sized>(game: &mut L) {
     if !ridley::separated_from_rect(0, rect, game) || {
         let expired =
             (session_slot!(game, Ridley[RIDLEY].function_timer) as i16).wrapping_sub(1) < 0;
-        session_slot!(
-            game,
-            Ridley[RIDLEY].function_timer =
-                session_slot!(game, Ridley[RIDLEY].function_timer).wrapping_sub(1)
-        );
+        session_slot!(game, Ridley[RIDLEY].function_timer, |function_timer| {
+            function_timer.wrapping_sub(1)
+        });
         expired
     } {
         session_slot!(game, Ridley[RIDLEY].timer = 0);
@@ -802,11 +794,9 @@ pub fn handle_getaway<L: Lease + ?Sized>(game: &mut L) {
     }
     let step = (index >> 1) as isize;
     if crate::ceres_ridley_tables::getaway_zoom(game, step) == 0xffff {
-        session_slot!(
-            game,
-            Ridley[RIDLEY].getaway_finished =
-                session_slot!(game, Ridley[RIDLEY].getaway_finished).wrapping_add(1)
-        );
+        session_slot!(game, Ridley[RIDLEY].getaway_finished, |getaway_finished| {
+            getaway_finished.wrapping_add(1)
+        });
         game.set_slot_byte(FAKE_BG_MODE, 9);
         game.set_slot_byte(MODE7_SETTINGS, 0);
         word! { game, 0;
@@ -832,11 +822,8 @@ pub fn handle_getaway<L: Lease + ?Sized>(game: &mut L) {
         session_slot!(game, Ridley[RIDLEY].mode7_x = x);
         scroll!(game.Bg1H = x);
         palette_by_zoom(session_slot!(game, Ridley[RIDLEY].mode7_zoom), game);
-        session_slot!(
-            game,
-            Ridley[RIDLEY].swoop_angle =
-                session_slot!(game, Ridley[RIDLEY].swoop_angle).wrapping_add(48)
-        );
+        session_slot!(game, Ridley[RIDLEY].swoop_angle, |swoop_angle| swoop_angle
+            .wrapping_add(48));
         set_mode7_rotation(game);
         animate_mode7_baby_metroid(game);
         animate_mode7_wings(game);
@@ -929,11 +916,9 @@ pub fn self_destruct_activating<L: Lease + ?Sized>(game: &mut L) {
 /// The next self destruct sequence step.
 fn next_step<L: Lease + ?Sized>(game: &mut L) {
     for _ in 0..2 {
-        session_slot!(
-            game,
-            Ridley[RIDLEY].function_timer =
-                session_slot!(game, Ridley[RIDLEY].function_timer).wrapping_add(1)
-        );
+        session_slot!(game, Ridley[RIDLEY].function_timer, |function_timer| {
+            function_timer.wrapping_add(1)
+        });
     }
 }
 

@@ -282,14 +282,14 @@ pub fn scene_2_fading_in<H: Host + ?Sized>(game: &mut H) {
 /// space view ($8B:DA1A): every other frame a fade step; at the end the
 /// space view's display. Was `CinematicFunction_Intro_Func117`.
 pub fn scene_2<H: Host + ?Sized>(game: &mut H) {
-    word!(game.MODE7_ZOOM = word!(game.MODE7_ZOOM).wrapping_add(4));
+    word!(game.MODE7_ZOOM, wrapping_add(4));
     if (word!(game.CINEMATIC_FUNCTION_TIMER) & 1) == 0 {
         fade_cinematic_colors(0xe0, 0x10, false, game);
         fade_cinematic_colors(0x1a0, 0x10, true, game);
         fade_cinematic_colors(0x1e0, 0x10, true, game);
         compose_cinematic_palette(game);
     }
-    word!(game.CINEMATIC_FUNCTION_TIMER = word!(game.CINEMATIC_FUNCTION_TIMER).wrapping_sub(1));
+    word!(game.CINEMATIC_FUNCTION_TIMER, wrapping_sub(1));
     if (word!(game.CINEMATIC_FUNCTION_TIMER) & 0x8000) != 0 {
         crate::word_transfers!(game, ascending, 128; le(PALETTE_BUFFER, 0) <- rom(SPACE_PALETTES, 0));
         for (at, value) in [
@@ -400,7 +400,7 @@ pub fn gunship_fly_into_camera<H: Host + ?Sized>(game: &mut H) {
         word!(game.CINEMATIC_FUNCTION = function::GUNSHIP_FREEZE_FRAME);
         crate::word_transfers!(game, descending, 16; le(PALETTE_BUFFER, 95) <- table(GUNSHIP_GREY, 15));
     } else {
-        word!(game.MODE7_ZOOM = word!(game.MODE7_ZOOM).wrapping_sub(4));
+        word!(game.MODE7_ZOOM, wrapping_sub(4));
     }
 }
 
@@ -505,7 +505,7 @@ pub fn fade_in_samus<H: Host + ?Sized>(game: &mut H) {
 /// Cinematic function - post-credits - wavy Samus ($8B:E190). Was
 /// `CinematicFunction_Intro_Func132`.
 pub fn wavy_samus<H: Host + ?Sized>(game: &mut H) {
-    word!(game.REG_BG3VOFS = word!(game.REG_BG3VOFS).wrapping_add(2));
+    word!(game.REG_BG3VOFS, wrapping_add(2));
     if countdown(game) {
         crate::word_transfers!(game, ascending, 288; pause_map(288) <- rom(DEER_FORCE_TILES, 0));
         queue_cinematic_tilemap(CinematicTilemap::FullText, game);
@@ -520,7 +520,7 @@ pub fn wavy_samus<H: Host + ?Sized>(game: &mut H) {
 /// second idle Samus, cross-faded out of her suit unless the clear was slow.
 /// Was `CinematicFunction_Intro_Func137`.
 pub fn nintendo_1994<H: Host + ?Sized>(game: &mut H) {
-    word!(game.CINEMATIC_VAR13 = word!(game.CINEMATIC_VAR13).wrapping_sub(1));
+    word!(game.CINEMATIC_VAR13, wrapping_sub(1));
     let expired = (word!(game.CINEMATIC_VAR13) & 0x8000) != 0;
     if word!(game.CINEMATIC_VAR13) == 0 || expired {
         if below(word!(game.GAME_TIME_HOURS), FAST_CLEAR_HOURS)
@@ -567,7 +567,7 @@ pub fn grey_out_icon<H: Host + ?Sized>(game: &mut H) {
 /// ($8B:E797): then the percentage, and the completion record. Was
 /// `CinematicFunction_Intro_Func148`.
 pub fn scroll_item_percentage<H: Host + ?Sized>(game: &mut H) {
-    word!(game.CINEMATIC_Y = word!(game.CINEMATIC_Y).wrapping_sub(2));
+    word!(game.CINEMATIC_Y, wrapping_sub(2));
     if below(word!(game.CINEMATIC_Y), ITEM_PERCENTAGE_STOP) {
         spawn(
             game,

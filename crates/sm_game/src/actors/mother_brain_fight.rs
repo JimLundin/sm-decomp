@@ -1156,7 +1156,7 @@ crate::dispatch::callback_dispatch! {
     [11120566] phase3_death_fade_out_body [] {
         game.foreign(|game| game.flicker_body());
         generate_mixed_explosions_around_body(game);
-        session_slot!(game, MotherBrainBody[BODY].function_timer = session_slot!(game, MotherBrainBody[BODY].function_timer).wrapping_sub(1));
+        session_slot!(game, MotherBrainBody[BODY].function_timer, |timer| timer.wrapping_sub(1));
         if (session_slot!(game, MotherBrainBody[BODY].function_timer) & 0x8000) != 0 {
             session_slot!(game, MotherBrainBody[BODY].function_timer = 16);
             let v2: u16 = (session_slot!(game, MotherBrainBody[BODY].grey_transition)).wrapping_add(1);
@@ -1240,7 +1240,7 @@ crate::dispatch::callback_dispatch! {
     };
     [11121401] phase3_death_escape_door_exploding [] {
         generate_escape_door_explosion(game);
-        session_slot!(game, MotherBrainBody[BODY].function_timer = session_slot!(game, MotherBrainBody[BODY].function_timer).wrapping_sub(1));
+        session_slot!(game, MotherBrainBody[BODY].function_timer, |timer| timer.wrapping_sub(1));
         if (session_slot!(game, MotherBrainBody[BODY].function_timer) & 0x8000) != 0 {
             run_samus_command(samus_command::ENABLE_TIMER_HANDLING, game);
             word!(game.TIMER_STATUS = 2);
@@ -1334,7 +1334,7 @@ crate::dispatch::callback_dispatch! {
     [11123061] phase2_firing_rainbow_beam_start_firing [] {
         aim_rainbow_beam_and_increase_width(game);
         if game.owned(OwnedWord::PowerBomb) == 0 {
-            session_slot!(game, MotherBrainBody[BODY].function_timer = session_slot!(game, MotherBrainBody[BODY].function_timer).wrapping_sub(1));
+            session_slot!(game, MotherBrainBody[BODY].function_timer, |timer| timer.wrapping_sub(1));
             if (session_slot!(game, MotherBrainBody[BODY].function_timer) & 0x8000) != 0 && game.owned(OwnedWord::PowerBomb) == 0 {
                 game.set_owned(OwnedWord::Cooldown, 0);
                 reset_body_rainbow_beam_palette_animation(game);
@@ -1369,7 +1369,7 @@ crate::dispatch::callback_dispatch! {
         aim_rainbow_beam_and_increase_width(game);
         handle_rainbow_beam_explosions(game);
         move_samus_towards_wall_due_to_rainbow_beam(game);
-        session_slot!(game, MotherBrainBody[BODY].function_timer = session_slot!(game, MotherBrainBody[BODY].function_timer).wrapping_sub(1));
+        session_slot!(game, MotherBrainBody[BODY].function_timer, |timer| timer.wrapping_sub(1));
         if (session_slot!(game, MotherBrainBody[BODY].function_timer) & 0x8000) != 0 {
             { game.set_owned(OwnedWord::EarthquakeType, 8); game.set_owned(OwnedWord::EarthquakeTimer, 8); }
             session_slot!(game, MotherBrainBody[BODY].function = function::PHASE_2_FIRING_RAINBOW_BEAM_START_DRAINING_SAMUS);
@@ -1391,7 +1391,7 @@ crate::dispatch::callback_dispatch! {
             game.drain_ammo_by_rainbow_beam();
         });
         move_samus_towards_middle_of_wall(game);
-        session_slot!(game, MotherBrainBody[BODY].function_timer = session_slot!(game, MotherBrainBody[BODY].function_timer).wrapping_sub(1));
+        session_slot!(game, MotherBrainBody[BODY].function_timer, |timer| timer.wrapping_sub(1));
         if (session_slot!(game, MotherBrainBody[BODY].function_timer) & 0x8000) != 0 {
             session_slot!(game, MotherBrainBody[BODY].function = function::PHASE_2_FIRING_RAINBOW_BEAM_FINISH_FIRING_RAINBOW_BEAM);
         }
@@ -1468,7 +1468,7 @@ crate::dispatch::callback_dispatch! {
     };
     [11124317] drained_regain_balance [] {
         handle_body_rainbow_palette(game);
-        session_slot!(game, MotherBrainBody[BODY].function_timer = session_slot!(game, MotherBrainBody[BODY].function_timer).wrapping_sub(1));
+        session_slot!(game, MotherBrainBody[BODY].function_timer, |timer| timer.wrapping_sub(1));
         if (session_slot!(game, MotherBrainBody[BODY].function_timer) & 0x8000) != 0 {
             session_slot!(game, MotherBrainBody[BODY].function = function::DRAINED_BY_BABY_METROID_FIRING_RAINBOW_BEAM);
             session_slot!(game, MotherBrainBrain[BRAIN].painful_walk_function = function::PAINFUL_WALK_FORWARDS);
@@ -1584,7 +1584,7 @@ crate::dispatch::callback_dispatch! {
     @functions [pub fn (game: &mut impl Lease)];
     @prefix { let e: i32 = 0; };
     [11110578] fake_death_descent_transition_palette_to_grey [] {
-        session_slot!(game, MotherBrainBody[e].function_timer = session_slot!(game, MotherBrainBody[e].function_timer).wrapping_sub(1));
+        session_slot!(game, MotherBrainBody[e].function_timer, |timer| timer.wrapping_sub(1));
         if (session_slot!(game, MotherBrainBody[e].function_timer) & 0x8000) != 0 {
             session_slot!(game, MotherBrainBody[e].function_timer = 8);
             let v2: u16 = (session_slot!(game, MotherBrainBody[e].grey_transition)).wrapping_add(1);
@@ -1665,7 +1665,7 @@ crate::dispatch::callback_dispatch! {
         session_slot!(game, MotherBrainBrain[BRAIN].base.y_pos = v3 as u16);
     };
     [11121361] phase3_death_spawn_time_bomb_set_text [] {
-        session_slot!(game, MotherBrainBody[e].function_timer = session_slot!(game, MotherBrainBody[e].function_timer).wrapping_sub(1));
+        session_slot!(game, MotherBrainBody[e].function_timer, |timer| timer.wrapping_sub(1));
         if (session_slot!(game, MotherBrainBody[e].function_timer) & 0x8000) != 0 {
             session_slot!(game, MotherBrainBody[e].function = function::PHASE_3_DEATH_TYPE_OUT_ZEBES_ESCAPE_TEXT);
             spawn_room_projectile(
@@ -1757,7 +1757,7 @@ crate::dispatch::callback_dispatch! {
             }
         } else {
             session_slot!(game, MotherBrainBody[e].cooldown = 64);
-            session_slot!(game, MotherBrainBody[e].attack_phase = session_slot!(game, MotherBrainBody[e].attack_phase).wrapping_add(1));
+            session_slot!(game, MotherBrainBody[e].attack_phase, |attack_phase| attack_phase.wrapping_add(1));
             if decide_phase2_attack_strategy(game) != 0 {
                 return;
             }
@@ -1793,9 +1793,9 @@ crate::dispatch::callback_dispatch! {
     };
     phase2_attack_cooldown [] {
         let fresh9: u16 = session_slot!(game, MotherBrainBody[e].cooldown);
-        session_slot!(game, MotherBrainBody[e].cooldown = session_slot!(game, MotherBrainBody[e].cooldown).wrapping_sub(1));
+        session_slot!(game, MotherBrainBody[e].cooldown, |cooldown| cooldown.wrapping_sub(1));
         if fresh9 == 1 {
-            session_slot!(game, MotherBrainBody[e].attack_phase = session_slot!(game, MotherBrainBody[e].attack_phase).wrapping_add(1));
+            session_slot!(game, MotherBrainBody[e].attack_phase, |attack_phase| attack_phase.wrapping_add(1));
         }
     };
     phase2_end_attack [] {
@@ -1823,10 +1823,10 @@ crate::dispatch::callback_dispatch! {
         aim_rainbow_beam(game);
     };
     handle_rainbow_beam_explosions [] {
-        session_slot!(game, MotherBrainBody[e].explosion_timer = session_slot!(game, MotherBrainBody[e].explosion_timer).wrapping_sub(1));
+        session_slot!(game, MotherBrainBody[e].explosion_timer, |explosion_timer| explosion_timer.wrapping_sub(1));
         if (session_slot!(game, MotherBrainBody[e].explosion_timer) & 0x8000) != 0 {
             session_slot!(game, MotherBrainBody[e].explosion_timer = 8);
-            session_slot!(game, MotherBrainBody[e].cooldown = session_slot!(game, MotherBrainBody[e].cooldown).wrapping_add(1));
+            session_slot!(game, MotherBrainBody[e].cooldown, |cooldown| cooldown.wrapping_add(1));
             let v2: i32 = session_slot!(game, MotherBrainBody[e].cooldown) as i32 & 7;
             game.foreign(|game| crate::actors::host::BossEffects::set_projectile_spawn_point(game, RAINBOW_BEAM_EXPLOSION_X[v2 as usize] as u16, RAINBOW_BEAM_EXPLOSION_Y[v2 as usize] as u16));
             spawn_room_projectile(
@@ -1846,7 +1846,7 @@ crate::dispatch::callback_dispatch! {
         drained_regain_balance(game);
     };
     [11124629] drained_transition_to_grey [] {
-        session_slot!(game, MotherBrainBody[e].function_timer = session_slot!(game, MotherBrainBody[e].function_timer).wrapping_sub(1));
+        session_slot!(game, MotherBrainBody[e].function_timer, |timer| timer.wrapping_sub(1));
         let v2: bool = (session_slot!(game, MotherBrainBody[e].function_timer) & 0x8000) != 0;
         if v2 && {
             session_slot!(game, MotherBrainBody[e].function_timer = 16);
@@ -1872,7 +1872,7 @@ crate::dispatch::callback_dispatch! {
         phase2_revive_self_transition_from_grey(game);
     };
     [11124879] phase2_revive_self_transition_from_grey [] {
-        session_slot!(game, MotherBrainBody[e].function_timer = session_slot!(game, MotherBrainBody[e].function_timer).wrapping_sub(1));
+        session_slot!(game, MotherBrainBody[e].function_timer, |timer| timer.wrapping_sub(1));
         let v1: bool = (session_slot!(game, MotherBrainBody[e].function_timer) & 0x8000) != 0;
         if v1 && {
             session_slot!(game, MotherBrainBody[e].function_timer = 16);
@@ -1889,7 +1889,7 @@ crate::dispatch::callback_dispatch! {
     @functions [pub fn (game: &mut impl State)];
     @prefix { let e: i32 = 0; };
     [11124987] phase2_revive_self_walk_up_to_baby_metroid [] {
-        session_slot!(game, MotherBrainBody[e].function_timer = session_slot!(game, MotherBrainBody[e].function_timer).wrapping_sub(1));
+        session_slot!(game, MotherBrainBody[e].function_timer, |timer| timer.wrapping_sub(1));
         let v1: bool = (session_slot!(game, MotherBrainBody[e].function_timer) & 0x8000) != 0;
         if v1 && make_walk_forwards(4, 0x50, game) & 1 != 0 {
             session_slot!(game, MotherBrainBody[e].function = function::PHASE_2_REVIVE_SELF_PREPARE_NECK_FOR_BABY_METROID_MURDER);
@@ -2006,7 +2006,7 @@ crate::dispatch::callback_dispatch! {
     @countdown [pub fn (game: &mut impl Lease)];
     before {
         let e: i32 = BRAIN;
-        session_slot!(game, MotherBrainBrain[e].subfunction_timer = session_slot!(game, MotherBrainBrain[e].subfunction_timer).wrapping_sub(1));
+        session_slot!(game, MotherBrainBrain[e].subfunction_timer, |subfunction_timer| subfunction_timer.wrapping_sub(1));
     }
     when (session_slot!(game, MotherBrainBrain[e].subfunction_timer) & 0x8000) != 0;
     [11110787] spawn_top_right_tube_falling {
@@ -2060,7 +2060,7 @@ crate::dispatch::callback_dispatch! {
     @countdown [pub fn (game: &mut impl Lease)];
     before {
         let e: i32 = 0;
-        session_slot!(game, MotherBrainBody[e].function_timer = session_slot!(game, MotherBrainBody[e].function_timer).wrapping_sub(1));
+        session_slot!(game, MotherBrainBody[e].function_timer, |timer| timer.wrapping_sub(1));
     }
     when (session_slot!(game, MotherBrainBody[e].function_timer) & 0x8000) != 0;
     [11110441] fake_death_descent_lock_samus_and_set_scroll_region {
@@ -2092,7 +2092,7 @@ crate::dispatch::callback_dispatch! {
     before {
         generate_smoky_explosions_around_body(game);
         let e: i32 = 0;
-        session_slot!(game, MotherBrainBody[e].function_timer = session_slot!(game, MotherBrainBody[e].function_timer).wrapping_sub(1));
+        session_slot!(game, MotherBrainBody[e].function_timer, |timer| timer.wrapping_sub(1));
     }
     when (session_slot!(game, MotherBrainBody[e].function_timer) & 0x8000) != 0;
     [11120402] phase3_death_idle_whilst_exploding {
@@ -2111,7 +2111,7 @@ crate::dispatch::callback_dispatch! {
     before {
         generate_mixed_explosions_around_body(game);
         let e: i32 = 0;
-        session_slot!(game, MotherBrainBody[e].function_timer = session_slot!(game, MotherBrainBody[e].function_timer).wrapping_sub(1));
+        session_slot!(game, MotherBrainBody[e].function_timer, |timer| timer.wrapping_sub(1));
     }
     when (session_slot!(game, MotherBrainBody[e].function_timer) & 0x8000) != 0;
     [11120541] phase3_death_set_up_body_fade_out {
@@ -2126,7 +2126,7 @@ crate::dispatch::callback_dispatch! {
     @countdown [pub fn (game: &mut impl Lease)];
     before {
         let e: i32 = 0;
-        session_slot!(game, MotherBrainBody[e].function_timer = session_slot!(game, MotherBrainBody[e].function_timer).wrapping_sub(1));
+        session_slot!(game, MotherBrainBody[e].function_timer, |timer| timer.wrapping_sub(1));
     }
     when (session_slot!(game, MotherBrainBody[e].function_timer) & 0x8000) != 0;
     [11122970] phase2_firing_rainbow_beam_start_charging {
@@ -2150,7 +2150,7 @@ crate::dispatch::callback_dispatch! {
     @countdown [pub fn (game: &mut impl Lease)];
     before {
         let e: i32 = 0;
-        session_slot!(game, MotherBrainBody[e].function_timer = session_slot!(game, MotherBrainBody[e].function_timer).wrapping_sub(1));
+        session_slot!(game, MotherBrainBody[e].function_timer, |timer| timer.wrapping_sub(1));
     }
     when (session_slot!(game, MotherBrainBody[e].function_timer) & 0x8000) != 0;
     [11110532] fake_death_descent_begin_screen_flashing_and_lower_acid {
@@ -2485,9 +2485,8 @@ pub fn process_brain_instruction_list(game: &mut impl Lease) -> i32 {
             {
                 session_slot!(
                     game,
-                    MotherBrainBody[BODY].brain_instruction_timer =
-                        session_slot!(game, MotherBrainBody[BODY].brain_instruction_timer)
-                            .wrapping_add(1)
+                    MotherBrainBody[BODY].brain_instruction_timer,
+                    |brain_instruction_timer| brain_instruction_timer.wrapping_add(1)
                 );
                 return p.word(2) as i32;
             }
@@ -2791,8 +2790,8 @@ pub fn phase2_firing_hand_beam_back_up(game: &mut impl State) {
         session_slot! { game, MotherBrainBrain[BRAIN]; lower_motion = 8, upper_motion = 6 }
         session_slot!(
             game,
-            MotherBrainBody[BODY].hand_beam_phase =
-                session_slot!(game, MotherBrainBody[BODY].hand_beam_phase).wrapping_add(1)
+            MotherBrainBody[BODY].hand_beam_phase,
+            |hand_beam_phase| hand_beam_phase.wrapping_add(1)
         );
     }
 }
@@ -2801,8 +2800,8 @@ pub fn phase2_firing_hand_beam_wait_for_any_active_bombs(game: &mut impl State) 
         set_body_instruction_list(animation::BODY_HAND_BEAM_MODE, game);
         session_slot!(
             game,
-            MotherBrainBody[BODY].hand_beam_phase =
-                session_slot!(game, MotherBrainBody[BODY].hand_beam_phase).wrapping_add(1)
+            MotherBrainBody[BODY].hand_beam_phase,
+            |hand_beam_phase| hand_beam_phase.wrapping_add(1)
         );
     }
 }
@@ -2908,11 +2907,11 @@ crate::dispatch::callback_dispatch! {
     }
     when v1 == 0;
     [11124712] painful_walking_forwards {
-        session_slot!(game, MotherBrainBrain[e].painful_walk_stage = session_slot!(game, MotherBrainBrain[e].painful_walk_stage).wrapping_add(1));
+        session_slot!(game, MotherBrainBrain[e].painful_walk_stage, |painful_walk_stage| painful_walk_stage.wrapping_add(1));
         session_slot!(game, MotherBrainBrain[e].painful_walk_function = function::PAINFUL_WALK_BACKWARDS);
     };
     [11124764] painful_walking_backwards {
-        session_slot!(game, MotherBrainBrain[e].painful_walk_stage = session_slot!(game, MotherBrainBrain[e].painful_walk_stage).wrapping_add(1));
+        session_slot!(game, MotherBrainBrain[e].painful_walk_stage, |painful_walk_stage| painful_walk_stage.wrapping_add(1));
         session_slot!(game, MotherBrainBrain[e].painful_walk_function = function::PAINFUL_WALK_FORWARDS);
     };
     @external {
@@ -2966,7 +2965,7 @@ crate::dispatch::callback_dispatch! {
     @functions [pub fn (game: &mut impl Lease)];
     @prefix { let e: i32 = BRAIN; };
     spawn_dust_clouds_for_ascent [] {
-        session_slot!(game, MotherBrainBrain[e].subfunction_timer = session_slot!(game, MotherBrainBrain[e].subfunction_timer).wrapping_sub(1));
+        session_slot!(game, MotherBrainBrain[e].subfunction_timer, |subfunction_timer| subfunction_timer.wrapping_sub(1));
         if (session_slot!(game, MotherBrainBrain[e].subfunction_timer) & 0x8000) != 0 {
             session_slot!(game, MotherBrainBrain[e].subfunction_timer = 7);
         }
@@ -3411,8 +3410,8 @@ pub fn increment_hand_beam_attack_phase(
 ) -> EnemyScript {
     session_slot!(
         game,
-        MotherBrainBody[BODY].hand_beam_phase =
-            session_slot!(game, MotherBrainBody[BODY].hand_beam_phase).wrapping_add(1)
+        MotherBrainBody[BODY].hand_beam_phase,
+        |hand_beam_phase| hand_beam_phase.wrapping_add(1)
     );
     jp
 }
