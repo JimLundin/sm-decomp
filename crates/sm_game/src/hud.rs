@@ -325,6 +325,12 @@ pub fn advance<H: HudFrameHost + ?Sized>(game: &mut H) {
         }
         word!(game.VRAM_WRITE_QUEUE_TAIL = tail.wrapping_add(7));
     }
+    // The digit drawing leaves the ammunition digit tiles in the long pointer scratch: $00 from
+    // $80:9BFE and bank $00 in $02 from $80:9B4A, whether or not any digit changed.
+    let [low, high, ..] = WEAPON_DIGITS.to_le_bytes();
+    for (at, byte) in [(0, low), (1, high), (2, 0)] {
+        game.compatibility_write_byte(at, byte);
+    }
 }
 
 fn highlight<H: HudFrameHost + ?Sized>(selection: u16, palette: u16, game: &mut H) {

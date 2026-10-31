@@ -36,6 +36,7 @@ pub struct AuxiliaryGameplayCheckpoint {
     pub compatibility_enemy_scratch: u16,
     pub shared_sequence: crate::player_collision::state::SequenceWorkspace,
     pub multiply_scratch: crate::player_collision::state::MultiplyScratch,
+    pub pointer_scratch: crate::session::PointerScratch,
 }
 fn audio_asset(bytes: &mut Vec<u8>, asset: AssetRef) {
     bytes.extend_from_slice(&asset.id.0.to_le_bytes());
@@ -1502,6 +1503,8 @@ checkpoint_fields!(checkpoint_sequence, checkpoint_read_sequence, collision::Seq
     stage: checkpoint_word/checkpoint_read_word, value: checkpoint_word/checkpoint_read_word);
 checkpoint_fields!(checkpoint_multiply, checkpoint_read_multiply, collision::MultiplyScratch,
     left: checkpoint_word/checkpoint_read_word, right: checkpoint_word/checkpoint_read_word);
+checkpoint_fields!(checkpoint_pointer, checkpoint_read_pointer, crate::session::PointerScratch,
+    address: checkpoint_word/checkpoint_read_word, bank: checkpoint_word/checkpoint_read_word);
 checkpoint_fields!(checkpoint_botwoon_death, checkpoint_read_botwoon_death, crate::actors::botwoon_death::DeathProtocol,
     pending_hit: checkpoint_word/checkpoint_read_word, active: checkpoint_word/checkpoint_read_word,
     tail_ready: checkpoint_word/checkpoint_read_word, previous_health: checkpoint_word/checkpoint_read_word,
@@ -1592,7 +1595,8 @@ checkpoint_auxiliary!(
     spawn_scratch: checkpoint_spawn_scratch/checkpoint_read_spawn_scratch,
     compatibility_enemy_scratch: checkpoint_word/checkpoint_read_word,
     shared_sequence: checkpoint_sequence/checkpoint_read_sequence,
-    multiply_scratch: checkpoint_multiply/checkpoint_read_multiply);
+    multiply_scratch: checkpoint_multiply/checkpoint_read_multiply,
+    pointer_scratch: checkpoint_pointer/checkpoint_read_pointer);
 
 use crate::room_entry::{content as room_content, state::RoomEntry, world};
 use crate::session::{Cell, Room, TERRAIN_CELLS, TILE_DEFINITIONS, Terrain};
@@ -2202,6 +2206,7 @@ impl NumericGameplayCheckpoint {
             compatibility_enemy_scratch,
             shared_sequence,
             multiply_scratch,
+            pointer_scratch,
         } = self.auxiliary;
         // Exhaustive construction also makes future Session/auxiliary fields a
         // compiler error until their checkpoint participation is explicit.
@@ -2233,6 +2238,7 @@ impl NumericGameplayCheckpoint {
             compatibility_enemy_scratch,
             shared_sequence,
             multiply_scratch,
+            pointer_scratch,
         }
     }
 }
