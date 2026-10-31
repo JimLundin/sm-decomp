@@ -588,7 +588,7 @@ BUG_HOOKS = [
     (0x829325, 'a', 'none', 'removed', 'patched',
      'Game state 10h (paused - fading out)',
      'The main game loop sets DB=$82 at $893D and the preceding states restore DB with PHB/PLB, so DB is already $82 on hardware'),
-    (0x848ACD, 'a', 'none', 'removed', 'patched',
+    (0x848ACD, 'a', 'none', 'removed', 'follows',
      'Instruction - increment room argument; room argument = FFFFh and go to [[Y] + 1] if [room argument] >= [[Y]]',
      "Hardware leaves A's high byte = $8A, so the 16-bit STA puts $8A in the Draygon cannon PLM room argument's high byte; only the low byte is compared and the slot is later overwritten with FFFFh (RAM-only difference)"),
     (0xA7CEB2, 'b', 'state', 'removed', 'follows',
