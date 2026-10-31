@@ -998,7 +998,6 @@ pub unsafe fn RunAsmCode(
                     let mut line = [0u8; 80];
                     getProcessorStateCpu(&mut game.execution(), &mut line);
                     puts(line.as_ptr().cast());
-                    line[0] = 0;
                 }
                 game.execution().step_cpu();
                 while game.dma_busy() {
@@ -1363,7 +1362,7 @@ pub unsafe fn RunOneFrameOfGame_Both(native_game: &mut Game) {
         let samus_before = game.capture_samus_snapshot();
         let session_before =
             session_native_adoption::capture(game).expect("Session before capture rejected");
-        let mut selected_session = None;
+        let mut selected_session;
         let queue_before = crate::audio_snapshot::ApuQueueSnapshot::capture(game);
         let apu_before = queue_before.pending;
         let apu_queue_before = queue_before.size;
@@ -1551,7 +1550,7 @@ pub unsafe fn RunOneFrameOfGame_Both(native_game: &mut Game) {
                 }
                 let queue_rerun = crate::audio_snapshot::ApuQueueSnapshot::capture(game);
                 queue_mine.select_runtime(queue_rerun, game);
-                selected_session = Some(session_recovery);
+                selected_session = session_recovery;
                 break;
             } else {
                 (*game.g_snes).ppu = (*game.g_snes).snes_ppu;
@@ -1589,11 +1588,10 @@ pub unsafe fn RunOneFrameOfGame_Both(native_game: &mut Game) {
                     }
                     game.restore_native_player_snapshot(PlayerSnapshotSource::Theirs);
                 }
-                selected_session = Some(session_theirs);
+                selected_session = session_theirs;
                 break;
             }
         }
-        let mut selected_session = selected_session.expect("selected Session result missing");
         (*game.g_snes).ppu = if game.g_other_image as i32 != 0 {
             (*game.g_snes).my_ppu
         } else {
