@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Verify the full 100% route as a chain of original-emulator room seeds.
+"""Verify a full TAS route as a chain of original-emulator room seeds.
+
+FULL_ROUTE selects the route: 100 (default, the 100% TAS and its
+100-input-phase capture) or any (the any% TAS and its any-boundary capture).
 
 A replay of the movie from boot cannot follow the route: the verifier takes one
 input per native controller read, and lag frames shift the movie (run
@@ -26,24 +29,37 @@ numbers and SHA-256 digests only.
 """
 import csv, hashlib, io, json, os, pathlib, re, subprocess, sys, tarfile
 
-CAPTURE = "100-input-phase"
-SEEDS = pathlib.Path("target/seeds") / CAPTURE
-ROOMS = pathlib.Path("movies/room-seeds-100-input-phase.csv")
-CHAIN = pathlib.Path("movies/full-route-chain.csv")
-RECIPE = pathlib.Path("movies/full-route-chain.generated.toml")
-MOVIE = pathlib.Path("movies/super-metroid-100-4010.lsmv")
-MOVIE_FRAMES = 222788
-JOBS = 12
+ROUTE = os.environ.get("FULL_ROUTE", "100")
 REGIONS = ("wram", "sram", "vram", "cgram", "oam", "apuram")
-# Encrypted release asset (ci-data) holding the seeds and inputs; set when published.
-BUNDLE_ASSET = "full-route-chain-v1-72e0f64e0d47b53d.tar.gz.enc"
-BUNDLE_SHA256 = "72e0f64e0d47b53d5110cb8c31e13571c14bc95684696aa8ce7f62c05a6f6dc1"
+# Per route: capture, committed room-seed index, pinned chain CSV, movie and its
+# length, and the encrypted ci-data asset with the seeds and inputs (None until
+# published).
+ROUTES = {
+    "100": dict(capture="100-input-phase", rooms="movies/room-seeds-100-input-phase.csv",
+                chain="movies/full-route-chain.csv", movie="movies/super-metroid-100-4010.lsmv",
+                frames=222788, asset="full-route-chain-v1-72e0f64e0d47b53d.tar.gz.enc",
+                sha256="72e0f64e0d47b53d5110cb8c31e13571c14bc95684696aa8ce7f62c05a6f6dc1"),
+    "any": dict(capture="any-boundary", rooms="movies/room-seeds-any-boundary.csv",
+                chain="movies/full-route-chain-any.csv", movie="movies/super-metroid-any-3653.lsmv",
+                frames=129712, asset="full-route-chain-any-v1-5d139284193bc614.tar.gz.enc",
+                sha256="5d139284193bc61443855b0fa82128abf44e66f2ad03a7dd5360bbbbef582f03", jobs=6),
+}
+_route = ROUTES[ROUTE]
+CAPTURE = _route["capture"]
+SEEDS = pathlib.Path("target/seeds") / CAPTURE
+ROOMS = pathlib.Path(_route["rooms"])
+CHAIN = pathlib.Path(_route["chain"])
+RECIPE = pathlib.Path(f"movies/full-route-chain-{ROUTE}.generated.toml")
+MOVIE = pathlib.Path(_route["movie"])
+MOVIE_FRAMES = _route["frames"]
+BUNDLE_ASSET, BUNDLE_SHA256 = _route["asset"], _route["sha256"]
+JOBS = _route.get("jobs", 12)
 # Rooms that stay in lockstep but whose aligned inputs never leave the room;
 # they are reported, not replayed, until the cause is known. Every other room
 # must pass.
 KNOWN_FAILURES = {}
 # Rooms that once exposed sm_game bugs; they must keep passing.
-REGRESSIONS = {
+REGRESSIONS = {} if ROUTE != "100" else {
     6: "Ceres Ridley's acceleration carry chain times the getaway as on hardware",
     246: "D387 out-of-room level word wraps like $94's long indexed read",
     311: "Tourian statue init passes $D7B9 and returned handles as $1993",
@@ -68,7 +84,7 @@ def chain():
 
 
 def input_name(index):
-    return f"movies/chain-100-{index:04d}.inputs"
+    return f"movies/chain-{ROUTE}-{index:04d}.inputs"
 
 
 def inputs():
@@ -187,15 +203,25 @@ def jobs():
 
 
 def plan():
-    if BUNDLE_ASSET is None:
-        raise SystemExit("the chain bundle is not published yet; see BUNDLE_ASSET in this script")
-    matrix = {"include": [{"index": i, "name": f"100-{i:02d}-rooms-{group[0]['room_index']}-{group[-1]['room_index']}",
-                           "steps": sum(int(entry["steps"]) for entry in group)}
-                          for i, group in enumerate(jobs())]}
+    """One matrix over every published route; each job names its route and asset."""
+    include = []
+    for route, settings in ROUTES.items():
+        if settings["asset"] is None:
+            print(f"route {route}: chain bundle not published yet; skipped")
+            continue
+        planned = subprocess.run([sys.executable, __file__, "jobs"], env=dict(os.environ, FULL_ROUTE=route),
+                                 check=True, capture_output=True, text=True).stdout
+        include += [dict(job, route=route, asset=settings["asset"]) for job in json.loads(planned)]
+    if not include:
+        raise SystemExit("no chain bundle is published; see ROUTES in this script")
     with open(os.environ["GITHUB_OUTPUT"], "a") as out:
-        out.write(f"matrix={json.dumps(matrix)}\nasset={BUNDLE_ASSET}\n")
-    print(f"{len(matrix['include'])} jobs over {len(chain())} rooms, "
-          f"{sum(int(entry['steps']) for entry in chain())} steps")
+        out.write(f"matrix={json.dumps({'include': include})}\n")
+    print(f"{len(include)} jobs: " + ", ".join(job["name"] for job in include))
+
+
+def job_list():
+    print(json.dumps([{"index": i, "name": f"{ROUTE}-{i:02d}-rooms-{group[0]['room_index']}-{group[-1]['room_index']}",
+                       "steps": sum(int(entry["steps"]) for entry in group)} for i, group in enumerate(jobs())]))
 
 
 def run(job):
@@ -204,7 +230,7 @@ def run(job):
     ids, lines = [], []
     for entry in group:
         index = int(entry["room_index"])
-        name = f"chain-{index:04d}-{entry['room']}"
+        name = f"chain-{index:04d}-{entry['room']}" if ROUTE == "100" else f"chain-{ROUTE}-{index:04d}-{entry['room']}"
         if index in KNOWN_FAILURES:
             print(f"KNOWN {name}: {KNOWN_FAILURES[index]}", flush=True)
             continue
@@ -226,4 +252,4 @@ def run(job):
 
 
 if __name__ == "__main__":
-    {"inputs": inputs, "pack": pack, "plan": plan, "restore": restore, "run": run}[sys.argv[1]](*sys.argv[2:])
+    {"inputs": inputs, "pack": pack, "plan": plan, "jobs": job_list, "restore": restore, "run": run}[sys.argv[1]](*sys.argv[2:])
