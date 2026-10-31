@@ -979,3 +979,26 @@ pub fn start_escape<L: Lease + ?Sized>(game: &mut L) {
     word! {game; TIMER_STATUS = 1; CERES_STATUS = ESCAPE_STARTED; }
     game.foreign(|game| game.set_boss_bit(1));
 }
+
+// The named Ceres Ridley functions are the decompilation's; the getaway's
+// RTS is its locret label.
+const _: () = {
+    use crate::actors::ceres_ridley::ceres_function as f;
+    const fn at(word: u16) -> u32 {
+        0xa6_0000 | word as u32
+    }
+    assert!(at(f::TRANSITION_TO_FLYING) == 10920788 && at(f::INITIAL) == 10920795);
+    assert!(at(f::WAIT_TO_FADE_IN) == 10920823 && at(f::FADE_IN_EYE) == 10920841);
+    assert!(at(f::FADE_IN_BODY) == 10920927 && at(f::WAIT_TO_ROAR) == 10921045);
+    assert!(at(f::ROAR_BEFORE_FLYING) == 10921080 && at(f::LIFTOFF_DECELERATING) == 10921672);
+    assert!(at(f::HOVERING) == 10921704 && at(f::FIREBALLS_MOVE_TO_POSITION) == 10921858);
+    assert!(at(f::FIREBALLS_SHOOTING) == 10921977 && at(f::LUNGE_SETUP) == 10922044);
+    assert!(at(f::LUNGE) == 10922062 && at(f::SWOOP_SETUP) == 10922125);
+    assert!(at(f::SWOOP_MOVE_TO_POSITION) == 10922148 && at(f::SWOOP_AIMING_DOWN) == 10922196);
+    assert!(at(f::SWOOP_AIMING_LEFT) == 10922232 && at(f::SWOOP_AIMING_UP) == 10922275);
+    assert!(at(f::SWOOP_AIMING_UP_FASTER) == 10922311);
+    assert!(at(f::WRITE_PALETTES_AND_SPAWN_WALLS) == 10922400 && at(f::SET_UP_GETAWAY) == 10922513);
+    assert!(at(f::SELF_DESTRUCT_ACTIVATED) == 10922576);
+    assert!(at(f::SELF_DESTRUCT_ACTIVATING) == 10928206);
+    assert!(at(f::GETAWAY) == 10922575);
+};

@@ -244,3 +244,14 @@ pub fn initialize_spike_platform_bottom<H: Host + ?Sized>(game: &mut H) {
             slot!(game, EnemyLayout8[e - 0x40].base.y_pos).wrapping_add(12)
     );
 }
+
+// The fire arc's functions and data are its dispatch IDs and the
+// decompilation's addresses.
+const _: () = {
+    use crate::actors::fire_arc::{self as a, function as f};
+    use crate::constants::{bank_86::*, bank_a6::*};
+    assert!((0xa6_0000 | f::INACTIVE as u32) == 10917397);
+    assert!((0xa6_0000 | f::ACTIVE as u32) == 10917506);
+    assert!(a::INSTRUCTION_LIST == ADDR_K_FIRE_ARC_ILIST_9490 as u16);
+    assert!(a::BODY_PROJECTILE == ADDR_K_EPROJ_FIRE_ARC_BODY as u16);
+};

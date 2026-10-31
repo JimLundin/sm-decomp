@@ -1437,3 +1437,42 @@ fn death_explosion<S: BossState + ?Sized>(game: &mut S, k: u16) {
         }
     }
 }
+
+// The named bank $A7 functions are the ones `DispatchEnemyPreInstr` dispatches on.
+const _: () = {
+    use crate::actors::phantoon::function as f;
+    const fn at(word: u16) -> u32 {
+        0xa7_0000 | word as u32
+    }
+    assert!(
+        at(f::SPAWN_STARTING_FLAMES) == 10998953 && at(f::WAIT_BEFORE_SPINNING_FLAMES) == 10999022
+    );
+    assert!(at(f::SPAWN_FLAMES_BEFORE_FIGHT) == 10999048 && at(f::WAVY_FADE_IN) == 10999114);
+    assert!(at(f::PICK_ROUND_1_PATTERN) == 10999190 && at(f::FIGURE_EIGHT) == 10999271);
+    assert!(at(f::EYE_FOLLOWS_SAMUS) == 10999309 && at(f::BECOME_SOLID_AND_SWOOP) == 10999388);
+    assert!(at(f::SWOOPING) == 10999416 && at(f::FADE_OUT_WITH_SWOOP) == 10999481);
+    assert!(at(f::WAIT_AFTER_FADE_OUT) == 10999508 && at(f::REAPPEAR) == 10999522);
+    assert!(
+        at(f::FADE_IN_BEFORE_FIGURE_EIGHT) == 10999597
+            && at(f::BECOME_SOLID_AFTER_FLAME_RAIN) == 10999615
+    );
+    assert!(
+        at(f::FADE_IN_DURING_FLAME_RAIN) == 10999655
+            && at(f::FOLLOW_SAMUS_DURING_FLAME_RAIN) == 10999688
+    );
+    assert!(at(f::FADE_OUT_DURING_FLAME_RAIN) == 10999765 && at(f::SPAWN_FLAME_RAIN) == 10999799);
+    assert!(
+        at(f::FADE_OUT_BEFORE_FIRST_FLAME_RAIN) == 10999850
+            && at(f::FADE_OUT_BEFORE_ENRAGE) == 10999900
+    );
+    assert!(at(f::MOVE_TO_TOP_CENTRE) == 10999924 && at(f::FADE_IN_ENRAGED) == 10999953);
+    assert!(at(f::ENRAGED) == 10999980 && at(f::FADE_OUT_AFTER_ENRAGE) == 11000086);
+    assert!(
+        at(f::FINISH_SWOOP_AFTER_FATAL_SHOT) == 11000110 && at(f::DYING_FADE_IN_OUT) == 11000136
+    );
+    assert!(at(f::DYING_EXPLOSIONS) == 11000203 && at(f::WAVY_DYING_CRY) == 11000401);
+    assert!(at(f::DYING_FADE_OUT) == 11000454 && at(f::ALMOST_DEAD) == 11000535);
+    assert!(
+        at(f::DEAD) == 11000637 && f::NOTHING == crate::constants::bank_a7::FNNULLSUB_237 as u16
+    );
+};

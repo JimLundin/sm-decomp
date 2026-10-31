@@ -214,3 +214,18 @@ fn puff_smoke(game: &mut impl Lease, k: u16) {
         game.spawn_room_projectile(DUST_CLOUD, SMOKE_PARAMETER);
     });
 }
+
+// The falling tubes' bank $A9 functions are the ones `CallMotherBrainsTubesFalling` dispatched on.
+const _: () = {
+    use crate::actors::mother_brain_tubes::{self as tubes, function as f};
+    const fn at(word: u16) -> u32 {
+        0xa9_0000 | word as u32
+    }
+    assert!(at(f::FALL) == 11111304 && at(f::WAIT_TO_FALL) == 11111371);
+    assert!(at(f::FALL_WITH_BRAIN) == 11111382);
+    // MotherBrainBody_FakeDeath_Ascent_0_DrawBG1Row23.
+    assert!(at(tubes::BODY_ASCENT) == 11111559);
+    assert!(
+        tubes::DUST_CLOUD == crate::constants::bank_86::ADDR_K_EPROJ_DUST_CLOUD_EXPLOSION as u16
+    );
+};

@@ -299,3 +299,17 @@ pub fn release_samus<H: Host + ?Sized>(game: &mut H) {
     game.ram().copy_in(RELEASE_LIMITS + 7, &1u16.to_ne_bytes());
     game.spawn_plm(0x17, 0x1d, WRECKED_SHIP_SLOPE_PLM);
 }
+
+// The named bank $AA functions and instruction lists are the decompilation's.
+const _: () = {
+    use crate::actors::statues::{function as f, instruction_list as l};
+    use crate::constants::bank_aa::*;
+    const fn at(word: u16) -> i32 {
+        0xaa_0000 | word as i32
+    }
+    assert!(at(f::LOWER_NORFAIR) == 11199557 && at(f::WRECKED_SHIP) == 11200430);
+    assert!(at(f::NOTHING) == FNNULLSUB_276);
+    assert!(l::LOWER_NORFAIR_ACTIVATED == ADDR_K_SHAKTOOL_ILIST_E3A7 as u16);
+    assert!(l::WRECKED_SHIP_ACTIVATED == ADDR_K_SHAKTOOL_ILIST_E461 as u16);
+    assert!(l::NOTHING_SPRITEMAP == ADDR_K_SPRITEMAP_NOTHING_AA as u16);
+};
