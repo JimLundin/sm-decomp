@@ -615,7 +615,7 @@ BUG_HOOKS = [
     (0xA496E0, 'b', 'state', 'removed', 'patched',
      'Erase melting Crocomire pixel column',
      'Past the 49-entry table (X > 48), hardware reads code bytes as offsets, erases and increments RAM at $069C+garbage and eventually returns error (ending the melt); the hook returns success immediately'),
-    (0x91DA89, 'b', 'visual', 'removed', 'patched',
+    (0x91DA89, 'b', 'visual', 'removed', 'follows',
      'Handle screw attacking / speed boosting palette',
      'With special Samus palette frame > 6, hardware loads a palette pointer from past the $DAA9 table and shows garbage Samus colours; the hook clamps the frame to 6'),
     (0x828D56, 'c', 'visual', 'removed', 'patched',

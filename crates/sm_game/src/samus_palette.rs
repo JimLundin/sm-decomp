@@ -36,7 +36,14 @@ fn copy_colors<const N: usize>(
     first: usize,
     source: u16,
 ) {
-    let bytes = h.record(Source::Native, 0x9b, source).bytes::<N>(0);
+    // Bank $9B's $6000-$7FFF window is unmapped. The copy's LDA $00xx,X then
+    // reads the open bus, which still holds the operand's high byte, $00.
+    let bytes =
+        if (0x6000..0x8000).contains(&usize::from(source)) && usize::from(source) + N <= 0x8000 {
+            [0; N]
+        } else {
+            h.record(Source::Native, 0x9b, source).bytes::<N>(0)
+        };
     fn colors(h: &mut impl Host, buffer: PaletteBuffer) -> &mut [u16] {
         match buffer {
             PaletteBuffer::Current => &mut h.session_mut().presentation.visual_mut().colors,
@@ -340,16 +347,15 @@ pub fn screw_speed(h: &mut impl Host) -> PaletteCarry {
         let negative = h.session().presentation.palette().timer & 0x8000 != 0;
         if h.session().presentation.palette().timer == 0 || negative {
             h.session_mut().presentation.palette_mut().timer = 4;
-            let base = suit_table(h, 0x91daa9);
-            if h.session().player.palette_frame > 6 {
-                h.session_mut().player.palette_frame = 6;
-            }
-            let address = base.wrapping_add(h.session().player.palette_frame);
-            let source = h.record(Source::Native, 0x91, address).native_word(0);
-            copy_suit(h, PaletteBuffer::Current, source);
-            let frame = h.session().player.palette_frame;
-            h.session_mut().player.palette_frame =
-                if frame >= 6 { 6 } else { frame.wrapping_add(2) };
+            // A frame past 6, left by the screw attack, indexes past the suit's
+            // four pointers, so the original shows whatever palette follows.
+            frame_palette(h, 0x91daa9);
+            let next = h.session().player.palette_frame.wrapping_add(2);
+            h.session_mut().player.palette_frame = if next.wrapping_sub(8) & 0x8000 != 0 {
+                next
+            } else {
+                6
+            };
         }
     }
     PaletteCarry::Set

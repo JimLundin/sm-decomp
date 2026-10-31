@@ -84,9 +84,20 @@ pub(crate) fn clears_y_on_enemy_instruction_end() -> bool {
     *CLEARS.get_or_init(|| installs(PatchKind::OtherHook, 0xa08086))
 }
 
+/// The bug hooks that keep the original game off unmapped reads. Once the Rust
+/// engine follows one, the default oracle reaches those reads too.
+const OPEN_BUS_GUARDS: [u32; 1] = [0x91da89];
+
 /// Whether the oracle keeps the CPU data bus value (MDR) and returns it for
-/// unmapped reads, as bsnes and hardware do. Only the faithful oracle reaches
-/// such reads; the patched one keeps its zero open bus and stops on them.
+/// unmapped reads, as bsnes and hardware do. Only an oracle without an
+/// open-bus guard reaches such reads; otherwise it keeps its zero open bus and
+/// stops on them.
 pub(crate) fn models_open_bus() -> bool {
-    faithful()
+    static MODELS: OnceLock<bool> = OnceLock::new();
+    *MODELS.get_or_init(|| {
+        faithful()
+            || OPEN_BUS_GUARDS
+                .iter()
+                .any(|&address| !installs(PatchKind::BugHook, address))
+    })
 }
