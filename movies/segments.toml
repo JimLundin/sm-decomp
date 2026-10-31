@@ -1155,7 +1155,7 @@ frames = 15900
 expect = ["credits-complete"]
 require_hit = ["ending_graphics.item_percentage"]
 
-# The Volcano Room (AE32) is on no movie's route; its lavaquake runs only there.
+# The Volcano Room (AE32) is on no movie's route; its Polyp runs only there.
 # Low% seed85's latched word, then the volcano-room recipe.
 [[segment]]
 id = "volcano-room-lavaquake"
@@ -1166,7 +1166,7 @@ input_sha256 = "32d9f08bdfd0b2bac2f6f56b45f27867d30287a2b0a0ae3f9938892971ffc550
 start_frame = 0
 frames = 841
 expect = ["room:AE74", "room:AE32"]
-require_hit = ["lavaquake.update"]
+require_hit = ["polyp.main_ai"]
 
 # The low% movie's first 1,902 Draygon words, then the release recipe: Samus
 # stays caught, so Draygon spirals up and tail-whips her until the reserve refills.
