@@ -109,9 +109,6 @@ impl Runtime<'_> {
     }
 }
 impl GameEffects for Runtime<'_> {
-    fn pose_command(&mut self, command: u16) {
-        self.foreign(|game| crate::game::session_runtime::player_command(command, game));
-    }
     fn spawn_hdma_object(&mut self, definition: &crate::types::HdmaObjectDefinition) {
         self.foreign(|game| crate::game::visual_runtime::spawn_hdma(0x91, definition, game));
     }

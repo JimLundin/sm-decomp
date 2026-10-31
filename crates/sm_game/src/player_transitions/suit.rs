@@ -245,7 +245,7 @@ pub fn initialize_hdma(h: &mut (impl crate::runtime_access::SessionRam + ?Sized)
 pub fn begin_pickup<H: SamusLease>(h: &mut H, gravity: bool) {
     use crate::{display::hdma_spawn::HdmaObjectDefinition, player_transitions::xray};
     prepare(h, gravity, xray::set_window_word);
-    h.pose_command(0x15);
+    h.native_player_command(0x15);
     center(h);
     crate::visual_host::Effects::sound(h, 2, 6, 0x56);
     let program = if gravity { 0xd67a } else { 0xd5a2 };
@@ -288,5 +288,5 @@ pub fn advance_pickup<H: SamusLease>(h: &mut H, gravity: bool) {
     let program = arrays::HDMA_OBJECT_INSTRUCTION_LIST_POINTERS + offset;
     h.write_slice_le(program, h.word(program).wrapping_add(2));
     h.write_slice_le(arrays::HDMA_OBJECT_INSTRUCTION_TIMERS + offset, 1);
-    h.pose_command(0xb);
+    h.native_player_command(0xb);
 }
