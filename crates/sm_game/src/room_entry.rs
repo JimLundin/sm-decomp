@@ -18,6 +18,7 @@ pub mod effects;
 pub mod installation;
 pub mod prepared_assets;
 pub mod prepared_tables;
+pub mod protocol;
 pub mod selection;
 pub mod state;
 pub mod world;

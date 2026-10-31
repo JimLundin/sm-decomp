@@ -1,7 +1,8 @@
 //! Initial entry, door continuations and the scroll-completion interrupt.
 #![forbid(unsafe_code)]
 use super::{
-    EntryPoll, EntrySignal, EntryWait, background,
+    api::{EntryPoll, EntrySignal, EntryWait},
+    background,
     content::{AssetSource, LoadMode, SharedAsset, VramDestination},
     effects::{
         AssetRead, AssetSlot, BufferClear, CameraEffect as C, CameraField as F, DeviceWord,
@@ -10,7 +11,7 @@ use super::{
     },
     installation,
 };
-use sm_game::{animated_tiles, enemy_projectiles, palette_effects, player_projectiles};
+use crate::{animated_tiles, enemy_projectiles, palette_effects, player_projectiles};
 use std::num::NonZeroU8;
 
 fn waiting(cause: EntryWait, value: u8) -> Option<EntryPoll> {
@@ -30,7 +31,7 @@ fn room_irq(h: &mut impl EntryHost) {
     let irq = h.session().room.entry.irq_policy;
     h.write_external(E::NextIrqHandler, if irq == 0 { 4 } else { irq });
 }
-pub(crate) fn load_destination(h: &mut impl EntryHost) {
+pub fn load_destination(h: &mut impl EntryHost) {
     installation::load_destination_cre(h);
     installation::load_door(h);
     installation::load_header(h);
@@ -38,7 +39,7 @@ pub(crate) fn load_destination(h: &mut impl EntryHost) {
     installation::load_tiles_and_palette(h);
 }
 fn initial(h: &mut impl EntryHost) -> EntryPoll {
-    crate::verify_probe::hit("coroutine.start");
+    crate::probe::hit("coroutine.start");
     let resume = *h.session().control.secondary();
     if resume == 0 {
         h.device_word(DeviceWord::DmaEnable, 0);
@@ -60,7 +61,7 @@ fn initial(h: &mut impl EntryHost) -> EntryPoll {
         animated_tiles::execution::clear(h.session_mut());
         h.call(L::WaitVblankClearHdma);
         h.call(L::InitializeRoomSpecialEffects);
-        sm_game::room_mechanisms::creation::clear_session(h.session_mut());
+        crate::room_mechanisms::creation::clear_session(h.session_mut());
         enemy_projectiles::lifecycle::clear(h);
         palette_effects::execution::clear(h.session_mut());
         h.call(L::UpdateBeamTilesAndPalette);
@@ -230,7 +231,7 @@ fn place_and_load(h: &mut impl EntryHost) -> EntryPoll {
     EntryPoll::Returned(0)
 }
 fn more(h: &mut impl EntryHost) -> EntryPoll {
-    crate::verify_probe::hit("coroutine.door");
+    crate::probe::hit("coroutine.door");
     let resume = *h.session().control.primary();
     if resume == 0 {
         h.call(L::LoadEnemyGraphics);
@@ -238,7 +239,7 @@ fn more(h: &mut impl EntryHost) -> EntryPoll {
         enemy_projectiles::lifecycle::clear(h);
         animated_tiles::execution::clear(h.session_mut());
         palette_effects::execution::clear(h.session_mut());
-        sm_game::room_mechanisms::creation::clear_session(h.session_mut());
+        crate::room_mechanisms::creation::clear_session(h.session_mut());
         installation::initialize_door_objects(h);
         h.call(L::LoadFxHeader);
         h.close_door();
@@ -253,11 +254,9 @@ fn more(h: &mut impl EntryHost) -> EntryPoll {
     if resume <= 1 {
         let mut wait = resume == 1;
         loop {
-            if wait {
-                if let Some(poll) = waiting(EntryWait::Nmi, h.wait(EntryWait::Nmi)) {
-                    *h.session_mut().control.primary_mut() = 1;
-                    return poll;
-                }
+            if wait && let Some(poll) = waiting(EntryWait::Nmi, h.wait(EntryWait::Nmi)) {
+                *h.session_mut().control.primary_mut() = 1;
+                return poll;
             }
             if h.session().room.entry.completion & 0x8000 != 0 {
                 break;
@@ -313,7 +312,7 @@ fn finish_transition(h: &mut impl EntryHost) {
     h.write_external(E::DisplayAndObjectSelect, display);
 }
 /// Full numeric address is retained at the compatibility dispatch boundary.
-pub(crate) fn dispatch(h: &mut impl EntryHost, address: u32) -> EntryPoll {
+pub fn dispatch(h: &mut impl EntryHost, address: u32) -> EntryPoll {
     match address {
         0x82e17d => {
             if h.session().room.entry.elevator_flags == 0 {
@@ -454,7 +453,7 @@ fn irq(h: &mut impl EntryHost) -> EntryPoll {
         EntryPoll::Returned(0)
     }
 }
-pub(crate) fn resume(h: &mut impl EntryHost, signal: EntrySignal) -> EntryPoll {
+pub fn resume(h: &mut impl EntryHost, signal: EntrySignal) -> EntryPoll {
     match signal {
         EntrySignal::Initial => initial(h),
         EntrySignal::DoorState10 => state10(h),
