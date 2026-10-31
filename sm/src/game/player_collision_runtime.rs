@@ -72,7 +72,7 @@ impl ImportedCollisionReads for Runtime<'_> {
 }
 
 impl Effects for Runtime<'_> {
-    #[cfg(any(test, sm_verify_dll))]
+    #[cfg(sm_verify_dll)]
     fn record_launch(
         &mut self,
         direction: sm_game::launch_motion::MovementDirection,

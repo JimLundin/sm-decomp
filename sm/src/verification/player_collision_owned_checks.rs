@@ -1,16 +1,17 @@
 //! Candidate-owned invariants. Register under crate::game for real owner access.
+//! The verifier runs the Game checks; the detached host's tests run the
+//! generic Host checks, which are `cfg(test)`.
 //! No Game, RAM facade or copied collision algorithm is used by generic checks.
 #![forbid(unsafe_code)]
 use std::cell::RefCell;
 use {
-    crate::game::player_collision::operations::{
-        self, Direction, DisplacementRequest, Obstruction,
-    },
-    sm_game::launch_motion::MovementDirection,
-    sm_game::{
-        actors::access::ActorKey, player_collision::effects::Host, visual_host,
-        visual_state::PaletteCarry,
-    },
+    crate::game::player_collision::operations,
+    sm_game::{actors::access::ActorKey, launch_motion::MovementDirection},
+};
+#[cfg(test)]
+use {
+    operations::{Direction, DisplacementRequest, Obstruction},
+    sm_game::{player_collision::effects::Host, visual_host, visual_state::PaletteCarry},
 };
 
 std::thread_local! {
@@ -46,6 +47,7 @@ pub(crate) fn observed<R>(action: impl FnOnce() -> R) -> (R, Vec<(u8, i32)>) {
 }
 
 // One owner, four actual operations; sentinel directions expose extra writes.
+#[cfg(test)]
 pub(crate) fn unchecked_launch<H: Host>(h: &mut H) {
     let cases = [
         (
@@ -134,6 +136,7 @@ pub(crate) fn same_interval_radius<H: sm_game::actors::access::ActorAccess>(
 }
 
 // Actual palette phase consumes the live clock, without content reads here.
+#[cfg(test)]
 pub(crate) fn same_interval_frame<H: visual_host::Host>(h: &mut H) {
     {
         let s = h.session_mut();
@@ -163,6 +166,7 @@ pub(crate) fn same_interval_frame<H: visual_host::Host>(h: &mut H) {
 
 // Probe-only caller must remain responsible for position publication.
 // The fixture supplies valid authored empty terrain and no interactive actors.
+#[cfg(test)]
 pub(crate) fn pose_probe_does_not_commit<H: Host>(h: &mut H) {
     let before = {
         let p = &h.session().player;
@@ -187,6 +191,7 @@ pub(crate) fn pose_probe_does_not_commit<H: Host>(h: &mut H) {
 
 // Same host interval, actual actor-first horizontal core. Fixture actor is solid,
 // at (120,100), radii (2,2), and the actual interactive list contains its key.
+#[cfg(test)]
 pub(crate) fn same_interval_collision_radius<H: Host>(h: &mut H, actor: ActorKey) {
     use operations::{HorizontalDirection, HorizontalRequest};
     for (radius, blocked) in [(1, false), (18, true), (1, false)] {
@@ -227,6 +232,7 @@ pub(crate) fn same_interval_collision_radius<H: Host>(h: &mut H, actor: ActorKey
 
 // Actual shinespark Y consumes the same shared sequence on successive calls.
 // Fixture supplies valid empty terrain and an empty actual interactive list.
+#[cfg(test)]
 pub(crate) fn shared_sequence_move_y<H: Host>(h: &mut H) {
     use operations::Axis;
     {
@@ -375,6 +381,7 @@ pub(crate) fn transition_a7_single_commit(
     assert_eq!(launches, [], "collision.owned.transition_a7_no_launch");
 }
 
+#[cfg(test)]
 pub(crate) fn launches_so_far() -> Vec<(u8, i32)> {
     LAUNCHES.with(|slot| {
         slot.borrow()

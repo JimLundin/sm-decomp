@@ -419,16 +419,8 @@ fn assert_projectiles_checkpoint(owner: &GameOwner, required: &ss::DisplayStartR
     expected.trails[17].right.remaining = 0xbcdf;
     expected.controls.cooldown = 0x1357;
     expected.controls.flare_timers[2] = 0x2468;
-    crate::game::launch_motion_ram::record_observed(
-        &mut expected.launch,
-        MovementDirection::Left,
-        -0x12345,
-    );
-    crate::game::launch_motion_ram::record_observed(
-        &mut expected.launch,
-        MovementDirection::Down,
-        0x23456,
-    );
+    record_observed(&mut expected.launch, MovementDirection::Left, -0x12345);
+    record_observed(&mut expected.launch, MovementDirection::Down, 0x23456);
     let bytes = expected.encode_checkpoint(&a).unwrap();
     let decoded = Projectiles::decode_checkpoint(&bytes, &a).unwrap();
     assert_eq!(decoded, expected);
@@ -643,3 +635,14 @@ fn assert_dirty_runtime_lease_preserves_native_mutation(owner: &GameOwner) {
 pub use session_audio_checkpoint_cases::{
     bank_upload_physical_prefixes, bank_upload_physical_timeout_boundaries,
 };
+
+/// Record one launch-motion step the way the collision owner does, after the
+/// verifier observes it.
+fn record_observed(
+    motion: &mut sm_game::launch_motion::LaunchMotion,
+    direction: sm_game::launch_motion::MovementDirection,
+    amount: i32,
+) {
+    crate::game::player_collision_owned_checks::record_launch(direction, amount);
+    motion.record_movement(direction, amount);
+}

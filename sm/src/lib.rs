@@ -357,7 +357,6 @@ pub mod game {
     pub(crate) mod enemy_speeds;
 
     pub(crate) mod gameplay;
-    pub(crate) mod launch_motion_ram;
     pub(crate) mod menu_host;
     pub mod message_composition;
     pub(crate) mod mode7_transfers;
@@ -388,7 +387,7 @@ pub mod game {
     #[cfg(sm_verify_dll)]
     #[path = "../verification/player_collision_entry_adapters.rs"]
     pub(crate) mod player_collision_adapters;
-    #[cfg(any(test, sm_verify_dll))]
+    #[cfg(sm_verify_dll)]
     #[path = "../verification/player_collision_owned_checks.rs"]
     pub(crate) mod player_collision_owned_checks;
     pub(crate) use sm_game::player_movement;
