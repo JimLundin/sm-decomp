@@ -399,19 +399,8 @@ fields!(Spc {
     a, x, y, sp, pc, c, z, v, n, i, h, p, b, stopped, cyclesUsed
 } skip { apu });
 
-fields!(NativePlayerState {
-    timer_cycles, port_to_snes, last_value_from_snes, counter_sf0c, always_zero,
-    temp_accum, ttt, did_affect_volumepitch_flag, addr0, addr1, lfsr_value, is_chan_on,
-    fast_forward, word_20, music_ptr_toplevel, block_count, sfx_timer_accum, chn,
-    key_ON, key_OFF, cur_chan_bit, reg_FLG, reg_NON, reg_EON, echo_stored_time,
-    echo_parameter_EDL, reg_EFB, global_transposition, main_tempo_accum, tempo,
-    tempo_fade_num_ticks, tempo_fade_final, tempo_fade_add, master_volume,
-    master_volume_fade_ticks, master_volume_fade_target,
-    master_volume_fade_add_per_tick, vol_dirty, percussion_base_id, echo_volume_left,
-    echo_volume_right, echo_volume_fade_add_left, echo_volume_fade_add_right,
-    echo_volume_fade_ticks, echo_volume_fade_target_left, echo_volume_fade_target_right,
-    p_echoBuffer, memset_ptr, memset_ctr, disable_sfx2, byte_4B1, channel, sfx1, sfx2,
-    sfx3, sfx_chans_1, sfx_chans_2, sfx_chans_3, last_written_edl, input_ports
+fields!(NativePlayerState named {
+    timer_cycles = "timer_cycles", port_to_snes = "port_to_snes", last_value_from_snes = "last_value_from_snes", counter_sf0c = "counter_sf0c", always_zero = "always_zero", temp_accum = "temp_accum", ttt = "ttt", did_affect_volumepitch_flag = "did_affect_volumepitch_flag", addr0 = "addr0", addr1 = "addr1", lfsr_value = "lfsr_value", is_chan_on = "is_chan_on", fast_forward = "fast_forward", word_20 = "word_20", music_ptr_toplevel = "music_ptr_toplevel", block_count = "block_count", sfx_timer_accum = "sfx_timer_accum", chn = "chn", key_on = "key_ON", key_off = "key_OFF", cur_chan_bit = "cur_chan_bit", reg_flg = "reg_FLG", reg_non = "reg_NON", reg_eon = "reg_EON", echo_stored_time = "echo_stored_time", echo_parameter_edl = "echo_parameter_EDL", reg_efb = "reg_EFB", global_transposition = "global_transposition", main_tempo_accum = "main_tempo_accum", tempo = "tempo", tempo_fade_num_ticks = "tempo_fade_num_ticks", tempo_fade_final = "tempo_fade_final", tempo_fade_add = "tempo_fade_add", master_volume = "master_volume", master_volume_fade_ticks = "master_volume_fade_ticks", master_volume_fade_target = "master_volume_fade_target", master_volume_fade_add_per_tick = "master_volume_fade_add_per_tick", vol_dirty = "vol_dirty", percussion_base_id = "percussion_base_id", echo_volume_left = "echo_volume_left", echo_volume_right = "echo_volume_right", echo_volume_fade_add_left = "echo_volume_fade_add_left", echo_volume_fade_add_right = "echo_volume_fade_add_right", echo_volume_fade_ticks = "echo_volume_fade_ticks", echo_volume_fade_target_left = "echo_volume_fade_target_left", echo_volume_fade_target_right = "echo_volume_fade_target_right", echo_buffer_ptr = "p_echoBuffer", memset_ptr = "memset_ptr", memset_ctr = "memset_ctr", disable_sfx2 = "disable_sfx2", byte_4b1 = "byte_4B1", channel = "channel", sfx1 = "sfx1", sfx2 = "sfx2", sfx3 = "sfx3", sfx_chans_1 = "sfx_chans_1", sfx_chans_2 = "sfx_chans_2", sfx_chans_3 = "sfx_chans_3", last_written_edl = "last_written_edl", input_ports = "input_ports"
 } skip { });
 
 fields!(Timer {

@@ -92,20 +92,20 @@ macro_rules! transfer {
                 temp_accum, ttt, did_affect_volumepitch_flag, addr0, addr1, lfsr_value, is_chan_on,
                 fast_forward, timer_cycles;
             0x20 => word_20;
-            0x40 => music_ptr_toplevel, block_count, sfx_timer_accum, chn, key_ON, key_OFF,
-                cur_chan_bit, reg_FLG, reg_NON, reg_EON;
-            0x4c => echo_stored_time, echo_parameter_EDL, reg_EFB;
+            0x40 => music_ptr_toplevel, block_count, sfx_timer_accum, chn, key_on, key_off,
+                cur_chan_bit, reg_flg, reg_non, reg_eon;
+            0x4c => echo_stored_time, echo_parameter_edl, reg_efb;
             0x50 => global_transposition, main_tempo_accum, tempo, tempo_fade_num_ticks,
                 tempo_fade_final, tempo_fade_add, master_volume, master_volume_fade_ticks,
                 master_volume_fade_target, master_volume_fade_add_per_tick, vol_dirty,
                 percussion_base_id, echo_volume_left, echo_volume_right, echo_volume_fade_add_left,
                 echo_volume_fade_add_right, echo_volume_fade_ticks, echo_volume_fade_target_left,
                 echo_volume_fade_target_right;
-            0xd2 => p_echoBuffer;
+            0xd2 => echo_buffer_ptr;
             0xee => memset_ptr;
             0x390 => memset_ctr;
             0x4a9 => disable_sfx2;
-            0x4b1 => byte_4B1;
+            0x4b1 => byte_4b1;
             0x4ba => sfx3.some_value;
             0x4be => last_written_edl;
         }

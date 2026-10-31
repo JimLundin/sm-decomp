@@ -9270,7 +9270,7 @@ fn music_echo_literals_preserve_register_order_full_edl_and_failure_prefixes() {
         let mut state = NativePlayerState::default();
         state.last_written_edl = 3;
         state.echo_stored_time = 0xfe;
-        state.reg_FLG = 0x43;
+        state.reg_flg = 0x43;
         let ram = ApuRam::new();
         let mut writes = Vec::new();
         let result = catch(unwind(|| {
@@ -9286,9 +9286,9 @@ fn music_echo_literals_preserve_register_order_full_edl_and_failure_prefixes() {
         assert_eq!(writes, expected[..(failure + 1).min(7)]);
         assert_eq!(
             (
-                state.echo_parameter_EDL,
+                state.echo_parameter_edl,
                 state.echo_stored_time,
-                state.reg_FLG
+                state.reg_flg
             ),
             (5, 0xfa, 0x43)
         );
@@ -9297,14 +9297,14 @@ fn music_echo_literals_preserve_register_order_full_edl_and_failure_prefixes() {
     let mut state = NativePlayerState::default();
     state.last_written_edl = 5;
     state.echo_stored_time = 0xfa;
-    state.reg_FLG = 0x43;
+    state.reg_flg = 0x43;
     let ram = ApuRam::new();
     let mut writes = Vec::new();
     MusicSequencer::new(&mut state, &ram, |reg, value| writes.push((reg, value))).setup_echo(5);
     assert_eq!(writes, [(109, 0xed)]);
     assert_eq!(
         (
-            state.echo_parameter_EDL,
+            state.echo_parameter_edl,
             state.echo_stored_time,
             state.last_written_edl
         ),
@@ -9326,7 +9326,7 @@ fn music_echo_literals_preserve_register_order_full_edl_and_failure_prefixes() {
     );
     assert_eq!(
         (
-            state.echo_parameter_EDL,
+            state.echo_parameter_edl,
             state.echo_stored_time,
             state.last_written_edl
         ),
@@ -9341,7 +9341,7 @@ fn music_command_hold_reset_preserves_native_low_bytes_and_sfx_keyoff_mask() {
     let mut state = NativePlayerState::default();
     state.input_ports = [1, 0x22, 0x33, 0x44];
     state.is_chan_on = 0xa5;
-    state.key_OFF = 1;
+    state.key_off = 1;
     state.master_volume = 0x1277;
     state.tempo = 0x6688;
     state.master_volume_fade_ticks = 3;
@@ -9377,7 +9377,7 @@ fn music_command_hold_reset_preserves_native_low_bytes_and_sfx_keyoff_mask() {
     assert_eq!(state.music_ptr_toplevel, 0x3456);
     assert_eq!(state.counter_sf0c, 2);
     assert_eq!(state.port_to_snes[0], 1);
-    assert_eq!(state.key_OFF, 0x5b);
+    assert_eq!(state.key_off, 0x5b);
     assert_eq!(state.input_ports, [255, 0x22, 0x33, 0x44]);
     state.input_ports[0] = 0xf1;
     MusicSequencer::new(&mut state, &ram, |_, _| {
@@ -9422,13 +9422,13 @@ fn music_command_hold_reset_preserves_native_low_bytes_and_sfx_keyoff_mask() {
         assert_eq!(c.note_ticks_left, 8);
     }
     state.input_ports[0] = 0xf0;
-    state.key_OFF = 0;
+    state.key_off = 0;
     MusicSequencer::new(&mut state, &ram, |_, _| {
         panic!("stop mask writes no DSP register")
     })
     .tick();
     assert_eq!(state.input_ports[0], 255);
-    assert_eq!(state.key_OFF, 0x5a);
+    assert_eq!(state.key_off, 0x5a);
     assert_eq!(state.counter_sf0c, 1);
     assert_eq!(state.music_ptr_toplevel, 0x3456);
 }
@@ -9443,8 +9443,8 @@ fn music_wrapped_instrument_stream_keeps_lazy_ram_reads_and_failed_write_prefixe
         let mut state = NativePlayerState::default();
         state.input_ports[0] = 255;
         state.port_to_snes[0] = 1;
-        state.reg_FLG = 0x60;
-        state.reg_NON = 0x80;
+        state.reg_flg = 0x60;
+        state.reg_non = 0x80;
         state.channel[0].index = 255;
         state.channel[0].pattern_order_ptr_for_chan = 0xfffe;
         state.channel[0].note_ticks_left = 1;
@@ -9488,7 +9488,7 @@ fn music_wrapped_instrument_stream_keeps_lazy_ram_reads_and_failed_write_prefixe
         assert_eq!(result.is_err(), failure < 4);
         assert_eq!(writes, expected[..(failure + 1).min(4)]);
         assert_eq!(
-            (state.reg_FLG, state.reg_NON, state.channel[0].instrument_id),
+            (state.reg_flg, state.reg_non, state.channel[0].instrument_id),
             (0x35, 0x81, 2)
         );
         let c = &state.channel[0];
@@ -9612,7 +9612,7 @@ fn music_shifted_song_origin_and_latent_invalid_origins_keep_literal_read_prefix
         state.input_ports[0] = 0xf0;
         state.is_chan_on = 0xa5;
         MusicSequencer::with_origin(&mut state, &ram, origin, |_, _| panic!()).tick();
-        assert_eq!((state.input_ports[0], state.key_OFF), (255, 0x5a));
+        assert_eq!((state.input_ports[0], state.key_off), (255, 0x5a));
         state.channel[0].pan_value = 0x0a00;
         state.channel[0].pan_num_ticks = 1;
         state.channel[0].final_volume = 255;
@@ -9625,7 +9625,7 @@ fn music_shifted_song_origin_and_latent_invalid_origins_keep_literal_read_prefix
         state.input_ports[0] = 1;
         state.counter_sf0c = 0x77;
         state.music_ptr_toplevel = 0xabcd;
-        state.key_OFF = 0x81;
+        state.key_off = 0x81;
         assert!(
             catch(unwind(|| MusicSequencer::with_origin(
                 &mut state,
@@ -9644,7 +9644,7 @@ fn music_shifted_song_origin_and_latent_invalid_origins_keep_literal_read_prefix
         assert_eq!(state.port_to_snes[0], 1);
         assert_eq!(state.music_ptr_toplevel, 0xabcd);
         assert_eq!(state.counter_sf0c, 0x77);
-        assert_eq!(state.key_OFF, 0x81);
+        assert_eq!(state.key_off, 0x81);
     }
 }
 
@@ -10138,11 +10138,11 @@ fn sfx_groups_initialize_crosses_nominal_groups_with_literal_flat_channel_result
             }
         }
         state.cur_chan_bit = 255;
-        state.reg_EON = 255;
+        state.reg_eon = 255;
         S::fields(&mut state, group).0.voices_to_setup = count;
         S::initialize(&mut state, group);
         assert_eq!(
-            (state.is_chan_on, state.cur_chan_bit, state.reg_EON),
+            (state.is_chan_on, state.cur_chan_bit, state.reg_eon),
             (mask, 255 ^ mask, 255 ^ mask)
         );
         let r = S::fields(&mut state, group).0;
@@ -10204,13 +10204,13 @@ fn sfx_groups_first_outside_flat_allocation_keeps_exact_initialization_failure_p
     ] {
         let mut state = NativePlayerState::default();
         state.cur_chan_bit = 255;
-        state.reg_EON = 255;
+        state.reg_eon = 255;
         state.last_written_edl = 0x77;
         state.input_ports = [0x11, 0x22, 0x33, 0x44];
         S::fields(&mut state, group).0.voices_to_setup = requested;
         assert!(catch(unwind(|| S::initialize(&mut state, group))).is_err());
         assert_eq!(
-            (state.is_chan_on, state.cur_chan_bit, state.reg_EON),
+            (state.is_chan_on, state.cur_chan_bit, state.reg_eon),
             (mask, 255 ^ mask, 255 ^ mask)
         );
         let r = S::fields(&mut state, group).0;
@@ -10359,8 +10359,8 @@ fn music_fir_live_ram_wrap_and_writer_failures_keep_literal_coefficients_and_pre
             let mut state = NativePlayerState::default();
             state.input_ports[0] = 255;
             state.port_to_snes[0] = 1;
-            state.byte_4B1 = 0xa7;
-            state.reg_EFB = 0x88;
+            state.byte_4b1 = 0xa7;
+            state.reg_efb = 0x88;
             state.channel[0].pattern_order_ptr_for_chan = 0x2200;
             state.channel[0].note_ticks_left = 1;
             state.channel[0].note_length = 4;
@@ -10413,7 +10413,7 @@ fn music_fir_live_ram_wrap_and_writer_failures_keep_literal_coefficients_and_pre
                 }]
             );
             assert_eq!(
-                (state.byte_4B1, state.reg_EFB),
+                (state.byte_4b1, state.reg_efb),
                 if failure < 0 {
                     (0xa7, 0x88)
                 } else {
@@ -10481,7 +10481,7 @@ fn bank_upload_native_installation_prefixes() {
         state.music_ptr_toplevel = 0xabcd;
         state.counter_sf0c = 7;
         state.is_chan_on = 0xa5;
-        state.key_OFF = 1;
+        state.key_off = 1;
         let mut writes = Vec::new();
         let result = catch_unwind(AssertUnwindSafe(|| {
             install_bank(&mut state, &ram, image.clone(), 0, |reg, value| {
@@ -10535,7 +10535,7 @@ fn bank_upload_native_installation_prefixes() {
             }
         );
         assert_eq!(state.counter_sf0c, if success { 2 } else { 7 });
-        assert_eq!(state.key_OFF, if success { 0x5b } else { 1 });
+        assert_eq!(state.key_off, if success { 0x5b } else { 1 });
         assert_eq!(state.is_chan_on, 0xa5);
     }
 }
