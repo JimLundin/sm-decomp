@@ -26,6 +26,7 @@ pub struct RomRecords {
     pub boss_lists: crate::boss_lists::ImportedBossLists,
     pub gameplay_tables: crate::gameplay_tables::ImportedGameplayTables,
     pub enemy_lists: crate::enemy_lists::ImportedEnemyLists,
+    pub samus_palettes: crate::samus_palette::ImportedPaletteTables,
 }
 
 /// A host holding the loaded image and its imported records.

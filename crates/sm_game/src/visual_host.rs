@@ -102,7 +102,13 @@ pub trait Composition {
     fn spawn_statue_projectile(&mut self, kind: StatueProjectile, parameter: u16);
 }
 pub trait Host:
-    SessionAccess + Content + Aliases + Effects + Composition + crate::gameplay_flag_host::Host
+    SessionAccess
+    + Content
+    + Aliases
+    + Effects
+    + Composition
+    + crate::gameplay_flag_host::Host
+    + crate::records::Records
 {
 }
 impl Record for sm_data::cartridge::RomRecord {

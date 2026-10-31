@@ -84,6 +84,8 @@ struct Composed {
     collision_contract: game::player_collision_host::CollisionContract,
     transition_contract: game::player_transitions_host::TransitionContract,
     image: RomImage,
+    /// No imported records: table reads fall back to the prepared image.
+    records: sm_game::records::RomRecords,
     events: Vec<Event>,
     fail_upload: bool,
     animation_invalid_result: Option<u16>,
@@ -113,6 +115,7 @@ impl Composed {
             collision_contract: Default::default(),
             transition_contract: Default::default(),
             image: RomImage::zeroed(0x300000),
+            records: Default::default(),
             events: Vec::new(),
             fail_upload: false,
             animation_invalid_result: None,

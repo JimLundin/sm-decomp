@@ -1,11 +1,56 @@
 //! Samus palette phases share the actual visual, player and inventory owner.
 use crate::player_transitions::state::FrameBetaMode;
 use crate::{
+    imported::ImportedWords,
     liquid_surface::{self, LiquidAtHeight},
+    records::Records,
     session::Session,
     visual_host::{Host, Record, Source},
     visual_state::{PaletteBuffer, PaletteCarry},
 };
+use sm_data::cartridge::RomImage;
+use sm_data::samus_palettes::*;
+
+/// Samus's palette pointer tables, imported from the loaded image.
+#[derive(Default)]
+pub struct ImportedPaletteTables {
+    suits: ImportedWords<SUIT_PALETTES, SUITS>,
+    charge_sequences: ImportedWords<CHARGE_SEQUENCES, SUITS>,
+    screw_attack: ImportedWords<SCREW_ATTACK_FRAMES, SUITS>,
+    speed_boost: ImportedWords<SPEED_BOOST_FRAMES, SUITS>,
+    shine: ImportedWords<SHINE_FRAMES, SUITS>,
+    shinespark: ImportedWords<SHINESPARK_FRAMES, SUITS>,
+    visor: ImportedWords<VISOR_COLOURS, VISOR_FRAMES>,
+    charge: ImportedWords<CHARGE_PALETTES, CHARGE_STEPS>,
+    crystal: ImportedWords<CRYSTAL_LAST_COLOURS, CRYSTAL_FRAMES>,
+    glow: ImportedWords<GLOW_PALETTES, GLOW_PHASES>,
+    beams: ImportedWords<BEAM_PALETTES, BEAM_COMBINATIONS>,
+}
+
+pub fn import(image: &RomImage) -> ImportedPaletteTables {
+    ImportedPaletteTables {
+        suits: ImportedWords::import(image),
+        charge_sequences: ImportedWords::import(image),
+        screw_attack: ImportedWords::import(image),
+        speed_boost: ImportedWords::import(image),
+        shine: ImportedWords::import(image),
+        shinespark: ImportedWords::import(image),
+        visor: ImportedWords::import(image),
+        charge: ImportedWords::import(image),
+        crystal: ImportedWords::import(image),
+        glow: ImportedWords::import(image),
+        beams: ImportedWords::import(image),
+    }
+}
+
+/// Entry `index` of the selected table; indices past it keep the original load.
+fn entry<const ADDRESS: u32, const ROWS: usize>(
+    h: &(impl Records + ?Sized),
+    table: impl Fn(&ImportedPaletteTables) -> &ImportedWords<ADDRESS, ROWS>,
+    index: usize,
+) -> u16 {
+    table(&h.records().samus_palettes).word(h.loaded_image(), index as isize)
+}
 
 fn carry(set: bool) -> PaletteCarry {
     if set {
@@ -97,11 +142,20 @@ pub fn load_suit(h: &mut impl Host, buffer: PaletteBuffer) {
     let source = suit_source(h.session());
     copy_suit(h, buffer, source);
 }
-fn suit_table(h: &impl Host, address: u32) -> u16 {
-    let record = h.table(Source::Loaded, address);
-    record.native_word(usize::from(h.session().presentation.palette().suit_index >> 1) * 2)
+fn suit_table<const ADDRESS: u32>(
+    h: &impl Host,
+    table: impl Fn(&ImportedPaletteTables) -> &ImportedWords<ADDRESS, SUITS>,
+) -> u16 {
+    entry(
+        h,
+        table,
+        usize::from(h.session().presentation.palette().suit_index >> 1),
+    )
 }
-fn frame_palette(h: &mut impl Host, table: u32) {
+fn frame_palette<const ADDRESS: u32>(
+    h: &mut impl Host,
+    table: impl Fn(&ImportedPaletteTables) -> &ImportedWords<ADDRESS, SUITS>,
+) {
     let base = suit_table(h, table);
     let address = base.wrapping_add(h.session().player.palette_frame);
     let source = h.record(Source::Native, 0x91, address).native_word(0);
@@ -145,7 +199,7 @@ pub fn advance(h: &mut impl Host) {
             phase == PaletteCarry::Clear
         };
         if restore {
-            let source = suit_table(h, 0x91d727);
+            let source = suit_table(h, |t| &t.suits);
             copy_suit(h, PaletteBuffer::Current, source);
         }
     }
@@ -169,8 +223,7 @@ pub fn visor(h: &mut impl Host) -> u8 {
             return 0;
         }
         h.session_mut().presentation.palette_mut().visor_timer = timer | 5;
-        let record = h.table(Source::Loaded, 0x9ba3c0);
-        let value = record.native_word(usize::from((timer >> 8) >> 1) * 2);
+        let value = entry(h, |t| &t.visor, usize::from((timer >> 8) >> 1));
         h.session_mut().presentation.visual_mut().colors[196] = value;
         let frame = (timer >> 8) + 2;
         let high = if frame.wrapping_sub(12) & 0x8000 != 0 {
@@ -251,9 +304,11 @@ pub fn misc(h: &mut impl Host) -> PaletteCarry {
     }
     if h.session().player.special_palette_flags & 0x8000 != 0 {
         let shift_carry = h.session().projectiles.controls.charge_palette & 0x8000 != 0;
-        let record = h.table(Source::Loaded, 0x91d99e);
-        let source =
-            record.native_word(usize::from(h.session().projectiles.controls.charge_palette) * 2);
+        let source = entry(
+            h,
+            |t| &t.charge,
+            usize::from(h.session().projectiles.controls.charge_palette),
+        );
         copy_suit(h, PaletteBuffer::Current, source);
         h.session_mut().presentation.palette_mut().timer =
             h.session().presentation.palette().timer.wrapping_sub(1);
@@ -276,7 +331,7 @@ pub fn misc(h: &mut impl Host) -> PaletteCarry {
         return carry(result);
     } else {
         if h.session().player.special_palette_flags & 1 != 0 {
-            let source = suit_table(h, 0x91d998);
+            let source = suit_table(h, |t| &t.charge_sequences);
             copy_suit(h, PaletteBuffer::Current, source);
         } else {
             load_suit(h, PaletteBuffer::Current);
@@ -331,7 +386,7 @@ pub fn screw_speed(h: &mut impl Host) -> PaletteCarry {
         false
     };
     if screw {
-        frame_palette(h, 0x91da4a);
+        frame_palette(h, |t| &t.screw_attack);
         let frame = h.session().player.palette_frame;
         h.session_mut().player.palette_frame = if frame >= 10 {
             0
@@ -349,7 +404,7 @@ pub fn screw_speed(h: &mut impl Host) -> PaletteCarry {
             h.session_mut().presentation.palette_mut().timer = 4;
             // A frame past 6, left by the screw attack, indexes past the suit's
             // four pointers, so the original shows whatever palette follows.
-            frame_palette(h, 0x91daa9);
+            frame_palette(h, |t| &t.speed_boost);
             let next = h.session().player.palette_frame.wrapping_add(2);
             h.session_mut().player.palette_frame = if next.wrapping_sub(8) & 0x8000 != 0 {
                 next
@@ -373,7 +428,7 @@ pub fn shine(h: &mut impl Host) -> PaletteCarry {
         h.session_mut().player.shine_tick = 0;
         PaletteCarry::Clear
     } else {
-        frame_palette(h, 0x91db10);
+        frame_palette(h, |t| &t.shine);
         let frame = h.session().player.palette_frame;
         h.session_mut().player.palette_frame = if frame.wrapping_sub(10) & 0x8000 == 0 {
             0
@@ -391,7 +446,7 @@ pub fn shinespark(h: &mut impl Host) -> PaletteCarry {
         h.session_mut().player.palette_frame = 0;
         PaletteCarry::Clear
     } else {
-        frame_palette(h, 0x91db75);
+        frame_palette(h, |t| &t.shinespark);
         let frame = h.session().player.palette_frame;
         h.session_mut().player.palette_frame = if frame.wrapping_sub(6) & 0x8000 == 0 {
             0
@@ -414,8 +469,11 @@ pub fn crystal_flash(h: &mut impl Host) -> PaletteCarry {
         h.session_mut().player.shine_timer = h.session().player.shine_timer.wrapping_sub(1);
         if (h.session().player.shine_timer as i16) <= 0 {
             h.session_mut().player.shine_timer = 5;
-            let record = h.table(Source::Loaded, 0x91dc28);
-            let source = record.native_word(usize::from(h.session().player.palette_frame >> 1) * 2);
+            let source = entry(
+                h,
+                |t| &t.crystal,
+                usize::from(h.session().player.palette_frame >> 1),
+            );
             copy_crystal_last6(h, source);
             let frame = h.session().player.palette_frame;
             h.session_mut().player.palette_frame = if frame.wrapping_sub(10) & 0x8000 == 0 {
@@ -457,8 +515,11 @@ pub fn crystal_flash(h: &mut impl Host) -> PaletteCarry {
     }
 }
 fn xray_color(h: &mut impl Host) {
-    let record = h.table(Source::Loaded, 0x9ba3c0);
-    let value = record.native_word(usize::from(h.session().player.palette_frame >> 1) * 2);
+    let value = entry(
+        h,
+        |t| &t.visor,
+        usize::from(h.session().player.palette_frame >> 1),
+    );
     h.session_mut().presentation.visual_mut().colors[196] = value;
 }
 pub fn xray(h: &mut impl Host) -> PaletteCarry {
@@ -532,8 +593,7 @@ pub fn cancel_speed_boost(h: &mut impl Host) {
 /// One loop serves byte-offset Y callers and masked beam-bitfield A/Load callers.
 /// Each color reacquires native90 after wrapping the logical bank address.
 pub fn write_beam_palette(h: &mut impl Host, table_index: u16) {
-    let record = h.table(Source::Loaded, 0x90c3c9);
-    let source = record.native_word(usize::from(table_index) * 2);
+    let source = entry(h, |t| &t.beams, usize::from(table_index));
     for offset in (0u16..32).step_by(2) {
         let color = h
             .record(Source::Native, 0x90, source.wrapping_add(offset))
@@ -553,10 +613,7 @@ pub fn charge_feedback(h: &mut impl Host) -> u8 {
                     return 1;
                 }
                 let phase = (h.session().projectiles.controls.glow & 0x1e) >> 1;
-                let source = {
-                    let record = h.table(Source::Loaded, 0x91d829);
-                    record.native_word(usize::from(phase) * 2)
-                };
+                let source = entry(h, |t| &t.glow, usize::from(phase));
                 copy_suit(h, PaletteBuffer::Current, source);
             }
             // Color lookup can change the owner; decrement its current glow.
