@@ -224,35 +224,241 @@ pub enum ScrollDefinition {
 
 /// Only acquisition, diagnostics and current-session observations cross this seam.
 /// Pure retained-token reads and cursor arithmetic are inherent helpers (signature ledger).
-pub trait EntryContent {
+/// A prepared world answers from the Session; the required methods acquire the
+/// original's records and RAM for the canonical one.
+pub trait EntryContent: crate::session_access::SessionAccess {
     fn contact_bts(&mut self) -> u8;
-    fn contact_exit(&mut self, list: &DoorList, bts: u8) -> Identity<ExitId>;
-    fn contact_has_destination(&mut self, exit: &Identity<ExitId>) -> bool;
-    fn capture_station(&mut self, site: StartSite) -> StationCapture;
-    fn capture_header(&mut self, room: &Identity<RoomId>) -> HeaderCapture;
-    fn capture_start_header(&mut self, room: &Identity<RoomId>) -> HeaderCapture;
-    fn selector(&mut self, cursor: &SelectorCursor) -> (SelectorKind, SelectorCursor);
-    fn capture_operand(&mut self, cursor: &SelectorCursor) -> OperandCapture;
-    fn direct_target(&mut self, cursor: &SelectorCursor) -> Identity<StateId>;
+    /// The word at `bank:address`, after the original's RomPtr diagnostic.
+    fn legacy_word(&mut self, bank: u8, address: u16) -> u16;
+    /// The load station index ($078B).
+    fn load_station_index(&self) -> u16;
+    /// The current load station's record in the original's table ($80:C4B5).
+    fn legacy_station(&mut self) -> StationCapture;
+    /// A room record read through the original's room_record policy.
+    fn room_capture<P>(&mut self, bank: u8, address: u16) -> Capture<P>;
+    /// A room record read through the RomPtr policy of load stations.
+    fn native_room_capture<P>(&mut self, bank: u8, address: u16) -> Capture<P>;
+    /// A record read through the PLM loaded_record policy.
+    fn closing_capture<P>(&mut self, bank: u8, address: u16) -> Capture<P>;
+    /// A background record in bank $8F.
+    fn background_capture<P>(&mut self, address: u16, mode: LoadMode) -> Capture<P>;
     fn invalid_selector(&mut self, address: u32) -> Option<SelectorCursor>;
-    fn capture_state(&mut self, state: &Identity<StateId>) -> StateCapture;
-    fn capture_tileset(&mut self, selection: TilesetSelection) -> TilesetCapture;
-    fn capture_door(&mut self, exit: &Identity<ExitId>) -> DoorCapture;
-    fn scroll_pair(&mut self, cursor: &ScrollCursor) -> [u8; 2];
-    fn object_exists(&mut self, cursor: &ObjectCursor) -> bool;
+    /// The tileset record the original's table ($8F:E7A7) names for `index`.
+    fn legacy_tileset(&mut self, index: u8) -> TilesetCapture;
+    /// The asset slot's three projected bytes.
+    fn asset_bytes(&self, slot: AssetSlot, read: AssetRead) -> [u8; 3];
+
+    fn contact_exit(&mut self, list: &DoorList, bts: u8) -> Identity<ExitId> {
+        match list {
+            DoorList::Prepared(id) => Identity::Known(
+                self.session()
+                    .world
+                    .definition()
+                    .expect("prepared door list")
+                    .door_lists[id][usize::from(bts & 0x7f)],
+            ),
+            DoorList::Legacy(list) => {
+                let key = self.legacy_word(0x8f, list.wrapping_add(u16::from(bts & 0x7f) * 2));
+                self.session().world.exit_identity(key)
+            }
+        }
+    }
+    fn contact_has_destination(&mut self, exit: &Identity<ExitId>) -> bool {
+        match exit {
+            Identity::Known(id) => {
+                let world = self.session().world.definition().expect("prepared exit");
+                let _ = &world.rooms[&world.exits[id].destination];
+                true
+            }
+            Identity::LegacyUnresolved(key) => self.legacy_word(0x83, *key) & 0x8000 != 0,
+        }
+    }
+    fn capture_station(&mut self, site: StartSite) -> StationCapture {
+        let world = self.session().world.clone();
+        match site {
+            StartSite::Authored(position) => Capture::Prepared { world, position },
+            StartSite::CurrentLoadStation if !world.is_canonical_legacy() => {
+                let position = world.start_at(self.session().room.area, self.load_station_index());
+                Capture::Prepared { world, position }
+            }
+            StartSite::CurrentLoadStation => self.legacy_station(),
+        }
+    }
+    fn capture_header(&mut self, room: &Identity<RoomId>) -> HeaderCapture {
+        match room {
+            Identity::Known(position) => self.prepared(*position),
+            Identity::LegacyUnresolved(key) => self.room_capture(0x8f, *key),
+        }
+    }
+    fn capture_start_header(&mut self, room: &Identity<RoomId>) -> HeaderCapture {
+        match room {
+            Identity::Known(position) => self.prepared(*position),
+            Identity::LegacyUnresolved(key) => self.native_room_capture(0x8f, *key),
+        }
+    }
+    fn selector(&mut self, cursor: &SelectorCursor) -> (SelectorKind, SelectorCursor) {
+        match cursor {
+            SelectorCursor::Legacy(address) => {
+                let token: OperandCapture = self.room_capture(0x8f, *address);
+                let opcode = 0x8f0000 | u32::from(token.raw_word(0));
+                let kind = SelectorKind::from_legacy(opcode);
+                (kind, SelectorCursor::Legacy(address.wrapping_add(2)))
+            }
+            SelectorCursor::Prepared(position) => {
+                use super::world::StateCondition;
+                let world = self
+                    .session()
+                    .world
+                    .definition()
+                    .expect("prepared selector");
+                let kind = match world.rooms[&position.room].selectors[position.index].condition {
+                    StateCondition::Default => SelectorKind::Default,
+                    StateCondition::Event(_) => SelectorKind::Event,
+                    StateCondition::Boss(_) => SelectorKind::Boss,
+                    StateCondition::BossOne => SelectorKind::BossOne,
+                    StateCondition::MorphAndMissiles => SelectorKind::MorphAndMissiles,
+                    StateCondition::PowerBombs => SelectorKind::PowerBombs,
+                };
+                (kind, cursor.clone())
+            }
+        }
+    }
+    fn capture_operand(&mut self, cursor: &SelectorCursor) -> OperandCapture {
+        match cursor {
+            SelectorCursor::Legacy(address) => self.room_capture(0x8f, *address),
+            SelectorCursor::Prepared(position) => self.prepared(*position),
+        }
+    }
+    fn direct_target(&mut self, cursor: &SelectorCursor) -> Identity<StateId> {
+        match cursor {
+            SelectorCursor::Legacy(address) => {
+                let token: OperandCapture = self.room_capture(0x8f, *address);
+                self.session().world.state_identity(token.raw_word(0))
+            }
+            SelectorCursor::Prepared(position) => Identity::Known(
+                self.session()
+                    .world
+                    .definition()
+                    .expect("prepared selector")
+                    .rooms[&position.room]
+                    .selectors[position.index]
+                    .state,
+            ),
+        }
+    }
+    fn capture_state(&mut self, state: &Identity<StateId>) -> StateCapture {
+        match state {
+            Identity::Known(position) => self.prepared(*position),
+            Identity::LegacyUnresolved(key) => self.room_capture(0x8f, *key),
+        }
+    }
+    fn capture_tileset(&mut self, selection: TilesetSelection) -> TilesetCapture {
+        match selection {
+            TilesetSelection::Prepared(position) => self.prepared(position),
+            TilesetSelection::Legacy(index) => self.legacy_tileset(index),
+        }
+    }
+    fn capture_door(&mut self, exit: &Identity<ExitId>) -> DoorCapture {
+        match exit {
+            Identity::Known(position) => self.prepared(*position),
+            Identity::LegacyUnresolved(key) => self.room_capture(0x83, *key),
+        }
+    }
+    fn scroll_pair(&mut self, cursor: &ScrollCursor) -> [u8; 2] {
+        match cursor {
+            ScrollCursor::Legacy(address) => {
+                let record: StateCapture = self.room_capture(0x8f, *address);
+                record.raw_word(0).to_ne_bytes()
+            }
+            ScrollCursor::Prepared { state, index } => {
+                let world = self.session().world.definition().expect("prepared scrolls");
+                match &world.states[state].scrolls {
+                    super::world::ScrollDefinition::Cells(bytes) => {
+                        [bytes[*index], bytes[*index + 1]]
+                    }
+                    _ => panic!("record cursor for generated scrolls"),
+                }
+            }
+        }
+    }
+    fn object_exists(&mut self, cursor: &ObjectCursor) -> bool {
+        let address = match cursor {
+            ObjectCursor::LegacyInitial(address) => *address,
+            ObjectCursor::LegacyDoor(address) => *address as u16,
+            ObjectCursor::Prepared { state, index } => {
+                let world = self.session().world.definition().expect("prepared objects");
+                return *index < world.states[state].objects.len();
+            }
+        };
+        let record: StateCapture = self.room_capture(0x8f, address);
+        record.raw_word(0) != 0
+    }
     fn selected_background(
         &mut self,
         state: &Identity<StateId>,
         mode: LoadMode,
-    ) -> Option<BackgroundCursor>;
+    ) -> Option<BackgroundCursor> {
+        match state {
+            Identity::Known(state) => {
+                let world = self
+                    .session()
+                    .world
+                    .definition()
+                    .expect("prepared background");
+                (!world.states[state].background.is_empty()).then_some(BackgroundCursor::Prepared(
+                    BackgroundPosition {
+                        state: *state,
+                        index: 0,
+                        part: BackgroundPart::Opcode,
+                    },
+                ))
+            }
+            Identity::LegacyUnresolved(address) => {
+                /// The room state's library background pointer ($8F state header +16h).
+                const BACKGROUND_POINTER: usize = 0x16;
+                let record: StateCapture = self.background_capture(*address, mode);
+                let cursor = record.background_word(BACKGROUND_POINTER);
+                (cursor & 0x8000 != 0).then_some(BackgroundCursor::Legacy(cursor))
+            }
+        }
+    }
     fn capture_background(
         &mut self,
         cursor: &BackgroundCursor,
         mode: LoadMode,
-    ) -> BackgroundCapture;
-    fn live_asset(&self, slot: AssetSlot, read: AssetRead) -> AssetSource;
-    fn capture_closing_door(&mut self, exit: &Identity<ExitId>) -> ClosingDoorCapture;
-    fn capture_closing_header(&mut self, direction: u16) -> ClosingHeaderCapture;
+    ) -> BackgroundCapture {
+        match cursor {
+            BackgroundCursor::Legacy(address) => self.background_capture(*address, mode),
+            BackgroundCursor::Prepared(position) => self.prepared(*position),
+        }
+    }
+    fn live_asset(&self, slot: AssetSlot, read: AssetRead) -> AssetSource {
+        AssetSource::Bound(
+            self.session()
+                .world
+                .asset(slot, self.asset_bytes(slot, read)),
+        )
+    }
+    fn capture_closing_door(&mut self, exit: &Identity<ExitId>) -> ClosingDoorCapture {
+        match exit {
+            Identity::Known(position) => self.prepared(*position),
+            Identity::LegacyUnresolved(key) => self.closing_capture(0x83, *key),
+        }
+    }
+    fn capture_closing_header(&mut self, direction: u16) -> ClosingHeaderCapture {
+        if self.session().world.is_canonical_legacy() {
+            self.closing_capture(0x8f, direction.wrapping_mul(2).wrapping_add(0xe68a))
+        } else {
+            self.prepared(ClosingHeaderPosition { direction })
+        }
+    }
+    /// The prepared world's record at `position`.
+    fn prepared<P>(&self, position: P) -> Capture<P> {
+        Capture::Prepared {
+            world: self.session().world.clone(),
+            position,
+        }
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
