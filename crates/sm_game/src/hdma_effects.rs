@@ -462,3 +462,36 @@ fn store_word<H: Host + ?Sized>(h: &mut H, at: usize, value: u16, store: Store) 
         Store::SliceNative => h.write_slice_native(at, value),
     }
 }
+
+/// Run HDMA object effect `effect` for the object in `slot`, through the
+/// owned-Session view.
+pub fn apply<H>(effect: crate::hdma_objects::HdmaEffect, slot: u16, h: &mut H)
+where
+    H: HdmaEffects
+        + crate::actors::mother_brain_rainbow::Host
+        + crate::player_transitions::effects::SamusLease,
+{
+    use crate::hdma_objects::HdmaEffect::*;
+    use crate::player_transitions::{suit, xray};
+    match effect {
+        InitializeRainbowBeam => crate::actors::mother_brain_rainbow::initialize_hdma(h),
+        AdvanceRainbowBeam => crate::actors::mother_brain_rainbow::advance_hdma(h),
+        AdvanceProgram => h.advance_hdma_program(),
+        InitializePhantoonWave => h.initialize_phantoon_wave(slot),
+        InitializeEyeBeam => h.initialize_eye_beam(slot),
+        ResetWave => h.reset_hdma_wave(slot),
+        InitializeWavePair { base, primary } => h.initialize_wave_pair(base, primary),
+        SetPhantoonMotion { direction, speed } => h.set_phantoon_motion(direction, speed),
+        ScrollWeather(weather) => h.scroll_weather_layers(slot, weather),
+        BeginHaze { color } => h.begin_haze(slot, color),
+        AdvanceHaze(phase) => h.advance_haze(slot, phase),
+        SelectDraygonLayer => h.select_draygon_layer(slot),
+        SelectPhantoonLayer => h.select_phantoon_layer(),
+        AdvanceWave(wave) => h.advance_hdma_wave(slot, wave),
+        AdvanceEyeBeam(phase) => h.advance_eye_beam(slot, phase),
+        AdvanceXrayBackground => xray::advance_background(h),
+        AdvanceXrayBeam(phase) => xray::advance_beam(h, phase),
+        InitializeSuitPickup => suit::initialize_hdma(h),
+        AdvanceSuitPickup { gravity } => suit::advance_pickup(h, gravity),
+    }
+}
