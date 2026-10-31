@@ -3,7 +3,8 @@ use crate::imported::Imported;
 use crate::menus::menu_tilemap::native_record;
 use crate::menus::prelude::{EnemyData, do_until};
 use crate::ram::RawRam as _;
-use crate::ram::{slot, word};
+use crate::ram::word;
+use crate::session_slot;
 use sm_data::cartridge::{RomImage, lorom_offset};
 use sm_data::demo_rooms::{
     DemoEntry, DemoScene, DemoScenes, DemoSets, SCENES_ADDRESS, SCENES_BYTES, SETS_ADDRESS,
@@ -235,7 +236,7 @@ pub fn run_room_hook<H: crate::menus::host::Host + ?Sized>(address: u32, game: &
         0x82891a => game.ram().write_byte(0xcd20 + 33, 0),
         0x828924 => {}
         0x828925 => game.ram().copy_in(0x59, &74u16.to_ne_bytes()),
-        0x82892b => slot!(game, EnemyData[0].ai_preinstr = 60),
+        0x82892b => session_slot!(game, EnemyData[0].ai_preinstr = 60),
         0x828932 => game.set_boss_byte(1, 1),
         _ => {
             game.unreachable_native();

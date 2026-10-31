@@ -272,12 +272,12 @@ where
 {
     use crate::actors::crocomire_reactions as crocomire;
     use crate::actors::layouts::EnemyLayout72 as Crocomire;
-    use crate::ram::slot;
+    use crate::session_slot;
     static DEFINITION: HdmaObjectDefinition = HdmaObjectDefinition::new(0x42, 0x10, 0x9563);
     if let Some(request) = crocomire::execute_phase(game) {
         game.queue_sound(1, request as u16 as u8, 6);
         crocomire::prepare_scroll_hdma(game);
-        slot!(
+        session_slot!(
             game,
             Crocomire[0].var_1f = spawn_hdma(0xa4, &DEFINITION, game)
         );
@@ -289,19 +289,19 @@ where
 /// Position Crocomire's second body part and align its BG2 image with the camera.
 pub fn align_crocomire_background<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     use crate::actors::layouts::EnemyLayout72 as Crocomire;
-    use crate::ram::slot;
+    use crate::session_slot;
     let primary = i32::from(word!(game.CUR_ENEMY_INDEX));
     let secondary = i32::from(word!(game.CUR_ENEMY_INDEX)) + 64;
-    slot!(
+    session_slot!(
         game,
-        Crocomire[secondary].base.x_pos = slot!(game, Crocomire[secondary].var_a)
-            .wrapping_add(slot!(game, Crocomire[primary].base.x_pos))
+        Crocomire[secondary].base.x_pos = session_slot!(game, Crocomire[secondary].var_a)
+            .wrapping_add(session_slot!(game, Crocomire[primary].base.x_pos))
     );
-    slot!(
+    session_slot!(
         game,
-        Crocomire[secondary].base.y_pos = slot!(game, Crocomire[primary].base.y_pos)
+        Crocomire[secondary].base.y_pos = session_slot!(game, Crocomire[primary].base.y_pos)
     );
-    let relative = slot!(game, Crocomire[primary].base.x_pos)
+    let relative = session_slot!(game, Crocomire[primary].base.x_pos)
         .wrapping_sub(crate::camera::current(game).layer1[0]) as i16;
     let offset = 51u16.wrapping_sub(relative as u16);
     word!(

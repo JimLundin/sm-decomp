@@ -2,7 +2,7 @@
 use crate::liquid_effects::WATER_WAVE;
 use crate::menus::menu_tilemap::native_record;
 use crate::menus::prelude::*;
-use crate::ram::slot;
+use crate::session_slot;
 
 pub fn initialize_banded_sky<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     crate::liquid::LiquidWords::set(game, |words| &mut words.liquid.surface.whole, 1248);
@@ -202,7 +202,7 @@ pub fn advance_parallax<H: crate::menus::host::Host + ?Sized>(_k: u16, game: &mu
         let entry = native_record(0x88aec1 + 8 * u32::from(v1), game);
         let at = i32::from(entry.word(6)) - 0xf78;
         let value = words!((entry.word(4), entry.word(2)));
-        slot!(game, PairU16[at](j, k) += value);
+        session_slot!(game, PairU16[at](j, k) += value);
     }
     word! { game, 0; SCROLLING_SKY_BG2_HDMA_DATA[44], SCROLLING_SKY_BG2_HDMA_DATA[45] }
     write_sky_word(31, 0, game);

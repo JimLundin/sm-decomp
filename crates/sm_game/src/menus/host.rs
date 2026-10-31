@@ -159,7 +159,7 @@ pub trait Host:
     + crate::records::Records
     + MenuRuntime
     + crate::runtime_access::RuntimeAccess
-    + crate::records::Records
+    + crate::actors::session_slots::SlotAccess
 {
     type Sram: SaveRam + ?Sized;
     fn sram(&self) -> &Self::Sram;
