@@ -987,10 +987,10 @@ fn connected_to_block<H: Host + ?Sized>(game: &mut H) -> bool {
 }
 
 /// The grapple point's tile upload runs on the compat game: it queues native
-/// VRAM transfers, so it needs only RAM words, the menu runtime and records.
+/// VRAM transfers, so it needs only RAM words, the display owner and records.
 pub fn update_tiles<
     H: crate::ram::CompatibilityRam
-        + crate::menus::host::MenuRuntime
+        + crate::display_refresh::DisplayOwner
         + crate::player_position::PlayerFacts
         + crate::records::Records
         + ?Sized,
@@ -1007,20 +1007,22 @@ pub fn update_tiles<
             word!(game.GRAPPLE_POINT_ANIM_PTR = grapple_aim::point_animation(game).first);
         }
     }
-    let cursor = game.queue_native_transfer(
+    let cursor = crate::display_refresh::queue_native_transfer(
         word!(game.VRAM_WRITE_QUEUE_TAIL),
         32,
-        &|game: &H| word!(game.GRAPPLE_POINT_ANIM_PTR),
+        |game: &H| word!(game.GRAPPLE_POINT_ANIM_PTR),
         0x9a,
-        &|_: &H| 0x6200,
+        |_: &H| 0x6200,
+        game,
     );
     let index = (game.grapple_angle() >> 1 & 0xfe) >> 1;
-    game.queue_native_transfer(
+    crate::display_refresh::queue_native_transfer(
         cursor,
         128,
-        &|game: &H| crate::gameplay_tables::grapple_point_tile(game, isize::from(index)),
+        |game: &H| crate::gameplay_tables::grapple_point_tile(game, isize::from(index)),
         0x9a,
-        &|_: &H| 0x6210,
+        |_: &H| 0x6210,
+        game,
     );
     if (word!(game.FLARE_COUNTER) as i32 - 120i32) & 0x8000 != 0 {
         word!(game.FLARE_COUNTER += 1);

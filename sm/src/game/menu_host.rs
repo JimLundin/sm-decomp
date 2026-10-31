@@ -26,23 +26,6 @@ impl sm_game::sprite_output::SpriteHost for Game {
 // SAFETY (all `unsafe` calls below): the menus run from the frame loop with
 // the SNES backend installed, and `&mut self` excludes any other access.
 impl MenuRuntime for Game {
-    fn queue_native_transfer(
-        &mut self,
-        cursor: u16,
-        size: u16,
-        source: &dyn Fn(&Self) -> u16,
-        bank: u8,
-        destination: &dyn Fn(&Self) -> u16,
-    ) -> u16 {
-        crate::game::display_refresh::queue_native_transfer(
-            cursor,
-            size,
-            source,
-            bank,
-            destination,
-            self,
-        )
-    }
     fn load_vram_words(&mut self, source: u32, destination: u16, bytes: u16) {
         crate::game::display_refresh::GraphicsAsset::VramWords(source, destination, bytes)
             .load(self)
@@ -55,9 +38,6 @@ impl MenuRuntime for Game {
             &mut Runtime::new(self),
             ArrivalRequest::Start(StartSite::CurrentLoadStation),
         );
-    }
-    fn queue_fx_clear(&mut self) {
-        crate::game::display_refresh::queue_fx_clear(self)
     }
     fn update_beam_tiles_and_palette(&mut self) {
         crate::game::visual_runtime::update_beam_tiles_and_palette(self)
@@ -79,9 +59,6 @@ impl MenuRuntime for Game {
     }
     fn shake_room_with_sound(&mut self, kind: u16) {
         visual_runtime::shake_room_with_sound(kind, self)
-    }
-    fn display_wait(&mut self, update: bool) -> u8 {
-        crate::game::display_refresh::wait(update, self)
     }
     fn set_boss_byte(&mut self, area: u16, value: u8) {
         crate::game::gameplay_flag_runtime::set_boss_byte_at(area, value, self)
@@ -168,9 +145,6 @@ impl MenuRuntime for Game {
     }
     fn spawn_palette_effect(&mut self, definition: u16) {
         crate::game::palette_effects::spawn(definition, self)
-    }
-    fn enable_display_nmi(&mut self, enabled: bool) {
-        crate::game::display_refresh::enable(enabled, self)
     }
     fn request_reset(&mut self) {
         Game::request_reset(self)

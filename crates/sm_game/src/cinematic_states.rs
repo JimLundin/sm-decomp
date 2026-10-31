@@ -100,7 +100,7 @@ pub fn wait_for_nmis<H: Host + ?Sized>(count: u8, game: &mut H) -> bool {
     if left == 0 {
         left = count;
     }
-    while game.display_wait(true) == 0 {
+    while crate::display_refresh::wait(true, game) == 0 {
         left -= 1;
         if left == 0 {
             game.ram().write_byte(NMI_WAITS, 0);
@@ -190,7 +190,7 @@ pub fn nintendo_logo<H: Host + ?Sized>(game: &mut H) -> u8 {
         GraphicsAsset::VramWords(0x7f5000, 0x6000, 0x4000).load(game);
         game.ram().write_byte(mirror::INIDISP, 0x80);
         crate::word_transfers!(game, ascending, 256; le(PALETTE_BUFFER, 0) <- rom(TITLE_PALETTES, 0));
-        game.enable_display_nmi(true);
+        crate::display_refresh::enable(true, game);
         crate::screen_fade::set_both(game, 1, 1);
     }
     // Stages 1..=6 resume a pending NMI before drawing the next frame.

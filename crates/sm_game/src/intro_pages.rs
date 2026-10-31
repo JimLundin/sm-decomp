@@ -516,7 +516,7 @@ pub fn enable_text<H: crate::menus::host::Host + ?Sized>(j: u16, game: &mut H) -
 pub fn fade_out_to_ceres<H: crate::menus::host::Host + ?Sized>(restore_samus: bool, game: &mut H) {
     game.fade(false);
     if game.ram().read_byte(0x51) == 0x80 {
-        game.enable_display_nmi(true);
+        crate::display_refresh::enable(true, game);
         crate::screen_fade::set_both(game, 0, 0);
         word! { game, 0; REG_BG2HOFS, REG_BG3HOFS, REG_BG2VOFS, REG_BG3VOFS, MODE7_ANGLE }
         crate::word_transfers!(game, descending, 329; native(0x1c1d) <- value(0));

@@ -327,7 +327,7 @@ fn frame<H: Host>(game: &mut H) -> CoroutineRet {
                 0
             }
             Options => options_settings::advance(game, upload_options_tiles, |game| {
-                game.enable_display_nmi(true)
+                crate::display_refresh::enable(true, game)
             }),
         };
         if returned != 0 {
@@ -394,7 +394,7 @@ fn initialize<H: Host>(game: &mut H) -> CoroutineRet {
         hud::initialize(game);
         word_transfers!(game, ascending, 16; native(0xc380) <- native(0xc180));
         crate::screen_fade::set_both(game, 1, 1);
-        game.enable_display_nmi(true);
+        crate::display_refresh::enable(true, game);
         enemy_projectiles::lifecycle::set_enabled(&mut game.runtime(), true);
         set_mechanisms_enabled(game, true);
         palette_effects::set_enabled(game.runtime().session_mut(), true);
@@ -423,7 +423,7 @@ fn initialize<H: Host>(game: &mut H) -> CoroutineRet {
             if !waiting {
                 actors::staging::transfer_actor_tiles_and_initialize(&mut game.runtime());
             }
-            let yielded = game.display_wait(true);
+            let yielded = crate::display_refresh::wait(true, game);
             if yielded != 0 {
                 game.ram().write_byte(0x612, stage);
                 return yielded;
@@ -463,7 +463,7 @@ fn stop_demo<H: Host>(game: &mut H) -> CoroutineRet {
     if word!(game.SUBSTATE) != 1 {
         demo_rooms::advance_set(game);
     }
-    game.enable_display_nmi(true);
+    crate::display_refresh::enable(true, game);
     word!(game.GAME_STATE += 1);
     crate::screen_fade::set_both(game, 0, 0);
     crate::hdma_objects::clear_hdma(game);
@@ -530,7 +530,7 @@ fn advance_pause<H: Host>(game: &mut H) -> CoroutineRet {
         0 => pause_controls::update_map(game),
         1 => pause_controls::update_equipment(game),
         2 | 5 => pause_controls::fade_out_tab(game, tab == 5, |game| {
-            game.enable_display_nmi(true);
+            crate::display_refresh::enable(true, game);
         }),
         3 | 6 => pause_controls::load_tab(game, tab == 3, |game| {
             if tab == 3 {
@@ -556,13 +556,13 @@ fn setup_unpause<H: Host>(game: &mut H) -> CoroutineRet {
         display_refresh::pause_graphics(false, game);
         pause_controls::resume(game);
         game.write_register_word(MDMAEN as u16, 0);
-        game.enable_display_nmi(false);
+        crate::display_refresh::enable(false, game);
         game.disable_scanline_irq();
         crate::room_entry::installation::load_tiles_and_palette(&mut game.runtime());
         crate::room_entry::background::load(&mut game.runtime(), LoadMode::Initial);
         fill_viewport(&mut game.runtime());
         crate::room_mechanisms::graphics::reload_graphics(&mut game.runtime());
-        game.enable_display_nmi(true);
+        crate::display_refresh::enable(true, game);
         game.enable_scanline_irq(false);
         pause_controls::restore_graphics(game);
         game.load_vram_words(
@@ -605,7 +605,7 @@ fn fade_out<H: Host>(entry: Entry, game: &mut H) -> CoroutineRet {
     }
     game.fade(false);
     if game.ram().read_byte(0x51) == 0x80 {
-        game.enable_display_nmi(true);
+        crate::display_refresh::enable(true, game);
         crate::screen_fade::set_both(game, 0, 0);
         word!(game.GAME_STATE += 1);
         if matches!(entry, Entry::GameOverFadeOut) {
@@ -620,7 +620,7 @@ fn fade_out<H: Host>(entry: Entry, game: &mut H) -> CoroutineRet {
 fn exit_time_up<H: Host>(game: &mut H) -> CoroutineRet {
     game.fade(false);
     if game.ram().read_byte(0x51) == 0x80 {
-        game.enable_display_nmi(true);
+        crate::display_refresh::enable(true, game);
         finish_gameplay(true, game);
         crate::screen_fade::set_both(game, 0, 0);
         word! { game, 0; CERES_STATUS, TIMER_STATUS }
@@ -838,7 +838,7 @@ fn finish_pass<H: Host>(entry: Entry, game: &mut H) {
             game.fade(false);
             if game.ram().read_byte(0x51) == 0x80 {
                 let ceres = matches!(entry, Entry::CeresBlackout);
-                game.enable_display_nmi(true);
+                crate::display_refresh::enable(true, game);
                 finish_gameplay(ceres, game);
                 crate::screen_fade::set_both(game, 0, 0);
                 if ceres {
@@ -859,7 +859,7 @@ fn finish_pass<H: Host>(entry: Entry, game: &mut H) {
         Entry::PauseFadeOut => {
             game.fade(false);
             if game.ram().read_byte(0x51) & 0xf == 0 {
-                game.enable_display_nmi(true);
+                crate::display_refresh::enable(true, game);
                 crate::screen_fade::set_both(game, 0, 0);
                 word!(game.GAME_STATE += 1);
             }
