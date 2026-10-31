@@ -249,6 +249,12 @@ pub trait RuntimeHost:
     type Game: Host + ?Sized;
     fn foreign<T>(&mut self, action: impl FnOnce(&mut Self::Game) -> T) -> T;
 }
+impl<T: crate::actors::host::ActorLease + ?Sized> RuntimeHost for T {
+    type Game = <T as crate::actors::host::ActorLease>::Game;
+    fn foreign<R>(&mut self, action: impl FnOnce(&mut Self::Game) -> R) -> R {
+        crate::actors::host::ActorLease::foreign(self, action)
+    }
+}
 
 fn initialize_living<L: Lease + ?Sized>(e: i32, game: &mut L) {
     session_slot!(game, Botwoon[e].body_projectile_index = BODY_PROJECTILES);
@@ -479,7 +485,7 @@ pub fn crumbling_wall<L: Lease + ?Sized>(k: u16, game: &mut L) {
 }
 fn mark_hit<R: RuntimeHost>(h: &mut R, actor: Key) {
     if h.resolve_actor(actor, Native).health == 0 {
-        h.set_native_death_signal(actor.byte_index(), botwoon_death::Signal::PendingHit, 1);
+        h.set_death_signal(actor.byte_index(), botwoon_death::Signal::PendingHit, 1);
         h.edit_actor(Key::from_legacy(0), Native, |actor| {
             actor.properties |= INTANGIBLE;
         });
@@ -489,7 +495,7 @@ fn mark_hit<R: RuntimeHost>(h: &mut R, actor: Key) {
 pub fn shot<R: RuntimeHost>(h: &mut R) {
     let actor = h.selected_actor();
     let health = h.resolve_actor(actor, Native).health;
-    h.set_native_death_signal(
+    h.set_death_signal(
         actor.byte_index(),
         botwoon_death::Signal::PreviousHealth,
         health,

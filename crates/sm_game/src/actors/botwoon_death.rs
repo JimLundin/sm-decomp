@@ -2,6 +2,7 @@
 //! words held by the Session.
 //! Unknown words are retained; a nonzero signal has the original meaning.
 use super::access::{AccessMode::Native, ActorAccess};
+use super::session_slots::SlotAccess;
 use crate::actors::botwoon::function;
 use crate::enemy_projectiles::host::{BotwoonField as B, Host as EprojHost};
 
@@ -45,31 +46,39 @@ pub fn collapse_delay_address(enemy: u16) -> usize {
     0x8004 + usize::from(enemy)
 }
 
-/// Native actor accesses retain their full selector and ordered byte stores.
-/// Projectile capabilities retain their separate little-endian publication.
-pub trait Host: ActorAccess {
-    fn native_death_signal(&self, enemy: u16, signal: Signal) -> u16;
-    fn set_native_death_signal(&mut self, enemy: u16, signal: Signal, value: u16);
-    fn set_collapse_delay(&mut self, enemy: u16, value: u16);
+/// The death signals and collapse delay through the Session's slot words: slot 0's
+/// signals are its death protocol, any other slot's (and the delay) that slot's
+/// extended RAM. Stores take the lease's byte path, low byte first, as the original's.
+pub trait Host: ActorAccess + SlotAccess {
+    fn death_signal(&self, enemy: u16, signal: Signal) -> u16 {
+        self.slot_word(signal.address(enemy))
+    }
+    fn set_death_signal(&mut self, enemy: u16, signal: Signal, value: u16) {
+        self.set_slot_word(signal.address(enemy), value);
+    }
+    fn set_collapse_delay(&mut self, enemy: u16, value: u16) {
+        self.set_slot_word(collapse_delay_address(enemy), value);
+    }
 }
+impl<T: ActorAccess + SlotAccess + ?Sized> Host for T {}
 
 pub fn pending(h: &impl Host, enemy: u16) -> bool {
-    h.native_death_signal(enemy, Signal::PendingHit) != 0
+    h.death_signal(enemy, Signal::PendingHit) != 0
 }
 pub fn landed(h: &impl Host, enemy: u16) -> bool {
-    h.native_death_signal(enemy, Signal::BodyLanded) != 0
+    h.death_signal(enemy, Signal::BodyLanded) != 0
 }
 pub fn arm(h: &mut impl Host) {
     let actor = h.selected_actor();
     let enemy = actor.byte_index();
-    if pending(h, enemy) && h.native_death_signal(enemy, Signal::TailReady) != 0 {
-        h.set_native_death_signal(enemy, Signal::Active, 1);
+    if pending(h, enemy) && h.death_signal(enemy, Signal::TailReady) != 0 {
+        h.set_death_signal(enemy, Signal::Active, 1);
         h.edit_actor(actor, Native, |actor| {
             actor.variables[3] = function::DEATH_PRE_DEATH_DELAY
         });
         h.set_collapse_delay(enemy, PRE_DEATH_START);
-        h.set_native_death_signal(enemy, Signal::PendingHit, 0);
-        h.set_native_death_signal(enemy, Signal::TailReady, 0);
+        h.set_death_signal(enemy, Signal::PendingHit, 0);
+        h.set_death_signal(enemy, Signal::TailReady, 0);
     }
 }
 /// Keep the projectile visibility/pose stores before this tail confirmation.
