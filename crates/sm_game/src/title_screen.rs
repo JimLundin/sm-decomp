@@ -177,5 +177,5 @@ pub fn initialize_title_sprite<H: crate::menus::host::Host + ?Sized>(
     let (y, palette, effect) =
         [(48, 1024, 0xe194), (81, 512, 0xe198), (196, 2048, 0xe19c)][variant];
     place_cinematic_sprite(object, (128, y), palette, game);
-    game.spawn_palette_effect(effect);
+    crate::palette_effects::execution::leased::spawn(effect, game);
 }

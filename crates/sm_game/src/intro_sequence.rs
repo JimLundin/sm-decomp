@@ -206,8 +206,8 @@ pub fn initial<H: Host + ?Sized>(game: &mut H) {
     crate::display_refresh::enable(true, game);
     crate::screen_fade::set_both(game, 3, 3);
     crate::hdma_objects::set_hdma_enabled(true, game);
-    game.clear_palette_effects();
-    game.set_palette_effects_enabled(true);
+    crate::palette_effects::execution::leased::clear(game);
+    crate::palette_effects::execution::leased::set_enabled(true, game);
     word!(game.DOOR_DEF_PTR = 0);
     word!(game.LAYER1_X_POS = 0);
     word!(game.LAYER1_Y_POS = 0);
@@ -309,8 +309,8 @@ pub fn ceres_initial<H: Host + ?Sized>(game: &mut H) {
     word!(game.CINEMATIC_Y = -104i32 as u16);
     word!(game.MODE7_ANGLE = 224);
     word!(game.MODE7_ZOOM = 512);
-    game.clear_palette_effects();
-    game.set_palette_effects_enabled(true);
+    crate::palette_effects::execution::leased::clear(game);
+    crate::palette_effects::execution::leased::set_enabled(true, game);
     clear_cinematic_background(0, game);
     word!(game.CINEMATIC_BG_VRAM_ADDRESS = 23552);
     crate::display_refresh::enable(true, game);
@@ -348,8 +348,8 @@ pub fn ceres_flying_into_camera<H: Host + ?Sized>(game: &mut H) {
         sprites(game, object::CERES_VORTEX, 1);
         sprites(game, object::CERES_STARS, 1);
         word!(game.CINEMATIC_FUNCTION = function::CERES_FLYING_INTO_CERES);
-        game.spawn_palette_effect(CERES_GLOW_1);
-        game.spawn_palette_effect(CERES_GLOW_2);
+        crate::palette_effects::execution::leased::spawn(CERES_GLOW_1, game);
+        crate::palette_effects::execution::leased::spawn(CERES_GLOW_2, game);
     } else {
         word!(game.MODE7_ZOOM, wrapping_sub(16));
     }
@@ -415,8 +415,8 @@ pub fn boom_initial<H: Host + ?Sized>(game: &mut H) {
     word!(game.MODE7_ZOOM = 256);
     crate::hdma_objects::set_hdma_enabled(false, game);
     crate::hdma_objects::clear_hdma(game);
-    game.clear_palette_effects();
-    game.set_palette_effects_enabled(true);
+    crate::palette_effects::execution::leased::clear(game);
+    crate::palette_effects::execution::leased::set_enabled(true, game);
     clear_cinematic_background(0x2f, game);
     word!(game.CINEMATIC_BG_VRAM_ADDRESS = 0);
     sprites(game, object::CERES_GUNSHIP, 0);
@@ -424,7 +424,7 @@ pub fn boom_initial<H: Host + ?Sized>(game: &mut H) {
     spawn_at(game, object::CERES_VORTEX, 0, 0x0000);
     // The palette the preceding sprite initializer leaves in A.
     sprites(game, object::CERES_EXPLOSION_SPAWNER, 0x0800);
-    game.spawn_palette_effect(BOOM_GLOW);
+    crate::palette_effects::execution::leased::spawn(BOOM_GLOW, game);
     crate::display_refresh::enable(true, game);
     crate::screen_fade::set_both(game, 1, 1);
     word!(game.CINEMATIC_FUNCTION = function::BOOM_WAIT_FOR_MUSIC);
@@ -568,10 +568,10 @@ pub fn zebes_initial<H: Host + ?Sized>(game: &mut H) {
     word!(game.MODE7_ZOOM = 256);
     crate::hdma_objects::set_hdma_enabled(false, game);
     crate::hdma_objects::clear_hdma(game);
-    game.clear_palette_effects();
-    game.set_palette_effects_enabled(true);
+    crate::palette_effects::execution::leased::clear(game);
+    crate::palette_effects::execution::leased::set_enabled(true, game);
     game.ram().write_byte(mirror::MOSAIC, 0x81);
-    game.spawn_palette_effect(CERES_GLOW_1);
+    crate::palette_effects::execution::leased::spawn(CERES_GLOW_1, game);
     word!(game.CINEMATIC_FUNCTION = function::ZEBES_FADING_IN);
     crate::display_refresh::enable(true, game);
     crate::screen_fade::set_both(game, 1, 1);

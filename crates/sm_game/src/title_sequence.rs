@@ -108,9 +108,9 @@ fn start_demo_logo<H: Host + ?Sized>(game: &mut H) {
     crate::word_transfers!(game, ascending, 128; le(PALETTE_BUFFER, 128) <- rom(TITLE_PALETTES, 128));
     word!(game.PALETTE_BUFFER[201] = 0x7fff);
     word!(game.PALETTE_BUFFER[202] = 32128);
-    game.clear_palette_effects();
-    game.spawn_palette_effect(TITLE_GLOW_1);
-    game.spawn_palette_effect(TITLE_GLOW_2);
+    crate::palette_effects::execution::leased::clear(game);
+    crate::palette_effects::execution::leased::spawn(TITLE_GLOW_1, game);
+    crate::palette_effects::execution::leased::spawn(TITLE_GLOW_2, game);
     set_cinematic_backdrop(false, game);
     game.ram().write_byte(crate::ram::mirror::TM, 17);
     crate::room_visuals::initialize_title_gradient(game);
@@ -140,10 +140,10 @@ pub fn load_graphics<H: Host + ?Sized>(game: &mut H) {
     crate::display_refresh::enable(true, game);
     crate::screen_fade::set_both(game, 1, 1);
     crate::hdma_objects::set_hdma_enabled(true, game);
-    game.set_palette_effects_enabled(true);
+    crate::palette_effects::execution::leased::set_enabled(true, game);
     word!(game.FX_LAYER_BLENDING_CONFIG_A = 0);
-    game.spawn_palette_effect(TITLE_GLOW_1);
-    game.spawn_palette_effect(TITLE_GLOW_2);
+    crate::palette_effects::execution::leased::spawn(TITLE_GLOW_1, game);
+    crate::palette_effects::execution::leased::spawn(TITLE_GLOW_2, game);
     // The second title palette allocation leaves its slot offset in A.
     spawn(game, CinematicObjects::Mode7, object::BABY_METROID, 0x000c);
 }
@@ -195,8 +195,8 @@ fn finish<H: Host + ?Sized>(next: u16, game: &mut H, clear_index: impl FnOnce(&m
     word!(game.REG_BG3VOFS = 0);
     word!(game.MODE7_ANGLE = 0);
     word!(game.CINEMATIC_FUNCTION = function::SETUP);
-    game.set_palette_effects_enabled(false);
-    game.clear_palette_effects();
+    crate::palette_effects::execution::leased::set_enabled(false, game);
+    crate::palette_effects::execution::leased::clear(game);
     crate::word_transfers!(game, descending, 329; native(CINEMATIC_OBJECTS) <- value(0));
     crate::word_transfers!(game, descending, 256; le(HDMA_TABLE_1, 255) <- value(0));
     word!(game.GAME_STATE = next);

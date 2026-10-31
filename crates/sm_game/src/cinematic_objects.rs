@@ -222,7 +222,7 @@ pub fn execute_cinematic_sprite_instruction<H: crate::menus::host::Host + ?Sized
                 j = (j).wrapping_add(6);
             }
             },
-            9161125 => { game.spawn_palette_effect(crate::intro_sequence::ZEBES_TEXT_FADE_IN);         },
+            9161125 => { crate::palette_effects::execution::leased::spawn(crate::intro_sequence::ZEBES_TEXT_FADE_IN, game);         },
             9161135 => {
             if word!(game.JAPANESE_TEXT_FLAG) != 0 {
                 CinematicSprites.spawn(intro::PLANET_ZEBES_JAPANESE_TEXT,
@@ -231,7 +231,7 @@ pub fn execute_cinematic_sprite_instruction<H: crate::menus::host::Host + ?Sized
                 );
             }
                 },
-            9161149 => { game.spawn_palette_effect(crate::intro_sequence::ZEBES_TEXT_FADE_OUT);         },
+            9161149 => { crate::palette_effects::execution::leased::spawn(crate::intro_sequence::ZEBES_TEXT_FADE_OUT, game);         },
             9171550 => {
             set_cinematic_blend(3, 16, 2, 34, game);
             game.ram().write_byte(0x5d, 100);
@@ -240,7 +240,7 @@ pub fn execute_cinematic_sprite_instruction<H: crate::menus::host::Host + ?Sized
     crate::flow::set(game, crate::flow::Word::CinematicFunction, 0xe58a);
                 },
             9171588 => {
-            game.spawn_palette_effect(ending_effect::ZEBES_FADE_OUT);
+            crate::palette_effects::execution::leased::spawn(ending_effect::ZEBES_FADE_OUT, game);
             word!(game.PALETTE_BUFFER[254] = 1);
                 },
             9171605 => {
@@ -252,15 +252,15 @@ pub fn execute_cinematic_sprite_instruction<H: crate::menus::host::Host + ?Sized
             game.ram().write_byte(0x59, 124);
             spawn_cinematic_sprite_at(ending::ZEBES_STARS_RIGHT, 0, 0xf27c, game);
             spawn_cinematic_sprite_at(ending::ZEBES_STARS_LEFT, 2, 2, game);
-            game.spawn_palette_effect(ending_effect::EXPLOSION_WIDE_FOREGROUND);
-            game.spawn_palette_effect(ending_effect::EXPLOSION_SPACE_WHITE_OUT);
-            game.spawn_palette_effect(ending_effect::EXPLOSION_WIDE_BACKGROUND);
+            crate::palette_effects::execution::leased::spawn(ending_effect::EXPLOSION_WIDE_FOREGROUND, game);
+            crate::palette_effects::execution::leased::spawn(ending_effect::EXPLOSION_SPACE_WHITE_OUT, game);
+            crate::palette_effects::execution::leased::spawn(ending_effect::EXPLOSION_WIDE_BACKGROUND, game);
                 },
             9171706 => {
             set_cinematic_blend(3, 18, 2, 51, game);
             game.ram().write_byte(0x58, 116);
             game.ram().write_byte(0x59, 120);
-            game.spawn_palette_effect(ending_effect::EXPLOSION_FINALE);
+            crate::palette_effects::execution::leased::spawn(ending_effect::EXPLOSION_FINALE, game);
             spawn_cinematic_sprite_at(ending::ZEBES_AFTERGLOW, 6, 6, game);
                 },
             9171755 => {

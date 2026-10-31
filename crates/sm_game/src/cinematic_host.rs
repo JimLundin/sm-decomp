@@ -3,15 +3,12 @@
 //! session operations the compatibility runtime still implements.
 
 pub trait Host: crate::menus::host::Host + crate::display_refresh::Host {
-    fn clear_palette_effects(&mut self);
-    fn set_palette_effects_enabled(&mut self, enabled: bool);
     fn spawn_power_bomb(&mut self);
     /// Set up Samus for the intro.
     fn initialize_player(&mut self);
     fn disable_scanline_irq(&mut self);
     /// Queue the ending's next Mode 7 tile upload.
     fn advance_ending_tile_upload(&mut self);
-    fn advance_palette_effects(&mut self);
     /// Prepare Samus's projectiles and run her frame.
     fn advance_intro_player(&mut self);
     /// The original's failed native assertion `expression` in `function`.

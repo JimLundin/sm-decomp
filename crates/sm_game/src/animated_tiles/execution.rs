@@ -377,3 +377,25 @@ pub fn upload_pending(host: &mut impl Host) {
         host.probe("animated_tiles.upload.acknowledged");
     }
 }
+
+/// The compatibility entries: each runs on a fresh lease of `game`.
+pub mod leased {
+    use crate::runtime_access::RuntimeAccess;
+    use crate::session_access::SessionAccess;
+
+    pub fn set_enabled<H: RuntimeAccess + ?Sized>(enabled: bool, game: &mut H) {
+        super::set_enabled(game.runtime().session_mut(), enabled);
+    }
+    pub fn clear<H: RuntimeAccess + ?Sized>(game: &mut H) {
+        super::clear(game.runtime().session_mut());
+    }
+    pub fn spawn<H: RuntimeAccess + ?Sized>(definition: u16, game: &mut H) {
+        super::spawn(&mut game.runtime(), definition);
+    }
+    pub fn advance<H: RuntimeAccess + ?Sized>(game: &mut H) {
+        super::advance(&mut game.runtime());
+    }
+    pub fn upload_pending<H: RuntimeAccess + ?Sized>(game: &mut H) {
+        super::upload_pending(&mut game.runtime());
+    }
+}

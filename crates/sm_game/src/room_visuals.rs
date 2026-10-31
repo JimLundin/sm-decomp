@@ -210,7 +210,7 @@ pub fn initialize_weather<H: crate::menus::host::Host + ?Sized>(weather: Weather
     game.spawn_hdma(0x88, &HdmaObjectDefinition::new(control, 0x11, program));
     if let Some(tiles) = tiles {
         spawn_bg3_scroll(game);
-        game.spawn_animated_tiles(tiles as u16);
+        crate::animated_tiles::execution::leased::spawn(tiles as u16, game);
     }
 }
 
