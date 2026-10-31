@@ -389,6 +389,24 @@ fn idle_flying(game: &mut (impl EnemyHost + LeaseActors), k: u16) {
     session_slot!(game, Kihunter[hunter]; arc_centre_x = dx.wrapping_add(x), arc_centre_y = y, function = SWOOP,
         arc_radius_y = dy, arc_radius_x = distance, swipe = 0);
 }
+/// One frame of the swoop's swing ($A8:F3B8): the 16.16 angular `velocity` gains the
+/// `acceleration`, its whole part stopping at `cap`, and moves the arc `angle`. Forwards
+/// (a positive acceleration) the arc ends at angle 100h, backwards below 80h. The new
+/// velocity and angle, and whether the arc ended.
+pub fn swing(velocity: u32, acceleration: u32, cap: u16, angle: u16) -> (u32, u16, bool) {
+    let forward = acceleration & 0x8000_0000 == 0;
+    let mut velocity = velocity.wrapping_add(acceleration);
+    let whole = (velocity >> 16) as u16;
+    if forward == (whole.wrapping_sub(cap) & 0x8000 == 0) {
+        velocity = (u32::from(cap) << 16) | (velocity & 0xffff);
+    }
+    let angle = angle.wrapping_add((velocity >> 16) as u16);
+    let finished = match forward {
+        true => angle.wrapping_sub(0x100) & 0x8000 == 0,
+        false => angle.wrapping_sub(0x80) & 0x8000 != 0,
+    };
+    (velocity, angle, finished)
+}
 /// Ki-hunter function - winged - swoop ($A8:F3B8): swing along the arc to Samus, swiping
 /// past the trigger angle, then back off at a block.
 fn swoop(game: &mut (impl EnemyHost + LeaseActors), k: u16) {
@@ -406,24 +424,18 @@ fn swoop(game: &mut (impl EnemyHost + LeaseActors), k: u16) {
         game,
         Kihunter[hunter](angular_acceleration, angular_subacceleration)
     );
-    session_slot!(
+    let velocity = session_slot!(
         game,
-        Kihunter[hunter](angular_velocity, angular_subvelocity) += acceleration
+        Kihunter[hunter](angular_velocity, angular_subvelocity)
     );
     let cap = session_slot!(game, Kihunter[hunter].angular_velocity_cap);
-    let delta = session_slot!(game, Kihunter[hunter].angular_velocity).wrapping_sub(cap);
-    if forward == (delta & 0x8000 == 0) {
-        session_slot!(game, Kihunter[hunter].angular_velocity = cap);
-    }
-    let velocity = session_slot!(game, Kihunter[hunter].angular_velocity);
-    session_slot!(game, Kihunter[hunter].arc_angle, |angle| angle
-        .wrapping_add(velocity));
     let angle = session_slot!(game, Kihunter[hunter].arc_angle);
-    let finished_arc = if forward {
-        (angle as i32 - 256) & 0x8000 == 0
-    } else {
-        (angle as i32 - 128) & 0x8000 != 0
-    };
+    let (velocity, angle, finished_arc) = swing(velocity, acceleration, cap, angle);
+    session_slot!(
+        game,
+        Kihunter[hunter](angular_velocity, angular_subvelocity) = velocity
+    );
+    session_slot!(game, Kihunter[hunter].arc_angle = angle);
     if finished_arc {
         return session_slot!(game, Kihunter[hunter].function = IDLE_FLYING);
     }
