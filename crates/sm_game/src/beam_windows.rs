@@ -11,6 +11,10 @@ const XRAY_GRADIENTS: u32 = 0x91_c9d4;
 const TABLE_BYTES: u16 = 460;
 /// The window word that hides a row.
 const CLOSED: u16 = 255;
+/// $0D1E, the off-screen beam table index: the on-screen beams clear it,
+/// then the up-right and down-right ones leave their left edge's crossing
+/// row there.
+const CROSSING_ROW: usize = 0xd1e;
 
 /// The beam window's host: tables through the RAM projection and the
 /// cartridge reads.
@@ -50,7 +54,8 @@ fn close_rows(write: &mut impl FnMut(i32, u16), mut position: u16, down: bool) {
 /// once both edges leave the screen on the same side. With `open_crossing`,
 /// the row where the left edge leaves past the right of the screen keeps
 /// x = 255 to the right edge open, as the on-screen up-right beam ($91:C71C)
-/// fills that row's left byte with FFh and closes only the rows after it.
+/// fills that row's left byte with FFh and closes only the rows after it;
+/// that row's index is returned.
 fn rasterize_xray_edges(
     write: &mut impl FnMut(i32, u16),
     mut position: i32,
@@ -59,7 +64,7 @@ fn rasterize_xray_edges(
     steps: [u32; 2],
     finish_adjustment: i32,
     mut open_crossing: bool,
-) {
+) -> Option<i32> {
     let outside_rows = |position| {
         if row_step < 0 {
             position < 0
@@ -67,10 +72,14 @@ fn rasterize_xray_edges(
             position >= i32::from(TABLE_BYTES)
         }
     };
+    let mut crossing = None;
     loop {
         let packed = advance_window_edges(&mut edges, steps, false);
         let left_past = edges[0] as i32 >= 65536;
         let hidden = (edges[1] as i32) < 0 || (left_past && !open_crossing);
+        if open_crossing && left_past {
+            crossing = Some((position >> 1) * 2);
+        }
         open_crossing &= !left_past;
         let finished = edges[0] & !65535 != 0
             && edges[1] & !65535 != 0
@@ -81,14 +90,14 @@ fn rasterize_xray_edges(
             loop {
                 position += row_step;
                 if outside_rows(position) {
-                    return;
+                    return crossing;
                 }
                 write((position >> 1) * 2, CLOSED);
             }
         }
         position += row_step;
         if outside_rows(position) {
-            return;
+            return crossing;
         }
     }
 }
@@ -147,6 +156,7 @@ fn store_onscreen_positive_rows(ram: &mut (impl SessionRam + ?Sized), rows: Posi
         low_edge = value;
         if carry {
             carry_row = index;
+            ram.write_slice_le(CROSSING_ROW, index);
             do_until! { !continues(index);
                 ram.write_slice_le(at(index), 0x00ff);
                 index = index.wrapping_add(2);
@@ -352,6 +362,9 @@ pub fn calculate_xray_window<H: BeamHost + ?Sized>(window: XrayWindow, game: &mu
     let origin = x << 8;
     let position = 2 * i32::from(y);
     let up_start = position - if off_screen { 2 } else { 4 };
+    if !off_screen {
+        game.write_slice_le(CROSSING_ROW, 0);
+    }
     // Generic rows retain signed offsets; positive-down helpers wrap their u16 offsets.
     let mut write = |offset: i32, value: u16| {
         let address = table
@@ -412,7 +425,7 @@ pub fn calculate_xray_window<H: BeamHost + ?Sized>(window: XrayWindow, game: &mu
             } else {
                 ([0, edge], [u32::MAX, increment])
             };
-            rasterize_xray_edges(&mut write, start, step, edges, steps, -step, false);
+            _ = rasterize_xray_edges(&mut write, start, step, edges, steps, -step, false);
         }
     } else {
         let up = matches!(direction, Up);
@@ -432,7 +445,7 @@ pub fn calculate_xray_window<H: BeamHost + ?Sized>(window: XrayWindow, game: &mu
         };
         let left = xray_edge(origin, gradients[0], positive_left, off_screen);
         let right = xray_edge(origin, gradients[1], positive_right, off_screen);
-        rasterize_xray_edges(
+        let crossing = rasterize_xray_edges(
             &mut write,
             if up { up_start } else { position },
             if up { -2 } else { 2 },
@@ -446,5 +459,8 @@ pub fn calculate_xray_window<H: BeamHost + ?Sized>(window: XrayWindow, game: &mu
             if up { position as u16 } else { up_start as u16 },
             up,
         );
+        if let Some(row) = crossing {
+            game.write_slice_le(CROSSING_ROW, row as u16);
+        }
     }
 }
