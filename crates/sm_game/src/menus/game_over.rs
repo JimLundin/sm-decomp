@@ -69,8 +69,8 @@ fn draw_menu<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     for (at, value) in [(0x69, 17), (0x74, 32), (0x75, 64), (0x76, 0x80)] {
         game.ram().write_byte(at, value);
     }
-    game.queue_music_delayed8(0);
-    game.queue_music_delayed8(0xff03);
+    crate::music_requests::queue_delayed_8(0, game);
+    crate::music_requests::queue_delayed_8(0xff03, game);
     with_file_select(game, |menu| {
         *menu.missile_animation_timer() = 1;
         *menu.missile_animation_frame() = 0;
@@ -109,9 +109,9 @@ fn draw_menu<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
 }
 
 fn wait_for_music<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    if game.has_queued_music() == 0 {
+    if crate::music_requests::has_queued_music(game) == 0 {
         crate::menu!(game.MenuIndex += 1);
-        game.queue_music_delayed8(4);
+        crate::music_requests::queue_delayed_8(4, game);
     }
 }
 

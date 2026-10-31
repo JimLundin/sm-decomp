@@ -216,8 +216,8 @@ pub fn initial<H: Host + ?Sized>(game: &mut H) {
     crate::word_transfers!(game, descending, 128; pause_map(127) <- rom(INTRO_PAUSE_MAP, 127));
     word!(game.INTRO_FRAME_COUNTER = 0xffff);
     word!(game.CINEMATIC_FUNCTION = function::WAIT_FOR_MUSIC_AND_FADE_IN);
-    game.queue_music_delayed8(NO_MUSIC);
-    game.queue_music_delayed8(INTRO_MUSIC_DATA);
+    crate::music_requests::queue_delayed_8(NO_MUSIC, game);
+    crate::music_requests::queue_delayed_8(INTRO_MUSIC_DATA, game);
 }
 
 /// Cinematic function - intro - play "the last Metroid is in captivity"
@@ -227,7 +227,7 @@ pub fn last_metroid_in_captivity<H: Host + ?Sized>(game: &mut H) {
     if countdown(game) {
         word!(game.CINEMATIC_FUNCTION = function::GALAXY_IS_AT_PEACE);
         word!(game.CINEMATIC_FUNCTION_TIMER = 200);
-        game.queue_music_delayed8(LAST_METROID_MUSIC);
+        crate::music_requests::queue_delayed_8(LAST_METROID_MUSIC, game);
     }
 }
 
@@ -235,9 +235,9 @@ pub fn last_metroid_in_captivity<H: Host + ?Sized>(game: &mut H) {
 /// ($8B:A613). Was `CinematicFunc_Intro_QueueGalaxyIsAtPeace`.
 pub fn galaxy_is_at_peace<H: Host + ?Sized>(game: &mut H) {
     if countdown(game) {
-        game.queue_music_delayed8(NO_MUSIC);
-        game.queue_music_delayed8(GALAXY_AT_PEACE_DATA);
-        game.queue_music_delayed(5, SONG_DELAY);
+        crate::music_requests::queue_delayed_8(NO_MUSIC, game);
+        crate::music_requests::queue_delayed_8(GALAXY_AT_PEACE_DATA, game);
+        crate::music_requests::queue_delayed(5, SONG_DELAY, game);
         word!(game.CINEMATIC_FUNCTION = function::WAIT_240_FRAMES);
     }
 }
@@ -288,9 +288,9 @@ pub fn set_up_text_page_1<H: Host + ?Sized>(game: &mut H) {
     word!(game.REG_BG3VOFS = 8);
     crate::intro_pages::clear_english_text(game);
     crate::intro_pages::reset_caret(game);
-    game.queue_music_delayed8(NO_MUSIC);
-    game.queue_music_delayed8(TEXT_MUSIC_DATA);
-    game.queue_music_delayed(5, SONG_DELAY);
+    crate::music_requests::queue_delayed_8(NO_MUSIC, game);
+    crate::music_requests::queue_delayed_8(TEXT_MUSIC_DATA, game);
+    crate::music_requests::queue_delayed(5, SONG_DELAY, game);
     word!(game.CINEMATIC_FUNCTION = function::SPAWN_TEXT_PAGE_1);
 }
 
@@ -316,14 +316,14 @@ pub fn ceres_initial<H: Host + ?Sized>(game: &mut H) {
     crate::display_refresh::enable(true, game);
     sprites(game, object::CERES_STARS, 0);
     word!(game.CINEMATIC_FUNCTION = function::CERES_WAIT_FOR_MUSIC);
-    game.queue_music_delayed8(CERES_MUSIC_DATA);
-    game.queue_music_delayed(5, SONG_DELAY);
+    crate::music_requests::queue_delayed_8(CERES_MUSIC_DATA, game);
+    crate::music_requests::queue_delayed(5, SONG_DELAY, game);
 }
 
 /// Cinematic function - fly to Ceres - wait for music queue and enable
 /// display ($8B:BDE4). Was `CinematicFunction_Intro_Func55`.
 pub fn ceres_wait_for_music<H: Host + ?Sized>(game: &mut H) {
-    if game.has_queued_music() & 1 == 0 {
+    if crate::music_requests::has_queued_music(game) & 1 == 0 {
         game.ram().write_byte(mirror::INIDISP, 15);
         word!(game.CINEMATIC_FUNCTION = function::CERES_FLYING_INTO_CAMERA);
     }
@@ -428,19 +428,19 @@ pub fn boom_initial<H: Host + ?Sized>(game: &mut H) {
     crate::display_refresh::enable(true, game);
     crate::screen_fade::set_both(game, 1, 1);
     word!(game.CINEMATIC_FUNCTION = function::BOOM_WAIT_FOR_MUSIC);
-    game.queue_music_delayed8(NO_MUSIC);
-    game.queue_music_delayed8(CERES_MUSIC_DATA);
+    crate::music_requests::queue_delayed_8(NO_MUSIC, game);
+    crate::music_requests::queue_delayed_8(CERES_MUSIC_DATA, game);
     if word!(game.GAME_STATE) == BOOM_WITH_SAMUS {
-        game.queue_music_delayed(8, SONG_DELAY);
+        crate::music_requests::queue_delayed(8, SONG_DELAY, game);
     } else {
-        game.queue_music_delayed(7, SONG_DELAY);
+        crate::music_requests::queue_delayed(7, SONG_DELAY, game);
     }
 }
 
 /// Cinematic function - Ceres goes boom - wait for music queue ($8B:C2E4).
 /// Was `CinematicFunction_Intro_Func74`.
 pub fn boom_wait_for_music<H: Host + ?Sized>(game: &mut H) {
-    if game.has_queued_music() & 1 == 0 {
+    if crate::music_requests::has_queued_music(game) & 1 == 0 {
         word!(game.CINEMATIC_FUNCTION = function::BOOM_SMALL_EXPLOSIONS);
     }
 }
@@ -526,7 +526,7 @@ pub fn boom_fade_out<H: Host + ?Sized>(game: &mut H) {
         crate::display_refresh::enable(true, game);
         crate::screen_fade::set_both(game, 0, 0);
         if word!(game.GAME_STATE) == BOOM_WITH_SAMUS {
-            game.queue_music_delayed8(NO_MUSIC);
+            crate::music_requests::queue_delayed_8(NO_MUSIC, game);
             word!(game.HUD_ITEM_INDEX = 0);
             word!(game.SAMUS_AUTO_CANCEL_HUD_ITEM_INDEX = 0);
             game.set_invincibility_timer(0);

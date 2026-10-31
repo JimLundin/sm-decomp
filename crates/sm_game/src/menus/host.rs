@@ -104,8 +104,6 @@ pub trait MenuRuntime:
     fn native_image_binding(&self) -> Option<sm_data::cartridge::RomImage>;
     fn spawn_animated_tiles(&mut self, definition: u16);
     fn shake_room_with_sound(&mut self, kind: u16);
-    fn has_queued_music(&mut self) -> u8;
-    fn queue_music_delayed8(&mut self, track: u16);
     /// Spawn an HDMA object from bank `bank`; returns its slot.
     fn spawn_hdma(
         &mut self,
@@ -139,6 +137,7 @@ pub trait Host:
     + DisplayRefresh
     + crate::display_refresh::DisplayOwner
     + crate::hdma_objects::HdmaTable
+    + crate::session_owners::AudioHost
     + crate::sprite_output::SpriteHost
     + crate::cartridge::NativeDiagnostics
     + crate::decompression::DecompressionHost

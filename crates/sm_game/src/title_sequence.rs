@@ -84,7 +84,7 @@ fn fade_out_to_demo<H: Host + ?Sized>(game: &mut H) {
     if advance_cinematic_fade(CinematicFade::FastOut, game) {
         word!(game.SKIP_TO_TITLE_INDEX = 2);
         word!(game.CINEMATIC_FUNCTION = function::WAITING);
-        game.queue_music_delayed8(DEMO_MUSIC);
+        crate::music_requests::queue_delayed_8(DEMO_MUSIC, game);
     }
 }
 
@@ -152,7 +152,7 @@ pub fn load_graphics<H: Host + ?Sized>(game: &mut H) {
 /// `CinematicFunctionOpening`.
 pub fn setup<H: Host + ?Sized>(game: &mut H) {
     load_graphics(game);
-    game.queue_music_delayed8(TITLE_MUSIC_DATA);
+    crate::music_requests::queue_delayed_8(TITLE_MUSIC_DATA, game);
     word!(game.CINEMATIC_FUNCTION = function::NOTHING);
     spawn(
         game,
@@ -160,7 +160,7 @@ pub fn setup<H: Host + ?Sized>(game: &mut H) {
         object::SCROLLING_1994,
         function::NOTHING,
     );
-    game.queue_music_delayed8(TITLE_THEME);
+    crate::music_requests::queue_delayed_8(TITLE_THEME, game);
 }
 
 /// Cinematic function - title sequence - scene 3 - zooming out ($8B:9E8B):
