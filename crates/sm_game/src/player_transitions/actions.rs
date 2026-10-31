@@ -280,6 +280,7 @@ fn clamp(h: &mut impl Host) {
     pose::clamp_previous_position(h.session_mut(), delta);
 }
 fn after_grapple(h: &mut impl Host) {
+    crate::probe::hit("grapple.after_release");
     clamp(h);
     crate::samus_palette::cancel_speed_boost(h);
     clear_base(h.session_mut());

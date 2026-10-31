@@ -361,6 +361,7 @@ fn suit_pickup_shot(h: &mut impl Host, raw: u16) {
     }
 }
 pub fn reflect(h: &mut impl Host, raw: u16) {
+    crate::probe::hit("player_projectiles.reflect");
     let kind = shot!(h, raw, kind);
     if kind & super::kinds::MISSILE_BIT != 0 {
         animation::initialize(h, raw, Initialization::Projectile);

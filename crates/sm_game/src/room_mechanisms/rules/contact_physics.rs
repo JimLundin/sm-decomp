@@ -13,6 +13,7 @@ pub enum Setup {
 }
 
 fn surface(c: &mut impl Host) {
+    crate::probe::hit("contact_physics.surface");
     c.session_mut().player.contact.momentum = 0;
     c.session_mut().player.contact.speed_boost = 0;
     c.session_mut().projectiles.controls.echo_sound = 0;
@@ -87,6 +88,7 @@ fn collision_surface(c: &mut impl Host, displacement: &mut Displacement<'_>) -> 
         }
         _ => return 0,
     }
+    crate::probe::hit("contact_physics.sand_floor");
     let visits = c.session().player.contact.sand_visits.wrapping_add(1);
     c.session_mut().player.contact.sand_visits = visits;
     0
@@ -95,6 +97,7 @@ fn collision_surface(c: &mut impl Host, displacement: &mut Displacement<'_>) -> 
 pub fn setup(c: &mut impl Host, displacement: &mut Displacement<'_>, kind: Setup) -> u8 {
     match kind {
         Setup::Ice => {
+            crate::probe::hit("contact_physics.ice");
             let radius = c.session().player.contact.radius;
             let bottom = c.session().player.y.wrapping_add(radius).wrapping_sub(1);
             if matches!(bottom & 15, 7 | 15) {
@@ -103,6 +106,7 @@ pub fn setup(c: &mut impl Host, displacement: &mut Displacement<'_>, kind: Setup
         }
         Setup::Surface => surface(c),
         Setup::Submerge | Setup::SlowFall | Setup::FastFall => {
+            crate::probe::hit("contact_physics.sinking");
             let fraction = match kind {
                 Setup::Submerge => {
                     c.session_mut().player.contact.auto_jump = 0;
