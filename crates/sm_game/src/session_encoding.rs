@@ -730,6 +730,7 @@ macro_rules! scalar_words {
         $f(ram::TIMER_STATUS,$($borrow)* $s.timing.timer_status);
         $f(ram::JAPANESE_TEXT_FLAG,$($borrow)* $s.options.japanese_text);
         $f(ram::FX_LAYER_BLENDING_CONFIG_A,$($borrow)* $s.room.fx_blending);
+        $f(ram::FX_LAYER_BLENDING_CONFIG_B,$($borrow)* $s.room.fx_layer3_blending);
         $f(0x5f7,$($borrow)* $s.minimap.disabled);
         for row in 0..3 {
             for column in 0..5 {
