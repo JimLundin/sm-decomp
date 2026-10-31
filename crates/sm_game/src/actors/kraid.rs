@@ -439,10 +439,11 @@ fn push_samus<S: BossState + ?Sized>(game: &mut S) {
     word!(game.EXTRA_SAMUS_Y_DISPLACEMENT = -8i32 as u16);
 }
 
-/// The arm is shot: the projectile explodes. Was `Kraid_Arm_Shot`.
+/// The arm is shot: the projectile explodes and flies on, since the original's
+/// delete indexes by the explosion's ID left in Y and writes ROM ($A7:94BA).
+/// Was `Kraid_Arm_Shot`.
 pub fn arm_shot<L: Lease + ?Sized>(game: &mut L, j: u16) {
     projectile_explosion(game, j);
-    word!(game.PROJECTILE_DIR[(j >> 1)] |= 0x10);
 }
 
 /// Whether Kraid's boss bit is set for this area. Was `Kraid_CheckIfDead`.
