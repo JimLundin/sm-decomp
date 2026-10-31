@@ -45,6 +45,7 @@ fn assert_checkpoint_binding(session: &Session, loaded: &RomImage, native: &RomI
                 loaded: Some(loaded),
                 native: Some(native),
                 sources: &[],
+                policy_dependent: &|_| false,
             },
         )
         .unwrap();
@@ -58,6 +59,7 @@ fn assert_checkpoint_binding(session: &Session, loaded: &RomImage, native: &RomI
             loaded: Some(loaded),
             native: Some(native),
             sources: &[],
+            policy_dependent: &|_| false,
         },
     )
     .unwrap();
@@ -73,7 +75,8 @@ fn assert_checkpoint_binding(session: &Session, loaded: &RomImage, native: &RomI
                 CheckpointImages {
                     loaded: Some(loaded),
                     native: Some(native),
-                    sources: &[]
+                    sources: &[],
+                    policy_dependent: &|_| false,
                 }
             )
             .unwrap(),
@@ -141,6 +144,7 @@ fn authored_timeline(session: &Session, loaded: &RomImage, native: &RomImage) {
                 loaded: Some(loaded),
                 native: Some(native),
                 sources: &[],
+                policy_dependent: &|_| false,
             },
         )
         .unwrap();
@@ -154,6 +158,7 @@ fn authored_timeline(session: &Session, loaded: &RomImage, native: &RomImage) {
             loaded: Some(loaded),
             native: Some(native),
             sources: &[],
+            policy_dependent: &|_| false,
         },
     )
     .unwrap();
@@ -181,6 +186,7 @@ fn authored_timeline(session: &Session, loaded: &RomImage, native: &RomImage) {
             loaded: Some(loaded),
             native: Some(native),
             sources: &[],
+            policy_dependent: &|_| false,
         },
     )
     .unwrap();
@@ -311,6 +317,7 @@ fn authority_failures(session: &Session, loaded: &RomImage, native: &RomImage) {
                 loaded: Some(loaded),
                 native: Some(native),
                 sources: &[],
+                policy_dependent: &|_| false,
             },
         )
         .unwrap();
@@ -327,7 +334,8 @@ fn authority_failures(session: &Session, loaded: &RomImage, native: &RomImage) {
             CheckpointImages {
                 loaded: Some(loaded),
                 native: Some(native),
-                sources: &[]
+                sources: &[],
+                policy_dependent: &|_| false,
             }
         )
         .err()
@@ -347,7 +355,8 @@ fn authority_failures(session: &Session, loaded: &RomImage, native: &RomImage) {
                 CheckpointImages {
                     loaded: Some(loaded),
                     native: Some(native),
-                    sources: &[]
+                    sources: &[],
+                    policy_dependent: &|_| false,
                 }
             )
             .err()
@@ -366,6 +375,7 @@ fn authority_failures(session: &Session, loaded: &RomImage, native: &RomImage) {
             loaded: Some(loaded),
             native: Some(native),
             sources: &[],
+            policy_dependent: &|_| false,
         },
     )
     .unwrap();
@@ -442,7 +452,8 @@ fn check_authored(
                 CheckpointImages {
                     loaded: Some(loaded),
                     native: Some(native),
-                    sources: &[]
+                    sources: &[],
+                    policy_dependent: &|_| false,
                 }
             )
             .unwrap(),
@@ -479,7 +490,8 @@ fn forbidden_lineage(session: &Session, loaded: &RomImage, native: &RomImage) {
                 CheckpointImages {
                     loaded: Some(loaded),
                     native: Some(native),
-                    sources: &[]
+                    sources: &[],
+                    policy_dependent: &|_| false,
                 }
             )
             .err()
@@ -501,7 +513,8 @@ fn forbidden_lineage(session: &Session, loaded: &RomImage, native: &RomImage) {
                 CheckpointImages {
                     loaded: Some(loaded),
                     native: Some(native),
-                    sources: &[]
+                    sources: &[],
+                    policy_dependent: &|_| false,
                 }
             )
             .err()
@@ -531,7 +544,8 @@ fn expect_rejection(
             CheckpointImages {
                 loaded: Some(loaded),
                 native: Some(native),
-                sources: &[]
+                sources: &[],
+                policy_dependent: &|_| false,
             }
         )
         .err()

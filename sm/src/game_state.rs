@@ -1543,6 +1543,7 @@ impl GameOwner {
                     loaded: game.loaded_rom.as_ref(),
                     native: game.capture_native_rom_binding().as_ref(),
                     sources: sources,
+                    policy_dependent: &crate::rom_patches::policy_dependent,
                 })
         })
     }
@@ -1588,6 +1589,7 @@ impl GameOwner {
                     loaded: game.loaded_rom.as_ref(),
                     native: game.capture_native_rom_binding().as_ref(),
                     sources: sources,
+                    policy_dependent: &crate::rom_patches::policy_dependent,
                 },
             )?;
             let (description, media, required) = supplied.into_parts();

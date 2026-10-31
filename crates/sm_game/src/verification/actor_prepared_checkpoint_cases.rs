@@ -135,6 +135,7 @@ pub fn run(session: &Session, loaded: &RomImage, native: &RomImage) {
                 loaded: Some(loaded),
                 native: Some(native),
                 sources: &sources,
+                policy_dependent: &|_| false,
             },
         )
         .unwrap();
@@ -149,6 +150,7 @@ pub fn run(session: &Session, loaded: &RomImage, native: &RomImage) {
             loaded: Some(loaded),
             native: Some(native),
             sources: &sources,
+            policy_dependent: &|_| false,
         },
     )
     .unwrap();
@@ -165,7 +167,8 @@ pub fn run(session: &Session, loaded: &RomImage, native: &RomImage) {
                 CheckpointImages {
                     loaded: Some(loaded),
                     native: Some(native),
-                    sources: &sources
+                    sources: &sources,
+                    policy_dependent: &|_| false,
                 }
             )
             .unwrap(),
@@ -271,7 +274,8 @@ fn changed_catalogs(
                 CheckpointImages {
                     loaded: Some(loaded),
                     native: Some(native),
-                    sources: &sources
+                    sources: &sources,
+                    policy_dependent: &|_| false,
                 }
             )
             .err()
@@ -318,6 +322,7 @@ fn changed_palette_source(
                 loaded: Some(&changed),
                 native: Some(native),
                 sources: &sources,
+                policy_dependent: &|_| false,
             },
         )
         .unwrap();
@@ -331,6 +336,7 @@ fn changed_palette_source(
             loaded: Some(&changed),
             native: Some(native),
             sources: &sources,
+            policy_dependent: &|_| false,
         },
     )
     .unwrap();
@@ -345,7 +351,8 @@ fn changed_palette_source(
             CheckpointImages {
                 loaded: Some(&changed),
                 native: Some(native),
-                sources: &sources
+                sources: &sources,
+                policy_dependent: &|_| false,
             }
         )
         .err()
@@ -433,7 +440,8 @@ fn changed_prepared_catalog(
             CheckpointImages {
                 loaded: Some(loaded),
                 native: Some(native),
-                sources: &sources
+                sources: &sources,
+                policy_dependent: &|_| false,
             }
         )
         .err()
@@ -462,6 +470,7 @@ fn accept_changed_catalog(
                 loaded: Some(loaded),
                 native: Some(native),
                 sources: sources,
+                policy_dependent: &|_| false,
             },
         )
         .unwrap();
@@ -475,6 +484,7 @@ fn accept_changed_catalog(
             loaded: Some(loaded),
             native: Some(native),
             sources: sources,
+            policy_dependent: &|_| false,
         },
     )
     .unwrap();
