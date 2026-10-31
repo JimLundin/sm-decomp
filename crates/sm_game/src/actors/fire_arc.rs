@@ -119,9 +119,8 @@ pub fn initialize<H: Host + ?Sized>(game: &mut H) {
         FireArc[e].direction = slot!(byte game, FireArc[e].parameter_2[0]) as u16
     );
     let inactive = slot!(byte game, FireArc[e].parameter_2[1]) as u16;
-    slot!(game, FireArc[e].inactive_reset = inactive);
-    slot!(game, FireArc[e].inactive_timer = inactive);
-    slot!(game, FireArc[e].function = function::INACTIVE);
+    slot!(game, FireArc[e]; inactive_reset = inactive, inactive_timer = inactive,
+        function = function::INACTIVE);
     let pair = 2 * usize::from(slot!(game, FireArc[e].direction));
     let start = START_AND_FINISH[pair];
     slot!(game, FireArc[e]; start_angle = start, angle = start,
@@ -215,9 +214,8 @@ pub fn inactive<H: Host + ?Sized>(game: &mut H) {
         game,
         FireArc[e].inactive_timer = slot!(game, FireArc[e].inactive_reset)
     );
-    slot!(game, FireArc[e].angle = slot!(game, FireArc[e].start_angle));
-    slot!(game, FireArc[e].function = function::ACTIVE);
-    slot!(game, FireArc[e].head_explosion = 0);
+    slot!(game, FireArc[e]; angle = slot!(game, FireArc[e].start_angle),
+        function = function::ACTIVE, head_explosion = 0);
     clear_words(game, slot!(@at FireArc, e, projectile_explosions), 8);
     clear_words(game, slot!(@at FireArc, e, sprite_explosions), 8);
     slot!(game, FireArc[e].base.properties, |old| old

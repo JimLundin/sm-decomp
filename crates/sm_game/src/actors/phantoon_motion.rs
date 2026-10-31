@@ -110,8 +110,7 @@ fn update_speed(reversed: bool, game: &mut (impl BossState + ?Sized)) {
         (session_slot!(game, Body[BODY].speed) as i16).wrapping_sub(bound as i16) >= 0
     };
     if reached {
-        session_slot!(game, Body[BODY].speed = clamp);
-        session_slot!(game, Body[BODY].speed_subpixel = 0);
+        session_slot!(game, Body[BODY]; speed = clamp, speed_subpixel = 0);
         session_slot!(
             game,
             Body[BODY].movement_stage = if restart {

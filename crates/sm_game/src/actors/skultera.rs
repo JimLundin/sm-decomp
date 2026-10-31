@@ -88,16 +88,13 @@ pub fn initialize(game: &mut (impl Host + ?Sized)) {
     let value = u16::from(slot!(byte game, Skultera[fish].parameter_2[0]));
     slot!(game, Skultera[fish].radius = value);
     let value = u16::from(slot!(byte game, Skultera[fish].parameter_2[1]));
-    slot!(game, Skultera[fish].angle_delta = value);
-    slot!(game, Skultera[fish].angle = 0);
-    slot!(game, Skultera[fish].turn_finished = 0);
+    slot!(game, Skultera[fish]; angle_delta = value, angle = 0, turn_finished = 0);
     let offset = y_offset(fish, game);
     slot!(game, Skultera[fish].previous_y_offset = offset);
 }
 fn set_instruction_list(fish: i32, instruction: u16, game: &mut (impl Host + ?Sized)) {
-    slot!(game, Skultera[fish].base.instruction_timer = 1);
-    slot!(game, Skultera[fish].base.timer = 0);
-    slot!(game, Skultera[fish].base.current_instruction = instruction);
+    slot!(game, Skultera[fish].base; instruction_timer = 1, timer = 0,
+        current_instruction = instruction);
 }
 fn turn(fish: i32, left: bool, game: &mut (impl Host + ?Sized)) {
     let (function, list) = if left {

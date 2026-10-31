@@ -591,14 +591,12 @@ pub fn initialize_alive_sidehopper_corpse(game: &mut impl Lease) {
         );
     }
     session_slot! { game, Corpse[e]; drained_palette_index = 0, x_velocity = 96, y_velocity = 256 }
-    session_slot!(game, Corpse[e].base.x_pos = 488);
-    session_slot!(game, Corpse[e].base.y_pos = 184);
+    session_slot!(game, Corpse[e].base; x_pos = 488, y_pos = 184);
     session_slot!(
         game,
         Corpse[e].function = function::SIDEHOPPER_ALIVE_WAITING_FOR_ACTIVATION
     );
-    session_slot!(game, Corpse[e].base.palette_index = 512);
-    session_slot!(game, Corpse[e].base.y_height = 21);
+    session_slot!(game, Corpse[e].base; palette_index = 512, y_height = 21);
     set_enemy_instruction_list(
         game.current_enemy(),
         ADDR_K_DEAD_MONSTERS_ILIST_ECE3 as u16,
@@ -699,8 +697,8 @@ crate::dispatch::callback_dispatch! {
             if v5 >= 8 {
                 set_enemy_instruction_list(v3, ADDR_K_DEAD_MONSTERS_ILIST_ECE9 as u16, game);
                 session_slot!(game, Corpse[e].function = function::SIDEHOPPER_DEAD_WAIT_FOR_SAMUS_COLLISION);
-                session_slot!(game, Corpse[e].base.properties = (session_slot!(game, Corpse[e].base.properties)) | (0x8000u16));
-                session_slot!(game, Corpse[e].base.y_height = 12);
+                session_slot!(game, Corpse[e].base; properties = (session_slot!(game, Corpse[e].base.properties)) | (0x8000u16),
+                    y_height = 12);
             }
         }
     };
@@ -1033,8 +1031,7 @@ pub fn initialize_torizo_corpse(game: &mut impl Lease) {
             (session_slot!(game, DeadTorizo[e].base.properties)) | (0xa000u16)
     );
     session_slot! { game, DeadTorizo[e].base; current_instruction = ADDR_K_DEAD_TORIZO_ILIST_D6DC as u16, instruction_timer = 1 }
-    session_slot!(game, DeadTorizo[e].base.timer = 0);
-    session_slot!(game, DeadTorizo[e].base.palette_index = 512);
+    session_slot!(game, DeadTorizo[e].base; timer = 0, palette_index = 512);
     session_slot! { game, DeadTorizo[e]; x_velocity = 0, y_velocity = 8, pre_rot_delay = 0, sand_heap_lines = 15, rot_timer = 0 };
     initialize_enemy_corpse_rotting(0, ADDR_STRU_A9DD58 as u16, game);
 }

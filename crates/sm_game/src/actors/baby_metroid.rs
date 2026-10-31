@@ -132,8 +132,7 @@ pub fn wait_for_camera(game: &mut impl Host) {
             game.spawn_hardcoded_plm(block_x, block_y, INVISIBLE_WALL);
         }
         let e = word!(game.CUR_ENEMY_INDEX) as i32;
-        session_slot!(game, BabyMetroid[e].function = LET_SIDEHOPPER_LIVE);
-        session_slot!(game, BabyMetroid[e].cry_enabled = 1);
+        session_slot!(game, BabyMetroid[e]; function = LET_SIDEHOPPER_LIVE, cry_enabled = 1);
     }
 }
 

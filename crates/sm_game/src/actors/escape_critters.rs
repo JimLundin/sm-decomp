@@ -94,8 +94,7 @@ pub fn initialize(dachora: bool, game: &mut (impl Host + ?Sized)) {
         slot!(game, Critter[e].base; instruction_timer = 1, timer = 0, palette_index = 0);
         let index = (slot!(game, Critter[e].etecoon_index) >> 1) as isize;
         let etecoon = game.escape_etecoon(index);
-        slot!(game, Critter[e].base.x_pos = etecoon.x_position);
-        slot!(game, Critter[e].base.y_pos = etecoon.y_position);
+        slot!(game, Critter[e].base; x_pos = etecoon.x_position, y_pos = etecoon.y_position);
         slot!(game, Critter[e].function = etecoon.function);
         slot!(
             game,

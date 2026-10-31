@@ -196,8 +196,7 @@ pub const VANISH: u16 = 0x0400 | 0x0100;
 /// Was `CeresDoor_Init`.
 pub fn initialize_door<H: Host + ?Sized>(game: &mut H) {
     let e = current(game);
-    slot!(game, Door[e].base.spritemap_pointer = DOOR_SPRITEMAP);
-    slot!(game, Door[e].base.instruction_timer = 1);
+    slot!(game, Door[e].base; spritemap_pointer = DOOR_SPRITEMAP, instruction_timer = 1);
     slot!(game, Door[e].base; timer = 0, vram_tiles_index = 0);
     slot!(game, Door[e].base.palette_index = 1024);
     let kind = slot!(game, Door[e].kind) as isize;

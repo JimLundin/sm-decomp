@@ -81,8 +81,7 @@ fn current(game: &impl Lease) -> i32 {
 pub fn initialize(game: &mut impl Lease) {
     let me = current(game);
     let kind = session_slot!(game, Tube[me].parameter_1) as usize >> 1;
-    session_slot!(game, Tube[me].base.x_width = WIDTHS[kind]);
-    session_slot!(game, Tube[me].base.y_height = HEIGHTS[kind]);
+    session_slot!(game, Tube[me].base; x_width = WIDTHS[kind], y_height = HEIGHTS[kind]);
     session_slot!(game, Tube[me].burst_y = BURST_HEIGHTS[kind]);
     session_slot!(game, Tube[me]; smoke_timer = 0, smoke_index = 0, fall_speed = 0);
     session_slot!(
@@ -191,8 +190,7 @@ fn fall_with_brain(game: &mut impl Lease, k: u16) {
             crate::hdma_objects::free_hdma_object(2, game);
         });
         session_slot!(game, Tube[BRAIN].base.y_pos = BRAIN_LANDING_Y);
-        session_slot!(game, Tube[BODY].base.x_pos = BODY_X);
-        session_slot!(game, Tube[BODY].base.y_pos = BODY_Y);
+        session_slot!(game, Tube[BODY].base; x_pos = BODY_X, y_pos = BODY_Y);
         crate::actors::mother_brain_neck::setup_for_fake_ascent(game);
         session_slot!(game, Tube[BODY].function = BODY_ASCENT);
         let current = game.current_enemy();

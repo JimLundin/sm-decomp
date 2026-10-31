@@ -190,8 +190,8 @@ crate::dispatch::callback_dispatch! {
         {
             let e: i32 = k as i32;
             session_slot! { game, BabyMetroid[e]; x_velocity = 0, y_velocity = 0 }
-            session_slot!(game, BabyMetroid[e].base.x_pos = session_slot!(game, BabyMetroid[e1].base.x_pos));
-            session_slot!(game, BabyMetroid[e].base.y_pos = (session_slot!(game, BabyMetroid[e1].base.y_pos)).wrapping_sub(32));
+            session_slot!(game, BabyMetroid[e].base; x_pos = session_slot!(game, BabyMetroid[e1].base.x_pos),
+                y_pos = (session_slot!(game, BabyMetroid[e1].base.y_pos)).wrapping_sub(32));
             session_slot! { game, BabyMetroid[e].base; current_instruction = ADDR_K_BABY_METROID_ILIST_F924 as u16, instruction_timer = 1 }
             session_slot!(game, BabyMetroid[e].base.timer = 0);
             session_slot! { game, BabyMetroid[e]; function = function::DRAINING_SIDEHOPPER, palette_handler_delay = 1 }
@@ -260,8 +260,8 @@ crate::dispatch::callback_dispatch! {
     [11137254] draining_sidehopper [] {
         let v2: i32 = (session_slot!(game, BabyMetroid[e].base.frame_counter) as i32 & 6) >> 1;
         let e1: i32 = k as i32 + 64;
-        session_slot!(game, BabyMetroid[e].base.x_pos = (session_slot!(game, BabyMetroid[e1].base.x_pos)).wrapping_add((SHAKE_X_OFFSETS[v2 as usize]) as u16));
-        session_slot!(game, BabyMetroid[e].base.y_pos = (session_slot!(game, BabyMetroid[e1].base.y_pos) as i32 + SHAKE_Y_OFFSETS[v2 as usize] as i32 - 32i32) as u16);
+        session_slot!(game, BabyMetroid[e].base; x_pos = (session_slot!(game, BabyMetroid[e1].base.x_pos)).wrapping_add((SHAKE_X_OFFSETS[v2 as usize]) as u16),
+            y_pos = (session_slot!(game, BabyMetroid[e1].base.y_pos) as i32 + SHAKE_Y_OFFSETS[v2 as usize] as i32 - 32i32) as u16);
         let fresh13: u16 = session_slot!(game, BabyMetroid[e].function_timer);
         session_slot!(game, BabyMetroid[e].function_timer, |old| old.wrapping_sub(1));
         if fresh13 == 1 {
@@ -341,8 +341,8 @@ crate::dispatch::callback_dispatch! {
             // set when the speed was at least 4, unsigned.
             let carry = u16::from(y_speed >= 4);
             let v2: i32 = (session_slot!(game, BabyMetroid[e].base.frame_counter) as i32 & 6) >> 1;
-            session_slot!(game, BabyMetroid[e].base.x_pos = (game.player_x()).wrapping_add((SHAKE_X_OFFSETS[v2 as usize]) as u16).wrapping_add(carry));
-            session_slot!(game, BabyMetroid[e].base.y_pos = (game.player_y() as i32 + SHAKE_Y_OFFSETS[v2 as usize] as i32 - 20i32) as u16);
+            session_slot!(game, BabyMetroid[e].base; x_pos = (game.player_x()).wrapping_add((SHAKE_X_OFFSETS[v2 as usize]) as u16).wrapping_add(carry),
+                y_pos = (game.player_y() as i32 + SHAKE_Y_OFFSETS[v2 as usize] as i32 - 20i32) as u16);
             game.foreign(|game| game.drain_health_by_baby_metroid());
         };
     };

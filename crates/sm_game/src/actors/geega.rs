@@ -8,8 +8,8 @@ use sm_data::enemy_speeds::SpeedTable;
 
 pub fn initialize<H: ActorHost + ActorRuntime + ?Sized>(game: &mut H) {
     let e = i32::from(word!(game.CUR_ENEMY_INDEX));
-    slot!(game, Bug[e].var_07 = slot!(game, Bug[e].base.x_pos));
-    slot!(game, Bug[e].var_08 = slot!(game, Bug[e].base.y_pos));
+    slot!(game, Bug[e]; var_07 = slot!(game, Bug[e].base.x_pos),
+        var_08 = slot!(game, Bug[e].base.y_pos));
     slot!(game, Bug[e].base; x_subpos = 0, y_subpos = 0, instruction_timer = 1, timer = 0, current_instruction = 0x8efc);
     if slot!(game, Bug[e].parameter_1) == 0 {
         slot!(game, Bug[e].base.current_instruction = 0x8f24);

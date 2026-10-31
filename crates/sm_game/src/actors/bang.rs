@@ -109,8 +109,8 @@ pub fn initialize<H: LeaseActors + ?Sized>(game: &mut H) {
     session_slot!(runtime, Bang[bang].max_speed = limit);
     let index = 2 * parameter[1] as isize;
     let interval = table(runtime, INTERVALS, index);
-    session_slot!(runtime, Bang[bang].acceleration_interval_timer = interval);
-    session_slot!(runtime, Bang[bang].acceleration_interval_reset = interval);
+    session_slot!(runtime, Bang[bang]; acceleration_interval_timer = interval,
+        acceleration_interval_reset = interval);
     let interval = table(runtime, INTERVALS, index + 1);
     session_slot!(runtime, Bang[bang].deceleration_interval_reset = interval);
     runtime.edit_actor(key, Native, |actor| {

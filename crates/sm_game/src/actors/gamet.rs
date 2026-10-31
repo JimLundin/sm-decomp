@@ -8,8 +8,8 @@ use sm_data::enemy_speeds::SpeedTable;
 
 pub fn initialize<H: ActorHost + ActorRuntime + ?Sized>(game: &mut H) {
     let e = i32::from(word!(game.CUR_ENEMY_INDEX));
-    slot!(game, Bug[e].var_d = slot!(game, Bug[e].base.x_pos));
-    slot!(game, Bug[e].var_e = slot!(game, Bug[e].base.y_pos));
+    slot!(game, Bug[e]; var_d = slot!(game, Bug[e].base.x_pos),
+        var_e = slot!(game, Bug[e].base.y_pos));
     slot!(game, Bug[e].base.properties, |old| old | 0x100);
     slot!(
         game,
@@ -95,8 +95,8 @@ pub fn rise<H: ActorHost + ActorRuntime + ?Sized>(game: &mut H) {
     slot!(game, Bug[e].base.properties, |old| old & !0x100);
     slot!(game, Bug[e].base(y_pos, y_subpos) += speed(66, game));
     if (slot!(game, Bug[e].base.y_pos) as i16).wrapping_sub(game.player_y() as i16) < 0 {
-        slot!(game, Bug[e].var_a = slot!(game, Bug[e].var_f));
-        slot!(game, Bug[e].var_01 = slot!(game, Bug[e].base.y_pos));
+        slot!(game, Bug[e]; var_a = slot!(game, Bug[e].var_f),
+            var_01 = slot!(game, Bug[e].base.y_pos));
         slot!(game, Bug[e].base; instruction_timer = 1, timer = 0);
         let actor = word!(game.CUR_ENEMY_INDEX);
         let instruction = facing_animation(actor, game);
