@@ -1036,6 +1036,7 @@ impl Drop for ExportIdentity<'_> {
         }
     }
 }
+#[cfg(sm_verify_dll)]
 pub(crate) fn export_session(state: Session, game: &mut Game) {
     let guard = ExportIdentity {
         state: Some(state),

@@ -1,7 +1,8 @@
 //! ID37 supplements frozen0..36 with actual VRAM back-reference positioning.
 use crate::room_background_support::ram_bytes;
 use crate::{
-    game_state::Game, rom::RomImage, room_background_cases::Operation, room_background_support::*,
+    game_state::Game, rom::RomImage, room_background_cases::Operation, room_background_fixture::*,
+    room_background_support::*,
 };
 use std::panic::{AssertUnwindSafe, catch_unwind};
 

@@ -4,6 +4,7 @@ use crate::{
     game_state::{Game, WorkRam},
     recording::RecordingBytes,
     rom::RomImage,
+    room_background_fixture::*,
     room_background_support::*,
 };
 use std::cell::RefCell;

@@ -1,6 +1,8 @@
 //! Frozen inputs/expected effects for actual background and installation entries.
 use crate::room_background_support::ram_bytes;
-use crate::{game_state::Game, rom::RomImage, room_background_support::*};
+use crate::{
+    game_state::Game, rom::RomImage, room_background_fixture::*, room_background_support::*,
+};
 use std::panic::{AssertUnwindSafe, catch_unwind};
 pub(crate) const CASES: u32 = 37;
 #[derive(Clone, Copy)]

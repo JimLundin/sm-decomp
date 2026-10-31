@@ -1,6 +1,8 @@
 //! Scoped verifier-only environment changes at actual legacy callback edges.
 //! The display and native renderer still execute their maintained algorithms.
-use crate::{game_state::Game, rom::RomImage};
+#[cfg(sm_verify_dll)]
+use crate::game_state::Game;
+use crate::rom::RomImage;
 use std::cell::RefCell;
 
 struct MessageTrace {
@@ -8,6 +10,8 @@ struct MessageTrace {
     bytes: Vec<u8>,
 }
 struct NativeTrace {
+    /// Installed by the verifier's native read hook.
+    #[cfg(sm_verify_dll)]
     replacement: RomImage,
     addresses: Vec<u16>,
 }
@@ -36,6 +40,7 @@ pub(super) fn finish_message() -> Vec<u8> {
 /// Called inside the scheduler's existing released-owner display closure.
 /// Each edge records613 before changing the environment; the actual display
 /// then runs and613 is inspected again before returning to the scheduler.
+#[cfg(sm_verify_dll)]
 pub(crate) unsafe fn display(request: u16, game: &mut Game) -> u8 {
     let marker = MESSAGE.with(|state| {
         let mut state = state.borrow_mut();
@@ -77,10 +82,14 @@ pub(super) fn begin_native(replacement: RomImage) {
     NATIVE.with(|state| {
         assert!(state.borrow().is_none());
         *state.borrow_mut() = Some(NativeTrace {
+            #[cfg(sm_verify_dll)]
             replacement,
             addresses: Vec::new(),
         });
     });
+    // Other builds have no read hook to install the replacement.
+    #[cfg(not(sm_verify_dll))]
+    drop(replacement);
 }
 pub(super) fn finish_native() -> Vec<u16> {
     NATIVE.with(|state| {
@@ -94,6 +103,7 @@ pub(super) fn finish_native() -> Vec<u16> {
 
 /// Runs immediately before real RomPtr at the existing foreign boundary.
 /// Allocation replacement is environmental input; no stream value is mocked.
+#[cfg(sm_verify_dll)]
 pub(crate) fn native_read(bank: u8, address: u16, game: &mut Game) {
     NATIVE.with(|state| {
         if let Some(trace) = state.borrow_mut().as_mut() {

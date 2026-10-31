@@ -2,10 +2,9 @@
 #![forbid(unsafe_code)]
 use crate::game_state::Game;
 use std::cell::{Cell, RefCell};
-use {
-    crate::game::{session_encoding, session_runtime::Runtime},
-    sm_game::{samus_palette, session::Session},
-};
+#[cfg(sm_verify_dll)]
+use {crate::game::session_encoding, sm_game::session::Session};
+use {crate::game::session_runtime::Runtime, sm_game::samus_palette};
 thread_local! { static TRACE: RefCell<Option<Vec<u8>>> = const { RefCell::new(None) }; }
 thread_local! {
     static ACTIVE_CASE: Cell<Option<u32>> = const { Cell::new(None) };
@@ -13,6 +12,7 @@ thread_local! {
 }
 /// Four explicitly injected callback-transition cases, after actual charge
 /// processing and immediately before selector dispatch. Not production policy.
+#[cfg(sm_verify_dll)]
 pub(crate) fn inject(name: &str, state: &mut Session) {
     if name != "samus.palette.dispatch" {
         return;
@@ -45,6 +45,7 @@ fn append(tag: u8, payload: &[u8]) {
         }
     });
 }
+#[cfg(sm_verify_dll)]
 pub(crate) fn event(kind: &str, argument: u16) {
     #[cfg(sm_verify_dll)]
     crate::player_transitions_rust_observer::palette_event(kind, argument);
@@ -63,11 +64,13 @@ pub(crate) fn event(kind: &str, argument: u16) {
     };
     append(7, &[code, argument as u8, (argument >> 8) as u8]);
 }
+#[cfg(sm_verify_dll)]
 pub(crate) fn sound(channel: usize, sound: u8, limit: u8) {
     #[cfg(sm_verify_dll)]
     crate::player_transitions_rust_observer::sound(channel, sound, limit);
     append(8, &[u8::try_from(channel).unwrap(), limit, sound]);
 }
+#[cfg(sm_verify_dll)]
 pub(crate) fn observe(name: &str, state: &Session, game: &Game) {
     #[cfg(sm_verify_dll)]
     crate::player_transitions_rust_observer::projected(name, state, game);

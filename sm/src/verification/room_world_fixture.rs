@@ -224,6 +224,7 @@ pub(crate) fn binding(swapped: bool) -> Arc<WorldBinding> {
 }
 
 /// Only full application packs add the actual CurrentLoadStation opening sites.
+#[cfg(sm_verify_dll)]
 pub(crate) fn definition_with_application_starts(
     swapped: bool,
 ) -> (WorldDefinition, CompatibilityKeys) {
