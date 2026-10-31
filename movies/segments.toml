@@ -1550,7 +1550,6 @@ start_frame = 0
 frames = 450
 expect = ["room:D9FE"]
 require_hit = ["contact_physics.sinking", "contact_physics.surface", "contact_physics.sand_floor"]
-pending = "awaiting the seeds-v1-terrain-grapple-c77a6dd6e1e0de4e ci-data upload"
 
 [[segment]]
 id = "samus-grapple-release"
@@ -1562,7 +1561,6 @@ start_frame = 0
 frames = 488
 expect = ["room:D78F"]
 require_hit = ["grapple.after_release"]
-pending = "awaiting the seeds-v1-terrain-grapple-c77a6dd6e1e0de4e ci-data upload"
 
 [[segment]]
 id = "beam-reflect"
@@ -1574,4 +1572,3 @@ start_frame = 0
 frames = 572
 expect = ["room:B482"]
 require_hit = ["player_projectiles.reflect"]
-pending = "awaiting the seeds-v1-terrain-grapple-c77a6dd6e1e0de4e ci-data upload"
