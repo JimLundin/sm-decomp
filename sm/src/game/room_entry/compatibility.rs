@@ -57,6 +57,11 @@ impl EntryEffects for Runtime<'_> {
                 game::samus_palette::load_suit(self, game::visual_state::PaletteBuffer::Target)
             }
             LeafEffect::LoadFxHeader => sm_game::room_state::fx::load_header(self),
+            LeafEffect::StopHdmaEffects => game::visual_runtime::clear_hdma_channels(self),
+            LeafEffect::WaitVblankClearHdma => game::visual_runtime::clear_hdma(self),
+            LeafEffect::InitializeRoomSpecialEffects => {
+                game::visual_runtime::initialize_room_effects(self)
+            }
             LeafEffect::EnableNmi => sm_game::display_refresh::enable(true, self),
             LeafEffect::DisableNmi => sm_game::display_refresh::enable(false, self),
             _ => self.foreign(|game| unsafe {
@@ -83,12 +88,6 @@ impl EntryEffects for Runtime<'_> {
                     }
                     LeafEffect::SpinJumpSound => {
                         game::session_runtime::player_command(0x1c, game);
-                    }
-                    LeafEffect::StopHdmaEffects => {
-                        game::visual_runtime::clear_hdma_channels(game);
-                    }
-                    LeafEffect::InitializeRoomSpecialEffects => {
-                        game::visual_runtime::initialize_room_effects(game);
                     }
                     LeafEffect::LoadEnemyGraphics => {
                         sm_game::room_state::load_enemy_graphics(game);
@@ -129,9 +128,6 @@ impl EntryEffects for Runtime<'_> {
                     LeafEffect::DisableIrq => {
                         game::scanline_irq::disable(game);
                     }
-                    LeafEffect::WaitVblankClearHdma => {
-                        game::visual_runtime::clear_hdma(game);
-                    }
                     LeafEffect::SelectEnemies
                     | LeafEffect::RunEnemies
                     | LeafEffect::DrawScene
@@ -141,6 +137,9 @@ impl EntryEffects for Runtime<'_> {
                     | LeafEffect::LoadRoomAssets
                     | LeafEffect::LoadSuitTargetPalette
                     | LeafEffect::LoadFxHeader
+                    | LeafEffect::StopHdmaEffects
+                    | LeafEffect::WaitVblankClearHdma
+                    | LeafEffect::InitializeRoomSpecialEffects
                     | LeafEffect::EnableNmi
                     | LeafEffect::DisableNmi => {
                         unreachable!("leaf runs on the lease")

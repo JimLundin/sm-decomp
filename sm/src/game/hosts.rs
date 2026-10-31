@@ -28,6 +28,24 @@ impl sm_game::runtime_access::RuntimeAccess for Game {
     }
 }
 
+impl sm_game::hdma_objects::HdmaTable for Game {
+    fn with_hdma_table<T>(
+        &mut self,
+        action: impl FnOnce(&mut sm_game::hdma::HdmaObjects) -> T,
+    ) -> T {
+        sm_game::hdma_objects::with_table(self, action)
+    }
+}
+
+impl sm_game::hdma_objects::HdmaTable for crate::game::session_runtime::Runtime<'_> {
+    fn with_hdma_table<T>(
+        &mut self,
+        action: impl FnOnce(&mut sm_game::hdma::HdmaObjects) -> T,
+    ) -> T {
+        action(&mut self.session_mut().hdma)
+    }
+}
+
 impl sm_game::hdma_program::LeaseHdma for Game {
     type Lease<'a> = crate::game::session_runtime::Runtime<'a>;
     fn hdma_lease(&mut self) -> Self::Lease<'_> {
