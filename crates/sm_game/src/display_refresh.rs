@@ -247,7 +247,7 @@ pub fn fade<H: Host + ?Sized>(fade_in: bool, game: &mut H) {
     game.write_owned_byte(0x51, next);
 }
 
-pub fn wait<H: Host + ?Sized>(update: bool, game: &mut H) -> u8 {
+pub fn wait<H: CompatibilityRam + DisplayOwner + ?Sized>(update: bool, game: &mut H) -> u8 {
     if game.compatibility_byte(0x782) != 0 {
         game.write_owned_byte(0x782, 0);
         return 0;
@@ -737,21 +737,21 @@ pub fn queue_scrolling_tiles<H: Host + ?Sized>(k: u16, layout: ScrollingLayout, 
     );
 }
 
-pub fn native_word<H: Host + ?Sized>(offset: usize, game: &H) -> u16 {
+pub fn native_word<H: CompatibilityRam + ?Sized>(offset: usize, game: &H) -> u16 {
     u16::from_ne_bytes([
         game.compatibility_byte(offset),
         game.compatibility_byte(offset + 1),
     ])
 }
 
-pub fn set_native_word<H: Host + ?Sized>(offset: usize, value: u16, game: &mut H) {
+pub fn set_native_word<H: DisplayOwner + ?Sized>(offset: usize, value: u16, game: &mut H) {
     let bytes = value.to_ne_bytes();
     game.write_owned_byte(offset, bytes[0]);
     game.write_owned_byte(offset + 1, bytes[1]);
 }
 
 /// Publish a native queue record, evaluating each source after preceding stores.
-pub fn queue_native_transfer<H: Host + ?Sized>(
+pub fn queue_native_transfer<H: CompatibilityRam + DisplayOwner + ?Sized>(
     mut cursor: u16,
     size: u16,
     source: impl FnOnce(&H) -> u16,
@@ -773,7 +773,7 @@ pub fn queue_native_transfer<H: Host + ?Sized>(
     cursor
 }
 
-pub fn queue_fx_clear<H: Host + ?Sized>(game: &mut H) {
+pub fn queue_fx_clear<H: CompatibilityRam + DisplayOwner + ?Sized>(game: &mut H) {
     word_transfers!(game, descending, 1920; native(0x4efe) <- value(6222));
     let tail = word!(game.VRAM_WRITE_QUEUE_TAIL);
     let entry = 0xd0 + usize::from(word!(game.VRAM_WRITE_QUEUE_TAIL));

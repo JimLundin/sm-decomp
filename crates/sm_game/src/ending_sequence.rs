@@ -185,7 +185,7 @@ pub fn setup<H: Host + ?Sized>(game: &mut H) {
     word!(game.LAYER1_Y_POS = 0);
     game.clear_palette_effects();
     game.set_palette_effects_enabled(true);
-    game.enable_display_nmi(true);
+    crate::display_refresh::enable(true, game);
     word!(game.SHOOTING_STARS_ENABLED = 0);
     set_cinematic_blend(17, 1, 2, 17, game);
     for parameter in 0..2 {
@@ -415,7 +415,7 @@ pub fn gunship_fly_into_camera<H: Host + ?Sized>(game: &mut H) {
 pub fn transition_to_credits<H: Host + ?Sized>(game: &mut H) {
     crate::screen_fade::set_counter(game, 1);
     if crate::cinematic::advance_cinematic_fade(CinematicFade::FastOut, game) {
-        game.enable_display_nmi(true);
+        crate::display_refresh::enable(true, game);
         crate::screen_fade::set_both(game, 0, 0);
         word!(game.CINEMATIC_FUNCTION = function::CREDITS_SETUP);
     }
@@ -455,7 +455,7 @@ pub fn credits_setup<H: Host + ?Sized>(game: &mut H) {
     word!(game.CINEMATIC_Y = -24i32 as u16);
     word!(game.MODE7_ANGLE = 0);
     word!(game.MODE7_ZOOM = 2304);
-    game.enable_display_nmi(true);
+    crate::display_refresh::enable(true, game);
     game.ram().write_byte(mirror::INIDISP, 15);
     word!(game.LAYER1_X_POS = 0);
     word!(game.LAYER1_Y_POS = 0);

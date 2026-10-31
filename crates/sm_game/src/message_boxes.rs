@@ -301,7 +301,7 @@ impl<H: crate::menus::host::Host + ?Sized> crate::dialogue::Context for LegacyDi
     ) -> (crate::dialogue::Dialogue<u16>, crate::dialogue::Outcome) {
         use {crate::dialogue::Outcome, crate::dialogue_ram};
         dialogue_ram::publish(state, self.0);
-        let result = self.0.display_wait(false);
+        let result = crate::display_refresh::wait(false, self.0);
         let outcome =
             std::num::NonZeroU8::new(result).map_or(Outcome::Complete, Outcome::Suspended);
         (dialogue_ram::import(self.0), outcome)

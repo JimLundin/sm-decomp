@@ -676,32 +676,35 @@ fn reserve_digits<H: Host + ?Sized>(hundreds: u16, remainder: u16, game: &mut H)
 
 pub fn queue_equipment_wireframe<H: Host + ?Sized>(game: &mut H) {
     equipment_wireframe(game);
-    game.queue_native_transfer(
+    crate::display_refresh::queue_native_transfer(
         word!(game.VRAM_WRITE_QUEUE_TAIL),
         1280,
-        &|_| (EQUIPMENT_TILEMAP + cell(4, 0)) as u16,
+        |_| (EQUIPMENT_TILEMAP + cell(4, 0)) as u16,
         126,
-        &|_| 0x3080,
+        |_| 0x3080,
+        game,
     );
 }
 
 pub fn queue_pause_labels<H: Host + ?Sized>(game: &mut H) {
-    game.queue_native_transfer(
+    crate::display_refresh::queue_native_transfer(
         word!(game.VRAM_WRITE_QUEUE_TAIL),
         128,
-        &|_| (PAUSE_TILEMAP + cell(25, 0)) as u16,
+        |_| (PAUSE_TILEMAP + cell(25, 0)) as u16,
         126,
-        &|game| (u16::from(game.ram().read_byte(crate::ram::mirror::BG2SC) & 0xfc) << 8) + 800,
+        |game| (u16::from(game.ram().read_byte(crate::ram::mirror::BG2SC) & 0xfc) << 8) + 800,
+        game,
     );
 }
 
 pub fn queue_options<H: Host + ?Sized>(game: &mut H) {
-    game.queue_native_transfer(
+    crate::display_refresh::queue_native_transfer(
         word!(game.VRAM_WRITE_QUEUE_TAIL),
         2048,
-        &|_| OPTIONS_TILEMAP as u16,
+        |_| OPTIONS_TILEMAP as u16,
         126,
-        &|_| 0x5000,
+        |_| 0x5000,
+        game,
     );
 }
 

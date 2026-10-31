@@ -93,7 +93,7 @@ pub fn play<H: crate::menus::host::Host + ?Sized>(
                 word! {game; SUBSTATE = 0; MY_COUNTER = 90; }
             }
             do_until! { word!(game.MY_COUNTER -= 1, reread) == 0;
-                let yielded: u8 = game.display_wait(true);
+                let yielded: u8 = crate::display_refresh::wait(true, game);
                 if yielded != 0 {
                     game.ram().write_byte(0x614, 1);
                     return yielded;

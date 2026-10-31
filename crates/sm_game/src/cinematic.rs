@@ -131,18 +131,19 @@ pub fn queue_cinematic_tilemap<H: crate::menus::host::Host + ?Sized>(
         Japanese => (1536, 0x4000),
         JapaneseIntro => (256, 0x3000),
     };
-    game.queue_native_transfer(
+    crate::display_refresh::queue_native_transfer(
         word!(game.VRAM_WRITE_QUEUE_TAIL),
         size,
-        &|_| source,
+        |_| source,
         126,
         // Earlier queue writes can overlap this destination field.
-        &|game| match tiles {
+        |game| match tiles {
             Eyes => 18848,
             Japanese => 16768,
             JapaneseIntro => 20192,
             _ => word!(game.CINEMATIC_BG_VRAM_ADDRESS),
         },
+        game,
     );
 }
 

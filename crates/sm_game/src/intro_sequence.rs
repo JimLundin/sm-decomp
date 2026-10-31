@@ -203,7 +203,7 @@ pub fn initial<H: Host + ?Sized>(game: &mut H) {
     GraphicsAsset::VramWords(0x9ad200, 0x6000, 0x2000).load(game);
     GraphicsAsset::VramWords(0x7fb800, 0x6e00, 0x2400).load(game);
     GraphicsAsset::Decompress(0x95d713, 0x1a000).load(game);
-    game.enable_display_nmi(true);
+    crate::display_refresh::enable(true, game);
     crate::screen_fade::set_both(game, 3, 3);
     crate::hdma_objects::set_hdma_enabled(true, game);
     game.clear_palette_effects();
@@ -313,7 +313,7 @@ pub fn ceres_initial<H: Host + ?Sized>(game: &mut H) {
     game.set_palette_effects_enabled(true);
     clear_cinematic_background(0, game);
     word!(game.CINEMATIC_BG_VRAM_ADDRESS = 23552);
-    game.enable_display_nmi(true);
+    crate::display_refresh::enable(true, game);
     sprites(game, object::CERES_STARS, 0);
     word!(game.CINEMATIC_FUNCTION = function::CERES_WAIT_FOR_MUSIC);
     game.queue_music_delayed8(CERES_MUSIC_DATA);
@@ -425,7 +425,7 @@ pub fn boom_initial<H: Host + ?Sized>(game: &mut H) {
     // The palette the preceding sprite initializer leaves in A.
     sprites(game, object::CERES_EXPLOSION_SPAWNER, 0x0800);
     game.spawn_palette_effect(BOOM_GLOW);
-    game.enable_display_nmi(true);
+    crate::display_refresh::enable(true, game);
     crate::screen_fade::set_both(game, 1, 1);
     word!(game.CINEMATIC_FUNCTION = function::BOOM_WAIT_FOR_MUSIC);
     game.queue_music_delayed8(NO_MUSIC);
@@ -523,7 +523,7 @@ pub fn boom_wait<H: Host + ?Sized>(game: &mut H) {
 pub fn boom_fade_out<H: Host + ?Sized>(game: &mut H) {
     crate::display_refresh::fade(false, game);
     if game.ram().read_byte(mirror::INIDISP) == 0x80 {
-        game.enable_display_nmi(true);
+        crate::display_refresh::enable(true, game);
         crate::screen_fade::set_both(game, 0, 0);
         if word!(game.GAME_STATE) == BOOM_WITH_SAMUS {
             game.queue_music_delayed8(NO_MUSIC);
@@ -573,7 +573,7 @@ pub fn zebes_initial<H: Host + ?Sized>(game: &mut H) {
     game.ram().write_byte(mirror::MOSAIC, 0x81);
     game.spawn_palette_effect(CERES_GLOW_1);
     word!(game.CINEMATIC_FUNCTION = function::ZEBES_FADING_IN);
-    game.enable_display_nmi(true);
+    crate::display_refresh::enable(true, game);
     crate::screen_fade::set_both(game, 1, 1);
 }
 

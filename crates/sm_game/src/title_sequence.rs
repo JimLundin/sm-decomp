@@ -137,7 +137,7 @@ pub fn load_graphics<H: Host + ?Sized>(game: &mut H) {
     GraphicsAsset::Decompress(0x95a5e1, 0x19000).load(game);
     GraphicsAsset::VramLowBytes(0x7f4000, 0x0000, 0x1000).load_planes(0xff, false, game);
     crate::cinematic_display::reset_cinematic_transform(128, 128, game);
-    game.enable_display_nmi(true);
+    crate::display_refresh::enable(true, game);
     crate::screen_fade::set_both(game, 1, 1);
     crate::hdma_objects::set_hdma_enabled(true, game);
     game.set_palette_effects_enabled(true);
@@ -186,7 +186,7 @@ pub fn zooming_out<H: Host + ?Sized>(game: &mut H) {
 /// Finishes the title sequence for game state `next`: the display back on,
 /// effects and cinematic objects cleared.
 fn finish<H: Host + ?Sized>(next: u16, game: &mut H, clear_index: impl FnOnce(&mut H)) {
-    game.enable_display_nmi(true);
+    crate::display_refresh::enable(true, game);
     game.ram().write_byte(crate::ram::mirror::BGMODE, 1);
     crate::screen_fade::set_both(game, 0, 0);
     word!(game.REG_BG2HOFS = 0);

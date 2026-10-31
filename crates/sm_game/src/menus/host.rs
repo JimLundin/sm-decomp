@@ -60,16 +60,6 @@ impl<T: crate::runtime_access::RuntimeAccess + ?Sized> PlayerRuntime for T {}
 pub trait MenuRuntime:
     crate::player_position::PlayerPosition + crate::player_position::PlayerFacts + PlayerRuntime
 {
-    /// Queue a tilemap transfer whose source and destination are read from
-    /// the host after the size word is written.
-    fn queue_native_transfer(
-        &mut self,
-        cursor: u16,
-        size: u16,
-        source: &dyn Fn(&Self) -> u16,
-        bank: u8,
-        destination: &dyn Fn(&Self) -> u16,
-    ) -> u16;
     /// Upload `bytes` from `source` to VRAM word address `destination`.
     fn load_vram_words(&mut self, source: u32, destination: u16, bytes: u16);
     fn boss_byte(&mut self, area: u16) -> u8;
@@ -99,7 +89,6 @@ pub trait MenuRuntime:
     fn spawn_room_enemy_projectile(&mut self, definition: u16, parameter: u16) -> u16;
     /// The original's `RomPtr_RAM` assertion on a RAM-table address.
     fn assert_ram_pointer(&mut self, address: u16);
-    fn enable_display_nmi(&mut self, enabled: bool);
     /// The message box DMA length the original kept outside RAM.
     fn message_box_das0l_value(&self) -> u16;
     fn set_message_box_das0l_value(&mut self, value: u16);
@@ -110,8 +99,6 @@ pub trait MenuRuntime:
     /// The carry the HDMA object handler ($88:84B9) is running with: the main game loop's, set
     /// from power-on, except while a message box restores the display, where it is clear.
     fn hdma_handler_carry(&self) -> bool;
-    /// Wait for the next display refresh; nonzero yields to the frame loop.
-    fn display_wait(&mut self, update: bool) -> u8;
     fn set_boss_byte(&mut self, area: u16, value: u8);
     /// The registered native image, if any, without the missing-image panic.
     fn native_image_binding(&self) -> Option<sm_data::cartridge::RomImage>;
@@ -127,7 +114,6 @@ pub trait MenuRuntime:
     ) -> u16;
     /// The original's unreachable-state failure.
     fn rtl_unreachable(&mut self) -> bool;
-    fn queue_fx_clear(&mut self);
     fn update_beam_tiles_and_palette(&mut self);
     fn flush_sram(&mut self);
     fn invalid_window(&mut self, address: u32);
