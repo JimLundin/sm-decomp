@@ -297,10 +297,15 @@ def build(root, rustc, use_cargo=None, frontend=False):
     # the DLL is unloaded before any rebuild.
     stamp = output / "direct-build.json"
     native = sorted({path.resolve() for directory in sdk for path in directory.glob("*.a")})
+    # The archives' bytes differ between otherwise identical builds, so a host
+    # that rebuilds them from pinned sources each time (CI) may name those
+    # sources' identity in SM_NATIVE_IDENTITY instead.
+    native_identity = os.environ.get("SM_NATIVE_IDENTITY")
     def build_identity():
+        archives = ([(str(path), native_identity) for path in native] if native_identity else
+                    [(str(path), hashlib.sha256(path.read_bytes()).hexdigest()) for path in native])
         return hashlib.sha256(json.dumps([
-            source, common, compiler, incremental,
-            [(str(path), hashlib.sha256(path.read_bytes()).hexdigest()) for path in native],
+            source, common, compiler, incremental, archives,
             [(name, os.environ.get(name, "")) for name in
              ("PATH", "LIBRARY_PATH", "RUSTFLAGS", "CARGO_ENCODED_RUSTFLAGS")],
         ]).encode()).hexdigest()
