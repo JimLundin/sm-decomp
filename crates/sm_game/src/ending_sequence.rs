@@ -183,9 +183,9 @@ pub fn setup<H: Host + ?Sized>(game: &mut H) {
     cinematic!(game.Mode7Zoom = 64);
     cinematic!(game.X = 0);
     cinematic!(game.Y = 0);
-    word!(game.DOOR_DEF_PTR = 0);
-    word!(game.LAYER1_X_POS = 0);
-    word!(game.LAYER1_Y_POS = 0);
+    cinematic!(game.DoorExit = 0);
+    cinematic!(game.Layer1X = 0);
+    cinematic!(game.Layer1Y = 0);
     crate::palette_effects::execution::leased::clear(game);
     crate::palette_effects::execution::leased::set_enabled(true, game);
     crate::display_refresh::enable(true, game);
@@ -331,7 +331,7 @@ pub fn scene_2<H: Host + ?Sized>(game: &mut H) {
         cinematic!(game.XSpeed = 0);
         cinematic!(game.YSubspeed = 0);
         cinematic!(game.YSpeed = 0);
-        word!(game.FX_LAYER_BLENDING_CONFIG_A = 0);
+        cinematic!(game.FxBlending = 0);
         scroll!(game.Bg2H = 0);
         scroll!(game.Bg2V = 0);
         crate::screen_fade::set_both(game, 0, 2);
@@ -460,8 +460,8 @@ pub fn credits_setup<H: Host + ?Sized>(game: &mut H) {
     cinematic!(game.Mode7Zoom = 2304);
     crate::display_refresh::enable(true, game);
     game.ram().write_byte(mirror::INIDISP, 15);
-    word!(game.LAYER1_X_POS = 0);
-    word!(game.LAYER1_Y_POS = 0);
+    cinematic!(game.Layer1X = 0);
+    cinematic!(game.Layer1Y = 0);
     crate::hdma_objects::set_hdma_enabled(true, game);
     crate::word_transfers!(game, descending, 256; le(HDMA_TABLE_1, 255) <- value(0));
     crate::shooting_star_motion::initialize_shooting_stars(game);
@@ -551,8 +551,8 @@ pub fn fade_from_white<H: Host + ?Sized>(game: &mut H) {
         flow::set(game, CinematicFunction, function::FINISHED);
         cinematic!(game.BgVramAddress = 20480);
         queue_cinematic_tilemap(CinematicTilemap::FullText, game);
-        word!(game.LAYER1_X_POS = 256);
-        word!(game.LAYER1_Y_POS = 256);
+        cinematic!(game.Layer1X = 256);
+        cinematic!(game.Layer1Y = 256);
         // A carries into each spawn: the layer position, then what each
         // initializer loaded last ($8B:F18F..F1D4).
         let parameters = [0x0100, 8, 8, 0x0e00];

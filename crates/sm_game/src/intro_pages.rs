@@ -139,8 +139,8 @@ pub fn create_japanese_text<H: crate::menus::host::Host + ?Sized>(
     game: &mut H,
 ) -> u16 {
     cinematic!(game.IntroTextClickFlag = 0);
-    if word!(game.JAPANESE_TEXT_FLAG) != 0 {
-        CinematicObjects::Mode7.spawn(object, word!(game.JAPANESE_TEXT_FLAG), game);
+    if cinematic!(game.JapaneseText) != 0 {
+        CinematicObjects::Mode7.spawn(object, cinematic!(game.JapaneseText), game);
     }
     j
 }
@@ -157,10 +157,10 @@ pub fn spawn_marker<H: crate::menus::host::Host + ?Sized>(
     game: &mut H,
 ) -> u16 {
     reset_text_marker(game);
-    if word!(game.JAPANESE_TEXT_FLAG) != 0 {
+    if cinematic!(game.JapaneseText) != 0 {
         let failed = CinematicObjects::Sprites.spawn(
             ADDR_CINEMATIC_SPRITE_OBJECT_DEF_8BCE73 as u16,
-            word!(game.JAPANESE_TEXT_FLAG),
+            cinematic!(game.JapaneseText),
             game,
         ) != 0;
         if let Some(object) = continuation {
@@ -233,7 +233,7 @@ pub fn wait_for_scene<H: crate::menus::host::Host + ?Sized>(scene: Scene, game: 
                 crate::room_view::set(game, crate::room_view::Word::Width, 32);
                 crate::room_view::set(game, crate::room_view::Word::Height, 16);
             }
-            word!(game.SAMUS_POSE = K_POSE_02_FACE_L_NORMAL as u16);
+            cinematic!(game.SamusPose = K_POSE_02_FACE_L_NORMAL as u16);
             game.finish_pose_change();
             let (x, y) = if mother_brain { (155, 115) } else { (376, 147) };
             game.set_player_x(x);
@@ -258,7 +258,7 @@ pub fn wait_for_scene<H: crate::menus::host::Host + ?Sized>(scene: Scene, game: 
                 );
                 crate::word_transfers!(game, ascending, 224; le(LEVEL_DATA, 0) <- rom(0x8cbec3, 0));
                 crate::word_transfers!(game, ascending, 256; native(0x16402) <- value(0));
-                word!(game.HUD_ITEM_INDEX = 1);
+                cinematic!(game.SelectedWeapon = 1);
             } else {
                 CinematicObjects::Sprites.spawn(
                     ADDR_CINEMATIC_SPRITE_OBJECT_DEF_8BCE5B as u16,
@@ -272,7 +272,7 @@ pub fn wait_for_scene<H: crate::menus::host::Host + ?Sized>(scene: Scene, game: 
                 );
                 cinematic!(game.IntroFrameCounter = 0);
                 crate::word_transfers!(game, ascending, 384; le(LEVEL_DATA, 0) <- rom(0x8cc083, 0));
-                word!(game.HUD_ITEM_INDEX = 0);
+                cinematic!(game.SelectedWeapon = 0);
             }
             word!(game.FRAME_HANDLER_ALFA = (0x90e6c9i32) as u16);
             word!(game.FRAME_HANDLER_BETA = (0x90e833i32) as u16);
@@ -367,7 +367,7 @@ pub fn wait_for_fade<H: crate::menus::host::Host + ?Sized>(
         crate::flow::set(game, crate::flow::Word::CinematicFunction, next);
         if next == 0xa5f8 {
             cinematic!(game.FunctionTimer = 60);
-            if word!(game.JAPANESE_TEXT_FLAG) != 0 {
+            if cinematic!(game.JapaneseText) != 0 {
                 queue_cinematic_tilemap(CinematicTilemap::JapaneseIntro, game);
             }
         }
@@ -490,7 +490,7 @@ pub fn show_final_page<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
 pub fn wait_for_final_page<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     if page_input_ready(game) {
         cinematic!(game.Var13 = 127);
-        if word!(game.JAPANESE_TEXT_FLAG) != 0 {
+        if cinematic!(game.JapaneseText) != 0 {
             crate::flow::set(game, crate::flow::Word::CinematicFunction, 0xb207);
             set_cinematic_tilemap_updates(false, game);
             clear_japanese_tiles(game);
@@ -534,7 +534,8 @@ pub fn fade_out_to_ceres<H: crate::menus::host::Host + ?Sized>(restore_samus: bo
         );
         if restore_samus {
             crate::menus::controller_input::restore_cinematic_bindings(game);
-            word! { game, 0; SAMUS_MAX_MISSILES, SAMUS_MISSILES }
+            crate::inventory::set(game, crate::inventory::Word::MaxMissiles, 0);
+            crate::inventory::set(game, crate::inventory::Word::Missiles, 0);
         }
     }
 }

@@ -107,7 +107,7 @@ pub fn advance_intro_rinka<H: crate::menus::host::Host + ?Sized>(
     } else {
         game.set_invincibility_timer(11);
         game.set_knockback_timer(11);
-        word!(game.KNOCKBACK_X_DIR = 1);
+        cinematic!(game.KnockbackXDirection = 1);
     }
     resume_cinematic_sprite(slot, 0xce53, game);
 }

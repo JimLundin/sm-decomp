@@ -429,7 +429,7 @@ pub fn move_ending_cloud<H: crate::menus::host::Host + ?Sized>(
 
 pub fn prepare_ending_time<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     let hours = word!(game.GAME_TIME_HOURS);
-    word! { game; SUBSTATE = hours / 10; SUIT_PICKUP_LIGHT_BEAM_POS = hours % 10; }
+    cinematic! { game; SequenceStage = hours / 10; SequenceValue = hours % 10; }
     let minutes = word!(game.GAME_TIME_MINUTES);
     crate::word_transfers!(game, ascending, 1;
         native(0xdf0) <- value(minutes / 10), native(0xdf2) <- value(minutes % 10),

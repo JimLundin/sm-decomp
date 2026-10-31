@@ -5,7 +5,6 @@ use crate::cinematic_state::cinematic;
 use crate::display::control::{Brightness, Layers, MainWindowMask, SubScreen};
 use crate::menus::prelude::{options_menu, owned, scroll};
 use crate::ram::RawRam as _;
-use crate::ram::word;
 
 pub fn configure_cinematic_display<H: crate::menus::host::Host + ?Sized>(
     display: crate::visual_state::CinematicDisplay,
@@ -178,7 +177,7 @@ pub fn configure_cinematic_display<H: crate::menus::host::Host + ?Sized>(
         XSub, X, YSub, Y, XSubspeed, XSpeed, YSubspeed, YSpeed,
     }
     if matches!(display, Intro | Station) {
-        word!(game.FX_LAYER_BLENDING_CONFIG_A = 0);
+        cinematic!(game.FxBlending = 0);
     }
     if intro {
         scroll! { game, 0; Bg2H, Bg2V, Bg3H, Bg3V }

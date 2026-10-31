@@ -144,7 +144,7 @@ pub fn load_graphics<H: Host + ?Sized>(game: &mut H) {
     crate::screen_fade::set_both(game, 1, 1);
     crate::hdma_objects::set_hdma_enabled(true, game);
     crate::palette_effects::execution::leased::set_enabled(true, game);
-    word!(game.FX_LAYER_BLENDING_CONFIG_A = 0);
+    cinematic!(game.FxBlending = 0);
     crate::palette_effects::execution::leased::spawn(TITLE_GLOW_1, game);
     crate::palette_effects::execution::leased::spawn(TITLE_GLOW_2, game);
     // The second title palette allocation leaves its slot offset in A.

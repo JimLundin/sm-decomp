@@ -245,15 +245,15 @@ pub fn execute_cinematic_sprite_instruction<H: crate::menus::host::Host + ?Sized
             spawn_cinematic_sprite_at(samus::SUITED_JUMP_BODY, 0, parameter, game);
             },
             9158806 => {
-            if word!(game.JAPANESE_TEXT_FLAG) == 0 {
+            if cinematic!(game.JapaneseText) == 0 {
                 j = (j).wrapping_add(6);
             }
             },
             9161125 => { crate::palette_effects::execution::leased::spawn(crate::intro_sequence::ZEBES_TEXT_FADE_IN, game);         },
             9161135 => {
-            if word!(game.JAPANESE_TEXT_FLAG) != 0 {
+            if cinematic!(game.JapaneseText) != 0 {
                 CinematicSprites.spawn(intro::PLANET_ZEBES_JAPANESE_TEXT,
-                    word!(game.JAPANESE_TEXT_FLAG),
+                    cinematic!(game.JapaneseText),
                     game,
                 );
             }
@@ -314,7 +314,7 @@ pub fn execute_cinematic_sprite_instruction<H: crate::menus::host::Host + ?Sized
             game.queue_sound(0, 0x22_u8, 15);
                 },
             9172561 => {
-            word! {game; SAMUS_Y_SUBSPEED = 0; SAMUS_Y_SPEED = -16i32 as u16; }
+            cinematic! {game; SamusYSubspeed = 0; SamusYSpeed = -16i32 as u16; }
                 },
             9152792 => { spawn_cinematic_burst(0xcecd, 0..6, 6, game); game.queue_sound(1, 0xb_u8, 6); },
             9159684 => { spawn_cinematic_burst(0xcebb, 0..5, 0, game); },
@@ -766,7 +766,7 @@ fn cinematic_background_command<H: crate::menus::host::Host + ?Sized>(
         9154004 => intro_pages::reset_text_marker(game),
         9168423 => draw_cinematic_item_percentage(game),
         9168745 => {
-            if word!(game.JAPANESE_TEXT_FLAG) != 0 {
+            if cinematic!(game.JapaneseText) != 0 {
                 crate::word_transfers!(game, descending, 64; pause_map(799) <- rom(0x8cdf5b, 63));
             }
         }
