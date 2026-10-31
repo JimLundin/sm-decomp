@@ -152,11 +152,16 @@ frames = 2300
 expect = ["encounter:ceres-ridley"]
 after_expectations = 120
 
+# The authored Bomb Torizo and bomb-jump inputs predate the original door and
+# box timings; their seeded checkpoints were cut at the rows' start frames by
+# 96b667a43^, the last build whose replay of these inputs reached the events.
 [[segment]]
 id = "boss-bomb-torizo"
-pending = "authored against the patched oracle; the shorter door and box timings move the path before its event (frames still match). A checkpoint cut by the last passing build reaches it, but corpus checkpoints cannot carry a seed yet"
+pending = "awaiting the seeds-v1-seeded-checkpoints-f4e03e50190ab6dd ci-data upload"
 seed = "100-input-phase:27"
 seed_sha256 = "c402c17601f3ac1b274a8c1914e306ed304371b8e65031975d5b67947591528c"
+checkpoint = "bomb-torizo-seeded-1441.smvchk"
+checkpoint_sha256 = "54f04af09f6ef50fb836d754439f970a8f95fd71714f2cee5e79e288cf11ee4b"
 inputs = "authored-bomb-torizo.inputs"
 input_sha256 = "cb1badc64cca3aa72364677aa8c6d9ce2c827b42eca8e2712ad03deb5561dfe4"
 start_frame = 1441
@@ -816,9 +821,11 @@ expect = ["room:E0B5"]
 # Vertical bomb-jump lifecycle and subsequent gameplay.
 [[segment]]
 id = "samus-bomb-jump-vertical"
-pending = "authored against the patched oracle; the shorter door and box timings move the path before its event (frames still match). A checkpoint cut by the last passing build reaches it, but corpus checkpoints cannot carry a seed yet"
+pending = "awaiting the seeds-v1-seeded-checkpoints-f4e03e50190ab6dd ci-data upload"
 seed = "100-input-phase:27"
 seed_sha256 = "c402c17601f3ac1b274a8c1914e306ed304371b8e65031975d5b67947591528c"
+checkpoint = "bomb-jump-seeded-6762.smvchk"
+checkpoint_sha256 = "78cfe367caaf404ada1654e8f73fb0def11870040be62106296c8f48fa3d908c"
 inputs = "authored-bomb-jump.inputs"
 input_sha256 = "65a524cd11d5b4a35bf9add300b091d64ce39888083e529633210eac5ced2d3c"
 start_frame = 6762
@@ -1074,9 +1081,11 @@ expect = ["area:crateria", "room:91F8"]
 # Fixed window starts at the authenticated Stone Zoomer movement mismatch.
 [[segment]]
 id = "wall-crawler-slope-step"
-pending = "authored against the patched oracle; the shorter door and box timings move the path before its event (frames still match). A checkpoint cut by the last passing build reaches it, but corpus checkpoints cannot carry a seed yet"
+pending = "awaiting the seeds-v1-seeded-checkpoints-f4e03e50190ab6dd ci-data upload"
 seed = "100-input-phase:27"
 seed_sha256 = "c402c17601f3ac1b274a8c1914e306ed304371b8e65031975d5b67947591528c"
+checkpoint = "bomb-jump-seeded-6762.smvchk"
+checkpoint_sha256 = "78cfe367caaf404ada1654e8f73fb0def11870040be62106296c8f48fa3d908c"
 inputs = "authored-bomb-jump.inputs"
 input_sha256 = "65a524cd11d5b4a35bf9add300b091d64ce39888083e529633210eac5ced2d3c"
 start_frame = 6762
