@@ -2,7 +2,7 @@
 //! still owns, plus unsafe entries for callers with a live backend.
 use crate::game::{animated_tiles, mode7_transfers, vram_read_queue};
 use crate::game_state::Game;
-use crate::rtl::{DMAP1, MDMAEN, VMADDL, VMAIN, WriteReg, WriteRegWord};
+use crate::rtl::{DMAP1, MDMAEN, VMADDL, VMAIN, write_reg, write_reg_word};
 use sm_game::display::control::Brightness;
 pub(crate) use sm_game::display::transfer::ScrollingLayout as ScrollingDmaLayout;
 use sm_game::display_refresh as refresh;
@@ -69,7 +69,7 @@ pub(crate) unsafe fn flush_tilemaps(game: &mut Game) {
         if tail != 0 {
             // The sentinel uses the byte tail, which need not lie on an entry boundary.
             game.write_vram_queue_word(tail, 0, 0);
-            WriteRegWord(DMAP1 as u16, 0x1801, game);
+            write_reg_word(DMAP1 as u16, 0x1801, game);
             sm_game::display::transfer::drain_tilemaps(
                 &mut crate::game::display_transfers::CompatibilityQueue::new(game),
             );
@@ -87,7 +87,7 @@ pub(crate) unsafe fn flush_tilemaps(game: &mut Game) {
                 [(0x964, [0xc948, 0xc98c]), (0x980, [0xca50, 0xca94])],
             ),
         ] {
-            WriteReg(VMAIN as u16, increment, game);
+            write_reg(VMAIN as u16, increment, game);
             for (parameters, sources) in buffers {
                 crate::game::display_transfers::upload_scrolling_tilemap(
                     parameters, sources, layout, game,
@@ -124,12 +124,12 @@ pub(crate) unsafe fn start_room_dma(
                     game,
                 )
             }
-            None => WriteReg(MDMAEN as u16, mask, game),
+            None => write_reg(MDMAEN as u16, mask, game),
         }
     }
 }
 
-pub unsafe fn CopyToVramNow(vram_dst: u16, src: u32, size: u16, game: &mut Game) {
+pub unsafe fn copy_to_vram_now(vram_dst: u16, src: u32, size: u16, game: &mut Game) {
     unsafe {
         copy_to_vram_with_source(vram_dst, src, size, None, game);
     }
@@ -155,7 +155,7 @@ pub(crate) unsafe fn copy_to_vram_with_source(
 }
 
 /// Decompress `src` into VRAM at `dst_addr`, with its PPU readback.
-pub fn DecompressToVRAM(src: u32, dst_addr: u16, game: &mut Game) {
+pub fn decompress_to_vram(src: u32, dst_addr: u16, game: &mut Game) {
     refresh::decompress_to_vram(src, dst_addr, game);
 }
 /// Decompress a prepared stream into VRAM, with its PPU readback.

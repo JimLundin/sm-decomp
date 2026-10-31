@@ -7,7 +7,7 @@ use crate::snes::apu::{apu_reset, apu_saveload};
 use crate::snes::cart::{cart_reset, cart_saveload};
 use crate::snes::cpu::cpu_saveload;
 use crate::snes::ppu::{
-    ppu_checkOverscan, ppu_handleVblank, ppu_read, ppu_reset, ppu_saveload, ppu_write,
+    ppu_check_overscan, ppu_handle_vblank, ppu_read, ppu_reset, ppu_saveload, ppu_write,
 };
 pub use crate::types::Snes;
 use crate::types::{Apu, ApuRegisters, Cart, Cpu, Dma, DmaChannel, Dsp, Input, Ppu, Spc};
@@ -167,7 +167,7 @@ impl Backend {
     }
 }
 
-fn SwapInputBits(input: u16) -> u16 {
+fn swap_input_bits(input: u16) -> u16 {
     input.reverse_bits()
 }
 
@@ -308,18 +308,18 @@ impl crate::execution::Execution<'_> {
         unsafe {
             let snes = self.snes();
             if (*snes).hPos == 0 {
-                let mut startingVblank = false;
+                let mut starting_vblank = false;
                 if (*snes).vPos == 0 {
                     (*snes).inVblank = false;
                     (*snes).inNmi = false;
                     self.initialize_hdma();
                 } else if (*snes).vPos == 225 {
-                    startingVblank = !ppu_checkOverscan(self.selected_ppu());
+                    starting_vblank = !ppu_check_overscan(self.selected_ppu());
                 } else if (*snes).vPos == 240 && !(*snes).inVblank {
-                    startingVblank = true;
+                    starting_vblank = true;
                 }
-                if startingVblank {
-                    ppu_handleVblank(self.selected_ppu());
+                if starting_vblank {
+                    ppu_handle_vblank(self.selected_ppu());
                     (*snes).inVblank = true;
                     (*snes).inNmi = true;
                     (*self.selected_cpu()).nmiWanted = true;
@@ -431,8 +431,8 @@ impl crate::execution::Execution<'_> {
                 0x4215 => ((*snes).divideResult >> 8) as u8,
                 0x4216 => (*snes).multiplyResult as u8,
                 0x4217 => ((*snes).multiplyResult >> 8) as u8,
-                0x4218 => SwapInputBits(self.backend.input1.get().currentState) as u8,
-                0x4219 => (SwapInputBits(self.backend.input1.get().currentState) >> 8) as u8,
+                0x4218 => swap_input_bits(self.backend.input1.get().currentState) as u8,
+                0x4219 => (swap_input_bits(self.backend.input1.get().currentState) >> 8) as u8,
                 0x421a..=0x421f => 0,
                 _ => (*snes).openBus,
             }

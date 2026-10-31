@@ -10,14 +10,14 @@ use ::core::mem::size_of;
 use ::core::ptr::null_mut;
 
 use crate::c_library::{fprintf, memcmp, printf, puts, snprintf, stderr, time};
-use crate::rtl::{RtlSaveSnapshot, RtlSetupEmuCallbacks};
+use crate::rtl::{rtl_save_snapshot, rtl_setup_emu_callbacks};
 
 #[path = "game/session_native_adoption.rs"]
 pub(crate) mod session_native_adoption;
 use crate::game_state::persistent_session::SessionSnapshotPayload;
-use crate::snes::cpu::{cpu_getFlags, cpu_setFlags};
-use crate::snes::snes_other::snes_loadRom;
-use crate::tracing::getProcessorStateCpu;
+use crate::snes::cpu::{cpu_get_flags, cpu_set_flags};
+use crate::snes::snes_other::snes_load_rom;
+use crate::tracing::get_processor_state_cpu;
 pub use crate::types::ProjectileInstr;
 pub use crate::types::{BotwoonLayout, Cpu, Dma, Ppu, Snes};
 // Explicit state previously included by the oversized OAM memory copy.
@@ -67,12 +67,12 @@ pub const RM_THEIRS: RunMode = 2;
 pub use crate::types::RunMode;
 pub const NULL: *mut c_void = null_mut::<c_void>();
 #[inline]
-unsafe fn get_ProjectileInstr(a: u16, game: &mut HookContext<'_, '_>) -> *mut ProjectileInstr {
+unsafe fn get_projectile_instr(a: u16, game: &mut HookContext<'_, '_>) -> *mut ProjectileInstr {
     unsafe {
         crate::rtl::rom_ptr_parts((0x930000 | a as i32) as u32, game.host) as *mut ProjectileInstr
     }
 }
-pub unsafe fn Call(addr: u32, game: &mut Game) {
+pub unsafe fn call_routine(addr: u32, game: &mut Game) {
     unsafe {
         assert!(
             game.supports_legacy_persistence(),
@@ -82,7 +82,7 @@ pub unsafe fn Call(addr: u32, game: &mut Game) {
             '_c2rust_label: addr & 0x8000 != 0;
             b"addr & 0x8000\0", b"src/sm_cpu_infra.c\0", 54, b"void Call(uint32)\0"
         };
-        RunAsmCode(addr, 0, 0, 0, 0, game);
+        run_asm_code(addr, 0, 0, 0, 0, game);
     }
 }
 // The native diagnostic is the remaining unsafe boundary; ROM access is checked.
@@ -240,7 +240,7 @@ unsafe fn patch_bugs_parts(mode: u32, addr: u32, game: &mut HookContext<'_, '_>)
             let k: i32 = (*game.cpu()).x as i32;
             let ip: i32 = word!(game.PROJECTILE_BOMB_INSTRUCTION_PTR[(k >> 1)]) as i32;
             let delta: i32 = if word!(game.PROJECTILE_BOMB_INSTRUCTION_TIMERS[(k >> 1)]) as i32 == 1
-                && (*get_ProjectileInstr(ip as u16, game)).timer & 0x8000 == 0
+                && (*get_projectile_instr(ip as u16, game)).timer & 0x8000 == 0
             {
                 0
             } else {
@@ -325,29 +325,30 @@ unsafe fn patch_bugs_parts(mode: u32, addr: u32, game: &mut HookContext<'_, '_>)
             } else if fix_bug_hook(0xa5a018, &mut game.host) {
                 word!(game.REMOVED_VAR_E24 = 0);
             } else if fix_bug_hook(0xb39ddb, &mut game.host) {
-                let E = word!(game.CUR_ENEMY_INDEX) as i32;
+                let enemy = word!(game.CUR_ENEMY_INDEX) as i32;
                 word!(
-                    game.REMOVED_R18 = (slot!(game, BotwoonLayout[E].base.x_pos) as i32
-                        - slot!(game, BotwoonLayout[E].var_56) as i32)
+                    game.REMOVED_R18 = (slot!(game, BotwoonLayout[enemy].base.x_pos) as i32
+                        - slot!(game, BotwoonLayout[enemy].var_56) as i32)
                         as u16
                 );
                 word!(
-                    game.REMOVED_R20 = (slot!(game, BotwoonLayout[E].base.y_pos) as i32
-                        - slot!(game, BotwoonLayout[E].var_57) as i32)
+                    game.REMOVED_R20 = (slot!(game, BotwoonLayout[enemy].base.y_pos) as i32
+                        - slot!(game, BotwoonLayout[enemy].var_57) as i32)
                         as u16
                 );
             } else if fix_bug_hook(0xb39e13, &mut game.host) {
-                let E_0 = word!(game.CUR_ENEMY_INDEX) as i32;
+                let enemy_0 = word!(game.CUR_ENEMY_INDEX) as i32;
                 slot!(
                     game,
-                    BotwoonLayout[E_0].var_45 = (slot!(game, BotwoonLayout[E_0].var_45) as i32
+                    BotwoonLayout[enemy_0].var_45 = (slot!(game, BotwoonLayout[enemy_0].var_45)
+                        as i32
                         + (word!(game.REMOVED_R22) as i32
-                            - slot!(game, BotwoonLayout[E_0].var_45) as i32)
+                            - slot!(game, BotwoonLayout[enemy_0].var_45) as i32)
                             as i8 as i32
                             * 3
                             / 4) as u8 as u16
                 );
-                word!(game.REMOVED_R22 = slot!(game, BotwoonLayout[E_0].var_45));
+                word!(game.REMOVED_R22 = slot!(game, BotwoonLayout[enemy_0].var_45));
             }
         }
         0
@@ -553,7 +554,7 @@ unsafe fn compare_snapshot_bytes(
     }
 }
 
-unsafe fn VerifySnapshotsEq(
+unsafe fn verify_snapshots_eq(
     b: *mut Snapshot,
     a: *mut Snapshot,
     prev: *mut Snapshot,
@@ -848,7 +849,7 @@ unsafe fn VerifySnapshotsEq(
 // Snapshot storage is separate from the live emulator allocations. Narrow
 // borrows let the compiler retain that distinction across the bulk copies.
 // RAM must be the selected backend's stable binding at both capture and restore.
-unsafe fn MakeSnapshotWithPlayerOwner(
+unsafe fn make_snapshot_with_player_owner(
     s: &mut Snapshot,
     snes: &Snes,
     c: &Cpu,
@@ -882,7 +883,7 @@ macro_rules! copy_snapshot_fields {
         $($target.$field = $source.$field;)*
     };
 }
-unsafe fn RestoreSnapshot(
+unsafe fn restore_snapshot(
     s: &Snapshot,
     snes: &mut Snes,
     c: &mut Cpu,
@@ -936,7 +937,7 @@ unsafe fn RestoreSnapshot(
         copy_snapshot_fields! {c, s.cpu; a, x, y, sp, dp, db, pc, k}
         snes.vTimer = s.snes.vTimer;
         copy_snapshot_fields! {c, s.cpu; e, stopped, irqWanted, nmiWanted}
-        cpu_setFlags(cpu_getFlags(&s.cpu), c);
+        cpu_set_flags(cpu_get_flags(&s.cpu), c);
         c.waiting = s.cpu.waiting;
         copy_snapshot_fields! {snes, s.snes;
             hPos, vPos, frames, inNmi, inIrq, inVblank,
@@ -959,7 +960,7 @@ unsafe fn RestoreSnapshot(
         ppu.objPixelBufferXX[..19].copy_from_slice(&s.ppu.objPixelBufferXX[..19]);
     }
 }
-pub unsafe fn RunAsmCode(
+pub unsafe fn run_asm_code(
     pc: u32,
     a: u16,
     x: u16,
@@ -996,7 +997,7 @@ pub unsafe fn RunAsmCode(
                 let _pc_0: u32 = (words!(i32, (*(*game.g_snes).cpu), k, pc)) as u32;
                 if (*game.g_snes).debug_cycles {
                     let mut line = [0u8; 80];
-                    getProcessorStateCpu(&mut game.execution(), &mut line);
+                    get_processor_state_cpu(&mut game.execution(), &mut line);
                     puts(line.as_ptr().cast());
                 }
                 game.execution().step_cpu();
@@ -1029,7 +1030,7 @@ pub unsafe fn RunAsmCode(
         }
     }
 }
-unsafe fn loadRom(name: *const c_char, game: &mut Game) -> bool {
+unsafe fn load_rom(name: *const c_char, game: &mut Game) -> bool {
     unsafe {
         let bytes = match crate::util::read_whole_file(name) {
             Ok(bytes) => bytes,
@@ -1038,23 +1039,23 @@ unsafe fn loadRom(name: *const c_char, game: &mut Game) -> bool {
                 return false;
             }
             Err(crate::util::ReadFailure::Read) => {
-                crate::host::Die(c"unable to read the ROM file".as_ptr());
+                crate::host::fatal_error(c"unable to read the ROM file".as_ptr());
                 return false;
             }
         };
         // The trailing NUL stays outside the ROM length.
         let length = bytes.len() - 1;
-        snes_loadRom(bytes.as_ptr(), length as i32, game)
+        snes_load_rom(bytes.as_ptr(), length as i32, game)
     }
 }
-pub unsafe fn FixupCarry(addr: u32, game: &mut Game) {
+pub unsafe fn fixup_carry(addr: u32, game: &mut Game) {
     unsafe {
         game.note_samus_external_mutation();
         patch_image(addr, &mut game.execution_parts().1).write(addr, 0, 0);
     }
 }
 
-pub fn RtlUpdateSnesPatchForBugfix(game: &mut Game) {
+pub fn rtl_update_snes_patch_for_bugfix(game: &mut Game) {
     game.note_samus_external_mutation();
     let counter = u16::from_le_bytes([game.ram().read_byte(0xc2), game.ram().read_byte(0xc3)]);
     game.currently_installed_bug_fix_counter = counter;
@@ -1067,20 +1068,20 @@ pub fn RtlUpdateSnesPatchForBugfix(game: &mut Game) {
     .update_bugfix(counter);
     game.refresh_rom_records();
 }
-pub unsafe fn SnesInit(filename: *const c_char, game: &mut Game) -> *mut Snes {
+pub unsafe fn snes_init(filename: *const c_char, game: &mut Game) -> *mut Snes {
     unsafe {
         game.note_samus_external_mutation();
         game.initialize_backend();
-        let loaded: bool = loadRom(filename, game);
+        let loaded: bool = load_rom(filename, game);
         if !loaded {
             return null_mut::<Snes>();
         }
         game.g_sram = (*(*game.g_snes).cart).ram.clone();
         game.register_native_rom((*(*game.g_snes).cart).rom.clone());
         game.register_rom((*(*game.g_snes).cart).rom.clone());
-        RtlSetupEmuCallbacks(
+        rtl_setup_emu_callbacks(
             null_mut::<u8>(),
-            Some(RtlRunFrameCompare as unsafe fn(u16, i32, &mut Game) -> ()),
+            Some(rtl_run_frame_compare as unsafe fn(u16, i32, &mut Game) -> ()),
             None,
             game,
         );
@@ -1092,7 +1093,7 @@ pub unsafe fn SnesInit(filename: *const c_char, game: &mut Game) -> *mut Snes {
                 .clone(),
         )
         .install_startup(game.g_use_my_apu_code);
-        RtlUpdateSnesPatchForBugfix(game);
+        rtl_update_snes_patch_for_bugfix(game);
         // Every site keeps its original byte, installed or not, so checkpoints
         // (which store these bytes) do not depend on the patch policy.
         let originals = PATCHED_CARRIES
@@ -1114,7 +1115,7 @@ pub unsafe fn SnesInit(filename: *const c_char, game: &mut Game) -> *mut Snes {
             if crate::oracle_mode::installs(crate::oracle_mode::PatchKind::Carry, address)
                 && patch_image(address, &mut game.execution_parts().1).byte(address) != 0
             {
-                FixupCarry(address, game);
+                fixup_carry(address, game);
             }
         }
         install_startup_bug_hooks(&mut game.execution_parts().1);
@@ -1122,7 +1123,7 @@ pub unsafe fn SnesInit(filename: *const c_char, game: &mut Game) -> *mut Snes {
         game.g_snes
     }
 }
-pub unsafe fn DebugGameOverMenu() {
+pub unsafe fn debug_game_over_menu() {
     unsafe {
         crate::native_assertion! {
             '_c2rust_label;
@@ -1144,7 +1145,7 @@ unsafe fn upload_faithful_music_data(game: &mut Game) {
         let ram = game.ram();
         let source = u32::from_le_bytes([ram.read_byte(0), ram.read_byte(1), ram.read_byte(2), 0]);
         if source != 0xcf8000 {
-            crate::rtl::RtlApuUpload(source, game);
+            crate::rtl::rtl_apu_upload(source, game);
         }
     }
 }
@@ -1162,13 +1163,13 @@ fn recovery_player(game: &Game) -> PlayerSnapshotSource<'static> {
     }
 }
 
-pub unsafe fn RunCpuUntilPC(pc1: u32, pc2: u32, game: &mut Game) -> u32 {
+pub unsafe fn run_cpu_until_pc(pc1: u32, pc2: u32, game: &mut Game) -> u32 {
     unsafe {
         game.note_samus_external_mutation();
         loop {
             if (*game.g_snes).debug_cycles {
                 let mut line = [0u8; 80];
-                getProcessorStateCpu(&mut game.execution(), &mut line);
+                get_processor_state_cpu(&mut game.execution(), &mut line);
                 puts(line.as_ptr().cast());
             }
             game.execution().step_cpu();
@@ -1182,7 +1183,7 @@ pub unsafe fn RunCpuUntilPC(pc1: u32, pc2: u32, game: &mut Game) -> u32 {
         }
     }
 }
-pub unsafe fn RunOneFrameOfGame_Emulated(native_game: &mut Game) {
+pub unsafe fn run_one_frame_of_game_emulated(native_game: &mut Game) {
     let game = &mut *native_game;
     unsafe {
         if !game.supports_legacy_persistence() {
@@ -1201,17 +1202,17 @@ pub unsafe fn RunOneFrameOfGame_Emulated(native_game: &mut Game) {
         let bug_fix_bak: u16 = word!(game.BUG_FIX_COUNTER);
         let cpu = (*game.g_snes).cpu;
         if (*cpu).k == 0x80 && (*cpu).pc == 0x8459 {
-            RunCpuUntilPC(0x808460, 0x808460, game);
+            run_cpu_until_pc(0x808460, 0x808460, game);
             (*cpu).pc = 0x8462;
         }
-        RunCpuUntilPC(0x808343, 0x85813c, game);
+        run_cpu_until_pc(0x808343, 0x85813c, game);
         (*(*game.g_snes).cpu).nmiWanted = true;
         // An NMI that reads the controller latches the next frame's word.
         let frame_input = game.input1_mut().currentState;
         if let Some(input) = crate::oracle_mode::nmi_input() {
             game.input1_mut().currentState = input;
         }
-        RunCpuUntilPC(0x80834a, 0x858142, game);
+        run_cpu_until_pc(0x80834a, 0x858142, game);
         game.input1_mut().currentState = frame_input;
         word!(game.BUG_FIX_COUNTER = bug_fix_bak);
         game.commit_actor_canonical(actor_transition);
@@ -1222,7 +1223,7 @@ pub unsafe fn RunOneFrameOfGame_Emulated(native_game: &mut Game) {
             .expect("Session native result adoption rejected");
     }
 }
-pub unsafe fn DrawFrameToPpu(native_game: &mut Game) {
+pub unsafe fn draw_frame_to_ppu(native_game: &mut Game) {
     let game = &mut *native_game;
     // This local capability is constructed only under this function's existing
     // exclusive, live-backend contract. No safe caller can construct it.
@@ -1278,7 +1279,7 @@ pub unsafe fn DrawFrameToPpu(native_game: &mut Game) {
     session_native_adoption::reconcile_current(native_game)
         .expect("Session native result adoption rejected");
 }
-pub unsafe fn SaveBugSnapshot(game: &mut Game) {
+pub unsafe fn save_bug_snapshot(game: &mut Game) {
     unsafe {
         if game.VERIFY_ACTIVE {
             return;
@@ -1291,7 +1292,7 @@ pub unsafe fn SaveBugSnapshot(game: &mut Game) {
                 c"saves/bug-%d.sav".as_ptr(),
                 time(null_mut::<core::ffi::c_long>()) as i32,
             );
-            RtlSaveSnapshot(&raw mut buffer as *mut c_char, true, game);
+            rtl_save_snapshot(&raw mut buffer as *mut c_char, true, game);
         }
         game.g_got_mismatch_count = 5 * 60;
     }
@@ -1337,7 +1338,7 @@ unsafe fn report_first_verify_failure(game: &mut Game) {
         eprintln!("RAM: {differing_bytes} differing bytes (showing at most 64)");
     }
 }
-pub unsafe fn RunOneFrameOfGame_Both(native_game: &mut Game) {
+pub unsafe fn run_one_frame_of_game_both(native_game: &mut Game) {
     let game = &mut *native_game;
     unsafe {
         if !game.supports_legacy_persistence() {
@@ -1356,7 +1357,7 @@ pub unsafe fn RunOneFrameOfGame_Both(native_game: &mut Game) {
             let cpu = game.g_cpu;
             let player = game.g_spc_player;
             let (backend, ram, _, _, before, owner) = game.ram_and_owned_snapshots();
-            MakeSnapshotWithPlayerOwner(before, &*snes, &*cpu, player, owner, ram, backend);
+            make_snapshot_with_player_owner(before, &*snes, &*cpu, player, owner, ram, backend);
         }
         game.actor_snapshots.before = Some(game.capture_actor_snapshot());
         let samus_before = game.capture_samus_snapshot();
@@ -1374,14 +1375,14 @@ pub unsafe fn RunOneFrameOfGame_Both(native_game: &mut Game) {
             (*game.g_snes).runningWhichVersion = 1;
             let position = game.audio_execution_position();
             game.audio_output.enter_execution(position);
-            RunOneFrameOfGame_Emulated(game);
-            DrawFrameToPpu(game);
+            run_one_frame_of_game_emulated(game);
+            draw_frame_to_ppu(game);
             {
                 let snes = game.g_snes;
                 let cpu = game.g_cpu;
                 let player = game.g_spc_player;
                 let (backend, ram, _, theirs, _, owner) = game.ram_and_owned_snapshots();
-                MakeSnapshotWithPlayerOwner(theirs, &*snes, &*cpu, player, owner, ram, backend);
+                make_snapshot_with_player_owner(theirs, &*snes, &*cpu, player, owner, ram, backend);
             }
             game.actor_snapshots.theirs = Some(game.capture_actor_snapshot());
             let samus_theirs = game.capture_samus_snapshot();
@@ -1412,7 +1413,7 @@ pub unsafe fn RunOneFrameOfGame_Both(native_game: &mut Game) {
                 let snes = game.g_snes;
                 let cpu = game.g_cpu;
                 let (backend, ram, _, _, before, _) = game.ram_and_owned_snapshots();
-                RestoreSnapshot(before, &mut *snes, &mut *cpu, ram, backend);
+                restore_snapshot(before, &mut *snes, &mut *cpu, ram, backend);
                 actor_restore.commit(game.actor_identity_mut());
                 restore
                     .finish(samus_restore)
@@ -1424,21 +1425,21 @@ pub unsafe fn RunOneFrameOfGame_Both(native_game: &mut Game) {
             let position = game.audio_execution_position();
             game.audio_output.enter_execution(position);
             gameplay::advance(Entry::Frame, game);
-            DrawFrameToPpu(game);
+            draw_frame_to_ppu(game);
             let queue_mine = crate::audio_snapshot::ApuQueueSnapshot::capture(game);
             {
                 let snes = game.g_snes;
                 let cpu = game.g_cpu;
                 let player = game.g_spc_player;
                 let (backend, ram, mine, _, _, owner) = game.ram_and_owned_snapshots();
-                MakeSnapshotWithPlayerOwner(mine, &*snes, &*cpu, player, owner, ram, backend);
+                make_snapshot_with_player_owner(mine, &*snes, &*cpu, player, owner, ram, backend);
             }
             game.actor_snapshots.mine = Some(game.capture_actor_snapshot());
             let _samus_mine = game.capture_samus_snapshot();
             let mut session_mine = session_native_adoption::capture(game)
                 .expect("Session Rust result capture rejected");
             (*game.g_snes).runningWhichVersion = 0xff;
-            VerifySnapshotsEq(
+            verify_snapshots_eq(
                 &raw mut *game.g_snapshot_mine,
                 &raw mut *game.g_snapshot_theirs,
                 &raw mut *game.g_snapshot_before,
@@ -1517,7 +1518,7 @@ pub unsafe fn RunOneFrameOfGame_Both(native_game: &mut Game) {
                     let snes = game.g_snes;
                     let cpu = game.g_cpu;
                     let (backend, ram, _, _, before, _) = game.ram_and_owned_snapshots();
-                    RestoreSnapshot(before, &mut *snes, &mut *cpu, ram, backend);
+                    restore_snapshot(before, &mut *snes, &mut *cpu, ram, backend);
                     actor_restore.commit(game.actor_identity_mut());
                     restore
                         .finish(samus_restore)
@@ -1530,7 +1531,7 @@ pub unsafe fn RunOneFrameOfGame_Both(native_game: &mut Game) {
                 if game.g_debug_flag {
                     continue;
                 }
-                SaveBugSnapshot(game);
+                save_bug_snapshot(game);
                 {
                     let player = game.g_spc_player;
                     let (_, _, mine, _, _, owner) = game.ram_and_owned_snapshots();
@@ -1540,8 +1541,8 @@ pub unsafe fn RunOneFrameOfGame_Both(native_game: &mut Game) {
                 game.g_snapshot_before.audio.restore(game.g_snes);
                 queue_before.restore(game);
                 game.restore_native_player_snapshot(PlayerSnapshotSource::Before);
-                RunOneFrameOfGame_Emulated(game);
-                DrawFrameToPpu(game);
+                run_one_frame_of_game_emulated(game);
+                draw_frame_to_ppu(game);
                 let _samus_recovery = game.capture_samus_snapshot();
                 let session_recovery = session_native_adoption::capture(game)
                     .expect("Session rerun result capture rejected");
@@ -1572,7 +1573,7 @@ pub unsafe fn RunOneFrameOfGame_Both(native_game: &mut Game) {
                     let snes = game.g_snes;
                     let cpu = game.g_cpu;
                     let (backend, ram, _, theirs, _, _) = game.ram_and_owned_snapshots();
-                    RestoreSnapshot(theirs, &mut *snes, &mut *cpu, ram, backend);
+                    restore_snapshot(theirs, &mut *snes, &mut *cpu, ram, backend);
                     actor_restore.commit(game.actor_identity_mut());
                     restore
                         .finish(samus_restore)
@@ -1608,7 +1609,7 @@ pub unsafe fn RunOneFrameOfGame_Both(native_game: &mut Game) {
         }
         if word!(game.MENU_INDEX) & 0xff00 != 0 {
             printf(c"MENU INDEX TOO BIG!\n".as_ptr());
-            SaveBugSnapshot(game);
+            save_bug_snapshot(game);
             word!(game.MENU_INDEX &= 0xff);
         }
         if game.g_got_mismatch_count != 0 {
@@ -1623,7 +1624,7 @@ pub unsafe fn RunOneFrameOfGame_Both(native_game: &mut Game) {
             .expect("Session normalized selected adoption rejected");
     }
 }
-pub unsafe fn RtlRunFrameCompare(input: u16, _run_what: i32, native_game: &mut Game) {
+pub unsafe fn rtl_run_frame_compare(input: u16, _run_what: i32, native_game: &mut Game) {
     let game = &mut *native_game;
     unsafe {
         if !game.supports_legacy_persistence() && u32::from(game.g_runmode) != RM_MINE {
@@ -1640,17 +1641,17 @@ pub unsafe fn RtlRunFrameCompare(input: u16, _run_what: i32, native_game: &mut G
         if game.g_runmode as i32 == RM_THEIRS as i32 {
             let position = game.audio_execution_position();
             game.audio_output.enter_execution(position);
-            RunOneFrameOfGame_Emulated(game);
-            DrawFrameToPpu(game);
+            run_one_frame_of_game_emulated(game);
+            draw_frame_to_ppu(game);
         } else if game.g_runmode as i32 == RM_MINE as i32 {
             (*game.g_snes).runningWhichVersion = 0xff;
             let position = game.audio_execution_position();
             game.audio_output.enter_execution(position);
             gameplay::advance(Entry::Frame, game);
-            DrawFrameToPpu(game);
+            draw_frame_to_ppu(game);
             (*game.g_snes).runningWhichVersion = 0;
         } else {
-            RunOneFrameOfGame_Both(game);
+            run_one_frame_of_game_both(game);
         };
         mutation
             .finish_current()

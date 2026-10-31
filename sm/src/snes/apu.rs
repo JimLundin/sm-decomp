@@ -2,8 +2,8 @@ use crate::c_library::puts;
 use crate::execution::Execution;
 use crate::initial_state::InitialState;
 use crate::snes::dsp::{dsp_cycle, dsp_read, dsp_reset, dsp_saveload, dsp_write};
-use crate::snes::spc::{spc_reset, spc_runOpcode, spc_saveload};
-use crate::tracing::getProcessorStateSpc;
+use crate::snes::spc::{spc_reset, spc_run_opcode, spc_saveload};
+use crate::tracing::get_processor_state_spc;
 pub use crate::types::{Apu, ApuRegisters, DspRegWriteHistory, Timer};
 use ::core::mem::size_of;
 // Register serialization retains the forty bytes following legacy APU RAM.
@@ -66,10 +66,10 @@ unsafe fn apu_cycle_parts(apu: *mut Apu, debug_cycles: &bool) {
         let opcode_cycles = if (*apu).registers.cpuCyclesLeft == 0 {
             if *debug_cycles {
                 let mut line = [0u8; 80];
-                getProcessorStateSpc(apu, &mut line);
+                get_processor_state_spc(apu, &mut line);
                 puts(line.as_ptr().cast());
             }
-            Some(spc_runOpcode((*apu).spc) as u8)
+            Some(spc_run_opcode((*apu).spc) as u8)
         } else {
             None
         };
@@ -80,7 +80,7 @@ unsafe fn apu_cycle_parts(apu: *mut Apu, debug_cycles: &bool) {
     }
 }
 #[unsafe(export_name = "apu_cpuRead")]
-pub unsafe extern "C-unwind" fn apu_cpuRead(apu: *mut Apu, adr: u16) -> u8 {
+pub unsafe extern "C-unwind" fn apu_cpu_read(apu: *mut Apu, adr: u16) -> u8 {
     unsafe {
         (*apu).registers.read(&(*apu).ram, adr, |address| {
             dsp_read(&(*(*apu).dsp).state, address)
@@ -98,7 +98,7 @@ fn record_dsp_write(history: &mut DspRegWriteHistory, address: u8, value: u8) {
 }
 
 #[unsafe(export_name = "apu_cpuWrite")]
-pub unsafe extern "C-unwind" fn apu_cpuWrite(apu: *mut Apu, adr: u16, val: u8) {
+pub unsafe extern "C-unwind" fn apu_cpu_write(apu: *mut Apu, adr: u16, val: u8) {
     unsafe {
         (*apu)
             .registers

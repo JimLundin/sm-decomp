@@ -27,7 +27,7 @@ COUPLINGS = {
     "Game handle (files)": (re.compile(r"\bgame_state::Game\b|\bGame\b.*game_state|&mut Game\b"), "files"),
     "ram_map addresses (files)": (re.compile(r"\bram_map\b"), "files"),
     "rom_table_word reads (sites)": (re.compile(r"\brom_table_word\b"), "sites"),
-    "PPU register writes (sites)": (re.compile(r"\b(WriteReg|WriteRegWord|write_register_and_mirror)\b"), "sites"),
+    "PPU register writes (sites)": (re.compile(r"\b(write_reg|write_reg_word|write_register_and_mirror)\b"), "sites"),
     "audio backend calls (sites)": (re.compile(r"native_audio::(write_sound_port|upload_bank)\b"), "sites"),
 }
 

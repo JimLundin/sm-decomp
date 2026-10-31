@@ -4,8 +4,8 @@ use crate::ram_map::word;
 use crate::rtl::{
     APUI00, APUI01, APUI02, APUI03, BG1HOFS, BG1SC, BG1VOFS, BG2HOFS, BG2SC, BG2VOFS, BG3HOFS,
     BG3SC, BG3VOFS, BG4HOFS, BG4SC, BG4VOFS, BG12NBA, BG34NBA, CGADSUB, CGWSEL, M7A, M7B, M7C, M7D,
-    M7X, M7Y, MEMSEL, MOSAIC, NMITIMEN, RtlApuWrite, SETINI, VMAIN, W12SEL, W34SEL, WBGLOG, WH0,
-    WH1, WH2, WH3, WOBJLOG, WOBJSEL,
+    M7X, M7Y, MEMSEL, MOSAIC, NMITIMEN, SETINI, VMAIN, W12SEL, W34SEL, WBGLOG, WH0, WH1, WH2, WH3,
+    WOBJLOG, WOBJSEL, rtl_apu_write,
 };
 use sm_game::display::control::{
     BgMode, Brightness, FixedColor, Layers, MainScreen, MainWindowMask, Mode7Settings, SubScreen,
@@ -68,10 +68,10 @@ pub(crate) unsafe fn resume(game: &mut Game) -> u8 {
                 NMI_COPY_SAMUS_HALVES, NMI_COPY_SAMUS_TOP_HALF_SRC, NMI_COPY_SAMUS_BOTTOM_HALF_SRC,
             }
             crate::game::display_refresh::enable(true, game);
-            RtlApuWrite(APUI00, 0, game);
-            RtlApuWrite(APUI01, 0, game);
-            RtlApuWrite(APUI02, 0, game);
-            RtlApuWrite(APUI03, 0, game);
+            rtl_apu_write(APUI00, 0, game);
+            rtl_apu_write(APUI01, 0, game);
+            rtl_apu_write(APUI02, 0, game);
+            rtl_apu_write(APUI03, 0, game);
             word!(game.RANDOM_NUMBER = 97);
             crate::game::music::reset_delays(game);
             word!(game.ENABLE_DEBUG = 0);

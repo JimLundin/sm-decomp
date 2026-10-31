@@ -34,7 +34,7 @@ pub(crate) unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
     unsafe {
         assert!((14..16).contains(&id));
         assert!(!g.g_snes.is_null(), "composed.real-hardware-carrier");
-        crate::rtl::RtlReset(2, g);
+        crate::rtl::rtl_reset(2, g);
         crate::native_audio::upload_bank(0xcf8000, g);
         fixture::install(g);
         steps::install_surface_content(g);
@@ -77,7 +77,7 @@ pub(crate) unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
                 break;
             }
             crate::game::display_refresh::run(g);
-            crate::cpu_infra::DrawFrameToPpu(g);
+            crate::cpu_infra::draw_frame_to_ppu(g);
         }
         assert!(done, "composed.start.completed");
         assert_eq!(g.ram().read_byte(0x613), 0);
@@ -89,7 +89,7 @@ pub(crate) unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
         for step in 0..16 {
             transferred = checks::source_transfer(&mut Runtime::new(g));
             crate::game::display_refresh::run(g);
-            crate::cpu_infra::DrawFrameToPpu(g);
+            crate::cpu_infra::draw_frame_to_ppu(g);
             assert!(!g.g_fail, "composed.source.transfer-no-diagnostic-{step}");
             if transferred {
                 break;
@@ -150,7 +150,7 @@ pub(crate) unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
         let mut done = false;
         for frame in 0..768 {
             crate::verify_probe::begin_frame(192 + frame);
-            crate::rtl::RtlRunFrame(0, g);
+            crate::rtl::rtl_run_frame(0, g);
             assert!(!g.g_fail, "composed.door.no-diagnostic-{frame}");
             if word(g, 0x998) == 8 {
                 done = true;

@@ -76,7 +76,7 @@ unsafe extern "C-unwind" {
 #[unsafe(no_mangle)]
 unsafe extern "C-unwind" fn sm_util_die(message: *const c_char) {
     unsafe {
-        crate::host::Die(message);
+        crate::host::fatal_error(message);
     }
 }
 

@@ -1,7 +1,7 @@
 //! Crocomire's phases and scripts run in `sm_game::actors::crocomire_reactions`;
 //! its imported tables, BG2 alignment, boss word, projectiles and drop come from here.
 #![forbid(unsafe_code)]
-use crate::game::enemy_projectiles::{ClearEprojs, scatter_drop};
+use crate::game::enemy_projectiles::{clear_eprojs, scatter_drop};
 use crate::game::gameplay_flag_runtime;
 use crate::game_state::Game;
 use sm_data::crocomire::{
@@ -114,7 +114,7 @@ impl Host for Game {
     }
 
     fn clear_enemy_projectiles(&mut self) {
-        ClearEprojs(self);
+        clear_eprojs(self);
     }
 
     fn scatter_crocomire_drop(&mut self, area: u16) {

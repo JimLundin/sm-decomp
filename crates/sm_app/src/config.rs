@@ -92,7 +92,7 @@ unsafe extern "C-unwind" fn sm_config_read_file(
             Ok(buffer) => buffer,
             Err(sm::util::ReadFailure::Open) => return null_mut(),
             Err(sm::util::ReadFailure::Read) => {
-                sm::host::Die(c"unable to read the configuration file".as_ptr());
+                sm::host::fatal_error(c"unable to read the configuration file".as_ptr());
                 return null_mut();
             }
         };

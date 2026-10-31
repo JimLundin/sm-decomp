@@ -1,10 +1,10 @@
 //! Additional synthetic cases, separate from the frozen 354-case carrier.
 //! Intended as a child of that carrier; no cartridge content is used.
 use super::{bytes, put, slot};
-fn CallEprojInit(ea: u32, k: u16, game: &mut Game) {
+fn call_eproj_init(ea: u32, k: u16, game: &mut Game) {
     super::super::with_execution(game, |ctx| super::super::setup::dispatch(ea, k, ctx));
 }
-fn CallEprojPreInstr(ea: u32, k: u16, game: &mut Game) {
+fn call_eproj_pre_instr(ea: u32, k: u16, game: &mut Game) {
     super::super::with_execution(game, |ctx| super::super::pre_actions::dispatch(ea, k, ctx));
 }
 fn move_along_angle(k: u16, game: &mut Game) {
@@ -50,7 +50,7 @@ pub(super) unsafe fn execute(id: u32, game: &mut Game, image: &RomImage) -> Opti
             [0xffff, 0x8000, 1, 0][id as usize % 4],
         );
         {
-            CallEprojInit(setups[id as usize / 4], index, game)
+            call_eproj_init(setups[id as usize / 4], index, game)
         };
     } else if id < 60 {
         let variant = (id - 28) as usize;
@@ -71,7 +71,7 @@ pub(super) unsafe fn execute(id: u32, game: &mut Game, image: &RomImage) -> Opti
         slot(game, a::EPROJ_X_SUBPOS, index, 0xffff);
         slot(game, a::EPROJ_Y_SUBPOS, index, 1);
         {
-            CallEprojInit(8842182, index, game);
+            call_eproj_init(8842182, index, game);
             move_along_angle(index, game);
             move_along_angle(index, game);
         }
@@ -98,7 +98,7 @@ pub(super) unsafe fn execute(id: u32, game: &mut Game, image: &RomImage) -> Opti
             slot(game, field, index, value);
         }
         {
-            CallEprojPreInstr(pre, index, game)
+            call_eproj_pre_instr(pre, index, game)
         };
     }
     None

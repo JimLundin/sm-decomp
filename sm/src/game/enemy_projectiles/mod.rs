@@ -36,13 +36,13 @@ use sm_game::enemy_projectiles::shared_pre;
 fn with_execution<R>(game: &mut Game, operation: impl FnOnce(&mut Runtime<'_>) -> R) -> R {
     operation(&mut Runtime::new(game))
 }
-pub fn EnableEprojs(game: &mut Game) {
+pub fn enable_eprojs(game: &mut Game) {
     with_execution(game, |ctx| lifecycle::set_enabled(ctx, true));
 }
-pub fn DisableEprojs(game: &mut Game) {
+pub fn disable_eprojs(game: &mut Game) {
     with_execution(game, |ctx| lifecycle::set_enabled(ctx, false));
 }
-pub fn ClearEprojs(game: &mut Game) {
+pub fn clear_eprojs(game: &mut Game) {
     with_execution(game, |ctx| lifecycle::clear(ctx));
 }
 pub fn spawn_with_enemy_gfx(parameter: u16, enemy: u16, definition: u16, game: &mut Game) -> u16 {
@@ -61,7 +61,7 @@ pub fn spawn_with_room_gfx(definition: u16, parameter: u16, game: &mut Game) -> 
         lifecycle::spawn_room(ctx, definition, parameter)
     })
 }
-pub fn EprojRunAll(game: &mut Game) {
+pub fn eproj_run_all(game: &mut Game) {
     with_execution(game, |ctx| lifecycle::advance(ctx));
 }
 pub fn x_velocity_at_angle(amplitude: u16, angle: u16) -> u16 {

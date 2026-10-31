@@ -1,5 +1,5 @@
 //! Eleven eligible corrected legacy Rust calls, compared with frozen CPU output.
-use super::{Game, MakeSnapshotWithPlayerOwner, RestoreSnapshot, Snapshot};
+use super::{Game, Snapshot, make_snapshot_with_player_owner, restore_snapshot};
 use crate::native_rom::NativeRomPointer;
 use crate::{initial_state::InitialState, player_transitions_rust_observer as observer};
 pub const CAPACITY: usize = 2 * 1024 * 1024;
@@ -154,7 +154,7 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
             let snapshot_cpu = game.g_cpu;
             let snapshot_player = game.g_spc_player;
             let (backend, ram, _, _, _, owner) = game.ram_and_owned_snapshots();
-            MakeSnapshotWithPlayerOwner(
+            make_snapshot_with_player_owner(
                 &mut before,
                 &*snapshot_snes,
                 &*snapshot_cpu,
@@ -280,7 +280,7 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
             let snapshot_snes = game.g_snes;
             let snapshot_cpu = game.g_cpu;
             let (backend, ram, _, _, _, _) = game.ram_and_owned_snapshots();
-            RestoreSnapshot(
+            restore_snapshot(
                 &before,
                 &mut *snapshot_snes,
                 &mut *snapshot_cpu,

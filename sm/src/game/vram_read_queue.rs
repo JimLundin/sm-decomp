@@ -2,7 +2,7 @@
 #![deny(unsafe_op_in_unsafe_fn)]
 use crate::game_state::Game;
 use crate::ram_map::checked_word as word;
-use crate::rtl::WriteReg;
+use crate::rtl::write_reg;
 use crate::snes::registers::*;
 
 pub(super) unsafe fn process(game: &mut Game) {
@@ -11,7 +11,7 @@ pub(super) unsafe fn process(game: &mut Game) {
         // Only the low sentinel byte is cleared; the high byte remains live.
         game.ram().write_byte(0x340 + usize::from(tail), 0);
         unsafe {
-            WriteReg(VMAIN as u16, 0x80, game);
+            write_reg(VMAIN as u16, 0x80, game);
         }
         // DMA can overwrite later records, so each is decoded after the last ran.
         sm_game::display::transfer::drain_readbacks(&mut unsafe {

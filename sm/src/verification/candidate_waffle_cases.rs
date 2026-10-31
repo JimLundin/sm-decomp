@@ -1,7 +1,7 @@
 //! Actual whole Waffle producer with synthetic sine/sprite content.
 use super::{bytes, put};
 use sm_game::actors::layouts::EnemyLayout72 as Layout;
-fn CallNuclearWaffleFunc(ea: u32, game: &mut Game) {
+fn call_nuclear_waffle_func(ea: u32, game: &mut Game) {
     assert_eq!(ea, 10917506);
     super::super::advance_fire_arc_orbit(game);
 }
@@ -103,7 +103,7 @@ pub(super) unsafe fn execute(id: u32, game: &mut Game, image: &RomImage) -> Opti
         );
     }
     {
-        CallNuclearWaffleFunc(10917506, game)
+        call_nuclear_waffle_func(10917506, game)
     };
     None
 }

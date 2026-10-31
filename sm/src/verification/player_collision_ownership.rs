@@ -184,7 +184,8 @@ unsafe fn vertical_carry(g: &mut Game, out: &mut Vec<u8>) {
         .map(|at| g.ram().read_byte(at))
         .collect::<Vec<_>>();
     record(out, 0, 0, g);
-    let result = unsafe { sm_a9::MotherBrain_MoveSamusVerticallyTowardsCeilingFloor(0x0120, g) };
+    let result =
+        unsafe { sm_a9::mother_brain_move_samus_vertically_towards_ceiling_floor(0x0120, g) };
     assert_eq!(result, 0, "collision.owner.vertical.unclamped");
     put(&mut expected, 0xafa, 62);
     put(&mut expected, 0xb14, 62);
@@ -201,7 +202,8 @@ unsafe fn vertical_carry(g: &mut Game, out: &mut Vec<u8>) {
     expected = (0..g.ram().len())
         .map(|at| g.ram().read_byte(at))
         .collect::<Vec<_>>();
-    let result = unsafe { sm_a9::MotherBrain_MoveSamusVerticallyTowardsCeilingFloor(0x0220, g) };
+    let result =
+        unsafe { sm_a9::mother_brain_move_samus_vertically_towards_ceiling_floor(0x0220, g) };
     assert_eq!(result, 1, "collision.owner.vertical.clamped");
     for at in [0xafa, 0xb14] {
         put(&mut expected, at, 192);
@@ -225,7 +227,7 @@ unsafe fn horizontal_carry(g: &mut Game, out: &mut Vec<u8>) {
         .map(|at| g.ram().read_byte(at))
         .collect::<Vec<_>>();
     record(out, 0, 0, g);
-    let result = unsafe { sm_a9::MotherBrain_MoveSamusHorizTowardsWall(0x0120, g) };
+    let result = unsafe { sm_a9::mother_brain_move_samus_horiz_towards_wall(0x0120, g) };
     assert_eq!(result, 0, "collision.owner.horizontal.unclamped");
     for at in [0xaf6, 0xb10] {
         put(&mut expected, at, 102);
@@ -243,7 +245,7 @@ unsafe fn horizontal_carry(g: &mut Game, out: &mut Vec<u8>) {
     expected = (0..g.ram().len())
         .map(|at| g.ram().read_byte(at))
         .collect::<Vec<_>>();
-    let result = unsafe { sm_a9::MotherBrain_MoveSamusHorizTowardsWall(0x0120, g) };
+    let result = unsafe { sm_a9::mother_brain_move_samus_horiz_towards_wall(0x0120, g) };
     assert_eq!(result, 1, "collision.owner.horizontal.clamped");
     for at in [0xaf6, 0xb10] {
         put(&mut expected, at, 235);
@@ -344,7 +346,7 @@ unsafe fn reset(g: &mut Game, out: &mut Vec<u8>) {
     record(out, 1, 0, g);
     let snes = g.g_snes;
     let world = g.world().clone();
-    unsafe { crate::rtl::RtlReset(2, g) };
+    unsafe { crate::rtl::rtl_reset(2, g) };
     assert_eq!(g.g_snes, snes, "collision.owner.reset.backend_identity");
     assert!(
         std::sync::Arc::ptr_eq(g.world(), &world),
@@ -435,7 +437,7 @@ unsafe fn snapshot(g: &mut Game, out: &mut Vec<u8>) {
             let snapshot_cpu = g.g_cpu;
             let snapshot_player = g.g_spc_player;
             let (backend, ram, _, _, before, owner) = g.ram_and_owned_snapshots();
-            super::MakeSnapshotWithPlayerOwner(
+            super::make_snapshot_with_player_owner(
                 before,
                 &*snapshot_snes,
                 &*snapshot_cpu,
@@ -466,7 +468,7 @@ unsafe fn snapshot(g: &mut Game, out: &mut Vec<u8>) {
             let snapshot_snes = snes;
             let snapshot_cpu = g.g_cpu;
             let (backend, ram, _, _, before, _) = g.ram_and_owned_snapshots();
-            super::RestoreSnapshot(
+            super::restore_snapshot(
                 before,
                 &mut *snapshot_snes,
                 &mut *snapshot_cpu,

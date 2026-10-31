@@ -100,7 +100,7 @@ impl MenuRuntime for Game {
         crate::game::visual_runtime::update_beam_tiles_and_palette(self)
     }
     fn has_queued_music(&mut self) -> u8 {
-        crate::game::music::HasQueuedMusic(self)
+        crate::game::music::has_queued_music(self)
     }
     fn queue_music_delayed8(&mut self, track: u16) {
         crate::game::music::queue_music_delayed_8(track, self)
@@ -109,7 +109,7 @@ impl MenuRuntime for Game {
         sm_game::hdma_objects::spawn_hdma_owned(bank, args, self)
     }
     fn rtl_unreachable(&mut self) -> bool {
-        crate::rtl::Unreachable(self)
+        crate::rtl::report_unreachable(self)
     }
     fn spawn_bg3_scroll(&mut self) {
         sm_game::hdma_objects::spawn_bg3_scroll_owned(self)
@@ -213,7 +213,7 @@ impl MenuRuntime for Game {
     }
     fn handle_music_queue(&mut self) {
         // SAFETY: HDMA updates run from the frame loop with the backend installed.
-        unsafe { crate::game::music::HandleMusicQueue(self) }
+        unsafe { crate::game::music::handle_music_queue(self) }
     }
     fn hdma_effect(&mut self, effect: sm_game::hdma_objects::HdmaEffect, slot: u16) {
         use sm_game::hdma_effects::HdmaEffects;
@@ -265,7 +265,7 @@ impl MenuRuntime for Game {
         Game::request_reset(self)
     }
     fn flush_sram(&mut self) {
-        unsafe { crate::rtl::RtlWriteSram(self) }
+        unsafe { crate::rtl::rtl_write_sram(self) }
     }
     fn invalid_window(&mut self, address: u32) {
         crate::game::session_runtime::invalid_window(self, address)
@@ -476,7 +476,7 @@ impl sm_game::cinematic_host::Host for Game {
     }
 
     fn queue_music_delayed(&mut self, track: u16, delay: u16) {
-        crate::game::music::QueueMusic_DelayedY(track, delay, self);
+        crate::game::music::queue_music_delayed_y(track, delay, self);
     }
 
     fn spawn_power_bomb(&mut self) {

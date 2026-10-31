@@ -25,7 +25,7 @@ impl sm_game::gameplay_frame::Host for Game {
         unsafe { crate::game::boot::resume(self) }
     }
     fn fail_frame_state(&mut self) {
-        unsafe { crate::host::Die(c"Incorrect coroutine_state_0".as_ptr()) }
+        unsafe { crate::host::fatal_error(c"Incorrect coroutine_state_0".as_ptr()) }
     }
     fn report_broken_coroutine(&mut self, state: [u8; 4]) {
         unsafe {
@@ -36,7 +36,7 @@ impl sm_game::gameplay_frame::Host for Game {
                 state[2] as i32,
                 state[3] as i32,
             );
-            crate::host::Warning(c"Coroutine State is broken!".as_ptr());
+            crate::host::report_warning(c"Coroutine State is broken!".as_ptr());
         }
     }
     fn update_hdma(&mut self) {
@@ -57,7 +57,7 @@ impl sm_game::gameplay_frame::Host for Game {
         crate::game::room_entry::protocol::resume(&mut Runtime::new(self), signal).returned_byte()
     }
     fn debug_game_over_menu(&mut self) {
-        unsafe { crate::cpu_infra::DebugGameOverMenu() }
+        unsafe { crate::cpu_infra::debug_game_over_menu() }
     }
     fn advance_sound_effects(&mut self) {
         crate::game::music::advance_sound_effects(self, |channel, value, meaning, game| unsafe {
@@ -105,7 +105,7 @@ impl sm_game::gameplay_frame::Host for Game {
     }
 
     fn queue_music_delayed(&mut self, track: u16, delay: u16) {
-        crate::game::music::QueueMusic_DelayedY(track, delay, self);
+        crate::game::music::queue_music_delayed_y(track, delay, self);
     }
     fn advance_low_health_warning(&mut self) {
         crate::game::session_runtime::player_update_runtime::low_health(self);

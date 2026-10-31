@@ -15,13 +15,13 @@ pub unsafe fn ppu_copy(ppu: *mut Ppu, ppu_src: *mut Ppu) {
     unsafe {
         let snes = (*ppu).snes;
         let pitch: usize = (*ppu).renderPitch as usize;
-        let renderBuffer = (*ppu).renderBuffer;
+        let buffer = (*ppu).renderBuffer;
         memcpy(
             ppu as *mut c_void,
             ppu_src as *const c_void,
             size_of::<Ppu>() as usize,
         );
-        (*ppu).renderBuffer = renderBuffer;
+        (*ppu).renderBuffer = buffer;
         (*ppu).renderPitch = pitch as u32;
         (*ppu).snes = snes;
     }
@@ -49,7 +49,7 @@ pub unsafe fn ppu_saveload(ppu: *mut Ppu, io: &mut crate::snapshot_io::SnapshotI
     }
 }
 // These duplicate renderer inputs are outside the legacy serialized PPU range.
-pub fn PpuRestoreRenderRouting(ppu: &mut Ppu) {
+pub fn ppu_restore_render_routing(ppu: &mut Ppu) {
     ppu.screenEnabled = [0; 2];
     ppu.screenWindowed = [0; 2];
     for (index, layer) in ppu.layer.iter().enumerate() {
@@ -67,19 +67,19 @@ pub fn PpuRestoreRenderRouting(ppu: &mut Ppu) {
         ppu.windowsel |= flags << (index * 4);
     }
 }
-pub unsafe fn PpuBeginDrawing(ppu: *mut Ppu, pixels: *mut u8, pitch: usize, _render_flags: u32) {
+pub unsafe fn ppu_begin_drawing(ppu: *mut Ppu, pixels: *mut u8, pitch: usize, _render_flags: u32) {
     unsafe {
         (*ppu).renderPitch = pitch as u32;
         (*ppu).renderBuffer = pixels;
     }
 }
-pub unsafe fn ppu_checkOverscan(ppu: *mut Ppu) -> bool {
+pub unsafe fn ppu_check_overscan(ppu: *mut Ppu) -> bool {
     unsafe {
         (*ppu).frameOverscan = (*ppu).overscan;
         (*ppu).frameOverscan
     }
 }
-pub unsafe fn ppu_handleVblank(ppu: *mut Ppu) {
+pub unsafe fn ppu_handle_vblank(ppu: *mut Ppu) {
     unsafe {
         if !(*ppu).forcedBlank {
             (*ppu).oamAdr = (*ppu).oamAdrWritten;
@@ -90,7 +90,7 @@ pub unsafe fn ppu_handleVblank(ppu: *mut Ppu) {
     }
 }
 #[inline]
-fn ClearBackdrop(buf: &mut PpuPixelPrioBufs) {
+fn clear_backdrop(buf: &mut PpuPixelPrioBufs) {
     buf.data.fill(0x0500);
 }
 
@@ -229,16 +229,16 @@ pub(crate) unsafe fn ppu_run_line(ppu: *mut Ppu, line: i32, new_ppu: &bool) {
                     &mut (*ppu).brightnessMultHalf,
                 );
             }
-            ClearBackdrop(&mut (*ppu).objBuffer);
+            clear_backdrop(&mut (*ppu).objBuffer);
             (*ppu).lineHasSprites =
-                !(*ppu).forcedBlank && ppu_evaluateSprites(ppu, line - 1i32) as i32 != 0;
+                !(*ppu).forcedBlank && ppu_evaluate_sprites(ppu, line - 1i32) as i32 != 0;
             // EXTBG composition and enabled mosaic use the per-pixel path.
             let mosaic = (*ppu).mosaicSize > 1 && (*ppu).bgLayer.iter().any(|bg| bg.mosaicEnabled);
             if *new_ppu && !((*ppu).mode == 7 && (*ppu).m7extBg) && !mosaic {
-                PpuDrawWholeLine(ppu, line as u32);
+                ppu_draw_whole_line(ppu, line as u32);
             } else {
                 if (*ppu).mode as i32 == 7 {
-                    ppu_calculateMode7Starts(ppu, line);
+                    ppu_calculate_mode7_starts(ppu, line);
                 }
                 for x in 0i32..256 {
                     ppu_render_pixel::<false>(ppu, x, line, (0, 0));
@@ -248,7 +248,7 @@ pub(crate) unsafe fn ppu_run_line(ppu: *mut Ppu, line: i32, new_ppu: &bool) {
     }
 }
 
-unsafe fn PpuDrawWholeLine(ppu: *mut Ppu, y: u32) {
+unsafe fn ppu_draw_whole_line(ppu: *mut Ppu, y: u32) {
     unsafe {
         if (*ppu).forcedBlank {
             let dst = (*ppu)
@@ -285,7 +285,7 @@ unsafe fn PpuDrawWholeLine(ppu: *mut Ppu, y: u32) {
     }
 }
 
-unsafe fn ppu_getPixel<const NATIVE: bool>(
+unsafe fn ppu_get_pixel<const NATIVE: bool>(
     ppu: *mut Ppu,
     x: i32,
     y: i32,
@@ -313,7 +313,7 @@ unsafe fn ppu_getPixel<const NATIVE: bool>(
     }
 }
 
-unsafe fn ppu_calculateMode7Starts(ppu: *mut Ppu, y: i32) {
+unsafe fn ppu_calculate_mode7_starts(ppu: *mut Ppu, y: i32) {
     unsafe {
         let (x, y) = {
             let config = ppu_line_config(ppu);
@@ -329,7 +329,7 @@ unsafe fn ppu_calculateMode7Starts(ppu: *mut Ppu, y: i32) {
     }
 }
 
-unsafe fn ppu_evaluateSprites(ppu: *mut Ppu, line: i32) -> bool {
+unsafe fn ppu_evaluate_sprites(ppu: *mut Ppu, line: i32) -> bool {
     unsafe {
         let overflow = raster::Overflow {
             range: (*ppu).rangeOver,
@@ -434,7 +434,7 @@ pub unsafe fn ppu_write(ppu: *mut Ppu, adr: u8, val: u8) {
         sm_backend_ppu_write(ppu, adr, val);
     }
 }
-pub fn PpuGetCurrentRenderScale(_ppu: *mut Ppu, _render_flags: u32) -> i32 {
+pub fn ppu_get_current_render_scale(_ppu: *mut Ppu, _render_flags: u32) -> i32 {
     1
 }
 
@@ -442,7 +442,7 @@ unsafe fn ppu_render_pixel<const NATIVE: bool>(ppu: *mut Ppu, x: i32, y: i32, st
     unsafe {
         let mut output = [0u8; 4];
         if !(*ppu).forcedBlank {
-            let main = ppu_getPixel::<NATIVE>(ppu, x, y, false, starts);
+            let main = ppu_get_pixel::<NATIVE>(ppu, x, y, false, starts);
             let policy = if NATIVE {
                 raster::Quantization::Native
             } else {
@@ -463,7 +463,7 @@ unsafe fn ppu_render_pixel<const NATIVE: bool>(ppu: *mut Ppu, x: i32, y: i32, st
             if ppu_raster_result(raster::needs_subscreen(&math, main, window, false))
                 || !NATIVE && ((*ppu).pseudoHires || (*ppu).mode == 5 || (*ppu).mode == 6)
             {
-                second = ppu_getPixel::<NATIVE>(ppu, x, y, true, starts);
+                second = ppu_get_pixel::<NATIVE>(ppu, x, y, true, starts);
             }
             // These inputs were read after the optional backend sub query.
             math.add_subscreen = (*ppu).addSubscreen;

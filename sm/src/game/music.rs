@@ -5,7 +5,7 @@ use crate::ram_map::checked_word;
 pub(crate) use sm_game::music_requests as requests;
 
 #[forbid(unsafe_code)]
-pub fn HasQueuedMusic(game: &mut Game) -> u8 {
+pub fn has_queued_music(game: &mut Game) -> u8 {
     requests::has_queued_music(game)
 }
 
@@ -19,11 +19,11 @@ pub fn queue_music_delayed_8(track: u16, game: &mut Game) {
     enqueue(track, 8, true, game);
 }
 #[forbid(unsafe_code)]
-pub fn QueueMusic_DelayedY(track: u16, delay: u16, game: &mut Game) {
+pub fn queue_music_delayed_y(track: u16, delay: u16, game: &mut Game) {
     enqueue(track, delay, false, game);
 }
 
-pub unsafe fn HandleMusicQueue(game: &mut Game) {
+pub unsafe fn handle_music_queue(game: &mut Game) {
     unsafe {
         requests::advance_music(game, |effect, meaning, game| {
             match effect {
@@ -67,7 +67,7 @@ fn room_track_changed(game: &Game) -> bool {
 }
 
 #[forbid(unsafe_code)]
-pub fn LoadRoomMusic(game: &mut Game) {
+pub fn load_room_music(game: &mut Game) {
     if checked_word!(game.GAME_STATE) < 40
         && checked_word!(game.ROOM_MUSIC_DATA_INDEX) != 0
         && checked_word!(game.ROOM_MUSIC_DATA_INDEX) != checked_word!(game.MUSIC_DATA_INDEX)
@@ -78,23 +78,23 @@ pub fn LoadRoomMusic(game: &mut Game) {
 }
 
 #[forbid(unsafe_code)]
-pub fn UpdateMusicTrackIndex(game: &mut Game) {
+pub fn update_music_track_index(game: &mut Game) {
     if room_track_changed(game) {
         checked_word!(game.MUSIC_TRACK_INDEX = checked_word!(game.ROOM_MUSIC_TRACK_INDEX));
     }
 }
 
 #[forbid(unsafe_code)]
-pub fn LoadNewMusicTrackIfChanged(game: &mut Game) {
+pub fn load_new_music_track_if_changed(game: &mut Game) {
     if room_track_changed(game) {
-        QueueMusic_DelayedY(checked_word!(game.ROOM_MUSIC_TRACK_INDEX), 6, game);
+        queue_music_delayed_y(checked_word!(game.ROOM_MUSIC_TRACK_INDEX), 6, game);
     }
 }
 
 #[forbid(unsafe_code)]
-pub fn PlayRoomMusicTrackAfterAFrames(delay: u16, game: &mut Game) {
+pub fn play_room_music_track_after_aframes(delay: u16, game: &mut Game) {
     if checked_word!(game.GAME_STATE) < 40 {
-        QueueMusic_DelayedY(0, delay, game);
+        queue_music_delayed_y(0, delay, game);
         queue_music_delayed_8(checked_word!(game.MUSIC_TRACK_INDEX), game);
     }
 }
@@ -144,24 +144,24 @@ pub(crate) fn queue_sfx(channel: usize, sound: u8, max_queued: u8, game: &mut Ga
 }
 
 crate::forward_calls! { pub fn (sound: u16, game: &mut Game);
-    QueueSfx1_Max15 => queue_sfx(0, sound as u8, 15, game);
-    QueueSfx1_Max9 => queue_sfx(0, sound as u8, 9, game);
-    QueueSfx1_Max3 => queue_sfx(0, sound as u8, 3, game);
-    QueueSfx1_Max1 => queue_sfx(0, sound as u8, 1, game);
+    queue_sfx1_max15 => queue_sfx(0, sound as u8, 15, game);
+    queue_sfx1_max9 => queue_sfx(0, sound as u8, 9, game);
+    queue_sfx1_max3 => queue_sfx(0, sound as u8, 3, game);
+    queue_sfx1_max1 => queue_sfx(0, sound as u8, 1, game);
     queue_sfx1_max6 => queue_sfx(0, sound as u8, 6, game);
 }
 crate::forward_calls! { pub fn (sound: u16, game: &mut Game);
-    QueueSfx2_Max15 => queue_sfx(1, sound as u8, 15, game);
-    QueueSfx2_Max9 => queue_sfx(1, sound as u8, 9, game);
+    queue_sfx2_max15 => queue_sfx(1, sound as u8, 15, game);
+    queue_sfx2_max9 => queue_sfx(1, sound as u8, 9, game);
     queue_sfx2_max3 => queue_sfx(1, sound as u8, 3, game);
-    QueueSfx2_Max1 => queue_sfx(1, sound as u8, 1, game);
+    queue_sfx2_max1 => queue_sfx(1, sound as u8, 1, game);
     queue_sfx2_max6 => queue_sfx(1, sound as u8, 6, game);
 }
 crate::forward_calls! { pub fn (sound: u16, game: &mut Game);
-    QueueSfx3_Max15 => queue_sfx(2, sound as u8, 15, game);
-    QueueSfx3_Max9 => queue_sfx(2, sound as u8, 9, game);
+    queue_sfx3_max15 => queue_sfx(2, sound as u8, 15, game);
+    queue_sfx3_max9 => queue_sfx(2, sound as u8, 9, game);
     queue_sfx3_max3 => queue_sfx(2, sound as u8, 3, game);
-    QueueSfx3_Max1 => queue_sfx(2, sound as u8, 1, game);
+    queue_sfx3_max1 => queue_sfx(2, sound as u8, 1, game);
     queue_sfx3_max6 => queue_sfx(2, sound as u8, 6, game);
 }
 pub(crate) fn advance_sound_effects(
@@ -180,6 +180,6 @@ pub(crate) fn advance_sound_effects(
     .expect("audio sound advance");
 }
 
-pub fn ResetSoundQueues(game: &mut Game) {
+pub fn clear_sound_queues(game: &mut Game) {
     requests::reset_sound_queues(game).expect("audio sound queue reset");
 }

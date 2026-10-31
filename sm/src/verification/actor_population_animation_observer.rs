@@ -61,7 +61,7 @@ fn append_parts(
     spawn_rect: &Rect16U,
     spawn_r22: &u16,
     spawn_pt: &Point16U,
-    spawn_varE24: &u16,
+    spawn_var_e24: &u16,
 ) {
     c.events.push(event);
     c.bytes.extend_from_slice(&event.to_le_bytes());
@@ -76,7 +76,7 @@ fn append_parts(
         spawn_rect,
         spawn_r22,
         spawn_pt,
-        spawn_varE24,
+        spawn_var_e24,
     );
 }
 pub(crate) fn stage(event: u16, key: u16, g: &mut Game) -> bool {
@@ -156,7 +156,7 @@ pub(crate) fn diagnostic_parts(
     spawn_rect: &Rect16U,
     spawn_r22: &u16,
     spawn_pt: &Point16U,
-    spawn_varE24: &u16,
+    spawn_var_e24: &u16,
 ) {
     ACTIVE.with(|a| {
         let mut active = a.borrow_mut();
@@ -177,7 +177,7 @@ pub(crate) fn diagnostic_parts(
             spawn_rect,
             spawn_r22,
             spawn_pt,
-            spawn_varE24,
+            spawn_var_e24,
         );
         if c.id != 11 || c.diagnostics == 2 {
             // Actual diagnostic precedes this new RomRecord acquisition. Already captured
@@ -206,7 +206,7 @@ pub(crate) fn diagnostic_parts(
                 spawn_rect,
                 spawn_r22,
                 spawn_pt,
-                spawn_varE24,
+                spawn_var_e24,
             );
         }
     });

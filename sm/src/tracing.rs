@@ -1,5 +1,5 @@
 use crate::execution::Execution;
-use crate::snes::apu::apu_cpuRead;
+use crate::snes::apu::apu_cpu_read;
 use crate::types::Apu;
 use std::fmt::Write;
 
@@ -209,10 +209,10 @@ fn instruction_text(line: &mut [u8], template: &str, operands: [u32; 2], short: 
     }
     out.finish();
 }
-pub(crate) unsafe fn getProcessorStateCpu(execution: &mut Execution<'_>, line: &mut [u8; 80]) {
+pub(crate) unsafe fn get_processor_state_cpu(execution: &mut Execution<'_>, line: &mut [u8; 80]) {
     unsafe {
         let mut disassembly = [0; 14];
-        getDisassemblyCpu(execution, &mut disassembly);
+        get_disassembly_cpu(execution, &mut disassembly);
         // Bus reads can change CPU fields or its owning pointer. Capture afterwards.
         let cpu = &*execution.selected_cpu();
         let (bank, pc, a, x, y, sp, dp, db) =
@@ -233,10 +233,10 @@ pub(crate) unsafe fn getProcessorStateCpu(execution: &mut Execution<'_>, line: &
         out.finish();
     }
 }
-pub unsafe fn getProcessorStateSpc(apu: *mut Apu, line: &mut [u8; 80]) {
+pub unsafe fn get_processor_state_spc(apu: *mut Apu, line: &mut [u8; 80]) {
     unsafe {
         let mut disassembly = [0; 18];
-        getDisassemblySpc(apu, &mut disassembly);
+        get_disassembly_spc(apu, &mut disassembly);
         let spc = &*(*apu).spc;
         let (pc, a, x, y, sp) = (spc.pc, spc.a, spc.x, spc.y, spc.sp);
         let flags = flag_letters(
@@ -257,7 +257,7 @@ pub unsafe fn getProcessorStateSpc(apu: *mut Apu, line: &mut [u8; 80]) {
         out.finish();
     }
 }
-unsafe fn getDisassemblyCpu(execution: &mut Execution<'_>, line: &mut [u8; 14]) {
+unsafe fn get_disassembly_cpu(execution: &mut Execution<'_>, line: &mut [u8; 14]) {
     unsafe {
         let address = u32::from((*execution.selected_cpu()).pc)
             | (u32::from((*execution.selected_cpu()).k) << 16);
@@ -299,12 +299,12 @@ unsafe fn getDisassemblyCpu(execution: &mut Execution<'_>, line: &mut [u8; 14]) 
         instruction_text(line, OPCODE_NAMES[usize::from(opcode)], operands, short);
     }
 }
-unsafe fn getDisassemblySpc(apu: *mut Apu, line: &mut [u8; 18]) {
+unsafe fn get_disassembly_spc(apu: *mut Apu, line: &mut [u8; 18]) {
     unsafe {
         let address = (*(*apu).spc).pc;
-        let opcode = apu_cpuRead(apu, address);
-        let byte = apu_cpuRead(apu, address.wrapping_add(1));
-        let byte2 = apu_cpuRead(apu, address.wrapping_add(2));
+        let opcode = apu_cpu_read(apu, address);
+        let byte = apu_cpu_read(apu, address.wrapping_add(1));
+        let byte2 = apu_cpu_read(apu, address.wrapping_add(2));
         let word = u16::from_le_bytes([byte, byte2]);
         let relative = (*(*apu).spc)
             .pc

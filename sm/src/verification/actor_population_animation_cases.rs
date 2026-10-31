@@ -74,7 +74,7 @@ pub(crate) fn snapshot_parts(
     spawn_rect: &Rect16U,
     spawn_r22: &u16,
     spawn_pt: &Point16U,
-    spawn_varE24: &u16,
+    spawn_var_e24: &u16,
 ) {
     out.extend((0..ram.len()).map(|at| ram.read_byte(at)));
     for v in [
@@ -85,7 +85,7 @@ pub(crate) fn snapshot_parts(
         *spawn_r22,
         spawn_pt.x,
         spawn_pt.y,
-        *spawn_varE24,
+        *spawn_var_e24,
     ] {
         out.extend_from_slice(&v.to_le_bytes());
     }

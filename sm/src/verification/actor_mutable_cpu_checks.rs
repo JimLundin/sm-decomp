@@ -32,7 +32,7 @@ pub(crate) unsafe fn run(game: &mut Game) -> Vec<u8> {
             let snapshot_cpu = game.g_cpu;
             let snapshot_player = game.g_spc_player;
             let (backend, ram, _, _, before, owner) = game.ram_and_owned_snapshots();
-            super::MakeSnapshotWithPlayerOwner(
+            super::make_snapshot_with_player_owner(
                 before,
                 &*snapshot_snes,
                 &*snapshot_cpu,
@@ -62,7 +62,7 @@ pub(crate) unsafe fn run(game: &mut Game) -> Vec<u8> {
             let snapshot_snes = snes;
             let snapshot_cpu = game.g_cpu;
             let (backend, ram, _, _, before, _) = game.ram_and_owned_snapshots();
-            super::RestoreSnapshot(
+            super::restore_snapshot(
                 before,
                 &mut *snapshot_snes,
                 &mut *snapshot_cpu,
@@ -87,7 +87,7 @@ pub(crate) unsafe fn run(game: &mut Game) -> Vec<u8> {
         fixture::assert_image(game, &image, &expected_image, "actual_cpu_restore");
         fixture::consume_checked(game, true, "after_actual_cpu_restore");
 
-        crate::rtl::RtlReset(2, game);
+        crate::rtl::rtl_reset(2, game);
         assert_eq!(
             game.g_snes, snes,
             "actor.mutable.reset_preserves_snes_owner"
@@ -126,9 +126,9 @@ fn cpu_writer_admission(world: std::sync::Arc<sm_game::room_entry::world::WorldB
                     let mut runtime = Runtime::new(g);
                     runtime.foreign(|g| {
                         if direct {
-                            super::RunAsmCode(0, 0, 0, 0, 0, g);
+                            super::run_asm_code(0, 0, 0, 0, 0, g);
                         } else {
-                            super::Call(0, g);
+                            super::call_routine(0, g);
                         }
                     });
                 }))
@@ -174,7 +174,7 @@ fn cpu_writer_admission(world: std::sync::Arc<sm_game::room_entry::world::WorldB
                 let result = catch_unwind(AssertUnwindSafe(|| {
                     let mut runtime = Runtime::new(g);
                     let result =
-                        runtime.foreign(|g| super::RunAsmCode(0x7e8000, value, 0, 0, 0, g));
+                        runtime.foreign(|g| super::run_asm_code(0x7e8000, value, 0, 0, 0, g));
                     assert_eq!(runtime.word(0x1738), value);
                     result
                 }));

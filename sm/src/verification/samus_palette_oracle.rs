@@ -1,8 +1,8 @@
 //! Verification only: actual 65816 selector-2 branch and ordered effects.
 //! Captures contain ROM-derived RAM: keep them outside the repository.
-use super::{Game, MakeSnapshotWithPlayerOwner, RestoreSnapshot, Snapshot};
+use super::{Game, Snapshot, make_snapshot_with_player_owner, restore_snapshot};
 use crate::initial_state::InitialState;
-use crate::snes::cpu::cpu_getFlags;
+use crate::snes::cpu::cpu_get_flags;
 
 // Primary sources: https://patrickjohnston.org/bank/91#D6F7 and #D8A5.
 // Compare named executable/table windows with the user's local original ROM;
@@ -111,7 +111,7 @@ unsafe fn observation(output: &mut Vec<u8>, tag: u8, game: &Game, full: bool) {
         let cpu = &*game.g_cpu;
         let mut payload = Vec::new();
         payload.extend_from_slice(&(u32::from(cpu.k) << 16 | u32::from(cpu.pc)).to_le_bytes());
-        payload.push(cpu_getFlags(cpu));
+        payload.push(cpu_get_flags(cpu));
         for value in [cpu.a, cpu.x, cpu.y, cpu.sp, cpu.dp] {
             payload.extend_from_slice(&value.to_le_bytes());
         }
@@ -145,7 +145,7 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
             let snapshot_cpu = game.g_cpu;
             let snapshot_player = game.g_spc_player;
             let (backend, ram, _, _, _, owner) = game.ram_and_owned_snapshots();
-            MakeSnapshotWithPlayerOwner(
+            make_snapshot_with_player_owner(
                 &mut before,
                 &*snapshot_snes,
                 &*snapshot_cpu,
@@ -306,7 +306,7 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
             let snapshot_snes = game.g_snes;
             let snapshot_cpu = game.g_cpu;
             let (backend, ram, _, _, _, _) = game.ram_and_owned_snapshots();
-            RestoreSnapshot(
+            restore_snapshot(
                 &before,
                 &mut *snapshot_snes,
                 &mut *snapshot_cpu,

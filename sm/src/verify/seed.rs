@@ -255,7 +255,7 @@ fn ppu_registers(ppu: &mut Ppu, r: &Registers) -> Result<(), String> {
         layer.maskLogic = r.get(&format!("ppu_window_mask[{index}]"))? as u8;
         ppu.mathEnabled[index] = r.get(&format!("ppu_color_enabled[{index}]"))? != 0;
     }
-    sm::snes::ppu::PpuRestoreRenderRouting(ppu);
+    sm::snes::ppu::ppu_restore_render_routing(ppu);
     Ok(())
 }
 
@@ -338,7 +338,7 @@ pub(super) unsafe fn load(
             }
             (*snes.apu).ram.copy_from(&apuram);
             (*game.g_spc_player).ram.copy_from(&apuram);
-            sm::spc_player::SpcPlayer_CopyVariablesFromRam(game.g_spc_player);
+            sm::spc_player::spc_player_copy_variables_from_ram(game.g_spc_player);
             let cpu = &mut *snes.cpu;
             cpu.a = r.get("a")? as u16;
             cpu.x = r.get("x")? as u16;
@@ -393,7 +393,7 @@ pub(super) unsafe fn load(
                     original_wait_entered = false;
                 }
                 if pc == 0x808348 {
-                    sm::rtl::FinishLoadSnesState(game);
+                    sm::rtl::finish_complete_load(game);
                 }
                 if pc == 0x80834a || pc == 0x858142 {
                     if let Some(input) = &controller {

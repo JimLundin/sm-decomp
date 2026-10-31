@@ -184,7 +184,7 @@ fn draw_body(game: &mut Game, mode: Body) {
     samus_drawing::draw_body(&mut Runtime::new(game), mode);
 }
 
-pub fn Samus_DrawWhenNotAnimatingOrDying(game: &mut Game) {
+pub fn samus_draw_when_not_animating_or_dying(game: &mut Game) {
     draw_body(game, Body::Frozen);
 }
 
@@ -261,7 +261,7 @@ impl samus_drawing::Authority for Runtime<'_> {
 
 fn sprite_position(k: u16, game: &mut Game) -> PairU16 {
     let (x, y) = samus_position_tiles::sprite_position(&mut NativePosition(game), k).unwrap();
-    MakePairU16(x, y)
+    make_pair_u16(x, y)
 }
 struct NativePosition<'a>(&'a mut Game);
 impl samus_position_tiles::PositionHost for NativePosition<'_> {

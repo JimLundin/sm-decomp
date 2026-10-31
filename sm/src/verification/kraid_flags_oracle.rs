@@ -1,7 +1,7 @@
 //! Original CPU Kraid read and complete palette/music/native-store caller.
 use super::Game;
 use crate::native_rom::NativeRomPointer;
-use crate::{kraid_flags_case as case, snes::cpu::cpu_getFlags};
+use crate::{kraid_flags_case as case, snes::cpu::cpu_get_flags};
 use std::collections::BTreeSet;
 fn offset(address: u32) -> usize {
     crate::rtl::lorom_offset(address) as usize
@@ -49,7 +49,7 @@ unsafe fn header(game: &Game) -> [u8; 16] {
         let c = &*game.g_cpu;
         let mut out = [0; 16];
         out[..4].copy_from_slice(&(u32::from(c.k) << 16 | u32::from(c.pc)).to_le_bytes());
-        out[4] = cpu_getFlags(c);
+        out[4] = cpu_get_flags(c);
         for (i, v) in [c.a, c.x, c.y, c.sp, c.dp].into_iter().enumerate() {
             out[5 + i * 2..7 + i * 2].copy_from_slice(&v.to_le_bytes());
         }

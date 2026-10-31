@@ -30,7 +30,7 @@ impl sm_game::actors::host::EnemyHost for Game {
 }
 impl sm_game::actors::species::SpeciesHost for Game {
     fn unknown_routine(&mut self) {
-        crate::rtl::Unreachable(self);
+        crate::rtl::report_unreachable(self);
     }
 }
 

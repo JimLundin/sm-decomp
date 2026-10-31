@@ -54,10 +54,10 @@ boundaries, not proof that every generic native access is disjoint:
 
 | Boundary | Required treatment |
 | --- | --- |
-| `Game::new`, ROM hard reset, `RtlReset`, Rust workspace clears, Samus initialization | Establish the model from the resulting initialized image. |
-| Every `RestoreSnapshot`, retries and partial failures | Discard stale typed values and respect the actual restore/failure prefix. |
+| `Game::new`, ROM hard reset, `rtl_reset`, Rust workspace clears, Samus initialization | Establish the model from the resulting initialized image. |
+| Every `restore_snapshot`, retries and partial failures | Discard stale typed values and respect the actual restore/failure prefix. |
 | Frontend replay base/final snapshots, SRAM-only/reset replay, checkpoint machine load | Reconstruct at the correct phase; these formats restore different state. |
-| Replay patches, `RunAsmCode`, CPU/DMA/WRAM-port writes | Export before access and import after external writes, including aliased fields. |
+| Replay patches, `run_asm_code`, CPU/DMA/WRAM-port writes | Export before access and import after external writes, including aliased fields. |
 | Scanline, HDMA and IRQ activity after gameplay; native off-table accesses | Do not assume the Rust gameplay return is the final writer of the frame. |
 
 Follow the current code in `game_state.rs`, `cpu_infra.rs`, `rtl.rs`,

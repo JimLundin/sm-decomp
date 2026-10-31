@@ -1,6 +1,6 @@
 use crate::c_library::printf;
 use crate::execution::{DmaRomSource, Execution};
-use crate::host::Die;
+use crate::host::fatal_error;
 use crate::rom::RomImage;
 use crate::rtl::words;
 pub use crate::types::{Cart, Snes};
@@ -37,27 +37,27 @@ macro_rules! cart_snapshot {
 }
 cart_snapshot! { cart, io; ramSize: u32 }
 // Adopt the actual prepared allocation; cartridge and native views share its lifetime.
-pub unsafe fn cart_load(cart: *mut Cart, type_0: i32, rom: RomImage, ramSize: i32) {
+pub unsafe fn cart_load(cart: *mut Cart, type_0: i32, rom: RomImage, ram_size: i32) {
     unsafe {
         (*cart).type_0 = type_0 as u8;
         (*cart).rom = RomImage::default();
         (*cart).ram = crate::save_ram::SaveRam::default();
         (*cart).rom = rom;
         (*cart).romSize = (*cart).rom.len() as u32;
-        (*cart).ram = crate::save_ram::SaveRam::zeroed(ramSize.max(0) as usize);
-        (*cart).ramSize = ramSize as u32;
+        (*cart).ram = crate::save_ram::SaveRam::zeroed(ram_size.max(0) as usize);
+        (*cart).ramSize = ram_size as u32;
     }
 }
 pub unsafe fn cart_write(cart: *mut Cart, bank: u8, adr: u16, val: u8) {
     unsafe {
         match (*cart).type_0 {
-            1 => cart_writeLorom(cart, bank, adr, val),
-            2 => cart_writeHirom(cart, bank, adr, val),
+            1 => cart_write_lorom(cart, bank, adr, val),
+            2 => cart_write_hirom(cart, bank, adr, val),
             _ => {}
         };
     }
 }
-unsafe fn cart_writeLorom(cart: *mut Cart, bank: u8, address: u16, value: u8) {
+unsafe fn cart_write_lorom(cart: *mut Cart, bank: u8, address: u16, value: u8) {
     unsafe {
         if (matches!(bank, 0x70..=0x7d) || bank > 0xf0) && address < 0x8000 && (*cart).ramSize > 0 {
             let index = ((u32::from(bank & 0xf) << 15) | u32::from(address))
@@ -66,7 +66,7 @@ unsafe fn cart_writeLorom(cart: *mut Cart, bank: u8, address: u16, value: u8) {
         }
     }
 }
-unsafe fn cart_writeHirom(cart: *mut Cart, mut bank: u8, adr: u16, val: u8) {
+unsafe fn cart_write_hirom(cart: *mut Cart, mut bank: u8, adr: u16, val: u8) {
     unsafe {
         bank = bank & 0x7f;
         if (bank as i32) < 0x40
@@ -229,7 +229,7 @@ impl Execution<'_> {
             }
             eprintln!("Direct page $44..$50: {direct_page:02X?}");
             self.dump_cpu_history();
-            Die(c"The game crashed in cart_readLorom".as_ptr());
+            fatal_error(c"The game crashed in cart_readLorom".as_ptr());
             (*self.snes()).openBus
         }
     }

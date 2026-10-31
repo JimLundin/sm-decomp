@@ -3,7 +3,7 @@ pub(crate) use sm_game::room_scrolls::*;
 
 impl sm_game::room_scrolls::Host for crate::game::session_runtime::Runtime<'_> {
     fn unreachable(&mut self) -> bool {
-        self.foreign(|game| crate::rtl::Unreachable(game))
+        self.foreign(|game| crate::rtl::report_unreachable(game))
     }
     fn queue_scrolling_tiles(
         &mut self,

@@ -432,7 +432,7 @@ pub mod game {
 }
 
 /// Emulated SNES hardware. Also runs the original ROM as the differential
-/// oracle: see `cpu_infra::RunOneFrameOfGame_Both`.
+/// oracle: see `cpu_infra::run_one_frame_of_game_both`.
 pub mod snes {
     pub mod apu;
     pub mod cart;

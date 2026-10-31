@@ -75,10 +75,10 @@ macro_rules! register_writes {
         $($crate::rtl::register_writes!(@write $game; $kind($($argument)*));)*
     };
     (@write $game:ident; byte($address:expr, $value:expr $(, $($tail:tt)*)?)) => {
-        $crate::rtl::WriteReg($address, $value, $game $(, $($tail)*)?)
+        $crate::rtl::write_reg($address, $value, $game $(, $($tail)*)?)
     };
     (@write $game:ident; word($address:expr, $value:expr $(, $($tail:tt)*)?)) => {
-        $crate::rtl::WriteRegWord($address, $value, $game $(, $($tail)*)?)
+        $crate::rtl::write_reg_word($address, $value, $game $(, $($tail)*)?)
     };
     (@write $game:ident; mirror($address:expr, $value:expr, $offset:expr, $before:expr $(, $($tail:tt)*)?)) => {
         $crate::rtl::write_register_and_mirror($address, $value, $offset, $before, $game $(, $($tail)*)?)
@@ -86,7 +86,7 @@ macro_rules! register_writes {
     (@write $game:ident; show($display:expr $(,)?)) => {{
         use $crate::game::display_transfers::DisplayRegister as _;
         let display = $display;
-        $crate::rtl::WriteReg(display.register(), display.value(), $game)
+        $crate::rtl::write_reg(display.register(), display.value(), $game)
     }};
     (@write $game:ident; show_mirror($display:expr, $offset:expr, $before:expr $(,)?)) => {{
         use $crate::game::display_transfers::DisplayRegister as _;
@@ -111,16 +111,16 @@ macro_rules! rom_table_word {
 pub(crate) use rom_table_word;
 
 use crate::c_library::{fprintf, memcpy, printf, sprintf, stderr};
-use crate::cpu_infra::RtlUpdateSnesPatchForBugfix;
+use crate::cpu_infra::rtl_update_snes_patch_for_bugfix;
 use crate::game_state::Game;
-use crate::host::{Die, RtlApuLock, RtlApuUnlock};
+use crate::host::{fatal_error, rtl_apu_lock, rtl_apu_unlock};
 use crate::initial_state::InitialState;
 use crate::ram_map::word;
 use crate::recording::RecordingBytes;
 pub use crate::recording::StateRecorder;
 use crate::snes::ppu::ppu_copy;
 pub use crate::snes::registers::*;
-use crate::spc_player::SpcPlayer_Upload;
+use crate::spc_player::spc_player_upload;
 pub use crate::types::Dsp;
 pub use crate::types::{Cpu, FILE, LongPtr, PairU16, Snes, VoidP};
 pub use crate::types::{RunFrameFunc, SyncAllFunc};
@@ -138,7 +138,7 @@ pub const SAVE_LOAD_SAVE: SaveLoadOperation = 1;
 pub const CURRENT_BUG_FIX_COUNTER: u32 = 1;
 pub const NULL: *mut c_void = null_mut::<c_void>();
 
-pub unsafe fn RtlSetupEmuCallbacks(
+pub unsafe fn rtl_setup_emu_callbacks(
     emu_ram: *mut u8,
     func: Option<RunFrameFunc>,
     sync_all: Option<SyncAllFunc>,
@@ -173,7 +173,7 @@ unsafe fn synchronize_whole_state(native_game: &mut Game, complete_load: bool) {
 pub unsafe fn recording_allocation(result: crate::recording::BufferResult) {
     unsafe {
         if result.is_err() {
-            Die(c"memory allocation failed".as_ptr());
+            fatal_error(c"memory allocation failed".as_ptr());
             panic!("allocation error callback returned");
         }
     }
@@ -198,7 +198,7 @@ pub(crate) unsafe fn snapshot_result(result: Result<(), TransferError>) {
 // Hardware regions include padding and retained raw aliases. Keep raw copies
 // until field-based serializers replace them; never borrow all RAM mutably.
 
-pub unsafe fn FinishLoadSnesState(game: &mut Game) {
+pub unsafe fn finish_complete_load(game: &mut Game) {
     unsafe {
         finish_load_snes_state(game, true);
     }
@@ -210,7 +210,7 @@ unsafe fn finish_load_snes_state(native_game: &mut Game, complete_load: bool) {
             .begin_samus_mutation()
             .expect("Samus mutation rejected");
         let game = mutation.game();
-        crate::snes::ppu::PpuRestoreRenderRouting(&mut *(*game.g_snes).ppu);
+        crate::snes::ppu::ppu_restore_render_routing(&mut *(*game.g_snes).ppu);
         (*(*game.g_snes).cpu).e = false;
         let ram = game.ram();
         let next: u32 = ((ram.read_byte(((*(*game.g_snes).cpu).sp as i32 + 3) as usize) as i32
@@ -241,7 +241,7 @@ unsafe fn finish_load_snes_state(native_game: &mut Game, complete_load: bool) {
     }
 }
 
-/// Read `n` bytes into `data`, reporting a short read through `Die` as the
+/// Read `n` bytes into `data`, reporting a short read through `fatal_error` as the
 /// original did. Returns whether all `n` bytes arrived.
 // LEGACY(message-text): "fread failed\n" names a C call that no longer exists;
 // it is kept only because room_world_dll.rs matches the exact Die text.
@@ -255,11 +255,11 @@ unsafe fn read_file_block(f: &mut File, data: *mut c_void, n: usize) -> bool {
     let buffer = unsafe { core::slice::from_raw_parts_mut(data.cast::<u8>(), n) };
     let complete = crate::util::read_up_to(f, buffer) == n;
     if !complete {
-        unsafe { Die(c"fread failed\n".as_ptr()) };
+        unsafe { fatal_error(c"fread failed\n".as_ptr()) };
     }
     complete
 }
-pub unsafe fn RtlReset(mode: i32, game: &mut Game) {
+pub unsafe fn rtl_reset(mode: i32, game: &mut Game) {
     unsafe {
         reset(mode, game, true);
         game.audio_output.new_epoch();
@@ -282,9 +282,9 @@ unsafe fn reset(mode: i32, native_game: &mut Game, complete_load: bool) {
             game.g_sram.fill(0..0x2000, 0);
         }
         game.ram().write_byte(0x611, 1);
-        RtlApuLock();
-        RtlRestoreMusicAfterLoad_Locked(true, game);
-        RtlApuUnlock();
+        rtl_apu_lock();
+        rtl_restore_music_after_load_locked(true, game);
+        rtl_apu_unlock();
         synchronize_whole_state(game, complete_load);
         game.commit_actor_canonical(actor_transition);
         if mode & 2 == 0 {
@@ -301,7 +301,7 @@ unsafe fn reset(mode: i32, native_game: &mut Game, complete_load: bool) {
         }
     }
 }
-pub unsafe fn StateRecorder_Load(f: &mut File, replay_mode: bool, game: &mut Game) {
+pub unsafe fn load_state_recording(f: &mut File, replay_mode: bool, game: &mut Game) {
     unsafe {
         let _ = state_recorder_load(f, replay_mode, game, false);
     }
@@ -434,11 +434,11 @@ unsafe fn state_recorder_load(
                 b"void StateRecorder_Load(StateRecorder *, FILE *, _Bool)\0"
             };
             if is_old {
-                RtlClearKeyLog(game);
+                rtl_clear_key_log(game);
             }
         }
         if !is_reset {
-            RtlRestoreMusicAfterLoad_Locked(false, game);
+            rtl_restore_music_after_load_locked(false, game);
         }
         // The extension describes the final snapshot, not a replay's base state.
         if !replay_mode && hdr[10] == u32::from_le_bytes(*b"APQ1") {
@@ -477,7 +477,7 @@ unsafe fn state_recorder_load(
                 .restore(game);
             }
         }
-        RtlUpdateSnesPatchForBugfix(game);
+        rtl_update_snes_patch_for_bugfix(game);
         if let Some(transition) = actor_transition {
             game.commit_actor_canonical(transition);
         }
@@ -494,7 +494,7 @@ unsafe fn state_recorder_load(
         read_complete
     }
 }
-pub unsafe fn StateRecorder_Save(
+pub unsafe fn state_recorder_save(
     f: &mut impl Write,
     saving_with_bug: bool,
     native_game: &mut Game,
@@ -570,7 +570,7 @@ pub unsafe fn StateRecorder_Save(
             .expect("Session native continuation adoption rejected");
     }
 }
-pub unsafe fn StateRecorder_ClearKeyLog(native_game: &mut Game) {
+pub unsafe fn state_recorder_clear_key_log(native_game: &mut Game) {
     let game = &mut *native_game;
     unsafe {
         if let Err(error) = crate::cpu_infra::session_native_adoption::require_legacy_binary(game) {
@@ -596,7 +596,7 @@ pub unsafe fn StateRecorder_ClearKeyLog(native_game: &mut Game) {
             snapshots.0.capture(game.g_snes);
             game.capture_native_player_snapshot(&mut snapshots.1);
             // Replay restores the queue separately, so do not deliver it early.
-            RtlSaveMusicStateToRam_Locked(game, false);
+            rtl_save_music_state_to_ram_locked(game, false);
             Some(snapshots)
         } else {
             None
@@ -619,7 +619,7 @@ pub unsafe fn StateRecorder_ClearKeyLog(native_game: &mut Game) {
             .expect("Session native result adoption rejected");
     }
 }
-pub unsafe fn StateRecorder_ReadNextReplayState(game: &mut Game) -> u16 {
+pub unsafe fn state_recorder_read_next_replay_state(game: &mut Game) -> u16 {
     use crate::recording::log_format;
     unsafe {
         crate::native_assertion! {
@@ -715,12 +715,12 @@ pub unsafe fn StateRecorder_ReadNextReplayState(game: &mut Game) -> u16 {
 }
 
 crate::forward_calls! { pub unsafe fn (game: &mut Game);
-    RtlClearKeyLog => StateRecorder_ClearKeyLog(game);
+    rtl_clear_key_log => state_recorder_clear_key_log(game);
 }
-pub fn RtlStopReplay(game: &mut Game) {
+pub fn rtl_stop_replay(game: &mut Game) {
     game.state_recorder.stop();
 }
-pub unsafe fn RtlRunFrame(mut inputs: i32, native_game: &mut Game) -> bool {
+pub unsafe fn rtl_run_frame(mut inputs: i32, native_game: &mut Game) -> bool {
     let game = &mut *native_game;
     unsafe {
         if !game.supports_legacy_persistence()
@@ -746,7 +746,7 @@ pub unsafe fn RtlRunFrame(mut inputs: i32, native_game: &mut Game) -> bool {
         }
         let is_replay: bool = game.state_recorder.replay_mode;
         if is_replay {
-            inputs = StateRecorder_ReadNextReplayState(game) as i32;
+            inputs = state_recorder_read_next_replay_state(game) as i32;
         } else {
             if game.state_recorder.snapshot_flags & 1 != 0 {
                 game.state_recorder.snapshot_flags &= !(1i32) as u32;
@@ -775,7 +775,7 @@ pub unsafe fn RtlRunFrame(mut inputs: i32, native_game: &mut Game) -> bool {
             recording_allocation(game.state_recorder.record(inputs as u16));
         }
         if word!(game.BUG_FIX_COUNTER) as i32 != game.currently_installed_bug_fix_counter as i32 {
-            RtlUpdateSnesPatchForBugfix(game);
+            rtl_update_snes_patch_for_bugfix(game);
         }
         let admitted_input = if is_replay {
             game.state_recorder.replay_frame_counter
@@ -785,7 +785,7 @@ pub unsafe fn RtlRunFrame(mut inputs: i32, native_game: &mut Game) -> bool {
         game.audio_output.begin_input(u64::from(admitted_input));
         game.g_rtl_runframe.expect("non-null function pointer")(inputs as u16, 0, game);
         game.snes_frame_counter += 1;
-        RtlPushApuState(game);
+        rtl_push_apu_state(game);
         mutation
             .finish_current()
             .expect("Samus frame adoption rejected");
@@ -795,7 +795,7 @@ pub unsafe fn RtlRunFrame(mut inputs: i32, native_game: &mut Game) -> bool {
         is_replay
     }
 }
-pub unsafe fn RtlSaveSnapshot(
+pub unsafe fn rtl_save_snapshot(
     filename: *const c_char,
     saving_with_bug: bool,
     native_game: &mut Game,
@@ -822,10 +822,10 @@ pub unsafe fn RtlSaveSnapshot(
             .begin_samus_mutation()
             .expect("Samus mutation rejected");
         let game = mutation.game();
-        RtlApuLock();
-        RtlSaveMusicStateToRam_Locked(game, true);
-        StateRecorder_Save(&mut f, saving_with_bug, game);
-        RtlApuUnlock();
+        rtl_apu_lock();
+        rtl_save_music_state_to_ram_locked(game, true);
+        state_recorder_save(&mut f, saving_with_bug, game);
+        rtl_apu_unlock();
         let _ = f.flush();
         drop(f);
         mutation
@@ -839,7 +839,7 @@ static BUG_SAVES: crate::types::ImmutableCStringPointers<7> = crate::types::immu
     b"Before Kraid\0", b"Before Golden Torizo\0", b"After Crocomire\0", b"Baby Metroid\0",
     b"Tourian Statue\0", b"Before Ridley\0", b"Enter Mother Brain\0",
 };
-pub unsafe fn RtlSaveLoad(cmd: i32, slot: i32, native_game: &mut Game) {
+pub unsafe fn rtl_save_load(cmd: i32, slot: i32, native_game: &mut Game) {
     let game = &mut *native_game;
     unsafe {
         if !game.supports_legacy_persistence() {
@@ -902,11 +902,11 @@ pub unsafe fn RtlSaveLoad(cmd: i32, slot: i32, native_game: &mut Game) {
                 .begin_samus_mutation()
                 .expect("Samus mutation rejected");
             let game = mutation.game();
-            RtlApuLock();
+            rtl_apu_lock();
             let complete_load =
                 state_recorder_load(&mut f, cmd == SAVE_LOAD_REPLAY as i32, game, true);
             ppu_copy((*game.g_snes).my_ppu, (*game.g_snes).ppu);
-            RtlApuUnlock();
+            rtl_apu_unlock();
             synchronize_whole_state(game, complete_load);
             drop(f);
             if game.ram().read_byte(0x611)
@@ -940,18 +940,18 @@ pub unsafe fn RtlSaveLoad(cmd: i32, slot: i32, native_game: &mut Game) {
                     .expect("Session native continuation adoption rejected");
             }
         } else {
-            RtlSaveSnapshot(&raw mut name as *mut c_char, false, game);
+            rtl_save_snapshot(&raw mut name as *mut c_char, false, game);
         };
     }
 }
-pub fn MakePairU16(k: u16, j: u16) -> PairU16 {
+pub fn make_pair_u16(k: u16, j: u16) -> PairU16 {
     let r: PairU16 = PairU16 { k, j };
     r
 }
 pub fn invalid_interrupt(_game: &mut Game) {
     unreachable_failure(true)
 }
-pub fn Unreachable(_game: &mut Game) -> bool {
+pub fn report_unreachable(_game: &mut Game) -> bool {
     unreachable_failure(false)
 }
 // Only these fixed static diagnostics cross the native assertion boundary.
@@ -1055,7 +1055,7 @@ pub(crate) unsafe fn rom_bank_record<const BANK: u8>(
 /// Resolve a word address in a fixed ROM bank through the maintained validator.
 #[inline]
 pub(crate) unsafe fn rom_bank_ptr<const BANK: u8>(addr: u16, game: &mut Game) -> *const u8 {
-    unsafe { RomPtr((u32::from(BANK) << 16) | u32::from(addr), game) }
+    unsafe { rom_ptr((u32::from(BANK) << 16) | u32::from(addr), game) }
 }
 
 /// Resolve an explicit bank and word address, retaining RomPtr diagnostics.
@@ -1071,7 +1071,7 @@ pub(crate) fn report_invalid_rom_address(address: u32, game: &mut Game) {
     game.g_fail = true;
 }
 
-pub unsafe fn RomPtr(addr: u32, game: &mut Game) -> *const u8 {
+pub unsafe fn rom_ptr(addr: u32, game: &mut Game) -> *const u8 {
     unsafe { rom_ptr_parts(addr, &mut game.execution_parts().1) }
 }
 pub(crate) unsafe fn rom_ptr_parts(addr: u32, host: &mut HostContext<'_>) -> *const u8 {
@@ -1106,15 +1106,15 @@ pub(crate) unsafe fn write_register_and_mirror(
     unsafe {
         if mirror_first {
             game.ram().write_byte(mirror, value);
-            WriteReg(register, value, game);
+            write_reg(register, value, game);
         } else {
-            WriteReg(register, value, game);
+            write_reg(register, value, game);
             game.ram().write_byte(mirror, value);
         }
     }
 }
 
-pub unsafe fn WriteReg(reg: u16, value: u8, game: &mut Game) {
+pub unsafe fn write_reg(reg: u16, value: u8, game: &mut Game) {
     let views = (game.g_snes, game.g_cpu);
     unsafe { write_reg_parts(reg, value, &mut game.execution(), views) }
 }
@@ -1191,24 +1191,24 @@ pub(crate) fn abs16(value: u16) -> u16 {
 pub fn multiply_8x8(a: u8, b: u8) -> u16 {
     (a as i32 * b as i32) as u16
 }
-pub unsafe fn ReadReg(reg: u16, game: &mut Game) -> u8 {
+pub unsafe fn read_reg(reg: u16, game: &mut Game) -> u8 {
     unsafe { game.execution().read(reg as u32) }
 }
-pub unsafe fn ReadRegWord(reg: u16, game: &mut Game) -> u16 {
+pub unsafe fn read_reg_word(reg: u16, game: &mut Game) -> u16 {
     unsafe {
-        let mut rv: u16 = ReadReg(reg, game) as u16;
-        rv = (rv as i32 | (ReadReg((reg as i32 + 1) as u16, game) as i32) << 8) as u16;
+        let mut rv: u16 = read_reg(reg, game) as u16;
+        rv = (rv as i32 | (read_reg((reg as i32 + 1) as u16, game) as i32) << 8) as u16;
         rv
     }
 }
-pub unsafe fn WriteRegWord(reg: u16, value: u16, game: &mut Game) {
+pub unsafe fn write_reg_word(reg: u16, value: u16, game: &mut Game) {
     unsafe {
-        WriteReg(reg, value as u8, game);
-        WriteReg((reg as i32 + 1) as u16, (value >> 8) as u8, game);
+        write_reg(reg, value as u8, game);
+        write_reg((reg as i32 + 1) as u16, (value >> 8) as u8, game);
     }
 }
 
-pub unsafe fn RtlApuWrite(adr: u32, val: u8, game: &mut Game) {
+pub unsafe fn rtl_apu_write(adr: u32, val: u8, game: &mut Game) {
     unsafe {
         let (backend, mut host) = game.execution_parts();
         if apu_write_queued(adr, val, &mut host, backend.as_deref()) {
@@ -1295,14 +1295,14 @@ unsafe fn apu_write_upload(adr: u32, val: u8, game: &mut Execution<'_>) {
         game.host.audio_output.complete_port(request);
     }
 }
-pub unsafe fn RtlPushApuState(game: &mut Game) {
+pub unsafe fn rtl_push_apu_state(game: &mut Game) {
     unsafe {
-        RtlApuLock();
+        rtl_apu_lock();
         game.apu_queue.push(game.uploading_apu());
-        RtlApuUnlock();
+        rtl_apu_unlock();
     }
 }
-unsafe fn RtlPopApuState_Locked(game: &mut Game) {
+unsafe fn rtl_pop_apu_state_locked(game: &mut Game) {
     unsafe {
         if game.uploading_apu() {
             return;
@@ -1319,7 +1319,7 @@ unsafe fn RtlPopApuState_Locked(game: &mut Game) {
         }
     }
 }
-pub unsafe fn RtlApuUpload(address: u32, game: &mut Game) {
+pub unsafe fn rtl_apu_upload(address: u32, game: &mut Game) {
     unsafe {
         if address & 0x8000 == 0 {
             printf(c"RomPtr - Invalid access 0x%x!\n".as_ptr(), address);
@@ -1346,13 +1346,13 @@ pub unsafe fn RtlApuUpload(address: u32, game: &mut Game) {
             snapshot.apu_upload_count = snapshot.apu_upload_count.saturating_add(1);
             snapshot.apu_startup_upload = startup;
         }
-        RtlApuLock();
+        rtl_apu_lock();
         game.apu_queue.reset();
-        SpcPlayer_Upload(game.g_spc_player, image, source);
-        RtlApuUnlock();
+        spc_player_upload(game.g_spc_player, image, source);
+        rtl_apu_unlock();
     }
 }
-unsafe fn RtlRestoreMusicAfterLoad_Locked(is_reset: bool, game: &mut Game) {
+unsafe fn rtl_restore_music_after_load_locked(is_reset: bool, game: &mut Game) {
     unsafe {
         if game.g_use_my_apu_code {
             (*game.g_spc_player)
@@ -1367,7 +1367,7 @@ unsafe fn RtlRestoreMusicAfterLoad_Locked(is_reset: bool, game: &mut Game) {
         game.apu_queue.reset();
     }
 }
-unsafe fn RtlSaveMusicStateToRam_Locked(game: &mut Game, include_queued_commands: bool) {
+unsafe fn rtl_save_music_state_to_ram_locked(game: &mut Game, include_queued_commands: bool) {
     unsafe {
         if game.g_use_my_apu_code {
             game.save_native_audio_variables(include_queued_commands);
@@ -1378,10 +1378,10 @@ unsafe fn RtlSaveMusicStateToRam_Locked(game: &mut Game, include_queued_commands
         }
     }
 }
-pub unsafe fn RtlRenderAudio(audio_buffer: &mut [[i16; 2]], game: &mut Game) -> bool {
+pub unsafe fn rtl_render_audio(audio_buffer: &mut [[i16; 2]], game: &mut Game) -> bool {
     unsafe {
-        RtlApuLock();
-        RtlPopApuState_Locked(game);
+        rtl_apu_lock();
+        rtl_pop_apu_state_locked(game);
         let mut produced = false;
         if !game.g_use_my_apu_code {
             if !game.uploading_apu() {
@@ -1397,11 +1397,11 @@ pub unsafe fn RtlRenderAudio(audio_buffer: &mut [[i16; 2]], game: &mut Game) -> 
             game.render_native_audio(audio_buffer);
             produced = true;
         }
-        RtlApuUnlock();
+        rtl_apu_unlock();
         produced
     }
 }
-pub unsafe fn RtlCheat(c: c_char, game: &mut Game) {
+pub unsafe fn rtl_cheat(c: c_char, game: &mut Game) {
     unsafe {
         if c as i32 == 'w' as i32 {
             word!(game.SAMUS_HEALTH = word!(game.SAMUS_MAX_HEALTH));
@@ -1438,7 +1438,7 @@ pub unsafe fn RtlCheat(c: c_char, game: &mut Game) {
         }
     }
 }
-pub unsafe fn RtlReadSram(game: &mut Game) {
+pub unsafe fn rtl_read_sram(game: &mut Game) {
     unsafe {
         if !game.supports_legacy_persistence() {
             eprintln!("RtlReadSram: legacy persistence is unavailable for a prepared world");
@@ -1475,7 +1475,7 @@ pub unsafe fn RtlReadSram(game: &mut Game) {
         }
     }
 }
-pub unsafe fn RtlWriteSram(game: &mut Game) {
+pub unsafe fn rtl_write_sram(game: &mut Game) {
     unsafe {
         if game.VERIFY_ACTIVE {
             return;

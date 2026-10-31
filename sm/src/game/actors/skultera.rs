@@ -19,6 +19,6 @@ impl Host for Game {
     }
 
     fn unreachable(&mut self) {
-        crate::rtl::Unreachable(self);
+        crate::rtl::report_unreachable(self);
     }
 }

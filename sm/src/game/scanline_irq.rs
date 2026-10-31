@@ -1,7 +1,7 @@
 //! Native access for the shared scanline interrupt decisions and effects.
 use crate::game_state::Game;
 use crate::ram_map::{checked_word as at, word};
-use crate::rtl::{BG3SC, CGADSUB, CGWSEL, HTIMEL, NMITIMEN, TM, VTIMEL, WriteReg};
+use crate::rtl::{BG3SC, CGADSUB, CGWSEL, HTIMEL, NMITIMEN, TM, VTIMEL, write_reg};
 use std::convert::Infallible;
 use {
     crate::game::{room_entry, session_runtime},
@@ -72,7 +72,7 @@ impl irq::Host for NativeIrqHost<'_> {
             irq::Output::InterruptEnable => NMITIMEN,
         };
         // The private host keeps the construction invariant across ordered effects.
-        unsafe { WriteReg(register as u16, value, self.0.0) };
+        unsafe { write_reg(register as u16, value, self.0.0) };
         Ok(())
     }
     fn follow_transition(&mut self) -> Result<(), Infallible> {
