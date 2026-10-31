@@ -1,5 +1,4 @@
 //! The compatibility runtime as the `sm_game::menus` host.
-use crate::game::visual_runtime;
 use crate::game_state::Game;
 use sm_game::menus::host::{Host, MenuRuntime};
 use sm_game::save_file::SaveRam;
@@ -37,17 +36,9 @@ impl MenuRuntime for Game {
     fn rtl_unreachable(&mut self) -> bool {
         crate::rtl::report_unreachable(self)
     }
-    fn shake_room_with_sound(&mut self, kind: u16) {
-        visual_runtime::shake_room_with_sound(kind, self)
-    }
     fn run_hdma_objects(&mut self) {
         // Closing the box ($85:8589) ends on a borrow, and nothing up to the handler sets C.
-        self.message_box_hdma = true;
-        crate::game::visual_runtime::update_hdma(self);
-        self.message_box_hdma = false;
-    }
-    fn hdma_handler_carry(&self) -> bool {
-        !self.message_box_hdma
+        crate::game::visual_runtime::update_hdma(false, self);
     }
     fn advance_dialogue_sound_effects(&mut self) {
         crate::game::music::advance_sound_effects(self, |channel, value, meaning, game| {

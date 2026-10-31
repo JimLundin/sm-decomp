@@ -47,10 +47,11 @@ pub fn initialize_water<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
 fn step_liquid<H: crate::menus::host::Host + ?Sized>(
     game: &mut H,
     surface: crate::liquid::Surface,
+    handler_carry: bool,
 ) {
     let effects = with_liquid(game, |words| crate::liquid::step(words, surface));
     if effects.shake {
-        game.shake_room_with_sound(21);
+        crate::room_visuals::shake_room_with_sound(21, handler_carry, game);
     }
     if effects.unknown_handler {
         game.rtl_unreachable();
@@ -111,10 +112,14 @@ fn table_height(position: u16, camera: u16, water: bool) -> u16 {
 }
 
 static LAVA_SOUND_EFFECTS: [u8; 8] = [0x12, 0x13, 0x14, 0x12, 0x13, 0x14, 0x12, 0x13];
-pub fn lava_surface<H: crate::menus::host::Host + ?Sized>(object: &mut HdmaObject, game: &mut H) {
+pub fn lava_surface<H: crate::menus::host::Host + ?Sized>(
+    object: &mut HdmaObject,
+    handler_carry: bool,
+    game: &mut H,
+) {
     word!(game.FX_LAYER_BLENDING_CONFIG_C = word!(game.FX_LAYER_BLENDING_CONFIG_B));
     if word!(game.TIME_IS_FROZEN_FLAG) == 0 {
-        step_liquid(game, crate::liquid::Surface::LavaAcid);
+        step_liquid(game, crate::liquid::Surface::LavaAcid, handler_carry);
         word!(game.BG3_XPOS = word!(game.REG_BG1HOFS));
         crate::word_transfers!(game, ascending, 1; native(0x9c00) <- value(0));
         word!(game.BG3_YPOS = 0);
@@ -158,12 +163,16 @@ pub fn lava_surface<H: crate::menus::host::Host + ?Sized>(object: &mut HdmaObjec
         object.table = (3 * (((v8 as i32 ^ 0x1ff) + 1) & 0x3ff) + 0xb62a) as u16;
     }
 }
-pub fn water_surface<H: crate::menus::host::Host + ?Sized>(object: &mut HdmaObject, game: &mut H) {
+pub fn water_surface<H: crate::menus::host::Host + ?Sized>(
+    object: &mut HdmaObject,
+    handler_carry: bool,
+    game: &mut H,
+) {
     word!(game.FX_LAYER_BLENDING_CONFIG_C = word!(game.FX_LAYER_BLENDING_CONFIG_B));
     if word!(game.TIME_IS_FROZEN_FLAG) != 0 {
         return;
     }
-    step_liquid(game, crate::liquid::Surface::Water);
+    step_liquid(game, crate::liquid::Surface::Water, handler_carry);
     let layer1 = crate::camera::current(game).layer1;
     word!(
         game.BG3_YPOS = surface_scroll(

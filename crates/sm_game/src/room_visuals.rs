@@ -77,7 +77,11 @@ pub fn advance_fireflea_lighting<H: crate::menus::host::Host + ?Sized>(game: &mu
 /// The least earthquake timer a room shake sets.
 const EARTHQUAKE_TIMER: u16 = 0x20;
 
-pub fn shake_room_with_sound<H: crate::menus::host::Host + ?Sized>(kind: u16, game: &mut H) {
+pub fn shake_room_with_sound<H: crate::menus::host::Host + ?Sized>(
+    kind: u16,
+    handler_carry: bool,
+    game: &mut H,
+) {
     static SOUNDS: [u16; 17] = [
         0x46, 1, 0x46, 3, 0x46, 2, 0x46, 1, 0x46, 1, 0x46, 2, 0x46, 2, 0x46, 1, 0x8000,
     ];
@@ -95,7 +99,7 @@ pub fn shake_room_with_sound<H: crate::menus::host::Host + ?Sized>(kind: u16, ga
         // CPX #$0C, but for the first object the one the handler was entered with. The main game
         // loop's PLP restores that every frame from power-on, where loading the save slots
         // ($80:8261) leaves it set.
-        let carry = u16::from(word!(game.HDMA_OBJECT_INDEX) == 0 && game.hdma_handler_carry());
+        let carry = u16::from(word!(game.HDMA_OBJECT_INDEX) == 0 && handler_carry);
         word!(
             game.EARTHQUAKE_SFX_TIMER = SOUNDS[usize::from(index >> 1) + 1]
                 .wrapping_add(word!(game.RANDOM_NUMBER) & 3)
@@ -131,11 +135,12 @@ pub fn initialize_tourian_statue<H: crate::menus::host::Host + ?Sized>(game: &mu
 pub fn advance_tourian_statue<H: crate::menus::host::Host + ?Sized>(
     object: &mut crate::hdma::HdmaObject,
     phase: TourianStatuePhase,
+    handler_carry: bool,
     game: &mut H,
 ) {
     use TourianStatuePhase::*;
     if matches!(phase, Shaking | Sinking) {
-        shake_room_with_sound(13, game);
+        shake_room_with_sound(13, handler_carry, game);
     }
     match phase {
         Waiting => {

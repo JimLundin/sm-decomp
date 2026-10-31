@@ -138,17 +138,17 @@ pub(crate) fn table_words(objects: &mut HdmaObjects, mut each: impl FnMut(usize,
 
 /// Run every active object's program once, as the enabled branch of
 /// `update_hdma`.
-pub fn run_objects<H: DispatchHost + LeaseHdma + ?Sized>(game: &mut H) {
+pub fn run_objects<H: DispatchHost + LeaseHdma + ?Sized>(handler_carry: bool, game: &mut H) {
     if game.runtime_admissible() {
-        run(&mut Leased(game.hdma_lease()));
+        run(&mut Leased(game.hdma_lease()), handler_carry);
     } else {
         let mut bridge = Bridged::load(game);
-        run(&mut bridge);
+        run(&mut bridge, handler_carry);
         bridge.store();
     }
 }
 
-fn run<I: Interpreter>(it: &mut I) {
+fn run<I: Interpreter>(it: &mut I, handler_carry: bool) {
     it.set_byte(0x85, 0);
     let mut slot = 0usize;
     loop {
@@ -159,7 +159,7 @@ fn run<I: Interpreter>(it: &mut I) {
         if channels != 0 {
             let enabled = it.byte(0x85) | channels;
             it.set_byte(0x85, enabled);
-            run_program(slot >> 1, it);
+            run_program(slot >> 1, it, handler_carry);
             slot = usize::from(it.objects().selected);
         }
         slot += 2;
@@ -169,11 +169,11 @@ fn run<I: Interpreter>(it: &mut I) {
     }
 }
 
-fn run_program<I: Interpreter>(index: usize, it: &mut I) {
+fn run_program<I: Interpreter>(index: usize, it: &mut I, handler_carry: bool) {
     let object = it.objects().objects[index];
     let pre_instruction =
         (u32::from(object.pre_instruction_bank) << 16) | u32::from(object.pre_instruction);
-    crate::hdma_dispatch::run_pre_action(pre_instruction, index, it);
+    crate::hdma_dispatch::run_pre_action(pre_instruction, index, it, handler_carry);
     let object = &mut it.objects().objects[index];
     let timer = object.instruction_timer;
     object.instruction_timer = timer.wrapping_sub(1);

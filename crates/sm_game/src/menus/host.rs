@@ -84,10 +84,6 @@ pub trait MenuRuntime:
     fn advance_dialogue_sound_effects(&mut self);
     /// Run the HDMA object handler, which also handles the music queue ($88:84B9).
     fn run_hdma_objects(&mut self);
-    /// The carry the HDMA object handler ($88:84B9) is running with: the main game loop's, set
-    /// from power-on, except while a message box restores the display, where it is clear.
-    fn hdma_handler_carry(&self) -> bool;
-    fn shake_room_with_sound(&mut self, kind: u16);
     /// Spawn an HDMA object from bank `bank`; returns its slot.
     fn spawn_hdma(
         &mut self,
