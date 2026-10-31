@@ -153,8 +153,11 @@ def cargo_host(root, rustc, output, source, inventory, frontend=False, retry=Tru
     # directory. Keep this game's and host's artifacts with their source.
     # The launcher requests the full verification configuration for both the
     # library and example. Ordinary cargo builds keep the non-verifier profile.
+    # One job by default keeps the local loop's memory bounded; CI's runners
+    # set CARGO_BUILD_JOBS to their core count.
+    jobs = os.environ.get("CARGO_BUILD_JOBS", "1")
     command = [cargo, "build", "-p", "sm", "--release", "--example", "sm_verify",
-               "--locked", "-j", "1", "--target-dir", str(root / "target"),
+               "--locked", "-j", jobs, "--target-dir", str(root / "target"),
                "--message-format=json"]
     environment = dict(os.environ, RUSTC=rustc, SM_VERIFY_SOURCE_HASH=source,
                        SM_VERIFY_SOURCE_INVENTORY=str(inventory))
