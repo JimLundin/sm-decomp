@@ -1,10 +1,13 @@
 //! Button-driven pose requests on the existing player transition owner.
+use super::state::InputMode;
 use super::{
     content::TransitionTable,
     effects::Host,
     jump::initialize_jump,
     state::{BombJump, JumpKind, MomentumAction, PoseRequestWord},
 };
+use crate::ram::words as ram;
+use crate::runtime_access::{OwnedCall, SessionView};
 use crate::{
     external_inputs::ExternalInputs,
     visual_host::{Content, Record},
@@ -129,4 +132,75 @@ pub fn finish_input(s: &mut crate::session::Session, inputs: &ExternalInputs) {
         }
     }
     p.previous_health_for_flash = s.inventory.health.current;
+}
+/// The frame's input step for the current input mode.
+pub fn dispatch_input<H: SessionView + OwnedCall>(h: &mut H) {
+    match h.session().player.transitions.input_mode {
+        InputMode::Normal => handle_frame_input(h),
+        InputMode::Demo => handle_demo_input(h),
+        InputMode::Xray => super::xray::handle_input(h),
+        InputMode::AutoJump => {
+            let pressed = h.inputs().pressed;
+            let timer = h.session().player.contact.auto_jump;
+            if timer != 0 && (timer.wrapping_sub(9) as i16) < 0 {
+                h.write_slice_le(ram::JOYPAD1_NEWKEYS, pressed | h.inputs().jump_button);
+                h.session_mut().player.contact.auto_jump = 0;
+            }
+            handle_frame_input(h);
+            h.write_slice_le(ram::JOYPAD1_NEWKEYS, pressed);
+            h.session_mut().player.transitions.input_mode = InputMode::Normal;
+        }
+        InputMode::Disabled => {}
+        InputMode::Unknown(_) => _ = crate::player_projectiles::host::Host::unknown(h),
+    }
+}
+/// Frozen crouch and turn input uses the same owned X-ray transition.
+fn handle_frame_input<H: SessionView + OwnedCall>(h: &mut H) {
+    if matches!(h.session().player.movement_and_facing >> 8, 5 | 21) && h.inputs().frozen != 0 {
+        h.owned_call(|h| super::xray::handle_input(h));
+    } else {
+        handle_input(h);
+    }
+}
+/// Play the demo's next input into the joypad words, then handle it.
+fn handle_demo_input<H: SessionView + OwnedCall>(h: &mut H) {
+    if super::demo::advance(h) {
+        // The joypad words do not alias the demo's ($0A84-$0A8E).
+        let demo = h.session().player.demo.clone();
+        h.write_slice_le(ram::JOYPAD1_INPUT_SAMUSFILTER, demo.previous_held);
+        h.write_slice_le(ram::JOYPAD1_NEWINPUT_SAMUSFILTER, demo.previous_pressed);
+        h.write_slice_le(ram::JOYPAD1_LASTKEYS, demo.held);
+        h.session_mut().player.demo.previous_held = demo.held;
+        h.write_slice_le(ram::JOYPAD1_NEWKEYS, demo.pressed);
+        h.session_mut().player.demo.previous_pressed = demo.pressed;
+    }
+    handle_frame_input(h);
+}
+/// The player frame's end: filtered input, movement sound, debug, escape state.
+pub fn finish_frame<H: SessionView + OwnedCall>(h: &mut H) {
+    let inputs = h.inputs().clone();
+    finish_input(h.session_mut(), &inputs);
+    h.write_slice_le(ram::JOYPAD1_INPUT_SAMUSFILTER, inputs.held);
+    h.write_slice_le(ram::JOYPAD1_NEWINPUT_SAMUSFILTER, inputs.pressed);
+    h.owned_call(crate::player_projectiles::feedback::movement_sound);
+    if h.word(ram::ENABLE_DEBUG) != 0 {
+        if matches!(h.session().player.pose, 0 | 0x9b) {
+            if h.word(ram::JOYPAD2_LAST) & 0x30 == 0x30 && h.word(ram::JOYPAD2_NEW_KEYS) & 0x80 != 0
+            {
+                h.write_slice_le(ram::DEBUG_INVINCIBILITY, 7);
+            }
+        } else {
+            if (h.word(ram::DEBUG_INVINCIBILITY).wrapping_sub(7) as i16) >= 0 {
+                return;
+            }
+            h.write_slice_le(ram::DEBUG_INVINCIBILITY, 0);
+        }
+    }
+    if h.owned_call(|h| crate::progress::event_happened(h, 0xe))
+        && h.session().player.transitions.frame_gamma
+            == super::state::FrameGammaMode::DrawEscapeTimer
+        && h.word(ram::GAME_STATE) != 35
+    {
+        h.write_slice_le(ram::GAME_STATE, 35);
+    }
 }

@@ -82,6 +82,13 @@ impl Effects for Runtime<'_> {
     }
 }
 impl Host for Runtime<'_> {}
+impl sm_game::runtime_access::OwnedCall for Runtime<'_> {
+    fn owned_call<R>(&mut self, action: impl FnOnce(&mut Self) -> R) -> R {
+        Runtime::owned_call(self, action)
+    }
+}
+pub(crate) use sm_game::player_transitions::input::dispatch_input;
+pub(crate) use sm_game::player_transitions::input::finish_frame as finish_player_frame;
 
 impl Runtime<'_> {
     fn finish_ceres_arrival(&mut self) {
@@ -180,36 +187,6 @@ impl Runtime<'_> {
             self.write_slice_le(field, value);
         }
     }
-
-    pub(crate) fn handle_demo_input(&mut self) {
-        use crate::{game::player_transitions::demo, ram_map::words as ram};
-        if demo::advance(self) {
-            self.write_slice_le(
-                ram::JOYPAD1_INPUT_SAMUSFILTER,
-                self.session().player.demo.previous_held,
-            );
-            self.write_slice_le(
-                ram::JOYPAD1_NEWINPUT_SAMUSFILTER,
-                self.session().player.demo.previous_pressed,
-            );
-            self.write_slice_le(ram::JOYPAD1_LASTKEYS, self.session().player.demo.held);
-            self.session_mut().player.demo.previous_held = self.session().player.demo.held;
-            self.write_slice_le(ram::JOYPAD1_NEWKEYS, self.session().player.demo.pressed);
-            self.session_mut().player.demo.previous_pressed = self.session().player.demo.pressed;
-        }
-        self.handle_input();
-    }
-
-    /// Frozen crouch and turn input uses the same owned X-ray transition.
-    pub(crate) fn handle_input(&mut self) {
-        if matches!(self.session().player.movement_and_facing >> 8, 5 | 21)
-            && self.inputs().frozen != 0
-        {
-            self.owned_call(|runtime| xray::handle_input(runtime));
-        } else {
-            crate::game::player_transitions::handle_input(self);
-        }
-    }
 }
 
 pub(crate) fn face_forward(game: &mut crate::game_state::Game) {
@@ -304,31 +281,6 @@ pub(crate) fn initialize(game: &mut crate::game_state::Game) {
         ram::SAMUS_PREV_HEALTH_FOR_FLASH,
         rt.session().inventory.health.current,
     );
-}
-
-pub(super) fn dispatch_input(h: &mut Runtime<'_>) {
-    use crate::game::player_transitions::state::InputMode;
-    use crate::ram_map::words as ram;
-    match h.session().player.transitions.input_mode {
-        InputMode::Normal => h.handle_input(),
-        InputMode::Demo => h.handle_demo_input(),
-        InputMode::Xray => xray::handle_input(h),
-        InputMode::AutoJump => {
-            let pressed = h.inputs().pressed;
-            let timer = h.session().player.contact.auto_jump;
-            if timer != 0 && (timer.wrapping_sub(9) as i16) < 0 {
-                h.write_slice_le(ram::JOYPAD1_NEWKEYS, pressed | h.inputs().jump_button);
-                h.session_mut().player.contact.auto_jump = 0;
-            }
-            h.handle_input();
-            h.write_slice_le(ram::JOYPAD1_NEWKEYS, pressed);
-            h.session_mut().player.transitions.input_mode = InputMode::Normal;
-        }
-        InputMode::Disabled => {}
-        InputMode::Unknown(_) => {
-            sm_game::player_projectiles::host::Host::unknown(h);
-        }
-    }
 }
 
 pub(crate) fn finish_xray(game: &mut crate::game_state::Game) {
@@ -438,36 +390,4 @@ impl Runtime<'_> {
 
 pub(crate) fn damage_player(amount: u16, game: &mut crate::game_state::Game) {
     sm_game::samus_periodic_damage::contact(&mut Runtime::new(game), amount);
-}
-
-pub(crate) fn finish_player_frame(h: &mut Runtime<'_>) {
-    use crate::{
-        game::{player_transitions, progress_flags},
-        ram_map::words as ram,
-    };
-    let inputs = h.inputs().clone();
-    player_transitions::finish_input(h.session_mut(), &inputs);
-    h.write_slice_le(ram::JOYPAD1_INPUT_SAMUSFILTER, inputs.held);
-    h.write_slice_le(ram::JOYPAD1_NEWINPUT_SAMUSFILTER, inputs.pressed);
-    h.owned_call(sm_game::player_projectiles::feedback::movement_sound);
-    if h.word(ram::ENABLE_DEBUG) != 0 {
-        if matches!(h.session().player.pose, 0 | 0x9b) {
-            if h.word(ram::JOYPAD2_LAST) & 0x30 == 0x30 && h.word(ram::JOYPAD2_NEW_KEYS) & 0x80 != 0
-            {
-                h.write_slice_le(ram::DEBUG_INVINCIBILITY, 7);
-            }
-        } else {
-            if (h.word(ram::DEBUG_INVINCIBILITY).wrapping_sub(7) as i16) >= 0 {
-                return;
-            }
-            h.write_slice_le(ram::DEBUG_INVINCIBILITY, 0);
-        }
-    }
-    if h.owned_call(|h| progress_flags::event_happened(h, 0xe))
-        && h.session().player.transitions.frame_gamma
-            == player_transitions::state::FrameGammaMode::DrawEscapeTimer
-        && h.word(ram::GAME_STATE) != 35
-    {
-        h.write_slice_le(ram::GAME_STATE, 35);
-    }
 }
