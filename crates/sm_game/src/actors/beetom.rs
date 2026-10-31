@@ -15,10 +15,9 @@ part_view! {
         pad1: [u8; 26696],
         words: [
             instruction_list, var_01, short_hop_y_speed_index, long_hop_y_speed_index, lunge_y_speed_index,
-            falling, samus_x_offset, samus_y_offset, attached, direction, var_0a, var_0b, var_0c, var_0d,
-            var_0e, var_0f, var_10, var_11, var_12, var_13, var_14, var_15, var_16, var_17, var_18, var_19,
-            var_1a, var_1b, var_1c, var_1d, var_1e, var_1f,
+            falling, samus_x_offset, samus_y_offset, attached, direction,
         ],
+        _: [u16; 22],
     }
 }
 

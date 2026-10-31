@@ -19,10 +19,9 @@ part_view! {
         pad1: [u8; 26696],
         words: [
             new_instruction_list, small_hop_y_speed_index, big_hop_y_speed_index, falling, ready_to_hop,
-            hop_table_index, variant_index, var_07, var_08, var_09, var_0a, var_0b, var_0c, var_0d, var_0e,
-            var_0f, var_10, var_11, var_12, var_13, var_14, var_15, var_16, var_17, var_18, var_19, var_1a,
-            var_1b, var_1c, var_1d, var_1e, var_1f,
+            hop_table_index, variant_index,
         ],
+        _: [u16; 25],
     }
 }
 

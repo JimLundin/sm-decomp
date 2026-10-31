@@ -40,10 +40,9 @@ part_view! {
         pad1: [u8; 26696],
         words: [
             var_00, animation_active, var_02, home_y, cooldown, var_05, var_06, shrink_subspeed,
-            shrink_speed, grow_subspeed, grow_speed, var_0b, var_0c, var_0d, var_0e, var_0f, var_10,
-            var_11, var_12, var_13, var_14, var_15, var_16, var_17, var_18, var_19, var_1a, var_1b,
-            var_1c, var_1d, var_1e, var_1f,
+            shrink_speed, grow_subspeed, grow_speed,
         ],
+        _: [u16; 21],
     }
 }
 
@@ -54,10 +53,9 @@ part_view! {
         pad1: [u8; 26696],
         words: [
             facing_right, animation_active, waiting_for_arm, home_y, cooldown, var_05, var_06,
-            shrink_subspeed, shrink_speed, grow_subspeed, grow_speed, var_0b, var_0c, var_0d,
-            var_0e, var_0f, var_10, var_11, var_12, var_13, var_14, var_15, var_16, var_17, var_18,
-            var_19, var_1a, var_1b, var_1c, var_1d, var_1e, var_1f,
+            shrink_subspeed, shrink_speed, grow_subspeed, grow_speed,
         ],
+        _: [u16; 21],
     }
 }
 
@@ -70,10 +68,9 @@ part_view! {
         pad1: [u8; 26696],
         words: [
             var_00, animation_active, var_02, home_y, cooldown, var_05, var_06, shrink_subspeed,
-            shrink_speed, grow_subspeed, grow_speed, var_0b, fully_grown, hold_retracted, var_0e,
-            var_0f, var_10, var_11, var_12, var_13, var_14, var_15, var_16, var_17, var_18, var_19,
-            var_1a, var_1b, var_1c, var_1d, var_1e, var_1f,
+            shrink_speed, grow_subspeed, grow_speed, var_0b, fully_grown, hold_retracted,
         ],
+        _: [u16; 18],
     }
 }
 
@@ -85,9 +82,9 @@ part_view! {
         words: [
             var_00, animation_active, var_02, home_y, cooldown, var_05, var_06, shrink_subspeed,
             shrink_speed, grow_subspeed, grow_speed, var_0b, var_0c, var_0d, var_0e, var_0f, var_10,
-            home_x, throw_x, throw_y, var_14, var_15, var_16, var_17, var_18, var_19, var_1a,
-            var_1b, var_1c, var_1d, var_1e, var_1f,
+            home_x, throw_x, throw_y,
         ],
+        _: [u16; 12],
     }
 }
 

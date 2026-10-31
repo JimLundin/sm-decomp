@@ -21,8 +21,8 @@ part_view! {
         words: [var_a, var_b, var_c, var_d, var_e, var_f, parameter_1, parameter_2],
         pad1: [u8; 26696],
         words: [timer, acceleration_sub, acceleration, x_subvelocity, y_velocity, hide_timer, child_height,
-            y_subvelocity, var_08, var_09, var_0a, var_0b, var_0c, var_0d, var_0e, var_0f, var_10, var_11, var_12,
-            var_13, var_14, var_15, var_16, var_17, var_18, var_19, var_1a, var_1b, var_1c, var_1d, var_1e, var_1f],
+            y_subvelocity],
+        _: [u16; 24],
     }
 }
 

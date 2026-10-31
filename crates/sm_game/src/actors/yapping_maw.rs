@@ -43,10 +43,9 @@ part_view! {
         pad3: [u8; 1984],
         words: [
             segment_projectile, var_41, var_42, var_43, segment_index, initial_palette,
-            sprite_object, sprite_appearance, var_48, var_49, var_4a, var_4b, var_4c, var_4d,
-            var_4e, var_4f, var_50, var_51, var_52, var_53, var_54, var_55, var_56, var_57, var_58,
-            var_59, var_5a, var_5b, var_5c, var_5d, var_5e, var_5f,
+            sprite_object, sprite_appearance,
         ],
+        _: [u16; 24],
     }
 }
 

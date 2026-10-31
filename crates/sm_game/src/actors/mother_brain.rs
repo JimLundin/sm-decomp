@@ -231,18 +231,8 @@ part_view! {
             lower_motion,
             upper_motion,
             neck_speed,
-            var_35,
-            var_36,
-            var_37,
-            var_38,
-            var_39,
-            var_3a,
-            var_3b,
-            var_3c,
-            var_3d,
-            var_3e,
-            var_3f,
         ],
+        _: [u16; 11],
     }
 }
 

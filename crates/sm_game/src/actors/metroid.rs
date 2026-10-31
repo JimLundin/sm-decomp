@@ -16,9 +16,8 @@ part_view! {
     Metroid: EnemyLayout40 {
         words: [x_subvelocity, x_velocity, y_subvelocity, y_velocity, bombed_off_timer, function_index, parameter_1, freeze_threshold],
         pad1: [u8; 26696],
-        words: [electricity_sprite, shell_sprite, samus_subhealth, var_03, var_04, var_05, var_06, var_07, var_08, var_09, var_0a,
-            var_0b, var_0c, var_0d, var_0e, var_0f, var_10, var_11, var_12, var_13, var_14, var_15, var_16, var_17, var_18,
-            var_19, var_1a, var_1b, var_1c, var_1d, var_1e, var_1f],
+        words: [electricity_sprite, shell_sprite, samus_subhealth],
+        _: [u16; 29],
     }
 }
 

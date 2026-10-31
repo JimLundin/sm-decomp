@@ -16,9 +16,8 @@ part_view! {
             var_0f, var_10, var_11, var_12, var_13, var_14, var_15, var_16, var_17, var_18, var_19, var_1a, var_1b,
             var_1c, var_1d, var_1e, var_1f],
         pad3: [u8; 4032],
-        words: [previous_health, var_41, var_42, var_43, var_44, var_45, var_46, var_47, var_48, var_49, var_4a,
-            var_4b, var_4c, var_4d, var_4e, var_4f, var_50, var_51, var_52, var_53, var_54, var_55, var_56, var_57,
-            var_58, var_59, var_5a, var_5b, var_5c, var_5d, var_5e, var_5f],
+        words: [previous_health],
+        _: [u16; 31],
     }
 }
 

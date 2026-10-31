@@ -14,9 +14,8 @@ part_view! {
     Choot: EnemyLayout40 {
         words: [function, y_speed_index, pattern_index, pattern_loops, pattern, pattern_y_distance, parameter_1, parameter_2],
         pad1: [u8; 26696],
-        words: [spawn_x, spawn_y, falling_x, falling_y, origin_x, origin_y, initial_y_speed_index, jump_delay, var_08,
-            var_09, var_0a, var_0b, var_0c, var_0d, var_0e, var_0f, var_10, var_11, var_12, var_13, var_14, var_15,
-            var_16, var_17, var_18, var_19, var_1a, var_1b, var_1c, var_1d, var_1e, var_1f],
+        words: [spawn_x, spawn_y, falling_x, falling_y, origin_x, origin_y, initial_y_speed_index, jump_delay],
+        _: [u16; 24],
     }
 }
 
