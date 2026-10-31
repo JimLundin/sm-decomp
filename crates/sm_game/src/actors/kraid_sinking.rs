@@ -2,9 +2,10 @@
 //! at $A7:C5E7 and the row clears it queues (bank $A7:C537-$A7:C6FF).
 use crate::actors::host::ActorHost;
 use crate::actors::layouts::KraidLayout as Kraid;
+use crate::actors::session_slots::session_slot;
 use crate::cartridge::native_record;
 use crate::ram::RawRam as _;
-use crate::ram::{slot, word};
+use crate::ram::word;
 use sm_data::cartridge::RomRecord;
 
 const BANK: u8 = 0xa7;
@@ -30,7 +31,10 @@ const VRAM_WRITE_QUEUE: usize = 0xd0;
 const BASE_BITS: i32 = 0xfc;
 
 /// Row `index` of the sinking Kraid table.
-pub fn sinking_row(index: usize, game: &mut (impl ActorHost + ?Sized)) -> RomRecord {
+pub fn sinking_row(
+    index: usize,
+    game: &mut (impl ActorHost + crate::actors::session_slots::SlotAccess + ?Sized),
+) -> RomRecord {
     let table = native_record(BANK, SINKING_TABLE, game);
     RomRecord {
         base: table.base + ROW_BYTES * index,
@@ -38,7 +42,11 @@ pub fn sinking_row(index: usize, game: &mut (impl ActorHost + ?Sized)) -> RomRec
     }
 }
 
-fn store_word(at: usize, value: u16, game: &mut (impl ActorHost + ?Sized)) {
+fn store_word(
+    at: usize,
+    value: u16,
+    game: &mut (impl ActorHost + crate::actors::session_slots::SlotAccess + ?Sized),
+) {
     let bytes = value.to_ne_bytes();
     game.ram().write_byte(at, bytes[0]);
     game.ram().write_byte(at + 1, bytes[1]);
@@ -46,7 +54,11 @@ fn store_word(at: usize, value: u16, game: &mut (impl ActorHost + ?Sized)) {
 
 /// Queue the blank tilemap row at queue byte `tail` to `tilemap_offset` past
 /// the BG2 tilemap base, clearing a row of Kraid, and set the tail after it.
-pub fn queue_row_clear(tail: u16, tilemap_offset: u16, game: &mut (impl ActorHost + ?Sized)) {
+pub fn queue_row_clear(
+    tail: u16,
+    tilemap_offset: u16,
+    game: &mut (impl ActorHost + crate::actors::session_slots::SlotAccess + ?Sized),
+) {
     let at = VRAM_WRITE_QUEUE + usize::from(tail);
     store_word(at, CLEAR_BYTES, game);
     store_word(at + 2, BLANK_TILEMAP, game);
@@ -59,14 +71,16 @@ pub fn queue_row_clear(tail: u16, tilemap_offset: u16, game: &mut (impl ActorHos
 /// Handle Kraid sinking ($A7:C59F): find the row for Kraid's y, queue its
 /// clear unless it has none, and return its crumble routine in bank $A7.
 /// None once the table ends. The table walk of `Kraid_HandleSinking`.
-pub fn handle_sinking(game: &mut (impl ActorHost + ?Sized)) -> Option<u32> {
+pub fn handle_sinking(
+    game: &mut (impl ActorHost + crate::actors::session_slots::SlotAccess + ?Sized),
+) -> Option<u32> {
     for index in 0.. {
         let row = sinking_row(index, game);
         let y = row.word(ROW_Y) as i16;
         if y < 0 {
             return None;
         }
-        if i32::from(y) == i32::from(slot!(game, Kraid[0].base.y_pos)) {
+        if i32::from(y) == i32::from(session_slot!(game, Kraid[0].base.y_pos)) {
             if row.word(ROW_TILEMAP) & NO_CLEAR == 0 {
                 let tail = word!(game.VRAM_WRITE_QUEUE_TAIL);
                 queue_row_clear(tail, row.word(ROW_TILEMAP), game);

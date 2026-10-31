@@ -3,14 +3,21 @@
 //! Native hook words, actor words and little-endian hook variables stay authoritative.
 use crate::actors::host::{ActorHost, ActorRuntime, Axis, abs16};
 use crate::actors::layouts::part_view;
+use crate::actors::session_slots::session_slot;
 use crate::inventory::{self, Word};
 use crate::ram::RawRam as _;
-use crate::ram::{slot, word};
+use crate::ram::word;
 use crate::records::Records;
 
 /// What the face block needs: the shared actor operations and its glow colours.
-pub trait Host: ActorHost + ActorRuntime + Records {}
-impl<T: ActorHost + ActorRuntime + Records + ?Sized> Host for T {}
+pub trait Host:
+    ActorHost + ActorRuntime + Records + crate::actors::session_slots::SlotAccess
+{
+}
+impl<T: ActorHost + ActorRuntime + Records + crate::actors::session_slots::SlotAccess + ?Sized> Host
+    for T
+{
+}
 
 part_view! {
     /// The face block's view of its slot.
@@ -50,16 +57,16 @@ const MORPH_BALL: u16 = 4;
 const SIGN: u16 = 0x8000;
 
 fn publish_palette(block: i32, game: &mut (impl Host + ?Sized)) {
-    let palette = slot!(game, FaceBlock[block].base.palette_index);
+    let palette = session_slot!(game, FaceBlock[block].base.palette_index);
     word!(game.VARIABLES_FOR_ENEMY_GRAPHICS_DRAWN_HOOK[HOOK_PALETTE] = (palette >> 4) & 0xff);
 }
 fn within_range(block: i32, delta: u16, game: &mut (impl Host + ?Sized)) -> bool {
-    (abs16(delta) as i16).wrapping_sub(slot!(game, FaceBlock[block].range) as i16) < 0
+    (abs16(delta) as i16).wrapping_sub(session_slot!(game, FaceBlock[block].range) as i16) < 0
 }
 /// Initialisation AI - blue Brinstar face block ($A8:E82E).
 pub fn initialize(game: &mut (impl Host + ?Sized)) {
     let block = word!(game.CUR_ENEMY_INDEX) as i32;
-    slot!(
+    session_slot!(
         game,
         FaceBlock[block].base.current_instruction = instruction_list::FACING_FORWARD
     );
@@ -72,7 +79,7 @@ pub fn initialize(game: &mut (impl Host + ?Sized)) {
     game.ram().copy_in(GFX_DRAWN_HOOK_BANK, &BANK.to_ne_bytes());
     publish_palette(block, game);
     word!(game.VARIABLES_FOR_ENEMY_GRAPHICS_DRAWN_HOOK[HOOK_TIMER] = CYCLE_FRAMES);
-    slot!(game, FaceBlock[block].direction_to_not_turn, |old| (old
+    session_slot!(game, FaceBlock[block].direction_to_not_turn, |old| (old
         & 1)
         << 15);
 }
@@ -86,7 +93,7 @@ pub fn main_ai(game: &mut (impl Host + ?Sized)) {
         .copy_in(GFX_DRAWN_HOOK, &PALETTE_CYCLE_HOOK.to_ne_bytes());
     let block = word!(game.CUR_ENEMY_INDEX) as i32;
     publish_palette(block, game);
-    if slot!(game, FaceBlock[block].activated) != 0 {
+    if session_slot!(game, FaceBlock[block].activated) != 0 {
         return;
     }
     let k = word!(game.CUR_ENEMY_INDEX);
@@ -96,18 +103,18 @@ pub fn main_ai(game: &mut (impl Host + ?Sized)) {
     }
     let k = word!(game.CUR_ENEMY_INDEX);
     let dx = game.player_delta(k, Axis::X);
-    slot!(game, FaceBlock[block].direction_to_samus = dx);
+    session_slot!(game, FaceBlock[block].direction_to_samus = dx);
     if within_range(block, dx, game)
-        && slot!(game, FaceBlock[block].direction_to_samus) & SIGN
-            != slot!(game, FaceBlock[block].direction_to_not_turn)
+        && session_slot!(game, FaceBlock[block].direction_to_samus) & SIGN
+            != session_slot!(game, FaceBlock[block].direction_to_not_turn)
     {
-        let instruction = if slot!(game, FaceBlock[block].direction_to_samus) & SIGN == 0 {
+        let instruction = if session_slot!(game, FaceBlock[block].direction_to_samus) & SIGN == 0 {
             instruction_list::TURNING_RIGHT
         } else {
             instruction_list::TURNING_LEFT
         };
-        slot!(game, FaceBlock[block].base; current_instruction = instruction, instruction_timer = 1);
-        slot!(game, FaceBlock[block].activated = 1);
+        session_slot!(game, FaceBlock[block].base; current_instruction = instruction, instruction_timer = 1);
+        session_slot!(game, FaceBlock[block].activated = 1);
         word!(game.VARIABLES_FOR_ENEMY_GRAPHICS_DRAWN_HOOK[HOOK_TIMER] = CYCLE_FRAMES);
     }
 }

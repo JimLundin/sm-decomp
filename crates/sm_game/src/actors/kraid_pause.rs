@@ -8,13 +8,26 @@
 //! decompilation.
 use crate::actors::kraid_sinking;
 use crate::actors::layouts::KraidLayout;
+use crate::actors::session_slots::session_slot;
 use crate::display_refresh::{GraphicsAsset, enqueue_readback, set_blank, wait};
 use crate::ram::RawRam as _;
-use crate::ram::{slot, word};
+use crate::ram::word;
 
 /// What the hooks need: the display refresh and actor RAM.
-pub trait Host: crate::display_refresh::Host + crate::actors::host::ActorHost {}
-impl<T: crate::display_refresh::Host + crate::actors::host::ActorHost + ?Sized> Host for T {}
+pub trait Host:
+    crate::display_refresh::Host
+    + crate::actors::host::ActorHost
+    + crate::actors::session_slots::SlotAccess
+{
+}
+impl<
+    T: crate::display_refresh::Host
+        + crate::actors::host::ActorHost
+        + crate::actors::session_slots::SlotAccess
+        + ?Sized,
+> Host for T
+{
+}
 
 type CoroutineRet = u8;
 
@@ -107,7 +120,7 @@ pub fn unpause_sinking<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
                     return yielded;
                 }
                 load_kraid_tiles(game);
-                if (slot!(game, KraidLayout[0].base.y_pos) as i16)
+                if (session_slot!(game, KraidLayout[0].base.y_pos) as i16)
                     .wrapping_sub(kraid_sinking::sinking_row(0, game).word(0) as i16)
                     < 0
                 {
@@ -123,7 +136,7 @@ pub fn unpause_sinking<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
             if queue_transfer {
                 let row = kraid_sinking::sinking_row(usize::from(word!(game.MY_COUNTER)), game);
                 if !(row.word(0) != 0xffff
-                    && (slot!(game, KraidLayout[0].base.y_pos) as i16)
+                    && (session_slot!(game, KraidLayout[0].base.y_pos) as i16)
                         .wrapping_sub(row.word(0) as i16)
                         >= 0)
                 {

@@ -4,15 +4,27 @@
 use crate::actors::api::angle_from_delta;
 use crate::actors::host::{ActorHost, ActorRuntime, Axis};
 use crate::actors::layouts::part_view;
+use crate::actors::session_slots::session_slot;
 use crate::effects::SoundEffects;
-use crate::ram::RawRam as _;
-use crate::ram::{slot, word};
+use crate::ram::word;
 use crate::records::Records;
 
 /// What the morph ball eye needs: the shared actor operations, sound and its
 /// mount tables.
-pub trait Host: ActorHost + ActorRuntime + SoundEffects + Records {}
-impl<T: ActorHost + ActorRuntime + SoundEffects + Records + ?Sized> Host for T {}
+pub trait Host:
+    ActorHost + ActorRuntime + SoundEffects + Records + crate::actors::session_slots::SlotAccess
+{
+}
+impl<
+    T: ActorHost
+        + ActorRuntime
+        + SoundEffects
+        + Records
+        + crate::actors::session_slots::SlotAccess
+        + ?Sized,
+> Host for T
+{
+}
 
 part_view! {
     /// The eye's view of its slot.
@@ -70,12 +82,12 @@ const MORPH_BALL: u16 = 4;
 const SIGN: u16 = 0x8000;
 
 fn face(eye: i32, right: u16, left: u16, game: &mut (impl Host + ?Sized)) {
-    let instruction = if slot!(game, Eye[eye].facing_left) & 1 == 0 {
+    let instruction = if session_slot!(game, Eye[eye].facing_left) & 1 == 0 {
         right
     } else {
         left
     };
-    slot!(game, Eye[eye].base.current_instruction = instruction);
+    session_slot!(game, Eye[eye].base.current_instruction = instruction);
 }
 fn samus_near(k: u16, columns: u16, game: &mut (impl Host + ?Sized)) -> bool {
     game.player_within(k, Axis::Y, NEAR_ROWS) && game.player_within(k, Axis::X, columns)
@@ -83,35 +95,35 @@ fn samus_near(k: u16, columns: u16, game: &mut (impl Host + ?Sized)) -> bool {
 fn aim(eye: i32, game: &mut (impl Host + ?Sized)) -> u16 {
     let angle = angle_from_delta(
         game.player_x()
-            .wrapping_sub(slot!(game, Eye[eye].base.x_pos)),
+            .wrapping_sub(session_slot!(game, Eye[eye].base.x_pos)),
         game.player_y()
-            .wrapping_sub(slot!(game, Eye[eye].base.y_pos)),
+            .wrapping_sub(session_slot!(game, Eye[eye].base.y_pos)),
     );
-    slot!(game, Eye[eye].angle = angle);
+    session_slot!(game, Eye[eye].angle = angle);
     angle
 }
 /// Initialisation AI - morph ball eye ($A8:9058): an eye, or a mount facing
 /// the way its parameter says.
 pub fn initialize(game: &mut (impl Host + ?Sized)) {
     let eye = word!(game.CUR_ENEMY_INDEX) as i32;
-    slot!(game, Eye[eye].base.properties, |old| old
+    session_slot!(game, Eye[eye].base.properties, |old| old
         | PROCESS_INSTRUCTIONS);
-    slot!(game, Eye[eye].base; spritemap_pointer = NO_SPRITEMAP, instruction_timer = 1, timer = 0);
-    if slot!(game, Eye[eye].mount) & MOUNT_BIT != 0 {
-        let index = (slot!(game, Eye[eye].mount) & MOUNT_FACING) as usize;
-        slot!(game, Eye[eye].base.x_pos, |old| old
+    session_slot!(game, Eye[eye].base; spritemap_pointer = NO_SPRITEMAP, instruction_timer = 1, timer = 0);
+    if session_slot!(game, Eye[eye].mount) & MOUNT_BIT != 0 {
+        let index = (session_slot!(game, Eye[eye].mount) & MOUNT_FACING) as usize;
+        session_slot!(game, Eye[eye].base.x_pos, |old| old
             .wrapping_add(MOUNT_X_OFFSETS[index] as u16));
-        slot!(game, Eye[eye].base.y_pos, |old| old
+        session_slot!(game, Eye[eye].base.y_pos, |old| old
             .wrapping_add(MOUNT_Y_OFFSETS[index] as u16));
-        slot!(game, Eye[eye].function = function::MOUNT);
-        slot!(
+        session_slot!(game, Eye[eye].function = function::MOUNT);
+        session_slot!(
             game,
             Eye[eye].base.current_instruction =
                 crate::enemy_lists::eye_instruction_list(game, index as isize)
         );
         crate::word_transfers!(game, descending, 256; native(BEAM_WINDOW_TABLE) <- value(255));
     } else {
-        slot!(game, Eye[eye].function = function::WAIT_FOR_SAMUS);
+        session_slot!(game, Eye[eye].function = function::WAIT_FOR_SAMUS);
         face(
             eye,
             instruction_list::RIGHT_CLOSED,
@@ -127,7 +139,7 @@ pub fn main_ai(game: &mut (impl Host + ?Sized)) -> Option<u32> {
         return None;
     }
     let eye = word!(game.CUR_ENEMY_INDEX) as i32;
-    Some(BANK << 16 | u32::from(slot!(game, Eye[eye].function)))
+    Some(BANK << 16 | u32::from(session_slot!(game, Eye[eye].function)))
 }
 /// Morph ball eye functions ($A8:90F1, $A8:912E, $A8:9160, $A8:91CE): true
 /// when the eye has opened and its beam should start, after its sound and
@@ -137,21 +149,21 @@ pub fn run_function(function: u16, k: u16, game: &mut (impl Host + ?Sized)) -> b
     match function {
         function::WAIT_FOR_SAMUS => {
             if samus_near(k, NEAR_COLUMNS, game) {
-                slot!(game, Eye[eye].function_timer = OPEN_FRAMES);
-                slot!(game, Eye[eye].base.instruction_timer = 1);
+                session_slot!(game, Eye[eye].function_timer = OPEN_FRAMES);
+                session_slot!(game, Eye[eye].base.instruction_timer = 1);
                 face(
                     eye,
                     instruction_list::RIGHT_ACTIVATING,
                     instruction_list::LEFT_ACTIVATING,
                     game,
                 );
-                slot!(game, Eye[eye].function = function::ACTIVATING);
+                session_slot!(game, Eye[eye].function = function::ACTIVATING);
             }
         }
         function::ACTIVE => {
             if samus_near(k, VIEW_COLUMNS, game) {
                 let angle = aim(eye, game);
-                slot!(
+                session_slot!(
                     game,
                     Eye[eye].base.current_instruction = (((angle as i32 & ANGLE_STEP) >> 2)
                         + i32::from(instruction_list::ACTIVE))
@@ -159,27 +171,27 @@ pub fn run_function(function: u16, k: u16, game: &mut (impl Host + ?Sized)) -> b
                 );
             } else {
                 game.queue_sound(1, SILENCE, 6);
-                slot!(game, Eye[eye]; activated = 0, function_timer = OPEN_FRAMES);
+                session_slot!(game, Eye[eye]; activated = 0, function_timer = OPEN_FRAMES);
                 face(
                     eye,
                     instruction_list::RIGHT_DEACTIVATING,
                     instruction_list::LEFT_DEACTIVATING,
                     game,
                 );
-                slot!(game, Eye[eye].function = function::DEACTIVATING);
+                session_slot!(game, Eye[eye].function = function::DEACTIVATING);
             }
-            slot!(game, Eye[eye].base.instruction_timer = 1);
+            session_slot!(game, Eye[eye].base.instruction_timer = 1);
         }
         function::ACTIVATING | function::DEACTIVATING => {
-            let expired = slot!(game, Eye[eye].function_timer) == 1;
-            slot!(game, Eye[eye].function_timer, |old| old.wrapping_sub(1));
-            let negative = slot!(game, Eye[eye].function_timer) & SIGN != 0;
+            let expired = session_slot!(game, Eye[eye].function_timer) == 1;
+            session_slot!(game, Eye[eye].function_timer, |old| old.wrapping_sub(1));
+            let negative = session_slot!(game, Eye[eye].function_timer) & SIGN != 0;
             if expired || negative {
                 if function == function::ACTIVATING {
                     game.queue_sound(1, RAY_SOUND, 6);
                     return true;
                 }
-                slot!(game, Eye[eye].function = function::WAIT_FOR_SAMUS);
+                session_slot!(game, Eye[eye].function = function::WAIT_FOR_SAMUS);
             }
         }
         _ => unreachable!("morph ball eye function {function:04x}"),
@@ -190,6 +202,6 @@ pub fn run_function(function: u16, k: u16, game: &mut (impl Host + ?Sized)) -> b
 /// Samus. Was `finish_beam`.
 pub fn start_tracking(k: u16, game: &mut (impl Host + ?Sized)) {
     let eye = k as i32;
-    slot!(game, Eye[eye].function = function::ACTIVE);
+    session_slot!(game, Eye[eye].function = function::ACTIVE);
     aim(eye, game);
 }

@@ -29,7 +29,7 @@ use crate::kraid_tables;
 use crate::menus::prelude::{boss, owned};
 use crate::palette_effects::fading::background6;
 use crate::ram::CompatibilityRam as _;
-use crate::ram::{slot, word};
+use crate::ram::word;
 use crate::runtime_access::RuntimeAccess as _;
 use sm_data::cartridge::RomRecord;
 
@@ -381,11 +381,14 @@ fn native_word<S: BossState + ?Sized>(game: &S, at: usize) -> u16 {
 
 /// Health word `index` of the body's eighths, at byte `slot` past the body.
 fn health_eighth<S: BossState + ?Sized>(game: &S, slot: i32, index: usize) -> u16 {
-    native_word(game, slot!(@at Body, slot, health_eighths) + index * 2)
+    native_word(
+        game,
+        crate::ram_slot!(@at Body, slot, health_eighths) + index * 2,
+    )
 }
 
 fn set_health_eighth<S: BossState + ?Sized>(game: &mut S, slot: i32, index: usize, value: u16) {
-    let at = slot!(@at Body, slot, health_eighths) + index * 2;
+    let at = crate::ram_slot!(@at Body, slot, health_eighths) + index * 2;
     set_native_word(game, at, value);
 }
 
@@ -2071,7 +2074,8 @@ pub fn initialize<L: Lease + ?Sized>(game: &mut L) {
             eighth = eighth.wrapping_add(step);
         }
         load_bg2(game, 0xdfff);
-        let quarter_at = |index: usize| slot!(@at Body, BODY, health_quarters) + index * 2;
+        let quarter_at =
+            |index: usize| crate::ram_slot!(@at Body, BODY, health_quarters) + index * 2;
         let quarter: u16 = session_slot!(game, Body[BODY].base.health) >> 2;
         set_native_word(game, quarter_at(0), quarter);
         let half: u16 = native_word(game, quarter_at(0)).wrapping_add(quarter);
@@ -2080,7 +2084,11 @@ pub fn initialize<L: Lease + ?Sized>(game: &mut L) {
         set_native_word(game, quarter_at(2), three);
         let all = native_word(game, quarter_at(0)).wrapping_add(three);
         set_native_word(game, quarter_at(3), all);
-        set_native_word(game, slot!(@at Body, BODY, unread_782e) + 8 * 2, 0);
+        set_native_word(
+            game,
+            crate::ram_slot!(@at Body, BODY, unread_782e) + 8 * 2,
+            0,
+        );
         session_slot!(game, Body[BODY].base; x_pos = 176, y_pos = 592, properties = (session_slot!(game, Body[BODY].base.properties)) | (K_ENEMY_PROPS_TANGIBLE as u16));
         session_slot!(game, Body[BODY]; function = function::RESTRICT_SAMUS_X, timer = 300, next = function::RAISE_THROUGH_FLOOR, script_delay = 64);
         game.foreign(|game| game.disable_minimap_for_boss());

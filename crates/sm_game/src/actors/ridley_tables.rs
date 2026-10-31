@@ -1,9 +1,10 @@
 //! Ridley's pogo speeds and tail data copies from bank $A6 ($A6:B90F, $A6:D3B4).
 use crate::actors::host::ActorHost;
 use crate::actors::ridley::Ridley;
+use crate::actors::session_slots::session_slot;
 use crate::cartridge::native_record;
 use crate::ram::RawRam as _;
-use crate::ram::{slot, word};
+use crate::ram::word;
 
 const BANK: u8 = 0xa6;
 const RIDLEY: i32 = 0;
@@ -21,11 +22,16 @@ const SIGN: u16 = 0x8000;
 /// accelerations for Ridley's acceleration index, then the Y velocity from
 /// its row and the X velocity, keeping its sign, from the other, each through
 /// its own native fetch. Was `Ridley_Func_29`.
-pub fn set_pogo_speeds(game: &mut (impl ActorHost + crate::records::Records + ?Sized)) {
+pub fn set_pogo_speeds(
+    game: &mut (
+             impl ActorHost + crate::records::Records + crate::actors::session_slots::SlotAccess + ?Sized
+         ),
+) {
     let pick = (word!(game.RANDOM_NUMBER) & ROW_CHOICES) as isize;
     let x_row = crate::actor_tables::word(game, |t| &t.ridley_x_velocities, pick);
     let y_row = crate::actor_tables::word(game, |t| &t.ridley_y_velocities, pick);
-    let offset = (2 * (i32::from(slot!(game, Ridley[RIDLEY].acceleration_index)) + 2)) as u16;
+    let offset =
+        (2 * (i32::from(session_slot!(game, Ridley[RIDLEY].acceleration_index)) + 2)) as u16;
     let step = (offset >> 1) as isize;
     word!(
         game.TILEMAP_STUFF[UPWARDS_ACCELERATION] =
@@ -35,14 +41,14 @@ pub fn set_pogo_speeds(game: &mut (impl ActorHost + crate::records::Records + ?S
         game.TILEMAP_STUFF[DOWNWARDS_ACCELERATION] =
             crate::actor_tables::word(game, |t| &t.ridley_downwards, step)
     );
-    slot!(
+    session_slot!(
         game,
         Ridley[RIDLEY].y_velocity = native_record(BANK, y_row, game).word(usize::from(offset))
     );
     let speed = native_record(BANK, x_row, game).word(usize::from(offset));
-    slot!(
+    session_slot!(
         game,
-        Ridley[RIDLEY].x_velocity = (if slot!(game, Ridley[RIDLEY].x_velocity) & SIGN != 0 {
+        Ridley[RIDLEY].x_velocity = (if session_slot!(game, Ridley[RIDLEY].x_velocity) & SIGN != 0 {
             -i32::from(speed)
         } else {
             i32::from(speed)
@@ -56,7 +62,7 @@ pub fn set_pogo_speeds(game: &mut (impl ActorHost + crate::records::Records + ?S
 pub fn set_tail_segments_from_list(
     destination: u16,
     source: u16,
-    game: &mut (impl ActorHost + ?Sized),
+    game: &mut (impl ActorHost + crate::actors::session_slots::SlotAccess + ?Sized),
 ) {
     let words = native_record(BANK, source, game);
     for i in 0..TAIL_SEGMENTS {

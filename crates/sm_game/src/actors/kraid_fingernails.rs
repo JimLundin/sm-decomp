@@ -2,10 +2,9 @@
 //! (bank $A7:BCEF-$A7:BE8E): the initialisation they share.
 use crate::actors::host::ActorHost;
 use crate::actors::layouts::{EnemyBase, KraidLayout as Kraid, same_words};
+use crate::actors::session_slots::session_slot;
 use crate::cartridge::native_record;
 use crate::constants::enemy_properties::K_ENEMY_PROPS_INVISIBLE;
-use crate::ram::RawRam as _;
-use crate::ram::slot;
 
 /// A fingernail's view of its slot.
 #[derive(Clone, Copy)]
@@ -66,24 +65,27 @@ const START_DELAY: u16 = 0x40;
 
 /// Kraid's fingernails initialisation AI ($A7:BCF2), for good and bad
 /// fingernails. Was `KraidFingernailInit`.
-pub fn initialize(k: u16, game: &mut (impl ActorHost + ?Sized)) {
-    let palette_index = slot!(game, Kraid[0].base.palette_index);
+pub fn initialize(
+    k: u16,
+    game: &mut (impl ActorHost + crate::actors::session_slots::SlotAccess + ?Sized),
+) {
+    let palette_index = session_slot!(game, Kraid[0].base.palette_index);
     let nail = i32::from(k);
-    slot!(game, Fingernail[nail].base.palette_index = palette_index);
-    slot!(game, Fingernail[nail].x_subvelocity = X_SUBVELOCITY);
-    slot!(game, Fingernail[nail].base.properties, |old| old
+    session_slot!(game, Fingernail[nail].base.palette_index = palette_index);
+    session_slot!(game, Fingernail[nail].x_subvelocity = X_SUBVELOCITY);
+    session_slot!(game, Fingernail[nail].base.properties, |old| old
         | K_ENEMY_PROPS_INVISIBLE as u16);
-    slot!(game, Fingernail[nail].base;
+    session_slot!(game, Fingernail[nail].base;
         instruction_timer = HOLD, current_instruction = instruction_list::FINGERNAIL);
     let spritemap = native_record(BANK, instruction_list::FINGERNAIL, game).word(2);
-    slot!(game, Fingernail[nail].base.spritemap_pointer = spritemap);
-    slot!(
+    session_slot!(game, Fingernail[nail].base.spritemap_pointer = spritemap);
+    session_slot!(
         game,
         Fingernail[nail].next_function = function::INITIALISE_FINGERNAIL
     );
-    slot!(
+    session_slot!(
         game,
         Fingernail[nail].function = function::HANDLE_FUNCTION_TIMER
     );
-    slot!(game, Fingernail[nail].function_timer = START_DELAY);
+    session_slot!(game, Fingernail[nail].function_timer = START_DELAY);
 }
