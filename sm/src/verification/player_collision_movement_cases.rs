@@ -12,19 +12,6 @@ thread_local! {
     static CANCEL_ARMED: core::cell::Cell<bool> = const { core::cell::Cell::new(false) };
     static CANCEL_VALUES: std::cell::RefCell<Vec<[u16;3]>> = const { std::cell::RefCell::new(Vec::new()) };
 }
-/// cfg-only call at actual sm91 cancellation entry, before Runtime construction.
-/// Read-only observation; never alters gameplay or fabricates callback results.
-pub(crate) fn observe_cancel(g: &Game) {
-    if CANCEL_ARMED.with(|v| v.get()) {
-        CANCEL_VALUES.with_borrow_mut(|v| {
-            v.push([
-                get(g, w::SAMUS_X_BASE_SPEED),
-                get(g, w::SAMUS_X_EXTRA_RUN_SPEED),
-                get(g, w::SAMUS_X_ACCEL_MODE),
-            ])
-        });
-    }
-}
 struct CancelGuard;
 impl Drop for CancelGuard {
     fn drop(&mut self) {

@@ -47,10 +47,6 @@ fn replacement(address: u32, value: u16) -> RomImage {
     word(&image, address, value);
     image
 }
-pub(crate) fn diagnostic(address: u32, g: &mut Game) {
-    let (_, host) = g.execution_parts();
-    diagnostic_parts(address, host.ram, host.loaded_rom);
-}
 pub(crate) fn diagnostic_parts(address: u32, ram: &WorkRam, loaded_rom: &mut Option<RomImage>) {
     ACTIVE.with(|a| {
         let mut active = a.borrow_mut();

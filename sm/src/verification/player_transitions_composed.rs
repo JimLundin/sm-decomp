@@ -286,10 +286,6 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
 }
 
 thread_local! { static MODE: std::cell::Cell<u8> = const { std::cell::Cell::new(0) }; }
-/// Only the three composed fixture invocations enable matching clock observations.
-pub(crate) fn active() -> bool {
-    MODE.with(|mode| mode.get() != 0)
-}
 fn expected_word(bytes: &mut [u8], at: usize, value: u16) {
     bytes[at..at + 2].copy_from_slice(&value.to_le_bytes());
 }
