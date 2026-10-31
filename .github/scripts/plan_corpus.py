@@ -33,6 +33,8 @@ def seed_bundle(row):
         return ('seeds-v1-terrain-grapple-c77a6dd6e1e0de4e.tar.gz.enc', 'c77a6dd6e1e0de4e07ffe47a2ae55fc7ba3aaf9a7276a04841cd8746e6e72d24')
     if row['id'] in ('enemy-fire-arc', 'enemy-oum-roll', 'enemy-tatori-touch'):
         return ('seeds-v1-enemies-dd825e69ee36457f.tar.gz.enc', 'dd825e69ee36457f9c24627b860246e0313ef67ee6754830d7f6331c05125c16')
+    if row['id'] == 'boss-ridley-swoop':
+        return ('seeds-v1-ridley-swoop-3ac1b65c9164ca03.tar.gz.enc', '3ac1b65c9164ca038c3a487770ef437fadd03a2fc639ff03ac3c664f565b9661')
     if row['id'] == 'boss-draygon-grapple-repel':
         return ('seeds-v1-scenario-repel-ccb2329f0fbbd52c.tar.gz.enc', 'ccb2329f0fbbd52cca0d799cceb106f4ab32b716ac49ed75d17ab5fe074cb924')
     if row['id'].startswith('boss-kraid-pause-'):
