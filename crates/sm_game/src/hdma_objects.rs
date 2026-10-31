@@ -1,9 +1,12 @@
 //! HDMA objects: allocation, channel setup, the per-frame program interpreter and the room effect reset.
 use crate::cinematic::cinematic_native_record;
 use crate::display::registers::{DMAP0, HDMAEN, MDMAEN};
+use crate::display::sequence::Registers;
+use crate::display_refresh::DisplayOwner;
 use crate::imported::word as table_word;
 use crate::ram::RawRam as _;
 use crate::ram::{checked_word, word};
+use crate::session_access::SessionAccess;
 
 /// The HDMA effects whose state the host's session view projects.
 #[derive(Clone, Copy)]
@@ -84,10 +87,16 @@ pub fn spawn_hdma_words<H: crate::menus::host::Host + ?Sized>(
     place_hdma(None, bank, read_word, game)
 }
 
+/// The HDMA object table's owner: a lease's Session, or what `with_table`
+/// opens for a host that holds none.
+pub trait HdmaTable {
+    fn with_hdma_table<T>(&mut self, action: impl FnOnce(&mut crate::hdma::HdmaObjects) -> T) -> T;
+}
+
 /// Run `action` on the HDMA table: the owned Session's under one lease when
 /// one can open, otherwise a copy decoded from RAM and stored back if
 /// `action` changed it.
-fn with_table<H, T>(game: &mut H, action: impl FnOnce(&mut crate::hdma::HdmaObjects) -> T) -> T
+pub fn with_table<H, T>(game: &mut H, action: impl FnOnce(&mut crate::hdma::HdmaObjects) -> T) -> T
 where
     H: crate::ram::WorkRamAccess + crate::runtime_access::RuntimeAccess + ?Sized,
 {
@@ -177,25 +186,27 @@ pub fn clear_hdma_flags<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
 }
 
 /// Free every object and clear the HDMA channel enable mirror.
-pub fn clear_hdma_channels<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    game.ram().write_byte(0x85, 0);
-    with_table(game, |table| {
+pub fn clear_hdma_channels<H: DisplayOwner + HdmaTable + ?Sized>(game: &mut H) {
+    game.write_owned_byte(0x85, 0);
+    game.with_hdma_table(|table| {
         for object in table.objects.iter_mut().rev() {
             object.channels = 0;
         }
     });
 }
 
-pub fn clear_hdma<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+pub fn clear_hdma<H: Registers + DisplayOwner + HdmaTable + ?Sized>(game: &mut H) {
     crate::display::sequence::register_writes! { game;
         byte(MDMAEN as u16, 0); byte(HDMAEN as u16, 0);
     }
     clear_hdma_channels(game);
 }
 
-pub fn initialize_room_effects<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+pub fn initialize_room_effects<H>(game: &mut H)
+where
+    H: Registers + crate::ram::CompatibilityRam + DisplayOwner + SessionAccess + ?Sized,
+{
     use crate::display::registers::{WMADDH, WMADDL, WMADDM};
-    use crate::ram::word;
     word! { game, 0; EARTHQUAKE_SFX_INDEX, EARTHQUAKE_SFX_TIMER }
     if matches!(
         word!(game.ROOM_PTR),
@@ -246,10 +257,7 @@ pub fn initialize_room_effects<H: crate::menus::host::Host + ?Sized>(game: &mut 
     word! { game, 0;
         REG_BG3HOFS, REG_BG3VOFS,
     }
-    crate::session_access::SessionAccess::session_mut(&mut game.runtime())
-        .room
-        .camera
-        .layer2 = [0, 0];
+    game.session_mut().room.camera.layer2 = [0, 0];
     word!(game.ROOM_LOADING_IRQ_HANDLER = 0);
     crate::word_transfers! { game, ascending, 1;
         native(0x602) <- value(0x8800), native(0x605) <- value(0x8800),
@@ -259,17 +267,22 @@ pub fn initialize_room_effects<H: crate::menus::host::Host + ?Sized>(game: &mut 
         byte(WMADDL as u16, 0xf0); byte(WMADDM as u16, 0xff);
         byte(WMADDH as u16, 1);
     }
-    game.ram().write_byte(0x85, 0);
+    game.write_owned_byte(0x85, 0);
     set_fixed_color([32, 64, 0x80], game);
-    game.ram().write_byte(0x57, 0);
-    game.ram().write_byte(0x69, 19);
-    game.ram().write_byte(0x6f, 0);
-    game.ram().write_byte(0x72, 0);
-    game.ram().write_byte(0x5d, 0);
-    game.ram().write_byte(0x5e, 4);
-    game.ram().write_byte(0x59, 73);
-    game.ram().write_byte(0x5a, 90);
-    game.ram().write_byte(0x5b, 90);
+    // Mosaic, main layers, colour selection and math, BG character and screen bases.
+    for (at, value) in [
+        (0x57, 0),
+        (0x69, 19),
+        (0x6f, 0),
+        (0x72, 0),
+        (0x5d, 0),
+        (0x5e, 4),
+        (0x59, 73),
+        (0x5a, 90),
+        (0x5b, 90),
+    ] {
+        game.write_owned_byte(at, value);
+    }
 }
 
 pub fn update_hdma<H>(game: &mut H)
