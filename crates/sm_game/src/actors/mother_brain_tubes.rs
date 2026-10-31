@@ -70,6 +70,10 @@ const LANDING_EARTHQUAKE: u16 = 0x19;
 /// Mother Brain's body slot and its brain slot.
 const BODY: i32 = 0;
 const BRAIN: i32 = 0x40;
+/// The slot the landing's STZ $0FAC,x ($A9:8C12) clears. It meant the tube's
+/// Y velocity, but X is the $FE the room palette writes ($A9:D2E4) leave, so
+/// it clears $7E:10AA: slot 4's $0FAA, its burst height if it is a tube.
+const STALE_SLOT: i32 = 0x100;
 /// The body's function once the brain has landed: the fake death's ascent.
 pub const BODY_ASCENT: u16 = 0x8c87;
 
@@ -187,6 +191,7 @@ fn fall_with_brain(game: &mut impl Lease, k: u16) {
             crate::hdma_objects::free_hdma_object(0, game);
             crate::hdma_objects::free_hdma_object(2, game);
         });
+        session_slot!(game, Tube[STALE_SLOT].burst_y = 0);
         session_slot!(game, Tube[BRAIN].base.y_pos = BRAIN_LANDING_Y);
         session_slot!(game, Tube[BODY].base; x_pos = BODY_X, y_pos = BODY_Y);
         crate::actors::mother_brain_neck::setup_for_fake_ascent(game);
