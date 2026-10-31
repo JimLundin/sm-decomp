@@ -1,4 +1,5 @@
 //! Checked drawing compatibility boundary. Only the native warning remains unsafe.
+use crate::menus::prelude::{owned, save_selection};
 use crate::ram::RawRam as _;
 use crate::ram::checked_word as word;
 use crate::sprite_drawing::{Clip, SpriteMap};
@@ -294,7 +295,7 @@ const FILE_MENU_MISSILE_POSITIONS: [(u16, u16); 6] = [
 /// Place the selection missile beside the selected save slot's row.
 pub fn file_menu_cursor<H: SpriteHost + ?Sized>(game: &mut H) {
     // The original doubles the row into a pair offset, dropping bit 14.
-    let row = usize::from(word!(game.SELECTED_SAVE_SLOT) & 0x3fff);
+    let row = usize::from(save_selection!(game.SelectedSlot) & 0x3fff);
     let (y, x) = FILE_MENU_MISSILE_POSITIONS[row];
     crate::enemy_projectiles::table::with_file_select(game, |menu| {
         *menu.missile_y() = y;

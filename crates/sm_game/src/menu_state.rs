@@ -106,6 +106,7 @@ pub const WORDS: usize = 31;
 #[derive(Clone, Copy, Default, Debug, PartialEq, Eq)]
 pub struct MenuScreens {
     pub map: MapScreenState,
+    pub save_selection: SaveSelection,
 }
 
 /// The pause and file select map screens' scrolling and marker: the scroll
@@ -158,6 +159,54 @@ pub mod map_screen {
             ram::SAMUS_POSITION_INDICATOR_ANIMATION_LOOP_COUNTER
                 == Word::IndicatorLoopCounter as usize
         );
+    };
+
+    /// `word` as the host's projection holds it, low byte then high.
+    pub fn get<H: CompatibilityRam + ?Sized>(h: &H, word: Word) -> u16 {
+        crate::projection::word(h, word as usize)
+    }
+    /// Store `value` to `word`, low byte then high, as the named word store did.
+    pub fn set<H: CompatibilityRam + ?Sized>(h: &mut H, word: Word, value: u16) {
+        crate::projection::set_word(h, word as usize, value);
+    }
+}
+
+/// The save slot and map station selection: the file select map's unread
+/// flag, the current area's collected map and the load station index
+/// ($0787..$078C), and the file select map area, the selected save slot and
+/// the empty-slot bits ($0950..$0955).
+#[derive(Clone, Copy, Default, Debug, PartialEq, Eq)]
+pub struct SaveSelection {
+    pub map_unread: u16,
+    pub has_area_map: u16,
+    pub load_station: u16,
+    pub map_area_index: u16,
+    pub selected_slot: u16,
+    pub nonempty_slots: u16,
+}
+
+/// The save selection words through the host's projected bytes, by RAM address.
+pub mod save_selection {
+    use crate::ram::CompatibilityRam;
+
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    pub enum Word {
+        MapUnread = 0x787,
+        HasAreaMap = 0x789,
+        LoadStation = 0x78b,
+        MapAreaIndex = 0x950,
+        SelectedSlot = 0x952,
+        NonemptySlots = 0x954,
+    }
+
+    const _: () = {
+        use crate::ram::words as ram;
+        assert!(ram::FILE_SELECT_MAP_UNREAD == Word::MapUnread as usize);
+        assert!(ram::HAS_AREA_MAP == Word::HasAreaMap as usize);
+        assert!(ram::LOAD_STATION_INDEX == Word::LoadStation as usize);
+        assert!(ram::FILE_SELECT_MAP_AREA_INDEX == Word::MapAreaIndex as usize);
+        assert!(ram::SELECTED_SAVE_SLOT == Word::SelectedSlot as usize);
+        assert!(ram::NONEMPTY_SAVE_SLOTS == Word::NonemptySlots as usize);
     };
 
     /// `word` as the host's projection holds it, low byte then high.

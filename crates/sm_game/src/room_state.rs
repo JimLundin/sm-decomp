@@ -1,6 +1,7 @@
 //! Room state rules that run on named RAM and the owned-Session view.
 pub mod fx;
 use crate::enemy_projectiles::host::Effects;
+use crate::menus::prelude::{owned, save_selection};
 use crate::ram::RawRam as _;
 use crate::ram::{checked_word, word, words as fields};
 use crate::room_mechanisms::creation::spawn_hardcoded;
@@ -122,7 +123,7 @@ pub fn execute_setup_code<H: ScriptHost + ?Sized>(script: u16, game: &mut H) {
             let collected =
                 u16::from_ne_bytes([game.ram().read_byte(at), game.ram().read_byte(at + 1)]) | 1;
             word_transfers!(game, ascending, 1; native(at) <- value(collected));
-            word!(game.HAS_AREA_MAP = collected);
+            save_selection!(game.HasAreaMap = collected);
         }
         // Set Zebes timebomb event and set light horizontal room shaking.
         0xc91f => {

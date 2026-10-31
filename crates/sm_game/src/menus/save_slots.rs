@@ -66,7 +66,7 @@ pub fn save<H: Host + ?Sized>(slot: u16, game: &mut H) {
     game.observe_flags_save(2);
     transfer_map(Direction::Save, game);
     game.observe_flags_save(3);
-    word!(game.SRAM_SAVE_STATION_INDEX = word!(game.LOAD_STATION_INDEX));
+    word!(game.SRAM_SAVE_STATION_INDEX = save_selection!(game.LoadStation));
     word!(game.SRAM_AREA_INDEX = crate::room_view::current(game).area);
     game.observe_flags_save(4);
     let checksum = save_file::save(&mut SaveFile(game), slot);
@@ -81,7 +81,7 @@ pub fn load<H: Host + ?Sized>(slot: u16, game: &mut H) -> u8 {
     if save_file::checksum_matches(&SaveFile(game), slot, checksum) {
         crate::word_transfers!(game, descending, 48; native(0xa00) <- le(PLAYER_DATA_SAVED, 47));
         transfer_map(Direction::Load, game);
-        word!(game.LOAD_STATION_INDEX = word!(game.SRAM_SAVE_STATION_INDEX));
+        save_selection!(game.LoadStation = word!(game.SRAM_SAVE_STATION_INDEX));
         crate::room_view::set(
             game,
             crate::room_view::Word::Area,
@@ -90,7 +90,7 @@ pub fn load<H: Host + ?Sized>(slot: u16, game: &mut H) -> u8 {
         0
     } else {
         save_file::clear(&mut SaveFile(game), slot);
-        word!(game.LOAD_STATION_INDEX = 0);
+        save_selection!(game.LoadStation = 0);
         crate::room_view::set(game, crate::room_view::Word::Area, 0);
         1
     }
@@ -194,8 +194,8 @@ pub fn load_area_map<H: Host + ?Sized>(game: &mut H) {
     for (active, saved) in area_map_words(crate::room_view::current(game).area) {
         crate::word_transfers!(game, ascending, 1; native(0x7f7 + active * 2) <- le(EXPLORED_MAP_TILES_SAVED, saved));
     }
-    word!(
-        game.HAS_AREA_MAP = game.ram().read_byte(
+    save_selection!(
+        game.HasAreaMap = game.ram().read_byte(
             crate::ram::bytes::MAP_STATION_BYTE_ARRAY
                 + usize::from(crate::room_view::current(game).area)
         ) as u16
@@ -206,7 +206,7 @@ pub fn save_area_map<H: Host + ?Sized>(game: &mut H) {
     for (active, saved) in area_map_words(crate::room_view::current(game).area) {
         crate::word_transfers!(game, ascending, 1; le(EXPLORED_MAP_TILES_SAVED, saved) <- native(0x7f7 + active * 2));
     }
-    if word!(game.HAS_AREA_MAP) != 0 {
+    if save_selection!(game.HasAreaMap) != 0 {
         let flag = 0xd908 + usize::from(crate::room_view::current(game).area);
         word!(game, flag; = word!(game, flag;) | 0xff);
     }

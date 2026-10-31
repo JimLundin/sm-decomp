@@ -71,6 +71,9 @@ pub(crate) use scroll;
 /// The map screens' words ([`crate::menu_state::map_screen::Word`]).
 macro_rules! map_screen { ($($t:tt)*) => { owned!([$crate::menu_state::map_screen] $($t)*) }; }
 pub(crate) use map_screen;
+/// [`crate::menu_state::save_selection::Word`].
+macro_rules! save_selection { ($($t:tt)*) => { owned!([$crate::menu_state::save_selection] $($t)*) }; }
+pub(crate) use save_selection;
 /// Crocomire's melt words ([`crate::actors::crocomire_reactions::melt::Word`]).
 macro_rules! melt { ($($t:tt)*) => { owned!([$crate::actors::crocomire_reactions::melt] $($t)*) }; }
 pub(crate) use melt;

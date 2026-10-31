@@ -86,7 +86,7 @@ pub fn finish_start<H: Host + ?Sized>(game: &mut H) {
         word!(game.GAME_STATE = 5);
         if word!(game.LOADING_GAME_STATE) != 5 {
             word!(game.LOADING_GAME_STATE = 5);
-            super::save_slots::save(word!(game.SELECTED_SAVE_SLOT), game);
+            super::save_slots::save(save_selection!(game.SelectedSlot), game);
         }
     } else if word!(game.LOADING_GAME_STATE) != 0 {
         word!(game.GAME_STATE = word!(game.LOADING_GAME_STATE));

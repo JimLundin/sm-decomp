@@ -735,6 +735,12 @@ macro_rules! scalar_words {
         $f(ram::SAMUS_POSITION_INDICATOR_ANIMATION_FRAME,$($borrow)* $s.menu_screens.map.indicator_frame);
         $f(ram::SAMUS_POSITION_INDICATOR_ANIMATION_TIMER,$($borrow)* $s.menu_screens.map.indicator_timer);
         $f(ram::SAMUS_POSITION_INDICATOR_ANIMATION_LOOP_COUNTER,$($borrow)* $s.menu_screens.map.indicator_loop_counter);
+        $f(ram::FILE_SELECT_MAP_UNREAD,$($borrow)* $s.menu_screens.save_selection.map_unread);
+        $f(ram::HAS_AREA_MAP,$($borrow)* $s.menu_screens.save_selection.has_area_map);
+        $f(ram::LOAD_STATION_INDEX,$($borrow)* $s.menu_screens.save_selection.load_station);
+        $f(ram::FILE_SELECT_MAP_AREA_INDEX,$($borrow)* $s.menu_screens.save_selection.map_area_index);
+        $f(ram::SELECTED_SAVE_SLOT,$($borrow)* $s.menu_screens.save_selection.selected_slot);
+        $f(ram::NONEMPTY_SAVE_SLOTS,$($borrow)* $s.menu_screens.save_selection.nonempty_slots);
         $f(0x5f5,$($borrow)* $s.feedback.sound_disabled);
         $f(ram::RANDOM_NUMBER,$($borrow)* $s.timing.random_number);
         $f(ram::TIME_IS_FROZEN_FLAG,$($borrow)* $s.timing.time_frozen);

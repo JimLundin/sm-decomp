@@ -412,6 +412,35 @@ fn map_screen_round_trips_every_word() {
     check_owner("map screen", &map_screen_lanes());
 }
 
+/// Save selection.
+fn save_selection_lanes() -> Vec<Lane> {
+    vec![
+        (0x787, 0, |s, _| {
+            &mut s.menu_screens.save_selection.map_unread
+        }),
+        (0x789, 0, |s, _| {
+            &mut s.menu_screens.save_selection.has_area_map
+        }),
+        (0x78b, 0, |s, _| {
+            &mut s.menu_screens.save_selection.load_station
+        }),
+        (0x950, 0, |s, _| {
+            &mut s.menu_screens.save_selection.map_area_index
+        }),
+        (0x952, 0, |s, _| {
+            &mut s.menu_screens.save_selection.selected_slot
+        }),
+        (0x954, 0, |s, _| {
+            &mut s.menu_screens.save_selection.nonempty_slots
+        }),
+    ]
+}
+
+#[test]
+fn save_selection_round_trips_every_word() {
+    check_owner("save selection", &save_selection_lanes());
+}
+
 /// The message box's animation radius and scratch words.
 fn message_box_lanes() -> Vec<Lane> {
     let mut lanes: Vec<Lane> = vec![(0x5a2, 0, |s, _| &mut s.messages.box_radius)];
@@ -999,6 +1028,7 @@ fn all_owner_lanes() -> Vec<(&'static str, Vec<Lane>)> {
         ("flow", flow_lanes()),
         ("menu_state", menu_lanes()),
         ("map screen", map_screen_lanes()),
+        ("save selection", save_selection_lanes()),
         ("room geometry", room_geometry_lanes()),
         ("room effects", room_effect_lanes()),
         ("room entry", room_entry_lanes()),

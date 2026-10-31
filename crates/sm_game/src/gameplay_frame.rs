@@ -13,7 +13,7 @@ use crate::display::sequence::{register_writes, write_register_and_mirror};
 use crate::display_refresh;
 use crate::enemy_projectiles;
 use crate::gameplay_rules::{finish_frame, finish_health_and_time};
-use crate::menus::prelude::CoroutineRet;
+use crate::menus::prelude::{CoroutineRet, owned, save_selection};
 use crate::menus::{
     controller_input, file_menu, game_over, map_menu, options_settings, pause_controls,
     reserve_tanks, save_slots,
@@ -365,11 +365,11 @@ fn initialize<H: Host>(game: &mut H) -> CoroutineRet {
             let loading = u32::from(word!(game.LOADING_GAME_STATE));
             if loading == K_LOADING_GAME_STATE_1F_STARTING_AT_CERES {
                 game.runtime().session_mut().room.area = 6;
-                word!(game.LOAD_STATION_INDEX = 0);
+                save_selection!(game.LoadStation = 0);
                 escape_timer::clear(game);
             } else if loading == K_LOADING_GAME_STATE_22_ESCAPING_CERES {
                 game.runtime().session_mut().room.area = 0;
-                word!(game.LOAD_STATION_INDEX = 18);
+                save_selection!(game.LoadStation = 18);
                 save_slots::load_area_map(game);
             }
         }
@@ -843,7 +843,7 @@ fn finish_pass<H: Host>(entry: Entry, game: &mut H) {
                 if ceres {
                     word!(game.LOADING_GAME_STATE = K_LOADING_GAME_STATE_22_ESCAPING_CERES as u16);
                     word!(game.GAME_STATE = 34);
-                    save_slots::save(word!(game.SELECTED_SAVE_SLOT), game);
+                    save_slots::save(save_selection!(game.SelectedSlot), game);
                     crate::flow::set(game, crate::flow::Word::CinematicFunction, 0xc11b);
                     word! { game, 0; CERES_STATUS, TIMER_STATUS }
                 } else {

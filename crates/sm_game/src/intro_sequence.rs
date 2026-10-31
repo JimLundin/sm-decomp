@@ -16,6 +16,7 @@ use crate::cinematic_host::Host;
 use crate::cinematic_objects::CinematicObjects;
 use crate::display_refresh::GraphicsAsset;
 use crate::inventory::{self, Word};
+use crate::menus::prelude::{owned, save_selection};
 use crate::ram::RawRam as _;
 use crate::ram::mirror;
 use crate::ram::word;
@@ -389,8 +390,8 @@ pub fn start_game_at_ceres<H: Host + ?Sized>(game: &mut H) {
     word!(game.LOADING_GAME_STATE = SET_UP_NEW_GAME);
     word!(game.GAME_STATE = SET_UP_NEW_GAME);
     crate::room_view::set(game, crate::room_view::Word::Area, CERES);
-    word!(game.LOAD_STATION_INDEX = 0);
-    crate::menus::save_slots::save(word!(game.SELECTED_SAVE_SLOT), game);
+    save_selection!(game.LoadStation = 0);
+    crate::menus::save_slots::save(save_selection!(game.SelectedSlot), game);
 }
 
 /// Cinematic function - Ceres goes boom - initial ($8B:C11B). Was

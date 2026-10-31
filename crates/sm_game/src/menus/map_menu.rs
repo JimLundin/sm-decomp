@@ -115,12 +115,12 @@ fn prepare<H: Host + ?Sized>(game: &mut H) {
 fn fade_palette<H: Host + ?Sized>(game: &mut H) {
     if crate::palette_effects::fading::file_select(game) != 0 {
         scroll! { game, 0; Bg1V, Bg1H, Bg2V, Bg2H }
-        word!(game.FILE_SELECT_MAP_AREA_INDEX = area_selection(game).unwrap_or(0) as u16);
+        save_selection!(game.MapAreaIndex = area_selection(game).unwrap_or(0) as u16);
         for area in 0..6 {
             menu_tilemap::area_palette(area, area == crate::room_view::current(game).area, game);
         }
         crate::menu!(game.MenuIndex += 1);
-        word!(game.FILE_SELECT_MAP_UNREAD = 0);
+        save_selection!(game.MapUnread = 0);
         game.ram().write_byte(
             crate::ram::mirror::TM,
             crate::display::control::Layers::BG2.byte(),
@@ -243,7 +243,7 @@ fn choose_area<H: Host + ?Sized>(game: &mut H) {
         if attempts != 0 {
             keys = word!(game.ENABLE_DEBUG) as i16;
             if word!(game.ENABLE_DEBUG) != 0 {
-                let mut selection = word!(game.FILE_SELECT_MAP_AREA_INDEX);
+                let mut selection = save_selection!(game.MapAreaIndex);
                 for _ in 0..attempts {
                     selection = if previous {
                         previous_area(selection)
@@ -298,14 +298,14 @@ fn select_area<H: Host + ?Sized>(game: &mut H) {
             crate::room_view::Word::Area,
             word!(game.SRAM_AREA_INDEX),
         );
-        word!(game.LOAD_STATION_INDEX = word!(game.SRAM_SAVE_STATION_INDEX));
+        save_selection!(game.LoadStation = word!(game.SRAM_SAVE_STATION_INDEX));
         draw_area_labels(game);
         return;
     }
     crate::room_view::set(
         game,
         crate::room_view::Word::Area,
-        AREAS[word!(game.FILE_SELECT_MAP_AREA_INDEX) as usize],
+        AREAS[save_selection!(game.MapAreaIndex) as usize],
     );
     let mut bits = native_word(
         USED_STATIONS + 2 * usize::from(crate::room_view::current(game).area),
@@ -336,7 +336,7 @@ fn select_area<H: Host + ?Sized>(game: &mut H) {
             unlocked_only = false;
         }
     }
-    word!(game.LOAD_STATION_INDEX = station);
+    save_selection!(game.LoadStation = station);
     draw_area_labels(game);
 }
 fn area_available<H: Host + ?Sized>(area: u16, game: &mut H) -> u16 {
@@ -355,13 +355,13 @@ fn area_available<H: Host + ?Sized>(area: u16, game: &mut H) -> u16 {
 }
 fn switch_area<H: Host + ?Sized>(area: u16, game: &mut H) {
     menu_tilemap::area_palette(
-        AREAS[word!(game.FILE_SELECT_MAP_AREA_INDEX) as usize],
+        AREAS[save_selection!(game.MapAreaIndex) as usize],
         false,
         game,
     );
-    word!(game.FILE_SELECT_MAP_AREA_INDEX = area);
+    save_selection!(game.MapAreaIndex = area);
     menu_tilemap::area_palette(AREAS[area as usize], true, game);
-    load_background(AREAS[word!(game.FILE_SELECT_MAP_AREA_INDEX) as usize], game);
+    load_background(AREAS[save_selection!(game.MapAreaIndex) as usize], game);
 }
 /// The current area's explored map tiles.
 const EXPLORED: usize = crate::ram::bytes::MAP_TILES_EXPLORED;
@@ -386,7 +386,7 @@ fn draw_area_labels<H: Host + ?Sized>(game: &mut H) {
         game,
     );
     for i in 0i32..6 {
-        palette = (if i == word!(game.FILE_SELECT_MAP_AREA_INDEX) as i32 {
+        palette = (if i == save_selection!(game.MapAreaIndex) as i32 {
             0
         } else {
             512
@@ -526,32 +526,32 @@ fn choose_room<H: Host + ?Sized>(game: &mut H) {
             USED_STATIONS + 2 * usize::from(crate::room_view::current(game).area),
             game,
         );
-        let mut remaining: i16 = word!(game.LOAD_STATION_INDEX) as i16;
+        let mut remaining: i16 = save_selection!(game.LoadStation) as i16;
         do_until! { remaining < 0 ;
             unlocked >>= 1;
             remaining -= 1;
         }
         let stations = station_coordinates(crate::room_view::current(game).area, game);
-        let station_offset: i16 = (4i16).wrapping_mul((word!(game.LOAD_STATION_INDEX)) as i16);
+        let station_offset: i16 = (4i16).wrapping_mul((save_selection!(game.LoadStation)) as i16);
         let station_x: u16 = stations.table_word((station_offset >> 1) as isize);
         let station_y: u16 = stations
             .image
             .table_word(stations.base, ((station_offset as i32 >> 1) + 1) as isize);
-        let mut check_unlocked = (word!(game.LOAD_STATION_INDEX) as i32 - 16i32) & 0x8000 != 0;
+        let mut check_unlocked = (save_selection!(game.LoadStation) as i32 - 16i32) & 0x8000 != 0;
         loop {
             let inspect_terminal = if check_unlocked {
-                (word!(game.LOAD_STATION_INDEX += 1, reread) as i32 - 16i32) & 0x8000 == 0
+                (save_selection!(game.LoadStation += 1, reread) as i32 - 16i32) & 0x8000 == 0
             } else {
-                word!(game.LOAD_STATION_INDEX += 1);
+                save_selection!(game.LoadStation += 1);
                 true
             };
             if inspect_terminal {
                 let terminator: i16 = stations.image.table_word(
                     stations.base,
-                    (2 * word!(game.LOAD_STATION_INDEX) as i32) as isize,
+                    (2 * save_selection!(game.LoadStation) as i32) as isize,
                 ) as i16;
                 if terminator == -1i16 {
-                    word!(game.LOAD_STATION_INDEX = 0);
+                    save_selection!(game.LoadStation = 0);
                     unlocked = native_word(
                         USED_STATIONS + 2 * usize::from(crate::room_view::current(game).area),
                         game,
@@ -568,7 +568,7 @@ fn choose_room<H: Host + ?Sized>(game: &mut H) {
             if is_unlocked == 0
                 || stations.image.table_word(
                     stations.base,
-                    (2 * word!(game.LOAD_STATION_INDEX) as i32) as isize,
+                    (2 * save_selection!(game.LoadStation) as i32) as isize,
                 ) >= 0xfffe
             {
                 check_unlocked = true;
@@ -576,10 +576,10 @@ fn choose_room<H: Host + ?Sized>(game: &mut H) {
                 break;
             }
         }
-        let next_offset: u16 = (4u16).wrapping_mul(word!(game.LOAD_STATION_INDEX));
+        let next_offset: u16 = (4u16).wrapping_mul(save_selection!(game.LoadStation));
         let next_x: u16 = stations.image.table_word(
             stations.base,
-            (2 * word!(game.LOAD_STATION_INDEX) as i32) as isize,
+            (2 * save_selection!(game.LoadStation) as i32) as isize,
         );
         if (next_x as i32 - scroll!(game.Bg1H) as i32) & 0x8000 != 0
             || (next_x as i32 - 256i32 - scroll!(game.Bg1H) as i32) & 0x8000 == 0
@@ -612,10 +612,10 @@ fn choose_room<H: Host + ?Sized>(game: &mut H) {
     } else if (game.observed_inputs().pressed & 0x8000) != 0 {
         crate::menu!(game.MenuIndex += 5);
         let Some(selection) = area_selection(game) else {
-            word!(game.FILE_SELECT_MAP_AREA_INDEX = 0);
+            save_selection!(game.MapAreaIndex = 0);
             return;
         };
-        word!(game.FILE_SELECT_MAP_AREA_INDEX = selection as u16);
+        save_selection!(game.MapAreaIndex = selection as u16);
         game.queue_sound(0, 0x3c_u8, 6);
     } else if game.observed_inputs().pressed as i32 & (K_BUTTON_START as i32 | K_BUTTON_A as i32)
         != 0
@@ -821,7 +821,8 @@ pub fn draw_icons<H: Host + ?Sized>(mode: IconMode, game: &mut H) {
                 let bits = station_bits(0, game);
                 let mut bytes = bits.to_ne_bytes();
                 bytes[0] = bits as u8
-                    & [1, 2, 4, 8, 0x10, 0x20, 0x40, 0x80][word!(game.LOAD_STATION_INDEX) as usize];
+                    & [1, 2, 4, 8, 0x10, 0x20, 0x40, 0x80]
+                        [save_selection!(game.LoadStation) as usize];
                 icon_group(8, 0xc80b, u16::from_ne_bytes(bytes), 1024, game);
             }
             if word!(game.ENABLE_DEBUG) != 0 {
@@ -836,7 +837,7 @@ pub fn draw_icons<H: Host + ?Sized>(mode: IconMode, game: &mut H) {
                 crate::room_view::current(game).area as isize,
             );
             let record = map_record(address, game);
-            let offset = 4 * usize::from(word!(game.LOAD_STATION_INDEX));
+            let offset = 4 * usize::from(save_selection!(game.LoadStation));
             let x = record.word(offset).wrapping_sub(scroll!(game.Bg1H));
             let y = record.word(offset + 2).wrapping_sub(scroll!(game.Bg1V));
             if map_screen!(game.IndicatorLoopCounter) & 1 == 0 {
@@ -931,7 +932,7 @@ fn boss_icons<H: Host + ?Sized>(sprite: u16, table: u16, game: &mut H) {
                 if defeated {
                     draw_record(0x62, &record, 3584, game);
                     draw_record(sprite, &record, 3072, game);
-                } else if word!(game.HAS_AREA_MAP) != 0 {
+                } else if save_selection!(game.HasAreaMap) != 0 {
                     draw_record(sprite, &record, 3584, game);
                 } else {
                     // An undisplayed undefeated boss consumes a second bit.
@@ -1169,7 +1170,7 @@ fn find_map_edge<H: Host + ?Sized>(
 }
 
 pub fn scroll_limits<H: Host + ?Sized>(game: &mut H) {
-    let source = if word!(game.HAS_AREA_MAP) != 0 {
+    let source = if save_selection!(game.HasAreaMap) != 0 {
         let pointer = map_record(
             (i32::from(ADDR_K_PAUSE_MENU_MAP_DATA as u16)
                 + 2 * i32::from(crate::room_view::current(game).area)) as u16,

@@ -114,7 +114,7 @@ pub fn file_rows<H: Host + ?Sized>(emphasis: FileRowEmphasis, game: &mut H) {
     for slot in 0..3u16 {
         save_slots::load(slot, game);
         let dim = match emphasis {
-            FileRowEmphasis::Occupied => word!(game.NONEMPTY_SAVE_SLOTS) & (1 << slot) == 0,
+            FileRowEmphasis::Occupied => save_selection!(game.NonemptySlots) & (1 << slot) == 0,
             FileRowEmphasis::Destination => {
                 with_file_select(game, |menu| *menu.file_copy_source_slot() == slot)
             }
@@ -125,8 +125,16 @@ pub fn file_rows<H: Host + ?Sized>(emphasis: FileRowEmphasis, game: &mut H) {
         set_palette(if dim { 1024 } else { 0 }, game);
         let mask = 1 << slot;
         let base = (slot + 2) << 8;
-        health(!word!(game.NONEMPTY_SAVE_SLOTS) & mask, base + 0x18, game);
-        time(!word!(game.NONEMPTY_SAVE_SLOTS) & mask, base + 0x72, game);
+        health(
+            !save_selection!(game.NonemptySlots) & mask,
+            base + 0x18,
+            game,
+        );
+        time(
+            !save_selection!(game.NonemptySlots) & mask,
+            base + 0x72,
+            game,
+        );
         load(base + 0x34, ADDR_K_MENU_TILEMAP_TIME as u16, game);
         load(base + 8, FILE_LABELS[usize::from(slot)], game);
     }
@@ -152,7 +160,7 @@ pub fn main_menu<H: Host + ?Sized>(game: &mut H) {
 /// $81:9EF3 up to the clear-forced-blank wait: the file rows and the cursor.
 fn draw_main_menu<H: Host + ?Sized>(game: &mut H) {
     clear(game);
-    word!(game.NONEMPTY_SAVE_SLOTS = u16::MAX);
+    save_selection!(game.NonemptySlots = u16::MAX);
     set_palette(0, game);
     load(0x56, ADDR_K_MENU_TILEMAP_SAMUS_DATA as u16, game);
     for (slot, label) in FILE_LABELS.into_iter().enumerate() {
@@ -163,16 +171,24 @@ fn draw_main_menu<H: Host + ?Sized>(game: &mut H) {
         let top = 0x146 + 0x140 * slot as u16;
         load(top, label, game);
         let empty = save_slots::load(slot as u16, game);
-        word!(
-            game.NONEMPTY_SAVE_SLOTS =
-                (word!(game.NONEMPTY_SAVE_SLOTS) >> 1) | (u16::from(empty) << 15)
+        save_selection!(
+            game.NonemptySlots =
+                (save_selection!(game.NonemptySlots) >> 1) | (u16::from(empty) << 15)
         );
-        health(word!(game.NONEMPTY_SAVE_SLOTS) & 0x8000, top + 0x16, game);
-        time(word!(game.NONEMPTY_SAVE_SLOTS) & 0x8000, top + 0x6e, game);
+        health(
+            save_selection!(game.NonemptySlots) & 0x8000,
+            top + 0x16,
+            game,
+        );
+        time(
+            save_selection!(game.NonemptySlots) & 0x8000,
+            top + 0x6e,
+            game,
+        );
         load(top + 0x30, ADDR_K_MENU_TILEMAP_TIME as u16, game);
     }
-    word!(game.NONEMPTY_SAVE_SLOTS = (!word!(game.NONEMPTY_SAVE_SLOTS)).swap_bytes() >> 5);
-    if word!(game.NONEMPTY_SAVE_SLOTS) != 0 {
+    save_selection!(game.NonemptySlots = (!save_selection!(game.NonemptySlots)).swap_bytes() >> 5);
+    if save_selection!(game.NonemptySlots) != 0 {
         set_palette(0, game);
         load(0x508, ADDR_K_MENU_TILEMAP_DATA_COPY as u16, game);
         set_palette(0, game);
