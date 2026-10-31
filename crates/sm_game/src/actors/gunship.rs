@@ -11,6 +11,7 @@ use crate::display::transfer::{Source, TilemapUpload, queue_tilemap};
 use crate::enemy_projectiles::host::Effects as _;
 use crate::geometry::Position;
 use crate::item_pickups::Resource;
+use crate::player_position::{PlayerPosition as _, PlayerWord};
 use crate::player_projectiles::content::{self, table};
 use crate::ram::words as W;
 use crate::session_slot;
@@ -108,6 +109,17 @@ fn advance_native(rt: &mut impl ActorLease, high: usize, low: usize, amount: i32
     rt.write_slice_native(low, position.fraction);
     rt.write_slice_native(high, position.whole);
 }
+/// Add a 16.16 `amount` to Samus's Y position, reading and storing the fraction first.
+fn advance_player(rt: &mut impl ActorLease, amount: i32) {
+    let fraction = rt.player_y_fraction();
+    let mut position = Position {
+        whole: rt.player_y(),
+        fraction,
+    };
+    position.advance(amount);
+    rt.set_player_word(PlayerWord::YFraction, position.fraction);
+    rt.set_player_y(position.whole);
+}
 /// Open or close the entrance pad.
 fn entrance(rt: &mut impl ActorLease, index: u16, opening: bool) {
     set_instruction(rt, part(index, PAD), if opening { 0xa5be } else { 0xa5ee });
@@ -138,7 +150,7 @@ pub fn initialize_top<H: LeaseActors + ?Sized>(game: &mut H) {
     session_slot!(rt, Gunship[top].base.palette_index = 3584);
     if rt.word(W::GAME_STATE) != 40 || rt.word(W::DEMO_SET) != 0 {
         if rt.word(W::LOADING_GAME_STATE) == 34 {
-            let y = rt.word(W::SAMUS_Y_POS).wrapping_sub(17);
+            let y = rt.player_y().wrapping_sub(17);
             session_slot!(rt, Gunship[top].base.y_pos = y);
             session_slot!(rt, Gunship[top].function = DESCENDING);
         } else {
@@ -147,7 +159,7 @@ pub fn initialize_top<H: LeaseActors + ?Sized>(game: &mut H) {
             session_slot!(rt, Gunship[top]; step = y, function = IDLE);
         }
     } else {
-        rt.write_slice_le(W::SAMUS_Y_POS, 1138);
+        rt.set_player_y(1138);
         let y = session_slot!(rt, Gunship[top].base.y_pos).wrapping_sub(25);
         session_slot!(rt, Gunship[top].base.y_pos = y);
         session_slot!(rt, Gunship[top]; step = y, function = WAIT_TO_OPEN_FOR_EXIT);
@@ -183,7 +195,7 @@ pub fn initialize_bottom<H: LeaseActors + ?Sized>(game: &mut H) {
             set_instruction(rt, bottom, 0xa5be);
         }
     } else if rt.word(W::LOADING_GAME_STATE) == 34 {
-        let y = rt.word(W::SAMUS_Y_POS).wrapping_add(23);
+        let y = rt.player_y().wrapping_add(23);
         session_slot!(rt, Gunship[bottom].base.y_pos = y);
     } else {
         add_y(rt, bottom, 15);
@@ -236,7 +248,7 @@ fn descend(rt: &mut impl ActorLease, index: u16) {
     let top = part(index, TOP);
     let slow = session_slot!(rt, Gunship[top].base.y_pos).wrapping_sub(768) & 0x8000 == 0;
     let amount = if slow { 0x28000 } else { 0x48000 };
-    advance_native(rt, W::SAMUS_Y_POS, W::SAMUS_Y_SUBPOS, amount);
+    advance_player(rt, amount);
     for slot in [PAD, BOTTOM_PART, TOP] {
         let at = crate::ram_slot!(@at Gunship, part(index, slot), base.y_pos);
         advance_native(rt, at, at + 2, amount);
@@ -254,8 +266,8 @@ fn descend(rt: &mut impl ActorLease, index: u16) {
 fn brake(rt: &mut impl ActorLease, index: u16) {
     let top = part(index, TOP);
     let row = usize::from(session_slot!(rt, Gunship[top].step)).cast_signed();
-    let y = rt.word(W::SAMUS_Y_POS).wrapping_add(table(rt, BRAKES, row));
-    rt.write_slice_le(W::SAMUS_Y_POS, y);
+    let y = rt.player_y().wrapping_add(table(rt, BRAKES, row));
+    rt.set_player_y(y);
     for slot in [PAD, BOTTOM_PART, TOP] {
         // The live position is read before each separately failing table read.
         let slot = part(index, slot);
@@ -269,9 +281,8 @@ fn brake(rt: &mut impl ActorLease, index: u16) {
         session_slot!(rt, Gunship[top]; function = WAIT_TO_OPEN_FOR_EJECT, step = y, hover_timer = 1);
         session_slot!(rt, Gunship[0].hover_frame = 0);
         let x = session_slot!(rt, Gunship[top].base.x_pos).wrapping_add(1);
-        rt.write_slice_le(W::SAMUS_X_POS, x);
-        let x = rt.word(W::SAMUS_X_POS);
-        rt.write_slice_le(W::SAMUS_PREV_X_POS, x);
+        rt.set_player_x(x);
+        rt.set_previous_player_x(x);
         entrance(rt, index, true);
     }
 }
@@ -287,7 +298,7 @@ fn idle(rt: &mut impl ActorLease, index: u16) {
         session_slot!(rt, Gunship[top].base.x_pos),
         session_slot!(rt, Gunship[top].base.y_pos),
     );
-    let (samus_x, samus_y) = (rt.word(W::SAMUS_X_POS), rt.word(W::SAMUS_Y_POS));
+    let (samus_x, samus_y) = (rt.player_x(), rt.player_y());
     let negative = |value: u16| value & 0x8000 != 0;
     if negative(x.wrapping_sub(8).wrapping_sub(samus_x))
         && !negative(x.wrapping_add(8).wrapping_sub(samus_x))
@@ -297,11 +308,10 @@ fn idle(rt: &mut impl ActorLease, index: u16) {
         && rt.word(W::JOYPAD1_NEWKEYS) & 0x400 != 0
     {
         session_slot!(rt, Gunship[top].function = WAIT_TO_OPEN_FOR_ENTRY);
-        if rt.word(W::SAMUS_X_POS) != 1152 {
+        if rt.player_x() != 1152 {
             let x = session_slot!(rt, Gunship[top].base.x_pos);
-            rt.write_slice_le(W::SAMUS_X_POS, x);
-            let x = rt.word(W::SAMUS_X_POS);
-            rt.write_slice_le(W::SAMUS_PREV_X_POS, x);
+            rt.set_player_x(x);
+            rt.set_previous_player_x(x);
         }
         rt.foreign(|game| game.face_player_forward());
         rt.foreign(|game| game.command_player(0x1a));
@@ -323,9 +333,9 @@ fn move_player(rt: &mut impl ActorLease, index: u16, function: u16) {
         EJECT_SAMUS => 1u16.wrapping_neg(),
         _ => 2u16.wrapping_neg(),
     };
-    let y = rt.word(W::SAMUS_Y_POS).wrapping_add(delta);
-    rt.write_slice_le(W::SAMUS_Y_POS, y);
-    if (rt.word(W::SAMUS_Y_POS).wrapping_sub(target) & 0x8000 == 0) == entering {
+    let y = rt.player_y().wrapping_add(delta);
+    rt.set_player_y(y);
+    if (rt.player_y().wrapping_sub(target) & 0x8000 == 0) == entering {
         let next = match function {
             EJECT_SAMUS => WAIT_TO_CLOSE_AND_SAVE,
             LOWER_SAMUS => WAIT_TO_CLOSE_FOR_ENTRY,
@@ -398,7 +408,7 @@ fn load_dust_clouds(rt: &mut impl ActorLease, index: u16) {
 
 /// The three parts follow Samus.
 fn follow_player(rt: &mut impl ActorLease, index: u16) {
-    let y = rt.word(W::SAMUS_Y_POS);
+    let y = rt.player_y();
     session_slot!(
         rt,
         Gunship[part(index, TOP)].base.y_pos = y.wrapping_sub(17)
@@ -427,9 +437,9 @@ fn fire_up_engines(rt: &mut impl ActorLease, index: u16) {
     } else {
         amount.wrapping_neg()
     };
-    let y = rt.word(W::SAMUS_Y_POS).wrapping_add(shake);
-    rt.write_slice_le(W::SAMUS_Y_POS, y);
-    rt.write_slice_le(W::SAMUS_PREV_Y_POS, y);
+    let y = rt.player_y().wrapping_add(shake);
+    rt.set_player_y(y);
+    rt.set_previous_player_y(y);
     follow_player(rt, index);
     let counter = session_slot!(rt, Gunship[bottom].step).wrapping_add(1);
     session_slot!(rt, Gunship[bottom].step = counter);
@@ -451,14 +461,8 @@ fn accelerate(rt: &mut impl ActorLease, index: u16) {
     if (speed & 0xff00).wrapping_sub(2560) & 0x8000 == 0 {
         session_slot!(rt, Gunship[bottom].function = 2304);
     }
-    let fraction = rt.word(W::SAMUS_Y_SUBPOS);
-    let mut position = Position {
-        whole: rt.word(W::SAMUS_Y_POS),
-        fraction,
-    };
-    position.advance(-(i32::from(session_slot!(rt, Gunship[bottom].function)) << 8));
-    rt.write_slice_le(W::SAMUS_Y_SUBPOS, position.fraction);
-    rt.write_slice_le(W::SAMUS_Y_POS, position.whole);
+    let speed = i32::from(session_slot!(rt, Gunship[bottom].function));
+    advance_player(rt, -(speed << 8));
     follow_player(rt, index);
 }
 
@@ -516,8 +520,8 @@ pub fn run<H: LeaseActors + ?Sized>(game: &mut H, index: u16, function: u16) {
         LOAD_DUST_CLOUD_TILES => load_dust_clouds(rt, index),
         FIRE_UP_ENGINES => fire_up_engines(rt, index),
         STEADY_RISE => {
-            let y = rt.word(W::SAMUS_Y_POS).wrapping_sub(2);
-            rt.write_slice_le(W::SAMUS_Y_POS, y);
+            let y = rt.player_y().wrapping_sub(2);
+            rt.set_player_y(y);
             follow_player(rt, index);
             if session_slot!(rt, Gunship[top].base.y_pos).wrapping_sub(896) & 0x8000 != 0 {
                 session_slot!(rt, Gunship[top].function = ACCELERATING_SET_GAME_STATE);
