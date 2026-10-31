@@ -1638,4 +1638,3 @@ start_frame = 0
 frames = 3612
 expect = ["state:26", "state:4"]
 require_hit = ["file_menu.confirm_copy", "file_menu.copy_slot", "file_menu.confirm_clear", "file_menu.clear_slot"]
-pending = "awaiting the seeds-v1-file-copy-51a67d39af3c9628 ci-data upload"
