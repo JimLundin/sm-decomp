@@ -13,9 +13,6 @@ use crate::actors::{combat, queries};
 use crate::constants::{bank_86::*, enemy_properties::*};
 use crate::enemy_script::EnemyScript;
 use crate::menus::prelude::{boss, owned};
-use crate::ram::RawRam as _;
-use crate::ram::WorkRamAccess as _;
-use crate::ram::slot;
 use sm_data::botwoon_holes::Hole;
 use sm_data::botwoon_speeds::BotwoonSpeed;
 use sm_data::enemy_speeds::SpeedTable;
@@ -848,7 +845,8 @@ pub fn main_ai<R: RuntimeHost>(runtime: &mut R) {
             let e = i32::from(runtime.selected_actor().byte_index());
             if spitting(e, runtime) {
                 runtime.foreign(|game| {
-                    let address = BANK << 16 | u32::from(slot!(game, Botwoon[e].head_function));
+                    let address =
+                        BANK << 16 | u32::from(session_slot!(game, Botwoon[e].head_function));
                     let k = boss!(game.CurEnemyIndex);
                     game.b3_pre_instruction(address, k);
                 });

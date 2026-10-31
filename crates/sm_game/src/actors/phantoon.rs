@@ -25,8 +25,6 @@ use crate::display::transfer::{Source, TilemapUpload, queue_tilemap};
 use crate::enemy_projectiles::drops::DropSource;
 use crate::menus::prelude::{boss, owned, scroll};
 use crate::phantoon_tables::{self, Timer};
-use crate::ram::RawRam as _;
-use crate::ram::slot;
 
 /// A lease on a game with Phantoon's effects.
 pub trait Lease: BossLease<Game: Host> {}
@@ -651,14 +649,14 @@ pub fn initialize<H: Host + ?Sized>(game: &mut H) {
     boss!(game.EnemyTilemapSize = BG2_TILEMAP_SIZE);
     game.disable_minimap_for_boss();
     let me = current(game);
-    slot!(game, Body[me].timer = 120);
-    slot!(game, Body[me]; movement_index = 0, speed_subpixel = 0);
+    session_slot!(game, Body[me].timer = 120);
+    session_slot!(game, Body[me]; movement_index = 0, speed_subpixel = 0);
     boss!(game.PhantoonMaterialisationSound = 0);
-    slot!(game, Eye[EYE]; background_held = 0, parameter_2 = 0);
-    slot!(
+    session_slot!(game, Eye[EYE]; background_held = 0, parameter_2 = 0);
+    session_slot!(
         game,
         Body[BODY].base.properties =
-            (slot!(game, Body[BODY].base.properties)) | (K_ENEMY_PROPS_TANGIBLE as u16)
+            (session_slot!(game, Body[BODY].base.properties)) | (K_ENEMY_PROPS_TANGIBLE as u16)
     );
     game.spawn_hdma(0xa7, &SEMI_TRANSPARENCY_HDMA);
     initialize_part(game);

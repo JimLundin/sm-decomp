@@ -21,8 +21,7 @@ use crate::constants::{
 use crate::display::transfer::{Source, TilemapUpload, queue_tilemap};
 use crate::enemy_script::EnemyScript;
 use crate::menus::prelude::{boss, do_until, melt, owned, scroll};
-use crate::ram::RawRam as _;
-use crate::ram::{checked_word, slot, word, words as ram};
+use crate::ram::{checked_word, word, words as ram};
 use sm_data::crocomire::{
     BRIDGE_DEBRIS_ADDRESS, FLESH_TILEMAP_ADDRESS, MELT_TILES, SCROLL_SPRITEMAP_ADDRESS,
     SKELETON_TILEMAP_ADDRESS, SPIKE_WALL_DESTINATION_ADDRESS, SPIKE_WALL_TILE_ADDRESS,
@@ -1423,7 +1422,7 @@ pub fn execute_phase<H: Host + ?Sized>(game: &mut H) -> Option<ScrollRequest> {
         Some(dead_from_room_entry as fn(&mut H)),
         Some(flowing_down_the_river as fn(&mut H)),
     ];
-    let phase = (slot!(game, Crocomire[0i32].death_sequence_index) as i32 >> 1) as usize;
+    let phase = (session_slot!(game, Crocomire[0i32].death_sequence_index) as i32 >> 1) as usize;
     match phases[phase] {
         Some(execute) => {
             execute(game);
