@@ -101,6 +101,14 @@ SCENARIOS = {
         base="100-input-phase:221",
         edits={"energy": 999},
         note="Tatori room with full energy"),
+    # The 100% movie's Ridley fight with full energy and reserves and Ridley's
+    # health (enemy slot 0) down to 9000, where he swoops, which the movie's
+    # quick fight never sees.
+    "ridley-swoop": Scenario(
+        base="100-boundary:118",
+        edits={"energy": 699, "reserve_energy": 200},
+        words={0x0F8C: 9000},
+        note="Ridley fight at half health with full energy"),
     # The landing site with the charge beam and one other beam equipped and
     # the power bombs selected, so a released charge fires that beam's
     # special attack.

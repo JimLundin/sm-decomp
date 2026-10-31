@@ -1609,3 +1609,18 @@ start_frame = 0
 frames = 761
 expect = ["room:D055"]
 require_hit = ["tatori.touch"]
+
+# Ridley at half health with full energy (scenario ridley-swoop) and the
+# controller released: he swoops, which the movie's quick fight never sees.
+
+[[segment]]
+id = "boss-ridley-swoop"
+seed = "scenario-ridley-swoop:118"
+seed_sha256 = "c4d7bfb756f61f4dc95e6f121cb2804ce9d5162a82a404e33b16159256cf398e"
+inputs = "authored-ridley-swoop.inputs"
+input_sha256 = "1fc7b2ec802ee9383d8a966bb01cd41482185bc47f91af78b1742656c257abe4"
+start_frame = 0
+frames = 1501
+expect = ["room:B32E"]
+require_hit = ["ridley.swoop_velocities"]
+pending = "awaiting the seeds-v1-ridley-swoop-3ac1b65c9164ca03 ci-data upload"
