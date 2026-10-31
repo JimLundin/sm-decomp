@@ -147,7 +147,7 @@ fn roll(runtime: &mut impl ActorLease, oum: i32) {
         } else {
             0xfff0
         };
-        session_slot!(runtime, Oum[oum].base.x_pos, |x| x.wrapping_add(back));
+        session_slot!(runtime, Oum[oum].base.x_pos, |old| old.wrapping_add(back));
     }
     if blocked {
         session_slot!(runtime, Oum[oum].direction, |direction| direction ^ 1);
@@ -159,7 +159,7 @@ fn roll(runtime: &mut impl ActorLease, oum: i32) {
 fn attack(runtime: &mut impl ActorLease, oum: i32) {
     if session_slot!(runtime, Oum[oum].animation_finished) != 0 {
         session_slot!(runtime, Oum[oum].animation_finished = 0);
-        session_slot!(runtime, Oum[oum].new_list_index, |i| i.wrapping_sub(2));
+        session_slot!(runtime, Oum[oum].new_list_index, |old| old.wrapping_sub(2));
         set_instruction_list(runtime, oum);
         session_slot!(runtime, Oum[oum].function = ROLLING);
     }

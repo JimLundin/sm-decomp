@@ -69,9 +69,6 @@ pub fn lint_touch_samus(k: u16, game: &mut (impl Host + ?Sized)) {
     }
     word!(game.EXTRA_SAMUS_X_DISPLACEMENT = push);
     game.contact_reaction_finalizing_death();
-    slot!(
-        game,
-        Kraid[e].base.properties =
-            slot!(game, Kraid[e].base.properties) | K_ENEMY_PROPS_TANGIBLE as u16
-    );
+    slot!(game, Kraid[e].base.properties, |old| old
+        | K_ENEMY_PROPS_TANGIBLE as u16);
 }

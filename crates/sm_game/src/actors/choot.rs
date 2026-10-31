@@ -131,7 +131,8 @@ pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
                 return;
             }
             let distance = session_slot!(runtime, Choot[choot].pattern_y_distance);
-            session_slot!(runtime, Choot[choot].origin_y, |y| y.wrapping_add(distance));
+            session_slot!(runtime, Choot[choot].origin_y, |old| old
+                .wrapping_add(distance));
             let loops = session_slot!(runtime, Choot[choot].pattern_loops).wrapping_sub(1);
             session_slot!(runtime, Choot[choot]; pattern_index = 0, pattern_loops = loops);
             if loops & 0x8000 != 0 {

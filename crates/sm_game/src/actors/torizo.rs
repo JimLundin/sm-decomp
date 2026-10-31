@@ -151,16 +151,10 @@ pub fn golden_damaged_shot_reaction<L: Lease>(game: &mut L) {
             TorizoSlot[e].base.current_instruction = instruction_list::DEATH_SEQUENCE
         );
         session_slot!(game, TorizoSlot[e].base.instruction_timer = 1);
-        session_slot!(
-            game,
-            TorizoSlot[e].damage =
-                session_slot!(game, TorizoSlot[e].damage) | GUT_AND_FACE_BLOWN_UP
-        );
-        session_slot!(
-            game,
-            TorizoSlot[e].base.properties =
-                session_slot!(game, TorizoSlot[e].base.properties) | K_ENEMY_PROPS_TANGIBLE as u16
-        );
+        session_slot!(game, TorizoSlot[e].damage, |old| old
+            | GUT_AND_FACE_BLOWN_UP);
+        session_slot!(game, TorizoSlot[e].base.properties, |old| old
+            | K_ENEMY_PROPS_TANGIBLE as u16);
     }
 }
 
@@ -451,16 +445,10 @@ fn normal_movement<L: Lease>(k: u16, game: &mut L) {
 fn golden_wake<L: Lease>(game: &mut L) {
     let e = game.current_enemy() as i32;
     if game.player_y() > GOLDEN_WAKE_Y && game.player_x() > GOLDEN_WAKE_X {
-        session_slot!(
-            game,
-            TorizoSlot[e].base.current_instruction,
-            |current_instruction| current_instruction.wrapping_add(1)
-        );
-        session_slot!(
-            game,
-            TorizoSlot[e].base.current_instruction,
-            |current_instruction| current_instruction.wrapping_add(1)
-        );
+        session_slot!(game, TorizoSlot[e].base.current_instruction, |old| old
+            .wrapping_add(1));
+        session_slot!(game, TorizoSlot[e].base.current_instruction, |old| old
+            .wrapping_add(1));
         session_slot!(game, TorizoSlot[e].base.instruction_timer = 1);
     }
 }
@@ -1037,11 +1025,8 @@ pub fn start_turning<L: Lease>(k: u16, game: &mut L) {
 /// the step counts. Was `Torizo_Instr_11`, `_29`, `_1` and `_28`.
 pub fn stepped<L: Lease>(k: u16, game: &mut L, state: u16) {
     let e = i32::from(k);
-    session_slot!(
-        game,
-        TorizoSlot[e].direction =
-            session_slot!(game, TorizoSlot[e].direction) & !STEP_STATE | state
-    );
+    session_slot!(game, TorizoSlot[e].direction, |old| old & !STEP_STATE
+        | state);
     session_slot!(game, TorizoSlot[e].steps, |old| old.wrapping_add(1));
 }
 

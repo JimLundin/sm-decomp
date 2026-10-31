@@ -202,18 +202,12 @@ fn spit<H: Host + ?Sized>(game: &mut H, row: u16, offset: u16) {
 pub fn step<H: Host + ?Sized>(game: &mut H) {
     let me = current(game);
     if slot!(game, MiniKraid[me].cycles_until_spit) != 0 {
-        slot!(
-            game,
-            MiniKraid[me].cycles_until_spit =
-                slot!(game, MiniKraid[me].cycles_until_spit).wrapping_sub(1)
-        );
+        slot!(game, MiniKraid[me].cycles_until_spit, |old| old
+            .wrapping_sub(1));
     }
     let steps = slot!(game, MiniKraid[me].steps_until_turn);
-    slot!(
-        game,
-        MiniKraid[me].steps_until_turn =
-            slot!(game, MiniKraid[me].steps_until_turn).wrapping_sub(1)
-    );
+    slot!(game, MiniKraid[me].steps_until_turn, |old| old
+        .wrapping_sub(1));
     let turn_around: bool = if steps == 1 {
         slot!(
             game,

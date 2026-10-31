@@ -305,32 +305,20 @@ pub fn elevator_default<H: Host + ?Sized>(k: u16, game: &mut H) {
 /// frames, then the elevator room rotates. Was `CeresDoor_Func_6`.
 pub fn rumbling_and_explosions<H: Host + ?Sized>(k: u16, game: &mut H) {
     let e = i32::from(k);
-    slot!(
-        game,
-        Door[e].rumbling_timer = slot!(game, Door[e].rumbling_timer).wrapping_sub(1)
-    );
+    slot!(game, Door[e].rumbling_timer, |old| old.wrapping_sub(1));
     if (slot!(game, Door[e].rumbling_timer) & 0x8000) != 0 {
-        slot!(
-            game,
-            Door[e].base.properties =
-                slot!(game, Door[e].base.properties) | K_ENEMY_PROPS_INVISIBLE as u16
-        );
+        slot!(game, Door[e].base.properties, |old| old
+            | K_ENEMY_PROPS_INVISIBLE as u16);
         slot!(game, Door[e].function = door_function::ELEVATOR_ANIMATIONS);
         start_elevator_rotation(game);
         return;
     }
-    slot!(
-        game,
-        Door[0].rumble_timer = slot!(game, Door[0].rumble_timer).wrapping_sub(1)
-    );
+    slot!(game, Door[0].rumble_timer, |old| old.wrapping_sub(1));
     if (slot!(game, Door[0].rumble_timer) & 0x8000) == 0 {
         return;
     }
     slot!(game, Door[0].rumble_timer = 4);
-    slot!(
-        game,
-        Door[0].rumble_index = slot!(game, Door[0].rumble_index).wrapping_sub(1)
-    );
+    slot!(game, Door[0].rumble_index, |old| old.wrapping_sub(1));
     if (slot!(game, Door[0].rumble_index) & 0x8000) != 0 {
         slot!(game, Door[0].rumble_index = 3);
     }

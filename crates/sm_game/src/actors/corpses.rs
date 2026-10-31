@@ -493,10 +493,10 @@ crate::dispatch::callback_dispatch! {
             let sand_heap_lines: u16 = session_slot!(game, DeadTorizo[e].sand_heap_lines);
             if sand_heap_lines != 0 {
                 copy_line_of_sand_heap_tile_data(sand_heap_lines, game);
-                session_slot!(game, DeadTorizo[e].sand_heap_lines, |sand_heap_lines| sand_heap_lines.wrapping_sub(1));
+                session_slot!(game, DeadTorizo[e].sand_heap_lines, |old| old.wrapping_sub(1));
             }
         }
-        session_slot!(game, DeadTorizo[e].y_velocity, |y_velocity| y_velocity.wrapping_add(1));
+        session_slot!(game, DeadTorizo[e].y_velocity, |old| old.wrapping_add(1));
         move_enemy_with_velocity(game);
         if process_corpse_rotting(0, game) & 1 == 0 {
             session_slot!(game, DeadTorizo[e].function = function::TORIZO_ROTTED);
@@ -667,7 +667,7 @@ crate::dispatch::callback_dispatch! {
     };
     [11131165] sidehopper_corpse_idling [] {
         let e: i32 = k as i32;
-        session_slot!(game, Corpse[e].function_timer, |timer| timer.wrapping_sub(1));
+        session_slot!(game, Corpse[e].function_timer, |old| old.wrapping_sub(1));
         if (session_slot!(game, Corpse[e].function_timer) & 0x8000) != 0 {
             if session_slot!(game, Corpse[e].drained_palette_index) != 0 {
                 session_slot!(game, Corpse[e].function = function::SIDEHOPPER_BEING_DRAINED);

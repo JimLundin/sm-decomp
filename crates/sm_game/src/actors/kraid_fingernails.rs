@@ -71,11 +71,8 @@ pub fn initialize(k: u16, game: &mut (impl ActorHost + ?Sized)) {
     let nail = i32::from(k);
     slot!(game, Fingernail[nail].base.palette_index = palette_index);
     slot!(game, Fingernail[nail].x_subvelocity = X_SUBVELOCITY);
-    slot!(
-        game,
-        Fingernail[nail].base.properties =
-            slot!(game, Fingernail[nail].base.properties) | K_ENEMY_PROPS_INVISIBLE as u16
-    );
+    slot!(game, Fingernail[nail].base.properties, |old| old
+        | K_ENEMY_PROPS_INVISIBLE as u16);
     slot!(game, Fingernail[nail].base;
         instruction_timer = HOLD, current_instruction = instruction_list::FINGERNAIL);
     let spritemap = native_record(BANK, instruction_list::FINGERNAIL, game).word(2);

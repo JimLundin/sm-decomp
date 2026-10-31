@@ -79,11 +79,8 @@ pub(crate) fn type_escape_text(tiles: u16, game: &mut Game) -> u8 {
     }
     let mut character = code as u8 as i16;
     if character as u8 == b' ' {
-        slot!(
-            game,
-            MotherBrainBody[0].beam_left_origin_x =
-                slot!(game, MotherBrainBody[0].beam_left_origin_x).wrapping_add(1)
-        );
+        slot!(game, MotherBrainBody[0].beam_left_origin_x, |old| old
+            .wrapping_add(1));
         slot!(
             game,
             MotherBrainBody[0].beam_left_edge = (cursor + 1) as u16

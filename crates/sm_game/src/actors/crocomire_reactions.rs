@@ -788,11 +788,8 @@ fn update_wall<L: Lease + ?Sized>(game: &mut L) {
                 | ((K_ENEMY_PROPS_TANGIBLE) as u16));
             let e1: i32 = game.current_enemy() as i32 + 64;
             session_slot!(game, Crocomire[e1].base; instruction_timer = 0x7fff, current_instruction = ADDR_K_CROCOMIRE_ILIST_BF62 as u16);
-            session_slot!(
-                game,
-                Crocomire[0x40i32].base.properties =
-                    session_slot!(game, Crocomire[0x40i32].base.properties) | (0x100u16)
-            );
+            session_slot!(game, Crocomire[0x40i32].base.properties, |old| old
+                | (0x100u16));
 
             session_slot!(game, Crocomire[ek]; y_velocity = 0, projectile_counter = 0);
             session_slot!(game, Crocomire[ek].step_counter = 2048);
@@ -1092,11 +1089,8 @@ pub fn hop_6_sinking<L: Lease + ?Sized>(game: &mut L) {
         );
         crate::word_transfers!(game, ascending, 1; native(SCROLLS_4_5) <- value(257));
         word!(game.DEBUG_DISABLE_MINIMAP = 0);
-        session_slot!(
-            game,
-            Crocomire[0x40i32].base.properties =
-                session_slot!(game, Crocomire[0x40i32].base.properties) | (0x200u16)
-        );
+        session_slot!(game, Crocomire[0x40i32].base.properties, |old| old
+            | (0x200u16));
 
         game.foreign(|game| game.spawn_plm(0x4e, WALL_ROW, CLEAR_INVISIBLE_WALL));
         word! { game, 0; CAMERA_DISTANCE_INDEX, CROCO_MELT_ERASE_TARGET }

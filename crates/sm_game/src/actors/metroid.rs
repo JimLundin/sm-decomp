@@ -98,9 +98,11 @@ fn bombed_off(runtime: &mut impl ActorLease) {
     let metroid = current_slot(runtime);
     let frame = (session_slot!(runtime, Metroid[metroid].bombed_off_timer) & 3) as isize;
     let dx = table(runtime, BOMBED_OFF_DISPLACEMENTS, frame);
-    session_slot!(runtime, Metroid[metroid].base.x_pos, |x| x.wrapping_add(dx));
+    session_slot!(runtime, Metroid[metroid].base.x_pos, |old| old
+        .wrapping_add(dx));
     let dy = table(runtime, BOMBED_OFF_DISPLACEMENTS, frame + 4);
-    session_slot!(runtime, Metroid[metroid].base.y_pos, |y| y.wrapping_add(dy));
+    session_slot!(runtime, Metroid[metroid].base.y_pos, |old| old
+        .wrapping_add(dy));
     let key = combat::current(runtime);
     let finished = runtime.edit_actor(key, Native, |actor| {
         actor.variables[..4].fill(0);
