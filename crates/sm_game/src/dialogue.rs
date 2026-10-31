@@ -423,6 +423,13 @@ pub fn interact<C: Context>(
             ReadingDelay => {
                 state.delay_remaining = state.delay_remaining.wrapping_sub(1);
                 if state.delay_remaining == 0 {
+                    // LOOP_INPUT ($85:84A3) reads the controller in the delay's last frame, so a
+                    // held button dismisses the box without another lag frame.
+                    let (next, input) = context.input(state);
+                    state = next;
+                    if input.dismiss {
+                        break;
+                    }
                     phase = Dismissing;
                 }
             }

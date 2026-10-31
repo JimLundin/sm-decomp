@@ -836,8 +836,8 @@ pub(crate) unsafe fn restore_capture_with_sources(
         // changing live allocations before the complete machine/actor preflight.
         let loaded_after_patch = game.loaded_rom.as_ref().and_then(|loaded| {
             // Short images retain the original post-machine patch failure prefix.
-            // $85:9650's14 bytes are the updater's highest addressed range.
-            if loaded.len() < crate::rom::lorom_offset(0x859650) as usize + 14 {
+            // $85:9650's 16 bytes are the updater's highest addressed range.
+            if loaded.len() < crate::rom::lorom_offset(0x859650) as usize + 16 {
                 return None;
             }
             let projected = crate::rom::RomImage::zeroed(loaded.len());

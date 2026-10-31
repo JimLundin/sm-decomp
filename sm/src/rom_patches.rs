@@ -153,7 +153,7 @@ const AFTER_AUDIO: &[(u32, &[u8])] = &[
 /// ROM patches outside the startup tables: native audio's upload skip and
 /// `update_bugfix`'s message box input poll.
 const OTHER_PATCHES: [(u32, usize); 4] =
-    [(0x808028, 1), (0x8584a3, 4), (0x859650, 14), (0x8584cc, 2)];
+    [(0x808028, 1), (0x8584a3, 4), (0x859650, 16), (0x8584cc, 2)];
 
 /// Whether the ROM byte at `offset` depends on which snesrev patches the oracle
 /// installs: a patched-carry or bug-hook site, or a byte a ROM patch writes.
@@ -227,12 +227,12 @@ impl RomPatches {
         // required a new press. The polled input byte is the only difference.
         let original = crate::oracle_mode::follows_original(PatchKind::Rom, 0x859650);
         let return_address = if counter < 1 && !original { 0x8f } else { 0x8b };
+        // Read the controller first, as LOOP_INPUT does in the delay's last frame, and wait a
+        // lag frame only while nothing is pressed: JSL $809459; REP #$30; LDA $8B; BNE done;
+        // JSR $8136; BRA $9650; done: RTS.
         self.startup_bytes(
             0x859650,
             &[
-                0x20,
-                0x36,
-                0x81,
                 0x22,
                 0x59,
                 0x94,
@@ -241,8 +241,13 @@ impl RomPatches {
                 0x30,
                 0xa5,
                 return_address,
-                0xf0,
-                0xf3,
+                0xd0,
+                0x05,
+                0x20,
+                0x36,
+                0x81,
+                0x80,
+                0xf1,
                 0x60,
             ],
         );
