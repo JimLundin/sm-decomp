@@ -7,7 +7,8 @@ Run with RUSTFLAGS carrying -C instrument-coverage. Builds every lib and
 tests/*.rs test binary of sm_data, sm_game and sm_runtime, copies them to
 OUT_DIR/bin (llvm-cov needs them as objects) and runs each as `cargo test`
 would, from its package root, with LLVM_PROFILE_FILE under OUT_DIR/profiles.
-OUT_DIR/objects.txt names the copied binaries. Doc-tests are not
+OUT_DIR/objects.txt names the binaries that ran; one that Windows cannot
+start is skipped with a warning. Doc-tests are not
 instrumented and are left to CI's test step. Exits non-zero if a binary fails.
 """
 import json
@@ -42,16 +43,22 @@ def main():
             binaries.append((message["target"]["name"], target, package))
     if not binaries:
         raise SystemExit("no test binaries were built")
-    failed = []
+    failed, ran = [], []
     for name, binary, package in binaries:
         environment = dict(os.environ, CARGO_MANIFEST_DIR=str(package),
                            LLVM_PROFILE_FILE=str(out / "profiles" / f"{name}-%p-%m.profraw"))
         print(f"== {name}", flush=True)
-        if subprocess.run([str(binary)], cwd=package, env=environment).returncode != 0:
+        try:
+            result = subprocess.run([str(binary)], cwd=package, env=environment)
+        except OSError as error:
+            # A binary Windows cannot start is left out of the report.
+            print(f"::warning::{binary.name} could not start: {error}", flush=True)
+            continue
+        ran.append(binary.name)
+        if result.returncode != 0:
             failed.append(name)
-    names = [binary.name for _, binary, _ in binaries]
-    (out / "objects.txt").write_text("".join(f"{name}\n" for name in names), encoding="utf-8")
-    print(f"{len(binaries)} test binaries, {len(failed)} failed", flush=True)
+    (out / "objects.txt").write_text("".join(f"{name}\n" for name in ran), encoding="utf-8")
+    print(f"{len(binaries)} test binaries, {len(ran)} ran, {len(failed)} failed", flush=True)
     if failed:
         raise SystemExit("failed: " + ", ".join(failed))
 
