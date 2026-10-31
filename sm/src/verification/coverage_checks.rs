@@ -10484,21 +10484,27 @@ fn bank_upload_native_installation_prefixes() {
         state.key_off = 1;
         let mut writes = Vec::new();
         let result = catch_unwind(AssertUnwindSafe(|| {
-            install_bank(&mut state, &ram, image.clone(), 0, |reg, value| {
-                writes.push((reg, value));
-                if Some(writes.len() - 1) == failure {
-                    panic!("native register writer failed");
-                }
-                if reg == 92 {
-                    if length > 4 {
-                        let count = 2u16.to_ne_bytes();
-                        image.write(0, count[0]);
-                        image.write(1, count[1]);
-                        image.write(4, 0x99);
+            install_bank(
+                &mut state,
+                &ram,
+                |at| image.read(at),
+                0,
+                |reg, value| {
+                    writes.push((reg, value));
+                    if Some(writes.len() - 1) == failure {
+                        panic!("native register writer failed");
                     }
-                    ram.write(0x581f, 0x56);
-                }
-            })
+                    if reg == 92 {
+                        if length > 4 {
+                            let count = 2u16.to_ne_bytes();
+                            image.write(0, count[0]);
+                            image.write(1, count[1]);
+                            image.write(4, 0x99);
+                        }
+                        ram.write(0x581f, 0x56);
+                    }
+                },
+            )
         }));
         let success = failure.is_none() && length != 5;
         assert_eq!(result.is_ok(), success);

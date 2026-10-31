@@ -1320,7 +1320,7 @@ pub unsafe fn rtl_apu_upload(address: u32, game: &mut Game) {
         }
         rtl_apu_lock();
         game.apu_queue.reset();
-        game.native_player_mut().upload(image, source);
+        game.native_player_mut().upload(|at| image.read(at), source);
         rtl_apu_unlock();
     }
 }
