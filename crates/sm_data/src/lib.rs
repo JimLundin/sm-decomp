@@ -48,6 +48,7 @@ pub mod save_slots;
 pub mod scene;
 pub mod shaktool;
 pub mod shooting_stars;
+pub mod sprite_programs;
 pub mod statues;
 pub mod table;
 pub mod title_screen;

@@ -15,6 +15,8 @@ pub enum Bank {
     Palette,
     /// $87: the animated tile programs.
     Animated,
+    /// $B4: the sprite object programs.
+    Sprite,
 }
 
 impl Bank {
@@ -22,6 +24,7 @@ impl Bank {
         match self {
             Self::Palette => sm_data::palette_programs::BANK,
             Self::Animated => sm_data::animated_programs::BANK,
+            Self::Sprite => sm_data::sprite_programs::BANK,
         }
     }
 }
@@ -49,6 +52,7 @@ fn imported(
     let table = match bank {
         Bank::Palette => &records.palette_programs,
         Bank::Animated => &records.animated_programs,
+        Bank::Sprite => &records.sprite_programs,
     };
     Some((Imported::from(table, host.loaded_image())?, at))
 }

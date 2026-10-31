@@ -1,4 +1,5 @@
 //! Gameplay sprite allocation, animation and ordered drawing on the shared Session.
+use crate::program_banks::{self, Bank};
 use crate::{
     session::{Point, Session},
     sprite_effect_host::{Host, SpriteMember},
@@ -6,8 +7,12 @@ use crate::{
         LegacySpriteHandle, LegacySpriteMap, LegacySpriteWordIndex, SpawnResult, SpriteDraw,
         SpriteSlot, SpriteSpawn,
     },
-    visual_host::{Record, Source},
 };
+use sm_data::sprite_programs::{Command, DEFINITIONS};
+
+fn program_word(host: &mut impl Host, cursor: u16, displacement: usize) -> u16 {
+    program_banks::word(host, Bank::Sprite, cursor, displacement)
+}
 
 // Ordinary active slots use direct fields; only broad legacy indices use projection.
 macro_rules! read_slot {
@@ -82,11 +87,9 @@ pub fn spawn(host: &mut impl Host, request: SpriteSpawn) -> SpawnResult {
     slot.x.whole = request.position.x;
     slot.y.whole = request.position.y;
     slot.appearance = request.appearance;
-    let table = host.table(Source::Loaded, 0xb4bda8);
-    let instruction = table.native_word(usize::from(request.definition.0) * 2);
+    let instruction = program_word(host, DEFINITIONS, usize::from(request.definition.0) * 2);
     host.session_mut().sprite_effects.active[index].instruction = instruction;
-    let record = host.record(Source::Loaded, 0xb4, instruction);
-    let timer = record.native_word(0);
+    let timer = program_word(host, instruction, 0);
     // Allocation retains its captured destination even if diagnostics changed selected.
     host.session_mut().sprite_effects.active[index].timer = timer;
     host.probe("sprite.spawn.allocated");
@@ -100,9 +103,9 @@ pub fn legacy_result(result: SpawnResult) -> LegacySpriteHandle {
     })
 }
 
-fn instruction(host: &mut impl Host, opcode: u16) {
-    match opcode {
-        0xbcf0 => {
+fn instruction(host: &mut impl Host, handler: u16) {
+    match Command::decode(handler) {
+        Some(Command::Hold) => {
             let index = host.session().sprite_effects.selected >> 1;
             let previous = read_slot!(host, index, instruction, Instruction);
             write_slot!(
@@ -115,11 +118,11 @@ fn instruction(host: &mut impl Host, opcode: u16) {
             write_slot!(host, index, timer, Timer, 0x7fff);
             host.probe("sprite.command.hold");
         }
-        0xbd07 => {
+        Some(Command::Delete) => {
             write_selected_native!(host, instruction, Instruction, 0u16);
             host.probe("sprite.command.retire");
         }
-        0xbd12 => {
+        Some(Command::Goto) => {
             let index = host.session().sprite_effects.selected >> 1;
             let current = match host.session().sprite_effects.active.get(usize::from(index)) {
                 Some(slot) => u16::from_ne_bytes(slot.instruction.to_le_bytes()),
@@ -127,15 +130,13 @@ fn instruction(host: &mut impl Host, opcode: u16) {
                     host.sprite_word_native(SpriteMember::Instruction, LegacySpriteWordIndex(index))
                 }
             };
-            let record = host.record(Source::Loaded, 0xb4, current);
-            let target = record.native_word(2);
+            let target = program_word(host, current, 2);
             write_selected_native!(host, instruction, Instruction, target);
-            let record = host.record(Source::Loaded, 0xb4, target);
-            let timer = record.native_word(0);
+            let timer = program_word(host, target, 0);
             write_selected_native!(host, timer, Timer, timer);
             host.probe("sprite.command.jump");
         }
-        _ => host.invalid_sprite_instruction(),
+        None => host.invalid_sprite_instruction(),
     }
 }
 
@@ -155,8 +156,7 @@ pub fn update(host: &mut impl Host) {
                 if timer == 1 {
                     let next = read_slot!(host, index, instruction, Instruction).wrapping_add(4);
                     write_slot!(host, index, instruction, Instruction, next);
-                    let record = host.record(Source::Loaded, 0xb4, next);
-                    timer = record.native_word(0);
+                    timer = program_word(host, next, 0);
                     if timer & 0x8000 == 0 {
                         write_selected_native!(host, timer, Timer, timer);
                     }
@@ -197,8 +197,7 @@ pub fn draw(host: &mut impl Host) {
         let palette = host.session().sprite_effects.active[index].appearance & 0xe00;
         let base_tile = host.session().sprite_effects.active[index].appearance & 0x1ff;
         let cursor = host.session().sprite_effects.active[index].instruction;
-        let record = host.record(Source::Loaded, 0xb4, cursor);
-        let map = LegacySpriteMap(record.native_word(2));
+        let map = LegacySpriteMap(program_word(host, cursor, 2));
         host.submit_sprite(SpriteDraw {
             map,
             position: Point { x, y: y as u16 },

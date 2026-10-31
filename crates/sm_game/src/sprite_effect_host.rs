@@ -75,7 +75,9 @@ pub trait ControllerInputs {
         self.attachment_word(0xf78 + usize::from(enemy) + offset_of!(EnemyBase, frozen_timer))
     }
 }
-pub trait Host: SessionAccess + Content + Aliases + Effects + ControllerInputs {
+pub trait Host:
+    SessionAccess + Content + Aliases + Effects + ControllerInputs + crate::records::Records
+{
     #[cfg(sm_verify_dll)]
     fn observe_draygon(&self, _kind: u8, _handle: u16, _value: u16) {}
 }

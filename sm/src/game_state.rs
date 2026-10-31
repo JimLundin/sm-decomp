@@ -769,6 +769,8 @@ impl Game {
             sm_game::program_banks::import(image, sm_game::program_banks::Bank::Palette);
         self.records.animated_programs =
             sm_game::program_banks::import(image, sm_game::program_banks::Bank::Animated);
+        self.records.sprite_programs =
+            sm_game::program_banks::import(image, sm_game::program_banks::Bank::Sprite);
         self.records.gameplay_tables = sm_game::gameplay_tables::import(image);
         self.records.enemy_lists = sm_game::enemy_lists::import(image);
     }
