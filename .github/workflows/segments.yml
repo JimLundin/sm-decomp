@@ -17,6 +17,10 @@ on:
         type: choice
         options: [patched, faithful]
         default: patched
+      audio_trace:
+        description: Also run the paired physical-audio oracle and keep each row's ordered Cue/port trace
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -82,6 +86,7 @@ jobs:
     runs-on: windows-2022
     env:
       SM_ORACLE: ${{ inputs.oracle || 'patched' }}
+      AUDIO_TRACE: ${{ inputs.audio_trace && '1' || '' }}
     timeout-minutes: ${{ matrix.kind == 'checkpoint' && 65 || 120 }}
     strategy:
       fail-fast: false
@@ -176,6 +181,8 @@ jobs:
         run: |
           $rows = @()
           foreach ($id in $env:SEGMENTS.Split(' ')) { $rows += @('--segment', $id) }
+          # Each row also checks its ordered Cue/port trace against the physical-audio oracle.
+          if ($env:AUDIO_TRACE) { $rows += @('--audio-trace-directory', 'audio-traces') }
           python tools/verify_dll.py rom/sm.smc --corpus movies/segments.toml --no-build --direct @rows 2>&1 | Tee-Object -FilePath corpus.log
           $code = $LASTEXITCODE
           "### $env:SEGMENTS" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
@@ -183,3 +190,11 @@ jobs:
           Select-String -Path corpus.log -Pattern '^(PASS|FAIL|Corpus)' | ForEach-Object { $_.Line } | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
           '```' | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
           if ($code -ne 0) { throw "Rows failed ($code)" }
+      - name: Keep the audio traces
+        if: always() && inputs.audio_trace
+        uses: actions/upload-artifact@v4
+        with:
+          name: audio-traces-${{ matrix.name }}
+          path: audio-traces
+          if-no-files-found: warn
+          retention-days: 7
