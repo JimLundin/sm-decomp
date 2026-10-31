@@ -220,6 +220,13 @@ RECIPES = {
     # movie words: with the gravity suit Samus outlasts the spiral, and
     # Draygon reaches the final tail whips.
     "long-release": Recipe("_ 3000"),
+    # After the boss-draygon words to 1,480 (scenario seed draygon-repel):
+    # cancel the item, select the grapple and fire it four frames before
+    # Draygon reaches Samus, so the grapple repels his grab.
+    "grapple-repel": Recipe("""
+        _ 820; press Y 6; repeat 4 { press Select 6 }; _ 82
+        X 60; _ 1700
+    """),
     # Pause, wait for the pause screen, unpause and watch the room resume.
     "pause-resume": Recipe("press Start 150; hold Start 200; _ $tail", {"tail": 240}),
 }
@@ -251,6 +258,7 @@ PINNED = {
     "volcano-room": "e38317b3da5183e18af6c56257404ffee041db2d87583f8304549b1f5760d6d0",
     "release": "47a5f51e76c59f0f2b1f2b336b18e249cf9337d58fdb5fff6074b2ebea876071",
     "long-release": "5e93dfb35fefa55b112c3503c95292700424e13106b27eea5f248a0649e593a2",
+    "grapple-repel": "875864d6999f51b0782c478dc115064e830ec019168817fbf2aefcee32c93cff",
     "pause-resume": "6982afc4c06ba2311042798e0c0c2ccdbe47a7dbe599fb50b927ba414c24d077",
 }
 
