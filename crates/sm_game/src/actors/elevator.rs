@@ -50,9 +50,8 @@ fn place_samus(runtime: &mut impl ActorLease) {
     runtime.session_mut().player.contact.y_speed.fraction = 0;
 }
 /// Initialisation AI - elevator ($A3:94E6).
-pub fn initialize<H: LeaseActors + ?Sized>(game: &mut H) {
-    let mut runtime = game.lease();
-    let key = combat::current(&runtime);
+pub fn initialize(runtime: &mut impl ActorLease) {
+    let key = combat::current(runtime);
     runtime.edit_actor(key, Native, |actor| {
         actor.spritemap = NO_SPRITEMAP;
         actor.restart_animation(INSTRUCTION_LIST);
@@ -66,7 +65,7 @@ pub fn initialize<H: LeaseActors + ?Sized>(game: &mut H) {
     let entry = &runtime.session().room.entry;
     if entry.elevator_status != 0 || entry.elevator_flags != 0 {
         runtime.edit_actor(key, Native, |actor| actor.y.whole = actor.parameters[1]);
-        place_samus(&mut runtime);
+        place_samus(runtime);
     }
 }
 /// Main AI / grapple AI / frozen AI - elevator ($A3:952A): run the elevator

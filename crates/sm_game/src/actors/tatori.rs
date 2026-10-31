@@ -136,9 +136,8 @@ fn detach_child(runtime: &mut impl ActorLease) {
     });
 }
 /// Initialisation AI - tatori ($A2:8D6C) or mini-tatori ($A2:8D9D).
-pub fn initialize<H: LeaseActors + ?Sized>(child: bool, game: &mut H) {
-    let mut lease = game.lease();
-    let key = combat::current(&lease);
+pub fn initialize(child: bool, lease: &mut impl ActorLease) {
+    let key = combat::current(lease);
     lease.edit_actor(key, Le, |actor| {
         actor.instruction_delay = 1;
         actor.timer = 0;
@@ -469,10 +468,9 @@ pub fn touch(child: bool, runtime: &mut impl ActorLease) {
     detach_child(runtime);
 }
 /// Enemy shot - mini-tatori ($A2:930F).
-pub fn shot<H: LeaseActors + ?Sized>(game: &mut H) {
-    let mut lease = game.lease();
-    combat::shot_reaction(&mut lease, ShotHandling::Finalize);
-    detach_child(&mut lease);
+pub fn shot(lease: &mut impl ActorLease) {
+    combat::shot_reaction(lease, ShotHandling::Finalize);
+    detach_child(lease);
 }
 /// The tatori instructions ($A2:9381-$A2:94C7).
 pub fn instruction<H: LeaseActors + ?Sized>(ea: u32, j: EnemyScript, game: &mut H) -> EnemyScript {

@@ -18,9 +18,8 @@ fn random_entry(runtime: &mut impl ActorLease, address: u32, mask: u16) -> u16 {
 }
 
 /// Initialisation AI - enemy $D1FF (polyp) ($A2:B570): also seeds the random number with 11h.
-pub fn initialize<H: LeaseActors + ?Sized>(game: &mut H) {
-    let mut runtime = game.lease();
-    let key = current(&runtime);
+pub fn initialize(runtime: &mut impl ActorLease) {
+    let key = current(runtime);
     runtime.edit_actor(key, Native, |actor| {
         actor.restart_animation(0xb51a);
         actor.variables[0] = WAIT_FOR_SAMUS_TO_GET_NEAR;

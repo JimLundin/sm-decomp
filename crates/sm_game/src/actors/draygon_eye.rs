@@ -21,8 +21,7 @@ const EIGHTH_TURN: u16 = 0x20;
 const QUARTER_TURN: usize = 0x40;
 
 /// Initialisation AI - Draygon eye ($A5:C46B).
-pub fn initialize<H: LeaseActors + ?Sized>(game: &mut H) {
-    let mut runtime = game.lease();
+pub fn initialize(runtime: &mut impl ActorLease) {
     let key = Key::from_legacy(runtime.word(words::CUR_ENEMY_INDEX));
     runtime.edit_actor(key, Native, |actor| {
         actor.instruction = list::EYE_LEFT_IDLE;

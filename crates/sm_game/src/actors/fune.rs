@@ -73,9 +73,8 @@ fn set_instruction_list(runtime: &mut impl ActorLease) {
     runtime.edit_actor(key, Native, |actor| actor.instruction = instruction);
 }
 /// Initialisation AI - fune / namihe ($A8:96E3).
-pub fn initialize<H: LeaseActors + ?Sized>(game: &mut H) {
-    let mut runtime = game.lease();
-    let key = selected(&runtime);
+pub fn initialize(runtime: &mut impl ActorLease) {
+    let key = selected(runtime);
     runtime.edit_actor(key, Native, |actor| {
         actor.variables[lane::LISTS] = FUNE_IDLE_LEFT;
         actor.variables[lane::FUNCTION] = function::WAIT_FOR_TIMER;
@@ -88,7 +87,7 @@ pub fn initialize<H: LeaseActors + ?Sized>(game: &mut H) {
             actor.variables[lane::LISTS] = actor.variables[lane::LISTS].wrapping_add(FACING_RIGHT);
         }
     });
-    set_instruction_list(&mut runtime);
+    set_instruction_list(runtime);
     runtime.edit_actor(key, Native, |actor| {
         actor.variables[lane::Y_PROXIMITY] = u16::from(actor.parameters[1].to_ne_bytes()[1]);
         // The cooldown time.
@@ -97,9 +96,8 @@ pub fn initialize<H: LeaseActors + ?Sized>(game: &mut H) {
     });
 }
 /// Main AI - fune / namihe ($A8:9730): run its function. Was `advance`.
-pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
-    let mut runtime = game.lease();
-    let key = selected(&runtime);
+pub fn main_ai(runtime: &mut impl ActorLease) {
+    let key = selected(runtime);
     match runtime.resolve_actor(key, Native).variables[lane::FUNCTION] {
         // Fune / namihe function - wait for timer (fune) ($A8:9737).
         function::WAIT_FOR_TIMER => {
@@ -114,7 +112,7 @@ pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
                 runtime.edit_actor(key, Native, |actor| {
                     actor.variables[lane::LISTS] = actor.variables[lane::LISTS].wrapping_sub(ACTIVE)
                 });
-                set_instruction_list(&mut runtime);
+                set_instruction_list(runtime);
                 runtime.edit_actor(key, Native, |actor| {
                     actor.variables[lane::FUNCTION] = function::FUNE_ACTIVE;
                     actor.variables[lane::COOLDOWN_TIMER] = 0;
@@ -126,15 +124,15 @@ pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
             let saved = SAVED_LISTS + usize::from(key.byte_index());
             let lists = runtime.resolve_actor(key, Native).variables[lane::LISTS];
             runtime.write_slice_native(saved, lists);
-            let live = selected(&runtime);
+            let live = selected(runtime);
             let range = runtime.resolve_actor(live, Native).variables[lane::Y_PROXIMITY];
-            if player_within(&mut runtime, live, Axis::Y, range) {
+            if player_within(runtime, live, Axis::Y, range) {
                 let table = runtime.lease_native_word(saved);
                 runtime.edit_actor(key, Native, |actor| actor.variables[lane::LISTS] = table);
                 let table = table.wrapping_sub(ACTIVE);
                 runtime.write_slice_native(saved, table);
                 runtime.edit_actor(key, Native, |actor| actor.variables[lane::LISTS] = table);
-                set_instruction_list(&mut runtime);
+                set_instruction_list(runtime);
                 runtime.edit_actor(key, Native, |actor| {
                     actor.variables[lane::FUNCTION] = function::NAMIHE_ACTIVE
                 });

@@ -5,7 +5,6 @@ use crate::actors::api::{DeathKind, ShotHandling};
 use crate::actors::combat;
 use crate::actors::host::{ActorLease, ActorRuntime as _, LeaseActors};
 use crate::actors::layouts::part_view;
-use crate::enemy_projectiles::host::Effects as _;
 use crate::ram::words;
 use crate::session_slot;
 
@@ -65,8 +64,7 @@ pub fn initialize(runtime: &mut impl ActorLease) {
 }
 /// Main AI - Kago ($A8:AB75): Kago function - nothing ($A8:AB7B) becomes an
 /// RTL. Was `advance`.
-pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
-    let mut runtime = game.lease();
+pub fn main_ai(runtime: &mut impl ActorLease) {
     let key = Key::from_legacy(runtime.word(words::CUR_ENEMY_INDEX));
     match runtime.resolve_actor(key, Native).variables[0] {
         function::NOTHING => {

@@ -1,11 +1,9 @@
 //! Mochtroid, the fake Metroid of Maridia, which drifts after Samus and
 //! drains her a little at a time (bank $A3:A725-$A3:A97B).
-use crate::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
+use crate::actors::access::{AccessMode::Native, ActorKey as Key};
 use crate::actors::api::{self, Axis, DeathHandling, MovementResult, SlopePolicy};
 use crate::actors::combat;
-use crate::actors::host::{ActorLease, LeaseActors};
-use crate::enemy_projectiles::host::Effects as _;
-use crate::session_access::SessionAccess as _;
+use crate::actors::host::ActorLease;
 
 /// Mochtroid's actor words, by `variables` lane; its function index is the
 /// pre-instruction word.
@@ -100,20 +98,18 @@ fn track_axis(runtime: &mut impl ActorLease, key: Key, axis: Axis, chasing: bool
     }
 }
 /// Initialisation AI - Mochtroid ($A3:A77D).
-pub fn initialize<H: LeaseActors + ?Sized>(game: &mut H) {
-    let mut runtime = game.lease();
-    let key = combat::current(&runtime);
+pub fn initialize(runtime: &mut impl ActorLease) {
+    let key = combat::current(runtime);
     runtime.edit_actor(key, Native, |actor| actor.layer = 2);
-    set_instruction_list(&mut runtime, instruction_list::NOT_TOUCHING_SAMUS);
+    set_instruction_list(runtime, instruction_list::NOT_TOUCHING_SAMUS);
     runtime.edit_actor(key, Native, |actor| {
         actor.pre_instruction = function::NOT_TOUCHING_SAMUS
     });
 }
 /// Main AI - Mochtroid ($A3:A790): run its function, then reset it to not
 /// touching Samus. Was `advance`.
-pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
-    let mut runtime = game.lease();
-    let key = combat::current(&runtime);
+pub fn main_ai(runtime: &mut impl ActorLease) {
+    let key = combat::current(runtime);
     let function = runtime
         .resolve_actor(key, Native)
         .pre_instruction
@@ -151,26 +147,20 @@ pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
             [Axis::X, Axis::Y]
         };
         for axis in axes {
-            track_axis(
-                &mut runtime,
-                key,
-                axis,
-                function == function::NOT_TOUCHING_SAMUS,
-            );
+            track_axis(runtime, key, axis, function == function::NOT_TOUCHING_SAMUS);
         }
     }
     if function != function::TOUCHING_SAMUS {
-        set_instruction_list(&mut runtime, instruction_list::NOT_TOUCHING_SAMUS);
+        set_instruction_list(runtime, instruction_list::NOT_TOUCHING_SAMUS);
     }
 }
 /// Enemy touch - Mochtroid ($A3:A953): latch on and drain Samus.
-pub fn touch<H: LeaseActors + ?Sized>(game: &mut H) {
-    let mut runtime = game.lease();
-    let key = combat::current(&runtime);
+pub fn touch(runtime: &mut impl ActorLease) {
+    let key = combat::current(runtime);
     runtime.edit_actor(key, Native, |actor| {
         actor.pre_instruction = function::TOUCHING_SAMUS
     });
-    set_instruction_list(&mut runtime, instruction_list::TOUCHING_SAMUS);
+    set_instruction_list(runtime, instruction_list::TOUCHING_SAMUS);
     let timer = DAMAGE_TIMER + usize::from(key.byte_index());
     let next = runtime.lease_native_word(timer).wrapping_add(1);
     runtime.write_slice_native(timer, next);
@@ -194,7 +184,7 @@ pub fn touch<H: LeaseActors + ?Sized>(game: &mut H) {
         }
     }
     if damage {
-        combat::contact_reaction(&mut runtime, DeathHandling::Finalize);
+        combat::contact_reaction(runtime, DeathHandling::Finalize);
         runtime.session_mut().player.invincibility = 0;
         runtime.session_mut().player.knockback_timer = 0;
     }

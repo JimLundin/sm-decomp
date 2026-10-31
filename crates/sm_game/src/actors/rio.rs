@@ -72,9 +72,8 @@ pub fn bounce_horizontal(h: &mut impl ActorLease, key: Key, variable: usize) -> 
 }
 
 /// Initialisation AI - enemy $D27F (rio) ($A2:BBCD).
-pub fn initialize<H: LeaseActors + ?Sized>(game: &mut H) {
-    let mut runtime = game.lease();
-    runtime.edit_actor(current(&runtime), Native, |actor| {
+pub fn initialize(runtime: &mut impl ActorLease) {
+    runtime.edit_actor(current(runtime), Native, |actor| {
         actor.variables[ANIMATION_FINISHED] = 0;
         actor.pre_instruction = 0;
         actor.instruction = 0xbb4b;

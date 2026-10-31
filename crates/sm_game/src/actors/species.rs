@@ -429,6 +429,30 @@ pub fn lease_ai<H: LeaseScope + ?Sized>(ea: u32, game: &mut H) -> bool {
         10735074 => game.with_lease(yard::initialize),
         10736560 => game.with_lease(yard::touch),
         10736745 => game.with_lease(yard::shot),
+        10863723 => game.with_lease(draygon_eye::initialize),
+        10720486 => game.with_lease(elevator::initialize),
+        11048675 => game.with_lease(fune::initialize),
+        11048752 => game.with_lease(fune::main_ai),
+        11053941 => game.with_lease(kago::main_ai),
+        10725245 => game.with_lease(mochtroid::initialize),
+        10725264 => game.with_lease(mochtroid::main_ai),
+        10725715 => game.with_lease(mochtroid::touch),
+        10663280 => game.with_lease(polyp::initialize),
+        10664909 => game.with_lease(rio::initialize),
+        10674643 => game.with_lease(|runtime| rippers::initialize(rippers::Kind::Gripper, runtime)),
+        10674968 => {
+            game.with_lease(|runtime| rippers::initialize(rippers::Kind::RipperII, runtime))
+        }
+        10675359 => game.with_lease(|runtime| rippers::initialize(rippers::Kind::Ripper, runtime)),
+        10674721 => game.with_lease(|runtime| rippers::main_ai(rippers::Kind::Gripper, runtime)),
+        10675027 => game.with_lease(|runtime| rippers::main_ai(rippers::Kind::RipperII, runtime)),
+        10675418 => game.with_lease(|runtime| rippers::main_ai(rippers::Kind::Ripper, runtime)),
+        10653036 | 10653085 => {
+            game.with_lease(|runtime| tatori::initialize(ea == 10653085, runtime))
+        }
+        10654479 => game.with_lease(tatori::shot),
+        10728522 => game.with_lease(zoa::initialize),
+        10728572 => game.with_lease(zoa::main_ai),
         _ => return false,
     }
     true
@@ -457,6 +481,9 @@ pub fn lease_instruction<H: LeaseScope + ?Sized>(
             game.with_lease(|runtime| tripper::set_x_movement(false, j, runtime))
         }
         10722422 | 10722444 => game.with_lease(|runtime| tripper::set_x_movement(true, j, runtime)),
+        10728489 => game.with_lease(|runtime| zoa::set_x_speed_index(4, j, runtime)),
+        10728500 => game.with_lease(|runtime| zoa::set_x_speed_index(8, j, runtime)),
+        10728511 => game.with_lease(|runtime| zoa::set_x_speed_index(12, j, runtime)),
         _ => return Err(j),
     })
 }
@@ -662,7 +689,6 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         10846253 => game.shot_reaction(Shot::Finalize),
         10851818 => draygon_death::touch(game),
         10851847 => draygon_death::power_bomb(game),
-        10863723 => draygon_eye::initialize(game),
         // Bank $A3: the crawlers, divers, platforms, bugs and fish.
         10718509 => fireflea::initialize(game),
         10718702 => fireflea::main_ai(game),
@@ -671,11 +697,7 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         10718857 => fireflea::shot(game),
         10719413 => skultera::initialize(game),
         10719531 => skultera::main_ai(game),
-        10720486 => elevator::initialize(game),
         10720554 => elevator::main_ai(game),
-        10725245 => mochtroid::initialize(game),
-        10725264 => mochtroid::main_ai(game),
-        10725715 => mochtroid::touch(game),
         10739851 | 10741442 => {
             let function = crawlers::main_ai(game);
             pre_instruction(function, game);
@@ -686,13 +708,11 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
                 game.unknown_routine();
             }
         }
-        10653036 | 10653085 => tatori::initialize(ea == 10653085, game),
         10653138 | 10653998 => {
             if !tatori::main_ai(ea == 10653998, game) {
                 game.unknown_routine();
             }
         }
-        10654479 => tatori::shot(game),
         11062135 => work_robot::initialize(game),
         11062220 => work_robot::initialize_deactivated(game),
         10914607 => spike_platform::initialize(game),
@@ -745,8 +765,6 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         10743559 => metroid::shot(game),
         10743874 => metroid::power_bomb(game),
         10726351 => sidehopper::main_ai(game),
-        10728522 => zoa::initialize(game),
-        10728572 => zoa::main_ai(game),
         // Bank $A8.
         11045147 => evir::main_ai(game),
         11047000 => morph_ball_eye::initialize(game),
@@ -758,9 +776,6 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
                 pre_instruction(function, game);
             }
         }
-        11048675 => fune::initialize(game),
-        11048752 => fune::main_ai(game),
-        11053941 => kago::main_ai(game),
         11053955 => kago::shot(game),
         11068296 => atomic::initialize(game),
         11068355 => atomic::main_ai(game),
@@ -792,16 +807,8 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         11789909 => pre_instruction(escape_critters::main_ai(game), game),
         10662880 => multiviola::initialize(game),
         10662927 => multiviola::main_ai(game),
-        10663280 => polyp::initialize(game),
         10663311 => polyp::main_ai(game),
-        10674643 => rippers::initialize(rippers::Kind::Gripper, game),
-        10674721 => rippers::main_ai(rippers::Kind::Gripper, game),
-        10674968 => rippers::initialize(rippers::Kind::RipperII, game),
-        10675027 => rippers::main_ai(rippers::Kind::RipperII, game),
         10675113 => rippers::shot(game),
-        10675359 => rippers::initialize(rippers::Kind::Ripper, game),
-        10675418 => rippers::main_ai(rippers::Kind::Ripper, game),
-        10664909 => rio::initialize(game),
         10664931 => rio::main_ai(game),
         10666562 => geruta::initialize(false, game),
         10667763 => geruta::initialize(true, game),
@@ -1158,9 +1165,6 @@ pub fn instruction<H: InstructionHost>(
         10669235 | 10669246 | 10669257 => oum::instruction(ea, j, game),
         10659181 | 10659185 => cacatac::owtch::set_function_index(ea, k, j, game),
         10742437 => metroid::draining_sound(j, game),
-        10728489 => zoa::set_x_speed_index(4, j, game),
-        10728500 => zoa::set_x_speed_index(8, j, game),
-        10728511 => zoa::set_x_speed_index(12, j, game),
         // Bang's queue acquired suit sound effect: 56h, library 2.
         10730104 => {
             game.queue_sound(1, 0x56, 6);

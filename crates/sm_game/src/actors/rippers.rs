@@ -37,9 +37,8 @@ fn moving_left(runtime: &impl ActorLease, key: Key) -> bool {
 
 /// Initialisation AI ($A2:E1D3, $A2:E318, $A2:E49F); the Gripper's instruction list word
 /// holds its speed and direction.
-pub fn initialize<H: LeaseActors + ?Sized>(kind: Kind, game: &mut H) {
-    let mut runtime = game.lease();
-    let key = current(&runtime);
+pub fn initialize(kind: Kind, runtime: &mut impl ActorLease) {
+    let key = current(runtime);
     if kind == Kind::Gripper {
         let (speed, moving_right) = runtime.edit_actor(key, Native, |actor| {
             actor.variables[SPEED_INDEX] = u16::from(actor.instruction.to_ne_bytes()[0]) * 8;
@@ -48,8 +47,8 @@ pub fn initialize<H: LeaseActors + ?Sized>(kind: Kind, game: &mut H) {
                 (actor.instruction & 0xfeff) != 0,
             )
         });
-        set_x_velocity(&mut runtime, key, speed, moving_right);
-        let moving_right = !moving_left(&runtime, key);
+        set_x_velocity(runtime, key, speed, moving_right);
+        let moving_right = !moving_left(runtime, key);
         runtime.edit_actor(key, Native, |actor| {
             actor.instruction = INSTRUCTION_LISTS[kind as usize][usize::from(moving_right)];
             actor.variables[..X_SUBVELOCITY].copy_from_slice(&actor.parameters);
@@ -61,22 +60,21 @@ pub fn initialize<H: LeaseActors + ?Sized>(kind: Kind, game: &mut H) {
         actor.variables[SPEED_INDEX] = actor.parameters[0].wrapping_mul(8);
         (actor.variables[SPEED_INDEX], actor.parameters[1] != 0)
     });
-    set_x_velocity(&mut runtime, key, speed, moving_right);
+    set_x_velocity(runtime, key, speed, moving_right);
 }
 
 /// Main AI ($A2:E221, $A2:E353, $A2:E4DA): turn when blocked or, for the Gripper, past a bound.
-pub fn main_ai<H: LeaseActors + ?Sized>(kind: Kind, game: &mut H) {
-    let mut runtime = game.lease();
-    let key = current(&runtime);
+pub fn main_ai(kind: Kind, runtime: &mut impl ActorLease) {
+    let key = current(runtime);
     let [_, _, low, high, _] = runtime.resolve_actor(key, Native).variables;
     let velocity = ((u32::from(high) << 16) | u32::from(low)) as i32;
-    if api::move_horizontal(&mut runtime, key, velocity, SlopePolicy::Ignore) != Blocked {
+    if api::move_horizontal(runtime, key, velocity, SlopePolicy::Ignore) != Blocked {
         if kind != Kind::Gripper {
             return;
         }
         // The bounds use the live current enemy; the turn keeps the original one.
-        let current = current(&runtime);
-        let left = moving_left(&runtime, current);
+        let current = current(runtime);
+        let left = moving_left(runtime, current);
         let actor = runtime.resolve_actor(current, Native);
         let bound = actor.variables[usize::from(!left)];
         if ((actor.x.whole as i16).wrapping_sub(bound as i16) < 0) != left {
@@ -85,8 +83,8 @@ pub fn main_ai<H: LeaseActors + ?Sized>(kind: Kind, game: &mut H) {
     }
     // Movement may change the record: keep its key and reread its fields.
     let speed = runtime.resolve_actor(key, Native).variables[SPEED_INDEX];
-    let turn_right = moving_left(&runtime, key);
-    set_x_velocity(&mut runtime, key, speed, turn_right);
+    let turn_right = moving_left(runtime, key);
+    set_x_velocity(runtime, key, speed, turn_right);
     let list = INSTRUCTION_LISTS[kind as usize][usize::from(turn_right)];
     runtime.edit_actor(key, Native, |actor| actor.restart_animation(list));
 }

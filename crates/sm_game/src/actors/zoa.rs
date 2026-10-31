@@ -1,11 +1,10 @@
 //! Zoa, Maridia's refill creatures, which rise towards Samus from the sand,
 //! shoot off sideways and return off screen (bank $A3:B3A1-$A3:B52F). Was
 //! `refill_candy`.
-use crate::actors::access::{AccessMode::Native, ActorAccess};
+use crate::actors::access::AccessMode::Native;
 use crate::actors::api::{self, Axis};
 use crate::actors::combat;
-use crate::actors::host::{ActorLease, LeaseActors};
-use crate::enemy_projectiles::host::Effects as _;
+use crate::actors::host::ActorLease;
 use crate::enemy_script::EnemyScript;
 use crate::player_projectiles::content::table;
 
@@ -62,15 +61,14 @@ fn set_instruction_list(runtime: &mut impl ActorLease) {
     }
 }
 /// Initialisation AI - Zoa ($A3:B44A).
-pub fn initialize<H: LeaseActors + ?Sized>(game: &mut H) {
-    let mut runtime = game.lease();
-    let key = combat::current(&runtime);
+pub fn initialize(runtime: &mut impl ActorLease) {
+    let key = combat::current(runtime);
     runtime.edit_actor(key, Native, |actor| {
         actor.parameters[0] = function::WAIT_FOR_SAMUS;
         actor.variables[lane::INSTRUCTION_LIST_INDEX] = 0;
         actor.variables[lane::PREVIOUS_INSTRUCTION_LIST_INDEX] = 0;
     });
-    let at = x_speed_index(&runtime);
+    let at = x_speed_index(runtime);
     runtime.write_slice_native(at, 0);
     runtime.edit_actor(key, Native, |actor| {
         actor.instruction = LEFT_SHOOTING;
@@ -80,39 +78,38 @@ pub fn initialize<H: LeaseActors + ?Sized>(game: &mut H) {
     });
 }
 /// Main AI - Zoa ($A3:B47C): run its function. Was `advance`.
-pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
-    let mut runtime = game.lease();
-    let key = combat::current(&runtime);
+pub fn main_ai(runtime: &mut impl ActorLease) {
+    let key = combat::current(runtime);
     match runtime.resolve_actor(key, Native).parameters[0] {
         // Zoa function - wait for Samus to get near ($A3:B482).
         function::WAIT_FOR_SAMUS => {
-            let current = combat::current(&runtime);
-            if api::player_within(&mut runtime, current, Axis::X, NEAR_COLUMNS) {
-                let current = combat::current(&runtime);
-                let index = if api::player_delta(&runtime, current, Axis::X) & SIGN == 0 {
+            let current = combat::current(runtime);
+            if api::player_within(runtime, current, Axis::X, NEAR_COLUMNS) {
+                let current = combat::current(runtime);
+                let index = if api::player_delta(runtime, current, Axis::X) & SIGN == 0 {
                     RIGHT_RISING
                 } else {
                     LEFT_RISING
                 };
-                let key = combat::current(&runtime);
+                let key = combat::current(runtime);
                 runtime.edit_actor(key, Native, |actor| {
                     actor.variables[lane::INSTRUCTION_LIST_INDEX] = index
                 });
-                set_instruction_list(&mut runtime);
+                set_instruction_list(runtime);
                 runtime.edit_actor(key, Native, |actor| actor.parameters[0] = function::RISING);
             }
         }
         // Zoa function - rising ($A3:B4A8): rise to Samus's height, then shoot.
         function::RISING => {
             runtime.edit_actor(key, Native, |actor| actor.properties &= !INVISIBLE);
-            if api::player_delta(&runtime, key, Axis::Y) & SIGN != 0 {
+            if api::player_delta(runtime, key, Axis::Y) & SIGN != 0 {
                 runtime.edit_actor(key, Native, |actor| actor.y.advance(RISE));
             } else {
                 runtime.edit_actor(key, Native, |actor| {
                     actor.variables[lane::INSTRUCTION_LIST_INDEX] =
                         actor.variables[lane::INSTRUCTION_LIST_INDEX].wrapping_sub(1)
                 });
-                set_instruction_list(&mut runtime);
+                set_instruction_list(runtime);
                 runtime.edit_actor(key, Native, |actor| {
                     actor.pre_instruction = 0;
                     actor.parameters[0] = function::SHOOTING;
@@ -122,9 +119,9 @@ pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
         // Zoa function - shooting ($A3:B4D6): shoot sideways until off
         // screen, then return to the spawn point and wait.
         function::SHOOTING => {
-            let index = (runtime.lease_native_word(x_speed_index(&runtime)) >> 1) as isize;
-            let high = table(&runtime, X_SPEEDS, index);
-            let low = table(&runtime, X_SPEEDS, index + 1);
+            let index = (runtime.lease_native_word(x_speed_index(runtime)) >> 1) as isize;
+            let high = table(runtime, X_SPEEDS, index);
+            let low = table(runtime, X_SPEEDS, index + 1);
             let speed = ((u32::from(high) << 16) | u32::from(low)) as i32;
             // Preserve ordinary signed negation, including its checked-build overflow.
             let speed = if runtime.resolve_actor(key, Native).variables
@@ -136,7 +133,7 @@ pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
                 -speed
             };
             runtime.edit_actor(key, Native, |actor| actor.x.advance(speed));
-            let outside = api::current_outside_screen(&runtime);
+            let outside = api::current_outside_screen(runtime);
             if outside {
                 runtime.edit_actor(key, Native, |actor| {
                     actor.properties |= INVISIBLE;
@@ -145,7 +142,7 @@ pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
                     actor.variables[lane::INSTRUCTION_LIST_INDEX] = 0;
                 });
             }
-            set_instruction_list(&mut runtime);
+            set_instruction_list(runtime);
             if outside {
                 runtime.edit_actor(key, Native, |actor| {
                     actor.parameters[0] = function::WAIT_FOR_SAMUS
@@ -156,13 +153,12 @@ pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
     }
 }
 /// Instruction - enemy X speed table index = `value` ($A3:B429, $A3:B434, $A3:B43F).
-pub fn set_x_speed_index<H: LeaseActors + ?Sized>(
+pub fn set_x_speed_index(
     value: u16,
     script: EnemyScript,
-    game: &mut H,
+    runtime: &mut impl ActorLease,
 ) -> EnemyScript {
-    let mut runtime = game.lease();
-    let at = x_speed_index(&runtime);
+    let at = x_speed_index(runtime);
     runtime.write_slice_native(at, value);
     script
 }
