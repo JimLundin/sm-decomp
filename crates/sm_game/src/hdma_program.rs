@@ -296,7 +296,8 @@ fn execute<I: Interpreter>(handler: u16, index: usize, script: Script, it: &mut 
             let object = &mut it.objects().objects[index];
             object.c = 0;
             object.a = 0;
-            let opened = it.foreign(|game| game.event_happened(0xa)) != 0;
+            let opened =
+                it.foreign(|game| crate::progress::leased::event_has_happened(0xa, game)) != 0;
             let offset: u16 = if opened { 0xff10 } else { 0 };
             it.objects().objects[index].b = offset;
             let [low, high] = offset.to_ne_bytes();

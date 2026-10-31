@@ -121,7 +121,7 @@ pub fn execute_setup_code<H: ScriptHost + ?Sized>(script: u16, game: &mut H) {
         }
         // Set Zebes timebomb event and set light horizontal room shaking.
         0xc91f => {
-            game.set_event_happened(0xe);
+            crate::progress::leased::mark_event(0xe, game);
             word! {game; EARTHQUAKE_TYPE = 18; EARTHQUAKE_TIMER = u16::MAX; }
         }
         // Light horizontal shaking; rising acid and medium horizontal shaking.

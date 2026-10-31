@@ -237,7 +237,7 @@ pub fn run_room_hook<H: crate::menus::host::Host + ?Sized>(address: u32, game: &
         0x828924 => {}
         0x828925 => game.ram().copy_in(0x59, &74u16.to_ne_bytes()),
         0x82892b => session_slot!(game, EnemyData[0].ai_preinstr = 60),
-        0x828932 => game.set_boss_byte(1, 1),
+        0x828932 => crate::progress::leased::set_boss_byte_at(1, 1, game),
         _ => {
             game.unreachable_native();
         }

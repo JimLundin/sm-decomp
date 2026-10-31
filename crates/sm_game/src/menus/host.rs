@@ -62,7 +62,6 @@ pub trait MenuRuntime:
 {
     /// Upload `bytes` from `source` to VRAM word address `destination`.
     fn load_vram_words(&mut self, source: u32, destination: u16, bytes: u16);
-    fn boss_byte(&mut self, area: u16) -> u8;
     /// Begin entering the room at the current load station.
     fn enter_load_station(&mut self);
     fn request_reset(&mut self);
@@ -78,10 +77,6 @@ pub trait MenuRuntime:
     fn handle_music_queue(&mut self);
     /// Run an HDMA effect through the session view.
     fn hdma_effect(&mut self, effect: crate::hdma_objects::HdmaEffect, slot: u16);
-    /// Gameplay event and boss flags, as the original's checks return them.
-    fn event_happened(&mut self, event: u16) -> u16;
-    fn set_event_happened(&mut self, event: u16);
-    fn boss_bit_for_current_area(&mut self, bit: u16) -> u8;
     /// Spawn the hardcoded PLM `id` at block (`x`, `y`).
     fn spawn_hardcoded_plm(&mut self, x: u8, y: u8, id: u16);
     /// Spawn an enemy projectile that uses the room's graphics; returns its slot.
@@ -98,7 +93,6 @@ pub trait MenuRuntime:
     /// The carry the HDMA object handler ($88:84B9) is running with: the main game loop's, set
     /// from power-on, except while a message box restores the display, where it is clear.
     fn hdma_handler_carry(&self) -> bool;
-    fn set_boss_byte(&mut self, area: u16, value: u8);
     /// The registered native image, if any, without the missing-image panic.
     fn native_image_binding(&self) -> Option<sm_data::cartridge::RomImage>;
     fn shake_room_with_sound(&mut self, kind: u16);

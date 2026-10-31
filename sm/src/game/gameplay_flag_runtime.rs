@@ -63,33 +63,8 @@ pub(crate) fn prepare_bit_access(bit: u16, game: &mut Game) -> u16 {
         bit,
     )
 }
-pub(crate) fn set_boss_bits_for_current_area(mask: u16, game: &mut Game) {
-    flags::mark_boss_defeated(&mut Runtime::new(game), mask);
-}
-pub(crate) fn check_boss_bit_for_cur_area(mask: u16, game: &mut Game) -> u8 {
-    u8::from(flags::boss_defeated(&mut Runtime::new(game), mask))
-}
-pub(crate) fn mark_event(event: u16, game: &mut Game) {
-    flags::set_event(&mut Runtime::new(game), event);
-}
-pub(crate) fn clear_event_happened(event: u16, game: &mut Game) {
-    flags::clear_event(&mut Runtime::new(game), event);
-}
-pub(crate) fn event_has_happened(event: u16, game: &mut Game) -> u16 {
-    u16::from(flags::event_happened(&mut Runtime::new(game), event))
-}
-pub(crate) fn boss_byte_at(area: u16, game: &mut Game) -> u8 {
-    flags::boss_byte_at(&Runtime::new(game), area)
-}
-pub(crate) fn set_boss_byte_at(area: u16, value: u8, game: &mut Game) {
-    flags::set_boss_byte_at(&mut Runtime::new(game), area, value);
-}
-pub(crate) fn boss_word_at(area: u16, order: BossWordOrder, game: &mut Game) -> u16 {
-    flags::boss_word_at(&Runtime::new(game), area, order)
-}
-pub(crate) fn set_boss_word_le(area: u16, value: u16, game: &mut Game) {
-    flags::set_boss_word_le(&mut Runtime::new(game), area, value);
-}
-pub(crate) fn set_boss_word_native(area: u16, value: u16, game: &mut Game) {
-    flags::set_boss_word_native(&mut Runtime::new(game), area, value);
-}
+pub(crate) use flags::leased::{
+    boss_byte_at, boss_word_at, check_boss_bit_for_cur_area, clear_event_happened,
+    event_has_happened, mark_event, set_boss_bits_for_current_area, set_boss_word_le,
+    set_boss_word_native,
+};
