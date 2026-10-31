@@ -7,43 +7,6 @@ use crate::rtl::rom_bank_record;
 use crate::types::{EnemyDef, EnemyTileset};
 use core::mem::offset_of;
 use sm_game::decompression::decompress_to_ram;
-use sm_game::room_entry::{
-    content::{SelectorCursor, SelectorKind},
-    installation, selection,
-};
-
-pub(crate) fn select_entry(address: u32, cursor: u16, game: &mut Game) -> u16 {
-    let mut runtime = Runtime::new(game);
-    match selection::select_entry(
-        &mut runtime,
-        SelectorKind::from_legacy(address),
-        SelectorCursor::Legacy(cursor),
-    ) {
-        Some(SelectorCursor::Legacy(next)) => next,
-        None => 0,
-        Some(SelectorCursor::Prepared(_)) => {
-            unreachable!("legacy selector returned authored cursor")
-        }
-    }
-}
-
-pub(crate) fn select(room: u16, game: &mut Game) {
-    let mut runtime = Runtime::new(game);
-    let room = runtime.session().world.room_identity(room);
-    selection::select(&mut runtime, room);
-}
-
-pub(crate) fn load_header(game: &mut Game) {
-    installation::load_header(&mut Runtime::new(game));
-}
-
-pub(crate) fn load_state(game: &mut Game) {
-    installation::load_state(&mut Runtime::new(game));
-}
-
-pub(crate) fn load_door(game: &mut Game) {
-    installation::load_door(&mut Runtime::new(game));
-}
 
 pub(crate) fn pause_draygon(game: &mut Game) {
     word!(game.IRQHANDLER_NEXT_HANDLER = 4);
@@ -219,22 +182,6 @@ pub(crate) unsafe fn door_script(address: u32, game: &mut Game) {
     }
 }
 
-#[cfg(sm_verify_dll)]
-pub(crate) fn load_tiles_and_palette(game: &mut Game) {
-    installation::load_tiles_and_palette(&mut Runtime::new(game));
-}
-
-#[cfg(sm_verify_dll)]
-pub(crate) fn load_level<const INITIAL: bool>(game: &mut Game) {
-    use sm_game::room_entry::content::LoadMode;
-    let mode = if INITIAL {
-        LoadMode::Initial
-    } else {
-        LoadMode::Door
-    };
-    installation::load_level(&mut Runtime::new(game), mode);
-}
-
 #[forbid(unsafe_code)]
 pub(crate) fn decompress_level(source: u32, game: &mut Game) {
     decompress_to_ram(source, 0x10000, game);
@@ -276,7 +223,6 @@ pub(crate) unsafe fn load_enemy_graphics(game: &mut Game) {
     }
 }
 
-use sm_game::room_state::advance_ceres_elevator;
 pub(crate) use sm_game::room_state::{copy_level_planes, load_sprite_palettes};
 
 impl sm_game::room_state::MainCodeHost for Runtime<'_> {
@@ -286,8 +232,28 @@ impl sm_game::room_state::MainCodeHost for Runtime<'_> {
     fn ceres_rotation_step(&mut self, word: isize) -> sm_data::ceres_elevator::RotationStep {
         self.foreign(|game| sm_game::ceres_elevator::step(game, word))
     }
+    fn create_explosion(&mut self, x: u16, y: u16, kind: u16) {
+        self.foreign(|game| crate::game::sprite_effect_runtime::create_sprite(x, y, kind, 0, game));
+    }
+    fn queue_sky_rows(&mut self, ocean: bool) {
+        use sm_game::scrolling_sky::{queue_land_rows, queue_ocean_rows};
+        self.foreign(|game| {
+            if ocean {
+                queue_ocean_rows(game)
+            } else {
+                queue_land_rows(game)
+            }
+        });
+    }
+    fn spawn_room_projectile(&mut self, definition: u16, parameter: u16) {
+        self.foreign(|game| {
+            crate::game::enemy_projectiles::spawn_with_room_gfx(definition, parameter, game);
+        });
+    }
+    fn handle_ceres_getaway(&mut self) {
+        self.foreign(sm_game::actors::ceres_ridley::handle_getaway_if_active);
+    }
 }
-use sm_game::room_state::{advance_elevatube, shake_crocomire, shake_ridley};
 
 #[path = "../verification/room_level_copy.rs"]
 mod level_copy_checks;
@@ -460,142 +426,9 @@ pub(crate) fn load_fx_header(game: &mut Game) {
     }
 }
 
-pub(crate) unsafe fn advance_room(game: &mut Game) {
+pub(crate) fn advance_room(game: &mut Game) {
     let script = word!(game.ROOM_MAIN_CODE_PTR);
     if script != 0 {
-        unsafe { advance_script(0x8f0000 | u32::from(script), &mut Runtime::new(game)) };
-    }
-}
-
-unsafe fn random_explosions(mask: u16, check_tile: bool, h: &mut Runtime<'_>) {
-    {
-        if h.word(ram::TIME_IS_FROZEN_FLAG) != 0 || h.word(ram::NMI_FRAME_COUNTER_WORD) & mask != 0
-        {
-            return;
-        }
-        let random = h.foreign(|game| game.next_random());
-        let layer1 = h.session().room.camera.layer1;
-        let x = layer1[0].wrapping_add(random as u8 as u16);
-        let y = layer1[1].wrapping_add(u16::from(random.to_ne_bytes()[1]));
-        // X on entry to $8F:C1A9: 0 from the room main ASM dispatch, or the
-        // block index the tile check ($8F:C131) left.
-        let mut entry_x = 0;
-        if check_tile {
-            let row =
-                u16::from((y >> 4) as u8) * u16::from(h.word(ram::ROOM_WIDTH_IN_BLOCKS) as u8);
-            entry_x = row.wrapping_add(x >> 4).wrapping_mul(2);
-            if h.native_word(0x10002 + usize::from(entry_x)) & 0x3ff == 255 {
-                return;
-            }
-        }
-        let random = h.foreign(|game| game.next_random()) & 15;
-        if random < 8 {
-            let sound = [0x24, 0, 0, 0x25, 0, 0, 0, 0][usize::from(random)];
-            if sound != 0 {
-                h.foreign(|game| crate::game::music::queue_sfx2_max6(sound, game));
-            }
-        }
-        // $8F:C1B5 loads X only for a random value below 8; otherwise the
-        // sprite object ID comes from the X it entered with.
-        let index = if random < 8 { random } else { entry_x & 7 };
-        let sprite = [3, 3, 9, 12, 12, 18, 18, 21][usize::from(index)];
-        h.foreign(|game| crate::game::sprite_effect_runtime::create_sprite(x, y, sprite, 0, game));
-    }
-}
-
-unsafe fn select_earthquake(
-    ending: u16,
-    threshold: u16,
-    starting: u16,
-    h: &mut Runtime<'_>,
-) -> Option<u16> {
-    let timer = h.session().room.main_native(0);
-    if timer != 0 {
-        let remaining = timer.wrapping_sub(1);
-        h.session_mut().room.set_main_native(0, remaining);
-        (remaining == 0).then_some(ending)
-    } else if h.foreign(|game| game.next_random()) < threshold {
-        h.session_mut().room.main_variables[0] = 42;
-        Some(starting)
-    } else {
-        None
-    }
-}
-
-unsafe fn advance_script(address: u32, h: &mut Runtime<'_>) {
-    use crate::game::constants::bank_86::*;
-    use sm_game::scrolling_sky;
-    unsafe {
-        match address {
-            9421078 => h.foreign(|game| scrolling_sky::queue_land_rows(game)),
-            9421083 => h.foreign(|game| scrolling_sky::queue_ocean_rows(game)),
-            9421088 | 9421092 => {
-                if address == 9421088 {
-                    h.foreign(|game| scrolling_sky::queue_land_rows(game));
-                }
-                random_explosions(1, true, h);
-                h.write_word_le(
-                    h.word(ram::EARTHQUAKE_TIMER) | 0x8000,
-                    ram::EARTHQUAKE_TIMER,
-                );
-            }
-            9421286 => {
-                if h.byte(0xcd2b) == 2
-                    && h.session().room.camera.layer1[1] < 0x500
-                    && h.session().room.camera.layer1[0] < 0x380
-                {
-                    let x = h.session().room.camera.layer1[0] + 3;
-                    sm_game::camera::set_layer1(h, 0, x);
-                }
-            }
-            9429686 => advance_elevatube(h),
-            9430303 => advance_ceres_elevator(h),
-            9430308 => {}
-            9430309 => {
-                if h.word(ram::CERES_STATUS) != 0 {
-                    let room = &mut h.session_mut().room;
-                    room.main_variables[0] = room.main_variables[0].wrapping_sub(1);
-                    if (room.main_native(0) as i16) < 0 {
-                        room.main_variables[0] = 8;
-                        let definition = if h.word(ram::RANDOM_NUMBER) & 0x8000 != 0 {
-                            ADDR_STRU_869742
-                        } else {
-                            ADDR_STRU_869734
-                        } as u16;
-                        let x = [
-                            0x50, 0x60, 0x70, 0x80, 0x90, 0xa0, 0xb0, 0xc0, 0xd0, 0xe0, 0xf0,
-                            0x110, 0x130, 0x150, 0x170, 0x190,
-                        ][usize::from(h.word(ram::RANDOM_NUMBER) & 15)];
-                        h.foreign(|game| {
-                            crate::game::enemy_projectiles::spawn_with_room_gfx(definition, x, game)
-                        });
-                    }
-                }
-            }
-            9430385 => {
-                if h.word(ram::CERES_STATUS) & 1 != 0 {
-                    h.foreign(sm_game::actors::ceres_ridley::handle_getaway_if_active);
-                }
-            }
-            9430396 => {
-                if let Some(kind) = select_earthquake(18, 0x200, 23, h) {
-                    h.write_word_le(kind, ram::EARTHQUAKE_TYPE);
-                }
-                random_explosions(3, false, h);
-            }
-            9430432 => random_explosions(3, false, h),
-            9430436 => {
-                if let Some(kind) = select_earthquake(21, 0x180, 26, h) {
-                    h.session_mut().room.set_main_native(1, kind);
-                }
-                h.write_word_le(h.session().room.main_native(1), ram::EARTHQUAKE_TYPE);
-                random_explosions(3, false, h);
-            }
-            9431245 => shake_crocomire(h),
-            9431376 => shake_ridley(h),
-            _ => {
-                h.foreign(|game| crate::rtl::Unreachable(game));
-            }
-        }
+        sm_game::room_state::execute_main_code(script, &mut Runtime::new(game));
     }
 }

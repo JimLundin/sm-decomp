@@ -29,16 +29,20 @@ pub(crate) fn run(op: Operation, g: &mut Game) -> Option<u8> {
             );
             None
         }
-        Operation::Level(true) => {
-            crate::game::room_state::load_level::<true>(g);
-            None
-        }
-        Operation::Level(false) => {
-            crate::game::room_state::load_level::<false>(g);
+        Operation::Level(initial) => {
+            use sm_game::room_entry::{content::LoadMode, installation};
+            let mode = if initial {
+                LoadMode::Initial
+            } else {
+                LoadMode::Door
+            };
+            installation::load_level(&mut crate::game::session_runtime::Runtime::new(g), mode);
             None
         }
         Operation::Tiles => {
-            crate::game::room_state::load_tiles_and_palette(g);
+            sm_game::room_entry::installation::load_tiles_and_palette(
+                &mut crate::game::session_runtime::Runtime::new(g),
+            );
             None
         }
         Operation::Place => {
