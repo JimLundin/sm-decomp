@@ -1,7 +1,8 @@
 //! The cinematic object engine: sprite, Mode 7 and background objects, their scripts and drawing.
+use crate::cinematic_state::{self, Array, Word, cinematic};
 use crate::ending_graphics::draw_cinematic_item_percentage;
 use crate::ram::RawRam as _;
-use crate::ram::{checked_word, word};
+use crate::ram::word;
 use crate::visual_state::CeresExplosion;
 use crate::{cinematic::*, ending_screens::*, intro_objects::*, title_screen::*};
 
@@ -26,45 +27,71 @@ pub enum CinematicObjects {
     Background,
 }
 
-/// Cinematic object tables addressed through the RAM-compatible layouts below;
-/// stays with them until those layouts have a typed owner.
+/// A cinematic object table's words in the cinematic state: its slot count,
+/// selected object and spawn parameter, the first of its four planes
+/// (instruction pointers, pre-instructions, timers, then the goto counters)
+/// and the tables a spawn clears.
 struct CinematicObjectLayout {
     slots: u16,
-    current: usize,
-    instructions: usize,
-    parameter: usize,
-    cleared: &'static [usize],
+    current: Word,
+    instructions: Array,
+    parameter: Word,
+    cleared: &'static [Array],
 }
+
+impl CinematicObjectLayout {
+    /// Object `object`'s word in `plane`, as an index from the instruction
+    /// pointers.
+    fn index(&self, plane: u16, object: u16) -> u16 {
+        (plane * self.slots) + (object >> 1)
+    }
+    fn get<H: crate::menus::host::Host + ?Sized>(&self, game: &H, plane: u16, object: u16) -> u16 {
+        cinematic_state::get_at(game, self.instructions, self.index(plane, object))
+    }
+    fn set<H: crate::menus::host::Host + ?Sized>(
+        &self,
+        game: &mut H,
+        plane: u16,
+        object: u16,
+        value: u16,
+    ) {
+        cinematic_state::set_at(game, self.instructions, self.index(plane, object), value);
+    }
+}
+
+/// The planes after the instruction pointers.
+const PRE_INSTRUCTION: u16 = 1;
+const TIMER: u16 = 2;
+const COUNTER: u16 = 3;
 
 impl CinematicObjects {
     fn layout(self) -> CinematicObjectLayout {
-        use crate::ram::{word_arrays as a, words as w};
         match self {
             Self::Sprites => CinematicObjectLayout {
                 slots: 16,
-                current: w::CINEMATIC_OBJ_INDEX,
-                instructions: a::CINEMATICSPR_INSTR_PTR,
-                parameter: w::CINEMATIC_SPAWN_PARAM,
+                current: Word::ObjectIndex,
+                instructions: Array::SprInstructionPointer,
+                parameter: Word::SpawnParameter,
                 cleared: &[
-                    a::CINEMATICSPR_WHATTODRAW,
-                    a::CINEMATICSPR_GOTO_TIMER,
-                    a::CINEMATICSPR_ARR6,
-                    a::CINEMATICSPR_ARR7,
+                    Array::SprWhatToDraw,
+                    Array::SprGotoTimer,
+                    Array::SprArr6,
+                    Array::SprArr7,
                 ],
             },
             Self::Mode7 => CinematicObjectLayout {
                 slots: 2,
-                current: w::MODE7_CUR_INDEX,
-                instructions: a::MODE7_OBJ_INSTR_PTR,
-                parameter: w::MODE7_SPAWN_PARAM,
-                cleared: &[a::MODE7_OBJ_GOTO_TIMER],
+                current: Word::Mode7ObjectIndex,
+                instructions: Array::Mode7InstructionPointer,
+                parameter: Word::Mode7SpawnParameter,
+                cleared: &[Array::Mode7GotoTimer],
             },
             Self::Background => CinematicObjectLayout {
                 slots: 4,
-                current: w::CINEMATIC_BG_OBJECT_INDEX,
-                instructions: a::CINEMATICBG_INSTR_PTR,
-                parameter: w::CINEMATIC_BG_VRAM_ADDRESS,
-                cleared: &[a::CINEMATICBG_ARR1, a::CINEMATICBG_ARR6],
+                current: Word::BgObjectIndex,
+                instructions: Array::BgInstructionPointer,
+                parameter: Word::BgVramAddress,
+                cleared: &[Array::BgArr1, Array::BgArr6],
             },
         }
     }
@@ -76,9 +103,9 @@ impl CinematicObjects {
         game: &mut H,
     ) -> u8 {
         let layout = self.layout();
-        checked_word!(game, layout.parameter; = parameter);
+        cinematic_state::set(game, layout.parameter, parameter);
         for slot in (0..layout.slots).rev() {
-            if checked_word!(game, layout.instructions + 2 * usize::from(slot);) == 0 {
+            if layout.get(game, 0, slot * 2) == 0 {
                 return initialize_cinematic_object(self, definition, slot * 2, game);
             }
         }
@@ -88,25 +115,25 @@ impl CinematicObjects {
     pub fn advance<H: crate::menus::host::Host + ?Sized>(self, game: &mut H) {
         use crate::visual_state::CinematicTilemap;
         use CinematicObjects::Background;
-        if matches!(self, Background) && word!(game.CINEMATIC_ENABLE_OBJS) & 0x8000 == 0 {
+        if matches!(self, Background) && cinematic!(game.EnableObjects) & 0x8000 == 0 {
             return;
         }
         let layout = self.layout();
         let mut object = i32::from(2 * (layout.slots - 1));
         while object >= 0 {
-            checked_word!(game, layout.current; = object as u16);
-            if checked_word!(game, layout.instructions + 2 * (object as usize >> 1);) != 0 {
+            cinematic_state::set(game, layout.current, object as u16);
+            if layout.get(game, 0, object as u16) != 0 {
                 match self {
                     Background => advance_cinematic_object::<0x8c>(self, object as u16, game),
                     _ => advance_cinematic_object::<0x8b>(self, object as u16, game),
                 }
                 // A callback may redirect the scan outside its original slot range.
-                object = i32::from(checked_word!(game, layout.current;));
+                object = i32::from(cinematic_state::get(game, layout.current));
             }
             object -= 2;
         }
         if matches!(self, Background) {
-            if word!(game.CINEMATIC_ENABLE_BG_TILEMAP) & 0x8000 != 0 {
+            if cinematic!(game.EnableBgTilemap) & 0x8000 != 0 {
                 queue_cinematic_tilemap(CinematicTilemap::Text, game);
             }
             queue_cinematic_tilemap(CinematicTilemap::Eyes, game);
@@ -133,14 +160,14 @@ pub fn advance_intro_mother_brain<H: crate::menus::host::Host + ?Sized>(
 ) {
     let slot = usize::from(object >> 1);
     if stage != 2 {
-        let timer = word!(game.CINEMATICSPR_ARR6[slot]);
+        let timer = cinematic!(game.SprArr6[slot]);
         if timer != 0 {
             if timer & 1 != 0 {
                 crate::word_transfers!(game, descending, 16; native(0xc1fe) <- rom(0x8ce3e9, 255));
             } else {
                 crate::word_transfers!(game, descending, 16; native(0xc1fe) <- value(0x7fff));
             }
-            word!(game.CINEMATICSPR_ARR6[slot] -= 1);
+            cinematic!(game.SprArr6[slot] -= 1);
         }
     }
     if stage == 0 {
@@ -152,22 +179,22 @@ pub fn advance_intro_mother_brain<H: crate::menus::host::Host + ?Sized>(
             return;
         }
         game.retire_projectile(2 * projectile as u16);
-        word!(game.CINEMATICSPR_ARR6[slot] = 8);
+        cinematic!(game.SprArr6[slot] = 8);
     } else {
-        if word!(game.CINEMATIC_FRAME_COUNTER) & 1 != 0 {
-            word!(game.CINEMATIC_Y -= 4);
+        if cinematic!(game.FrameCounter) & 1 != 0 {
+            cinematic!(game.Y -= 4);
         } else {
-            word!(game.CINEMATIC_Y += 4);
+            cinematic!(game.Y += 4);
         }
         if stage == 2 {
             crate::intro_pages::wait_for_scene_end(object, true, game);
             return;
         }
     }
-    let count = word!(game.CINEMATICSPR_GOTO_TIMER[slot]).wrapping_add(1);
-    word!(game.CINEMATICSPR_GOTO_TIMER[slot] = count);
+    let count = cinematic!(game.SprGotoTimer[slot]).wrapping_add(1);
+    cinematic!(game.SprGotoTimer[slot] = count);
     if stage == 0 && count == 4 {
-        word! {game; CINEMATICSPR_GOTO_TIMER[slot] = 0; CINEMATICSPR_PREINSTR_FUNC[slot] = 0xb80f; }
+        cinematic! { game; SprGotoTimer[slot] = 0; SprPreInstruction[slot] = 0xb80f; }
         spawn_cinematic_burst(0xcf1b, 0..3, 0, game);
         spawn_cinematic_burst(0xcf15, 0..5, 0, game);
     }
@@ -191,7 +218,7 @@ pub fn execute_cinematic_sprite_instruction<H: crate::menus::host::Host + ?Sized
             CinematicSprites.spawn(title::COPYRIGHT_FADE_IN, v0, game);
             },
             9150192 => {
-            word!(game.CINEMATICBG_ARR9[(k >> 1)] = 0);
+            cinematic!(game.BgArr9[k >> 1] = 0);
             CinematicSprites.spawn(title::COPYRIGHT_FADE_IN, 0, game);
             },
             9150233 => {
@@ -236,7 +263,7 @@ pub fn execute_cinematic_sprite_instruction<H: crate::menus::host::Host + ?Sized
             set_cinematic_blend(3, 16, 2, 34, game);
             game.ram().write_byte(0x5d, 100);
             game.ram().write_byte(0x59, 84);
-            word!(game.CINEMATIC_FUNCTION_TIMER = 0);
+            cinematic!(game.FunctionTimer = 0);
     crate::flow::set(game, crate::flow::Word::CinematicFunction, 0xe58a);
                 },
             9171588 => {
@@ -269,19 +296,19 @@ pub fn execute_cinematic_sprite_instruction<H: crate::menus::host::Host + ?Sized
             word! { game, 0x7fff; PALETTE_BUFFER[0], PALETTE_BUFFER[128] }
             crate::word_transfers!(game, descending, 16; le(PALETTE_BUFFER, 31) <- value(0x7fff));
             crate::flow::set(game, crate::flow::Word::CinematicFunction, 0xdb9e);
-    word!(game.CINEMATIC_FUNCTION_TIMER = 120);
+    cinematic!(game.FunctionTimer = 120);
                 },
             9172040 => {
             crate::screen_fade::set_both(game, 0, 0);
             crate::flow::set(game, crate::flow::Word::CinematicFunction, 0xde64);
                 },
             9172484 => {
-            word!(game.CINEMATICBG_ARR9[(k >> 1)] = 3584);
+            cinematic!(game.BgArr9[k >> 1] = 3584);
             crate::flow::set(game, crate::flow::Word::CinematicFunction, 0xe3ae);
             set_cinematic_blend(17, 16, 2, -127i32 as u8, game);
-            word! {game; CINEMATIC_X = -4i32 as u16; CINEMATIC_Y = -8i32 as u16;
-                CINEMATIC_FUNCTION_TIMER = 16; }
-            word! { game, 32; CINEMATIC_VAR14, CINEMATIC_VAR17 }
+            cinematic! { game; X = -4i32 as u16; Y = -8i32 as u16;
+                FunctionTimer = 16; }
+            cinematic! { game, 32; Var14, Var17 }
             capture_cinematic_palette(game);
             prepare_cinematic_palette_fade(game);
             game.queue_sound(0, 0x22_u8, 15);
@@ -323,7 +350,7 @@ pub fn spawn_cinematic_sprite_at<H: crate::menus::host::Host + ?Sized>(
     parameter: u16,
     game: &mut H,
 ) -> u8 {
-    word!(game.CINEMATIC_SPAWN_PARAM = parameter);
+    cinematic!(game.SpawnParameter = parameter);
     initialize_cinematic_object(CinematicObjects::Sprites, definition, slot, game)
 }
 
@@ -335,14 +362,12 @@ fn initialize_cinematic_object<H: crate::menus::host::Host + ?Sized>(
 ) -> u8 {
     use CinematicObjects::*;
     let layout = objects.layout();
-    let offset = usize::from(object & !1);
-    let stride = 2 * usize::from(layout.slots);
     let record = cinematic_native_record::<0x8b>(definition, game);
-    checked_word!(game, layout.instructions + stride + offset; = record.word(2));
-    checked_word!(game, layout.instructions + offset; = record.word(4));
-    checked_word!(game, layout.instructions + 2 * stride + offset; = 1);
-    for field in layout.cleared {
-        checked_word!(game, field + offset; = 0);
+    layout.set(game, PRE_INSTRUCTION, object, record.word(2));
+    layout.set(game, 0, object, record.word(4));
+    layout.set(game, TIMER, object, 1);
+    for &table in layout.cleared {
+        cinematic_state::set_at(game, table, object >> 1, 0);
     }
     // Setup is read after publication, and Mode7 alone receives a word index.
     let setup = u32::from(record.word(0)) | 0x8b0000;
@@ -384,41 +409,41 @@ fn initialize_cinematic_sprite<H: crate::menus::host::Host + ?Sized>(
             game.rtl_unreachable();
         }
         9152856 => {
-            let parameter = word!(game.CINEMATIC_SPAWN_PARAM);
-            word!(game.CINEMATICSPR_GOTO_TIMER[slot] = word!(game.CINEMATIC_SPAWN_PARAM));
+            let parameter = cinematic!(game.SpawnParameter);
+            cinematic!(game.SprGotoTimer[slot] = cinematic!(game.SpawnParameter));
             let position = usize::from(4u16.wrapping_mul(parameter) >> 1);
-            word! { game;
-                CINEMATICBG_ARR7[slot] = (EGG_POSITIONS[position] as u16).wrapping_add(16);
-                CINEMATICBG_ARR8[slot] = (EGG_POSITIONS[position + 1] as u16).wrapping_add(59);
-                CINEMATICBG_ARR9[slot] = 3584;
+            cinematic! { game;
+                BgArr7[slot] = (EGG_POSITIONS[position] as u16).wrapping_add(16);
+                BgArr8[slot] = (EGG_POSITIONS[position + 1] as u16).wrapping_add(59);
+                BgArr9[slot] = 3584;
             }
         }
         9153178 => {
-            word! { game;
-                CINEMATICSPR_GOTO_TIMER[slot] = word!(game.CINEMATIC_SPAWN_PARAM);
-                CINEMATICBG_ARR7[slot] = word!(game.CINEMATICBG_ARR7[13]);
-                CINEMATICBG_ARR8[slot] = word!(game.CINEMATICBG_ARR8[13]);
-                CINEMATICBG_ARR9[slot] = 3584;
+            cinematic! { game;
+                SprGotoTimer[slot] = cinematic!(game.SpawnParameter);
+                BgArr7[slot] = cinematic!(game.BgArr7[13]);
+                BgArr8[slot] = cinematic!(game.BgArr8[13]);
+                BgArr9[slot] = 3584;
             }
         }
         9158270 => {
-            if word!(game.CINEMATIC_SPAWN_PARAM) != 0 {
-                word!(game.CINEMATICSPR_PREINSTR_FUNC[slot] = 0xbfc6);
-                word!(game.CINEMATICBG_ARR7[slot] = -32i32 as u16);
+            if cinematic!(game.SpawnParameter) != 0 {
+                cinematic!(game.SprPreInstruction[slot] = 0xbfc6);
+                cinematic!(game.BgArr7[slot] = -32i32 as u16);
             } else {
-                word!(game.CINEMATICSPR_GOTO_TIMER[slot] = -1024i32 as u16);
-                word!(game.CINEMATICBG_ARR7[slot] = 112);
+                cinematic!(game.SprGotoTimer[slot] = -1024i32 as u16);
+                cinematic!(game.BgArr7[slot] = 112);
             }
-            word! {game; CINEMATICBG_ARR8[slot] = 87; CINEMATICBG_ARR9[slot] = 2048; }
+            cinematic! { game; BgArr8[slot] = 87; BgArr9[slot] = 2048; }
         }
         9158560 => {
-            if word!(game.CINEMATIC_SPAWN_PARAM) != 0 {
-                word!(game.CINEMATICBG_ARR7[slot] = 224);
+            if cinematic!(game.SpawnParameter) != 0 {
+                cinematic!(game.BgArr7[slot] = 224);
             } else {
-                word!(game.CINEMATICBG_ARR7[slot] = 112);
-                word!(game.CINEMATICSPR_PREINSTR_FUNC[slot] = 0xbfd9);
+                cinematic!(game.BgArr7[slot] = 112);
+                cinematic!(game.SprPreInstruction[slot] = 0xbfd9);
             }
-            word! {game; CINEMATICBG_ARR8[slot] = 87; CINEMATICBG_ARR9[slot] = 2048; }
+            cinematic! { game; BgArr8[slot] = 87; BgArr9[slot] = 2048; }
         }
         9171343 => initialize_ending_sprite_pair(object, true, game),
         9171368 => initialize_ending_sprite_pair(object, false, game),
@@ -528,24 +553,19 @@ fn advance_cinematic_object<const BANK: u8>(
 ) {
     use CinematicObjects::*;
     let layout = objects.layout();
-    let stride = 2 * usize::from(layout.slots);
-    let pre = u32::from(checked_word!(game,
-        layout.instructions + stride + usize::from(object & !1);))
-        | 0x8b0000;
+    let pre = u32::from(layout.get(game, PRE_INSTRUCTION, object)) | 0x8b0000;
     match objects {
         Sprites => game.cinematic_sprite_pre_instruction(pre, object),
         Mode7 => cinematic_mode7_pre(pre, object, game),
         Background => advance_cinematic_background_pre(pre, object, game),
     }
-    let selected = checked_word!(game, layout.current;);
-    let offset = usize::from(selected & !1);
-    let timer_at = layout.instructions + 2 * stride + offset;
-    let timer = checked_word!(game, timer_at;);
-    checked_word!(game, timer_at; = timer.wrapping_sub(1));
+    let selected = cinematic_state::get(game, layout.current);
+    let timer = layout.get(game, TIMER, selected);
+    layout.set(game, TIMER, selected, timer.wrapping_sub(1));
     if timer != 1 {
         return;
     }
-    let mut address = checked_word!(game, layout.instructions + offset;);
+    let mut address = layout.get(game, 0, selected);
     let duration = loop {
         let instruction = cinematic_native_record::<BANK>(address, game).word(0);
         if instruction & 0x8000 == 0 {
@@ -555,28 +575,32 @@ fn advance_cinematic_object<const BANK: u8>(
         address = match (objects, instruction) {
             (Sprites, 0x9438) | (Mode7, 0x956b) | (Background, 0x9698) => {
                 if !matches!(objects, Mode7) {
-                    checked_word!(game, layout.cleared[0] + offset; = 0);
+                    cinematic_state::set_at(game, layout.cleared[0], selected >> 1, 0);
                 }
-                checked_word!(game, layout.instructions + offset; = 0);
+                layout.set(game, 0, selected, 0);
                 0
             }
             (Sprites, 0x9442) => {
-                checked_word!(game, layout.instructions + offset; = operand.wrapping_sub(2));
+                layout.set(game, 0, selected, operand.wrapping_sub(2));
                 0
             }
             (Sprites, 0x944c | 0x94d6) | (Mode7, 0x9572 | 0x9597) => {
                 let plane = if matches!(instruction, 0x94d6 | 0x9597) {
-                    3
+                    COUNTER
                 } else {
-                    1
+                    PRE_INSTRUCTION
                 };
-                checked_word!(game, layout.instructions + plane * stride + offset;
-                    = cinematic_native_record::<0x8b>(operand, game).word(0));
+                let value = cinematic_native_record::<0x8b>(operand, game).word(0);
+                layout.set(game, plane, selected, value);
                 operand.wrapping_add(2)
             }
             (Sprites, 0x9457) | (Mode7, 0x957d) => {
-                checked_word!(game, layout.instructions + stride + offset;
-                    = if matches!(objects, Sprites) { 0x945f } else { 0x9585 });
+                let next = if matches!(objects, Sprites) {
+                    0x945f
+                } else {
+                    0x9585
+                };
+                layout.set(game, PRE_INSTRUCTION, selected, next);
                 operand
             }
             (Sprites, 0x94a2 | 0x94bc | 0x94c3 | 0x94cd)
@@ -584,9 +608,8 @@ fn advance_cinematic_object<const BANK: u8>(
             | (Background, 0x971e) => {
                 let relative = matches!(instruction, 0x94a2 | 0x94cd);
                 let skip = matches!(instruction, 0x94c3 | 0x94cd | 0x958d) && {
-                    let counter_at = layout.instructions + 3 * stride + offset;
-                    let counter = checked_word!(game, counter_at;);
-                    checked_word!(game, counter_at; = counter.wrapping_sub(1));
+                    let counter = layout.get(game, COUNTER, selected);
+                    layout.set(game, COUNTER, selected, counter.wrapping_sub(1));
                     counter == 1
                 };
                 if skip {
@@ -614,20 +637,20 @@ fn advance_cinematic_object<const BANK: u8>(
             return;
         }
     };
-    checked_word!(game, timer_at; = duration);
+    layout.set(game, TIMER, selected, duration);
     let payload = cinematic_native_record::<BANK>(address, game);
     if matches!(objects, Background) {
-        word!(game.CINEMATICBG_ARR1[(selected >> 1)] = payload.word(4));
+        cinematic!(game.BgArr1[selected >> 1] = payload.word(4));
     }
     let value = payload.word(2);
     drop(payload);
     match objects {
-        Sprites => word!(game.CINEMATICSPR_WHATTODRAW[(selected >> 1)] = value),
+        Sprites => cinematic!(game.SprWhatToDraw[selected >> 1] = value),
         Mode7 => crate::display::transfer::enqueue_mode7_rom(0x8b, value, game),
         Background => draw_cinematic_background(selected, value, game),
     }
     let size = if matches!(objects, Background) { 6 } else { 4 };
-    checked_word!(game, layout.instructions + offset; = address.wrapping_add(size));
+    layout.set(game, 0, selected, address.wrapping_add(size));
 }
 
 pub fn advance_cinematic_background_pre<H: crate::menus::host::Host + ?Sized>(
@@ -641,9 +664,9 @@ pub fn advance_cinematic_background_pre<H: crate::menus::host::Host + ?Sized>(
             if crate::flow::current(game).cinematic_function == 0xb207
                 || crate::flow::current(game).cinematic_function == 0xa390
             {
-                word!(game.CINEMATICBG_INSTR_PTR[(object >> 1)] = 0xd613);
-                word!(game.CINEMATICBG_INSTR_TIMER[(object >> 1)] = 1);
-                word!(game.CINEMATICBG_PREINSTR[(object >> 1)] = 0x93d9);
+                cinematic!(game.BgInstructionPointer[object >> 1] = 0xd613);
+                cinematic!(game.BgInstructionTimer[object >> 1] = 1);
+                cinematic!(game.BgPreInstruction[object >> 1] = 0x93d9);
             }
         }
         _ => {
@@ -657,29 +680,29 @@ fn draw_cinematic_background<H: crate::menus::host::Host + ?Sized>(
     position: u16,
     game: &mut H,
 ) {
-    let definition = word!(game.CINEMATICBG_ARR1[(object >> 1)]);
+    let definition = cinematic!(game.BgArr1[object >> 1]);
     let command = cinematic_native_record::<0x8c>(definition, game).word(0);
     match command {
         0x8849 => {}
         0x884d | 0x88b7 | 0x88fd => {
             if command == 0x884d {
-                word!(
-                    game.INTRO_TEXT_CLICK_FLAG = u16::from(word!(game.INTRO_TEXT_CLICK_FLAG) == 0)
+                cinematic!(
+                    game.IntroTextClickFlag = u16::from(cinematic!(game.IntroTextClickFlag) == 0)
                 );
                 crate::intro_pages::spawn_text_glow(definition, position, game);
                 let record = cinematic_native_record::<0x8c>(
-                    word!(game.CINEMATICBG_INSTR_PTR[(object >> 1)]),
+                    cinematic!(game.BgInstructionPointer[object >> 1]),
                     game,
                 );
                 let bottom = if (record.word(6) as i16) < 0 {
-                    word!(game.CINEMATICBG_ARR7[15] = 8);
+                    cinematic!(game.BgArr7[15] = 8);
                     8 * (u16::from(record.byte(3)) + 2)
                 } else {
-                    word!(game.CINEMATICBG_ARR7[15] = 8 * u16::from(record.byte(8)));
+                    cinematic!(game.BgArr7[15] = 8 * u16::from(record.byte(8)));
                     8 * u16::from(record.byte(9))
                 };
-                word!(game.CINEMATICBG_ARR8[15] = bottom.wrapping_sub(8));
-                if record.word(4) != 0xd67d && word!(game.INTRO_TEXT_CLICK_FLAG) != 0 {
+                cinematic!(game.BgArr8[15] = bottom.wrapping_sub(8));
+                if record.word(4) != 0xd67d && cinematic!(game.IntroTextClickFlag) != 0 {
                     game.queue_sound(2, 0xd_u8, 6);
                 }
             }
@@ -786,13 +809,13 @@ pub fn draw_cinematic_sprites<H: crate::menus::host::Host + ?Sized>(ending: bool
     use crate::sprite_drawing::Clip;
     let layer1 = crate::camera::current(game).layer1;
     for slot in (0..16usize).rev() {
-        let sprite = word!(game.CINEMATICSPR_WHATTODRAW[slot]);
+        let sprite = cinematic!(game.SprWhatToDraw[slot]);
         if sprite == 0 {
             continue;
         }
-        let palette = word!(game.CINEMATICBG_ARR9[slot]);
-        let x = word!(game.CINEMATICBG_ARR7[slot]).wrapping_sub(layer1[0]);
-        let y = word!(game.CINEMATICBG_ARR8[slot]).wrapping_sub(layer1[1]);
+        let palette = cinematic!(game.BgArr9[slot]);
+        let x = cinematic!(game.BgArr7[slot]).wrapping_sub(layer1[0]);
+        let y = cinematic!(game.BgArr8[slot]).wrapping_sub(layer1[1]);
         if y.wrapping_add(128) < 0x1ff {
             let clip = if y & 0xff00 != 0 {
                 Clip::BoundedOutside
