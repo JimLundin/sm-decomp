@@ -129,7 +129,7 @@ pub fn seal_wall<H: VisualsHost + ?Sized>(game: &mut H) {
         game.spawn_room_enemy_projectile(ADDR_K_EPROJ_DUST_CLOUD_EXPLOSION as u16, 9);
     }
     for y in [4, 9] {
-        game.spawn_hardcoded_plm(0xf, y, 0xb673);
+        crate::room_mechanisms::creation::spawn_hardcoded(0xf, y, 0xb673, game);
     }
     slot_view!(game, MotherBrainBody[0].function = 0x881d);
 }
