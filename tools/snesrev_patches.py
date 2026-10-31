@@ -579,7 +579,7 @@ BUG_HOOKS = [
     (0x86B701, 'b', 'crash', 'removed', 'patched',
      'Pre-instruction - eye door projectile - moving',
      'When the door bit is set, hardware reaches the explode branch with X = door-bit byte index, not the projectile index, writes the instruction pointer and timer into the wrong slot and eventually executes a garbage instruction pointer'),
-    (0x8FC1B0, 'b', 'visual', 'removed', 'patched',
+    (0x8FC1B0, 'b', 'visual', 'removed', 'follows',
      'Generate random explosion at ([$12], [$14])',
      'When random & Fh >= 8, hardware indexes the sprite-object ID table with whatever X the caller had (& 7); the hook uses the random value, so a different explosion type is spawned'),
     (0x80804F, 'a', 'none', 'removed', 'patched',
