@@ -212,6 +212,22 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Cargo build failed' }
           cargo build --release --locked -p sm_app --bin sm
           if ($LASTEXITCODE -ne 0) { throw 'Desktop build failed' }
+
+  verifier:
+    # The verifier's Cargo configuration builds the sm library again with its own
+    # cfg flags, so it runs beside the plain build rather than after it.
+    runs-on: windows-2022
+    timeout-minutes: 60
+    env:
+      RUSTUP_TOOLCHAIN: stable-x86_64-pc-windows-gnu
+      # The hosted runner has four cores; let cargo and rustc's codegen use them.
+      CARGO_BUILD_JOBS: 4
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/windows-native
       - name: Check Cargo verifier configuration and actor exports
         run: |
           python tools/verify_dll.py --build-only --cargo
