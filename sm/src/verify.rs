@@ -1042,6 +1042,8 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
     let mut oracle_only = false;
     let mut audio_trace_path = None;
     #[cfg(sm_verify_dll)]
+    let mut divergence_report: Option<&String> = None;
+    #[cfg(sm_verify_dll)]
     let mut prepared_checkpoint_check = None;
     #[cfg(sm_verify_dll)]
     let mut prepared_checkpoint_reject = None;
@@ -1064,6 +1066,10 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
                         .next()
                         .ok_or("missing prepared checkpoint rejection path")?,
                 );
+            }
+            #[cfg(sm_verify_dll)]
+            "--divergence-report" if divergence_report.is_none() => {
+                divergence_report = Some(options.next().ok_or("missing divergence report path")?);
             }
             "--audio-trace" if audio_trace_path.is_none() => {
                 audio_trace_path = Some(options.next().ok_or("missing audio trace path")?);
@@ -1196,6 +1202,10 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
         return Err(
             "--oracle-only only produces a checkpoint, without probes or expectations".into(),
         );
+    }
+    #[cfg(sm_verify_dll)]
+    if oracle_only && divergence_report.is_some() {
+        return Err("--oracle-only runs no comparison to report".into());
     }
     if audio_trace_path.is_some()
         && (!game.supports_legacy_persistence()
@@ -1383,6 +1393,13 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
             )),
             None => None,
         };
+        // Typed observations compare beside RAM on every paired frame.
+        #[cfg(sm_verify_dll)]
+        if !oracle_only {
+            game.observation = Some(Box::new(sm::observation::Lockstep::new(
+                divergence_report.map(std::path::PathBuf::from),
+            )));
+        }
         let mut completed = 0;
         let mut hit_tail_complete = after_hits.is_none();
         let mut expectation_tail_complete = after_expectations.is_none();
@@ -1475,6 +1492,12 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
             "Verified {completed} frames: {failures} failing frames ({:.2}s)",
             start.elapsed().as_secs_f64()
         );
+        #[cfg(sm_verify_dll)]
+        if let Some(mut lockstep) = game.observation.take() {
+            for line in lockstep.finish()? {
+                eprintln!("{line}");
+            }
+        }
         let probes = sm::verify_probe::report();
         let expectations = coverage.report_expectations();
         if failures != 0 {
