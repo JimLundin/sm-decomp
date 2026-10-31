@@ -1261,7 +1261,6 @@ require_hit = ["kraid.dead_hook", "kraid_pause.unpause_dead", "kraid_pause.trans
 # Samus repels his grab, and he flails his tail and flies off.
 [[segment]]
 id = "boss-draygon-grapple-repel"
-pending = "awaiting the seeds-v1-scenario-repel-ccb2329f0fbbd52c ci-data upload"
 seed = "scenario-draygon-repel:259"
 seed_sha256 = "78783af693fd02b771ad003bd135e6e7ad338026acdaf70008ece4ddad03a531"
 inputs = "authored-draygon-grapple-repel.inputs"
