@@ -1397,7 +1397,6 @@ require_hit = ["xray.window"]
 
 [[segment]]
 id = "xray-scan-92fd"
-pending = "X-ray window HDMA_TABLE_1 edge byte is 00, not FF, from input frame 138 (beam at the right screen edge)"
 seed = "100-input-phase:300"
 seed_sha256 = "f920d0d23ef3f12b9c87959c3c317f90f0321f4b3503d8a914700a9b6777a20d"
 inputs = "authored-xray-scan-300.inputs"
@@ -1409,7 +1408,6 @@ require_hit = ["xray.window"]
 
 [[segment]]
 id = "xray-scan-9a44"
-pending = "X-ray window HDMA_TABLE_1 edge byte is 00, not FF, from input frame 138 (beam at the right screen edge)"
 seed = "100-input-phase:303"
 seed_sha256 = "cbcebcf17718dc609535549e2418f47201e1ef76db49952cda452fc54084dd50"
 inputs = "authored-xray-scan-303.inputs"
