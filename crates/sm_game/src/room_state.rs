@@ -280,7 +280,7 @@ pub fn execute_main_code<H: MainCodeHost>(script: u16, h: &mut H) {
         0xe524 => {}
         // Main ASM - spawn Ceres pre elevator hall falling debris.
         0xe525 => {
-            if h.word(fields::CERES_STATUS) != 0 {
+            if h.session().room.ceres_status != 0 {
                 let room = &mut h.session_mut().room;
                 room.main_variables[0] = room.main_variables[0].wrapping_sub(1);
                 if (room.main_native(0) as i16) < 0 {
@@ -300,7 +300,7 @@ pub fn execute_main_code<H: MainCodeHost>(script: u16, h: &mut H) {
         }
         // Main ASM - handle Ceres Ridley getaway cutscene.
         0xe571 => {
-            if (h.word(fields::CERES_STATUS) & 1) != 0 {
+            if (h.session().room.ceres_status & 1) != 0 {
                 h.handle_ceres_getaway();
             }
         }
@@ -389,7 +389,7 @@ fn select_earthquake<H: MainCodeHost>(
 }
 
 pub fn advance_ceres_elevator<H: MainCodeHost + ?Sized>(h: &mut H) {
-    if (h.word(fields::CERES_STATUS) & 0x8000) != 0 {
+    if (h.session().room.ceres_status & 0x8000) != 0 {
         if (112i16).wrapping_sub(h.session().player.x as i16) < 0
             && (144i16).wrapping_sub(h.session().player.x as i16) >= 0
             && (h.session().player.y as i32 - 128i32) & 0x8000 != 0

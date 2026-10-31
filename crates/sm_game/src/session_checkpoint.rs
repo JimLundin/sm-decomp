@@ -1994,7 +1994,8 @@ checkpoint_fields!(checkpoint_room, checkpoint_read_room, Room,
     enemy_deaths: checkpoint_word/checkpoint_read_word, enemy_quota: checkpoint_word/checkpoint_read_word,
     loaded_items: checkpoint_word/checkpoint_read_word, power_bomb_radius: checkpoint_word/checkpoint_read_word,
     enemy_processing_stage: checkpoint_word/checkpoint_read_word, collision_detection_index: checkpoint_word/checkpoint_read_word,
-    slope_behavior: checkpoint_word/checkpoint_read_word, main_variables: checkpoint_words/audio_words,
+    slope_behavior: checkpoint_word/checkpoint_read_word, ceres_status: checkpoint_word/checkpoint_read_word,
+    main_variables: checkpoint_words/audio_words,
     camera: checkpoint_camera/checkpoint_read_camera);
 checkpoint_fields!(checkpoint_camera, checkpoint_read_camera, crate::camera::Camera,
     layer1_block: checkpoint_words/audio_words, layer2_block: checkpoint_words/audio_words,
@@ -2043,7 +2044,7 @@ impl Room {
         }
         let topology = checkpoint_world_binding(binding)?;
         checkpoint_validate_room(self, binding)?;
-        let mut bytes = Vec::from(b"SMROOMS\x04".as_slice());
+        let mut bytes = Vec::from(b"SMROOMS\x05".as_slice());
         let source = observation_binding(metadata);
         checkpoint_count(&mut bytes, source.len());
         bytes.extend_from_slice(&source);
@@ -2058,7 +2059,7 @@ impl Room {
         expected: &world::WorldBinding,
     ) -> Result<Self, String> {
         let mut read = CheckpointReader(bytes);
-        if read.bytes(8)? != b"SMROOMS\x04" {
+        if read.bytes(8)? != b"SMROOMS\x05" {
             return Err("unsupported room checkpoint schema".into());
         }
         let size = usize::try_from(read.counter()?)
