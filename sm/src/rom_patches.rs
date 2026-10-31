@@ -1,7 +1,7 @@
 //! Checked patch installation over the shared cartridge image.
 #![forbid(unsafe_code)]
 use crate::oracle_mode::PatchKind;
-use crate::rom::RomImage;
+use crate::snes::cart::CartRom;
 use std::collections::HashSet;
 use std::sync::OnceLock;
 
@@ -183,9 +183,9 @@ pub fn policy_dependent(offset: usize) -> bool {
         .contains(&offset)
 }
 
-pub struct RomPatches(RomImage);
+pub struct RomPatches(CartRom);
 impl RomPatches {
-    pub fn new(image: RomImage) -> Self {
+    pub fn new(image: CartRom) -> Self {
         Self(image)
     }
     pub fn byte(&self, address: u32) -> u8 {

@@ -195,7 +195,7 @@ pub struct Game {
     native_rom: Option<crate::rom::RomImage>,
     /// The oracle's cartridge ROM, which its compatibility patches rewrite;
     /// the engine's images are an unpatched copy, as hardware reads.
-    pub(crate) cartridge_rom: Option<crate::rom::RomImage>,
+    pub(crate) cartridge_rom: Option<crate::snes::cart::CartRom>,
     /// Imported from `loaded_rom` by `register_rom`; see game::enemy_speeds.
     pub(crate) enemy_speeds: Option<crate::game::enemy_speeds::ImportedSpeeds>,
     /// Imported from `native_rom` by `register_native_rom`; see game::enemy_speeds.
