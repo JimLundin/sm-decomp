@@ -1,9 +1,9 @@
 //! The hardware records of the save-state format, over sm_runtime's transfers.
 #![forbid(unsafe_code)]
+use sm_runtime::snapshot::SnapshotOutput;
 #[cfg(any(feature = "frontend", sm_verify_dll))]
 pub(crate) use sm_runtime::snapshot::state_layout;
 pub use sm_runtime::snapshot::{Block, SnapshotIo, State, TransferError};
-use sm_runtime::snapshot::{Fields, SnapshotOutput};
 use std::collections::TryReserveError;
 
 // Hardware values are serialized field by field. Explicit padding fields retain
@@ -113,19 +113,6 @@ sm_runtime::state_record!(WindowLayer, 5, {
 
 });
 
-impl State for crate::apu_ram::ApuRam {
-    const SIZE: usize = 65536;
-    fn layout(layout: &mut String) {
-        <[u8; Self::SIZE]>::layout(layout);
-    }
-    fn transfer(&mut self, fields: &mut Fields<'_>) {
-        for offset in 0..Self::SIZE {
-            let mut byte = self.read(offset as u16);
-            byte.transfer(fields);
-            self.write(offset as u16, byte);
-        }
-    }
-}
 sm_runtime::state_record!(Apu, 65576, { ram, registers } skip { spc, dsp });
 sm_runtime::state_record!(ApuRegisters, 40, {
     romReadable, dspAdr, snapshot_padding0, cycles, inPorts, outPorts, timer, cpuCyclesLeft, pad

@@ -1,5 +1,6 @@
 //! The audio processor's 64 KiB RAM, shared by the sound driver and the DSP voices;
 //! snapshots copy its bytes.
+use crate::snapshot::{Fields, State};
 use std::{cell::Cell, rc::Rc};
 
 #[derive(Clone)]
@@ -64,5 +65,19 @@ impl ApuRam {
     /// entire use of the pointer, and serialize all access through the game gate.
     pub fn as_mut_ptr(&self) -> *mut u8 {
         self.0.as_ptr().cast::<u8>().cast_mut()
+    }
+}
+
+impl State for ApuRam {
+    const SIZE: usize = 65536;
+    fn layout(layout: &mut String) {
+        <[u8; Self::SIZE]>::layout(layout);
+    }
+    fn transfer(&mut self, fields: &mut Fields<'_>) {
+        for offset in 0..Self::SIZE {
+            let mut byte = self.read(offset as u16);
+            byte.transfer(fields);
+            self.write(offset as u16, byte);
+        }
     }
 }
