@@ -472,11 +472,9 @@ impl EntryEffects for Runtime<'_> {
     }
     fn setup(&mut self, action: SetupAction) {
         let (kind, code) = action.compatibility_code(&self.session().world);
-        self.foreign(|game| unsafe {
-            match kind {
-                SetupKind::Room => game::room_state::setup_script(0x8f0000 | u32::from(code), game),
-                SetupKind::Door => game::room_state::door_script(0x8f0000 | u32::from(code), game),
-            }
+        self.foreign(|game| match kind {
+            SetupKind::Room => sm_game::room_state::execute_setup_code(code, game),
+            SetupKind::Door => sm_game::room_state::execute_door_code(code, game),
         });
     }
     fn spawn_room_object(&mut self, cursor: &ObjectCursor) {

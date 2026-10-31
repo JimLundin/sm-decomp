@@ -1,8 +1,9 @@
 //! Room state rules that run on named RAM and the owned-Session view.
 use crate::enemy_projectiles::host::Effects;
 use crate::ram::RawRam as _;
-use crate::ram::{checked_word, words as fields};
+use crate::ram::{checked_word, word, words as fields};
 use crate::runtime_access::SessionView;
+use crate::session_access::SessionAccess as _;
 use crate::word_transfers;
 
 /// Named and raw work RAM, the loaded cartridge and its records, and the
@@ -57,6 +58,175 @@ pub fn load_sprite_palettes<H: Host + ?Sized>(game: &mut H) {
     word_transfers!(game, descending, 16; le(TARGET_PALETTES, 223) <- rom(0x9a8000, 223));
     word_transfers!(game, descending, 16; native(0xc3de) <- native(0xc1de));
     word_transfers!(game, descending, 16; native(0xc31e) <- rom(0x9afc00, 15));
+}
+
+/// What room setup and door ASM need: the menus' runtime and the owned Session.
+pub trait ScriptHost: crate::menus::host::Host + crate::runtime_access::RuntimeAccess {}
+impl<T: crate::menus::host::Host + crate::runtime_access::RuntimeAccess + ?Sized> ScriptHost for T {}
+
+/// Execute room setup ASM ($8F:E88F): the room state's setup routine
+/// `script`. Was `RunRoomSetupCode`.
+pub fn execute_setup_code<H: ScriptHost + ?Sized>(script: u16, game: &mut H) {
+    use crate::constants::bank_87::*;
+    use crate::scrolling_sky;
+    match script {
+        // Clear Crateria mainstreet escape passage if critters escaped and shake screen.
+        0x9194 => {
+            game.spawn_hardcoded_plm(0x3d, 0xb, 0xbb30);
+            word! {game; EARTHQUAKE_TYPE = 24; EARTHQUAKE_TIMER = u16::MAX; }
+        }
+        // Make old Tourian escape shaft fake wall explode; spawn critters escape block.
+        0x91a9 => game.spawn_hardcoded_plm(0x10, 0x87, 0xb964),
+        0x91b2 => game.spawn_hardcoded_plm(0xf, 0xa, 0xb9ed),
+        // Scrolling sky land, shake screen; scrolling sky land; ocean.
+        0x91bd => {
+            word! {game; EARTHQUAKE_TYPE = 6; EARTHQUAKE_TIMER = u16::MAX; }
+            scrolling_sky::initialize_land(game);
+        }
+        0x91c9 => scrolling_sky::initialize_land(game),
+        0x91ce => scrolling_sky::initialize_ocean(game),
+        // Run statue unlocking animations.
+        0x91d7 => {
+            for animation in [
+                ADDR_K_ANIMTILES_TOURIAN_STATUE_KRAID,
+                ADDR_K_ANIMTILES_TOURIAN_STATUE_PHANTOON,
+                ADDR_K_ANIMTILES_TOURIAN_STATUE_DRAYGON,
+                ADDR_K_ANIMTILES_TOURIAN_STATUE_RIDLEY,
+            ] {
+                game.spawn_animated_tiles(animation as u16);
+            }
+        }
+        // Spawn pre-Phantoon room enemy projectile.
+        0xc8c8 => {
+            use crate::constants::bank_86::ADDR_K_EPROJ_PRE_PHANTOM_ROOM;
+            game.spawn_room_enemy_projectile(ADDR_K_EPROJ_PRE_PHANTOM_ROOM as u16, 0xc8c8);
+        }
+        // Shaktool's room.
+        0xc8d3 => game.spawn_hardcoded_plm(0, 0, 0xb8eb),
+        // Set pausing code for Draygon: native-order addresses, then the bank.
+        0xc8dd => {
+            for (at, hook) in [(0x601, 0xc8f6), (0x604, 0xc8fc)] {
+                word_transfers!(game, ascending, 1; native(at) <- value(hook));
+                game.ram().write_byte(at + 2, 0x8f);
+            }
+        }
+        // Set collected map.
+        0xc90a => {
+            let at = 0xd908 + usize::from(word!(game.AREA_INDEX));
+            let collected =
+                u16::from_ne_bytes([game.ram().read_byte(at), game.ram().read_byte(at + 1)]) | 1;
+            word_transfers!(game, ascending, 1; native(at) <- value(collected));
+            word!(game.HAS_AREA_MAP = collected);
+        }
+        // Set Zebes timebomb event and set light horizontal room shaking.
+        0xc91f => {
+            game.set_event_happened(0xe);
+            word! {game; EARTHQUAKE_TYPE = 18; EARTHQUAKE_TIMER = u16::MAX; }
+        }
+        // Light horizontal shaking; rising acid and medium horizontal shaking.
+        0xc933 | 0xc953 => {
+            let kind = if script == 0xc953 {
+                game.spawn_hardcoded_plm(0x10, 0x10, 0xb968);
+                21
+            } else {
+                18
+            };
+            word!(game.EARTHQUAKE_TYPE = kind);
+            {
+                let mut runtime = game.runtime();
+                let room = &mut runtime.session_mut().room;
+                room.set_main_native(1, kind);
+                room.set_main_native(0, 0);
+            }
+            word!(game.EARTHQUAKE_TIMER = u16::MAX);
+        }
+        // Set medium horizontal room shaking.
+        0xc946 => {
+            word! {game; EARTHQUAKE_TYPE = 21; EARTHQUAKE_TIMER = u16::MAX; }
+        }
+        // Ceres door to solid blocks, Ceres haze, BG1/2 tiles base and haze.
+        0xc96e => {
+            game.spawn_hardcoded_plm(0xf, 0x26, 0xba48);
+            crate::room_visuals::initialize_room_haze(game);
+        }
+        0xc976 => crate::room_visuals::initialize_room_haze(game),
+        0xc97b => {
+            game.ram().write_byte(0x5d, 102);
+            crate::room_visuals::initialize_room_haze(game);
+            word!(game.HDMA_DATA_TABLE_IN_CERES = 9);
+        }
+        0x91bb | 0x91bc | 0x91d3 | 0x91d4 | 0x91d5 | 0x91d6 | 0x91f4 | 0x91f5 | 0x91f6 | 0x91f7
+        | 0xc8c7 | 0xc8d0 | 0xc8d1 | 0xc8d2 | 0xc8dc | 0xc91e => {}
+        _ => {
+            game.rtl_unreachable();
+        }
+    }
+}
+
+/// Execute door ASM ($8F:E8A3): the door's routine `script`, or the scroll
+/// updates its pointer names. Was `RunDoorSetupCode`.
+pub fn execute_door_code<H: ScriptHost + ?Sized>(script: u16, game: &mut H) {
+    use crate::constants::bank_87::*;
+    match script {
+        // Start Wrecked Ship treadmill - west / east entrance.
+        0xb971 | 0xe1d8 => {
+            let (animation, mechanism) = if script == 0xb971 {
+                (ADDR_K_ANIMTILES_WRECKED_SHIP_TRADMILL_RIGHT, 0xb64b)
+            } else {
+                (ADDR_K_ANIMTILES_WRECKED_SHIP_TRADMILL_LEFT, 0xb64f)
+            };
+            game.spawn_animated_tiles(animation as u16);
+            game.spawn_hardcoded_plm(4, 9, mechanism);
+        }
+        // Set up elevatube from south / north.
+        0xe26c | 0xe291 => {
+            {
+                let mut runtime = game.runtime();
+                let room = &mut runtime.session_mut().room;
+                if script == 0xe26c {
+                    room.set_main_native(2, (-256i16) as u16);
+                    room.set_main_native(1, 2496);
+                    room.set_main_native(3, (-32i16) as u16);
+                } else {
+                    // The original strings write little-endian bytes on every host.
+                    room.set_main_native(2, 256);
+                    room.main_variables[1] = 64;
+                    room.main_variables[3] = 32;
+                }
+            }
+            game.player_command(0);
+            game.spawn_hardcoded_plm(1, 0, 0xb8f9);
+        }
+        // Reset elevatube on north / south exit.
+        0xe301 | 0xe309 => {
+            if script == 0xe309 {
+                word_transfers!(game, ascending, 1; native(0xcd20) <- value(514));
+            }
+            game.player_command(1);
+        }
+        // To Ceres elevator shaft.
+        0xe4e0 => {
+            game.ram().write_byte(0x56, 7);
+            game.write_register(crate::display::registers::BGMODE as u16, 7);
+            word! { game, 256; REG_M7A, REG_M7D }
+            word! { game, 0; REG_M7B, REG_M7C }
+            word! {game; REG_M7X = 128; REG_M7Y = 1008; IRQ_ENABLE_MODE7 = 1; }
+            let mut runtime = game.runtime();
+            let room = &mut runtime.session_mut().room;
+            room.main_variables[0] = 34;
+            room.main_variables[1] = 60;
+        }
+        // From Ceres elevator shaft.
+        0xe513 => {
+            game.ram().write_byte(0x56, 9);
+            word!(game.IRQ_ENABLE_MODE7 = 0);
+        }
+        _ => {
+            if !crate::room_scrolls::apply(0x8f0000 | u32::from(script), &mut game.runtime()) {
+                game.rtl_unreachable();
+            }
+        }
+    }
 }
 
 /// What the room main code needs beyond the owned-Session view: the Samus
