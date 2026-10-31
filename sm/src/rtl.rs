@@ -238,8 +238,6 @@ unsafe fn finish_load_snes_state(native_game: &mut Game, complete_load: bool) {
 
 /// Read `n` bytes into `data`, reporting a short read through `fatal_error` as the
 /// original did. Returns whether all `n` bytes arrived.
-// LEGACY(message-text): "fread failed\n" names a C call that no longer exists;
-// it is kept only because room_world_dll.rs matches the exact Die text.
 ///
 /// # Safety
 /// `data` must be valid for writing `n` bytes.
@@ -250,7 +248,7 @@ unsafe fn read_file_block(f: &mut File, data: *mut c_void, n: usize) -> bool {
     let buffer = unsafe { core::slice::from_raw_parts_mut(data.cast::<u8>(), n) };
     let complete = crate::util::read_up_to(f, buffer) == n;
     if !complete {
-        unsafe { fatal_error(c"fread failed\n".as_ptr()) };
+        unsafe { fatal_error(c"state file ended early\n".as_ptr()) };
     }
     complete
 }

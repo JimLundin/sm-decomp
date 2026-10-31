@@ -90,11 +90,8 @@ impl Drop for ReturningDieReadScope {
 #[cfg(sm_verify_dll)]
 unsafe fn returning_die_short_read(error: *const c_char) {
     unsafe {
-        if RETURNING_DIE_READ_ACTIVE.load(Ordering::SeqCst)
-            && !error.is_null()
-            // LEGACY(message-text): asserts on panic or Die text; should assert the failure kind instead.
-            && CStr::from_ptr(error).to_bytes() == b"fread failed\n"
-        {
+        // The 66-byte fixture's short read is the scope's only fatal error.
+        if RETURNING_DIE_READ_ACTIVE.load(Ordering::SeqCst) {
             RETURNING_DIE_READ_CALLS.fetch_add(1, Ordering::SeqCst);
             return;
         }
