@@ -83,8 +83,6 @@ pub trait MenuRuntime:
     /// The carry the HDMA object handler ($88:84B9) is running with: the main game loop's, set
     /// from power-on, except while a message box restores the display, where it is clear.
     fn hdma_handler_carry(&self) -> bool;
-    /// The registered native image, if any, without the missing-image panic.
-    fn native_image_binding(&self) -> Option<sm_data::cartridge::RomImage>;
     fn shake_room_with_sound(&mut self, kind: u16);
     /// Spawn an HDMA object from bank `bank`; returns its slot.
     fn spawn_hdma(

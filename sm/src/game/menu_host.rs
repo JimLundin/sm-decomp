@@ -40,9 +40,6 @@ impl MenuRuntime for Game {
     fn shake_room_with_sound(&mut self, kind: u16) {
         visual_runtime::shake_room_with_sound(kind, self)
     }
-    fn native_image_binding(&self) -> Option<crate::rom::RomImage> {
-        self.capture_native_rom_binding()
-    }
     fn run_hdma_objects(&mut self) {
         // Closing the box ($85:8589) ends on a borrow, and nothing up to the handler sets C.
         self.message_box_hdma = true;

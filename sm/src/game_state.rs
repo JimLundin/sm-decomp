@@ -1742,6 +1742,9 @@ impl sm_game::cartridge::NativeImage for Game {
     fn native_image(&self) -> crate::rom::RomImage {
         self.capture_native_rom()
     }
+    fn native_image_binding(&self) -> Option<crate::rom::RomImage> {
+        self.capture_native_rom_binding()
+    }
 }
 
 impl sm_game::display::sequence::Registers for Game {
