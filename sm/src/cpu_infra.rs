@@ -1206,7 +1206,13 @@ pub unsafe fn RunOneFrameOfGame_Emulated(native_game: &mut Game) {
         }
         RunCpuUntilPC(0x808343, 0x85813c, game);
         (*(*game.g_snes).cpu).nmiWanted = true;
+        // An NMI that reads the controller latches the next frame's word.
+        let frame_input = game.input1_mut().currentState;
+        if let Some(input) = crate::oracle_mode::nmi_input() {
+            game.input1_mut().currentState = input;
+        }
         RunCpuUntilPC(0x80834a, 0x858142, game);
+        game.input1_mut().currentState = frame_input;
         word!(game.BUG_FIX_COUNTER = bug_fix_bak);
         game.commit_actor_canonical(actor_transition);
         mutation

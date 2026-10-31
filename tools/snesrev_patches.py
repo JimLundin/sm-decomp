@@ -40,10 +40,10 @@ from these tables; `--check` verifies it is current.
 The faithful oracle removes every CARRY site, every BUG_HOOK and the PEA $C2AE
 hook, even the invisible ones: none of them is needed to step frames. It keeps
 the ROM patches that let the oracle step whole frames without a running beam:
-beam spin-wait removals, the main-loop input read, the deferred message box,
+beam spin-wait removals, the deferred message box,
 the native-audio handshake and the host-owned soft reset. Kept "b" and "c"
-entries are open follow-ups that need harness work (input supplied one NMI
-earlier, an SPC sound driver, beam timing) and a capture replay.
+entries are open follow-ups that need harness work (an SPC sound driver, beam
+timing) and a capture replay.
 
 Routine names and descriptions of the original code come from Patrick
 Johnston's bank logs, https://patrickjohnston.org/bank/<bank>#f<address>.
@@ -701,15 +701,15 @@ ROM_PATCHES = [
     (0x8685BD, 'b', 'state', 'removed', 'patched',
      'Enemy projectile block collision - vertical - slope',
      'JMP $8676 retargeted to $F4A6 so Y is initialised; changes enemy projectile collisions on quarter/three-quarter slopes'),
-    (0x82F713, 'c', 'state', 'kept', 'patched',
+    (0x82F713, 'c', 'state', 'removed', 'patched',
      'Free space (new main loop: REP; JSL read input; JSR body; JSL wait NMI; JMP)',
-     "Moves the controller read from NMI to the start of each main-loop iteration, so requested NMIs outside the main loop (door scroll, message boxes, nested waits) no longer sample input. Kept: the replay inputs are aligned to this read; restoring the NMI read needs the harness to supply each frame's input one NMI earlier"),
-    (0x828944, 'a', 'none', 'kept', 'patched',
+     "Moves the controller read from NMI to the start of each main-loop iteration, so requested NMIs outside the main loop (door scroll, message boxes, nested waits) no longer sample input. Without it the oracle reads in NMI and the replay supplies each NMI the next frame's word (oracle_mode::set_next_frame_input). $80:95E1, $82:8944, $82:897A and $82:F713 must flip together"),
+    (0x828944, 'a', 'none', 'removed', 'patched',
      'Main game loop - entry',
-     'Replaces STZ $0DF4 + CLI with CLI; JMP $F713; $0DF4 (debug spare-CPU flag) is already 0 from the boot RAM clear'),
-    (0x82897A, 'a', 'none', 'kept', 'patched',
+     'Replaces STZ $0DF4 + CLI with CLI; JMP $F713; $0DF4 (debug spare-CPU flag) is already 0 from the boot RAM clear. Removed together with $82:F713'),
+    (0x82897A, 'a', 'none', 'removed', 'patched',
      'Main game loop - tail',
-     'JSL wait-for-NMI; PLP; BRA becomes PLP; RTS so the body is a subroutine of the $F713 loop, which does the wait'),
+     'JSL wait-for-NMI; PLP; BRA becomes PLP; RTS so the body is a subroutine of the $F713 loop, which does the wait. Removed together with $82:F713'),
     (0x80945C, 'a', 'none', 'kept', 'patched',
      'Read controller input',
      'Removes the $4212 auto-joypad-busy spin; the oracle does not advance the beam during CPU execution, the joypad is read after auto-read completes on hardware too, and carry is unused before the next CMP'),
@@ -905,9 +905,9 @@ ROM_PATCHES = [
     (0x8194E9, 'b', 'timing', 'kept', 'patched',
      'File select menu - index 21h: main to title sequence',
      'JML soft reset becomes JML $81F000; reset deferred one frame (host-owned reset)'),
-    (0x8095E1, 'b', 'state', 'kept', 'patched',
+    (0x8095E1, 'b', 'state', 'removed', 'patched',
      'NMI',
-     'Removes the controller read from NMI (moved to the main loop at $82:F713), so requested NMIs outside the main loop no longer update $8B/$8F/$97/$A3. Kept with $82:F713: the replay inputs are aligned to the main-loop read'),
+     'Removes the controller read from NMI (moved to the main loop at $82:F713), so requested NMIs outside the main loop no longer update $8B/$8F/$97/$A3. Removed together with $82:F713, $82:8944 and $82:897A'),
     (0x828A59, 'b', 'audio', 'kept', 'patched',
      'Sound state 1 - wait for APU sound request acknowledgement',
      'CMP $2141,x/BEQ becomes CLC x3; BRA: assumes immediate APU acknowledgement. Kept: the oracle uses native audio, so no SPC sound driver answers the ports'),
