@@ -94,7 +94,7 @@ pub fn execute_setup_code<H: ScriptHost + ?Sized>(script: u16, game: &mut H) {
                 ADDR_K_ANIMTILES_TOURIAN_STATUE_DRAYGON,
                 ADDR_K_ANIMTILES_TOURIAN_STATUE_RIDLEY,
             ] {
-                game.spawn_animated_tiles(animation as u16);
+                crate::animated_tiles::execution::leased::spawn(animation as u16, game);
             }
         }
         // Spawn pre-Phantoon room enemy projectile.
@@ -176,7 +176,7 @@ pub fn execute_door_code<H: ScriptHost + ?Sized>(script: u16, game: &mut H) {
             } else {
                 (ADDR_K_ANIMTILES_WRECKED_SHIP_TRADMILL_LEFT, 0xb64f)
             };
-            game.spawn_animated_tiles(animation as u16);
+            crate::animated_tiles::execution::leased::spawn(animation as u16, game);
             game.spawn_hardcoded_plm(4, 9, mechanism);
         }
         // Set up elevatube from south / north.

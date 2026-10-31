@@ -23,7 +23,7 @@ fn initialize_hot<H: crate::menus::host::Host + ?Sized>(tiles: u16, game: &mut H
     game.spawn_hdma(0x88, &SURFACE);
     game.spawn_hdma(0x88, &BACKGROUND);
     crate::hdma_objects::spawn_bg3_scroll(game);
-    game.spawn_animated_tiles(tiles);
+    crate::animated_tiles::execution::leased::spawn(tiles, game);
 }
 pub fn initialize_water<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     crate::liquid::LiquidWords::set(game, |words| &mut words.liquid.rising, 0xc428);

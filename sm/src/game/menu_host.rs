@@ -48,9 +48,6 @@ impl MenuRuntime for Game {
     fn rtl_unreachable(&mut self) -> bool {
         crate::rtl::report_unreachable(self)
     }
-    fn spawn_animated_tiles(&mut self, definition: u16) {
-        crate::game::animated_tiles::spawn(definition, self)
-    }
     fn shake_room_with_sound(&mut self, kind: u16) {
         visual_runtime::shake_room_with_sound(kind, self)
     }
@@ -136,9 +133,6 @@ impl MenuRuntime for Game {
     }
     fn hdma_effect(&mut self, effect: sm_game::hdma_objects::HdmaEffect, slot: u16) {
         sm_game::hdma_effects::apply(effect, slot, &mut Runtime::new(self));
-    }
-    fn spawn_palette_effect(&mut self, definition: u16) {
-        crate::game::palette_effects::spawn(definition, self)
     }
     fn request_reset(&mut self) {
         Game::request_reset(self)
@@ -240,14 +234,6 @@ const _: () = assert!(
 );
 
 impl sm_game::cinematic_host::Host for Game {
-    fn clear_palette_effects(&mut self) {
-        crate::game::palette_effects::clear(self);
-    }
-
-    fn set_palette_effects_enabled(&mut self, enabled: bool) {
-        crate::game::palette_effects::set_enabled(enabled, self);
-    }
-
     fn spawn_power_bomb(&mut self) {
         sm_game::explosion_window::spawn_power_bomb(self);
     }
@@ -262,10 +248,6 @@ impl sm_game::cinematic_host::Host for Game {
 
     fn advance_ending_tile_upload(&mut self) {
         crate::game::mode7_transfers::advance_ending_tile_upload(self);
-    }
-
-    fn advance_palette_effects(&mut self) {
-        crate::game::palette_effects::advance(self);
     }
 
     fn advance_intro_player(&mut self) {

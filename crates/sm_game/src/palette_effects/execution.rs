@@ -439,3 +439,22 @@ pub fn setup(host: &mut impl Host, ea: u32, slot: u16) {
         _ => host.invalid_palette_instruction(),
     }
 }
+
+/// The compatibility entries: each runs on a fresh lease of `game`.
+pub mod leased {
+    use crate::runtime_access::RuntimeAccess;
+    use crate::session_access::SessionAccess;
+
+    pub fn set_enabled<H: RuntimeAccess + ?Sized>(enabled: bool, game: &mut H) {
+        super::set_enabled(game.runtime().session_mut(), enabled);
+    }
+    pub fn clear<H: RuntimeAccess + ?Sized>(game: &mut H) {
+        super::clear(game.runtime().session_mut());
+    }
+    pub fn spawn<H: RuntimeAccess + ?Sized>(definition: u16, game: &mut H) {
+        super::spawn(&mut game.runtime(), definition);
+    }
+    pub fn advance<H: RuntimeAccess + ?Sized>(game: &mut H) {
+        super::advance(&mut game.runtime());
+    }
+}

@@ -332,7 +332,7 @@ pub fn fade_to_scene<H: crate::menus::host::Host + ?Sized>(palette: Palette, gam
         clear_japanese_tiles(game);
         crate::flow::set(game, crate::flow::Word::CinematicFunction, 0xa391);
         if matches!(palette, Palette::Gameplay) && (word!(game.INTRO_SAMUS_DISPLAY) & 0x8000) != 0 {
-            game.spawn_palette_effect(ADDR_K_PALFX_E1BC as u16);
+            crate::palette_effects::execution::leased::spawn(ADDR_K_PALFX_E1BC as u16, game);
         }
     }
 }

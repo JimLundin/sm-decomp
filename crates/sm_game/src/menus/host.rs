@@ -66,7 +66,6 @@ pub trait MenuRuntime:
     /// Begin entering the room at the current load station.
     fn enter_load_station(&mut self);
     fn request_reset(&mut self);
-    fn spawn_palette_effect(&mut self, definition: u16);
     /// Run bank $8B's cinematic sprite pre-instruction `pre` for `object`.
     fn cinematic_sprite_pre_instruction(&mut self, pre: u32, object: u16);
     /// Run bank $8B's cinematic sprite instruction; returns the next script cursor.
@@ -102,7 +101,6 @@ pub trait MenuRuntime:
     fn set_boss_byte(&mut self, area: u16, value: u8);
     /// The registered native image, if any, without the missing-image panic.
     fn native_image_binding(&self) -> Option<sm_data::cartridge::RomImage>;
-    fn spawn_animated_tiles(&mut self, definition: u16);
     fn shake_room_with_sound(&mut self, kind: u16);
     /// Spawn an HDMA object from bank `bank`; returns its slot.
     fn spawn_hdma(

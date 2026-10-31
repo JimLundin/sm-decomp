@@ -259,7 +259,7 @@ pub fn title_sequence<H: Host + ?Sized>(game: &mut H) -> u8 {
     run_function(game);
     CinematicObjects::Sprites.advance(game);
     CinematicObjects::Mode7.advance(game);
-    game.advance_palette_effects();
+    crate::palette_effects::execution::leased::advance(game);
     crate::cinematic_objects::draw_cinematic_sprites(false, game);
     crate::title_screen::request_title_skip(game);
     crate::title_sequence::handle_transitions(game);
@@ -295,7 +295,7 @@ pub fn intro<H: Host + ?Sized>(game: &mut H) -> u8 {
     CinematicObjects::Mode7.advance(game);
     CinematicObjects::Background.advance(game);
     crate::intro_pages::advance_text_glow(game);
-    game.advance_palette_effects();
+    crate::palette_effects::execution::leased::advance(game);
     crate::cinematic_display::draw_intro_sprites(game);
     crate::intro_objects::update_cinematic_transform(true, game);
     0
@@ -312,7 +312,7 @@ pub fn ending_and_credits<H: Host + ?Sized>(game: &mut H) -> u8 {
     CinematicObjects::Sprites.advance(game);
     advance_final_screen_background(game);
     crate::credits::advance_credits(game);
-    game.advance_palette_effects();
+    crate::palette_effects::execution::leased::advance(game);
     crate::cinematic_objects::draw_cinematic_sprites(true, game);
     crate::shooting_star_motion::advance_shooting_stars(game);
     crate::intro_objects::update_cinematic_transform(true, game);
