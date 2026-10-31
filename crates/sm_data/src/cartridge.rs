@@ -59,6 +59,21 @@ impl RomImage {
     }
 }
 
+impl From<&[u8]> for RomImage {
+    fn from(bytes: &[u8]) -> Self {
+        Self(Rc::new(Shared {
+            cells: bytes.iter().copied().map(Cell::new).collect(),
+            writes: Cell::new(0),
+        }))
+    }
+}
+
+impl From<Vec<u8>> for RomImage {
+    fn from(bytes: Vec<u8>) -> Self {
+        Self::from(bytes.as_slice())
+    }
+}
+
 /// A captured cartridge allocation with linear, native-endian record reads.
 pub struct RomRecord {
     pub image: RomImage,
