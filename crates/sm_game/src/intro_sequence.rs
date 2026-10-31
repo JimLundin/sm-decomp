@@ -139,9 +139,11 @@ const HATCH_SOUND: u8 = 0x23;
 
 /// Counts down `cinematic_function_timer`; true when it reaches zero or below.
 pub fn countdown<H: Host + ?Sized>(game: &mut H) -> bool {
-    cinematic!(game.FunctionTimer -= 1);
-    let expired = (cinematic!(game.FunctionTimer) & 0x8000) != 0;
-    cinematic!(game.FunctionTimer) == 0 || expired
+    cinematic_state::with_fields(game, |state| {
+        let timer = state.function_timer();
+        *timer = timer.wrapping_sub(1);
+        *timer == 0 || *timer & 0x8000 != 0
+    })
 }
 
 fn load_space_graphics<H: Host + ?Sized>(game: &mut H) {
