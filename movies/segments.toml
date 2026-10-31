@@ -1623,3 +1623,19 @@ start_frame = 0
 frames = 1501
 expect = ["room:B32E"]
 require_hit = ["ridley.swoop_velocities"]
+
+# The file select's copy and clear (tools/authored_inputs.py file-copy-clear):
+# after the death row's movie words, quit from the game over menu, copy the
+# saved file to another slot and clear one.
+
+[[segment]]
+id = "file-copy-clear"
+seed = "scenario-one-energy-crocomire:142"
+seed_sha256 = "63f0a5d9f7f38da95e78ec31ff64c94f2108f92b44c4652bcdf9661cb598d624"
+inputs = "authored-file-copy-clear.inputs"
+input_sha256 = "507fd14b02f9c9d31098422a91fadf87ed1f097de036b1bb867fad0deadab903"
+start_frame = 0
+frames = 3612
+expect = ["state:26", "state:4"]
+require_hit = ["file_menu.confirm_copy", "file_menu.copy_slot", "file_menu.confirm_clear", "file_menu.clear_slot"]
+pending = "awaiting the seeds-v1-file-copy-51a67d39af3c9628 ci-data upload"
