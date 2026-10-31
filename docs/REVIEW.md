@@ -163,7 +163,7 @@ VALIDATION Gate 2. (b) Step 1 starts now as its own lane.
    reported at the right tick, domain and field.
    Step 2: free-run and determinism modes, and the oracle digest lock
    (condition 8), measured on those five rooms.
-   Step 3: free run against the lock becomes the corpus gate (condition 8's
+   Step 3: free run against the lock becomes the frequent gate (condition 8's
    switch), plus the landing replay job. Step 4: scenarios as data with
    `cut`/`lock`; PLAN's regression rows become scenarios. Step 5 onward:
    retire whole-RAM comparison domain by domain, as in condition 1.
@@ -208,15 +208,20 @@ VALIDATION Gate 2. (b) Step 1 starts now as its own lane.
    - *Landing replay.* A commit costs one incremental build plus engine-only
      frames, so one job replays each commit of a landing (at most 25) in order
      and names the first red commit: ratchet (4)'s green prefix.
-   - *Adopt on measurement.* On the five step-1 rooms, report engine-only free
-     run time against lockstep. Adopt if it is at least 2x faster per row;
-     otherwise post the numbers in #6 and keep lockstep.
-   - *Switching the gate.* Free run against the lock becomes the corpus gate only
-     once it is green on the whole corpus and both routes, with every divergence
-     fixed or listed in LEGACY. Free run is stricter than lockstep: masked scratch
-     that later changes behaviour shows up. Until the switch, lockstep stays
-     authoritative, and the scheduled corpus keeps one full live lockstep run
-     until projections retire the RAM comparison.
+   - *Adopted (Jim, 2026-10-31).* Engine-only free run against the lock is the
+     frequent verifier. On the five step-1 rooms it measured about 1.4x faster
+     than lockstep (#6). Jim replaced the former 2x adoption bar: a hash per
+     scenario is deterministic and small, coverage grows by adding scenarios,
+     and engine optimisation widens the gap. Running lockstep across everything
+     on every change is too costly. Lockstep remains, to locate a fault and
+     confirm a failure.
+   - *Running the gate.* Check-lock runs on every PR and push over every locked
+     scenario. A mismatch reruns its 1,000-tick span live in lockstep in the
+     same job. A row that is not yet green against the faithful lock is listed
+     in LEGACY and stays on live patched lockstep until fixed (8(i)). Free run
+     is stricter than lockstep: masked scratch that later changes behaviour
+     shows up. The scheduled corpus keeps one full live lockstep run until
+     projections retire the RAM comparison.
 9. **Scenario sources: tricks for Map Rando (Jim, 2026-10-31).** Map Rando's
    point is the vanilla trick library, so scenarios should cover it. Its own
    patches are mostly QoL, so its few gameplay changes (suit damage, door
