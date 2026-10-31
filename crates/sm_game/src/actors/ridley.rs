@@ -3073,6 +3073,7 @@ pub fn calculate_swoop_velocities<L: Lease + ?Sized>(
     target_speed: u16,
     game: &mut L,
 ) {
+    crate::probe::hit("ridley.swoop_velocities");
     if target_speed != session_slot!(game, Ridley[RIDLEY].swoop_speed) {
         if (target_speed as i16)
             .wrapping_sub(session_slot!(game, Ridley[RIDLEY].swoop_speed) as i16)
