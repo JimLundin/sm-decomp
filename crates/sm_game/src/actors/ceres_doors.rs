@@ -432,3 +432,15 @@ pub fn animate_elevator_platform<H: Host + ?Sized>(game: &mut H) {
     let list = crate::ceres_door_data::platform_frame(game, frame);
     game.queue_mode7_transfer(0xa6, list);
 }
+
+// The door functions, palettes and spritemap are the dispatch IDs and the
+// decompilation's addresses; the steam's hidden state is the doors' one.
+const _: () = {
+    use crate::actors::ceres_doors::{self as c, door_function as f};
+    use crate::constants::bank_a6::*;
+    assert!((0xa6_0000 | f::RUMBLING_AND_EXPLOSIONS as u32) == 10942428);
+    assert!((0xa6_0000 | f::ELEVATOR_ANIMATIONS as u32) == 10942544);
+    assert!(c::DOOR_PALETTE == ADDR_K_CERES_DOOR_PALETTE as u16);
+    assert!(c::ESCAPE_DOOR_PALETTE == ADDR_WORD_A6F50C as u16);
+    assert!(c::DOOR_SPRITEMAP == ADDR_K_CERES_DOOR_SPRMAP_FAC7 as u16);
+};
