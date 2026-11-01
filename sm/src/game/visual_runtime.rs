@@ -29,7 +29,6 @@ use sm_game::visual_host::session_aliases as aliases;
 impl sm_game::room_visuals::StatueHost for crate::game_state::Game {
     fn finish_statue_animation(&mut self) {
         use sm_game::runtime_access::RuntimeAccess;
-        use sm_game::session_access::SessionAccess;
         if self.runtime_admissible() {
             self.runtime().session_mut().mechanisms.statue_finished = 0x8000;
         } else {
