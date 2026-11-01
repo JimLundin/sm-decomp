@@ -490,6 +490,7 @@ pub fn hovering_movement<L: Lease + ?Sized>(game: &mut L) -> bool {
 /// Ridley function - shoot fireballs - move to position ($A6:A782): rise with
 /// at least 80h speed, then shoot from the top. Was `CeresRidley_Func_13`.
 pub fn fireballs_move_to_position<L: Lease + ?Sized>(game: &mut L) {
+    crate::probe::hit("ceres_ridley.fireballs_move_to_position");
     let mut speed = abs16(session_slot!(game, Ridley[RIDLEY].y_velocity));
     if speed < 0x80 {
         speed = 128;

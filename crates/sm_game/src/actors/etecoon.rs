@@ -314,6 +314,7 @@ pub fn running_right<L: Lease>(game: &mut L, k: u16) {
 /// Jumps: against a wall it wall-jumps, on the floor it lands. Was
 /// `Etecoon_Func_10`.
 pub fn jumping<L: Lease>(game: &mut L, k: u16) {
+    crate::probe::hit("etecoon.jumping");
     freeze_if_quake(game, k);
     if move_horizontally(game, k) {
         let me = k as i32;

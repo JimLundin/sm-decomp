@@ -617,6 +617,7 @@ macro_rules! initialize_grapple_endpoints {
 }
 
 fn draygon_direction<H: Host + ?Sized>(pose: u16, game: &mut H) -> u16 {
+    crate::probe::hit("grapple.draygon_direction");
     let (toward, down, up, straight) = if pose as i32 == K_POSE_BE_FACE_L_DRAYGON_MOVE as i32 {
         (K_BUTTON_LEFT, 6, 8, 7)
     } else {

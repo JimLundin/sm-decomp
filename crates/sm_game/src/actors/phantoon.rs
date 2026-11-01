@@ -326,6 +326,7 @@ pub fn open_eye<S: BossState + ?Sized>(game: &mut S) {
 /// Instruction: picks the next figure-8 direction and whether flame rain
 /// comes first. Was `Phantoon_PickPatternForRound2`.
 pub fn pick_pattern<S: BossState + ?Sized>(game: &mut S) {
+    crate::probe::hit("phantoon.pick_pattern");
     session_slot!(game, Body[BODY].timer = 60);
     let roll = (game.roll_random() as i32 & 7) as usize;
     let closed: u16 = phantoon_tables::timer(game, Timer::EyeClosed, roll);

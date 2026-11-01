@@ -15,6 +15,7 @@ const PALETTE_BYTES: usize = 32;
 /// Load dachora palette ($A7:F535): copy the 32-byte palette at `source` into
 /// the enemy's sprite palette. Was `Dachora_Func_1`.
 pub fn load_palette(source: u16, k: u16, game: &mut impl BossState) {
+    crate::probe::hit("dachora.load_palette");
     // The palette index's bits 9-11 select the sprite palette.
     let palette = u16::swap_bytes(session_slot!(
         game,

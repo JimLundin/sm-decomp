@@ -392,6 +392,7 @@ pub fn echo<L: Lease>(game: &mut L, k: u16) {
 /// Speeds the run up to the top speed, shining once there, while falling
 /// onto the floor; the horizontal step. Was `Dachora_Func_6`.
 fn accelerate<L: Lease>(game: &mut L, k: u16) -> i32 {
+    crate::probe::hit("dachora.accelerate");
     let me = k as i32;
     if !below(session_slot!(game, Dachora[me].speed), TOP_SPEED) {
         if session_slot!(game, Dachora[me].shine) == 1 {
