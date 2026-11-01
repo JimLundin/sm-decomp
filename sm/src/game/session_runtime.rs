@@ -1185,6 +1185,8 @@ impl Runtime<'_> {
             10943916 => self.owned_call(sm_game::actors::zebetites::shot),
             11766625 => self.owned_call(sm_game::actors::gamet::initialize),
             11766686 => self.owned_call(sm_game::actors::gamet::main_ai),
+            11068296 => self.owned_call(actors::atomic::initialize),
+            11068355 => self.owned_call(actors::atomic::main_ai),
             10988577 => self.owned_call(sm_game::actors::kraid::main_ai),
             10997414 => self.owned_call(sm_game::actors::phantoon::main_ai),
             11191972 => self.owned_call(sm_game::actors::torizo::main_ai),
