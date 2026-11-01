@@ -4,7 +4,7 @@ use crate::game::music::queue_sfx2_max6;
 use crate::game::prelude::*;
 pub(crate) use sm_game::mother_brain_visuals::*;
 
-impl VisualsHost for Game {
+impl PaletteHost for Game {
     fn mother_brain_visuals(&self) -> &ImportedTables {
         &self.mother_brain_visuals
     }

@@ -1531,6 +1531,11 @@ impl sm_game::records::Records for Runtime<'_> {
         &self.game.records
     }
 }
+impl sm_game::mother_brain_visuals::PaletteHost for Runtime<'_> {
+    fn mother_brain_visuals(&self) -> &sm_game::mother_brain_visuals::ImportedTables {
+        &self.game.mother_brain_visuals
+    }
+}
 impl sm_game::player_position::PlayerFacts for Runtime<'_> {
     fn facing(&self) -> u8 {
         Runtime::byte(self, 0xa1e)

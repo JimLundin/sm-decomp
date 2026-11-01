@@ -26,9 +26,6 @@ use crate::actors::mother_brain_fight::{
     set_enemy_instruction_list, spawn_room_projectile,
 };
 use crate::actors::session_slots::session_slot;
-// The game's traits, for the calls made on it through `foreign`.
-use crate::actors::mother_brain_fight::Host as _;
-
 use crate::baby_metroid_tables;
 use crate::constants::bank_86::*;
 use crate::constants::bank_a9::*;
@@ -40,8 +37,6 @@ use crate::palette_copies::copy_rom_colors_to_palette;
 
 /// What the cutscene reaches beyond the baby Metroid's encounter.
 pub trait Host: crate::actors::baby_metroid_encounter::Host {
-    /// Turn Mother Brain's room lights off for the baby Metroid's last charge.
-    fn lights_off(&mut self);
     /// Heal Samus by the baby Metroid; false once she is full. Was
     /// `heal_by_baby_metroid`.
     fn heal_by_baby_metroid(&mut self) -> bool;
@@ -374,7 +369,7 @@ crate::dispatch::callback_dispatch! {
             session_slot!(game, BabyMetroidInCutscene[e].base.vram_tiles_index = 4256);
             queue_sfx3_max6(sound::BABY_METROID_DIES, game);
             crate::probe::hit("baby-metroid.fatal-blow");
-            game.foreign(|game| game.lights_off());
+            crate::mother_brain_visuals::lights_off(game);
             set_enemy_instruction_list(k, ADDR_K_BABY_METROID_ILIST_CFCE as u16, game);
             session_slot! { game, BabyMetroidInCutscene[e]; x_velocity = 0, y_velocity = 0 }
             session_slot!(game, MotherBrainBody[0i32].function = ADDR_LOCRET_A9C18D as u16);
@@ -436,7 +431,7 @@ crate::dispatch::callback_dispatch! {
     [11128048] finish_cutscene [] {
         let v2: u16 = (session_slot!(game, MotherBrainBody[BODY].grey_transition)).wrapping_add(1);
         session_slot!(game, MotherBrainBody[BODY].grey_transition = v2);
-        if game.foreign(|game| game.fade(Fade::LightsOn, (v2).wrapping_sub(1))) & 1 != 0 {
+        if crate::mother_brain_visuals::fade(Fade::LightsOn, (v2).wrapping_sub(1), game) & 1 != 0 {
             session_slot!(game, MotherBrainBody[BODY].function = function::MOTHER_BRAIN_PHASE_3_RECOVER_FROM_CUTSCENE_MAKE_SOME_DISTANCE);
             run_samus_command(samus_command::DISABLE_RAINBOW_AND_STAND_UP, game);
             player_mother_brain(3, game);

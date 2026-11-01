@@ -12,7 +12,6 @@ pub use crate::game::constants::bank_a6::*;
 pub use crate::game::constants::bank_a9::*;
 
 use crate::game::mother_brain_samus_vitals as vitals;
-use crate::game::mother_brain_visuals;
 use sm_game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
 
 pub use crate::types::ConstsB7;
@@ -152,10 +151,6 @@ impl baby_metroid_encounter::Host for Game {
 }
 
 impl baby_metroid_cutscene::Host for Game {
-    fn lights_off(&mut self) {
-        mother_brain_visuals::lights_off(self);
-    }
-
     fn heal_by_baby_metroid(&mut self) -> bool {
         vitals::heal_by_baby_metroid(self)
     }
@@ -285,20 +280,8 @@ impl sm_game::actors::mother_brain_fight::Host for Game {
         ));
     }
 
-    fn fade(&mut self, kind: sm_game::actors::mother_brain_fight::Fade, frame: u16) -> u8 {
-        crate::game::mother_brain_visuals::fade(kind, frame, self)
-    }
-
-    fn update_health_palette(&mut self) {
-        crate::game::mother_brain_visuals::update_health_palette(self);
-    }
-
     fn seal_wall(&mut self) {
         crate::game::mother_brain_visuals::seal_wall(self);
-    }
-
-    fn flicker_body(&mut self) {
-        crate::game::mother_brain_visuals::flicker_body(self);
     }
 
     fn drain_health_by_rainbow_beam(&mut self) {

@@ -834,7 +834,9 @@ pub trait OwnedWords {
 
 /// A lease on the game for one frame of an AI: the state steps run on it, and
 /// `foreign` runs the rest on the game it leases.
-pub trait Lease: State + escape_typewriter::Host {
+pub trait Lease:
+    State + escape_typewriter::Host + crate::mother_brain_visuals::PaletteHost
+{
     type Game: Host;
     fn foreign<T>(&mut self, action: impl FnOnce(&mut Self::Game) -> T) -> T;
 }
@@ -858,11 +860,7 @@ pub trait Host:
     fn set_projectile_spawn_r22(&mut self, value: u16);
     /// A dud shot reaction, in one actor lease.
     fn create_dud(&mut self);
-    /// Step a palette fade; nonzero once done. Was `mother_brain_visuals::fade`.
-    fn fade(&mut self, kind: Fade, frame: u16) -> u8;
-    fn update_health_palette(&mut self);
     fn seal_wall(&mut self);
-    fn flicker_body(&mut self);
     fn drain_health_by_rainbow_beam(&mut self);
     fn drain_ammo_by_rainbow_beam(&mut self);
     fn add_glass_hits(&mut self, slot: usize, amount: u16);
@@ -1149,14 +1147,14 @@ crate::dispatch::callback_dispatch! {
         }
     };
     [11120566] phase3_death_fade_out_body [] {
-        game.foreign(|game| game.flicker_body());
+        crate::mother_brain_visuals::flicker_body(game);
         generate_mixed_explosions_around_body(game);
         session_slot!(game, MotherBrainBody[BODY].function_timer, |old| old.wrapping_sub(1));
         if (session_slot!(game, MotherBrainBody[BODY].function_timer) & 0x8000) != 0 {
             session_slot!(game, MotherBrainBody[BODY].function_timer = 16);
             let v2: u16 = (session_slot!(game, MotherBrainBody[BODY].grey_transition)).wrapping_add(1);
             session_slot!(game, MotherBrainBody[BODY].grey_transition = v2);
-            if game.foreign(|game| game.fade(Fade::ToBlack, (v2).wrapping_sub(1))) & 1 != 0 {
+            if crate::mother_brain_visuals::fade(Fade::ToBlack, (v2).wrapping_sub(1), game) & 1 != 0 {
                 game.set_owned(OwnedWord::Bg2TilemapSize, 710);
                 word_transfers!(game, descending, 356; le(TILEMAP_STUFF, 355) <- value(824));
                 game.set_owned(OwnedWord::Bg2TilemapPending, 1);
@@ -1584,7 +1582,7 @@ crate::dispatch::callback_dispatch! {
             session_slot!(game, MotherBrainBody[e].function_timer = 8);
             let v2: u16 = (session_slot!(game, MotherBrainBody[e].grey_transition)).wrapping_add(1);
             session_slot!(game, MotherBrainBody[e].grey_transition = v2);
-            if game.foreign(|game| game.fade(Fade::FakeDeathToGray, (v2).wrapping_sub(1))) & 1 != 0 {
+            if crate::mother_brain_visuals::fade(Fade::FakeDeathToGray, (v2).wrapping_sub(1), game) & 1 != 0 {
                 session_slot!(game, MotherBrainBody[e].function = function::FAKE_DEATH_DESCENT_COLLAPSE_TUBES);
             }
         }
@@ -1848,7 +1846,7 @@ crate::dispatch::callback_dispatch! {
             session_slot!(game, MotherBrainBody[e].function_timer = 16);
             let v3: u16 = (session_slot!(game, MotherBrainBody[e].grey_transition)).wrapping_add(1);
             session_slot!(game, MotherBrainBody[e].grey_transition = v3);
-            game.foreign(|game| game.fade(Fade::DrainedToGray, (v3).wrapping_sub(1))) & 1 != 0
+            crate::mother_brain_visuals::fade(Fade::DrainedToGray, (v3).wrapping_sub(1), game) & 1 != 0
         } {
             session_slot!(game, MotherBrainBrain[BRAIN].base.health = -29536i32 as u16);
             session_slot!(game, MotherBrainBody[e].corpse_state = 1);
@@ -1874,7 +1872,7 @@ crate::dispatch::callback_dispatch! {
             session_slot!(game, MotherBrainBody[e].function_timer = 16);
             let v2: u16 = (session_slot!(game, MotherBrainBody[e].grey_transition)).wrapping_add(1);
             session_slot!(game, MotherBrainBody[e].grey_transition = v2);
-            game.foreign(|game| game.fade(Fade::DrainedFromGray, (v2).wrapping_sub(1))) & 1 != 0
+            crate::mother_brain_visuals::fade(Fade::DrainedFromGray, (v2).wrapping_sub(1), game) & 1 != 0
         } {
             session_slot!(game, MotherBrainBody[e].function = function::PHASE_2_REVIVE_SELF_WAKE_UP);
             session_slot!(game, MotherBrainBrain[BRAIN].brain_palette_enabled = 1);
@@ -2101,7 +2099,7 @@ crate::dispatch::callback_dispatch! {
             let color = game.owned(OwnedWord::Color(159 - index));
             game.set_owned(OwnedWord::Color(255 - index), color);
         }
-        game.foreign(|game| game.update_health_palette());
+        crate::mother_brain_visuals::update_health_palette(game);
         session_slot!(game, MotherBrainBody[e].brain_palette = 3584);
         session_slot! { game, MotherBrainBrain[BRAIN]; subfunction = 0, subfunction_timer = 0 }
         session_slot!(game, MotherBrainBody[e].function = function::PHASE_3_DEATH_SET_UP_BODY_FADE_OUT);
@@ -2178,7 +2176,7 @@ crate::dispatch::callback_dispatch! {
         session_slot!(game, MotherBrainBody[e].function_timer = 4);
         let v3: u16 = (session_slot!(game, MotherBrainBody[e].grey_transition)).wrapping_add(1);
         session_slot!(game, MotherBrainBody[e].grey_transition = v3);
-        if game.foreign(|game| game.fade(Fade::FakeDeathFromGray, (v3).wrapping_sub(1))) & 1 != 0 {
+        if crate::mother_brain_visuals::fade(Fade::FakeDeathFromGray, (v3).wrapping_sub(1), game) & 1 != 0 {
             session_slot!(game, MotherBrainBrain[BRAIN].brain_palette_enabled = 1);
             session_slot!(game, MotherBrainBody[e].form = 2);
             crate::probe::hit("mother-brain.form-2");
@@ -2212,7 +2210,7 @@ crate::dispatch::callback_dispatch! {
     [11121033] phase3_death_fade_to_grey {
         let v2: u16 = (session_slot!(game, MotherBrainBody[e].grey_transition)).wrapping_add(1);
         session_slot!(game, MotherBrainBody[e].grey_transition = v2);
-        if game.foreign(|game| game.fade(Fade::RealDeathToGray, (v2).wrapping_sub(1))) & 1 != 0 {
+        if crate::mother_brain_visuals::fade(Fade::RealDeathToGray, (v2).wrapping_sub(1), game) & 1 != 0 {
             set_brain_instruction_list(animation::BRAIN_CORPSE, game);
             session_slot!(game, MotherBrainBody[e]; function = function::PHASE_3_DEATH_CORPSE_TIPS_OVER,
                 function_timer = 256);
@@ -3076,7 +3074,7 @@ crate::dispatch::callback_dispatch! {
             handle_brain_palette(game);
         }
         if session_slot!(game, MotherBrainBrain[e].health_palette_enabled) != 0 {
-            game.foreign(|game| game.update_health_palette());
+            crate::mother_brain_visuals::update_health_palette(game);
         }
     };
 }

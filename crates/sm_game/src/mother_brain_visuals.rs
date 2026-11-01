@@ -1,15 +1,16 @@
 //! Mother Brain encounter palettes, fades, wall sealing, body flicker and HDMA spawns.
+use crate::actors::boss_lease::BossState;
 use crate::actors::host::BossEffects;
 use crate::actors::layouts::EnemyBase;
 use crate::actors::mother_brain::{MotherBrainBody, MotherBrainBrain};
 use crate::actors::mother_brain_fight::Fade;
-use crate::actors::session_slots::SlotAccess;
 use crate::constants::bank_86::ADDR_K_EPROJ_DUST_CLOUD_EXPLOSION;
 use crate::constants::enemy_properties::K_ENEMY_PROPS_INVISIBLE;
 use crate::display::hdma_spawn::HdmaObjectDefinition;
 use crate::imported::{Imported, word};
 use crate::menus::host::Host;
 use crate::palette_copies::copy_rom_colors_to_palette;
+use crate::runtime_access::SessionRam;
 use crate::session_slot as slot_view;
 use sm_data::mother_brain::{
     BACK_LEG_PALETTES_ADDRESS, BODY_PALETTES_ADDRESS, HealthPalettes, PALETTES_BYTES,
@@ -44,14 +45,19 @@ pub fn import(image: &sm_data::cartridge::RomImage) -> ImportedTables {
     }
 }
 
-/// The visuals' host: the menus host's RAM projection, cartridge and spawns,
-/// the boss effects' palette copies and spawn point, and the slot view.
-pub trait VisualsHost: Host + BossEffects + SlotAccess {
+/// The palette and layer steps' host: a boss state's slot words, palette
+/// copies and cartridge, the projected RAM words, and the encounter's tables.
+pub trait PaletteHost: BossState + SessionRam {
     fn mother_brain_visuals(&self) -> &ImportedTables;
 }
 
+/// The wall seal's host besides: the menus host's spawns and the boss effects'
+/// spawn point.
+pub trait VisualsHost: PaletteHost + Host + BossEffects {}
+impl<T: PaletteHost + Host + BossEffects + ?Sized> VisualsHost for T {}
+
 /// Step fade `kind` to `frame`; returns 1 once its colour list ends.
-pub fn fade<H: VisualsHost + ?Sized>(kind: Fade, frame: u16, game: &mut H) -> u8 {
+pub fn fade<H: PaletteHost + ?Sized>(kind: Fade, frame: u16, game: &mut H) -> u8 {
     let (table, colors) = match kind {
         Fade::ToBlack => (0xad_e9e8, 14),
         Fade::FakeDeathToGray => (0xad_ed8a, 3),
@@ -94,7 +100,7 @@ pub fn fade<H: VisualsHost + ?Sized>(kind: Fade, frame: u16, game: &mut H) -> u8
 }
 
 /// Mother Brain's body and back-leg palettes for her current health band.
-pub fn update_health_palette<H: VisualsHost + ?Sized>(game: &mut H) {
+pub fn update_health_palette<H: PaletteHost + ?Sized>(game: &mut H) {
     if slot_view!(game, MotherBrainBody[0].corpse_state) < 2 {
         return;
     }
@@ -115,7 +121,7 @@ pub fn update_health_palette<H: VisualsHost + ?Sized>(game: &mut H) {
 }
 
 /// The lights-off colours on the brain and leg lines.
-pub fn lights_off<H: VisualsHost + ?Sized>(game: &mut H) {
+pub fn lights_off<H: PaletteHost + ?Sized>(game: &mut H) {
     for line in [BRAIN_LINE, LEGS_LINE] {
         copy_rom_colors_to_palette(line, PALETTE_BANK, LIGHTS_OFF_COLORS, 14, game);
     }
@@ -139,7 +145,7 @@ pub fn seal_wall<H: VisualsHost + ?Sized>(game: &mut H) {
 }
 
 /// Flicker Mother Brain's body layer and visibility on alternate frames.
-pub fn flicker_body<H: VisualsHost + ?Sized>(game: &mut H) {
+pub fn flicker_body<H: PaletteHost + ?Sized>(game: &mut H) {
     let invisible = K_ENEMY_PROPS_INVISIBLE as u16;
     let screen = game.word(MAIN_SCREEN);
     if slot_view!(game, EnemyBase[0].frame_counter) & 1 != 0 {
