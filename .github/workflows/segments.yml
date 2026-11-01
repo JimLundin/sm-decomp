@@ -22,6 +22,10 @@ on:
         description: Check each row's ordered Cue/port trace against the physical-audio oracle
         type: boolean
         default: false
+      oracle_sample:
+        description: Also re-record a rotating sample of at least 30 faithful locks and fail on drift
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -43,6 +47,7 @@ jobs:
       - id: plan
         env:
           SELECTED: ${{ github.event.inputs.segments }}
+          ORACLE_SAMPLE: ${{ (github.event_name == 'schedule' || inputs.oracle_sample) && '1' || '' }}
         run: |
           python3 .github/scripts/plan_corpus.py
 
@@ -88,7 +93,7 @@ jobs:
     env:
       SM_ORACLE: ${{ inputs.oracle || 'patched' }}
       AUDIO_TRACE: ${{ inputs.audio_trace && '1' || '' }}
-    timeout-minutes: ${{ inputs.audio_trace && 125 || (matrix.kind == 'checkpoint' && 65 || 120) }}
+    timeout-minutes: ${{ (inputs.audio_trace || matrix.record_oracle) && 125 || (matrix.kind == 'checkpoint' && 65 || 120) }}
     strategy:
       fail-fast: false
       # The route and the corpus at eight each, with PR CI's four jobs, fill the
@@ -176,6 +181,7 @@ jobs:
           python -B .github/scripts/prepare_corpus_inputs.py
           if ($LASTEXITCODE -ne 0) { throw 'Input preparation failed' }
       - name: Run rows
+        if: '!matrix.record_oracle'
         timeout-minutes: ${{ inputs.audio_trace && 120 || (matrix.kind == 'checkpoint' && 60 || 120) }}
         env:
           SEGMENTS: ${{ matrix.segments }}
@@ -199,3 +205,14 @@ jobs:
           Select-String -Path corpus.log -Pattern '^(PASS|FAIL|Corpus|RESULT|DOMAIN)' | ForEach-Object { $_.Line } | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
           '```' | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
           if ($code -ne 0) { throw "Rows failed ($code)" }
+      - name: Compare fresh faithful oracle digests with the committed lock
+        if: matrix.record_oracle
+        timeout-minutes: 120
+        env:
+          SEGMENTS: ${{ matrix.segments }}
+        run: |
+          # Only ids, ticks, domains and hashes reach the console or summary.
+          python -B .github/scripts/lock_gate.py record-oracle 2>&1 | Tee-Object -FilePath oracle-sample.log
+          $code = $LASTEXITCODE
+          Get-Content oracle-sample.log | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+          if ($code -ne 0) { throw "Faithful oracle sample failed ($code)" }

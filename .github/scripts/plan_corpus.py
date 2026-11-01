@@ -4,7 +4,10 @@
 import json, os, pathlib, sys, tomllib
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[2] / 'tools'))
 import scenario  # noqa: E402
-rows = [row for row in scenario.rows() if 'chain' not in row]
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+from lock_gate import oracle_sample, oracle_slot  # noqa: E402
+all_rows = scenario.rows()
+rows = [row for row in all_rows if 'chain' not in row]
 bundles = scenario.read_lock().bundles
 movie = next(m for m in tomllib.load(open('movies/manifest.toml', 'rb'))['movies'] if m['category'] == 'any%')
 with open(os.environ['GITHUB_OUTPUT'], 'a') as out:
@@ -29,7 +32,20 @@ for r in rows:
     else:
         kind = 'checkpoint' if 'checkpoint' in r else ('seed' if 'seed' in r else ('route' if r['inputs'].startswith('corpus-') else 'captured'))
         identity = seed_bundle(r)[0] if kind in ('seed', 'checkpoint') else r['inputs']
-        groups.setdefault((kind, identity), []).append(r)
+        groups.setdefault((False, kind, identity), []).append(r)
+
+if os.environ.get('ORACLE_SAMPLE') == '1':
+    locked = scenario.check()
+    slot = oracle_slot()
+    sampled = set(oracle_sample(all_rows, locked, slot))
+    for row in all_rows:
+        if row['id'] not in sampled:
+            continue
+        # Route rooms are seeds too; the existing runtime-only restore supports
+        # explicitly selected chain ids and checks their pinned bundle members.
+        kind = 'seed' if 'seed' in row else ('route' if row['inputs'].startswith('corpus-') else 'captured')
+        identity = seed_bundle(row)[0] if kind == 'seed' else row['inputs']
+        groups.setdefault((True, kind, identity), []).append(row)
 def cost(kind, row):
     # Replay frames, plus, for a checkpoint row, the boot prefix it regenerates
     # when its checkpoint is rejected; that prefix replays about 5 times faster.
@@ -53,13 +69,16 @@ def chunks(kind, members):
 
 FRAME_CAP = sum(r.get('frames', 0) for g in groups.values() for r in g) / 12
 shards = []
-for (kind, identity), members in sorted(groups.items()):
+for (record, kind, identity), members in sorted(groups.items()):
     members.sort(key=lambda r: r.get('start_frame', 0))
     for i, chunk in enumerate(chunks(kind, members)):
         inputs = chunk[0]['inputs']
         asset, digest = seed_bundle(chunk[0]) if kind != 'route' else ('', '')
         name = identity.removeprefix('layout150-').removeprefix('seeds-v1-').split('-')[0] if kind in ('seed', 'checkpoint') else identity.removesuffix('.inputs')
-        shards.append({'name': f"{kind}-{name}-{i}", 'cost': sum(cost(kind, r) for r in chunk),
+        if record and 'chain' in chunk[0]:
+            name = chunk[0]['chain']
+        shards.append({'name': f"{'oracle-' if record else ''}{kind}-{name}-{i}",
+                       'record_oracle': record, 'cost': sum(cost(kind, r) for r in chunk),
                        'kind': kind, 'inputs': inputs,
                        'seed_asset': asset, 'seed_sha256': digest,
                        'route': inputs.removeprefix('corpus-').removesuffix('.inputs') if kind == 'route' else '',
@@ -70,6 +89,8 @@ if not shards:
     raise SystemExit('no runnable rows selected')
 with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as out:
     out.write(f"Selection: {source}\n\n")
+    if os.environ.get('ORACLE_SAMPLE') == '1':
+        out.write(f"Faithful oracle sample: {len(sampled)} locked scenarios, UTC slot {slot}\n\n")
     out.write(f"{sum(len(s['segments'].split()) for s in shards)} rows in {len(shards)} shards\n\n")
     out.write('Skipped:\n\n' + ''.join(f'- {i}: {why}\n' for i, why in skipped))
 with open(os.environ['GITHUB_OUTPUT'], 'a') as out:
