@@ -133,12 +133,14 @@ fn back<H: Host + ?Sized>(game: &mut H, options: &mut OptionsMenu) {
 fn toggle_language<H: Host + ?Sized>(game: &mut H, options: &mut OptionsMenu) {
     crate::probe::hit("options_settings.toggle_language");
     options.menu_option_index = 0;
-    session_word!(game.JapaneseTextFlag = u16::from(session_word!(game.JapaneseTextFlag) == 0));
+    crate::session_cohort::with(game, |_, words: &mut crate::session_words::SessionWords| {
+        words.japanese_text_flag = u16::from(words.japanese_text_flag == 0);
+    });
     highlight_language(game);
 }
 
 pub fn highlight_language<H: Host + ?Sized>(game: &mut H) {
-    let japanese = session_word!(game.JapaneseTextFlag) != 0;
+    let japanese = crate::session_words::current(game).japanese_text_flag != 0;
     for (offset, words, dimmed) in [
         (0x288, 12, japanese),
         (0x2c8, 12, japanese),
@@ -363,14 +365,15 @@ pub fn replace_screen<H: Host + ?Sized>(game: &mut H, options: &mut OptionsMenu)
     use super::options_objects::spawn;
     if options.menu_option_index != 0 {
         if options.menu_option_index & 4 != 0 {
-            let japanese = session_word!(game.JapaneseTextFlag) != 0;
+            let japanese = crate::session_words::current(game).japanese_text_flag != 0;
             copy_screen(0x1dffe + usize::from(japanese) * 0x800, !japanese, game);
             highlight_special(0, game);
             highlight_special(1, game);
             options.menu_option_index = 4;
             spawn(4, definition::SPECIAL_SETTING_MODE_BORDER, game);
         } else {
-            let source = 0x1cffe + usize::from(session_word!(game.JapaneseTextFlag) != 0) * 0x800;
+            let source = 0x1cffe
+                + usize::from(crate::session_words::current(game).japanese_text_flag != 0) * 0x800;
             copy_screen(source, true, game);
             // The controller initializer receives the final native word copied to tile zero.
             let tile = u16::from_ne_bytes([

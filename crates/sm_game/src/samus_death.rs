@@ -2,7 +2,7 @@
 //! and the suit explosion, with their palettes and tile uploads.
 use crate::constants::buttons::{K_BUTTON_A, K_BUTTON_L, K_BUTTON_R};
 use crate::menu_state::MenuScreens;
-use crate::menus::prelude::{CoroutineRet, owned, session_word};
+use crate::menus::prelude::CoroutineRet;
 use crate::player_transitions as pt;
 use crate::ram::{RawRam, word};
 use crate::runtime_access::RuntimeAccess;
@@ -108,10 +108,13 @@ pub fn flash_death<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
             screens.death.index = 0;
             screens.death.counter = 0;
             advance_suit_explosion(game, screens);
-            session_word!(
-                game.Substate = (word!(game.JOYPAD2_LAST) as i32 & 0xb0
-                    == K_BUTTON_A as i32 | K_BUTTON_L as i32 | K_BUTTON_R as i32)
-                    as u16
+            let stage = u16::from(
+                word!(game.JOYPAD2_LAST) as i32 & 0xb0
+                    == K_BUTTON_A as i32 | K_BUTTON_L as i32 | K_BUTTON_R as i32,
+            );
+            crate::session_cohort::with(
+                game,
+                |_, words: &mut crate::session_words::SessionWords| words.substate = stage,
             );
             word!(game.GAME_STATE += 1);
         }
@@ -123,7 +126,7 @@ fn death_palette<H: Host + ?Sized>(frame: Option<u16>, game: &mut H) {
     let pointer = crate::gameplay_tables::death_palette(
         game,
         frame.is_some(),
-        (session_word!(game.SamusSuitPaletteIndex) >> 1) as isize,
+        (crate::session_words::current(game).samus_suit_palette_index >> 1) as isize,
     )
     .wrapping_add(frame.unwrap_or(0));
     let address = game
@@ -161,7 +164,7 @@ fn queue_death_tiles<H: Host + ?Sized>(frame: u16, game: &mut H) {
 }
 
 fn whiten_death_palette<H: Host + ?Sized>(game: &mut H, screens: &mut MenuScreens) {
-    if session_word!(game.Substate) == 0 && screens.death.index != 0 {
+    if crate::session_words::current(game).substate == 0 && screens.death.index != 0 {
         const SHADES: [u16; 22] = [
             0x421, 0xc63, 0x14a5, 0x1ce7, 0x2529, 0x2d6b, 0x35ad, 0x4210, 0x4a52, 0x4e73, 0x5294,
             0x56b5, 0x5ad6, 0x5ef7, 0x6318, 0x6739, 0x6b5a, 0x6f7b, 0x739c, 0x77bd, 0x7bde, 0x7fff,
@@ -195,11 +198,14 @@ fn advance_suit_explosion<H: Host + ?Sized>(game: &mut H, screens: &mut MenuScre
         if screens.death.index.wrapping_sub(9) & 0x8000 == 0 {
             screens.death.counter = 21;
             whiten_death_palette(game, screens);
-            session_word!(game.Substate = 0);
+            crate::session_cohort::with(
+                game,
+                |_, words: &mut crate::session_words::SessionWords| words.substate = 0,
+            );
             return true;
         }
-        let recolor =
-            session_word!(game.Substate) == 0 || screens.death.index.wrapping_sub(2) & 0x8000 != 0;
+        let recolor = crate::session_words::current(game).substate == 0
+            || screens.death.index.wrapping_sub(2) & 0x8000 != 0;
         let index = 2 * usize::from(screens.death.index);
         let delay = game.runtime().table(Source::Native, 0x9bb823).byte(index);
         screens.options_menu.screen_index = u16::from(delay);

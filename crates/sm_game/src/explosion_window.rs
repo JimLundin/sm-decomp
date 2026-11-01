@@ -4,7 +4,7 @@ use crate::display::hdma_spawn::HdmaObjectDefinition;
 use crate::display_refresh::mult8x8;
 use crate::hdma::HdmaObject;
 use crate::menus::menu_tilemap::native_record;
-use crate::menus::prelude::{do_until, owned, session_word};
+use crate::menus::prelude::do_until;
 use crate::player_movement::forced;
 use crate::ram::RawRam as _;
 use crate::ram::word;
@@ -95,7 +95,7 @@ crate::typed_constants! { Consts89;
 }
 
 pub fn spawn_power_bomb<H: Host + ?Sized>(game: &mut H) {
-    if session_word!(game.TimeIsFrozenFlag) != 0 {
+    if crate::session_words::current(game).time_is_frozen_flag != 0 {
         session_cohort::with(game, |_, e: &mut Explosion| {
             e.bomb.explosion_status = 0x4000
         });
@@ -147,20 +147,24 @@ pub fn try_crystal_flash<H: Host + ?Sized>(game: &mut H) -> bool {
         word!(game.GAME_STATE),
         word!(game.JOYPAD1_LASTKEYS),
         word!(game.BUTTON_CONFIG_SHOOT_X),
-        session_word!(game.SamusYSpeed) == 0 && session_word!(game.SamusYSubspeed) == 0,
+        {
+            let words = crate::session_words::current(game);
+            words.samus_y_speed == 0 && words.samus_y_subspeed == 0
+        },
         inventory.health.current,
         inventory.reserve_health,
         inventory.ammunition.map(|supply| supply.current),
     ) {
         return false;
     }
-    session_word!(
-        game.SamusPose = if word!(game, 0xa1e;) as u8 == 4 {
-            0xd4
-        } else {
-            0xd3
-        }
-    );
+    let pose = if word!(game, 0xa1e;) as u8 == 4 {
+        0xd4
+    } else {
+        0xd3
+    };
+    crate::session_cohort::with(game, |_, words: &mut crate::session_words::SessionWords| {
+        words.samus_pose = pose;
+    });
     game.initialize_crystal_flash()
 }
 pub fn finish_power_bomb<H: Host + ?Sized>(object: &mut HdmaObject, v0: u16, game: &mut H) {

@@ -13,7 +13,7 @@ use crate::player_transitions::state::{
 /// Samus's movement handler after a grapple launch ($90:946E).
 const GRAPPLE_LAUNCH_MOVEMENT: MovementMode = MovementMode::from_raw(0x946e);
 use crate::actors::host::abs16;
-use crate::menus::prelude::{owned, session_word};
+
 use crate::projectile_geometry::SINE_COSINE;
 use crate::projectile_room::Axis;
 use crate::ram::word;
@@ -1010,36 +1010,43 @@ pub fn update_tiles<
 >(
     game: &mut H,
 ) {
-    if (session_word!(game.GrapplePointAnimTimer -= 1, reread) & 0x8000) != 0 {
-        session_word!(game.GrapplePointAnimTimer = 5);
-        session_word!(game.GrapplePointAnimPtr += 512);
-        if ((session_word!(game.GrapplePointAnimPtr)) as i16)
-            .wrapping_sub(grapple_aim::point_animation(game).end as i16)
-            >= 0
-        {
-            session_word!(game.GrapplePointAnimPtr = grapple_aim::point_animation(game).first);
-        }
-    }
-    let cursor = crate::display_refresh::queue_native_transfer(
-        word!(game.VRAM_WRITE_QUEUE_TAIL),
-        32,
-        |game: &H| session_word!(game.GrapplePointAnimPtr),
-        0x9a,
-        |_: &H| 0x6200,
+    crate::session_cohort::with_projected(
         game,
+        |game, words: &mut crate::session_words::SessionWords| {
+            let timer = &mut words.grapple_point_anim_timer;
+            *timer = timer.wrapping_sub(1);
+            if *timer & 0x8000 != 0 {
+                *timer = 5;
+                let tiles = &mut words.grapple_point_anim_ptr;
+                *tiles = tiles.wrapping_add(512);
+                if (*tiles as i16).wrapping_sub(grapple_aim::point_animation(game).end as i16) >= 0
+                {
+                    *tiles = grapple_aim::point_animation(game).first;
+                }
+            }
+            let tiles = words.grapple_point_anim_ptr;
+            let cursor = crate::display_refresh::queue_native_transfer(
+                word!(game.VRAM_WRITE_QUEUE_TAIL),
+                32,
+                |_: &H| tiles,
+                0x9a,
+                |_: &H| 0x6200,
+                game,
+            );
+            let index = (game.grapple_angle() >> 1 & 0xfe) >> 1;
+            crate::display_refresh::queue_native_transfer(
+                cursor,
+                128,
+                |game: &H| crate::gameplay_tables::grapple_point_tile(game, isize::from(index)),
+                0x9a,
+                |_: &H| 0x6210,
+                game,
+            );
+            if words.flare_counter.wrapping_sub(120) & 0x8000 != 0 {
+                words.flare_counter = words.flare_counter.wrapping_add(1);
+            }
+        },
     );
-    let index = (game.grapple_angle() >> 1 & 0xfe) >> 1;
-    crate::display_refresh::queue_native_transfer(
-        cursor,
-        128,
-        |game: &H| crate::gameplay_tables::grapple_point_tile(game, isize::from(index)),
-        0x9a,
-        |_: &H| 0x6210,
-        game,
-    );
-    if (session_word!(game.FlareCounter) as i32 - 120i32) & 0x8000 != 0 {
-        session_word!(game.FlareCounter += 1);
-    }
 }
 
 pub fn update<H: Host + ?Sized>(game: &mut H) {
@@ -1056,7 +1063,7 @@ pub fn update<H: Host + ?Sized>(game: &mut H) {
     );
     if game.session().player.grapple as i32 != 0x9bc4f0 & 0xffff
         && (game.session().player.grapple as i32 - (0x9bc856 & 0xffff)) & 0x8000 != 0
-        && (session_word!(game.SamusSuitPaletteIndex) & 4) == 0
+        && (game.session().presentation.palette().suit_index & 4) == 0
         && game.session().room.liquid.kind != 0
         && {
             r18 = game.player_bottom();

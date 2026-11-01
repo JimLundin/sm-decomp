@@ -68,9 +68,6 @@ pub(crate) use inventory;
 /// The BG scroll mirrors ([`crate::display::sequence::scroll::Word`]).
 macro_rules! scroll { ($($t:tt)*) => { owned!([$crate::display::sequence::scroll] $($t)*) }; }
 pub(crate) use scroll;
-/// The Session-owned words ([`crate::session_words::Word`]).
-macro_rules! session_word { ($($t:tt)*) => { owned!([$crate::session_words] $($t)*) }; }
-pub(crate) use session_word;
 /// Crocomire's melt words ([`crate::actors::crocomire_reactions::melt::Word`]).
 macro_rules! melt { ($($t:tt)*) => { owned!([$crate::actors::crocomire_reactions::melt] $($t)*) }; }
 pub(crate) use melt;

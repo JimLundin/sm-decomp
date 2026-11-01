@@ -25,6 +25,18 @@ pub trait Cohort: Clone + PartialEq + Default {
     fn session_words(session: &mut Session, visit: impl FnMut(usize, &mut u16));
 }
 
+/// Two groups held together, in order.
+impl<A: Cohort, B: Cohort> Cohort for (A, B) {
+    fn words(&mut self, mut visit: impl FnMut(usize, &mut u16)) {
+        self.0.words(&mut visit);
+        self.1.words(&mut visit);
+    }
+    fn session_words(session: &mut Session, mut visit: impl FnMut(usize, &mut u16)) {
+        A::session_words(session, &mut visit);
+        B::session_words(session, &mut visit);
+    }
+}
+
 /// The group as the host's projection holds it.
 pub fn load<C: Cohort, H: CompatibilityRam + ?Sized>(game: &H) -> C {
     let mut cohort = C::default();
@@ -32,15 +44,9 @@ pub fn load<C: Cohort, H: CompatibilityRam + ?Sized>(game: &H) -> C {
     cohort
 }
 
-/// Store the words `after` changed from `before`.
-pub fn store<C, H>(game: &mut H, before: &C, mut after: C)
-where
-    C: Cohort,
-    H: CompatibilityRam + RuntimeAccess + ?Sized,
-{
-    if after == *before {
-        return;
-    }
+/// The words `after` changed from `before`: each one's index, RAM address
+/// and value.
+fn changes<C: Cohort>(before: &C, mut after: C) -> Vec<(usize, usize, u16)> {
     let mut previous = Vec::new();
     before.clone().words(|_, word| previous.push(*word));
     let mut changes = Vec::new();
@@ -51,6 +57,19 @@ where
         }
         index += 1;
     });
+    changes
+}
+
+/// Store the words `after` changed from `before`.
+pub fn store<C, H>(game: &mut H, before: &C, after: C)
+where
+    C: Cohort,
+    H: CompatibilityRam + RuntimeAccess + ?Sized,
+{
+    if after == *before {
+        return;
+    }
+    let changes = changes(before, after);
     if game.session_retained() {
         use crate::session_access::SessionAccess as _;
         let mut lease = game.runtime();
@@ -83,6 +102,28 @@ where
     #[cfg(sm_verify_dll)]
     release(held);
     store(game, &before, cohort);
+    result
+}
+
+/// [`with`] for a host that cannot open a lease: the changed words go to the
+/// projection, low byte then high, as the named word stores did.
+pub fn with_projected<C, H, T>(game: &mut H, action: impl FnOnce(&mut H, &mut C) -> T) -> T
+where
+    C: Cohort,
+    H: CompatibilityRam + ?Sized,
+{
+    let before = load::<C, H>(game);
+    let mut cohort = before.clone();
+    #[cfg(sm_verify_dll)]
+    let held = hold(&mut cohort);
+    let result = action(game, &mut cohort);
+    #[cfg(sm_verify_dll)]
+    release(held);
+    if cohort != before {
+        for (_, at, value) in changes(&before, cohort) {
+            crate::projection::set_word(game, at, value);
+        }
+    }
     result
 }
 
@@ -157,6 +198,12 @@ mod tests {
         check_encoding::<SaveSelection>();
         check_encoding::<OptionsMenu>();
         check_encoding::<DeathSequence>();
+    }
+
+    #[test]
+    fn the_session_words_load_from_their_projected_words() {
+        check_encoding::<crate::session_words::SessionWords>();
+        check_encoding::<(OptionsMenu, crate::session_words::SessionWords)>();
     }
 
     #[test]
