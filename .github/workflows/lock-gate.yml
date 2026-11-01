@@ -83,8 +83,8 @@ jobs:
     timeout-minutes: 60
     strategy:
       fail-fast: false
-      # Beside the lockstep route and corpus at eight each and PR CI's four jobs.
-      max-parallel: 8
+      # Bound this replay matrix to six jobs; other workflows share runners.
+      max-parallel: 6
       matrix: ${{ fromJson(needs.plan.outputs.matrix) }}
     name: ${{ matrix.name }}
     defaults:

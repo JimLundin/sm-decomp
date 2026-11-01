@@ -93,9 +93,8 @@ jobs:
     timeout-minutes: 60
     strategy:
       fail-fast: false
-      # The route and the corpus at eight each, with PR CI's four jobs, fill the
-      # account's twenty hosted runners when a batch lands.
-      max-parallel: 8
+      # Bound this replay matrix to six jobs; other workflows share runners.
+      max-parallel: 6
       matrix: ${{ fromJson(needs.plan.outputs.matrix) }}
     name: ${{ matrix.name }}
     defaults:

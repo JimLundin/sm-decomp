@@ -50,9 +50,9 @@ SEEDS = pathlib.Path("target/seeds") / CAPTURE
 ROOMS = pathlib.Path(_route["rooms"])
 MOVIE = pathlib.Path(_route["movie"])
 MOVIE_FRAMES = _route["frames"]
-# The published routes share one matrix of about WAVES * PARALLEL jobs of
-# similar step totals; full-route.yml runs PARALLEL of them at a time.
-PARALLEL, WAVES = 8, 2
+# Keep sixteen balanced jobs across the published routes. The workflow
+# independently bounds how many jobs run at once.
+TARGET_JOBS = 16
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools"))
@@ -210,14 +210,14 @@ def restore(bundle):
 def jobs():
     """Pack this route's rooms into groups of similar step totals, heaviest group first.
 
-    Every published route's groups target the same size, a WAVES * PARALLEL
-    share of all their steps, so the combined matrix runs in WAVES waves.
+    Every published route's groups target one of TARGET_JOBS equal shares
+    of all their steps; concurrency is bounded by the workflow.
     Each room replays from its own seed, so a group need not be contiguous:
     rooms go heaviest first into the lightest group.
     """
     entries = chain()
     total = sum(int(entry["steps"]) for route in ROUTES if published(route)[0] for entry in chain(route))
-    target = total / (WAVES * PARALLEL)
+    target = total / TARGET_JOBS
     groups = [[] for _ in range(max(1, round(sum(int(e["steps"]) for e in entries) / target)))]
     for entry in sorted(entries, key=lambda entry: -int(entry["steps"])):
         min(groups, key=lambda group: sum(int(e["steps"]) for e in group)).append(entry)
