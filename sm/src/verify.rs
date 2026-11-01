@@ -1595,50 +1595,76 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
             }
             return Ok(failures);
         }
-        probes?;
-        expectations?;
+        // Metadata only: the raw error can contain private trace data or paths.
+        // Tick names the last visited input, not a claimed divergence location.
+        let last_tick = completed.checked_sub(1).map(|offset| first + offset);
+        probes.map_err(|error| post_replay_error("required-probes", last_tick, error))?;
+        expectations.map_err(|error| post_replay_error("required-facts", last_tick, error))?;
         if !hit_tail_complete {
-            return Err(
+            return Err(post_replay_error(
+                "probe-follow-up",
+                last_tick,
                 "required probe follow-up window did not complete within the replay frame limit"
                     .into(),
-            );
+            ));
         }
         if !expectation_tail_complete {
-            return Err(
+            return Err(post_replay_error(
+                "fact-follow-up",
+                last_tick,
                 "expectation follow-up window did not complete within the replay frame limit"
                     .into(),
-            );
+            ));
         }
         if std::env::var_os("SM_VERIFY_REQUIRE_CREDITS").is_some() && coverage.credits_frames() == 0
         {
-            return Err("replay never entered the ending/credits state (39)".into());
+            return Err(post_replay_error(
+                "credits-fact",
+                last_tick,
+                "replay never entered the ending/credits state (39)".into(),
+            ));
         }
         if let Some(trace) = audio_trace {
             use std::io::Write;
             let mut trace = trace.0.borrow_mut();
             if trace.frames != completed || trace.input.is_some() || trace.cue.is_some() {
-                return Err("audio trace has missing/unclosed input outputs".into());
+                return Err(post_replay_error(
+                    "audio-output-completion",
+                    last_tick,
+                    "audio trace has missing/unclosed input outputs".into(),
+                ));
             }
             let frames = trace.frames;
             let cues = trace.cues;
             let ports = trace.ports;
             writeln!(trace.writer,
                 "{{\"audio_trace_complete\":true,\"first\":{first},\"end\":{},\"frames\":{frames},\"cues\":{cues},\"ports\":{ports}}}", first + completed
-            ).map_err(|e| e.to_string())?;
-            trace.writer.flush().map_err(|e| e.to_string())?;
+            ).map_err(|e| post_replay_error("audio-footer-write", last_tick, e.to_string()))?;
+            trace
+                .writer
+                .flush()
+                .map_err(|e| post_replay_error("audio-footer-flush", last_tick, e.to_string()))?;
             game.audio_output = Default::default();
         }
         if let Some(path) = checkpoint_out {
             let end = first + completed;
-            if checkpoint::origin(&rom, seed_in.map(std::path::Path::new))? != origin {
-                return Err("seed changed during replay".into());
+            if checkpoint::origin(&rom, seed_in.map(std::path::Path::new))
+                .map_err(|error| post_replay_error("checkpoint-origin-read", last_tick, error))?
+                != origin
+            {
+                return Err(post_replay_error(
+                    "checkpoint-origin-changed",
+                    last_tick,
+                    "seed changed during replay".into(),
+                ));
             }
             if oracle_only || engine_only {
                 // The checkpoint resumes a paired replay; the side's state is
                 // already in the Game after every frame.
                 game.g_runmode = sm::cpu_infra::RM_BOTH as u8;
             }
-            checkpoint::save(std::path::Path::new(path), game, origin, &inputs, end)?;
+            checkpoint::save(std::path::Path::new(path), game, origin, &inputs, end)
+                .map_err(|error| post_replay_error("checkpoint-save", last_tick, error))?;
             eprintln!("Saved verifier checkpoint before input frame {end}: {path}");
         }
         #[cfg(sm_verify_dll)]
@@ -2097,6 +2123,12 @@ fn owned_player_snapshots_restore_state_ram_and_dsp() {
     player.state.tempo = 0x1111;
     game.restore_native_player_snapshot(Source::Local(&snapshot));
     assert_eq!(game.native_player_mut().state.tempo, 0x1111);
+}
+
+fn post_replay_error(category: &'static str, tick: Option<usize>, error: String) -> String {
+    let tick = tick.map_or_else(|| "unknown".into(), |tick| tick.to_string());
+    eprintln!("DIAGNOSTIC stage=post-replay category={category} tick={tick}");
+    error
 }
 
 // Consume actual owned sink outputs. Only one input's oracle operations are

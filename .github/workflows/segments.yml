@@ -191,9 +191,13 @@ jobs:
           if ($env:AUDIO_TRACE) { $rows += @('--audio-trace-directory', 'audio-traces') }
           $rawLog = Join-Path $env:RUNNER_TEMP 'corpus-raw.log'
           $currentRow = ''
+          # Only fixed diagnostic categories survive; raw exception text stays private.
+          $diagnostic = '^DIAGNOSTIC stage=(post-replay|audio-trace-validation|post-replay-provenance|corpus-post-replay) category=(required-probes|required-facts|probe-follow-up|fact-follow-up|credits-fact|audio-output-completion|audio-footer-write|audio-footer-flush|checkpoint-origin-read|checkpoint-origin-changed|checkpoint-save|trace-read|trace-format|header-missing|header-provenance|footer-duplicate|output-stream|output-kind|footer-incomplete|output-counts|source-read|source-changed|rom-input-read|rom-input-changed|dll-read|dll-changed|inputs-changed|checkpoint-read|checkpoint-frame) tick=(unknown|[0-9]+)$'
           python tools/verify_dll.py rom/sm.smc --corpus scenarios --no-build --direct @rows 2>&1 | Tee-Object -FilePath $rawLog | ForEach-Object {
             if (-not $env:AUDIO_TRACE) { $_ }
             elseif ($_ -match '^SEGMENT ([A-Za-z0-9-]+)') { $currentRow = $Matches[1] }
+            elseif ($_ -match $diagnostic) { "DIAGNOSTIC row=${currentRow} stage=$($Matches[1]) category=$($Matches[2]) tick=$($Matches[3])" }
+            elseif ($_ -match '^FAIL ([A-Za-z0-9-]+): verifier exit ([0-9]+)$') { "FAIL $($Matches[1])"; "EXIT row=$($Matches[1]) code=$($Matches[2])" }
             elseif ($_ -match '^(PASS|FAIL) ([A-Za-z0-9-]+)') { "$($Matches[1]) $($Matches[2])" }
             elseif ($_ -match '^Verified ([0-9]+) frames: ([0-9]+) failing frames') { "RESULT ${currentRow}: $($Matches[1]) frames, $($Matches[2]) failing frames" }
             elseif ($_ -match '^@([0-9]+): (?:Observation|Free-run) divergence in ([A-Za-z0-9_.\[\]-]+)') { "DOMAIN ${currentRow}: tick $($Matches[1]), field $($Matches[2])" }
@@ -202,7 +206,7 @@ jobs:
           $code = $LASTEXITCODE
           "### $env:SEGMENTS" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
           '```' | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
-          Select-String -Path corpus.log -Pattern '^(PASS|FAIL|Corpus|RESULT|DOMAIN)' | ForEach-Object { $_.Line } | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+          Select-String -Path corpus.log -Pattern '^(PASS|FAIL|Corpus|RESULT|DOMAIN|DIAGNOSTIC|EXIT)' | ForEach-Object { $_.Line } | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
           '```' | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
           if ($code -ne 0) { throw "Rows failed ($code)" }
       - name: Compare fresh faithful oracle digests with the committed lock

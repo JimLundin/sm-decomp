@@ -881,6 +881,8 @@ def run_corpus(root, args):
     passed = set()
     for segment in sorted(runnable, key=lambda item: (item["start_frame"], str(item["inputs"]))):
         name = segment["id"]
+        # Associate diagnostics from prefix setup with this row as well as its replay.
+        print(f"SEGMENT {name}: setup", flush=True)
         try:
             if source_hash(root) != source:
                 raise RuntimeError("source changed during corpus; rebuild before continuing")
@@ -917,7 +919,8 @@ def run_corpus(root, args):
                 print(f"SEGMENT {name}: seed {segment['seed']}, budget {segment['frames']} frames", flush=True)
                 code, _ = corpus_child(with_divergence_report(with_audio_trace(replay, name), name), root)
                 if not input_matches(segment):
-                    raise RuntimeError("inputs changed during seeded corpus segment")
+                    raise diagnostic_error("corpus-post-replay", "inputs-changed",
+                                           RuntimeError("inputs changed during seeded corpus segment"))
                 if code:
                     failures.add(name)
                     print(f"FAIL {name}: verifier exit {code}", flush=True)
@@ -940,14 +943,19 @@ def run_corpus(root, args):
                 if checkpoint is None:
                     raise RuntimeError("checkpoint regeneration failed")
             if not input_matches(segment):
-                raise RuntimeError("inputs changed during corpus segment")
+                raise diagnostic_error("corpus-post-replay", "inputs-changed",
+                                       RuntimeError("inputs changed during corpus segment"))
             if code:
                 failures.add(name)
                 print(f"FAIL {name}: verifier exit {code}", flush=True)
             else:
-                end = checkpoint_frame(output)
+                try:
+                    end = checkpoint_frame(output)
+                except OSError as error:
+                    raise diagnostic_error("corpus-post-replay", "checkpoint-read", error)
                 if end is None or not start < end <= start + segment["frames"]:
-                    raise RuntimeError("segment checkpoint has an unexpected input frame")
+                    raise diagnostic_error("corpus-post-replay", "checkpoint-frame",
+                                           RuntimeError("segment checkpoint has an unexpected input frame"))
                 passed.add(name)
                 print(f"PASS {name}", flush=True)
         except (OSError, RuntimeError, ValueError) as error:
@@ -974,31 +982,50 @@ def audio_file_hash(path):
     return digest.hexdigest()
 
 
+def diagnostic_error(stage, category, error):
+    """Publish static metadata; preserve the existing exception and exit status."""
+    print(f"DIAGNOSTIC stage={stage} category={category} tick=unknown", flush=True)
+    return error
+
+
 def check_audio_trace(path, identity):
+    try:
+        _check_audio_trace(path, identity)
+    except OSError as error:
+        raise diagnostic_error("audio-trace-validation", "trace-read", error)
+    except (ValueError, KeyError, TypeError, AttributeError) as error:
+        # Malformed metadata is not a gameplay comparison and carries no raw text.
+        raise diagnostic_error("audio-trace-validation", "trace-format", error)
+
+
+def _check_audio_trace(path, identity):
+    def failure(category, message):
+        return diagnostic_error("audio-trace-validation", category, RuntimeError(message))
+
     counts = {"InputBegin": 0, "InputComplete": 0, "CueBegin": 0,
               "CueComplete": 0, "Port": 0, "ExecutionBegin": 0}
     footer = None
     with Path(path).open("r", encoding="utf-8") as stream:
         first = stream.readline()
         if not first:
-            raise RuntimeError("missing audio trace header")
+            raise failure("header-missing", "missing audio trace header")
         header = json.loads(first)
         if header.get("audio_trace") != 1 or any(header.get(k) != v for k, v in identity.items()):
-            raise RuntimeError("audio trace source/native/ROM/input provenance differs")
+            raise failure("header-provenance", "audio trace source/native/ROM/input provenance differs")
         for line in stream:
             if line.startswith("{"):
                 if footer is not None:
-                    raise RuntimeError("duplicate audio trace completion")
+                    raise failure("footer-duplicate", "duplicate audio trace completion")
                 footer = json.loads(line)
                 continue
             if footer is not None or not line.startswith("AudioOutput "):
-                raise RuntimeError("gapped/unrecognized audio output stream")
+                raise failure("output-stream", "gapped/unrecognized audio output stream")
             kind = line[len("AudioOutput "):].split(" ", 1)[0]
             if kind not in counts:
-                raise RuntimeError("unknown actual audio output kind")
+                raise failure("output-kind", "unknown actual audio output kind")
             counts[kind] += 1
     if not footer or footer.get("audio_trace_complete") is not True:
-        raise RuntimeError("missing/incomplete audio trace output")
+        raise failure("footer-incomplete", "missing/incomplete audio trace output")
     frames = footer.get("frames")
     if (not isinstance(frames, int) or frames <= 0 or footer.get("first") != header.get("first")
             or footer.get("end") != header["first"] + frames
@@ -1007,7 +1034,7 @@ def check_audio_trace(path, identity):
             or counts["ExecutionBegin"] != 2 * frames
             or counts["CueBegin"] != counts["CueComplete"]
             or counts["CueBegin"] != footer.get("cues") or counts["Port"] != footer.get("ports")):
-        raise RuntimeError("audio trace visited-frame/request counts differ")
+        raise failure("output-counts", "audio trace visited-frame/request counts differ")
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
@@ -1297,13 +1324,29 @@ def main():
         host.sm_verify.restype = ctypes.c_int
         result = host.sm_verify(str(rom).encode("utf-8"), str(inputs).encode("utf-8"),
                                 args.frames or 0)
-    if source_hash(root) != source:
-        raise RuntimeError("source changed during replay; result applies only to the printed source")
+    try:
+        unchanged_source = source_hash(root) == source
+    except OSError as error:
+        raise diagnostic_error("post-replay-provenance", "source-read", error)
+    if not unchanged_source:
+        raise diagnostic_error("post-replay-provenance", "source-changed",
+                               RuntimeError("source changed during replay; result applies only to the printed source"))
     if args.audio_trace is not None:
-        if audio_file_hash(rom) != audio_identity["rom"] or audio_file_hash(inputs) != audio_identity["inputs"]:
-            raise RuntimeError("audio trace ROM/input file changed during replay")
-        if audio_file_hash(dll) != audio_dll_hash:
-            raise RuntimeError("audio trace DLL changed during replay")
+        try:
+            unchanged_files = (audio_file_hash(rom) == audio_identity["rom"]
+                               and audio_file_hash(inputs) == audio_identity["inputs"])
+        except OSError as error:
+            raise diagnostic_error("post-replay-provenance", "rom-input-read", error)
+        if not unchanged_files:
+            raise diagnostic_error("post-replay-provenance", "rom-input-changed",
+                                   RuntimeError("audio trace ROM/input file changed during replay"))
+        try:
+            unchanged_dll = audio_file_hash(dll) == audio_dll_hash
+        except OSError as error:
+            raise diagnostic_error("post-replay-provenance", "dll-read", error)
+        if not unchanged_dll:
+            raise diagnostic_error("post-replay-provenance", "dll-changed",
+                                   RuntimeError("audio trace DLL changed during replay"))
         if result == 0:
             check_audio_trace(args.audio_trace, audio_identity)
     print(f"Verifier total: {time.perf_counter() - started:.2f}s", file=sys.stderr)
