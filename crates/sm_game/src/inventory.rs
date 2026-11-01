@@ -226,6 +226,14 @@ pub fn set<H: CompatibilityRam + ?Sized>(h: &mut H, word: Word, value: u16) {
     crate::projection::set_word(h, word.address(), value);
 }
 
+/// Explicit compatibility adoption of the actual selected byte image.
+pub fn decode(bytes: &impl Fn(usize) -> u8) -> Inventory {
+    use crate::session_cohort::Cohort as _;
+    let mut inventory = Inventory::default();
+    inventory.words(|at, field| *field = u16::from_le_bytes([bytes(at), bytes(at + 1)]));
+    inventory
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -279,12 +287,4 @@ mod tests {
         assert_eq!(host.0.inventory.ammunition[2].maximum, 0x0456);
         assert_eq!(get(&host, Word::ReserveHealth), 0x0123);
     }
-}
-
-/// Explicit compatibility adoption of the actual selected byte image.
-pub fn decode(bytes: &impl Fn(usize) -> u8) -> Inventory {
-    use crate::session_cohort::Cohort as _;
-    let mut inventory = Inventory::default();
-    inventory.words(|at, field| *field = u16::from_le_bytes([bytes(at), bytes(at + 1)]));
-    inventory
 }
