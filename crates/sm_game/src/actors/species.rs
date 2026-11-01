@@ -17,10 +17,9 @@ use crate::actors::{
     crocomire_reactions, dachora_run, dragon, draygon_death, draygon_eye, draygon_flight,
     draygon_grab, draygon_host, draygon_sweep, elevator, escape_critters, etecoon, evir, fire_arc,
     fire_pillar, flies, fune, geruta, gunship, kago, kraid, magdollite, metroid, mini_crocomire,
-    mini_kraid, mochtroid, morph_ball_eye, multiviola, oum, phantoon, phantoon_actions, polyp,
-    puyo, reflec, rinka, rio, rippers, roach, shutters, sidehopper, skree, space_pirates,
-    spike_platform, spore_spawn, squeept, statues, tatori, torizo, tripper, waver, work_robot,
-    wrecked_ship_spark, yard, zoa,
+    mini_kraid, mochtroid, multiviola, oum, phantoon, phantoon_actions, polyp, puyo, reflec, rinka,
+    rio, rippers, roach, shutters, sidehopper, skree, space_pirates, spike_platform, spore_spawn,
+    squeept, statues, tatori, torizo, tripper, waver, work_robot, wrecked_ship_spark, yard, zoa,
 };
 use crate::combat_rules::LatchMode;
 use crate::enemy_projectiles::host::Effects as _;
@@ -686,15 +685,9 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         10726351 => sidehopper::main_ai(game),
         // Bank $A8.
         11045147 => evir::main_ai(game),
-        11047000 => morph_ball_eye::initialize(game),
         11057165 => beetom::main_ai(game),
         11058734 => beetom::touch(game),
         11058860 => beetom::shot(game),
-        11047138 => {
-            if let Some(function) = morph_ball_eye::main_ai(game) {
-                pre_instruction(function, game);
-            }
-        }
         11053955 => kago::shot(game),
         11055370 => pre_instruction(magdollite::main_ai(game), game),
         11789909 => pre_instruction(escape_critters::main_ai(game), game),
@@ -741,8 +734,6 @@ pub trait PreInstructionHost:
     fn native_pre_instruction(&mut self, ea: u32, k: u16);
     /// Magdollite's original diagnostic for an undefined lava height.
     fn warn_lava_height(&mut self, value: i32);
-    /// Start the morph ball eye's beam effect.
-    fn initialize_morph_eye_beam(&mut self);
 }
 
 /// An enemy species' pre-instruction, keyed by its address. The current
@@ -868,12 +859,6 @@ pub fn pre_instruction<H: PreInstructionHost>(ea: u32, game: &mut H) {
         11192360 | 11195885 => torizo::attacking(k, game),
         11199557 => statues::lower_norfair(game, k),
         11200430 => statues::wrecked_ship(game, k),
-        11047153 | 11047214 | 11047264 | 11047374 => {
-            if morph_ball_eye::run_function(ea as u16, k, game) {
-                game.initialize_morph_eye_beam();
-                morph_ball_eye::start_tracking(k, game);
-            }
-        }
         11055620 => {
             let (actor, diagnostic) = magdollite::grow_arm(game);
             if let Some(value) = diagnostic {

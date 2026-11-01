@@ -141,12 +141,16 @@ impl sm_game::actors::species::PreInstructionHost for Game {
     fn warn_lava_height(&mut self, value: i32) {
         unsafe { crate::c_library::printf(c"Y undefined %d!\n".as_ptr(), value) };
     }
-    fn initialize_morph_eye_beam(&mut self) {
-        crate::game::visual_runtime::initialize_morph_eye_beam(self);
-    }
     fn native_pre_instruction(&mut self, _ea: u32, _k: u16) {
         // Every pre-instruction routine is in sm_game's species table now.
         crate::rtl::report_unreachable(self);
+    }
+}
+
+/// The morph ball eye runs on the scheduler's lease; its beam starts on the game.
+impl sm_game::actors::morph_ball_eye::Host for Runtime<'_> {
+    fn start_beam(&mut self) {
+        self.foreign(crate::game::visual_runtime::initialize_morph_eye_beam);
     }
 }
 
@@ -1228,6 +1232,8 @@ impl Runtime<'_> {
             11069070 => self.owned_call(sm_game::actors::wrecked_ship_spark::main_ai),
             11069486 => self.owned_call(sm_game::actors::blue_brinstar_face_block::initialize),
             11069614 => self.owned_call(sm_game::actors::blue_brinstar_face_block::main_ai),
+            11047000 => self.owned_call(sm_game::actors::morph_ball_eye::initialize),
+            11047138 => self.owned_call(sm_game::actors::morph_ball_eye::main_ai),
             10988577 => self.owned_call(sm_game::actors::kraid::main_ai),
             10997414 => self.owned_call(sm_game::actors::phantoon::main_ai),
             11191972 => self.owned_call(sm_game::actors::torizo::main_ai),
