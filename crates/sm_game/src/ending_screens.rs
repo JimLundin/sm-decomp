@@ -1,7 +1,7 @@
 //! Ending and post-credits screens: sprite pairs, gunship, Samus, clouds, time and zoom.
 use crate::cinematic::*;
 use crate::cinematic_objects::CinematicObjects;
-use crate::cinematic_state::{Cinematic, Word, cinematic};
+use crate::cinematic_state::{Cinematic, Word};
 use crate::menus::prelude::words;
 use crate::ram::RawRam as _;
 use crate::ram::{word, words as ram_words};
@@ -315,7 +315,7 @@ pub fn advance_postcredits_samus_reveal<H: crate::menus::host::Host + ?Sized>(
     // decomposition its last blue delta ($7E:2FFE); each later one the
     // palette index the previous initializer loaded.
     let mut parameter = if initial && under_ten {
-        cinematic!(game.TilemapStuff[2047])
+        crate::session_cohort::load::<crate::cinematic::FadePlanes, _>(game).0[2047]
     } else {
         word!(game.GAME_TIME_HOURS)
     };

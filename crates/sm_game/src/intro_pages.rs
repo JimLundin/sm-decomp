@@ -1,7 +1,7 @@
 //! Intro narrative pages, scene entry, crossfades and Japanese text continuations.
 //! Numeric callbacks select these operations; Game retains the cinematic state.
 use crate::cinematic_objects::CinematicObjects;
-use crate::cinematic_state::{Array, Cinematic, cinematic};
+use crate::cinematic_state::{Array, Cinematic};
 use crate::imported::Imported;
 use crate::ram::RawRam as _;
 
@@ -506,9 +506,14 @@ pub fn draw_japanese_text<H: crate::menus::host::Host + ?Sized>(
 ) -> u16 {
     set_cinematic_tilemap_updates(false, cine);
     if restore_palette {
-        for color in 17..20 {
-            cinematic!(game.PaletteBuffer[color] = intro_color(game, color));
-        }
+        crate::session_cohort::with(
+            game,
+            |game, palette: &mut crate::cinematic::PaletteBuffer| {
+                for color in 17..20 {
+                    palette.0[color] = intro_color(game, color);
+                }
+            },
+        );
     }
     clear_japanese_tiles(game);
     for &line in lines {

@@ -11,7 +11,6 @@ use crate::cinematic::{advance_cinematic_fade, clear_cinematic_sprites, set_cine
 use crate::cinematic_host::Host;
 use crate::cinematic_objects::CinematicObjects;
 use crate::cinematic_state::Cinematic;
-use crate::cinematic_state::cinematic;
 use crate::display_refresh::GraphicsAsset;
 use crate::menu_state::OptionsMenu;
 use crate::menus::prelude::{owned, scroll};
@@ -119,8 +118,8 @@ fn start_demo_logo<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     *cine.y_subspeed() = 0;
     *cine.skip_to_title_index() = 3;
     crate::word_transfers!(game, ascending, 128; le(PALETTE_BUFFER, 128) <- rom(TITLE_PALETTES, 128));
-    cinematic!(game.PaletteBuffer[201] = 0x7fff);
-    cinematic!(game.PaletteBuffer[202] = 32128);
+    crate::cinematic::set_cinematic_colors(&[201], 0x7fff, game);
+    crate::cinematic::set_cinematic_colors(&[202], 32128, game);
     crate::palette_effects::execution::leased::clear(game);
     crate::palette_effects::execution::leased::spawn(TITLE_GLOW_1, game);
     crate::palette_effects::execution::leased::spawn(TITLE_GLOW_2, game);

@@ -1,6 +1,5 @@
 //! Cinematic palettes, fades, tilemap queueing and sprite resumption over RAM.
 use crate::cinematic_state::Cinematic;
-use crate::cinematic_state::cinematic;
 use crate::ram::RawRam as _;
 use crate::ram::word;
 
@@ -60,28 +59,104 @@ pub fn advance_cinematic_fade<H: crate::menus::host::Host + ?Sized>(
     complete
 }
 
+/// The cinematic palette fades' working planes: the BG2 tilemap buffer
+/// $7E:2000..$7E:2FFF (`actors.extended.blocks[4..6]`), by word. Word
+/// `index` of plane `n` (0..8) is word `256 * n + index`.
+#[derive(Clone, Debug, PartialEq)]
+pub struct FadePlanes(pub Box<[u16; 2048]>);
+
+impl Default for FadePlanes {
+    fn default() -> Self {
+        Self(Box::new([0; 2048]))
+    }
+}
+
+impl crate::session_cohort::Cohort for FadePlanes {
+    fn words(&mut self, mut visit: impl FnMut(usize, &mut u16)) {
+        for (index, word) in self.0.iter_mut().enumerate() {
+            visit(0x2000 + 2 * index, word);
+        }
+    }
+    fn session_words(
+        session: &mut crate::session::Session,
+        mut visit: impl FnMut(usize, &mut u16),
+    ) {
+        let blocks = &mut session.actors.extended.blocks[4..6];
+        for (index, word) in blocks.iter_mut().flatten().enumerate() {
+            visit(0x2000 + 2 * index, word);
+        }
+    }
+}
+
+/// The palette buffer $7E:C000..$7E:C1FF, the presentation's colours.
+#[derive(Clone, Debug, PartialEq)]
+pub struct PaletteBuffer(pub [u16; 256]);
+
+impl Default for PaletteBuffer {
+    fn default() -> Self {
+        Self([0; 256])
+    }
+}
+
+impl crate::session_cohort::Cohort for PaletteBuffer {
+    fn words(&mut self, mut visit: impl FnMut(usize, &mut u16)) {
+        for (index, word) in self.0.iter_mut().enumerate() {
+            visit(0xc000 + 2 * index, word);
+        }
+    }
+    fn session_words(
+        session: &mut crate::session::Session,
+        mut visit: impl FnMut(usize, &mut u16),
+    ) {
+        let colors = &mut session.presentation.visual_mut().colors;
+        for (index, word) in colors.iter_mut().enumerate() {
+            visit(0xc000 + 2 * index, word);
+        }
+    }
+}
+
+/// Store `value` to palette buffer colours `indices`.
+pub fn set_cinematic_colors<H: crate::menus::host::Host + ?Sized>(
+    indices: &[usize],
+    value: u16,
+    game: &mut H,
+) {
+    crate::session_cohort::with(game, |_, palette: &mut PaletteBuffer| {
+        for &index in indices {
+            palette.0[index] = value;
+        }
+    });
+}
+
 pub fn clear_cinematic_colors<H: crate::menus::host::Host + ?Sized>(
     offset: u16,
     count: u16,
     game: &mut H,
 ) {
-    for index in cinematic_color_indices(offset, count) {
-        for plane in [256, 512, 768, 1024] {
-            cinematic!(game.TilemapStuff[index + plane] = 0);
+    crate::session_cohort::with(game, |_, planes: &mut FadePlanes| {
+        for index in cinematic_color_indices(offset, count) {
+            for plane in [256, 512, 768, 1024] {
+                planes.0[index + plane] = 0;
+            }
         }
-    }
+    });
 }
 
 pub fn compose_cinematic_palette<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    for index in 0..256 {
-        // Red uses the physical high byte, independently of native word endianness.
-        let red = u16::from(game.ram().read_byte(0x2401 + 2 * index) & 31);
-        let green = (cinematic!(game.TilemapStuff[index + 768]) >> 3) & 0x3e0;
-        let blue = (cinematic!(game.TilemapStuff[index + 1024]) << 2) & 0x7c00;
-        let color = red | green | blue;
-        cinematic!(game.TilemapStuff[index] = color);
-        cinematic!(game.PaletteBuffer[index] = color);
-    }
+    crate::session_cohort::with(
+        game,
+        |_, (planes, palette): &mut (FadePlanes, PaletteBuffer)| {
+            for index in 0..256 {
+                // Red is the high byte of plane 2's word.
+                let red = u16::from(planes.0[index + 512].to_le_bytes()[1] & 31);
+                let green = (planes.0[index + 768] >> 3) & 0x3e0;
+                let blue = (planes.0[index + 1024] << 2) & 0x7c00;
+                let color = red | green | blue;
+                planes.0[index] = color;
+                palette.0[index] = color;
+            }
+        },
+    );
 }
 
 pub fn fade_cinematic_colors<H: crate::menus::host::Host + ?Sized>(
@@ -90,34 +165,34 @@ pub fn fade_cinematic_colors<H: crate::menus::host::Host + ?Sized>(
     increasing: bool,
     game: &mut H,
 ) {
-    for index in cinematic_color_indices(offset, count) {
-        for plane in [512, 768, 1024] {
-            let current = index + plane;
-            if increasing {
-                let step = cinematic!(game.TilemapStuff[current + 768]);
-                cinematic!(
-                    game.TilemapStuff[current] =
-                        step.wrapping_add(cinematic!(game.TilemapStuff[current])) & 0x1fff
-                );
-            } else {
-                cinematic!(
-                    game.TilemapStuff[current] -= cinematic!(game.TilemapStuff[current + 768])
-                );
+    crate::session_cohort::with(game, |_, planes: &mut FadePlanes| {
+        for index in cinematic_color_indices(offset, count) {
+            for plane in [512, 768, 1024] {
+                let current = index + plane;
+                let step = planes.0[current + 768];
+                let word = &mut planes.0[current];
+                *word = if increasing {
+                    step.wrapping_add(*word) & 0x1fff
+                } else {
+                    word.wrapping_sub(step)
+                };
             }
         }
-    }
+    });
 }
 
 pub fn prepare_cinematic_palette_fade<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    for index in 0..256 {
-        let color = cinematic!(game.TilemapStuff[index + 256]);
-        for channel in 0..3 {
-            let component = (color >> (5 * channel)) & 31;
-            let current = index + 512 + 256 * channel;
-            cinematic!(game.TilemapStuff[current] = component << 8);
-            cinematic!(game.TilemapStuff[current + 768] = component << 3);
+    crate::session_cohort::with(game, |_, planes: &mut FadePlanes| {
+        for index in 0..256 {
+            let color = planes.0[index + 256];
+            for channel in 0..3 {
+                let component = (color >> (5 * channel)) & 31;
+                let current = index + 512 + 256 * channel;
+                planes.0[current] = component << 8;
+                planes.0[current + 768] = component << 3;
+            }
         }
-    }
+    });
 }
 
 pub fn queue_cinematic_tilemap<H: crate::menus::host::Host + ?Sized>(

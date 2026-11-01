@@ -268,11 +268,11 @@ pub fn execute_cinematic_sprite_instruction<H: crate::menus::host::Host + ?Sized
                 },
             9171588 => {
             crate::palette_effects::execution::leased::spawn(ending_effect::ZEBES_FADE_OUT, game);
-            cinematic!(game.PaletteBuffer[254] = 1);
+            set_cinematic_colors(&[254], 1, game);
                 },
             9171605 => {
             CinematicSprites.spawn(ending::ZEBES_SILHOUETTE, 0xf295, cine, game);
-            cinematic!(game.PaletteBuffer[0] = 0x7fff);
+            set_cinematic_colors(&[0], 0x7fff, game);
                 },
             9171639 => {
             set_cinematic_blend(17, 2, 2, 17, game);
@@ -293,7 +293,7 @@ pub fn execute_cinematic_sprite_instruction<H: crate::menus::host::Host + ?Sized
             9171755 => {
             game.ram().write_byte(0x69, 0);
             game.ram().write_byte(0x6b, 0);
-            cinematic! { game, 0x7fff; PaletteBuffer[0], PaletteBuffer[128] }
+            set_cinematic_colors(&[0, 128], 0x7fff, game);
             crate::word_transfers!(game, descending, 16; le(PALETTE_BUFFER, 31) <- value(0x7fff));
             crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| flow.cinematic_function = 0xdb9e);
     *cine.function_timer() = 120;
