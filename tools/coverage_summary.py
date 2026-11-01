@@ -87,6 +87,43 @@ def load(llvm_cov, profdata, obj, *others):
     return files, functions
 
 
+def load_union(llvm_cov, profdata, obj, *others):
+    """Per-file (lines hit, lines, functions hit, functions) over several objects.
+
+    The verifier DLL (direct rustc, relative crate roots) and the Cargo-built
+    test binaries spell one source path differently, so llvm-cov reports such
+    a file once per spelling; their lines and functions (by start line) are
+    united here instead of the last spelling replacing the others.
+    """
+    extra = [argument for other in others for argument in ("-object", other)]
+    exported = subprocess.run(
+        [llvm_cov, "export", "-format=lcov", f"-instr-profile={profdata}", obj, *extra],
+        check=True, capture_output=True, text=True).stdout
+    lines = collections.defaultdict(dict)
+    starts = collections.defaultdict(dict)
+    names = {}
+    path = None
+    for record in exported.splitlines():
+        kind, _, value = record.partition(":")
+        if kind == "SF":
+            path, names = scope_of(value), {}
+        elif path is None:
+            continue
+        elif kind == "DA":
+            line, count = value.split(",")[:2]
+            lines[path][int(line)] = lines[path].get(int(line), False) or int(count) > 0
+        elif kind == "FN":
+            line, name = value.split(",", 1)
+            names[name] = int(line)
+            starts[path].setdefault(int(line), False)
+        elif kind == "FNDA":
+            count, name = value.split(",", 1)
+            if int(count) > 0 and name in names:
+                starts[path][names[name]] = True
+    return {path: (sum(hits.values()), len(hits), sum(starts[path].values()), len(starts[path]))
+            for path, hits in lines.items()}
+
+
 def percent(hit, total):
     return f"{100 * hit / total:5.1f}%" if total else "  n/a"
 
@@ -131,8 +168,8 @@ def main():
         out += [f"Full 100% route alone: lines {rhit}/{total} ({percent(rhit, total).strip()}); "
                 f"functions {rfhit}/{ftotal} ({percent(rfhit, ftotal).strip()}).", ""]
     if options["--unit"]:
-        unit_files, _ = load(llvm_cov, options["--unit"], *objects)
-        both, _ = load(llvm_cov, options["--combined"], obj, *objects)
+        unit_files = load_union(llvm_cov, options["--unit"], *objects)
+        both = load_union(llvm_cov, options["--combined"], obj, *objects)
         uh, ut, ufh, uft = totals({path: value for path, value in unit_files.items()
                                    if path.startswith("crates/sm_game/")})
         ch, ct, cfh, cft = totals(both)
