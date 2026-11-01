@@ -121,8 +121,8 @@ nor listed. The `lock-gate.yml` workflow runs it, then the engine over every
 locked scenario on each pull request and push; its console carries ids, stream and
 field names, ticks and hashes only.
 
-On 2026-11-01 the lock holds 605 of the 647 lockable scenarios: 85 of the 119
-seeded and boot corpus rows and 520 of the routes' 528 rooms. The other 42 stay on
+On 2026-11-01 the lock holds 619 of the 660 lockable scenarios: 99 of the 132
+seeded and boot corpus rows and 520 of the routes' 528 rooms. The other 41 stay on
 lockstep, listed in LEGACY.md. The 23 corpus rows that start from a checkpoint are
 not lockable yet: they need an oracle-side prefix first.
 

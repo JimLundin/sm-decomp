@@ -6878,6 +6878,18 @@ digests = { "wram" = "b37ad1bb274aabaa", "sram" = "5f0f044adf7612a2", "vram" = "
 marks = {  }
 
 [[scenario]]
+id = "file-copy-clear"
+oracle = "faithful"
+start = "seed:63f0a5d9f7f38da95e78ec31ff64c94f2108f92b44c4652bcdf9661cb598d624"
+inputs = "507fd14b02f9c9d31098422a91fadf87ed1f097de036b1bb867fad0deadab903"
+frames = 3612
+format = 1
+ticks = 3612
+combined = "bc49462648ce3e81"
+digests = { "wram" = "34996b008a096280", "sram" = "89310597751b7701", "vram" = "ad5224b462e74ba9", "cgram" = "a6de0b5a74fd3b32", "oam" = "0012cb482cc770d2", "ppu" = "8cc99011c0b8a404", "video" = "c6c58fbfcf205326", "apu" = "b569102ebd09f4e4", "input" = "0aa9c2b863832f11", "samus" = "f609575a7686d5a3", "camera" = "5702f300354aeaa9", "room" = "0bb2135928e51f59", "progress" = "927daa30bebb6c20", "actors" = "955e4ec403265a0a", "effects" = "47af23d89050a2fd" }
+marks = { "1000" = "17ec82173495bc1e", "2000" = "ef4621108d13693d", "3000" = "31c662a25f1df937" }
+
+[[scenario]]
 id = "golden-orb-spawn-parameter"
 oracle = "faithful"
 start = "seed:3d65a01ecba9dc550449d70db11d6172211ab4fc728334ae9ccad93a6b5d226d"

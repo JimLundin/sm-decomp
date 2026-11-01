@@ -31,7 +31,6 @@ import full_route  # noqa: E402
 FAITHFUL = "a faithful-oracle known divergence"
 ITEM_DRIFT = "WRAM drift lockstep masks, in the item and pickup rows (not yet identified)"
 DRIFT = "drift lockstep masks (not yet identified)"
-ENGINE_PANIC = "the engine alone panics; lockstep adopts the oracle's state first"
 UNLOCKED = {
     "samus-scripted-intro": FAITHFUL,
     "pause-menu-tour": FAITHFUL,
@@ -74,7 +73,6 @@ UNLOCKED = {
     "boss-crocomire": DRIFT,
     "ice-return-business": DRIFT,
     "music-fir-selector10": DRIFT,
-    "file-copy-clear": ENGINE_PANIC,
 }
 
 
