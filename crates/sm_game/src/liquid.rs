@@ -6,8 +6,8 @@
 //! # Scope and owner types
 //!
 //! Step 1, liquid: `Room::liquid: Liquid` joins the five existing `room.liquid_*`
-//! words (kept as they are) with the rest of the $195C–$1980 block (not $1966–$196A, which
-//! is unnamed; not the layer blending words at $1982–$1986, which belong to
+//! words (kept as they are) with the rest of the $195Câ€“$1980 block (not $1966â€“$196A, which
+//! is unnamed; not the layer blending words at $1982â€“$1986, which belong to
 //! display):
 //!
 //! | RAM | field | before step 1 |
@@ -20,12 +20,12 @@
 //! | $1970/$1972 | `offset: Position` | RAM only |
 //! | $1974 | `tide_phase: u16` | RAM only |
 //! | $1976 | `base_fraction: u16` (whole stays `room.liquid_height`) | RAM only |
-//! | $1978–$1980 | `room.liquid_{height,target,velocity,options,delay}` | owned |
+//! | $1978â€“$1980 | `room.liquid_{height,target,velocity,options,delay}` | owned |
 //!
-//! Step 2, HDMA objects: `Presentation::hdma: HdmaObjects` takes $18B0–$1958:
+//! Step 2, HDMA objects: `Presentation::hdma: HdmaObjects` takes $18B0â€“$1958:
 //! the enable flag, selected index, and six slots of channel mask, bank,
 //! instruction list, table, instruction timer, pre-instruction (+bank),
-//! timer and the six behaviour words A–F. The liquid routines are HDMA
+//! timer and the six behaviour words Aâ€“F. The liquid routines are HDMA
 //! pre-instructions over these slots, so step 2 completes step 1's callers.
 //!
 //! Every word keeps its full stored `u16` (no enums yet): behaviours write
@@ -200,6 +200,10 @@ pub struct MotionEffects {
     pub shake: bool,
     /// `rising` held no known handler; the original reports it and continues.
     pub unknown_handler: bool,
+    /// Raising or lowering toward an enabled target ($88:868C) leaves the
+    /// velocity's low byte in $17 over a cleared $16: the scratch word the next
+    /// door-closing PLM takes as its room argument.
+    pub spawn_argument: Option<u16>,
 }
 
 /// Advance the base height toward its target; true once there, or when the
@@ -238,6 +242,7 @@ pub fn advance_motion(words: &mut LiquidWords) -> MotionEffects {
     let mut effects = MotionEffects {
         shake: matches!(state, HOT_DELAY | HOT_MOVING),
         unknown_handler: false,
+        spawn_argument: None,
     };
     match state {
         HOT_IDLE | WATER_IDLE => {
@@ -269,6 +274,9 @@ pub fn advance_motion(words: &mut LiquidWords) -> MotionEffects {
             }
         }
         HOT_MOVING | WATER_MOVING => {
+            if words.target & 0x8000 == 0 {
+                effects.spawn_argument = Some(words.velocity << 8);
+            }
             if move_toward_target(words) {
                 words.velocity = 0;
                 words.liquid.rising = if state == HOT_MOVING {

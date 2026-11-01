@@ -53,6 +53,9 @@ fn step_liquid<H: crate::menus::host::Host + ?Sized>(
     if effects.shake {
         crate::room_visuals::shake_room_with_sound(21, handler_carry, game);
     }
+    if let Some(argument) = effects.spawn_argument {
+        crate::projection::set_word(game, 0x16, argument);
+    }
     if effects.unknown_handler {
         game.rtl_unreachable();
         with_liquid(game, |words| {
