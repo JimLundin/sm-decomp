@@ -4,8 +4,9 @@
 use super::{api, combat, queries};
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
+use sm_game::actors::access::ActorKey;
 use sm_game::actors::boss_lease::{BossLease, BossState};
-use sm_game::actors::host::{ActorRuntime, BossEffects, Death, Shot};
+use sm_game::actors::host::{ActorRuntime, BossEffects, Death, EnemyHost, Shot};
 use sm_game::geometry::{Point, Vector32};
 
 fn death(death: Death) -> api::DeathHandling {
@@ -80,6 +81,12 @@ impl BossState for Game {
     fn actor_record(&mut self, bank: u8, address: u16) -> crate::rom::RomRecord {
         BossEffects::actor_legacy_record(self, bank, address)
     }
+    fn player_angle(&mut self, k: u16) -> u16 {
+        EnemyHost::angle_to_player(self, k)
+    }
+    fn shot_direction(&self) -> u16 {
+        EnemyHost::collided_projectile_direction(self)
+    }
 }
 
 impl BossLease for Game {
@@ -152,6 +159,13 @@ impl BossState for Runtime<'_> {
     }
     fn actor_record(&mut self, bank: u8, address: u16) -> crate::rom::RomRecord {
         self.actor_legacy_record(bank, address)
+    }
+    fn player_angle(&mut self, k: u16) -> u16 {
+        api::angle_to_player(self, ActorKey::from_legacy(k))
+    }
+    fn shot_direction(&self) -> u16 {
+        use sm_game::ram::{word_arrays::PROJECTILE_DIR, words::COLLISION_DETECTION_INDEX};
+        self.word(PROJECTILE_DIR + 2 * usize::from(self.word(COLLISION_DETECTION_INDEX)))
     }
 }
 
