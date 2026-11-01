@@ -1,14 +1,30 @@
 //! Geega detection, straight flight, curved turns and home reset.
 //! Native actor fields retain authority and original query/ROM failure ordering.
-use crate::actors::host::{ActorHost, ActorRuntime, Axis};
+use crate::actors::boss_lease::BossLease;
+use crate::actors::host::{Axis, BossEffects};
 use crate::actors::layouts::EnemyLayout72 as Bug;
-use crate::actors::session_slots::SlotAccess;
-use crate::ram::word;
 use crate::session_slot;
 use sm_data::enemy_speeds::SpeedTable;
 
-pub fn initialize<H: ActorHost + ActorRuntime + SlotAccess + ?Sized>(game: &mut H) {
-    let e = i32::from(word!(game.CUR_ENEMY_INDEX));
+/// A lease on a game with the geegas' effects.
+pub trait Lease: BossLease<Game: BossEffects> {}
+impl<T: BossLease<Game: BossEffects> + ?Sized> Lease for T {}
+
+/// Main AI - geega ($B3:8FAE): run its state routine.
+pub fn main_ai<H: Lease + ?Sized>(game: &mut H) {
+    match state_address(game) {
+        11767733 => detect_player(game),
+        11767797 => launch_delay(game.current_enemy(), game),
+        11767848 => fly(true, game),
+        11767997 => fly(false, game),
+        11768154 => turn(true, game),
+        11768280 => turn(false, game),
+        _ => game.foreign(|game| game.unreachable()),
+    }
+}
+
+pub fn initialize<H: Lease + ?Sized>(game: &mut H) {
+    let e = i32::from(game.current_enemy());
     session_slot!(game, Bug[e]; var_07 = session_slot!(game, Bug[e].base.x_pos),
         var_08 = session_slot!(game, Bug[e].base.y_pos));
     session_slot!(game, Bug[e].base; x_subpos = 0, y_subpos = 0, instruction_timer = 1, timer = 0, current_instruction = 0x8efc);
@@ -19,15 +35,15 @@ pub fn initialize<H: ActorHost + ActorRuntime + SlotAccess + ?Sized>(game: &mut 
     session_slot!(game, Bug[e]; var_01 = game.enemy_speed(SpeedTable::Linear, index), var_00 = game.enemy_speed(SpeedTable::Linear, index + 1),
         var_03 = game.enemy_speed(SpeedTable::Linear, index + 2), var_02 = game.enemy_speed(SpeedTable::Linear, index + 3), var_a = 0x8fb5, var_06 = 0);
 }
-pub fn state_address<H: ActorHost + ActorRuntime + SlotAccess + ?Sized>(game: &H) -> u32 {
-    let e = i32::from(word!(game.CUR_ENEMY_INDEX));
+pub fn state_address<H: Lease + ?Sized>(game: &H) -> u32 {
+    let e = i32::from(game.current_enemy());
     0xb30000 | u32::from(session_slot!(game, Bug[e].var_a))
 }
-fn reset_home<H: ActorHost + ActorRuntime + SlotAccess + ?Sized>(e: i32, game: &mut H) {
+fn reset_home<H: Lease + ?Sized>(e: i32, game: &mut H) {
     session_slot!(game, Bug[e].base; x_pos = session_slot!(game, Bug[e].var_07), y_pos = session_slot!(game, Bug[e].var_08), x_subpos = 0, y_subpos = 0);
     session_slot!(game, Bug[e]; var_a = 0x8fb5, var_06 = 0);
 }
-fn horizontal<H: ActorHost + ActorRuntime + SlotAccess + ?Sized>(left: bool, k: u16, game: &mut H) {
+fn horizontal<H: Lease + ?Sized>(left: bool, k: u16, game: &mut H) {
     let e = i32::from(k);
     let (high, low) = if left {
         (
@@ -45,11 +61,7 @@ fn horizontal<H: ActorHost + ActorRuntime + SlotAccess + ?Sized>(left: bool, k: 
         Bug[e].base(x_pos, x_subpos) += (u32::from(high) << 16) | u32::from(low)
     );
 }
-fn vertical<H: ActorHost + ActorRuntime + SlotAccess + ?Sized>(
-    counting_down: bool,
-    k: u16,
-    game: &mut H,
-) {
+fn vertical<H: Lease + ?Sized>(counting_down: bool, k: u16, game: &mut H) {
     let e = i32::from(k);
     if counting_down {
         session_slot!(game, Bug[e].var_e, |old| old.wrapping_sub(1));
@@ -69,10 +81,10 @@ fn vertical<H: ActorHost + ActorRuntime + SlotAccess + ?Sized>(
         Bug[e].base(y_pos, y_subpos) += (u32::from(high) << 16) | u32::from(low)
     );
 }
-pub fn detect_player<H: ActorHost + ActorRuntime + SlotAccess + ?Sized>(game: &mut H) {
-    let e = i32::from(word!(game.CUR_ENEMY_INDEX));
+pub fn detect_player<H: Lease + ?Sized>(game: &mut H) {
+    let e = i32::from(game.current_enemy());
     let left = session_slot!(game, Bug[e].parameter_1) != 0;
-    let actor = word!(game.CUR_ENEMY_INDEX);
+    let actor = game.current_enemy();
     let dx = game.player_delta(actor, Axis::X) as i16;
     let in_x_range = if left {
         dx < 0 && (i32::from(dx) + 192) & 0x8000 == 0
@@ -82,14 +94,14 @@ pub fn detect_player<H: ActorHost + ActorRuntime + SlotAccess + ?Sized>(game: &m
     if !in_x_range {
         return;
     }
-    let actor = word!(game.CUR_ENEMY_INDEX);
+    let actor = game.current_enemy();
     let in_y_range = game.player_within(actor, Axis::Y, 0x30);
     if in_y_range {
         session_slot!(game, Bug[e].base.properties, |old| old & !0x100);
         session_slot!(game, Bug[e]; var_20 = 24, var_a = 0x8ff5);
     }
 }
-pub fn launch_delay<H: ActorHost + ActorRuntime + SlotAccess + ?Sized>(k: u16, game: &mut H) {
+pub fn launch_delay<H: Lease + ?Sized>(k: u16, game: &mut H) {
     let e = i32::from(k);
     let delay = session_slot!(game, Bug[e].var_20).wrapping_sub(1);
     session_slot!(game, Bug[e].var_20 = delay);
@@ -102,9 +114,9 @@ pub fn launch_delay<H: ActorHost + ActorRuntime + SlotAccess + ?Sized>(k: u16, g
         }
     }
 }
-pub fn fly<H: ActorHost + ActorRuntime + SlotAccess + ?Sized>(left: bool, game: &mut H) {
-    let e = i32::from(word!(game.CUR_ENEMY_INDEX));
-    horizontal(left, word!(game.CUR_ENEMY_INDEX), game);
+pub fn fly<H: Lease + ?Sized>(left: bool, game: &mut H) {
+    let e = i32::from(game.current_enemy());
+    horizontal(left, game.current_enemy(), game);
     if game.current_outside_screen() {
         reset_home(e, game);
         session_slot!(game, Bug[e].base.properties, |old| old | 0x100);
@@ -128,17 +140,17 @@ pub fn fly<H: ActorHost + ActorRuntime + SlotAccess + ?Sized>(left: bool, game: 
         session_slot!(game, Bug[e].base; instruction_timer = 1, timer = 0, current_instruction = instruction);
     }
 }
-pub fn turn<H: ActorHost + ActorRuntime + SlotAccess + ?Sized>(left: bool, game: &mut H) {
-    let e = i32::from(word!(game.CUR_ENEMY_INDEX));
+pub fn turn<H: Lease + ?Sized>(left: bool, game: &mut H) {
+    let e = i32::from(game.current_enemy());
     let instruction = if left { 0x8efc } else { 0x8f24 };
     if game.current_outside_screen() {
         reset_home(e, game);
         session_slot!(game, Bug[e].base; instruction_timer = 1, timer = 0, current_instruction = instruction);
         session_slot!(game, Bug[e].base.properties, |old| old | 0x100);
     } else {
-        horizontal(left, word!(game.CUR_ENEMY_INDEX), game);
+        horizontal(left, game.current_enemy(), game);
         let counting_down = session_slot!(game, Bug[e].var_f) != 0;
-        vertical(counting_down, word!(game.CUR_ENEMY_INDEX), game);
+        vertical(counting_down, game.current_enemy(), game);
         if !counting_down {
             let finished = if left {
                 (session_slot!(game, Bug[e].base.y_pos) as i16).wrapping_sub(session_slot!(
