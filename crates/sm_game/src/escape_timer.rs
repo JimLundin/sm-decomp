@@ -116,6 +116,9 @@ pub fn draw<H: crate::sprite_output::SpriteHost + ?Sized>(game: &mut H) {
             draw_sprite(x, map, game);
         }
     }
+    // Each sprite ($80:9FCA) passes its palette in $16, the scratch word the next
+    // door-closing PLM takes as its room argument.
+    crate::projection::set_word(game, 0x16, 0xa00);
 }
 
 fn draw_sprite<H: crate::sprite_output::SpriteHost + ?Sized>(offset: u16, map: u16, game: &mut H) {
