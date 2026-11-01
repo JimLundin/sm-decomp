@@ -628,7 +628,7 @@ pub fn initialize(game: &mut impl State) {
     session_slot! { game, BabyMetroid[e].base; current_instruction = ADDR_K_BABY_METROID_ILIST_F90E as u16, instruction_timer = 1 }
     session_slot!(game, BabyMetroid[e].base.timer = 0);
     let mut v2: u16 = function::WAIT_FOR_CAMERA;
-    if (crate::camera::current(game).layer1[0] & 0x8000) != 0 {
+    if (crate::camera::layer1(game)[0] & 0x8000) != 0 {
         session_slot!(game, BabyMetroid[e].base.properties, |old| (old as i32
             | (K_ENEMY_PROPS_TANGIBLE as i32 | K_ENEMY_PROPS_INVISIBLE as i32))
             as u16);

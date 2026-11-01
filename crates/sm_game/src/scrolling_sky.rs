@@ -29,7 +29,7 @@ fn build_vertical_bands<H: crate::menus::host::Host + ?Sized>(game: &mut H) -> u
     crate::word_transfers!(game, ascending, 1; native(0x9c00) <- value(31));
     crate::word_transfers!(game, ascending, 1; native(0x9c01) <- value(0));
     let mut row = 3u16;
-    let mut y = crate::camera::current(game).layer1[1].wrapping_add(32);
+    let mut y = crate::camera::layer1(game)[1].wrapping_add(32);
     let mut band = 0usize;
     let mut inset = y & if y.wrapping_sub(1248) & 0x8000 != 0 {
         15
@@ -72,7 +72,7 @@ pub fn update_horizontal_scroll<H: crate::menus::host::Host + ?Sized>(
     object: &mut crate::hdma::HdmaObject,
     game: &mut H,
 ) {
-    let layer1_y = crate::camera::current(game).layer1[1];
+    let layer1_y = crate::camera::layer1(game)[1];
     if (layer1_y as i32 - 1024i32) & 0x8000 != 0 {
         if (game.ram().read_byte(0x5b5) & 1) == 0 {
             word!(
@@ -138,7 +138,7 @@ fn append_upper_band<H: crate::menus::host::Host + ?Sized>(
     r22: u16,
     game: &mut H,
 ) -> u16 {
-    let layer1_y = crate::camera::current(game).layer1[1];
+    let layer1_y = crate::camera::layer1(game)[1];
     let visible = 1216u16.wrapping_sub(layer1_y);
     if (1216i16).wrapping_sub(layer1_y as i16) < 0 || layer1_y == 1216 {
         return r18;
@@ -212,7 +212,7 @@ pub fn advance_parallax<L: crate::actors::boss_lease::BossState + ?Sized>(game: 
     word! { game, 0; SCROLLING_SKY_BG2_HDMA_DATA[44], SCROLLING_SKY_BG2_HDMA_DATA[45] }
     write_sky_word(31, 0, game);
     write_sky_word(1438, 1, game);
-    let layer1_y = crate::camera::current(game).layer1[1];
+    let layer1_y = crate::camera::layer1(game)[1];
     let mut r18: u16 = layer1_y.wrapping_add(32);
     let r20: u16 = layer1_y.wrapping_add(224);
     let mut v6: u16 = 3;
@@ -266,7 +266,7 @@ fn queue_tile_rows<H: crate::menus::host::Host + ?Sized>(address: u32, game: &mu
     if word!(game.TIME_IS_FROZEN_FLAG) != 0 {
         write_sky_word(0, 0, game);
     } else {
-        let layer1_y = crate::camera::current(game).layer1[1];
+        let layer1_y = crate::camera::layer1(game)[1];
         word!(game.REG_BG2VOFS = layer1_y);
         let v0: u16 = word!(game.VRAM_WRITE_QUEUE_TAIL);
         let v1 = 0xd0 + usize::from(word!(game.VRAM_WRITE_QUEUE_TAIL));

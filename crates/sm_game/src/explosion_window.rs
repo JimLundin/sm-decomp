@@ -400,7 +400,7 @@ fn calculate_explosion_hdma_table_pointers<H: Host + ?Sized>(
     if pre_explosion && (bomb.explosion_status & 0x8000) == 0 {
         return;
     }
-    let layer1 = crate::camera::current(game).layer1;
+    let layer1 = crate::camera::layer1(game);
     let x = (i32::from(bomb.x) - i32::from(layer1[0]) + 256) as u16;
     let y_offset = if x >= 0x300 {
         0

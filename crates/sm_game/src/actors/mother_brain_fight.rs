@@ -2560,7 +2560,7 @@ pub fn add_spritemap_to_oam(j: u16, r18: u16, r20: u16, r22: u16, game: &mut imp
         image: source.image,
         offset: source.base,
     };
-    let layer1 = crate::camera::current(game).layer1;
+    let layer1 = crate::camera::layer1(game);
     game.draw_room_spritemap(
         &map,
         (r18, r20),
@@ -3009,7 +3009,7 @@ crate::dispatch::callback_dispatch! {
         }
         let v6: i32 = (flash_timer as i32 & 6) >> 1;
         let r18: u16 = (session_slot!(game, MotherBrainBrain[e].base.x_pos)).wrapping_add((SHAKE_X_OFFSETS[v6 as usize]) as u16);
-        if ((r18 as i32 + 32 - crate::camera::current(game).layer1[0] as i32) as i16) >= 0 {
+        if ((r18 as i32 + 32 - crate::camera::layer1(game)[0] as i32) as i16) >= 0 {
             let r20: u16 = (session_slot!(game, MotherBrainBrain[e].base.y_pos)).wrapping_add((SHAKE_Y_OFFSETS[v6 as usize]) as u16);
             add_spritemap_to_oam(v2, r18, r20, r22, game);
         }

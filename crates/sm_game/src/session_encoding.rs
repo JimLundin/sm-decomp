@@ -137,13 +137,6 @@ pub fn menu(bytes: &impl Fn(usize) -> u8) -> crate::menu_state::MenuState {
 }
 /// RAM address of the first flow word, `cinematic_function`.
 pub const FLOW: usize = ram::CINEMATIC_FUNCTION;
-/// The camera as `bytes` encode it.
-pub fn camera(bytes: &impl Fn(usize) -> u8) -> crate::camera::Camera {
-    let mut camera = crate::camera::Camera::default();
-    let load = |at: usize, value: &mut u16| *value = read(bytes, at);
-    camera_words!((camera), load, (&mut));
-    camera
-}
 /// The flow as `bytes` encode it.
 pub fn flow(bytes: &impl Fn(usize) -> u8) -> crate::flow::Flow {
     let mut flow = crate::flow::Flow::default();

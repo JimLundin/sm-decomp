@@ -119,8 +119,7 @@ pub fn separated_from_rect(
 /// the stop, pin it there, turn scrolls 1 and 3 red, raise the invisible walls,
 /// let the sidehopper live and enable the cry. Was `BabyMetroid_Func_4`.
 pub fn wait_for_camera(game: &mut impl Host) {
-    if (crate::camera::current(game).layer1[0] as i32 - (i32::from(CAMERA_STOP_X) + 1)) & SIGN != 0
-    {
+    if (crate::camera::layer1(game)[0] as i32 - (i32::from(CAMERA_STOP_X) + 1)) & SIGN != 0 {
         crate::camera::set_layer1(&mut game.runtime(), 0, CAMERA_STOP_X);
         // Red is the scroll word's low byte with its high byte cleared.
         for scroll in SCROLLS {
@@ -143,13 +142,12 @@ pub fn is_off_screen(k: u16, game: &mut (impl SlotAccess + CompatibilityRam + ?S
     let e = i32::from(k);
     let y_pos = session_slot!(game, BabyMetroid[e].base.y_pos) as i16;
     if y_pos >= 0 {
-        let y =
-            (y_pos as i32 + SCREEN_Y_MARGIN - crate::camera::current(game).layer1[1] as i32) as i16;
+        let y = (y_pos as i32 + SCREEN_Y_MARGIN - crate::camera::layer1(game)[1] as i32) as i16;
         if y >= 0 && (y as i32 - SCREEN_HEIGHT) & SIGN != 0 {
             let x_pos = session_slot!(game, BabyMetroid[e].base.x_pos) as i16;
             if x_pos >= 0 {
-                let x = (x_pos as i32 + SCREEN_X_MARGIN
-                    - crate::camera::current(game).layer1[0] as i32) as i16;
+                let x =
+                    (x_pos as i32 + SCREEN_X_MARGIN - crate::camera::layer1(game)[0] as i32) as i16;
                 if x >= 0 && (x as i32 - SCREEN_WIDTH) & SIGN != 0 {
                     return 0;
                 }

@@ -59,11 +59,74 @@ pub struct Camera {
     pub distance_index: u16,
 }
 
-/// The camera as the host's projection holds it, for hosts outside a
-/// lease: the owned Session's projection while one is installed, the byte
-/// image otherwise. It opens no lease.
-pub fn current<H: crate::ram::CompatibilityRam + ?Sized>(h: &H) -> Camera {
-    crate::session_encoding::camera(&crate::projection::reader(h))
+impl Camera {
+    /// Visit each word with its RAM address, each axis's words in turn.
+    fn visit(&mut self, mut visit: impl FnMut(usize, &mut u16)) {
+        use crate::ram::words as ram;
+        for axis in 0..2 {
+            visit(ram::LAYER1_X_BLOCK + 2 * axis, &mut self.layer1_block[axis]);
+            visit(ram::LAYER2_X_BLOCK + 2 * axis, &mut self.layer2_block[axis]);
+            visit(
+                ram::PREVIOUS_LAYER1_X_BLOCK + 2 * axis,
+                &mut self.previous_layer1_block[axis],
+            );
+            visit(
+                ram::PREVIOUS_LAYER2_X_BLOCK + 2 * axis,
+                &mut self.previous_layer2_block[axis],
+            );
+            visit(ram::BG1_X_BLOCK + 2 * axis, &mut self.bg1_block[axis]);
+            visit(ram::BG2_X_BLOCK + 2 * axis, &mut self.bg2_block[axis]);
+            visit(
+                ram::LAYER1_X_SUBPOS + 4 * axis,
+                &mut self.layer1_fraction[axis],
+            );
+            visit(LAYER1 + 4 * axis, &mut self.layer1[axis]);
+            visit(ram::LAYER2_X_POS + 2 * axis, &mut self.layer2[axis]);
+            visit(BG1_OFFSET + 2 * axis, &mut self.bg1_offset[axis]);
+            visit(ram::BG2_X_SCROLL + 2 * axis, &mut self.bg2_scroll[axis]);
+            visit(
+                ram::IDEAL_LAYER1_XPOS + 4 * axis,
+                &mut self.ideal_layer1[axis],
+            );
+        }
+        visit(ram::CAMERA_DISTANCE_INDEX, &mut self.distance_index);
+    }
+}
+
+/// The whole camera, for code outside a lease that reads more than layer 1.
+impl crate::session_cohort::Cohort for Camera {
+    fn words(&mut self, visit: impl FnMut(usize, &mut u16)) {
+        self.visit(visit);
+    }
+    fn session_words(session: &mut crate::session::Session, visit: impl FnMut(usize, &mut u16)) {
+        session.room.camera.visit(visit);
+    }
+}
+
+/// Layer 1's whole position, `[x, y]` ($0911, $0915): the camera words most
+/// code outside a lease reads.
+#[derive(Clone, Copy, Default, Debug, PartialEq, Eq)]
+pub struct Layer1(pub [u16; 2]);
+
+impl crate::session_cohort::Cohort for Layer1 {
+    fn words(&mut self, mut visit: impl FnMut(usize, &mut u16)) {
+        for (axis, word) in self.0.iter_mut().enumerate() {
+            visit(LAYER1 + 4 * axis, word);
+        }
+    }
+    fn session_words(
+        session: &mut crate::session::Session,
+        mut visit: impl FnMut(usize, &mut u16),
+    ) {
+        for (axis, word) in session.room.camera.layer1.iter_mut().enumerate() {
+            visit(LAYER1 + 4 * axis, word);
+        }
+    }
+}
+
+/// Layer 1's whole position as the host's projection holds it.
+pub fn layer1<H: crate::ram::CompatibilityRam + ?Sized>(h: &H) -> [u16; 2] {
+    crate::session_cohort::load::<Layer1, H>(h).0
 }
 
 /// Store layer 1's whole position on `axis` (0 = x, 1 = y). The store is

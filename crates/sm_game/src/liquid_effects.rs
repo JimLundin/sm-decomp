@@ -128,7 +128,7 @@ pub fn lava_surface<H: crate::menus::host::Host + ?Sized>(
                 .liquid
                 .lava_acid
                 .whole,
-            crate::camera::current(game).layer1[1],
+            crate::camera::layer1(game)[1],
         );
         crate::word_transfers!(game, ascending, 1; native(0x9c02) <- value(scroll));
         if crate::liquid::LiquidWords::read(game).liquid.kind == 2
@@ -157,7 +157,7 @@ pub fn lava_surface<H: crate::menus::host::Host + ?Sized>(
                 .liquid
                 .lava_acid
                 .whole,
-            crate::camera::current(game).layer1[1],
+            crate::camera::layer1(game)[1],
             false,
         );
         object.table = (3 * (((v8 as i32 ^ 0x1ff) + 1) & 0x3ff) + 0xb62a) as u16;
@@ -173,7 +173,7 @@ pub fn water_surface<H: crate::menus::host::Host + ?Sized>(
         return;
     }
     step_liquid(game, crate::liquid::Surface::Water, handler_carry);
-    let layer1 = crate::camera::current(game).layer1;
+    let layer1 = crate::camera::layer1(game);
     word!(
         game.BG3_YPOS = surface_scroll(
             crate::liquid::LiquidWords::read(game).liquid.surface.whole,
@@ -198,7 +198,7 @@ pub fn water_surface<H: crate::menus::host::Host + ?Sized>(
     }
     let v9 = table_height(
         crate::liquid::LiquidWords::read(game).liquid.surface.whole,
-        crate::camera::current(game).layer1[1],
+        crate::camera::layer1(game)[1],
         true,
     );
     object.table = (3 * (((v9 as i32 ^ 0x1ff) + 1) & 0x3ff) + 0xc645) as u16;
@@ -304,7 +304,7 @@ pub fn water_background<H: crate::menus::host::Host + ?Sized>(
     }
     let height = table_height(
         crate::liquid::LiquidWords::read(game).liquid.surface.whole,
-        crate::camera::current(game).layer1[1],
+        crate::camera::layer1(game)[1],
         true,
     );
     object.table = 3 * ((height ^ 0x1ff) & 0x3ff) + 0xcf46;

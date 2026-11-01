@@ -161,7 +161,7 @@ pub fn echo<H: SpriteHost + ?Sized>(slot: u16, game: &mut H, content: &mut impl 
             + usize::from(word!(game.SAMUS_POSE)) * 8
             + 4,
     );
-    let layer1 = crate::camera::current(game).layer1;
+    let layer1 = crate::camera::layer1(game);
     let y = y.wrapping_sub(u16::from(height)).wrapping_sub(layer1[1]);
     if (y as i16) >= 0 && y.wrapping_sub(248) & 0x8000 != 0 {
         let sprite = word!(game.SAMUS_TOP_HALF_SPRITEMAP_INDEX);
@@ -193,7 +193,7 @@ pub fn grapple<H: SpriteHost + ?Sized>(game: &mut H, segment: Option<(u16, u16, 
         game.ram().write_byte(at + 1, y as u8);
         game.ram().copy_in(at + 2, &tile.to_ne_bytes());
     } else {
-        let layer1 = crate::camera::current(game).layer1;
+        let layer1 = crate::camera::layer1(game);
         let x = word!(game.GRAPPLE_BEAM_END_X_POS)
             .wrapping_sub(layer1[0])
             .wrapping_sub(4);

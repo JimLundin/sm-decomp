@@ -824,7 +824,7 @@ pub fn draw_cinematic_sprites<H: crate::menus::host::Host + ?Sized>(
     game: &mut H,
 ) {
     use crate::sprite_drawing::Clip;
-    let layer1 = crate::camera::current(game).layer1;
+    let layer1 = crate::camera::layer1(game);
     for slot in (0..16usize).rev() {
         let sprite = *cine.spr_what_to_draw(slot);
         if sprite == 0 {

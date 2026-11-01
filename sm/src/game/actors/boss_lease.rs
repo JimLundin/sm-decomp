@@ -50,7 +50,7 @@ impl BossState for Game {
         api::direction_to_player(&mut Runtime::new(self))
     }
     fn camera(&mut self) -> sm_game::camera::Camera {
-        sm_game::camera::current(self)
+        sm_game::session_cohort::load(self)
     }
     fn current_enemy(&self) -> u16 {
         Game::cur_enemy_index(self)

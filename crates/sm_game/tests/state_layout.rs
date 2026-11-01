@@ -214,7 +214,7 @@ fn camera_round_trips_every_field() {
     }
     let expected = s.room.camera;
     assert_eq!(
-        sm_game::camera::current(&Projection(s)),
+        sm_game::session_cohort::load::<sm_game::camera::Camera, _>(&Projection(s)),
         expected,
         "camera view"
     );

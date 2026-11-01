@@ -197,7 +197,7 @@ pub fn draw_unpause<H: crate::menus::host::Host + ?Sized>(
 }
 
 pub fn resume<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    let camera = crate::camera::current(game);
+    let camera = crate::session_cohort::load::<crate::camera::Camera, _>(game);
     session_cohort::with(game, |_, scroll: &mut BgScroll| {
         for axis in 0..2 {
             scroll.bg1[axis] = camera.bg1_offset[axis].wrapping_add(camera.layer1[axis]);
