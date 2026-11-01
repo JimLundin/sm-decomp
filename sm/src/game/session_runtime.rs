@@ -1194,6 +1194,10 @@ impl Runtime<'_> {
             10718857 => self.owned_call(actors::fireflea::shot),
             10719413 => self.owned_call(actors::skultera::initialize),
             10719531 => self.owned_call(actors::skultera::main_ai),
+            11197603 => self.owned_call(actors::shaktool::main_ai),
+            11198019 => self.owned_call(actors::shaktool::initialize),
+            11198255 => self.owned_call(actors::shaktool::touch),
+            11198260 => self.owned_call(actors::shaktool::shot),
             10988577 => self.owned_call(sm_game::actors::kraid::main_ai),
             10997414 => self.owned_call(sm_game::actors::phantoon::main_ai),
             11191972 => self.owned_call(sm_game::actors::torizo::main_ai),
@@ -1225,6 +1229,11 @@ impl Runtime<'_> {
             Err(script) => script,
         };
         match routine {
+            11196721 | 11196735 | 11196746 | 11196755 | 11196858 => {
+                return self.owned_call(|runtime| {
+                    actors::shaktool::instruction(routine, actor, script, runtime)
+                });
+            }
             10719382 | 10719392 | 10719402 => {
                 return self
                     .owned_call(|runtime| actors::skultera::instruction(routine, script, runtime));
