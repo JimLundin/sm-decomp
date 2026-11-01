@@ -13,14 +13,14 @@ use crate::actors::host::{
 };
 use crate::actors::spore_spawn::instruction as spore;
 use crate::actors::{
-    alcoon, bang, beetom, blue_brinstar_face_block, botwoon, boulder, boyon, cacatac, choot,
-    covern, crawlers, crocomire_reactions, dachora_run, dragon, draygon_death, draygon_eye,
-    draygon_flight, draygon_grab, draygon_host, draygon_sweep, elevator, escape_critters, etecoon,
-    evir, fire_arc, fire_pillar, flies, fune, geruta, gunship, kago, kraid, magdollite, metroid,
-    mini_crocomire, mini_kraid, mochtroid, morph_ball_eye, multiviola, oum, phantoon,
-    phantoon_actions, polyp, puyo, reflec, rinka, rio, rippers, roach, shutters, sidehopper, skree,
-    space_pirates, spike_platform, spore_spawn, squeept, statues, tatori, torizo, tripper, waver,
-    work_robot, wrecked_ship_spark, yard, zoa,
+    alcoon, bang, beetom, botwoon, boulder, boyon, cacatac, choot, covern, crawlers,
+    crocomire_reactions, dachora_run, dragon, draygon_death, draygon_eye, draygon_flight,
+    draygon_grab, draygon_host, draygon_sweep, elevator, escape_critters, etecoon, evir, fire_arc,
+    fire_pillar, flies, fune, geruta, gunship, kago, kraid, magdollite, metroid, mini_crocomire,
+    mini_kraid, mochtroid, morph_ball_eye, multiviola, oum, phantoon, phantoon_actions, polyp,
+    puyo, reflec, rinka, rio, rippers, roach, shutters, sidehopper, skree, space_pirates,
+    spike_platform, spore_spawn, squeept, statues, tatori, torizo, tripper, waver, work_robot,
+    wrecked_ship_spark, yard, zoa,
 };
 use crate::combat_rules::LatchMode;
 use crate::enemy_projectiles::host::Effects as _;
@@ -153,16 +153,8 @@ pub fn shot<H: ShotHost>(ea: u32, j: u16, game: &mut H) {
     }
 }
 
-/// Graphics draw hooks whose routines still run in the compatibility crate.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum NativeDrawHook {
-    BlueFaceBlockPalette,
-}
-
 /// What the draw hooks need beyond their actors' own hosts.
-pub trait DrawHookHost: SpeciesHost + LeaseActors + magdollite::Host + draygon_host::Host {
-    fn native_draw_hook(&mut self, hook: NativeDrawHook);
-}
+pub trait DrawHookHost: SpeciesHost + LeaseActors + magdollite::Host + draygon_host::Host {}
 
 /// An enemy species' graphics draw hook, keyed by its address.
 pub fn draw_hook<H: DrawHookHost>(ea: u32, game: &mut H) {
@@ -174,7 +166,6 @@ pub fn draw_hook<H: DrawHookHost>(ea: u32, game: &mut H) {
         10851138 => draygon_flight::set_bg2_scroll(game),
         11042892 => (),
         11055282 => magdollite::cycle_palette(game),
-        11069550 => game.native_draw_hook(NativeDrawHook::BlueFaceBlockPalette),
         11110278 => (),
         _ => game.unknown_routine(),
     }
@@ -705,8 +696,6 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
             }
         }
         11053955 => kago::shot(game),
-        11069486 => blue_brinstar_face_block::initialize(game),
-        11069614 => blue_brinstar_face_block::main_ai(game),
         11055370 => pre_instruction(magdollite::main_ai(game), game),
         11789909 => pre_instruction(escape_critters::main_ai(game), game),
         10662880 => multiviola::initialize(game),
