@@ -19,9 +19,8 @@ use crate::actors::{
     evir, fire_arc, fire_pillar, flies, fune, geega, geruta, gunship, kago, kihunter, kraid,
     magdollite, metroid, mini_crocomire, mini_kraid, mochtroid, morph_ball_eye, multiviola, oum,
     phantoon, phantoon_actions, polyp, powamp, puyo, reflec, rinka, rio, rippers, roach, shaktool,
-    shutters, sidehopper, skree, skultera, space_pirates, spike_platform, spore_spawn, squeept,
-    statues, tatori, torizo, tripper, waver, work_robot, wrecked_ship_spark, yapping_maw, yard,
-    zeb, zoa,
+    shutters, sidehopper, skree, space_pirates, spike_platform, spore_spawn, squeept, statues,
+    tatori, torizo, tripper, waver, work_robot, wrecked_ship_spark, yapping_maw, yard, zeb, zoa,
 };
 use crate::combat_rules::LatchMode;
 use crate::enemy_projectiles::host::Effects as _;
@@ -242,7 +241,6 @@ pub trait AiHost:
     + fire_arc::Host
     + mini_kraid::Host
     + PreInstructionHost
-    + skultera::Host
     + crate::actors::host::EnemyHost
     + crate::effects::SoundEffects
     + spore_spawn::Host
@@ -679,8 +677,6 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         10851818 => draygon_death::touch(game),
         10851847 => draygon_death::power_bomb(game),
         // Bank $A3: the crawlers, divers, platforms, bugs and fish.
-        10719413 => skultera::initialize(game),
-        10719531 => skultera::main_ai(game),
         10720554 => elevator::main_ai(game),
         10739851 | 10741442 => {
             let function = crawlers::main_ai(game);
@@ -1004,7 +1000,6 @@ pub trait InstructionHost:
     + kraid::Host
     + phantoon::Host
     + mini_kraid::Host
-    + skultera::Host
     + crate::actors::host::EnemyHost
     + crate::effects::SoundEffects
     + botwoon::Host
@@ -1136,7 +1131,6 @@ pub fn instruction<H: InstructionHost>(
         }
         10738632 => reflec::set_reflection_axis(k, j, game),
         10741344 | 10739650 => crawlers::set_function(k, j, game),
-        10719382 | 10719392 | 10719402 => skultera::instruction(ea, j, game),
         11048485 | 11048497 | 11048522 | 11048547 | 11048572 | 11048597 | 11048628 => {
             fune::instruction(ea, j, game)
         }

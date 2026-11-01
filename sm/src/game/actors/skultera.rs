@@ -1,6 +1,6 @@
-//! Skultera runs in `sm_game::actors::skultera`; its sine comes from here.
+//! Skultera runs in `sm_game::actors::skultera` on the scheduler's lease.
 #![forbid(unsafe_code)]
-use crate::game_state::Game;
+use crate::game::session_runtime::Runtime;
 pub(crate) use sm_game::actors::skultera::*;
 
 // The named bank $A3 addresses are the ones `session_runtime` dispatches on.
@@ -13,12 +13,8 @@ const _: () = {
     assert!(i::LAYER_6 == 10719382 && i::LAYER_2 == 10719392 && i::SET_TURN_FINISHED == 10719402);
 };
 
-impl Host for Game {
-    fn actor_sine(&mut self, angle: u16, amplitude: u16) -> u16 {
-        crate::game::session_runtime::actor_sine(angle, amplitude, self)
-    }
-
+impl Host for Runtime<'_> {
     fn unreachable(&mut self) {
-        crate::rtl::report_unreachable(self);
+        self.foreign(|game| crate::rtl::report_unreachable(game));
     }
 }
