@@ -158,7 +158,9 @@ pub fn load_graphics<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     crate::screen_fade::set_both(game, 1, 1);
     crate::hdma_objects::set_hdma_enabled(true, game);
     crate::palette_effects::execution::leased::set_enabled(true, game);
-    cinematic!(game.FxBlending = 0);
+    crate::session_cohort::with(game, |_, words: &mut crate::session_words::SessionWords| {
+        words.fx_layer_blending_config_a = 0
+    });
     crate::palette_effects::execution::leased::spawn(TITLE_GLOW_1, game);
     crate::palette_effects::execution::leased::spawn(TITLE_GLOW_2, game);
     // The second title palette allocation leaves its slot offset in A.

@@ -1,7 +1,7 @@
 //! Intro and Zebes cinematic objects: Rinkas, the baby, explosions, flights, scenes and transforms.
 use crate::cinematic::*;
 use crate::cinematic_objects::CinematicObjects;
-use crate::cinematic_state::{Cinematic, Word, cinematic};
+use crate::cinematic_state::{Cinematic, Word};
 use crate::menus::prelude::{owned, scroll};
 use crate::ram::RawRam as _;
 use crate::ram::word;
@@ -105,7 +105,9 @@ pub fn advance_intro_rinka<H: crate::menus::host::Host + ?Sized>(
     } else {
         game.set_invincibility_timer(11);
         game.set_knockback_timer(11);
-        cinematic!(game.KnockbackXDirection = 1);
+        crate::session_cohort::with(game, |_, words: &mut crate::session_words::SessionWords| {
+            words.knockback_x_dir = 1
+        });
     }
     resume_cinematic_sprite(slot, 0xce53, cine);
 }

@@ -432,7 +432,10 @@ pub fn move_ending_cloud(object: u16, velocity: (i16, i16), cine: &mut Cinematic
 
 pub fn prepare_ending_time<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     let hours = word!(game.GAME_TIME_HOURS);
-    cinematic! { game; SequenceStage = hours / 10; SequenceValue = hours % 10; }
+    crate::session_cohort::with(game, |_, words: &mut crate::session_words::SessionWords| {
+        words.substate = hours / 10;
+        words.suit_pickup_light_beam_pos = hours % 10;
+    });
     let minutes = word!(game.GAME_TIME_MINUTES);
     crate::word_transfers!(game, ascending, 1;
         native(0xdf0) <- value(minutes / 10), native(0xdf2) <- value(minutes % 10),

@@ -133,8 +133,13 @@ pub fn create_japanese_text<H: crate::menus::host::Host + ?Sized>(
     game: &mut H,
 ) -> u16 {
     *cine.intro_text_click_flag() = 0;
-    if cinematic!(game.JapaneseText) != 0 {
-        CinematicObjects::Mode7.spawn(object, cinematic!(game.JapaneseText), cine, game);
+    if crate::session_words::current(game).japanese_text_flag != 0 {
+        CinematicObjects::Mode7.spawn(
+            object,
+            crate::session_words::current(game).japanese_text_flag,
+            cine,
+            game,
+        );
     }
     j
 }
@@ -152,10 +157,10 @@ pub fn spawn_marker<H: crate::menus::host::Host + ?Sized>(
     game: &mut H,
 ) -> u16 {
     reset_text_marker(cine);
-    if cinematic!(game.JapaneseText) != 0 {
+    if crate::session_words::current(game).japanese_text_flag != 0 {
         let failed = CinematicObjects::Sprites.spawn(
             ADDR_CINEMATIC_SPRITE_OBJECT_DEF_8BCE73 as u16,
-            cinematic!(game.JapaneseText),
+            crate::session_words::current(game).japanese_text_flag,
             cine,
             game,
         ) != 0;
@@ -238,7 +243,12 @@ pub fn wait_for_scene<H: crate::menus::host::Host + ?Sized>(
                 crate::room_view::set(game, crate::room_view::Word::Width, 32);
                 crate::room_view::set(game, crate::room_view::Word::Height, 16);
             }
-            cinematic!(game.SamusPose = K_POSE_02_FACE_L_NORMAL as u16);
+            crate::session_cohort::with(
+                game,
+                |_, words: &mut crate::session_words::SessionWords| {
+                    words.samus_pose = K_POSE_02_FACE_L_NORMAL as u16
+                },
+            );
             game.finish_pose_change();
             let (x, y) = if mother_brain { (155, 115) } else { (376, 147) };
             game.set_player_x(x);
@@ -265,7 +275,10 @@ pub fn wait_for_scene<H: crate::menus::host::Host + ?Sized>(
                 );
                 crate::word_transfers!(game, ascending, 224; le(LEVEL_DATA, 0) <- rom(0x8cbec3, 0));
                 crate::word_transfers!(game, ascending, 256; native(0x16402) <- value(0));
-                cinematic!(game.SelectedWeapon = 1);
+                crate::session_cohort::with(
+                    game,
+                    |_, words: &mut crate::session_words::SessionWords| words.hud_item_index = 1,
+                );
             } else {
                 CinematicObjects::Sprites.spawn(
                     ADDR_CINEMATIC_SPRITE_OBJECT_DEF_8BCE5B as u16,
@@ -281,7 +294,10 @@ pub fn wait_for_scene<H: crate::menus::host::Host + ?Sized>(
                 );
                 *cine.intro_frame_counter() = 0;
                 crate::word_transfers!(game, ascending, 384; le(LEVEL_DATA, 0) <- rom(0x8cc083, 0));
-                cinematic!(game.SelectedWeapon = 0);
+                crate::session_cohort::with(
+                    game,
+                    |_, words: &mut crate::session_words::SessionWords| words.hud_item_index = 0,
+                );
             }
             word!(game.FRAME_HANDLER_ALFA = (0x90e6c9i32) as u16);
             word!(game.FRAME_HANDLER_BETA = (0x90e833i32) as u16);
@@ -393,7 +409,7 @@ pub fn wait_for_fade<H: crate::menus::host::Host + ?Sized>(
         });
         if next == 0xa5f8 {
             *cine.function_timer() = 60;
-            if cinematic!(game.JapaneseText) != 0 {
+            if crate::session_words::current(game).japanese_text_flag != 0 {
                 queue_cinematic_tilemap(CinematicTilemap::JapaneseIntro, cine, game);
             }
         }
@@ -554,7 +570,7 @@ pub fn wait_for_final_page<H: crate::menus::host::Host + ?Sized>(
 ) {
     if page_input_ready(cine, game) {
         *cine.var13() = 127;
-        if cinematic!(game.JapaneseText) != 0 {
+        if crate::session_words::current(game).japanese_text_flag != 0 {
             crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
                 flow.cinematic_function = 0xb207
             });

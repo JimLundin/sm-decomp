@@ -204,8 +204,12 @@ pub fn initial<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     crate::palette_effects::execution::leased::clear(game);
     crate::palette_effects::execution::leased::set_enabled(true, game);
     cinematic!(game.DoorExit = 0);
-    cinematic!(game.Layer1X = 0);
-    cinematic!(game.Layer1Y = 0);
+    crate::session_cohort::with(game, |_, words: &mut crate::session_words::SessionWords| {
+        words.layer1_x_pos = 0
+    });
+    crate::session_cohort::with(game, |_, words: &mut crate::session_words::SessionWords| {
+        words.layer1_y_pos = 0
+    });
     *cine.intro_japanese_text_timer() = 0;
     crate::word_transfers!(game, descending, 1024; cinematic_bg(1023) <- native(BG_SOURCE));
     crate::word_transfers!(game, descending, 128; pause_map(127) <- rom(INTRO_PAUSE_MAP, 127));
@@ -425,8 +429,12 @@ pub fn boom_initial<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     crate::cinematic_display::configure_cinematic_display(CinematicDisplay::Station, cine, game);
     clear_cinematic_objects(cine);
     cinematic!(game.DoorExit = 0);
-    cinematic!(game.Layer1X = 0);
-    cinematic!(game.Layer1Y = 0);
+    crate::session_cohort::with(game, |_, words: &mut crate::session_words::SessionWords| {
+        words.layer1_x_pos = 0
+    });
+    crate::session_cohort::with(game, |_, words: &mut crate::session_words::SessionWords| {
+        words.layer1_y_pos = 0
+    });
     crate::word_transfers!(game, ascending, 256; le(PALETTE_BUFFER, 0) <- rom(SPACE_PALETTES, 0));
     load_space_graphics(game);
     GraphicsAsset::VramLowBytes(0x7f4600, 0x0000, 0x600).load_planes(0x8c, false, game);
@@ -498,8 +506,15 @@ pub fn boom_explosions<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     if below(*cine.mode7_zoom(), 640) {
         *cine.mode7_zoom() = cine.mode7_zoom().wrapping_add(1);
     } else {
-        cinematic!(game.PowerBombX = (word!(game.REG_M7X)).wrapping_sub(*cine.x()));
-        cinematic!(game.PowerBombY = (word!(game.REG_M7Y)).wrapping_sub(*cine.y()));
+        let x = word!(game.REG_M7X).wrapping_sub(*cine.x());
+        let y = word!(game.REG_M7Y).wrapping_sub(*cine.y());
+        crate::session_cohort::with(
+            game,
+            |_, explosion: &mut crate::explosion_window::Explosion| {
+                explosion.bomb.x = x;
+                explosion.bomb.y = y;
+            },
+        );
         crate::hdma_objects::set_hdma_enabled(true, game);
         game.spawn_power_bomb();
         game.ram().write_byte(0x6f, 16);
@@ -556,13 +571,26 @@ pub fn boom_fade_out<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
         crate::screen_fade::set_both(game, 0, 0);
         if word!(game.GAME_STATE) == BOOM_WITH_SAMUS {
             crate::music_requests::queue_delayed_8(NO_MUSIC, game);
-            cinematic!(game.SelectedWeapon = 0);
-            cinematic!(game.AutomaticWeapon = 0);
+            crate::session_cohort::with(
+                game,
+                |_, words: &mut crate::session_words::SessionWords| words.hud_item_index = 0,
+            );
+            crate::session_cohort::with(
+                game,
+                |_, words: &mut crate::session_words::SessionWords| {
+                    words.samus_auto_cancel_hud_item_index = 0
+                },
+            );
             game.set_invincibility_timer(0);
             game.set_knockback_timer(0);
             crate::hdma_objects::clear_hdma(game);
             game.disable_scanline_irq();
-            cinematic!(game.FxBlending = 0);
+            crate::session_cohort::with(
+                game,
+                |_, words: &mut crate::session_words::SessionWords| {
+                    words.fx_layer_blending_config_a = 0
+                },
+            );
             game.ram().write_byte(0x6e, 0);
             game.ram().write_byte(0x71, 0);
             game.ram().write_byte(mirror::TM, 16);

@@ -50,6 +50,10 @@ macro_rules! session_words {
 session_words! {
     /// `feedback.sound_disabled`.
     DebugDisableSounds = 0x05f5, DEBUG_DISABLE_SOUNDS, debug_disable_sounds: |s| s.feedback.sound_disabled;
+    /// `room.camera.layer1[0]`.
+    Layer1XPos = 0x0911, LAYER1_X_POS, layer1_x_pos: |s| s.room.camera.layer1[0];
+    /// `room.camera.layer1[1]`.
+    Layer1YPos = 0x0915, LAYER1_Y_POS, layer1_y_pos: |s| s.room.camera.layer1[1];
     /// `room.ceres_status`.
     CeresStatus = 0x093f, CERES_STATUS, ceres_status: |s| s.room.ceres_status;
     /// `timing.timer_status`.
@@ -66,6 +70,8 @@ session_words! {
     SamusSuitPaletteIndex = 0x0a74, SAMUS_SUIT_PALETTE_INDEX, samus_suit_palette_index: |s| s.presentation.palette_mut().suit_index;
     /// `timing.time_frozen`.
     TimeIsFrozenFlag = 0x0a78, TIME_IS_FROZEN_FLAG, time_is_frozen_flag: |s| s.timing.time_frozen;
+    /// `player.knockback_x_direction`.
+    KnockbackXDir = 0x0a54, KNOCKBACK_X_DIR, knockback_x_dir: |s| s.player.knockback_x_direction;
     /// `player.transitions.elevator_fade_timer`.
     ReachedCeresElevatorFadeTimer = 0x0aa0, REACHED_CERES_ELEVATOR_FADE_TIMER, reached_ceres_elevator_fade_timer: |s| s.player.transitions.elevator_fade_timer;
     /// `player.contact.y_speed.fraction`.
@@ -82,6 +88,8 @@ session_words! {
     QueuedMessageBoxIndex = 0x0dc8, QUEUED_MESSAGE_BOX_INDEX, queued_message_box_index: |s| s.messages.queued;
     /// `shared_sequence.stage`.
     Substate = 0x0dec, SUBSTATE, substate: |s| s.shared_sequence.stage;
+    /// `shared_sequence.value`.
+    SuitPickupLightBeamPos = 0x0dee, SUIT_PICKUP_LIGHT_BEAM_POS, suit_pickup_light_beam_pos: |s| s.shared_sequence.value;
     /// `actors.diagnostics.sprite_contacts_disabled`.
     DebugDisableSpriteInteract = 0x0e12, DEBUG_DISABLE_SPRITE_INTERACT, debug_disable_sprite_interact: |s| s.actors.diagnostics.sprite_contacts_disabled;
     /// `room.fx_blending`.

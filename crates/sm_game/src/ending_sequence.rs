@@ -170,8 +170,12 @@ pub fn setup<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     *cine.x() = 0;
     *cine.y() = 0;
     cinematic!(game.DoorExit = 0);
-    cinematic!(game.Layer1X = 0);
-    cinematic!(game.Layer1Y = 0);
+    crate::session_cohort::with(game, |_, words: &mut crate::session_words::SessionWords| {
+        words.layer1_x_pos = 0
+    });
+    crate::session_cohort::with(game, |_, words: &mut crate::session_words::SessionWords| {
+        words.layer1_y_pos = 0
+    });
     crate::palette_effects::execution::leased::clear(game);
     crate::palette_effects::execution::leased::set_enabled(true, game);
     crate::display_refresh::enable(true, game);
@@ -328,7 +332,9 @@ pub fn scene_2<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
         *cine.x_speed() = 0;
         *cine.y_subspeed() = 0;
         *cine.y_speed() = 0;
-        cinematic!(game.FxBlending = 0);
+        crate::session_cohort::with(game, |_, words: &mut crate::session_words::SessionWords| {
+            words.fx_layer_blending_config_a = 0
+        });
         scroll!(game.Bg2H = 0);
         scroll!(game.Bg2V = 0);
         crate::screen_fade::set_both(game, 0, 2);
@@ -482,8 +488,12 @@ pub fn credits_setup<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     *cine.mode7_zoom() = 2304;
     crate::display_refresh::enable(true, game);
     game.ram().write_byte(mirror::INIDISP, 15);
-    cinematic!(game.Layer1X = 0);
-    cinematic!(game.Layer1Y = 0);
+    crate::session_cohort::with(game, |_, words: &mut crate::session_words::SessionWords| {
+        words.layer1_x_pos = 0
+    });
+    crate::session_cohort::with(game, |_, words: &mut crate::session_words::SessionWords| {
+        words.layer1_y_pos = 0
+    });
     crate::hdma_objects::set_hdma_enabled(true, game);
     crate::word_transfers!(game, descending, 256; le(HDMA_TABLE_1, 255) <- value(0));
     crate::shooting_star_motion::initialize_shooting_stars(game);
@@ -589,8 +599,12 @@ pub fn fade_from_white<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
         });
         *cine.bg_vram_address() = 20480;
         queue_cinematic_tilemap(CinematicTilemap::FullText, cine, game);
-        cinematic!(game.Layer1X = 256);
-        cinematic!(game.Layer1Y = 256);
+        crate::session_cohort::with(game, |_, words: &mut crate::session_words::SessionWords| {
+            words.layer1_x_pos = 256
+        });
+        crate::session_cohort::with(game, |_, words: &mut crate::session_words::SessionWords| {
+            words.layer1_y_pos = 256
+        });
         // A carries into each spawn: the layer position, then what each
         // initializer loaded last ($8B:F18F..F1D4).
         let parameters = [0x0100, 8, 8, 0x0e00];

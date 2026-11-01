@@ -2,7 +2,6 @@
 use crate::cinematic::set_fixed_color;
 use crate::cinematic_objects::draw_cinematic_sprites;
 use crate::cinematic_state::Cinematic;
-use crate::cinematic_state::cinematic;
 use crate::display::control::{Brightness, Layers, MainWindowMask, SubScreen};
 use crate::menu_state::OptionsMenu;
 use crate::menus::prelude::{owned, scroll};
@@ -195,7 +194,9 @@ pub fn configure_cinematic_display<H: crate::menus::host::Host + ?Sized>(
     *cine.y_subspeed() = 0;
     *cine.y_speed() = 0;
     if matches!(display, Intro | Station) {
-        cinematic!(game.FxBlending = 0);
+        crate::session_cohort::with(game, |_, words: &mut crate::session_words::SessionWords| {
+            words.fx_layer_blending_config_a = 0
+        });
     }
     if intro {
         scroll! { game, 0; Bg2H, Bg2V, Bg3H, Bg3V }
