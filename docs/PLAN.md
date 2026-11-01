@@ -6,6 +6,11 @@ REVIEW scopes frozen compat and verification separately. The completion target
 below 100,000 lines applies to sm_data, sm_game, sm_runtime and sm_app. Report gross
 physical totals, compat and verification separately; REVIEW owns phase/size measures.
 
+Jim's completion scope (2026-11-01): migrate all engine responsibilities into the
+new crate setup and extend verification to the complete existing any%, 100% and
+low% movies. Account for boot, transitions and endgame as well as selected rooms;
+record uncovered scope until genuine replays and named facts prove it.
+
 The [accepted destination](target-architecture/README.md) is one deterministic owned
 Session, our renderer/audio and small platform libraries, independent of SNES emulation.
 Map Rando needs custom sprites/palettes, configurable rooms/doors and opt-in re-spin/QoL.

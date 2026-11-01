@@ -34,8 +34,8 @@ import cycle_report  # noqa: E402
 # union adds two files: 1842/99 becomes 2145/101. This is not the lower queued
 # batch-13 count; lower it only after that landing. Production remains advisory.
 BASELINE = {
-    "sm_game_ram_sites": 2145,
-    "sm_game_coupled_files": 101,
+    "sm_game_ram_sites": 2138,
+    "sm_game_coupled_files": 98,
     "production_lines": 173506,
 }
 ADVISORY = {"production_lines"}
