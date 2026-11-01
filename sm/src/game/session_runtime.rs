@@ -1142,7 +1142,6 @@ crate::game::callback_dispatch! {
         11111301 => [{
                     sm_a9::tubes_falling_main_ai(crate::ram_map::word!(game.CUR_ENEMY_INDEX), game);
                 }];
-        11121927 => sm_a9::brain_shot;
         10783748 => crate::game::visual_runtime::advance_crocomire;
         0xa90000..=0xa9ffff => [sm_a9::dispatch_enemy_ai(ea, game)];
     }
@@ -1158,7 +1157,7 @@ fn native_instruction(ea: u32, j: EnemyScript, game: &mut Game) -> EnemyScript {
 }
 impl Runtime<'_> {
     pub(crate) fn actor_ai_legacy(&mut self, routine: u32) {
-        if sm_game::actors::species::lease_ai(routine, self) || self.bank_a9_ai(routine) {
+        if sm_game::actors::species::lease_ai(routine, self) || self.bank_a9_routine(routine) {
             return;
         }
         match routine {
@@ -1233,7 +1232,7 @@ impl Runtime<'_> {
         use sm_game::actors::species;
         if routine == 10940479 {
             self.owned_call(sm_game::actors::ceres_doors::steam_touch);
-        } else if !species::lease_touch(routine, self) {
+        } else if !self.bank_a9_routine(routine) && !species::lease_touch(routine, self) {
             self.foreign(|game| species::touch(routine, game));
         }
     }
@@ -1241,7 +1240,7 @@ impl Runtime<'_> {
         use sm_game::actors::species;
         if routine == 10936202 {
             self.owned_call(sm_game::actors::ridley::shot);
-        } else if !species::lease_shot(routine, self) {
+        } else if !self.bank_a9_routine(routine) && !species::lease_shot(routine, self) {
             self.foreign(|game| species::shot(routine, argument, game));
         }
     }
@@ -1249,9 +1248,7 @@ impl Runtime<'_> {
         use sm_game::actors::species;
         if routine == 10920690 {
             self.owned_call(sm_game::actors::ridley::draw_baby_metroid_and_door);
-        } else if routine == 11129754 {
-            self.owned_call(sm_game::actors::corpses::torizo_corpse_graphics_drawn_hook);
-        } else if !species::lease_draw_hook(routine, self) {
+        } else if !self.bank_a9_routine(routine) && !species::lease_draw_hook(routine, self) {
             self.foreign(|game| species::draw_hook(routine, game));
         }
     }

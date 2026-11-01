@@ -3,7 +3,6 @@
 #![forbid(unsafe_code)]
 use crate::game::actors::api;
 use crate::game::session_runtime::Runtime;
-use crate::game::sm_a9;
 use crate::game_state::Game;
 use crate::ram_map::word;
 use sm_game::actors::access::ActorKey;
@@ -34,22 +33,13 @@ impl sm_game::actors::species::SpeciesHost for Game {
     }
 }
 
-impl sm_game::actors::species::TouchHost for Game {
-    fn native_touch(&mut self, touch: sm_game::actors::species::NativeTouch) {
-        use sm_game::actors::species::NativeTouch::*;
-        match touch {
-            MotherBrainBrain => sm_a9::brain_touch(self),
-        }
-    }
-}
+impl sm_game::actors::species::TouchHost for Game {}
 
 impl sm_game::actors::species::ShotHost for Game {
     fn native_shot(&mut self, shot: sm_game::actors::species::NativeShot) {
         use sm_game::actors::species::NativeShot::*;
         match shot {
             Dud => api::create_dud(&mut Runtime::new(self)),
-            MotherBrainBody => sm_a9::body_shot(self),
-            MotherBrainBrain => sm_a9::brain_shot(self),
         }
     }
 }
@@ -59,8 +49,6 @@ impl sm_game::actors::species::DrawHookHost for Game {
         use sm_game::actors::species::NativeDrawHook::*;
         match hook {
             BlueFaceBlockPalette => sm_game::actors::blue_brinstar_face_block::cycle_palette(self),
-            MotherBrainBrainAndNeck => sm_a9::draw_brain_and_neck_hook(self),
-            MotherBrainBrain => sm_a9::draw_brain_hook(self),
         }
     }
 }

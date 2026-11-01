@@ -162,10 +162,10 @@ impl baby_metroid_cutscene::Host for Game {
 }
 
 impl Runtime<'_> {
-    /// Bank $A9's AI and reactions that run on this lease: Mother Brain's, the
-    /// tubes', the baby Metroid's and the corpses'; false when `routine` is not
-    /// one of them.
-    pub(crate) fn bank_a9_ai(&mut self, routine: u32) -> bool {
+    /// Bank $A9's AI, reactions and draw hooks that run on this lease: Mother
+    /// Brain's, the tubes', the baby Metroid's and the corpses'; false when
+    /// `routine` is not one of them.
+    pub(crate) fn bank_a9_routine(&mut self, routine: u32) -> bool {
         let action: fn(&mut Self) = match routine {
             11110023 => mother_brain_fight::initialize_body,
             11110149 => mother_brain_fight::initialize_brain,
@@ -173,7 +173,10 @@ impl Runtime<'_> {
             11110279 => mother_brain_fight::power_bomb_reaction,
             11110283 => mother_brain_fight::brain_main_ai,
             11111221 => sm_game::actors::mother_brain_tubes::initialize,
+            11110345 => mother_brain_fight::draw_brain_and_neck_hook,
+            11110365 => mother_brain_fight::draw_brain_hook,
             11121923 => mother_brain_fight::body_shot,
+            11121927 => mother_brain_fight::brain_shot,
             11122118 => mother_brain_fight::brain_touch,
             11126544 => baby_metroid_cutscene::initialize,
             11126649 => baby_metroid_cutscene::main_ai,
@@ -185,6 +188,7 @@ impl Runtime<'_> {
             11139138 => baby_metroid_encounter::shot,
             11129608 => corpses::initialize_torizo_corpse,
             11129704 => corpses::torizo_corpse_main_ai,
+            11129754 => corpses::torizo_corpse_graphics_drawn_hook,
             11129898 => corpses::torizo_corpse_power_bomb_reaction,
             11129907 => corpses::torizo_corpse_touch_or_shot,
             11130806 => corpses::initialize_sidehopper_corpse,

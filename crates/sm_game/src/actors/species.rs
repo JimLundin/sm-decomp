@@ -58,12 +58,6 @@ impl<T> B3Host for T where
 {
 }
 
-/// Contact reactions whose routines still run in the compatibility crate.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum NativeTouch {
-    MotherBrainBrain,
-}
-
 /// What the contact reactions need beyond their actors' own hosts.
 pub trait TouchHost:
     SpeciesHost
@@ -78,7 +72,6 @@ pub trait TouchHost:
     + phantoon::Host
     + spore_spawn::Host
 {
-    fn native_touch(&mut self, touch: NativeTouch);
 }
 
 /// An enemy species' contact reaction, keyed by its address.
@@ -101,7 +94,6 @@ pub fn touch<H: TouchHost>(ea: u32, game: &mut H) {
         10982544 => kraid::arm_touch(game),
         11001237 => phantoon::touch(game),
         11122117 => (),
-        11122118 => game.native_touch(NativeTouch::MotherBrainBrain),
         11192695 => torizo::touch(game),
         11700076 => space_pirates::touch(game),
         _ => game.unknown_routine(),
@@ -112,8 +104,6 @@ pub fn touch<H: TouchHost>(ea: u32, game: &mut H) {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum NativeShot {
     Dud,
-    MotherBrainBody,
-    MotherBrainBrain,
 }
 
 /// What the shot reactions need beyond their actors' own hosts.
@@ -156,8 +146,6 @@ pub fn shot<H: ShotHost>(ea: u32, j: u16, game: &mut H) {
         10982581 => (),
         10982582 => kraid::arm_shot(game, j),
         11001243 => phantoon::shot(game),
-        11121923 => game.native_shot(NativeShot::MotherBrainBody),
-        11121927 => game.native_shot(NativeShot::MotherBrainBrain),
         11192700 => torizo::shot(game),
         11192769 => (),
         11192770 => torizo::standing_shot(game),
@@ -172,8 +160,6 @@ pub fn shot<H: ShotHost>(ea: u32, j: u16, game: &mut H) {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum NativeDrawHook {
     BlueFaceBlockPalette,
-    MotherBrainBrainAndNeck,
-    MotherBrainBrain,
 }
 
 /// What the draw hooks need beyond their actors' own hosts.
@@ -193,8 +179,6 @@ pub fn draw_hook<H: DrawHookHost>(ea: u32, game: &mut H) {
         11055282 => magdollite::cycle_palette(game),
         11069550 => game.native_draw_hook(NativeDrawHook::BlueFaceBlockPalette),
         11110278 => (),
-        11110345 => game.native_draw_hook(NativeDrawHook::MotherBrainBrainAndNeck),
-        11110365 => game.native_draw_hook(NativeDrawHook::MotherBrainBrain),
         _ => game.unknown_routine(),
     }
 }
