@@ -97,22 +97,18 @@ impl sm_game::actors::deaths::Deaths for Game {
     }
 }
 
-impl sm_game::actors::zebetites::Host for Game {
+impl sm_game::actors::zebetites::Lease for crate::game::session_runtime::Runtime<'_> {
     fn event_happened(&mut self, event: u16) -> u16 {
-        crate::game::gameplay_flag_runtime::event_has_happened(event, self)
+        self.foreign(|game| crate::game::gameplay_flag_runtime::event_has_happened(event, game))
     }
     fn set_event(&mut self, event: u16) {
-        crate::game::gameplay_flag_runtime::mark_event(event, self);
+        self.foreign(|game| crate::game::gameplay_flag_runtime::mark_event(event, game));
     }
     fn clear_event(&mut self, event: u16) {
-        crate::game::gameplay_flag_runtime::clear_event_happened(event, self);
+        self.foreign(|game| crate::game::gameplay_flag_runtime::clear_event_happened(event, game));
     }
     fn spawn_population(&mut self, bank: u8, population: u16) -> u16 {
-        crate::game::actors::population::spawn_legacy(
-            &mut crate::game::session_runtime::Runtime::new(self),
-            bank,
-            population,
-        )
+        crate::game::actors::population::spawn_legacy(self, bank, population)
     }
 }
 

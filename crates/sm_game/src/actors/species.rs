@@ -21,7 +21,7 @@ use crate::actors::{
     multiviola, oum, phantoon, phantoon_actions, polyp, powamp, puyo, reflec, rinka, rio, rippers,
     roach, shaktool, shutters, sidehopper, skree, skultera, space_pirates, spike_platform,
     spore_spawn, squeept, statues, tatori, torizo, tripper, waver, work_robot, wrecked_ship_spark,
-    yapping_maw, yard, zeb, zebetites, zoa,
+    yapping_maw, yard, zeb, zoa,
 };
 use crate::combat_rules::LatchMode;
 use crate::enemy_projectiles::host::Effects as _;
@@ -252,7 +252,6 @@ pub trait AiHost:
     + boulder::Host
     + fire_arc::Host
     + mini_kraid::Host
-    + zebetites::Host
     + PreInstructionHost
     + fireflea::Host
     + skultera::Host
@@ -615,8 +614,8 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         10780717 => game.shot_reaction(Shot::Finalize),
         10783322 => crocomire_reactions::initialize(game),
         10795410 => crocomire_reactions::power_bomb(game),
-        // Bank $A6: the boulder, the fire arc, Mini-Kraid, Ceres's steam and
-        // doors and the zebetites, with the bank's common reactions.
+        // Bank $A6: the boulder, the fire arc and Mini-Kraid, with the bank's
+        // common reactions.
         10911779 => game.contact_reaction(Death::Finalize),
         10911789 => game.shot_reaction(Shot::Finalize),
         10913525 => boulder::initialize(game),
@@ -628,10 +627,6 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         10918594 => mini_kraid::main_ai(game),
         10918946 => mini_kraid::touch(game),
         10918969 => mini_kraid::shot(game),
-        10943346 => zebetites::initialize(game),
-        10943539 => zebetites::main_ai(game),
-        10943911 => zebetites::touch(game),
-        10943916 => zebetites::shot(game),
         // Bank $A7: Kraid, Phantoon, the etecoons and the dachora, with the
         // bank's common reactions.
         10982544 => kraid::arm_touch(game),

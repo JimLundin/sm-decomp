@@ -4,7 +4,9 @@
 //!
 //! Was `Zebetites` in the original decompilation (bank $A6:FB72-$A6:FD54). Its
 //! view names the slot words over the same RAM bytes as `EnemyLayout8`.
-use crate::actors::host::{Death, Shot};
+use crate::actors::boss_lease::BossLease;
+use crate::actors::deaths::Deaths;
+use crate::actors::host::{BossEffects, Death, Shot};
 use crate::actors::layouts::{EnemyBase, EnemyLayout8};
 use crate::constants::enemy_properties::K_ENEMY_PROPS_DELETED;
 use crate::palette_copies::copy_rom_colors_to_palette;
@@ -12,11 +14,9 @@ use crate::ram::word;
 use crate::session_slot;
 use crate::zebetite_data;
 
-/// What the zebetites need beyond the shared boss effects: dying, their tables,
-/// the room's event flags and spawning the next zebetites.
-pub trait Host:
-    crate::actors::host::BossEffects + crate::actors::deaths::Deaths + crate::records::Records
-{
+/// The lease the zebetites run on, with the room's event flags and spawning the
+/// next zebetites; dying and the shared boss effects are the game's.
+pub trait Lease: BossLease<Game: BossEffects + Deaths> {
     fn event_happened(&mut self, event: u16) -> u16;
     fn set_event(&mut self, event: u16);
     fn clear_event(&mut self, event: u16);
@@ -76,12 +76,12 @@ const GLOW_PALETTE_WORD: u16 = 0x158;
 /// The sound of a shot striking a zebetite.
 const HIT_SOUND: u8 = 9;
 
-fn current<H: Host + ?Sized>(game: &H) -> i32 {
-    word!(game.CUR_ENEMY_INDEX) as i32
+fn current<L: Lease + ?Sized>(game: &L) -> i32 {
+    i32::from(game.current_enemy())
 }
 
 /// Places the next zebetite from the destroyed count. Was `Zebetites_Init`.
-pub fn initialize<H: Host + ?Sized>(game: &mut H) {
+pub fn initialize<L: Lease + ?Sized>(game: &mut L) {
     let me = current(game);
     session_slot!(game, Zebetite[me].base; properties = (session_slot!(game, Zebetite[me].base.properties)) | (0xa000u16),
         instruction_timer = 1, timer = 0, palette_index = 1024, vram_tiles_index = 128, );
@@ -121,23 +121,23 @@ pub fn initialize<H: Host + ?Sized>(game: &mut H) {
 }
 
 /// Stills the earthquake shake and runs the current state. Was `Zebetites_Main`.
-pub fn main_ai<H: Host + ?Sized>(game: &mut H) {
+pub fn main_ai<L: Lease + ?Sized>(game: &mut L) {
     if word!(game.EARTHQUAKE_TIMER) == 0 {
         session_slot!(game, Zebetite[current(game)].base.shake_timer = 0);
     }
     let me = current(game);
     let state = session_slot!(game, Zebetite[me].state);
-    let k = word!(game.CUR_ENEMY_INDEX);
+    let k = game.current_enemy();
     match state {
         state::SPAWN_PARTNER => spawn_partner(game, k),
         state::WAIT_FOR_DOOR => wait_for_door(game, k),
         state::ACTIVE => run(game),
-        _ => game.unreachable(),
+        _ => game.foreign(|game| game.unreachable()),
     }
 }
 
 /// A pair's first zebetite spawns the second and links them. Was `Zebetites_Func_1`.
-fn spawn_partner<H: Host + ?Sized>(game: &mut H, k: u16) {
+fn spawn_partner<L: Lease + ?Sized>(game: &mut L, k: u16) {
     let me = k as i32;
     if (session_slot!(game, Zebetite[me].pair) & 0x8000) != 0 {
         let partner = game.spawn_population(0xa6, PARTNER);
@@ -149,7 +149,7 @@ fn spawn_partner<H: Host + ?Sized>(game: &mut H, k: u16) {
 }
 
 /// Waits for the door transition to finish. Was `Zebetites_Func_2`.
-fn wait_for_door<H: Host + ?Sized>(game: &mut H, k: u16) {
+fn wait_for_door<L: Lease + ?Sized>(game: &mut L, k: u16) {
     if word!(game.DOOR_TRANSITION_FLAG_ELEVATOR_ZEBETITES) == 0 {
         session_slot!(game, Zebetite[k as i32].state = state::ACTIVE);
         run(game);
@@ -158,7 +158,7 @@ fn wait_for_door<H: Host + ?Sized>(game: &mut H, k: u16) {
 
 /// Glows, shows its health stage and regrows; once destroyed, counts itself
 /// and makes way for the next zebetite. Was `Zebetites_Func_3`.
-fn run<H: Host + ?Sized>(game: &mut H) {
+fn run<L: Lease + ?Sized>(game: &mut L) {
     glow(game);
     show_health_stage(game);
     let me = current(game);
@@ -180,14 +180,13 @@ fn run<H: Host + ?Sized>(game: &mut H) {
     }
 }
 
-fn die<H: Host + ?Sized>(game: &mut H) {
-    let _actor = word!(game.CUR_ENEMY_INDEX);
-    game.normal_death(0);
+fn die<L: Lease + ?Sized>(game: &mut L) {
+    game.foreign(|game| game.normal_death(0));
 }
 
 /// Adds this zebetite to the destroyed count in the event flags. Was
 /// `Zebetites_Func_6`/`Zebetites_Func_7`.
-fn count_destroyed<H: Host + ?Sized>(game: &mut H) {
+fn count_destroyed<L: Lease + ?Sized>(game: &mut L) {
     let me = current(game);
     let destroyed: i16 = ((session_slot!(game, Zebetite[me].destroyed)) as i16).wrapping_add(1);
     session_slot!(game, Zebetite[me].destroyed = destroyed as u16);
@@ -202,7 +201,7 @@ fn count_destroyed<H: Host + ?Sized>(game: &mut H) {
 
 /// Shows the animation for the current health: five stages from full to
 /// almost destroyed. Was `Zebetites_Func_5`.
-fn show_health_stage<H: Host + ?Sized>(game: &mut H) {
+fn show_health_stage<L: Lease + ?Sized>(game: &mut L) {
     let mut stage: u16 = 0;
     let me = current(game);
     let health: u16 = session_slot!(game, Zebetite[me].base.health);
@@ -224,12 +223,9 @@ fn show_health_stage<H: Host + ?Sized>(game: &mut H) {
 
 /// Advances the shared glow one frame, when no palette change is pending and
 /// this is a pair's first zebetite. Was `Zebetites_Func_4`.
-fn glow<H: Host + ?Sized>(game: &mut H) {
+fn glow<L: Lease + ?Sized>(game: &mut L) {
     if word!(game.PALETTE_CHANGE_NUM) == 0
-        && session_slot!(
-            game,
-            Zebetite[word!(game.CUR_ENEMY_INDEX) as i32].second_of_pair
-        ) == 0
+        && session_slot!(game, Zebetite[current(game)].second_of_pair) == 0
     {
         let first: i32 = 0;
         let frame: u16 = ((session_slot!(game, Zebetite[first].glow_frame) as i32 + 1) & 7) as u16;
@@ -245,14 +241,14 @@ fn glow<H: Host + ?Sized>(game: &mut H) {
 }
 
 /// Touched by Samus. Was `Zebetites_Touch`.
-pub fn touch<H: Host + ?Sized>(game: &mut H) {
-    game.contact_reaction(Death::LeavePending);
+pub fn touch<L: Lease + ?Sized>(game: &mut L) {
+    game.react_to_contact(Death::LeavePending);
 }
 
 /// Hit by a shot: a pair shares its health and flash. Was `Zebetites_Shot`.
-pub fn shot<H: Host + ?Sized>(game: &mut H) {
+pub fn shot<L: Lease + ?Sized>(game: &mut L) {
     game.queue_sound(2, HIT_SOUND, 6);
-    game.shot_reaction(Shot::ReactionOnly);
+    game.react_to_shot(Shot::ReactionOnly);
     let me = current(game);
     let partner: i32 = session_slot!(game, Zebetite[me].partner) as i32;
     session_slot!(
