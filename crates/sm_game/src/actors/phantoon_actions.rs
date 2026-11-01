@@ -3,36 +3,13 @@
 //!
 //! Phantoon is four enemies: the body in slot 0, then the eye, tentacles and
 //! mouth. The mouth's slot holds the wavy fade's amplitude.
-use crate::actors::boss_lease::BossState;
-use crate::actors::layouts::{EnemyBase, EnemyLayout8 as Part, same_words};
-use crate::actors::session_slots::session_slot;
+use crate::actors::phantoon::{State, part};
+
 use crate::cartridge::native_record;
 use crate::cartridge::rom_table_word;
 
-/// What Phantoon's actions need beyond the common actor host.
-pub trait Host: crate::actors::host::ActorHost + crate::effects::SoundEffects {}
-impl<T: crate::actors::host::ActorHost + crate::effects::SoundEffects + ?Sized> Host for T {}
-
 /// The Phantoon destroyable flames enemy projectile ($86:9C29).
 pub const DESTROYABLE_FLAMES: u16 = 0x9c29;
-
-/// The mouth's view of its slot.
-#[derive(Clone, Copy)]
-#[repr(C)]
-pub struct Mouth {
-    pub base: EnemyBase,
-    pub casual_flame_pattern: u16,
-    pub casual_flame_timer: u16,
-    pub casual_flame_pattern_index: u16,
-    pub wave_amplitude: u16,
-    pub wave_shrinking: u16,
-    pad_0fb2: [u16; 3],
-}
-
-same_words!(Mouth: EnemyLayout8 {
-    casual_flame_pattern = var_a, casual_flame_timer = var_b, casual_flame_pattern_index = var_c,
-    wave_amplitude = var_d, wave_shrinking = var_e,
-});
 
 const BANK: u8 = 0xa7;
 /// The mouth's slot.
@@ -61,36 +38,36 @@ const SIGN: i32 = 0x8000;
 /// Grow/shrink Phantoon wave amplitude ($A7:CF27) by the delta in `amount`'s
 /// low word, growing up to the maximum in its high word; 1 once shrinking has
 /// taken it below zero. Was `approach_speed`.
-pub fn grow_or_shrink_wave_amplitude(amount: i32, game: &mut (impl BossState + ?Sized)) -> u8 {
+pub fn grow_or_shrink_wave_amplitude(amount: i32, game: &mut (impl State + ?Sized)) -> u8 {
     let (delta, max) = (amount as u16, (amount >> 16) as u16);
-    let amplitude = session_slot!(game, Mouth[MOUTH].wave_amplitude);
-    if session_slot!(game, Mouth[MOUTH].wave_shrinking) != 0 {
-        session_slot!(
+    let amplitude = part!(game, Mouth[MOUTH].wave_amplitude);
+    if part!(game, Mouth[MOUTH].wave_shrinking) != 0 {
+        part!(
             game,
             Mouth[MOUTH].wave_amplitude = amplitude.wrapping_sub(delta)
         );
         if amplitude < delta {
-            session_slot!(game, Mouth[MOUTH].wave_amplitude = 0);
+            part!(game, Mouth[MOUTH].wave_amplitude = 0);
             return 1;
         }
     } else {
         let next = delta.wrapping_add(amplitude);
-        session_slot!(game, Mouth[MOUTH].wave_amplitude = next);
+        part!(game, Mouth[MOUTH].wave_amplitude = next);
         if (i32::from(next >> 8) - i32::from(max >> 8)) & SIGN == 0 {
-            session_slot!(game, Mouth[MOUTH].wave_amplitude = max);
+            part!(game, Mouth[MOUTH].wave_amplitude = max);
         }
     }
     0
 }
 
 /// Spawn casual flame ($A7:CF5E). Was `spawn_fireball`.
-pub fn spawn_casual_flame(k: u16, game: &mut (impl BossState + ?Sized)) {
+pub fn spawn_casual_flame(k: u16, game: &mut (impl State + ?Sized)) {
     game.spawn_actor_eproj(0, k, DESTROYABLE_FLAMES);
     game.queue_sound(2, FLAME_SOUND, 6);
 }
 
 /// Phantoon materialisation flame spiral ($A7:CF70). Was `spawn_fireball_circle`.
-pub fn spawn_flame_spiral(k: u16, game: &mut (impl BossState + ?Sized)) {
+pub fn spawn_flame_spiral(k: u16, game: &mut (impl State + ?Sized)) {
     for i in (0..SPIRAL_FLAMES).rev() {
         game.spawn_actor_eproj(i | SPIRAL, k, DESTROYABLE_FLAMES);
     }
@@ -100,7 +77,7 @@ pub fn spawn_flame_spiral(k: u16, game: &mut (impl BossState + ?Sized)) {
 /// Spawn flame rain enemy projectiles ($A7:CF8B): eight flames at consecutive
 /// positions of nine from the pattern's first, leaving one gap, each falling
 /// for longer. Was `spawn_fireball_pattern`.
-pub fn spawn_flame_rain(k: u16, pattern: u16, game: &mut (impl BossState + ?Sized)) {
+pub fn spawn_flame_rain(k: u16, pattern: u16, game: &mut (impl State + ?Sized)) {
     let mut position =
         i16::from(native_record(BANK, RAIN_FIRST_POSITIONS, game).byte(usize::from(pattern)));
     for flame in 1..=RAIN_FLAMES {
@@ -120,10 +97,10 @@ pub fn spawn_flame_rain(k: u16, pattern: u16, game: &mut (impl BossState + ?Size
 /// Get Phantoon health-based palette colour ($A7:DC0F): the colour at `base`
 /// in the palette for the current part's health step; returns (base, colour).
 /// Was `Phantoon_SetColorBasedOnHp_FindEntry`.
-pub fn health_palette_colour(base: u16, game: &mut (impl BossState + ?Sized)) -> (u16, u16) {
+pub fn health_palette_colour(base: u16, game: &mut (impl State + ?Sized)) -> (u16, u16) {
     let (mut bound, mut step) = (HEALTH_STEP, 0u16);
     while (bound as i16)
-        .wrapping_sub(session_slot!(game, Part[i32::from(game.current_enemy())].base.health) as i16)
+        .wrapping_sub(part!(game, Part[i32::from(game.current_enemy())].base.health) as i16)
         < 0
     {
         bound = bound.wrapping_add(HEALTH_STEP);

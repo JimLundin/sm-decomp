@@ -3,9 +3,7 @@
 //! pad are three consecutive slots.
 #![forbid(unsafe_code)]
 use crate::actors::combat;
-use crate::actors::host::{
-    ActorLease, ActorRuntime as _, BossEffects as _, LeaseActors, sign_extend8,
-};
+use crate::actors::host::{ActorLease, ActorRuntime as _, BossEffects as _, sign_extend8};
 use crate::actors::layouts::part_view;
 use crate::display::transfer::{Source, TilemapUpload, queue_tilemap};
 use crate::enemy_projectiles::host::Effects as _;
@@ -36,6 +34,8 @@ pub trait Host {
     /// The message box `kind`'s response, negative until it closes.
     fn message_box_response(&mut self, kind: u16) -> i32;
     fn save_game(&mut self, slot: u16);
+    /// A stored function outside the gunship table retains the original dispatch.
+    fn run_other_pre_instruction(&mut self, address: u32);
 }
 
 /// Gunship functions ($A2:A80C-$A2:AD2D).
@@ -68,9 +68,7 @@ const DUST_SOURCES: u32 = 0xa2_ac07;
 const DUST_DESTINATIONS: u32 = 0xa2_ac11;
 /// The save station flags word, read and written little-endian.
 const USED_SAVE_STATIONS: usize = 0xd8f8;
-/// Samus's movement type byte ($0A1F), 0 standing, and two words liftoff clears that are
-/// never read.
-const MOVEMENT_TYPE: usize = 0xa1f;
+/// Native presentation aliases cleared on liftoff: suit colour and crystal flash delay.
 const UNREAD: [usize; 2] = [0xdf0, 0xdf2];
 /// The gunship's top, bottom and entrance pad, from the current slot.
 const TOP: i32 = 0;
@@ -97,9 +95,16 @@ fn set_instruction(rt: &mut impl ActorLease, slot: i32, list: u16) {
 fn add_y(rt: &mut impl ActorLease, slot: i32, amount: u16) {
     session_slot!(rt, Gunship[slot].base.y_pos, |y| y.wrapping_add(amount));
 }
-/// Add a 16.16 `amount` to the native split position at `high` and `low`, reading the
-/// low word first and storing it first, as AddToHiLo does.
-fn advance_native(rt: &mut impl ActorLease, high: usize, low: usize, amount: i32) {
+/// Advance aligned owned parts directly. Odd, widened off-table and non-LE
+/// native identities retain the original fraction-first compatibility accesses.
+fn advance_part(rt: &mut impl ActorLease, slot: i32, amount: i32) {
+    if cfg!(target_endian = "little") && (0..2048).contains(&slot) && slot % 64 == 0 {
+        let actor = &mut rt.session_mut().actors.slots[usize::try_from(slot / 64).unwrap()];
+        actor.y.advance(amount);
+        return;
+    }
+    let high = crate::ram_slot!(@at Gunship, slot, base.y_pos);
+    let low = high + 2;
     let fraction = rt.lease_native_word(low);
     let mut position = Position {
         whole: rt.lease_native_word(high),
@@ -130,26 +135,26 @@ fn save(rt: &mut impl ActorLease) {
     crate::probe::hit("gunship.save");
     let flags = rt.word(USED_SAVE_STATIONS) | 1;
     rt.write_slice_le(USED_SAVE_STATIONS, flags);
-    rt.write_slice_le(W::LOAD_STATION_INDEX, 0);
-    let slot = rt.word(W::SELECTED_SAVE_SLOT);
-    rt.foreign(|game| game.save_game(slot));
+    rt.session_mut().menu_screens.save_selection.load_station = 0;
+    let slot = rt.session().menu_screens.save_selection.selected_slot;
+    rt.save_game(slot);
 }
 fn unlock_player(rt: &mut impl ActorLease) {
-    rt.write_slice_le(W::FRAME_HANDLER_ALFA, 0xe695);
-    rt.write_slice_le(W::FRAME_HANDLER_BETA, 0xe725);
+    rt.session_mut().player.transitions.frame_alpha =
+        crate::player_transitions::state::FrameAlphaMode::from_raw(0xe695);
+    rt.session_mut().player.transitions.frame_beta =
+        crate::player_transitions::state::FrameBetaMode::Gameplay;
 }
 
 /// Initialisation AI - gunship top ($A2:A644).
-pub fn initialize_top<H: LeaseActors + ?Sized>(game: &mut H) {
-    let mut lease = game.lease();
-    let rt = &mut lease;
+pub fn initialize_top(rt: &mut impl ActorLease) {
     let top = combat::current_slot(rt);
     session_slot!(rt, Gunship[top].base.properties, |properties| properties
         | 0x2400);
     session_slot!(rt, Gunship[top].base; instruction_timer = 1, timer = 0, current_instruction = 0xa616);
     session_slot!(rt, Gunship[top].base.palette_index = 3584);
-    if rt.word(W::GAME_STATE) != 40 || rt.word(W::DEMO_SET) != 0 {
-        if rt.word(W::LOADING_GAME_STATE) == 34 {
+    if rt.word(W::GAME_STATE) != 40 || rt.session().flow.demo_set != 0 {
+        if rt.session().menu_screens.save_selection.loading_game_state == 34 {
             let y = rt.player_y().wrapping_sub(17);
             session_slot!(rt, Gunship[top].base.y_pos = y);
             session_slot!(rt, Gunship[top].function = DESCENDING);
@@ -165,16 +170,14 @@ pub fn initialize_top<H: LeaseActors + ?Sized>(game: &mut H) {
         session_slot!(rt, Gunship[top]; step = y, function = WAIT_TO_OPEN_FOR_EXIT);
         session_slot!(rt, Gunship[0].entrance_timer = 144);
     }
-    rt.foreign(|game| game.spawn_palette_effect(0xe1c0));
+    rt.spawn_palette_effect(0xe1c0);
     let top = combat::current_slot(rt);
     session_slot!(rt, Gunship[top].hover_timer = 1);
     session_slot!(rt, Gunship[0].hover_frame = 0);
 }
 
 /// Initialisation AI - gunship bottom / entrance pad ($A2:A6D2).
-pub fn initialize_bottom<H: LeaseActors + ?Sized>(game: &mut H) {
-    let mut lease = game.lease();
-    let rt = &mut lease;
+pub fn initialize_bottom(rt: &mut impl ActorLease) {
     let bottom = combat::current_slot(rt);
     session_slot!(rt, Gunship[bottom].base.properties, |properties| properties
         | 0x2400);
@@ -191,10 +194,10 @@ pub fn initialize_bottom<H: LeaseActors + ?Sized>(game: &mut H) {
         // The entrance pad sits below the top, two slots before it.
         let y = session_slot!(rt, Gunship[bottom - PAD].base.y_pos);
         session_slot!(rt, Gunship[bottom].base.y_pos = y.wrapping_sub(1));
-        if rt.word(W::GAME_STATE) == 40 && rt.word(W::DEMO_SET) == 0 {
+        if rt.word(W::GAME_STATE) == 40 && rt.session().flow.demo_set == 0 {
             set_instruction(rt, bottom, 0xa5be);
         }
-    } else if rt.word(W::LOADING_GAME_STATE) == 34 {
+    } else if rt.session().menu_screens.save_selection.loading_game_state == 34 {
         let y = rt.player_y().wrapping_add(23);
         session_slot!(rt, Gunship[bottom].base.y_pos = y);
     } else {
@@ -226,9 +229,7 @@ fn hover(rt: &mut impl ActorLease, index: u16) {
 
 /// Main AI - gunship top ($A2:A759): the engine hum and the hover; its function, run
 /// next through the pre-instruction table.
-pub fn main<H: LeaseActors + ?Sized>(game: &mut H) -> u32 {
-    let mut lease = game.lease();
-    let rt = &mut lease;
+pub fn main(rt: &mut impl ActorLease) -> u32 {
     let bottom = combat::current_slot(rt) + BOTTOM_PART;
     if hover_expired(rt, bottom) {
         rt.queue_sound(2, 6, 0x4d);
@@ -237,7 +238,7 @@ pub fn main<H: LeaseActors + ?Sized>(game: &mut H) -> u32 {
     let top = combat::current_slot(rt);
     let function = session_slot!(rt, Gunship[top].function);
     if function.wrapping_add(0x56be) & 0x8000 == 0 && function.wrapping_add(0x53e5) & 0x8000 != 0 {
-        let index = rt.word(W::CUR_ENEMY_INDEX);
+        let index = rt.session().actors.controls.selected;
         hover(rt, index);
     }
     0xa2_0000 | u32::from(session_slot!(rt, Gunship[top].function))
@@ -250,8 +251,7 @@ fn descend(rt: &mut impl ActorLease, index: u16) {
     let amount = if slow { 0x28000 } else { 0x48000 };
     advance_player(rt, amount);
     for slot in [PAD, BOTTOM_PART, TOP] {
-        let at = crate::ram_slot!(@at Gunship, part(index, slot), base.y_pos);
-        advance_native(rt, at, at + 2, amount);
+        advance_part(rt, part(index, slot), amount);
     }
     if slow && session_slot!(rt, Gunship[top].base.y_pos).wrapping_sub(1119) & 0x8000 == 0 {
         session_slot!(rt, Gunship[top].base.y_pos = 1119);
@@ -290,7 +290,8 @@ fn brake(rt: &mut impl ActorLease, index: u16) {
 /// Idle - handle letting Samus enter ($A2:A9BD): Samus standing on the pad presses
 /// down.
 fn idle(rt: &mut impl ActorLease, index: u16) {
-    if rt.word(W::GAME_STATE) != 8 || rt.word(W::FRAME_HANDLER_ALFA) != 0xe695 {
+    if rt.word(W::GAME_STATE) != 8 || rt.session().player.transitions.frame_alpha.to_raw() != 0xe695
+    {
         return;
     }
     let top = part(index, TOP);
@@ -304,8 +305,8 @@ fn idle(rt: &mut impl ActorLease, index: u16) {
         && !negative(x.wrapping_add(8).wrapping_sub(samus_x))
         && negative(y.wrapping_sub(64).wrapping_sub(samus_y))
         && !negative(y.wrapping_sub(samus_y))
-        && rt.lease_byte(MOVEMENT_TYPE) == 0
-        && rt.word(W::JOYPAD1_NEWKEYS) & 0x400 != 0
+        && rt.session().player.movement_and_facing.to_le_bytes()[1] == 0
+        && rt.inputs().pressed & 0x400 != 0
     {
         session_slot!(rt, Gunship[top].function = WAIT_TO_OPEN_FOR_ENTRY);
         if rt.player_x() != 1152 {
@@ -313,9 +314,9 @@ fn idle(rt: &mut impl ActorLease, index: u16) {
             rt.set_player_x(x);
             rt.set_previous_player_x(x);
         }
-        rt.foreign(|game| game.face_player_forward());
+        rt.face_player_forward();
         rt.foreign(|game| game.command_player(0x1a));
-        rt.write_slice_le(W::ELEVATOR_STATUS, 0);
+        rt.session_mut().room.entry.elevator_status = 0;
         let y = session_slot!(rt, Gunship[top].base.y_pos).wrapping_sub(1);
         session_slot!(rt, Gunship[part(index, PAD)].base.y_pos = y);
         entrance(rt, index, true);
@@ -349,7 +350,7 @@ fn move_player(rt: &mut impl ActorLease, index: u16, function: u16) {
 /// Samus entered - go to liftoff or restore Samus health / ammo ($A2:AAA2).
 fn refill(rt: &mut impl ActorLease, index: u16) {
     let top = part(index, TOP);
-    if rt.foreign(|game| game.event_happened(0xe)) {
+    if rt.event_happened(0xe) {
         session_slot!(rt, Gunship[top].function = LOAD_DUST_CLOUD_TILES);
         session_slot!(rt, Gunship[part(index, BOTTOM_PART)]; function = 0, step = 0);
         rt.write_slice_le(W::SUBSTATE, 0);
@@ -366,17 +367,16 @@ fn refill(rt: &mut impl ActorLease, index: u16) {
         Resource::SuperMissiles,
         Resource::PowerBombs,
     ] {
-        rt.foreign(|game| game.restore(resource, 2));
+        rt.restore(resource, 2);
     }
-    let full = [
-        (W::SAMUS_RESERVE_HEALTH, W::SAMUS_MAX_RESERVE_HEALTH),
-        (W::SAMUS_HEALTH, W::SAMUS_MAX_HEALTH),
-        (W::SAMUS_MISSILES, W::SAMUS_MAX_MISSILES),
-        (W::SAMUS_SUPER_MISSILES, W::SAMUS_MAX_SUPER_MISSILES),
-        (W::SAMUS_POWER_BOMBS, W::SAMUS_MAX_POWER_BOMBS),
-    ]
-    .into_iter()
-    .all(|(current, maximum)| (rt.word(current).wrapping_sub(rt.word(maximum)) as i16) >= 0);
+    let inventory = &rt.session().inventory;
+    let at_capacity = |current: u16, maximum: u16| current.wrapping_sub(maximum) & 0x8000 == 0;
+    let full = at_capacity(inventory.reserve_health, inventory.reserve_capacity)
+        && at_capacity(inventory.health.current, inventory.health.maximum)
+        && inventory
+            .ammunition
+            .iter()
+            .all(|supply| at_capacity(supply.current, supply.maximum));
     if full {
         session_slot!(rt, Gunship[top].function = SAVE_CONFIRMATION);
     }
@@ -467,9 +467,7 @@ fn accelerate(rt: &mut impl ActorLease, index: u16) {
 }
 
 /// Gunship function `function` ($A2:A80C-$A2:AD2D) for the gunship at `index`.
-pub fn run<H: LeaseActors + ?Sized>(game: &mut H, index: u16, function: u16) {
-    let mut lease = game.lease();
-    let rt = &mut lease;
+pub fn run(rt: &mut impl ActorLease, index: u16, function: u16) {
     let top = part(index, TOP);
     match function {
         DESCENDING => descend(rt, index),
@@ -495,7 +493,10 @@ pub fn run<H: LeaseActors + ?Sized>(game: &mut H, index: u16, function: u16) {
             session_slot!(rt, Gunship[top].function = next);
             if function == WAIT_TO_CLOSE_AND_SAVE {
                 unlock_player(rt);
-                rt.write_slice_le(W::LOADING_GAME_STATE, 5);
+                rt.session_mut()
+                    .menu_screens
+                    .save_selection
+                    .loading_game_state = 5;
                 save(rt);
             } else if function == WAIT_TO_CLOSE_FOR_EXIT
                 && rt.word(W::GAME_STATE).wrapping_sub(40) & 0x8000 != 0
@@ -507,7 +508,7 @@ pub fn run<H: LeaseActors + ?Sized>(game: &mut H, index: u16, function: u16) {
         IDLE => idle(rt, index),
         ENTERED => refill(rt, index),
         SAVE_CONFIRMATION => {
-            let response = rt.foreign(|game| game.message_box_response(0x1c));
+            let response = rt.message_box_response(0x1c);
             if response < 0 {
                 return;
             }

@@ -152,6 +152,30 @@ impl sm_game::actors::species::PreInstructionHost for Game {
     }
 }
 
+impl sm_game::actors::gunship::Host for Runtime<'_> {
+    fn spawn_palette_effect(&mut self, definition: u16) {
+        self.foreign(|game| crate::game::palette_effects::spawn(definition, game));
+    }
+    fn face_player_forward(&mut self) {
+        self.foreign(player_face_forward);
+    }
+    fn event_happened(&mut self, event: u16) -> bool {
+        self.owned_call(|runtime| sm_game::progress::event_happened(runtime, event))
+    }
+    fn restore(&mut self, resource: sm_game::item_pickups::Resource, amount: u16) {
+        self.foreign(|game| crate::game::item_pickups_runtime::restore(resource, amount, game));
+    }
+    fn message_box_response(&mut self, kind: u16) -> i32 {
+        self.foreign(|game| sm_game::message_boxes::poll(kind, game))
+    }
+    fn save_game(&mut self, slot: u16) {
+        self.foreign(|game| sm_game::menus::save_slots::save(slot, game));
+    }
+    fn run_other_pre_instruction(&mut self, address: u32) {
+        self.foreign(|game| sm_game::actors::species::pre_instruction(address, game));
+    }
+}
+
 /// The morph ball eye runs on the scheduler's lease; its beam starts on the game.
 impl sm_game::actors::morph_ball_eye::Host for Runtime<'_> {
     fn start_beam(&mut self) {
@@ -1267,7 +1291,12 @@ impl Runtime<'_> {
             11056128 | 11056134 | 11056140 => {
                 self.owned_call(|runtime| actors::magdollite::damage(routine, runtime))
             }
+            10997235 => self.owned_call(sm_game::actors::phantoon::initialize),
+            10997333 => self.owned_call(sm_game::actors::phantoon::initialize_part),
             10997414 => self.owned_call(sm_game::actors::phantoon::main_ai),
+            11001151 => self.owned_call(sm_game::actors::phantoon::hurt),
+            11001237 => self.owned_call(sm_game::actors::phantoon::touch),
+            11001243 => self.owned_call(sm_game::actors::phantoon::shot),
             11191972 => self.owned_call(sm_game::actors::torizo::main_ai),
             11195241 => self.owned_call(sm_game::actors::torizo::golden_main_ai),
             10847996 | 10863750 => self.owned_call(|runtime| {
@@ -1288,6 +1317,16 @@ impl Runtime<'_> {
         script: EnemyScript,
     ) -> EnemyScript {
         use sm_game::actors::{ridley, species};
+        if routine == 10977418 {
+            self.owned_call(|runtime| {
+                let address = u32::from(script.word(0)) | 0xa70000;
+                sm_game::actors::phantoon::callback(
+                    runtime,
+                    sm_game::actors::phantoon::Callback::Instruction { address, actor },
+                );
+            });
+            return script.offset(1);
+        }
         let script = match self.kraid_and_hosts_instruction(routine, actor, script) {
             Ok(script) => return script,
             Err(script) => script,
@@ -1390,7 +1429,9 @@ impl Runtime<'_> {
         if self.kraid_and_hosts_touch(routine) {
             return;
         }
-        if routine == 10940479 {
+        if routine == 11001237 {
+            self.owned_call(sm_game::actors::phantoon::touch);
+        } else if routine == 10940479 {
             self.owned_call(sm_game::actors::ceres_doors::steam_touch);
         } else if routine == 10874348 {
             self.owned_call(actors::spore_spawn::touch);
@@ -1405,7 +1446,9 @@ impl Runtime<'_> {
         if self.kraid_and_hosts_shot(routine, argument) {
             return;
         }
-        if routine == 10936202 {
+        if routine == 11001243 {
+            self.owned_call(sm_game::actors::phantoon::shot);
+        } else if routine == 10936202 {
             self.owned_call(sm_game::actors::ridley::shot);
         } else if routine == 10874202 {
             self.owned_call(actors::spore_spawn::shot);

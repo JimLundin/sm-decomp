@@ -326,7 +326,9 @@ unsafe fn gunship(id: u32, game: &mut Game) -> Vec<u8> {
         put(&mut expected_ram, SHIP_STATE, 0xab1f);
     }
     begin_trace();
-    sm_game::actors::gunship::run(game, 0, 0xaaa2);
+    sm_game::actors::host::LeaseScope::with_lease(game, |runtime| {
+        sm_game::actors::gunship::run(runtime, 0, 0xaaa2);
+    });
     let trace = finish_trace();
     assert_eq!(trace, expected_trace, "gunship restore ordering {id}");
     assert_eq!(

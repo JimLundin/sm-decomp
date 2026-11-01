@@ -193,11 +193,11 @@ pub trait ActorLease:
     + crate::display::transfer::TilemapQueue
     + crate::ram::CompatibilityRam
     + crate::cartridge::LoadedImage
+    + crate::actors::gunship::Host
 {
     type Game: BossEffects
         + LeaseActors
         + crate::records::Records
-        + crate::actors::gunship::Host
         + crate::actors::botwoon::Effects
         + ?Sized;
     /// The compatibility word at `at`, through the session projection.

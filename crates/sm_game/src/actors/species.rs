@@ -15,9 +15,9 @@ use crate::actors::{
     alcoon, bang, beetom, boyon, cacatac, choot, covern, crawlers, dragon, draygon_death,
     draygon_eye, draygon_flight, draygon_grab, draygon_host, draygon_sweep, elevator, evir,
     fire_pillar, flies, fune, geruta, gunship, kago, metroid, mini_crocomire, mochtroid,
-    multiviola, oum, phantoon, phantoon_actions, polyp, puyo, reflec, rinka, rio, rippers, roach,
-    shutters, sidehopper, skree, space_pirates, spike_platform, spore_spawn, squeept, tatori,
-    torizo, tripper, waver, work_robot, wrecked_ship_spark, yard, zoa,
+    multiviola, oum, phantoon, polyp, puyo, reflec, rinka, rio, rippers, roach, shutters,
+    sidehopper, skree, space_pirates, spike_platform, spore_spawn, squeept, tatori, torizo,
+    tripper, waver, work_robot, wrecked_ship_spark, yard, zoa,
 };
 use crate::combat_rules::LatchMode;
 use crate::enemy_projectiles::host::Effects as _;
@@ -60,7 +60,7 @@ pub trait TouchHost:
     + draygon_host::Host
     + space_pirates::Pirates
     + torizo::Ai
-    + phantoon::Host
+    + phantoon::Dispatch
     + spore_spawn::Host
 {
 }
@@ -79,7 +79,7 @@ pub fn touch<H: TouchHost>(ea: u32, game: &mut H) {
         // Ridley's contact leaves the death pending.
         10936153 => game.contact_reaction(Death::LeavePending),
         10977356 => (),
-        11001237 => phantoon::touch(game),
+        11001237 => game.phantoon(phantoon::Callback::Touch),
         11122117 => (),
         11192695 => torizo::touch(game),
         11700076 => space_pirates::touch(game),
@@ -101,7 +101,7 @@ pub trait ShotHost:
     + draygon_host::Host
     + space_pirates::Pirates
     + torizo::Ai
-    + phantoon::Host
+    + phantoon::Dispatch
     + spore_spawn::Host
 {
     fn native_shot(&mut self, shot: NativeShot);
@@ -123,7 +123,7 @@ pub fn shot<H: ShotHost>(ea: u32, _j: u16, game: &mut H) {
         10911820 => (),
         10977356 => (),
         10982581 => (),
-        11001243 => phantoon::shot(game),
+        11001243 => game.phantoon(phantoon::Callback::Shot),
         11192700 => torizo::shot(game),
         11192769 => (),
         11192770 => torizo::standing_shot(game),
@@ -171,7 +171,7 @@ pub trait AiHost:
     + DrawHookHost
     + space_pirates::Pirates
     + torizo::Ai
-    + phantoon::Host
+    + phantoon::Dispatch
     + PreInstructionHost
     + crate::actors::host::EnemyHost
     + crate::effects::SoundEffects
@@ -268,6 +268,16 @@ pub fn lease_ai<H: LeaseScope + ?Sized>(ea: u32, game: &mut H) -> bool {
         }),
         10679322 => game.with_lease(|runtime| {
             shutters::reaction(Kind::HorizontalShutter, Event::PowerBomb, runtime)
+        }),
+        10659396 => game.with_lease(gunship::initialize_top),
+        10659538 => game.with_lease(gunship::initialize_bottom),
+        10659673 => game.with_lease(|runtime| {
+            let function = gunship::main(runtime);
+            // The original pre-instruction samples the selector after main AI.
+            let index = runtime.session().actors.controls.selected;
+            if !gunship_pre_instruction(function, index, runtime) {
+                runtime.run_other_pre_instruction(function);
+            }
         }),
         11066573 => game.with_lease(alcoon::initialize),
         11066731 => game.with_lease(alcoon::main_ai),
@@ -514,12 +524,12 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         10911789 => game.shot_reaction(Shot::Finalize),
         // Bank $A7: Kraid, Phantoon, the etecoons and the dachora, with the
         // bank's common reactions.
-        10997235 => phantoon::initialize(game),
-        10997333 => phantoon::initialize_part(game),
-        10997414 => phantoon::main_ai(game),
-        11001151 => phantoon::hurt(game),
-        11001237 => phantoon::touch(game),
-        11001243 => phantoon::shot(game),
+        10997235 => game.phantoon(phantoon::Callback::Initialize),
+        10997333 => game.phantoon(phantoon::Callback::InitializePart),
+        10997414 => game.phantoon(phantoon::Callback::Main),
+        11001151 => game.phantoon(phantoon::Callback::Hurt),
+        11001237 => game.phantoon(phantoon::Callback::Touch),
+        11001243 => game.phantoon(phantoon::Callback::Shot),
         10977325 => game.shot_reaction(Shot::Finalize),
         10977340 => game.power_bomb_reaction(Death::LeavePending),
         // Bank $A8: the common grapple, contact, shot and frozen reactions.
@@ -568,12 +578,6 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         11062220 => work_robot::initialize_deactivated(game),
         10914607 => spike_platform::initialize(game),
         10914733 => spike_platform::run(game),
-        10659396 => gunship::initialize_top(game),
-        10659538 => gunship::initialize_bottom(game),
-        10659673 => {
-            let function = gunship::main(game);
-            pre_instruction(function, game);
-        }
         11063693 => work_robot::shot_deactivated(game),
         11063698 => work_robot::shot(game),
         10735204 => {
@@ -632,17 +636,64 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
 
 /// What the pre-instruction table needs beyond its actors' own hosts.
 pub trait PreInstructionHost:
-    B3Host + torizo::Ai + phantoon::Host + crate::actors::host::EnemyHost
+    B3Host + torizo::Ai + phantoon::Dispatch + crate::actors::host::EnemyHost
 {
     /// A pre-instruction whose arm is still in the compatibility table, for
     /// the current enemy `k` read before dispatch.
     fn native_pre_instruction(&mut self, ea: u32, k: u16);
 }
 
+/// Gunship pre-instructions on the active actor lease; `index` is captured by
+/// the caller before dispatch. The bottom's RTL remains a no-op.
+pub fn gunship_pre_instruction(
+    ea: u32,
+    index: u16,
+    runtime: &mut impl crate::actors::host::ActorLease,
+) -> bool {
+    let [low, high, _, _] = ea.to_le_bytes();
+    match ea {
+        10659852 | 10660048 | 10660162 | 10660176 | 10660231 | 10660285 | 10660431 | 10660445
+        | 10660500 | 10660514 | 10660639 | 10660704 | 10660718 | 10660773 | 10660807 | 10660891
+        | 10661079 | 10661134 | 10661165 => {
+            gunship::run(runtime, index, u16::from_le_bytes([low, high]))
+        }
+        10659799 => (),
+        _ => return false,
+    }
+    true
+}
+
 /// An enemy species' pre-instruction, keyed by its address. The current
 /// enemy index is read once, before dispatch, as the original did.
 pub fn pre_instruction<H: PreInstructionHost>(ea: u32, game: &mut H) {
     let k: u16 = word!(game.CUR_ENEMY_INDEX);
+    if matches!(
+        ea,
+        10659852
+            | 10660048
+            | 10660162
+            | 10660176
+            | 10660231
+            | 10660285
+            | 10660431
+            | 10660445
+            | 10660500
+            | 10660514
+            | 10660639
+            | 10660704
+            | 10660718
+            | 10660773
+            | 10660807
+            | 10660891
+            | 10661079
+            | 10661134
+            | 10661165
+    ) {
+        game.with_lease(|runtime| {
+            gunship_pre_instruction(ea, k, runtime);
+        });
+        return;
+    }
     match ea {
         10730661 => bang::movement_delay(game),
         10730693 => bang::target_samus(game),
@@ -667,9 +718,6 @@ pub fn pre_instruction<H: PreInstructionHost>(ea: u32, game: &mut H) {
         10735612 => yard::crawl(k, crate::actors::api::Axis::X, 0xa3cd1a, game),
         10735456 => yard::hiding(k, game),
         10736051 => yard::airborne(k, game),
-        10659852 | 10660048 | 10660162 | 10660176 | 10660231 | 10660285 | 10660431 | 10660445
-        | 10660500 | 10660514 | 10660639 | 10660704 | 10660718 | 10660773 | 10660807 | 10660891
-        | 10661079 | 10661134 | 10661165 => gunship::run(game, k, ea as u16),
         10657772 => cacatac::moving(true, game),
         10649723 => (),
         10652277 => (),
@@ -690,39 +738,14 @@ pub fn pre_instruction<H: PreInstructionHost>(ea: u32, game: &mut H) {
         11197611 => (),
         0xb30000..=0xb3ffff => crate::actors::species::b3_pre_instruction(ea, k, game),
         // Bank $A7: Phantoon, the etecoons and the dachora.
-        10999114 => phantoon::wavy_fade_in(game, k),
-        10999271 => phantoon::figure_eight(game, k),
-        10999309 => phantoon::eye_follows_samus(game, k),
-        10999416 => phantoon::swooping(game, k),
-        10999481 => phantoon::fade_out_with_swoop(game, k),
-        10999522 => phantoon::reappear(game, k),
-        10999597 => phantoon::fade_in_before_figure_eight(game),
-        10999615 => phantoon::become_solid_after_flame_rain(game, k),
-        10999655 => phantoon::fade_in_during_flame_rain(game, k),
-        10999765 => phantoon::fade_out_during_flame_rain(game, k),
-        10999850 => phantoon::fade_out_before_first_flame_rain(game, k),
-        10999900 => phantoon::fade_out_before_enrage(game, k),
-        10999953 => phantoon::fade_in_enraged(game, k),
-        10999980 => phantoon::enraged(game, k),
-        11000086 => phantoon::fade_out_after_enrage(game, k),
-        11000110 => phantoon::finish_swoop_after_fatal_shot(game, k),
-        11000136 => phantoon::dying_fade_in_out(game, k),
-        11000401 => phantoon::wavy_dying_cry(game, k),
-        11000454 => phantoon::dying_fade_out(game, k),
-        11000535 => phantoon::almost_dead(game, k),
-        11000637 => phantoon::dead(game, k),
-        10999388 => phantoon::become_solid_and_swoop(game, k),
-        10998953 => phantoon::countdown(game, k, phantoon::function::SPAWN_STARTING_FLAMES),
-        10999022 => phantoon::countdown(game, k, phantoon::function::WAIT_BEFORE_SPINNING_FLAMES),
-        10999048 => phantoon::countdown(game, k, phantoon::function::SPAWN_FLAMES_BEFORE_FIGHT),
-        10999190 => phantoon::countdown(game, k, phantoon::function::PICK_ROUND_1_PATTERN),
-        10999508 => phantoon::countdown(game, k, phantoon::function::WAIT_AFTER_FADE_OUT),
-        10999688 => {
-            phantoon::countdown(game, k, phantoon::function::FOLLOW_SAMUS_DURING_FLAME_RAIN)
-        }
-        10999799 => phantoon::countdown(game, k, phantoon::function::SPAWN_FLAME_RAIN),
-        10999924 => phantoon::countdown(game, k, phantoon::function::MOVE_TO_TOP_CENTRE),
-        11000203 => phantoon::countdown(game, k, phantoon::function::DYING_EXPLOSIONS),
+        10999114 | 10999271 | 10999309 | 10999416 | 10999481 | 10999522 | 10999597 | 10999615
+        | 10999655 | 10999765 | 10999850 | 10999900 | 10999953 | 10999980 | 11000086 | 11000110
+        | 11000136 | 11000401 | 11000454 | 11000535 | 11000637 | 10999388 | 10998953 | 10999022
+        | 10999048 | 10999190 | 10999508 | 10999688 | 10999799 | 10999924 | 11000203 => game
+            .phantoon(phantoon::Callback::PreInstruction {
+                function: ea as u16,
+                actor: k,
+            }),
         // Bank $AA: the Torizos, Shaktool and the statues.
         11192146 => torizo::walking(k, game),
         11192364 => torizo::jumping_or_falling(k, game),
@@ -763,7 +786,7 @@ pub trait InstructionHost:
     + draygon_host::Host
     + LeaseActors
     + torizo::Ai
-    + phantoon::Host
+    + phantoon::Dispatch
     + crate::actors::host::EnemyHost
     + crate::effects::SoundEffects
     + spore_spawn::Host
@@ -774,13 +797,10 @@ pub trait InstructionHost:
 
 /// The bank $A7 functions Phantoon's instruction lists call, keyed by address.
 fn call_a7_function<H: InstructionHost>(ea: u32, k: u16, game: &mut H) {
-    match ea {
-        10997485 => phantoon::materialisation_sound(game),
-        10997598 => phantoon_actions::spawn_casual_flame(k, game),
-        10997823 => phantoon::open_eye(game),
-        10997878 => phantoon::pick_pattern(game),
-        _ => game.unknown_routine(),
-    }
+    game.phantoon(phantoon::Callback::Instruction {
+        address: ea,
+        actor: k,
+    });
 }
 
 /// An enemy species' instruction, keyed by its address; `k` is the enemy and

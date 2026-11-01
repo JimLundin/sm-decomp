@@ -185,23 +185,39 @@ impl sm_game::actors::mother_brain_neck::Host for Game {
     }
 }
 
-impl sm_game::actors::phantoon::Host for Game {
-    fn run_function(&mut self, address: u32) {
-        crate::game::session_runtime::run_a7_function(address, self);
+impl sm_game::actors::phantoon::Dispatch for Game {
+    fn phantoon(&mut self, callback: sm_game::actors::phantoon::Callback) {
+        crate::game::session_runtime::Runtime::new(self)
+            .owned_call(|runtime| sm_game::actors::phantoon::callback(runtime, callback));
     }
-
-    fn direction_to_player(&mut self) -> sm_game::actors::api::PlayerDirection {
-        crate::game::actors::api::direction_to_player(
-            &mut crate::game::session_runtime::Runtime::new(self),
-        )
+}
+impl sm_game::actors::phantoon::State for crate::game::session_runtime::Runtime<'_> {
+    fn phantoon_random(&mut self) -> u16 {
+        self.owned_call(|runtime| {
+            let value = sm_game::random::next(runtime.session().timing.random_number);
+            runtime.session_mut().timing.random_number = value;
+            sm_game::session_access::SessionAccess::refresh_inputs(runtime);
+            value
+        })
     }
-
+}
+impl sm_game::actors::phantoon::Lease for crate::game::session_runtime::Runtime<'_> {
+    fn owned<R>(&mut self, action: impl FnOnce(&mut Self) -> R) -> R {
+        self.owned_call(action)
+    }
+    fn run_foreign_function(&mut self, address: u32) {
+        self.foreign(|game| crate::game::session_runtime::run_a7_function(address, game));
+    }
     fn spawn_hdma(&mut self, bank: u8, args: &sm_game::display::hdma_spawn::HdmaObjectDefinition) {
-        crate::game::visual_runtime::spawn_hdma(bank, args, self);
+        self.foreign(|game| crate::game::visual_runtime::spawn_hdma(bank, args, game));
     }
-
     fn start_wave(&mut self, direction: u16, speed: u16) {
-        crate::game::visual_runtime::initialize_phantoon_motion(direction, speed, self);
+        self.foreign(|game| {
+            crate::game::visual_runtime::initialize_phantoon_motion(direction, speed, game)
+        });
+    }
+    fn disable_minimap(&mut self) {
+        self.owned_call(sm_game::player_update::minimap::disable_for_boss);
     }
 }
 
@@ -294,27 +310,6 @@ impl sm_game::actors::ceres_ridley::Host for crate::game::session_runtime::Runti
 
     fn queue_escape_tile_table(&mut self) {
         self.foreign(crate::game::rom_vram_entries::queue_escape_tile_table);
-    }
-}
-
-impl sm_game::actors::gunship::Host for Game {
-    fn spawn_palette_effect(&mut self, definition: u16) {
-        crate::game::palette_effects::spawn(definition, self);
-    }
-    fn face_player_forward(&mut self) {
-        crate::game::session_runtime::player_face_forward(self);
-    }
-    fn event_happened(&mut self, event: u16) -> bool {
-        crate::game::gameplay_flag_runtime::event_has_happened(event, self) != 0
-    }
-    fn restore(&mut self, resource: sm_game::item_pickups::Resource, amount: u16) {
-        crate::game::item_pickups_runtime::restore(resource, amount, self);
-    }
-    fn message_box_response(&mut self, kind: u16) -> i32 {
-        sm_game::message_boxes::poll(kind, self)
-    }
-    fn save_game(&mut self, slot: u16) {
-        sm_game::menus::save_slots::save(slot, self);
     }
 }
 
