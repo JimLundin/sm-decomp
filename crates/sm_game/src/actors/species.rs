@@ -13,8 +13,8 @@ use crate::actors::host::{
 };
 use crate::actors::spore_spawn::instruction as spore;
 use crate::actors::{
-    alcoon, atomic, bang, beetom, blue_brinstar_face_block, botwoon, boulder, boyon, bull, cacatac,
-    choot, covern, crawlers, crocomire_reactions, dachora_run, dragon, draygon_death, draygon_eye,
+    alcoon, bang, beetom, blue_brinstar_face_block, botwoon, boulder, boyon, bull, cacatac, choot,
+    covern, crawlers, crocomire_reactions, dachora_run, dragon, draygon_death, draygon_eye,
     draygon_flight, draygon_grab, draygon_host, draygon_sweep, elevator, escape_critters, etecoon,
     evir, fire_arc, fire_pillar, fireflea, flies, fune, geega, geruta, gunship, kago, kihunter,
     kraid, magdollite, metroid, mini_crocomire, mini_kraid, mochtroid, morph_ball_eye, multiviola,
@@ -244,7 +244,6 @@ pub trait AiHost:
     + PreInstructionHost
     + fireflea::Host
     + skultera::Host
-    + atomic::Host
     + crate::actors::host::EnemyHost
     + crate::effects::SoundEffects
     + spore_spawn::Host
@@ -766,8 +765,6 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
             }
         }
         11053955 => kago::shot(game),
-        11068296 => atomic::initialize(game),
-        11068355 => atomic::main_ai(game),
         11069486 => blue_brinstar_face_block::initialize(game),
         11069614 => blue_brinstar_face_block::main_ai(game),
         11051537 => {
