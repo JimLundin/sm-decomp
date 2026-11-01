@@ -16,12 +16,12 @@ use crate::actors::{
     alcoon, bang, beetom, blue_brinstar_face_block, botwoon, boulder, boyon, bull, cacatac, choot,
     covern, crawlers, crocomire_reactions, dachora_run, dragon, draygon_death, draygon_eye,
     draygon_flight, draygon_grab, draygon_host, draygon_sweep, elevator, escape_critters, etecoon,
-    evir, fire_arc, fire_pillar, fireflea, flies, fune, geega, geruta, gunship, kago, kihunter,
-    kraid, magdollite, metroid, mini_crocomire, mini_kraid, mochtroid, morph_ball_eye, multiviola,
-    oum, phantoon, phantoon_actions, polyp, powamp, puyo, reflec, rinka, rio, rippers, roach,
-    shaktool, shutters, sidehopper, skree, skultera, space_pirates, spike_platform, spore_spawn,
-    squeept, statues, tatori, torizo, tripper, waver, work_robot, wrecked_ship_spark, yapping_maw,
-    yard, zeb, zoa,
+    evir, fire_arc, fire_pillar, flies, fune, geega, geruta, gunship, kago, kihunter, kraid,
+    magdollite, metroid, mini_crocomire, mini_kraid, mochtroid, morph_ball_eye, multiviola, oum,
+    phantoon, phantoon_actions, polyp, powamp, puyo, reflec, rinka, rio, rippers, roach, shaktool,
+    shutters, sidehopper, skree, skultera, space_pirates, spike_platform, spore_spawn, squeept,
+    statues, tatori, torizo, tripper, waver, work_robot, wrecked_ship_spark, yapping_maw, yard,
+    zeb, zoa,
 };
 use crate::combat_rules::LatchMode;
 use crate::enemy_projectiles::host::Effects as _;
@@ -242,7 +242,6 @@ pub trait AiHost:
     + fire_arc::Host
     + mini_kraid::Host
     + PreInstructionHost
-    + fireflea::Host
     + skultera::Host
     + crate::actors::host::EnemyHost
     + crate::effects::SoundEffects
@@ -680,11 +679,6 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         10851818 => draygon_death::touch(game),
         10851847 => draygon_death::power_bomb(game),
         // Bank $A3: the crawlers, divers, platforms, bugs and fish.
-        10718509 => fireflea::initialize(game),
-        10718702 => fireflea::main_ai(game),
-        10718827 => fireflea::touch(game),
-        10718851 => fireflea::power_bomb(game),
-        10718857 => fireflea::shot(game),
         10719413 => skultera::initialize(game),
         10719531 => skultera::main_ai(game),
         10720554 => elevator::main_ai(game),
