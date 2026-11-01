@@ -5,8 +5,8 @@
 //! Was `Torizo_*` and `GoldTorizo_*` in the original decompilation. The
 //! movement functions are dispatched by the compat host, so their ids are
 //! unchanged.
+use crate::actors::boss_interaction as interaction;
 use crate::actors::boss_lease::BossLease;
-use crate::actors::boss_lease::boss_ram;
 use crate::actors::deaths::Deaths;
 use crate::actors::host::{BossEffects, Shot, Slopes};
 use crate::actors::layouts::part_view;
@@ -15,13 +15,14 @@ use crate::constants::enemy_properties::{
     K_ENEMY_PROPS_DELETED, K_ENEMY_PROPS_INVISIBLE, K_ENEMY_PROPS_TANGIBLE,
 };
 use crate::enemy_script::EnemyScript;
-use crate::menus::prelude::{boss, owned};
+use crate::menus::prelude::battle;
+use crate::menus::prelude::owned;
 use crate::ram::word;
 use crate::records::Records;
 
 /// A lease on a game with the Torizos' effects.
-pub trait Lease: BossLease<Game: Ai> {}
-impl<T: BossLease<Game: Ai> + ?Sized> Lease for T {}
+pub trait Lease: BossLease<Game: Ai> + crate::actors::boss_interaction::Access {}
+impl<T: BossLease<Game: Ai> + crate::actors::boss_interaction::Access + ?Sized> Lease for T {}
 
 part_view! {
     /// A Torizo's view of its slot: its velocities and gravity (1/100h px a
@@ -124,7 +125,7 @@ pub fn walk<L: Lease>(
 /// Handle low-health initial drool ($AA:C620): in Crateria, now and then
 /// drool while health is low. Was `Torizo_C620`.
 pub fn drool_at_low_health<L: Lease>(k: u16, game: &mut L) {
-    if game.area() == CRATERIA && boss!(game.Random) & DROOL_CHANCE == 0 {
+    if game.area() == CRATERIA && battle!(game.Random) & DROOL_CHANCE == 0 {
         let health: u16 = session_slot!(game, TorizoSlot[k as i32].base.health);
         if health != 0 && health < LOW_HEALTH {
             game.spawn_projectile(health, k, LOW_HEALTH_DROOL);
@@ -163,11 +164,11 @@ pub fn golden_damaged_shot_reaction<L: Lease>(game: &mut L) {
 /// Golden Torizo shot reaction - normal - missile ($AA:D6D1): dodge it. Was
 /// `Torizo_D6D1`.
 pub fn golden_missile_reaction<L: Lease>(k: u16, j: u16, game: &mut L) {
-    boss_ram::set_at(
+    interaction::set_at(
         game,
-        boss_ram::Array::ProjectileDir,
+        interaction::Array::ProjectileDir,
         j >> 1,
-        boss_ram::get_at(game, boss_ram::Array::ProjectileDir, j >> 1) & !DELETE_PROJECTILE,
+        interaction::get_at(game, interaction::Array::ProjectileDir, j >> 1) & !DELETE_PROJECTILE,
     );
     let e = i32::from(k);
     session_slot!(game, TorizoSlot[e].function = NO_FUNCTION);
@@ -187,11 +188,12 @@ pub fn golden_super_missile_reaction<L: Lease>(k: u16, j: u16, game: &mut L) {
     if facing_against_samus(k, game) & SIGN as u16 == 0 {
         session_slot!(game, TorizoSlot[e].damage, |old| old | CAUGHT_SUPER_MISSILE);
         session_slot!(game, TorizoSlot[e].function = NO_FUNCTION);
-        boss_ram::set_at(
+        interaction::set_at(
             game,
-            boss_ram::Array::ProjectileDir,
+            interaction::Array::ProjectileDir,
             j >> 1,
-            boss_ram::get_at(game, boss_ram::Array::ProjectileDir, j >> 1) | DELETE_PROJECTILE,
+            interaction::get_at(game, interaction::Array::ProjectileDir, j >> 1)
+                | DELETE_PROJECTILE,
         );
         session_slot!(game, TorizoSlot[e].base.instruction_timer = 1);
         let parameter = session_slot!(game, TorizoSlot[e].direction);
@@ -367,8 +369,8 @@ const SIT_DOWN_X: [i16; 16] = [-9, -6, -7, 5, -16, -7, 0, 0, 9, 6, 7, -5, 16, 7,
 const SIT_DOWN_Y: [i16; 8] = [0, -6, -6, -7, 0, 0, 0, 0];
 
 fn quake<L: Lease>(game: &mut L) {
-    boss!(game.EarthquakeType = 4);
-    boss!(game.EarthquakeTimer = 32);
+    battle!(game.EarthquakeType = 4);
+    battle!(game.EarthquakeTimer = 32);
 }
 
 /// Whether Samus is at least `distance` px from Torizo `k` horizontally.
@@ -710,11 +712,11 @@ pub fn golden_shot<L: Lease>(game: &mut L) {
         }
         let stunned: bool =
             ((session_slot!(game, TorizoSlot[e].damage) & CAUGHT_SUPER_MISSILE) != 0) || {
-                let j: u16 = 2u16.wrapping_mul(boss!(game.CollisionDetectionIndex));
-                let kind: u16 = (boss_ram::get_at(
+                let j: u16 = 2u16.wrapping_mul(battle!(game.CollisionDetectionIndex));
+                let kind: u16 = (interaction::get_at(
                     game,
-                    boss_ram::Array::ProjectileType,
-                    boss!(game.CollisionDetectionIndex),
+                    interaction::Array::ProjectileType,
+                    battle!(game.CollisionDetectionIndex),
                 )) & 0xf00;
                 session_slot!(game, TorizoSlot[e].shot_kind = kind);
                 if kind == 0x100 {
@@ -744,7 +746,7 @@ pub fn main_ai<L: Lease>(game: &mut L) {
 /// `GoldTorizo_Main`.
 pub fn golden_main_ai<L: Lease>(game: &mut L) {
     let e = game.current_enemy() as i32;
-    if SPACE_JUMP_POSES.contains(&boss!(game.SamusPose)) {
+    if SPACE_JUMP_POSES.contains(&battle!(game.SamusPose)) {
         session_slot!(game, TorizoSlot[e].space_jump_frames, |old| old
             .wrapping_add(1));
     } else {
@@ -788,20 +790,20 @@ pub fn initialize<L: Lease>(game: &mut L) {
     if game.area() != 0 {
         game.foreign(|game| game.set_palette_targets(Palettes::GoldenStart));
         if word!(game.JOYPAD1_LASTKEYS) == DEBUG_KEYS {
-            boss!(game.SamusHealth = 700);
-            boss!(game.SamusMaxHealth = 700);
-            boss!(game.SamusMaxReserveHealth = 300);
-            boss!(game.SamusReserveHealth = 300);
-            boss!(game.SamusMissiles = 100);
-            boss!(game.SamusMaxMissiles = 100);
-            boss!(game.SamusSuperMissiles = 20);
-            boss!(game.SamusMaxSuperMissiles = 20);
-            boss!(game.SamusPowerBombs = 20);
-            boss!(game.SamusMaxPowerBombs = 20);
-            boss!(game.EquippedItems = -3273i32 as u16);
-            boss!(game.CollectedItems = -3273i32 as u16);
-            boss!(game.EquippedBeams = 4111);
-            boss!(game.CollectedBeams = 4111);
+            battle!(game.SamusHealth = 700);
+            battle!(game.SamusMaxHealth = 700);
+            battle!(game.SamusMaxReserveHealth = 300);
+            battle!(game.SamusReserveHealth = 300);
+            battle!(game.SamusMissiles = 100);
+            battle!(game.SamusMaxMissiles = 100);
+            battle!(game.SamusSuperMissiles = 20);
+            battle!(game.SamusMaxSuperMissiles = 20);
+            battle!(game.SamusPowerBombs = 20);
+            battle!(game.SamusMaxPowerBombs = 20);
+            battle!(game.EquippedItems = -3273i32 as u16);
+            battle!(game.CollectedItems = -3273i32 as u16);
+            battle!(game.EquippedBeams = 4111);
+            battle!(game.CollectedBeams = 4111);
         }
     } else {
         game.foreign(|game| {
@@ -1085,7 +1087,7 @@ fn choose_attack<L: Lease>(k: u16, jp: EnemyScript, game: &mut L, missiles: u16)
         game,
         TorizoSlot[k as i32].link = list_address(game, k, jp.offset(2))
     );
-    if boss!(game.SamusMissiles) < missiles
+    if battle!(game.SamusMissiles) < missiles
         || ((game.frame() as i32 + (game.player_x() as i32 & 1) + (game.player_x() as i32 >> 1))
             & 8)
             != 0
@@ -1259,7 +1261,7 @@ pub fn branch_if_samus_rolling_behind<L: Lease>(
     if (facing_against_samus(k, game) & 0x8000) == 0
         || !samus_at_least(game, k, 4)
         || samus_at_least(game, k, 0x28)
-        || !ROLLING_POSES.contains(&boss!(game.SamusPose))
+        || !ROLLING_POSES.contains(&battle!(game.SamusPose))
     {
         return jp.offset(1);
     }

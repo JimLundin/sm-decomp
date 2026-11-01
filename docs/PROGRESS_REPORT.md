@@ -7,9 +7,9 @@ does not promote any assertion to a fresh observation. Earlier dates and
 embedded source/DLL pins define each snapshot's scope. Missing run/source
 provenance is explicit; retain the original owned receipts before reusing proof.
 
-[Jim's #6 issue body](https://github.com/JimLundin/sm-decomp/issues/6) remains the
-sole daily remote report. PLAN holds standing rules, REVIEW milestone decisions,
-and the accepted architecture the destination. Consult this document when you
+PLAN holds current reporting and standing rules, REVIEW milestone decisions,
+and the accepted architecture the destination. Issue #6 was retired by Jim on
+2026-11-01; references below preserve historical provenance. Consult this document when you
 need figures or recorded state; follow the source or original receipt when you
 need its exact proof. Live jobs, owner claims and resource grants require fresh
 observation at the work boundary.
@@ -857,4 +857,24 @@ da5a5548312c42807d6a24f95fd14a3e1ad47b26,landed,2026-11-01T11:15:16Z,gh pr view 
 1785dbe22848aa9b33f1f5a3537e6e926ce5780b,landed,2026-11-01T19:47:08Z,gh pr view 148 mergeCommit/mergedAt + git ls-remote origin main,PR148
 2e7461c8535f4cda855c085f242bb186225eb213,pending,2026-11-01T19:49:20Z,read-only Git observation of prepared PR149 source; not landed,PR149-pending
 ae61cf1db93f330d91d804a2c8526099ed477287,pending,2026-11-01T19:49:20Z,read-only Git observation of root source-only boss150 pin; not landed,boss-pending
+```
+
+
+## Pattern migration: PR149 landed and NEXT609 prepared (2026-11-01)
+
+Observed at 22:18 UTC. PR149 fast-forwarded main to `811a77f9eb79a589c566292947dca5b133c65c98` at 22:05:42 UTC. Its source `69fd9756...` and DLL `5ddb7dd6...` passed the strict gate, 148 unit checks and all 70 existing replay jobs (43 patched and 27 supported locks, 43 deduplicated rows); all original process families closed. CI, corpus, route and oracle-lock workflows passed on that exact head. Final evidence is `$TEMP/collab/ram-pattern149b-qualification/run-c/FINAL_QUALIFICATION_HANDOFF.md`; no inherited source proof or new scenarios.
+
+| Observation | RAM sites | Coupled files | Status |
+| --- | ---: | ---: | --- |
+| Main before PR149 | 2,057 | 93 | Landed baseline `1785dbe` |
+| Main after PR149 | 1,768 | 89 | Landed `811a77f` |
+| NEXT609 single overlay | 1,159 | 88 | Reviewed source; executable qualification pending |
+
+The next overlay combines sequence/control, named boss interactions and numeric display/HUD responsibilities once: 609 sites retired from current main. All eight import corrections survive. Canonical source `afb54857...` was formatted to `242549b0...`; formatting changed physical layout, not the retirement count. Final physical production is 183,746 lines (151,052 target and 32,694 compatibility), an increase of 2,723 from current main. Existing verification totals 60,783, increasing by 127. Helpers, adapters, fixtures and formatting expansion all count; no line savings are claimed. Exact final accounting and format pins are in `$TEMP/collab/root-coordination/next609-formatted-accounting.json` and `next609-format-delta.json`.
+
+The ratchet baseline was lowered to 1,768/89 after the landing and is carried with the next code slice. Physical display aliases and native/DMA transfers remain charged; the next source packet retains all 487 direct game RAM byte calls. This counter alone does not prove RAM independence. Complete engine ownership, independent renderer/audio and the entire existing any%, 100% and low% movies remain open.
+
+```csv
+pin,status,observed_at,evidence,label
+811a77f9eb79a589c566292947dca5b133c65c98,landed,2026-11-01T22:05:42Z,gh pr view 149 mergeCommit/mergedAt + watcher exit0 + main fast-forward,PR149
 ```

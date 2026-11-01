@@ -482,8 +482,10 @@ fn stop_demo<H: Host>(game: &mut H) -> CoroutineRet {
     crate::screen_fade::store(game, 0, 0);
     crate::hdma_objects::clear_hdma(game);
     game.disable_scanline_irq();
-    word! { game, 0;
-        FX_LAYER_BLENDING_CONFIG_A, CUR_IRQ_HANDLER, IRQHANDLER_NEXT_HANDLER,
+    crate::sequence_word!(game.FX_LAYER_BLENDING_CONFIG_A = 0);
+    {
+        crate::frame_display_word!(game.CurrentInterrupt = 0);
+        crate::frame_display_word!(game.PendingInterrupt = 0);
     }
     palette_effects::set_enabled(game.runtime().session_mut(), false);
     palette_effects::clear(game.runtime().session_mut());
@@ -502,15 +504,18 @@ fn next_demo<H: Host>(game: &mut H) -> CoroutineRet {
     } else if substate != 0 {
         game.load_title_sequence_graphics();
         word!(game.EPROJ_X_POS[4] = 2);
-        crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+        crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
             flow.cinematic_function = 0x9a47
         });
     } else {
         crate::music_requests::queue_delayed_8(0, game);
-        crate::session_cohort::with(game, |_, words: &mut crate::session_words::SessionWords| {
-            words.debug_disable_sounds = 0;
-        });
-        crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+        crate::sequence_state::with_words(
+            game,
+            |_, words: &mut crate::session_words::SessionWords| {
+                words.debug_disable_sounds = 0;
+            },
+        );
+        crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
             flow.cinematic_function = 0x9b68
         });
     }
@@ -637,7 +642,7 @@ fn fade_out<H: Host>(entry: Entry, game: &mut H) -> CoroutineRet {
         word!(game.GAME_STATE += 1);
         if matches!(entry, Entry::GameOverFadeOut) {
             crate::menus::state::with(game, |_, menu: &mut MenuState| menu.menu_index = 0);
-            crate::session_cohort::with(
+            crate::sequence_state::with_words(
                 game,
                 |_, words: &mut crate::session_words::SessionWords| {
                     words.debug_disable_sounds = 0;
@@ -655,10 +660,13 @@ fn exit_time_up<H: Host>(game: &mut H) -> CoroutineRet {
         crate::display_refresh::enable(true, game);
         finish_gameplay(true, game);
         crate::screen_fade::store(game, 0, 0);
-        crate::session_cohort::with(game, |_, words: &mut crate::session_words::SessionWords| {
-            words.ceres_status = 0;
-            words.timer_status = 0;
-        });
+        crate::sequence_state::with_words(
+            game,
+            |_, words: &mut crate::session_words::SessionWords| {
+                words.ceres_status = 0;
+                words.timer_status = 0;
+            },
+        );
         cancel_sound_effects(game, 15);
         if crate::progress::event_happened(&mut game.runtime(), 0xe) {
             crate::menus::state::with(game, |_, options: &mut OptionsMenu| {
@@ -669,7 +677,7 @@ fn exit_time_up<H: Host>(game: &mut H) -> CoroutineRet {
             word!(game.GAME_STATE = K_GAME_STATE_25_SAMUS_NO_HEALTH as u16);
         } else {
             word!(game.GAME_STATE = K_GAME_STATE_37_CERES_GOES_BOOM_WITH_SAMUS as u16);
-            crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+            crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
                 flow.cinematic_function = 0xc11b
             });
         }
@@ -689,7 +697,8 @@ fn pass<H: Host>(entry: Entry, game: &mut H) -> CoroutineRet {
         && game.ram().read_byte(0x612) == 0
         && reserve_tanks::refill_auto(game) != 0
     {
-        word! {game; TIME_IS_FROZEN_FLAG = 0; GAME_STATE = K_GAME_STATE_8_MAIN_GAMEPLAY as u16; }
+        crate::sequence_word!(game.TIME_IS_FROZEN_FLAG = 0);
+        word!(game.GAME_STATE = K_GAME_STATE_8_MAIN_GAMEPLAY as u16);
         game.player_command(0x10);
     }
     let yielded = advance_gameplay(game);
@@ -726,9 +735,12 @@ fn advance_gameplay<H: Host>(game: &mut H) -> CoroutineRet {
             game.set_resume_point(ResumePoint::EnemyMessage as u8);
             return yielded;
         }
-        crate::session_cohort::with(game, |_, words: &mut crate::session_words::SessionWords| {
-            words.queued_message_box_index = 0;
-        });
+        crate::sequence_state::with_words(
+            game,
+            |_, words: &mut crate::session_words::SessionWords| {
+                words.queued_message_box_index = 0;
+            },
+        );
     }
     if matches!(resume, ResumePoint::Start | ResumePoint::EnemyMessage) {
         game.advance_player();
@@ -849,7 +861,7 @@ fn finish_pass<H: Host>(entry: Entry, game: &mut H) {
             }
         }
         Entry::CeresElevator => {
-            let timer = crate::session_cohort::with(
+            let timer = crate::sequence_state::with_words(
                 game,
                 |_, words: &mut crate::session_words::SessionWords| {
                     let timer = &mut words.reached_ceres_elevator_fade_timer;
@@ -893,7 +905,7 @@ fn finish_pass<H: Host>(entry: Entry, game: &mut H) {
             word_transfers!(game, descending, 48; le(TARGET_PALETTES, 255) <- value(0));
             word_transfers!(game, descending, 16; le(TARGET_PALETTES, 207) <- le(PALETTE_BUFFER, 207));
             begin_death_sequence(game, 0);
-            crate::session_cohort::with(
+            crate::sequence_state::with_words(
                 game,
                 |_, words: &mut crate::session_words::SessionWords| {
                     words.hud_item_index = 0;
@@ -920,10 +932,10 @@ fn finish_pass<H: Host>(entry: Entry, game: &mut H) {
                         });
                     word!(game.GAME_STATE = 34);
                     save_slots::save(slot, game);
-                    crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+                    crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
                         flow.cinematic_function = 0xc11b
                     });
-                    crate::session_cohort::with(
+                    crate::sequence_state::with_words(
                         game,
                         |_, words: &mut crate::session_words::SessionWords| {
                             words.ceres_status = 0;
@@ -932,10 +944,10 @@ fn finish_pass<H: Host>(entry: Entry, game: &mut H) {
                     );
                 } else {
                     word!(game.GAME_STATE = K_GAME_STATE_39_ENDING_AND_CREDITS as u16);
-                    crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+                    crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
                         flow.cinematic_function = 0xd480
                     });
-                    crate::session_cohort::with(
+                    crate::sequence_state::with_words(
                         game,
                         |_, words: &mut crate::session_words::SessionWords| {
                             words.timer_status = 0;

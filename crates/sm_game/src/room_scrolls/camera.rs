@@ -14,7 +14,7 @@ fn camera_scroll_value<H: Host + ?Sized>(column: u16, row: u8, game: &H) -> u8 {
 
 pub fn auto_x<H: Host + ?Sized>(game: &mut H) {
     crate::probe::hit("camera.auto_x");
-    if word!(game.TIME_IS_FROZEN_FLAG) != 0 {
+    if crate::sequence_word!(game.TIME_IS_FROZEN_FLAG) != 0 {
         return;
     }
     let previous = game.session().room.camera.layer1[0];
@@ -129,7 +129,7 @@ pub fn trigger_left<H: Host + ?Sized>(game: &mut H) {
 }
 pub fn auto_y<H: Host + ?Sized>(game: &mut H) {
     crate::probe::hit("camera.auto_y");
-    if word!(game.TIME_IS_FROZEN_FLAG) != 0 {
+    if crate::sequence_word!(game.TIME_IS_FROZEN_FLAG) != 0 {
         return;
     }
     let column = game.session().room.camera.layer1[0].wrapping_add(128) >> 8;

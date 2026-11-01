@@ -50,12 +50,12 @@ fn scene<H: crate::menus::host::Host + ?Sized>(game: &H, address: u16) -> Option
 
 pub fn reset<H: crate::menus::host::Host + ?Sized>(game: &mut H) -> u8 {
     word! { game, 0; UNUSED_WORD_7E0DF8, UNUSED_WORD_7E0DFA, UNUSED_WORD_7E0DFC }
-    crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+    crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
         flow.cinematic_function = 0x9b68
     });
-    crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| flow.demo_set = 0);
-    if crate::session_cohort::load::<crate::flow::Flow, _>(game).num_demo_sets == 4 {
-        crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| flow.demo_set = 3);
+    crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| flow.demo_set = 0);
+    if crate::sequence_state::Access::sequence_flow(&*game).num_demo_sets == 4 {
+        crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| flow.demo_set = 3);
     }
     word!(game.GAME_STATE += 1);
     0
@@ -79,25 +79,25 @@ pub fn play<H: crate::menus::host::Host + ?Sized>(
                     return yielded;
                 }
                 if word!(game.JOYPAD1_NEWKEYS) != 0 {
-                    word!(game.SUBSTATE = 1);
+                    crate::sequence_word!(game.SUBSTATE = 1);
                     break 'finish_demo;
                 }
                 {
-                    let value = crate::session_cohort::load::<crate::flow::Flow, _>(game)
+                    let value = crate::sequence_state::Access::sequence_flow(&*game)
                         .demo_timer
                         .wrapping_sub(1);
-                    crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+                    crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
                         flow.demo_timer = value
                     })
                 };
-                if !(crate::session_cohort::load::<crate::flow::Flow, _>(game).demo_timer == 0
-                    || (crate::session_cohort::load::<crate::flow::Flow, _>(game).demo_timer
-                        & 0x8000)
+                if !(crate::sequence_state::Access::sequence_flow(&*game).demo_timer == 0
+                    || (crate::sequence_state::Access::sequence_flow(&*game).demo_timer & 0x8000)
                         != 0)
                 {
                     break 'done;
                 }
-                word! {game; SUBSTATE = 0; MY_COUNTER = 90; }
+                crate::sequence_word!(game.SUBSTATE = 0);
+                word!(game.MY_COUNTER = 90);
             }
             do_until! { word!(game.MY_COUNTER -= 1, reread) == 0;
                 let yielded: u8 = crate::display_refresh::wait(true, game);
@@ -106,13 +106,13 @@ pub fn play<H: crate::menus::host::Host + ?Sized>(
                     return yielded;
                 }
                 if word!(game.JOYPAD1_NEWKEYS) != 0 {
-                    word!(game.SUBSTATE = 1);
+                    crate::sequence_word!(game.SUBSTATE = 1);
                     break;
                 }
             }
         }
         word!(game.GAME_STATE += 1);
-        word!(game.DEBUG_DISABLE_SOUNDS = 0);
+        crate::sequence_word!(game.DEBUG_DISABLE_SOUNDS = 0);
         game.ram().write_byte(0x51, 0x80);
         crate::screen_fade::store(game, 1, 1);
     }
@@ -123,10 +123,10 @@ pub fn play<H: crate::menus::host::Host + ?Sized>(
 pub fn advance_set<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     let base = set_start(
         game,
-        crate::session_cohort::load::<crate::flow::Flow, _>(game).demo_set,
+        crate::sequence_state::Access::sequence_flow(&*game).demo_set,
     );
     let address = base.wrapping_add(
-        crate::session_cohort::load::<crate::flow::Flow, _>(game)
+        crate::sequence_state::Access::sequence_flow(&*game)
             .demo_scene
             .wrapping_mul(18),
     );
@@ -135,25 +135,26 @@ pub fn advance_set<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
         None => native_record(0x820000 | u32::from(address), game).word(0) == 0xffff,
     };
     if ended {
-        word!(game.SUBSTATE = 0);
-        let next = crate::session_cohort::load::<crate::flow::Flow, _>(game)
+        crate::sequence_word!(game.SUBSTATE = 0);
+        let next = crate::sequence_state::Access::sequence_flow(&*game)
             .demo_set
             .wrapping_add(1);
         {
-            let value = if next
-                >= crate::session_cohort::load::<crate::flow::Flow, _>(game).num_demo_sets
-            {
-                0
-            } else {
-                next
-            };
-            crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+            let value =
+                if next >= crate::sequence_state::Access::sequence_flow(&*game).num_demo_sets {
+                    0
+                } else {
+                    next
+                };
+            crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
                 flow.demo_set = value
             })
         };
-        crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| flow.demo_scene = 0);
+        crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
+            flow.demo_scene = 0
+        });
     } else {
-        word!(game.SUBSTATE = 0x8000);
+        crate::sequence_word!(game.SUBSTATE = 0x8000);
     }
 }
 
@@ -161,11 +162,10 @@ pub fn load<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     use crate::session_access::SessionAccess;
     game.runtime().session_mut().set_exit_key(0);
     // Loading reads the scene before the set table; the resumed hook does the reverse.
-    let offset =
-        18 * i32::from(crate::session_cohort::load::<crate::flow::Flow, _>(game).demo_scene);
+    let offset = 18 * i32::from(crate::sequence_state::Access::sequence_flow(&*game).demo_scene);
     let base = set_start(
         game,
-        crate::session_cohort::load::<crate::flow::Flow, _>(game).demo_set,
+        crate::sequence_state::Access::sequence_flow(&*game).demo_set,
     );
     let address = (offset + i32::from(base)) as u16;
     let room = scene(game, address).unwrap_or_else(|| {
@@ -206,7 +206,7 @@ pub fn load<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
             .wrapping_add(128),
     );
     game.set_previous_player_x(game.player_x());
-    crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+    crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
         flow.demo_timer = room.timer
     });
     let room_key = game.runtime().session().room_key();
@@ -221,10 +221,10 @@ pub fn load<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
         crate::display_scroll::write(game, crate::display_scroll::Word::Bg1V, 0);
     }
     {
-        let value = crate::session_cohort::load::<crate::flow::Flow, _>(game)
+        let value = crate::sequence_state::Access::sequence_flow(&*game)
             .demo_scene
             .wrapping_add(1);
-        crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+        crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
             flow.demo_scene = value
         })
     };
@@ -254,11 +254,11 @@ pub fn load<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
 pub fn finish_setup<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     let base = set_start(
         game,
-        crate::session_cohort::load::<crate::flow::Flow, _>(game).demo_set,
+        crate::sequence_state::Access::sequence_flow(&*game).demo_set,
     );
     let address = (i32::from(base)
-        + 18 * (i32::from(crate::session_cohort::load::<crate::flow::Flow, _>(game).demo_scene)
-            - 1)) as u16;
+        + 18 * (i32::from(crate::sequence_state::Access::sequence_flow(&*game).demo_scene) - 1))
+        as u16;
     let hook = scene(game, address).map_or_else(
         || native_record(0x820000 | u32::from(address), game).word(16),
         |scene| scene.hook,

@@ -111,7 +111,7 @@ pub fn flash_death<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
                 word!(game.JOYPAD2_LAST) as i32 & 0xb0
                     == K_BUTTON_A as i32 | K_BUTTON_L as i32 | K_BUTTON_R as i32,
             );
-            crate::session_cohort::with(
+            crate::sequence_state::with_words(
                 game,
                 |_, words: &mut crate::session_words::SessionWords| words.substate = stage,
             );
@@ -197,7 +197,7 @@ fn advance_suit_explosion<H: Host + ?Sized>(game: &mut H, screens: &mut MenuScre
         if screens.death.index.wrapping_sub(9) & 0x8000 == 0 {
             screens.death.counter = 21;
             whiten_death_palette(game, screens);
-            crate::session_cohort::with(
+            crate::sequence_state::with_words(
                 game,
                 |_, words: &mut crate::session_words::SessionWords| words.substate = 0,
             );

@@ -33,6 +33,24 @@ macro_rules! session_words {
             $($(#[$doc])* pub $field: u16,)+
         }
 
+
+        impl SessionWords {
+            pub fn apply_changed(self, before: &Self, session: &mut Session) {
+                $({
+                    if self.$field != before.$field {
+                        let $s = &mut *session;
+                        $path = self.$field;
+                    }
+                })+
+            }
+            pub fn get(self, word: Word) -> u16 {
+                match word { $(Word::$word => self.$field,)+ }
+            }
+            pub fn set(&mut self, word: Word, value: u16) {
+                match word { $(Word::$word => self.$field = value,)+ }
+            }
+        }
+
         impl crate::session_cohort::Cohort for SessionWords {
             fn words(&mut self, mut visit: impl FnMut(usize, &mut u16)) {
                 $(visit($at, &mut self.$field);)+
@@ -103,6 +121,124 @@ session_words! {
 }
 
 /// The Session-owned words as the host's projection holds them.
-pub fn current<H: crate::ram::CompatibilityRam + ?Sized>(game: &H) -> SessionWords {
-    crate::session_cohort::load(game)
+pub fn current<H: crate::sequence_state::Access + ?Sized>(game: &H) -> SessionWords {
+    game.sequence_words()
+}
+
+impl SessionWords {
+    pub fn from_session(s: &Session) -> Self {
+        Self {
+            debug_disable_sounds: s.feedback.sound_disabled,
+            layer1_x_pos: s.room.camera.layer1[0],
+            layer1_y_pos: s.room.camera.layer1[1],
+            ceres_status: s.room.ceres_status,
+            timer_status: s.timing.timer_status,
+            hud_item_index: s.projectiles.controls.selected_weapon,
+            japanese_text_flag: s.options.japanese_text,
+            samus_auto_cancel_hud_item_index: s.projectiles.controls.automatic_weapon,
+            samus_pose: s.player.pose,
+            samus_suit_palette_index: s.presentation.palette().suit_index,
+            time_is_frozen_flag: s.timing.time_frozen,
+            knockback_x_dir: s.player.knockback_x_direction,
+            reached_ceres_elevator_fade_timer: s.player.transitions.elevator_fade_timer,
+            samus_y_subspeed: s.player.contact.y_speed.fraction,
+            samus_y_speed: s.player.contact.y_speed.whole,
+            flare_counter: s.projectiles.controls.charge,
+            grapple_point_anim_timer: s.player.swing.start_animation_timer,
+            grapple_point_anim_ptr: s.player.swing.start_animation_tiles,
+            queued_message_box_index: s.messages.queued,
+            substate: s.shared_sequence.stage,
+            suit_pickup_light_beam_pos: s.shared_sequence.value,
+            debug_disable_sprite_interact: s.actors.diagnostics.sprite_contacts_disabled,
+            fx_layer_blending_config_a: s.room.fx_blending,
+            samus_invincibility_timer: s.player.invincibility,
+            samus_knockback_timer: s.player.knockback_timer,
+            palette_change_num: s.presentation.visual().palette_fade.step,
+        }
+    }
+}
+
+impl SessionWords {
+    pub fn changes(self, before: &Self) -> Vec<(usize, u16)> {
+        let mut changed = Vec::new();
+        if self.debug_disable_sounds != before.debug_disable_sounds {
+            changed.push((0x5f5, self.debug_disable_sounds));
+        }
+        if self.layer1_x_pos != before.layer1_x_pos {
+            changed.push((0x911, self.layer1_x_pos));
+        }
+        if self.layer1_y_pos != before.layer1_y_pos {
+            changed.push((0x915, self.layer1_y_pos));
+        }
+        if self.ceres_status != before.ceres_status {
+            changed.push((0x93f, self.ceres_status));
+        }
+        if self.timer_status != before.timer_status {
+            changed.push((0x943, self.timer_status));
+        }
+        if self.hud_item_index != before.hud_item_index {
+            changed.push((0x9d2, self.hud_item_index));
+        }
+        if self.japanese_text_flag != before.japanese_text_flag {
+            changed.push((0x9e2, self.japanese_text_flag));
+        }
+        if self.samus_auto_cancel_hud_item_index != before.samus_auto_cancel_hud_item_index {
+            changed.push((0xa04, self.samus_auto_cancel_hud_item_index));
+        }
+        if self.samus_pose != before.samus_pose {
+            changed.push((0xa1c, self.samus_pose));
+        }
+        if self.samus_suit_palette_index != before.samus_suit_palette_index {
+            changed.push((0xa74, self.samus_suit_palette_index));
+        }
+        if self.time_is_frozen_flag != before.time_is_frozen_flag {
+            changed.push((0xa78, self.time_is_frozen_flag));
+        }
+        if self.knockback_x_dir != before.knockback_x_dir {
+            changed.push((0xa54, self.knockback_x_dir));
+        }
+        if self.reached_ceres_elevator_fade_timer != before.reached_ceres_elevator_fade_timer {
+            changed.push((0xaa0, self.reached_ceres_elevator_fade_timer));
+        }
+        if self.samus_y_subspeed != before.samus_y_subspeed {
+            changed.push((0xb2c, self.samus_y_subspeed));
+        }
+        if self.samus_y_speed != before.samus_y_speed {
+            changed.push((0xb2e, self.samus_y_speed));
+        }
+        if self.flare_counter != before.flare_counter {
+            changed.push((0xcd0, self.flare_counter));
+        }
+        if self.grapple_point_anim_timer != before.grapple_point_anim_timer {
+            changed.push((0xd3e, self.grapple_point_anim_timer));
+        }
+        if self.grapple_point_anim_ptr != before.grapple_point_anim_ptr {
+            changed.push((0xd40, self.grapple_point_anim_ptr));
+        }
+        if self.queued_message_box_index != before.queued_message_box_index {
+            changed.push((0xdc8, self.queued_message_box_index));
+        }
+        if self.substate != before.substate {
+            changed.push((0xdec, self.substate));
+        }
+        if self.suit_pickup_light_beam_pos != before.suit_pickup_light_beam_pos {
+            changed.push((0xdee, self.suit_pickup_light_beam_pos));
+        }
+        if self.debug_disable_sprite_interact != before.debug_disable_sprite_interact {
+            changed.push((0xe12, self.debug_disable_sprite_interact));
+        }
+        if self.fx_layer_blending_config_a != before.fx_layer_blending_config_a {
+            changed.push((0x1982, self.fx_layer_blending_config_a));
+        }
+        if self.samus_invincibility_timer != before.samus_invincibility_timer {
+            changed.push((0x18a8, self.samus_invincibility_timer));
+        }
+        if self.samus_knockback_timer != before.samus_knockback_timer {
+            changed.push((0x18aa, self.samus_knockback_timer));
+        }
+        if self.palette_change_num != before.palette_change_num {
+            changed.push((0xc400, self.palette_change_num));
+        }
+        changed
+    }
 }

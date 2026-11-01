@@ -256,3 +256,34 @@ fn a_vram_address_with_bit_15_keeps_it_in_the_record() {
     assert_eq!(record(&world, 0).3, 0x8000);
     assert_eq!(world.word(VRAM_ADDRESS), 0x8001);
 }
+
+impl sm_game::sequence_state::Access for World {
+    fn set_cinematic_function(&mut self, value: u16) {
+        for (part, byte) in value.to_le_bytes().into_iter().enumerate() {
+            self.compatibility_write_byte(0x1f51 + part, byte);
+        }
+    }
+    fn set_sequence_word(&mut self, word: sm_game::session_words::Word, value: u16) {
+        for (part, byte) in value.to_le_bytes().into_iter().enumerate() {
+            self.compatibility_write_byte((word as usize) + part, byte);
+        }
+    }
+    fn sequence_flow(&self) -> sm_game::flow::Flow {
+        panic!("sequence controls were not supplied")
+    }
+    fn sequence_words(&self) -> sm_game::session_words::SessionWords {
+        panic!("sequence controls were not supplied")
+    }
+    fn commit_flow(&mut self, before: &sm_game::flow::Flow, after: sm_game::flow::Flow) {
+        let _ = (before, after);
+        panic!("sequence controls were not supplied");
+    }
+    fn commit_sequence_words(
+        &mut self,
+        before: &sm_game::session_words::SessionWords,
+        after: sm_game::session_words::SessionWords,
+    ) {
+        let _ = (before, after);
+        panic!("sequence controls were not supplied");
+    }
+}

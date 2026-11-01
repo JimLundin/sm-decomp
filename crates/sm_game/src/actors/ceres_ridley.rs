@@ -8,8 +8,8 @@
 //! movement and drawing in `ridley`; the intro (`initial` to
 //! `roar_before_flying`) and `init` serve both fights.
 #![forbid(unsafe_code)]
+use crate::actors::boss_interaction as interaction;
 use crate::actors::boss_lease::bg2_staging;
-use crate::actors::boss_lease::boss_ram;
 use crate::actors::host::BossEffects as _;
 use crate::actors::host::{abs16, below};
 use crate::actors::ridley::{
@@ -20,7 +20,8 @@ use crate::constants::enemy_properties::{
     K_ENEMY_PROPS_BLOCK_PLASMA_BEAM, K_ENEMY_PROPS_DELETED, K_ENEMY_PROPS_INVISIBLE,
     K_ENEMY_PROPS_TANGIBLE,
 };
-use crate::menus::prelude::{boss, display_scroll, owned};
+use crate::menus::prelude::battle;
+use crate::menus::prelude::{display_scroll, owned};
 use crate::palette_copies::{copy_rom_colors_to_palette, copy_rom_colors_to_target_palette};
 use crate::projectile_geometry::SINE_COSINE;
 use crate::ram::word;
@@ -31,7 +32,7 @@ pub use crate::actors::ridley::Lease;
 
 /// What Ceres Ridley's lease needs beyond Ridley's: the boss flags, the mode 7
 /// transfers, the getaway push and the escape sequence's tiles.
-pub trait Host: ridley::Host {
+pub trait Host: ridley::Host + crate::display::preparation::Access {
     /// The boss bits for `area`.
     fn boss_byte(&mut self, area: u16) -> u8;
     /// Queue the bank `bank` mode 7 transfer list at `list`.
@@ -131,7 +132,7 @@ pub fn init<L: Lease + ?Sized>(game: &mut L) {
     session_slot!(game, Ridley[RIDLEY].palette = 3584);
     session_slot!(game, Ridley[RIDLEY].base.extra_properties, |old| old | 4);
     session_slot!(game, Ridley[RIDLEY]; fight_mode = 0, hit_counter = 0);
-    boss!(game, 0; EarthquakeType, EarthquakeTimer);
+    battle!(game, 0; EarthquakeType, EarthquakeTimer);
     ridley::initialise_tail(game);
     ridley::initialise_ribs(game);
     session_slot!(game, Ridley[RIDLEY].base.properties, |old| old
@@ -153,7 +154,7 @@ pub fn init<L: Lease + ?Sized>(game: &mut L) {
         );
     } else {
         session_slot!(game, Ridley[RIDLEY].base; x_pos = 186, y_pos = 169);
-        boss!(game.CeresStatus = 0);
+        battle!(game.CeresStatus = 0);
         session_slot!(game, Ridley[RIDLEY]; facing = ridley::FACING_LEFT, movement_enabled = 0);
         bg2_staging::set(game, tail::IDLE_WHIP, 1);
         session_slot!(game, Ridley[RIDLEY]; tail_damage = 15, function = ceres_function::INITIAL);
@@ -187,7 +188,7 @@ pub fn main<L: Lease + ?Sized>(game: &mut L) {
     session_slot!(game, Ridley[RIDLEY].base.health = 0x7fff);
     let function = session_slot!(game, Ridley[RIDLEY].function);
     run_function(game, function);
-    if boss!(game.CeresStatus) == 0 {
+    if battle!(game.CeresStatus) == 0 {
         let moving = session_slot!(game, Ridley[RIDLEY].movement_enabled) != 0;
         if moving {
             ridley::hurt_flash(game);
@@ -253,11 +254,11 @@ fn run_ceres_function<L: Lease + ?Sized>(game: &mut L, function: u16) -> bool {
 /// Randomly update Ridley tail curliness ($A6:A2BD): the ideal inter-segment
 /// angle, 8 to 17h, one frame in 256. Was `CeresRidley_Func_1`.
 pub fn randomize_tail_curliness<L: Lease + ?Sized>(game: &mut L) {
-    if boss!(game.Random) >= 0xff00 {
+    if battle!(game.Random) >= 0xff00 {
         bg2_staging::set(
             game,
             tail::IDEAL_SEGMENT_ANGLE,
-            (boss!(game.Random) & 0xf) + 8,
+            (battle!(game.Random) & 0xf) + 8,
         );
     }
 }
@@ -279,7 +280,7 @@ pub fn transition_to_flying<L: Lease + ?Sized>(game: &mut L) {
 /// Ridley function - initial ($A6:A35B): after the door transition, wait to
 /// fade in, shorter in Norfair. Was `CeresRidley_Func_3`.
 pub fn initial<L: Lease + ?Sized>(game: &mut L) {
-    if boss!(game.DoorTransitionEnemies) == 0 {
+    if battle!(game.DoorTransitionEnemies) == 0 {
         session_slot!(
             game,
             Ridley[RIDLEY].function = ceres_function::WAIT_TO_FADE_IN
@@ -457,7 +458,7 @@ pub fn hovering<L: Lease + ?Sized>(game: &mut L) {
             Ridley[RIDLEY].function = function::FAKE_RETREAT_MOVE_TO_POSITION
         );
         ridley::fake_retreat_move_to_position(game);
-    } else if below(boss!(game.SamusHealth), 30) {
+    } else if below(battle!(game.SamusHealth), 30) {
         session_slot!(game, Ridley[RIDLEY].fight_mode = 0);
         session_slot!(
             game,
@@ -469,7 +470,8 @@ pub fn hovering<L: Lease + ?Sized>(game: &mut L) {
         session_slot!(game, Ridley[RIDLEY].timer = timer);
         timer >= 0x7c
     } {
-        let attack = crate::ceres_ridley_tables::attack(game, (boss!(game.Random) & 0xf) as isize);
+        let attack =
+            crate::ceres_ridley_tables::attack(game, (battle!(game.Random) & 0xf) as isize);
         session_slot!(game, Ridley[RIDLEY]; function = attack, timer = 0);
     }
 }
@@ -532,10 +534,10 @@ pub fn fireballs_move_to_position<L: Lease + ?Sized>(game: &mut L) {
 /// Ridley function - shoot fireballs - shooting ($A6:A7F9): jitter around the
 /// shooting spot, then hover. Was `CeresRidley_A7F9`.
 pub fn fireballs_shooting<L: Lease + ?Sized>(game: &mut L) {
-    let jitter = if boss!(game.Random) & 0x8000 != 0 {
-        -(boss!(game.Random) as i32 & 7)
+    let jitter = if battle!(game.Random) & 0x8000 != 0 {
+        -(battle!(game.Random) as i32 & 7)
     } else {
-        boss!(game.Random) as i32 & 7
+        battle!(game.Random) as i32 & 7
     } as u16;
     // The Y add's ADC carries in from the X add, so a negative jitter adds one more.
     let (x, carry) = crate::carry::adc(session_slot!(game, Ridley[RIDLEY].target_x), jitter, false);
@@ -705,7 +707,7 @@ pub fn write_palettes_and_spawn_walls<L: Lease + ?Sized>(game: &mut L) {
 /// `CeresRidley_Func_24`.
 pub fn set_up_getaway<L: Lease + ?Sized>(game: &mut L) {
     session_slot!(game, Ridley[RIDLEY].function = ceres_function::GETAWAY);
-    boss!(game.CeresStatus = RIDLEY_ESCAPING);
+    battle!(game.CeresStatus = RIDLEY_ESCAPING);
     set_up_mode7(game);
 }
 
@@ -728,8 +730,16 @@ pub fn set_up_mode7<L: Lease + ?Sized>(game: &mut L) {
     game.set_slot_byte(FAKE_BG_MODE, 7);
     word!(game.IRQ_ENABLE_MODE7 = 1);
     game.set_slot_byte(MODE7_SETTINGS, MODE7_TRANSPARENT_OVERFLOW);
-    word! { game, 256; REG_M7A, REG_M7B, REG_M7C, REG_M7D }
-    word! { game, 64; REG_M7X, REG_M7Y }
+    {
+        crate::frame_display_word!(game.AffineWords0Pair = 256);
+        crate::frame_display_word!(game.AffineWords1Pair = 256);
+        crate::frame_display_word!(game.AffineWords2Pair = 256);
+        crate::frame_display_word!(game.AffineWords3Pair = 256);
+    }
+    {
+        crate::frame_display_word!(game.AffineWords4Pair = 64);
+        crate::frame_display_word!(game.AffineWords5Pair = 64);
+    }
     session_slot!(game, Ridley[RIDLEY]; getaway_finished = 0, getaway_index = 0);
     session_slot!(game, Ridley[RIDLEY]; swoop_angle = 1, mode7_x = -128i32 as u16);
     display_scroll!(game.Bg1H = -128i32 as u16);
@@ -757,7 +767,7 @@ pub fn handle_getaway<L: Lease + ?Sized>(game: &mut L) {
     }
     if index == 208 {
         game.begin_ceres_push();
-        boss!(game; EarthquakeType = 35; EarthquakeTimer = 64;);
+        battle!(game; EarthquakeType = 35; EarthquakeTimer = 64;);
     }
     let step = (index >> 1) as isize;
     if crate::ceres_ridley_tables::getaway_zoom(game, step) == 0xffff {
@@ -767,12 +777,12 @@ pub fn handle_getaway<L: Lease + ?Sized>(game: &mut L) {
         game.set_slot_byte(FAKE_BG_MODE, 9);
         game.set_slot_byte(MODE7_SETTINGS, 0);
         {
-            word!(game.REG_M7A = 0);
-            word!(game.REG_M7B = 0);
-            word!(game.REG_M7C = 0);
-            word!(game.REG_M7D = 0);
-            word!(game.REG_M7X = 0);
-            word!(game.REG_M7Y = 0);
+            crate::frame_display_word!(game.AffineWords0Pair = 0);
+            crate::frame_display_word!(game.AffineWords1Pair = 0);
+            crate::frame_display_word!(game.AffineWords2Pair = 0);
+            crate::frame_display_word!(game.AffineWords3Pair = 0);
+            crate::frame_display_word!(game.AffineWords4Pair = 0);
+            crate::frame_display_word!(game.AffineWords5Pair = 0);
             crate::display_scroll::write(game, crate::display_scroll::Word::Bg1H, 0);
             crate::display_scroll::write(game, crate::display_scroll::Word::Bg1V, 0);
         }
@@ -808,11 +818,31 @@ pub fn handle_getaway<L: Lease + ?Sized>(game: &mut L) {
 /// byte of the mode 7 angle, scaled by the zoom. Was `CeresRidley_Func_29`.
 pub fn set_mode7_rotation<L: Lease + ?Sized>(game: &mut L) {
     let angle = session_slot!(byte game, Ridley[RIDLEY].swoop_angle[1]) as u16;
-    word! { game;
-        REG_M7A = signed_scale(cosine_256(angle), session_slot!(game, Ridley[RIDLEY].mode7_zoom));
-        REG_M7B = signed_scale(sine_256(angle), session_slot!(game, Ridley[RIDLEY].mode7_zoom));
-        REG_M7C = signed_scale(-(sine_256(angle) as i32) as u16, session_slot!(game, Ridley[RIDLEY].mode7_zoom));
-        REG_M7D = signed_scale(cosine_256(angle), session_slot!(game, Ridley[RIDLEY].mode7_zoom));
+    {
+        crate::frame_display_word!(
+            game.AffineWords0Pair = signed_scale(
+                cosine_256(angle),
+                session_slot!(game, Ridley[RIDLEY].mode7_zoom)
+            )
+        );
+        crate::frame_display_word!(
+            game.AffineWords1Pair = signed_scale(
+                sine_256(angle),
+                session_slot!(game, Ridley[RIDLEY].mode7_zoom)
+            )
+        );
+        crate::frame_display_word!(
+            game.AffineWords2Pair = signed_scale(
+                -(sine_256(angle) as i32) as u16,
+                session_slot!(game, Ridley[RIDLEY].mode7_zoom)
+            )
+        );
+        crate::frame_display_word!(
+            game.AffineWords3Pair = signed_scale(
+                cosine_256(angle),
+                session_slot!(game, Ridley[RIDLEY].mode7_zoom)
+            )
+        );
     }
 }
 
@@ -899,29 +929,29 @@ fn next_step<L: Lease + ?Sized>(game: &mut L) {
 /// Self destruct sequence function index 0 - load text colours ($A6:C062).
 /// Was `Ridley_Func_55`.
 pub fn load_text_colours<L: Lease + ?Sized>(game: &mut L) {
-    boss_ram::set_at(
+    interaction::set_at(
         game,
-        boss_ram::Array::PaletteBuffer,
+        interaction::Array::PaletteBuffer,
         97,
-        boss_ram::get_at(game, boss_ram::Array::PaletteBuffer, 1),
+        interaction::get_at(game, interaction::Array::PaletteBuffer, 1),
     );
-    boss_ram::set_at(
+    interaction::set_at(
         game,
-        boss_ram::Array::PaletteBuffer,
+        interaction::Array::PaletteBuffer,
         99,
-        boss_ram::get_at(game, boss_ram::Array::PaletteBuffer, 3),
+        interaction::get_at(game, interaction::Array::PaletteBuffer, 3),
     );
-    boss_ram::set_at(
+    interaction::set_at(
         game,
-        boss_ram::Array::PaletteBuffer,
+        interaction::Array::PaletteBuffer,
         81,
-        boss_ram::get_at(game, boss_ram::Array::PaletteBuffer, 17),
+        interaction::get_at(game, interaction::Array::PaletteBuffer, 17),
     );
-    boss_ram::set_at(
+    interaction::set_at(
         game,
-        boss_ram::Array::PaletteBuffer,
+        interaction::Array::PaletteBuffer,
         83,
-        boss_ram::get_at(game, boss_ram::Array::PaletteBuffer, 19),
+        interaction::get_at(game, interaction::Array::PaletteBuffer, 19),
     );
     // The escape timer sprite tile transfer entries ($A6:C4CB).
     session_slot!(game, Ridley[RIDLEY].fade_index = 0xc4cb);
@@ -964,7 +994,7 @@ pub fn emergency_text_appears<L: Lease + ?Sized>(game: &mut L) {
         session_slot!(game, Ridley[RIDLEY]; typewriter_tilemap = 0, typewriter_timer = 0,
             typewriter_timer_reset = 0, typewriter_stroke_timer = 0);
         session_slot!(game, Ridley[RIDLEY].fade_index = 32);
-        if boss!(game.JapaneseTextFlag) == 0 {
+        if battle!(game.JapaneseTextFlag) == 0 {
             next_step(game);
         }
         next_step(game);
@@ -1003,7 +1033,7 @@ pub fn start_escape<L: Lease + ?Sized>(game: &mut L) {
         game,
         Ridley[RIDLEY].function = ceres_function::SELF_DESTRUCT_ACTIVATED
     );
-    boss!(game; TimerStatus = 1; CeresStatus = ESCAPE_STARTED;);
+    battle!(game; TimerStatus = 1; CeresStatus = ESCAPE_STARTED;);
     game.set_boss_bit(1);
 }
 

@@ -4,7 +4,6 @@ use crate::cinematic_objects::CinematicObjects;
 use crate::cinematic_state::{Cinematic, Word};
 use crate::menus::prelude::display_scroll;
 use crate::ram::RawRam as _;
-use crate::ram::word;
 use crate::visual_state::{CeresExplosion, CinematicFade};
 
 const RINKA_POSITIONS: [(u16, u16); 4] = [(112, 72), (192, 56), (128, 48), (232, 80)];
@@ -105,9 +104,10 @@ pub fn advance_intro_rinka<H: crate::menus::host::Host + ?Sized>(
     } else {
         game.set_invincibility_timer(11);
         game.set_knockback_timer(11);
-        crate::session_cohort::with(game, |_, words: &mut crate::session_words::SessionWords| {
-            words.knockback_x_dir = 1
-        });
+        crate::sequence_state::with_words(
+            game,
+            |_, words: &mut crate::session_words::SessionWords| words.knockback_x_dir = 1,
+        );
     }
     resume_cinematic_sprite(slot, 0xce53, cine);
 }
@@ -165,10 +165,12 @@ pub fn initialize_ceres_explosion<H: crate::menus::host::Host + ?Sized>(
         *cine.spr_instruction_timer(slot) = delays[parameter];
     }
     // Keep the Y lookup and camera reads after the X store for aliased slots.
-    *cine.bg_arr7(slot) =
-        (x[parameter] as i32 + word!(game.REG_M7X) as i32 - *cine.x() as i32) as u16;
-    *cine.bg_arr8(slot) =
-        (y[parameter] as i32 + word!(game.REG_M7Y) as i32 - *cine.y() as i32) as u16;
+    *cine.bg_arr7(slot) = (x[parameter] as i32
+        + crate::frame_display_word!(game.AffineWords4Pair) as i32
+        - *cine.x() as i32) as u16;
+    *cine.bg_arr8(slot) = (y[parameter] as i32
+        + crate::frame_display_word!(game.AffineWords5Pair) as i32
+        - *cine.y() as i32) as u16;
     *cine.bg_arr9(slot) = 2560;
 }
 
@@ -200,7 +202,7 @@ pub fn advance_intro_landing_mosaic<H: crate::menus::host::Host + ?Sized>(
             ] {
                 CinematicObjects::Sprites.spawn(definition, parameter, cine, game);
             }
-            crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+            crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
                 flow.cinematic_function = 0xa38f
             });
         }
@@ -209,7 +211,7 @@ pub fn advance_intro_landing_mosaic<H: crate::menus::host::Host + ?Sized>(
         game.fade(true);
         if game.ram().read_byte(0x51) == 15 {
             crate::screen_fade::store(game, 0, 0);
-            crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+            crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
                 flow.cinematic_function = 0xc7ca
             });
         }
@@ -221,7 +223,7 @@ pub fn advance_ceres_station<H: crate::menus::host::Host + ?Sized>(
     cine: &mut Cinematic,
     game: &mut H,
 ) {
-    if crate::session_cohort::load::<crate::flow::Flow, _>(game).cinematic_function == 0xbdf9 {
+    if crate::sequence_state::Access::sequence_flow(&*game).cinematic_function == 0xbdf9 {
         let slot = usize::from(object >> 1);
         *cine.spr_goto_timer(slot) = cine.spr_goto_timer(slot).wrapping_add(128);
         let velocity = ((*cine.spr_goto_timer(slot) as i16 as i32) << 8) as u32;
@@ -243,7 +245,7 @@ pub fn advance_zebes_flight<H: crate::menus::host::Host + ?Sized>(
         *cine.y() = -112i16 as u16;
         *cine.mode7_angle() = 32;
         *cine.mode7_zoom() = 16;
-        crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+        crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
             flow.cinematic_function = 0xc9f9
         });
         return;
@@ -260,7 +262,7 @@ pub fn advance_zebes_flight<H: crate::menus::host::Host + ?Sized>(
         if stage == 3 {
             game.ram().write_byte(0x69, 16);
         }
-        crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+        crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
             flow.cinematic_function = next
         });
         if stage == 3 {
@@ -288,14 +290,14 @@ pub fn advance_zebes_destruction_zoom<H: crate::menus::host::Host + ?Sized>(
     if (*cine.mode7_zoom() as i32 - 384) & 0x8000 == 0
         && advance_cinematic_fade(CinematicFade::FastOut, game)
     {
-        crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+        crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
             flow.cinematic_function = next_scene
         });
     }
     if let Some(next) = fade_in {
         // Both fades may run this frame; the later transition wins.
         if advance_cinematic_fade(CinematicFade::FastIn, game) {
-            crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+            crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
                 flow.cinematic_function = next
             });
         }
@@ -321,8 +323,7 @@ pub fn advance_zebes_stars<H: crate::menus::host::Host + ?Sized>(
             (u32::from(*cine.spr_goto_timer(slot)) << 16) | u32::from(*cine.spr_arr7(slot));
         advance_cinematic_coordinate(object, false, velocity, cine);
         wait_cinematic_scene(object, 0xde63, None, cine, game);
-    } else if crate::session_cohort::load::<crate::flow::Flow, _>(game).cinematic_function == 0xdca5
-    {
+    } else if crate::sequence_state::Access::sequence_flow(&*game).cinematic_function == 0xdca5 {
         *cine.spr_pre_instruction(slot) = 0xf375;
         *cine.spr_arr7(slot) = 0x4000;
         *cine.spr_goto_timer(slot) = 0;
@@ -336,7 +337,7 @@ pub fn wait_cinematic_scene<H: crate::menus::host::Host + ?Sized>(
     cine: &mut Cinematic,
     game: &mut H,
 ) {
-    if crate::session_cohort::load::<crate::flow::Flow, _>(game).cinematic_function == scene {
+    if crate::sequence_state::Access::sequence_flow(&*game).cinematic_function == scene {
         let slot = usize::from(object >> 1);
         if let Some(next) = next_preinstruction {
             *cine.spr_pre_instruction(slot) = next;
@@ -360,7 +361,7 @@ pub fn launch_cinematic_sprite<H: crate::menus::host::Host + ?Sized>(
     if (*cine.bg_arr8(slot) as i32 + 128) & 0x8000 != 0 {
         resume_cinematic_sprite(slot, 0xce53, cine);
         if advance_scene {
-            crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+            crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
                 flow.cinematic_function = 0xcadf
             });
         }
@@ -379,17 +380,28 @@ pub fn update_cinematic_transform<H: crate::menus::host::Host + ?Sized>(
             SINE_COSINE[usize::from(angle) + 64] as u16,
             *cine.mode7_zoom(),
         );
-        word!(game.REG_M7A = cosine);
-        word!(game.REG_M7D = word!(game.REG_M7A));
+        crate::frame_display_word!(game.AffineWords0Pair = cosine);
+        crate::frame_display_word!(
+            game.AffineWords3Pair = crate::frame_display_word!(game.AffineWords0Pair)
+        );
         let angle = *cine.mode7_angle() as u8;
         let sine = scaled_cinematic_value(
             SINE_COSINE[usize::from(angle) + 64] as u16,
             *cine.mode7_zoom(),
         );
-        word! {game; REG_M7B = sine; REG_M7C = sine.wrapping_neg(); }
+        {
+            crate::frame_display_word!(game.AffineWords1Pair = sine);
+            crate::frame_display_word!(game.AffineWords2Pair = sine.wrapping_neg());
+        }
     } else {
-        word! {game; REG_M7A = *cine.mode7_zoom(); REG_M7D = *cine.mode7_zoom(); }
-        word! { game, 0; REG_M7B, REG_M7C }
+        {
+            crate::frame_display_word!(game.AffineWords0Pair = *cine.mode7_zoom());
+            crate::frame_display_word!(game.AffineWords3Pair = *cine.mode7_zoom());
+        }
+        {
+            crate::frame_display_word!(game.AffineWords1Pair = 0);
+            crate::frame_display_word!(game.AffineWords2Pair = 0);
+        }
     }
     display_scroll!(game.Bg1H = *cine.x());
     display_scroll!(game.Bg1V = *cine.y());

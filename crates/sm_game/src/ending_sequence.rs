@@ -137,8 +137,8 @@ fn sprites<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H, definition: u16
 pub fn setup<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     use crate::cinematic_states::{resuming, wait_for_nmis};
     if !resuming(game) {
-        word!(game.CUR_IRQ_HANDLER = 0);
-        word!(game.IRQHANDLER_NEXT_HANDLER = 0);
+        crate::frame_display_word!(game.CurrentInterrupt = 0);
+        crate::frame_display_word!(game.PendingInterrupt = 0);
     }
     if wait_for_nmis(9, game) {
         return;
@@ -170,10 +170,10 @@ pub fn setup<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     *cine.x() = 0;
     *cine.y() = 0;
     cinematic!(game.DoorExit = 0);
-    crate::session_cohort::with(game, |_, words: &mut crate::session_words::SessionWords| {
+    crate::sequence_state::with_words(game, |_, words: &mut crate::session_words::SessionWords| {
         words.layer1_x_pos = 0
     });
-    crate::session_cohort::with(game, |_, words: &mut crate::session_words::SessionWords| {
+    crate::sequence_state::with_words(game, |_, words: &mut crate::session_words::SessionWords| {
         words.layer1_y_pos = 0
     });
     crate::palette_effects::execution::leased::clear(game);
@@ -191,7 +191,7 @@ pub fn setup<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
         );
     }
     crate::screen_fade::store(game, 0, 2);
-    crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+    crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
         flow.cinematic_function = function::WAIT_FOR_MUSIC
     });
     crate::music_requests::queue_delayed_8(NO_MUSIC, game);
@@ -205,7 +205,7 @@ pub fn wait_for_music<H: Host + ?Sized>(game: &mut H) {
     if crate::music_requests::has_queued_music(game) & 1 == 0 {
         crate::palette_effects::execution::leased::spawn(ZEBES_GLOW_1, game);
         crate::palette_effects::execution::leased::spawn(ZEBES_GLOW_2, game);
-        crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+        crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
             flow.cinematic_function = function::SCENE_0_FADING_IN
         });
     }
@@ -226,7 +226,7 @@ pub fn scene_1_setup<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     *cine.mode7_zoom() = 64;
     *cine.x() = 0;
     *cine.y() = 0;
-    crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+    crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
         flow.cinematic_function = function::SCENE_1_FADING_IN
     });
 }
@@ -257,12 +257,12 @@ pub fn scene_2_setup<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     sprites(cine, game, object::STARS, 0x0e00);
     *cine.mode7_angle() = 0;
     *cine.mode7_zoom() = 64;
-    word!(game.REG_M7A = 256);
-    word!(game.REG_M7B = 0);
-    word!(game.REG_M7C = 0);
-    word!(game.REG_M7D = 256);
-    word!(game.REG_M7X = 128);
-    word!(game.REG_M7Y = 128);
+    crate::frame_display_word!(game.AffineWords0Pair = 256);
+    crate::frame_display_word!(game.AffineWords1Pair = 0);
+    crate::frame_display_word!(game.AffineWords2Pair = 0);
+    crate::frame_display_word!(game.AffineWords3Pair = 256);
+    crate::frame_display_word!(game.AffineWords4Pair = 128);
+    crate::frame_display_word!(game.AffineWords5Pair = 128);
     *cine.x() = 0;
     *cine.y() = 0;
     set_cinematic_blend(1, 16, 2, 33, game);
@@ -272,7 +272,7 @@ pub fn scene_2_setup<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     clear_cinematic_colors(0x1e0, 0x10, game);
     compose_cinematic_palette(game);
     *cine.function_timer() = 63;
-    crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+    crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
         flow.cinematic_function = function::SCENE_2_FADING_IN
     });
 }
@@ -283,7 +283,7 @@ pub fn scene_2_fading_in<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     scene_2(cine, game);
     if crate::cinematic::advance_cinematic_fade(CinematicFade::FastIn, game) {
         crate::screen_fade::store(game, 2, 2);
-        crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+        crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
             flow.cinematic_function = function::SCENE_2
         });
     }
@@ -333,13 +333,16 @@ pub fn scene_2<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
         *cine.x_speed() = 0;
         *cine.y_subspeed() = 0;
         *cine.y_speed() = 0;
-        crate::session_cohort::with(game, |_, words: &mut crate::session_words::SessionWords| {
-            words.fx_layer_blending_config_a = 0
-        });
+        crate::sequence_state::with_words(
+            game,
+            |_, words: &mut crate::session_words::SessionWords| {
+                words.fx_layer_blending_config_a = 0
+            },
+        );
         display_scroll!(game.Bg2H = 0);
         display_scroll!(game.Bg2V = 0);
         crate::screen_fade::store(game, 0, 2);
-        crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+        crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
             flow.cinematic_function = function::LOAD_GUNSHIP_BG
         });
         *cine.function_timer() = 0;
@@ -355,7 +358,7 @@ pub fn upload_tiles<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     if page.wrapping_add(1).wrapping_sub(16) & 0x8000 == 0 {
         game.ram().write_byte(0x55, 1);
         *cine.function_timer() = 0;
-        crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+        crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
             flow.cinematic_function = 0xdb9d
         });
     }
@@ -368,7 +371,7 @@ pub fn change_music<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
         crate::music_requests::queue_delayed_8(NO_MUSIC, game);
         crate::music_requests::queue_delayed_8(CREDITS_MUSIC_DATA, game);
         crate::music_requests::queue_delayed(5, SONG_DELAY, game);
-        crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+        crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
             flow.cinematic_function = function::GUNSHIP_SETUP
         });
     }
@@ -387,8 +390,8 @@ pub fn gunship_setup<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
         crate::cinematic::set_cinematic_colors(&[0, 16, 128], 0, game);
         crate::palette_effects::execution::leased::spawn(SPACE_GLOW_1, game);
         crate::palette_effects::execution::leased::spawn(SPACE_GLOW_2, game);
-        word!(game.REG_M7X = 56);
-        word!(game.REG_M7Y = 24);
+        crate::frame_display_word!(game.AffineWords4Pair = 56);
+        crate::frame_display_word!(game.AffineWords5Pair = 24);
         *cine.x() = -72i32 as u16;
         *cine.y() = -104i32 as u16;
         *cine.mode7_zoom() = 3072;
@@ -396,7 +399,7 @@ pub fn gunship_setup<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
         *cine.function_timer() = 1;
         *cine.var13() = 192;
         *cine.var14() = 0;
-        crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+        crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
             flow.cinematic_function = function::GUNSHIP_SPINNING_FAST
         });
     }
@@ -429,7 +432,7 @@ pub fn gunship_fly_into_camera<H: Host + ?Sized>(cine: &mut Cinematic, game: &mu
     if below(*cine.mode7_zoom(), 32) {
         let parameter = *cine.mode7_zoom();
         sprites(cine, game, object::GUNSHIP_TEXT, parameter);
-        crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+        crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
             flow.cinematic_function = function::GUNSHIP_FREEZE_FRAME
         });
         crate::word_transfers!(game, descending, 16; le(PALETTE_BUFFER, 95) <- table(GUNSHIP_GREY, 15));
@@ -445,7 +448,7 @@ pub fn transition_to_credits<H: Host + ?Sized>(game: &mut H) {
     if crate::cinematic::advance_cinematic_fade(CinematicFade::FastOut, game) {
         crate::display_refresh::enable(true, game);
         crate::screen_fade::store(game, 0, 0);
-        crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+        crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
             flow.cinematic_function = function::CREDITS_SETUP
         });
     }
@@ -487,10 +490,10 @@ pub fn credits_setup<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     *cine.mode7_zoom() = 2304;
     crate::display_refresh::enable(true, game);
     game.ram().write_byte(mirror::INIDISP, 15);
-    crate::session_cohort::with(game, |_, words: &mut crate::session_words::SessionWords| {
+    crate::sequence_state::with_words(game, |_, words: &mut crate::session_words::SessionWords| {
         words.layer1_x_pos = 0
     });
-    crate::session_cohort::with(game, |_, words: &mut crate::session_words::SessionWords| {
+    crate::sequence_state::with_words(game, |_, words: &mut crate::session_words::SessionWords| {
         words.layer1_y_pos = 0
     });
     crate::hdma_objects::set_hdma_enabled(true, game);
@@ -500,7 +503,7 @@ pub fn credits_setup<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     clear_cinematic_background(0x7f, cine, game);
     let roll = crate::credits::prepare_credit_roll(object::CREDITS, cine, game);
     crate::cinematic_objects::advance_cinematic_background_pre(roll, 0, cine, game);
-    crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+    crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
         flow.cinematic_function = function::CREDITS
     });
 }
@@ -509,7 +512,7 @@ pub fn credits_setup<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
 /// `CinematicFunction_Intro_Func129`.
 pub fn blank_screen<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     if countdown(cine) {
-        crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+        crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
             flow.cinematic_function = function::FADE_IN_SHOOTING_STARS
         });
         *cine.function_timer() = 120;
@@ -529,7 +532,7 @@ pub fn fade_in_shooting_stars<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut
         clear_cinematic_colors(0x40, 0x10, game);
         compose_cinematic_palette(game);
         *cine.function_timer() = 32;
-        crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+        crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
             flow.cinematic_function = function::FADE_IN_SAMUS
         });
     }
@@ -543,7 +546,7 @@ pub fn fade_in_samus<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     if countdown(cine) {
         set_cinematic_blend(18, 4, 2, 2, game);
         *cine.function_timer() = 180;
-        crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+        crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
             flow.cinematic_function = function::WAVY_SAMUS
         });
         crate::room_visuals::initialize_intro_wave(game);
@@ -559,7 +562,7 @@ pub fn wavy_samus<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
         queue_cinematic_tilemap(CinematicTilemap::FullText, cine, game);
         set_cinematic_blend(1, 0, 0, 0, game);
         *cine.function_timer() = 180;
-        crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+        crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
             flow.cinematic_function = function::DEER_FORCE
         });
         word!(game.WAVY_SAMUS_ENABLED = 0);
@@ -577,11 +580,11 @@ pub fn nintendo_1994<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
             || below(word!(game.GAME_TIME_HOURS), CLEAR_HOURS)
         {
             set_cinematic_blend(2, 16, 2, 34, game);
-            crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+            crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
                 flow.cinematic_function = function::IDLE_SAMUS_2_CROSS_FADE
             });
         } else {
-            crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+            crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
                 flow.cinematic_function = function::IDLE_SAMUS_2
             });
         }
@@ -593,17 +596,19 @@ pub fn nintendo_1994<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
 pub fn fade_from_white<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     fade_cinematic_fixed_color(game);
     if countdown(cine) {
-        crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+        crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
             flow.cinematic_function = function::FINISHED
         });
         *cine.bg_vram_address() = 20480;
         queue_cinematic_tilemap(CinematicTilemap::FullText, cine, game);
-        crate::session_cohort::with(game, |_, words: &mut crate::session_words::SessionWords| {
-            words.layer1_x_pos = 256
-        });
-        crate::session_cohort::with(game, |_, words: &mut crate::session_words::SessionWords| {
-            words.layer1_y_pos = 256
-        });
+        crate::sequence_state::with_words(
+            game,
+            |_, words: &mut crate::session_words::SessionWords| words.layer1_x_pos = 256,
+        );
+        crate::sequence_state::with_words(
+            game,
+            |_, words: &mut crate::session_words::SessionWords| words.layer1_y_pos = 256,
+        );
         // A carries into each spawn: the layer position, then what each
         // initializer loaded last ($8B:F18F..F1D4).
         let parameters = [0x0100, 8, 8, 0x0e00];
@@ -623,7 +628,7 @@ pub fn fade_from_white<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
 /// ($8B:E58A): then the icon background. Was `CinematicFunction_Intro_Func144`.
 pub fn grey_out_icon<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     if crate::ending_graphics::advance_ending_logo_palette(cine, game) {
-        crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+        crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
             flow.cinematic_function = function::FINISHED
         });
         clear_cinematic_sprites(cine);
@@ -650,7 +655,7 @@ pub fn scroll_item_percentage<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut
             object::ITEM_PERCENTAGE,
             0x4c00,
         );
-        crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+        crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
             flow.cinematic_function = function::FINISHED
         });
         crate::menus::save_slots::record_completion(game);

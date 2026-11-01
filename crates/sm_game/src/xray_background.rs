@@ -454,8 +454,8 @@ pub fn restore_right<H: Host + ?Sized>(game: &mut H) {
 }
 pub fn finish_restore<H: Host + ?Sized>(object: &mut HdmaObject, game: &mut H) {
     game.apply_xray_blending(BlendPhase::Restore);
-    if word!(game.TIME_IS_FROZEN_FLAG) != 0 {
-        word!(game.TIME_IS_FROZEN_FLAG = 0);
+    if crate::sequence_word!(game.TIME_IS_FROZEN_FLAG) != 0 {
+        crate::sequence_word!(game.TIME_IS_FROZEN_FLAG = 0);
         stop_demo(0, game);
         word_transfers!(game, ascending, 1; native(0xa88) <- value(1));
         game.ram().write_byte(0xa8a, 0x98);

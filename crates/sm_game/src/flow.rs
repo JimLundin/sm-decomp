@@ -67,3 +67,42 @@ pub enum Word {
 pub fn set<H: CompatibilityRam + ?Sized>(h: &mut H, word: Word, value: u16) {
     crate::projection::set_word(h, crate::session_encoding::FLOW + 2 * word as usize, value);
 }
+
+impl Flow {
+    pub fn changes(self, before: &Self) -> Vec<(usize, u16)> {
+        let mut changed = Vec::new();
+        if self.cinematic_function != before.cinematic_function {
+            changed.push((0x1f51, self.cinematic_function));
+        }
+        if self.demo_timer != before.demo_timer {
+            changed.push((0x1f53, self.demo_timer));
+        }
+        if self.demo_set != before.demo_set {
+            changed.push((0x1f55, self.demo_set));
+        }
+        if self.demo_scene != before.demo_scene {
+            changed.push((0x1f57, self.demo_scene));
+        }
+        if self.num_demo_sets != before.num_demo_sets {
+            changed.push((0x1f59, self.num_demo_sets));
+        }
+        changed
+    }
+    pub fn apply_changed(self, before: &Self, flow: &mut Self) {
+        if self.cinematic_function != before.cinematic_function {
+            flow.cinematic_function = self.cinematic_function;
+        }
+        if self.demo_timer != before.demo_timer {
+            flow.demo_timer = self.demo_timer;
+        }
+        if self.demo_set != before.demo_set {
+            flow.demo_set = self.demo_set;
+        }
+        if self.demo_scene != before.demo_scene {
+            flow.demo_scene = self.demo_scene;
+        }
+        if self.num_demo_sets != before.num_demo_sets {
+            flow.num_demo_sets = self.num_demo_sets;
+        }
+    }
+}

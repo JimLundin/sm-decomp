@@ -14,9 +14,9 @@ Primary (Jim, 2026-10-29 evening): the collaborator session is the sole Git
 writer for main; root releases main and hands in-flight work over as patches.
 Linux stays stopped.
 
-Jim's 2026-11-01 pattern-wide migration and reporting decisions in PLAN supersede
-earlier small-slice pacing and issue #6 publication instructions below. The
-compiler/fidelity gates and full completion scope remain required.
+Read PLAN's 2026-11-01 work order and migration scope before assigning phase work.
+PLAN owns current pacing and reporting; the compiler/fidelity gates and full
+completion scope below remain required.
 
 **Landing rule (Jim, 2026-10-29).** A change lands when the local compiler gate
 (fmt; `rustc --emit=metadata` of `sm` with and without `sm_verify_dll`;
@@ -67,9 +67,10 @@ M seams and cycle cuts, B bank retirement.
 1. **Package graph and seams (M).** Add `sm_data`, `sm_game` and `sm_runtime`
    to the workspace; `sm` becomes compat plus oracle tools. Put the CONTRACTS
    types in place: `TickOutput`, a coarse `Scene`, a `Cue` record in `sm_data`.
-   Route `game/`'s 4 audio backend calls (`write_sound_port`, `upload_bank`)
+   Route `game/`'s audio backend calls (`write_sound_port`, `upload_bank`)
    through Cues; a compat adapter maps each Cue back to `ApuQueue` port bytes so
-   oracle input is unchanged. Move the 44 cycle-free files into `sm_game`; CI
+   oracle input is unchanged. Move the cycle-free files from the
+   [review baseline](PROGRESS_REPORT.md#review-baseline) into `sm_game`; CI
    fails if `sm_data` or `sm_game` depends on compat. *Exit:* both build headless
    without compat, the corpus is green, and the Cue trace reproduces the port
    trace on every corpus row.
@@ -99,8 +100,8 @@ M seams and cycle cuts, B bank retirement.
    [landing stall](PROGRESS_REPORT.md#landing-stall-snapshot) remains recorded. (5) The Phase 1 exit item, the Cue trace matching
    the port trace on every corpus row, is still open (`sm/src/verify.rs:1184`
    requires the physical-audio oracle). Before the next landing, either run it or
-   state the blocker and the plan in #6. Update #6's opening with the current
-   `cycle_report.py` and ratchet numbers at least once a day.
+   state the blocker and next action to Jim in the conversation. Keep measured
+   cycle and ratchet figures in the dated PROGRESS_REPORT.
 3. **Gate 1 vertical slice.** Morph room 9E9F: `Session::open` from prepared
    content, the full Morph1200 inputs, `sm_runtime` renderer and sequencer, a
    minimal `sm_app`, headless replay in `sm_tools`, compared to the oracle
@@ -124,7 +125,9 @@ beside M and B under the landing rule and ratchets (1) to (5).
 
 **Jim's decisions.** (a) No tolerances: every divergence is fixed or listed in
 `docs/LEGACY.md`. For this harness that overrides "documented tolerances" in
-VALIDATION Gate 2. (b) Step 1 starts now as its own lane.
+VALIDATION Gate 2. (b) The original step-1 lane decision and its retained
+status are recorded in the [harness snapshot](PROGRESS_REPORT.md#harness-snapshot).
+Current harness work supports migration under PLAN's work order.
 
 **Review conditions (reviewer, 2026-10-31).**
 
@@ -153,7 +156,7 @@ VALIDATION Gate 2. (b) Step 1 starts now as its own lane.
    encrypted ci-data assets (PLAN: never commit movies or derived data), and
    `scenario cut`/`lock` update them through that route. CI logs and committed
    files carry tick, domain, field names and hashes, never ROM-derived values.
-6. **Order, each closing on evidence posted in #6.**
+6. **Order, each closing on retained evidence in repository reports and owned receipts.**
    Step 1: typed observations and both projections next to the unchanged RAM
    comparison; structured divergence report; no new `sm_game_ram` sites.
    *Exit:* chain rooms 1, 6, 100, 200 and 320 pass, and a one-field mutant is
@@ -226,7 +229,9 @@ VALIDATION Gate 2. (b) Step 1 starts now as its own lane.
      is stricter than lockstep: masked scratch that later changes behaviour
      shows up. The scheduled corpus keeps one full live lockstep run until
      projections retire the RAM comparison.
-9. **Scenario sources: tricks for Map Rando (Jim, 2026-10-31).** Map Rando's
+9. **Scenario sources: tricks for Map Rando (Jim, 2026-10-31).** New scenario
+   and trick expansion is deferred under PLAN's migration-first work order.
+   The following design remains the destination after migration. Map Rando's
    point is the vanilla trick library, so scenarios should cover it. Its own
    patches are mostly QoL, so its few gameplay changes (suit damage, door
    timing) wait for a later fidelity profile. Not every strat gets a scenario.
@@ -252,7 +257,8 @@ VALIDATION Gate 2. (b) Step 1 starts now as its own lane.
      reconstruct the start (room, entry, equipment, position) as a documented
      constructed start; replay on the faithful oracle. *Success:* the oracle
      reaches the end node, and frames outside the HUD match the video. Report
-     the hit rate and per-strat cost in #6, then decide whether to scale it.
+     the hit rate and per-strat cost in a dated PROGRESS_REPORT entry, then
+     decide whether to scale it.
      Videos are fetched by pinned digest and never committed.
 
 ### Retained publication and acceptance
@@ -362,10 +368,9 @@ Preserve live jobs/frozen sources and send minimal actual results before prose.
 Drain qualified code to main at the next safe boundary; documentation ACKs and
 CI observation never gate publication or independent implementation.
 
-The primary keeps the sole report in Jim's #6 issue body current once a day
-(see the metrics below) and reads #6 at every work boundary. Mark pending checks honestly; keep exact proof in owned records.
-Archive answered feedback and duplicate report comments before authorized retirement
-after verified body publication. Task issues remain retired; direct handoffs continue during CI.
+Follow PLAN's current reporting rules. Mark pending checks honestly and keep
+exact proof in owned records. Direct handoffs continue during CI; historical
+issue receipts remain evidence provenance.
 
 Measure each cycle's actual source/review/build/capture/replay/publication time,
 queue/handoff gaps and net deltas. Preserve original handles and exact attribution;
@@ -385,7 +390,8 @@ and verification are reported separately and do not count against it. Moving
 code into a package is neutral, not growth; moves, formatting and relocation to
 verification are still not savings, and every adapter counts once.
 
-The #6 report carries these measures daily, not per commit. Its historical
+The dated PROGRESS_REPORT carries these measures and each observation's source
+and qualification scope. Its historical
 [baseline](PROGRESS_REPORT.md#daily-report-baseline) is retained separately:
 
 | Measure | Direction |

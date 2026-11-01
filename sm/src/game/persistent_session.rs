@@ -309,7 +309,9 @@ pub struct SessionSlot {
     pub(crate) aggregate: AggregateSlot,
     pub(crate) menu: std::cell::RefCell<sm_game::menus::state::Domain>,
     pub(crate) inventory: std::cell::RefCell<sm_game::inventory_domain::InventoryDomain>,
+    pub(crate) frame_display: std::cell::RefCell<sm_game::display::preparation::Domain>,
     pub(crate) scroll: std::cell::RefCell<sm_game::display_scroll::ScrollDomain>,
+    pub(crate) sequence: std::cell::RefCell<sm_game::sequence_state::Domain>,
 }
 
 pub(crate) enum AggregateSlot {
@@ -325,7 +327,9 @@ impl SessionSlot {
             aggregate: AggregateSlot::Legacy,
             menu: std::cell::RefCell::new(sm_game::menus::state::Domain::Unowned),
             inventory: std::cell::RefCell::new(sm_game::inventory_domain::InventoryDomain::Unowned),
+            frame_display: std::cell::RefCell::new(sm_game::display::preparation::Domain::Unowned),
             scroll: std::cell::RefCell::new(sm_game::display_scroll::ScrollDomain::Unowned),
+            sequence: std::cell::RefCell::new(sm_game::sequence_state::Domain::Unowned),
         }
     }
 }

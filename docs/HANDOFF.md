@@ -19,8 +19,9 @@ describes that snapshot; sample actual state before continuing it.
    Original donor and tally proofs transfer only with their exact pins.
 4. Continue full any%, 100% and low% verification, including boot, transitions
    and endgame. A prefix import or passing room row does not prove a full movie.
-5. Continue native video, Cue/hardware and remaining domain work in REVIEW order;
-   read the applicable frozen owner handoff before granting a build.
+5. Continue remaining engine domains and their native video/Cue/hardware
+   qualification under PLAN's work order and REVIEW's contracts; read the
+   applicable frozen owner handoff before granting a build.
 
 Use PLAN's resource floors and fresh samples for each admission. Preserve
 canonical/mutant DLLs, native/library guards, sources, private data and original

@@ -87,7 +87,7 @@ pub fn handle_transitions<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) 
 fn fade_out_to_demo<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     if advance_cinematic_fade(CinematicFade::FastOut, game) {
         *cine.skip_to_title_index() = 2;
-        crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+        crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
             flow.cinematic_function = function::WAITING
         });
         crate::music_requests::queue_delayed_8(DEMO_MUSIC, game);
@@ -132,10 +132,10 @@ fn start_demo_logo<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
 fn fade_in_title<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     if advance_cinematic_fade(CinematicFade::FastIn, game) {
         *cine.skip_to_title_index() = 0;
-        crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+        crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
             flow.demo_timer = DEMO_DELAY
         });
-        crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+        crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
             flow.cinematic_function = function::TITLE_SCREEN
         });
     }
@@ -144,8 +144,8 @@ fn fade_in_title<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
 /// Load title sequence graphics ($8B:9B87). Was `LoadTitleSequenceGraphics`.
 pub fn load_graphics<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     crate::cinematic_display::configure_cinematic_display(CinematicDisplay::Title, cine, game);
-    word!(game.CUR_IRQ_HANDLER = 0);
-    word!(game.IRQHANDLER_NEXT_HANDLER = 0);
+    crate::frame_display_word!(game.CurrentInterrupt = 0);
+    crate::frame_display_word!(game.PendingInterrupt = 0);
     crate::word_transfers!(game, ascending, 256; le(PALETTE_BUFFER, 0) <- rom(TITLE_PALETTES, 0));
     GraphicsAsset::Decompress(0x94e000, 0x10000).load(game);
     GraphicsAsset::Decompress(0x96fc04, 0x14000).load(game);
@@ -157,7 +157,7 @@ pub fn load_graphics<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     crate::screen_fade::store(game, 1, 1);
     crate::hdma_objects::set_hdma_enabled(true, game);
     crate::palette_effects::execution::leased::set_enabled(true, game);
-    crate::session_cohort::with(game, |_, words: &mut crate::session_words::SessionWords| {
+    crate::sequence_state::with_words(game, |_, words: &mut crate::session_words::SessionWords| {
         words.fx_layer_blending_config_a = 0
     });
     crate::palette_effects::execution::leased::spawn(TITLE_GLOW_1, game);
@@ -177,7 +177,7 @@ pub fn load_graphics<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
 pub fn setup<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     load_graphics(cine, game);
     crate::music_requests::queue_delayed_8(TITLE_MUSIC_DATA, game);
-    crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+    crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
         flow.cinematic_function = function::NOTHING
     });
     spawn(
@@ -194,12 +194,12 @@ pub fn setup<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
 /// every other frame, zoom out to full size, then show the title logo. Was
 /// `CinematicFunc_Func7`.
 pub fn zooming_out<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
-    if (word!(game.NMI_FRAME_COUNTER_WORD) & 1) == 0 {
+    if (crate::frame_display_word!(game.NmiFrameWordPair) & 1) == 0 {
         if ((*cine.mode7_zoom()).wrapping_sub(256) as i16) < 0 {
             *cine.mode7_zoom() = cine.mode7_zoom().wrapping_add(1);
         } else {
             *cine.mode7_zoom() = 256;
-            crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+            crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
                 flow.cinematic_function = function::WAITING
             });
             spawn(
@@ -229,7 +229,7 @@ fn finish<H: Host + ?Sized>(
     display_scroll!(game.Bg2V = 0);
     display_scroll!(game.Bg3V = 0);
     *cine.mode7_angle() = 0;
-    crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+    crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
         flow.cinematic_function = function::SETUP
     });
     crate::palette_effects::execution::leased::set_enabled(false, game);
@@ -257,7 +257,9 @@ pub fn to_file_select<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
 pub fn to_demos<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     if advance_cinematic_fade(CinematicFade::SlowOut, game) {
         finish(TRANSITION_TO_DEMO, cine, game, |game| {
-            crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| flow.demo_scene = 0)
+            crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
+                flow.demo_scene = 0
+            })
         });
     }
 }

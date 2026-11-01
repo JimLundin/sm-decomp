@@ -36,7 +36,8 @@ pub trait DisplayOwner {
 /// What the display refresh needs besides RAM, registers and the cartridge:
 /// owned display stores and the uploads the compatibility runtime still owns.
 pub trait Host:
-    CompatibilityRam
+    crate::display::preparation::Access
+    + CompatibilityRam
     + crate::ram::WorkRamAccess
     + Registers
     + crate::word_transfers::LoadedRom
@@ -61,18 +62,9 @@ pub trait Host:
     fn fill_vram_low_bytes(&mut self, fill: u8, word_reset: bool);
 }
 
-fn fill_owned<H: Host + ?Sized>(game: &mut H, range: core::ops::Range<usize>, value: u8) {
-    for at in range {
-        game.write_owned_byte(at, value);
-    }
-}
-
 /// Set the forced-blank mirror bit for the next display refresh.
 pub fn set_blank<H: Host + ?Sized>(blank: bool, game: &mut H) {
-    game.write_owned_byte(
-        0x51,
-        game.compatibility_byte(0x51) & 0x7f | if blank { 0x80 } else { 0 },
-    );
+    crate::frame_display_byte!(game, crate::display::preparation::Field::Brightness => crate::display::preparation::Access::display_control_byte(&*game, crate::display::preparation::Field::Brightness) & 0x7f | if blank { 0x80 } else { 0 });
 }
 
 pub fn pause_graphics<H: Host + ?Sized>(paused: bool, game: &mut H) {
@@ -91,10 +83,14 @@ pub fn pause_graphics<H: Host + ?Sized>(paused: bool, game: &mut H) {
         register_writes! { game;
             show_mirror(MainScreen(Layers::of(true, true, true, false, true)), 0x69, false); mirror(MOSAIC as u16, 0, 0x57, false);
         }
-        for offset in 0x74..0x77 {
-            game.write_owned_byte(offset, game.compatibility_byte(offset) & 0xe0);
+        for field in [
+            crate::display::preparation::Field::FixedColor0,
+            crate::display::preparation::Field::FixedColor1,
+            crate::display::preparation::Field::FixedColor2,
+        ] {
+            crate::frame_display_byte!(game, field => crate::display::preparation::Access::display_control_byte(&*game, field) & 0xe0)
         }
-        game.write_owned_byte(0x71, 0);
+        crate::frame_display_byte!(game, crate::display::preparation::Field::NextColorMath => 0);
     }
 }
 
@@ -154,7 +150,7 @@ pub fn initialize_gameplay<H: Host + ?Sized>(game: &mut H) {
 pub fn capture_pause_background<H: Host + ?Sized>(game: &mut H) {
     register_writes! { game;
         word(VMADDL as u16,
-        (u16::from(game.compatibility_byte(0x59) & 0xfc) << 8) | 1,); byte(VMAIN as u16, 0x80);
+        (u16::from(crate::display::preparation::Access::display_control_byte(&*game, crate::display::preparation::Field::Screens1) & 0xfc) << 8) | 1,); byte(VMAIN as u16, 0x80);
         byte(DMAP1 as u16, 0x81); byte(BBAD1 as u16, 0x39);
         word(A1T1L as u16, 0xdf5c); byte(A1B1 as u16, 0x7e);
         word(DAS1L as u16, 0x1000); byte(DAS10 as u16, 0);
@@ -212,24 +208,35 @@ fn room_area<H: crate::runtime_access::RuntimeAccess + ?Sized>(game: &mut H) -> 
 }
 
 pub fn reset_gameplay_layers<H: Host + ?Sized>(clear_current_irq: bool, game: &mut H) {
-    crate::session_cohort::with_projected(
+    crate::sequence_state::with_words_projected(
         game,
         |_, words: &mut crate::session_words::SessionWords| {
             words.fx_layer_blending_config_a = 0;
         },
     );
     if clear_current_irq {
-        word!(game.CUR_IRQ_HANDLER = 0);
+        crate::frame_display_word!(game.CurrentInterrupt = 0);
     }
     reset_layer_mirrors(game);
-    game.write_owned_byte(0x55, 9);
+    crate::frame_display_byte!(game, crate::display::preparation::Field::Mode => 9);
 }
 
 pub fn reset_layer_mirrors<H: Host + ?Sized>(game: &mut H) {
-    game.write_owned_byte(0x6e, 0);
-    game.write_owned_byte(0x71, 0);
-    game.write_owned_byte(0x69, 16);
-    fill_owned(game, 0x6b..0x6e, 0);
+    crate::frame_display_byte!(game, crate::display::preparation::Field::NextColorSelection => 0);
+    crate::frame_display_byte!(game, crate::display::preparation::Field::NextColorMath => 0);
+    crate::frame_display_byte!(game, crate::display::preparation::Field::MainLayers => 16);
+    for field in [
+        crate::display::preparation::Field::SubLayers,
+        crate::display::preparation::Field::MainWindow,
+        crate::display::preparation::Field::SubWindow,
+    ] {
+        crate::display::preparation::Access::store_display_control_byte(
+            &mut *game,
+            field,
+            0,
+            crate::display::preparation::Store::Owned,
+        );
+    }
 }
 
 pub fn fade<H: Host + crate::screen_fade::Owner + ?Sized>(fade_in: bool, game: &mut H) {
@@ -237,7 +244,10 @@ pub fn fade<H: Host + crate::screen_fade::Owner + ?Sized>(fade_in: bool, game: &
     if !due {
         return;
     }
-    let brightness = game.compatibility_byte(0x51) & 0xf;
+    let brightness = crate::display::preparation::Access::display_control_byte(
+        &*game,
+        crate::display::preparation::Field::Brightness,
+    ) & 0xf;
     let next = if fade_in {
         if brightness == 15 {
             return;
@@ -250,30 +260,43 @@ pub fn fade<H: Host + crate::screen_fade::Owner + ?Sized>(fade_in: bool, game: &
             value => value - 1,
         }
     };
-    game.write_owned_byte(0x51, next);
+    crate::frame_display_byte!(game, crate::display::preparation::Field::Brightness => next);
 }
 
-pub fn wait<H: CompatibilityRam + DisplayOwner + ?Sized>(update: bool, game: &mut H) -> u8 {
-    if game.compatibility_byte(0x782) != 0 {
-        game.write_owned_byte(0x782, 0);
+pub fn wait<H: crate::display::preparation::Access + CompatibilityRam + DisplayOwner + ?Sized>(
+    update: bool,
+    game: &mut H,
+) -> u8 {
+    if crate::display::preparation::Access::display_control_byte(
+        &*game,
+        crate::display::preparation::Field::NmiAcknowledgment,
+    ) != 0
+    {
+        crate::frame_display_byte!(game, crate::display::preparation::Field::NmiAcknowledgment => 0);
         return 0;
     }
     if update {
-        game.write_owned_byte(0x5b4, 1);
+        crate::frame_display_byte!(game, crate::display::preparation::Field::NmiPending => 1);
     }
-    game.write_owned_byte(0x782, 1);
+    crate::frame_display_byte!(game, crate::display::preparation::Field::NmiAcknowledgment => 1);
     1
 }
 
-pub fn enable<H: Registers + CompatibilityRam + DisplayOwner + ?Sized>(
+pub fn enable<
+    H: Registers + crate::display::preparation::Access + CompatibilityRam + DisplayOwner + ?Sized,
+>(
     enabled: bool,
     game: &mut H,
 ) {
     let mask = if enabled { 0x80 } else { 0 };
-    let value = (game.compatibility_byte(0x84) & 0x7f) | mask;
+    let value = (crate::display::preparation::Access::display_control_byte(
+        &*game,
+        crate::display::preparation::Field::NmiEnable,
+    ) & 0x7f)
+        | mask;
     game.write_register(NMITIMEN as u16, value);
     // The hardware write may change RAM; publish the value captured before it.
-    game.write_owned_byte(0x84, value);
+    crate::frame_display_byte!(game, crate::display::preparation::Field::NmiEnable => value);
 }
 
 /// The scanline interrupt's controls and display through a host's projection
@@ -281,44 +304,51 @@ pub fn enable<H: Registers + CompatibilityRam + DisplayOwner + ?Sized>(
 /// presentation, RAM otherwise, as a lease or the compatibility game holds them.
 pub struct ScanlineIrq<'a, H: ?Sized>(pub &'a mut H);
 
-/// The work RAM word a scanline interrupt control store writes.
-pub fn control_word(field: irq::Store) -> usize {
-    match field {
-        irq::Store::Current => words::CUR_IRQ_HANDLER,
-        irq::Store::Pending => words::IRQHANDLER_NEXT_HANDLER,
-        irq::Store::Enable => 0x84,
-    }
-}
-impl<H: CompatibilityRam + ?Sized> irq::Controls for ScanlineIrq<'_, H> {
+impl<H: crate::display::preparation::Access + CompatibilityRam + ?Sized> irq::Controls
+    for ScanlineIrq<'_, H>
+{
     fn read_control(&mut self, field: irq::Control) -> u16 {
-        crate::projection::word(
-            &*self.0,
-            match field {
-                irq::Control::Current => words::CUR_IRQ_HANDLER,
-                irq::Control::Pending => words::IRQHANDLER_NEXT_HANDLER,
-                irq::Control::Enable => 0x84,
-                irq::Control::PreviousCre => words::PREVIOUS_CRE_BITSET,
-                irq::Control::CurrentCre => words::CRE_BITSET,
-                irq::Control::TransitionFlag => words::DOOR_TRANSITION_FLAG,
-            },
-        )
+        use crate::display::preparation::{Access, Field, Place, Word};
+        match field {
+            irq::Control::Current => Access::display_history_word(&*self.0, Word::CurrentInterrupt),
+            irq::Control::Pending => Access::display_history_word(&*self.0, Word::PendingInterrupt),
+            irq::Control::Enable => {
+                Place::Controls(Field::NmiEnable, Field::HdmaEnable).read(&*self.0)
+            }
+            irq::Control::PreviousCre => {
+                crate::projection::word(&*self.0, words::PREVIOUS_CRE_BITSET)
+            }
+            irq::Control::CurrentCre => crate::projection::word(&*self.0, words::CRE_BITSET),
+            irq::Control::TransitionFlag => {
+                crate::projection::word(&*self.0, words::DOOR_TRANSITION_FLAG)
+            }
+        }
     }
     fn write_control(&mut self, field: irq::Store, value: u16) {
-        crate::projection::set_word(self.0, control_word(field), value);
+        use crate::display::preparation::{Field, Place, Word};
+        let place = match field {
+            irq::Store::Current => Place::History(Word::CurrentInterrupt),
+            irq::Store::Pending => Place::History(Word::PendingInterrupt),
+            irq::Store::Enable => Place::Controls(Field::NmiEnable, Field::HdmaEnable),
+        };
+        place.write(self.0, value);
     }
 }
-impl<H: CompatibilityRam + Registers + ?Sized> irq::Display for ScanlineIrq<'_, H> {
+impl<H: crate::display::preparation::Access + CompatibilityRam + Registers + ?Sized> irq::Display
+    for ScanlineIrq<'_, H>
+{
     type Error = Infallible;
 
     fn read_mirror(&mut self, field: irq::Mirror) -> u8 {
-        crate::projection::byte(
+        use crate::display::preparation::{Access, Field};
+        Access::display_control_byte(
             &*self.0,
             match field {
-                irq::Mirror::Background3Map => 0x5b,
-                irq::Mirror::ColorWindow => 0x70,
-                irq::Mirror::ColorArithmetic => 0x73,
-                irq::Mirror::MainLayers => 0x6a,
-                irq::Mirror::InterruptEnable => 0x84,
+                irq::Mirror::Background3Map => Field::Background3Map,
+                irq::Mirror::ColorWindow => Field::PreviousColorSelection,
+                irq::Mirror::ColorArithmetic => Field::PreviousColorMath,
+                irq::Mirror::MainLayers => Field::PreviousMainLayers,
+                irq::Mirror::InterruptEnable => Field::NmiEnable,
             },
         )
     }
@@ -340,7 +370,9 @@ impl<H: CompatibilityRam + Registers + ?Sized> irq::Display for ScanlineIrq<'_, 
 }
 
 /// Enable the scanline interrupt through `game`'s projection and registers.
-pub fn enable_scanline_irq<H: CompatibilityRam + Registers + ?Sized>(
+pub fn enable_scanline_irq<
+    H: crate::display::preparation::Access + CompatibilityRam + Registers + ?Sized,
+>(
     immediate: bool,
     game: &mut H,
 ) {
@@ -348,44 +380,57 @@ pub fn enable_scanline_irq<H: CompatibilityRam + Registers + ?Sized>(
 }
 
 /// Disable the scanline interrupt in `game`'s projected enable mirror.
-pub fn disable_scanline_irq<H: CompatibilityRam + ?Sized>(game: &mut H) {
+pub fn disable_scanline_irq<H: crate::display::preparation::Access + CompatibilityRam + ?Sized>(
+    game: &mut H,
+) {
     irq::disable(&mut ScanlineIrq(game));
 }
 
-fn upload_latches<H: Host + ?Sized>(register: u16, source: usize, count: u16, game: &mut H) {
-    for index in 0..count {
-        let address = register + index;
-        let offset = source + usize::from(index) * 2;
-        game.write_register(address, game.compatibility_byte(offset));
-        game.write_register(address, game.compatibility_byte(offset + 1));
+fn upload_affine_latches<H: Host + ?Sized>(game: &mut H) {
+    use crate::display::preparation::{Access, Field};
+    for (index, (low, high)) in [
+        (Field::AffineWords0Low, Field::AffineWords0High),
+        (Field::AffineWords1Low, Field::AffineWords1High),
+        (Field::AffineWords2Low, Field::AffineWords2High),
+        (Field::AffineWords3Low, Field::AffineWords3High),
+        (Field::AffineWords4Low, Field::AffineWords4High),
+        (Field::AffineWords5Low, Field::AffineWords5High),
+    ]
+    .into_iter()
+    .enumerate()
+    {
+        let register = (M7A as u16) + u16::try_from(index).expect("six affine latches");
+        game.write_register(register, Access::display_control_byte(&*game, low));
+        // The low register callback precedes the high field observation.
+        game.write_register(register, Access::display_control_byte(&*game, high));
     }
 }
 
 fn upload_registers<H: Host + ?Sized>(game: &mut H) {
     register_writes! { game;
-        byte(NMITIMEN as u16, game.compatibility_byte(0x84)); byte(INIDISP as u16, game.compatibility_byte(0x51));
-        byte(OBSEL as u16, game.compatibility_byte(0x52)); byte(BGMODE as u16, game.compatibility_byte(0x55));
-        byte(MOSAIC as u16, game.compatibility_byte(0x57)); byte(BG1SC as u16, game.compatibility_byte(0x58));
-        byte(BG2SC as u16, game.compatibility_byte(0x59)); byte(BG3SC as u16, game.compatibility_byte(0x5a));
-        byte(BG4SC as u16, game.compatibility_byte(0x5c)); byte(BG12NBA as u16, game.compatibility_byte(0x5d));
-        byte(BG34NBA as u16, game.compatibility_byte(0x5e)); byte(M7SEL as u16, game.compatibility_byte(0x5f));
-        byte(W12SEL as u16, game.compatibility_byte(0x60)); byte(W34SEL as u16, game.compatibility_byte(0x61));
-        byte(WOBJSEL as u16, game.compatibility_byte(0x62)); byte(WH0 as u16, game.compatibility_byte(0x63));
-        byte(WH1 as u16, game.compatibility_byte(0x64)); byte(WH2 as u16, game.compatibility_byte(0x65));
-        byte(WH3 as u16, game.compatibility_byte(0x66)); byte(WBGLOG as u16, game.compatibility_byte(0x67));
-        byte(WOBJLOG as u16, game.compatibility_byte(0x68));
+        byte(NMITIMEN as u16, crate::display::preparation::Access::display_control_byte(&*game, crate::display::preparation::Field::NmiEnable)); byte(INIDISP as u16, crate::display::preparation::Access::display_control_byte(&*game, crate::display::preparation::Field::Brightness));
+        byte(OBSEL as u16, crate::display::preparation::Access::display_control_byte(&*game, crate::display::preparation::Field::ObjectLayout)); byte(BGMODE as u16, crate::display::preparation::Access::display_control_byte(&*game, crate::display::preparation::Field::Mode));
+        byte(MOSAIC as u16, crate::display::preparation::Access::display_control_byte(&*game, crate::display::preparation::Field::Mosaic)); byte(BG1SC as u16, crate::display::preparation::Access::display_control_byte(&*game, crate::display::preparation::Field::Screens0));
+        byte(BG2SC as u16, crate::display::preparation::Access::display_control_byte(&*game, crate::display::preparation::Field::Screens1)); byte(BG3SC as u16, crate::display::preparation::Access::display_control_byte(&*game, crate::display::preparation::Field::Screens2));
+        byte(BG4SC as u16, crate::display::preparation::Access::display_control_byte(&*game, crate::display::preparation::Field::Screens3)); byte(BG12NBA as u16, crate::display::preparation::Access::display_control_byte(&*game, crate::display::preparation::Field::Characters0));
+        byte(BG34NBA as u16, crate::display::preparation::Access::display_control_byte(&*game, crate::display::preparation::Field::Characters1)); byte(M7SEL as u16, crate::display::preparation::Access::display_control_byte(&*game, crate::display::preparation::Field::AffineSelection));
+        byte(W12SEL as u16, crate::display::preparation::Access::display_control_byte(&*game, crate::display::preparation::Field::WindowSelection0)); byte(W34SEL as u16, crate::display::preparation::Access::display_control_byte(&*game, crate::display::preparation::Field::WindowSelection1));
+        byte(WOBJSEL as u16, crate::display::preparation::Access::display_control_byte(&*game, crate::display::preparation::Field::WindowSelection2)); byte(WH0 as u16, crate::display::preparation::Access::display_control_byte(&*game, crate::display::preparation::Field::WindowPositions0));
+        byte(WH1 as u16, crate::display::preparation::Access::display_control_byte(&*game, crate::display::preparation::Field::WindowPositions1)); byte(WH2 as u16, crate::display::preparation::Access::display_control_byte(&*game, crate::display::preparation::Field::WindowPositions2));
+        byte(WH3 as u16, crate::display::preparation::Access::display_control_byte(&*game, crate::display::preparation::Field::WindowPositions3)); byte(WBGLOG as u16, crate::display::preparation::Access::display_control_byte(&*game, crate::display::preparation::Field::WindowLogic0));
+        byte(WOBJLOG as u16, crate::display::preparation::Access::display_control_byte(&*game, crate::display::preparation::Field::WindowLogic1));
     }
-    game.write_owned_byte(0x6a, game.compatibility_byte(0x69));
+    crate::frame_display_byte!(game, crate::display::preparation::Field::PreviousMainLayers => crate::display::preparation::Access::display_control_byte(&*game, crate::display::preparation::Field::MainLayers));
     register_writes! { game;
-        byte(TM as u16, game.compatibility_byte(0x69)); byte(TMW as u16, game.compatibility_byte(0x6c));
-        byte(TS as u16, game.compatibility_byte(0x6b)); byte(TSW as u16, game.compatibility_byte(0x6d));
-        byte(CGWSEL as u16, game.compatibility_byte(0x6f)); byte(CGADSUB as u16, game.compatibility_byte(0x72));
+        byte(TM as u16, crate::display::preparation::Access::display_control_byte(&*game, crate::display::preparation::Field::MainLayers)); byte(TMW as u16, crate::display::preparation::Access::display_control_byte(&*game, crate::display::preparation::Field::MainWindow));
+        byte(TS as u16, crate::display::preparation::Access::display_control_byte(&*game, crate::display::preparation::Field::SubLayers)); byte(TSW as u16, crate::display::preparation::Access::display_control_byte(&*game, crate::display::preparation::Field::SubWindow));
+        byte(CGWSEL as u16, crate::display::preparation::Access::display_control_byte(&*game, crate::display::preparation::Field::ColorSelection)); byte(CGADSUB as u16, crate::display::preparation::Access::display_control_byte(&*game, crate::display::preparation::Field::ColorMath));
     }
-    game.write_owned_byte(0x70, game.compatibility_byte(0x6e));
-    game.write_owned_byte(0x73, game.compatibility_byte(0x71));
+    crate::frame_display_byte!(game, crate::display::preparation::Field::PreviousColorSelection => crate::display::preparation::Access::display_control_byte(&*game, crate::display::preparation::Field::NextColorSelection));
+    crate::frame_display_byte!(game, crate::display::preparation::Field::PreviousColorMath => crate::display::preparation::Access::display_control_byte(&*game, crate::display::preparation::Field::NextColorMath));
     register_writes! { game;
-        byte(COLDATA as u16, game.compatibility_byte(0x74)); byte(COLDATA as u16, game.compatibility_byte(0x75));
-        byte(COLDATA as u16, game.compatibility_byte(0x76)); byte(SETINI as u16, game.compatibility_byte(0x77));
+        byte(COLDATA as u16, crate::display::preparation::Access::display_control_byte(&*game, crate::display::preparation::Field::FixedColor0)); byte(COLDATA as u16, crate::display::preparation::Access::display_control_byte(&*game, crate::display::preparation::Field::FixedColor1));
+        byte(COLDATA as u16, crate::display::preparation::Access::display_control_byte(&*game, crate::display::preparation::Field::FixedColor2)); byte(SETINI as u16, crate::display::preparation::Access::display_control_byte(&*game, crate::display::preparation::Field::Geometry));
     }
 
     // Scroll and Mode 7 words latch low then high through the same register.
@@ -395,9 +440,19 @@ fn upload_registers<H: Host + ?Sized>(game: &mut H) {
         // Re-sample after the low latch: the register callback may change it.
         game.write_register(register, game.scroll_byte(word, true));
     }
-    game.write_owned_byte(0x7ec, game.compatibility_byte(0x56));
-    if game.compatibility_byte(0x55) & 7 == 7 || game.compatibility_byte(0x56) & 7 == 7 {
-        upload_latches(M7A as u16, 0x78, 6, game);
+    crate::frame_display_byte!(game, crate::display::preparation::Field::CommittedFakeMode => crate::display::preparation::Access::display_control_byte(&*game, crate::display::preparation::Field::FakeMode));
+    if crate::display::preparation::Access::display_control_byte(
+        &*game,
+        crate::display::preparation::Field::Mode,
+    ) & 7
+        == 7
+        || crate::display::preparation::Access::display_control_byte(
+            &*game,
+            crate::display::preparation::Field::FakeMode,
+        ) & 7
+            == 7
+    {
+        upload_affine_latches(game);
     }
 }
 
@@ -439,7 +494,10 @@ struct Refresh<'a, H: ?Sized>(&'a mut H);
 // behavior; this adapter never produces a portable DisplayError.
 impl<H: Host + ?Sized> crate::scene::commit::RefreshHost for Refresh<'_, H> {
     fn pending_nmi(&self) -> u8 {
-        self.0.compatibility_byte(0x5b4)
+        crate::display::preparation::Access::display_control_byte(
+            &*self.0,
+            crate::display::preparation::Field::NmiPending,
+        )
     }
     fn palette_and_objects(&mut self) -> Result<(), DisplayError> {
         upload_palette_and_oam(self.0);
@@ -471,10 +529,16 @@ impl<H: Host + ?Sized> crate::scene::commit::RefreshHost for Refresh<'_, H> {
         Ok(())
     }
     fn mode(&self) -> u8 {
-        self.0.compatibility_byte(0x55)
+        crate::display::preparation::Access::display_control_byte(
+            &*self.0,
+            crate::display::preparation::Field::Mode,
+        )
     }
     fn fake_mode(&self) -> u8 {
-        self.0.compatibility_byte(0x56)
+        crate::display::preparation::Access::display_control_byte(
+            &*self.0,
+            crate::display::preparation::Field::FakeMode,
+        )
     }
     fn mode7(&mut self) -> Result<(), DisplayError> {
         self.0.process_mode7();
@@ -489,48 +553,60 @@ impl<H: Host + ?Sized> crate::scene::commit::RefreshHost for Refresh<'_, H> {
         Ok(())
     }
     fn hdma_enable(&self) -> u8 {
-        self.0.compatibility_byte(0x85)
+        crate::display::preparation::Access::display_control_byte(
+            &*self.0,
+            crate::display::preparation::Field::HdmaEnable,
+        )
     }
     fn publish_hdma(&mut self, value: u8) -> Result<(), DisplayError> {
         self.0.write_register(HDMAEN as u16, value);
         Ok(())
     }
     fn set_pending_nmi(&mut self, value: u8) {
-        self.0.write_owned_byte(0x5b4, value)
+        crate::frame_display_byte!(self.0, crate::display::preparation::Field::NmiPending => value)
     }
     fn missed(&self) -> u8 {
-        self.0.compatibility_byte(0x5ba)
+        crate::display::preparation::Access::display_control_byte(
+            &*self.0,
+            crate::display::preparation::Field::NmiMissed,
+        )
     }
     fn set_missed(&mut self, value: u8) {
-        self.0.write_owned_byte(0x5ba, value)
+        crate::frame_display_byte!(self.0, crate::display::preparation::Field::NmiMissed => value)
     }
     fn max_missed(&self) -> u8 {
-        self.0.compatibility_byte(0x5bb)
+        crate::display::preparation::Access::display_control_byte(
+            &*self.0,
+            crate::display::preparation::Field::NmiMaxMissed,
+        )
     }
     fn set_max_missed(&mut self, value: u8) {
-        self.0.write_owned_byte(0x5bb, value)
+        crate::frame_display_byte!(self.0, crate::display::preparation::Field::NmiMaxMissed => value)
     }
     fn frame_byte(&self) -> u8 {
-        self.0.compatibility_byte(0x5b5)
+        crate::display::preparation::Access::display_control_byte(
+            &*self.0,
+            crate::display::preparation::Field::NmiFrameByte,
+        )
     }
     fn set_frame_byte(&mut self, value: u8) {
-        self.0.write_owned_byte(0x5b5, value)
+        crate::frame_display_byte!(self.0, crate::display::preparation::Field::NmiFrameByte => value)
     }
     fn frame_word(&self) -> u16 {
         let game = &*self.0;
-        word!(game.NMI_FRAME_COUNTER_WORD)
+        crate::frame_display_word!(game.NmiFrameWordPair)
     }
     fn set_frame_word(&mut self, value: u16) {
         let game = &mut *self.0;
-        word!(game.NMI_FRAME_COUNTER_WORD = value);
+        crate::frame_display_word!(game.NmiFrameWordPair = value);
     }
     fn including_lag(&self) -> u16 {
         let game = &*self.0;
-        word!(game.NMI_FRAME_COUNTER_INCLUDING_LAG)
+        crate::frame_display_word!(game.NmiIncludingLagPair)
     }
     fn set_including_lag(&mut self, value: u16) {
         let game = &mut *self.0;
-        word!(game.NMI_FRAME_COUNTER_INCLUDING_LAG = value);
+        crate::frame_display_word!(game.NmiIncludingLagPair = value);
     }
 }
 

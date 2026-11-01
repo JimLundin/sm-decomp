@@ -98,6 +98,37 @@ impl crate::display_scroll::Access for SessionProjection {
     }
 }
 #[cfg(test)]
+
+impl crate::sequence_state::Access for SessionProjection {
+    fn set_cinematic_function(&mut self, value: u16) {
+        for (part, byte) in value.to_le_bytes().into_iter().enumerate() {
+            self.compatibility_write_byte(0x1f51 + part, byte);
+        }
+    }
+    fn set_sequence_word(&mut self, word: crate::session_words::Word, value: u16) {
+        for (part, byte) in value.to_le_bytes().into_iter().enumerate() {
+            self.compatibility_write_byte((word as usize) + part, byte);
+        }
+    }
+    fn sequence_flow(&self) -> crate::flow::Flow {
+        self.0.flow
+    }
+    fn sequence_words(&self) -> crate::session_words::SessionWords {
+        crate::session_words::SessionWords::from_session(&self.0)
+    }
+    fn commit_flow(&mut self, before: &crate::flow::Flow, after: crate::flow::Flow) {
+        after.apply_changed(before, &mut self.0.flow);
+    }
+    fn commit_sequence_words(
+        &mut self,
+        before: &crate::session_words::SessionWords,
+        after: crate::session_words::SessionWords,
+    ) {
+        after.apply_changed(before, &mut self.0);
+    }
+}
+
+#[cfg(test)]
 impl CompatibilityRam for SessionProjection {
     fn compatibility_byte(&self, at: usize) -> u8 {
         crate::session_encoding::projected_byte(&self.0, at).expect("view byte is projected")

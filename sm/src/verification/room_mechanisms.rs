@@ -786,7 +786,11 @@ unsafe fn consumer_case(id: u32, g: &mut Game, image: &mut [u8]) -> (u8, u16) {
                 + core::mem::offset_of!(crate::types::EnemyData, current_instruction),
             0xffff,
         );
-        sm_game::actors::torizo::run_torizo_function(g, 11192006u32 as u16, actor);
+        sm_game::actors::torizo::run_torizo_function(
+            &mut crate::game::session_runtime::Runtime::new(g),
+            11192006u32 as u16,
+            actor,
+        );
     } else if n < 14 {
         let slot = if n & 1 == 0 { 0 } else { 39 };
         put(g, 0x1d77 + 2 * slot, 0xfffe);

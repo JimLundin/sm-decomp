@@ -161,6 +161,37 @@ mod tests {
             self.0[0xb1 + 2 * usize::from(word) + usize::from(high)] = value;
         }
     }
+
+    impl crate::sequence_state::Access for Ram {
+        fn set_cinematic_function(&mut self, value: u16) {
+            for (part, byte) in value.to_le_bytes().into_iter().enumerate() {
+                self.compatibility_write_byte(0x1f51 + part, byte);
+            }
+        }
+        fn set_sequence_word(&mut self, word: crate::session_words::Word, value: u16) {
+            for (part, byte) in value.to_le_bytes().into_iter().enumerate() {
+                self.compatibility_write_byte((word as usize) + part, byte);
+            }
+        }
+        fn sequence_flow(&self) -> crate::flow::Flow {
+            panic!("sequence controls were not supplied")
+        }
+        fn sequence_words(&self) -> crate::session_words::SessionWords {
+            panic!("sequence controls were not supplied")
+        }
+        fn commit_flow(&mut self, before: &crate::flow::Flow, after: crate::flow::Flow) {
+            let _ = (before, after);
+            panic!("sequence controls were not supplied");
+        }
+        fn commit_sequence_words(
+            &mut self,
+            before: &crate::session_words::SessionWords,
+            after: crate::session_words::SessionWords,
+        ) {
+            let _ = (before, after);
+            panic!("sequence controls were not supplied");
+        }
+    }
     impl CompatibilityRam for Ram {
         fn compatibility_byte(&self, at: usize) -> u8 {
             self.0[at]

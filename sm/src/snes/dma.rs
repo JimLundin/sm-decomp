@@ -650,7 +650,11 @@ mod table_check {
                     interrupts.next_if(|(line, _)| usize::from(*line) + 2 <= pass)
                 {
                     for (field, value) in stores {
-                        let offset = sm_game::display_refresh::control_word(field);
+                        let offset = match field {
+                            sm_game::scene::irq::Store::Current => 0xab,
+                            sm_game::scene::irq::Store::Pending => 0xa7,
+                            sm_game::scene::irq::Store::Enable => 0x84,
+                        };
                         let [low, high] = value.to_le_bytes();
                         scratch.store(offset, low);
                         scratch.store(offset + 1, high);

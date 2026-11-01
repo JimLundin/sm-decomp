@@ -118,7 +118,7 @@ fn prepare<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H, _: &mut MenuScr
         true,
         game,
     );
-    word! {game; PALETTE_CHANGE_NUM = 0; }
+    crate::sequence_word!(game.PALETTE_CHANGE_NUM = 0);
     menu_tilemap::load_palette(game);
     crate::word_transfers!(game, ascending, 32; le(TARGET_PALETTES, 0) <- le(PALETTE_BUFFER, 0));
     word! { game, 0; TARGET_PALETTES[14], TARGET_PALETTES[30] }

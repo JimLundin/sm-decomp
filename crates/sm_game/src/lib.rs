@@ -97,6 +97,7 @@ pub mod display {
     pub mod error;
     pub mod hdma;
     pub mod hdma_spawn;
+    pub mod preparation;
     pub mod registers;
     pub mod sequence;
     pub mod transfer;
@@ -116,6 +117,7 @@ pub mod actors {
     pub mod bang;
     pub mod beetom;
     pub mod blue_brinstar_face_block;
+    pub mod boss_interaction;
     pub mod boss_lease;
     pub mod botwoon;
     pub mod botwoon_death;
@@ -374,3 +376,5 @@ pub mod torizo_tables;
 pub mod transition_trace;
 pub mod visual_host;
 pub mod zebetite_data;
+
+pub mod sequence_state;

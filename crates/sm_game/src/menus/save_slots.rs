@@ -147,7 +147,7 @@ pub fn initialize<H: Host + ?Sized>(game: &mut H) {
         inventory.reserve_health = 0;
         inventory.reserve_missiles = 0;
     });
-    game_word!(game.HUD_ITEM_INDEX = 0);
+    crate::sequence_word!(game.HUD_ITEM_INDEX = 0);
     game_word! {game; BUTTON_CONFIG_UP = K_BUTTON_UP as u16; BUTTON_CONFIG_DOWN = K_BUTTON_DOWN as u16;
     BUTTON_CONFIG_LEFT = K_BUTTON_LEFT as u16; BUTTON_CONFIG_RIGHT = K_BUTTON_RIGHT as u16;
     BUTTON_CONFIG_JUMP_A = K_BUTTON_A as u16; BUTTON_CONFIG_RUN_B = K_BUTTON_B as u16;
@@ -155,9 +155,10 @@ pub fn initialize<H: Host + ?Sized>(game: &mut H) {
     BUTTON_CONFIG_ITEMSWITCH = K_BUTTON_SELECT as u16;
     BUTTON_CONFIG_AIM_UP_R = K_BUTTON_R as u16; BUTTON_CONFIG_AIM_DOWN_L = K_BUTTON_L as u16; }
     game_word! { game, 0;
-        GAME_TIME_FRAMES, GAME_TIME_SECONDS, GAME_TIME_MINUTES, GAME_TIME_HOURS, JAPANESE_TEXT_FLAG,
-        MOONWALK_FLAG, HUD_AUTO_CANCEL_FLAG,
+        GAME_TIME_FRAMES, GAME_TIME_SECONDS, GAME_TIME_MINUTES, GAME_TIME_HOURS,
     }
+    crate::sequence_word!(game.JAPANESE_TEXT_FLAG = 0);
+    game_word! { game, 0; MOONWALK_FLAG, HUD_AUTO_CANCEL_FLAG }
     game_word! { game, 1; DEBUG_FLAG, UNUSED_WORD_7E09E8 }
     crate::word_transfers!(game, ascending, 4;
         native(0xd830) <- value(0),
@@ -183,14 +184,14 @@ pub fn record_completion<H: Host + ?Sized>(game: &mut H) {
     game.flush_sram();
 }
 pub fn verify_boot<H: Host + ?Sized>(game: &mut H) {
-    crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+    crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
         flow.num_demo_sets = 3
     });
     if (0..3).all(|slot| load(slot, game) != 0) {
         game.sram().write_bytes(0x1fe0, b"madadameyohn");
         game.flush_sram();
     } else if game.sram().bytes(crate::save_file::header::SIGNATURE) == b"supermetroid" {
-        crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+        crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
             flow.num_demo_sets = 4
         });
     }

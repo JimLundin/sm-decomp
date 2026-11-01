@@ -118,7 +118,7 @@ pub fn lava_surface<H: crate::menus::host::Host + ?Sized>(
     game: &mut H,
 ) {
     word!(game.FX_LAYER_BLENDING_CONFIG_C = word!(game.FX_LAYER_BLENDING_CONFIG_B));
-    if word!(game.TIME_IS_FROZEN_FLAG) == 0 {
+    if crate::sequence_word!(game.TIME_IS_FROZEN_FLAG) == 0 {
         step_liquid(game, crate::liquid::Surface::LavaAcid, handler_carry);
         word!(game.BG3_XPOS = crate::menus::prelude::display_scroll!(game.Bg1H));
         crate::word_transfers!(game, ascending, 1; native(0x9c00) <- value(0));
@@ -169,7 +169,7 @@ pub fn water_surface<H: crate::menus::host::Host + ?Sized>(
     game: &mut H,
 ) {
     word!(game.FX_LAYER_BLENDING_CONFIG_C = word!(game.FX_LAYER_BLENDING_CONFIG_B));
-    if word!(game.TIME_IS_FROZEN_FLAG) != 0 {
+    if crate::sequence_word!(game.TIME_IS_FROZEN_FLAG) != 0 {
         return;
     }
     step_liquid(game, crate::liquid::Surface::Water, handler_carry);
@@ -265,7 +265,7 @@ pub fn lava_background<H: crate::menus::host::Host + ?Sized>(
     game: &mut H,
 ) {
     word!(game.BG2_Y_SCROLL_SPARE_ENTRY = crate::menus::prelude::display_scroll!(game.Bg2V));
-    let active = word!(game.TIME_IS_FROZEN_FLAG) == 0
+    let active = crate::sequence_word!(game.TIME_IS_FROZEN_FLAG) == 0
         && crate::liquid::LiquidWords::read(game).options & 6 != 0;
     let horizontal = active && crate::liquid::LiquidWords::read(game).options & 2 == 0;
     game.write_register(
@@ -293,7 +293,7 @@ pub fn water_background<H: crate::menus::host::Host + ?Sized>(
     game: &mut H,
 ) {
     word!(game.BG2_Y_SCROLL_SPARE_ENTRY = crate::menus::prelude::display_scroll!(game.Bg2H));
-    if word!(game.TIME_IS_FROZEN_FLAG) != 0 {
+    if crate::sequence_word!(game.TIME_IS_FROZEN_FLAG) != 0 {
         water_flat(game);
     } else if crate::liquid::LiquidWords::read(game).options & 2 == 0 {
         object.channels = 0;

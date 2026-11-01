@@ -18,13 +18,13 @@ pub fn finish_health_and_time<H: Host + ?Sized>(game: &mut H) {
     let inventory = crate::session_cohort::load::<crate::inventory::Inventory, _>(game);
     if (inventory.health.current as i16) <= 0 {
         if (inventory.reserve_mode & 1) != 0 && inventory.reserve_health != 0 {
-            word!(game.TIME_IS_FROZEN_FLAG = 0x8000);
+            crate::sequence_word!(game.TIME_IS_FROZEN_FLAG = 0x8000);
             word!(game.GAME_STATE = K_GAME_STATE_27_RESERVE_TANKS_AUTO as u16);
             game.player_command(0x1b);
         } else if word!(game.GAME_STATE) as i32 != K_GAME_STATE_8_MAIN_GAMEPLAY as i32 {
             return;
         } else {
-            word!(game.TIME_IS_FROZEN_FLAG = 0x8000);
+            crate::sequence_word!(game.TIME_IS_FROZEN_FLAG = 0x8000);
             game.player_command(0x11);
             word!(game.GAME_STATE = K_GAME_STATE_19_SAMUS_NO_HEALTH as u16);
         }
@@ -58,7 +58,7 @@ const ROOM_SHAKES: [u16; 144] = [
 pub fn finish_frame<H: Host + ?Sized>(game: &mut H) {
     let quake = crate::room_view::effects(game);
     if quake.earthquake_timer != 0
-        && word!(game.TIME_IS_FROZEN_FLAG) == 0
+        && crate::sequence_word!(game.TIME_IS_FROZEN_FLAG) == 0
         && (quake.earthquake_kind as i16).wrapping_sub(36) < 0
     {
         let index = usize::from(quake.earthquake_kind) * 4;
@@ -93,14 +93,17 @@ pub fn finish_frame<H: Host + ?Sized>(game: &mut H) {
     }
     word!(game.FRAME_COUNTER_EVERY_FRAME += 1);
     for timer in [
-        fields::SAMUS_INVINCIBILITY_TIMER,
-        fields::SAMUS_KNOCKBACK_TIMER,
-        fields::PROJECTILE_INVINCIBILITY_TIMER,
+        crate::session_words::Word::SamusInvincibilityTimer,
+        crate::session_words::Word::SamusKnockbackTimer,
     ] {
-        let remaining = checked_word!(game, timer;);
+        let remaining = crate::sequence_state::read(&*game, timer);
         if remaining != 0 {
-            checked_word!(game, timer; = remaining - 1);
+            crate::sequence_state::write(game, timer, remaining - 1);
         }
+    }
+    let remaining = checked_word!(game, fields::PROJECTILE_INVINCIBILITY_TIMER;);
+    if remaining != 0 {
+        checked_word!(game, fields::PROJECTILE_INVINCIBILITY_TIMER; = remaining - 1);
     }
     word!(game.INTERACTIVE_ENEMY_INDEXES[0] = u16::MAX);
     word!(game.ACTIVE_ENEMY_INDEXES[0] = u16::MAX);

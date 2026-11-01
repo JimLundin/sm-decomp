@@ -7,7 +7,8 @@ use sm_data::cartridge::RomImage;
 /// What sprite output reads and writes: named and raw work RAM, the cartridge,
 /// the original's invalid-ROM warning and its failure flag.
 pub trait SpriteHost:
-    crate::ram::CompatibilityRam
+    crate::display::preparation::Access
+    + crate::ram::CompatibilityRam
     + crate::records::Records
     + crate::ram::WorkRamAccess
     + crate::cartridge::LoadedImage
@@ -158,7 +159,7 @@ pub fn echo<H: SpriteHost + ?Sized>(slot: u16, game: &mut H, content: &mut impl 
     let image = content.image(game);
     let height = image.read(
         sm_data::cartridge::lorom_offset(0x91b629) as usize
-            + usize::from(word!(game.SAMUS_POSE)) * 8
+            + usize::from(crate::sequence_word!(game.SAMUS_POSE)) * 8
             + 4,
     );
     let layer1 = crate::camera::current(game).layer1;
@@ -175,7 +176,7 @@ pub fn echo<H: SpriteHost + ?Sized>(slot: u16, game: &mut H, content: &mut impl 
     }
 }
 pub fn crash_echoes<H: SpriteHost + ?Sized>(game: &mut H, content: &mut impl Content<H>) {
-    if word!(game.NMI_FRAME_COUNTER_WORD) & 1 != 0 {
+    if crate::frame_display_word!(game.NmiFrameWordPair) & 1 != 0 {
         for index in [3, 2] {
             if word!(game.SPEED_ECHO_XSPEED[index]) != 0 {
                 echo((index * 2) as u16, game, content);

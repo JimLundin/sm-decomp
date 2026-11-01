@@ -141,14 +141,17 @@ accepted campaign.
   stay separate. Use tools/progress.sh --accounting --ref PIN --superseded RECORD.
 - Never commit ROMs, movies/checkpoints/saves or derived game data. Only encrypted
   release assets use the existing ci-data route; verify complete restore/member identities.
-- Small commits, one coherent idea. If an item stalls over an hour, record its blocker
+- Coherent owner commits and corrective fixes compose the migration PR scope
+  above. If an item stalls over an hour, record its blocker
   and findings, then keep useful independent work supplied.
 
 ## Fast loop
 
-Keep a dedicated gameplay verification coverage owner alongside the engine lanes.
-Replenish that lane with fresh bounded agents when each task completes; report
-newly reached game behaviors and mutation sensitivity separately from passing rows.
+Keep a dedicated verification owner supplied alongside engine migration.
+Qualify changed responsibilities and the combined source, including existing-row
+captures required by state or codec changes under resource admission. Continue
+the complete existing movie scope above; defer new trick/scenario expansion.
+Report reached behavior and mutation sensitivity separately from passing rows.
 
 1. cargo fmt --check; cargo check --no-default-features --lib with warnings denied;
    one DLL build: python tools/verify_dll.py --build-only. Cargo enforces
@@ -191,7 +194,7 @@ Cross-recipe reuse requires SHA-bound identical canonical input prefixes; keep s
 ROM/native/full-input/loader guards and save matching manifest starts during setup.
 Use [movies/README](../movies/README.md) for commands; inspect masks/hardware/audio/persistence when touched.
 
-The primary publishes qualified small commits to main and fixes known CI failures.
+The primary publishes qualified migration slices to main and fixes known CI failures.
 Observe the actual CI workflow and commit; continue independent implementation
 while hosted checks run. Free runners only; Windows full corpus runs every 3h,
 after bank deletion and at review waypoints, at most 6 parallel shards. Checkpoint

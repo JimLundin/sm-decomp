@@ -4,15 +4,16 @@
 //! The swing instructions lived with Draygon as `increase_grab_speed`,
 //! `clear_grab_rotation`, `grab_timers`, `place_grab_start` and `set_state`.
 #![forbid(unsafe_code)]
+use crate::actors::boss_interaction as interaction;
 use crate::actors::boss_lease::BossLease;
-use crate::actors::boss_lease::boss_ram;
 use crate::actors::host::{BossEffects, Death, Shot, abs16, below};
 use crate::actors::layouts::{EnemyBase, same_words};
 use crate::actors::queries::angle_from_delta;
 use crate::actors::session_slots::session_slot;
 use crate::enemy_script::EnemyScript;
 use crate::geometry::Vector32;
-use crate::menus::prelude::{boss, owned};
+use crate::menus::prelude::battle;
+use crate::menus::prelude::owned;
 use crate::ram::word_arrays;
 
 /// What Spore Spawn needs beyond the shared boss effects.
@@ -26,8 +27,8 @@ pub trait Host: BossEffects {
 }
 
 /// A lease on a game with Spore Spawn's effects.
-pub trait Lease: BossLease<Game: Host> {}
-impl<T: BossLease<Game: Host> + ?Sized> Lease for T {}
+pub trait Lease: BossLease<Game: Host> + crate::actors::boss_interaction::Access {}
+impl<T: BossLease<Game: Host> + crate::actors::boss_interaction::Access + ?Sized> Lease for T {}
 
 /// Spore Spawn's view of its slot: its orbit's origin, the stem's anchor,
 /// the swing, and its 16.16 speeds and angle back to the middle.
@@ -185,13 +186,13 @@ pub fn initialize<L: Lease + ?Sized>(game: &mut L) {
             game.update_spore_stem();
             game.spawn_plm(7, 30, CLOSE_CEILING);
         });
-        boss!(game.ScrollingFinishedHook = 0);
+        battle!(game.ScrollingFinishedHook = 0);
     } else {
         session_slot!(game, Spore[0].base.current_instruction = list::FIGHT_INTRO);
-        boss!(game.FlagProcessAllEnemies = 0xffff);
+        battle!(game.FlagProcessAllEnemies = 0xffff);
         let spawn_key = game.current_enemy();
         session_slot!(game, Spore[k].function = function::NOTHING);
-        boss!(game.ScrollingFinishedHook = 0x9589);
+        battle!(game.ScrollingFinishedHook = 0x9589);
         session_slot!(game, Spore[k].base.y_pos, |old| old.wrapping_sub(128));
         for part in 0..4 {
             game.spawn_actor_eproj(part, spawn_key, SPORE_SPAWNERS);
@@ -336,7 +337,7 @@ pub fn after_damage<L: Lease + ?Sized>(game: &mut L) {
         let bits = game.boss_word(area);
         game.set_boss_word(area, bits | DEAD);
     });
-    boss!(game.ScrollingFinishedHook = 0);
+    battle!(game.ScrollingFinishedHook = 0);
     game.foreign(|game| game.spawn_plm(7, 30, OPEN_CEILING));
 }
 
@@ -349,11 +350,11 @@ pub fn touch<L: Lease + ?Sized>(game: &mut L) {
 /// Shot AI ($A5:ED5A): only charged shots and missiles hurt it; the first hit
 /// of a swing reverses it, and its palette darkens with health.
 pub fn shot<L: Lease + ?Sized>(game: &mut L) {
-    let _projectile = boss!(game.CollisionDetectionIndex).wrapping_mul(2);
-    let kind = boss_ram::get_at(
+    let _projectile = battle!(game.CollisionDetectionIndex).wrapping_mul(2);
+    let kind = interaction::get_at(
         game,
-        boss_ram::Array::ProjectileType,
-        boss!(game.CollisionDetectionIndex),
+        interaction::Array::ProjectileType,
+        battle!(game.CollisionDetectionIndex),
     );
     if kind & 0x700 == 0 && kind & 0x10 == 0 {
         return;
@@ -386,7 +387,7 @@ pub fn shot<L: Lease + ?Sized>(game: &mut L) {
             for index in 144..160 {
                 let colour =
                     crate::gameplay_tables::spore_spawn_colour(game, (cursor >> 1) as isize);
-                boss_ram::set_at(game, boss_ram::Array::PaletteBuffer, index, colour);
+                interaction::set_at(game, interaction::Array::PaletteBuffer, index, colour);
                 cursor = cursor.wrapping_add(2);
             }
         }

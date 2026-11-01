@@ -230,11 +230,11 @@ pub fn advance(h: &mut impl Host) -> bool {
 /// Load the demo's scene and Samus's demo setup, and the demo button layout.
 pub fn load_demo<H: SamusLease>(h: &mut H) {
     use crate::ram::words as ram;
-    let scene = h.word(ram::DEMO_SCENE);
-    let set = h.word(ram::DEMO_SET);
+    let scene = crate::sequence_state::Access::sequence_flow(&*h).demo_scene;
+    let set = crate::sequence_state::Access::sequence_flow(&*h).demo_set;
     load_data(h, set, scene);
-    let set = h.word(ram::DEMO_SET);
-    let scene = h.word(ram::DEMO_SCENE);
+    let set = crate::sequence_state::Access::sequence_flow(&*h).demo_set;
+    let scene = crate::sequence_state::Access::sequence_flow(&*h).demo_scene;
     if initialize_scene(h, set, scene) {
         h.owned_call(super::equipment::face_forward);
         h.session_mut().player.transitions.draw_handler = super::state::DrawMode::Normal;

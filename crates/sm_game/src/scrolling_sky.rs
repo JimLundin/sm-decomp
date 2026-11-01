@@ -255,7 +255,7 @@ pub fn advance_parallax<L: crate::actors::boss_lease::BossState + ?Sized>(game: 
 }
 /// Advance the parallax unless time is frozen.
 pub fn update_parallax<L: crate::actors::boss_lease::BossState + ?Sized>(game: &mut L) {
-    if word!(game.TIME_IS_FROZEN_FLAG) == 0 {
+    if crate::sequence_word!(game.TIME_IS_FROZEN_FLAG) == 0 {
         advance_parallax(game);
     }
 }
@@ -263,7 +263,7 @@ fn queue_tile_rows<H: crate::menus::host::Host + ?Sized>(address: u32, game: &mu
     // Capture the original native source even when frozen; reads remain lazy.
     let src = game.native_image();
     let base = sm_data::cartridge::lorom_offset(address) as usize;
-    if word!(game.TIME_IS_FROZEN_FLAG) != 0 {
+    if crate::sequence_word!(game.TIME_IS_FROZEN_FLAG) != 0 {
         write_sky_word(0, 0, game);
     } else {
         let layer1_y = crate::camera::current(game).layer1[1];

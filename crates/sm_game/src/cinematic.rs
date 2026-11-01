@@ -302,7 +302,16 @@ where
     H: crate::display_refresh::DisplayOwner + ?Sized,
 {
     for (channel, value) in channels.into_iter().enumerate() {
-        game.write_owned_byte(0x74 + channel, value);
+        crate::display::preparation::Access::store_display_control_byte(
+            &mut *game,
+            [
+                crate::display::preparation::Field::FixedColor0,
+                crate::display::preparation::Field::FixedColor1,
+                crate::display::preparation::Field::FixedColor2,
+            ][channel],
+            value,
+            crate::display::preparation::Store::Owned,
+        );
     }
 }
 

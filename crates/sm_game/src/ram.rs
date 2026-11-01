@@ -30,7 +30,7 @@ pub trait WorkRamAccess {
 pub trait RamHost: CompatibilityRam + WorkRamAccess {}
 impl<T: CompatibilityRam + WorkRamAccess + ?Sized> RamHost for T {}
 
-pub trait CompatibilityRam: crate::display_scroll::Access {
+pub trait CompatibilityRam: crate::display_scroll::Access + crate::sequence_state::Access {
     fn compatibility_byte(&self, at: usize) -> u8;
     fn compatibility_write_byte(&mut self, at: usize, value: u8);
     /// The external observations (joypad keys, frame counter, camera...) as

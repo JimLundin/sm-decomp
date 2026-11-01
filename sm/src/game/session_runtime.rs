@@ -702,6 +702,9 @@ impl<'g> Runtime<'g> {
                 .state
                 .phase = sm_game::scene::state::DisplayPhase::Failed;
         }
+        self.refresh_written_inputs();
+    }
+    fn refresh_written_inputs(&mut self) {
         self.inputs =
             encoding::inputs_from_session(self.session(), &|at| self.game.ram().read_byte(at));
         // Preserve observation refresh timing while A5A is owned by Session.
@@ -1649,6 +1652,9 @@ mod screen_fade_runtime;
 #[path = "scroll_runtime.rs"]
 mod scroll_runtime;
 
+#[path = "sequence_runtime.rs"]
+mod sequence_runtime;
+
 #[cfg(sm_verify_dll)]
 #[path = "../verification/collision_mechanism_checks.rs"]
 pub(crate) mod collision_mechanism_checks;
@@ -1966,5 +1972,149 @@ impl Runtime<'_> {
             _ => return false,
         }
         true
+    }
+}
+
+#[path = "boss_interaction_runtime.rs"]
+mod boss_interaction_runtime;
+
+// Frame display controls use the existing admitted Display, never a new lease.
+#[forbid(unsafe_code)]
+impl sm_game::display::preparation::Access for Runtime<'_> {
+    fn display_control_byte(&self, field: sm_game::display::preparation::Field) -> u8 {
+        if self.display_owned() {
+            let display = self
+                .session()
+                .presentation
+                .owner()
+                .expect("current Display");
+            sm_game::display::preparation::display_byte(&display.state, field)
+        } else {
+            self.byte(crate::game_state::frame_field_address(field))
+        }
+    }
+    fn store_display_control_byte(
+        &mut self,
+        field: sm_game::display::preparation::Field,
+        value: u8,
+        _store: sm_game::display::preparation::Store,
+    ) {
+        if self.display_owned() {
+            sm_game::display::preparation::set_display_byte(
+                &mut self
+                    .session_mut()
+                    .presentation
+                    .owner_mut()
+                    .expect("current Display")
+                    .state,
+                field,
+                value,
+            );
+            self.refresh_written_inputs();
+        } else {
+            self.set_byte(crate::game_state::frame_field_address(field), value);
+        }
+    }
+    fn display_history_word(&self, word: sm_game::display::preparation::Word) -> u16 {
+        if self.display_owned() {
+            sm_game::display::preparation::display_word(
+                &self
+                    .session()
+                    .presentation
+                    .owner()
+                    .expect("current Display")
+                    .state,
+                word,
+            )
+        } else {
+            self.word(crate::game_state::frame_word_address(word))
+        }
+    }
+    fn store_display_history_word(
+        &mut self,
+        word: sm_game::display::preparation::Word,
+        value: u16,
+        _store: sm_game::display::preparation::Store,
+    ) {
+        let at = crate::game_state::frame_word_address(word);
+        for (lane, byte) in value.to_le_bytes().into_iter().enumerate() {
+            if self.display_owned() {
+                let display = &mut self
+                    .session_mut()
+                    .presentation
+                    .owner_mut()
+                    .expect("current Display")
+                    .state;
+                let mut bytes =
+                    sm_game::display::preparation::display_word(display, word).to_le_bytes();
+                bytes[lane] = byte;
+                sm_game::display::preparation::set_display_word(
+                    display,
+                    word,
+                    u16::from_le_bytes(bytes),
+                );
+                self.refresh_written_inputs();
+            } else {
+                self.set_byte(at + lane, byte);
+            }
+        }
+    }
+    fn hud_tile(&self, index: isize) -> u16 {
+        let at = crate::game_state::frame_hud_address(index);
+        if self.display_owned()
+            && let Some(&value) = usize::try_from(index).ok().and_then(|index| {
+                self.session()
+                    .presentation
+                    .owner()
+                    .expect("current Display")
+                    .state
+                    .hud
+                    .tiles
+                    .get(index)
+            })
+        {
+            value
+        } else {
+            self.word(at)
+        }
+    }
+    fn store_hud_tile(
+        &mut self,
+        index: isize,
+        value: u16,
+        _store: sm_game::display::preparation::Store,
+    ) {
+        let at = crate::game_state::frame_hud_address(index);
+        let normal = usize::try_from(index).ok().filter(|&index| index < 96);
+        for (lane, byte) in value.to_le_bytes().into_iter().enumerate() {
+            if self.display_owned()
+                && let Some(index) = normal
+            {
+                let tile = &mut self
+                    .session_mut()
+                    .presentation
+                    .owner_mut()
+                    .expect("current Display")
+                    .state
+                    .hud
+                    .tiles[index];
+                let mut bytes = tile.to_le_bytes();
+                bytes[lane] = byte;
+                *tile = u16::from_le_bytes(bytes);
+                self.refresh_written_inputs();
+            } else {
+                self.set_byte(at + lane, byte);
+            }
+        }
+    }
+    fn physical_display_control_byte(&self, field: sm_game::display::preparation::Field) -> u8 {
+        self.byte(crate::game_state::frame_field_address(field))
+    }
+    fn store_physical_display_control_byte(
+        &mut self,
+        field: sm_game::display::preparation::Field,
+        value: u8,
+    ) {
+        self.set_byte(crate::game_state::frame_field_address(field), value);
     }
 }

@@ -66,7 +66,7 @@ pub fn initialize_fireflea_lighting<H: crate::menus::host::Host + ?Sized>(game: 
 
 pub fn advance_fireflea_lighting<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     word!(game.FX_LAYER_BLENDING_CONFIG_C = word!(game.FX_LAYER_BLENDING_CONFIG_C) & 0xff00 | 0xc);
-    if word!(game.TIME_IS_FROZEN_FLAG) != 0 {
+    if crate::sequence_word!(game.TIME_IS_FROZEN_FLAG) != 0 {
         return;
     }
     if word!(game.FIREFLEA_FLASHING_TIMER -= 1, reread) == 0 {
@@ -183,7 +183,7 @@ pub fn advance_tourian_statue<H: crate::menus::host::Host + StatueHost + ?Sized>
             }
         }
         Sinking => {
-            if word!(game.TIME_IS_FROZEN_FLAG) != 0 {
+            if crate::sequence_word!(game.TIME_IS_FROZEN_FLAG) != 0 {
                 return;
             }
             // A is the fraction and B the whole of the statue's scroll offset.
@@ -271,7 +271,7 @@ pub fn scroll_weather<H: crate::menus::host::Host + ?Sized>(
     use crate::ram::checked_word;
     game.ram().write_byte(0x5b, 92);
     checked_word!(game.FX_LAYER_BLENDING_CONFIG_C = checked_word!(game.FX_LAYER_BLENDING_CONFIG_B));
-    if checked_word!(game.TIME_IS_FROZEN_FLAG) != 0 {
+    if crate::sequence_word!(game.TIME_IS_FROZEN_FLAG) != 0 {
         return;
     }
     crate::hdma_effects::apply_leased(HdmaEffect::ScrollWeather(weather), slot, game);

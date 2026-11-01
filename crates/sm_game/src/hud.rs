@@ -28,6 +28,7 @@ pub trait HudPlayer {
 /// effects and the native cartridge. A Session lease can provide it.
 pub trait HudFrameHost:
     HudPlayer
+    + crate::display::preparation::Access
     + crate::ram::CompatibilityRam
     + crate::player_position::PlayerFacts
     + crate::effects::SoundEffects
@@ -47,7 +48,7 @@ impl<T> HudHost for T where
     T: HudFrameHost + crate::ram::RamHost + crate::display::sequence::Registers + ?Sized
 {
 }
-use crate::ram::{checked_word as at, word, words as fields};
+use crate::ram::word;
 
 /// $80:9DD3: the ammunition digit tiles, 0 to 9.
 const WEAPON_DIGITS: u32 = 0x80_9dd3;
@@ -165,7 +166,7 @@ const fn initial_tiles() -> [u16; 96] {
     tiles
 }
 
-fn stamp<H: crate::ram::CompatibilityRam + ?Sized>(
+fn stamp<H: crate::display::preparation::Access + ?Sized>(
     base: usize,
     columns: usize,
     count: usize,
@@ -173,7 +174,9 @@ fn stamp<H: crate::ram::CompatibilityRam + ?Sized>(
     game: &mut H,
 ) {
     for index in 0..count {
-        word!(game.HUD_TILEMAP[base + 32 * (index / columns) + index % columns] = tile(index));
+        crate::frame_display_word!(
+            game.HudTiles[base + 32 * (index / columns) + index % columns] = tile(index)
+        );
     }
 }
 
@@ -182,7 +185,7 @@ pub fn install<H: HudHost + ?Sized>(item: Item, game: &mut H) {
     let index = item as usize;
     let base = usize::from(ITEM_OFFSETS[index] >> 1);
     let native = (index != 0).then(|| native_record(0x8099a3 + 4 + 8 * index as u32, game));
-    if word!(game.HUD_TILEMAP[base]) & 0x3ff == BLANK_TILE & 0x3ff {
+    if crate::frame_display_word!(game.HudTiles[base]) & 0x3ff == BLANK_TILE & 0x3ff {
         let columns = if index == 0 { 3 } else { 2 };
         stamp(
             base,
@@ -209,7 +212,9 @@ pub fn initialize<H: HudHost + ?Sized>(game: &mut H) {
         game,
     );
     game.write_register(MDMAEN as u16, 2);
-    crate::word_transfers!(game, ascending, 96; le(HUD_TILEMAP, 0) <- table(INITIAL_TILES, 0));
+    for (index, &value) in INITIAL_TILES.iter().enumerate() {
+        crate::frame_display_word!(game.HudTiles[index] = value);
+    }
     for (item, mask) in [(Item::Xray, XRAY_SCOPE), (Item::Grapple, GRAPPLING_BEAM)] {
         if game.equipped_items() & mask != 0 {
             install(item, game);
@@ -223,12 +228,17 @@ pub fn initialize<H: HudHost + ?Sized>(game: &mut H) {
             install(item, game);
         }
     }
-    word! { game, 0; SAMUS_PREV_HEALTH, SAMUS_PREV_MISSILES, SAMUS_PREV_SUPER_MISSILES,
-    SAMUS_PREV_POWER_BOMBS, SAMUS_PREV_HUD_ITEM_INDEX, }
+    {
+        crate::frame_display_word!(game.PreviousHealth = 0);
+        crate::frame_display_word!(game.PreviousMissiles = 0);
+        crate::frame_display_word!(game.PreviousSupers = 0);
+        crate::frame_display_word!(game.PreviousBombs = 0);
+        crate::frame_display_word!(game.PreviousSelection = 0);
+    }
     ammunition(true, game);
     highlight(game.selected_item(), SELECTED_PALETTE, game);
     highlight(
-        word!(game.SAMUS_PREV_HUD_ITEM_INDEX),
+        crate::frame_display_word!(game.PreviousSelection),
         UNSELECTED_PALETTE,
         game,
     );
@@ -237,22 +247,26 @@ pub fn initialize<H: HudHost + ?Sized>(game: &mut H) {
 
 fn ammunition<H: HudFrameHost + ?Sized>(initial: bool, game: &mut H) {
     {
-        const ROWS: [(usize, u16); 3] = [
-            (fields::SAMUS_PREV_MISSILES, 0x94),
-            (fields::SAMUS_PREV_SUPER_MISSILES, 0x9c),
-            (fields::SAMUS_PREV_POWER_BOMBS, 0xa2),
+        const ROWS: [(crate::display::preparation::Word, u16); 3] = [
+            (crate::display::preparation::Word::PreviousMissiles, 0x94),
+            (crate::display::preparation::Word::PreviousSupers, 0x9c),
+            (crate::display::preparation::Word::PreviousBombs, 0xa2),
         ];
         for (index, &(previous, offset)) in ROWS.iter().enumerate() {
             if game.max_ammunition(index) != 0
-                && (initial || game.ammunition(index) != at!(game, previous;))
+                && (initial
+                    || game.ammunition(index)
+                        != crate::display::preparation::Access::display_history_word(
+                            &*game, previous,
+                        ))
             {
                 if !initial {
-                    at!(game, previous; = game.ammunition(index));
+                    crate::frame_display_history!(game, previous => game.ammunition(index));
                 }
                 let three = index == 0
                     || (!initial && index == 1 && word!(game.JOYPAD_DBG_FLAGS) & 0x1f40 != 0);
                 let count = if !initial && index == 1 {
-                    at!(game, previous;)
+                    crate::display::preparation::Access::display_history_word(&*game, previous)
                 } else {
                     game.ammunition(index)
                 };
@@ -270,8 +284,8 @@ pub fn advance<H: HudFrameHost + ?Sized>(game: &mut H) {
             let start = if game.reserve_health() == 0 { 12 } else { 0 };
             stamp(8, 2, 6, |i| reserve.word(start + 2 * i), game);
         }
-        if game.health() != word!(game.SAMUS_PREV_HEALTH) {
-            word!(game.SAMUS_PREV_HEALTH = game.health());
+        if game.health() != crate::frame_display_word!(game.PreviousHealth) {
+            crate::frame_display_word!(game.PreviousHealth = game.health());
             let mut filled = game.health() / 100;
             let remainder = game.health() % 100;
             let count = usize::from(game.max_health() / 100);
@@ -285,23 +299,25 @@ pub fn advance<H: HudFrameHost + ?Sized>(game: &mut H) {
                 } else {
                     EMPTY_TANK_TILE
                 };
-                crate::word_transfers!(game, ascending, 1; native(TILEMAP_RAM + usize::from(offset)) <- value(tile));
+                crate::frame_display_word!(
+                    game.HudTiles[usize::from(offset) / 2] = u16::from_le_bytes(tile.to_ne_bytes())
+                );
             }
             number(HEALTH_DIGITS, remainder, 0x8c, false, game);
         }
         ammunition(false, game);
-        if game.selected_item() != word!(game.SAMUS_PREV_HUD_ITEM_INDEX) {
+        if game.selected_item() != crate::frame_display_word!(game.PreviousSelection) {
             highlight(game.selected_item(), SELECTED_PALETTE, game);
             highlight(
-                word!(game.SAMUS_PREV_HUD_ITEM_INDEX),
+                crate::frame_display_word!(game.PreviousSelection),
                 UNSELECTED_PALETTE,
                 game,
             );
-            word!(game.SAMUS_PREV_HUD_ITEM_INDEX = game.selected_item());
+            crate::frame_display_word!(game.PreviousSelection = game.selected_item());
             if game.movement_type() != SPIN_JUMPING
                 && game.movement_type() != WALL_JUMPING
                 && game.grapple_function() == GRAPPLE_INACTIVE
-                && word!(game.TIME_IS_FROZEN_FLAG) == 0
+                && crate::sequence_word!(game.TIME_IS_FROZEN_FLAG) == 0
             {
                 game.queue_sound(0, 0x39_u8, 6);
             }
@@ -334,7 +350,7 @@ pub fn advance<H: HudFrameHost + ?Sized>(game: &mut H) {
 }
 
 fn highlight<H: HudFrameHost + ?Sized>(selection: u16, palette: u16, game: &mut H) {
-    word!(game.HUD_ITEM_TILEMAP_PALETTE_BITS = palette);
+    crate::frame_display_word!(game.HudPalette = palette);
     let item = (selection as i16).wrapping_sub(1);
     if item >= 0 {
         let base = usize::from(ITEM_OFFSETS[item as usize] >> 1);
@@ -345,10 +361,10 @@ fn highlight<H: HudFrameHost + ?Sized>(selection: u16, palette: u16, game: &mut 
         };
         for &offset in offsets {
             let index = base + offset;
-            if word!(game.HUD_TILEMAP[index]) != BLANK_TILE {
-                word!(
-                    game.HUD_TILEMAP[index] = word!(game.HUD_ITEM_TILEMAP_PALETTE_BITS)
-                        | word!(game.HUD_TILEMAP[index]) & !PALETTE_BITS
+            if crate::frame_display_word!(game.HudTiles[index]) != BLANK_TILE {
+                crate::frame_display_word!(
+                    game.HudTiles[index] = crate::frame_display_word!(game.HudPalette)
+                        | crate::frame_display_word!(game.HudTiles[index]) & !PALETTE_BITS
                 );
             }
         }
@@ -363,8 +379,8 @@ fn number<H: HudFrameHost + ?Sized>(
     game: &mut H,
 ) {
     if three {
-        word!(
-            game.HUD_TILEMAP[cursor >> 1] =
+        crate::frame_display_word!(
+            game.HudTiles[cursor >> 1] =
                 native_record(address.wrapping_add(2 * u32::from(value / 100)), game).word(0)
         );
         value %= 100;
@@ -373,15 +389,19 @@ fn number<H: HudFrameHost + ?Sized>(
     let base = usize::from(cursor >> 1);
     // Units follow the widened pair index; they do not wrap the u16 byte cursor.
     for (index, digit) in [(base, value / 10), (base + 1, value % 10)] {
-        word!(
-            game.HUD_TILEMAP[index] =
+        crate::frame_display_word!(
+            game.HudTiles[index] =
                 native_record(address.wrapping_add(2 * u32::from(digit)), game).word(0)
         );
     }
 }
 
 pub fn menu_reserve_mode<
-    H: HudPlayer + crate::ram::CompatibilityRam + crate::cartridge::NativeDiagnostics + ?Sized,
+    H: HudPlayer
+        + crate::display::preparation::Access
+        + crate::ram::CompatibilityRam
+        + crate::cartridge::NativeDiagnostics
+        + ?Sized,
 >(
     automatic: bool,
     game: &mut H,

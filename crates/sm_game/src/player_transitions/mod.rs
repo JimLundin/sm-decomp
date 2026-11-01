@@ -118,7 +118,7 @@ pub fn initialize(h: &mut impl effects::SamusLease) {
     h.session_mut().room.liquid.surface.whole = u16::MAX;
     h.session_mut().room.liquid.lava_acid.whole = u16::MAX;
     h.update_beam_graphics();
-    h.write_slice_le(ram::CINEMATIC_FUNCTION, 0);
+    crate::sequence_state::Access::set_cinematic_function(h, 0);
     let state = h.session_mut();
     let p = &mut state.player;
     p.pose = 0;

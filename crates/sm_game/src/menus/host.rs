@@ -121,7 +121,8 @@ pub trait MenuRuntime:
 }
 
 pub trait Host:
-    CompatibilityRam
+    crate::display::preparation::Access
+    + CompatibilityRam
     + crate::runtime_access::SessionRam
     + crate::player_position::PlayerPosition
     + crate::hud::HudPlayer

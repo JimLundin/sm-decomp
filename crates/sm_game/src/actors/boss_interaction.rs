@@ -1,0 +1,318 @@
+//! Boss interactions on the scheduler's existing Session owner.
+//! Named controls belong to their actual actor, player, room and inventory
+//! owners. This facet stores no duplicate state and introduces no admission.
+//! Physical Game callbacks retain boss_ram; dirty and off-table aliases remain
+//! explicit compatibility capabilities in the scheduler adapter.
+#![forbid(unsafe_code)]
+use crate::session::Session;
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Word {
+    QuakeSoundTimer,
+    CrocomireBridge1,
+    CrocomireBridge2,
+    CrocomireUnread,
+    CrocomireAcidSmoke,
+    PhantoonMaterialisationSound,
+    EnemyTilemapPending,
+    EnemyTilemapSize,
+    BossId,
+    Unused179E,
+    MinimapDisabled,
+    LavaAcidY,
+    DoorTransitionEnemies,
+    CameraDistance,
+    Random,
+    FxLayerFlags,
+    MessageBoxScratch1,
+    RemovedR18,
+    RemovedR20,
+    RemovedR22,
+    AreaIndex,
+    RoomWidthInBlocks,
+    ScrollingFinishedHook,
+    CeresStatus,
+    TimerStatus,
+    EquippedItems,
+    CollectedItems,
+    EquippedBeams,
+    CollectedBeams,
+    SamusHealth,
+    SamusMaxHealth,
+    SamusMissiles,
+    SamusMaxMissiles,
+    SamusSuperMissiles,
+    SamusMaxSuperMissiles,
+    SamusPowerBombs,
+    SamusMaxPowerBombs,
+    SamusMaxReserveHealth,
+    SamusReserveHealth,
+    JapaneseTextFlag,
+    SamusPose,
+    KnockbackXDir,
+    SamusGrappleFlags,
+    SamusXSpeedDivisor,
+    SamusXPos,
+    SamusYPos,
+    SamusXRadius,
+    SamusYRadius,
+    ExtraSamusXSubdisplacement,
+    ExtraSamusXDisplacement,
+    ExtraSamusYDisplacement,
+    ProjectileCounter,
+    PowerBombExplosionXPos,
+    PowerBombExplosionYPos,
+    PowerBombFlag,
+    GrappleBeamFunction,
+    RemovedVarE22,
+    RemovedVarE2A,
+    RandomEnemyCounter,
+    CurEnemyIndex,
+    FlagProcessAllEnemies,
+    EarthquakeType,
+    EarthquakeTimer,
+    CollisionDetectionIndex,
+    SamusInvincibilityTimer,
+    SamusKnockbackTimer,
+    EprojInitParam2,
+    MeltEraseTarget,
+    MeltSubindex,
+    MeltWords,
+    MeltColumn,
+    MeltDisplacement,
+    MeltYOffset,
+    MeltUnread,
+    MeltMaxY,
+    MeltIndex,
+}
+pub fn control(session: &Session, word: Word) -> &u16 {
+    match word {
+        Word::QuakeSoundTimer => &session.actors.extended.blocks[3][0],
+        Word::CrocomireBridge1 => &session.actors.extended.blocks[3][1],
+        Word::CrocomireBridge2 => &session.actors.extended.blocks[3][3],
+        Word::CrocomireUnread => &session.actors.extended.blocks[3][5],
+        Word::CrocomireAcidSmoke => &session.actors.extended.blocks[3][12],
+        Word::PhantoonMaterialisationSound => &session.actors.extended.blocks[3][25],
+        Word::EnemyTilemapPending => &session.actors.drawing.tilemap_pending,
+        Word::EnemyTilemapSize => &session.actors.drawing.tilemap_size,
+        Word::BossId => &session.actors.schedule.boss_id,
+        Word::Unused179E => &session.actors.schedule.compatibility_179e[0],
+        Word::MinimapDisabled => &session.minimap.disabled,
+        Word::LavaAcidY => &session.room.liquid.lava_acid.whole,
+        Word::DoorTransitionEnemies => &session.room.entry.enemy_interlock,
+        Word::CameraDistance => &session.room.camera.distance_index,
+        Word::Random => &session.timing.random_number,
+        Word::FxLayerFlags => &session.room.fx_layer_flags,
+        Word::MessageBoxScratch1 => &session.messages.box_scratch[1],
+        Word::RemovedR18 => &session.spawn_scratch.header,
+        Word::RemovedR20 => &session.spawn_scratch.coordinates,
+        Word::RemovedR22 => &session.spawn_scratch.argument,
+        Word::AreaIndex => &session.room.area,
+        Word::RoomWidthInBlocks => &session.room.width,
+        Word::ScrollingFinishedHook => &session.room.entry.scrolling_hook,
+        Word::CeresStatus => &session.room.ceres_status,
+        Word::TimerStatus => &session.timing.timer_status,
+        Word::EquippedItems => &session.inventory.equipment.active,
+        Word::CollectedItems => &session.inventory.equipment.owned,
+        Word::EquippedBeams => &session.inventory.beams.active,
+        Word::CollectedBeams => &session.inventory.beams.owned,
+        Word::SamusHealth => &session.inventory.health.current,
+        Word::SamusMaxHealth => &session.inventory.health.maximum,
+        Word::SamusMissiles => &session.inventory.ammunition[0].current,
+        Word::SamusMaxMissiles => &session.inventory.ammunition[0].maximum,
+        Word::SamusSuperMissiles => &session.inventory.ammunition[1].current,
+        Word::SamusMaxSuperMissiles => &session.inventory.ammunition[1].maximum,
+        Word::SamusPowerBombs => &session.inventory.ammunition[2].current,
+        Word::SamusMaxPowerBombs => &session.inventory.ammunition[2].maximum,
+        Word::SamusMaxReserveHealth => &session.inventory.reserve_capacity,
+        Word::SamusReserveHealth => &session.inventory.reserve_health,
+        Word::JapaneseTextFlag => &session.options.japanese_text,
+        Word::SamusPose => &session.player.pose,
+        Word::KnockbackXDir => &session.player.knockback_x_direction,
+        Word::SamusGrappleFlags => &session.player.grapple_interaction_flags,
+        Word::SamusXSpeedDivisor => &session.player.speed_divisor,
+        Word::SamusXPos => &session.player.x,
+        Word::SamusYPos => &session.player.y,
+        Word::SamusXRadius => &session.player.contact.x_radius,
+        Word::SamusYRadius => &session.player.contact.radius,
+        Word::ExtraSamusXSubdisplacement => &session.player.contact.external_x.fraction,
+        Word::ExtraSamusXDisplacement => &session.player.contact.external_x.whole,
+        Word::ExtraSamusYDisplacement => &session.player.contact.external_y.whole,
+        Word::ProjectileCounter => &session.projectiles.count,
+        Word::PowerBombExplosionXPos => &session.projectiles.power_bomb.x,
+        Word::PowerBombExplosionYPos => &session.projectiles.power_bomb.y,
+        Word::PowerBombFlag => &session.projectiles.power_bomb.flag,
+        Word::GrappleBeamFunction => &session.player.grapple,
+        Word::RemovedVarE22 => &session.actors.compatibility.scratch[0],
+        Word::RemovedVarE2A => &session.actors.compatibility.scratch[4],
+        Word::RandomEnemyCounter => &session.actors.controls.phase_counter,
+        Word::CurEnemyIndex => &session.actors.controls.selected,
+        Word::FlagProcessAllEnemies => &session.actors.controls.process_all,
+        Word::EarthquakeType => &session.feedback.earthquake_kind,
+        Word::EarthquakeTimer => &session.feedback.earthquake_timer,
+        Word::CollisionDetectionIndex => &session.room.collision_detection_index,
+        Word::SamusInvincibilityTimer => &session.player.invincibility,
+        Word::SamusKnockbackTimer => &session.player.knockback_timer,
+        Word::EprojInitParam2 => &session.enemy_projectiles.spawn.secondary,
+        Word::MeltEraseTarget => &session.actors.crocomire_melt.words[0],
+        Word::MeltSubindex => &session.actors.crocomire_melt.words[1],
+        Word::MeltWords => &session.actors.crocomire_melt.words[3],
+        Word::MeltColumn => &session.actors.crocomire_melt.words[4],
+        Word::MeltDisplacement => &session.actors.crocomire_melt.words[5],
+        Word::MeltYOffset => &session.actors.crocomire_melt.words[6],
+        Word::MeltUnread => &session.actors.crocomire_melt.words[7],
+        Word::MeltMaxY => &session.actors.crocomire_melt.words[8],
+        Word::MeltIndex => &session.actors.crocomire_melt.words[9],
+    }
+}
+pub fn control_mut(session: &mut Session, word: Word) -> &mut u16 {
+    match word {
+        Word::QuakeSoundTimer => &mut session.actors.extended.blocks[3][0],
+        Word::CrocomireBridge1 => &mut session.actors.extended.blocks[3][1],
+        Word::CrocomireBridge2 => &mut session.actors.extended.blocks[3][3],
+        Word::CrocomireUnread => &mut session.actors.extended.blocks[3][5],
+        Word::CrocomireAcidSmoke => &mut session.actors.extended.blocks[3][12],
+        Word::PhantoonMaterialisationSound => &mut session.actors.extended.blocks[3][25],
+        Word::EnemyTilemapPending => &mut session.actors.drawing.tilemap_pending,
+        Word::EnemyTilemapSize => &mut session.actors.drawing.tilemap_size,
+        Word::BossId => &mut session.actors.schedule.boss_id,
+        Word::Unused179E => &mut session.actors.schedule.compatibility_179e[0],
+        Word::MinimapDisabled => &mut session.minimap.disabled,
+        Word::LavaAcidY => &mut session.room.liquid.lava_acid.whole,
+        Word::DoorTransitionEnemies => &mut session.room.entry.enemy_interlock,
+        Word::CameraDistance => &mut session.room.camera.distance_index,
+        Word::Random => &mut session.timing.random_number,
+        Word::FxLayerFlags => &mut session.room.fx_layer_flags,
+        Word::MessageBoxScratch1 => &mut session.messages.box_scratch[1],
+        Word::RemovedR18 => &mut session.spawn_scratch.header,
+        Word::RemovedR20 => &mut session.spawn_scratch.coordinates,
+        Word::RemovedR22 => &mut session.spawn_scratch.argument,
+        Word::AreaIndex => &mut session.room.area,
+        Word::RoomWidthInBlocks => &mut session.room.width,
+        Word::ScrollingFinishedHook => &mut session.room.entry.scrolling_hook,
+        Word::CeresStatus => &mut session.room.ceres_status,
+        Word::TimerStatus => &mut session.timing.timer_status,
+        Word::EquippedItems => &mut session.inventory.equipment.active,
+        Word::CollectedItems => &mut session.inventory.equipment.owned,
+        Word::EquippedBeams => &mut session.inventory.beams.active,
+        Word::CollectedBeams => &mut session.inventory.beams.owned,
+        Word::SamusHealth => &mut session.inventory.health.current,
+        Word::SamusMaxHealth => &mut session.inventory.health.maximum,
+        Word::SamusMissiles => &mut session.inventory.ammunition[0].current,
+        Word::SamusMaxMissiles => &mut session.inventory.ammunition[0].maximum,
+        Word::SamusSuperMissiles => &mut session.inventory.ammunition[1].current,
+        Word::SamusMaxSuperMissiles => &mut session.inventory.ammunition[1].maximum,
+        Word::SamusPowerBombs => &mut session.inventory.ammunition[2].current,
+        Word::SamusMaxPowerBombs => &mut session.inventory.ammunition[2].maximum,
+        Word::SamusMaxReserveHealth => &mut session.inventory.reserve_capacity,
+        Word::SamusReserveHealth => &mut session.inventory.reserve_health,
+        Word::JapaneseTextFlag => &mut session.options.japanese_text,
+        Word::SamusPose => &mut session.player.pose,
+        Word::KnockbackXDir => &mut session.player.knockback_x_direction,
+        Word::SamusGrappleFlags => &mut session.player.grapple_interaction_flags,
+        Word::SamusXSpeedDivisor => &mut session.player.speed_divisor,
+        Word::SamusXPos => &mut session.player.x,
+        Word::SamusYPos => &mut session.player.y,
+        Word::SamusXRadius => &mut session.player.contact.x_radius,
+        Word::SamusYRadius => &mut session.player.contact.radius,
+        Word::ExtraSamusXSubdisplacement => &mut session.player.contact.external_x.fraction,
+        Word::ExtraSamusXDisplacement => &mut session.player.contact.external_x.whole,
+        Word::ExtraSamusYDisplacement => &mut session.player.contact.external_y.whole,
+        Word::ProjectileCounter => &mut session.projectiles.count,
+        Word::PowerBombExplosionXPos => &mut session.projectiles.power_bomb.x,
+        Word::PowerBombExplosionYPos => &mut session.projectiles.power_bomb.y,
+        Word::PowerBombFlag => &mut session.projectiles.power_bomb.flag,
+        Word::GrappleBeamFunction => &mut session.player.grapple,
+        Word::RemovedVarE22 => &mut session.actors.compatibility.scratch[0],
+        Word::RemovedVarE2A => &mut session.actors.compatibility.scratch[4],
+        Word::RandomEnemyCounter => &mut session.actors.controls.phase_counter,
+        Word::CurEnemyIndex => &mut session.actors.controls.selected,
+        Word::FlagProcessAllEnemies => &mut session.actors.controls.process_all,
+        Word::EarthquakeType => &mut session.feedback.earthquake_kind,
+        Word::EarthquakeTimer => &mut session.feedback.earthquake_timer,
+        Word::CollisionDetectionIndex => &mut session.room.collision_detection_index,
+        Word::SamusInvincibilityTimer => &mut session.player.invincibility,
+        Word::SamusKnockbackTimer => &mut session.player.knockback_timer,
+        Word::EprojInitParam2 => &mut session.enemy_projectiles.spawn.secondary,
+        Word::MeltEraseTarget => &mut session.actors.crocomire_melt.words[0],
+        Word::MeltSubindex => &mut session.actors.crocomire_melt.words[1],
+        Word::MeltWords => &mut session.actors.crocomire_melt.words[3],
+        Word::MeltColumn => &mut session.actors.crocomire_melt.words[4],
+        Word::MeltDisplacement => &mut session.actors.crocomire_melt.words[5],
+        Word::MeltYOffset => &mut session.actors.crocomire_melt.words[6],
+        Word::MeltUnread => &mut session.actors.crocomire_melt.words[7],
+        Word::MeltMaxY => &mut session.actors.crocomire_melt.words[8],
+        Word::MeltIndex => &mut session.actors.crocomire_melt.words[9],
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Array {
+    ProjectileXPos,
+    ProjectileYPos,
+    ProjectileXRadius,
+    ProjectileYRadius,
+    ProjectileDir,
+    ProjectileType,
+    PaletteBuffer,
+}
+pub fn collection(session: &Session, array: Array, index: usize) -> Option<&u16> {
+    if array == Array::PaletteBuffer {
+        return session.presentation.visual().colors.get(index);
+    }
+    let shot = session.projectiles.shots.get(index)?;
+    Some(match array {
+        Array::ProjectileXPos => &shot.x,
+        Array::ProjectileYPos => &shot.y,
+        Array::ProjectileXRadius => &shot.x_radius,
+        Array::ProjectileYRadius => &shot.y_radius,
+        Array::ProjectileDir => &shot.direction,
+        Array::ProjectileType => &shot.kind,
+        Array::PaletteBuffer => unreachable!(),
+    })
+}
+pub fn collection_mut(session: &mut Session, array: Array, index: usize) -> Option<&mut u16> {
+    if array == Array::PaletteBuffer {
+        return session.presentation.visual_mut().colors.get_mut(index);
+    }
+    let shot = session.projectiles.shots.get_mut(index)?;
+    Some(match array {
+        Array::ProjectileXPos => &mut shot.x,
+        Array::ProjectileYPos => &mut shot.y,
+        Array::ProjectileXRadius => &mut shot.x_radius,
+        Array::ProjectileYRadius => &mut shot.y_radius,
+        Array::ProjectileDir => &mut shot.direction,
+        Array::ProjectileType => &mut shot.kind,
+        Array::PaletteBuffer => unreachable!(),
+    })
+}
+
+/// Only an already-admitted scheduler implements this capability. Direct Game
+/// callbacks cannot acquire it or manufacture a full Session through a read.
+pub trait Access: crate::session_access::SessionAccess {
+    fn boss_control(&self, word: Word) -> u16;
+    fn set_boss_control(&mut self, word: Word, value: u16);
+    fn boss_collection(&self, array: Array, index: usize) -> u16;
+    fn set_boss_collection(&mut self, array: Array, index: usize, value: u16);
+}
+pub fn get<H: Access + ?Sized>(host: &H, word: Word) -> u16 {
+    host.boss_control(word)
+}
+pub fn set<H: Access + ?Sized>(host: &mut H, word: Word, value: u16) {
+    host.set_boss_control(word, value);
+}
+pub fn get_at<H: Access + ?Sized, I: TryInto<usize, Error: core::fmt::Debug>>(
+    host: &H,
+    array: Array,
+    index: I,
+) -> u16 {
+    host.boss_collection(array, index.try_into().expect("word array index"))
+}
+pub fn set_at<H: Access + ?Sized, I: TryInto<usize, Error: core::fmt::Debug>>(
+    host: &mut H,
+    array: Array,
+    index: I,
+    value: u16,
+) {
+    host.set_boss_collection(array, index.try_into().expect("word array index"), value);
+}

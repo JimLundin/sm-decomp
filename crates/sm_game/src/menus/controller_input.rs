@@ -140,9 +140,12 @@ fn debug_controls<H: Host + ?Sized>(game: &mut H) {
             word!(game.JOYPAD2_NEW_KEYS &= (0x10u16));
         }
     } else {
-        crate::session_cohort::with(game, |_, words: &mut crate::session_words::SessionWords| {
-            words.debug_disable_sounds = 0;
-        });
+        crate::sequence_state::with_words(
+            game,
+            |_, words: &mut crate::session_words::SessionWords| {
+                words.debug_disable_sounds = 0;
+            },
+        );
         game.request_reset();
     }
 }

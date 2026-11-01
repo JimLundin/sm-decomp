@@ -103,7 +103,7 @@ pub fn finish_start<H: Host + ?Sized>(game: &mut H) {
     {
         word!(game.GAME_STATE = loading);
         if loading == 34 {
-            crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+            crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
                 flow.cinematic_function = 0xc11b
             });
         }
@@ -113,7 +113,7 @@ pub fn finish_start<H: Host + ?Sized>(game: &mut H) {
         });
     } else {
         word!(game.GAME_STATE = 30);
-        crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+        crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
             flow.cinematic_function = 0xa395
         });
         crate::menus::state::with(game, |_, options: &mut OptionsMenu| {
@@ -137,7 +137,7 @@ fn back<H: Host + ?Sized>(game: &mut H, options: &mut OptionsMenu) {
 fn toggle_language<H: Host + ?Sized>(game: &mut H, options: &mut OptionsMenu) {
     crate::probe::hit("options_settings.toggle_language");
     options.menu_option_index = 0;
-    crate::session_cohort::with(game, |_, words: &mut crate::session_words::SessionWords| {
+    crate::sequence_state::with_words(game, |_, words: &mut crate::session_words::SessionWords| {
         words.japanese_text_flag = u16::from(words.japanese_text_flag == 0);
     });
     highlight_language(game);

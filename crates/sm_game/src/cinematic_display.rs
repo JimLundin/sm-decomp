@@ -194,9 +194,12 @@ pub fn configure_cinematic_display<H: crate::menus::host::Host + ?Sized>(
     *cine.y_subspeed() = 0;
     *cine.y_speed() = 0;
     if matches!(display, Intro | Station) {
-        crate::session_cohort::with(game, |_, words: &mut crate::session_words::SessionWords| {
-            words.fx_layer_blending_config_a = 0
-        });
+        crate::sequence_state::with_words(
+            game,
+            |_, words: &mut crate::session_words::SessionWords| {
+                words.fx_layer_blending_config_a = 0
+            },
+        );
     }
     if intro {
         display_scroll! { game, 0; Bg2H, Bg2V, Bg3H, Bg3V }

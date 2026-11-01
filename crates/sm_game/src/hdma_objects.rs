@@ -186,8 +186,12 @@ pub fn clear_hdma_flags<H: HdmaTable + ?Sized>(game: &mut H) {
 }
 
 /// Free every object and clear the HDMA channel enable mirror.
-pub fn clear_hdma_channels<H: DisplayOwner + HdmaTable + ?Sized>(game: &mut H) {
-    game.write_owned_byte(0x85, 0);
+pub fn clear_hdma_channels<
+    H: crate::display::preparation::Access + DisplayOwner + HdmaTable + ?Sized,
+>(
+    game: &mut H,
+) {
+    crate::frame_display_byte!(game, crate::display::preparation::Field::HdmaEnable => 0);
     game.with_hdma_table(|table| {
         for object in table.objects.iter_mut().rev() {
             object.channels = 0;
@@ -195,7 +199,11 @@ pub fn clear_hdma_channels<H: DisplayOwner + HdmaTable + ?Sized>(game: &mut H) {
     });
 }
 
-pub fn clear_hdma<H: Registers + DisplayOwner + HdmaTable + ?Sized>(game: &mut H) {
+pub fn clear_hdma<
+    H: Registers + crate::display::preparation::Access + DisplayOwner + HdmaTable + ?Sized,
+>(
+    game: &mut H,
+) {
     crate::display::sequence::register_writes! { game;
         byte(MDMAEN as u16, 0); byte(HDMAEN as u16, 0);
     }
@@ -204,7 +212,12 @@ pub fn clear_hdma<H: Registers + DisplayOwner + HdmaTable + ?Sized>(game: &mut H
 
 pub fn initialize_room_effects<H>(game: &mut H)
 where
-    H: Registers + crate::ram::CompatibilityRam + DisplayOwner + SessionAccess + ?Sized,
+    H: Registers
+        + crate::display::preparation::Access
+        + crate::ram::CompatibilityRam
+        + DisplayOwner
+        + SessionAccess
+        + ?Sized,
 {
     use crate::display::registers::{WMADDH, WMADDL, WMADDM};
     word! { game, 0; EARTHQUAKE_SFX_INDEX, EARTHQUAKE_SFX_TIMER }
@@ -254,7 +267,7 @@ where
     crate::liquid::LiquidWords::set(game, |words| &mut words.liquid.tide_phase, 0);
     crate::liquid::LiquidWords::set(game, |words| &mut words.liquid.offset.fraction, 0);
     crate::liquid::LiquidWords::set(game, |words| &mut words.liquid.offset.whole, 0);
-    word!(game.FX_LAYER_BLENDING_CONFIG_A = 2);
+    crate::sequence_word!(game.FX_LAYER_BLENDING_CONFIG_A = 2);
     {
         crate::display_scroll::write(game, crate::display_scroll::Word::Bg3H, 0);
         crate::display_scroll::write(game, crate::display_scroll::Word::Bg3V, 0);
@@ -269,21 +282,26 @@ where
         byte(WMADDL as u16, 0xf0); byte(WMADDM as u16, 0xff);
         byte(WMADDH as u16, 1);
     }
-    game.write_owned_byte(0x85, 0);
+    crate::frame_display_byte!(game, crate::display::preparation::Field::HdmaEnable => 0);
     set_fixed_color([32, 64, 0x80], game);
     // Mosaic, main layers, colour selection and math, BG character and screen bases.
-    for (at, value) in [
-        (0x57, 0),
-        (0x69, 19),
-        (0x6f, 0),
-        (0x72, 0),
-        (0x5d, 0),
-        (0x5e, 4),
-        (0x59, 73),
-        (0x5a, 90),
-        (0x5b, 90),
+    for (field, value) in [
+        (crate::display::preparation::Field::Mosaic, 0),
+        (crate::display::preparation::Field::MainLayers, 19),
+        (crate::display::preparation::Field::ColorSelection, 0),
+        (crate::display::preparation::Field::ColorMath, 0),
+        (crate::display::preparation::Field::Characters0, 0),
+        (crate::display::preparation::Field::Characters1, 4),
+        (crate::display::preparation::Field::Screens1, 73),
+        (crate::display::preparation::Field::Screens2, 90),
+        (crate::display::preparation::Field::Background3Map, 90),
     ] {
-        game.write_owned_byte(at, value);
+        crate::display::preparation::Access::store_display_control_byte(
+            &mut *game,
+            field,
+            value,
+            crate::display::preparation::Store::Owned,
+        );
     }
 }
 
@@ -295,7 +313,7 @@ where
     H: crate::hdma_dispatch::DispatchHost + crate::hdma_program::LeaseHdma + ?Sized,
 {
     game.handle_music_queue();
-    if checked_word!(game.TIME_IS_FROZEN_FLAG) == 0
+    if crate::sequence_word!(game.TIME_IS_FROZEN_FLAG) == 0
         && crate::session_cohort::load::<crate::explosion_window::Explosion, _>(game)
             .bomb
             .explosion_status
@@ -308,7 +326,9 @@ where
         spawn_hdma(0x88, &HdmaObjectDefinition::new(0x40, 0x28, 0x8ace), game);
         spawn_hdma(0x88, &HdmaObjectDefinition::new(0x40, 0x29, 0x8b80), game);
     }
-    checked_word!(game.FX_LAYER_BLENDING_CONFIG_C = checked_word!(game.FX_LAYER_BLENDING_CONFIG_A));
+    checked_word!(
+        game.FX_LAYER_BLENDING_CONFIG_C = crate::sequence_word!(game.FX_LAYER_BLENDING_CONFIG_A)
+    );
     if checked_word!(game.HDMA_OBJECTS_ENABLE_FLAG) & 0x8000 != 0 {
         crate::hdma_program::run_objects(handler_carry, game);
         crate::layer_blending::update(game);
@@ -336,7 +356,7 @@ pub fn advance_title_gradient<H: crate::menus::host::Host + ?Sized>(backdrop: bo
     if backdrop {
         refresh_title_gradient(game);
     }
-    if crate::session_cohort::load::<crate::flow::Flow, _>(game).cinematic_function == 0x9b68 {
+    if crate::sequence_state::Access::sequence_flow(&*game).cinematic_function == 0x9b68 {
         crate::hdma_effects::apply_leased(HdmaEffect::AdvanceProgram, 0, game);
     }
 }

@@ -224,7 +224,7 @@ fn show_health_stage<L: Lease + ?Sized>(game: &mut L) {
 /// Advances the shared glow one frame, when no palette change is pending and
 /// this is a pair's first zebetite. Was `Zebetites_Func_4`.
 fn glow<L: Lease + ?Sized>(game: &mut L) {
-    if word!(game.PALETTE_CHANGE_NUM) == 0
+    if crate::sequence_word!(game.PALETTE_CHANGE_NUM) == 0
         && session_slot!(game, Zebetite[current(game)].second_of_pair) == 0
     {
         let first: i32 = 0;

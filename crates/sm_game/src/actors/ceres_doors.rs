@@ -16,7 +16,7 @@ use crate::ram::word;
 use crate::session_slot;
 
 /// The lease the steam and doors run on, with what they still reach in the game.
-pub trait Lease: BossLease<Game: BossEffects> {
+pub trait Lease: BossLease<Game: BossEffects> + crate::display::preparation::Access {
     /// The current area's boss bits.
     fn area_boss_flags(&mut self) -> u8;
     /// Queue the bank `bank` mode 7 transfer list at `list`.
@@ -152,7 +152,7 @@ pub fn instruction<L: Lease + ?Sized>(
             return branch(far, script);
         }
         0xa6_f66a => return branch((game.area_boss_flags() & 1) == 0, script),
-        0xa6_f678 => return branch(word!(game.CERES_STATUS) == 0, script),
+        0xa6_f678 => return branch(crate::sequence_word!(game.CERES_STATUS) == 0, script),
         0xa6_f68b => change_properties(k, INTANGIBLE, 0, game),
         0xa6_f695 => change_properties(k, 0, INTANGIBLE, game),
         0xa6_f6a6 => change_properties(k, INVISIBLE, 0, game),
@@ -270,7 +270,7 @@ pub fn initialize_door<L: Lease + ?Sized>(game: &mut L) {
     );
     session_slot!(game, Door[e].drawn_by_ridley = 0);
     load_overlay_tiles(game.current_enemy(), game);
-    let palette = if word!(game.CERES_STATUS) != 0 {
+    let palette = if crate::sequence_word!(game.CERES_STATUS) != 0 {
         ESCAPE_DOOR_PALETTE.wrapping_add(2)
     } else {
         if session_slot!(game, Door[e].kind) == RIDLEYS_ROOM_FACING_RIGHT {
@@ -316,7 +316,9 @@ pub fn door_main<L: Lease + ?Sized>(game: &mut L) {
 /// Handle Ceres door earthquake during escape ($A6:F773): a rare stronger
 /// earthquake type replaces `earthquake`. Was `escape_rumble`.
 pub fn escape_rumble<L: Lease + ?Sized>(earthquake: u16, game: &mut L) {
-    if word!(game.CERES_STATUS) >= ESCAPE_STARTED && word!(game.EARTHQUAKE_TIMER) == 0 {
+    if crate::sequence_word!(game.CERES_STATUS) >= ESCAPE_STARTED
+        && word!(game.EARTHQUAKE_TIMER) == 0
+    {
         if (word!(game.RANDOM_NUMBER) & 0xfff) < 0x80 {
             word! {game; EARTHQUAKE_TIMER = 4; EARTHQUAKE_TYPE = earthquake.wrapping_add(6); }
         } else {
@@ -334,7 +336,7 @@ pub fn mode7_wall<L: Lease + ?Sized>(game: &mut L) {
         0,
         game,
     );
-    if word!(game.CERES_STATUS) & RIDLEY_ESCAPING != 0 {
+    if crate::sequence_word!(game.CERES_STATUS) & RIDLEY_ESCAPING != 0 {
         session_slot!(game, Door[current(game)].base.palette_index = 3584);
         change_properties(
             game.current_enemy(),
@@ -350,7 +352,7 @@ pub fn mode7_wall<L: Lease + ?Sized>(game: &mut L) {
 /// `CeresDoor_Func_5`.
 pub fn elevator_default<L: Lease + ?Sized>(k: u16, game: &mut L) {
     elevator_animations(game);
-    if word!(game.CERES_STATUS) >= ESCAPE_STARTED {
+    if crate::sequence_word!(game.CERES_STATUS) >= ESCAPE_STARTED {
         let e = i32::from(k);
         session_slot!(
             game,
@@ -401,8 +403,8 @@ pub fn rumbling_and_explosions<L: Lease + ?Sized>(k: u16, game: &mut L) {
 /// Set Ceres elevator room to rotate if Ridley has escaped ($A6:F67F). Was
 /// `finish_door_explosion`.
 pub fn start_elevator_rotation<L: Lease + ?Sized>(game: &mut L) {
-    if word!(game.CERES_STATUS) != 0 {
-        word!(game.CERES_STATUS = ELEVATOR_ROTATING);
+    if crate::sequence_word!(game.CERES_STATUS) != 0 {
+        crate::sequence_word!(game.CERES_STATUS = ELEVATOR_ROTATING);
     }
 }
 
@@ -411,8 +413,8 @@ pub fn start_elevator_rotation<L: Lease + ?Sized>(game: &mut L) {
 /// frame. Was `CeresDoor_Func_7`.
 pub fn elevator_animations<L: Lease + ?Sized>(game: &mut L) {
     animate_elevator_platform(game);
-    if word!(game.PALETTE_CHANGE_NUM) == 0 {
-        let frame = 2 * (word!(game.NMI_FRAME_COUNTER_WORD) & 0x38);
+    if crate::sequence_word!(game.PALETTE_CHANGE_NUM) == 0 {
+        let frame = 2 * (crate::frame_display_word!(game.NmiFrameWordPair) & 0x38);
         copy_rom_colors_to_palette(0x52, 0xa6, BEACON_PALETTES.wrapping_add(frame), 6, game);
     }
 }
@@ -420,7 +422,7 @@ pub fn elevator_animations<L: Lease + ?Sized>(game: &mut L) {
 /// Animate Ceres elevator platform ($A6:F8F1): light and dark frames, two
 /// frames each. Was `CeresDoor_Func_8`.
 pub fn animate_elevator_platform<L: Lease + ?Sized>(game: &mut L) {
-    let frame = ((word!(game.NMI_FRAME_COUNTER_WORD) & 2) >> 1) as isize;
+    let frame = ((crate::frame_display_word!(game.NmiFrameWordPair) & 2) >> 1) as isize;
     let list = crate::ceres_door_data::platform_frame(game, frame);
     game.queue_mode7_transfer(0xa6, list);
 }

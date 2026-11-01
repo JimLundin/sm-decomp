@@ -46,7 +46,9 @@ fn run(operation: Operation, image: &RomImage, g: &mut Game) -> Returned {
             Operation::Load(slot) => {
                 return Returned::word(u16::from(sm_game::menus::save_slots::load(slot, g)));
             }
-            Operation::SporeDeath => crate::game::actors::spore_spawn::after_damage(g),
+            Operation::SporeDeath => crate::game::actors::spore_spawn::after_damage(
+                &mut crate::game::session_runtime::Runtime::new(g),
+            ),
         }
     }
     Returned { kind: 0, value: 0 }

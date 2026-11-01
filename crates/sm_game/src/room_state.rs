@@ -12,7 +12,8 @@ use crate::word_transfers;
 /// Named and raw work RAM, the loaded cartridge and its records, and the
 /// Samus pose command.
 pub trait Host:
-    crate::ram::CompatibilityRam
+    crate::display::preparation::Access
+    + crate::ram::CompatibilityRam
     + crate::ram::WorkRamAccess
     + crate::word_transfers::LoadedRom
     + crate::records::Records
@@ -20,7 +21,8 @@ pub trait Host:
 {
 }
 impl<T> Host for T where
-    T: crate::ram::CompatibilityRam
+    T: crate::display::preparation::Access
+        + crate::ram::CompatibilityRam
         + crate::ram::WorkRamAccess
         + crate::word_transfers::LoadedRom
         + crate::records::Records
@@ -217,9 +219,19 @@ pub fn execute_door_code<H: ScriptHost + ?Sized>(script: u16, game: &mut H) {
         0xe4e0 => {
             game.ram().write_byte(0x56, 7);
             game.write_register(crate::display::registers::BGMODE as u16, 7);
-            word! { game, 256; REG_M7A, REG_M7D }
-            word! { game, 0; REG_M7B, REG_M7C }
-            word! {game; REG_M7X = 128; REG_M7Y = 1008; IRQ_ENABLE_MODE7 = 1; }
+            {
+                crate::frame_display_word!(game.AffineWords0Pair = 256);
+                crate::frame_display_word!(game.AffineWords3Pair = 256);
+            }
+            {
+                crate::frame_display_word!(game.AffineWords1Pair = 0);
+                crate::frame_display_word!(game.AffineWords2Pair = 0);
+            }
+            {
+                crate::frame_display_word!(game.AffineWords4Pair = 128);
+                crate::frame_display_word!(game.AffineWords5Pair = 1008);
+                word!(game.IRQ_ENABLE_MODE7 = 1);
+            }
             let mut runtime = game.runtime();
             let room = &mut runtime.session_mut().room;
             room.main_variables[0] = 34;

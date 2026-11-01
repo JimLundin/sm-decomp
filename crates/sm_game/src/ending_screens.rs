@@ -170,7 +170,7 @@ pub fn advance_ending_gunship_spin<H: crate::menus::host::Host + ?Sized>(
         return false;
     }
     if slow {
-        crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+        crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
             flow.cinematic_function = function::GUNSHIP_FLY_INTO_CAMERA
         });
         *cine.var14() = 0x8000;
@@ -178,7 +178,7 @@ pub fn advance_ending_gunship_spin<H: crate::menus::host::Host + ?Sized>(
     } else {
         *cine.var13() = 1;
         *cine.var14() = 0;
-        crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+        crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
             flow.cinematic_function = function::GUNSHIP_SPINNING_SLOW
         });
     }
@@ -277,7 +277,7 @@ pub fn advance_postcredits_samus_reveal<H: crate::menus::host::Host + ?Sized>(
         game.ram().write_byte(crate::ram::mirror::M7SEL, 0x80);
         game.ram().write_byte(crate::ram::mirror::BG1SC, 0);
         game.ram().write_byte(crate::ram::mirror::BG12NBA, 0);
-        crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+        crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
             flow.cinematic_function = function::IDLE
         });
         *cine.var14() = 0;
@@ -325,7 +325,7 @@ pub fn advance_postcredits_samus_reveal<H: crate::menus::host::Host + ?Sized>(
     }
     if initial {
         if !under_ten {
-            crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+            crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
                 flow.cinematic_function = function::IDLE_SAMUS
             });
             set_cinematic_blend(16, 0, 0, 0, game);
@@ -336,7 +336,7 @@ pub fn advance_postcredits_samus_reveal<H: crate::menus::host::Host + ?Sized>(
             clear_cinematic_colors(0x1a0, 0x10, game);
             compose_cinematic_palette(game);
             set_cinematic_blend(2, 16, 2, 34, game);
-            crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+            crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
                 flow.cinematic_function = function::IDLE_SAMUS_SUIT_CROSS_FADE
             });
         }
@@ -383,7 +383,7 @@ pub fn advance_postcredits_samus_message<H: crate::menus::host::Host + ?Sized>(
         queue_cinematic_tilemap(CinematicTilemap::FullText, cine, game);
         set_cinematic_blend(1, 0, 0, 0, game);
         *cine.var13() = 180;
-        crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+        crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
             flow.cinematic_function = function::NINTENDO_1994
         });
     }
@@ -432,7 +432,7 @@ pub fn move_ending_cloud(object: u16, velocity: (i16, i16), cine: &mut Cinematic
 
 pub fn prepare_ending_time<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     let hours = word!(game.GAME_TIME_HOURS);
-    crate::session_cohort::with(game, |_, words: &mut crate::session_words::SessionWords| {
+    crate::sequence_state::with_words(game, |_, words: &mut crate::session_words::SessionWords| {
         words.substate = hours / 10;
         words.suit_pickup_light_beam_pos = hours % 10;
     });
@@ -490,7 +490,7 @@ pub fn advance_postcredits_zoom<H: crate::menus::host::Host + ?Sized>(
         *cine.mode7_zoom() = cine.mode7_zoom().wrapping_sub(64);
         if (*cine.mode7_zoom() as i32 - 24) & 0x8000 != 0 {
             *cine.mode7_zoom() = 24;
-            crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+            crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
                 flow.cinematic_function = function::FADE_TO_WHITE
             });
             *cine.function_timer() = 180;
@@ -513,7 +513,7 @@ pub fn advance_postcredits_zoom<H: crate::menus::host::Host + ?Sized>(
         crate::word_transfers!(game, ascending, 16; le(PALETTE_BUFFER, 192) <- rom(0x8ce7e9, 192));
         *cine.x() = 0;
         *cine.y() = 0;
-        crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+        crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
             flow.cinematic_function = function::FADE_FROM_WHITE
         });
         *cine.function_timer() = 32;

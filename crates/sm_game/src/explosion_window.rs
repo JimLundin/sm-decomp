@@ -162,7 +162,7 @@ pub fn try_crystal_flash<H: Host + ?Sized>(game: &mut H) -> bool {
     } else {
         0xd3
     };
-    crate::session_cohort::with(game, |_, words: &mut crate::session_words::SessionWords| {
+    crate::sequence_state::with_words(game, |_, words: &mut crate::session_words::SessionWords| {
         words.samus_pose = pose;
     });
     game.initialize_crystal_flash()
