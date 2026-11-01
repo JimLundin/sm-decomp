@@ -1956,3 +1956,34 @@ start_frame = 0
 frames = 401
 expect = ["room:9AD9"]
 require_hit = ["etecoon.tunnel_jump"]
+
+# The Lower Norfair acid statue room with the space jump collected and Samus
+# moved onto the power bomb blocks over the Chozo statue's hand (scenario
+# lower-norfair-hand), the lower-norfair-hand recipe: a power bomb uncovers the
+# hand, she morphs in its palm facing right and the statue lowers the acid.
+[[segment]]
+id = "terrain-lower-norfair-hand"
+seed = "scenario-lower-norfair-hand:133"
+seed_sha256 = "84e45e27aa51c60f41e420c9d3b6b31a2f522c5a04b454468ca0588e7db9139a"
+inputs = "authored-lower-norfair-hand.inputs"
+input_sha256 = "138c620f9a7ddd40a83c524fd13ba9647d551084614769fe07ab60480e5c10ab"
+start_frame = 0
+frames = 1391
+expect = ["room:B1E5"]
+require_hit = ["hands.setup", "hands.lower_acid"]
+pending = "awaiting the seeds-v1-acidhand-263f82ef4a26cef1 ci-data upload"
+
+# Green Brinstar's main shaft entered beside the etecoons (seed 43), the
+# etecoon-face-right recipe: Samus turns to face them, so the etecoon that
+# lands beside her looks right and runs left.
+[[segment]]
+id = "enemy-etecoon-run-left"
+seed = "100-input-phase:43"
+seed_sha256 = "1ef87bac8d9ca6cb1623cb89d94654c8396cf4b179954ee69c640bc5ef10bc04"
+inputs = "authored-etecoon-face-right.inputs"
+input_sha256 = "6f5ac13d3417a1821d78a6d8c215b62f930a949dcdd0662e94d8ce644f245a68"
+start_frame = 0
+frames = 513
+expect = ["room:9AD9"]
+require_hit = ["etecoon.look_right_run_left"]
+pending = "awaiting the seeds-v1-acidhand-263f82ef4a26cef1 ci-data upload"

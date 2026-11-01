@@ -135,6 +135,14 @@ SCENARIOS = {
         words={0x11FA: 560, 0x11FE: 1993, 0x1212: 0xE854, 0x1214: 1, 0x122C: 2,
                0x1230: 11, 0x1232: 0xEE3E},
         note="Samus beside the waiting etecoon at the top of the shaft"),
+    # The 100% movie's Lower Norfair acid statue room, which the route passes
+    # before it has the space jump, with the space jump collected and Samus
+    # moved onto the power bomb blocks that cover the statue's hand.
+    "lower-norfair-hand": Scenario(
+        base="100-input-phase:133",
+        edits={"collected_items": "varia+morph-ball+screw-attack+hi-jump+space-jump+bombs+speed-booster+x-ray",
+               "x": 104, "y": 155},
+        note="Samus beside the Lower Norfair Chozo hand with the space jump"),
     # The landing site with the charge beam and one other beam equipped and
     # the power bombs selected, so a released charge fires that beam's
     # special attack.

@@ -327,6 +327,18 @@ RECIPES = {
     # turn to the left kihunter and keep shooting as it swoops, so it loses
     # its wings, which drift down.
     "kihunter-wings": Recipe("_ 10; Left 2; repeat 40 { X 2; _ 6 }; _ 120"),
+    # The Lower Norfair acid statue room with the space jump (scenario
+    # lower-norfair-hand): morph, select the power bombs and lay one to clear
+    # the blocks over the statue's hand, stand, jump onto the hand, morph
+    # facing right in its palm and wait while the acid lowers.
+    "lower-norfair-hand": Recipe("""
+        _ 4; morph; repeat 3 { Select 2; _ 4 }; X 2; _ 200
+        Up 2; _ 6; Up 2; _ 20; A 4; Left+A 16; A 10; _ 30
+        morph; Right 2; _ 1050
+    """),
+    # Green Brinstar's main shaft entered beside the etecoons (seed 43): turn
+    # right to face them and wait, so the one that lands beside her runs left.
+    "etecoon-face-right": Recipe("Right 12; _ 500"),
 }
 
 SWEEPS = {
@@ -391,6 +403,8 @@ PINNED = {
     "draygon-grapple-held": "25548fe6af9cc6dc0e3da4f127a498af703f31b4a2a8cc402e0abe0b5fa1ea20",
     "wrecked-ship-hand": "f968153478819d4364cde8e0f882b682a8cc97f9e52d25ac51928b8cabf2127f",
     "kihunter-wings": "a12900693ec38b1f1eea8979e825b04b4744e5dfefdc7b9f758f9e148d0e9bfc",
+    "lower-norfair-hand": "c20e8f655f662e35059ebf591e6969ec47947bba45b58b5a653197213e6d0dab",
+    "etecoon-face-right": "6973e5e54d5e1b35c7bd6123b9516eabb8dc88b5adb3e5adf98f9f9ff68c6678",
 }
 
 
