@@ -117,6 +117,11 @@ pub(crate) unsafe fn actor_species_pre_instruction(ea: u32, game: &mut Game) {
     sm_game::actors::species::pre_instruction(ea, game);
 }
 
+/// Magdollite's original diagnostic for an undefined lava height.
+pub(crate) fn warn_lava_height(value: i32) {
+    unsafe { crate::c_library::printf(c"Y undefined %d!\n".as_ptr(), value) };
+}
+
 /// Write `operand` to the multiplicand register, for Yapping Maw.
 pub(crate) fn write_multiplicand(operand: u8, game: &mut Game) {
     unsafe { crate::rtl::write_reg(crate::rtl::WRMPYA as u16, operand, game) };
@@ -138,9 +143,6 @@ impl sm_game::actors::species::AiHost for Game {
 }
 
 impl sm_game::actors::species::PreInstructionHost for Game {
-    fn warn_lava_height(&mut self, value: i32) {
-        unsafe { crate::c_library::printf(c"Y undefined %d!\n".as_ptr(), value) };
-    }
     fn native_pre_instruction(&mut self, _ea: u32, _k: u16) {
         // Every pre-instruction routine is in sm_game's species table now.
         crate::rtl::report_unreachable(self);
@@ -1238,6 +1240,11 @@ impl Runtime<'_> {
                 actors::escape_critters::initialize(routine == 11791077, runtime)
             }),
             11789909 => self.owned_call(actors::escape_critters::main_ai),
+            11054987 => self.owned_call(actors::magdollite::initialize),
+            11055370 => self.owned_call(actors::magdollite::main_ai),
+            11056128 | 11056134 | 11056140 => {
+                self.owned_call(|runtime| actors::magdollite::damage(routine, runtime))
+            }
             10988577 => self.owned_call(sm_game::actors::kraid::main_ai),
             10997414 => self.owned_call(sm_game::actors::phantoon::main_ai),
             11191972 => self.owned_call(sm_game::actors::torizo::main_ai),
@@ -1269,6 +1276,13 @@ impl Runtime<'_> {
             Err(script) => script,
         };
         match routine {
+            11054610 | 11054630 | 11054640 | 11054650 | 11054661 | 11054672 | 11054682
+            | 11054692 | 11054728 | 11054742 | 11054778 | 11054794 | 11054820 | 11054846
+            | 11054872 | 11054916 => {
+                return self.owned_call(|runtime| {
+                    actors::magdollite::instruction(routine, script, runtime)
+                });
+            }
             11789637 | 11791016 | 11791032 | 11789840 | 11791049 | 11791063 => {
                 return self.owned_call(|runtime| {
                     actors::escape_critters::instruction(routine, actor, script, runtime)
@@ -1340,6 +1354,8 @@ impl Runtime<'_> {
         use sm_game::actors::species;
         if routine == 10920690 {
             self.owned_call(sm_game::actors::ridley::draw_baby_metroid_and_door);
+        } else if routine == 11055282 {
+            self.owned_call(actors::magdollite::cycle_palette);
         } else if routine == 11069550 {
             self.owned_call(sm_game::actors::blue_brinstar_face_block::cycle_palette);
         } else if !self.bank_a9_routine(routine) && !species::lease_draw_hook(routine, self) {

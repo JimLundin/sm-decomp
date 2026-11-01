@@ -16,10 +16,10 @@ use crate::actors::{
     alcoon, bang, beetom, botwoon, boulder, boyon, cacatac, choot, covern, crawlers,
     crocomire_reactions, dachora_run, dragon, draygon_death, draygon_eye, draygon_flight,
     draygon_grab, draygon_host, draygon_sweep, elevator, etecoon, evir, fire_arc, fire_pillar,
-    flies, fune, geruta, gunship, kago, kraid, magdollite, metroid, mini_crocomire, mini_kraid,
-    mochtroid, multiviola, oum, phantoon, phantoon_actions, polyp, puyo, reflec, rinka, rio,
-    rippers, roach, shutters, sidehopper, skree, space_pirates, spike_platform, spore_spawn,
-    squeept, statues, tatori, torizo, tripper, waver, work_robot, wrecked_ship_spark, yard, zoa,
+    flies, fune, geruta, gunship, kago, kraid, metroid, mini_crocomire, mini_kraid, mochtroid,
+    multiviola, oum, phantoon, phantoon_actions, polyp, puyo, reflec, rinka, rio, rippers, roach,
+    shutters, sidehopper, skree, space_pirates, spike_platform, spore_spawn, squeept, statues,
+    tatori, torizo, tripper, waver, work_robot, wrecked_ship_spark, yard, zoa,
 };
 use crate::combat_rules::LatchMode;
 use crate::enemy_projectiles::host::Effects as _;
@@ -146,7 +146,7 @@ pub fn shot<H: ShotHost>(ea: u32, j: u16, game: &mut H) {
 }
 
 /// What the draw hooks need beyond their actors' own hosts.
-pub trait DrawHookHost: SpeciesHost + LeaseActors + magdollite::Host + draygon_host::Host {}
+pub trait DrawHookHost: SpeciesHost + LeaseActors + draygon_host::Host {}
 
 /// An enemy species' graphics draw hook, keyed by its address.
 pub fn draw_hook<H: DrawHookHost>(ea: u32, game: &mut H) {
@@ -157,7 +157,6 @@ pub fn draw_hook<H: DrawHookHost>(ea: u32, game: &mut H) {
         10518604 => (),
         10851138 => draygon_flight::set_bg2_scroll(game),
         11042892 => (),
-        11055282 => magdollite::cycle_palette(game),
         11110278 => (),
         _ => game.unknown_routine(),
     }
@@ -518,8 +517,6 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         11001242 => (),
         11001873 => (),
         11042892 => (),
-        11054987 => magdollite::initialize(game),
-        11056128 | 11056134 | 11056140 => magdollite::damage(ea, game),
         11062374 => (),
         11108428 => (),
         11122117 => (),
@@ -677,7 +674,6 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         11058734 => beetom::touch(game),
         11058860 => beetom::shot(game),
         11053955 => kago::shot(game),
-        11055370 => pre_instruction(magdollite::main_ai(game), game),
         10662880 => multiviola::initialize(game),
         10662927 => multiviola::main_ai(game),
         10663311 => polyp::main_ai(game),
@@ -708,7 +704,6 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
 /// What the pre-instruction table needs beyond its actors' own hosts.
 pub trait PreInstructionHost:
     B3Host
-    + magdollite::Host
     + torizo::Ai
     + statues::Host
     + phantoon::Host
@@ -719,8 +714,6 @@ pub trait PreInstructionHost:
     /// A pre-instruction whose arm is still in the compatibility table, for
     /// the current enemy `k` read before dispatch.
     fn native_pre_instruction(&mut self, ea: u32, k: u16);
-    /// Magdollite's original diagnostic for an undefined lava height.
-    fn warn_lava_height(&mut self, value: i32);
 }
 
 /// An enemy species' pre-instruction, keyed by its address. The current
@@ -766,10 +759,6 @@ pub fn pre_instruction<H: PreInstructionHost>(ea: u32, game: &mut H) {
         10741441 => (),
         10998952 => (),
         11047388 => (),
-        11055386 | 11055477 | 11055507 | 11055544 | 11055581 | 11055885 | 11055903 | 11055958
-        | 11056039 => magdollite::run_state(ea as u16, game),
-        11055761 => (),
-        11055765 => magdollite::shrink_arm(game),
         11192670 => (),
         11197610 => (),
         11200422 => (),
@@ -846,13 +835,6 @@ pub fn pre_instruction<H: PreInstructionHost>(ea: u32, game: &mut H) {
         11192360 | 11195885 => torizo::attacking(k, game),
         11199557 => statues::lower_norfair(game, k),
         11200430 => statues::wrecked_ship(game, k),
-        11055620 => {
-            let (actor, diagnostic) = magdollite::grow_arm(game);
-            if let Some(value) = diagnostic {
-                game.warn_lava_height(value);
-            }
-            magdollite::finish_arm_growth(actor, game);
-        }
         10666625 => geruta::flames(k, false, game),
         10666727 => geruta::idle(k, false, game),
         10666815 => geruta::finish_animation(k, false, false, game),
@@ -885,7 +867,6 @@ pub fn pre_instruction<H: PreInstructionHost>(ea: u32, game: &mut H) {
 pub trait InstructionHost:
     SpeciesHost
     + crocomire_reactions::Host
-    + magdollite::Host
     + space_pirates::Pirates
     + draygon_host::Host
     + LeaseActors
@@ -1028,10 +1009,6 @@ pub fn instruction<H: InstructionHost>(
             alcoon::instruction(ea, j, game)
         }
         0xa40000..=0xa4ffff => crocomire_reactions::instruction(ea, k, j, game),
-        11054610 | 11054630 | 11054640 | 11054650 | 11054661 | 11054672 | 11054682 | 11054692
-        | 11054728 | 11054742 | 11054778 | 11054794 | 11054820 | 11054846 | 11054872 | 11054916 => {
-            magdollite::instruction(ea, j, game)
-        }
         // Bank $A6: Mini-Kraid and the steam.
         10918694 => {
             mini_kraid::step(game);

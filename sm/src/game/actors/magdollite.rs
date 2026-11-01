@@ -77,4 +77,8 @@ impl Host for Game {
             |rom| load(rom, address, index),
         )
     }
+
+    fn warn_lava_height(&mut self, value: i32) {
+        crate::game::session_runtime::warn_lava_height(value);
+    }
 }

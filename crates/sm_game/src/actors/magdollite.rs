@@ -6,25 +6,27 @@
 //! and writes its neighbours' slot fields; the views below name those fields
 //! over the same RAM bytes.
 use crate::actors::boss_lease::BossLease;
-use crate::actors::host::{Axis, Death, Shot};
+use crate::actors::host::{Axis, BossEffects, Death, Shot};
 use crate::actors::layouts::part_view;
 use crate::actors::session_slots::session_slot;
 use crate::constants::enemy_properties::{K_ENEMY_PROPS_DELETED, K_ENEMY_PROPS_INVISIBLE};
 use crate::enemy_script::EnemyScript;
-use crate::ram::{CompatibilityRam, word};
+use crate::ram::word;
 use sm_data::enemy_speeds::SpeedTable;
 use sm_data::magdollite::{ARM_GROWTH_ADDRESS, ARM_INSTRUCTION_ADDRESS, ARM_Y_OFFSET_ADDRESS};
 
 /// A lease on a game with Magdollite's effects.
-pub trait Lease: BossLease<Game: Host> {}
-impl<T: BossLease<Game: Host> + ?Sized> Lease for T {}
+pub trait Lease: BossLease<Game: Host + BossEffects> {}
+impl<T: BossLease<Game: Host + BossEffects> + ?Sized> Lease for T {}
 
 /// What Magdollite needs beyond the shared actor operations: its tables.
-pub trait Host: BossLease<Game = Self> + crate::actors::host::ActorHost {
+pub trait Host {
     /// Colours 9-12 of the glow palette whose colour 0 is word `source`.
     fn magdollite_glow_colors(&self, source: isize) -> [u16; 4];
     /// Arm step `index`'s field at `address` (growth, instruction list or y offset).
     fn magdollite_arm(&self, address: u32, index: isize) -> u16;
+    /// The original diagnostic for an undefined lava height.
+    fn warn_lava_height(&mut self, value: i32);
 }
 
 /// The size of one enemy spawn record (`EnemySpawnData`).
@@ -218,8 +220,8 @@ const _: () = {
 };
 
 /// The current enemy's slot, read afresh at each use as the original did.
-fn current(game: &(impl CompatibilityRam + ?Sized)) -> i32 {
-    word!(game.CUR_ENEMY_INDEX) as i32
+fn current<L: Lease>(game: &L) -> i32 {
+    i32::from(game.current_enemy())
 }
 fn is_negative(value: u16) -> bool {
     (value as i16) < 0
@@ -334,12 +336,33 @@ pub fn cycle_palette<L: Lease>(game: &mut L) {
         word!(game.PALETTE_BUFFER[target + FIRST_GLOW_COLOR + i] = color);
     }
 }
-/// Main AI ($A8:B10A): count down the part's cooldown and name its state function.
-pub fn main_ai<L: Lease>(game: &mut L) -> u32 {
+/// Main AI ($A8:B10A): count down the part's cooldown and run its state
+/// function.
+pub fn main_ai<L: Lease>(game: &mut L) {
     crate::probe::hit("magdollite.main_ai");
     let part = current(game);
     session_slot!(game, Part[part].cooldown, |old| old.wrapping_sub(1));
-    u32::from(AI_BANK) << 16 | u32::from(session_slot!(game, Part[part].state))
+    match session_slot!(game, Part[part].state) {
+        state::ARM_GROWN => {}
+        state::ARM_SHRINKING => shrink_arm(game),
+        state::ARM_GROWING => {
+            let (actor, diagnostic) = grow_arm(game);
+            if let Some(value) = diagnostic {
+                game.foreign(|game| game.warn_lava_height(value));
+            }
+            finish_arm_growth(actor, game);
+        }
+        function @ (state::HEAD_IDLE
+        | state::HEAD_WAIT_SUBMERGED
+        | state::HEAD_EMERGE_WHEN_READY
+        | state::HEAD_WAIT_EMERGED
+        | state::ARM_WAIT_HEAD_SUBMERGED
+        | state::HAND_IDLE
+        | state::HAND_THROW_AND_SHRINK
+        | state::HAND_GROW_AND_THROW
+        | state::HAND_FOLLOW_SHRINKING_ARM) => run_state(function, game),
+        _ => game.foreign(|game| game.unreachable()),
+    }
 }
 /// The head's reaction to a power bomb, contact or shot, shared with the arm and hand.
 pub fn damage<L: Lease>(address: u32, game: &mut L) {
