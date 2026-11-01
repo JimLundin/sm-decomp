@@ -1,7 +1,8 @@
 //! Bull, Maridia's gas bag, which waits, then speeds at Samus and slows when she slips
 //! off its heading; a shot knocks it away (bank $A8:D821-$A8:DBC6). Was `maridia_puffer`.
 #![forbid(unsafe_code)]
-use crate::actors::host::{EnemyHost, Shot, abs16, sign_extend8};
+use crate::actors::boss_lease::BossLease;
+use crate::actors::host::{BossEffects, Shot, abs16, sign_extend8};
 use crate::actors::layouts::part_view;
 use crate::gameplay_tables::enemy_sine;
 use crate::session_slot;
@@ -34,7 +35,7 @@ const INTERVALS: [u16; 26] = [
 ];
 
 /// Initialisation AI - bull ($A8:D8C9).
-pub fn initialize(game: &mut impl EnemyHost) {
+pub fn initialize(game: &mut impl BossLease<Game: BossEffects>) {
     let bull = i32::from(game.current_enemy());
     session_slot!(game, Bull[bull].base; instruction_timer = 1, timer = 0, current_instruction = 0xd841);
     let index = 4u16.wrapping_mul(session_slot!(game, Bull[bull].parameter_1)) as usize >> 1;
@@ -44,14 +45,14 @@ pub fn initialize(game: &mut impl EnemyHost) {
         max_speed = max_speed);
 }
 /// The angle to Samus, from the positive X axis.
-fn aim(game: &mut impl EnemyHost) -> (i32, u16) {
-    let angle = (game.angle_to_player(game.current_enemy()) as u8).wrapping_sub(64) as u16;
+fn aim(game: &mut impl BossLease<Game: BossEffects>) -> (i32, u16) {
+    let angle = (game.player_angle(game.current_enemy()) as u8).wrapping_sub(64) as u16;
     let bull = i32::from(game.current_enemy());
     session_slot!(game, Bull[bull].angle_to_samus = angle);
     (bull, angle)
 }
 /// Bull X and Y movement ($A8:D9DB, $A8:DA28): along its angle at its speed.
-fn drift(game: &mut impl EnemyHost) {
+fn drift(game: &mut impl BossLease<Game: BossEffects>) {
     for horizontal in [true, false] {
         let bull = i32::from(game.current_enemy());
         let quarter = if horizontal { 64 } else { 0 };
@@ -69,7 +70,7 @@ fn drift(game: &mut impl EnemyHost) {
     }
 }
 /// Accelerate ($A8:DA71) or decelerate ($A8:DA92), each interval.
-fn change_speed(game: &mut impl EnemyHost, accelerating: bool) {
+fn change_speed(game: &mut impl BossLease<Game: BossEffects>, accelerating: bool) {
     let bull = i32::from(game.current_enemy());
     let previous = session_slot!(game, Bull[bull].acceleration_timer);
     let timer = previous.wrapping_sub(1);
@@ -88,7 +89,7 @@ fn change_speed(game: &mut impl EnemyHost, accelerating: bool) {
     }
 }
 /// Main AI - bull ($A8:D90B): re-enable the shot reaction, and run its function.
-pub fn main_ai(game: &mut impl EnemyHost) {
+pub fn main_ai(game: &mut impl BossLease<Game: BossEffects>) {
     let bull = i32::from(game.current_enemy());
     let timer = session_slot!(game, Bull[bull].shot_reaction_timer).wrapping_sub(1);
     session_slot!(game, Bull[bull].shot_reaction_timer = timer);
@@ -131,11 +132,11 @@ pub fn main_ai(game: &mut impl EnemyHost) {
                     speed = 0);
             }
         }
-        _ => game.unknown_routine(),
+        _ => game.foreign(|game| game.unreachable()),
     }
 }
 /// Enemy shot - bull: knocked away from the shot unless it hurt or was recently shot.
-pub fn shot(game: &mut impl EnemyHost) {
+pub fn shot(game: &mut impl BossLease<Game: BossEffects>) {
     let bull = i32::from(game.current_enemy());
     let health = session_slot!(game, Bull[bull].base.health);
     session_slot!(game, Bull[bull].previous_health = health);
@@ -143,7 +144,7 @@ pub fn shot(game: &mut impl EnemyHost) {
     let hurt = session_slot!(game, Bull[bull].base.health) != health;
     if !hurt && session_slot!(game, Bull[bull].shot_reaction_disabled) == 0 {
         session_slot!(game, Bull[bull].base; instruction_timer = 1, timer = 0, current_instruction = 0xd855);
-        let direction = game.collided_projectile_direction() & 0xf;
+        let direction = game.shot_direction() & 0xf;
         session_slot!(game, Bull[bull].angle = RECOIL_ANGLES[direction as usize]);
         session_slot!(game, Bull[bull]; acceleration = 256, speed = 1536, function = DECELERATING,
             shot_reaction_timer = 48, shot_reaction_disabled = 1);

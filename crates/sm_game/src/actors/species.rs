@@ -13,7 +13,7 @@ use crate::actors::host::{
 };
 use crate::actors::spore_spawn::instruction as spore;
 use crate::actors::{
-    alcoon, bang, beetom, blue_brinstar_face_block, botwoon, boulder, boyon, bull, cacatac, choot,
+    alcoon, bang, beetom, blue_brinstar_face_block, botwoon, boulder, boyon, cacatac, choot,
     covern, crawlers, crocomire_reactions, dachora_run, dragon, draygon_death, draygon_eye,
     draygon_flight, draygon_grab, draygon_host, draygon_sweep, elevator, escape_critters, etecoon,
     evir, fire_arc, fire_pillar, flies, fune, geega, geruta, gunship, kago, kihunter, kraid,
@@ -698,9 +698,6 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         }
         11063693 => work_robot::shot_deactivated(game),
         11063698 => work_robot::shot(game),
-        11065545 => bull::initialize(game),
-        11065611 => bull::main_ai(game),
-        11066132 => bull::shot(game),
         10735204 => {
             let function = yard::prepare(game);
             pre_instruction(function, game);
