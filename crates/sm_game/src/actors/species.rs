@@ -20,7 +20,7 @@ use crate::actors::{
     metroid, mini_crocomire, mini_kraid, mochtroid, morph_ball_eye, multiviola, oum, phantoon,
     phantoon_actions, polyp, powamp, puyo, reflec, rinka, rio, rippers, roach, shutters,
     sidehopper, skree, space_pirates, spike_platform, spore_spawn, squeept, statues, tatori,
-    torizo, tripper, waver, work_robot, wrecked_ship_spark, yapping_maw, yard, zeb, zoa,
+    torizo, tripper, waver, work_robot, wrecked_ship_spark, yard, zeb, zoa,
 };
 use crate::combat_rules::LatchMode;
 use crate::enemy_projectiles::host::Effects as _;
@@ -225,7 +225,6 @@ pub fn b3_pre_instruction<H: B3Host>(ea: u32, k: u16, game: &mut H) {
 pub trait AiHost:
     B3Host
     + DrawHookHost
-    + yapping_maw::Host
     + crocomire_reactions::Host
     + space_pirates::Pirates
     + torizo::Ai
@@ -558,10 +557,6 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         11001242 => (),
         11001873 => (),
         11042892 => (),
-        11051336 => yapping_maw::initialize(game),
-        11052953 => yapping_maw::touch(game),
-        11052989 => yapping_maw::shot(game),
-        11053109 => yapping_maw::frozen(game),
         11054987 => magdollite::initialize(game),
         11056128 | 11056134 | 11056140 => magdollite::damage(ea, game),
         11062374 => (),
@@ -743,12 +738,6 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         11053955 => kago::shot(game),
         11069486 => blue_brinstar_face_block::initialize(game),
         11069614 => blue_brinstar_face_block::main_ai(game),
-        11051537 => {
-            if !yapping_maw::main_ai(game, |operand, game| game.write_multiplicand(operand)) {
-                game.unknown_routine();
-            }
-            yapping_maw::update_segments(game);
-        }
         11055370 => pre_instruction(magdollite::main_ai(game), game),
         11765882 => pre_instruction(zeb::state_address(game), game),
         11767726 => pipe_bug_state(geega::state_address(game), game),
@@ -970,7 +959,6 @@ pub fn pre_instruction<H: PreInstructionHost>(ea: u32, game: &mut H) {
 pub trait InstructionHost:
     SpeciesHost
     + crocomire_reactions::Host
-    + yapping_maw::Host
     + magdollite::Host
     + escape_critters::Host
     + space_pirates::Pirates
@@ -1116,9 +1104,6 @@ pub fn instruction<H: InstructionHost>(
             alcoon::instruction(ea, j, game)
         }
         0xa40000..=0xa4ffff => crocomire_reactions::instruction(ea, k, j, game),
-        11051207 | 11051225 | 11051243 | 11051261 | 11051279 | 11051297 | 11051315 => {
-            yapping_maw::instruction(ea, j, game)
-        }
         11054610 | 11054630 | 11054640 | 11054650 | 11054661 | 11054672 | 11054682 | 11054692
         | 11054728 | 11054742 | 11054778 | 11054794 | 11054820 | 11054846 | 11054872 | 11054916 => {
             magdollite::instruction(ea, j, game)

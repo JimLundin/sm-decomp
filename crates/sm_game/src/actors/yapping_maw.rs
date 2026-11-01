@@ -117,11 +117,7 @@ const QUARTER_TURN: u8 = 0x40;
 const SIGN: u16 = 0x8000;
 
 /// What Yapping Maw needs beyond the shared actor operations.
-pub trait Host:
-    crate::actors::boss_lease::BossLease<Game = Self>
-    + crate::actors::host::ActorHost
-    + crate::runtime_access::RuntimeAccess
-{
+pub trait Host: crate::ram::WorkRamAccess + crate::runtime_access::RuntimeAccess {
     /// Create a sprite object of `kind` at (`x`, `y`); its handle.
     fn create_sprite(&mut self, x: u16, y: u16, kind: u16, appearance: u16) -> u16;
     fn maw_appearance(&mut self, handle: u16, appearance: u16, enemy: u16);

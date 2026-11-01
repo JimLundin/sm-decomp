@@ -117,6 +117,11 @@ pub(crate) unsafe fn actor_species_pre_instruction(ea: u32, game: &mut Game) {
     sm_game::actors::species::pre_instruction(ea, game);
 }
 
+/// Write `operand` to the multiplicand register, for Yapping Maw.
+pub(crate) fn write_multiplicand(operand: u8, game: &mut Game) {
+    unsafe { crate::rtl::write_reg(crate::rtl::WRMPYA as u16, operand, game) };
+}
+
 impl sm_game::actors::species::AiHost for Game {
     fn native_ai(&mut self, ea: u32) {
         unsafe { native_ai(ea, self) }
@@ -125,7 +130,7 @@ impl sm_game::actors::species::AiHost for Game {
         unsafe { crate::c_library::printf(c"Possible bug. What is X?\n".as_ptr()) };
     }
     fn write_multiplicand(&mut self, operand: u8) {
-        unsafe { crate::rtl::write_reg(crate::rtl::WRMPYA as u16, operand, self) };
+        write_multiplicand(operand, self);
     }
     fn install_draygon_layers(&mut self) {
         crate::game::visual_runtime::initialize_draygon_layer(self);
@@ -1205,6 +1210,11 @@ impl Runtime<'_> {
             11072020 => self.owned_call(sm_game::actors::kihunter::initialize_wings),
             11072092 | 11072098 => self.owned_call(sm_game::actors::kihunter::main_ai),
             11073281 => self.owned_call(sm_game::actors::kihunter::shot),
+            11051336 => self.owned_call(actors::yapping_maw::initialize),
+            11052953 => self.owned_call(actors::yapping_maw::touch),
+            11052989 => self.owned_call(actors::yapping_maw::shot),
+            11053109 => self.owned_call(actors::yapping_maw::frozen),
+            11051537 => self.owned_call(actors::yapping_maw::run_main_ai),
             10988577 => self.owned_call(sm_game::actors::kraid::main_ai),
             10997414 => self.owned_call(sm_game::actors::phantoon::main_ai),
             11191972 => self.owned_call(sm_game::actors::torizo::main_ai),
@@ -1236,6 +1246,11 @@ impl Runtime<'_> {
             Err(script) => script,
         };
         match routine {
+            11051207 | 11051225 | 11051243 | 11051261 | 11051279 | 11051297 | 11051315 => {
+                return self.owned_call(|runtime| {
+                    actors::yapping_maw::instruction(routine, script, runtime)
+                });
+            }
             11072806 | 11072996 | 11073151 | 11073234 | 11073240 => {
                 return self.owned_call(|runtime| {
                     sm_game::actors::kihunter::instruction(runtime, routine, actor, script)
