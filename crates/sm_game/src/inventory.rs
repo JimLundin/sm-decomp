@@ -24,15 +24,26 @@ pub use crate::item_pickups::{Inventory, Loadout, Supply};
 impl Inventory {
     /// The value of the word `word` names.
     pub fn word(&self, word: Word) -> u16 {
-        use crate::session_cohort::Cohort as _;
-        let mut copy = self.clone();
-        let mut value = 0;
-        copy.words(|at, field| {
-            if at == word.address() {
-                value = *field;
-            }
-        });
-        value
+        match word {
+            Word::EquippedItems => self.equipment.active,
+            Word::CollectedItems => self.equipment.owned,
+            Word::EquippedBeams => self.beams.active,
+            Word::CollectedBeams => self.beams.owned,
+            Word::ReserveMode => self.reserve_mode,
+            Word::Health => self.health.current,
+            Word::MaxHealth => self.health.maximum,
+            Word::Missiles => self.ammunition[0].current,
+            Word::MaxMissiles => self.ammunition[0].maximum,
+            Word::SuperMissiles => self.ammunition[1].current,
+            Word::MaxSuperMissiles => self.ammunition[1].maximum,
+            Word::PowerBombs => self.ammunition[2].current,
+            Word::MaxPowerBombs => self.ammunition[2].maximum,
+            Word::MaxReserveHealth => self.reserve_capacity,
+            Word::ReserveHealth => self.reserve_health,
+            Word::ReserveMissiles => self.reserve_missiles,
+            Word::SubunitHealth => self.health_fraction,
+            Word::HyperBeam => self.hyper_beam,
+        }
     }
 }
 
@@ -107,6 +118,31 @@ impl Word {
             Self::SubunitHealth => 0xa4c,
             Self::HyperBeam => 0xa76,
         }
+    }
+
+    pub fn from_address(at: usize) -> Option<Self> {
+        [
+            Self::EquippedItems,
+            Self::CollectedItems,
+            Self::EquippedBeams,
+            Self::CollectedBeams,
+            Self::ReserveMode,
+            Self::Health,
+            Self::MaxHealth,
+            Self::Missiles,
+            Self::MaxMissiles,
+            Self::SuperMissiles,
+            Self::MaxSuperMissiles,
+            Self::PowerBombs,
+            Self::MaxPowerBombs,
+            Self::MaxReserveHealth,
+            Self::ReserveHealth,
+            Self::ReserveMissiles,
+            Self::SubunitHealth,
+            Self::HyperBeam,
+        ]
+        .into_iter()
+        .find(|word| word.address() == at)
     }
 
     /// The ammunition supply `index` (0 missiles, 1 super missiles, 2 power
@@ -243,4 +279,12 @@ mod tests {
         assert_eq!(host.0.inventory.ammunition[2].maximum, 0x0456);
         assert_eq!(get(&host, Word::ReserveHealth), 0x0123);
     }
+}
+
+/// Explicit compatibility adoption of the actual selected byte image.
+pub fn decode(bytes: &impl Fn(usize) -> u8) -> Inventory {
+    use crate::session_cohort::Cohort as _;
+    let mut inventory = Inventory::default();
+    inventory.words(|at, field| *field = u16::from_le_bytes([bytes(at), bytes(at + 1)]));
+    inventory
 }

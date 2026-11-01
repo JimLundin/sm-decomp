@@ -302,3 +302,26 @@ pub(crate) fn validate_normalized_projection(
 }
 
 pub(crate) use sm_game::scene::owned_samus::{bottom_visible, draw_body, draw_sprite};
+
+/// Compatibility residency, with one independently revocable inventory owner.
+/// The aggregate's current behavior and admission rules remain unchanged.
+pub struct SessionSlot {
+    pub(crate) aggregate: AggregateSlot,
+    pub(crate) inventory: std::cell::RefCell<sm_game::inventory_domain::InventoryDomain>,
+}
+
+pub(crate) enum AggregateSlot {
+    Legacy,
+    Ready(Box<PersistentSession>),
+    Leased,
+    Failed(Option<Box<PersistentSession>>),
+}
+
+impl SessionSlot {
+    pub(crate) fn new() -> Self {
+        Self {
+            aggregate: AggregateSlot::Legacy,
+            inventory: std::cell::RefCell::new(sm_game::inventory_domain::InventoryDomain::Unowned),
+        }
+    }
+}

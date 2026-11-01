@@ -63,7 +63,10 @@ pub trait ResetRequest {
 
 /// The runtime operations the menus call.
 pub trait MenuRuntime:
-    crate::player_position::PlayerPosition + crate::player_position::PlayerFacts + PlayerRuntime
+    crate::player_position::PlayerPosition
+    + crate::player_position::PlayerFacts
+    + PlayerRuntime
+    + crate::inventory_domain::InventoryAccess
 {
     /// Upload `bytes` from `source` to VRAM word address `destination`.
     fn load_vram_words(&mut self, source: u32, destination: u16, bytes: u16);

@@ -1,4 +1,4 @@
-//! Reserve refill and equipment-menu controls; RAM remains authoritative.
+//! Reserve controls on the independently owned inventory domain; automatic refill retains its adapter.
 use super::menu_tilemap;
 use super::prelude::*;
 use crate::inventory::Inventory;
@@ -8,9 +8,9 @@ use crate::session_cohort;
 pub fn prepare_menu<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
     scroll! {game; Bg4H = scroll!(game.Bg1H); Bg4V = scroll!(game.Bg1V); }
     scroll! { game, 0; Bg1H, Bg1V }
-    let inventory: Inventory = session_cohort::load(game);
-    if inventory.reserve_capacity != 0 && inventory.reserve_mode != 0 {
-        let address = if inventory.reserve_mode == 1 {
+    let inventory = game.reserve_state();
+    if inventory.capacity != 0 && inventory.mode != 0 {
+        let address = if inventory.mode == 1 {
             0x82bf2a
         } else {
             0x82bf22
@@ -24,12 +24,12 @@ pub fn prepare_menu<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
     menu.pausemenu_reserve_tank_animation_frame = 0;
     menu.pausemenu_reserve_tank_animation_timer =
         u16::from(menu_tilemap::native_record(0x82c165, game).byte(0));
-    if inventory.reserve_capacity != 0 {
+    if inventory.capacity != 0 {
         menu.pausemenu_equipment_category_item = 0;
     } else {
         'category: for (category, count, masks, collected) in [
-            (1, 5, 0x82c04c, inventory.beams.owned),
-            (2, 6, 0x82c056, inventory.equipment.owned),
+            (1, 5, 0x82c04c, inventory.beams),
+            (2, 6, 0x82c056, inventory.equipment),
         ] {
             if category == 1 && inventory.hyper_beam != 0 {
                 continue;
@@ -44,22 +44,23 @@ pub fn prepare_menu<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
         }
         // No matching beam/suit leaves the previous selection unchanged.
     }
-    if inventory.reserve_health != 0 {
+    if inventory.reserve != 0 {
         menu_tilemap::reserve_arrow(menu_tilemap::ReserveArrow::On, game);
         menu_tilemap::queue_equipment_wireframe(game);
     }
 }
 
 pub fn toggle_mode<H: Host + ?Sized>(game: &mut H) {
-    let inventory: Inventory = session_cohort::load(game);
-    if game.observed_inputs().pressed & K_BUTTON_A as u16 == 0 || inventory.reserve_capacity == 0 {
+    let inventory = game.reserve_state();
+    if game.observed_inputs().pressed & K_BUTTON_A as u16 == 0 || inventory.capacity == 0 {
         return;
     }
     game.queue_sound(0, 0x37_u8, 6);
-    let automatic = inventory.reserve_mode != 1;
-    session_cohort::with(game, |_, inventory: &mut Inventory| {
-        inventory.reserve_mode = if automatic { 1 } else { 2 };
-    });
+    let automatic = inventory.mode != 1;
+    let change = game
+        .reserve_state()
+        .select_mode(if automatic { 1 } else { 2 });
+    game.commit_reserve(change);
     crate::hud::menu_reserve_mode(automatic, game);
     let first = if automatic { 0x3d56 } else { 0x3d46 };
     menu_tilemap::reserve_label(|index| first + index as u16, game);
@@ -91,7 +92,7 @@ pub fn transfer_manual<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
         if game.observed_inputs().pressed & K_BUTTON_A as u16 == 0 {
             return;
         }
-        let reserve = session_cohort::load::<Inventory, _>(game).reserve_health;
+        let reserve = game.reserve_state().reserve;
         menu.pausemenu_reserve_tank_delay_ctr = ((i32::from(reserve) + 7) & 0xfff8) as u16;
     }
     menu.pausemenu_reserve_tank_delay_ctr = menu.pausemenu_reserve_tank_delay_ctr.wrapping_sub(1);
@@ -99,13 +100,8 @@ pub fn transfer_manual<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
         game.queue_sound(2, 0x2d_u8, 6);
     }
     crate::probe::hit("reserve_tanks.transfer_manual");
-    let more = session_cohort::with(game, |_, inventory: &mut Inventory| {
-        let more = transfer_one(true, inventory);
-        if !more {
-            inventory.reserve_health = 0;
-        }
-        more
-    });
+    let (change, more) = game.reserve_state().transfer_manual();
+    game.commit_reserve(change);
     if more {
         return;
     }

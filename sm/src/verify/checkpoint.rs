@@ -487,6 +487,9 @@ macro_rules! machine_state {
         }
         unsafe fn machine($game: &mut Game, $archive: &mut Archive<'_>) -> Result<(), String> {
             unsafe {
+                if matches!($archive, Archive::Load(_)) {
+                    $game.revoke_inventory_domain();
+                }
                 $archive.work_ram($game.ram())?;
                 $(machine_state!(@check $archive, $field, $check); $game.$field.state($archive)?;)*
                 let $snes = $game.g_snes;
@@ -877,6 +880,7 @@ pub(crate) unsafe fn restore_capture_with_sources(
                 }
             }
         }
+        game.adopt_inventory_image();
         game.audio_output.new_epoch();
         Ok(())
     }

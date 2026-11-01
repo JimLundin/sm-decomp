@@ -400,6 +400,7 @@ impl<'g> Runtime<'g> {
         // Export was authorized before revocation; do not repeat ready preflight
         // while the external interval is deliberately unavailable.
         export_session_preflighted(state, mutation.game());
+        mutation.game().revoke_inventory_domain();
         let result = action(mutation.game());
         let payload = mutation.game().capture_samus_snapshot();
         let prepared = mutation
@@ -517,7 +518,10 @@ impl<'g> Runtime<'g> {
                 // A rejected foreign call retains this Runtime's identity owner;
                 // discard invalid byte/native publication rather than panic again.
                 self.game.return_actor_identity(state.actor_identity);
+                self.game.return_inventory_domain(state.inventory, false);
                 self.game.revoke_samus_authority();
+            } else {
+                self.game.revoke_inventory_domain();
             }
         }
     }
@@ -998,6 +1002,9 @@ fn reuse_frame_session(game: &mut Game) -> Option<(Session, ExternalInputs)> {
         );
     }
     state.actor_identity = game.take_actor_identity();
+    if let Some(inventory) = game.take_inventory_domain() {
+        state.inventory = inventory;
+    }
     Some((state, inputs))
 }
 pub(crate) fn import_session(game: &mut Game) -> Session {
@@ -1015,6 +1022,9 @@ fn import_session_preflighted(game: &mut Game) -> Session {
     );
     import_native_spawn(&mut state, game);
     state.actor_identity = game.take_actor_identity();
+    if let Some(inventory) = game.take_inventory_domain() {
+        state.inventory = inventory;
+    }
     state
 }
 fn preflight_export(state: &Session, game: &Game) {
@@ -1041,6 +1051,8 @@ impl Drop for ExportIdentity<'_> {
             if self.game.actor_identity_is_with_session() {
                 self.game.return_actor_identity(state.actor_identity);
             }
+            self.game
+                .return_inventory_domain(state.inventory, !std::thread::panicking());
         }
     }
 }

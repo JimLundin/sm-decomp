@@ -84,7 +84,7 @@ const _: () = {
 
 /// The compatibility allocation shared only by Game and its retained backend.
 /// Safe operations copy values; they never borrow live bytes as u8 references.
-pub struct WorkRam(Rc<RamBytes>, Rc<Cell<u64>>);
+pub struct WorkRam(Rc<RamBytes>, Rc<Cell<u64>>, Rc<Cell<u64>>);
 #[forbid(unsafe_code)]
 impl WorkRam {
     pub(crate) const LEN: usize = 0x20000;
@@ -93,6 +93,7 @@ impl WorkRam {
             Rc::new(RamBytes {
                 bytes: [const { Cell::new(0) }; Self::LEN],
             }),
+            Rc::new(Cell::new(0)),
             Rc::new(Cell::new(0)),
         )
     }
@@ -104,6 +105,7 @@ impl WorkRam {
     pub fn write_byte(&self, at: usize, value: u8) {
         let cell = &self.0.bytes[at];
         self.note_write();
+        self.note_inventory_write(at..at + 1);
         cell.set(value);
     }
 
@@ -117,6 +119,7 @@ impl WorkRam {
         assert!(destination <= self.len() - count, "dest is out of bounds");
         if count != 0 {
             self.note_write();
+            self.note_inventory_write(destination..destination + count);
         }
         if destination > source.start {
             for offset in (0..count).rev() {
@@ -144,6 +147,7 @@ impl WorkRam {
         let cells = &self.0.bytes[at..end];
         if !cells.is_empty() {
             self.note_write();
+            self.note_inventory_write(at..end);
         }
         for (cell, &byte) in cells.iter().zip(input) {
             cell.set(byte);
@@ -151,9 +155,10 @@ impl WorkRam {
     }
 
     pub fn fill(&self, range: Range<usize>, value: u8) {
-        let cells = &self.0.bytes[range];
+        let cells = &self.0.bytes[range.clone()];
         if !cells.is_empty() {
             self.note_write();
+            self.note_inventory_write(range);
         }
         for cell in cells {
             cell.set(value);
@@ -161,10 +166,27 @@ impl WorkRam {
     }
 
     pub(crate) fn share_for_backend(&self) -> Self {
-        Self(Rc::clone(&self.0), Rc::clone(&self.1))
+        Self(Rc::clone(&self.0), Rc::clone(&self.1), Rc::clone(&self.2))
     }
     fn note_write(&self) {
         self.1.set(self.1.get().wrapping_add(1));
+    }
+    fn note_inventory_write(&self, range: Range<usize>) {
+        if [
+            0x9a2..0x9aa,
+            0x9c0..0x9d2,
+            0x9d4..0x9da,
+            0xa4c..0xa4e,
+            0xa76..0xa78,
+        ]
+        .iter()
+        .any(|owned| range.start < owned.end && owned.start < range.end)
+        {
+            self.2.set(self.2.get().wrapping_add(1));
+        }
+    }
+    fn inventory_epoch(&self) -> u64 {
+        self.2.get()
     }
     fn write_epoch(&self) -> u64 {
         self.1.get()
@@ -968,7 +990,7 @@ impl Game {
             escape_etecoons: Default::default(),
             records: Default::default(),
             samus: SamusOwner::default(),
-            persistent_session: persistent_session::SessionSlot::Legacy,
+            persistent_session: persistent_session::SessionSlot::new(),
             persistent_ram_epoch: 0,
             pending_supplied_start: None,
             decompress_src: 0,
@@ -1101,17 +1123,17 @@ impl GameOwner {
         sources: &[(sm_game::room_entry::world::ResourceId, crate::rom::RomImage)],
     ) -> Result<(), String> {
         self.with(|game| {
-            let current_identity = match &game.persistent_session {
-                persistent_session::SessionSlot::Ready(state)
-                | persistent_session::SessionSlot::Failed(Some(state)) => {
+            let current_identity = match &game.persistent_session.aggregate {
+                persistent_session::AggregateSlot::Ready(state)
+                | persistent_session::AggregateSlot::Failed(Some(state)) => {
                     &state.gameplay.actor_identity
                 }
-                persistent_session::SessionSlot::Legacy => game
+                persistent_session::AggregateSlot::Legacy => game
                     .actor_identity
                     .as_ref()
                     .ok_or("Session restore actor identity unavailable")?,
-                persistent_session::SessionSlot::Leased
-                | persistent_session::SessionSlot::Failed(None) => {
+                persistent_session::AggregateSlot::Leased
+                | persistent_session::AggregateSlot::Failed(None) => {
                     return Err("Session restore ownership unavailable".into());
                 }
             };
@@ -1173,8 +1195,8 @@ impl persistent_session::AudioHost for Game {
             persistent_session::AudioStamp,
         ) -> Result<R, DisplayError>,
     ) -> Result<Option<R>, DisplayError> {
-        use persistent_session::{Control, SessionSlot};
-        if matches!(self.persistent_session, SessionSlot::Legacy) {
+        use persistent_session::{AggregateSlot as SessionSlot, Control};
+        if matches!(self.persistent_session.aggregate, SessionSlot::Legacy) {
             return Ok(None);
         }
         if self.persistent_ram_epoch != self.ram.write_epoch() {
@@ -1182,7 +1204,7 @@ impl persistent_session::AudioHost for Game {
             return Err(DisplayError::Poisoned);
         }
         self.preflight_samus_runtime()?;
-        let SessionSlot::Ready(state) = &mut self.persistent_session else {
+        let SessionSlot::Ready(state) = &mut self.persistent_session.aggregate else {
             return Err(DisplayError::Phase);
         };
         let producing = state.gameplay.presentation.owner()?.state.phase
@@ -1206,8 +1228,8 @@ impl Game {
     /// The retained Session while it is current with RAM, for observation.
     #[cfg(sm_verify_dll)]
     pub(crate) fn observed_session(&self) -> Option<&sm_game::session::Session> {
-        match &self.persistent_session {
-            persistent_session::SessionSlot::Ready(state)
+        match &self.persistent_session.aggregate {
+            persistent_session::AggregateSlot::Ready(state)
                 if self.persistent_ram_epoch == self.ram.write_epoch()
                     && self.preflight_samus_runtime().is_ok() =>
             {
@@ -1219,7 +1241,8 @@ impl Game {
     /// The HDMA object table as `compatibility_byte` projects it: the
     /// retained Session's while it is current, the RAM words otherwise.
     pub(crate) fn projected_hdma_objects(&self) -> sm_game::hdma::HdmaObjects {
-        if let persistent_session::SessionSlot::Ready(state) = &self.persistent_session {
+        if let persistent_session::AggregateSlot::Ready(state) = &self.persistent_session.aggregate
+        {
             if self.persistent_ram_epoch == self.ram.write_epoch()
                 && self.preflight_samus_runtime().is_ok()
             {
@@ -1229,7 +1252,11 @@ impl Game {
         sm_game::hdma_objects::read_table(self)
     }
     pub fn compatibility_byte(&self, at: usize) -> u8 {
-        if let persistent_session::SessionSlot::Ready(state) = &self.persistent_session {
+        if inventory_address(at) {
+            return self.inventory_byte(at);
+        }
+        if let persistent_session::AggregateSlot::Ready(state) = &self.persistent_session.aggregate
+        {
             if self.persistent_ram_epoch == self.ram.write_epoch()
                 && self.preflight_samus_runtime().is_ok()
             {
@@ -1252,15 +1279,17 @@ impl Game {
     pub fn compatibility_write_owned_byte(&mut self, at: usize, byte: u8) {
         self.ram.read_byte(at); // Preserve the original byte bounds failure before mutation.
         if matches!(
-            self.persistent_session,
-            persistent_session::SessionSlot::Ready(_)
+            self.persistent_session.aggregate,
+            persistent_session::AggregateSlot::Ready(_)
         ) && (self.persistent_ram_epoch != self.ram.write_epoch()
             || self.preflight_samus_runtime().is_err()
             || persistent_session::Presentation::requires_semantic_counterpart(at))
         {
             self.poison_persistent_session();
         }
-        if let persistent_session::SessionSlot::Ready(state) = &mut self.persistent_session {
+        if let persistent_session::AggregateSlot::Ready(state) =
+            &mut self.persistent_session.aggregate
+        {
             crate::game::session_encoding::write_projected_byte(&mut state.gameplay, at, byte);
             self.ram.write_byte(at, byte);
             state.observations = crate::game::session_encoding::inputs(&|lane| {
@@ -1268,6 +1297,15 @@ impl Game {
                     .unwrap_or_else(|| self.ram.read_byte(lane))
             });
             self.persistent_ram_epoch = self.ram.write_epoch();
+            if matches!(
+                self.persistent_session.inventory.get_mut(),
+                sm_game::inventory_domain::InventoryDomain::InSession { .. }
+            ) {
+                *self.persistent_session.inventory.get_mut() =
+                    sm_game::inventory_domain::InventoryDomain::InSession {
+                        epoch: self.ram.inventory_epoch(),
+                    };
+            }
         } else {
             self.ram.write_byte(at, byte);
         }
@@ -1301,8 +1339,8 @@ impl Game {
         prepared: persistent_session::PreparedSessionStart,
         scoped_adoption: bool,
     ) -> Result<(), persistent_session::SessionStartError> {
-        use persistent_session::{SessionSlot, SessionStartError};
-        if matches!(self.persistent_session, SessionSlot::Leased)
+        use persistent_session::{AggregateSlot as SessionSlot, SessionStartError};
+        if matches!(self.persistent_session.aggregate, SessionSlot::Leased)
             || (!scoped_adoption && self.samus.mutation_depth() != 0)
         {
             return Err(SessionStartError::Phase);
@@ -1326,16 +1364,20 @@ impl Game {
         self.samus.install(binding);
         self.actor_identity = None;
         self.persistent_ram_epoch = self.ram.write_epoch();
-        self.persistent_session = SessionSlot::Ready(Box::new(session));
+        self.persistent_session.aggregate = SessionSlot::Ready(Box::new(session));
+        *self.persistent_session.inventory.get_mut() =
+            sm_game::inventory_domain::InventoryDomain::InSession {
+                epoch: self.ram.inventory_epoch(),
+            };
         Ok(())
     }
     /// Whether `Runtime::new` would succeed now, without changing any state:
     /// the Samus runtime admits import, and any retained persistent Session
     /// is current with RAM.
     pub(crate) fn session_lease_admissible(&self) -> bool {
-        use persistent_session::SessionSlot;
+        use persistent_session::AggregateSlot as SessionSlot;
         self.preflight_samus_runtime().is_ok()
-            && match &self.persistent_session {
+            && match &self.persistent_session.aggregate {
                 SessionSlot::Legacy => true,
                 SessionSlot::Ready(_) => self.persistent_ram_epoch == self.ram.write_epoch(),
                 SessionSlot::Leased | SessionSlot::Failed(_) => false,
@@ -1344,15 +1386,15 @@ impl Game {
     /// Whether a retained persistent Session is installed and current.
     pub(crate) fn persistent_session_current(&self) -> bool {
         matches!(
-            self.persistent_session,
-            persistent_session::SessionSlot::Ready(_)
+            self.persistent_session.aggregate,
+            persistent_session::AggregateSlot::Ready(_)
         ) && self.session_lease_admissible()
     }
     pub(crate) fn lease_persistent_session(
         &mut self,
     ) -> Result<Option<persistent_session::PersistentSession>, DisplayError> {
-        use persistent_session::SessionSlot;
-        if matches!(self.persistent_session, SessionSlot::Legacy) {
+        use persistent_session::AggregateSlot as SessionSlot;
+        if matches!(self.persistent_session.aggregate, SessionSlot::Legacy) {
             return Ok(None);
         }
         self.preflight_samus_runtime()?;
@@ -1360,10 +1402,14 @@ impl Game {
             self.poison_persistent_session();
             return Err(DisplayError::Poisoned);
         }
-        match std::mem::replace(&mut self.persistent_session, SessionSlot::Leased) {
-            SessionSlot::Ready(session) => Ok(Some(*session)),
+        match std::mem::replace(&mut self.persistent_session.aggregate, SessionSlot::Leased) {
+            SessionSlot::Ready(session) => {
+                *self.persistent_session.inventory.get_mut() =
+                    sm_game::inventory_domain::InventoryDomain::Leased;
+                Ok(Some(*session))
+            }
             other => {
-                self.persistent_session = other;
+                self.persistent_session.aggregate = other;
                 Err(DisplayError::Phase)
             }
         }
@@ -1374,12 +1420,13 @@ impl Game {
         completed: bool,
         admitted_epoch: u64,
     ) {
-        use persistent_session::SessionSlot;
+        use persistent_session::AggregateSlot as SessionSlot;
         assert!(
-            matches!(self.persistent_session, SessionSlot::Leased),
+            matches!(self.persistent_session.aggregate, SessionSlot::Leased),
             "Session lease owner"
         );
-        self.persistent_session = if completed && admitted_epoch == self.ram.write_epoch() {
+        self.persistent_session.aggregate = if completed && admitted_epoch == self.ram.write_epoch()
+        {
             self.persistent_ram_epoch = admitted_epoch;
             SessionSlot::Ready(Box::new(session))
         } else {
@@ -1387,15 +1434,26 @@ impl Game {
             session.poison();
             SessionSlot::Failed(Some(Box::new(session)))
         };
+        *self.persistent_session.inventory.get_mut() =
+            if completed && admitted_epoch == self.ram.write_epoch() {
+                sm_game::inventory_domain::InventoryDomain::InSession {
+                    epoch: self.ram.inventory_epoch(),
+                }
+            } else {
+                sm_game::inventory_domain::InventoryDomain::Revoked
+            };
     }
     fn poison_persistent_session(&mut self) {
-        use persistent_session::SessionSlot;
-        match std::mem::replace(&mut self.persistent_session, SessionSlot::Failed(None)) {
+        use persistent_session::AggregateSlot as SessionSlot;
+        match std::mem::replace(
+            &mut self.persistent_session.aggregate,
+            SessionSlot::Failed(None),
+        ) {
             SessionSlot::Ready(mut state) | SessionSlot::Failed(Some(mut state)) => {
                 state.poison();
-                self.persistent_session = SessionSlot::Failed(Some(state));
+                self.persistent_session.aggregate = SessionSlot::Failed(Some(state));
             }
-            other => self.persistent_session = other,
+            other => self.persistent_session.aggregate = other,
         }
     }
     pub(crate) fn checkpoint_session(
@@ -1405,16 +1463,16 @@ impl Game {
             return Err(DisplayError::Poisoned);
         }
         self.preflight_samus_runtime()?;
-        match &self.persistent_session {
-            persistent_session::SessionSlot::Ready(session) => session.checkpoint(),
+        match &self.persistent_session.aggregate {
+            persistent_session::AggregateSlot::Ready(session) => session.checkpoint(),
             _ => Err(DisplayError::Phase),
         }
     }
     pub(crate) fn capture_session_snapshot(
         &self,
     ) -> Result<persistent_session::SessionSnapshotPayload, DisplayError> {
-        match &self.persistent_session {
-            persistent_session::SessionSlot::Legacy => {
+        match &self.persistent_session.aggregate {
+            persistent_session::AggregateSlot::Legacy => {
                 Ok(persistent_session::SessionSnapshotPayload(None))
             }
             _ => self
@@ -1424,20 +1482,25 @@ impl Game {
     }
     pub(crate) fn begin_session_interval(&mut self, fresh_entry: bool) -> Result<(), DisplayError> {
         if matches!(
-            self.persistent_session,
-            persistent_session::SessionSlot::Legacy
+            self.persistent_session.aggregate,
+            persistent_session::AggregateSlot::Legacy
         ) {
+            self.adopt_inventory_image();
             return Ok(());
         }
         if self.persistent_ram_epoch != self.ram.write_epoch() {
             return Err(DisplayError::Poisoned);
         }
         self.preflight_samus_runtime()?;
-        match &mut self.persistent_session {
-            persistent_session::SessionSlot::Legacy => Ok(()),
-            persistent_session::SessionSlot::Ready(state) => state.begin_interval(fresh_entry),
+        let result = match &mut self.persistent_session.aggregate {
+            persistent_session::AggregateSlot::Legacy => Ok(()),
+            persistent_session::AggregateSlot::Ready(state) => state.begin_interval(fresh_entry),
             _ => Err(DisplayError::Phase),
+        };
+        if result.is_ok() {
+            self.adopt_inventory_image();
         }
+        result
     }
     pub(crate) fn prepare_session_adoption(
         &self,
@@ -1455,16 +1518,18 @@ impl Game {
                 .map_err(persistent_session::SessionStartError::Binding)?;
             self.install_session_start_inner(start, true)?;
         } else if !matches!(
-            self.persistent_session,
-            persistent_session::SessionSlot::Legacy
+            self.persistent_session.aggregate,
+            persistent_session::AggregateSlot::Legacy
         ) {
             return Err(persistent_session::SessionStartError::Binding(
                 DisplayError::Incomplete,
             ));
         }
+        self.adopt_inventory_image();
         Ok(())
     }
     pub(crate) fn revoke_session_authority(&mut self) {
+        self.revoke_inventory_domain();
         self.revoke_samus_authority();
     }
     pub(crate) fn take_actor_identity(
@@ -1491,7 +1556,9 @@ impl Game {
         self.actor_identity = Some(identity);
     }
     pub(crate) fn actor_identity(&self) -> &crate::game::actors::identity::ActorIdentityState {
-        if let persistent_session::SessionSlot::Ready(session) = &self.persistent_session {
+        if let persistent_session::AggregateSlot::Ready(session) =
+            &self.persistent_session.aggregate
+        {
             return &session.gameplay.actor_identity;
         }
         self.actor_identity
@@ -1501,7 +1568,9 @@ impl Game {
     pub(crate) fn actor_identity_mut(
         &mut self,
     ) -> &mut crate::game::actors::identity::ActorIdentityState {
-        if let persistent_session::SessionSlot::Ready(session) = &mut self.persistent_session {
+        if let persistent_session::AggregateSlot::Ready(session) =
+            &mut self.persistent_session.aggregate
+        {
             return &mut session.gameplay.actor_identity;
         }
         self.actor_identity
@@ -1546,6 +1615,7 @@ impl Game {
         self.samus.authority(self.samus_images())
     }
     pub(crate) fn revoke_samus_authority(&mut self) {
+        self.revoke_inventory_domain();
         self.poison_persistent_session();
         self.samus.revoke();
     }
@@ -1564,10 +1634,11 @@ impl Game {
     pub(crate) fn begin_samus_mutation(&mut self) -> Result<SamusMutation<'_>, DisplayError> {
         // Native compatibility remains available for the legacy/reference path.
         let legacy = matches!(
-            self.persistent_session,
-            persistent_session::SessionSlot::Legacy
+            self.persistent_session.aggregate,
+            persistent_session::AggregateSlot::Legacy
         );
         self.samus.begin_mutation(legacy)?;
+        self.revoke_inventory_domain();
         Ok(SamusMutation {
             game: self,
             completed: false,
@@ -1626,6 +1697,7 @@ impl Game {
         self.loaded_rom = payload.loaded;
         self.native_rom = payload.native;
         self.samus.adopt(payload.binding);
+        self.adopt_inventory_image();
         Ok(())
     }
     pub(crate) fn samus_execution(&self) -> Result<Option<SamusExecution>, DisplayError> {
@@ -1848,5 +1920,191 @@ impl sm_game::ram::WorkRamAccess for Game {
     type Ram = WorkRam;
     fn ram(&self) -> &WorkRam {
         Game::ram(self)
+    }
+}
+
+fn inventory_address(at: usize) -> bool {
+    [
+        0x9a2..0x9aa,
+        0x9c0..0x9d2,
+        0x9d4..0x9da,
+        0xa4c..0xa4e,
+        0xa76..0xa78,
+    ]
+    .iter()
+    .any(|range| range.contains(&at))
+}
+
+#[forbid(unsafe_code)]
+impl Game {
+    fn inventory_byte(&self, at: usize) -> u8 {
+        use sm_game::inventory_domain::InventoryDomain;
+        let domain = self.persistent_session.inventory.borrow();
+        let inventory = match &*domain {
+            InventoryDomain::Owned { inventory, epoch } if *epoch == self.ram.inventory_epoch() => {
+                Some(inventory)
+            }
+            InventoryDomain::InSession { epoch } if *epoch == self.ram.inventory_epoch() => {
+                match &self.persistent_session.aggregate {
+                    persistent_session::AggregateSlot::Ready(state)
+                    | persistent_session::AggregateSlot::Failed(Some(state)) => {
+                        Some(&state.gameplay.inventory)
+                    }
+                    _ => None,
+                }
+            }
+            _ => None,
+        };
+        inventory.map_or_else(
+            || self.ram.read_byte(at),
+            |inventory| {
+                // The adapter owns addresses; the domain core owns ordinary fields.
+                let word = sm_game::inventory::Word::from_address(at & !1).expect("inventory word");
+                inventory.word(word).to_le_bytes()[at & 1]
+            },
+        )
+    }
+    pub(crate) fn revoke_inventory_domain(&mut self) {
+        *self.persistent_session.inventory.get_mut() =
+            sm_game::inventory_domain::InventoryDomain::Revoked;
+    }
+    pub(crate) fn adopt_inventory_image(&mut self) {
+        use sm_game::inventory_domain::InventoryDomain;
+        if matches!(
+            self.persistent_session.inventory.get_mut(),
+            InventoryDomain::Leased
+        ) {
+            // The child Runtime already imported the actual selected image.
+            return;
+        }
+        let epoch = self.ram.inventory_epoch();
+        if matches!(
+            self.persistent_session.inventory.get_mut(),
+            InventoryDomain::Owned { epoch: current, .. }
+                | InventoryDomain::InSession { epoch: current }
+                if *current == epoch
+        ) {
+            return;
+        }
+        let inventory = sm_game::inventory::decode(&|at| self.ram.read_byte(at));
+        match &mut self.persistent_session.aggregate {
+            persistent_session::AggregateSlot::Ready(state)
+            | persistent_session::AggregateSlot::Failed(Some(state)) => {
+                state.gameplay.inventory = inventory;
+                *self.persistent_session.inventory.get_mut() = InventoryDomain::InSession { epoch };
+            }
+            _ => {
+                *self.persistent_session.inventory.get_mut() =
+                    InventoryDomain::Owned { inventory, epoch }
+            }
+        }
+    }
+    pub(crate) fn take_inventory_domain(&mut self) -> Option<sm_game::inventory::Inventory> {
+        use sm_game::inventory_domain::InventoryDomain;
+        let domain = std::mem::replace(
+            self.persistent_session.inventory.get_mut(),
+            InventoryDomain::Leased,
+        );
+        match domain {
+            InventoryDomain::Owned { inventory, epoch } if epoch == self.ram.inventory_epoch() => {
+                Some(inventory)
+            }
+            _ => None,
+        }
+    }
+    pub(crate) fn return_inventory_domain(
+        &mut self,
+        inventory: sm_game::inventory::Inventory,
+        completed: bool,
+    ) {
+        use sm_game::inventory_domain::InventoryDomain;
+        *self.persistent_session.inventory.get_mut() = if completed {
+            InventoryDomain::Owned {
+                inventory,
+                epoch: self.ram.inventory_epoch(),
+            }
+        } else {
+            InventoryDomain::Revoked
+        };
+    }
+}
+
+#[forbid(unsafe_code)]
+impl sm_game::inventory_domain::InventoryAccess for Game {
+    fn reserve_state(&self) -> sm_game::inventory_domain::ReserveState {
+        use sm_game::inventory_domain::{InventoryDomain, ReserveState};
+        let mut domain = self.persistent_session.inventory.borrow_mut();
+        // First domain entry establishes only inventory, never an incomplete Session.
+        // Dirty/revoked owners remain byte-authoritative until scoped adoption.
+        if matches!(*domain, InventoryDomain::Unowned) {
+            *domain = InventoryDomain::Owned {
+                inventory: sm_game::inventory::decode(&|at| self.ram.read_byte(at)),
+                epoch: self.ram.inventory_epoch(),
+            };
+        }
+        match &*domain {
+            InventoryDomain::Owned { inventory, epoch } if *epoch == self.ram.inventory_epoch() => {
+                ReserveState::from(inventory)
+            }
+            InventoryDomain::InSession { epoch } if *epoch == self.ram.inventory_epoch() => {
+                match &self.persistent_session.aggregate {
+                    persistent_session::AggregateSlot::Ready(state)
+                    | persistent_session::AggregateSlot::Failed(Some(state)) => {
+                        ReserveState::from(&state.gameplay.inventory)
+                    }
+                    _ => panic!("inventory resident outside Session"),
+                }
+            }
+            _ => ReserveState::from(&sm_game::inventory::decode(&|at| self.ram.read_byte(at))),
+        }
+    }
+    fn commit_reserve(&mut self, change: sm_game::inventory_domain::ReserveChange) {
+        if change.is_empty() {
+            return;
+        }
+        if self.persistent_session_current() {
+            // Exactly the former changed cohort store's aggregate admission seam.
+            use sm_game::session_access::SessionAccess as _;
+            let mut runtime = crate::game::session_runtime::Runtime::new(self);
+            change.apply(&mut runtime.session_mut().inventory);
+            runtime.refresh_inputs();
+            return;
+        }
+        let inventory = self.take_inventory_domain();
+        // Keep the owner unavailable across physical publication, including unwind.
+        struct Publish<'a> {
+            game: &'a mut Game,
+            inventory: Option<sm_game::inventory::Inventory>,
+            completed: bool,
+        }
+        impl Drop for Publish<'_> {
+            fn drop(&mut self) {
+                if let Some(inventory) = self.inventory.take() {
+                    self.game.return_inventory_domain(inventory, self.completed);
+                } else {
+                    self.game.revoke_inventory_domain();
+                }
+            }
+        }
+        let mut publish = Publish {
+            game: self,
+            inventory,
+            completed: false,
+        };
+        if let Some(inventory) = &mut publish.inventory {
+            change.apply(inventory);
+        }
+        for (at, value) in [
+            (0x9c0, change.mode),
+            (0x9c2, change.health),
+            (0x9d6, change.reserve),
+        ] {
+            if let Some(value) = value {
+                let [low, high] = value.to_le_bytes();
+                publish.game.compatibility_write_byte(at, low);
+                publish.game.compatibility_write_byte(at + 1, high);
+            }
+        }
+        publish.completed = true;
     }
 }

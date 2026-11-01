@@ -11,6 +11,12 @@ new crate setup and extend verification to the complete existing any%, 100% and
 low% movies. Account for boot, transitions and endgame as well as selected rooms;
 record uncovered scope until genuine replays and named facts prove it.
 
+Jim's work order (2026-11-01): retire explicit RAM manipulation and migrate engine
+responsibilities into owned state in the new crates first. New scenario and trick
+expansion waits until that migration is complete. Keep existing regression
+verification running to qualify migration changes; complete existing movie scope
+remains part of final acceptance.
+
 The [accepted destination](target-architecture/README.md) is one deterministic owned
 Session, our renderer/audio and small platform libraries, independent of SNES emulation.
 Map Rando needs custom sprites/palettes, configurable rooms/doors and opt-in re-spin/QoL.

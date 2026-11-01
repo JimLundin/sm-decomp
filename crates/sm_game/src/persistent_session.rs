@@ -97,13 +97,6 @@ pub struct PersistentSession {
     pub required: Arc<SessionStartRequirements>,
 }
 
-pub enum SessionSlot {
-    Legacy,
-    Ready(Box<PersistentSession>),
-    Leased,
-    Failed(Option<Box<PersistentSession>>),
-}
-
 /// Captured current owners, including final resident and separate visible history.
 /// This semantic checkpoint does not run an interval or invoke the native loader.
 #[derive(Clone)]
