@@ -16,12 +16,12 @@ use crate::actors::{
     alcoon, atomic, bang, beetom, blue_brinstar_face_block, botwoon, boulder, boyon, bull, cacatac,
     choot, covern, crawlers, crocomire_reactions, dachora_run, dragon, draygon_death, draygon_eye,
     draygon_flight, draygon_grab, draygon_host, draygon_sweep, elevator, escape_critters, etecoon,
-    evir, fire_arc, fire_pillar, fireflea, flies, fune, gamet, geega, geruta, gunship, kago,
-    kihunter, kraid, magdollite, metroid, mini_crocomire, mini_kraid, mochtroid, morph_ball_eye,
-    multiviola, oum, phantoon, phantoon_actions, polyp, powamp, puyo, reflec, rinka, rio, rippers,
-    roach, shaktool, shutters, sidehopper, skree, skultera, space_pirates, spike_platform,
-    spore_spawn, squeept, statues, tatori, torizo, tripper, waver, work_robot, wrecked_ship_spark,
-    yapping_maw, yard, zeb, zoa,
+    evir, fire_arc, fire_pillar, fireflea, flies, fune, geega, geruta, gunship, kago, kihunter,
+    kraid, magdollite, metroid, mini_crocomire, mini_kraid, mochtroid, morph_ball_eye, multiviola,
+    oum, phantoon, phantoon_actions, polyp, powamp, puyo, reflec, rinka, rio, rippers, roach,
+    shaktool, shutters, sidehopper, skree, skultera, space_pirates, spike_platform, spore_spawn,
+    squeept, statues, tatori, torizo, tripper, waver, work_robot, wrecked_ship_spark, yapping_maw,
+    yard, zeb, zoa,
 };
 use crate::combat_rules::LatchMode;
 use crate::enemy_projectiles::host::Effects as _;
@@ -186,17 +186,6 @@ pub fn draw_hook<H: DrawHookHost>(ea: u32, game: &mut H) {
 /// A pipe bug's state routine, keyed by its bank $B3 address.
 pub fn pipe_bug_state<H: B3Host>(ea: u32, game: &mut H) {
     match ea {
-        11766733 => crate::actors::gamet::await_group(game),
-        11766783 => crate::actors::gamet::await_player(game),
-        11766950 => crate::actors::gamet::rise(game),
-        11767039 => crate::actors::gamet::settle(game),
-        11767052 => crate::actors::gamet::move_to_limit(-16, game),
-        11767118 => crate::actors::gamet::move_to_limit(-32, game),
-        11767184 => crate::actors::gamet::move_to_limit(16, game),
-        11767250 => crate::actors::gamet::move_to_limit(32, game),
-        11767316 => crate::actors::gamet::fly(2, game),
-        11767349 => crate::actors::gamet::fly(0, game),
-        11767386 => crate::actors::gamet::start_flight(game),
         11767733 => crate::actors::geega::detect_player(game),
         11767797 => crate::actors::geega::launch_delay(word!(game.CUR_ENEMY_INDEX), game),
         11767848 => crate::actors::geega::fly(true, game),
@@ -593,7 +582,6 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         11763788 => (),
         11765518 => (),
         11765819 => zeb::initialize(game),
-        11766625 => gamet::initialize(game),
         11767628 => geega::initialize(game),
         11769219 => botwoon::initialize(game),
         11769448 => botwoon::main_ai(&mut LeaseActors::lease(game)),
@@ -790,10 +778,6 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         }
         11055370 => pre_instruction(magdollite::main_ai(game), game),
         11765882 => pre_instruction(zeb::state_address(game), game),
-        11766686 => {
-            pipe_bug_state(gamet::state_address(game), game);
-            gamet::reset_offscreen(game);
-        }
         11767726 => pipe_bug_state(geega::state_address(game), game),
         11789909 => pre_instruction(escape_critters::main_ai(game), game),
         10662880 => multiviola::initialize(game),
