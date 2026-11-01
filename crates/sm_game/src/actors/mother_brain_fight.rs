@@ -961,15 +961,11 @@ pub static NECK_ANGLE_DELTAS: [u16; 8] = [0x500, 0x500, 0x200, 0x200, 0xc0, 0xc0
 pub static PAINFUL_WALKING_TIMERS: [i16; 8] = [0x10, 0x10, 0x20, 0x20, 0x30, 0x30, 0x40, 0x40];
 
 pub fn corpse_rotting_finished(game: &mut impl Lease) {
-    game.foreign(|game| {
-        crate::actors::host::BossEffects::set_projectile_spawn_point(
-            game,
-            (session_slot!(game, MotherBrainBrain[BRAIN].base.x_pos) as i32
-                + (random_number(game) as i32 & 0x1f)
-                - 16i32) as u16,
-            (session_slot!(game, MotherBrainBrain[BRAIN].base.y_pos)).wrapping_add(16),
-        )
-    });
+    let x = (session_slot!(game, MotherBrainBrain[BRAIN].base.x_pos) as i32
+        + (random_number(game) as i32 & 0x1f)
+        - 16i32) as u16;
+    let y = (session_slot!(game, MotherBrainBrain[BRAIN].base.y_pos)).wrapping_add(16);
+    game.foreign(|game| crate::actors::host::BossEffects::set_projectile_spawn_point(game, x, y));
     spawn_room_projectile(ADDR_K_EPROJ_DUST_CLOUD_EXPLOSION as u16, 0xa, game);
     if (game.owned(OwnedWord::RandomEnemyCounter) & 7) == 0 {
         queue_sfx2_max3(sound::LAVA_ACID_DAMAGE, game);
@@ -1404,7 +1400,8 @@ crate::dispatch::callback_dispatch! {
         if (v1 as i32 - 512i32) & 0x8000 != 0 {
             session_slot! { game, MotherBrainBody[BODY]; beam_width = 512, cooldown = -256i32 as u16 }
             session_slot!(game, MotherBrainBody[BODY].explosion_timer = 0);
-            game.foreign(|game| crate::hdma_objects::free_hdma_object(session_slot!(game, MotherBrainBody[BODY].hdma_object), game));
+            let hdma_object = session_slot!(game, MotherBrainBody[BODY].hdma_object);
+            game.foreign(|game| crate::hdma_objects::free_hdma_object(hdma_object, game));
             game.set_owned(OwnedWord::EarthquakeTimer, 0);
             set_brain_instruction_list(animation::BRAIN_NEUTRAL_PHASE_2, game);
             set_up_brain_normal_palette(game);
@@ -1627,7 +1624,8 @@ crate::dispatch::callback_dispatch! {
             game.set_owned(OwnedWord::Bg2TilemapSize, 320);
             session_slot!(game, MotherBrainBody[e].base.y_pos = 188);
             game.set_owned(OwnedWord::EarthquakeTimer, 0);
-            game.foreign(|game| crate::hdma_objects::free_hdma_object(session_slot!(game, MotherBrainBody[e].hdma_object), game));
+            let hdma_object = session_slot!(game, MotherBrainBody[e].hdma_object);
+            game.foreign(|game| crate::hdma_objects::free_hdma_object(hdma_object, game));
             set_body_instruction_list(animation::BODY_STAND_UP_FROM_CROUCH_SLOW, game);
             session_slot!(game, MotherBrainBody[e].function = function::FAKE_DEATH_ASCENT_WAIT_UNTIL_MOTHER_BRAIN_HAS_FINISHED_UNCROUCHING);
             fake_death_ascent_wait_for_uncrouching(game);
@@ -2445,9 +2443,11 @@ crate::dispatch::callback_dispatch! {
     [11116358] spawn_laser_projectile [k] {
         let e: i32 = BRAIN;
         session_slot!(game, MotherBrainBrain[e].neck_moving = 0);
+        let x = (session_slot!(game, MotherBrainBrain[e].base.x_pos)).wrapping_add(16);
+        let y = (session_slot!(game, MotherBrainBrain[e].base.y_pos)).wrapping_add(4);
         game.foreign(|game| {
             game.set_projectile_spawn_r22(1);
-            crate::actors::host::BossEffects::set_projectile_spawn_point(game, (session_slot!(game, MotherBrainBrain[e].base.x_pos)).wrapping_add(16), (session_slot!(game, MotherBrainBrain[e].base.y_pos)).wrapping_add(4));
+            crate::actors::host::BossEffects::set_projectile_spawn_point(game, x, y);
         });
         spawn_room_projectile(ADDR_STRU_86A17B as u16, 1, game);
     };
@@ -2971,7 +2971,8 @@ crate::dispatch::callback_dispatch! {
         if (session_slot!(game, MotherBrainBrain[e].subfunction_timer) & 0x8000) != 0 {
             session_slot!(game, MotherBrainBrain[e].subfunction_timer = 7);
         }
-        game.foreign(|game| crate::actors::host::BossEffects::set_projectile_spawn_point(game, FAKE_DEATH_EXPLOSION_X[session_slot!(game, MotherBrainBrain[e].subfunction_timer) as usize], 212));
+        let x = FAKE_DEATH_EXPLOSION_X[session_slot!(game, MotherBrainBrain[e].subfunction_timer) as usize];
+        game.foreign(|game| crate::actors::host::BossEffects::set_projectile_spawn_point(game, x, 212));
         spawn_room_projectile(
             ADDR_K_EPROJ_DUST_CLOUD_EXPLOSION as u16,
             FAKE_DEATH_EXPLOSION_TYPES[(((random_number(game)) & (0x100u16)) >> 8) as usize] as u16,
