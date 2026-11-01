@@ -878,3 +878,10 @@ The ratchet baseline was lowered to 1,768/89 after the landing and is carried wi
 pin,status,observed_at,evidence,label
 811a77f9eb79a589c566292947dca5b133c65c98,landed,2026-11-01T22:05:42Z,gh pr view 149 mergeCommit/mergedAt + watcher exit0 + main fast-forward,PR149
 ```
+
+
+### PR150 compiler repair, 2026-11-01
+
+The first local gate on `3d63baf07` failed: Torizo and Spore dispatch lacked the Runtime-only boss capabilities, the cinematic fixed-color bound was incomplete, and Clippy found a doc-comment spacing error. No DLL or replay started on that head. Original gate session 55391 closed with exit 1 and no resource stop; its frozen failure handoff is `$TEMP/collab/owned150-qualification/run/GATE_FAILURE_HANDOFF.md`. Hosted compiler jobs failed on the same family.
+
+The reviewed seven-file repair routes boss callbacks through the existing lease tables, preserves physical Draygon selector/function reads and arbitrary dispatch inside the foreign interval, and reuses the active lease for four shared Spore aliases. It adds 88 production lines; verification is unchanged. This repair removes no additional RAM accesses: the combined candidate still measures 1,159 sites in 88 files, 609 fewer than main. Source `ca65aefd...` and patch `851edd97...` have independent source review in `$TEMP/collab/capability150-dispatch-review/HANDOFF.md`; compiler, DLL, fixture and replay qualification remain pending on a fresh sibling. No scenarios, locks or checkpoint schema changed.

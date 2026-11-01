@@ -31,7 +31,6 @@ use sm_data::crocomire::{
 /// A lease on a game with Crocomire's effects.
 /// Crocomire's melt words, which the Session holds as `actors.crocomire_melt`,
 /// read and stored through the host's projected bytes.
-
 pub trait Lease:
     BossLease<Game: Host> + ActorAccess + crate::actors::boss_interaction::Access
 {

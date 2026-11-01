@@ -7,7 +7,14 @@ pub(crate) use sm_game::actors::shaktool::*;
 
 impl Lease for Runtime<'_> {
     fn run_function(&mut self, address: u32) {
-        self.foreign(|game| crate::game::session_runtime::run_aa_function(address, game));
+        if sm_game::actors::species::is_torizo_pre_instruction(address) {
+            self.owned_call(|runtime| {
+                let k = crate::game::session_runtime::Runtime::word(runtime, 0xe54);
+                sm_game::actors::species::torizo_pre_instruction(address, k, runtime);
+            });
+        } else {
+            self.foreign(|game| crate::game::session_runtime::run_aa_function(address, game));
+        }
     }
 
     fn angle_between(&mut self, from: u16, to: u16) -> u16 {

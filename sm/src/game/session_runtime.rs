@@ -172,7 +172,14 @@ impl sm_game::actors::gunship::Host for Runtime<'_> {
         self.foreign(|game| sm_game::menus::save_slots::save(slot, game));
     }
     fn run_other_pre_instruction(&mut self, address: u32) {
-        self.foreign(|game| sm_game::actors::species::pre_instruction(address, game));
+        if sm_game::actors::species::is_torizo_pre_instruction(address) {
+            self.owned_call(|runtime| {
+                let k = Runtime::word(runtime, 0xe54);
+                sm_game::actors::species::torizo_pre_instruction(address, k, runtime);
+            });
+        } else {
+            self.foreign(|game| sm_game::actors::species::pre_instruction(address, game));
+        }
     }
 }
 
@@ -1333,11 +1340,14 @@ impl Runtime<'_> {
             11001151 => self.owned_call(sm_game::actors::phantoon::hurt),
             11001237 => self.owned_call(sm_game::actors::phantoon::touch),
             11001243 => self.owned_call(sm_game::actors::phantoon::shot),
-            11191972 => self.owned_call(sm_game::actors::torizo::main_ai),
-            11195241 => self.owned_call(sm_game::actors::torizo::golden_main_ai),
             10847996 | 10863750 => self.owned_call(|runtime| {
                 use sm_game::actors::{draygon_flight, species};
-                draygon_flight::main_ai(routine == 10847996, species::draygon_function, runtime)
+                draygon_flight::main_ai(
+                    routine == 10847996,
+                    species::draygon_function,
+                    species::draygon_function_on_lease,
+                    runtime,
+                )
             }),
             11771926 => self.owned_call(actors::botwoon::shot),
             11771903 | 11771969 => {

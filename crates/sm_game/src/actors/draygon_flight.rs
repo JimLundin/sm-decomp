@@ -203,23 +203,46 @@ pub fn initialize_tail_or_arms<S: BossState>(arms: bool, game: &mut S) {
         session_slot!(game, Draygon[k].base.layer = 2);
     }
 }
+fn uses_spore_function(address: u32) -> bool {
+    matches!(address, 10873627 | 10873682 | 10873755 | 10873838)
+}
+
 /// Main AI - Draygon body ($A5:86FC, with `body`) or eye ($A5:C486): run the
 /// part's function, then the body carries the other parts with it. Was `update`.
-pub fn main_ai<L: Lease>(body: bool, dispatch: impl FnOnce(u32, u16, &mut L::Game), game: &mut L) {
+pub fn main_ai<L: Lease>(
+    body: bool,
+    dispatch: impl FnOnce(u32, u16, &mut L::Game),
+    lease_dispatch: impl FnOnce(u32, u16, &mut L),
+    game: &mut L,
+) {
     if !body {
-        return game.foreign(|game| {
+        let selected = game.foreign(|game| {
             let k = game.current_enemy() as i32;
             let state =
                 (u32::from(BANK) << 16) | u32::from(session_slot!(game, Draygon[k].function));
-            dispatch(state, game.current_enemy(), game)
+            if uses_spore_function(state) {
+                Some((state, game.current_enemy()))
+            } else {
+                dispatch(state, game.current_enemy(), game);
+                None
+            }
         });
+        if let Some((state, k)) = selected {
+            lease_dispatch(state, k, game);
+        }
+        return;
     }
     // The body's function runs on the lease, the effects that need the game
     // in foreign calls.
     let k = game.current_enemy();
     let function = session_slot!(game, Draygon[k as i32].function);
     run_function_on(game, function, k, |game| {
-        dispatch(u32::from(BANK) << 16 | u32::from(function), k, game)
+        let state = (u32::from(BANK) << 16) | u32::from(function);
+        if uses_spore_function(state) {
+            lease_dispatch(state, k, game);
+        } else {
+            game.foreign(|game| dispatch(state, k, game));
+        }
     });
     let x = session_slot!(game, Draygon[BODY].base.x_pos);
     for k in [EYE, TAIL, ARMS] {
@@ -233,13 +256,8 @@ pub fn main_ai<L: Lease>(body: bool, dispatch: impl FnOnce(u32, u16, &mut L::Gam
 
 /// Run the bank $A5 body function `function` for part `k`, as the species
 /// table's dispatch does: the flight, swoop and grab functions on this lease, the rest
-/// through `fallback` on the game.
-fn run_function_on<L: Lease>(
-    game: &mut L,
-    function: u16,
-    k: u16,
-    fallback: impl FnOnce(&mut L::Game),
-) {
+/// through `fallback`, which chooses typed or physical dispatch.
+fn run_function_on<L: Lease>(game: &mut L, function: u16, k: u16, fallback: impl FnOnce(&mut L)) {
     use crate::actors::{draygon_grab as grab, draygon_sweep as sweep};
     match function {
         function::FIGHT_INTRO_INITIAL_DELAY => fight_intro(true, game),
@@ -270,7 +288,7 @@ fn run_function_on<L: Lease>(
         function::FLY_STRAIGHT_UP => grab::fly_straight_up(game),
         function::NONE => {}
         // The left swoop setup's diagnostic, the death and anything else.
-        _ => game.foreign(fallback),
+        _ => fallback(game),
     }
 }
 /// Enemy graphics drawn hook - Draygon - set BG2 X/Y scroll ($A5:9342). Was

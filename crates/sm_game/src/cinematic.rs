@@ -299,7 +299,7 @@ pub fn add_cinematic_pair(
 
 pub fn set_fixed_color<H>(channels: [u8; 3], game: &mut H)
 where
-    H: crate::display_refresh::DisplayOwner + ?Sized,
+    H: crate::display::preparation::Access + ?Sized,
 {
     for (channel, value) in channels.into_iter().enumerate() {
         crate::display::preparation::Access::store_display_control_byte(

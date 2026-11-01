@@ -83,7 +83,6 @@ pub fn touch<H: TouchHost>(ea: u32, game: &mut H) {
         10977356 => (),
         11001237 => game.phantoon(phantoon::Callback::Touch),
         11122117 => (),
-        11192695 => torizo::touch(game),
         11700076 => space_pirates::touch(game),
         _ => game.unknown_routine(),
     }
@@ -126,9 +125,7 @@ pub fn shot<H: ShotHost>(ea: u32, _j: u16, game: &mut H) {
         10977356 => (),
         10982581 => (),
         11001243 => game.phantoon(phantoon::Callback::Shot),
-        11192700 => torizo::shot(game),
         11192769 => (),
-        11192770 => torizo::standing_shot(game),
         11700089 => space_pirates::shot(game),
         11700168 => space_pirates::check_shot(game),
         11700286 => space_pirates::reflect(game),
@@ -229,12 +226,26 @@ pub fn draygon_function<H: AiHost>(ea: u32, k: u16, game: &mut H) {
         10863891 => draygon_eye::look_at_samus(k, true, game),
         // Spore Spawn's functions ($A5:EB1A-$A5:EBEE), which the dispatch shares.
         10846283 | 10873626 => (),
+        10873627 => game.with_lease(spore_spawn::descend),
+        10873682 => game.with_lease(|runtime| spore_spawn::orbit(k, runtime)),
+        10873755 => game.with_lease(spore_spawn::begin_return),
+        10873838 => game.with_lease(spore_spawn::finish_return),
+        _ => game.unknown_routine(),
+    }
+}
+
+/// Dispatch the shared bank $A5 functions while retaining the scheduler's lease.
+pub fn draygon_function_on_lease<L>(ea: u32, k: u16, game: &mut L)
+where
+    L: crate::actors::host::ActorLease + spore_spawn::Lease,
+{
+    crate::actors::host::ActorLease::owned_lease_call(game, |game| match ea {
         10873627 => spore_spawn::descend(game),
         10873682 => spore_spawn::orbit(k, game),
         10873755 => spore_spawn::begin_return(game),
         10873838 => spore_spawn::finish_return(game),
-        _ => game.unknown_routine(),
-    }
+        _ => unreachable!(),
+    });
 }
 
 /// The AI routines that run on one actor lease, keyed by address: the lease the scheduler
@@ -361,6 +372,15 @@ pub fn lease_ai<H: LeaseScope + ?Sized>(ea: u32, game: &mut H) -> bool {
         10728572 => game.with_lease(zoa::main_ai),
         10670988 => game.with_lease(|runtime| oum::touch(false, runtime)),
         10671028 => game.with_lease(oum::shot),
+        11191934 => game.with_lease(torizo::hurt),
+        11192695 => game.with_lease(torizo::touch),
+        11192700 => game.with_lease(torizo::shot),
+        11195322 => game.with_lease(torizo::golden_hurt),
+        11191972 => game.with_lease(torizo::main_ai),
+        11192447 => game.with_lease(torizo::initialize),
+        11195241 => game.with_lease(torizo::golden_main_ai),
+        11196007 => game.with_lease(torizo::golden_shot),
+        // Bank $B2: the space pirates.
         _ => return false,
     }
     true
@@ -392,6 +412,200 @@ pub fn lease_instruction<H: LeaseScope + ?Sized>(
         10728489 => game.with_lease(|runtime| zoa::set_x_speed_index(4, j, runtime)),
         10728500 => game.with_lease(|runtime| zoa::set_x_speed_index(8, j, runtime)),
         10728511 => game.with_lease(|runtime| zoa::set_x_speed_index(12, j, runtime)),
+        11186332 => game.with_lease(|runtime| torizo::set_function(k, j, runtime)),
+        11186461 => {
+            game.with_lease(|runtime| torizo::blow_up_gut(k, runtime));
+            j
+        }
+        11186622 => {
+            game.with_lease(|runtime| torizo::blow_up_face(k, runtime));
+            j
+        }
+        11186724 => {
+            game.with_lease(|runtime| torizo::set_visible(k, runtime));
+            j
+        }
+        11186734 => {
+            game.with_lease(|runtime| torizo::set_invisible(k, runtime));
+            j
+        }
+        11186765 => {
+            game.with_lease(|runtime| torizo::defeated(k, runtime));
+            j
+        }
+        11190985 => {
+            game.with_lease(|runtime| torizo::lock_animation(k, runtime));
+            j
+        }
+        11190993 => {
+            game.with_lease(|runtime| torizo::unlock_animation(k, runtime));
+            j
+        }
+        11191001 => game.with_lease(|runtime| torizo::branch_if_faceless(k, j, runtime)),
+        11191021 => game.with_lease(|runtime| torizo::set_link(k, j, runtime)),
+        11191043 => game.with_lease(|runtime| torizo::low_health_explosions(k, j, runtime)),
+        11191087 => game.with_lease(|runtime| torizo::death_explosion(k, j, runtime)),
+        11191131 => {
+            game.with_lease(|runtime| torizo::drool_if_low_health(k, runtime));
+            j
+        }
+        11191149 => {
+            game.with_lease(|runtime| torizo::start_turning(k, runtime));
+            j
+        }
+        11191159 => {
+            game.with_lease(|runtime| torizo::stepped(k, runtime, 0));
+            j
+        }
+        11191178 => {
+            game.with_lease(|runtime| torizo::stepped(k, runtime, 0x8000));
+            j
+        }
+        11191200 => {
+            game.with_lease(|runtime| torizo::stepped(k, runtime, 0x2000));
+            j
+        }
+        11191222 => {
+            game.with_lease(|runtime| torizo::stepped(k, runtime, 0xa000));
+            j
+        }
+        11191244 => game.with_lease(|runtime| torizo::stand_up(k, j, runtime)),
+        11191326 => game.with_lease(|runtime| torizo::sit_down(k, j, runtime)),
+        11191408 => game.with_lease(|runtime| {
+            torizo::walk(
+                k,
+                j,
+                torizo::list::TURNING_LEFT,
+                torizo::list::TURNING_RIGHT,
+                72,
+                runtime,
+            )
+        }),
+        11191525 => game.with_lease(|runtime| {
+            torizo::walk(
+                k,
+                j,
+                torizo::list::FACELESS_TURNING_LEFT,
+                torizo::list::FACELESS_TURNING_RIGHT,
+                72,
+                runtime,
+            )
+        }),
+        11191642 => game.with_lease(|runtime| torizo::branch_if_rising(k, j, runtime)),
+        11191655 => game.with_lease(|runtime| torizo::call_if_samus_close_in_front(k, j, runtime)),
+        11191691 => game.with_lease(|runtime| torizo::jump_back_if_samus_close(k, j, runtime)),
+        11191716 => game.with_lease(|runtime| torizo::bomb_attack(k, j, runtime)),
+        11191755 => {
+            game.with_lease(|runtime| torizo::bomb_chozo_orbs(k, runtime));
+            j
+        }
+        11191779 => game.with_lease(|runtime| torizo::bomb_sonic_boom(k, j, runtime)),
+        11191794 => game.with_lease(|runtime| torizo::golden_sonic_boom(k, j, runtime)),
+        11193038 => game.with_lease(|runtime| torizo::branch_if_airborne(k, j, runtime)),
+        11193058 => {
+            game.with_lease(|runtime| torizo::start_golden_fight(k, runtime));
+            j
+        }
+        11193815 => {
+            game.with_lease(|runtime| torizo::clear_caught_super_missile(k, runtime));
+            j
+        }
+        11194747 => {
+            game.with_lease(|runtime| torizo::disable_eye_beam_explosions(k, runtime));
+            j
+        }
+        11194759 => {
+            game.with_lease(|runtime| torizo::enable_eye_beam_explosions(k, runtime));
+            j
+        }
+        11194855 => {
+            game.with_lease(|runtime| torizo::clear_stunned(k, runtime));
+            j
+        }
+        11195370 => {
+            game.with_lease(|runtime| torizo::branch_if_samus_rolling_behind(k, j, runtime))
+        }
+        11195461 => {
+            game.with_lease(|runtime| torizo::call_sometimes_if_samus_in_front(k, j, runtime))
+        }
+        11195508 => game.with_lease(|runtime| torizo::call_sometimes_at_low_health(k, j, runtime)),
+        11195547 => {
+            game.with_lease(|runtime| torizo::call_if_stunned_at_high_health(k, j, runtime))
+        }
+        11195578 => game.with_lease(|runtime| torizo::jump_forwards_if_samus_far(k, j, runtime)),
+        11195635 => {
+            game.with_lease(|runtime| torizo::golden_chozo_orbs(k, runtime));
+            j
+        }
+        11195645 => game.with_lease(|runtime| torizo::golden_jump_back(k, j, runtime)),
+        11195686 => game.with_lease(|runtime| torizo::golden_attack(k, j, runtime)),
+        11195725 => game.with_lease(|runtime| {
+            torizo::walk(
+                k,
+                j,
+                torizo::list::GOLDEN_TURNING_LEFT,
+                torizo::list::GOLDEN_TURNING_RIGHT,
+                16,
+                runtime,
+            )
+        }),
+        11191031 => game.with_lease(|runtime| torizo::return_to_link(k, runtime)),
+        11191037 => game.with_lease(|runtime| torizo::return_from_gut_explosion(k, runtime)),
+        11186744 => {
+            game.with_lease(torizo::fade_to_black);
+            j
+        }
+        11186801 => {
+            game.with_lease(torizo::advance_colour_change);
+            j
+        }
+        11188557 => {
+            game.with_lease(torizo::fade_to_active);
+            j
+        }
+        11188561 => {
+            game.with_lease(torizo::start_fight);
+            j
+        }
+        11191114 => {
+            game.with_lease(torizo::landing_dust);
+            j
+        }
+        11191809 => game.with_lease(|runtime| torizo::explosive_swipe(j, runtime)),
+        11191824 => {
+            game.with_lease(torizo::shot_sound);
+            j
+        }
+        11191832 => {
+            game.with_lease(torizo::footstep_sound);
+            j
+        }
+        11193054 => {
+            game.with_lease(torizo::golden_palettes);
+            j
+        }
+        11194601 => {
+            game.with_lease(torizo::spawn_egg);
+            j
+        }
+        11194611 => game.with_lease(|runtime| torizo::branch_if_egg_active(j, runtime)),
+        11195279 => {
+            game.with_lease(torizo::egg_released_sound);
+            j
+        }
+        11195287 => {
+            game.with_lease(torizo::laser_sound);
+            j
+        }
+        11195295 => {
+            game.with_lease(torizo::sonic_boom_sound);
+            j
+        }
+        11195360 => {
+            game.with_lease(torizo::golden_super_missile);
+            j
+        }
+        11195446 => game.with_lease(|runtime| torizo::eye_beam(j, runtime)),
         _ => return Err(j),
     })
 }
@@ -402,6 +616,7 @@ pub fn lease_touch<H: LeaseScope + ?Sized>(ea: u32, game: &mut H) -> bool {
     match ea {
         10670984 => game.with_lease(|runtime| oum::touch(true, runtime)),
         10670988 => game.with_lease(|runtime| oum::touch(false, runtime)),
+        11192695 => game.with_lease(torizo::touch),
         _ => return false,
     }
     true
@@ -412,6 +627,8 @@ pub fn lease_touch<H: LeaseScope + ?Sized>(ea: u32, game: &mut H) -> bool {
 pub fn lease_shot<H: LeaseScope + ?Sized>(ea: u32, game: &mut H) -> bool {
     match ea {
         10671028 => game.with_lease(oum::shot),
+        11192700 => game.with_lease(torizo::shot),
+        11192770 => game.with_lease(torizo::standing_shot),
         _ => return false,
     }
     true
@@ -538,20 +755,15 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         11042851 => game.contact_reaction(Death::Finalize),
         11042861 => game.shot_reaction(Shot::Finalize),
         // Bank $AA: the Torizos, Shaktool and the statues.
-        11191934 => torizo::hurt(game),
-        11192695 => torizo::touch(game),
-        11192700 => torizo::shot(game),
-        11195322 => torizo::golden_hurt(game),
-        11191972 => torizo::main_ai(game),
-        11192447 => torizo::initialize(game),
-        11195241 => torizo::golden_main_ai(game),
-        11196007 => torizo::golden_shot(game),
-        // Bank $B2: the space pirates.
         0xb20000..=0xb2ffff => space_pirates::dispatch_ai(ea, game),
         // Bank $A5.
         10847879 => draygon_flight::initialize(|game: &mut H| game.install_draygon_layers(), game),
-        10847996 => draygon_flight::main_ai(true, draygon_function, game),
-        10863750 => draygon_flight::main_ai(false, draygon_function, game),
+        10847996 => game.with_lease(|runtime| {
+            draygon_flight::main_ai(true, draygon_function, draygon_function_on_lease, runtime)
+        }),
+        10863750 => game.with_lease(|runtime| {
+            draygon_flight::main_ai(false, draygon_function, draygon_function_on_lease, runtime)
+        }),
         10851661 => draygon_death::hurt_ai(game),
         10864025 => draygon_flight::initialize_tail_or_arms(false, game),
         10864045 => draygon_flight::initialize_tail_or_arms(true, game),
@@ -667,8 +879,28 @@ pub fn gunship_pre_instruction(
 
 /// An enemy species' pre-instruction, keyed by its address. The current
 /// enemy index is read once, before dispatch, as the original did.
+/// The Torizo pre-instructions selected before entering a physical callback.
+pub fn is_torizo_pre_instruction(ea: u32) -> bool {
+    matches!(ea, 11192146 | 11192364 | 11195889 | 11192360 | 11195885)
+}
+
+/// Run a selected Torizo pre-instruction using the caller's captured enemy.
+pub fn torizo_pre_instruction<L: torizo::Lease>(ea: u32, k: u16, game: &mut L) {
+    match ea {
+        11192146 => torizo::walking(k, game),
+        11192364 => torizo::jumping_or_falling(k, game),
+        11195889 => torizo::golden_walking(k, game),
+        11192360 | 11195885 => torizo::attacking(k, game),
+        _ => unreachable!(),
+    }
+}
+
 pub fn pre_instruction<H: PreInstructionHost>(ea: u32, game: &mut H) {
     let k: u16 = word!(game.CUR_ENEMY_INDEX);
+    if is_torizo_pre_instruction(ea) {
+        game.with_lease(|runtime| torizo_pre_instruction(ea, k, runtime));
+        return;
+    }
     if matches!(
         ea,
         10659852
@@ -749,10 +981,6 @@ pub fn pre_instruction<H: PreInstructionHost>(ea: u32, game: &mut H) {
                 actor: k,
             }),
         // Bank $AA: the Torizos, Shaktool and the statues.
-        11192146 => torizo::walking(k, game),
-        11192364 => torizo::jumping_or_falling(k, game),
-        11195889 => torizo::golden_walking(k, game),
-        11192360 | 11195885 => torizo::attacking(k, game),
         10666625 => geruta::flames(k, false, game),
         10666727 => geruta::idle(k, false, game),
         10666815 => geruta::finish_animation(k, false, false, game),
@@ -913,188 +1141,6 @@ pub fn instruction<H: InstructionHost>(
         // Bank $AA: the Torizos, Shaktool and the statues; the two identity
         // instructions return the script unchanged.
         11190984 | 11196831 => j,
-        11186332 => torizo::set_function(k, j, game),
-        11186461 => {
-            torizo::blow_up_gut(k, game);
-            j
-        }
-        11186622 => {
-            torizo::blow_up_face(k, game);
-            j
-        }
-        11186724 => {
-            torizo::set_visible(k, game);
-            j
-        }
-        11186734 => {
-            torizo::set_invisible(k, game);
-            j
-        }
-        11186765 => {
-            torizo::defeated(k, game);
-            j
-        }
-        11190985 => {
-            torizo::lock_animation(k, game);
-            j
-        }
-        11190993 => {
-            torizo::unlock_animation(k, game);
-            j
-        }
-        11191001 => torizo::branch_if_faceless(k, j, game),
-        11191021 => torizo::set_link(k, j, game),
-        11191043 => torizo::low_health_explosions(k, j, game),
-        11191087 => torizo::death_explosion(k, j, game),
-        11191131 => {
-            torizo::drool_if_low_health(k, game);
-            j
-        }
-        11191149 => {
-            torizo::start_turning(k, game);
-            j
-        }
-        11191159 => {
-            torizo::stepped(k, game, 0);
-            j
-        }
-        11191178 => {
-            torizo::stepped(k, game, 0x8000);
-            j
-        }
-        11191200 => {
-            torizo::stepped(k, game, 0x2000);
-            j
-        }
-        11191222 => {
-            torizo::stepped(k, game, 0xa000);
-            j
-        }
-        11191244 => torizo::stand_up(k, j, game),
-        11191326 => torizo::sit_down(k, j, game),
-        11191408 => torizo::walk(
-            k,
-            j,
-            torizo::list::TURNING_LEFT,
-            torizo::list::TURNING_RIGHT,
-            72,
-            game,
-        ),
-        11191525 => torizo::walk(
-            k,
-            j,
-            torizo::list::FACELESS_TURNING_LEFT,
-            torizo::list::FACELESS_TURNING_RIGHT,
-            72,
-            game,
-        ),
-        11191642 => torizo::branch_if_rising(k, j, game),
-        11191655 => torizo::call_if_samus_close_in_front(k, j, game),
-        11191691 => torizo::jump_back_if_samus_close(k, j, game),
-        11191716 => torizo::bomb_attack(k, j, game),
-        11191755 => {
-            torizo::bomb_chozo_orbs(k, game);
-            j
-        }
-        11191779 => torizo::bomb_sonic_boom(k, j, game),
-        11191794 => torizo::golden_sonic_boom(k, j, game),
-        11193038 => torizo::branch_if_airborne(k, j, game),
-        11193058 => {
-            torizo::start_golden_fight(k, game);
-            j
-        }
-        11193815 => {
-            torizo::clear_caught_super_missile(k, game);
-            j
-        }
-        11194747 => {
-            torizo::disable_eye_beam_explosions(k, game);
-            j
-        }
-        11194759 => {
-            torizo::enable_eye_beam_explosions(k, game);
-            j
-        }
-        11194855 => {
-            torizo::clear_stunned(k, game);
-            j
-        }
-        11195370 => torizo::branch_if_samus_rolling_behind(k, j, game),
-        11195461 => torizo::call_sometimes_if_samus_in_front(k, j, game),
-        11195508 => torizo::call_sometimes_at_low_health(k, j, game),
-        11195547 => torizo::call_if_stunned_at_high_health(k, j, game),
-        11195578 => torizo::jump_forwards_if_samus_far(k, j, game),
-        11195635 => {
-            torizo::golden_chozo_orbs(k, game);
-            j
-        }
-        11195645 => torizo::golden_jump_back(k, j, game),
-        11195686 => torizo::golden_attack(k, j, game),
-        11195725 => torizo::walk(
-            k,
-            j,
-            torizo::list::GOLDEN_TURNING_LEFT,
-            torizo::list::GOLDEN_TURNING_RIGHT,
-            16,
-            game,
-        ),
-        11191031 => torizo::return_to_link(k, game),
-        11191037 => torizo::return_from_gut_explosion(k, game),
-        11186744 => {
-            torizo::fade_to_black(game);
-            j
-        }
-        11186801 => {
-            torizo::advance_colour_change(game);
-            j
-        }
-        11188557 => {
-            torizo::fade_to_active(game);
-            j
-        }
-        11188561 => {
-            torizo::start_fight(game);
-            j
-        }
-        11191114 => {
-            torizo::landing_dust(game);
-            j
-        }
-        11191809 => torizo::explosive_swipe(j, game),
-        11191824 => {
-            torizo::shot_sound(game);
-            j
-        }
-        11191832 => {
-            torizo::footstep_sound(game);
-            j
-        }
-        11193054 => {
-            torizo::golden_palettes(game);
-            j
-        }
-        11194601 => {
-            torizo::spawn_egg(game);
-            j
-        }
-        11194611 => torizo::branch_if_egg_active(j, game),
-        11195279 => {
-            torizo::egg_released_sound(game);
-            j
-        }
-        11195287 => {
-            torizo::laser_sound(game);
-            j
-        }
-        11195295 => {
-            torizo::sonic_boom_sound(game);
-            j
-        }
-        11195360 => {
-            torizo::golden_super_missile(game);
-            j
-        }
-        11195446 => torizo::eye_beam(j, game),
         0xb20000..=0xb2ffff => space_pirates::dispatch_instruction(ea, k, j, game),
         // Bank $A5.
         10851549 => draygon_flight::set_instruction_lists(j, game),
