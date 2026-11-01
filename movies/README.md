@@ -8,8 +8,9 @@ must match. The [README](../README.md#verification) lists what this does not
 cover.
 
 The corpus scenarios in [scenarios/corpus.toml](../scenarios/corpus.toml)
-define the rows and the events each must show: 161 rows, 247,574 selected
-frames. [scenarios/lock.toml](../scenarios/lock.toml) pins their inputs, seeds
+define the rows and the events each must show. The dated
+[workflow snapshot](../docs/PROGRESS_REPORT.md#workflow-inventory-snapshot) retains
+the previous row/frame totals; use the manifest for current selections. [scenarios/lock.toml](../scenarios/lock.toml) pins their inputs, seeds
 and checkpoints, and the bundles holding them; `tools/scenario.py lock`
 writes it (see [the harness](../docs/SCENARIO_HARNESS.md#scenarios-as-data)). Follow the
 [build guide](../docs/ITERATION.md) first; commands below run from the

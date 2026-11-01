@@ -11,36 +11,19 @@ re-spin, all supplied through `sm_data` and explicit profiles. The
 [accepted architecture](docs/target-architecture/README.md) describes the
 destination.
 
-## Where it stands
+## Migration and crate roles
 
 The code began as a one-time c2rust translation of
 [snesrev/sm](https://github.com/snesrev/sm) ([translation record](tools/transpile/README.md))
-and is now maintained by hand. Today the game runs as Rust gameplay driving
-emulated SNES video and audio hardware. A built-in 65816 emulator runs the
-original ROM alongside it as a reference (the oracle), so every frame of the
-Rust game can be compared with the original.
+and is maintained by hand. Target responsibilities are gameplay in `sm_game`,
+content in `sm_data`, rendering/audio in `sm_runtime`, the device shell in
+`sm_app`, and replay/import tooling in `sm_tools`. `sm` supplies retained compat
+and oracle tooling while responsibilities migrate.
 
-Engine code is being moved, module by module, out of the compatibility crate
-`sm` into target crates that the compiler keeps free of the emulator. Nothing
-yet runs without the emulated hardware: the emulated PPU draws through
-`sm_runtime`'s scanline renderer, but the game still runs on the emulated
-machine, and the target-engine [validation gates](docs/target-architecture/VALIDATION.md)
-have not been run.
-
-## Crate layout
-
-| Crate | Role |
-| --- | --- |
-| [`crates/sm_game`](crates/sm_game/README.md) | Gameplay rules and the deterministic `Session` with typed state; about 102,000 lines. No dependency on the emulator or devices, though some moved code still reaches the RAM image through host traits; `unsafe` is forbidden. |
-| [`crates/sm_data`](crates/sm_data/README.md) | Content records built from bytes and validated when imported (tables, palettes, boss and enemy data). No dependencies; `unsafe` is forbidden. |
-| [`crates/sm_runtime`](crates/sm_runtime/README.md) | Shared scanline renderer for prepared media, plus Scene and message consumers. The destination for the renderer, audio and devices. |
-| [`crates/sm_app`](crates/sm_app/README.md) | The desktop binary `sm`: SDL2 window, input, configuration, OpenGL presentation and the run loop. Still built on `sm`. |
-| [`sm`](sm/README.md) | Compat: the `Game` handle, the SNES RAM image, emulated PPU/APU, the 65816 oracle, the verifier, and game code not yet migrated. It only shrinks. |
-
-CI enforces the dependency direction: `sm_game` and `sm_runtime` may depend
-only on `sm_data`, and `sm_data` depends on nothing. The planned `sm_tools`
-crate (importer, replay) does not exist yet; replay and import tooling is the
-verifier in `sm` plus the Python scripts in [`tools/`](tools).
+For measured crate size, implementation status and retained validation evidence,
+read the dated [progress report](docs/PROGRESS_REPORT.md#readme-snapshot).
+[Architecture migration](docs/target-architecture/README.md#responsibility-migration)
+defines each responsibility's destination and removal condition.
 
 ### How code moves
 
@@ -84,12 +67,11 @@ compared. Every frame it checks WRAM, SRAM, VRAM, CGRAM, OAM, PPU registers and
 port state, and the rendered 256x240 image. Any difference fails the run. The
 [verification guide](movies/README.md) explains how to run it locally.
 
-| Check | Workflow | Runs | Covers |
-| --- | --- | --- | --- |
-| PR CI | [`ci.yml`](.github/workflows/ci.yml) | Every pull request and push to main | Formatting, progress reports, dependency direction, target-crate tests, the `sm_data` ROM import check, Windows build of native libraries, verifier DLL and desktop, verifier unit tests, detached composition checks |
-| Corpus | [`segments.yml`](.github/workflows/segments.yml) | Every 3 hours, on dispatch, and after a push that deletes a legacy bank file | The 161 corpus scenarios of [`scenarios/corpus.toml`](scenarios/corpus.toml): 247,574 selected frames covering every area and boss, item pickups, doors, elevators, saves, death and credits |
-| Full route | [`full-route.yml`](.github/workflows/full-route.yml) | Nightly and on dispatch | The whole 100% TAS, 222,788 frames, in 20,000-frame chunks started from checkpoints that the original produces from boot |
-| Coverage | [`coverage.yml`](.github/workflows/coverage.yml) | Manual | The corpus on an instrumented verifier; reports `sm_game` and `sm/src/game` code it never executes |
+Read the workflow definitions for their current triggers and selections:
+[PR CI](.github/workflows/ci.yml), [corpus](.github/workflows/segments.yml),
+[full route](.github/workflows/full-route.yml) and [coverage](.github/workflows/coverage.yml).
+The [report](docs/PROGRESS_REPORT.md#workflow-inventory-snapshot) retains the old
+inventory; selected-frame counts alone do not prove complete movie coverage.
 
 The ROM for CI comes from repository secrets. The ROM import check confirms
 that every `sm_data` record accepts the real cartridge; a record that rejected
@@ -111,7 +93,8 @@ What this does not cover:
   checked by the comparison.
 - The desktop build and the verifier run only on Windows.
 - Self-consistency of the target crates is not fidelity: the target-engine
-  gates in [VALIDATION](docs/target-architecture/VALIDATION.md) are still open.
+  gates in [VALIDATION](docs/target-architecture/VALIDATION.md) require their own
+  evidence; consult the dated [report](docs/PROGRESS_REPORT.md#architecture-snapshot).
 
 ## Progress
 
@@ -124,14 +107,8 @@ of access. Code in `sm_game` that still reads the RAM image through those macros
 is relocated, not yet owned. `sh tools/progress.sh` counts transpiler residue
 (unsafe functions, C ABI exports, casts, legacy bank lines). CI prints both.
 
-A snapshot at `f13baeee` (2026-10-30); rerun the scripts for current numbers:
-
-| Measure | Value |
-| --- | ---: |
-| `sm_game` lines | 101,999 |
-| `sm_game` files still on compat RAM/registers | 88 of 363 |
-| Legacy bank lines (`sm/src/game/sm_*.rs`) | 6,392 |
-| `sm/src/game/` files using the `Game` handle | 123 |
+For source-bound measurements, read the [progress report](docs/PROGRESS_REPORT.md#source-count-snapshot).
+Rerun the accounting tools for current numbers; #6 is the sole daily report.
 
 ## Documentation
 
