@@ -61,7 +61,12 @@ pub(crate) fn run_checked() {
     crate::game::actors::contact_checks::run_checked();
     botwoon_maw_publication_preserves_owned_aliases_and_capture_epoch();
     player_lease::run_checked();
+    boss_dispatch::spore_aliases_reuse_actual_runtime();
+    boss_dispatch::physical_eye_failure_preserves_allocation_prefix();
 }
+
+#[path = "boss_dispatch_boundaries.rs"]
+mod boss_dispatch;
 
 #[path = "player_lease_checks.rs"]
 mod player_lease;
