@@ -67,7 +67,8 @@ def chunks(kind, members):
         current.append(r)
     return out + [current]
 
-FRAME_CAP = sum(r.get('frames', 0) for g in groups.values() for r in g) / 12
+FRAME_CAP = sum(r.get('frames', 0) for (record, _, _), members in groups.items()
+                if not record for r in members) / 12
 shards = []
 for (record, kind, identity), members in sorted(groups.items()):
     members.sort(key=lambda r: r.get('start_frame', 0))
