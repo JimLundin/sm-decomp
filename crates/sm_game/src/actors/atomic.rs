@@ -1,17 +1,14 @@
 //! Atomic, the Wrecked Ship's spinning orb, which drifts towards Samus (bank
 //! $A8:E230-$A8:E489). Was `wrecked_ship_orbs`.
-use crate::actors::host::{ActorHost, ActorRuntime, Axis};
+use crate::actors::boss_lease::BossState;
+use crate::actors::host::Axis;
 use crate::actors::layouts::part_view;
 use crate::actors::session_slots::session_slot;
-use crate::ram::word;
-use crate::records::Records;
 use sm_data::enemy_speeds::SpeedTable;
 
 /// What Atomic needs beyond the shared actor operations: its instruction lists
 /// and the unreachable diagnostic.
-pub trait Host:
-    ActorHost + ActorRuntime + Records + crate::actors::session_slots::SlotAccess
-{
+pub trait Host: BossState {
     fn unreachable(&mut self);
 }
 
@@ -41,7 +38,7 @@ pub mod function {
 const SIGN: u16 = 0x8000;
 
 fn current(game: &(impl Host + ?Sized)) -> i32 {
-    word!(game.CUR_ENEMY_INDEX) as i32
+    i32::from(game.current_enemy())
 }
 /// Initialisation AI - Atomic ($A8:E388).
 pub fn initialize(game: &mut (impl Host + ?Sized)) {
@@ -89,7 +86,7 @@ fn move_atomic(horizontal: bool, function: u16, game: &mut (impl Host + ?Sized))
 pub fn main_ai(game: &mut (impl Host + ?Sized)) {
     let atomic = current(game);
     session_slot!(game, Atomic[atomic].y_movement_function = function::MOVE_UP);
-    let k = word!(game.CUR_ENEMY_INDEX);
+    let k = game.current_enemy();
     if game.player_delta(k, Axis::Y) & SIGN == 0 {
         session_slot!(
             game,
@@ -101,7 +98,7 @@ pub fn main_ai(game: &mut (impl Host + ?Sized)) {
         game,
         Atomic[atomic].x_movement_function = function::MOVE_LEFT
     );
-    let k = word!(game.CUR_ENEMY_INDEX);
+    let k = game.current_enemy();
     if game.player_delta(k, Axis::X) & SIGN == 0 {
         session_slot!(
             game,
