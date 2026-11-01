@@ -76,6 +76,8 @@ pub trait BossState:
     fn select_enemy(&mut self, k: u16);
     /// Kill the current actor with death `kind`.
     fn kill_current(&mut self, kind: crate::actors::api::DeathKind);
+    /// The current area's boss flags.
+    fn area_boss_byte(&mut self) -> u8;
 }
 
 /// A lease on a boss's game. The game is its own lease, whose `foreign` runs

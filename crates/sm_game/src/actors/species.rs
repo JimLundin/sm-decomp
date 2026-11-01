@@ -676,8 +676,6 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
             let function = yard::prepare(game);
             pre_instruction(function, game);
         }
-        11068983 => wrecked_ship_spark::initialize(game),
-        11069070 => wrecked_ship_spark::main_ai(game),
         10663876 => {
             if !rinka::main_ai(game) {
                 game.unknown_routine();
@@ -1046,7 +1044,6 @@ pub fn instruction<H: InstructionHost>(
         10854268 | 10854318 => draygon_death::spawn_goop(ea == 10854318, j, game),
         10725992 => sidehopper::queue_sound(j, game),
         10657941 => cacatac::resume_moving(k, j, game),
-        11068957 | 11068970 => wrecked_ship_spark::set_intangible(game, ea == 11068957, j),
         10734646 | 10734655 | 10734664 | 10734687 | 10734712 => yard::instruction(ea, k, j, game),
         11062537 | 11062692 | 11062762 | 11062917 | 11062987 | 11062991 | 11063146 | 11063216
         | 11063371 | 11063441 | 11063490 | 11063494 | 11063506 | 11063552 | 11063559 | 11063601
