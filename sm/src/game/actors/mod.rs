@@ -2,7 +2,6 @@
 #![forbid(unsafe_code)]
 pub(in crate::game) use sm_game::actors::access;
 pub(in crate::game) use sm_game::actors::api;
-pub(crate) mod baby_metroid;
 pub(in crate::game) mod boss_lease;
 pub(crate) mod botwoon;
 pub(crate) mod escape_critters;

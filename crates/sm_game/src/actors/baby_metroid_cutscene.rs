@@ -43,8 +43,11 @@ pub trait Host: crate::actors::baby_metroid_encounter::Host {
 }
 
 /// A Mother Brain lease whose game is this module's host.
-pub trait Lease: FightLease<Game: Host> {}
-impl<T: FightLease<Game: Host> + ?Sized> Lease for T {}
+pub trait Lease: FightLease<Game: Host> + crate::actors::baby_metroid_encounter::Lease {}
+impl<T: FightLease<Game: Host> + crate::actors::baby_metroid_encounter::Lease + ?Sized> Lease
+    for T
+{
+}
 
 /// The bank $A9 functions these slots run, named after the bank log's headings.
 pub mod function {

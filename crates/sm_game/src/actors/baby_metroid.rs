@@ -5,16 +5,8 @@ use crate::actors::host::abs16;
 use crate::actors::layouts::part_view;
 use crate::actors::session_slots::{SlotAccess, session_slot};
 use crate::effects::SoundEffects;
-use crate::ram::{CompatibilityRam, RawRam as _, WorkRamAccess};
-
-/// What the baby Metroid needs beyond a boss's state steps and work RAM:
-/// hardcoded PLM spawns.
-pub trait Host:
-    WorkRamAccess + crate::actors::boss_lease::BossState + crate::runtime_access::RuntimeAccess
-{
-    /// Spawn the PLM with `header` at block (`block_x`, `block_y`).
-    fn spawn_hardcoded_plm(&mut self, block_x: u8, block_y: u8, header: u16);
-}
+use crate::ram::CompatibilityRam;
+use crate::runtime_access::SessionRam;
 
 part_view! {
     /// The baby Metroid's view of its slot.
@@ -118,21 +110,21 @@ pub fn separated_from_rect(
 /// Baby Metroid function - wait for camera ($A9:EFE6): once the camera is left of
 /// the stop, pin it there, turn scrolls 1 and 3 red, raise the invisible walls,
 /// let the sidehopper live and enable the cry. Was `BabyMetroid_Func_4`.
-pub fn wait_for_camera(game: &mut impl Host) {
-    if (crate::camera::current(game).layer1[0] as i32 - (i32::from(CAMERA_STOP_X) + 1)) & SIGN != 0
+pub fn wait_for_camera(game: &mut impl crate::actors::mother_brain_fight::Lease) {
+    if ((i32::from(game.camera().layer1[0]) - (i32::from(CAMERA_STOP_X) + 1)) & SIGN) != 0
     {
-        crate::camera::set_layer1(&mut game.runtime(), 0, CAMERA_STOP_X);
+        crate::camera::set_layer1(game, 0, CAMERA_STOP_X);
         // Red is the scroll word's low byte with its high byte cleared.
         for scroll in SCROLLS {
-            let value = u16::from(game.ram().read_byte(scroll));
+            let value = u16::from(SessionRam::byte(game, scroll));
             let bytes = value.to_ne_bytes();
-            game.ram().write_byte(scroll, bytes[0]);
-            game.ram().write_byte(scroll + 1, bytes[1]);
+            SessionRam::set_byte(game, scroll, bytes[0]);
+            SessionRam::set_byte(game, scroll + 1, bytes[1]);
         }
         for (block_x, block_y) in INVISIBLE_WALLS {
-            game.spawn_hardcoded_plm(block_x, block_y, INVISIBLE_WALL);
+            crate::actors::mother_brain_fight::spawn_plm(block_x, block_y, INVISIBLE_WALL, game);
         }
-        let e = game.current_enemy() as i32;
+        let e = i32::from(game.current_enemy());
         session_slot!(game, BabyMetroid[e]; function = LET_SIDEHOPPER_LIVE, cry_enabled = 1);
     }
 }

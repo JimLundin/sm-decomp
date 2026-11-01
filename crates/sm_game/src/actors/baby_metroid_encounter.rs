@@ -87,6 +87,7 @@ const _: () = {
     }
     assert!(at(f::DISAPPEARED) == 11136991);
     assert!(at(f::WAIT_FOR_CAMERA) == 11136998);
+    assert!(at(crate::actors::baby_metroid::LET_SIDEHOPPER_LIVE) == 11137067);
     assert!(at(f::QUEUE_BATTLE_MUSIC) == 11137079);
     assert!(at(f::RUSH_TO_MIDDLE_OF_ROOM) == 11137097);
     assert!(at(f::RUSH_TO_SIDEHOPPER) == 11137133);
@@ -109,9 +110,7 @@ const _: () = {
     assert!(at(f::REMORSE) == 11137982);
 };
 
-pub trait Host:
-    crate::actors::mother_brain_fight::Host + crate::actors::baby_metroid::Host
-{
+pub trait Host: crate::actors::mother_brain_fight::Host {
     /// Drain Samus's health while the baby Metroid is latched on. Was
     /// `drain_health_by_baby_metroid`.
     fn drain_health_by_baby_metroid(&mut self);
@@ -120,8 +119,11 @@ pub trait Host:
 }
 
 /// A Mother Brain lease whose game is this module's host.
-pub trait Lease: FightLease<Game: Host> {}
-impl<T: FightLease<Game: Host> + ?Sized> Lease for T {}
+pub trait Lease: FightLease<Game: Host> {
+    /// Run the camera wait on the current Session, retaining the former
+    /// foreign entry's preflight and publication if an effect fails.
+    fn wait_for_camera(&mut self);
+}
 
 pub static GRADUAL_ACCELERATION_DIVISORS: [i8; 16] = [
     0x10, 0xf, 0xe, 0xd, 0xc, 0xb, 0xa, 9, 8, 7, 6, 5, 4, 3, 2, 1,
@@ -376,7 +378,7 @@ crate::dispatch::callback_dispatch! {
         back_off_guiltily(k, game);
     };
     @external {
-        11136998 => [game.foreign(crate::actors::baby_metroid::wait_for_camera)];
+        11136998 => [game.wait_for_camera()];
         11137787 => [go_left_guiltily(game)]; 11137828 => [go_right_guiltily(game)];
         11137901 => [fleeing(game)];
     }

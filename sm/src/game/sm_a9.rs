@@ -140,6 +140,12 @@ pub(crate) fn dispatch_enemy_instr(ea: u32, j: EnemyScript, game: &mut Game) -> 
     }
 }
 
+impl baby_metroid_encounter::Lease for Runtime<'_> {
+    fn wait_for_camera(&mut self) {
+        self.owned_call(sm_game::actors::baby_metroid::wait_for_camera);
+    }
+}
+
 impl baby_metroid_encounter::Host for Game {
     fn drain_health_by_baby_metroid(&mut self) {
         vitals::drain_health_by_baby_metroid(self);
