@@ -1,19 +1,17 @@
-//! Shaktool's pieces run in `sm_game::actors::shaktool`; its tables come from here.
+//! Shaktool's pieces run in `sm_game::actors::shaktool` on the scheduler's
+//! lease; the bank $AA functions they do not run themselves run on the game.
 #![forbid(unsafe_code)]
-use crate::game_state::Game;
+use crate::game::session_runtime::Runtime;
+use sm_game::actors::access::ActorKey as Key;
 pub(crate) use sm_game::actors::shaktool::*;
 
-impl Ai for Game {
+impl Lease for Runtime<'_> {
     fn run_function(&mut self, address: u32) {
-        crate::game::session_runtime::run_aa_function(address, self);
+        self.foreign(|game| crate::game::session_runtime::run_aa_function(address, game));
     }
 
     fn angle_between(&mut self, from: u16, to: u16) -> u16 {
-        crate::game::actors::api::angle_between(
-            &crate::game::session_runtime::Runtime::new(self),
-            sm_game::actors::access::ActorKey::from_legacy(from),
-            sm_game::actors::access::ActorKey::from_legacy(to),
-        )
+        crate::game::actors::api::angle_between(self, Key::from_legacy(from), Key::from_legacy(to))
     }
 }
 

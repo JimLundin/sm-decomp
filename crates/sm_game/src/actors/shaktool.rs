@@ -4,16 +4,21 @@
 //! Piece 0, the primary piece, is initially the right saw hand; piece 6, the
 //! final piece, the left one. The pieces occupy consecutive enemy slots, and
 //! every piece names its primary piece's slot.
-use crate::actors::boss_lease::BossLease;
+use crate::actors::boss_lease::BossState;
 use crate::actors::layouts::part_view;
 use crate::actors::session_slots::session_slot;
 use crate::enemy_script::EnemyScript;
 use crate::projectile_geometry::SINE_COSINE;
-use crate::ram::{WorkRamAccess, word};
+use crate::ram::word;
 
-/// A lease on a game with Shaktool's effects.
-pub trait Lease: BossLease<Game: Ai> {}
-impl<T: BossLease<Game: Ai> + ?Sized> Lease for T {}
+/// What the Shaktool pieces need beyond a boss's state: the bank $AA
+/// functions they do not run themselves, and the angle between two actors.
+pub trait Lease: BossState {
+    /// Run the bank $AA function at `address` for the current piece.
+    fn run_function(&mut self, address: u32);
+    /// The angle from actor `from` to actor `to`.
+    fn angle_between(&mut self, from: u16, to: u16) -> u16;
+}
 
 part_view! {
     /// A piece's view of its slot.
@@ -254,21 +259,30 @@ const QUARTER_TURN: u16 = 0x4000;
 /// Shot dead, every piece's properties become just bit 9, deleted.
 const DEAD_PROPERTIES: u16 = 0x200;
 
-/// What the Shaktool pieces' AI needs beyond the shared actor operations
-/// and tables: its function dispatch.
-pub trait Ai: BossLease<Game = Self> + WorkRamAccess {
-    /// Run the bank $AA function at `address` for the current piece.
-    fn run_function(&mut self, address: u32);
-    /// The angle from actor `from` to actor `to`.
-    fn angle_between(&mut self, from: u16, to: u16) -> u16;
+/// Run one of Shaktool's script instructions, keyed by address; `k` is the
+/// piece.
+pub fn instruction<L: Lease>(address: u32, k: u16, jp: EnemyScript, game: &mut L) -> EnemyScript {
+    match address {
+        11196721 => lower_away_from_projectile(k, jp, game),
+        11196735 => raise_towards_projectile(k, jp, game),
+        11196746 => lower(k, jp, game),
+        11196755 => raise(k, jp, game),
+        11196858 => reset_functions(k, jp, game),
+        _ => unreachable!("unrecognized Shaktool instruction"),
+    }
 }
 
 /// Main AI and hurt AI ($AA:DCA3): the piece's function. Was `Shaktool_Hurt`.
 pub fn main_ai<L: Lease>(game: &mut L) {
     crate::probe::hit("shaktool.main_ai");
-    let piece = i32::from(game.current_enemy());
-    let address = (u32::from(BANK) << 16) | u32::from(session_slot!(game, Piece[piece].function));
-    game.foreign(|game| game.run_function(address));
+    let k = game.current_enemy();
+    match session_slot!(game, Piece[i32::from(k)].function) {
+        function::NOTHING => {}
+        function::ARM_PIECE => arm_piece(k, game),
+        function::HEAD => head(k, game),
+        function::FINAL_PIECE => final_piece(k, game),
+        other => game.run_function((u32::from(BANK) << 16) | u32::from(other)),
+    }
 }
 
 /// Initialisation AI ($AA:DE43): piece `piece_index` from the piece table,
@@ -472,7 +486,7 @@ pub fn final_piece<L: Lease>(mut k: u16, game: &mut L) {
         }
         session_slot!(game, Piece[piece].direction = 0);
         let primary: u16 = session_slot!(game, Piece[piece].primary_piece);
-        let angle: u16 = game.foreign(|game| game.angle_between(k, primary));
+        let angle: u16 = game.angle_between(k, primary);
         let whole = ((angle as i32) << 8) as i16 as u16;
         let facing: u16 =
             if (session_slot!(game, Piece[piece].movement_options) & ANTICLOCKWISE) != 0 {

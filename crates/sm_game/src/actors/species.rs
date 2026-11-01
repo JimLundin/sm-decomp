@@ -18,9 +18,9 @@ use crate::actors::{
     draygon_flight, draygon_grab, draygon_host, draygon_sweep, elevator, escape_critters, etecoon,
     evir, fire_arc, fire_pillar, flies, fune, geega, geruta, gunship, kago, kihunter, kraid,
     magdollite, metroid, mini_crocomire, mini_kraid, mochtroid, morph_ball_eye, multiviola, oum,
-    phantoon, phantoon_actions, polyp, powamp, puyo, reflec, rinka, rio, rippers, roach, shaktool,
-    shutters, sidehopper, skree, space_pirates, spike_platform, spore_spawn, squeept, statues,
-    tatori, torizo, tripper, waver, work_robot, wrecked_ship_spark, yapping_maw, yard, zeb, zoa,
+    phantoon, phantoon_actions, polyp, powamp, puyo, reflec, rinka, rio, rippers, roach, shutters,
+    sidehopper, skree, space_pirates, spike_platform, spore_spawn, squeept, statues, tatori,
+    torizo, tripper, waver, work_robot, wrecked_ship_spark, yapping_maw, yard, zeb, zoa,
 };
 use crate::combat_rules::LatchMode;
 use crate::enemy_projectiles::host::Effects as _;
@@ -65,7 +65,6 @@ pub trait TouchHost:
     + draygon_host::Host
     + space_pirates::Pirates
     + torizo::Ai
-    + shaktool::Ai
     + statues::Host
     + kraid::Host
     + phantoon::Host
@@ -113,7 +112,6 @@ pub trait ShotHost:
     + draygon_host::Host
     + space_pirates::Pirates
     + torizo::Ai
-    + shaktool::Ai
     + statues::Host
     + kraid::Host
     + phantoon::Host
@@ -231,7 +229,6 @@ pub trait AiHost:
     + crocomire_reactions::Host
     + space_pirates::Pirates
     + torizo::Ai
-    + shaktool::Ai
     + statues::Host
     + kraid::Host
     + phantoon::Host
@@ -652,10 +649,6 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         11192700 => torizo::shot(game),
         11195322 => torizo::golden_hurt(game),
         11196360 => statues::initialize_tourian_statue(game),
-        11197603 => shaktool::main_ai(game),
-        11198019 => shaktool::initialize(game),
-        11198255 => shaktool::touch(game),
-        11198260 => shaktool::shot(game),
         11200278 => statues::initialize_tube_cracks(game),
         11200293 => statues::initialize_chozo_statue(game),
         11200423 => statues::main_ai(game),
@@ -799,7 +792,6 @@ pub trait PreInstructionHost:
     B3Host
     + magdollite::Host
     + torizo::Ai
-    + shaktool::Ai
     + statues::Host
     + phantoon::Host
     + etecoon::Host
@@ -940,9 +932,6 @@ pub fn pre_instruction<H: PreInstructionHost>(ea: u32, game: &mut H) {
         11192360 | 11195885 => torizo::attacking(k, game),
         11199557 => statues::lower_norfair(game, k),
         11200430 => statues::wrecked_ship(game, k),
-        11197612 => shaktool::arm_piece(k, game),
-        11197655 => shaktool::head(k, game),
-        11197733 => shaktool::final_piece(k, game),
         11047153 | 11047214 | 11047264 | 11047374 => {
             if morph_ball_eye::run_function(ea as u16, k, game) {
                 game.initialize_morph_eye_beam();
@@ -995,7 +984,6 @@ pub trait InstructionHost:
     + draygon_host::Host
     + LeaseActors
     + torizo::Ai
-    + shaktool::Ai
     + statues::Host
     + kraid::Host
     + phantoon::Host
@@ -1392,11 +1380,6 @@ pub fn instruction<H: InstructionHost>(
             j
         }
         11195446 => torizo::eye_beam(j, game),
-        11196721 => shaktool::lower_away_from_projectile(k, j, game),
-        11196735 => shaktool::raise_towards_projectile(k, j, game),
-        11196746 => shaktool::lower(k, j, game),
-        11196755 => shaktool::raise(k, j, game),
-        11196858 => shaktool::reset_functions(k, j, game),
         11199529 => {
             statues::start_lowering_acid(game);
             j
