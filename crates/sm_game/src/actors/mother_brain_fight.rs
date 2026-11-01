@@ -819,7 +819,6 @@ owned_words! {
     Bg2TilemapSize => words::ENEMY_BG2_TILEMAP_SIZE,
     Bg2TilemapPending => words::NMI_FLAG_BG2_ENEMY_VRAM_TRANSFER,
     PaletteFadeStep => words::PALETTE_CHANGE_NUM,
-    Bg2Scroll(axis) => words::REG_BG2HOFS + 2 * axis,
     TimerStatus => words::TIMER_STATUS,
     JapaneseText => words::JAPANESE_TEXT_FLAG,
     FxBlending => words::FX_LAYER_BLENDING_CONFIG_A,
@@ -1614,7 +1613,7 @@ crate::dispatch::callback_dispatch! {
     [11112013] fake_death_ascent_raise [] {
         if !((game.frame() & 3) != 0 || {
             spawn_dust_clouds_for_ascent(game);
-            game.set_owned(OwnedWord::Bg2Scroll(1), game.owned(OwnedWord::Bg2Scroll(1)).wrapping_add(2));
+            game.set_scroll_word(crate::display_scroll::Word::Bg2V, game.scroll_word(crate::display_scroll::Word::Bg2V).wrapping_add(2));
             let v1: u16 = (session_slot!(game, MotherBrainBody[e].base.y_pos)).wrapping_sub(2);
             session_slot!(game, MotherBrainBody[e].base.y_pos = v1);
             v1 >= 0xbd
@@ -2694,8 +2693,8 @@ pub fn determine_shot_reaction_type(game: &mut impl State) -> u16 {
 }
 /// Mother Brain's body (BG2) scroll: horizontal, then vertical.
 fn set_bg2_scroll(x: u16, y: u16, game: &mut impl State) {
-    game.set_owned(OwnedWord::Bg2Scroll(0), x);
-    game.set_owned(OwnedWord::Bg2Scroll(1), y);
+    game.set_scroll_word(crate::display_scroll::Word::Bg2H, x);
+    game.set_scroll_word(crate::display_scroll::Word::Bg2V, y);
 }
 /// The last random number, as the Session holds it.
 pub(crate) fn random_number(game: &(impl OwnedWords + ?Sized)) -> u16 {

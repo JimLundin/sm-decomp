@@ -13,7 +13,7 @@ use crate::cinematic_objects::CinematicObjects;
 use crate::cinematic_state::Cinematic;
 use crate::display_refresh::GraphicsAsset;
 use crate::menu_state::OptionsMenu;
-use crate::menus::prelude::{owned, scroll};
+use crate::menus::prelude::{display_scroll, owned};
 use crate::ram::RawRam as _;
 use crate::ram::word;
 use crate::visual_state::{CinematicDisplay, CinematicFade};
@@ -106,7 +106,7 @@ fn start_demo_logo<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
         object::DEMO_LOGO,
         0x0400,
     );
-    crate::screen_fade::set_both(game, 0, 2);
+    crate::screen_fade::store(game, 0, 2);
     *cine.mode7_zoom() = 256;
     *cine.x() = 0;
     *cine.x_sub() = 0;
@@ -154,7 +154,7 @@ pub fn load_graphics<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     GraphicsAsset::VramLowBytes(0x7f4000, 0x0000, 0x1000).load_planes(0xff, false, game);
     crate::cinematic_display::reset_cinematic_transform(128, 128, game);
     crate::display_refresh::enable(true, game);
-    crate::screen_fade::set_both(game, 1, 1);
+    crate::screen_fade::store(game, 1, 1);
     crate::hdma_objects::set_hdma_enabled(true, game);
     crate::palette_effects::execution::leased::set_enabled(true, game);
     crate::session_cohort::with(game, |_, words: &mut crate::session_words::SessionWords| {
@@ -223,11 +223,11 @@ fn finish<H: Host + ?Sized>(
 ) {
     crate::display_refresh::enable(true, game);
     game.ram().write_byte(crate::ram::mirror::BGMODE, 1);
-    crate::screen_fade::set_both(game, 0, 0);
-    scroll!(game.Bg2H = 0);
-    scroll!(game.Bg3H = 0);
-    scroll!(game.Bg2V = 0);
-    scroll!(game.Bg3V = 0);
+    crate::screen_fade::store(game, 0, 0);
+    display_scroll!(game.Bg2H = 0);
+    display_scroll!(game.Bg3H = 0);
+    display_scroll!(game.Bg2V = 0);
+    display_scroll!(game.Bg3V = 0);
     *cine.mode7_angle() = 0;
     crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
         flow.cinematic_function = function::SETUP
@@ -245,7 +245,7 @@ fn finish<H: Host + ?Sized>(
 pub fn to_file_select<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     if advance_cinematic_fade(CinematicFade::SlowOut, game) {
         finish(FILE_SELECT_MENUS, cine, game, |game| {
-            crate::session_cohort::with(game, |_, options: &mut OptionsMenu| {
+            crate::menus::state::with(game, |_, options: &mut OptionsMenu| {
                 options.screen_index = 0
             })
         });

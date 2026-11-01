@@ -92,6 +92,27 @@ impl NativeDiagnostics for World {
         panic!("text read below $8000: {address:#x}");
     }
 }
+impl sm_game::display_scroll::Access for World {
+    fn scroll_word(&self, word: sm_game::display_scroll::Word) -> u16 {
+        let at = 0xb1 + 2 * usize::from(word);
+        u16::from_le_bytes([self.ram[at], self.ram[at + 1]])
+    }
+    fn set_scroll_word(&mut self, word: sm_game::display_scroll::Word, value: u16) {
+        let at = 0xb1 + 2 * usize::from(word);
+        self.ram[at..at + 2].copy_from_slice(&value.to_le_bytes());
+    }
+    fn physical_scroll_byte(&self, word: sm_game::display_scroll::Word, high: bool) -> u8 {
+        self.ram[0xb1 + 2 * usize::from(word) + usize::from(high)]
+    }
+    fn write_physical_scroll_byte(
+        &mut self,
+        word: sm_game::display_scroll::Word,
+        high: bool,
+        value: u8,
+    ) {
+        self.ram[0xb1 + 2 * usize::from(word) + usize::from(high)] = value;
+    }
+}
 impl CompatibilityRam for World {
     fn compatibility_byte(&self, at: usize) -> u8 {
         self.ram[at]

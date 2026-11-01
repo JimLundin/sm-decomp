@@ -8,7 +8,6 @@ use crate::ram::{RawRam, word};
 use crate::runtime_access::RuntimeAccess;
 use crate::scene::samus_body::Body;
 use crate::session_access::SessionAccess as _;
-use crate::session_cohort;
 use crate::sprite_output;
 use crate::visual_host::{Content, Record, Source};
 use crate::word_transfers;
@@ -36,7 +35,7 @@ fn draw_samus<H: Host + ?Sized>(game: &mut H, body: Body) {
 pub fn advance_death_pose<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
     pt::animation::advance_animation(&mut game.runtime(), pt::state::AnimationStep::Death);
     draw_samus(game, Body::Death);
-    let expired = session_cohort::with(game, |_, screens: &mut MenuScreens| {
+    let expired = crate::menus::state::with(game, |_, screens: &mut MenuScreens| {
         let timer = &mut screens.death.flash_timer;
         *timer = timer.wrapping_sub(1);
         *timer == 0 || *timer & 0x8000 != 0
@@ -81,7 +80,7 @@ pub fn begin_death<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
 }
 
 pub fn flash_death<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
-    session_cohort::with(game, |game, screens: &mut MenuScreens| {
+    crate::menus::state::with(game, |game, screens: &mut MenuScreens| {
         if screens.death.counter.wrapping_sub(4) & 0x8000 != 0 {
             queue_death_tiles(2u16.wrapping_mul(screens.death.counter), game);
         }
@@ -179,12 +178,12 @@ fn whiten_death_palette<H: Host + ?Sized>(game: &mut H, screens: &mut MenuScreen
 }
 
 pub fn explode_suit<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
-    let exploded = session_cohort::with(game, |game, screens: &mut MenuScreens| {
+    let exploded = crate::menus::state::with(game, |game, screens: &mut MenuScreens| {
         whiten_death_palette(game, screens);
         advance_suit_explosion(game, screens)
     });
     if exploded {
-        crate::screen_fade::set_both(game, 1, 1);
+        crate::screen_fade::store(game, 1, 1);
         word!(game.GAME_STATE += 1);
     }
     0

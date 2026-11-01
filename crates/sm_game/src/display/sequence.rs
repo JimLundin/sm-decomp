@@ -68,34 +68,4 @@ macro_rules! register_sequence {
 }
 pub use crate::register_sequence as register_writes;
 
-/// The BG scroll register mirrors $00B1..$00C0, which the NMI writes to
-/// BGnHOFS/BGnVOFS and the owned Session holds as `controls.scroll_words`,
-/// read and stored through the host's projected bytes.
-pub mod scroll {
-    use crate::ram::CompatibilityRam;
-    /// A scroll mirror: BG1..BG4, horizontal then vertical, in RAM order.
-    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-    pub enum Word {
-        Bg1H,
-        Bg1V,
-        Bg2H,
-        Bg2V,
-        Bg3H,
-        Bg3V,
-        Bg4H,
-        Bg4V,
-    }
-    const _: () = assert!(crate::ram::words::REG_BG1HOFS == 0xb1);
-    const _: () = assert!(crate::ram::words::REG_BG4VOFS == 0xb1 + 2 * Word::Bg4V as usize);
-    /// `word` as the host's projection holds it, low byte then high.
-    pub fn get<H: CompatibilityRam + ?Sized>(h: &H, word: Word) -> u16 {
-        let at = 0xb1 + 2 * word as usize;
-        u16::from_le_bytes([h.compatibility_byte(at), h.compatibility_byte(at + 1)])
-    }
-    /// Store `value` to `word`, low byte then high, as the named word store did.
-    pub fn set<H: CompatibilityRam + ?Sized>(h: &mut H, word: Word, value: u16) {
-        let [low, high] = value.to_le_bytes();
-        h.compatibility_write_byte(0xb1 + 2 * word as usize, low);
-        h.compatibility_write_byte(0xb2 + 2 * word as usize, high);
-    }
-}
+pub use crate::display_scroll as scroll;

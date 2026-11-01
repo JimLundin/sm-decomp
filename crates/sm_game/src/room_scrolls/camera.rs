@@ -292,34 +292,38 @@ pub fn layer2_position<H: Host + ?Sized>(axis: Axis, game: &mut H) -> u8 {
 }
 
 pub fn calculate_scrolls<H: Host + ?Sized>(game: &mut H) {
-    word!(
-        game.REG_BG1HOFS = (game.session().room.camera.bg1_offset[0])
+    crate::menus::prelude::display_scroll!(
+        game.Bg1H = (game.session().room.camera.bg1_offset[0])
             .wrapping_add(game.session().room.camera.layer1[0])
     );
-    word!(
-        game.REG_BG1VOFS = (game.session().room.camera.bg1_offset[1])
+    crate::menus::prelude::display_scroll!(
+        game.Bg1V = (game.session().room.camera.bg1_offset[1])
             .wrapping_add(game.session().room.camera.layer1[1])
     );
-    word!(
-        game.REG_BG2HOFS = (game.session().room.camera.bg2_scroll[0])
+    crate::menus::prelude::display_scroll!(
+        game.Bg2H = (game.session().room.camera.bg2_scroll[0])
             .wrapping_add(game.session().room.camera.layer2[0])
     );
-    word!(
-        game.REG_BG2VOFS = (game.session().room.camera.bg2_scroll[1])
+    crate::menus::prelude::display_scroll!(
+        game.Bg2V = (game.session().room.camera.bg2_scroll[1])
             .wrapping_add(game.session().room.camera.layer2[1])
     );
 }
 
 pub fn calculate_blocks<H: Host + ?Sized>(game: &mut H) {
     crate::probe::hit("camera.blocks");
-    game.session_mut().room.camera.bg1_block[0] = word!(game.REG_BG1HOFS) >> 4;
-    game.session_mut().room.camera.bg2_block[0] = word!(game.REG_BG2HOFS) >> 4;
+    game.session_mut().room.camera.bg1_block[0] =
+        crate::menus::prelude::display_scroll!(game.Bg1H) >> 4;
+    game.session_mut().room.camera.bg2_block[0] =
+        crate::menus::prelude::display_scroll!(game.Bg2H) >> 4;
     game.session_mut().room.camera.layer1_block[0] =
         ((game.session().room.camera.layer1[0] as i16) >> 4) as u16;
     game.session_mut().room.camera.layer2_block[0] =
         ((game.session().room.camera.layer2[0] as i16) >> 4) as u16;
-    game.session_mut().room.camera.bg1_block[1] = word!(game.REG_BG1VOFS) >> 4;
-    game.session_mut().room.camera.bg2_block[1] = word!(game.REG_BG2VOFS) >> 4;
+    game.session_mut().room.camera.bg1_block[1] =
+        crate::menus::prelude::display_scroll!(game.Bg1V) >> 4;
+    game.session_mut().room.camera.bg2_block[1] =
+        crate::menus::prelude::display_scroll!(game.Bg2V) >> 4;
     game.session_mut().room.camera.layer1_block[1] =
         ((game.session().room.camera.layer1[1] as i16) >> 4) as u16;
     game.session_mut().room.camera.layer2_block[1] =

@@ -8,7 +8,6 @@ use crate::imported::{Imported, grid_word, word as table_word};
 use crate::menu_state::set_menu_byte;
 use crate::menu_state::{MENU, MenuState, WORDS};
 use crate::menu_state::{MapScreenState, MenuScreens};
-use crate::session_cohort;
 use sm_data::pause_menu::{
     ANIMATION_PALETTE_ADDRESS, ANIMATION_SPRITEMAP_ADDRESS, ANIMATIONS, AREA_MAP_ADDRESS,
     AREA_MAPS, LABEL_SPRITEMAP_ADDRESS, LABEL_SPRITEMAPS, MAP_ICON_ADDRESS, MAP_ICON_AREAS,
@@ -90,7 +89,7 @@ pub fn advance<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
         close_room_window::<H>,
         fade_to_options::<H>,
     ];
-    session_cohort::with(
+    crate::menus::state::with(
         game,
         |game, (menu, screens): &mut (MenuState, MenuScreens)| {
             states[menu.menu_index as usize](menu, game, screens)
@@ -127,7 +126,7 @@ fn prepare<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H, _: &mut MenuScr
 }
 fn fade_palette<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H, screens: &mut MenuScreens) {
     if crate::palette_effects::fading::file_select(game) != 0 {
-        scroll! { game, 0; Bg1V, Bg1H, Bg2V, Bg2H }
+        display_scroll! { game, 0; Bg1V, Bg1H, Bg2V, Bg2H }
         screens.save_selection.map_area_index = area_selection(game).unwrap_or(0) as u16;
         for area in 0..6 {
             menu_tilemap::area_palette(area, area == crate::room_view::current(game).area, game);
@@ -223,7 +222,7 @@ fn open_area_window<H: Host + ?Sized>(
             crate::ram::mirror::TSW,
             crate::display::control::Layers::NONE.byte(),
         );
-        scroll!(game.Bg2V = 24);
+        display_scroll!(game.Bg2V = 24);
         menu.pausemenu_palette_animation_timer = 1;
         let mut _v1: u16 = 0;
         crate::word_transfers!(game, ascending, 800; xray(0) <- rom(0xb6e000, 0));
@@ -524,7 +523,7 @@ fn initialize_room<H: Host + ?Sized>(
     center_map(112, &screens.map, game);
     let map = &mut screens.map;
     map.min_y_scroll = map.min_y_scroll.wrapping_add(24);
-    scroll!(game.Bg2V = 24);
+    display_scroll!(game.Bg2V = 24);
     crate::ram::checked_word!(game, 0x69; = crate::ram::checked_word!(game, 0x69;) & !4);
     menu.menu_index = menu.menu_index.wrapping_add(1);
     map.scrolling_direction = 0;
@@ -599,10 +598,10 @@ fn choose_room<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H, screens: &m
             stations.base,
             (2 * i32::from(selection.load_station)) as isize,
         );
-        if (next_x as i32 - scroll!(game.Bg1H) as i32) & 0x8000 != 0
-            || (next_x as i32 - 256i32 - scroll!(game.Bg1H) as i32) & 0x8000 == 0
+        if (next_x as i32 - display_scroll!(game.Bg1H) as i32) & 0x8000 != 0
+            || (next_x as i32 - 256i32 - display_scroll!(game.Bg1H) as i32) & 0x8000 == 0
         {
-            let mut scroll_x: i16 = (scroll!(game.Bg1H) as i32
+            let mut scroll_x: i16 = (display_scroll!(game.Bg1H) as i32
                 + stations.table_word((next_offset >> 1) as isize) as i32
                 - station_x as i32) as i16;
             if scroll_x >= 0 {
@@ -612,20 +611,20 @@ fn choose_room<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H, screens: &m
             } else {
                 scroll_x = 0;
             }
-            scroll!(game.Bg1H = scroll_x as u16);
+            display_scroll!(game.Bg1H = scroll_x as u16);
         }
         let next_y_offset: u16 = (next_offset).wrapping_add(2);
         let next_y: u16 = stations.table_word((next_y_offset >> 1) as isize);
-        if (next_y as i32 - scroll!(game.Bg1V) as i32) & 0x8000 != 0
-            || (next_y as i32 - 161i32 - scroll!(game.Bg1V) as i32) & 0x8000 == 0
+        if (next_y as i32 - display_scroll!(game.Bg1V) as i32) & 0x8000 != 0
+            || (next_y as i32 - 161i32 - display_scroll!(game.Bg1V) as i32) & 0x8000 == 0
         {
-            let mut scroll_y: u16 = (scroll!(game.Bg1V) as i32
+            let mut scroll_y: u16 = (display_scroll!(game.Bg1V) as i32
                 + stations.table_word((next_y_offset >> 1) as isize) as i32
                 - station_y as i32) as u16;
             if ((scroll_y) as i16).wrapping_sub(screens.map.min_y_scroll as i16) >= 0 {
                 scroll_y = screens.map.min_y_scroll;
             }
-            scroll!(game.Bg1V = scroll_y);
+            display_scroll!(game.Bg1V = scroll_y);
         }
     } else if (game.observed_inputs().pressed & 0x8000) != 0 {
         menu.menu_index = menu.menu_index.wrapping_add(5);
@@ -718,7 +717,7 @@ fn begin_return_window<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H, _: 
         .write_byte(super::menu_window::ram::WINDOW_1_TABLE + 9, 0);
     game.ram()
         .write_byte(super::menu_window::ram::WINDOW_2_TABLE + 9, 0);
-    scroll! { game, 0; Bg1V, Bg1H }
+    display_scroll! { game, 0; Bg1V, Bg1H }
 }
 fn close_room_window<H: Host + ?Sized>(
     menu: &mut MenuState,
@@ -789,10 +788,10 @@ pub fn scroll<H: Host + ?Sized>(map: &mut MapScreenState, game: &mut H) {
     }
     let speed = SCROLL_SPEEDS[usize::from(index >> 1)];
     match direction {
-        1 => scroll!(game.Bg1H -= speed),
-        2 => scroll!(game.Bg1H += speed),
-        3 => scroll!(game.Bg1V -= speed),
-        _ => scroll!(game.Bg1V += speed),
+        1 => display_scroll!(game.Bg1H -= speed),
+        2 => display_scroll!(game.Bg1H += speed),
+        3 => display_scroll!(game.Bg1V -= speed),
+        _ => display_scroll!(game.Bg1V += speed),
     };
     map.scrolling_speed_index = map.scrolling_speed_index.wrapping_add(2);
     if map.scrolling_speed_index & 0xf == 0 {
@@ -817,8 +816,8 @@ fn draw_record<H: Host + ?Sized>(
 ) {
     crate::sprite_output::menu(
         sprite,
-        record.word(0).wrapping_sub(scroll!(game.Bg1H)),
-        record.word(2).wrapping_sub(scroll!(game.Bg1V)),
+        record.word(0).wrapping_sub(display_scroll!(game.Bg1H)),
+        record.word(2).wrapping_sub(display_scroll!(game.Bg1V)),
         palette,
         game,
     );
@@ -866,8 +865,10 @@ pub fn draw_icons<H: Host + ?Sized>(
             );
             let record = map_record(address, game);
             let offset = 4 * usize::from(screens.save_selection.load_station);
-            let x = record.word(offset).wrapping_sub(scroll!(game.Bg1H));
-            let y = record.word(offset + 2).wrapping_sub(scroll!(game.Bg1V));
+            let x = record.word(offset).wrapping_sub(display_scroll!(game.Bg1H));
+            let y = record
+                .word(offset + 2)
+                .wrapping_sub(display_scroll!(game.Bg1V));
             if screens.map.indicator_loop_counter & 1 == 0 {
                 crate::sprite_output::menu(0x12, x, y, 3584, game);
             }
@@ -884,8 +885,8 @@ pub fn draw_icons<H: Host + ?Sized>(
     if crate::room_view::current(game).area == 0 {
         crate::sprite_output::menu(
             0x63,
-            0xd8u16.wrapping_sub(scroll!(game.Bg1H)),
-            0x28u16.wrapping_sub(scroll!(game.Bg1V)),
+            0xd8u16.wrapping_sub(display_scroll!(game.Bg1H)),
+            0x28u16.wrapping_sub(display_scroll!(game.Bg1V)),
             3584,
             game,
         );
@@ -1030,11 +1031,11 @@ pub fn draw_player_marker<H: Host + ?Sized>(map: &mut MapScreenState, game: &mut
         sprite,
         (8 * (i32::from(crate::room_view::effects(game).map_x)
             + i32::from(game.ram().read_byte(crate::ram::words::SAMUS_X_POS + 1)))
-            - i32::from(scroll!(game.Bg1H))) as u16,
+            - i32::from(display_scroll!(game.Bg1H))) as u16,
         (8 * (i32::from(crate::room_view::effects(game).map_y)
             + i32::from(game.ram().read_byte(crate::ram::words::SAMUS_Y_POS + 1))
             + 1)
-            - i32::from(scroll!(game.Bg1V))) as u16,
+            - i32::from(display_scroll!(game.Bg1V))) as u16,
         3584,
         game,
     );
@@ -1070,7 +1071,7 @@ pub fn reset_animations<H: Host + ?Sized>(
     game: &mut H,
 ) {
     menu.pausemenu_reserve_tank_delay_ctr = 0;
-    scroll! { game, 0; Bg1H, Bg2H, Bg3H, Bg2V, Bg3V }
+    display_scroll! { game, 0; Bg1H, Bg2H, Bg3H, Bg2V, Bg3V }
     menu.pausemenu_button_label_mode = 0;
     menu.pausemenu_lr_animation_frame = 0;
     menu.unused_word_7e0745 = 0;
@@ -1085,7 +1086,7 @@ pub fn reset_animations<H: Host + ?Sized>(
 }
 
 pub fn center_map<H: Host + ?Sized>(vertical_center: u16, map: &MapScreenState, game: &mut H) {
-    scroll!(
+    display_scroll!(
         game.Bg1H = (i32::from(map.min_x_scroll)
             + (i32::from(map.max_x_scroll.wrapping_sub(map.min_x_scroll)) >> 1)
             - 128) as u16
@@ -1093,21 +1094,21 @@ pub fn center_map<H: Host + ?Sized>(vertical_center: u16, map: &MapScreenState, 
     let x = (8
         * (i32::from(crate::room_view::effects(game).map_x)
             + i32::from((game.player_x() & 0xff00) >> 8))
-        - i32::from(scroll!(game.Bg1H))) as u16;
+        - i32::from(display_scroll!(game.Bg1H))) as u16;
     let right = 224i16.wrapping_sub(x as i16);
     if right >= 0 {
         let left = 32u16.wrapping_sub(x);
         if left & 0x8000 == 0 {
-            scroll!(game.Bg1H -= left);
+            display_scroll!(game.Bg1H -= left);
         }
     } else {
-        scroll!(game.Bg1H -= right as u16);
+        display_scroll!(game.Bg1H -= right as u16);
     }
     let middle = (i32::from(map.min_y_scroll)
         + (i32::from(map.max_y_scroll.wrapping_sub(map.min_y_scroll)) >> 1)
         + 16) as u16;
     let aligned = (i32::from(vertical_center) - i32::from(middle)) & 0xfff8;
-    scroll!(game.Bg1V = (-aligned) as u16);
+    display_scroll!(game.Bg1V = (-aligned) as u16);
     let y = (8
         * (i32::from(crate::room_view::effects(game).map_y)
             + i32::from(game.ram().read_byte(crate::ram::words::SAMUS_Y_POS + 1))
@@ -1115,9 +1116,9 @@ pub fn center_map<H: Host + ?Sized>(vertical_center: u16, map: &MapScreenState, 
         + aligned) as u16;
     let top = 64i16.wrapping_sub(y as i16);
     if top >= 0 {
-        scroll!(game.Bg1V -= top as u16);
-        if (i32::from(scroll!(game.Bg1V)) + 40) & 0x8000 != 0 {
-            scroll!(game.Bg1V = -40i32 as u16);
+        display_scroll!(game.Bg1V -= top as u16);
+        if (i32::from(display_scroll!(game.Bg1V)) + 40) & 0x8000 != 0 {
+            display_scroll!(game.Bg1V = -40i32 as u16);
         }
     }
 }
@@ -1280,7 +1281,7 @@ fn draw_room_map<H: Host + ?Sized>(game: &mut H) {
         crate::ram::mirror::TM,
         crate::display::control::Layers::BG1_BG2_SPRITES.byte(),
     );
-    scroll!(game.Bg1V = -40i16 as u16);
+    display_scroll!(game.Bg1V = -40i16 as u16);
     render_map(MapScreen::FileSelect, game);
     menu_tilemap::upload(4096, 0x7e3000, 0, false, game);
 }
@@ -1426,16 +1427,17 @@ pub fn scroll_arrows<H: Host + ?Sized>(
         MapScreen::Pause => (0x82b9a0, 56, 177),
         MapScreen::FileSelect => (0x81af32, 64, 145),
     };
-    if (i32::from(map.min_x_scroll) - 24 - i32::from(scroll!(game.Bg1H))) & 0x8000 != 0 {
+    if (i32::from(map.min_x_scroll) - 24 - i32::from(display_scroll!(game.Bg1H))) & 0x8000 != 0 {
         scroll_arrow(base, map, menu, game);
     }
-    if (i32::from(map.max_x_scroll) - 232 - i32::from(scroll!(game.Bg1H))) & 0x8000 == 0 {
+    if (i32::from(map.max_x_scroll) - 232 - i32::from(display_scroll!(game.Bg1H))) & 0x8000 == 0 {
         scroll_arrow(base + 10, map, menu, game);
     }
-    if (i32::from(map.min_y_scroll) - top - i32::from(scroll!(game.Bg1V))) & 0x8000 != 0 {
+    if (i32::from(map.min_y_scroll) - top - i32::from(display_scroll!(game.Bg1V))) & 0x8000 != 0 {
         scroll_arrow(base + 20, map, menu, game);
     }
-    if (i32::from(map.max_y_scroll) - bottom - i32::from(scroll!(game.Bg1V))) & 0x8000 != 0 {
+    if (i32::from(map.max_y_scroll) - bottom - i32::from(display_scroll!(game.Bg1V))) & 0x8000 != 0
+    {
         if map.scrolling_direction == menu_tilemap::native_record(base + 30, game).word(8) {
             map.gear_switch_timer = 0;
             map.scrolling_direction = 0;

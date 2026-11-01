@@ -28,7 +28,7 @@ pub fn advance<H: crate::menus::host::Host + ?Sized>(game: &mut H) -> CoroutineR
         load_map::<H>,
         |_, game| fade_to_title(game),
     ];
-    crate::session_cohort::with(game, |game, menu: &mut MenuState| {
+    crate::menus::state::with(game, |game, menu: &mut MenuState| {
         states[menu.menu_index as usize](menu, game)
     });
     super::pending_wait(game)
@@ -50,7 +50,7 @@ fn prepare<H: crate::menus::host::Host + ?Sized>(menu: &mut MenuState, game: &mu
     crate::word_transfers!(game, ascending, 256; pause_map(384) <- le(PALETTE_BUFFER, 0));
     crate::word_transfers!(game, ascending, 27; pause_map(640) <- native(0x51));
     menu_tilemap::prepare_graphics(game);
-    scroll! { game, 0; Bg1H, Bg2H, Bg3H, Bg1V, Bg2V, Bg3V }
+    display_scroll! { game, 0; Bg1H, Bg2H, Bg3H, Bg1V, Bg2V, Bg3V }
     menu_tilemap::load_palette(game);
     menu.menu_index = menu.menu_index.wrapping_add(1);
 }
@@ -63,8 +63,8 @@ fn initialize<H: crate::menus::host::Host + ?Sized>(menu: &mut MenuState, game: 
         return;
     }
     menu.menu_index = menu.menu_index.wrapping_add(1);
-    crate::screen_fade::set_both(game, 0, 0);
-    crate::session_cohort::with(game, |_, selection: &mut SaveSelection| {
+    crate::screen_fade::store(game, 0, 0);
+    crate::menus::state::with(game, |_, selection: &mut SaveSelection| {
         selection.map_area_index = 0;
     });
     place_missile(FIRST_CHOICE_ROW, game);
@@ -151,12 +151,12 @@ fn choose<H: crate::menus::host::Host + ?Sized>(menu: &mut MenuState, game: &mut
     if game.observed_inputs().pressed & (K_BUTTON_SELECT | K_BUTTON_UP | K_BUTTON_DOWN) as u16 != 0
     {
         game.queue_sound(0, 0x37_u8, 6);
-        crate::session_cohort::with(game, |_, selection: &mut SaveSelection| {
+        crate::menus::state::with(game, |_, selection: &mut SaveSelection| {
             selection.map_area_index ^= 1;
         });
     } else if game.observed_inputs().pressed & K_BUTTON_A as u16 != 0 {
         session_slot!(game, EnemyBase[0].instruction_timer = 180);
-        let selection = crate::session_cohort::load::<SaveSelection, _>(game);
+        let selection = crate::menus::state::load::<SaveSelection, _>(game);
         if selection.map_area_index != 0 {
             menu.menu_index = 7;
         } else {
@@ -170,7 +170,7 @@ fn choose<H: crate::menus::host::Host + ?Sized>(menu: &mut MenuState, game: &mut
         }
         return;
     }
-    let row = if crate::session_cohort::load::<SaveSelection, _>(game).map_area_index != 0 {
+    let row = if crate::menus::state::load::<SaveSelection, _>(game).map_area_index != 0 {
         SECOND_CHOICE_ROW
     } else {
         FIRST_CHOICE_ROW

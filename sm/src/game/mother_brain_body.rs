@@ -97,8 +97,20 @@ fn move_body(step: Step, game: &mut Game) {
         body.y.whole = body.y.whole.wrapping_add(step.dy);
         body.x.whole
     });
-    word!(game.REG_BG2VOFS -= step.dy);
-    word!(game.REG_BG2HOFS = step.scroll_x.wrapping_add(34).wrapping_sub(x));
+    {
+        use sm_game::display_scroll::{Access as _, Word};
+        let at = Word::Bg2V;
+        let old = game.scroll_word(at);
+        let [low, high] = old.wrapping_sub(step.dy).to_le_bytes();
+        game.write_physical_scroll_byte(at, false, low);
+        game.write_physical_scroll_byte(at, true, high);
+    }
+    {
+        use sm_game::display_scroll::{Access as _, Word};
+        let [low, high] = step.scroll_x.wrapping_add(34).wrapping_sub(x).to_le_bytes();
+        game.write_physical_scroll_byte(Word::Bg2H, false, low);
+        game.write_physical_scroll_byte(Word::Bg2H, true, high);
+    }
 }
 
 /// Runs a body script step, or returns `None` for an address this module does not own.

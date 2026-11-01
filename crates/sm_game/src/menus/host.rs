@@ -67,6 +67,7 @@ pub trait MenuRuntime:
     + crate::player_position::PlayerFacts
     + PlayerRuntime
     + crate::inventory_domain::InventoryAccess
+    + super::state::Access
 {
     /// Upload `bytes` from `source` to VRAM word address `destination`.
     fn load_vram_words(&mut self, source: u32, destination: u16, bytes: u16);

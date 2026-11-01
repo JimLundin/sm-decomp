@@ -222,7 +222,7 @@ macro_rules! mother_brain_owned {
             TimerStatus => $($reference)* $session.timing.timer_status,
             JapaneseText => $($reference)* $session.options.japanese_text,
             FxBlending => $($reference)* $session.room.fx_blending,
-            PaletteFadeStep | Bg2Scroll(_) => unreachable!("presentation words go through its owner"),
+            PaletteFadeStep => unreachable!("presentation words go through its owner"),
             Color(_) => unreachable!("colours go through the visual owner"),
         }
     }};
@@ -235,14 +235,8 @@ fn in_owner(word: OwnedWord) -> bool {
         ShotX(index) | ShotY(index) | ShotKind(index) | ShotDamage(index) => index < 10,
         Color(index) => index < 256,
         CollidingEnemy(direction) => direction < 4,
-        Bg2Scroll(axis) => axis < 2,
         _ => true,
     }
-}
-/// The display's scroll word for BG2's `axis` ($7E:00B5, $00B7).
-fn bg2_scroll(session: &mut sm_game::session::Session, axis: usize) -> &mut u16 {
-    let display = session.presentation.owner_mut().expect("owned display");
-    &mut display.state.controls.scroll_words[2 + axis]
 }
 impl sm_game::sprite_drawing::DisplayObjects for Runtime<'_> {
     fn owned_objects(&mut self) -> Option<&mut sm_game::scene::state::ObjectStaging> {
@@ -264,22 +258,13 @@ impl sm_game::actors::mother_brain_fight::OwnedWords for Runtime<'_> {
     fn owned(&self, word: OwnedWord) -> u16 {
         let at = word.address();
         // The display owns the BG2 scroll only when the Session's presentation does.
-        if !in_owner(word) || matches!(word, OwnedWord::Bg2Scroll(_)) && !self.display_owned() {
+        if !in_owner(word) {
             return self.word(at);
         }
         self.owned_session(
             |session| match word {
                 OwnedWord::Color(index) => session.presentation.visual().colors[index],
                 OwnedWord::PaletteFadeStep => session.presentation.visual().palette_fade.step,
-                OwnedWord::Bg2Scroll(axis) => {
-                    session
-                        .presentation
-                        .owner()
-                        .expect("owned display")
-                        .state
-                        .controls
-                        .scroll_words[2 + axis]
-                }
                 _ => mother_brain_owned!(session, word),
             },
             at,
@@ -287,7 +272,7 @@ impl sm_game::actors::mother_brain_fight::OwnedWords for Runtime<'_> {
     }
     fn set_owned(&mut self, word: OwnedWord, value: u16) {
         let at = word.address();
-        if !in_owner(word) || matches!(word, OwnedWord::Bg2Scroll(_)) && !self.display_owned() {
+        if !in_owner(word) {
             return self.write_word_le(value, at);
         }
         self.store_owned_session(
@@ -296,7 +281,6 @@ impl sm_game::actors::mother_brain_fight::OwnedWords for Runtime<'_> {
                 OwnedWord::PaletteFadeStep => {
                     &mut session.presentation.visual_mut().palette_fade.step
                 }
-                OwnedWord::Bg2Scroll(axis) => bg2_scroll(session, axis),
                 _ => mother_brain_owned!(session, word, &, mut),
             },
             at,

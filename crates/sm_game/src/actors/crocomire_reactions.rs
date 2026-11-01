@@ -20,7 +20,7 @@ use crate::constants::{
 };
 use crate::display::transfer::{Source, TilemapUpload, queue_tilemap};
 use crate::enemy_script::EnemyScript;
-use crate::menus::prelude::{boss, do_until, melt, owned, scroll};
+use crate::menus::prelude::{boss, display_scroll, do_until, melt, owned};
 use crate::ram::{checked_word, word, words as ram};
 use sm_data::crocomire::{
     BRIDGE_DEBRIS_ADDRESS, FLESH_TILEMAP_ADDRESS, MELT_TILES, SCROLL_SPRITEMAP_ADDRESS,
@@ -185,7 +185,7 @@ fn cap_byte(value: u8, limit: u8) -> u8 {
     }
 }
 pub fn fill_scroll<L: Lease + ?Sized>(game: &mut L) {
-    let scroll = scroll!(game.Bg2V);
+    let scroll = display_scroll!(game.Bg2V);
     crate::word_transfers!(game, descending, 256; le(CROCOMIRE_BG2_SCROLL_HDMA_DATA, 255) <- value(scroll));
 }
 pub fn melt_down<L: Lease + ?Sized>(game: &mut L) {
@@ -194,7 +194,7 @@ pub fn melt_down<L: Lease + ?Sized>(game: &mut L) {
     update_background(game.current_enemy(), game);
     let key = game.current_enemy() as i32;
     if (session_slot!(game, Crocomire[key].base.y_pos) as i32 - 280) & 0x8000 != 0 {
-        let mut cursor = (8 * ((scroll!(game.Bg2V) as i32 + 288) & 0xfff8)) as u16;
+        let mut cursor = (8 * ((display_scroll!(game.Bg2V) as i32 + 288) & 0xfff8)) as u16;
         for _ in 0..32 {
             bg2_staging::set(game, usize::from(cursor >> 1), 824);
             cursor = cursor.wrapping_add(2);
@@ -270,7 +270,9 @@ pub fn melt_up<L: Lease + ?Sized>(game: &mut L) {
     }
 }
 pub fn update_background<L: Lease + ?Sized>(k: u16, game: &mut L) {
-    scroll!(game.Bg2V = 67u16.wrapping_sub(session_slot!(game, Crocomire[k as i32].base.y_pos)));
+    display_scroll!(
+        game.Bg2V = 67u16.wrapping_sub(session_slot!(game, Crocomire[k as i32].base.y_pos))
+    );
     let mut index = 32u16;
     let spritemap = loop {
         let candidate = session_slot!(game, Crocomire[0].base.spritemap_pointer);
@@ -289,7 +291,7 @@ pub fn update_background<L: Lease + ?Sized>(k: u16, game: &mut L) {
     let offset = game
         .foreign(|game| crate::cartridge::native_record(0xa4, spritemap, game))
         .table_word(14);
-    scroll!(game.Bg2V += offset);
+    display_scroll!(game.Bg2V += offset);
     align_background(game);
 }
 /// Position Crocomire's second body part and align its BG2 image with the camera.
@@ -309,13 +311,12 @@ fn align_background<L: Lease + ?Sized>(game: &mut L) {
     let relative = session_slot!(game, Layout[primary].base.x_pos)
         .wrapping_sub(game.camera().layer1[0]) as i16;
     let offset = 51u16.wrapping_sub(relative as u16);
-    word!(
-        game.REG_BG2HOFS =
-            if (-128..384).contains(&relative) && (offset as i16).unsigned_abs() < 284 {
-                offset
-            } else {
-                256
-            }
+    crate::menus::prelude::display_scroll!(
+        game.Bg2H = if (-128..384).contains(&relative) && (offset as i16).unsigned_abs() < 284 {
+            offset
+        } else {
+            256
+        }
     );
 }
 pub fn update_palette<L: Lease + ?Sized>(game: &mut L) {
@@ -994,7 +995,7 @@ pub fn melting<L: Lease + ?Sized>(game: &mut L) {
             do_until! { ((v7) as i16).wrapping_sub((melt!(game.MaxY)) as i16) >= 0 ;
                 word!(
                     game.CROCOMIRE_BG2_SCROLL_HDMA_DATA[(v6 >> 1)] =
-                        (scroll!(game.Bg2V) as i32 + v7 as i32
+                        (display_scroll!(game.Bg2V) as i32 + v7 as i32
                             - boss!(game.MessageBoxScratch1) as i32)
                             as u16
                 );
@@ -1007,7 +1008,7 @@ pub fn melting<L: Lease + ?Sized>(game: &mut L) {
                 v6 = (v6).wrapping_add(2);
             }
             if ((v6) as i16).wrapping_sub(512) < 0 {
-                let v9: u16 = scroll!(game.Bg2V);
+                let v9: u16 = display_scroll!(game.Bg2V);
                 do_until! { ((v6) as i16).wrapping_sub(512) >= 0 ;
                     word!(game.CROCOMIRE_BG2_SCROLL_HDMA_DATA[(v6 >> 1)] = v9);
                     v6 = (v6).wrapping_add(2);
@@ -1398,7 +1399,7 @@ pub fn unlock_camera<L: Lease + ?Sized>(game: &mut L) {
 pub fn prepare_scroll_hdma<L: Lease + ?Sized>(game: &mut L) {
     let mut v1: u16 =
         (2 * (session_slot!(game, Crocomire[0x40i32].base.y_pos) as i32 - 72i32)) as u16;
-    let v2: u16 = scroll!(game.Bg2V);
+    let v2: u16 = display_scroll!(game.Bg2V);
     do_until! { (v1 & 0x8000) != 0 ;
         word!(game.CROCOMIRE_BG2_SCROLL_HDMA_DATA[(v1 >> 1)] = v2);
         v1 = (v1).wrapping_sub(2);
@@ -1523,7 +1524,7 @@ fn clear_tilemap<L: Lease + ?Sized>(game: &mut L) {
 /// Crocomire main AI - death sequence index 56h - dead due to room entry ($A4:8C90). Was
 /// `reset_scroll`.
 fn dead_from_room_entry<L: Lease + ?Sized>(game: &mut L) {
-    scroll!(game, 0; Bg2H, Bg2V);
+    display_scroll!(game, 0; Bg2H, Bg2V);
 }
 fn spawn_random_dust<L: Lease + ?Sized>(game: &mut L) {
     let random = boss!(game.Random);

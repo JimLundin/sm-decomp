@@ -131,8 +131,6 @@ pub mod boss_ram {
         RemovedR22 = 0x0016,
         /// `REG_M7A`.
         RegM7a = 0x0078,
-        /// `REG_BG1HOFS`.
-        RegBg1hofs = 0x00b1,
         /// `VRAM_WRITE_QUEUE_TAIL`.
         VramWriteQueueTail = 0x0330,
         /// `AREA_INDEX`.

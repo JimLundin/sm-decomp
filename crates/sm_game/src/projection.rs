@@ -71,6 +71,33 @@ pub fn copy_into_image<H: WorkRamAccess + ?Sized>(h: &H, at: usize, bytes: &[u8]
 pub(crate) struct SessionProjection(pub crate::session::Session);
 
 #[cfg(test)]
+impl crate::display_scroll::Access for SessionProjection {
+    fn scroll_word(&self, word: crate::display_scroll::Word) -> u16 {
+        self.0
+            .presentation
+            .owner()
+            .expect("provided Display")
+            .state
+            .controls
+            .scroll_words[usize::from(word)]
+    }
+    fn set_scroll_word(&mut self, word: crate::display_scroll::Word, value: u16) {
+        self.0
+            .presentation
+            .owner_mut()
+            .expect("provided Display")
+            .state
+            .controls
+            .scroll_words[usize::from(word)] = value;
+    }
+    fn physical_scroll_byte(&self, _: crate::display_scroll::Word, _: bool) -> u8 {
+        panic!("physical image was not supplied")
+    }
+    fn write_physical_scroll_byte(&mut self, _: crate::display_scroll::Word, _: bool, _: u8) {
+        panic!("physical image was not supplied")
+    }
+}
+#[cfg(test)]
 impl CompatibilityRam for SessionProjection {
     fn compatibility_byte(&self, at: usize) -> u8 {
         crate::session_encoding::projected_byte(&self.0, at).expect("view byte is projected")

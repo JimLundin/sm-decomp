@@ -469,24 +469,10 @@ fn projectile_kind<S: State + ?Sized>(game: &S, index: u16) -> u16 {
     }
 }
 fn bg2_scroll<S: State + ?Sized>(game: &S, axis: usize) -> u16 {
-    match game.session().presentation.owner() {
-        Ok(display) => display.state.controls.scroll_words[2 + axis],
-        Err(_) => {
-            let at = 0xb5 + 2 * axis;
-            u16::from_le_bytes([game.slot_byte(at), game.slot_byte(at + 1)])
-        }
-    }
+    game.scroll_word(crate::display_scroll::WORDS[2 + axis])
 }
 fn set_bg2_scroll<S: State + ?Sized>(game: &mut S, axis: usize, value: u16) {
-    match game.session_mut().presentation.owner_mut() {
-        Ok(display) => display.state.controls.scroll_words[2 + axis] = value,
-        Err(_) => {
-            let at = 0xb5 + 2 * axis;
-            let [low, high] = value.to_le_bytes();
-            game.set_slot_byte(at, low);
-            game.set_slot_byte(at + 1, high);
-        }
-    }
+    game.set_scroll_word(crate::display_scroll::WORDS[2 + axis], value);
 }
 fn set_mosaic<S: State + ?Sized>(game: &mut S, value: u8) {
     match game.session_mut().presentation.owner_mut() {

@@ -325,6 +325,7 @@ pub mod ceres_door_data;
 pub mod ceres_elevator;
 pub mod ceres_ridley_tables;
 pub mod corpse_tables;
+pub mod display_scroll;
 pub mod explosion_window;
 pub mod gameplay_frame;
 pub mod gameplay_rules;

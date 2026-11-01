@@ -114,7 +114,7 @@ pub enum FileRowEmphasis {
 
 pub fn file_rows<H: Host + ?Sized>(emphasis: FileRowEmphasis, game: &mut H) {
     // Loading a slot leaves the nonempty-slot bits as they were.
-    let nonempty = crate::session_cohort::load::<SaveSelection, _>(game).nonempty_slots;
+    let nonempty = crate::menus::state::load::<SaveSelection, _>(game).nonempty_slots;
     for slot in 0..3u16 {
         save_slots::load(slot, game);
         let dim = match emphasis {
@@ -173,7 +173,7 @@ fn draw_main_menu<H: Host + ?Sized>(game: &mut H) {
         load(top + 0x30, ADDR_K_MENU_TILEMAP_TIME as u16, game);
     }
     let nonempty = (!nonempty).swap_bytes() >> 5;
-    crate::session_cohort::with(game, |_, selection: &mut SaveSelection| {
+    crate::menus::state::with(game, |_, selection: &mut SaveSelection| {
         selection.nonempty_slots = nonempty;
     });
     if nonempty != 0 {
@@ -200,7 +200,7 @@ fn draw_main_menu<H: Host + ?Sized>(game: &mut H) {
             *menu.helmet_y(helmet) = y;
         }
     });
-    crate::screen_fade::set_both(game, 1, 1);
+    crate::screen_fade::store(game, 1, 1);
 }
 
 /// The slot helmets' x, and their y beside each save slot's row.

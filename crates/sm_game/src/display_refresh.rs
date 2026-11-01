@@ -175,7 +175,14 @@ pub fn load_pause_assets<H: Host + crate::menus::host::Host + ?Sized>(game: &mut
 
 /// Upload the pause map and the area label.
 pub fn upload_pause_map<H: Host + crate::menus::host::Host + ?Sized>(game: &mut H) {
-    word! {game; REG_BG1HOFS = word!(game.REG_BG4HOFS); REG_BG1VOFS = word!(game.REG_BG4VOFS); }
+    {
+        crate::menus::prelude::display_scroll!(
+            game.Bg1H = crate::menus::prelude::display_scroll!(game.Bg4H)
+        );
+        crate::menus::prelude::display_scroll!(
+            game.Bg1V = crate::menus::prelude::display_scroll!(game.Bg4V)
+        );
+    }
     register_writes! { game;
         byte(VMADDL as u16, 0); byte(VMADDH as u16, 0x30);
         byte(VMAIN as u16, 0x80);
@@ -225,16 +232,8 @@ pub fn reset_layer_mirrors<H: Host + ?Sized>(game: &mut H) {
     fill_owned(game, 0x6b..0x6e, 0);
 }
 
-pub fn fade<H: Host + ?Sized>(fade_in: bool, game: &mut H) {
-    use crate::screen_fade;
-    let remaining = screen_fade::current(game).counter.wrapping_sub(1);
-    let due = (remaining as i16) < 0;
-    let counter = if due {
-        screen_fade::current(game).delay
-    } else {
-        remaining
-    };
-    screen_fade::set_counter(game, counter);
+pub fn fade<H: Host + crate::screen_fade::Owner + ?Sized>(fade_in: bool, game: &mut H) {
+    let due = game.tick_screen_fade();
     if !due {
         return;
     }
@@ -390,7 +389,12 @@ fn upload_registers<H: Host + ?Sized>(game: &mut H) {
     }
 
     // Scroll and Mode 7 words latch low then high through the same register.
-    upload_latches(BG1HOFS as u16, 0xb1, 8, game);
+    for (index, word) in crate::display_scroll::WORDS.into_iter().enumerate() {
+        let register = (BG1HOFS as u16) + u16::try_from(index).expect("eight scroll registers");
+        game.write_register(register, game.scroll_byte(word, false));
+        // Re-sample after the low latch: the register callback may change it.
+        game.write_register(register, game.scroll_byte(word, true));
+    }
     game.write_owned_byte(0x7ec, game.compatibility_byte(0x56));
     if game.compatibility_byte(0x55) & 7 == 7 || game.compatibility_byte(0x56) & 7 == 7 {
         upload_latches(M7A as u16, 0x78, 6, game);

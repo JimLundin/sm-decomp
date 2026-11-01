@@ -12,7 +12,7 @@ use crate::actors::host::BossEffects as _;
 use crate::actors::session_slots::session_slot;
 use crate::display::transfer::{Source, TilemapUpload, queue_tilemap};
 use crate::enemy_script::EnemyScript;
-use crate::menus::prelude::{boss, owned, scroll};
+use crate::menus::prelude::{boss, display_scroll, owned};
 
 /// Sprite object 3Dh: Draygon foaming at the mouth, 20h px ahead of and 10h
 /// px above the body.
@@ -280,12 +280,12 @@ pub fn set_bg2_scroll<S: BossState>(game: &mut S) {
         + i32::from(game.camera().layer1[0])
         - i32::from(session_slot!(game, Draygon[BODY].base.x_pos))
         - BG2_X_OFFSET;
-    scroll!(game.Bg2H = x as u16);
+    display_scroll!(game.Bg2H = x as u16);
     let y = i32::from(session_slot!(game, Draygon[BODY].graphics_y_displacement))
         + i32::from(game.camera().layer1[1])
         - i32::from(session_slot!(game, Draygon[BODY].base.y_pos))
         - BG2_Y_OFFSET;
-    scroll!(game.Bg2V = y as u16);
+    display_scroll!(game.Bg2V = y as u16);
 }
 /// Oscillate around the goop height and move on.
 fn goop_glide<S: BossState>(right: bool, game: &mut S) {

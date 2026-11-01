@@ -47,14 +47,18 @@ pub fn begin<H: Host + ?Sized>(game: &mut H) {
     set_bg1_offset(
         game,
         0,
-        word!(game.REG_BG1HOFS).wrapping_sub(game.session().room.camera.layer1[0]),
+        crate::menus::prelude::display_scroll!(game.Bg1H)
+            .wrapping_sub(game.session().room.camera.layer1[0]),
     );
     game.session_mut().room.camera.bg1_offset[1] =
-        word!(game.REG_BG1VOFS).wrapping_sub(game.session().room.camera.layer1[1]);
+        crate::menus::prelude::display_scroll!(game.Bg1V)
+            .wrapping_sub(game.session().room.camera.layer1[1]);
     game.session_mut().room.camera.bg2_scroll[0] =
-        word!(game.REG_BG2HOFS).wrapping_sub(game.session().room.camera.layer1[0]);
+        crate::menus::prelude::display_scroll!(game.Bg2H)
+            .wrapping_sub(game.session().room.camera.layer1[0]);
     game.session_mut().room.camera.bg2_scroll[1] =
-        word!(game.REG_BG2VOFS).wrapping_sub(game.session().room.camera.layer1[1]);
+        crate::menus::prelude::display_scroll!(game.Bg2V)
+            .wrapping_sub(game.session().room.camera.layer1[1]);
     if direction == 3 {
         game.session_mut().room.entry.arrival_y =
             game.session().room.entry.arrival_y.wrapping_add(32);
@@ -148,8 +152,8 @@ pub fn horizontal<H: Host + ?Sized>(left: bool, game: &mut H) -> u8 {
 }
 
 fn first_vertical_frame<H: Host + ?Sized>(offset: u16, block_delta: u16, game: &mut H) {
-    let bg1 = word!(game.REG_BG1VOFS);
-    let bg2 = word!(game.REG_BG2VOFS);
+    let bg1 = crate::menus::prelude::display_scroll!(game.Bg1V);
+    let bg2 = crate::menus::prelude::display_scroll!(game.Bg2V);
     let layer1 = game.session().room.camera.layer1[1];
     set_layer1(
         game,
@@ -163,8 +167,8 @@ fn first_vertical_frame<H: Host + ?Sized>(offset: u16, block_delta: u16, game: &
     update_map(game);
     game.session_mut().room.camera.layer2[1] = layer2;
     set_layer1(game, 1, layer1);
-    word!(game.REG_BG2VOFS = bg2);
-    word!(game.REG_BG1VOFS = bg1);
+    crate::menus::prelude::display_scroll!(game.Bg2V = bg2);
+    crate::menus::prelude::display_scroll!(game.Bg1V = bg1);
 }
 
 pub fn down<H: Host + ?Sized>(game: &mut H) -> u8 {

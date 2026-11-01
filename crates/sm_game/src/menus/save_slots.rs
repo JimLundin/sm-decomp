@@ -5,7 +5,6 @@ use crate::menu_state::SaveSelection;
 use crate::ram::checked_word as word;
 use crate::ram::word as game_word;
 use crate::save_file::{self, SaveHost};
-use crate::session_cohort;
 use sm_data::cartridge::{RomImage, lorom_offset};
 use sm_data::save_slots::{ADDRESS, BYTES, SaveSlots};
 
@@ -68,7 +67,7 @@ pub fn save<H: Host + ?Sized>(slot: u16, game: &mut H) {
     game.observe_flags_save(2);
     transfer_map(Direction::Save, game);
     game.observe_flags_save(3);
-    session_cohort::with(game, |game, selection: &mut SaveSelection| {
+    crate::menus::state::with(game, |game, selection: &mut SaveSelection| {
         selection.save_station = selection.load_station;
         selection.save_area = crate::room_view::current(game).area;
     });
@@ -85,14 +84,14 @@ pub fn load<H: Host + ?Sized>(slot: u16, game: &mut H) -> u8 {
     if save_file::checksum_matches(&SaveFile(game), slot, checksum) {
         crate::word_transfers!(game, descending, 48; native(0xa00) <- le(PLAYER_DATA_SAVED, 47));
         transfer_map(Direction::Load, game);
-        session_cohort::with(game, |game, selection: &mut SaveSelection| {
+        crate::menus::state::with(game, |game, selection: &mut SaveSelection| {
             selection.load_station = selection.save_station;
             crate::room_view::set(game, crate::room_view::Word::Area, selection.save_area);
         });
         0
     } else {
         save_file::clear(&mut SaveFile(game), slot);
-        session_cohort::with(game, |_, selection: &mut SaveSelection| {
+        crate::menus::state::with(game, |_, selection: &mut SaveSelection| {
             selection.load_station = 0;
         });
         crate::room_view::set(game, crate::room_view::Word::Area, 0);
@@ -220,7 +219,7 @@ pub fn save_area_map<H: Host + ?Sized>(game: &mut H) {
     for (active, saved) in area_map_words(crate::room_view::current(game).area) {
         crate::word_transfers!(game, ascending, 1; le(EXPLORED_MAP_TILES_SAVED, saved) <- native(0x7f7 + active * 2));
     }
-    if session_cohort::load::<SaveSelection, _>(game).has_area_map != 0 {
+    if crate::menus::state::load::<SaveSelection, _>(game).has_area_map != 0 {
         let flag = 0xd908 + usize::from(crate::room_view::current(game).area);
         word!(game, flag; = word!(game, flag;) | 0xff);
     }

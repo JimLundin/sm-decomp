@@ -114,7 +114,7 @@ pub fn play<H: crate::menus::host::Host + ?Sized>(
         word!(game.GAME_STATE += 1);
         word!(game.DEBUG_DISABLE_SOUNDS = 0);
         game.ram().write_byte(0x51, 0x80);
-        crate::screen_fade::set_both(game, 1, 1);
+        crate::screen_fade::store(game, 1, 1);
     }
     game.ram().write_byte(0x614, 0);
     0
@@ -216,7 +216,10 @@ pub fn load<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     let area = &mut runtime.session_mut().room.area;
     *area = *area & 0xff00 | u16::from(value);
     drop(runtime);
-    word! { game, 0; REG_BG1HOFS, REG_BG1VOFS }
+    {
+        crate::display_scroll::write(game, crate::display_scroll::Word::Bg1H, 0);
+        crate::display_scroll::write(game, crate::display_scroll::Word::Bg1V, 0);
+    }
     {
         let value = crate::session_cohort::load::<crate::flow::Flow, _>(game)
             .demo_scene

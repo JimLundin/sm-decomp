@@ -9,7 +9,9 @@ use crate::visual_state::{EyeBeamPhase, HazePhase, HdmaWave, Weather};
 
 /// The session view these effects read and write: the lease's live RAM and
 /// Session projection, plus the eye beam's window table outside it.
-pub trait Host: SessionRam + SessionAccess + ActorAccess + Content {
+pub trait Host:
+    SessionRam + SessionAccess + ActorAccess + Content + crate::display_scroll::Access
+{
     /// Build the eye beam's window table outside the session view.
     fn calculate_xray_window(&mut self, window: crate::beam_windows::XrayWindow);
 }
@@ -192,9 +194,17 @@ pub trait HdmaEffects: Host {
         let mut phase = self.hdma_object(slot).a;
         // Cinematic BG3 data is separate from Phantoon's BG2 table.
         let (scroll, store, table) = if phantoon {
-            (ram::REG_BG2HOFS, Store::SliceNative, ram::PHANTOON_WAVES)
+            (
+                crate::display_scroll::Word::Bg2H,
+                Store::SliceNative,
+                ram::PHANTOON_WAVES,
+            )
         } else {
-            (ram::REG_BG3HOFS, Store::SliceLe, arrays::HDMA_TABLE_1)
+            (
+                crate::display_scroll::Word::Bg3H,
+                Store::SliceLe,
+                arrays::HDMA_TABLE_1,
+            )
         };
         for row in 0..256 / step {
             let sample = SINE_COSINE[usize::from(phase >> 1) + 64];
@@ -206,14 +216,16 @@ pub trait HdmaEffects: Host {
             };
             let offset = hdma_wave_offset(sample, low, high);
             phase = phase.wrapping_add(step) & 0x1ff;
-            let value = self.word(scroll).wrapping_add(offset);
+            let value = self.scroll_word(scroll).wrapping_add(offset);
             store_word(self, table + 2 * usize::from(row), value, store);
         }
         // Phantoon samples its mode again after the first half is published.
         let narrow = phantoon && self.resolve_actor(controller, Native).parameters[0] & 1 == 0;
         let rows = if narrow { 32 } else { 64 };
         for row in (0..rows).rev() {
-            let origin = self.word(scroll).wrapping_add(self.word(scroll));
+            let origin = self
+                .scroll_word(scroll)
+                .wrapping_add(self.scroll_word(scroll));
             let sample = if phantoon {
                 self.native_word(table + 2 * row)
             } else {

@@ -20,7 +20,7 @@ pub fn initialize<H: Host + ?Sized>(game: &mut H, options: &mut OptionsMenu, upl
         game.ram().write_byte(mirror, 0);
     }
     upload(game);
-    scroll! { game, 0; Bg1H, Bg1V, Bg2H, Bg2V }
+    display_scroll! { game, 0; Bg1H, Bg1V, Bg2H, Bg2V }
     options.debug_invincibility = 0;
     crate::word_transfers!(game, descending, 256; le(PALETTE_BUFFER, 255) <- rom(0x8ee400, 255));
     for (index, source) in [0x978df4, 0x978fcd, 0x9791c4, 0x97938d, 0x97953a]
@@ -75,22 +75,22 @@ pub fn main_menu<H: Host + ?Sized>(game: &mut H, options: &mut OptionsMenu) {
 
 fn start<H: Host + ?Sized>(game: &mut H, options: &mut OptionsMenu) {
     if word!(game.ENABLE_DEBUG) != 0 && game.observed_inputs().held & K_BUTTON_L as u16 == 0
-        || crate::session_cohort::load::<SaveSelection, _>(game).loading_game_state == 5
+        || crate::menus::state::load::<SaveSelection, _>(game).loading_game_state == 5
     {
         options.screen_index = 4;
     } else {
-        crate::screen_fade::set_both(game, 0, 0);
+        crate::screen_fade::store(game, 0, 0);
         options.screen_index = 12;
     }
 }
 
 pub fn finish_start<H: Host + ?Sized>(game: &mut H) {
-    crate::session_cohort::with(game, |_, options: &mut OptionsMenu| {
+    crate::menus::state::with(game, |_, options: &mut OptionsMenu| {
         options.screen_index = 0
     });
     if word!(game.ENABLE_DEBUG) != 0 && (game.observed_inputs().held & 0x20) == 0 {
         word!(game.GAME_STATE = 5);
-        let slot = crate::session_cohort::with(game, |_, selection: &mut SaveSelection| {
+        let slot = crate::menus::state::with(game, |_, selection: &mut SaveSelection| {
             let unsaved = selection.loading_game_state != 5;
             selection.loading_game_state = 5;
             unsaved.then_some(selection.selected_slot)
@@ -99,7 +99,7 @@ pub fn finish_start<H: Host + ?Sized>(game: &mut H) {
             super::save_slots::save(slot, game);
         }
     } else if let loading @ 1.. =
-        crate::session_cohort::load::<SaveSelection, _>(game).loading_game_state
+        crate::menus::state::load::<SaveSelection, _>(game).loading_game_state
     {
         word!(game.GAME_STATE = loading);
         if loading == 34 {
@@ -107,7 +107,7 @@ pub fn finish_start<H: Host + ?Sized>(game: &mut H) {
                 flow.cinematic_function = 0xc11b
             });
         }
-        crate::session_cohort::with(game, |_, options: &mut OptionsMenu| {
+        crate::menus::state::with(game, |_, options: &mut OptionsMenu| {
             options.menu_option_index = 0;
             options.screen_index = 0;
         });
@@ -116,16 +116,16 @@ pub fn finish_start<H: Host + ?Sized>(game: &mut H) {
         crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
             flow.cinematic_function = 0xa395
         });
-        crate::session_cohort::with(game, |_, options: &mut OptionsMenu| {
+        crate::menus::state::with(game, |_, options: &mut OptionsMenu| {
             options.menu_option_index = 0;
         });
-        crate::screen_fade::set_both(game, 0, 0);
+        crate::screen_fade::store(game, 0, 0);
     }
 }
 
 fn dissolve<H: Host + ?Sized>(game: &mut H, options: &mut OptionsMenu) {
     game.ram().write_byte(crate::ram::mirror::MOSAIC, 3);
-    crate::screen_fade::set_both(game, 0, 0);
+    crate::screen_fade::store(game, 0, 0);
     options.screen_index = 5;
 }
 
@@ -287,11 +287,11 @@ fn reset_bindings<H: Host + ?Sized>(game: &mut H, _: &mut OptionsMenu) {
 
 pub fn scroll<const DOWN: bool, H: Host + ?Sized>(game: &mut H, options: &mut OptionsMenu) {
     if DOWN {
-        scroll!(game.Bg1V += 2);
+        display_scroll!(game.Bg1V += 2);
     } else {
-        scroll!(game.Bg1V -= 2);
+        display_scroll!(game.Bg1V -= 2);
     }
-    if scroll!(game.Bg1V) == if DOWN { 32 } else { 0 } {
+    if display_scroll!(game.Bg1V) == if DOWN { 32 } else { 0 } {
         options.screen_index = 7;
     }
 }
@@ -321,17 +321,17 @@ pub fn fade_out<H: Host + ?Sized>(
         return;
     }
     enable(game);
-    crate::screen_fade::set_both(game, 0, 0);
+    crate::screen_fade::store(game, 0, 0);
     match screen {
         0 => options.screen_index = options.screen_index.wrapping_add(1),
         5 => {
-            scroll!(game.Bg1V = 0);
+            display_scroll!(game.Bg1V = 0);
             options.screen_index = options.screen_index.wrapping_add(1);
             replace_screen(game, options);
         }
         11 => {
             word!(game.GAME_STATE = 4);
-            crate::session_cohort::with(game, |_, menu: &mut crate::menu_state::MenuState| {
+            crate::menus::state::with(game, |_, menu: &mut crate::menu_state::MenuState| {
                 menu.menu_index = 0
             });
             options.screen_index = 0;
@@ -356,7 +356,7 @@ pub fn fade_in<const DISSOLVE: bool, H: Host + ?Sized>(game: &mut H, options: &m
     if DISSOLVE {
         game.ram().write_byte(crate::ram::mirror::MOSAIC, 0);
     }
-    crate::screen_fade::set_both(game, 0, 0);
+    crate::screen_fade::store(game, 0, 0);
     if !DISSOLVE {
         options.screen_index = options.screen_index.wrapping_add(1);
     } else if options.menu_option_index == 0 {
@@ -410,13 +410,13 @@ pub fn copy_screen<H: Host + ?Sized>(last_word: usize, native: bool, game: &mut 
 
 pub fn advance<H: Host + ?Sized>(game: &mut H, upload: fn(&mut H), enable: fn(&mut H)) -> u8 {
     // Keep the original thirteen-entry bounds failure ahead of all menu effects.
-    let index = crate::session_cohort::load::<OptionsMenu, _>(game).screen_index;
+    let index = crate::menus::state::load::<OptionsMenu, _>(game).screen_index;
     let screen = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12][usize::from(index)];
     // Starting a game saves, which reads RAM; it stores its own options words.
     if screen == 4 {
         finish_start(game);
     }
-    crate::session_cohort::with(game, |game, options: &mut OptionsMenu| {
+    crate::menus::state::with(game, |game, options: &mut OptionsMenu| {
         match screen {
             1 => initialize(game, options, upload),
             2 => fade_in::<false, H>(game, options),

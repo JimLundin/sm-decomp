@@ -62,9 +62,30 @@ macro_rules! owned {
     };
 }
 pub(crate) use owned;
-/// The BG scroll mirrors ([`crate::display::sequence::scroll::Word`]).
-macro_rules! scroll { ($($t:tt)*) => { owned!([$crate::display::sequence::scroll] $($t)*) }; }
-pub(crate) use scroll;
+/// Direct access to the current presentation scroll owner.
+macro_rules! display_scroll {
+    ($game:ident.$word:ident) => { $crate::display_scroll::read(&*$game, $crate::display_scroll::Word::$word) };
+    ($game:ident.$word:ident = $value:expr $(,)?) => {{
+        let value: u16 = $value;
+        $crate::display_scroll::write($game, $crate::display_scroll::Word::$word, value)
+    }};
+    ($game:ident.$word:ident $op:tt $value:expr, reread $(,)?) => {{
+        $crate::menus::prelude::display_scroll!($game.$word $op $value);
+        $crate::display_scroll::read(&*$game, $crate::display_scroll::Word::$word)
+    }};
+    ($game:ident.$word:ident $op:tt $value:expr $(,)?) => {{
+        let old = $crate::display_scroll::read(&*$game, $crate::display_scroll::Word::$word);
+        let value: u16 = $crate::menus::prelude::owned!(@op old $op $value);
+        $crate::display_scroll::write($game, $crate::display_scroll::Word::$word, value)
+    }};
+    ($game:ident, $value:expr; $($word:ident),+ $(,)?) => {
+        $($crate::menus::prelude::display_scroll!($game.$word = $value);)+
+    };
+    ($game:ident; $($word:ident = $value:expr;)+) => {
+        $($crate::menus::prelude::display_scroll!($game.$word = $value);)+
+    };
+}
+pub(crate) use display_scroll;
 /// Crocomire's melt words ([`crate::actors::crocomire_reactions::melt::Word`]).
 macro_rules! melt { ($($t:tt)*) => { owned!([$crate::actors::crocomire_reactions::melt] $($t)*) }; }
 pub(crate) use melt;

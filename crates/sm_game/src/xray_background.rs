@@ -120,8 +120,14 @@ fn copy_background<H: Host + ?Sized>(game: &mut H) {
 /// byte; `restore_left` puts them back.
 pub fn freeze_and_backup<H: Host + ?Sized>(object: &mut HdmaObject, game: &mut H) {
     game.ram().write_byte(0xa78, 1);
-    object.a = u16::from_le_bytes([word!(game.REG_BG2HOFS) as u8, game.ram().read_byte(0xb6)]);
-    object.b = u16::from_le_bytes([word!(game.REG_BG2VOFS) as u8, game.ram().read_byte(0xb8)]);
+    object.a = u16::from_le_bytes([
+        crate::menus::prelude::display_scroll!(game.Bg2H) as u8,
+        game.physical_scroll_byte(crate::display_scroll::Word::Bg2H, true),
+    ]);
+    object.b = u16::from_le_bytes([
+        crate::menus::prelude::display_scroll!(game.Bg2V) as u8,
+        game.physical_scroll_byte(crate::display_scroll::Word::Bg2V, true),
+    ]);
     object.c = (object.c & 0xff00) | u16::from(game.ram().read_byte(0x59));
 }
 pub fn capture_bg1_right<H: Host + ?Sized>(game: &mut H) {
@@ -365,13 +371,21 @@ pub fn capture_bg2_right<H: Host + ?Sized>(game: &mut H) {
     if can_reveal_blocks(game) {
         if crate::room_view::effects(game).earthquake_timer != 0 {
             let camera = camera(game);
-            word! { game;
-                REG_BG1HOFS = camera.layer1[0].wrapping_add(camera.bg1_offset[0]);
-                REG_BG1VOFS = camera.layer1[1].wrapping_add(camera.bg1_offset[1]);
+            {
+                crate::menus::prelude::display_scroll!(
+                    game.Bg1H = camera.layer1[0].wrapping_add(camera.bg1_offset[0])
+                );
+                crate::menus::prelude::display_scroll!(
+                    game.Bg1V = camera.layer1[1].wrapping_add(camera.bg1_offset[1])
+                );
             }
         }
-        word!(game.REG_BG2HOFS = (word!(game.REG_BG1HOFS)) & (0xfu16));
-        word!(game.REG_BG2VOFS = (word!(game.REG_BG1VOFS)) & (0xfu16));
+        crate::menus::prelude::display_scroll!(
+            game.Bg2H = (crate::menus::prelude::display_scroll!(game.Bg1H)) & (0xfu16)
+        );
+        crate::menus::prelude::display_scroll!(
+            game.Bg2V = (crate::menus::prelude::display_scroll!(game.Bg1V)) & (0xfu16)
+        );
         game.ram().write_byte(0x59, 73);
     }
     enqueue_readback(0x59, 1024, 0x5800, 2048, true, game);
@@ -410,8 +424,8 @@ pub fn restore_left<H: Host + ?Sized>(object: &mut HdmaObject, game: &mut H) {
     word!(game.HDMA_TABLE_1[0] = 255);
     game.apply_xray_blending(BlendPhase::Restore);
     set_backdrop_color(0, game);
-    word!(game.REG_BG2HOFS = object.a);
-    word!(game.REG_BG2VOFS = object.b);
+    crate::menus::prelude::display_scroll!(game.Bg2H = object.a);
+    crate::menus::prelude::display_scroll!(game.Bg2V = object.b);
     game.ram().write_byte(0x59, object.c as u8);
     if (word!(game.VRAM_WRITE_QUEUE_TAIL) as i16).wrapping_sub(240) < 0 {
         upload_screen(0x5000, 0, game);

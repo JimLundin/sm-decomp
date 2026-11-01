@@ -19,7 +19,7 @@ use crate::display_refresh::GraphicsAsset;
 use crate::inventory;
 use crate::menu_state::OptionsMenu;
 use crate::menu_state::SaveSelection;
-use crate::menus::prelude::{owned, scroll};
+use crate::menus::prelude::{display_scroll, owned};
 use crate::ram::RawRam as _;
 use crate::ram::mirror;
 use crate::ram::word;
@@ -199,7 +199,7 @@ pub fn initial<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     GraphicsAsset::VramWords(0x7fb800, 0x6e00, 0x2400).load(game);
     GraphicsAsset::Decompress(0x95d713, 0x1a000).load(game);
     crate::display_refresh::enable(true, game);
-    crate::screen_fade::set_both(game, 3, 3);
+    crate::screen_fade::store(game, 3, 3);
     crate::hdma_objects::set_hdma_enabled(true, game);
     crate::palette_effects::execution::leased::clear(game);
     crate::palette_effects::execution::leased::set_enabled(true, game);
@@ -254,7 +254,7 @@ pub fn fade_out<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
         crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
             flow.cinematic_function = function::WAIT_FOR_FADE_OUT
         });
-        crate::screen_fade::set_both(game, 2, 2);
+        crate::screen_fade::store(game, 2, 2);
     }
 }
 
@@ -292,8 +292,8 @@ pub fn set_up_text_page_1<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) 
         0x4c00,
     );
     *cine.y() = 8;
-    scroll!(game.Bg2V = 8);
-    scroll!(game.Bg3V = 8);
+    display_scroll!(game.Bg2V = 8);
+    display_scroll!(game.Bg3V = 8);
     crate::intro_pages::clear_english_text(game);
     crate::intro_pages::reset_caret(cine);
     crate::music_requests::queue_delayed_8(NO_MUSIC, game);
@@ -457,7 +457,7 @@ pub fn boom_initial<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     sprites(cine, game, object::CERES_EXPLOSION_SPAWNER, 0x0800);
     crate::palette_effects::execution::leased::spawn(BOOM_GLOW, game);
     crate::display_refresh::enable(true, game);
-    crate::screen_fade::set_both(game, 1, 1);
+    crate::screen_fade::store(game, 1, 1);
     crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
         flow.cinematic_function = function::BOOM_WAIT_FOR_MUSIC
     });
@@ -488,7 +488,7 @@ pub fn boom_small_explosions<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut 
     *cine.mode7_zoom() = cine.mode7_zoom().wrapping_add(1);
     crate::display_refresh::fade(true, game);
     if game.ram().read_byte(mirror::INIDISP) == 15 {
-        crate::screen_fade::set_both(game, 0, 0);
+        crate::screen_fade::store(game, 0, 0);
         crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
             flow.cinematic_function = function::BOOM_EXPLOSIONS
         });
@@ -554,7 +554,7 @@ pub fn boom_gunship_flying_away<H: Host + ?Sized>(cine: &mut Cinematic, game: &m
 /// `CinematicFunction_Intro_Func84`.
 pub fn boom_wait<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     if countdown(cine) {
-        crate::screen_fade::set_both(game, 1, 1);
+        crate::screen_fade::store(game, 1, 1);
         crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
             flow.cinematic_function = function::BOOM_FADE_OUT
         });
@@ -568,7 +568,7 @@ pub fn boom_fade_out<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     crate::display_refresh::fade(false, game);
     if game.ram().read_byte(mirror::INIDISP) == 0x80 {
         crate::display_refresh::enable(true, game);
-        crate::screen_fade::set_both(game, 0, 0);
+        crate::screen_fade::store(game, 0, 0);
         if word!(game.GAME_STATE) == BOOM_WITH_SAMUS {
             crate::music_requests::queue_delayed_8(NO_MUSIC, game);
             crate::session_cohort::with(
@@ -641,7 +641,7 @@ pub fn zebes_initial<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
         flow.cinematic_function = function::ZEBES_FADING_IN
     });
     crate::display_refresh::enable(true, game);
-    crate::screen_fade::set_both(game, 1, 1);
+    crate::screen_fade::store(game, 1, 1);
 }
 
 /// Cinematic function - fly to Zebes - hold on scene for 40h frames

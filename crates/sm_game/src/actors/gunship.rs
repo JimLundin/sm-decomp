@@ -534,8 +534,7 @@ pub fn run(rt: &mut impl ActorLease, index: u16, function: u16) {
             if function == ACCELERATING_SET_GAME_STATE && rising {
                 session_slot!(rt, Gunship[top].function = ACCELERATING);
                 rt.write_slice_le(W::GAME_STATE, 38);
-                rt.write_slice_le(W::SCREEN_FADE_DELAY, 0);
-                rt.write_slice_le(W::SCREEN_FADE_COUNTER, 0);
+                crate::screen_fade::store(rt, 0, 0);
             }
         }
         _ => unreachable!("only registered gunship functions enter this module"),

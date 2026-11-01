@@ -255,8 +255,9 @@ where
     crate::liquid::LiquidWords::set(game, |words| &mut words.liquid.offset.fraction, 0);
     crate::liquid::LiquidWords::set(game, |words| &mut words.liquid.offset.whole, 0);
     word!(game.FX_LAYER_BLENDING_CONFIG_A = 2);
-    word! { game, 0;
-        REG_BG3HOFS, REG_BG3VOFS,
+    {
+        crate::display_scroll::write(game, crate::display_scroll::Word::Bg3H, 0);
+        crate::display_scroll::write(game, crate::display_scroll::Word::Bg3V, 0);
     }
     game.session_mut().room.camera.layer2 = [0, 0];
     word!(game.ROOM_LOADING_IRQ_HANDLER = 0);

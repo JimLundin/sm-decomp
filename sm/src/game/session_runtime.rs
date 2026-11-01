@@ -425,6 +425,8 @@ impl<'g> Runtime<'g> {
         // while the external interval is deliberately unavailable.
         export_session_preflighted(state, mutation.game());
         mutation.game().revoke_inventory_domain();
+        mutation.game().revoke_menu_domain();
+        mutation.game().revoke_scroll_domain();
         let result = action(mutation.game());
         let payload = mutation.game().capture_samus_snapshot();
         let prepared = mutation
@@ -543,13 +545,24 @@ impl<'g> Runtime<'g> {
                 // discard invalid byte/native publication rather than panic again.
                 self.game.return_actor_identity(state.actor_identity);
                 self.game.return_inventory_domain(state.inventory, false);
+                self.game.return_menu_domain(
+                    sm_game::menus::state::State {
+                        menu: state.menu,
+                        screens: state.menu_screens,
+                    },
+                    false,
+                );
                 self.game.revoke_samus_authority();
             } else {
                 self.game.revoke_inventory_domain();
+                self.game.revoke_menu_domain();
             }
         }
     }
     pub(crate) fn byte(&self, at: usize) -> u8 {
+        if (0xb1..0xc1).contains(&at) && !self.display_owned() {
+            return self.game.scroll_byte(at);
+        }
         if self.persistent_is_current() {
             if let Some(byte) = encoding::projected_byte(self.session(), at) {
                 return byte;
@@ -653,6 +666,11 @@ impl<'g> Runtime<'g> {
         u16::from_ne_bytes([self.byte(at), self.byte(at + 1)])
     }
     pub(crate) fn set_byte(&mut self, at: usize, value: u8) {
+        if (0xb1..0xc1).contains(&at) && self.persistent_is_current() && !self.display_owned() {
+            self.game.set_scroll_byte(at, value);
+            self.inputs = encoding::inputs(&|lane| self.game.ram().read_byte(lane));
+            return;
+        }
         if !self.persistent_is_current() {
             self.game.ram().write_byte(at, value);
             self.inputs = encoding::inputs(&|lane| self.game.ram().read_byte(lane));
@@ -1029,6 +1047,10 @@ fn reuse_frame_session(game: &mut Game) -> Option<(Session, ExternalInputs)> {
     if let Some(inventory) = game.take_inventory_domain() {
         state.inventory = inventory;
     }
+    if let Some(menu) = game.take_menu_domain() {
+        state.menu = menu.menu;
+        state.menu_screens = menu.screens;
+    }
     Some((state, inputs))
 }
 pub(crate) fn import_session(game: &mut Game) -> Session {
@@ -1048,6 +1070,10 @@ fn import_session_preflighted(game: &mut Game) -> Session {
     state.actor_identity = game.take_actor_identity();
     if let Some(inventory) = game.take_inventory_domain() {
         state.inventory = inventory;
+    }
+    if let Some(menu) = game.take_menu_domain() {
+        state.menu = menu.menu;
+        state.menu_screens = menu.screens;
     }
     state
 }
@@ -1077,6 +1103,13 @@ impl Drop for ExportIdentity<'_> {
             }
             self.game
                 .return_inventory_domain(state.inventory, !std::thread::panicking());
+            self.game.return_menu_domain(
+                sm_game::menus::state::State {
+                    menu: state.menu,
+                    screens: state.menu_screens,
+                },
+                !std::thread::panicking(),
+            );
         }
     }
 }
@@ -1609,6 +1642,12 @@ pub(crate) use player_transitions_runtime::{
 };
 #[path = "player_update_runtime.rs"]
 pub(crate) mod player_update_runtime;
+
+#[path = "screen_fade_runtime.rs"]
+mod screen_fade_runtime;
+
+#[path = "scroll_runtime.rs"]
+mod scroll_runtime;
 
 #[cfg(sm_verify_dll)]
 #[path = "../verification/collision_mechanism_checks.rs"]

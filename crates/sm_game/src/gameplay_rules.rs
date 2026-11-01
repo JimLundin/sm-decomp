@@ -69,15 +69,17 @@ pub fn finish_frame<H: Host + ?Sized>(game: &mut H) {
             1
         };
         for (offset, register) in [
-            fields::REG_BG1HOFS,
-            fields::REG_BG1VOFS,
-            fields::REG_BG2HOFS,
-            fields::REG_BG2VOFS,
+            crate::display_scroll::Word::Bg1H,
+            crate::display_scroll::Word::Bg1V,
+            crate::display_scroll::Word::Bg2H,
+            crate::display_scroll::Word::Bg2V,
         ]
         .into_iter()
         .enumerate()
         {
-            checked_word!(game, register; += ROOM_SHAKES[index + offset].wrapping_mul(direction));
+            let old = game.scroll_word(register);
+            let value = old.wrapping_add(ROOM_SHAKES[index + offset].wrapping_mul(direction));
+            game.set_scroll_word(register, value);
         }
         crate::room_view::set_effect(
             game,

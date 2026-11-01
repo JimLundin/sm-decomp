@@ -6,8 +6,8 @@ use crate::menu_state::MenuState;
 use crate::session_cohort;
 
 pub fn prepare_menu<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
-    scroll! {game; Bg4H = scroll!(game.Bg1H); Bg4V = scroll!(game.Bg1V); }
-    scroll! { game, 0; Bg1H, Bg1V }
+    display_scroll! {game; Bg4H = display_scroll!(game.Bg1H); Bg4V = display_scroll!(game.Bg1V); }
+    display_scroll! { game, 0; Bg1H, Bg1V }
     let inventory = game.reserve_state();
     if inventory.capacity != 0 && inventory.mode != 0 {
         let address = if inventory.mode == 1 {

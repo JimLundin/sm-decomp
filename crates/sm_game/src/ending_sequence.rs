@@ -19,7 +19,7 @@ use crate::cinematic_objects::CinematicObjects;
 use crate::cinematic_state::{Cinematic, Word, cinematic};
 use crate::display_refresh::GraphicsAsset;
 use crate::intro_sequence::countdown;
-use crate::menus::prelude::{owned, scroll};
+use crate::menus::prelude::{display_scroll, owned};
 use crate::ram::RawRam as _;
 use crate::ram::mirror;
 use crate::ram::word;
@@ -190,7 +190,7 @@ pub fn setup<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
             game,
         );
     }
-    crate::screen_fade::set_both(game, 0, 2);
+    crate::screen_fade::store(game, 0, 2);
     crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
         flow.cinematic_function = function::WAIT_FOR_MUSIC
     });
@@ -282,7 +282,7 @@ pub fn scene_2_setup<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
 pub fn scene_2_fading_in<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     scene_2(cine, game);
     if crate::cinematic::advance_cinematic_fade(CinematicFade::FastIn, game) {
-        crate::screen_fade::set_both(game, 2, 2);
+        crate::screen_fade::store(game, 2, 2);
         crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
             flow.cinematic_function = function::SCENE_2
         });
@@ -336,9 +336,9 @@ pub fn scene_2<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
         crate::session_cohort::with(game, |_, words: &mut crate::session_words::SessionWords| {
             words.fx_layer_blending_config_a = 0
         });
-        scroll!(game.Bg2H = 0);
-        scroll!(game.Bg2V = 0);
-        crate::screen_fade::set_both(game, 0, 2);
+        display_scroll!(game.Bg2H = 0);
+        display_scroll!(game.Bg2V = 0);
+        crate::screen_fade::store(game, 0, 2);
         crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
             flow.cinematic_function = function::LOAD_GUNSHIP_BG
         });
@@ -441,10 +441,10 @@ pub fn gunship_fly_into_camera<H: Host + ?Sized>(cine: &mut Cinematic, game: &mu
 /// Cinematic function - ending - space view - transition to credits
 /// ($8B:DE64). Was `CinematicFunction_Intro_Func125`.
 pub fn transition_to_credits<H: Host + ?Sized>(game: &mut H) {
-    crate::screen_fade::set_counter(game, 1);
+    game.set_screen_fade_counter(1);
     if crate::cinematic::advance_cinematic_fade(CinematicFade::FastOut, game) {
         crate::display_refresh::enable(true, game);
-        crate::screen_fade::set_both(game, 0, 0);
+        crate::screen_fade::store(game, 0, 0);
         crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
             flow.cinematic_function = function::CREDITS_SETUP
         });
@@ -523,7 +523,7 @@ pub fn fade_in_shooting_stars<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut
     crate::display_refresh::fade(true, game);
     if game.ram().read_byte(mirror::INIDISP) == 15 {
         set_cinematic_blend(2, 16, 2, 34, game);
-        crate::screen_fade::set_both(game, 0, 0);
+        crate::screen_fade::store(game, 0, 0);
         capture_cinematic_palette(game);
         prepare_cinematic_palette_fade(game);
         clear_cinematic_colors(0x40, 0x10, game);
@@ -553,7 +553,7 @@ pub fn fade_in_samus<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
 /// Cinematic function - post-credits - wavy Samus ($8B:E190). Was
 /// `CinematicFunction_Intro_Func132`.
 pub fn wavy_samus<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
-    scroll!(game.Bg3V += 2);
+    display_scroll!(game.Bg3V += 2);
     if countdown(cine) {
         crate::word_transfers!(game, ascending, 288; pause_map(288) <- rom(DEER_FORCE_TILES, 0));
         queue_cinematic_tilemap(CinematicTilemap::FullText, cine, game);

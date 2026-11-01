@@ -182,7 +182,8 @@ pub fn below(value: u16, limit: u16) -> bool {
 /// edits actors directly, plus the session-aware RAM word read and `foreign`
 /// onto the leased game.
 pub trait ActorLease:
-    crate::actors::access::ActorAccess
+    crate::screen_fade::Owner
+    + crate::actors::access::ActorAccess
     + crate::actors::effects::ActorHost
     + crate::enemy_projectiles::host::Host
     + crate::room_mechanisms::host::Host

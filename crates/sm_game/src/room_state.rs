@@ -123,7 +123,7 @@ pub fn execute_setup_code<H: ScriptHost + ?Sized>(script: u16, game: &mut H) {
             let collected =
                 u16::from_ne_bytes([game.ram().read_byte(at), game.ram().read_byte(at + 1)]) | 1;
             word_transfers!(game, ascending, 1; native(at) <- value(collected));
-            crate::session_cohort::with(game, |_, selection: &mut SaveSelection| {
+            crate::menus::state::with(game, |_, selection: &mut SaveSelection| {
                 selection.has_area_map = collected;
             });
         }
@@ -477,11 +477,11 @@ pub fn shake_crocomire<H: SessionView + ?Sized>(h: &mut H) {
     }
     if h.resolve_actor(body, Native).variables[0] == 64 {
         let shift = h.resolve_actor(legs, Native).variables[3];
-        h.write_word_le(
+        h.set_scroll_word(
+            crate::display_scroll::Word::Bg1V,
             shift
                 .wrapping_add(h.session().room.camera.bg1_offset[1])
                 .wrapping_add(h.session().room.camera.layer1[1]),
-            fields::REG_BG1VOFS,
         );
     } else if h.resolve_actor(body, Native).variables[1] & 0x400 != 0 {
         let timer = h.edit_actor(legs, Native, |actor| {
@@ -493,11 +493,12 @@ pub fn shake_crocomire<H: SessionView + ?Sized>(h: &mut H) {
         } else {
             timer
         };
-        h.write_word_le(
-            h.word(fields::REG_BG1VOFS).wrapping_add(shift),
-            fields::REG_BG1VOFS,
+        h.set_scroll_word(
+            crate::display_scroll::Word::Bg1V,
+            h.scroll_word(crate::display_scroll::Word::Bg1V)
+                .wrapping_add(shift),
         );
-        h.write_word_le(shift.wrapping_sub(48), fields::REG_BG2VOFS);
+        h.set_scroll_word(crate::display_scroll::Word::Bg2V, shift.wrapping_sub(48));
     } else if h.resolve_actor(body, Native).variables[2] == 34
         && h.resolve_actor(body, Native).variables[3] != 0
     {
@@ -530,16 +531,22 @@ pub fn shake_ridley<H: SessionView + ?Sized>(h: &mut H) {
     for (table, registers) in [
         (
             [0, 2, 2, 2, 0, -2, -2, -2],
-            [fields::REG_BG1HOFS, fields::REG_BG2HOFS],
+            [
+                crate::display_scroll::Word::Bg1H,
+                crate::display_scroll::Word::Bg2H,
+            ],
         ),
         (
             [-2, -2, 0, 2, 2, 2, 0, -2],
-            [fields::REG_BG1VOFS, fields::REG_BG2VOFS],
+            [
+                crate::display_scroll::Word::Bg1V,
+                crate::display_scroll::Word::Bg2V,
+            ],
         ),
     ] {
         let shift = table[index] as u16;
         for register in registers {
-            h.write_word_le(h.word(register).wrapping_add(shift), register);
+            h.set_scroll_word(register, h.scroll_word(register).wrapping_add(shift));
         }
     }
 }

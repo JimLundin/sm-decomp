@@ -99,8 +99,8 @@ pub fn update_horizontal_scroll<H: crate::menus::host::Host + ?Sized>(
         let mut v5: u16 = object.a;
         for i in (0i32..=30).rev().step_by(2) {
             word!(
-                game.FX22_X_TABLE[(v5 >> 1)] =
-                    ((WATER_WAVE[(i >> 1) as usize]) as u16).wrapping_add(word!(game.REG_BG1HOFS))
+                game.FX22_X_TABLE[(v5 >> 1)] = ((WATER_WAVE[(i >> 1) as usize]) as u16)
+                    .wrapping_add(crate::menus::prelude::display_scroll!(game.Bg1H))
             );
             v5 = ((v5 as i32 - 2i32) & 0x1f) as u16;
         }
@@ -267,7 +267,7 @@ fn queue_tile_rows<H: crate::menus::host::Host + ?Sized>(address: u32, game: &mu
         write_sky_word(0, 0, game);
     } else {
         let layer1_y = crate::camera::current(game).layer1[1];
-        word!(game.REG_BG2VOFS = layer1_y);
+        crate::menus::prelude::display_scroll!(game.Bg2V = layer1_y);
         let v0: u16 = word!(game.VRAM_WRITE_QUEUE_TAIL);
         let v1 = 0xd0 + usize::from(word!(game.VRAM_WRITE_QUEUE_TAIL));
         let stride = VRAM_WRITE_ENTRY_BYTES;

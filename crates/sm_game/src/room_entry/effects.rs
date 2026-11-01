@@ -30,7 +30,7 @@ pub trait EntryEffects:
             CameraWord::Layer2(axis) => camera.layer2[axis],
             CameraWord::Bg1Offset(axis) => camera.bg1_offset[axis],
             CameraWord::Bg2Scroll(axis) => camera.bg2_scroll[axis],
-            CameraWord::Mirror(word) => scroll::get(self, word),
+            CameraWord::Mirror(word) => scroll::read(self, word),
         }
     }
     fn write_camera(&mut self, field: CameraField, value: u16) {
@@ -41,7 +41,7 @@ pub trait EntryEffects:
             CameraWord::Bg1Offset(axis) => crate::camera::set_bg1_offset(self, axis, value),
             CameraWord::Layer2(axis) => self.session_mut().room.camera.layer2[axis] = value,
             CameraWord::Bg2Scroll(axis) => self.session_mut().room.camera.bg2_scroll[axis] = value,
-            CameraWord::Mirror(word) => scroll::set(self, word, value),
+            CameraWord::Mirror(word) => scroll::write(self, word, value),
         }
     }
     fn call(&mut self, effect: LeafEffect);

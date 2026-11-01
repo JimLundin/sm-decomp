@@ -15,48 +15,7 @@ pub fn advance_cinematic_fade<H: crate::menus::host::Host + ?Sized>(
     fade: crate::visual_state::CinematicFade,
     game: &mut H,
 ) -> bool {
-    use crate::screen_fade;
-    use crate::visual_state::CinematicFade::*;
-    let slow = matches!(fade, SlowIn | SlowOut);
-    if slow {
-        // Only the low delay byte decrements, with the signed-byte wrap retained.
-        let delay = (screen_fade::current(game).delay as u8).wrapping_sub(1);
-        screen_fade::set_low(game, false, delay);
-        if (screen_fade::current(game).delay as u8 as i8) > 0 {
-            return false;
-        }
-    }
-    let increasing = matches!(fade, FastIn | SlowIn);
-    let brightness = game.ram().read_byte(0x51);
-    if !increasing && brightness & 15 == 0 {
-        return true;
-    }
-    let step = if slow {
-        1
-    } else {
-        screen_fade::current(game).counter as u8
-    };
-    let (next, complete) = if increasing {
-        let next = brightness.wrapping_add(step) & 31;
-        (next.min(15), next >= 15)
-    } else {
-        let next = (brightness & 15).wrapping_sub(step);
-        let complete = (next as i8) <= 0;
-        (if complete { 0x80 } else { next }, complete)
-    };
-    game.ram().write_byte(0x51, next);
-    if slow {
-        let delay = if complete {
-            0
-        } else {
-            screen_fade::current(game).counter as u8
-        };
-        screen_fade::set_low(game, false, delay);
-        if complete {
-            screen_fade::set_low(game, true, 0);
-        }
-    }
-    complete
+    game.cinematic_screen_fade(fade)
 }
 
 /// The cinematic palette fades' working planes: the BG2 tilemap buffer

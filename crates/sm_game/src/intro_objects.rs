@@ -2,7 +2,7 @@
 use crate::cinematic::*;
 use crate::cinematic_objects::CinematicObjects;
 use crate::cinematic_state::{Cinematic, Word};
-use crate::menus::prelude::{owned, scroll};
+use crate::menus::prelude::{display_scroll, owned};
 use crate::ram::RawRam as _;
 use crate::ram::word;
 use crate::visual_state::{CeresExplosion, CinematicFade};
@@ -208,7 +208,7 @@ pub fn advance_intro_landing_mosaic<H: crate::menus::host::Host + ?Sized>(
     if fading {
         game.fade(true);
         if game.ram().read_byte(0x51) == 15 {
-            crate::screen_fade::set_both(game, 0, 0);
+            crate::screen_fade::store(game, 0, 0);
             crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
                 flow.cinematic_function = 0xc7ca
             });
@@ -391,8 +391,8 @@ pub fn update_cinematic_transform<H: crate::menus::host::Host + ?Sized>(
         word! {game; REG_M7A = *cine.mode7_zoom(); REG_M7D = *cine.mode7_zoom(); }
         word! { game, 0; REG_M7B, REG_M7C }
     }
-    scroll!(game.Bg1H = *cine.x());
-    scroll!(game.Bg1V = *cine.y());
+    display_scroll!(game.Bg1H = *cine.x());
+    display_scroll!(game.Bg1V = *cine.y());
 }
 
 pub fn draw_cinematic_rectangle<H: crate::menus::host::Host + ?Sized>(

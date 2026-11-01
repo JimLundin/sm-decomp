@@ -130,8 +130,7 @@ pub(crate) fn advance_frame(game: &mut Game) {
                 && word!(game.GAME_STATE) == 8
                 && word!(game.JOYPAD1_NEWKEYS) & 0x1000 != 0
             {
-                word!(game.SCREEN_FADE_DELAY = 1);
-                word!(game.SCREEN_FADE_COUNTER = 1);
+                sm_game::screen_fade::store(game, 1, 1);
                 word!(game.GAME_STATE = 12);
             }
             low_health(game);

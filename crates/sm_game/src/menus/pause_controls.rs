@@ -4,8 +4,7 @@ use super::{equipment_menu, map_menu, menu_tilemap};
 use crate::menu_state::MenuScreens;
 use crate::menu_state::MenuState;
 use crate::ram::RawRam as _;
-use crate::ram::{word, words as fields};
-use crate::session_cohort;
+use crate::ram::word;
 
 pub fn hook_address<H: crate::menus::host::Host + ?Sized>(pausing: bool, game: &H) -> u32 {
     let offset = if pausing { 0x601 } else { 0x604 };
@@ -16,14 +15,14 @@ pub fn hook_address<H: crate::menus::host::Host + ?Sized>(pausing: bool, game: &
 }
 
 pub fn initialize<H: crate::menus::host::Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
-    session_cohort::with(game, |game, screens: &mut MenuScreens| {
+    crate::menus::state::with(game, |game, screens: &mut MenuScreens| {
         map_menu::reset_animations(&mut screens.map, menu, game);
         menu_tilemap::equipment_icons(game);
         menu_tilemap::pause_labels(0, game);
         menu_tilemap::queue_pause_labels(game);
         map_menu::scroll_limits(screens, game);
         map_menu::center_map(0x80, &screens.map, game);
-        crate::screen_fade::set_both(game, 1, 1);
+        crate::screen_fade::store(game, 1, 1);
         menu.pausemenu_leftarrow_animation_frame = 0;
         menu.pausemenu_palette_animation_timer = 1;
         screens.map.scrolling_direction = 0;
@@ -34,15 +33,15 @@ pub fn initialize<H: crate::menus::host::Host + ?Sized>(menu: &mut MenuState, ga
 }
 
 pub fn fade_in<H: crate::menus::host::Host + ?Sized>(game: &mut H) -> u8 {
-    crate::session_cohort::with(game, |game, menu: &mut MenuState| {
+    crate::menus::state::with(game, |game, menu: &mut MenuState| {
         if menu.menu_index != 0 {
             draw_equipment(menu, game);
         } else {
-            session_cohort::with(game, |game, screens| draw_map(menu, game, screens));
+            crate::menus::state::with(game, |game, screens| draw_map(menu, game, screens));
         }
         game.fade(true);
         if game.ram().read_byte(crate::ram::mirror::INIDISP) == 15 {
-            crate::screen_fade::set_both(game, 0, 0);
+            crate::screen_fade::store(game, 0, 0);
             word!(game.GAME_STATE += 1);
         }
         0
@@ -51,7 +50,7 @@ pub fn fade_in<H: crate::menus::host::Host + ?Sized>(game: &mut H) -> u8 {
 
 pub fn update_map<H: crate::menus::host::Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
     advance(menu, game);
-    session_cohort::with(game, |game, screens: &mut MenuScreens| {
+    crate::menus::state::with(game, |game, screens: &mut MenuScreens| {
         map_menu::scroll_arrows(map_menu::MapScreen::Pause, &mut screens.map, menu, game);
         map_menu::scroll(&mut screens.map, game);
         draw_map(menu, game, screens);
@@ -60,7 +59,7 @@ pub fn update_map<H: crate::menus::host::Host + ?Sized>(menu: &mut MenuState, ga
 }
 
 pub fn update_equipment<H: crate::menus::host::Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
-    scroll! { game, 0; Bg1H, Bg1V }
+    display_scroll! { game, 0; Bg1H, Bg1V }
     equipment_menu::update(menu, game);
     advance(menu, game);
     menu.pause_screen_mode = 1;
@@ -73,12 +72,12 @@ pub fn fade_tab<const EQUIPMENT: bool, H: crate::menus::host::Host + ?Sized>(
     if EQUIPMENT {
         draw_equipment(menu, game);
     } else {
-        session_cohort::with(game, |game, screens| draw_map(menu, game, screens));
+        crate::menus::state::with(game, |game, screens| draw_map(menu, game, screens));
     }
     menu.pause_screen_mode = u16::from(EQUIPMENT);
     game.fade(true);
     if game.ram().read_byte(crate::ram::mirror::INIDISP) == 15 {
-        crate::screen_fade::set_both(game, 0, 0);
+        crate::screen_fade::store(game, 0, 0);
         let mut selected = menu.pausemenu_button_label_mode;
         if menu.pausemenu_button_label_mode != 0 {
             selected = 1;
@@ -96,7 +95,7 @@ pub fn fade_out_tab<H: crate::menus::host::Host + ?Sized>(
     if equipment {
         draw_equipment(menu, game);
     } else {
-        session_cohort::with(game, |game, screens: &mut MenuScreens| {
+        crate::menus::state::with(game, |game, screens: &mut MenuScreens| {
             map_menu::display_elevator_destinations(game);
             map_menu::draw_player_marker(&mut screens.map, game);
             map_menu::draw_icons(map_menu::IconMode::Pause, screens, menu, game);
@@ -110,7 +109,7 @@ pub fn fade_out_tab<H: crate::menus::host::Host + ?Sized>(
     game.fade(false);
     if game.ram().read_byte(crate::ram::mirror::INIDISP) == 0x80 {
         enable(game);
-        crate::screen_fade::set_both(game, 0, 0);
+        crate::screen_fade::store(game, 0, 0);
         menu.menu_index = menu.menu_index.wrapping_add(1);
     }
 }
@@ -127,13 +126,13 @@ pub fn load_tab<H: crate::menus::host::Host + ?Sized>(
     }
     upload(game);
     if equipment {
-        scroll!(game.Bg1V = 0);
+        display_scroll!(game.Bg1V = 0);
         menu.pause_screen_mode = 1;
     }
     menu_tilemap::pause_labels(menu.pausemenu_button_label_mode, game);
     menu.pausemenu_lr_animation_frame = 0;
     menu.pausemenu_lr_animation_timer = menu_tilemap::native_record(0x82c10c, game).word(0);
-    crate::screen_fade::set_both(game, 1, 1);
+    crate::screen_fade::store(game, 1, 1);
     if !equipment {
         menu.pause_screen_mode = 0;
     }
@@ -162,7 +161,7 @@ pub fn draw_unpause<H: crate::menus::host::Host + ?Sized>(menu: &mut MenuState, 
         draw_shoulder(menu, game);
     } else {
         // Unpause keeps the opposite icon/marker order from the active map.
-        session_cohort::with(game, |game, screens: &mut MenuScreens| {
+        crate::menus::state::with(game, |game, screens: &mut MenuScreens| {
             map_menu::display_elevator_destinations(game);
             map_menu::draw_icons(map_menu::IconMode::Pause, screens, menu, game);
             map_menu::draw_player_marker(&mut screens.map, game);
@@ -172,15 +171,13 @@ pub fn draw_unpause<H: crate::menus::host::Host + ?Sized>(menu: &mut MenuState, 
 
 pub fn resume<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     let camera = crate::camera::current(game);
-    scroll!(game.Bg1H = camera.bg1_offset[0].wrapping_add(camera.layer1[0]));
-    scroll!(game.Bg1V = camera.bg1_offset[1].wrapping_add(camera.layer1[1]));
-    scroll!(game.Bg2H = camera.bg2_scroll[0].wrapping_add(camera.layer2[0]));
-    scroll!(game.Bg2V = camera.bg2_scroll[1].wrapping_add(camera.layer2[1]));
+    display_scroll!(game.Bg1H = camera.bg1_offset[0].wrapping_add(camera.layer1[0]));
+    display_scroll!(game.Bg1V = camera.bg1_offset[1].wrapping_add(camera.layer1[1]));
+    display_scroll!(game.Bg2H = camera.bg2_scroll[0].wrapping_add(camera.layer2[0]));
+    display_scroll!(game.Bg2V = camera.bg2_scroll[1].wrapping_add(camera.layer2[1]));
     game.update_beam_tiles_and_palette();
     // Palette timer/frame and pause_screen_mode survive this ordered reset.
-    crate::word_transfers!(game, ascending, 10; little(fields::MENU_INDEX) <- value(0));
-    crate::word_transfers!(game, ascending, 9; little(fields::UNUSED_WORD_7E073D) <- value(0));
-    crate::word_transfers!(game, ascending, 9; little(fields::PAUSEMENU_SHOULDER_BUTTON_HIGHLIGHT) <- value(0));
+    game.reset_pause_menu();
     game.player_command(0xc);
 }
 
@@ -193,10 +190,17 @@ pub fn save_graphics<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     for (index, source) in GRAPHICS_MIRRORS.into_iter().enumerate() {
         // The six scroll mirrors are read as LE words, then truncated to a byte.
         let value = if (6..12).contains(&index) {
-            u16::from_le_bytes([
-                game.ram().read_byte(source),
-                game.ram().read_byte(source + 1),
-            ]) as u8
+            let word = [
+                crate::display_scroll::Word::Bg1H,
+                crate::display_scroll::Word::Bg2H,
+                crate::display_scroll::Word::Bg3H,
+                crate::display_scroll::Word::Bg1V,
+                crate::display_scroll::Word::Bg2V,
+                crate::display_scroll::Word::Bg3V,
+            ][index - 6];
+            let low = game.physical_scroll_byte(word, false);
+            let _high = game.physical_scroll_byte(word, true);
+            low
         } else {
             game.ram().read_byte(source)
         };
@@ -210,7 +214,19 @@ pub fn restore_graphics<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
         let value = game
             .ram()
             .read_byte(crate::ram::bytes::PAUSEMENU_BAK_BG1SC + index);
-        game.ram().write_byte(GRAPHICS_MIRRORS[index], value);
+        if (6..12).contains(&index) {
+            let word = [
+                crate::display_scroll::Word::Bg1H,
+                crate::display_scroll::Word::Bg2H,
+                crate::display_scroll::Word::Bg3H,
+                crate::display_scroll::Word::Bg1V,
+                crate::display_scroll::Word::Bg2V,
+                crate::display_scroll::Word::Bg3V,
+            ][index - 6];
+            game.write_physical_scroll_byte(word, false, value);
+        } else {
+            game.ram().write_byte(GRAPHICS_MIRRORS[index], value);
+        }
     }
 }
 
@@ -220,7 +236,7 @@ fn advance<H: crate::menus::host::Host + ?Sized>(menu: &mut MenuState, game: &mu
     map_menu::animate_pause_sprite(2, 0xe8, 0xd0, menu, game);
     if word!(game.NEWLY_HELD_DOWN_TIMED_HELD_INPUT) & K_BUTTON_START as u16 != 0 {
         game.queue_sound(0, 0x38_u8, 6);
-        crate::screen_fade::set_both(game, 1, 1);
+        crate::screen_fade::store(game, 1, 1);
         let previous = menu.pausemenu_button_label_mode;
         menu.pausemenu_button_label_mode = 1;
         menu_tilemap::pause_labels(menu.pausemenu_button_label_mode, game);

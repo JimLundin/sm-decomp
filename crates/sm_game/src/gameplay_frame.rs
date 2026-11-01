@@ -376,7 +376,7 @@ fn initialize<H: Host>(game: &mut H) -> CoroutineRet {
     if stage == 0 {
         let demo = u32::from(word!(game.GAME_STATE)) == K_GAME_STATE_40_TRANSITION_TO_DEMO;
         if !demo {
-            session_cohort::with(game, |game, selection: &mut SaveSelection| {
+            crate::menus::state::with(game, |game, selection: &mut SaveSelection| {
                 let loading = u32::from(selection.loading_game_state);
                 if loading == K_LOADING_GAME_STATE_1F_STARTING_AT_CERES {
                     game.runtime().session_mut().room.area = 6;
@@ -408,7 +408,7 @@ fn initialize<H: Host>(game: &mut H) -> CoroutineRet {
         }
         hud::initialize(game);
         word_transfers!(game, ascending, 16; native(0xc380) <- native(0xc180));
-        crate::screen_fade::set_both(game, 1, 1);
+        crate::screen_fade::store(game, 1, 1);
         crate::display_refresh::enable(true, game);
         enemy_projectiles::lifecycle::set_enabled(&mut game.runtime(), true);
         set_mechanisms_enabled(game, true);
@@ -418,7 +418,7 @@ fn initialize<H: Host>(game: &mut H) -> CoroutineRet {
         crate::player_movement::speed::set_liquid_physics(&mut game.runtime());
         stage = if u32::from(word!(game.GAME_STATE)) == K_GAME_STATE_40_TRANSITION_TO_DEMO {
             2
-        } else if u32::from(session_cohort::load::<SaveSelection, _>(game).loading_game_state)
+        } else if u32::from(crate::menus::state::load::<SaveSelection, _>(game).loading_game_state)
             == K_LOADING_GAME_STATE_22_ESCAPING_CERES
         {
             crate::music_requests::queue_delayed_8(5, game);
@@ -458,7 +458,7 @@ fn initialize<H: Host>(game: &mut H) -> CoroutineRet {
         }
         word_transfers!(game, ascending, 256; native(0xc000) <- le(TARGET_PALETTES, 0));
         if stage == 4 {
-            if u32::from(session_cohort::load::<SaveSelection, _>(game).loading_game_state)
+            if u32::from(crate::menus::state::load::<SaveSelection, _>(game).loading_game_state)
                 == K_LOADING_GAME_STATE_1F_STARTING_AT_CERES
             {
                 word!(game.PALETTE_BUFFER[223] = 0);
@@ -479,7 +479,7 @@ fn stop_demo<H: Host>(game: &mut H) -> CoroutineRet {
     }
     crate::display_refresh::enable(true, game);
     word!(game.GAME_STATE += 1);
-    crate::screen_fade::set_both(game, 0, 0);
+    crate::screen_fade::store(game, 0, 0);
     crate::hdma_objects::clear_hdma(game);
     game.disable_scanline_irq();
     word! { game, 0;
@@ -538,7 +538,7 @@ fn setup_pause<H: Host>(game: &mut H) -> CoroutineRet {
     word_transfers!(game, ascending, 256; pause_map(384) <- le(PALETTE_BUFFER, 0));
     word_transfers!(game, ascending, 256; le(PALETTE_BUFFER, 0) <- rom(0xb6f000, 0));
     display_refresh::pause_graphics(true, game);
-    session_cohort::with(game, |game, menu: &mut MenuState| {
+    crate::menus::state::with(game, |game, menu: &mut MenuState| {
         pause_controls::initialize(menu, game)
     });
     0
@@ -546,7 +546,7 @@ fn setup_pause<H: Host>(game: &mut H) -> CoroutineRet {
 
 /// Pause phase: one pause menu frame.
 fn advance_pause<H: Host>(game: &mut H) -> CoroutineRet {
-    crate::session_cohort::with(game, |game, menu: &mut MenuState| {
+    crate::menus::state::with(game, |game, menu: &mut MenuState| {
         controller_input::filter(3, game);
         // Preserve the eight-entry bounds failure before any tab work.
         let tab = [0, 1, 2, 3, 4, 5, 6, 7][usize::from(menu.menu_index)];
@@ -595,7 +595,7 @@ fn setup_unpause<H: Host>(game: &mut H) -> CoroutineRet {
             u16::from(game.ram().read_byte(0x59) & 0xfc) << 8,
             0x1000,
         );
-        crate::screen_fade::set_both(game, 1, 1);
+        crate::screen_fade::store(game, 1, 1);
     }
     if resume <= 1 {
         let yielded = match pause_controls::hook_address(false, game) {
@@ -626,17 +626,17 @@ fn setup_unpause<H: Host>(game: &mut H) -> CoroutineRet {
 /// Pause and death phases: fade to black before unpausing or game over.
 fn fade_out<H: Host>(entry: Entry, game: &mut H) -> CoroutineRet {
     if matches!(entry, Entry::UnpauseFadeOut) {
-        session_cohort::with(game, |game, menu: &mut MenuState| {
+        crate::menus::state::with(game, |game, menu: &mut MenuState| {
             pause_controls::draw_unpause(menu, game)
         });
     }
     game.fade(false);
     if game.ram().read_byte(0x51) == 0x80 {
         crate::display_refresh::enable(true, game);
-        crate::screen_fade::set_both(game, 0, 0);
+        crate::screen_fade::store(game, 0, 0);
         word!(game.GAME_STATE += 1);
         if matches!(entry, Entry::GameOverFadeOut) {
-            session_cohort::with(game, |_, menu: &mut MenuState| menu.menu_index = 0);
+            crate::menus::state::with(game, |_, menu: &mut MenuState| menu.menu_index = 0);
             crate::session_cohort::with(
                 game,
                 |_, words: &mut crate::session_words::SessionWords| {
@@ -654,17 +654,17 @@ fn exit_time_up<H: Host>(game: &mut H) -> CoroutineRet {
     if game.ram().read_byte(0x51) == 0x80 {
         crate::display_refresh::enable(true, game);
         finish_gameplay(true, game);
-        crate::screen_fade::set_both(game, 0, 0);
+        crate::screen_fade::store(game, 0, 0);
         crate::session_cohort::with(game, |_, words: &mut crate::session_words::SessionWords| {
             words.ceres_status = 0;
             words.timer_status = 0;
         });
         cancel_sound_effects(game, 15);
         if crate::progress::event_happened(&mut game.runtime(), 0xe) {
-            session_cohort::with(game, |_, options: &mut OptionsMenu| {
+            crate::menus::state::with(game, |_, options: &mut OptionsMenu| {
                 options.screen_index = 0
             });
-            session_cohort::with(game, |_, menu: &mut MenuState| menu.menu_index = 0);
+            crate::menus::state::with(game, |_, menu: &mut MenuState| menu.menu_index = 0);
             word_transfers!(game, descending, 128; le(EPROJ_Y_SUBPOS, 142) <- value(0));
             word!(game.GAME_STATE = K_GAME_STATE_25_SAMUS_NO_HEALTH as u16);
         } else {
@@ -824,7 +824,7 @@ fn set_mechanisms_enabled<H: Host>(game: &mut H, enabled: bool) {
 /// Start the death sequence's progress: its first phase after a three-frame
 /// delay, with the death pose's flash timer at `flash_timer`.
 fn begin_death_sequence<H: Host>(game: &mut H, flash_timer: u16) {
-    session_cohort::with(game, |_, screens: &mut MenuScreens| {
+    crate::menus::state::with(game, |_, screens: &mut MenuScreens| {
         screens.options_menu.screen_index = 3;
         screens.death = DeathSequence {
             index: 0,
@@ -840,7 +840,7 @@ fn finish_pass<H: Host>(entry: Entry, game: &mut H) {
         Entry::FadeIn | Entry::Unpause => {
             game.fade(true);
             if game.ram().read_byte(0x51) == 15 {
-                crate::screen_fade::set_both(game, 0, 0);
+                crate::screen_fade::store(game, 0, 0);
                 if matches!(entry, Entry::FadeIn) {
                     word!(game.GAME_STATE += 1);
                 } else {
@@ -859,7 +859,7 @@ fn finish_pass<H: Host>(entry: Entry, game: &mut H) {
             );
             if timer == 0 || timer & 0x8000 != 0 {
                 word!(game.GAME_STATE += 1);
-                crate::screen_fade::set_both(game, 0, 0);
+                crate::screen_fade::store(game, 0, 0);
             }
         }
         Entry::TimeUp | Entry::DeathBlackout => {
@@ -868,7 +868,7 @@ fn finish_pass<H: Host>(entry: Entry, game: &mut H) {
                 if death {
                     finish_gameplay(true, game);
                     begin_death_sequence(game, 16);
-                    crate::screen_fade::set_both(game, 0, 0);
+                    crate::screen_fade::store(game, 0, 0);
                     word_transfers!(game, descending, 128; le(EPROJ_Y_SUBPOS, 142) <- value(0));
                     word!(game.GAME_STATE += 1);
                     session_cohort::with(game, |_, e: &mut crate::explosion_window::Explosion| {
@@ -880,7 +880,7 @@ fn finish_pass<H: Host>(entry: Entry, game: &mut H) {
                     crate::music_requests::queue_delayed(5, 0xe, game);
                 } else {
                     word!(game.GAME_STATE = K_GAME_STATE_36_WHITING_OUT_FROM_TIME_UP as u16);
-                    crate::screen_fade::set_both(game, 0, 0);
+                    crate::screen_fade::store(game, 0, 0);
                 }
             }
         }
@@ -910,13 +910,14 @@ fn finish_pass<H: Host>(entry: Entry, game: &mut H) {
                 let ceres = matches!(entry, Entry::CeresBlackout);
                 crate::display_refresh::enable(true, game);
                 finish_gameplay(ceres, game);
-                crate::screen_fade::set_both(game, 0, 0);
+                crate::screen_fade::store(game, 0, 0);
                 if ceres {
-                    let slot = session_cohort::with(game, |_, selection: &mut SaveSelection| {
-                        selection.loading_game_state =
-                            K_LOADING_GAME_STATE_22_ESCAPING_CERES as u16;
-                        selection.selected_slot
-                    });
+                    let slot =
+                        crate::menus::state::with(game, |_, selection: &mut SaveSelection| {
+                            selection.loading_game_state =
+                                K_LOADING_GAME_STATE_22_ESCAPING_CERES as u16;
+                            selection.selected_slot
+                        });
                     word!(game.GAME_STATE = 34);
                     save_slots::save(slot, game);
                     crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
@@ -949,7 +950,7 @@ fn finish_pass<H: Host>(entry: Entry, game: &mut H) {
             game.fade(false);
             if game.ram().read_byte(0x51) & 0xf == 0 {
                 crate::display_refresh::enable(true, game);
-                crate::screen_fade::set_both(game, 0, 0);
+                crate::screen_fade::store(game, 0, 0);
                 word!(game.GAME_STATE += 1);
             }
         }

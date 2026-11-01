@@ -307,7 +307,9 @@ pub(crate) use sm_game::scene::owned_samus::{bottom_visible, draw_body, draw_spr
 /// The aggregate's current behavior and admission rules remain unchanged.
 pub struct SessionSlot {
     pub(crate) aggregate: AggregateSlot,
+    pub(crate) menu: std::cell::RefCell<sm_game::menus::state::Domain>,
     pub(crate) inventory: std::cell::RefCell<sm_game::inventory_domain::InventoryDomain>,
+    pub(crate) scroll: std::cell::RefCell<sm_game::display_scroll::ScrollDomain>,
 }
 
 pub(crate) enum AggregateSlot {
@@ -321,7 +323,9 @@ impl SessionSlot {
     pub(crate) fn new() -> Self {
         Self {
             aggregate: AggregateSlot::Legacy,
+            menu: std::cell::RefCell::new(sm_game::menus::state::Domain::Unowned),
             inventory: std::cell::RefCell::new(sm_game::inventory_domain::InventoryDomain::Unowned),
+            scroll: std::cell::RefCell::new(sm_game::display_scroll::ScrollDomain::Unowned),
         }
     }
 }

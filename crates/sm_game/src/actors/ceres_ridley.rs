@@ -20,7 +20,7 @@ use crate::constants::enemy_properties::{
     K_ENEMY_PROPS_BLOCK_PLASMA_BEAM, K_ENEMY_PROPS_DELETED, K_ENEMY_PROPS_INVISIBLE,
     K_ENEMY_PROPS_TANGIBLE,
 };
-use crate::menus::prelude::{boss, owned, scroll};
+use crate::menus::prelude::{boss, display_scroll, owned};
 use crate::palette_copies::{copy_rom_colors_to_palette, copy_rom_colors_to_target_palette};
 use crate::projectile_geometry::SINE_COSINE;
 use crate::ram::word;
@@ -732,9 +732,9 @@ pub fn set_up_mode7<L: Lease + ?Sized>(game: &mut L) {
     word! { game, 64; REG_M7X, REG_M7Y }
     session_slot!(game, Ridley[RIDLEY]; getaway_finished = 0, getaway_index = 0);
     session_slot!(game, Ridley[RIDLEY]; swoop_angle = 1, mode7_x = -128i32 as u16);
-    scroll!(game.Bg1H = -128i32 as u16);
+    display_scroll!(game.Bg1H = -128i32 as u16);
     session_slot!(game, Ridley[RIDLEY].mode7_y = 32);
-    scroll!(game.Bg1V = 32);
+    display_scroll!(game.Bg1V = 32);
     session_slot!(game, Ridley[RIDLEY]; mode7_zoom = 2048, unread_8022 = 1024);
 }
 
@@ -766,8 +766,15 @@ pub fn handle_getaway<L: Lease + ?Sized>(game: &mut L) {
         });
         game.set_slot_byte(FAKE_BG_MODE, 9);
         game.set_slot_byte(MODE7_SETTINGS, 0);
-        word! { game, 0;
-            REG_M7A, REG_M7B, REG_M7C, REG_M7D, REG_M7X, REG_M7Y, REG_BG1HOFS, REG_BG1VOFS,
+        {
+            word!(game.REG_M7A = 0);
+            word!(game.REG_M7B = 0);
+            word!(game.REG_M7C = 0);
+            word!(game.REG_M7D = 0);
+            word!(game.REG_M7X = 0);
+            word!(game.REG_M7Y = 0);
+            crate::display_scroll::write(game, crate::display_scroll::Word::Bg1H, 0);
+            crate::display_scroll::write(game, crate::display_scroll::Word::Bg1V, 0);
         }
         session_slot!(
             game,
@@ -784,10 +791,10 @@ pub fn handle_getaway<L: Lease + ?Sized>(game: &mut L) {
             .y
             .wrapping_add(session_slot!(game, Ridley[RIDLEY].mode7_y));
         session_slot!(game, Ridley[RIDLEY].mode7_y = y);
-        scroll!(game.Bg1V = y);
+        display_scroll!(game.Bg1V = y);
         let x = session_slot!(game, Ridley[RIDLEY].mode7_x).wrapping_sub(velocity.x);
         session_slot!(game, Ridley[RIDLEY].mode7_x = x);
-        scroll!(game.Bg1H = x);
+        display_scroll!(game.Bg1H = x);
         palette_by_zoom(session_slot!(game, Ridley[RIDLEY].mode7_zoom), game);
         session_slot!(game, Ridley[RIDLEY].swoop_angle, |swoop_angle| swoop_angle
             .wrapping_add(48));

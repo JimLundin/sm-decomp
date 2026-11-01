@@ -13,6 +13,7 @@ pub mod pause_controls;
 pub mod prelude;
 pub mod reserve_tanks;
 pub mod save_slots;
+pub mod state;
 
 use crate::ram::RawRam as _;
 

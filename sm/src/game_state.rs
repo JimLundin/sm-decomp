@@ -84,7 +84,13 @@ const _: () = {
 
 /// The compatibility allocation shared only by Game and its retained backend.
 /// Safe operations copy values; they never borrow live bytes as u8 references.
-pub struct WorkRam(Rc<RamBytes>, Rc<Cell<u64>>, Rc<Cell<u64>>);
+pub struct WorkRam(
+    Rc<RamBytes>,
+    Rc<Cell<u64>>,
+    Rc<Cell<u64>>,
+    Rc<Cell<u64>>,
+    Rc<Cell<u64>>,
+);
 #[forbid(unsafe_code)]
 impl WorkRam {
     pub(crate) const LEN: usize = 0x20000;
@@ -93,6 +99,8 @@ impl WorkRam {
             Rc::new(RamBytes {
                 bytes: [const { Cell::new(0) }; Self::LEN],
             }),
+            Rc::new(Cell::new(0)),
+            Rc::new(Cell::new(0)),
             Rc::new(Cell::new(0)),
             Rc::new(Cell::new(0)),
         )
@@ -106,6 +114,8 @@ impl WorkRam {
         let cell = &self.0.bytes[at];
         self.note_write();
         self.note_inventory_write(at..at + 1);
+        self.note_menu_write(at..at + 1);
+        self.note_scroll_write(at..at + 1);
         cell.set(value);
     }
 
@@ -120,6 +130,8 @@ impl WorkRam {
         if count != 0 {
             self.note_write();
             self.note_inventory_write(destination..destination + count);
+            self.note_menu_write(destination..destination + count);
+            self.note_scroll_write(destination..destination + count);
         }
         if destination > source.start {
             for offset in (0..count).rev() {
@@ -148,6 +160,8 @@ impl WorkRam {
         if !cells.is_empty() {
             self.note_write();
             self.note_inventory_write(at..end);
+            self.note_menu_write(at..end);
+            self.note_scroll_write(at..end);
         }
         for (cell, &byte) in cells.iter().zip(input) {
             cell.set(byte);
@@ -158,7 +172,9 @@ impl WorkRam {
         let cells = &self.0.bytes[range.clone()];
         if !cells.is_empty() {
             self.note_write();
-            self.note_inventory_write(range);
+            self.note_inventory_write(range.clone());
+            self.note_menu_write(range.clone());
+            self.note_scroll_write(range);
         }
         for cell in cells {
             cell.set(value);
@@ -166,7 +182,13 @@ impl WorkRam {
     }
 
     pub(crate) fn share_for_backend(&self) -> Self {
-        Self(Rc::clone(&self.0), Rc::clone(&self.1), Rc::clone(&self.2))
+        Self(
+            Rc::clone(&self.0),
+            Rc::clone(&self.1),
+            Rc::clone(&self.2),
+            Rc::clone(&self.3),
+            Rc::clone(&self.4),
+        )
     }
     fn note_write(&self) {
         self.1.set(self.1.get().wrapping_add(1));
@@ -184,6 +206,25 @@ impl WorkRam {
         {
             self.2.set(self.2.get().wrapping_add(1));
         }
+    }
+    fn note_menu_write(&self, range: Range<usize>) {
+        if menu_ranges()
+            .iter()
+            .any(|owned| range.start < owned.end && owned.start < range.end)
+        {
+            self.3.set(self.3.get().wrapping_add(1));
+        }
+    }
+    fn menu_epoch(&self) -> u64 {
+        self.3.get()
+    }
+    fn note_scroll_write(&self, range: Range<usize>) {
+        if range.start < 0xc1 && 0xb1 < range.end {
+            self.4.set(self.4.get().wrapping_add(1));
+        }
+    }
+    pub(crate) fn scroll_epoch(&self) -> u64 {
+        self.4.get()
     }
     fn inventory_epoch(&self) -> u64 {
         self.2.get()
@@ -1252,6 +1293,12 @@ impl Game {
         sm_game::hdma_objects::read_table(self)
     }
     pub fn compatibility_byte(&self, at: usize) -> u8 {
+        if menu_ranges().iter().any(|range| range.contains(&at)) {
+            return self.menu_byte(at);
+        }
+        if (0xb1..0xc1).contains(&at) {
+            return self.scroll_byte(at);
+        }
         if inventory_address(at) {
             return self.inventory_byte(at);
         }
@@ -1297,6 +1344,9 @@ impl Game {
                     .unwrap_or_else(|| self.ram.read_byte(lane))
             });
             self.persistent_ram_epoch = self.ram.write_epoch();
+            *self.persistent_session.menu.get_mut() = sm_game::menus::state::Domain::InSession {
+                epoch: self.ram.menu_epoch(),
+            };
             if matches!(
                 self.persistent_session.inventory.get_mut(),
                 sm_game::inventory_domain::InventoryDomain::InSession { .. }
@@ -1369,6 +1419,10 @@ impl Game {
             sm_game::inventory_domain::InventoryDomain::InSession {
                 epoch: self.ram.inventory_epoch(),
             };
+        *self.persistent_session.menu.get_mut() = sm_game::menus::state::Domain::InSession {
+            epoch: self.ram.menu_epoch(),
+        };
+        self.adopt_scroll_image();
         Ok(())
     }
     /// Whether `Runtime::new` would succeed now, without changing any state:
@@ -1406,6 +1460,7 @@ impl Game {
             SessionSlot::Ready(session) => {
                 *self.persistent_session.inventory.get_mut() =
                     sm_game::inventory_domain::InventoryDomain::Leased;
+                *self.persistent_session.menu.get_mut() = sm_game::menus::state::Domain::Leased;
                 Ok(Some(*session))
             }
             other => {
@@ -1442,6 +1497,19 @@ impl Game {
             } else {
                 sm_game::inventory_domain::InventoryDomain::Revoked
             };
+        *self.persistent_session.menu.get_mut() =
+            if completed && admitted_epoch == self.ram.write_epoch() {
+                sm_game::menus::state::Domain::InSession {
+                    epoch: self.ram.menu_epoch(),
+                }
+            } else {
+                sm_game::menus::state::Domain::Revoked
+            };
+        if completed && admitted_epoch == self.ram.write_epoch() {
+            self.adopt_scroll_image();
+        } else {
+            self.revoke_scroll_domain();
+        }
     }
     fn poison_persistent_session(&mut self) {
         use persistent_session::AggregateSlot as SessionSlot;
@@ -1486,6 +1554,8 @@ impl Game {
             persistent_session::AggregateSlot::Legacy
         ) {
             self.adopt_inventory_image();
+            self.adopt_menu_image();
+            self.adopt_scroll_image();
             return Ok(());
         }
         if self.persistent_ram_epoch != self.ram.write_epoch() {
@@ -1499,6 +1569,8 @@ impl Game {
         };
         if result.is_ok() {
             self.adopt_inventory_image();
+            self.adopt_menu_image();
+            self.adopt_scroll_image();
         }
         result
     }
@@ -1526,10 +1598,14 @@ impl Game {
             ));
         }
         self.adopt_inventory_image();
+        self.adopt_menu_image();
+        self.adopt_scroll_image();
         Ok(())
     }
     pub(crate) fn revoke_session_authority(&mut self) {
         self.revoke_inventory_domain();
+        self.revoke_menu_domain();
+        self.revoke_scroll_domain();
         self.revoke_samus_authority();
     }
     pub(crate) fn take_actor_identity(
@@ -1616,6 +1692,8 @@ impl Game {
     }
     pub(crate) fn revoke_samus_authority(&mut self) {
         self.revoke_inventory_domain();
+        self.revoke_menu_domain();
+        self.revoke_scroll_domain();
         self.poison_persistent_session();
         self.samus.revoke();
     }
@@ -1639,6 +1717,8 @@ impl Game {
         );
         self.samus.begin_mutation(legacy)?;
         self.revoke_inventory_domain();
+        self.revoke_menu_domain();
+        self.revoke_scroll_domain();
         Ok(SamusMutation {
             game: self,
             completed: false,
@@ -1698,6 +1778,8 @@ impl Game {
         self.native_rom = payload.native;
         self.samus.adopt(payload.binding);
         self.adopt_inventory_image();
+        self.adopt_menu_image();
+        self.adopt_scroll_image();
         Ok(())
     }
     pub(crate) fn samus_execution(&self) -> Result<Option<SamusExecution>, DisplayError> {
@@ -2106,5 +2188,430 @@ impl sm_game::inventory_domain::InventoryAccess for Game {
             }
         }
         publish.completed = true;
+    }
+}
+
+// Exact UI encoding lanes; all aliases, bulk stores and CPU writes advance this epoch.
+fn menu_ranges() -> [Range<usize>; 10] {
+    [
+        0x727..0x765,
+        0x5ac..0x5b4,
+        0x5fb..0x601,
+        0x776..0x77c,
+        0x787..0x78d,
+        0x950..0x956,
+        0xd914..0xd91a,
+        0x99e..0x9a0,
+        0xde0..0xde4,
+        0xde4..0xdea,
+    ]
+}
+
+#[forbid(unsafe_code)]
+impl Game {
+    fn read_menu_image(&self) -> sm_game::menus::state::State {
+        // Scoped selected-image adoption is infallible and admits no Samus/actor lease.
+        // This decoder is a retained adapter, never an engine read implementation.
+        use sm_game::session_cohort::Cohort;
+        fn decode<C: Cohort>(game: &Game) -> C {
+            let mut value = C::default();
+            value.words(|at, word| {
+                *word = u16::from_le_bytes([game.ram.read_byte(at), game.ram.read_byte(at + 1)])
+            });
+            value
+        }
+        sm_game::menus::state::State {
+            menu: decode(self),
+            screens: decode(self),
+        }
+    }
+    fn menu_byte(&self, at: usize) -> u8 {
+        use sm_game::menus::state::Access;
+        use sm_game::session_cohort::Cohort;
+        let state = self.menu_state();
+        let mut value = (state.menu, state.screens);
+        let mut byte = None;
+        value.words(|start, word| {
+            if at == start || at == start + 1 {
+                byte = Some(word.to_le_bytes()[at - start]);
+            }
+        });
+        byte.expect("menu encoding lane")
+    }
+    pub(crate) fn revoke_menu_domain(&mut self) {
+        *self.persistent_session.menu.get_mut() = sm_game::menus::state::Domain::Revoked;
+    }
+    pub(crate) fn adopt_menu_image(&mut self) {
+        use sm_game::menus::state::Domain;
+        if matches!(self.persistent_session.menu.get_mut(), Domain::Leased) {
+            return;
+        }
+        let epoch = self.ram.menu_epoch();
+        if matches!(self.persistent_session.menu.get_mut(),
+            Domain::Owned { epoch: current, .. } | Domain::InSession { epoch: current }
+            if *current == epoch)
+        {
+            return;
+        }
+        let state = self.read_menu_image();
+        match &mut self.persistent_session.aggregate {
+            persistent_session::AggregateSlot::Ready(session)
+            | persistent_session::AggregateSlot::Failed(Some(session)) => {
+                session.gameplay.menu = state.menu;
+                session.gameplay.menu_screens = state.screens;
+                *self.persistent_session.menu.get_mut() = Domain::InSession { epoch };
+            }
+            _ => *self.persistent_session.menu.get_mut() = Domain::Owned { state, epoch },
+        }
+    }
+    pub(crate) fn take_menu_domain(&mut self) -> Option<sm_game::menus::state::State> {
+        use sm_game::menus::state::Domain;
+        let domain = std::mem::replace(self.persistent_session.menu.get_mut(), Domain::Leased);
+        match domain {
+            Domain::Owned { state, epoch } if epoch == self.ram.menu_epoch() => Some(state),
+            _ => None,
+        }
+    }
+    pub(crate) fn return_menu_domain(
+        &mut self,
+        state: sm_game::menus::state::State,
+        completed: bool,
+    ) {
+        use sm_game::menus::state::Domain;
+        *self.persistent_session.menu.get_mut() = if completed {
+            Domain::Owned {
+                state,
+                epoch: self.ram.menu_epoch(),
+            }
+        } else {
+            Domain::Revoked
+        };
+    }
+}
+
+#[forbid(unsafe_code)]
+impl sm_game::menus::state::Access for Game {
+    fn reset_pause_menu(&mut self) {
+        let mut state = self.menu_state();
+        state.clear_pause_menu();
+        struct Clear<'a> {
+            game: &'a mut Game,
+            state: sm_game::menus::state::State,
+            completed: bool,
+        }
+        impl Drop for Clear<'_> {
+            fn drop(&mut self) {
+                self.game.return_menu_domain(self.state, self.completed);
+            }
+        }
+        *self.persistent_session.menu.get_mut() = sm_game::menus::state::Domain::Leased;
+        let mut clear = Clear {
+            game: self,
+            state,
+            completed: false,
+        };
+        // The old three ascending LE transfers, including zero-to-zero stores.
+        // Keep physical publication here so a subsequent player-command failure
+        // retains exactly the original clear prefix and admission ordering.
+        for (start, words) in [(0x727, 10), (0x73d, 9), (0x751, 9)] {
+            for index in 0..words {
+                let at = start + 2 * index;
+                clear.game.compatibility_write_byte(at, 0);
+                clear.game.compatibility_write_byte(at + 1, 0);
+            }
+        }
+        clear.completed = true;
+    }
+    fn menu_state(&self) -> sm_game::menus::state::State {
+        use sm_game::menus::state::{Domain, State};
+        let epoch = self.ram.menu_epoch();
+        let mut domain = self.persistent_session.menu.borrow_mut();
+        match &*domain {
+            Domain::Owned {
+                state,
+                epoch: current,
+            } if *current == epoch => return *state,
+            Domain::InSession { epoch: current } if *current == epoch => {
+                if let persistent_session::AggregateSlot::Ready(session)
+                | persistent_session::AggregateSlot::Failed(Some(session)) =
+                    &self.persistent_session.aggregate
+                {
+                    return State {
+                        menu: session.gameplay.menu,
+                        screens: session.gameplay.menu_screens,
+                    };
+                }
+            }
+            Domain::Leased => return self.read_menu_image(),
+            _ => {}
+        }
+        // An external writer revoked the old authority. Rebuild once from the actual
+        // selected bytes, without changed-store admission or unrelated preflight.
+        let state = self.read_menu_image();
+        *domain = Domain::Owned { state, epoch };
+        state
+    }
+    fn commit_menu<C: sm_game::menus::state::Value>(&mut self, before: &C, after: C) {
+        use sm_game::menus::state::State;
+        use sm_game::session_cohort::Cohort;
+        if after == *before {
+            return;
+        }
+        if self.persistent_session_current() {
+            // Preserve precisely the former changed-copy store's lease admission.
+            use sm_game::session_access::SessionAccess;
+            let mut runtime = crate::game::session_runtime::Runtime::new(self);
+            let session = runtime.session_mut();
+            let mut state = State {
+                menu: session.menu,
+                screens: session.menu_screens,
+            };
+            C::merge(before, &after, &mut state);
+            session.menu = state.menu;
+            session.menu_screens = state.screens;
+            runtime.refresh_inputs();
+            return;
+        }
+        let previous = self.menu_state();
+        let mut state = previous;
+        C::merge(before, &after, &mut state);
+        // Select physical stores from the draft's original before/after values,
+        // even if a native alias already wrote the same result during the call.
+        // Unchanged draft fields preserve the completed foreign byte prefix.
+        let mut original = previous;
+        C::replace(before, &mut original);
+        let mut changed = original;
+        C::merge(before, &after, &mut changed);
+        let mut old = (original.menu, original.screens);
+        let mut words = Vec::new();
+        old.words(|at, word| words.push((at, *word)));
+        let mut new = (changed.menu, changed.screens);
+        let mut changes = Vec::new();
+        let mut index = 0;
+        new.words(|at, word| {
+            if words[index].1 != *word {
+                changes.push((at, *word));
+            }
+            index += 1;
+        });
+        struct Publish<'a> {
+            game: &'a mut Game,
+            state: State,
+            completed: bool,
+        }
+        impl Drop for Publish<'_> {
+            fn drop(&mut self) {
+                self.game.return_menu_domain(self.state, self.completed);
+            }
+        }
+        *self.persistent_session.menu.get_mut() = sm_game::menus::state::Domain::Leased;
+        let mut publish = Publish {
+            game: self,
+            state,
+            completed: false,
+        };
+        for (at, word) in changes {
+            let [low, high] = word.to_le_bytes();
+            publish.game.compatibility_write_byte(at, low);
+            publish.game.compatibility_write_byte(at + 1, high);
+        }
+        publish.completed = true;
+    }
+}
+
+use sm_game::display_scroll::Access as _;
+
+fn scroll_address(word: sm_game::display_scroll::Word) -> usize {
+    0xb1 + 2 * usize::from(word)
+}
+fn scroll_lane(at: usize) -> (sm_game::display_scroll::Word, usize) {
+    let offset = at - 0xb1;
+    (sm_game::display_scroll::WORDS[offset / 2], offset % 2)
+}
+
+#[forbid(unsafe_code)]
+impl Game {
+    pub(crate) fn revoke_scroll_domain(&mut self) {
+        *self.persistent_session.scroll.get_mut() = sm_game::display_scroll::ScrollDomain::Revoked;
+    }
+    pub(crate) fn adopt_scroll_image(&mut self) {
+        if self.persistent_session_current() {
+            if let persistent_session::AggregateSlot::Ready(state) =
+                &self.persistent_session.aggregate
+            {
+                if state.gameplay.presentation.is_owned() {
+                    *self.persistent_session.scroll.get_mut() =
+                        sm_game::display_scroll::ScrollDomain::InSession {
+                            epoch: self.ram().scroll_epoch(),
+                        };
+                    return;
+                }
+            }
+        }
+        let epoch = self.ram().scroll_epoch();
+        if matches!(self.persistent_session.scroll.get_mut(),
+            sm_game::display_scroll::ScrollDomain::Owned { epoch: current, .. } if *current == epoch)
+        {
+            return;
+        }
+        let scroll = sm_game::display_scroll::WORDS.map(|word| {
+            let at = scroll_address(word);
+            u16::from_le_bytes([self.ram().read_byte(at), self.ram().read_byte(at + 1)])
+        });
+        *self.persistent_session.scroll.get_mut() =
+            sm_game::display_scroll::ScrollDomain::Owned { scroll, epoch };
+    }
+    pub(crate) fn scroll_byte(&self, at: usize) -> u8 {
+        let (word, offset) = scroll_lane(at);
+        self.scroll_word(word).to_le_bytes()[offset]
+    }
+    pub(crate) fn set_scroll_byte(&mut self, at: usize, byte: u8) {
+        let (word, offset) = scroll_lane(at);
+        let mut bytes = self.scroll_word(word).to_le_bytes();
+        bytes[offset] = byte;
+        self.publish_scroll(word, u16::from_le_bytes(bytes), Some(offset));
+    }
+    fn publish_scroll(
+        &mut self,
+        word: sm_game::display_scroll::Word,
+        value: u16,
+        byte: Option<usize>,
+    ) {
+        if self.persistent_session_current() {
+            if let persistent_session::AggregateSlot::Ready(state) =
+                &mut self.persistent_session.aggregate
+            {
+                if let Ok(display) = state.gameplay.presentation.owner_mut() {
+                    display.state.controls.scroll_words[usize::from(word)] = value;
+                    for (offset, byte_value) in value.to_le_bytes().into_iter().enumerate() {
+                        if byte.is_none_or(|selected| selected == offset) {
+                            self.compatibility_write_owned_byte(
+                                scroll_address(word) + offset,
+                                byte_value,
+                            );
+                        }
+                    }
+                    *self.persistent_session.scroll.get_mut() =
+                        sm_game::display_scroll::ScrollDomain::InSession {
+                            epoch: self.ram().scroll_epoch(),
+                        };
+                    return;
+                }
+            }
+        }
+        // First entry establishes the complete actual image, never a Display.
+        if matches!(
+            *self.persistent_session.scroll.borrow(),
+            sm_game::display_scroll::ScrollDomain::Unowned
+        ) {
+            self.adopt_scroll_image();
+        }
+        let slot = std::mem::replace(
+            self.persistent_session.scroll.get_mut(),
+            sm_game::display_scroll::ScrollDomain::Leased,
+        );
+        let mut scroll = match slot {
+            sm_game::display_scroll::ScrollDomain::Owned { scroll, epoch }
+                if epoch == self.ram().scroll_epoch() =>
+            {
+                Some(scroll)
+            }
+            _ => None,
+        };
+        if let Some(scroll) = &mut scroll {
+            scroll[usize::from(word)] = value;
+        }
+        struct Publish<'a> {
+            game: &'a mut Game,
+            scroll: Option<[u16; 8]>,
+            completed: bool,
+        }
+        impl Drop for Publish<'_> {
+            fn drop(&mut self) {
+                *self.game.persistent_session.scroll.get_mut() = match self.scroll.take() {
+                    Some(scroll) if self.completed => {
+                        sm_game::display_scroll::ScrollDomain::Owned {
+                            scroll,
+                            epoch: self.game.ram().scroll_epoch(),
+                        }
+                    }
+                    _ => sm_game::display_scroll::ScrollDomain::Revoked,
+                };
+            }
+        }
+        let mut publish = Publish {
+            game: self,
+            scroll,
+            completed: false,
+        };
+        for (offset, byte_value) in value.to_le_bytes().into_iter().enumerate() {
+            if byte.is_none_or(|selected| selected == offset) {
+                publish
+                    .game
+                    .compatibility_write_byte(scroll_address(word) + offset, byte_value);
+            }
+        }
+        publish.completed = true;
+    }
+}
+
+#[forbid(unsafe_code)]
+impl sm_game::display_scroll::Access for Game {
+    fn scroll_word(&self, word: sm_game::display_scroll::Word) -> u16 {
+        if self.persistent_session_current() {
+            if let persistent_session::AggregateSlot::Ready(state) =
+                &self.persistent_session.aggregate
+            {
+                if let Ok(display) = state.gameplay.presentation.owner() {
+                    return display.state.controls.scroll_words[usize::from(word)];
+                }
+            }
+        }
+        let mut domain = self.persistent_session.scroll.borrow_mut();
+        if matches!(*domain, sm_game::display_scroll::ScrollDomain::Unowned) {
+            let scroll = sm_game::display_scroll::WORDS.map(|word| {
+                let at = scroll_address(word);
+                u16::from_le_bytes([self.ram().read_byte(at), self.ram().read_byte(at + 1)])
+            });
+            *domain = sm_game::display_scroll::ScrollDomain::Owned {
+                scroll,
+                epoch: self.ram().scroll_epoch(),
+            };
+        }
+        match &*domain {
+            sm_game::display_scroll::ScrollDomain::Owned { scroll, epoch }
+                if *epoch == self.ram().scroll_epoch() =>
+            {
+                scroll[usize::from(word)]
+            }
+            _ => {
+                // Revoked, dirty or suspended ownership exposes selected bytes.
+                let at = scroll_address(word);
+                u16::from_le_bytes([self.ram().read_byte(at), self.ram().read_byte(at + 1)])
+            }
+        }
+    }
+    fn actor_scroll_word(&self, word: sm_game::display_scroll::Word) -> u16 {
+        // The old boss view called Game::slot_byte, which samples raw RAM.
+        u16::from_le_bytes([
+            self.physical_scroll_byte(word, false),
+            self.physical_scroll_byte(word, true),
+        ])
+    }
+    fn set_scroll_word(&mut self, word: sm_game::display_scroll::Word, value: u16) {
+        self.publish_scroll(word, value, None);
+    }
+    fn physical_scroll_byte(&self, word: sm_game::display_scroll::Word, high: bool) -> u8 {
+        self.ram()
+            .read_byte(scroll_address(word) + usize::from(high))
+    }
+    fn write_physical_scroll_byte(
+        &mut self,
+        word: sm_game::display_scroll::Word,
+        high: bool,
+        value: u8,
+    ) {
+        self.ram()
+            .write_byte(scroll_address(word) + usize::from(high), value);
     }
 }

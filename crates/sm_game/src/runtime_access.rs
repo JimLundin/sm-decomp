@@ -8,6 +8,7 @@
 /// The host traits the owned-Session view provides.
 pub trait SessionView:
     crate::session_access::SessionAccess
+    + crate::display_scroll::Access
     + SessionRam
     + crate::hud::HudFrameHost
     + crate::player_position::PlayerPosition
@@ -28,6 +29,7 @@ pub trait SessionView:
 }
 impl<T> SessionView for T where
     T: crate::session_access::SessionAccess
+        + crate::display_scroll::Access
         + SessionRam
         + crate::hud::HudFrameHost
         + crate::player_position::PlayerPosition
@@ -98,7 +100,7 @@ impl<
 > PlayerLease for T
 {
 }
-pub trait RuntimeAccess {
+pub trait RuntimeAccess: crate::screen_fade::Owner {
     type Runtime<'a>: PlayerLease
         + crate::hdma_effects::HdmaEffects
         + crate::actors::mother_brain_rainbow::Host

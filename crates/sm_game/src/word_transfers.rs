@@ -140,6 +140,27 @@ mod tests {
     /// The named-RAM macros over a plain byte array instead of the compat Game.
     struct Ram(Vec<u8>);
 
+    impl crate::display_scroll::Access for Ram {
+        fn scroll_word(&self, word: crate::display_scroll::Word) -> u16 {
+            let at = 0xb1 + 2 * usize::from(word);
+            u16::from_le_bytes([self.0[at], self.0[at + 1]])
+        }
+        fn set_scroll_word(&mut self, word: crate::display_scroll::Word, value: u16) {
+            let at = 0xb1 + 2 * usize::from(word);
+            self.0[at..at + 2].copy_from_slice(&value.to_le_bytes());
+        }
+        fn physical_scroll_byte(&self, word: crate::display_scroll::Word, high: bool) -> u8 {
+            self.0[0xb1 + 2 * usize::from(word) + usize::from(high)]
+        }
+        fn write_physical_scroll_byte(
+            &mut self,
+            word: crate::display_scroll::Word,
+            high: bool,
+            value: u8,
+        ) {
+            self.0[0xb1 + 2 * usize::from(word) + usize::from(high)] = value;
+        }
+    }
     impl CompatibilityRam for Ram {
         fn compatibility_byte(&self, at: usize) -> u8 {
             self.0[at]

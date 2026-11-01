@@ -331,15 +331,23 @@ pub fn update_scrolls<H: Host + ?Sized>(game: &mut H) {
         return;
     }
     let camera = game.session().room.camera;
-    word!(game.REG_BG1HOFS = camera.bg1_offset[0].wrapping_add(camera.layer1[0]));
-    word!(game.REG_BG1VOFS = camera.bg1_offset[1].wrapping_add(camera.layer1[1]));
+    crate::menus::prelude::display_scroll!(
+        game.Bg1H = camera.bg1_offset[0].wrapping_add(camera.layer1[0])
+    );
+    crate::menus::prelude::display_scroll!(
+        game.Bg1V = camera.bg1_offset[1].wrapping_add(camera.layer1[1])
+    );
     if layer2_position(CameraAxis::X, game) == 0 {
         let camera = game.session().room.camera;
-        word!(game.REG_BG2HOFS = camera.bg2_scroll[0].wrapping_add(camera.layer2[0]));
+        crate::menus::prelude::display_scroll!(
+            game.Bg2H = camera.bg2_scroll[0].wrapping_add(camera.layer2[0])
+        );
     }
     if layer2_position(CameraAxis::Y, game) == 0 {
         let camera = game.session().room.camera;
-        word!(game.REG_BG2VOFS = camera.bg2_scroll[1].wrapping_add(camera.layer2[1]));
+        crate::menus::prelude::display_scroll!(
+            game.Bg2V = camera.bg2_scroll[1].wrapping_add(camera.layer2[1])
+        );
     }
     update_backgrounds(game);
 }
