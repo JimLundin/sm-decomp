@@ -27,6 +27,9 @@ enum Expectation {
     MetroidLatch,
     MetroidDrain,
     BotwoonSpit,
+    MetroidFreeze,
+    MetroidMissileShatter,
+    MetroidBombRelease,
 }
 
 impl Expectation {
@@ -66,6 +69,9 @@ impl Expectation {
             "metroid" => match name {
                 "latch" => Ok(Self::MetroidLatch),
                 "drain" => Ok(Self::MetroidDrain),
+                "freeze" => Ok(Self::MetroidFreeze),
+                "missile-shatter" => Ok(Self::MetroidMissileShatter),
+                "bomb-release" => Ok(Self::MetroidBombRelease),
                 _ => Err(bad()),
             },
             "botwoon" if name == "spit" => Ok(Self::BotwoonSpit),
@@ -143,6 +149,8 @@ impl Expectation {
             Self::MetroidLatch => live && before.gameplay.metroid_latch(after.gameplay),
             Self::MetroidDrain => live && before.gameplay.metroid_drain(after.gameplay),
             Self::BotwoonSpit => live && before.gameplay.botwoon_spit(after.gameplay),
+            Self::MetroidFreeze => live && before.gameplay.metroid_freeze(after.gameplay),
+            Self::MetroidMissileShatter | Self::MetroidBombRelease => false,
             // These require episode history, handled by observe_expectations.
             Self::Door(_)
             | Self::Elevator(_)
@@ -372,6 +380,8 @@ struct ReplayCoverage {
     areas: BTreeSet<u16>,
     previous: CoverageState,
     death_in_progress: bool,
+    metroid_shatter: gameplay_facts::MetroidShatter,
+    metroid_bomb_release: gameplay_facts::MetroidBombRelease,
     door_episode: Option<DoorEpisode>,
     elevator_departure: Option<(u16, u16)>,
     ceres_combat: bool,
@@ -740,6 +750,16 @@ impl ReplayCoverage {
     fn observe_expectations(&mut self, current: CoverageState, frame: usize) {
         let before = self.previous;
         let dying = (19..=25).contains(&current.state);
+        let metroid_shatter = self.metroid_shatter.observe(
+            before.gameplay,
+            current.gameplay,
+            before.same_gameplay_room(&current),
+        );
+        let metroid_bomb_release = self.metroid_bomb_release.observe(
+            before.gameplay,
+            current.gameplay,
+            before.same_gameplay_room(&current),
+        );
         if dying && !(19..=25).contains(&before.state) {
             self.death_in_progress = true;
         }
@@ -761,6 +781,8 @@ impl ReplayCoverage {
                 Expectation::Elevator(room) => elevator == Some(room),
                 Expectation::CeresRidley => ceres,
                 Expectation::SaveDeathContinue => save_continue,
+                Expectation::MetroidMissileShatter => metroid_shatter,
+                Expectation::MetroidBombRelease => metroid_bomb_release,
                 Expectation::Boss { area: 0, mask: 4 } => bomb,
                 _ => expected.kind.observed(&before, &current, death),
             };

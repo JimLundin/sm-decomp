@@ -68,6 +68,12 @@ class Scenario:
 
 
 SCENARIOS = {
+    "coverage-metroid-ice": Scenario(
+        base="100-input-phase:317",
+        edits={"equipped_items": "varia+morph-ball+gravity+hi-jump+bombs", "equipped_beams": "ice+plasma+charge",
+               "selected_item": "none", "energy": 699, "max_energy": 699,
+               "reserve_energy": 0, "missiles": 50, "max_missiles": 50},
+        note="Retail Metroid ice freeze followed by ordinary missiles; no screw attack"),
     "coverage-metroid": Scenario(
         base="100-input-phase:317",
         edits={"equipped_items": "varia+spring-ball+morph-ball+gravity+hi-jump+space-jump+bombs+speed-booster+grapple+x-ray", "equipped_beams": 0,

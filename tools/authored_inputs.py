@@ -196,6 +196,13 @@ class Sweep:
 
 
 RECIPES = {
+    # Candidate from the original Tourian entry seed, preserving its first word.
+    # Unmorph from the movie's spring-ball entry pose, freeze with a charged
+    # ice beam, then select ordinary missiles and fire.
+    "coverage-metroid-ice-shatter": Recipe("press Up 20; X 70; _ 30; press Select 10; repeat 8 { press X 24 }; _ 120"),
+    # Cancel the selected HUD item before laying ordinary bombs from the morph
+    # pose. Keep the original approach's 333 ticks, then wait for a fresh latch.
+    "coverage-metroid-bomb-release": Recipe("_ 180; press Y 10; morph; repeat 12 { press X 8 }; _ 100"),
     # Keep --prefix-frames 333 of the original approach. Without the ice
     # beam the Metroids in the entry room survive and latch onto Samus.
     "coverage-metroid-latch-drain": Recipe("_ 400"),
@@ -384,6 +391,8 @@ SWEEPS = {
 
 # SHA-256 of each recipe's own words, before any prefix; `check` keeps them.
 PINNED = {
+    "coverage-metroid-ice-shatter": "cdc0a606d5d119c07017e6d7e0c1b6ba7e80f280c4dd315775b57c2e962a53d2",
+    "coverage-metroid-bomb-release": "36226d566d39078e6e88201e0df43df64d2370c42f1f21892ed0d8daa589404c",
     "coverage-metroid-latch-drain": "3d2bc137e05df8bca64f457fb2a4e4f5f4579179af2bcf20ed5a4c0301545494",
     "coverage-botwoon-spit": "ca2431d3b1a380ce77495dca8b9efc1fb20d1efd8f8d4de97e43d9df76695a0d",
     "pause-menu-tour": "b3fd5b2ec38a6cc00731f528244f120b7793ea0802dd4a5cd8e0b673b8efe5f0",
