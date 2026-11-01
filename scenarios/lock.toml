@@ -7106,6 +7106,18 @@ digests = { "wram" = "11ae30b377cfea43", "sram" = "a6f542f12240e5af", "vram" = "
 marks = {  }
 
 [[scenario]]
+id = "samus-grapple-walljump"
+oracle = "faithful"
+start = "seed:ce4115b7f605815c7416913920048cb54e5d5911d8dddc2d411cf8958e1fd83f"
+inputs = "9957036f4b058286d2c873646b02c02fb532c907884eefb33c1619a16a877ae0"
+frames = 174
+format = 1
+ticks = 174
+combined = "8a58f3438680dd7f"
+digests = { "wram" = "57c6064bfcb0e20b", "sram" = "2c64b4a755785e6d", "vram" = "d0d1a7835d1520d6", "cgram" = "6626f8b9dab21dfc", "oam" = "f174ba79d02b36f7", "ppu" = "a8067bd25d69932b", "video" = "ad38455b7bf5395f", "apu" = "962528ce3ce52e7d", "input" = "6be792bd1e2bdadd", "samus" = "98b843f82e063b7e", "camera" = "d1388b20294f0c7f", "room" = "6301e67014cc47e8", "progress" = "9ce1fefbf7175b1e", "actors" = "aa32c1d48155b998", "effects" = "404c75833e82028d" }
+marks = {  }
+
+[[scenario]]
 id = "samus-gunship-save"
 oracle = "faithful"
 start = "seed:1563be3787a3edca0cc6821a8db4967c2318e41a7ae6a50dc9a5d0a5288ad07c"

@@ -1829,4 +1829,3 @@ start_frame = 0
 frames = 174
 expect = ["room:D72A"]
 require_hit = ["grapple.special_angle", "grapple.jump_admission", "grapple.release_walljump"]
-pending = "awaiting the seeds-v1-grapplewall-4f6db9f4f7fc408a ci-data upload"
