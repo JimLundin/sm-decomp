@@ -27,7 +27,6 @@ enum Expectation {
     MetroidLatch,
     MetroidDrain,
     BotwoonSpit,
-    SpringBallGroundedJump,
     MetroidFreeze,
     MetroidMissileShatter,
     MetroidBombRelease,
@@ -76,7 +75,6 @@ impl Expectation {
                 _ => Err(bad()),
             },
             "botwoon" if name == "spit" => Ok(Self::BotwoonSpit),
-            "spring-ball" if name == "grounded-jump" => Ok(Self::SpringBallGroundedJump),
             "room" | "door" | "elevator"
                 if name.len() == 4 && name.bytes().all(|byte| byte.is_ascii_hexdigit()) =>
             {
@@ -152,9 +150,7 @@ impl Expectation {
             Self::MetroidDrain => live && before.gameplay.metroid_drain(after.gameplay),
             Self::BotwoonSpit => live && before.gameplay.botwoon_spit(after.gameplay),
             Self::MetroidFreeze => live && before.gameplay.metroid_freeze(after.gameplay),
-            Self::MetroidMissileShatter
-            | Self::MetroidBombRelease
-            | Self::SpringBallGroundedJump => false,
+            Self::MetroidMissileShatter | Self::MetroidBombRelease => false,
             // These require episode history, handled by observe_expectations.
             Self::Door(_)
             | Self::Elevator(_)
@@ -289,7 +285,6 @@ struct CoverageState {
     saved_area: u16,
     coroutines_idle: bool,
     gameplay: gameplay_facts::Snapshot,
-    spring_player: gameplay_facts::SpringPlayer,
 }
 
 impl CoverageState {
@@ -339,7 +334,6 @@ impl CoverageState {
             } else {
                 None
             },
-            spring_player: gameplay_facts::SpringPlayer::read(game),
             gameplay: if word(0x998) == 8 {
                 gameplay_facts::Snapshot::read(game)
             } else {
@@ -394,7 +388,6 @@ struct ReplayCoverage {
     bomb_damaged: bool,
     bomb_dying: bool,
     save_episode: Option<SaveEpisode>,
-    spring_jump: gameplay_facts::SpringJump,
     expected: Vec<RequiredExpectation>,
     enemies: BTreeSet<u16>,
     last_state_room: Option<(u16, u16)>,
@@ -774,12 +767,6 @@ impl ReplayCoverage {
         let (door, elevator) = self.observe_traversal(&current);
         let ceres = self.observe_ceres(&current);
         let bomb = self.observe_bomb_torizo(&current);
-        let spring_jump = self.spring_jump.observe(
-            before.same_gameplay_room(&current),
-            before.items[0] & 2 == 0 && current.items[0] & 2 != 0,
-            before.spring_player,
-            current.spring_player,
-        );
         let save_continue = self.observe_save_continue(
             &current,
             sm::verify_probe::last_hit_frame("save.sram.committed") == Some(frame),
@@ -793,7 +780,6 @@ impl ReplayCoverage {
                 Expectation::Door(room) => door == Some(room),
                 Expectation::Elevator(room) => elevator == Some(room),
                 Expectation::CeresRidley => ceres,
-                Expectation::SpringBallGroundedJump => spring_jump,
                 Expectation::SaveDeathContinue => save_continue,
                 Expectation::MetroidMissileShatter => metroid_shatter,
                 Expectation::MetroidBombRelease => metroid_bomb_release,

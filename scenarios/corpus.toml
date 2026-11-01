@@ -419,16 +419,6 @@ tags = ["required"]
 unlocked = "WRAM drift lockstep masks, in the item and pickup rows (not yet identified)"
 
 [[scenario]]
-id = "spring-ball-grounded-jump"
-start = "seed:dbef5f5401a660cc107893ccbcc513e841e2975465745ec7786f39dc261e05fb"
-ticks = 1180
-facts = ["item:spring-ball", "room:D6D0", "spring-ball:grounded-jump", "probe:coroutine.plm.message.completed"]
-after_expectations = 120
-after_hits = 120
-tags = ["required"]
-pending = "Faithful oracle reached pickup and grounded jump/landing; observer build, paired/free-run, mutation and private input bundle/lock are pending"
-
-[[scenario]]
 id = "item-plasma"
 start = "seed:7f91cbe7c1ae4a078b97e1d5a029ffbb7d12ea97502e78cecca339e69f471c0a"
 ticks = 1400

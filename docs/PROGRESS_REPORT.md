@@ -46,11 +46,8 @@ Exact root receipts are in `$TEMP/collab/docs-ci-coverage-composition/checks.jso
 `l6-integrated-260d11ef6/`, `l6-integrated-rows/` and
 `verification-spring-ball-jump/`. CI timing/capacity evidence remains in
 [VERIFICATION_SHARDING](VERIFICATION_SHARDING.md), rather than duplicated here.
-The preceding CI slice, [PR #145](https://github.com/JimLundin/sm-decomp/pull/145),
-landed at 2026-11-01 15:13:18 UTC on `534c5be320c20856e3ef5f710ea35f639579eea3`.
-CI 41318095924, corpus 41318110135, route 41318095894 and lock 41318096004 all
-passed. Original watcher25370 is terminal EXIT0. The RAM baseline is now2100;
-this newly prepared composition remains separately unqualified.
+The preceding CI slice, PR #145, still needs its final oracle-lock gate and the
+original watcher outcome; inspect its actual state before treating it as landed.
 
 ## Root observations received 2026-11-01
 
