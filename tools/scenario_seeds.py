@@ -8,8 +8,8 @@ the seed's regions and registers into target/seeds/scenario-NAME/, applies the
 edits to its WRAM, and records the new region hashes in that capture's
 rooms.csv. The verifier then loads the scenario seed into both engines like
 any other seed, so the original game decides what follows from the edited
-state; a corpus row uses it as `seed = "scenario-NAME:INDEX"` with the
-seed_sha256 this tool prints.
+state; a scenario starts from it with the `start` this tool prints and pins
+`seed=scenario-NAME:INDEX` (tools/scenario.py lock --pin).
 
 Edits stay within the seed's room: the room, its level data and its video
 memory come from the recording. The gameplay state, room and NMI words and
@@ -237,8 +237,8 @@ def write(name):
             data = (target / row["file"]).read_bytes()
             writer.writerow({**row, "sha256": hashlib.sha256(data).hexdigest()})
     index = int(rows[0]["room_index"])
-    print(f'seed = "scenario-{name}:{index}"')
-    print(f'seed_sha256 = "{seed_digest(target, prefix)}"')
+    print(f'start = "seed:{seed_digest(target, prefix)}"')
+    print(f"# python tools/scenario.py lock --pin ID seed=scenario-{name}:{index} inputs=FILE.inputs bundle=ASSET")
     print(f"# {len(words)} edited words; wram: {target / (prefix + '-wram.bin')}")
 
 
