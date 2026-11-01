@@ -22,7 +22,13 @@ fn grapple<H: Host>(h: &mut H, amount: i32) -> bool {
     h.session_mut().player.contact.collision_direction = direction;
     let result = geometry::solid_contact(h, amount);
     if matches!(result.obstruction, Obstruction::Clear) {
-        geometry::wall_probe(h, result.displacement);
+        // Facing left, the block check looks left: the distance is negated ($90:9CFB).
+        let distance = if direction == 0 {
+            result.displacement.wrapping_neg()
+        } else {
+            result.displacement
+        };
+        geometry::wall_probe(h, distance);
         if h.session().player.collision.flags == 0 {
             return false;
         }
