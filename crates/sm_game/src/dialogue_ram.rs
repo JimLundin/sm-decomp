@@ -56,7 +56,7 @@ pub fn import<H: crate::ram::RamHost + ?Sized>(game: &H) -> Dialogue<u16> {
             value @ STEPS.. => ChildContinuation::Step(value - STEPS),
             value => ChildContinuation::Invalid(value),
         },
-        radius: message_box::get(game, message_box::Word::Radius),
+        radius: crate::session_cohort::load::<MessageBox, _>(game).radius,
         selection: match read(game, ram::SAVE_CONFIRMATION_SELECTION) {
             0 => Selection::Accept,
             2 => Selection::Decline,
@@ -81,7 +81,9 @@ pub fn publish<H: crate::ram::RamHost + ?Sized>(state: Dialogue<u16>, game: &mut
         },
     );
     write(game, ram::MY_COUNTER, state.delay_remaining);
-    message_box::set(game, message_box::Word::Radius, state.radius);
+    crate::session_cohort::with_projected(game, |_, message_box: &mut MessageBox| {
+        message_box.radius = state.radius
+    });
     write(
         game,
         ram::SAVE_CONFIRMATION_SELECTION,
@@ -142,30 +144,36 @@ pub fn select_pause<H: crate::ram::RamHost + ?Sized>(game: &mut H) {
     write(game, ram::GAME_STATE, 12);
 }
 
-/// The message box's animation words, which the Session holds as
-/// `messages.box_radius` and `messages.box_scratch`, read and stored through
-/// the host's projected bytes.
-pub mod message_box {
-    use crate::ram::CompatibilityRam;
-    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-    pub enum Word {
-        Radius = 0x5a2,
-        Scratch0 = 0x5a4,
-        Scratch1 = 0x5a6,
-        Scratch2 = 0x5a8,
-        Scratch3 = 0x5aa,
+/// The message box's opening radius and its HDMA scratch words ($05A2..$05AB),
+/// held by `Session::messages`, as a typed copy.
+#[derive(Clone, Copy, Default, Debug, PartialEq, Eq)]
+pub struct MessageBox {
+    pub radius: u16,
+    pub scratch: [u16; 4],
+}
+
+impl crate::session_cohort::Cohort for MessageBox {
+    fn words(&mut self, mut visit: impl FnMut(usize, &mut u16)) {
+        visit(ram::MESSAGE_BOX_ANIMATION_Y_RADIUS, &mut self.radius);
+        for (index, word) in self.scratch.iter_mut().enumerate() {
+            visit(SCRATCH + 2 * index, word);
+        }
     }
-    /// The scratch words in RAM order.
-    pub const SCRATCH: [Word; 4] = [
-        Word::Scratch0,
-        Word::Scratch1,
-        Word::Scratch2,
-        Word::Scratch3,
-    ];
-    pub fn get<H: CompatibilityRam + ?Sized>(h: &H, word: Word) -> u16 {
-        crate::projection::word(h, word as usize)
-    }
-    pub fn set<H: CompatibilityRam + ?Sized>(h: &mut H, word: Word, value: u16) {
-        crate::projection::set_word(h, word as usize, value);
+    fn session_words(
+        session: &mut crate::session::Session,
+        mut visit: impl FnMut(usize, &mut u16),
+    ) {
+        let messages = &mut session.messages;
+        visit(
+            ram::MESSAGE_BOX_ANIMATION_Y_RADIUS,
+            &mut messages.box_radius,
+        );
+        for (index, word) in messages.box_scratch.iter_mut().enumerate() {
+            visit(SCRATCH + 2 * index, word);
+        }
     }
 }
+
+/// The first scratch word.
+const SCRATCH: usize = 0x5a4;
+const _: () = assert!(ram::MESSAGE_BOX_ANIMATION_Y_RADIUS + 2 == SCRATCH);

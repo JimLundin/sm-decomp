@@ -1,6 +1,6 @@
 //! Message boxes, input confirmation, animation and saved-game feedback.
 pub use crate::constants::bank_60::*;
-use crate::dialogue_ram::message_box;
+use crate::dialogue_ram::MessageBox;
 pub use crate::menus::prelude::*;
 use crate::message_composition as composition;
 use composition::BoxSize;
@@ -74,9 +74,11 @@ fn message_tile<H: crate::menus::host::Host + ?Sized>(
 }
 
 fn write_message_tilemap<H: crate::menus::host::Host + ?Sized>(game: &mut H) -> u16 {
-    message_box::set(game, message_box::Word::Scratch1, 112);
-    message_box::set(game, message_box::Word::Scratch0, 124);
-    message_box::set(game, message_box::Word::Radius, 0);
+    crate::session_cohort::with(game, |_, message_box: &mut MessageBox| {
+        message_box.scratch[1] = 112;
+        message_box.scratch[0] = 124;
+        message_box.radius = 0;
+    });
     game.ram().fill(0x3000..0x30e0, 0);
     let message =
         u16::from_le_bytes([game.ram().read_byte(0x1c1f), game.ram().read_byte(0x1c20)]) as isize;
@@ -191,7 +193,7 @@ fn prepare_scroll<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     }
 }
 fn msg_box_make_hdma_table<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    let radius = message_box::get(game, message_box::Word::Radius);
+    let radius = crate::session_cohort::load::<MessageBox, _>(game).radius;
     let values = composition::radius_values(radius);
     for at in (0x30bc..0x30f8).step_by(2) {
         game.ram().copy_in(at, &values.top_scroll.to_le_bytes());
@@ -201,9 +203,9 @@ fn msg_box_make_hdma_table<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     }
     game.ram().fill(0x3134..0x31e0, 0);
     // Retain the final scratch publication order after all scanline writes.
-    for (word, value) in message_box::SCRATCH.into_iter().zip(values.scratch) {
-        message_box::set(game, word, value);
-    }
+    crate::session_cohort::with(game, |_, message_box: &mut MessageBox| {
+        message_box.scratch = values.scratch
+    });
 }
 /// DMA the composed box from $7E:3200 to its BG3 rows ($85:831E).
 fn upload_message<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
