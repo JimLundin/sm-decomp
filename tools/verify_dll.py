@@ -12,6 +12,8 @@ import subprocess
 import sys
 import time
 
+import scenario
+
 # Windows remains the pinned verifier host; Linux builds the same cdylib as a .so.
 WINDOWS = os.name == "nt"
 HOST_LIBRARY = "sm_verify.dll" if WINDOWS else "libsm_verify.so"
@@ -432,21 +434,6 @@ def corpus_child(command, root):
         "truncated checkpoint log",
     }
     return result, result == 2 and not replayed and len(errors) == 1 and errors[0] in rejected
-
-
-def lock_entry_text(entry):
-    """One `[[scenario]]` table of an oracle digest lock."""
-    def inline(table):
-        return "{ " + ", ".join(f'"{key}" = "{value}"' for key, value in table.items()) + " }"
-    lines = ["[[scenario]]"]
-    for key in ("id", "oracle", "start", "inputs"):
-        lines.append(f'{key} = "{entry[key]}"')
-    for key in ("frames", "format", "ticks"):
-        lines.append(f"{key} = {entry[key]}")
-    lines.append(f'combined = "{entry["combined"]}"')
-    lines.append(f"digests = {inline(entry['digests'])}")
-    lines.append(f"marks = {inline(entry['marks'])}")
-    return "\n".join(lines) + "\n"
 
 
 def compare_lock(locked, run):
@@ -989,17 +976,11 @@ def run_corpus(root, args):
             failures.add(name)
             print(f"FAIL {name}: {error}", flush=True)
     if args.mode == "lock" and args.lock_entries:
-        # Rows that recorded are written; a failed row stays out and fails the run.
-        merged = {}
-        if args.lock.exists():
-            with args.lock.open("rb") as file:
-                merged = {entry["id"]: entry for entry in tomllib.load(file).get("scenario", [])}
-        merged.update(args.lock_entries)
-        args.lock.write_text(
-            "# Oracle digest lock (REVIEW lane S condition 8): the faithful oracle's running\n"
-            "# digests per scenario. Written by tools/verify_dll.py --mode lock; never edit.\n\n"
-            + "\n".join(lock_entry_text(merged[name]) for name in sorted(merged)),
-            encoding="utf-8", newline="\n")
+        # Rows that recorded are written beside the lock's pins; a failed row
+        # stays out and fails the run.
+        lock = scenario.read_lock(root, args.lock)
+        lock.entries.update(args.lock_entries)
+        scenario.write_lock(args.lock, lock)
         print(f"Lock: wrote {len(args.lock_entries)} entries to {args.lock}", flush=True)
     print(f"Corpus {'PARTIAL' if partial else 'FULL'}: {len(passed)}/{len(selected)} selected passed; "
           f"{len(passed.intersection(required))}/{len(required)} required passed", flush=True)
