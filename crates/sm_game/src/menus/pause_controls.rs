@@ -1,6 +1,7 @@
 //! Pause-screen lifecycle, input and saved graphics; RAM remains authoritative.
 use super::prelude::*;
 use super::{equipment_menu, map_menu, menu_tilemap};
+use crate::display::sequence::scroll::BgScroll;
 use crate::menu_state::MenuState;
 use crate::menu_state::{MenuFrame, MenuScreens};
 use crate::ram::RawRam as _;
@@ -20,12 +21,14 @@ pub fn initialize<H: crate::menus::host::Host + ?Sized>(
     screens: &mut MenuScreens,
     game: &mut H,
 ) {
-    map_menu::reset_animations(&mut screens.map, menu, game);
-    menu_tilemap::equipment_icons(game);
-    menu_tilemap::pause_labels(0, game);
-    menu_tilemap::queue_pause_labels(game);
-    map_menu::scroll_limits(screens, game);
-    map_menu::center_map(0x80, &screens.map, game);
+    session_cohort::with(game, |game, scroll: &mut BgScroll| {
+        map_menu::reset_animations(&mut screens.map, menu, scroll, game);
+        menu_tilemap::equipment_icons(game);
+        menu_tilemap::pause_labels(0, game);
+        menu_tilemap::queue_pause_labels(game);
+        map_menu::scroll_limits(screens, game);
+        map_menu::center_map(0x80, &screens.map, &mut scroll.bg1, game);
+    });
     crate::screen_fade::set_both(game, 1, 1);
     menu.pausemenu_leftarrow_animation_frame = 0;
     menu.pausemenu_palette_animation_timer = 1;
@@ -40,7 +43,8 @@ pub fn fade_in<H: crate::menus::host::Host + ?Sized>(game: &mut H) -> u8 {
         if menu.menu_index != 0 {
             draw_equipment(menu, game);
         } else {
-            draw_map(menu, game, screens);
+            let bg1 = session_cohort::load::<BgScroll, _>(game).bg1;
+            draw_map(menu, game, screens, bg1);
         }
         game.fade(true);
         if game.ram().read_byte(crate::ram::mirror::INIDISP) == 15 {
@@ -57,14 +61,23 @@ pub fn update_map<H: crate::menus::host::Host + ?Sized>(
     game: &mut H,
 ) {
     advance(menu, game);
-    map_menu::scroll_arrows(map_menu::MapScreen::Pause, &mut screens.map, menu, game);
-    map_menu::scroll(&mut screens.map, game);
-    draw_map(menu, game, screens);
+    session_cohort::with(game, |game, scroll: &mut BgScroll| {
+        let bg1 = &mut scroll.bg1;
+        map_menu::scroll_arrows(
+            map_menu::MapScreen::Pause,
+            &mut screens.map,
+            menu,
+            *bg1,
+            game,
+        );
+        map_menu::scroll(&mut screens.map, bg1, game);
+        draw_map(menu, game, screens, *bg1);
+    });
     menu.pause_screen_mode = 0;
 }
 
 pub fn update_equipment<H: crate::menus::host::Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
-    scroll! { game, 0; Bg1H, Bg1V }
+    session_cohort::with(game, |_, scroll: &mut BgScroll| scroll.bg1 = [0, 0]);
     equipment_menu::update(menu, game);
     advance(menu, game);
     menu.pause_screen_mode = 1;
@@ -78,7 +91,8 @@ pub fn fade_tab<const EQUIPMENT: bool, H: crate::menus::host::Host + ?Sized>(
     if EQUIPMENT {
         draw_equipment(menu, game);
     } else {
-        draw_map(menu, game, screens);
+        let bg1 = session_cohort::load::<BgScroll, _>(game).bg1;
+        draw_map(menu, game, screens, bg1);
     }
     menu.pause_screen_mode = u16::from(EQUIPMENT);
     game.fade(true);
@@ -102,9 +116,10 @@ pub fn fade_out_tab<H: crate::menus::host::Host + ?Sized>(
     if equipment {
         draw_equipment(menu, game);
     } else {
-        map_menu::display_elevator_destinations(game);
-        map_menu::draw_player_marker(&mut screens.map, game);
-        map_menu::draw_icons(map_menu::IconMode::Pause, screens, menu, game);
+        let bg1 = session_cohort::load::<BgScroll, _>(game).bg1;
+        map_menu::display_elevator_destinations(bg1, game);
+        map_menu::draw_player_marker(&mut screens.map, bg1, game);
+        map_menu::draw_icons(map_menu::IconMode::Pause, screens, menu, bg1, game);
     }
     draw_shoulder(menu, game);
     // Equipment fade preserves this mode; map fade resets it after drawing.
@@ -125,13 +140,15 @@ pub fn load_tab<H: crate::menus::host::Host + ?Sized>(
     equipment: bool,
     upload: impl FnOnce(&mut H),
 ) {
-    map_menu::display_elevator_destinations(game);
+    map_menu::display_elevator_destinations(session_cohort::load::<BgScroll, _>(game).bg1, game);
     if equipment {
-        crate::menus::reserve_tanks::prepare_menu(menu, game);
+        session_cohort::with(game, |game, scroll| {
+            crate::menus::reserve_tanks::prepare_menu(menu, scroll, game)
+        });
     }
     upload(game);
     if equipment {
-        scroll!(game.Bg1V = 0);
+        session_cohort::with(game, |_, scroll: &mut BgScroll| scroll.bg1[1] = 0);
         menu.pause_screen_mode = 1;
     }
     menu_tilemap::pause_labels(menu.pausemenu_button_label_mode, game);
@@ -144,14 +161,16 @@ pub fn load_tab<H: crate::menus::host::Host + ?Sized>(
     menu.menu_index = menu.menu_index.wrapping_add(1);
 }
 
+/// Draw the map tab's sprites over BG1's scroll `bg1`.
 fn draw_map<H: crate::menus::host::Host + ?Sized>(
     menu: &mut MenuState,
     game: &mut H,
     screens: &mut MenuScreens,
+    bg1: [u16; 2],
 ) {
-    map_menu::draw_player_marker(&mut screens.map, game);
-    map_menu::draw_icons(map_menu::IconMode::Pause, screens, menu, game);
-    map_menu::display_elevator_destinations(game);
+    map_menu::draw_player_marker(&mut screens.map, bg1, game);
+    map_menu::draw_icons(map_menu::IconMode::Pause, screens, menu, bg1, game);
+    map_menu::display_elevator_destinations(bg1, game);
 }
 
 pub fn draw_equipment<H: crate::menus::host::Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
@@ -170,18 +189,21 @@ pub fn draw_unpause<H: crate::menus::host::Host + ?Sized>(
         draw_shoulder(menu, game);
     } else {
         // Unpause keeps the opposite icon/marker order from the active map.
-        map_menu::display_elevator_destinations(game);
-        map_menu::draw_icons(map_menu::IconMode::Pause, screens, menu, game);
-        map_menu::draw_player_marker(&mut screens.map, game);
+        let bg1 = session_cohort::load::<BgScroll, _>(game).bg1;
+        map_menu::display_elevator_destinations(bg1, game);
+        map_menu::draw_icons(map_menu::IconMode::Pause, screens, menu, bg1, game);
+        map_menu::draw_player_marker(&mut screens.map, bg1, game);
     }
 }
 
 pub fn resume<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     let camera = crate::camera::current(game);
-    scroll!(game.Bg1H = camera.bg1_offset[0].wrapping_add(camera.layer1[0]));
-    scroll!(game.Bg1V = camera.bg1_offset[1].wrapping_add(camera.layer1[1]));
-    scroll!(game.Bg2H = camera.bg2_scroll[0].wrapping_add(camera.layer2[0]));
-    scroll!(game.Bg2V = camera.bg2_scroll[1].wrapping_add(camera.layer2[1]));
+    session_cohort::with(game, |_, scroll: &mut BgScroll| {
+        for axis in 0..2 {
+            scroll.bg1[axis] = camera.bg1_offset[axis].wrapping_add(camera.layer1[axis]);
+            scroll.bg2[axis] = camera.bg2_scroll[axis].wrapping_add(camera.layer2[axis]);
+        }
+    });
     game.update_beam_tiles_and_palette();
     // Palette timer/frame and pause_screen_mode survive this ordered reset.
     crate::word_transfers!(game, ascending, 10; little(fields::MENU_INDEX) <- value(0));

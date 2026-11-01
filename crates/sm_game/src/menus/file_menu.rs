@@ -11,6 +11,7 @@ use crate::constants::bank_81::{
     ADDR_K_MENU_TILEMAP_DATA_COPY_MODE, ADDR_K_MENU_TILEMAP_EXIT, ADDR_K_MENU_TILEMAP_IS_THIS_OK,
     ADDR_K_MENU_TILEMAP_NO, ADDR_K_MENU_TILEMAP_YES,
 };
+use crate::display::sequence::scroll::BgScroll;
 use crate::menu_state::MenuState;
 use crate::menu_state::SaveSelection;
 use crate::save_file::header;
@@ -117,7 +118,11 @@ fn prepare<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
     crate::hdma_objects::clear_hdma(game);
     menu.menu_index = menu.menu_index.wrapping_add(1);
     menu_tilemap::prepare_graphics(game);
-    scroll! { game, 0; Bg1H, Bg2H, Bg3H, Bg1V, Bg2V, Bg3V }
+    crate::session_cohort::with(game, |_, scroll: &mut BgScroll| {
+        scroll.bg1 = [0, 0];
+        scroll.bg2 = [0, 0];
+        scroll.bg3 = [0, 0];
+    });
     menu_tilemap::load_palette(game);
 }
 fn fade_to_options<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H) {

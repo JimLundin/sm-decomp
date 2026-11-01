@@ -85,6 +85,40 @@ pub mod scroll {
         Bg4H,
         Bg4V,
     }
+    /// The BG1..BG4 scroll mirrors, each horizontal then vertical.
+    #[derive(Clone, Copy, Default, Debug, PartialEq, Eq)]
+    pub struct BgScroll {
+        pub bg1: [u16; 2],
+        pub bg2: [u16; 2],
+        pub bg3: [u16; 2],
+        pub bg4: [u16; 2],
+    }
+
+    /// The mirrors are Session fields while its presentation is Owned, and
+    /// RAM otherwise.
+    impl crate::session_cohort::Cohort for BgScroll {
+        fn words(&mut self, mut visit: impl FnMut(usize, &mut u16)) {
+            let layers = [&mut self.bg1, &mut self.bg2, &mut self.bg3, &mut self.bg4];
+            for (layer, words) in layers.into_iter().enumerate() {
+                for (axis, word) in words.iter_mut().enumerate() {
+                    visit(FIRST + 4 * layer + 2 * axis, word);
+                }
+            }
+        }
+        fn session_words(
+            session: &mut crate::session::Session,
+            mut visit: impl FnMut(usize, &mut u16),
+        ) {
+            if let Ok(owner) = session.presentation.owner_mut() {
+                for (index, word) in owner.state.controls.scroll_words.iter_mut().enumerate() {
+                    visit(FIRST + 2 * index, word);
+                }
+            }
+        }
+    }
+
+    /// The first mirror, BG1's horizontal scroll.
+    const FIRST: usize = 0xb1;
     const _: () = assert!(crate::ram::words::REG_BG1HOFS == 0xb1);
     const _: () = assert!(crate::ram::words::REG_BG4VOFS == 0xb1 + 2 * Word::Bg4V as usize);
     /// `word` as the host's projection holds it, low byte then high.

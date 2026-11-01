@@ -23,8 +23,10 @@ use crate::session::Session;
 pub trait Cohort: Clone + PartialEq + Default {
     /// Visit each word with its RAM address.
     fn words(&mut self, visit: impl FnMut(usize, &mut u16));
-    /// Visit the group's words in `session`, in the order `words` visits the
-    /// copy's.
+    /// Visit the group's words in `session` with their RAM addresses, in the
+    /// order `words` visits the copy's. A group the Session holds only in some
+    /// of its states visits just the words it holds now; a store reaches the
+    /// others through the retained Session's lease bytes.
     fn session_words(session: &mut Session, visit: impl FnMut(usize, &mut u16));
 }
 
@@ -47,18 +49,16 @@ pub fn load<C: Cohort, H: CompatibilityRam + ?Sized>(game: &H) -> C {
     cohort
 }
 
-/// The words `after` changed from `before`: each one's index, RAM address
-/// and value.
-fn changes<C: Cohort>(before: &C, mut after: C) -> Vec<(usize, usize, u16)> {
+/// The words `after` changed from `before`: each one's RAM address and value.
+fn changes<C: Cohort>(before: &C, mut after: C) -> Vec<(usize, u16)> {
     let mut previous = Vec::new();
     before.clone().words(|_, word| previous.push(*word));
     let mut changes = Vec::new();
-    let mut index = 0;
+    let mut previous = previous.into_iter();
     after.words(|at, word| {
-        if previous[index] != *word {
-            changes.push((index, at, *word));
+        if previous.next() != Some(*word) {
+            changes.push((at, *word));
         }
-        index += 1;
     });
     changes
 }
@@ -76,18 +76,23 @@ where
     if game.session_retained() {
         use crate::session_access::SessionAccess as _;
         let mut lease = game.runtime();
-        let mut index = 0;
-        C::session_words(lease.session_mut(), |_, word| {
-            if let Some(&(_, _, value)) = changes.iter().find(|change| change.0 == index) {
-                *word = value;
+        let mut pending = changes;
+        C::session_words(lease.session_mut(), |at, word| {
+            if let Some(index) = pending.iter().position(|change| change.0 == at) {
+                *word = pending.remove(index).1;
             }
-            index += 1;
         });
+        // The words the Session does not hold in its current state go
+        // through the lease's bytes, which keep it current.
+        for (at, value) in pending {
+            use crate::runtime_access::SessionRam as _;
+            lease.write_word_le(value, at);
+        }
         // Some cohort words are external observations; the lease publishes
         // its observations with the Session.
         lease.refresh_inputs();
     } else {
-        for (_, at, value) in changes {
+        for (at, value) in changes {
             crate::projection::set_word(game, at, value);
         }
     }
@@ -126,7 +131,7 @@ where
     #[cfg(sm_verify_dll)]
     release(held);
     if cohort != before {
-        for (_, at, value) in changes(&before, cohort) {
+        for (at, value) in changes(&before, cohort) {
             crate::projection::set_word(game, at, value);
         }
     }
@@ -260,6 +265,14 @@ mod tests {
         check_encoding::<crate::menu_state::MenuState>();
         check_encoding::<crate::inventory::Inventory>();
         check_encoding::<crate::flow::Flow>();
+    }
+
+    #[test]
+    fn the_bg_scroll_mirrors_are_the_register_mirror_words_in_ram_order() {
+        use crate::display::sequence::scroll::BgScroll;
+        let mut addresses = Vec::new();
+        BgScroll::default().words(|at, _| addresses.push(at));
+        assert_eq!(addresses, (0xb1..0xc1).step_by(2).collect::<Vec<_>>());
     }
 
     #[test]

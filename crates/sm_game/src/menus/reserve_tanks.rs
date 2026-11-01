@@ -5,9 +5,13 @@ use crate::inventory::Inventory;
 use crate::menu_state::MenuState;
 use crate::session_cohort;
 
-pub fn prepare_menu<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
-    scroll! {game; Bg4H = scroll!(game.Bg1H); Bg4V = scroll!(game.Bg1V); }
-    scroll! { game, 0; Bg1H, Bg1V }
+pub fn prepare_menu<H: Host + ?Sized>(
+    menu: &mut MenuState,
+    scroll: &mut crate::display::sequence::scroll::BgScroll,
+    game: &mut H,
+) {
+    scroll.bg4 = scroll.bg1;
+    scroll.bg1 = [0, 0];
     let inventory: Inventory = session_cohort::load(game);
     if inventory.reserve_capacity != 0 && inventory.reserve_mode != 0 {
         let address = if inventory.reserve_mode == 1 {

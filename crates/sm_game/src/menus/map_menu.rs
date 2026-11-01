@@ -4,6 +4,7 @@ use super::prelude::*;
 use super::save_slots::load_area_map;
 use crate::constants::{bank_81::*, bank_82::*};
 use crate::display::control::{Layers, MainScreen, MainWindowMask, SubScreen, SubWindowMask};
+use crate::display::sequence::scroll::BgScroll;
 use crate::imported::{Imported, grid_word, word as table_word};
 use crate::menu_state::set_menu_byte;
 use crate::menu_state::{MENU, MenuState, WORDS};
@@ -124,7 +125,10 @@ fn prepare<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H, _: &mut MenuScr
 }
 fn fade_palette<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H, screens: &mut MenuScreens) {
     if crate::palette_effects::fading::file_select(game) != 0 {
-        scroll! { game, 0; Bg1V, Bg1H, Bg2V, Bg2H }
+        session_cohort::with(game, |_, scroll: &mut BgScroll| {
+            scroll.bg1 = [0, 0];
+            scroll.bg2 = [0, 0];
+        });
         screens.save_selection.map_area_index = area_selection(game).unwrap_or(0) as u16;
         for area in 0..6 {
             menu_tilemap::area_palette(area, area == crate::room_view::current(game).area, game);
@@ -220,7 +224,7 @@ fn open_area_window<H: Host + ?Sized>(
             crate::ram::mirror::TSW,
             crate::display::control::Layers::NONE.byte(),
         );
-        scroll!(game.Bg2V = 24);
+        session_cohort::with(game, |_, scroll: &mut BgScroll| scroll.bg2[1] = 24);
         menu.pausemenu_palette_animation_timer = 1;
         let mut _v1: u16 = 0;
         crate::word_transfers!(game, ascending, 800; xray(0) <- rom(0xb6e000, 0));
@@ -516,12 +520,15 @@ fn initialize_room<H: Host + ?Sized>(
     let header = crate::projection::word(game, crate::ram::words::ROOM_PTR);
     let room = menu_tilemap::native_record(0x8f0000 | u32::from(header), game);
     crate::room_view::enter_header(game, [1, 2, 3].map(|at| room.byte(at)));
-    reset_animations(&mut screens.map, menu, game);
-    scroll_limits(screens, game);
-    center_map(112, &screens.map, game);
+    // The room selection above stores BG1's scroll, so the copy starts here.
+    session_cohort::with(game, |game, scroll: &mut BgScroll| {
+        reset_animations(&mut screens.map, menu, scroll, game);
+        scroll_limits(screens, game);
+        center_map(112, &screens.map, &mut scroll.bg1, game);
+        scroll.bg2[1] = 24;
+    });
     let map = &mut screens.map;
     map.min_y_scroll = map.min_y_scroll.wrapping_add(24);
-    scroll!(game.Bg2V = 24);
     crate::ram::checked_word!(game, 0x69; = crate::ram::checked_word!(game, 0x69;) & !4);
     menu.menu_index = menu.menu_index.wrapping_add(1);
     map.scrolling_direction = 0;
@@ -531,10 +538,21 @@ fn initialize_room<H: Host + ?Sized>(
     map.indicator_loop_counter = 0;
 }
 fn choose_room<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H, screens: &mut MenuScreens) {
-    draw_icons(IconMode::FileSelect, screens, menu, game);
-    scroll_arrows(MapScreen::FileSelect, &mut screens.map, menu, game);
-    scroll(&mut screens.map, game);
-    display_elevator_destinations(game);
+    session_cohort::with(game, |game, scroll: &mut BgScroll| {
+        choose_room_on(menu, game, screens, &mut scroll.bg1)
+    });
+}
+/// [`choose_room`] on BG1's scroll.
+fn choose_room_on<H: Host + ?Sized>(
+    menu: &mut MenuState,
+    game: &mut H,
+    screens: &mut MenuScreens,
+    bg1: &mut [u16; 2],
+) {
+    draw_icons(IconMode::FileSelect, screens, menu, *bg1, game);
+    scroll_arrows(MapScreen::FileSelect, &mut screens.map, menu, *bg1, game);
+    scroll(&mut screens.map, bg1, game);
+    display_elevator_destinations(*bg1, game);
     if word!(game.ENABLE_DEBUG) != 0
         && (word!(game.JOYPAD2_NEW_KEYS) as i32 & K_BUTTON_SELECT as i32) != 0
     {
@@ -596,10 +614,10 @@ fn choose_room<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H, screens: &m
             stations.base,
             (2 * i32::from(selection.load_station)) as isize,
         );
-        if (next_x as i32 - scroll!(game.Bg1H) as i32) & 0x8000 != 0
-            || (next_x as i32 - 256i32 - scroll!(game.Bg1H) as i32) & 0x8000 == 0
+        if (next_x as i32 - bg1[0] as i32) & 0x8000 != 0
+            || (next_x as i32 - 256i32 - bg1[0] as i32) & 0x8000 == 0
         {
-            let mut scroll_x: i16 = (scroll!(game.Bg1H) as i32
+            let mut scroll_x: i16 = (bg1[0] as i32
                 + stations.table_word((next_offset >> 1) as isize) as i32
                 - station_x as i32) as i16;
             if scroll_x >= 0 {
@@ -609,20 +627,20 @@ fn choose_room<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H, screens: &m
             } else {
                 scroll_x = 0;
             }
-            scroll!(game.Bg1H = scroll_x as u16);
+            bg1[0] = scroll_x as u16;
         }
         let next_y_offset: u16 = (next_offset).wrapping_add(2);
         let next_y: u16 = stations.table_word((next_y_offset >> 1) as isize);
-        if (next_y as i32 - scroll!(game.Bg1V) as i32) & 0x8000 != 0
-            || (next_y as i32 - 161i32 - scroll!(game.Bg1V) as i32) & 0x8000 == 0
+        if (next_y as i32 - bg1[1] as i32) & 0x8000 != 0
+            || (next_y as i32 - 161i32 - bg1[1] as i32) & 0x8000 == 0
         {
-            let mut scroll_y: u16 = (scroll!(game.Bg1V) as i32
+            let mut scroll_y: u16 = (bg1[1] as i32
                 + stations.table_word((next_y_offset >> 1) as isize) as i32
                 - station_y as i32) as u16;
             if ((scroll_y) as i16).wrapping_sub(screens.map.min_y_scroll as i16) >= 0 {
                 scroll_y = screens.map.min_y_scroll;
             }
-            scroll!(game.Bg1V = scroll_y);
+            bg1[1] = scroll_y;
         }
     } else if (game.observed_inputs().pressed & 0x8000) != 0 {
         menu.menu_index = menu.menu_index.wrapping_add(5);
@@ -640,13 +658,15 @@ fn choose_room<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H, screens: &m
     }
 }
 fn show_room<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H, screens: &mut MenuScreens) {
-    draw_icons(IconMode::FileSelect, screens, menu, game);
-    display_elevator_destinations(game);
+    let bg1 = session_cohort::load::<BgScroll, _>(game).bg1;
+    draw_icons(IconMode::FileSelect, screens, menu, bg1, game);
+    display_elevator_destinations(bg1, game);
     menu.menu_index = menu.menu_index.wrapping_add(1);
 }
 fn fade_room<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H, screens: &mut MenuScreens) {
-    draw_icons(IconMode::FileSelect, screens, menu, game);
-    display_elevator_destinations(game);
+    let bg1 = session_cohort::load::<BgScroll, _>(game).bg1;
+    draw_icons(IconMode::FileSelect, screens, menu, bg1, game);
+    display_elevator_destinations(bg1, game);
     game.fade(false);
     if (game.ram().read_byte(crate::ram::mirror::INIDISP) & 0xf) == 0 {
         menu.menu_index = menu.menu_index.wrapping_add(1);
@@ -715,7 +735,7 @@ fn begin_return_window<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H, _: 
         .write_byte(super::menu_window::ram::WINDOW_1_TABLE + 9, 0);
     game.ram()
         .write_byte(super::menu_window::ram::WINDOW_2_TABLE + 9, 0);
-    scroll! { game, 0; Bg1V, Bg1H }
+    session_cohort::with(game, |_, scroll: &mut BgScroll| scroll.bg1 = [0, 0]);
 }
 fn close_room_window<H: Host + ?Sized>(
     menu: &mut MenuState,
@@ -772,8 +792,8 @@ const SCROLL_SPEEDS: [u16; 32] = [
     0, 0, 0, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 ];
 
-/// Advance the shared file-select/pause-map scroll, with RAM as its only state.
-pub fn scroll<H: Host + ?Sized>(map: &mut MapScreenState, game: &mut H) {
+/// Advance the shared file-select/pause-map scroll of BG1.
+pub fn scroll<H: Host + ?Sized>(map: &mut MapScreenState, bg1: &mut [u16; 2], game: &mut H) {
     // Preserve the dispatch table's bounds failure before touching scroll state.
     let direction = [0, 1, 2, 3, 4][usize::from(map.scrolling_direction)];
     if direction == 0 {
@@ -786,10 +806,10 @@ pub fn scroll<H: Host + ?Sized>(map: &mut MapScreenState, game: &mut H) {
     }
     let speed = SCROLL_SPEEDS[usize::from(index >> 1)];
     match direction {
-        1 => scroll!(game.Bg1H -= speed),
-        2 => scroll!(game.Bg1H += speed),
-        3 => scroll!(game.Bg1V -= speed),
-        _ => scroll!(game.Bg1V += speed),
+        1 => bg1[0] = bg1[0].wrapping_sub(speed),
+        2 => bg1[0] = bg1[0].wrapping_add(speed),
+        3 => bg1[1] = bg1[1].wrapping_sub(speed),
+        _ => bg1[1] = bg1[1].wrapping_add(speed),
     };
     map.scrolling_speed_index = map.scrolling_speed_index.wrapping_add(2);
     if map.scrolling_speed_index & 0xf == 0 {
@@ -806,16 +826,18 @@ fn map_record<H: Host + ?Sized>(cursor: u16, game: &mut H) -> sm_data::cartridge
     menu_tilemap::native_record(0x820000 | u32::from(cursor), game)
 }
 
+/// Draw `record`'s sprite at its map position less BG1's scroll `bg1`.
 fn draw_record<H: Host + ?Sized>(
     sprite: u16,
     record: &sm_data::cartridge::RomRecord,
     palette: u16,
+    bg1: [u16; 2],
     game: &mut H,
 ) {
     crate::sprite_output::menu(
         sprite,
-        record.word(0).wrapping_sub(scroll!(game.Bg1H)),
-        record.word(2).wrapping_sub(scroll!(game.Bg1V)),
+        record.word(0).wrapping_sub(bg1[0]),
+        record.word(2).wrapping_sub(bg1[1]),
         palette,
         game,
     );
@@ -831,14 +853,15 @@ pub fn draw_icons<H: Host + ?Sized>(
     mode: IconMode,
     screens: &mut MenuScreens,
     menu: &mut MenuState,
+    bg1: [u16; 2],
     game: &mut H,
 ) {
     if matches!(mode, IconMode::FileSelect) {
         animate_palette(menu, game);
     }
-    boss_icons(9, 0xc7cb, screens.save_selection.has_area_map, game);
+    boss_icons(9, 0xc7cb, screens.save_selection.has_area_map, bg1, game);
     for (sprite, table) in [(0xb, 0xc7db), (0xa, 0xc7eb), (0x4e, 0xc7fb)] {
-        icon_group(sprite, table, u16::MAX, 3584, game);
+        icon_group(sprite, table, u16::MAX, 3584, bg1, game);
     }
     match mode {
         IconMode::Pause => {
@@ -848,10 +871,10 @@ pub fn draw_icons<H: Host + ?Sized>(
                 bytes[0] = bits as u8
                     & [1, 2, 4, 8, 0x10, 0x20, 0x40, 0x80]
                         [usize::from(screens.save_selection.load_station)];
-                icon_group(8, 0xc80b, u16::from_ne_bytes(bytes), 1024, game);
+                icon_group(8, 0xc80b, u16::from_ne_bytes(bytes), 1024, bg1, game);
             }
             if word!(game.ENABLE_DEBUG) != 0 {
-                icon_group(8, 0xc82b, u16::MAX, 1024, game);
+                icon_group(8, 0xc82b, u16::MAX, 1024, bg1, game);
             }
         }
         IconMode::FileSelect => {
@@ -863,26 +886,26 @@ pub fn draw_icons<H: Host + ?Sized>(
             );
             let record = map_record(address, game);
             let offset = 4 * usize::from(screens.save_selection.load_station);
-            let x = record.word(offset).wrapping_sub(scroll!(game.Bg1H));
-            let y = record.word(offset + 2).wrapping_sub(scroll!(game.Bg1V));
+            let x = record.word(offset).wrapping_sub(bg1[0]);
+            let y = record.word(offset + 2).wrapping_sub(bg1[1]);
             if screens.map.indicator_loop_counter & 1 == 0 {
                 crate::sprite_output::menu(0x12, x, y, 3584, game);
             }
             crate::sprite_output::menu(sprite, x, y, 3584, game);
             if word!(game.ENABLE_DEBUG) != 0 {
                 let saves = station_bits(0, game);
-                icon_group(0xc, 0xc80b, saves, 1536, game);
+                icon_group(0xc, 0xc80b, saves, 1536, bg1, game);
                 let elevators = station_bits(1, game);
-                icon_group(0x17, 0xc81b, elevators, 1536, game);
-                icon_group(0xc, 0xc82b, u16::MAX, 1536, game);
+                icon_group(0x17, 0xc81b, elevators, 1536, bg1, game);
+                icon_group(0xc, 0xc82b, u16::MAX, 1536, bg1, game);
             }
         }
     }
     if crate::room_view::current(game).area == 0 {
         crate::sprite_output::menu(
             0x63,
-            0xd8u16.wrapping_sub(scroll!(game.Bg1H)),
-            0x28u16.wrapping_sub(scroll!(game.Bg1V)),
+            0xd8u16.wrapping_sub(bg1[0]),
+            0x28u16.wrapping_sub(bg1[1]),
             3584,
             game,
         );
@@ -902,6 +925,7 @@ fn icon_group<H: Host + ?Sized>(
     table: u16,
     mut bits: u16,
     palette: u16,
+    bg1: [u16; 2],
     game: &mut H,
 ) {
     let mut cursor = map_record(
@@ -920,7 +944,7 @@ fn icon_group<H: Host + ?Sized>(
         let visible = bits & 1 != 0;
         bits >>= 1;
         if visible && explored(record.word(0), record.word(2), game) {
-            draw_record(sprite, &record, palette, game);
+            draw_record(sprite, &record, palette, bg1, game);
         }
         cursor = cursor.wrapping_add(4);
     }
@@ -935,7 +959,13 @@ fn explored<H: Host + ?Sized>(x: u16, y: u16, game: &mut H) -> bool {
         != 0
 }
 
-fn boss_icons<H: Host + ?Sized>(sprite: u16, table: u16, has_area_map: u16, game: &mut H) {
+fn boss_icons<H: Host + ?Sized>(
+    sprite: u16,
+    table: u16,
+    has_area_map: u16,
+    bg1: [u16; 2],
+    game: &mut H,
+) {
     let mut bits =
         crate::progress::leased::boss_byte_at(crate::room_view::current(game).area, game) as i32;
     let cursor = map_record(
@@ -955,10 +985,10 @@ fn boss_icons<H: Host + ?Sized>(sprite: u16, table: u16, has_area_map: u16, game
                 let defeated = bits & 1 != 0;
                 bits >>= 1;
                 if defeated {
-                    draw_record(0x62, &record, 3584, game);
-                    draw_record(sprite, &record, 3072, game);
+                    draw_record(0x62, &record, 3584, bg1, game);
+                    draw_record(sprite, &record, 3072, bg1, game);
                 } else if has_area_map != 0 {
-                    draw_record(sprite, &record, 3584, game);
+                    draw_record(sprite, &record, 3584, bg1, game);
                 } else {
                     // An undisplayed undefeated boss consumes a second bit.
                     bits >>= 1;
@@ -1021,23 +1051,23 @@ fn advance_marker(map: &mut MapScreenState) -> u16 {
     SPRITES[usize::from(map.indicator_frame >> 1)]
 }
 
-pub fn draw_player_marker<H: Host + ?Sized>(map: &mut MapScreenState, game: &mut H) {
+pub fn draw_player_marker<H: Host + ?Sized>(map: &mut MapScreenState, bg1: [u16; 2], game: &mut H) {
     let sprite = advance_marker(map);
     crate::sprite_output::menu(
         sprite,
         (8 * (i32::from(crate::room_view::effects(game).map_x)
             + i32::from(game.ram().read_byte(crate::ram::words::SAMUS_X_POS + 1)))
-            - i32::from(scroll!(game.Bg1H))) as u16,
+            - i32::from(bg1[0])) as u16,
         (8 * (i32::from(crate::room_view::effects(game).map_y)
             + i32::from(game.ram().read_byte(crate::ram::words::SAMUS_Y_POS + 1))
             + 1)
-            - i32::from(scroll!(game.Bg1V))) as u16,
+            - i32::from(bg1[1])) as u16,
         3584,
         game,
     );
 }
 
-pub fn display_elevator_destinations<H: Host + ?Sized>(game: &mut H) {
+pub fn display_elevator_destinations<H: Host + ?Sized>(bg1: [u16; 2], game: &mut H) {
     if game.ram().read_byte(
         crate::ram::bytes::MAP_STATION_BYTE_ARRAY
             + usize::from(crate::room_view::current(game).area),
@@ -1056,7 +1086,7 @@ pub fn display_elevator_destinations<H: Host + ?Sized>(game: &mut H) {
         if record.word(0) == 0xffff {
             break;
         }
-        draw_record(record.word(4), &record, 0, game);
+        draw_record(record.word(4), &record, 0, bg1, game);
         cursor += 6;
     }
 }
@@ -1064,10 +1094,13 @@ pub fn display_elevator_destinations<H: Host + ?Sized>(game: &mut H) {
 pub fn reset_animations<H: Host + ?Sized>(
     map: &mut MapScreenState,
     menu: &mut MenuState,
+    scroll: &mut BgScroll,
     game: &mut H,
 ) {
     menu.pausemenu_reserve_tank_delay_ctr = 0;
-    scroll! { game, 0; Bg1H, Bg2H, Bg3H, Bg2V, Bg3V }
+    scroll.bg1[0] = 0;
+    scroll.bg2 = [0, 0];
+    scroll.bg3 = [0, 0];
     menu.pausemenu_button_label_mode = 0;
     menu.pausemenu_lr_animation_frame = 0;
     menu.unused_word_7e0745 = 0;
@@ -1081,30 +1114,34 @@ pub fn reset_animations<H: Host + ?Sized>(
     menu.pausemenu_palette_animation_frame = 0;
 }
 
-pub fn center_map<H: Host + ?Sized>(vertical_center: u16, map: &MapScreenState, game: &mut H) {
-    scroll!(
-        game.Bg1H = (i32::from(map.min_x_scroll)
-            + (i32::from(map.max_x_scroll.wrapping_sub(map.min_x_scroll)) >> 1)
-            - 128) as u16
-    );
+/// Center BG1's scroll `bg1` on Samus's map position.
+pub fn center_map<H: Host + ?Sized>(
+    vertical_center: u16,
+    map: &MapScreenState,
+    bg1: &mut [u16; 2],
+    game: &mut H,
+) {
+    bg1[0] = (i32::from(map.min_x_scroll)
+        + (i32::from(map.max_x_scroll.wrapping_sub(map.min_x_scroll)) >> 1)
+        - 128) as u16;
     let x = (8
         * (i32::from(crate::room_view::effects(game).map_x)
             + i32::from((game.player_x() & 0xff00) >> 8))
-        - i32::from(scroll!(game.Bg1H))) as u16;
+        - i32::from(bg1[0])) as u16;
     let right = 224i16.wrapping_sub(x as i16);
     if right >= 0 {
         let left = 32u16.wrapping_sub(x);
         if left & 0x8000 == 0 {
-            scroll!(game.Bg1H -= left);
+            bg1[0] = bg1[0].wrapping_sub(left);
         }
     } else {
-        scroll!(game.Bg1H -= right as u16);
+        bg1[0] = bg1[0].wrapping_sub(right as u16);
     }
     let middle = (i32::from(map.min_y_scroll)
         + (i32::from(map.max_y_scroll.wrapping_sub(map.min_y_scroll)) >> 1)
         + 16) as u16;
     let aligned = (i32::from(vertical_center) - i32::from(middle)) & 0xfff8;
-    scroll!(game.Bg1V = (-aligned) as u16);
+    bg1[1] = (-aligned) as u16;
     let y = (8
         * (i32::from(crate::room_view::effects(game).map_y)
             + i32::from(game.ram().read_byte(crate::ram::words::SAMUS_Y_POS + 1))
@@ -1112,9 +1149,9 @@ pub fn center_map<H: Host + ?Sized>(vertical_center: u16, map: &MapScreenState, 
         + aligned) as u16;
     let top = 64i16.wrapping_sub(y as i16);
     if top >= 0 {
-        scroll!(game.Bg1V -= top as u16);
-        if (i32::from(scroll!(game.Bg1V)) + 40) & 0x8000 != 0 {
-            scroll!(game.Bg1V = -40i32 as u16);
+        bg1[1] = bg1[1].wrapping_sub(top as u16);
+        if (i32::from(bg1[1]) + 40) & 0x8000 != 0 {
+            bg1[1] = -40i32 as u16;
         }
     }
 }
@@ -1277,7 +1314,9 @@ fn draw_room_map<H: Host + ?Sized>(game: &mut H) {
         crate::ram::mirror::TM,
         crate::display::control::Layers::BG1_BG2_SPRITES.byte(),
     );
-    scroll!(game.Bg1V = -40i16 as u16);
+    session_cohort::with(game, |_, scroll: &mut BgScroll| {
+        scroll.bg1[1] = -40i16 as u16
+    });
     render_map(MapScreen::FileSelect, game);
     menu_tilemap::upload(4096, 0x7e3000, 0, false, game);
 }
@@ -1417,22 +1456,23 @@ pub fn scroll_arrows<H: Host + ?Sized>(
     screen: MapScreen,
     map: &mut MapScreenState,
     menu: &mut MenuState,
+    bg1: [u16; 2],
     game: &mut H,
 ) {
     let (base, top, bottom) = match screen {
         MapScreen::Pause => (0x82b9a0, 56, 177),
         MapScreen::FileSelect => (0x81af32, 64, 145),
     };
-    if (i32::from(map.min_x_scroll) - 24 - i32::from(scroll!(game.Bg1H))) & 0x8000 != 0 {
+    if (i32::from(map.min_x_scroll) - 24 - i32::from(bg1[0])) & 0x8000 != 0 {
         scroll_arrow(base, map, menu, game);
     }
-    if (i32::from(map.max_x_scroll) - 232 - i32::from(scroll!(game.Bg1H))) & 0x8000 == 0 {
+    if (i32::from(map.max_x_scroll) - 232 - i32::from(bg1[0])) & 0x8000 == 0 {
         scroll_arrow(base + 10, map, menu, game);
     }
-    if (i32::from(map.min_y_scroll) - top - i32::from(scroll!(game.Bg1V))) & 0x8000 != 0 {
+    if (i32::from(map.min_y_scroll) - top - i32::from(bg1[1])) & 0x8000 != 0 {
         scroll_arrow(base + 20, map, menu, game);
     }
-    if (i32::from(map.max_y_scroll) - bottom - i32::from(scroll!(game.Bg1V))) & 0x8000 != 0 {
+    if (i32::from(map.max_y_scroll) - bottom - i32::from(bg1[1])) & 0x8000 != 0 {
         if map.scrolling_direction == menu_tilemap::native_record(base + 30, game).word(8) {
             map.gear_switch_timer = 0;
             map.scrolling_direction = 0;

@@ -2,6 +2,7 @@
 use super::menu_tilemap;
 use super::options_objects::definition;
 use super::prelude::*;
+use crate::display::sequence::scroll::BgScroll;
 use crate::menu_state::{OptionsMenu, SaveSelection};
 use crate::ram::word;
 
@@ -20,7 +21,10 @@ pub fn initialize<H: Host + ?Sized>(game: &mut H, options: &mut OptionsMenu, upl
         game.ram().write_byte(mirror, 0);
     }
     upload(game);
-    scroll! { game, 0; Bg1H, Bg1V, Bg2H, Bg2V }
+    crate::session_cohort::with(game, |_, scroll: &mut BgScroll| {
+        scroll.bg1 = [0, 0];
+        scroll.bg2 = [0, 0];
+    });
     options.debug_invincibility = 0;
     crate::word_transfers!(game, descending, 256; le(PALETTE_BUFFER, 255) <- rom(0x8ee400, 255));
     for (index, source) in [0x978df4, 0x978fcd, 0x9791c4, 0x97938d, 0x97953a]
@@ -286,12 +290,16 @@ fn reset_bindings<H: Host + ?Sized>(game: &mut H, _: &mut OptionsMenu) {
 }
 
 pub fn scroll<const DOWN: bool, H: Host + ?Sized>(game: &mut H, options: &mut OptionsMenu) {
-    if DOWN {
-        scroll!(game.Bg1V += 2);
-    } else {
-        scroll!(game.Bg1V -= 2);
-    }
-    if scroll!(game.Bg1V) == if DOWN { 32 } else { 0 } {
+    let y = crate::session_cohort::with(game, |_, scroll: &mut BgScroll| {
+        let y = &mut scroll.bg1[1];
+        *y = if DOWN {
+            y.wrapping_add(2)
+        } else {
+            y.wrapping_sub(2)
+        };
+        *y
+    });
+    if y == if DOWN { 32 } else { 0 } {
         options.screen_index = 7;
     }
 }
@@ -325,7 +333,7 @@ pub fn fade_out<H: Host + ?Sized>(
     match screen {
         0 => options.screen_index = options.screen_index.wrapping_add(1),
         5 => {
-            scroll!(game.Bg1V = 0);
+            crate::session_cohort::with(game, |_, scroll: &mut BgScroll| scroll.bg1[1] = 0);
             options.screen_index = options.screen_index.wrapping_add(1);
             replace_screen(game, options);
         }

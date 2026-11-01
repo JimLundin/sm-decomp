@@ -6,6 +6,7 @@ use crate::constants::bank_81::{
     ADDR_K_MENU_TILEMAP_NO_GO_TO_TITLE, ADDR_K_MENU_TILEMAP_TRY_AGAIN,
     ADDR_K_MENU_TILEMAP_YES_RETURN_TO_GAME,
 };
+use crate::display::sequence::scroll::BgScroll;
 use crate::enemy_projectiles::table::with_file_select;
 use crate::menu_state::MenuState;
 use crate::menu_state::SaveSelection;
@@ -50,7 +51,11 @@ fn prepare<H: crate::menus::host::Host + ?Sized>(menu: &mut MenuState, game: &mu
     crate::word_transfers!(game, ascending, 256; pause_map(384) <- le(PALETTE_BUFFER, 0));
     crate::word_transfers!(game, ascending, 27; pause_map(640) <- native(0x51));
     menu_tilemap::prepare_graphics(game);
-    scroll! { game, 0; Bg1H, Bg2H, Bg3H, Bg1V, Bg2V, Bg3V }
+    crate::session_cohort::with(game, |_, scroll: &mut BgScroll| {
+        scroll.bg1 = [0, 0];
+        scroll.bg2 = [0, 0];
+        scroll.bg3 = [0, 0];
+    });
     menu_tilemap::load_palette(game);
     menu.menu_index = menu.menu_index.wrapping_add(1);
 }
