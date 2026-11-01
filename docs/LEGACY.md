@@ -28,6 +28,24 @@ Session would retire the list.
 | `$84:8243`, `$84:EFD3` unpause item-GFX load | `pause-menu-tour` @1378, `boss-kraid-pause-400` @588, `-950` @1138, `-1030` @1218, `-1960` @2148, route `chain-0211` @368 | garbage transfers into empty item-GFX slots |
 | `$80:9AF3` broken mini-map init | `samus-scripted-intro` @8316, any% chain room 11 (`chain-any-0011-DF45`) @2115 | one frame of HUD mini-map tiles from scratch, while blanked |
 
+## Oracle digest lock: scenarios kept on lockstep
+
+The engine-only gate (`lock-gate.yml`) checks every seeded and boot corpus row
+and every route room against the faithful oracle's digest lock
+(`scenarios/lock.toml`). These scenarios are not locked; they stay on the patched
+lockstep corpus and route jobs until the cause is fixed. Each is listed in
+`UNLOCKED` in `.github/scripts/lock_gate.py`, which fails if a listed scenario
+locks or an unlisted one is missing; the list only shrinks. Ticks are the first
+divergence of an engine free run against the faithful oracle's trace (the
+localization `check-lock` prints), recorded 2026-11-01 on `land/batch13`.
+
+| Cause | Scenarios and first free-run divergence | Lockstep over the span |
+| --- | --- | --- |
+| The faithful-oracle divergences above | `samus-scripted-intro` @8256 vram, `pause-menu-tour` @1378, `boss-kraid-pause-400` @588, `-950` @1138, `-1030` @1218 (wram, vram, ppu), `enemy-fire-arc` @119 (wram, actors), route `chain-0011-DF45` @2054, `chain-0211-C98E` @368, `chain-any-0011-DF45` @2055 | fails at the listed frame |
+| Not yet identified: WRAM drift that lockstep masks, in all seeded item and pickup rows but `item-wave` | `item-bombs` @437, `-grapple` @408, `-gravity` @402, `-hi-jump` @458, `-ice` @411, `-morph-ball` @972, `-plasma` @526, `-screw-attack` @514, `-space-jump` @401, `-spazer` @440, `-speed-booster` @421, `-spring-ball` @780, `-varia` @403, `-x-ray` @541; `pickup-energy` @424, `-missile` @405, `-power-bomb` @500, `-super` @578; `samus-grapple-connect-swing` @408, `space-jump-bubble-word-counter` @401, `xray-activate-release` @541 | passes: masked scratch or state lockstep re-adopts |
+| Not yet identified: drift lockstep masks | `boss-kraid` and `boss-kraid-pause-1960` @1580 wram; route `chain-0330-92FD` @210 wram, `chain-any-0079-ACF0` @345 wram, `chain-any-0196-92FD` @431 wram, `chain-0086-AA41` @95 ppu (one Tick), `chain-any-0074-AFA3` @316 ppu | passes |
+| The engine alone panics (`gameplay_frame.rs`, slice index 65535 of 45) | `file-copy-clear` | passes: adopting the oracle's state avoids it |
+
 ## `LEGACY(verifier)`: RAM the frame comparison does not check
 
 `normalize_snapshot_ram` (`sm/src/cpu_infra.rs`) copies these ranges from one
