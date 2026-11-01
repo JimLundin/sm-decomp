@@ -1,18 +1,19 @@
 # Scenario harness (2026-10-31)
 
-Status: **accepted by Jim, 2026-10-31; admitted under
-[REVIEW's lane S conditions](REVIEW.md#scenario-harness-lane-s-jim-2026-10-31);
-steps 1 to 3 landed (the standalone recorder is open): engine-only free run against
-the committed oracle digest lock is the frequent gate (Jim, 2026-10-31, Decision 4);
-step 4 in progress: scenarios as data, with `scenario lock` and `scenario cut`.** It expands
-[Validation · Verification strategy](target-architecture/VALIDATION.md#verification-strategy)
-into a concrete design. It is PLAN's one runner: the harness grows inside the current
-verifier and then replaces it, and never runs beside it as a second framework. Its code
-counts as verification, reported separately from production lines.
+Accepted by Jim on 2026-10-31 under
+[REVIEW's lane S conditions](REVIEW.md#scenario-harness-lane-s-jim-2026-10-31).
+Engine-only free run against the committed oracle digest lock is the frequent
+gate (Jim, 2026-10-31, Decision 4). For implementation steps, lock coverage and
+timing evidence, read the dated [harness snapshot](PROGRESS_REPORT.md#harness-snapshot).
 
-## Why
+This expands [Validation · Verification strategy](target-architecture/VALIDATION.md#verification-strategy)
+into a concrete design. It is PLAN's one runner: the harness grows inside the
+current verifier and then replaces it. Its code counts as verification,
+reported separately from production lines.
 
-Today's verifier is good at one thing: it finds the first frame where the recovered
+## Design motivation (2026-10-31)
+
+At the design baseline, the verifier was good at one thing: it finds the first frame where the recovered
 code differs from the ROM. The problem is how it does that. It compares all of WRAM,
 VRAM and SRAM byte for byte, and then adopts the oracle's state on every frame. That
 design has three consequences:
@@ -20,8 +21,9 @@ design has three consequences:
 1. **It ties the engine to the SNES RAM layout.** Every owner moved into the Session
    still has to re-encode itself into SNES bytes so that the comparison can see it
    (`validate_normalized_projection`). Some places can't be made to agree, and those
-   are hidden by 34 normalization ranges whose only stated reason is "existing
-   exceptions".
+   are hidden by normalization ranges whose stated reason is "existing
+   exceptions"; the [design snapshot](PROGRESS_REPORT.md#harness-measurements)
+   retains the inventory.
 2. **It can't show drift.** Because the oracle's state is adopted every frame, the
    native engine never runs freely. A small difference is counted once and then wiped
    out, so we never see what it grows into.
@@ -122,10 +124,9 @@ plan (`.github/scripts/lock_gate.py`) runs it, then the engine over every
 locked scenario on each pull request and push; its console carries ids, stream and
 field names, ticks and hashes only.
 
-On 2026-11-01 the lock holds 619 of the 660 lockable scenarios: 99 of the 132
-seeded and boot corpus rows and 520 of the routes' 528 rooms. The other 41 stay on
-lockstep, listed in LEGACY.md. The 23 corpus rows that start from a checkpoint are
-not lockable yet: they need an oracle-side prefix first.
+Read the dated [lock coverage snapshot](PROGRESS_REPORT.md#lock-coverage-snapshot)
+for measured locked/unlocked scope. Checkpoint starts need an oracle-side input
+prefix before faithful locking; [LEGACY](LEGACY.md) names retained divergences.
 
 ## Scenarios as data
 
@@ -250,7 +251,7 @@ files and CI logs carry ticks, domain and field names and hashes, never values.
 ## Performance
 
 The target is the full corpus plus both routes, in both modes, at least as fast as
-today's corpus run alone.
+the design-baseline corpus run alone; measure current throughput in a dated report.
 
 - **One Rust binary** (`sm_tools scenario run`) runs many scenarios in one process,
   spread across threads. There is no Python in the run path and no re-hash per row;
@@ -258,9 +259,9 @@ today's corpus run alone.
 - **Cheap comparison:** each domain is hashed per Tick, and a field-by-field diff only
   runs when the hashes differ. Video compares line hashes. Pixels, PPU model checks
   and PCM are sampled every N Ticks, the way SM_PPU_MODEL_CHECK works today.
-- **Free run needs no snapshot or restore per Tick.** That removes today's 3 snapshots
-  and 2–3 restores per frame. Lockstep pays that cost only inside a localisation
-  window.
+- **Free run needs no snapshot or restore per Tick.** Lockstep pays that cost
+  inside a localisation window; the [design snapshot](PROGRESS_REPORT.md#harness-measurements)
+  retains the earlier operation counts.
 - **Shared prefixes:** checkpoints are cached by (start, input-prefix hash), as the
   corpus already does, so scenarios with a common route prefix don't replay it.
 - **Sharding:** a CI job takes a slice of scenarios weighted by recorded duration.
@@ -304,8 +305,9 @@ ground (VALIDATION.md).
 2. **Free-run mode** in the same DLL, for routes and corpus rows. First nightly, then
    on every PR once it is stable.
 3. **`scenario` manifests** generated from `movies/segments.toml` and the route CSVs,
-   so the formats change without losing a row (all 687 came back unchanged; both are
-   deleted). Add `scenario cut` and `scenario lock`.
+   so the formats change without losing a row. Retain the
+   [migration evidence](PROGRESS_REPORT.md#harness-measurements). Add `scenario cut`
+   and `scenario lock`.
 4. **The `sm_tools` binary** takes over orchestration from `verify_dll.py` and
    `full_route.py`. The DLL build stays, so the oracle remains reachable while it is
    still linked.
@@ -325,9 +327,9 @@ ground (VALIDATION.md).
 2. No tolerances: every divergence is fixed or listed in [LEGACY.md](LEGACY.md), as now.
 3. Step 1 starts now as its own lane, in parallel with the moves into the crates.
 4. **Free run against the lock is the frequent gate.** Engine-only free run against
-   the committed oracle digest lock runs on every pull request and push, even though
-   on the five step-1 rooms it measured only about 1.4x faster than lockstep. This
-   overrides the 2x adoption bar in REVIEW's lane S condition 8. A locked scenario
+   the committed oracle digest lock runs on every pull request and push. The
+   [adoption measurement](PROGRESS_REPORT.md#harness-measurements) retains the
+   five-room comparison. This overrides the 2x adoption bar in REVIEW's lane S condition 8. A locked scenario
    needs only its digests, runs deterministically, and costs no oracle frames, and
    scenarios will keep being added. Engine optimization is expected to widen the gap.
    Lockstep stays: it localises a fault and confirms a failure (a lock mismatch reruns

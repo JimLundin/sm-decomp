@@ -44,27 +44,22 @@ from the emulator. Code that exists only to keep the original runtime and oracle
 working is **compat**: it shrinks and gets no new features. Owners built inside
 the RAM-compatible runtime stay inside the backend cycle and are not the goal.
 
-Measured at `2c2928e` with `python3 tools/cycle_report.py`: the 376 `game/`
-files (118,152 lines) are, apart from 44 files (10,850 lines), tied into one
-dependency cycle with `game_state`, `ram_map`, `rtl`, `cpu_infra` and `snes/`. The couplings holding the cycle together are the `Game` handle (145 files),
-`ram_map` addresses (102 files), `rom_table_word` ROM reads (369 sites) and PPU
-register writes (95 sites). Bank retirement stopped after 2026-10-27 12:47, and
-the checkpoint source fingerprint (85 files, 46,745 lines) invalidated every
-checkpoint on 9 of the first 11 commits of 2026-10-29.
+The [review baseline](PROGRESS_REPORT.md#review-baseline) records the measured
+backend cycle, coupling and checkpoint invalidations that motivated these phases.
 
 ### Phases
 
 Each phase closes on evidence, not a date. Lanes: A tooling/verification,
 M seams and cycle cuts, B bank retirement.
 
-0. **Verification loop (A, now; nothing else lands first).** Fingerprint the
+0. **Verification loop (A; prerequisite for later phases).** Fingerprint the
    Checkpoint's serialised layout (`State` field names and types) instead of
    source text; keep the round-trip/extra-bytes/input-prefix rejections. Refresh
    the `f158` seed asset; split the checkpoint shard to at most ~60 minutes. Run
    `tools/cycle_report.py` in CI. *Exit:* two consecutive green full-corpus runs
    on main, scheduled or dispatched (Jim, 2026-10-29: the schedule fired only
-   every 4–9 h, so dispatched runs count). Exited 2026-10-30: scheduled runs
-   green on `7cf2692` and `213c458`.
+   every 4–9 h, so dispatched runs count). The retained exit evidence is in
+   [Phase 0 qualification](PROGRESS_REPORT.md#phase-0-qualification).
 1. **Package graph and seams (M).** Add `sm_data`, `sm_game` and `sm_runtime`
    to the workspace; `sm` becomes compat plus oracle tools. Put the CONTRACTS
    types in place: `TickOutput`, a coarse `Scene`, a `Cue` record in `sm_data`.
@@ -85,10 +80,8 @@ M seams and cycle cuts, B bank retirement.
    *Exit per domain:* it compiles in `sm_game` and its corpus rows pass.
 
    **Phase 2 ratchets (review, 2026-10-30; flagged in two consecutive reviews).**
-   `cycle_report.py`'s `sm_game_ram` total sites rose from 3,932 to 6,933 and
-   coupled files from 67 to 111 between `9325dd0` and `54f1c79`, because moves
-   carried `word!`/`slot!` addressing into `sm_game`; production grew 155,275 to
-   172,456 while game code moved (moves add 1.3-1.9x lines of lease/host glue).
+   The [ratchet review snapshot](PROGRESS_REPORT.md#ratchet-review-snapshot)
+   records the increases that prompted these rules.
    From now: (1) no landing may raise `sm_game_ram` total sites or coupled
    files; a move that brings RAM-addressed code must convert at least as many
    sites to typed `Session` fields in the same landing; make `cycle_report.py`
@@ -98,8 +91,8 @@ M seams and cycle cuts, B bank retirement.
 
    **Landing size and reporting (review, 2026-10-31; flagged in three reviews).**
    (4) A landing PR carries at most ~25 commits; when its CI or corpus fails,
-   land the green prefix rather than holding everything (#116: 94 commits, five
-   red CI runs, main idle 7 h). (5) The Phase 1 exit item, the Cue trace matching
+   land the green prefix rather than holding everything. The original
+   [landing stall](PROGRESS_REPORT.md#landing-stall-snapshot) remains recorded. (5) The Phase 1 exit item, the Cue trace matching
    the port trace on every corpus row, is still open (`sm/src/verify.rs:1184`
    requires the physical-audio oracle). Before the next landing, either run it or
    state the blocker and the plan in #6. Update #6's opening with the current
@@ -188,16 +181,17 @@ VALIDATION Gate 2. (b) Step 1 starts now as its own lane.
      first tick and field, and confirms the failure.
    - *Oracle independence (Jim, 2026-10-31).* Engine work never changes the lock.
      (i) Lock against the **faithful** oracle, the real game. The patched oracle
-     still applies 174 entries the engine reproduces (39 gameplay-visible), and
-     every native fix flips one, so its output moves with engine work. A row
+     applies entries the engine reproduces; its output moves with engine work
+     as native fixes flip entries. Read the [oracle snapshot](PROGRESS_REPORT.md#oracle-and-trick-source-snapshot)
+     for the retained inventory. A row
      whose engine still reproduces a gameplay-visible patch is listed in LEGACY
      and stays on live patched lockstep until that entry `follows`; the list only
      shrinks. (ii) Key each scenario on the oracle's start (seed digest, or boot
      plus input-prefix digest), never on a checkpoint file: checkpoints serialize
      engine State and are regenerated when its layout changes. (iii) *Decided
      (review, 2026-11-01): no standalone recorder now.* Extracting it means
-     refactoring the oracle frame off `Game` (21 outside modules, #6
-     2026-10-31 21:20), which is compat work. Prove independence by evidence
+     refactoring the oracle frame off `Game`, which is compat work
+     ([retained inventory](PROGRESS_REPORT.md#oracle-and-trick-source-snapshot)). Prove independence by evidence
      instead: the scheduled corpus re-records a rotating sample of at least 30
      locked scenarios on the faithful oracle from the current main and fails if
      any digest differs from the committed lock without a lock change in the
@@ -215,8 +209,8 @@ VALIDATION Gate 2. (b) Step 1 starts now as its own lane.
      frames, so one job replays each commit of a landing (at most 25) in order
      and names the first red commit: ratchet (4)'s green prefix.
    - *Adopted (Jim, 2026-10-31).* Engine-only free run against the lock is the
-     frequent verifier. On the five step-1 rooms it measured about 1.4x faster
-     than lockstep (#6). Jim replaced the former 2x adoption bar: a hash per
+     frequent verifier. The [adoption measurement](PROGRESS_REPORT.md#harness-snapshot)
+     retains the step-1 comparison. Jim replaced the former 2x adoption bar: a hash per
      scenario is deterministic and small, coverage grows by adding scenarios,
      and engine optimisation widens the gap. Running lockstep across everything
      on every change is too costly. Lockstep remains, to locate a fault and
@@ -237,9 +231,9 @@ VALIDATION Gate 2. (b) Step 1 starts now as its own lane.
      (CC-BY-4.0; credit in `THIRD_PARTY_NOTICES.md`; the data is not copied
      into the repo) and turns a chosen strat into a scenario skeleton: its
      stable ID (room, from node, to node, name), the entrance and exit
-     conditions, and the equipment and end node as named facts. On
-     2026-10-31 it held 14,301 strats in 261 rooms, 6,161 with an entrance
-     condition and 4,890 with an exit condition. Choose by tech frequency and
+     conditions, and the equipment and end node as named facts. See the
+     [source inventory](PROGRESS_REPORT.md#oracle-and-trick-source-snapshot) for the
+     retained upstream snapshot. Choose by tech frequency and
      by door conditions first (G-mode, shinecharged, runway, spark), because
      carrying state into rooms that were never neighbours is what Map Rando
      adds.
@@ -247,7 +241,7 @@ VALIDATION Gate 2. (b) Step 1 starts now as its own lane.
      `tools/authored_inputs.py`, or extracted from video (next item). A
      scenario is accepted only when the faithful oracle reaches its end node
      with its facts; then it is locked (condition 8).
-   - *Video-to-movie trial (after step 4).* Map Rando's 8,500+ strat videos
+   - *Video-to-movie trial (after step 4).* Map Rando's strat videos
      are CC0, captured as uncompressed AVI from accurate emulators with the
      Practice ROM's input display, and mapped to strats in a public database
      dump. Trial on 10 strats: read per-frame buttons from the input display;
@@ -257,34 +251,14 @@ VALIDATION Gate 2. (b) Step 1 starts now as its own lane.
      the hit rate and per-strat cost in #6, then decide whether to scale it.
      Videos are fetched by pinned digest and never committed.
 
-### Current publication and acceptance
+### Retained publication and acceptance
 
-Phase 0 schema15003 source622a573e / layout7110b4dec014d09b uses complete ordered
-serialized State fields/types and opaque/manual wire protocols rather than source text.
-Exact source review transfers1252 checks through the49-check three-cast correction;
-strict library/DLL/all147 registered checks/frontend/format pass. Genuine initialized
-captures and14 checkpoint rows pass; four fresh-only rejection checks run0 frames.
-Both encrypted packs and complete selected restores are verified.
-Source/native/ROM/input/loader proof stays separate from persisted compatibility;
-old c975 captures must reject and are never restamped. Phase 0 closed on
-2026-10-30 after two consecutive green scheduled full-corpus runs.
-The [147 record](https://github.com/JimLundin/sm-decomp/blob/2c2928e725dc30cf6e1df32bfd5070c805bda3ef/docs/PLAN.md#current-work-and-limits) retains prior audio/source/native/runtime limits;
-original15002 compile EXIT101 and bounded DLL disk-cap stop keep their attribution.
+Read the dated [Phase 0 qualification](PROGRESS_REPORT.md#phase-0-qualification)
+and [cohort proofs](PROGRESS_REPORT.md#retained-cohort-proofs) before changing an
+accepted owner. Frozen reports retain full hashes, native/cache/compiler/profile/
+source/codec/input/loader pins, donor/caller costs, exact deltas and failed or
+unexecuted variants. Consult the relevant original owned receipt.
 
-Completed room/renderer/message/Scene/delivery reports are in the
-[frozen history](https://github.com/JimLundin/sm-decomp/blob/170bc5351c64f0846bbcb7b4714064a7230db153/docs/REVIEW.md#current-publication-and-acceptance):
-
-| Cohort | Qualified source / DLL | Retained evidence |
-| --- | --- | --- |
-| Room, 0fed8911 | 9787b619 / composition04–05 | 38 cases; 21,481 comparisons / 0; exact transfer/failure lineage |
-| Shared renderer | c942fe04 / b01c2561 | 24 units; original 17 rows / 26,638 / 0; independent pixel witnesses |
-| Message composition | 5787 / 8d58 | 26 units; 26 rows / 51,456 / 0; prepared display and content identity |
-| Scene/native sharing | edbe402d / d02d370b | 46 units; original 26 rows / 199,063 / 0; atmospheric failure lineage |
-| Delivery/settlement | dfdd6120 / 7fa1a335 | 48 units; original 26 rows / 199,063 / 0; register/routing/counter witnesses |
-
-Frozen reports retain full hashes, native/cache/compiler/profile/source/codec/input/
-loader pins, donor/caller costs, exact deltas and failed or unexecuted variants.
-Read the relevant report and original owned receipts when touching its owner.
 Catalog/schema/validation/adapters and verification growth all count; moves and
 formatter joins earn no savings. Windows selected ROM/search paths retain ASCII
 policy; pack/verifier paths retain Rust handling. Absolute ASCII ROM paths work
@@ -327,7 +301,8 @@ PLAN affected rows/four smokes/full Morph1200 retain their original proofs.
 
 ### Message composition contracts
 
-Reuse the unchanged 295-line dialogue runner and frozen V03 renderer. One pure
+Reuse the unchanged dialogue runner and frozen V03 renderer
+([retained slice evidence](PROGRESS_REPORT.md#owned-slice-snapshot)). One pure
 message-composition implementation serves the native writer and an actual prepared
 display consumer. Remove replaced borders/text/button/selection/radius/scanline
 bodies in the same cohort. Keep lazy draw/drawing/fresh modify reads, scratch/text/
@@ -345,7 +320,8 @@ delivery and full Session/Scene extraction remain explicit dependencies.
 ### Full owned playable slice remains open
 
 The four accepted interface decisions below refine the full Morph9E9F proposal.
-The six-role +8,900..21,100 production estimate is not blanket authorization.
+The retained production estimate is not blanket authorization
+([snapshot](PROGRESS_REPORT.md#owned-slice-snapshot)).
 Preserve all eight full-slice proof groups and original full 1,200-frame Morph.
 
 1. Tools construct G's complete sealed validated start; D owns immutable envelope/
@@ -405,17 +381,18 @@ and verification are reported separately and do not count against it. Moving
 code into a package is neutral, not growth; moves, formatting and relocation to
 verification are still not savings, and every adapter counts once.
 
-The #6 report carries these measures daily, not per commit:
+The #6 report carries these measures daily, not per commit. Its historical
+[baseline](PROGRESS_REPORT.md#daily-report-baseline) is retained separately:
 
-| Measure | 2c2928e | Direction |
-| --- | --- | --- |
-| Lines in target packages | 0 | up |
-| Lines outside the backend cycle (`tools/cycle_report.py`) | 10,850 | up |
-| Legacy bank lines | 17,822 | 0 |
-| Compat lines | about 12,900 Rust plus LakeSnes C | down |
-| Unsafe fns/blocks/impls in `game/` (excluding compat) | 955 | 0 |
-| Scheduled full corpus | failing | green |
-| Validation gates passed | 0 of 6 | Gate 1 at phase 3 |
+| Measure | Direction |
+| --- | --- |
+| Lines in target packages | up |
+| Lines outside the backend cycle (`tools/cycle_report.py`) | up |
+| Legacy bank lines | 0 |
+| Compat lines | down |
+| Unsafe fns/blocks/impls in `game/` (excluding compat) | 0 |
+| Scheduled full corpus | green |
+| Validation gates passed | Gate 1 at phase 3 |
 
 Full owned Session, independent renderer/audio, boot-to-credits fidelity and Map
 Rando remain open; the accepted architecture and VALIDATION gates define them.

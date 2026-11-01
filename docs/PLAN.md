@@ -61,32 +61,16 @@ report comments before authorized retirement after verified body publication.
 Keep replay docs essential, upstream references and CSV/TOML provenance/checks;
 shared Python installers/runtime-only restores are support work, counted separately.
 
-## Current phase and retained evidence
+## Phase and retained evidence
 
-[REVIEW's Milestone plan](REVIEW.md#milestone-plan-2026-10-29) sets the active phase
-(Phase 2, with lane S beside it). Phase 0 exited on 2026-10-30.
-
-Schema15003 source622a573e / persisted layout7110b4dec014d09b fingerprints ordered
-State fields/types and complete opaque/manual encodings. Source/native/ROM/input
-qualification remains separate; matching layouts never permit header restamps.
-Strict library/DLL/all147 registered checks/frontend/format pass; fresh initialized
-captures and14 checkpoint rows pass; four fresh-only rejection checks run0 frames.
-Both encrypted packs and complete selected restores are verified.
-CI selects the two layout150 assets by verified digests for all14 checkpoint rows;
-shard names retain distinct f158/checkpoints identities.
-Scheduled full corpus passed twice (7cf2692, 213c458); Phase 0 is closed.
-Push CI selects main; full-corpus cron runs at minute17 every3h to avoid the
-hourly scheduling peak. This is a reliability experiment; missed-slot cause is unproved.
-Read [current acceptance](REVIEW.md#current-publication-and-acceptance) before
-changing a retained owner. Preserve original source/DLL/native/input/loader pins,
-unexecuted cases and exclusions in the original owned qualification receipts.
-The [147 record](https://github.com/JimLundin/sm-decomp/blob/2c2928e725dc30cf6e1df32bfd5070c805bda3ef/docs/PLAN.md#current-work-and-limits),
-[146 record](https://github.com/JimLundin/sm-decomp/blob/0ec67ed08e303adc0078c84ee54cb961df3563ba/docs/PLAN.md#current-work-and-limits),
-[DSP93/earlier cohorts](https://github.com/JimLundin/sm-decomp/blob/170bc5351c64f0846bbcb7b4714064a7230db153/docs/PLAN.md#current-work-and-limits),
-[SOURCE15–38](https://github.com/JimLundin/sm-decomp/blob/4c302a50/docs/PLAN.md#qualified-history)
-and [M1a audit](archive/M1A-REVIEW.md) preserve historical proofs and scoped contracts.
-Reach the applicable frozen record when touching its owner; history assigns no
-work and authorizes no repeated accepted campaign.
+[REVIEW's Milestone plan](REVIEW.md#milestone-plan-2026-10-29) sets the work order.
+Read the dated [Phase 0 qualification](PROGRESS_REPORT.md#phase-0-qualification)
+and [retained proof references](PROGRESS_REPORT.md#phase-0-records-and-scheduling)
+before changing a retained owner. Preserve original source/DLL/native/input/
+loader pins, unexecuted cases and exclusions in its owned receipts.
+Persisted compatibility never substitutes for source/native/ROM/input proof or
+permits header restamps. Frozen history assigns no work and authorizes no repeated
+accepted campaign.
 
 ## Implementation contracts
 
@@ -221,7 +205,8 @@ workload/profile grant and fresh shared ledger determine admission.
 Below2GiB/resource errors stop newest producer, not every lightweight reader.
 Measure CPU/RAM/paging/disk/useful throughput. Raise concurrency only when budgets
 fit and the next useful batch improves measured throughput; -j1 permits parallel codegen.
-Streaming TAS imports reserve200MiB (measured90.5MiB), old whole-log imports3GiB.
+Streaming TAS imports reserve200MiB; old whole-log imports reserve3GiB.
+For the retained memory observation, read the [resource snapshot](PROGRESS_REPORT.md#resource-snapshot).
 
 Check disk/storage runway at session start, before batches and during artifact jobs.
 Keep >=50GiB after budgets; cleanup below75GiB to restore100GiB. Below50GiB hold new

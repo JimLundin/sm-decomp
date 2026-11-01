@@ -5,6 +5,8 @@ The goal is the new game engine in the new crates (`crates/sm_data`, `sm_game`,
 compatibility layer and oracle tooling we are moving off.
 [docs/REVIEW.md](docs/REVIEW.md)'s Milestone plan sets the active phase and records
 Jim's decisions; [docs/PLAN.md](docs/PLAN.md) holds the standing rules.
+For measured counts, retained job evidence or timing, read the dated
+[progress report](docs/PROGRESS_REPORT.md); #6 remains the sole daily report.
 
 Load the skill for your role first; each is short and self-contained.
 

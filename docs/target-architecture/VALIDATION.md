@@ -1,6 +1,6 @@
 # Evidence and implementation gates
 
-All target-engine gates below are **not run**. Existing `sm-decomp` comparisons remain useful evidence for the behavior they exercise. A report that renders correctly is not evidence that the proposed engine is deterministic, faithful, fast, or complete. Implement the smallest useful slice at each gate and use its failures to revise the architecture before expanding content.
+Record gate results in the dated [progress report](../PROGRESS_REPORT.md#architecture-snapshot); require the exit evidence below before marking a gate passed. Existing `sm-decomp` comparisons remain useful evidence for the behavior they exercise. A report that renders correctly is not evidence that the proposed engine is deterministic, faithful, fast, or complete. Implement the smallest useful slice at each gate and use its failures to revise the architecture before expanding content.
 
 Use [Migration](README.md#responsibility-migration) for current Windows work and intermediate replacements. These gates describe completion of the new architecture; they do not replace the current plan's work order, require immediate emulator removal, or invalidate its existing checks.
 
