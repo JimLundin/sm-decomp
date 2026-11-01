@@ -431,8 +431,7 @@ fn initialize<H: Host>(game: &mut H) -> CoroutineRet {
                 game.ram().write_byte(0x612, stage);
                 return yielded;
             }
-            word!(game.LOOP_COUNTER_TRANSFER_ENEMIES_TO_VRAM -= 1);
-            if (word!(game.LOOP_COUNTER_TRANSFER_ENEMIES_TO_VRAM) & 0x8000) != 0 {
+            if (word!(game.LOOP_COUNTER_TRANSFER_ENEMIES_TO_VRAM -= 1, reread) & 0x8000) != 0 {
                 break;
             }
             waiting = false;
