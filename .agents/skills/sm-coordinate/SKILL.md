@@ -6,7 +6,8 @@ description: Run sm-decomp as the root coordinator. Choose lane tasks, brief fre
 # Coordinate
 
 You are the root. You own the one landing branch (`land/batch13`), every push to
-`main`, every ci-data upload, and every post to Jim's issue #6. Lanes do the work.
+`main`, every ci-data upload, and result updates to Jim in the conversation.
+PLAN owns current migration scope and reporting rules. Lanes do the work.
 
 ## The loop
 
@@ -49,8 +50,8 @@ The brief says:
   `docs/LEGACY.md`. There are no tolerances.
 - **Count honestly.** A measure counts real coupling: no renames passed off as
   decoupling, and no counting typed access as RAM.
-- **Prefer the smaller, verifiable step.** Land partial progress, and re-cut stale data
-  rather than marking required rows pending.
+- **Scope complete patterns.** Compose complete ownership domains into migration
+  slices at PLAN's required scale; qualify the combined source before landing.
 - **Risky CI wiring goes last in the queue**, so it can't block the rest.
 - **Lower the ratchet baseline after each landing that cut it** (`ram_ratchet.py --update`).
 - **Lane output that adds lines** without removing any is fine as a step only if
@@ -60,6 +61,5 @@ The brief says:
 
 - `docs/REVIEW.md` and `docs/PLAN.md` record Jim's decisions. You may edit them
   to do that.
-- Post a short result report to #6 when a phase exit or a verification finding
-  changes the plan. Ask Jim before any other post.
+- Report landings, blockers and phase evidence in the conversation and repository.
 - The briefs' shared rules live in `sm-lane`; keep them there, not in briefs.

@@ -2,7 +2,8 @@
 
 Read [AGENTS](../AGENTS.md), [PLAN](PLAN.md) and [REVIEW](REVIEW.md), then
 sm-coordinate, sm-land and sm-resources. Root owns Git, publication, ci-data
-uploads and result reports to [Jim's #6](https://github.com/JimLundin/sm-decomp/issues/6).
+uploads and result reports to Jim in the conversation. PLAN owns the current
+pattern-wide migration scope and reporting rules.
 
 Before continuing an owner or job, read the [frozen handoff snapshot](PROGRESS_REPORT.md#coordinator-handoff-snapshot).
 Reach its original owned receipt and verify the current source, writer, process
@@ -11,9 +12,9 @@ describes that snapshot; sample actual state before continuing it.
 
 1. Reconcile the actual landing worktree with main and collect the exact-head
    gate, CI, corpus, route and oracle-lock results before publication.
-2. Keep a dedicated gameplay coverage owner continuously supplied with fresh
-   bounded agents. Report reached behavior, mutation sensitivity and passing
-   rows separately; preserve failed trials and unobserved facts.
+2. Supply existing gameplay verification for the active migration under PLAN's
+   work order. Report reached behavior, mutation sensitivity and passing rows
+   separately; preserve failed trials and unobserved facts.
 3. Reconcile retained decoupling patches before qualifying their new source/DLL.
    Original donor and tally proofs transfer only with their exact pins.
 4. Continue full any%, 100% and low% verification, including boot, transitions

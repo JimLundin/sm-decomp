@@ -6,7 +6,8 @@ compatibility layer and oracle tooling we are moving off.
 [docs/REVIEW.md](docs/REVIEW.md)'s Milestone plan sets the active phase and records
 Jim's decisions; [docs/PLAN.md](docs/PLAN.md) holds the standing rules.
 For measured counts, retained job evidence or timing, read the dated
-[progress report](docs/PROGRESS_REPORT.md); #6 remains the sole daily report.
+[progress report](docs/PROGRESS_REPORT.md). PLAN owns current coordination and
+reporting rules, including Jim's pattern-wide migration work order.
 
 Load the skill for your role first; each is short and self-contained.
 
@@ -21,9 +22,8 @@ Load the skill for your role first; each is short and self-contained.
 | reporting or handing off | [sm-handoff](.agents/skills/sm-handoff/SKILL.md) |
 | the root coordinator | [sm-coordinate](.agents/skills/sm-coordinate/SKILL.md), [sm-land](.agents/skills/sm-land/SKILL.md), [sm-resources](.agents/skills/sm-resources/SKILL.md) |
 
-The root alone pushes to `main` and `land/*`, uploads to ci-data, and posts to
-[Jim's conversation #6](https://github.com/JimLundin/sm-decomp/issues/6). GitHub
-updates lead with the result and name the owner and next action.
+The root alone pushes to `main` and `land/*` and uploads to ci-data. Give Jim
+progress updates in the conversation and keep durable evidence in the repository.
 
 Before changing ownership, interfaces or backend architecture, read the
 [accepted destination](docs/target-architecture/README.md) and its Windows policy.

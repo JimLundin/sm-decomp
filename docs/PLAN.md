@@ -17,6 +17,19 @@ expansion waits until that migration is complete. Keep existing regression
 verification running to qualify migration changes; complete existing movie scope
 remains part of final acceptance.
 
+Jim's migration scope (2026-11-01): each migration PR retires hundreds of actual
+RAM accesses through complete domains and repeated patterns, including their
+producers, consumers and lifecycle boundaries. Compose independently reviewed
+components into a meaningful slice and qualify its combined source. Measure one
+overlay against landed main; preserve behavior and report retained raw aliases.
+The root's current slice target is at least 200 access retirements. Counts and
+the landed burndown belong in the dated PROGRESS_REPORT, with unresolved access
+candidates and pending work separate from proved eliminations.
+
+Jim retired issue #6 (2026-11-01). Progress and blockers are reported in this
+conversation; durable evidence stays in repository reports and owned artifacts.
+Historical issue references are evidence provenance, not a reporting destination.
+
 The [accepted destination](target-architecture/README.md) is one deterministic owned
 Session, our renderer/audio and small platform libraries, independent of SNES emulation.
 Map Rando needs custom sprites/palettes, configurable rooms/doors and opt-in re-spin/QoL.
@@ -58,11 +71,8 @@ Measure with tools/progress.sh and retain exact production/legacy/unsafe/verific
 support deltas, B replacement ratio/reason, source/native/codec/input pins and actual
 check results in the owned qualification/publication record. Commit messages need
 no Score, hash inventory or warning ledger. Necessary growth remains accountable.
-Read/respond to Jim's #6 conversation at work boundaries. Update its sole issue-body
-report daily under REVIEW with measured progress and actual CI/qualification results.
-Use compact tables/progress bars and at most one tiny dependency diagram.
-Keep exact proof in owned records. Archive answered feedback and duplicate
-report comments before authorized retirement after verified body publication.
+Report landed behavior, measured burndown and blockers to Jim in the conversation.
+Keep changing figures in the dated PROGRESS_REPORT and exact proof in owned records.
 
 Keep replay docs essential, upstream references and CSV/TOML provenance/checks;
 shared Python installers/runtime-only restores are support work, counted separately.
@@ -231,6 +241,6 @@ through another tool or use tiny compression gains to continue below the reserve
 Done: Fast loop passes; measure tools/progress.sh and retain explained deltas and
 exact qualification evidence. Fetch/reconcile/recheck HEAD/index, commit the coherent
 change with a concise message and immediately push main.
-Update active PLAN beside code and the sole #6 report daily under REVIEW; no README
+Update active PLAN beside code and the dated progress report under REVIEW; no README
 progress image or extra readiness gates. Bounded delegated core work continues during CI.
 Pre-transpile .scratch/gates/pointers/scopes are inactive in archive/pre-transpile-2026-10-17.

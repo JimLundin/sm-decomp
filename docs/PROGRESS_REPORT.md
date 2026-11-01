@@ -753,3 +753,108 @@ Manifest migration: all 687 rows came back unchanged; old formats deleted.
 Adoption comparison: on the five step-1 rooms, engine-only free run measured
 about 1.4x faster than lockstep (#6). This is historical timing, not a current
 throughput claim. No measurement command or exact run ID is given in this passage.
+
+## RAM source burndown, 2026-11-01
+
+Measured 2026-11-01T19:52:57.915408+00:00; definition `ram-source-v1`, tool `4facec8db33cda690cd0a80007813b07ff2ec1f236500f29c94a7b2ada7cf174`.
+
+Each site is a lexical source candidate/reference, not a resolved RAM operation. Typed Session field access is excluded. Address APIs can use typed Session; never sum them into raw RAM calls.
+
+Native ratchet uses each pin's original definitions; fixed ratchet applies this tool's patterns to every pin. A definition change is not a code elimination. Raw-call curve includes target plus sm/src/game so migration between those paths earns no saving. Compat/oracle and verification remain separate.
+
+| State | Pin | Observed UTC | Native ratchet | Fixed ratchet | Raw calls: target + legacy | Address APIs: target + legacy |
+| --- | --- | --- | ---: | ---: | ---: | ---: |
+| landed PR138 | `67996282ef072c126b0c34a1c570da077c8a51db` | 2026-11-01T07:36:03Z | 1842 | 2145 | 557 + 75 | 6323 + 127 |
+| landed PR139 | `1e91c617c3b7c1fed10df539ef21ce2d43728dc7` | 2026-11-01T09:27:33Z | 2138 | 2138 | 557 + 78 | 6323 + 127 |
+| landed PR140 | `e52d13b99f56c665ac22c05029af010ea3538d83` | 2026-11-01T09:50:02Z | 2138 | 2138 | 557 + 78 | 6323 + 127 |
+| landed PR141 | `da5a5548312c42807d6a24f95fd14a3e1ad47b26` | 2026-11-01T11:15:16Z | 2138 | 2138 | 557 + 78 | 6323 + 127 |
+| landed PR142 | `74a984d5ec4b43c60d4eef902754a19793a77e6a` | 2026-11-01T12:24:02Z | 2109 | 2109 | 552 + 78 | 6327 + 127 |
+| landed PR143 | `02d4af54397b945e9dadfeaf542c8910ca11c05a` | 2026-11-01T13:14:31Z | 2109 | 2109 | 552 + 78 | 6327 + 127 |
+| landed PR144 | `49656229aed66d6c78d95b2b2c22a99cd2a0e6ad` | 2026-11-01T13:59:37Z | 2100 | 2100 | 552 + 78 | 6327 + 127 |
+| landed PR145 | `534c5be320c20856e3ef5f710ea35f639579eea3` | 2026-11-01T15:13:18Z | 2100 | 2100 | 552 + 78 | 6327 + 127 |
+| landed PR147 | `33e8cbb8408b08e32b18bc648f4e9def226729e3` | 2026-11-01T17:49:03Z | 2100 | 2100 | 552 + 78 | 6327 + 127 |
+| landed PR148 | `1785dbe22848aa9b33f1f5a3537e6e926ce5780b` | 2026-11-01T19:47:08Z | 2057 | 2057 | 538 + 77 | 6332 + 127 |
+| pending PR149-pending | `2e7461c8535f4cda855c085f242bb186225eb213` | 2026-11-01T19:49:20Z | 2052 | 2052 | 538 + 77 | 6332 + 127 |
+| pending boss-pending | `ae61cf1db93f330d91d804a2c8526099ed477287` | 2026-11-01T19:49:20Z | 2027 | 2027 | 538 + 77 | 5966 + 127 |
+
+Landed measured interval: 12.185 hours; fixed-ratchet net removal 88 sites (7.22/hour); explicit raw-receiver call candidates net removal 17. This is an observed landing rate, not a forecast or source/build/replay speed.
+
+```mermaid
+xychart-beta
+  title "Landed fixed-definition sm_game ratchet"
+  x-axis ["PR138", "PR139", "PR140", "PR141", "PR142", "PR143", "PR144", "PR145", "PR147", "PR148"]
+  y-axis "Matched sites" 0 --> 2145
+  line [2145, 2138, 2138, 2138, 2109, 2109, 2100, 2100, 2100, 2057]
+```
+
+```mermaid
+xychart-beta
+  title "Landed lexical raw RAM calls (target + legacy engine)"
+  x-axis ["PR138", "PR139", "PR140", "PR141", "PR142", "PR143", "PR144", "PR145", "PR147", "PR148"]
+  y-axis "Candidate calls" 0 --> 635
+  line [632, 635, 635, 635, 630, 630, 630, 630, 630, 615]
+```
+
+X positions are landing events, not evenly spaced elapsed time; timestamps are in the table/CSV.
+
+Source/review/build/replay/CI queue durations: not measured by Git timestamps; no timing claims inferred.
+
+### Latest landed remaining inventory
+
+| Scope | Raw calls | Raw bases | RAM macros | RAM views | Cohort copies | Address APIs | Unresolved methods | Backend references |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| target | 538 | 0 | 902 | 687 | 300 | 6332 | 1206 | 1285 |
+| legacy_engine | 77 | 0 | 258 | 21 | 2 | 127 | 175 | 536 |
+| compat_oracle | 67 | 0 | 60 | 5 | 0 | 15 | 50 | 263 |
+| verification | 824 | 0 | 4 | 44 | 1 | 77 | 341 | 970 |
+
+The raw-call curve alone omits named macros, views and copies. These columns have different meanings and must not be summed into a resolved-operation total. Detailed remaining counts by path domain are in `domains.csv`.
+
+### Definitions and evidence
+
+`sites.csv.gz` gives immutable pin/blob, scope/domain, file, line/column/offset, exclusive kind and symbol. Deduplication identity is (pin,file,offset); most specific call kind wins, then dependency references. Different tokens in one statement can count separately. `domains.csv` gives path-defined remaining counts; `history.csv` is dated machine-readable evidence. Blob cache is local tooling output, not historical authority.
+
+- `raw_ram_call`: RawRam method on an explicit .ram() receiver or file-local alias; lexical evidence, not type checking.
+- `raw_base`: g_ram identifier or simple let alias; reference, not a resolved dereference/operation.
+- `ram_macro`: word/checked_word/ram_word/slot/word_transfers invocations, outside macro definitions.
+- `ram_view`: Existing named RAM/view call patterns; may project owned fields at runtime.
+- `cohort_copy`: session_cohort load/with/with_projected calls, including file-local import aliases.
+- `address_api`: SessionRam/SlotAccess/native-order methods, .word/.byte with imported RAM selector namespace, and session_slot macro; may use typed storage, never added to raw calls.
+- `unresolved_method`: word/byte/read/write/copy method without explicit raw receiver or known address API spelling.
+- `backend_reference`: Game/raw/interface/native/compat symbols and import aliases; references, not calls.
+
+### Unresolved scope
+
+- Lexical source inventory, not Rust name/type resolution or expanded operation counts; cfg branches counted regardless of build.
+- SessionRam, SlotAccess and named views may select typed Session or RAM at runtime; no dynamic ownership inferred.
+- File-local imports/simple let aliases only; shadowing, reexports across files, glob imports and function pointers unresolved.
+- Macro definitions excluded from call totals; macro expansion multiplicity and custom/generated macros unresolved.
+- Address construction, pointer dereferences hidden by arbitrary aliases/helpers, native foreign writers and external code unresolved.
+- Paths define domains, not gameplay reach or semantic ownership; file moves between scopes require review.
+- Zero matched candidates is not proof of zero engine RAM dependencies or complete gameplay coverage.
+
+Reproduce this dated snapshot with the embedded immutable-pin manifest:
+
+```powershell
+python -B tools/cycle_report.py --ram-history --pins docs/PROGRESS_REPORT.md --output "$env:TEMP/collab/ram-burndown-rerun"
+```
+
+The command writes `history.csv`, `domains.csv`, `sites.csv.gz`, `blob-cache.csv.gz` and `report.md` only under the requested artifact directory. PR #146 was closed without a merge and is excluded. Pending labels retain their state at this observation; later acceptance requires a new dated manifest. The source-only tool change itself ran no build, native checks, replays or CI job.
+
+Coordination update received from the root on 2026-11-01: Jim deleted issue #6 (API 410); its body and 50 comments are preserved in `$TEMP/collab/root-coordination/issue6-before-deletion.json`. New coordination updates use the conversation and repository. Earlier issue references above remain historical records. Complete engine and movie acceptance remains the goal.
+
+```csv
+pin,status,observed_at,evidence,label
+67996282ef072c126b0c34a1c570da077c8a51db,landed,2026-11-01T07:36:03Z,gh pr view 138 mergeCommit/mergedAt,PR138
+1e91c617c3b7c1fed10df539ef21ce2d43728dc7,landed,2026-11-01T09:27:33Z,gh pr view 139 mergeCommit/mergedAt,PR139
+e52d13b99f56c665ac22c05029af010ea3538d83,landed,2026-11-01T09:50:02Z,gh pr view 140 mergeCommit/mergedAt,PR140
+da5a5548312c42807d6a24f95fd14a3e1ad47b26,landed,2026-11-01T11:15:16Z,gh pr view 141 mergeCommit/mergedAt,PR141
+74a984d5ec4b43c60d4eef902754a19793a77e6a,landed,2026-11-01T12:24:02Z,gh pr view 142 mergeCommit/mergedAt,PR142
+02d4af54397b945e9dadfeaf542c8910ca11c05a,landed,2026-11-01T13:14:31Z,gh pr view 143 mergeCommit/mergedAt,PR143
+49656229aed66d6c78d95b2b2c22a99cd2a0e6ad,landed,2026-11-01T13:59:37Z,gh pr view 144 mergeCommit/mergedAt,PR144
+534c5be320c20856e3ef5f710ea35f639579eea3,landed,2026-11-01T15:13:18Z,gh pr view 145 mergeCommit/mergedAt,PR145
+33e8cbb8408b08e32b18bc648f4e9def226729e3,landed,2026-11-01T17:49:03Z,gh pr view 147 mergeCommit/mergedAt + git ls-remote origin main,PR147
+1785dbe22848aa9b33f1f5a3537e6e926ce5780b,landed,2026-11-01T19:47:08Z,gh pr view 148 mergeCommit/mergedAt + git ls-remote origin main,PR148
+2e7461c8535f4cda855c085f242bb186225eb213,pending,2026-11-01T19:49:20Z,read-only Git observation of prepared PR149 source; not landed,PR149-pending
+ae61cf1db93f330d91d804a2c8526099ed477287,pending,2026-11-01T19:49:20Z,read-only Git observation of root source-only boss150 pin; not landed,boss-pending
+```

@@ -14,6 +14,10 @@ Primary (Jim, 2026-10-29 evening): the collaborator session is the sole Git
 writer for main; root releases main and hands in-flight work over as patches.
 Linux stays stopped.
 
+Jim's 2026-11-01 pattern-wide migration and reporting decisions in PLAN supersede
+earlier small-slice pacing and issue #6 publication instructions below. The
+compiler/fidelity gates and full completion scope remain required.
+
 **Landing rule (Jim, 2026-10-29).** A change lands when the local compiler gate
 (fmt; `rustc --emit=metadata` of `sm` with and without `sm_verify_dll`;
 `player_detached`; source inventory), PR CI and a full corpus on its exact head
@@ -32,10 +36,10 @@ it is still a Super Metroid engine, not a general-purpose one.
 Judge every change by whether it moves the code toward that engine and makes
 the code base smaller and clearer.
 
-The external review runs at 08:34 and 16:34 Stockholm time and posts to #6.
+The external review runs at 08:34 and 16:34 Stockholm time.
 Visible progress on main is expected between any two reviews; a review with no
 new commits, or none serving the current phase, is treated as a stall and
-investigated. If you are blocked, say so in #6 with the cause before the next
+investigated. Report blockers to Jim in the conversation before the next
 review rather than waiting.
 
 **Progress means behaviour crossing into a target package** (`sm_data`,
