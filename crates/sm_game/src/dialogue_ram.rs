@@ -126,11 +126,8 @@ pub fn publish<H: crate::ram::RamHost + ?Sized>(state: Dialogue<u16>, game: &mut
 pub fn input<H: crate::ram::RamHost + ?Sized>(game: &H) -> Input {
     use crate::constants::buttons::*;
     let keys = read(game, ram::JOYPAD1_NEWKEYS);
-    let dismiss = if read(game, ram::BUG_FIX_COUNTER) == 0 {
-        keys != 0
-    } else {
-        read(game, ram::JOYPAD1_LASTKEYS) != 0
-    };
+    // LOOP_INPUT ($85:84A3) accepts held input after the reading delay.
+    let dismiss = read(game, ram::JOYPAD1_LASTKEYS) != 0;
     Input {
         confirm: keys & K_BUTTON_A as u16 != 0,
         cancel: keys & K_BUTTON_B as u16 != 0,

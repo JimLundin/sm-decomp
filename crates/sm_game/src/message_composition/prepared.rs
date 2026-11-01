@@ -474,11 +474,7 @@ impl d::Context for PreparedOwner {
                 confirm: sample.new_keys & 0x80 != 0,
                 cancel: sample.new_keys & 0x8000 != 0,
                 toggle: sample.new_keys & (0x2000 | 0x200 | 0x100) != 0,
-                dismiss: if sample.bug_fix_counter == 0 {
-                    sample.new_keys != 0
-                } else {
-                    sample.held_keys != 0
-                },
+                dismiss: sample.held_keys != 0,
             },
         )
     }
