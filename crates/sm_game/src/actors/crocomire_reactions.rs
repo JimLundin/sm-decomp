@@ -7,7 +7,7 @@ use crate::actors::boss_lease::BossLease;
 use crate::actors::boss_lease::bg2_staging;
 use crate::actors::boss_lease::boss_ram;
 use crate::actors::crocomire_attack::{Crocomire, flag, lane};
-use crate::actors::host::{ActorLease, BossEffects, Death, LeaseActors, Slopes};
+use crate::actors::host::{BossEffects, Death, Slopes};
 use crate::actors::session_slots::session_slot;
 use crate::carry::{adc, sbc};
 use crate::constants::{
@@ -57,18 +57,17 @@ pub mod melt {
         h.compatibility_write_byte(word as usize + 1, high);
     }
 }
-pub trait Lease: BossLease<Game: Host> {}
-impl<T: BossLease<Game: Host> + ?Sized> Lease for T {}
+pub trait Lease: BossLease<Game: Host> + ActorAccess {}
+impl<T: BossLease<Game: Host> + ActorAccess + ?Sized> Lease for T {}
 
 /// What Crocomire needs beyond the shared boss effects: its imported tables,
 /// the BG2 alignment, the native boss word, projectile clearing and its drop.
-pub trait Host: BossEffects + LeaseActors + BossLease<Game = Self> {
+pub trait Host: BossEffects + crate::menus::host::Host {
     /// The word at `index` of the Crocomire table at `address` (scroll
     /// spritemaps, spike wall tiles and destinations, bridge debris).
     fn crocomire_table_word(&self, address: u32, index: isize) -> u16;
     /// The 256 tiles of the melt tilemap at `table` while it is imported.
     fn crocomire_melt_tilemap(&self, table: u32) -> Option<[u16; MELT_TILES]>;
-    fn align_crocomire_background(&mut self);
     /// The boss word for `area`, in native order.
     fn boss_word_native(&mut self, area: u16) -> u16;
     fn clear_enemy_projectiles(&mut self);
@@ -163,19 +162,6 @@ pub mod instruction {
     /// $A4:9A9B-$A4:9AD7: spawn big dust cloud at each of 13 X offsets, 5 bytes apart.
     pub const SPAWN_DUST_FIRST: u32 = 0xa4_9a9b;
     pub const SPAWN_DUST_LAST: u32 = 0xa4_9ad7;
-}
-
-/// Instruction - fight AI ($A4:86A6).
-pub fn fight_ai<H: Host + ?Sized>(k: u16, jp: EnemyScript, game: &mut H) -> EnemyScript {
-    crate::actors::crocomire_attack::fight_ai(k, jp, &mut game.lease())
-}
-/// Instruction - maybe start projectile attack ($A4:8752).
-pub fn maybe_start_projectile_attack<H: Host + ?Sized>(
-    k: u16,
-    jp: EnemyScript,
-    game: &mut H,
-) -> EnemyScript {
-    crate::actors::crocomire_attack::maybe_start_projectile_attack(k, jp, &mut game.lease())
 }
 
 /// The death sequence's next step: its index is a word offset, raised a byte
@@ -296,7 +282,7 @@ pub fn update_background<L: Lease + ?Sized>(k: u16, game: &mut L) {
         }
         index = index.wrapping_sub(2);
         if index & 0x8000 != 0 {
-            game.foreign(|game| game.align_crocomire_background());
+            align_background(game);
             return;
         }
     };
@@ -304,7 +290,33 @@ pub fn update_background<L: Lease + ?Sized>(k: u16, game: &mut L) {
         .foreign(|game| crate::cartridge::native_record(0xa4, spritemap, game))
         .table_word(14);
     scroll!(game.Bg2V += offset);
-    game.foreign(|game| game.align_crocomire_background());
+    align_background(game);
+}
+/// Position Crocomire's second body part and align its BG2 image with the camera.
+fn align_background<L: Lease + ?Sized>(game: &mut L) {
+    use crate::actors::layouts::EnemyLayout72 as Layout;
+    let primary = i32::from(game.current_enemy());
+    let secondary = i32::from(game.current_enemy()) + 64;
+    session_slot!(
+        game,
+        Layout[secondary].base.x_pos = session_slot!(game, Layout[secondary].var_a)
+            .wrapping_add(session_slot!(game, Layout[primary].base.x_pos))
+    );
+    session_slot!(
+        game,
+        Layout[secondary].base.y_pos = session_slot!(game, Layout[primary].base.y_pos)
+    );
+    let relative = session_slot!(game, Layout[primary].base.x_pos)
+        .wrapping_sub(game.camera().layer1[0]) as i16;
+    let offset = 51u16.wrapping_sub(relative as u16);
+    word!(
+        game.REG_BG2HOFS =
+            if (-128..384).contains(&relative) && (offset as i16).unsigned_abs() < 284 {
+                offset
+            } else {
+                256
+            }
+    );
 }
 pub fn update_palette<L: Lease + ?Sized>(game: &mut L) {
     if boss!(game.DoorTransitionEnemies) == 0 {
@@ -317,55 +329,51 @@ pub fn update_palette<L: Lease + ?Sized>(game: &mut L) {
         }
     }
 }
-fn wall_counter(runtime: &impl ActorAccess, key: u16) -> u16 {
+fn wall_counter(runtime: &(impl ActorAccess + ?Sized), key: u16) -> u16 {
     runtime
         .resolve_actor(Key::from_legacy(key), AccessMode::Native)
         .variables[lane::STEP_COUNTER]
 }
-fn set_wall_counter(runtime: &mut impl ActorAccess, key: u16, value: u16) {
+fn set_wall_counter(runtime: &mut (impl ActorAccess + ?Sized), key: u16, value: u16) {
     runtime.edit_actor(Key::from_legacy(key), AccessMode::Native, |enemy| {
         enemy.variables[lane::STEP_COUNTER] = value
     });
 }
 /// Crocomire main AI - death sequence index 40h - behind wall - rumbling ($A4:9859). Was
 /// `wall_step`.
-pub fn behind_wall_rumbling<H: Host + ?Sized>(game: &mut H) {
-    let mut runtime = game.lease();
-    let mut cursor = wall_counter(&runtime, 0);
-    let image = runtime.leased_image().expect("ROM must be loaded");
+pub fn behind_wall_rumbling<L: Lease + ?Sized>(game: &mut L) {
+    let mut cursor = wall_counter(game, 0);
+    let image = game.loaded_image().clone();
     let target = image.table_word(
         sm_data::cartridge::lorom_offset(RUMBLE_TABLE) as usize,
         (cursor >> 1) as isize,
     );
     if target == 0x8080 {
-        set_wall_counter(&mut runtime, 0x40, 0x8080);
-        set_wall_counter(&mut runtime, 0, 128);
-        drop(runtime);
+        set_wall_counter(game, 0x40, 0x8080);
+        set_wall_counter(game, 0, 128);
         crate::word_transfers!(game, descending, 16; le(PALETTE_BUFFER, 191) <- rom(PALETTE_SPRITE_6, 15));
-        game.lease()
-            .edit_actor(Key::from_legacy(0), AccessMode::Native, |enemy| {
-                enemy.variables[lane::DEATH_SEQUENCE_INDEX] =
-                    enemy.variables[lane::DEATH_SEQUENCE_INDEX].wrapping_add(2);
-            });
+        game.edit_actor(Key::from_legacy(0), AccessMode::Native, |enemy| {
+            enemy.variables[lane::DEATH_SEQUENCE_INDEX] =
+                enemy.variables[lane::DEATH_SEQUENCE_INDEX].wrapping_add(2);
+        });
         return;
     }
-    let current = wall_counter(&runtime, 0x40);
+    let current = wall_counter(game, 0x40);
     if current != target {
-        let step = wall_counter(&runtime, 0xc0);
+        let step = wall_counter(game, 0xc0);
         let next = if (current as i16).wrapping_sub(target as i16) >= 0 {
             current.wrapping_sub(step)
         } else {
             current.wrapping_add(step)
         };
-        set_wall_counter(&mut runtime, 0x40, next);
+        set_wall_counter(game, 0x40, next);
         return;
     }
     if target & 0x8000 != 0 {
-        let countdown = wall_counter(&runtime, 0x80);
+        let countdown = wall_counter(game, 0x80);
         if countdown != 0 {
-            set_wall_counter(&mut runtime, 0x80, countdown.wrapping_sub(1));
-            set_wall_counter(&mut runtime, 0, cursor.wrapping_sub(2));
-            drop(runtime);
+            set_wall_counter(game, 0x80, countdown.wrapping_sub(1));
+            set_wall_counter(game, 0, cursor.wrapping_sub(2));
             game.queue_sound(1, 0x2b, 6);
             return;
         }
@@ -374,15 +382,15 @@ pub fn behind_wall_rumbling<H: Host + ?Sized>(game: &mut H) {
             sm_data::cartridge::lorom_offset(RUMBLE_TABLE) as usize,
             (cursor >> 1) as isize,
         );
-        set_wall_counter(&mut runtime, 0x80, countdown);
+        set_wall_counter(game, 0x80, countdown);
         cursor = cursor.wrapping_add(2);
         let step = image.table_word(
             sm_data::cartridge::lorom_offset(RUMBLE_TABLE) as usize,
             (cursor >> 1) as isize,
         );
-        set_wall_counter(&mut runtime, 0xc0, step);
+        set_wall_counter(game, 0xc0, step);
     }
-    set_wall_counter(&mut runtime, 0, cursor.wrapping_add(2));
+    set_wall_counter(game, 0, cursor.wrapping_add(2));
 }
 /// Handle playing Crocomire acid damage sound effect ($A4:8D1F). Was `rumble`.
 pub fn play_acid_damage_sound<L: Lease + ?Sized>(game: &mut L) {
@@ -501,8 +509,8 @@ pub fn hit<L: Lease + ?Sized>(game: &mut L) {
     session_slot!(game, Crocomire[0].base.ai_handler_bits, |old| old | 2);
 }
 
-pub fn select_melt_animation<const SKELETON: bool, H: Host + ?Sized>(key: Key, game: &mut H) {
-    game.lease().edit_actor(key, AccessMode::Native, |enemy| {
+pub fn select_melt_animation<const SKELETON: bool, L: Lease + ?Sized>(key: Key, game: &mut L) {
+    game.edit_actor(key, AccessMode::Native, |enemy| {
         let instruction = match enemy.y.whole as i16 {
             y if y.wrapping_sub(280) >= 0 => ADDR_K_CROCOMIRE_ILIST_BF64 as u16,
             y if y.wrapping_sub(264) >= 0 => ADDR_K_CROCOMIRE_ILIST_BF6C as u16,
@@ -519,7 +527,7 @@ pub fn select_melt_animation<const SKELETON: bool, H: Host + ?Sized>(key: Key, g
 /// `melt_skeleton_up`.
 pub fn hop_6_rising<L: Lease + ?Sized>(game: &mut L) {
     let key = Key::from_legacy(game.current_enemy());
-    game.foreign(|game| select_melt_animation::<true, _>(key, game));
+    select_melt_animation::<true, _>(key, game);
     emit_lava_plume(game);
     melt_up(game);
 }
@@ -529,7 +537,7 @@ pub fn hop_6_rising<L: Lease + ?Sized>(game: &mut L) {
 pub fn hop_3_4_5_sinking<L: Lease + ?Sized>(game: &mut L) {
     emit_lava_plume(game);
     let key = Key::from_legacy(0);
-    game.foreign(|game| select_melt_animation::<false, _>(key, game));
+    select_melt_animation::<false, _>(key, game);
     melt_down(game);
 }
 
@@ -560,7 +568,7 @@ pub fn hop_1_2_sinking<L: Lease + ?Sized>(game: &mut L) {
 pub fn hop_3_4_5_rising<L: Lease + ?Sized>(game: &mut L) {
     emit_lava_plume(game);
     let key = Key::from_legacy(game.current_enemy());
-    game.foreign(|game| select_melt_animation::<false, _>(key, game));
+    select_melt_animation::<false, _>(key, game);
     melt_up(game);
 }
 
@@ -862,12 +870,11 @@ fn demolish_wall<L: Lease + ?Sized>(game: &mut L) {
 }
 
 /// Crocomire death sequence index += 2 ($A4:9BB3). Was `advance_phase`.
-pub fn advance_death_sequence<H: Host + ?Sized>(game: &mut H) {
-    game.lease()
-        .edit_actor(Key::from_legacy(0), AccessMode::Native, |enemy| {
-            enemy.variables[lane::DEATH_SEQUENCE_INDEX] =
-                enemy.variables[lane::DEATH_SEQUENCE_INDEX].wrapping_add(2);
-        });
+pub fn advance_death_sequence<L: Lease + ?Sized>(game: &mut L) {
+    game.edit_actor(Key::from_legacy(0), AccessMode::Native, |enemy| {
+        enemy.variables[lane::DEATH_SEQUENCE_INDEX] =
+            enemy.variables[lane::DEATH_SEQUENCE_INDEX].wrapping_add(2);
+    });
 }
 
 /// Crocomire main AI - death sequence index 20h/26h - hop 4/5 - resting ($A4:8D47). Was
@@ -887,7 +894,7 @@ pub fn hop_4_5_resting<L: Lease + ?Sized>(game: &mut L) {
 /// `rumble_and_wait`.
 pub fn hop_1_2_resting<L: Lease + ?Sized>(game: &mut L) {
     play_acid_damage_sound(game);
-    game.foreign(|game| game.align_crocomire_background());
+    align_background(game);
     hop_4_5_resting(game);
 }
 
@@ -942,7 +949,7 @@ pub fn behind_wall_no_more_rumbling<L: Lease + ?Sized>(game: &mut L) {
             v8 = game.spawn_projectile(v8, k, ADDR_K_EPROJ_CROCOMIRE_SPIKE_WALL_PIECES as u16);
         }
         game.queue_sound(1, 0x30, 6);
-        game.foreign(advance_death_sequence);
+        advance_death_sequence(game);
     };
 }
 
@@ -1016,12 +1023,8 @@ pub fn melting<L: Lease + ?Sized>(game: &mut L) {
         i += 8;
     }
     melt!(game.Index = (i + 2) as u16);
-    game.foreign(|game| {
-        crate::hdma_objects::free_hdma_object(
-            session_slot!(game, Crocomire[e0].melting_hdma_object),
-            game,
-        )
-    });
+    let object = session_slot!(game, Crocomire[e0].melting_hdma_object);
+    game.foreign(|game| crate::hdma_objects::free_hdma_object(object, game));
 }
 
 /// Erase melting Crocomire pixel column ($A4:96C8). `bug` is the low byte of
@@ -1167,7 +1170,7 @@ pub fn initialize<L: Lease + ?Sized>(game: &mut L) {
 /// `complete_skeleton_melt`.
 pub fn hop_6_sinking<L: Lease + ?Sized>(game: &mut L) {
     let key = Key::from_legacy(0);
-    game.foreign(|game| select_melt_animation::<true, _>(key, game));
+    select_melt_animation::<true, _>(key, game);
     emit_lava_plume(game);
     melt_down(game);
     let e: i32 = 0;
@@ -1220,15 +1223,15 @@ pub fn falling<L: Lease + ?Sized>(game: &mut L) {
 
 /// Crocomire main AI - death sequence index 3Eh - behind wall - wait for Samus ($A4:97D3). Was
 /// `release_skeleton_room`.
-pub fn behind_wall_wait_for_samus<H: Host + ?Sized>(game: &mut H) {
+pub fn behind_wall_wait_for_samus<L: Lease + ?Sized>(game: &mut L) {
     if (game.player_x() as i16).wrapping_sub(640) >= 0 {
         return;
     }
-    game.queue_music_delayed(5);
-    game.lease().write_slice_native(SCROLLS_3_4, 256);
-    game.spawn_plm(0x30, WALL_ROW, CREATE_INVISIBLE_WALL);
+    game.foreign(|game| game.queue_music_delayed(5));
+    game.set_slot_word(SCROLLS_3_4, 256);
+    game.foreign(|game| game.spawn_plm(0x30, WALL_ROW, CREATE_INVISIBLE_WALL));
     boss!(game.CameraDistance = 6);
-    let mut runtime = game.lease();
+    let runtime = &mut *game;
     // Fixed, disjoint records; no callback or fallible operation between these writes.
     runtime.edit_actor(Key::from_legacy(0), AccessMode::Native, |enemy| {
         enemy.properties = enemy.properties & 0x7bff | K_ENEMY_PROPS_TANGIBLE as u16;
@@ -1260,24 +1263,23 @@ fn accelerated_speed(fraction: u16, whole: u16, acceleration: u32, limit: u16) -
 
 /// Crocomire main AI - death sequence index 58h - flowing down the river ($A4:9830). Was
 /// `reposition_skeleton`.
-pub fn flowing_down_the_river<H: Host + ?Sized>(game: &mut H) {
-    game.lease()
-        .edit_actor(Key::from_legacy(0), AccessMode::Native, |enemy| {
-            enemy.x.whole = enemy.x.whole.wrapping_sub(2);
-            if (enemy.x.whole as i16).wrapping_sub(480) < 0 {
-                enemy.x.whole = 480;
-                enemy.y.whole = 54;
-                enemy.variables[lane::DEATH_SEQUENCE_INDEX] = death::BEHIND_WALL_WAIT_FOR_SAMUS;
-            } else {
-                enemy.y.whole = 220;
-            }
-        });
+pub fn flowing_down_the_river<L: Lease + ?Sized>(game: &mut L) {
+    game.edit_actor(Key::from_legacy(0), AccessMode::Native, |enemy| {
+        enemy.x.whole = enemy.x.whole.wrapping_sub(2);
+        if (enemy.x.whole as i16).wrapping_sub(480) < 0 {
+            enemy.x.whole = 480;
+            enemy.y.whole = 54;
+            enemy.variables[lane::DEATH_SEQUENCE_INDEX] = death::BEHIND_WALL_WAIT_FOR_SAMUS;
+        } else {
+            enemy.y.whole = 220;
+        }
+    });
 }
 
 /// Crocomire main AI - death sequence index 44h - breaks down wall ($A4:99E5). Was
 /// `launch_skeleton`.
-pub fn breaks_down_wall<H: Host + ?Sized>(game: &mut H) {
-    let mut runtime = game.lease();
+pub fn breaks_down_wall<L: Lease + ?Sized>(game: &mut L) {
+    let runtime = &mut *game;
     runtime.edit_actor(Key::from_legacy(0), AccessMode::Native, |enemy| {
         if (enemy.x.whole as i16).wrapping_sub(224) < 0 {
             let speed = accelerated_speed(
@@ -1308,25 +1310,23 @@ pub fn breaks_down_wall<H: Host + ?Sized>(game: &mut H) {
 }
 
 /// Crocomire main AI - death sequence index 46h - skeleton falls ($A4:9A38). Was `land_skeleton`.
-pub fn skeleton_falls<H: Host + ?Sized>(game: &mut H) {
-    let impact = game
-        .lease()
-        .edit_actor(Key::from_legacy(0), AccessMode::Native, |enemy| {
-            let speed = accelerated_speed(
-                enemy.variables[lane::Y_VELOCITY],
-                enemy.pre_instruction,
-                2048,
-                5,
-            );
-            enemy.variables[lane::Y_VELOCITY] = speed as u16;
-            enemy.pre_instruction = (speed >> 16) as u16;
-            enemy.y.advance(0xe000);
-            enemy.x.advance(speed as i32);
-            (enemy.x.whole as i16).wrapping_sub(576) >= 0
-        });
+pub fn skeleton_falls<L: Lease + ?Sized>(game: &mut L) {
+    let impact = game.edit_actor(Key::from_legacy(0), AccessMode::Native, |enemy| {
+        let speed = accelerated_speed(
+            enemy.variables[lane::Y_VELOCITY],
+            enemy.pre_instruction,
+            2048,
+            5,
+        );
+        enemy.variables[lane::Y_VELOCITY] = speed as u16;
+        enemy.pre_instruction = (speed >> 16) as u16;
+        enemy.y.advance(0xe000);
+        enemy.x.advance(speed as i32);
+        (enemy.x.whole as i16).wrapping_sub(576) >= 0
+    });
     if impact {
         game.queue_sound(1, 0x25, 6);
-        let mut runtime = game.lease();
+        let runtime = &mut *game;
         let palette = runtime
             .resolve_actor(Key::from_legacy(0), AccessMode::Native)
             .palette;
@@ -1344,58 +1344,54 @@ pub fn skeleton_falls<H: Host + ?Sized>(game: &mut H) {
 
 /// Crocomire main AI - death sequence index 48h - skeleton falls apart ($A4:9B06). Was
 /// `finish_skeleton_escape`.
-pub fn skeleton_falls_apart<H: Host + ?Sized>(game: &mut H) {
-    let finished = game
-        .lease()
-        .edit_actor(Key::from_legacy(0), AccessMode::Native, |enemy| {
-            if (enemy.instruction as i16).wrapping_add(0x1e3a) < 0 {
-                let speed = accelerated_speed(
-                    enemy.variables[lane::Y_VELOCITY],
-                    enemy.pre_instruction,
-                    4096,
-                    6,
-                );
-                enemy.variables[lane::Y_VELOCITY] = speed as u16;
-                enemy.pre_instruction = (speed >> 16) as u16;
-                false
-            } else {
-                enemy.instruction = ADDR_K_CROCOMIRE_ILIST_E1CC as u16;
-                enemy.instruction_delay = 1;
-                enemy.x.whole = enemy.x.whole.wrapping_add(64);
-                enemy.y.whole = enemy.y.whole.wrapping_add(21);
-                enemy.radius.y = 28;
-                enemy.radius.x = 40;
-                true
-            }
-        });
+pub fn skeleton_falls_apart<L: Lease + ?Sized>(game: &mut L) {
+    let finished = game.edit_actor(Key::from_legacy(0), AccessMode::Native, |enemy| {
+        if (enemy.instruction as i16).wrapping_add(0x1e3a) < 0 {
+            let speed = accelerated_speed(
+                enemy.variables[lane::Y_VELOCITY],
+                enemy.pre_instruction,
+                4096,
+                6,
+            );
+            enemy.variables[lane::Y_VELOCITY] = speed as u16;
+            enemy.pre_instruction = (speed >> 16) as u16;
+            false
+        } else {
+            enemy.instruction = ADDR_K_CROCOMIRE_ILIST_E1CC as u16;
+            enemy.instruction_delay = 1;
+            enemy.x.whole = enemy.x.whole.wrapping_add(64);
+            enemy.y.whole = enemy.y.whole.wrapping_add(21);
+            enemy.radius.y = 28;
+            enemy.radius.x = 40;
+            true
+        }
+    });
     if finished {
-        game.spawn_plm(0x30, WALL_ROW, CLEAR_INVISIBLE_WALL);
-        game.scatter_crocomire_drop(0);
+        game.foreign(|game| {
+            game.spawn_plm(0x30, WALL_ROW, CLEAR_INVISIBLE_WALL);
+            game.scatter_crocomire_drop(0);
+        });
         advance_death_sequence(game);
     }
 }
 
 /// Crocomire main AI - death sequence index 4Ch - set index 4Eh ($A4:9B7D). Was
 /// `await_skeleton_script`.
-pub fn set_index_4e<H: Host + ?Sized>(game: &mut H) {
-    game.lease()
-        .edit_actor(Key::from_legacy(0), AccessMode::Native, |enemy| {
-            if (enemy.instruction as i16).wrapping_add(0x1e3a) >= 0 {
-                enemy.variables[lane::DEATH_SEQUENCE_INDEX] =
-                    enemy.variables[lane::DEATH_SEQUENCE_INDEX].wrapping_add(2);
-            }
-        });
+pub fn set_index_4e<L: Lease + ?Sized>(game: &mut L) {
+    game.edit_actor(Key::from_legacy(0), AccessMode::Native, |enemy| {
+        if (enemy.instruction as i16).wrapping_add(0x1e3a) >= 0 {
+            enemy.variables[lane::DEATH_SEQUENCE_INDEX] =
+                enemy.variables[lane::DEATH_SEQUENCE_INDEX].wrapping_add(2);
+        }
+    });
 }
 
 /// Crocomire main AI - death sequence index 4Ah - unlock camera ($A4:9B65). Was
 /// `open_skeleton_exit`.
-pub fn unlock_camera<H: Host + ?Sized>(game: &mut H) {
-    {
-        let mut runtime = game.lease();
-        runtime.write_slice_native(SCROLLS_0_1, 257);
-        runtime.write_slice_native(SCROLLS_2_3, 257);
-    }
-    game.spawn_plm(0x1e, WALL_ROW, CLEAR_INVISIBLE_WALL);
+pub fn unlock_camera<L: Lease + ?Sized>(game: &mut L) {
+    game.set_slot_word(SCROLLS_0_1, 257);
+    game.set_slot_word(SCROLLS_2_3, 257);
+    game.foreign(|game| game.spawn_plm(0x1e, WALL_ROW, CLEAR_INVISIBLE_WALL));
     advance_death_sequence(game);
 }
 
@@ -1422,59 +1418,75 @@ pub fn prepare_scroll_hdma<L: Lease + ?Sized>(game: &mut L) {
 }
 
 // Returned only for the two synchronous hardware phases of the fixed actor-0 driver.
+/// Main AI - Crocomire ($A4:8C04): its phase step, the melting phases' scroll
+/// HDMA, Samus's collision and its palette.
+pub fn main_ai<L: Lease + ?Sized>(game: &mut L) {
+    static DEFINITION: crate::menus::prelude::HdmaObjectDefinition =
+        crate::menus::prelude::HdmaObjectDefinition::new(0x42, 0x10, 0x9563);
+    if let Some(request) = execute_phase(game) {
+        game.queue_sound(1, request as u16 as u8, 6);
+        prepare_scroll_hdma(game);
+        let object = game.foreign(|game| crate::hdma_objects::spawn_hdma(0xa4, &DEFINITION, game));
+        use crate::actors::layouts::EnemyLayout72 as Layout;
+        session_slot!(game, Layout[0].var_1f = object);
+    }
+    samus_collision(game);
+    update_palette(game);
+}
+
 pub enum ScrollRequest {
     Flesh = 0x77,
     Skeleton = 0x2d,
 }
 /// Main AI - Crocomire ($A4:8C04): run the death sequence function; the two
 /// melting HDMA phases are left to the caller.
-pub fn execute_phase<H: Host + ?Sized>(game: &mut H) -> Option<ScrollRequest> {
-    let phases: [Option<fn(&mut H)>; 45] = [
-        Some(not_started as fn(&mut H)),
-        Some(falling as fn(&mut H)),
-        Some(hop_1_2_resting as fn(&mut H)),
-        Some(hop_1_2_rising as fn(&mut H)),
-        Some(hop_1_2_sinking as fn(&mut H)),
-        Some(hop_1_2_resting as fn(&mut H)),
-        Some(hop_1_2_rising as fn(&mut H)),
-        Some(hop_1_2_sinking as fn(&mut H)),
-        Some(hop_3_load_melting_tilemap as fn(&mut H)),
-        Some(load_melting_tiles as fn(&mut H)),
-        Some(upload_melting_tiles as fn(&mut H)),
-        Some(hop_3_4_5_rising as fn(&mut H)),
+pub fn execute_phase<L: Lease + ?Sized>(game: &mut L) -> Option<ScrollRequest> {
+    let phases: [Option<fn(&mut L)>; 45] = [
+        Some(not_started as fn(&mut L)),
+        Some(falling as fn(&mut L)),
+        Some(hop_1_2_resting as fn(&mut L)),
+        Some(hop_1_2_rising as fn(&mut L)),
+        Some(hop_1_2_sinking as fn(&mut L)),
+        Some(hop_1_2_resting as fn(&mut L)),
+        Some(hop_1_2_rising as fn(&mut L)),
+        Some(hop_1_2_sinking as fn(&mut L)),
+        Some(hop_3_load_melting_tilemap as fn(&mut L)),
+        Some(load_melting_tiles as fn(&mut L)),
+        Some(upload_melting_tiles as fn(&mut L)),
+        Some(hop_3_4_5_rising as fn(&mut L)),
         None,
-        Some(melting as fn(&mut H)),
-        Some(clear_tilemap as fn(&mut H)),
-        Some(hop_3_4_5_sinking as fn(&mut H)),
-        Some(hop_4_5_resting as fn(&mut H)),
-        Some(hop_3_4_5_rising as fn(&mut H)),
-        Some(hop_3_4_5_sinking as fn(&mut H)),
-        Some(hop_4_5_resting as fn(&mut H)),
-        Some(hop_3_4_5_rising as fn(&mut H)),
-        Some(hop_3_4_5_sinking as fn(&mut H)),
-        Some(hop_6_load_melting_tilemap as fn(&mut H)),
-        Some(load_melting_tiles as fn(&mut H)),
-        Some(upload_melting_tiles as fn(&mut H)),
-        Some(set_index_34 as fn(&mut H)),
-        Some(hop_6_rising as fn(&mut H)),
+        Some(melting as fn(&mut L)),
+        Some(clear_tilemap as fn(&mut L)),
+        Some(hop_3_4_5_sinking as fn(&mut L)),
+        Some(hop_4_5_resting as fn(&mut L)),
+        Some(hop_3_4_5_rising as fn(&mut L)),
+        Some(hop_3_4_5_sinking as fn(&mut L)),
+        Some(hop_4_5_resting as fn(&mut L)),
+        Some(hop_3_4_5_rising as fn(&mut L)),
+        Some(hop_3_4_5_sinking as fn(&mut L)),
+        Some(hop_6_load_melting_tilemap as fn(&mut L)),
+        Some(load_melting_tiles as fn(&mut L)),
+        Some(upload_melting_tiles as fn(&mut L)),
+        Some(set_index_34 as fn(&mut L)),
+        Some(hop_6_rising as fn(&mut L)),
         None,
-        Some(melting as fn(&mut H)),
-        Some(clear_tilemap as fn(&mut H)),
-        Some(hop_6_sinking as fn(&mut H)),
-        Some(behind_wall_wait_for_samus as fn(&mut H)),
-        Some(behind_wall_rumbling as fn(&mut H)),
-        Some(behind_wall_no_more_rumbling as fn(&mut H)),
-        Some(breaks_down_wall as fn(&mut H)),
-        Some(skeleton_falls as fn(&mut H)),
-        Some(skeleton_falls_apart as fn(&mut H)),
-        Some(unlock_camera as fn(&mut H)),
-        Some(set_index_4e as fn(&mut H)),
-        Some(advance_death_sequence as fn(&mut H)),
-        Some(mark_event_and_start_music as fn(&mut H)),
-        Some(dead as fn(&mut H)),
-        Some(advance_death_sequence as fn(&mut H)),
-        Some(dead_from_room_entry as fn(&mut H)),
-        Some(flowing_down_the_river as fn(&mut H)),
+        Some(melting as fn(&mut L)),
+        Some(clear_tilemap as fn(&mut L)),
+        Some(hop_6_sinking as fn(&mut L)),
+        Some(behind_wall_wait_for_samus as fn(&mut L)),
+        Some(behind_wall_rumbling as fn(&mut L)),
+        Some(behind_wall_no_more_rumbling as fn(&mut L)),
+        Some(breaks_down_wall as fn(&mut L)),
+        Some(skeleton_falls as fn(&mut L)),
+        Some(skeleton_falls_apart as fn(&mut L)),
+        Some(unlock_camera as fn(&mut L)),
+        Some(set_index_4e as fn(&mut L)),
+        Some(advance_death_sequence as fn(&mut L)),
+        Some(mark_event_and_start_music as fn(&mut L)),
+        Some(dead as fn(&mut L)),
+        Some(advance_death_sequence as fn(&mut L)),
+        Some(dead_from_room_entry as fn(&mut L)),
+        Some(flowing_down_the_river as fn(&mut L)),
     ];
     let phase = (session_slot!(game, Crocomire[0i32].death_sequence_index) as i32 >> 1) as usize;
     match phases[phase] {
@@ -1506,7 +1518,7 @@ fn clear_tilemap<L: Lease + ?Sized>(game: &mut L) {
     session_slot!(game, Crocomire[e].step_counter = 2048);
     bg2_staging::fill(game, (0..=2047).rev(), 824);
     queue_tilemap_upload(2048, 0xfe, game);
-    game.foreign(advance_death_sequence);
+    advance_death_sequence(game);
 }
 /// Crocomire main AI - death sequence index 56h - dead due to room entry ($A4:8C90). Was
 /// `reset_scroll`.
@@ -1519,20 +1531,20 @@ fn spawn_random_dust<L: Lease + ?Sized>(game: &mut L) {
     if (random as i16).wrapping_sub(4096) >= 0 {
         offset = offset.wrapping_neg();
     }
-    game.foreign(|game| spawn_dust(EnemyScript::Stop, offset, game));
+    spawn_dust(EnemyScript::Stop, offset, game);
 }
-fn spawn_dust<H: Host + ?Sized>(jp: EnemyScript, offset: u16, game: &mut H) -> EnemyScript {
+fn spawn_dust<L: Lease + ?Sized>(jp: EnemyScript, offset: u16, game: &mut L) -> EnemyScript {
     let (x, y) = {
-        let runtime = game.lease();
-        let actor = runtime.resolve_actor(Key::from_legacy(0), AccessMode::Native);
+        let random = game.current_random();
+        let actor = game.resolve_actor(Key::from_legacy(0), AccessMode::Native);
         // The offset's add carries in from the random add, as the original's does.
-        let (x, carry) = adc(runtime.word(ram::RANDOM_NUMBER) & 7, actor.x.whole, false);
+        let (x, carry) = adc(random & 7, actor.x.whole, false);
         (
             adc(x, offset, carry).0,
             actor.radius.y.wrapping_add(actor.y.whole).wrapping_sub(16),
         )
     };
-    game.set_projectile_spawn_point(x, y);
+    game.place_projectile_spawn(x, y);
     game.spawn_room_projectile(ADDR_K_EPROJ_DUST_CLOUD_EXPLOSION as u16, 0x15);
     jp
 }
@@ -1551,10 +1563,10 @@ fn mark_event_and_start_music<L: Lease + ?Sized>(game: &mut L) {
     game.foreign(|game| {
         game.set_boss_word(area, bits | 2);
         game.queue_music_delayed(6);
-        spawn_dust(EnemyScript::Stop, 0xfff0, game);
-        spawn_dust(EnemyScript::Stop, 0x10, game);
-        advance_death_sequence(game);
     });
+    spawn_dust(EnemyScript::Stop, 0xfff0, game);
+    spawn_dust(EnemyScript::Stop, 0x10, game);
+    advance_death_sequence(game);
 }
 
 /// Hurt AI - Crocomire ($A4:8687).
@@ -1589,11 +1601,11 @@ const DUST_OFFSETS: [u16; 13] = [
     0xffe0, 0, 0xfff0, 0x10, 0, 8, 0x10, 0x18, 0x20, 0x28, 0x30, 0x38, 0x40,
 ];
 /// Run one of Crocomire's script instructions (one of [`instruction`]).
-pub fn instruction<H: Host + ?Sized>(
+pub fn instruction<L: Lease + ?Sized>(
     ea: u32,
     k: u16,
     jp: EnemyScript,
-    game: &mut H,
+    game: &mut L,
 ) -> EnemyScript {
     use instruction::*;
     if matches!(
@@ -1610,16 +1622,12 @@ pub fn instruction<H: Host + ?Sized>(
         QUEUE_BIG_EXPLOSION => game.queue_sound(1, BIG_EXPLOSION_SOUND, 6),
         QUEUE_SKELETON_COLLAPSES => game.queue_sound(1, SKELETON_COLLAPSES_SOUND, 6),
         SHAKE_SCREEN => {
-            {
-                let mut runtime = game.lease();
-                runtime.write_slice_le(ram::EARTHQUAKE_TYPE, 4);
-                runtime.write_slice_le(ram::EARTHQUAKE_TIMER, 5);
-            }
+            game.set_slot_word(ram::EARTHQUAKE_TYPE, 4);
+            game.set_slot_word(ram::EARTHQUAKE_TIMER, 5);
             game.queue_sound(1, SHAKE_SOUND, 6);
         }
         MOVE_LEFT_4PX | MOVE_LEFT_4PX_AND_SPAWN_DUST | MOVE_LEFT_4PX_AND_SPAWN_DUST_2 => {
             let hit = game
-                .lease()
                 .resolve_actor(Key::from_legacy(0), AccessMode::Native)
                 .variables[lane::FIGHT_FLAGS]
                 & flag::DAMAGED
@@ -1630,11 +1638,10 @@ pub fn instruction<H: Host + ?Sized>(
         }
         MOVE_LEFT_4PX_SPAWN_DUST_AND_HANDLE_SPIKE_WALL => {
             return if walk(game.current_enemy(), -4, game) {
-                game.lease()
-                    .edit_actor(Key::from_legacy(0), AccessMode::Native, |actor| {
-                        actor.variables[lane::FIGHT_FUNCTION] =
-                            crate::actors::crocomire_attack::fight::BACK_OFF_FROM_SPIKE_WALL;
-                    });
+                game.edit_actor(Key::from_legacy(0), AccessMode::Native, |actor| {
+                    actor.variables[lane::FIGHT_FUNCTION] =
+                        crate::actors::crocomire_attack::fight::BACK_OFF_FROM_SPIKE_WALL;
+                });
                 EnemyScript::jump(
                     crate::actors::crocomire_attack::instruction_list::BACK_OFF_FROM_SPIKE_WALL,
                 )
@@ -1649,15 +1656,12 @@ pub fn instruction<H: Host + ?Sized>(
             };
         }
         MOVE_RIGHT_4PX_IF_ON_SCREEN | MOVE_RIGHT_4PX_IF_ON_SCREEN_AND_SPAWN_DUST => {
+            let camera = game.camera();
             let can_walk = {
-                let runtime = game.lease();
-                let actor = runtime.resolve_actor(Key::from_legacy(0), AccessMode::Native);
+                let actor = game.resolve_actor(Key::from_legacy(0), AccessMode::Native);
                 // The subtracts carry their borrows on, as the original's do ($A4:9067).
                 let (edge, carry) = sbc(actor.x.whole, actor.radius.x, true);
                 let (edge, carry) = sbc(edge, 0x100, carry);
-                let camera = crate::session_access::SessionAccess::session(&runtime)
-                    .room
-                    .camera;
                 (sbc(edge, 4, carry).0.wrapping_sub(camera.layer1[0]) as i16) < 0
             };
             if can_walk {
@@ -1675,10 +1679,8 @@ pub fn instruction<H: Host + ?Sized>(
                 game,
             );
         }
-        FIGHT_AI => return fight_ai(k, jp, game),
-        MAYBE_START_PROJECTILE_ATTACK => return maybe_start_projectile_attack(k, jp, game),
         _ => {
-            game.unreachable();
+            game.foreign(|game| game.unreachable());
             return EnemyScript::Stop;
         }
     }

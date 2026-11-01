@@ -105,10 +105,6 @@ impl Host for Game {
         Imported::from(imported, rom).map(|tilemap| *tilemap.tiles())
     }
 
-    fn align_crocomire_background(&mut self) {
-        crate::game::visual_runtime::align_crocomire_background(self);
-    }
-
     fn boss_word_native(&mut self, area: u16) -> u16 {
         gameplay_flag_runtime::boss_word_at(area, BossWordOrder::Native, self)
     }

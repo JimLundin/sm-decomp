@@ -4,10 +4,10 @@ pub(crate) use sm_game::hdma_objects::{
     spawn_hdma, spawn_hdma_words, update_hdma,
 };
 pub(crate) use sm_game::room_visuals::{
-    advance_crocomire, align_crocomire_background, initialize_bomb_torizo_haze,
-    initialize_ceres_elevator, initialize_ceres_ridley, initialize_draygon_layer,
-    initialize_fireflea_lighting, initialize_morph_eye_beam, initialize_phantoon_motion,
-    initialize_room_haze, initialize_tourian_statue, initialize_weather,
+    initialize_bomb_torizo_haze, initialize_ceres_elevator, initialize_ceres_ridley,
+    initialize_draygon_layer, initialize_fireflea_lighting, initialize_morph_eye_beam,
+    initialize_phantoon_motion, initialize_room_haze, initialize_tourian_statue,
+    initialize_weather,
 };
 
 pub(crate) use crate::game::hosts::update_beam_tiles_and_palette;

@@ -1156,7 +1156,6 @@ crate::game::callback_dispatch! {
         11111301 => [{
                     sm_a9::tubes_falling_main_ai(crate::ram_map::word!(game.CUR_ENEMY_INDEX), game);
                 }];
-        10783748 => crate::game::visual_runtime::advance_crocomire;
         0xa90000..=0xa9ffff => [sm_a9::dispatch_enemy_ai(ea, game)];
     }
 }
@@ -1246,6 +1245,11 @@ impl Runtime<'_> {
             10873619 => self.owned_call(actors::spore_spawn::main_ai),
             10874202 => self.owned_call(actors::spore_spawn::shot),
             10874348 => self.owned_call(actors::spore_spawn::touch),
+            10783748 => self.owned_call(actors::crocomire_reactions::main_ai),
+            10782343 => self.owned_call(actors::crocomire_reactions::hurt),
+            10811002 => self.owned_call(actors::crocomire_reactions::initialize_tongue),
+            10783322 => self.owned_call(actors::crocomire_reactions::initialize),
+            10795410 => self.owned_call(actors::crocomire_reactions::power_bomb),
             11056128 | 11056134 | 11056140 => {
                 self.owned_call(|runtime| actors::magdollite::damage(routine, runtime))
             }
@@ -1280,6 +1284,11 @@ impl Runtime<'_> {
             Err(script) => script,
         };
         match routine {
+            0xa40000..=0xa4ffff => {
+                return self.owned_call(|runtime| {
+                    actors::crocomire_reactions::instruction(routine, actor, script, runtime)
+                });
+            }
             10872671 | 10872689 | 10872877 | 10872956 | 10873018 | 10873009 | 10873034
             | 10873116 | 10873198 | 10873265 => {
                 return self.owned_call(|runtime| {
@@ -1350,6 +1359,8 @@ impl Runtime<'_> {
             self.owned_call(sm_game::actors::ceres_doors::steam_touch);
         } else if routine == 10874348 {
             self.owned_call(actors::spore_spawn::touch);
+        } else if routine == 10795325 {
+            self.owned_call(actors::crocomire_reactions::touch);
         } else if !self.bank_a9_routine(routine) && !species::lease_touch(routine, self) {
             self.foreign(|game| species::touch(routine, game));
         }
@@ -1360,6 +1371,12 @@ impl Runtime<'_> {
             self.owned_call(sm_game::actors::ridley::shot);
         } else if routine == 10874202 {
             self.owned_call(actors::spore_spawn::shot);
+        } else if routine == 10795345 {
+            self.owned_call(actors::crocomire_reactions::count_hit);
+        } else if matches!(routine, 10795368 | 10795700) {
+            self.owned_call(actors::crocomire_reactions::impact);
+        } else if routine == 10795525 {
+            self.owned_call(actors::crocomire_reactions::hit);
         } else if !self.bank_a9_routine(routine) && !species::lease_shot(routine, self) {
             self.foreign(|game| species::shot(routine, argument, game));
         }

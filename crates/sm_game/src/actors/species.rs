@@ -12,13 +12,13 @@ use crate::actors::host::{
     ActorHost, ActorLease as _, ActorRuntime, Death, LeaseActors, LeaseScope, Shot,
 };
 use crate::actors::{
-    alcoon, bang, beetom, botwoon, boulder, boyon, cacatac, choot, covern, crawlers,
-    crocomire_reactions, dachora_run, dragon, draygon_death, draygon_eye, draygon_flight,
-    draygon_grab, draygon_host, draygon_sweep, elevator, etecoon, evir, fire_arc, fire_pillar,
-    flies, fune, geruta, gunship, kago, kraid, metroid, mini_crocomire, mini_kraid, mochtroid,
-    multiviola, oum, phantoon, phantoon_actions, polyp, puyo, reflec, rinka, rio, rippers, roach,
-    shutters, sidehopper, skree, space_pirates, spike_platform, spore_spawn, squeept, statues,
-    tatori, torizo, tripper, waver, work_robot, wrecked_ship_spark, yard, zoa,
+    alcoon, bang, beetom, botwoon, boulder, boyon, cacatac, choot, covern, crawlers, dachora_run,
+    dragon, draygon_death, draygon_eye, draygon_flight, draygon_grab, draygon_host, draygon_sweep,
+    elevator, etecoon, evir, fire_arc, fire_pillar, flies, fune, geruta, gunship, kago, kraid,
+    metroid, mini_crocomire, mini_kraid, mochtroid, multiviola, oum, phantoon, phantoon_actions,
+    polyp, puyo, reflec, rinka, rio, rippers, roach, shutters, sidehopper, skree, space_pirates,
+    spike_platform, spore_spawn, squeept, statues, tatori, torizo, tripper, waver, work_robot,
+    wrecked_ship_spark, yard, zoa,
 };
 use crate::combat_rules::LatchMode;
 use crate::enemy_projectiles::host::Effects as _;
@@ -52,7 +52,7 @@ impl<T> B3Host for T where
 pub trait TouchHost:
     SpeciesHost
     + ActorRuntime
-    + crocomire_reactions::Host
+    + LeaseActors
     + draygon_host::Host
     + space_pirates::Pirates
     + torizo::Ai
@@ -71,7 +71,6 @@ pub fn touch<H: TouchHost>(ea: u32, game: &mut H) {
     match ea {
         10518563 => game.contact_reaction(Death::Finalize),
         10780707 => game.contact_reaction(Death::Finalize),
-        10795325 => crocomire_reactions::touch(game),
         10795344 => (),
         10846284 => (),
         10851818 => draygon_death::touch(game),
@@ -98,7 +97,7 @@ pub enum NativeShot {
 pub trait ShotHost:
     SpeciesHost
     + ActorRuntime
-    + crocomire_reactions::Host
+    + LeaseActors
     + draygon_host::Host
     + space_pirates::Pirates
     + torizo::Ai
@@ -120,10 +119,6 @@ pub fn shot<H: ShotHost>(ea: u32, j: u16, game: &mut H) {
         10846278 => game.native_shot(NativeShot::Dud),
         10649676 => (),
         10780717 => game.shot_reaction(Shot::Finalize),
-        10795345 => crocomire_reactions::count_hit(game),
-        10795368 => crocomire_reactions::impact(game),
-        10795525 => crocomire_reactions::hit(game),
-        10795700 => crocomire_reactions::impact(game),
         10846253 => game.shot_reaction(Shot::Finalize),
         10846284 => (),
         10851824 => draygon_death::shot(game),
@@ -182,7 +177,6 @@ pub fn b3_pre_instruction<H: B3Host>(ea: u32, k: u16, game: &mut H) {
 pub trait AiHost:
     B3Host
     + DrawHookHost
-    + crocomire_reactions::Host
     + space_pirates::Pirates
     + torizo::Ai
     + statues::Host
@@ -531,12 +525,8 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         11791130 => (),
         10649635 => game.contact_reaction(Death::Finalize),
         10649645 => game.shot_reaction(Shot::Finalize),
-        10782343 => crocomire_reactions::hurt(game),
-        10811002 => crocomire_reactions::initialize_tongue(game),
         10780707 => game.contact_reaction(Death::Finalize),
         10780717 => game.shot_reaction(Shot::Finalize),
-        10783322 => crocomire_reactions::initialize(game),
-        10795410 => crocomire_reactions::power_bomb(game),
         // Bank $A6: the boulder, the fire arc and Mini-Kraid, with the bank's
         // common reactions.
         10911779 => game.contact_reaction(Death::Finalize),
@@ -859,7 +849,6 @@ pub fn pre_instruction<H: PreInstructionHost>(ea: u32, game: &mut H) {
 /// What the instruction table needs beyond its actors' own hosts.
 pub trait InstructionHost:
     SpeciesHost
-    + crocomire_reactions::Host
     + space_pirates::Pirates
     + draygon_host::Host
     + LeaseActors
@@ -987,7 +976,6 @@ pub fn instruction<H: InstructionHost>(
         11067164 | 11067187 | 11067193 | 11067199 | 11067235 | 11067249 => {
             alcoon::instruction(ea, j, game)
         }
-        0xa40000..=0xa4ffff => crocomire_reactions::instruction(ea, k, j, game),
         // Bank $A6: Mini-Kraid and the steam.
         10918694 => {
             mini_kraid::step(game);
