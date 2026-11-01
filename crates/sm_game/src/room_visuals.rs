@@ -107,12 +107,10 @@ pub fn shake_room_with_sound<H: crate::menus::host::Host + ?Sized>(
         );
         word!(game.EARTHQUAKE_SFX_INDEX = index.wrapping_add(4));
     }
-    crate::room_view::set_effect(game, crate::room_view::EffectWord::EarthquakeKind, kind);
-    crate::room_view::set_effect(
-        game,
-        crate::room_view::EffectWord::EarthquakeTimer,
-        crate::room_view::effects(game).earthquake_timer | EARTHQUAKE_TIMER,
-    );
+    crate::session_cohort::with(game, |_, room: &mut crate::room_view::RoomEffects| {
+        room.earthquake_kind = kind;
+        room.earthquake_timer |= EARTHQUAKE_TIMER;
+    });
 }
 
 pub fn initialize_tourian_statue<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
@@ -147,12 +145,14 @@ pub fn advance_tourian_statue<H: crate::menus::host::Host + ?Sized>(
             if (6..=9)
                 .all(|event| crate::progress::leased::event_has_happened(event, game) & 1 != 0)
             {
-                crate::room_view::set_effect(
+                let animation = crate::session_cohort::with(
                     game,
-                    crate::room_view::EffectWord::StatueAnimation,
-                    crate::room_view::effects(game).statue_animation | (0x10),
+                    |_, room: &mut crate::room_view::RoomEffects| {
+                        room.statue_animation |= 0x10;
+                        room.statue_animation
+                    },
                 );
-                if crate::room_view::effects(game).statue_animation & 0x8000 == 0 {
+                if animation & 0x8000 == 0 {
                     object.c = 300;
                     advance_statue_program(object);
                 }
@@ -190,11 +190,9 @@ pub fn advance_tourian_statue<H: crate::menus::host::Host + ?Sized>(
             }
         }
         Finished => {
-            crate::room_view::set_effect(
-                game,
-                crate::room_view::EffectWord::StatueFinished,
-                0x8000,
-            );
+            crate::session_cohort::with(game, |_, room: &mut crate::room_view::RoomEffects| {
+                room.statue_finished = 0x8000
+            });
             crate::word_transfers!(game, ascending, 1; native(0xcd20) <- value(514));
         }
     }

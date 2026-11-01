@@ -241,8 +241,14 @@ pub fn wait_for_scene<H: crate::menus::host::Host + ?Sized>(
             game.ram()
                 .write_byte(0x58, if mother_brain { 80 } else { 84 });
             if !mother_brain {
-                crate::room_view::set(game, crate::room_view::Word::Width, 32);
-                crate::room_view::set(game, crate::room_view::Word::Height, 16);
+                crate::session_cohort::with(
+                    game,
+                    |_, room: &mut crate::room_view::RoomGeometry| room.width = 32,
+                );
+                crate::session_cohort::with(
+                    game,
+                    |_, room: &mut crate::room_view::RoomGeometry| room.height = 16,
+                );
             }
             crate::session_cohort::with(
                 game,

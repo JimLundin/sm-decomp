@@ -24,7 +24,7 @@ macro_rules! camera_words {
         $f(ram::CAMERA_DISTANCE_INDEX,$($borrow)* $c.distance_index);
     };
 }
-// The room's area and geometry (`crate::room_view`), in `room_view::Word` order.
+// The room's area and geometry (`crate::room_view::RoomGeometry`).
 macro_rules! room_geometry_words {
     (($c:expr), $f:ident, ($($borrow:tt)*)) => {
         $f(ram::AREA_INDEX,$($borrow)* $c.area);
@@ -33,54 +33,6 @@ macro_rules! room_geometry_words {
         $f(ram::ROOM_WIDTH_IN_SCROLLS,$($borrow)* $c.scroll_width);
         $f(ram::ROOM_HEIGHT_IN_SCROLLS,$($borrow)* $c.scroll_height);
     };
-}
-/// The room's area and geometry as `bytes` encode them.
-pub fn room_geometry(bytes: &impl Fn(usize) -> u8) -> crate::room_view::RoomGeometry {
-    let mut room = crate::room_view::RoomGeometry::default();
-    let load = |at: usize, value: &mut u16| *value = read(bytes, at);
-    room_geometry_words!((room), load, (&mut));
-    room
-}
-/// Each room geometry word's address, in `room_view::Word` order.
-pub fn room_geometry_addresses() -> [usize; 5] {
-    let mut addresses = [0; 5];
-    let mut index = 0;
-    let room = crate::room_view::RoomGeometry::default();
-    let mut visit = |at: usize, _: &u16| {
-        addresses[index] = at;
-        index += 1;
-    };
-    room_geometry_words!((room), visit, (&));
-    addresses
-}
-// The room's effect and placement words (`crate::room_view::RoomEffects`),
-// in `room_view::EffectWord` order. scalar_words projects each from the
-// Session field named in its `EffectWord` documentation.
-const ROOM_EFFECT_WORDS: [usize; 7] = [
-    ram::EARTHQUAKE_TYPE,
-    ram::EARTHQUAKE_TIMER,
-    ram::TOURIAN_ENTRANCE_STATUE_ANIMSTATE,
-    ram::TOURIAN_ENTRANCE_STATUE_FINISHED,
-    ram::ROOM_X_COORDINATE_ON_MAP,
-    ram::ROOM_Y_COORDINATE_ON_MAP,
-    ram::ELEVATOR_DOOR_PROPERTIES_ORIENTATION,
-];
-/// The room's effect and placement words as `bytes` encode them.
-pub fn room_effects(bytes: &impl Fn(usize) -> u8) -> crate::room_view::RoomEffects {
-    let [w0, w1, w2, w3, w4, w5, w6] = ROOM_EFFECT_WORDS.map(|at| read(bytes, at));
-    crate::room_view::RoomEffects {
-        earthquake_kind: w0,
-        earthquake_timer: w1,
-        statue_animation: w2,
-        statue_finished: w3,
-        map_x: w4,
-        map_y: w5,
-        elevator_properties: w6,
-    }
-}
-/// The address of `word`.
-pub fn room_effect_address(word: crate::room_view::EffectWord) -> usize {
-    ROOM_EFFECT_WORDS[word as usize]
 }
 // The game flow (`crate::flow`), in RAM order.
 macro_rules! flow_words {

@@ -63,14 +63,15 @@ pub fn save<H: Host + ?Sized>(slot: u16, game: &mut H) {
     crate::word_transfers!(game, descending, 48; le(PLAYER_DATA_SAVED, 47) <- native(0xa00));
     game.observe_flags_save(1);
     crate::word_transfers!(game, ascending, 128;
-        le(EXPLORED_MAP_TILES_SAVED, crate::room_view::current(game).area.wrapping_mul(256) >> 1)
+        le(EXPLORED_MAP_TILES_SAVED, crate::session_cohort::load::<crate::room_view::RoomGeometry, _>(game).area.wrapping_mul(256) >> 1)
             <- native(0x7f7));
     game.observe_flags_save(2);
     transfer_map(Direction::Save, game);
     game.observe_flags_save(3);
     session_cohort::with(game, |game, selection: &mut SaveSelection| {
         selection.save_station = selection.load_station;
-        selection.save_area = crate::room_view::current(game).area;
+        selection.save_area =
+            crate::session_cohort::load::<crate::room_view::RoomGeometry, _>(game).area;
     });
     game.observe_flags_save(4);
     let checksum = save_file::save(&mut SaveFile(game), slot);
@@ -87,7 +88,9 @@ pub fn load<H: Host + ?Sized>(slot: u16, game: &mut H) -> u8 {
         transfer_map(Direction::Load, game);
         session_cohort::with(game, |game, selection: &mut SaveSelection| {
             selection.load_station = selection.save_station;
-            crate::room_view::set(game, crate::room_view::Word::Area, selection.save_area);
+            crate::session_cohort::with(game, |_, room: &mut crate::room_view::RoomGeometry| {
+                room.area = selection.save_area
+            });
         });
         0
     } else {
@@ -95,7 +98,9 @@ pub fn load<H: Host + ?Sized>(slot: u16, game: &mut H) -> u8 {
         session_cohort::with(game, |_, selection: &mut SaveSelection| {
             selection.load_station = 0;
         });
-        crate::room_view::set(game, crate::room_view::Word::Area, 0);
+        crate::session_cohort::with(game, |_, room: &mut crate::room_view::RoomGeometry| {
+            room.area = 0
+        });
         1
     }
 }
@@ -207,29 +212,44 @@ fn area_map_words(area: u16) -> impl Iterator<Item = (usize, u16)> {
 /// Load the current area's explored map, and whether its map station was
 /// used, into `selection`.
 pub fn load_area_map<H: Host + ?Sized>(selection: &mut SaveSelection, game: &mut H) {
-    for (active, saved) in area_map_words(crate::room_view::current(game).area) {
+    for (active, saved) in
+        area_map_words(crate::session_cohort::load::<crate::room_view::RoomGeometry, _>(game).area)
+    {
         crate::word_transfers!(game, ascending, 1; native(0x7f7 + active * 2) <- le(EXPLORED_MAP_TILES_SAVED, saved));
     }
     selection.has_area_map = u16::from(game.ram().read_byte(
         crate::ram::bytes::MAP_STATION_BYTE_ARRAY
-            + usize::from(crate::room_view::current(game).area),
+            + usize::from(
+                crate::session_cohort::load::<crate::room_view::RoomGeometry, _>(game).area,
+            ),
     ));
 }
 
 pub fn save_area_map<H: Host + ?Sized>(game: &mut H) {
-    for (active, saved) in area_map_words(crate::room_view::current(game).area) {
+    for (active, saved) in
+        area_map_words(crate::session_cohort::load::<crate::room_view::RoomGeometry, _>(game).area)
+    {
         crate::word_transfers!(game, ascending, 1; le(EXPLORED_MAP_TILES_SAVED, saved) <- native(0x7f7 + active * 2));
     }
     if session_cohort::load::<SaveSelection, _>(game).has_area_map != 0 {
-        let flag = 0xd908 + usize::from(crate::room_view::current(game).area);
+        let flag = 0xd908
+            + usize::from(
+                crate::session_cohort::load::<crate::room_view::RoomGeometry, _>(game).area,
+            );
         word!(game, flag; = word!(game, flag;) | 0xff);
     }
 }
 
 pub fn mark_elevator<H: Host + ?Sized>(game: &mut H) {
-    let table =
-        crate::menu_lists::elevator_door_table(game, crate::room_view::current(game).area as isize);
-    let displacement = 4 * ((crate::room_view::effects(game).elevator_properties & 15) as i32 - 1);
+    let table = crate::menu_lists::elevator_door_table(
+        game,
+        crate::session_cohort::load::<crate::room_view::RoomGeometry, _>(game).area as isize,
+    );
+    let displacement = 4
+        * ((crate::session_cohort::load::<crate::room_view::RoomEffects, _>(game)
+            .elevator_properties
+            & 15) as i32
+            - 1);
     let cursor = (i32::from(table) + displacement) as u16;
     // Retain the diagnostic before capturing its native allocation.
     if cursor & 0x8000 == 0 {

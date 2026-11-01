@@ -131,7 +131,11 @@ fn fade_palette<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H, screens: &
         });
         screens.save_selection.map_area_index = area_selection(game).unwrap_or(0) as u16;
         for area in 0..6 {
-            menu_tilemap::area_palette(area, area == crate::room_view::current(game).area, game);
+            menu_tilemap::area_palette(
+                area,
+                area == crate::session_cohort::load::<crate::room_view::RoomGeometry, _>(game).area,
+                game,
+            );
         }
         menu.menu_index = menu.menu_index.wrapping_add(1);
         screens.save_selection.map_unread = 0;
@@ -158,7 +162,10 @@ fn load_foreground<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H, _: &mut
 }
 fn begin_background<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H, _: &mut MenuScreens) {
     menu.menu_index = menu.menu_index.wrapping_add(1);
-    load_background(crate::room_view::current(game).area, game);
+    load_background(
+        crate::session_cohort::load::<crate::room_view::RoomGeometry, _>(game).area,
+        game,
+    );
 }
 fn load_background<H: Host + ?Sized>(j: u16, game: &mut H) {
     menu_tilemap::upload(
@@ -304,22 +311,29 @@ fn select_area<H: Host + ?Sized>(screens: &mut MenuScreens, menu: &mut MenuState
     menu.menu_index = menu.menu_index.wrapping_add(1);
     if word!(game.ENABLE_DEBUG) == 0 {
         let selection = &mut screens.save_selection;
-        crate::room_view::set(game, crate::room_view::Word::Area, selection.save_area);
+        crate::session_cohort::with(game, |_, room: &mut crate::room_view::RoomGeometry| {
+            room.area = selection.save_area
+        });
         selection.load_station = selection.save_station;
         draw_area_labels(screens, game);
         return;
     }
-    crate::room_view::set(
-        game,
-        crate::room_view::Word::Area,
-        AREAS[usize::from(screens.save_selection.map_area_index)],
-    );
+    let area = AREAS[usize::from(screens.save_selection.map_area_index)];
+    crate::session_cohort::with(game, |_, room: &mut crate::room_view::RoomGeometry| {
+        room.area = area
+    });
     let mut bits = native_word(
-        USED_STATIONS + 2 * usize::from(crate::room_view::current(game).area),
+        USED_STATIONS
+            + 2 * usize::from(
+                crate::session_cohort::load::<crate::room_view::RoomGeometry, _>(game).area,
+            ),
         game,
     );
     let mut station = 0u16;
-    let coordinates = station_coordinates(crate::room_view::current(game).area, game);
+    let coordinates = station_coordinates(
+        crate::session_cohort::load::<crate::room_view::RoomGeometry, _>(game).area,
+        game,
+    );
     let mut remaining = 16u16;
     let mut unlocked_only = true;
     loop {
@@ -459,8 +473,11 @@ fn begin_room_window<H: Host + ?Sized>(
         .write_byte(super::menu_window::ram::WINDOW_2_TABLE + 9, 0);
     menu_tilemap::area_label(game);
     menu_tilemap::upload(512, 0x7e4000, 1, false, game);
-    word! {game; EXPAND_SQ_TIMER = WINDOW_TIMERS[crate::room_view::current(game).area as usize]; }
-    let label: i32 = ((4u16).wrapping_mul(crate::room_view::current(game).area)) as i32 >> 1;
+    word! {game; EXPAND_SQ_TIMER = WINDOW_TIMERS[crate::session_cohort::load::<crate::room_view::RoomGeometry, _>(game).area as usize]; }
+    let label: i32 = ((4u16)
+        .wrapping_mul(crate::session_cohort::load::<crate::room_view::RoomGeometry, _>(game).area))
+        as i32
+        >> 1;
     word!(game.EXPAND_SQ_LEFT_POS = LABEL_POSITIONS[label as usize]);
     word!(game.EXPAND_SQ_RIGHT_POS = word!(game.EXPAND_SQ_LEFT_POS));
     word!(game.EXPAND_SQ_TOP_POS = LABEL_POSITIONS[(label + 1) as usize]);
@@ -469,7 +486,10 @@ fn begin_room_window<H: Host + ?Sized>(
         EXPAND_SQ_LEFT_SUBPOS, EXPAND_SQ_RIGHT_SUBPOS, EXPAND_SQ_TOP_SUBPOS,
         EXPAND_SQ_BOTTOM_SUBPOS,
     }
-    super::menu_window::load_velocities(crate::room_view::current(game).area, game);
+    super::menu_window::load_velocities(
+        crate::session_cohort::load::<crate::room_view::RoomGeometry, _>(game).area,
+        game,
+    );
     super::menu_window::project(game);
     crate::display::sequence::write_register_and_mirror(game, HDMAEN as u16, 0xc, 0x85, true);
     menu.menu_index = menu.menu_index.wrapping_add(1);
@@ -519,7 +539,20 @@ fn initialize_room<H: Host + ?Sized>(
     crate::hdma_objects::clear_hdma(game);
     let header = crate::projection::word(game, crate::ram::words::ROOM_PTR);
     let room = menu_tilemap::native_record(0x8f0000 | u32::from(header), game);
-    crate::room_view::enter_header(game, [1, 2, 3].map(|at| room.byte(at)));
+    // The area and map position take only their low bytes from the header.
+    let [area, x, y] = [1, 2, 3].map(|at| u16::from(room.byte(at)));
+    crate::session_cohort::with(
+        game,
+        |_,
+         (geometry, effects): &mut (
+            crate::room_view::RoomGeometry,
+            crate::room_view::RoomEffects,
+        )| {
+            geometry.area = (geometry.area & 0xff00) | area;
+            effects.map_x = (effects.map_x & 0xff00) | x;
+            effects.map_y = (effects.map_y & 0xff00) | y;
+        },
+    );
     // The room selection above stores BG1's scroll, so the copy starts here.
     session_cohort::with(game, |game, scroll: &mut BgScroll| {
         reset_animations(&mut screens.map, menu, scroll, game);
@@ -558,7 +591,10 @@ fn choose_room_on<H: Host + ?Sized>(
     {
         game.queue_sound(0, 0x38_u8, 6);
         let mut unlocked: u16 = native_word(
-            USED_STATIONS + 2 * usize::from(crate::room_view::current(game).area),
+            USED_STATIONS
+                + 2 * usize::from(
+                    crate::session_cohort::load::<crate::room_view::RoomGeometry, _>(game).area,
+                ),
             game,
         );
         let selection = &mut screens.save_selection;
@@ -567,7 +603,10 @@ fn choose_room_on<H: Host + ?Sized>(
             unlocked >>= 1;
             remaining -= 1;
         }
-        let stations = station_coordinates(crate::room_view::current(game).area, game);
+        let stations = station_coordinates(
+            crate::session_cohort::load::<crate::room_view::RoomGeometry, _>(game).area,
+            game,
+        );
         let station_offset: i16 = (4i16).wrapping_mul(selection.load_station as i16);
         let station_x: u16 = stations.table_word((station_offset >> 1) as isize);
         let station_y: u16 = stations
@@ -586,7 +625,13 @@ fn choose_room_on<H: Host + ?Sized>(
                 if terminator == -1i16 {
                     selection.load_station = 0;
                     unlocked = native_word(
-                        USED_STATIONS + 2 * usize::from(crate::room_view::current(game).area),
+                        USED_STATIONS
+                            + 2 * usize::from(
+                                crate::session_cohort::load::<crate::room_view::RoomGeometry, _>(
+                                    game,
+                                )
+                                .area,
+                            ),
                         game,
                     );
                 } else if terminator != -2i16 {
@@ -700,8 +745,15 @@ fn restore_area<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H, _: &mut Me
     for area in 0..6 {
         menu_tilemap::area_palette(area, false, game);
     }
-    menu_tilemap::area_palette(crate::room_view::current(game).area, true, game);
-    load_background(crate::room_view::current(game).area, game);
+    menu_tilemap::area_palette(
+        crate::session_cohort::load::<crate::room_view::RoomGeometry, _>(game).area,
+        true,
+        game,
+    );
+    load_background(
+        crate::session_cohort::load::<crate::room_view::RoomGeometry, _>(game).area,
+        game,
+    );
     menu.menu_index = menu.menu_index.wrapping_add(1);
 }
 fn begin_return_window<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H, _: &mut MenuScreens) {
@@ -709,9 +761,12 @@ fn begin_return_window<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H, _: 
     game.queue_sound(0, 0x3c_u8, 6);
     word! { game;
         EXPAND_SQ_TIMER =
-            (WINDOW_TIMERS[crate::room_view::current(game).area as usize]).wrapping_sub(12);
+            (WINDOW_TIMERS[crate::session_cohort::load::<crate::room_view::RoomGeometry, _>(game).area as usize]).wrapping_sub(12);
     }
-    super::menu_window::load_velocities(crate::room_view::current(game).area, game);
+    super::menu_window::load_velocities(
+        crate::session_cohort::load::<crate::room_view::RoomGeometry, _>(game).area,
+        game,
+    );
     word! { game;
         EXPAND_SQ_LEFT_POS = 8;
         EXPAND_SQ_RIGHT_POS = 248;
@@ -783,9 +838,9 @@ fn set_native_word<H: Host + ?Sized>(offset: usize, value: u16, game: &mut H) {
 }
 
 fn area_selection<H: Host + ?Sized>(game: &H) -> Option<usize> {
-    AREAS
-        .iter()
-        .position(|&area| area == crate::room_view::current(game).area)
+    AREAS.iter().position(|&area| {
+        area == crate::session_cohort::load::<crate::room_view::RoomGeometry, _>(game).area
+    })
 }
 
 const SCROLL_SPEEDS: [u16; 32] = [
@@ -865,7 +920,9 @@ pub fn draw_icons<H: Host + ?Sized>(
     }
     match mode {
         IconMode::Pause => {
-            if crate::room_view::current(game).area == screens.save_selection.save_area {
+            if crate::session_cohort::load::<crate::room_view::RoomGeometry, _>(game).area
+                == screens.save_selection.save_area
+            {
                 let bits = station_bits(0, game);
                 let mut bytes = bits.to_ne_bytes();
                 bytes[0] = bits as u8
@@ -882,7 +939,8 @@ pub fn draw_icons<H: Host + ?Sized>(
             // This fixed table is native and linear; only its result is bank-wrapped.
             let address = game.native_image().table_word(
                 sm_data::cartridge::lorom_offset(0x82c80b) as usize,
-                crate::room_view::current(game).area as isize,
+                crate::session_cohort::load::<crate::room_view::RoomGeometry, _>(game).area
+                    as isize,
             );
             let record = map_record(address, game);
             let offset = 4 * usize::from(screens.save_selection.load_station);
@@ -901,7 +959,7 @@ pub fn draw_icons<H: Host + ?Sized>(
             }
         }
     }
-    if crate::room_view::current(game).area == 0 {
+    if crate::session_cohort::load::<crate::room_view::RoomGeometry, _>(game).area == 0 {
         crate::sprite_output::menu(
             0x63,
             0xd8u16.wrapping_sub(bg1[0]),
@@ -913,7 +971,11 @@ pub fn draw_icons<H: Host + ?Sized>(
 }
 
 fn station_bits<H: Host + ?Sized>(offset: usize, game: &mut H) -> u16 {
-    let address = USED_STATIONS + 2 * usize::from(crate::room_view::current(game).area) + offset;
+    let address = USED_STATIONS
+        + 2 * usize::from(
+            crate::session_cohort::load::<crate::room_view::RoomGeometry, _>(game).area,
+        )
+        + offset;
     u16::from_ne_bytes([
         game.ram().read_byte(address),
         game.ram().read_byte(address + 1),
@@ -929,7 +991,10 @@ fn icon_group<H: Host + ?Sized>(
     game: &mut H,
 ) {
     let mut cursor = map_record(
-        (i32::from(table) + 2 * i32::from(crate::room_view::current(game).area)) as u16,
+        (i32::from(table)
+            + 2 * i32::from(
+                crate::session_cohort::load::<crate::room_view::RoomGeometry, _>(game).area,
+            )) as u16,
         game,
     )
     .word(0);
@@ -966,10 +1031,15 @@ fn boss_icons<H: Host + ?Sized>(
     bg1: [u16; 2],
     game: &mut H,
 ) {
-    let mut bits =
-        crate::progress::leased::boss_byte_at(crate::room_view::current(game).area, game) as i32;
+    let mut bits = crate::progress::leased::boss_byte_at(
+        crate::session_cohort::load::<crate::room_view::RoomGeometry, _>(game).area,
+        game,
+    ) as i32;
     let cursor = map_record(
-        (i32::from(table) + 2 * i32::from(crate::room_view::current(game).area)) as u16,
+        (i32::from(table)
+            + 2 * i32::from(
+                crate::session_cohort::load::<crate::room_view::RoomGeometry, _>(game).area,
+            )) as u16,
         game,
     )
     .word(0);
@@ -1055,11 +1125,13 @@ pub fn draw_player_marker<H: Host + ?Sized>(map: &mut MapScreenState, bg1: [u16;
     let sprite = advance_marker(map);
     crate::sprite_output::menu(
         sprite,
-        (8 * (i32::from(crate::room_view::effects(game).map_x)
-            + i32::from(game.ram().read_byte(crate::ram::words::SAMUS_X_POS + 1)))
+        (8 * (i32::from(
+            crate::session_cohort::load::<crate::room_view::RoomEffects, _>(game).map_x,
+        ) + i32::from(game.ram().read_byte(crate::ram::words::SAMUS_X_POS + 1)))
             - i32::from(bg1[0])) as u16,
-        (8 * (i32::from(crate::room_view::effects(game).map_y)
-            + i32::from(game.ram().read_byte(crate::ram::words::SAMUS_Y_POS + 1))
+        (8 * (i32::from(
+            crate::session_cohort::load::<crate::room_view::RoomEffects, _>(game).map_y,
+        ) + i32::from(game.ram().read_byte(crate::ram::words::SAMUS_Y_POS + 1))
             + 1)
             - i32::from(bg1[1])) as u16,
         3584,
@@ -1070,7 +1142,9 @@ pub fn draw_player_marker<H: Host + ?Sized>(map: &mut MapScreenState, bg1: [u16;
 pub fn display_elevator_destinations<H: Host + ?Sized>(bg1: [u16; 2], game: &mut H) {
     if game.ram().read_byte(
         crate::ram::bytes::MAP_STATION_BYTE_ARRAY
-            + usize::from(crate::room_view::current(game).area),
+            + usize::from(
+                crate::session_cohort::load::<crate::room_view::RoomGeometry, _>(game).area,
+            ),
     ) == 0
     {
         return;
@@ -1079,7 +1153,7 @@ pub fn display_elevator_destinations<H: Host + ?Sized>(bg1: [u16; 2], game: &mut
         &game.pause_menu_tables().map_icons,
         game,
         MAP_ICON_ADDRESS,
-        crate::room_view::current(game).area as isize,
+        crate::session_cohort::load::<crate::room_view::RoomGeometry, _>(game).area as isize,
     ));
     loop {
         let record = map_record(cursor as u16, game);
@@ -1125,7 +1199,7 @@ pub fn center_map<H: Host + ?Sized>(
         + (i32::from(map.max_x_scroll.wrapping_sub(map.min_x_scroll)) >> 1)
         - 128) as u16;
     let x = (8
-        * (i32::from(crate::room_view::effects(game).map_x)
+        * (i32::from(crate::session_cohort::load::<crate::room_view::RoomEffects, _>(game).map_x)
             + i32::from((game.player_x() & 0xff00) >> 8))
         - i32::from(bg1[0])) as u16;
     let right = 224i16.wrapping_sub(x as i16);
@@ -1143,7 +1217,7 @@ pub fn center_map<H: Host + ?Sized>(
     let aligned = (i32::from(vertical_center) - i32::from(middle)) & 0xfff8;
     bg1[1] = (-aligned) as u16;
     let y = (8
-        * (i32::from(crate::room_view::effects(game).map_y)
+        * (i32::from(crate::session_cohort::load::<crate::room_view::RoomEffects, _>(game).map_y)
             + i32::from(game.ram().read_byte(crate::ram::words::SAMUS_Y_POS + 1))
             + 1)
         + aligned) as u16;
@@ -1219,7 +1293,9 @@ pub fn scroll_limits<H: Host + ?Sized>(screens: &mut MenuScreens, game: &mut H) 
     let source = if screens.save_selection.has_area_map != 0 {
         let pointer = map_record(
             (i32::from(ADDR_K_PAUSE_MENU_MAP_DATA as u16)
-                + 2 * i32::from(crate::room_view::current(game).area)) as u16,
+                + 2 * i32::from(
+                    crate::session_cohort::load::<crate::room_view::RoomGeometry, _>(game).area,
+                )) as u16,
             game,
         )
         .word(0);
@@ -1229,7 +1305,7 @@ pub fn scroll_limits<H: Host + ?Sized>(screens: &mut MenuScreens, game: &mut H) 
     };
     let map = &mut screens.map;
     map.min_x_scroll = find_map_edge(source.as_ref(), MapEdge::Left, game).wrapping_mul(8);
-    if crate::room_view::current(game).area == 4 {
+    if crate::session_cohort::load::<crate::room_view::RoomGeometry, _>(game).area == 4 {
         map.min_x_scroll = map.min_x_scroll.wrapping_sub(24);
     }
     map.max_x_scroll = find_map_edge(source.as_ref(), MapEdge::Right, game).wrapping_mul(8);
@@ -1243,8 +1319,11 @@ pub enum MapScreen {
 }
 
 pub fn render_map<H: Host + ?Sized>(screen: MapScreen, game: &mut H) {
-    let mut area = crate::room_view::current(game).area;
-    if (i32::from(crate::room_view::current(game).area) - 7) & 0x8000 == 0 {
+    let mut area = crate::session_cohort::load::<crate::room_view::RoomGeometry, _>(game).area;
+    if (i32::from(crate::session_cohort::load::<crate::room_view::RoomGeometry, _>(game).area) - 7)
+        & 0x8000
+        == 0
+    {
         area = 0;
     }
     let address = menu_tilemap::native_record(0x82964a, game).load24(3 * usize::from(area));
@@ -1264,7 +1343,9 @@ pub fn render_map<H: Host + ?Sized>(screen: MapScreen, game: &mut H) {
     );
     if game.ram().read_byte(
         crate::ram::bytes::MAP_STATION_BYTE_ARRAY
-            + usize::from(crate::room_view::current(game).area),
+            + usize::from(
+                crate::session_cohort::load::<crate::room_view::RoomGeometry, _>(game).area,
+            ),
     ) != 0
     {
         let mut mapped = bitmap.word(0).swap_bytes();

@@ -551,8 +551,8 @@ fn room_view_round_trips_every_field() {
         *field(&mut s, index) = value(k, 0);
     }
     let host = Projection(s);
-    let geometry = sm_game::room_view::current(&host);
-    let effects = sm_game::room_view::effects(&host);
+    let geometry = sm_game::session_cohort::load::<sm_game::room_view::RoomGeometry, _>(&host);
+    let effects = sm_game::session_cohort::load::<sm_game::room_view::RoomEffects, _>(&host);
     let values: Vec<u16> = (0..12).map(|k| value(k, 0)).collect();
     assert_eq!(
         [

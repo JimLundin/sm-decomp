@@ -166,9 +166,11 @@ pub fn initial<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     crate::cinematic_display::configure_cinematic_display(CinematicDisplay::Intro, cine, game);
     word!(game.CUR_IRQ_HANDLER = 0);
     word!(game.IRQHANDLER_NEXT_HANDLER = 0);
-    crate::room_view::set(game, crate::room_view::Word::Area, 0);
-    crate::room_view::set(game, crate::room_view::Word::Width, 16);
-    crate::room_view::set(game, crate::room_view::Word::Height, 16);
+    crate::session_cohort::with(game, |_, room: &mut crate::room_view::RoomGeometry| {
+        room.area = 0;
+        room.width = 16;
+        room.height = 16;
+    });
     game.initialize_player();
     game.update_beam_tiles_and_palette();
     crate::session_cohort::with(game, |_, inventory: &mut inventory::Inventory| {
@@ -413,7 +415,9 @@ pub fn start_game_at_ceres<H: Host + ?Sized>(game: &mut H) {
     let slot = crate::session_cohort::with(game, |game, selection: &mut SaveSelection| {
         selection.loading_game_state = SET_UP_NEW_GAME;
         word!(game.GAME_STATE = SET_UP_NEW_GAME);
-        crate::room_view::set(game, crate::room_view::Word::Area, CERES);
+        crate::session_cohort::with(game, |_, room: &mut crate::room_view::RoomGeometry| {
+            room.area = CERES
+        });
         selection.load_station = 0;
         selection.selected_slot
     });

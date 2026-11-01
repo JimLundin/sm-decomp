@@ -56,7 +56,7 @@ const ROOM_SHAKES: [u16; 144] = [
 ];
 
 pub fn finish_frame<H: Host + ?Sized>(game: &mut H) {
-    let quake = crate::room_view::effects(game);
+    let quake = crate::session_cohort::load::<crate::room_view::RoomEffects, _>(game);
     if quake.earthquake_timer != 0
         && word!(game.TIME_IS_FROZEN_FLAG) == 0
         && (quake.earthquake_kind as i16).wrapping_sub(36) < 0
@@ -79,11 +79,10 @@ pub fn finish_frame<H: Host + ?Sized>(game: &mut H) {
         {
             checked_word!(game, register; += ROOM_SHAKES[index + offset].wrapping_mul(direction));
         }
-        crate::room_view::set_effect(
-            game,
-            crate::room_view::EffectWord::EarthquakeTimer,
-            quake.earthquake_timer.wrapping_sub(1),
-        );
+        let timer = quake.earthquake_timer.wrapping_sub(1);
+        crate::session_cohort::with(game, |_, room: &mut crate::room_view::RoomEffects| {
+            room.earthquake_timer = timer
+        });
         // Kinds from 18 also shake the active enemies.
         if (quake.earthquake_kind as i16).wrapping_sub(18) >= 0 {
             crate::actors::scheduling::shake_active_enemies(&mut game.runtime());

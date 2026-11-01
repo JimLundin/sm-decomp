@@ -575,7 +575,9 @@ fn clear_slot<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
     save_slots::initialize(game);
     save_slots::load(copy_source(game), game);
     let source = copy_source(game);
-    crate::room_view::set(game, crate::room_view::Word::Area, source);
+    crate::session_cohort::with(game, |_, room: &mut crate::room_view::RoomGeometry| {
+        room.area = source
+    });
     session_cohort::with(game, |game, selection| load_area_map(selection, game));
     crate::word_transfers!(game, ascending, 288; native(0x3b00) <- value(15));
     let cleared = BIT_SHL_NOT[usize::from(copy_source(game))];

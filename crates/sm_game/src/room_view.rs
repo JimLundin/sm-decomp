@@ -4,12 +4,12 @@
 //! `Session::room` owns these words (`area`, `width`, `height`,
 //! `scroll_width`, `scroll_height`); `session_encoding` projects them and
 //! names their layout once. Code that runs outside a lease (the menus, the
-//! display refresh, the intro) reads them with [`current`] and stores with
-//! [`set`], through the host's projected bytes: the owned Session's
-//! projection while one is installed, the byte image otherwise, with the same
-//! bytes and order as the named words they replace. Lease code uses
+//! display refresh, the intro) reads and stores them as [`RoomGeometry`] and
+//! [`RoomEffects`] copies through `session_cohort`. Lease code uses
 //! `session().room` directly.
-use crate::ram::CompatibilityRam;
+use crate::ram::words as ram;
+use crate::session::Session;
+use crate::session_cohort::Cohort;
 
 /// The owned room words this view covers.
 #[derive(Clone, Copy, Default, Debug, PartialEq, Eq)]
@@ -36,63 +36,69 @@ pub struct RoomEffects {
     pub elevator_properties: u16,
 }
 
-/// An effect or placement word, by its Session field.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum EffectWord {
-    /// `feedback.earthquake_kind` (`earthquake_type`).
-    EarthquakeKind,
-    /// `feedback.earthquake_timer`.
-    EarthquakeTimer,
-    /// `mechanisms.statue_animation` (`tourian_entrance_statue_animstate`).
-    StatueAnimation,
-    /// `mechanisms.statue_finished` (`tourian_entrance_statue_finished`).
-    StatueFinished,
-    /// `room.entry.map_x` (`room_x_coordinate_on_map`).
-    MapX,
-    /// `room.entry.map_y` (`room_y_coordinate_on_map`).
-    MapY,
-    /// `room.entry.elevator_properties` (`elevator_door_properties_orientation`).
-    ElevatorProperties,
-}
-
-/// The effect and placement words as the host's projection holds them.
-pub fn effects<H: CompatibilityRam + ?Sized>(h: &H) -> RoomEffects {
-    crate::session_encoding::room_effects(&crate::projection::reader(h))
-}
-
-/// Store `value` to `word`, low byte then high, as the named word store did.
-pub fn set_effect<H: CompatibilityRam + ?Sized>(h: &mut H, word: EffectWord, value: u16) {
-    crate::projection::set_word(h, crate::session_encoding::room_effect_address(word), value);
-}
-
-/// Take the area and map position from room header bytes 1..=3, storing only
-/// each word's low byte, as the original's byte stores did.
-pub fn enter_header<H: CompatibilityRam + ?Sized>(h: &mut H, bytes: [u8; 3]) {
-    let area = crate::session_encoding::room_geometry_addresses()[Word::Area as usize];
-    let [x, y] =
-        [EffectWord::MapX, EffectWord::MapY].map(crate::session_encoding::room_effect_address);
-    for (at, byte) in [area, x, y].into_iter().zip(bytes) {
-        crate::projection::set_byte(h, at, byte);
+impl RoomGeometry {
+    fn visit(&mut self, mut visit: impl FnMut(usize, &mut u16)) {
+        visit(ram::AREA_INDEX, &mut self.area);
+        visit(ram::ROOM_WIDTH_IN_BLOCKS, &mut self.width);
+        visit(ram::ROOM_HEIGHT_IN_BLOCKS, &mut self.height);
+        visit(ram::ROOM_WIDTH_IN_SCROLLS, &mut self.scroll_width);
+        visit(ram::ROOM_HEIGHT_IN_SCROLLS, &mut self.scroll_height);
     }
 }
 
-/// A room word, by its Session field.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Word {
-    Area,
-    Width,
-    Height,
-    ScrollWidth,
-    ScrollHeight,
+impl Cohort for RoomGeometry {
+    fn words(&mut self, visit: impl FnMut(usize, &mut u16)) {
+        self.visit(visit);
+    }
+    fn session_words(session: &mut Session, mut visit: impl FnMut(usize, &mut u16)) {
+        let room = &mut session.room;
+        visit(ram::AREA_INDEX, &mut room.area);
+        visit(ram::ROOM_WIDTH_IN_BLOCKS, &mut room.width);
+        visit(ram::ROOM_HEIGHT_IN_BLOCKS, &mut room.height);
+        visit(ram::ROOM_WIDTH_IN_SCROLLS, &mut room.scroll_width);
+        visit(ram::ROOM_HEIGHT_IN_SCROLLS, &mut room.scroll_height);
+    }
 }
 
-/// The room words as the host's projection holds them.
-pub fn current<H: CompatibilityRam + ?Sized>(h: &H) -> RoomGeometry {
-    crate::session_encoding::room_geometry(&crate::projection::reader(h))
-}
-
-/// Store `value` to `word`, low byte then high, as the named word store did.
-pub fn set<H: CompatibilityRam + ?Sized>(h: &mut H, word: Word, value: u16) {
-    let at = crate::session_encoding::room_geometry_addresses()[word as usize];
-    crate::projection::set_word(h, at, value);
+impl Cohort for RoomEffects {
+    fn words(&mut self, mut visit: impl FnMut(usize, &mut u16)) {
+        visit(ram::EARTHQUAKE_TYPE, &mut self.earthquake_kind);
+        visit(ram::EARTHQUAKE_TIMER, &mut self.earthquake_timer);
+        visit(
+            ram::TOURIAN_ENTRANCE_STATUE_ANIMSTATE,
+            &mut self.statue_animation,
+        );
+        visit(
+            ram::TOURIAN_ENTRANCE_STATUE_FINISHED,
+            &mut self.statue_finished,
+        );
+        visit(ram::ROOM_X_COORDINATE_ON_MAP, &mut self.map_x);
+        visit(ram::ROOM_Y_COORDINATE_ON_MAP, &mut self.map_y);
+        visit(
+            ram::ELEVATOR_DOOR_PROPERTIES_ORIENTATION,
+            &mut self.elevator_properties,
+        );
+    }
+    fn session_words(session: &mut Session, mut visit: impl FnMut(usize, &mut u16)) {
+        visit(ram::EARTHQUAKE_TYPE, &mut session.feedback.earthquake_kind);
+        visit(
+            ram::EARTHQUAKE_TIMER,
+            &mut session.feedback.earthquake_timer,
+        );
+        visit(
+            ram::TOURIAN_ENTRANCE_STATUE_ANIMSTATE,
+            &mut session.mechanisms.statue_animation,
+        );
+        visit(
+            ram::TOURIAN_ENTRANCE_STATUE_FINISHED,
+            &mut session.mechanisms.statue_finished,
+        );
+        let entry = &mut session.room.entry;
+        visit(ram::ROOM_X_COORDINATE_ON_MAP, &mut entry.map_x);
+        visit(ram::ROOM_Y_COORDINATE_ON_MAP, &mut entry.map_y);
+        visit(
+            ram::ELEVATOR_DOOR_PROPERTIES_ORIENTATION,
+            &mut entry.elevator_properties,
+        );
+    }
 }
