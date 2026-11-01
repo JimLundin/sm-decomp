@@ -440,6 +440,7 @@ pub fn signal_to_leave(k: u16, game: &mut impl State) {
     }
 }
 pub fn gradually_accelerate_towards_samus(k: u16, game: &mut impl Lease) -> u8 {
+    crate::probe::hit("baby_metroid.accelerate_towards_samus");
     {
         let e: i32 = k as i32;
         let v2: u16 =

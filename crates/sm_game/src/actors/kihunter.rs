@@ -63,6 +63,7 @@ fn begin_drift(game: &mut impl EnemyHost, wings: i32, left: bool) {
 }
 /// Kihunter wings falling function - drifting left ($A8:F7DB) or right ($A8:F8AD).
 fn drift(game: &mut (impl EnemyHost + LeaseActors), left: bool) {
+    crate::probe::hit("kihunter.drift");
     let wings = i32::from(game.current_enemy());
     let record = game
         .lease()

@@ -35,6 +35,7 @@ pub fn setup(
             || pose_matches(c, GroundedPose::SpringRight)
             || pose_matches(c, GroundedPose::SpringLeft))
     {
+        crate::probe::hit("hands.setup");
         if hand == Hand::LowerNorfair {
             flags::set_event(c, 0xc);
         }

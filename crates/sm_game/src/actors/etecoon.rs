@@ -458,6 +458,7 @@ pub fn running_for_tunnel_jump<L: Lease>(game: &mut L, k: u16) {
 
 /// Was `Etecoon_Func_19`.
 pub fn tunnel_jump<L: Lease>(game: &mut L, k: u16) {
+    crate::probe::hit("etecoon.tunnel_jump");
     move_horizontally(game, k);
     move_vertically(game, k);
     let me = k as i32;
