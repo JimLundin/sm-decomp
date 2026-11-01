@@ -3,7 +3,7 @@
 #![forbid(unsafe_code)]
 use super::{api, scheduling};
 use crate::game::enemy_projectiles;
-use crate::game::session_runtime::{Runtime, player_command};
+use crate::game::session_runtime::{Runtime, player_command, write_multiplicand};
 use crate::game::sprite_effect_runtime as sprites;
 use crate::game_state::Game;
 pub(crate) use sm_game::actors::yapping_maw::*;
@@ -17,6 +17,19 @@ const _: () = {
     assert!(i::QUEUE_SOUND_IF_ON_SCREEN == 11051315);
 };
 use sm_game::geometry::Point;
+
+/// Main AI - Yapping Maw ($A8:A211) on the scheduler's lease:
+/// its function, then its body segments; the multiplicand writes and an
+/// unknown function's failure run on the game.
+pub(crate) fn run_main_ai(runtime: &mut Runtime<'_>) {
+    let known = main_ai(runtime, |operand, runtime: &mut Runtime<'_>| {
+        runtime.foreign(|game| write_multiplicand(operand, game));
+    });
+    if !known {
+        runtime.foreign(|game| crate::rtl::report_unreachable(game));
+    }
+    update_segments(runtime);
+}
 
 impl Host for Game {
     fn create_sprite(&mut self, x: u16, y: u16, kind: u16, appearance: u16) -> u16 {
