@@ -192,12 +192,17 @@ fn damage_above_screen<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
         word!(game.SAMUS_PERIODIC_DAMAGE = 8);
     }
 }
-fn write_sky_word<H: crate::menus::host::Host + ?Sized>(value: u16, offset: isize, game: &mut H) {
+fn write_sky_word<H: crate::ram::CompatibilityRam + ?Sized>(
+    value: u16,
+    offset: isize,
+    game: &mut H,
+) {
     crate::word_transfers!(game, ascending, 1; native(0x9f00 + offset) <- value(value));
 }
 
-pub fn advance_parallax<H: crate::menus::host::Host + ?Sized>(_k: u16, game: &mut H) {
-    game.ram().write_byte(0x59, 74);
+/// Advance the scrolling sky's parallax, on the lease the HDMA object opens.
+pub fn advance_parallax<L: crate::actors::boss_lease::BossState + ?Sized>(game: &mut L) {
+    game.compatibility_write_byte(0x59, 74);
     for v1 in 0u16..23 {
         let entry = native_record(0x88aec1 + 8 * u32::from(v1), game);
         let at = i32::from(entry.word(6)) - 0xf78;
@@ -248,9 +253,10 @@ pub fn advance_parallax<H: crate::menus::host::Host + ?Sized>(_k: u16, game: &mu
     write_sky_word(181, v6 as isize + 1, game);
     write_sky_word(0, v6 as isize + 3, game);
 }
-pub fn update_parallax<H: crate::menus::host::Host + ?Sized>(k: u16, game: &mut H) {
+/// Advance the parallax unless time is frozen.
+pub fn update_parallax<L: crate::actors::boss_lease::BossState + ?Sized>(game: &mut L) {
     if word!(game.TIME_IS_FROZEN_FLAG) == 0 {
-        advance_parallax(k, game);
+        advance_parallax(game);
     }
 }
 fn queue_tile_rows<H: crate::menus::host::Host + ?Sized>(address: u32, game: &mut H) {
