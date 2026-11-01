@@ -1,16 +1,12 @@
 //! Kraid's lint, the belly spikes Kraid fires at Samus: its collision with
 //! Samus against the lint hitbox (bank $A7:B96A).
+use crate::actors::boss_lease::BossState;
+use crate::actors::host::Death;
 use crate::actors::layouts::KraidLayout as Kraid;
 use crate::actors::session_slots::session_slot;
 use crate::cartridge::native_record;
 use crate::constants::enemy_properties::K_ENEMY_PROPS_TANGIBLE;
 use crate::ram::word;
-
-/// What Kraid's lint needs beyond the common actor host.
-pub trait Host: crate::actors::host::ActorHost + crate::actors::session_slots::SlotAccess {
-    /// The shared enemy contact reaction, finalizing a death it causes.
-    fn contact_reaction_finalizing_death(&mut self);
-}
 
 const BANK: u8 = 0xa7;
 /// The entry of "Hitbox - Kraid lint" ($A7:92B5) after its count word: left,
@@ -25,14 +21,14 @@ const INSET: i32 = 2;
 const MAX_PUSH: u16 = 16;
 const SIGN: i32 = 0x8000;
 
-fn hitbox(field: usize, game: &mut (impl Host + ?Sized)) -> i32 {
+fn hitbox(field: usize, game: &mut (impl BossState + ?Sized)) -> i32 {
     i32::from(native_record(BANK, HITBOX, game).word(field))
 }
 
 /// Push Samus out of the lint's box, clamp her extra displacement and make the
 /// lint tangible; sign tests are on the low 16 bits as in the original.
 /// Kraid lint / Samus collision handling ($A7:B96A). Was `Kraid_EnemyTouch_Lint`.
-pub fn lint_touch_samus(k: u16, game: &mut (impl Host + ?Sized)) {
+pub fn lint_touch_samus(k: u16, game: &mut (impl BossState + ?Sized)) {
     let e = i32::from(k);
     if session_slot!(game, Kraid[e].base.properties) as i32 & K_ENEMY_PROPS_TANGIBLE as i32 != 0
         || game.invincibility_timer() != 0
@@ -68,7 +64,7 @@ pub fn lint_touch_samus(k: u16, game: &mut (impl Host + ?Sized)) {
         push = MAX_PUSH;
     }
     word!(game.EXTRA_SAMUS_X_DISPLACEMENT = push);
-    game.contact_reaction_finalizing_death();
+    game.react_to_contact(Death::Finalize);
     session_slot!(game, Kraid[e].base.properties, |old| old
         | K_ENEMY_PROPS_TANGIBLE as u16);
 }
