@@ -18,6 +18,10 @@ on:
         type: choice
         options: [patched, faithful]
         default: patched
+      audio_trace:
+        description: Check each row's ordered Cue/port trace against the physical-audio oracle
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -83,7 +87,8 @@ jobs:
     runs-on: windows-2022
     env:
       SM_ORACLE: ${{ inputs.oracle || 'patched' }}
-    timeout-minutes: ${{ matrix.kind == 'checkpoint' && 65 || 120 }}
+      AUDIO_TRACE: ${{ inputs.audio_trace && '1' || '' }}
+    timeout-minutes: ${{ inputs.audio_trace && 125 || (matrix.kind == 'checkpoint' && 65 || 120) }}
     strategy:
       fail-fast: false
       # The route and the corpus at eight each, with PR CI's four jobs, fill the
@@ -171,12 +176,13 @@ jobs:
           python -B .github/scripts/prepare_corpus_inputs.py
           if ($LASTEXITCODE -ne 0) { throw 'Input preparation failed' }
       - name: Run rows
-        timeout-minutes: ${{ matrix.kind == 'checkpoint' && 60 || 120 }}
+        timeout-minutes: ${{ inputs.audio_trace && 120 || (matrix.kind == 'checkpoint' && 60 || 120) }}
         env:
           SEGMENTS: ${{ matrix.segments }}
         run: |
           $rows = @()
           foreach ($id in $env:SEGMENTS.Split(' ')) { $rows += @('--segment', $id) }
+          if ($env:AUDIO_TRACE) { $rows += @('--audio-trace-directory', 'audio-traces') }
           python tools/verify_dll.py rom/sm.smc --corpus scenarios --no-build --direct @rows 2>&1 | Tee-Object -FilePath corpus.log
           $code = $LASTEXITCODE
           "### $env:SEGMENTS" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
