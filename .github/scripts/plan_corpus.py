@@ -38,6 +38,9 @@ def seed_bundle(row):
                      'enemy-boulder-bounce', 'enemy-boulder-roll', 'enemy-evir',
                      'enemy-metroid', 'enemy-etecoon', 'samus-ceres-push'):
         return ('seeds-v1-routeenemies-ad7fd75a7035bea2.tar.gz.enc', 'ad7fd75a7035bea2669dedbfe7db1e528b668b3044d09b55afe5382f9059f892')
+    if row['id'] in ('boss-draygon-grapple-held', 'boss-ceres-ridley-fireballs', 'boss-phantoon-second-round',
+                     'enemy-dachora-shinespark', 'enemy-etecoon-jumps'):
+        return ('seeds-v1-unreached-020b4cd19fbaf9cb.tar.gz.enc', '020b4cd19fbaf9cb4a16c97e6c53060c6c807ab73dbf0b1d6301128b5c7028b2')
     if row['id'] == 'samus-grapple-walljump':
         return ('seeds-v1-grapplewall-4f6db9f4f7fc408a.tar.gz.enc', '4f6db9f4f7fc408aec578994afc84a8b6a61de58acef46ec9f123515e0784061')
     if row['id'] == 'boss-ridley-swoop':

@@ -1829,3 +1829,78 @@ start_frame = 0
 frames = 174
 expect = ["room:D72A"]
 require_hit = ["grapple.special_angle", "grapple.jump_admission", "grapple.release_walljump"]
+
+# Content neither the corpus nor the 100% route reached: a seed's latched
+# movie word, then a recipe (tools/authored_inputs.py) or the controller
+# released (release --set frames=N).
+
+# The boss-draygon words to 1,480 (seed 100-boundary:259), then the
+# draygon-grapple-held recipe: Draygon grabs the released Samus, who selects
+# the grapple and fires it while struggling in his grip.
+[[segment]]
+id = "boss-draygon-grapple-held"
+seed = "100-boundary:259"
+seed_sha256 = "d8a5b0b9a72ca9d31ab86d21c2ef931303f3a6b48459b057a8db309fe89723d7"
+inputs = "authored-draygon-grapple-held.inputs"
+input_sha256 = "75eabfaf1d2120d8852a58fc55cf0266f636d524774eae93148d45b5e185e511"
+start_frame = 0
+frames = 2858
+expect = ["room:DA60"]
+require_hit = ["draygon_grab.grab", "grapple.draygon_direction"]
+pending = "awaiting the seeds-v1-unreached-020b4cd19fbaf9cb ci-data upload"
+
+# The Ceres Ridley fight released from its first frame (frames=1900): Samus
+# never hits back, and Ridley reaches his fireball pattern.
+[[segment]]
+id = "boss-ceres-ridley-fireballs"
+seed = "100-input-phase:6"
+seed_sha256 = "0a6d988b41a6ed6baf83f194d23219f8a98f47c38cea6c2bf81520d5461a2938"
+inputs = "authored-ceres-ridley-fireballs.inputs"
+input_sha256 = "030df170a36ef872591b50bb2800daf1c4cf4472e6c4563a92602b6fb4ec2150"
+start_frame = 0
+frames = 1901
+expect = ["room:E0B5"]
+require_hit = ["ceres_ridley.fireballs_move_to_position"]
+pending = "awaiting the seeds-v1-unreached-020b4cd19fbaf9cb ci-data upload"
+
+# The Phantoon fight released from its first frame (frames=1000): he survives
+# his first round and picks his second-round pattern.
+[[segment]]
+id = "boss-phantoon-second-round"
+seed = "100-input-phase:190"
+seed_sha256 = "ef79426f2c6c8dd824b6a7b0f1b20074b7a7d5147a438969ed0118e55e4b65ea"
+inputs = "authored-phantoon-pattern.inputs"
+input_sha256 = "174d7d87cc1a3c575c63c48e5b82660e4e71655cda056fee01aac265a0ee62df"
+start_frame = 0
+frames = 1001
+expect = ["room:CD13"]
+require_hit = ["phantoon.pick_pattern"]
+pending = "awaiting the seeds-v1-unreached-020b4cd19fbaf9cb ci-data upload"
+
+# The dachora room with Samus moved beside the dachora (scenario dachora),
+# released (frames=1300): it runs, charges and shinesparks.
+[[segment]]
+id = "enemy-dachora-shinespark"
+seed = "scenario-dachora:44"
+seed_sha256 = "c3be67779f54b02a86ef2c2b6683777264b943beab7943ec8ce51164cf176afc"
+inputs = "authored-dachora-shinespark.inputs"
+input_sha256 = "bde9457e50e6dbad0a5abb3c77859302f633c696823bf295cfa8b2044f2ee190"
+start_frame = 0
+frames = 1301
+expect = ["room:9CB3"]
+require_hit = ["dachora.accelerate", "dachora.load_palette"]
+pending = "awaiting the seeds-v1-unreached-020b4cd19fbaf9cb ci-data upload"
+
+# Green Brinstar's main shaft entered beside the etecoons (seed 43), released
+# (frames=2000): they run and wall jump up their shaft.
+[[segment]]
+id = "enemy-etecoon-jumps"
+seed = "100-input-phase:43"
+seed_sha256 = "1ef87bac8d9ca6cb1623cb89d94654c8396cf4b179954ee69c640bc5ef10bc04"
+inputs = "authored-etecoon-jumps.inputs"
+input_sha256 = "9bb4e32798a111b84d8ee11d1d7d30d7b39255778915c3df7bcee16c3e168dbe"
+start_frame = 0
+frames = 2001
+expect = ["room:9AD9"]
+require_hit = ["etecoon.jumping"]
+pending = "awaiting the seeds-v1-unreached-020b4cd19fbaf9cb ci-data upload"

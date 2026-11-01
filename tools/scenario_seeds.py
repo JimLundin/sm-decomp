@@ -118,6 +118,13 @@ SCENARIOS = {
                "selected_item": "power-bombs"},
         note=f"{beam} special beam attack at the landing site")
        for beam in ("wave", "ice", "spazer", "plasma")},
+    # The 100% movie's Dachora room, entered at its top before the route has
+    # the speed booster, with Samus moved to the floor beside the dachora,
+    # which the route never approaches.
+    "dachora": Scenario(
+        base="100-input-phase:44",
+        edits={"x": 170, "y": 1691},
+        note="Samus beside the dachora"),
 }
 
 

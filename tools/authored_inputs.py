@@ -310,6 +310,15 @@ RECIPES = {
         repeat 4 { Select 2; _ 4 }; Right 14; _ 4; Left 6; _ 1
         X+Left 4; X 10; X+Up 2; X 40; _ 4; A 4; _ 60
     """),
+    # After the boss-draygon words to 1,480 (seed 100-boundary:259): stay
+    # released until Draygon grabs Samus, select the grapple, then fire it
+    # while struggling in his grip, straight, up and down, toward him and away.
+    "draygon-grapple-held": Recipe("""
+        _ 1120; Select 2; _ 4
+        Right 10; Right+X 4; Right 20; Right+Up 4; Right+Up+X 4; Right+Up 20
+        Right+Down 4; Right+Down+X 4; Right+Down 20; Left 10; Left+X 4; Left 20
+        Left+Up 4; Left+Up+X 4; Left+Up 20; _ 100
+    """),
 }
 
 SWEEPS = {
@@ -371,6 +380,7 @@ PINNED = {
     "ceres-ridley-door": "45991b53cf8828c9542d208c26bc8d30143eb6f8fa1e21f5e590bec33909cb59",
     "red-tower-refill-door": "73d7fc2e9b32e137867ca292defb27fcf7d9b87316fc4fa004ed442474f4d95d",
     "grapple-walljump": "7e33e488fdb27153a412c60cfdfd446474251343430506417d5dce9848d0ac09",
+    "draygon-grapple-held": "25548fe6af9cc6dc0e3da4f127a498af703f31b4a2a8cc402e0abe0b5fa1ea20",
 }
 
 
