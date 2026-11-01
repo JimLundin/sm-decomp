@@ -2,9 +2,9 @@
 
 Status: **accepted by Jim, 2026-10-31; admitted under
 [REVIEW's lane S conditions](REVIEW.md#scenario-harness-lane-s-jim-2026-10-31);
-steps 1 and 2 landed (the standalone recorder is open); step 3 in progress: engine-only
-free run against the committed oracle digest lock is the frequent gate (Jim, 2026-10-31,
-Decision 4).** It expands
+steps 1 to 3 landed (the standalone recorder is open): engine-only free run against
+the committed oracle digest lock is the frequent gate (Jim, 2026-10-31, Decision 4);
+step 4 in progress: scenarios as data, with `scenario lock` and `scenario cut`.** It expands
 [Validation · Verification strategy](target-architecture/VALIDATION.md#verification-strategy)
 into a concrete design. It is PLAN's one runner: the harness grows inside the current
 verifier and then replaces it, and never runs beside it as a second framework. Its code
@@ -114,10 +114,11 @@ The lock is `scenarios/lock.toml`: every seeded and boot corpus row and every ro
 of both routes, keyed on the oracle's start (seed payload digest, or `boot`) and the
 input digest and budget. `.github/scripts/full_route.py run JOB` passes its
 arguments to the corpus run, so the routes record and check the same way.
-`.github/scripts/lock_gate.py` lists the scenarios that stay on patched lockstep
-(their `docs/LEGACY.md` entries) and fails on a stale lock: an entry whose start,
-inputs or budget changed, an entry for no scenario, or a scenario neither locked
-nor listed. The `lock-gate.yml` workflow runs it, then the engine over every
+A scenario that stays on patched lockstep carries an `unlocked` note (its
+`docs/LEGACY.md` entry). `tools/scenario.py lock --check` fails on a stale lock: an
+entry whose start, inputs or budget changed, an entry for no scenario, or a
+lockable scenario neither locked nor `unlocked`. The `lock-gate.yml` workflow's
+plan (`.github/scripts/lock_gate.py`) runs it, then the engine over every
 locked scenario on each pull request and push; its console carries ids, stream and
 field names, ticks and hashes only.
 
@@ -126,13 +127,59 @@ seeded and boot corpus rows and 520 of the routes' 528 rooms. The other 41 stay 
 lockstep, listed in LEGACY.md. The 23 corpus rows that start from a checkpoint are
 not lockable yet: they need an oracle-side prefix first.
 
+## Scenarios as data
+
+Every corpus row and route room is a scenario in `scenarios/*.toml`
+(`tools/scenario.py`; harness step 4). `corpus.toml` holds the corpus rows with
+their notes, `route-100.toml` and `route-any.toml` one line per room, and
+`regressions.toml` the scenarios `cut` writes. A scenario holds its `id`, its
+`start` (`boot` or `seed:<payload SHA-256>`, and a `prefix` of input Ticks), its
+budget `ticks`, its `facts` and the file's `domains`, plus `tags` (`required`
+marks the coverage scope, `route:100` a route room) and notes: `pending`,
+`unlocked` (stays on patched lockstep, with its LEGACY entry) and `regression`
+(a divergence it once exposed). A fact is a verifier expectation (`room:DF45`,
+`boss:kraid`), `probe:NAME` (a probe the engine must hit) or
+`observe:DOMAIN.FIELD@TICK` (a field the comparison must cover at a Tick the
+scenario runs). `domains` names every compared domain: narrowing it would be a
+tolerance (Decision 2).
+
+`verify_dll.py --corpus scenarios` runs them, so the corpus workflows, the lock
+gate and the route jobs (`full_route.py run`, by `--segment`) share one runner.
+Everything else is generated into `scenarios/lock.toml`, so nobody edits a SHA
+by hand:
+
+- `pins`: each scenario's input file, seed (`capture:index`) and checkpoints by
+  name and SHA-256, and the ci-data bundle holding them;
+- `bundles`: each bundle's ciphertext SHA-256;
+- `[[scenario]]`: the oracle digests (below).
+
+`scenario.py lock` rehashes whatever inputs, seeds and checkpoints are present
+(a recaptured seed rewrites its scenario's `start`), takes `--bundle FILE` and
+`--pin ID KEY=VALUE`, and with `--record` records the faithful oracle for every
+stale lockable scenario. `scenario.py lock --check` needs no data: every
+runnable scenario is pinned and in a pinned bundle, every seeded start matches
+its capture's `movies/room-seeds-*.csv`, every observed field lies inside its
+scenario, and the oracle lock is current. The lock gate's plan runs it on every
+pull request and push. `full_route.py inputs` writes a route's scenarios and pins,
+and `pack` pins its bundle.
+
 ## Turning divergences into scenarios
 
-`scenario cut <run> --at <tick> --window <n>` writes a new scenario. Its Start is a
-checkpoint a few Ticks before the divergence and its inputs are the next *n* Ticks.
-Its fact is the divergent field's oracle value. The checkpoint stays in the encrypted
-bundle; only metadata is committed. So anyone who sees drift in a playthrough, or
-wants to pin a trick, records a movie and gets a small permanent scenario out of it.
+`scenario.py cut <run> --at <tick> --window <n>` writes a new scenario to
+`regressions.toml`. It starts from the run's start with a prefix `--lead` Ticks
+(default 8) before the divergence, which a checkpoint skips, and runs the lead
+and the next *n* Ticks. Its fact is the divergent field (`--report` takes it
+from the run's divergence report; values are never committed), and its
+`regression` note says where it came from. Its inputs (the run's, to the
+window's end, since the checkpoint binds its prefix), its checkpoints (patched
+and, where the faithful prefix replays, faithful) and its seed are packed into
+a new `cut-v1-<digest>.tar.gz.enc` bundle that the lock pins; only metadata is
+committed, and the bundle is uploaded to ci-data with the commit. A Tick here is
+the verifier's frame counter, the input index of seeded and boot rows. So anyone
+who sees drift in a playthrough, or wants to pin a trick, records a movie and
+gets a small permanent scenario out of it. PLAN's regression rows are such
+scenarios: the route rooms that exposed bugs carry `regression` notes, and every
+new comparison failure gets a cut.
 
 Authoring stays text-first:
 
@@ -154,11 +201,11 @@ files and CI logs carry ticks, domain and field names and hashes, never values.
   on `sm_data`, `sm_game` and `sm_runtime`; CI rejects any target package depending on
   it, and it depending on `sm`. The oracle projection stays in `sm`.
 - **Scenario manifest:** TOML, one table per scenario, grouped by file
-  (`scenarios/route-100.toml`, `scenarios/tricks.toml`, `scenarios/bosses.toml`, …).
+  (`scenarios/corpus.toml`, `scenarios/route-100.toml`, `scenarios/regressions.toml`, …).
   A committed scenario holds only its `id`, its `start` as a reference by digest, its
-  `facts` and `domains`, plus `ticks`, `modes`, `tags` (e.g. `trick`, `glitch`,
-  `route`, `boss:ridley`) and `pending`. The digests live in a generated
-  `scenarios/lock.toml`.
+  `facts` and `domains`, plus `ticks`, `tags` (e.g. `trick`, `glitch`, `route:100`,
+  `boss:ridley`) and its notes (`pending`, `unlocked`, `regression`). The digests
+  live in a generated `scenarios/lock.toml` (see [Scenarios as data](#scenarios-as-data)).
 - **Input stream:** the current hex text, with lag Ticks written explicitly as `-`
   lines. Explicit lag Ticks mean a hardware-correct timing fix no longer shifts the
   movie by silently consuming inputs. That shifting is exactly what made the 8
@@ -236,7 +283,8 @@ ground (VALIDATION.md).
 2. **Free-run mode** in the same DLL, for routes and corpus rows. First nightly, then
    on every PR once it is stable.
 3. **`scenario` manifests** generated from `movies/segments.toml` and the route CSVs,
-   so the formats change without losing a row. Add `scenario cut` and `scenario lock`.
+   so the formats change without losing a row (all 687 came back unchanged; both are
+   deleted). Add `scenario cut` and `scenario lock`.
 4. **The `sm_tools` binary** takes over orchestration from `verify_dll.py` and
    `full_route.py`. The DLL build stays, so the oracle remains reachable while it is
    still linked.

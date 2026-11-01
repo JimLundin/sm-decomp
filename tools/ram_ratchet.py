@@ -5,7 +5,8 @@ docs/REVIEW.md's Phase 2 ratchets: no landing may raise cycle_report's
 sm_game_ram total sites or coupled files, and moves are line-neutral or
 smaller in production lines (crates/*/src plus sm/src outside verification;
 #[cfg(test)] items inside crates/*/src are tests, not production). The
-scenario harness (crates/sm_tools and sm/src/verification/observation) is
+scenario harness (crates/sm_tools, sm/src/verification/observation and
+tools/scenario.py) is
 verification, reported separately (REVIEW, lane S condition 1).
 The baseline below only moves down: run with --update after a landing that
 lowers a measure, and commit the result with that landing.
@@ -94,6 +95,9 @@ def harness_lines():
                 if name.endswith(".rs"):
                     with open(os.path.join(root, name), "rb") as source:
                         total += source.read().decode("utf-8").count("\n")
+    # The scenario model, its lock and cut.
+    with open(os.path.join("tools", "scenario.py"), "rb") as source:
+        total += source.read().decode("utf-8").count("\n")
     return total
 
 

@@ -7,8 +7,11 @@ SRAM, VRAM, CGRAM, OAM, PPU registers and port state, and the rendered image
 must match. The [README](../README.md#verification) lists what this does not
 cover.
 
-[segments.toml](segments.toml) defines the scenarios (rows), their inputs and
-required events: 161 rows, 247,574 selected frames. Follow the
+The corpus scenarios in [scenarios/corpus.toml](../scenarios/corpus.toml)
+define the rows and the events each must show: 161 rows, 247,574 selected
+frames. [scenarios/lock.toml](../scenarios/lock.toml) pins their inputs, seeds
+and checkpoints, and the bundles holding them; `tools/scenario.py lock`
+writes it (see [the harness](../docs/SCENARIO_HARNESS.md#scenarios-as-data)). Follow the
 [build guide](../docs/ITERATION.md) first; commands below run from the
 repository root with Python 3.11+ (`python3` on systems without `python`).
 You need your own unheadered ROM at `rom/sm.smc`. The verifier builds only on
@@ -19,7 +22,7 @@ Windows x86-64 GNU.
 With its inputs and starting state installed:
 
 ```sh
-python tools/verify_dll.py rom/sm.smc --corpus movies/segments.toml --segment boss-crocomire
+python tools/verify_dll.py rom/sm.smc --corpus scenarios --segment boss-crocomire
 ```
 
 Repeat `--segment ID` to select more rows. Omit it to run the full corpus once
@@ -41,7 +44,7 @@ python tools/ci_seed_data.py restore target/reseeded.enc --rom rom/sm.smc --sha2
 
 Most rows start from original-emulator room seeds; eight start from verifier
 checkpoints. The current asset names, hashes and exact row-to-bundle mapping
-are in `seed_bundle` in [plan_corpus.py](../.github/scripts/plan_corpus.py).
+are the `bundles` and `pins` of [scenarios/lock.toml](../scenarios/lock.toml).
 Restore each bundle with only its matching `--segment` selections. Restoration
 checks hashes and refuses to replace different existing files.
 Add `--runtime-only` when you only need to replay existing rows; it restores

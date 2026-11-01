@@ -1,6 +1,7 @@
 name: Corpus replay
 
-# Runs movies/segments.toml rows against the oracle on hosted Windows runners.
+# Runs the corpus scenarios (every scenario but the route rooms)
+# against the oracle on hosted Windows runners.
 # The ROM comes from repository secrets; ROM-derived files (inputs, checkpoints)
 # stay private; the seed release asset is encrypted with a ROM-derived key.
 on:
@@ -176,7 +177,7 @@ jobs:
         run: |
           $rows = @()
           foreach ($id in $env:SEGMENTS.Split(' ')) { $rows += @('--segment', $id) }
-          python tools/verify_dll.py rom/sm.smc --corpus movies/segments.toml --no-build --direct @rows 2>&1 | Tee-Object -FilePath corpus.log
+          python tools/verify_dll.py rom/sm.smc --corpus scenarios --no-build --direct @rows 2>&1 | Tee-Object -FilePath corpus.log
           $code = $LASTEXITCODE
           "### $env:SEGMENTS" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
           '```' | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8

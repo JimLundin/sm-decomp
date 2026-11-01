@@ -12,7 +12,9 @@ import subprocess
 import sys
 import time
 
-import scenario
+# The scenario model beside this script, whichever directory Python starts in.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import scenario  # noqa: E402
 
 # Windows remains the pinned verifier host; Linux builds the same cdylib as a .so.
 WINDOWS = os.name == "nt"
@@ -583,9 +585,7 @@ def run_single_side(root, args, segment, replay, report, tomllib):
             return code
         with entry.open("rb") as file:
             run = tomllib.load(file)
-        key = {"id": name, "oracle": "faithful",
-               "start": f"seed:{segment['seed_sha256']}" if "seed" in segment else "boot",
-               "inputs": segment["input_sha256"], "frames": segment["frames"]}
+        key = {"id": name, "oracle": "faithful"} | scenario.lock_key(segment)
         if args.mode == "lock":
             args.lock_entries[name] = key | run
             print(f"LOCK {name}: {run['ticks']} ticks, {len(run['digests'])} streams", flush=True)
@@ -608,17 +608,14 @@ def run_single_side(root, args, segment, replay, report, tomllib):
 
 
 def run_corpus(root, args):
-    import csv
     import re
     import tomllib
     import uuid
 
-    recipe_path = args.corpus.resolve()
-    with recipe_path.open("rb") as file:
-        recipe = tomllib.load(file)
-    if (set(recipe) - {"version", "required", "segment"}
-            or type(recipe.get("version")) is not int or recipe["version"] != 1):
-        raise ValueError("corpus requires version=1 and only required/segment tables")
+    # The corpus is the scenarios directory (tools/scenario.py): every
+    # scenario's row, with its pinned files under the checkout.
+    checkout = args.corpus.resolve().parent
+    required, rows = scenario.recipe(checkout)
 
     def strings(value, field):
         if (not isinstance(value, list) or any(not isinstance(x, str) or not x for x in value)
@@ -631,14 +628,15 @@ def run_corpus(root, args):
             raise ValueError(f"corpus {field} must be an integer in {minimum}..u64::MAX")
         return value
 
-    required = strings(recipe.get("required"), "required")
-    if not required or not isinstance(recipe.get("segment", []), list):
-        raise ValueError("corpus requires nonempty required IDs and segment tables")
+    required = strings(required, "required")
+    if not required:
+        raise ValueError("corpus requires nonempty required IDs")
     segments = {}
-    for segment in recipe.get("segment", []):
+    for segment in rows:
         allowed = {"id", "inputs", "input_sha256", "start_frame", "frames", "require_hit",
-                   "after_hits", "expect", "after_expectations", "pending", "seed", "seed_sha256",
-                   "checkpoint", "checkpoint_sha256", "faithful_checkpoint", "faithful_checkpoint_sha256"}
+                   "after_hits", "expect", "after_expectations", "observe", "pending", "seed",
+                   "seed_sha256", "checkpoint", "checkpoint_sha256", "faithful_checkpoint",
+                   "faithful_checkpoint_sha256", "bundle", "tags", "unlocked", "regression", "chain"}
         if not isinstance(segment, dict) or set(segment) - allowed:
             raise ValueError("corpus segment has unknown fields")
         # The faithful oracle starts checkpoint rows from its own original-game
@@ -669,7 +667,7 @@ def run_corpus(root, args):
         else:
             if not isinstance(segment.get("inputs"), str) or not segment["inputs"]:
                 raise ValueError(f"corpus {name}: inputs path required")
-            segment["inputs"] = (recipe_path.parent / segment["inputs"]).resolve()
+            segment["inputs"] = (checkout / "movies" / segment["inputs"]).resolve()
             digest = segment.get("input_sha256", "")
             if (not isinstance(digest, str) or len(digest) != 64
                     or any(c not in "0123456789abcdef" for c in digest)):
@@ -691,22 +689,23 @@ def run_corpus(root, args):
                     integer(segment[tail], name + " " + tail, 0)
                     if not segment[key]:
                         raise ValueError(f"corpus {name}: {tail} requires {key}")
-            if not segment["require_hit"] and not segment["expect"]:
-                raise ValueError(f"corpus {name}: require_hit or expect must demonstrate coverage")
+            # An observed field needs no verifier option: lockstep compares
+            # every domain on every tick, and scenario.py checks its tick.
+            if not segment["require_hit"] and not segment["expect"] and not segment.get("observe"):
+                raise ValueError(f"corpus {name}: a probe, expectation or observed field must demonstrate coverage")
         segments[name] = segment
     selected = strings(args.segment, "selection") if args.segment else list(dict.fromkeys(required + list(segments)))
     for name in selected:
         segments.setdefault(name, {"id": name, "pending": "required or selected recipe is missing"})
     partial = bool(args.segment) or not set(required).issubset(selected)
     print(f"Corpus {'PARTIAL selection' if partial else 'full required scope'}: "
-          f"{len(selected)} selected, {len(required)} required; {recipe_path}", flush=True)
+          f"{len(selected)} selected, {len(required)} required; {args.corpus}", flush=True)
     def input_matches(segment):
         if "checkpoint" in segment:
-            recipe_root = recipe_path.parent.parent
-            checkpoint = recipe_root / "target/checkpoints" / segment["checkpoint"]
-            if not checkpoint.resolve().is_relative_to(recipe_root):
+            checkpoint = checkout / "target/checkpoints" / segment["checkpoint"]
+            if not checkpoint.resolve().is_relative_to(checkout):
                 raise ValueError("configured checkpoint escapes checkout")
-            if any(part.is_symlink() for part in (checkpoint, *checkpoint.parents) if part != recipe_root):
+            if any(part.is_symlink() for part in (checkpoint, *checkpoint.parents) if part != checkout):
                 raise ValueError("configured checkpoint contains symlink")
             if not checkpoint.is_file():
                 raise ValueError("configured checkpoint is not a regular file")
@@ -721,26 +720,8 @@ def run_corpus(root, args):
             segment["_checkpoint_path"] = checkpoint
             segment["_checkpoint_frame"] = frame
         if "seed" in segment:
-            capture, index = segment["seed"].split(":")
-            directory = recipe_path.parent.parent / "target/seeds" / capture
-            with (directory / "rooms.csv").open(newline="") as file:
-                entries = [row for row in csv.DictReader(file)
-                           if row["room_index"] == str(int(index)) and row["region"] == "wram"]
-            if len(entries) != 1:
-                raise ValueError("seed index requires exactly one captured WRAM entry")
-            filename = entries[0]["file"]
-            if Path(filename).name != filename or not filename.endswith("-wram.bin"):
-                raise ValueError("invalid indexed seed filename")
-            seed = directory / filename
-            digest = hashlib.sha256()
-            for region, size in (("wram", 131072), ("sram", 8192), ("vram", 65536),
-                                 ("cgram", 512), ("oam", 544), ("apuram", 65536)):
-                data = seed.with_name(filename.replace("-wram.bin", f"-{region}.bin")).read_bytes()
-                if len(data) != size:
-                    raise ValueError(f"seed {region} requires {size} bytes")
-                digest.update(data)
-            digest.update(seed.with_name(filename.replace("-wram.bin", "-registers.csv")).read_bytes())
-            if digest.hexdigest() != segment["seed_sha256"]:
+            seed = scenario.seed_file(checkout, segment["seed"])
+            if scenario.seed_digest(seed) != segment["seed_sha256"]:
                 raise ValueError("seed payload SHA-256 does not match the recipe")
             segment["_seed_path"] = seed
         return hashlib.sha256(segment["inputs"].read_bytes()).hexdigest() == segment["input_sha256"]
@@ -894,10 +875,7 @@ def run_corpus(root, args):
     def with_divergence_report(replay, name):
         return replay + report_option(name)
 
-    args.lock_entries = {}
-    if args.mode == "check-lock":
-        with args.lock.open("rb") as file:
-            args.lock_entries = {entry["id"]: entry for entry in tomllib.load(file).get("scenario", [])}
+    args.lock_entries = scenario.read_lock(checkout, args.lock).entries if args.mode == "check-lock" else {}
 
     # Earlier windows can supply checked prefixes to later branches of the same inputs.
     passed = set()
@@ -1070,7 +1048,8 @@ def main():
                         help="require an observed gameplay condition (repeatable)")
     parser.add_argument("--after-expectations", type=int, metavar="N",
                         help="observe N additional frames after all expectations are met")
-    parser.add_argument("--corpus", type=Path, help="run required replay segments from a TOML recipe")
+    parser.add_argument("--corpus", type=Path, metavar="SCENARIOS",
+                        help="run scenarios (the scenarios directory) as corpus rows")
     parser.add_argument("--segment", action="append", default=[], metavar="ID",
                         help="run selected corpus segments only; reports partial coverage")
     parser.add_argument("--after-hits", type=int, metavar="N",

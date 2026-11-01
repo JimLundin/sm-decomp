@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
-# Select and shard existing corpus rows with their exact seed/movie identities.
-import json, os, tomllib
-rows = tomllib.load(open('movies/segments.toml', 'rb'))['segment']
+# Select and shard the corpus scenarios (every scenario but the route rooms)
+# with their exact seed/movie identities.
+import json, os, pathlib, sys, tomllib
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[2] / 'tools'))
+import scenario  # noqa: E402
+rows = [row for row in scenario.rows() if 'chain' not in row]
+bundles = scenario.read_lock().bundles
 movie = next(m for m in tomllib.load(open('movies/manifest.toml', 'rb'))['movies'] if m['category'] == 'any%')
 with open(os.environ['GITHUB_OUTPUT'], 'a') as out:
     out.write(f"movie_file={movie['file']}\nmovie_sha256={movie['sha256']}\n")
@@ -13,81 +17,8 @@ if wanted:
     if unknown:
         raise SystemExit(f'unknown rows: {sorted(unknown)}')
 def seed_bundle(row):
-    if row['id'] == 'samus-grapple-connect-swing':
-        return ('CONNECT-e5c5a415-9.tar.gz.enc', 'fefac98ed43a3f3529349fa7d40dd469c353bd68dc1e697bba7f2f967ca06501')
-    if row['id'] == 'xray-activate-release':
-        return ('seeds-v1-xray-activation-9c5ad92da3d5d2dc.tar.gz.enc', '9c5ad92da3d5d2dc13cfae2e2a0906ca915b2329767f121183190d2ab96c25bc')
-    if row['id'] in ('mother-brain-glass', 'mother-brain-fake-death', 'mother-brain-phase2',
-                     'mother-brain-baby-metroid-drain', 'mother-brain-baby-metroid-sacrifice',
-                     'mother-brain-escape-door'):
-        return ('seeds-v1-mb-phases-13dd32bb039004ab.tar.gz.enc', '13dd32bb039004abe6a8a3225cc1dfe14421dab64bea27e8931b987603042caf')
-    if row['id'] in ('samus-gunship-save', 'samus-space-jump-chain', 'samus-screw-attack'):
-        return ('seeds-v1-tricks2-891ceaf012b8dfb4.tar.gz.enc', '891ceaf012b8dfb4728c0707f845b38ec3499448ee7c35e4f9b778cd5fb6f19b')
-    if row['id'].startswith(('samus-shinespark-', 'samus-walljump-', 'xray-scan-')) or row['id'] == 'samus-crystal-flash':
-        return ('seeds-v1-tricks-95f7c4352cb18fbe.tar.gz.enc', '95f7c4352cb18fbe3a4c31b4da1de269b25b48db0232653e6fb020c832c5bdb3')
-    if row['id'] == 'samus-mockball':
-        return ('seeds-v1-mockball-4447309c78721b0b.tar.gz.enc', '4447309c78721b0b2a04d7ca70570f9d8b894aac59e5b8aee674275fb373bf7a')
-    if row['id'].startswith('special-beam-'):
-        return ('seeds-v1-special-beam-42ef643c82c0b3e4.tar.gz.enc', '42ef643c82c0b3e4b3fd8329e3df55416c639b703f30dfdc4b41049deb8816bb')
-    if row['id'] in ('terrain-quicksand', 'samus-grapple-release', 'beam-reflect'):
-        return ('seeds-v1-terrain-grapple-c77a6dd6e1e0de4e.tar.gz.enc', 'c77a6dd6e1e0de4e07ffe47a2ae55fc7ba3aaf9a7276a04841cd8746e6e72d24')
-    if row['id'] in ('enemy-fire-arc', 'enemy-oum-roll', 'enemy-tatori-touch'):
-        return ('seeds-v1-enemies-dd825e69ee36457f.tar.gz.enc', 'dd825e69ee36457f9c24627b860246e0313ef67ee6754830d7f6331c05125c16')
-    if row['id'] in ('enemy-covern-roach', 'enemy-magdollite', 'enemy-yapping-maw',
-                     'enemy-shaktool', 'enemy-kihunter-work-robot', 'enemy-spike-platform',
-                     'enemy-boulder-bounce', 'enemy-boulder-roll', 'enemy-evir',
-                     'enemy-metroid', 'enemy-etecoon', 'samus-ceres-push'):
-        return ('seeds-v1-routeenemies-ad7fd75a7035bea2.tar.gz.enc', 'ad7fd75a7035bea2669dedbfe7db1e528b668b3044d09b55afe5382f9059f892')
-    if row['id'] in ('boss-draygon-grapple-held', 'boss-ceres-ridley-fireballs', 'boss-phantoon-second-round',
-                     'enemy-dachora-shinespark', 'enemy-etecoon-jumps'):
-        return ('seeds-v1-unreached-020b4cd19fbaf9cb.tar.gz.enc', '020b4cd19fbaf9cb4a16c97e6c53060c6c807ab73dbf0b1d6301128b5c7028b2')
-    if row['id'] in ('terrain-wrecked-ship-hand', 'enemy-kihunter-wings', 'enemy-baby-metroid-remorse',
-                     'enemy-etecoon-tunnel-jump'):
-        return ('seeds-v1-handwings-6302cac975d0049c.tar.gz.enc', '6302cac975d0049c512dc2ab254e6a4ba03f8f396027544c7160e82645b45675')
-    if row['id'] in ('terrain-lower-norfair-hand', 'enemy-etecoon-run-left'):
-        return ('seeds-v1-acidhand-263f82ef4a26cef1.tar.gz.enc', '263f82ef4a26cef1e419f99df61631a394add848940f0e3c4621167b0a856e13')
-    if row['id'] == 'samus-grapple-walljump':
-        return ('seeds-v1-grapplewall-4f6db9f4f7fc408a.tar.gz.enc', '4f6db9f4f7fc408aec578994afc84a8b6a61de58acef46ec9f123515e0784061')
-    if row['id'] == 'boss-ridley-swoop':
-        return ('seeds-v1-ridley-swoop-3ac1b65c9164ca03.tar.gz.enc', '3ac1b65c9164ca038c3a487770ef437fadd03a2fc639ff03ac3c664f565b9661')
-    if row['id'] == 'file-copy-clear':
-        return ('seeds-v1-file-copy-51a67d39af3c9628.tar.gz.enc', '51a67d39af3c9628bd3959e295d33a6667e5f3c5e9abe7d939a2a410629a619d')
-    if row['id'] == 'boss-draygon-grapple-repel':
-        return ('seeds-v1-scenario-repel-ccb2329f0fbbd52c.tar.gz.enc', 'ccb2329f0fbbd52cca0d799cceb106f4ab32b716ac49ed75d17ab5fe074cb924')
-    if row['id'].startswith('boss-kraid-pause-'):
-        return ('seeds-v1-kraid-pause-52ba63dc0b528e28.tar.gz.enc', '52ba63dc0b528e2849dc880c7407afdb0365a28c0264c0e2e896585a883bddee')
-    if row['id'] == 'boss-draygon-final-whips':
-        return ('seeds-v1-final-whips-6295d2432aa88773.tar.gz.enc', '6295d2432aa88773bbedbcaaf4ddc4276878951281787e171620a9d40d13a9ce')
-    if row['id'] in ('volcano-room-lavaquake', 'boss-draygon-tail-whip', 'boss-draygon-later-swoop'):
-        return ('seeds-v1-offroute-4b5962a5bc7f6aaa.tar.gz.enc', '4b5962a5bc7f6aaa5050bd5f7d6abfb046e1b078c26b4242d82489300c7f044a')
-    if row['id'] in ('pause-menu-tour', 'options-menu-tour', 'boss-draygon-grab', 'credits-ending'):
-        return ('seeds-v1-coverage-54f838bfd8146bf7.tar.gz.enc', '54f838bfd8146bf76d631d567299b0721adbc1c4065584e9de5f3e19632ccb21')
-    if row['id'] in ('boss-bomb-torizo', 'samus-bomb-jump-vertical', 'wall-crawler-slope-step'):
-        return ('seeds-v1-seeded-checkpoints-f4e03e50190ab6dd.tar.gz.enc', 'f4e03e50190ab6dd9acfd595ddb544b93b36eef2e7231e1599dff3199d8e0631')
-    if row['id'] in ('save-death-reload', 'save-memory', 'death'):
-        return ('seeds-v1-realigned-ef199d44b0070294.tar.gz.enc', 'ef199d44b0070294bcbac363aaa3577304a3cbbc7a1122a6f488329d41441e52')
-    if row['id'] in ('boss-crocomire', 'crocomire-spit-drop-scratch', 'crocomire-melt-graphics-buffer',
-                     'crocomire-wall-spawn-return', 'ice-return-business', 'power-bomb-warehouse-elevator-entry',
-                     'power-bomb-red-tower-refill-door', 'power-bomb-room-entry', 'pickup-reserve',
-                     'door-transition', 'music-fir-selector10'):
-        return ('seeds-v1-reseeded-bf1451e13f4e2680.tar.gz.enc', 'bf1451e13f4e26806b712234991c78d9d5ed187d0b14a1e9f3f3947be301590c')
-    if 'checkpoint' in row:
-        return ('layout150-f158-faithful2-d4050aa32a965168.tar.gz.enc', 'd4050aa32a965168653e68a2389145af6aa6f2cd5666bec5eec7c737ffef874b')
-    # Match exact seed identities, not capture prefixes: pickups and the
-    # general bundle contain different subsets of 100-input-phase.
-    seed = row.get('seed')
-    if seed in ('100-input-phase:1', '100-input-phase:5', '100-input-phase:6', '100-input-phase:12', '100-input-phase:16',
-                '100-input-phase:17', '100-input-phase:19', '100-input-phase:27', '100-input-phase:37',
-                '100-input-phase:55', '100-input-phase:73', '100-input-phase:74', '100-input-phase:80',
-                '100-input-phase:85', '100-input-phase:92', '100-input-phase:98', '100-input-phase:104',
-                '100-input-phase:142', '100-input-phase:163', '100-input-phase:170', '100-input-phase:173',
-                '100-input-phase:179', '100-input-phase:294'):
-        return ('seeds-v1-six-3a87864fbffb215a.tar.gz.enc', '3a87864fbffb215aa87ba3901c57b542abae1e907d105be4ee44bbb9921db793')
-    if seed == 'golden-input-phase:1':
-        return ('seeds-v1-golden-3b895ada4be8fcb4.tar.gz.enc', '3b895ada4be8fcb4e1b77941f0f4c4530150c626588b53d2e8cf5c2dc2cbeb0e')
-    if seed == '100-credits:336':
-        return ('seeds-v1-credits-42b93bf0bf83aba1.tar.gz.enc', '42b93bf0bf83aba1dd10fc24ca7d5f5b639c65e501e06ce2239c7c638c2a0ce8')
-    return ('seeds-v1-spore-6b6b2c8fd70bc713.tar.gz.enc', '6b6b2c8fd70bc7139410cd576f015dfcb361360ae74cf2196a62d7edfbda7835')
+    # The ci-data bundle with the row's private data, as scenarios/lock.toml pins it.
+    return row['bundle'], bundles[row['bundle']]
 
 groups, skipped = {}, []
 for r in rows:

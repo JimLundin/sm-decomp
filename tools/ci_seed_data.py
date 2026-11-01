@@ -9,8 +9,12 @@ from pathlib import Path, PurePosixPath
 import re
 import shutil
 import subprocess
+import sys
 import tarfile
-import tomllib
+
+# The scenario model beside this script, whichever directory Python starts in.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import scenario  # noqa: E402
 
 
 def digest(path):
@@ -44,7 +48,8 @@ def valid_name(name):
 
 
 def selected_rows(args):
-    rows = tomllib.loads((args.root / "movies/segments.toml").read_text())["segment"]
+    # Route rooms have their own bundles (full_route.py); they pack only when selected.
+    rows = [row for row in scenario.rows(args.root) if "chain" not in row or row["id"] in args.segment]
     known = {row["id"] for row in rows}
     if set(args.segment) - known:
         raise ValueError("unknown selected row")
@@ -121,15 +126,7 @@ def pack(args):
             prefix = f"target/seeds/{capture}/{int(index):04d}-"
             seed = next(path for name, path in files.items()
                         if name.startswith(prefix) and name.endswith("-wram.bin"))
-            sha = hashlib.sha256()
-            for region, size in (("wram", 131072), ("sram", 8192), ("vram", 65536),
-                                 ("cgram", 512), ("oam", 544), ("apuram", 65536)):
-                data = seed.with_name(seed.name.replace("-wram.bin", f"-{region}.bin")).read_bytes()
-                if len(data) != size:
-                    raise ValueError(f"seed {region} requires {size} bytes")
-                sha.update(data)
-            sha.update(seed.with_name(seed.name.replace("-wram.bin", "-registers.csv")).read_bytes())
-            if sha.hexdigest() != row.get("seed_sha256"):
+            if scenario.seed_digest(seed) != row.get("seed_sha256"):
                 raise ValueError("seed payload hash mismatch: " + row["id"])
     else:
         captures = {row["seed"].split(":")[0] for row in rows if "seed" in row}
