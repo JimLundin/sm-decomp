@@ -4,6 +4,7 @@ use super::Runtime;
 use sm_game::{
     flow::Flow,
     sequence_state::{Access, State},
+    session_access::SessionAccess,
     session_words::SessionWords,
 };
 impl Access for Runtime<'_> {

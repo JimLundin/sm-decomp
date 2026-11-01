@@ -899,3 +899,8 @@ Final formatted source `515db3da...` and witness patch `85f0b07a...` passed inde
 The original strict gate on `620d3fac4` closed with exit 1: four diagnostics required the scheduler lease's physical Game associated type to be Sized when passed to the existing generic Draygon dispatcher. All previous missing-capability diagnostics were resolved; the gate stopped without a resource failure. Frozen evidence is `$TEMP/collab/owned150-qualification/run-c/GATE_FAILURE_HANDOFF.md`.
 
 The exact two-line amendment adds the Sized bound only to the scheduler's associated BossLease::Game capabilities. Both actual implementations use Game; runtime behavior, aliases and ordering are unchanged. Patch `49ba8260...` passed independent source review. It changes no production line count, verification count or RAM retirement total. The fresh source must pass a new strict gate before DLL and replay qualification.
+
+
+### PR150 final compiler findings, 2026-11-01
+
+The original gate on `ef85eff` resolved the Sized errors and exposed two remaining issues: `sequence_runtime` needed the SessionAccess trait import for its existing refresh_inputs calls, and a test projection had a blank line after its cfg attribute. Gate session 15124 closed with exit 1 without a resource stop; source and historical guards passed. The reviewed import/spacing amendment `e6580fb2...` preserves both refresh_inputs calls and the projection impl. Its one compatibility import line and one removed verification blank line are accounted separately. Fresh source qualification remains required; the combined 609 RAM-access retirement scope is unchanged.

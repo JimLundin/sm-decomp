@@ -98,7 +98,6 @@ impl crate::display_scroll::Access for SessionProjection {
     }
 }
 #[cfg(test)]
-
 impl crate::sequence_state::Access for SessionProjection {
     fn set_cinematic_function(&mut self, value: u16) {
         for (part, byte) in value.to_le_bytes().into_iter().enumerate() {
