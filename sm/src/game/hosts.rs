@@ -267,61 +267,57 @@ impl sm_game::actors::dachora_run::Host for Game {
     }
 }
 
-impl sm_game::actors::ridley::Host for Game {
+// Ridley's effects on his lease; those of the game's hardware, flags and
+// queues are one trip to it each.
+impl sm_game::actors::ridley::Host for crate::game::session_runtime::Runtime<'_> {
     fn spawn_population(&mut self, bank: u8, population: u16) -> u16 {
-        crate::game::actors::population::spawn_legacy(
-            &mut crate::game::session_runtime::Runtime::new(self),
-            bank,
-            population,
-        )
+        crate::game::actors::population::spawn_legacy(self, bank, population)
     }
 
     fn set_boss_bit(&mut self, mask: u16) {
-        crate::game::gameplay_flag_runtime::set_boss_bits_for_current_area(mask, self);
+        self.foreign(|game| {
+            crate::game::gameplay_flag_runtime::set_boss_bits_for_current_area(mask, game);
+        });
     }
 
-    fn hardware_sine(&mut self, amplitude: u16, angle: u16) -> u16 {
-        crate::game::sm_a9::sin_times(amplitude, angle, self)
-    }
-
-    fn hardware_cosine(&mut self, amplitude: u16, angle: u16) -> u16 {
-        crate::game::sm_a9::cos_times(amplitude, angle, self)
+    fn hardware_sine_cosine(&mut self, amplitude: u16, angle: u16) -> (u16, u16) {
+        self.foreign(|game| {
+            let sine = crate::game::sm_a9::sin_times(amplitude, angle, game);
+            (sine, crate::game::sm_a9::cos_times(amplitude, angle, game))
+        })
     }
 
     fn move_liquid(&mut self, target: u16, velocity: u16, delay: u16) {
-        let mut runtime = crate::game::session_runtime::Runtime::new(self);
-        let room = &mut runtime.session_mut().room;
+        let room = &mut self.session_mut().room;
         room.liquid_target = target;
         room.liquid_velocity = velocity;
         room.liquid_delay = delay;
     }
 }
 
-impl sm_game::actors::ceres_ridley::Host for Game {
+impl sm_game::actors::ceres_ridley::Host for crate::game::session_runtime::Runtime<'_> {
     fn boss_byte(&mut self, area: u16) -> u8 {
-        crate::game::gameplay_flag_runtime::boss_byte_at(area, self)
+        self.foreign(|game| crate::game::gameplay_flag_runtime::boss_byte_at(area, game))
     }
 
     fn queue_mode7_transfer(&mut self, bank: u8, list: u16) {
-        crate::game::mode7_transfers::enqueue_rom(bank, list, self);
+        self.foreign(|game| crate::game::mode7_transfers::enqueue_rom(bank, list, game));
     }
 
     fn begin_ceres_push(&mut self) {
-        sm_game::player_movement::forced::begin_ceres_push(
-            crate::game::session_runtime::Runtime::new(self).session_mut(),
-        );
+        sm_game::player_movement::forced::begin_ceres_push(self.session_mut());
     }
 
     fn queue_escape_timer_tiles(&mut self) -> bool {
-        crate::game::rom_vram_entries::queue_escape_timer_tiles(self) & 1 != 0
+        self.foreign(|game| crate::game::rom_vram_entries::queue_escape_timer_tiles(game) & 1 != 0)
     }
 
     fn queue_getaway_tiles(&mut self) {
-        crate::game::rom_vram_entries::queue_getaway_tiles(self);
+        self.foreign(crate::game::rom_vram_entries::queue_getaway_tiles);
     }
 
     fn queue_escape_tile_table(&mut self) {
-        crate::game::rom_vram_entries::queue_escape_tile_table(self);
+        self.foreign(crate::game::rom_vram_entries::queue_escape_tile_table);
     }
 }
 

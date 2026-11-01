@@ -125,7 +125,9 @@ pub(crate) fn run(op: Operation, g: &mut Game) -> Option<u16> {
                     0xa1, 0x8000, g,
                 ));
             }
-            Operation::CallerSpawn => sm_game::actors::ceres_ridley::spawn_getaway_walls(g),
+            Operation::CallerSpawn => sm_game::actors::ceres_ridley::spawn_getaway_walls(
+                &mut crate::game::session_runtime::Runtime::new(g),
+            ),
             Operation::Record => crate::game::actors::reference_population_animation::record(64, g),
             Operation::Respawn => {
                 crate::game::actors::reference_population_animation::respawn(64, g)

@@ -8,12 +8,10 @@
 //! movement and drawing in `ridley`; the intro (`initial` to
 //! `roar_before_flying`) and `init` serve both fights.
 #![forbid(unsafe_code)]
-use crate::actors::boss_lease::BossState as _;
 use crate::actors::boss_lease::bg2_staging;
 use crate::actors::boss_lease::boss_ram;
 use crate::actors::host::BossEffects as _;
 use crate::actors::host::{abs16, below};
-use crate::actors::ridley::Host as _;
 use crate::actors::ridley::{
     self, FACING_RIGHT, NORFAIR, RIDLEY, Rect, Ridley, function, instruction_list, tail,
 };
@@ -31,7 +29,7 @@ use sm_data::cartridge::lorom_offset;
 /// A lease on a game with Ceres Ridley's effects: Ridley's.
 pub use crate::actors::ridley::Lease;
 
-/// What Ceres Ridley needs beyond Ridley's host: the boss flags, the mode 7
+/// What Ceres Ridley's lease needs beyond Ridley's: the boss flags, the mode 7
 /// transfers, the getaway push and the escape sequence's tiles.
 pub trait Host: ridley::Host {
     /// The boss bits for `area`.
@@ -117,7 +115,8 @@ const ESCAPE_STARTED: u16 = 2;
 /// Initialisation AI - enemy $E13F/$E17F (Ridley) ($A6:A0F5), for both fights;
 /// a defeated Ridley is deleted. Was `CeresRidley_Init`.
 pub fn init<L: Lease + ?Sized>(game: &mut L) {
-    if (game.foreign(|game| game.boss_byte(game.area())) & 1) != 0 {
+    let area = game.area();
+    if (game.boss_byte(area) & 1) != 0 {
         session_slot!(game, Ridley[RIDLEY].base.properties, |old| old
             | K_ENEMY_PROPS_TANGIBLE as u16
             | K_ENEMY_PROPS_DELETED as u16
@@ -401,7 +400,7 @@ pub fn roar_before_flying<L: Lease + ?Sized>(game: &mut L) {
         if !fade_in_background(step.wrapping_sub(1), game) {
             return;
         }
-        game.foreign(|game| game.move_liquid(440, -96i32 as u16, 32));
+        game.move_liquid(440, -96i32 as u16, 32);
     }
     session_slot!(game, Ridley[RIDLEY].fade_index = 0);
     ridley::set_instruction_list(ceres_instruction_list::TRANSITION_TO_FLYING, game);
@@ -713,7 +712,7 @@ pub fn set_up_getaway<L: Lease + ?Sized>(game: &mut L) {
 /// `CeresRidley_Func_25`.
 pub fn spawn_getaway_walls<L: Lease + ?Sized>(game: &mut L) {
     for population in ceres_data::GETAWAY_WALLS {
-        game.foreign(|game| game.spawn_population(0xa6, population));
+        game.spawn_population(0xa6, population);
     }
 }
 
@@ -756,7 +755,7 @@ pub fn handle_getaway<L: Lease + ?Sized>(game: &mut L) {
         game.queue_sound(1, 0x4e, 6);
     }
     if index == 208 {
-        game.foreign(|game| game.begin_ceres_push());
+        game.begin_ceres_push();
         boss!(game; EarthquakeType = 35; EarthquakeTimer = 64;);
     }
     let step = (index >> 1) as isize;
@@ -843,7 +842,7 @@ pub fn animate_mode7_baby_metroid<L: Lease + ?Sized>(game: &mut L) {
         let frame = session_slot!(game, Ridley[RIDLEY].baby_metroid_frame).wrapping_add(1) & 3;
         session_slot!(game, Ridley[RIDLEY].baby_metroid_frame = frame);
         let list = crate::ceres_ridley_tables::baby_metroid_frame(game, frame as isize);
-        game.foreign(|game| game.queue_mode7_transfer(0xa6, list));
+        game.queue_mode7_transfer(0xa6, list);
     }
 }
 
@@ -854,7 +853,7 @@ pub fn animate_mode7_wings<L: Lease + ?Sized>(game: &mut L) {
         let frame = session_slot!(game, Ridley[RIDLEY].mode7_wings_frame).wrapping_add(1) & 1;
         session_slot!(game, Ridley[RIDLEY].mode7_wings_frame = frame);
         let list = crate::ceres_ridley_tables::wing_frame(game, frame as isize);
-        game.foreign(|game| game.queue_mode7_transfer(0xa6, list));
+        game.queue_mode7_transfer(0xa6, list);
     }
 }
 
@@ -925,7 +924,7 @@ pub fn load_text_colours<L: Lease + ?Sized>(game: &mut L) {
 /// Self destruct sequence function index 2 - loading escape timer sprite
 /// tiles ($A6:C08E). Was `Ridley_C08E`.
 pub fn load_escape_timer_tiles<L: Lease + ?Sized>(game: &mut L) {
-    if game.foreign(|game| game.queue_escape_timer_tiles()) {
+    if game.queue_escape_timer_tiles() {
         // The Ceres escape timer BG1/2 tile transfer entries ($A6:C4FE).
         session_slot!(game, Ridley[RIDLEY].fade_index = 0xc4fe);
         next_step(game);
@@ -936,9 +935,9 @@ pub fn load_escape_timer_tiles<L: Lease + ?Sized>(game: &mut L) {
 /// Self destruct sequence function index 4 - loading Ceres escape timer BG1/2
 /// tiles ($A6:C09F). Was `Ridley_C09F`.
 pub fn load_escape_background_tiles<L: Lease + ?Sized>(game: &mut L) {
-    if game.foreign(|game| game.queue_escape_timer_tiles()) {
+    if game.queue_escape_timer_tiles() {
         next_step(game);
-        game.foreign(|game| game.queue_getaway_tiles());
+        game.queue_getaway_tiles();
         session_slot!(game, Ridley[RIDLEY].fade_index = 128);
         game.foreign(|game| game.queue_music_delayed(7));
     }
@@ -971,7 +970,7 @@ pub fn japanese_text_appears<L: Lease + ?Sized>(game: &mut L) {
     session_slot!(game, Ridley[RIDLEY].fade_index = timer.wrapping_sub(1));
     if timer == 1 {
         next_step(game);
-        game.foreign(|game| game.queue_escape_tile_table());
+        game.queue_escape_tile_table();
     }
     type_self_destruct_text(game);
 }
@@ -997,7 +996,7 @@ pub fn start_escape<L: Lease + ?Sized>(game: &mut L) {
         Ridley[RIDLEY].function = ceres_function::SELF_DESTRUCT_ACTIVATED
     );
     boss!(game; TimerStatus = 1; CeresStatus = ESCAPE_STARTED;);
-    game.foreign(|game| game.set_boss_bit(1));
+    game.set_boss_bit(1);
 }
 
 // The named Ceres Ridley functions are the decompilation's; the getaway's

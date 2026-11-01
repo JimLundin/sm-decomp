@@ -41,34 +41,43 @@ use sm_data::ridley_explosion::{
     HAND_ADDRESS, LEGS_ADDRESS, MOUTH_ADDRESS, TORSO_ADDRESS, WINGS_ADDRESS,
 };
 
-/// A lease on a game with Ridley's effects, Norfair's and Ceres's, that
-/// types the self destruct text.
+/// A lease with Ridley's effects, Norfair's and Ceres's, that types the self
+/// destruct text, on a game with the shared boss effects, deaths and sprites.
 pub trait Lease:
-    BossLease<Game: crate::actors::ceres_ridley::Host> + crate::escape_typewriter::Host
+    BossLease<Game: GameEffects> + crate::actors::ceres_ridley::Host + crate::escape_typewriter::Host
 {
 }
 impl<T> Lease for T where
-    T: BossLease<Game: crate::actors::ceres_ridley::Host> + crate::escape_typewriter::Host + ?Sized
+    T: BossLease<Game: GameEffects>
+        + crate::actors::ceres_ridley::Host
+        + crate::escape_typewriter::Host
+        + ?Sized
 {
 }
 
-/// What Ridley needs beyond the shared boss effects, deaths and sprites.
-pub trait Host:
-    crate::actors::host::BossEffects
-    + crate::actors::deaths::Deaths
-    + crate::records::Records
-    + crate::cartridge::NativeImage
-    + crate::sprite_output::SpriteHost
-    + BossLease<Game = Self>
+/// What Ridley's lease still reaches in the game: the shared boss effects,
+/// deaths and sprites.
+pub trait GameEffects:
+    crate::actors::host::BossEffects + crate::actors::deaths::Deaths + crate::sprite_output::SpriteHost
 {
+}
+impl<T> GameEffects for T where
+    T: crate::actors::host::BossEffects
+        + crate::actors::deaths::Deaths
+        + crate::sprite_output::SpriteHost
+        + ?Sized
+{
+}
+
+/// What Ridley needs beyond the shared boss state steps.
+pub trait Host {
     /// Spawn the enemy population at `bank:population`.
     fn spawn_population(&mut self, bank: u8, population: u16) -> u16;
     /// Mark the current area's boss bits `mask` as defeated.
     fn set_boss_bit(&mut self, mask: u16);
-    /// `amplitude` times the sine of `angle` through the PPU multiplier.
-    fn hardware_sine(&mut self, amplitude: u16, angle: u16) -> u16;
-    /// `amplitude` times the cosine of `angle` through the PPU multiplier.
-    fn hardware_cosine(&mut self, amplitude: u16, angle: u16) -> u16;
+    /// `amplitude` times the sine and the cosine of `angle`, in that order,
+    /// through the PPU multiplier.
+    fn hardware_sine_cosine(&mut self, amplitude: u16, angle: u16) -> (u16, u16);
     /// Move the room's liquid to `target` at `velocity` after `delay` frames.
     fn move_liquid(&mut self, target: u16, velocity: u16, delay: u16);
 }
@@ -1888,7 +1897,7 @@ pub fn death_move_to_death_spot<L: Lease + ?Sized>(game: &mut L) {
     move_to_death_spot(game);
     if timer_expired(game) {
         session_slot!(game, Ridley[RIDLEY]; x_velocity = 0, y_velocity = 0);
-        game.foreign(|game| game.move_liquid(528, 64, 1));
+        game.move_liquid(528, 64, 1);
         session_slot!(game, Ridley[RIDLEY]; small_explosion_timer = 0, small_explosion_index = 0);
         session_slot!(
             game,
@@ -1944,8 +1953,8 @@ pub fn falling_apart<L: Lease + ?Sized>(game: &mut L) {
 pub fn still_falling_apart<L: Lease + ?Sized>(game: &mut L) {
     if timer_expired(game) {
         // The drop routine keeps but never reads the X it is passed.
+        game.set_boss_bit(1);
         game.foreign(|game| {
-            game.set_boss_bit(1);
             game.scatter_enemy_drop(DropSource::Ridley, 0);
             game.queue_music_delayed(3);
         });
@@ -2132,7 +2141,7 @@ pub fn spawn_explosions<L: Lease + ?Sized>(game: &mut L) {
         0xca37,
     ];
     for population in POPULATIONS {
-        game.foreign(|game| game.spawn_population(0xa6, population));
+        game.spawn_population(0xa6, population);
     }
 }
 
@@ -2691,11 +2700,7 @@ pub fn update_tail_segment_angle<L: Lease + ?Sized>(segment: usize, game: &mut L
             .wrapping_add(total as u8) as u16;
     }
     let length = u16::from(game.slot_byte(TAIL_RAM + 2 * tail::distance(segment) + 1));
-    // The PPU multiplier is the game's, once for both products.
-    let (x, y) = game.foreign(|game| {
-        let x = game.hardware_sine(length, total);
-        (x, game.hardware_cosine(length, total))
-    });
+    let (x, y) = game.hardware_sine_cosine(length, total);
     bg2_staging::set(game, tail::x_offset(segment), x);
     bg2_staging::set(game, tail::y_offset(segment), y);
 }
