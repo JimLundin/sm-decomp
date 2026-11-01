@@ -96,6 +96,9 @@ impl BossState for Game {
     fn kill_current(&mut self, kind: api::DeathKind) {
         combat::die(&mut Runtime::new(self), kind);
     }
+    fn area_boss_byte(&mut self) -> u8 {
+        EnemyHost::area_boss_flags(self)
+    }
 }
 
 impl BossLease for Game {
@@ -184,6 +187,9 @@ impl BossState for Runtime<'_> {
     }
     fn kill_current(&mut self, kind: api::DeathKind) {
         combat::die(self, kind);
+    }
+    fn area_boss_byte(&mut self) -> u8 {
+        sm_game::progress::boss_byte_at(self, self.session().room.area)
     }
 }
 

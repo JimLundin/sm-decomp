@@ -1224,6 +1224,8 @@ impl Runtime<'_> {
             11060670 => self.owned_call(sm_game::actors::powamp::touch),
             11060719 => self.owned_call(sm_game::actors::powamp::shot),
             11060799 => self.owned_call(sm_game::actors::powamp::power_bomb),
+            11068983 => self.owned_call(sm_game::actors::wrecked_ship_spark::initialize),
+            11069070 => self.owned_call(sm_game::actors::wrecked_ship_spark::main_ai),
             10988577 => self.owned_call(sm_game::actors::kraid::main_ai),
             10997414 => self.owned_call(sm_game::actors::phantoon::main_ai),
             11191972 => self.owned_call(sm_game::actors::torizo::main_ai),
@@ -1255,6 +1257,12 @@ impl Runtime<'_> {
             Err(script) => script,
         };
         match routine {
+            11068957 | 11068970 => {
+                return self.owned_call(|runtime| {
+                    use sm_game::actors::wrecked_ship_spark::set_intangible;
+                    set_intangible(runtime, routine == 11068957, script)
+                });
+            }
             11051207 | 11051225 | 11051243 | 11051261 | 11051279 | 11051297 | 11051315 => {
                 return self.owned_call(|runtime| {
                     actors::yapping_maw::instruction(routine, script, runtime)
