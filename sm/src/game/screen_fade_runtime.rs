@@ -3,7 +3,6 @@
 use super::Runtime;
 use crate::game_state::Game;
 use sm_game::screen_fade::{CinematicFade, Owner, ScreenFade};
-use sm_game::session_access::SessionAccess;
 
 impl Owner for Game {
     fn with_screen_fade<R>(&mut self, action: impl FnOnce(&mut ScreenFade) -> R) -> R {
