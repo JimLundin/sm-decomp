@@ -3499,8 +3499,9 @@ pub fn tail_samus_collision<L: Lease + ?Sized>(game: &mut L) {
         h: 14,
     };
     if samus_in_rect(rect, game) {
+        let damage = session_slot!(game, Ridley[RIDLEY].tail_damage);
         game.foreign(|game| {
-            let amount = game.suit_damage(session_slot!(game, Ridley[RIDLEY].tail_damage));
+            let amount = game.suit_damage(damage);
             game.damage_player(amount);
         });
         boss!(game.SamusInvincibilityTimer = 96);
