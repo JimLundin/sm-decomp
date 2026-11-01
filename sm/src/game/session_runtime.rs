@@ -1201,6 +1201,10 @@ impl Runtime<'_> {
             11065545 => self.owned_call(sm_game::actors::bull::initialize),
             11065611 => self.owned_call(sm_game::actors::bull::main_ai),
             11066132 => self.owned_call(sm_game::actors::bull::shot),
+            11071880 => self.owned_call(sm_game::actors::kihunter::initialize),
+            11072020 => self.owned_call(sm_game::actors::kihunter::initialize_wings),
+            11072092 | 11072098 => self.owned_call(sm_game::actors::kihunter::main_ai),
+            11073281 => self.owned_call(sm_game::actors::kihunter::shot),
             10988577 => self.owned_call(sm_game::actors::kraid::main_ai),
             10997414 => self.owned_call(sm_game::actors::phantoon::main_ai),
             11191972 => self.owned_call(sm_game::actors::torizo::main_ai),
@@ -1232,6 +1236,11 @@ impl Runtime<'_> {
             Err(script) => script,
         };
         match routine {
+            11072806 | 11072996 | 11073151 | 11073234 | 11073240 => {
+                return self.owned_call(|runtime| {
+                    sm_game::actors::kihunter::instruction(runtime, routine, actor, script)
+                });
+            }
             11196721 | 11196735 | 11196746 | 11196755 | 11196858 => {
                 return self.owned_call(|runtime| {
                     actors::shaktool::instruction(routine, actor, script, runtime)

@@ -70,6 +70,10 @@ pub trait BossState:
     fn player_angle(&mut self, k: u16) -> u16;
     /// The direction of the projectile the current actor collided with.
     fn shot_direction(&self) -> u16;
+    /// The random number, as last rolled.
+    fn current_random(&self) -> u16;
+    /// Make actor `k` the current actor.
+    fn select_enemy(&mut self, k: u16);
 }
 
 /// A lease on a boss's game. The game is its own lease, whose `foreign` runs
