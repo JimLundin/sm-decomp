@@ -127,10 +127,37 @@ where
     result
 }
 
+/// The words of every copy `with` holds, and their bytes as a bit set.
+#[cfg(sm_verify_dll)]
+#[derive(Default)]
+struct Held {
+    words: Vec<usize>,
+    bytes: Vec<u64>,
+}
+
+#[cfg(sm_verify_dll)]
+impl Held {
+    fn mark(&mut self, at: usize, held: bool) {
+        let (index, bit) = (at / 64, 1u64 << (at % 64));
+        if self.bytes.len() <= index {
+            self.bytes.resize(index + 1, 0);
+        }
+        if held {
+            self.bytes[index] |= bit;
+        } else {
+            self.bytes[index] &= !bit;
+        }
+    }
+    fn holds(&self, at: usize) -> bool {
+        self.bytes
+            .get(at / 64)
+            .is_some_and(|bits| bits & (1u64 << (at % 64)) != 0)
+    }
+}
+
 #[cfg(sm_verify_dll)]
 std::thread_local! {
-    /// The RAM addresses of the words of every copy `with` holds.
-    static HELD: core::cell::RefCell<Vec<usize>> = const { core::cell::RefCell::new(Vec::new()) };
+    static HELD: core::cell::RefCell<Held> = core::cell::RefCell::new(Held::default());
 }
 
 /// Mark `cohort`'s words held; returns the previous held count.
@@ -138,24 +165,40 @@ std::thread_local! {
 fn hold<C: Cohort>(cohort: &mut C) -> usize {
     HELD.with(|held| {
         let mut held = held.borrow_mut();
-        let previous = held.len();
-        cohort.words(|at, _| held.push(at));
+        let previous = held.words.len();
+        cohort.words(|at, _| {
+            held.words.push(at);
+            held.mark(at, true);
+            held.mark(at + 1, true);
+        });
         previous
     })
 }
 
 #[cfg(sm_verify_dll)]
 fn release(previous: usize) {
-    HELD.with(|held| held.borrow_mut().truncate(previous));
+    HELD.with(|held| {
+        let mut held = held.borrow_mut();
+        let released = held.words.split_off(previous);
+        for at in released {
+            held.mark(at, false);
+            held.mark(at + 1, false);
+        }
+        // An outer copy keeps its own words held.
+        for index in 0..held.words.len() {
+            let at = held.words[index];
+            held.mark(at, true);
+            held.mark(at + 1, true);
+        }
+    });
 }
 
 /// Fail when byte `at` belongs to a word of a copy `with` holds.
 #[cfg(sm_verify_dll)]
 pub fn check_not_held(at: usize) {
     HELD.with(|held| {
-        let held = held.borrow();
         assert!(
-            !held.iter().any(|&word| at == word || at == word + 1),
+            !held.borrow().holds(at),
             "byte ${at:04X} of a held Session copy was reached through the projection"
         );
     });
