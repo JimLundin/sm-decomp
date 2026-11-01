@@ -1204,7 +1204,6 @@ impl Runtime<'_> {
             11072020 => self.owned_call(sm_game::actors::kihunter::initialize_wings),
             11072092 | 11072098 => self.owned_call(sm_game::actors::kihunter::main_ai),
             11073281 => self.owned_call(sm_game::actors::kihunter::shot),
-            10988577 => self.owned_call(sm_game::actors::kraid::main_ai),
             10997414 => self.owned_call(sm_game::actors::phantoon::main_ai),
             11191972 => self.owned_call(sm_game::actors::torizo::main_ai),
             11195241 => self.owned_call(sm_game::actors::torizo::golden_main_ai),
@@ -1276,6 +1275,9 @@ impl Runtime<'_> {
     }
     pub(crate) fn actor_touch_legacy(&mut self, routine: u32) {
         use sm_game::actors::species;
+        if self.kraid_and_hosts_touch(routine) {
+            return;
+        }
         if routine == 10940479 {
             self.owned_call(sm_game::actors::ceres_doors::steam_touch);
         } else if !self.bank_a9_routine(routine) && !species::lease_touch(routine, self) {
@@ -1284,6 +1286,9 @@ impl Runtime<'_> {
     }
     pub(crate) fn actor_shot_legacy(&mut self, routine: u32, argument: u16) {
         use sm_game::actors::species;
+        if self.kraid_and_hosts_shot(routine, argument) {
+            return;
+        }
         if routine == 10936202 {
             self.owned_call(sm_game::actors::ridley::shot);
         } else if !self.bank_a9_routine(routine) && !species::lease_shot(routine, self) {
@@ -1647,8 +1652,28 @@ impl<'g> sm_game::grapple_swing::Host for Runtime<'g> {
 // as owned calls on the scheduler's lease.
 impl Runtime<'_> {
     fn kraid_and_hosts_ai(&mut self, routine: u32) -> bool {
-        use sm_game::actors::{boulder, dachora_run, etecoon, fire_arc, mini_kraid, statues};
+        use sm_game::actors::{
+            boulder, dachora_run, etecoon, fire_arc, kraid, mini_kraid, statues,
+        };
         match routine {
+            10982544 => self.owned_call(kraid::arm_touch),
+            10982559 => self.owned_call(kraid::touch),
+            10987865 => self.owned_call(kraid::initialize),
+            10988355 => self.owned_call(kraid::initialize_arm),
+            10988392 => self.owned_call(|runtime| kraid::initialize_lint(runtime, 0x80)),
+            10988444 => self.owned_call(|runtime| kraid::initialize_lint(runtime, 0xc0)),
+            10988490 => self.owned_call(|runtime| kraid::initialize_lint(runtime, 0x100)),
+            10988536 => self.owned_call(kraid::initialize_foot),
+            10988577 => self.owned_call(kraid::main_ai),
+            10991549 => self.owned_call(kraid::arm_main),
+            10991617 => self.owned_call(|runtime| kraid::lint_main_ai(runtime, 0x80)),
+            10991629 => self.owned_call(|runtime| kraid::lint_main_ai(runtime, 0xc0)),
+            10991641 => self.owned_call(|runtime| kraid::lint_main_ai(runtime, 0x100)),
+            10992118 => self.owned_call(kraid::foot_main),
+            10992847 | 10992862 => self.owned_call(kraid::fingernail_touch),
+            10992879 | 10992941 => self.owned_call(kraid::initialize_fingernail),
+            10992946 => self.owned_call(|runtime| kraid::fingernail_main(runtime, 0x180)),
+            10992969 => self.owned_call(|runtime| kraid::fingernail_main(runtime, 0x1c0)),
             10918488 => self.owned_call(mini_kraid::initialize),
             10918594 => self.owned_call(mini_kraid::main_ai),
             10918946 => self.owned_call(mini_kraid::touch),
@@ -1676,9 +1701,16 @@ impl Runtime<'_> {
         actor: u16,
         script: EnemyScript,
     ) -> Result<EnemyScript, EnemyScript> {
-        use sm_game::actors::{mini_kraid, statues};
+        use sm_game::actors::{kraid, mini_kraid, statues};
         // The instructions that only act return the script unchanged.
         let action: Option<fn(&mut Self)> = match routine {
+            10991155 => Some(|_| ()),
+            10991158 => Some(kraid::step_up),
+            10991164 => Some(kraid::step_down_and_shake),
+            10991182 => Some(kraid::stomp_sound),
+            10991194 | 10991207 => Some(kraid::step_back),
+            10991220 => Some(kraid::step_forward),
+            10991235 => Some(kraid::lunge_right),
             10918694 => Some(mini_kraid::step),
             10918834 => Some(mini_kraid::roar),
             10918852 => Some(mini_kraid::spit_left),
@@ -1697,11 +1729,32 @@ impl Runtime<'_> {
         }
         Ok(match routine {
             10918772 => self.owned_call(mini_kraid::choose_animation),
+            10979983 => match self.owned_call(kraid::arm_swipe_when_hurt) {
+                Some(list) => EnemyScript::jump(list),
+                None => script,
+            },
             11199887 => {
                 self.owned_call(|runtime| statues::spike_clearing_footstep(runtime, actor, script))
             }
             11199960 => self.owned_call(|runtime| statues::movement(runtime, actor, script)),
             _ => return Err(script),
         })
+    }
+    fn kraid_and_hosts_touch(&mut self, routine: u32) -> bool {
+        use sm_game::actors::kraid;
+        match routine {
+            10982539 => self.owned_call(kraid::touch_arm_or_foot),
+            10982544 => self.owned_call(kraid::arm_touch),
+            _ => return false,
+        }
+        true
+    }
+    fn kraid_and_hosts_shot(&mut self, routine: u32, argument: u16) -> bool {
+        use sm_game::actors::kraid;
+        match routine {
+            10982582 => self.owned_call(|runtime| kraid::arm_shot(runtime, argument)),
+            _ => return false,
+        }
+        true
     }
 }

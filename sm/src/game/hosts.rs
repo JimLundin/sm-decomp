@@ -205,26 +205,16 @@ impl sm_game::actors::phantoon::Host for Game {
     }
 }
 
-impl sm_game::actors::kraid::Host for Game {
-    fn queue_kraid_tilemap(&mut self, tail: u16, source: u16) {
-        // The two fixed tail reads have no intervening effects and select the same entry.
-        crate::game::display_refresh::queue_native_transfer(
-            tail,
-            704,
-            |_| source,
-            0xa7,
-            |game| ((game.ram().read_byte(0x59) as i32 & 0xfc) << 8) as u16,
-            self,
-        );
-    }
-
+impl sm_game::actors::kraid::Lease for crate::game::session_runtime::Runtime<'_> {
     fn touches_player_from_above(&mut self, k: u16) -> bool {
         crate::game::actors::api::touches_player_from_above(
-            &crate::game::session_runtime::Runtime::new(self),
+            self,
             sm_game::actors::access::ActorKey::from_legacy(k),
         )
     }
+}
 
+impl sm_game::actors::kraid::Host for Game {
     fn boss_word_native(&mut self, area: u16) -> u16 {
         crate::game::gameplay_flag_runtime::boss_word_at(
             area,

@@ -18,12 +18,14 @@ pub trait Host:
     crate::display_refresh::Host
     + crate::actors::host::ActorHost
     + crate::actors::session_slots::SlotAccess
+    + crate::display::transfer::TilemapQueue
 {
 }
 impl<
     T: crate::display_refresh::Host
         + crate::actors::host::ActorHost
         + crate::actors::session_slots::SlotAccess
+        + crate::display::transfer::TilemapQueue
         + ?Sized,
 > Host for T
 {
@@ -142,7 +144,13 @@ pub fn unpause_sinking<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
                 {
                     break 'done;
                 }
-                kraid_sinking::queue_row_clear(word!(game.MY_COUNTER2), row.word(2), game);
+                let bg2_base = game.ram().read_byte(BG2_TILEMAP_BASE);
+                kraid_sinking::queue_row_clear(
+                    word!(game.MY_COUNTER2),
+                    row.word(2),
+                    bg2_base,
+                    game,
+                );
             }
             let yielded = wait(true, game);
             if yielded != 0 {

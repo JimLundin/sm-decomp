@@ -6,8 +6,7 @@ use crate::rtl::{DMAP1, MDMAEN, VMAIN, write_reg, write_reg_word};
 pub(crate) use sm_game::display::transfer::ScrollingLayout as ScrollingDmaLayout;
 use sm_game::display_refresh as refresh;
 pub(crate) use sm_game::display_refresh::{
-    fade, native_word, queue_native_transfer, queue_scrolling_tiles, set_blank, set_native_word,
-    wait,
+    fade, native_word, queue_scrolling_tiles, set_blank, set_native_word, wait,
 };
 
 impl refresh::DisplayOwner for Game {

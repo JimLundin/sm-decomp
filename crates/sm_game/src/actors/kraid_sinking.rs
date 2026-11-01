@@ -1,11 +1,10 @@
 //! Kraid sinking through the floor after his death: the sinking Kraid table
 //! at $A7:C5E7 and the row clears it queues (bank $A7:C537-$A7:C6FF).
-use crate::actors::host::ActorHost;
+use crate::actors::boss_lease::BossState;
 use crate::actors::layouts::KraidLayout as Kraid;
 use crate::actors::session_slots::session_slot;
-use crate::cartridge::native_record;
-use crate::ram::RawRam as _;
-use crate::ram::word;
+use crate::cartridge::{NativeDiagnostics, native_record};
+use crate::display::transfer::{TILEMAP_QUEUE, TilemapQueue};
 use sm_data::cartridge::RomRecord;
 
 const BANK: u8 = 0xa7;
@@ -26,15 +25,10 @@ const BLANK_TILEMAP_BANK: u8 = 0x7e;
 const QUEUE_ENTRY_BYTES: u16 = 7;
 /// $7E:0059, the BG2 tilemap base and size register (`reg_BG2SC`).
 const BG2_TILEMAP_BASE: usize = 0x59;
-/// $7E:00D0, the VRAM write queue (`vram_write_queue`), seven bytes an entry.
-const VRAM_WRITE_QUEUE: usize = 0xd0;
 const BASE_BITS: i32 = 0xfc;
 
 /// Row `index` of the sinking Kraid table.
-pub fn sinking_row(
-    index: usize,
-    game: &mut (impl ActorHost + crate::actors::session_slots::SlotAccess + ?Sized),
-) -> RomRecord {
+pub fn sinking_row(index: usize, game: &mut (impl NativeDiagnostics + ?Sized)) -> RomRecord {
     let table = native_record(BANK, SINKING_TABLE, game);
     RomRecord {
         base: table.base + ROW_BYTES * index,
@@ -42,38 +36,40 @@ pub fn sinking_row(
     }
 }
 
-fn store_word(
-    at: usize,
-    value: u16,
-    game: &mut (impl ActorHost + crate::actors::session_slots::SlotAccess + ?Sized),
-) {
-    let bytes = value.to_ne_bytes();
-    game.ram().write_byte(at, bytes[0]);
-    game.ram().write_byte(at + 1, bytes[1]);
-}
-
 /// Queue the blank tilemap row at queue byte `tail` to `tilemap_offset` past
-/// the BG2 tilemap base, clearing a row of Kraid, and set the tail after it.
+/// the BG2 tilemap base `bg2_base` (BG2SC), clearing a row of Kraid, and set
+/// the tail after it.
 pub fn queue_row_clear(
     tail: u16,
     tilemap_offset: u16,
-    game: &mut (impl ActorHost + crate::actors::session_slots::SlotAccess + ?Sized),
+    bg2_base: u8,
+    queue: &mut (impl TilemapQueue + ?Sized),
 ) {
-    let at = VRAM_WRITE_QUEUE + usize::from(tail);
-    store_word(at, CLEAR_BYTES, game);
-    store_word(at + 2, BLANK_TILEMAP, game);
-    game.ram().write_byte(at + 4, BLANK_TILEMAP_BANK);
-    let base = (i32::from(game.ram().read_byte(BG2_TILEMAP_BASE)) & BASE_BITS) << 8;
-    store_word(at + 5, (i32::from(tilemap_offset) + base) as u16, game);
-    word!(game.VRAM_WRITE_QUEUE_TAIL = tail.wrapping_add(QUEUE_ENTRY_BYTES));
+    let base = (i32::from(bg2_base) & BASE_BITS) << 8;
+    let destination = (i32::from(tilemap_offset) + base) as u16;
+    let [size_low, size_high] = CLEAR_BYTES.to_le_bytes();
+    let [source_low, source_high] = BLANK_TILEMAP.to_le_bytes();
+    let [destination_low, destination_high] = destination.to_le_bytes();
+    let entry = [
+        size_low,
+        size_high,
+        source_low,
+        source_high,
+        BLANK_TILEMAP_BANK,
+        destination_low,
+        destination_high,
+    ];
+    let at = TILEMAP_QUEUE + usize::from(tail);
+    for (offset, byte) in entry.into_iter().enumerate() {
+        queue.set_tilemap_queue_byte(at + offset, byte);
+    }
+    queue.set_tilemap_queue_tail(tail.wrapping_add(QUEUE_ENTRY_BYTES));
 }
 
 /// Handle Kraid sinking ($A7:C59F): find the row for Kraid's y, queue its
 /// clear unless it has none, and return its crumble routine in bank $A7.
 /// None once the table ends. The table walk of `Kraid_HandleSinking`.
-pub fn handle_sinking(
-    game: &mut (impl ActorHost + crate::actors::session_slots::SlotAccess + ?Sized),
-) -> Option<u32> {
+pub fn handle_sinking(game: &mut (impl BossState + ?Sized)) -> Option<u32> {
     for index in 0.. {
         let row = sinking_row(index, game);
         let y = row.word(ROW_Y) as i16;
@@ -82,8 +78,9 @@ pub fn handle_sinking(
         }
         if i32::from(y) == i32::from(session_slot!(game, Kraid[0].base.y_pos)) {
             if row.word(ROW_TILEMAP) & NO_CLEAR == 0 {
-                let tail = word!(game.VRAM_WRITE_QUEUE_TAIL);
-                queue_row_clear(tail, row.word(ROW_TILEMAP), game);
+                let tail = game.tilemap_queue_tail();
+                let bg2_base = game.slot_byte(BG2_TILEMAP_BASE);
+                queue_row_clear(tail, row.word(ROW_TILEMAP), bg2_base, game);
             }
             return Some(u32::from(BANK) << 16 | u32::from(row.word(ROW_ROUTINE)));
         }

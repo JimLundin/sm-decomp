@@ -16,7 +16,7 @@ use crate::actors::{
     alcoon, bang, beetom, blue_brinstar_face_block, botwoon, boyon, cacatac, choot, covern,
     crawlers, crocomire_reactions, dragon, draygon_death, draygon_eye, draygon_flight,
     draygon_grab, draygon_host, draygon_sweep, elevator, escape_critters, evir, fire_pillar, flies,
-    fune, geega, geruta, gunship, kago, kraid, magdollite, metroid, mini_crocomire, mochtroid,
+    fune, geega, geruta, gunship, kago, magdollite, metroid, mini_crocomire, mochtroid,
     morph_ball_eye, multiviola, oum, phantoon, phantoon_actions, polyp, powamp, puyo, reflec,
     rinka, rio, rippers, roach, shutters, sidehopper, skree, space_pirates, spike_platform,
     spore_spawn, squeept, tatori, torizo, tripper, waver, work_robot, wrecked_ship_spark,
@@ -65,7 +65,6 @@ pub trait TouchHost:
     + draygon_host::Host
     + space_pirates::Pirates
     + torizo::Ai
-    + kraid::Host
     + phantoon::Host
     + spore_spawn::Host
 {
@@ -87,8 +86,6 @@ pub fn touch<H: TouchHost>(ea: u32, game: &mut H) {
         // Ridley's contact leaves the death pending.
         10936153 => game.contact_reaction(Death::LeavePending),
         10977356 => (),
-        10982539 => kraid::touch_arm_or_foot(game),
-        10982544 => kraid::arm_touch(game),
         11001237 => phantoon::touch(game),
         11122117 => (),
         11192695 => torizo::touch(game),
@@ -111,15 +108,14 @@ pub trait ShotHost:
     + draygon_host::Host
     + space_pirates::Pirates
     + torizo::Ai
-    + kraid::Host
     + phantoon::Host
     + spore_spawn::Host
 {
     fn native_shot(&mut self, shot: NativeShot);
 }
 
-/// An enemy species' shot reaction, keyed by its address; `j` is the projectile.
-pub fn shot<H: ShotHost>(ea: u32, j: u16, game: &mut H) {
+/// An enemy species' shot reaction, keyed by its address; `_j` is the projectile, which none of them reads.
+pub fn shot<H: ShotHost>(ea: u32, _j: u16, game: &mut H) {
     if lease_shot(ea, game) {
         return;
     }
@@ -139,7 +135,6 @@ pub fn shot<H: ShotHost>(ea: u32, j: u16, game: &mut H) {
         10911820 => (),
         10977356 => (),
         10982581 => (),
-        10982582 => kraid::arm_shot(game, j),
         11001243 => phantoon::shot(game),
         11192700 => torizo::shot(game),
         11192769 => (),
@@ -227,7 +222,6 @@ pub trait AiHost:
     + crocomire_reactions::Host
     + space_pirates::Pirates
     + torizo::Ai
-    + kraid::Host
     + phantoon::Host
     + PreInstructionHost
     + crate::actors::host::EnemyHost
@@ -593,22 +587,6 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         10911789 => game.shot_reaction(Shot::Finalize),
         // Bank $A7: Kraid, Phantoon, the etecoons and the dachora, with the
         // bank's common reactions.
-        10982544 => kraid::arm_touch(game),
-        10987865 => kraid::initialize(game),
-        10988355 => kraid::initialize_arm(game),
-        10988392 => kraid::initialize_lint(game, 0x80),
-        10988444 => kraid::initialize_lint(game, 0xc0),
-        10988490 => kraid::initialize_lint(game, 0x100),
-        10988536 => kraid::initialize_foot(game),
-        10988577 => kraid::main_ai(game),
-        10991549 => kraid::arm_main(game),
-        10991617 => kraid::lint_main_ai(game, 0x80),
-        10991629 => kraid::lint_main_ai(game, 0xc0),
-        10991641 => kraid::lint_main_ai(game, 0x100),
-        10992118 => kraid::foot_main(game),
-        10992847 | 10992862 => kraid::fingernail_touch(game),
-        10992946 => kraid::fingernail_main(game, 0x180),
-        10992969 => kraid::fingernail_main(game, 0x1c0),
         10997235 => phantoon::initialize(game),
         10997333 => phantoon::initialize_part(game),
         10997414 => phantoon::main_ai(game),
@@ -617,8 +595,6 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         11001243 => phantoon::shot(game),
         10977325 => game.shot_reaction(Shot::Finalize),
         10977340 => game.power_bomb_reaction(Death::LeavePending),
-        10982559 => kraid::touch(game),
-        10992879 | 10992941 => kraid::initialize_fingernail(game),
         // Bank $A8: the common grapple, contact, shot and frozen reactions.
         11042851 => game.contact_reaction(Death::Finalize),
         11042861 => game.shot_reaction(Shot::Finalize),
@@ -915,7 +891,6 @@ pub trait InstructionHost:
     + draygon_host::Host
     + LeaseActors
     + torizo::Ai
-    + kraid::Host
     + phantoon::Host
     + crate::actors::host::EnemyHost
     + crate::effects::SoundEffects
@@ -1069,39 +1044,6 @@ pub fn instruction<H: InstructionHost>(
         10977418 => {
             call_a7_function(j.word(0) as u32 | 0xa70000, k, game);
             j.offset(1)
-        }
-        10991155 => j,
-        10979983 => match kraid::arm_swipe_when_hurt(game) {
-            Some(list) => EnemyScript::jump(list),
-            None => j,
-        },
-        10991158 => {
-            kraid::step_up(game);
-            j
-        }
-        10991164 => {
-            kraid::step_down_and_shake(game);
-            j
-        }
-        10991182 => {
-            kraid::stomp_sound(game);
-            j
-        }
-        10991194 => {
-            kraid::step_back(game);
-            j
-        }
-        10991207 => {
-            kraid::step_back(game);
-            j
-        }
-        10991220 => {
-            kraid::step_forward(game);
-            j
-        }
-        10991235 => {
-            kraid::lunge_right(game);
-            j
         }
         // Bank $AA: the Torizos, Shaktool and the statues; the two identity
         // instructions return the script unchanged.
