@@ -6,6 +6,7 @@
 bundles = [
     { name = "CONNECT-e5c5a415-9.tar.gz.enc", sha256 = "fefac98ed43a3f3529349fa7d40dd469c353bd68dc1e697bba7f2f967ca06501" },
     { name = "coverage-v1-metroid-botwoon-82d7b3c1a2ef44f5.tar.gz.enc", sha256 = "82d7b3c1a2ef44f523c8177d760e4cfd07117813fc0b98f0177916a2be8e6449" },
+    { name = "coverage-v2-metroid-interactions.tar.gz.enc", sha256 = "851545e4084779da2b662a4311c681a45d303bb66176dbd5fffbf09a68140d1b" },
     { name = "full-route-chain-any-v1-5d139284193bc614.tar.gz.enc", sha256 = "5d139284193bc61443855b0fa82128abf44e66f2ad03a7dd5360bbbbef582f03" },
     { name = "full-route-chain-v1-72e0f64e0d47b53d.tar.gz.enc", sha256 = "72e0f64e0d47b53d5110cb8c31e13571c14bc95684696aa8ce7f62c05a6f6dc1" },
     { name = "layout150-f158-faithful2-d4050aa32a965168.tar.gz.enc", sha256 = "d4050aa32a965168653e68a2389145af6aa6f2cd5666bec5eec7c737ffef874b" },
@@ -599,6 +600,8 @@ pins = [
     { id = "chain-any-0196-92FD", bundle = "full-route-chain-any-v1-5d139284193bc614.tar.gz.enc", seed = "any-boundary:196", inputs = "chain-any-0196.inputs", input_sha256 = "bee9c1e8e326a3490f19285183bfac328c9d0a27b3fe9327f92529a632906897" },
     { id = "chain-any-0197-91F8", bundle = "full-route-chain-any-v1-5d139284193bc614.tar.gz.enc", seed = "any-boundary:197", inputs = "chain-any-0197.inputs", input_sha256 = "707907b1f0a4ba22b5d14a3490f0c9d61dfa41a48d7289d61a4c37be74570d66" },
     { id = "coverage-botwoon-spit", bundle = "coverage-v1-metroid-botwoon-82d7b3c1a2ef44f5.tar.gz.enc", seed = "scenario-coverage-botwoon:122", inputs = "coverage-botwoon-spit.inputs", input_sha256 = "af2992543d7e3999e6ab881fd4b1b153dcf67f08e443a81a2e480c0965040ef3" },
+    { id = "coverage-metroid-bomb-release", bundle = "coverage-v2-metroid-interactions.tar.gz.enc", seed = "scenario-coverage-metroid:317", inputs = "coverage-metroid-bomb-release.inputs", input_sha256 = "4b38501f73da7d64811203537320a5b6444ba6543db2845ab1fd4b4b9d2ccf56" },
+    { id = "coverage-metroid-ice-shatter", bundle = "coverage-v2-metroid-interactions.tar.gz.enc", seed = "scenario-coverage-metroid-ice:317", inputs = "coverage-metroid-ice-shatter.inputs", input_sha256 = "dfa0f8b7b82dbcf96edbea03da3e6b7479d1e6a0b14fb6e6b93509c4804d8278" },
     { id = "coverage-metroid-latch-drain", bundle = "coverage-v1-metroid-botwoon-82d7b3c1a2ef44f5.tar.gz.enc", seed = "scenario-coverage-metroid:317", inputs = "coverage-metroid-latch-drain.inputs", input_sha256 = "f8e7b3f2d2b0ef4a79888d925bc7eeb68b2c51750120716e95fd604f090144f9" },
     { id = "credits", bundle = "seeds-v1-credits-42b93bf0bf83aba1.tar.gz.enc", seed = "100-credits:336", inputs = "seed-credits.inputs", input_sha256 = "344e9a8d6654c87f8b7470205e2313a8f3e8c3350f79e3ad3e7350f87f2c1442" },
     { id = "credits-completed-spawn", bundle = "seeds-v1-credits-42b93bf0bf83aba1.tar.gz.enc", seed = "100-credits:336", inputs = "seed-credits.inputs", input_sha256 = "344e9a8d6654c87f8b7470205e2313a8f3e8c3350f79e3ad3e7350f87f2c1442" },
@@ -7281,6 +7284,30 @@ format = 1
 ticks = 901
 combined = "487beb2a6775d244"
 digests = { "wram" = "99fdfc26077db939", "sram" = "7c7b24e87944bf42", "vram" = "7422357a794b0d87", "cgram" = "822b663a498c9168", "oam" = "ad403daaaac54d68", "ppu" = "b43aa515889cc427", "video" = "79d40a6fe09686fa", "apu" = "c7002ed1d939efad", "input" = "143ee8a58c73b7c2", "samus" = "ee8bb87966fec716", "camera" = "f48a7a9c423cdb29", "room" = "b13d9804e087050b", "progress" = "275b641d65c0a492", "actors" = "bfd38aa440855983", "effects" = "22898c0ce4b85046" }
+marks = {  }
+
+[[scenario]]
+id = "coverage-metroid-bomb-release"
+oracle = "faithful"
+start = "seed:82869a63ad3d891860751e8b054540eb45b3117a6c254e47245c25a1c2556726"
+inputs = "4b38501f73da7d64811203537320a5b6444ba6543db2845ab1fd4b4b9d2ccf56"
+frames = 757
+format = 1
+ticks = 757
+combined = "0b1a1a0a136fb654"
+digests = { "wram" = "bc4e1d9976c532e8", "sram" = "2351715febebdea6", "vram" = "94fdf287533965ad", "cgram" = "c74c3ea687d82b4a", "oam" = "e449ee87f32502bc", "ppu" = "81c019da123aaf6b", "video" = "54e35e7a3085ef7e", "apu" = "68ee80f8fac02da6", "input" = "3b33727b3c77a271", "samus" = "09a60df8c69f7ede", "camera" = "93c2414571c2a9e7", "room" = "d789dcc041ad0fba", "progress" = "cc2d1bc6c4d29d4a", "actors" = "09f09482972d784f", "effects" = "75769b2e190a0006" }
+marks = {  }
+
+[[scenario]]
+id = "coverage-metroid-ice-shatter"
+oracle = "faithful"
+start = "seed:c5e9179f7997b42f5646ef53c8cd27ce3b44f8660692ef5d2822022ff02a09f4"
+inputs = "dfa0f8b7b82dbcf96edbea03da3e6b7479d1e6a0b14fb6e6b93509c4804d8278"
+frames = 502
+format = 1
+ticks = 502
+combined = "f759be6b9da7576c"
+digests = { "wram" = "c071880f768fb124", "sram" = "dd9914eaeb30a9e8", "vram" = "d6856fd571630c77", "cgram" = "73ac102ea9b5c3b1", "oam" = "24a21c44318fb49c", "ppu" = "15378c7fcc3de4f6", "video" = "ae78fce2178ed243", "apu" = "0018025b2f73e682", "input" = "f5a9b5ef9a6ba517", "samus" = "0b6c901667020b7e", "camera" = "4ad18237bee218de", "room" = "6727fee8c7edf931", "progress" = "56468afdd8a652d6", "actors" = "33658c9892acd34a", "effects" = "71eb25b1ddb5e89f" }
 marks = {  }
 
 [[scenario]]

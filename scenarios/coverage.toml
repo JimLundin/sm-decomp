@@ -15,3 +15,17 @@ id = "coverage-botwoon-spit"
 start = "seed:da4125501ba0c8b04777d50ee8d489e4daffeddadc65abd86bae5438ef0ea03d"
 ticks = 901
 facts = ["room:D95E", "botwoon:spit"]
+
+# Original Tourian opening (50 ticks), then jump and ordinary missiles.
+[[scenario]]
+id = "coverage-metroid-ice-shatter"
+start = "seed:c5e9179f7997b42f5646ef53c8cd27ce3b44f8660692ef5d2822022ff02a09f4"
+ticks = 502
+facts = ["room:DBCD", "metroid:freeze", "metroid:missile-shatter"]
+
+# Original approach (333 ticks), then wait, morph and lay ordinary bombs.
+[[scenario]]
+id = "coverage-metroid-bomb-release"
+start = "seed:82869a63ad3d891860751e8b054540eb45b3117a6c254e47245c25a1c2556726"
+ticks = 757
+facts = ["room:DBCD", "metroid:latch", "metroid:bomb-release"]
