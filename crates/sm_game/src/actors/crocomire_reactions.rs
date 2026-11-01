@@ -90,9 +90,14 @@ const MELTING_TILES_SOURCE: u32 = 0xa4_9bc5;
 const MELTING_TILES_DESTINATION: u32 = 0xa4_9bc7;
 const MELTING_TILES_SIZE: u32 = 0xa4_9bc9;
 const MELTING_TILES_BANK: u32 = 0xa4_9bcb;
-/// $A4:98CA: the rumble table, ended by 8080h; $A4:9697: the melting X offsets.
+/// $A4:98CA: the rumble table, ended by 8080h.
 const RUMBLE_TABLE: u32 = 0xa4_98ca;
+/// $A4:9697: the melting X offsets, one per pixel column in melting order, and
+/// $A4:9BBD: the tile pixel column bitmasks, ~80h >> column.
 const MELTING_X_OFFSETS: u32 = 0xa4_9697;
+const PIXEL_COLUMN_MASKS: u32 = 0xa4_9bbd;
+/// $7E:4000: the melting tiles' graphics buffer.
+const MELTING_TILES_BUFFER: usize = 0x4000;
 /// Crocomire palettes ($A4:B87D): BG1/2 palette 7, the target sprite palettes
 /// 3 and 6, and sprite palettes 4 and 6.
 const PALETTE_BG_7: u32 = 0xa4_b89d;
@@ -1009,47 +1014,53 @@ pub fn melting<L: Lease + ?Sized>(game: &mut L) {
     });
 }
 
+/// Erase melting Crocomire pixel column ($A4:96C8). Returns 0 when the column
+/// search runs off the X offset table index range.
 fn erase_melt_columns<L: Lease + ?Sized>(game: &mut L) -> u16 {
-    let mut n: i32 = game.slot_byte(PIXELS_TO_ERASE) as i32;
+    let [target, _] = melt!(game.EraseTarget).to_le_bytes();
+    let mut column = melt!(game.Column);
+    // Columns melted down to the target are skipped.
     loop {
-        if melt!(game.Column) > 48 {
+        if column > 48 {
+            melt!(game.Column = column);
             return 1;
         }
-        let rr: i32 = game.native_image().read(
-            sm_data::cartridge::lorom_offset(MELTING_X_OFFSETS) as usize
-                + usize::from(melt!(game.Column)),
-        ) as i32;
-        if (game.slot_byte(MELTING_Y_OFFSETS + rr as usize) as i8)
-            .wrapping_sub((melt!(game.EraseTarget)) as i8)
-            < 0
-        {
+        let height = game.slot_byte(MELTING_Y_OFFSETS + usize::from(x_offset(game, column)));
+        if height.wrapping_sub(target) & 0x80 != 0 {
             break;
         }
-        if melt!(game.Column += 1, reread) >= 128 {
+        column = column.wrapping_add(1);
+        if column.wrapping_sub(0x80) & 0x8000 == 0 {
             melt!(game.Column = 0);
             return 0;
         }
     }
-    // The top-of-loop return dominates this break; intervening reads do not change the index.
-    let vline_idx: i32 = game.native_image().read(
-        sm_data::cartridge::lorom_offset(MELTING_X_OFFSETS) as usize
-            + usize::from(melt!(game.Column)),
-    ) as i32;
-    let mask: u8 = !(0x80u8 >> (vline_idx & 7));
-    do_until! { n == 0 ;
-        let q: i32 = game.slot_byte(MELTING_Y_OFFSETS + vline_idx as usize) as i32;
-        let j: i32 = 2 * (q & 7) + ((q & !(7i32)) << 6) + 4 * (vline_idx & !(7i32));
-        // Melting tiles span the $4000 graphics buffer, beyond the menu backup prefix.
-        for plane_offset in [0, 1, 16, 17] {
-            let at = 0x4000 + j as usize + plane_offset;
+    melt!(game.Column = column);
+    // The mask's pixel column is the table index % 8, not the X offset's.
+    let [low, _] = column.to_le_bytes();
+    let mask = rom_byte(game, PIXEL_COLUMN_MASKS, low & 7);
+    let offset = x_offset(game, column);
+    let height_at = MELTING_Y_OFFSETS + usize::from(offset);
+    let mut pixels = u16::from(game.slot_byte(PIXELS_TO_ERASE));
+    loop {
+        // The Y offset is read as a word: the next column's low two bits reach
+        // bit 14 of the tile offset.
+        let height = game.slot_word(height_at);
+        let tile = ((u16::from(offset) & 0xf8) << 2)
+            .wrapping_add((height & 7) << 1)
+            .wrapping_add((height & 0xfff8) << 6);
+        for plane in [0, 1, 0x10, 0x11] {
+            let at = MELTING_TILES_BUFFER + usize::from(tile) + plane;
             game.set_slot_byte(at, game.slot_byte(at) & mask);
         }
-        if game.slot_byte(MELTING_Y_OFFSETS + vline_idx as usize) == 48 {
+        if game.slot_byte(height_at) == 48 {
             break;
         }
-        let at = MELTING_Y_OFFSETS + vline_idx as usize;
-        game.set_slot_byte(at, game.slot_byte(at).wrapping_add(1));
-        n -= 1;
+        game.set_slot_word(height_at, game.slot_word(height_at).wrapping_add(1));
+        pixels = pixels.wrapping_sub(1);
+        if pixels == 0 {
+            break;
+        }
     }
     let v7 = loop {
         let v7 = (melt!(game.Subindex)).wrapping_add(melt!(game.Index));
@@ -1061,6 +1072,18 @@ fn erase_melt_columns<L: Lease + ?Sized>(game: &mut L) -> u16 {
     queue_melt_graphics(v7, false, game);
     melt!(game.Subindex += 8);
     1
+}
+
+/// The cartridge byte at `index` in the bank $A4 table at `address`.
+fn rom_byte<L: Lease + ?Sized>(game: &L, address: u32, index: u8) -> u8 {
+    game.native_image()
+        .read(sm_data::cartridge::lorom_offset(address).unsigned_abs() + usize::from(index))
+}
+
+/// The melting X offset at table index `column` ($A4:9697).
+fn x_offset<L: Lease + ?Sized>(game: &L, column: u16) -> u8 {
+    let [index, _] = column.to_le_bytes();
+    rom_byte(game, MELTING_X_OFFSETS, index)
 }
 
 /// Initializes the defeated or active boss room with the original ordered effects.
