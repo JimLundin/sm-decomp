@@ -126,16 +126,13 @@ pub fn publish<H: crate::ram::RamHost + ?Sized>(state: Dialogue<u16>, game: &mut
 pub fn input<H: crate::ram::RamHost + ?Sized>(game: &H) -> Input {
     use crate::constants::buttons::*;
     let keys = read(game, ram::JOYPAD1_NEWKEYS);
-    let dismiss = if read(game, ram::BUG_FIX_COUNTER) == 0 {
-        keys != 0
-    } else {
-        read(game, ram::JOYPAD1_LASTKEYS) != 0
-    };
     Input {
         confirm: keys & K_BUTTON_A as u16 != 0,
         cancel: keys & K_BUTTON_B as u16 != 0,
         toggle: keys & (K_BUTTON_SELECT | K_BUTTON_LEFT | K_BUTTON_RIGHT) as u16 != 0,
-        dismiss,
+        // LOOP_INPUT ($85:84A3) reads the joypad's raw state ($4218/$4219): a held
+        // button dismisses the box, as snesrev's bug-fix counter 1 decides too.
+        dismiss: read(game, ram::JOYPAD1_LASTKEYS) != 0,
     }
 }
 pub fn select_pause<H: crate::ram::RamHost + ?Sized>(game: &mut H) {
