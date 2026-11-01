@@ -22,6 +22,7 @@ struct Actor {
     function: u16,
 }
 
+#[cfg(sm_verify_dll)]
 pub(super) fn check_fresh_events() {
     let mut before = Snapshot {
         health: 99,
