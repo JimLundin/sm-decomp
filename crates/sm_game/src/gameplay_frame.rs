@@ -341,7 +341,6 @@ fn frame<H: Host>(game: &mut H) -> CoroutineRet {
         if state.iter().fold(0, |bits, byte| bits | byte) != 0 {
             game.report_broken_coroutine(state);
         }
-        game.ram().write_byte(0x611, 0);
         0
     };
     if returned == 0 {
@@ -353,8 +352,20 @@ fn frame<H: Host>(game: &mut H) -> CoroutineRet {
     if requested {
         controller_input::sample_latched(game);
     }
+    // A soft reset (the game over and file select quits, the debug reset chord)
+    // jumps to $80:8462: the next frame resumes boot there, which clears bank $7E.
+    let reset = word!(game.GAME_STATE) == SOFT_RESET_REQUESTED;
+    if returned == 0 || reset {
+        let resume = if reset { RESUME_SOFT_RESET } else { 0 };
+        game.ram().write_byte(0x611, resume);
+    }
     returned
 }
+
+/// The game state a soft-reset request leaves for the frame's end.
+const SOFT_RESET_REQUESTED: u16 = 0xffff;
+/// The frame resume byte that enters boot at the soft reset.
+const RESUME_SOFT_RESET: u8 = 3;
 
 /// Room transition phase: initial room load and actor tile staging.
 fn initialize<H: Host>(game: &mut H) -> CoroutineRet {
