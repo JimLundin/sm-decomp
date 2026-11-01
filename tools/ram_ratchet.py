@@ -23,11 +23,12 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import cycle_report  # noqa: E402
 
-# Lowered with batch 10 (2026-10-30); first measured on main 91d0bcce. The
+# Lowered to the honest view-counting measure after batch 13q (2026-11-01;
+# 3663 before). First measured on main 91d0bcce. The
 # production line baseline dropped by the 685 #[cfg(test)] lines it stopped
 # counting (2026-10-31).
 BASELINE = {
-    "sm_game_ram_sites": 3663,
+    "sm_game_ram_sites": 2319,
     "sm_game_coupled_files": 101,
     "production_lines": 173506,
 }
