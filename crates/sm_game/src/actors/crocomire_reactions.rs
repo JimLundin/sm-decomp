@@ -93,9 +93,16 @@ const MELTING_TILES_BANK: u32 = 0xa4_9bcb;
 /// $A4:98CA: the rumble table, ended by 8080h.
 const RUMBLE_TABLE: u32 = 0xa4_98ca;
 /// $A4:9697: the melting X offsets, one per pixel column in melting order, and
-/// $A4:9BBD: the tile pixel column bitmasks, ~80h >> column.
-const MELTING_X_OFFSETS: u32 = 0xa4_9697;
-const PIXEL_COLUMN_MASKS: u32 = 0xa4_9bbd;
+/// $A4:9BBD: the tile pixel column bitmasks, ~80h >> column. Erase melting
+/// Crocomire pixel column reads both, and the melting Y offsets, through the
+/// data bank $A4; each `_BUS` is the load's high operand byte, which the read
+/// leaves on the data bus.
+const MELTING_X_OFFSETS: u16 = 0x9697;
+const MELTING_X_OFFSETS_BUS: u8 = 0x96;
+const PIXEL_COLUMN_MASKS: u16 = 0x9bbd;
+const PIXEL_COLUMN_MASKS_BUS: u8 = 0x9b;
+const MELTING_Y_OFFSETS_OPERAND: u16 = 0x069c;
+const MELTING_Y_OFFSETS_BUS: u8 = 0x06;
 /// $7E:4000: the melting tiles' graphics buffer.
 const MELTING_TILES_BUFFER: usize = 0x4000;
 /// Crocomire palettes ($A4:B87D): BG1/2 palette 7, the target sprite palettes
@@ -948,11 +955,14 @@ pub fn melting<L: Lease + ?Sized>(game: &mut L) {
     let e2: i32 = 0x80;
     let mut counter: u16 = session_slot!(game, Crocomire[e2].step_counter);
     session_slot!(game, Crocomire[e1].step_counter, |old| old.wrapping_sub(1));
+    // A is 0 or the shifted X position here, and the erase keeps its low byte.
+    let mut bug = 0;
     if (session_slot!(game, Crocomire[e1].step_counter) & 2) != 0 {
         counter = (counter).wrapping_add(4);
+        [bug, _] = counter.to_le_bytes();
     }
     session_slot!(game, Crocomire[e0].base.x_pos = counter);
-    if erase_melt_columns(game) != 0 {
+    if erase_melt_columns(game, bug) != 0 {
         update_background(game.current_enemy(), game);
         let mut v4: u16 = (melt!(game.YOffset)).wrapping_sub(3);
         let skip_tilemap_update: bool = ((melt!(game.YOffset) as i32 - 19i32) & 0x8000 != 0)
@@ -1014,9 +1024,11 @@ pub fn melting<L: Lease + ?Sized>(game: &mut L) {
     });
 }
 
-/// Erase melting Crocomire pixel column ($A4:96C8). Returns 0 when the column
-/// search runs off the X offset table index range.
-fn erase_melt_columns<L: Lease + ?Sized>(game: &mut L) -> u16 {
+/// Erase melting Crocomire pixel column ($A4:96C8). `bug` is the low byte of
+/// the caller's A, which the routine's XBA leaves as the high byte of Y: the
+/// column search and the pixel mask then read $100 * `bug` bytes further on.
+/// Returns 0 when the column search runs off the X offset table index range.
+fn erase_melt_columns<L: Lease + ?Sized>(game: &mut L, bug: u8) -> u16 {
     let [target, _] = melt!(game.EraseTarget).to_le_bytes();
     let mut column = melt!(game.Column);
     // Columns melted down to the target are skipped.
@@ -1025,7 +1037,12 @@ fn erase_melt_columns<L: Lease + ?Sized>(game: &mut L) -> u16 {
             melt!(game.Column = column);
             return 1;
         }
-        let height = game.slot_byte(MELTING_Y_OFFSETS + usize::from(x_offset(game, column)));
+        let height = data_bank_byte(
+            game,
+            MELTING_Y_OFFSETS_OPERAND,
+            u16::from_le_bytes([x_offset(game, column), bug]),
+            MELTING_Y_OFFSETS_BUS,
+        );
         if height.wrapping_sub(target) & 0x80 != 0 {
             break;
         }
@@ -1038,7 +1055,12 @@ fn erase_melt_columns<L: Lease + ?Sized>(game: &mut L) -> u16 {
     melt!(game.Column = column);
     // The mask's pixel column is the table index % 8, not the X offset's.
     let [low, _] = column.to_le_bytes();
-    let mask = rom_byte(game, PIXEL_COLUMN_MASKS, low & 7);
+    let mask = data_bank_byte(
+        game,
+        PIXEL_COLUMN_MASKS,
+        u16::from_le_bytes([low & 7, bug]),
+        PIXEL_COLUMN_MASKS_BUS,
+    );
     let offset = x_offset(game, column);
     let height_at = MELTING_Y_OFFSETS + usize::from(offset);
     let mut pixels = u16::from(game.slot_byte(PIXELS_TO_ERASE));
@@ -1074,16 +1096,28 @@ fn erase_melt_columns<L: Lease + ?Sized>(game: &mut L) -> u16 {
     1
 }
 
-/// The cartridge byte at `index` in the bank $A4 table at `address`.
-fn rom_byte<L: Lease + ?Sized>(game: &L, address: u32, index: u8) -> u8 {
-    game.native_image()
-        .read(sm_data::cartridge::lorom_offset(address).unsigned_abs() + usize::from(index))
+/// The byte the CPU reads at `address` + `index` with the data bank at $A4, as
+/// Erase melting Crocomire pixel column's indexed loads do. The index carries
+/// into bank $A5. Below $2000 is low RAM's mirror and from $8000 the cartridge;
+/// between them the read finds the open bus, which still holds `bus`. The
+/// registers in that span ($21xx, $4016-$4017, $42xx-$43xx) are only within
+/// reach of an X offset read past the table, and read as the open bus here.
+fn data_bank_byte<L: Lease + ?Sized>(game: &L, address: u16, index: u16, bus: u8) -> u8 {
+    let (offset, carry) = address.overflowing_add(index);
+    match offset {
+        ..0x2000 => game.slot_byte(usize::from(offset)),
+        0x8000.. => {
+            let long = ((BANK + u32::from(carry)) << 16) | u32::from(offset);
+            game.native_image()
+                .read(sm_data::cartridge::lorom_offset(long).unsigned_abs())
+        }
+        _ => bus,
+    }
 }
 
 /// The melting X offset at table index `column` ($A4:9697).
 fn x_offset<L: Lease + ?Sized>(game: &L, column: u16) -> u8 {
-    let [index, _] = column.to_le_bytes();
-    rom_byte(game, MELTING_X_OFFSETS, index)
+    data_bank_byte(game, MELTING_X_OFFSETS, column, MELTING_X_OFFSETS_BUS)
 }
 
 /// Initializes the defeated or active boss room with the original ordered effects.
