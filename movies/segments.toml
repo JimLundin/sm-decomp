@@ -1913,7 +1913,6 @@ start_frame = 0
 frames = 2123
 expect = ["room:C98E"]
 require_hit = ["hands.setup"]
-pending = "awaiting the seeds-v1-handwings-6302cac975d0049c ci-data upload"
 
 # Crateria's kihunter room with the power beam and Samus moved beside the left
 # kihunter (scenario kihunter-wings), the kihunter-wings recipe: her shots
@@ -1928,7 +1927,6 @@ start_frame = 0
 frames = 453
 expect = ["room:948C"]
 require_hit = ["kihunter.drift"]
-pending = "awaiting the seeds-v1-handwings-6302cac975d0049c ci-data upload"
 
 # The baby Metroid's room: the movie words to 1,000, until it has drained
 # Samus, then released (frames=2400). Samus stays, so after backing off the
@@ -1943,7 +1941,6 @@ start_frame = 0
 frames = 3400
 expect = ["room:DCB1"]
 require_hit = ["baby_metroid.accelerate_towards_samus"]
-pending = "awaiting the seeds-v1-handwings-6302cac975d0049c ci-data upload"
 
 # Green Brinstar's main shaft with Samus moved to the top of the etecoons'
 # shaft and the etecoon that waits for her there moved ahead of her (scenario
@@ -1959,4 +1956,3 @@ start_frame = 0
 frames = 401
 expect = ["room:9AD9"]
 require_hit = ["etecoon.tunnel_jump"]
-pending = "awaiting the seeds-v1-handwings-6302cac975d0049c ci-data upload"

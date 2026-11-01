@@ -6758,6 +6758,18 @@ digests = { "wram" = "0bd7bd9a79db10b9", "sram" = "9c20c22c0c85a4c3", "vram" = "
 marks = {  }
 
 [[scenario]]
+id = "enemy-baby-metroid-remorse"
+oracle = "faithful"
+start = "seed:aa728bbb9c2648e2d1b9d09a684aa4f61714dd14ebfd3f6ca3fbdef969f9bf2e"
+inputs = "ba0770dd6591306143428e424d6eea2ee5e3c7ab765545225c182f5f49ab490b"
+frames = 3400
+format = 1
+ticks = 3400
+combined = "e39ace1e0be04afc"
+digests = { "wram" = "5ba1ff7dfeba1629", "sram" = "3d94c01ad7b4f006", "vram" = "cbccdcb48e5553cf", "cgram" = "2a04869645182857", "oam" = "070a1b6b5176b284", "ppu" = "d1494aeb44089fbb", "video" = "796acad8e3c2238c", "apu" = "953580f9c39d910c", "input" = "f2be63378403721f", "samus" = "1ae32e110b25a7e2", "camera" = "2403d144b6c37ac2", "room" = "cacd8c33c37e3640", "progress" = "cbf2ef28a1b23cb5", "actors" = "4e38a41c593804d3", "effects" = "3f261a8f7472f77f" }
+marks = { "1000" = "81d2cd86c6e1c676", "2000" = "2d984cc74ca22486", "3000" = "b4f447a4ffddd5c7" }
+
+[[scenario]]
 id = "enemy-boulder-bounce"
 oracle = "faithful"
 start = "seed:ed666ea53e17bea7758835b6594bf17d7c0e57c1f2fd6cc047993a9e10c89c7f"
@@ -6830,6 +6842,18 @@ digests = { "wram" = "3aca25649c705606", "sram" = "52692ea278b52dec", "vram" = "
 marks = { "1000" = "fe9a54539f2736c7", "2000" = "57d6a2a26fb5200e" }
 
 [[scenario]]
+id = "enemy-etecoon-tunnel-jump"
+oracle = "faithful"
+start = "seed:912d13878db3ebcf32a7d0c59e7e00fcbe932c83b5052d9c89bdfc30b6e866ca"
+inputs = "be13a41e4475b88819cd3487ac7c6fec1ecc0dfef6ac9ac466a2d03336949bd8"
+frames = 401
+format = 1
+ticks = 401
+combined = "7ff51fe358240bb5"
+digests = { "wram" = "c1835ac8885ef625", "sram" = "7a257bf8b2551c4f", "vram" = "b4daebf58214191f", "cgram" = "4b047779c07955f6", "oam" = "7c4435689939fa06", "ppu" = "baab854357c4e107", "video" = "60b4ff6dcaf1adb7", "apu" = "60faa59260642aeb", "input" = "810e025fe81298bf", "samus" = "4d4adf7c237e4903", "camera" = "ee514ca753cd4c00", "room" = "6769cae924eb3cb8", "progress" = "5ee8f93ae421aba5", "actors" = "722615c62b84edf2", "effects" = "60590eb8863342e5" }
+marks = {  }
+
+[[scenario]]
 id = "enemy-evir"
 oracle = "faithful"
 start = "seed:ef0f216d1f5be301111ed15481976a8b3293885f457b66c6feb59c23694a46f1"
@@ -6839,6 +6863,18 @@ format = 1
 ticks = 363
 combined = "ab6c39fb53af7cae"
 digests = { "wram" = "482876ade1382df0", "sram" = "55898c66370637a1", "vram" = "f525dc294286d3a2", "cgram" = "0064ce7583f1778d", "oam" = "3f878037d1dc359f", "ppu" = "54d355a3f0351d5b", "video" = "fc269ebef0f4a57c", "apu" = "e387efda514a0b23", "input" = "cb0ef3f8531b95ef", "samus" = "86f6572c80c14551", "camera" = "649ec667ccdd1710", "room" = "84289cce52e19045", "progress" = "1472b6076f566b88", "actors" = "9b3d18bce635b41c", "effects" = "c5697d07da2e6a71" }
+marks = {  }
+
+[[scenario]]
+id = "enemy-kihunter-wings"
+oracle = "faithful"
+start = "seed:1443a133069abf496ed0742842c412b2053d70cb64cd43791aff762d16d5c419"
+inputs = "c47fa69da00dbb3bff0d0b942f2ce61b1917549ad105ee61d089844cb1ee9af4"
+frames = 453
+format = 1
+ticks = 453
+combined = "eaaf47f4d41491ae"
+digests = { "wram" = "4a68e29e6ec234f9", "sram" = "30aa4d1fba825308", "vram" = "9bf65030d2698107", "cgram" = "b950f2c5e6f4785c", "oam" = "35938a38eacdc154", "ppu" = "56072526e4f79ceb", "video" = "9e9129313c4c36b0", "apu" = "b8c799fdfd14afcd", "input" = "dffbbc5be46b9ef3", "samus" = "920720ac6563d01b", "camera" = "3b41c6134c0c1f6c", "room" = "93e5bf6a7c76ffcf", "progress" = "0855ba3aac75e55e", "actors" = "ca4000b1537112b9", "effects" = "160b324e2b118bc4" }
 marks = {  }
 
 [[scenario]]
@@ -7428,6 +7464,18 @@ ticks = 450
 combined = "95214760846d6768"
 digests = { "wram" = "c7cc13837a75c17b", "sram" = "5b3674e14a8e2120", "vram" = "e4cdaa3e7a66aa3b", "cgram" = "1362e65bff7be43b", "oam" = "9969f559df75dde7", "ppu" = "6af959522498f410", "video" = "396237c5a0fefb91", "apu" = "680bf87eada5155a", "input" = "15b59a47a6848c36", "samus" = "c9ff760b7737675f", "camera" = "d42d4e6ff8611371", "room" = "34f5f9ead429b9f9", "progress" = "be663ce768c4f438", "actors" = "21506ce1abf939e9", "effects" = "eb8d8a8a86928eb1" }
 marks = {  }
+
+[[scenario]]
+id = "terrain-wrecked-ship-hand"
+oracle = "faithful"
+start = "seed:3a1aa6b20772c1b3cb31d40909dcbea44b76351d9891c60b2c7f9fb9a3fa82fc"
+inputs = "54d06a14b23c3afe2241eaae2812fc4f984736bbe934f6e81d37bcd461a83174"
+frames = 2123
+format = 1
+ticks = 2123
+combined = "026a3a0cb3a96334"
+digests = { "wram" = "12dade0e37e0b5fb", "sram" = "6491aa9531de7682", "vram" = "02bb611f7e85a18f", "cgram" = "1b06fd7c8ad19554", "oam" = "7bc796dc3be1f66a", "ppu" = "1ba00dc183dccbbd", "video" = "c92ad90948d37b33", "apu" = "03db4b29841fd0cf", "input" = "8a3d26da853980a4", "samus" = "d4b9befd6cf50569", "camera" = "840deffb5afcf544", "room" = "b703a5827a865bc5", "progress" = "9f1fde83c8ae8df2", "actors" = "c09273672c2d5c8b", "effects" = "c8dc0a08d3d44e63" }
+marks = { "1000" = "cfbd0c0ac6b84ca3", "2000" = "88da87eb00b65e3c" }
 
 [[scenario]]
 id = "volcano-room-lavaquake"
