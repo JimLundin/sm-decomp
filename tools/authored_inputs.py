@@ -196,6 +196,11 @@ class Sweep:
 
 
 RECIPES = {
+    # Keep --prefix-frames 333 of the original approach. Without the ice
+    # beam the Metroids in the entry room survive and latch onto Samus.
+    "coverage-metroid-latch-drain": Recipe("_ 400"),
+    # Keep only Botwoon's seed-latched controller word, then let the fight run.
+    "coverage-botwoon-spit": Recipe("_ 900"),
     # Pause in a room with reserve energy, scroll the map, open the equipment
     # screen, set the reserve tanks to manual and transfer their energy,
     # restore automatic mode, toggle each beam, suit, item and boots twice,
@@ -379,6 +384,8 @@ SWEEPS = {
 
 # SHA-256 of each recipe's own words, before any prefix; `check` keeps them.
 PINNED = {
+    "coverage-metroid-latch-drain": "3d2bc137e05df8bca64f457fb2a4e4f5f4579179af2bcf20ed5a4c0301545494",
+    "coverage-botwoon-spit": "ca2431d3b1a380ce77495dca8b9efc1fb20d1efd8f8d4de97e43d9df76695a0d",
     "pause-menu-tour": "b3fd5b2ec38a6cc00731f528244f120b7793ea0802dd4a5cd8e0b673b8efe5f0",
     "options-tour": "b06fcdb5eddf0784604c5e8e2c7d4a6f724ecffb62e762b82c799e0a75bc0128",
     "volcano-room": "e38317b3da5183e18af6c56257404ffee041db2d87583f8304549b1f5760d6d0",

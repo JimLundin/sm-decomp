@@ -68,6 +68,15 @@ class Scenario:
 
 
 SCENARIOS = {
+    "coverage-metroid": Scenario(
+        base="100-input-phase:317",
+        edits={"equipped_items": "varia+spring-ball+morph-ball+gravity+hi-jump+space-jump+bombs+speed-booster+grapple+x-ray", "equipped_beams": 0,
+               "energy": 699, "max_energy": 699, "reserve_energy": 0},
+        note="Metroid latch and drain with screw attack unequipped"),
+    "coverage-botwoon": Scenario(
+        base="low-input-phase:122",
+        edits={"energy": 699, "max_energy": 699, "reserve_energy": 0},
+        note="Botwoon spit patterns with enough energy to survive released controls"),
     # The 100% movie's Draygon fight with full energy and reserves, so Samus
     # survives his whole grab. The grapple-repel recipe reselects the
     # grapple before firing it, since the movie words change the item.

@@ -4,6 +4,8 @@ use std::{collections::BTreeSet, ffi::CString, time::Instant};
 
 use sm::verification_checkpoint as checkpoint;
 // Explicit so the desktop binary in sm_app can share this module.
+#[path = "verify/gameplay_facts.rs"]
+mod gameplay_facts;
 #[path = "verify/seed.rs"]
 mod seed;
 
@@ -22,6 +24,9 @@ enum Expectation {
     Death,
     Credits,
     CreditsComplete,
+    MetroidLatch,
+    MetroidDrain,
+    BotwoonSpit,
 }
 
 impl Expectation {
@@ -58,6 +63,12 @@ impl Expectation {
                 _ => return Err(bad()),
             })),
             "encounter" if name == "ceres-ridley" => Ok(Self::CeresRidley),
+            "metroid" => match name {
+                "latch" => Ok(Self::MetroidLatch),
+                "drain" => Ok(Self::MetroidDrain),
+                _ => Err(bad()),
+            },
+            "botwoon" if name == "spit" => Ok(Self::BotwoonSpit),
             "room" | "door" | "elevator"
                 if name.len() == 4 && name.bytes().all(|byte| byte.is_ascii_hexdigit()) =>
             {
@@ -129,6 +140,9 @@ impl Expectation {
             Self::State(state) => after.state == state,
             Self::Area(area) => after.state == 8 && after.area == area,
             Self::Room(room) => after.state == 8 && after.room == room,
+            Self::MetroidLatch => live && before.gameplay.metroid_latch(after.gameplay),
+            Self::MetroidDrain => live && before.gameplay.metroid_drain(after.gameplay),
+            Self::BotwoonSpit => live && before.gameplay.botwoon_spit(after.gameplay),
             // These require episode history, handled by observe_expectations.
             Self::Door(_)
             | Self::Elevator(_)
@@ -262,6 +276,7 @@ struct CoverageState {
     saved_station: u16,
     saved_area: u16,
     coroutines_idle: bool,
+    gameplay: gameplay_facts::Snapshot,
 }
 
 impl CoverageState {
@@ -310,6 +325,11 @@ impl CoverageState {
                 BombActor::read(game)
             } else {
                 None
+            },
+            gameplay: if word(0x998) == 8 {
+                gameplay_facts::Snapshot::read(game)
+            } else {
+                gameplay_facts::Snapshot::default()
             },
         }
     }

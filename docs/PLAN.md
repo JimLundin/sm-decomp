@@ -146,6 +146,10 @@ work and authorizes no repeated accepted campaign.
 
 ## Fast loop
 
+Keep a dedicated gameplay verification coverage owner alongside the engine lanes.
+Replenish that lane with fresh bounded agents when each task completes; report
+newly reached game behaviors and mutation sensitivity separately from passing rows.
+
 1. cargo fmt --check; cargo check --no-default-features --lib with warnings denied;
    one DLL build: python tools/verify_dll.py --build-only. Cargo enforces
    warnings='deny' in sm/Cargo.toml for every sm target while preserving dependency

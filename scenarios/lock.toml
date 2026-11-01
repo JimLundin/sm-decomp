@@ -5,6 +5,7 @@
 
 bundles = [
     { name = "CONNECT-e5c5a415-9.tar.gz.enc", sha256 = "fefac98ed43a3f3529349fa7d40dd469c353bd68dc1e697bba7f2f967ca06501" },
+    { name = "coverage-v1-metroid-botwoon-82d7b3c1a2ef44f5.tar.gz.enc", sha256 = "82d7b3c1a2ef44f523c8177d760e4cfd07117813fc0b98f0177916a2be8e6449" },
     { name = "full-route-chain-any-v1-5d139284193bc614.tar.gz.enc", sha256 = "5d139284193bc61443855b0fa82128abf44e66f2ad03a7dd5360bbbbef582f03" },
     { name = "full-route-chain-v1-72e0f64e0d47b53d.tar.gz.enc", sha256 = "72e0f64e0d47b53d5110cb8c31e13571c14bc95684696aa8ce7f62c05a6f6dc1" },
     { name = "layout150-f158-faithful2-d4050aa32a965168.tar.gz.enc", sha256 = "d4050aa32a965168653e68a2389145af6aa6f2cd5666bec5eec7c737ffef874b" },
@@ -597,6 +598,8 @@ pins = [
     { id = "chain-any-0195-96BA", bundle = "full-route-chain-any-v1-5d139284193bc614.tar.gz.enc", seed = "any-boundary:195", inputs = "chain-any-0195.inputs", input_sha256 = "4ae595d959e56430501d0d0e9cead299e0d69a45d42a178464c932f8a28419d4" },
     { id = "chain-any-0196-92FD", bundle = "full-route-chain-any-v1-5d139284193bc614.tar.gz.enc", seed = "any-boundary:196", inputs = "chain-any-0196.inputs", input_sha256 = "bee9c1e8e326a3490f19285183bfac328c9d0a27b3fe9327f92529a632906897" },
     { id = "chain-any-0197-91F8", bundle = "full-route-chain-any-v1-5d139284193bc614.tar.gz.enc", seed = "any-boundary:197", inputs = "chain-any-0197.inputs", input_sha256 = "707907b1f0a4ba22b5d14a3490f0c9d61dfa41a48d7289d61a4c37be74570d66" },
+    { id = "coverage-botwoon-spit", bundle = "coverage-v1-metroid-botwoon-82d7b3c1a2ef44f5.tar.gz.enc", seed = "scenario-coverage-botwoon:122", inputs = "coverage-botwoon-spit.inputs", input_sha256 = "af2992543d7e3999e6ab881fd4b1b153dcf67f08e443a81a2e480c0965040ef3" },
+    { id = "coverage-metroid-latch-drain", bundle = "coverage-v1-metroid-botwoon-82d7b3c1a2ef44f5.tar.gz.enc", seed = "scenario-coverage-metroid:317", inputs = "coverage-metroid-latch-drain.inputs", input_sha256 = "f8e7b3f2d2b0ef4a79888d925bc7eeb68b2c51750120716e95fd604f090144f9" },
     { id = "credits", bundle = "seeds-v1-credits-42b93bf0bf83aba1.tar.gz.enc", seed = "100-credits:336", inputs = "seed-credits.inputs", input_sha256 = "344e9a8d6654c87f8b7470205e2313a8f3e8c3350f79e3ad3e7350f87f2c1442" },
     { id = "credits-completed-spawn", bundle = "seeds-v1-credits-42b93bf0bf83aba1.tar.gz.enc", seed = "100-credits:336", inputs = "seed-credits.inputs", input_sha256 = "344e9a8d6654c87f8b7470205e2313a8f3e8c3350f79e3ad3e7350f87f2c1442" },
     { id = "credits-ending", bundle = "seeds-v1-coverage-54f838bfd8146bf7.tar.gz.enc", seed = "100-credits:336", inputs = "seed-credits-ending.inputs", input_sha256 = "5b6ffc5db37ecd8f79aafbac3351af1ecda182a585df97634ee6a75b1980386c" },
@@ -7266,6 +7269,30 @@ format = 1
 ticks = 129
 combined = "fb1d156e407a5577"
 digests = { "wram" = "8ef06413bae7a102", "sram" = "ae563e5eed369dff", "vram" = "89465a405c73cd5e", "cgram" = "1fbf1ee923189cb5", "oam" = "718d354842ea36e1", "ppu" = "be847f95f4088a6c", "video" = "e62443480875266c", "apu" = "fe55d7690d781c85", "input" = "0519886f5aada7cb", "samus" = "ee78d967d74c027d", "camera" = "416a4212dffb6158", "room" = "877a35274fde2883", "progress" = "10a0b2d93f6f2686", "actors" = "f12c2f9b9a01ce6e", "effects" = "54829ebce5a9e741" }
+marks = {  }
+
+[[scenario]]
+id = "coverage-botwoon-spit"
+oracle = "faithful"
+start = "seed:da4125501ba0c8b04777d50ee8d489e4daffeddadc65abd86bae5438ef0ea03d"
+inputs = "af2992543d7e3999e6ab881fd4b1b153dcf67f08e443a81a2e480c0965040ef3"
+frames = 901
+format = 1
+ticks = 901
+combined = "487beb2a6775d244"
+digests = { "wram" = "99fdfc26077db939", "sram" = "7c7b24e87944bf42", "vram" = "7422357a794b0d87", "cgram" = "822b663a498c9168", "oam" = "ad403daaaac54d68", "ppu" = "b43aa515889cc427", "video" = "79d40a6fe09686fa", "apu" = "c7002ed1d939efad", "input" = "143ee8a58c73b7c2", "samus" = "ee8bb87966fec716", "camera" = "f48a7a9c423cdb29", "room" = "b13d9804e087050b", "progress" = "275b641d65c0a492", "actors" = "bfd38aa440855983", "effects" = "22898c0ce4b85046" }
+marks = {  }
+
+[[scenario]]
+id = "coverage-metroid-latch-drain"
+oracle = "faithful"
+start = "seed:82869a63ad3d891860751e8b054540eb45b3117a6c254e47245c25a1c2556726"
+inputs = "f8e7b3f2d2b0ef4a79888d925bc7eeb68b2c51750120716e95fd604f090144f9"
+frames = 733
+format = 1
+ticks = 733
+combined = "400a1c0e8903c1b7"
+digests = { "wram" = "57628f8755029760", "sram" = "058c6e144ae8d611", "vram" = "4449327f56f8fc7d", "cgram" = "a170dcf0a736da8e", "oam" = "c3fa5a5229b1ed8b", "ppu" = "3a40cdfc87aa97aa", "video" = "653a63d302d2573c", "apu" = "2b6688d24dd85904", "input" = "579ab2abcb3fe532", "samus" = "276d16b517a9213e", "camera" = "b737da9604562861", "room" = "29a55fae898d428b", "progress" = "45b8d993929d27d6", "actors" = "7c68e1dde6f1458c", "effects" = "d476332d6f27702c" }
 marks = {  }
 
 [[scenario]]

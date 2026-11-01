@@ -21,7 +21,7 @@ pub(super) fn run() -> i32 {
     macro_rules! cases {
             ($($test:ident),+ $(,)?) => { [$( (stringify!($test), $test as fn()), )+] };
         }
-    let tests: [(&str, fn()); 147] = cases![
+    let tests: [(&str, fn()); 148] = cases![
         checkpoint_serialized_schema_matches_actual_compiled_codecs,
         seeded_checkpoint_origin_binds_its_seed_payload,
         prepared_message_pixels_delay_queue_and_checkpoint,
@@ -31,6 +31,7 @@ pub(super) fn run() -> i32 {
         room_pack_rejects_checksum_valid_structural_errors,
         room_pack_selection_rejects_missing_duplicate_and_option_values,
         expectation_parser_rejects_unknown_or_malformed_values,
+        gameplay_facts_require_fresh_same_actor_events,
         inventory_events_require_a_new_award_inside_the_same_live_room,
         boss_flags_require_a_rising_bit_in_the_corresponding_area,
         credits_require_enabled_script_advancement_not_ending_presence,
@@ -1680,6 +1681,8 @@ fn expectation_parser_rejects_unknown_or_malformed_values() {
         "elevator:FFFFF",
         "elevator:zzzz",
         "encounter:ridley",
+        "metroid:unknown",
+        "botwoon:unknown",
         "credits:1",
         "state:",
         "state:-1",
@@ -1716,6 +1719,11 @@ fn expectation_parser_rejects_unknown_or_malformed_values() {
         Expectation::parse("boss:mother-brain").unwrap(),
         Expectation::Boss { area: 5, mask: 2 }
     );
+}
+
+#[cfg_attr(test, test)]
+fn gameplay_facts_require_fresh_same_actor_events() {
+    gameplay_facts::check_fresh_events();
 }
 
 #[cfg_attr(test, test)]
