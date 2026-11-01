@@ -5,18 +5,18 @@ the `sm-coordinate`, `sm-land` and `sm-resources` skills. Then do the first step
 
 ## Where things are
 
-- **`main`:** `da5a55483`; #138 through #141 landed with their exact-head gates green.
-- Complete RAM measure: **2,138 sites / 98 coupled files**, including 303 executable
-  RAM-backed cohort-copy calls. This baseline landed in #140.
+- **`main`:** `74a984d5e`; #138 through #142 landed with their exact-head gates green.
+- Complete RAM measure: **2,109 sites / 96 coupled files**. The lowered baseline
+  is queued beside the qualified Metroid coverage pair in the next slice.
 - #139 landed the scenario format, L5 batch 1, typed native-video verifier producers,
   corrected accounting and the Cue-trace dispatch option. Physical production grew
   by 372 lines; `sm_tools` is counted separately as verification.
 - #140 landed the rotating faithful sample; #141 landed Metroid latch/drain and
   Botwoon spit. Both coverage scenarios caught deliberate gameplay mutants.
-- **#142:** twelve qualified L5 commits, head `74a984d5e`, branch `land/batch13z`.
-  Local gate and hosted CI passed; corpus run **41303916057**, route and lock gates
-  are still running/queued. Watcher exec session **88871** must be polled before
-  treating it as stopped. This slice measures **2,109 sites / 96 files**, physical
+- **#142 landed at 12:24:02 UTC:** twelve qualified L5 commits, head `74a984d5e`.
+  Local gate, CI **41303910705**, corpus **41303916057**, route **41303910279**
+  and lock **41303910244** passed. Watcher **88871** is terminal EXIT0; do not
+  restart it. This slice measures **2,109 sites / 96 files**, physical
   production **179,299** (+8), ratchet production **178,892** (+8).
 - Next coverage commits are picked after #142 on the landing branch: `d725ed328`,
   `55f557469`, `e581ce2f9`. Metroid ice/missile shatter and latch/bomb release pass
@@ -24,8 +24,9 @@ the `sm-coordinate`, `sm-land` and `sm-resources` skills. Then do the first step
   706. Encrypted bundle `coverage-v2-metroid-interactions.tar.gz.enc` is uploaded;
   ciphertext SHA `851545e4084779da2b662a4311c681a45d303bb66176dbd5fffbf09a68140d1b`.
   Its 18 restored members match. Composition gate/hosted qualification remain.
-- Fresh dedicated coverage owner `verification_grapple_apex` is source-only on a
-  genuine airborne Standard grapple connection. Reach is unproved; its predecessor
+- Fresh dedicated coverage owner `verification_grapple_qualification` is reviewing
+  repaired guards and preparing proof of airborne zero-speed terrain selection.
+  Genuine reach and natural apex are unproved; its predecessor
   brief is `$TEMP/collab/verification-next/SUCCESSOR.md`. Keep this lane supplied
   with fresh bounded owners; report reached gameplay and bug sensitivity separately.
 - Full Cue/port run **41291863856**: 154/160 rows passed; six failed after zero
@@ -50,10 +51,9 @@ the `sm-coordinate`, `sm-land` and `sm-resources` skills. Then do the first step
 
 ## First steps
 
-1. Poll #142 watcher **88871** and exact-head hosted runs. After it lands, report to
-   Jim and run `python tools/ram_ratchet.py --update` on the landing branch; include
-   the lowered baseline with the ready Metroid pair and this handoff in the next
-   small slice, with a fresh composition gate and background watcher.
+1. Land the ready Metroid pair and lowered RAM baseline with a fresh exact-head
+   composition gate, hosted gates and background watcher. #142 is already landed;
+   its ratchet update completed. Report each landing to Jim.
 2. Replenish the active L5/L6/L4 implementation and D/C2 qualification owners.
    L4 retires RAM-backed copies toward sole typed Session ownership; its old donor
    savings use an incomplete measure and are not current ownership evidence.
