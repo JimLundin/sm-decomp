@@ -3,8 +3,8 @@ use crate::cinematic::set_fixed_color;
 use crate::cinematic_objects::draw_cinematic_sprites;
 use crate::cinematic_state::Cinematic;
 use crate::display::control::{Brightness, Layers, MainWindowMask, SubScreen};
+use crate::display::sequence::scroll::BgScroll;
 use crate::menu_state::OptionsMenu;
-use crate::menus::prelude::{owned, scroll};
 use crate::ram::RawRam as _;
 
 pub fn configure_cinematic_display<H: crate::menus::host::Host + ?Sized>(
@@ -102,13 +102,16 @@ pub fn configure_cinematic_display<H: crate::menus::host::Host + ?Sized>(
             reset_cinematic_transform(128, 128, game);
             *cine.mode7_angle() = 0;
             *cine.mode7_zoom() = 1;
-            scroll!(game, 0; Bg1H, Bg1V, Bg2H, Bg2V);
+            crate::session_cohort::with(game, |_, scroll: &mut BgScroll| {
+                scroll.bg1 = [0, 0];
+                scroll.bg2 = [0, 0];
+            });
             *cine.x_sub() = 0;
             *cine.x() = 0;
             *cine.y_sub() = 0;
             *cine.y() = 0;
         } else {
-            scroll! { game, 0; Bg1H, Bg1V }
+            crate::session_cohort::with(game, |_, scroll: &mut BgScroll| scroll.bg1 = [0, 0]);
         }
         return;
     }
@@ -199,7 +202,10 @@ pub fn configure_cinematic_display<H: crate::menus::host::Host + ?Sized>(
         });
     }
     if intro {
-        scroll! { game, 0; Bg2H, Bg2V, Bg3H, Bg3V }
+        crate::session_cohort::with(game, |_, scroll: &mut BgScroll| {
+            scroll.bg2 = [0, 0];
+            scroll.bg3 = [0, 0];
+        });
     }
 }
 

@@ -2,7 +2,7 @@
 use crate::cinematic::*;
 use crate::cinematic_objects::CinematicObjects;
 use crate::cinematic_state::{Cinematic, Word};
-use crate::menus::prelude::{owned, scroll};
+use crate::display::sequence::scroll::BgScroll;
 use crate::ram::RawRam as _;
 use crate::ram::word;
 use crate::visual_state::{CeresExplosion, CinematicFade};
@@ -391,8 +391,8 @@ pub fn update_cinematic_transform<H: crate::menus::host::Host + ?Sized>(
         word! {game; REG_M7A = *cine.mode7_zoom(); REG_M7D = *cine.mode7_zoom(); }
         word! { game, 0; REG_M7B, REG_M7C }
     }
-    scroll!(game.Bg1H = *cine.x());
-    scroll!(game.Bg1V = *cine.y());
+    let position = [*cine.x(), *cine.y()];
+    crate::session_cohort::with(game, |_, scroll: &mut BgScroll| scroll.bg1 = position);
 }
 
 pub fn draw_cinematic_rectangle<H: crate::menus::host::Host + ?Sized>(

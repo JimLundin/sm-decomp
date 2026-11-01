@@ -15,11 +15,11 @@ use crate::cinematic::{
 use crate::cinematic_host::Host;
 use crate::cinematic_objects::CinematicObjects;
 use crate::cinematic_state::{Cinematic, Word, cinematic};
+use crate::display::sequence::scroll::BgScroll;
 use crate::display_refresh::GraphicsAsset;
 use crate::inventory;
 use crate::menu_state::OptionsMenu;
 use crate::menu_state::SaveSelection;
-use crate::menus::prelude::{owned, scroll};
 use crate::ram::RawRam as _;
 use crate::ram::mirror;
 use crate::ram::word;
@@ -292,8 +292,10 @@ pub fn set_up_text_page_1<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) 
         0x4c00,
     );
     *cine.y() = 8;
-    scroll!(game.Bg2V = 8);
-    scroll!(game.Bg3V = 8);
+    crate::session_cohort::with(game, |_, scroll: &mut BgScroll| {
+        scroll.bg2[1] = 8;
+        scroll.bg3[1] = 8;
+    });
     crate::intro_pages::clear_english_text(game);
     crate::intro_pages::reset_caret(cine);
     crate::music_requests::queue_delayed_8(NO_MUSIC, game);

@@ -11,9 +11,9 @@ use crate::cinematic::{advance_cinematic_fade, clear_cinematic_sprites, set_cine
 use crate::cinematic_host::Host;
 use crate::cinematic_objects::CinematicObjects;
 use crate::cinematic_state::Cinematic;
+use crate::display::sequence::scroll::BgScroll;
 use crate::display_refresh::GraphicsAsset;
 use crate::menu_state::OptionsMenu;
-use crate::menus::prelude::{owned, scroll};
 use crate::ram::RawRam as _;
 use crate::ram::word;
 use crate::visual_state::{CinematicDisplay, CinematicFade};
@@ -224,10 +224,10 @@ fn finish<H: Host + ?Sized>(
     crate::display_refresh::enable(true, game);
     game.ram().write_byte(crate::ram::mirror::BGMODE, 1);
     crate::screen_fade::set_both(game, 0, 0);
-    scroll!(game.Bg2H = 0);
-    scroll!(game.Bg3H = 0);
-    scroll!(game.Bg2V = 0);
-    scroll!(game.Bg3V = 0);
+    crate::session_cohort::with(game, |_, scroll: &mut BgScroll| {
+        scroll.bg2 = [0, 0];
+        scroll.bg3 = [0, 0];
+    });
     *cine.mode7_angle() = 0;
     crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
         flow.cinematic_function = function::SETUP

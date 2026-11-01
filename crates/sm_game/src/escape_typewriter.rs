@@ -5,7 +5,7 @@
 use crate::actors::layouts::{EnemyBase, same_words};
 use crate::actors::session_slots::SlotAccess;
 use crate::cartridge::NativeDiagnostics;
-use crate::display::sequence::scroll::{self, Word::Bg2H, Word::Bg2V};
+use crate::display::sequence::scroll::BgScroll;
 use crate::display::transfer::{Source, TilemapQueue, TilemapUpload, queue_tilemap};
 use crate::effects::SoundEffects;
 use crate::player_projectiles::content;
@@ -76,8 +76,7 @@ pub fn set_up_zebes<H: Host + ?Sized>(game: &mut H) {
     }
     session_slot!(game, Typewriter[0].text = ZEBES_ESCAPE_TEXT);
     session_slot!(game, Typewriter[0]; vram_address = 0, timer = 0, timer_reset = 0, stroke_timer = 0);
-    scroll::set(game, Bg2H, 0);
-    scroll::set(game, Bg2V, 0);
+    crate::session_cohort::with_projected(game, |_, scroll: &mut BgScroll| scroll.bg2 = [0, 0]);
 }
 
 /// Handle typewriter text ($A6:C2B1), drawing 'A' as `tiles`; true once the text ends.
