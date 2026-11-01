@@ -11,6 +11,7 @@ import shutil
 import subprocess
 import sys
 import tarfile
+import tempfile
 
 # The scenario model beside this script, whichever directory Python starts in.
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -40,6 +41,7 @@ def valid_name(name):
     if path.is_absolute() or ".." in path.parts or "\\" in name or ":" in name:
         return False
     return bool(re.fullmatch(r"movies/[A-Za-z0-9_-]+\.inputs", name) or re.fullmatch(
+        r"movies/[A-Za-z0-9_-]+\.map\.csv(?:\.toml)?", name) or re.fullmatch(
         r"target/checkpoints/[A-Za-z0-9_-]+\.smvchk", name) or re.fullmatch(
         r"target/seeds/[A-Za-z0-9-]+/(?:rooms\.csv|lag\.csv(?:\.(?:polls|events|eof-polls|eof-hardware|phases|milestones)\.csv|\.eof\.json)?|"
         r"snes9x\.(?:json|frames\.csv|events\.csv|state|live\.json|history\.json)|"
@@ -49,7 +51,8 @@ def valid_name(name):
 
 def selected_rows(args):
     # Route rooms have their own bundles (full_route.py); they pack only when selected.
-    rows = [row for row in scenario.rows(args.root) if "chain" not in row or row["id"] in args.segment]
+    rows = [row for row in scenario.rows(args.root, validate_movie_maps=False)
+            if "chain" not in row or row["id"] in args.segment]
     known = {row["id"] for row in rows}
     if set(args.segment) - known:
         raise ValueError("unknown selected row")
@@ -89,6 +92,23 @@ def runtime_seed_indexes(rows):
     return indexes
 
 
+def movie_map_files(rows):
+    return {"movies/" + name for row in rows if "movie_map" in row
+            for name in (row["movie_map"], row["movie_map"].removesuffix(".toml"))}
+
+
+def check_movie_maps(root, rows):
+    from movie_inputs import check_work_event_map
+    for row in rows:
+        if "movie_map" not in row:
+            continue
+        metadata = regular_path(root, "movies/" + row["movie_map"])
+        regular_path(root, "movies/" + row["movie_map"].removesuffix(".toml"))
+        inputs = regular_path(root, "movies/" + row["inputs"])
+        check_work_event_map(metadata, row["movie_map_sha256"], inputs,
+                             row["start_frame"] + row["frames"])
+
+
 def runtime_seed_files(root, seed_indexes):
     for capture, indexes in seed_indexes.items():
         prefix = f"target/seeds/{capture}/"
@@ -109,7 +129,8 @@ def runtime_seed_files(root, seed_indexes):
 
 def pack(args):
     rows = selected_rows(args)
-    files = {}
+    check_movie_maps(args.root, rows)
+    files = {name: regular_path(args.root, name) for name in movie_map_files(rows)}
     runtime_only = getattr(args, "runtime_only", False)
     if runtime_only:
         seed_indexes = runtime_seed_indexes(rows)
@@ -153,14 +174,15 @@ def pack(args):
             if digest(path) != row[key + "_sha256"]:
                 raise ValueError("checkpoint hash mismatch: " + row["id"])
             files[name] = path
-        if not runtime_only and row["inputs"].startswith("corpus-") and "checkpoint" not in row:
+        if (not runtime_only and row["inputs"].startswith("corpus-")
+                and "checkpoint" not in row and "movie_map" not in row):
             continue
         name = "movies/" + row["inputs"]
         if not valid_name(name):
             raise ValueError("invalid corpus input name")
         path = args.root / name
-        if "checkpoint" in row or runtime_only:
-            path = regular_path(args.root, name, required="checkpoint" in row)
+        if "checkpoint" in row or runtime_only or "movie_map" in row:
+            path = regular_path(args.root, name, required="checkpoint" in row or "movie_map" in row)
         # The original options prefix is exactly the first 8,250 supported words.
         if not path.exists() and row["inputs"] == "any-wait-prefix.inputs":
             data = b"".join((args.root / "movies/any-door-prefix.inputs").read_bytes().splitlines(True)[:8250])
@@ -197,7 +219,9 @@ def restore(args):
     rows = selected_rows(args)
     runtime_only = getattr(args, "runtime_only", False)
     inputs = {"movies/" + row["inputs"] for row in rows
-              if runtime_only or not row["inputs"].startswith("corpus-") or "checkpoint" in row}
+              if runtime_only or not row["inputs"].startswith("corpus-")
+              or "checkpoint" in row or "movie_map" in row}
+    maps = movie_map_files(rows)
     checkpoints = {"target/checkpoints/" + row[key]
                    for row in rows for key in ("checkpoint", "faithful_checkpoint") if key in row}
     if any(not valid_name(name) for name in inputs):
@@ -206,9 +230,12 @@ def restore(args):
     needed_indexes = {f"target/seeds/{capture}/rooms.csv" for capture in captures}
     seed_indexes = runtime_seed_indexes(rows) if runtime_only else {}
     command, env = cipher(args, decrypt=True)
-    process = subprocess.Popen(command, stdout=subprocess.PIPE, env=env)
+    staging = tempfile.TemporaryDirectory(prefix=".seed-restore-", dir=args.root)
+    staged = Path(staging.name).resolve()
+    process = None
     seen, restored = set(), set()
     try:
+        process = subprocess.Popen(command, stdout=subprocess.PIPE, env=env)
         with tarfile.open(fileobj=process.stdout, mode="r|gz") as archive:
             for member in archive:
                 name = member.name
@@ -216,7 +243,7 @@ def restore(args):
                     raise ValueError("invalid or duplicate seed archive member")
                 seen.add(name)
                 parts = PurePosixPath(name).parts
-                if name not in inputs | checkpoints and not (
+                if name not in inputs | checkpoints | maps and not (
                         parts[:2] == ("target", "seeds") and parts[2] in captures):
                     continue
                 if runtime_only and parts[:2] == ("target", "seeds"):
@@ -226,44 +253,54 @@ def restore(args):
                             and int(filename[:4]) in seed_indexes[parts[2]]):
                         continue
                 regular_path(args.root, name, required=False)
-                destination = (args.root / name).resolve()
-                if not destination.is_relative_to(args.root):
+                destination = (staged / name).resolve()
+                if not destination.is_relative_to(staged):
                     raise ValueError("seed extraction escapes checkout")
                 destination.parent.mkdir(parents=True, exist_ok=True)
                 with archive.extractfile(member) as source:
-                    if destination.exists():
-                        if digest(destination) != hashlib.file_digest(source, "sha256").hexdigest():
-                            raise ValueError("refusing to replace different existing seed data")
-                    else:
-                        with destination.open("xb") as output:
-                            shutil.copyfileobj(source, output, 1024 * 1024)
+                    with destination.open("xb") as output:
+                        shutil.copyfileobj(source, output, 1024 * 1024)
                 restored.add(name)
         # Consume the cipher trailer before checking OpenSSL's exit status.
         while process.stdout.read(1024 * 1024):
             pass
         if process.wait() != 0:
             raise RuntimeError("seed decryption failed")
-        if missing := (inputs | checkpoints | needed_indexes) - restored:
+        if missing := (inputs | checkpoints | maps | needed_indexes) - restored:
             raise ValueError("seed archive lacks selected corpus data: " + ", ".join(sorted(missing)))
         if runtime_only:
-            for expected in runtime_seed_files(args.root, seed_indexes):
+            for expected in runtime_seed_files(staged, seed_indexes):
                 if expected - restored:
                     raise ValueError("seed archive lacks selected runtime companions")
         for row in rows:
             name = "movies/" + row["inputs"]
-            if name in inputs and digest(args.root / name) != row["input_sha256"]:
+            if name in inputs and digest(staged / name) != row["input_sha256"]:
                 raise ValueError("restored corpus input hash mismatch: " + row["id"])
             for key in ("checkpoint", "faithful_checkpoint"):
                 if key not in row:
                     continue
-                path = args.root / "target/checkpoints" / row[key]
+                path = staged / "target/checkpoints" / row[key]
                 if digest(path) != row[key + "_sha256"]:
                     raise ValueError("restored checkpoint hash mismatch: " + row["id"])
+        # Authenticate every selected companion before exposing any recipe or
+        # checkpoint. Existing files never substitute for missing archive members.
+        check_movie_maps(staged, rows)
+        for name in sorted(restored):
+            destination = regular_path(args.root, name, required=False)
+            if destination.exists() and digest(destination) != digest(staged / name):
+                raise ValueError("refusing to replace different existing seed data")
+        for name in sorted(restored):
+            destination = args.root / name
+            if not destination.exists():
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                (staged / name).replace(destination)
     finally:
-        process.stdout.close()
-        if process.poll() is None:
-            process.kill()
-            process.wait()
+        if process is not None:
+            process.stdout.close()
+            if process.poll() is None:
+                process.kill()
+                process.wait()
+        staging.cleanup()
     print(f"Restored {len(restored)} private corpus files; replay retains recipe hash checks")
 
 

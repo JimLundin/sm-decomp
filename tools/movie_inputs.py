@@ -8,6 +8,7 @@ import csv
 import hashlib
 import json
 import struct
+import tomllib
 from itertools import islice, zip_longest
 from pathlib import Path
 import zipfile
@@ -101,16 +102,18 @@ def seeded_wait_slice(source, path, seed, count, continuation=None):
     if (int(event['movie_frame']) != boundary_frame or int(event['room']) != room
             or int(event['nmi']) != boundary_nmi):
         raise ValueError('unsupported room seed phase; no matching next NMI boundary')
-    print(f'Seed input starts at native step {first}, captured event {event["event"]}')
+    print(f'Seed input starts after original native read/work ordinal {first}, captured event {event["event"]}')
     return aligned_wait_prefix(source, path, count, boundary + 1, continuation)
 
 
-def aligned_wait_prefix(source, path, count, after_event=0, continuation=None):
+def aligned_wait_prefix(source, path, count, after_event=0, continuation=None,
+                        map_output=None, provenance=None):
     """Replay observed wait-entry input; reject gaps instead of guessing lag removal."""
     def rows(suffix):
         with Path(str(path) + suffix).open(newline='') as file:
             yield from csv.DictReader(file)
-    if Path(str(path) + '.error.txt').exists() or count <= 0:
+    if (Path(str(path) + '.error.txt').exists()
+            or (count is None and map_output is None) or (count is not None and count <= 0)):
         raise ValueError('failed capture or invalid prefix length')
     video = []
     eof_polls = rows('.eof-polls.csv') if continuation else iter(())
@@ -162,6 +165,12 @@ def aligned_wait_prefix(source, path, count, after_event=0, continuation=None):
         if next(hardware, None) is not None:
             raise ValueError('extra EOF hardware controller observations')
     events = observed_events()
+    if map_output is not None:
+        if after_event or count is not None or not provenance:
+            raise ValueError('event maps require full boot capture and authenticated provenance')
+        if not any(event['kind'] == 'joypad_begin' for event in rows('.events.csv')):
+            raise ValueError('event map requires complete controller read boundaries')
+        return write_work_event_map(video, events, path, map_output, provenance)
     def complete(result):
         # The previous eager read parsed the unused suffix too. Preserve its
         # CSV error detection without retaining a second whole capture.
@@ -215,9 +224,40 @@ def aligned_wait_prefix(source, path, count, after_event=0, continuation=None):
     raise ValueError('capture ends before the requested aligned prefix')
 
 
-def aligned_work_prefix(video, events, count, after_event=0, previous=None, frame_start=1):
-    """Preserve observed normal updates and the loading lag suspension."""
-    result, last_frame = [], 0
+def mapped_work_events(video, events, after_event=0, previous=None, frame_start=1,
+                       native_read_start=0):
+    """Map contiguous original event ranges; unsupported cadence never makes a step.
+
+    Event/video endpoints are inclusive. Native read endpoints are zero-based,
+    half-open original ordinals. No captured events or input words are rewritten.
+    """
+    last_frame = 0
+    first = last = None
+    reads = read_begin = native_read_start
+    step = 0
+    blocked = False
+    wait_word = None
+    gap_read = False
+
+    def span(boundary, word=None, incomplete=False):
+        nonlocal first, read_begin, step, blocked
+        gap = boundary == 'requested_nmi_work' or incomplete
+        blocked |= gap
+        supported = word is not None and not gap
+        row = dict(event_begin=first['event'], event_end=last['event'],
+                   video_begin=first['movie_frame'], video_end=last['movie_frame'],
+                   native_read_begin=read_begin, native_read_end=reads,
+                   boundary=boundary, status=('incomplete' if incomplete else
+                       'gap' if gap else 'blocked' if blocked else
+                       'supported' if supported else 'evidence'),
+                   verifier_step=step if supported and not blocked else '',
+                   settled=all(value is None for value in
+                               (read, wait, lag, vblank, irq, no_update)))
+        if supported and not blocked:
+            row['word'] = word
+            step += 1
+        first, read_begin = None, reads
+        return row
     read = wait = lag = vblank = irq = None
     no_update = None
     no_update_nmis = 0
@@ -230,6 +270,11 @@ def aligned_work_prefix(video, events, count, after_event=0, previous=None, fram
                 or frame < frame_start):
             raise ValueError('nonsequential work-boundary capture')
         last_frame = frame
+        last = event
+        if first is None:
+            first = event
+        if kind == 'joypad_read':
+            reads += 1
         if not 0 <= event['joypad'] <= 0xffff:
             raise ValueError('invalid observed input')
         if kind == 'no_update_enter' and not door and wait is None and no_update is None:
@@ -241,17 +286,19 @@ def aligned_work_prefix(video, events, count, after_event=0, previous=None, fram
                     or any(event[key] != no_update[key] for key in ('nmi', 'state', 'room', 'joypad'))
                     or (event['including_lag'] - no_update['including_lag']) % 65536 != 1):
                 raise ValueError('no-update wait did not contain one unchanged-input lag NMI')
-            result.append(no_update['joypad'])
-            no_update = None
+            word, no_update = no_update['joypad'], None
+            yield span('no_update', word)
         elif kind in ('irq_enter', 'lag_nmi', 'door_dma', 'cre_decode_enter', 'cre_decode_exit',
                     'tiles_decode_enter', 'tiles_decode_exit', 'palette_decode_enter', 'palette_decode_exit'):
             pass  # Read-only ordering evidence; these hooks do not define input consumption.
-        elif kind == 'wait_enter' and wait is None:
-            wait = event
+        elif kind == 'wait_enter' and wait is None and read is None and no_update is None:
+            wait, wait_word = event, None
         elif kind == 'wait_exit' and wait is not None:
-            if event['nmi'] != (wait['nmi'] + 1) % 65536 or read is not None:
+            if (event['nmi'] != (wait['nmi'] + 1) % 65536
+                    or read is not None or wait_word is None):
                 raise ValueError('normal wait did not contain one complete NMI')
-            wait = None
+            word, wait, wait_word = wait_word, None, None
+            yield span('normal_wait', word)
         elif kind == 'place_enter' and not door and wait is None:
             if event['state'] != 11:
                 raise ValueError('placement outside door transition')
@@ -262,10 +309,8 @@ def aligned_work_prefix(video, events, count, after_event=0, previous=None, fram
             if any(event[key] != vblank[key] for key in ('nmi', 'including_lag', 'joypad')):
                 raise ValueError('unsupported vblank wait timing')
             lag, vblank = event, None
-            result.append(event['joypad'])
-        # A lag NMI can read the controller while the game is still working on its
-        # previous update (outside any wait or door phase); it is still one native
-        # controller read, so it consumes the next input like a waiting read.
+            yield span('door_vblank', event['joypad'])
+        # Requested NMIs outside supported suspension boundaries are work gaps.
         elif kind == 'joypad_begin' and read is None and (
                 wait is not None or door
                 or all(value is None for value in (lag, vblank, irq, no_update))):
@@ -279,6 +324,7 @@ def aligned_work_prefix(video, events, count, after_event=0, previous=None, fram
             if (not continuous or lag is not None
                     or (wait is not None and event['joypad'] != wait['joypad'])):
                 raise ValueError('unobserved NMI or input change')
+            gap_read = wait is None and not door
             read = event
         elif kind == 'joypad_read' and read is not None:
             # A video boundary can split one uninterrupted controller read.
@@ -287,8 +333,16 @@ def aligned_work_prefix(video, events, count, after_event=0, previous=None, fram
                     or frame not in (read['movie_frame'], read['movie_frame'] + 1)
                     or (crossed and event['event'] != read['event'] + 1)):
                 raise ValueError('incomplete controller read')
-            result.append(read['joypad'])
+            word = read['joypad']
             previous, read = event, None
+            if gap_read:
+                yield span('requested_nmi_work')
+            elif wait is not None:
+                if wait_word is not None:
+                    raise ValueError('normal wait contains multiple controller reads')
+                wait_word = word
+            else:
+                yield span('door_controller', word)
         elif kind == 'scroll_irq_enter' and door and irq is None:
             if lag is not None:
                 if (any(event[key] != lag[key] for key in ('nmi', 'x', 'y', 'joypad'))
@@ -306,9 +360,168 @@ def aligned_work_prefix(video, events, count, after_event=0, previous=None, fram
             door = False
         else:
             raise ValueError(f'unsupported work boundary {kind}')
-        if len(result) >= count and all(value is None for value in (read, wait, lag, vblank, irq, no_update)):
+        if (first is not None and kind == 'scroll_irq_exit'
+                and all(value is None for value in (read, wait, lag, vblank, irq, no_update))):
+            yield span('door_settlement')
+    pending = any(value is not None for value in (read, wait, lag, vblank, irq, no_update)) or door
+    if first is None and pending:
+        # A terminal marker owns no events when EOF immediately follows a
+        # supported suspension boundary; its range is explicitly empty.
+        first = dict(last, event=last['event'] + 1)
+    if first is not None:
+        yield span('pending_eof' if pending else 'evidence', incomplete=pending)
+
+
+def aligned_work_prefix(video, events, count, after_event=0, previous=None, frame_start=1):
+    """Publish only complete supported steps before the first native work gap."""
+    result = []
+    for row in mapped_work_events(video, events, after_event, previous, frame_start):
+        if row['status'] in ('gap', 'blocked', 'incomplete'):
+            raise ValueError(f"unsupported native cadence at events {row['event_begin']}.."
+                             f"{row['event_end']}, video {row['video_begin']}..{row['video_end']}; "
+                             f"qualified prefix has {len(result)} steps")
+        if 'word' in row:
+            result.append(row['word'])
+        if len(result) >= count and row['settled']:
             return result[:count]
     raise ValueError('capture ends before the requested complete work prefix')
+
+
+def file_sha256(path):
+    with Path(path).open('rb') as stream:
+        return hashlib.file_digest(stream, 'sha256').hexdigest()
+
+
+def write_work_event_map(video, events, path, output, provenance):
+    """Write lossless identity ranges, with separate original and supported-prefix pins.
+
+    This is an import artifact, not replay evidence. In particular, supported
+    rows after a gap cannot qualify an input or checkpoint prefix through it.
+    """
+    required = {'movie', 'rom', 'native', 'native_source'}
+    if set(provenance) != required:
+        raise ValueError('event map requires original movie/ROM/native/source handles')
+    files = dict(provenance, video=path, polls=Path(str(path) + '.polls.csv'),
+                 events=Path(str(path) + '.events.csv'))
+    pins = {key + '_sha256': file_sha256(value) for key, value in files.items()}
+    pins['importer_sha256'] = file_sha256(__file__)
+    with zipfile.ZipFile(provenance['movie']) as archive:
+        with archive.open('input') as stream:
+            pins['movie_input_sha256'] = hashlib.file_digest(stream, 'sha256').hexdigest()
+    prefix = hashlib.sha256()
+    pending_prefix = prefix.copy()
+    pending_steps = 0
+    steps = reads = event_end = 0
+    first_gap = None
+    fields = ('event_begin', 'event_end', 'video_begin', 'video_end',
+              'native_read_begin', 'native_read_end', 'boundary', 'status',
+              'verifier_step', 'settled')
+    # Publish only after successful parsing and a second original identity check.
+    temporary = output.with_name(output.name + '.pending')
+    try:
+        with temporary.open('w', encoding='ascii', newline='') as stream:
+            writer = csv.DictWriter(stream, fields, extrasaction='ignore', lineterminator='\n')
+            writer.writeheader()
+            for row in mapped_work_events(video, events):
+                if row['event_begin'] != event_end + 1 or row['native_read_begin'] != reads:
+                    raise ValueError('event map omits an original event or controller read')
+                writer.writerow(row)
+                event_end, reads = row['event_end'], row['native_read_end']
+                if 'word' in row:
+                    pending_prefix.update(f"{row['word']:04X}\r\n".encode('ascii'))
+                    pending_steps += 1
+                if first_gap is None and row['status'] in ('gap', 'incomplete'):
+                    first_gap = row
+                if first_gap is None and row['settled']:
+                    prefix, steps = pending_prefix.copy(), pending_steps
+        if any(file_sha256(value) != pins[key + '_sha256'] for key, value in files.items()):
+            raise ValueError('original capture changed during event map generation')
+        pins['map_sha256'] = file_sha256(temporary)
+        pins['canonical_input_prefix_sha256'] = prefix.hexdigest()
+        lines = ['version = 1', f'qualified_steps = {steps}', f'original_events = {event_end}',
+                 f'original_native_reads = {reads}', f'original_video_frames = {len(video)}',
+                 f'map = {json.dumps(output.name)}',
+                 f'complete = {str(first_gap is None).lower()}']
+        lines += [f'{key} = "{value}"' for key, value in pins.items()]
+        if first_gap is not None:
+            lines += [f'first_gap_{key} = {first_gap[key]}' for key in
+                      ('event_begin', 'event_end', 'video_begin', 'video_end',
+                       'native_read_begin', 'native_read_end')]
+        output.with_suffix(output.suffix + '.toml').write_text('\n'.join(lines) + '\n',
+                                                             encoding='ascii', newline='\n')
+        temporary.replace(output)
+    finally:
+        temporary.unlink(missing_ok=True)
+    return steps
+
+
+def check_work_event_map(metadata, expected_sha256, inputs, through):
+    """Registry guard: a boot input/checkpoint prefix cannot cross an import gap."""
+    if file_sha256(metadata) != expected_sha256:
+        raise ValueError('event map manifest SHA-256 mismatch')
+    with metadata.open('rb') as stream:
+        info = tomllib.load(stream)
+    required = ('movie', 'movie_input', 'rom', 'native', 'native_source', 'video', 'polls',
+                'events', 'importer', 'map', 'canonical_input_prefix')
+    if (info.get('version') != 1 or any(not isinstance(info.get(key + '_sha256'), str)
+            or len(info[key + '_sha256']) != 64
+            or any(c not in '0123456789abcdef' for c in info[key + '_sha256']) for key in required)
+            or type(info.get('qualified_steps')) is not int or info['qualified_steps'] < 0
+            or type(through) is not int or not 0 < through <= info['qualified_steps']):
+        raise ValueError('input or checkpoint prefix crosses an unsupported native event span')
+    name = info.get('map', '')
+    if (not isinstance(name, str) or Path(name).name != name
+            or name != metadata.name.removesuffix('.toml')):
+        raise ValueError('event map must be a flat companion file')
+    if file_sha256(metadata.with_name(name)) != info['map_sha256']:
+        raise ValueError('event map SHA-256 mismatch')
+    event_end = reads = steps = qualified = 0
+    blocked = False
+    first_gap = None
+    with metadata.with_name(name).open(newline='') as stream:
+        for row in csv.DictReader(stream):
+            begin, end = int(row['event_begin']), int(row['event_end'])
+            read_begin, read_end = int(row['native_read_begin']), int(row['native_read_end'])
+            video_begin, video_end = int(row['video_begin']), int(row['video_end'])
+            empty_eof = (row['boundary'] == 'pending_eof' and row['status'] == 'incomplete'
+                         and end == begin - 1 and read_end == read_begin)
+            if (begin != event_end + 1 or (end < begin and not empty_eof)
+                    or read_begin != reads or read_end < reads
+                    or not 1 <= video_begin <= video_end <= info['original_video_frames']
+                    or row['status'] not in ('supported', 'gap', 'blocked', 'incomplete', 'evidence')
+                    or row['settled'] not in ('True', 'False')):
+                raise ValueError('event map has an omitted or invalid original identity range')
+            event_end, reads = end, read_end
+            if row['status'] in ('gap', 'incomplete'):
+                blocked = True
+                if first_gap is None:
+                    first_gap = row
+            if row['verifier_step'] != '':
+                if blocked or row['status'] != 'supported' or int(row['verifier_step']) != steps:
+                    raise ValueError('event map assigns a step across an unsupported span')
+                steps += 1
+            elif row['status'] == 'supported':
+                raise ValueError('supported event map range has no verifier step')
+            if not blocked and row['settled'] == 'True':
+                qualified = steps
+    if (event_end != info['original_events'] or reads != info['original_native_reads']
+            or qualified != info['qualified_steps'] or info.get('complete') != (first_gap is None)
+            or (first_gap is not None and any(info.get('first_gap_' + key) != int(first_gap[key])
+                for key in ('event_begin', 'event_end', 'video_begin', 'video_end',
+                            'native_read_begin', 'native_read_end')))):
+        raise ValueError('event map manifest differs from original ranges or qualified boundary')
+    # Bind the entire qualified prefix, independent of the requested shorter row.
+    prefix = hashlib.sha256()
+    with inputs.open('rb') as stream:
+        for _ in range(info['qualified_steps']):
+            line = stream.readline()
+            if (len(line) != 6 or line[-2:] != b'\r\n'
+                    or any(c not in b'0123456789ABCDEF' for c in line[:4])):
+                raise ValueError('incomplete or noncanonical qualified input prefix')
+            prefix.update(line)
+    if prefix.hexdigest() != info['canonical_input_prefix_sha256']:
+        raise ValueError('event map qualified input prefix SHA-256 mismatch')
+    return info
 
 
 def snes9x_capture_inputs(movie, rom, capture, expected_sha256, seed, count):
@@ -1269,12 +1482,23 @@ if __name__ == '__main__':
     parser.add_argument('--route', choices=tuple(ROUTES), help='apply an authored coverage route')
     parser.add_argument('--lag-log', type=Path, help='lsnes CSV with input and boundary companions')
     parser.add_argument('--frames', type=int, help='number of observed wait steps to import')
+    parser.add_argument('--event-map-only', action='store_true',
+                        help='write full original event ranges and supported-prefix manifest, not inputs')
+    parser.add_argument('--native', type=Path, help='original capture executable for event-map provenance')
+    parser.add_argument('--native-source', type=Path, help='original capture source archive for provenance')
     parser.add_argument('--seed', type=Path, help='start after this captured room WRAM seed')
     parser.add_argument('--eof-capture', type=Path, help='authenticated recorded read-only EOF continuation metadata')
     parser.add_argument('--eof-capture-sha256', help='required pinned EOF metadata SHA-256')
     parser.add_argument('--snes9x-capture', type=Path, help='authenticated original five-port SMV work capture')
     parser.add_argument('--snes9x-capture-sha256', help='required Snes9x metadata SHA-256')
     args = parser.parse_args()
+    if args.event_map_only:
+        if (not args.lag_log or not args.native or not args.native_source or args.seed
+                or args.frames is not None or args.route or args.snes9x_capture
+                or args.snes9x_capture_sha256):
+            parser.error('--event-map-only requires --lag-log, --native and --native-source, from boot')
+    elif args.native or args.native_source:
+        parser.error('--native and --native-source require --event-map-only')
     if args.snes9x_capture or args.snes9x_capture_sha256:
         if (not args.snes9x_capture or not args.snes9x_capture_sha256 or not args.seed
                 or args.frames is None or args.lag_log or args.route or args.eof_capture
@@ -1290,7 +1514,7 @@ if __name__ == '__main__':
         parser.error('--eof-capture requires --eof-capture-sha256 and --lag-log')
     if args.seed and not args.lag_log:
         parser.error('--seed requires --lag-log and --frames')
-    if ((args.lag_log and (args.route or args.frames is None))
+    if ((args.lag_log and (args.route or (args.frames is None and not args.event_map_only)))
             or (args.frames is not None and not args.lag_log)):
         parser.error('--lag-log requires --frames and cannot combine with --route')
     if args.route and hashlib.sha256(args.movie.read_bytes()).hexdigest() != ROUTE_SOURCE_SHA256:
@@ -1298,6 +1522,12 @@ if __name__ == '__main__':
     frames = load(args.movie, args.rom)
     continuation = (recorded_eof(args.movie, frames, args.lag_log, args.eof_capture, args.eof_capture_sha256)
                     if args.eof_capture else None)
+    if args.event_map_only:
+        steps = aligned_wait_prefix(frames, args.lag_log, None, continuation=continuation,
+            map_output=args.output, provenance=dict(movie=args.movie, rom=args.rom,
+                                                   native=args.native, native_source=args.native_source))
+        print(f'Mapped original capture; supported input prefix has {steps} steps; no inputs emitted')
+        raise SystemExit(0)
     if args.lag_log:
         frames = (seeded_wait_slice(frames, args.lag_log, args.seed, args.frames, continuation)
                   if args.seed else aligned_wait_prefix(frames, args.lag_log, args.frames, continuation=continuation))
@@ -1309,5 +1539,6 @@ if __name__ == '__main__':
             raise ValueError('authored route output length or SHA-256 mismatch')
         args.output.write_bytes(data)
     else:
-        args.output.write_text(''.join(f'{word:04X}\n' for word in frames), encoding='ascii')
+        args.output.write_text(''.join(f'{word:04X}\n' for word in frames),
+                               encoding='ascii', newline='\r\n')
     print(f'Imported {len(frames)} controller frames')

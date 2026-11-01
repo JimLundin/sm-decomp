@@ -55,7 +55,7 @@ DOMAINS = ("ram", "input", "samus", "camera", "room", "progress", "actors", "eff
 FIELDS = {"id", "start", "prefix", "ticks", "facts", "after_expectations", "after_hits",
           "tags", "pending", "unlocked", "regression"}
 PIN_FIELDS = ("id", "bundle", "seed", "inputs", "input_sha256", "checkpoint", "checkpoint_sha256",
-              "faithful_checkpoint", "faithful_checkpoint_sha256")
+              "faithful_checkpoint", "faithful_checkpoint_sha256", "movie_map", "movie_map_sha256")
 SEED_REGIONS = (("wram", 131072), ("sram", 8192), ("vram", 65536),
                 ("cgram", 512), ("oam", 544), ("apuram", 65536))
 DIGEST = re.compile(r"[0-9a-f]{64}")
@@ -161,9 +161,9 @@ def write_route(root, route, entries):
     (root / f"scenarios/route-{route}.toml").write_text("\n".join(lines + ["]", ""]), newline="\n")
 
 
-def rows(root=ROOT):
+def rows(root=ROOT, require_movie_maps=False, pins=None, validate_movie_maps=True):
     """Each scenario as the runner's row: its pinned files, budget and facts."""
-    pins = read_lock(root).pins
+    pins = read_lock(root).pins if pins is None else pins
     found = []
     for name, entry in load(root).items():
         pin = pins.get(name, {})
@@ -172,8 +172,24 @@ def rows(root=ROOT):
             row["pending"] = entry["pending"]
         if entry["start"] != "boot":
             row["seed"], row["seed_sha256"] = pin.get("seed", ""), entry["start"].removeprefix("seed:")
-        row.update((key, pin[key]) for key in PIN_FIELDS[2:] if key in pin)
+        row.update((key, pin[key]) for key in PIN_FIELDS[2:] if key in pin and not key.startswith("movie_map"))
         row["start_frame"], row["frames"] = entry.get("prefix", 0), entry["ticks"]
+        if "movie_map" in pin or "movie_map_sha256" in pin:
+            name_map, digest = pin.get("movie_map", ""), pin.get("movie_map_sha256", "")
+            if (entry["start"] != "boot" or not isinstance(name_map, str)
+                    or not re.fullmatch(r"[A-Za-z0-9_-]+\.map\.csv\.toml", name_map)
+                    or not isinstance(digest, str) or not DIGEST.fullmatch(digest)):
+                raise ValueError(f"{name}: movie map requires a boot start and flat SHA-pinned manifest")
+            metadata = root / "movies" / name_map
+            if not metadata.resolve().is_relative_to((root / "movies").resolve()):
+                raise ValueError(f"{name}: movie map escapes movies")
+            row.update(movie_map=name_map, movie_map_sha256=digest)
+            if require_movie_maps or (validate_movie_maps and metadata.exists()):
+                from movie_inputs import check_work_event_map
+                inputs = root / "movies" / pin.get("inputs", "")
+                if not inputs.resolve().is_relative_to((root / "movies").resolve()):
+                    raise ValueError(f"{name}: movie map inputs escape movies")
+                check_work_event_map(metadata, digest, inputs, row["start_frame"] + row["frames"])
         facts = entry.get("facts", [])
         row["expect"] = [fact for fact in facts if not fact.startswith(("probe:", "observe:"))]
         row["require_hit"] = [fact.removeprefix("probe:") for fact in facts if fact.startswith("probe:")]
@@ -192,7 +208,12 @@ def rows(root=ROOT):
 
 def recipe(root=ROOT):
     """The corpus the runner selects from: the required ids and every scenario's row."""
-    found = rows(root)
+    found = rows(root, require_movie_maps=True)
+    # The registry validates provenance before returning the existing runner's
+    # row format; map pins are private bundle metadata, not runner arguments.
+    for row in found:
+        row.pop("movie_map", None)
+        row.pop("movie_map_sha256", None)
     return [row["id"] for row in found if "required" in row["tags"]], found
 
 
@@ -333,10 +354,18 @@ def lock(args):
                 pin.pop(key, None)
     for bundle in args.bundle:
         data.bundles[bundle.name] = sha256(bundle)
-    loaded = {row["id"]: row for row in rows(root)}
     changed = 0
+    # New map pins must be hashed before rows validates their bound artifacts.
+    for pin in data.pins.values():
+        if "movie_map" in pin:
+            path = root / "movies" / pin["movie_map"]
+            if path.is_file() and pin.get("movie_map_sha256") != (digest := sha256(path)):
+                pin["movie_map_sha256"], changed = digest, changed + 1
+    loaded = {row["id"]: row for row in rows(root, pins=data.pins)}
     for name, pin in data.pins.items():
         files = [("input_sha256", root / "movies" / pin.get("inputs", ""))]
+        if "movie_map" in pin:
+            files.append(("movie_map_sha256", root / "movies" / pin["movie_map"]))
         files += [(key + "_sha256", root / "target/checkpoints" / pin[key])
                   for key in ("checkpoint", "faithful_checkpoint") if key in pin]
         for key, path in files:
@@ -368,12 +397,16 @@ def lock(args):
 def cut(args):
     """A small permanent scenario from a divergence: lead ticks before it, then the window."""
     root = args.root
+    if args.window <= 0 or args.lead <= 0:
+        raise SystemExit("--window and --lead must be positive")
     parent = next((row for row in rows(root) if row["id"] == args.run), None)
     if parent is None or "pending" in parent:
         raise SystemExit(f"{args.run}: no runnable scenario")
     start = args.at - args.lead
     if not parent["start_frame"] <= start < args.at or start < 1:
         raise SystemExit("--at less --lead must fall within the scenario, after its first tick")
+    if args.at + args.window > parent["start_frame"] + parent["frames"]:
+        raise SystemExit("cut window ends after its parent scenario")
     name = args.id or f"cut-{args.run}-{args.at}"
     facts = list(args.fact)
     if args.report:
@@ -388,17 +421,29 @@ def cut(args):
     # The inputs are the parent's up to the window's end: the checkpoint binds its prefix.
     source = root / "movies" / parent["inputs"]
     end, kept, words = args.at + args.window, [], 0
-    for line in source.read_bytes().splitlines(keepends=True):
-        if words == end:
-            break
-        kept.append(line)
-        words += bool(line.strip()) and not line.startswith(b"#")
-    if words < end:
-        raise SystemExit(f"{args.run}: its inputs end before tick {end}")
-    data = b"".join(kept)
-    inputs = root / "movies" / f"{name}.inputs"
-    inputs.write_bytes(data)
-    pin = {"id": name, "inputs": inputs.name, "input_sha256": hashlib.sha256(data).hexdigest()}
+    if "movie_map" in parent:
+        from movie_inputs import check_work_event_map
+        check_work_event_map(root / "movies" / parent["movie_map"],
+                             parent["movie_map_sha256"], source, end)
+        if sha256(source) != parent["input_sha256"]:
+            raise SystemExit(f"{args.run}: original mapped input hash differs")
+        # Keep the authentic entire qualified prefix. Shortening it to this
+        # window would make the inherited map's prefix identity unverifiable.
+        inputs = source
+        pin = {"id": name, **{key: parent[key] for key in
+               ("inputs", "input_sha256", "movie_map", "movie_map_sha256")}}
+    else:
+        for line in source.read_bytes().splitlines(keepends=True):
+            if words == end:
+                break
+            kept.append(line)
+            words += bool(line.strip()) and not line.startswith(b"#")
+        if words < end:
+            raise SystemExit(f"{args.run}: its inputs end before tick {end}")
+        data = b"".join(kept)
+        inputs = root / "movies" / f"{name}.inputs"
+        inputs.write_bytes(data)
+        pin = {"id": name, "inputs": inputs.name, "input_sha256": hashlib.sha256(data).hexdigest()}
     seed = []
     if "seed" in parent:
         pin["seed"] = parent["seed"]

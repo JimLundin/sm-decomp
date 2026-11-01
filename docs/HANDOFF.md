@@ -1,95 +1,106 @@
 # Hand-off, 2026-11-01
 
-This page is written for the next coordinator session. Start with `AGENTS.md` and
-the `sm-coordinate`, `sm-land` and `sm-resources` skills. Then do the first steps below.
-
-## Where things are
-
-- **`main`:** `74a984d5e`; #138 through #142 landed with their exact-head gates green.
-- Complete RAM measure: **2,109 sites / 96 coupled files**. The lowered baseline
-  is queued beside the qualified Metroid coverage pair in the next slice.
-- #139 landed the scenario format, L5 batch 1, typed native-video verifier producers,
-  corrected accounting and the Cue-trace dispatch option. Physical production grew
-  by 372 lines; `sm_tools` is counted separately as verification.
-- #140 landed the rotating faithful sample; #141 landed Metroid latch/drain and
-  Botwoon spit. Both coverage scenarios caught deliberate gameplay mutants.
-- **#142 landed at 12:24:02 UTC:** twelve qualified L5 commits, head `74a984d5e`.
-  Local gate, CI **41303910705**, corpus **41303916057**, route **41303910279**
-  and lock **41303910244** passed. Watcher **88871** is terminal EXIT0; do not
-  restart it. This slice measures **2,109 sites / 96 files**, physical
-  production **179,299** (+8), ratchet production **178,892** (+8).
-- Next coverage commits are picked after #142 on the landing branch: `d725ed328`,
-  `55f557469`, `e581ce2f9`. Metroid ice/missile shatter and latch/bomb release pass
-  both oracles, faithful free run and engine locks. Mutants fail at ticks 49 and
-  706. Encrypted bundle `coverage-v2-metroid-interactions.tar.gz.enc` is uploaded;
-  ciphertext SHA `851545e4084779da2b662a4311c681a45d303bb66176dbd5fffbf09a68140d1b`.
-  Its 18 restored members match. Composition gate **87997** passed on `02d4af543`;
-  **PR #143**, branch `land/batch13aa`, is in hosted qualification. Background
-  watcher **14750** is live; preserve and poll its original handle.
-- Fresh dedicated coverage owner `verification_grapple_qualification` is reviewing
-  repaired guards and preparing proof of airborne zero-speed terrain selection.
-  Genuine reach and natural apex are unproved; its predecessor
-  brief is `$TEMP/collab/verification-next/SUCCESSOR.md`. Keep this lane supplied
-  with fresh bounded owners; report reached gameplay and bug sensitivity separately.
-- Full Cue/port run **41291863856**: 154/160 rows passed; six failed after zero
-  differing frames. Safe diagnostic patches are reconciled onto `74a984d5e` in
-  `20261101/cue-diag-qual`; gate/build/focused physical-audio replay remain pending.
-- Full any/100 inputs are imported and hash-qualified: **115,542** and **199,259**
-  native ticks. Original any replay **81000** is terminal **FAIL**, all descendants
-  stopped: it consumed 115,542 ticks with zero frame differences but observed only
-  six intro room facts and missed all 121 gameplay room facts; no checkpoint saved.
-  Source `33519e8e...` / qualified #141 DLL `834065f5...` remain pinned. Fresh owner
-  `full_movie_route_drift` is finding the earliest missed transition/input mapping.
-  Full 100% is held pending this shared-route concern. EOF gameplay proof remains open.
-- Low% has a full **153,266**-tick input and 186 captured room observations.
-  Faithful boot faults at 7892/7952 require hardware fixes. Fresh owner
-  `hardware_writer_qualification` is qualifying the existing last-writer diagnostic;
-  source `3ed035ca...`, direct DLL exec **44613**. Preserve original inputs/ROM.
-- L6 source/DLL are frozen at `747bdb51...` / `0734dcb...`: 68 patched rows passed;
-  faithful locked-remaining 57 is live (exec **71281**, PID **23836**), then 62
-  engine locks. Kraid pause1030 failed at 1218 identically on pre-L6 L5, matching
-  LEGACY; excluded pause rows are not green faithful proof. L4/D/C2/V2 await grants.
-- Botwoon canonical gate/DLL passed, with 11 patched rows, two faithful rows and
-  eight engine locks. Actual reached state-body tally: Game **0**, lease **64,424**
-  across both oracles and 23 routines. Initialization and narrow spit are unobserved;
-  retained Game effects/history are separate. Canonical patch SHA `317d4e47...`
-  is applied after #143 as `a1d88ffcd`; the new integrated gate remains pending.
-- Fresh Draygon qualifier `draygon_qualification` has verified source `3eea5c29...`
-  and patch `a84ca271...`, preparing gate/DLL/replay/tally under a compiler hold.
-  Fresh hardware source owner `hardware_shared_scratch` is implementing shared
-  typed scratch from the faithful producer map; Ceres failure closure remains open.
+Read AGENTS.md, PLAN and REVIEW, then sm-coordinate, sm-land and sm-resources.
+Root owns Git, publication, ci-data uploads and result reports to Jim's #6.
+The primary checkout is stale; use the landing worktree below.
 
 ## First steps
 
-1. Poll #143 watcher **14750**, then report its actual landing. Its exact-head local
-   gate passed. Qualify the applied Botwoon composition for the next small slice;
-   do not lower its ratchet until that slice lands. #142 is already landed.
-2. Replenish the active L5/L6/L4 implementation and D/C2 qualification owners.
-   L4 retires RAM-backed copies toward sole typed Session ownership; its old donor
-   savings use an incomplete measure and are not current ownership evidence.
-3. Keep a dedicated gameplay coverage owner supplied with bounded tasks. Prove
-   new gameplay facts against the faithful oracle and demonstrate bug sensitivity.
-4. Cover the complete current any%, 100% and low% movie scope, including boot,
-   omitted transitions and endgame. Passing selected room rows proves only those rows.
-5. Qualify the prepared safe Cue diagnostics and rerun the six failed rows before
-   landing checkpoint-policy/audio work. Preserve the completed per-row inventory.
+1. Land the qualified three-tool movie-map slice with the lowered RAM baseline.
+   Require exact-head GATE OK, CI, corpus, route and oracle-lock gates; start
+   `bash tools/lane/watch.sh <pr>` in the background and report each landing.
+2. Keep a dedicated gameplay coverage owner continuously supplied. Current owner
+   `verification_grapple_floor73` runs a genuine earlier-turn route. Reach of
+   both D78F and airborne-standard-anchor remains unproved. Preserve prior
+   trials; replenish with a fresh bounded agent from its handoff when it finishes.
+   Report reached behavior, mutation sensitivity and passing rows separately.
+3. Collect L6 actual tally rows/locks and qualify its current-main composition.
+   Apply only the reconciled patch, then prove its actual new source/DLL.
+4. Continue full any%, 100% and low% verification, including boot, transitions
+   and endgame. `full_movie_continuation_source` owns the next source task;
+   importing a prefix or passing room rows does not prove the complete movies.
+5. Review Draygon tally instrumentation before granting a fresh build. Resume
+   L4/D/C2/V2 and Cue/hardware work as measured resources permit.
 
-## Resource recovery and current handles
+## Landed and ready
 
-Root removed 5,313 explicit regenerable compiler files from 54 completed historical
-roots, recovering 21.16 GiB; source, DLLs, native archives, seeds and receipts remain.
-Removal exec **92172** is terminal EXIT0; receipt is
-`$TEMP/collab/resource-cache-inventory/removed-qualified-cache.csv`. Disk reached
-54.08 GiB and is about 53.6 GiB after new work. PLAN's 50 GiB reserve applies.
-Do not repeat cleanup or delete external hardlinks/junctions excluded by its manifest.
+- Main is `49656229aed66d6c78d95b2b2c22a99cd2a0e6ad`. PRs #138 through #144
+  landed. #144 landed at 13:59:37 UTC; watcher 31255 is terminal EXIT0.
+  CI 41310808761, corpus 41310834695, route 41310808744 and all 30 lock jobs
+  in 41310808806 passed. Preserve the original gate/DLL/replay receipts in
+  `$TEMP/collab/land-botwoon-49656229a/`.
+- Botwoon reduced complete RAM coupling from 2109 to **2100 sites / 96 files**.
+  Physical production is **179304** (+5). Baseline2100 travels with this slice.
+  Retained Game effects/history and unobserved initialization remain separate.
+- #143 landed Metroid ice/missile and latch/bomb coverage. Both oracles, faithful
+  free run and engine locks passed; deliberate mutants failed at ticks49/706.
+- Three-tool movie-map patch SHA `206a2678ba3c43b1ae04e706654754648b0493e38e56e3fe8a37f2b04d31e5b5`
+  adds verification374/removes61 (net313), production0. Full original map,
+  strict9266 import/9267 rejection, encrypted three-member exact restore and
+  all nine rejection controls pass; every qualification family is terminal.
+  Missing members cannot borrow preexisting files. No new gameplay row or
+  full-movie completion is claimed. Private bundle has not been uploaded.
 
-Hardware has the sole new DLL compiler grant: 3.25 GiB family RAM, 1.25 GiB combined
-new disk; full-any replay is 200 MiB / 64 MiB new outputs, L6 replay 768 MiB / 16 MiB
-logs. All coverage mutant/final-gate families are terminal. Its first final gate
-stopped at the 300 MiB disk allowance; expanded gate **87690/24884** passed.
-Fresh-sample actual handles/resources before successor admission; files alone do not
-prove liveness. `.ps1` file execution is disabled; use ordinary native commands or
-the permitted Python launchers without changing security settings.
+## Current engine and verification evidence
+
+- L6 canonical source747bdb51/DLL0734dcb8 passed147 checks,68 patched rows,
+  64 faithful rows and62 locks. Faithful Kraid pause1030 is a genuine retained
+  preexisting failure; four400/950/1030/1960 exclusions remain disclosed.
+  Current-main21-file patch SHA `558442994a813edd9c636a61253e36d901b701d4ea7c842c5e86a867660b3b6c`
+  is ready in `$TEMP/collab/l6-current-main-composition/`; unqualified result
+  sourcec4bac7c9 predicts RAM2068/93, physical production-95, verification+3.
+- Actual L6 tally:12 patched rows pass/13656 ticks. Across81 reached mapped
+  moved-body keys, Game primitive0/Runtime333655. Retained Game transfer
+  effects608 and observed paused hooks are separate.98 body keys and271
+  capability/field gaps remain unmeasured. Six applicable locks run separately.
+  Preserve `$TEMP/collab/l6-moved-state-tally/` and `l6-tally-rows/`.
+- Draygon sourcee6aab08d/DLLf36613f6 passed gate,26 patched/26 faithful rows
+  and23 locks. Tally source20018391 is prepared but uncompiled; instrumentation
+  review and separate build admission remain required. Handoff:
+  `$TEMP/collab/l5-draygon/qualification-20261101/HANDOFF.md`.
+- Dedicated grapple predecessor proved spike-grounding83 and contact73,
+  not walljump or the required grapple event. Its prior six unique trials
+  missed both facts. Frozen sourceef9198ba/DLL2363b966 and genuine recorded
+  equipment/input/CPU phase remain unchanged. Reach HANDOFF/NEXT_COMMAND in
+  `$TEMP/collab/verification-grapple-edge-launch/` before continuation.
+- Full any capture maps722077 events/106967 native reads/127725 rows.
+  It has **984 requested-NMI work gaps across27 ranges**,117159 blocked rows
+  and incomplete EOF. Only9266 steps qualify; first gap read ordinal9261
+  differs because five supported steps do not poll. Full map SHA b2413c73;
+  source/private evidence in `$TEMP/collab/full-movie-map-artifact-run/`.
+- Original full-any replay115542 ticks had zero pair differences but only six
+  intro facts and **121 missing gameplay facts**. Full100/low completion and
+  genuine endgame continuation remain unproved; original movies end in gameplay.
+- First native SendAPUData span:41 NMIs,98212 pre-effect writes (46183 APUIO,
+  51906 PPU,123 control),124 APURAM samples/120 digests. Ordered work and
+  independent APU execution need preservation. Pixel video identity and PCM
+  are unmeasured. This proves only the first span, not all27 ranges. Logger,
+  native, ROM and original observations match; all capture jobs are terminal.
+  Reach `$TEMP/collab/full-movie-upload-bus-capture/SEAM-CONSTRAINTS.md`.
+- Hardware scratch gate/build/148 checks pass; patched boot fails7952 HUD,
+  faithful boot fails7892 DMA. Five controls and two actual locks pass.
+  Diagnostic scratch patch9feeb89c remains off-tree/uncompiled; runtime stack
+  phase and genuine SMAUX0d load/continuation remain unproved. Preserve
+  `$TEMP/collab/hardware-scratch-qualification/HANDOFF.md`.
+- Cue run41291863856 has154/160 passing rows; six zero-difference expectation
+  failures retain their inventory. Safe diagnostics need actual qualification
+  before checkpoint-policy/audio changes land. L4/D/C2/V2 remain open.
+
+## Resource admission
+
+PLAN's **50GiB disk / 2GiB remaining RAM floors** override older skill figures.
+Reserve remaining growth, including temporary outputs; allocated bytes are not
+new reservations. Sample actual process families/handles at each boundary.
+Cross-agent session IDs and formatted PowerShell tables do not prove termination.
+
+Root successor cleanup recovered3497500658 bytes from1379 exact compiler files;
+receipts `removed-root-approved.csv` and `removed-root-approved-additional.csv`
+under `$TEMP/collab/resource-runway-successor/`. Earlier cleanup remains separate.
+Preserve canonical/mutant DLLs, native/library guards, sources, private data and
+all original failures/proofs. Latest disk was about53.8GiB; sample fresh.
+Root next gate reserves2GiB/700MiB; tally locks512MiB/remaining64MiB,
+coverage300MiB/64MiB and source128MiB/64MiB. Future held builds are not live jobs.
+`.ps1` execution stays disabled; use permitted inline PowerShell/Python launchers.
 
 ## Retained origin/lane donors
 
