@@ -216,7 +216,10 @@ pub fn load<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     let area = &mut runtime.session_mut().room.area;
     *area = *area & 0xff00 | u16::from(value);
     drop(runtime);
-    word! { game, 0; REG_BG1HOFS, REG_BG1VOFS }
+    crate::session_cohort::with(
+        game,
+        |_, scroll: &mut crate::display::sequence::scroll::BgScroll| scroll.bg1 = [0, 0],
+    );
     {
         let value = crate::session_cohort::load::<crate::flow::Flow, _>(game)
             .demo_scene

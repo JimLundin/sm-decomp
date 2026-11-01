@@ -99,10 +99,14 @@ pub fn update_horizontal_scroll<H: crate::menus::host::Host + ?Sized>(
             object.a = ((object.a as i32 + 2) & 0x1f) as u16;
         }
         let mut v5: u16 = object.a;
+        // The table's words are not BG1's scroll, which stays as loaded.
+        let bg1_x =
+            crate::session_cohort::load::<crate::display::sequence::scroll::BgScroll, _>(game).bg1
+                [0];
         for i in (0i32..=30).rev().step_by(2) {
             word!(
                 game.FX22_X_TABLE[(v5 >> 1)] =
-                    ((WATER_WAVE[(i >> 1) as usize]) as u16).wrapping_add(word!(game.REG_BG1HOFS))
+                    ((WATER_WAVE[(i >> 1) as usize]) as u16).wrapping_add(bg1_x)
             );
             v5 = ((v5 as i32 - 2i32) & 0x1f) as u16;
         }
@@ -269,7 +273,10 @@ fn queue_tile_rows<H: crate::menus::host::Host + ?Sized>(address: u32, game: &mu
         write_sky_word(0, 0, game);
     } else {
         let layer1_y = crate::camera::layer1(game)[1];
-        word!(game.REG_BG2VOFS = layer1_y);
+        crate::session_cohort::with(
+            game,
+            |_, scroll: &mut crate::display::sequence::scroll::BgScroll| scroll.bg2[1] = layer1_y,
+        );
         let v0: u16 = word!(game.VRAM_WRITE_QUEUE_TAIL);
         let v1 = 0xd0 + usize::from(word!(game.VRAM_WRITE_QUEUE_TAIL));
         let stride = VRAM_WRITE_ENTRY_BYTES;

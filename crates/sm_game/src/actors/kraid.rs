@@ -2157,15 +2157,21 @@ pub fn main_ai<L: Lease + ?Sized>(game: &mut L) {
     body_touch(game);
     // Each subtract's borrow carries into the next step, as the original's
     // unpaired SBC/ADC chain does ($A7:AC30).
-    let (x, carry) = sbc(boss!(game.RegBg1hofs), game.camera().bg1_offset[0], true);
+    let bg1_x =
+        crate::session_cohort::load::<crate::display::sequence::scroll::BgScroll, _>(game).bg1[0];
+    let (x, carry) = sbc(bg1_x, game.camera().bg1_offset[0], true);
     let (x, carry) = sbc(x, session_slot!(game, Body[BODY].base.x_pos), carry);
-    word!(game.REG_BG2HOFS = adc(x, session_slot!(game, Body[BODY].base.x_width), carry).0);
+    let x = adc(x, session_slot!(game, Body[BODY].base.x_width), carry).0;
     let (y, carry) = sbc(
         game.camera().layer1[1],
         session_slot!(game, Body[BODY].base.y_pos),
         true,
     );
-    word!(game.REG_BG2VOFS = adc(y, 152, carry).0);
+    let y = adc(y, 152, carry).0;
+    crate::session_cohort::with_projected(
+        game,
+        |_, scroll: &mut crate::display::sequence::scroll::BgScroll| scroll.bg2 = [x, y],
+    );
     let function = session_slot!(game, Body[BODY].function);
     run_function(game, function);
 }
