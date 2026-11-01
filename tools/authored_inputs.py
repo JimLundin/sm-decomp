@@ -340,6 +340,38 @@ RECIPES = {
     # Green Brinstar's main shaft entered beside the etecoons (seed 43): turn
     # right to face them and wait, so the one that lands beside her runs left.
     "etecoon-face-right": Recipe("Right 12; _ 500"),
+    # Bomb Torizo's room (seed 100-input-phase:27): walk to the bombs, wait out
+    # their message, then dodge and keep shooting as Bomb Torizo wakes. With
+    # its health at 100 (scenario bomb-torizo-fight) the shots finish it.
+    "bomb-torizo-fight": Recipe("""
+        _ 10; Right+X 70; _ 700; A 1; _ 120; Left+X 100; _ 5; Left+A+X 70; _ 125
+        A+X 20; Left+A+X 60; _ 160; Right 1; X 70; B+Right+A+X 65; Left+X 1
+        X 230; B+Left+A+X 4; repeat 60 { X 1; _ 9 }; _ 130
+    """),
+    # Bomb Torizo's room (seed 100-input-phase:27): take the bombs, wait out
+    # their message, morph and lay two, the second of which bomb jumps her.
+    "bomb-jump": Recipe("_ 10; Right+X 70; _ 700; A 1; _ 60; morph; X 2; _ 100; X 2; _ 100"),
+    # Norfair's save room B167 (seed any-boundary:110): walk to the station's
+    # step, back off, hop onto the station, step onto its centre and confirm
+    # the save prompt and the saved message. Samus waits at rest before each
+    # move, so both oracles' landings line up.
+    "norfair-save": Recipe("""
+        _ 19; Left 30; _ 10; Right 10; _ 20; Left 6; Left+A 6; _ 40; Left 3; _ 60
+        A 2; _ 180; A 2; _ 220
+    """),
+    # The same save with one energy (scenario one-energy-save): leave the pit
+    # for the Business Center, where the first hit kills her, then confirm the
+    # game over menu's continue and the file's load.
+    "save-death-continue": Recipe("""
+        _ 19; Left 30; _ 10; Right 10; _ 20; Left 6; Left+A 6; _ 40; Left 3; _ 60
+        A 2; _ 180; A 2; _ 160
+        Left 60; _ 10; Right 14; _ 10; Left 2; Left+A 30; Left 140; Left+A 40; _ 300
+        repeat 5 { Right+A 30; Left+A 30 }; _ 300; repeat 3 { A 2; _ 300 }; _ 360
+    """),
+    # Double Chamber ADAD after the 100% movie's 127 words (seed
+    # 100-input-phase:103), which open the shot gate: below its trigger,
+    # shoot straight up until a shot triggers it again and it closes.
+    "gate-reclose": Recipe("_ 80; repeat 4 { Up 10; Up+X 2; Up 20; _ 10 }; _ 60"),
 }
 
 SWEEPS = {
@@ -406,6 +438,11 @@ PINNED = {
     "kihunter-wings": "a12900693ec38b1f1eea8979e825b04b4744e5dfefdc7b9f758f9e148d0e9bfc",
     "lower-norfair-hand": "c20e8f655f662e35059ebf591e6969ec47947bba45b58b5a653197213e6d0dab",
     "etecoon-face-right": "6973e5e54d5e1b35c7bd6123b9516eabb8dc88b5adb3e5adf98f9f9ff68c6678",
+    "bomb-torizo-fight": "08149d61cf9c1d0b15a0a84aa04cbbf3ec403ab972de7068a5073a1cafad5837",
+    "bomb-jump": "42c5d0cea0ef134fe24bb583d08d62520b1c83f73ec11767f43802e32e9da122",
+    "norfair-save": "49a0ba0b75a67da03959d8c53776284b1db5f57ad7d10c6bc1e4226679f2ff3d",
+    "save-death-continue": "07002600f6a8d22a803c4c3c7bf715e0a30b9bdf326d9d2aa94437fb4104706f",
+    "gate-reclose": "8b753fa8a650f77de1b281f32cc9f846cf55afe634c49b04e668658c9b1648bd",
 }
 
 
