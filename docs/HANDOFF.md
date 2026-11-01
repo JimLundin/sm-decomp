@@ -23,7 +23,9 @@ the `sm-coordinate`, `sm-land` and `sm-resources` skills. Then do the first step
   both oracles, faithful free run and engine locks. Mutants fail at ticks 49 and
   706. Encrypted bundle `coverage-v2-metroid-interactions.tar.gz.enc` is uploaded;
   ciphertext SHA `851545e4084779da2b662a4311c681a45d303bb66176dbd5fffbf09a68140d1b`.
-  Its 18 restored members match. Composition gate/hosted qualification remain.
+  Its 18 restored members match. Composition gate **87997** passed on `02d4af543`;
+  **PR #143**, branch `land/batch13aa`, is in hosted qualification. Background
+  watcher **14750** is live; preserve and poll its original handle.
 - Fresh dedicated coverage owner `verification_grapple_qualification` is reviewing
   repaired guards and preparing proof of airborne zero-speed terrain selection.
   Genuine reach and natural apex are unproved; its predecessor
@@ -32,11 +34,13 @@ the `sm-coordinate`, `sm-land` and `sm-resources` skills. Then do the first step
 - Full Cue/port run **41291863856**: 154/160 rows passed; six failed after zero
   differing frames. Safe diagnostic patches are reconciled onto `74a984d5e` in
   `20261101/cue-diag-qual`; gate/build/focused physical-audio replay remain pending.
-- Full any/100 inputs are genuinely imported and hash-qualified: **115,542** and
-  **199,259** native ticks. Full any patched replay is live under owner
-  `full_any_replay`, exec **81000**, corpus PID **20200**, supervisor **15140**;
-  20,000 ticks passed, no differences. Frozen source is `33519e8e...`, matching
-  qualified #141 DLL `834065f5...`. Full EOF/facts/continuation proof remains open.
+- Full any/100 inputs are imported and hash-qualified: **115,542** and **199,259**
+  native ticks. Original any replay **81000** is terminal **FAIL**, all descendants
+  stopped: it consumed 115,542 ticks with zero frame differences but observed only
+  six intro room facts and missed all 121 gameplay room facts; no checkpoint saved.
+  Source `33519e8e...` / qualified #141 DLL `834065f5...` remain pinned. Fresh owner
+  `full_movie_route_drift` is finding the earliest missed transition/input mapping.
+  Full 100% is held pending this shared-route concern. EOF gameplay proof remains open.
 - Low% has a full **153,266**-tick input and 186 captured room observations.
   Faithful boot faults at 7892/7952 require hardware fixes. Fresh owner
   `hardware_writer_qualification` is qualifying the existing last-writer diagnostic;
@@ -45,15 +49,21 @@ the `sm-coordinate`, `sm-land` and `sm-resources` skills. Then do the first step
   faithful locked-remaining 57 is live (exec **71281**, PID **23836**), then 62
   engine locks. Kraid pause1030 failed at 1218 identically on pre-L6 L5, matching
   LEGACY; excluded pause rows are not green faithful proof. L4/D/C2/V2 await grants.
-- Botwoon and Draygon lease source patches are ready, not qualified. Their exact
-  bases are `74a984d5e`; handoffs are `$TEMP/collab/l5-{botwoon,draygon}/HANDOFF.md`.
-  Botwoon source review found no concrete regression; Draygon review is active.
+- Botwoon canonical gate/DLL passed, with 11 patched rows, two faithful rows and
+  eight engine locks. Actual reached state-body tally: Game **0**, lease **64,424**
+  across both oracles and 23 routines. Initialization and narrow spit are unobserved;
+  retained Game effects/history are separate. Canonical patch SHA `317d4e47...`
+  is applied after #143 as `a1d88ffcd`; the new integrated gate remains pending.
+- Fresh Draygon qualifier `draygon_qualification` has verified source `3eea5c29...`
+  and patch `a84ca271...`, preparing gate/DLL/replay/tally under a compiler hold.
+  Fresh hardware source owner `hardware_shared_scratch` is implementing shared
+  typed scratch from the faithful producer map; Ceres failure closure remains open.
 
 ## First steps
 
-1. Land the ready Metroid pair and lowered RAM baseline with a fresh exact-head
-   composition gate, hosted gates and background watcher. #142 is already landed;
-   its ratchet update completed. Report each landing to Jim.
+1. Poll #143 watcher **14750**, then report its actual landing. Its exact-head local
+   gate passed. Qualify the applied Botwoon composition for the next small slice;
+   do not lower its ratchet until that slice lands. #142 is already landed.
 2. Replenish the active L5/L6/L4 implementation and D/C2 qualification owners.
    L4 retires RAM-backed copies toward sole typed Session ownership; its old donor
    savings use an incomplete measure and are not current ownership evidence.
