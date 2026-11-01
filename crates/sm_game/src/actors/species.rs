@@ -18,9 +18,9 @@ use crate::actors::{
     draygon_flight, draygon_grab, draygon_host, draygon_sweep, elevator, escape_critters, etecoon,
     evir, fire_arc, fire_pillar, flies, fune, geruta, gunship, kago, kraid, magdollite, metroid,
     mini_crocomire, mini_kraid, mochtroid, morph_ball_eye, multiviola, oum, phantoon,
-    phantoon_actions, polyp, powamp, puyo, reflec, rinka, rio, rippers, roach, shutters,
-    sidehopper, skree, space_pirates, spike_platform, spore_spawn, squeept, statues, tatori,
-    torizo, tripper, waver, work_robot, wrecked_ship_spark, yard, zoa,
+    phantoon_actions, polyp, puyo, reflec, rinka, rio, rippers, roach, shutters, sidehopper, skree,
+    space_pirates, spike_platform, spore_spawn, squeept, statues, tatori, torizo, tripper, waver,
+    work_robot, wrecked_ship_spark, yard, zoa,
 };
 use crate::combat_rules::LatchMode;
 use crate::enemy_projectiles::host::Effects as _;
@@ -676,14 +676,6 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
             let function = yard::prepare(game);
             pre_instruction(function, game);
         }
-        11059657 => powamp::initialize(game),
-        11059740 => {
-            let function = powamp::function(game);
-            pre_instruction(function, game);
-        }
-        11060670 => powamp::touch(game),
-        11060719 => powamp::shot(game),
-        11060799 => powamp::power_bomb(game),
         11068983 => wrecked_ship_spark::initialize(game),
         11069070 => wrecked_ship_spark::main_ai(game),
         10663876 => {
@@ -794,8 +786,6 @@ pub fn pre_instruction<H: PreInstructionHost>(ea: u32, game: &mut H) {
         10735612 => yard::crawl(k, crate::actors::api::Axis::X, 0xa3cd1a, game),
         10735456 => yard::hiding(k, game),
         10736051 => yard::airborne(k, game),
-        11059843 | 11059878 | 11059919 | 11060075 | 11060193 | 11060329 | 11060444 | 11060480
-        | 11060509 | 11060584 | 11060585 | 11060639 => powamp::run(game, ea as u16, k),
         10659852 | 10660048 | 10660162 | 10660176 | 10660231 | 10660285 | 10660431 | 10660445
         | 10660500 | 10660514 | 10660639 | 10660704 | 10660718 | 10660773 | 10660807 | 10660891
         | 10661079 | 10661134 | 10661165 => gunship::run(game, k, ea as u16),

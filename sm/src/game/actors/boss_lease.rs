@@ -93,6 +93,9 @@ impl BossState for Game {
     fn select_enemy(&mut self, k: u16) {
         EnemyHost::set_current_enemy(self, k);
     }
+    fn kill_current(&mut self, kind: api::DeathKind) {
+        combat::die(&mut Runtime::new(self), kind);
+    }
 }
 
 impl BossLease for Game {
@@ -178,6 +181,9 @@ impl BossState for Runtime<'_> {
     }
     fn select_enemy(&mut self, k: u16) {
         self.session_mut().actors.controls.selected = k;
+    }
+    fn kill_current(&mut self, kind: api::DeathKind) {
+        combat::die(self, kind);
     }
 }
 
