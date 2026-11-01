@@ -174,8 +174,11 @@ from the run's divergence report; values are never committed), and its
 window's end, since the checkpoint binds its prefix), its checkpoints (patched
 and, where the faithful prefix replays, faithful) and its seed are packed into
 a new `cut-v1-<digest>.tar.gz.enc` bundle that the lock pins; only metadata is
-committed, and the bundle is uploaded to ci-data with the commit. A Tick here is
-the verifier's frame counter, the input index of seeded and boot rows. So anyone
+committed, and the bundle is uploaded to ci-data with the commit. The checkpoint
+is taken in lockstep before the divergence, so it holds the oracle's state, and
+it binds the state layout rather than the source: a cut made on the failing
+build loads in the fixed one. A Tick here is the verifier's frame counter, the
+input index of seeded and boot rows. So anyone
 who sees drift in a playthrough, or wants to pin a trick, records a movie and
 gets a small permanent scenario out of it. PLAN's regression rows are such
 scenarios: the route rooms that exposed bugs carry `regression` notes, and every

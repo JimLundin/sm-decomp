@@ -30,12 +30,16 @@ oracle's running digests (REVIEW lane S condition 8).
         and, with --record, record the oracle for every stale lockable scenario
   lock --check
         check the scenarios and lock are complete and current, without data (CI)
+  cut ID --at TICK --window N [--lead L] [--report R | --fact F...] [--why TEXT]
+        turn ID's divergence at TICK into a scenario: a checkpoint L ticks before
+        it and the next N ticks, packed into a new bundle for ci-data
 """
 import argparse
 import csv
 import dataclasses
 import hashlib
 import json
+import os
 from pathlib import Path
 import re
 import subprocess
@@ -361,6 +365,85 @@ def lock(args):
     check(root)
 
 
+def cut(args):
+    """A small permanent scenario from a divergence: lead ticks before it, then the window."""
+    root = args.root
+    parent = next((row for row in rows(root) if row["id"] == args.run), None)
+    if parent is None or "pending" in parent:
+        raise SystemExit(f"{args.run}: no runnable scenario")
+    start = args.at - args.lead
+    if not parent["start_frame"] <= start < args.at or start < 1:
+        raise SystemExit("--at less --lead must fall within the scenario, after its first tick")
+    name = args.id or f"cut-{args.run}-{args.at}"
+    facts = list(args.fact)
+    if args.report:
+        with args.report.open("rb") as stream:
+            report = tomllib.load(stream).get("divergence")
+        if not report:
+            raise SystemExit(f"{args.report}: reports no divergence")
+        # A field's path starts with its domain (samus.x_fraction).
+        facts.append(f"observe:{report.get('field', report['domain'])}@{report['tick']}")
+    if not facts:
+        facts.append(f"observe:ram@{args.at}")
+    # The inputs are the parent's up to the window's end: the checkpoint binds its prefix.
+    source = root / "movies" / parent["inputs"]
+    end, kept, words = args.at + args.window, [], 0
+    for line in source.read_bytes().splitlines(keepends=True):
+        if words == end:
+            break
+        kept.append(line)
+        words += bool(line.strip()) and not line.startswith(b"#")
+    if words < end:
+        raise SystemExit(f"{args.run}: its inputs end before tick {end}")
+    data = b"".join(kept)
+    inputs = root / "movies" / f"{name}.inputs"
+    inputs.write_bytes(data)
+    pin = {"id": name, "inputs": inputs.name, "input_sha256": hashlib.sha256(data).hexdigest()}
+    seed = []
+    if "seed" in parent:
+        pin["seed"] = parent["seed"]
+        seed = ["--seed", str(seed_file(root, parent["seed"]))]
+    checkpoints = root / "target/checkpoints"
+    checkpoints.mkdir(parents=True, exist_ok=True)
+    for oracle, key in (("patched", "checkpoint"), ("faithful", "faithful_checkpoint")):
+        path = checkpoints / f"{name}-{start}{'-faithful' if oracle == 'faithful' else ''}.smvchk"
+        path.unlink(missing_ok=True)
+        code = subprocess.run([sys.executable, str(root / "tools/verify_dll.py"), str(args.rom), str(inputs),
+                               "--no-build", "--frames", str(start), "--checkpoint-out", str(path), *seed],
+                              cwd=root, env=dict(os.environ, SM_ORACLE=oracle)).returncode
+        if code and oracle == "patched":
+            raise SystemExit(f"{name}: the prefix to tick {start} did not replay")
+        if not code:
+            pin[key], pin[key + "_sha256"] = path.name, sha256(path)
+        else:
+            print(f"{name}: no faithful checkpoint; the faithful oracle differs before tick {start}")
+    entry = {"id": name, "start": "boot" if "seed" not in parent else f"seed:{parent['seed_sha256']}",
+             "prefix": start, "ticks": args.lead + args.window, "facts": facts,
+             "regression": args.why or f"cut from {args.run} at tick {args.at}"}
+    path = root / "scenarios/regressions.toml"
+    if not path.exists():
+        path.write_text("# Scenarios cut from divergences (tools/scenario.py cut): each starts a few ticks\n"
+                        "# before one and runs its window. Their data is in the bundles the lock names.\n"
+                        f"version = 1\ndomains = {toml_value(list(DOMAINS))}\n", newline="\n")
+    with path.open("a", encoding="utf-8", newline="\n") as stream:
+        stream.write("\n[[scenario]]\n" + "".join(f"{key} = {toml_value(value)}\n" for key, value in entry.items()))
+    data = read_lock(root)
+    data.pins[name] = pin
+    write_lock(root / LOCK, data)
+    # Pack the cut's inputs, checkpoints and seed into its own encrypted bundle.
+    packed = root / "target" / f"{name}.tar.gz.enc"
+    packed.unlink(missing_ok=True)
+    subprocess.run([sys.executable, str(root / "tools/ci_seed_data.py"), "pack", str(packed), "--root", str(root),
+                    "--rom", str(args.rom), "--segment", name, "--runtime-only"], cwd=root, check=True)
+    digest = sha256(packed)
+    bundle = packed.with_name(f"cut-v1-{digest[:16]}.tar.gz.enc")
+    packed.replace(bundle)
+    pin["bundle"], data.bundles[bundle.name] = bundle.name, digest
+    write_lock(root / LOCK, data)
+    print(f"Cut {name}: ticks {start}..{end} from {args.run}; facts {', '.join(facts)}")
+    print(f"Publish its bundle: gh release upload ci-data {bundle.relative_to(root).as_posix()}")
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--root", type=Path, default=ROOT)
@@ -371,9 +454,21 @@ def main():
     locking.add_argument("--bundle", type=Path, action="append", default=[])
     locking.add_argument("--pin", nargs="+", action="append", default=[], metavar="ID KEY=VALUE")
     locking.add_argument("--record", action="store_true")
+    cutting = commands.add_parser("cut")
+    cutting.add_argument("run")
+    cutting.add_argument("--at", type=int, required=True)
+    cutting.add_argument("--window", type=int, required=True)
+    cutting.add_argument("--lead", type=int, default=8)
+    cutting.add_argument("--id")
+    cutting.add_argument("--report", type=Path)
+    cutting.add_argument("--fact", action="append", default=[])
+    cutting.add_argument("--why")
     args = parser.parse_args()
     args.root = args.root.resolve()
-    check(args.root) if args.check else lock(args)
+    if args.command == "lock":
+        check(args.root) if args.check else lock(args)
+    else:
+        cut(args)
 
 
 if __name__ == "__main__":
