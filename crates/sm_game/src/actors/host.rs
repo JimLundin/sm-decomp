@@ -229,7 +229,7 @@ pub trait ActorLease:
 /// A host that can lease its actors; each `lease` is one original `Runtime`.
 pub trait LeaseActors {
     type Lease<'a>: ActorLease
-        + crate::actors::boss_lease::BossLease<Game: crate::actors::species::AiHost>
+        + crate::actors::boss_lease::BossLease<Game: crate::actors::species::AiHost + Sized>
         + crate::actors::torizo::Lease
         + crate::actors::spore_spawn::Lease
         + crate::actors::draygon_host::Lease
@@ -242,7 +242,7 @@ pub trait LeaseActors {
 /// leases its actors, or the lease the work already runs inside.
 pub trait LeaseScope {
     type Scoped<'a>: ActorLease
-        + crate::actors::boss_lease::BossLease<Game: crate::actors::species::AiHost>
+        + crate::actors::boss_lease::BossLease<Game: crate::actors::species::AiHost + Sized>
         + crate::actors::torizo::Lease
         + crate::actors::spore_spawn::Lease
         + crate::actors::draygon_host::Lease
