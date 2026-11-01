@@ -101,7 +101,30 @@ observation. `verify_dll.py --corpus R --mode M` runs seeded and boot rows:
   typed observation off, saving a checkpoint, and the second half from it.
 - `lock --oracle faithful --lock F` writes the oracle digest lock (REVIEW, lane S
   condition 8); `check-lock --lock F` runs only the engine against it and names the
-  differing streams and the last matching 1,000-Tick mark.
+  differing streams and the last matching 1,000-Tick mark. It then reruns the first
+  unmatched 1,000-Tick span live in faithful lockstep: the oracle alone replays to the
+  mark and saves a checkpoint, and both sides run the span from it, which names the
+  first differing Tick and field (or reports that lockstep masks the drift).
+
+A single-side run takes the row's whole budget (or its inputs, if they end first): the
+oracle cannot see probes, so neither side stops on a probe or expectation tail, and
+only the engine checks the required hits.
+
+The lock is `scenarios/lock.toml`: every seeded and boot corpus row and every room
+of both routes, keyed on the oracle's start (seed payload digest, or `boot`) and the
+input digest and budget. `.github/scripts/full_route.py run JOB` passes its
+arguments to the corpus run, so the routes record and check the same way.
+`.github/scripts/lock_gate.py` lists the scenarios that stay on patched lockstep
+(their `docs/LEGACY.md` entries) and fails on a stale lock: an entry whose start,
+inputs or budget changed, an entry for no scenario, or a scenario neither locked
+nor listed. The `lock-gate.yml` workflow runs it, then the engine over every
+locked scenario on each pull request and push; its console carries ids, stream and
+field names, ticks and hashes only.
+
+On 2026-11-01 the lock holds 601 of the 639 lockable scenarios: 81 of the 111
+seeded and boot corpus rows and 520 of the routes' 528 rooms. The other 38 stay on
+lockstep, listed in LEGACY.md. The 23 corpus rows that start from a checkpoint are
+not lockable yet: they need an oracle-side prefix first.
 
 ## Turning divergences into scenarios
 

@@ -1,0 +1,224 @@
+name: Engine against the oracle lock
+
+# The frequent gate (docs/SCENARIO_HARNESS.md, Decision 4): the engine alone
+# replays every scenario scenarios/lock.toml locks (seeded and boot corpus rows,
+# and both routes' rooms) and its running digests must equal the faithful
+# oracle's. A stale lock fails the plan. A mismatch reruns its first unmatched
+# 1,000-Tick span live in faithful lockstep, naming the first Tick and field.
+# Logs carry ids, stream and field names, ticks and hashes only. The lockstep
+# corpus and route workflows keep running beside it.
+on:
+  pull_request:
+  # Landing branches run it as their pull request; every other push runs it here.
+  push:
+    branches-ignore: ['land/**']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: lock-gate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  plan:
+    runs-on: ubuntu-24.04
+    outputs:
+      matrix: ${{ steps.plan.outputs.matrix }}
+      movie_file: ${{ steps.movie.outputs.movie_file }}
+      movie_sha256: ${{ steps.movie.outputs.movie_sha256 }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: plan
+        run: python3 .github/scripts/lock_gate.py plan
+      - id: movie
+        run: |
+          python3 - <<'PY'
+          import os, tomllib
+          movie = next(m for m in tomllib.load(open('movies/manifest.toml', 'rb'))['movies'] if m['category'] == 'any%')
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as out:
+              out.write(f"movie_file={movie['file']}\nmovie_sha256={movie['sha256']}\n")
+          PY
+
+  build:
+    runs-on: windows-2022
+    timeout-minutes: 60
+    env:
+      RUSTUP_TOOLCHAIN: stable-x86_64-pc-windows-gnu
+      CARGO_INCREMENTAL: '0'
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/windows-native
+      - name: Reuse a verifier built from the same sources
+        # verify_dll.py still rebuilds unless the DLL's stamp matches these sources,
+        # the compiler and its options; the native archives count by their sources.
+        uses: actions/cache@v4
+        with:
+          path: target/verify-dll
+          key: verifier-direct-${{ hashFiles('crates/**', 'sm/**', 'Cargo.lock', 'rust-toolchain.toml', 'tools/verify_dll.py', 'tools/install_lakesnes.py', 'tools/install_native_*.py', '.github/actions/windows-native/action.yml') }}
+      - name: Build the verifier DLL (direct, as the local Fast loop does)
+        env:
+          # Every native archive is rebuilt here from these pinned sources.
+          SM_NATIVE_IDENTITY: ${{ hashFiles('crates/**', 'sm/**', 'tools/install_lakesnes.py', 'tools/install_native_*.py', '.github/actions/windows-native/action.yml') }}
+        run: |
+          python tools/verify_dll.py --build-only --direct
+          if ($LASTEXITCODE -ne 0) { throw 'Verifier DLL build failed' }
+          New-Item -ItemType Directory -Force -Path verifier | Out-Null
+          Copy-Item target/verify-dll/sm_verify.dll verifier/
+          Copy-Item -Recurse (Split-Path -Parent $env:LIBRARY_PATH) verifier/sdk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: verifier
+          path: verifier
+          retention-days: 1
+
+
+  scenarios:
+    needs: [plan, build]
+    runs-on: windows-2022
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      # Beside the lockstep route and corpus at eight each and PR CI's four jobs.
+      max-parallel: 8
+      matrix: ${{ fromJson(needs.plan.outputs.matrix) }}
+    name: ${{ matrix.name }}
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - uses: actions/download-artifact@v4
+        with:
+          name: verifier
+          path: verifier
+      - name: Place the verifier
+        run: |
+          New-Item -ItemType Directory -Force -Path target/verify-dll | Out-Null
+          Copy-Item verifier/sm_verify.dll target/verify-dll/
+          "LIBRARY_PATH=$((Resolve-Path verifier/sdk/lib).Path)" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Cache the pinned movie download
+        if: contains(matrix.kinds, 'route')
+        uses: actions/cache@v4
+        with:
+          path: movies/${{ needs.plan.outputs.movie_file }}
+          key: ${{ runner.os }}-movie-${{ needs.plan.outputs.movie_sha256 }}
+      - name: Restore the ROM and the scenarios' encrypted seeds and inputs
+        env:
+          JOB_KIND: ${{ matrix.kind }}
+          SHARDS: ${{ matrix.shards }}
+          ROUTE: ${{ matrix.route }}
+          ASSET: ${{ matrix.asset }}
+          ROM_00: ${{ secrets.SM_ROM_00 }}
+          ROM_01: ${{ secrets.SM_ROM_01 }}
+          ROM_02: ${{ secrets.SM_ROM_02 }}
+          ROM_03: ${{ secrets.SM_ROM_03 }}
+          ROM_04: ${{ secrets.SM_ROM_04 }}
+          ROM_05: ${{ secrets.SM_ROM_05 }}
+          ROM_06: ${{ secrets.SM_ROM_06 }}
+          ROM_07: ${{ secrets.SM_ROM_07 }}
+          ROM_08: ${{ secrets.SM_ROM_08 }}
+          ROM_09: ${{ secrets.SM_ROM_09 }}
+          ROM_10: ${{ secrets.SM_ROM_10 }}
+          ROM_11: ${{ secrets.SM_ROM_11 }}
+          ROM_12: ${{ secrets.SM_ROM_12 }}
+          ROM_13: ${{ secrets.SM_ROM_13 }}
+          ROM_14: ${{ secrets.SM_ROM_14 }}
+          ROM_15: ${{ secrets.SM_ROM_15 }}
+          ROM_16: ${{ secrets.SM_ROM_16 }}
+          ROM_17: ${{ secrets.SM_ROM_17 }}
+          ROM_18: ${{ secrets.SM_ROM_18 }}
+          ROM_19: ${{ secrets.SM_ROM_19 }}
+          ROM_20: ${{ secrets.SM_ROM_20 }}
+          ROM_21: ${{ secrets.SM_ROM_21 }}
+          ROM_22: ${{ secrets.SM_ROM_22 }}
+          ROM_23: ${{ secrets.SM_ROM_23 }}
+          ROM_24: ${{ secrets.SM_ROM_24 }}
+          ROM_25: ${{ secrets.SM_ROM_25 }}
+          ROM_26: ${{ secrets.SM_ROM_26 }}
+          ROM_27: ${{ secrets.SM_ROM_27 }}
+          ROM_28: ${{ secrets.SM_ROM_28 }}
+          ROM_29: ${{ secrets.SM_ROM_29 }}
+          ROM_30: ${{ secrets.SM_ROM_30 }}
+          ROM_31: ${{ secrets.SM_ROM_31 }}
+          ROM_32: ${{ secrets.SM_ROM_32 }}
+          ROM_33: ${{ secrets.SM_ROM_33 }}
+          ROM_34: ${{ secrets.SM_ROM_34 }}
+          ROM_35: ${{ secrets.SM_ROM_35 }}
+          ROM_36: ${{ secrets.SM_ROM_36 }}
+          ROM_37: ${{ secrets.SM_ROM_37 }}
+          ROM_38: ${{ secrets.SM_ROM_38 }}
+          ROM_39: ${{ secrets.SM_ROM_39 }}
+          ROM_40: ${{ secrets.SM_ROM_40 }}
+          ROM_41: ${{ secrets.SM_ROM_41 }}
+          ROM_42: ${{ secrets.SM_ROM_42 }}
+          ROM_43: ${{ secrets.SM_ROM_43 }}
+          ROM_44: ${{ secrets.SM_ROM_44 }}
+        run: |
+          if ($env:JOB_KIND -eq 'corpus') {
+            # One seed bundle (or movie route) per shard, restored in turn.
+            foreach ($shard in ($env:SHARDS | ConvertFrom-Json)) {
+              $env:KIND = $shard.kind
+              $env:SEED_ASSET = $shard.seed_asset
+              $env:SEED_SHA256 = $shard.seed_sha256
+              $env:SEGMENTS = $shard.segments
+              $env:ROUTE = $shard.route
+              $env:INPUTS = $shard.inputs
+              python -B .github/scripts/prepare_corpus_inputs.py
+              if ($LASTEXITCODE -ne 0) { throw 'Input preparation failed' }
+            }
+            exit 0
+          }
+          python -B .github/scripts/prepare_rom.py
+          if ($LASTEXITCODE -ne 0) { throw 'ROM preparation failed' }
+          $bundle = Join-Path $env:RUNNER_TEMP 'chain.tar.gz.enc'
+          Invoke-WebRequest "https://github.com/JimLundin/sm-decomp/releases/download/ci-data/$env:ASSET" -OutFile $bundle
+          $env:FULL_ROUTE = $env:ROUTE
+          python -B .github/scripts/full_route.py restore $bundle
+          if ($LASTEXITCODE -ne 0) { throw 'Chain restore failed' }
+      - name: Check the engine against the lock
+        timeout-minutes: 55
+        env:
+          KIND: ${{ matrix.kind }}
+          SEGMENTS: ${{ matrix.segments }}
+        run: |
+          # The full log stays on the runner; the console shows ids, streams,
+          # fields, ticks and hashes.
+          $names = '^(SEGMENT|PASS|FAIL|UNLOCKED|KNOWN|REGRESSION|Corpus|job |Verifier total|Lock|[A-Za-z0-9-]+: (lock |lockstep |free run |Free run|Free-run|@|no current|localization))'
+          $log = Join-Path $env:RUNNER_TEMP 'lock.log'
+          if ($env:KIND -eq 'room') {
+            $env:FULL_ROUTE = '${{ matrix.route }}'
+            python -B .github/scripts/full_route.py run ${{ matrix.index }} --mode check-lock --lock scenarios/lock.toml 2>&1 | Tee-Object -FilePath $log | Select-String -CaseSensitive -Pattern $names | ForEach-Object { $_.Line }
+          } else {
+            $rows = @()
+            foreach ($id in $env:SEGMENTS.Split(' ')) { $rows += @('--segment', $id) }
+            python tools/verify_dll.py rom/sm.smc --corpus movies/segments.toml --no-build --direct --mode check-lock --lock scenarios/lock.toml @rows 2>&1 | Tee-Object -FilePath $log | Select-String -CaseSensitive -Pattern $names | ForEach-Object { $_.Line }
+          }
+          $code = $LASTEXITCODE
+          "### ${{ matrix.name }}" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+          '```' | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+          Select-String -CaseSensitive -Path $log -Pattern '^(PASS|FAIL|Corpus|[A-Za-z0-9-]+: (lock |lockstep |free run |Free run|@))' | ForEach-Object { $_.Line } | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+          '```' | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+          if ($code -ne 0) { throw "Scenarios failed ($code)" }
+
+  result:
+    name: Engine against the oracle lock result
+    needs: [plan, build, scenarios]
+    if: always()
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Require every scenario job to pass
+        env:
+          PLAN: ${{ needs.plan.result }}
+          BUILD: ${{ needs.build.result }}
+          SCENARIOS: ${{ needs.scenarios.result }}
+        run: |
+          echo "plan $PLAN, build $BUILD, scenarios $SCENARIOS"
+          test "$PLAN" = success && test "$BUILD" = success && test "$SCENARIOS" = success
