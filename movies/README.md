@@ -175,7 +175,11 @@ branch that does the work. Ice physics (`contact_physics.ice`, PLM $B70F,
 Crateria special air with BTS 80h) has no row: no Crateria level the seeds
 capture places it, so retail play never reaches it. Neither do Bang's movement
 (no room places a Bang) or the scrolling sky's horizontal HDMA (FX type 22h,
-unused).
+unused), the forced fall and its capped fall animation
+(`forced::finish_forced_fall` and `animate_fall`, Samus handlers $90:E3A3 and
+$E41B, which only the unused $90:E37F installs) or the pre-instruction of
+projectile 27h (`suit_pickup_shot`, $90:EFD3, which only the unused $90:EF5E
+fires).
 
 A scenario seed is a recorded room seed with declared edits to its work RAM:
 energy, ammunition, items, beams, the selected item, Samus's position or raw
