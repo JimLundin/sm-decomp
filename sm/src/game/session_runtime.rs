@@ -1095,6 +1095,9 @@ impl SessionAccess for Runtime<'_> {
     fn inputs(&self) -> &ExternalInputs {
         Runtime::inputs(self)
     }
+    fn refresh_inputs(&mut self) {
+        self.refresh_player_observations();
+    }
     fn probe(&self, name: &'static str) {
         #[cfg(sm_verify_dll)]
         crate::game::visual_runtime::samus_observer::observe(name, self.session(), self.game);

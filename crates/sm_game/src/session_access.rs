@@ -19,5 +19,9 @@ pub trait SessionAccess {
         Ok(())
     }
     fn inputs(&self) -> &ExternalInputs;
+    /// Refresh the external observations from the Session after stores to
+    /// fields they read (the cinematic function, the FX blending, the frozen
+    /// time flag, ...); a host that keeps none does nothing.
+    fn refresh_inputs(&mut self) {}
     fn probe(&self, name: &'static str);
 }

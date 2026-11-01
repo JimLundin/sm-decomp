@@ -83,6 +83,9 @@ where
             }
             index += 1;
         });
+        // Some cohort words are external observations; the lease publishes
+        // its observations with the Session.
+        lease.refresh_inputs();
     } else {
         for (_, at, value) in changes {
             crate::projection::set_word(game, at, value);
