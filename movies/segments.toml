@@ -1847,7 +1847,6 @@ start_frame = 0
 frames = 2858
 expect = ["room:DA60"]
 require_hit = ["draygon_grab.grab", "grapple.draygon_direction"]
-pending = "awaiting the seeds-v1-unreached-020b4cd19fbaf9cb ci-data upload"
 
 # The Ceres Ridley fight released from its first frame (frames=1900): Samus
 # never hits back, and Ridley reaches his fireball pattern.
@@ -1861,7 +1860,6 @@ start_frame = 0
 frames = 1901
 expect = ["room:E0B5"]
 require_hit = ["ceres_ridley.fireballs_move_to_position"]
-pending = "awaiting the seeds-v1-unreached-020b4cd19fbaf9cb ci-data upload"
 
 # The Phantoon fight released from its first frame (frames=1000): he survives
 # his first round and picks his second-round pattern.
@@ -1875,7 +1873,6 @@ start_frame = 0
 frames = 1001
 expect = ["room:CD13"]
 require_hit = ["phantoon.pick_pattern"]
-pending = "awaiting the seeds-v1-unreached-020b4cd19fbaf9cb ci-data upload"
 
 # The dachora room with Samus moved beside the dachora (scenario dachora),
 # released (frames=1300): it runs, charges and shinesparks.
@@ -1889,7 +1886,6 @@ start_frame = 0
 frames = 1301
 expect = ["room:9CB3"]
 require_hit = ["dachora.accelerate", "dachora.load_palette"]
-pending = "awaiting the seeds-v1-unreached-020b4cd19fbaf9cb ci-data upload"
 
 # Green Brinstar's main shaft entered beside the etecoons (seed 43), released
 # (frames=2000): they run and wall jump up their shaft.
@@ -1903,4 +1899,3 @@ start_frame = 0
 frames = 2001
 expect = ["room:9AD9"]
 require_hit = ["etecoon.jumping"]
-pending = "awaiting the seeds-v1-unreached-020b4cd19fbaf9cb ci-data upload"

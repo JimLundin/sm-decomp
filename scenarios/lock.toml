@@ -122,6 +122,18 @@ digests = { "wram" = "6f0c02fbffeae3fc", "sram" = "4047717004cb6972", "vram" = "
 marks = { "1000" = "5860afe93983a7af", "2000" = "a2202c9e29bd2d1a" }
 
 [[scenario]]
+id = "boss-ceres-ridley-fireballs"
+oracle = "faithful"
+start = "seed:0a6d988b41a6ed6baf83f194d23219f8a98f47c38cea6c2bf81520d5461a2938"
+inputs = "030df170a36ef872591b50bb2800daf1c4cf4472e6c4563a92602b6fb4ec2150"
+frames = 1901
+format = 1
+ticks = 1901
+combined = "e0140d6e48c8cb7b"
+digests = { "wram" = "fdbc1f78d3bbde71", "sram" = "e192c17a45d3feaf", "vram" = "d028fbade2b5a471", "cgram" = "cd5a4af7be2ead7e", "oam" = "518db82aa00d9a01", "ppu" = "04eb5be14a5f59e7", "video" = "59921cff25faa2da", "apu" = "d70e9e239dd279e2", "input" = "4be4431ee760cc09", "samus" = "79b44079a26f1281", "camera" = "82f168f4c9fa35c0", "room" = "752f8f6a76e10723", "progress" = "17f43e0cffa8c738", "actors" = "64865f7e258cc17d", "effects" = "8605b2bd1358aa30" }
+marks = { "1000" = "20d04932c222ed5e" }
+
+[[scenario]]
 id = "boss-draygon"
 oracle = "faithful"
 start = "seed:d8a5b0b9a72ca9d31ab86d21c2ef931303f3a6b48459b057a8db309fe89723d7"
@@ -156,6 +168,18 @@ ticks = 3585
 combined = "7663c861cbc511ea"
 digests = { "wram" = "8d54be5b2cb5ca89", "sram" = "19de683a2a82b5cc", "vram" = "51089b562cbc173b", "cgram" = "1a62ae4dd02151ce", "oam" = "bd49cd4af8f64c6a", "ppu" = "87f31b47a56583be", "video" = "2b0397f6def1efa7", "apu" = "41be8ad83c0aaf4b", "input" = "acc5c3a691813e05", "samus" = "3029809a02dda27a", "camera" = "8510deef85a5586a", "room" = "c848cd2e333c5c7b", "progress" = "2e8d0c6120a724a2", "actors" = "c489c6d11d77f903", "effects" = "799e79068f18ddfa" }
 marks = { "1000" = "9daaa0cade7e56dd", "2000" = "55dfc63f91e02562", "3000" = "767f24612af11fa7" }
+
+[[scenario]]
+id = "boss-draygon-grapple-held"
+oracle = "faithful"
+start = "seed:d8a5b0b9a72ca9d31ab86d21c2ef931303f3a6b48459b057a8db309fe89723d7"
+inputs = "75eabfaf1d2120d8852a58fc55cf0266f636d524774eae93148d45b5e185e511"
+frames = 2858
+format = 1
+ticks = 2858
+combined = "77ad889d4df38f64"
+digests = { "wram" = "807896fb7552de76", "sram" = "c5f2104a5f701dcf", "vram" = "0fd3bc6dcbbfd75f", "cgram" = "9a5de117b9c9eb49", "oam" = "8ba215963bea6e64", "ppu" = "b601b7262a124528", "video" = "0e6efc6e0a04d047", "apu" = "238aab9167145f96", "input" = "4d2eaa4e15950097", "samus" = "c4ac6e5870fd2346", "camera" = "0d54b6ca086c9d11", "room" = "53d893ba9c17829d", "progress" = "ae29ffb5275a8d0b", "actors" = "67406ee0848ad67f", "effects" = "73d436a3fb7e45ee" }
+marks = { "1000" = "2cc8b3abd20c26dd", "2000" = "0e6f8389c50c860c" }
 
 [[scenario]]
 id = "boss-draygon-grapple-repel"
@@ -228,6 +252,18 @@ ticks = 2062
 combined = "60b59f8dbf204711"
 digests = { "wram" = "5de1dc4dc44589f7", "sram" = "ada6571cfe2ea93d", "vram" = "ad46f0f8c5284b1a", "cgram" = "59ad77adaa2953c6", "oam" = "98484da4c7e4544f", "ppu" = "95e0b56637dd49b6", "video" = "50645f66bb1d41ca", "apu" = "495a83c272103d70", "input" = "2e6005582316cea8", "samus" = "c6f6ab9e384dd1bb", "camera" = "99646d2e54433acb", "room" = "f73d7700fd1847ea", "progress" = "bb0304cffedda723", "actors" = "67b5f5b63e50f51a", "effects" = "e37828ae927166ea" }
 marks = { "1000" = "ef0dc0a18306f519", "2000" = "963e8b42d784396e" }
+
+[[scenario]]
+id = "boss-phantoon-second-round"
+oracle = "faithful"
+start = "seed:ef79426f2c6c8dd824b6a7b0f1b20074b7a7d5147a438969ed0118e55e4b65ea"
+inputs = "174d7d87cc1a3c575c63c48e5b82660e4e71655cda056fee01aac265a0ee62df"
+frames = 1001
+format = 1
+ticks = 1001
+combined = "e1f8a650549b87b3"
+digests = { "wram" = "1be2d984236328a2", "sram" = "aec22ccec91c59ba", "vram" = "0172222b921328a5", "cgram" = "606bb121a15ec317", "oam" = "1fba45ab4dcf7323", "ppu" = "2ed3635f198b7794", "video" = "a41be9a12d5bfca8", "apu" = "a1a1c4aabc5b82af", "input" = "8e20b19b45e1979e", "samus" = "e2c9ac8cbbf6a597", "camera" = "00a82200867ff28e", "room" = "f71b653d596e15db", "progress" = "9f5486c5e3c52683", "actors" = "4f77a93398def161", "effects" = "60152a58e6a83a33" }
+marks = { "1000" = "f95a99c3f103ef58" }
 
 [[scenario]]
 id = "boss-ridley"
@@ -6758,6 +6794,18 @@ digests = { "wram" = "41991b000c413644", "sram" = "f050b8a436a15ab5", "vram" = "
 marks = {  }
 
 [[scenario]]
+id = "enemy-dachora-shinespark"
+oracle = "faithful"
+start = "seed:c3be67779f54b02a86ef2c2b6683777264b943beab7943ec8ce51164cf176afc"
+inputs = "bde9457e50e6dbad0a5abb3c77859302f633c696823bf295cfa8b2044f2ee190"
+frames = 1301
+format = 1
+ticks = 1301
+combined = "d1778780edf43955"
+digests = { "wram" = "765c82163f58da47", "sram" = "b249bdb084f88868", "vram" = "e3078eff67030b09", "cgram" = "7200b24975469782", "oam" = "474c98be80ec1dd6", "ppu" = "cc967e8c4512b71b", "video" = "b6e6918aa4af99f2", "apu" = "1c3cdad1ce90e18a", "input" = "5d1901952d7941bd", "samus" = "826e98948b5a9e8b", "camera" = "22f156e5d4706831", "room" = "eb90cdaabede820d", "progress" = "b3dd5087799b23c8", "actors" = "304557ba94575766", "effects" = "eb2953fc8cf93659" }
+marks = { "1000" = "5207b0a3ba5a8243" }
+
+[[scenario]]
 id = "enemy-etecoon"
 oracle = "faithful"
 start = "seed:0ed91a468dc2bdcff3e278ca3877f07ceaf9d9d2152ef86098e21539c6d3bfb2"
@@ -6768,6 +6816,18 @@ ticks = 907
 combined = "e92fe0cbf288de5e"
 digests = { "wram" = "ddcf23c15f0bab6f", "sram" = "1ae56ed26f2bf788", "vram" = "6d761f47bb073c92", "cgram" = "f9196d66fc0e6879", "oam" = "b40934e5a41c4e7c", "ppu" = "697373253883307b", "video" = "4a35b7dfe4e70436", "apu" = "85f31bbbd752cf93", "input" = "2a2fa3e1bf738a47", "samus" = "38b7251b077e66a7", "camera" = "6e21682b75a570d6", "room" = "2344b3a08f248b30", "progress" = "b47374246ee13d79", "actors" = "079f0f8f011f9856", "effects" = "75384c3b02414d0f" }
 marks = {  }
+
+[[scenario]]
+id = "enemy-etecoon-jumps"
+oracle = "faithful"
+start = "seed:1ef87bac8d9ca6cb1623cb89d94654c8396cf4b179954ee69c640bc5ef10bc04"
+inputs = "9bb4e32798a111b84d8ee11d1d7d30d7b39255778915c3df7bcee16c3e168dbe"
+frames = 2001
+format = 1
+ticks = 2001
+combined = "5ce1932827a82242"
+digests = { "wram" = "3aca25649c705606", "sram" = "52692ea278b52dec", "vram" = "62477e73bb9b348f", "cgram" = "193214f54b83748a", "oam" = "912289563a64cb09", "ppu" = "18a264927a3a5f12", "video" = "3aa9602334754170", "apu" = "7fe9fa84ab51db08", "input" = "5a15f119143e5b41", "samus" = "accf72832e187ed3", "camera" = "47c281a740819a19", "room" = "bedac3e5ddeb2c14", "progress" = "969349ada45006e9", "actors" = "97eb697606e0ebb1", "effects" = "6194c9049a3a2811" }
+marks = { "1000" = "fe9a54539f2736c7", "2000" = "57d6a2a26fb5200e" }
 
 [[scenario]]
 id = "enemy-evir"
