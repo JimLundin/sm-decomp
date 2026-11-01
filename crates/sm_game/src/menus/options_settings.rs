@@ -103,7 +103,9 @@ pub fn finish_start<H: Host + ?Sized>(game: &mut H) {
     {
         word!(game.GAME_STATE = loading);
         if loading == 34 {
-            crate::flow::set(game, crate::flow::Word::CinematicFunction, 0xc11b);
+            crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+                flow.cinematic_function = 0xc11b
+            });
         }
         crate::session_cohort::with(game, |_, options: &mut OptionsMenu| {
             options.menu_option_index = 0;
@@ -111,7 +113,9 @@ pub fn finish_start<H: Host + ?Sized>(game: &mut H) {
         });
     } else {
         word!(game.GAME_STATE = 30);
-        crate::flow::set(game, crate::flow::Word::CinematicFunction, 0xa395);
+        crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+            flow.cinematic_function = 0xa395
+        });
         crate::session_cohort::with(game, |_, options: &mut OptionsMenu| {
             options.menu_option_index = 0;
         });

@@ -88,7 +88,9 @@ pub fn start_title_pan<H: crate::menus::host::Host + ?Sized>(
         (function::ZOOM_OUT, 67, 0, 0),
     ][stage];
     game.ram().write_byte(crate::ram::mirror::TM, 17);
-    crate::flow::set(game, crate::flow::Word::CinematicFunction, next);
+    crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+        flow.cinematic_function = next
+    });
     *cine.mode7_zoom() = zoom;
     *cine.x() = x;
     *cine.x_sub() = 0;
@@ -124,7 +126,9 @@ pub fn advance_title_pan<H: crate::menus::host::Host + ?Sized>(
     // The vertical pan ends on the opposite side of its cutoff.
     if negative != (stage == 2) {
         game.ram().write_byte(crate::ram::mirror::TM, 16);
-        crate::flow::set(game, crate::flow::Word::CinematicFunction, function::IDLE);
+        crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+            flow.cinematic_function = function::IDLE
+        });
         let definition = [
             scrolling_text::NINTENDO,
             scrolling_text::PRESENTS,
@@ -141,7 +145,7 @@ pub fn request_title_skip<H: crate::menus::host::Host + ?Sized>(
     game: &mut H,
 ) {
     // Before the title screen: the original adds the function's negation plus one.
-    if (crate::flow::current(game).cinematic_function as i32
+    if (crate::session_cohort::load::<crate::flow::Flow, _>(game).cinematic_function as i32
         + (function::TITLE_SCREEN.wrapping_neg() as i32 + 1))
         & 0x8000
         != 0
@@ -155,26 +159,26 @@ pub fn request_title_skip<H: crate::menus::host::Host + ?Sized>(
 
 pub fn advance_title_wait<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     let expired = {
-        let flow_word = crate::flow::current(game).demo_timer.wrapping_sub(1);
-        crate::flow::set(game, crate::flow::Word::DemoTimer, flow_word);
+        let flow_word = crate::session_cohort::load::<crate::flow::Flow, _>(game)
+            .demo_timer
+            .wrapping_sub(1);
+        crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+            flow.demo_timer = flow_word
+        });
         flow_word
     } & 0x8000
         != 0;
-    if crate::flow::current(game).demo_timer == 0 || expired {
-        crate::flow::set(
-            game,
-            crate::flow::Word::CinematicFunction,
-            function::TO_DEMOS,
-        );
+    if crate::session_cohort::load::<crate::flow::Flow, _>(game).demo_timer == 0 || expired {
+        crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+            flow.cinematic_function = function::TO_DEMOS
+        });
     } else {
         if word!(game.JOYPAD1_NEWKEYS) & CONFIRM_BUTTONS == 0 {
             return;
         }
-        crate::flow::set(
-            game,
-            crate::flow::Word::CinematicFunction,
-            function::TO_FILE_SELECT,
-        );
+        crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+            flow.cinematic_function = function::TO_FILE_SELECT
+        });
     }
     crate::screen_fade::set_both(game, 2, 2);
 }

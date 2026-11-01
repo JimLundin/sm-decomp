@@ -170,7 +170,9 @@ pub fn spawn_marker<H: crate::menus::host::Host + ?Sized>(
             return j;
         }
     }
-    crate::flow::set(game, crate::flow::Word::CinematicFunction, next);
+    crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+        flow.cinematic_function = next
+    });
     j
 }
 
@@ -312,14 +314,12 @@ pub fn wait_for_scene<H: crate::menus::host::Host + ?Sized>(
     set_cinematic_blend(6, 17, 2, 0, game);
     game.spawn_hdma(0x88, &HdmaObjectDefinition::new(0, 0x31, 0xec03));
     hide_caret(cine);
-    crate::flow::set(
-        game,
-        crate::flow::Word::CinematicFunction,
-        match palette {
+    crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+        flow.cinematic_function = match palette {
             Palette::Gameplay => 0xb250,
             Palette::Scientist => 0xb2d2,
-        },
-    );
+        }
+    });
     crate::word_transfers!(game, ascending, 256; native(0x2200) <- rom(0x8ce3e9, 0));
     prepare_cinematic_palette_fade(game);
     for &(index, count) in palette.colors() {
@@ -347,7 +347,9 @@ pub fn fade_to_scene<H: crate::menus::host::Host + ?Sized>(
         game.ram().write_byte(0x6f, 0);
         crate::word_transfers!(game, ascending, 640; pause_map(128) <- value(47));
         clear_japanese_tiles(game);
-        crate::flow::set(game, crate::flow::Word::CinematicFunction, 0xa391);
+        crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+            flow.cinematic_function = 0xa391
+        });
         if matches!(palette, Palette::Gameplay) && (*cine.intro_samus_display() & 0x8000) != 0 {
             crate::palette_effects::execution::leased::spawn(ADDR_K_PALFX_E1BC as u16, game);
         }
@@ -360,7 +362,9 @@ pub fn wait_for_music<H: crate::menus::host::Host + ?Sized>(
     game: &mut H,
 ) {
     if crate::music_requests::has_queued_music(game) & 1 == 0 {
-        crate::flow::set(game, crate::flow::Word::CinematicFunction, next);
+        crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+            flow.cinematic_function = next
+        });
         if next == 0xa64c {
             *cine.function_timer() = 240;
         } else {
@@ -384,7 +388,9 @@ pub fn wait_for_fade<H: crate::menus::host::Host + ?Sized>(
     game: &mut H,
 ) {
     if advance_cinematic_fade(fade, game) {
-        crate::flow::set(game, crate::flow::Word::CinematicFunction, next);
+        crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+            flow.cinematic_function = next
+        });
         if next == 0xa5f8 {
             *cine.function_timer() = 60;
             if cinematic!(game.JapaneseText) != 0 {
@@ -400,7 +406,9 @@ pub fn start_page<H: crate::menus::host::Host + ?Sized>(
     cine: &mut Cinematic,
     game: &mut H,
 ) -> u16 {
-    crate::flow::set(game, crate::flow::Word::CinematicFunction, next);
+    crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+        flow.cinematic_function = next
+    });
     set_cinematic_tilemap_updates(false, cine);
     clear_japanese_tiles(game);
     queue_cinematic_tilemap(CinematicTilemap::Japanese, cine, game);
@@ -414,7 +422,9 @@ pub fn show_page<H: crate::menus::host::Host + ?Sized>(
     game: &mut H,
 ) {
     CinematicObjects::Background.spawn(object, 0x4c00, cine, game);
-    crate::flow::set(game, crate::flow::Word::CinematicFunction, next);
+    crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+        flow.cinematic_function = next
+    });
     setup_page_palettes(cine, game);
 }
 
@@ -439,7 +449,9 @@ pub fn fade_to_page<H: crate::menus::host::Host + ?Sized>(
         if matches!(palette, Palette::Scientist) {
             crate::word_transfers!(game, ascending, 7; native(0xc1c0) <- rom(0x8ce3e9, 224));
         }
-        crate::flow::set(game, crate::flow::Word::CinematicFunction, 0xa391);
+        crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+            flow.cinematic_function = 0xa391
+        });
     }
 }
 
@@ -514,7 +526,9 @@ pub fn wait_after_japanese_text<H: crate::menus::host::Host + ?Sized>(
     game: &mut H,
 ) -> u16 {
     set_cinematic_tilemap_updates(true, cine);
-    crate::flow::set(game, crate::flow::Word::CinematicFunction, next);
+    crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+        flow.cinematic_function = next
+    });
     j
 }
 
@@ -527,7 +541,9 @@ pub fn show_final_page<H: crate::menus::host::Host + ?Sized>(cine: &mut Cinemati
         cine,
         game,
     );
-    crate::flow::set(game, crate::flow::Word::CinematicFunction, 0xa390);
+    crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+        flow.cinematic_function = 0xa390
+    });
     reset_caret(cine);
     crate::music_requests::queue_delayed_8(0, game);
 }
@@ -539,7 +555,9 @@ pub fn wait_for_final_page<H: crate::menus::host::Host + ?Sized>(
     if page_input_ready(cine, game) {
         *cine.var13() = 127;
         if cinematic!(game.JapaneseText) != 0 {
-            crate::flow::set(game, crate::flow::Word::CinematicFunction, 0xb207);
+            crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+                flow.cinematic_function = 0xb207
+            });
             set_cinematic_tilemap_updates(false, cine);
             clear_japanese_tiles(game);
             queue_cinematic_tilemap(CinematicTilemap::Japanese, cine, game);
@@ -579,11 +597,9 @@ pub fn fade_out_to_ceres<H: crate::menus::host::Host + ?Sized>(
         scroll!(game, 0; Bg2H, Bg3H, Bg2V, Bg3V);
         *cine.mode7_angle() = 0;
         cine.clear();
-        crate::flow::set(
-            game,
-            crate::flow::Word::CinematicFunction,
-            if restore_samus { 0xbca0 } else { 0xc100 },
-        );
+        crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+            flow.cinematic_function = if restore_samus { 0xbca0 } else { 0xc100 }
+        });
         if restore_samus {
             crate::menus::controller_input::restore_cinematic_bindings(game);
             crate::session_cohort::with(game, |_, inventory: &mut crate::inventory::Inventory| {
@@ -594,7 +610,9 @@ pub fn fade_out_to_ceres<H: crate::menus::host::Host + ?Sized>(
 }
 
 pub fn finish_pages<H: crate::menus::host::Host + ?Sized>(j: u16, game: &mut H) -> u16 {
-    crate::flow::set(game, crate::flow::Word::CinematicFunction, 0xb72f);
+    crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+        flow.cinematic_function = 0xb72f
+    });
     crate::screen_fade::set_both(game, 1, 1);
     j
 }

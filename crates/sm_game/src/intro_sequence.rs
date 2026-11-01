@@ -16,7 +16,6 @@ use crate::cinematic_host::Host;
 use crate::cinematic_objects::CinematicObjects;
 use crate::cinematic_state::{Cinematic, Word, cinematic};
 use crate::display_refresh::GraphicsAsset;
-use crate::flow::{self, Word::CinematicFunction};
 use crate::inventory;
 use crate::menu_state::OptionsMenu;
 use crate::menu_state::SaveSelection;
@@ -211,11 +210,9 @@ pub fn initial<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     crate::word_transfers!(game, descending, 1024; cinematic_bg(1023) <- native(BG_SOURCE));
     crate::word_transfers!(game, descending, 128; pause_map(127) <- rom(INTRO_PAUSE_MAP, 127));
     *cine.intro_frame_counter() = 0xffff;
-    flow::set(
-        game,
-        CinematicFunction,
-        function::WAIT_FOR_MUSIC_AND_FADE_IN,
-    );
+    crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+        flow.cinematic_function = function::WAIT_FOR_MUSIC_AND_FADE_IN
+    });
     crate::music_requests::queue_delayed_8(NO_MUSIC, game);
     crate::music_requests::queue_delayed_8(INTRO_MUSIC_DATA, game);
 }
@@ -225,7 +222,9 @@ pub fn initial<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
 /// `CinematicFunction_Intro_LastMetroidCaptivity`.
 pub fn last_metroid_in_captivity<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     if countdown(cine) {
-        flow::set(game, CinematicFunction, function::GALAXY_IS_AT_PEACE);
+        crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+            flow.cinematic_function = function::GALAXY_IS_AT_PEACE
+        });
         *cine.function_timer() = 200;
         crate::music_requests::queue_delayed_8(LAST_METROID_MUSIC, game);
     }
@@ -238,7 +237,9 @@ pub fn galaxy_is_at_peace<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) 
         crate::music_requests::queue_delayed_8(NO_MUSIC, game);
         crate::music_requests::queue_delayed_8(GALAXY_AT_PEACE_DATA, game);
         crate::music_requests::queue_delayed(5, SONG_DELAY, game);
-        flow::set(game, CinematicFunction, function::WAIT_240_FRAMES);
+        crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+            flow.cinematic_function = function::WAIT_240_FRAMES
+        });
     }
 }
 
@@ -246,7 +247,9 @@ pub fn galaxy_is_at_peace<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) 
 /// `CinematicFunc_Intro_FadeOut`.
 pub fn fade_out<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     if countdown(cine) {
-        flow::set(game, CinematicFunction, function::WAIT_FOR_FADE_OUT);
+        crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+            flow.cinematic_function = function::WAIT_FOR_FADE_OUT
+        });
         crate::screen_fade::set_both(game, 2, 2);
     }
 }
@@ -292,7 +295,9 @@ pub fn set_up_text_page_1<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) 
     crate::music_requests::queue_delayed_8(NO_MUSIC, game);
     crate::music_requests::queue_delayed_8(TEXT_MUSIC_DATA, game);
     crate::music_requests::queue_delayed(5, SONG_DELAY, game);
-    flow::set(game, CinematicFunction, function::SPAWN_TEXT_PAGE_1);
+    crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+        flow.cinematic_function = function::SPAWN_TEXT_PAGE_1
+    });
 }
 
 /// Cinematic function - fly to Ceres - initial ($8B:BCA0). Was
@@ -316,7 +321,9 @@ pub fn ceres_initial<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     *cine.bg_vram_address() = 23552;
     crate::display_refresh::enable(true, game);
     sprites(cine, game, object::CERES_STARS, 0);
-    flow::set(game, CinematicFunction, function::CERES_WAIT_FOR_MUSIC);
+    crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+        flow.cinematic_function = function::CERES_WAIT_FOR_MUSIC
+    });
     crate::music_requests::queue_delayed_8(CERES_MUSIC_DATA, game);
     crate::music_requests::queue_delayed(5, SONG_DELAY, game);
 }
@@ -326,7 +333,9 @@ pub fn ceres_initial<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
 pub fn ceres_wait_for_music<H: Host + ?Sized>(game: &mut H) {
     if crate::music_requests::has_queued_music(game) & 1 == 0 {
         game.ram().write_byte(mirror::INIDISP, 15);
-        flow::set(game, CinematicFunction, function::CERES_FLYING_INTO_CAMERA);
+        crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+            flow.cinematic_function = function::CERES_FLYING_INTO_CAMERA
+        });
     }
 }
 
@@ -348,7 +357,9 @@ pub fn ceres_flying_into_camera<H: Host + ?Sized>(cine: &mut Cinematic, game: &m
         sprites(cine, game, object::CERES_SMALL_ASTEROIDS, 0x0c00);
         sprites(cine, game, object::CERES_VORTEX, 1);
         sprites(cine, game, object::CERES_STARS, 1);
-        flow::set(game, CinematicFunction, function::CERES_FLYING_INTO_CERES);
+        crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+            flow.cinematic_function = function::CERES_FLYING_INTO_CERES
+        });
         crate::palette_effects::execution::leased::spawn(CERES_GLOW_1, game);
         crate::palette_effects::execution::leased::spawn(CERES_GLOW_2, game);
     } else {
@@ -386,7 +397,9 @@ pub fn ceres_flying_into_ceres<H: Host + ?Sized>(cine: &mut Cinematic, game: &mu
             object::CERES_BG,
             0x5c00,
         );
-        flow::set(game, CinematicFunction, function::PAGE_6_DRAWN);
+        crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+            flow.cinematic_function = function::PAGE_6_DRAWN
+        });
     }
 }
 
@@ -437,7 +450,9 @@ pub fn boom_initial<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     crate::palette_effects::execution::leased::spawn(BOOM_GLOW, game);
     crate::display_refresh::enable(true, game);
     crate::screen_fade::set_both(game, 1, 1);
-    flow::set(game, CinematicFunction, function::BOOM_WAIT_FOR_MUSIC);
+    crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+        flow.cinematic_function = function::BOOM_WAIT_FOR_MUSIC
+    });
     crate::music_requests::queue_delayed_8(NO_MUSIC, game);
     crate::music_requests::queue_delayed_8(CERES_MUSIC_DATA, game);
     if word!(game.GAME_STATE) == BOOM_WITH_SAMUS {
@@ -451,7 +466,9 @@ pub fn boom_initial<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
 /// Was `CinematicFunction_Intro_Func74`.
 pub fn boom_wait_for_music<H: Host + ?Sized>(game: &mut H) {
     if crate::music_requests::has_queued_music(game) & 1 == 0 {
-        flow::set(game, CinematicFunction, function::BOOM_SMALL_EXPLOSIONS);
+        crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+            flow.cinematic_function = function::BOOM_SMALL_EXPLOSIONS
+        });
     }
 }
 
@@ -464,7 +481,9 @@ pub fn boom_small_explosions<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut 
     crate::display_refresh::fade(true, game);
     if game.ram().read_byte(mirror::INIDISP) == 15 {
         crate::screen_fade::set_both(game, 0, 0);
-        flow::set(game, CinematicFunction, function::BOOM_EXPLOSIONS);
+        crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+            flow.cinematic_function = function::BOOM_EXPLOSIONS
+        });
         *cine.function_timer() = 1;
         *cine.var13() = 0;
     }
@@ -493,7 +512,9 @@ pub fn boom_explosions<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
             crate::display::transfer::enqueue_mode7_rom(0x8b, mode7::BOOM, game);
         }
         crate::display::transfer::enqueue_mode7_rom(0x8b, mode7::BOOM_GUNSHIP, game);
-        flow::set(game, CinematicFunction, function::BOOM_GUNSHIP_FLYING_AWAY);
+        crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+            flow.cinematic_function = function::BOOM_GUNSHIP_FLYING_AWAY
+        });
     }
 }
 
@@ -505,7 +526,9 @@ pub fn boom_gunship_flying_away<H: Host + ?Sized>(cine: &mut Cinematic, game: &m
     *cine.x() = cine.x().wrapping_add(2);
     *cine.mode7_angle() = (*cine.mode7_angle() as u8).wrapping_sub(1) as u16;
     if below(*cine.mode7_zoom(), 16) {
-        flow::set(game, CinematicFunction, function::BOOM_WAIT_C0H_FRAMES);
+        crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+            flow.cinematic_function = function::BOOM_WAIT_C0H_FRAMES
+        });
         *cine.function_timer() = 192;
     } else {
         *cine.mode7_zoom() = cine.mode7_zoom().wrapping_sub(16);
@@ -517,7 +540,9 @@ pub fn boom_gunship_flying_away<H: Host + ?Sized>(cine: &mut Cinematic, game: &m
 pub fn boom_wait<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     if countdown(cine) {
         crate::screen_fade::set_both(game, 1, 1);
-        flow::set(game, CinematicFunction, function::BOOM_FADE_OUT);
+        crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+            flow.cinematic_function = function::BOOM_FADE_OUT
+        });
     }
 }
 
@@ -556,7 +581,9 @@ pub fn boom_fade_out<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
             }
             word!(game.GAME_STATE = SAMUS_NO_HEALTH);
         } else {
-            flow::set(game, CinematicFunction, function::ZEBES_INITIAL);
+            crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+                flow.cinematic_function = function::ZEBES_INITIAL
+            });
         }
     }
 }
@@ -582,7 +609,9 @@ pub fn zebes_initial<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     crate::palette_effects::execution::leased::set_enabled(true, game);
     game.ram().write_byte(mirror::MOSAIC, 0x81);
     crate::palette_effects::execution::leased::spawn(CERES_GLOW_1, game);
-    flow::set(game, CinematicFunction, function::ZEBES_FADING_IN);
+    crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+        flow.cinematic_function = function::ZEBES_FADING_IN
+    });
     crate::display_refresh::enable(true, game);
     crate::screen_fade::set_both(game, 1, 1);
 }
@@ -591,7 +620,9 @@ pub fn zebes_initial<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
 /// ($8B:CAD0). Was `CinematicFunction_Intro_Func108`.
 pub fn zebes_hold<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     if countdown(cine) {
-        flow::set(game, CinematicFunction, function::ZEBES_SLIDE_SCENE_AWAY);
+        crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+            flow.cinematic_function = function::ZEBES_SLIDE_SCENE_AWAY
+        });
     }
 }
 
@@ -654,7 +685,9 @@ pub fn baby_idling(k: u16, cine: &mut Cinematic) {
 /// Ch frames ($8B:C489), until the gunship flies away. Was
 /// `CinematicSprPreInstr_C489`.
 pub fn explosion_spawner<H: Host + ?Sized>(k: u16, cine: &mut Cinematic, game: &mut H) {
-    if flow::current(game).cinematic_function == function::BOOM_GUNSHIP_FLYING_AWAY {
+    if crate::session_cohort::load::<crate::flow::Flow, _>(game).cinematic_function
+        == function::BOOM_GUNSHIP_FLYING_AWAY
+    {
         *cine.spr_pre_instruction(k >> 1) = pre_instruction::NOTHING;
     } else if countdown(cine) {
         let pattern = *cine.var13();

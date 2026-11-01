@@ -13,11 +13,10 @@
 //! observation, so a lease refreshes it from this owner after each store.
 //!
 //! **Consumers.** The title, intro, ending, credits, options and demo code
-//! run on the compatibility host outside a lease. They read the owner with
-//! [`current`] and store with [`set`], which go through the host's
-//! projected bytes: the owned Session's projection while one is installed,
-//! the byte image otherwise, with the same bytes and order as the named
-//! words they replace. A consumer that moves onto a lease uses
+//! run on the compatibility host outside a lease. They read a [`Flow`] copy
+//! loaded through [`crate::session_cohort`] and store the words they change
+//! with `session_cohort::with`. [`current`] and [`set`] remain the projected
+//! view for the layout checks. A consumer that moves onto a lease uses
 //! `session().flow` directly.
 use crate::ram::CompatibilityRam;
 
@@ -33,6 +32,20 @@ pub struct Flow {
     pub demo_scene: u16,
     /// How many demo sets the cartridge has ($1F59).
     pub num_demo_sets: u16,
+}
+
+impl crate::session_cohort::Cohort for Flow {
+    fn words(&mut self, mut visit: impl FnMut(usize, &mut u16)) {
+        use crate::ram::words as ram;
+        visit(ram::CINEMATIC_FUNCTION, &mut self.cinematic_function);
+        visit(ram::DEMO_TIMER, &mut self.demo_timer);
+        visit(ram::DEMO_SET, &mut self.demo_set);
+        visit(ram::DEMO_SCENE, &mut self.demo_scene);
+        visit(ram::NUM_DEMO_SETS, &mut self.num_demo_sets);
+    }
+    fn session_words(session: &mut crate::session::Session, visit: impl FnMut(usize, &mut u16)) {
+        Self::words(&mut session.flow, visit);
+    }
 }
 
 /// The flow as the host's projection holds it.

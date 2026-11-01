@@ -221,11 +221,11 @@ pub fn execute_cinematic_sprite_instruction<H: crate::menus::host::Host + ?Sized
             CinematicSprites.spawn(title::COPYRIGHT_FADE_IN, 0, cine, game);
             },
             9150233 => {
-            crate::flow::set(game, crate::flow::Word::DemoTimer, 900);
-    crate::flow::set(game, crate::flow::Word::CinematicFunction, 0x9f29);
+            crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| flow.demo_timer = 900);
+    crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| flow.cinematic_function = 0x9f29);
             },
             9158818 => {
-            crate::flow::set(game, crate::flow::Word::CinematicFunction, 0xc0c5);
+            crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| flow.cinematic_function = 0xc0c5);
             crate::screen_fade::set_both(game, 1, 1);
             },
             // The instruction's own address is in A at $F51D.
@@ -264,7 +264,7 @@ pub fn execute_cinematic_sprite_instruction<H: crate::menus::host::Host + ?Sized
             game.ram().write_byte(0x5d, 100);
             game.ram().write_byte(0x59, 84);
             *cine.function_timer() = 0;
-    crate::flow::set(game, crate::flow::Word::CinematicFunction, 0xe58a);
+    crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| flow.cinematic_function = 0xe58a);
                 },
             9171588 => {
             crate::palette_effects::execution::leased::spawn(ending_effect::ZEBES_FADE_OUT, game);
@@ -295,16 +295,16 @@ pub fn execute_cinematic_sprite_instruction<H: crate::menus::host::Host + ?Sized
             game.ram().write_byte(0x6b, 0);
             cinematic! { game, 0x7fff; PaletteBuffer[0], PaletteBuffer[128] }
             crate::word_transfers!(game, descending, 16; le(PALETTE_BUFFER, 31) <- value(0x7fff));
-            crate::flow::set(game, crate::flow::Word::CinematicFunction, 0xdb9e);
+            crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| flow.cinematic_function = 0xdb9e);
     *cine.function_timer() = 120;
                 },
             9172040 => {
             crate::screen_fade::set_both(game, 0, 0);
-            crate::flow::set(game, crate::flow::Word::CinematicFunction, 0xde64);
+            crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| flow.cinematic_function = 0xde64);
                 },
             9172484 => {
             *cine.bg_arr9(k >> 1) = 3584;
-            crate::flow::set(game, crate::flow::Word::CinematicFunction, 0xe3ae);
+            crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| flow.cinematic_function = 0xe3ae);
             set_cinematic_blend(17, 16, 2, -127i32 as u8, game);
             *cine.x() = -4i32 as u16;
             *cine.y() = -8i32 as u16;
@@ -670,8 +670,10 @@ pub fn advance_cinematic_background_pre<H: crate::menus::host::Host + ?Sized>(
     match command {
         0x8b93d9 => {}
         0x8bb4bc => {
-            if crate::flow::current(game).cinematic_function == 0xb207
-                || crate::flow::current(game).cinematic_function == 0xa390
+            if crate::session_cohort::load::<crate::flow::Flow, _>(game).cinematic_function
+                == 0xb207
+                || crate::session_cohort::load::<crate::flow::Flow, _>(game).cinematic_function
+                    == 0xa390
             {
                 *cine.bg_instruction_pointer(object >> 1) = 0xd613;
                 *cine.bg_instruction_timer(object >> 1) = 1;
@@ -781,7 +783,9 @@ fn cinematic_background_command<H: crate::menus::host::Host + ?Sized>(
         }
         9168768 => {
             crate::word_transfers!(game, descending, 64; native(0x363e) <- value(127));
-            crate::flow::set(game, crate::flow::Word::CinematicFunction, 0xe797);
+            crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+                flow.cinematic_function = 0xe797
+            });
         }
         9154115 | 9154169 | 9154676 | 9154739 | 9154971 | 9155112 => {
             let definition = match command {
@@ -839,7 +843,7 @@ pub fn draw_cinematic_sprites<H: crate::menus::host::Host + ?Sized>(
         }
     }
     if ending
-        && crate::flow::current(game)
+        && crate::session_cohort::load::<crate::flow::Flow, _>(game)
             .cinematic_function
             .wrapping_sub(0xda02)
             & 0x8000

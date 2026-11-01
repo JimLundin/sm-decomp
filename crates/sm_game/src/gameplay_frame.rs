@@ -502,13 +502,17 @@ fn next_demo<H: Host>(game: &mut H) -> CoroutineRet {
     } else if substate != 0 {
         game.load_title_sequence_graphics();
         word!(game.EPROJ_X_POS[4] = 2);
-        crate::flow::set(game, crate::flow::Word::CinematicFunction, 0x9a47);
+        crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+            flow.cinematic_function = 0x9a47
+        });
     } else {
         crate::music_requests::queue_delayed_8(0, game);
         crate::session_cohort::with(game, |_, words: &mut crate::session_words::SessionWords| {
             words.debug_disable_sounds = 0;
         });
-        crate::flow::set(game, crate::flow::Word::CinematicFunction, 0x9b68);
+        crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+            flow.cinematic_function = 0x9b68
+        });
     }
     0
 }
@@ -665,7 +669,9 @@ fn exit_time_up<H: Host>(game: &mut H) -> CoroutineRet {
             word!(game.GAME_STATE = K_GAME_STATE_25_SAMUS_NO_HEALTH as u16);
         } else {
             word!(game.GAME_STATE = K_GAME_STATE_37_CERES_GOES_BOOM_WITH_SAMUS as u16);
-            crate::flow::set(game, crate::flow::Word::CinematicFunction, 0xc11b);
+            crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+                flow.cinematic_function = 0xc11b
+            });
         }
     }
     0
@@ -913,7 +919,9 @@ fn finish_pass<H: Host>(entry: Entry, game: &mut H) {
                     });
                     word!(game.GAME_STATE = 34);
                     save_slots::save(slot, game);
-                    crate::flow::set(game, crate::flow::Word::CinematicFunction, 0xc11b);
+                    crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+                        flow.cinematic_function = 0xc11b
+                    });
                     crate::session_cohort::with(
                         game,
                         |_, words: &mut crate::session_words::SessionWords| {
@@ -923,7 +931,9 @@ fn finish_pass<H: Host>(entry: Entry, game: &mut H) {
                     );
                 } else {
                     word!(game.GAME_STATE = K_GAME_STATE_39_ENDING_AND_CREDITS as u16);
-                    crate::flow::set(game, crate::flow::Word::CinematicFunction, 0xd480);
+                    crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+                        flow.cinematic_function = 0xd480
+                    });
                     crate::session_cohort::with(
                         game,
                         |_, words: &mut crate::session_words::SessionWords| {

@@ -18,7 +18,6 @@ use crate::cinematic_host::Host;
 use crate::cinematic_objects::CinematicObjects;
 use crate::cinematic_state::{Cinematic, Word, cinematic};
 use crate::display_refresh::GraphicsAsset;
-use crate::flow::{self, Word::CinematicFunction};
 use crate::intro_sequence::countdown;
 use crate::menus::prelude::{owned, scroll};
 use crate::ram::RawRam as _;
@@ -188,7 +187,9 @@ pub fn setup<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
         );
     }
     crate::screen_fade::set_both(game, 0, 2);
-    flow::set(game, CinematicFunction, function::WAIT_FOR_MUSIC);
+    crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+        flow.cinematic_function = function::WAIT_FOR_MUSIC
+    });
     crate::music_requests::queue_delayed_8(NO_MUSIC, game);
     crate::music_requests::queue_delayed_8(ESCAPE_MUSIC_DATA, game);
     crate::music_requests::queue_delayed(5, SONG_DELAY, game);
@@ -200,7 +201,9 @@ pub fn wait_for_music<H: Host + ?Sized>(game: &mut H) {
     if crate::music_requests::has_queued_music(game) & 1 == 0 {
         crate::palette_effects::execution::leased::spawn(ZEBES_GLOW_1, game);
         crate::palette_effects::execution::leased::spawn(ZEBES_GLOW_2, game);
-        flow::set(game, CinematicFunction, function::SCENE_0_FADING_IN);
+        crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+            flow.cinematic_function = function::SCENE_0_FADING_IN
+        });
     }
 }
 
@@ -219,7 +222,9 @@ pub fn scene_1_setup<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     *cine.mode7_zoom() = 64;
     *cine.x() = 0;
     *cine.y() = 0;
-    flow::set(game, CinematicFunction, function::SCENE_1_FADING_IN);
+    crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+        flow.cinematic_function = function::SCENE_1_FADING_IN
+    });
 }
 
 /// Cinematic function - ending - Zebes destruction scene 2 - cross-fade to
@@ -262,7 +267,9 @@ pub fn scene_2_setup<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     clear_cinematic_colors(0x1e0, 0x10, game);
     compose_cinematic_palette(game);
     *cine.function_timer() = 63;
-    flow::set(game, CinematicFunction, function::SCENE_2_FADING_IN);
+    crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+        flow.cinematic_function = function::SCENE_2_FADING_IN
+    });
 }
 
 /// Cinematic function - ending - Zebes destruction scene 2 - cross-fade to
@@ -271,7 +278,9 @@ pub fn scene_2_fading_in<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     scene_2(cine, game);
     if crate::cinematic::advance_cinematic_fade(CinematicFade::FastIn, game) {
         crate::screen_fade::set_both(game, 2, 2);
-        flow::set(game, CinematicFunction, function::SCENE_2);
+        crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+            flow.cinematic_function = function::SCENE_2
+        });
     }
 }
 
@@ -323,7 +332,9 @@ pub fn scene_2<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
         scroll!(game.Bg2H = 0);
         scroll!(game.Bg2V = 0);
         crate::screen_fade::set_both(game, 0, 2);
-        flow::set(game, CinematicFunction, function::LOAD_GUNSHIP_BG);
+        crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+            flow.cinematic_function = function::LOAD_GUNSHIP_BG
+        });
         *cine.function_timer() = 0;
     }
 }
@@ -337,7 +348,9 @@ pub fn upload_tiles<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     if page.wrapping_add(1).wrapping_sub(16) & 0x8000 == 0 {
         game.ram().write_byte(0x55, 1);
         *cine.function_timer() = 0;
-        flow::set(game, CinematicFunction, 0xdb9d);
+        crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+            flow.cinematic_function = 0xdb9d
+        });
     }
 }
 
@@ -348,7 +361,9 @@ pub fn change_music<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
         crate::music_requests::queue_delayed_8(NO_MUSIC, game);
         crate::music_requests::queue_delayed_8(CREDITS_MUSIC_DATA, game);
         crate::music_requests::queue_delayed(5, SONG_DELAY, game);
-        flow::set(game, CinematicFunction, function::GUNSHIP_SETUP);
+        crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+            flow.cinematic_function = function::GUNSHIP_SETUP
+        });
     }
 }
 
@@ -376,7 +391,9 @@ pub fn gunship_setup<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
         *cine.function_timer() = 1;
         *cine.var13() = 192;
         *cine.var14() = 0;
-        flow::set(game, CinematicFunction, function::GUNSHIP_SPINNING_FAST);
+        crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+            flow.cinematic_function = function::GUNSHIP_SPINNING_FAST
+        });
     }
 }
 
@@ -407,7 +424,9 @@ pub fn gunship_fly_into_camera<H: Host + ?Sized>(cine: &mut Cinematic, game: &mu
     if below(*cine.mode7_zoom(), 32) {
         let parameter = *cine.mode7_zoom();
         sprites(cine, game, object::GUNSHIP_TEXT, parameter);
-        flow::set(game, CinematicFunction, function::GUNSHIP_FREEZE_FRAME);
+        crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+            flow.cinematic_function = function::GUNSHIP_FREEZE_FRAME
+        });
         crate::word_transfers!(game, descending, 16; le(PALETTE_BUFFER, 95) <- table(GUNSHIP_GREY, 15));
     } else {
         *cine.mode7_zoom() = cine.mode7_zoom().wrapping_sub(4);
@@ -421,7 +440,9 @@ pub fn transition_to_credits<H: Host + ?Sized>(game: &mut H) {
     if crate::cinematic::advance_cinematic_fade(CinematicFade::FastOut, game) {
         crate::display_refresh::enable(true, game);
         crate::screen_fade::set_both(game, 0, 0);
-        flow::set(game, CinematicFunction, function::CREDITS_SETUP);
+        crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+            flow.cinematic_function = function::CREDITS_SETUP
+        });
     }
 }
 
@@ -470,14 +491,18 @@ pub fn credits_setup<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     clear_cinematic_background(0x7f, cine, game);
     let roll = crate::credits::prepare_credit_roll(object::CREDITS, cine, game);
     crate::cinematic_objects::advance_cinematic_background_pre(roll, 0, cine, game);
-    flow::set(game, CinematicFunction, function::CREDITS);
+    crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+        flow.cinematic_function = function::CREDITS
+    });
 }
 
 /// Cinematic function - post-credits - blank screen ($8B:E0F4). Was
 /// `CinematicFunction_Intro_Func129`.
 pub fn blank_screen<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     if countdown(cine) {
-        flow::set(game, CinematicFunction, function::FADE_IN_SHOOTING_STARS);
+        crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+            flow.cinematic_function = function::FADE_IN_SHOOTING_STARS
+        });
         *cine.function_timer() = 120;
         game.ram().write_byte(mirror::TM, 16);
     }
@@ -495,7 +520,9 @@ pub fn fade_in_shooting_stars<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut
         clear_cinematic_colors(0x40, 0x10, game);
         compose_cinematic_palette(game);
         *cine.function_timer() = 32;
-        flow::set(game, CinematicFunction, function::FADE_IN_SAMUS);
+        crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+            flow.cinematic_function = function::FADE_IN_SAMUS
+        });
     }
 }
 
@@ -507,7 +534,9 @@ pub fn fade_in_samus<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     if countdown(cine) {
         set_cinematic_blend(18, 4, 2, 2, game);
         *cine.function_timer() = 180;
-        flow::set(game, CinematicFunction, function::WAVY_SAMUS);
+        crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+            flow.cinematic_function = function::WAVY_SAMUS
+        });
         crate::room_visuals::initialize_intro_wave(game);
     }
 }
@@ -521,7 +550,9 @@ pub fn wavy_samus<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
         queue_cinematic_tilemap(CinematicTilemap::FullText, cine, game);
         set_cinematic_blend(1, 0, 0, 0, game);
         *cine.function_timer() = 180;
-        flow::set(game, CinematicFunction, function::DEER_FORCE);
+        crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+            flow.cinematic_function = function::DEER_FORCE
+        });
         word!(game.WAVY_SAMUS_ENABLED = 0);
     }
 }
@@ -537,9 +568,13 @@ pub fn nintendo_1994<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
             || below(word!(game.GAME_TIME_HOURS), CLEAR_HOURS)
         {
             set_cinematic_blend(2, 16, 2, 34, game);
-            flow::set(game, CinematicFunction, function::IDLE_SAMUS_2_CROSS_FADE);
+            crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+                flow.cinematic_function = function::IDLE_SAMUS_2_CROSS_FADE
+            });
         } else {
-            flow::set(game, CinematicFunction, function::IDLE_SAMUS_2);
+            crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+                flow.cinematic_function = function::IDLE_SAMUS_2
+            });
         }
     }
 }
@@ -549,7 +584,9 @@ pub fn nintendo_1994<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
 pub fn fade_from_white<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     fade_cinematic_fixed_color(game);
     if countdown(cine) {
-        flow::set(game, CinematicFunction, function::FINISHED);
+        crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+            flow.cinematic_function = function::FINISHED
+        });
         *cine.bg_vram_address() = 20480;
         queue_cinematic_tilemap(CinematicTilemap::FullText, cine, game);
         cinematic!(game.Layer1X = 256);
@@ -573,7 +610,9 @@ pub fn fade_from_white<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
 /// ($8B:E58A): then the icon background. Was `CinematicFunction_Intro_Func144`.
 pub fn grey_out_icon<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     if crate::ending_graphics::advance_ending_logo_palette(cine, game) {
-        flow::set(game, CinematicFunction, function::FINISHED);
+        crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+            flow.cinematic_function = function::FINISHED
+        });
         clear_cinematic_sprites(cine);
         spawn(
             cine,
@@ -598,7 +637,9 @@ pub fn scroll_item_percentage<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut
             object::ITEM_PERCENTAGE,
             0x4c00,
         );
-        flow::set(game, CinematicFunction, function::FINISHED);
+        crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+            flow.cinematic_function = function::FINISHED
+        });
         crate::menus::save_slots::record_completion(game);
     }
 }

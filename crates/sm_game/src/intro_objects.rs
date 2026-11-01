@@ -198,14 +198,18 @@ pub fn advance_intro_landing_mosaic<H: crate::menus::host::Host + ?Sized>(
             ] {
                 CinematicObjects::Sprites.spawn(definition, parameter, cine, game);
             }
-            crate::flow::set(game, crate::flow::Word::CinematicFunction, 0xa38f);
+            crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+                flow.cinematic_function = 0xa38f
+            });
         }
     }
     if fading {
         game.fade(true);
         if game.ram().read_byte(0x51) == 15 {
             crate::screen_fade::set_both(game, 0, 0);
-            crate::flow::set(game, crate::flow::Word::CinematicFunction, 0xc7ca);
+            crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+                flow.cinematic_function = 0xc7ca
+            });
         }
     }
 }
@@ -215,7 +219,7 @@ pub fn advance_ceres_station<H: crate::menus::host::Host + ?Sized>(
     cine: &mut Cinematic,
     game: &mut H,
 ) {
-    if crate::flow::current(game).cinematic_function == 0xbdf9 {
+    if crate::session_cohort::load::<crate::flow::Flow, _>(game).cinematic_function == 0xbdf9 {
         let slot = usize::from(object >> 1);
         *cine.spr_goto_timer(slot) = cine.spr_goto_timer(slot).wrapping_add(128);
         let velocity = ((*cine.spr_goto_timer(slot) as i16 as i32) << 8) as u32;
@@ -237,7 +241,9 @@ pub fn advance_zebes_flight<H: crate::menus::host::Host + ?Sized>(
         *cine.y() = -112i16 as u16;
         *cine.mode7_angle() = 32;
         *cine.mode7_zoom() = 16;
-        crate::flow::set(game, crate::flow::Word::CinematicFunction, 0xc9f9);
+        crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+            flow.cinematic_function = 0xc9f9
+        });
         return;
     }
     let (horizontal, threshold, limit, increment, next) = [
@@ -252,7 +258,9 @@ pub fn advance_zebes_flight<H: crate::menus::host::Host + ?Sized>(
         if stage == 3 {
             game.ram().write_byte(0x69, 16);
         }
-        crate::flow::set(game, crate::flow::Word::CinematicFunction, next);
+        crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+            flow.cinematic_function = next
+        });
         if stage == 3 {
             *cine.function_timer() = 64;
         }
@@ -278,12 +286,16 @@ pub fn advance_zebes_destruction_zoom<H: crate::menus::host::Host + ?Sized>(
     if (*cine.mode7_zoom() as i32 - 384) & 0x8000 == 0
         && advance_cinematic_fade(CinematicFade::FastOut, game)
     {
-        crate::flow::set(game, crate::flow::Word::CinematicFunction, next_scene);
+        crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+            flow.cinematic_function = next_scene
+        });
     }
     if let Some(next) = fade_in {
         // Both fades may run this frame; the later transition wins.
         if advance_cinematic_fade(CinematicFade::FastIn, game) {
-            crate::flow::set(game, crate::flow::Word::CinematicFunction, next);
+            crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+                flow.cinematic_function = next
+            });
         }
     }
 }
@@ -307,7 +319,8 @@ pub fn advance_zebes_stars<H: crate::menus::host::Host + ?Sized>(
             (u32::from(*cine.spr_goto_timer(slot)) << 16) | u32::from(*cine.spr_arr7(slot));
         advance_cinematic_coordinate(object, false, velocity, cine);
         wait_cinematic_scene(object, 0xde63, None, cine, game);
-    } else if crate::flow::current(game).cinematic_function == 0xdca5 {
+    } else if crate::session_cohort::load::<crate::flow::Flow, _>(game).cinematic_function == 0xdca5
+    {
         *cine.spr_pre_instruction(slot) = 0xf375;
         *cine.spr_arr7(slot) = 0x4000;
         *cine.spr_goto_timer(slot) = 0;
@@ -321,7 +334,7 @@ pub fn wait_cinematic_scene<H: crate::menus::host::Host + ?Sized>(
     cine: &mut Cinematic,
     game: &mut H,
 ) {
-    if crate::flow::current(game).cinematic_function == scene {
+    if crate::session_cohort::load::<crate::flow::Flow, _>(game).cinematic_function == scene {
         let slot = usize::from(object >> 1);
         if let Some(next) = next_preinstruction {
             *cine.spr_pre_instruction(slot) = next;
@@ -345,7 +358,9 @@ pub fn launch_cinematic_sprite<H: crate::menus::host::Host + ?Sized>(
     if (*cine.bg_arr8(slot) as i32 + 128) & 0x8000 != 0 {
         resume_cinematic_sprite(slot, 0xce53, cine);
         if advance_scene {
-            crate::flow::set(game, crate::flow::Word::CinematicFunction, 0xcadf);
+            crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+                flow.cinematic_function = 0xcadf
+            });
         }
     }
 }

@@ -85,7 +85,9 @@ pub fn advance_credit_roll<H: crate::menus::host::Host + ?Sized>(
                 *cine.y_sub() = 0;
                 *cine.y() = 0;
                 *cine.shooting_stars_enabled() = 1;
-                crate::flow::set(game, crate::flow::Word::CinematicFunction, 0xe0f4);
+                crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
+                    flow.cinematic_function = 0xe0f4
+                });
                 *cine.function_timer() = 60;
             }
             _ => return false,

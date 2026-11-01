@@ -335,7 +335,7 @@ pub fn advance_title_gradient<H: crate::menus::host::Host + ?Sized>(backdrop: bo
     if backdrop {
         refresh_title_gradient(game);
     }
-    if crate::flow::current(game).cinematic_function == 0x9b68 {
+    if crate::session_cohort::load::<crate::flow::Flow, _>(game).cinematic_function == 0x9b68 {
         crate::hdma_effects::apply_leased(HdmaEffect::AdvanceProgram, 0, game);
     }
 }

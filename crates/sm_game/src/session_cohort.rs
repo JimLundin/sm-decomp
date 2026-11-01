@@ -256,6 +256,7 @@ mod tests {
     fn the_menu_state_and_inventory_load_from_their_projected_words() {
         check_encoding::<crate::menu_state::MenuState>();
         check_encoding::<crate::inventory::Inventory>();
+        check_encoding::<crate::flow::Flow>();
     }
 
     #[test]
