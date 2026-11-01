@@ -253,12 +253,6 @@ impl sm_game::actors::etecoon::Lease for crate::game::session_runtime::Runtime<'
     }
 }
 
-impl sm_game::actors::dachora_run::Host for Game {
-    fn run_function(&mut self, address: u32) {
-        crate::game::session_runtime::run_a7_function(address, self);
-    }
-}
-
 // Ridley's effects on his lease; those of the game's hardware, flags and
 // queues are one trip to it each.
 impl sm_game::actors::ridley::Host for crate::game::session_runtime::Runtime<'_> {

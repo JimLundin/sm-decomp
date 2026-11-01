@@ -14,7 +14,7 @@ use crate::actors::host::{
 use crate::actors::spore_spawn::instruction as spore;
 use crate::actors::{
     alcoon, bang, beetom, blue_brinstar_face_block, botwoon, boyon, cacatac, choot, covern,
-    crawlers, crocomire_reactions, dachora_run, dragon, draygon_death, draygon_eye, draygon_flight,
+    crawlers, crocomire_reactions, dragon, draygon_death, draygon_eye, draygon_flight,
     draygon_grab, draygon_host, draygon_sweep, elevator, escape_critters, evir, fire_pillar, flies,
     fune, geega, geruta, gunship, kago, kraid, magdollite, metroid, mini_crocomire, mini_kraid,
     mochtroid, morph_ball_eye, multiviola, oum, phantoon, phantoon_actions, polyp, powamp, puyo,
@@ -229,7 +229,6 @@ pub trait AiHost:
     + torizo::Ai
     + kraid::Host
     + phantoon::Host
-    + dachora_run::Host
     + mini_kraid::Host
     + PreInstructionHost
     + crate::actors::host::EnemyHost
@@ -621,8 +620,6 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         11001151 => phantoon::hurt(game),
         11001237 => phantoon::touch(game),
         11001243 => phantoon::shot(game),
-        11007197 => dachora_run::initialize(game),
-        11007278 => dachora_run::main_ai(game),
         10977325 => game.shot_reaction(Shot::Finalize),
         10977340 => game.power_bomb_reaction(Death::LeavePending),
         10982559 => kraid::touch(game),
@@ -765,12 +762,7 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
 
 /// What the pre-instruction table needs beyond its actors' own hosts.
 pub trait PreInstructionHost:
-    B3Host
-    + magdollite::Host
-    + torizo::Ai
-    + phantoon::Host
-    + dachora_run::Host
-    + crate::actors::host::EnemyHost
+    B3Host + magdollite::Host + torizo::Ai + phantoon::Host + crate::actors::host::EnemyHost
 {
     /// A pre-instruction whose arm is still in the compatibility table, for
     /// the current enemy `k` read before dispatch.
@@ -859,14 +851,6 @@ pub fn pre_instruction<H: PreInstructionHost>(ea: u32, game: &mut H) {
         11000454 => phantoon::dying_fade_out(game, k),
         11000535 => phantoon::almost_dead(game, k),
         11000637 => phantoon::dead(game, k),
-        11007344 => dachora_run::wait_for_samus(game, k),
-        11007420 => dachora_run::start_running(game, k),
-        11007469 => dachora_run::running_left(game, k),
-        11007582 => dachora_run::running_right(game, k),
-        11007887 => dachora_run::activate_shinespark(game, k),
-        11008006 => dachora_run::shinesparking(game, k),
-        11008309 => dachora_run::falling(game, k),
-        11008396 => dachora_run::echo(game, k),
         10999388 => phantoon::become_solid_and_swoop(game, k),
         10998953 => phantoon::countdown(game, k, phantoon::function::SPAWN_STARTING_FLAMES),
         10999022 => phantoon::countdown(game, k, phantoon::function::WAIT_BEFORE_SPINNING_FLAMES),
