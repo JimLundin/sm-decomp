@@ -10,7 +10,7 @@
 //! order. What still lives in the compatibility runtime is reached through
 //! [`Host`], with the original names kept on the forwarding helpers at the end
 //! of this module.
-use crate::actors::corpses::Corpse;
+use crate::actors::corpses::{self, Corpse};
 use crate::actors::host::abs16;
 use crate::actors::mother_brain::{BODY, BRAIN, MotherBrainBody, MotherBrainBrain};
 use crate::actors::mother_brain_effects::{
@@ -869,8 +869,6 @@ pub trait Host:
     fn spawn_palette_effect(&mut self, definition: u16);
     /// Queue a sprite tile transfer list; nonzero once done.
     fn queue_mother_brain_sprite_tiles(&mut self, bank: u8, start: u16) -> u8;
-    fn process_corpse_rotting(&mut self, k: u16) -> u8;
-    fn process_corpse_rotting_vram_transfers(&mut self, k: u16);
     fn set_boss_bit_for_current_area(&mut self, mask: u16);
     fn set_event_happened(&mut self, event: u16);
     fn check_event_happened(&mut self, event: u16) -> u16;
@@ -881,13 +879,12 @@ pub trait Host:
     fn native_word(&mut self, offset: usize) -> u16;
     fn set_native_word(&mut self, offset: usize, value: u16);
     fn samus_contact(&mut self, boxes: u16, x: u16, y: u16) -> Contact;
-    /// Ridley's contact damage, which Mother Brain shares. Was `Ridley_Func_98`.
-    fn deal_contact_damage(&mut self);
+    /// Whether Samus touches one of the dead Torizo's hitboxes.
+    fn dead_torizo_contact(&mut self) -> bool;
     fn move_samus_horizontally_towards_wall(&mut self, amount: u16) -> u8;
     fn move_samus_vertically_towards_ceiling_floor(&mut self, amount: u16) -> u8;
     /// Start the corpse rotting of slot `k` from `definition`. Was
     /// `InitializeEnemyCorpseRotting`.
-    fn initialize_corpse_rotting(&mut self, k: u16, definition: u16);
     /// Queue a sound; the value the original left in A. Was `queue_sfx`.
     fn queue_sound_result(&mut self, channel: usize, sound: u8, max_queued: u8) -> u16;
     /// The lease an AI's frame runs its state steps in.
@@ -914,8 +911,6 @@ on_game! {
     native_word(offset: usize) -> u16 => native_word;
     set_native_word(offset: usize, value: u16) => set_native_word;
     queue_mother_brain_sprite_tiles(bank: u8, start: u16) -> u8 => queue_mother_brain_sprite_tiles;
-    process_corpse_rotting(k: u16) -> u8 => process_corpse_rotting;
-    process_corpse_rotting_vram_transfers(k: u16) => process_corpse_rotting_vram_transfers;
     set_boss_bit_for_current_area(mask: u16) => set_boss_bit_for_current_area;
     set_event_happened(event: u16) => set_event_happened;
     check_event_happened(event: u16) -> u16 => check_event_happened;
@@ -924,7 +919,6 @@ on_game! {
     player_mother_brain(command: u16) => player_mother_brain;
     load_fx_entry(index: u16) => load_fx_entry;
     samus_contact(boxes: u16, x: u16, y: u16) -> Contact => samus_contact;
-    deal_contact_damage() => deal_contact_damage;
     move_samus_horizontally_towards_wall(amount: u16) -> u8 => move_samus_horizontally_towards_wall;
     move_samus_vertically_towards_ceiling_floor(amount: u16) -> u8 => move_samus_vertically_towards_ceiling_floor;
     add_glass_hits(slot: usize, amount: u16) => add_glass_hits;
@@ -1191,9 +1185,9 @@ crate::dispatch::callback_dispatch! {
         }
     };
     [11121109] phase3_death_corpse_rots_away [] {
-        if process_corpse_rotting(BRAIN as u16, game) & 1 != 0 {
+        if corpses::process_corpse_rotting(BRAIN as u16, game) & 1 != 0 {
             let vram_transfers: u16 = session_slot!(game, Corpse[BRAIN].vram_transfers);
-            process_corpse_rotting_vram_transfers(vram_transfers, game);
+            corpses::process_corpse_rotting_vram_transfers(vram_transfers, game);
         } else {
             let mut e1: i32 = BRAIN;
             session_slot!(game, MotherBrainBrain[e1].base.properties, |old| old & 0xdeff | 0x100);
@@ -2714,6 +2708,15 @@ pub(crate) fn collided_shot_kind(game: &impl State) -> u16 {
     let shot = usize::from(game.owned(OwnedWord::CollisionIndex));
     game.owned(OwnedWord::ShotKind(shot))
 }
+/// Deal suit-adjusted enemy damage to Samus ($A6:D453), Ridley's routine:
+/// the current enemy's contact damage. Was `Ridley_Func_98`.
+fn deal_contact_damage(game: &mut impl Lease) {
+    let damage = crate::actors::ridley::contact_damage(game);
+    game.foreign(|game| {
+        let amount = game.suit_damage(damage);
+        game.damage_player(amount);
+    });
+}
 pub fn hurt_samus(game: &mut impl Lease) {
     deal_contact_damage(game);
     game.set_owned(OwnedWord::Invincibility, 96);
@@ -3310,7 +3313,7 @@ pub fn initialize_body(game: &mut impl Lease) {
     }
 }
 pub fn initialize_brain(game: &mut impl Lease) {
-    game.foreign(|game| game.initialize_corpse_rotting(BRAIN as u16, ADDR_STRU_A9DE08 as u16));
+    corpses::initialize_enemy_corpse_rotting(BRAIN as u16, ADDR_STRU_A9DE08 as u16, game);
     session_slot!(game, MotherBrainBrain[BRAIN].base.health = 3000);
     set_brain_unused_instruction_list(ADDR_K_MOTHER_BRAIN_ILIST_9C13 as u16, game);
     session_slot! { game, MotherBrainBrain[BRAIN].base; vram_tiles_index = 0, properties = (session_slot!(game, MotherBrainBrain[BRAIN].base.properties)) | (0x1100u16), palette_index = 512 };

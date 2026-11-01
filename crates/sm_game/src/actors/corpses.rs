@@ -12,9 +12,7 @@ use crate::actors::host::{Death, Slopes};
 use crate::actors::layouts::part_view;
 use crate::actors::mother_brain_fight::OwnedWord;
 use crate::actors::mother_brain_fight::random_number;
-use crate::actors::mother_brain_fight::{
-    BANK, BANK_BASE, Lease as FightLease, State, cgram, sound,
-};
+use crate::actors::mother_brain_fight::{BANK, BANK_BASE, Host as _, Lease, State, cgram, sound};
 use crate::actors::mother_brain_fight::{
     add_spritemap_to_oam, bank_unreachable, corpse_rotting_finished, move_enemy_with_velocity,
     native_word, queue_sfx2_max3, queue_sfx2_max6, set_enemy_instruction_list,
@@ -36,16 +34,6 @@ use crate::ram::word;
 use crate::word_transfers;
 use crate::{corpse_tables, torizo_corpse_tables};
 use sm_data::cartridge::RomRecord;
-
-/// What the corpses reach beyond Mother Brain's fight.
-pub trait Host: crate::actors::mother_brain_fight::Host {
-    /// Whether Samus touches one of the dead Torizo's hitboxes.
-    fn dead_torizo_contact(&mut self) -> bool;
-}
-
-/// A Mother Brain lease whose game is this module's host.
-pub trait Lease: FightLease<Game: Host> {}
-impl<T: FightLease<Game: Host> + ?Sized> Lease for T {}
 
 /// The bank $A9 functions these slots run, named after the bank log's headings.
 pub mod function {

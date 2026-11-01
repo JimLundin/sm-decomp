@@ -11,9 +11,9 @@
 //! and its escape sequence are in `ceres_ridley`, whose `run_function`
 //! dispatches both through the bank's function table.
 use crate::actors::api::angle_from_delta;
-use crate::actors::boss_lease::BossLease;
 use crate::actors::boss_lease::bg2_staging;
 use crate::actors::boss_lease::boss_ram;
+use crate::actors::boss_lease::{BossLease, BossState};
 use crate::actors::deaths::Deaths as _;
 use crate::actors::host::BossEffects as _;
 use crate::actors::host::{Death, Shot, abs16, below};
@@ -2877,16 +2877,12 @@ pub fn flip_tail<L: Lease + ?Sized>(game: &mut L) {
     }
 }
 
-/// Deal suit-adjusted enemy damage to Samus ($A6:D453): the current enemy's
-/// contact damage. Was `Ridley_Func_98`.
-pub fn deal_contact_damage<L: Lease + ?Sized>(game: &mut L) {
-    let definition = session_slot!(game, Ridley[current(game)].base.enemy_ptr);
-    let damage = crate::cartridge::native_record(ENEMY_DEFINITION_BANK, definition, game)
-        .word(ENEMY_DEFINITION_DAMAGE);
-    game.foreign(|game| {
-        let amount = game.suit_damage(damage);
-        game.damage_player(amount);
-    });
+/// The damage deal suit-adjusted enemy damage to Samus ($A6:D453) deals: the
+/// current enemy's contact damage, from its definition. Mother Brain shares it.
+pub fn contact_damage(game: &mut (impl BossState + ?Sized)) -> u16 {
+    let definition = session_slot!(game, Ridley[i32::from(game.current_enemy())].base.enemy_ptr);
+    crate::cartridge::native_record(ENEMY_DEFINITION_BANK, definition, game)
+        .word(ENEMY_DEFINITION_DAMAGE)
 }
 
 /// Set Ridley instruction list ($A6:D467). Was `Ridley_Func_99`.

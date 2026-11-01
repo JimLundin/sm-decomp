@@ -209,12 +209,6 @@ impl Runtime<'_> {
     }
 }
 
-impl corpses::Host for Game {
-    fn dead_torizo_contact(&mut self) -> bool {
-        actors::part_hitboxes::dead_torizo_contact(self)
-    }
-}
-
 // The game is its own lease: the fight's lease code runs on it directly
 // outside a frame's Session lease.
 impl sm_game::actors::mother_brain_fight::Lease for Game {
@@ -305,14 +299,6 @@ impl sm_game::actors::mother_brain_fight::Host for Game {
         crate::game::rom_vram_entries::queue_mother_brain_sprite_tiles(bank, start, self)
     }
 
-    fn process_corpse_rotting(&mut self, k: u16) -> u8 {
-        corpses::process_corpse_rotting(k, self)
-    }
-
-    fn process_corpse_rotting_vram_transfers(&mut self, k: u16) {
-        corpses::process_corpse_rotting_vram_transfers(k, self);
-    }
-
     fn set_boss_bit_for_current_area(&mut self, mask: u16) {
         crate::game::gameplay_flag_runtime::set_boss_bits_for_current_area(mask, self);
     }
@@ -364,16 +350,12 @@ impl sm_game::actors::mother_brain_fight::Host for Game {
         }
     }
 
-    fn deal_contact_damage(&mut self) {
-        sm_game::actors::ridley::deal_contact_damage(self);
+    fn dead_torizo_contact(&mut self) -> bool {
+        actors::part_hitboxes::dead_torizo_contact(self)
     }
 
     fn move_samus_horizontally_towards_wall(&mut self, amount: u16) -> u8 {
         crate::game::sm_a9::move_samus_horizontally_towards_wall(amount, self)
-    }
-
-    fn initialize_corpse_rotting(&mut self, k: u16, definition: u16) {
-        corpses::initialize_enemy_corpse_rotting(k, definition, self);
     }
 
     fn queue_sound_result(&mut self, channel: usize, sound: u8, max_queued: u8) -> u16 {
