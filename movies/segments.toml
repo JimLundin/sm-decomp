@@ -1971,7 +1971,6 @@ start_frame = 0
 frames = 1391
 expect = ["room:B1E5"]
 require_hit = ["hands.setup", "hands.lower_acid"]
-pending = "awaiting the seeds-v1-acidhand-263f82ef4a26cef1 ci-data upload"
 
 # Green Brinstar's main shaft entered beside the etecoons (seed 43), the
 # etecoon-face-right recipe: Samus turns to face them, so the etecoon that
@@ -1986,4 +1985,3 @@ start_frame = 0
 frames = 513
 expect = ["room:9AD9"]
 require_hit = ["etecoon.look_right_run_left"]
-pending = "awaiting the seeds-v1-acidhand-263f82ef4a26cef1 ci-data upload"
