@@ -17,6 +17,26 @@ repository root with Python 3.11+ (`python3` on systems without `python`).
 You need your own unheadered ROM at `rom/sm.smc`. The verifier builds only on
 Windows x86-64 GNU.
 
+## Add a scenario
+
+Adding a row means a scenario plus a pin, through `tools/scenario.py lock --pin`
+([details](../docs/SCENARIO_HARNESS.md#scenarios-as-data)):
+
+1. Add its table to `scenarios/corpus.toml`: `id`, `start` (`boot`, or
+   `seed:<payload SHA-256>`, which `scenario_seeds.py write` and
+   `authored_inputs.py sweep` print), `prefix` if it starts after a prefix,
+   `ticks` and `facts`. No file names and no SHA-256 other than the start's.
+2. Pin its private data, then let `lock` hash it:
+   `python tools/scenario.py lock --pin ID seed=CAPTURE:INDEX inputs=FILE.inputs bundle=ASSET`
+   (add `checkpoint=FILE.smvchk` for a checkpoint start). With the files under
+   `movies/`, `target/seeds/` and `target/checkpoints/`, `lock` writes their
+   SHA-256s; `--bundle FILE` pins a new bundle's.
+3. A seeded or boot scenario without a prefix is lockable: record it with
+   `lock --record` (the faithful oracle), or give it an `unlocked` note with its
+   LEGACY entry.
+4. `python tools/scenario.py lock --check` must pass. Commit the scenario file
+   and `scenarios/lock.toml` together, and upload a new bundle to ci-data.
+
 ## Run a scenario
 
 With its inputs and starting state installed:
@@ -188,7 +208,7 @@ A scenario seed is a recorded room seed with declared edits to its work RAM:
 energy, ammunition, items, beams, the selected item, Samus's position or raw
 words such as a boss phase. [scenario_seeds.py](../tools/scenario_seeds.py)
 holds the recipes; `write NAME` creates `target/seeds/scenario-NAME/` with
-fresh region hashes and prints the row's `seed` and `seed_sha256`. Both
+fresh region hashes and prints the scenario's `start` and the seed to pin. Both
 engines load the edited seed, so the original game still decides what
 follows. Scenario seeds stay local and go to CI in encrypted bundles.
 

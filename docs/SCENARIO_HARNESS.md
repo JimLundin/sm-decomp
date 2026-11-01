@@ -163,6 +163,24 @@ scenario, and the oracle lock is current. The lock gate's plan runs it on every
 pull request and push. `full_route.py inputs` writes a route's scenarios and pins,
 and `pack` pins its bundle.
 
+**Adding a row now means a scenario plus a pin**; `movies/segments.toml` is gone,
+and nobody types a file name or SHA-256 into a committed file:
+
+1. Add its table to `scenarios/corpus.toml`: `id`, `start` (`boot`, or
+   `seed:<payload SHA-256>`, which `scenario_seeds.py write` and
+   `authored_inputs.py sweep` print), `prefix` if it starts after a prefix,
+   `ticks` and `facts`. No file names and no SHA-256 other than the start's.
+2. Pin its private data, then let `lock` hash it:
+   `python tools/scenario.py lock --pin ID seed=CAPTURE:INDEX inputs=FILE.inputs bundle=ASSET`
+   (add `checkpoint=FILE.smvchk` for a checkpoint start). With the files under
+   `movies/`, `target/seeds/` and `target/checkpoints/`, `lock` writes their
+   SHA-256s; `--bundle FILE` pins a new bundle's.
+3. A seeded or boot scenario without a prefix is lockable: record it with
+   `lock --record` (the faithful oracle), or give it an `unlocked` note with its
+   LEGACY entry.
+4. `python tools/scenario.py lock --check` must pass. Commit the scenario file
+   and `scenarios/lock.toml` together, and upload a new bundle to ci-data.
+
 ## Turning divergences into scenarios
 
 `scenario.py cut <run> --at <tick> --window <n>` writes a new scenario to
