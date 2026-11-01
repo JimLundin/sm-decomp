@@ -2,28 +2,15 @@
 //! the morph ball (bank $A8:8F8C-$A8:91DF): proximity, opening, tracking and
 //! closing. The runtime owns beam hardware startup.
 use crate::actors::api::angle_from_delta;
-use crate::actors::host::{ActorHost, ActorRuntime, Axis};
+use crate::actors::boss_lease::BossState;
+use crate::actors::host::Axis;
 use crate::actors::layouts::part_view;
 use crate::actors::session_slots::session_slot;
-use crate::effects::SoundEffects;
-use crate::ram::word;
-use crate::records::Records;
 
-/// What the morph ball eye needs: the shared actor operations, sound and its
-/// mount tables.
-pub trait Host:
-    ActorHost + ActorRuntime + SoundEffects + Records + crate::actors::session_slots::SlotAccess
-{
-}
-impl<
-    T: ActorHost
-        + ActorRuntime
-        + SoundEffects
-        + Records
-        + crate::actors::session_slots::SlotAccess
-        + ?Sized,
-> Host for T
-{
+/// What the morph ball eye needs beyond a boss's state: its beam.
+pub trait Host: BossState {
+    /// Start the eye's beam effect.
+    fn start_beam(&mut self);
 }
 
 part_view! {
@@ -55,7 +42,6 @@ pub mod instruction_list {
     pub const LEFT_ACTIVATING: u16 = 0x9026;
 }
 
-const BANK: u32 = 0xa8;
 /// Properties bit 13: process instructions; $A8:804D: no spritemap.
 const PROCESS_INSTRUCTIONS: u16 = 0x2000;
 const NO_SPRITEMAP: u16 = 0x804d;
@@ -105,7 +91,7 @@ fn aim(eye: i32, game: &mut (impl Host + ?Sized)) -> u16 {
 /// Initialisation AI - morph ball eye ($A8:9058): an eye, or a mount facing
 /// the way its parameter says.
 pub fn initialize(game: &mut (impl Host + ?Sized)) {
-    let eye = word!(game.CUR_ENEMY_INDEX) as i32;
+    let eye = game.current_enemy() as i32;
     session_slot!(game, Eye[eye].base.properties, |old| old
         | PROCESS_INSTRUCTIONS);
     session_slot!(game, Eye[eye].base; spritemap_pointer = NO_SPRITEMAP, instruction_timer = 1, timer = 0);
@@ -133,18 +119,22 @@ pub fn initialize(game: &mut (impl Host + ?Sized)) {
     }
 }
 /// Main AI - morph ball eye ($A8:90E2): its function, once the morph ball is
-/// collected. Was `state_address`.
-pub fn main_ai(game: &mut (impl Host + ?Sized)) -> Option<u32> {
+/// collected; an eye that has opened starts its beam and tracks Samus.
+pub fn main_ai(game: &mut (impl Host + ?Sized)) {
     if crate::session_cohort::load::<crate::inventory::Inventory, _>(game)
         .equipment
         .owned
         & MORPH_BALL
         == 0
     {
-        return None;
+        return;
     }
-    let eye = word!(game.CUR_ENEMY_INDEX) as i32;
-    Some(BANK << 16 | u32::from(session_slot!(game, Eye[eye].function)))
+    let k = game.current_enemy();
+    let function = session_slot!(game, Eye[k as i32].function);
+    if run_function(function, k, game) {
+        game.start_beam();
+        start_tracking(k, game);
+    }
 }
 /// Morph ball eye functions ($A8:90F1, $A8:912E, $A8:9160, $A8:91CE): true
 /// when the eye has opened and its beam should start, after its sound and
