@@ -16,8 +16,8 @@ use crate::actors::{
     alcoon, bang, beetom, blue_brinstar_face_block, botwoon, boulder, boyon, cacatac, choot,
     covern, crawlers, crocomire_reactions, dachora_run, dragon, draygon_death, draygon_eye,
     draygon_flight, draygon_grab, draygon_host, draygon_sweep, elevator, escape_critters, etecoon,
-    evir, fire_arc, fire_pillar, flies, fune, geega, geruta, gunship, kago, kraid, magdollite,
-    metroid, mini_crocomire, mini_kraid, mochtroid, morph_ball_eye, multiviola, oum, phantoon,
+    evir, fire_arc, fire_pillar, flies, fune, geruta, gunship, kago, kraid, magdollite, metroid,
+    mini_crocomire, mini_kraid, mochtroid, morph_ball_eye, multiviola, oum, phantoon,
     phantoon_actions, polyp, powamp, puyo, reflec, rinka, rio, rippers, roach, shutters,
     sidehopper, skree, space_pirates, spike_platform, spore_spawn, squeept, statues, tatori,
     torizo, tripper, waver, work_robot, wrecked_ship_spark, yard, zoa,
@@ -180,20 +180,6 @@ pub fn draw_hook<H: DrawHookHost>(ea: u32, game: &mut H) {
     }
 }
 
-/// A pipe bug's state routine, keyed by its bank $B3 address.
-pub fn pipe_bug_state<H: B3Host>(ea: u32, game: &mut H) {
-    match ea {
-        11767733 => crate::actors::geega::detect_player(game),
-        11767797 => crate::actors::geega::launch_delay(word!(game.CUR_ENEMY_INDEX), game),
-        11767848 => crate::actors::geega::fly(true, game),
-        11767997 => crate::actors::geega::fly(false, game),
-        11768154 => crate::actors::geega::turn(true, game),
-        11768280 => crate::actors::geega::turn(false, game),
-        _ => {
-            game.unknown_routine();
-        }
-    }
-}
 /// A bank $B3 enemy pre-instruction, keyed by its address.
 pub fn b3_pre_instruction<H: B3Host>(ea: u32, k: u16, game: &mut H) {
     match ea {
@@ -564,7 +550,6 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         11698252 => (),
         11763788 => (),
         11765518 => (),
-        11767628 => geega::initialize(game),
         11769219 => botwoon::initialize(game),
         11769448 => botwoon::main_ai(&mut LeaseActors::lease(game)),
         11771903 | 11771969 => botwoon::contact(ea == 11771969, &mut LeaseActors::lease(game)),
@@ -733,7 +718,6 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         11069486 => blue_brinstar_face_block::initialize(game),
         11069614 => blue_brinstar_face_block::main_ai(game),
         11055370 => pre_instruction(magdollite::main_ai(game), game),
-        11767726 => pipe_bug_state(geega::state_address(game), game),
         11789909 => pre_instruction(escape_critters::main_ai(game), game),
         10662880 => multiviola::initialize(game),
         10662927 => multiviola::main_ai(game),
