@@ -1813,3 +1813,20 @@ start_frame = 0
 frames = 1777
 expect = ["room:E0B5"]
 require_hit = ["forced.accelerate_fall"]
+
+# Colosseum (seed 100-input-phase:257), the grapple-walljump recipe
+# (tools/authored_inputs.py): grapple the wall's grapple blocks, reel in until
+# the swing stops against the wall at a special angle (the wallgrab), let go and
+# jump off it.
+
+[[segment]]
+id = "samus-grapple-walljump"
+seed = "100-input-phase:257"
+seed_sha256 = "ce4115b7f605815c7416913920048cb54e5d5911d8dddc2d411cf8958e1fd83f"
+inputs = "authored-grapple-walljump.inputs"
+input_sha256 = "9957036f4b058286d2c873646b02c02fb532c907884eefb33c1619a16a877ae0"
+start_frame = 0
+frames = 174
+expect = ["room:D72A"]
+require_hit = ["grapple.special_angle", "grapple.jump_admission", "grapple.release_walljump"]
+pending = "awaiting the seeds-v1-grapplewall-4f6db9f4f7fc408a ci-data upload"

@@ -303,6 +303,13 @@ RECIPES = {
     # select missiles, open it with two and walk into the refill room.
     "red-tower-refill-door": Recipe(
         "Left 70; Select 2; _ 6; X 2; _ 30; X 2; _ 30; Left 120; _ 150"),
+    # Colosseum (seed 100-input-phase:257): select the grapple, drop off the
+    # entry ledge, turn and grapple the wall's grapple blocks, reel in until the
+    # swing stops against the wall (the wallgrab), then let go and jump off it.
+    "grapple-walljump": Recipe("""
+        repeat 4 { Select 2; _ 4 }; Right 14; _ 4; Left 6; _ 1
+        X+Left 4; X 10; X+Up 2; X 40; _ 4; A 4; _ 60
+    """),
 }
 
 SWEEPS = {
@@ -363,6 +370,7 @@ PINNED = {
     "pause-resume": "6982afc4c06ba2311042798e0c0c2ccdbe47a7dbe599fb50b927ba414c24d077",
     "ceres-ridley-door": "45991b53cf8828c9542d208c26bc8d30143eb6f8fa1e21f5e590bec33909cb59",
     "red-tower-refill-door": "73d7fc2e9b32e137867ca292defb27fcf7d9b87316fc4fa004ed442474f4d95d",
+    "grapple-walljump": "7e33e488fdb27153a412c60cfdfd446474251343430506417d5dce9848d0ac09",
 }
 
 
