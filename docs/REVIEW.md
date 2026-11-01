@@ -194,10 +194,16 @@ VALIDATION Gate 2. (b) Step 1 starts now as its own lane.
      and stays on live patched lockstep until that entry `follows`; the list only
      shrinks. (ii) Key each scenario on the oracle's start (seed digest, or boot
      plus input-prefix digest), never on a checkpoint file: checkpoints serialize
-     engine State and are regenerated when its layout changes. (iii) The recorder
-     builds from an explicit file list (LakeSnes, the faithful patch subset, the
-     recorder and oracle projection with `ram_map.rs`), never `sm/**` or
-     `crates/**` wholesale, and CI checks that list reaches no engine code.
+     engine State and are regenerated when its layout changes. (iii) *Decided
+     (review, 2026-11-01): no standalone recorder now.* Extracting it means
+     refactoring the oracle frame off `Game` (21 outside modules, #6
+     2026-10-31 21:20), which is compat work. Prove independence by evidence
+     instead: the scheduled corpus re-records a rotating sample of at least 30
+     locked scenarios on the faithful oracle from the current main and fails if
+     any digest differs from the committed lock without a lock change in the
+     same commit. The standalone recorder becomes due when Phase 2 has moved
+     the oracle frame's remaining `Game` uses out of `sm`, or at the first
+     unexplained lock drift.
      (iv) Digests are per domain, so adding a projection adds digests and
      retiring a mask refreshes only that domain.
    - *Maintenance.* `scenario lock` writes the file and records that identity
