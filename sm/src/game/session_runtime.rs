@@ -146,8 +146,8 @@ impl sm_game::actors::species::PreInstructionHost for Game {
 }
 
 impl sm_game::actors::species::InstructionHost for Game {
-    fn native_instruction(&mut self, ea: u32, k: u16, j: EnemyScript) -> EnemyScript {
-        unsafe { native_instruction(ea, k, j, self) }
+    fn native_instruction(&mut self, ea: u32, _actor: u16, j: EnemyScript) -> EnemyScript {
+        native_instruction(ea, j, self)
     }
 }
 
@@ -1147,16 +1147,18 @@ crate::game::callback_dispatch! {
         0xa90000..=0xa9ffff => [sm_a9::dispatch_enemy_ai(ea, game)];
     }
 }
-crate::game::callback_dispatch! {
-    unsafe fn native_instruction(ea: u32, k: u16, j: EnemyScript, game: &mut Game) -> EnemyScript => ea;
-    call (k, j, game); default { crate::rtl::report_unreachable(game); EnemyScript::Stop };
-    @external {
-        0xa90000..=0xa9ffff => [sm_a9::dispatch_enemy_instr(ea, k, j, game)];
+/// The instructions still in the compatibility crate: Mother Brain's body's, in bank $A9.
+fn native_instruction(ea: u32, j: EnemyScript, game: &mut Game) -> EnemyScript {
+    if ea >> 16 == 0xa9 {
+        sm_a9::dispatch_enemy_instr(ea, j, game)
+    } else {
+        crate::rtl::report_unreachable(game);
+        EnemyScript::Stop
     }
 }
 impl Runtime<'_> {
     pub(crate) fn actor_ai_legacy(&mut self, routine: u32) {
-        if sm_game::actors::species::lease_ai(routine, self) || self.corpse_ai(routine) {
+        if sm_game::actors::species::lease_ai(routine, self) || self.bank_a9_ai(routine) {
             return;
         }
         match routine {
@@ -1165,16 +1167,16 @@ impl Runtime<'_> {
             10920584 => self.owned_call(sm_game::actors::ceres_ridley::main),
             10920659 => self.owned_call(sm_game::actors::ceres_ridley::hurt),
             10924583 => self.owned_call(sm_game::actors::ridley::main),
-            10940337 => self.owned_call(sm_game::actors::ceres_doors::initialize_steam),
-            10940429 => self.owned_call(sm_game::actors::ceres_doors::steam_main),
-            10942149 => self.owned_call(sm_game::actors::ceres_doors::initialize_door),
-            10942309 => self.owned_call(sm_game::actors::ceres_doors::door_main),
             10924682 => self.owned_call(sm_game::actors::ridley::time_frozen),
             10924695 => self.owned_call(sm_game::actors::ridley::hurt),
             10929814 => self.owned_call(sm_game::actors::ridley::explosion_init),
             10930388 => self.owned_call(sm_game::actors::ridley::explosion_main),
             10936202 => self.owned_call(sm_game::actors::ridley::shot),
             10936242 => self.owned_call(sm_game::actors::ridley::power_bomb),
+            10940337 => self.owned_call(sm_game::actors::ceres_doors::initialize_steam),
+            10940429 => self.owned_call(sm_game::actors::ceres_doors::steam_main),
+            10942149 => self.owned_call(sm_game::actors::ceres_doors::initialize_door),
+            10942309 => self.owned_call(sm_game::actors::ceres_doors::door_main),
             10988577 => self.owned_call(sm_game::actors::kraid::main_ai),
             10997414 => self.owned_call(sm_game::actors::phantoon::main_ai),
             11191972 => self.owned_call(sm_game::actors::torizo::main_ai),
@@ -1197,15 +1199,14 @@ impl Runtime<'_> {
         script: EnemyScript,
     ) -> EnemyScript {
         use sm_game::actors::{ridley, species};
-        let mut script = match species::lease_instruction(routine, actor, script, self) {
+        let script = match species::lease_instruction(routine, actor, script, self) {
             Ok(script) => return script,
             Err(script) => script,
         };
-        if routine == 11136208 {
-            return self.owned_call(|runtime| {
-                sm_game::actors::corpses::sidehopper_corpse_end_hop(actor, script, runtime)
-            });
-        }
+        let mut script = match self.bank_a9_instruction(routine, actor, script) {
+            Ok(script) => return script,
+            Err(script) => script,
+        };
         match routine {
             10940711 => {
                 return self.owned_call(|runtime| {

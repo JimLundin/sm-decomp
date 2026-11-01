@@ -665,13 +665,10 @@ pub fn power_bomb_reaction(game: &mut impl Lease) {
     {
         signal_to_leave(game.current_enemy(), game);
     }
-    game.foreign(main_ai);
+    main_ai(game);
 }
-/// Main AI - baby Metroid: the frame runs on one lease.
-pub fn main_ai(game: &mut impl Host) {
-    baby_metroid_frame(&mut game.lease());
-}
-fn baby_metroid_frame(game: &mut impl Lease) {
+/// Main AI - baby Metroid.
+pub fn main_ai(game: &mut impl Lease) {
     let e: i32 = game.current_enemy() as i32;
     session_slot!(game, BabyMetroid[e].base.health = 0x7fff);
     run_baby_metroid_function(

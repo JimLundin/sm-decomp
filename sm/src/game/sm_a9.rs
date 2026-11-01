@@ -128,34 +128,16 @@ crate::game::callback_dispatch! {
     @forward [pub fn (game: &mut Game)];
     [11108367] enemy_grapple_react_cancel_beam_a9 => actors::combat::select_frozen_ai(&mut Runtime::new(game));
     [11108417] enemy_normal_frozen_ai_a9 => actors::scheduling::update_frozen_enemy(&mut Runtime::new(game));
-    @external {
-        11110023 => mother_brain_fight::initialize_body;
-        11110149 => mother_brain_fight::initialize_brain;
-        11110206 => mother_brain_fight::body_main_ai;
-        11110279 => mother_brain_fight::power_bomb_reaction;
-        11110283 => mother_brain_fight::brain_main_ai;
-        11111221 => sm_game::actors::mother_brain_tubes::initialize;
-        11121923 => mother_brain_fight::body_shot;
-        11122118 => mother_brain_fight::brain_touch;
-        11126544 => baby_metroid_cutscene::initialize;
-        11126649 => baby_metroid_cutscene::main_ai;
-        11128579 => baby_metroid_cutscene::touch;
-        11136823 => baby_metroid_encounter::initialize;
-        11136954 => baby_metroid_encounter::power_bomb_reaction;
-        11136965 => baby_metroid_encounter::main_ai;
-        11138953 => baby_metroid_encounter::touch;
-        11139138 => baby_metroid_encounter::shot;
-    }
 }
 
-crate::game::callback_dispatch! {
-    pub(crate) fn dispatch_enemy_instr(ea: u32, k: u16, j: EnemyScript, game: &mut Game) -> EnemyScript => ea;
-    call (k, j, game); default { match crate::game::mother_brain_body::dispatch_instruction(ea, j, game) { Some(script) => script, None => { crate::rtl::report_unreachable(game); EnemyScript::Stop } } };
-    @external {
-        11115208 => mother_brain_fight::spawn_dust_cloud_at_offset;
-        11115247 => mother_brain_fight::spawn_hand_beam_projectile;
-        11115269 => mother_brain_fight::increment_hand_beam_attack_phase;
-        11139476 => baby_metroid_encounter::branch_or_queue_remorse_sound;
+/// Bank $A9's instructions still on the game: Mother Brain's body's.
+pub(crate) fn dispatch_enemy_instr(ea: u32, j: EnemyScript, game: &mut Game) -> EnemyScript {
+    match crate::game::mother_brain_body::dispatch_instruction(ea, j, game) {
+        Some(script) => script,
+        None => {
+            crate::rtl::report_unreachable(game);
+            EnemyScript::Stop
+        }
     }
 }
 
@@ -180,10 +162,27 @@ impl baby_metroid_cutscene::Host for Game {
 }
 
 impl Runtime<'_> {
-    /// The corpses' AI and reactions, on this lease; false when `routine` is
-    /// not one of them.
-    pub(crate) fn corpse_ai(&mut self, routine: u32) -> bool {
+    /// Bank $A9's AI and reactions that run on this lease: Mother Brain's, the
+    /// tubes', the baby Metroid's and the corpses'; false when `routine` is not
+    /// one of them.
+    pub(crate) fn bank_a9_ai(&mut self, routine: u32) -> bool {
         let action: fn(&mut Self) = match routine {
+            11110023 => mother_brain_fight::initialize_body,
+            11110149 => mother_brain_fight::initialize_brain,
+            11110206 => mother_brain_fight::body_main_ai,
+            11110279 => mother_brain_fight::power_bomb_reaction,
+            11110283 => mother_brain_fight::brain_main_ai,
+            11111221 => sm_game::actors::mother_brain_tubes::initialize,
+            11121923 => mother_brain_fight::body_shot,
+            11122118 => mother_brain_fight::brain_touch,
+            11126544 => baby_metroid_cutscene::initialize,
+            11126649 => baby_metroid_cutscene::main_ai,
+            11128579 => baby_metroid_cutscene::touch,
+            11136823 => baby_metroid_encounter::initialize,
+            11136954 => baby_metroid_encounter::power_bomb_reaction,
+            11136965 => baby_metroid_encounter::main_ai,
+            11138953 => baby_metroid_encounter::touch,
+            11139138 => baby_metroid_encounter::shot,
             11129608 => corpses::initialize_torizo_corpse,
             11129704 => corpses::torizo_corpse_main_ai,
             11129898 => corpses::torizo_corpse_power_bomb_reaction,
@@ -206,6 +205,25 @@ impl Runtime<'_> {
         };
         self.owned_call(action);
         true
+    }
+
+    /// Bank $A9's instructions that run on this lease, for `actor` at `script`;
+    /// the script back, unrun, when `routine` is not one of them.
+    pub(crate) fn bank_a9_instruction(
+        &mut self,
+        routine: u32,
+        actor: u16,
+        script: EnemyScript,
+    ) -> Result<EnemyScript, EnemyScript> {
+        let instruction: fn(u16, EnemyScript, &mut Self) -> EnemyScript = match routine {
+            11115208 => mother_brain_fight::spawn_dust_cloud_at_offset,
+            11115247 => mother_brain_fight::spawn_hand_beam_projectile,
+            11115269 => mother_brain_fight::increment_hand_beam_attack_phase,
+            11139476 => baby_metroid_encounter::branch_or_queue_remorse_sound,
+            11136208 => corpses::sidehopper_corpse_end_hop,
+            _ => return Err(script),
+        };
+        Ok(self.owned_call(|runtime| instruction(actor, script, runtime)))
     }
 }
 

@@ -817,11 +817,8 @@ pub fn initialize(game: &mut impl State) {
         game,
     );
 }
-/// Main AI - baby Metroid in the cutscene: the frame runs on one lease.
-pub fn main_ai(game: &mut impl Host) {
-    cutscene_frame(&mut game.lease());
-}
-fn cutscene_frame(game: &mut impl Lease) {
+/// Main AI - baby Metroid in the cutscene.
+pub fn main_ai(game: &mut impl Lease) {
     let e: i32 = game.current_enemy() as i32;
     session_slot!(game, BabyMetroidInCutscene[e].base.shake_timer = 0);
     run_cutscene_function(

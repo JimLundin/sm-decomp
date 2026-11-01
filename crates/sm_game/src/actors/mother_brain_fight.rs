@@ -3321,11 +3321,8 @@ pub fn initialize_brain(game: &mut impl Lease) {
     set_brain_instruction_list(ADDR_STRU_A99C21 as u16, game);
     set_up_brain_normal_palette(game);
 }
-/// Main AI - Mother Brain body: the frame runs on one lease.
-pub fn body_main_ai(game: &mut impl Host) {
-    body_frame(&mut game.lease());
-}
-fn body_frame(game: &mut impl Lease) {
+/// Main AI - Mother Brain body.
+pub fn body_main_ai(game: &mut impl Lease) {
     handle_room_palette(game);
     if session_slot!(game, MotherBrainBody[BODY].function) == function::FIRST_PHASE {
         body_phase1(game);
@@ -3343,16 +3340,11 @@ fn body_frame(game: &mut impl Lease) {
     }
 }
 pub fn power_bomb_reaction(game: &mut impl Lease) {
-    game.foreign(|game| {
-        game.power_bomb_reaction(crate::actors::host::Death::LeavePending);
-        brain_main_ai(game);
-    });
+    game.foreign(|game| game.power_bomb_reaction(crate::actors::host::Death::LeavePending));
+    brain_main_ai(game);
 }
-/// Main AI - Mother Brain brain: the frame runs on one lease.
-pub fn brain_main_ai(game: &mut impl Host) {
-    brain_frame(&mut game.lease());
-}
-fn brain_frame(game: &mut impl Lease) {
+/// Main AI - Mother Brain brain.
+pub fn brain_main_ai(game: &mut impl Lease) {
     set_graphics_drawn_hook(NO_DRAW_HOOK, game);
     if (session_slot!(game, MotherBrainBrain[BRAIN].base.properties) & 0x100) != 0 {
         run_function(
