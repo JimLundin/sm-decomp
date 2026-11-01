@@ -261,6 +261,18 @@ mod tests {
     }
 
     #[test]
+    fn the_room_and_display_words_load_from_their_projected_words() {
+        check_encoding::<crate::camera::Camera>();
+        check_encoding::<crate::camera::Layer1>();
+        check_encoding::<crate::room_view::RoomGeometry>();
+        check_encoding::<crate::room_view::RoomEffects>();
+        check_encoding::<crate::liquid::LiquidWords>();
+        check_encoding::<crate::screen_fade::ScreenFade>();
+        check_encoding::<crate::dialogue_ram::MessageBox>();
+        check_encoding::<crate::actors::crocomire_reactions::Melt>();
+    }
+
+    #[test]
     fn the_menu_state_and_inventory_load_from_their_projected_words() {
         check_encoding::<crate::menu_state::MenuState>();
         check_encoding::<crate::inventory::Inventory>();
