@@ -4,7 +4,20 @@ use crate::hdma_objects::{HdmaEffect, spawn_bg3_scroll, spawn_hdma};
 use crate::menus::prelude::HdmaObjectDefinition;
 use crate::ram::RawRam as _;
 use crate::ram::word;
+use crate::session_access::SessionAccess;
 use crate::visual_state::{TourianStatuePhase, Weather};
+
+/// Statue transitions on the current Session; compatibility keeps the terminal
+/// store available while the HDMA interpreter cannot admit a Session lease.
+pub trait StatueHost: crate::runtime_access::RuntimeAccess {
+    fn begin_statue_animation(&mut self) -> bool {
+        let mut runtime = self.runtime();
+        let animation = &mut runtime.session_mut().mechanisms.statue_animation;
+        *animation |= 0x10;
+        *animation & 0x8000 == 0
+    }
+    fn finish_statue_animation(&mut self);
+}
 
 pub fn initialize_ceres_ridley<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     game.spawn_hdma(0x88, &HdmaObjectDefinition::new(0x40, 5, 0xd906));
@@ -132,7 +145,7 @@ pub fn initialize_tourian_statue<H: crate::menus::host::Host + ?Sized>(game: &mu
     spawn_bg3_scroll(game);
 }
 
-pub fn advance_tourian_statue<H: crate::menus::host::Host + ?Sized>(
+pub fn advance_tourian_statue<H: crate::menus::host::Host + StatueHost + ?Sized>(
     object: &mut crate::hdma::HdmaObject,
     phase: TourianStatuePhase,
     handler_carry: bool,
@@ -147,12 +160,7 @@ pub fn advance_tourian_statue<H: crate::menus::host::Host + ?Sized>(
             if (6..=9)
                 .all(|event| crate::progress::leased::event_has_happened(event, game) & 1 != 0)
             {
-                crate::room_view::set_effect(
-                    game,
-                    crate::room_view::EffectWord::StatueAnimation,
-                    crate::room_view::effects(game).statue_animation | (0x10),
-                );
-                if crate::room_view::effects(game).statue_animation & 0x8000 == 0 {
+                if game.begin_statue_animation() {
                     object.c = 300;
                     advance_statue_program(object);
                 }
@@ -190,11 +198,7 @@ pub fn advance_tourian_statue<H: crate::menus::host::Host + ?Sized>(
             }
         }
         Finished => {
-            crate::room_view::set_effect(
-                game,
-                crate::room_view::EffectWord::StatueFinished,
-                0x8000,
-            );
+            game.finish_statue_animation();
             crate::word_transfers!(game, ascending, 1; native(0xcd20) <- value(514));
         }
     }

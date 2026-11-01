@@ -103,9 +103,9 @@ MUTATIONS = (
     shift("swap_room_width_and_height", ENCODING,
           "$f(ram::ROOM_WIDTH_IN_BLOCKS,$($borrow)* $c.width);\n        $f(ram::ROOM_HEIGHT_IN_BLOCKS,$($borrow)* $c.height);",
           "$f(ram::ROOM_WIDTH_IN_BLOCKS,$($borrow)* $c.height);\n        $f(ram::ROOM_HEIGHT_IN_BLOCKS,$($borrow)* $c.width);", ROOM_VIEW),
-    shift("swap_room_statue_words", ENCODING,
-          "        statue_animation: w2,\n        statue_finished: w3,",
-          "        statue_animation: w3,\n        statue_finished: w2,", ROOM_VIEW),
+    shift("shift_room_statue_animation", ENCODING,
+          "$f(ram::TOURIAN_ENTRANCE_STATUE_ANIMSTATE,$($borrow)* $s.mechanisms.statue_animation);",
+          "$f(ram::TOURIAN_ENTRANCE_STATUE_FINISHED,$($borrow)* $s.mechanisms.statue_animation);", ROOM_VIEW),
     # Room entry and scrolling (the alias maps one word onto another field).
     shift("shift_room_transition_selector", ENCODING,
           "$f(0x099c,$($borrow)* $s.room.entry.transition_selector);",

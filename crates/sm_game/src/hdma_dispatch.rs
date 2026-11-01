@@ -235,8 +235,14 @@ where
 }
 
 /// The hosts every pre-instruction target runs on.
-pub trait DispatchHost: Host + explosion_window::Host + xray_background::Host {}
-impl<T: Host + explosion_window::Host + xray_background::Host + ?Sized> DispatchHost for T {}
+pub trait DispatchHost:
+    Host + explosion_window::Host + xray_background::Host + room_visuals::StatueHost
+{
+}
+impl<T> DispatchHost for T where
+    T: Host + explosion_window::Host + xray_background::Host + room_visuals::StatueHost + ?Sized
+{
+}
 
 /// Run the pre-instruction at `address` for HDMA object `index`. Targets
 /// that own their object's words run on it as typed fields; the rest run on

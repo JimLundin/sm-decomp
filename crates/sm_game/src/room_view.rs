@@ -23,14 +23,11 @@ pub struct RoomGeometry {
     pub scroll_height: u16,
 }
 
-/// The room's effect and placement words: the earthquake, the Tourian
-/// entrance statue and the room's map position and elevator door.
+/// The room's earthquake and placement words: its map position and elevator door.
 #[derive(Clone, Copy, Default, Debug, PartialEq, Eq)]
 pub struct RoomEffects {
     pub earthquake_kind: u16,
     pub earthquake_timer: u16,
-    pub statue_animation: u16,
-    pub statue_finished: u16,
     pub map_x: u16,
     pub map_y: u16,
     pub elevator_properties: u16,
@@ -43,10 +40,6 @@ pub enum EffectWord {
     EarthquakeKind,
     /// `feedback.earthquake_timer`.
     EarthquakeTimer,
-    /// `mechanisms.statue_animation` (`tourian_entrance_statue_animstate`).
-    StatueAnimation,
-    /// `mechanisms.statue_finished` (`tourian_entrance_statue_finished`).
-    StatueFinished,
     /// `room.entry.map_x` (`room_x_coordinate_on_map`).
     MapX,
     /// `room.entry.map_y` (`room_y_coordinate_on_map`).

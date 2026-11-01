@@ -569,13 +569,11 @@ fn room_view_round_trips_every_field() {
         [
             effects.earthquake_kind,
             effects.earthquake_timer,
-            effects.statue_animation,
-            effects.statue_finished,
             effects.map_x,
             effects.map_y,
             effects.elevator_properties,
         ],
-        values[5..],
+        [values[5], values[6], values[9], values[10], values[11]],
         "room effects view"
     );
 }

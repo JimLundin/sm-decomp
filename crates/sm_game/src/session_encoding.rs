@@ -56,26 +56,22 @@ pub fn room_geometry_addresses() -> [usize; 5] {
 // The room's effect and placement words (`crate::room_view::RoomEffects`),
 // in `room_view::EffectWord` order. scalar_words projects each from the
 // Session field named in its `EffectWord` documentation.
-const ROOM_EFFECT_WORDS: [usize; 7] = [
+const ROOM_EFFECT_WORDS: [usize; 5] = [
     ram::EARTHQUAKE_TYPE,
     ram::EARTHQUAKE_TIMER,
-    ram::TOURIAN_ENTRANCE_STATUE_ANIMSTATE,
-    ram::TOURIAN_ENTRANCE_STATUE_FINISHED,
     ram::ROOM_X_COORDINATE_ON_MAP,
     ram::ROOM_Y_COORDINATE_ON_MAP,
     ram::ELEVATOR_DOOR_PROPERTIES_ORIENTATION,
 ];
 /// The room's effect and placement words as `bytes` encode them.
 pub fn room_effects(bytes: &impl Fn(usize) -> u8) -> crate::room_view::RoomEffects {
-    let [w0, w1, w2, w3, w4, w5, w6] = ROOM_EFFECT_WORDS.map(|at| read(bytes, at));
+    let [w0, w1, w2, w3, w4] = ROOM_EFFECT_WORDS.map(|at| read(bytes, at));
     crate::room_view::RoomEffects {
         earthquake_kind: w0,
         earthquake_timer: w1,
-        statue_animation: w2,
-        statue_finished: w3,
-        map_x: w4,
-        map_y: w5,
-        elevator_properties: w6,
+        map_x: w2,
+        map_y: w3,
+        elevator_properties: w4,
     }
 }
 /// The address of `word`.

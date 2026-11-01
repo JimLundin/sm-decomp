@@ -235,8 +235,8 @@ where
     word!(game.BG3_YPOS = 0);
     word!(game.IRQ_ENABLE_MODE7 = 0);
     word!(game.CAMERA_DISTANCE_INDEX = 0);
-    crate::room_view::set_effect(game, crate::room_view::EffectWord::StatueAnimation, 0);
-    crate::room_view::set_effect(game, crate::room_view::EffectWord::StatueFinished, 0);
+    game.session_mut().mechanisms.statue_animation = 0;
+    game.session_mut().mechanisms.statue_finished = 0;
     crate::room_view::set_effect(game, crate::room_view::EffectWord::EarthquakeTimer, 0);
     word!(game.PHANTOM_RELATED_LAYER_FLAG = 0);
     let session = game.session_mut();
