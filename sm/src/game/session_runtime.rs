@@ -653,13 +653,8 @@ impl<'g> Runtime<'g> {
                 .state
                 .phase = sm_game::scene::state::DisplayPhase::Failed;
         }
-        self.inputs = encoding::inputs(&|at| {
-            if self.persistent.is_some() {
-                self.byte(at)
-            } else {
-                self.game.ram().read_byte(at)
-            }
-        });
+        self.inputs =
+            encoding::inputs_from_session(self.session(), &|at| self.game.ram().read_byte(at));
         // Preserve observation refresh timing while A5A is owned by Session.
         self.inputs.transitions.frame_gamma = self.session().player.transitions.frame_gamma;
         // The camera and cinematic observations are Session words; refresh them from

@@ -142,6 +142,7 @@ pub fn main_ai(game: &mut (impl Host + ?Sized)) {
 pub fn run_function(function: u16, k: u16, game: &mut (impl Host + ?Sized)) -> bool {
     let eye = k as i32;
     match function {
+        function::MOUNT => (),
         function::WAIT_FOR_SAMUS => {
             if samus_near(k, NEAR_COLUMNS, game) {
                 session_slot!(game, Eye[eye].function_timer = OPEN_FRAMES);

@@ -1239,6 +1239,68 @@ pub fn write_projected_byte(s: &mut Session, at: usize, value: u8) -> bool {
     scalar_words!(s,write,(&mut));
     changed
 }
+/// The input projection during a current Session interval. Read each byte in
+/// `inputs` order, selecting the same owner as `projected_byte` without walking
+/// unrelated actor, terrain, palette and mechanism lanes for every observation.
+/// The callback supplies only bytes whose owner is still external.
+/// Retire this compatibility dispatch when the remaining input producers supply
+/// typed observations directly, removing their RAM-addressed input boundary.
+pub fn inputs_from_session(s: &Session, bytes: &impl Fn(usize) -> u8) -> ExternalInputs {
+    inputs(&|at| {
+        let (base, word) = match at {
+            0xa5a..=0xa5b => (0xa5a, s.player.transitions.frame_gamma.to_raw()),
+            0xde0..=0xde1 => (0xde0, s.menu_screens.options_menu.debug_invincibility),
+            0x185e..=0x185f => (0x185e, s.actors.diagnostics.freeze),
+            0xf8c..=0xf8d => (0xf8c, s.actors.slots[0].health),
+            0x1982..=0x1983 => (0x1982, s.room.fx_blending),
+            0x1962..=0x1963 => (0x1962, s.room.liquid.lava_acid.whole),
+            0x196e..=0x196f => (0x196e, s.room.liquid.kind),
+            0xe54..=0xe55 => (0xe54, s.actors.controls.selected),
+            0x5e5..=0x5e6 => (0x5e5, s.timing.random_number),
+            0xe44..=0xe45 => (0xe44, s.actors.controls.phase_counter),
+            0x195e..=0x195f => (0x195e, s.room.liquid.surface.whole),
+            0xa78..=0xa79 => (0xa78, s.timing.time_frozen),
+            0x1f51..=0x1f52 => (0x1f51, s.flow.cinematic_function),
+            0x91d..=0x91e => (0x91d, s.room.camera.bg1_offset[0]),
+            0x592..=0x593 => (0x592, s.projectiles.power_bomb.explosion_status),
+            0x911..=0x912 => (0x911, s.room.camera.layer1[0]),
+            0x915..=0x916 => (0x915, s.room.camera.layer1[1]),
+            0x93f..=0x940 => (0x93f, s.room.ceres_status),
+            0x8b..=0x8c | 0x8f..=0x90 | 0x9b2..=0x9bf | 0xdfe..=0xe01 => {
+                let Ok(metadata) = s.control.metadata() else {
+                    return bytes(at);
+                };
+                let input = &metadata.input_history;
+                match at {
+                    0x8b..=0x8c => (0x8b, input.ports[0].sampled),
+                    0x8f..=0x90 => (0x8f, input.ports[0].pressed),
+                    0x9b2..=0x9b3 => (0x9b2, input.bindings.shoot),
+                    0x9b4..=0x9b5 => (0x9b4, input.bindings.jump),
+                    0x9b6..=0x9b7 => (0x9b6, input.bindings.run),
+                    0x9b8..=0x9b9 => (0x9b8, input.bindings.cancel),
+                    0x9ba..=0x9bb => (0x9ba, input.bindings.switch),
+                    0x9bc..=0x9bd => (0x9bc, input.bindings.aim_down),
+                    0x9be..=0x9bf => (0x9be, input.bindings.aim_up),
+                    0xdfe..=0xdff => (0xdfe, input.samus_held),
+                    _ => (0xe00, input.samus_pressed),
+                }
+            }
+            0x78..=0x7d | 0x80..=0x83 | 0x5b5..=0x5b7 => {
+                let Ok(owner) = s.presentation.owner() else {
+                    return bytes(at);
+                };
+                let state = &owner.state;
+                match at {
+                    0x5b5 => return state.nmi.frame_byte,
+                    0x5b6..=0x5b7 => (0x5b6, state.nmi.frame_word),
+                    _ => (at & !1, state.controls.affine_words[(at - 0x78) / 2]),
+                }
+            }
+            _ => return bytes(at),
+        };
+        word.to_le_bytes()[at - base]
+    })
+}
 pub fn inputs(bytes: &impl Fn(usize) -> u8) -> ExternalInputs {
     let w = |at| read(bytes, at);
     ExternalInputs {
