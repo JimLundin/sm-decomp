@@ -83,7 +83,7 @@ fn start<H: Host + ?Sized>(game: &mut H, options: &mut OptionsMenu) {
     {
         options.screen_index = 4;
     } else {
-        crate::screen_fade::set_both(game, 0, 0);
+        crate::screen_fade::store(game, 0, 0);
         options.screen_index = 12;
     }
 }
@@ -123,13 +123,13 @@ pub fn finish_start<H: Host + ?Sized>(game: &mut H) {
         crate::session_cohort::with(game, |_, options: &mut OptionsMenu| {
             options.menu_option_index = 0;
         });
-        crate::screen_fade::set_both(game, 0, 0);
+        crate::screen_fade::store(game, 0, 0);
     }
 }
 
 fn dissolve<H: Host + ?Sized>(game: &mut H, options: &mut OptionsMenu) {
     game.ram().write_byte(crate::ram::mirror::MOSAIC, 3);
-    crate::screen_fade::set_both(game, 0, 0);
+    crate::screen_fade::store(game, 0, 0);
     options.screen_index = 5;
 }
 
@@ -329,7 +329,7 @@ pub fn fade_out<H: Host + ?Sized>(
         return;
     }
     enable(game);
-    crate::screen_fade::set_both(game, 0, 0);
+    crate::screen_fade::store(game, 0, 0);
     match screen {
         0 => options.screen_index = options.screen_index.wrapping_add(1),
         5 => {
@@ -364,7 +364,7 @@ pub fn fade_in<const DISSOLVE: bool, H: Host + ?Sized>(game: &mut H, options: &m
     if DISSOLVE {
         game.ram().write_byte(crate::ram::mirror::MOSAIC, 0);
     }
-    crate::screen_fade::set_both(game, 0, 0);
+    crate::screen_fade::store(game, 0, 0);
     if !DISSOLVE {
         options.screen_index = options.screen_index.wrapping_add(1);
     } else if options.menu_option_index == 0 {

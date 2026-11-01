@@ -200,7 +200,7 @@ fn draw_main_menu<H: Host + ?Sized>(game: &mut H) {
             *menu.helmet_y(helmet) = y;
         }
     });
-    crate::screen_fade::set_both(game, 1, 1);
+    crate::screen_fade::store(game, 1, 1);
 }
 
 /// The slot helmets' x, and their y beside each save slot's row.

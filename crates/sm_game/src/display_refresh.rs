@@ -227,16 +227,13 @@ pub fn reset_layer_mirrors<H: Host + ?Sized>(game: &mut H) {
     fill_owned(game, 0x6b..0x6e, 0);
 }
 
-pub fn fade<H: Host + ?Sized>(fade_in: bool, game: &mut H) {
-    use crate::screen_fade;
-    let remaining = screen_fade::current(game).counter.wrapping_sub(1);
-    let due = (remaining as i16) < 0;
-    let counter = if due {
-        screen_fade::current(game).delay
-    } else {
-        remaining
-    };
-    screen_fade::set_counter(game, counter);
+pub fn fade<H: Host + crate::runtime_access::RuntimeAccess + ?Sized>(fade_in: bool, game: &mut H) {
+    let due = crate::session_cohort::with(game, |_, fade: &mut crate::screen_fade::ScreenFade| {
+        let remaining = fade.counter.wrapping_sub(1);
+        let due = (remaining as i16) < 0;
+        fade.counter = if due { fade.delay } else { remaining };
+        due
+    });
     if !due {
         return;
     }

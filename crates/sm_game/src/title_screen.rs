@@ -153,7 +153,7 @@ pub fn request_title_skip<H: crate::menus::host::Host + ?Sized>(
         && *cine.skip_to_title_index() == 0
     {
         *cine.skip_to_title_index() = 1;
-        crate::screen_fade::set_both(game, 0, 2);
+        crate::screen_fade::store(game, 0, 2);
     }
 }
 
@@ -180,7 +180,7 @@ pub fn advance_title_wait<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
             flow.cinematic_function = function::TO_FILE_SELECT
         });
     }
-    crate::screen_fade::set_both(game, 2, 2);
+    crate::screen_fade::store(game, 2, 2);
 }
 
 pub fn initialize_title_sprite<H: crate::menus::host::Host + ?Sized>(

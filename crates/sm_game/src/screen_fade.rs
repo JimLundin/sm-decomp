@@ -1,33 +1,29 @@
 //! The screen brightness fade ($0723 frames per step, $0725 countdown), owned
-//! by `Visuals::screen_fade`, read and stored through the host's projected
-//! bytes with the same bytes and order as the named words they replace.
+//! by `Visuals::screen_fade`, read and stored as a typed [`ScreenFade`] copy.
 #![forbid(unsafe_code)]
-use crate::projection;
 use crate::ram::CompatibilityRam;
+use crate::runtime_access::RuntimeAccess;
+use crate::session::Session;
+use crate::session_cohort::Cohort;
 pub use crate::visual_state::ScreenFade;
 
 const DELAY: usize = 0x723;
 const COUNTER: usize = 0x725;
 
-pub fn current<H: CompatibilityRam + ?Sized>(h: &H) -> ScreenFade {
-    ScreenFade {
-        delay: projection::word(h, DELAY),
-        counter: projection::word(h, COUNTER),
+impl Cohort for ScreenFade {
+    fn words(&mut self, mut visit: impl FnMut(usize, &mut u16)) {
+        visit(DELAY, &mut self.delay);
+        visit(COUNTER, &mut self.counter);
+    }
+    fn session_words(session: &mut Session, visit: impl FnMut(usize, &mut u16)) {
+        session.presentation.visual_mut().screen_fade.words(visit);
     }
 }
 
-/// Store the delay, then the counter.
-pub fn set_both<H: CompatibilityRam + ?Sized>(h: &mut H, delay: u16, counter: u16) {
-    projection::set_word(h, DELAY, delay);
-    set_counter(h, counter);
-}
-
-pub fn set_counter<H: CompatibilityRam + ?Sized>(h: &mut H, counter: u16) {
-    projection::set_word(h, COUNTER, counter);
-}
-
-/// Store only the delay's (or with `counter`, the counter's) low byte, as the
-/// 8-bit stores do.
-pub fn set_low<H: CompatibilityRam + ?Sized>(h: &mut H, counter: bool, value: u8) {
-    projection::set_byte(h, if counter { COUNTER } else { DELAY }, value);
+/// Start the fade with `delay` frames per step and the countdown at
+/// `counter`, through a typed copy.
+pub fn store<H: CompatibilityRam + RuntimeAccess + ?Sized>(game: &mut H, delay: u16, counter: u16) {
+    crate::session_cohort::with(game, |_, fade: &mut ScreenFade| {
+        *fade = ScreenFade { delay, counter }
+    });
 }

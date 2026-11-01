@@ -208,7 +208,7 @@ pub fn advance_intro_landing_mosaic<H: crate::menus::host::Host + ?Sized>(
     if fading {
         game.fade(true);
         if game.ram().read_byte(0x51) == 15 {
-            crate::screen_fade::set_both(game, 0, 0);
+            crate::screen_fade::store(game, 0, 0);
             crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
                 flow.cinematic_function = 0xc7ca
             });

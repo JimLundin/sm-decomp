@@ -24,7 +24,7 @@ pub fn prepare_credit_roll<H: crate::menus::host::Host + ?Sized>(
     *cine.y_sub() = 0;
     *cine.y() = 0;
     *cine.credits_enabled() |= 0x8000;
-    crate::screen_fade::set_both(game, 3, 3);
+    crate::screen_fade::store(game, 3, 3);
     let record = cinematic_native_record::<0x8b>(definition, game);
     *cine.credits_pre_instruction() = record.word(2);
     *cine.credits_instruction_list() = record.word(4);
@@ -81,7 +81,7 @@ pub fn advance_credit_roll<H: crate::menus::host::Host + ?Sized>(
                 crate::word_transfers!(game, ascending, 252; le(PALETTE_BUFFER, 4) <- rom(0x8ce7e9, 4));
                 game.ram().write_byte(0x69, 0); // reg_TM
                 game.ram().write_byte(0x51, 0x80); // reg_INIDISP
-                crate::screen_fade::set_both(game, 0, 0);
+                crate::screen_fade::store(game, 0, 0);
                 *cine.y_sub() = 0;
                 *cine.y() = 0;
                 *cine.shooting_stars_enabled() = 1;

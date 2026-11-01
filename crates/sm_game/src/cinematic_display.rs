@@ -150,7 +150,7 @@ pub fn configure_cinematic_display<H: crate::menus::host::Host + ?Sized>(
             crate::session_cohort::with(game, |_, options: &mut OptionsMenu| {
                 options.menu_option_index = 0
             });
-            crate::screen_fade::set_both(game, 0, 0);
+            crate::screen_fade::store(game, 0, 0);
             crate::session_cohort::with(game, |_, menu: &mut crate::menu_state::MenuState| {
                 menu.pausemenu_start_lr_pressed_highlight_timer = 0;
                 menu.pausemenu_lr_animation_timer = 0;
@@ -180,7 +180,7 @@ pub fn configure_cinematic_display<H: crate::menus::host::Host + ?Sized>(
         }
         Escape => {
             crate::sprite_drawing::reset_cursor(game);
-            crate::screen_fade::set_both(game, 0, 0);
+            crate::screen_fade::store(game, 0, 0);
             *cine.mode7_angle() = 0;
         }
         _ => {}

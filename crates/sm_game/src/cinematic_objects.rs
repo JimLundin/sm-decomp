@@ -226,7 +226,7 @@ pub fn execute_cinematic_sprite_instruction<H: crate::menus::host::Host + ?Sized
             },
             9158818 => {
             crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| flow.cinematic_function = 0xc0c5);
-            crate::screen_fade::set_both(game, 1, 1);
+            crate::screen_fade::store(game, 1, 1);
             },
             // The instruction's own address is in A at $F51D.
             9172253 => {
@@ -299,7 +299,7 @@ pub fn execute_cinematic_sprite_instruction<H: crate::menus::host::Host + ?Sized
     *cine.function_timer() = 120;
                 },
             9172040 => {
-            crate::screen_fade::set_both(game, 0, 0);
+            crate::screen_fade::store(game, 0, 0);
             crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| flow.cinematic_function = 0xde64);
                 },
             9172484 => {

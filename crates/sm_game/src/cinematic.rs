@@ -15,14 +15,29 @@ pub fn advance_cinematic_fade<H: crate::menus::host::Host + ?Sized>(
     fade: crate::visual_state::CinematicFade,
     game: &mut H,
 ) -> bool {
-    use crate::screen_fade;
+    crate::session_cohort::with(game, |game, screen: &mut crate::screen_fade::ScreenFade| {
+        advance_fade(fade, screen, game)
+    })
+}
+
+/// The low byte of `word` set to `value`, as the 8-bit stores do.
+fn with_low_byte(word: u16, value: u8) -> u16 {
+    (word & 0xff00) | u16::from(value)
+}
+
+/// [`advance_cinematic_fade`] on the screen fade's copy.
+fn advance_fade<H: crate::menus::host::Host + ?Sized>(
+    fade: crate::visual_state::CinematicFade,
+    screen: &mut crate::screen_fade::ScreenFade,
+    game: &mut H,
+) -> bool {
     use crate::visual_state::CinematicFade::*;
     let slow = matches!(fade, SlowIn | SlowOut);
     if slow {
         // Only the low delay byte decrements, with the signed-byte wrap retained.
-        let delay = (screen_fade::current(game).delay as u8).wrapping_sub(1);
-        screen_fade::set_low(game, false, delay);
-        if (screen_fade::current(game).delay as u8 as i8) > 0 {
+        let delay = (screen.delay as u8).wrapping_sub(1);
+        screen.delay = with_low_byte(screen.delay, delay);
+        if (delay as i8) > 0 {
             return false;
         }
     }
@@ -31,11 +46,7 @@ pub fn advance_cinematic_fade<H: crate::menus::host::Host + ?Sized>(
     if !increasing && brightness & 15 == 0 {
         return true;
     }
-    let step = if slow {
-        1
-    } else {
-        screen_fade::current(game).counter as u8
-    };
+    let step = if slow { 1 } else { screen.counter as u8 };
     let (next, complete) = if increasing {
         let next = brightness.wrapping_add(step) & 31;
         (next.min(15), next >= 15)
@@ -46,14 +57,10 @@ pub fn advance_cinematic_fade<H: crate::menus::host::Host + ?Sized>(
     };
     game.ram().write_byte(0x51, next);
     if slow {
-        let delay = if complete {
-            0
-        } else {
-            screen_fade::current(game).counter as u8
-        };
-        screen_fade::set_low(game, false, delay);
+        let delay = if complete { 0 } else { screen.counter as u8 };
+        screen.delay = with_low_byte(screen.delay, delay);
         if complete {
-            screen_fade::set_low(game, true, 0);
+            screen.counter = with_low_byte(screen.counter, 0);
         }
     }
     complete

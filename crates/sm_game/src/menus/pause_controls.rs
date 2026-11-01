@@ -29,7 +29,7 @@ pub fn initialize<H: crate::menus::host::Host + ?Sized>(
         map_menu::scroll_limits(screens, game);
         map_menu::center_map(0x80, &screens.map, &mut scroll.bg1, game);
     });
-    crate::screen_fade::set_both(game, 1, 1);
+    crate::screen_fade::store(game, 1, 1);
     menu.pausemenu_leftarrow_animation_frame = 0;
     menu.pausemenu_palette_animation_timer = 1;
     screens.map.scrolling_direction = 0;
@@ -48,7 +48,7 @@ pub fn fade_in<H: crate::menus::host::Host + ?Sized>(game: &mut H) -> u8 {
         }
         game.fade(true);
         if game.ram().read_byte(crate::ram::mirror::INIDISP) == 15 {
-            crate::screen_fade::set_both(game, 0, 0);
+            crate::screen_fade::store(game, 0, 0);
             word!(game.GAME_STATE += 1);
         }
         0
@@ -97,7 +97,7 @@ pub fn fade_tab<const EQUIPMENT: bool, H: crate::menus::host::Host + ?Sized>(
     menu.pause_screen_mode = u16::from(EQUIPMENT);
     game.fade(true);
     if game.ram().read_byte(crate::ram::mirror::INIDISP) == 15 {
-        crate::screen_fade::set_both(game, 0, 0);
+        crate::screen_fade::store(game, 0, 0);
         let mut selected = menu.pausemenu_button_label_mode;
         if menu.pausemenu_button_label_mode != 0 {
             selected = 1;
@@ -129,7 +129,7 @@ pub fn fade_out_tab<H: crate::menus::host::Host + ?Sized>(
     game.fade(false);
     if game.ram().read_byte(crate::ram::mirror::INIDISP) == 0x80 {
         enable(game);
-        crate::screen_fade::set_both(game, 0, 0);
+        crate::screen_fade::store(game, 0, 0);
         menu.menu_index = menu.menu_index.wrapping_add(1);
     }
 }
@@ -154,7 +154,7 @@ pub fn load_tab<H: crate::menus::host::Host + ?Sized>(
     menu_tilemap::pause_labels(menu.pausemenu_button_label_mode, game);
     menu.pausemenu_lr_animation_frame = 0;
     menu.pausemenu_lr_animation_timer = menu_tilemap::native_record(0x82c10c, game).word(0);
-    crate::screen_fade::set_both(game, 1, 1);
+    crate::screen_fade::store(game, 1, 1);
     if !equipment {
         menu.pause_screen_mode = 0;
     }
@@ -248,7 +248,7 @@ fn advance<H: crate::menus::host::Host + ?Sized>(menu: &mut MenuState, game: &mu
     map_menu::animate_pause_sprite(2, 0xe8, 0xd0, menu, game);
     if word!(game.NEWLY_HELD_DOWN_TIMED_HELD_INPUT) & K_BUTTON_START as u16 != 0 {
         game.queue_sound(0, 0x38_u8, 6);
-        crate::screen_fade::set_both(game, 1, 1);
+        crate::screen_fade::store(game, 1, 1);
         let previous = menu.pausemenu_button_label_mode;
         menu.pausemenu_button_label_mode = 1;
         menu_tilemap::pause_labels(menu.pausemenu_button_label_mode, game);

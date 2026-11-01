@@ -385,7 +385,7 @@ pub fn wait_for_music<H: crate::menus::host::Host + ?Sized>(
         if next == 0xa64c {
             *cine.function_timer() = 240;
         } else {
-            crate::screen_fade::set_both(game, 2, 2);
+            crate::screen_fade::store(game, 2, 2);
             if next == 0xa84a {
                 CinematicObjects::Background.spawn(
                     ADDR_CINEMATIC_BG_OBJECT_DEF_8BCF3F as u16,
@@ -615,7 +615,7 @@ pub fn fade_out_to_ceres<H: crate::menus::host::Host + ?Sized>(
     game.fade(false);
     if game.ram().read_byte(0x51) == 0x80 {
         crate::display_refresh::enable(true, game);
-        crate::screen_fade::set_both(game, 0, 0);
+        crate::screen_fade::store(game, 0, 0);
         crate::session_cohort::with(game, |_, scroll: &mut BgScroll| {
             scroll.bg2 = [0, 0];
             scroll.bg3 = [0, 0];
@@ -638,7 +638,7 @@ pub fn finish_pages<H: crate::menus::host::Host + ?Sized>(j: u16, game: &mut H) 
     crate::session_cohort::with(game, |_, flow: &mut crate::flow::Flow| {
         flow.cinematic_function = 0xb72f
     });
-    crate::screen_fade::set_both(game, 1, 1);
+    crate::screen_fade::store(game, 1, 1);
     j
 }
 

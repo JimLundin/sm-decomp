@@ -184,7 +184,7 @@ pub fn explode_suit<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
         advance_suit_explosion(game, screens)
     });
     if exploded {
-        crate::screen_fade::set_both(game, 1, 1);
+        crate::screen_fade::store(game, 1, 1);
         word!(game.GAME_STATE += 1);
     }
     0

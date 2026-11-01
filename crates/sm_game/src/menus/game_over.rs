@@ -68,7 +68,7 @@ fn initialize<H: crate::menus::host::Host + ?Sized>(menu: &mut MenuState, game: 
         return;
     }
     menu.menu_index = menu.menu_index.wrapping_add(1);
-    crate::screen_fade::set_both(game, 0, 0);
+    crate::screen_fade::store(game, 0, 0);
     crate::session_cohort::with(game, |_, selection: &mut SaveSelection| {
         selection.map_area_index = 0;
     });
