@@ -469,16 +469,99 @@ def compare_lock(locked, run):
     return differing, last
 
 
+# The lock's mark interval (sm_tools::trace::MARK_TICKS).
+LOCK_MARK = 1000
+# Free-run and lockstep console lines naming the first differing Tick, stream
+# and field; whatever follows a lockstep name is a value.
+LOCALIZED = re.compile(r"^(@[0-9]+: (?:(?:Free-run|Observation) divergence in [^;]*"
+                       r"|[A-Za-z0-9 ,()/-]*? (?:compare failed|differs))"
+                       r"|Free run: .*|Free-run spread: .*)")
+# Each corpus run localizes at most this many mismatches; the rest only fail.
+LOCALIZE_LIMIT = 4
+
+
+def without_options(command, options):
+    """The command without each of these options and its value."""
+    kept, parts = [], iter(command)
+    for part in parts:
+        if part in options:
+            next(parts)
+        else:
+            kept.append(part)
+    return kept
+
+
+def localize(root, segment, replay, mark, work):
+    """Rerun the lock's first unmatched 1,000-Tick span live, in free run and lockstep.
+
+    The faithful oracle records a trace to the span's end and the engine free
+    runs against it, which names where the run first drifted, even where
+    lockstep's masks hide it. Then the oracle alone replays to the last
+    matching mark and saves a checkpoint, and both sides run the span from it
+    in lockstep, which names the first fault the oracle's state shows. Only
+    the names reach the console.
+    """
+    name = segment["id"]
+    total = int(replay[replay.index("--frames") + 1])
+    # A run whose every mark matches differs within its last span.
+    mark = min(mark, (total - 1) // LOCK_MARK * LOCK_MARK)
+    frames = min(LOCK_MARK, total - mark)
+    # The replay without its coverage checks: verifier, ROM, inputs, --no-build, --frames N.
+    base = replay[:replay.index("--frames") + 2]
+    if "seed" in segment:
+        base += ["--seed", str(segment["_seed_path"])]
+    environment = dict(os.environ, SM_ORACLE="faithful")
+    def quiet(command):
+        result = subprocess.run(command, cwd=root, env=environment, capture_output=True,
+                                text=True, encoding="utf-8", errors="replace")
+        return result.returncode, result.stdout + result.stderr
+    def report(label, start, code, output):
+        names = [match.group(1) for match in map(LOCALIZED.match, output.splitlines()) if match]
+        print(f"{name}: {label} over ticks {start}..{mark + frames}: "
+              + (f"exit {code}" if code else "passes (the drift is masked here)"), flush=True)
+        for line in names[:8]:
+            print(f"{name}: {line}", flush=True)
+    drift = list(base)
+    drift[drift.index("--frames") + 1] = str(mark + frames)
+    trace = work / "span.trace"
+    code, _ = quiet(drift + ["--oracle-only", "--trace-out", str(trace)])
+    if code:
+        print(f"{name}: localization could not record the oracle to tick {mark + frames}", flush=True)
+        return
+    report("free run", 0, *quiet(drift + ["--engine-only", "--free-run", str(trace)]))
+    span = list(base)
+    if mark:
+        checkpoint = work / "mark.smvchk"
+        prefix = list(base)
+        prefix[prefix.index("--frames") + 1] = str(mark)
+        code, _ = quiet(prefix + ["--oracle-only", "--checkpoint-out", str(checkpoint),
+                                  "--lock-out", str(work / "mark.toml")])
+        if code:
+            print(f"{name}: localization could not replay the oracle to tick {mark}", flush=True)
+            return
+        span += ["--checkpoint-in", str(checkpoint)]
+    span[span.index("--frames") + 1] = str(frames)
+    report("lockstep", mark, *quiet(span + ["--divergence-report", str(work / "span.toml")]))
+
+
 def run_single_side(root, args, segment, replay, report, tomllib):
     """One seeded or boot row in a single-side mode (docs/SCENARIO_HARNESS.md):
     free run against a fresh oracle trace, determinism of the engine against
     its own trace, or the oracle digest lock (REVIEW lane S condition 8)."""
     import tempfile
     name = segment["id"]
+    # Both sides run the whole budget, or to the end of the inputs where a row's
+    # early stop allowed a longer ceiling: the oracle cannot see probes, so no
+    # side stops on a probe or expectation tail, and only the engine checks the hits.
+    replay = without_options(replay, ("--after-hits", "--after-expectations"))
+    with segment["inputs"].open(encoding="ascii") as file:
+        available = sum(1 for line in file if line.strip() and not line.strip().startswith("#"))
+    replay[replay.index("--frames") + 1] = str(min(segment["frames"], available))
+    oracle = without_options(replay, ("--require-hit",))
     with tempfile.TemporaryDirectory(prefix="sm-single-") as work:
         work = Path(work)
         def child(extra):
-            return corpus_child(replay + extra, root)[0]
+            return corpus_child((oracle if "--oracle-only" in extra else replay) + extra, root)[0]
         if args.mode == "free-run":
             trace = work / "oracle.trace"
             code = child(["--oracle-only", "--trace-out", str(trace)])
@@ -494,7 +577,7 @@ def run_single_side(root, args, segment, replay, report, tomllib):
             code = child(["--engine-only", "--trace-out", str(trace)])
             if code:
                 return code
-            frames = segment["frames"]
+            frames = int(replay[replay.index("--frames") + 1])
             half = max(1, frames // 2)
             base = [part for part in replay if part not in ("--expect", *segment["expect"])]
             base[base.index("--frames") + 1] = str(half)
@@ -509,7 +592,7 @@ def run_single_side(root, args, segment, replay, report, tomllib):
         entry = work / "entry.toml"
         side = "--oracle-only" if args.mode == "lock" else "--engine-only"
         code = child([side, "--lock-out", str(entry)])
-        if code:
+        if code and (args.mode == "lock" or not entry.exists()):
             return code
         with entry.open("rb") as file:
             run = tomllib.load(file)
@@ -527,11 +610,14 @@ def run_single_side(root, args, segment, replay, report, tomllib):
         differing, mark = compare_lock(locked, run)
         if differing:
             print(f"{name}: lock mismatch in {', '.join(differing)}; last matching mark "
-                  f"{mark} ticks; rerun in lockstep to name the first tick and field", flush=True)
+                  f"{mark} ticks", flush=True)
+            args.localized = getattr(args, "localized", 0) + 1
+            if args.localized <= LOCALIZE_LIMIT:
+                localize(root, segment, replay, mark or 0, work)
             return 1
         compared = len(locked["digests"].keys() & run["digests"].keys())
         print(f"{name}: lock matches ({run['ticks']} ticks, {compared} streams)", flush=True)
-        return 0
+        return code
 
 
 def run_corpus(root, args):
@@ -902,7 +988,8 @@ def run_corpus(root, args):
         except (OSError, RuntimeError, ValueError) as error:
             failures.add(name)
             print(f"FAIL {name}: {error}", flush=True)
-    if args.mode == "lock" and not failures:
+    if args.mode == "lock" and args.lock_entries:
+        # Rows that recorded are written; a failed row stays out and fails the run.
         merged = {}
         if args.lock.exists():
             with args.lock.open("rb") as file:
