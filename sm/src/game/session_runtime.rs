@@ -96,10 +96,6 @@ pub struct Runtime<'g> {
         std::sync::Arc<crate::game_state::persistent_session::SessionStartRequirements>,
     )>,
 }
-/// Spawns the collision PLM with `header` at the selected block. Was in bank $AA.
-pub(crate) fn spawn_collision_plm(header: u16, game: &mut Game) {
-    unsafe { crate::game::room_mechanisms::spawn_collision(header, game) };
-}
 
 /// Runs the bank $AA function at `address` for the current enemy. Was in bank $AA.
 pub(crate) fn run_aa_function(address: u32, game: &mut Game) {
@@ -1230,6 +1226,10 @@ impl Runtime<'_> {
         script: EnemyScript,
     ) -> EnemyScript {
         use sm_game::actors::{ridley, species};
+        let script = match self.kraid_and_hosts_instruction(routine, actor, script) {
+            Ok(script) => return script,
+            Err(script) => script,
+        };
         let script = match species::lease_instruction(routine, actor, script, self) {
             Ok(script) => return script,
             Err(script) => script,
@@ -1647,8 +1647,12 @@ impl<'g> sm_game::grapple_swing::Host for Runtime<'g> {
 // as owned calls on the scheduler's lease.
 impl Runtime<'_> {
     fn kraid_and_hosts_ai(&mut self, routine: u32) -> bool {
-        use sm_game::actors::{boulder, fire_arc};
+        use sm_game::actors::{boulder, fire_arc, statues};
         match routine {
+            11196360 => self.owned_call(statues::initialize_tourian_statue),
+            11200278 => self.owned_call(statues::initialize_tube_cracks),
+            11200293 => self.owned_call(statues::initialize_chozo_statue),
+            11200423 => self.owned_call(statues::main_ai),
             10913525 => self.owned_call(boulder::initialize),
             10913683 => self.owned_call(boulder::main_ai),
             10914693 | 10914713 => self.owned_call(fire_arc::initialize_spike_platform_bottom),
@@ -1657,5 +1661,34 @@ impl Runtime<'_> {
             _ => return false,
         }
         true
+    }
+    fn kraid_and_hosts_instruction(
+        &mut self,
+        routine: u32,
+        actor: u16,
+        script: EnemyScript,
+    ) -> Result<EnemyScript, EnemyScript> {
+        use sm_game::actors::statues;
+        // The instructions that only act return the script unchanged.
+        let action: Option<fn(&mut Self)> = match routine {
+            11199529 => Some(statues::start_lowering_acid),
+            11199542 => Some(statues::set_lowered_acid),
+            11199549 => Some(statues::unlock_samus),
+            11199871 => Some(statues::grab_sound),
+            11199879 => Some(statues::footstep_sound),
+            11200240 => Some(statues::release_samus),
+            _ => None,
+        };
+        if let Some(action) = action {
+            self.owned_call(action);
+            return Ok(script);
+        }
+        Ok(match routine {
+            11199887 => {
+                self.owned_call(|runtime| statues::spike_clearing_footstep(runtime, actor, script))
+            }
+            11199960 => self.owned_call(|runtime| statues::movement(runtime, actor, script)),
+            _ => return Err(script),
+        })
     }
 }

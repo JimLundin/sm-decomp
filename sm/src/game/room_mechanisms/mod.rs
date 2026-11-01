@@ -11,7 +11,6 @@ mod runtime;
 use sm_game::room_mechanisms::setup;
 mod rules {
     pub(super) use sm_game::room_mechanisms::rules::crumbling_wall;
-    pub(super) use sm_game::room_mechanisms::rules::hands;
     pub(super) use sm_game::room_mechanisms::rules::mother_brain_glass;
     pub(super) use sm_game::room_mechanisms::rules::torizo_statue;
     pub(super) use sm_game::room_mechanisms::rules::treadmill;
@@ -77,9 +76,6 @@ pub(crate) fn calculate_coordinates(k: u16, game: &mut Game) {
 }
 pub(crate) fn add_glass_hits(slot: usize, amount: u16, game: &mut Game) {
     rules::mother_brain_glass::add_hits(&mut Runtime::new(game), slot, amount);
-}
-pub(crate) fn lower_acid(game: &mut Game) {
-    rules::hands::lower_acid(&mut Runtime::new(game));
 }
 pub(crate) fn open_passage(game: &mut Game) {
     rules::crumbling_wall::open_passage(&mut Runtime::new(game));

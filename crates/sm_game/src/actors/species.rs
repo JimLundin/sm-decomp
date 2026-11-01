@@ -19,8 +19,8 @@ use crate::actors::{
     fire_pillar, flies, fune, geega, geruta, gunship, kago, kraid, magdollite, metroid,
     mini_crocomire, mini_kraid, mochtroid, morph_ball_eye, multiviola, oum, phantoon,
     phantoon_actions, polyp, powamp, puyo, reflec, rinka, rio, rippers, roach, shutters,
-    sidehopper, skree, space_pirates, spike_platform, spore_spawn, squeept, statues, tatori,
-    torizo, tripper, waver, work_robot, wrecked_ship_spark, yapping_maw, yard, zeb, zoa,
+    sidehopper, skree, space_pirates, spike_platform, spore_spawn, squeept, tatori, torizo,
+    tripper, waver, work_robot, wrecked_ship_spark, yapping_maw, yard, zeb, zoa,
 };
 use crate::combat_rules::LatchMode;
 use crate::enemy_projectiles::host::Effects as _;
@@ -65,7 +65,6 @@ pub trait TouchHost:
     + draygon_host::Host
     + space_pirates::Pirates
     + torizo::Ai
-    + statues::Host
     + kraid::Host
     + phantoon::Host
     + spore_spawn::Host
@@ -112,7 +111,6 @@ pub trait ShotHost:
     + draygon_host::Host
     + space_pirates::Pirates
     + torizo::Ai
-    + statues::Host
     + kraid::Host
     + phantoon::Host
     + spore_spawn::Host
@@ -229,7 +227,6 @@ pub trait AiHost:
     + crocomire_reactions::Host
     + space_pirates::Pirates
     + torizo::Ai
-    + statues::Host
     + kraid::Host
     + phantoon::Host
     + etecoon::Host
@@ -641,10 +638,6 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         11192695 => torizo::touch(game),
         11192700 => torizo::shot(game),
         11195322 => torizo::golden_hurt(game),
-        11196360 => statues::initialize_tourian_statue(game),
-        11200278 => statues::initialize_tube_cracks(game),
-        11200293 => statues::initialize_chozo_statue(game),
-        11200423 => statues::main_ai(game),
         11191972 => torizo::main_ai(game),
         11192447 => torizo::initialize(game),
         11195241 => torizo::golden_main_ai(game),
@@ -778,7 +771,6 @@ pub trait PreInstructionHost:
     B3Host
     + magdollite::Host
     + torizo::Ai
-    + statues::Host
     + phantoon::Host
     + etecoon::Host
     + dachora_run::Host
@@ -916,8 +908,6 @@ pub fn pre_instruction<H: PreInstructionHost>(ea: u32, game: &mut H) {
         11192364 => torizo::jumping_or_falling(k, game),
         11195889 => torizo::golden_walking(k, game),
         11192360 | 11195885 => torizo::attacking(k, game),
-        11199557 => statues::lower_norfair(game, k),
-        11200430 => statues::wrecked_ship(game, k),
         11047153 | 11047214 | 11047264 | 11047374 => {
             if morph_ball_eye::run_function(ea as u16, k, game) {
                 game.initialize_morph_eye_beam();
@@ -970,7 +960,6 @@ pub trait InstructionHost:
     + draygon_host::Host
     + LeaseActors
     + torizo::Ai
-    + statues::Host
     + kraid::Host
     + phantoon::Host
     + mini_kraid::Host
@@ -1363,32 +1352,6 @@ pub fn instruction<H: InstructionHost>(
             j
         }
         11195446 => torizo::eye_beam(j, game),
-        11199529 => {
-            statues::start_lowering_acid(game);
-            j
-        }
-        11199542 => {
-            statues::set_lowered_acid(game);
-            j
-        }
-        11199549 => {
-            statues::unlock_samus(game);
-            j
-        }
-        11199871 => {
-            statues::grab_sound(game);
-            j
-        }
-        11199879 => {
-            statues::footstep_sound(game);
-            j
-        }
-        11200240 => {
-            statues::release_samus(game);
-            j
-        }
-        11199887 => statues::spike_clearing_footstep(game, k, j),
-        11199960 => statues::movement(game, k, j),
         0xb20000..=0xb2ffff => space_pirates::dispatch_instruction(ea, k, j, game),
         // Bank $A5.
         10851549 => draygon_flight::set_instruction_lists(j, game),

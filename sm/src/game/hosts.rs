@@ -405,39 +405,35 @@ impl sm_game::actors::ceres_doors::Lease for crate::game::session_runtime::Runti
     }
 }
 
-impl sm_game::actors::statues::Host for Game {
-    fn run_function(&mut self, address: u32) {
-        crate::game::session_runtime::run_aa_function(address, self);
-    }
-
+impl sm_game::actors::statues::Lease for crate::game::session_runtime::Runtime<'_> {
     fn boss_word_native(&mut self, area: u16) -> u16 {
-        crate::game::gameplay_flag_runtime::boss_word_at(
-            area,
-            sm_game::gameplay_flag_host::BossWordOrder::Native,
-            self,
-        )
+        self.foreign(|game| {
+            crate::game::gameplay_flag_runtime::boss_word_at(
+                area,
+                sm_game::gameplay_flag_host::BossWordOrder::Native,
+                game,
+            )
+        })
     }
 
     fn start_lowering_acid(&mut self) {
-        let mut runtime = crate::game::session_runtime::Runtime::new(self);
-        let room = &mut runtime.session_mut().room;
+        let room = &mut self.session_mut().room;
         room.liquid_delay = 32;
         room.liquid_velocity = 64;
     }
 
     fn lower_acid(&mut self) {
-        crate::game::room_mechanisms::lower_acid(self);
+        sm_game::room_mechanisms::rules::hands::lower_acid(self);
     }
 
     fn select_block_at(&mut self, x: u16, y: u16) {
-        crate::game::actors::api::select_block_at(
-            &mut crate::game::session_runtime::Runtime::new(self),
-            sm_game::geometry::Point { x, y },
-        );
+        crate::game::actors::api::select_block_at(self, sm_game::geometry::Point { x, y });
     }
 
     fn spawn_collision_plm(&mut self, header: u16) {
-        crate::game::session_runtime::spawn_collision_plm(header, self);
+        use sm_game::room_mechanisms::{creation, host};
+        let source = host::SpawnSource::Collision { header };
+        creation::spawn(self, source, &mut host::Contact::Absent);
     }
 }
 
