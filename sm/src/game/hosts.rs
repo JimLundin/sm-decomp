@@ -386,9 +386,9 @@ impl sm_game::display::transfer::TilemapQueue for Game {
     }
 }
 
-impl sm_game::actors::fire_arc::Host for Game {
+impl sm_game::actors::fire_arc::Lease for crate::game::session_runtime::Runtime<'_> {
     fn advance_orbit(&mut self) {
-        crate::game::enemy_projectiles::advance_fire_arc_orbit(self);
+        sm_game::enemy_projectiles::attachments_fire_arc_botwoon::advance_fire_arc_orbit(self);
     }
 }
 

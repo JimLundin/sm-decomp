@@ -1160,6 +1160,9 @@ fn native_instruction(ea: u32, j: EnemyScript, game: &mut Game) -> EnemyScript {
 }
 impl Runtime<'_> {
     pub(crate) fn actor_ai_legacy(&mut self, routine: u32) {
+        if self.kraid_and_hosts_ai(routine) {
+            return;
+        }
         if sm_game::actors::species::lease_ai(routine, self) || self.bank_a9_routine(routine) {
             return;
         }
@@ -1637,5 +1640,20 @@ impl<'g> sm_game::grapple_swing::Host for Runtime<'g> {
         let low = u16::from_ne_bytes([Runtime::byte(self, 0xa4e), Runtime::byte(self, 0xa4f)]);
         let high = u16::from_ne_bytes([Runtime::byte(self, 0xa50), Runtime::byte(self, 0xa51)]);
         (low, high)
+    }
+}
+
+// Kraid's, Phantoon's and the other bank $A6, $A7 and $AA hosts' entry points,
+// as owned calls on the scheduler's lease.
+impl Runtime<'_> {
+    fn kraid_and_hosts_ai(&mut self, routine: u32) -> bool {
+        use sm_game::actors::fire_arc;
+        match routine {
+            10914693 | 10914713 => self.owned_call(fire_arc::initialize_spike_platform_bottom),
+            10917060 => self.owned_call(fire_arc::initialize),
+            10917390 => self.owned_call(fire_arc::main_ai),
+            _ => return false,
+        }
+        true
     }
 }
