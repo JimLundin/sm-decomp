@@ -6686,6 +6686,18 @@ digests = { "wram" = "1b91805cfbe495af", "sram" = "898dd5ea35ae305a", "vram" = "
 marks = { "1000" = "17ec82173495bc1e" }
 
 [[scenario]]
+id = "door-transition"
+oracle = "faithful"
+start = "seed:a627651fd74a3c99e3a54adee5f7683e70f3bb2946c578d36269f3039b061594"
+inputs = "0508217270fab04efafa863b3685045c8707ae95b9722a375853aba1da410d6f"
+frames = 373
+format = 1
+ticks = 373
+combined = "65996ae30a873fc1"
+digests = { "wram" = "f21f42c52ab31c52", "sram" = "0a2ddea81cb21aab", "vram" = "d06eeffcb386aeae", "cgram" = "ec383e89e5d44149", "oam" = "1a9c2d7415201e1b", "ppu" = "f5ac51f6b6b64707", "video" = "44801dbe71b26100", "apu" = "9bc74791783492eb", "input" = "2ccd3f2b48f3c0f8", "samus" = "d6bdb2eb26693bca", "camera" = "789d7786aabf2f06", "room" = "050763a3e4a0b862", "progress" = "1845611545c02044", "actors" = "36c5b0f4b0bb9215", "effects" = "536636e968474ce8" }
+marks = {  }
+
+[[scenario]]
 id = "draygon-bubble-word-counter"
 oracle = "faithful"
 start = "seed:d8a5b0b9a72ca9d31ab86d21c2ef931303f3a6b48459b057a8db309fe89723d7"
@@ -6888,6 +6900,42 @@ ticks = 1989
 combined = "ffecc88d74871732"
 digests = { "wram" = "988a6f6b3926fad6", "sram" = "a84e7dbb57027efc", "vram" = "b666ba1413a45c78", "cgram" = "d6e4b44e4656e74b", "oam" = "229eee40cea812c0", "ppu" = "dd4821111946ea47", "video" = "131a0e7b337555e7", "apu" = "5602c8ab525f0658", "input" = "f8bd1af73f6c4871", "samus" = "3e32974d47c0ffda", "camera" = "c8504097a31baf00", "room" = "6bec273421d1a605", "progress" = "628e4ee974d84e6d", "actors" = "eab4c768d6f8fcaa", "effects" = "b4520029248cf49e" }
 marks = { "1000" = "ef0dc0a18306f519" }
+
+[[scenario]]
+id = "power-bomb-red-tower-refill-door"
+oracle = "faithful"
+start = "seed:91e08780a8255840c590ccb9ce1e4e661e09d8ba07f9fd58d4dc0355a29f4d58"
+inputs = "644ad5b2703895704516c4476d079b0be4ab23a3659bf475f8555be875010ac3"
+frames = 413
+format = 1
+ticks = 413
+combined = "3c5637cf34d350db"
+digests = { "wram" = "31952c2ea1d38c07", "sram" = "e99fa06c5b3597ca", "vram" = "288d72dc014bc112", "cgram" = "0857028e81e4f11f", "oam" = "5ebc3443109686b3", "ppu" = "5babc14b7301e3bd", "video" = "d15400d51b15b86f", "apu" = "06f551c7d910b191", "input" = "5d368ff58c3030ac", "samus" = "e53631289651187d", "camera" = "14fd6695d996bdb7", "room" = "f35a8f8bfd4b384f", "progress" = "9aae5b812ba988e8", "actors" = "453ea69209adc7c1", "effects" = "6f5d6d4c35c9c433" }
+marks = {  }
+
+[[scenario]]
+id = "power-bomb-room-entry"
+oracle = "faithful"
+start = "seed:c9cf0566737a094ed81b23e8637722e01dd572c385531f0a05f57a61f0819c4c"
+inputs = "b386b720f57d268554f805a8651ef0c49315d24fabc81d9a9447fc285c6308d8"
+frames = 388
+format = 1
+ticks = 388
+combined = "b8ed79cbd7275208"
+digests = { "wram" = "f9ce854743ab8f29", "sram" = "5eec29c11d0ec01a", "vram" = "717e8733c872f6c3", "cgram" = "5c0abf8d6f332b43", "oam" = "935c278bfde26331", "ppu" = "ddae7327df2dfa8e", "video" = "76b4177dcdf4f3a0", "apu" = "fe6fca87cfeb87d9", "input" = "32a7d758071b3189", "samus" = "b8fa30e265e9a276", "camera" = "27a10f52d4aa6c3b", "room" = "2c825e8f0f9845a4", "progress" = "c08c4546c81669fe", "actors" = "5a74437bac34d483", "effects" = "072ddf95cd2e33c8" }
+marks = {  }
+
+[[scenario]]
+id = "power-bomb-warehouse-elevator-entry"
+oracle = "faithful"
+start = "seed:6500dc6f8246a79041b290b5f651c476d28c0121fb83c85be07c554983ebdbcf"
+inputs = "1ec2b020f79e3f5e8feca667f7f9727b95c1181d6972b0825d9a7f7358133b85"
+frames = 345
+format = 1
+ticks = 345
+combined = "ce5a357b05cb5b78"
+digests = { "wram" = "438017c53140b06b", "sram" = "1cbb4204853e0b9f", "vram" = "5546099731739f10", "cgram" = "b6e9f410d6fed80c", "oam" = "b5ed89527a39f306", "ppu" = "6de0d830a50af3b6", "video" = "50ce60d361c14a7d", "apu" = "b8de91e1f3637d21", "input" = "5987a981012531d6", "samus" = "15b947864de9928a", "camera" = "a2567986de478707", "room" = "ff9d5ceaead78b19", "progress" = "768a84561f35dad7", "actors" = "1cd30f70da31c03d", "effects" = "90550272ae99a452" }
+marks = {  }
 
 [[scenario]]
 id = "samus-crystal-flash"

@@ -63,6 +63,7 @@ UNLOCKED = {
     "samus-grapple-connect-swing": ITEM_DRIFT,
     "space-jump-bubble-word-counter": ITEM_DRIFT,
     "xray-activate-release": ITEM_DRIFT,
+    "pickup-reserve": ITEM_DRIFT,
     "boss-kraid": DRIFT,
     "boss-kraid-pause-1960": DRIFT,
     "chain-0330-92FD": DRIFT,
@@ -70,6 +71,9 @@ UNLOCKED = {
     "chain-any-0196-92FD": DRIFT,
     "chain-0086-AA41": DRIFT,
     "chain-any-0074-AFA3": DRIFT,
+    "boss-crocomire": DRIFT,
+    "ice-return-business": DRIFT,
+    "music-fir-selector10": DRIFT,
     "file-copy-clear": ENGINE_PANIC,
 }
 
