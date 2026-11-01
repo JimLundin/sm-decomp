@@ -1647,8 +1647,12 @@ impl<'g> sm_game::grapple_swing::Host for Runtime<'g> {
 // as owned calls on the scheduler's lease.
 impl Runtime<'_> {
     fn kraid_and_hosts_ai(&mut self, routine: u32) -> bool {
-        use sm_game::actors::{boulder, dachora_run, etecoon, fire_arc, statues};
+        use sm_game::actors::{boulder, dachora_run, etecoon, fire_arc, mini_kraid, statues};
         match routine {
+            10918488 => self.owned_call(mini_kraid::initialize),
+            10918594 => self.owned_call(mini_kraid::main_ai),
+            10918946 => self.owned_call(mini_kraid::touch),
+            10918969 => self.owned_call(mini_kraid::shot),
             11004178 => self.owned_call(etecoon::initialize),
             11004224 => self.owned_call(etecoon::main_ai),
             11007197 => self.owned_call(dachora_run::initialize),
@@ -1672,9 +1676,13 @@ impl Runtime<'_> {
         actor: u16,
         script: EnemyScript,
     ) -> Result<EnemyScript, EnemyScript> {
-        use sm_game::actors::statues;
+        use sm_game::actors::{mini_kraid, statues};
         // The instructions that only act return the script unchanged.
         let action: Option<fn(&mut Self)> = match routine {
+            10918694 => Some(mini_kraid::step),
+            10918834 => Some(mini_kraid::roar),
+            10918852 => Some(mini_kraid::spit_left),
+            10918914 => Some(mini_kraid::spit_right),
             11199529 => Some(statues::start_lowering_acid),
             11199542 => Some(statues::set_lowered_acid),
             11199549 => Some(statues::unlock_samus),
@@ -1688,6 +1696,7 @@ impl Runtime<'_> {
             return Ok(script);
         }
         Ok(match routine {
+            10918772 => self.owned_call(mini_kraid::choose_animation),
             11199887 => {
                 self.owned_call(|runtime| statues::spike_clearing_footstep(runtime, actor, script))
             }

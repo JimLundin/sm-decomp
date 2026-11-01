@@ -16,9 +16,9 @@ use crate::actors::{
     alcoon, bang, beetom, blue_brinstar_face_block, botwoon, boyon, cacatac, choot, covern,
     crawlers, crocomire_reactions, dragon, draygon_death, draygon_eye, draygon_flight,
     draygon_grab, draygon_host, draygon_sweep, elevator, escape_critters, evir, fire_pillar, flies,
-    fune, geega, geruta, gunship, kago, kraid, magdollite, metroid, mini_crocomire, mini_kraid,
-    mochtroid, morph_ball_eye, multiviola, oum, phantoon, phantoon_actions, polyp, powamp, puyo,
-    reflec, rinka, rio, rippers, roach, shutters, sidehopper, skree, space_pirates, spike_platform,
+    fune, geega, geruta, gunship, kago, kraid, magdollite, metroid, mini_crocomire, mochtroid,
+    morph_ball_eye, multiviola, oum, phantoon, phantoon_actions, polyp, powamp, puyo, reflec,
+    rinka, rio, rippers, roach, shutters, sidehopper, skree, space_pirates, spike_platform,
     spore_spawn, squeept, tatori, torizo, tripper, waver, work_robot, wrecked_ship_spark,
     yapping_maw, yard, zeb, zoa,
 };
@@ -229,7 +229,6 @@ pub trait AiHost:
     + torizo::Ai
     + kraid::Host
     + phantoon::Host
-    + mini_kraid::Host
     + PreInstructionHost
     + crate::actors::host::EnemyHost
     + crate::effects::SoundEffects
@@ -592,10 +591,6 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         // common reactions.
         10911779 => game.contact_reaction(Death::Finalize),
         10911789 => game.shot_reaction(Shot::Finalize),
-        10918488 => mini_kraid::initialize(game),
-        10918594 => mini_kraid::main_ai(game),
-        10918946 => mini_kraid::touch(game),
-        10918969 => mini_kraid::shot(game),
         // Bank $A7: Kraid, Phantoon, the etecoons and the dachora, with the
         // bank's common reactions.
         10982544 => kraid::arm_touch(game),
@@ -922,7 +917,6 @@ pub trait InstructionHost:
     + torizo::Ai
     + kraid::Host
     + phantoon::Host
-    + mini_kraid::Host
     + crate::actors::host::EnemyHost
     + crate::effects::SoundEffects
     + botwoon::Host
@@ -1070,24 +1064,6 @@ pub fn instruction<H: InstructionHost>(
         11789840 => escape_critters::move_x(k, j, game),
         11791049 => escape_critters::shift_dachora(0xfffa, j, game),
         11791063 => escape_critters::shift_dachora(6, j, game),
-        // Bank $A6: Mini-Kraid and the steam.
-        10918694 => {
-            mini_kraid::step(game);
-            j
-        }
-        10918772 => mini_kraid::choose_animation(game),
-        10918834 => {
-            mini_kraid::roar(game);
-            j
-        }
-        10918852 => {
-            mini_kraid::spit_left(game);
-            j
-        }
-        10918914 => {
-            mini_kraid::spit_right(game);
-            j
-        }
         // Bank $A7: Kraid's steps and the calls into Phantoon's functions; Kraid's
         // identity instruction returns the script unchanged.
         10977418 => {
