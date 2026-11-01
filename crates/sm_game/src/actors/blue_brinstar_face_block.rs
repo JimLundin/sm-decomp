@@ -1,22 +1,15 @@
 //! The blue Brinstar face block, which turns to look at Samus once she has the
 //! morph ball, and glows (bank $A8:E7AC-$A8:E99A). Was `blue_face_block`.
 //! Native hook words, actor words and little-endian hook variables stay authoritative.
-use crate::actors::host::{ActorHost, ActorRuntime, Axis, abs16};
+use crate::actors::boss_lease::BossState;
+use crate::actors::host::{Axis, abs16};
 use crate::actors::layouts::part_view;
 use crate::actors::session_slots::session_slot;
-use crate::ram::RawRam as _;
 use crate::ram::word;
-use crate::records::Records;
 
-/// What the face block needs: the shared actor operations and its glow colours.
-pub trait Host:
-    ActorHost + ActorRuntime + Records + crate::actors::session_slots::SlotAccess
-{
-}
-impl<T: ActorHost + ActorRuntime + Records + crate::actors::session_slots::SlotAccess + ?Sized> Host
-    for T
-{
-}
+/// What the face block needs: a boss's state, which holds its glow colours.
+pub trait Host: BossState {}
+impl<T: BossState + ?Sized> Host for T {}
 
 part_view! {
     /// The face block's view of its slot.
@@ -64,7 +57,7 @@ fn within_range(block: i32, delta: u16, game: &mut (impl Host + ?Sized)) -> bool
 }
 /// Initialisation AI - blue Brinstar face block ($A8:E82E).
 pub fn initialize(game: &mut (impl Host + ?Sized)) {
-    let block = word!(game.CUR_ENEMY_INDEX) as i32;
+    let block = game.current_enemy() as i32;
     session_slot!(
         game,
         FaceBlock[block].base.current_instruction = instruction_list::FACING_FORWARD
@@ -79,8 +72,8 @@ pub fn initialize(game: &mut (impl Host + ?Sized)) {
     } else {
         PALETTE_CYCLE_HOOK
     };
-    game.ram().copy_in(GFX_DRAWN_HOOK, &hook.to_ne_bytes());
-    game.ram().copy_in(GFX_DRAWN_HOOK_BANK, &BANK.to_ne_bytes());
+    game.set_slot_word(GFX_DRAWN_HOOK, hook);
+    game.set_slot_word(GFX_DRAWN_HOOK_BANK, BANK);
     publish_palette(block, game);
     word!(game.VARIABLES_FOR_ENEMY_GRAPHICS_DRAWN_HOOK[HOOK_TIMER] = CYCLE_FRAMES);
     session_slot!(game, FaceBlock[block].direction_to_not_turn, |old| (old
@@ -98,19 +91,18 @@ pub fn main_ai(game: &mut (impl Host + ?Sized)) {
     {
         return;
     }
-    game.ram()
-        .copy_in(GFX_DRAWN_HOOK, &PALETTE_CYCLE_HOOK.to_ne_bytes());
-    let block = word!(game.CUR_ENEMY_INDEX) as i32;
+    game.set_slot_word(GFX_DRAWN_HOOK, PALETTE_CYCLE_HOOK);
+    let block = game.current_enemy() as i32;
     publish_palette(block, game);
     if session_slot!(game, FaceBlock[block].activated) != 0 {
         return;
     }
-    let k = word!(game.CUR_ENEMY_INDEX);
+    let k = game.current_enemy();
     let dy = game.player_delta(k, Axis::Y);
     if !within_range(block, dy, game) {
         return;
     }
-    let k = word!(game.CUR_ENEMY_INDEX);
+    let k = game.current_enemy();
     let dx = game.player_delta(k, Axis::X);
     session_slot!(game, FaceBlock[block].direction_to_samus = dx);
     if within_range(block, dx, game)
@@ -147,13 +139,13 @@ pub fn cycle_palette(game: &mut (impl Host + ?Sized)) {
     for _ in 0..COLOURS {
         let color = crate::enemy_lists::face_block_glow_colour(game, (source >> 1) as isize);
         let at = FIRST_GLOW_COLOUR + usize::from(destination >> 1) * 2;
-        game.ram().copy_in(at, &color.to_ne_bytes());
+        game.set_slot_word(at, color);
         source = source.wrapping_add(2);
         destination = destination.wrapping_add(2);
     }
     // The legacy phase increment reads physical byte zero, even on a big-endian host.
     word!(
         game.VARIABLES_FOR_ENEMY_GRAPHICS_DRAWN_HOOK[HOOK_COLOUR_SET] =
-            (u16::from(game.ram().read_byte(HOOK_COLOUR_SET_LOW)) + 1) & COLOUR_SETS
+            (u16::from(game.slot_byte(HOOK_COLOUR_SET_LOW)) + 1) & COLOUR_SETS
     );
 }

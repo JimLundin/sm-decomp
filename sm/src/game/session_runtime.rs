@@ -1226,6 +1226,8 @@ impl Runtime<'_> {
             11060799 => self.owned_call(sm_game::actors::powamp::power_bomb),
             11068983 => self.owned_call(sm_game::actors::wrecked_ship_spark::initialize),
             11069070 => self.owned_call(sm_game::actors::wrecked_ship_spark::main_ai),
+            11069486 => self.owned_call(sm_game::actors::blue_brinstar_face_block::initialize),
+            11069614 => self.owned_call(sm_game::actors::blue_brinstar_face_block::main_ai),
             10988577 => self.owned_call(sm_game::actors::kraid::main_ai),
             10997414 => self.owned_call(sm_game::actors::phantoon::main_ai),
             11191972 => self.owned_call(sm_game::actors::torizo::main_ai),
@@ -1323,6 +1325,8 @@ impl Runtime<'_> {
         use sm_game::actors::species;
         if routine == 10920690 {
             self.owned_call(sm_game::actors::ridley::draw_baby_metroid_and_door);
+        } else if routine == 11069550 {
+            self.owned_call(sm_game::actors::blue_brinstar_face_block::cycle_palette);
         } else if !self.bank_a9_routine(routine) && !species::lease_draw_hook(routine, self) {
             self.foreign(|game| species::draw_hook(routine, game));
         }

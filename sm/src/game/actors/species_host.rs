@@ -44,11 +44,4 @@ impl sm_game::actors::species::ShotHost for Game {
     }
 }
 
-impl sm_game::actors::species::DrawHookHost for Game {
-    fn native_draw_hook(&mut self, hook: sm_game::actors::species::NativeDrawHook) {
-        use sm_game::actors::species::NativeDrawHook::*;
-        match hook {
-            BlueFaceBlockPalette => sm_game::actors::blue_brinstar_face_block::cycle_palette(self),
-        }
-    }
-}
+impl sm_game::actors::species::DrawHookHost for Game {}
