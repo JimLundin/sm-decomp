@@ -33,9 +33,9 @@ Session would retire the list.
 The engine-only gate (`lock-gate.yml`) checks every seeded and boot corpus row
 and every route room against the faithful oracle's digest lock
 (`scenarios/lock.toml`). These scenarios are not locked; they stay on the patched
-lockstep corpus and route jobs until the cause is fixed. Each is listed in
-`UNLOCKED` in `.github/scripts/lock_gate.py`, which fails if a listed scenario
-locks or an unlisted one is missing; the list only shrinks. Ticks are the first
+lockstep corpus and route jobs until the cause is fixed. Each carries an
+`unlocked` note in its `scenarios/*.toml` file; `tools/scenario.py lock --check`
+fails if a noted scenario locks or an unnoted one is missing; the notes only shrink. Ticks are the first
 divergence of an engine free run against the faithful oracle's trace (the
 localization `check-lock` prints), recorded 2026-11-01 on `land/batch13`.
 

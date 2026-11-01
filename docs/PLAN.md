@@ -147,7 +147,7 @@ work and authorizes no repeated accepted campaign.
    flags. Direct rustc uses explicit -D warnings, including detached/mutation builds.
    Fix diagnostics; blanket suppression and historical warning-bearing builds do
    not qualify this strict profile. Denied work never passes.
-2. verify_dll.py --corpus movies/segments.toml --segment for every affected named row,
+2. verify_dll.py --corpus scenarios --segment for every affected named row,
    plus door-loading-lag-nmi,tas-ceres-four-doors,area-crateria,item-morph-ball; zero failures.
    No reached row: A adds one; B moves unchanged and records uncovered: <function> in qualification.
 3. Nothing extra routinely: no mutation/independent controls/frontend metadata, optimized

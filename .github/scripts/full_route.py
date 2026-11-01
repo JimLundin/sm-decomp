@@ -15,10 +15,14 @@ from the oracle's, so later inputs land early and the room never ends (72 of
 79 local failures). Such a row only expects gameplay (state 8). Every frame compares WRAM, VRAM, CGRAM, OAM, PPU state and pixels
 against the original, as corpus rows do.
 
+Each room is a scenario in scenarios/route-R.toml; scenarios/lock.toml pins
+its inputs and seed and the ci-data bundle that holds them (tools/scenario.py).
+
 Local (needs the ROM, the movie and the original capture with its lag logs):
-  inputs                 write movies/chain-100-NNNN.inputs and the pinned
-                         movies/full-route-chain.csv (steps, input SHA-256)
+  inputs                 write movies/chain-100-NNNN.inputs, the route's
+                         scenarios (steps, next room) and their pins
   pack BUNDLE            encrypt the seeds and inputs with the ROM-derived key
+                         and pin the bundle
 CI:
   plan                   write the job matrix to GITHUB_OUTPUT
   restore BUNDLE         restore the pinned bundle (ROM in rom/sm.smc)
@@ -26,56 +30,33 @@ CI:
                          passing ARGS (e.g. --mode check-lock --lock F, which
                          replays only the rooms F locks)
 
-Nothing ROM-derived is committed: the CSVs hold room ids, step counts, frame
-numbers and SHA-256 digests only.
+Nothing ROM-derived is committed: the scenarios and the room-seed CSVs hold
+room ids, step counts, frame numbers and SHA-256 digests only.
 """
 import csv, hashlib, io, json, os, pathlib, re, subprocess, sys, tarfile
 
 ROUTE = os.environ.get("FULL_ROUTE", "100")
 REGIONS = ("wram", "sram", "vram", "cgram", "oam", "apuram")
-# Per route: capture, committed room-seed index, pinned chain CSV, movie and its
-# length, and the encrypted ci-data asset with the seeds and inputs (None until
-# published).
+# Per route: capture, committed room-seed index, movie and its length.
 ROUTES = {
     "100": dict(capture="100-input-phase", rooms="movies/room-seeds-100-input-phase.csv",
-                chain="movies/full-route-chain.csv", movie="movies/super-metroid-100-4010.lsmv",
-                frames=222788, asset="full-route-chain-v1-72e0f64e0d47b53d.tar.gz.enc",
-                sha256="72e0f64e0d47b53d5110cb8c31e13571c14bc95684696aa8ce7f62c05a6f6dc1"),
+                movie="movies/super-metroid-100-4010.lsmv", frames=222788),
     "any": dict(capture="any-boundary", rooms="movies/room-seeds-any-boundary.csv",
-                chain="movies/full-route-chain-any.csv", movie="movies/super-metroid-any-3653.lsmv",
-                frames=129712, asset="full-route-chain-any-v1-5d139284193bc614.tar.gz.enc",
-                sha256="5d139284193bc61443855b0fa82128abf44e66f2ad03a7dd5360bbbbef582f03"),
+                movie="movies/super-metroid-any-3653.lsmv", frames=129712),
 }
 _route = ROUTES[ROUTE]
 CAPTURE = _route["capture"]
 SEEDS = pathlib.Path("target/seeds") / CAPTURE
 ROOMS = pathlib.Path(_route["rooms"])
-CHAIN = pathlib.Path(_route["chain"])
-# One generated recipe per job, so jobs can run side by side in one checkout.
-RECIPE = "movies/full-route-chain-{route}-{job}.generated.toml"
 MOVIE = pathlib.Path(_route["movie"])
 MOVIE_FRAMES = _route["frames"]
-BUNDLE_ASSET, BUNDLE_SHA256 = _route["asset"], _route["sha256"]
 # The published routes share one matrix of about WAVES * PARALLEL jobs of
 # similar step totals; full-route.yml runs PARALLEL of them at a time.
 PARALLEL, WAVES = 8, 2
-# Rooms that stay in lockstep but whose aligned inputs never leave the room;
-# they are reported, not replayed, until the cause is known. Every other room
-# must pass.
-KNOWN_FAILURES = {}
-# Rooms that once exposed sm_game bugs; they must keep passing.
-REGRESSIONS = {} if ROUTE != "100" else {
-    6: "Ceres Ridley's acceleration carry chain times the getaway as on hardware",
-    246: "D387 out-of-room level word wraps like $94's long indexed read",
-    311: "Tourian statue init passes $D7B9 and returned handles as $1993",
-    312: "Tourian statue dust clouds pass $20 and returned handles as $1993",
-    324: "the original sound-clear delay times the escape door as on hardware",
-    328: "escape wall explosion passes A = 1 as $1993",
-    329: "escape wall explosion passes A = 1 as $1993",
-}
-assert not set(KNOWN_FAILURES) & set(REGRESSIONS)
 
-sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[2] / "tools"))
+ROOT = pathlib.Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "tools"))
+import scenario  # noqa: E402
 
 
 def rooms():
@@ -83,9 +64,21 @@ def rooms():
         return list(csv.DictReader(stream))
 
 
-def chain():
-    with CHAIN.open(newline="") as stream:
-        return list(csv.DictReader(stream))
+def chain(route=ROUTE):
+    """The route's rooms in order, from their scenarios and pins."""
+    return [dict(id=row["id"], room_index=row["seed"].split(":")[1], room=row["id"].rsplit("-", 1)[1],
+                 steps=row["frames"], input_sha256=row["input_sha256"], bundle=row.get("bundle"),
+                 pending=row.get("pending"), regression=row.get("regression"))
+            for row in scenario.rows(ROOT) if row.get("chain") == route]
+
+
+def published(route=ROUTE):
+    """The route's ci-data asset and its pinned SHA-256; None until published."""
+    names = {entry["bundle"] for entry in chain(route)}
+    if len(names) != 1 or None in names:
+        return None, None
+    name = names.pop()
+    return name, scenario.read_lock(ROOT).bundles[name]
 
 
 def room_id(route, index, room):
@@ -106,6 +99,7 @@ def inputs():
         waits = sorted(int(event["movie_frame"]) for event in csv.DictReader(stream)
                        if event["kind"] == "no_update_enter")
     entries, rows = [], rooms()
+    notes, lock = scenario.load(ROOT), scenario.read_lock(ROOT)
     for position, row in enumerate(rows):
         index = int(row["room_index"])
         following = rows[position + 1] if position + 1 < len(rows) else None
@@ -126,13 +120,19 @@ def inputs():
                 count -= 1
         data = "".join(f"{word:04X}\r\n" for word in words).encode("ascii")
         pathlib.Path(input_name(index)).write_bytes(data)
-        entries.append({"room_index": index, "room": row["room"], "next_room": following["room"] if following else "",
-                        "ends": ends, "steps": len(words), "input_sha256": hashlib.sha256(data).hexdigest()})
-        print(f"{index:4d} {row['room']} -> {entries[-1]['next_room'] or 'end'} ({ends}): {len(words)} steps", flush=True)
-    with CHAIN.open("w", newline="") as stream:
-        writer = csv.DictWriter(stream, fieldnames=list(entries[0]), lineterminator="\n")
-        writer.writeheader()
-        writer.writerows(entries)
+        name = room_id(ROUTE, index, row["room"])
+        # A room that runs into the next must reach it; one that stops at a wait only expects gameplay.
+        expect = f"room:{following['room']}" if ends == "next-room" else "state:8"
+        entries.append({key: value for key, value in notes.get(name, {}).items()
+                        if key in ("pending", "unlocked", "regression")}
+                       | {"id": name, "start": f"seed:{row['observation_sha256']}", "ticks": len(words),
+                          "facts": [expect]})
+        pin = lock.pins.setdefault(name, {"id": name}) | {"seed": f"{CAPTURE}:{index}"}
+        lock.pins[name] = pin | {"inputs": pathlib.Path(input_name(index)).name,
+                                 "input_sha256": hashlib.sha256(data).hexdigest()}
+        print(f"{index:4d} {row['room']} -> {expect} ({ends}): {len(words)} steps", flush=True)
+    scenario.write_route(ROOT, ROUTE, entries)
+    scenario.write_lock(ROOT / scenario.LOCK, lock)
 
 
 def bundle_files():
@@ -167,13 +167,22 @@ def pack(bundle):
         if process.wait():
             raise SystemExit("bundle encryption failed")
     with open(bundle, "rb") as stream:
-        print(f"Encrypted {len(names)} files; ciphertext SHA-256 {hashlib.file_digest(stream, 'sha256').hexdigest()}")
+        digest = hashlib.file_digest(stream, "sha256").hexdigest()
+    lock = scenario.read_lock(ROOT)
+    for entry in chain():
+        lock.pins[entry["id"]]["bundle"] = pathlib.Path(bundle).name
+    lock.bundles[pathlib.Path(bundle).name] = digest
+    lock.bundles = {name: sha for name, sha in lock.bundles.items()
+                    if any(pin.get("bundle") == name for pin in lock.pins.values())}
+    scenario.write_lock(ROOT / scenario.LOCK, lock)
+    print(f"Encrypted {len(names)} files; ciphertext SHA-256 {digest}; pinned in {scenario.LOCK}")
 
 
 def restore(bundle):
     import ci_seed_data
+    pinned = published()[1]
     with open(bundle, "rb") as stream:
-        if not BUNDLE_SHA256 or hashlib.file_digest(stream, "sha256").hexdigest() != BUNDLE_SHA256:
+        if not pinned or hashlib.file_digest(stream, "sha256").hexdigest() != pinned:
             raise SystemExit("chain bundle SHA-256 mismatch")
     wanted = set(bundle_files())
     command, env = cipher(True, bundle)
@@ -207,11 +216,7 @@ def jobs():
     rooms go heaviest first into the lightest group.
     """
     entries = chain()
-    total = 0
-    for settings in ROUTES.values():
-        if settings["asset"] is not None:
-            with open(settings["chain"], newline="") as stream:
-                total += sum(int(row["steps"]) for row in csv.DictReader(stream))
+    total = sum(int(entry["steps"]) for route in ROUTES if published(route)[0] for entry in chain(route))
     target = total / (WAVES * PARALLEL)
     groups = [[] for _ in range(max(1, round(sum(int(e["steps"]) for e in entries) / target)))]
     for entry in sorted(entries, key=lambda entry: -int(entry["steps"])):
@@ -224,15 +229,16 @@ def jobs():
 def plan():
     """One matrix over every published route; each job names its route and asset."""
     include = []
-    for route, settings in ROUTES.items():
-        if settings["asset"] is None:
+    for route in ROUTES:
+        asset = published(route)[0]
+        if asset is None:
             print(f"route {route}: chain bundle not published yet; skipped")
             continue
         planned = subprocess.run([sys.executable, __file__, "jobs"], env=dict(os.environ, FULL_ROUTE=route),
                                  check=True, capture_output=True, text=True).stdout
-        include += [dict(job, route=route, asset=settings["asset"]) for job in json.loads(planned)]
+        include += [dict(job, route=route, asset=asset) for job in json.loads(planned)]
     if not include:
-        raise SystemExit("no chain bundle is published; see ROUTES in this script")
+        raise SystemExit(f"no chain bundle is published; see the route pins in {scenario.LOCK}")
     # Start the heaviest jobs first across both routes.
     include.sort(key=lambda job: -job["steps"])
     with open(os.environ["GITHUB_OUTPUT"], "a") as out:
@@ -249,45 +255,31 @@ def locked(extra):
     """The scenario ids an oracle digest lock passed as --lock F holds, if any."""
     if "--lock" not in extra:
         return None
-    import tomllib
-    path = pathlib.Path(extra[extra.index("--lock") + 1])
-    if not path.exists():
-        return set()
-    with path.open("rb") as stream:
-        return {entry["id"] for entry in tomllib.load(stream).get("scenario", [])}
+    return set(scenario.read_lock(ROOT, pathlib.Path(extra[extra.index("--lock") + 1])).entries)
 
 
 def run(job, *extra):
-    observation = {row["room_index"]: row["observation_sha256"] for row in rooms()}
     group = jobs()[int(job)]
     # Checking a lock replays only the rooms it holds; recording one, every room.
     lock = locked(extra) if "check-lock" in extra else None
-    ids, lines = [], []
+    ids = []
     for entry in group:
-        index = int(entry["room_index"])
-        name = room_id(ROUTE, index, entry["room"])
-        if index in KNOWN_FAILURES:
-            print(f"KNOWN {name}: {KNOWN_FAILURES[index]}", flush=True)
+        name = entry["id"]
+        if entry["pending"]:
+            print(f"KNOWN {name}: {entry['pending']}", flush=True)
             continue
         if lock is not None and name not in lock:
             print(f"UNLOCKED {name}: not in the lock; stays on lockstep", flush=True)
             continue
-        if index in REGRESSIONS:
-            print(f"REGRESSION {name}: {REGRESSIONS[index]}", flush=True)
+        if entry["regression"]:
+            print(f"REGRESSION {name}: {entry['regression']}", flush=True)
         ids.append(name)
-        expect = f"room:{entry['next_room']}" if entry["ends"] == "next-room" else "state:8"
-        lines += ["[[segment]]", f'id = "{name}"', f'seed = "{CAPTURE}:{index}"',
-                  f'seed_sha256 = "{observation[entry["room_index"]]}"',
-                  f'inputs = "{pathlib.Path(input_name(index)).name}"', f'input_sha256 = "{entry["input_sha256"]}"',
-                  f"frames = {entry['steps']}", f'expect = ["{expect}"]', ""]
-    header = ["# Generated by .github/scripts/full_route.py run; not committed.", "version = 1",
-              "required = [" + ", ".join(f'"{name}"' for name in ids) + "]", ""]
-    recipe = pathlib.Path(RECIPE.format(route=ROUTE, job=job))
-    recipe.write_text("\n".join(header + lines))
     print(f"job {job}: rooms {', '.join(entry['room_index'] for entry in group)}, "
           f"{sum(int(entry['steps']) for entry in group)} steps", flush=True)
-    subprocess.run([sys.executable, "tools/verify_dll.py", "rom/sm.smc", "--corpus", str(recipe),
-                    "--no-build", "--direct", *extra], check=True)
+    if ids:
+        subprocess.run([sys.executable, "tools/verify_dll.py", "rom/sm.smc", "--corpus", "scenarios",
+                        "--no-build", "--direct", *[part for name in ids for part in ("--segment", name)],
+                        *extra], check=True)
 
 
 if __name__ == "__main__":

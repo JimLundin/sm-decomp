@@ -199,7 +199,7 @@ jobs:
           } else {
             $rows = @()
             foreach ($id in $env:SEGMENTS.Split(' ')) { $rows += @('--segment', $id) }
-            python tools/verify_dll.py rom/sm.smc --corpus movies/segments.toml --no-build --direct --mode check-lock --lock scenarios/lock.toml @rows 2>&1 | Tee-Object -FilePath $log | Select-String -CaseSensitive -Pattern $names | ForEach-Object { $_.Line }
+            python tools/verify_dll.py rom/sm.smc --corpus scenarios --no-build --direct --mode check-lock --lock scenarios/lock.toml @rows 2>&1 | Tee-Object -FilePath $log | Select-String -CaseSensitive -Pattern $names | ForEach-Object { $_.Line }
           }
           $code = $LASTEXITCODE
           "### ${{ matrix.name }}" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8

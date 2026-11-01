@@ -1,6 +1,7 @@
 name: Corpus coverage
 
-# Runs movies/segments.toml rows with an LLVM-instrumented verifier DLL and
+# Runs the corpus scenarios (every scenario but the route rooms)
+# with an LLVM-instrumented verifier DLL and
 # reports which engine sources (crates/sm_game, sm/src/game) the corpus never
 # executes. Manual only; landings use the uninstrumented corpus replay.
 # With full_route, the 100% room chain (full-route.yml) also runs instrumented
@@ -243,7 +244,7 @@ jobs:
         run: |
           $rows = @()
           foreach ($id in $env:SEGMENTS.Split(' ')) { $rows += @('--segment', $id) }
-          python tools/verify_dll.py rom/sm.smc --corpus movies/segments.toml --no-build --direct @rows 2>&1 | Tee-Object -FilePath corpus.log
+          python tools/verify_dll.py rom/sm.smc --corpus scenarios --no-build --direct @rows 2>&1 | Tee-Object -FilePath corpus.log
           $code = $LASTEXITCODE
           "### $env:SEGMENTS" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
           '```' | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8

@@ -5,8 +5,8 @@ A recipe is a short script in the input language below. It holds only
 controller words chosen here, nothing from the ROM or a movie, except that a
 seeded row's first words must be the movie words latched at its seed; --prefix
 takes them from that seed's imported movie inputs. The output stays local and
-private like every other corpus input; its row in movies/segments.toml pins
-its SHA-256.
+private like every other corpus input; scenarios/lock.toml pins its SHA-256
+for its scenario in scenarios/corpus.toml.
 
 Input language (statements end at a newline or ';', '#' starts a comment):
 
@@ -28,7 +28,8 @@ starting points whose timing must be checked against the replay of each use.
     python tools/authored_inputs.py sweep draygon-release movies --prefix target/seed-low-129.inputs
     python tools/authored_inputs.py check
 
-A sweep writes one input per parameter set and prints its segments.toml rows.
+A sweep writes one input per parameter set and prints its scenarios and the
+tools/scenario.py lock command that pins their inputs.
 """
 import argparse
 import csv
@@ -449,13 +450,10 @@ def sweep(name, out_dir, prefix):
                           if len(plan.values[key]) > 1)
         stem = f"authored-{plan.row}-{suffix}"
         write(out_dir / f"{stem}.inputs", data)
-        expect = ", ".join(f'"{item}"' for item in plan.expect)
-        print(f'\n[[segment]]\nid = "{plan.row}-{suffix}"\nseed = "{plan.seed}"\n'
-              f'seed_sha256 = "{seed_sha256(plan.seed)}"\ninputs = "{stem}.inputs"\n'
-              f'input_sha256 = "{hashlib.sha256(encode(data)).hexdigest()}"\n'
-              f"start_frame = 0\nframes = {len(data)}\nexpect = [{expect}]")
-        if suffix in plan.hits:
-            print("require_hit = [" + ", ".join(f'"{hit}"' for hit in plan.hits[suffix]) + "]")
+        facts = ", ".join(f'"{item}"' for item in [*plan.expect, *(f"probe:{hit}" for hit in plan.hits.get(suffix, []))])
+        print(f'\n[[scenario]]\nid = "{plan.row}-{suffix}"\nstart = "seed:{seed_sha256(plan.seed)}"\n'
+              f"ticks = {len(data)}\nfacts = [{facts}]\n"
+              f"# python tools/scenario.py lock --pin {plan.row}-{suffix} seed={plan.seed} inputs={stem}.inputs")
 
 
 def check():
