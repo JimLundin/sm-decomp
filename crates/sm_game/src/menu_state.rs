@@ -130,6 +130,9 @@ pub fn set_menu_byte(word: &mut u16, lane: usize, value: u8) {
 pub const MENU: usize = 0x727;
 pub const WORDS: usize = 31;
 
+/// The menu state and the menu screens a menu frame holds as one copy.
+pub type MenuFrame = (MenuState, MenuScreens);
+
 /// The menu screens' words outside the pause menu cohort, owned by
 /// `Session::menu_screens`. Each is the little-endian value of its two RAM
 /// bytes; `session_encoding` projects them and the auxiliary gameplay

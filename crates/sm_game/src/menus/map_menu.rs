@@ -7,7 +7,7 @@ use crate::display::control::{Layers, MainScreen, MainWindowMask, SubScreen, Sub
 use crate::imported::{Imported, grid_word, word as table_word};
 use crate::menu_state::set_menu_byte;
 use crate::menu_state::{MENU, MenuState, WORDS};
-use crate::menu_state::{MapScreenState, MenuScreens};
+use crate::menu_state::{MapScreenState, MenuFrame, MenuScreens};
 use crate::session_cohort;
 use sm_data::pause_menu::{
     ANIMATION_PALETTE_ADDRESS, ANIMATION_SPRITEMAP_ADDRESS, ANIMATIONS, AREA_MAP_ADDRESS,
@@ -90,12 +90,9 @@ pub fn advance<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
         close_room_window::<H>,
         fade_to_options::<H>,
     ];
-    session_cohort::with(
-        game,
-        |game, (menu, screens): &mut (MenuState, MenuScreens)| {
-            states[menu.menu_index as usize](menu, game, screens)
-        },
-    );
+    session_cohort::with(game, |game, (menu, screens): &mut MenuFrame| {
+        states[menu.menu_index as usize](menu, game, screens)
+    });
     super::pending_wait(game)
 }
 fn fade_to_options<H: Host + ?Sized>(

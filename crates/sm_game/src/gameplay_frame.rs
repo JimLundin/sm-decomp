@@ -14,7 +14,7 @@ use crate::display_refresh;
 use crate::enemy_projectiles;
 use crate::gameplay_rules::{finish_frame, finish_health_and_time};
 use crate::menu_state::MenuState;
-use crate::menu_state::{DeathSequence, MenuScreens, OptionsMenu, SaveSelection};
+use crate::menu_state::{DeathSequence, MenuFrame, MenuScreens, OptionsMenu, SaveSelection};
 use crate::menus::prelude::CoroutineRet;
 use crate::menus::{
     controller_input, file_menu, game_over, map_menu, options_settings, pause_controls,
@@ -538,22 +538,22 @@ fn setup_pause<H: Host>(game: &mut H) -> CoroutineRet {
     word_transfers!(game, ascending, 256; pause_map(384) <- le(PALETTE_BUFFER, 0));
     word_transfers!(game, ascending, 256; le(PALETTE_BUFFER, 0) <- rom(0xb6f000, 0));
     display_refresh::pause_graphics(true, game);
-    session_cohort::with(game, |game, menu: &mut MenuState| {
-        pause_controls::initialize(menu, game)
+    session_cohort::with(game, |game, (menu, screens): &mut MenuFrame| {
+        pause_controls::initialize(menu, screens, game)
     });
     0
 }
 
 /// Pause phase: one pause menu frame.
 fn advance_pause<H: Host>(game: &mut H) -> CoroutineRet {
-    crate::session_cohort::with(game, |game, menu: &mut MenuState| {
+    session_cohort::with(game, |game, (menu, screens): &mut MenuFrame| {
         controller_input::filter(3, game);
         // Preserve the eight-entry bounds failure before any tab work.
         let tab = [0, 1, 2, 3, 4, 5, 6, 7][usize::from(menu.menu_index)];
         match tab {
-            0 => pause_controls::update_map(menu, game),
+            0 => pause_controls::update_map(menu, screens, game),
             1 => pause_controls::update_equipment(menu, game),
-            2 | 5 => pause_controls::fade_out_tab(menu, game, tab == 5, |game| {
+            2 | 5 => pause_controls::fade_out_tab(menu, screens, game, tab == 5, |game| {
                 crate::display_refresh::enable(true, game);
             }),
             3 | 6 => pause_controls::load_tab(menu, game, tab == 3, |game| {
@@ -563,8 +563,8 @@ fn advance_pause<H: Host>(game: &mut H) -> CoroutineRet {
                     display_refresh::upload_pause_map(game);
                 }
             }),
-            4 => pause_controls::fade_tab::<true, _>(menu, game),
-            _ => pause_controls::fade_tab::<false, _>(menu, game),
+            4 => pause_controls::fade_tab::<true, _>(menu, screens, game),
+            _ => pause_controls::fade_tab::<false, _>(menu, screens, game),
         }
         hud::advance(game);
         map_menu::animate_palette(menu, game);
@@ -626,8 +626,8 @@ fn setup_unpause<H: Host>(game: &mut H) -> CoroutineRet {
 /// Pause and death phases: fade to black before unpausing or game over.
 fn fade_out<H: Host>(entry: Entry, game: &mut H) -> CoroutineRet {
     if matches!(entry, Entry::UnpauseFadeOut) {
-        session_cohort::with(game, |game, menu: &mut MenuState| {
-            pause_controls::draw_unpause(menu, game)
+        session_cohort::with(game, |game, (menu, screens): &mut MenuFrame| {
+            pause_controls::draw_unpause(menu, screens, game)
         });
     }
     game.fade(false);

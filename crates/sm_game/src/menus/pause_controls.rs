@@ -1,8 +1,8 @@
 //! Pause-screen lifecycle, input and saved graphics; RAM remains authoritative.
 use super::prelude::*;
 use super::{equipment_menu, map_menu, menu_tilemap};
-use crate::menu_state::MenuScreens;
 use crate::menu_state::MenuState;
+use crate::menu_state::{MenuFrame, MenuScreens};
 use crate::ram::RawRam as _;
 use crate::ram::{word, words as fields};
 use crate::session_cohort;
@@ -15,30 +15,32 @@ pub fn hook_address<H: crate::menus::host::Host + ?Sized>(pausing: bool, game: &
     u32::from_ne_bytes(bytes) & 0xffffff
 }
 
-pub fn initialize<H: crate::menus::host::Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
-    session_cohort::with(game, |game, screens: &mut MenuScreens| {
-        map_menu::reset_animations(&mut screens.map, menu, game);
-        menu_tilemap::equipment_icons(game);
-        menu_tilemap::pause_labels(0, game);
-        menu_tilemap::queue_pause_labels(game);
-        map_menu::scroll_limits(screens, game);
-        map_menu::center_map(0x80, &screens.map, game);
-        crate::screen_fade::set_both(game, 1, 1);
-        menu.pausemenu_leftarrow_animation_frame = 0;
-        menu.pausemenu_palette_animation_timer = 1;
-        screens.map.scrolling_direction = 0;
-        screens.map.scrolling_speed_index = 0;
-    });
+pub fn initialize<H: crate::menus::host::Host + ?Sized>(
+    menu: &mut MenuState,
+    screens: &mut MenuScreens,
+    game: &mut H,
+) {
+    map_menu::reset_animations(&mut screens.map, menu, game);
+    menu_tilemap::equipment_icons(game);
+    menu_tilemap::pause_labels(0, game);
+    menu_tilemap::queue_pause_labels(game);
+    map_menu::scroll_limits(screens, game);
+    map_menu::center_map(0x80, &screens.map, game);
+    crate::screen_fade::set_both(game, 1, 1);
+    menu.pausemenu_leftarrow_animation_frame = 0;
+    menu.pausemenu_palette_animation_timer = 1;
+    screens.map.scrolling_direction = 0;
+    screens.map.scrolling_speed_index = 0;
     crate::display_refresh::queue_fx_clear(game);
     word!(game.GAME_STATE += 1);
 }
 
 pub fn fade_in<H: crate::menus::host::Host + ?Sized>(game: &mut H) -> u8 {
-    crate::session_cohort::with(game, |game, menu: &mut MenuState| {
+    session_cohort::with(game, |game, (menu, screens): &mut MenuFrame| {
         if menu.menu_index != 0 {
             draw_equipment(menu, game);
         } else {
-            session_cohort::with(game, |game, screens| draw_map(menu, game, screens));
+            draw_map(menu, game, screens);
         }
         game.fade(true);
         if game.ram().read_byte(crate::ram::mirror::INIDISP) == 15 {
@@ -49,13 +51,15 @@ pub fn fade_in<H: crate::menus::host::Host + ?Sized>(game: &mut H) -> u8 {
     })
 }
 
-pub fn update_map<H: crate::menus::host::Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
+pub fn update_map<H: crate::menus::host::Host + ?Sized>(
+    menu: &mut MenuState,
+    screens: &mut MenuScreens,
+    game: &mut H,
+) {
     advance(menu, game);
-    session_cohort::with(game, |game, screens: &mut MenuScreens| {
-        map_menu::scroll_arrows(map_menu::MapScreen::Pause, &mut screens.map, menu, game);
-        map_menu::scroll(&mut screens.map, game);
-        draw_map(menu, game, screens);
-    });
+    map_menu::scroll_arrows(map_menu::MapScreen::Pause, &mut screens.map, menu, game);
+    map_menu::scroll(&mut screens.map, game);
+    draw_map(menu, game, screens);
     menu.pause_screen_mode = 0;
 }
 
@@ -68,12 +72,13 @@ pub fn update_equipment<H: crate::menus::host::Host + ?Sized>(menu: &mut MenuSta
 
 pub fn fade_tab<const EQUIPMENT: bool, H: crate::menus::host::Host + ?Sized>(
     menu: &mut MenuState,
+    screens: &mut MenuScreens,
     game: &mut H,
 ) {
     if EQUIPMENT {
         draw_equipment(menu, game);
     } else {
-        session_cohort::with(game, |game, screens| draw_map(menu, game, screens));
+        draw_map(menu, game, screens);
     }
     menu.pause_screen_mode = u16::from(EQUIPMENT);
     game.fade(true);
@@ -89,6 +94,7 @@ pub fn fade_tab<const EQUIPMENT: bool, H: crate::menus::host::Host + ?Sized>(
 
 pub fn fade_out_tab<H: crate::menus::host::Host + ?Sized>(
     menu: &mut MenuState,
+    screens: &mut MenuScreens,
     game: &mut H,
     equipment: bool,
     enable: fn(&mut H),
@@ -96,11 +102,9 @@ pub fn fade_out_tab<H: crate::menus::host::Host + ?Sized>(
     if equipment {
         draw_equipment(menu, game);
     } else {
-        session_cohort::with(game, |game, screens: &mut MenuScreens| {
-            map_menu::display_elevator_destinations(game);
-            map_menu::draw_player_marker(&mut screens.map, game);
-            map_menu::draw_icons(map_menu::IconMode::Pause, screens, menu, game);
-        });
+        map_menu::display_elevator_destinations(game);
+        map_menu::draw_player_marker(&mut screens.map, game);
+        map_menu::draw_icons(map_menu::IconMode::Pause, screens, menu, game);
     }
     draw_shoulder(menu, game);
     // Equipment fade preserves this mode; map fade resets it after drawing.
@@ -155,18 +159,20 @@ pub fn draw_equipment<H: crate::menus::host::Host + ?Sized>(menu: &mut MenuState
     menu_tilemap::reserve_tanks(menu, game);
 }
 
-pub fn draw_unpause<H: crate::menus::host::Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
+pub fn draw_unpause<H: crate::menus::host::Host + ?Sized>(
+    menu: &mut MenuState,
+    screens: &mut MenuScreens,
+    game: &mut H,
+) {
     draw_start(menu, game);
     if menu.pause_screen_mode == 1 {
         draw_equipment(menu, game);
         draw_shoulder(menu, game);
     } else {
         // Unpause keeps the opposite icon/marker order from the active map.
-        session_cohort::with(game, |game, screens: &mut MenuScreens| {
-            map_menu::display_elevator_destinations(game);
-            map_menu::draw_icons(map_menu::IconMode::Pause, screens, menu, game);
-            map_menu::draw_player_marker(&mut screens.map, game);
-        });
+        map_menu::display_elevator_destinations(game);
+        map_menu::draw_icons(map_menu::IconMode::Pause, screens, menu, game);
+        map_menu::draw_player_marker(&mut screens.map, game);
     }
 }
 
