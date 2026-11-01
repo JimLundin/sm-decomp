@@ -19,7 +19,7 @@ use crate::display_refresh::GraphicsAsset;
 use crate::inventory;
 use crate::menu_state::OptionsMenu;
 use crate::menu_state::SaveSelection;
-use crate::menus::prelude::{display_scroll, owned};
+use crate::menus::prelude::display_scroll;
 use crate::ram::RawRam as _;
 use crate::ram::mirror;
 use crate::ram::word;

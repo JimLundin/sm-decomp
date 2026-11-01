@@ -19,7 +19,7 @@ use crate::cinematic_objects::CinematicObjects;
 use crate::cinematic_state::{Cinematic, Word, cinematic};
 use crate::display_refresh::GraphicsAsset;
 use crate::intro_sequence::countdown;
-use crate::menus::prelude::{display_scroll, owned};
+use crate::menus::prelude::display_scroll;
 use crate::ram::RawRam as _;
 use crate::ram::mirror;
 use crate::ram::word;

@@ -2,7 +2,7 @@
 use super::Host;
 use super::{add_native_motion, calculate_blocks, calculate_scrolls, layer2_position, update_map};
 use crate::camera::{set_bg1_offset, set_layer1};
-use crate::ram::{word, words as fields};
+use crate::ram::words as fields;
 use crate::ram_words as words;
 use crate::room_entry::content::Axis;
 

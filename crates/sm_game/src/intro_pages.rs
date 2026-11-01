@@ -13,7 +13,7 @@ use crate::cinematic::{
 use crate::constants::bank_8d::ADDR_K_PALFX_E1BC;
 use crate::constants::bank_91::{ADDR_STRU_91877E, ADDR_STRU_918784};
 use crate::constants::samus_poses::K_POSE_02_FACE_L_NORMAL;
-use crate::menus::prelude::{HdmaObjectDefinition, display_scroll, do_until, owned};
+use crate::menus::prelude::{HdmaObjectDefinition, display_scroll, do_until};
 use crate::ram::word;
 use crate::visual_state::{CinematicFade, CinematicTilemap};
 use sm_data::intro_palette::{

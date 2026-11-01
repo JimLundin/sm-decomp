@@ -4,7 +4,7 @@ use crate::cinematic_objects::draw_cinematic_sprites;
 use crate::cinematic_state::Cinematic;
 use crate::display::control::{Brightness, Layers, MainWindowMask, SubScreen};
 use crate::menu_state::OptionsMenu;
-use crate::menus::prelude::{display_scroll, owned};
+use crate::menus::prelude::display_scroll;
 use crate::ram::RawRam as _;
 
 pub fn configure_cinematic_display<H: crate::menus::host::Host + ?Sized>(
