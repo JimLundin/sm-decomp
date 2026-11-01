@@ -96,18 +96,38 @@ fn debug_controls<H: Host + ?Sized>(game: &mut H) {
                     let entering_swap = (!(word!(game.JOYPAD_DBG_FLAGS)) & 0x8000) != 0;
                     word!(game.JOYPAD_DBG_FLAGS ^= (0x8000u16));
                     if entering_swap {
+                        let [missiles, supers, bombs] =
+                            crate::session_cohort::load::<crate::inventory::Inventory, _>(game)
+                                .ammunition
+                                .map(|supply| supply.current);
                         word! { game;
-                            JOYPAD_DBG_MISSILES_SWAP = inventory!(game.Missiles);
-                            JOYPAD_DBG_SUPER_MISSILES_SWAP = inventory!(game.SuperMissiles);
-                            JOYPAD_DBG_POWER_BOMBS_SWAP = inventory!(game.PowerBombs);
+                            JOYPAD_DBG_MISSILES_SWAP = missiles;
+                            JOYPAD_DBG_SUPER_MISSILES_SWAP = supers;
+                            JOYPAD_DBG_POWER_BOMBS_SWAP = bombs;
                         }
-                        inventory! { game, 0; Missiles, SuperMissiles, PowerBombs }
+                        crate::session_cohort::with(
+                            game,
+                            |_, inventory: &mut crate::inventory::Inventory| {
+                                for supply in &mut inventory.ammunition {
+                                    supply.current = 0;
+                                }
+                            },
+                        );
                     } else {
-                        inventory! { game;
-                            Missiles = word!(game.JOYPAD_DBG_MISSILES_SWAP);
-                            SuperMissiles = word!(game.JOYPAD_DBG_SUPER_MISSILES_SWAP);
-                            PowerBombs = word!(game.JOYPAD_DBG_POWER_BOMBS_SWAP);
-                        }
+                        let swapped = [
+                            word!(game.JOYPAD_DBG_MISSILES_SWAP),
+                            word!(game.JOYPAD_DBG_SUPER_MISSILES_SWAP),
+                            word!(game.JOYPAD_DBG_POWER_BOMBS_SWAP),
+                        ];
+                        crate::session_cohort::with(
+                            game,
+                            |_, inventory: &mut crate::inventory::Inventory| {
+                                for (supply, value) in inventory.ammunition.iter_mut().zip(swapped)
+                                {
+                                    supply.current = value;
+                                }
+                            },
+                        );
                     }
                 }
                 if (word!(game.JOYPAD_DBG_2) & 0x40) != 0 {

@@ -15,7 +15,7 @@ impl<T> Host for T where
 }
 
 pub fn finish_health_and_time<H: Host + ?Sized>(game: &mut H) {
-    let inventory = crate::inventory::current(game);
+    let inventory = crate::session_cohort::load::<crate::inventory::Inventory, _>(game);
     if (inventory.health.current as i16) <= 0 {
         if (inventory.reserve_mode & 1) != 0 && inventory.reserve_health != 0 {
             word!(game.TIME_IS_FROZEN_FLAG = 0x8000);

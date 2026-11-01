@@ -172,8 +172,12 @@ pub fn initial<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     crate::room_view::set(game, crate::room_view::Word::Height, 16);
     game.initialize_player();
     game.update_beam_tiles_and_palette();
-    inventory::set(game, inventory::Word::MaxMissiles, INTRO_MISSILES);
-    inventory::set(game, inventory::Word::Missiles, INTRO_MISSILES);
+    crate::session_cohort::with(game, |_, inventory: &mut inventory::Inventory| {
+        inventory.ammunition[0] = inventory::Supply {
+            current: INTRO_MISSILES,
+            maximum: INTRO_MISSILES,
+        };
+    });
     *cine.intro_samus_display() = 0;
     word!(game.SAMUS_DRAW_HANDLER = DEFAULT_DRAW_HANDLER);
     crate::menus::controller_input::use_cinematic_bindings(game);
@@ -597,11 +601,9 @@ pub fn zebes_load_game_data<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H
     game.ram().write_byte(mirror::INIDISP, 0x80);
     clear_cinematic_objects(cine);
     word!(game.GAME_STATE = LOADING_GAME_DATA);
-    inventory::set(
-        game,
-        inventory::Word::Health,
-        inventory::get(game, inventory::Word::MaxHealth),
-    );
+    crate::session_cohort::with(game, |_, inventory: &mut inventory::Inventory| {
+        inventory.health.current = inventory.health.maximum;
+    });
 }
 
 /// Pre-instruction - the confused baby metroid waits for its egg to hatch

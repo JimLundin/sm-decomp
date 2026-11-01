@@ -140,7 +140,9 @@ pub fn draw_cinematic_item_percentage<H: crate::menus::host::Host + ?Sized>(game
             game,
             ITEM_BIT_ADDRESS,
             index,
-        ) & crate::inventory::get(game, crate::inventory::Word::CollectedItems)
+        ) & crate::session_cohort::load::<crate::inventory::Inventory, _>(game)
+            .equipment
+            .owned
             != 0
         {
             count = count.wrapping_add(1);
@@ -152,7 +154,9 @@ pub fn draw_cinematic_item_percentage<H: crate::menus::host::Host + ?Sized>(game
             game,
             BEAM_BIT_ADDRESS,
             index,
-        ) & crate::inventory::get(game, crate::inventory::Word::CollectedBeams)
+        ) & crate::session_cohort::load::<crate::inventory::Inventory, _>(game)
+            .beams
+            .owned
             != 0
         {
             count = count.wrapping_add(1);

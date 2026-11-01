@@ -142,7 +142,7 @@ pub fn begin_prescaled_explosion<H: Host + ?Sized>(game: &mut H) {
 // Rejection and pose publication precede Session admission, including import failures.
 pub fn try_crystal_flash<H: Host + ?Sized>(game: &mut H) -> bool {
     use crate::ram::checked_word as word;
-    let inventory = crate::inventory::current(game);
+    let inventory = crate::session_cohort::load::<crate::inventory::Inventory, _>(game);
     if !forced::crystal_flash_allowed(
         word!(game.GAME_STATE),
         word!(game.JOYPAD1_LASTKEYS),

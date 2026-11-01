@@ -1373,9 +1373,13 @@ pub fn animate_pause_sprite<H: Host + ?Sized>(
 }
 
 pub fn draw_equipment_selector<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
-    if inventory!(game.MaxReserveHealth)
-        | inventory!(game.CollectedItems)
-        | inventory!(game.CollectedBeams)
+    if crate::session_cohort::load::<crate::inventory::Inventory, _>(game).reserve_capacity
+        | crate::session_cohort::load::<crate::inventory::Inventory, _>(game)
+            .equipment
+            .owned
+        | crate::session_cohort::load::<crate::inventory::Inventory, _>(game)
+            .beams
+            .owned
         == 0
     {
         return;

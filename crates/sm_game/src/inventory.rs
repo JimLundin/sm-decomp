@@ -21,6 +21,21 @@ use crate::ram::CompatibilityRam;
 
 pub use crate::item_pickups::{Inventory, Loadout, Supply};
 
+impl Inventory {
+    /// The value of the word `word` names.
+    pub fn word(&self, word: Word) -> u16 {
+        use crate::session_cohort::Cohort as _;
+        let mut copy = self.clone();
+        let mut value = 0;
+        copy.words(|at, field| {
+            if at == word.address() {
+                value = *field;
+            }
+        });
+        value
+    }
+}
+
 impl crate::session_cohort::Cohort for Inventory {
     fn words(&mut self, mut visit: impl FnMut(usize, &mut u16)) {
         visit(Word::EquippedItems.address(), &mut self.equipment.active);

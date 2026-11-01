@@ -586,8 +586,9 @@ pub fn fade_out_to_ceres<H: crate::menus::host::Host + ?Sized>(
         );
         if restore_samus {
             crate::menus::controller_input::restore_cinematic_bindings(game);
-            crate::inventory::set(game, crate::inventory::Word::MaxMissiles, 0);
-            crate::inventory::set(game, crate::inventory::Word::Missiles, 0);
+            crate::session_cohort::with(game, |_, inventory: &mut crate::inventory::Inventory| {
+                inventory.ammunition[0] = crate::inventory::Supply::default();
+            });
         }
     }
 }

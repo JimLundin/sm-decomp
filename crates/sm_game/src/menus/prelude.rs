@@ -62,9 +62,6 @@ macro_rules! owned {
     };
 }
 pub(crate) use owned;
-/// Samus's inventory words ([`crate::inventory::Word`]).
-macro_rules! inventory { ($($t:tt)*) => { owned!([$crate::inventory] $($t)*) }; }
-pub(crate) use inventory;
 /// The BG scroll mirrors ([`crate::display::sequence::scroll::Word`]).
 macro_rules! scroll { ($($t:tt)*) => { owned!([$crate::display::sequence::scroll] $($t)*) }; }
 pub(crate) use scroll;

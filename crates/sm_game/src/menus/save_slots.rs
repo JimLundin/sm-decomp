@@ -134,15 +134,21 @@ fn transfer_map<H: Host + ?Sized>(direction: Direction, game: &mut H) {
 }
 
 pub fn initialize<H: Host + ?Sized>(game: &mut H) {
-    inventory! { game, 99; MaxHealth, Health }
-    inventory! { game, 0;
-        MaxMissiles, Missiles, MaxSuperMissiles, SuperMissiles, MaxPowerBombs, PowerBombs,
-    }
+    // A new game's inventory: 99 health, no ammunition, items, beams or reserves.
+    crate::session_cohort::with(game, |_, inventory: &mut crate::inventory::Inventory| {
+        inventory.health = crate::inventory::Supply {
+            current: 99,
+            maximum: 99,
+        };
+        inventory.ammunition = Default::default();
+        inventory.beams = crate::inventory::Loadout::default();
+        inventory.equipment = crate::inventory::Loadout::default();
+        inventory.reserve_mode = 0;
+        inventory.reserve_capacity = 0;
+        inventory.reserve_health = 0;
+        inventory.reserve_missiles = 0;
+    });
     game_word!(game.HUD_ITEM_INDEX = 0);
-    inventory! { game, 0;
-        CollectedBeams, EquippedBeams, CollectedItems, EquippedItems, ReserveMode,
-        MaxReserveHealth, ReserveHealth, ReserveMissiles,
-    }
     game_word! {game; BUTTON_CONFIG_UP = K_BUTTON_UP as u16; BUTTON_CONFIG_DOWN = K_BUTTON_DOWN as u16;
     BUTTON_CONFIG_LEFT = K_BUTTON_LEFT as u16; BUTTON_CONFIG_RIGHT = K_BUTTON_RIGHT as u16;
     BUTTON_CONFIG_JUMP_A = K_BUTTON_A as u16; BUTTON_CONFIG_RUN_B = K_BUTTON_B as u16;

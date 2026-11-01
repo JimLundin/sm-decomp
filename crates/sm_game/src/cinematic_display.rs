@@ -166,8 +166,10 @@ pub fn configure_cinematic_display<H: crate::menus::host::Host + ?Sized>(
                 menu.pausemenu_reserve_tank_delay_ctr = 0;
                 menu.unused_word_7e0759 = 0;
             });
-            crate::inventory::set(game, crate::inventory::Word::ReserveHealth, 0);
-            crate::inventory::set(game, crate::inventory::Word::ReserveMissiles, 0);
+            crate::session_cohort::with(game, |_, inventory: &mut crate::inventory::Inventory| {
+                inventory.reserve_health = 0;
+                inventory.reserve_missiles = 0;
+            });
             *cine.mode7_angle() = 0;
         }
         Intro => {

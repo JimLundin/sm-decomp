@@ -135,7 +135,12 @@ pub fn initialize(game: &mut (impl Host + ?Sized)) {
 /// Main AI - morph ball eye ($A8:90E2): its function, once the morph ball is
 /// collected. Was `state_address`.
 pub fn main_ai(game: &mut (impl Host + ?Sized)) -> Option<u32> {
-    if crate::inventory::get(game, crate::inventory::Word::CollectedItems) & MORPH_BALL == 0 {
+    if crate::session_cohort::load::<crate::inventory::Inventory, _>(game)
+        .equipment
+        .owned
+        & MORPH_BALL
+        == 0
+    {
         return None;
     }
     let eye = word!(game.CUR_ENEMY_INDEX) as i32;
