@@ -2,9 +2,9 @@
 //! form, hops and spits acid; its wings, in the next slot, flutter down
 //! (bank $A8:E99A-$A8:F9BD). Was `ki_hunter`.
 #![forbid(unsafe_code)]
-use crate::actors::access::ActorKey as Key;
-use crate::actors::api::{self, Axis, MovementResult::Blocked, SlopePolicy};
-use crate::actors::host::{ActorLease as _, EnemyHost, LeaseActors, Shot, abs16};
+use crate::actors::api::Axis;
+use crate::actors::boss_lease::BossLease;
+use crate::actors::host::{BossEffects, Shot, Slopes, abs16};
 use crate::actors::layouts::part_view;
 use crate::enemy_lists::kihunter_wing_instruction_list;
 use crate::enemy_script::EnemyScript;
@@ -51,8 +51,12 @@ const QUADRATIC_SPEEDS: u32 = 0xa2_838f;
 /// The wings are the next slot after the body.
 const WINGS: i32 = 64;
 
+/// A lease on a game with the Kihunter's effects.
+pub trait Lease: BossLease<Game: BossEffects> {}
+impl<T: BossLease<Game: BossEffects> + ?Sized> Lease for T {}
+
 /// Set up falling Kihunter wings drifting left ($A8:F947) or right ($A8:F96A).
-fn begin_drift(game: &mut impl EnemyHost, wings: i32, left: bool) {
+fn begin_drift(game: &mut impl Lease, wings: i32, left: bool) {
     let falling = if left { DRIFTING_LEFT } else { DRIFTING_RIGHT };
     let index = session_slot!(game, Wings[wings].speed_table_reset);
     let angle = if left { 0xe000 } else { 0xa000 };
@@ -62,11 +66,9 @@ fn begin_drift(game: &mut impl EnemyHost, wings: i32, left: bool) {
         arc_start_x = x, arc_start_y = y);
 }
 /// Kihunter wings falling function - drifting left ($A8:F7DB) or right ($A8:F8AD).
-fn drift(game: &mut (impl EnemyHost + LeaseActors), left: bool) {
+fn drift(game: &mut impl Lease, left: bool) {
     let wings = i32::from(game.current_enemy());
-    let record = game
-        .lease()
-        .lease_native_record(0xa2, (QUADRATIC_SPEEDS & 0xffff) as u16);
+    let record = crate::cartridge::native_record(0xa2, (QUADRATIC_SPEEDS & 0xffff) as u16, game);
     let index = session_slot!(byte game, Wings[wings].speed_table_index[1]);
     let speed = record.word(8 * usize::from(index) + if left { 5 } else { 1 });
     session_slot!(game, Wings[wings].arc_angle, |angle| angle
@@ -77,8 +79,8 @@ fn drift(game: &mut (impl EnemyHost + LeaseActors), left: bool) {
     } else {
         let amount =
             (y.wrapping_sub(session_slot!(game, Wings[wings].base.y_pos)) as i16 as i32) << 16;
-        let key = Key::from_legacy(game.current_enemy());
-        if api::move_vertical(&mut game.lease(), key, amount) == Blocked {
+        let k = game.current_enemy();
+        if game.move_vertical(k, amount) {
             session_slot!(game, Wings[wings].base.properties, |old| old | 0x200);
             let x = session_slot!(game, Wings[wings].fall_start_x);
             session_slot!(game, Wings[wings].base.x_pos = x);
@@ -105,7 +107,7 @@ fn drift(game: &mut (impl EnemyHost + LeaseActors), left: bool) {
     }
 }
 /// Initialisation AI - Kihunter ($A8:F188).
-pub fn initialize(game: &mut impl EnemyHost) {
+pub fn initialize(game: &mut impl Lease) {
     let hunter = i32::from(game.current_enemy());
     session_slot!(game, Kihunter[hunter].base.properties, |old| old | 0x2000);
     session_slot!(game, Kihunter[hunter].wingless = 0);
@@ -123,7 +125,7 @@ pub fn initialize(game: &mut impl EnemyHost) {
     }
 }
 /// Initialisation AI - Kihunter wings ($A8:F214): take the body's position and palette.
-pub fn initialize_wings(game: &mut (impl EnemyHost + LeaseActors)) {
+pub fn initialize_wings(game: &mut impl Lease) {
     let wings = i32::from(game.current_enemy());
     session_slot!(game, Wings[wings].base.properties, |old| old | 0x2000);
     session_slot!(game, Wings[wings].base; instruction_timer = 1, timer = 0, current_instruction = 0xea4e);
@@ -133,7 +135,7 @@ pub fn initialize_wings(game: &mut (impl EnemyHost + LeaseActors)) {
     let tiles = session_slot!(game, Kihunter[wings - WINGS].base.vram_tiles_index);
     for (field, value) in [(0x1e, palette), (0x20, tiles)] {
         let at = crate::ram_slot!(@at Wings, wings, base) + field;
-        game.lease().write_slice_native(at, value);
+        game.set_slot_word(at, value);
     }
     if session_slot!(game, Kihunter[wings - WINGS].parameter_1) & 0x8000 != 0 {
         session_slot!(game, Wings[wings].base.properties, |old| old | 0x200);
@@ -141,26 +143,25 @@ pub fn initialize_wings(game: &mut (impl EnemyHost + LeaseActors)) {
 }
 /// Copy the body's Y then X position to the wings (or X then Y), each through its own
 /// compatibility Runtime, as the source does.
-fn follow_body(game: &mut (impl EnemyHost + LeaseActors), wings: i32, x_first: bool) {
+fn follow_body(game: &mut impl Lease, wings: i32, x_first: bool) {
     for x in [x_first, !x_first] {
         let (field, value) = match x {
             true => (2, session_slot!(game, Kihunter[wings - WINGS].base.x_pos)),
             false => (6, session_slot!(game, Kihunter[wings - WINGS].base.y_pos)),
         };
         let at = crate::ram_slot!(@at Wings, wings, base) + field;
-        game.lease().write_slice_native(at, value);
+        game.set_slot_word(at, value);
     }
 }
 /// Determine falling Kihunter wings speed table index reset value ($A8:F98D).
-fn prepare_fall_speed(game: &mut (impl EnemyHost + LeaseActors)) {
+fn prepare_fall_speed(game: &mut impl Lease) {
     let wings = i32::from(game.current_enemy());
     session_slot!(game, Wings[wings]; speed_table_reset = 0, speed_table_index = 0);
     loop {
         let speed = session_slot!(game, Wings[wings].speed_table_reset).wrapping_add(384);
         session_slot!(game, Wings[wings].speed_table_reset = speed);
-        let record = game
-            .lease()
-            .lease_native_record(0xa2, (QUADRATIC_SPEEDS & 0xffff) as u16);
+        let record =
+            crate::cartridge::native_record(0xa2, (QUADRATIC_SPEEDS & 0xffff) as u16, game);
         let phase = record
             .word(8 * usize::from(speed >> 8) + 1)
             .wrapping_add(session_slot!(game, Wings[wings].fall_phase));
@@ -172,7 +173,7 @@ fn prepare_fall_speed(game: &mut (impl EnemyHost + LeaseActors)) {
 }
 /// Enemy shot - Kihunter ($A8:F701): below its wings' health it loses them, which fall;
 /// above it, the wings share its frozen state and flash; dead, the wings go too.
-pub fn shot(game: &mut (impl EnemyHost + LeaseActors)) {
+pub fn shot(game: &mut impl Lease) {
     game.shot_reaction(Shot::Finalize);
     let hunter = i32::from(game.current_enemy());
     let wings = hunter + WINGS;
@@ -184,8 +185,8 @@ pub fn shot(game: &mut (impl EnemyHost + LeaseActors)) {
     if health != threshold && (health as i16).wrapping_sub(threshold as i16) >= 0 {
         for field in [0x12, 0x26, 0x28, 0x24] {
             let at = crate::ram_slot!(@at Kihunter, hunter, base) + field;
-            let value = game.lease().lease_native_word(at);
-            game.lease().write_slice_native(at + 64, value);
+            let value = game.slot_word(at);
+            game.set_slot_word(at + 64, value);
         }
         return;
     }
@@ -194,7 +195,7 @@ pub fn shot(game: &mut (impl EnemyHost + LeaseActors)) {
     }
     session_slot!(game, Kihunter[hunter]; wingless = 1, function = INITIAL_FALLING, y_subvelocity = 0, y_velocity = 1);
     let body = game.current_enemy();
-    game.set_current_enemy(body.wrapping_add(64));
+    game.select_enemy(body.wrapping_add(64));
     if session_slot!(game, Wings[wings].function) != FALLING {
         let x = session_slot!(game, Wings[wings].base.x_pos);
         let y = session_slot!(game, Wings[wings].base.y_pos);
@@ -211,39 +212,39 @@ pub fn shot(game: &mut (impl EnemyHost + LeaseActors)) {
             instruction_timer = 1, timer = 0);
         session_slot!(game, Wings[wings].base.properties, |old| old | 0x800);
     }
-    game.set_current_enemy(body);
+    game.select_enemy(body);
 }
 /// Fire acid spit ($A8:F6DC).
-fn spit(game: &mut impl EnemyHost, projectile: u16) {
+fn spit(game: &mut impl Lease, projectile: u16) {
     game.queue_sound(1, 0x4c, 6);
-    game.spawn_projectile(0, game.current_enemy(), projectile);
+    game.spawn_actor_eproj(0, game.current_enemy(), projectile);
     let current = i32::from(game.current_enemy());
     session_slot!(game, Kihunter[current].thinking_timer = 24);
 }
 /// Determine falling Kihunter wings left ($A8:F851) and right ($A8:F87F) arc centre offsets.
-fn wing_origins(game: &mut (impl EnemyHost + LeaseActors)) {
+fn wing_origins(game: &mut impl Lease) {
     for (phase, x_field, y_field) in [(0xe0, 3, 4), (0xa0, 1, 2)] {
-        let x = game.actor_cosine(phase, 0x30);
+        let x = game.scaled_cosine(phase, 0x30);
         let at = 0x7800 + usize::from(game.current_enemy());
-        game.lease().write_slice_native(at + x_field * 2, x);
-        let y = game.actor_sine(phase, 0x30);
-        game.lease().write_slice_native(at + y_field * 2, y);
+        game.set_slot_word(at + x_field * 2, x);
+        let y = game.scaled_sine(phase, 0x30);
+        game.set_slot_word(at + y_field * 2, y);
     }
 }
 /// Set the body's and the wings' instruction lists to the pair at `index`.
-fn set_paired_lists(game: &mut (impl EnemyHost + LeaseActors), k: u16, index: u16) {
+fn set_paired_lists(game: &mut impl Lease, k: u16, index: u16) {
     for (offset, entry) in [(0, index), (64, index + 1)] {
         let value = kihunter_wing_instruction_list(game, entry as isize);
         let at = crate::ram_slot!(@at Kihunter, i32::from(k) + offset, base.current_instruction);
-        game.lease().write_slice_native(at, value);
+        game.set_slot_word(at, value);
     }
     for offset in [0, 64] {
         let at = crate::ram_slot!(@at Kihunter, i32::from(k) + offset, base.instruction_timer);
-        game.lease().write_slice_native(at, 1);
+        game.set_slot_word(at, 1);
     }
 }
 /// Main AI - Kihunter ($A8:F25C) or Kihunter wings ($A8:F262): run its function.
-pub fn main_ai(game: &mut (impl EnemyHost + LeaseActors)) {
+pub fn main_ai(game: &mut impl Lease) {
     crate::probe::hit("kihunter.main_ai");
     let k = game.current_enemy();
     let hunter = i32::from(k);
@@ -272,7 +273,7 @@ pub fn main_ai(game: &mut (impl EnemyHost + LeaseActors)) {
         }
         PREPARE_TO_HOP => {
             session_slot!(game, Kihunter[hunter]; function = IDLE, y_subvelocity = 0);
-            let hop = ((game.random_number() as i32 & 1) - 8) as u16;
+            let hop = ((game.current_random() as i32 & 1) - 8) as u16;
             session_slot!(game, Kihunter[hunter].y_velocity = hop);
             let left = (session_slot!(game, Kihunter[hunter].base.x_pos) as i16)
                 .wrapping_sub(game.player_x() as i16)
@@ -330,15 +331,15 @@ pub fn main_ai(game: &mut (impl EnemyHost + LeaseActors)) {
         FALLING => match session_slot!(game, Wings[hunter].falling_function) {
             DRIFTING_LEFT => drift(game, true),
             DRIFTING_RIGHT => drift(game, false),
-            _ => game.unknown_routine(),
+            _ => game.foreign(|game| game.unreachable()),
         },
         IDLE => (),
-        _ => game.unknown_routine(),
+        _ => game.foreign(|game| game.unreachable()),
     }
 }
 /// Ki-hunter function - winged - idle flying ($A8:F268): bob between its bounds and pace,
 /// and swoop at Samus when she comes near and below.
-fn idle_flying(game: &mut (impl EnemyHost + LeaseActors), k: u16) {
+fn idle_flying(game: &mut impl Lease, k: u16) {
     let hunter = i32::from(k);
     let vertical = if move_velocity(game, k, Axis::Y) {
         Some(session_slot!(game, Kihunter[hunter].y_velocity).wrapping_neg())
@@ -410,7 +411,7 @@ pub fn swing(velocity: u32, acceleration: u32, cap: u16, angle: u16) -> (u32, u1
 }
 /// Ki-hunter function - winged - swoop ($A8:F3B8): swing along the arc to Samus, swiping
 /// past the trigger angle, then back off at a block.
-fn swoop(game: &mut (impl EnemyHost + LeaseActors), k: u16) {
+fn swoop(game: &mut impl Lease, k: u16) {
     crate::probe::hit("kihunter.swoop");
     let hunter = i32::from(k);
     let forward = session_slot!(game, Kihunter[hunter].angular_acceleration) & 0x8000 == 0;
@@ -443,7 +444,7 @@ fn swoop(game: &mut (impl EnemyHost + LeaseActors), k: u16) {
     }
     let radius = session_slot!(game, Kihunter[hunter].arc_radius_x);
     let x = session_slot!(game, Kihunter[hunter].arc_centre_x) as i32
-        + game.actor_cosine(angle, radius) as i32;
+        + game.scaled_cosine(angle, radius) as i32;
     let dx = (x - session_slot!(game, Kihunter[hunter].base.x_pos) as i32) as u16;
     let collided = if move_by(game, k, Axis::X, (dx as i16 as i32) << 16) {
         let forward = session_slot!(game, Kihunter[hunter].angular_acceleration) & 0x8000 == 0;
@@ -454,7 +455,7 @@ fn swoop(game: &mut (impl EnemyHost + LeaseActors), k: u16) {
         let angle = session_slot!(game, Kihunter[hunter].arc_angle);
         let radius = session_slot!(game, Kihunter[hunter].arc_radius_y);
         let y = session_slot!(game, Kihunter[hunter].arc_centre_y) as i32
-            + game.actor_sine(angle, radius) as i32;
+            + game.scaled_sine(angle, radius) as i32;
         let dy = (y - session_slot!(game, Kihunter[hunter].base.y_pos) as i32) as u16;
         move_by(game, k, Axis::Y, (dy as i16 as i32) << 16)
     };
@@ -465,12 +466,7 @@ fn swoop(game: &mut (impl EnemyHost + LeaseActors), k: u16) {
 /// The Kihunter instructions: set idling instruction lists facing forwards ($A8:F526),
 /// enemy function = hop ($A8:F5E4) or thinking ($A8:F67F), and fire acid spit left
 /// ($A8:F6D2) or right ($A8:F6D8).
-pub fn instruction(
-    game: &mut (impl EnemyHost + LeaseActors),
-    ea: u32,
-    k: u16,
-    j: EnemyScript,
-) -> EnemyScript {
+pub fn instruction(game: &mut impl Lease, ea: u32, k: u16, j: EnemyScript) -> EnemyScript {
     let hunter = i32::from(k);
     match ea {
         0xa8_f526 => {
@@ -493,22 +489,19 @@ pub fn instruction(
         }
         0xa8_f6d2 | 0xa8_f6d8 => spit(game, if ea == 0xa8_f6d2 { 0xcf18 } else { 0xcf26 }),
         _ => {
-            game.unknown_routine();
+            game.foreign(|game| game.unreachable());
             return EnemyScript::Stop;
         }
     }
     j
 }
-fn move_by(game: &mut impl LeaseActors, k: u16, axis: Axis, amount: i32) -> bool {
-    let mut lease = game.lease();
-    let key = Key::from_legacy(k);
-    let result = match axis {
-        Axis::X => api::move_horizontal(&mut lease, key, amount, SlopePolicy::Ignore),
-        Axis::Y => api::move_vertical(&mut lease, key, amount),
-    };
-    result == Blocked
+fn move_by(game: &mut impl Lease, k: u16, axis: Axis, amount: i32) -> bool {
+    match axis {
+        Axis::X => game.move_horizontal(k, amount, Slopes::Ignore),
+        Axis::Y => game.move_vertical(k, amount),
+    }
 }
-fn move_velocity(game: &mut (impl EnemyHost + LeaseActors), k: u16, axis: Axis) -> bool {
+fn move_velocity(game: &mut impl Lease, k: u16, axis: Axis) -> bool {
     let hunter = i32::from(k);
     let amount = match axis {
         Axis::X => session_slot!(game, Kihunter[hunter](x_velocity, x_subvelocity)),
@@ -516,28 +509,21 @@ fn move_velocity(game: &mut (impl EnemyHost + LeaseActors), k: u16, axis: Axis) 
     };
     move_by(game, k, axis, amount as i32)
 }
-fn snap(game: &mut impl LeaseActors, k: u16) {
-    api::snap_to_slopes(&mut game.lease(), Key::from_legacy(k));
+fn snap(game: &mut impl Lease, k: u16) {
+    game.snap_to_slopes(k);
 }
 /// A falling wing's X or Y: the arc start plus the arc's offset at its angle, less the
 /// arc centre offset for its side.
-fn wing_coordinate(
-    game: &mut (impl EnemyHost + LeaseActors),
-    wings: i32,
-    x: bool,
-    left: bool,
-) -> u16 {
+fn wing_coordinate(game: &mut impl Lease, wings: i32, x: bool, left: bool) -> u16 {
     let at = 0x7800 + wings as usize;
-    let start = game.lease().lease_native_word(at + if x { 10 } else { 12 });
+    let start = game.slot_word(at + if x { 10 } else { 12 });
     let phase = u16::from(session_slot!(byte game, Wings[wings].arc_angle[1]));
     let displacement = if x {
-        game.actor_cosine(phase, 0x30)
+        game.scaled_cosine(phase, 0x30)
     } else {
-        game.actor_sine(phase, 0x30)
+        game.scaled_sine(phase, 0x30)
     };
     let field = if left { 6 } else { 2 };
-    let correction = game
-        .lease()
-        .lease_native_word(at + field + usize::from(!x) * 2);
+    let correction = game.slot_word(at + field + usize::from(!x) * 2);
     start.wrapping_add(displacement).wrapping_sub(correction)
 }

@@ -87,6 +87,12 @@ impl BossState for Game {
     fn shot_direction(&self) -> u16 {
         EnemyHost::collided_projectile_direction(self)
     }
+    fn current_random(&self) -> u16 {
+        EnemyHost::random_number(self)
+    }
+    fn select_enemy(&mut self, k: u16) {
+        EnemyHost::set_current_enemy(self, k);
+    }
 }
 
 impl BossLease for Game {
@@ -166,6 +172,12 @@ impl BossState for Runtime<'_> {
     fn shot_direction(&self) -> u16 {
         use sm_game::ram::{word_arrays::PROJECTILE_DIR, words::COLLISION_DETECTION_INDEX};
         self.word(PROJECTILE_DIR + 2 * usize::from(self.word(COLLISION_DETECTION_INDEX)))
+    }
+    fn current_random(&self) -> u16 {
+        self.session().timing.random_number
+    }
+    fn select_enemy(&mut self, k: u16) {
+        self.session_mut().actors.controls.selected = k;
     }
 }
 
