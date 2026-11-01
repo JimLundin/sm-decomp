@@ -242,6 +242,7 @@ pub fn hopping_bottom<L: Lease>(game: &mut L, k: u16) {
                         | PlayerDirection::Down
                 );
                 if samus_right_or_level {
+                    crate::probe::hit("etecoon.look_right_run_left");
                     session_slot!(
                         game,
                         Etecoon[me].base.current_instruction = list::LOOK_RIGHT_AND_RUN_LEFT

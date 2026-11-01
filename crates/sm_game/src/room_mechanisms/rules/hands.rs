@@ -85,6 +85,7 @@ pub fn monitor_norfair(c: &mut impl Host) {
     }
 }
 pub fn lower_acid(c: &mut impl Host) {
+    crate::probe::hit("hands.lower_acid");
     c.session_mut().room.liquid_height = 722;
 }
 
