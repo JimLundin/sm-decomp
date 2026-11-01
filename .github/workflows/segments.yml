@@ -183,10 +183,14 @@ jobs:
           $rows = @()
           foreach ($id in $env:SEGMENTS.Split(' ')) { $rows += @('--segment', $id) }
           if ($env:AUDIO_TRACE) { $rows += @('--audio-trace-directory', 'audio-traces') }
-          python tools/verify_dll.py rom/sm.smc --corpus scenarios --no-build --direct @rows 2>&1 | Tee-Object -FilePath corpus.log
+          python tools/verify_dll.py rom/sm.smc --corpus scenarios --no-build --direct @rows 2>&1 | Tee-Object -FilePath corpus.log | ForEach-Object {
+            if (-not $env:AUDIO_TRACE) { $_ }
+            elseif ($_ -match '^(PASS|FAIL) ([A-Za-z0-9-]+)') { "$($Matches[1]) $($Matches[2])" }
+            elseif ($_ -match '^Corpus') { $_ }
+          } | Tee-Object -FilePath corpus-summary.log
           $code = $LASTEXITCODE
           "### $env:SEGMENTS" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
           '```' | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
-          Select-String -Path corpus.log -Pattern '^(PASS|FAIL|Corpus)' | ForEach-Object { $_.Line } | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+          Select-String -Path corpus-summary.log -Pattern '^(PASS|FAIL|Corpus)' | ForEach-Object { $_.Line } | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
           '```' | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
           if ($code -ne 0) { throw "Rows failed ($code)" }
