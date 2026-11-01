@@ -1,18 +1,14 @@
 //! Fireflea, the glowing bug of Norfair's dark rooms, which flies a circle or
 //! a vertical line; killing one darkens the room (bank $A3:8C0F-$A3:8EA5).
-use crate::actors::host::{ActorHost, ActorRuntime, Death, Shot};
+use crate::actors::boss_lease::BossState;
+use crate::actors::host::{Death, Shot};
 use crate::actors::layouts::part_view;
 use crate::actors::session_slots::session_slot;
-use crate::ram::word;
 use sm_data::cartridge::lorom_offset;
 use sm_data::enemy_speeds::SpeedTable;
 
 /// What the fireflea needs beyond the shared actor operations.
-pub trait Host: ActorHost + ActorRuntime + crate::actors::session_slots::SlotAccess {
-    /// `amplitude` times the cosine of `angle`.
-    fn actor_cosine(&mut self, angle: u16, amplitude: u16) -> u16;
-    /// `amplitude` times the sine of `angle`.
-    fn actor_sine(&mut self, angle: u16, amplitude: u16) -> u16;
+pub trait Host: BossState {
     /// The enemy death routine, with the normal death animation.
     fn die_normally(&mut self);
     /// Darken the room by one fireflea's light.
@@ -43,7 +39,7 @@ const POSITIVE: u16 = 1;
 const NEGATE: u16 = 4;
 
 fn current(game: &(impl Host + ?Sized)) -> i32 {
-    i32::from(word!(game.CUR_ENEMY_INDEX))
+    i32::from(game.current_enemy())
 }
 fn angle<const INITIAL: bool>(flea: i32, game: &(impl Host + ?Sized)) -> u16 {
     if INITIAL {
@@ -58,12 +54,12 @@ fn circle<const INITIAL: bool>(flea: i32, game: &mut (impl Host + ?Sized)) {
     let centre = session_slot!(game, Fireflea[flea].x_centre);
     let a = angle::<INITIAL>(flea, game);
     let radius = session_slot!(game, Fireflea[flea].radius);
-    let x = centre.wrapping_add(game.actor_cosine(a, radius));
+    let x = centre.wrapping_add(game.scaled_cosine(a, radius));
     session_slot!(game, Fireflea[flea].base.x_pos = x);
     let centre = session_slot!(game, Fireflea[flea].y_centre);
     let a = angle::<INITIAL>(flea, game);
     let radius = session_slot!(game, Fireflea[flea].radius);
-    let y = centre.wrapping_add(game.actor_sine(a, radius));
+    let y = centre.wrapping_add(game.scaled_sine(a, radius));
     session_slot!(game, Fireflea[flea].base.y_pos = y);
 }
 /// Set fireflea speed ($A3:8D75).
