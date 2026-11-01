@@ -1,0 +1,1305 @@
+# Corpus scenarios (docs/SCENARIO_HARNESS.md, Formats). Candidate checks,
+# not pass records: coverage stays incomplete while any `required` one is pending.
+# Inputs, seeds and checkpoints are private; scenarios/lock.toml pins them.
+version = 1
+domains = ["ram", "input", "samus", "camera", "room", "progress", "actors", "effects"]
+
+# Measured published-any% wait-entry inputs; regeneration: movies/README.md.
+# Before the fix, step330 wrote 0000 instead of the final highlighted tile0458.
+[[scenario]]
+id = "options-menu-return-parameter"
+start = "boot"
+prefix = 329
+ticks = 5
+facts = ["state:2"]
+
+[[scenario]]
+id = "area-ceres"
+start = "seed:c555cbf4669a2d3ed5e444aeb8e3e97d03bacafba50d5c93ec4d5c9dd42ae889"
+ticks = 300
+facts = ["area:ceres", "room:DF45", "probe:player_projectiles.prepare.weapons", "probe:player_projectiles.history.finished"]
+after_expectations = 120
+tags = ["required"]
+
+# Both scripted intro scenes, followed through the return to ordinary gameplay.
+[[scenario]]
+id = "samus-scripted-intro"
+start = "boot"
+ticks = 8780
+facts = ["state:30", "area:ceres", "room:DF45", "probe:player_projectiles.prepare.weapons", "probe:transitions.phase.2", "probe:transitions.phase.25", "probe:samus.jump.normal"]
+unlocked = "a faithful-oracle known divergence"
+
+# TAS playback skips attract mode; local input file is b"0000\n" repeated 6000 times.
+# Includes initialization, the first demo tick, and 120 following demo frames.
+[[scenario]]
+id = "demo-attract-setup"
+start = "boot"
+prefix = 2619
+ticks = 189
+facts = ["state:41", "state:42", "probe:coroutine.init", "probe:coroutine.demo", "probe:transitions.phase.2"]
+
+# Full window reaches held-input pose changes, normal jumps and their animation tail.
+[[scenario]]
+id = "samus-input-poses"
+start = "seed:c555cbf4669a2d3ed5e444aeb8e3e97d03bacafba50d5c93ec4d5c9dd42ae889"
+ticks = 440
+facts = ["area:ceres", "room:DF45", "probe:samus.jump.normal", "probe:transitions.phase.2", "probe:transitions.phase.25"]
+
+[[scenario]]
+id = "area-crateria"
+start = "seed:cebb82e3b4a7ba2c89aec1b5f783c160a6dc857dd5a72b65fc8a784c954215ae"
+ticks = 300
+facts = ["area:crateria", "room:91F8"]
+after_expectations = 120
+tags = ["required"]
+
+[[scenario]]
+id = "area-brinstar"
+start = "seed:683b99270f4445a643b13de71614ce5c34e1a6aae9e34d16431f5194243ff939"
+ticks = 250
+facts = ["area:brinstar", "room:9E9F"]
+after_expectations = 120
+tags = ["required"]
+
+[[scenario]]
+id = "area-norfair"
+start = "seed:8ae395fe6e30a00558414eef4b260ba5c56dbf0e05219454e1cdfb6a95fa4b51"
+ticks = 250
+facts = ["area:norfair", "room:A9E5"]
+after_expectations = 120
+tags = ["required"]
+
+[[scenario]]
+id = "area-wrecked-ship"
+start = "seed:8532ace90d98b9b90ac9a99dd831562ef24080bbfabca0d000d8a73799b99546"
+ticks = 300
+facts = ["area:wrecked-ship", "room:CBD5"]
+tags = ["required"]
+
+[[scenario]]
+id = "area-maridia"
+start = "seed:a7af09ee92cbf3eef3a42445ca4e62ce798141e4af0fdc887f7b8d03de661215"
+ticks = 300
+facts = ["area:maridia", "room:CF54", "door:CF54"]
+after_expectations = 120
+tags = ["required"]
+
+[[scenario]]
+id = "area-tourian"
+start = "seed:4b8c7fa388691556522014895afe2a7f7a6202c28d5f5f47d24f05d5ae56aebf"
+ticks = 300
+facts = ["area:tourian", "room:DAAE"]
+tags = ["required"]
+
+[[scenario]]
+id = "boss-ceres-ridley"
+start = "seed:0a6d988b41a6ed6baf83f194d23219f8a98f47c38cea6c2bf81520d5461a2938"
+ticks = 2300
+facts = ["encounter:ceres-ridley"]
+after_expectations = 120
+tags = ["required"]
+
+# The authored Bomb Torizo and bomb-jump inputs predate the original door and
+# box timings; their seeded checkpoints were cut at the rows' start frames by
+# 96b667a43^, the last build whose replay of these inputs reached the events.
+[[scenario]]
+id = "boss-bomb-torizo"
+start = "seed:c402c17601f3ac1b274a8c1914e306ed304371b8e65031975d5b67947591528c"
+prefix = 1441
+ticks = 2491
+facts = ["boss:bomb-torizo"]
+after_expectations = 120
+tags = ["required"]
+
+[[scenario]]
+id = "boss-spore-spawn"
+start = "seed:86e339178981dec4dd82d59baa4cc61bbf8379fd4997f24319016d1766d7bd4c"
+ticks = 2294
+facts = ["boss:spore-spawn", "room:9DC7"]
+after_expectations = 120
+tags = ["required"]
+
+[[scenario]]
+id = "boss-kraid"
+start = "seed:2edce9c97864f0c38c41e0cc24e88a3b3e228aa2b22d03fa2a93f7d593c0fee4"
+ticks = 5560
+facts = ["boss:kraid", "room:A59F", "probe:actors.kraid.shot_ai.disabled", "probe:boss.kraid.background_restored"]
+after_expectations = 120
+after_hits = 120
+tags = ["required"]
+unlocked = "drift lockstep masks (not yet identified)"
+
+# Crocomire from the 100% route's room entry (seed 142): its movie words to the
+# defeat, then released (tools/authored_inputs.py write release --prefix-frames
+# 3857 --set frames=130). The spit, melt and wall rows below replay windows of
+# the same inputs.
+[[scenario]]
+id = "boss-crocomire"
+start = "seed:a1bdb9e6425c23be82d5047185c0aa619532c5e062a3329753c27320ad32df1f"
+ticks = 3987
+facts = ["boss:crocomire", "room:A98D", "state:8"]
+after_expectations = 120
+tags = ["required"]
+unlocked = "drift lockstep masks (not yet identified)"
+
+[[scenario]]
+id = "boss-phantoon"
+start = "seed:14710aef93ab5d7de5be17122739391b7922bb5a5a9480e9e37755f28800bf3e"
+ticks = 2062
+facts = ["boss:phantoon", "room:CD13"]
+after_expectations = 120
+tags = ["required"]
+
+[[scenario]]
+id = "boss-botwoon"
+start = "seed:a6e0ff8857c26854745b8f4fb6f5ddf162156df80ac51aa22e866765c513dcbb"
+ticks = 1032
+facts = ["boss:botwoon", "room:D95E"]
+after_expectations = 120
+tags = ["required"]
+
+[[scenario]]
+id = "boss-draygon"
+start = "seed:d8a5b0b9a72ca9d31ab86d21c2ef931303f3a6b48459b057a8db309fe89723d7"
+ticks = 2500
+facts = ["boss:draygon", "room:DA60"]
+after_expectations = 120
+tags = ["required"]
+
+[[scenario]]
+id = "boss-golden-torizo"
+start = "seed:3d65a01ecba9dc550449d70db11d6172211ab4fc728334ae9ccad93a6b5d226d"
+ticks = 1207
+facts = ["boss:golden-torizo", "room:B283"]
+after_expectations = 120
+tags = ["required"]
+
+[[scenario]]
+id = "golden-original-wait"
+start = "seed:3d65a01ecba9dc550449d70db11d6172211ab4fc728334ae9ccad93a6b5d226d"
+ticks = 1
+facts = ["room:B283"]
+
+[[scenario]]
+id = "golden-orb-spawn-parameter"
+start = "seed:3d65a01ecba9dc550449d70db11d6172211ab4fc728334ae9ccad93a6b5d226d"
+ticks = 235
+facts = ["room:B283"]
+
+[[scenario]]
+id = "boss-ridley"
+start = "seed:1baf6b7e86e47846063e5e173f058676ad90b084f1d9ab53e4b8d1e0a4cd9dbd"
+ticks = 2100
+facts = ["boss:ridley", "room:B32E"]
+after_expectations = 120
+tags = ["required"]
+
+[[scenario]]
+id = "boss-mother-brain"
+start = "seed:e0990c38601961b4cd287d9b092fbfdda2909da6c7fc01ad76258e3fccb8ae58"
+ticks = 1380
+facts = ["boss:mother-brain", "room:DD58"]
+after_expectations = 120
+tags = ["required"]
+
+# Mother Brain's room by phase, each from its original-emulator phase seed
+# (movies/README.md, Mother Brain phase observations) through the next form change.
+[[scenario]]
+id = "mother-brain-glass"
+start = "seed:7f9ca83538b709b2c9e33a6546c06144711b731583646caab506fb9067abae8d"
+ticks = 760
+facts = ["probe:mother-brain.form-1"]
+after_hits = 120
+
+[[scenario]]
+id = "mother-brain-fake-death"
+start = "seed:ba069ef8a5c528bca6a76417cdb0c85c1b7a3b097fe54519925c8927b2527a83"
+ticks = 1360
+facts = ["probe:mother-brain.form-2"]
+after_hits = 120
+
+[[scenario]]
+id = "mother-brain-phase2"
+start = "seed:7ca74c7521eab3beebcfef0e51d1b52a3aff685797896736fefefc42e078a12c"
+ticks = 2940
+facts = ["probe:mother-brain.form-3"]
+after_hits = 120
+
+[[scenario]]
+id = "mother-brain-baby-metroid-drain"
+start = "seed:f301c0ce3fa916bfe21cc3decbeabf24f012148cebe2439432bebe90ba3ab9c1"
+ticks = 1480
+facts = ["probe:mother-brain.drained"]
+after_hits = 120
+
+[[scenario]]
+id = "mother-brain-baby-metroid-sacrifice"
+start = "seed:f29c6e9e32db7e70db7f816ccd14b26059b664fcc316e1aa41c76719ff54ad93"
+ticks = 2830
+facts = ["probe:baby-metroid.fatal-blow", "probe:mother-brain.form-4"]
+after_hits = 120
+pending = "form-4 never fires in 2830 frames (fatal blow at 2426); oracle drifts from the capture between steps 5910 and 8582"
+
+# Final form through the defeat, the escape timer and the door out of the room.
+[[scenario]]
+id = "mother-brain-escape-door"
+start = "seed:e0990c38601961b4cd287d9b092fbfdda2909da6c7fc01ad76258e3fccb8ae58"
+ticks = 1500
+facts = ["boss:mother-brain", "room:DE4D"]
+after_expectations = 100
+
+[[scenario]]
+id = "item-morph-ball"
+start = "seed:683b99270f4445a643b13de71614ce5c34e1a6aae9e34d16431f5194243ff939"
+ticks = 1200
+facts = ["item:morph-ball", "room:9E9F", "probe:coroutine.plm.message.completed"]
+tags = ["required"]
+unlocked = "WRAM drift lockstep masks, in the item and pickup rows (not yet identified)"
+
+[[scenario]]
+id = "item-bombs"
+start = "seed:c402c17601f3ac1b274a8c1914e306ed304371b8e65031975d5b67947591528c"
+ticks = 1400
+facts = ["item:bombs", "room:9804", "probe:coroutine.plm.message.completed"]
+after_expectations = 120
+after_hits = 120
+tags = ["required"]
+unlocked = "WRAM drift lockstep masks, in the item and pickup rows (not yet identified)"
+
+[[scenario]]
+id = "item-charge"
+start = "seed:36262820f622d995ea44ad6162fa8bace23adb165f3d26b06cf4104761297808"
+prefix = 700
+ticks = 1119
+facts = ["item:charge", "room:9D19", "probe:coroutine.plm.message.completed"]
+after_expectations = 120
+after_hits = 120
+tags = ["required"]
+
+[[scenario]]
+id = "item-spazer"
+start = "seed:1f735beec4f33196046bb34c26277acbba6a2821cec5834e64d32f6d1646891f"
+ticks = 740
+facts = ["item:spazer", "room:A447", "probe:coroutine.plm.message.completed"]
+after_expectations = 120
+after_hits = 120
+tags = ["required"]
+unlocked = "WRAM drift lockstep masks, in the item and pickup rows (not yet identified)"
+
+[[scenario]]
+id = "item-hi-jump"
+start = "seed:8ae395fe6e30a00558414eef4b260ba5c56dbf0e05219454e1cdfb6a95fa4b51"
+ticks = 869
+facts = ["item:hi-jump", "room:A9E5", "probe:coroutine.plm.message.completed"]
+after_expectations = 120
+after_hits = 120
+tags = ["required"]
+unlocked = "WRAM drift lockstep masks, in the item and pickup rows (not yet identified)"
+
+[[scenario]]
+id = "item-varia"
+start = "seed:0243d2584e6e8951389a89206822e57c4e02b9529637f60e72c1acdbb554095d"
+ticks = 1581
+facts = ["item:varia", "room:A6E2"]
+after_expectations = 120
+tags = ["required"]
+unlocked = "WRAM drift lockstep masks, in the item and pickup rows (not yet identified)"
+
+[[scenario]]
+id = "item-speed-booster"
+start = "seed:314ee167378d7be1db136d58d8ce47ce3eedd76e3d5b79f859ea792df4055efc"
+ticks = 692
+facts = ["item:speed-booster", "room:AD1B", "probe:coroutine.plm.message.completed"]
+after_expectations = 120
+after_hits = 120
+tags = ["required"]
+unlocked = "WRAM drift lockstep masks, in the item and pickup rows (not yet identified)"
+
+[[scenario]]
+id = "item-ice"
+start = "seed:68385c119baf78a520fdb6284702846d6567adffb7b19886411d78719e41d228"
+ticks = 808
+facts = ["item:ice", "room:A890", "probe:coroutine.plm.message.completed"]
+after_expectations = 120
+after_hits = 120
+tags = ["required"]
+unlocked = "WRAM drift lockstep masks, in the item and pickup rows (not yet identified)"
+
+# Optional navigation route; does not satisfy Crocomire or Power Bomb coverage.
+# The 100% route back from the Ice Beam room (seed 163) through the four doors:
+# release --prefix-frames 1350 --set frames=120, idle after the last door.
+[[scenario]]
+id = "ice-return-business"
+start = "seed:68385c119baf78a520fdb6284702846d6567adffb7b19886411d78719e41d228"
+ticks = 1470
+facts = ["door:A8B9", "door:A75D", "door:A815", "door:A7DE"]
+unlocked = "drift lockstep masks (not yet identified)"
+
+# Optional navigation rows; Power Bomb acquisition is covered by the required item row.
+# They split the old any% window's doors over 100% seeds. The elevator up from
+# Norfair to the warehouse entrance (seed 167; release --prefix-frames 285
+# --set frames=60):
+[[scenario]]
+id = "power-bomb-warehouse-elevator-entry"
+start = "seed:6500dc6f8246a79041b290b5f651c476d28c0121fb83c85be07c554983ebdbcf"
+ticks = 345
+facts = ["door:A6A1"]
+
+# Red Tower's bottom (seed 176; recipe red-tower-refill-door) into the refill room:
+[[scenario]]
+id = "power-bomb-red-tower-refill-door"
+start = "seed:91e08780a8255840c590ccb9ce1e4e661e09d8ba07f9fd58d4dc0355a29f4d58"
+ticks = 413
+facts = ["door:A618"]
+
+# The Power Bomb room's door (seed 178; release --prefix-frames 328 --set frames=60):
+[[scenario]]
+id = "power-bomb-room-entry"
+start = "seed:c9cf0566737a094ed81b23e8637722e01dd572c385531f0a05f57a61f0819c4c"
+ticks = 388
+facts = ["door:A3AE"]
+
+[[scenario]]
+id = "item-wave"
+start = "seed:cf9249a38227658aae6216cfa495663e8f3de653b2a0cd06bd981e56cff22bf6"
+ticks = 612
+facts = ["item:wave", "room:ADDE", "probe:coroutine.plm.message.completed"]
+after_expectations = 120
+after_hits = 120
+tags = ["required"]
+
+[[scenario]]
+id = "item-grapple"
+start = "seed:850cd8da4c66fc1c26f3cf157074b596437152c6a9621adbc30b7d34e8dd9785"
+ticks = 1000
+facts = ["item:grapple", "room:AC2B", "probe:coroutine.plm.message.completed"]
+after_expectations = 120
+after_hits = 120
+tags = ["required"]
+unlocked = "WRAM drift lockstep masks, in the item and pickup rows (not yet identified)"
+
+[[scenario]]
+id = "item-x-ray"
+start = "seed:39c756f499e9095ad4be8367c4f6bce2e6239c3c2f94f92935919548252347bd"
+ticks = 1400
+facts = ["item:x-ray", "room:A2CE", "probe:coroutine.plm.message.completed"]
+after_expectations = 120
+after_hits = 120
+tags = ["required"]
+unlocked = "WRAM drift lockstep masks, in the item and pickup rows (not yet identified)"
+
+[[scenario]]
+id = "item-gravity"
+start = "seed:f4feecaaed3f1d0144c93ce815f7f1ccf9ea8654df448a061ae130bf9019c39c"
+ticks = 737
+facts = ["item:gravity", "room:CE40", "probe:coroutine.plm.message.completed"]
+after_expectations = 120
+after_hits = 120
+tags = ["required"]
+unlocked = "WRAM drift lockstep masks, in the item and pickup rows (not yet identified)"
+
+[[scenario]]
+id = "item-space-jump"
+start = "seed:8934feb66211432cba2165d62dc279470cccf550fc78d85e74208f09e8df024b"
+ticks = 841
+facts = ["item:space-jump", "room:D9AA", "probe:coroutine.plm.message.completed"]
+after_expectations = 120
+after_hits = 120
+tags = ["required"]
+unlocked = "WRAM drift lockstep masks, in the item and pickup rows (not yet identified)"
+
+[[scenario]]
+id = "item-spring-ball"
+start = "seed:dbef5f5401a660cc107893ccbcc513e841e2975465745ec7786f39dc261e05fb"
+ticks = 1400
+facts = ["item:spring-ball", "room:D6D0", "probe:coroutine.plm.message.completed"]
+after_expectations = 120
+after_hits = 120
+tags = ["required"]
+unlocked = "WRAM drift lockstep masks, in the item and pickup rows (not yet identified)"
+
+[[scenario]]
+id = "item-plasma"
+start = "seed:7f91cbe7c1ae4a078b97e1d5a029ffbb7d12ea97502e78cecca339e69f471c0a"
+ticks = 1400
+facts = ["item:plasma", "room:D2AA", "probe:coroutine.plm.message.completed"]
+after_expectations = 120
+after_hits = 120
+tags = ["required"]
+unlocked = "WRAM drift lockstep masks, in the item and pickup rows (not yet identified)"
+
+[[scenario]]
+id = "item-screw-attack"
+start = "seed:b22f820734a6b8215486fe7b16c7875d01bca36b3bfe15de859080d88e115297"
+ticks = 684
+facts = ["item:screw-attack", "room:B6C1", "probe:coroutine.plm.message.completed"]
+after_expectations = 120
+after_hits = 120
+tags = ["required"]
+unlocked = "WRAM drift lockstep masks, in the item and pickup rows (not yet identified)"
+
+[[scenario]]
+id = "pickup-missile"
+start = "seed:c412a0f23b3e66af4734b67f5cfa63ea66d195da8d6ddcc01a293c2ecdf44b33"
+ticks = 1050
+facts = ["pickup:missile", "room:A107", "probe:coroutine.plm.message.completed"]
+after_expectations = 120
+after_hits = 120
+tags = ["required"]
+unlocked = "WRAM drift lockstep masks, in the item and pickup rows (not yet identified)"
+
+[[scenario]]
+id = "pickup-super"
+start = "seed:0daca7aff63368fdffb03a05e22ed3959ca792a977c795b66d3562b1e8211929"
+ticks = 1804
+facts = ["pickup:super", "room:9BC8", "probe:coroutine.plm.message.completed"]
+after_expectations = 120
+after_hits = 120
+tags = ["required"]
+unlocked = "WRAM drift lockstep masks, in the item and pickup rows (not yet identified)"
+
+[[scenario]]
+id = "pickup-power-bomb"
+start = "seed:84e3c2d25258c4ba6f5fe2b75669dc55ba2c097c4e5d0da0687434fc79d9a5cc"
+ticks = 650
+facts = ["pickup:power-bomb", "room:A3AE", "probe:coroutine.plm.message.completed"]
+after_expectations = 120
+after_hits = 120
+tags = ["required"]
+unlocked = "WRAM drift lockstep masks, in the item and pickup rows (not yet identified)"
+
+[[scenario]]
+id = "pickup-energy"
+start = "seed:35c79a1c885e1b784c47ce16f42e0c5cc15cf66cb2f720bd99919cb113f04666"
+ticks = 801
+facts = ["pickup:energy", "room:A4B1", "probe:coroutine.plm.message.completed"]
+after_expectations = 120
+after_hits = 120
+tags = ["required"]
+unlocked = "WRAM drift lockstep masks, in the item and pickup rows (not yet identified)"
+
+# Optional terrain regression on the existing authored reserve route.
+# The seeded observation retains the full 398-frame AC83 window; this is not a new required check.
+[[scenario]]
+id = "samus-square-slope-reserve"
+start = "seed:3afddc6d8ae3d3d5aadb42e4d773df3d67b3140701098e3b6513bc2d95a9a59e"
+ticks = 398
+facts = ["room:AC83"]
+
+# Norfair's reserve tank room (seed 93): the movie words through both item
+# messages (the missile's, then the reserve tank's), then released
+# (release --prefix-frames 960 --set frames=150). The full window runs.
+[[scenario]]
+id = "pickup-reserve"
+start = "seed:5ccaf31efc3cce08773ab710409f7ac8464bd8c234fd2074368c86ca7e6f0c33"
+ticks = 1110
+facts = ["pickup:reserve", "room:AC5A", "probe:coroutine.plm.message.completed"]
+tags = ["required"]
+unlocked = "WRAM drift lockstep masks, in the item and pickup rows (not yet identified)"
+
+# Ceres (seed 5; recipe ceres-ridley-door): through the door to Ridley's room.
+[[scenario]]
+id = "door-transition"
+start = "seed:a627651fd74a3c99e3a54adee5f7683e70f3bb2946c578d36269f3039b061594"
+ticks = 373
+facts = ["door:E0B5"]
+after_expectations = 120
+tags = ["required"]
+
+[[scenario]]
+id = "elevator-traversal"
+start = "seed:4330506a3ea58a2f5f466fbd7839fb0fb1ae1c772840e8a5d354b87d693d7ffe"
+ticks = 860
+facts = ["elevator:9E9F"]
+after_expectations = 120
+tags = ["required"]
+
+[[scenario]]
+id = "elevator-up"
+start = "seed:e27b78a4c9d1210ab9f2b56255f8a3f5c8eb086db61bd09cd27465e2082236c5"
+prefix = 25
+ticks = 840
+facts = ["elevator:97B5"]
+after_expectations = 120
+
+[[scenario]]
+id = "save-death-reload"
+start = "boot"
+prefix = 69400
+ticks = 6664
+facts = ["save-death-continue", "probe:save.sram.committed", "probe:save.continue.restored"]
+after_expectations = 120
+after_hits = 120
+tags = ["required"]
+
+# Additional diagnostic; does not satisfy the required save-death-reload scenario.
+# Both save rows start from save-in-kago-69400.smvchk, cut by e8dc97f92's
+# replay from save-before-kago: their route's authored doors predate the
+# original 2-frame sound-request delay (c91431d90), so the current build no
+# longer reaches the save room from the earlier checkpoint.
+# The checkpoint keeps e8dc97f92's pre-c91431d90 timing; a scenario cut by the
+# harness will replace it.
+[[scenario]]
+id = "save-memory"
+start = "boot"
+prefix = 69400
+ticks = 2400
+facts = ["room:A201", "probe:save.sram.committed"]
+after_expectations = 120
+after_hits = 120
+
+# The movie words replay as on hardware, where Samus survives this room; the
+# one-energy-crocomire scenario seed (tools/scenario_seeds.py) makes her first
+# hit fatal.
+[[scenario]]
+id = "death"
+start = "seed:63f0a5d9f7f38da95e78ec31ff64c94f2108f92b44c4652bcdf9661cb598d624"
+ticks = 1800
+facts = ["death"]
+after_expectations = 120
+tags = ["required"]
+
+[[scenario]]
+id = "credits"
+start = "seed:30a15d0ea37f431e17b1fe820a2d4518ce1d83df280be4c518053115d9db12ac"
+ticks = 11900
+facts = ["credits", "credits-complete"]
+after_expectations = 120
+tags = ["required"]
+
+# The observed placement lag formerly incremented the native acknowledged-NMI counter.
+[[scenario]]
+id = "door-loading-lag-nmi"
+start = "seed:c555cbf4669a2d3ed5e444aeb8e3e97d03bacafba50d5c93ec4d5c9dd42ae889"
+prefix = 272
+ticks = 5
+facts = ["state:11"]
+
+[[scenario]]
+id = "tas-ceres-four-doors"
+start = "seed:c555cbf4669a2d3ed5e444aeb8e3e97d03bacafba50d5c93ec4d5c9dd42ae889"
+prefix = 249
+ticks = 861
+facts = ["door:DF8D", "door:DFD7", "door:E021", "door:E06B", "state:8"]
+
+# The recorded controller read at native step9216 crosses adjacent video frames.
+[[scenario]]
+id = "tas-ceres-cross-frame-read"
+start = "seed:a627651fd74a3c99e3a54adee5f7683e70f3bb2946c578d36269f3039b061594"
+prefix = 32
+ticks = 166
+facts = ["state:8", "state:11", "probe:coroutine.door"]
+
+# Natural ADAD gate re-close: $84:BBE1 must pass its loaded definition as A/Y.
+# The predecessor writes 0000 instead of E64B to spawn.primary at step 153607.
+[[scenario]]
+id = "shot-gate-spawn-parameter"
+start = "boot"
+prefix = 153606
+ticks = 10
+facts = ["room:ADAD", "probe:eproj.spawn.initialized"]
+
+# Ceres Ridley's scripted push in a fixed 1,000-frame window; falling-x at input 1268.
+[[scenario]]
+id = "samus-forced-ceres"
+start = "seed:0a6d988b41a6ed6baf83f194d23219f8a98f47c38cea6c2bf81520d5461a2938"
+prefix = 1000
+ticks = 1000
+facts = ["room:E0B5", "probe:samus.bomb.falling-x"]
+
+# Vertical bomb-jump lifecycle and subsequent gameplay.
+[[scenario]]
+id = "samus-bomb-jump-vertical"
+start = "seed:c402c17601f3ac1b274a8c1914e306ed304371b8e65031975d5b67947591528c"
+prefix = 6762
+ticks = 800
+facts = ["area:crateria", "probe:samus.jump.bomb"]
+
+# Onscreen dust writes its last bound before the following Crocomire drop:
+# dust at step 3852, then the defeat's pickup drops at 3853.
+[[scenario]]
+id = "crocomire-spit-drop-scratch"
+start = "seed:a1bdb9e6425c23be82d5047185c0aa619532c5e062a3329753c27320ad32df1f"
+prefix = 3851
+ticks = 4
+facts = ["room:A98D", "state:8", "probe:eproj.pre.executed", "probe:eproj.spawn.initialized"]
+
+# The melt's second frame, as the old any% window at 169057.
+[[scenario]]
+id = "crocomire-melt-graphics-buffer"
+start = "seed:a1bdb9e6425c23be82d5047185c0aa619532c5e062a3329753c27320ad32df1f"
+prefix = 1890
+ticks = 4
+facts = ["room:A98D", "state:8"]
+
+# The wall's eight debris projectiles spawn at step 3525.
+[[scenario]]
+id = "crocomire-wall-spawn-return"
+start = "seed:a1bdb9e6425c23be82d5047185c0aa619532c5e062a3329753c27320ad32df1f"
+prefix = 3525
+ticks = 4
+facts = ["room:A98D", "state:8", "probe:eproj.spawn.initialized"]
+
+# Preserve the room setup accumulator in the projectile spawn parameter.
+# Explicit seed and distributed checkpoint fields cannot be combined; compatible internal checkpoints may be reused.
+# Replay through frame 1985 and three after it.
+[[scenario]]
+id = "phantoon-exit-spawn-parameter"
+start = "seed:14710aef93ab5d7de5be17122739391b7922bb5a5a9480e9e37755f28800bf3e"
+ticks = 1989
+facts = ["boss:phantoon", "state:11"]
+
+# Preserve the sound/opcode/coordinate accumulator passed to Mother Brain spawns.
+# Explicit seed and distributed checkpoint fields cannot be combined; compatible internal checkpoints may be reused.
+# First mismatch was 2719, last was 4555.
+[[scenario]]
+id = "mother-brain-beam-spawn-parameters"
+start = "seed:bdc211c67f48aa56b73509f66e292db299ad59573372e3761f11acb259ebba5b"
+ticks = 4560
+facts = ["room:DD58", "state:8"]
+
+# Compare the original first bubble mismatch and three following frames.
+[[scenario]]
+id = "draygon-bubble-word-counter"
+start = "seed:d8a5b0b9a72ca9d31ab86d21c2ef931303f3a6b48459b057a8db309fe89723d7"
+ticks = 18
+facts = ["room:DA60"]
+
+# Compare the original first bubble mismatch and three following frames.
+[[scenario]]
+id = "space-jump-bubble-word-counter"
+start = "seed:8934feb66211432cba2165d62dc279470cccf550fc78d85e74208f09e8df024b"
+ticks = 440
+facts = ["room:D9AA"]
+unlocked = "WRAM drift lockstep masks, in the item and pickup rows (not yet identified)"
+
+[[scenario]]
+id = "mother-brain-purple-breath-parameter"
+start = "seed:048f8ab51a243e3734a7bc0fabcbfb6745f32abaf57474e0455150b5d250f590"
+ticks = 2756
+facts = ["room:DD58", "state:8"]
+
+# First failed frame163 lost the spawner Y accumulator passed to the spawn call.
+[[scenario]]
+id = "spore-spawn-parameter"
+start = "seed:86e339178981dec4dd82d59baa4cc61bbf8379fd4997f24319016d1766d7bd4c"
+ticks = 167
+facts = ["room:9DC7"]
+
+# First oracle difference at native frame 1108; retain three following frames.
+[[scenario]]
+id = "credits-zebes-spawn"
+start = "seed:30a15d0ea37f431e17b1fe820a2d4518ce1d83df280be4c518053115d9db12ac"
+ticks = 1112
+facts = ["room:91F8", "state:39"]
+
+# First oracle difference at native frame 1496; retain three following frames.
+[[scenario]]
+id = "credits-silhouette-spawn"
+start = "seed:30a15d0ea37f431e17b1fe820a2d4518ce1d83df280be4c518053115d9db12ac"
+ticks = 1500
+facts = ["room:91F8", "state:39"]
+
+# First oracle difference at native frame 1504; retain three following frames.
+[[scenario]]
+id = "credits-explosion-slot"
+start = "seed:30a15d0ea37f431e17b1fe820a2d4518ce1d83df280be4c518053115d9db12ac"
+ticks = 1508
+facts = ["room:91F8", "state:39"]
+
+# First oracle difference at native frame 1648; retain three following frames.
+[[scenario]]
+id = "credits-explosion-afterglow-slot"
+start = "seed:30a15d0ea37f431e17b1fe820a2d4518ce1d83df280be4c518053115d9db12ac"
+ticks = 1652
+facts = ["room:91F8", "state:39"]
+
+# First oracle difference at native frame 2898; retain three following frames.
+[[scenario]]
+id = "credits-completed-spawn"
+start = "seed:30a15d0ea37f431e17b1fe820a2d4518ce1d83df280be4c518053115d9db12ac"
+ticks = 2902
+facts = ["room:91F8", "state:39"]
+
+# First oracle difference at native frame 3080; retain three following frames.
+[[scenario]]
+id = "credits-time-spawn"
+start = "seed:30a15d0ea37f431e17b1fe820a2d4518ce1d83df280be4c518053115d9db12ac"
+ticks = 3084
+facts = ["room:91F8", "state:39"]
+
+# First oracle difference at native frame 3166; retain three following frames.
+[[scenario]]
+id = "credits-time-hours-spawn"
+start = "seed:30a15d0ea37f431e17b1fe820a2d4518ce1d83df280be4c518053115d9db12ac"
+ticks = 3170
+facts = ["room:91F8", "state:39"]
+
+# First oracle difference at native frame 3174; retain three following frames.
+[[scenario]]
+id = "credits-time-hours-units-spawn"
+start = "seed:30a15d0ea37f431e17b1fe820a2d4518ce1d83df280be4c518053115d9db12ac"
+ticks = 3178
+facts = ["room:91F8", "state:39"]
+
+# First oracle difference at native frame 3182; retain three following frames.
+[[scenario]]
+id = "credits-time-separator-spawn"
+start = "seed:30a15d0ea37f431e17b1fe820a2d4518ce1d83df280be4c518053115d9db12ac"
+ticks = 3186
+facts = ["room:91F8", "state:39"]
+
+# First oracle difference at native frame 3190; retain three following frames.
+[[scenario]]
+id = "credits-time-minutes-spawn"
+start = "seed:30a15d0ea37f431e17b1fe820a2d4518ce1d83df280be4c518053115d9db12ac"
+ticks = 3194
+facts = ["room:91F8", "state:39"]
+
+# First oracle difference at native frame 3198; retain three following frames.
+[[scenario]]
+id = "credits-time-minutes-units-spawn"
+start = "seed:30a15d0ea37f431e17b1fe820a2d4518ce1d83df280be4c518053115d9db12ac"
+ticks = 3202
+facts = ["room:91F8", "state:39"]
+
+# First oracle difference at native frame 11786; retain three following frames.
+[[scenario]]
+id = "credits-postroll-wave"
+start = "seed:30a15d0ea37f431e17b1fe820a2d4518ce1d83df280be4c518053115d9db12ac"
+ticks = 11790
+facts = ["credits-complete"]
+
+# Fixed window includes the first Gunship bob at input frame 274.
+[[scenario]]
+id = "gunship-bobbing-cycle"
+start = "seed:cebb82e3b4a7ba2c89aec1b5f783c160a6dc857dd5a72b65fc8a784c954215ae"
+ticks = 300
+facts = ["area:crateria", "room:91F8"]
+
+# Fixed window starts at the authenticated Stone Zoomer movement mismatch.
+[[scenario]]
+id = "wall-crawler-slope-step"
+start = "seed:c402c17601f3ac1b274a8c1914e306ed304371b8e65031975d5b67947591528c"
+prefix = 6762
+ticks = 8
+facts = ["area:crateria", "room:92FD"]
+
+# Original item words through frame666, then authored standing/select/run/release input.
+# Fixed2131 frames retain activation and the return to the normal pose after release.
+[[scenario]]
+id = "xray-activate-release"
+start = "seed:39c756f499e9095ad4be8367c4f6bce2e6239c3c2f94f92935919548252347bd"
+ticks = 2131
+facts = ["item:x-ray", "room:A2CE", "probe:coroutine.plm.message.completed"]
+unlocked = "WRAM drift lockstep masks, in the item and pickup rows (not yet identified)"
+
+[[scenario]]
+id = "samus-grapple-connect-swing"
+start = "seed:850cd8da4c66fc1c26f3cf157074b596437152c6a9621adbc30b7d34e8dd9785"
+ticks = 1151
+facts = ["item:grapple", "room:AC2B", "probe:coroutine.plm.message.completed"]
+unlocked = "WRAM drift lockstep masks, in the item and pickup rows (not yet identified)"
+
+# Native FIR selector10 regression: entering Kraid's lair's A521 from seed 70,
+# the song's echo command selects FIR 10 at step 1037 (release
+# --prefix-frames 1040 --set frames=20).
+[[scenario]]
+id = "music-fir-selector10"
+start = "seed:f3b56c1315f7e5fe3cea69ea817ec8eafe2a33ef1ec9c67835d13499e91b5516"
+ticks = 1060
+facts = ["state:8"]
+unlocked = "drift lockstep masks (not yet identified)"
+
+# Coverage rows for gameplay the 100% room chain does not reach.
+# tools/authored_inputs.py writes the authored inputs; see its recipes.
+
+# Seed303's latched movie word, then the pause-menu-tour recipe: map scrolling,
+# both tabs, manual reserve transfer, every equipment toggle, then unpause.
+[[scenario]]
+id = "pause-menu-tour"
+start = "seed:cbcebcf17718dc609535549e2418f47201e1ef76db49952cda452fc54084dd50"
+ticks = 1512
+facts = ["state:15", "state:18", "room:9A44", "probe:pause_controls.shoulder_input", "probe:equipment_menu.toggle", "probe:reserve_tanks.transfer_manual"]
+unlocked = "a faithful-oracle known divergence"
+
+# From power-on, the options-tour recipe: title, file select, controller
+# remapping, special settings, both languages, back to file select, start.
+[[scenario]]
+id = "options-menu-tour"
+start = "boot"
+ticks = 2310
+facts = ["state:2", "state:4", "state:30", "probe:controller_input.remap_binding", "probe:options_settings.toggle_special", "probe:options_settings.toggle_language"]
+
+# The low% movie's Draygon fight: Draygon grabs Samus, who grapples a turret.
+[[scenario]]
+id = "boss-draygon-grab"
+start = "seed:987fcffbe5a3c0e86996b029eaf95b6b2341edec5927dd979faaa4c8c83777cf"
+ticks = 3585
+facts = ["boss:draygon", "room:DA60", "room:D78F", "probe:draygon_grab.grab"]
+
+# seed-credits.inputs followed by 4,000 released words: the post-roll ending,
+# Samus, the clear time and the item percentage.
+[[scenario]]
+id = "credits-ending"
+start = "seed:30a15d0ea37f431e17b1fe820a2d4518ce1d83df280be4c518053115d9db12ac"
+ticks = 15900
+facts = ["credits-complete", "probe:ending_graphics.item_percentage"]
+
+# The Volcano Room (AE32) is on no movie's route; its Polyp runs only there.
+# Low% seed85's latched word, then the volcano-room recipe.
+[[scenario]]
+id = "volcano-room-lavaquake"
+start = "seed:0f9feb22036939dfedd5048f1fc7d3d2d6ebd5ca8760e6e0719ad3739c48842d"
+ticks = 841
+facts = ["room:AE74", "room:AE32", "probe:polyp.main_ai"]
+
+# The low% movie's first 1,902 Draygon words, then the release recipe: Samus
+# stays caught, so Draygon spirals up and tail-whips her until the reserve refills.
+[[scenario]]
+id = "boss-draygon-tail-whip"
+start = "seed:987fcffbe5a3c0e86996b029eaf95b6b2341edec5927dd979faaa4c8c83777cf"
+ticks = 3500
+facts = ["room:DA60", "state:27", "probe:draygon_grab.grab", "probe:draygon_grab.tail_whip"]
+
+# The first 1,880 words, then the release recipe: Draygon misses Samus and
+# begins a later swoop.
+[[scenario]]
+id = "boss-draygon-later-swoop"
+start = "seed:987fcffbe5a3c0e86996b029eaf95b6b2341edec5927dd979faaa4c8c83777cf"
+ticks = 2650
+facts = ["room:DA60"]
+
+# The boss-draygon words to 1,480, then the long-release recipe: with the
+# gravity suit Samus outlasts the rising spiral, and Draygon starts the final
+# tail whips before she dies.
+[[scenario]]
+id = "boss-draygon-final-whips"
+start = "seed:d8a5b0b9a72ca9d31ab86d21c2ef931303f3a6b48459b057a8db309fe89723d7"
+ticks = 4480
+facts = ["room:DA60", "death", "probe:draygon_grab.final_tail_whips"]
+
+# Kraid pause rows: the boss-kraid words to a frame, then the pause-resume
+# recipe (tools/authored_inputs.py sweep kraid-pause). Each unpause runs
+# the hook for Kraid alive, sinking or dead; require_hit names it.
+[[scenario]]
+id = "boss-kraid-pause-400"
+start = "seed:2edce9c97864f0c38c41e0cc24e88a3b3e228aa2b22d03fa2a93f7d593c0fee4"
+ticks = 1012
+facts = ["room:A59F", "state:18", "probe:kraid_pause.unpause_alive", "probe:kraid_pause.transfer_top_half"]
+unlocked = "a faithful-oracle known divergence"
+
+[[scenario]]
+id = "boss-kraid-pause-950"
+start = "seed:2edce9c97864f0c38c41e0cc24e88a3b3e228aa2b22d03fa2a93f7d593c0fee4"
+ticks = 1562
+facts = ["room:A59F", "state:18", "probe:kraid_pause.unpause_sinking", "probe:kraid_pause.sinking_row_wait", "probe:kraid_pause.sinking_last_wait"]
+unlocked = "a faithful-oracle known divergence"
+
+[[scenario]]
+id = "boss-kraid-pause-1030"
+start = "seed:2edce9c97864f0c38c41e0cc24e88a3b3e228aa2b22d03fa2a93f7d593c0fee4"
+ticks = 1642
+facts = ["room:A59F", "state:18", "probe:kraid_pause.unpause_dead", "probe:kraid_pause.transfer_top_half"]
+unlocked = "a faithful-oracle known divergence"
+
+[[scenario]]
+id = "boss-kraid-pause-1960"
+start = "seed:2edce9c97864f0c38c41e0cc24e88a3b3e228aa2b22d03fa2a93f7d593c0fee4"
+ticks = 2572
+facts = ["room:A59F", "state:18", "probe:kraid.dead_hook", "probe:kraid_pause.unpause_dead", "probe:kraid_pause.transfer_top_half"]
+unlocked = "drift lockstep masks (not yet identified)"
+
+# The first scenario-seed row (tools/scenario_seeds.py draygon-repel: the
+# boss-draygon seed with full energy and reserves). The boss-draygon words to
+# 1,480, then the grapple-repel recipe: the grapple fired as Draygon reaches
+# Samus repels his grab, and he flails his tail and flies off.
+[[scenario]]
+id = "boss-draygon-grapple-repel"
+start = "seed:78783af693fd02b771ad003bd135e6e7ad338026acdaf70008ece4ddad03a531"
+ticks = 4182
+facts = ["room:DA60", "probe:draygon_grab.repelled_by_grapple", "probe:draygon_grab.flail_tail_and_fly_straight_up"]
+
+# Trick and scope rows (tools/authored_inputs.py recipes and sweeps, from the
+# landing site and other late-game 100% seeds; the crystal flash uses the
+# crystal-flash scenario seed). Each requires the probe on its routine.
+[[scenario]]
+id = "samus-shinespark-up"
+start = "seed:1563be3787a3edca0cc6821a8db4967c2318e41a7ae6a50dc9a5d0a5288ad07c"
+ticks = 393
+facts = ["room:91F8", "probe:shinespark.store", "probe:shinespark.vertical"]
+
+[[scenario]]
+id = "samus-shinespark-right"
+start = "seed:1563be3787a3edca0cc6821a8db4967c2318e41a7ae6a50dc9a5d0a5288ad07c"
+ticks = 405
+facts = ["room:91F8", "probe:shinespark.store", "probe:shinespark.horizontal"]
+
+[[scenario]]
+id = "samus-shinespark-left"
+start = "seed:1563be3787a3edca0cc6821a8db4967c2318e41a7ae6a50dc9a5d0a5288ad07c"
+ticks = 418
+facts = ["room:91F8", "probe:shinespark.store", "probe:shinespark.horizontal"]
+
+[[scenario]]
+id = "samus-shinespark-up-right"
+start = "seed:1563be3787a3edca0cc6821a8db4967c2318e41a7ae6a50dc9a5d0a5288ad07c"
+ticks = 405
+facts = ["room:91F8", "probe:shinespark.store", "probe:shinespark.diagonal"]
+
+[[scenario]]
+id = "samus-shinespark-up-left"
+start = "seed:1563be3787a3edca0cc6821a8db4967c2318e41a7ae6a50dc9a5d0a5288ad07c"
+ticks = 418
+facts = ["room:91F8", "probe:shinespark.store", "probe:shinespark.diagonal"]
+
+[[scenario]]
+id = "samus-walljump-16"
+start = "seed:1563be3787a3edca0cc6821a8db4967c2318e41a7ae6a50dc9a5d0a5288ad07c"
+ticks = 157
+facts = ["room:91F8", "probe:samus.jump.wall"]
+
+[[scenario]]
+id = "samus-walljump-22"
+start = "seed:1563be3787a3edca0cc6821a8db4967c2318e41a7ae6a50dc9a5d0a5288ad07c"
+ticks = 163
+facts = ["room:91F8", "probe:samus.jump.wall"]
+
+[[scenario]]
+id = "samus-walljump-28"
+start = "seed:1563be3787a3edca0cc6821a8db4967c2318e41a7ae6a50dc9a5d0a5288ad07c"
+ticks = 169
+facts = ["room:91F8", "probe:samus.jump.wall"]
+
+[[scenario]]
+id = "samus-crystal-flash"
+start = "seed:66215813a01a15b73637bdd5d79e6992c4eb9138e4cab5d26e78cb1efa4efe4e"
+ticks = 903
+facts = ["room:91F8", "probe:crystal_flash.start"]
+
+[[scenario]]
+id = "xray-scan-91f8"
+start = "seed:1563be3787a3edca0cc6821a8db4967c2318e41a7ae6a50dc9a5d0a5288ad07c"
+ticks = 261
+facts = ["room:91F8", "probe:xray.window"]
+
+[[scenario]]
+id = "xray-scan-96ba"
+start = "seed:361668acd582f80fecd528270a8cad1a3d83563372b7d1c274a17287a318fb9e"
+ticks = 261
+facts = ["room:96BA", "probe:xray.window"]
+
+[[scenario]]
+id = "xray-scan-92fd"
+start = "seed:f920d0d23ef3f12b9c87959c3c317f90f0321f4b3503d8a914700a9b6777a20d"
+ticks = 261
+facts = ["room:92FD", "probe:xray.window"]
+
+[[scenario]]
+id = "xray-scan-9a44"
+start = "seed:cbcebcf17718dc609535549e2418f47201e1ef76db49952cda452fc54084dd50"
+ticks = 261
+facts = ["room:9A44", "probe:xray.window"]
+
+# More trick rows (tools/authored_inputs.py): the gunship save, a space-jump
+# chain and the screw attack through enemies. Each requires its probe.
+[[scenario]]
+id = "samus-gunship-save"
+start = "seed:1563be3787a3edca0cc6821a8db4967c2318e41a7ae6a50dc9a5d0a5288ad07c"
+ticks = 1750
+facts = ["room:91F8", "probe:gunship.save"]
+
+[[scenario]]
+id = "samus-space-jump-chain"
+start = "seed:1563be3787a3edca0cc6821a8db4967c2318e41a7ae6a50dc9a5d0a5288ad07c"
+ticks = 383
+facts = ["room:91F8", "probe:samus.space_jump"]
+
+[[scenario]]
+id = "samus-screw-attack"
+start = "seed:f2e7aa08e0dc81cf18ea13b8e0bfd240b4773ec9911d9b4d4d049f08797451f2"
+ticks = 945
+facts = ["room:93AA", "probe:contact.screw"]
+
+# Mockball (tools/authored_inputs.py mockball): the ball lands still morphing
+# and keeps the spin jump's extra run speed.
+[[scenario]]
+id = "samus-mockball"
+start = "seed:1563be3787a3edca0cc6821a8db4967c2318e41a7ae6a50dc9a5d0a5288ad07c"
+ticks = 129
+facts = ["room:91F8", "probe:morph.rolling_with_momentum"]
+
+# Special beam attacks (tools/authored_inputs.py special-beam): one beam with
+# charge and the power bombs selected (scenario seeds special-beam-*).
+[[scenario]]
+id = "special-beam-wave"
+start = "seed:10781bc61e3a0a6b73a48110fca1b2c0df54606478b1c4dfc25f9ab4a1fc95e8"
+ticks = 471
+facts = ["room:91F8", "probe:special_beam.wave"]
+
+[[scenario]]
+id = "special-beam-ice"
+start = "seed:5fc2d0e767a96ec53f66a2eaf1f88fd8b60c698331e95c969dd4a413e98b6103"
+ticks = 471
+facts = ["room:91F8", "probe:special_beam.ice"]
+
+[[scenario]]
+id = "special-beam-spazer"
+start = "seed:3e7e85f71df2d6ffe4ebdad4352c2682a84cebd7b4cafba1febe453b6b546062"
+ticks = 471
+facts = ["room:91F8", "probe:special_beam.spazer"]
+
+[[scenario]]
+id = "special-beam-plasma"
+start = "seed:76ea60b721af309f8e4fac4f922341263055bfb9cbd3898e079d7ccdc4e0cf6f"
+ticks = 471
+facts = ["room:91F8", "probe:special_beam.plasma"]
+
+# Terrain and grapple rows from 100% chain rooms (the full route's seeds and
+# aligned movie inputs): sinking into and standing on sand, releasing the
+# grapple, and a beam reflected back.
+[[scenario]]
+id = "terrain-quicksand"
+start = "seed:2172e0e644a420ca625dd83d058fd23e1b1751d112b00a69d19a6c4637b9d046"
+ticks = 450
+facts = ["room:D9FE", "probe:contact_physics.sinking", "probe:contact_physics.surface", "probe:contact_physics.sand_floor"]
+
+[[scenario]]
+id = "samus-grapple-release"
+start = "seed:ce4115b7f605815c7416913920048cb54e5d5911d8dddc2d411cf8958e1fd83f"
+ticks = 488
+facts = ["room:D78F", "probe:grapple.after_release"]
+
+[[scenario]]
+id = "beam-reflect"
+start = "seed:3cc7ebb5a17f149413bfd508c8e54e12e9b1da95e7fad8eba8692892b7848895"
+ticks = 572
+facts = ["room:B482", "probe:player_projectiles.reflect"]
+
+# Enemy rows for routines no movie runs: the fire arc (low% seed 89 through
+# its room, with the movie words), and authored play beside an Oum and on the
+# Tatori (tools/scenario_seeds.py oum-roll and tatori-touch).
+[[scenario]]
+id = "enemy-fire-arc"
+start = "seed:ae29af007c08c18496a941361a47845a50c694e5bbf874ebffb9d60325565297"
+ticks = 1103
+facts = ["room:B457", "room:B4AD", "probe:fire_arc.initialize", "probe:fire_arc.orbit"]
+unlocked = "a faithful-oracle known divergence"
+
+[[scenario]]
+id = "enemy-oum-roll"
+start = "seed:bcf01bb7acfc1a23b6f3365880f08b71ffac34cad498eb0f8d1adfeec64c9ee2"
+ticks = 391
+facts = ["room:D913", "probe:oum.roll"]
+
+[[scenario]]
+id = "enemy-tatori-touch"
+start = "seed:93c7b555fc69660c2c1b83d6f2d24c5ec4e4aeb0088cdd6b18a659e171046d8a"
+ticks = 761
+facts = ["room:D055", "probe:tatori.touch"]
+
+# Ridley at half health with full energy (scenario ridley-swoop) and the
+# controller released: he swoops, which the movie's quick fight never sees.
+[[scenario]]
+id = "boss-ridley-swoop"
+start = "seed:c4d7bfb756f61f4dc95e6f121cb2804ce9d5162a82a404e33b16159256cf398e"
+ticks = 1501
+facts = ["room:B32E", "probe:ridley.swoop_velocities"]
+
+# The file select's copy and clear (tools/authored_inputs.py file-copy-clear):
+# after the death row's movie words, quit from the game over menu, copy the
+# saved file to another slot and clear one.
+[[scenario]]
+id = "file-copy-clear"
+start = "seed:63f0a5d9f7f38da95e78ec31ff64c94f2108f92b44c4652bcdf9661cb598d624"
+ticks = 3612
+facts = ["state:26", "state:4", "probe:file_menu.confirm_copy", "probe:file_menu.copy_slot", "probe:file_menu.confirm_clear", "probe:file_menu.clear_slot"]
+
+# Enemy rows from 100% chain rooms (the full route's seeds and aligned movie
+# inputs): each room runs the named enemies' AI and the branches the route
+# reaches in them.
+[[scenario]]
+id = "enemy-covern-roach"
+start = "seed:68b6b014bbb0a0e62c24580ce2e189c05036d028aa01827e11ec4d1c8daf85b6"
+ticks = 643
+facts = ["room:CC6F", "probe:covern.main_ai", "probe:covern.awake", "probe:roach.main_ai"]
+
+[[scenario]]
+id = "enemy-magdollite"
+start = "seed:e6b5875ca21fe4ca6382d51c02a5386ddc64356e0887b541bcc868ecf7edf880"
+ticks = 852
+facts = ["room:B236", "probe:magdollite.main_ai", "probe:magdollite.grow_arm"]
+
+[[scenario]]
+id = "enemy-yapping-maw"
+start = "seed:61fac0cf5cc5c84c23648e1009027caa65a6f9f11796dcbbc37c122d5c867a70"
+ticks = 387
+facts = ["room:965B", "probe:yapping_maw.main_ai", "probe:yapping_maw.attack"]
+
+[[scenario]]
+id = "enemy-shaktool"
+start = "seed:6af921f86b7882c1080e16186e0dbe075b38e97856781e7235f8594c612616e4"
+ticks = 2479
+facts = ["room:D6D0", "probe:shaktool.main_ai", "probe:shaktool.flip"]
+
+[[scenario]]
+id = "enemy-kihunter-work-robot"
+start = "seed:91a12eaad05cd84194f7076fa7c297e4088cbe457f45b721fca7c5b11f9470d9"
+ticks = 573
+facts = ["room:CAAE", "probe:kihunter.main_ai", "probe:kihunter.swoop", "probe:work_robot.main_ai", "probe:work_robot.shot"]
+
+[[scenario]]
+id = "enemy-spike-platform"
+start = "seed:4fbbf6d61a8aa86f44202397a1a843ac10b92d07f9d68b3aa89979e693eb023a"
+ticks = 283
+facts = ["room:CBD5", "probe:spike_platform.run"]
+
+[[scenario]]
+id = "enemy-boulder-bounce"
+start = "seed:ed666ea53e17bea7758835b6594bf17d7c0e57c1f2fd6cc047993a9e10c89c7f"
+ticks = 313
+facts = ["room:D4EF", "probe:boulder.main_ai", "probe:boulder.bounce_rise"]
+
+[[scenario]]
+id = "enemy-boulder-roll"
+start = "seed:044c3034ba280ba8ba3bb542114ec17a268836990600cf8946a1b15261b98772"
+ticks = 763
+facts = ["room:B6EE", "probe:boulder.main_ai", "probe:boulder.roll"]
+
+[[scenario]]
+id = "enemy-evir"
+start = "seed:ef0f216d1f5be301111ed15481976a8b3293885f457b66c6feb59c23694a46f1"
+ticks = 363
+facts = ["room:D252", "probe:evir.main_ai", "probe:evir.projectile"]
+
+[[scenario]]
+id = "enemy-metroid"
+start = "seed:16a8f3308d2e9e5e2da543a80574357bac9c61d3a32cedbc02e720b13c4d2a36"
+ticks = 431
+facts = ["room:DC19", "probe:metroid.main_ai"]
+
+[[scenario]]
+id = "enemy-etecoon"
+start = "seed:0ed91a468dc2bdcff3e278ca3877f07ceaf9d9d2152ef86098e21539c6d3bfb2"
+ticks = 907
+facts = ["room:9BC8", "probe:etecoon.main_ai"]
+
+# The Ceres Ridley fight's movie words to 1,000, then the controller released
+# (tools/authored_inputs.py release): Samus stands in the room when Ridley's
+# getaway pushes her out of his way, so she falls while she is pushed.
+[[scenario]]
+id = "samus-ceres-push"
+start = "seed:0a6d988b41a6ed6baf83f194d23219f8a98f47c38cea6c2bf81520d5461a2938"
+ticks = 1777
+facts = ["room:E0B5", "probe:forced.accelerate_fall"]
+
+# Colosseum (seed 100-input-phase:257), the grapple-walljump recipe
+# (tools/authored_inputs.py): grapple the wall's grapple blocks, reel in until
+# the swing stops against the wall at a special angle (the wallgrab), let go and
+# jump off it.
+[[scenario]]
+id = "samus-grapple-walljump"
+start = "seed:ce4115b7f605815c7416913920048cb54e5d5911d8dddc2d411cf8958e1fd83f"
+ticks = 174
+facts = ["room:D72A", "probe:grapple.special_angle", "probe:grapple.jump_admission", "probe:grapple.release_walljump"]
+
+# Content neither the corpus nor the 100% route reached: a seed's latched
+# movie word, then a recipe (tools/authored_inputs.py) or the controller
+# released (release --set frames=N).
+
+# The boss-draygon words to 1,480 (seed 100-boundary:259), then the
+# draygon-grapple-held recipe: Draygon grabs the released Samus, who selects
+# the grapple and fires it while struggling in his grip.
+[[scenario]]
+id = "boss-draygon-grapple-held"
+start = "seed:d8a5b0b9a72ca9d31ab86d21c2ef931303f3a6b48459b057a8db309fe89723d7"
+ticks = 2858
+facts = ["room:DA60", "probe:draygon_grab.grab", "probe:grapple.draygon_direction"]
+
+# The Ceres Ridley fight released from its first frame (frames=1900): Samus
+# never hits back, and Ridley reaches his fireball pattern.
+[[scenario]]
+id = "boss-ceres-ridley-fireballs"
+start = "seed:0a6d988b41a6ed6baf83f194d23219f8a98f47c38cea6c2bf81520d5461a2938"
+ticks = 1901
+facts = ["room:E0B5", "probe:ceres_ridley.fireballs_move_to_position"]
+
+# The Phantoon fight released from its first frame (frames=1000): he survives
+# his first round and picks his second-round pattern.
+[[scenario]]
+id = "boss-phantoon-second-round"
+start = "seed:ef79426f2c6c8dd824b6a7b0f1b20074b7a7d5147a438969ed0118e55e4b65ea"
+ticks = 1001
+facts = ["room:CD13", "probe:phantoon.pick_pattern"]
+
+# The dachora room with Samus moved beside the dachora (scenario dachora),
+# released (frames=1300): it runs, charges and shinesparks.
+[[scenario]]
+id = "enemy-dachora-shinespark"
+start = "seed:c3be67779f54b02a86ef2c2b6683777264b943beab7943ec8ce51164cf176afc"
+ticks = 1301
+facts = ["room:9CB3", "probe:dachora.accelerate", "probe:dachora.load_palette"]
+
+# Green Brinstar's main shaft entered beside the etecoons (seed 43), released
+# (frames=2000): they run and wall jump up their shaft.
+[[scenario]]
+id = "enemy-etecoon-jumps"
+start = "seed:1ef87bac8d9ca6cb1623cb89d94654c8396cf4b179954ee69c640bc5ef10bc04"
+ticks = 2001
+facts = ["room:9AD9", "probe:etecoon.jumping"]
+
+# Bowling Alley after Phantoon with Samus moved onto the Chozo statue's hand
+# (scenario wrecked-ship-hand), the wrecked-ship-hand recipe: she morphs in
+# its palm and the statue carries her across the spikes and sets her down.
+[[scenario]]
+id = "terrain-wrecked-ship-hand"
+start = "seed:3a1aa6b20772c1b3cb31d40909dcbea44b76351d9891c60b2c7f9fb9a3fa82fc"
+ticks = 2123
+facts = ["room:C98E", "probe:hands.setup"]
+
+# Crateria's kihunter room with the power beam and Samus moved beside the left
+# kihunter (scenario kihunter-wings), the kihunter-wings recipe: her shots
+# wound it without killing it, so it loses its wings, which drift down.
+[[scenario]]
+id = "enemy-kihunter-wings"
+start = "seed:1443a133069abf496ed0742842c412b2053d70cb64cd43791aff762d16d5c419"
+ticks = 453
+facts = ["room:948C", "probe:kihunter.drift"]
+
+# The baby Metroid's room: the movie words to 1,000, until it has drained
+# Samus, then released (frames=2400). Samus stays, so after backing off the
+# baby Metroid returns to her while she recovers, then flees remorsefully.
+[[scenario]]
+id = "enemy-baby-metroid-remorse"
+start = "seed:aa728bbb9c2648e2d1b9d09a684aa4f61714dd14ebfd3f6ca3fbdef969f9bf2e"
+ticks = 3400
+facts = ["room:DCB1", "probe:baby_metroid.accelerate_towards_samus"]
+
+# Green Brinstar's main shaft with Samus moved to the top of the etecoons'
+# shaft and the etecoon that waits for her there moved ahead of her (scenario
+# etecoon-tunnel-jump), released (frames=400): it runs right, leaps into the
+# morph tunnel, runs through it and drops off its ledge.
+[[scenario]]
+id = "enemy-etecoon-tunnel-jump"
+start = "seed:912d13878db3ebcf32a7d0c59e7e00fcbe932c83b5052d9c89bdfc30b6e866ca"
+ticks = 401
+facts = ["room:9AD9", "probe:etecoon.tunnel_jump"]
+
+# The Lower Norfair acid statue room with the space jump collected and Samus
+# moved onto the power bomb blocks over the Chozo statue's hand (scenario
+# lower-norfair-hand), the lower-norfair-hand recipe: a power bomb uncovers the
+# hand, she morphs in its palm facing right and the statue lowers the acid.
+[[scenario]]
+id = "terrain-lower-norfair-hand"
+start = "seed:84e45e27aa51c60f41e420c9d3b6b31a2f522c5a04b454468ca0588e7db9139a"
+ticks = 1391
+facts = ["room:B1E5", "probe:hands.setup", "probe:hands.lower_acid"]
+
+# Green Brinstar's main shaft entered beside the etecoons (seed 43), the
+# etecoon-face-right recipe: Samus turns to face them, so the etecoon that
+# lands beside her looks right and runs left.
+[[scenario]]
+id = "enemy-etecoon-run-left"
+start = "seed:1ef87bac8d9ca6cb1623cb89d94654c8396cf4b179954ee69c640bc5ef10bc04"
+ticks = 513
+facts = ["room:9AD9", "probe:etecoon.look_right_run_left"]
