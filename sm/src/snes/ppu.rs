@@ -450,7 +450,11 @@ pub unsafe fn ppu_write(ppu: *mut Ppu, adr: u8, val: u8) {
             0x2e..=0x2f => (*ppu).screenWindowed[usize::from(adr - 0x2e)] = val,
             _ => {}
         }
-        sm_backend_ppu_write(ppu, adr, val);
+        if matches!(adr, 0x18 | 0x19) && SAMUS_VRAM_DMA.get() == Some(ppu as usize) {
+            samus_vram_byte(&mut *ppu, adr == 0x19, val);
+        } else {
+            sm_backend_ppu_write(ppu, adr, val);
+        }
         #[cfg(sm_verify_dll)]
         native_line::write(ppu, adr, val);
         #[cfg(sm_verify_dll)]
@@ -458,6 +462,72 @@ pub unsafe fn ppu_write(ppu: *mut Ppu, adr: u8, val: u8) {
             model_check::after_write(&*ppu, adr, val, checked);
         }
     }
+}
+
+thread_local! {
+    /// A synchronous Samus DMA interval; never stores video state or a live borrow.
+    static SAMUS_VRAM_DMA: std::cell::Cell<Option<usize>> = const { std::cell::Cell::new(None) };
+}
+
+/// The original DMA drain retains all bus reads, open-bus writes and channel effects.
+/// Only this selected PPU's VRAM byte sink runs the typed implementation.
+pub(crate) fn samus_vram_dma(ppu: *mut Ppu, drain: impl FnOnce()) {
+    struct Restore(Option<usize>);
+    impl Drop for Restore {
+        fn drop(&mut self) {
+            SAMUS_VRAM_DMA.set(self.0);
+        }
+    }
+    let _restore = Restore(SAMUS_VRAM_DMA.replace(Some(ppu as usize)));
+    drain();
+}
+
+pub(crate) fn samus_vram_mode(cell: &std::cell::Cell<Ppu>) {
+    let mut ppu = cell.get();
+    #[cfg(sm_verify_dll)]
+    let checked = model_check::before_write(&ppu, 0x15, 0x80);
+    let mut ports = ports_of(&ppu);
+    ports.set_vram_mode(1, 0, true);
+    ppu.vramIncrement = ports.vram_increment;
+    ppu.vramRemapMode = ports.vram_remap;
+    ppu.vramIncrementOnHigh = ports.vram_increment_on_high;
+    cell.set(ppu);
+    #[cfg(sm_verify_dll)]
+    if let Some(checked) = checked {
+        model_check::after_write(&ppu, 0x15, 0x80, checked);
+    }
+}
+
+pub(crate) fn samus_vram_pointer_byte(cell: &std::cell::Cell<Ppu>, value: u8, high: bool) {
+    let mut ppu = cell.get();
+    #[cfg(sm_verify_dll)]
+    let register = if high { 0x17 } else { 0x16 };
+    #[cfg(sm_verify_dll)]
+    let checked = model_check::before_write(&ppu, register, value);
+    let mut ports = ports_of(&ppu);
+    let memory = MemoryView::new(&ppu);
+    let mut address = ports.vram_pointer.to_le_bytes();
+    address[usize::from(high)] = value;
+    ports.set_vram_pointer(&memory, u16::from_le_bytes(address));
+    ppu.vramPointer = ports.vram_pointer;
+    ppu.vramReadBuffer = ports.vram_read_buffer;
+    cell.set(ppu);
+    #[cfg(sm_verify_dll)]
+    if let Some(checked) = checked {
+        model_check::after_write(&ppu, register, value, checked);
+    }
+}
+
+fn samus_vram_byte(ppu: &mut Ppu, high: bool, value: u8) {
+    let mut ports = ports_of(ppu);
+    let mut memory = MemoryView::new(ppu);
+    ports.write_vram_byte(&mut memory, high, value);
+    let Some(Store::Vram(index, word)) = memory.store else {
+        unreachable!("a VRAM byte always makes one VRAM store");
+    };
+    // Publish this byte before the DMA advances its channel, including on failure.
+    ppu.vram[usize::from(index)] = word;
+    ppu.vramPointer = ports.vram_pointer;
 }
 
 /// The verifier's per-access check of the native register and port models
@@ -562,7 +632,6 @@ mod model_check {
 }
 
 /// The emulated PPU's port state in the native renderer's model.
-#[cfg(sm_verify_dll)]
 fn ports_of(ppu: &Ppu) -> raster::memory::Ports {
     raster::memory::Ports {
         sprite_size: ppu.objSize,
@@ -586,7 +655,6 @@ fn ports_of(ppu: &Ppu) -> raster::memory::Ports {
 }
 
 /// One memory store the port model made, to compare with the emulated PPU's.
-#[cfg(sm_verify_dll)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum Store {
     Vram(u16, u16),
@@ -607,23 +675,20 @@ impl Store {
     }
 }
 
-/// The emulated PPU's memory, read in place; the port model's store is recorded
-/// rather than applied, so the emulated write stays the only one.
-#[cfg(sm_verify_dll)]
+/// A read-only PPU memory view recording one port store. The caller commits it
+/// immediately for typed production, or compares it in the verifier.
 struct MemoryView<'a> {
     ppu: &'a Ppu,
     /// A port write makes at most one store.
     store: Option<Store>,
 }
 
-#[cfg(sm_verify_dll)]
 impl<'a> MemoryView<'a> {
     fn new(ppu: &'a Ppu) -> Self {
         Self { ppu, store: None }
     }
 }
 
-#[cfg(sm_verify_dll)]
 impl raster::memory::VideoMemory for MemoryView<'_> {
     fn vram(&self, index: u16) -> u16 {
         self.ppu.vram[usize::from(index & 0x7fff)]

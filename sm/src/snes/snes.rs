@@ -101,6 +101,42 @@ impl Backend {
         }
     }
 
+    /// Select only an allocation owned by this backend. No supplied pointer is followed.
+    pub(crate) fn selected_video(&self) -> *mut Ppu {
+        self.selected_video_cell().as_ptr()
+    }
+
+    fn selected_video_cell(&self) -> &Cell<Ppu> {
+        let selected = self.snes.get().ppu;
+        if selected == self.snes_ppu.as_ptr() {
+            return &self.snes_ppu;
+        }
+        assert_eq!(
+            selected,
+            self.my_ppu.as_ptr(),
+            "video requires an owned PPU"
+        );
+        &self.my_ppu
+    }
+
+    pub(crate) fn samus_vram_mode(&mut self) {
+        let cell = self.selected_video_cell();
+        crate::snes::ppu::samus_vram_mode(cell);
+        crate::snes::ppu::produced(cell.as_ptr(), "samus tiles", |ports, _| {
+            ports.set_vram_mode(1, 0, true);
+        });
+    }
+
+    pub(crate) fn samus_vram_pointer_byte(&mut self, value: u8, high: bool) {
+        let cell = self.selected_video_cell();
+        crate::snes::ppu::samus_vram_pointer_byte(cell, value, high);
+        crate::snes::ppu::produced(cell.as_ptr(), "samus tiles", |ports, memory| {
+            let mut address = ports.vram_pointer.to_le_bytes();
+            address[usize::from(high)] = value;
+            ports.set_vram_pointer(memory, u16::from_le_bytes(address));
+        });
+    }
+
     pub(crate) fn input1_mut(&mut self) -> &mut Input {
         self.input1.get_mut()
     }

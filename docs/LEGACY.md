@@ -101,3 +101,12 @@ one more, `ORACLE_RAM` in `sm/src/verification/observation/machine.rs`:
 | Range | What it holds | Why | What would retire it | Owner |
 | --- | --- | --- | --- | --- |
 | $00C2-$00C3 | snesrev's bug-fix counter, the oracle's patch selector; the original never uses it | only an oracle frame writes it; lockstep's sides share RAM, so only free run sees it (from the first Tick of a seeded row) | the oracle keeping its patch selector outside game RAM | verifier |
+
+## `LEGACY(video-observer)`: typed video preserves register observer boundaries
+
+`rtl::samus_vram_mode` and `rtl::samus_vram_pointer` retain the existing
+`observe_register_write` hook after each typed mode/address byte update. The
+background verifier can change the loaded ROM at these exact boundaries.
+This is verification compatibility, not an emulated PPU write or a second video
+producer. Remove these hooks when that verifier consumes equivalent typed video
+effects and preserves its source-mutation, failure-prefix and snapshot checks.

@@ -1084,6 +1084,29 @@ pub(crate) unsafe fn write_register_and_mirror(
     }
 }
 
+/// Typed Samus mode update; bank-0 cartridge tails are inert for every cart type.
+/// LEGACY(video-observer): preserve the existing register observer's mutation boundary.
+pub(crate) fn samus_vram_mode(game: &mut Game) {
+    let views = (game.g_snes, game.g_cpu);
+    let (backend, mut host) = game.execution_parts();
+    let backend = backend.expect("video requires an owned backend");
+    backend.samus_vram_mode();
+    observe_register_write(VMAIN as u16, 0x80, &mut host, backend, views);
+}
+
+/// VMADDL and VMADDH retain distinct prefetch, publication and observer boundaries.
+/// LEGACY(video-observer): remove with the register-based background verification.
+pub(crate) fn samus_vram_pointer(address: u16, game: &mut Game) {
+    for (index, value) in address.to_le_bytes().into_iter().enumerate() {
+        let views = (game.g_snes, game.g_cpu);
+        let (backend, mut host) = game.execution_parts();
+        let backend = backend.expect("video requires an owned backend");
+        backend.samus_vram_pointer_byte(value, index == 1);
+        let register = if index == 0 { VMADDL } else { VMADDH };
+        observe_register_write(register as u16, value, &mut host, backend, views);
+    }
+}
+
 pub unsafe fn write_reg(reg: u16, value: u8, game: &mut Game) {
     let views = (game.g_snes, game.g_cpu);
     unsafe { write_reg_parts(reg, value, &mut game.execution(), views) }

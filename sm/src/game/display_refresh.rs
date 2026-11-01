@@ -56,14 +56,11 @@ impl refresh::Host for Game {
 
 impl sm_game::display::video::Video for Game {
     fn producing(&mut self) {
-        assert!(!self.g_snes.is_null(), "SNES backend must be installed");
-        // SAFETY: the backend is installed, and `&mut self` excludes other access.
-        crate::snes::ppu::producing(unsafe { (*self.g_snes).ppu });
+        let ppu = self.execution_parts().0.unwrap().selected_video();
+        crate::snes::ppu::producing(ppu);
     }
     fn produced(&mut self, producer: &'static str, uploads: &[Upload]) {
-        assert!(!self.g_snes.is_null(), "SNES backend must be installed");
-        // SAFETY: as for `producing`.
-        let ppu = unsafe { (*self.g_snes).ppu };
+        let ppu = self.execution_parts().0.unwrap().selected_video();
         let self_ref = &*self;
         let ram = self.ram();
         let bytes = |source: usize, count: u16| {
