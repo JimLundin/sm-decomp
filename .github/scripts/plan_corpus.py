@@ -33,6 +33,11 @@ def seed_bundle(row):
         return ('seeds-v1-terrain-grapple-c77a6dd6e1e0de4e.tar.gz.enc', 'c77a6dd6e1e0de4e07ffe47a2ae55fc7ba3aaf9a7276a04841cd8746e6e72d24')
     if row['id'] in ('enemy-fire-arc', 'enemy-oum-roll', 'enemy-tatori-touch'):
         return ('seeds-v1-enemies-dd825e69ee36457f.tar.gz.enc', 'dd825e69ee36457f9c24627b860246e0313ef67ee6754830d7f6331c05125c16')
+    if row['id'] in ('enemy-covern-roach', 'enemy-magdollite', 'enemy-yapping-maw',
+                     'enemy-shaktool', 'enemy-kihunter-work-robot', 'enemy-spike-platform',
+                     'enemy-boulder-bounce', 'enemy-boulder-roll', 'enemy-evir',
+                     'enemy-metroid', 'enemy-etecoon', 'samus-ceres-push'):
+        return ('seeds-v1-routeenemies-ad7fd75a7035bea2.tar.gz.enc', 'ad7fd75a7035bea2669dedbfe7db1e528b668b3044d09b55afe5382f9059f892')
     if row['id'] == 'boss-ridley-swoop':
         return ('seeds-v1-ridley-swoop-3ac1b65c9164ca03.tar.gz.enc', '3ac1b65c9164ca038c3a487770ef437fadd03a2fc639ff03ac3c664f565b9661')
     if row['id'] == 'file-copy-clear':

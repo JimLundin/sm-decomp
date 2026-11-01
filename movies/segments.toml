@@ -1673,3 +1673,155 @@ start_frame = 0
 frames = 3612
 expect = ["state:26", "state:4"]
 require_hit = ["file_menu.confirm_copy", "file_menu.copy_slot", "file_menu.confirm_clear", "file_menu.clear_slot"]
+
+# Enemy rows from 100% chain rooms (the full route's seeds and aligned movie
+# inputs): each room runs the named enemies' AI and the branches the route
+# reaches in them.
+
+[[segment]]
+id = "enemy-covern-roach"
+seed = "100-input-phase:188"
+seed_sha256 = "68b6b014bbb0a0e62c24580ce2e189c05036d028aa01827e11ec4d1c8daf85b6"
+inputs = "seed-covern-roach-caf6.inputs"
+input_sha256 = "f15eab42e4b6ddedc6c7667f3065b12be6882dc9ba409b5a8c89f8927063ddf1"
+start_frame = 0
+frames = 643
+expect = ["room:CC6F"]
+require_hit = ["covern.main_ai", "covern.awake", "roach.main_ai"]
+pending = "awaiting the seeds-v1-routeenemies-ad7fd75a7035bea2 ci-data upload"
+
+[[segment]]
+id = "enemy-magdollite"
+seed = "100-input-phase:133"
+seed_sha256 = "e6b5875ca21fe4ca6382d51c02a5386ddc64356e0887b541bcc868ecf7edf880"
+inputs = "seed-magdollite-b1e5.inputs"
+input_sha256 = "8c198ac2de1c312dafa589dd2176a2cff1e460e05527e0e15a38b8e74c6f9133"
+start_frame = 0
+frames = 852
+expect = ["room:B236"]
+require_hit = ["magdollite.main_ai", "magdollite.grow_arm"]
+pending = "awaiting the seeds-v1-routeenemies-ad7fd75a7035bea2 ci-data upload"
+
+[[segment]]
+id = "enemy-yapping-maw"
+seed = "100-input-phase:308"
+seed_sha256 = "61fac0cf5cc5c84c23648e1009027caa65a6f9f11796dcbbc37c122d5c867a70"
+inputs = "seed-yapping-maw-92b3.inputs"
+input_sha256 = "1eda5ce5e67b1b488afd80bb65b7c24a08fe5612b7bdf87a3cc47846989b5110"
+start_frame = 0
+frames = 387
+expect = ["room:965B"]
+require_hit = ["yapping_maw.main_ai", "yapping_maw.attack"]
+pending = "awaiting the seeds-v1-routeenemies-ad7fd75a7035bea2 ci-data upload"
+
+[[segment]]
+id = "enemy-shaktool"
+seed = "100-input-phase:238"
+seed_sha256 = "6af921f86b7882c1080e16186e0dbe075b38e97856781e7235f8594c612616e4"
+inputs = "seed-shaktool-d8c5.inputs"
+input_sha256 = "e7d43dbf41290899ca96b68f1b3a4706fd55c599761307f6596f64e405cf12ac"
+start_frame = 0
+frames = 2479
+expect = ["room:D6D0"]
+require_hit = ["shaktool.main_ai", "shaktool.flip"]
+pending = "awaiting the seeds-v1-routeenemies-ad7fd75a7035bea2 ci-data upload"
+
+[[segment]]
+id = "enemy-kihunter-work-robot"
+seed = "100-input-phase:205"
+seed_sha256 = "91a12eaad05cd84194f7076fa7c297e4088cbe457f45b721fca7c5b11f9470d9"
+inputs = "seed-kihunter-work-robot-ca52.inputs"
+input_sha256 = "b0ab814811fb06d598ed5e004af16684562f0e2f4d81e05e0d045994dcface18"
+start_frame = 0
+frames = 573
+expect = ["room:CAAE"]
+require_hit = ["kihunter.main_ai", "kihunter.swoop", "work_robot.main_ai", "work_robot.shot"]
+pending = "awaiting the seeds-v1-routeenemies-ad7fd75a7035bea2 ci-data upload"
+
+[[segment]]
+id = "enemy-spike-platform"
+seed = "100-input-phase:198"
+seed_sha256 = "4fbbf6d61a8aa86f44202397a1a843ac10b92d07f9d68b3aa89979e693eb023a"
+inputs = "seed-spike-platform-cb8b.inputs"
+input_sha256 = "ad7c886db80dd758d57d85571c4a8cfcff01f058637e25f84da7a1f204fa91c9"
+start_frame = 0
+frames = 283
+expect = ["room:CBD5"]
+require_hit = ["spike_platform.run"]
+pending = "awaiting the seeds-v1-routeenemies-ad7fd75a7035bea2 ci-data upload"
+
+[[segment]]
+id = "enemy-boulder-bounce"
+seed = "100-input-phase:270"
+seed_sha256 = "ed666ea53e17bea7758835b6594bf17d7c0e57c1f2fd6cc047993a9e10c89c7f"
+inputs = "seed-boulder-bounce-d4ef.inputs"
+input_sha256 = "ef1bb450163d26c94959f99953fb270838a94314977c8aeccfcb49fc66331e00"
+start_frame = 0
+frames = 313
+expect = ["room:D4EF"]
+require_hit = ["boulder.main_ai", "boulder.bounce_rise"]
+pending = "awaiting the seeds-v1-routeenemies-ad7fd75a7035bea2 ci-data upload"
+
+[[segment]]
+id = "enemy-boulder-roll"
+seed = "100-input-phase:112"
+seed_sha256 = "044c3034ba280ba8ba3bb542114ec17a268836990600cf8946a1b15261b98772"
+inputs = "seed-boulder-roll-b6ee.inputs"
+input_sha256 = "ef90c7900cd61c8704e951467e548cc9bd10cd23e6ac25f462f994a1f74c6bba"
+start_frame = 0
+frames = 763
+expect = ["room:B6EE"]
+require_hit = ["boulder.main_ai", "boulder.roll"]
+pending = "awaiting the seeds-v1-routeenemies-ad7fd75a7035bea2 ci-data upload"
+
+[[segment]]
+id = "enemy-evir"
+seed = "100-input-phase:271"
+seed_sha256 = "ef0f216d1f5be301111ed15481976a8b3293885f457b66c6feb59c23694a46f1"
+inputs = "seed-evir-d461.inputs"
+input_sha256 = "cdabb0720cc2bb4e4b70e272fdc115b8ed630ce8d8779a2a3b5fb6620ff82d4c"
+start_frame = 0
+frames = 363
+expect = ["room:D252"]
+require_hit = ["evir.main_ai", "evir.projectile"]
+pending = "awaiting the seeds-v1-routeenemies-ad7fd75a7035bea2 ci-data upload"
+
+[[segment]]
+id = "enemy-metroid"
+seed = "100-input-phase:317"
+seed_sha256 = "16a8f3308d2e9e5e2da543a80574357bac9c61d3a32cedbc02e720b13c4d2a36"
+inputs = "seed-metroid-dbcd.inputs"
+input_sha256 = "e4f3917892bed5d93790ab2fad4f2f7f3f0b430ad2302c4abedab4ec88d0f555"
+start_frame = 0
+frames = 431
+expect = ["room:DC19"]
+require_hit = ["metroid.main_ai"]
+pending = "awaiting the seeds-v1-routeenemies-ad7fd75a7035bea2 ci-data upload"
+
+[[segment]]
+id = "enemy-etecoon"
+seed = "100-input-phase:34"
+seed_sha256 = "0ed91a468dc2bdcff3e278ca3877f07ceaf9d9d2152ef86098e21539c6d3bfb2"
+inputs = "seed-etecoon-9ad9.inputs"
+input_sha256 = "390381250abe16887889f14ec17b8b16d0687864563e54007262593e4f24dd75"
+start_frame = 0
+frames = 907
+expect = ["room:9BC8"]
+require_hit = ["etecoon.main_ai"]
+pending = "awaiting the seeds-v1-routeenemies-ad7fd75a7035bea2 ci-data upload"
+
+# The Ceres Ridley fight's movie words to 1,000, then the controller released
+# (tools/authored_inputs.py release): Samus stands in the room when Ridley's
+# getaway pushes her out of his way, so she falls while she is pushed.
+
+[[segment]]
+id = "samus-ceres-push"
+seed = "100-input-phase:6"
+seed_sha256 = "0a6d988b41a6ed6baf83f194d23219f8a98f47c38cea6c2bf81520d5461a2938"
+inputs = "authored-ceres-push.inputs"
+input_sha256 = "d1df9777e5ebdad599b50eeadcd4d96051eb29c4cc21183ee375e270c6873d50"
+start_frame = 0
+frames = 1777
+expect = ["room:E0B5"]
+require_hit = ["forced.accelerate_fall"]
+pending = "awaiting the seeds-v1-routeenemies-ad7fd75a7035bea2 ci-data upload"
