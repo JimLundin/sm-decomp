@@ -159,11 +159,10 @@ pub fn advance_tourian_statue<H: crate::menus::host::Host + StatueHost + ?Sized>
         Waiting => {
             if (6..=9)
                 .all(|event| crate::progress::leased::event_has_happened(event, game) & 1 != 0)
+                && game.begin_statue_animation()
             {
-                if game.begin_statue_animation() {
-                    object.c = 300;
-                    advance_statue_program(object);
-                }
+                object.c = 300;
+                advance_statue_program(object);
             }
         }
         Shaking => {

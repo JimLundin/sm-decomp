@@ -46,8 +46,9 @@ Exact root receipts are in `$TEMP/collab/docs-ci-coverage-composition/checks.jso
 `l6-integrated-260d11ef6/`, `l6-integrated-rows/` and
 `verification-spring-ball-jump/`. CI timing/capacity evidence remains in
 [VERIFICATION_SHARDING](VERIFICATION_SHARDING.md), rather than duplicated here.
-The preceding CI slice, PR #145, still needs its final oracle-lock gate and the
-original watcher outcome; inspect its actual state before treating it as landed.
+The preceding CI slice, PR #145, landed at `534c5be320c20856e3ef5f710ea35f639579eea3`
+after its exact-head gates passed; original watcher `25370` exited 0. This
+landing does not qualify the prepared composition above.
 
 ## Root observations received 2026-11-01
 
@@ -63,8 +64,8 @@ and six locks / 4,604 ticks. Across 81 mapped keys, Game primitive count is 0 an
 Runtime count 333,655; retained Game 2,464 byte writes and 261 paused primitives
 are separate. These tally results do not qualify a changed source automatically.
 
-**Pending:** PR #145 head `534c5be32` hosted gates, original watcher 25370 live,
-corpus 41318110135 queued/starting. New landing rows have not started. Coverage
+**Landed:** PR #145 head `534c5be32`; hosted gates passed and original watcher
+25370 exited 0. **Pending:** new landing rows have not started. Coverage
 owner `verification_spring_ball_jump` is preparing genuine recorded 1,180-Tick
 input with a 906-Tick pickup prefix; preparation is not executed coverage.
 

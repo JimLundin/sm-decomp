@@ -111,8 +111,7 @@ pub fn separated_from_rect(
 /// the stop, pin it there, turn scrolls 1 and 3 red, raise the invisible walls,
 /// let the sidehopper live and enable the cry. Was `BabyMetroid_Func_4`.
 pub fn wait_for_camera(game: &mut impl crate::actors::mother_brain_fight::Lease) {
-    if ((i32::from(game.camera().layer1[0]) - (i32::from(CAMERA_STOP_X) + 1)) & SIGN) != 0
-    {
+    if ((i32::from(game.camera().layer1[0]) - (i32::from(CAMERA_STOP_X) + 1)) & SIGN) != 0 {
         crate::camera::set_layer1(game, 0, CAMERA_STOP_X);
         // Red is the scroll word's low byte with its high byte cleared.
         for scroll in SCROLLS {
