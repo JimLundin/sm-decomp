@@ -15,12 +15,12 @@ use crate::actors::spore_spawn::instruction as spore;
 use crate::actors::{
     alcoon, bang, beetom, blue_brinstar_face_block, botwoon, boyon, cacatac, choot, covern,
     crawlers, crocomire_reactions, dachora_run, dragon, draygon_death, draygon_eye, draygon_flight,
-    draygon_grab, draygon_host, draygon_sweep, elevator, escape_critters, etecoon, evir,
-    fire_pillar, flies, fune, geega, geruta, gunship, kago, kraid, magdollite, metroid,
-    mini_crocomire, mini_kraid, mochtroid, morph_ball_eye, multiviola, oum, phantoon,
-    phantoon_actions, polyp, powamp, puyo, reflec, rinka, rio, rippers, roach, shutters,
-    sidehopper, skree, space_pirates, spike_platform, spore_spawn, squeept, tatori, torizo,
-    tripper, waver, work_robot, wrecked_ship_spark, yapping_maw, yard, zeb, zoa,
+    draygon_grab, draygon_host, draygon_sweep, elevator, escape_critters, evir, fire_pillar, flies,
+    fune, geega, geruta, gunship, kago, kraid, magdollite, metroid, mini_crocomire, mini_kraid,
+    mochtroid, morph_ball_eye, multiviola, oum, phantoon, phantoon_actions, polyp, powamp, puyo,
+    reflec, rinka, rio, rippers, roach, shutters, sidehopper, skree, space_pirates, spike_platform,
+    spore_spawn, squeept, tatori, torizo, tripper, waver, work_robot, wrecked_ship_spark,
+    yapping_maw, yard, zeb, zoa,
 };
 use crate::combat_rules::LatchMode;
 use crate::enemy_projectiles::host::Effects as _;
@@ -229,7 +229,6 @@ pub trait AiHost:
     + torizo::Ai
     + kraid::Host
     + phantoon::Host
-    + etecoon::Host
     + dachora_run::Host
     + mini_kraid::Host
     + PreInstructionHost
@@ -622,8 +621,6 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         11001151 => phantoon::hurt(game),
         11001237 => phantoon::touch(game),
         11001243 => phantoon::shot(game),
-        11004178 => etecoon::initialize(game),
-        11004224 => etecoon::main_ai(game),
         11007197 => dachora_run::initialize(game),
         11007278 => dachora_run::main_ai(game),
         10977325 => game.shot_reaction(Shot::Finalize),
@@ -772,7 +769,6 @@ pub trait PreInstructionHost:
     + magdollite::Host
     + torizo::Ai
     + phantoon::Host
-    + etecoon::Host
     + dachora_run::Host
     + crate::actors::host::EnemyHost
 {
@@ -863,23 +859,6 @@ pub fn pre_instruction<H: PreInstructionHost>(ea: u32, game: &mut H) {
         11000454 => phantoon::dying_fade_out(game, k),
         11000535 => phantoon::almost_dead(game, k),
         11000637 => phantoon::dead(game, k),
-        11004335 => etecoon::initial(game, k),
-        11004471 => etecoon::hopping_bottom(game, k),
-        11004674 => etecoon::running_left(game, k),
-        11004716 => etecoon::running_right(game, k),
-        11004752 => etecoon::jumping(game, k),
-        11004877 => etecoon::wall_jump(game, k),
-        11005079 => etecoon::run_to_left_run_up_point(game, k),
-        11005115 => etecoon::run_to_right_run_up_point(game, k),
-        11005151 => etecoon::running_for_tunnel_jump(game, k),
-        11005193 => etecoon::tunnel_jump(game, k),
-        11005226 => etecoon::running_through_tunnel(game, k),
-        11005268 => etecoon::falling_from_tunnel_ledge(game, k),
-        11005301 => etecoon::hopping_top(game, k),
-        11005383 => etecoon::start_hop_top(game, k),
-        11005502 => etecoon::hop_until_samus_near(game, k),
-        11005594 => etecoon::running_for_failed_tunnel_jump(game, k),
-        11005624 => etecoon::failed_tunnel_jump(game, k),
         11007344 => dachora_run::wait_for_samus(game, k),
         11007420 => dachora_run::start_running(game, k),
         11007469 => dachora_run::running_left(game, k),
@@ -900,9 +879,6 @@ pub fn pre_instruction<H: PreInstructionHost>(ea: u32, game: &mut H) {
         10999799 => phantoon::countdown(game, k, phantoon::function::SPAWN_FLAME_RAIN),
         10999924 => phantoon::countdown(game, k, phantoon::function::MOVE_TO_TOP_CENTRE),
         11000203 => phantoon::countdown(game, k, phantoon::function::DYING_EXPLOSIONS),
-        11004416 => etecoon::start_hop_bottom(game, k),
-        11004597 => etecoon::look_at_samus(game, k),
-        11004955 => etecoon::landed_from_jump(game, k),
         // Bank $AA: the Torizos, Shaktool and the statues.
         11192146 => torizo::walking(k, game),
         11192364 => torizo::jumping_or_falling(k, game),

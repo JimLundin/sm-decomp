@@ -1647,8 +1647,10 @@ impl<'g> sm_game::grapple_swing::Host for Runtime<'g> {
 // as owned calls on the scheduler's lease.
 impl Runtime<'_> {
     fn kraid_and_hosts_ai(&mut self, routine: u32) -> bool {
-        use sm_game::actors::{boulder, fire_arc, statues};
+        use sm_game::actors::{boulder, etecoon, fire_arc, statues};
         match routine {
+            11004178 => self.owned_call(etecoon::initialize),
+            11004224 => self.owned_call(etecoon::main_ai),
             11196360 => self.owned_call(statues::initialize_tourian_statue),
             11200278 => self.owned_call(statues::initialize_tube_cracks),
             11200293 => self.owned_call(statues::initialize_chozo_statue),

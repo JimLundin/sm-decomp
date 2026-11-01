@@ -243,14 +243,10 @@ impl sm_game::actors::kraid::Host for Game {
     }
 }
 
-impl sm_game::actors::etecoon::Host for Game {
-    fn run_function(&mut self, address: u32) {
-        crate::game::session_runtime::run_a7_function(address, self);
-    }
-
+impl sm_game::actors::etecoon::Lease for crate::game::session_runtime::Runtime<'_> {
     fn probe_horizontal(&mut self, k: u16, amount: i32) -> bool {
         crate::game::actors::api::probe_horizontal(
-            &mut crate::game::session_runtime::Runtime::new(self),
+            self,
             sm_game::actors::access::ActorKey::from_legacy(k),
             amount,
         ) == crate::game::actors::api::MovementResult::Blocked

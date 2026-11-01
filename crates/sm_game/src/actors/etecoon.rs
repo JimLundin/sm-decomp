@@ -3,20 +3,17 @@
 //! $A7:E912-$A7:EEEA).
 //!
 //! Was `Etecoon_*` in the original decompilation. Each etecoon runs the bank
-//! $A7 function in its `function` word; the compat host dispatches it, so the
-//! function ids are unchanged.
+//! $A7 function in its `function` word, whose ids are the original's.
 use crate::actors::api::PlayerDirection;
 use crate::actors::boss_lease::BossLease;
-use crate::actors::host::{Axis, Slopes, below};
+use crate::actors::host::{Axis, BossEffects, Slopes, below};
 use crate::actors::layouts::part_view;
 use crate::actors::session_slots::session_slot;
 use crate::constants::enemy_properties::K_ENEMY_PROPS_DISABLE_SAMUS_COLL;
 use crate::ram::word;
 
-/// What the etecoons need beyond the common actor operations and sounds.
-pub trait Host: crate::actors::host::ActorHost + BossLease<Game = Self> {
-    /// Run the bank $A7 function at `address` for the current etecoon.
-    fn run_function(&mut self, address: u32);
+/// A lease on a game with the etecoons' effects.
+pub trait Lease: BossLease<Game: BossEffects> {
     /// Whether moving actor `k` by `amount` (16.16) horizontally would be
     /// blocked, without moving it.
     fn probe_horizontal(&mut self, k: u16, amount: i32) -> bool;
@@ -78,11 +75,6 @@ pub mod instruction_list {
 
 use instruction_list as list;
 
-/// A lease on a game with the etecoons' effects.
-pub trait Lease: BossLease<Game: Host> {}
-impl<T: BossLease<Game: Host> + ?Sized> Lease for T {}
-
-const BANK: u32 = 0xa7;
 /// The etecoon constants at $A7:E900: the hop and the tunnel jump's upward
 /// speeds, the running speeds and how near Samus must be to be looked at.
 const HOP_SPEED: u16 = 0xfffd;
@@ -185,8 +177,36 @@ pub fn main_ai<L: Lease>(game: &mut L) {
     if session_slot!(byte game, Etecoon[me].route[1]) != 0 {
         session_slot!(game, Etecoon[me].route, |old| old.wrapping_sub(256));
     } else {
-        let address = (BANK << 16) | session_slot!(game, Etecoon[me].function) as u32;
-        game.foreign(|game| game.run_function(address));
+        let address = session_slot!(game, Etecoon[me].function);
+        run_function(game, address);
+    }
+}
+
+/// Run the etecoon's bank $A7 function at `address` for the current enemy.
+fn run_function<L: Lease>(game: &mut L, address: u16) {
+    let k = game.current_enemy();
+    match address {
+        function::INITIAL => initial(game, k),
+        function::HOPPING_BOTTOM => hopping_bottom(game, k),
+        function::RUNNING_LEFT => running_left(game, k),
+        function::RUNNING_RIGHT => running_right(game, k),
+        function::JUMPING => jumping(game, k),
+        function::WALL_JUMP => wall_jump(game, k),
+        function::RUN_TO_LEFT_RUN_UP => run_to_left_run_up_point(game, k),
+        function::RUN_TO_RIGHT_RUN_UP => run_to_right_run_up_point(game, k),
+        function::RUNNING_FOR_TUNNEL_JUMP => running_for_tunnel_jump(game, k),
+        function::TUNNEL_JUMP => tunnel_jump(game, k),
+        function::RUNNING_THROUGH_TUNNEL => running_through_tunnel(game, k),
+        function::FALLING_FROM_TUNNEL_LEDGE => falling_from_tunnel_ledge(game, k),
+        function::HOPPING_TOP => hopping_top(game, k),
+        function::START_HOP_TOP => start_hop_top(game, k),
+        function::HOP_UNTIL_SAMUS_NEAR => hop_until_samus_near(game, k),
+        function::RUNNING_FOR_FAILED_TUNNEL_JUMP => running_for_failed_tunnel_jump(game, k),
+        function::FAILED_TUNNEL_JUMP => failed_tunnel_jump(game, k),
+        function::START_HOP_BOTTOM => start_hop_bottom(game, k),
+        function::LOOK_AT_SAMUS => look_at_samus(game, k),
+        function::LANDED_FROM_JUMP => landed_from_jump(game, k),
+        _ => game.foreign(|game| game.unreachable()),
     }
 }
 
@@ -302,7 +322,7 @@ pub fn running_left<L: Lease>(game: &mut L, k: u16) {
 
 /// Runs right, jumping 32 px before the wall. Was `Etecoon_Func_9`.
 pub fn running_right<L: Lease>(game: &mut L, k: u16) {
-    if game.foreign(|game| game.probe_horizontal(k, (32u32 << 16) as i32)) {
+    if game.probe_horizontal(k, (32u32 << 16) as i32) {
         let me = k as i32;
         session_slot!(game, Etecoon[me].base; instruction_timer = 1, current_instruction = list::JUMPING_RIGHT);
         session_slot!(game, Etecoon[me].function = function::JUMPING);
