@@ -1,6 +1,6 @@
 //! Kraid's fingernails, the good and bad claws Kraid flicks across the room
 //! (bank $A7:BCEF-$A7:BE8E): the initialisation they share.
-use crate::actors::host::ActorHost;
+use crate::actors::boss_lease::BossState;
 use crate::actors::layouts::{EnemyBase, KraidLayout as Kraid, same_words};
 use crate::actors::session_slots::session_slot;
 use crate::cartridge::native_record;
@@ -65,10 +65,7 @@ const START_DELAY: u16 = 0x40;
 
 /// Kraid's fingernails initialisation AI ($A7:BCF2), for good and bad
 /// fingernails. Was `KraidFingernailInit`.
-pub fn initialize(
-    k: u16,
-    game: &mut (impl ActorHost + crate::actors::session_slots::SlotAccess + ?Sized),
-) {
+pub fn initialize(k: u16, game: &mut (impl BossState + ?Sized)) {
     let palette_index = session_slot!(game, Kraid[0].base.palette_index);
     let nail = i32::from(k);
     session_slot!(game, Fingernail[nail].base.palette_index = palette_index);

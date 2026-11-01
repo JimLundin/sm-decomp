@@ -3,25 +3,17 @@
 //! shinesparks upward trailing four echoes (bank $A7:F4DD-$A7:F9C1).
 //!
 //! Was `Dachora_*` in the original decompilation. The dachora and its echoes
-//! run the bank $A7 function in their `function` word; the compat host
-//! dispatches it, so the function ids are unchanged.
+//! run the bank $A7 function in their `function` word, whose ids are the
+//! original's.
 use crate::actors::boss_lease::BossLease;
 use crate::actors::dachora::load_palette;
-use crate::actors::host::{Axis, Slopes};
+use crate::actors::host::{Axis, BossEffects, Slopes};
 use crate::actors::layouts::part_view;
 use crate::actors::session_slots::session_slot;
 use crate::constants::enemy_properties::{
     K_ENEMY_PROPS_DISABLE_SAMUS_COLL, K_ENEMY_PROPS_INVISIBLE,
 };
 use crate::ram::word;
-
-/// What the dachora needs beyond the common actor operations and sounds.
-pub trait Host:
-    crate::actors::boss_lease::BossLease<Game = Self> + crate::actors::host::ActorHost
-{
-    /// Run the bank $A7 function at `address` for the current dachora.
-    fn run_function(&mut self, address: u32);
-}
 
 part_view! {
     /// The dachora's view of its slot. `speed` is its 16.16 running speed,
@@ -81,10 +73,9 @@ use crate::actors::host::below;
 use instruction_list as list;
 
 /// A lease on a game with the dachora's effects.
-pub trait Lease: BossLease<Game: Host> {}
-impl<T: BossLease<Game: Host> + ?Sized> Lease for T {}
+pub trait Lease: BossLease<Game: BossEffects> {}
+impl<T: BossLease<Game: BossEffects> + ?Sized> Lease for T {}
 
-const BANK: u32 = 0xa7;
 /// The dachora constants at $A7:F4C9: how near Samus must be, the blink,
 /// the shinespark charge, the echo interval and lifetime, the top running
 /// speed and the running acceleration.
@@ -159,8 +150,18 @@ pub fn initialize<L: Lease>(game: &mut L) {
 /// Main AI: the function. Was `Dachora_Main`.
 pub fn main_ai<L: Lease>(game: &mut L) {
     let me = game.current_enemy() as i32;
-    let address = (BANK << 16) | session_slot!(game, Dachora[me].function) as u32;
-    game.foreign(|game| game.run_function(address));
+    let k = game.current_enemy();
+    match session_slot!(game, Dachora[me].function) {
+        function::WAIT_FOR_SAMUS => wait_for_samus(game, k),
+        function::START_RUNNING => start_running(game, k),
+        function::RUNNING_LEFT => running_left(game, k),
+        function::RUNNING_RIGHT => running_right(game, k),
+        function::ACTIVATE_SHINESPARK => activate_shinespark(game, k),
+        function::SHINESPARKING => shinesparking(game, k),
+        function::FALLING => falling(game, k),
+        function::ECHO => echo(game, k),
+        _ => game.foreign(|game| game.unreachable()),
+    }
 }
 
 /// Falls to the floor and blinks once Samus is near. Was `Dachora_Func_2`.

@@ -6,11 +6,13 @@ The primary checkout is stale; use the landing worktree below.
 
 ## First steps
 
-1. Land the qualified three-tool movie-map slice with the lowered RAM baseline.
+1. Poll PR #145's original background watcher25370, then report its landing.
+   Head534c5be32/branchland/batch13ac passed its local GATE OK; corpus41318110135
+   and hosted gates are running. Its three-tool movie-map slice lowers baseline2100.
    Require exact-head GATE OK, CI, corpus, route and oracle-lock gates; start
    `bash tools/lane/watch.sh <pr>` in the background and report each landing.
 2. Keep a dedicated gameplay coverage owner continuously supplied. Current owner
-   `verification_grapple_floor73` runs a genuine earlier-turn route. Reach of
+   `verification_grapple_ordinary_jump` runs the proved floor73 route. Reach of
    both D78F and airborne-standard-anchor remains unproved. Preserve prior
    trials; replenish with a fresh bounded agent from its handoff when it finishes.
    Report reached behavior, mutation sensitivity and passing rows separately.
@@ -34,7 +36,7 @@ The primary checkout is stale; use the landing worktree below.
   Retained Game effects/history and unobserved initialization remain separate.
 - #143 landed Metroid ice/missile and latch/bomb coverage. Both oracles, faithful
   free run and engine locks passed; deliberate mutants failed at ticks49/706.
-- Three-tool movie-map patch SHA `206a2678ba3c43b1ae04e706654754648b0493e38e56e3fe8a37f2b04d31e5b5`
+- PR #145 three-tool movie-map patch SHA `206a2678ba3c43b1ae04e706654754648b0493e38e56e3fe8a37f2b04d31e5b5`
   adds verification374/removes61 (net313), production0. Full original map,
   strict9266 import/9267 rejection, encrypted three-member exact restore and
   all nine rejection controls pass; every qualification family is terminal.
@@ -47,20 +49,26 @@ The primary checkout is stale; use the landing worktree below.
   64 faithful rows and62 locks. Faithful Kraid pause1030 is a genuine retained
   preexisting failure; four400/950/1030/1960 exclusions remain disclosed.
   Current-main21-file patch SHA `558442994a813edd9c636a61253e36d901b701d4ea7c842c5e86a867660b3b6c`
-  is ready in `$TEMP/collab/l6-current-main-composition/`; unqualified result
-  sourcec4bac7c9 predicts RAM2068/93, physical production-95, verification+3.
+  is applied after534c5be32; actual unqualified sourcec4bac7c9 has RAM2068/93,
+  physical production-95, verification+3. Frozen new-head gate/DLL/replays
+  must qualify it before publication; original canonical proofs remain separate.
 - Actual L6 tally:12 patched rows pass/13656 ticks. Across81 reached mapped
   moved-body keys, Game primitive0/Runtime333655. Retained Game transfer
-  effects608 and observed paused hooks are separate.98 body keys and271
-  capability/field gaps remain unmeasured. Six applicable locks run separately.
+  effects2464 byte-write operations (original608 subset) and paused261
+  primitives remain separate.98 body keys and271 capability/field gaps remain
+  unmeasured. Six applicable locks match/4604ticks; all18 original jobs terminal.
   Preserve `$TEMP/collab/l6-moved-state-tally/` and `l6-tally-rows/`.
 - Draygon sourcee6aab08d/DLLf36613f6 passed gate,26 patched/26 faithful rows
-  and23 locks. Tally source20018391 is prepared but uncompiled; instrumentation
-  review and separate build admission remain required. Handoff:
+  and23 locks. Tally source20018391 needs correction before compilation: review
+  found target telemetry and RMW undercounts. Source-only repair3137fdc6
+  removes telemetry and preserves caller/primitive distinctions; independent
+  review and separate build admission remain required. Canonical handoff:
   `$TEMP/collab/l5-draygon/qualification-20261101/HANDOFF.md`.
-- Dedicated grapple predecessor proved spike-grounding83 and contact73,
+- Dedicated grapple predecessor proved spike-grounding83 and stableground73,
   not walljump or the required grapple event. Its prior six unique trials
-  missed both facts. Frozen sourceef9198ba/DLL2363b966 and genuine recorded
+  missed both facts. New ordinary-jump owner genuinely observed ground0 to
+  ordinary2 at740 and release-zero755; both requested facts remain absent.
+  Frozen sourceef9198ba/DLL2363b966 and genuine recorded
   equipment/input/CPU phase remain unchanged. Reach HANDOFF/NEXT_COMMAND in
   `$TEMP/collab/verification-grapple-edge-launch/` before continuation.
 - Full any capture maps722077 events/106967 native reads/127725 rows.
@@ -98,8 +106,10 @@ receipts `removed-root-approved.csv` and `removed-root-approved-additional.csv`
 under `$TEMP/collab/resource-runway-successor/`. Earlier cleanup remains separate.
 Preserve canonical/mutant DLLs, native/library guards, sources, private data and
 all original failures/proofs. Latest disk was about53.8GiB; sample fresh.
-Root next gate reserves2GiB/700MiB; tally locks512MiB/remaining64MiB,
-coverage300MiB/64MiB and source128MiB/64MiB. Future held builds are not live jobs.
+PR145 local gate and L6 tally jobs are terminal; their budgets released.
+Next L6 compiler/replay grants require a fresh sample and owned ceiling;
+coverage300MiB/64MiB and source review128MiB/64MiB remain lightweight grants.
+Future held builds are not live jobs.
 `.ps1` execution stays disabled; use permitted inline PowerShell/Python launchers.
 
 ## Retained origin/lane donors

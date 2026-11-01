@@ -75,9 +75,9 @@ impl sm_game::runtime_access::SessionRam for crate::game::session_runtime::Runti
     }
 }
 
-impl sm_game::actors::boulder::Host for Game {
+impl sm_game::actors::boulder::Lease for crate::game::session_runtime::Runtime<'_> {
     fn enemy_speed32(&self, offset: usize) -> u32 {
-        crate::game::enemy_speeds::word32(&self.enemy_speeds32, &self.capture_native_rom(), offset)
+        self.native_speed32(offset)
     }
 }
 
@@ -205,26 +205,16 @@ impl sm_game::actors::phantoon::Host for Game {
     }
 }
 
-impl sm_game::actors::kraid::Host for Game {
-    fn queue_kraid_tilemap(&mut self, tail: u16, source: u16) {
-        // The two fixed tail reads have no intervening effects and select the same entry.
-        crate::game::display_refresh::queue_native_transfer(
-            tail,
-            704,
-            |_| source,
-            0xa7,
-            |game| ((game.ram().read_byte(0x59) as i32 & 0xfc) << 8) as u16,
-            self,
-        );
-    }
-
+impl sm_game::actors::kraid::Lease for crate::game::session_runtime::Runtime<'_> {
     fn touches_player_from_above(&mut self, k: u16) -> bool {
         crate::game::actors::api::touches_player_from_above(
-            &crate::game::session_runtime::Runtime::new(self),
+            self,
             sm_game::actors::access::ActorKey::from_legacy(k),
         )
     }
+}
 
+impl sm_game::actors::kraid::Host for Game {
     fn boss_word_native(&mut self, area: u16) -> u16 {
         crate::game::gameplay_flag_runtime::boss_word_at(
             area,
@@ -243,23 +233,13 @@ impl sm_game::actors::kraid::Host for Game {
     }
 }
 
-impl sm_game::actors::etecoon::Host for Game {
-    fn run_function(&mut self, address: u32) {
-        crate::game::session_runtime::run_a7_function(address, self);
-    }
-
+impl sm_game::actors::etecoon::Lease for crate::game::session_runtime::Runtime<'_> {
     fn probe_horizontal(&mut self, k: u16, amount: i32) -> bool {
         crate::game::actors::api::probe_horizontal(
-            &mut crate::game::session_runtime::Runtime::new(self),
+            self,
             sm_game::actors::access::ActorKey::from_legacy(k),
             amount,
         ) == crate::game::actors::api::MovementResult::Blocked
-    }
-}
-
-impl sm_game::actors::dachora_run::Host for Game {
-    fn run_function(&mut self, address: u32) {
-        crate::game::session_runtime::run_a7_function(address, self);
     }
 }
 
@@ -386,9 +366,9 @@ impl sm_game::display::transfer::TilemapQueue for Game {
     }
 }
 
-impl sm_game::actors::fire_arc::Host for Game {
+impl sm_game::actors::fire_arc::Lease for crate::game::session_runtime::Runtime<'_> {
     fn advance_orbit(&mut self) {
-        crate::game::enemy_projectiles::advance_fire_arc_orbit(self);
+        sm_game::enemy_projectiles::attachments_fire_arc_botwoon::advance_fire_arc_orbit(self);
     }
 }
 
@@ -405,39 +385,35 @@ impl sm_game::actors::ceres_doors::Lease for crate::game::session_runtime::Runti
     }
 }
 
-impl sm_game::actors::statues::Host for Game {
-    fn run_function(&mut self, address: u32) {
-        crate::game::session_runtime::run_aa_function(address, self);
-    }
-
+impl sm_game::actors::statues::Lease for crate::game::session_runtime::Runtime<'_> {
     fn boss_word_native(&mut self, area: u16) -> u16 {
-        crate::game::gameplay_flag_runtime::boss_word_at(
-            area,
-            sm_game::gameplay_flag_host::BossWordOrder::Native,
-            self,
-        )
+        self.foreign(|game| {
+            crate::game::gameplay_flag_runtime::boss_word_at(
+                area,
+                sm_game::gameplay_flag_host::BossWordOrder::Native,
+                game,
+            )
+        })
     }
 
     fn start_lowering_acid(&mut self) {
-        let mut runtime = crate::game::session_runtime::Runtime::new(self);
-        let room = &mut runtime.session_mut().room;
+        let room = &mut self.session_mut().room;
         room.liquid_delay = 32;
         room.liquid_velocity = 64;
     }
 
     fn lower_acid(&mut self) {
-        crate::game::room_mechanisms::lower_acid(self);
+        sm_game::room_mechanisms::rules::hands::lower_acid(self);
     }
 
     fn select_block_at(&mut self, x: u16, y: u16) {
-        crate::game::actors::api::select_block_at(
-            &mut crate::game::session_runtime::Runtime::new(self),
-            sm_game::geometry::Point { x, y },
-        );
+        crate::game::actors::api::select_block_at(self, sm_game::geometry::Point { x, y });
     }
 
     fn spawn_collision_plm(&mut self, header: u16) {
-        crate::game::session_runtime::spawn_collision_plm(header, self);
+        use sm_game::room_mechanisms::{creation, host};
+        let source = host::SpawnSource::Collision { header };
+        creation::spawn(self, source, &mut host::Contact::Absent);
     }
 }
 
