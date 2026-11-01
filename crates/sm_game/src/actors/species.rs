@@ -8,6 +8,7 @@
 //! for the small tables, the same address for the large ones. Moving a
 //! routine here means moving its arm.
 use crate::actors::access::{AccessMode::LittleEndian, AccessMode::Native, ActorAccess as _};
+use crate::actors::gunship::Host as _;
 use crate::actors::host::{
     ActorHost, ActorLease as _, ActorRuntime, Death, LeaseActors, LeaseScope, Shot,
 };
@@ -23,6 +24,7 @@ use crate::combat_rules::LatchMode;
 use crate::enemy_projectiles::host::Effects as _;
 use crate::enemy_script::EnemyScript;
 use crate::ram::word;
+use crate::session_access::SessionAccess as _;
 
 /// The failure every table shares.
 pub trait SpeciesHost {

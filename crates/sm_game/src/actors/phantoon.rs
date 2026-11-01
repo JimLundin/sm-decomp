@@ -195,7 +195,14 @@ macro_rules! part {
         part!($g, $layout[$slot] $(.$prefix)* .$hi = (sum >> 16) as u16);
     }};
     ($g:ident, $layout:ident[$slot:expr] $(.$prefix:ident)*; $($field:ident = $value:expr),+ $(,)?) => {
-        $(part!($g, $layout[$slot] $(.$prefix)* .$field = $value);)+
+        $crate::actors::phantoon::part!(@set_fields $g, $layout[$slot] [$(.$prefix)*]; $($field = $value),+);
+    };
+    (@set_fields $g:ident, $layout:ident[$slot:expr] [$($prefix:tt)*]; $field:ident = $value:expr, $($rest:tt)+) => {
+        $crate::actors::phantoon::part!($g, $layout[$slot] $($prefix)* .$field = $value);
+        $crate::actors::phantoon::part!(@set_fields $g, $layout[$slot] [$($prefix)*]; $($rest)+);
+    };
+    (@set_fields $g:ident, $layout:ident[$slot:expr] [$($prefix:tt)*]; $field:ident = $value:expr) => {
+        $crate::actors::phantoon::part!($g, $layout[$slot] $($prefix)* .$field = $value);
     };
     ($g:ident, $layout:ident[$slot:expr] $(.$field:ident)+, |$old:ident| $value:expr) => {{
         let slot: i32 = $slot;
@@ -989,18 +996,14 @@ pub fn main_ai<L: Lease + ?Sized>(game: &mut L) {
         part!(game, Tentacles[TENTACLES].base.y_pos = y);
         part!(game, Mouth[MOUTH].base.y_pos = y);
         if part!(game, Eye[EYE].background_held) == 0 {
-            set_bg2_scroll(
-                game,
-                0,
-                (game.camera().layer1[0] as i32 - part!(game, Body[BODY].base.x_pos) as i32 + 40)
-                    as u16,
-            );
-            set_bg2_scroll(
-                game,
-                1,
-                (game.camera().layer1[1] as i32 - part!(game, Body[BODY].base.y_pos) as i32 + 40)
-                    as u16,
-            );
+            let x_scroll = (game.camera().layer1[0] as i32
+                - part!(game, Body[BODY].base.x_pos) as i32
+                + 40) as u16;
+            set_bg2_scroll(game, 0, x_scroll);
+            let y_scroll = (game.camera().layer1[1] as i32
+                - part!(game, Body[BODY].base.y_pos) as i32
+                + 40) as u16;
+            set_bg2_scroll(game, 1, y_scroll);
         }
     }
 }
