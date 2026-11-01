@@ -44,8 +44,9 @@ fi
 # sm in both configurations, then the verifier cdylib against the verify-cfg library.
 rustc --crate-name sm --crate-type rlib sm/src/lib.rs $gx $gt $ext --emit=metadata -o "$O/libsm.rmeta" >"$O/sm.log" 2>&1 || fail "SM FAIL" "$O/sm.log"
 rustc --crate-name sm --crate-type rlib --cfg sm_verify_dll sm/src/lib.rs $gxv $gtv $ext --emit=metadata -o "$O/libsmv.rmeta" >"$O/smv.log" 2>&1 || fail "SM [verify] FAIL" "$O/smv.log"
-# Cargo's ordinary sm_verify example also includes the standalone replay module.
-rustc --crate-name sm_verify --crate-type cdylib sm/src/verify_dll.rs --extern sm="$O/libsm.rmeta" $gx $gt $ext --emit=metadata -o "$O/plain-verify.rmeta" >"$O/plain-v.log" 2>&1 || fail "VERIFY_DLL [plain] FAIL" "$O/plain-v.log"
+# Check the ordinary host against the library exposing checkpoint support, as
+# Cargo's frontend library does; the host itself still has no sm_verify_dll cfg.
+rustc --crate-name sm_verify --crate-type cdylib sm/src/verify_dll.rs --extern sm="$O/libsmv.rmeta" $gxv $gtv $ext --emit=metadata -o "$O/plain-verify.rmeta" >"$O/plain-v.log" 2>&1 || fail "VERIFY_DLL [plain] FAIL" "$O/plain-v.log"
 for t in "" "--test"; do
   SM_VERIFY_SOURCE_HASH=$(printf '0%.0s' $(seq 64)) rustc $t --crate-name sm_verify --crate-type cdylib --cfg sm_verify_dll sm/src/verify_dll.rs --extern sm="$O/libsmv.rmeta" $gxv $gtv $ext --emit=metadata -o "$O/verify.rmeta" >"$O/v.log" 2>&1 || fail "VERIFY_DLL [$t] FAIL" "$O/v.log"
 done
