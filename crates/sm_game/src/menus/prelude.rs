@@ -68,9 +68,6 @@ pub(crate) use inventory;
 /// The BG scroll mirrors ([`crate::display::sequence::scroll::Word`]).
 macro_rules! scroll { ($($t:tt)*) => { owned!([$crate::display::sequence::scroll] $($t)*) }; }
 pub(crate) use scroll;
-/// The power bomb's words ([`crate::explosion_window::power_bomb::Word`]).
-macro_rules! power_bomb { ($($t:tt)*) => { owned!([$crate::explosion_window::power_bomb] $($t)*) }; }
-pub(crate) use power_bomb;
 /// The Session-owned words ([`crate::session_words::Word`]).
 macro_rules! session_word { ($($t:tt)*) => { owned!([$crate::session_words] $($t)*) }; }
 pub(crate) use session_word;
