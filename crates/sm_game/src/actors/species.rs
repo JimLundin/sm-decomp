@@ -11,7 +11,6 @@ use crate::actors::access::{AccessMode::LittleEndian, AccessMode::Native, ActorA
 use crate::actors::host::{
     ActorHost, ActorLease as _, ActorRuntime, Death, LeaseActors, LeaseScope, Shot,
 };
-use crate::actors::spore_spawn::instruction as spore;
 use crate::actors::{
     alcoon, bang, beetom, botwoon, boulder, boyon, cacatac, choot, covern, crawlers,
     crocomire_reactions, dachora_run, dragon, draygon_death, draygon_eye, draygon_flight,
@@ -76,7 +75,6 @@ pub fn touch<H: TouchHost>(ea: u32, game: &mut H) {
         10795344 => (),
         10846284 => (),
         10851818 => draygon_death::touch(game),
-        10874348 => spore_spawn::touch(game),
         // Ridley's contact leaves the death pending.
         10936153 => game.contact_reaction(Death::LeavePending),
         10977356 => (),
@@ -129,7 +127,6 @@ pub fn shot<H: ShotHost>(ea: u32, j: u16, game: &mut H) {
         10846253 => game.shot_reaction(Shot::Finalize),
         10846284 => (),
         10851824 => draygon_death::shot(game),
-        10874202 => spore_spawn::shot(game),
         10911820 => (),
         10977356 => (),
         10982581 => (),
@@ -531,10 +528,6 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         11769448 => botwoon::main_ai(&mut LeaseActors::lease(game)),
         11771903 | 11771969 => botwoon::contact(ea == 11771969, &mut LeaseActors::lease(game)),
         11771926 => botwoon::shot(&mut LeaseActors::lease(game)),
-        10873386 => spore_spawn::initialize(game),
-        10873619 => spore_spawn::main_ai(game),
-        10874202 => spore_spawn::shot(game),
-        10874348 => spore_spawn::touch(game),
         11791130 => (),
         10649635 => game.contact_reaction(Death::Finalize),
         10649645 => game.shot_reaction(Shot::Finalize),
@@ -954,13 +947,6 @@ pub fn instruction<H: InstructionHost>(
                 .write_slice_le(crate::ram::words::ROOM_LOADING_IRQ_HANDLER, 12);
             j
         }
-        spore::INCREASE_MAX_X_RADIUS => spore_spawn::increase_max_x_radius(j, game),
-        spore::CLEAR_DAMAGED_FLAG => spore_spawn::clear_damaged_flag(j, game),
-        spore::SET_MAX_X_RADIUS_AND_ANGLE_DELTA => {
-            spore_spawn::set_max_x_radius_and_angle_delta(j, game)
-        }
-        spore::HARDEN => spore_spawn::harden(j, game),
-        spore::SET_FUNCTION => spore_spawn::set_function(j, game),
         // Death quake sound timer = [[Y]] ($A5:E872) and queue sound [[Y]] ($A5:E895).
         10872946 => {
             let at = crate::ram::words::BOSS_DEATH_QUAKE_SOUND_TIMER;
@@ -971,13 +957,6 @@ pub fn instruction<H: InstructionHost>(
             LeaseActors::lease(game).queue_sound(2, 6, j.word(0));
             j.offset(1)
         }
-        10873009 => {
-            game.scatter_spore_spawn_drop(k);
-            j
-        }
-        10873034 | 10873116 => spore_spawn::fade(ea == 10873116, j, game),
-        10873198 => spore_spawn::emit_spore(j, game),
-        10873265 => spore_spawn::emit_hurt(j, game),
         10852159 => draygon_death::spawn_dying_sprite(21, j, game),
         10852178 => draygon_death::spawn_dying_sprite(3, j, game),
         10852197 => draygon_death::spawn_dying_sprite(29, j, game),

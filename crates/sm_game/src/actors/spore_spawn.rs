@@ -16,7 +16,7 @@ use crate::menus::prelude::{boss, owned};
 use crate::ram::word_arrays;
 
 /// What Spore Spawn needs beyond the shared boss effects.
-pub trait Host: BossEffects + BossLease<Game = Self> {
+pub trait Host: BossEffects {
     /// Move the stem's segments between its anchor and Spore Spawn.
     fn update_spore_stem(&mut self);
     /// The boss bits of `area`.
@@ -197,6 +197,33 @@ pub fn initialize<L: Lease + ?Sized>(game: &mut L) {
             game.spawn_actor_eproj(part, spawn_key, SPORE_SPAWNERS);
         }
         game.foreign(|game| game.update_spore_stem());
+    }
+}
+
+/// Run one of Spore Spawn's script instructions, keyed by address, for actor `k`.
+pub fn run_instruction<L: Lease + ?Sized>(
+    address: u32,
+    k: u16,
+    script: EnemyScript,
+    game: &mut L,
+) -> EnemyScript {
+    match address {
+        instruction::INCREASE_MAX_X_RADIUS => increase_max_x_radius(script, game),
+        instruction::CLEAR_DAMAGED_FLAG => clear_damaged_flag(script, game),
+        instruction::SET_MAX_X_RADIUS_AND_ANGLE_DELTA => {
+            set_max_x_radius_and_angle_delta(script, game)
+        }
+        instruction::HARDEN => harden(script, game),
+        instruction::SET_FUNCTION => set_function(script, game),
+        // Instruction - spawn Spore Spawn's death drops ($A5:E8B1).
+        10873009 => {
+            game.foreign(|game| game.scatter_spore_spawn_drop(k));
+            script
+        }
+        10873034 | 10873116 => fade(address == 10873116, script, game),
+        10873198 => emit_spore(script, game),
+        10873265 => emit_hurt(script, game),
+        _ => unreachable!("unrecognized Spore Spawn instruction"),
     }
 }
 

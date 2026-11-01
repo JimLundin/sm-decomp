@@ -1242,6 +1242,10 @@ impl Runtime<'_> {
             11789909 => self.owned_call(actors::escape_critters::main_ai),
             11054987 => self.owned_call(actors::magdollite::initialize),
             11055370 => self.owned_call(actors::magdollite::main_ai),
+            10873386 => self.owned_call(actors::spore_spawn::initialize),
+            10873619 => self.owned_call(actors::spore_spawn::main_ai),
+            10874202 => self.owned_call(actors::spore_spawn::shot),
+            10874348 => self.owned_call(actors::spore_spawn::touch),
             11056128 | 11056134 | 11056140 => {
                 self.owned_call(|runtime| actors::magdollite::damage(routine, runtime))
             }
@@ -1276,6 +1280,12 @@ impl Runtime<'_> {
             Err(script) => script,
         };
         match routine {
+            10872671 | 10872689 | 10872877 | 10872956 | 10873018 | 10873009 | 10873034
+            | 10873116 | 10873198 | 10873265 => {
+                return self.owned_call(|runtime| {
+                    actors::spore_spawn::run_instruction(routine, actor, script, runtime)
+                });
+            }
             11054610 | 11054630 | 11054640 | 11054650 | 11054661 | 11054672 | 11054682
             | 11054692 | 11054728 | 11054742 | 11054778 | 11054794 | 11054820 | 11054846
             | 11054872 | 11054916 => {
@@ -1338,6 +1348,8 @@ impl Runtime<'_> {
         use sm_game::actors::species;
         if routine == 10940479 {
             self.owned_call(sm_game::actors::ceres_doors::steam_touch);
+        } else if routine == 10874348 {
+            self.owned_call(actors::spore_spawn::touch);
         } else if !self.bank_a9_routine(routine) && !species::lease_touch(routine, self) {
             self.foreign(|game| species::touch(routine, game));
         }
@@ -1346,6 +1358,8 @@ impl Runtime<'_> {
         use sm_game::actors::species;
         if routine == 10936202 {
             self.owned_call(sm_game::actors::ridley::shot);
+        } else if routine == 10874202 {
+            self.owned_call(actors::spore_spawn::shot);
         } else if !self.bank_a9_routine(routine) && !species::lease_shot(routine, self) {
             self.foreign(|game| species::shot(routine, argument, game));
         }
