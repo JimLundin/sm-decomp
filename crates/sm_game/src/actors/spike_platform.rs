@@ -65,6 +65,7 @@ pub fn initialize<H: LeaseActors + ?Sized>(game: &mut H) {
 
 /// Main AI - spike platform top ($A6:8BAD): its function.
 pub fn run<H: LeaseActors + ?Sized>(game: &mut H) {
+    crate::probe::hit("spike_platform.run");
     let mut lease = game.lease();
     let rt = &mut lease;
     let slot = combat::current_slot(rt);

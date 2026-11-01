@@ -58,6 +58,7 @@ pub fn clear_collided_motion(h: &mut impl Host) {
 }
 
 fn accelerate_fall(s: &mut Session) {
+    crate::probe::hit("forced.accelerate_fall");
     let c = &mut s.player.contact;
     if c.y_speed.whole.wrapping_sub(5) & 0x8000 != 0 {
         let next = speed::value(&c.y_speed).wrapping_add(speed::value(&c.y_acceleration));

@@ -116,6 +116,7 @@ pub fn initialize_deactivated<H: LeaseActors + ?Sized>(game: &mut H) {
 }
 /// Main AI - work robot ($A8:CC36): fall, accelerating.
 pub fn main_ai(runtime: &mut impl ActorLease) {
+    crate::probe::hit("work_robot.main_ai");
     let key = combat::current(runtime);
     let actor = runtime.resolve_actor(key, Native);
     let speed = ((u32::from(actor.pre_instruction) << 16) | u32::from(actor.variables[4])) as i32;
@@ -142,6 +143,7 @@ pub fn shot_deactivated<H: LeaseActors + ?Sized>(game: &mut H) {
 }
 /// Enemy shot - work robot ($A8:D192): knocked back and its laser delayed, while powered.
 pub fn shot<H: LeaseActors + EnemyHost + ?Sized>(game: &mut H) {
+    crate::probe::hit("work_robot.shot");
     if !powered(game) {
         return;
     }

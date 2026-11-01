@@ -180,6 +180,7 @@ pub fn initialize<L: Lease>(game: &mut L) {
 /// Main AI: count down a quake freeze, else run the function. Was
 /// `Etecoon_Main`.
 pub fn main_ai<L: Lease>(game: &mut L) {
+    crate::probe::hit("etecoon.main_ai");
     let me = game.current_enemy() as i32;
     if session_slot!(byte game, Etecoon[me].route[1]) != 0 {
         session_slot!(game, Etecoon[me].route, |old| old.wrapping_sub(256));

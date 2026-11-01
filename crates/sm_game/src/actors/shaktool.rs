@@ -122,6 +122,7 @@ pub fn set_neighbour_angles<L: Lease>(k: u16, a: u16, game: &mut L) {
 /// angles of the pieces at mirrored places, swap the saw hands' positions and
 /// centre the arm pieces and head. Was `Shaktool_DB59`.
 pub fn flip<L: Lease>(k: u16, game: &mut L) {
+    crate::probe::hit("shaktool.flip");
     let primary: u16 = session_slot!(game, Piece[k as i32].primary_piece);
     let head = i32::from(primary) + HEAD;
     session_slot!(game, Piece[head].direction, |old| old ^ FLIPPED);
@@ -264,6 +265,7 @@ pub trait Ai: BossLease<Game = Self> + WorkRamAccess {
 
 /// Main AI and hurt AI ($AA:DCA3): the piece's function. Was `Shaktool_Hurt`.
 pub fn main_ai<L: Lease>(game: &mut L) {
+    crate::probe::hit("shaktool.main_ai");
     let piece = i32::from(game.current_enemy());
     let address = (u32::from(BANK) << 16) | u32::from(session_slot!(game, Piece[piece].function));
     game.foreign(|game| game.run_function(address));

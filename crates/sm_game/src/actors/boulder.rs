@@ -163,6 +163,7 @@ pub fn initialize<H: Host + ?Sized>(game: &mut H) {
 
 /// Runs the current state. Was `Boulder_Main`.
 pub fn main_ai<H: Host + ?Sized>(game: &mut H) {
+    crate::probe::hit("boulder.main_ai");
     let me = current(game);
     match session_slot!(game, Boulder[me].state) {
         state::WAIT_FOR_SAMUS => wait_for_samus(game),
@@ -283,6 +284,7 @@ fn fall<H: Host + ?Sized>(game: &mut H) {
 
 /// Rises after a landing while rolling, slowing down. Was `Boulder_Func_3`.
 fn bounce_rise<H: Host + ?Sized>(game: &mut H) {
+    crate::probe::hit("boulder.bounce_rise");
     let me = current(game);
     move_y(
         game,
@@ -348,6 +350,7 @@ fn bounce_fall<H: Host + ?Sized>(game: &mut H) {
 
 /// Rolls along the ground until a wall stops it. Was `Boulder_Func_5`.
 fn roll<H: Host + ?Sized>(game: &mut H) {
+    crate::probe::hit("boulder.roll");
     let me = current(game);
     let mut row = row(game, me, true);
     let index: i32 = row as i32 >> 1;

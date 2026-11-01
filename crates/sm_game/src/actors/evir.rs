@@ -221,6 +221,7 @@ fn run_function(runtime: &mut impl ActorLease, evir: i32) {
 }
 /// Main AI - evir ($A8:891B).
 pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
+    crate::probe::hit("evir.main_ai");
     let mut lease = game.lease();
     let evir = current_slot(&lease);
     run_function(&mut lease, evir);
@@ -228,6 +229,7 @@ pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
 /// Main AI - evir projectile ($A8:899E): unless frozen, keep its moving or regrowing list,
 /// or shoot; then run its function.
 pub fn projectile_main_ai(runtime: &mut impl ActorLease) {
+    crate::probe::hit("evir.projectile");
     let evir = current_slot(runtime);
     if session_slot!(runtime, Evir[evir].base.frozen_timer) == 0 {
         if session_slot!(runtime, Evir[evir].moving) != 0 {

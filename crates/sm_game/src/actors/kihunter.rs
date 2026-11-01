@@ -244,6 +244,7 @@ fn set_paired_lists(game: &mut (impl EnemyHost + LeaseActors), k: u16, index: u1
 }
 /// Main AI - Kihunter ($A8:F25C) or Kihunter wings ($A8:F262): run its function.
 pub fn main_ai(game: &mut (impl EnemyHost + LeaseActors)) {
+    crate::probe::hit("kihunter.main_ai");
     let k = game.current_enemy();
     let hunter = i32::from(k);
     match session_slot!(game, Kihunter[hunter].function) {
@@ -410,6 +411,7 @@ pub fn swing(velocity: u32, acceleration: u32, cap: u16, angle: u16) -> (u32, u1
 /// Ki-hunter function - winged - swoop ($A8:F3B8): swing along the arc to Samus, swiping
 /// past the trigger angle, then back off at a block.
 fn swoop(game: &mut (impl EnemyHost + LeaseActors), k: u16) {
+    crate::probe::hit("kihunter.swoop");
     let hunter = i32::from(k);
     let forward = session_slot!(game, Kihunter[hunter].angular_acceleration) & 0x8000 == 0;
     let past_turn = (session_slot!(game, Kihunter[hunter].arc_angle) as i16)

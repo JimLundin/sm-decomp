@@ -240,6 +240,7 @@ pub fn initialize(runtime: &mut impl ActorLease) {
 }
 /// Main AI - roach ($A3:A2D0): run its function. Was `advance`.
 pub fn main_ai(runtime: &mut impl ActorLease) {
+    crate::probe::hit("roach.main_ai");
     let key = combat::current(runtime);
     let roach = current_slot(runtime);
     let function = runtime.resolve_actor(key, Native).variables[lane::FUNCTION];

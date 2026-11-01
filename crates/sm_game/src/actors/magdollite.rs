@@ -336,6 +336,7 @@ pub fn cycle_palette<L: Lease>(game: &mut L) {
 }
 /// Main AI ($A8:B10A): count down the part's cooldown and name its state function.
 pub fn main_ai<L: Lease>(game: &mut L) -> u32 {
+    crate::probe::hit("magdollite.main_ai");
     let part = current(game);
     session_slot!(game, Part[part].cooldown, |old| old.wrapping_sub(1));
     u32::from(AI_BANK) << 16 | u32::from(session_slot!(game, Part[part].state))
@@ -387,6 +388,7 @@ fn stretch_head_hitbox<L: Lease>(hand: u16, game: &mut L) {
 /// Growing arm ($A8:B204), part one: move up at the head's grow speed. Returns
 /// the arm and, when it has reached the warning extension, that extension.
 pub fn grow_arm<L: Lease>(game: &mut L) -> (u16, Option<i32>) {
+    crate::probe::hit("magdollite.grow_arm");
     let arm = current(game);
     let head = current(game) - SLOT;
     let value = u32::from(session_slot!(game, Head[head].grow_subspeed))

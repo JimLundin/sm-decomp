@@ -234,6 +234,7 @@ fn project<L: Lease>(
 /// Yapping maw function - attack ($A8:A28C), calculating the origin
 /// ($A8:A310). Was `start_reach`.
 fn attack<L: Lease>(write_operand: &mut impl FnMut(u8, &mut L), game: &mut L) {
+    crate::probe::hit("yapping_maw.attack");
     let maw = game.current_enemy() as i32;
     session_slot!(game, Maw[maw]; angle = 0, subangle = 0, angular_speed_index = 0);
     session_slot!(
@@ -435,6 +436,7 @@ fn cooldown<L: Lease>(game: &mut L) {
 /// existing runtime's unknown-address failure before attachments update. Was
 /// `advance`.
 pub fn main_ai<L: Lease>(game: &mut L, mut write_operand: impl FnMut(u8, &mut L)) -> bool {
+    crate::probe::hit("yapping_maw.main_ai");
     let maw = game.current_enemy() as i32;
     session_slot!(game, Maw[maw].intangibility_timer, |old| old
         .wrapping_sub(1));

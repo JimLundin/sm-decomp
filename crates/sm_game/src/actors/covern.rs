@@ -344,6 +344,7 @@ fn ready_to_materialise(runtime: &mut impl ActorLease, key: Key) -> bool {
 /// Covern function - dematerialised - awake ($A8:9D36): follow Samus's zone
 /// and materialise near her when ready.
 fn awake(runtime: &mut impl ActorLease, key: Key) {
+    crate::probe::hit("covern.awake");
     let covern = i32::from(key.byte_index());
     if ready_to_materialise(runtime, key) {
         runtime.edit_actor(key, Native, |actor| {
@@ -387,6 +388,7 @@ fn awake(runtime: &mut impl ActorLease, key: Key) {
 }
 /// Main AI - coven ($A8:9B3C): run its function. Was `advance`.
 pub fn main_ai(runtime: &mut impl ActorLease) {
+    crate::probe::hit("covern.main_ai");
     let key = selected(runtime);
     match runtime.resolve_actor(key, Native).variables[lane::FUNCTION] {
         function::FADE_TO_WHITE => fade_to_white(runtime, key),

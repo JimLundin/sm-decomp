@@ -161,6 +161,7 @@ pub fn hurt<H: LeaseActors + ?Sized>(game: &mut H) {
 }
 /// Main AI - metroid ($A3:EB98): run its function, and carry its sprites.
 pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
+    crate::probe::hit("metroid.main_ai");
     let runtime = &mut game.lease();
     let key = combat::current(runtime);
     let target_y = runtime.session().player.y.wrapping_sub(8);
