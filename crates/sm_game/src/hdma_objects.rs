@@ -221,14 +221,12 @@ where
             game.write_register(0x4300 + channel + register, value);
         }
     }
-    crate::liquid::LiquidWords::set(game, |words| &mut words.liquid.surface.fraction, 0);
-    crate::liquid::LiquidWords::set(game, |words| &mut words.liquid.surface.whole, -1i32 as u16);
-    crate::liquid::LiquidWords::set(game, |words| &mut words.liquid.lava_acid.fraction, 0);
-    crate::liquid::LiquidWords::set(
-        game,
-        |words| &mut words.liquid.lava_acid.whole,
-        -1i32 as u16,
-    );
+    crate::session_cohort::with_projected(game, |_, words: &mut crate::liquid::LiquidWords| {
+        words.liquid.surface.fraction = 0;
+        words.liquid.surface.whole = -1i32 as u16;
+        words.liquid.lava_acid.fraction = 0;
+        words.liquid.lava_acid.whole = -1i32 as u16;
+    });
     word!(game.HUD_BG3_XPOS = 0);
     word!(game.HUD_BG3_YPOS = 0);
     word!(game.BG3_XPOS = 0);
@@ -245,17 +243,21 @@ where
     session.projectiles.power_bomb.explosion_status = 0;
     session.projectiles.power_bomb.flag = 0;
     session.room.power_bomb_radius = 0;
-    crate::liquid::LiquidWords::set(game, |words| &mut words.liquid.tilemap, 0);
-    crate::liquid::LiquidWords::set(game, |words| &mut words.liquid.kind, 0);
-    crate::liquid::LiquidWords::set(game, |words| &mut words.liquid.base_fraction, 0x8000);
-    crate::liquid::LiquidWords::set(game, |words| &mut words.height, 0);
-    crate::liquid::LiquidWords::set(game, |words| &mut words.target, 0);
-    crate::liquid::LiquidWords::set(game, |words| &mut words.velocity, 0);
-    crate::liquid::LiquidWords::set(game, |words| &mut words.options, 0);
-    crate::liquid::LiquidWords::set(game, |words| &mut words.delay, 0);
-    crate::liquid::LiquidWords::set(game, |words| &mut words.liquid.tide_phase, 0);
-    crate::liquid::LiquidWords::set(game, |words| &mut words.liquid.offset.fraction, 0);
-    crate::liquid::LiquidWords::set(game, |words| &mut words.liquid.offset.whole, 0);
+    crate::session_cohort::with_projected(game, |_, words: &mut crate::liquid::LiquidWords| {
+        words.liquid.tilemap = 0;
+        words.liquid.kind = 0;
+        words.liquid.base_fraction = 0x8000;
+        words.height = 0;
+        words.target = 0;
+        words.velocity = 0;
+        words.options = 0;
+        words.delay = 0;
+        words.liquid.tide_phase = 0;
+    });
+    crate::session_cohort::with_projected(game, |_, words: &mut crate::liquid::LiquidWords| {
+        words.liquid.offset.fraction = 0;
+        words.liquid.offset.whole = 0;
+    });
     word!(game.FX_LAYER_BLENDING_CONFIG_A = 2);
     word! { game, 0;
         REG_BG3HOFS, REG_BG3VOFS,

@@ -151,33 +151,41 @@ impl LiquidWords {
             (0x1980, &mut self.delay),
         ]
     }
-    pub fn read(ram: &(impl crate::ram::CompatibilityRam + ?Sized)) -> Self {
-        let mut words = Self::default();
-        for (at, word) in words.slots() {
-            *word = crate::projection::word(ram, at);
-        }
-        words
-    }
-    /// Store `value` to the one word `field` selects, low byte then high,
-    /// as a named word store does.
-    pub fn set(
-        ram: &mut (impl crate::ram::CompatibilityRam + ?Sized),
-        field: impl FnOnce(&mut Self) -> &mut u16,
-        value: u16,
-    ) {
-        let mut words = Self::default();
-        let target: *const u16 = field(&mut words);
-        let at = words
-            .slots()
-            .into_iter()
-            .find(|(_, word)| core::ptr::eq(&**word, target))
-            .map(|(at, _)| at)
-            .expect("liquid word");
-        crate::projection::set_word(ram, at, value);
-    }
-    pub fn write(mut self, ram: &mut (impl crate::ram::CompatibilityRam + ?Sized)) {
+}
+
+/// The liquid words as a typed copy of the Room's, for code outside a lease.
+impl crate::session_cohort::Cohort for LiquidWords {
+    fn words(&mut self, mut visit: impl FnMut(usize, &mut u16)) {
         for (at, word) in self.slots() {
-            crate::projection::set_word(ram, at, *word);
+            visit(at, word);
+        }
+    }
+    fn session_words(
+        session: &mut crate::session::Session,
+        mut visit: impl FnMut(usize, &mut u16),
+    ) {
+        let room = &mut session.room;
+        let l = &mut room.liquid;
+        let slots = [
+            (0x195c, &mut l.surface.fraction),
+            (0x195e, &mut l.surface.whole),
+            (0x1960, &mut l.lava_acid.fraction),
+            (0x1962, &mut l.lava_acid.whole),
+            (0x1964, &mut l.tilemap),
+            (0x196c, &mut l.rising),
+            (0x196e, &mut l.kind),
+            (0x1970, &mut l.offset.fraction),
+            (0x1972, &mut l.offset.whole),
+            (0x1974, &mut l.tide_phase),
+            (0x1976, &mut l.base_fraction),
+            (0x1978, &mut room.liquid_height),
+            (0x197a, &mut room.liquid_target),
+            (0x197c, &mut room.liquid_velocity),
+            (0x197e, &mut room.liquid_options),
+            (0x1980, &mut room.liquid_delay),
+        ];
+        for (at, word) in slots {
+            visit(at, word);
         }
     }
 }

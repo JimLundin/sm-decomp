@@ -679,7 +679,7 @@ fn liquid_round_trips_every_field() {
     let expected = sm_game::liquid::LiquidWords::of(&s.room);
     let host = Projection(s);
     assert_eq!(
-        sm_game::liquid::LiquidWords::read(&host),
+        sm_game::session_cohort::load::<sm_game::liquid::LiquidWords, _>(&host),
         expected,
         "liquid view"
     );

@@ -119,12 +119,10 @@ pub fn initialize_tourian_statue<H: crate::menus::host::Host + ?Sized>(game: &mu
         crate::word_transfers!(game, ascending, 1; native(0xcd20) <- value(514));
     }
     game.ram().write_byte(0x59, 74);
-    crate::liquid::LiquidWords::set(game, |words| &mut words.liquid.rising, 0xc428);
-    crate::liquid::LiquidWords::set(
-        game,
-        |words| &mut words.liquid.surface.whole,
-        crate::liquid::LiquidWords::read(game).height,
-    );
+    crate::session_cohort::with_projected(game, |_, words: &mut crate::liquid::LiquidWords| {
+        words.liquid.rising = 0xc428;
+        words.liquid.surface.whole = words.height;
+    });
     game.spawn_hdma(0x88, &HdmaObjectDefinition::new(0x42, 0x11, 0xd856));
     game.spawn_hdma(0x88, &HdmaObjectDefinition::new(0x42, 0x10, 0xdcfa));
     spawn_bg3_scroll(game);

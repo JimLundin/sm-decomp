@@ -5,8 +5,10 @@ use crate::menus::prelude::*;
 use crate::session_slot;
 
 pub fn initialize_banded_sky<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    crate::liquid::LiquidWords::set(game, |words| &mut words.liquid.surface.whole, 1248);
-    crate::liquid::LiquidWords::set(game, |words| &mut words.liquid.kind, 6);
+    crate::session_cohort::with_projected(game, |_, words: &mut crate::liquid::LiquidWords| {
+        words.liquid.surface.whole = 1248;
+        words.liquid.kind = 6;
+    });
     static UNK_88A62E: HdmaObjectDefinition = HdmaObjectDefinition::new(0x2, 0x12, 0xad63 as VoidP);
     static UNK_88A636: HdmaObjectDefinition =
         HdmaObjectDefinition::new(0x42, 0x11, 0xad4e as VoidP);
