@@ -66,6 +66,10 @@ pub trait BossState:
     fn set_step_scratch(&mut self, value: u16);
     /// The actor content record at `bank:address`, as the original actor read.
     fn actor_record(&mut self, bank: u8, address: u16) -> sm_data::cartridge::RomRecord;
+    /// The angle from actor `k` to Samus.
+    fn player_angle(&mut self, k: u16) -> u16;
+    /// The direction of the projectile the current actor collided with.
+    fn shot_direction(&self) -> u16;
 }
 
 /// A lease on a boss's game. The game is its own lease, whose `foreign` runs
