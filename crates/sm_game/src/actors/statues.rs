@@ -51,6 +51,8 @@ part_view! {
 
 /// Bank $AA chozo statue functions, stored in `function`.
 pub mod function {
+    /// The common clear-pre-instruction command selects the bank $AA RTS.
+    pub const CLEARED: u16 = 0x807b;
     pub const LOWER_NORFAIR: u16 = 0xe445;
     pub const NOTHING: u16 = 0xe7a6;
     pub const WRECKED_SHIP: u16 = 0xe7ae;
@@ -192,7 +194,7 @@ pub fn main_ai<L: Lease + ?Sized>(game: &mut L) {
     match session_slot!(game, Statue[me].function) {
         function::LOWER_NORFAIR => lower_norfair(game, k),
         function::WRECKED_SHIP => wrecked_ship(game, k),
-        function::NOTHING => {}
+        function::NOTHING | function::CLEARED => {}
         _ => game.foreign(|game| game.unreachable()),
     }
 }
@@ -325,6 +327,7 @@ const _: () = {
     }
     assert!(at(f::LOWER_NORFAIR) == 11199557 && at(f::WRECKED_SHIP) == 11200430);
     assert!(at(f::NOTHING) == FNNULLSUB_276);
+    assert!(at(f::CLEARED) == FNNULLSUB_171_AA);
     assert!(l::LOWER_NORFAIR_ACTIVATED == ADDR_K_SHAKTOOL_ILIST_E3A7 as u16);
     assert!(l::WRECKED_SHIP_ACTIVATED == ADDR_K_SHAKTOOL_ILIST_E461 as u16);
     assert!(l::NOTHING_SPRITEMAP == ADDR_K_SPRITEMAP_NOTHING_AA as u16);
