@@ -12,6 +12,7 @@ pub fn jump_admission<H: Host>(h: &mut H, request: JumpRequest) -> bool {
     }
 }
 fn grapple<H: Host>(h: &mut H, amount: i32) -> bool {
+    crate::probe::hit("grapple.jump_admission");
     h.session_mut().actors.controls.shake_request = 0xffff;
     let direction = match h.session().player.movement_and_facing as u8 {
         4 => 0,

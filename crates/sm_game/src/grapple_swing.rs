@@ -285,6 +285,7 @@ pub fn apply_special_angle<H: Host + ?Sized>(game: &mut H) -> u8 {
             return 0;
         }
     }
+    crate::probe::hit("grapple.special_angle");
     game.session_mut().player.transitions.interrupted =
         PoseRequestWord::from_raw(special_angle_word!(game, row, 2));
     game.set_player_x(
@@ -907,6 +908,7 @@ pub fn release_stationary<H: Host + ?Sized>(game: &mut H) {
 }
 
 pub fn release_walljump<H: Host + ?Sized>(game: &mut H) {
+    crate::probe::hit("grapple.release_walljump");
     game.queue_sound(0, 7_u8, 15);
     if game.facing() == 8 {
         game.session_mut().player.transitions.transitional =
