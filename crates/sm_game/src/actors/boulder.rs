@@ -3,15 +3,15 @@
 //!
 //! Was `Boulder` in the original decompilation (bank $A6:86F5-$A6:89FC). Its
 //! state words name the slot fields over the same RAM bytes as `EnemyLayout40`.
-use crate::actors::host::{Axis, Slopes};
+use crate::actors::boss_lease::BossLease;
+use crate::actors::host::{Axis, BossEffects, Slopes};
 use crate::actors::layouts::{EnemyBase, EnemyLayout40};
 use crate::constants::enemy_properties::{K_ENEMY_PROPS_DELETED, K_ENEMY_PROPS_INVISIBLE};
-use crate::ram::word;
 use crate::session_slot;
 use sm_data::enemy_speeds::SpeedTable;
 
 /// What the boulder needs beyond the shared boss effects: the 32-bit speeds.
-pub trait Host: crate::actors::host::BossEffects {
+pub trait Lease: BossLease<Game: BossEffects> {
     /// The native-order 32-bit enemy speed at byte `offset` from $A0:CBC7.
     fn enemy_speed32(&self, offset: usize) -> u32;
 }
@@ -99,12 +99,12 @@ const FALL_SPEED_CAP: u16 = 0x5000;
 const BOUNCE_ROLL_CAP: u16 = 0x5000;
 const ROLL_SPEED_CAP: u16 = 0x4000;
 
-fn current<H: Host + ?Sized>(game: &H) -> i32 {
-    word!(game.CUR_ENEMY_INDEX) as i32
+fn current<L: Lease + ?Sized>(game: &L) -> i32 {
+    i32::from(game.current_enemy())
 }
 
 /// Sets up a boulder from its parameters. Was `Boulder_Init`.
-pub fn initialize<H: Host + ?Sized>(game: &mut H) {
+pub fn initialize<L: Lease + ?Sized>(game: &mut L) {
     let me = current(game);
     session_slot!(game, Boulder[me]; fall_speed = 0, roll_speed = 0);
     session_slot!(game, Boulder[me]; bounces_left = 2, state = state::WAIT_FOR_SAMUS);
@@ -162,7 +162,7 @@ pub fn initialize<H: Host + ?Sized>(game: &mut H) {
 }
 
 /// Runs the current state. Was `Boulder_Main`.
-pub fn main_ai<H: Host + ?Sized>(game: &mut H) {
+pub fn main_ai<L: Lease + ?Sized>(game: &mut L) {
     crate::probe::hit("boulder.main_ai");
     let me = current(game);
     match session_slot!(game, Boulder[me].state) {
@@ -172,12 +172,12 @@ pub fn main_ai<H: Host + ?Sized>(game: &mut H) {
         state::BOUNCE_FALL => bounce_fall(game),
         state::ROLL => roll(game),
         state::STOPPED => {}
-        _ => game.unreachable(),
+        _ => game.foreign(|game| game.unreachable()),
     }
 }
 
 /// The state that follows a release: a drop, or a roll when on the ground.
-fn release<H: Host + ?Sized>(game: &mut H, me: i32) {
+fn release<L: Lease + ?Sized>(game: &mut L, me: i32) {
     session_slot!(game, Boulder[me].state = state::FALL);
     if session_slot!(game, Boulder[me].starts_rolling) != 0 {
         session_slot!(game, Boulder[me].state = state::ROLL);
@@ -186,9 +186,9 @@ fn release<H: Host + ?Sized>(game: &mut H, me: i32) {
 
 /// Waits for Samus to be below the boulder and close enough on its side.
 /// Was `Boulder_Func_1`.
-fn wait_for_samus<H: Host + ?Sized>(game: &mut H) {
+fn wait_for_samus<L: Lease + ?Sized>(game: &mut L) {
     let below: i16 = {
-        let actor = word!(game.CUR_ENEMY_INDEX);
+        let actor = game.current_enemy();
         game.player_delta(actor, Axis::Y)
     } as i16;
     if below >= 0 {
@@ -196,7 +196,7 @@ fn wait_for_samus<H: Host + ?Sized>(game: &mut H) {
         if below.wrapping_sub(session_slot!(game, Boulder[me].trigger_height) as i16) < 0 {
             if session_slot!(game, Boulder[me].kind) != kind::ROLL_RIGHT {
                 let beside: i16 = {
-                    let actor = word!(game.CUR_ENEMY_INDEX);
+                    let actor = game.current_enemy();
                     game.player_delta(actor, Axis::X)
                 } as i16;
                 if beside < 0
@@ -207,7 +207,7 @@ fn wait_for_samus<H: Host + ?Sized>(game: &mut H) {
                 }
             } else {
                 let beside: i16 = {
-                    let actor = word!(game.CUR_ENEMY_INDEX);
+                    let actor = game.current_enemy();
                     game.player_delta(actor, Axis::X)
                 } as i16;
                 if beside >= 0
@@ -222,7 +222,7 @@ fn wait_for_samus<H: Host + ?Sized>(game: &mut H) {
 }
 
 /// Speeds up `speed` by `step`, holding it at `cap`.
-fn accelerate<H: Host + ?Sized>(game: &mut H, me: i32, roll: bool, step: u16, cap: u16) {
+fn accelerate<L: Lease + ?Sized>(game: &mut L, me: i32, roll: bool, step: u16, cap: u16) {
     let speed = if roll {
         session_slot!(game, Boulder[me].roll_speed)
     } else {
@@ -245,7 +245,7 @@ fn accelerate<H: Host + ?Sized>(game: &mut H, me: i32, roll: bool, step: u16, ca
 
 /// The speed table row for a speed word's high byte; `+ 4` selects the
 /// negated speed, moving up or left.
-fn row<H: Host + ?Sized>(game: &H, me: i32, roll: bool) -> u16 {
+fn row<L: Lease + ?Sized>(game: &L, me: i32, roll: bool) -> u16 {
     let speed = if roll {
         session_slot!(byte game, Boulder[me].roll_speed[1])
     } else {
@@ -255,7 +255,7 @@ fn row<H: Host + ?Sized>(game: &H, me: i32, roll: bool) -> u16 {
 }
 
 /// Rolls one frame at the current rolling speed. Was part of `Boulder_Func_3`.
-fn roll_step<H: Host + ?Sized>(game: &mut H, me: i32) {
+fn roll_step<L: Lease + ?Sized>(game: &mut L, me: i32) {
     let mut row = row(game, me, true);
     if session_slot!(game, Boulder[me].kind) != kind::ROLL_RIGHT {
         row = row.wrapping_add(4);
@@ -265,7 +265,7 @@ fn roll_step<H: Host + ?Sized>(game: &mut H, me: i32) {
 }
 
 /// Falls to the ground, speeding up. Was `Boulder_Func_2`.
-fn fall<H: Host + ?Sized>(game: &mut H) {
+fn fall<L: Lease + ?Sized>(game: &mut L) {
     let me = current(game);
     move_y(game, row(game, me, false));
     if ((session_slot!(game, Boulder[me].base.y_pos)) as i16)
@@ -283,7 +283,7 @@ fn fall<H: Host + ?Sized>(game: &mut H) {
 }
 
 /// Rises after a landing while rolling, slowing down. Was `Boulder_Func_3`.
-fn bounce_rise<H: Host + ?Sized>(game: &mut H) {
+fn bounce_rise<L: Lease + ?Sized>(game: &mut L) {
     crate::probe::hit("boulder.bounce_rise");
     let me = current(game);
     move_y(
@@ -301,11 +301,11 @@ fn bounce_rise<H: Host + ?Sized>(game: &mut H) {
 
 /// Falls back from a bounce while rolling; landing bounces again, starts the
 /// final roll, or shatters. Was `Boulder_Func_4`.
-fn bounce_fall<H: Host + ?Sized>(game: &mut H) {
+fn bounce_fall<L: Lease + ?Sized>(game: &mut L) {
     let me = current(game);
     let row: i32 = (8 * session_slot!(byte game, Boulder[me].fall_speed[1]) as i32) >> 1;
     let landed = {
-        let actor = word!(game.CUR_ENEMY_INDEX);
+        let actor = game.current_enemy();
         let amount = game.enemy_speed32(4 * (row >> 1) as usize) as i32;
         game.move_vertical(actor, amount)
     };
@@ -349,13 +349,13 @@ fn bounce_fall<H: Host + ?Sized>(game: &mut H) {
 }
 
 /// Rolls along the ground until a wall stops it. Was `Boulder_Func_5`.
-fn roll<H: Host + ?Sized>(game: &mut H) {
+fn roll<L: Lease + ?Sized>(game: &mut L) {
     crate::probe::hit("boulder.roll");
     let me = current(game);
     let mut row = row(game, me, true);
     let index: i32 = row as i32 >> 1;
     {
-        let actor = word!(game.CUR_ENEMY_INDEX);
+        let actor = game.current_enemy();
         let amount = game
             .enemy_speed32(4 * (index >> 1) as usize)
             .wrapping_add(((session_slot!(game, Boulder[me].roll_lift) as i32) << 16) as u32)
@@ -372,7 +372,7 @@ fn roll<H: Host + ?Sized>(game: &mut H) {
     }
     let index: i32 = row as i32 >> 1;
     let blocked = {
-        let actor = word!(game.CUR_ENEMY_INDEX);
+        let actor = game.current_enemy();
         let amount = game.enemy_speed32(4 * (index >> 1) as usize) as i32;
         game.move_horizontal(actor, amount, Slopes::Ignore)
     };
@@ -406,18 +406,18 @@ fn roll<H: Host + ?Sized>(game: &mut H) {
 }
 
 /// A dust cloud where the boulder is, and the breaking sound.
-fn shatter_dust<H: Host + ?Sized>(game: &mut H, me: i32) {
+fn shatter_dust<L: Lease + ?Sized>(game: &mut L, me: i32) {
     let (x, y) = (
         session_slot!(game, Boulder[me].base.x_pos),
         session_slot!(game, Boulder[me].base.y_pos),
     );
-    game.set_projectile_spawn_point(x, y);
-    game.spawn_room_projectile(DUST_CLOUD, DUST_CLOUD_PARAMETER);
+    game.place_projectile_spawn(x, y);
+    game.spawn_room_eproj(DUST_CLOUD, DUST_CLOUD_PARAMETER);
     game.queue_sound(1, SHATTER_SOUND, 6);
 }
 
 /// The quadratic speed at word `row`: the 16.16 speed as (high, low) words.
-fn quadratic<H: Host + ?Sized>(game: &H, row: u16) -> u32 {
+fn quadratic<L: Lease + ?Sized>(game: &L, row: u16) -> u32 {
     let index: i32 = row as i32 >> 1;
     let high = game.enemy_speed(SpeedTable::Quadratic, (index + 1) as isize);
     let low = game.enemy_speed(SpeedTable::Quadratic, index as isize);
@@ -426,7 +426,7 @@ fn quadratic<H: Host + ?Sized>(game: &H, row: u16) -> u32 {
 
 /// Moves the boulder horizontally by the quadratic speed at `row`, without
 /// collision. Was `Boulder_Func_7`.
-fn move_x<H: Host + ?Sized>(game: &mut H, row: u16) {
+fn move_x<L: Lease + ?Sized>(game: &mut L, row: u16) {
     let me = current(game);
     session_slot!(
         game,
@@ -436,7 +436,7 @@ fn move_x<H: Host + ?Sized>(game: &mut H, row: u16) {
 
 /// Moves the boulder vertically by the quadratic speed at `row`, without
 /// collision. Was `Boulder_Func_9`.
-fn move_y<H: Host + ?Sized>(game: &mut H, row: u16) {
+fn move_y<L: Lease + ?Sized>(game: &mut L, row: u16) {
     let me = current(game);
     session_slot!(
         game,

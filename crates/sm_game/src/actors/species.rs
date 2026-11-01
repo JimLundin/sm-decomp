@@ -13,10 +13,10 @@ use crate::actors::host::{
 };
 use crate::actors::spore_spawn::instruction as spore;
 use crate::actors::{
-    alcoon, bang, beetom, blue_brinstar_face_block, botwoon, boulder, boyon, cacatac, choot,
-    covern, crawlers, crocomire_reactions, dachora_run, dragon, draygon_death, draygon_eye,
-    draygon_flight, draygon_grab, draygon_host, draygon_sweep, elevator, escape_critters, etecoon,
-    evir, fire_pillar, flies, fune, geega, geruta, gunship, kago, kraid, magdollite, metroid,
+    alcoon, bang, beetom, blue_brinstar_face_block, botwoon, boyon, cacatac, choot, covern,
+    crawlers, crocomire_reactions, dachora_run, dragon, draygon_death, draygon_eye, draygon_flight,
+    draygon_grab, draygon_host, draygon_sweep, elevator, escape_critters, etecoon, evir,
+    fire_pillar, flies, fune, geega, geruta, gunship, kago, kraid, magdollite, metroid,
     mini_crocomire, mini_kraid, mochtroid, morph_ball_eye, multiviola, oum, phantoon,
     phantoon_actions, polyp, powamp, puyo, reflec, rinka, rio, rippers, roach, shutters,
     sidehopper, skree, space_pirates, spike_platform, spore_spawn, squeept, statues, tatori,
@@ -234,7 +234,6 @@ pub trait AiHost:
     + phantoon::Host
     + etecoon::Host
     + dachora_run::Host
-    + boulder::Host
     + mini_kraid::Host
     + PreInstructionHost
     + crate::actors::host::EnemyHost
@@ -598,8 +597,6 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         // common reactions.
         10911779 => game.contact_reaction(Death::Finalize),
         10911789 => game.shot_reaction(Shot::Finalize),
-        10913525 => boulder::initialize(game),
-        10913683 => boulder::main_ai(game),
         10918488 => mini_kraid::initialize(game),
         10918594 => mini_kraid::main_ai(game),
         10918946 => mini_kraid::touch(game),

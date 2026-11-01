@@ -75,9 +75,9 @@ impl sm_game::runtime_access::SessionRam for crate::game::session_runtime::Runti
     }
 }
 
-impl sm_game::actors::boulder::Host for Game {
+impl sm_game::actors::boulder::Lease for crate::game::session_runtime::Runtime<'_> {
     fn enemy_speed32(&self, offset: usize) -> u32 {
-        crate::game::enemy_speeds::word32(&self.enemy_speeds32, &self.capture_native_rom(), offset)
+        self.native_speed32(offset)
     }
 }
 
