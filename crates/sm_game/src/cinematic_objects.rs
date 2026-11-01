@@ -1,5 +1,5 @@
 //! The cinematic object engine: sprite, Mode 7 and background objects, their scripts and drawing.
-use crate::cinematic_state::{Array, Cinematic, Word, cinematic};
+use crate::cinematic_state::{Array, Cinematic, Word};
 use crate::ending_graphics::draw_cinematic_item_percentage;
 use crate::ram::RawRam as _;
 use crate::ram::word;
@@ -168,11 +168,11 @@ pub fn advance_intro_mother_brain<H: crate::menus::host::Host + ?Sized>(
         }
     }
     if stage == 0 {
-        let Some(projectile) = (0..5).rfind(|&i| cinematic!(game.ProjectileType[i]) & 0xfff == 256)
-        else {
+        let shots: ShotWords = crate::session_cohort::load(game);
+        let Some(projectile) = (0..5).rfind(|&i| shots.kind[i] & 0xfff == 256) else {
             return;
         };
-        if (cinematic!(game.ProjectileX[projectile]) as i32 - 84) & 0x8000 == 0 {
+        if (shots.x[projectile] as i32 - 84) & 0x8000 == 0 {
             return;
         }
         game.retire_projectile(2 * projectile as u16);

@@ -267,5 +267,6 @@ mod tests {
         check_encoding::<crate::cinematic_state::Cinematic>();
         check_encoding::<crate::cinematic::FadePlanes>();
         check_encoding::<crate::cinematic::PaletteBuffer>();
+        check_encoding::<crate::cinematic::ShotWords>();
     }
 }

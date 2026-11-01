@@ -88,6 +88,37 @@ impl crate::session_cohort::Cohort for FadePlanes {
     }
 }
 
+/// Samus's projectiles' X positions and kinds ($7E:0B64, $7E:0C18), which
+/// the intro's Mother Brain watches.
+#[derive(Clone, Default, Debug, PartialEq)]
+pub struct ShotWords {
+    pub x: [u16; 10],
+    pub kind: [u16; 10],
+}
+
+impl crate::session_cohort::Cohort for ShotWords {
+    fn words(&mut self, mut visit: impl FnMut(usize, &mut u16)) {
+        for (index, x) in self.x.iter_mut().enumerate() {
+            visit(0xb64 + 2 * index, x);
+        }
+        for (index, kind) in self.kind.iter_mut().enumerate() {
+            visit(0xc18 + 2 * index, kind);
+        }
+    }
+    fn session_words(
+        session: &mut crate::session::Session,
+        mut visit: impl FnMut(usize, &mut u16),
+    ) {
+        let shots = &mut session.projectiles.shots;
+        for (index, shot) in shots.iter_mut().enumerate() {
+            visit(0xb64 + 2 * index, &mut shot.x);
+        }
+        for (index, shot) in shots.iter_mut().enumerate() {
+            visit(0xc18 + 2 * index, &mut shot.kind);
+        }
+    }
+}
+
 /// The palette buffer $7E:C000..$7E:C1FF, the presentation's colours.
 #[derive(Clone, Debug, PartialEq)]
 pub struct PaletteBuffer(pub [u16; 256]);
