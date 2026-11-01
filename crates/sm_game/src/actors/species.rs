@@ -12,8 +12,8 @@ use crate::actors::host::{
     ActorHost, ActorLease as _, ActorRuntime, Death, LeaseActors, LeaseScope, Shot,
 };
 use crate::actors::{
-    alcoon, bang, beetom, botwoon, boulder, boyon, cacatac, choot, covern, crawlers, dachora_run,
-    dragon, draygon_death, draygon_eye, draygon_flight, draygon_grab, draygon_host, draygon_sweep,
+    alcoon, bang, beetom, boulder, boyon, cacatac, choot, covern, crawlers, dachora_run, dragon,
+    draygon_death, draygon_eye, draygon_flight, draygon_grab, draygon_host, draygon_sweep,
     elevator, etecoon, evir, fire_arc, fire_pillar, flies, fune, geruta, gunship, kago, kraid,
     metroid, mini_crocomire, mini_kraid, mochtroid, multiviola, oum, phantoon, phantoon_actions,
     polyp, puyo, reflec, rinka, rio, rippers, roach, shutters, sidehopper, skree, space_pirates,
@@ -33,7 +33,12 @@ pub trait SpeciesHost {
 
 /// What the bank $B3 routines need beyond their actors' own hosts.
 pub trait B3Host:
-    SpeciesHost + ActorHost + ActorRuntime + LeaseActors + botwoon::Host + crate::records::Records
+    SpeciesHost
+    + ActorHost
+    + ActorRuntime
+    + LeaseActors
+    + crate::actors::boss_lease::BossState
+    + crate::records::Records
 {
 }
 
@@ -42,7 +47,7 @@ impl<T> B3Host for T where
         + ActorHost
         + ActorRuntime
         + LeaseActors
-        + botwoon::Host
+        + crate::actors::boss_lease::BossState
         + crate::records::Records
         + ?Sized
 {
@@ -155,18 +160,13 @@ pub fn draw_hook<H: DrawHookHost>(ea: u32, game: &mut H) {
 }
 
 /// A bank $B3 enemy pre-instruction, keyed by its address.
-pub fn b3_pre_instruction<H: B3Host>(ea: u32, k: u16, game: &mut H) {
+pub fn b3_pre_instruction<H: PreInstructionHost>(ea: u32, k: u16, game: &mut H) {
     match ea {
         11763835 => (),
         11767039 => crate::actors::gamet::settle(game),
-        11771328 => crate::actors::botwoon::head_moving_around(game),
-        11771517 => {
-            let address = crate::actors::botwoon::head_set_spit_angle(game);
-            b3_pre_instruction(address, word!(game.CUR_ENEMY_INDEX), game);
+        11771328 | 11771517 | 11771616 | 11771700 | 11771770 => {
+            game.native_pre_instruction(ea, k);
         }
-        11771616 => crate::actors::botwoon::head_spit(true, game),
-        11771700 => crate::actors::botwoon::head_spit(false, game),
-        11771770 => crate::actors::botwoon::head_cooldown(k, game),
         _ => {
             game.unknown_routine();
         }
@@ -518,10 +518,6 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         11698252 => (),
         11763788 => (),
         11765518 => (),
-        11769219 => botwoon::initialize(game),
-        11769448 => botwoon::main_ai(&mut LeaseActors::lease(game)),
-        11771903 | 11771969 => botwoon::contact(ea == 11771969, &mut LeaseActors::lease(game)),
-        11771926 => botwoon::shot(&mut LeaseActors::lease(game)),
         11791130 => (),
         10649635 => game.contact_reaction(Death::Finalize),
         10649645 => game.shot_reaction(Shot::Finalize),
@@ -859,7 +855,6 @@ pub trait InstructionHost:
     + mini_kraid::Host
     + crate::actors::host::EnemyHost
     + crate::effects::SoundEffects
-    + botwoon::Host
     + spore_spawn::Host
 {
     /// An instruction whose arm is still in the compatibility table.
@@ -1255,10 +1250,6 @@ pub fn instruction<H: InstructionHost>(
         10854231 => draygon_eye::set_function(0, j, game),
         10863739 => draygon_eye::set_function(0x40, j, game),
         10915247 | 10915347..=10915793 => fire_pillar::instruction(ea, j, game),
-        11769031 | 11769095 | 11769111 | 11769175 => botwoon::set_hitbox(8, 16, j, game),
-        11769047 | 11769079 | 11769127 | 11769159 => botwoon::set_hitbox(12, 12, j, game),
-        11769063 | 11769143 => botwoon::set_hitbox(16, 8, j, game),
-        11769191 => botwoon::set_spitting(j, game),
         10664899 => {
             rio::set_animation_finished(game);
             j

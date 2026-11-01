@@ -143,9 +143,16 @@ impl sm_game::actors::species::AiHost for Game {
 }
 
 impl sm_game::actors::species::PreInstructionHost for Game {
-    fn native_pre_instruction(&mut self, _ea: u32, _k: u16) {
-        // Every pre-instruction routine is in sm_game's species table now.
-        crate::rtl::report_unreachable(self);
+    fn native_pre_instruction(&mut self, ea: u32, k: u16) {
+        match ea {
+            11771328 | 11771517 | 11771616 | 11771700 | 11771770 => {
+                Runtime::new(self)
+                    .owned_call(|runtime| actors::botwoon::pre_instruction(ea, k, runtime));
+            }
+            _ => {
+                crate::rtl::report_unreachable(self);
+            }
+        }
     }
 }
 
@@ -1169,6 +1176,7 @@ impl Runtime<'_> {
             return;
         }
         match routine {
+            11769219 => self.owned_call(actors::botwoon::initialize),
             11769448 => self.owned_call(actors::botwoon::main_ai),
             10920181 => self.owned_call(sm_game::actors::ceres_ridley::init),
             10920584 => self.owned_call(sm_game::actors::ceres_ridley::main),
@@ -1279,6 +1287,21 @@ impl Runtime<'_> {
             Err(script) => script,
         };
         match routine {
+            11769031 | 11769095 | 11769111 | 11769175 => {
+                return self
+                    .owned_call(|runtime| actors::botwoon::set_hitbox(8, 16, script, runtime));
+            }
+            11769047 | 11769079 | 11769127 | 11769159 => {
+                return self
+                    .owned_call(|runtime| actors::botwoon::set_hitbox(12, 12, script, runtime));
+            }
+            11769063 | 11769143 => {
+                return self
+                    .owned_call(|runtime| actors::botwoon::set_hitbox(16, 8, script, runtime));
+            }
+            11769191 => {
+                return self.owned_call(|runtime| actors::botwoon::set_spitting(script, runtime));
+            }
             0xa40000..=0xa4ffff => {
                 return self.owned_call(|runtime| {
                     actors::crocomire_reactions::instruction(routine, actor, script, runtime)

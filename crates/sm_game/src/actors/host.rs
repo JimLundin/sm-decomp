@@ -198,7 +198,7 @@ pub trait ActorLease:
         + LeaseActors
         + crate::records::Records
         + crate::actors::gunship::Host
-        + crate::actors::botwoon::Host
+        + crate::actors::botwoon::Effects
         + ?Sized;
     /// The compatibility word at `at`, through the session projection.
     fn word(&self, at: usize) -> u16;

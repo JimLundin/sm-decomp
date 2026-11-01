@@ -1,10 +1,8 @@
 //! Botwoon runs in `sm_game::actors::botwoon`; its tables, flags, PLMs and
 //! history hooks come from here, and its death signals run in the Runtime lease.
 #![forbid(unsafe_code)]
-use crate::game::actors::api;
 use crate::game::enemy_projectiles::{self, scatter_drop};
 use crate::game::gameplay_flag_runtime::{boss_byte_at, set_boss_bits_for_current_area};
-use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
 use crate::rom::RomImage;
 use crate::rtl::rom_table_word;
@@ -12,7 +10,6 @@ use sm_data::botwoon_holes::{ADDRESS as HOLES, BYTES as HOLE_BYTES, BotwoonHoles
 use sm_data::botwoon_speeds::{
     ADDRESS as SPEEDS, BYTES as SPEED_BYTES, BotwoonSpeed, BotwoonSpeeds,
 };
-use sm_game::actors::access::ActorKey as Key;
 pub(crate) use sm_game::actors::botwoon::*;
 use sm_game::enemy_projectiles::drops::DropSource;
 use sm_game::imported::Imported;
@@ -47,7 +44,7 @@ pub(crate) fn import_holes(image: &RomImage) -> Option<ImportedHoles> {
     Imported::import(image, HOLES, HOLE_BYTES, BotwoonHoles::import)
 }
 
-impl Host for Game {
+impl Effects for Game {
     /// The speed level whose two words start at word `index` of $B3:94BB. The
     /// record serves it while the loaded image is the imported allocation; any
     /// other image or index runs the original indexed loads.
@@ -78,10 +75,6 @@ impl Host for Game {
             })
     }
 
-    fn angle_to_player(&mut self, actor: u16) -> u16 {
-        api::angle_to_player(&Runtime::new(self), Key::from_legacy(actor))
-    }
-
     fn set_boss_bit(&mut self, mask: u16) {
         set_boss_bits_for_current_area(mask, self);
     }
@@ -96,10 +89,6 @@ impl Host for Game {
 
     fn scatter_botwoon_drop(&mut self, area: u16) {
         scatter_drop(DropSource::Botwoon, area, self);
-    }
-
-    fn b3_pre_instruction(&mut self, address: u32, k: u16) {
-        sm_game::actors::species::b3_pre_instruction(address, k, self);
     }
 
     fn record_botwoon_head(&mut self) {

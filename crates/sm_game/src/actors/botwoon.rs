@@ -1,25 +1,24 @@
 //! Botwoon, Maridia's serpent boss, which weaves between four holes in its
 //! room's walls (bank $B3:9319-$B3:E2FF).
 //! Native-field compatibility retains independent body and callback epochs.
-use crate::actors::access::{AccessMode::Native, ActorKey as Key};
+use crate::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 use crate::actors::api::{DeathHandling, ShotHandling};
 use crate::actors::boss_lease::BossLease;
 use crate::actors::boss_lease::boss_ram;
 use crate::actors::botwoon_death;
-use crate::actors::host::{BossEffects as _, Random as _};
+use crate::actors::host::BossEffects as _;
 use crate::actors::layouts::{EnemyBase, same_words};
 use crate::actors::session_slots::session_slot;
 use crate::actors::{combat, queries};
 use crate::constants::{bank_86::*, enemy_properties::*};
 use crate::enemy_script::EnemyScript;
-use crate::menus::prelude::{boss, owned};
 use sm_data::botwoon_holes::Hole;
 use sm_data::botwoon_speeds::BotwoonSpeed;
 use sm_data::enemy_speeds::SpeedTable;
 
 /// A lease on a game with Botwoon's effects.
-pub trait Lease: BossLease<Game: Host> {}
-impl<T: BossLease<Game: Host> + ?Sized> Lease for T {}
+pub trait Lease: BossLease<Game: Effects> + ActorAccess {}
+impl<T: BossLease<Game: Effects> + ActorAccess + ?Sized> Lease for T {}
 
 /// Botwoon's view of its slot.
 #[derive(Clone, Copy)]
@@ -202,18 +201,13 @@ const SPIT_SPEEDS: [u16; 3] = [2, 3, 4];
 /// Angles are measured from the top, clockwise; 40h less is the maths angle.
 const QUARTER_TURN: u8 = 0x40;
 
-/// What Botwoon needs beyond the shared boss effects: its tables, the
-/// player angle, the area boss flags, the passage it opens, its drop and
-/// the bank $B3 pre-instruction and history hooks.
-pub trait Host:
-    crate::actors::boss_lease::BossLease<Game = Self> + crate::actors::host::BossEffects
-{
+/// The retained imported tables, boss flags, passage, drop and body-history
+/// effects. Botwoon's actor state and head dispatch stay on the lease.
+pub trait Effects: crate::actors::host::BossEffects {
     /// The speed level whose two words start at word `index` of $B3:94BB.
     fn botwoon_speed_level(&self, index: isize) -> BotwoonSpeed;
     /// The hole whose four words start at word `index` of $B3:949B.
     fn botwoon_hole(&self, index: isize) -> Hole;
-    /// The angle from actor `actor` to Samus.
-    fn angle_to_player(&mut self, actor: u16) -> u16;
     /// Set boss bit `mask` for the current area.
     fn set_boss_bit(&mut self, mask: u16);
     /// The boss byte for `area`.
@@ -221,33 +215,27 @@ pub trait Host:
     fn open_passage(&mut self);
     /// Botwoon's death drop for `area`.
     fn scatter_botwoon_drop(&mut self, area: u16);
-    /// Run the bank $B3 pre-instruction at `address` for actor `k`.
-    fn b3_pre_instruction(&mut self, address: u32, k: u16);
     fn record_botwoon_head(&mut self);
     fn follow_botwoon_history(&mut self);
     fn orient_botwoon_body(&mut self);
     fn advance_botwoon_history(&mut self);
 }
 
-/// The runtime lease Botwoon's death signals and shared reactions run in;
-/// `foreign` runs the per-frame steps on the game it leases.
+/// Botwoon's state and reactions run on the scheduler's lease.
 pub trait RuntimeHost:
-    crate::actors::effects::ActorHost
+    Lease
+    + crate::actors::effects::ActorHost
     + crate::enemy_projectiles::host::Host
     + crate::room_mechanisms::host::Effects
     + botwoon_death::Host
     + crate::actors::session_slots::SessionSlots
-    + crate::ram::CompatibilityRam
-    + crate::cartridge::LoadedImage
 {
-    type Game: Host + ?Sized;
-    fn foreign<T>(&mut self, action: impl FnOnce(&mut Self::Game) -> T) -> T;
 }
-impl<T: crate::actors::host::ActorLease + ?Sized> RuntimeHost for T {
-    type Game = <T as crate::actors::host::ActorLease>::Game;
-    fn foreign<R>(&mut self, action: impl FnOnce(&mut Self::Game) -> R) -> R {
-        crate::actors::host::ActorLease::foreign(self, action)
-    }
+impl<T> RuntimeHost for T where
+    T: crate::actors::host::ActorLease
+        + BossLease<Game = <T as crate::actors::host::ActorLease>::Game>
+        + ?Sized
+{
 }
 
 fn initialize_living<L: Lease + ?Sized>(e: i32, game: &mut L) {
@@ -283,7 +271,7 @@ fn initialize_living<L: Lease + ?Sized>(e: i32, game: &mut L) {
 }
 /// Botwoon health-based palette handling ($B3:982B).
 fn health_palette<R: RuntimeHost>(game: &mut R) {
-    let e = i32::from(boss!(game.CurEnemyIndex));
+    let e = i32::from(game.current_enemy());
     if session_slot!(game, Botwoon[e].health_palette_index) != LAST_HEALTH_PALETTE
         && (session_slot!(game, Botwoon[e].base.health) as i16).wrapping_sub(
             crate::cartridge::rom_table_word!(
@@ -315,7 +303,7 @@ fn health_palette<R: RuntimeHost>(game: &mut R) {
 /// Botwoon function - initial ($B3:9878): wait, then go through a hole. Was
 /// `wait_entry`.
 fn initial<R: RuntimeHost>(game: &mut R) {
-    let e = i32::from(boss!(game.CurEnemyIndex));
+    let e = i32::from(game.current_enemy());
     let delay = session_slot!(game, Botwoon[e].initial_delay).wrapping_sub(1);
     session_slot!(game, Botwoon[e].initial_delay = delay);
     if delay == 0 {
@@ -377,7 +365,7 @@ fn spitting<R: RuntimeHost>(e: i32, runtime: &mut R) -> bool {
         movement_function = movement_function::START_MOVING_BY_MOVEMENT_DATA,
         head_function = head_function::MOVING_AROUND);
     let direct = botwoon_death::pending(runtime, e as u16) || {
-        let choice = runtime.foreign(|game| game.next_random()) & 1;
+        let choice = runtime.roll_random() & 1;
         session_slot!(runtime, Botwoon[e]; head_hidden = choice, previous_head_hidden = choice);
         session_slot!(runtime, Botwoon[e].previous_head_hidden) == 0
     };
@@ -386,13 +374,13 @@ fn spitting<R: RuntimeHost>(e: i32, runtime: &mut R) -> bool {
     } else {
         session_slot!(runtime, Botwoon[e]; hole_collision_disabled = 0, target_history_index = u16::MAX);
     }
-    runtime.foreign(|game| choose_movement_path(boss!(game.CurEnemyIndex), game));
+    choose_movement_path(runtime.current_enemy(), runtime);
     false
 }
 /// Botwoon function - death sequence - pre-death delay ($B3:9A46). Was
 /// `wait_collapse`.
 fn pre_death_delay<R: RuntimeHost>(game: &mut R) {
-    let e = i32::from(boss!(game.CurEnemyIndex));
+    let e = i32::from(game.current_enemy());
     let delay = session_slot!(game, Botwoon[e].pre_death_counter).wrapping_add(1);
     session_slot!(game, Botwoon[e].pre_death_counter = delay);
     if (i32::from(delay) - PRE_DEATH_FRAMES) & SIGN == 0 {
@@ -558,9 +546,8 @@ fn clamp_delta(value: u16) -> u16 {
 /// from the offsets to it ($B3:9BF8). Was `seek_hole`.
 pub fn move_toward_target_hole<L: Lease + ?Sized>(game: &mut L) {
     let e = i32::from(game.current_enemy());
-    let target = game.foreign(|game| {
-        game.botwoon_hole((session_slot!(game, Botwoon[e].target_hole) >> 1) as isize)
-    });
+    let index = (session_slot!(game, Botwoon[e].target_hole) >> 1) as isize;
+    let target = game.foreign(|game| game.botwoon_hole(index));
     let x = clamp_delta(
         (i32::from(target.left) + 4 - i32::from(session_slot!(game, Botwoon[e].base.x_pos))) as u16,
     );
@@ -696,7 +683,7 @@ pub fn head_set_spit_angle<L: Lease + ?Sized>(game: &mut L) -> u32 {
     let e = i32::from(game.current_enemy());
     session_slot!(game, Botwoon[e].base.layer = SHOWN_LAYER);
     let actor = game.current_enemy();
-    let angle = game.foreign(|game| game.angle_to_player(actor));
+    let angle = game.player_angle(actor);
     session_slot!(game, Botwoon[e].spit_angle = angle);
     let instruction = crate::actor_tables::word(
         game,
@@ -827,8 +814,9 @@ pub fn main_ai<R: RuntimeHost>(runtime: &mut R) {
     let k = runtime.selected_actor().byte_index();
     match state {
         function::INITIAL => initial(runtime),
-        function::GO_THROUGH_HOLE | function::MOVING_AROUND => runtime.foreign(|game| {
-            let e = i32::from(boss!(game.CurEnemyIndex));
+        function::GO_THROUGH_HOLE | function::MOVING_AROUND => {
+            let game = &mut *runtime;
+            let e = i32::from(game.current_enemy());
             let changed = if state == function::GO_THROUGH_HOLE {
                 leave_hole(e, game)
             } else {
@@ -837,23 +825,20 @@ pub fn main_ai<R: RuntimeHost>(runtime: &mut R) {
             if !changed {
                 step_body(e, game);
                 if state == function::GO_THROUGH_HOLE {
-                    hole_collision(boss!(game.CurEnemyIndex), game);
+                    hole_collision(game.current_enemy(), game);
                 }
             }
-        }),
+        }
         function::SPITTING => {
             let e = i32::from(runtime.selected_actor().byte_index());
             if spitting(e, runtime) {
-                runtime.foreign(|game| {
-                    let address =
-                        BANK << 16 | u32::from(session_slot!(game, Botwoon[e].head_function));
-                    let k = boss!(game.CurEnemyIndex);
-                    game.b3_pre_instruction(address, k);
-                });
+                let address =
+                    (BANK << 16) | u32::from(session_slot!(runtime, Botwoon[e].head_function));
+                pre_instruction(address, runtime.current_enemy(), runtime);
             }
         }
         function::DEATH_PRE_DEATH_DELAY => pre_death_delay(runtime),
-        function::DEATH_FALLING_TO_GROUND => runtime.foreign(fall_to_ground),
+        function::DEATH_FALLING_TO_GROUND => fall_to_ground(runtime),
         function::DEATH_WAIT_FOR_BODY_TO_FALL => {
             let actor = runtime.selected_actor();
             if botwoon_death::landed(runtime, actor.byte_index()) {
@@ -869,7 +854,7 @@ pub fn main_ai<R: RuntimeHost>(runtime: &mut R) {
                 session_slot!(runtime, Botwoon[i32::from(k)]; death_counter = 0, large_wall_explosion_timer = 0, wall_smoke_timer = 0);
             }
         }
-        function::DEATH_CRUMBLING_WALL => runtime.foreign(|game| crumbling_wall(k, game)),
+        function::DEATH_CRUMBLING_WALL => crumbling_wall(k, runtime),
         _ => {
             runtime.foreign(|game| game.unreachable());
         }
@@ -890,11 +875,28 @@ fn step_body<L: Lease + ?Sized>(e: i32, game: &mut L) {
     game.foreign(|game| {
         game.record_botwoon_head();
         game.follow_botwoon_history();
-        game.b3_pre_instruction(
-            BANK << 16 | u32::from(session_slot!(game, Botwoon[e].head_function)),
-            boss!(game.CurEnemyIndex),
-        );
+    });
+    let address = (BANK << 16) | u32::from(session_slot!(game, Botwoon[e].head_function));
+    pre_instruction(address, game.current_enemy(), game);
+    game.foreign(|game| {
         game.orient_botwoon_body();
         game.advance_botwoon_history();
     });
+}
+
+/// Run the head callback, including the immediate spawn after aiming.
+pub fn pre_instruction<L: Lease + ?Sized>(address: u32, k: u16, game: &mut L) {
+    match address {
+        11763835 => (),
+        11767039 => crate::actors::gamet::settle(game),
+        11771328 => head_moving_around(game),
+        11771517 => {
+            let address = head_set_spit_angle(game);
+            pre_instruction(address, game.current_enemy(), game);
+        }
+        11771616 => head_spit(true, game),
+        11771700 => head_spit(false, game),
+        11771770 => head_cooldown(k, game),
+        _ => game.foreign(|game| game.unreachable()),
+    }
 }
