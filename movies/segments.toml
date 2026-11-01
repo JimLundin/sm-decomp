@@ -1688,7 +1688,6 @@ start_frame = 0
 frames = 643
 expect = ["room:CC6F"]
 require_hit = ["covern.main_ai", "covern.awake", "roach.main_ai"]
-pending = "awaiting the seeds-v1-routeenemies-ad7fd75a7035bea2 ci-data upload"
 
 [[segment]]
 id = "enemy-magdollite"
@@ -1700,7 +1699,6 @@ start_frame = 0
 frames = 852
 expect = ["room:B236"]
 require_hit = ["magdollite.main_ai", "magdollite.grow_arm"]
-pending = "awaiting the seeds-v1-routeenemies-ad7fd75a7035bea2 ci-data upload"
 
 [[segment]]
 id = "enemy-yapping-maw"
@@ -1712,7 +1710,6 @@ start_frame = 0
 frames = 387
 expect = ["room:965B"]
 require_hit = ["yapping_maw.main_ai", "yapping_maw.attack"]
-pending = "awaiting the seeds-v1-routeenemies-ad7fd75a7035bea2 ci-data upload"
 
 [[segment]]
 id = "enemy-shaktool"
@@ -1724,7 +1721,6 @@ start_frame = 0
 frames = 2479
 expect = ["room:D6D0"]
 require_hit = ["shaktool.main_ai", "shaktool.flip"]
-pending = "awaiting the seeds-v1-routeenemies-ad7fd75a7035bea2 ci-data upload"
 
 [[segment]]
 id = "enemy-kihunter-work-robot"
@@ -1736,7 +1732,6 @@ start_frame = 0
 frames = 573
 expect = ["room:CAAE"]
 require_hit = ["kihunter.main_ai", "kihunter.swoop", "work_robot.main_ai", "work_robot.shot"]
-pending = "awaiting the seeds-v1-routeenemies-ad7fd75a7035bea2 ci-data upload"
 
 [[segment]]
 id = "enemy-spike-platform"
@@ -1748,7 +1743,6 @@ start_frame = 0
 frames = 283
 expect = ["room:CBD5"]
 require_hit = ["spike_platform.run"]
-pending = "awaiting the seeds-v1-routeenemies-ad7fd75a7035bea2 ci-data upload"
 
 [[segment]]
 id = "enemy-boulder-bounce"
@@ -1760,7 +1754,6 @@ start_frame = 0
 frames = 313
 expect = ["room:D4EF"]
 require_hit = ["boulder.main_ai", "boulder.bounce_rise"]
-pending = "awaiting the seeds-v1-routeenemies-ad7fd75a7035bea2 ci-data upload"
 
 [[segment]]
 id = "enemy-boulder-roll"
@@ -1772,7 +1765,6 @@ start_frame = 0
 frames = 763
 expect = ["room:B6EE"]
 require_hit = ["boulder.main_ai", "boulder.roll"]
-pending = "awaiting the seeds-v1-routeenemies-ad7fd75a7035bea2 ci-data upload"
 
 [[segment]]
 id = "enemy-evir"
@@ -1784,7 +1776,6 @@ start_frame = 0
 frames = 363
 expect = ["room:D252"]
 require_hit = ["evir.main_ai", "evir.projectile"]
-pending = "awaiting the seeds-v1-routeenemies-ad7fd75a7035bea2 ci-data upload"
 
 [[segment]]
 id = "enemy-metroid"
@@ -1796,7 +1787,6 @@ start_frame = 0
 frames = 431
 expect = ["room:DC19"]
 require_hit = ["metroid.main_ai"]
-pending = "awaiting the seeds-v1-routeenemies-ad7fd75a7035bea2 ci-data upload"
 
 [[segment]]
 id = "enemy-etecoon"
@@ -1808,7 +1798,6 @@ start_frame = 0
 frames = 907
 expect = ["room:9BC8"]
 require_hit = ["etecoon.main_ai"]
-pending = "awaiting the seeds-v1-routeenemies-ad7fd75a7035bea2 ci-data upload"
 
 # The Ceres Ridley fight's movie words to 1,000, then the controller released
 # (tools/authored_inputs.py release): Samus stands in the room when Ridley's
@@ -1824,4 +1813,3 @@ start_frame = 0
 frames = 1777
 expect = ["room:E0B5"]
 require_hit = ["forced.accelerate_fall"]
-pending = "awaiting the seeds-v1-routeenemies-ad7fd75a7035bea2 ci-data upload"
