@@ -1031,12 +1031,9 @@ pub fn melting<L: Lease + ?Sized>(game: &mut L) {
 fn erase_melt_columns<L: Lease + ?Sized>(game: &mut L, bug: u8) -> u16 {
     let [target, _] = melt!(game.EraseTarget).to_le_bytes();
     let mut column = melt!(game.Column);
-    // Columns melted down to the target are skipped.
+    // Columns melted down to the target are skipped. Past the 49-entry table
+    // the X offsets are the routine's own code bytes.
     loop {
-        if column > 48 {
-            melt!(game.Column = column);
-            return 1;
-        }
         let height = data_bank_byte(
             game,
             MELTING_Y_OFFSETS_OPERAND,
