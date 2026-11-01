@@ -1,16 +1,14 @@
 //! Skultera, Maridia's bony fish, which swims a wave left and right and turns
 //! at walls (bank $A3:900A-$A3:94AA). Was `maridia_fish`.
-use crate::actors::host::{ActorHost, ActorRuntime, Slopes};
+use crate::actors::boss_lease::BossState;
+use crate::actors::host::Slopes;
 use crate::actors::layouts::part_view;
 use crate::actors::session_slots::session_slot;
 use crate::enemy_script::EnemyScript;
-use crate::ram::word;
 use sm_data::enemy_speeds::SpeedTable;
 
 /// What Skultera needs beyond the shared actor operations.
-pub trait Host: ActorHost + ActorRuntime + crate::actors::session_slots::SlotAccess {
-    /// `amplitude` times the sine of `angle`.
-    fn actor_sine(&mut self, angle: u16, amplitude: u16) -> u16;
+pub trait Host: BossState {
     fn unreachable(&mut self);
 }
 
@@ -53,13 +51,13 @@ pub mod instruction {
 }
 
 fn current(game: &(impl Host + ?Sized)) -> i32 {
-    i32::from(word!(game.CUR_ENEMY_INDEX))
+    i32::from(game.current_enemy())
 }
 /// The wave's Y offset at the fish's angle.
 fn y_offset(fish: i32, game: &mut (impl Host + ?Sized)) -> u16 {
     let angle = session_slot!(game, Skultera[fish].angle);
     let radius = session_slot!(game, Skultera[fish].radius);
-    game.actor_sine(angle, radius)
+    game.scaled_sine(angle, radius)
 }
 /// Initialisation AI - Skultera ($A3:90B5).
 pub fn initialize(game: &mut (impl Host + ?Sized)) {
@@ -108,7 +106,7 @@ fn turn(fish: i32, left: bool, game: &mut (impl Host + ?Sized)) {
 /// Skultera function - swimming left ($A3:9132) or right ($A3:91AB): swim on
 /// the wave, turning at walls and blocks.
 fn swim(fish: i32, left: bool, game: &mut (impl Host + ?Sized)) {
-    let k = word!(game.CUR_ENEMY_INDEX);
+    let k = game.current_enemy();
     let amount = if left {
         (u32::from(session_slot!(game, Skultera[fish].left_velocity)) << 16)
             | u32::from(session_slot!(game, Skultera[fish].left_subvelocity))
@@ -121,7 +119,7 @@ fn swim(fish: i32, left: bool, game: &mut (impl Host + ?Sized)) {
     } else {
         let offset = y_offset(fish, game);
         session_slot!(game, Skultera[fish].y_offset = offset);
-        let k = word!(game.CUR_ENEMY_INDEX);
+        let k = game.current_enemy();
         let amount = i32::from(
             (offset as i16)
                 .wrapping_sub(session_slot!(game, Skultera[fish].previous_y_offset) as i16),

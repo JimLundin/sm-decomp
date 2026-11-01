@@ -1192,6 +1192,8 @@ impl Runtime<'_> {
             10718827 => self.owned_call(actors::fireflea::touch),
             10718851 => self.owned_call(actors::fireflea::power_bomb),
             10718857 => self.owned_call(actors::fireflea::shot),
+            10719413 => self.owned_call(actors::skultera::initialize),
+            10719531 => self.owned_call(actors::skultera::main_ai),
             10988577 => self.owned_call(sm_game::actors::kraid::main_ai),
             10997414 => self.owned_call(sm_game::actors::phantoon::main_ai),
             11191972 => self.owned_call(sm_game::actors::torizo::main_ai),
@@ -1223,6 +1225,10 @@ impl Runtime<'_> {
             Err(script) => script,
         };
         match routine {
+            10719382 | 10719392 | 10719402 => {
+                return self
+                    .owned_call(|runtime| actors::skultera::instruction(routine, script, runtime));
+            }
             10940711 => {
                 return self.owned_call(|runtime| {
                     sm_game::actors::ceres_doors::steam_activate(actor, script, runtime)
