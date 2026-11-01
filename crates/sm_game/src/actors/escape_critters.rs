@@ -3,6 +3,8 @@
 //!
 //! Was `escape_animals`. Each critter waits or runs around the escape room
 //! until the critters-escaped event, then runs for the exit.
+use crate::actors::boss_lease::BossState;
+use crate::actors::host::Slopes;
 use crate::actors::layouts::part_view;
 use crate::actors::session_slots::session_slot;
 use crate::constants::enemy_properties::*;
@@ -10,16 +12,14 @@ use crate::enemy_script::EnemyScript;
 use crate::ram::word;
 use sm_data::escape_etecoons::EscapeEtecoon;
 
-/// What the escape critters need beyond the common actor host.
-pub trait Host: crate::actors::host::ActorHost + crate::actors::session_slots::SlotAccess {
+/// What the escape critters need beyond a boss's state.
+pub trait Host: BossState {
     /// Whether game event `event` has happened.
     fn event_happened(&mut self, event: u16) -> bool;
     /// Etecoon `index`'s initial state at $B3:E718.
     fn escape_etecoon(&self, index: isize) -> EscapeEtecoon;
-    /// Move actor `k` by `amount` (16.16) horizontally, ignoring slopes; true when blocked.
-    fn move_horizontal_ignoring_slopes(&mut self, k: u16, amount: i32) -> bool;
-    /// Move actor `k` by `amount` (16.16) vertically.
-    fn move_vertical(&mut self, k: u16, amount: i32);
+    /// The original failure for a function no routine answers.
+    fn unknown_function(&mut self);
 }
 
 part_view! {
@@ -55,7 +55,6 @@ pub mod instruction {
     pub const DACHORA_X_POSITION_PLUS_6: u32 = 0xb3_ead7;
 }
 
-const BANK: u32 = 0xb3;
 /// Game event 0Fh: the critters escaped.
 const CRITTERS_ESCAPED: u16 = 0xf;
 /// Properties bit 13, process instructions (the decompiler's
@@ -75,7 +74,7 @@ const SIGN: i32 = 0x8000;
 /// Initialisation AI (escape etecoon $B3:E6CB, escape dachora $B3:EAE5):
 /// once the critters have escaped, delete the critter; otherwise start it.
 pub fn initialize(dachora: bool, game: &mut (impl Host + ?Sized)) {
-    let e = i32::from(word!(game.CUR_ENEMY_INDEX));
+    let e = i32::from(game.current_enemy());
     if game.event_happened(CRITTERS_ESCAPED) {
         session_slot!(game, Critter[e].base.properties, |old| old
             | K_ENEMY_PROPS_DELETED as u16);
@@ -104,11 +103,35 @@ pub fn initialize(dachora: bool, game: &mut (impl Host + ?Sized)) {
     }
 }
 
-/// Main AI - escape etecoon ($B3:E655): the etecoon's function in bank $B3.
-/// Was `state_address`.
-pub fn main_ai(game: &mut (impl Host + ?Sized)) -> u32 {
-    let e = i32::from(word!(game.CUR_ENEMY_INDEX));
-    BANK << 16 | u32::from(session_slot!(game, Critter[e].function))
+/// Main AI - escape etecoon ($B3:E655): run the etecoon's function.
+pub fn main_ai(game: &mut (impl Host + ?Sized)) {
+    let k = game.current_enemy();
+    match session_slot!(game, Critter[i32::from(k)].function) {
+        function::RUNNING_FOR_ESCAPE => run_for_escape(k, game),
+        function::STATIONARY => wait_to_express_gratitude(k, game),
+        function::RUNNING_AROUND_AIMLESSLY => run_around_aimlessly(k, game),
+        _ => game.unknown_function(),
+    }
+}
+
+/// Run one of the critters' script instructions (one of [`instruction`]), for
+/// critter `k`.
+pub fn instruction(
+    address: u32,
+    k: u16,
+    script: EnemyScript,
+    game: &mut (impl Host + ?Sized),
+) -> EnemyScript {
+    match address {
+        instruction::ETECOON_GO_TO_IF_LOW_TIDE | instruction::DACHORA_GO_TO_IF_LOW_TIDE => {
+            go_to_if(false, script, game)
+        }
+        instruction::DACHORA_GO_TO_IF_CRITTERS_ESCAPED => go_to_if(true, script, game),
+        instruction::ETECOON_X_POSITION_PLUS => move_x(k, script, game),
+        instruction::DACHORA_X_POSITION_MINUS_6 => shift_dachora(0xfffa, script, game),
+        instruction::DACHORA_X_POSITION_PLUS_6 => shift_dachora(6, script, game),
+        _ => unreachable!("unrecognized escape critter instruction"),
+    }
 }
 
 /// Escape etecoon function - running for escape ($B3:E65C). Was `run_right`.
@@ -135,7 +158,7 @@ pub fn wait_to_express_gratitude(k: u16, game: &mut (impl Host + ?Sized)) {
 pub fn run_around_aimlessly(k: u16, game: &mut (impl Host + ?Sized)) {
     let e = i32::from(k);
     let amount = i32::from(session_slot!(game, Critter[e].x_velocity) as i16) << 8;
-    let blocked = game.move_horizontal_ignoring_slopes(k, amount);
+    let blocked = game.move_horizontal(k, amount, Slopes::Ignore);
     if blocked {
         session_slot!(game, Critter[e].base.instruction_timer = 1);
         let left = (-i32::from(session_slot!(game, Critter[e].x_velocity))) & SIGN != 0;
@@ -191,7 +214,7 @@ pub fn shift_dachora(
     script: EnemyScript,
     game: &mut (impl Host + ?Sized),
 ) -> EnemyScript {
-    let e = i32::from(word!(game.CUR_ENEMY_INDEX));
+    let e = i32::from(game.current_enemy());
     session_slot!(game, Critter[e].base.x_pos, |old| old.wrapping_add(amount));
     script
 }

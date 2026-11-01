@@ -1234,6 +1234,10 @@ impl Runtime<'_> {
             11069614 => self.owned_call(sm_game::actors::blue_brinstar_face_block::main_ai),
             11047000 => self.owned_call(sm_game::actors::morph_ball_eye::initialize),
             11047138 => self.owned_call(sm_game::actors::morph_ball_eye::main_ai),
+            11790027 | 11791077 => self.owned_call(|runtime| {
+                actors::escape_critters::initialize(routine == 11791077, runtime)
+            }),
+            11789909 => self.owned_call(actors::escape_critters::main_ai),
             10988577 => self.owned_call(sm_game::actors::kraid::main_ai),
             10997414 => self.owned_call(sm_game::actors::phantoon::main_ai),
             11191972 => self.owned_call(sm_game::actors::torizo::main_ai),
@@ -1265,6 +1269,11 @@ impl Runtime<'_> {
             Err(script) => script,
         };
         match routine {
+            11789637 | 11791016 | 11791032 | 11789840 | 11791049 | 11791063 => {
+                return self.owned_call(|runtime| {
+                    actors::escape_critters::instruction(routine, actor, script, runtime)
+                });
+            }
             11068957 | 11068970 => {
                 return self.owned_call(|runtime| {
                     use sm_game::actors::wrecked_ship_spark::set_intangible;

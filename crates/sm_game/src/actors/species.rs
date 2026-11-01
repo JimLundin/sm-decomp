@@ -15,10 +15,10 @@ use crate::actors::spore_spawn::instruction as spore;
 use crate::actors::{
     alcoon, bang, beetom, botwoon, boulder, boyon, cacatac, choot, covern, crawlers,
     crocomire_reactions, dachora_run, dragon, draygon_death, draygon_eye, draygon_flight,
-    draygon_grab, draygon_host, draygon_sweep, elevator, escape_critters, etecoon, evir, fire_arc,
-    fire_pillar, flies, fune, geruta, gunship, kago, kraid, magdollite, metroid, mini_crocomire,
-    mini_kraid, mochtroid, multiviola, oum, phantoon, phantoon_actions, polyp, puyo, reflec, rinka,
-    rio, rippers, roach, shutters, sidehopper, skree, space_pirates, spike_platform, spore_spawn,
+    draygon_grab, draygon_host, draygon_sweep, elevator, etecoon, evir, fire_arc, fire_pillar,
+    flies, fune, geruta, gunship, kago, kraid, magdollite, metroid, mini_crocomire, mini_kraid,
+    mochtroid, multiviola, oum, phantoon, phantoon_actions, polyp, puyo, reflec, rinka, rio,
+    rippers, roach, shutters, sidehopper, skree, space_pirates, spike_platform, spore_spawn,
     squeept, statues, tatori, torizo, tripper, waver, work_robot, wrecked_ship_spark, yard, zoa,
 };
 use crate::combat_rules::LatchMode;
@@ -34,13 +34,7 @@ pub trait SpeciesHost {
 
 /// What the bank $B3 routines need beyond their actors' own hosts.
 pub trait B3Host:
-    SpeciesHost
-    + ActorHost
-    + ActorRuntime
-    + LeaseActors
-    + botwoon::Host
-    + escape_critters::Host
-    + crate::records::Records
+    SpeciesHost + ActorHost + ActorRuntime + LeaseActors + botwoon::Host + crate::records::Records
 {
 }
 
@@ -50,7 +44,6 @@ impl<T> B3Host for T where
         + ActorRuntime
         + LeaseActors
         + botwoon::Host
-        + escape_critters::Host
         + crate::records::Records
         + ?Sized
 {
@@ -175,9 +168,6 @@ pub fn b3_pre_instruction<H: B3Host>(ea: u32, k: u16, game: &mut H) {
     match ea {
         11763835 => (),
         11767039 => crate::actors::gamet::settle(game),
-        11789916 => crate::actors::escape_critters::run_for_escape(k, game),
-        11789936 => crate::actors::escape_critters::wait_to_express_gratitude(k, game),
-        11789952 => crate::actors::escape_critters::run_around_aimlessly(k, game),
         11771328 => crate::actors::botwoon::head_moving_around(game),
         11771517 => {
             let address = crate::actors::botwoon::head_set_spit_angle(game);
@@ -548,8 +538,6 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         10873619 => spore_spawn::main_ai(game),
         10874202 => spore_spawn::shot(game),
         10874348 => spore_spawn::touch(game),
-        11790027 => escape_critters::initialize(false, game),
-        11791077 => escape_critters::initialize(true, game),
         11791130 => (),
         10649635 => game.contact_reaction(Death::Finalize),
         10649645 => game.shot_reaction(Shot::Finalize),
@@ -690,7 +678,6 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         11058860 => beetom::shot(game),
         11053955 => kago::shot(game),
         11055370 => pre_instruction(magdollite::main_ai(game), game),
-        11789909 => pre_instruction(escape_critters::main_ai(game), game),
         10662880 => multiviola::initialize(game),
         10662927 => multiviola::main_ai(game),
         10663311 => polyp::main_ai(game),
@@ -899,7 +886,6 @@ pub trait InstructionHost:
     SpeciesHost
     + crocomire_reactions::Host
     + magdollite::Host
-    + escape_critters::Host
     + space_pirates::Pirates
     + draygon_host::Host
     + LeaseActors
@@ -1046,11 +1032,6 @@ pub fn instruction<H: InstructionHost>(
         | 11054728 | 11054742 | 11054778 | 11054794 | 11054820 | 11054846 | 11054872 | 11054916 => {
             magdollite::instruction(ea, j, game)
         }
-        11789637 | 11791016 => escape_critters::go_to_if(false, j, game),
-        11791032 => escape_critters::go_to_if(true, j, game),
-        11789840 => escape_critters::move_x(k, j, game),
-        11791049 => escape_critters::shift_dachora(0xfffa, j, game),
-        11791063 => escape_critters::shift_dachora(6, j, game),
         // Bank $A6: Mini-Kraid and the steam.
         10918694 => {
             mini_kraid::step(game);

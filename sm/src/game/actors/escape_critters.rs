@@ -1,9 +1,7 @@
-//! The escape critters run in `sm_game::actors::escape_critters`; their
-//! table, events and movement come from here.
+//! The escape critters run in `sm_game::actors::escape_critters` on the
+//! scheduler's lease; their table comes from here.
 #![forbid(unsafe_code)]
-use crate::game::gameplay_flag_runtime::event_has_happened;
 use crate::game::session_runtime::Runtime;
-use crate::game_state::Game;
 use crate::rom::RomImage;
 use sm_data::escape_etecoons::{ADDRESS, BYTES, EscapeEtecoon, EscapeEtecoons};
 pub(crate) use sm_game::actors::escape_critters::*;
@@ -22,7 +20,6 @@ const _: () = {
     assert!(i::ETECOON_X_POSITION_PLUS == 11789840);
     assert!(i::DACHORA_X_POSITION_MINUS_6 == 11791049 && i::DACHORA_X_POSITION_PLUS_6 == 11791063);
 };
-use {crate::game::actors::api, sm_game::actors::access::ActorKey as Key};
 
 pub(crate) type ImportedTables = Option<Imported<EscapeEtecoons>>;
 
@@ -30,15 +27,15 @@ pub(crate) fn import(image: &RomImage) -> ImportedTables {
     Imported::import(image, ADDRESS, BYTES, EscapeEtecoons::import)
 }
 
-impl Host for Game {
+impl Host for Runtime<'_> {
     fn event_happened(&mut self, event: u16) -> bool {
-        event_has_happened(event, self) != 0
+        sm_game::progress::event_happened(self, event)
     }
 
     /// Other images and indices run the five original indexed loads.
     fn escape_etecoon(&self, index: isize) -> EscapeEtecoon {
         Imported::read(
-            &self.escape_etecoons,
+            &self.samus_game().escape_etecoons,
             self,
             |table| table.etecoon(usize::try_from(index).ok()?),
             |rom| EscapeEtecoon {
@@ -51,16 +48,7 @@ impl Host for Game {
         )
     }
 
-    fn move_horizontal_ignoring_slopes(&mut self, k: u16, amount: i32) -> bool {
-        api::move_horizontal(
-            &mut Runtime::new(self),
-            Key::from_legacy(k),
-            amount,
-            api::SlopePolicy::Ignore,
-        ) == api::MovementResult::Blocked
-    }
-
-    fn move_vertical(&mut self, k: u16, amount: i32) {
-        api::move_vertical(&mut Runtime::new(self), Key::from_legacy(k), amount);
+    fn unknown_function(&mut self) {
+        self.foreign(|game| crate::rtl::report_unreachable(game));
     }
 }
