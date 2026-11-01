@@ -41,6 +41,9 @@ def seed_bundle(row):
     if row['id'] in ('boss-draygon-grapple-held', 'boss-ceres-ridley-fireballs', 'boss-phantoon-second-round',
                      'enemy-dachora-shinespark', 'enemy-etecoon-jumps'):
         return ('seeds-v1-unreached-020b4cd19fbaf9cb.tar.gz.enc', '020b4cd19fbaf9cb4a16c97e6c53060c6c807ab73dbf0b1d6301128b5c7028b2')
+    if row['id'] in ('terrain-wrecked-ship-hand', 'enemy-kihunter-wings', 'enemy-baby-metroid-remorse',
+                     'enemy-etecoon-tunnel-jump'):
+        return ('seeds-v1-handwings-6302cac975d0049c.tar.gz.enc', '6302cac975d0049c512dc2ab254e6a4ba03f8f396027544c7160e82645b45675')
     if row['id'] == 'samus-grapple-walljump':
         return ('seeds-v1-grapplewall-4f6db9f4f7fc408a.tar.gz.enc', '4f6db9f4f7fc408aec578994afc84a8b6a61de58acef46ec9f123515e0784061')
     if row['id'] == 'boss-ridley-swoop':

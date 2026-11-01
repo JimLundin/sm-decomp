@@ -319,6 +319,14 @@ RECIPES = {
         Right+Down 4; Right+Down+X 4; Right+Down 20; Left 10; Left+X 4; Left 20
         Left+Up 4; Left+Up+X 4; Left+Up 20; _ 100
     """),
+    # Bowling Alley with Samus on the Chozo hand (scenario wrecked-ship-hand):
+    # morph in its palm, then ride the statue across the spikes until it sets
+    # her down.
+    "wrecked-ship-hand": Recipe("_ 10; morph; _ 2100"),
+    # Crateria's kihunter room with the power beam (scenario kihunter-wings):
+    # turn to the left kihunter and keep shooting as it swoops, so it loses
+    # its wings, which drift down.
+    "kihunter-wings": Recipe("_ 10; Left 2; repeat 40 { X 2; _ 6 }; _ 120"),
 }
 
 SWEEPS = {
@@ -381,6 +389,8 @@ PINNED = {
     "red-tower-refill-door": "73d7fc2e9b32e137867ca292defb27fcf7d9b87316fc4fa004ed442474f4d95d",
     "grapple-walljump": "7e33e488fdb27153a412c60cfdfd446474251343430506417d5dce9848d0ac09",
     "draygon-grapple-held": "25548fe6af9cc6dc0e3da4f127a498af703f31b4a2a8cc402e0abe0b5fa1ea20",
+    "wrecked-ship-hand": "f968153478819d4364cde8e0f882b682a8cc97f9e52d25ac51928b8cabf2127f",
+    "kihunter-wings": "a12900693ec38b1f1eea8979e825b04b4744e5dfefdc7b9f758f9e148d0e9bfc",
 }
 
 

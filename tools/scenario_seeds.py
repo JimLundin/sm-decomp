@@ -109,6 +109,32 @@ SCENARIOS = {
         edits={"energy": 699, "reserve_energy": 200},
         words={0x0F8C: 9000},
         note="Ridley fight at half health with full energy"),
+    # The 100% movie's Bowling Alley after Phantoon, with Samus moved onto the
+    # Chozo statue's hand, which the movie passes.
+    "wrecked-ship-hand": Scenario(
+        base="100-input-phase:211",
+        edits={"x": 1192, "y": 347},
+        note="Samus on the Wrecked Ship Chozo hand"),
+    # The 100% movie's Crateria kihunter room with only the power beam, Samus
+    # moved to the top corridor beside the left kihunter, so her shots wound
+    # it without killing it and its wings fall.
+    "kihunter-wings": Scenario(
+        base="100-input-phase:184",
+        edits={"equipped_beams": 0, "x": 232, "y": 187},
+        note="Samus beside a kihunter with the power beam"),
+    # Green Brinstar's main shaft entered beside the etecoons (seed 43), with
+    # Samus moved to the top of their shaft and the etecoon that waits for her
+    # there (enemy slot 10, route 2) moved ahead of her, as its last hop
+    # leaves it: its X ($11FA), Y ($11FE), instruction list ($1212, $A7:E854
+    # hopping facing left) and timer ($1214), run speed ($122C), timer ($1230)
+    # and function ($1232, $A7:EE3E hop until Samus is near). The route never
+    # climbs the shaft, so the etecoon never shows her the tunnel jump.
+    "etecoon-tunnel-jump": Scenario(
+        base="100-input-phase:43",
+        edits={"x": 550, "y": 1979},
+        words={0x11FA: 560, 0x11FE: 1993, 0x1212: 0xE854, 0x1214: 1, 0x122C: 2,
+               0x1230: 11, 0x1232: 0xEE3E},
+        note="Samus beside the waiting etecoon at the top of the shaft"),
     # The landing site with the charge beam and one other beam equipped and
     # the power bombs selected, so a released charge fires that beam's
     # special attack.

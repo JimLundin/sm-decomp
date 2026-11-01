@@ -1899,3 +1899,64 @@ start_frame = 0
 frames = 2001
 expect = ["room:9AD9"]
 require_hit = ["etecoon.jumping"]
+
+# Bowling Alley after Phantoon with Samus moved onto the Chozo statue's hand
+# (scenario wrecked-ship-hand), the wrecked-ship-hand recipe: she morphs in
+# its palm and the statue carries her across the spikes and sets her down.
+[[segment]]
+id = "terrain-wrecked-ship-hand"
+seed = "scenario-wrecked-ship-hand:211"
+seed_sha256 = "3a1aa6b20772c1b3cb31d40909dcbea44b76351d9891c60b2c7f9fb9a3fa82fc"
+inputs = "authored-wrecked-ship-hand.inputs"
+input_sha256 = "54d06a14b23c3afe2241eaae2812fc4f984736bbe934f6e81d37bcd461a83174"
+start_frame = 0
+frames = 2123
+expect = ["room:C98E"]
+require_hit = ["hands.setup"]
+pending = "awaiting the seeds-v1-handwings-6302cac975d0049c ci-data upload"
+
+# Crateria's kihunter room with the power beam and Samus moved beside the left
+# kihunter (scenario kihunter-wings), the kihunter-wings recipe: her shots
+# wound it without killing it, so it loses its wings, which drift down.
+[[segment]]
+id = "enemy-kihunter-wings"
+seed = "scenario-kihunter-wings:184"
+seed_sha256 = "1443a133069abf496ed0742842c412b2053d70cb64cd43791aff762d16d5c419"
+inputs = "authored-kihunter-wings.inputs"
+input_sha256 = "c47fa69da00dbb3bff0d0b942f2ce61b1917549ad105ee61d089844cb1ee9af4"
+start_frame = 0
+frames = 453
+expect = ["room:948C"]
+require_hit = ["kihunter.drift"]
+pending = "awaiting the seeds-v1-handwings-6302cac975d0049c ci-data upload"
+
+# The baby Metroid's room: the movie words to 1,000, until it has drained
+# Samus, then released (frames=2400). Samus stays, so after backing off the
+# baby Metroid returns to her while she recovers, then flees remorsefully.
+[[segment]]
+id = "enemy-baby-metroid-remorse"
+seed = "100-input-phase:320"
+seed_sha256 = "aa728bbb9c2648e2d1b9d09a684aa4f61714dd14ebfd3f6ca3fbdef969f9bf2e"
+inputs = "authored-baby-metroid-remorse.inputs"
+input_sha256 = "ba0770dd6591306143428e424d6eea2ee5e3c7ab765545225c182f5f49ab490b"
+start_frame = 0
+frames = 3400
+expect = ["room:DCB1"]
+require_hit = ["baby_metroid.accelerate_towards_samus"]
+pending = "awaiting the seeds-v1-handwings-6302cac975d0049c ci-data upload"
+
+# Green Brinstar's main shaft with Samus moved to the top of the etecoons'
+# shaft and the etecoon that waits for her there moved ahead of her (scenario
+# etecoon-tunnel-jump), released (frames=400): it runs right, leaps into the
+# morph tunnel, runs through it and drops off its ledge.
+[[segment]]
+id = "enemy-etecoon-tunnel-jump"
+seed = "scenario-etecoon-tunnel-jump:43"
+seed_sha256 = "912d13878db3ebcf32a7d0c59e7e00fcbe932c83b5052d9c89bdfc30b6e866ca"
+inputs = "authored-etecoon-tunnel-jump.inputs"
+input_sha256 = "be13a41e4475b88819cd3487ac7c6fec1ecc0dfef6ac9ac466a2d03336949bd8"
+start_frame = 0
+frames = 401
+expect = ["room:9AD9"]
+require_hit = ["etecoon.tunnel_jump"]
+pending = "awaiting the seeds-v1-handwings-6302cac975d0049c ci-data upload"
