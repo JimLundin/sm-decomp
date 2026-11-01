@@ -21,9 +21,10 @@ use crate::constants::enemy_properties::{
     K_ENEMY_PROPS_TANGIBLE,
 };
 use crate::display::hdma_spawn::HdmaObjectDefinition;
+use crate::display::sequence::scroll::BgScroll;
 use crate::display::transfer::{Source, TilemapUpload, queue_tilemap};
 use crate::enemy_projectiles::drops::DropSource;
-use crate::menus::prelude::{boss, owned, scroll};
+use crate::menus::prelude::{boss, owned};
 use crate::phantoon_tables::{self, Timer};
 
 /// A lease on a game with Phantoon's effects.
@@ -479,7 +480,7 @@ fn start_dying<S: BossState + ?Sized>(game: &mut S, k: u16) {
     }
     session_slot!(game, Eye[EYE]; movement_reversed = 0, fade_complete = 0);
     look_at_samus(game);
-    let scroll: u16 = scroll!(game.Bg2H);
+    let scroll: u16 = crate::session_cohort::load::<BgScroll, _>(game).bg2[0];
     for offset in (0i16..=510).rev().step_by(2) {
         set_native_word(
             game,
@@ -710,16 +711,15 @@ pub fn main_ai<L: Lease + ?Sized>(game: &mut L) {
         session_slot!(game, Tentacles[TENTACLES].base.y_pos = y);
         session_slot!(game, Mouth[MOUTH].base.y_pos = y);
         if session_slot!(game, Eye[EYE].background_held) == 0 {
-            scroll!(
-                game.Bg2H = (game.camera().layer1[0] as i32
-                    - session_slot!(game, Body[BODY].base.x_pos) as i32
-                    + 40) as u16
-            );
-            scroll!(
-                game.Bg2V = (game.camera().layer1[1] as i32
-                    - session_slot!(game, Body[BODY].base.y_pos) as i32
-                    + 40) as u16
-            );
+            let x = (game.camera().layer1[0] as i32
+                - session_slot!(game, Body[BODY].base.x_pos) as i32
+                + 40) as u16;
+            let y = (game.camera().layer1[1] as i32
+                - session_slot!(game, Body[BODY].base.y_pos) as i32
+                + 40) as u16;
+            crate::session_cohort::with_projected(game, |_, scroll: &mut BgScroll| {
+                scroll.bg2 = [x, y]
+            });
         }
     }
 }

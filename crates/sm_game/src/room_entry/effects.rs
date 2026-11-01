@@ -6,7 +6,7 @@ use super::{
         VramDestination,
     },
 };
-use crate::display::sequence::scroll;
+use crate::display::sequence::scroll::BgScroll;
 
 pub trait EntryHost:
     crate::visual_host::Host
@@ -30,7 +30,12 @@ pub trait EntryEffects:
             CameraWord::Layer2(axis) => camera.layer2[axis],
             CameraWord::Bg1Offset(axis) => camera.bg1_offset[axis],
             CameraWord::Bg2Scroll(axis) => camera.bg2_scroll[axis],
-            CameraWord::Mirror(word) => scroll::get(self, word),
+            CameraWord::Bg1Mirror(axis) => {
+                crate::session_cohort::load::<BgScroll, _>(self).bg1[axis]
+            }
+            CameraWord::Bg2Mirror(axis) => {
+                crate::session_cohort::load::<BgScroll, _>(self).bg2[axis]
+            }
         }
     }
     fn write_camera(&mut self, field: CameraField, value: u16) {
@@ -41,7 +46,16 @@ pub trait EntryEffects:
             CameraWord::Bg1Offset(axis) => crate::camera::set_bg1_offset(self, axis, value),
             CameraWord::Layer2(axis) => self.session_mut().room.camera.layer2[axis] = value,
             CameraWord::Bg2Scroll(axis) => self.session_mut().room.camera.bg2_scroll[axis] = value,
-            CameraWord::Mirror(word) => scroll::set(self, word, value),
+            CameraWord::Bg1Mirror(axis) => {
+                crate::session_cohort::with_projected(self, |_, scroll: &mut BgScroll| {
+                    scroll.bg1[axis] = value
+                })
+            }
+            CameraWord::Bg2Mirror(axis) => {
+                crate::session_cohort::with_projected(self, |_, scroll: &mut BgScroll| {
+                    scroll.bg2[axis] = value
+                })
+            }
         }
     }
     fn call(&mut self, effect: LeafEffect);
@@ -105,7 +119,9 @@ enum CameraWord {
     Layer2(usize),
     Bg1Offset(usize),
     Bg2Scroll(usize),
-    Mirror(scroll::Word),
+    /// BG1's and BG2's scroll mirrors, by axis.
+    Bg1Mirror(usize),
+    Bg2Mirror(usize),
 }
 impl CameraField {
     fn word(self) -> CameraWord {
@@ -118,10 +134,10 @@ impl CameraField {
             Self::Bg1YOffset => CameraWord::Bg1Offset(1),
             Self::Bg2XScroll => CameraWord::Bg2Scroll(0),
             Self::Bg2YScroll => CameraWord::Bg2Scroll(1),
-            Self::Bg1Hofs => CameraWord::Mirror(scroll::Word::Bg1H),
-            Self::Bg1Vofs => CameraWord::Mirror(scroll::Word::Bg1V),
-            Self::Bg2Hofs => CameraWord::Mirror(scroll::Word::Bg2H),
-            Self::Bg2Vofs => CameraWord::Mirror(scroll::Word::Bg2V),
+            Self::Bg1Hofs => CameraWord::Bg1Mirror(0),
+            Self::Bg1Vofs => CameraWord::Bg1Mirror(1),
+            Self::Bg2Hofs => CameraWord::Bg2Mirror(0),
+            Self::Bg2Vofs => CameraWord::Bg2Mirror(1),
         }
     }
 }

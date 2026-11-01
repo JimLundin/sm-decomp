@@ -62,9 +62,6 @@ macro_rules! owned {
     };
 }
 pub(crate) use owned;
-/// The BG scroll mirrors ([`crate::display::sequence::scroll::Word`]).
-macro_rules! scroll { ($($t:tt)*) => { owned!([$crate::display::sequence::scroll] $($t)*) }; }
-pub(crate) use scroll;
 /// Crocomire's melt words ([`crate::actors::crocomire_reactions::melt::Word`]).
 macro_rules! melt { ($($t:tt)*) => { owned!([$crate::actors::crocomire_reactions::melt] $($t)*) }; }
 pub(crate) use melt;
