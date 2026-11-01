@@ -8,7 +8,7 @@ use crate::actors::layouts::part_view;
 use crate::actors::session_slots::session_slot;
 
 /// What the morph ball eye needs beyond a boss's state: its beam.
-pub trait Host: BossState {
+pub trait Host: BossState + crate::session_access::SessionAccess {
     /// Start the eye's beam effect.
     fn start_beam(&mut self);
 }
@@ -121,12 +121,7 @@ pub fn initialize(game: &mut (impl Host + ?Sized)) {
 /// Main AI - morph ball eye ($A8:90E2): its function, once the morph ball is
 /// collected; an eye that has opened starts its beam and tracks Samus.
 pub fn main_ai(game: &mut (impl Host + ?Sized)) {
-    if crate::session_cohort::load::<crate::inventory::Inventory, _>(game)
-        .equipment
-        .owned
-        & MORPH_BALL
-        == 0
-    {
+    if game.session().inventory.equipment.owned & MORPH_BALL == 0 {
         return;
     }
     let k = game.current_enemy();

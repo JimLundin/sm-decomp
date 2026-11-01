@@ -8,8 +8,8 @@ use crate::actors::session_slots::session_slot;
 use crate::ram::word;
 
 /// What the face block needs: a boss's state, which holds its glow colours.
-pub trait Host: BossState {}
-impl<T: BossState + ?Sized> Host for T {}
+pub trait Host: BossState + crate::session_access::SessionAccess {}
+impl<T: BossState + crate::session_access::SessionAccess + ?Sized> Host for T {}
 
 part_view! {
     /// The face block's view of its slot.
@@ -62,12 +62,7 @@ pub fn initialize(game: &mut (impl Host + ?Sized)) {
         game,
         FaceBlock[block].base.current_instruction = instruction_list::FACING_FORWARD
     );
-    let hook: u16 = if crate::session_cohort::load::<crate::inventory::Inventory, _>(game)
-        .equipment
-        .owned
-        & MORPH_BALL
-        == 0
-    {
+    let hook: u16 = if game.session().inventory.equipment.owned & MORPH_BALL == 0 {
         NO_HOOK
     } else {
         PALETTE_CYCLE_HOOK
@@ -83,12 +78,7 @@ pub fn initialize(game: &mut (impl Host + ?Sized)) {
 /// Main AI - blue Brinstar face block ($A8:E8AE): once Samus is in range,
 /// turn towards her, unless she is on the side it never turns to. Was `advance`.
 pub fn main_ai(game: &mut (impl Host + ?Sized)) {
-    if crate::session_cohort::load::<crate::inventory::Inventory, _>(game)
-        .equipment
-        .owned
-        & MORPH_BALL
-        == 0
-    {
+    if game.session().inventory.equipment.owned & MORPH_BALL == 0 {
         return;
     }
     game.set_slot_word(GFX_DRAWN_HOOK, PALETTE_CYCLE_HOOK);
