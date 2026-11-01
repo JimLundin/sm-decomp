@@ -1215,6 +1215,8 @@ impl Runtime<'_> {
             11052989 => self.owned_call(actors::yapping_maw::shot),
             11053109 => self.owned_call(actors::yapping_maw::frozen),
             11051537 => self.owned_call(actors::yapping_maw::run_main_ai),
+            11765819 => self.owned_call(sm_game::actors::zeb::initialize),
+            11765882 => self.owned_call(sm_game::actors::zeb::main_ai),
             10988577 => self.owned_call(sm_game::actors::kraid::main_ai),
             10997414 => self.owned_call(sm_game::actors::phantoon::main_ai),
             11191972 => self.owned_call(sm_game::actors::torizo::main_ai),

@@ -1,21 +1,31 @@
 //! Zeb emergence, horizontal flight, reset and animation selection.
 //! Native actor words remain authoritative across the existing query boundaries.
-use crate::actors::access::ActorKey as Key;
-use crate::actors::host::LeaseActors;
-use crate::actors::host::abs16;
-use crate::actors::host::{ActorHost, ActorRuntime, Axis};
+use crate::actors::access::{ActorAccess, ActorKey as Key};
+use crate::actors::boss_lease::BossLease;
+use crate::actors::host::{Axis, BossEffects, abs16};
 use crate::actors::layouts::EnemyLayout72 as Bug;
 use crate::actors::queries;
-use crate::actors::session_slots::SlotAccess;
-use crate::ram::word;
 use crate::session_slot;
 
-pub fn initialize<
-    H: ActorHost + ActorRuntime + SlotAccess + LeaseActors + crate::records::Records + ?Sized,
->(
-    game: &mut H,
-) {
-    let e = i32::from(word!(game.CUR_ENEMY_INDEX));
+/// A lease on a game with the zebs' effects.
+pub trait Lease: BossLease<Game: BossEffects> + ActorAccess {}
+impl<T: BossLease<Game: BossEffects> + ActorAccess + ?Sized> Lease for T {}
+
+/// Main AI - zeb ($B3:887A): run its state routine.
+pub fn main_ai<H: Lease>(game: &mut H) {
+    let k = game.current_enemy();
+    match state_address(game) {
+        11765888 => await_view(k, game),
+        11765904 => await_player(k, game),
+        11765987 => rise(k, game),
+        11766044 => fly(k, game),
+        11766142 => cooldown(k, game),
+        _ => game.foreign(|game| game.unreachable()),
+    }
+}
+
+pub fn initialize<H: Lease>(game: &mut H) {
+    let e = i32::from(game.current_enemy());
     session_slot!(game, Bug[e].var_b = session_slot!(game, Bug[e].base.x_pos));
     let y = session_slot!(game, Bug[e].base.y_pos);
     session_slot!(game, Bug[e]; var_c = y, var_00 = y.wrapping_sub(16), var_f = 0x8880, var_d = 48, var_e = 0, var_01 = 0);
@@ -24,20 +34,12 @@ pub fn initialize<
         session_slot!(game, Bug[e].base.current_instruction = 0x8a1d);
     }
 }
-pub fn state_address<
-    H: ActorHost + ActorRuntime + SlotAccess + LeaseActors + crate::records::Records + ?Sized,
->(
-    game: &H,
-) -> u32 {
-    let e = i32::from(word!(game.CUR_ENEMY_INDEX));
+pub fn state_address<H: Lease>(game: &H) -> u32 {
+    let e = i32::from(game.current_enemy());
     0xb30000 | u32::from(session_slot!(game, Bug[e].var_f))
 }
-fn update_animation<
-    H: ActorHost + ActorRuntime + SlotAccess + LeaseActors + crate::records::Records + ?Sized,
->(
-    game: &mut H,
-) {
-    let e = i32::from(word!(game.CUR_ENEMY_INDEX));
+fn update_animation<H: Lease>(game: &mut H) {
+    let e = i32::from(game.current_enemy());
     let phase = session_slot!(game, Bug[e].var_e);
     if phase != session_slot!(game, Bug[e].var_01) {
         session_slot!(game, Bug[e].var_01 = phase);
@@ -45,23 +47,13 @@ fn update_animation<
         session_slot!(game, Bug[e].base; current_instruction = crate::enemy_lists::pipe_bug_instruction_list(game, alternate, phase as isize), instruction_timer = 1, timer = 0);
     }
 }
-pub fn await_view<
-    H: ActorHost + ActorRuntime + SlotAccess + LeaseActors + crate::records::Records + ?Sized,
->(
-    _: u16,
-    game: &mut H,
-) {
+pub fn await_view<H: Lease>(_: u16, game: &mut H) {
     if !game.current_outside_screen() {
-        let current = i32::from(word!(game.CUR_ENEMY_INDEX));
+        let current = i32::from(game.current_enemy());
         session_slot!(game, Bug[current].var_f = 0x8890);
     }
 }
-pub fn await_player<
-    H: ActorHost + ActorRuntime + SlotAccess + LeaseActors + crate::records::Records + ?Sized,
->(
-    k: u16,
-    game: &mut H,
-) {
+pub fn await_player<H: Lease>(k: u16, game: &mut H) {
     let e = i32::from(k);
     let dy = game.player_delta(k, Axis::Y) as i16;
     if dy < 0 && (i32::from(dy) + 96) & 0x8000 == 0 {
@@ -85,12 +77,7 @@ pub fn await_player<
         }
     }
 }
-pub fn rise<
-    H: ActorHost + ActorRuntime + SlotAccess + LeaseActors + crate::records::Records + ?Sized,
->(
-    k: u16,
-    game: &mut H,
-) {
+pub fn rise<H: Lease>(k: u16, game: &mut H) {
     let e = i32::from(k);
     let previous = session_slot!(game, Bug[e].base.y_subpos);
     session_slot!(game, Bug[e].base.y_subpos, |old| old.wrapping_sub(1));
@@ -110,12 +97,7 @@ pub fn rise<
         session_slot!(game, Bug[e].var_f = 0x891c);
     }
 }
-pub fn fly<
-    H: ActorHost + ActorRuntime + SlotAccess + LeaseActors + crate::records::Records + ?Sized,
->(
-    k: u16,
-    game: &mut H,
-) {
+pub fn fly<H: Lease>(k: u16, game: &mut H) {
     let e = i32::from(k);
     let step = if session_slot!(game, Bug[e].var_a) & 0x8000 == 0 {
         2
@@ -127,7 +109,7 @@ pub fn fly<
         Bug[e].base.x_subpos = session_slot!(game, Bug[e].base.x_subpos)
     );
     session_slot!(game, Bug[e].base.x_pos, |old| old.wrapping_add(step));
-    if queries::leaving_screen(&game.lease(), Key::from_legacy(k)) as u8 & 1 != 0 {
+    if queries::leaving_screen(&*game, Key::from_legacy(k)) as u8 & 1 != 0 {
         session_slot!(game, Bug[e].base; x_pos = session_slot!(game, Bug[e].var_b), x_subpos = 0);
         let y = session_slot!(game, Bug[e].var_c);
         session_slot!(game, Bug[e].base; y_pos = y, y_subpos = y);
@@ -138,12 +120,7 @@ pub fn fly<
         session_slot!(game, Bug[e]; var_d = 48, var_f = 0x897e);
     }
 }
-pub fn cooldown<
-    H: ActorHost + ActorRuntime + SlotAccess + LeaseActors + crate::records::Records + ?Sized,
->(
-    k: u16,
-    game: &mut H,
-) {
+pub fn cooldown<H: Lease>(k: u16, game: &mut H) {
     let e = i32::from(k);
     let previous = session_slot!(game, Bug[e].var_d);
     session_slot!(game, Bug[e].var_d, |old| old.wrapping_sub(1));

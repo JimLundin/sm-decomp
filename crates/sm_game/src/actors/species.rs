@@ -20,7 +20,7 @@ use crate::actors::{
     metroid, mini_crocomire, mini_kraid, mochtroid, morph_ball_eye, multiviola, oum, phantoon,
     phantoon_actions, polyp, powamp, puyo, reflec, rinka, rio, rippers, roach, shutters,
     sidehopper, skree, space_pirates, spike_platform, spore_spawn, squeept, statues, tatori,
-    torizo, tripper, waver, work_robot, wrecked_ship_spark, yard, zeb, zoa,
+    torizo, tripper, waver, work_robot, wrecked_ship_spark, yard, zoa,
 };
 use crate::combat_rules::LatchMode;
 use crate::enemy_projectiles::host::Effects as _;
@@ -198,11 +198,6 @@ pub fn pipe_bug_state<H: B3Host>(ea: u32, game: &mut H) {
 pub fn b3_pre_instruction<H: B3Host>(ea: u32, k: u16, game: &mut H) {
     match ea {
         11763835 => (),
-        11765888 => crate::actors::zeb::await_view(k, game),
-        11765904 => crate::actors::zeb::await_player(k, game),
-        11765987 => crate::actors::zeb::rise(k, game),
-        11766044 => crate::actors::zeb::fly(k, game),
-        11766142 => crate::actors::zeb::cooldown(k, game),
         11767039 => crate::actors::gamet::settle(game),
         11789916 => crate::actors::escape_critters::run_for_escape(k, game),
         11789936 => crate::actors::escape_critters::wait_to_express_gratitude(k, game),
@@ -569,7 +564,6 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         11698252 => (),
         11763788 => (),
         11765518 => (),
-        11765819 => zeb::initialize(game),
         11767628 => geega::initialize(game),
         11769219 => botwoon::initialize(game),
         11769448 => botwoon::main_ai(&mut LeaseActors::lease(game)),
@@ -739,7 +733,6 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         11069486 => blue_brinstar_face_block::initialize(game),
         11069614 => blue_brinstar_face_block::main_ai(game),
         11055370 => pre_instruction(magdollite::main_ai(game), game),
-        11765882 => pre_instruction(zeb::state_address(game), game),
         11767726 => pipe_bug_state(geega::state_address(game), game),
         11789909 => pre_instruction(escape_critters::main_ai(game), game),
         10662880 => multiviola::initialize(game),
