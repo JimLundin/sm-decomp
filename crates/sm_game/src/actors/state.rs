@@ -62,8 +62,9 @@ pub struct Actors {
     pub extended: ExtendedRam,
     pub crocomire_melt: CrocomireMelt,
 }
-/// Crocomire's melt ($7E:0688..$7E:071B): the words of
-/// `crocomire_reactions::melt::Word` by address, then each pixel column's height.
+/// Crocomire's melt ($7E:0688..$7E:071B): the words from $0688 by address
+/// (`crocomire_reactions::Melt` and the pixels to erase), then each pixel
+/// column's height.
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct CrocomireMelt {
     pub words: [u16; 10],
