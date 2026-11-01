@@ -2,10 +2,9 @@
 //! bursts into spikes when killed; its balloon, the previous slot, is drawn above it
 //! (bank $A8:C143-$A8:C6B2). Was `maridia_floater`.
 #![forbid(unsafe_code)]
-use crate::actors::access::ActorKey as Key;
-use crate::actors::api::{self, DeathHandling, DeathKind, MovementResult::Blocked, ShotHandling};
-use crate::actors::combat;
-use crate::actors::host::{EnemyHost, LeaseActors};
+use crate::actors::api::DeathKind;
+use crate::actors::boss_lease::BossLease;
+use crate::actors::host::{BossEffects, Death, Shot};
 use crate::actors::layouts::part_view;
 use crate::enemy_lists::floater_spike_instruction_list;
 use crate::session_slot;
@@ -42,13 +41,13 @@ const WIGGLE: [u16; 12] = [0, 1, 2, 3, 2, 1, 0, 0xffff, 0xfffe, 0xfffd, 0xfffe, 
 const BALLOON_SLOT: i32 = 64;
 
 /// Spawn powamp spike enemy projectiles ($A8:C223), in all eight directions.
-fn spawn_spikes(game: &mut impl EnemyHost, k: u16) {
+fn spawn_spikes(game: &mut impl Lease, k: u16) {
     for direction in (0..=7).rev() {
         game.spawn_projectile(direction, k, 0xd298);
     }
 }
 /// Set powamp balloon Y position ($A8:C234): over the body, by the balloon's inflation.
-fn place_balloon(game: &mut impl EnemyHost, body: i32) {
+fn place_balloon(game: &mut impl Lease, body: i32) {
     let balloon = body - BALLOON_SLOT;
     let list = session_slot!(game, Balloon[balloon].base.current_instruction);
     let y = balloon_offset(list).wrapping_add(session_slot!(game, Powamp[body].base.y_pos));
@@ -78,7 +77,7 @@ pub fn balloon_offset(list: u16) -> u16 {
     offsets[usize::from(frame >> 1)]
 }
 /// Wiggle the body each 5 frames; true only when a requested stop at the centre is reached.
-fn wiggle(game: &mut impl EnemyHost, body: i32, stop_at_centre: bool) -> bool {
+fn wiggle(game: &mut impl Lease, body: i32, stop_at_centre: bool) -> bool {
     let expired = session_slot!(game, Powamp[body].wiggle_timer) == 1;
     session_slot!(game, Powamp[body].wiggle_timer, |old| old.wrapping_sub(1));
     if !expired && session_slot!(game, Powamp[body].wiggle_timer) & 0x8000 == 0 {
@@ -104,31 +103,32 @@ fn wiggle(game: &mut impl EnemyHost, body: i32, stop_at_centre: bool) -> bool {
     );
     false
 }
-fn centred(game: &impl EnemyHost, body: i32) -> bool {
+fn centred(game: &impl Lease, body: i32) -> bool {
     matches!(session_slot!(game, Powamp[body].wiggle_index), 0 | 6)
 }
 /// Move the body by its Y velocity; whether blocked.
-fn move_vertically(game: &mut (impl EnemyHost + LeaseActors), body: i32) -> bool {
+fn move_vertically(game: &mut impl Lease, body: i32) -> bool {
     // The zero acceleration still reads and publishes the split native words.
     session_slot!(game, Powamp[body](y_velocity, y_subvelocity) += 0);
     let amount = session_slot!(game, Powamp[body](y_velocity, y_subvelocity));
-    api::move_vertical(
-        &mut game.lease(),
-        Key::from_legacy(body as u16),
-        amount as i32,
-    ) == Blocked
+    game.move_vertical(body as u16, amount as i32)
 }
-fn begin_deflating(game: &mut impl EnemyHost, body: i32) {
+fn begin_deflating(game: &mut impl Lease, body: i32) {
     session_slot!(game, Powamp[body]; function = DEFLATING, function_timer = 10);
     session_slot!(game, Balloon[body - BALLOON_SLOT].base; instruction_timer = 1, current_instruction = DEFLATE);
 }
-/// Main AI - powamp ($A8:C21C): its function, run next through the pre-instruction table.
-pub fn function(game: &mut impl EnemyHost) -> u32 {
-    let body = i32::from(game.current_enemy());
-    u32::from(session_slot!(game, Powamp[body].function)) | 0xa8_0000
+/// A lease on a game with the powamps' effects.
+pub trait Lease: BossLease<Game: BossEffects> {}
+impl<T: BossLease<Game: BossEffects> + ?Sized> Lease for T {}
+
+/// Main AI - powamp ($A8:C21C): run its function.
+pub fn main_ai(game: &mut impl Lease) {
+    let k = game.current_enemy();
+    let function = session_slot!(game, Powamp[i32::from(k)].function);
+    run(game, function, k);
 }
 /// Powamp function - body, by `function`; then set the balloon's Y position.
-pub fn run(game: &mut (impl EnemyHost + LeaseActors), mut function: u16, k: u16) {
+pub fn run(game: &mut impl Lease, mut function: u16, k: u16) {
     let body = i32::from(k);
     let balloon = body - BALLOON_SLOT;
     let grappled = |game: &mut _| session_slot!(game, Powamp[body].base.ai_handler_bits) & 1 != 0;
@@ -160,7 +160,7 @@ pub fn run(game: &mut (impl EnemyHost + LeaseActors), mut function: u16, k: u16)
                     session_slot!(game, Balloon[balloon].base.health = 0);
                     session_slot!(game, Balloon[balloon].base.properties, |old| old | 0x200);
                     spawn_spikes(game, k);
-                    return combat::die(&mut game.lease(), DeathKind::Normal { animation: 0 });
+                    return game.kill_current(DeathKind::Normal { animation: 0 });
                 }
             }
         }
@@ -231,12 +231,12 @@ pub fn run(game: &mut (impl EnemyHost + LeaseActors), mut function: u16, k: u16)
             session_slot!(game, Powamp[body]; function = DEATH_SEQUENCE, function_timer = 32);
         }
         BALLOON => return,
-        _ => return game.unknown_routine(),
+        _ => return game.foreign(|game| game.unreachable()),
     }
     place_balloon(game, body);
 }
 /// Initialisation AI - powamp ($A8:C1C9): the balloon or the body.
-pub fn initialize(game: &mut impl EnemyHost) {
+pub fn initialize(game: &mut impl Lease) {
     let powamp = i32::from(game.current_enemy());
     session_slot!(game, Powamp[powamp].base.properties, |old| old | 0x2000);
     session_slot!(game, Powamp[powamp].base; spritemap_pointer = 0x804d, instruction_timer = 1, timer = 0);
@@ -255,13 +255,13 @@ pub fn initialize(game: &mut impl EnemyHost) {
     }
 }
 /// Enemy touch - powamp ($A8:C5BE): killed, it bursts into spikes.
-pub fn touch(game: &mut (impl EnemyHost + LeaseActors)) {
+pub fn touch(game: &mut impl Lease) {
     let body = i32::from(game.current_enemy());
     if session_slot!(game, Powamp[body].dying) != 0 {
         return;
     }
     let palette = session_slot!(game, Powamp[body].base.palette_index);
-    combat::contact_reaction(&mut game.lease(), DeathHandling::Finalize);
+    game.contact_reaction(Death::Finalize);
     if session_slot!(game, Powamp[body].base.health) == 0 {
         let balloon = i32::from(game.current_enemy()) - BALLOON_SLOT;
         session_slot!(game, Balloon[balloon].base.properties, |old| old | 0x200);
@@ -271,12 +271,12 @@ pub fn touch(game: &mut (impl EnemyHost + LeaseActors)) {
     }
 }
 /// Enemy shot - powamp ($A8:C5EF): the balloon shares its frozen and flash state.
-pub fn shot(game: &mut (impl EnemyHost + LeaseActors)) {
+pub fn shot(game: &mut impl Lease) {
     let body = i32::from(game.current_enemy());
     if session_slot!(game, Powamp[body].dying) != 0 {
         return;
     }
-    combat::shot_reaction(&mut game.lease(), ShotHandling::ReactionOnly);
+    game.shot_reaction(Shot::ReactionOnly);
     let balloon = i32::from(game.current_enemy()) - BALLOON_SLOT;
     if session_slot!(game, Powamp[body].base.ai_handler_bits) & 4 != 0 {
         let frozen = session_slot!(game, Powamp[body].base.frozen_timer);
@@ -294,8 +294,8 @@ pub fn shot(game: &mut (impl EnemyHost + LeaseActors)) {
 }
 /// Power bomb reaction - powamp ($A8:C63F): the balloon shares its reaction state, or is
 /// deleted with it.
-pub fn power_bomb(game: &mut (impl EnemyHost + LeaseActors)) {
-    combat::power_bomb_reaction(&mut game.lease(), DeathHandling::Finalize);
+pub fn power_bomb(game: &mut impl Lease) {
+    game.power_bomb_reaction(Death::Finalize);
     let body = i32::from(game.current_enemy());
     let balloon = body - BALLOON_SLOT;
     if session_slot!(game, Powamp[body].base.health) == 0 {

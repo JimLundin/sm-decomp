@@ -74,6 +74,8 @@ pub trait BossState:
     fn current_random(&self) -> u16;
     /// Make actor `k` the current actor.
     fn select_enemy(&mut self, k: u16);
+    /// Kill the current actor with death `kind`.
+    fn kill_current(&mut self, kind: crate::actors::api::DeathKind);
 }
 
 /// A lease on a boss's game. The game is its own lease, whose `foreign` runs
