@@ -1,6 +1,6 @@
 //! Ending graphics: logo palette steps, icon and beam transfers, and the item percentage.
 use crate::cinematic::cinematic_native_record;
-use crate::cinematic_state::cinematic;
+use crate::cinematic_state::Cinematic;
 use crate::imported::{Imported, grid_word, load, word as table_word};
 use crate::ram::RawRam as _;
 use crate::ram::{checked_word, word};
@@ -11,8 +11,11 @@ use sm_data::credits::{
     ITEM_BIT_ADDRESS,
 };
 
-pub fn advance_ending_logo_palette<H: crate::menus::host::Host + ?Sized>(game: &mut H) -> bool {
-    let pair = (cinematic!(game.FunctionTimer).wrapping_mul(4) >> 1) as isize;
+pub fn advance_ending_logo_palette<H: crate::menus::host::Host + ?Sized>(
+    cine: &mut Cinematic,
+    game: &mut H,
+) -> bool {
+    let pair = ((*cine.function_timer()).wrapping_mul(4) >> 1) as isize;
     let step = Imported::read(
         &game.visual_tables().icon_palettes,
         game,
@@ -32,21 +35,28 @@ pub fn advance_ending_logo_palette<H: crate::menus::host::Host + ?Sized>(game: &
             source = source.wrapping_sub(2);
         }
     }
-    (cinematic!(game.FunctionTimer += 1, reread) as i32 - 16) & 0x8000 == 0
+    ({
+        *cine.function_timer() = cine.function_timer().wrapping_add(1);
+        *cine.function_timer()
+    } as i32
+        - 16)
+        & 0x8000
+        == 0
 }
 
 pub fn advance_ending_graphics<H: crate::menus::host::Host + ?Sized>(
     graphics: EndingGraphics,
+    cine: &mut Cinematic,
     game: &mut H,
 ) {
     use EndingGraphics::*;
     let limit = if matches!(graphics, Samus) { 16 } else { 6 };
-    if (matches!(graphics, Background) && cinematic!(game.Var17) != 0)
-        || (i32::from(cinematic!(game.Var14)) - limit) & 0x8000 == 0
+    if (matches!(graphics, Background) && *cine.var17() != 0)
+        || (i32::from(*cine.var14()) - limit) & 0x8000 == 0
     {
         return;
     }
-    let frame = cinematic!(game.Var14);
+    let frame = *cine.var14();
     let index = match graphics {
         Background => 4 * i32::from(frame),
         Samus => i32::from(frame.wrapping_mul(2) >> 1),
@@ -100,7 +110,7 @@ pub fn advance_ending_graphics<H: crate::menus::host::Host + ?Sized>(
         }
     }
     word!(game.VRAM_WRITE_QUEUE_TAIL = tail.wrapping_add(7));
-    cinematic!(game.Var14 += 1);
+    *cine.var14() = cine.var14().wrapping_add(1);
 }
 
 pub fn draw_cinematic_item_percentage<H: crate::menus::host::Host + ?Sized>(game: &mut H) {

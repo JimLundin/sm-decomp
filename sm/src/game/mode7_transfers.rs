@@ -14,11 +14,10 @@ pub(super) fn write_word(tail: u16, field: usize, value: u16, game: &mut Game) {
 }
 
 #[forbid(unsafe_code)]
-pub(crate) fn advance_ending_tile_upload(game: &mut Game) {
+pub(crate) fn advance_ending_tile_upload(page: u16, game: &mut Game) {
     use crate::ram_map::word;
-    let page = word!(game.CINEMATIC_FUNCTION_TIMER);
     let tail = word!(game.MODE7_VRAM_WRITE_QUEUE_TAIL);
-    let high_plane = word!(game.CINEMATIC_FUNCTION_TIMER) as i32 - 8 & 0x8000 != 0;
+    let high_plane = page.wrapping_sub(8) & 0x8000 != 0;
     write_word(tail, 0, if high_plane { 192 } else { 128 }, game);
     // Both original tables have 16 pages; bounds failure follows the first store.
     assert!(page < 16);
@@ -29,10 +28,6 @@ pub(crate) fn advance_ending_tile_upload(game: &mut Game) {
     write_word(tail, 6, source & 0x3fff, game);
     write_word(tail, 8, if high_plane { 128 } else { 0 }, game);
     word!(game.MODE7_VRAM_WRITE_QUEUE_TAIL = tail.wrapping_add(9));
-    if word!(game.CINEMATIC_FUNCTION_TIMER += 1, reread) as i32 - 16 & 0x8000 == 0 {
-        game.ram().write_byte(0x55, 1);
-        word! {game; CINEMATIC_FUNCTION_TIMER = 0; CINEMATIC_FUNCTION = 0xdb9d; }
-    }
 }
 
 pub(super) use sm_game::display::transfer::enqueue_mode7_rom as enqueue_rom;

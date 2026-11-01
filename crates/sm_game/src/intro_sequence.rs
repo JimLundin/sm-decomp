@@ -14,7 +14,7 @@ use crate::cinematic::{
 };
 use crate::cinematic_host::Host;
 use crate::cinematic_objects::CinematicObjects;
-use crate::cinematic_state::{self, Word, cinematic};
+use crate::cinematic_state::{Cinematic, Word, cinematic};
 use crate::display_refresh::GraphicsAsset;
 use crate::flow::{self, Word::CinematicFunction};
 use crate::inventory;
@@ -140,12 +140,10 @@ const CERES: u16 = 6;
 const HATCH_SOUND: u8 = 0x23;
 
 /// Counts down `cinematic_function_timer`; true when it reaches zero or below.
-pub fn countdown<H: Host + ?Sized>(game: &mut H) -> bool {
-    cinematic_state::with_fields(game, |state| {
-        let timer = state.function_timer();
-        *timer = timer.wrapping_sub(1);
-        *timer == 0 || *timer & 0x8000 != 0
-    })
+pub fn countdown(cine: &mut Cinematic) -> bool {
+    let timer = cine.function_timer();
+    *timer = timer.wrapping_sub(1);
+    *timer == 0 || *timer & 0x8000 != 0
 }
 
 fn load_space_graphics<H: Host + ?Sized>(game: &mut H) {
@@ -154,19 +152,19 @@ fn load_space_graphics<H: Host + ?Sized>(game: &mut H) {
     GraphicsAsset::Decompress(0x96d10a, 0x15000).load(game);
 }
 
-fn clear_cinematic_objects<H: Host + ?Sized>(game: &mut H) {
-    crate::cinematic_state::clear(game);
+fn clear_cinematic_objects(cine: &mut Cinematic) {
+    cine.clear();
 }
 
-fn sprites<H: Host + ?Sized>(game: &mut H, definition: u16, parameter: u16) {
-    spawn(game, CinematicObjects::Sprites, definition, parameter);
+fn sprites<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H, definition: u16, parameter: u16) {
+    spawn(cine, game, CinematicObjects::Sprites, definition, parameter);
 }
 
 /// Cinematic function - intro - initial ($8B:A395): Samus, the intro
 /// graphics, the background and the intro music. Was
 /// `CinematicFunction_Intro_Initial`.
-pub fn initial<H: Host + ?Sized>(game: &mut H) {
-    crate::cinematic_display::configure_cinematic_display(CinematicDisplay::Intro, game);
+pub fn initial<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
+    crate::cinematic_display::configure_cinematic_display(CinematicDisplay::Intro, cine, game);
     word!(game.CUR_IRQ_HANDLER = 0);
     word!(game.IRQHANDLER_NEXT_HANDLER = 0);
     crate::room_view::set(game, crate::room_view::Word::Area, 0);
@@ -176,12 +174,12 @@ pub fn initial<H: Host + ?Sized>(game: &mut H) {
     game.update_beam_tiles_and_palette();
     inventory::set(game, inventory::Word::MaxMissiles, INTRO_MISSILES);
     inventory::set(game, inventory::Word::Missiles, INTRO_MISSILES);
-    cinematic!(game.IntroSamusDisplay = 0);
+    *cine.intro_samus_display() = 0;
     word!(game.SAMUS_DRAW_HANDLER = DEFAULT_DRAW_HANDLER);
     crate::menus::controller_input::use_cinematic_bindings(game);
     game.set_invincibility_timer(0);
     game.set_knockback_timer(0);
-    clear_cinematic_objects(game);
+    clear_cinematic_objects(cine);
     crate::word_transfers!(game, ascending, 256; le(PALETTE_BUFFER, 0) <- rom(INTRO_PALETTES, 0));
     GraphicsAsset::Decompress(0x95f90e, 0x10000).load(game);
     GraphicsAsset::Decompress(0x95d089, 0x18000).load(game);
@@ -205,10 +203,10 @@ pub fn initial<H: Host + ?Sized>(game: &mut H) {
     cinematic!(game.DoorExit = 0);
     cinematic!(game.Layer1X = 0);
     cinematic!(game.Layer1Y = 0);
-    cinematic!(game.IntroJapaneseTextTimer = 0);
+    *cine.intro_japanese_text_timer() = 0;
     crate::word_transfers!(game, descending, 1024; cinematic_bg(1023) <- native(BG_SOURCE));
     crate::word_transfers!(game, descending, 128; pause_map(127) <- rom(INTRO_PAUSE_MAP, 127));
-    cinematic!(game.IntroFrameCounter = 0xffff);
+    *cine.intro_frame_counter() = 0xffff;
     flow::set(
         game,
         CinematicFunction,
@@ -221,18 +219,18 @@ pub fn initial<H: Host + ?Sized>(game: &mut H) {
 /// Cinematic function - intro - play "the last Metroid is in captivity"
 /// music for 200 frames ($8B:A5F8). Was
 /// `CinematicFunction_Intro_LastMetroidCaptivity`.
-pub fn last_metroid_in_captivity<H: Host + ?Sized>(game: &mut H) {
-    if countdown(game) {
+pub fn last_metroid_in_captivity<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
+    if countdown(cine) {
         flow::set(game, CinematicFunction, function::GALAXY_IS_AT_PEACE);
-        cinematic!(game.FunctionTimer = 200);
+        *cine.function_timer() = 200;
         crate::music_requests::queue_delayed_8(LAST_METROID_MUSIC, game);
     }
 }
 
 /// Cinematic function - intro - queue "the galaxy is at peace" music
 /// ($8B:A613). Was `CinematicFunc_Intro_QueueGalaxyIsAtPeace`.
-pub fn galaxy_is_at_peace<H: Host + ?Sized>(game: &mut H) {
-    if countdown(game) {
+pub fn galaxy_is_at_peace<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
+    if countdown(cine) {
         crate::music_requests::queue_delayed_8(NO_MUSIC, game);
         crate::music_requests::queue_delayed_8(GALAXY_AT_PEACE_DATA, game);
         crate::music_requests::queue_delayed(5, SONG_DELAY, game);
@@ -242,8 +240,8 @@ pub fn galaxy_is_at_peace<H: Host + ?Sized>(game: &mut H) {
 
 /// Cinematic function - intro - fade out ($8B:A64C). Was
 /// `CinematicFunc_Intro_FadeOut`.
-pub fn fade_out<H: Host + ?Sized>(game: &mut H) {
-    if countdown(game) {
+pub fn fade_out<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
+    if countdown(cine) {
         flow::set(game, CinematicFunction, function::WAIT_FOR_FADE_OUT);
         crate::screen_fade::set_both(game, 2, 2);
     }
@@ -252,7 +250,7 @@ pub fn fade_out<H: Host + ?Sized>(game: &mut H) {
 /// Cinematic function - intro - set up intro text page 1 ($8B:A66F): the
 /// text background, caret and next-page arrow, Samus blinking and the text
 /// music. Was `CinematicFunc_Intro_SetupTextPage2`.
-pub fn set_up_text_page_1<H: Host + ?Sized>(game: &mut H) {
+pub fn set_up_text_page_1<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     crate::intro_pages::clear_japanese_tiles(game);
     GraphicsAsset::VramWords(0x7e4000, 0x4180, 0x600).load(game);
     crate::display::sequence::write_register_and_mirror(
@@ -262,10 +260,10 @@ pub fn set_up_text_page_1<H: Host + ?Sized>(game: &mut H) {
         mirror::TM,
         false,
     );
-    clear_cinematic_background(0x2f, game);
-    enable_cinematic_background(game);
-    set_cinematic_tilemap_updates(true, game);
-    cinematic!(game.BgVramAddress = 0x4c00);
+    clear_cinematic_background(0x2f, cine, game);
+    enable_cinematic_background(cine);
+    set_cinematic_tilemap_updates(true, cine);
+    *cine.bg_vram_address() = 0x4c00;
     crate::word_transfers!(game, descending, 128;
         pause_map(127) <- value(BLANK_TEXT_TILE),
         pause_map(1023) <- value(BLANK_TEXT_TILE),
@@ -273,19 +271,20 @@ pub fn set_up_text_page_1<H: Host + ?Sized>(game: &mut H) {
     crate::word_transfers!(game, ascending, 128; pause_map(768) <- rom(TEXT_PAGE_1, 0));
     game.ram()
         .copy_in(NEXT_PAGE_ARROW, &NEXT_PAGE_ARROW_TILES.to_ne_bytes());
-    sprites(game, object::TEXT_CARET, 0x1c29);
-    cinematic!(game.FunctionTimer = 127);
+    sprites(cine, game, object::TEXT_CARET, 0x1c29);
+    *cine.function_timer() = 127;
     spawn(
+        cine,
         game,
         CinematicObjects::Background,
         object::SAMUS_BLINKING,
         0x4c00,
     );
-    cinematic!(game.Y = 8);
+    *cine.y() = 8;
     scroll!(game.Bg2V = 8);
     scroll!(game.Bg3V = 8);
     crate::intro_pages::clear_english_text(game);
-    crate::intro_pages::reset_caret(game);
+    crate::intro_pages::reset_caret(cine);
     crate::music_requests::queue_delayed_8(NO_MUSIC, game);
     crate::music_requests::queue_delayed_8(TEXT_MUSIC_DATA, game);
     crate::music_requests::queue_delayed(5, SONG_DELAY, game);
@@ -294,25 +293,25 @@ pub fn set_up_text_page_1<H: Host + ?Sized>(game: &mut H) {
 
 /// Cinematic function - fly to Ceres - initial ($8B:BCA0). Was
 /// `CinematicFunction_Intro_Func54`.
-pub fn ceres_initial<H: Host + ?Sized>(game: &mut H) {
-    crate::cinematic_display::configure_cinematic_display(CinematicDisplay::Station, game);
-    clear_cinematic_sprites(game);
+pub fn ceres_initial<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
+    crate::cinematic_display::configure_cinematic_display(CinematicDisplay::Station, cine, game);
+    clear_cinematic_sprites(cine);
     word!(game.CUR_IRQ_HANDLER = 0);
     word!(game.IRQHANDLER_NEXT_HANDLER = 0);
     crate::word_transfers!(game, ascending, 256; le(PALETTE_BUFFER, 0) <- rom(SPACE_PALETTES, 0));
     load_space_graphics(game);
     GraphicsAsset::VramLowBytes(0x7f4000, 0x0000, 0x300).load_planes(0x8c, true, game);
     crate::cinematic_display::reset_cinematic_transform(56, 24, game);
-    cinematic!(game.X = -72i32 as u16);
-    cinematic!(game.Y = -104i32 as u16);
-    cinematic!(game.Mode7Angle = 224);
-    cinematic!(game.Mode7Zoom = 512);
+    *cine.x() = -72i32 as u16;
+    *cine.y() = -104i32 as u16;
+    *cine.mode7_angle() = 224;
+    *cine.mode7_zoom() = 512;
     crate::palette_effects::execution::leased::clear(game);
     crate::palette_effects::execution::leased::set_enabled(true, game);
-    clear_cinematic_background(0, game);
-    cinematic!(game.BgVramAddress = 23552);
+    clear_cinematic_background(0, cine, game);
+    *cine.bg_vram_address() = 23552;
     crate::display_refresh::enable(true, game);
-    sprites(game, object::CERES_STARS, 0);
+    sprites(cine, game, object::CERES_STARS, 0);
     flow::set(game, CinematicFunction, function::CERES_WAIT_FOR_MUSIC);
     crate::music_requests::queue_delayed_8(CERES_MUSIC_DATA, game);
     crate::music_requests::queue_delayed(5, SONG_DELAY, game);
@@ -329,54 +328,60 @@ pub fn ceres_wait_for_music<H: Host + ?Sized>(game: &mut H) {
 
 /// Cinematic function - fly to Ceres - flying into camera ($8B:BDF9): zoom
 /// in, then show Ceres under attack. Was `CinematicFunction_Intro_Func56`.
-pub fn ceres_flying_into_camera<H: Host + ?Sized>(game: &mut H) {
-    if below(cinematic!(game.Mode7Zoom), 32) {
+pub fn ceres_flying_into_camera<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
+    if below(*cine.mode7_zoom(), 32) {
         game.ram().write_byte(0x6f, 0);
         game.ram().write_byte(0x72, 49);
         set_fixed_color([63, 95, 0x9f], game);
-        clear_cinematic_sprites(game);
+        clear_cinematic_sprites(cine);
         crate::display::transfer::enqueue_mode7_rom(0x8b, mode7::FLYING_INTO_CERES, game);
-        cinematic!(game.X = -32i32 as u16);
-        cinematic!(game.Y = -128i32 as u16);
-        cinematic!(game.Mode7Angle = 32);
+        *cine.x() = -32i32 as u16;
+        *cine.y() = -128i32 as u16;
+        *cine.mode7_angle() = 32;
         // Each parameter is what the preceding store or initializer leaves in A.
-        sprites(game, object::CERES_LARGE_ASTEROIDS, 0x0020);
-        sprites(game, object::CERES_UNDER_ATTACK, 0x0800);
-        sprites(game, object::CERES_SMALL_ASTEROIDS, 0x0c00);
-        sprites(game, object::CERES_VORTEX, 1);
-        sprites(game, object::CERES_STARS, 1);
+        sprites(cine, game, object::CERES_LARGE_ASTEROIDS, 0x0020);
+        sprites(cine, game, object::CERES_UNDER_ATTACK, 0x0800);
+        sprites(cine, game, object::CERES_SMALL_ASTEROIDS, 0x0c00);
+        sprites(cine, game, object::CERES_VORTEX, 1);
+        sprites(cine, game, object::CERES_STARS, 1);
         flow::set(game, CinematicFunction, function::CERES_FLYING_INTO_CERES);
         crate::palette_effects::execution::leased::spawn(CERES_GLOW_1, game);
         crate::palette_effects::execution::leased::spawn(CERES_GLOW_2, game);
     } else {
-        cinematic!(game.Mode7Zoom -= 16);
+        *cine.mode7_zoom() = cine.mode7_zoom().wrapping_sub(16);
     }
 }
 
 /// Cinematic function - fly to Ceres - flying into Ceres ($8B:BFDA): zoom
 /// in on Ceres, then show its background. Was `CinematicFunction_Intro_Func67`.
-pub fn ceres_flying_into_ceres<H: Host + ?Sized>(game: &mut H) {
+pub fn ceres_flying_into_ceres<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     fade_cinematic_fixed_color(game);
-    cinematic_state::add_pair(game, Word::X, Word::XSub, -0x2000i32 as u32);
-    if below(cinematic!(game.Mode7Zoom), 3072) {
-        cinematic!(game.Mode7Zoom += 16);
-    } else if below(cinematic!(game.Mode7Zoom), 0x2000) {
-        cinematic!(game.Mode7Zoom += 32);
+    cine.add_pair(Word::X, Word::XSub, -0x2000i32 as u32);
+    if below(*cine.mode7_zoom(), 3072) {
+        *cine.mode7_zoom() = cine.mode7_zoom().wrapping_add(16);
+    } else if below(*cine.mode7_zoom(), 0x2000) {
+        *cine.mode7_zoom() = cine.mode7_zoom().wrapping_add(32);
     } else {
         game.ram().write_byte(mirror::TM, 17);
         game.ram().write_byte(mirror::BGMODE, 1);
         game.ram().write_byte(mirror::M7SEL, 0);
         game.ram().write_byte(mirror::BG1SC, 92);
         game.ram().write_byte(mirror::BG12NBA, 6);
-        cinematic!(game.Mode7Zoom = 256);
-        cinematic!(game.Mode7Angle = 0);
-        cinematic!(game.XSub = 0);
-        cinematic!(game.X = 0);
-        cinematic!(game.YSub = 0);
-        cinematic!(game.Y = 0);
-        enable_cinematic_background(game);
-        set_cinematic_tilemap_updates(true, game);
-        spawn(game, CinematicObjects::Background, object::CERES_BG, 0x5c00);
+        *cine.mode7_zoom() = 256;
+        *cine.mode7_angle() = 0;
+        *cine.x_sub() = 0;
+        *cine.x() = 0;
+        *cine.y_sub() = 0;
+        *cine.y() = 0;
+        enable_cinematic_background(cine);
+        set_cinematic_tilemap_updates(true, cine);
+        spawn(
+            cine,
+            game,
+            CinematicObjects::Background,
+            object::CERES_BG,
+            0x5c00,
+        );
         flow::set(game, CinematicFunction, function::PAGE_6_DRAWN);
     }
 }
@@ -396,12 +401,12 @@ pub fn start_game_at_ceres<H: Host + ?Sized>(game: &mut H) {
 
 /// Cinematic function - Ceres goes boom - initial ($8B:C11B). Was
 /// `CinematicFunctionBlackoutFromCeres`.
-pub fn boom_initial<H: Host + ?Sized>(game: &mut H) {
+pub fn boom_initial<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     if crate::cinematic_states::wait_for_nmis(9, game) {
         return;
     }
-    crate::cinematic_display::configure_cinematic_display(CinematicDisplay::Station, game);
-    clear_cinematic_objects(game);
+    crate::cinematic_display::configure_cinematic_display(CinematicDisplay::Station, cine, game);
+    clear_cinematic_objects(cine);
     cinematic!(game.DoorExit = 0);
     cinematic!(game.Layer1X = 0);
     cinematic!(game.Layer1Y = 0);
@@ -410,21 +415,21 @@ pub fn boom_initial<H: Host + ?Sized>(game: &mut H) {
     GraphicsAsset::VramLowBytes(0x7f4600, 0x0000, 0x600).load_planes(0x8c, false, game);
     GraphicsAsset::VramWords(0x9ad200, 0x6000, 0x1a00).load(game);
     crate::cinematic_display::reset_cinematic_transform(52, 48, game);
-    cinematic!(game.X = -44i32 as u16);
-    cinematic!(game.Y = -112i32 as u16);
-    cinematic!(game.Mode7Angle = 0);
-    cinematic!(game.Mode7Zoom = 256);
+    *cine.x() = -44i32 as u16;
+    *cine.y() = -112i32 as u16;
+    *cine.mode7_angle() = 0;
+    *cine.mode7_zoom() = 256;
     crate::hdma_objects::set_hdma_enabled(false, game);
     crate::hdma_objects::clear_hdma(game);
     crate::palette_effects::execution::leased::clear(game);
     crate::palette_effects::execution::leased::set_enabled(true, game);
-    clear_cinematic_background(0x2f, game);
-    cinematic!(game.BgVramAddress = 0);
-    sprites(game, object::CERES_GUNSHIP, 0);
-    spawn_at(game, object::CERES_SMALL_ASTEROIDS, 2, 0x0002);
-    spawn_at(game, object::CERES_VORTEX, 0, 0x0000);
+    clear_cinematic_background(0x2f, cine, game);
+    *cine.bg_vram_address() = 0;
+    sprites(cine, game, object::CERES_GUNSHIP, 0);
+    spawn_at(cine, game, object::CERES_SMALL_ASTEROIDS, 2, 0x0002);
+    spawn_at(cine, game, object::CERES_VORTEX, 0, 0x0000);
     // The palette the preceding sprite initializer leaves in A.
-    sprites(game, object::CERES_EXPLOSION_SPAWNER, 0x0800);
+    sprites(cine, game, object::CERES_EXPLOSION_SPAWNER, 0x0800);
     crate::palette_effects::execution::leased::spawn(BOOM_GLOW, game);
     crate::display_refresh::enable(true, game);
     crate::screen_fade::set_both(game, 1, 1);
@@ -448,36 +453,36 @@ pub fn boom_wait_for_music<H: Host + ?Sized>(game: &mut H) {
 
 /// Cinematic function - Ceres goes boom - small Ceres explosions - fading in
 /// ($8B:C2F1). Was `CinematicFunction_Intro_Func75`.
-pub fn boom_small_explosions<H: Host + ?Sized>(game: &mut H) {
-    cinematic_state::add_pair(game, Word::Y, Word::YSub, 4096u32);
-    cinematic_state::add_pair(game, Word::X, Word::XSub, -0x4000i32 as u32);
-    cinematic!(game.Mode7Zoom += 1);
+pub fn boom_small_explosions<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
+    cine.add_pair(Word::Y, Word::YSub, 4096u32);
+    cine.add_pair(Word::X, Word::XSub, -0x4000i32 as u32);
+    *cine.mode7_zoom() = cine.mode7_zoom().wrapping_add(1);
     crate::display_refresh::fade(true, game);
     if game.ram().read_byte(mirror::INIDISP) == 15 {
         crate::screen_fade::set_both(game, 0, 0);
         flow::set(game, CinematicFunction, function::BOOM_EXPLOSIONS);
-        cinematic!(game.FunctionTimer = 1);
-        cinematic!(game.Var13 = 0);
+        *cine.function_timer() = 1;
+        *cine.var13() = 0;
     }
 }
 
 /// Cinematic function - Ceres goes boom - Ceres explosions ($8B:C345):
 /// zoom out, then the power bomb blast and the gunship. Was
 /// `CinematicFunction_Intro_Func76`.
-pub fn boom_explosions<H: Host + ?Sized>(game: &mut H) {
-    cinematic_state::add_pair(game, Word::Y, Word::YSub, 4096u32);
-    cinematic_state::add_pair(game, Word::X, Word::XSub, -0x4000i32 as u32);
-    if below(cinematic!(game.Mode7Zoom), 640) {
-        cinematic!(game.Mode7Zoom += 1);
+pub fn boom_explosions<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
+    cine.add_pair(Word::Y, Word::YSub, 4096u32);
+    cine.add_pair(Word::X, Word::XSub, -0x4000i32 as u32);
+    if below(*cine.mode7_zoom(), 640) {
+        *cine.mode7_zoom() = cine.mode7_zoom().wrapping_add(1);
     } else {
-        cinematic!(game.PowerBombX = (word!(game.REG_M7X)).wrapping_sub(cinematic!(game.X)));
-        cinematic!(game.PowerBombY = (word!(game.REG_M7Y)).wrapping_sub(cinematic!(game.Y)));
+        cinematic!(game.PowerBombX = (word!(game.REG_M7X)).wrapping_sub(*cine.x()));
+        cinematic!(game.PowerBombY = (word!(game.REG_M7Y)).wrapping_sub(*cine.y()));
         crate::hdma_objects::set_hdma_enabled(true, game);
         game.spawn_power_bomb();
         game.ram().write_byte(0x6f, 16);
         game.ram().write_byte(0x72, 55);
-        cinematic!(game.Mode7Zoom = 768);
-        sprites(game, object::CERES_EXPLOSION_GUNSHIP, 0);
+        *cine.mode7_zoom() = 768;
+        sprites(cine, game, object::CERES_EXPLOSION_GUNSHIP, 0);
         if word!(game.GAME_STATE) == BOOM_WITH_SAMUS {
             crate::display::transfer::enqueue_mode7_rom(0x8b, mode7::BOOM_WITH_SAMUS, game);
         } else {
@@ -490,23 +495,23 @@ pub fn boom_explosions<H: Host + ?Sized>(game: &mut H) {
 
 /// Cinematic function - Ceres goes boom - gunship flying away ($8B:C5CA).
 /// Was `CinematicFunction_Intro_Func77`.
-pub fn boom_gunship_flying_away<H: Host + ?Sized>(game: &mut H) {
+pub fn boom_gunship_flying_away<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     game.ram().write_byte(0x6f, 16);
     game.ram().write_byte(0x72, 55);
-    cinematic!(game.X += 2);
-    cinematic!(game.Mode7Angle = (cinematic!(game.Mode7Angle) as u8).wrapping_sub(1) as u16);
-    if below(cinematic!(game.Mode7Zoom), 16) {
+    *cine.x() = cine.x().wrapping_add(2);
+    *cine.mode7_angle() = (*cine.mode7_angle() as u8).wrapping_sub(1) as u16;
+    if below(*cine.mode7_zoom(), 16) {
         flow::set(game, CinematicFunction, function::BOOM_WAIT_C0H_FRAMES);
-        cinematic!(game.FunctionTimer = 192);
+        *cine.function_timer() = 192;
     } else {
-        cinematic!(game.Mode7Zoom -= 16);
+        *cine.mode7_zoom() = cine.mode7_zoom().wrapping_sub(16);
     }
 }
 
 /// Cinematic function - Ceres goes boom - wait C0h frames ($8B:C610). Was
 /// `CinematicFunction_Intro_Func84`.
-pub fn boom_wait<H: Host + ?Sized>(game: &mut H) {
-    if countdown(game) {
+pub fn boom_wait<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
+    if countdown(cine) {
         crate::screen_fade::set_both(game, 1, 1);
         flow::set(game, CinematicFunction, function::BOOM_FADE_OUT);
     }
@@ -515,7 +520,7 @@ pub fn boom_wait<H: Host + ?Sized>(game: &mut H) {
 /// Cinematic function - Ceres goes boom - fade out ($8B:C627): with Samus
 /// aboard, game over; else the flight to Zebes. Was
 /// `CinematicFunction_Intro_Func85`.
-pub fn boom_fade_out<H: Host + ?Sized>(game: &mut H) {
+pub fn boom_fade_out<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     crate::display_refresh::fade(false, game);
     if game.ram().read_byte(mirror::INIDISP) == 0x80 {
         crate::display_refresh::enable(true, game);
@@ -541,7 +546,7 @@ pub fn boom_fade_out<H: Host + ?Sized>(game: &mut H) {
             });
             crate::menu!(game.MenuIndex = 0);
             for index in (8..=135).rev() {
-                cinematic!(game.BgArr7[index] = 0);
+                *cine.bg_arr7(index) = 0;
             }
             word!(game.GAME_STATE = SAMUS_NO_HEALTH);
         } else {
@@ -552,19 +557,19 @@ pub fn boom_fade_out<H: Host + ?Sized>(game: &mut H) {
 
 /// Cinematic function - fly to Zebes - initial ($8B:C699). Was
 /// `CinematicFunction_Intro_Func86`.
-pub fn zebes_initial<H: Host + ?Sized>(game: &mut H) {
-    crate::cinematic_display::configure_cinematic_display(CinematicDisplay::Landing, game);
-    clear_cinematic_objects(game);
+pub fn zebes_initial<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
+    crate::cinematic_display::configure_cinematic_display(CinematicDisplay::Landing, cine, game);
+    clear_cinematic_objects(cine);
     GraphicsAsset::Decompress(0x978adb, 0x19000).load(game);
     GraphicsAsset::Decompress(0x96ec76, 0x15000).load(game);
     GraphicsAsset::VramLowBytes(0x7f4300, 0x0000, 0x300).load(game);
     GraphicsAsset::VramWords(0x7f9000, 0x5c00, 0x800).load(game);
     GraphicsAsset::VramWords(0x7f5000, 0x6000, 0x4000).load(game);
     crate::cinematic_display::reset_cinematic_transform(56, 24, game);
-    cinematic!(game.X = 0);
-    cinematic!(game.Y = 0);
-    cinematic!(game.Mode7Angle = 0);
-    cinematic!(game.Mode7Zoom = 256);
+    *cine.x() = 0;
+    *cine.y() = 0;
+    *cine.mode7_angle() = 0;
+    *cine.mode7_zoom() = 256;
     crate::hdma_objects::set_hdma_enabled(false, game);
     crate::hdma_objects::clear_hdma(game);
     crate::palette_effects::execution::leased::clear(game);
@@ -578,17 +583,17 @@ pub fn zebes_initial<H: Host + ?Sized>(game: &mut H) {
 
 /// Cinematic function - fly to Zebes - hold on scene for 40h frames
 /// ($8B:CAD0). Was `CinematicFunction_Intro_Func108`.
-pub fn zebes_hold<H: Host + ?Sized>(game: &mut H) {
-    if countdown(game) {
+pub fn zebes_hold<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
+    if countdown(cine) {
         flow::set(game, CinematicFunction, function::ZEBES_SLIDE_SCENE_AWAY);
     }
 }
 
 /// Cinematic function - fly to Zebes - load game data ($8B:CADF). Was
 /// `CinematicFunction_Intro_Func95`.
-pub fn zebes_load_game_data<H: Host + ?Sized>(game: &mut H) {
+pub fn zebes_load_game_data<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     game.ram().write_byte(mirror::INIDISP, 0x80);
-    clear_cinematic_objects(game);
+    clear_cinematic_objects(cine);
     word!(game.GAME_STATE = LOADING_GAME_DATA);
     inventory::set(
         game,
@@ -599,71 +604,78 @@ pub fn zebes_load_game_data<H: Host + ?Sized>(game: &mut H) {
 
 /// Pre-instruction - the confused baby metroid waits for its egg to hatch
 /// ($8B:BA5E). Was `CinematicFunction_Intro_Func50`.
-pub fn baby_waiting<H: Host + ?Sized>(k: u16, game: &mut H) {
+pub fn baby_waiting(k: u16, cine: &mut Cinematic) {
     let slot = (k as i32 >> 1) as usize;
     if !below(
-        cinematic!(game.SprInstructionPointer[slot + 1]),
+        *cine.spr_instruction_pointer(slot + 1),
         object::BABY_HATCH_LIST,
     ) {
-        cinematic!(game.SprPreInstruction[slot] = pre_instruction::BABY_HATCHED);
-        cinematic!(game.Var14 = 0);
-        cinematic!(game.Var17 = 0);
+        *cine.spr_pre_instruction(slot) = pre_instruction::BABY_HATCHED;
+        *cine.var14() = 0;
+        *cine.var17() = 0;
     }
 }
 
 /// Pre-instruction - confused baby metroid - hatched ($8B:BA73): the slime
 /// drops, then it chases Samus vertically until it slows. Was
 /// `CinematicFunction_Intro_Func51`.
-pub fn baby_hatched<H: Host + ?Sized>(k: u16, game: &mut H) {
+pub fn baby_hatched<H: Host + ?Sized>(k: u16, cine: &mut Cinematic, game: &mut H) {
     let slot = (k as i32 >> 1) as usize;
-    if cinematic!(game.BgArr8[slot]) == 145 {
-        crate::cinematic_objects::spawn_cinematic_burst(object::SLIME_DROPS, 0..4, 0, game);
+    if *cine.bg_arr8(slot) == 145 {
+        crate::cinematic_objects::spawn_cinematic_burst(object::SLIME_DROPS, 0..4, 0, cine, game);
         game.queue_sound(2, HATCH_SOUND, 6);
     }
-    crate::intro_objects::chase_intro_baby_y(k, 32, game);
-    if (cinematic!(game.Var17) & 0x8000) == 0 {
-        cinematic!(game.Var14 = 128);
-        cinematic!(game.SprPreInstruction[slot] = pre_instruction::BABY_IDLING);
+    crate::intro_objects::chase_intro_baby_y(k, 32, cine, game);
+    if (*cine.var17() & 0x8000) == 0 {
+        *cine.var14() = 128;
+        *cine.spr_pre_instruction(slot) = pre_instruction::BABY_IDLING;
     }
 }
 
 /// Pre-instruction - confused baby metroid - idling ($8B:BB0D): then dance.
 /// Was `CinematicFunction_Intro_Func52`.
-pub fn baby_idling<H: Host + ?Sized>(k: u16, game: &mut H) {
-    cinematic!(game.Var14 -= 1);
-    let expired = (cinematic!(game.Var14) & 0x8000) != 0;
-    if cinematic!(game.Var14) == 0 || expired {
+pub fn baby_idling(k: u16, cine: &mut Cinematic) {
+    *cine.var14() = cine.var14().wrapping_sub(1);
+    let expired = (*cine.var14() & 0x8000) != 0;
+    if *cine.var14() == 0 || expired {
         let slot = (k as i32 >> 1) as usize;
-        cinematic!(game.SprPreInstruction[slot] = pre_instruction::BABY_DANCING);
-        cinematic!(game.Var14 = 0);
-        cinematic!(game.Var17 = 0);
-        cinematic!(game.SprGotoTimer[slot] = 0);
+        *cine.spr_pre_instruction(slot) = pre_instruction::BABY_DANCING;
+        *cine.var14() = 0;
+        *cine.var17() = 0;
+        *cine.spr_goto_timer(slot) = 0;
     }
 }
 
 /// Pre-instruction - Ceres explosion spawner - spawn Ceres explosion 2 every
 /// Ch frames ($8B:C489), until the gunship flies away. Was
 /// `CinematicSprPreInstr_C489`.
-pub fn explosion_spawner<H: Host + ?Sized>(k: u16, game: &mut H) {
+pub fn explosion_spawner<H: Host + ?Sized>(k: u16, cine: &mut Cinematic, game: &mut H) {
     if flow::current(game).cinematic_function == function::BOOM_GUNSHIP_FLYING_AWAY {
-        cinematic!(game.SprPreInstruction[k >> 1] = pre_instruction::NOTHING);
-    } else if countdown(game) {
-        let pattern = cinematic!(game.Var13);
-        sprites(game, object::CERES_EXPLOSION_2, pattern);
-        cinematic!(game.FunctionTimer = 12);
-        cinematic!(game.Var13 = (cinematic!(game.Var13).wrapping_add(1)) & 7);
+        *cine.spr_pre_instruction(k >> 1) = pre_instruction::NOTHING;
+    } else if countdown(cine) {
+        let pattern = *cine.var13();
+        sprites(cine, game, object::CERES_EXPLOSION_2, pattern);
+        *cine.function_timer() = 12;
+        *cine.var13() = ((*cine.var13()).wrapping_add(1)) & 7;
     }
 }
 
 fn spawn<H: Host + ?Sized>(
+    cine: &mut Cinematic,
     game: &mut H,
     objects: CinematicObjects,
     definition: u16,
     parameter: u16,
 ) {
-    objects.spawn(definition, parameter, game);
+    objects.spawn(definition, parameter, cine, game);
 }
 
-fn spawn_at<H: Host + ?Sized>(game: &mut H, definition: u16, slot: u16, parameter: u16) {
-    crate::cinematic_objects::spawn_cinematic_sprite_at(definition, slot, parameter, game);
+fn spawn_at<H: Host + ?Sized>(
+    cine: &mut Cinematic,
+    game: &mut H,
+    definition: u16,
+    slot: u16,
+    parameter: u16,
+) {
+    crate::cinematic_objects::spawn_cinematic_sprite_at(definition, slot, parameter, cine, game);
 }

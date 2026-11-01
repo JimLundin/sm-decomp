@@ -7,8 +7,8 @@ pub trait Host: crate::menus::host::Host + crate::display_refresh::Host {
     /// Set up Samus for the intro.
     fn initialize_player(&mut self);
     fn disable_scanline_irq(&mut self);
-    /// Queue the ending's next Mode 7 tile upload.
-    fn advance_ending_tile_upload(&mut self);
+    /// Queue the ending's Mode 7 tile upload of `page`.
+    fn advance_ending_tile_upload(&mut self, page: u16);
     /// Prepare Samus's projectiles and run her frame.
     fn advance_intro_player(&mut self);
     /// The original's failed native assertion `expression` in `function`.

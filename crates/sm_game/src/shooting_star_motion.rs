@@ -1,7 +1,7 @@
 //! Shooting-star motion and drawing for the ending's star field.
 use crate::imported::word as table_word;
 use crate::menus::host::Host;
-use crate::ram::words::{OAM_NEXT_PTR, SHOOTING_STARS_ENABLED};
+use crate::ram::words::OAM_NEXT_PTR;
 use sm_data::shooting_stars::TILE_ADDRESS as STAR_TILE_ADDRESS;
 
 /// The 40 16-byte star records: state (index, frame high, bit 15 waiting), X
@@ -48,9 +48,10 @@ pub fn initialize_shooting_stars<H: Host + ?Sized>(game: &mut H) {
     }
 }
 
-/// Move every star, then draw the visible ones into OAM.
-pub fn advance_shooting_stars<H: Host + ?Sized>(game: &mut H) {
-    if game.word(SHOOTING_STARS_ENABLED) == 0 {
+/// Move every star, then draw the visible ones into OAM, while `enabled`
+/// (`shooting_stars_enabled`) is set.
+pub fn advance_shooting_stars<H: Host + ?Sized>(enabled: u16, game: &mut H) {
+    if enabled == 0 {
         return;
     }
     for at in RECORDS.step_by(16) {

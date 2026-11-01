@@ -1,7 +1,7 @@
 //! Title screen: Metroid palettes and cry, camera pans, skip and wait, sprite placement.
 use crate::cinematic::{place_cinematic_sprite, set_cinematic_backdrop};
 use crate::cinematic_objects::CinematicObjects;
-use crate::cinematic_state::{self, Word, cinematic};
+use crate::cinematic_state::{Cinematic, Word};
 use crate::constants::buttons::{K_BUTTON_A, K_BUTTON_B, K_BUTTON_START};
 use crate::menus::prelude::words;
 use crate::ram::RawRam as _;
@@ -78,6 +78,7 @@ pub fn title_metroid_palette<H: crate::menus::host::Host + ?Sized>(
 pub fn start_title_pan<H: crate::menus::host::Host + ?Sized>(
     stage: usize,
     cursor: u16,
+    cine: &mut Cinematic,
     game: &mut H,
 ) -> u16 {
     let (next, zoom, x, y) = [
@@ -88,16 +89,16 @@ pub fn start_title_pan<H: crate::menus::host::Host + ?Sized>(
     ][stage];
     game.ram().write_byte(crate::ram::mirror::TM, 17);
     crate::flow::set(game, crate::flow::Word::CinematicFunction, next);
-    cinematic!(game.Mode7Zoom = zoom);
-    cinematic!(game.X = x);
-    cinematic!(game.XSub = 0);
-    cinematic!(game.Y = y);
-    cinematic!(game.YSub = 0);
-    cinematic!(game.XSpeed = if stage < 2 { -2i16 as u16 } else { 0 });
-    cinematic!(game.XSubspeed = if stage < 2 { 0x8000 } else { 0 });
+    *cine.mode7_zoom() = zoom;
+    *cine.x() = x;
+    *cine.x_sub() = 0;
+    *cine.y() = y;
+    *cine.y_sub() = 0;
+    *cine.x_speed() = if stage < 2 { -2i16 as u16 } else { 0 };
+    *cine.x_subspeed() = if stage < 2 { 0x8000 } else { 0 };
     if stage >= 2 {
-        cinematic! {game; YSpeed = u16::from(stage == 2);
-        YSubspeed = if stage == 2 { 0x8000 } else { 0 }; }
+        *cine.y_speed() = u16::from(stage == 2);
+        *cine.y_subspeed() = if stage == 2 { 0x8000 } else { 0 };
     }
     if matches!(stage, 0 | 2) {
         set_cinematic_backdrop(true, game);
@@ -105,7 +106,11 @@ pub fn start_title_pan<H: crate::menus::host::Host + ?Sized>(
     cursor
 }
 
-pub fn advance_title_pan<H: crate::menus::host::Host + ?Sized>(stage: usize, game: &mut H) {
+pub fn advance_title_pan<H: crate::menus::host::Host + ?Sized>(
+    stage: usize,
+    cine: &mut Cinematic,
+    game: &mut H,
+) {
     // The last stage pans vertically.
     let (whole, fraction, speed, subspeed) = if stage == 2 {
         (Word::Y, Word::YSub, Word::YSpeed, Word::YSubspeed)
@@ -113,12 +118,9 @@ pub fn advance_title_pan<H: crate::menus::host::Host + ?Sized>(stage: usize, gam
         (Word::X, Word::XSub, Word::XSpeed, Word::XSubspeed)
     };
     let cutoff = [7, 176, -163][stage];
-    let velocity = words!((
-        cinematic_state::get(game, speed),
-        cinematic_state::get(game, subspeed),
-    ));
-    cinematic_state::add_pair(game, whole, fraction, velocity);
-    let negative = (cinematic_state::get(game, whole) as i32 + cutoff) & 0x8000 != 0;
+    let velocity = words!((*cine.word(speed), *cine.word(subspeed),));
+    cine.add_pair(whole, fraction, velocity);
+    let negative = (*cine.word(whole) as i32 + cutoff) & 0x8000 != 0;
     // The vertical pan ends on the opposite side of its cutoff.
     if negative != (stage == 2) {
         game.ram().write_byte(crate::ram::mirror::TM, 16);
@@ -128,22 +130,25 @@ pub fn advance_title_pan<H: crate::menus::host::Host + ?Sized>(stage: usize, gam
             scrolling_text::PRESENTS,
             scrolling_text::METROID_3,
         ][stage];
-        CinematicObjects::Sprites.spawn(definition, function::IDLE, game);
+        CinematicObjects::Sprites.spawn(definition, function::IDLE, cine, game);
         set_cinematic_backdrop(false, game);
     }
-    request_title_skip(game);
+    request_title_skip(cine, game);
 }
 
-pub fn request_title_skip<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+pub fn request_title_skip<H: crate::menus::host::Host + ?Sized>(
+    cine: &mut Cinematic,
+    game: &mut H,
+) {
     // Before the title screen: the original adds the function's negation plus one.
     if (crate::flow::current(game).cinematic_function as i32
         + (function::TITLE_SCREEN.wrapping_neg() as i32 + 1))
         & 0x8000
         != 0
         && word!(game.JOYPAD1_NEWKEYS) & CONFIRM_BUTTONS != 0
-        && cinematic!(game.SkipToTitleIndex) == 0
+        && *cine.skip_to_title_index() == 0
     {
-        cinematic!(game.SkipToTitleIndex = 1);
+        *cine.skip_to_title_index() = 1;
         crate::screen_fade::set_both(game, 0, 2);
     }
 }
@@ -177,10 +182,11 @@ pub fn advance_title_wait<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
 pub fn initialize_title_sprite<H: crate::menus::host::Host + ?Sized>(
     object: u16,
     variant: usize,
+    cine: &mut Cinematic,
     game: &mut H,
 ) {
     let (y, palette, effect) =
         [(48, 1024, 0xe194), (81, 512, 0xe198), (196, 2048, 0xe19c)][variant];
-    place_cinematic_sprite(object, (128, y), palette, game);
+    place_cinematic_sprite(object, (128, y), palette, cine);
     crate::palette_effects::execution::leased::spawn(effect, game);
 }

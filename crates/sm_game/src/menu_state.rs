@@ -121,8 +121,8 @@ impl Cohort for MenuScreens {
         self.options_menu.words(&mut visit);
         self.death.words(&mut visit);
     }
-    fn of(session: &mut Session) -> &mut Self {
-        &mut session.menu_screens
+    fn session_words(session: &mut Session, visit: impl FnMut(usize, &mut u16)) {
+        session.menu_screens.words(visit);
     }
 }
 
@@ -154,8 +154,8 @@ impl Cohort for MapScreenState {
             &mut self.indicator_loop_counter,
         );
     }
-    fn of(session: &mut Session) -> &mut Self {
-        &mut session.menu_screens.map
+    fn session_words(session: &mut Session, visit: impl FnMut(usize, &mut u16)) {
+        session.menu_screens.map.words(visit);
     }
 }
 
@@ -171,8 +171,8 @@ impl Cohort for SaveSelection {
         visit(ram::SRAM_SAVE_STATION_INDEX, &mut self.save_station);
         visit(ram::SRAM_AREA_INDEX, &mut self.save_area);
     }
-    fn of(session: &mut Session) -> &mut Self {
-        &mut session.menu_screens.save_selection
+    fn session_words(session: &mut Session, visit: impl FnMut(usize, &mut u16)) {
+        session.menu_screens.save_selection.words(visit);
     }
 }
 
@@ -182,8 +182,8 @@ impl Cohort for OptionsMenu {
         visit(ram::DEBUG_INVINCIBILITY, &mut self.debug_invincibility);
         visit(ram::GAME_OPTIONS_SCREEN_INDEX, &mut self.screen_index);
     }
-    fn of(session: &mut Session) -> &mut Self {
-        &mut session.menu_screens.options_menu
+    fn session_words(session: &mut Session, visit: impl FnMut(usize, &mut u16)) {
+        session.menu_screens.options_menu.words(visit);
     }
 }
 
@@ -193,8 +193,8 @@ impl Cohort for DeathSequence {
         visit(ram::DEATH_COUNTER, &mut self.counter);
         visit(ram::DEATH_FLASH_TIMER, &mut self.flash_timer);
     }
-    fn of(session: &mut Session) -> &mut Self {
-        &mut session.menu_screens.death
+    fn session_words(session: &mut Session, visit: impl FnMut(usize, &mut u16)) {
+        session.menu_screens.death.words(visit);
     }
 }
 

@@ -1,6 +1,7 @@
 //! Cinematic display setup: PPU modes, layers and mirrors per scene, the Mode 7 reset and intro sprite order.
 use crate::cinematic::set_fixed_color;
 use crate::cinematic_objects::draw_cinematic_sprites;
+use crate::cinematic_state::Cinematic;
 use crate::cinematic_state::cinematic;
 use crate::display::control::{Brightness, Layers, MainWindowMask, SubScreen};
 use crate::menu_state::OptionsMenu;
@@ -9,6 +10,7 @@ use crate::ram::RawRam as _;
 
 pub fn configure_cinematic_display<H: crate::menus::host::Host + ?Sized>(
     display: crate::visual_state::CinematicDisplay,
+    cine: &mut Cinematic,
     game: &mut H,
 ) {
     use crate::display::registers::{
@@ -99,9 +101,13 @@ pub fn configure_cinematic_display<H: crate::menus::host::Host + ?Sized>(
             set_fixed_color([32, 64, 0x80], game);
             crate::sprite_drawing::reset_cursor(game);
             reset_cinematic_transform(128, 128, game);
-            cinematic! { game; Mode7Angle = 0; Mode7Zoom = 1; }
+            *cine.mode7_angle() = 0;
+            *cine.mode7_zoom() = 1;
             scroll!(game, 0; Bg1H, Bg1V, Bg2H, Bg2V);
-            cinematic!(game, 0; XSub, X, YSub, Y);
+            *cine.x_sub() = 0;
+            *cine.x() = 0;
+            *cine.y_sub() = 0;
+            *cine.y() = 0;
         } else {
             scroll! { game, 0; Bg1H, Bg1V }
         }
@@ -160,25 +166,30 @@ pub fn configure_cinematic_display<H: crate::menus::host::Host + ?Sized>(
             crate::menu!(game.UnusedWord7e0759 = 0);
             crate::inventory::set(game, crate::inventory::Word::ReserveHealth, 0);
             crate::inventory::set(game, crate::inventory::Word::ReserveMissiles, 0);
-            cinematic!(game.Mode7Angle = 0);
+            *cine.mode7_angle() = 0;
         }
         Intro => {
             crate::sprite_drawing::reset_cursor(game);
-            cinematic!(game.Mode7Angle = 0);
+            *cine.mode7_angle() = 0;
         }
         Escape => {
             crate::sprite_drawing::reset_cursor(game);
             crate::screen_fade::set_both(game, 0, 0);
-            cinematic!(game.Mode7Angle = 0);
+            *cine.mode7_angle() = 0;
         }
         _ => {}
     }
     if display != Station {
-        cinematic!(game.Mode7Zoom = 256);
+        *cine.mode7_zoom() = 256;
     }
-    cinematic! { game, 0;
-        XSub, X, YSub, Y, XSubspeed, XSpeed, YSubspeed, YSpeed,
-    }
+    *cine.x_sub() = 0;
+    *cine.x() = 0;
+    *cine.y_sub() = 0;
+    *cine.y() = 0;
+    *cine.x_subspeed() = 0;
+    *cine.x_speed() = 0;
+    *cine.y_subspeed() = 0;
+    *cine.y_speed() = 0;
     if matches!(display, Intro | Station) {
         cinematic!(game.FxBlending = 0);
     }
@@ -219,13 +230,16 @@ fn set_mode7_transform<H: crate::menus::host::Host + ?Sized>(
     }
 }
 
-pub fn draw_intro_sprites<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    let samus = cinematic!(game.IntroSamusDisplay);
+pub fn draw_intro_sprites<H: crate::menus::host::Host + ?Sized>(
+    cine: &mut Cinematic,
+    game: &mut H,
+) {
+    let samus = *cine.intro_samus_display();
     if samus & 0x8000 != 0 {
         game.draw_player_frame();
         game.draw_projectiles();
     }
-    draw_cinematic_sprites(false, game);
+    draw_cinematic_sprites(false, cine, game);
     if samus != 0 && samus & 0x8000 == 0 {
         game.draw_player_frame();
         game.draw_projectiles();

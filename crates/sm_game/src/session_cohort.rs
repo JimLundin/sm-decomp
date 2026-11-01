@@ -20,8 +20,9 @@ use crate::session::Session;
 pub trait Cohort: Clone + PartialEq + Default {
     /// Visit each word with its RAM address.
     fn words(&mut self, visit: impl FnMut(usize, &mut u16));
-    /// The group in `session`.
-    fn of(session: &mut Session) -> &mut Self;
+    /// Visit the group's words in `session`, in the order `words` visits the
+    /// copy's.
+    fn session_words(session: &mut Session, visit: impl FnMut(usize, &mut u16));
 }
 
 /// The group as the host's projection holds it.
@@ -54,7 +55,7 @@ where
         use crate::session_access::SessionAccess as _;
         let mut lease = game.runtime();
         let mut index = 0;
-        C::of(lease.session_mut()).words(|_, word| {
+        C::session_words(lease.session_mut(), |_, word| {
             if let Some(&(_, _, value)) = changes.iter().find(|change| change.0 == index) {
                 *word = value;
             }
@@ -132,11 +133,19 @@ mod tests {
     fn check_encoding<C: Cohort + core::fmt::Debug>() {
         let mut session = Session::with_world(WorldBinding::canonical_legacy());
         let mut value = 0x1001u16;
-        C::of(&mut session).words(|_, word| {
+        let mut expected = C::default();
+        let mut addresses = Vec::new();
+        C::session_words(&mut session, |at, word| {
             *word = value;
+            addresses.push((at, value));
             value = value.wrapping_add(0x0101);
         });
-        let expected = C::of(&mut session).clone();
+        let mut index = 0;
+        expected.words(|at, word| {
+            assert_eq!(at, addresses[index].0);
+            *word = addresses[index].1;
+            index += 1;
+        });
         let host = Projection(session);
         assert_eq!(load::<C, _>(&host), expected);
     }
@@ -148,5 +157,10 @@ mod tests {
         check_encoding::<SaveSelection>();
         check_encoding::<OptionsMenu>();
         check_encoding::<DeathSequence>();
+    }
+
+    #[test]
+    fn the_cinematic_table_loads_from_its_projected_words() {
+        check_encoding::<crate::cinematic_state::Cinematic>();
     }
 }

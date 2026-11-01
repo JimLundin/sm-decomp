@@ -10,7 +10,7 @@
 use crate::cinematic::{advance_cinematic_coordinate, advance_cinematic_fade, set_fixed_color};
 use crate::cinematic_host::Host;
 use crate::cinematic_objects::CinematicObjects;
-use crate::cinematic_state::cinematic;
+use crate::cinematic_state::Cinematic;
 use crate::display::registers as reg;
 use crate::display_refresh::GraphicsAsset;
 use crate::flow;
@@ -35,9 +35,6 @@ const LOGO_HOLD: u16 = 120;
 const FINAL_SCREEN: u16 = 0xe504;
 /// The instruction that starts the title's scene 3 pan, $8B:9E58.
 pub const START_SCENE_3: u32 = 0x8b_9e58;
-/// $7E:1B7D: the metroid egg particles' velocity indices, horizontal then
-/// vertical per slot.
-const PARTICLE_VELOCITY_INDEX: usize = 0x1b7d;
 /// The egg particles fall away below Y 168.
 const PARTICLE_FLOOR: u16 = 168;
 /// What the egg particles become: the egg particle's and slime drop's
@@ -82,9 +79,9 @@ const SLIME_Y_FAST: [i16; 138] = [
     5, -0x4000, 5, -0x2000,
 ];
 
-fn run_function<H: Host + ?Sized>(game: &mut H) {
+fn run_function<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     let address = (BANK << 16) | u32::from(flow::current(game).cinematic_function);
-    crate::cinematic_dispatch::run_function(address, game);
+    crate::cinematic_dispatch::run_function(address, cine, game);
 }
 
 /// $0612: the NMIs a cinematic function still waits for.
@@ -115,11 +112,11 @@ pub fn wait_for_nmis<H: Host + ?Sized>(count: u8, game: &mut H) -> bool {
 }
 
 /// The intro and ending's frame counters.
-fn count_frames<H: Host + ?Sized>(game: &mut H) {
-    if (cinematic!(game.IntroFrameCounter) & 0x8000) == 0 {
-        cinematic!(game.IntroFrameCounter += 1);
+fn count_frames(cine: &mut Cinematic) {
+    if (*cine.intro_frame_counter() & 0x8000) == 0 {
+        *cine.intro_frame_counter() = cine.intro_frame_counter().wrapping_add(1);
     }
-    cinematic!(game.FrameCounter += 1);
+    *cine.frame_counter() = cine.frame_counter().wrapping_add(1);
 }
 
 /// Draws the Nintendo logo. Was `AddNintentoLogoToOam`.
@@ -261,21 +258,23 @@ pub fn nintendo_logo<H: Host + ?Sized>(game: &mut H) -> u8 {
 
 /// Game state 1 - title sequence ($8B:9A22). Was `GameState_1_OpeningCinematic_`.
 pub fn title_sequence<H: Host + ?Sized>(game: &mut H) -> u8 {
-    run_function(game);
-    CinematicObjects::Sprites.advance(game);
-    CinematicObjects::Mode7.advance(game);
-    crate::palette_effects::execution::leased::advance(game);
-    crate::cinematic_objects::draw_cinematic_sprites(false, game);
-    crate::title_screen::request_title_skip(game);
-    crate::title_sequence::handle_transitions(game);
-    crate::intro_objects::update_cinematic_transform(false, game);
-    0
+    crate::session_cohort::with(game, |game, cine: &mut Cinematic| {
+        run_function(cine, game);
+        CinematicObjects::Sprites.advance(cine, game);
+        CinematicObjects::Mode7.advance(cine, game);
+        crate::palette_effects::execution::leased::advance(game);
+        crate::cinematic_objects::draw_cinematic_sprites(false, cine, game);
+        crate::title_screen::request_title_skip(cine, game);
+        crate::title_sequence::handle_transitions(cine, game);
+        crate::intro_objects::update_cinematic_transform(false, cine, game);
+        0
+    })
 }
 
-/// Runs Samus during the intro once she is shown, with her timers. Was
-/// `HandleSamusDuringIntro`.
-pub fn handle_samus_during_intro<H: Host + ?Sized>(game: &mut H) {
-    if cinematic!(game.IntroSamusDisplay) != 0 {
+/// Runs Samus during the intro once she is shown (`intro_samus_display` is
+/// `display`), with her timers. Was `HandleSamusDuringIntro`.
+pub fn handle_samus_during_intro<H: Host + ?Sized>(display: u16, game: &mut H) {
+    if display != 0 {
         game.advance_intro_player();
         if game.invincibility_timer() != 0 {
             game.set_invincibility_timer(game.invincibility_timer() - 1);
@@ -290,85 +289,108 @@ pub fn handle_samus_during_intro<H: Host + ?Sized>(game: &mut H) {
 /// Ceres goes boom with Samus) ($8B:A35B). Was
 /// `GameState_37_CeresGoesBoomWithSamus_`.
 pub fn intro<H: Host + ?Sized>(game: &mut H) -> u8 {
-    run_function(game);
-    if resuming(game) {
+    let display = crate::session_cohort::with(game, |game, cine: &mut Cinematic| {
+        run_function(cine, game);
+        if resuming(game) {
+            return None;
+        }
+        count_frames(cine);
+        Some(*cine.intro_samus_display())
+    });
+    let Some(display) = display else {
         return 1;
-    }
-    count_frames(game);
-    handle_samus_during_intro(game);
-    CinematicObjects::Sprites.advance(game);
-    CinematicObjects::Mode7.advance(game);
-    CinematicObjects::Background.advance(game);
-    crate::intro_pages::advance_text_glow(game);
-    crate::palette_effects::execution::leased::advance(game);
-    crate::cinematic_display::draw_intro_sprites(game);
-    crate::intro_objects::update_cinematic_transform(true, game);
-    0
+    };
+    // Samus's frame reads the table as enemy projectiles, so it runs between
+    // two copies, on the table as the cinematic function left it.
+    handle_samus_during_intro(display, game);
+    crate::session_cohort::with(game, |game, cine: &mut Cinematic| {
+        CinematicObjects::Sprites.advance(cine, game);
+        CinematicObjects::Mode7.advance(cine, game);
+        CinematicObjects::Background.advance(cine, game);
+        crate::intro_pages::advance_text_glow(cine, game);
+        crate::palette_effects::execution::leased::advance(game);
+        crate::cinematic_display::draw_intro_sprites(cine, game);
+        crate::intro_objects::update_cinematic_transform(true, cine, game);
+        0
+    })
 }
 
 /// Game state 27h (ending and credits) ($8B:D443). Was
 /// `GameState_39_EndingAndCredits_`.
 pub fn ending_and_credits<H: Host + ?Sized>(game: &mut H) -> u8 {
-    run_function(game);
-    if resuming(game) {
-        return 1;
-    }
-    count_frames(game);
-    CinematicObjects::Sprites.advance(game);
-    advance_final_screen_background(game);
-    crate::credits::advance_credits(game);
-    crate::palette_effects::execution::leased::advance(game);
-    crate::cinematic_objects::draw_cinematic_sprites(true, game);
-    crate::shooting_star_motion::advance_shooting_stars(game);
-    crate::intro_objects::update_cinematic_transform(true, game);
-    0
+    crate::session_cohort::with(game, |game, cine: &mut Cinematic| {
+        run_function(cine, game);
+        if resuming(game) {
+            return 1;
+        }
+        count_frames(cine);
+        CinematicObjects::Sprites.advance(cine, game);
+        advance_final_screen_background(cine, game);
+        crate::credits::advance_credits(cine, game);
+        crate::palette_effects::execution::leased::advance(game);
+        crate::cinematic_objects::draw_cinematic_sprites(true, cine, game);
+        crate::shooting_star_motion::advance_shooting_stars(*cine.shooting_stars_enabled(), game);
+        crate::intro_objects::update_cinematic_transform(true, cine, game);
+        0
+    })
 }
 
 /// Handle final screen cinematic BG objects ($8B:D474): from the fade from
 /// white on. Was `MaybeHandleCinematicBgObjects`.
-pub fn advance_final_screen_background<H: Host + ?Sized>(game: &mut H) {
+pub fn advance_final_screen_background<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     let function = flow::current(game).cinematic_function;
     if function.wrapping_sub(FINAL_SCREEN) < 0x8000 {
-        CinematicObjects::Background.advance(game);
+        CinematicObjects::Background.advance(cine, game);
     }
 }
 
 /// Runs cinematic sprite instruction `ea` for object `k` at cursor `j`;
 /// returns the next cursor. Was `CallCinematicSprInstr`.
-pub fn run_sprite_instruction<H: Host + ?Sized>(ea: u32, k: u16, j: u16, game: &mut H) -> u16 {
+pub fn run_sprite_instruction<H: Host + ?Sized>(
+    ea: u32,
+    k: u16,
+    j: u16,
+    cine: &mut Cinematic,
+    game: &mut H,
+) -> u16 {
     if let Some(cursor) =
-        crate::cinematic_objects::execute_cinematic_sprite_instruction(ea, k, j, game)
+        crate::cinematic_objects::execute_cinematic_sprite_instruction(ea, k, j, cine, game)
     {
         cursor
     } else if ea == START_SCENE_3 {
-        crate::title_sequence::start_scene_3(j, game)
+        crate::title_sequence::start_scene_3(j, cine, game)
     } else {
         game.rtl_unreachable() as u16
     }
 }
 
+/// The original's assertion on a velocity index: its expression, line and
+/// function.
+struct NativeCheck {
+    expression: &'static [u8],
+    line: u32,
+    function: &'static [u8],
+}
+
 /// Advances egg particle `k` on one axis by the velocity its index selects
 /// from `table`, a table of 16.16 pairs; the original asserted the index.
 fn advance_particle_axis<H: Host + ?Sized, W: Copy + Into<Word>>(
+    cine: &mut Cinematic,
     game: &mut H,
     k: u16,
     vertical: bool,
     table: &[W],
-    expression: &'static [u8],
-    line: u32,
-    function: &'static [u8],
+    check: NativeCheck,
 ) {
     let slot = (k as i32 >> 1) as usize;
-    let index = 2 * game
-        .ram()
-        .read_byte(PARTICLE_VELOCITY_INDEX + 2 * slot + usize::from(vertical))
-        as usize;
+    // The velocity indices are the goto timers' low and high bytes.
+    let index = 2 * usize::from(cine.spr_goto_timer(slot).to_le_bytes()[usize::from(vertical)]);
     if !(index + 1 < table.len()) {
-        game.native_assertion(expression, line, function);
+        game.native_assertion(check.expression, check.line, check.function);
     }
     let (high, low) = (table[index].into().0, table[index + 1].into().0);
     let velocity = (u32::from(high) << 16) | u32::from(low);
-    advance_cinematic_coordinate(k, vertical, velocity, game);
+    advance_cinematic_coordinate(k, vertical, velocity, cine);
 }
 
 /// A velocity table entry as the original read it, a 16-bit word.
@@ -392,74 +414,89 @@ const SLIME_FUNCTION: &[u8] = b"void SetSomeStuffForSpriteObject_9(uint16)\0";
 /// Pre-instruction - cinematic sprite object $CECD-$CEEB (metroid egg
 /// particle) ($8B:A994): fly until below the floor, then land. Was
 /// `SetSomeStuffForSpriteObject_7`.
-pub fn egg_particle<H: Host + ?Sized>(k: u16, game: &mut H) {
+pub fn egg_particle<H: Host + ?Sized>(k: u16, cine: &mut Cinematic, game: &mut H) {
     let slot = (k as i32 >> 1) as usize;
     advance_particle_axis(
+        cine,
         game,
         k,
         false,
         &PARTICLE_X,
-        b"v3 + 1 < 12\0",
-        2389,
-        PARTICLE_FUNCTION,
+        NativeCheck {
+            expression: b"v3 + 1 < 12\0",
+            line: 2389,
+            function: PARTICLE_FUNCTION,
+        },
     );
     advance_particle_axis(
+        cine,
         game,
         k,
         true,
         &PARTICLE_Y,
-        b"v6 + 1 < 82\0",
-        2392,
-        PARTICLE_FUNCTION,
+        NativeCheck {
+            expression: b"v6 + 1 < 82\0",
+            line: 2392,
+            function: PARTICLE_FUNCTION,
+        },
     );
-    if ((cinematic!(game.BgArr8[slot])).wrapping_sub(PARTICLE_FLOOR) as i16) < 0 {
-        cinematic!(game.SprGotoTimer[slot] += 256);
+    if ((*cine.bg_arr8(slot)).wrapping_sub(PARTICLE_FLOOR) as i16) < 0 {
+        *cine.spr_goto_timer(slot) = cine.spr_goto_timer(slot).wrapping_add(256);
     } else {
-        cinematic!(game.SprInstructionTimer[slot] = 1);
-        cinematic!(game.SprInstructionPointer[slot] = PARTICLE_LANDED);
+        *cine.spr_instruction_timer(slot) = 1;
+        *cine.spr_instruction_pointer(slot) = PARTICLE_LANDED;
     }
 }
 
 /// Pre-instruction - cinematic sprite object $CEF1 (metroid egg slime drops)
 /// ($8B:AAB3): odd drops fall slower; below the floor they splash. Was
 /// `SetSomeStuffForSpriteObject_9`.
-pub fn slime_drop<H: Host + ?Sized>(k: u16, game: &mut H) {
+pub fn slime_drop<H: Host + ?Sized>(k: u16, cine: &mut Cinematic, game: &mut H) {
     let slot = (k as i32 >> 1) as usize;
     advance_particle_axis(
+        cine,
         game,
         k,
         false,
         &SLIME_X,
-        b"v3 + 1 < 10\0",
-        2442,
-        SLIME_FUNCTION,
+        NativeCheck {
+            expression: b"v3 + 1 < 10\0",
+            line: 2442,
+            function: SLIME_FUNCTION,
+        },
     );
-    if (cinematic!(game.SprGotoTimer[slot]) & 1) != 0 {
+    if (*cine.spr_goto_timer(slot) & 1) != 0 {
         advance_particle_axis(
+            cine,
             game,
             k,
             true,
             &SLIME_Y_SLOW,
-            b"v12 + 1 < 124\0",
-            2446,
-            SLIME_FUNCTION,
+            NativeCheck {
+                expression: b"v12 + 1 < 124\0",
+                line: 2446,
+                function: SLIME_FUNCTION,
+            },
         );
     } else {
         advance_particle_axis(
+            cine,
             game,
             k,
             true,
             &SLIME_Y_FAST,
-            b"v6 + 1 < 138\0",
-            2450,
-            SLIME_FUNCTION,
+            NativeCheck {
+                expression: b"v6 + 1 < 138\0",
+                line: 2450,
+                function: SLIME_FUNCTION,
+            },
         );
     }
-    if !(((cinematic!(game.BgArr8[slot])).wrapping_sub(PARTICLE_FLOOR) as i16) < 0) {
-        cinematic!(game.SprInstructionTimer[slot] = 1);
-        cinematic!(game.SprInstructionPointer[slot] = SLIME_LANDED);
-        cinematic!(game.SprPreInstruction[slot] = NO_PRE_INSTRUCTION);
+    if !(((*cine.bg_arr8(slot)).wrapping_sub(PARTICLE_FLOOR) as i16) < 0) {
+        *cine.spr_instruction_timer(slot) = 1;
+        *cine.spr_instruction_pointer(slot) = SLIME_LANDED;
+        *cine.spr_pre_instruction(slot) = NO_PRE_INSTRUCTION;
     } else {
-        cinematic!(game.SprGotoTimer[slot] += 256);
+        *cine.spr_goto_timer(slot) = cine.spr_goto_timer(slot).wrapping_add(256);
     }
 }

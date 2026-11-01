@@ -68,9 +68,20 @@ pub trait MenuRuntime:
     /// Upload `bytes` from `source` to VRAM word address `destination`.
     fn load_vram_words(&mut self, source: u32, destination: u16, bytes: u16);
     /// Run bank $8B's cinematic sprite pre-instruction `pre` for `object`.
-    fn cinematic_sprite_pre_instruction(&mut self, pre: u32, object: u16);
+    fn cinematic_sprite_pre_instruction(
+        &mut self,
+        pre: u32,
+        object: u16,
+        cine: &mut crate::cinematic_state::Cinematic,
+    );
     /// Run bank $8B's cinematic sprite instruction; returns the next script cursor.
-    fn cinematic_sprite_instruction(&mut self, command: u32, object: u16, operand: u16) -> u16;
+    fn cinematic_sprite_instruction(
+        &mut self,
+        command: u32,
+        object: u16,
+        operand: u16,
+        cine: &mut crate::cinematic_state::Cinematic,
+    ) -> u16;
     /// Write a DMA channel register on the owned backend.
     fn write_dma_register(&mut self, register: u16, value: u8);
     /// Advance the music queue, as the HDMA update did first each frame.

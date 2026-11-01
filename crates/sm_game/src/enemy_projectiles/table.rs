@@ -9,39 +9,87 @@ use crate::session::{EnemyProjectile, EnemyProjectiles};
 /// Projectile slots the original runs at once.
 pub const SLOTS: usize = 18;
 
+/// The RAM address of each slot word's first slot, in `session_encoding`
+/// order; slot `n`'s word is `2 * n` bytes further.
+const SLOT_WORD_BASES: [usize; 22] = [
+    0x1997, 0x19bb, 0x19df, 0x1a03, 0x1a27, 0x1a4b, 0x1a6f, 0x1a93, 0x1ab7, 0x1adb, 0x1aff, 0x1b23,
+    0x1b47, 0x1b6b, 0x1b8f, 0x1bb3, 0x1bd7, 0x1bfb, 0x97dc, 0xf380, 0xf3c8, 0xf410,
+];
+
+/// Word `field` of `slot`, in `SLOT_WORD_BASES` order.
+fn slot_word(slot: &mut EnemyProjectile, field: usize) -> &mut u16 {
+    match field {
+        0 => &mut slot.definition,
+        1 => &mut slot.graphics,
+        2 => &mut slot.counter,
+        3 => &mut slot.pre_action,
+        4 => &mut slot.x.fraction,
+        5 => &mut slot.x.whole,
+        6 => &mut slot.y.fraction,
+        7 => &mut slot.y.whole,
+        8 => &mut slot.velocity.x,
+        9 => &mut slot.velocity.y,
+        10 => &mut slot.behavior_a,
+        11 => &mut slot.behavior_b,
+        12 => &mut slot.program,
+        13 => &mut slot.spritemap,
+        14 => &mut slot.delay,
+        15 => &mut slot.radius,
+        16 => &mut slot.properties,
+        17 => &mut slot.behavior_c,
+        18 => &mut slot.angle,
+        19 => &mut slot.drop.flags,
+        20 => &mut slot.drop.enemy_definition,
+        _ => &mut slot.drop.killed_enemy,
+    }
+}
+
 /// The slots' RAM words, in `session_encoding` order.
 pub(crate) fn slot_words(
     slots: &mut [EnemyProjectile; SLOTS],
     mut each: impl FnMut(usize, &mut u16),
 ) {
     for (index, slot) in slots.iter_mut().enumerate() {
-        let at = 2 * index;
-        for (base, word) in [
-            (0x1997, &mut slot.definition),
-            (0x19bb, &mut slot.graphics),
-            (0x19df, &mut slot.counter),
-            (0x1a03, &mut slot.pre_action),
-            (0x1a27, &mut slot.x.fraction),
-            (0x1a4b, &mut slot.x.whole),
-            (0x1a6f, &mut slot.y.fraction),
-            (0x1a93, &mut slot.y.whole),
-            (0x1ab7, &mut slot.velocity.x),
-            (0x1adb, &mut slot.velocity.y),
-            (0x1aff, &mut slot.behavior_a),
-            (0x1b23, &mut slot.behavior_b),
-            (0x1b47, &mut slot.program),
-            (0x1b6b, &mut slot.spritemap),
-            (0x1b8f, &mut slot.delay),
-            (0x1bb3, &mut slot.radius),
-            (0x1bd7, &mut slot.properties),
-            (0x1bfb, &mut slot.behavior_c),
-            (0x97dc, &mut slot.angle),
-            (0xf380, &mut slot.drop.flags),
-            (0xf3c8, &mut slot.drop.enemy_definition),
-            (0xf410, &mut slot.drop.killed_enemy),
-        ] {
-            each(base + at, word);
+        for (field, base) in SLOT_WORD_BASES.into_iter().enumerate() {
+            each(base + 2 * index, slot_word(slot, field));
         }
+    }
+}
+
+impl EnemyProjectiles {
+    /// The table word at RAM address `at`, when the table has one there:
+    /// $198D..$1C1D and the slots' words outside that range.
+    pub fn word_at(&mut self, at: usize) -> Option<&mut u16> {
+        match at {
+            0x198d => return Some(&mut self.flags),
+            0x198f => return Some(&mut self.zoom),
+            0x1991 => return Some(&mut self.selected),
+            0x1993 => return Some(&mut self.spawn.primary),
+            0x1995 => return Some(&mut self.spawn.secondary),
+            _ => {}
+        }
+        let (field, base) = SLOT_WORD_BASES
+            .into_iter()
+            .enumerate()
+            .find(|&(_, base)| (base..base + 2 * SLOTS).contains(&at))?;
+        let offset = at - base;
+        offset
+            .is_multiple_of(2)
+            .then(|| slot_word(&mut self.slots[offset / 2], field))
+    }
+}
+
+impl crate::session_cohort::Cohort for EnemyProjectiles {
+    fn words(&mut self, mut visit: impl FnMut(usize, &mut u16)) {
+        visit(0x198d, &mut self.flags);
+        visit(0x198f, &mut self.zoom);
+        visit(0x1991, &mut self.selected);
+        visit(0x1993, &mut self.spawn.primary);
+        visit(0x1995, &mut self.spawn.secondary);
+        slot_words(&mut self.slots, visit);
+    }
+    fn session_words(session: &mut crate::session::Session, visit: impl FnMut(usize, &mut u16)) {
+        Self::words(&mut session.enemy_projectiles, visit);
     }
 }
 
@@ -70,6 +118,8 @@ where
     H: WorkRamAccess + RuntimeAccess + ?Sized,
 {
     use crate::session_access::SessionAccess;
+    #[cfg(sm_verify_dll)]
+    crate::session_cohort::check_not_held(0x1997);
     if game.runtime_admissible() {
         return action(&mut game.runtime().session_mut().enemy_projectiles);
     }

@@ -83,7 +83,9 @@ impl sm_game::gameplay_frame::Host for Game {
     }
 
     fn load_title_sequence_graphics(&mut self) {
-        sm_game::title_sequence::load_graphics(self);
+        sm_game::session_cohort::with(self, |game, cine| {
+            sm_game::title_sequence::load_graphics(cine, game)
+        });
     }
     fn disable_scanline_irq(&mut self) {
         sm_game::display_refresh::disable_scanline_irq(self);

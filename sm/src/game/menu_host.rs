@@ -71,11 +71,22 @@ impl MenuRuntime for Game {
             };
         }
     }
-    fn cinematic_sprite_pre_instruction(&mut self, pre: u32, object: u16) {
-        sm_game::cinematic_dispatch::run_sprite_pre_instruction(pre, object, self)
+    fn cinematic_sprite_pre_instruction(
+        &mut self,
+        pre: u32,
+        object: u16,
+        cine: &mut sm_game::cinematic_state::Cinematic,
+    ) {
+        sm_game::cinematic_dispatch::run_sprite_pre_instruction(pre, object, cine, self)
     }
-    fn cinematic_sprite_instruction(&mut self, command: u32, object: u16, operand: u16) -> u16 {
-        sm_game::cinematic_states::run_sprite_instruction(command, object, operand, self)
+    fn cinematic_sprite_instruction(
+        &mut self,
+        command: u32,
+        object: u16,
+        operand: u16,
+        cine: &mut sm_game::cinematic_state::Cinematic,
+    ) -> u16 {
+        sm_game::cinematic_states::run_sprite_instruction(command, object, operand, cine, self)
     }
     fn write_dma_register(&mut self, register: u16, value: u8) {
         crate::rtl::write_dma_register(register, value, self)
@@ -199,8 +210,8 @@ impl sm_game::cinematic_host::Host for Game {
         sm_game::display_refresh::disable_scanline_irq(self);
     }
 
-    fn advance_ending_tile_upload(&mut self) {
-        crate::game::mode7_transfers::advance_ending_tile_upload(self);
+    fn advance_ending_tile_upload(&mut self, page: u16) {
+        crate::game::mode7_transfers::advance_ending_tile_upload(page, self);
     }
 
     fn advance_intro_player(&mut self) {

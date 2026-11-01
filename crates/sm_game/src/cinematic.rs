@@ -1,4 +1,5 @@
 //! Cinematic palettes, fades, tilemap queueing and sprite resumption over RAM.
+use crate::cinematic_state::Cinematic;
 use crate::cinematic_state::cinematic;
 use crate::ram::RawRam as _;
 use crate::ram::word;
@@ -121,6 +122,7 @@ pub fn prepare_cinematic_palette_fade<H: crate::menus::host::Host + ?Sized>(game
 
 pub fn queue_cinematic_tilemap<H: crate::menus::host::Host + ?Sized>(
     tiles: crate::visual_state::CinematicTilemap,
+    cine: &mut Cinematic,
     game: &mut H,
 ) {
     use crate::visual_state::CinematicTilemap::*;
@@ -140,11 +142,11 @@ pub fn queue_cinematic_tilemap<H: crate::menus::host::Host + ?Sized>(
         |_| source,
         126,
         // Earlier queue writes can overlap this destination field.
-        |game| match tiles {
+        |_| match tiles {
             Eyes => 18848,
             Japanese => 16768,
             JapaneseIntro => 20192,
-            _ => cinematic!(game.BgVramAddress),
+            _ => *cine.bg_vram_address(),
         },
         game,
     );
@@ -163,21 +165,14 @@ pub fn set_cinematic_blend<H: crate::menus::host::Host + ?Sized>(
     game.ram().write_byte(0x72, color_math);
 }
 
-pub fn set_cinematic_tilemap_updates<H: crate::menus::host::Host + ?Sized>(
-    enabled: bool,
-    game: &mut H,
-) {
-    cinematic!(game.EnableBgTilemap, |old| (old & 0x7fff)
-        | (u16::from(enabled) << 15));
+pub fn set_cinematic_tilemap_updates(enabled: bool, cine: &mut Cinematic) {
+    let updates = cine.enable_bg_tilemap();
+    *updates = (*updates & 0x7fff) | (u16::from(enabled) << 15);
 }
 
-pub fn resume_cinematic_sprite<H: crate::menus::host::Host + ?Sized>(
-    slot: usize,
-    instruction: u16,
-    game: &mut H,
-) {
-    cinematic!(game.SprInstructionTimer[slot] = 1);
-    cinematic!(game.SprInstructionPointer[slot] = instruction);
+pub fn resume_cinematic_sprite(slot: usize, instruction: u16, cine: &mut Cinematic) {
+    *cine.spr_instruction_timer(slot) = 1;
+    *cine.spr_instruction_pointer(slot) = instruction;
 }
 
 pub fn cinematic_color_indices(mut offset: u16, count: u16) -> impl Iterator<Item = usize> {
@@ -205,14 +200,36 @@ pub fn add_native_pair<H: crate::menus::host::Host + ?Sized>(
     );
 }
 
-pub fn advance_cinematic_coordinate<H: crate::menus::host::Host + ?Sized>(
+/// Add the 16.16 `velocity` to sprite object `object`'s X or Y position, its
+/// whole and fraction words, fraction first.
+pub fn advance_cinematic_coordinate(
     object: u16,
     vertical: bool,
     velocity: u32,
-    game: &mut H,
+    cine: &mut Cinematic,
 ) {
-    let offset = usize::from(object & !1) + if vertical { 0x20 } else { 0 };
-    add_native_pair(0x1a7d + offset, 0x1add + offset, velocity, game);
+    use crate::cinematic_state::Array;
+    let (whole, fraction) = if vertical {
+        (Array::BgArr8, Array::SprArr7)
+    } else {
+        (Array::BgArr7, Array::SprArr6)
+    };
+    add_cinematic_pair(whole, fraction, object >> 1, velocity, cine);
+}
+
+/// Add the 16.16 `value` to the pair word `slot` of `whole` and `fraction`,
+/// storing the fraction first.
+pub fn add_cinematic_pair(
+    whole: crate::cinematic_state::Array,
+    fraction: crate::cinematic_state::Array,
+    slot: u16,
+    value: u32,
+    cine: &mut Cinematic,
+) {
+    let pair = u32::from(*cine.array(fraction, slot)) | (u32::from(*cine.array(whole, slot)) << 16);
+    let [low_0, low_1, high_0, high_1] = pair.wrapping_add(value).to_le_bytes();
+    *cine.array(fraction, slot) = u16::from_le_bytes([low_0, low_1]);
+    *cine.array(whole, slot) = u16::from_le_bytes([high_0, high_1]);
 }
 
 pub fn set_fixed_color<H>(channels: [u8; 3], game: &mut H)
@@ -231,31 +248,31 @@ pub fn set_cinematic_backdrop<H: crate::menus::host::Host + ?Sized>(lit: bool, g
     set_fixed_color(color, game);
 }
 
-pub fn place_cinematic_sprite<H: crate::menus::host::Host + ?Sized>(
+pub fn place_cinematic_sprite(
     object: u16,
     position: (u16, u16),
     palette: u16,
-    game: &mut H,
+    cine: &mut Cinematic,
 ) {
     let slot = usize::from(object >> 1);
-    cinematic!(game.BgArr7[slot] = position.0);
-    cinematic!(game.BgArr8[slot] = position.1);
-    cinematic!(game.BgArr9[slot] = palette);
+    *cine.bg_arr7(slot) = position.0;
+    *cine.bg_arr8(slot) = position.1;
+    *cine.bg_arr9(slot) = palette;
 }
 
-pub fn drift_cinematic_sprite<H: crate::menus::host::Host + ?Sized>(
+pub fn drift_cinematic_sprite(
     object: u16,
     horizontal: u32,
     vertical: Option<u32>,
     wrap_horizontal: bool,
-    game: &mut H,
+    cine: &mut Cinematic,
 ) {
     if let Some(velocity) = vertical {
-        advance_cinematic_coordinate(object, true, velocity, game);
+        advance_cinematic_coordinate(object, true, velocity, cine);
     }
-    advance_cinematic_coordinate(object, false, horizontal, game);
+    advance_cinematic_coordinate(object, false, horizontal, cine);
     if wrap_horizontal {
-        cinematic!(game.BgArr7[object >> 1] &= 0x1ff);
+        *cine.bg_arr7(object >> 1) &= 0x1ff;
     }
 }
 
@@ -275,24 +292,30 @@ pub fn fade_cinematic_fixed_color<H: crate::menus::host::Host + ?Sized>(game: &m
     }
 }
 
-pub fn enable_cinematic_background<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    cinematic!(game.EnableObjects |= 0x8000);
+pub fn enable_cinematic_background(cine: &mut Cinematic) {
+    *cine.enable_objects() |= 0x8000;
 }
 
-pub fn clear_cinematic_sprites<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    crate::word_transfers!(game, descending, 16;
-        le(CINEMATICSPR_INSTR_PTR, 15) <- value(0),
-        le(CINEMATICSPR_WHATTODRAW, 15) <- value(0),
-    );
+/// Clear every cinematic sprite object's instruction pointer and drawing.
+pub fn clear_cinematic_sprites(cine: &mut Cinematic) {
+    for slot in 0..16 {
+        *cine.spr_instruction_pointer(slot) = 0;
+        *cine.spr_what_to_draw(slot) = 0;
+    }
 }
 
-pub fn clear_cinematic_background<H: crate::menus::host::Host + ?Sized>(fill: u16, game: &mut H) {
+pub fn clear_cinematic_background<H: crate::menus::host::Host + ?Sized>(
+    fill: u16,
+    cine: &mut Cinematic,
+    game: &mut H,
+) {
     crate::word_transfers!(game, descending, 1024; native(0x37fe) <- value(fill));
-    crate::word_transfers!(game, descending, 4;
-        le(CINEMATICBG_ARR1, 3) <- value(0),
-        le(CINEMATICBG_INSTR_PTR, 3) <- value(0),
-    );
-    cinematic!(game.IntroTextClickFlag = 0);
+    // The original's four-word clear runs one word past CINEMATICBG_ARR1.
+    for slot in 0..4 {
+        *cine.bg_arr1(slot) = 0;
+        *cine.bg_instruction_pointer(slot) = 0;
+    }
+    *cine.intro_text_click_flag() = 0;
 }
 
 pub fn scaled_cinematic_value(value: u16, scale: u16) -> u16 {

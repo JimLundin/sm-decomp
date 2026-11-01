@@ -267,6 +267,10 @@ fn word(game: &Game, at: usize) -> u16 {
 unsafe fn invoke(id: u32, game: &mut Game) {
     match id {
         3800 | 3801 => crate::game::session_runtime::player_update_runtime::advance_frame(game),
-        _ => sm_game::cinematic_states::handle_samus_during_intro(game),
+        _ => {
+            let mut table =
+                sm_game::session_cohort::load::<sm_game::cinematic_state::Cinematic, _>(game);
+            sm_game::cinematic_states::handle_samus_during_intro(*table.intro_samus_display(), game)
+        }
     }
 }

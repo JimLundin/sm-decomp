@@ -13,14 +13,14 @@
 //! words, the palette and the enemy BG2 tilemap they borrow), by the field
 //! that holds them.
 //!
-//! **Consumers.** The cinematic functions run on the compatibility host
-//! outside a lease. They read and store these words with [`cinematic!`],
-//! through the host's projected bytes: a read sees the owned Session's
-//! projection while one is installed and the byte image otherwise, and a
-//! store writes the byte image, as the named words they replace did. The
-//! view names the words; it does not yet move their access onto the
-//! Session's fields, so `tools/cycle_report.py` still counts its call sites
-//! as RAM coupling.
+//! **Consumers.** The cinematic game states (the title sequence, the intro
+//! and Ceres, the ending and credits) each hold a [`Cinematic`] copy of the
+//! table for their frame through [`crate::session_cohort::with`]: their
+//! functions, objects and pre-instructions read and store its fields by the
+//! RAM names, and the words they changed are stored back once the frame's
+//! work returns. The other owners' words the view names are still reached
+//! with [`cinematic!`], through the host's projected bytes, so
+//! `tools/cycle_report.py` counts those call sites as RAM coupling.
 use crate::ram::CompatibilityRam;
 
 /// A cinematic word, by its RAM address.
@@ -195,25 +195,141 @@ pub enum Array {
     ProjectileType = 0x0c18,
 }
 
-/// The cinematic words as the Session's `enemy_projectiles` fields, by their
-/// RAM names, for code that runs on the owned table rather than the bytes.
-pub struct Cinematic<'a>(pub &'a mut crate::session::EnemyProjectiles);
+/// The cinematic words as a copy of the Session's enemy projectile table, by
+/// their RAM names, for cinematic code that holds the table for its call
+/// through [`crate::session_cohort::with`].
+#[derive(Clone, Default, Debug, PartialEq)]
+pub struct Cinematic(pub crate::session::EnemyProjectiles);
 
-impl Cinematic<'_> {
-    /// $1A49: `cinematic_function_timer`.
-    pub fn function_timer(&mut self) -> &mut u16 {
-        &mut self.0.slots[17].x.fraction
+impl crate::session_cohort::Cohort for Cinematic {
+    fn words(&mut self, visit: impl FnMut(usize, &mut u16)) {
+        self.0.words(visit);
+    }
+    fn session_words(session: &mut crate::session::Session, visit: impl FnMut(usize, &mut u16)) {
+        crate::session::EnemyProjectiles::session_words(session, visit);
     }
 }
 
-/// Run `action` on the cinematic words as Session fields: the owned
-/// Session's under one lease when one can open, otherwise a copy of the
-/// table decoded from RAM and stored back if it changed.
-pub fn with_fields<H, T>(game: &mut H, action: impl FnOnce(&mut Cinematic<'_>) -> T) -> T
-where
-    H: crate::ram::WorkRamAccess + crate::runtime_access::RuntimeAccess + ?Sized,
-{
-    crate::enemy_projectiles::table::with_projectiles(game, |table| action(&mut Cinematic(table)))
+impl Cinematic {
+    /// The table's word at RAM address `at`.
+    fn word_at(&mut self, at: usize) -> &mut u16 {
+        self.0
+            .word_at(at)
+            .expect("cinematic word outside the projectile table")
+    }
+    /// `word`, for code that selects it.
+    pub fn word(&mut self, word: Word) -> &mut u16 {
+        self.word_at(word as usize)
+    }
+    /// Word `index` of `array`, for code that selects the table.
+    pub fn array<I: TryInto<isize>>(&mut self, array: Array, index: I) -> &mut u16 {
+        self.word_at(at(array, index))
+    }
+    /// The word `offset` bytes into `array`, for tables their objects index
+    /// by byte offset.
+    pub fn offset(&mut self, array: Array, offset: usize) -> &mut u16 {
+        self.word_at(array as usize + offset)
+    }
+    /// Add `value` to the 16.16 pair `high`:`low`.
+    pub fn add_pair(&mut self, high: Word, low: Word, value: u32) {
+        let pair = u32::from(*self.word(low)) | (u32::from(*self.word(high)) << 16);
+        let [low_0, low_1, high_0, high_1] = pair.wrapping_add(value).to_le_bytes();
+        *self.word(low) = u16::from_le_bytes([low_0, low_1]);
+        *self.word(high) = u16::from_le_bytes([high_0, high_1]);
+    }
+    /// Clear every cinematic object word, $7E:1C1D down to $7E:198D.
+    pub fn clear(&mut self) {
+        for at in (Word::Mode7Angle as usize..=0x1c1d).step_by(2) {
+            *self.word_at(at) = 0;
+        }
+    }
+}
+
+macro_rules! cinematic_fields {
+    (words { $($word:ident = $variant:ident;)+ } arrays { $($array:ident = $table:ident;)+ }) => {
+        impl Cinematic {
+            $(
+                #[doc = concat!("[`Word::", stringify!($variant), "`].")]
+                pub fn $word(&mut self) -> &mut u16 {
+                    self.word_at(Word::$variant as usize)
+                }
+            )+
+            $(
+                #[doc = concat!("Word `index` of [`Array::", stringify!($table), "`].")]
+                pub fn $array<I: TryInto<isize>>(&mut self, index: I) -> &mut u16 {
+                    self.word_at(at(Array::$table, index))
+                }
+            )+
+        }
+    };
+}
+
+cinematic_fields! {
+    words {
+    mode7_angle = Mode7Angle;
+    mode7_zoom = Mode7Zoom;
+    x_sub = XSub;
+    x = X;
+    y_sub = YSub;
+    y = Y;
+    x_subspeed = XSubspeed;
+    x_speed = XSpeed;
+    y_subspeed = YSubspeed;
+    y_speed = YSpeed;
+    mode7_object_index = Mode7ObjectIndex;
+    mode7_spawn_parameter = Mode7SpawnParameter;
+    bg_object_index = BgObjectIndex;
+    enable_objects = EnableObjects;
+    enable_bg_tilemap = EnableBgTilemap;
+    bg_vram_address = BgVramAddress;
+    credits_instruction_list = CreditsInstructionList;
+    credits_instruction_timer = CreditsInstructionTimer;
+    credits_timer = CreditsTimer;
+    credits_pre_instruction = CreditsPreInstruction;
+    credits_enabled = CreditsEnabled;
+    credits_tilemap_row = CreditsTilemapRow;
+    last_credits_update_y = LastCreditsUpdateY;
+    shooting_stars_enabled = ShootingStarsEnabled;
+    text_glow_object_index = TextGlowObjectIndex;
+    function_timer = FunctionTimer;
+    var13 = Var13;
+    var14 = Var14;
+    var17 = Var17;
+    frame_counter = FrameCounter;
+    skip_to_title_index = SkipToTitleIndex;
+    intro_samus_display = IntroSamusDisplay;
+    object_index = ObjectIndex;
+    spawn_parameter = SpawnParameter;
+    intro_frame_counter = IntroFrameCounter;
+    intro_text_click_flag = IntroTextClickFlag;
+    intro_japanese_text_timer = IntroJapaneseTextTimer;
+    }
+    arrays {
+    mode7_instruction_pointer = Mode7InstructionPointer;
+    mode7_pre_instruction = Mode7PreInstruction;
+    mode7_instruction_timer = Mode7InstructionTimer;
+    mode7_goto_timer = Mode7GotoTimer;
+    bg_arr1 = BgArr1;
+    bg_instruction_pointer = BgInstructionPointer;
+    bg_pre_instruction = BgPreInstruction;
+    bg_instruction_timer = BgInstructionTimer;
+    bg_arr6 = BgArr6;
+    text_glow_pointers = TextGlowPointers;
+    text_glow_timers = TextGlowTimers;
+    text_glow_x_positions = TextGlowXPositions;
+    text_glow_y_positions = TextGlowYPositions;
+    text_glow_palettes = TextGlowPalettes;
+    spr_what_to_draw = SprWhatToDraw;
+    bg_arr7 = BgArr7;
+    bg_arr8 = BgArr8;
+    bg_arr9 = BgArr9;
+    spr_arr6 = SprArr6;
+    spr_arr7 = SprArr7;
+    spr_instruction_pointer = SprInstructionPointer;
+    spr_pre_instruction = SprPreInstruction;
+    spr_instruction_timer = SprInstructionTimer;
+    spr_goto_timer = SprGotoTimer;
+    }
 }
 
 /// `word` as the host's projection holds it, low byte then high.
@@ -233,39 +349,6 @@ pub fn at<I: TryInto<isize>>(array: Array, index: I) -> usize {
     (array as usize)
         .checked_add_signed(index.checked_mul(2).expect("word index overflow"))
         .expect("word address outside RAM")
-}
-
-/// Add `value` to the 16.16 pair `high`:`low`, reading and then storing the
-/// low word first.
-pub fn add_pair<H: CompatibilityRam + ?Sized>(h: &mut H, high: Word, low: Word, value: u32) {
-    let pair = u32::from(get(h, low)) | (u32::from(get(h, high)) << 16);
-    let [low_0, low_1, high_0, high_1] = pair.wrapping_add(value).to_le_bytes();
-    set(h, low, u16::from_le_bytes([low_0, low_1]));
-    set(h, high, u16::from_le_bytes([high_0, high_1]));
-}
-
-/// Clear every cinematic object word, $7E:1C1D down to $7E:198D, a word at a
-/// time, as the cinematics' 329-word clear did.
-pub fn clear<H: CompatibilityRam + ?Sized>(h: &mut H) {
-    for at in (Word::Mode7Angle as usize..=0x1c1d).rev().step_by(2) {
-        crate::projection::set_word(h, at, 0);
-    }
-}
-
-/// The word `offset` bytes into `array`, for tables their objects index by
-/// byte offset.
-pub fn get_offset<H: CompatibilityRam + ?Sized>(h: &H, array: Array, offset: usize) -> u16 {
-    crate::projection::word(h, array as usize + offset)
-}
-
-/// Store `value` to the word `offset` bytes into `array`, low byte then high.
-pub fn set_offset<H: CompatibilityRam + ?Sized>(
-    h: &mut H,
-    array: Array,
-    offset: usize,
-    value: u16,
-) {
-    crate::projection::set_word(h, array as usize + offset, value);
 }
 
 /// Word `index` of `array`.

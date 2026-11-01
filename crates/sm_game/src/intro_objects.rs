@@ -1,7 +1,7 @@
 //! Intro and Zebes cinematic objects: Rinkas, the baby, explosions, flights, scenes and transforms.
 use crate::cinematic::*;
 use crate::cinematic_objects::CinematicObjects;
-use crate::cinematic_state::{self, Word, cinematic};
+use crate::cinematic_state::{Cinematic, Word, cinematic};
 use crate::menus::prelude::{owned, scroll};
 use crate::ram::RawRam as _;
 use crate::ram::word;
@@ -11,97 +11,95 @@ const RINKA_POSITIONS: [(u16, u16); 4] = [(112, 72), (192, 56), (128, 48), (232,
 
 const RINKA_X_SPEED: [u32; 4] = [0x8000, 0xffff8000, 0x8000, 0xffff8000];
 
-pub fn initialize_intro_rinka<H: crate::menus::host::Host + ?Sized>(object: u16, game: &mut H) {
-    let variant = usize::from(cinematic!(game.SpawnParameter));
+pub fn initialize_intro_rinka(object: u16, cine: &mut Cinematic) {
+    let variant = usize::from(*cine.spawn_parameter());
     let slot = usize::from(object >> 1);
-    cinematic!(game.SprGotoTimer[slot] = cinematic!(game.SpawnParameter));
-    place_cinematic_sprite(object, RINKA_POSITIONS[variant], 3584, game);
+    *cine.spr_goto_timer(slot) = *cine.spawn_parameter();
+    place_cinematic_sprite(object, RINKA_POSITIONS[variant], 3584, cine);
 }
 
-pub fn start_intro_rinka<H: crate::menus::host::Host + ?Sized>(
-    object: u16,
-    cursor: u16,
-    game: &mut H,
-) -> u16 {
-    let misses_samus = cinematic!(game.SprGotoTimer[object >> 1]) != 0;
-    cinematic!(game.SprPreInstruction[object >> 1] = if misses_samus { 0xb93b } else { 0xb8d8 });
+pub fn start_intro_rinka(object: u16, cursor: u16, cine: &mut Cinematic) -> u16 {
+    let misses_samus = *cine.spr_goto_timer(object >> 1) != 0;
+    *cine.spr_pre_instruction(object >> 1) = if misses_samus { 0xb93b } else { 0xb8d8 };
     cursor
 }
 
 pub fn chase_intro_baby_y<H: crate::menus::host::Host + ?Sized>(
     object: u16,
     y_offset: i32,
+    cine: &mut Cinematic,
     game: &mut H,
 ) {
     let slot = usize::from(object >> 1);
-    if ((game.player_y() as i32 - y_offset - cinematic!(game.BgArr8[slot]) as i32) as i16) < 0 {
-        if (cinematic!(game.Var17) as i32 + 543) & 0x8000 == 0 {
-            cinematic!(game.Var17 -= 32);
+    if ((game.player_y() as i32 - y_offset - *cine.bg_arr8(slot) as i32) as i16) < 0 {
+        if (*cine.var17() as i32 + 543) & 0x8000 == 0 {
+            *cine.var17() = cine.var17().wrapping_sub(32);
         }
-    } else if (cinematic!(game.Var17) as i32 - 544) & 0x8000 != 0 {
-        cinematic!(game.Var17 += 32);
+    } else if (*cine.var17() as i32 - 544) & 0x8000 != 0 {
+        *cine.var17() = cine.var17().wrapping_add(32);
     }
-    let velocity = ((cinematic!(game.Var17) as i16 as i32) << 8) as u32;
-    advance_cinematic_coordinate(object, true, velocity, game);
+    let velocity = ((*cine.var17() as i16 as i32) << 8) as u32;
+    advance_cinematic_coordinate(object, true, velocity, cine);
 }
 
-pub fn advance_intro_baby_pursuit<H: crate::menus::host::Host + ?Sized>(object: u16, game: &mut H) {
+pub fn advance_intro_baby_pursuit<H: crate::menus::host::Host + ?Sized>(
+    object: u16,
+    cine: &mut Cinematic,
+    game: &mut H,
+) {
     let slot = usize::from(object >> 1);
-    if cinematic!(game.Var13) == 0 {
-        resume_cinematic_sprite(slot, 0xce53, game);
-        cinematic!(game.IntroSamusDisplay = 0);
+    if *cine.var13() == 0 {
+        resume_cinematic_sprite(slot, 0xce53, cine);
+        *cine.intro_samus_display() = 0;
         return;
     }
-    if (cinematic!(game.SprGotoTimer[slot]) as i32 - 128) & 0x8000 != 0 {
-        let timer = cinematic!(game.SprGotoTimer[slot]).wrapping_add(1);
-        cinematic!(game.SprGotoTimer[slot] = timer);
+    if (*cine.spr_goto_timer(slot) as i32 - 128) & 0x8000 != 0 {
+        let timer = (*cine.spr_goto_timer(slot)).wrapping_add(1);
+        *cine.spr_goto_timer(slot) = timer;
         if timer & 0x3f == 0 {
             game.queue_sound(2, 0x23_u8, 6);
         }
     }
-    if (game.player_x() as i16).wrapping_sub(cinematic!(game.BgArr7[slot]) as i16) < 0 {
-        if (cinematic!(game.Var14) as i32 + 639) & 0x8000 == 0 {
-            cinematic!(game.Var14 -= 32);
+    if (game.player_x() as i16).wrapping_sub(*cine.bg_arr7(slot) as i16) < 0 {
+        if (*cine.var14() as i32 + 639) & 0x8000 == 0 {
+            *cine.var14() = cine.var14().wrapping_sub(32);
         }
-    } else if (cinematic!(game.Var14) as i32 - 640) & 0x8000 != 0 {
-        cinematic!(game.Var14 += 32);
+    } else if (*cine.var14() as i32 - 640) & 0x8000 != 0 {
+        *cine.var14() = cine.var14().wrapping_add(32);
     }
-    cinematic!(
-        game.IntroSamusDisplay = if cinematic!(game.Var14) & 0x8000 != 0 {
-            1
-        } else {
-            u16::MAX
-        }
-    );
-    let velocity = ((cinematic!(game.Var14) as i16 as i32) << 8) as u32;
-    advance_cinematic_coordinate(object, false, velocity, game);
-    chase_intro_baby_y(object, 8, game);
+    *cine.intro_samus_display() = if *cine.var14() & 0x8000 != 0 {
+        1
+    } else {
+        u16::MAX
+    };
+    let velocity = ((*cine.var14() as i16 as i32) << 8) as u32;
+    advance_cinematic_coordinate(object, false, velocity, cine);
+    chase_intro_baby_y(object, 8, cine, game);
 }
 
 pub fn advance_intro_rinka<H: crate::menus::host::Host + ?Sized>(
     object: u16,
     misses_samus: bool,
+    cine: &mut Cinematic,
     game: &mut H,
 ) {
     let slot = usize::from(object >> 1);
     let horizontal = if misses_samus {
-        RINKA_X_SPEED[usize::from(cinematic!(game.SprGotoTimer[slot]))]
+        RINKA_X_SPEED[usize::from(*cine.spr_goto_timer(slot))]
     } else {
         0x8000
     };
-    advance_cinematic_coordinate(object, false, horizontal, game);
-    advance_cinematic_coordinate(object, true, 0x8000, game);
+    advance_cinematic_coordinate(object, false, horizontal, cine);
+    advance_cinematic_coordinate(object, true, 0x8000, cine);
     if misses_samus {
-        if !((cinematic!(game.BgArr8[slot]) as i32 - 16) & 0x8000 != 0
-            || (cinematic!(game.BgArr8[slot]) as i32 - 208) & 0x8000 == 0
-            || cinematic!(game.SprPreInstruction[0]) == 0xb80f)
+        if !((*cine.bg_arr8(slot) as i32 - 16) & 0x8000 != 0
+            || (*cine.bg_arr8(slot) as i32 - 208) & 0x8000 == 0
+            || *cine.spr_pre_instruction(0) == 0xb80f)
         {
             return;
         }
-    } else if (cinematic!(game.BgArr7[slot]) as i32 + 8 - (game.player_x() as i32 - 5)) & 0x8000
-        != 0
-    {
-        if cinematic!(game.SprPreInstruction[0]) != 0xb80f {
+    } else if (*cine.bg_arr7(slot) as i32 + 8 - (game.player_x() as i32 - 5)) & 0x8000 != 0 {
+        if *cine.spr_pre_instruction(0) != 0xb80f {
             return;
         }
     } else {
@@ -109,17 +107,13 @@ pub fn advance_intro_rinka<H: crate::menus::host::Host + ?Sized>(
         game.set_knockback_timer(11);
         cinematic!(game.KnockbackXDirection = 1);
     }
-    resume_cinematic_sprite(slot, 0xce53, game);
+    resume_cinematic_sprite(slot, 0xce53, cine);
 }
 
-pub fn initialize_intro_brain_particle<H: crate::menus::host::Host + ?Sized>(
-    object: u16,
-    big: bool,
-    game: &mut H,
-) {
-    let parameter = usize::from(cinematic!(game.SpawnParameter));
+pub fn initialize_intro_brain_particle(object: u16, big: bool, cine: &mut Cinematic) {
+    let parameter = usize::from(*cine.spawn_parameter());
     let slot = usize::from(object >> 1);
-    cinematic!(game.SprGotoTimer[slot] = cinematic!(game.SpawnParameter));
+    *cine.spr_goto_timer(slot) = *cine.spawn_parameter();
     let particles: &[(u16, u16, u16)] = if big {
         &[
             (56, 111, 1),
@@ -131,25 +125,24 @@ pub fn initialize_intro_brain_particle<H: crate::menus::host::Host + ?Sized>(
     } else {
         &[(72, 111, 1), (40, 115, 8), (40, 103, 16)]
     };
-    cinematic! { game;
-        BgArr7[slot] = particles[parameter].0;
-        BgArr8[slot] = particles[parameter].1;
-        SprInstructionTimer[slot] = particles[parameter].2;
-        BgArr9[slot] = 2560;
-    }
+    *cine.bg_arr7(slot) = particles[parameter].0;
+    *cine.bg_arr8(slot) = particles[parameter].1;
+    *cine.spr_instruction_timer(slot) = particles[parameter].2;
+    *cine.bg_arr9(slot) = 2560;
 }
 
 pub fn initialize_ceres_explosion<H: crate::menus::host::Host + ?Sized>(
     object: u16,
     pattern: CeresExplosion,
+    cine: &mut Cinematic,
     game: &mut H,
 ) {
     let slot = usize::from(object >> 1);
     let parameter = if matches!(pattern, CeresExplosion::Final) {
         0
     } else {
-        let parameter = usize::from(cinematic!(game.SpawnParameter));
-        cinematic!(game.SprGotoTimer[slot] = cinematic!(game.SpawnParameter));
+        let parameter = usize::from(*cine.spawn_parameter());
+        *cine.spr_goto_timer(slot) = *cine.spawn_parameter();
         parameter
     };
     let (x, y, delays): (&[i16], &[i16], &[u16]) = match pattern {
@@ -167,23 +160,22 @@ pub fn initialize_ceres_explosion<H: crate::menus::host::Host + ?Sized>(
         CeresExplosion::Final => (&[0], &[0], &[]),
     };
     if !delays.is_empty() {
-        cinematic!(game.SprInstructionTimer[slot] = delays[parameter]);
+        *cine.spr_instruction_timer(slot) = delays[parameter];
     }
     // Keep the Y lookup and camera reads after the X store for aliased slots.
-    cinematic! { game;
-        BgArr7[slot] = (x[parameter] as i32 + word!(game.REG_M7X) as i32
-            - cinematic!(game.X) as i32) as u16;
-        BgArr8[slot] = (y[parameter] as i32 + word!(game.REG_M7Y) as i32
-            - cinematic!(game.Y) as i32) as u16;
-        BgArr9[slot] = 2560;
-    }
+    *cine.bg_arr7(slot) =
+        (x[parameter] as i32 + word!(game.REG_M7X) as i32 - *cine.x() as i32) as u16;
+    *cine.bg_arr8(slot) =
+        (y[parameter] as i32 + word!(game.REG_M7Y) as i32 - *cine.y() as i32) as u16;
+    *cine.bg_arr9(slot) = 2560;
 }
 
 pub fn advance_intro_landing_mosaic<H: crate::menus::host::Host + ?Sized>(
     fading: bool,
+    cine: &mut Cinematic,
     game: &mut H,
 ) {
-    if cinematic!(game.FrameCounter) & 3 == 0 {
+    if *cine.frame_counter() & 3 == 0 {
         game.ram()
             .write_byte(0x57, game.ram().read_byte(0x57).wrapping_sub(16));
         if !fading && game.ram().read_byte(0x57) & 0xf0 == 0 {
@@ -192,8 +184,10 @@ pub fn advance_intro_landing_mosaic<H: crate::menus::host::Host + ?Sized>(
             game.ram().write_byte(0x58, 0);
             game.ram().write_byte(0x5d, 0);
             game.ram().write_byte(0x69, 17);
-            cinematic! {game; X = 128; Y = -104i32 as u16;
-            Mode7Angle = 32; Mode7Zoom = 256; }
+            *cine.x() = 128;
+            *cine.y() = -104i32 as u16;
+            *cine.mode7_angle() = 32;
+            *cine.mode7_zoom() = 256;
             for (definition, parameter) in [
                 (0xcea3, 0x0100), // The preceding $198F store leaves $0100 in A.
                 (0xcef7, 0x0e00), // Palette left in A by the preceding sprite initializer.
@@ -202,7 +196,7 @@ pub fn advance_intro_landing_mosaic<H: crate::menus::host::Host + ?Sized>(
                 (0xcf09, 0x0800), // Palette left in A by the preceding sprite initializer.
                 (0xceaf, 0x0800), // Palette left in A by the preceding sprite initializer.
             ] {
-                CinematicObjects::Sprites.spawn(definition, parameter, game);
+                CinematicObjects::Sprites.spawn(definition, parameter, cine, game);
             }
             crate::flow::set(game, crate::flow::Word::CinematicFunction, 0xa38f);
         }
@@ -216,25 +210,33 @@ pub fn advance_intro_landing_mosaic<H: crate::menus::host::Host + ?Sized>(
     }
 }
 
-pub fn advance_ceres_station<H: crate::menus::host::Host + ?Sized>(object: u16, game: &mut H) {
+pub fn advance_ceres_station<H: crate::menus::host::Host + ?Sized>(
+    object: u16,
+    cine: &mut Cinematic,
+    game: &mut H,
+) {
     if crate::flow::current(game).cinematic_function == 0xbdf9 {
         let slot = usize::from(object >> 1);
-        cinematic!(game.SprGotoTimer[slot] += 128);
-        let velocity = ((cinematic!(game.SprGotoTimer[slot]) as i16 as i32) << 8) as u32;
-        advance_cinematic_coordinate(object, true, velocity, game);
-        advance_cinematic_coordinate(object, false, velocity, game);
+        *cine.spr_goto_timer(slot) = cine.spr_goto_timer(slot).wrapping_add(128);
+        let velocity = ((*cine.spr_goto_timer(slot) as i16 as i32) << 8) as u32;
+        advance_cinematic_coordinate(object, true, velocity, cine);
+        advance_cinematic_coordinate(object, false, velocity, cine);
         for (high, low) in [(Word::X, Word::XSub), (Word::Y, Word::YSub)] {
-            cinematic_state::add_pair(game, high, low, velocity);
+            cine.add_pair(high, low, velocity);
         }
     }
 }
 
-pub fn advance_zebes_flight<H: crate::menus::host::Host + ?Sized>(stage: u8, game: &mut H) {
+pub fn advance_zebes_flight<H: crate::menus::host::Host + ?Sized>(
+    stage: u8,
+    cine: &mut Cinematic,
+    game: &mut H,
+) {
     if stage == 0 {
-        cinematic!(game.X = 62);
-        cinematic!(game.Y = -112i16 as u16);
-        cinematic!(game.Mode7Angle = 32);
-        cinematic!(game.Mode7Zoom = 16);
+        *cine.x() = 62;
+        *cine.y() = -112i16 as u16;
+        *cine.mode7_angle() = 32;
+        *cine.mode7_zoom() = 16;
         crate::flow::set(game, crate::flow::Word::CinematicFunction, 0xc9f9);
         return;
     }
@@ -243,23 +245,21 @@ pub fn advance_zebes_flight<H: crate::menus::host::Host + ?Sized>(stage: u8, gam
         (0xffff8000, Word::X, -128, 16, 0xca85),
         (0x2000, Word::Mode7Zoom, 0x2000, 32, 0xcad0),
     ][usize::from(stage - 1)];
-    cinematic_state::add_pair(game, Word::Y, Word::YSub, 0x2000);
-    cinematic_state::add_pair(game, Word::X, Word::XSub, horizontal);
-    let negative = (cinematic_state::get(game, threshold) as i32 - limit) & 0x8000 != 0;
+    cine.add_pair(Word::Y, Word::YSub, 0x2000);
+    cine.add_pair(Word::X, Word::XSub, horizontal);
+    let negative = (*cine.word(threshold) as i32 - limit) & 0x8000 != 0;
     if negative == (stage == 2) {
         if stage == 3 {
             game.ram().write_byte(0x69, 16);
         }
         crate::flow::set(game, crate::flow::Word::CinematicFunction, next);
         if stage == 3 {
-            cinematic!(game.FunctionTimer = 64);
+            *cine.function_timer() = 64;
         }
     } else {
-        cinematic!(game.Mode7Zoom += increment);
-        if stage == 2 && cinematic!(game.Mode7Angle) != 224 {
-            cinematic!(
-                game.Mode7Angle = (cinematic!(game.Mode7Angle) as u8).wrapping_sub(1) as u16
-            );
+        *cine.mode7_zoom() = cine.mode7_zoom().wrapping_add(increment);
+        if stage == 2 && *cine.mode7_angle() != 224 {
+            *cine.mode7_angle() = (*cine.mode7_angle() as u8).wrapping_sub(1) as u16;
         }
     }
 }
@@ -268,13 +268,14 @@ pub fn advance_zebes_destruction_zoom<H: crate::menus::host::Host + ?Sized>(
     speed: u16,
     next_scene: u16,
     fade_in: Option<u16>,
+    cine: &mut Cinematic,
     game: &mut H,
 ) {
-    if cinematic!(game.FrameCounter) & 1 == 0 {
-        cinematic!(game.Mode7Angle = (cinematic!(game.Mode7Angle) as u8).wrapping_sub(1) as u16);
+    if *cine.frame_counter() & 1 == 0 {
+        *cine.mode7_angle() = (*cine.mode7_angle() as u8).wrapping_sub(1) as u16;
     }
-    cinematic!(game.Mode7Zoom += speed);
-    if (cinematic!(game.Mode7Zoom) as i32 - 384) & 0x8000 == 0
+    *cine.mode7_zoom() = cine.mode7_zoom().wrapping_add(speed);
+    if (*cine.mode7_zoom() as i32 - 384) & 0x8000 == 0
         && advance_cinematic_fade(CinematicFade::FastOut, game)
     {
         crate::flow::set(game, crate::flow::Word::CinematicFunction, next_scene);
@@ -290,20 +291,26 @@ pub fn advance_zebes_destruction_zoom<H: crate::menus::host::Host + ?Sized>(
 pub fn advance_zebes_stars<H: crate::menus::host::Host + ?Sized>(
     object: u16,
     moving: bool,
+    cine: &mut Cinematic,
     game: &mut H,
 ) {
     let slot = usize::from(object >> 1);
     if moving {
-        let offset = 2 * slot;
-        add_native_pair(0x1b7d + offset, 0x1afd + offset, -32i32 as u32, game);
-        let velocity = (u32::from(cinematic!(game.SprGotoTimer[slot])) << 16)
-            | u32::from(cinematic!(game.SprArr7[slot]));
-        advance_cinematic_coordinate(object, false, velocity, game);
-        wait_cinematic_scene(object, 0xde63, None, game);
+        crate::cinematic::add_cinematic_pair(
+            crate::cinematic_state::Array::SprGotoTimer,
+            crate::cinematic_state::Array::SprArr7,
+            object >> 1,
+            -32i32 as u32,
+            cine,
+        );
+        let velocity =
+            (u32::from(*cine.spr_goto_timer(slot)) << 16) | u32::from(*cine.spr_arr7(slot));
+        advance_cinematic_coordinate(object, false, velocity, cine);
+        wait_cinematic_scene(object, 0xde63, None, cine, game);
     } else if crate::flow::current(game).cinematic_function == 0xdca5 {
-        cinematic!(game.SprPreInstruction[slot] = 0xf375);
-        cinematic!(game.SprArr7[slot] = 0x4000);
-        cinematic!(game.SprGotoTimer[slot] = 0);
+        *cine.spr_pre_instruction(slot) = 0xf375;
+        *cine.spr_arr7(slot) = 0x4000;
+        *cine.spr_goto_timer(slot) = 0;
     }
 }
 
@@ -311,14 +318,15 @@ pub fn wait_cinematic_scene<H: crate::menus::host::Host + ?Sized>(
     object: u16,
     scene: u16,
     next_preinstruction: Option<u16>,
+    cine: &mut Cinematic,
     game: &mut H,
 ) {
     if crate::flow::current(game).cinematic_function == scene {
         let slot = usize::from(object >> 1);
         if let Some(next) = next_preinstruction {
-            cinematic!(game.SprPreInstruction[slot] = next);
+            *cine.spr_pre_instruction(slot) = next;
         } else {
-            resume_cinematic_sprite(slot, 0xee9b, game);
+            resume_cinematic_sprite(slot, 0xee9b, cine);
         }
     }
 }
@@ -327,14 +335,15 @@ pub fn launch_cinematic_sprite<H: crate::menus::host::Host + ?Sized>(
     object: u16,
     acceleration: u16,
     advance_scene: bool,
+    cine: &mut Cinematic,
     game: &mut H,
 ) {
     let slot = usize::from(object >> 1);
-    cinematic!(game.SprGotoTimer[slot] += acceleration);
-    let velocity = -((cinematic!(game.SprGotoTimer[slot]) as i16 as i32) << 8) as u32;
-    advance_cinematic_coordinate(object, true, velocity, game);
-    if (cinematic!(game.BgArr8[slot]) as i32 + 128) & 0x8000 != 0 {
-        resume_cinematic_sprite(slot, 0xce53, game);
+    *cine.spr_goto_timer(slot) = cine.spr_goto_timer(slot).wrapping_add(acceleration);
+    let velocity = -((*cine.spr_goto_timer(slot) as i16 as i32) << 8) as u32;
+    advance_cinematic_coordinate(object, true, velocity, cine);
+    if (*cine.bg_arr8(slot) as i32 + 128) & 0x8000 != 0 {
+        resume_cinematic_sprite(slot, 0xce53, cine);
         if advance_scene {
             crate::flow::set(game, crate::flow::Word::CinematicFunction, 0xcadf);
         }
@@ -343,29 +352,30 @@ pub fn launch_cinematic_sprite<H: crate::menus::host::Host + ?Sized>(
 
 pub fn update_cinematic_transform<H: crate::menus::host::Host + ?Sized>(
     rotated: bool,
+    cine: &mut Cinematic,
     game: &mut H,
 ) {
     use crate::projectile_geometry::SINE_COSINE;
     if rotated {
-        let angle = (cinematic!(game.Mode7Angle) as u8).wrapping_add(64);
+        let angle = (*cine.mode7_angle() as u8).wrapping_add(64);
         let cosine = scaled_cinematic_value(
             SINE_COSINE[usize::from(angle) + 64] as u16,
-            cinematic!(game.Mode7Zoom),
+            *cine.mode7_zoom(),
         );
         word!(game.REG_M7A = cosine);
         word!(game.REG_M7D = word!(game.REG_M7A));
-        let angle = cinematic!(game.Mode7Angle) as u8;
+        let angle = *cine.mode7_angle() as u8;
         let sine = scaled_cinematic_value(
             SINE_COSINE[usize::from(angle) + 64] as u16,
-            cinematic!(game.Mode7Zoom),
+            *cine.mode7_zoom(),
         );
         word! {game; REG_M7B = sine; REG_M7C = sine.wrapping_neg(); }
     } else {
-        word! {game; REG_M7A = cinematic!(game.Mode7Zoom); REG_M7D = cinematic!(game.Mode7Zoom); }
+        word! {game; REG_M7A = *cine.mode7_zoom(); REG_M7D = *cine.mode7_zoom(); }
         word! { game, 0; REG_M7B, REG_M7C }
     }
-    scroll!(game.Bg1H = cinematic!(game.X));
-    scroll!(game.Bg1V = cinematic!(game.Y));
+    scroll!(game.Bg1H = *cine.x());
+    scroll!(game.Bg1V = *cine.y());
 }
 
 pub fn draw_cinematic_rectangle<H: crate::menus::host::Host + ?Sized>(
