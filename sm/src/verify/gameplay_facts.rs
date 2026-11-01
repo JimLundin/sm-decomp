@@ -92,6 +92,7 @@ pub(super) fn check_fresh_events() {
     check_bomb_release();
 }
 
+#[cfg(sm_verify_dll)]
 fn check_bomb_release() {
     let mut before = Snapshot {
         player_x: 100,
@@ -127,6 +128,7 @@ fn check_bomb_release() {
     assert!(!episode.observe(off, chased, true)); // No ordinary bomb was observed.
 }
 
+#[cfg(sm_verify_dll)]
 fn check_freeze_shatter() {
     let mut before = Snapshot::default();
     before.actors[0] = Actor {
