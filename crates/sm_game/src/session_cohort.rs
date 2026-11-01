@@ -11,7 +11,10 @@
 //!
 //! The function must not reach the group's words by any other path while it
 //! holds the copy; code it calls takes the copy instead. The verify build
-//! checks that no projection access reaches a held copy's words.
+//! checks that no projection access reaches a held copy's words. Code that
+//! reads them from raw RAM or on another lease (Samus's frame reads the
+//! cinematic table as enemy projectiles; the save file transfer reads the save
+//! selection) runs between copies, after the store.
 use crate::ram::CompatibilityRam;
 use crate::runtime_access::RuntimeAccess;
 use crate::session::Session;
@@ -247,6 +250,12 @@ mod tests {
     fn the_session_words_load_from_their_projected_words() {
         check_encoding::<crate::session_words::SessionWords>();
         check_encoding::<(OptionsMenu, crate::session_words::SessionWords)>();
+    }
+
+    #[test]
+    fn the_menu_state_and_inventory_load_from_their_projected_words() {
+        check_encoding::<crate::menu_state::MenuState>();
+        check_encoding::<crate::inventory::Inventory>();
     }
 
     #[test]

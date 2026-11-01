@@ -11,6 +11,7 @@ use crate::constants::bank_81::{
     ADDR_K_MENU_TILEMAP_DATA_COPY_MODE, ADDR_K_MENU_TILEMAP_EXIT, ADDR_K_MENU_TILEMAP_IS_THIS_OK,
     ADDR_K_MENU_TILEMAP_NO, ADDR_K_MENU_TILEMAP_YES,
 };
+use crate::menu_state::MenuState;
 use crate::menu_state::SaveSelection;
 use crate::save_file::header;
 use crate::session_cohort;
@@ -56,7 +57,7 @@ static BIT_SHL: [u8; 3] = [1, 2, 4];
 /// The native ROM allocation must cover every referenced menu text and save-map record.
 pub fn advance<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
     // The original state table, indexed and bounds-checked as before.
-    let states: [fn(&mut H); 34] = [
+    let states: [fn(&mut MenuState, &mut H); 34] = [
         prepare::<H>,
         load_background::<H>,
         initialize::<H>,
@@ -90,16 +91,18 @@ pub fn advance<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
         return_main::<H>,
         turn_helmet::<H>,
         fade_to_options::<H>,
-        fade_to_title::<H>,
+        |_, game| fade_to_title(game),
     ];
-    states[crate::menu!(game.MenuIndex) as usize](game);
+    crate::session_cohort::with(game, |game, menu: &mut MenuState| {
+        states[menu.menu_index as usize](menu, game)
+    });
     super::pending_wait(game)
 }
 fn border<H: Host + ?Sized>(sprite: u16, game: &mut H) {
     let x = if sprite == 0x4a { 0x7c } else { 0x80 };
     crate::sprite_output::menu(sprite, x, 0x10, 3584, game);
 }
-fn prepare<H: Host + ?Sized>(game: &mut H) {
+fn prepare<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
     if !super::resuming(game) {
         game.fade(false);
         if (game.ram().read_byte(crate::ram::mirror::INIDISP) & 0xf) != 0 {
@@ -112,19 +115,19 @@ fn prepare<H: Host + ?Sized>(game: &mut H) {
     game.queue_sound(2, 1_u8, 6);
     crate::hdma_objects::set_hdma_enabled(false, game);
     crate::hdma_objects::clear_hdma(game);
-    crate::menu!(game.MenuIndex += 1);
+    menu.menu_index = menu.menu_index.wrapping_add(1);
     menu_tilemap::prepare_graphics(game);
     scroll! { game, 0; Bg1H, Bg2H, Bg3H, Bg1V, Bg2V, Bg3V }
     menu_tilemap::load_palette(game);
 }
-fn fade_to_options<H: Host + ?Sized>(game: &mut H) {
+fn fade_to_options<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
     crate::sprite_output::menu_selection(game);
     border(0x48, game);
     crate::sprite_output::file_helmets(false, game);
     game.fade(false);
     if (game.ram().read_byte(crate::ram::mirror::INIDISP) & 0xf) == 0 {
         word!(game.GAME_STATE = K_GAME_STATE_2_GAME_OPTIONS_MENU as u16);
-        crate::menu!(game.MenuIndex = 0);
+        menu.menu_index = 0;
         // Clear the menu's reused RAM, $198D..BC.
         crate::word_transfers!(game, ascending, 24;
             native(crate::ram::words::MENU_SELECTION_MISSILE_ANIMATION_TIMER) <- value(0));
@@ -138,15 +141,15 @@ fn fade_to_title<H: Host + ?Sized>(game: &mut H) {
         game.request_reset();
     }
 }
-fn fade_from_main<H: Host + ?Sized>(game: &mut H) {
+fn fade_from_main<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
     if !super::resuming(game) {
         crate::sprite_output::menu_selection(game);
     }
-    fade_to_main(game);
+    fade_to_main(menu, game);
 }
-fn fade_to_main<H: Host + ?Sized>(game: &mut H) {
+fn fade_to_main<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
     if (super::resuming(game) || fade_out_mosaic(game)) && !super::blank_and_wait(true, game) {
-        crate::menu!(game.MenuIndex += 1);
+        menu.menu_index = menu.menu_index.wrapping_add(1);
     }
 }
 /// Fade out with the mosaic growing as the brightness falls; true once black.
@@ -160,11 +163,11 @@ fn fade_out_mosaic<H: Host + ?Sized>(game: &mut H) -> bool {
     );
     (game.ram().read_byte(crate::ram::mirror::INIDISP) & 0xf) == 0
 }
-fn restore_cursor<H: Host + ?Sized>(game: &mut H) {
+fn restore_cursor<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
     crate::sprite_output::file_menu_cursor(selected_slot(game), game);
-    fade_in(game);
+    fade_in(menu, game);
 }
-fn fade_in<H: Host + ?Sized>(game: &mut H) {
+fn fade_in<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
     crate::sprite_output::menu_selection(game);
     game.fade(true);
     game.ram().write_byte(
@@ -174,14 +177,14 @@ fn fade_in<H: Host + ?Sized>(game: &mut H) {
             as u8,
     );
     if (game.ram().read_byte(crate::ram::mirror::INIDISP) & 0xf) == 15 {
-        crate::menu!(game.MenuIndex += 1);
+        menu.menu_index = menu.menu_index.wrapping_add(1);
     }
 }
-fn begin_operation<const COPY: bool, H: Host + ?Sized>(game: &mut H) {
+fn begin_operation<const COPY: bool, H: Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
     if !COPY {
         border(0x4a, game);
     }
-    crate::menu!(game.MenuIndex += 1);
+    menu.menu_index = menu.menu_index.wrapping_add(1);
     if COPY {
         reset_copy(game);
     } else {
@@ -243,7 +246,7 @@ fn next_occupied_slot<H: Host + ?Sized>(game: &mut H) -> Option<u8> {
         }
     }
 }
-fn choose_source<const COPY: bool, H: Host + ?Sized>(game: &mut H) {
+fn choose_source<const COPY: bool, H: Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
     border(if COPY { 0x49 } else { 0x4a }, game);
     crate::sprite_output::menu_selection(game);
     let movement_high = if COPY {
@@ -255,16 +258,16 @@ fn choose_source<const COPY: bool, H: Host + ?Sized>(game: &mut H) {
         game.queue_sound(0, 0x37_u8, 6);
         if copy_selection(game) != 3 {
             set_copy_source(copy_selection(game), game);
-            crate::menu!(game.MenuIndex += 1);
+            menu.menu_index = menu.menu_index.wrapping_add(1);
             return;
         }
         if COPY {
-            crate::menu!(game.MenuIndex += 7);
+            menu.menu_index = menu.menu_index.wrapping_add(7);
             return;
         }
     } else if (game.observed_inputs().pressed & 0x8000) != 0 {
         if COPY {
-            crate::menu!(game.MenuIndex += 7);
+            menu.menu_index = menu.menu_index.wrapping_add(7);
             game.queue_sound(0, 0x37_u8, 6);
             return;
         }
@@ -285,12 +288,12 @@ fn choose_source<const COPY: bool, H: Host + ?Sized>(game: &mut H) {
         return;
     }
     game.queue_sound(0, 0x37_u8, 6);
-    crate::menu!(game.MenuIndex += 5);
+    menu.menu_index = menu.menu_index.wrapping_add(5);
 }
-fn begin_destination<H: Host + ?Sized>(game: &mut H) {
+fn begin_destination<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
     border(0x49, game);
     draw_destination(game);
-    crate::menu!(game.MenuIndex += 1);
+    menu.menu_index = menu.menu_index.wrapping_add(1);
     let mut selection: u16 = 0;
     let source = copy_source(game);
     while selection == source {
@@ -316,16 +319,16 @@ fn draw_destination<H: Host + ?Sized>(game: &mut H) {
     menu_tilemap::load(0x688, ADDR_K_MENU_TILEMAP_EXIT as u16, game);
     menu_tilemap::file_rows(menu_tilemap::FileRowEmphasis::Destination, game);
 }
-fn choose_destination<H: Host + ?Sized>(game: &mut H) {
+fn choose_destination<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
     border(0x49, game);
     crate::sprite_output::menu_selection(game);
     if game.observed_inputs().pressed as i32 & (K_BUTTON_START as i32 | K_BUTTON_A as i32) != 0 {
         game.queue_sound(0, 0x37_u8, 6);
         if copy_selection(game) != 3 {
             set_copy_destination(copy_selection(game), game);
-            crate::menu!(game.MenuIndex += 1);
+            menu.menu_index = menu.menu_index.wrapping_add(1);
         } else {
-            crate::menu!(game.MenuIndex += 5);
+            menu.menu_index = menu.menu_index.wrapping_add(5);
             return;
         }
     } else if (game.observed_inputs().pressed & 0x8000) == 0 {
@@ -350,7 +353,7 @@ fn choose_destination<H: Host + ?Sized>(game: &mut H) {
             set_copy_selection(slot, game);
         }
     } else {
-        crate::menu!(game.MenuIndex -= 2);
+        menu.menu_index = menu.menu_index.wrapping_sub(2);
         set_copy_selection(copy_source(game), game);
         game.queue_sound(0, 0x37_u8, 6);
         reset_copy(game);
@@ -358,7 +361,7 @@ fn choose_destination<H: Host + ?Sized>(game: &mut H) {
     }
     crate::sprite_output::file_slot_cursor(212, game);
 }
-fn begin_confirmation<const COPY: bool, H: Host + ?Sized>(game: &mut H) {
+fn begin_confirmation<const COPY: bool, H: Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
     border(if COPY { 0x49 } else { 0x4a }, game);
     menu_tilemap::set_palette(0, game);
     if COPY {
@@ -375,7 +378,7 @@ fn begin_confirmation<const COPY: bool, H: Host + ?Sized>(game: &mut H) {
         set_copy_destination(3, game);
     }
     draw_confirmation(game);
-    crate::menu!(game.MenuIndex += 1);
+    menu.menu_index = menu.menu_index.wrapping_add(1);
     set_copy_selection(0, game);
     if COPY {
         word!(game.FILE_COPY_ARROW_PALETTE_TIMER = 8);
@@ -391,7 +394,7 @@ fn draw_confirmation<H: Host + ?Sized>(game: &mut H) {
     menu_tilemap::load(0x65c, ADDR_K_MENU_TILEMAP_NO as u16, game);
     menu_tilemap::file_rows(menu_tilemap::FileRowEmphasis::Confirmation, game);
 }
-fn confirm_choice<const COPY: bool, H: Host + ?Sized>(game: &mut H) {
+fn confirm_choice<const COPY: bool, H: Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
     crate::probe::hit(if COPY {
         "file_menu.confirm_copy"
     } else {
@@ -417,11 +420,11 @@ fn confirm_choice<const COPY: bool, H: Host + ?Sized>(game: &mut H) {
         } else {
             game.queue_sound(0, 0x38_u8, 6);
             if copy_selection(game) == 0 {
-                crate::menu!(game.MenuIndex += 1);
+                menu.menu_index = menu.menu_index.wrapping_add(1);
                 return;
             }
             if COPY {
-                crate::menu!(game.MenuIndex -= 4);
+                menu.menu_index = menu.menu_index.wrapping_sub(4);
                 reset_copy(game);
                 return;
             }
@@ -429,10 +432,10 @@ fn confirm_choice<const COPY: bool, H: Host + ?Sized>(game: &mut H) {
         };
         if cancelled {
             if COPY {
-                crate::menu!(game.MenuIndex -= 3);
+                menu.menu_index = menu.menu_index.wrapping_sub(3);
                 set_copy_selection(copy_destination(game), game);
             } else {
-                crate::menu!(game.MenuIndex -= 2);
+                menu.menu_index = menu.menu_index.wrapping_sub(2);
                 set_copy_selection(copy_source(game), game);
             }
             game.queue_sound(0, 0x37_u8, 6);
@@ -460,7 +463,7 @@ fn animate_copy_arrow<H: Host + ?Sized>(game: &mut H) {
         word!(game.PALETTE_BUFFER[151] = first);
     }
 }
-fn copy_slot<H: Host + ?Sized>(game: &mut H) {
+fn copy_slot<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
     crate::probe::hit("file_menu.copy_slot");
     static BIT_SHL_16BIT: [u16; 3] = [1, 2, 4];
     border(0x49, game);
@@ -498,7 +501,7 @@ fn copy_slot<H: Host + ?Sized>(game: &mut H) {
         header::slot(header::MIRRORED_CHECKSUMS, destination),
         mirrored_checksum,
     );
-    crate::menu!(game.MenuIndex += 1);
+    menu.menu_index = menu.menu_index.wrapping_add(1);
     crate::word_transfers!(game, ascending, 288; native(0x3b00) <- value(15));
     let copied = BIT_SHL_16BIT[usize::from(copy_destination(game))];
     session_cohort::with(game, |_, slots: &mut SaveSelection| {
@@ -514,11 +517,11 @@ fn copy_slot<H: Host + ?Sized>(game: &mut H) {
     menu_tilemap::file_rows(menu_tilemap::FileRowEmphasis::Confirmation, game);
     game.flush_sram();
 }
-fn complete_operation<const COPY: bool, H: Host + ?Sized>(game: &mut H) {
+fn complete_operation<const COPY: bool, H: Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
     border(if COPY { 0x49 } else { 0x4a }, game);
     if game.observed_inputs().pressed != 0 {
         game.queue_sound(0, 0x37_u8, 6);
-        crate::menu!(game.MenuIndex += 1);
+        menu.menu_index = menu.menu_index.wrapping_add(1);
         let selected = if COPY {
             save_slots::last_selected(game)
         } else {
@@ -531,8 +534,8 @@ fn complete_operation<const COPY: bool, H: Host + ?Sized>(game: &mut H) {
         });
     }
 }
-fn resume_main<H: Host + ?Sized>(game: &mut H) {
-    crate::menu!(game.MenuIndex -= 14);
+fn resume_main<H: Host + ?Sized>(menu: &mut MenuState, _: &mut H) {
+    menu.menu_index = menu.menu_index.wrapping_sub(14);
 }
 fn reset_clear<H: Host + ?Sized>(game: &mut H) {
     menu_tilemap::clear(game);
@@ -545,7 +548,7 @@ fn reset_clear<H: Host + ?Sized>(game: &mut H) {
     select_first_slot(game);
     crate::sprite_output::file_slot_cursor(211, game);
 }
-fn clear_slot<H: Host + ?Sized>(game: &mut H) {
+fn clear_slot<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
     crate::probe::hit("file_menu.clear_slot");
     static BIT_SHL_NOT: [u16; 3] = [0xfffe, 0xfffd, 0xfffb];
     border(0x4a, game);
@@ -563,7 +566,7 @@ fn clear_slot<H: Host + ?Sized>(game: &mut H) {
     ] {
         game.sram().set_word(header::slot(table, slot), 0);
     }
-    crate::menu!(game.MenuIndex += 1);
+    menu.menu_index = menu.menu_index.wrapping_add(1);
     save_slots::initialize(game);
     save_slots::load(copy_source(game), game);
     let source = copy_source(game);
@@ -579,11 +582,11 @@ fn clear_slot<H: Host + ?Sized>(game: &mut H) {
     menu_tilemap::file_rows(menu_tilemap::FileRowEmphasis::Confirmation, game);
     game.flush_sram();
 }
-fn return_main<H: Host + ?Sized>(game: &mut H) {
+fn return_main<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
     border(0x48, game);
-    crate::menu!(game.MenuIndex -= 26);
+    menu.menu_index = menu.menu_index.wrapping_sub(26);
 }
-fn turn_helmet<H: Host + ?Sized>(game: &mut H) {
+fn turn_helmet<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
     crate::sprite_output::menu_selection(game);
     border(0x48, game);
     crate::sprite_output::file_helmets(true, game);
@@ -595,10 +598,10 @@ fn turn_helmet<H: Host + ?Sized>(game: &mut H) {
             })
         })
     {
-        crate::menu!(game.MenuIndex += 1);
+        menu.menu_index = menu.menu_index.wrapping_add(1);
     }
 }
-fn load_background<H: Host + ?Sized>(game: &mut H) {
+fn load_background<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
     // This menu spans $3600..$3dff, beyond the pause-map union field.
     crate::word_transfers!(game, descending, 1024; native(0x3dfe) <- rom(0x8edc00, 1023));
     menu_tilemap::upload(
@@ -608,29 +611,29 @@ fn load_background<H: Host + ?Sized>(game: &mut H) {
         true,
         game,
     );
-    crate::menu!(game.MenuIndex += 1);
+    menu.menu_index = menu.menu_index.wrapping_add(1);
     restart_missile(game);
 }
-fn initialize<H: Host + ?Sized>(game: &mut H) {
+fn initialize<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
     if !super::resuming(game) {
         let selected = save_slots::last_selected(game);
         session_cohort::with(game, |_, slots: &mut SaveSelection| {
             slots.selected_slot = selected;
         });
     }
-    menu_tilemap::main_menu(game);
+    menu_tilemap::main_menu(menu, game);
 }
-fn fade_in_main<H: Host + ?Sized>(game: &mut H) {
+fn fade_in_main<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
     crate::sprite_output::file_helmets(false, game);
     crate::sprite_output::file_menu_cursor(selected_slot(game), game);
     crate::sprite_output::menu_selection(game);
     border(0x48, game);
     game.fade(true);
     if (game.ram().read_byte(crate::ram::mirror::INIDISP) & 0xf) == 15 {
-        crate::menu!(game.MenuIndex += 1);
+        menu.menu_index = menu.menu_index.wrapping_add(1);
     }
 }
-fn choose_main<H: Host + ?Sized>(game: &mut H) {
+fn choose_main<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
     border(0x48, game);
     crate::sprite_output::menu_selection(game);
     crate::sprite_output::file_helmets(true, game);
@@ -650,7 +653,7 @@ fn choose_main<H: Host + ?Sized>(game: &mut H) {
             } else if (game.observed_inputs().pressed as i32 & K_BUTTON_DOWN as i32) == 0 {
                 if (game.observed_inputs().pressed as i32 & K_BUTTON_B as i32) != 0 {
                     game.queue_sound(0, 0x37_u8, 6);
-                    crate::menu!(game.MenuIndex = 33);
+                    menu.menu_index = 33;
                     game.queue_sound(0, 0x37_u8, 6);
                 }
                 true
@@ -675,7 +678,7 @@ fn choose_main<H: Host + ?Sized>(game: &mut H) {
         let mut selection: i16 = selected as i16;
         if (selected as i32 - 3i32) & 0x8000 != 0 {
             game.queue_sound(0, 0x2a_u8, 6);
-            crate::menu!(game.MenuIndex += 27);
+            menu.menu_index = menu.menu_index.wrapping_add(27);
             // Start the selected slot's helmet animation.
             let helmet = usize::from(selected);
             if helmet < 3 {
@@ -706,17 +709,17 @@ fn choose_main<H: Host + ?Sized>(game: &mut H) {
         } else {
             if selected == 3 {
                 game.queue_sound(0, 0x37_u8, 6);
-                crate::menu!(game.MenuIndex += 1);
+                menu.menu_index = menu.menu_index.wrapping_add(1);
                 set_native_word(MOSAIC, native_word(MOSAIC, game) & 0xff0c | 3, game);
             } else {
                 if selected == 4 {
                     game.queue_sound(0, 0x37_u8, 6);
-                    crate::menu!(game.MenuIndex += 15);
+                    menu.menu_index = menu.menu_index.wrapping_add(15);
                     selection = (i32::from(native_word(MOSAIC, game)) & 0xff0c | 3) as i16;
                     set_native_word(MOSAIC, selection as u16, game);
                 }
                 if selection == 5 {
-                    crate::menu!(game.MenuIndex = 33);
+                    menu.menu_index = 33;
                 }
             }
             return;

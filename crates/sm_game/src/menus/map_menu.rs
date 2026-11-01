@@ -5,6 +5,8 @@ use super::save_slots::load_area_map;
 use crate::constants::{bank_81::*, bank_82::*};
 use crate::display::control::{Layers, MainScreen, MainWindowMask, SubScreen, SubWindowMask};
 use crate::imported::{Imported, grid_word, word as table_word};
+use crate::menu_state::set_menu_byte;
+use crate::menu_state::{MENU, MenuState, WORDS};
 use crate::menu_state::{MapScreenState, MenuScreens};
 use crate::session_cohort;
 use sm_data::pause_menu::{
@@ -63,7 +65,7 @@ const AREAS: [u16; 6] = [0, 3, 5, 1, 4, 2];
 /// Requires live exclusive hardware and native ROM covering referenced map records.
 pub fn advance<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
     // The original state table, indexed and bounds-checked as before.
-    let states: [fn(&mut H, &mut MenuScreens); 23] = [
+    let states: [fn(&mut MenuState, &mut H, &mut MenuScreens); 23] = [
         prepare::<H>,
         fade_palette::<H>,
         load_foreground::<H>,
@@ -88,19 +90,27 @@ pub fn advance<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
         close_room_window::<H>,
         fade_to_options::<H>,
     ];
-    let state = states[crate::menu!(game.MenuIndex) as usize];
-    session_cohort::with(game, state);
+    session_cohort::with(
+        game,
+        |game, (menu, screens): &mut (MenuState, MenuScreens)| {
+            states[menu.menu_index as usize](menu, game, screens)
+        },
+    );
     super::pending_wait(game)
 }
-fn fade_to_options<H: Host + ?Sized>(game: &mut H, screens: &mut MenuScreens) {
+fn fade_to_options<H: Host + ?Sized>(
+    menu: &mut MenuState,
+    game: &mut H,
+    screens: &mut MenuScreens,
+) {
     draw_area_labels(screens, game);
     game.fade(false);
     if (game.ram().read_byte(crate::ram::mirror::INIDISP) & 0xf) == 0 {
         word!(game.GAME_STATE = K_GAME_STATE_2_GAME_OPTIONS_MENU as u16);
-        crate::menu!(game.MenuIndex = 0);
+        menu.menu_index = 0;
     }
 }
-fn prepare<H: Host + ?Sized>(game: &mut H, _: &mut MenuScreens) {
+fn prepare<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H, _: &mut MenuScreens) {
     menu_tilemap::clear(game);
     menu_tilemap::upload(
         menu_tilemap::MENU_TILEMAP_BYTES,
@@ -113,16 +123,16 @@ fn prepare<H: Host + ?Sized>(game: &mut H, _: &mut MenuScreens) {
     menu_tilemap::load_palette(game);
     crate::word_transfers!(game, ascending, 32; le(TARGET_PALETTES, 0) <- le(PALETTE_BUFFER, 0));
     word! { game, 0; TARGET_PALETTES[14], TARGET_PALETTES[30] }
-    crate::menu!(game.MenuIndex += 1);
+    menu.menu_index = menu.menu_index.wrapping_add(1);
 }
-fn fade_palette<H: Host + ?Sized>(game: &mut H, screens: &mut MenuScreens) {
+fn fade_palette<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H, screens: &mut MenuScreens) {
     if crate::palette_effects::fading::file_select(game) != 0 {
         scroll! { game, 0; Bg1V, Bg1H, Bg2V, Bg2H }
         screens.save_selection.map_area_index = area_selection(game).unwrap_or(0) as u16;
         for area in 0..6 {
             menu_tilemap::area_palette(area, area == crate::room_view::current(game).area, game);
         }
-        crate::menu!(game.MenuIndex += 1);
+        menu.menu_index = menu.menu_index.wrapping_add(1);
         screens.save_selection.map_unread = 0;
         game.ram().write_byte(
             crate::ram::mirror::TM,
@@ -130,7 +140,7 @@ fn fade_palette<H: Host + ?Sized>(game: &mut H, screens: &mut MenuScreens) {
         );
     }
 }
-fn load_foreground<H: Host + ?Sized>(game: &mut H, _: &mut MenuScreens) {
+fn load_foreground<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H, _: &mut MenuScreens) {
     menu_tilemap::upload(
         2048,
         0x810000 | ADDR_K_AREA_SELECT_FOREGROUND_TILEMAP,
@@ -143,10 +153,10 @@ fn load_foreground<H: Host + ?Sized>(game: &mut H, _: &mut MenuScreens) {
         ((game.ram().read_byte(crate::ram::mirror::OBSEL) as i32) << 8 | 0xf) as u16,
         game,
     );
-    crate::menu!(game.MenuIndex += 1);
+    menu.menu_index = menu.menu_index.wrapping_add(1);
 }
-fn begin_background<H: Host + ?Sized>(game: &mut H, _: &mut MenuScreens) {
-    crate::menu!(game.MenuIndex += 1);
+fn begin_background<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H, _: &mut MenuScreens) {
+    menu.menu_index = menu.menu_index.wrapping_add(1);
     load_background(crate::room_view::current(game).area, game);
 }
 fn load_background<H: Host + ?Sized>(j: u16, game: &mut H) {
@@ -161,7 +171,7 @@ fn load_background<H: Host + ?Sized>(j: u16, game: &mut H) {
         game,
     );
 }
-fn begin_area_window<H: Host + ?Sized>(game: &mut H, _: &mut MenuScreens) {
+fn begin_area_window<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H, _: &mut MenuScreens) {
     game.ram().write_byte(
         crate::ram::mirror::TS,
         crate::display::control::Layers::BG3.byte(),
@@ -177,12 +187,8 @@ fn begin_area_window<H: Host + ?Sized>(game: &mut H, _: &mut MenuScreens) {
     crate::display::sequence::write_register_and_mirror(game, HDMAEN as u16, 0xc, 0x85, true);
     configure_area_window(game);
     crate::hdma_objects::clear_hdma_flags(game);
-    crate::menu_state::set_byte(
-        game,
-        crate::menu_state::Word::MenuIndex,
-        0,
-        ((crate::menu!(game.MenuIndex)) as u8).wrapping_add(1),
-    );
+    let index = (menu.menu_index as u8).wrapping_add(1);
+    set_menu_byte(&mut menu.menu_index, 0, index);
 }
 fn configure_area_window<H: Host + ?Sized>(game: &mut H) {
     game.ram().write_byte(
@@ -195,15 +201,15 @@ fn configure_area_window<H: Host + ?Sized>(game: &mut H) {
         mirror(WOBJSEL as u16, 0x23, 0x62, true);
     }
 }
-fn open_area_window<H: Host + ?Sized>(game: &mut H, screens: &mut MenuScreens) {
+fn open_area_window<H: Host + ?Sized>(
+    menu: &mut MenuState,
+    game: &mut H,
+    screens: &mut MenuScreens,
+) {
     draw_area_labels(screens, game);
     if super::menu_window::open_from_center(game) {
-        crate::menu_state::set_byte(
-            game,
-            crate::menu_state::Word::MenuIndex,
-            0,
-            ((crate::menu!(game.MenuIndex)) as u8).wrapping_add(1),
-        );
+        let index = (menu.menu_index as u8).wrapping_add(1);
+        set_menu_byte(&mut menu.menu_index, 0, index);
         game.ram().write_byte(
             crate::ram::mirror::TM,
             game.ram().read_byte(crate::ram::mirror::TM)
@@ -218,7 +224,7 @@ fn open_area_window<H: Host + ?Sized>(game: &mut H, screens: &mut MenuScreens) {
             crate::display::control::Layers::NONE.byte(),
         );
         scroll!(game.Bg2V = 24);
-        crate::menu!(game.PausemenuPaletteAnimationTimer = 1);
+        menu.pausemenu_palette_animation_timer = 1;
         let mut _v1: u16 = 0;
         crate::word_transfers!(game, ascending, 800; xray(0) <- rom(0xb6e000, 0));
         _v1 = 800;
@@ -229,7 +235,7 @@ fn open_area_window<H: Host + ?Sized>(game: &mut H, screens: &mut MenuScreens) {
         menu_tilemap::upload(2048, 0x7e4000, 1, false, game);
     }
 }
-fn choose_area<H: Host + ?Sized>(game: &mut H, screens: &mut MenuScreens) {
+fn choose_area<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H, screens: &mut MenuScreens) {
     let mut keys = game.observed_inputs().pressed as i16;
     'handle_action: {
         let previous = game.observed_inputs().pressed & (K_BUTTON_UP | K_BUTTON_LEFT) as u16 != 0;
@@ -268,12 +274,12 @@ fn choose_area<H: Host + ?Sized>(game: &mut H, screens: &mut MenuScreens) {
             }
         }
         if keys < 0 {
-            crate::menu!(game.MenuIndex = 22);
+            menu.menu_index = 22;
             break 'handle_action;
         }
         if keys as i32 & (K_BUTTON_START as i32 | K_BUTTON_A as i32) != 0 {
             game.queue_sound(0, 0x38_u8, 6);
-            select_area(screens, game);
+            select_area(screens, menu, game);
             return;
         }
     }
@@ -293,8 +299,8 @@ fn next_area(a: u16) -> u16 {
     }
     result
 }
-fn select_area<H: Host + ?Sized>(screens: &mut MenuScreens, game: &mut H) {
-    crate::menu!(game.MenuIndex += 1);
+fn select_area<H: Host + ?Sized>(screens: &mut MenuScreens, menu: &mut MenuState, game: &mut H) {
+    menu.menu_index = menu.menu_index.wrapping_add(1);
     if word!(game.ENABLE_DEBUG) == 0 {
         let selection = &mut screens.save_selection;
         crate::room_view::set(game, crate::room_view::Word::Area, selection.save_area);
@@ -425,7 +431,11 @@ fn draw_area_labels<H: Host + ?Sized>(screens: &MenuScreens, game: &mut H) {
     }
 }
 static WINDOW_TIMERS: [u16; 6] = [0x33, 0x35, 0x2d, 0x33, 0x33, 0x22];
-fn begin_room_window<H: Host + ?Sized>(game: &mut H, screens: &mut MenuScreens) {
+fn begin_room_window<H: Host + ?Sized>(
+    menu: &mut MenuState,
+    game: &mut H,
+    screens: &mut MenuScreens,
+) {
     draw_area_labels(screens, game);
     super::menu_window::initialize(game);
     game.ram().write_byte(
@@ -461,13 +471,17 @@ fn begin_room_window<H: Host + ?Sized>(game: &mut H, screens: &mut MenuScreens) 
     super::menu_window::load_velocities(crate::room_view::current(game).area, game);
     super::menu_window::project(game);
     crate::display::sequence::write_register_and_mirror(game, HDMAEN as u16, 0xc, 0x85, true);
-    crate::menu!(game.MenuIndex += 1);
+    menu.menu_index = menu.menu_index.wrapping_add(1);
     game.queue_sound(0, 0x3b_u8, 6);
 }
-fn open_room_window<H: Host + ?Sized>(game: &mut H, screens: &mut MenuScreens) {
+fn open_room_window<H: Host + ?Sized>(
+    menu: &mut MenuState,
+    game: &mut H,
+    screens: &mut MenuScreens,
+) {
     super::menu_window::advance(super::menu_window::Motion::Expand, game);
     if (word!(game.EXPAND_SQ_TIMER -= 1, reread) & 0x8000) != 0 {
-        crate::menu!(game.MenuIndex += 1);
+        menu.menu_index = menu.menu_index.wrapping_add(1);
         game.ram().write_byte(
             crate::ram::mirror::TM,
             crate::display::control::Layers::BG2.byte(),
@@ -487,7 +501,11 @@ fn open_room_window<H: Host + ?Sized>(game: &mut H, screens: &mut MenuScreens) {
     }
     draw_area_labels(screens, game);
 }
-fn initialize_room<H: Host + ?Sized>(game: &mut H, screens: &mut MenuScreens) {
+fn initialize_room<H: Host + ?Sized>(
+    menu: &mut MenuState,
+    game: &mut H,
+    screens: &mut MenuScreens,
+) {
     load_area_map(&mut screens.save_selection, game);
     draw_room_map(game);
     crate::room_entry::selection::begin(
@@ -501,23 +519,23 @@ fn initialize_room<H: Host + ?Sized>(game: &mut H, screens: &mut MenuScreens) {
     let header = crate::projection::word(game, crate::ram::words::ROOM_PTR);
     let room = menu_tilemap::native_record(0x8f0000 | u32::from(header), game);
     crate::room_view::enter_header(game, [1, 2, 3].map(|at| room.byte(at)));
-    reset_animations(&mut screens.map, game);
+    reset_animations(&mut screens.map, menu, game);
     scroll_limits(screens, game);
     center_map(112, &screens.map, game);
     let map = &mut screens.map;
     map.min_y_scroll = map.min_y_scroll.wrapping_add(24);
     scroll!(game.Bg2V = 24);
     crate::ram::checked_word!(game, 0x69; = crate::ram::checked_word!(game, 0x69;) & !4);
-    crate::menu!(game.MenuIndex += 1);
+    menu.menu_index = menu.menu_index.wrapping_add(1);
     map.scrolling_direction = 0;
     map.scrolling_speed_index = 0;
     map.indicator_frame = 0;
     map.indicator_timer = 0;
     map.indicator_loop_counter = 0;
 }
-fn choose_room<H: Host + ?Sized>(game: &mut H, screens: &mut MenuScreens) {
-    draw_icons(IconMode::FileSelect, screens, game);
-    scroll_arrows(MapScreen::FileSelect, &mut screens.map, game);
+fn choose_room<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H, screens: &mut MenuScreens) {
+    draw_icons(IconMode::FileSelect, screens, menu, game);
+    scroll_arrows(MapScreen::FileSelect, &mut screens.map, menu, game);
     scroll(&mut screens.map, game);
     display_elevator_destinations(game);
     if word!(game.ENABLE_DEBUG) != 0
@@ -610,7 +628,7 @@ fn choose_room<H: Host + ?Sized>(game: &mut H, screens: &mut MenuScreens) {
             scroll!(game.Bg1V = scroll_y);
         }
     } else if (game.observed_inputs().pressed & 0x8000) != 0 {
-        crate::menu!(game.MenuIndex += 5);
+        menu.menu_index = menu.menu_index.wrapping_add(5);
         let Some(selection) = area_selection(game) else {
             screens.save_selection.map_area_index = 0;
             return;
@@ -620,25 +638,25 @@ fn choose_room<H: Host + ?Sized>(game: &mut H, screens: &mut MenuScreens) {
     } else if game.observed_inputs().pressed as i32 & (K_BUTTON_START as i32 | K_BUTTON_A as i32)
         != 0
     {
-        crate::menu!(game.MenuIndex += 1);
+        menu.menu_index = menu.menu_index.wrapping_add(1);
         game.queue_sound(0, 0x38_u8, 6);
     }
 }
-fn show_room<H: Host + ?Sized>(game: &mut H, screens: &mut MenuScreens) {
-    draw_icons(IconMode::FileSelect, screens, game);
+fn show_room<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H, screens: &mut MenuScreens) {
+    draw_icons(IconMode::FileSelect, screens, menu, game);
     display_elevator_destinations(game);
-    crate::menu!(game.MenuIndex += 1);
+    menu.menu_index = menu.menu_index.wrapping_add(1);
 }
-fn fade_room<H: Host + ?Sized>(game: &mut H, screens: &mut MenuScreens) {
-    draw_icons(IconMode::FileSelect, screens, game);
+fn fade_room<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H, screens: &mut MenuScreens) {
+    draw_icons(IconMode::FileSelect, screens, menu, game);
     display_elevator_destinations(game);
     game.fade(false);
     if (game.ram().read_byte(crate::ram::mirror::INIDISP) & 0xf) == 0 {
-        crate::menu!(game.MenuIndex += 1);
+        menu.menu_index = menu.menu_index.wrapping_add(1);
         set_native_word(enemy_data::FIRST + enemy_data::X_POS, 32, game);
     }
 }
-fn start_game<H: Host + ?Sized>(game: &mut H, _: &mut MenuScreens) {
+fn start_game<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H, _: &mut MenuScreens) {
     if !super::resuming(game) {
         let timer = enemy_data::FIRST + enemy_data::X_POS;
         set_native_word(timer, native_word(timer, game).wrapping_sub(1), game);
@@ -648,28 +666,28 @@ fn start_game<H: Host + ?Sized>(game: &mut H, _: &mut MenuScreens) {
     }
     if !super::blank_and_wait(true, game) {
         word!(game.GAME_STATE += 1);
-        crate::menu!(game.MenuIndex = 0);
+        menu.menu_index = 0;
     }
 }
-fn clear_room<H: Host + ?Sized>(game: &mut H, _: &mut MenuScreens) {
+fn clear_room<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H, _: &mut MenuScreens) {
     game.ram().write_byte(
         crate::ram::mirror::TM,
         crate::display::control::Layers::BG2_SPRITES.byte(),
     );
     crate::word_transfers!(game, descending, 1024; native(0x37fe) <- value(15));
     menu_tilemap::upload(2048, 0x7e3000, 0, true, game);
-    crate::menu!(game.MenuIndex += 1);
+    menu.menu_index = menu.menu_index.wrapping_add(1);
 }
-fn restore_area<H: Host + ?Sized>(game: &mut H, _: &mut MenuScreens) {
+fn restore_area<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H, _: &mut MenuScreens) {
     menu_tilemap::load_palette(game);
     for area in 0..6 {
         menu_tilemap::area_palette(area, false, game);
     }
     menu_tilemap::area_palette(crate::room_view::current(game).area, true, game);
     load_background(crate::room_view::current(game).area, game);
-    crate::menu!(game.MenuIndex += 1);
+    menu.menu_index = menu.menu_index.wrapping_add(1);
 }
-fn begin_return_window<H: Host + ?Sized>(game: &mut H, _: &mut MenuScreens) {
+fn begin_return_window<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H, _: &mut MenuScreens) {
     game.ram().write_byte(crate::ram::mirror::HDMAEN, 0);
     game.queue_sound(0, 0x3c_u8, 6);
     word! { game;
@@ -688,7 +706,7 @@ fn begin_return_window<H: Host + ?Sized>(game: &mut H, _: &mut MenuScreens) {
         EXPAND_SQ_BOTTOM_SUBPOS,
     }
     super::menu_window::project(game);
-    crate::menu!(game.MenuIndex += 1);
+    menu.menu_index = menu.menu_index.wrapping_add(1);
     crate::display::sequence::register_writes! { game;
         mirror(HDMAEN as u16, 0xc, 0x85, true); mirror(W12SEL as u16, 0x32, 0x60, true);
         mirror(W34SEL as u16, 2, 0x61, true);
@@ -702,11 +720,15 @@ fn begin_return_window<H: Host + ?Sized>(game: &mut H, _: &mut MenuScreens) {
         .write_byte(super::menu_window::ram::WINDOW_2_TABLE + 9, 0);
     scroll! { game, 0; Bg1V, Bg1H }
 }
-fn close_room_window<H: Host + ?Sized>(game: &mut H, screens: &mut MenuScreens) {
+fn close_room_window<H: Host + ?Sized>(
+    menu: &mut MenuState,
+    game: &mut H,
+    screens: &mut MenuScreens,
+) {
     super::menu_window::advance(super::menu_window::Motion::Contract, game);
     draw_area_labels(screens, game);
     if (word!(game.EXPAND_SQ_TIMER -= 1, reread) & 0x8000) != 0 {
-        crate::menu!(game.MenuIndex -= 15);
+        menu.menu_index = menu.menu_index.wrapping_sub(15);
         game.ram().write_byte(
             crate::ram::mirror::TM,
             crate::display::control::Layers::BG1_SPRITES.byte(),
@@ -808,9 +830,14 @@ pub enum IconMode {
     FileSelect,
 }
 
-pub fn draw_icons<H: Host + ?Sized>(mode: IconMode, screens: &mut MenuScreens, game: &mut H) {
+pub fn draw_icons<H: Host + ?Sized>(
+    mode: IconMode,
+    screens: &mut MenuScreens,
+    menu: &mut MenuState,
+    game: &mut H,
+) {
     if matches!(mode, IconMode::FileSelect) {
-        animate_palette(game);
+        animate_palette(menu, game);
     }
     boss_icons(9, 0xc7cb, screens.save_selection.has_area_map, game);
     for (sprite, table) in [(0xb, 0xc7db), (0xa, 0xc7eb), (0x4e, 0xc7fb)] {
@@ -945,44 +972,29 @@ fn boss_icons<H: Host + ?Sized>(sprite: u16, table: u16, has_area_map: u16, game
     }
 }
 
-pub fn animate_palette<H: Host + ?Sized>(game: &mut H) {
-    if crate::menu!(game.PausemenuPaletteAnimationTimer) as u8 == 0 {
+pub fn animate_palette<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
+    if menu.pausemenu_palette_animation_timer as u8 == 0 {
         return;
     }
-    crate::menu_state::set_byte(
-        game,
-        crate::menu_state::Word::PausemenuPaletteAnimationTimer,
-        0,
-        (crate::menu!(game.PausemenuPaletteAnimationTimer) as u8).wrapping_sub(1),
-    );
-    if crate::menu!(game.PausemenuPaletteAnimationTimer) as u8 != 0 {
+    let timer = (menu.pausemenu_palette_animation_timer as u8).wrapping_sub(1);
+    set_menu_byte(&mut menu.pausemenu_palette_animation_timer, 0, timer);
+    if menu.pausemenu_palette_animation_timer as u8 != 0 {
         return;
     }
-    let mut frame = i32::from(crate::menu!(game.PausemenuPaletteAnimationFrame)) + 1;
+    let mut frame = i32::from(menu.pausemenu_palette_animation_frame) + 1;
     loop {
-        crate::menu_state::set_byte(
-            game,
-            crate::menu_state::Word::PausemenuPaletteAnimationFrame,
-            0,
-            frame as u8,
-        );
+        set_menu_byte(&mut menu.pausemenu_palette_animation_frame, 0, frame as u8);
         let timer = game
             .native_image()
             .read(sm_data::cartridge::lorom_offset(0x82c10c) as usize + 3 * frame as usize);
         if timer != 0xff {
-            crate::menu_state::set_byte(
-                game,
-                crate::menu_state::Word::PausemenuPaletteAnimationTimer,
-                0,
-                timer,
-            );
+            set_menu_byte(&mut menu.pausemenu_palette_animation_timer, 0, timer);
             break;
         }
         game.queue_sound(2, 0x2a_u8, 6);
         frame = 0;
     }
-    let frame_word =
-        u16::from_ne_bytes([0, crate::menu!(game.PausemenuPaletteAnimationFrame) as u8]);
+    let frame_word = u16::from_ne_bytes([0, menu.pausemenu_palette_animation_frame as u8]);
     let mut source = (frame_word >> 3) + 30;
     for index in (176..192).rev() {
         let color = grid_word(
@@ -1052,22 +1064,24 @@ pub fn display_elevator_destinations<H: Host + ?Sized>(game: &mut H) {
     }
 }
 
-pub fn reset_animations<H: Host + ?Sized>(map: &mut MapScreenState, game: &mut H) {
-    crate::menu!(game.PausemenuReserveTankDelayCtr = 0);
+pub fn reset_animations<H: Host + ?Sized>(
+    map: &mut MapScreenState,
+    menu: &mut MenuState,
+    game: &mut H,
+) {
+    menu.pausemenu_reserve_tank_delay_ctr = 0;
     scroll! { game, 0; Bg1H, Bg2H, Bg3H, Bg2V, Bg3V }
-    crate::menu!(game.PausemenuButtonLabelMode = 0);
-    crate::menu!(game.PausemenuLrAnimationFrame = 0);
-    crate::menu!(game.UnusedWord7e0745 = 0);
+    menu.pausemenu_button_label_mode = 0;
+    menu.pausemenu_lr_animation_frame = 0;
+    menu.unused_word_7e0745 = 0;
     map.indicator_frame = 0;
     map.indicator_timer = 0;
     map.indicator_loop_counter = 0;
-    crate::menu!(
-        game.PausemenuLrAnimationTimer = game
-            .native_image()
-            .table_word(sm_data::cartridge::lorom_offset(0x82c10c) as usize, 0)
-    );
-    crate::menu!(game.PausemenuPaletteAnimationTimer = 1);
-    crate::menu!(game.PausemenuPaletteAnimationFrame = 0);
+    menu.pausemenu_lr_animation_timer = game
+        .native_image()
+        .table_word(sm_data::cartridge::lorom_offset(0x82c10c) as usize, 0);
+    menu.pausemenu_palette_animation_timer = 1;
+    menu.pausemenu_palette_animation_frame = 0;
 }
 
 pub fn center_map<H: Host + ?Sized>(vertical_center: u16, map: &MapScreenState, game: &mut H) {
@@ -1286,25 +1300,58 @@ fn animation_ram_address<H: Host + ?Sized>(table: u32, index: usize, game: &mut 
     usize::from(address)
 }
 
-pub fn animate_pause_sprite<H: Host + ?Sized>(animation: u16, x: u16, y: u16, game: &mut H) {
+/// The word at RAM address `at` the pause sprite animations name: the menu
+/// state's while one starts there, RAM otherwise.
+fn animation_word<H: Host + ?Sized>(at: usize, menu: &mut MenuState, game: &H) -> u16 {
+    match menu.word_at(at) {
+        Some(word) => *word,
+        None => native_word(at, game),
+    }
+}
+
+fn set_animation_word<H: Host + ?Sized>(at: usize, value: u16, menu: &mut MenuState, game: &mut H) {
+    match menu.word_at(at) {
+        Some(word) => *word = value,
+        None => set_native_word(at, value, game),
+    }
+}
+
+pub fn animate_pause_sprite<H: Host + ?Sized>(
+    animation: u16,
+    x: u16,
+    y: u16,
+    menu: &mut MenuState,
+    game: &mut H,
+) {
     let index = (i32::from(animation) - 1) as usize;
     let frame = animation_ram_address(0x82c0c4, index, game);
     let timer = animation_ram_address(0x82c0b2, index, game);
     let script = map_record(animation_entry(0x82c0e8, index, game), game);
-    set_native_word(timer, native_word(timer, game).wrapping_sub(1), game);
-    if native_word(timer, game) as i16 <= 0 {
-        set_native_word(frame, native_word(frame, game).wrapping_add(1), game);
-        let mut duration = u16::from(script.byte(3 * usize::from(native_word(frame, game))));
+    let ticked = animation_word(timer, menu, game).wrapping_sub(1);
+    set_animation_word(timer, ticked, menu, game);
+    if ticked as i16 <= 0 {
+        let next = animation_word(frame, menu, game).wrapping_add(1);
+        set_animation_word(frame, next, menu, game);
+        let mut duration = u16::from(script.byte(3 * usize::from(next)));
         if duration == 255 {
-            set_native_word(frame, 0, game);
+            set_animation_word(frame, 0, menu, game);
             duration = u16::from(script.byte(0));
         }
-        set_native_word(timer, duration, game);
+        set_animation_word(timer, duration, menu, game);
     }
     let palette = animation_palette(game, 3);
-    let delta = u16::from(script.byte(3 * usize::from(native_word(frame, game)) + 2));
+    let current = animation_word(frame, menu, game);
+    let delta = u16::from(script.byte(3 * usize::from(current) + 2));
     let variant = animation_ram_address(0x82c0d6, index, game);
-    let variant = 2 * u16::from(game.ram().read_byte(variant));
+    // The variant is one byte: the low or high byte of the word it falls in.
+    let variant = if (MENU..MENU + 2 * WORDS).contains(&variant) {
+        let lane = (variant - MENU) % 2;
+        menu.word_at(variant - lane)
+            .map_or(0, |word| word.to_le_bytes()[lane])
+    } else {
+        game.ram().read_byte(variant)
+    };
+    let variant = 2 * u16::from(variant);
     let sprite = map_record(
         table_word(
             &game.pause_menu_tables().animation_spritemaps,
@@ -1325,7 +1372,7 @@ pub fn animate_pause_sprite<H: Host + ?Sized>(animation: u16, x: u16, y: u16, ga
     );
 }
 
-pub fn draw_equipment_selector<H: Host + ?Sized>(game: &mut H) {
+pub fn draw_equipment_selector<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
     if inventory!(game.MaxReserveHealth)
         | inventory!(game.CollectedItems)
         | inventory!(game.CollectedBeams)
@@ -1337,22 +1384,27 @@ pub fn draw_equipment_selector<H: Host + ?Sized>(game: &mut H) {
         &game.pause_menu_tables().selector_positions,
         game,
         SELECTOR_POSITION_ADDRESS,
-        crate::menu!(game.PausemenuEquipmentCategoryItem) as u8 as isize,
+        menu.pausemenu_equipment_category_item as u8 as isize,
     )
-    .wrapping_add(
-        4 * u16::from(crate::menu_state::get_byte(
-            &*game,
-            crate::menu_state::Word::PausemenuEquipmentCategoryItem,
-            1,
-        )),
-    );
+    .wrapping_add(4 * u16::from(menu.pausemenu_equipment_category_item.to_le_bytes()[1]));
     let position = map_record(address, game);
-    animate_pause_sprite(3, position.word(0).wrapping_sub(1), position.word(2), game);
+    animate_pause_sprite(
+        3,
+        position.word(0).wrapping_sub(1),
+        position.word(2),
+        menu,
+        game,
+    );
 }
 
-fn scroll_arrow<H: Host + ?Sized>(address: u32, map: &mut MapScreenState, game: &mut H) {
+fn scroll_arrow<H: Host + ?Sized>(
+    address: u32,
+    map: &mut MapScreenState,
+    menu: &mut MenuState,
+    game: &mut H,
+) {
     let record = menu_tilemap::native_record(address, game);
-    animate_pause_sprite(record.word(4), record.word(0), record.word(2), game);
+    animate_pause_sprite(record.word(4), record.word(0), record.word(2), menu, game);
     // Drawing can replace the image; input and direction use a fresh capture.
     let record = menu_tilemap::native_record(address, game);
     if game.observed_inputs().held & record.word(6) != 0 && map.scrolling_direction == 0 {
@@ -1360,19 +1412,24 @@ fn scroll_arrow<H: Host + ?Sized>(address: u32, map: &mut MapScreenState, game: 
     }
 }
 
-pub fn scroll_arrows<H: Host + ?Sized>(screen: MapScreen, map: &mut MapScreenState, game: &mut H) {
+pub fn scroll_arrows<H: Host + ?Sized>(
+    screen: MapScreen,
+    map: &mut MapScreenState,
+    menu: &mut MenuState,
+    game: &mut H,
+) {
     let (base, top, bottom) = match screen {
         MapScreen::Pause => (0x82b9a0, 56, 177),
         MapScreen::FileSelect => (0x81af32, 64, 145),
     };
     if (i32::from(map.min_x_scroll) - 24 - i32::from(scroll!(game.Bg1H))) & 0x8000 != 0 {
-        scroll_arrow(base, map, game);
+        scroll_arrow(base, map, menu, game);
     }
     if (i32::from(map.max_x_scroll) - 232 - i32::from(scroll!(game.Bg1H))) & 0x8000 == 0 {
-        scroll_arrow(base + 10, map, game);
+        scroll_arrow(base + 10, map, menu, game);
     }
     if (i32::from(map.min_y_scroll) - top - i32::from(scroll!(game.Bg1V))) & 0x8000 != 0 {
-        scroll_arrow(base + 20, map, game);
+        scroll_arrow(base + 20, map, menu, game);
     }
     if (i32::from(map.max_y_scroll) - bottom - i32::from(scroll!(game.Bg1V))) & 0x8000 != 0 {
         if map.scrolling_direction == menu_tilemap::native_record(base + 30, game).word(8) {
@@ -1381,6 +1438,6 @@ pub fn scroll_arrows<H: Host + ?Sized>(screen: MapScreen, map: &mut MapScreenSta
             map.scrolling_speed_index = 0;
         }
     } else {
-        scroll_arrow(base + 30, map, game);
+        scroll_arrow(base + 30, map, menu, game);
     }
 }

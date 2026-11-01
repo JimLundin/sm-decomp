@@ -327,7 +327,9 @@ pub fn fade_out<H: Host + ?Sized>(
         }
         11 => {
             word!(game.GAME_STATE = 4);
-            crate::menu!(game.MenuIndex = 0);
+            crate::session_cohort::with(game, |_, menu: &mut crate::menu_state::MenuState| {
+                menu.menu_index = 0
+            });
             options.screen_index = 0;
         }
         _ => options.screen_index = 4,

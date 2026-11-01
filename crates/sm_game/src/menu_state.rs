@@ -12,11 +12,11 @@
 //! carries it.
 //!
 //! **Consumers.** The menus run on the compatibility host outside a lease and
-//! write these words every frame. They use [`menu!`](crate::menu), which reads
-//! and stores through the host's projected bytes: the owned Session's
-//! projection while one is installed, the byte image otherwise, with the same
-//! bytes and order as the named word accesses it replaces. A consumer that
-//! moves onto a lease uses `session().menu` directly.
+//! write these words every frame. Each menu frame (the pause screen, the file
+//! menu, the file select map and the game over menu) holds a [`MenuState`]
+//! copy through [`crate::session_cohort::with`] and its functions read and
+//! store the copy's fields; the words it changed are stored back once. A
+//! consumer that moves onto a lease uses `session().menu` directly.
 //!
 //! **Raw writes.** A raw store outside a lease advances the RAM write epoch,
 //! which suspends the projection, so later reads see RAM and the next lease
@@ -26,9 +26,10 @@
 //! $0727..$0764 are the boot clears, the hard reset fill, and the snapshot
 //! and seed loads. The clears and the fill are raw stores outside a lease;
 //! a snapshot load is followed by a checked Session adoption, and a seed load
-//! runs under a reference import. No `word_transfers!`, WRAM DMA, decompression,
-//! message box clear or save file transfer reaches the range.
-use crate::ram::CompatibilityRam;
+//! runs under a reference import. The unpause reset clears the range with
+//! `word_transfers!` while no copy is held. No WRAM DMA, decompression, message
+//! box clear or save file transfer reaches the range.
+
 use crate::ram::words as ram;
 use crate::session::Session;
 use crate::session_cohort::Cohort;
@@ -50,6 +51,26 @@ macro_rules! menu_state {
         impl MenuState {
             pub fn words(&self) -> [u16; WORDS] {
                 [$(self.$field),+]
+            }
+            /// The menu word at RAM address `at`, when one starts there.
+            pub fn word_at(&mut self, at: usize) -> Option<&mut u16> {
+                let offset = at.checked_sub(MENU)?;
+                if offset % 2 != 0 {
+                    return None;
+                }
+                [$(&mut self.$field),+].into_iter().nth(offset / 2)
+            }
+        }
+
+        impl Cohort for MenuState {
+            fn words(&mut self, mut visit: impl FnMut(usize, &mut u16)) {
+                let fields = [$(&mut self.$field),+];
+                for (index, field) in fields.into_iter().enumerate() {
+                    visit(MENU + 2 * index, field);
+                }
+            }
+            fn session_words(session: &mut Session, visit: impl FnMut(usize, &mut u16)) {
+                <Self as Cohort>::words(&mut session.menu, visit);
             }
         }
 
@@ -97,6 +118,13 @@ menu_state!(
     unused_word_7e0761: UnusedWord7e0761 = UNUSED_WORD_7E0761,
     pause_screen_mode: PauseScreenMode = PAUSE_SCREEN_MODE,
 );
+
+/// Store `value` as byte `lane` (0 low, 1 high) of the menu word `word`.
+pub fn set_menu_byte(word: &mut u16, lane: usize, value: u8) {
+    let mut bytes = word.to_le_bytes();
+    bytes[lane] = value;
+    *word = u16::from_le_bytes(bytes);
+}
 
 /// RAM address of the first menu word, `menu_index`.
 pub const MENU: usize = 0x727;
@@ -250,61 +278,4 @@ pub struct DeathSequence {
     pub index: u16,
     pub counter: u16,
     pub flash_timer: u16,
-}
-
-/// The menu state as the host's projection holds it.
-pub fn current<H: CompatibilityRam + ?Sized>(h: &H) -> MenuState {
-    crate::session_encoding::menu(&crate::projection::reader(h))
-}
-
-/// `word` as the host's projection holds it, low byte then high.
-pub fn get<H: CompatibilityRam + ?Sized>(h: &H, word: Word) -> u16 {
-    crate::projection::word(h, MENU + 2 * word as usize)
-}
-
-/// Store `value` to `word`, low byte then high, as the named word store did.
-pub fn set<H: CompatibilityRam + ?Sized>(h: &mut H, word: Word, value: u16) {
-    crate::projection::set_word(h, MENU + 2 * word as usize, value);
-}
-
-/// Byte `lane` (0 low, 1 high) of `word` as the host's projection holds it.
-pub fn get_byte<H: CompatibilityRam + ?Sized>(h: &H, word: Word, lane: usize) -> u8 {
-    crate::projection::byte(h, MENU + 2 * word as usize + lane)
-}
-
-/// Store byte `lane` (0 low, 1 high) of `word` through the host's projection.
-pub fn set_byte<H: CompatibilityRam + ?Sized>(h: &mut H, word: Word, lane: usize, value: u8) {
-    crate::projection::set_byte(h, MENU + 2 * word as usize + lane, value);
-}
-
-/// Typed access to the menu words through the host's projected bytes, in the
-/// shapes the named word accesses used: read, store, `+=`/`-=` (reading the
-/// old value first), and `-=` with a reread of the stored value.
-#[macro_export]
-macro_rules! menu {
-    ($game:ident.$field:ident) => {
-        $crate::menu_state::get(&*$game, $crate::menu_state::Word::$field)
-    };
-    ($game:ident.$field:ident = $value:expr $(,)?) => {{
-        let value: u16 = $value;
-        $crate::menu_state::set($game, $crate::menu_state::Word::$field, value)
-    }};
-    ($game:ident.$field:ident += $value:expr $(,)?) => {{
-        let old = $crate::menu_state::get(&*$game, $crate::menu_state::Word::$field);
-        let value = old.wrapping_add($value);
-        $crate::menu_state::set($game, $crate::menu_state::Word::$field, value)
-    }};
-    ($game:ident.$field:ident -= $value:expr $(,)?) => {{
-        let old = $crate::menu_state::get(&*$game, $crate::menu_state::Word::$field);
-        let value = old.wrapping_sub($value);
-        $crate::menu_state::set($game, $crate::menu_state::Word::$field, value)
-    }};
-    ($game:ident.$field:ident -= $value:expr, reread $(,)?) => {{
-        $crate::menu!($game.$field -= $value);
-        $crate::menu_state::get(&*$game, $crate::menu_state::Word::$field)
-    }};
-    ($game:ident.$field:ident += $value:expr, reread $(,)?) => {{
-        $crate::menu!($game.$field += $value);
-        $crate::menu_state::get(&*$game, $crate::menu_state::Word::$field)
-    }};
 }

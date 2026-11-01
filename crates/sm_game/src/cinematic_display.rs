@@ -149,21 +149,23 @@ pub fn configure_cinematic_display<H: crate::menus::host::Host + ?Sized>(
                 options.menu_option_index = 0
             });
             crate::screen_fade::set_both(game, 0, 0);
-            crate::menu!(game.PausemenuStartLrPressedHighlightTimer = 0);
-            crate::menu!(game.PausemenuLrAnimationTimer = 0);
-            crate::menu!(game.PausemenuItemSelectorAnimationTimer = 0);
-            crate::menu!(game.PausemenuReserveTankAnimationTimer = 0);
-            crate::menu!(game.UnusedWord7e0731 = 0);
-            crate::menu!(game.UnusedWord7e073d = 0);
-            crate::menu!(game.PausemenuLrAnimationFrame = 0);
-            crate::menu!(game.PausemenuItemSelectorAnimationFrame = 0);
-            crate::menu!(game.PausemenuReserveTankAnimationFrame = 0);
-            crate::menu!(game.UnusedWord7e0745 = 0);
-            crate::menu!(game.PausemenuShoulderButtonHighlight = 0);
-            crate::menu!(game.PausemenuButtonLabelMode = 0);
-            crate::menu!(game.PausemenuEquipmentCategoryItem = 0);
-            crate::menu!(game.PausemenuReserveTankDelayCtr = 0);
-            crate::menu!(game.UnusedWord7e0759 = 0);
+            crate::session_cohort::with(game, |_, menu: &mut crate::menu_state::MenuState| {
+                menu.pausemenu_start_lr_pressed_highlight_timer = 0;
+                menu.pausemenu_lr_animation_timer = 0;
+                menu.pausemenu_item_selector_animation_timer = 0;
+                menu.pausemenu_reserve_tank_animation_timer = 0;
+                menu.unused_word_7e0731 = 0;
+                menu.unused_word_7e073d = 0;
+                menu.pausemenu_lr_animation_frame = 0;
+                menu.pausemenu_item_selector_animation_frame = 0;
+                menu.pausemenu_reserve_tank_animation_frame = 0;
+                menu.unused_word_7e0745 = 0;
+                menu.pausemenu_shoulder_button_highlight = 0;
+                menu.pausemenu_button_label_mode = 0;
+                menu.pausemenu_equipment_category_item = 0;
+                menu.pausemenu_reserve_tank_delay_ctr = 0;
+                menu.unused_word_7e0759 = 0;
+            });
             crate::inventory::set(game, crate::inventory::Word::ReserveHealth, 0);
             crate::inventory::set(game, crate::inventory::Word::ReserveMissiles, 0);
             *cine.mode7_angle() = 0;

@@ -13,6 +13,7 @@ use crate::display::sequence::{register_writes, write_register_and_mirror};
 use crate::display_refresh;
 use crate::enemy_projectiles;
 use crate::gameplay_rules::{finish_frame, finish_health_and_time};
+use crate::menu_state::MenuState;
 use crate::menu_state::{DeathSequence, MenuScreens, OptionsMenu, SaveSelection};
 use crate::menus::prelude::CoroutineRet;
 use crate::menus::{
@@ -533,34 +534,38 @@ fn setup_pause<H: Host>(game: &mut H) -> CoroutineRet {
     word_transfers!(game, ascending, 256; pause_map(384) <- le(PALETTE_BUFFER, 0));
     word_transfers!(game, ascending, 256; le(PALETTE_BUFFER, 0) <- rom(0xb6f000, 0));
     display_refresh::pause_graphics(true, game);
-    pause_controls::initialize(game);
+    session_cohort::with(game, |game, menu: &mut MenuState| {
+        pause_controls::initialize(menu, game)
+    });
     0
 }
 
 /// Pause phase: one pause menu frame.
 fn advance_pause<H: Host>(game: &mut H) -> CoroutineRet {
-    controller_input::filter(3, game);
-    // Preserve the eight-entry bounds failure before any tab work.
-    let tab = [0, 1, 2, 3, 4, 5, 6, 7][usize::from(crate::menu!(game.MenuIndex))];
-    match tab {
-        0 => pause_controls::update_map(game),
-        1 => pause_controls::update_equipment(game),
-        2 | 5 => pause_controls::fade_out_tab(game, tab == 5, |game| {
-            crate::display_refresh::enable(true, game);
-        }),
-        3 | 6 => pause_controls::load_tab(game, tab == 3, |game| {
-            if tab == 3 {
-                game.load_vram_words(0x7e3800, 0x3000, 0x800);
-            } else {
-                display_refresh::upload_pause_map(game);
-            }
-        }),
-        4 => pause_controls::fade_tab::<true, _>(game),
-        _ => pause_controls::fade_tab::<false, _>(game),
-    }
-    hud::advance(game);
-    map_menu::animate_palette(game);
-    0
+    crate::session_cohort::with(game, |game, menu: &mut MenuState| {
+        controller_input::filter(3, game);
+        // Preserve the eight-entry bounds failure before any tab work.
+        let tab = [0, 1, 2, 3, 4, 5, 6, 7][usize::from(menu.menu_index)];
+        match tab {
+            0 => pause_controls::update_map(menu, game),
+            1 => pause_controls::update_equipment(menu, game),
+            2 | 5 => pause_controls::fade_out_tab(menu, game, tab == 5, |game| {
+                crate::display_refresh::enable(true, game);
+            }),
+            3 | 6 => pause_controls::load_tab(menu, game, tab == 3, |game| {
+                if tab == 3 {
+                    game.load_vram_words(0x7e3800, 0x3000, 0x800);
+                } else {
+                    display_refresh::upload_pause_map(game);
+                }
+            }),
+            4 => pause_controls::fade_tab::<true, _>(menu, game),
+            _ => pause_controls::fade_tab::<false, _>(menu, game),
+        }
+        hud::advance(game);
+        map_menu::animate_palette(menu, game);
+        0
+    })
 }
 
 /// Pause phase: restore the room after the pause screen.
@@ -617,7 +622,9 @@ fn setup_unpause<H: Host>(game: &mut H) -> CoroutineRet {
 /// Pause and death phases: fade to black before unpausing or game over.
 fn fade_out<H: Host>(entry: Entry, game: &mut H) -> CoroutineRet {
     if matches!(entry, Entry::UnpauseFadeOut) {
-        pause_controls::draw_unpause(game);
+        session_cohort::with(game, |game, menu: &mut MenuState| {
+            pause_controls::draw_unpause(menu, game)
+        });
     }
     game.fade(false);
     if game.ram().read_byte(0x51) == 0x80 {
@@ -625,7 +632,7 @@ fn fade_out<H: Host>(entry: Entry, game: &mut H) -> CoroutineRet {
         crate::screen_fade::set_both(game, 0, 0);
         word!(game.GAME_STATE += 1);
         if matches!(entry, Entry::GameOverFadeOut) {
-            crate::menu!(game.MenuIndex = 0);
+            session_cohort::with(game, |_, menu: &mut MenuState| menu.menu_index = 0);
             crate::session_cohort::with(
                 game,
                 |_, words: &mut crate::session_words::SessionWords| {
@@ -653,7 +660,7 @@ fn exit_time_up<H: Host>(game: &mut H) -> CoroutineRet {
             session_cohort::with(game, |_, options: &mut OptionsMenu| {
                 options.screen_index = 0
             });
-            crate::menu!(game.MenuIndex = 0);
+            session_cohort::with(game, |_, menu: &mut MenuState| menu.menu_index = 0);
             word_transfers!(game, descending, 128; le(EPROJ_Y_SUBPOS, 142) <- value(0));
             word!(game.GAME_STATE = K_GAME_STATE_25_SAMUS_NO_HEALTH as u16);
         } else {

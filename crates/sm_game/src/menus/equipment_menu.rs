@@ -2,6 +2,7 @@
 use super::menu_tilemap;
 use super::prelude::*;
 use crate::imported::{Imported, load, word as table_word};
+use crate::menu_state::MenuState;
 use sm_data::equipment_screen::{
     BEAM_BITMASK_ADDRESS, BEAM_TILEMAP_OFFSET_ADDRESS, BEAMS, BOOT_BITMASK_ADDRESS, BOOTS,
     BeamBitmasks, BeamTilemapOffsets, BootBitmasks, CATEGORY_ADDRESS, CATEGORY_BYTES, Categories,
@@ -48,141 +49,143 @@ fn category<H: Host + ?Sized>(game: &H, index: isize) -> Category {
     )
 }
 
-pub fn update<H: Host + ?Sized>(game: &mut H) {
-    let category = crate::menu!(game.PausemenuEquipmentCategoryItem) as u8;
-    let navigate: [fn(&mut H); 4] = [reserves, beams, suits, boots];
-    navigate[usize::from(category)](game);
+pub fn update<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
+    let category = menu.pausemenu_equipment_category_item as u8;
+    let navigate: [fn(&mut MenuState, &mut H); 4] = [reserves, beams, suits, boots];
+    navigate[usize::from(category)](menu, game);
     match category {
-        0 => menu_tilemap::update_reserve_arrow(game),
+        0 => menu_tilemap::update_reserve_arrow(menu, game),
         1 => {
             let previous = inventory!(game.EquippedBeams);
             if inventory!(game.CollectedBeams) != 0
-                && crate::menu!(game.PausemenuEquipmentCategoryItem) as u8 == 1
+                && menu.pausemenu_equipment_category_item as u8 == 1
             {
-                toggle(10, game);
+                toggle(10, menu, game);
                 exclude_other_beam(previous, game);
             }
         }
         _ => {
-            if crate::menu!(game.PausemenuEquipmentCategoryItem) as u8 == category {
-                toggle(18, game);
+            if menu.pausemenu_equipment_category_item as u8 == category {
+                toggle(18, menu, game);
             }
         }
     }
-    super::map_menu::draw_equipment_selector(game);
-    menu_tilemap::reserve_tanks(game);
+    super::map_menu::draw_equipment_selector(menu, game);
+    menu_tilemap::reserve_tanks(menu, game);
     menu_tilemap::queue_equipment_wireframe(game);
 }
 
-fn reserves<H: Host + ?Sized>(game: &mut H) {
-    let actions: [fn(&mut H); 2] = [
-        |game| super::reserve_tanks::toggle_mode(game),
-        |game| super::reserve_tanks::transfer_manual(game),
+fn reserves<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
+    let actions: [fn(&mut MenuState, &mut H); 2] = [
+        |_, game| super::reserve_tanks::toggle_mode(game),
+        super::reserve_tanks::transfer_manual,
     ];
-    actions[usize::from(crate::menu!(game.PausemenuEquipmentCategoryItem) >> 8)](game);
-    let previous = crate::menu!(game.PausemenuEquipmentCategoryItem);
+    actions[usize::from(menu.pausemenu_equipment_category_item >> 8)](menu, game);
+    let previous = menu.pausemenu_equipment_category_item;
     if game.observed_inputs().pressed & K_BUTTON_RIGHT as u16 != 0 {
         if game.observed_inputs().pressed & K_BUTTON_DOWN as u16 != 0
-            || scan(2, 0, false, None, game) == 0xffff
+            || scan(2, 0, false, None, menu, game) == 0xffff
         {
-            scan(3, 0, false, Some(previous), game);
+            scan(3, 0, false, Some(previous), menu, game);
         }
     } else if game.observed_inputs().pressed & K_BUTTON_UP as u16 != 0 {
-        if crate::menu!(game.PausemenuEquipmentCategoryItem) & 0xff00 != 0 {
+        if menu.pausemenu_equipment_category_item & 0xff00 != 0 {
             game.queue_sound(0, 0x37_u8, 6);
-            crate::menu!(game.PausemenuEquipmentCategoryItem -= 256);
+            menu.pausemenu_equipment_category_item =
+                menu.pausemenu_equipment_category_item.wrapping_sub(256);
         }
     } else if game.observed_inputs().pressed & K_BUTTON_DOWN as u16 != 0 {
-        if crate::menu!(game.PausemenuEquipmentCategoryItem) & 0xff00 == 256
+        if menu.pausemenu_equipment_category_item & 0xff00 == 256
             || inventory!(game.ReserveMode) == 1
             || {
-                crate::menu!(game.PausemenuEquipmentCategoryItem += 256);
+                menu.pausemenu_equipment_category_item =
+                    menu.pausemenu_equipment_category_item.wrapping_add(256);
                 inventory!(game.ReserveHealth) == 0
             }
         {
-            scan(1, 0, false, Some(previous), game);
+            scan(1, 0, false, Some(previous), menu, game);
         } else {
             game.queue_sound(0, 0x37_u8, 6);
         }
     }
 }
 
-fn beams<H: Host + ?Sized>(game: &mut H) {
-    let previous = crate::menu!(game.PausemenuEquipmentCategoryItem);
+fn beams<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
+    let previous = menu.pausemenu_equipment_category_item;
     if game.observed_inputs().pressed & K_BUTTON_RIGHT as u16 != 0 {
         if game.observed_inputs().pressed & K_BUTTON_UP as u16 != 0 {
-            scan(2, 0, false, None, game);
-        } else if scan(2, 4, false, None, game) != 0 {
-            scan(3, 0, false, Some(previous), game);
+            scan(2, 0, false, None, menu, game);
+        } else if scan(2, 4, false, None, menu, game) != 0 {
+            scan(3, 0, false, Some(previous), menu, game);
         }
     } else if game.observed_inputs().pressed & K_BUTTON_DOWN as u16 != 0 {
-        if inventory!(game.HyperBeam) == 0
-            && crate::menu!(game.PausemenuEquipmentCategoryItem) != 1025
-        {
-            scan(1, shift(256, game), false, Some(previous), game);
+        if inventory!(game.HyperBeam) == 0 && menu.pausemenu_equipment_category_item != 1025 {
+            scan(1, shift(256, menu), false, Some(previous), menu, game);
         }
     } else if game.observed_inputs().pressed & K_BUTTON_UP as u16 != 0
-        && (crate::menu!(game.PausemenuEquipmentCategoryItem) & 0xff00 == 0
-            || scan(1, shift(-256, game), true, None, game) == 0xffff)
-        && select_reserves(game) == 0
+        && (menu.pausemenu_equipment_category_item & 0xff00 == 0
+            || scan(1, shift(-256, menu), true, None, menu, game) == 0xffff)
+        && select_reserves(menu, game) == 0
     {
-        crate::menu!(game.PausemenuEquipmentCategoryItem = previous);
+        menu.pausemenu_equipment_category_item = previous;
     }
 }
 
-fn suits<H: Host + ?Sized>(game: &mut H) {
-    let previous = crate::menu!(game.PausemenuEquipmentCategoryItem);
+fn suits<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
+    let previous = menu.pausemenu_equipment_category_item;
     if game.observed_inputs().pressed & K_BUTTON_LEFT as u16 != 0 {
         if game.observed_inputs().pressed & K_BUTTON_DOWN as u16 == 0 {
-            if select_reserves(game) != 0 {
+            if select_reserves(menu, game) != 0 {
                 return;
             }
-            crate::menu!(game.PausemenuEquipmentCategoryItem = previous);
+            menu.pausemenu_equipment_category_item = previous;
         }
-        scan(1, 0, false, Some(previous), game);
+        scan(1, 0, false, Some(previous), menu, game);
     } else if game.observed_inputs().pressed & K_BUTTON_UP as u16 != 0 {
-        if crate::menu!(game.PausemenuEquipmentCategoryItem) & 0xff00 != 0 {
-            scan(2, shift(-256, game), true, Some(previous), game);
+        if menu.pausemenu_equipment_category_item & 0xff00 != 0 {
+            scan(2, shift(-256, menu), true, Some(previous), menu, game);
         }
     } else if game.observed_inputs().pressed & K_BUTTON_DOWN as u16 != 0
-        && (crate::menu!(game.PausemenuEquipmentCategoryItem) & 0xff00 == 1280
-            || scan(2, shift(256, game), false, None, game) == 0xffff)
+        && (menu.pausemenu_equipment_category_item & 0xff00 == 1280
+            || scan(2, shift(256, menu), false, None, menu, game) == 0xffff)
     {
-        scan(3, 0, false, Some(previous), game);
+        scan(3, 0, false, Some(previous), menu, game);
     }
 }
 
-fn boots<H: Host + ?Sized>(game: &mut H) {
-    let previous = crate::menu!(game.PausemenuEquipmentCategoryItem);
+fn boots<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
+    let previous = menu.pausemenu_equipment_category_item;
     if game.observed_inputs().pressed & K_BUTTON_LEFT as u16 != 0 {
         if (game.observed_inputs().pressed & K_BUTTON_UP as u16 != 0
-            || scan(1, 8, true, None, game) == 0xffff)
-            && select_reserves(game) == 0
+            || scan(1, 8, true, None, menu, game) == 0xffff)
+            && select_reserves(menu, game) == 0
         {
-            crate::menu!(game.PausemenuEquipmentCategoryItem = previous);
+            menu.pausemenu_equipment_category_item = previous;
         }
     } else if game.observed_inputs().pressed & K_BUTTON_DOWN as u16 != 0 {
-        if crate::menu!(game.PausemenuEquipmentCategoryItem) != 515 {
-            scan(3, shift(256, game), false, Some(previous), game);
+        if menu.pausemenu_equipment_category_item != 515 {
+            scan(3, shift(256, menu), false, Some(previous), menu, game);
         }
     } else if game.observed_inputs().pressed & K_BUTTON_UP as u16 != 0
-        && (crate::menu!(game.PausemenuEquipmentCategoryItem) & 0xff00 == 0
-            || scan(3, shift(-256, game), true, None, game) == 0xffff)
+        && (menu.pausemenu_equipment_category_item & 0xff00 == 0
+            || scan(3, shift(-256, menu), true, None, menu, game) == 0xffff)
     {
-        scan(2, 10, true, Some(previous), game);
+        scan(2, 10, true, Some(previous), menu, game);
     }
 }
 
-fn shift<H: Host + ?Sized>(amount: i16, game: &mut H) -> u16 {
-    crate::menu!(game.PausemenuEquipmentCategoryItem += amount as u16);
+fn shift(amount: i16, menu: &mut MenuState) -> u16 {
+    menu.pausemenu_equipment_category_item = menu
+        .pausemenu_equipment_category_item
+        .wrapping_add(amount as u16);
     // The selected item is the word's high byte.
-    2 * (crate::menu!(game.PausemenuEquipmentCategoryItem) >> 8)
+    2 * (menu.pausemenu_equipment_category_item >> 8)
 }
 
-fn select_reserves<H: Host + ?Sized>(game: &mut H) -> u16 {
+fn select_reserves<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H) -> u16 {
     let maximum = inventory!(game.MaxReserveHealth);
     if inventory!(game.MaxReserveHealth) != 0 {
-        crate::menu!(game.PausemenuEquipmentCategoryItem = 0);
+        menu.pausemenu_equipment_category_item = 0;
         game.queue_sound(0, 0x37_u8, 6);
         1
     } else {
@@ -196,6 +199,7 @@ fn scan<H: Host + ?Sized>(
     mut offset: u16,
     upward: bool,
     fallback: Option<u16>,
+    menu: &mut MenuState,
     game: &mut H,
 ) -> u16 {
     let limit = match category {
@@ -230,18 +234,18 @@ fn scan<H: Host + ?Sized>(
     }
     if !found {
         if let Some(previous) = fallback {
-            crate::menu!(game.PausemenuEquipmentCategoryItem = previous);
+            menu.pausemenu_equipment_category_item = previous;
         }
         return 0xffff;
     }
     let selection = ((offset >> 1) << 8) | category;
     // Downward beam selection stores before sound; all other paths store after it.
     if category == 1 && !upward {
-        crate::menu!(game.PausemenuEquipmentCategoryItem = selection);
+        menu.pausemenu_equipment_category_item = selection;
         game.queue_sound(0, 0x37_u8, 6);
     } else {
         game.queue_sound(0, 0x37_u8, 6);
-        crate::menu!(game.PausemenuEquipmentCategoryItem = selection);
+        menu.pausemenu_equipment_category_item = selection;
     }
     if category == 2 && !upward {
         0
@@ -275,14 +279,14 @@ fn exclude_other_beam<H: Host + ?Sized>(previous: u16, game: &mut H) {
     }
 }
 
-fn toggle<H: Host + ?Sized>(bytes: u16, game: &mut H) {
+fn toggle<H: Host + ?Sized>(bytes: u16, menu: &mut MenuState, game: &mut H) {
     if game.observed_inputs().pressed & K_BUTTON_A as u16 == 0 {
         return;
     }
     crate::probe::hit("equipment_menu.toggle");
     game.queue_sound(0, 0x38_u8, 6);
-    let item = crate::menu!(game.PausemenuEquipmentCategoryItem) >> 8;
-    let category = crate::menu!(game.PausemenuEquipmentCategoryItem) as u8 as isize;
+    let item = menu.pausemenu_equipment_category_item >> 8;
+    let category = menu.pausemenu_equipment_category_item as u8 as isize;
     let tables = self::category(game, category);
     let target = list_entry(tables.tilemap_offsets, item, game) as usize;
     let address = tables.equipped_address;

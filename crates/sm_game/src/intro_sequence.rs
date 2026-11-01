@@ -544,7 +544,9 @@ pub fn boom_fade_out<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
             crate::session_cohort::with(game, |_, options: &mut OptionsMenu| {
                 options.screen_index = 0
             });
-            crate::menu!(game.MenuIndex = 0);
+            crate::session_cohort::with(game, |_, menu: &mut crate::menu_state::MenuState| {
+                menu.menu_index = 0
+            });
             for index in (8..=135).rev() {
                 *cine.bg_arr7(index) = 0;
             }

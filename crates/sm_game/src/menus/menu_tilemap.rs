@@ -2,6 +2,7 @@
 use super::prelude::*;
 use crate::display::bg_tile;
 use crate::enemy_projectiles::table::with_file_select;
+use crate::menu_state::MenuState;
 use crate::menu_state::SaveSelection;
 
 /// The pause menu's map and equipment BG tilemap buffers in work RAM.
@@ -137,14 +138,14 @@ pub fn file_rows<H: Host + ?Sized>(emphasis: FileRowEmphasis, game: &mut H) {
 }
 
 /// Requires the native file-menu definitions for its text and tile reads.
-pub fn main_menu<H: Host + ?Sized>(game: &mut H) {
+pub fn main_menu<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
     if !super::resuming(game) {
         draw_main_menu(game);
     }
     if super::blank_and_wait(false, game) {
         return;
     }
-    crate::menu!(game.MenuIndex += 1);
+    menu.menu_index = menu.menu_index.wrapping_add(1);
     with_file_select(game, |menu| {
         *menu.file_copy_selection() = 0;
         *menu.file_copy_source_slot() = 0;
@@ -469,15 +470,12 @@ pub enum ReserveArrow {
     Off,
 }
 
-pub fn update_reserve_arrow<H: Host + ?Sized>(game: &mut H) {
-    let mode = if crate::menu!(game.PausemenuEquipmentCategoryItem) as u8 != 0 {
+pub fn update_reserve_arrow<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
+    let mode = if menu.pausemenu_equipment_category_item as u8 != 0 {
         ReserveArrow::Off
     } else {
-        [ReserveArrow::Animated, ReserveArrow::On][usize::from(crate::menu_state::get_byte(
-            &*game,
-            crate::menu_state::Word::PausemenuEquipmentCategoryItem,
-            1,
-        ))]
+        [ReserveArrow::Animated, ReserveArrow::On]
+            [usize::from(menu.pausemenu_equipment_category_item.to_le_bytes()[1])]
     };
     reserve_arrow(mode, game);
 }
@@ -712,22 +710,24 @@ pub fn queue_options<H: Host + ?Sized>(game: &mut H) {
     );
 }
 
-fn reserve_palette<H: Host + ?Sized>(game: &mut H) -> u16 {
+fn reserve_palette<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H) -> u16 {
     if inventory!(game.ReserveHealth) == 0 {
         return 1536;
     }
-    let expired = crate::menu!(game.PausemenuReserveTankAnimationTimer -= 1, reread) & 0x8000 != 0;
-    if crate::menu!(game.PausemenuReserveTankAnimationTimer) == 0 || expired {
-        crate::menu!(game.PausemenuReserveTankAnimationFrame += 1);
+    let timer = &mut menu.pausemenu_reserve_tank_animation_timer;
+    *timer = timer.wrapping_sub(1);
+    if *timer == 0 || *timer & 0x8000 != 0 {
+        menu.pausemenu_reserve_tank_animation_frame =
+            menu.pausemenu_reserve_tank_animation_frame.wrapping_add(1);
         let mut timer = u16::from(
             native_record(RESERVE_TANK_ANIMATION, game)
-                .byte(2 * usize::from(crate::menu!(game.PausemenuReserveTankAnimationFrame))),
+                .byte(2 * usize::from(menu.pausemenu_reserve_tank_animation_frame)),
         );
         if timer == 255 {
-            crate::menu!(game.PausemenuReserveTankAnimationFrame = 0);
+            menu.pausemenu_reserve_tank_animation_frame = 0;
             timer = u16::from(native_record(RESERVE_TANK_ANIMATION, game).byte(0));
         }
-        crate::menu!(game.PausemenuReserveTankAnimationTimer = timer);
+        menu.pausemenu_reserve_tank_animation_timer = timer;
     }
     super::map_menu::animation_palette(game, 3)
 }
@@ -737,8 +737,8 @@ fn reserve_sprite<H: Host + ?Sized>(sprite: u16, index: usize, palette: u16, gam
     crate::sprite_output::menu(sprite, X[index], 0x5f, palette, game);
 }
 
-pub fn reserve_tanks<H: Host + ?Sized>(game: &mut H) {
-    let palette = reserve_palette(game);
+pub fn reserve_tanks<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
+    let palette = reserve_palette(menu, game);
     if inventory!(game.MaxReserveHealth) == 0 {
         return;
     }

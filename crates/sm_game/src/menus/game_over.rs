@@ -7,6 +7,7 @@ use crate::constants::bank_81::{
     ADDR_K_MENU_TILEMAP_YES_RETURN_TO_GAME,
 };
 use crate::enemy_projectiles::table::with_file_select;
+use crate::menu_state::MenuState;
 use crate::menu_state::SaveSelection;
 use crate::menus::menu_tilemap;
 use crate::menus::save_slots;
@@ -17,7 +18,7 @@ use crate::session_slot;
 /// covering the referenced menu text, baby animation and save-map records.
 pub fn advance<H: crate::menus::host::Host + ?Sized>(game: &mut H) -> CoroutineRet {
     // The original state table, indexed and bounds-checked as before.
-    let states: [fn(&mut H); 8] = [
+    let states: [fn(&mut MenuState, &mut H); 8] = [
         prepare::<H>,
         initialize::<H>,
         wait_for_music::<H>,
@@ -25,13 +26,15 @@ pub fn advance<H: crate::menus::host::Host + ?Sized>(game: &mut H) -> CoroutineR
         choose::<H>,
         fade_to_map::<H>,
         load_map::<H>,
-        fade_to_title::<H>,
+        |_, game| fade_to_title(game),
     ];
-    states[crate::menu!(game.MenuIndex) as usize](game);
+    crate::session_cohort::with(game, |game, menu: &mut MenuState| {
+        states[menu.menu_index as usize](menu, game)
+    });
     super::pending_wait(game)
 }
 
-fn prepare<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+fn prepare<H: crate::menus::host::Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
     if !super::resuming(game) {
         game.fade(false);
         if game.ram().read_byte(crate::ram::mirror::INIDISP) & 0xf != 0 {
@@ -49,17 +52,17 @@ fn prepare<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     menu_tilemap::prepare_graphics(game);
     scroll! { game, 0; Bg1H, Bg2H, Bg3H, Bg1V, Bg2V, Bg3V }
     menu_tilemap::load_palette(game);
-    crate::menu!(game.MenuIndex += 1);
+    menu.menu_index = menu.menu_index.wrapping_add(1);
 }
 
-fn initialize<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+fn initialize<H: crate::menus::host::Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
     if !super::resuming(game) {
         draw_menu(game);
     }
     if super::blank_and_wait(false, game) {
         return;
     }
-    crate::menu!(game.MenuIndex += 1);
+    menu.menu_index = menu.menu_index.wrapping_add(1);
     crate::screen_fade::set_both(game, 0, 0);
     crate::session_cohort::with(game, |_, selection: &mut SaveSelection| {
         selection.map_area_index = 0;
@@ -111,31 +114,36 @@ fn draw_menu<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     }
 }
 
-fn wait_for_music<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+fn wait_for_music<H: crate::menus::host::Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
     if crate::music_requests::has_queued_music(game) == 0 {
-        crate::menu!(game.MenuIndex += 1);
+        menu.menu_index = menu.menu_index.wrapping_add(1);
         crate::music_requests::queue_delayed_8(4, game);
     }
 }
 
-fn fade_in<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    fade(true, 15, game);
+fn fade_in<H: crate::menus::host::Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
+    fade(true, 15, menu, game);
 }
-fn fade_to_map<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    fade(false, 0, game);
+fn fade_to_map<H: crate::menus::host::Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
+    fade(false, 0, menu, game);
 }
-fn fade<H: crate::menus::host::Host + ?Sized>(fade_in: bool, brightness: u8, game: &mut H) {
+fn fade<H: crate::menus::host::Host + ?Sized>(
+    fade_in: bool,
+    brightness: u8,
+    menu: &mut MenuState,
+    game: &mut H,
+) {
     animate_baby(game, |game| {
         game.rtl_unreachable();
     });
     crate::sprite_output::menu_selection(game);
     game.fade(fade_in);
     if game.ram().read_byte(crate::ram::mirror::INIDISP) & 0xf == brightness {
-        crate::menu!(game.MenuIndex += 1);
+        menu.menu_index = menu.menu_index.wrapping_add(1);
     }
 }
 
-fn choose<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+fn choose<H: crate::menus::host::Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
     animate_baby(game, |game| {
         game.rtl_unreachable();
     });
@@ -150,12 +158,12 @@ fn choose<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
         session_slot!(game, EnemyBase[0].instruction_timer = 180);
         let selection = crate::session_cohort::load::<SaveSelection, _>(game);
         if selection.map_area_index != 0 {
-            crate::menu!(game.MenuIndex = 7);
+            menu.menu_index = 7;
         } else {
             if selection.loading_game_state == K_GAME_STATE_31_SET_UP_NEW_GAME as u16 {
                 word!(game.GAME_STATE = selection.loading_game_state);
             } else {
-                crate::menu!(game.MenuIndex += 1);
+                menu.menu_index = menu.menu_index.wrapping_add(1);
             }
             let load_result = save_slots::load(selection.selected_slot, game);
             game.observe_selected_continue(load_result);
@@ -182,11 +190,11 @@ fn place_missile<H: Host + ?Sized>(y: u16, game: &mut H) {
     });
 }
 
-fn load_map<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+fn load_map<H: crate::menus::host::Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
     crate::hdma_objects::set_hdma_enabled(false, game);
     crate::hdma_objects::clear_hdma(game);
     word!(game.GAME_STATE = K_GAME_STATE_5_FILE_SELECT_MAP as u16);
-    crate::menu!(game.MenuIndex = 0);
+    menu.menu_index = 0;
 }
 
 fn fade_to_title<H: crate::menus::host::Host + ?Sized>(game: &mut H) {

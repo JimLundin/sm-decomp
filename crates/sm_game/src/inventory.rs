@@ -21,6 +21,31 @@ use crate::ram::CompatibilityRam;
 
 pub use crate::item_pickups::{Inventory, Loadout, Supply};
 
+impl crate::session_cohort::Cohort for Inventory {
+    fn words(&mut self, mut visit: impl FnMut(usize, &mut u16)) {
+        visit(Word::EquippedItems.address(), &mut self.equipment.active);
+        visit(Word::CollectedItems.address(), &mut self.equipment.owned);
+        visit(Word::EquippedBeams.address(), &mut self.beams.active);
+        visit(Word::CollectedBeams.address(), &mut self.beams.owned);
+        visit(Word::ReserveMode.address(), &mut self.reserve_mode);
+        visit(Word::Health.address(), &mut self.health.current);
+        visit(Word::MaxHealth.address(), &mut self.health.maximum);
+        for (index, supply) in self.ammunition.iter_mut().enumerate() {
+            let (current, maximum) = Word::ammunition(index);
+            visit(current.address(), &mut supply.current);
+            visit(maximum.address(), &mut supply.maximum);
+        }
+        visit(Word::MaxReserveHealth.address(), &mut self.reserve_capacity);
+        visit(Word::ReserveHealth.address(), &mut self.reserve_health);
+        visit(Word::ReserveMissiles.address(), &mut self.reserve_missiles);
+        visit(Word::SubunitHealth.address(), &mut self.health_fraction);
+        visit(Word::HyperBeam.address(), &mut self.hyper_beam);
+    }
+    fn session_words(session: &mut crate::session::Session, visit: impl FnMut(usize, &mut u16)) {
+        Self::words(&mut session.inventory, visit);
+    }
+}
+
 /// An inventory word, by what it holds.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Word {

@@ -338,7 +338,8 @@ fn menu_state_round_trips_every_field() {
     }
     let expected = s.menu;
     let host = Projection(s);
-    assert_eq!(sm_game::menu_state::current(&host), expected, "menu view");
+    let loaded = sm_game::session_cohort::load::<sm_game::menu_state::MenuState, _>(&host);
+    assert_eq!(loaded, expected, "menu copy");
     let words: Vec<u16> = (0..menu_lanes().len()).map(|k| value(k, 0)).collect();
     assert_eq!(
         expected.words().as_slice(),
