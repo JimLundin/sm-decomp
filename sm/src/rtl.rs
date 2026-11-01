@@ -724,8 +724,13 @@ pub unsafe fn rtl_run_frame(input: TickInput, native_game: &mut Game) -> bool {
         let mut mutation = game.samus_mutation();
         let game = mutation.game();
         // snesrev's bug-fix counter ($C2, which the original never uses) selects
-        // the ROM patches the oracle CPU runs; only an oracle frame needs it.
+        // the ROM patches the oracle CPU runs; only an oracle frame needs it, and
+        // only while the message box input poll keeps snesrev's variant. The
+        // faithful oracle's poll follows the original, so it leaves the byte as
+        // hardware does: a stale HDMA table can read it.
         let oracle = u32::from(game.g_runmode) != crate::cpu_infra::RM_MINE;
+        let raises_counter = oracle
+            && !crate::oracle_mode::follows_original(crate::oracle_mode::PatchKind::Rom, 0x859650);
         let is_replay: bool = game.state_recorder.replay_mode;
         if is_replay {
             inputs = state_recorder_read_next_replay_state(game) as i32;
@@ -733,7 +738,8 @@ pub unsafe fn rtl_run_frame(input: TickInput, native_game: &mut Game) -> bool {
             if game.state_recorder.snapshot_flags & 1 != 0 {
                 game.state_recorder.snapshot_flags &= !(1i32) as u32;
                 inputs = game.state_recorder.last_inputs as i32;
-            } else if oracle && word!(game.BUG_FIX_COUNTER) as i32 != CURRENT_BUG_FIX_COUNTER as i32
+            } else if raises_counter
+                && word!(game.BUG_FIX_COUNTER) as i32 != CURRENT_BUG_FIX_COUNTER as i32
             {
                 if game.g_debug_flag {
                     printf(
