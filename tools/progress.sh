@@ -39,7 +39,7 @@ case "${1-}" in
     # filenames via find -exec preserves spaces and avoids shell word splitting.
     metrics=$(find $roots -type f -name '*.rs' -exec awk '
       {
-        if (FILENAME ~ /\/(verification|verify)\// || FILENAME ~ /\/verify[^/]*[.]rs$/)
+        if (FILENAME ~ /\/(verification|verify)\// || FILENAME ~ /\/verify[^/]*[.]rs$/ || FILENAME ~ /(^|\/)crates\/sm_tools\/src\//)
           verification++
         else production++
         if (index($0, "unsafe")) unsafe_lines++
@@ -59,7 +59,7 @@ case "${1-}" in
         print "| Warnings (no-default library) | " warnings " |"
         print "| Required checkpoint checks passing | " segments " |"
         print ""
-        print "*Physical lines by path; inline verification hooks remain in production. Verification: `verification/`, `verify/`, or filenames starting `verify`."
+        print "*Physical lines by path; inline verification hooks remain in production. Verification: `verification/`, `verify/`, filenames starting `verify`, and `crates/sm_tools/src/`."
       }
     '
     exit ;;

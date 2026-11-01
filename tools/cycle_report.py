@@ -61,22 +61,87 @@ RAM_COUPLINGS = {
         r"|camera::current|menu_state::(?:get|set|current|get_byte|set_byte)"
         r"|screen_fade::(?:current|set_both|set_counter|set_low)|melt::(?:get|set)"
         r"|boss_ram::(?:get|set|get_at|set_at|fill)|LiquidWords::(?:read|write))\((?!\s*&?\*?\$)"),
+    # Typed copies still load/store RAM-addressed words through projection::word.
+    # Imports and aliases are resolved below; counting only this spelling would
+    # let a use declaration hide the same coupling.
+    "RAM-backed cohort copies (session_cohort::load/with/with_projected)": re.compile(
+        r"\bsession_cohort\s*::\s*(?:load|with|with_projected)\b\s*(?=\(|::\s*<)"),
 }
+COHORT_LABEL = "RAM-backed cohort copies (session_cohort::load/with/with_projected)"
 
 
-def sm_game_ram_couplings():
+def cohort_sites(text):
+    """Count direct calls and imported module/function spellings once per site."""
+    # Comments and literals cannot execute a copy. Preserve newlines for uses.
+    text = re.sub(r'//[^\n]*|/\*.*?\*/|r(\#*)".*?"\1|"(?:\\.|[^"\\])*"',
+                  " ", text, flags=re.S)
+    modules = {"session_cohort"}
+    functions = set()
+    imports = []
+
+    def expand(tree, prefix=""):
+        depth, start = 0, 0
+        parts = []
+        for index, char in enumerate(tree):
+            depth += (char == "{") - (char == "}")
+            if char == "," and depth == 0:
+                parts.append(tree[start:index])
+                start = index + 1
+        parts.append(tree[start:])
+        for part in parts:
+            part = part.strip()
+            if not part:
+                continue
+            if "{" in part:
+                base, nested = part.split("{", 1)
+                expand(nested.rsplit("}", 1)[0], prefix + base.strip())
+            else:
+                binding = re.split(r"\s+as\s+", part)
+                path = re.sub(r"\s+", "", prefix + binding[0])
+                name = binding[1].strip() if len(binding) == 2 else path.split("::")[-1]
+                imports.append((path, name))
+
+    for match in re.finditer(r"\buse\s+([^;]+);", text):
+        expand(match.group(1))
+    # Resolve alias chains, nested use trees, {self as ...}, and glob imports.
+    changed = True
+    while changed:
+        before = (len(modules), len(functions))
+        for path, name in imports:
+            parts = path.split("::")
+            if parts[-1] in modules or (len(parts) > 1 and parts[-1] == "self" and parts[-2] in modules):
+                modules.add(name if name != "self" else parts[-2])
+            elif len(parts) > 1 and parts[-2] in modules:
+                if parts[-1] == "*":
+                    functions.update(("load", "with", "with_projected"))
+                elif parts[-1] in ("load", "with", "with_projected"):
+                    functions.add(name)
+            elif parts[-1] in functions:
+                functions.add(name)
+        changed = before != (len(modules), len(functions))
+    module = "|".join(re.escape(name) for name in sorted(modules))
+    paths = rf"\b(?:{module})\s*::\s*(?:load|with|with_projected)\b"
+    if functions:
+        paths += r"|(?<![\w:.])(?:" + "|".join(re.escape(name) for name in sorted(functions)) + r")\b"
+    return len(re.findall(rf"(?:{paths})\s*(?=\(|::\s*<)", text))
+
+
+def sm_game_ram_couplings(source_root=os.path.join("crates", "sm_game", "src")):
     counts, files = {}, {}
     sources = {}
-    for root, _, names in os.walk(os.path.join("crates", "sm_game", "src")):
+    for root, _, names in os.walk(source_root):
         for name in names:
             if name.endswith(".rs"):
                 with open(os.path.join(root, name), encoding="utf-8", errors="replace") as source:
                     sources[os.path.join(root, name)] = source.read()
     for label, pattern in RAM_COUPLINGS.items():
-        hits = {path: len(pattern.findall(text)) for path, text in sources.items()}
+        hits = {path: cohort_sites(text) if label == COHORT_LABEL else len(pattern.findall(text))
+                for path, text in sources.items()}
         counts[label] = sum(hits.values())
         files[label] = sum(1 for n in hits.values() if n)
-    coupled = sum(1 for text in sources.values() if any(p.search(text) for p in RAM_COUPLINGS.values()))
+    coupled = sum(1 for text in sources.values()
+                  if cohort_sites(text) or any(p.search(text) for label, p in RAM_COUPLINGS.items()
+                                               if label != COHORT_LABEL))
     return {"files": len(sources), "coupled_files": coupled, "sites": counts, "site_files": files}
 
 

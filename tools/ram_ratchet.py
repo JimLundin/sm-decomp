@@ -8,7 +8,7 @@ smaller in production lines (crates/*/src plus sm/src outside verification;
 scenario harness (crates/sm_tools, sm/src/verification/observation and
 tools/scenario.py) is
 verification, reported separately (REVIEW, lane S condition 1).
-The baseline below only moves down: run with --update after a landing that
+Within the same measurement scope the baseline below only moves down: run with --update after a landing that
 lowers a measure, and commit the result with that landing.
 
 The production line count is advisory for now (Jim, 2026-10-31: shipping
@@ -28,9 +28,14 @@ import cycle_report  # noqa: E402
 # 3663, then 2319 before). First measured on main 91d0bcce. The
 # production line baseline dropped by the 685 #[cfg(test)] lines it stopped
 # counting (2026-10-31).
+# Measurement-only rebaseline on main c7936fda9f8422358796cfdd62df096c88428545:
+# include 303 executable RAM-backed cohort copy calls in 35 files. Four other
+# session_cohort references are documentation links, not calls. The coupled
+# union adds two files: 1842/99 becomes 2145/101. This is not the lower queued
+# batch-13 count; lower it only after that landing. Production remains advisory.
 BASELINE = {
-    "sm_game_ram_sites": 1842,
-    "sm_game_coupled_files": 99,
+    "sm_game_ram_sites": 2145,
+    "sm_game_coupled_files": 101,
     "production_lines": 173506,
 }
 ADVISORY = {"production_lines"}
