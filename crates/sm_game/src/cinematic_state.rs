@@ -7,21 +7,15 @@
 //! projectile table's bytes outside gameplay, so the Session holds them as
 //! `enemy_projectiles`' fields: each [`Word`] and [`Array`] names the field
 //! its RAM bytes encode. The Mode 7 zoom ($198F), which the projectile code
-//! leaves unused, is `enemy_projectiles.zoom`. The view also names the words
-//! and tables of other Session owners the cinematics read and store (the
-//! Japanese text option, the layer 1 position, Samus's and her projectiles'
-//! words, the palette and the enemy BG2 tilemap they borrow), by the field
-//! that holds them.
+//! leaves unused, is `enemy_projectiles.zoom`.
 //!
 //! **Consumers.** The cinematic game states (the title sequence, the intro
 //! and Ceres, the ending and credits) each hold a [`Cinematic`] copy of the
 //! table for their frame through [`crate::session_cohort::with`]: their
 //! functions, objects and pre-instructions read and store its fields by the
 //! RAM names, and the words they changed are stored back once the frame's
-//! work returns. The other owners' words the view names are still reached
-//! with [`cinematic!`], through the host's projected bytes, so
-//! `tools/cycle_report.py` counts those call sites as RAM coupling.
-use crate::ram::CompatibilityRam;
+//! work returns. The cinematics reach the other owners' words they share
+//! through those owners' typed copies and Session APIs.
 
 /// A cinematic word, by its RAM address.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -100,37 +94,6 @@ pub enum Word {
     IntroTextClickFlag = 0x1ba1,
     /// `INTRO_JAPANESE_TEXT_TIMER`: `enemy_projectiles.slots[10].delay`.
     IntroJapaneseTextTimer = 0x1ba3,
-    // Other owners' words the cinematics share.
-    /// `JAPANESE_TEXT_FLAG`: `options.japanese_text`.
-    JapaneseText = 0x09e2,
-    /// `LAYER1_X_POS`: `room.camera.layer1[0]`.
-    Layer1X = 0x0911,
-    /// `LAYER1_Y_POS`: `room.camera.layer1[1]`.
-    Layer1Y = 0x0915,
-    /// `DOOR_DEF_PTR`: `room.entry.exit`, by its compatibility key, ``.
-    DoorExit = 0x078d,
-    /// `FX_LAYER_BLENDING_CONFIG_A`: `room.fx_blending`.
-    FxBlending = 0x1982,
-    /// `HUD_ITEM_INDEX`: `projectiles.controls.selected_weapon`.
-    SelectedWeapon = 0x09d2,
-    /// `SAMUS_AUTO_CANCEL_HUD_ITEM_INDEX`: `projectiles.controls.automatic_weapon`.
-    AutomaticWeapon = 0x0a04,
-    /// `POWER_BOMB_EXPLOSION_X_POS`: `projectiles.power_bomb.x`.
-    PowerBombX = 0x0ce2,
-    /// `POWER_BOMB_EXPLOSION_Y_POS`: `projectiles.power_bomb.y`.
-    PowerBombY = 0x0ce4,
-    /// `SUBSTATE`: `shared_sequence.stage`.
-    SequenceStage = 0x0dec,
-    /// `SUIT_PICKUP_LIGHT_BEAM_POS`: `shared_sequence.value`.
-    SequenceValue = 0x0dee,
-    /// `SAMUS_POSE`: `player.pose`.
-    SamusPose = 0x0a1c,
-    /// `KNOCKBACK_X_DIR`: `player.knockback_x_direction`.
-    KnockbackXDirection = 0x0a54,
-    /// `SAMUS_Y_SUBSPEED`: `player.contact.y_speed.fraction`.
-    SamusYSubspeed = 0x0b2c,
-    /// `SAMUS_Y_SPEED`: `player.contact.y_speed.whole`.
-    SamusYSpeed = 0x0b2e,
 }
 
 /// A cinematic word table, by the RAM address of its first word.
@@ -184,15 +147,6 @@ pub enum Array {
     SprInstructionTimer = 0x1b5d,
     /// `CINEMATICSPR_GOTO_TIMER`, 16 words from `enemy_projectiles.slots[9].spritemap`.
     SprGotoTimer = 0x1b7d,
-    // Other owners' tables the cinematics share.
-    /// `PALETTE_BUFFER`, 256 words: the presentation's colours.
-    PaletteBuffer = 0xc000,
-    /// `TILEMAP_STUFF`, 2048 words: `actors.extended.blocks[4..6]`.
-    TilemapStuff = 0x2000,
-    /// `PROJECTILE_X_POS`, 10 words: `projectiles.shots[i].x`.
-    ProjectileX = 0x0b64,
-    /// `PROJECTILE_TYPE`, 10 words: `projectiles.shots[i].kind`.
-    ProjectileType = 0x0c18,
 }
 
 /// The cinematic words as a copy of the Session's enemy projectile table, by
@@ -332,16 +286,6 @@ cinematic_fields! {
     }
 }
 
-/// `word` as the host's projection holds it, low byte then high.
-pub fn get<H: CompatibilityRam + ?Sized>(h: &H, word: Word) -> u16 {
-    crate::projection::word(h, word as usize)
-}
-
-/// Store `value` to `word`, low byte then high, as the named word store did.
-pub fn set<H: CompatibilityRam + ?Sized>(h: &mut H, word: Word, value: u16) {
-    crate::projection::set_word(h, word as usize, value);
-}
-
 /// The address of word `index` of `array`; like the named tables, the index
 /// may run past the table's end or before its start.
 pub fn at<I: TryInto<isize>>(array: Array, index: I) -> usize {
@@ -350,92 +294,6 @@ pub fn at<I: TryInto<isize>>(array: Array, index: I) -> usize {
         .checked_add_signed(index.checked_mul(2).expect("word index overflow"))
         .expect("word address outside RAM")
 }
-
-/// Word `index` of `array`.
-pub fn get_at<H: CompatibilityRam + ?Sized, I: TryInto<isize>>(
-    h: &H,
-    array: Array,
-    index: I,
-) -> u16 {
-    crate::projection::word(h, at(array, index))
-}
-
-/// Store `value` to word `index` of `array`, low byte then high.
-pub fn set_at<H: CompatibilityRam + ?Sized, I: TryInto<isize>>(
-    h: &mut H,
-    array: Array,
-    index: I,
-    value: u16,
-) {
-    crate::projection::set_word(h, at(array, index), value);
-}
-
-/// Access to the cinematic words by name, through the host's projected RAM
-/// bytes (not yet the Session's fields), in the shapes the named word
-/// accesses used: `cinematic!(host.Word)` reads and `cinematic!(host.Word =
-/// value)` stores; tables take `Array[index]`. `+=`/`-=`/`&=`/`|=`/`^=` and
-/// `(host.Word, |old| value)` read the old value first (the destination's
-/// index before it); a trailing `reread` loads the stored word again. Stores
-/// evaluate the value before the destination's index. `(host; A = x; B[i] =
-/// y;)` stores in order.
-macro_rules! cinematic {
-    ($game:ident.$array:ident[$index:expr]) => {
-        $crate::cinematic_state::get_at(&*$game, $crate::cinematic_state::Array::$array, $index)
-    };
-    ($game:ident.$array:ident[$index:expr] = $value:expr $(,)?) => {{
-        let value: u16 = $value;
-        $crate::cinematic_state::set_at($game, $crate::cinematic_state::Array::$array, $index, value)
-    }};
-    ($game:ident.$array:ident[$index:expr], |$old:ident| $value:expr $(, $reread:ident)? $(,)?) => {
-        $crate::cinematic_state::cinematic!(@update $game,
-            $crate::cinematic_state::at($crate::cinematic_state::Array::$array, $index),
-            |$old| $value $(, $reread)?)
-    };
-    ($game:ident.$array:ident[$index:expr] $op:tt $value:expr $(, $reread:ident)? $(,)?) => {
-        $crate::cinematic_state::cinematic!(@update $game,
-            $crate::cinematic_state::at($crate::cinematic_state::Array::$array, $index),
-            |old| $crate::cinematic_state::cinematic!(@op old $op $value) $(, $reread)?)
-    };
-    ($game:ident.$word:ident) => {
-        $crate::cinematic_state::get(&*$game, $crate::cinematic_state::Word::$word)
-    };
-    ($game:ident.$word:ident = $value:expr $(,)?) => {{
-        let value: u16 = $value;
-        $crate::cinematic_state::set($game, $crate::cinematic_state::Word::$word, value)
-    }};
-    ($game:ident.$word:ident, |$old:ident| $value:expr $(, $reread:ident)? $(,)?) => {
-        $crate::cinematic_state::cinematic!(@update $game,
-            $crate::cinematic_state::Word::$word as usize, |$old| $value $(, $reread)?)
-    };
-    ($game:ident.$word:ident $op:tt $value:expr $(, $reread:ident)? $(,)?) => {
-        $crate::cinematic_state::cinematic!(@update $game,
-            $crate::cinematic_state::Word::$word as usize,
-            |old| $crate::cinematic_state::cinematic!(@op old $op $value) $(, $reread)?)
-    };
-    ($game:ident; $($word:ident $([$index:expr])? = $value:expr;)+) => {
-        $($crate::cinematic_state::cinematic!($game.$word $([$index])? = $value);)+
-    };
-    ($game:ident, $value:literal; $($word:ident $([$index:expr])?),+ $(,)?) => {
-        $($crate::cinematic_state::cinematic!($game.$word $([$index])? = $value);)+
-    };
-    (@update $game:ident, $at:expr, |$old:ident| $value:expr) => {{
-        let at: usize = $at;
-        let $old = $crate::projection::word(&*$game, at);
-        let value: u16 = $value;
-        $crate::projection::set_word($game, at, value);
-    }};
-    (@update $game:ident, $at:expr, |$old:ident| $value:expr, reread) => {{
-        let at: usize = $at;
-        $crate::cinematic_state::cinematic!(@update $game, at, |$old| $value);
-        $crate::projection::word(&*$game, at)
-    }};
-    (@op $old:ident += $value:expr) => { $old.wrapping_add($value) };
-    (@op $old:ident -= $value:expr) => { $old.wrapping_sub($value) };
-    (@op $old:ident &= $value:expr) => { $old & $value };
-    (@op $old:ident |= $value:expr) => { $old | $value };
-    (@op $old:ident ^= $value:expr) => { $old ^ $value };
-}
-pub(crate) use cinematic;
 
 #[cfg(test)]
 mod tests {
@@ -487,21 +345,6 @@ mod tests {
             IntroFrameCounter,
             IntroTextClickFlag,
             IntroJapaneseTextTimer,
-            JapaneseText,
-            Layer1X,
-            Layer1Y,
-            DoorExit,
-            FxBlending,
-            SelectedWeapon,
-            AutomaticWeapon,
-            PowerBombX,
-            PowerBombY,
-            SequenceStage,
-            SequenceValue,
-            SamusPose,
-            KnockbackXDirection,
-            SamusYSubspeed,
-            SamusYSpeed,
         ];
         let tables = [
             (Array::Mode7InstructionPointer, 2),
@@ -528,10 +371,6 @@ mod tests {
             (Array::SprPreInstruction, 16),
             (Array::SprInstructionTimer, 16),
             (Array::SprGotoTimer, 16),
-            (Array::PaletteBuffer, 256),
-            (Array::TilemapStuff, 2048),
-            (Array::ProjectileX, 10),
-            (Array::ProjectileType, 10),
         ];
         let addresses = words.map(|word| word as usize).into_iter().chain(
             tables

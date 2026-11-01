@@ -9,6 +9,25 @@ pub enum AssetSlot {
     Palette,
 }
 
+/// Clear the door exit the next room entry follows (`DOOR_DEF_PTR`, a world
+/// key) to key 0, as the cinematics do before they take over the screen: on
+/// the retained Session's lease while one is current, so it stays current,
+/// and through the host's projected bytes otherwise, as the named word store
+/// did.
+pub fn clear_exit<H>(game: &mut H)
+where
+    H: crate::ram::CompatibilityRam + crate::runtime_access::RuntimeAccess + ?Sized,
+{
+    if game.session_retained() {
+        use crate::session_access::SessionAccess as _;
+        let mut lease = game.runtime();
+        let session = lease.session_mut();
+        session.room.entry.exit = session.world.exit_identity(0);
+    } else {
+        crate::projection::set_word(game, crate::ram::words::DOOR_DEF_PTR, 0);
+    }
+}
+
 pub mod api;
 pub mod background;
 pub mod content;

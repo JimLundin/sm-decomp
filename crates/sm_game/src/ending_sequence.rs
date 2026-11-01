@@ -16,7 +16,7 @@ use crate::cinematic::{
 };
 use crate::cinematic_host::Host;
 use crate::cinematic_objects::CinematicObjects;
-use crate::cinematic_state::{Cinematic, Word, cinematic};
+use crate::cinematic_state::{Cinematic, Word};
 use crate::display::sequence::scroll::BgScroll;
 use crate::display_refresh::GraphicsAsset;
 use crate::intro_sequence::countdown;
@@ -169,12 +169,10 @@ pub fn setup<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     *cine.mode7_zoom() = 64;
     *cine.x() = 0;
     *cine.y() = 0;
-    cinematic!(game.DoorExit = 0);
+    crate::room_entry::clear_exit(game);
     crate::session_cohort::with(game, |_, words: &mut crate::session_words::SessionWords| {
-        words.layer1_x_pos = 0
-    });
-    crate::session_cohort::with(game, |_, words: &mut crate::session_words::SessionWords| {
-        words.layer1_y_pos = 0
+        words.layer1_x_pos = 0;
+        words.layer1_y_pos = 0;
     });
     crate::palette_effects::execution::leased::clear(game);
     crate::palette_effects::execution::leased::set_enabled(true, game);

@@ -14,7 +14,7 @@ use crate::cinematic::{
 };
 use crate::cinematic_host::Host;
 use crate::cinematic_objects::CinematicObjects;
-use crate::cinematic_state::{Cinematic, Word, cinematic};
+use crate::cinematic_state::{Cinematic, Word};
 use crate::display::sequence::scroll::BgScroll;
 use crate::display_refresh::GraphicsAsset;
 use crate::inventory;
@@ -203,12 +203,10 @@ pub fn initial<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     crate::hdma_objects::set_hdma_enabled(true, game);
     crate::palette_effects::execution::leased::clear(game);
     crate::palette_effects::execution::leased::set_enabled(true, game);
-    cinematic!(game.DoorExit = 0);
+    crate::room_entry::clear_exit(game);
     crate::session_cohort::with(game, |_, words: &mut crate::session_words::SessionWords| {
-        words.layer1_x_pos = 0
-    });
-    crate::session_cohort::with(game, |_, words: &mut crate::session_words::SessionWords| {
-        words.layer1_y_pos = 0
+        words.layer1_x_pos = 0;
+        words.layer1_y_pos = 0;
     });
     *cine.intro_japanese_text_timer() = 0;
     crate::word_transfers!(game, descending, 1024; cinematic_bg(1023) <- native(BG_SOURCE));
@@ -430,12 +428,10 @@ pub fn boom_initial<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     }
     crate::cinematic_display::configure_cinematic_display(CinematicDisplay::Station, cine, game);
     clear_cinematic_objects(cine);
-    cinematic!(game.DoorExit = 0);
+    crate::room_entry::clear_exit(game);
     crate::session_cohort::with(game, |_, words: &mut crate::session_words::SessionWords| {
-        words.layer1_x_pos = 0
-    });
-    crate::session_cohort::with(game, |_, words: &mut crate::session_words::SessionWords| {
-        words.layer1_y_pos = 0
+        words.layer1_x_pos = 0;
+        words.layer1_y_pos = 0;
     });
     crate::word_transfers!(game, ascending, 256; le(PALETTE_BUFFER, 0) <- rom(SPACE_PALETTES, 0));
     load_space_graphics(game);
