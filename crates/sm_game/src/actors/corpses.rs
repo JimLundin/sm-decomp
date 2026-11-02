@@ -773,15 +773,6 @@ fn rot_dead_monster(k: u16, rotted: u16, game: &mut impl Corpses) {
     let vram_transfers = DeadMonster::of(game, game.current_enemy()).vram_transfers();
     process_corpse_rotting_vram_transfers(vram_transfers, game);
 }
-/// Add `speed`'s low byte to the high byte of `position`'s fraction, and its
-/// signed high byte and the carry to the whole: the corpse's 8.8 move.
-fn step_position(position: &mut crate::geometry::Position, speed: u16) {
-    let [low, high] = position.fraction.to_le_bytes();
-    let full = i32::from(high) + i32::from(speed.to_ne_bytes()[0]);
-    position.fraction = u16::from_le_bytes([low, full as u8]);
-    position.whole =
-        (i32::from(position.whole) + i32::from((speed >> 8) as i8) + (full >> 8)) as u16;
-}
 pub fn sidehopper_corpse_movement(k: u16, game: &mut impl Corpses) -> u8 {
     let x_velocity = DeadMonster::of(game, k).x_velocity();
     sidehopper_corpse_horizontal_movement(k, x_velocity, game);
@@ -794,7 +785,8 @@ pub fn sidehopper_corpse_movement(k: u16, game: &mut impl Corpses) -> u8 {
     if (DeadMonster::of(game, k).actor().x.whole as i32 - 544i32) & 0x8000 != 0 {
         let mut corpse = DeadMonsterEdit::of(game, k);
         let y = &mut corpse.actor().y;
-        step_position(y, v3);
+        // The 8.8 move: the low byte into the fraction's high byte, carrying.
+        y.advance_8_8(v3 as i16);
         (((y.whole as i32 - 184i32) & 0x8000) == 0) as u8
     } else {
         {
@@ -805,7 +797,7 @@ pub fn sidehopper_corpse_movement(k: u16, game: &mut impl Corpses) -> u8 {
 }
 pub fn sidehopper_corpse_horizontal_movement(k: u16, a: u16, game: &mut impl Corpses) {
     if (DeadMonster::of(game, k).actor().x.whole as i32 - 544i32) & 0x8000 != 0 {
-        step_position(&mut DeadMonsterEdit::of(game, k).actor().x, a);
+        DeadMonsterEdit::of(game, k).actor().x.advance_8_8(a as i16);
     } else {
         {
             let (actor, amount) = (k, (a as i16 as i32) << 8);
