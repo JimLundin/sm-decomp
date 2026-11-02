@@ -17,9 +17,9 @@ use crate::actors::boss_lease::{BossLease, BossState};
 use crate::actors::deaths::Deaths as _;
 use crate::actors::host::BossEffects as _;
 use crate::actors::host::{Death, Shot, abs16, below};
-use crate::actors::layouts::{EnemyBase, same_words};
 use crate::actors::ridley_tables::{set_pogo_speeds, set_tail_segments_from_list};
 use crate::actors::session_slots::{SlotAccess, session_slot};
+use crate::actors::slot_view::{SlotState, slot_view};
 use crate::carry::{adc, sbc};
 use crate::constants::enemy_properties::{
     K_ENEMY_PROPS_DELETED, K_ENEMY_PROPS_INVISIBLE, K_ENEMY_PROPS_TANGIBLE,
@@ -35,6 +35,7 @@ use crate::menus::prelude::{boss, owned};
 use crate::palette_copies::copy_rom_colors_to_palette;
 use crate::ram::RawRam as _;
 use crate::ram::word;
+use crate::session_access::SessionAccess;
 use crate::sprite_drawing::Clip;
 use crate::{ridley_data, ridley_explosion_data, sprite_output};
 use sm_data::cartridge::lorom_offset;
@@ -47,6 +48,7 @@ use sm_data::ridley_explosion::{
 pub trait Lease:
     crate::actors::boss_interaction::Access
     + BossLease<Game: GameEffects>
+    + SlotState
     + crate::actors::ceres_ridley::Host
     + crate::escape_typewriter::Host
 {
@@ -54,6 +56,7 @@ pub trait Lease:
 impl<T> Lease for T where
     T: crate::actors::boss_interaction::Access
         + BossLease<Game: GameEffects>
+        + SlotState
         + crate::actors::ceres_ridley::Host
         + crate::escape_typewriter::Host
         + ?Sized
@@ -87,152 +90,95 @@ pub trait Host {
     fn move_liquid(&mut self, target: u16, velocity: u16, delay: u16);
 }
 
-/// What Ridley's state steps read and write: his slot words and the named RAM
-/// words, on the Session inside a lease and on the RAM image otherwise.
-pub trait State: SlotAccess + crate::ram::CompatibilityRam {}
-impl<T: SlotAccess + crate::ram::CompatibilityRam + ?Sized> State for T {}
+/// What Ridley's state steps read and write: his slot on the lease's Session
+/// and the named RAM words.
+pub trait State: SlotState + SlotAccess + crate::ram::CompatibilityRam {}
+impl<T: SlotState + SlotAccess + crate::ram::CompatibilityRam + ?Sized> State for T {}
 
-/// Ridley's view of enemy 0 and his extra RAM blocks, Norfair's and Ceres's.
-/// `fade_index` is also the escape timer tile transfer pointer and the self
-/// destruct step's timer, `function_timer` the self destruct sequence step,
-/// and `swoop_angle` the getaway's mode 7 angle. The `pad_*` words are unused.
-#[derive(Clone, Copy)]
-#[repr(C)]
-pub struct Ridley {
-    pub base: EnemyBase,
-    pub function: u16,
-    pub x_velocity: u16,
-    pub y_velocity: u16,
-    pad_0fae: [u16; 1],
-    pub fade_index: u16,
-    pub function_timer: u16,
-    pub parameter_1: u16,
-    pub parameter_2: u16,
-    pad1: [u8; 26696],
-    pub timer: u16,
-    pub fight_mode: u16,
-    pub movement_enabled: u16,
-    pub baby_metroid_instruction: u16,
-    pub baby_metroid_instruction_timer: u16,
-    pub ribs_pointer: u16,
-    pub ribs_timer: u16,
-    pub wings_frame: u16,
-    pub wings_timer_delta: u16,
-    pub wings_timer: u16,
-    pub swoop_angle: u16,
-    pub swoop_speed: u16,
-    pub palette: u16,
-    pub hit_counter: u16,
-    pub whip_sound_counter: u16,
-    pub roaring: u16,
-    pub facing: u16,
-    pad_7822: [u16; 1],
-    pub acceleration_index: u16,
-    pad_7826: [u16; 1],
-    pub grabbed_x_offset: u16,
-    pub grabbed_y_offset: u16,
-    pad_782c: [u16; 1],
-    pub target_x: u16,
-    pub target_y: u16,
-    pub fireball_x_velocity: u16,
-    pub fireball_y_velocity: u16,
-    pub holding_samus: u16,
-    pub tail_damage: u16,
-    pub feet_distance_index: u16,
-    pub intangibility_timer: u16,
-    pub hit_boundary: u16,
-    pad2: [u8; 1984],
-    pub min_y: u16,
-    pub max_y: u16,
-    pub min_x: u16,
-    pub max_x: u16,
-    pub grabbed_lag_timer: u16,
-    pub death_lunges: u16,
-    pub pogo_bounces: u16,
-    pub small_explosion_timer: u16,
-    pub small_explosion_index: u16,
-    pad_8012: [u16; 7],
-    pub mode7_zoom: u16,
-    /// Set with the zoom, never read.
-    pub unread_8022: u16,
-    pub getaway_finished: u16,
-    pub getaway_index: u16,
-    pub mode7_x: u16,
-    pub mode7_y: u16,
-    pub baby_metroid_frame: u16,
-    pub mode7_wings_frame: u16,
-    pub emergency_glow_index: u16,
-    pad_8032: [u16; 2],
-    pub typewriter_list: u16,
-    pub typewriter_tilemap: u16,
-    pub typewriter_timer: u16,
-    pub typewriter_timer_reset: u16,
-    pub typewriter_stroke_timer: u16,
-    pad3: [u8; 1984],
-    pub baby_metroid_function: u16,
-    pad_8802: [u16; 1],
-    pub baby_metroid_x: u16,
-    pub baby_metroid_y_subpixel: u16,
-    pub baby_metroid_y: u16,
-    pub baby_metroid_unread: u16,
-    pub baby_metroid_y_velocity: u16,
-    pad_880e: [u16; 25],
+slot_view! {
+    /// Ridley's slot, enemy 0, and his extended words, Norfair's and Ceres's.
+    /// `fade_index` is also the escape timer tile transfer pointer and the self
+    /// destruct step's timer, `function_timer` the self destruct sequence step,
+    /// and `swoop_angle` the getaway's mode 7 angle. His mode 7 zoom and the
+    /// typewriter's timer reset are Botwoon's death words in the Session:
+    /// [`mode7_zoom`] and [`set_typewriter_timer_reset`].
+    Ridley, RidleyEdit {
+        record: [
+            function = var_a, x_velocity = var_b, y_velocity = var_c, fade_index = var_e,
+            function_timer = var_f, parameter_1 = parameter_1, parameter_2 = parameter_2,
+        ],
+        extended: [
+            timer = var_00, fight_mode = var_01, movement_enabled = var_02,
+            baby_metroid_instruction = var_03, baby_metroid_instruction_timer = var_04,
+            ribs_pointer = var_05, ribs_timer = var_06, wings_frame = var_07,
+            wings_timer_delta = var_08, wings_timer = var_09, swoop_angle = var_0a,
+            swoop_speed = var_0b, palette = var_0c, hit_counter = var_0d,
+            whip_sound_counter = var_0e, roaring = var_0f, facing = var_10,
+            acceleration_index = var_12, grabbed_x_offset = var_14, grabbed_y_offset = var_15,
+            target_x = var_17, target_y = var_18, fireball_x_velocity = var_19,
+            fireball_y_velocity = var_1a, holding_samus = var_1b, tail_damage = var_1c,
+            feet_distance_index = var_1d, intangibility_timer = var_1e, hit_boundary = var_1f,
+            min_y = var_20, max_y = var_21, min_x = var_22, max_x = var_23,
+            grabbed_lag_timer = var_24, death_lunges = var_25, pogo_bounces = var_26,
+            small_explosion_timer = var_27, small_explosion_index = var_28,
+            // Set with the zoom, never read.
+            unread_8022 = var_31,
+            getaway_finished = var_32, getaway_index = var_33, mode7_x = var_34,
+            mode7_y = var_35, baby_metroid_frame = var_36, mode7_wings_frame = var_37,
+            emergency_glow_index = var_38, typewriter_list = var_3b,
+            typewriter_tilemap = var_3c, typewriter_timer = var_3d,
+            typewriter_stroke_timer = var_3f, baby_metroid_function = var_40,
+            baby_metroid_x = var_42, baby_metroid_y_subpixel = var_43, baby_metroid_y = var_44,
+            baby_metroid_unread = var_45, baby_metroid_y_velocity = var_46,
+        ],
+    }
 }
 
-/// An explosion enemy's view of its slot: `part` is its initialisation index,
-/// the part of Ridley it starts on.
-#[derive(Clone, Copy)]
-#[repr(C)]
-pub struct Explosion {
-    pub base: EnemyBase,
-    pad_0fa8: [u16; 1],
-    pub x_velocity: u16,
-    pub y_velocity: u16,
-    pad_0fae: [u16; 2],
-    pub lifetime: u16,
-    pub part: u16,
-    pad_0fb6: [u16; 1],
+slot_view! {
+    /// An explosion enemy's slot: `part` is its initialisation index, the part
+    /// of Ridley it starts on.
+    Explosion, ExplosionEdit {
+        record: [x_velocity = var_b, y_velocity = var_c, lifetime = var_f, part = parameter_1],
+        extended: [],
+    }
 }
 
-/// The Ceres door's view of enemy 1, which Ridley's graphics hook draws.
-#[derive(Clone, Copy)]
-#[repr(C)]
-pub struct CeresDoor {
-    pub base: EnemyBase,
-    pad_0fa8: [u16; 1],
-    pub drawn_by_ridley: u16,
-    pad_0fac: [u16; 6],
+slot_view! {
+    /// The Ceres door's slot, enemy 1, which Ridley's graphics hook draws.
+    CeresDoor, CeresDoorEdit {
+        record: [drawn_by_ridley = var_b],
+        extended: [],
+    }
 }
 
-same_words!(Ridley: EnemyLayout104 {
-    function = var_a, x_velocity = var_b, y_velocity = var_c, fade_index = var_e,
-    function_timer = var_f, parameter_1 = parameter_1, parameter_2 = parameter_2,
-    timer = var_00, fight_mode = var_01, movement_enabled = var_02,
-    baby_metroid_instruction = var_03, baby_metroid_instruction_timer = var_04,
-    ribs_pointer = var_05, ribs_timer = var_06, wings_frame = var_07, wings_timer_delta = var_08,
-    wings_timer = var_09, swoop_angle = var_0a, swoop_speed = var_0b, palette = var_0c,
-    hit_counter = var_0d, whip_sound_counter = var_0e, roaring = var_0f, facing = var_10,
-    acceleration_index = var_12, grabbed_x_offset = var_14, grabbed_y_offset = var_15,
-    target_x = var_17, target_y = var_18, fireball_x_velocity = var_19,
-    fireball_y_velocity = var_1a, holding_samus = var_1b, tail_damage = var_1c,
-    feet_distance_index = var_1d, intangibility_timer = var_1e, hit_boundary = var_1f,
-    min_y = var_20, max_y = var_21, min_x = var_22, max_x = var_23, grabbed_lag_timer = var_24,
-    death_lunges = var_25, pogo_bounces = var_26, small_explosion_timer = var_27,
-    small_explosion_index = var_28, mode7_zoom = var_30, unread_8022 = var_31,
-    getaway_finished = var_32, getaway_index = var_33, mode7_x = var_34, mode7_y = var_35,
-    baby_metroid_frame = var_36, mode7_wings_frame = var_37, emergency_glow_index = var_38,
-    typewriter_list = var_3b, typewriter_tilemap = var_3c, typewriter_timer = var_3d,
-    typewriter_timer_reset = var_3e, typewriter_stroke_timer = var_3f,
-    baby_metroid_function = var_40, baby_metroid_x = var_42, baby_metroid_y_subpixel = var_43,
-    baby_metroid_y = var_44, baby_metroid_unread = var_45, baby_metroid_y_velocity = var_46,
-});
-same_words!(Explosion: EnemyLayout8 {
-    x_velocity = var_b, y_velocity = var_c, lifetime = var_f, part = parameter_1,
-});
-same_words!(CeresDoor: EnemyLayout8 { drawn_by_ridley = var_b });
+/// Ceres Ridley's mode 7 zoom, his slot's `var_30`: the Session keeps the word
+/// as Botwoon's death protocol's `active`.
+pub(crate) fn mode7_zoom(game: &(impl SessionAccess + ?Sized)) -> u16 {
+    game.session().botwoon_death.active
+}
 
-pub(crate) const RIDLEY: i32 = 0;
-const CERES_DOOR: i32 = 0x40;
+/// Store Ceres Ridley's mode 7 zoom; the observations refresh as after the
+/// projected store.
+pub(crate) fn set_mode7_zoom(game: &mut (impl SlotState + ?Sized), zoom: u16) {
+    game.session_mut().botwoon_death.active = zoom;
+    game.record_stored();
+}
+
+/// Store the self destruct typewriter's timer reset, his slot's `var_3e`: the
+/// Session keeps the word as Botwoon's death protocol's `tail_ready`.
+pub(crate) fn set_typewriter_timer_reset(game: &mut (impl SlotState + ?Sized), reset: u16) {
+    game.session_mut().botwoon_death.tail_ready = reset;
+    game.record_stored();
+}
+
+/// Store `value` as the high byte of `word`.
+fn set_high_byte(word: &mut u16, value: u8) {
+    let [low, _] = word.to_le_bytes();
+    *word = u16::from_le_bytes([low, value]);
+}
+
+pub(crate) const RIDLEY: u16 = 0;
+const CERES_DOOR: u16 = 0x40;
 
 /// Ridley facing directions.
 pub(crate) const FACING_LEFT: u16 = 0;
@@ -251,8 +197,6 @@ const NO_WHIP_TARGET: u16 = 0xffff;
 /// Enemy definitions are in bank $A0; their contact damage word.
 const ENEMY_DEFINITION_BANK: u8 = 0xa0;
 const ENEMY_DEFINITION_DAMAGE: usize = 6;
-/// The projectile type words.
-const PROJECTILE_TYPES: usize = 0xc18;
 
 /// Bank $A6 Ridley functions, stored in the body's `function` word.
 pub mod function {
@@ -430,12 +374,8 @@ pub(crate) mod tail {
     }
 }
 
-/// The tail RAM's first byte, for the byte reads of segment angles.
-const TAIL_RAM: usize = 0x2000;
 /// The Ceres door spritemap ($A6:A329).
 const CERES_DOOR_SPRITEMAP: u16 = 0xa329;
-/// The enemy graphics drawn hook's long pointer.
-const GRAPHICS_DRAWN_HOOK: usize = 0x178c;
 /// Ridley's feet tiles in bank $B0 ($A6:DAD0): top and bottom.
 const FEET_UNCLENCHED_TILES: u16 = 0xdad0;
 const FEET_CLENCHED_TILES: u16 = 0xdad4;
@@ -448,9 +388,12 @@ const TAIL_SEGMENT_SPRITEMAPS: [u16; 3] = [0xdc90, 0xdc97, 0xdc9e];
 /// Bank $86 enemy projectiles.
 const DUST_CLOUD: u16 = 0xe509;
 const FIREBALL: u16 = 0x9642;
-/// Samus's movement type byte.
-const SAMUS_MOVEMENT_TYPE: usize = 0xa1f;
 const SPIN_JUMPING: u8 = 3;
+
+/// Samus's movement type: the high byte of her pose's movement and facing.
+fn samus_movement_type(game: &(impl SessionAccess + ?Sized)) -> u8 {
+    game.session().player.movement_and_facing.to_le_bytes()[1]
+}
 /// The level data's block words ($7F:0002).
 const LEVEL_DATA: isize = 0x10002;
 /// The VRAM write queue.
@@ -474,42 +417,25 @@ pub struct Rect {
 /// Check for enemy collision with rectangle ($A9:EF06, as the baby Metroid's):
 /// whether enemy `k`'s hitbox is clear of `rect`.
 pub(crate) fn separated_from_rect<L: Lease + ?Sized>(k: u16, rect: Rect, game: &mut L) -> bool {
-    let e = i32::from(k);
-    let width = (session_slot!(game, Ridley[e].base.x_width) as i32 + rect.w as i32 + 1) as u16;
-    let dx = abs16(
-        rect.x
-            .wrapping_sub(session_slot!(game, Ridley[e].base.x_pos)),
-    );
+    let width = (Ridley::of(game, k).actor().radius.x as i32 + rect.w as i32 + 1) as u16;
+    let dx = abs16(rect.x.wrapping_sub(Ridley::of(game, k).actor().x.whole));
     if dx < width {
-        let height =
-            (session_slot!(game, Ridley[e].base.y_height) as i32 + rect.h as i32 + 1) as u16;
-        return abs16(
-            rect.y
-                .wrapping_sub(session_slot!(game, Ridley[e].base.y_pos)),
-        ) >= height;
+        let height = (Ridley::of(game, k).actor().radius.y as i32 + rect.h as i32 + 1) as u16;
+        return abs16(rect.y.wrapping_sub(Ridley::of(game, k).actor().y.whole)) >= height;
     }
     true
 }
 
-fn current<L: Lease + ?Sized>(game: &L) -> i32 {
-    game.current_enemy() as i32
-}
-
 /// Count down Ridley's function timer; true once it is negative.
 fn timer_expired<L: Lease + ?Sized>(game: &mut L) -> bool {
-    session_slot!(game, Ridley[RIDLEY].function_timer, |function_timer| {
-        function_timer.wrapping_sub(1)
-    });
-    (session_slot!(game, Ridley[RIDLEY].function_timer) & 0x8000) != 0
+    *RidleyEdit::of(game, RIDLEY).function_timer() =
+        Ridley::of(game, RIDLEY).function_timer().wrapping_sub(1);
+    (Ridley::of(game, RIDLEY).function_timer() & 0x8000) != 0
 }
 
-/// The work RAM address of tail word `index`.
-const fn tail_address(index: usize) -> u16 {
-    (TAIL_RAM + 2 * index) as u16
-}
-
+/// The low byte of tail word `index`.
 fn tail_low_byte<L: Lease + ?Sized>(game: &L, index: usize) -> u16 {
-    u16::from(game.slot_byte(TAIL_RAM + index * 2))
+    tail_word(game, index) & 0xff
 }
 
 fn snes_divide(a: u16, b: u8) -> u16 {
@@ -520,17 +446,17 @@ fn snes_divide(a: u16, b: u8) -> u16 {
     }) as u16
 }
 
-/// The tail word `index` through raw work RAM, low byte first.
-fn tail_word(game: &(impl SlotAccess + ?Sized), index: usize) -> u16 {
-    let at = TAIL_RAM + index * 2;
-    u16::from_le_bytes([game.slot_byte(at), game.slot_byte(at + 1)])
+/// Tail word `index` ($7E:2000 + 2 * `index`): the Session keeps the tail RAM
+/// as the extended words' last two blocks.
+pub(crate) fn tail_word(game: &(impl SessionAccess + ?Sized), index: usize) -> u16 {
+    game.session().actors.extended.blocks[4..][index / 1024][index % 1024]
 }
 
-fn set_tail_word(game: &mut (impl SlotAccess + ?Sized), index: usize, value: u16) {
-    let at = TAIL_RAM + index * 2;
-    let [low, high] = value.to_le_bytes();
-    game.set_slot_byte(at, low);
-    game.set_slot_byte(at + 1, high);
+/// Store tail word `index`; the observations refresh as after the projected
+/// store.
+pub(crate) fn set_tail_word(game: &mut (impl SlotState + ?Sized), index: usize, value: u16) {
+    game.session_mut().actors.extended.blocks[4..][index / 1024][index % 1024] = value;
+    game.record_stored();
 }
 
 /// Queue two VRAM transfers of `size` bytes from bank $B0, then the
@@ -632,21 +558,27 @@ fn chained_homing_velocity(
 /// Move the current enemy by its X and Y velocities: subpixels in the low
 /// bytes, pixels in the signed high bytes. Was `MoveEnemyWithVelocity`.
 fn move_with_velocity<L: Lease + ?Sized>(game: &mut L) {
-    let e = game.current_enemy() as i32;
-    let x_velocity = session_slot!(game, Explosion[e].x_velocity);
-    let carry = session_slot!(byte game, Explosion[e].base.x_subpos[1]) as i32
+    let k = game.current_enemy();
+    let x_velocity = Explosion::of(game, k).x_velocity();
+    let carry = i32::from(Explosion::of(game, k).actor().x.fraction.to_le_bytes()[1])
         + x_velocity.to_ne_bytes()[0] as i32;
-    session_slot!(byte game, Explosion[e].base.x_subpos[1] = carry as u8);
-    session_slot!(game, Explosion[e].base.x_pos, |old| (old as i32
+    set_high_byte(
+        &mut ExplosionEdit::of(game, k).actor().x.fraction,
+        carry as u8,
+    );
+    ExplosionEdit::of(game, k).actor().x.whole = (Explosion::of(game, k).actor().x.whole as i32
         + ((x_velocity >> 8) as i8 as i32 + (carry >> 8)))
-        as u16);
-    let y_velocity = session_slot!(game, Explosion[e].y_velocity);
-    let carry = session_slot!(byte game, Explosion[e].base.y_subpos[1]) as i32
+        as u16;
+    let y_velocity = Explosion::of(game, k).y_velocity();
+    let carry = i32::from(Explosion::of(game, k).actor().y.fraction.to_le_bytes()[1])
         + y_velocity.to_ne_bytes()[0] as i32;
-    session_slot!(byte game, Explosion[e].base.y_subpos[1] = carry as u8);
-    session_slot!(game, Explosion[e].base.y_pos, |old| (old as i32
+    set_high_byte(
+        &mut ExplosionEdit::of(game, k).actor().y.fraction,
+        carry as u8,
+    );
+    ExplosionEdit::of(game, k).actor().y.whole = (Explosion::of(game, k).actor().y.whole as i32
         + ((y_velocity >> 8) as i8 as i32 + (carry >> 8)))
-        as u16);
+        as u16;
 }
 
 /// Handle baby metroid ($A6:A2DC): run its function, then hook the Ceres
@@ -654,11 +586,10 @@ fn move_with_velocity<L: Lease + ?Sized>(game: &mut L) {
 /// `Ridley_A2DC`.
 pub fn handle_baby_metroid<L: Lease + ?Sized>(game: &mut L) {
     run_baby_metroid_function(game);
-    if session_slot!(game, Ridley[RIDLEY].movement_enabled) != 0 {
+    if Ridley::of(game, RIDLEY).movement_enabled() != 0 {
         // The hook is the long pointer $A6:A2F2, `draw_baby_metroid_and_door`.
-        game.set_slot_byte(GRAPHICS_DRAWN_HOOK, 0xf2);
-        game.set_slot_byte(GRAPHICS_DRAWN_HOOK + 1, 0xa2);
-        game.set_slot_byte(GRAPHICS_DRAWN_HOOK + 2, 0xa6);
+        game.session_mut().actors.drawing.hook_address[..3].copy_from_slice(&[0xf2, 0xa2, 0xa6]);
+        game.record_stored();
     } else {
         draw_baby_metroid_and_door(game);
     }
@@ -672,10 +603,14 @@ pub fn draw_baby_metroid_and_door<L: Lease + ?Sized>(game: &mut L) {
     if battle!(game.CeresStatus) == 0 {
         draw_baby_metroid(game);
     }
-    if session_slot!(game, CeresDoor[CERES_DOOR].drawn_by_ridley) != 0 {
+    if CeresDoor::of(game, CERES_DOOR).drawn_by_ridley() != 0 {
         let offset = EARTHQUAKE_X_OFFSETS[(battle!(game.EarthquakeTimer) & 3) as usize];
-        let x = session_slot!(game, CeresDoor[CERES_DOOR].base.x_pos).wrapping_add(offset as u16);
-        let y = session_slot!(game, CeresDoor[CERES_DOOR].base.y_pos);
+        let x = CeresDoor::of(game, CERES_DOOR)
+            .actor()
+            .x
+            .whole
+            .wrapping_add(offset as u16);
+        let y = CeresDoor::of(game, CERES_DOOR).actor().y.whole;
         game.foreign(|game| {
             sprite_output::paletted(
                 0xa6,
@@ -693,16 +628,16 @@ pub fn draw_baby_metroid_and_door<L: Lease + ?Sized>(game: &mut L) {
 pub fn main<L: Lease + ?Sized>(lease: &mut L) {
     // The state steps, Ridley's function, the tail, drawing and ribs run on
     // the lease.
-    let mut lag = (session_slot!(lease, Ridley[RIDLEY].grabbed_lag_timer) as i16).wrapping_sub(4);
+    let mut lag = (Ridley::of(lease, RIDLEY).grabbed_lag_timer() as i16).wrapping_sub(4);
     if lag < 0 {
         lag = 0;
     }
-    session_slot!(lease, Ridley[RIDLEY].grabbed_lag_timer = lag as u16);
+    *RidleyEdit::of(lease, RIDLEY).grabbed_lag_timer() = lag as u16;
     set_tangibility(lease);
     lunge_if_power_bomb(lease);
-    let function = session_slot!(lease, Ridley[RIDLEY].function);
+    let function = Ridley::of(lease, RIDLEY).function();
     crate::actors::ceres_ridley::run_function(lease, function);
-    if session_slot!(lease, Ridley[RIDLEY].movement_enabled) != 0 {
+    if Ridley::of(lease, RIDLEY).movement_enabled() != 0 {
         hurt_flash(lease);
         move_ridley(lease);
         update_wings(lease);
@@ -711,7 +646,7 @@ pub fn main<L: Lease + ?Sized>(lease: &mut L) {
         draw_tail(lease);
         draw_wings(lease);
         handle_ribs(lease);
-        if session_slot!(lease, Ridley[RIDLEY].holding_samus) != 0 {
+        if Ridley::of(lease, RIDLEY).holding_samus() != 0 {
             move_samus_with_feet(lease);
         }
     }
@@ -765,8 +700,8 @@ pub(crate) fn run_ridley_function<L: Lease + ?Sized>(game: &mut L, function: u16
 
 /// Time is frozen AI - enemy $E17F (Ridley) ($A6:B28A). Was `Ridley_Func_2`.
 pub fn time_frozen<L: Lease + ?Sized>(game: &mut L) {
-    session_slot!(game, Ridley[RIDLEY].grabbed_lag_timer = 0);
-    session_slot!(game, Ridley[RIDLEY].base.frame_counter = 1);
+    *RidleyEdit::of(game, RIDLEY).grabbed_lag_timer() = 0;
+    RidleyEdit::of(game, RIDLEY).actor().frame = 1;
     hurt(game);
 }
 
@@ -774,14 +709,14 @@ pub fn time_frozen<L: Lease + ?Sized>(game: &mut L) {
 /// `main`; then the grabbed Samus lags until the timer reaches its limit.
 /// Was `Ridley_Hurt`.
 pub fn hurt<L: Lease + ?Sized>(game: &mut L) {
-    let animate = if session_slot!(game, Ridley[RIDLEY].base.frame_counter) & 1 != 0 {
+    let animate = if Ridley::of(game, RIDLEY).actor().frame & 1 != 0 {
         true
     } else {
         set_tangibility(game);
         lunge_if_power_bomb(game);
-        let function = session_slot!(game, Ridley[RIDLEY].function);
+        let function = Ridley::of(game, RIDLEY).function();
         crate::actors::ceres_ridley::run_function(game, function);
-        if session_slot!(game, Ridley[RIDLEY].movement_enabled) != 0 {
+        if Ridley::of(game, RIDLEY).movement_enabled() != 0 {
             move_ridley(game);
             update_wings(game);
             handle_tail(game);
@@ -797,19 +732,19 @@ pub fn hurt<L: Lease + ?Sized>(game: &mut L) {
         draw_wings(game);
         health_palette(game);
         handle_ribs(game);
-        let mut lag = session_slot!(game, Ridley[RIDLEY].grabbed_lag_timer).wrapping_add(1);
+        let mut lag = Ridley::of(game, RIDLEY).grabbed_lag_timer().wrapping_add(1);
         if (lag as i16).wrapping_sub(GRABBED_HURT_LAG as i16) >= 0 {
             lag = GRABBED_HURT_LAG;
         }
-        session_slot!(game, Ridley[RIDLEY].grabbed_lag_timer = lag);
-        if (session_slot!(game, Ridley[RIDLEY].grabbed_lag_timer) as i16)
+        *RidleyEdit::of(game, RIDLEY).grabbed_lag_timer() = lag;
+        if (Ridley::of(game, RIDLEY).grabbed_lag_timer() as i16)
             .wrapping_sub(GRABBED_HURT_LAG as i16)
             < 0
         {
             return;
         }
     }
-    if session_slot!(game, Ridley[RIDLEY].holding_samus) != 0 {
+    if Ridley::of(game, RIDLEY).holding_samus() != 0 {
         move_samus_with_feet(game);
     }
 }
@@ -827,7 +762,8 @@ pub fn liftoff<L: Lease + ?Sized>(game: &mut L) {
     };
     accelerate(0, 14, rect.x, rect.y, game);
     if !separated_from_rect(0, rect, game) {
-        session_slot!(game, Ridley[RIDLEY]; fight_mode = 1, function = function::DECIDE_ACTION);
+        *RidleyEdit::of(game, RIDLEY).fight_mode() = 1;
+        *RidleyEdit::of(game, RIDLEY).function() = function::DECIDE_ACTION;
         decide_action(game);
     }
 }
@@ -838,20 +774,19 @@ pub fn decide_action<L: Lease + ?Sized>(game: &mut L) {
     let choices = fight_action_choices(game);
     let choice = 2 * (game.roll_random() & 7) as usize;
     let next = crate::cartridge::native_record(0xa6, choices, game).word(choice);
-    session_slot!(game, Ridley[RIDLEY].function = next);
+    *RidleyEdit::of(game, RIDLEY).function() = next;
     crate::actors::ceres_ridley::run_function(game, next);
 }
 
 /// Get fight action choices ($A6:B335). Was `Ridley_Func_4`.
 pub fn fight_action_choices<L: Lease + ?Sized>(game: &mut L) -> u16 {
-    if game.slot_byte(SAMUS_MOVEMENT_TYPE) == SPIN_JUMPING {
+    if samus_movement_type(game) == SPIN_JUMPING {
         return actions::HOVER;
     }
-    let health = session_slot!(game, Ridley[RIDLEY].base.health);
+    let health = Ridley::of(game, RIDLEY).actor().health;
     if health == 0 {
-        session_slot!(game, Ridley[RIDLEY].death_lunges, |death_lunges| {
-            death_lunges.wrapping_add(1)
-        });
+        *RidleyEdit::of(game, RIDLEY).death_lunges() =
+            Ridley::of(game, RIDLEY).death_lunges().wrapping_add(1);
         actions::LUNGE
     } else if below(health, 14400) {
         actions::POGO_OR_SWOOP
@@ -859,7 +794,7 @@ pub fn fight_action_choices<L: Lease + ?Sized>(game: &mut L) -> u16 {
         actions::POGO
     } else if samus_not_spinning(game) {
         actions::LUNGE_OR_POGO
-    } else if below(session_slot!(game, Ridley[RIDLEY].base.health), 9000) {
+    } else if below(Ridley::of(game, RIDLEY).actor().health, 9000) {
         actions::SWOOP_OR_POGO
     } else {
         actions::POGO_OR_SWOOP
@@ -868,11 +803,8 @@ pub fn fight_action_choices<L: Lease + ?Sized>(game: &mut L) -> u16 {
 
 /// Ridley function - lunge missed - setup ($A6:B3EC). Was `Ridley_Func_5`.
 pub fn lunge_missed<L: Lease + ?Sized>(game: &mut L) {
-    session_slot!(
-        game,
-        Ridley[RIDLEY].function = function::LUNGE_MISSED_MOVE_TO_POSITION
-    );
-    session_slot!(game, Ridley[RIDLEY].function_timer = 128);
+    *RidleyEdit::of(game, RIDLEY).function() = function::LUNGE_MISSED_MOVE_TO_POSITION;
+    *RidleyEdit::of(game, RIDLEY).function_timer() = 128;
     lunge_missed_move_to_position(game);
 }
 
@@ -880,7 +812,7 @@ pub fn lunge_missed<L: Lease + ?Sized>(game: &mut L) {
 /// `Ridley_Func_6`.
 pub fn lunge_missed_move_to_position<L: Lease + ?Sized>(game: &mut L) {
     if timer_expired(game) || {
-        let x = if session_slot!(game, Ridley[RIDLEY].facing) != 0 {
+        let x = if Ridley::of(game, RIDLEY).facing() != 0 {
             96
         } else {
             192
@@ -894,7 +826,7 @@ pub fn lunge_missed_move_to_position<L: Lease + ?Sized>(game: &mut L) {
         accelerate(0, acceleration_factor(game), rect.x, rect.y, game);
         !separated_from_rect(0, rect, game)
     } {
-        session_slot!(game, Ridley[RIDLEY].function = function::DECIDE_ACTION);
+        *RidleyEdit::of(game, RIDLEY).function() = function::DECIDE_ACTION;
     }
 }
 
@@ -902,22 +834,20 @@ pub fn lunge_missed_move_to_position<L: Lease + ?Sized>(game: &mut L) {
 /// factor for lunge missed and dodging power bomb. Was `Ridley_Func_7`.
 pub fn acceleration_factor<L: Lease + ?Sized>(game: &mut L) -> u16 {
     const FACTORS: [u16; 4] = [4, 8, 0xa, 0xc];
-    FACTORS[session_slot!(game, Ridley[RIDLEY].acceleration_index) as usize]
+    FACTORS[Ridley::of(game, RIDLEY).acceleration_index() as usize]
 }
 
 /// Ridley action - swoop ($A6:B441). Was `Ridley_Func_8`.
 pub fn swoop<L: Lease + ?Sized>(game: &mut L) {
-    session_slot!(
-        game,
-        Ridley[RIDLEY].function = function::SWOOP_MOVE_TO_POSITION
-    );
-    session_slot!(game, Ridley[RIDLEY]; timer = 10, swoop_angle = 0);
+    *RidleyEdit::of(game, RIDLEY).function() = function::SWOOP_MOVE_TO_POSITION;
+    *RidleyEdit::of(game, RIDLEY).timer() = 10;
+    *RidleyEdit::of(game, RIDLEY).swoop_angle() = 0;
     swoop_move_to_position(game);
 }
 
 /// Ridley function - swoop - move to position ($A6:B455). Was `Ridley_B455`.
 pub fn swoop_move_to_position<L: Lease + ?Sized>(game: &mut L) {
-    let x = if session_slot!(game, Ridley[RIDLEY].facing) != 0 {
+    let x = if Ridley::of(game, RIDLEY).facing() != 0 {
         64
     } else {
         192
@@ -930,8 +860,9 @@ pub fn swoop_move_to_position<L: Lease + ?Sized>(game: &mut L) {
     };
     accelerate(0, 1, rect.x, rect.y, game);
     if !separated_from_rect(0, rect, game) {
-        session_slot!(game, Ridley[RIDLEY]; function = function::SWOOP_AIMING_DOWN, timer = 32,
-            swoop_angle = 0);
+        *RidleyEdit::of(game, RIDLEY).function() = function::SWOOP_AIMING_DOWN;
+        *RidleyEdit::of(game, RIDLEY).timer() = 32;
+        *RidleyEdit::of(game, RIDLEY).swoop_angle() = 0;
     }
 }
 
@@ -943,7 +874,7 @@ fn swoop_stage<L: Lease + ?Sized>(
     target_angle: u16,
     target_speed: u16,
 ) -> bool {
-    if session_slot!(game, Ridley[RIDLEY].facing) != 0 {
+    if Ridley::of(game, RIDLEY).facing() != 0 {
         calculate_swoop_velocities(angle_step, target_angle, target_speed, game);
     } else {
         calculate_swoop_velocities(
@@ -953,9 +884,9 @@ fn swoop_stage<L: Lease + ?Sized>(
             game,
         );
     }
-    let timer = session_slot!(game, Ridley[RIDLEY].timer);
+    let timer = Ridley::of(game, RIDLEY).timer();
     if timer != 0 {
-        session_slot!(game, Ridley[RIDLEY].timer = timer.wrapping_sub(1));
+        *RidleyEdit::of(game, RIDLEY).timer() = timer.wrapping_sub(1);
         false
     } else {
         true
@@ -966,11 +897,8 @@ fn swoop_stage<L: Lease + ?Sized>(
 /// `Ridley_Func_9`.
 pub fn swoop_aiming_down<L: Lease + ?Sized>(game: &mut L) {
     if swoop_stage(game, 32, 512, 1152) {
-        session_slot!(
-            game,
-            Ridley[RIDLEY].function = function::SWOOP_AIMING_HORIZONTAL
-        );
-        session_slot!(game, Ridley[RIDLEY].timer = 20);
+        *RidleyEdit::of(game, RIDLEY).function() = function::SWOOP_AIMING_HORIZONTAL;
+        *RidleyEdit::of(game, RIDLEY).timer() = 20;
     }
 }
 
@@ -978,7 +906,8 @@ pub fn swoop_aiming_down<L: Lease + ?Sized>(game: &mut L) {
 /// `Ridley_Func_10`.
 pub fn swoop_aiming_horizontal<L: Lease + ?Sized>(game: &mut L) {
     if swoop_stage(game, 320, 0x4000, 1280) {
-        session_slot!(game, Ridley[RIDLEY]; function = function::SWOOP_AIMING_UP, timer = 16);
+        *RidleyEdit::of(game, RIDLEY).function() = function::SWOOP_AIMING_UP;
+        *RidleyEdit::of(game, RIDLEY).timer() = 16;
         bg2_staging::set(game, tail::WHIP_REQUEST, 1);
     }
 }
@@ -987,11 +916,8 @@ pub fn swoop_aiming_horizontal<L: Lease + ?Sized>(game: &mut L) {
 /// `Ridley_Func_11`.
 pub fn swoop_aiming_up<L: Lease + ?Sized>(game: &mut L) {
     if swoop_stage(game, 512, 30720, 768) {
-        session_slot!(
-            game,
-            Ridley[RIDLEY].function = function::SWOOP_AIMING_UP_FASTER
-        );
-        session_slot!(game, Ridley[RIDLEY].timer = 32);
+        *RidleyEdit::of(game, RIDLEY).function() = function::SWOOP_AIMING_UP_FASTER;
+        *RidleyEdit::of(game, RIDLEY).timer() = 32;
     }
 }
 
@@ -999,7 +925,8 @@ pub fn swoop_aiming_up<L: Lease + ?Sized>(game: &mut L) {
 /// `Ridley_Func_12`.
 pub fn swoop_aiming_up_faster<L: Lease + ?Sized>(game: &mut L) {
     if swoop_stage(game, 1024, 30720, 768) {
-        session_slot!(game, Ridley[RIDLEY]; function = function::SWOOP_DECELERATE, timer = 32);
+        *RidleyEdit::of(game, RIDLEY).function() = function::SWOOP_DECELERATE;
+        *RidleyEdit::of(game, RIDLEY).timer() = 32;
         face_room_middle(game);
     }
 }
@@ -1008,16 +935,16 @@ pub fn swoop_aiming_up_faster<L: Lease + ?Sized>(game: &mut L) {
 /// `Ridley_Func_13`.
 pub fn swoop_decelerate<L: Lease + ?Sized>(game: &mut L) {
     calculate_swoop_velocities(0, 0x8000, 448, game);
-    let timer = session_slot!(game, Ridley[RIDLEY].timer);
+    let timer = Ridley::of(game, RIDLEY).timer();
     if timer != 0 {
-        session_slot!(game, Ridley[RIDLEY].timer = timer.wrapping_sub(1));
+        *RidleyEdit::of(game, RIDLEY).timer() = timer.wrapping_sub(1);
     } else {
         let next = if samus_not_spinning(game) {
             function::LUNGE
         } else {
             function::DECIDE_ACTION
         };
-        session_slot!(game, Ridley[RIDLEY].function = next);
+        *RidleyEdit::of(game, RIDLEY).function() = next;
     }
 }
 
@@ -1025,28 +952,22 @@ pub fn swoop_decelerate<L: Lease + ?Sized>(game: &mut L) {
 pub fn hover<L: Lease + ?Sized>(game: &mut L) {
     bg2_staging::set(game, tail::IDEAL_SEGMENT_ANGLE, 11);
     bg2_staging::set(game, tail::EXTENSION_SPEED, 384);
-    session_slot!(
-        game,
-        Ridley[RIDLEY].function = function::HOVER_TO_WALL_BEHIND
-    );
-    session_slot!(
-        game,
-        Ridley[RIDLEY].function_timer = ((battle!(game.Random) & 0x1f) + 32)
-    );
+    *RidleyEdit::of(game, RIDLEY).function() = function::HOVER_TO_WALL_BEHIND;
+    *RidleyEdit::of(game, RIDLEY).function_timer() = (battle!(game.Random) & 0x1f) + 32;
     hover_to_wall_behind(game);
 }
 
 /// Ridley function - hover - move to wall behind Ridley ($A6:B5E5). Was
 /// `Ridley_Func_15`.
 pub fn hover_to_wall_behind<L: Lease + ?Sized>(game: &mut L) {
-    let x = ridley_data::hover_behind(game, session_slot!(game, Ridley[RIDLEY].facing) as isize);
+    let x = ridley_data::hover_behind(game, Ridley::of(game, RIDLEY).facing() as isize);
     hover_movement(game, x, function::HOVER_TO_WALL_IN_FRONT);
 }
 
 /// Ridley function - hover - move to wall in front of Ridley ($A6:B613). Was
 /// `Ridley_Func_16`.
 pub fn hover_to_wall_in_front<L: Lease + ?Sized>(game: &mut L) {
-    let x = ridley_data::hover_in_front(game, session_slot!(game, Ridley[RIDLEY].facing) as isize);
+    let x = ridley_data::hover_in_front(game, Ridley::of(game, RIDLEY).facing() as isize);
     hover_movement(game, x, function::HOVER_TO_WALL_BEHIND);
 }
 
@@ -1057,7 +978,8 @@ fn hover_movement<L: Lease + ?Sized>(game: &mut L, x: u16, timeout: u16) {
     if hover_towards(x, game) {
         set_up_pogo_from_hover(game);
     } else if timer_expired(game) {
-        session_slot!(game, Ridley[RIDLEY]; function = timeout, function_timer = 128);
+        *RidleyEdit::of(game, RIDLEY).function() = timeout;
+        *RidleyEdit::of(game, RIDLEY).function_timer() = 128;
         face_room_middle(game);
     }
 }
@@ -1072,12 +994,12 @@ pub fn hover_towards<L: Lease + ?Sized>(x: u16, game: &mut L) -> bool {
     }
     accelerate(0, acceleration_factor(game), x, y, game);
     bg2_staging::set(game, tail::WHIP_REQUEST, 1);
-    if game.slot_byte(SAMUS_MOVEMENT_TYPE) != SPIN_JUMPING {
+    if samus_movement_type(game) != SPIN_JUMPING {
         return true;
     }
     if (battle!(game.Random) as u8) >= 0x80
-        && session_slot!(game, Ridley[RIDLEY].roaring) == 0
-        && session_slot!(game, Ridley[RIDLEY].facing) != FACING_FORWARD
+        && Ridley::of(game, RIDLEY).roaring() == 0
+        && Ridley::of(game, RIDLEY).facing() != FACING_FORWARD
     {
         set_instruction_list(instruction_list::SHOOT_FIREBALLS, game);
     }
@@ -1089,46 +1011,31 @@ pub fn set_up_pogo_from_hover<L: Lease + ?Sized>(game: &mut L) {
     bg2_staging::set(game, tail::EXTENSION_SPEED, 240);
     bg2_staging::set(game, tail::IDEAL_SEGMENT_ANGLE, 16);
     bg2_staging::set(game, tail::FUNCTION, 1);
-    session_slot!(
-        game,
-        Ridley[RIDLEY].function = function::POGO_FLY_TO_POSITION
-    );
+    *RidleyEdit::of(game, RIDLEY).function() = function::POGO_FLY_TO_POSITION;
 }
 
 /// Ridley action / function - pogo - fly to position ($A6:B6A7). Was
 /// `Ridley_Func_19`.
 pub fn pogo_fly_to_position<L: Lease + ?Sized>(game: &mut L) {
-    if below(session_slot!(game, Ridley[RIDLEY].base.y_pos), 288) {
+    if below(Ridley::of(game, RIDLEY).actor().y.whole, 288) {
         face_room_middle(game);
-        session_slot!(
-            game,
-            Ridley[RIDLEY].function = function::POGO_WAIT_AT_POSITION
-        );
-        session_slot!(game, Ridley[RIDLEY].function_timer = 32);
+        *RidleyEdit::of(game, RIDLEY).function() = function::POGO_WAIT_AT_POSITION;
+        *RidleyEdit::of(game, RIDLEY).function_timer() = 32;
         pogo_wait_at_position(game);
     } else {
-        let x = ridley_data::pogo_target(game, session_slot!(game, Ridley[RIDLEY].facing) as isize);
+        let x = ridley_data::pogo_target(game, Ridley::of(game, RIDLEY).facing() as isize);
         accelerate(0, 0, x, 288, game);
     }
 }
 
 /// Ridley function - pogo - wait at position ($A6:B6DD). Was `Ridley_Func_20`.
 pub fn pogo_wait_at_position<L: Lease + ?Sized>(game: &mut L) {
-    accelerate(
-        0,
-        0,
-        session_slot!(game, Ridley[RIDLEY].base.x_pos),
-        288,
-        game,
-    );
+    accelerate(0, 0, Ridley::of(game, RIDLEY).actor().x.whole, 288, game);
     if timer_expired(game) {
         set_up_pogo_tail(game);
         set_pogo_speeds(game);
-        session_slot!(game, Ridley[RIDLEY].function = function::POGO_DESCENDING);
-        session_slot!(
-            game,
-            Ridley[RIDLEY].function_timer = ((battle!(game.Random) & 0x3f) + 128)
-        );
+        *RidleyEdit::of(game, RIDLEY).function() = function::POGO_DESCENDING;
+        *RidleyEdit::of(game, RIDLEY).function_timer() = (battle!(game.Random) & 0x3f) + 128;
     }
 }
 
@@ -1142,11 +1049,11 @@ pub fn pogo_descending<L: Lease + ?Sized>(game: &mut L) {
         return;
     }
     let mut y_velocity = (bg2_staging::get(game, tail::POGO_DOWN_ACCELERATION) as i16)
-        .wrapping_add(session_slot!(game, Ridley[RIDLEY].y_velocity) as i16);
+        .wrapping_add(Ridley::of(game, RIDLEY).y_velocity() as i16);
     if !below(y_velocity as u16, 1536) {
         y_velocity = 1536;
     }
-    session_slot!(game, Ridley[RIDLEY].y_velocity = y_velocity as u16);
+    *RidleyEdit::of(game, RIDLEY).y_velocity() = y_velocity as u16;
     if tail_hits_floor(game) {
         let x = bg2_staging::get(game, tail::x(6));
         let y = bg2_staging::get(game, tail::y(6)).wrapping_add(12);
@@ -1156,48 +1063,43 @@ pub fn pogo_descending<L: Lease + ?Sized>(game: &mut L) {
         battle!(game; EarthquakeType = 13; EarthquakeTimer = 4;);
         set_pogo_x_direction(game);
         set_pogo_speeds(game);
-        set_tail_segments_from_list(tail_address(tail::distance(0)), tail_data::DISTANCES, game);
+        set_tail_segments_from_list(tail::distance(0), tail_data::DISTANCES, game);
         for segment in 0..7 {
             bg2_staging::set(game, tail::target_distance(segment), 3072);
         }
         bg2_staging::set(game, tail::FUNCTION, 4);
-        let mut bounces = session_slot!(game, Ridley[RIDLEY].pogo_bounces).wrapping_add(1);
-        if !below(session_slot!(game, Ridley[RIDLEY].pogo_bounces), 1) {
-            if session_slot!(game, Ridley[RIDLEY].facing) != FACING_FORWARD {
+        let mut bounces = Ridley::of(game, RIDLEY).pogo_bounces().wrapping_add(1);
+        if !below(Ridley::of(game, RIDLEY).pogo_bounces(), 1) {
+            if Ridley::of(game, RIDLEY).facing() != FACING_FORWARD {
                 set_instruction_list(instruction_list::SHOOT_FIREBALLS, game);
             }
             bounces = 0;
         }
-        session_slot!(game, Ridley[RIDLEY]; pogo_bounces = bounces,
-            function = function::POGO_ASCENDING);
+        *RidleyEdit::of(game, RIDLEY).pogo_bounces() = bounces;
+        *RidleyEdit::of(game, RIDLEY).function() = function::POGO_ASCENDING;
     }
 }
 
 /// Ridley function - pogo - ascending ($A6:B7B9). Was `Ridley_Func_22`.
 pub fn pogo_ascending<L: Lease + ?Sized>(game: &mut L) {
     if !samus_in_pogo_zone(game) || {
-        let expired =
-            (session_slot!(game, Ridley[RIDLEY].function_timer) as i16).wrapping_sub(1) < 0;
-        session_slot!(game, Ridley[RIDLEY].function_timer, |function_timer| {
-            function_timer.wrapping_sub(1)
-        });
+        let expired = (Ridley::of(game, RIDLEY).function_timer() as i16).wrapping_sub(1) < 0;
+        *RidleyEdit::of(game, RIDLEY).function_timer() =
+            Ridley::of(game, RIDLEY).function_timer().wrapping_sub(1);
         expired
     } {
         set_neutral_tail(game);
-        session_slot!(game, Ridley[RIDLEY].function = function::DECIDE_ACTION);
+        *RidleyEdit::of(game, RIDLEY).function() = function::DECIDE_ACTION;
     } else {
-        let y_velocity = session_slot!(game, Ridley[RIDLEY].y_velocity);
+        let y_velocity = Ridley::of(game, RIDLEY).y_velocity();
         let rising = (bg2_staging::get(game, tail::POGO_UP_ACCELERATION) as i16)
             .wrapping_add(y_velocity as i16)
             < 0;
-        session_slot!(
-            game,
-            Ridley[RIDLEY].y_velocity =
-                bg2_staging::get(game, tail::POGO_UP_ACCELERATION).wrapping_add(y_velocity)
-        );
+        *RidleyEdit::of(game, RIDLEY).y_velocity() =
+            bg2_staging::get(game, tail::POGO_UP_ACCELERATION).wrapping_add(y_velocity);
         if !rising {
-            session_slot!(game, Ridley[RIDLEY]; y_velocity = 0,
-                function = function::POGO_DESCENDING);
+            *RidleyEdit::of(game, RIDLEY).y_velocity() = 0;
+            *RidleyEdit::of(game, RIDLEY).function() = function::POGO_DESCENDING;
         }
     }
 }
@@ -1229,14 +1131,22 @@ pub fn samus_grabbable<L: Lease + ?Sized>(game: &mut L) -> bool {
 /// `x_radius` and `y_radius`. Was `Ridley_Func_26`.
 pub fn samus_touches_feet<L: Lease + ?Sized>(x_radius: u16, y_radius: u16, game: &mut L) -> bool {
     let rect = Rect {
-        x: session_slot!(game, Ridley[RIDLEY].base.x_pos).wrapping_add(ridley_data::feet_x(
-            game,
-            session_slot!(game, Ridley[RIDLEY].facing) as isize,
-        )),
-        y: session_slot!(game, Ridley[RIDLEY].base.y_pos).wrapping_add(ridley_data::feet_y(
-            game,
-            (session_slot!(game, Ridley[RIDLEY].feet_distance_index) >> 1) as isize,
-        )),
+        x: Ridley::of(game, RIDLEY)
+            .actor()
+            .x
+            .whole
+            .wrapping_add(ridley_data::feet_x(
+                game,
+                Ridley::of(game, RIDLEY).facing() as isize,
+            )),
+        y: Ridley::of(game, RIDLEY)
+            .actor()
+            .y
+            .whole
+            .wrapping_add(ridley_data::feet_y(
+                game,
+                (Ridley::of(game, RIDLEY).feet_distance_index() >> 1) as isize,
+            )),
         w: x_radius,
         h: y_radius,
     };
@@ -1246,64 +1156,65 @@ pub fn samus_touches_feet<L: Lease + ?Sized>(x_radius: u16, y_radius: u16, game:
 /// Ridley grabs Samus from pogo ($A6:B889): Y velocity = -max(200h, |Y
 /// velocity|). Was `Ridley_Func_27`.
 pub fn grab_samus_from_pogo<L: Lease + ?Sized>(game: &mut L) {
-    let mut y_velocity = session_slot!(game, Ridley[RIDLEY].y_velocity) as i16;
+    let mut y_velocity = Ridley::of(game, RIDLEY).y_velocity() as i16;
     if y_velocity >= 0 {
         y_velocity = -(y_velocity as i32) as i16;
     }
     if (y_velocity as i32 + 512) & 0x8000 == 0 {
         y_velocity = -512;
     }
-    session_slot!(game, Ridley[RIDLEY].y_velocity = y_velocity as u16);
+    *RidleyEdit::of(game, RIDLEY).y_velocity() = y_velocity as u16;
     set_neutral_tail(game);
-    session_slot!(game, Ridley[RIDLEY].function = function::GRABBED_SAMUS);
+    *RidleyEdit::of(game, RIDLEY).function() = function::GRABBED_SAMUS;
     grabbed_samus(game);
 }
 
 /// Set Ridley pogo X movement direction ($A6:B8A9): towards the room inside
 /// at the bounds, otherwise mostly towards Samus. Was `Ridley_Func_28`.
 pub fn set_pogo_x_direction<L: Lease + ?Sized>(game: &mut L) {
-    if session_slot!(game, Ridley[RIDLEY].x_velocity) == 0 {
-        let x_velocity = if session_slot!(game, Ridley[RIDLEY].base.x_pos) & 0x80 != 0 {
+    if Ridley::of(game, RIDLEY).x_velocity() == 0 {
+        let x_velocity = if Ridley::of(game, RIDLEY).actor().x.whole & 0x80 != 0 {
             -0xc0i32
         } else {
             0xc0
         };
-        session_slot!(game, Ridley[RIDLEY].x_velocity = x_velocity as u16);
+        *RidleyEdit::of(game, RIDLEY).x_velocity() = x_velocity as u16;
     }
-    let facing_away = ((session_slot!(game, Ridley[RIDLEY].x_velocity) as i32
-        ^ (session_slot!(game, Ridley[RIDLEY].base.x_pos) as i32 - game.player_x() as i32))
+    let facing_away = ((Ridley::of(game, RIDLEY).x_velocity() as i32
+        ^ (Ridley::of(game, RIDLEY).actor().x.whole as i32 - game.player_x() as i32))
         & 0x8000)
         == 0;
-    let x = session_slot!(game, Ridley[RIDLEY].base.x_pos);
-    if (x as i16).wrapping_sub(session_slot!(game, Ridley[RIDLEY].min_x) as i16) < 0 {
-        if (session_slot!(game, Ridley[RIDLEY].x_velocity) & 0x8000) == 0 {
+    let x = Ridley::of(game, RIDLEY).actor().x.whole;
+    if (x as i16).wrapping_sub(Ridley::of(game, RIDLEY).min_x() as i16) < 0 {
+        if (Ridley::of(game, RIDLEY).x_velocity() & 0x8000) == 0 {
             return;
         }
-    } else if (x as i16).wrapping_sub(session_slot!(game, Ridley[RIDLEY].max_x) as i16) >= 0 {
-        if (session_slot!(game, Ridley[RIDLEY].x_velocity) & 0x8000) != 0 {
+    } else if (x as i16).wrapping_sub(Ridley::of(game, RIDLEY).max_x() as i16) >= 0 {
+        if (Ridley::of(game, RIDLEY).x_velocity() & 0x8000) != 0 {
             return;
         }
     } else if facing_away == (battle!(game.Random) < 0x555) {
         return;
     }
-    session_slot!(game, Ridley[RIDLEY].x_velocity, |old| -(old as i32) as u16);
+    *RidleyEdit::of(game, RIDLEY).x_velocity() =
+        -(Ridley::of(game, RIDLEY).x_velocity() as i32) as u16;
 }
 
 /// Move Samus with Ridley's feet ($A6:B9E1): the grabbed offsets settle 4px
 /// a frame towards the feet. Was `Ridley_Func_30`.
 pub fn move_samus_with_feet<L: Lease + ?Sized>(game: &mut L) {
-    if let Some(offset) = settle_offset(session_slot!(game, Ridley[RIDLEY].grabbed_x_offset)) {
-        session_slot!(game, Ridley[RIDLEY].grabbed_x_offset = offset);
+    if let Some(offset) = settle_offset(Ridley::of(game, RIDLEY).grabbed_x_offset()) {
+        *RidleyEdit::of(game, RIDLEY).grabbed_x_offset() = offset;
     }
-    if let Some(offset) = settle_offset(session_slot!(game, Ridley[RIDLEY].grabbed_y_offset)) {
-        session_slot!(game, Ridley[RIDLEY].grabbed_y_offset = offset);
+    if let Some(offset) = settle_offset(Ridley::of(game, RIDLEY).grabbed_y_offset()) {
+        *RidleyEdit::of(game, RIDLEY).grabbed_y_offset() = offset;
     }
-    boss!(game; SamusXPos = (session_slot!(game, Ridley[RIDLEY].grabbed_x_offset) as i32
-            + session_slot!(game, Ridley[RIDLEY].base.x_pos) as i32
-            + ridley_data::feet_x(game, session_slot!(game, Ridley[RIDLEY].facing) as isize) as i32)
-            as u16; SamusYPos = (session_slot!(game, Ridley[RIDLEY].grabbed_y_offset) as i32
-            + session_slot!(game, Ridley[RIDLEY].base.y_pos) as i32
-            + ridley_data::feet_y(game, (session_slot!(game, Ridley[RIDLEY].feet_distance_index) >> 1) as isize) as i32)
+    boss!(game; SamusXPos = (Ridley::of(game, RIDLEY).grabbed_x_offset() as i32
+            + Ridley::of(game, RIDLEY).actor().x.whole as i32
+            + ridley_data::feet_x(game, Ridley::of(game, RIDLEY).facing() as isize) as i32)
+            as u16; SamusYPos = (Ridley::of(game, RIDLEY).grabbed_y_offset() as i32
+            + Ridley::of(game, RIDLEY).actor().y.whole as i32
+            + ridley_data::feet_y(game, (Ridley::of(game, RIDLEY).feet_distance_index() >> 1) as isize) as i32)
             as u16;);
 }
 
@@ -1325,38 +1236,32 @@ fn settle_offset(offset: u16) -> Option<u16> {
 
 /// Set grabbed Samus X/Y offset ($A6:BA54). Was `Ridley_Func_31`.
 pub fn set_grabbed_samus_offset<L: Lease + ?Sized>(game: &mut L) {
-    session_slot!(
-        game,
-        Ridley[RIDLEY].grabbed_x_offset = (game.player_x() as i32
-            - (session_slot!(game, Ridley[RIDLEY].base.x_pos) as i32
-                + ridley_data::feet_x(game, session_slot!(game, Ridley[RIDLEY].facing) as isize)
-                    as i32)) as u16
-    );
-    session_slot!(
-        game,
-        Ridley[RIDLEY].grabbed_y_offset = (game.player_y() as i32
-            - (session_slot!(game, Ridley[RIDLEY].base.y_pos) as i32
-                + ridley_data::feet_y(
-                    game,
-                    (session_slot!(game, Ridley[RIDLEY].feet_distance_index) >> 1) as isize
-                ) as i32)) as u16
-    );
+    *RidleyEdit::of(game, RIDLEY).grabbed_x_offset() = (game.player_x() as i32
+        - (Ridley::of(game, RIDLEY).actor().x.whole as i32
+            + ridley_data::feet_x(game, Ridley::of(game, RIDLEY).facing() as isize) as i32))
+        as u16;
+    *RidleyEdit::of(game, RIDLEY).grabbed_y_offset() = (game.player_y() as i32
+        - (Ridley::of(game, RIDLEY).actor().y.whole as i32
+            + ridley_data::feet_y(
+                game,
+                (Ridley::of(game, RIDLEY).feet_distance_index() >> 1) as isize,
+            ) as i32)) as u16;
 }
 
 /// Ridley lunge missed Samus ($A6:BA85): dodge a power bomb, retreat, or after
 /// ten lunges at no health, die. Was `Ridley_Func_32`.
 pub fn lunge_missed_samus<L: Lease + ?Sized>(game: &mut L) {
-    if below(session_slot!(game, Ridley[RIDLEY].death_lunges), 10) {
+    if below(Ridley::of(game, RIDLEY).death_lunges(), 10) {
         if battle!(game.PowerBombFlag) != 0 {
-            session_slot!(game, Ridley[RIDLEY].function = function::DODGE_POWER_BOMB);
+            *RidleyEdit::of(game, RIDLEY).function() = function::DODGE_POWER_BOMB;
             dodge_power_bomb(game);
         } else {
-            session_slot!(game, Ridley[RIDLEY].function = function::LUNGE_MISSED);
+            *RidleyEdit::of(game, RIDLEY).function() = function::LUNGE_MISSED;
             bg2_staging::set(game, tail::WHIP_REQUEST, 1);
         }
     } else {
         start_death_sequence(game);
-        session_slot!(game, Ridley[RIDLEY].function = function::DEATH_ROAR);
+        *RidleyEdit::of(game, RIDLEY).function() = function::DEATH_ROAR;
         death_roar(game);
     }
 }
@@ -1366,21 +1271,23 @@ pub fn lunge_missed_samus<L: Lease + ?Sized>(game: &mut L) {
 /// `Ridley_Func_33`.
 pub fn lunge<L: Lease + ?Sized>(game: &mut L) {
     if !(samus_not_spinning(game)
-        && session_slot!(game, Ridley[RIDLEY].hit_boundary) == 0
+        && Ridley::of(game, RIDLEY).hit_boundary() == 0
         && {
-            let side =
-                ridley_data::lunge_side(game, session_slot!(game, Ridley[RIDLEY].facing) as isize);
-            let dx = session_slot!(game, Ridley[RIDLEY].base.x_pos).wrapping_sub(game.player_x());
+            let side = ridley_data::lunge_side(game, Ridley::of(game, RIDLEY).facing() as isize);
+            let dx = Ridley::of(game, RIDLEY)
+                .actor()
+                .x
+                .whole
+                .wrapping_sub(game.player_x());
             ((side ^ dx) & 0x8000) == 0 || below(abs16(dx), 32)
         }
-        && ((session_slot!(game, Ridley[RIDLEY].base.y_pos) as i32 + 35 - game.player_y() as i32)
-            as i16)
+        && ((Ridley::of(game, RIDLEY).actor().y.whole as i32 + 35 - game.player_y() as i32) as i16)
             < 0)
     {
         lunge_missed_samus(game);
         return;
     }
-    let lead: i16 = if session_slot!(game, Ridley[RIDLEY].facing) != 0 {
+    let lead: i16 = if Ridley::of(game, RIDLEY).facing() != 0 {
         16
     } else {
         -16
@@ -1389,40 +1296,42 @@ pub fn lunge<L: Lease + ?Sized>(game: &mut L) {
         0,
         ridley_data::lunge_acceleration(
             game,
-            session_slot!(game, Ridley[RIDLEY].acceleration_index) as isize,
+            Ridley::of(game, RIDLEY).acceleration_index() as isize,
         ),
         game.player_x().wrapping_add(lead as u16),
         game.player_y().wrapping_sub(4),
         game,
     );
     let rect = Rect {
-        x: session_slot!(game, Ridley[RIDLEY].base.x_pos).wrapping_add(ridley_data::feet_x(
-            game,
-            session_slot!(game, Ridley[RIDLEY].facing) as isize,
-        )),
-        y: session_slot!(game, Ridley[RIDLEY].base.y_pos).wrapping_add(35),
+        x: Ridley::of(game, RIDLEY)
+            .actor()
+            .x
+            .whole
+            .wrapping_add(ridley_data::feet_x(
+                game,
+                Ridley::of(game, RIDLEY).facing() as isize,
+            )),
+        y: Ridley::of(game, RIDLEY).actor().y.whole.wrapping_add(35),
         w: 8,
         h: 12,
     };
     if samus_in_rect(rect, game) {
-        session_slot!(game, Ridley[RIDLEY].y_velocity, |old| -(old as i32) as u16);
-        if session_slot!(game, Ridley[RIDLEY].base.health) != 0 {
+        *RidleyEdit::of(game, RIDLEY).y_velocity() =
+            -(Ridley::of(game, RIDLEY).y_velocity() as i32) as u16;
+        if Ridley::of(game, RIDLEY).actor().health != 0 {
             if battle!(game.PowerBombFlag) != 0 {
                 grab_samus(game);
-                session_slot!(game, Ridley[RIDLEY].function = function::DODGE_POWER_BOMB);
+                *RidleyEdit::of(game, RIDLEY).function() = function::DODGE_POWER_BOMB;
                 dodge_power_bomb(game);
             } else {
                 grabbed_samus(game);
             }
         } else {
-            if session_slot!(game, Ridley[RIDLEY].holding_samus) == 0 {
+            if Ridley::of(game, RIDLEY).holding_samus() == 0 {
                 grab_samus(game);
             }
             start_death_sequence(game);
-            session_slot!(
-                game,
-                Ridley[RIDLEY].function = function::DYING_GRABBED_SAMUS
-            );
+            *RidleyEdit::of(game, RIDLEY).function() = function::DYING_GRABBED_SAMUS;
             dying_grabbed_samus(game);
         }
     }
@@ -1432,38 +1341,29 @@ pub fn lunge<L: Lease + ?Sized>(game: &mut L) {
 pub fn grabbed_samus<L: Lease + ?Sized>(game: &mut L) {
     /// Ridley lunge target X position ($A6:BBEB), by facing direction.
     const TARGET_X: [u16; 3] = [0x40, 0, 0xd0];
-    session_slot!(
-        game,
-        Ridley[RIDLEY].target_x = TARGET_X[session_slot!(game, Ridley[RIDLEY].facing) as usize]
-    );
-    let mut y = (session_slot!(game, Ridley[RIDLEY].base.y_pos) as i16).wrapping_sub(64);
-    if below(session_slot!(game, Ridley[RIDLEY].base.y_pos), 320) {
+    *RidleyEdit::of(game, RIDLEY).target_x() = TARGET_X[Ridley::of(game, RIDLEY).facing() as usize];
+    let mut y = (Ridley::of(game, RIDLEY).actor().y.whole as i16).wrapping_sub(64);
+    if below(Ridley::of(game, RIDLEY).actor().y.whole, 320) {
         y = 256;
     }
-    session_slot!(game, Ridley[RIDLEY].target_y = y as u16);
-    if session_slot!(game, Ridley[RIDLEY].holding_samus) == 0 {
+    *RidleyEdit::of(game, RIDLEY).target_y() = y as u16;
+    if Ridley::of(game, RIDLEY).holding_samus() == 0 {
         grab_samus(game);
     }
-    session_slot!(
-        game,
-        Ridley[RIDLEY].function = function::GRABBED_SAMUS_RISING
-    );
-    session_slot!(game, Ridley[RIDLEY].function_timer = 32);
+    *RidleyEdit::of(game, RIDLEY).function() = function::GRABBED_SAMUS_RISING;
+    *RidleyEdit::of(game, RIDLEY).function_timer() = 32;
     grabbed_samus_rising(game);
 }
 
 /// Ridley function - grabbed Samus - rising to up to 40h px ($A6:BBC4). Was
 /// `Ridley_Func_34`.
 pub fn grabbed_samus_rising<L: Lease + ?Sized>(game: &mut L) {
-    let x = session_slot!(game, Ridley[RIDLEY].target_x);
-    let y = session_slot!(game, Ridley[RIDLEY].target_y);
+    let x = Ridley::of(game, RIDLEY).target_x();
+    let y = Ridley::of(game, RIDLEY).target_y();
     accelerate(0, 0, x, y, game);
     if timer_expired(game) {
-        session_slot!(
-            game,
-            Ridley[RIDLEY].function = function::GRABBED_SAMUS_RISING_TO_MIDDLE
-        );
-        session_slot!(game, Ridley[RIDLEY].function_timer = 32);
+        *RidleyEdit::of(game, RIDLEY).function() = function::GRABBED_SAMUS_RISING_TO_MIDDLE;
+        *RidleyEdit::of(game, RIDLEY).function_timer() = 32;
     }
 }
 
@@ -1474,19 +1374,10 @@ pub fn grabbed_samus_rising_to_middle<L: Lease + ?Sized>(game: &mut L) {
         bg2_staging::set(game, tail::IDEAL_SEGMENT_ANGLE, 8);
         bg2_staging::set(game, tail::EXTENSION_SPEED, 240);
         release_samus(game);
-        session_slot!(
-            game,
-            Ridley[RIDLEY].function = function::GRABBED_SAMUS_RELEASE
-        );
-        session_slot!(game, Ridley[RIDLEY].function_timer = 64);
+        *RidleyEdit::of(game, RIDLEY).function() = function::GRABBED_SAMUS_RELEASE;
+        *RidleyEdit::of(game, RIDLEY).function_timer() = 64;
     } else {
-        accelerate(
-            0,
-            0,
-            session_slot!(game, Ridley[RIDLEY].target_x),
-            256,
-            game,
-        );
+        accelerate(0, 0, Ridley::of(game, RIDLEY).target_x(), 256, game);
     }
 }
 
@@ -1499,9 +1390,9 @@ pub fn grabbed_samus_release<L: Lease + ?Sized>(game: &mut L) {
     if timer_expired(game) {
         bg2_staging::set(game, tail::IDEAL_SEGMENT_ANGLE, 16);
         bg2_staging::set(game, tail::EXTENSION_SPEED, 240);
-        session_slot!(game, Ridley[RIDLEY].function = function::DECIDE_ACTION);
+        *RidleyEdit::of(game, RIDLEY).function() = function::DECIDE_ACTION;
     } else {
-        let x = TARGET_X[session_slot!(game, Ridley[RIDLEY].facing) as usize];
+        let x = TARGET_X[Ridley::of(game, RIDLEY).facing() as usize];
         accelerate(0, 0, x, 224, game);
     }
 }
@@ -1509,9 +1400,8 @@ pub fn grabbed_samus_release<L: Lease + ?Sized>(game: &mut L) {
 /// Grab Samus ($A6:BC68). Was `Ridley_Func_37`.
 pub fn grab_samus<L: Lease + ?Sized>(game: &mut L) {
     set_grabbed_samus_offset(game);
-    session_slot!(game, Ridley[RIDLEY].base.properties, |old| old
-        | K_ENEMY_PROPS_TANGIBLE as u16);
-    session_slot!(game, Ridley[RIDLEY].holding_samus = 1);
+    RidleyEdit::of(game, RIDLEY).actor().properties |= K_ENEMY_PROPS_TANGIBLE as u16;
+    *RidleyEdit::of(game, RIDLEY).holding_samus() = 1;
     game.foreign(|game| game.command_player(LOCK_SAMUS));
     draw_feet(true, game);
 }
@@ -1520,11 +1410,11 @@ pub fn grab_samus<L: Lease + ?Sized>(game: &mut L) {
 pub fn release_samus<L: Lease + ?Sized>(game: &mut L) {
     bg2_staging::set(game, tail::WHIP_REQUEST, 1);
     bg2_staging::set(game, tail::FUNCTION, 1);
-    if (session_slot!(game, Ridley[RIDLEY].fight_mode) & 0x8000) == 0 {
+    if (Ridley::of(game, RIDLEY).fight_mode() & 0x8000) == 0 {
         let timer = if samus_morphed(game) { 6 } else { 10 };
-        session_slot!(game, Ridley[RIDLEY].intangibility_timer = timer);
+        *RidleyEdit::of(game, RIDLEY).intangibility_timer() = timer;
     }
-    session_slot!(game, Ridley[RIDLEY].holding_samus = 0);
+    *RidleyEdit::of(game, RIDLEY).holding_samus() = 0;
     game.foreign(|game| game.command_player(UNLOCK_SAMUS));
     draw_feet(false, game);
 }
@@ -1533,7 +1423,7 @@ pub fn release_samus<L: Lease + ?Sized>(game: &mut L) {
 /// and tangible again when the intangibility timer runs out. Was
 /// `Ridley_Func_39`.
 pub fn set_tangibility<S: State + ?Sized>(game: &mut S) {
-    let mode = session_slot!(game, Ridley[RIDLEY].fight_mode) as i16;
+    let mode = Ridley::of(game, RIDLEY).fight_mode() as i16;
     if mode < 0 {
         return;
     }
@@ -1544,37 +1434,37 @@ pub fn set_tangibility<S: State + ?Sized>(game: &mut S) {
         }
         set_tangible(game, true);
     }
-    let timer = session_slot!(game, Ridley[RIDLEY].intangibility_timer);
+    let timer = Ridley::of(game, RIDLEY).intangibility_timer();
     if timer != 0 {
         let timer = timer.wrapping_sub(1);
-        session_slot!(game, Ridley[RIDLEY].intangibility_timer = timer);
-        if timer == 0 && (session_slot!(game, Ridley[RIDLEY].fight_mode) & 0x8000) == 0 {
+        *RidleyEdit::of(game, RIDLEY).intangibility_timer() = timer;
+        if timer == 0 && (Ridley::of(game, RIDLEY).fight_mode() & 0x8000) == 0 {
             set_tangible(game, true);
         }
     }
 }
 
 fn set_tangible<S: State + ?Sized>(game: &mut S, tangible: bool) {
-    let properties = session_slot!(game, Ridley[RIDLEY].base.properties);
+    let properties = Ridley::of(game, RIDLEY).actor().properties;
     let properties = if tangible {
         (properties as i32 & !(K_ENEMY_PROPS_TANGIBLE as i32)) as u16
     } else {
         properties | K_ENEMY_PROPS_TANGIBLE as u16
     };
-    session_slot!(game, Ridley[RIDLEY].base.properties = properties);
+    RidleyEdit::of(game, RIDLEY).actor().properties = properties;
 }
 
 /// Check if Samus is morphed or spin jumping / damage boosting ($A6:BCF1):
 /// the carry, Samus is neither spin jumping nor damage boosting. Was
 /// `Ridley_Func_40_Carry`.
 pub fn samus_not_spinning<L: Lease + ?Sized>(game: &mut L) -> bool {
-    MOVEMENT_TYPE_FLAGS[game.slot_byte(SAMUS_MOVEMENT_TYPE) as usize] & 0x80 != 0
+    MOVEMENT_TYPE_FLAGS[samus_movement_type(game) as usize] & 0x80 != 0
 }
 
 /// Check if Samus is morphed or spin jumping / damage boosting ($A6:BCF1):
 /// the overflow, Samus is morphed. Was `Ridley_Func_40_Sign`.
 pub fn samus_morphed<L: Lease + ?Sized>(game: &mut L) -> bool {
-    MOVEMENT_TYPE_FLAGS[game.slot_byte(SAMUS_MOVEMENT_TYPE) as usize] & 0x40 != 0
+    MOVEMENT_TYPE_FLAGS[samus_movement_type(game) as usize] & 0x40 != 0
 }
 
 /// $A6:BD04, by Samus movement type: bit 7 not spin jumping or damage
@@ -1593,14 +1483,14 @@ pub fn samus_in_pogo_zone<L: Lease + ?Sized>(game: &mut L) -> bool {
 /// Lunge if power bomb active and not holding Samus ($A6:BD2C). Was
 /// `Ridley_Func_42`.
 pub fn lunge_if_power_bomb<S: State + ?Sized>(game: &mut S) {
-    let mode = session_slot!(game, Ridley[RIDLEY].fight_mode) as i16;
+    let mode = Ridley::of(game, RIDLEY).fight_mode() as i16;
     if mode > 0
         && mode != 2
         && boss!(game.PowerBombFlag) != 0
-        && session_slot!(game, Ridley[RIDLEY].holding_samus) == 0
+        && Ridley::of(game, RIDLEY).holding_samus() == 0
     {
         set_neutral_tail(game);
-        session_slot!(game, Ridley[RIDLEY].function = function::LUNGE);
+        *RidleyEdit::of(game, RIDLEY).function() = function::LUNGE;
     }
 }
 
@@ -1608,7 +1498,7 @@ pub fn lunge_if_power_bomb<S: State + ?Sized>(game: &mut S) {
 /// the explosion, then back to the fight. Was `Ridley_Func_43`.
 pub fn dodge_power_bomb<L: Lease + ?Sized>(game: &mut L) {
     if battle!(game.PowerBombFlag) != 0 {
-        session_slot!(game, Ridley[RIDLEY].fight_mode = 2);
+        *RidleyEdit::of(game, RIDLEY).fight_mode() = 2;
         let x = if below(battle!(game.PowerBombExplosionXPos), 128) {
             192
         } else {
@@ -1621,13 +1511,13 @@ pub fn dodge_power_bomb<L: Lease + ?Sized>(game: &mut L) {
         };
         accelerate(0, acceleration_factor(game), x, y, game);
     } else {
-        session_slot!(game, Ridley[RIDLEY].fight_mode = 1);
-        let next = if session_slot!(game, Ridley[RIDLEY].holding_samus) != 0 {
+        *RidleyEdit::of(game, RIDLEY).fight_mode() = 1;
+        let next = if Ridley::of(game, RIDLEY).holding_samus() != 0 {
             function::GRABBED_SAMUS
         } else {
             function::DECIDE_ACTION
         };
-        session_slot!(game, Ridley[RIDLEY].function = next);
+        *RidleyEdit::of(game, RIDLEY).function() = next;
     }
 }
 
@@ -1635,26 +1525,21 @@ pub fn dodge_power_bomb<L: Lease + ?Sized>(game: &mut L) {
 /// `Ridley_Func_44`.
 pub fn fake_retreat_move_to_position<L: Lease + ?Sized>(game: &mut L) {
     ceres_accelerate(0, 1, 192, 128, game);
-    if !below(session_slot!(game, Ridley[RIDLEY].base.x_pos), 192) {
-        session_slot!(
-            game,
-            Ridley[RIDLEY].function = function::FAKE_RETREAT_RISING
-        );
+    if !below(Ridley::of(game, RIDLEY).actor().x.whole, 192) {
+        *RidleyEdit::of(game, RIDLEY).function() = function::FAKE_RETREAT_RISING;
     }
 }
 
 /// Ridley function - fake retreat - rising ($A6:BDBC): off the top of the
 /// screen, then drop the baby metroid. Was `Ridley_Func_45`.
 pub fn fake_retreat_rising<L: Lease + ?Sized>(game: &mut L) {
-    session_slot!(game, Ridley[RIDLEY].min_y = -192i32 as u16);
+    *RidleyEdit::of(game, RIDLEY).min_y() = -192i32 as u16;
     ceres_accelerate(0, 1, 192, -128i32 as u16, game);
-    if below(session_slot!(game, Ridley[RIDLEY].base.y_pos), 32) {
-        session_slot!(
-            game,
-            Ridley[RIDLEY].baby_metroid_function = baby_metroid_function::START_FALLING
-        );
-        session_slot!(game, Ridley[RIDLEY]; function = function::DROP_BABY_METROID,
-            function_timer = 21);
+    if below(Ridley::of(game, RIDLEY).actor().y.whole, 32) {
+        *RidleyEdit::of(game, RIDLEY).baby_metroid_function() =
+            baby_metroid_function::START_FALLING;
+        *RidleyEdit::of(game, RIDLEY).function() = function::DROP_BABY_METROID;
+        *RidleyEdit::of(game, RIDLEY).function_timer() = 21;
     }
 }
 
@@ -1663,10 +1548,7 @@ pub fn fake_retreat_rising<L: Lease + ?Sized>(game: &mut L) {
 pub fn drop_baby_metroid<L: Lease + ?Sized>(game: &mut L) {
     if timer_expired(game) {
         set_instruction_list(instruction_list::RETRIEVE_BABY_METROID, game);
-        session_slot!(
-            game,
-            Ridley[RIDLEY].function = function::RETRIEVE_BABY_METROID
-        );
+        *RidleyEdit::of(game, RIDLEY).function() = function::RETRIEVE_BABY_METROID;
         retrieve_baby_metroid(game);
     }
 }
@@ -1675,36 +1557,38 @@ pub fn drop_baby_metroid<L: Lease + ?Sized>(game: &mut L) {
 /// down and catch it in the feet, then retreat for real. Was
 /// `Ridley_Func_47`.
 pub fn retrieve_baby_metroid<L: Lease + ?Sized>(game: &mut L) {
-    let x = session_slot!(game, Ridley[RIDLEY].baby_metroid_x).wrapping_sub(10);
-    let y = session_slot!(game, Ridley[RIDLEY].baby_metroid_y).wrapping_sub(56);
+    let x = Ridley::of(game, RIDLEY).baby_metroid_x().wrapping_sub(10);
+    let y = Ridley::of(game, RIDLEY).baby_metroid_y().wrapping_sub(56);
     accelerate(0, 12, x, y, game);
     let rect = Rect {
-        x: session_slot!(game, Ridley[RIDLEY].base.x_pos).wrapping_add(14),
-        y: session_slot!(game, Ridley[RIDLEY].base.y_pos).wrapping_add(66),
+        x: Ridley::of(game, RIDLEY).actor().x.whole.wrapping_add(14),
+        y: Ridley::of(game, RIDLEY).actor().y.whole.wrapping_add(66),
         w: 4,
         h: 4,
     };
     if baby_metroid_in_rect(rect, game) {
-        session_slot!(game, Ridley[RIDLEY].holding_samus = 1);
+        *RidleyEdit::of(game, RIDLEY).holding_samus() = 1;
         draw_feet(true, game);
-        session_slot!(game, Ridley[RIDLEY].y_velocity = -512i32 as u16);
-        session_slot!(
-            game,
-            Ridley[RIDLEY].baby_metroid_function = baby_metroid_function::HELD_BY_FEET
-        );
-        session_slot!(
-            game,
-            Ridley[RIDLEY].function = function::CERES_REAL_RETREAT_RISING
-        );
+        *RidleyEdit::of(game, RIDLEY).y_velocity() = -512i32 as u16;
+        *RidleyEdit::of(game, RIDLEY).baby_metroid_function() = baby_metroid_function::HELD_BY_FEET;
+        *RidleyEdit::of(game, RIDLEY).function() = function::CERES_REAL_RETREAT_RISING;
     }
 }
 
 /// Check for baby metroid collision with rectangle ($A6:BE61); the baby
 /// metroid's radii are 4. Was `Ridley_Func_48`.
 pub fn baby_metroid_in_rect<L: Lease + ?Sized>(rect: Rect, game: &mut L) -> bool {
-    let dx = abs16(session_slot!(game, Ridley[RIDLEY].baby_metroid_x).wrapping_sub(rect.x));
+    let dx = abs16(
+        Ridley::of(game, RIDLEY)
+            .baby_metroid_x()
+            .wrapping_sub(rect.x),
+    );
     if dx < 4 || dx.wrapping_sub(4) < rect.w {
-        let dy = abs16(session_slot!(game, Ridley[RIDLEY].baby_metroid_y).wrapping_sub(rect.y));
+        let dy = abs16(
+            Ridley::of(game, RIDLEY)
+                .baby_metroid_y()
+                .wrapping_sub(rect.y),
+        );
         if dy < 4 || dy.wrapping_sub(4) < rect.h {
             return true;
         }
@@ -1764,7 +1648,7 @@ pub fn instruction<L: Lease + ?Sized>(
 
 /// Execute baby metroid function ($A6:BE93). Was `Ridley_Func_49`.
 pub fn run_baby_metroid_function<L: Lease + ?Sized>(game: &mut L) {
-    match session_slot!(game, Ridley[RIDLEY].baby_metroid_function) {
+    match Ridley::of(game, RIDLEY).baby_metroid_function() {
         baby_metroid_function::HELD => baby_metroid_held(game),
         baby_metroid_function::HELD_BY_FEET => baby_metroid_held_by_feet(game),
         baby_metroid_function::START_FALLING => baby_metroid_start_falling(game),
@@ -1776,60 +1660,51 @@ pub fn run_baby_metroid_function<L: Lease + ?Sized>(game: &mut L) {
 
 /// Baby metroid function - held by Ridley ($A6:BE9C). Was `Ridley_Func_50`.
 pub fn baby_metroid_held<L: Lease + ?Sized>(game: &mut L) {
-    session_slot!(
-        game,
-        Ridley[RIDLEY].baby_metroid_x =
-            session_slot!(game, Ridley[RIDLEY].base.x_pos).wrapping_sub(16)
-    );
-    session_slot!(
-        game,
-        Ridley[RIDLEY].baby_metroid_y =
-            session_slot!(game, Ridley[RIDLEY].base.y_pos).wrapping_add(22)
-    );
+    *RidleyEdit::of(game, RIDLEY).baby_metroid_x() =
+        Ridley::of(game, RIDLEY).actor().x.whole.wrapping_sub(16);
+    *RidleyEdit::of(game, RIDLEY).baby_metroid_y() =
+        Ridley::of(game, RIDLEY).actor().y.whole.wrapping_add(22);
 }
 
 /// Baby metroid function - held by Ridley's feet ($A6:BEB3). Was
 /// `Ridley_Func_51`.
 pub fn baby_metroid_held_by_feet<L: Lease + ?Sized>(game: &mut L) {
-    session_slot!(
-        game,
-        Ridley[RIDLEY].baby_metroid_x =
-            session_slot!(game, Ridley[RIDLEY].base.x_pos).wrapping_add(14)
-    );
-    session_slot!(
-        game,
-        Ridley[RIDLEY].baby_metroid_y =
-            session_slot!(game, Ridley[RIDLEY].base.y_pos).wrapping_add(66)
-    );
+    *RidleyEdit::of(game, RIDLEY).baby_metroid_x() =
+        Ridley::of(game, RIDLEY).actor().x.whole.wrapping_add(14);
+    *RidleyEdit::of(game, RIDLEY).baby_metroid_y() =
+        Ridley::of(game, RIDLEY).actor().y.whole.wrapping_add(66);
 }
 
 /// Baby metroid function - start falling ($A6:BECA). Was `Ridley_Func_52`.
 pub fn baby_metroid_start_falling<L: Lease + ?Sized>(game: &mut L) {
-    session_slot!(game, Ridley[RIDLEY]; baby_metroid_unread = 0, baby_metroid_y_velocity = 0);
-    session_slot!(
-        game,
-        Ridley[RIDLEY].baby_metroid_function = baby_metroid_function::FALLING
-    );
+    *RidleyEdit::of(game, RIDLEY).baby_metroid_unread() = 0;
+    *RidleyEdit::of(game, RIDLEY).baby_metroid_y_velocity() = 0;
+    *RidleyEdit::of(game, RIDLEY).baby_metroid_function() = baby_metroid_function::FALLING;
     baby_metroid_falling(game);
 }
 
 /// Baby metroid function - falling ($A6:BEDC): accelerate down to the floor
 /// at Y 192. Was `Ridley_Func_53`.
 pub fn baby_metroid_falling<L: Lease + ?Sized>(game: &mut L) {
-    let velocity = session_slot!(game, Ridley[RIDLEY].baby_metroid_y_velocity).wrapping_add(8);
-    session_slot!(game, Ridley[RIDLEY].baby_metroid_y_velocity = velocity);
-    let subpixel = session_slot!(byte game, Ridley[RIDLEY].baby_metroid_y_subpixel[1]) as i32
-        + (velocity as i32 & 0xff);
-    session_slot!(byte game, Ridley[RIDLEY].baby_metroid_y_subpixel[1] = subpixel as u8);
-    session_slot!(game, Ridley[RIDLEY].baby_metroid_y, |old| (old as i32
-        + ((velocity >> 8) as i8 as i32 + (subpixel >> 8)))
-        as u16);
-    if !below(session_slot!(game, Ridley[RIDLEY].baby_metroid_y), 192) {
-        session_slot!(game, Ridley[RIDLEY].baby_metroid_y = 192);
-        session_slot!(
-            game,
-            Ridley[RIDLEY].baby_metroid_function = baby_metroid_function::NOTHING
-        );
+    let velocity = Ridley::of(game, RIDLEY)
+        .baby_metroid_y_velocity()
+        .wrapping_add(8);
+    *RidleyEdit::of(game, RIDLEY).baby_metroid_y_velocity() = velocity;
+    let subpixel = i32::from(
+        Ridley::of(game, RIDLEY)
+            .baby_metroid_y_subpixel()
+            .to_le_bytes()[1],
+    ) + (velocity as i32 & 0xff);
+    set_high_byte(
+        RidleyEdit::of(game, RIDLEY).baby_metroid_y_subpixel(),
+        subpixel as u8,
+    );
+    *RidleyEdit::of(game, RIDLEY).baby_metroid_y() =
+        (Ridley::of(game, RIDLEY).baby_metroid_y() as i32
+            + ((velocity >> 8) as i8 as i32 + (subpixel >> 8))) as u16;
+    if !below(Ridley::of(game, RIDLEY).baby_metroid_y(), 192) {
+        *RidleyEdit::of(game, RIDLEY).baby_metroid_y() = 192;
+        *RidleyEdit::of(game, RIDLEY).baby_metroid_function() = baby_metroid_function::NOTHING;
     }
 }
 
@@ -1838,17 +1713,15 @@ pub fn draw_baby_metroid<L: Lease + ?Sized>(game: &mut L) {
     let Some(spritemap) = baby_metroid_spritemap(game) else {
         return;
     };
-    let x = session_slot!(game, Ridley[RIDLEY].baby_metroid_x);
-    let y = session_slot!(game, Ridley[RIDLEY].baby_metroid_y);
+    let x = Ridley::of(game, RIDLEY).baby_metroid_x();
+    let y = Ridley::of(game, RIDLEY).baby_metroid_y();
     add_spritemap(spritemap, x, y, 0, game);
 }
 
 /// Baby metroid instruction - go to [[X]] with 50% chance if not moving
 /// ($A6:BFC9), else the flapping sound. Was `BabyMetroid_Instr_2`.
 pub fn baby_metroid_goto_if_still<L: Lease + ?Sized>(k: u16, game: &mut L) -> u16 {
-    if session_slot!(game, Ridley[RIDLEY].baby_metroid_y_velocity) == 0
-        && (battle!(game.Random) & 1) != 0
-    {
+    if Ridley::of(game, RIDLEY).baby_metroid_y_velocity() == 0 && (battle!(game.Random) & 1) != 0 {
         return baby_metroid_goto(k, game);
     }
     game.queue_sound(2, 0x24, 6);
@@ -1866,7 +1739,7 @@ pub fn baby_metroid_load_palette<L: Lease + ?Sized>(k: u16, game: &mut L) -> u16
 /// Baby metroid instruction - go to [[X]] if moving ($A6:BFF2). Was
 /// `BabyMetroid_Instr_1`.
 pub fn baby_metroid_goto_if_moving<L: Lease + ?Sized>(k: u16, game: &mut L) -> u16 {
-    if session_slot!(game, Ridley[RIDLEY].baby_metroid_y_velocity) != 0 {
+    if Ridley::of(game, RIDLEY).baby_metroid_y_velocity() != 0 {
         baby_metroid_goto(k, game)
     } else {
         k.wrapping_add(2)
@@ -1889,11 +1762,8 @@ pub fn dying_grabbed_samus<L: Lease + ?Sized>(game: &mut L) {
 /// `Ridley_C53E`.
 pub fn death_roar<L: Lease + ?Sized>(game: &mut L) {
     set_instruction_list(instruction_list::DEATH_ROAR, game);
-    session_slot!(
-        game,
-        Ridley[RIDLEY].function = function::DEATH_MOVE_TO_DEATH_SPOT
-    );
-    session_slot!(game, Ridley[RIDLEY].function_timer = 32);
+    *RidleyEdit::of(game, RIDLEY).function() = function::DEATH_MOVE_TO_DEATH_SPOT;
+    *RidleyEdit::of(game, RIDLEY).function_timer() = 32;
 }
 
 /// Ridley function - death sequence - move to death spot ($A6:C551): then stop
@@ -1901,14 +1771,13 @@ pub fn death_roar<L: Lease + ?Sized>(game: &mut L) {
 pub fn death_move_to_death_spot<L: Lease + ?Sized>(game: &mut L) {
     move_to_death_spot(game);
     if timer_expired(game) {
-        session_slot!(game, Ridley[RIDLEY]; x_velocity = 0, y_velocity = 0);
+        *RidleyEdit::of(game, RIDLEY).x_velocity() = 0;
+        *RidleyEdit::of(game, RIDLEY).y_velocity() = 0;
         game.move_liquid(528, 64, 1);
-        session_slot!(game, Ridley[RIDLEY]; small_explosion_timer = 0, small_explosion_index = 0);
-        session_slot!(
-            game,
-            Ridley[RIDLEY].function = function::LOWER_ACID_AND_RELEASE_SAMUS
-        );
-        session_slot!(game, Ridley[RIDLEY].function_timer = 160);
+        *RidleyEdit::of(game, RIDLEY).small_explosion_timer() = 0;
+        *RidleyEdit::of(game, RIDLEY).small_explosion_index() = 0;
+        *RidleyEdit::of(game, RIDLEY).function() = function::LOWER_ACID_AND_RELEASE_SAMUS;
+        *RidleyEdit::of(game, RIDLEY).function_timer() = 160;
         lower_acid_and_release_samus(game);
     }
 }
@@ -1918,14 +1787,12 @@ pub fn death_move_to_death_spot<L: Lease + ?Sized>(game: &mut L) {
 pub fn lower_acid_and_release_samus<L: Lease + ?Sized>(game: &mut L) {
     spawn_small_explosion(game);
     if timer_expired(game) {
-        if session_slot!(game, Ridley[RIDLEY].holding_samus) != 0 {
+        if Ridley::of(game, RIDLEY).holding_samus() != 0 {
             release_samus(game);
         }
-        session_slot!(
-            game,
-            Ridley[RIDLEY].function = function::START_FALLING_APART
-        );
-        session_slot!(game, Ridley[RIDLEY]; x_velocity = 0, y_velocity = 0);
+        *RidleyEdit::of(game, RIDLEY).function() = function::START_FALLING_APART;
+        *RidleyEdit::of(game, RIDLEY).x_velocity() = 0;
+        *RidleyEdit::of(game, RIDLEY).y_velocity() = 0;
         spawn_explosions(game);
     }
 }
@@ -1934,21 +1801,18 @@ pub fn lower_acid_and_release_samus<L: Lease + ?Sized>(game: &mut L) {
 /// `Ridley_Func_65`.
 pub fn start_falling_apart<L: Lease + ?Sized>(game: &mut L) {
     spawn_small_explosion(game);
-    session_slot!(game, Ridley[RIDLEY].movement_enabled = 0);
-    session_slot!(game, Ridley[RIDLEY].base.properties, |old| old
-        | K_ENEMY_PROPS_INVISIBLE as u16);
-    session_slot!(game, Ridley[RIDLEY]; function = function::FALLING_APART, function_timer = 32);
+    *RidleyEdit::of(game, RIDLEY).movement_enabled() = 0;
+    RidleyEdit::of(game, RIDLEY).actor().properties |= K_ENEMY_PROPS_INVISIBLE as u16;
+    *RidleyEdit::of(game, RIDLEY).function() = function::FALLING_APART;
+    *RidleyEdit::of(game, RIDLEY).function_timer() = 32;
 }
 
 /// Ridley function - death sequence - falling apart ($A6:C5C8). Was
 /// `Ridley_Func_66`.
 pub fn falling_apart<L: Lease + ?Sized>(game: &mut L) {
     if timer_expired(game) {
-        session_slot!(
-            game,
-            Ridley[RIDLEY].function = function::STILL_FALLING_APART
-        );
-        session_slot!(game, Ridley[RIDLEY].function_timer = 256);
+        *RidleyEdit::of(game, RIDLEY).function() = function::STILL_FALLING_APART;
+        *RidleyEdit::of(game, RIDLEY).function_timer() = 256;
     }
 }
 
@@ -1963,9 +1827,8 @@ pub fn still_falling_apart<L: Lease + ?Sized>(game: &mut L) {
             game.scatter_enemy_drop(DropSource::Ridley, 0);
             game.queue_music_delayed(3);
         });
-        session_slot!(game, Ridley[RIDLEY].base.properties, |old| old
-            | K_ENEMY_PROPS_DELETED as u16);
-        session_slot!(game, Ridley[RIDLEY].function = function::DEAD);
+        RidleyEdit::of(game, RIDLEY).actor().properties |= K_ENEMY_PROPS_DELETED as u16;
+        *RidleyEdit::of(game, RIDLEY).function() = function::DEAD;
     }
 }
 
@@ -1989,20 +1852,30 @@ pub fn spawn_small_explosion<L: Lease + ?Sized>(game: &mut L) {
     const OFFSETS: [i16; 20] = [
         -24, -24, -20, 20, 16, -30, 30, -3, 14, -13, -2, 18, -2, -32, -31, 8, -4, -10, 19, 19,
     ];
-    let timer = (session_slot!(game, Ridley[RIDLEY].small_explosion_timer) as i16).wrapping_sub(1);
+    let timer = (Ridley::of(game, RIDLEY).small_explosion_timer() as i16).wrapping_sub(1);
     if timer >= 0 {
-        session_slot!(game, Ridley[RIDLEY].small_explosion_timer = timer as u16);
+        *RidleyEdit::of(game, RIDLEY).small_explosion_timer() = timer as u16;
         return;
     }
-    session_slot!(game, Ridley[RIDLEY].small_explosion_timer = 4);
-    let mut index = session_slot!(game, Ridley[RIDLEY].small_explosion_index).wrapping_add(1);
-    if !below(session_slot!(game, Ridley[RIDLEY].small_explosion_index), 9) {
+    *RidleyEdit::of(game, RIDLEY).small_explosion_timer() = 4;
+    let mut index = Ridley::of(game, RIDLEY)
+        .small_explosion_index()
+        .wrapping_add(1);
+    if !below(Ridley::of(game, RIDLEY).small_explosion_index(), 9) {
         index = 0;
     }
-    session_slot!(game, Ridley[RIDLEY].small_explosion_index = index);
+    *RidleyEdit::of(game, RIDLEY).small_explosion_index() = index;
     let pair = 2 * usize::from(index);
-    let x = session_slot!(game, Ridley[RIDLEY].base.x_pos).wrapping_add(OFFSETS[pair] as u16);
-    let y = session_slot!(game, Ridley[RIDLEY].base.y_pos).wrapping_add(OFFSETS[pair + 1] as u16);
+    let x = Ridley::of(game, RIDLEY)
+        .actor()
+        .x
+        .whole
+        .wrapping_add(OFFSETS[pair] as u16);
+    let y = Ridley::of(game, RIDLEY)
+        .actor()
+        .y
+        .whole
+        .wrapping_add(OFFSETS[pair + 1] as u16);
     game.place_projectile_spawn(x, y);
     game.spawn_room_projectile(DUST_CLOUD, 3);
     game.queue_sound(1, 0x24, 3);
@@ -2012,22 +1885,22 @@ pub fn spawn_small_explosion<L: Lease + ?Sized>(game: &mut L) {
 /// picks the place and instruction list; a random X drift. Was
 /// `RidleysExplosion_Init`.
 pub fn explosion_init<L: Lease + ?Sized>(game: &mut L) {
-    let e = current(game);
-    session_slot!(game, Explosion[e].base.instruction_timer = 1);
-    session_slot!(game, Explosion[e].base; timer = 0, vram_tiles_index = 0);
-    session_slot!(game, Explosion[e].base.palette_index = 3584);
-    let part = session_slot!(game, Explosion[e].part);
-    session_slot!(
-        game,
-        Explosion[e].lifetime = ridley_explosion_data::lifetime(game, (part >> 1) as isize)
-    );
+    let k = game.current_enemy();
+    ExplosionEdit::of(game, k).actor().instruction_delay = 1;
+    ExplosionEdit::of(game, k).actor().timer = 0;
+    ExplosionEdit::of(game, k).actor().tile = 0;
+    ExplosionEdit::of(game, k).actor().palette = 3584;
+    let part = Explosion::of(game, k).part();
+    *ExplosionEdit::of(game, k).lifetime() =
+        ridley_explosion_data::lifetime(game, (part >> 1) as isize);
     let random = game.roll_random();
     let drift = if random & 0x8000 != 0 {
         -(random as i32 & 0x130)
     } else {
         random as i32 & 0x130
     };
-    session_slot!(game, Explosion[e]; x_velocity = drift as u16, y_velocity = 0);
+    *ExplosionEdit::of(game, k).x_velocity() = drift as u16;
+    *ExplosionEdit::of(game, k).y_velocity() = 0;
     match part {
         0 | 2 | 4 | 6 | 8 | 10 => {
             // Ridley explosion initialisation - index = 0..Ah (tail segments 0..5).
@@ -2037,40 +1910,25 @@ pub fn explosion_init<L: Lease + ?Sized>(game: &mut L) {
                 explosion_instruction_list::TAIL_SEGMENTS_2_3,
                 explosion_instruction_list::TAIL_SEGMENTS_4_5,
             ];
-            session_slot!(
-                game,
-                Explosion[e].base.x_pos = bg2_staging::get(game, tail::x(segment))
-            );
-            session_slot!(
-                game,
-                Explosion[e].base.y_pos = bg2_staging::get(game, tail::y(segment))
-            );
-            session_slot!(
-                game,
-                Explosion[e].base.current_instruction = LISTS[segment / 2]
-            );
+            ExplosionEdit::of(game, k).actor().x.whole = bg2_staging::get(game, tail::x(segment));
+            ExplosionEdit::of(game, k).actor().y.whole = bg2_staging::get(game, tail::y(segment));
+            ExplosionEdit::of(game, k).actor().instruction = LISTS[segment / 2];
         }
         12 => {
             // Ridley explosion initialisation - index = Ch (tail tip).
-            session_slot!(
-                game,
-                Explosion[e].base.x_pos = bg2_staging::get(game, tail::x(6))
-            );
-            session_slot!(
-                game,
-                Explosion[e].base.y_pos = bg2_staging::get(game, tail::y(6))
-            );
+            ExplosionEdit::of(game, k).actor().x.whole = bg2_staging::get(game, tail::x(6));
+            ExplosionEdit::of(game, k).actor().y.whole = bg2_staging::get(game, tail::y(6));
             let list = game.native_image().table_word(
                 lorom_offset(TAIL_TIP_EXPLOSION_LISTS) as usize,
                 tail_tip_sector(game),
             );
-            session_slot!(game, Explosion[e].base.current_instruction = list);
+            ExplosionEdit::of(game, k).actor().instruction = list;
         }
-        14 => place_explosion(game, e, WINGS_ADDRESS, 0),
-        16 => place_explosion(game, e, LEGS_ADDRESS, 22),
-        18 => place_explosion(game, e, MOUTH_ADDRESS, -24),
-        20 => place_explosion(game, e, TORSO_ADDRESS, 0),
-        22 => place_explosion(game, e, HAND_ADDRESS, 7),
+        14 => place_explosion(game, k, WINGS_ADDRESS, 0),
+        16 => place_explosion(game, k, LEGS_ADDRESS, 22),
+        18 => place_explosion(game, k, MOUTH_ADDRESS, -24),
+        20 => place_explosion(game, k, TORSO_ADDRESS, 0),
+        22 => place_explosion(game, k, HAND_ADDRESS, 7),
         _ => game.foreign(|game| game.unreachable()),
     }
 }
@@ -2078,25 +1936,25 @@ pub fn explosion_init<L: Lease + ?Sized>(game: &mut L) {
 /// Ridley explosion initialisation - index = Eh..16h ($A6:C7DA..C8A2): explosion
 /// `e` on Ridley's `part`, its X from the part's placement for his facing and
 /// its Y `y_offset` from his. Was `place_ridley_explosion_x`.
-fn place_explosion<L: Lease + ?Sized>(game: &mut L, e: i32, part: u32, y_offset: i16) {
-    let side: isize = if session_slot!(game, Ridley[RIDLEY].facing) != 0 {
+fn place_explosion<L: Lease + ?Sized>(game: &mut L, k: u16, part: u32, y_offset: i16) {
+    let side: isize = if Ridley::of(game, RIDLEY).facing() != 0 {
         1
     } else {
         0
     };
-    let x = session_slot!(game, Ridley[RIDLEY].base.x_pos)
+    let x = Ridley::of(game, RIDLEY)
+        .actor()
+        .x
+        .whole
         .wrapping_add(ridley_explosion_data::placement(game, part, side).x_offset);
-    session_slot!(game, Explosion[e].base.x_pos = x);
-    session_slot!(
-        game,
-        Explosion[e].base.y_pos =
-            session_slot!(game, Ridley[RIDLEY].base.y_pos).wrapping_add(y_offset as u16)
-    );
-    session_slot!(
-        game,
-        Explosion[e].base.current_instruction =
-            ridley_explosion_data::placement(game, part, side).instruction_list
-    );
+    ExplosionEdit::of(game, k).actor().x.whole = x;
+    ExplosionEdit::of(game, k).actor().y.whole = Ridley::of(game, RIDLEY)
+        .actor()
+        .y
+        .whole
+        .wrapping_add(y_offset as u16);
+    ExplosionEdit::of(game, k).actor().instruction =
+        ridley_explosion_data::placement(game, part, side).instruction_list;
 }
 
 /// Main AI - enemy $E1BF (Ridley explosion) ($A6:C8D4): flicker, slow the
@@ -2104,21 +1962,21 @@ fn place_explosion<L: Lease + ?Sized>(game: &mut L, e: i32, part: u32, y_offset:
 /// `RidleysExplosion_Main`.
 pub fn explosion_main<L: Lease + ?Sized>(game: &mut L) {
     explosion_flicker(game.current_enemy(), game);
-    let e = current(game);
-    let mut speed = (abs16(session_slot!(game, Explosion[e].x_velocity)) as i16).wrapping_sub(4);
+    let k = game.current_enemy();
+    let mut speed = (abs16(Explosion::of(game, k).x_velocity()) as i16).wrapping_sub(4);
     if speed < 0 {
         speed = 0;
     }
-    let x_velocity = if session_slot!(game, Explosion[e].x_velocity) & 0x8000 != 0 {
+    let x_velocity = if Explosion::of(game, k).x_velocity() & 0x8000 != 0 {
         -(speed as i32)
     } else {
         speed as i32
     };
-    session_slot!(game, Explosion[e].x_velocity = x_velocity as u16);
-    session_slot!(game, Explosion[e].y_velocity, |old| old.wrapping_add(4));
+    *ExplosionEdit::of(game, k).x_velocity() = x_velocity as u16;
+    *ExplosionEdit::of(game, k).y_velocity() = Explosion::of(game, k).y_velocity().wrapping_add(4);
     move_with_velocity(game);
-    session_slot!(game, Explosion[e].lifetime, |old| old.wrapping_sub(1));
-    if (session_slot!(game, Explosion[e].lifetime) & 0x8000) != 0 {
+    *ExplosionEdit::of(game, k).lifetime() = Explosion::of(game, k).lifetime().wrapping_sub(1);
+    if (Explosion::of(game, k).lifetime() & 0x8000) != 0 {
         game.foreign(|game| game.normal_death(0));
     }
 }
@@ -2126,16 +1984,15 @@ pub fn explosion_main<L: Lease + ?Sized>(game: &mut L) {
 /// Handle flickering ($A6:C913): explosion `k` is invisible on odd frames.
 /// Was `RidleysExplosion_Func_1`.
 pub fn explosion_flicker<L: Lease + ?Sized>(k: u16, game: &mut L) {
-    let e = i32::from(k);
-    let odd = session_slot!(game, Explosion[e].base.frame_counter) & 1;
-    session_slot!(game, Explosion[e].base.frame_counter = odd);
+    let odd = Explosion::of(game, k).actor().frame & 1;
+    ExplosionEdit::of(game, k).actor().frame = odd;
     let properties = if odd != 0 {
-        session_slot!(game, Explosion[e].base.properties) | K_ENEMY_PROPS_INVISIBLE as u16
+        Explosion::of(game, k).actor().properties | K_ENEMY_PROPS_INVISIBLE as u16
     } else {
-        (session_slot!(game, Explosion[e].base.properties) as i32
-            & !(K_ENEMY_PROPS_INVISIBLE as i32)) as u16
+        (Explosion::of(game, k).actor().properties as i32 & !(K_ENEMY_PROPS_INVISIBLE as i32))
+            as u16
     };
-    session_slot!(game, Explosion[e].base.properties = properties);
+    ExplosionEdit::of(game, k).actor().properties = properties;
 }
 
 /// Spawn Ridley explosion enemies ($A6:C932). Was `RidleysExplosion_Func_2`.
@@ -2157,13 +2014,14 @@ pub fn emergency_text_glow<L: Lease + ?Sized>(game: &mut L) {
     if battle!(game.DoorTransitionEnemies) | boss!(game.PaletteChangeNum) == 0
         && (game.frame() & 3) == 0
     {
-        let mut step = session_slot!(game, Ridley[RIDLEY].emergency_glow_index).wrapping_add(1);
+        let mut step = Ridley::of(game, RIDLEY)
+            .emergency_glow_index()
+            .wrapping_add(1);
         if step >= 0x10 {
             step = 0;
         }
-        session_slot!(game, Ridley[RIDLEY].emergency_glow_index = step);
-        let colour =
-            session_slot!(game, Ridley[RIDLEY].emergency_glow_index) as isize + 2 * step as isize;
+        *RidleyEdit::of(game, RIDLEY).emergency_glow_index() = step;
+        let colour = Ridley::of(game, RIDLEY).emergency_glow_index() as isize + 2 * step as isize;
         word! { game;
             PALETTE_BUFFER[97] = ridley_data::emergency_glow(game, colour);
             PALETTE_BUFFER[98] = ridley_data::emergency_glow(game, colour + 1);
@@ -2192,9 +2050,9 @@ pub fn handle_tail<L: Lease + ?Sized>(game: &mut L) {
     functions[bg2_staging::get(game, tail::FUNCTION) as usize](&mut *game);
     calculate_tail_segment_positions(game);
     update_tail_segment_distances(game);
-    if session_slot!(game, Ridley[RIDLEY].holding_samus)
+    if Ridley::of(game, RIDLEY).holding_samus()
         | (battle!(game.SamusInvincibilityTimer)
-            | session_slot!(game, Ridley[RIDLEY].base.properties) & K_ENEMY_PROPS_TANGIBLE as u16)
+            | Ridley::of(game, RIDLEY).actor().properties & K_ENEMY_PROPS_TANGIBLE as u16)
         == 0
     {
         tail_samus_collision(game);
@@ -2240,7 +2098,7 @@ pub fn unused_pogo_descending_stab<L: Lease + ?Sized>(game: &mut L) {
 /// straight down, then the normal pogo tail once no segment moves. Was
 /// `Ridley_Func_75`.
 pub fn pogo_tail_pointed_down<L: Lease + ?Sized>(game: &mut L) {
-    if session_slot!(game, Ridley[RIDLEY].facing) != 0 {
+    if Ridley::of(game, RIDLEY).facing() != 0 {
         bg2_staging::set(game, tail::WHIP_TARGET_CLOCKWISE, 0x4000);
         bg2_staging::set(game, tail::WHIP_TARGET_ANTICLOCKWISE, NO_WHIP_TARGET);
     } else {
@@ -2291,8 +2149,7 @@ pub fn update_tail_segment_angles<L: Lease + ?Sized>(game: &mut L) {
 /// Set Ridley tail angle extrema ($A6:CBFE), by facing direction. Was
 /// `Ridley_Func_77`.
 pub fn set_tail_angle_extrema<L: Lease + ?Sized>(game: &mut L) {
-    let limits =
-        ridley_data::tail_angles(game, session_slot!(game, Ridley[RIDLEY].facing) as isize);
+    let limits = ridley_data::tail_angles(game, Ridley::of(game, RIDLEY).facing() as isize);
     bg2_staging::set(game, tail::MIN_CLOCKWISE_ANGLE, limits.min_clockwise);
     bg2_staging::set(
         game,
@@ -2359,7 +2216,7 @@ pub fn configure_tail_whip<L: Lease + ?Sized>(game: &mut L) -> bool {
         Some(bg2_staging::get(game, tail::WHIP_REQUEST).wrapping_sub(1))
     } else if abs16(
         game.player_x()
-            .wrapping_sub(session_slot!(game, Ridley[RIDLEY].base.x_pos)),
+            .wrapping_sub(Ridley::of(game, RIDLEY).actor().x.whole),
     ) < 0x80
     {
         Some(0)
@@ -2410,7 +2267,7 @@ fn pogo_tail_whips<L: Lease + ?Sized>(game: &mut L) -> bool {
         && ((battle!(game.Random) as u8) >= 0xf0
             || abs16(
                 game.player_x()
-                    .wrapping_sub(session_slot!(game, Ridley[RIDLEY].base.x_pos)),
+                    .wrapping_sub(Ridley::of(game, RIDLEY).actor().x.whole),
             ) < 0x80)
         && (bg2_staging::get(game, tail::WHIP_TARGET_CLOCKWISE)
             & bg2_staging::get(game, tail::WHIP_TARGET_ANTICLOCKWISE)
@@ -2431,7 +2288,7 @@ pub fn handle_normal_pogo_tail<L: Lease + ?Sized>(game: &mut L) {
     if pogo_tail_whips(game) || any_tail_segment_active(game) {
         return;
     }
-    if (session_slot!(game, Ridley[RIDLEY].y_velocity) & 0x8000) == 0 {
+    if (Ridley::of(game, RIDLEY).y_velocity() & 0x8000) == 0 {
         bg2_staging::set(game, tail::FUNCTION, 5);
     }
     bg2_staging::set(game, tail::WHIP_TARGET_CLOCKWISE, NO_WHIP_TARGET);
@@ -2457,7 +2314,7 @@ pub fn handle_pogo_tail_stab<L: Lease + ?Sized>(game: &mut L) {
     if pogo_tail_whips(game) || any_tail_segment_active(game) {
         return;
     }
-    if (session_slot!(game, Ridley[RIDLEY].y_velocity) & 0x8000) == 0 {
+    if (Ridley::of(game, RIDLEY).y_velocity() & 0x8000) == 0 {
         bg2_staging::set(game, tail::FUNCTION, 6);
         for segment in 0..7 {
             bg2_staging::set(game, tail::target_distance(segment), 2560);
@@ -2508,26 +2365,26 @@ pub fn calculate_tail_segment_positions<L: Lease + ?Sized>(game: &mut L) {
         game,
         tail::y(0),
         (bg2_staging::get(game, tail::y_offset(0)) as i32
-            + session_slot!(game, Ridley[RIDLEY].base.y_pos) as i32
+            + Ridley::of(game, RIDLEY).actor().y.whole as i32
             + 16) as u16,
     );
     chain_tail_positions(game, tail::y(0));
-    let mut x_offset = (session_slot!(game, Ridley[RIDLEY].facing) as i16).wrapping_sub(1);
-    if session_slot!(game, Ridley[RIDLEY].facing) != FACING_FORWARD {
+    let mut x_offset = (Ridley::of(game, RIDLEY).facing() as i16).wrapping_sub(1);
+    if Ridley::of(game, RIDLEY).facing() != FACING_FORWARD {
         x_offset = (bg2_staging::get(game, tail::x_offset(0)) as i16)
-            .wrapping_add(BASE_X_OFFSETS[session_slot!(game, Ridley[RIDLEY].facing) as usize]);
+            .wrapping_add(BASE_X_OFFSETS[Ridley::of(game, RIDLEY).facing() as usize]);
     }
     bg2_staging::set(
         game,
         tail::x(0),
-        session_slot!(game, Ridley[RIDLEY].base.x_pos).wrapping_add(x_offset as u16),
+        Ridley::of(game, RIDLEY)
+            .actor()
+            .x
+            .whole
+            .wrapping_add(x_offset as u16),
     );
-    if session_slot!(game, Ridley[RIDLEY].facing) == FACING_FORWARD {
-        bg2_staging::set(
-            game,
-            tail::x(1),
-            session_slot!(game, Ridley[RIDLEY].base.x_pos),
-        );
+    if Ridley::of(game, RIDLEY).facing() == FACING_FORWARD {
+        bg2_staging::set(game, tail::x(1), Ridley::of(game, RIDLEY).actor().x.whole);
         for segment in 2..7 {
             let x = tail_word(game, tail::x(1));
             set_tail_word(game, tail::x(segment), x);
@@ -2700,11 +2557,10 @@ pub fn update_tail_segment_angle<L: Lease + ?Sized>(segment: usize, game: &mut L
     // Segment angles add up along the tail, in their low bytes.
     let mut total = angle as u8 as u16;
     if segment != 0 {
-        total = game
-            .slot_byte(TAIL_RAM + 2 * tail::angle(segment - 1))
-            .wrapping_add(total as u8) as u16;
+        total =
+            (tail_low_byte(game, tail::angle(segment - 1)) as u8).wrapping_add(total as u8) as u16;
     }
-    let length = u16::from(game.slot_byte(TAIL_RAM + 2 * tail::distance(segment) + 1));
+    let length = tail_word(game, tail::distance(segment)) >> 8;
     let (x, y) = game.hardware_sine_cosine(length, total);
     bg2_staging::set(game, tail::x_offset(segment), x);
     bg2_staging::set(game, tail::y_offset(segment), y);
@@ -2721,8 +2577,8 @@ fn stops_at_whip_target<L: Lease + ?Sized>(game: &L, segment: usize) -> bool {
 pub fn set_tail_whip_target<L: Lease + ?Sized>(attack: u16, game: &mut L) {
     // The attack's low byte becomes the target angle's high byte.
     bg2_staging::set(game, tail::WHIP_ANGLE_OFFSET, u16::from(attack as u8) << 8);
-    if session_slot!(game, Ridley[RIDLEY].facing) != FACING_FORWARD
-        && session_slot!(game, Ridley[RIDLEY].fight_mode) != 0
+    if Ridley::of(game, RIDLEY).facing() != FACING_FORWARD
+        && Ridley::of(game, RIDLEY).fight_mode() != 0
     {
         let (dx, dy) = if let Some(missile) = missile_near_tail(game) {
             (
@@ -2737,7 +2593,7 @@ pub fn set_tail_whip_target<L: Lease + ?Sized>(attack: u16, game: &mut L) {
             )
         };
         let direction = -(angle_from_delta(dx, dy) as i32 + 0x80) as u8 as u16;
-        if session_slot!(game, Ridley[RIDLEY].facing) != 0 {
+        if Ridley::of(game, RIDLEY).facing() != 0 {
             let mut reach = direction;
             if (0x18..0xe8).contains(&direction) {
                 reach = 24;
@@ -2789,7 +2645,7 @@ pub fn missile_near_tail<L: Lease + ?Sized>(game: &mut L) -> Option<Point> {
 
 /// The low nibble of projectile `n`'s type high byte: its weapon.
 fn projectile_kind<L: Lease + ?Sized>(game: &L, n: usize) -> u8 {
-    game.slot_byte(PROJECTILE_TYPES + 2 * n + 1) & 0xf
+    game.session().projectiles.shots[n].kind.to_le_bytes()[1] & 0xf
 }
 
 /// Whether projectile `n`'s hitbox overlaps `rect`.
@@ -2824,16 +2680,18 @@ fn projectile_overlaps<L: Lease + ?Sized>(game: &L, n: usize, rect: Rect) -> boo
 /// tail, unless roaring. Was `Ridley_Func_91`.
 pub fn tail_whip_sound<L: Lease + ?Sized>(game: &mut L) {
     if !below(bg2_staging::get(game, tail::ANGLE_DELTA), 8) {
-        let counter = session_slot!(game, Ridley[RIDLEY].whip_sound_counter).wrapping_add(1);
-        session_slot!(game, Ridley[RIDLEY].whip_sound_counter = counter);
+        let counter = Ridley::of(game, RIDLEY)
+            .whip_sound_counter()
+            .wrapping_add(1);
+        *RidleyEdit::of(game, RIDLEY).whip_sound_counter() = counter;
         if below(counter, 16) {
             return;
         }
-        if session_slot!(game, Ridley[RIDLEY].roaring) == 0 {
+        if Ridley::of(game, RIDLEY).roaring() == 0 {
             game.queue_sound(2, 0x21, 6);
         }
     }
-    session_slot!(game, Ridley[RIDLEY].whip_sound_counter = 0);
+    *RidleyEdit::of(game, RIDLEY).whip_sound_counter() = 0;
 }
 
 /// Initialise Ridley tail RAM ($A6:D2D6). Was `Ridley_Func_92`.
@@ -2848,15 +2706,11 @@ pub fn initialise_tail<L: Lease + ?Sized>(game: &mut L) {
     for segment in 0..7 {
         bg2_staging::set(game, tail::stagger_angle(segment), 17);
     }
-    set_tail_segments_from_list(
-        tail_address(tail::direction(0)),
-        tail_data::DIRECTIONS,
-        game,
-    );
-    set_tail_segments_from_list(tail_address(tail::distance(0)), tail_data::DISTANCES, game);
-    set_tail_segments_from_list(tail_address(tail::angle(0)), tail_data::ANGLES, game);
-    set_tail_segments_from_list(tail_address(tail::x(0)), tail_data::X_POSITIONS, game);
-    set_tail_segments_from_list(tail_address(tail::y(0)), tail_data::Y_POSITIONS, game);
+    set_tail_segments_from_list(tail::direction(0), tail_data::DIRECTIONS, game);
+    set_tail_segments_from_list(tail::distance(0), tail_data::DISTANCES, game);
+    set_tail_segments_from_list(tail::angle(0), tail_data::ANGLES, game);
+    set_tail_segments_from_list(tail::x(0), tail_data::X_POSITIONS, game);
+    set_tail_segments_from_list(tail::y(0), tail_data::Y_POSITIONS, game);
     set_tail_segment_flags(0, game);
 }
 
@@ -2875,7 +2729,7 @@ pub fn set_tail_segment_flags<L: Lease + ?Sized>(flags: u16, game: &mut L) {
 /// Flip Ridley tail ($A6:D3F9): mirror every segment's angle and turn it
 /// anticlockwise. Was `Ridley_Func_96`.
 pub fn flip_tail<L: Lease + ?Sized>(game: &mut L) {
-    set_tail_segments_from_list(tail_address(tail::distance(0)), tail_data::DISTANCES, game);
+    set_tail_segments_from_list(tail::distance(0), tail_data::DISTANCES, game);
     for segment in 0..7 {
         bg2_staging::set(
             game,
@@ -2891,24 +2745,33 @@ pub fn flip_tail<L: Lease + ?Sized>(game: &mut L) {
 }
 
 /// The damage deal suit-adjusted enemy damage to Samus ($A6:D453) deals: the
-/// current enemy's contact damage, from its definition. Mother Brain shares it.
+/// current enemy's contact damage, from its definition. Mother Brain shares it,
+/// and its fight still runs on the RAM image, so the definition is read by slot
+/// address.
 pub fn contact_damage(game: &mut (impl BossState + ?Sized)) -> u16 {
-    let definition = session_slot!(game, Ridley[i32::from(game.current_enemy())].base.enemy_ptr);
+    use crate::actors::layouts::EnemyLayout8;
+    let definition = session_slot!(
+        game,
+        EnemyLayout8[i32::from(game.current_enemy())].base.enemy_ptr
+    );
     crate::cartridge::native_record(ENEMY_DEFINITION_BANK, definition, game)
         .word(ENEMY_DEFINITION_DAMAGE)
 }
 
 /// Set Ridley instruction list ($A6:D467). Was `Ridley_Func_99`.
 pub fn set_instruction_list<L: Lease + ?Sized>(list: u16, game: &mut L) {
-    session_slot!(game, Ridley[RIDLEY].base; current_instruction = list, instruction_timer = 1);
-    session_slot!(game, Ridley[RIDLEY].base.timer = 0);
+    let mut ridley = RidleyEdit::of(game, RIDLEY);
+    let actor = ridley.actor();
+    actor.instruction = list;
+    actor.instruction_delay = 1;
+    actor.timer = 0;
 }
 
 /// Norfair Ridley health-based palette handling ($A6:D474): below 9000, 5400
 /// and 1800 health Ridley accelerates harder and glows redder. Was
 /// `Ridley_Func_100`.
 pub fn health_palette<L: Lease + ?Sized>(game: &mut L) {
-    let health = session_slot!(game, Ridley[RIDLEY].base.health);
+    let health = Ridley::of(game, RIDLEY).actor().health;
     let index: i16 = if health >= 0x2328 {
         0
     } else if health >= 0x1518 {
@@ -2918,7 +2781,7 @@ pub fn health_palette<L: Lease + ?Sized>(game: &mut L) {
     } else {
         3
     };
-    session_slot!(game, Ridley[RIDLEY].acceleration_index = index as u16);
+    *RidleyEdit::of(game, RIDLEY).acceleration_index() = index as u16;
     if index.wrapping_sub(1) >= 0 {
         load_health_palette((index as u16).wrapping_sub(1), game);
     }
@@ -2938,10 +2801,9 @@ pub fn load_health_palette<L: Lease + ?Sized>(index: u16, game: &mut L) {
 /// Ceres Ridley health-based palette handling ($A6:D4B5): by the hit counter.
 /// Was `Ridley_Func_101`.
 pub fn ceres_health_palette<L: Lease + ?Sized>(game: &mut L) {
-    if session_slot!(game, Ridley[RIDLEY].fight_mode) != 0
-        && session_slot!(game, Ridley[RIDLEY].hit_counter) >= 0x32
+    if Ridley::of(game, RIDLEY).fight_mode() != 0 && Ridley::of(game, RIDLEY).hit_counter() >= 0x32
     {
-        let index = if session_slot!(game, Ridley[RIDLEY].hit_counter) >= 0x46 {
+        let index = if Ridley::of(game, RIDLEY).hit_counter() >= 0x46 {
             2
         } else {
             0
@@ -2954,12 +2816,12 @@ pub fn ceres_health_palette<L: Lease + ?Sized>(game: &mut L) {
 /// palette 0 while the flash timer runs. Was `Ridley_Func_102`.
 pub fn hurt_flash<S: State + ?Sized>(game: &mut S) {
     let mut palette = 3584;
-    if session_slot!(game, Ridley[RIDLEY].base.flash_timer) >= 2
+    if Ridley::of(game, RIDLEY).actor().flash >= 2
         && ((boss!(game.RandomEnemyCounter) as i32 + 1) & 2) != 0
     {
         palette = 0;
     }
-    session_slot!(game, Ridley[RIDLEY].palette = palette);
+    *RidleyEdit::of(game, RIDLEY).palette() = palette;
 }
 
 /// Check for collision with non-air block ($A6:D4F9): whether the level data
@@ -2991,17 +2853,16 @@ pub fn accelerate_with_force<L: Lease + ?Sized>(
     crate::probe::hit("homing.ridley.extra");
     let divisor = INERTIA[inertia as usize];
     accelerate_x(k, x, u16::from(divisor), force, game);
-    let e = i32::from(k);
-    let position = session_slot!(game, Ridley[e].base.y_pos);
+    let position = Ridley::of(game, k).actor().y.whole;
     if position != y {
-        session_slot!(game, Ridley[e].y_velocity, |old| chained_homing_velocity(
+        *RidleyEdit::of(game, k).y_velocity() = chained_homing_velocity(
             position,
             y,
-            old,
+            Ridley::of(game, k).y_velocity(),
             divisor,
             Deceleration::Force(force),
             1280,
-        ));
+        );
     }
 }
 
@@ -3012,17 +2873,16 @@ const INERTIA: [u8; 16] = [
 
 /// Ridley X acceleration ($A6:D5A9). Was `Ridley_Func_105`.
 pub fn accelerate_x<L: Lease + ?Sized>(k: u16, x: u16, divisor: u16, force: u16, game: &mut L) {
-    let e = i32::from(k);
-    let position = session_slot!(game, Ridley[e].base.x_pos);
+    let position = Ridley::of(game, k).actor().x.whole;
     if position != x {
-        session_slot!(game, Ridley[e].x_velocity, |old| chained_homing_velocity(
+        *RidleyEdit::of(game, k).x_velocity() = chained_homing_velocity(
             position,
             x,
-            old,
+            Ridley::of(game, k).x_velocity(),
             divisor as u8,
             Deceleration::Force(force),
             1280,
-        ));
+        );
     }
 }
 
@@ -3036,33 +2896,31 @@ pub fn ceres_accelerate<L: Lease + ?Sized>(k: u16, inertia: u16, x: u16, y: u16,
     crate::probe::hit("homing.ridley.double");
     let divisor = CERES_INERTIA[inertia as usize];
     ceres_accelerate_x(k, x, u16::from(divisor), game);
-    let e = i32::from(k);
-    let position = session_slot!(game, Ridley[e].base.y_pos);
+    let position = Ridley::of(game, k).actor().y.whole;
     if position != y {
-        session_slot!(game, Ridley[e].y_velocity, |old| chained_homing_velocity(
+        *RidleyEdit::of(game, k).y_velocity() = chained_homing_velocity(
             position,
             y,
-            old,
+            Ridley::of(game, k).y_velocity(),
             divisor,
             Deceleration::DoubleStep,
             1280,
-        ));
+        );
     }
 }
 
 /// Ceres Ridley X acceleration ($A6:D6A6). Was `Ridley_Func_107`.
 pub fn ceres_accelerate_x<L: Lease + ?Sized>(k: u16, x: u16, divisor: u16, game: &mut L) {
-    let e = i32::from(k);
-    let position = session_slot!(game, Ridley[e].base.x_pos);
+    let position = Ridley::of(game, k).actor().x.whole;
     if position != x {
-        session_slot!(game, Ridley[e].x_velocity, |old| chained_homing_velocity(
+        *RidleyEdit::of(game, k).x_velocity() = chained_homing_velocity(
             position,
             x,
-            old,
+            Ridley::of(game, k).x_velocity(),
             divisor as u8,
             Deceleration::DoubleStep,
             1280,
-        ));
+        );
     }
 }
 
@@ -3076,25 +2934,24 @@ pub fn calculate_swoop_velocities<L: Lease + ?Sized>(
     game: &mut L,
 ) {
     crate::probe::hit("ridley.swoop_velocities");
-    if target_speed != session_slot!(game, Ridley[RIDLEY].swoop_speed) {
-        if (target_speed as i16)
-            .wrapping_sub(session_slot!(game, Ridley[RIDLEY].swoop_speed) as i16)
-            >= 0
-        {
-            let mut speed = session_slot!(game, Ridley[RIDLEY].swoop_speed).wrapping_add(32);
+    if target_speed != Ridley::of(game, RIDLEY).swoop_speed() {
+        if (target_speed as i16).wrapping_sub(Ridley::of(game, RIDLEY).swoop_speed() as i16) >= 0 {
+            let mut speed = Ridley::of(game, RIDLEY).swoop_speed().wrapping_add(32);
             if !below(speed, target_speed) {
                 speed = target_speed;
             }
-            session_slot!(game, Ridley[RIDLEY].swoop_speed = speed);
+            *RidleyEdit::of(game, RIDLEY).swoop_speed() = speed;
         } else {
-            let mut speed = session_slot!(game, Ridley[RIDLEY].swoop_speed).wrapping_sub(32);
+            let mut speed = Ridley::of(game, RIDLEY).swoop_speed().wrapping_sub(32);
             if below(speed, target_speed) {
                 speed = target_speed;
             }
-            session_slot!(game, Ridley[RIDLEY].swoop_speed = speed);
+            *RidleyEdit::of(game, RIDLEY).swoop_speed() = speed;
         }
     }
-    let mut angle = session_slot!(game, Ridley[RIDLEY].swoop_angle).wrapping_add(angle_step);
+    let mut angle = Ridley::of(game, RIDLEY)
+        .swoop_angle()
+        .wrapping_add(angle_step);
     let past_target = if (angle_step & 0x8000) != 0 {
         below(angle, target_angle)
     } else {
@@ -3103,65 +2960,58 @@ pub fn calculate_swoop_velocities<L: Lease + ?Sized>(
     if past_target {
         angle = target_angle;
     }
-    session_slot!(game, Ridley[RIDLEY].swoop_angle = angle);
+    *RidleyEdit::of(game, RIDLEY).swoop_angle() = angle;
     let direction = angle.to_ne_bytes()[1] as u16;
-    session_slot!(
-        game,
-        Ridley[RIDLEY].x_velocity =
-            x_velocity_at_angle(session_slot!(game, Ridley[RIDLEY].swoop_speed), direction)
-    );
-    session_slot!(
-        game,
-        Ridley[RIDLEY].y_velocity =
-            y_velocity_at_angle(session_slot!(game, Ridley[RIDLEY].swoop_speed), direction)
-    );
+    *RidleyEdit::of(game, RIDLEY).x_velocity() =
+        x_velocity_at_angle(Ridley::of(game, RIDLEY).swoop_speed(), direction);
+    *RidleyEdit::of(game, RIDLEY).y_velocity() =
+        y_velocity_at_angle(Ridley::of(game, RIDLEY).swoop_speed(), direction);
 }
 
 /// Move Ridley ($A6:D86B): the current enemy by its velocities, clamped to
 /// Ridley's bounds; `hit_boundary` records the side hit (1 left, 2 right, 4
 /// top, 8 bottom). Was `Ridley_Func_112`.
 pub fn move_ridley<S: State + ?Sized>(game: &mut S) {
-    session_slot!(game, Ridley[RIDLEY].hit_boundary = 0);
+    *RidleyEdit::of(game, RIDLEY).hit_boundary() = 0;
     let k = boss!(game.CurEnemyIndex);
-    let e = boss!(game.CurEnemyIndex) as i32;
-    let carry = session_slot!(byte game, Ridley[e].base.x_subpos[1]) as i32
-        + session_slot!(byte game, Ridley[e].x_velocity[0]) as i32;
-    session_slot!(byte game, Ridley[e].base.x_subpos[1] = carry as u8);
-    let mut x = (session_slot!(game, Ridley[e].base.x_pos) as i32
-        + (session_slot!(game, Ridley[e].x_velocity) >> 8) as i8 as i32
+    let carry = i32::from(Ridley::of(game, k).actor().x.fraction.to_le_bytes()[1])
+        + i32::from(Ridley::of(game, k).x_velocity().to_le_bytes()[0]);
+    set_high_byte(&mut RidleyEdit::of(game, k).actor().x.fraction, carry as u8);
+    let mut x = (Ridley::of(game, k).actor().x.whole as i32
+        + (Ridley::of(game, k).x_velocity() >> 8) as i8 as i32
         + (carry >> 8)) as u16;
-    if (x as i16).wrapping_sub(session_slot!(game, Ridley[RIDLEY].min_x) as i16) >= 0 {
-        if (x as i16).wrapping_sub(session_slot!(game, Ridley[RIDLEY].max_x) as i16) >= 0 {
-            session_slot!(game, Ridley[e].x_velocity = 0);
-            session_slot!(game, Ridley[RIDLEY].hit_boundary = 2);
-            x = session_slot!(game, Ridley[RIDLEY].max_x);
+    if (x as i16).wrapping_sub(Ridley::of(game, RIDLEY).min_x() as i16) >= 0 {
+        if (x as i16).wrapping_sub(Ridley::of(game, RIDLEY).max_x() as i16) >= 0 {
+            *RidleyEdit::of(game, k).x_velocity() = 0;
+            *RidleyEdit::of(game, RIDLEY).hit_boundary() = 2;
+            x = Ridley::of(game, RIDLEY).max_x();
         }
-        session_slot!(game, Ridley[e].base.x_pos = x);
+        RidleyEdit::of(game, k).actor().x.whole = x;
     } else {
         ceres_earthquake(k, game);
-        let copied = session_slot!(game, Ridley[RIDLEY].min_x);
-        session_slot!(game, Ridley[e].base.x_pos = copied);
-        session_slot!(game, Ridley[e].x_velocity = 0);
-        session_slot!(game, Ridley[RIDLEY].hit_boundary = 1);
+        let copied = Ridley::of(game, RIDLEY).min_x();
+        RidleyEdit::of(game, k).actor().x.whole = copied;
+        *RidleyEdit::of(game, k).x_velocity() = 0;
+        *RidleyEdit::of(game, RIDLEY).hit_boundary() = 1;
     }
-    let carry = session_slot!(byte game, Ridley[e].base.y_subpos[1]) as i32
-        + session_slot!(byte game, Ridley[e].y_velocity[0]) as i32;
-    session_slot!(byte game, Ridley[e].base.y_subpos[1] = carry as u8);
-    let mut y = (session_slot!(game, Ridley[e].base.y_pos) as i32
-        + (session_slot!(game, Ridley[e].y_velocity) >> 8) as i8 as i32
+    let carry = i32::from(Ridley::of(game, k).actor().y.fraction.to_le_bytes()[1])
+        + i32::from(Ridley::of(game, k).y_velocity().to_le_bytes()[0]);
+    set_high_byte(&mut RidleyEdit::of(game, k).actor().y.fraction, carry as u8);
+    let mut y = (Ridley::of(game, k).actor().y.whole as i32
+        + (Ridley::of(game, k).y_velocity() >> 8) as i8 as i32
         + (carry >> 8)) as u16;
-    if (y as i16).wrapping_sub(session_slot!(game, Ridley[RIDLEY].min_y) as i16) >= 0 {
-        if (y as i16).wrapping_sub(session_slot!(game, Ridley[RIDLEY].max_y) as i16) >= 0 {
-            session_slot!(game, Ridley[e].y_velocity = 0);
-            session_slot!(game, Ridley[RIDLEY].hit_boundary = 8);
-            y = session_slot!(game, Ridley[RIDLEY].max_y);
+    if (y as i16).wrapping_sub(Ridley::of(game, RIDLEY).min_y() as i16) >= 0 {
+        if (y as i16).wrapping_sub(Ridley::of(game, RIDLEY).max_y() as i16) >= 0 {
+            *RidleyEdit::of(game, k).y_velocity() = 0;
+            *RidleyEdit::of(game, RIDLEY).hit_boundary() = 8;
+            y = Ridley::of(game, RIDLEY).max_y();
         }
-        session_slot!(game, Ridley[e].base.y_pos = y);
+        RidleyEdit::of(game, k).actor().y.whole = y;
     } else {
-        let copied = session_slot!(game, Ridley[RIDLEY].min_y);
-        session_slot!(game, Ridley[e].base.y_pos = copied);
-        session_slot!(game, Ridley[e].y_velocity = 0);
-        session_slot!(game, Ridley[RIDLEY].hit_boundary = 4);
+        let copied = Ridley::of(game, RIDLEY).min_y();
+        RidleyEdit::of(game, k).actor().y.whole = copied;
+        *RidleyEdit::of(game, k).y_velocity() = 0;
+        *RidleyEdit::of(game, RIDLEY).hit_boundary() = 4;
     }
 }
 
@@ -3170,9 +3020,8 @@ pub fn move_ridley<S: State + ?Sized>(game: &mut S) {
 /// `Ridley_Func_113`.
 pub fn ceres_earthquake<S: State + ?Sized>(k: u16, game: &mut S) {
     if boss!(game.AreaIndex) != NORFAIR {
-        let e = i32::from(k);
-        let speed = abs16(session_slot!(game, Ridley[e].x_velocity))
-            .max(abs16(session_slot!(game, Ridley[e].y_velocity)));
+        let speed =
+            abs16(Ridley::of(game, k).x_velocity()).max(abs16(Ridley::of(game, k).y_velocity()));
         if speed >= 0x280 {
             let kind = if boss!(game.AreaIndex) == NORFAIR {
                 24
@@ -3187,36 +3036,39 @@ pub fn ceres_earthquake<S: State + ?Sized>(k: u16, game: &mut S) {
 /// Turn Ridley around if not facing room middle ($A6:D955). Was
 /// `Ridley_Func_114`.
 pub fn face_room_middle<L: Lease + ?Sized>(game: &mut L) {
-    let list = match session_slot!(game, Ridley[RIDLEY].facing) {
+    let list = match Ridley::of(game, RIDLEY).facing() {
         FACING_LEFT if !in_right_half(game) => instruction_list::TURN_TO_FACE_RIGHT,
         FACING_LEFT | FACING_FORWARD => return,
         _ if in_right_half(game) => instruction_list::TURN_TO_FACE_LEFT,
         _ => return,
     };
-    session_slot!(game, Ridley[RIDLEY].base; current_instruction = list, instruction_timer = 2);
-    session_slot!(game, Ridley[RIDLEY].base.timer = 0);
+    let mut ridley = RidleyEdit::of(game, RIDLEY);
+    let actor = ridley.actor();
+    actor.instruction = list;
+    actor.instruction_delay = 2;
+    actor.timer = 0;
 }
 
 /// Whether Ridley's X position mod 100h is at least 80h. The original reads
 /// the word at $0F79, whose sign is that bit.
 fn in_right_half<L: Lease + ?Sized>(game: &L) -> bool {
-    session_slot!(byte game, Ridley[RIDLEY].base.x_pos[0]) >= 0x80
+    Ridley::of(game, RIDLEY).actor().x.whole.to_le_bytes()[0] >= 0x80
 }
 
 /// Update Ridley wings animation ($A6:D97D): ten frames, faster at speed.
 /// Was `Ridley_Func_115`.
 pub fn update_wings<S: State + ?Sized>(game: &mut S) {
     wings_animation_timer(game);
-    let timer = (session_slot!(game, Ridley[RIDLEY].wings_timer) as i16)
-        .wrapping_sub(session_slot!(game, Ridley[RIDLEY].wings_timer_delta) as i16);
-    session_slot!(game, Ridley[RIDLEY].wings_timer = timer as u16);
+    let timer = (Ridley::of(game, RIDLEY).wings_timer() as i16)
+        .wrapping_sub(Ridley::of(game, RIDLEY).wings_timer_delta() as i16);
+    *RidleyEdit::of(game, RIDLEY).wings_timer() = timer as u16;
     if timer < 0 {
-        session_slot!(game, Ridley[RIDLEY].wings_timer = 32);
-        let mut frame = session_slot!(game, Ridley[RIDLEY].wings_frame).wrapping_add(1);
+        *RidleyEdit::of(game, RIDLEY).wings_timer() = 32;
+        let mut frame = Ridley::of(game, RIDLEY).wings_frame().wrapping_add(1);
         if frame >= 0xa {
             frame = 0;
         }
-        session_slot!(game, Ridley[RIDLEY].wings_frame = frame);
+        *RidleyEdit::of(game, RIDLEY).wings_frame() = frame;
     }
 }
 
@@ -3225,10 +3077,10 @@ pub fn update_wings<S: State + ?Sized>(game: &mut S) {
 pub fn wings_animation_timer<S: State + ?Sized>(game: &mut S) {
     /// The wings timer deltas ($A6:D9ED), by speed.
     const DELTAS: [u16; 8] = [0xc, 0xe, 0x10, 0x12, 0x1c, 0x20, 0x28, 0x30];
-    let x_speed = abs16(session_slot!(game, Ridley[RIDLEY].x_velocity));
-    let sum = x_speed.wrapping_add(abs16(session_slot!(game, Ridley[RIDLEY].y_velocity)));
+    let x_speed = abs16(Ridley::of(game, RIDLEY).x_velocity());
+    let sum = x_speed.wrapping_add(abs16(Ridley::of(game, RIDLEY).y_velocity()));
     if sum == 0 {
-        session_slot!(game, Ridley[RIDLEY].wings_timer_delta = 0);
+        *RidleyEdit::of(game, RIDLEY).wings_timer_delta() = 0;
         return;
     }
     let mut speed = sum.wrapping_sub(x_speed);
@@ -3237,27 +3089,28 @@ pub fn wings_animation_timer<S: State + ?Sized>(game: &mut S) {
     }
     let index = (((4 * speed as i32) & 0xf00) >> 8).min(7);
     let mut delta = DELTAS[index as usize];
-    if (session_slot!(game, Ridley[RIDLEY].y_velocity) & 0x8000) == 0 {
+    if (Ridley::of(game, RIDLEY).y_velocity() & 0x8000) == 0 {
         delta >>= 1;
     }
-    session_slot!(game, Ridley[RIDLEY].wings_timer_delta = delta);
+    *RidleyEdit::of(game, RIDLEY).wings_timer_delta() = delta;
 }
 
 /// Initialise Ridley ribs animation ($A6:D9FD). Was `Ridley_Func_117`.
 pub fn initialise_ribs<L: Lease + ?Sized>(game: &mut L) {
-    session_slot!(game, Ridley[RIDLEY]; ribs_pointer = RIBS_ANIMATION, ribs_timer = 1);
+    *RidleyEdit::of(game, RIDLEY).ribs_pointer() = RIBS_ANIMATION;
+    *RidleyEdit::of(game, RIDLEY).ribs_timer() = 1;
 }
 
 /// Handle Ridley ribs animation ($A6:DA0C): when the timer runs out, follow
 /// the table to its next frame and queue the frame's two tile rows. Was
 /// `Ridley_Func_118`.
 pub fn handle_ribs<L: Lease + ?Sized>(game: &mut L) {
-    let timer = session_slot!(game, Ridley[RIDLEY].ribs_timer).wrapping_sub(1);
-    session_slot!(game, Ridley[RIDLEY].ribs_timer = timer);
+    let timer = Ridley::of(game, RIDLEY).ribs_timer().wrapping_sub(1);
+    *RidleyEdit::of(game, RIDLEY).ribs_timer() = timer;
     if timer != 0 {
         return;
     }
-    let mut cursor = session_slot!(game, Ridley[RIDLEY].ribs_pointer);
+    let mut cursor = Ridley::of(game, RIDLEY).ribs_pointer();
     let frame = loop {
         let frame = crate::cartridge::native_record(0xa6, cursor, game);
         if (frame.word(0) & 0x8000) == 0 {
@@ -3265,11 +3118,11 @@ pub fn handle_ribs<L: Lease + ?Sized>(game: &mut L) {
         }
         // A word with bit 15 set is the table's loop pointer.
         cursor = frame.word(0);
-        session_slot!(game, Ridley[RIDLEY].ribs_pointer = cursor);
+        *RidleyEdit::of(game, RIDLEY).ribs_pointer() = cursor;
     };
-    session_slot!(game, Ridley[RIDLEY].ribs_timer = frame.word(0));
+    *RidleyEdit::of(game, RIDLEY).ribs_timer() = frame.word(0);
     queue_tile_pair(game, [frame.word(2), frame.word(4)], [29216, 29472], 64);
-    session_slot!(game, Ridley[RIDLEY].ribs_pointer = cursor.wrapping_add(6));
+    *RidleyEdit::of(game, RIDLEY).ribs_pointer() = cursor.wrapping_add(6);
 }
 
 /// Draw Ridley's feet ($A6:DA8B): queue the clenched or unclenched tiles. Was
@@ -3287,23 +3140,23 @@ pub fn draw_feet<L: Lease + ?Sized>(clenched: bool, game: &mut L) {
 /// Draw Ridley wings ($A6:DAD8): none while facing forward. Was
 /// `Ridley_Func_120`.
 pub fn draw_wings<L: Lease + ?Sized>(game: &mut L) {
-    let side = match session_slot!(game, Ridley[RIDLEY].facing) {
+    let side = match Ridley::of(game, RIDLEY).facing() {
         FACING_LEFT => 0,
         FACING_FORWARD => return,
         _ => 10,
     };
-    let frame = session_slot!(game, Ridley[RIDLEY].wings_frame) as isize + side;
+    let frame = Ridley::of(game, RIDLEY).wings_frame() as isize + side;
     let spritemap = ridley_data::wing_spritemap(game, frame);
-    let x = session_slot!(game, Ridley[RIDLEY].base.x_pos);
-    let y = session_slot!(game, Ridley[RIDLEY].base.y_pos);
-    let palette = session_slot!(game, Ridley[RIDLEY].palette);
+    let x = Ridley::of(game, RIDLEY).actor().x.whole;
+    let y = Ridley::of(game, RIDLEY).actor().y.whole;
+    let palette = Ridley::of(game, RIDLEY).palette();
     add_spritemap(spritemap, x, y, palette, game);
 }
 
 /// Draw Ridley tail ($A6:DB2A): the tip by its angle, then the segments
 /// towards the base. Was `sub_A6DB2A`.
 pub fn draw_tail<L: Lease + ?Sized>(game: &mut L) {
-    if (session_slot!(game, Ridley[RIDLEY].base.properties) & K_ENEMY_PROPS_INVISIBLE as u16) != 0 {
+    if (Ridley::of(game, RIDLEY).actor().properties & K_ENEMY_PROPS_INVISIBLE as u16) != 0 {
         return;
     }
     let tip = ridley_data::tail_tip_spritemap(game, tail_tip_sector(game));
@@ -3326,9 +3179,7 @@ pub fn draw_tail<L: Lease + ?Sized>(game: &mut L) {
 
 /// The tail tip's direction in 16 sectors: segment 5 and 6 angles' low bytes.
 fn tail_tip_sector<L: Lease + ?Sized>(game: &L) -> isize {
-    (((game.slot_byte(TAIL_RAM + 2 * tail::angle(5)) as i32
-        + game.slot_byte(TAIL_RAM + 2 * tail::angle(6)) as i32
-        + 8)
+    (((tail_low_byte(game, tail::angle(5)) as i32 + tail_low_byte(game, tail::angle(6)) as i32 + 8)
         & 0xf0) as u8
         >> 4) as isize
 }
@@ -3336,7 +3187,7 @@ fn tail_tip_sector<L: Lease + ?Sized>(game: &L) -> isize {
 /// Add Ridley spritemap to OAM ($A6:DBC2), in his spritemap palette. Was
 /// `sub_A6DBC2`.
 pub fn add_ridley_spritemap<L: Lease + ?Sized>(spritemap: u16, x: u16, y: u16, game: &mut L) {
-    let palette = session_slot!(game, Ridley[RIDLEY].palette);
+    let palette = Ridley::of(game, RIDLEY).palette();
     add_spritemap(spritemap, x, y, palette, game);
 }
 
@@ -3345,17 +3196,18 @@ pub fn add_ridley_spritemap<L: Lease + ?Sized>(spritemap: u16, x: u16, y: u16, g
 /// the list is stopped and nothing is drawn. Was
 /// `BabyMetroid_DBCB_DoubleRetEx`.
 pub fn baby_metroid_spritemap<L: Lease + ?Sized>(game: &mut L) -> Option<u16> {
-    if (session_slot!(game, Ridley[RIDLEY].baby_metroid_instruction) & 0x8000) == 0 {
+    if (Ridley::of(game, RIDLEY).baby_metroid_instruction() & 0x8000) == 0 {
         return None;
     }
-    let mut cursor = session_slot!(game, Ridley[RIDLEY].baby_metroid_instruction);
+    let mut cursor = Ridley::of(game, RIDLEY).baby_metroid_instruction();
     let mut entry = crate::cartridge::native_record(0xa6, cursor, game);
     let mut instruction = entry.word(0) & 0x8000 != 0;
     if !instruction {
-        if session_slot!(game, Ridley[RIDLEY].baby_metroid_instruction_timer) != entry.word(0) {
-            session_slot!(game, Ridley[RIDLEY].baby_metroid_instruction_timer, |old| {
-                old.wrapping_add(1)
-            });
+        if Ridley::of(game, RIDLEY).baby_metroid_instruction_timer() != entry.word(0) {
+            *RidleyEdit::of(game, RIDLEY).baby_metroid_instruction_timer() =
+                Ridley::of(game, RIDLEY)
+                    .baby_metroid_instruction_timer()
+                    .wrapping_add(1);
             return Some(entry.word(2));
         }
         cursor = cursor.wrapping_add(4);
@@ -3372,8 +3224,8 @@ pub fn baby_metroid_spritemap<L: Lease + ?Sized>(game: &mut L) -> Option<u16> {
             instruction = true;
         }
     }
-    session_slot!(game, Ridley[RIDLEY]; baby_metroid_instruction_timer = 1,
-        baby_metroid_instruction = cursor);
+    *RidleyEdit::of(game, RIDLEY).baby_metroid_instruction_timer() = 1;
+    *RidleyEdit::of(game, RIDLEY).baby_metroid_instruction() = cursor;
     Some(entry.word(2))
 }
 
@@ -3402,12 +3254,12 @@ pub fn add_spritemap<L: Lease + ?Sized>(
 /// Check if Ridley is on screen ($A6:DE7A): true when he is off it, with a
 /// 20h px margin. Was `Ridley_Func_121`.
 pub fn off_screen<S: State + ?Sized>(game: &mut S) -> bool {
-    let y = session_slot!(game, Ridley[RIDLEY].base.y_pos) as i16;
+    let y = Ridley::of(game, RIDLEY).actor().y.whole as i16;
     if y >= 0 {
         let layer1 = crate::camera::current(game).layer1;
         let screen_y = (y as i32 + 32 - layer1[1] as i32) as i16;
         if screen_y >= 0 && below(screen_y as u16, 288) {
-            let x = session_slot!(game, Ridley[RIDLEY].base.x_pos) as i16;
+            let x = Ridley::of(game, RIDLEY).actor().x.whole as i16;
             if x >= 0 {
                 let screen_x = (x as i32 + 32 - layer1[0] as i32) as i16;
                 if screen_x >= 0 && below(screen_x as u16, 320) {
@@ -3466,15 +3318,15 @@ pub fn shot<L: Lease + ?Sized>(game: &mut L) {
         game.shot_reaction(Shot::ReactionOnly);
         return;
     }
-    let flash_timer = session_slot!(game, Ridley[RIDLEY].base.flash_timer);
+    let flash_timer = Ridley::of(game, RIDLEY).actor().flash;
     let flash = if flash_timer != 0 && flash_timer & 1 != 0 {
         14
     } else {
         13
     };
-    session_slot!(game, Ridley[RIDLEY].base.flash_timer = flash);
-    session_slot!(game, Ridley[RIDLEY].hit_counter, |hit_counter| hit_counter
-        .wrapping_add(1));
+    RidleyEdit::of(game, RIDLEY).actor().flash = flash;
+    *RidleyEdit::of(game, RIDLEY).hit_counter() =
+        Ridley::of(game, RIDLEY).hit_counter().wrapping_add(1);
 }
 
 /// Power bomb reaction - enemy $E13F/$E17F (Ridley) ($A6:DFB2). Was
@@ -3486,15 +3338,12 @@ pub fn power_bomb<L: Lease + ?Sized>(game: &mut L) {
 /// Start Norfair Ridley death sequence ($A6:DFB7), once, at no health. Was
 /// `Ridley_Func_126`.
 pub fn start_death_sequence<L: Lease + ?Sized>(game: &mut L) {
-    if session_slot!(game, Ridley[RIDLEY].base.health) == 0
-        && (session_slot!(game, Ridley[RIDLEY].fight_mode) & 0x8000) == 0
+    if Ridley::of(game, RIDLEY).actor().health == 0
+        && (Ridley::of(game, RIDLEY).fight_mode() & 0x8000) == 0
     {
-        session_slot!(game, Ridley[RIDLEY].fight_mode = DEATH_SEQUENCE);
+        *RidleyEdit::of(game, RIDLEY).fight_mode() = DEATH_SEQUENCE;
         set_tangible(game, false);
-        session_slot!(
-            game,
-            Ridley[RIDLEY].function = function::DYING_GRABBED_SAMUS
-        );
+        *RidleyEdit::of(game, RIDLEY).function() = function::DYING_GRABBED_SAMUS;
     }
 }
 
@@ -3508,7 +3357,7 @@ pub fn tail_samus_collision<L: Lease + ?Sized>(game: &mut L) {
         h: 14,
     };
     if samus_in_rect(rect, game) {
-        let damage = session_slot!(game, Ridley[RIDLEY].tail_damage);
+        let damage = Ridley::of(game, RIDLEY).tail_damage();
         game.foreign(|game| {
             let amount = game.suit_damage(damage);
             game.damage_player(amount);
@@ -3528,7 +3377,7 @@ pub fn tail_samus_collision<L: Lease + ?Sized>(game: &mut L) {
 /// or segment 5 deflects in a dust cloud, missiles with a clank. Was
 /// `Ridley_Func_129`.
 pub fn tail_projectile_collision<L: Lease + ?Sized>(game: &mut L) {
-    if (session_slot!(game, Ridley[RIDLEY].base.properties) & K_ENEMY_PROPS_TANGIBLE as u16) != 0 {
+    if (Ridley::of(game, RIDLEY).actor().properties & K_ENEMY_PROPS_TANGIBLE as u16) != 0 {
         return;
     }
     let tip = Rect {
@@ -3561,14 +3410,14 @@ pub fn tail_projectile_collision<L: Lease + ?Sized>(game: &mut L) {
 
 /// Instruction - roar ($A6:E4BE). Was `Ridley_Instr_5`.
 pub fn roar<L: Lease + ?Sized>(script: EnemyScript, game: &mut L) -> EnemyScript {
-    session_slot!(game, Ridley[RIDLEY].roaring = 89);
+    *RidleyEdit::of(game, RIDLEY).roaring() = 89;
     game.queue_sound(1, 0x59, 6);
     script
 }
 
 /// Instruction - clear roaring flag ($A6:E4CA). Was `Ridley_Instr_6`.
 pub fn stop_roaring<L: Lease + ?Sized>(script: EnemyScript, game: &mut L) -> EnemyScript {
-    session_slot!(game, Ridley[RIDLEY].roaring = 0);
+    *RidleyEdit::of(game, RIDLEY).roaring() = 0;
     script
 }
 
@@ -3581,14 +3430,14 @@ pub fn goto_if_samus_health_low<L: Lease + ?Sized>(
     if game.area() == NORFAIR || !below(battle!(game.SamusHealth), 30) {
         return script.offset(1);
     }
-    session_slot!(game, Ridley[RIDLEY].timer = 8);
+    *RidleyEdit::of(game, RIDLEY).timer() = 8;
     EnemyScript::jump(script.word(0))
 }
 
 /// Unused. Instruction - go to [[Y]] if holding Samus, else go to [[Y] + 2]
 /// ($A6:E4EE). Was `Ridley_Instr_4`.
 pub fn goto_by_holding_samus<L: Lease + ?Sized>(script: EnemyScript, game: &mut L) -> EnemyScript {
-    if session_slot!(game, Ridley[RIDLEY].holding_samus) != 0 {
+    if Ridley::of(game, RIDLEY).holding_samus() != 0 {
         EnemyScript::jump(script.word(0))
     } else {
         EnemyScript::jump(script.word(2))
@@ -3601,7 +3450,7 @@ pub fn goto_if_not_holding_samus<L: Lease + ?Sized>(
     script: EnemyScript,
     game: &mut L,
 ) -> EnemyScript {
-    if session_slot!(game, Ridley[RIDLEY].holding_samus) != 0 {
+    if Ridley::of(game, RIDLEY).holding_samus() != 0 {
         script.offset(1)
     } else {
         EnemyScript::jump(script.word(0))
@@ -3613,7 +3462,7 @@ pub fn goto_if_not_holding_samus<L: Lease + ?Sized>(
 pub fn set_feet_distance<L: Lease + ?Sized>(script: EnemyScript, game: &mut L) -> EnemyScript {
     game.set_previous_player_x(battle!(game.SamusXPos));
     game.set_previous_player_y(battle!(game.SamusYPos));
-    session_slot!(game, Ridley[RIDLEY].feet_distance_index = script.word(0));
+    *RidleyEdit::of(game, RIDLEY).feet_distance_index() = script.word(0);
     script.offset(1)
 }
 
@@ -3623,7 +3472,7 @@ pub fn goto_if_not_facing_left<L: Lease + ?Sized>(
     script: EnemyScript,
     game: &mut L,
 ) -> EnemyScript {
-    if session_slot!(game, Ridley[RIDLEY].facing) != FACING_LEFT {
+    if Ridley::of(game, RIDLEY).facing() != FACING_LEFT {
         EnemyScript::jump(script.word(0))
     } else {
         script.offset(1)
@@ -3633,29 +3482,35 @@ pub fn goto_if_not_facing_left<L: Lease + ?Sized>(
 /// Instruction - move Ridley ([[Y]], [[Y] + 2]) pixels ($A6:E51F). Was
 /// `Ridley_Instr_14`.
 pub fn move_by<L: Lease + ?Sized>(script: EnemyScript, game: &mut L) -> EnemyScript {
-    session_slot!(game, Ridley[RIDLEY].base.x_pos, |x_pos| x_pos
-        .wrapping_add(script.word(0)));
-    session_slot!(game, Ridley[RIDLEY].base.y_pos, |y_pos| y_pos
-        .wrapping_add(script.word(2)));
+    RidleyEdit::of(game, RIDLEY).actor().x.whole = Ridley::of(game, RIDLEY)
+        .actor()
+        .x
+        .whole
+        .wrapping_add(script.word(0));
+    RidleyEdit::of(game, RIDLEY).actor().y.whole = Ridley::of(game, RIDLEY)
+        .actor()
+        .y
+        .whole
+        .wrapping_add(script.word(2));
     script.offset(2)
 }
 
 /// Instruction - flip Ridley left ($A6:E71C). Was `Ridley_Instr_9`.
 pub fn flip_left<L: Lease + ?Sized>(script: EnemyScript, game: &mut L) -> EnemyScript {
-    session_slot!(game, Ridley[RIDLEY].facing = FACING_LEFT);
+    *RidleyEdit::of(game, RIDLEY).facing() = FACING_LEFT;
     flip_tail(game);
     script
 }
 
 /// Instruction - face Ridley forward ($A6:E727). Was `Ridley_Instr_7`.
 pub fn face_forward<L: Lease + ?Sized>(script: EnemyScript, game: &mut L) -> EnemyScript {
-    session_slot!(game, Ridley[RIDLEY].facing = FACING_FORWARD);
+    *RidleyEdit::of(game, RIDLEY).facing() = FACING_FORWARD;
     script
 }
 
 /// Instruction - flip Ridley right ($A6:E72F). Was `Ridley_Instr_8`.
 pub fn flip_right<L: Lease + ?Sized>(script: EnemyScript, game: &mut L) -> EnemyScript {
-    session_slot!(game, Ridley[RIDLEY].facing = FACING_RIGHT);
+    *RidleyEdit::of(game, RIDLEY).facing() = FACING_RIGHT;
     flip_tail(game);
     script
 }
@@ -3667,11 +3522,11 @@ pub fn calculate_fireball_velocities<L: Lease + ?Sized>(
     script: EnemyScript,
     game: &mut L,
 ) -> EnemyScript {
-    let angle = if session_slot!(game, Ridley[RIDLEY].facing) != 0 {
-        let dx = (game.player_x() as i32
-            - (session_slot!(game, Ridley[RIDLEY].base.x_pos) as i32 + 25)) as u16;
-        let dy = (game.player_y() as i32
-            - (session_slot!(game, Ridley[RIDLEY].base.y_pos) as i32 - 43)) as u16;
+    let angle = if Ridley::of(game, RIDLEY).facing() != 0 {
+        let dx = (game.player_x() as i32 - (Ridley::of(game, RIDLEY).actor().x.whole as i32 + 25))
+            as u16;
+        let dy = (game.player_y() as i32 - (Ridley::of(game, RIDLEY).actor().y.whole as i32 - 43))
+            as u16;
         let mut angle = -(angle_from_delta(dx, dy) as i32 + 0x80) as u8 as u16;
         if !(0x15..0xc0).contains(&angle) {
             angle = 0x15;
@@ -3680,10 +3535,10 @@ pub fn calculate_fireball_velocities<L: Lease + ?Sized>(
         }
         angle
     } else {
-        let dx = (game.player_x() as i32
-            - (session_slot!(game, Ridley[RIDLEY].base.x_pos) as i32 - 25)) as u16;
-        let dy = (game.player_y() as i32
-            - (session_slot!(game, Ridley[RIDLEY].base.y_pos) as i32 - 43)) as u16;
+        let dx = (game.player_x() as i32 - (Ridley::of(game, RIDLEY).actor().x.whole as i32 - 25))
+            as u16;
+        let dy = (game.player_y() as i32 - (Ridley::of(game, RIDLEY).actor().y.whole as i32 - 43))
+            as u16;
         let mut angle = -(angle_from_delta(dx, dy) as i32 + 0x80) as u8 as u16;
         if !(0x40..0xeb).contains(&angle) {
             angle = 0xeb;
@@ -3692,14 +3547,8 @@ pub fn calculate_fireball_velocities<L: Lease + ?Sized>(
         }
         angle
     };
-    session_slot!(
-        game,
-        Ridley[RIDLEY].fireball_x_velocity = x_velocity_at_angle(0x500, angle)
-    );
-    session_slot!(
-        game,
-        Ridley[RIDLEY].fireball_y_velocity = y_velocity_at_angle(0x500, angle)
-    );
+    *RidleyEdit::of(game, RIDLEY).fireball_x_velocity() = x_velocity_at_angle(0x500, angle);
+    *RidleyEdit::of(game, RIDLEY).fireball_y_velocity() = y_velocity_at_angle(0x500, angle);
     script
 }
 
@@ -3729,24 +3578,22 @@ pub fn spawn_fireball<L: Lease + ?Sized>(
     game: &mut L,
 ) -> EnemyScript {
     battle!(game.EprojInitParam2 = afterburn);
-    game.spawn_room_projectile(FIREBALL, session_slot!(game, Ridley[RIDLEY].facing));
+    game.spawn_room_projectile(FIREBALL, Ridley::of(game, RIDLEY).facing());
     script
 }
 
 /// Instruction - start liftoff - Ceres Ridley ($A6:E969). Was `Ridley_Instr_15`.
 pub fn start_ceres_liftoff<L: Lease + ?Sized>(script: EnemyScript, game: &mut L) -> EnemyScript {
-    session_slot!(
-        game,
-        Ridley[RIDLEY].function = function::CERES_LIFTOFF_ACCELERATING
-    );
-    session_slot!(game, Ridley[RIDLEY].y_velocity = -352i32 as u16);
+    *RidleyEdit::of(game, RIDLEY).function() = function::CERES_LIFTOFF_ACCELERATING;
+    *RidleyEdit::of(game, RIDLEY).y_velocity() = -352i32 as u16;
     script
 }
 
 /// Instruction - start liftoff - Norfair Ridley ($A6:E976). Was
 /// `Ridley_Instr_16`.
 pub fn start_norfair_liftoff<L: Lease + ?Sized>(script: EnemyScript, game: &mut L) -> EnemyScript {
-    session_slot!(game, Ridley[RIDLEY]; function = function::LIFTOFF, y_velocity = -352i32 as u16);
+    *RidleyEdit::of(game, RIDLEY).function() = function::LIFTOFF;
+    *RidleyEdit::of(game, RIDLEY).y_velocity() = -352i32 as u16;
     script
 }
 
