@@ -859,11 +859,7 @@ pub trait PreInstructionHost:
 
 /// Gunship pre-instructions on the active actor lease; `index` is captured by
 /// the caller before dispatch. The bottom's RTL remains a no-op.
-pub fn gunship_pre_instruction(
-    ea: u32,
-    index: u16,
-    runtime: &mut impl crate::actors::host::ActorLease,
-) -> bool {
+pub fn gunship_pre_instruction(ea: u32, index: u16, runtime: &mut impl gunship::Lease) -> bool {
     let [low, high, _, _] = ea.to_le_bytes();
     match ea {
         10659852 | 10660048 | 10660162 | 10660176 | 10660231 | 10660285 | 10660431 | 10660445
