@@ -5,7 +5,6 @@ use crate::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 use crate::actors::host::{ActorLease, BossEffects, LeaseActors};
 use crate::enemy_projectiles::host::Effects as _;
 use crate::enemy_script::EnemyScript;
-use crate::ram::words as W;
 
 const INVISIBLE: u16 = 0x0100;
 const INTANGIBLE: u16 = 0x0400;
@@ -19,11 +18,12 @@ const Y_RADII: [u16; 22] = [
     0x18, 0x18, 0x14, 0x10, 0xc, 8,
 ];
 
-/// The graphics part and the native slot of the hitbox part after it.
-fn parts(runtime: &impl ActorLease) -> (Key, usize) {
-    let index = runtime.word(W::CUR_ENEMY_INDEX);
-    // The legacy child offset adds 64 after widening the selected u16 index.
-    (Key::from_legacy(index), 0xf78 + usize::from(index) + 64)
+/// The graphics part and the hitbox part in the slot after it.
+fn parts(runtime: &impl ActorLease) -> (Key, Key) {
+    let index = runtime.session().actors.controls.selected;
+    // The selected index stays below the slot table's end, so the next slot's
+    // index fits in u16; past the table the access projects the same bytes.
+    (Key::from_legacy(index), Key::from_legacy(index + 64))
 }
 
 /// Initialisation AI - enemy $E07F (fire pillar) ($A6:8FFC): parameter 2 zero for the graphics.
@@ -62,8 +62,7 @@ pub fn main_ai<H: LeaseActors>(game: &mut H) {
                 erupt
             });
             if erupt {
-                let properties = runtime.lease_native_word(column + 0x0e) & !INTANGIBLE;
-                runtime.write_slice_native(column + 0x0e, properties);
+                runtime.edit_actor(column, Native, |actor| actor.properties &= !INTANGIBLE);
             }
         }
         ERUPT => runtime.edit_actor(graphics, Native, |actor| {
@@ -104,11 +103,13 @@ pub fn instruction<H: LeaseActors + BossEffects>(
     let mut runtime = game.lease();
     let (graphics, column) = parts(&runtime);
     let base = runtime.resolve_actor(graphics, Native).variables[3];
-    runtime.write_slice_native(column + 0x06, base.wrapping_sub(5 * (frame as u16 + 1)));
-    runtime.write_slice_native(column + 0x0c, Y_RADII[frame]);
-    if frame == 0 {
-        runtime.write_slice_native(column + 0x0a, 8);
-    }
+    runtime.edit_actor(column, Native, |actor| {
+        actor.y.whole = base.wrapping_sub(5 * (frame as u16 + 1));
+        actor.radius.y = Y_RADII[frame];
+        if frame == 0 {
+            actor.radius.x = 8;
+        }
+    });
     script
 }
 
@@ -117,12 +118,12 @@ fn finish<H: LeaseActors>(game: &mut H) {
     let mut runtime = game.lease();
     let (graphics, column) = parts(&runtime);
     runtime.edit_actor(graphics, Native, |actor| actor.variables[2] = 1);
-    runtime.write_slice_native(column + 0x0a, 0);
-    runtime.write_slice_native(column + 0x0c, 0);
+    runtime.edit_actor(column, Native, |actor| {
+        (actor.radius.x, actor.radius.y) = (0, 0)
+    });
     runtime.edit_actor(graphics, Native, |actor| {
         actor.y.whole = actor.variables[3];
         actor.properties |= INVISIBLE;
     });
-    let properties = runtime.lease_native_word(column + 0x0e) | INTANGIBLE;
-    runtime.write_slice_native(column + 0x0e, properties);
+    runtime.edit_actor(column, Native, |actor| actor.properties |= INTANGIBLE);
 }
