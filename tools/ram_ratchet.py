@@ -19,7 +19,8 @@ The engine inventory (Jim, 2026-11-02) also counts what the sm_game measure
 misses: address APIs (session_slot!, SlotAccess, native_word, write_slice_*),
 direct .ram() calls and unresolved word/byte methods in the target packages, and
 all RAM access in the legacy engine under sm/src/game. Completion means these
-reach zero too. They are reported against main's baseline for now.
+reach zero too. Address APIs and raw calls may not rise above main's baseline;
+the other two are reported.
 
 Run from the repository root: python3 tools/ram_ratchet.py [--update]
 """
@@ -44,14 +45,16 @@ BASELINE = {
     "sm_game_coupled_files": 74,
     "production_lines": 173506,
     # Engine inventory (Jim, 2026-11-02): address-shaped access is RAM access.
-    # First measured on main 0115740f5; reported, not yet enforced.
+    # First measured on main 0115740f5. Address APIs and raw calls are enforced:
+    # converting counted sites into them is not a retirement, and the address
+    # decoding behind them slows every replay. The lexical unresolved-method and
+    # legacy-engine measures are reported only.
     "engine_ram_address_sites": 5887,
     "engine_raw_ram_calls": 115,
     "engine_unresolved_ram_methods": 1284,
     "legacy_engine_ram_sites": 546,
 }
-ADVISORY = {"production_lines", "engine_ram_address_sites", "engine_raw_ram_calls",
-            "engine_unresolved_ram_methods", "legacy_engine_ram_sites"}
+ADVISORY = {"production_lines", "engine_unresolved_ram_methods", "legacy_engine_ram_sites"}
 
 
 CFG_TEST = re.compile(r"^\s*#\[cfg\(test\)\]\s*$")

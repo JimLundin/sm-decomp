@@ -106,8 +106,12 @@ M seams and cycle cuts, B bank retirement.
    `native_word`, `write_slice_*`) violate the migration even when typed Session
    storage answers them. `ram_ratchet.py` reports them with direct `.ram()` calls,
    unresolved word/byte methods and legacy-engine access, against main's baseline.
-   A migration must not convert counted sites into these forms. Completion requires
-   all of them at zero in the target packages.
+   A migration must not convert counted sites into these forms; address APIs and
+   raw calls fail the ratchet when they rise. Completion requires all of them at
+   zero in the target packages. `land/owned-pattern152` adds about 2,650 address
+   APIs in its `*_owned.rs` actor files, and their address decoding costs 12-18% of
+   replay time, so it does not land until those use typed Session fields (Jim:
+   slowing every later replay costs more than the delay).
 
    **Landing size and reporting (review, 2026-10-31; flagged in three reviews).**
    (4) A landing PR carries at most ~25 commits; when its CI or corpus fails,

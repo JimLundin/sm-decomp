@@ -26,6 +26,12 @@ The root's current slice target is at least 200 access retirements. Counts and
 the landed burndown belong in the dated PROGRESS_REPORT, with unresolved access
 candidates and pending work separate from proved eliminations.
 
+Jim's address rule (2026-11-02): `session_slot!`, `SlotAccess`, `native_word`,
+`write_slice_*` and other APIs that name RAM addresses are RAM access. A slice
+may not raise `engine_ram_address_sites` or `engine_raw_ram_calls` in
+`ram_ratchet.py`. The 152 slice's owned actor files move onto typed Session
+fields before it lands; see REVIEW's Phase 2 ratchets.
+
 Jim's CI direction (2026-11-02): verification runs on GitHub Actions, on Linux, through
 one workflow ([verify.yml](../.github/workflows/verify.yml)). Pull requests gate on the
 oracle digest lock plus lockstep for rows it cannot hold; full lockstep runs nightly. This
