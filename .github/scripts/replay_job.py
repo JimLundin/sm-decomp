@@ -15,8 +15,6 @@ import scenario  # noqa: E402
 JOB = json.loads(os.environ["JOB"])
 TEMP = pathlib.Path(os.environ["RUNNER_TEMP"])
 SUMMARY = os.environ["GITHUB_STEP_SUMMARY"]
-if "PREFIX_STAGE" in os.environ:
-    JOB.update(mode="prefix", kinds="checkpoint", name="prefix-" + JOB["prefix_chain"])
 WORKERS = int(os.environ.get("WORKERS") or os.cpu_count() or 1)
 LOCK_NAMES = re.compile(r"^(SEGMENT|PASS|FAIL|UNLOCKED|KNOWN|REGRESSION|Corpus|job |Verifier total|Lock|"
                         r"[A-Za-z0-9-]+: (lock |lockstep |free run |Free run|Free-run|@|no current|localization))")
@@ -39,11 +37,7 @@ def script(name, *arguments, **environment):
 
 
 def restore():
-    if JOB["mode"] == "prefix":
-        script("prepare_corpus_inputs.py", KIND="checkpoint", SEED_ASSET=JOB["seed_asset"],
-               SEED_SHA256=JOB["seed_sha256"], SEGMENTS=JOB["segments"], ROUTE="", INPUTS=JOB["inputs"])
-    elif JOB["kinds"] == "room":
-        script("prepare_rom.py")
+    if JOB["kinds"] == "room":
         bundle = TEMP / "chain.tar.gz.enc"
         urllib.request.urlretrieve(
             f"https://github.com/JimLundin/sm-decomp/releases/download/ci-data/{JOB['asset']}", bundle)
@@ -52,10 +46,8 @@ def restore():
         # One seed bundle or movie route per shard, restored in turn.
         for shard in json.loads(JOB["shards"]):
             script("prepare_corpus_inputs.py", KIND=shard["kind"], SEED_ASSET=shard["seed_asset"],
-                   SEED_SHA256=shard["seed_sha256"], SEGMENTS=shard.get("prefix_segments") or shard["segments"],
+                   SEED_SHA256=shard["seed_sha256"], SEGMENTS=shard["segments"],
                    ROUTE=shard["route"], INPUTS=shard["inputs"])
-    else:
-        script("prepare_rom.py")
 
 
 def rom_import():
@@ -182,22 +174,6 @@ def replay():
 
 def main():
     restore()
-    if JOB.get("prefix_chain") and JOB["mode"] != "prefix":
-        os.environ.update(SM_CORPUS_PREFIX_IMPORT=str(ROOT / "prefix-completed/checkpoint.tar.gz.enc"),
-                          SM_CORPUS_PREFIX_STAGE=str(JOB["prefix_stage"]),
-                          SM_CORPUS_PREFIX_MEMBERS=JOB["prefix_segments"])
-    if JOB["mode"] == "prefix":
-        arguments = [sys.executable, "-B", "tools/verify_dll.py", "rom/sm.smc", "--corpus", "scenarios",
-                     "--no-build", "--direct", "--prefix-stage", os.environ["PREFIX_STAGE"],
-                     "--prefix-out", "prefix-transfer/checkpoint.tar.gz.enc"]
-        for name in JOB["segments"].split():
-            arguments += ["--segment", name]
-        if os.environ["PREFIX_STAGE"] != "0":
-            arguments += ["--prefix-in", "prefix-import/checkpoint.tar.gz.enc"]
-        environment = dict(os.environ, SM_ORACLE=JOB["oracle"])
-        if os.environ.get("AUDIO_TRACE"):
-            environment["SM_VERIFY_PHYSICAL_AUDIO"] = "1"
-        return subprocess.run(arguments, cwd=ROOT, env=environment).returncode
     if JOB["mode"] == "rom-import":
         return rom_import()
     if JOB["mode"] == "record":

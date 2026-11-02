@@ -96,7 +96,7 @@ Both save rows retain the full Kago approach before their selected save windows.
 
 ## Checks in CI
 
-CI holds the ROM in repository secrets and keeps every ROM-derived file
+CI decrypts the ROM from a private repository and keeps every ROM-derived file
 (inputs, checkpoints, logs) private to the runner.
 
 | Workflow | Runs | What it does |

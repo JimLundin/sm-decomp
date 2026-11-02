@@ -61,7 +61,8 @@ result. Never commit the mutant.
   engine or oracle. Fix it; never re-record over it.
 
 The gate runs every locked row in check-lock and lockstep for the rows the lock can't
-hold. Three rows with long cold prefixes (`shot-gate-spawn-parameter`, `save-death-reload`,
-`save-memory`) wait for the nightly full run, or `scope=rows`.
+hold. The three long checkpoint rows are being reseeded from room seeds through
+the existing setup; until those genuine starts and inputs are qualified, their
+current cold-prefix versions remain in nightly full runs or `scope=rows`.
 
 Done when every row you listed passed and you have the counts for your report.

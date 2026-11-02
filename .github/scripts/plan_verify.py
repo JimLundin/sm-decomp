@@ -4,12 +4,12 @@
 SCOPE selects what runs:
   gate      every locked scenario engine-only against the oracle lock, lockstep
             for the scenarios the lock cannot hold, and the ROM import check.
-            Rows whose cold prefix would dominate a pull request wait for full.
+            Three long-prefix rows await room-seed reseeding and stay in full.
   full      the gate plus lockstep of the whole corpus and both routes.
   rows      lockstep of the space-separated rows in SELECTED.
   coverage  instrumented lockstep of the corpus (and routes with COVER_ROUTES=1).
 """
-import json, os, pathlib, sys, tomllib, tempfile, subprocess
+import json, os, pathlib, sys, tomllib
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools"))
@@ -22,7 +22,7 @@ ROUTE = ".github/scripts/full_route.py"
 # Above this many prefix frames a rejected checkpoint costs more than the rest of
 # the gate, and every state layout change rejects it. These rows run in full.
 LONG_PREFIX = 20000
-SHARD = ("kind", "seed_asset", "seed_sha256", "segments", "route", "inputs", "prefix_chain", "prefix_stage", "prefix_segments")
+SHARD = ("kind", "seed_asset", "seed_sha256", "segments", "route", "inputs")
 
 
 def corpus_job(shard, mode, timeout):
@@ -30,8 +30,7 @@ def corpus_job(shard, mode, timeout):
     record = shard.get("record_oracle", False)
     return dict(name=shard["name"], mode="record" if record else mode, steps=shard["cost"],
                 segments=shard["segments"], kinds=shard["kind"], timeout=timeout,
-                shards=json.dumps([{key: shard.get(key, "") for key in SHARD}]),
-                **{key: shard.get(key, "") for key in ("prefix_chain", "prefix_stage", "prefix_segments")})
+                shards=json.dumps([{key: shard.get(key, "") for key in SHARD}]))
 
 
 def corpus_jobs(selected, sample, timeout=65):
@@ -130,40 +129,18 @@ def main():
         count = seen[job["name"]] = seen.get(job["name"], 0) + 1
         if count > 1:
             job["name"] = f"{job['name']}-{count}"
-    # The existing corpus planner owns source-bound prefix grouping and stages.
-    corpus_ids = sorted({name for job in jobs if job.get("kinds") != "room"
-                         for name in job.get("segments", "").split() if "chain" not in by_id[name]})
-    prefix = {"prefix_matrices": json.dumps({f"stage_{i:02d}": {"include": []} for i in range(28)}),
-              "prefix_stages": "0"}
-    if corpus_ids:
-        with tempfile.TemporaryDirectory() as directory:
-            output, summary = pathlib.Path(directory, "output"), pathlib.Path(directory, "summary")
-            subprocess.run([sys.executable, CORPUS], cwd=ROOT, check=True,
-                           env=dict(os.environ, SELECTED=" ".join(corpus_ids),
-                                    ORACLE=os.environ.get("ORACLE") or "patched",
-                                    ORACLE_SAMPLE="1" if scope == "full" and os.environ.get("ORACLE_SAMPLE") == "1" else "",
-                                    GITHUB_OUTPUT=str(output), GITHUB_STEP_SUMMARY=str(summary)),
-                           stdout=subprocess.DEVNULL)
-            values = dict(line.split("=", 1) for line in output.read_text().splitlines())
-            prefix = {key: values[key] for key in prefix}
-    ready = [job for job in jobs if not job.get("prefix_chain")]
-    checkpoints = [job for job in jobs if job.get("prefix_chain")]
     movie = next(m for m in tomllib.load((ROOT / "movies/manifest.toml").open("rb"))["movies"]
                  if m["category"] == "any%")
     with open(os.environ["GITHUB_OUTPUT"], "a") as out:
         out.write(f"matrix={json.dumps({'include': jobs})}\n")
-        for key, value in prefix.items():
-            out.write(f"{key}={value}\n")
-        out.write(f"ready_matrix={json.dumps({'include': ready})}\ncheckpoint_matrix={json.dumps({'include': checkpoints})}\n")
-        out.write(f"ready_count={len(ready)}\ncheckpoint_count={len(checkpoints)}\n")
         out.write(f"movie_file={movie['file']}\nmovie_sha256={movie['sha256']}\n")
     with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as out:
         out.write(f"Scope {scope}: {len(jobs)} jobs\n\n")
         if scope == "gate":
-            out.write("Partial fast gate; full exact-head qualification is required for landing.\n\n")
+            out.write("PR lock gate; three long-prefix rows remain pending room-seed reseeding.\n\n")
             for name in long_rows:
                 if name not in locked:
-                    out.write(f"Excluded from fast gate: {name}; queued for full verified-prefix replay.\n")
+                    out.write(f"Excluded from fast gate: {name}; pending room-seed reseeding; retained in nightly full cold replay.\n")
     print(f"{scope}: {len(jobs)} jobs: " + ", ".join(job["name"] for job in jobs))
 
 

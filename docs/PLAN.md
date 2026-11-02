@@ -32,7 +32,8 @@ oracle digest lock plus lockstep for rows it cannot hold; full lockstep runs nig
 replaces the 2026-10-27 stop on Linux. Windows CI only links the desktop nightly until
 `sm_app` moves off the Windows-only bridge. Local machines compile-check; they don't need
 a verifier build or replays. Push a slice once and let its gate finish unless fixing a
-failure, because a new commit cancels it. The production-line ratchet stays advisory until
+failure. PR Verify runs, including queued runs, finish without cancellation.
+The production-line ratchet stays advisory until
 RAM migration finishes, then becomes enforced so the code shrinks toward the 100,000-line
 target. PR descriptions carry landing evidence; don't grow PROGRESS_REPORT for each landing.
 
@@ -44,9 +45,9 @@ Jim's verifier execution direction (2026-11-02): ordinary Rust compilation is
 enough for local compiler checks. Replace the verifier DLL in GitHub Actions
 with a headless Rust executable using the existing verifier and orchestration.
 Preserve its replay modes, units, checkpoint operations, comparisons and actual
-source/native/input identity checks. Windows replay runners remain the current
-platform; changing the executable does not authorize restarting Linux work.
-Existing in-flight replay evidence retains its original artifact identities.
+source/native/input identity checks. Replay qualification runs on Linux under
+the CI direction above. Existing in-flight replay evidence retains its original
+artifact identities.
 
 Jim's CI platform clarification (2026-11-02): Linux CI is intentional. This
 supersedes the earlier Windows-only CI direction; local implementation and
@@ -55,6 +56,12 @@ hosted qualification through the existing verifier and orchestration, preserving
 all rows, actual source/executable/native/ROM/input identities and checkpoint
 guards. Preserve live Windows and Linux runs with their original proof scope;
 integrating CI does not transfer qualification between different heads or hosts.
+
+Jim's gate clarification (2026-11-02): land on exact-head PR CI and PR Verify's
+lock-first gate; dispatched full runs are extra evidence and full lockstep runs
+nightly. Remove staged-prefix workflow jobs and reseed the three long checkpoint
+rows from room seeds through the existing setup. Keep PR Verify runs, including
+queued runs. Do not add ROM-secret blocks; use the private ci-data ROM restore.
 
 The [accepted destination](target-architecture/README.md) is one deterministic owned
 Session, our renderer/audio and small platform libraries, independent of SNES emulation.

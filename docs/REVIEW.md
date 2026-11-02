@@ -24,8 +24,9 @@ completion scope below remain required.
 
 **Landing rule (Jim, 2026-10-29; local execution clarified 2026-11-02).**
 A change lands when local formatting, ordinary `cargo check` with warnings
-denied and source inventory checks pass, and PR CI and a full corpus on its
-exact head are green. CI builds and links the actual headless verifier
+denied and source inventory checks pass, and PR CI and PR Verify's oracle-lock
+gate on its exact head are green. Full live lockstep runs nightly. CI builds
+and links the actual headless verifier
 executable and runs the replays; local checks do not need an executable or DLL
 build. The PR description carries the evidence; no separate qualification
 records, timing tables or resource-ledger prose are required.
