@@ -30,7 +30,8 @@ type Field = fn(&mut Session, usize) -> &mut u16;
 type Lane = (usize, usize, Field);
 
 fn session() -> Session {
-    Session::with_world(WorldBinding::canonical_legacy())
+    // Encoding requires supplied owners, including the map-menu window.
+    decoded(&vec![0; RAM])
 }
 
 fn read(ram: &[u8], at: usize) -> u16 {
@@ -342,7 +343,12 @@ fn menu_window_lanes() -> Vec<Lane> {
 }
 #[test]
 fn supplied_menu_window_round_trips_all_hidden_fields() {
-    assert!(!session().menu_window.is_initialized());
+    assert!(
+        !Session::with_world(WorldBinding::canonical_legacy())
+            .menu_window
+            .is_initialized()
+    );
+    assert!(session().menu_window.is_initialized());
     check_owner("map-menu window", &menu_window_lanes());
     let bytes = Random::ram(0x9e20_9e50);
     let value = decoded(&bytes);

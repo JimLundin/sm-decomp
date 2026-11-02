@@ -82,7 +82,9 @@ macro_rules! spawn_word {
 // extended RAM 7800..9000 is owned here except the five Botwoon death words
 // (801E, 8020, 803C, 8818, 883E), which keep their own cohort; the bosses'
 // RAM 9000..97DC is owned here too, and the angles 97DC..9800 stay with eproj.
-const COMMON_RANGES: [(usize, usize); 27] = [
+// Lighting 1778..1784 stays with the canonical FX control owner; actor alias
+// readers/writers below resolve that provider without importing/emitting twice.
+const COMMON_RANGES: [(usize, usize); 26] = [
     (0x0688, 0x071c),
     (0x2000, 0x3000),
     (0x0e12, 0x0e14),
@@ -93,7 +95,6 @@ const COMMON_RANGES: [(usize, usize); 27] = [
     (0x0e54, 0x0e84),
     (0x0e84, 0x0f78),
     (0x0f78, 0x1778),
-    (0x1778, 0x1784),
     (0x1784, 0x179a),
     (0x179a, 0x183c),
     (0x183c, 0x183e),

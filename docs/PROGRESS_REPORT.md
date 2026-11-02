@@ -27,6 +27,32 @@ Pending and unobserved engine scope is retained in the coordinator and endgame
 snapshots below. Complete any%, 100%, low%, boot/transition/endgame acceptance is
 not established by this documentation cleanup.
 
+## PR #151 hosted qualification correction, 2026-11-02
+
+Published candidate `150fe6ed5ee77fb3a6b794b30e87f391b868b74d` retires
+546 RAM accesses, from 1,159 sites / 88 files on main to 613 / 74.
+PR #151 remains open; main is `558131e7208334a86a6de6945890fd8d4a73f616`.
+Its physical production Rust delta is +15,629 lines and verification +925;
+this is ownership migration, with no compactness claim.
+
+Hosted CI run `41457358300` built the DLL successfully. Its `format` job
+`125317319358` failed the target state-layout tests: four passed, 25 failed.
+The correction supplies test owners through the production RAM decoder,
+retains the constructor's uninitialized-owner assertion, emits odd-length
+graphics/countdown bytes once, and removes the actor codec's duplicate FX
+lighting emission. Actor alias readers and writers still resolve the same
+canonical FX owner; production admission and the overlap check stay strict.
+Independent source review passed correction patch
+`80f30c3e297cb3e114e81a609539d05e0a8869d85020295ebeac79d4375e9ba4`;
+formatting and diff checks passed. Corrected hosted tests and replays remain
+pending. Original failure logs are retained under
+`$TEMP/collab/root-coordination/pr151-format-job.log`.
+
+The existing hosted workflows qualify the DLL and replays; further local DLL
+qualification packets are stopped. Full existing any%, 100% and low% movie
+acceptance remains open. The independently reviewed next migration overlay
+retires 275 additional accesses, but has no compiler, replay or landing proof.
+
 ## Pause graphics adoption correction, 2026-11-02
 
 Current corrected source is `fc299d1d9c38272c94cb4ab88f9d008cec7a6b876586ee086ef54c998248ee98`

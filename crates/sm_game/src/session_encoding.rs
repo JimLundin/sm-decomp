@@ -1179,7 +1179,18 @@ pub fn visit(s: &Session, mut visit: impl FnMut(usize, u16)) {
 }
 pub fn encode(s: &Session, mut span: impl FnMut(usize, &[u8])) {
     span(0x60b, &[s.enemy_projectiles.spawn.angle]);
-    visit(s, |at, value| span(at, &value.to_le_bytes()));
+    visit(s, |at, value| {
+        let bytes = value.to_le_bytes();
+        match at {
+            // The odd menu-graphics tail visits its map-owner neighbor at
+            // 0776 through projected_byte; that owner emits the full word.
+            0x775 => span(at, &bytes[..1]),
+            // Countdown's last visit repeats Y low from the preceding pair,
+            // both through the countdown projection. Emit only its Y high.
+            0x94a => span(at + 1, &bytes[1..]),
+            _ => span(at, &bytes),
+        }
+    });
     for (index, cell) in s.room.terrain.cells().iter().enumerate() {
         span(0x16402 + index, &[cell.behavior]);
     }
