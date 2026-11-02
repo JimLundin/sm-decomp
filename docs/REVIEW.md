@@ -14,6 +14,10 @@ Primary (Jim, 2026-10-29 evening): the collaborator session is the sole Git
 writer for main; root releases main and hands in-flight work over as patches.
 Linux stays stopped.
 
+Jim clarified on 2026-11-02 that Linux CI is intentional. PLAN records this
+hosted-platform direction and the continuing local Cargo-check policy. Earlier
+Windows CI evidence keeps its exact source, host and artifact identities.
+
 Read PLAN's 2026-11-01 work order and migration scope before assigning phase work.
 PLAN owns current pacing and reporting; the compiler/fidelity gates and full
 completion scope below remain required.

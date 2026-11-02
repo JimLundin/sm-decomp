@@ -27,6 +27,35 @@ Pending and unobserved engine scope is retained in the coordinator and endgame
 snapshots below. Complete any%, 100%, low%, boot/transition/endgame acceptance is
 not established by this documentation cleanup.
 
+## Linux qualification forward fix, 2026-11-02
+
+Jim confirmed Linux CI is intentional. PR #151 at `4a4564ad7` has a successful
+CI build (`41481486141`, attempt 3), but two oracle-lock shards and four route
+shards failed their cumulative 55-minute limits. The observed failed logs show
+passing completed rows before timeout; they establish no result for unfinished
+rows. Failed logs remain with the dedicated verification owner.
+
+All seven initial capture groups succeeded. Two genuine imported second stages
+also succeeded: save-memory job `125421630200` and save-death job `125421630209`.
+Encrypted predecessor artifacts and receipts retain their original source,
+executable, native, ROM, input, codec and payload identities. These are partial
+prefix proofs, not complete 69,400/153,606-prefix or whole-movie acceptance.
+
+The reviewed CI-only forward fix consolidates hosted replay on Linux, retaining
+the headless executable and actual native archive identities. Planning covers
+all 164 runnable corpus rows, eight checkpoint recipes and 19 prefix stages.
+The frequent gate explicitly excludes three long-prefix rows; landing requires
+the separate full exact-head result. Local checks remain ordinary Cargo checks;
+the actual executable build and replay run in GitHub Actions. Hosted execution
+of the assembled Linux fix remains pending at this report boundary.
+
+Main remains `558131e72` (PR #150). PR #151 carries 546 genuine RAM-access
+retirements, from 1,159 sites / 88 files to 613 / 74. The separately committed
+next migration, `223466103`, carries 275 further genuine retirements; two spelling
+changes are excluded from that claim. Neither slice has landed, so neither
+changes the landed burndown. Full owned engine and complete existing any%, 100%
+and low% verification remain open. No additional tricks or scenarios are assigned.
+
 ## Guarded checkpoint staging, 2026-11-02
 
 Composed verifier source

@@ -38,6 +38,14 @@ source/native/input identity checks. Windows replay runners remain the current
 platform; changing the executable does not authorize restarting Linux work.
 Existing in-flight replay evidence retains its original artifact identities.
 
+Jim's CI platform clarification (2026-11-02): Linux CI is intentional. This
+supersedes the earlier Windows-only CI direction; local implementation and
+ordinary Cargo checking continue in the existing Windows workspace. Consolidate
+hosted qualification through the existing verifier and orchestration, preserving
+all rows, actual source/executable/native/ROM/input identities and checkpoint
+guards. Preserve live Windows and Linux runs with their original proof scope;
+integrating CI does not transfer qualification between different heads or hosts.
+
 The [accepted destination](target-architecture/README.md) is one deterministic owned
 Session, our renderer/audio and small platform libraries, independent of SNES emulation.
 Map Rando needs custom sprites/palettes, configurable rooms/doors and opt-in re-spin/QoL.

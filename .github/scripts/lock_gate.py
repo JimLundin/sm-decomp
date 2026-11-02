@@ -1,15 +1,14 @@
 #!/usr/bin/env python3
-"""Plan the engine-only gate against the oracle digest lock.
+"""The engine-only gate against the oracle digest lock.
 
 Every pull request and push runs the engine alone over every scenario that
 scenarios/lock.toml locks and compares its running digests with the faithful
-oracle's (docs/SCENARIO_HARNESS.md, Decision 4; lock-gate.yml). The plan first
+oracle's (docs/SCENARIO_HARNESS.md, Decision 4; verify.yml). The plan first
 runs `tools/scenario.py lock --check`, which fails on a stale lock (an entry
 whose start, inputs or budget no longer match its scenario, an entry for no
 scenario, or a lockable scenario neither locked nor `unlocked`); it never
 re-records.
 
-  plan    check the lock and write the job matrix to GITHUB_OUTPUT
   record-oracle    re-record SEGMENTS privately and compare their committed entries
 
 Recording (faithful oracle; docs/SCENARIO_HARNESS.md, "Oracle digest lock"):
@@ -116,7 +115,8 @@ def matrix(command, environment):
         return json.loads(line.removeprefix("matrix="))["include"]
 
 
-def plan():
+def jobs():
+    """The engine-only jobs: every locked room and corpus row."""
     locked = scenario.check(ROOT)
     corpus = sorted(locked & {row["id"] for row in scenario.rows(ROOT) if "chain" not in row})
     # Rooms run as the route jobs do (a room job checks only the rooms the lock
@@ -130,7 +130,7 @@ def plan():
     bins = [[] for _ in range(max(1, round(sum(shard["cost"] for shard in shards) / size)))]
     for shard in sorted(shards, key=lambda shard: -shard["cost"]):
         min(bins, key=lambda group: sum(shard["cost"] for shard in group)).append(shard)
-    jobs = rooms + [
+    packed = rooms + [
         dict(kind="corpus", name=f"corpus-{index:02d}-{sum(len(s['segments'].split()) for s in group)}-rows",
              steps=sum(shard["cost"] for shard in group),
              segments=" ".join(shard["segments"] for shard in group),
@@ -139,11 +139,9 @@ def plan():
                                                              "segments", "route", "inputs")}
                                 for shard in group]))
         for index, group in enumerate(bins) if group]
-    jobs.sort(key=lambda job: -job["steps"])
-    with open(os.environ["GITHUB_OUTPUT"], "a") as out:
-        out.write(f"matrix={json.dumps({'include': jobs})}\n")
-    print(f"{len(jobs)} jobs: " + ", ".join(job["name"] for job in jobs))
+    packed.sort(key=lambda job: -job["steps"])
+    return packed
 
 
 if __name__ == "__main__":
-    {"plan": plan, "record-oracle": record_oracle}[sys.argv[1]]()
+    {"record-oracle": record_oracle}[sys.argv[1]]()
