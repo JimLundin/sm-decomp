@@ -933,7 +933,19 @@ pub fn control_lane(at: usize) -> Option<usize> {
     if (0x18b0..0x195c).contains(&at) {
         return Some(76 + at - 0x18b0);
     }
-    (0..76).find(|&lane| control_address(lane) == at)
+    // Every projected byte asks this, so answer from a table of the fixed lanes.
+    static LANES: std::sync::OnceLock<Box<[u8; 0x20000]>> = std::sync::OnceLock::new();
+    let lanes = LANES.get_or_init(|| {
+        let mut lanes = Box::new([u8::MAX; 0x20000]);
+        for lane in (0..76).rev() {
+            lanes[control_address(lane)] = lane as u8;
+        }
+        lanes
+    });
+    match lanes.get(at) {
+        Some(&lane) if lane != u8::MAX => Some(usize::from(lane)),
+        _ => None,
+    }
 }
 
 /// One terminal provider after resolving the actual topology. Scalar cycles
@@ -1930,4 +1942,17 @@ pub(crate) fn reconcile_control_origins(
         display.hdma_live.forget_origin_coordinate(coordinate);
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod control_lane_table {
+    use super::*;
+
+    #[test]
+    fn the_table_answers_as_the_lane_search_does() {
+        for at in (0..0x18b0).chain(0x195c..0x20000) {
+            let searched = (0..76).find(|&lane| control_address(lane) == at);
+            assert_eq!(control_lane(at), searched, "address {at:#x}");
+        }
+    }
 }
