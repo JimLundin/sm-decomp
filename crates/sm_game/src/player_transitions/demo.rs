@@ -241,23 +241,30 @@ pub fn load_demo<H: SamusLease>(h: &mut H) {
     }
     finish_setup(h);
     h.update_beam_graphics();
+    // The demo's controller layout: the direction bindings (up, down, left,
+    // right), then the action bindings.
+    use crate::controller_state::Word as Input;
+    let s = h.session_mut();
+    s.game_loop.directions = [0x0800, 0x0400, 0x0200, 0x0100];
+    for (binding, value) in [
+        (Input::ButtonConfigShootX, 0x0040),
+        (Input::ButtonConfigJumpA, 0x0080),
+        (Input::ButtonConfigRunB, 0x8000),
+        (Input::ButtonConfigItemcancelY, 0x4000),
+        (Input::ButtonConfigItemswitch, 0x2000),
+        (Input::ButtonConfigAimUpR, 0x0010),
+        (Input::ButtonConfigAimDownL, 0x0020),
+    ] {
+        *binding.get_mut(&mut s.control) = value;
+    }
+    s.projectiles.preparation.aim_history = 0;
+    h.words_stored();
+    // These words have no Session field.
     for (field, value) in [
-        (ram::BUTTON_CONFIG_UP, 0x0800),
-        (ram::BUTTON_CONFIG_DOWN, 0x0400),
-        (ram::BUTTON_CONFIG_LEFT, 0x0200),
-        (ram::BUTTON_CONFIG_RIGHT, 0x0100),
-        (ram::BUTTON_CONFIG_SHOOT_X, 0x0040),
-        (ram::BUTTON_CONFIG_JUMP_A, 0x0080),
-        (ram::BUTTON_CONFIG_RUN_B, 0x8000),
-        (ram::BUTTON_CONFIG_ITEMCANCEL_Y, 0x4000),
-        (ram::BUTTON_CONFIG_ITEMSWITCH, 0x2000),
-        (ram::BUTTON_CONFIG_AIM_UP_R, 0x0010),
-        (ram::BUTTON_CONFIG_AIM_DOWN_L, 0x0020),
         (ram::UNUSED_WORD_7E09E8, 1),
         (ram::DEBUG_FLAG, 1),
         (ram::MOONWALK_FLAG, 0),
         (ram::UNUSED_WORD_7E0DF8, 0),
-        (ram::UNUSED_WORD_7E0DFA, 0),
         (ram::UNUSED_WORD_7E0DFC, 0),
     ] {
         h.write_slice_le(field, value);
