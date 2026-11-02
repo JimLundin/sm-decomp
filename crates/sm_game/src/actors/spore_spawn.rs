@@ -7,9 +7,8 @@
 use crate::actors::boss_interaction as interaction;
 use crate::actors::boss_lease::BossLease;
 use crate::actors::host::{BossEffects, Death, Shot, abs16, below};
-use crate::actors::layouts::{EnemyBase, same_words};
 use crate::actors::queries::angle_from_delta;
-use crate::actors::session_slots::session_slot;
+use crate::actors::slot_view::{SlotState, slot_view};
 use crate::enemy_script::EnemyScript;
 use crate::geometry::Vector32;
 use crate::menus::prelude::battle;
@@ -27,53 +26,31 @@ pub trait Host: BossEffects {
 }
 
 /// A lease on a game with Spore Spawn's effects.
-pub trait Lease: BossLease<Game: Host> + crate::actors::boss_interaction::Access {}
-impl<T: BossLease<Game: Host> + crate::actors::boss_interaction::Access + ?Sized> Lease for T {}
-
-/// Spore Spawn's view of its slot: its orbit's origin, the stem's anchor,
-/// the swing, and its 16.16 speeds and angle back to the middle.
-#[derive(Clone, Copy)]
-#[repr(C)]
-pub struct Spore {
-    pub base: EnemyBase,
-    pub function: u16,
-    pad_0faa: [u16; 1],
-    pub origin_x: u16,
-    pub origin_y: u16,
-    pad_0fb0: [u16; 1],
-    /// Cleared at initialisation; nothing reads it.
-    pub unread_0fb2: u16,
-    pad_0fb4: [u8; 26708],
-    pub stem_anchor_x: u16,
-    pub stem_anchor_y: u16,
-    pad_780c: [u16; 4],
-    pub angle: u16,
-    pub max_x_radius: u16,
-    pub angle_delta: u16,
-    pad_781a: [u16; 1],
-    /// Cleared on death; nothing reads it.
-    pub unread_781c: u16,
-    pad_781e: [u8; 2034],
-    pub return_x_speed: u16,
-    pub return_x_subspeed: u16,
-    pub return_y_speed: u16,
-    pub return_y_subspeed: u16,
-    pad_8018: [u16; 3],
-    pub damaged: u16,
-    pad_8020: [u8; 2016],
-    pub palette_health: u16,
-    pad_8802: [u16; 2],
-    pub return_angle: u16,
-    pad_8808: [u16; 28],
+pub trait Lease:
+    BossLease<Game: Host> + crate::actors::boss_interaction::Access + SlotState
+{
+}
+impl<T> Lease for T where
+    T: BossLease<Game: Host> + crate::actors::boss_interaction::Access + SlotState + ?Sized
+{
 }
 
-same_words!(Spore: EnemyLayout104 {
-    function = var_a, origin_x = var_c, origin_y = var_d, unread_0fb2 = var_f,
-    stem_anchor_x = var_04, stem_anchor_y = var_05, angle = var_0a, max_x_radius = var_0b,
-    angle_delta = var_0c, unread_781c = var_0e, return_x_speed = var_28,
-    return_x_subspeed = var_29, return_y_speed = var_2a, return_y_subspeed = var_2b,
-    damaged = var_2f, palette_health = var_40, return_angle = var_43,
-});
+slot_view! {
+    /// Spore Spawn's slot: its function, its orbit's origin, the stem's
+    /// anchor, the swing, and its 16.16 speeds and angle back to the middle.
+    /// `unread_0fb2` is cleared at initialisation and `unread_781c` on death;
+    /// nothing reads them.
+    Spore, SporeEdit {
+        record: [function = var_a, origin_x = var_c, origin_y = var_d, unread_0fb2 = var_f],
+        extended: [
+            stem_anchor_x = var_04, stem_anchor_y = var_05, angle = var_0a,
+            max_x_radius = var_0b, angle_delta = var_0c, unread_781c = var_0e,
+            return_x_speed = var_28, return_x_subspeed = var_29, return_y_speed = var_2a,
+            return_y_subspeed = var_2b, damaged = var_2f, palette_health = var_40,
+            return_angle = var_43,
+        ],
+    }
+}
 
 /// Bank $A5 Spore Spawn functions, stored in `function`; $EB1A is an RTS.
 pub mod function {
@@ -126,16 +103,19 @@ const DEAD: u16 = 2;
 
 /// Instruction - increase Spore Spawn max X radius ($A5:E75F).
 pub fn increase_max_x_radius<L: Lease + ?Sized>(script: EnemyScript, game: &mut L) -> EnemyScript {
-    if below(session_slot!(game, Spore[0].max_x_radius), RADIUS_LIMIT) {
-        session_slot!(game, Spore[0].max_x_radius, |old| old
-            .wrapping_add(RADIUS_STEP));
+    if below(Spore::of(game, 0).max_x_radius(), RADIUS_LIMIT) {
+        {
+            let mut spore = SporeEdit::of(game, 0);
+            let old = spore.max_x_radius();
+            *old = old.wrapping_add(RADIUS_STEP);
+        }
     }
     script
 }
 
 /// Instruction - clear Spore Spawn damaged flag ($A5:E771).
 pub fn clear_damaged_flag<L: Lease + ?Sized>(script: EnemyScript, game: &mut L) -> EnemyScript {
-    session_slot!(game, Spore[0].damaged = 0);
+    *SporeEdit::of(game, 0).damaged() = 0;
     script
 }
 
@@ -144,21 +124,27 @@ pub fn set_max_x_radius_and_angle_delta<L: Lease + ?Sized>(
     script: EnemyScript,
     game: &mut L,
 ) -> EnemyScript {
-    session_slot!(game, Spore[0]; max_x_radius = script.word(0), angle_delta = script.word(2));
+    {
+        let mut spore = SporeEdit::of(game, 0);
+        *spore.max_x_radius() = script.word(0);
+        *spore.angle_delta() = script.word(2);
+    }
     script.offset(2)
 }
 
 /// Instruction - Spore Spawn harden ($A5:E87C).
 pub fn harden<L: Lease + ?Sized>(script: EnemyScript, game: &mut L) -> EnemyScript {
-    session_slot!(game, Spore[0].base; x_pos = MIDDLE_X, y_pos = MIDDLE_Y,
-        properties = (session_slot!(game, Spore[0].base.properties) & HARD_KEEP) | HARD_SET);
+    SporeEdit::of(game, 0).actor().x.whole = MIDDLE_X;
+    SporeEdit::of(game, 0).actor().y.whole = MIDDLE_Y;
+    SporeEdit::of(game, 0).actor().properties =
+        (Spore::of(game, 0).actor().properties & HARD_KEEP) | HARD_SET;
     script
 }
 
 /// Instruction - enemy function = [[Y]] ($A5:E8BA).
 pub fn set_function<L: Lease + ?Sized>(script: EnemyScript, game: &mut L) -> EnemyScript {
-    let k = game.current_enemy() as i32;
-    session_slot!(game, Spore[k].function = script.word(0));
+    let k = game.current_enemy();
+    *SporeEdit::of(game, k).function() = script.word(0);
     script.offset(1)
 }
 
@@ -170,30 +156,40 @@ pub fn initialize<L: Lease + ?Sized>(game: &mut L) {
         let k = game.current_enemy();
         game.spawn_actor_eproj(part, k, STEM);
     }
-    let k = game.current_enemy() as i32;
+    let k = game.current_enemy();
     let (x, y) = (
-        session_slot!(game, Spore[k].base.x_pos),
-        session_slot!(game, Spore[k].base.y_pos),
+        Spore::of(game, k).actor().x.whole,
+        Spore::of(game, k).actor().y.whole,
     );
-    session_slot!(game, Spore[k]; stem_anchor_x = x, stem_anchor_y = y.wrapping_sub(72), origin_x = x,
-        origin_y = y, unread_0fb2 = 0);
+    {
+        let mut spore = SporeEdit::of(game, k);
+        *spore.stem_anchor_x() = x;
+        *spore.stem_anchor_y() = y.wrapping_sub(72);
+        *spore.origin_x() = x;
+        *spore.origin_y() = y;
+        *spore.unread_0fb2() = 0;
+    }
     let area = game.area();
     if game.foreign(|game| game.boss_bits(area)) & DEAD as u8 != 0 {
-        session_slot!(game, Spore[0].base.current_instruction = list::DEAD);
-        session_slot!(game, Spore[0].function = function::NOTHING);
-        session_slot!(game, Spore[0].base.properties, |old| old | 0x8000);
+        SporeEdit::of(game, 0).actor().instruction = list::DEAD;
+        *SporeEdit::of(game, 0).function() = function::NOTHING;
+        SporeEdit::of(game, 0).actor().properties |= 0x8000;
         game.foreign(|game| {
             game.update_spore_stem();
             game.spawn_plm(7, 30, CLOSE_CEILING);
         });
         battle!(game.ScrollingFinishedHook = 0);
     } else {
-        session_slot!(game, Spore[0].base.current_instruction = list::FIGHT_INTRO);
+        SporeEdit::of(game, 0).actor().instruction = list::FIGHT_INTRO;
         battle!(game.FlagProcessAllEnemies = 0xffff);
         let spawn_key = game.current_enemy();
-        session_slot!(game, Spore[k].function = function::NOTHING);
+        *SporeEdit::of(game, k).function() = function::NOTHING;
         battle!(game.ScrollingFinishedHook = 0x9589);
-        session_slot!(game, Spore[k].base.y_pos, |old| old.wrapping_sub(128));
+        {
+            let mut spore = SporeEdit::of(game, k);
+            let old = &mut spore.actor().y.whole;
+            *old = old.wrapping_sub(128);
+        }
         for part in 0..4 {
             game.spawn_actor_eproj(part, spawn_key, SPORE_SPAWNERS);
         }
@@ -231,7 +227,7 @@ pub fn run_instruction<L: Lease + ?Sized>(
 /// Main AI ($A5:EB13): its function.
 pub fn main_ai<L: Lease + ?Sized>(game: &mut L) {
     let k = game.current_enemy();
-    match session_slot!(game, Spore[k as i32].function) {
+    match Spore::of(game, k).function() {
         function::NOTHING => {}
         function::DESCEND => descend(game),
         function::ORBIT => orbit(k, game),
@@ -245,70 +241,90 @@ pub fn main_ai<L: Lease + ?Sized>(game: &mut L) {
 /// start swinging.
 pub fn descend<L: Lease + ?Sized>(game: &mut L) {
     game.foreign(|game| game.update_spore_stem());
-    let k = game.current_enemy() as i32;
-    let y = session_slot!(game, Spore[k].base.y_pos).wrapping_add(1);
-    session_slot!(game, Spore[k].base.y_pos = y);
+    let k = game.current_enemy();
+    let y = Spore::of(game, k).actor().y.whole.wrapping_add(1);
+    SporeEdit::of(game, k).actor().y.whole = y;
     if !below(y, MIDDLE_Y) {
-        session_slot!(game, Spore[k].base; current_instruction = list::DESCENDED, instruction_timer = 1);
+        {
+            let mut spore = SporeEdit::of(game, k);
+            let actor = spore.actor();
+            actor.instruction = list::DESCENDED;
+            actor.instruction_delay = 1;
+        }
     }
-    session_slot!(game, Spore[0]; max_x_radius = 48, angle_delta = 1, angle = 192);
+    {
+        let mut spore = SporeEdit::of(game, 0);
+        *spore.max_x_radius() = 48;
+        *spore.angle_delta() = 1;
+        *spore.angle() = 192;
+    }
 }
 
 /// Function - orbit ($A5:EB52): swing round the origin, half as high as wide,
 /// by the angle delta's low byte a frame.
 pub fn orbit<L: Lease + ?Sized>(k: u16, game: &mut L) {
     game.foreign(|game| game.update_spore_stem());
-    let e = i32::from(k);
     let (angle, radius) = (
-        session_slot!(game, Spore[0].angle),
-        session_slot!(game, Spore[0].max_x_radius),
+        Spore::of(game, 0).angle(),
+        Spore::of(game, 0).max_x_radius(),
     );
-    let x = session_slot!(game, Spore[e].origin_x).wrapping_add(game.scaled_cosine(angle, radius));
-    session_slot!(game, Spore[e].base.x_pos = x);
-    let phase = (2 * (i32::from(session_slot!(game, Spore[0].angle)) - 64)) as u16;
-    let radius = session_slot!(game, Spore[0].max_x_radius).wrapping_sub(16);
-    let y = session_slot!(game, Spore[e].origin_y).wrapping_add(game.scaled_sine(phase, radius));
-    session_slot!(game, Spore[e].base.y_pos = y);
-    let delta = session_slot!(byte game, Spore[0].angle_delta[0]);
-    session_slot!(game, Spore[0].angle, |old| u16::from(
-        delta.wrapping_add(old as u8)
-    ));
+    let x = Spore::of(game, k)
+        .origin_x()
+        .wrapping_add(game.scaled_cosine(angle, radius));
+    SporeEdit::of(game, k).actor().x.whole = x;
+    let phase = (2 * (i32::from(Spore::of(game, 0).angle()) - 64)) as u16;
+    let radius = Spore::of(game, 0).max_x_radius().wrapping_sub(16);
+    let y = Spore::of(game, k)
+        .origin_y()
+        .wrapping_add(game.scaled_sine(phase, radius));
+    SporeEdit::of(game, k).actor().y.whole = y;
+    let delta = Spore::of(game, 0).angle_delta().to_le_bytes()[0];
+    {
+        let mut spore = SporeEdit::of(game, 0);
+        let old = spore.angle();
+        *old = u16::from(delta.wrapping_add(*old as u8));
+    }
 }
 
 /// Function - begin return ($A5:EB9B): aim at the middle at 1 px a frame.
 pub fn begin_return<L: Lease + ?Sized>(game: &mut L) {
-    let dx = MIDDLE_X.wrapping_sub(session_slot!(game, Spore[0].base.x_pos));
-    let dy = MIDDLE_Y.wrapping_sub(session_slot!(game, Spore[0].base.y_pos));
+    let dx = MIDDLE_X.wrapping_sub(Spore::of(game, 0).actor().x.whole);
+    let dy = MIDDLE_Y.wrapping_sub(Spore::of(game, 0).actor().y.whole);
     let angle = 64u8.wrapping_sub(angle_from_delta(dx, dy) as u8);
-    session_slot!(game, Spore[0].return_angle = u16::from(angle));
-    let k = game.current_enemy() as i32;
-    let angle = u16::from(session_slot!(byte game, Spore[0].return_angle[0]));
+    *SporeEdit::of(game, 0).return_angle() = u16::from(angle);
+    let k = game.current_enemy();
+    let angle = u16::from(Spore::of(game, 0).return_angle().to_le_bytes()[0]);
     let v = game.direction_step(angle, 1);
-    session_slot!(game, Spore[k]; return_x_speed = (v.x >> 16) as u16, return_x_subspeed = v.x as u16,
-        return_y_speed = (v.y >> 16) as u16, return_y_subspeed = v.y as u16);
+    {
+        let mut spore = SporeEdit::of(game, k);
+        *spore.return_x_speed() = (v.x >> 16) as u16;
+        *spore.return_x_subspeed() = v.x as u16;
+        *spore.return_y_speed() = (v.y >> 16) as u16;
+        *spore.return_y_subspeed() = v.y as u16;
+    }
 }
 
 /// Function - finish return ($A5:EBEE): move back to the middle, then hang
 /// still, bubbling.
 pub fn finish_return<L: Lease + ?Sized>(game: &mut L) {
-    let k = game.current_enemy() as i32;
-    let phase = u16::from(session_slot!(byte game, Spore[0].return_angle[0]));
+    let k = game.current_enemy();
+    let phase = u16::from(Spore::of(game, 0).return_angle().to_le_bytes()[0]);
     let joined = |high: u16, low: u16| (u32::from(high) << 16) | u32::from(low);
     let x = joined(
-        session_slot!(game, Spore[k].return_x_speed),
-        session_slot!(game, Spore[k].return_x_subspeed),
+        Spore::of(game, k).return_x_speed(),
+        Spore::of(game, k).return_x_subspeed(),
     );
     let y = joined(
-        session_slot!(game, Spore[k].return_y_speed),
-        session_slot!(game, Spore[k].return_y_subspeed),
+        Spore::of(game, k).return_y_speed(),
+        Spore::of(game, k).return_y_subspeed(),
     );
     game.set_step_scratch(phase);
     game.step_along(phase, Vector32 { x, y });
     let near = |at: u16, middle: u16| below(abs16(at.wrapping_sub(middle)), 8);
-    if near(session_slot!(game, Spore[0].base.x_pos), MIDDLE_X)
-        && near(session_slot!(game, Spore[0].base.y_pos), MIDDLE_Y)
+    if near(Spore::of(game, 0).actor().x.whole, MIDDLE_X)
+        && near(Spore::of(game, 0).actor().y.whole, MIDDLE_Y)
     {
-        session_slot!(game, Spore[0].function = function::NOTHING);
+        *SporeEdit::of(game, 0).function() = function::NOTHING;
     }
     game.foreign(|game| game.update_spore_stem());
     if game.frame() & 0xf == 0 {
@@ -321,17 +337,28 @@ pub fn finish_return<L: Lease + ?Sized>(game: &mut L) {
 /// After contact or a shot: once dead, start the death sequence, mark it dead
 /// and open the ceiling.
 pub fn after_damage<L: Lease + ?Sized>(game: &mut L) {
-    let k = game.current_enemy() as i32;
-    if session_slot!(game, Spore[k].base.health) != 0 {
+    let k = game.current_enemy();
+    if Spore::of(game, k).actor().health != 0 {
         return;
     }
     // The original reselects after its health query, before clearing actor timers.
-    let k = game.current_enemy() as i32;
-    session_slot!(game, Spore[0].unread_781c = 0);
-    session_slot!(game, Spore[k].base; invincibility_timer = 0, flash_timer = 0, ai_handler_bits = 0);
-    session_slot!(game, Spore[k].base.properties, |old| old | 0x400);
+    let k = game.current_enemy();
+    *SporeEdit::of(game, 0).unread_781c() = 0;
+    {
+        let mut spore = SporeEdit::of(game, k);
+        let actor = spore.actor();
+        actor.invincibility = 0;
+        actor.flash = 0;
+        actor.ai_handlers = 0;
+    }
+    SporeEdit::of(game, k).actor().properties |= 0x400;
     crate::word_transfers!(game, descending, 14; native(0x19b1) <- value(0));
-    session_slot!(game, Spore[0].base; current_instruction = list::DEATH, instruction_timer = 1);
+    {
+        let mut spore = SporeEdit::of(game, 0);
+        let actor = spore.actor();
+        actor.instruction = list::DEATH;
+        actor.instruction_delay = 1;
+    }
     let area = game.area();
     game.foreign(|game| {
         let bits = game.boss_word(area);
@@ -360,29 +387,35 @@ pub fn shot<L: Lease + ?Sized>(game: &mut L) {
         return;
     }
     game.react_to_shot(Shot::Flash);
-    let k = game.current_enemy() as i32;
-    if session_slot!(game, Spore[k].base.flash_timer) == 0 {
+    let k = game.current_enemy();
+    if Spore::of(game, k).actor().flash == 0 {
         return after_damage(game);
     }
-    session_slot!(game, Spore[k].function = function::ORBIT);
-    if below(session_slot!(game, Spore[k].base.health), 400) {
-        let reversed = session_slot!(game, Spore[0].angle_delta) & 0x8000 != 0;
-        session_slot!(
-            game,
-            Spore[0].angle_delta = if reversed { 0xfffe } else { 2 }
-        );
+    *SporeEdit::of(game, k).function() = function::ORBIT;
+    if below(Spore::of(game, k).actor().health, 400) {
+        let reversed = Spore::of(game, 0).angle_delta() & 0x8000 != 0;
+        *SporeEdit::of(game, 0).angle_delta() = if reversed { 0xfffe } else { 2 };
     }
-    if session_slot!(game, Spore[0].damaged) == 0 {
-        session_slot!(game, Spore[0].angle_delta, |old| 0u16.wrapping_sub(old));
-        session_slot!(game, Spore[0].damaged = 1);
-        session_slot!(game, Spore[k].base; current_instruction = list::HURT, instruction_timer = 1);
-        let health = session_slot!(game, Spore[k].base.health);
+    if Spore::of(game, 0).damaged() == 0 {
+        {
+            let mut spore = SporeEdit::of(game, 0);
+            let old = spore.angle_delta();
+            *old = 0u16.wrapping_sub(*old);
+        }
+        *SporeEdit::of(game, 0).damaged() = 1;
+        {
+            let mut spore = SporeEdit::of(game, k);
+            let actor = spore.actor();
+            actor.instruction = list::HURT;
+            actor.instruction_delay = 1;
+        }
+        let health = Spore::of(game, k).actor().health;
         let darker = [70, 410, 770]
             .iter()
             .take_while(|&&threshold| !below(health, threshold))
             .count();
-        if health != session_slot!(game, Spore[0].palette_health) {
-            session_slot!(game, Spore[0].palette_health = health);
+        if health != Spore::of(game, 0).palette_health() {
+            *SporeEdit::of(game, 0).palette_health() = health;
             let mut cursor = 96 - 32 * darker as u16;
             for index in 144..160 {
                 let colour =
@@ -409,8 +442,15 @@ pub fn fade<L: Lease + ?Sized>(target: bool, script: EnemyScript, game: &mut L) 
 /// Instruction - spawn a spore within 40h px of Spore Spawn ($A5:E96E).
 pub fn emit_spore<L: Lease + ?Sized>(script: EnemyScript, game: &mut L) -> EnemyScript {
     let random = game.roll_random();
-    let x = session_slot!(game, Spore[0].base.x_pos).wrapping_add((random & 0x7f).wrapping_sub(64));
-    let y = session_slot!(game, Spore[0].base.y_pos)
+    let x = Spore::of(game, 0)
+        .actor()
+        .x
+        .whole
+        .wrapping_add((random & 0x7f).wrapping_sub(64));
+    let y = Spore::of(game, 0)
+        .actor()
+        .y
+        .whole
         .wrapping_add(((random >> 8) & 0x7f).wrapping_sub(64));
     game.place_projectile_spawn(x, y);
     game.spawn_room_eproj(SPORES, 0x15);
@@ -421,10 +461,16 @@ pub fn emit_spore<L: Lease + ?Sized>(script: EnemyScript, game: &mut L) -> Enemy
 /// Instruction - smoke within 40h px of Spore Spawn as it is hurt ($A5:E9B1).
 pub fn emit_hurt<L: Lease + ?Sized>(script: EnemyScript, game: &mut L) -> EnemyScript {
     let random = game.roll_random();
-    let x = session_slot!(game, Spore[0].base.x_pos)
+    let x = Spore::of(game, 0)
+        .actor()
+        .x
+        .whole
         .wrapping_add(random & 0x7f)
         .wrapping_sub(64);
-    let y = session_slot!(game, Spore[0].base.y_pos)
+    let y = Spore::of(game, 0)
+        .actor()
+        .y
+        .whole
         .wrapping_add((random >> 8) & 0x3f)
         .wrapping_sub(32);
     game.foreign(|game| game.create_sprite(x, y, 3, 0));
