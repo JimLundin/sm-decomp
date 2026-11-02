@@ -50,7 +50,12 @@ slot_view! {
     /// joints and segments, and the corpse's VRAM transfers. Fields as
     /// `MotherBrainBrain`'s.
     Brain, BrainEdit {
-        record: [function = var_a, subfunction = var_e, subfunction_timer = var_f],
+        record: [
+            function = var_a, subfunction = var_e, subfunction_timer = var_f,
+            // The same words as the body's death explosions' interval timer
+            // and offset row.
+            explosion_timer = var_e, explosion_index = var_f,
+        ],
         extended: [
             shake_timer = var_00, beam_palette_index = var_01, unpause_hook = var_02,
             bombs = var_05, painful_walk_stage = var_06, painful_walk_delay = var_07,
