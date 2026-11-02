@@ -74,7 +74,7 @@ coverage) and [desktop link](.github/workflows/desktop.yml).
 The [report](docs/PROGRESS_REPORT.md#workflow-inventory-snapshot) retains the old
 inventory; selected-frame counts alone do not prove complete movie coverage.
 
-The ROM for CI comes from repository secrets. The ROM import check confirms
+The ROM for CI is decrypted from a private repository. The ROM import check confirms
 that every `sm_data` record accepts the real cartridge; a record that rejected
 it would leave the game on its old ROM reads and the replays would not exercise
 it. A change lands after CI and Verify pass on its exact head; main is then
