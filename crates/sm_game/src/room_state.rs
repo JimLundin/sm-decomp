@@ -281,10 +281,8 @@ pub fn execute_main_code<H: MainCodeHost>(script: u16, h: &mut H) {
                 h.queue_sky_rows(false);
             }
             random_explosion(1, true, h);
-            h.write_word_le(
-                h.word(fields::EARTHQUAKE_TIMER) | 0x8000,
-                fields::EARTHQUAKE_TIMER,
-            );
+            h.session_mut().feedback.earthquake_timer |= 0x8000;
+            h.words_stored();
         }
         // Main ASM - scroll screen right in Dachora room.
         0xc1e6 => {
@@ -306,7 +304,7 @@ pub fn execute_main_code<H: MainCodeHost>(script: u16, h: &mut H) {
                 room.main_variables[0] = room.main_variables[0].wrapping_sub(1);
                 if (room.main_native(0) as i16) < 0 {
                     room.main_variables[0] = 8;
-                    let definition = if (h.word(fields::RANDOM_NUMBER) & 0x8000) != 0 {
+                    let definition = if (h.session().timing.random_number & 0x8000) != 0 {
                         ADDR_STRU_869742
                     } else {
                         ADDR_STRU_869734
@@ -314,7 +312,7 @@ pub fn execute_main_code<H: MainCodeHost>(script: u16, h: &mut H) {
                     let x = [
                         0x50, 0x60, 0x70, 0x80, 0x90, 0xa0, 0xb0, 0xc0, 0xd0, 0xe0, 0xf0, 0x110,
                         0x130, 0x150, 0x170, 0x190,
-                    ][usize::from(h.word(fields::RANDOM_NUMBER) & 15)];
+                    ][usize::from(h.session().timing.random_number & 15)];
                     h.spawn_room_projectile(definition, x);
                 }
             }
@@ -329,7 +327,8 @@ pub fn execute_main_code<H: MainCodeHost>(script: u16, h: &mut H) {
         // medium diagonal.
         0xe57c => {
             if let Some(kind) = select_earthquake(18, 0x200, 23, h) {
-                h.write_word_le(kind, fields::EARTHQUAKE_TYPE);
+                h.session_mut().feedback.earthquake_kind = kind;
+                h.words_stored();
             }
             random_explosion(3, false, h);
         }
@@ -341,7 +340,9 @@ pub fn execute_main_code<H: MainCodeHost>(script: u16, h: &mut H) {
             if let Some(kind) = select_earthquake(21, 0x180, 26, h) {
                 h.session_mut().room.set_main_native(1, kind);
             }
-            h.write_word_le(h.session().room.main_native(1), fields::EARTHQUAKE_TYPE);
+            let kind = h.session().room.main_native(1);
+            h.session_mut().feedback.earthquake_kind = kind;
+            h.words_stored();
             random_explosion(3, false, h);
         }
         0xe8cd => shake_crocomire(h),
@@ -354,9 +355,7 @@ pub fn execute_main_code<H: MainCodeHost>(script: u16, h: &mut H) {
 /// ($8F:C131, `on_tile`) or on every fourth frame ($8F:C183), then at
 /// ([$12], [$14]) ($8F:C1A9).
 fn random_explosion<H: MainCodeHost>(mask: u16, on_tile: bool, h: &mut H) {
-    if h.word(fields::TIME_IS_FROZEN_FLAG) != 0
-        || (h.word(fields::NMI_FRAME_COUNTER_WORD) & mask) != 0
-    {
+    if h.session().timing.time_frozen != 0 || (h.word(fields::NMI_FRAME_COUNTER_WORD) & mask) != 0 {
         return;
     }
     let random = h.next_random();
@@ -367,7 +366,7 @@ fn random_explosion<H: MainCodeHost>(mask: u16, on_tile: bool, h: &mut H) {
     // block index the tile check ($8F:C131) left.
     let mut entry_x = 0;
     if on_tile {
-        let row = u16::from((y >> 4) as u8) * u16::from(h.word(fields::ROOM_WIDTH_IN_BLOCKS) as u8);
+        let row = u16::from((y >> 4) as u8) * u16::from(h.session().room.width as u8);
         entry_x = row.wrapping_add(x >> 4).wrapping_mul(2);
         if (h.native_word(0x10002 + usize::from(entry_x)) & 0x3ff) == 255 {
             return;
@@ -415,13 +414,14 @@ pub fn advance_ceres_elevator<H: MainCodeHost + ?Sized>(h: &mut H) {
             && (144i16).wrapping_sub(h.session().player.x as i16) >= 0
             && (h.session().player.y as i32 - 128i32) & 0x8000 != 0
             && (h.session().player.y as i32 - 75i32) & 0x8000 == 0
-            && h.word(fields::SAMUS_Y_SPEED) == 0
-            && h.word(fields::SAMUS_Y_SUBSPEED) == 0
-            && h.word(fields::GAME_STATE) as i32 == 8
+            && h.session().player.contact.y_speed.whole == 0
+            && h.session().player.contact.y_speed.fraction == 0
+            && h.session().game_loop.mode == 8
         {
             h.command_player(2);
             h.session_mut().presentation.visual_mut().screen_fade = Default::default();
-            h.write_word_le(32, fields::GAME_STATE);
+            h.session_mut().game_loop.mode = 32;
+            h.words_stored();
         }
         // Variable 1 counts frames to the next rotation step; variable 0 is
         // the signed step index, negative while rotating back.
