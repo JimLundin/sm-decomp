@@ -8,6 +8,9 @@ description: Move sm_game state off SNES RAM onto typed Session state, using typ
 Progress is `sm_game_ram_sites` falling in `python tools/ram_ratchet.py`, which
 counts every RAM-by-name access. Renaming a RAM word does not count. A word is
 decoupled only when sm_game reads and writes it as a typed Session field.
+Moving a site into an address API (`session_slot!`, `ram_slot!(@at)`,
+`SlotAccess`, `native_word`, `write_slice_*`) is not decoupling: those still name
+RAM addresses. The ratchet's engine inventory reports them; never raise it.
 
 ## Pick the tool
 
