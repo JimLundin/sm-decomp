@@ -1,26 +1,35 @@
 //! Boyon, the bouncing blobs (bank $A2:8687-$A2:8911). Was `goofball`. Lanes: speed scale,
-//! speed, bounce height, distance risen, bounce phase; the rest is RAM at $7E:7800 + enemy.
+//! speed, bounce height, distance risen, bounce phase; the rest is in its extended words.
 #![forbid(unsafe_code)]
 use crate::actors::access::{AccessMode::LittleEndian as Le, ActorAccess, ActorKey as Key};
 use crate::actors::api::{self, Axis};
 use crate::actors::combat::current;
 use crate::actors::host::{ActorLease, LeaseActors};
+use crate::actors::slot_view::{SlotState, slot_view};
 use crate::enemy_projectiles::host::Effects as _;
 use crate::enemy_script::EnemyScript;
 use crate::player_projectiles::content::{offset, table};
 
-const EXTRA: usize = 0x7800; // word offsets below
-const LIMIT: usize = 0;
-const DIRECTION: usize = 2;
-const RESTING: usize = 4;
-const SAVED_SCALE: usize = 6;
-const REST_ANIMATION: usize = 8;
-const INITIALIZED: usize = 10;
+slot_view! {
+    /// The boyon's extended words: the bounce phase at which it lands
+    /// (`limit`), its direction (0 falling, 1 rising), whether it rests, its
+    /// saved speed scale, whether its rest animation started, and whether its
+    /// bounce is set up.
+    Boyon, BoyonEdit {
+        record: [],
+        extended: [
+            limit = var_00, direction = var_01, resting = var_02, saved_scale = var_03,
+            rest_animation = var_04, initialized = var_05,
+        ],
+    }
+}
+
 const IDLE: u16 = 0x86a7; // instruction lists
 const BOUNCING: u16 = 0x86bf;
 
-fn extra(runtime: &impl ActorLease) -> usize {
-    EXTRA + usize::from(current(runtime).byte_index())
+/// The current boyon's slot.
+fn slot(runtime: &impl ActorLease) -> u16 {
+    current(runtime).byte_index()
 }
 
 /// Initialisation AI - enemy $CEBF (boyon) ($A2:871C): speed scale and bounce height from the
@@ -30,7 +39,8 @@ pub fn initialize<H: LeaseActors>(game: &mut H) {
     let key = current(&runtime);
     runtime.edit_actor(key, Le, |actor| actor.spritemap = 0x804d);
     runtime.edit_actor(key, Le, |actor| actor.restart_animation(IDLE));
-    runtime.write_slice_le(extra(&runtime) + DIRECTION, 1);
+    let k = slot(&runtime);
+    *BoyonEdit::of(&mut runtime, k).direction() = 1;
     let [scale, height] = runtime.resolve_actor(key, Le).parameters[0].to_le_bytes();
     let scale = table(&runtime, 0xa2_86df, isize::from(scale));
     runtime.edit_actor(key, Le, |actor| actor.variables[0] = scale);
@@ -54,7 +64,7 @@ fn speed(runtime: &mut impl ActorLease, key: Key, phase: u16) -> u16 {
 }
 
 /// Calculate initial bounce speed ($A2:8755): the phase at which the bounce reaches its height.
-fn initialize_bounce(runtime: &mut impl ActorLease) {
+fn initialize_bounce(runtime: &mut (impl ActorLease + SlotState)) {
     let key = current(runtime);
     loop {
         let phase = runtime.resolve_actor(key, Le).variables[4];
@@ -70,42 +80,43 @@ fn initialize_bounce(runtime: &mut impl ActorLease) {
         }
     }
     let phase = runtime.resolve_actor(key, Le).variables[4];
-    let base = extra(runtime);
-    runtime.write_slice_le(base + LIMIT, phase);
-    runtime.write_slice_le(base + RESTING, 1);
-    runtime.write_slice_le(base + REST_ANIMATION, 1);
+    let k = slot(runtime);
+    *BoyonEdit::of(runtime, k).limit() = phase;
+    *BoyonEdit::of(runtime, k).resting() = 1;
+    *BoyonEdit::of(runtime, k).rest_animation() = 1;
 }
 
 /// Main AI - enemy $CEBF (boyon) ($A2:879C): bounce while Samus is in proximity.
 pub fn main_ai<H: LeaseActors>(game: &mut H) {
     let mut runtime = game.lease();
     let key = current(&runtime);
-    let base = extra(&runtime);
-    if runtime.word(base + INITIALIZED) == 0 {
+    let k = slot(&runtime);
+    if Boyon::of(&runtime, k).initialized() == 0 {
         initialize_bounce(&mut runtime);
-        return runtime.write_slice_le(base + INITIALIZED, 1);
+        *BoyonEdit::of(&mut runtime, k).initialized() = 1;
+        return;
     }
     let scale = runtime.resolve_actor(key, Le).variables[0];
-    runtime.write_slice_le(base + SAVED_SCALE, scale);
+    *BoyonEdit::of(&mut runtime, k).saved_scale() = scale;
     let selected = current(&runtime);
     let radius = runtime.resolve_actor(selected, Le).parameters[1];
     if api::player_within(&mut runtime, selected, Axis::X, radius) {
-        runtime.write_slice_le(base + RESTING, 0);
-        runtime.write_slice_le(base + REST_ANIMATION, 0);
+        *BoyonEdit::of(&mut runtime, k).resting() = 0;
+        *BoyonEdit::of(&mut runtime, k).rest_animation() = 0;
         if runtime.resolve_actor(key, Le).pre_instruction == 0 {
             runtime.edit_actor(key, Le, |actor| actor.pre_instruction = 1);
             runtime.edit_actor(key, Le, |actor| actor.restart_animation(BOUNCING));
         }
-    } else if runtime.word(base + RESTING) != 0 {
-        if runtime.word(base + REST_ANIMATION) == 0 {
-            runtime.write_slice_le(base + REST_ANIMATION, 1);
+    } else if Boyon::of(&runtime, k).resting() != 0 {
+        if Boyon::of(&runtime, k).rest_animation() == 0 {
+            *BoyonEdit::of(&mut runtime, k).rest_animation() = 1;
             runtime.edit_actor(key, Le, |actor| actor.restart_animation(IDLE));
         }
         return;
     }
-    let scale = runtime.word(base + SAVED_SCALE);
+    let scale = Boyon::of(&runtime, k).saved_scale();
     runtime.edit_actor(key, Le, |actor| actor.variables[0] = scale);
-    match runtime.word(base + DIRECTION) {
+    match Boyon::of(&runtime, k).direction() {
         0 => bounce(&mut runtime, true),
         1 => bounce(&mut runtime, false),
         _ => panic!("invalid Goofball state"),
@@ -113,9 +124,9 @@ pub fn main_ai<H: LeaseActors>(game: &mut H) {
 }
 
 /// Boyon bounce movement - falling and rising ($A2:8801, $A2:8850).
-fn bounce(runtime: &mut impl ActorLease, falling: bool) {
+fn bounce(runtime: &mut (impl ActorLease + SlotState), falling: bool) {
     let key = current(runtime);
-    let base = extra(runtime);
+    let k = slot(runtime);
     if falling {
         runtime.edit_actor(key, Le, |actor| {
             actor.variables[4] = actor.variables[4].wrapping_add(1)
@@ -134,20 +145,20 @@ fn bounce(runtime: &mut impl ActorLease, falling: bool) {
         }
         actor.variables[4]
     });
-    if falling && (phase.wrapping_sub(runtime.word(base + LIMIT)) as i16) >= 0 {
-        runtime.write_slice_le(base + DIRECTION, 1);
-        runtime.write_slice_le(base + RESTING, 1);
+    if falling && (phase.wrapping_sub(Boyon::of(runtime, k).limit()) as i16) >= 0 {
+        *BoyonEdit::of(runtime, k).direction() = 1;
+        *BoyonEdit::of(runtime, k).resting() = 1;
         runtime.edit_actor(key, Le, |actor| actor.pre_instruction = 0);
     } else if !falling && (phase & 0x8000) != 0 {
-        runtime.write_slice_le(base + DIRECTION, 0);
+        *BoyonEdit::of(runtime, k).direction() = 0;
     }
 }
 
 /// Instruction - start bounce ($A2:88C6).
 pub fn start_bounce<H: LeaseActors>(script: EnemyScript, game: &mut H) -> EnemyScript {
     let mut runtime = game.lease();
-    let base = extra(&runtime);
-    runtime.write_slice_le(base + RESTING, 0);
+    let k = slot(&runtime);
+    *BoyonEdit::of(&mut runtime, k).resting() = 0;
     runtime.queue_sound(2, 6, 0xe);
     script
 }
