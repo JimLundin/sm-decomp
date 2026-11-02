@@ -417,7 +417,7 @@ pub struct Game {
     /// the engine's images are an unpatched copy, as hardware reads.
     pub(crate) cartridge_rom: Option<crate::snes::cart::CartRom>,
     /// Imported from `loaded_rom` by `register_rom`; see game::enemy_speeds.
-    pub(crate) enemy_speeds: Option<crate::game::enemy_speeds::ImportedSpeeds>,
+    pub(crate) enemy_speeds: Rc<Option<crate::game::enemy_speeds::ImportedSpeeds>>,
     /// Imported from `native_rom` by `register_native_rom`; see game::enemy_speeds.
     pub(crate) enemy_speeds32: Option<crate::game::enemy_speeds::ImportedSpeeds32>,
     /// Imported from `loaded_rom` by `register_rom`; see sm_game::menus::save_slots.
@@ -450,7 +450,7 @@ pub struct Game {
     /// Imported from `loaded_rom` by `register_rom`; see sm_game::menus::menu_tilemap.
     pub(crate) area_select_palettes: Option<sm_game::menus::menu_tilemap::ImportedAreaPalettes>,
     /// Imported from `loaded_rom` by `register_rom`; see sm_game::records.
-    pub(crate) records: sm_game::records::RomRecords,
+    pub(crate) records: Rc<sm_game::records::RomRecords>,
     samus: SamusOwner,
     persistent_session: persistent_session::SessionSlot,
     persistent_ram_epoch: u64,
@@ -1006,23 +1006,28 @@ impl Game {
     }
 
     /// Import the `sm_data` records read from the loaded image.
+    /// Retained actor allocations keep their prior values. Each assignment still
+    /// evaluates its importer before changing the corresponding captured record.
     fn import_loaded_records(&mut self, image: &crate::rom::RomImage) {
-        self.enemy_speeds = crate::game::enemy_speeds::import(image);
-        self.records.sand_heap = sm_game::sand_heap::import(image);
+        self.enemy_speeds = Rc::new(crate::game::enemy_speeds::import(image));
+        Rc::make_mut(&mut self.records).sand_heap = sm_game::sand_heap::import(image);
         self.save_slots = sm_game::menus::save_slots::import(image);
-        self.records.ceres_rotation = sm_game::ceres_elevator::import(image);
+        Rc::make_mut(&mut self.records).ceres_rotation = sm_game::ceres_elevator::import(image);
         self.demo_sets = sm_game::demo_rooms::import_sets(image);
-        self.records.shooting_stars = sm_game::shooting_stars::import(image);
-        self.records.grapple_origins = sm_game::grapple_origins::import(image);
-        self.records.grapple_aim = sm_game::grapple_aim::import(image);
-        self.records.kraid_tables = sm_game::kraid_tables::import(image);
-        self.records.shaktool_tables = sm_game::shaktool_tables::import(image);
-        self.records.statue_tables = sm_game::statue_tables::import(image);
-        self.records.torizo_tables = sm_game::torizo_tables::import(image);
-        self.records.corpse_tables = sm_game::corpse_tables::import(image);
-        self.records.torizo_corpse_tables = sm_game::torizo_corpse_tables::import(image);
-        self.records.baby_metroid_tables = sm_game::baby_metroid_tables::import(image);
-        self.records.mother_brain_tables = sm_game::mother_brain_tables::import(image);
+        Rc::make_mut(&mut self.records).shooting_stars = sm_game::shooting_stars::import(image);
+        Rc::make_mut(&mut self.records).grapple_origins = sm_game::grapple_origins::import(image);
+        Rc::make_mut(&mut self.records).grapple_aim = sm_game::grapple_aim::import(image);
+        Rc::make_mut(&mut self.records).kraid_tables = sm_game::kraid_tables::import(image);
+        Rc::make_mut(&mut self.records).shaktool_tables = sm_game::shaktool_tables::import(image);
+        Rc::make_mut(&mut self.records).statue_tables = sm_game::statue_tables::import(image);
+        Rc::make_mut(&mut self.records).torizo_tables = sm_game::torizo_tables::import(image);
+        Rc::make_mut(&mut self.records).corpse_tables = sm_game::corpse_tables::import(image);
+        Rc::make_mut(&mut self.records).torizo_corpse_tables =
+            sm_game::torizo_corpse_tables::import(image);
+        Rc::make_mut(&mut self.records).baby_metroid_tables =
+            sm_game::baby_metroid_tables::import(image);
+        Rc::make_mut(&mut self.records).mother_brain_tables =
+            sm_game::mother_brain_tables::import(image);
         self.visual_tables = sm_game::visual_tables::import(image);
         self.pause_menu = sm_game::menus::map_menu::import(image);
         self.crocomire = crate::game::actors::crocomire_reactions::import(image);
@@ -1030,29 +1035,32 @@ impl Game {
         self.equipment_screen = sm_game::menus::equipment_menu::import(image);
         self.mother_brain_visuals = sm_game::mother_brain_visuals::import(image);
         self.escape_etecoons = crate::game::actors::escape_critters::import(image);
-        self.records.flame_rain = sm_game::phantoon_tables::import(image);
-        self.records.phantoon_timers = sm_game::phantoon_tables::import_timers(image);
+        Rc::make_mut(&mut self.records).flame_rain = sm_game::phantoon_tables::import(image);
+        Rc::make_mut(&mut self.records).phantoon_timers =
+            sm_game::phantoon_tables::import_timers(image);
         self.botwoon_speeds = crate::game::actors::botwoon::import_speeds(image);
         self.botwoon_holes = crate::game::actors::botwoon::import_holes(image);
         self.intro_palette = sm_game::intro_pages::import_intro_palette(image);
         self.area_select_palettes = sm_game::menus::menu_tilemap::import_area_palettes(image);
-        self.records.ceres_ridley_tables = sm_game::ceres_ridley_tables::import(image);
-        self.records.ridley_tables = sm_game::ridley_data::import(image);
-        self.records.ridley_explosion_tables = sm_game::ridley_explosion_data::import(image);
-        self.records.ceres_door_tables = sm_game::ceres_door_data::import(image);
-        self.records.zebetite_tables = sm_game::zebetite_data::import(image);
-        self.records.menu_lists = sm_game::menu_lists::import(image);
-        self.records.boss_lists = sm_game::boss_lists::import(image);
-        self.records.samus_palettes = sm_game::samus_palette::import(image);
-        self.records.actor_tables = sm_game::actor_tables::import(image);
-        self.records.palette_programs =
+        Rc::make_mut(&mut self.records).ceres_ridley_tables =
+            sm_game::ceres_ridley_tables::import(image);
+        Rc::make_mut(&mut self.records).ridley_tables = sm_game::ridley_data::import(image);
+        Rc::make_mut(&mut self.records).ridley_explosion_tables =
+            sm_game::ridley_explosion_data::import(image);
+        Rc::make_mut(&mut self.records).ceres_door_tables = sm_game::ceres_door_data::import(image);
+        Rc::make_mut(&mut self.records).zebetite_tables = sm_game::zebetite_data::import(image);
+        Rc::make_mut(&mut self.records).menu_lists = sm_game::menu_lists::import(image);
+        Rc::make_mut(&mut self.records).boss_lists = sm_game::boss_lists::import(image);
+        Rc::make_mut(&mut self.records).samus_palettes = sm_game::samus_palette::import(image);
+        Rc::make_mut(&mut self.records).actor_tables = sm_game::actor_tables::import(image);
+        Rc::make_mut(&mut self.records).palette_programs =
             sm_game::program_banks::import(image, sm_game::program_banks::Bank::Palette);
-        self.records.animated_programs =
+        Rc::make_mut(&mut self.records).animated_programs =
             sm_game::program_banks::import(image, sm_game::program_banks::Bank::Animated);
-        self.records.sprite_programs =
+        Rc::make_mut(&mut self.records).sprite_programs =
             sm_game::program_banks::import(image, sm_game::program_banks::Bank::Sprite);
-        self.records.gameplay_tables = sm_game::gameplay_tables::import(image);
-        self.records.enemy_lists = sm_game::enemy_lists::import(image);
+        Rc::make_mut(&mut self.records).gameplay_tables = sm_game::gameplay_tables::import(image);
+        Rc::make_mut(&mut self.records).enemy_lists = sm_game::enemy_lists::import(image);
     }
 
     pub(crate) fn register_rom(&mut self, image: crate::rom::RomImage) {
@@ -1184,7 +1192,7 @@ impl Game {
             loaded_rom: None,
             cartridge_rom: None,
             native_rom: None,
-            enemy_speeds: None,
+            enemy_speeds: Rc::default(),
             enemy_speeds32: None,
             save_slots: None,
             demo_sets: None,

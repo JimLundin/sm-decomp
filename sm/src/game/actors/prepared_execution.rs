@@ -15,7 +15,7 @@ use sm_game::{
     },
     session::Session,
 };
-use std::{rc::Rc, sync::Arc};
+use std::sync::Arc;
 
 pub(crate) struct PreparedActorPorts<'g> {
     pub(crate) game: &'g mut Game,
@@ -51,8 +51,8 @@ impl PreparedActorPorts<'_> {
         allocations.replace_sources(
             self.game.loaded_rom.clone(),
             self.game.capture_native_rom_binding(),
-            Rc::new(self.game.enemy_speeds.clone()),
-            Rc::new(self.game.records.clone()),
+            self.game.enemy_speeds.clone(),
+            self.game.records.clone(),
         );
     }
     pub(super) fn physical_slope_byte(
@@ -305,8 +305,8 @@ impl Game {
             self.loaded_rom.clone().ok_or(OpenError::ActorDefinitions)?,
             self.capture_native_rom_binding()
                 .ok_or(OpenError::ActorDefinitions)?,
-            Rc::new(self.enemy_speeds.clone()),
-            Rc::new(self.records.clone()),
+            self.enemy_speeds.clone(),
+            self.records.clone(),
             revision,
         )?;
         let mut owner = self

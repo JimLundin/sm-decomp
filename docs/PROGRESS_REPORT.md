@@ -27,6 +27,38 @@ Pending and unobserved engine scope is retained in the coordinator and endgame
 snapshots below. Complete any%, 100%, low%, boot/transition/endgame acceptance is
 not established by this documentation cleanup.
 
+## Captured record transport and hosted gates, 2026-11-02 17:08 UTC
+
+The next migration source is now
+`132548a10940d03e397e73de34b5b0d1f5a9c095f077e29d340ede0b33887a23`.
+An independently reviewed two-file change shares immutable imported records and
+enemy-speed allocations with prepared actor execution. Entry and resource refresh
+clone their `Rc` handles; loaded-record imports use copy-on-write at each original
+field assignment. Retained captures keep their original values and image identity,
+and import, diagnostic, reset/load and failure ordering remain unchanged. Deep
+copies remain possible on an actual import while an older capture retains the
+record allocation; no dynamic speedup is measured.
+
+Formatting and source inventory pass. Ordinary target/compat Cargo checking with
+warnings denied passed in 34.86 seconds; the verifier library/binary check passed
+in 34.41 seconds. No executable, DLL, capture or replay was built or run locally.
+The change adds eight physical production Rust lines, giving 258,294 production,
+62,294 verification and 379 legacy-bank lines. Genuine additional RAM retirements
+remain 275, with the expression counter unchanged at 336 sites / 44 files. This
+source still needs exact-head hosted qualification before landing.
+
+PR #151 head `4a4564ad7928637ffa19d0b1dbdab936f80cec64` passes CI
+`41481486141`, attempt 3. The build and verifier each needed one retry after
+Zig download timeouts before compilation. All seven stage-0 capture groups in
+corpus `41482414387` passed, and stage-1 jobs were created immediately afterward.
+Stage-1 save-memory job `125421630200` successfully restored its predecessor
+artifact and started the resumed interval at 17:07:02 UTC. Completed resume and
+complete-prefix proof remain pending. Route `41481486225` and oracle lock
+`41481486156` remain open.
+Main is still `558131e7208334a86a6de6945890fd8d4a73f616`; no new landing or
+full-movie acceptance is claimed. Original logs and exact source review are in
+the coordinator and captured-record transport owned artifacts.
+
 ## Qualified migration source, 2026-11-02
 
 The next actor/boss/room/display composition is frozen at source
