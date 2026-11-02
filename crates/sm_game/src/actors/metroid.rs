@@ -1,23 +1,30 @@
 //! The metroid, with its electricity and shell sprite objects (bank $A3:E9AF-$A3:F310).
 use crate::actors::access::{AccessMode::Native, ActorAccess as _};
 use crate::actors::api::{self, DeathHandling, DeathKind, ShotHandling, SlopePolicy};
-use crate::actors::combat::{self, current_slot};
+use crate::actors::combat;
 use crate::actors::host::{ActorLease, BossEffects as _, LeaseActors};
-use crate::actors::session_slots::SlotAccess as _;
-use crate::actors::{layouts::part_view, scheduling};
+use crate::actors::scheduling;
+use crate::actors::slot_view::{SlotState, slot_view};
 use crate::enemy_projectiles::host::Effects as _;
 use crate::enemy_script::EnemyScript;
 use crate::player_projectiles::content::table;
 use crate::ram::{word_arrays, words};
 use crate::session_access::SessionAccess as _;
-use crate::session_slot;
 
-part_view! {
-    Metroid: EnemyLayout40 {
-        words: [x_subvelocity, x_velocity, y_subvelocity, y_velocity, bombed_off_timer, function_index, parameter_1, freeze_threshold],
-        pad1: [u8; 26696],
-        words: [electricity_sprite, shell_sprite, samus_subhealth],
-        _: [u16; 29],
+/// A lease the metroids run on: their slots are the Session's.
+pub trait Lease: ActorLease + SlotState {}
+impl<T: ActorLease + SlotState + ?Sized> Lease for T {}
+
+slot_view! {
+    /// A metroid's slot: its X and Y velocities (16.16, in the actor's first
+    /// four words), the bombed off timer, function index and freeze threshold;
+    /// its electricity and shell sprites and Samus's drained subhealth.
+    Metroid, MetroidEdit {
+        record: [
+            x_subvelocity = var_a, y_subvelocity = var_c, bombed_off_timer = var_e,
+            function_index = var_f, freeze_threshold = parameter_2,
+        ],
+        extended: [electricity_sprite = var_00, shell_sprite = var_01, samus_subhealth = var_02],
     }
 }
 
@@ -37,13 +44,11 @@ const MISSILE: u16 = 0x100;
 const SUPER_MISSILE: u16 = 0x200;
 const BOMB: u16 = 0x500;
 
-fn sprite_at(metroid: i32, part: usize) -> usize {
-    crate::ram_slot!(@at Metroid, metroid, electricity_sprite) + 2 * part
+fn sprites(runtime: &impl Lease, metroid: u16) -> [u16; 2] {
+    let view = Metroid::of(runtime, metroid);
+    [view.electricity_sprite(), view.shell_sprite()]
 }
-fn sprites(runtime: &impl ActorLease, metroid: i32) -> [u16; 2] {
-    [0, 1].map(|part| runtime.slot_word(sprite_at(metroid, part)))
-}
-fn restart_animation(runtime: &mut impl ActorLease, draining: bool) {
+fn restart_animation(runtime: &mut impl Lease, draining: bool) {
     let key = combat::current(runtime);
     runtime.edit_actor(key, Native, |actor| {
         actor.instruction = LISTS[usize::from(draining)];
@@ -51,7 +56,7 @@ fn restart_animation(runtime: &mut impl ActorLease, draining: bool) {
     });
 }
 /// Metroid function index 0 - chase Samus ($A3:EC11), or 1 - latch onto Samus ($A3:ECDC).
-fn pursue(runtime: &mut impl ActorLease, target_y: u16, close: bool) {
+fn pursue(runtime: &mut impl Lease, target_y: u16, close: bool) {
     let key = combat::current(runtime);
     for axis in [1, 0] {
         let lanes = axis * 2..axis * 2 + 2;
@@ -94,15 +99,21 @@ fn pursue(runtime: &mut impl ActorLease, target_y: u16, close: bool) {
     }
 }
 /// Metroid function index 3 - bombed off Samus ($A3:EDAB): shake, then chase again.
-fn bombed_off(runtime: &mut impl ActorLease) {
-    let metroid = current_slot(runtime);
-    let frame = (session_slot!(runtime, Metroid[metroid].bombed_off_timer) & 3) as isize;
+fn bombed_off(runtime: &mut impl Lease) {
+    let metroid = combat::current(runtime).byte_index();
+    let frame = (Metroid::of(runtime, metroid).bombed_off_timer() & 3) as isize;
     let dx = table(runtime, BOMBED_OFF_DISPLACEMENTS, frame);
-    session_slot!(runtime, Metroid[metroid].base.x_pos, |old| old
-        .wrapping_add(dx));
+    {
+        let mut edit = MetroidEdit::of(runtime, metroid);
+        let old = edit.actor().x.whole;
+        edit.actor().x.whole = old.wrapping_add(dx);
+    }
     let dy = table(runtime, BOMBED_OFF_DISPLACEMENTS, frame + 4);
-    session_slot!(runtime, Metroid[metroid].base.y_pos, |old| old
-        .wrapping_add(dy));
+    {
+        let mut edit = MetroidEdit::of(runtime, metroid);
+        let old = edit.actor().y.whole;
+        edit.actor().y.whole = old.wrapping_add(dy);
+    }
     let key = combat::current(runtime);
     let finished = runtime.edit_actor(key, Native, |actor| {
         actor.variables[..4].fill(0);
@@ -121,15 +132,19 @@ fn bombed_off(runtime: &mut impl ActorLease) {
 pub fn initialize<H: LeaseActors + ?Sized>(game: &mut H) {
     let runtime = &mut game.lease();
     let key = combat::current(runtime);
-    let metroid = current_slot(runtime);
+    let metroid = combat::current(runtime).byte_index();
     runtime.edit_actor(key, Native, |actor| actor.instruction = LISTS[0]);
     for (part, kind) in SPRITES.into_iter().enumerate() {
         let actor = runtime.resolve_actor(key, Native);
         let (x, y, appearance) = (actor.x.whole, actor.y.whole, actor.tile | actor.palette);
         let handle = runtime.foreign(|game| game.create_sprite(x, y, kind, appearance));
-        runtime.set_slot_word(sprite_at(metroid, part), handle);
+        let mut edit = MetroidEdit::of(runtime, metroid);
+        *match part {
+            0 => edit.electricity_sprite(),
+            _ => edit.shell_sprite(),
+        } = handle;
     }
-    session_slot!(runtime, Metroid[metroid].samus_subhealth = 0);
+    *MetroidEdit::of(runtime, metroid).samus_subhealth() = 0;
     runtime.probe("sprite.metroid.init");
 }
 /// Frozen AI - metroid ($A3:EAE6): flash while bombed off, and freeze its sprites.
@@ -143,7 +158,7 @@ pub fn frozen<H: LeaseActors + ?Sized>(game: &mut H) {
             actor.flash = 2;
         }
     });
-    let handles = sprites(runtime, current_slot(runtime));
+    let handles = sprites(runtime, combat::current(runtime).byte_index());
     for (handle, program) in handles.into_iter().zip(FROZEN_PROGRAMS) {
         runtime.foreign(|game| game.freeze_sprite_attachment(handle, 0xc00, program));
     }
@@ -154,7 +169,7 @@ pub fn hurt<H: LeaseActors + ?Sized>(game: &mut H) {
     let runtime = &mut game.lease();
     let actor = runtime.resolve_actor(combat::current(runtime), Native);
     let appearance = [0, actor.palette][usize::from(actor.flash & 2 != 0)];
-    for handle in sprites(runtime, current_slot(runtime)) {
+    for handle in sprites(runtime, combat::current(runtime).byte_index()) {
         runtime.foreign(|game| game.flash_sprite_attachment(handle, appearance));
     }
     runtime.probe("sprite.metroid.hurt");
@@ -181,16 +196,20 @@ pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
     }
     let actor = runtime.resolve_actor(key, Native);
     let appearance = actor.tile | actor.palette;
-    for handle in sprites(runtime, current_slot(runtime)) {
+    for handle in sprites(runtime, combat::current(runtime).byte_index()) {
         runtime.foreign(|game| game.attach_sprite(handle, key.byte_index(), appearance));
     }
     runtime.probe("sprite.metroid.main");
 }
 /// Knock the metroid back from Samus at `target_y`, or from projectile 0, and chase.
-fn recoil(runtime: &mut impl ActorLease, contact: bool, target_y: u16) {
+fn recoil(runtime: &mut impl Lease, contact: bool, target_y: u16) {
     let key = combat::current(runtime);
-    let metroid = current_slot(runtime);
-    session_slot!(runtime, Metroid[metroid]; x_subvelocity = 0, y_subvelocity = 0);
+    let metroid = combat::current(runtime).byte_index();
+    {
+        let mut edit = MetroidEdit::of(runtime, metroid);
+        *edit.x_subvelocity() = 0;
+        *edit.y_subvelocity() = 0;
+    }
     for axis in [0, 1] {
         let target = match (contact, axis) {
             (true, 0) => runtime.session().player.x,
@@ -205,20 +224,23 @@ fn recoil(runtime: &mut impl ActorLease, contact: bool, target_y: u16) {
         });
         // The scaled difference lands in the middle two bytes of the 16.16 velocity.
         let scale = if contact { 64 } else { 32 };
-        let [low, high] = (difference as u16).wrapping_mul(scale).to_ne_bytes();
-        session_slot!(byte runtime, Metroid[metroid].x_subvelocity[1 + 4 * axis] = low);
-        session_slot!(byte runtime, Metroid[metroid].x_subvelocity[2 + 4 * axis] = high);
+        // Its low byte is the subvelocity's high byte, its high byte the velocity's low byte.
+        let [low, high] = (difference as u16).wrapping_mul(scale).to_le_bytes();
+        let mut edit = MetroidEdit::of(runtime, metroid);
+        let lanes = &mut edit.actor().variables;
+        lanes[2 * axis] = (lanes[2 * axis] & 0xff) | (u16::from(low) << 8);
+        lanes[2 * axis + 1] = (lanes[2 * axis + 1] & 0xff00) | u16::from(high);
     }
-    session_slot!(runtime, Metroid[metroid].function_index = CHASE_SAMUS);
+    *MetroidEdit::of(runtime, metroid).function_index() = CHASE_SAMUS;
     restart_animation(runtime, false);
 }
 /// Deal metroid contact damage to Samus ($A3:EECE): a health point as the subhealth wraps.
-fn drain(runtime: &mut impl ActorLease, metroid: i32) {
+fn drain(runtime: &mut impl Lease, metroid: u16) {
     let suits = runtime.word(words::EQUIPPED_ITEMS);
     let amount = DRAINS[usize::from(suits & 0x20 == 0) + usize::from(suits & 0x21 == 0)];
-    let previous = session_slot!(runtime, Metroid[metroid].samus_subhealth);
+    let previous = Metroid::of(runtime, metroid).samus_subhealth();
     let subhealth = previous.wrapping_sub(amount);
-    session_slot!(runtime, Metroid[metroid].samus_subhealth = subhealth);
+    *MetroidEdit::of(runtime, metroid).samus_subhealth() = subhealth;
     if previous < amount {
         runtime.damage_player(1);
     }
@@ -227,7 +249,7 @@ fn drain(runtime: &mut impl ActorLease, metroid: i32) {
 pub fn touch<H: LeaseActors + ?Sized>(game: &mut H) {
     let runtime = &mut game.lease();
     let key = combat::current(runtime);
-    let metroid = current_slot(runtime);
+    let metroid = combat::current(runtime).byte_index();
     let target_y = runtime.session().player.y.wrapping_sub(8);
     let index = runtime.resolve_actor(key, Native).pre_instruction;
     if runtime.word(words::SAMUS_CONTACT_DAMAGE_INDEX) != 0 {
@@ -259,7 +281,7 @@ pub fn touch<H: LeaseActors + ?Sized>(game: &mut H) {
         }
     }
 }
-fn retire_sprites(runtime: &mut impl ActorLease, metroid: i32) -> u16 {
+fn retire_sprites(runtime: &mut impl Lease, metroid: u16) -> u16 {
     let handles = sprites(runtime, metroid);
     for handle in handles {
         runtime.foreign(|game| game.retire_sprite_natively(handle));
@@ -270,7 +292,7 @@ fn retire_sprites(runtime: &mut impl ActorLease, metroid: i32) -> u16 {
 pub fn power_bomb<H: LeaseActors + ?Sized>(game: &mut H) {
     let runtime = &mut game.lease();
     let key = combat::current(runtime);
-    let metroid = current_slot(runtime);
+    let metroid = combat::current(runtime).byte_index();
     combat::power_bomb_reaction(runtime, DeathHandling::Finalize);
     if runtime.resolve_actor(key, Native).health == 0 {
         runtime.foreign(|game| game.command_player(DISABLE_BLUE_FLASHING));
@@ -283,7 +305,7 @@ pub fn shot<H: LeaseActors + ?Sized>(game: &mut H) {
     let projectile = usize::from(runtime.session().room.collision_detection_index);
     let kind = runtime.word(word_arrays::PROJECTILE_TYPE + 2 * projectile);
     let key = combat::current(runtime);
-    let metroid = current_slot(runtime);
+    let metroid = combat::current(runtime).byte_index();
     if runtime.resolve_actor(key, Native).frozen != 0 {
         if matches!(kind & PROJECTILE_KIND, MISSILE | SUPER_MISSILE) {
             let x = runtime.resolve_actor(key, Native).x.whole;
@@ -313,10 +335,10 @@ pub fn shot<H: LeaseActors + ?Sized>(game: &mut H) {
         if runtime.word(word_arrays::PROJECTILE_TYPE + 2 * projectile) & 2 != 0 {
             runtime.queue_sound(3, 6, 0xa); // Ice beam: enemy frozen.
             let damage = runtime.word(word_arrays::PROJECTILE_DAMAGE + 2 * projectile);
-            let threshold = session_slot!(runtime, Metroid[metroid].freeze_threshold);
+            let threshold = Metroid::of(runtime, metroid).freeze_threshold();
             runtime.edit_actor(key, Native, |actor| actor.flash = 4);
             let threshold_left = threshold.saturating_sub(damage);
-            session_slot!(runtime, Metroid[metroid].freeze_threshold = threshold_left);
+            *MetroidEdit::of(runtime, metroid).freeze_threshold() = threshold_left;
             if damage >= threshold {
                 runtime.edit_actor(key, Native, |actor| {
                     actor.frozen = 400;
@@ -334,7 +356,7 @@ pub fn draining_sound<H: LeaseActors + ?Sized>(script: EnemyScript, game: &mut H
     script
 }
 /// Instruction - play random Metroid cry ($A3:EAB1).
-pub fn random_cry(script: EnemyScript, runtime: &mut impl ActorLease) -> EnemyScript {
+pub fn random_cry(script: EnemyScript, runtime: &mut impl Lease) -> EnemyScript {
     let index = runtime.next_random() & 7;
     let cry = table(runtime, CRIES, index as isize);
     runtime.queue_sound(2, 6, cry);
