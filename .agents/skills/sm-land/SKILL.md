@@ -29,8 +29,8 @@ Order the queue so fixes for a red `main` go first and risky CI wiring goes last
    and ends with the Claude Code footer.
 4. In the background: `bash tools/lane/watch.sh <pr>`. The PR starts CI and Verify.
 
-Don't push the slice again while its gate runs unless you are fixing a failure: a new
-commit cancels the running gate.
+Let the slice gate finish unless fixing a failure. PR Verify runs, including
+queued runs, retain their own run group and must not be cancelled.
 
 ## When the watcher stops
 

@@ -46,10 +46,10 @@ on:
 permissions:
   contents: read
 
-# A new commit replaces its branch's gate; nightly and dispatched runs finish.
+# Every PR Verify run finishes, including queued runs. Push gates may be superseded.
 concurrency:
-  group: verify-${{ github.ref }}-${{ inputs.scope || github.event_name }}-${{ inputs.oracle || 'patched' }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}
+  group: verify-${{ github.event_name == 'pull_request' && github.run_id || github.ref }}-${{ inputs.scope || github.event_name }}-${{ inputs.oracle || 'patched' }}
+  cancel-in-progress: ${{ github.event_name == 'push' }}
 
 env:
   SCOPE: ${{ inputs.scope || (github.event_name == 'schedule' && 'full' || 'gate') }}
@@ -63,12 +63,6 @@ jobs:
     outputs:
       skip: ${{ steps.passed.outputs.skip }}
       matrix: ${{ steps.plan.outputs.matrix }}
-      prefix_matrices: ${{ steps.plan.outputs.prefix_matrices }}
-      prefix_stages: ${{ steps.plan.outputs.prefix_stages }}
-      ready_matrix: ${{ steps.plan.outputs.ready_matrix }}
-      checkpoint_matrix: ${{ steps.plan.outputs.checkpoint_matrix }}
-      ready_count: ${{ steps.plan.outputs.ready_count }}
-      checkpoint_count: ${{ steps.plan.outputs.checkpoint_count }}
       movie_file: ${{ steps.plan.outputs.movie_file }}
       movie_sha256: ${{ steps.plan.outputs.movie_sha256 }}
     steps:
@@ -142,515 +136,16 @@ jobs:
           path: verifier.tar
           retention-days: 1
 
-  prefix_00:
+  replay:
     needs: [plan, build]
-    if: ${{ !cancelled() && needs.plan.result == 'success' && needs.build.result == 'success' && needs.plan.outputs.skip != 'true' && fromJSON(needs.plan.outputs.prefix_stages) > 0 }}
-    runs-on: ubuntu-24.04
-    timeout-minutes: 60
-    strategy:
-      fail-fast: false
-      max-parallel: 3
-      matrix: ${{ fromJSON(needs.plan.outputs.prefix_matrices).stage_00 }}
-    name: verified-prefix-${{ matrix.prefix_chain }}-0
-    env:
-      PREFIX_STAGE: '0'
-      PREFIX_PREVIOUS: '-1'
-    steps: &verified_prefix_steps
-      - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
-        with:
-          name: verifier
-      - run: |
-          tar -xf verifier.tar
-          echo "LIBRARY_PATH=$GITHUB_WORKSPACE/target/verify-native/lib" >> "$GITHUB_ENV"
-      - name: Cache the pinned movie download
-        if: contains(matrix.kinds, 'route')
-        uses: actions/cache@v4
-        with:
-          path: movies/${{ needs.plan.outputs.movie_file }}
-          key: ${{ runner.os }}-movie-${{ needs.plan.outputs.movie_sha256 }}
-      - name: Restore successful predecessor
-        if: env.PREFIX_STAGE != '0'
-        uses: actions/download-artifact@v4
-        with:
-          name: verified-prefix-${{ matrix.prefix_chain }}-${{ env.PREFIX_PREVIOUS }}
-          path: prefix-import
-      - name: Restore and replay
-        env:
-          JOB: ${{ toJSON(matrix) }}
-          ORACLE: ${{ inputs.oracle }}
-          AUDIO_TRACE: ${{ inputs.audio_trace && '1' || '' }}
-          LLVM_PROFILE_FILE: ${{ inputs.scope == 'coverage' && format('{0}/profiles/%p-%m.profraw', github.workspace) || '' }}
-          ROM_00: ${{ secrets.SM_ROM_00 }}
-          ROM_01: ${{ secrets.SM_ROM_01 }}
-          ROM_02: ${{ secrets.SM_ROM_02 }}
-          ROM_03: ${{ secrets.SM_ROM_03 }}
-          ROM_04: ${{ secrets.SM_ROM_04 }}
-          ROM_05: ${{ secrets.SM_ROM_05 }}
-          ROM_06: ${{ secrets.SM_ROM_06 }}
-          ROM_07: ${{ secrets.SM_ROM_07 }}
-          ROM_08: ${{ secrets.SM_ROM_08 }}
-          ROM_09: ${{ secrets.SM_ROM_09 }}
-          ROM_10: ${{ secrets.SM_ROM_10 }}
-          ROM_11: ${{ secrets.SM_ROM_11 }}
-          ROM_12: ${{ secrets.SM_ROM_12 }}
-          ROM_13: ${{ secrets.SM_ROM_13 }}
-          ROM_14: ${{ secrets.SM_ROM_14 }}
-          ROM_15: ${{ secrets.SM_ROM_15 }}
-          ROM_16: ${{ secrets.SM_ROM_16 }}
-          ROM_17: ${{ secrets.SM_ROM_17 }}
-          ROM_18: ${{ secrets.SM_ROM_18 }}
-          ROM_19: ${{ secrets.SM_ROM_19 }}
-          ROM_20: ${{ secrets.SM_ROM_20 }}
-          ROM_21: ${{ secrets.SM_ROM_21 }}
-          ROM_22: ${{ secrets.SM_ROM_22 }}
-          ROM_23: ${{ secrets.SM_ROM_23 }}
-          ROM_24: ${{ secrets.SM_ROM_24 }}
-          ROM_25: ${{ secrets.SM_ROM_25 }}
-          ROM_26: ${{ secrets.SM_ROM_26 }}
-          ROM_27: ${{ secrets.SM_ROM_27 }}
-          ROM_28: ${{ secrets.SM_ROM_28 }}
-          ROM_29: ${{ secrets.SM_ROM_29 }}
-          ROM_30: ${{ secrets.SM_ROM_30 }}
-          ROM_31: ${{ secrets.SM_ROM_31 }}
-          ROM_32: ${{ secrets.SM_ROM_32 }}
-          ROM_33: ${{ secrets.SM_ROM_33 }}
-          ROM_34: ${{ secrets.SM_ROM_34 }}
-          ROM_35: ${{ secrets.SM_ROM_35 }}
-          ROM_36: ${{ secrets.SM_ROM_36 }}
-          ROM_37: ${{ secrets.SM_ROM_37 }}
-          ROM_38: ${{ secrets.SM_ROM_38 }}
-          ROM_39: ${{ secrets.SM_ROM_39 }}
-          ROM_40: ${{ secrets.SM_ROM_40 }}
-          ROM_41: ${{ secrets.SM_ROM_41 }}
-          ROM_42: ${{ secrets.SM_ROM_42 }}
-          ROM_43: ${{ secrets.SM_ROM_43 }}
-          ROM_44: ${{ secrets.SM_ROM_44 }}
-        run: python3 -B .github/scripts/replay_job.py
-      - uses: actions/upload-artifact@v4
-        with:
-          name: verified-prefix-${{ matrix.prefix_chain }}-${{ env.PREFIX_STAGE }}
-          path: |
-            prefix-transfer/checkpoint.tar.gz.enc
-            prefix-transfer/checkpoint.tar.gz.enc.sha256
-          if-no-files-found: error
-          retention-days: 1
-
-  prefix_01:
-    needs: [plan, build, prefix_00]
-    if: ${{ !cancelled() && needs.plan.result == 'success' && needs.build.result == 'success' && needs.plan.outputs.skip != 'true' && fromJSON(needs.plan.outputs.prefix_stages) > 1 }}
-    runs-on: ubuntu-24.04
-    timeout-minutes: 60
-    strategy:
-      fail-fast: false
-      max-parallel: 3
-      matrix: ${{ fromJSON(needs.plan.outputs.prefix_matrices).stage_01 }}
-    name: verified-prefix-${{ matrix.prefix_chain }}-1
-    env:
-      PREFIX_STAGE: '1'
-      PREFIX_PREVIOUS: '0'
-    steps: *verified_prefix_steps
-
-  prefix_02:
-    needs: [plan, build, prefix_01]
-    if: ${{ !cancelled() && needs.plan.result == 'success' && needs.build.result == 'success' && needs.plan.outputs.skip != 'true' && fromJSON(needs.plan.outputs.prefix_stages) > 2 }}
-    runs-on: ubuntu-24.04
-    timeout-minutes: 60
-    strategy:
-      fail-fast: false
-      max-parallel: 3
-      matrix: ${{ fromJSON(needs.plan.outputs.prefix_matrices).stage_02 }}
-    name: verified-prefix-${{ matrix.prefix_chain }}-2
-    env:
-      PREFIX_STAGE: '2'
-      PREFIX_PREVIOUS: '1'
-    steps: *verified_prefix_steps
-
-  prefix_03:
-    needs: [plan, build, prefix_02]
-    if: ${{ !cancelled() && needs.plan.result == 'success' && needs.build.result == 'success' && needs.plan.outputs.skip != 'true' && fromJSON(needs.plan.outputs.prefix_stages) > 3 }}
-    runs-on: ubuntu-24.04
-    timeout-minutes: 60
-    strategy:
-      fail-fast: false
-      max-parallel: 3
-      matrix: ${{ fromJSON(needs.plan.outputs.prefix_matrices).stage_03 }}
-    name: verified-prefix-${{ matrix.prefix_chain }}-3
-    env:
-      PREFIX_STAGE: '3'
-      PREFIX_PREVIOUS: '2'
-    steps: *verified_prefix_steps
-
-  prefix_04:
-    needs: [plan, build, prefix_03]
-    if: ${{ !cancelled() && needs.plan.result == 'success' && needs.build.result == 'success' && needs.plan.outputs.skip != 'true' && fromJSON(needs.plan.outputs.prefix_stages) > 4 }}
-    runs-on: ubuntu-24.04
-    timeout-minutes: 60
-    strategy:
-      fail-fast: false
-      max-parallel: 3
-      matrix: ${{ fromJSON(needs.plan.outputs.prefix_matrices).stage_04 }}
-    name: verified-prefix-${{ matrix.prefix_chain }}-4
-    env:
-      PREFIX_STAGE: '4'
-      PREFIX_PREVIOUS: '3'
-    steps: *verified_prefix_steps
-
-  prefix_05:
-    needs: [plan, build, prefix_04]
-    if: ${{ !cancelled() && needs.plan.result == 'success' && needs.build.result == 'success' && needs.plan.outputs.skip != 'true' && fromJSON(needs.plan.outputs.prefix_stages) > 5 }}
-    runs-on: ubuntu-24.04
-    timeout-minutes: 60
-    strategy:
-      fail-fast: false
-      max-parallel: 3
-      matrix: ${{ fromJSON(needs.plan.outputs.prefix_matrices).stage_05 }}
-    name: verified-prefix-${{ matrix.prefix_chain }}-5
-    env:
-      PREFIX_STAGE: '5'
-      PREFIX_PREVIOUS: '4'
-    steps: *verified_prefix_steps
-
-  prefix_06:
-    needs: [plan, build, prefix_05]
-    if: ${{ !cancelled() && needs.plan.result == 'success' && needs.build.result == 'success' && needs.plan.outputs.skip != 'true' && fromJSON(needs.plan.outputs.prefix_stages) > 6 }}
-    runs-on: ubuntu-24.04
-    timeout-minutes: 60
-    strategy:
-      fail-fast: false
-      max-parallel: 3
-      matrix: ${{ fromJSON(needs.plan.outputs.prefix_matrices).stage_06 }}
-    name: verified-prefix-${{ matrix.prefix_chain }}-6
-    env:
-      PREFIX_STAGE: '6'
-      PREFIX_PREVIOUS: '5'
-    steps: *verified_prefix_steps
-
-  prefix_07:
-    needs: [plan, build, prefix_06]
-    if: ${{ !cancelled() && needs.plan.result == 'success' && needs.build.result == 'success' && needs.plan.outputs.skip != 'true' && fromJSON(needs.plan.outputs.prefix_stages) > 7 }}
-    runs-on: ubuntu-24.04
-    timeout-minutes: 60
-    strategy:
-      fail-fast: false
-      max-parallel: 3
-      matrix: ${{ fromJSON(needs.plan.outputs.prefix_matrices).stage_07 }}
-    name: verified-prefix-${{ matrix.prefix_chain }}-7
-    env:
-      PREFIX_STAGE: '7'
-      PREFIX_PREVIOUS: '6'
-    steps: *verified_prefix_steps
-
-  prefix_08:
-    needs: [plan, build, prefix_07]
-    if: ${{ !cancelled() && needs.plan.result == 'success' && needs.build.result == 'success' && needs.plan.outputs.skip != 'true' && fromJSON(needs.plan.outputs.prefix_stages) > 8 }}
-    runs-on: ubuntu-24.04
-    timeout-minutes: 60
-    strategy:
-      fail-fast: false
-      max-parallel: 3
-      matrix: ${{ fromJSON(needs.plan.outputs.prefix_matrices).stage_08 }}
-    name: verified-prefix-${{ matrix.prefix_chain }}-8
-    env:
-      PREFIX_STAGE: '8'
-      PREFIX_PREVIOUS: '7'
-    steps: *verified_prefix_steps
-
-  prefix_09:
-    needs: [plan, build, prefix_08]
-    if: ${{ !cancelled() && needs.plan.result == 'success' && needs.build.result == 'success' && needs.plan.outputs.skip != 'true' && fromJSON(needs.plan.outputs.prefix_stages) > 9 }}
-    runs-on: ubuntu-24.04
-    timeout-minutes: 60
-    strategy:
-      fail-fast: false
-      max-parallel: 3
-      matrix: ${{ fromJSON(needs.plan.outputs.prefix_matrices).stage_09 }}
-    name: verified-prefix-${{ matrix.prefix_chain }}-9
-    env:
-      PREFIX_STAGE: '9'
-      PREFIX_PREVIOUS: '8'
-    steps: *verified_prefix_steps
-
-  prefix_10:
-    needs: [plan, build, prefix_09]
-    if: ${{ !cancelled() && needs.plan.result == 'success' && needs.build.result == 'success' && needs.plan.outputs.skip != 'true' && fromJSON(needs.plan.outputs.prefix_stages) > 10 }}
-    runs-on: ubuntu-24.04
-    timeout-minutes: 60
-    strategy:
-      fail-fast: false
-      max-parallel: 3
-      matrix: ${{ fromJSON(needs.plan.outputs.prefix_matrices).stage_10 }}
-    name: verified-prefix-${{ matrix.prefix_chain }}-10
-    env:
-      PREFIX_STAGE: '10'
-      PREFIX_PREVIOUS: '9'
-    steps: *verified_prefix_steps
-
-  prefix_11:
-    needs: [plan, build, prefix_10]
-    if: ${{ !cancelled() && needs.plan.result == 'success' && needs.build.result == 'success' && needs.plan.outputs.skip != 'true' && fromJSON(needs.plan.outputs.prefix_stages) > 11 }}
-    runs-on: ubuntu-24.04
-    timeout-minutes: 60
-    strategy:
-      fail-fast: false
-      max-parallel: 3
-      matrix: ${{ fromJSON(needs.plan.outputs.prefix_matrices).stage_11 }}
-    name: verified-prefix-${{ matrix.prefix_chain }}-11
-    env:
-      PREFIX_STAGE: '11'
-      PREFIX_PREVIOUS: '10'
-    steps: *verified_prefix_steps
-
-  prefix_12:
-    needs: [plan, build, prefix_11]
-    if: ${{ !cancelled() && needs.plan.result == 'success' && needs.build.result == 'success' && needs.plan.outputs.skip != 'true' && fromJSON(needs.plan.outputs.prefix_stages) > 12 }}
-    runs-on: ubuntu-24.04
-    timeout-minutes: 60
-    strategy:
-      fail-fast: false
-      max-parallel: 3
-      matrix: ${{ fromJSON(needs.plan.outputs.prefix_matrices).stage_12 }}
-    name: verified-prefix-${{ matrix.prefix_chain }}-12
-    env:
-      PREFIX_STAGE: '12'
-      PREFIX_PREVIOUS: '11'
-    steps: *verified_prefix_steps
-
-  prefix_13:
-    needs: [plan, build, prefix_12]
-    if: ${{ !cancelled() && needs.plan.result == 'success' && needs.build.result == 'success' && needs.plan.outputs.skip != 'true' && fromJSON(needs.plan.outputs.prefix_stages) > 13 }}
-    runs-on: ubuntu-24.04
-    timeout-minutes: 60
-    strategy:
-      fail-fast: false
-      max-parallel: 3
-      matrix: ${{ fromJSON(needs.plan.outputs.prefix_matrices).stage_13 }}
-    name: verified-prefix-${{ matrix.prefix_chain }}-13
-    env:
-      PREFIX_STAGE: '13'
-      PREFIX_PREVIOUS: '12'
-    steps: *verified_prefix_steps
-
-  prefix_14:
-    needs: [plan, build, prefix_13]
-    if: ${{ !cancelled() && needs.plan.result == 'success' && needs.build.result == 'success' && needs.plan.outputs.skip != 'true' && fromJSON(needs.plan.outputs.prefix_stages) > 14 }}
-    runs-on: ubuntu-24.04
-    timeout-minutes: 60
-    strategy:
-      fail-fast: false
-      max-parallel: 3
-      matrix: ${{ fromJSON(needs.plan.outputs.prefix_matrices).stage_14 }}
-    name: verified-prefix-${{ matrix.prefix_chain }}-14
-    env:
-      PREFIX_STAGE: '14'
-      PREFIX_PREVIOUS: '13'
-    steps: *verified_prefix_steps
-
-  prefix_15:
-    needs: [plan, build, prefix_14]
-    if: ${{ !cancelled() && needs.plan.result == 'success' && needs.build.result == 'success' && needs.plan.outputs.skip != 'true' && fromJSON(needs.plan.outputs.prefix_stages) > 15 }}
-    runs-on: ubuntu-24.04
-    timeout-minutes: 60
-    strategy:
-      fail-fast: false
-      max-parallel: 3
-      matrix: ${{ fromJSON(needs.plan.outputs.prefix_matrices).stage_15 }}
-    name: verified-prefix-${{ matrix.prefix_chain }}-15
-    env:
-      PREFIX_STAGE: '15'
-      PREFIX_PREVIOUS: '14'
-    steps: *verified_prefix_steps
-
-  prefix_16:
-    needs: [plan, build, prefix_15]
-    if: ${{ !cancelled() && needs.plan.result == 'success' && needs.build.result == 'success' && needs.plan.outputs.skip != 'true' && fromJSON(needs.plan.outputs.prefix_stages) > 16 }}
-    runs-on: ubuntu-24.04
-    timeout-minutes: 60
-    strategy:
-      fail-fast: false
-      max-parallel: 3
-      matrix: ${{ fromJSON(needs.plan.outputs.prefix_matrices).stage_16 }}
-    name: verified-prefix-${{ matrix.prefix_chain }}-16
-    env:
-      PREFIX_STAGE: '16'
-      PREFIX_PREVIOUS: '15'
-    steps: *verified_prefix_steps
-
-  prefix_17:
-    needs: [plan, build, prefix_16]
-    if: ${{ !cancelled() && needs.plan.result == 'success' && needs.build.result == 'success' && needs.plan.outputs.skip != 'true' && fromJSON(needs.plan.outputs.prefix_stages) > 17 }}
-    runs-on: ubuntu-24.04
-    timeout-minutes: 60
-    strategy:
-      fail-fast: false
-      max-parallel: 3
-      matrix: ${{ fromJSON(needs.plan.outputs.prefix_matrices).stage_17 }}
-    name: verified-prefix-${{ matrix.prefix_chain }}-17
-    env:
-      PREFIX_STAGE: '17'
-      PREFIX_PREVIOUS: '16'
-    steps: *verified_prefix_steps
-
-  prefix_18:
-    needs: [plan, build, prefix_17]
-    if: ${{ !cancelled() && needs.plan.result == 'success' && needs.build.result == 'success' && needs.plan.outputs.skip != 'true' && fromJSON(needs.plan.outputs.prefix_stages) > 18 }}
-    runs-on: ubuntu-24.04
-    timeout-minutes: 60
-    strategy:
-      fail-fast: false
-      max-parallel: 3
-      matrix: ${{ fromJSON(needs.plan.outputs.prefix_matrices).stage_18 }}
-    name: verified-prefix-${{ matrix.prefix_chain }}-18
-    env:
-      PREFIX_STAGE: '18'
-      PREFIX_PREVIOUS: '17'
-    steps: *verified_prefix_steps
-
-  prefix_19:
-    needs: [plan, build, prefix_18]
-    if: ${{ !cancelled() && needs.plan.result == 'success' && needs.build.result == 'success' && needs.plan.outputs.skip != 'true' && fromJSON(needs.plan.outputs.prefix_stages) > 19 }}
-    runs-on: ubuntu-24.04
-    timeout-minutes: 60
-    strategy:
-      fail-fast: false
-      max-parallel: 3
-      matrix: ${{ fromJSON(needs.plan.outputs.prefix_matrices).stage_19 }}
-    name: verified-prefix-${{ matrix.prefix_chain }}-19
-    env:
-      PREFIX_STAGE: '19'
-      PREFIX_PREVIOUS: '18'
-    steps: *verified_prefix_steps
-
-  prefix_20:
-    needs: [plan, build, prefix_19]
-    if: ${{ !cancelled() && needs.plan.result == 'success' && needs.build.result == 'success' && needs.plan.outputs.skip != 'true' && fromJSON(needs.plan.outputs.prefix_stages) > 20 }}
-    runs-on: ubuntu-24.04
-    timeout-minutes: 60
-    strategy:
-      fail-fast: false
-      max-parallel: 3
-      matrix: ${{ fromJSON(needs.plan.outputs.prefix_matrices).stage_20 }}
-    name: verified-prefix-${{ matrix.prefix_chain }}-20
-    env:
-      PREFIX_STAGE: '20'
-      PREFIX_PREVIOUS: '19'
-    steps: *verified_prefix_steps
-
-  prefix_21:
-    needs: [plan, build, prefix_20]
-    if: ${{ !cancelled() && needs.plan.result == 'success' && needs.build.result == 'success' && needs.plan.outputs.skip != 'true' && fromJSON(needs.plan.outputs.prefix_stages) > 21 }}
-    runs-on: ubuntu-24.04
-    timeout-minutes: 60
-    strategy:
-      fail-fast: false
-      max-parallel: 3
-      matrix: ${{ fromJSON(needs.plan.outputs.prefix_matrices).stage_21 }}
-    name: verified-prefix-${{ matrix.prefix_chain }}-21
-    env:
-      PREFIX_STAGE: '21'
-      PREFIX_PREVIOUS: '20'
-    steps: *verified_prefix_steps
-
-  prefix_22:
-    needs: [plan, build, prefix_21]
-    if: ${{ !cancelled() && needs.plan.result == 'success' && needs.build.result == 'success' && needs.plan.outputs.skip != 'true' && fromJSON(needs.plan.outputs.prefix_stages) > 22 }}
-    runs-on: ubuntu-24.04
-    timeout-minutes: 60
-    strategy:
-      fail-fast: false
-      max-parallel: 3
-      matrix: ${{ fromJSON(needs.plan.outputs.prefix_matrices).stage_22 }}
-    name: verified-prefix-${{ matrix.prefix_chain }}-22
-    env:
-      PREFIX_STAGE: '22'
-      PREFIX_PREVIOUS: '21'
-    steps: *verified_prefix_steps
-
-  prefix_23:
-    needs: [plan, build, prefix_22]
-    if: ${{ !cancelled() && needs.plan.result == 'success' && needs.build.result == 'success' && needs.plan.outputs.skip != 'true' && fromJSON(needs.plan.outputs.prefix_stages) > 23 }}
-    runs-on: ubuntu-24.04
-    timeout-minutes: 60
-    strategy:
-      fail-fast: false
-      max-parallel: 3
-      matrix: ${{ fromJSON(needs.plan.outputs.prefix_matrices).stage_23 }}
-    name: verified-prefix-${{ matrix.prefix_chain }}-23
-    env:
-      PREFIX_STAGE: '23'
-      PREFIX_PREVIOUS: '22'
-    steps: *verified_prefix_steps
-
-  prefix_24:
-    needs: [plan, build, prefix_23]
-    if: ${{ !cancelled() && needs.plan.result == 'success' && needs.build.result == 'success' && needs.plan.outputs.skip != 'true' && fromJSON(needs.plan.outputs.prefix_stages) > 24 }}
-    runs-on: ubuntu-24.04
-    timeout-minutes: 60
-    strategy:
-      fail-fast: false
-      max-parallel: 3
-      matrix: ${{ fromJSON(needs.plan.outputs.prefix_matrices).stage_24 }}
-    name: verified-prefix-${{ matrix.prefix_chain }}-24
-    env:
-      PREFIX_STAGE: '24'
-      PREFIX_PREVIOUS: '23'
-    steps: *verified_prefix_steps
-
-  prefix_25:
-    needs: [plan, build, prefix_24]
-    if: ${{ !cancelled() && needs.plan.result == 'success' && needs.build.result == 'success' && needs.plan.outputs.skip != 'true' && fromJSON(needs.plan.outputs.prefix_stages) > 25 }}
-    runs-on: ubuntu-24.04
-    timeout-minutes: 60
-    strategy:
-      fail-fast: false
-      max-parallel: 3
-      matrix: ${{ fromJSON(needs.plan.outputs.prefix_matrices).stage_25 }}
-    name: verified-prefix-${{ matrix.prefix_chain }}-25
-    env:
-      PREFIX_STAGE: '25'
-      PREFIX_PREVIOUS: '24'
-    steps: *verified_prefix_steps
-
-  prefix_26:
-    needs: [plan, build, prefix_25]
-    if: ${{ !cancelled() && needs.plan.result == 'success' && needs.build.result == 'success' && needs.plan.outputs.skip != 'true' && fromJSON(needs.plan.outputs.prefix_stages) > 26 }}
-    runs-on: ubuntu-24.04
-    timeout-minutes: 60
-    strategy:
-      fail-fast: false
-      max-parallel: 3
-      matrix: ${{ fromJSON(needs.plan.outputs.prefix_matrices).stage_26 }}
-    name: verified-prefix-${{ matrix.prefix_chain }}-26
-    env:
-      PREFIX_STAGE: '26'
-      PREFIX_PREVIOUS: '25'
-    steps: *verified_prefix_steps
-
-  prefix_27:
-    needs: [plan, build, prefix_26]
-    if: ${{ !cancelled() && needs.plan.result == 'success' && needs.build.result == 'success' && needs.plan.outputs.skip != 'true' && fromJSON(needs.plan.outputs.prefix_stages) > 27 }}
-    runs-on: ubuntu-24.04
-    timeout-minutes: 60
-    strategy:
-      fail-fast: false
-      max-parallel: 3
-      matrix: ${{ fromJSON(needs.plan.outputs.prefix_matrices).stage_27 }}
-    name: verified-prefix-${{ matrix.prefix_chain }}-27
-    env:
-      PREFIX_STAGE: '27'
-      PREFIX_PREVIOUS: '26'
-    steps: *verified_prefix_steps
-
-  ready-replay:
-    needs: [plan, build]
-    if: needs.plan.outputs.skip != 'true' && fromJSON(needs.plan.outputs.ready_count) > 0
+    if: needs.plan.outputs.skip != 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: ${{ matrix.timeout }}
     strategy:
       fail-fast: false
       # Other repositories share the account's 20 jobs; leave two for them and CI.
       max-parallel: 18
-      matrix: ${{ fromJson(needs.plan.outputs.ready_matrix) }}
+      matrix: ${{ fromJson(needs.plan.outputs.matrix) }}
     name: ${{ matrix.name }}
     steps:
       - uses: actions/checkout@v4
@@ -666,12 +161,6 @@ jobs:
         with:
           path: movies/${{ needs.plan.outputs.movie_file }}
           key: ${{ runner.os }}-movie-${{ needs.plan.outputs.movie_sha256 }}
-      - name: Restore completed verified prefix
-        if: matrix.prefix_chain != ''
-        uses: actions/download-artifact@v4
-        with:
-          name: verified-prefix-${{ matrix.prefix_chain }}-${{ matrix.prefix_stage }}
-          path: prefix-completed
       - name: Restore and replay
         env:
           JOB: ${{ toJSON(matrix) }}
@@ -727,104 +216,13 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always() && inputs.scope == 'coverage'
         with:
-          name: profiles-${{ matrix.kinds == 'room' && 'route-' || '' }}ready-${{ strategy.job-index }}
-          path: profiles
-          retention-days: 2
-          if-no-files-found: warn
-
-  checkpoint-replay:
-    needs: [plan, build, prefix_00, prefix_01, prefix_02, prefix_03, prefix_04, prefix_05, prefix_06, prefix_07, prefix_08, prefix_09, prefix_10, prefix_11, prefix_12, prefix_13, prefix_14, prefix_15, prefix_16, prefix_17, prefix_18, prefix_19, prefix_20, prefix_21, prefix_22, prefix_23, prefix_24, prefix_25, prefix_26, prefix_27]
-    if: ${{ !cancelled() && needs.plan.result == 'success' && needs.build.result == 'success' && needs.plan.outputs.skip != 'true' && fromJSON(needs.plan.outputs.checkpoint_count) > 0 }}
-    runs-on: ubuntu-24.04
-    timeout-minutes: ${{ matrix.timeout }}
-    strategy:
-      fail-fast: false
-      # Other repositories share the account's 20 jobs; leave two for them and CI.
-      max-parallel: 18
-      matrix: ${{ fromJson(needs.plan.outputs.checkpoint_matrix) }}
-    name: ${{ matrix.name }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
-        with:
-          name: verifier
-      - run: |
-          tar -xf verifier.tar
-          echo "LIBRARY_PATH=$GITHUB_WORKSPACE/target/verify-native/lib" >> "$GITHUB_ENV"
-      - name: Cache the pinned movie download
-        if: contains(matrix.kinds, 'route')
-        uses: actions/cache@v4
-        with:
-          path: movies/${{ needs.plan.outputs.movie_file }}
-          key: ${{ runner.os }}-movie-${{ needs.plan.outputs.movie_sha256 }}
-      - name: Restore completed verified prefix
-        if: matrix.prefix_chain != ''
-        uses: actions/download-artifact@v4
-        with:
-          name: verified-prefix-${{ matrix.prefix_chain }}-${{ matrix.prefix_stage }}
-          path: prefix-completed
-      - name: Restore and replay
-        env:
-          JOB: ${{ toJSON(matrix) }}
-          ORACLE: ${{ inputs.oracle }}
-          AUDIO_TRACE: ${{ inputs.audio_trace && '1' || '' }}
-          LLVM_PROFILE_FILE: ${{ inputs.scope == 'coverage' && format('{0}/profiles/%p-%m.profraw', github.workspace) || '' }}
-          ROM_00: ${{ secrets.SM_ROM_00 }}
-          ROM_01: ${{ secrets.SM_ROM_01 }}
-          ROM_02: ${{ secrets.SM_ROM_02 }}
-          ROM_03: ${{ secrets.SM_ROM_03 }}
-          ROM_04: ${{ secrets.SM_ROM_04 }}
-          ROM_05: ${{ secrets.SM_ROM_05 }}
-          ROM_06: ${{ secrets.SM_ROM_06 }}
-          ROM_07: ${{ secrets.SM_ROM_07 }}
-          ROM_08: ${{ secrets.SM_ROM_08 }}
-          ROM_09: ${{ secrets.SM_ROM_09 }}
-          ROM_10: ${{ secrets.SM_ROM_10 }}
-          ROM_11: ${{ secrets.SM_ROM_11 }}
-          ROM_12: ${{ secrets.SM_ROM_12 }}
-          ROM_13: ${{ secrets.SM_ROM_13 }}
-          ROM_14: ${{ secrets.SM_ROM_14 }}
-          ROM_15: ${{ secrets.SM_ROM_15 }}
-          ROM_16: ${{ secrets.SM_ROM_16 }}
-          ROM_17: ${{ secrets.SM_ROM_17 }}
-          ROM_18: ${{ secrets.SM_ROM_18 }}
-          ROM_19: ${{ secrets.SM_ROM_19 }}
-          ROM_20: ${{ secrets.SM_ROM_20 }}
-          ROM_21: ${{ secrets.SM_ROM_21 }}
-          ROM_22: ${{ secrets.SM_ROM_22 }}
-          ROM_23: ${{ secrets.SM_ROM_23 }}
-          ROM_24: ${{ secrets.SM_ROM_24 }}
-          ROM_25: ${{ secrets.SM_ROM_25 }}
-          ROM_26: ${{ secrets.SM_ROM_26 }}
-          ROM_27: ${{ secrets.SM_ROM_27 }}
-          ROM_28: ${{ secrets.SM_ROM_28 }}
-          ROM_29: ${{ secrets.SM_ROM_29 }}
-          ROM_30: ${{ secrets.SM_ROM_30 }}
-          ROM_31: ${{ secrets.SM_ROM_31 }}
-          ROM_32: ${{ secrets.SM_ROM_32 }}
-          ROM_33: ${{ secrets.SM_ROM_33 }}
-          ROM_34: ${{ secrets.SM_ROM_34 }}
-          ROM_35: ${{ secrets.SM_ROM_35 }}
-          ROM_36: ${{ secrets.SM_ROM_36 }}
-          ROM_37: ${{ secrets.SM_ROM_37 }}
-          ROM_38: ${{ secrets.SM_ROM_38 }}
-          ROM_39: ${{ secrets.SM_ROM_39 }}
-          ROM_40: ${{ secrets.SM_ROM_40 }}
-          ROM_41: ${{ secrets.SM_ROM_41 }}
-          ROM_42: ${{ secrets.SM_ROM_42 }}
-          ROM_43: ${{ secrets.SM_ROM_43 }}
-          ROM_44: ${{ secrets.SM_ROM_44 }}
-        run: python3 -B .github/scripts/replay_job.py
-      - uses: actions/upload-artifact@v4
-        if: always() && inputs.scope == 'coverage'
-        with:
-          name: profiles-${{ matrix.kinds == 'room' && 'route-' || '' }}checkpoint-${{ strategy.job-index }}
+          name: profiles-${{ matrix.kinds == 'room' && 'route-' || '' }}${{ strategy.job-index }}
           path: profiles
           retention-days: 2
           if-no-files-found: warn
 
   coverage-report:
-    needs: [build, ready-replay, checkpoint-replay]
+    needs: [build, replay]
     if: always() && inputs.scope == 'coverage' && needs.build.result == 'success'
     runs-on: ubuntu-24.04
     timeout-minutes: 60
@@ -853,18 +251,15 @@ jobs:
           retention-days: 30
 
   result:
-    name: ${{ (inputs.scope == 'full' || github.event_name == 'schedule') && needs.plan.outputs.skip != 'true' && 'Verify full result' || 'Verify partial or reused result' }}
-    needs: [plan, build, ready-replay, checkpoint-replay, coverage-report, prefix_00, prefix_01, prefix_02, prefix_03, prefix_04, prefix_05, prefix_06, prefix_07, prefix_08, prefix_09, prefix_10, prefix_11, prefix_12, prefix_13, prefix_14, prefix_15, prefix_16, prefix_17, prefix_18, prefix_19, prefix_20, prefix_21, prefix_22, prefix_23, prefix_24, prefix_25, prefix_26, prefix_27]
+    name: Verify result
+    needs: [plan, build, replay, coverage-report]
     if: always()
     runs-on: ubuntu-24.04
     steps:
-      - name: Require every planned job and required prefix to pass
+      - name: Require every planned job to pass
         env:
           RESULTS: ${{ toJSON(needs) }}
           SKIP: ${{ needs.plan.outputs.skip }}
-          PREFIX_STAGES: ${{ needs.plan.outputs.prefix_stages }}
-          READY_COUNT: ${{ needs.plan.outputs.ready_count }}
-          CHECKPOINT_COUNT: ${{ needs.plan.outputs.checkpoint_count }}
         run: |
           python3 -B - <<'PY'
           import json, os
@@ -872,9 +267,6 @@ jobs:
           assert needs['plan']['result'] == 'success'
           if os.environ['SKIP'] != 'true':
               assert needs['build']['result'] == 'success'
-              for key, count in [('ready-replay', 'READY_COUNT'), ('checkpoint-replay', 'CHECKPOINT_COUNT')]:
-                  if int(os.environ[count]): assert needs[key]['result'] == 'success', key
-              for stage in range(int(os.environ['PREFIX_STAGES'])):
-                  assert needs[f'prefix_{stage:02d}']['result'] == 'success', stage
+              assert needs['replay']['result'] == 'success'
               if os.environ['SCOPE'] == 'coverage': assert needs['coverage-report']['result'] == 'success'
           PY

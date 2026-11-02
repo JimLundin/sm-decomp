@@ -11,8 +11,8 @@ for _ in $(seq 1 90); do
   [ $rc = 0 ] && exit 0
   [ $rc = 3 ] && exit 3
   head=$(gh pr view "$pr" --json headRefOid --jq .headRefOid)
-  failed=$(gh run list --branch "$branch" --json conclusion,headSha,workflowName \
-    --jq "[.[] | select(.conclusion==\"failure\" and .headSha==\"$head\" and (.workflowName as \$w | $gates | index(\$w)))] | length")
+  failed=$(gh run list --branch "$branch" --json conclusion,headSha,workflowName,event \
+    --jq "[.[] | select(.conclusion==\"failure\" and .event==\"pull_request\" and .headSha==\"$head\" and (.workflowName as \$w | $gates | index(\$w)))] | length")
   [ "${failed:-0}" != 0 ] && { echo "a gating run failed on ${head:0:9}"; exit 4; }
   sleep 120
 done
