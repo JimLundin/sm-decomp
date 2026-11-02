@@ -226,6 +226,7 @@ pub mod actors {
     pub mod sidehopper;
     pub mod skree;
     pub mod skultera;
+    pub mod slot_view;
     pub mod snapshot;
     pub mod space_pirates;
     pub mod species;

@@ -760,7 +760,7 @@ impl<'g> Runtime<'g> {
         }
         self.refresh_written_inputs();
     }
-    fn refresh_written_inputs(&mut self) {
+    pub(crate) fn refresh_written_inputs(&mut self) {
         self.inputs =
             encoding::inputs_from_session(self.session(), &|at| self.game.ram().read_byte(at));
         // Preserve observation refresh timing while A5A is owned by Session.

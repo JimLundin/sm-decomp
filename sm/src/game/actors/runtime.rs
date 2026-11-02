@@ -282,3 +282,9 @@ impl sm_game::actors::session_slots::SessionSlots for Runtime<'_> {
         self.set_byte(at, value);
     }
 }
+impl sm_game::actors::slot_view::SlotState for Runtime<'_> {
+    /// The projected store's refresh after each record byte.
+    fn record_stored(&mut self) {
+        self.refresh_written_inputs();
+    }
+}
