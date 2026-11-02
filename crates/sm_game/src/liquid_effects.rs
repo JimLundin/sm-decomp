@@ -354,10 +354,11 @@ pub fn water_wave<H: crate::menus::host::Host + ?Sized>(hdma_index: usize, game:
 }
 pub fn water_flat<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     let value = crate::menus::prelude::display_scroll!(game.Bg2H);
-    for index in (0..16).rev() {
+    // The native fill starts at the last water-wave entry and descends.
+    for index in 0..16 {
         game.store_source_word(
             LiveOwner::LiquidSurface,
-            0x66 + 2 * index,
+            0x66 - 2 * index,
             native_order(),
             value,
         );

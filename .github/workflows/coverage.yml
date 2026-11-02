@@ -1,7 +1,7 @@
 name: Corpus coverage
 
 # Runs the corpus scenarios (every scenario but the route rooms)
-# with an LLVM-instrumented verifier DLL and
+# with an LLVM-instrumented verifier executable and
 # reports which engine sources (crates/sm_game, sm/src/game) the corpus never
 # executes. Manual only; landings use the uninstrumented corpus replay.
 # With full_route, the 100% room chain (full-route.yml) also runs instrumented
@@ -124,16 +124,16 @@ jobs:
         run: |
           python -B tools/profiler_runtime.py --zig $env:SM_ZIG --out "$env:RUNNER_TEMP/profiler"
           if ($LASTEXITCODE -ne 0) { throw 'Profiler runtime build failed' }
-      - name: Build the verifier DLL (direct, as the local Fast loop does)
+      - name: Build the verifier executable (direct, as the local Fast loop does)
         # Without link-dead-code the linker drops the per-function coverage records
         # (.lcovfun), and llvm-cov then reports no files.
         env:
           RUSTFLAGS: -C instrument-coverage -C link-dead-code -L ${{ runner.temp }}/profiler
         run: |
           python tools/verify_dll.py --build-only --direct
-          if ($LASTEXITCODE -ne 0) { throw 'Verifier DLL build failed' }
+          if ($LASTEXITCODE -ne 0) { throw 'Verifier executable build failed' }
           New-Item -ItemType Directory -Force -Path verifier | Out-Null
-          Copy-Item target/verify-dll/sm_verify.dll verifier/
+          Copy-Item target/verify-host/sm_verify.exe verifier/
           Copy-Item -Recurse (Split-Path -Parent $env:LIBRARY_PATH) verifier/sdk
       - name: Run the target packages' unit and integration tests instrumented
         # Their coverage of crates/sm_game is reported next to the corpus's.
@@ -171,8 +171,8 @@ jobs:
           path: verifier
       - name: Place the verifier
         run: |
-          New-Item -ItemType Directory -Force -Path target/verify-dll | Out-Null
-          Copy-Item verifier/sm_verify.dll target/verify-dll/
+          New-Item -ItemType Directory -Force -Path target/verify-host | Out-Null
+          Copy-Item verifier/sm_verify.exe target/verify-host/
           "LIBRARY_PATH=$((Resolve-Path verifier/sdk/lib).Path)" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
       - name: Cache the pinned movie download
         if: matrix.kind == 'route'
@@ -292,8 +292,8 @@ jobs:
           path: verifier
       - name: Place the verifier
         run: |
-          New-Item -ItemType Directory -Force -Path target/verify-dll | Out-Null
-          Copy-Item verifier/sm_verify.dll target/verify-dll/
+          New-Item -ItemType Directory -Force -Path target/verify-host | Out-Null
+          Copy-Item verifier/sm_verify.exe target/verify-host/
           "LIBRARY_PATH=$((Resolve-Path verifier/sdk/lib).Path)" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
       - name: Restore the ROM and the encrypted room seeds and inputs
         env:
@@ -443,7 +443,7 @@ jobs:
             $objects = @(Get-Content verifier/unit/objects.txt | ForEach-Object { '--unit-object'; (Join-Path 'verifier/unit/bin' $_) })
             $tests = @('--unit', 'unit.profdata', '--combined', 'combined.profdata') + $objects
           }
-          python -B tools/coverage_summary.py (Join-Path $env:LLVM_BIN 'llvm-cov.exe') corpus.profdata verifier/sm_verify.dll coverage.md @compare @tests
+          python -B tools/coverage_summary.py (Join-Path $env:LLVM_BIN 'llvm-cov.exe') corpus.profdata verifier/sm_verify.exe coverage.md @compare @tests
           if ($LASTEXITCODE -ne 0) { throw 'Coverage summary failed' }
           Get-Content coverage.md -TotalCount 80 | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
       - uses: actions/upload-artifact@v4

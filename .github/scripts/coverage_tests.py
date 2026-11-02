@@ -11,7 +11,7 @@ OUT_DIR/objects.txt names the binaries that ran; one that Windows cannot
 start is skipped with a warning. Doc-tests are not
 instrumented and are left to CI's test step. Exits non-zero if a binary fails.
 
-On Windows the executables link with Rust's bundled lld, as the verifier DLL
+On Windows the executables link with Rust's bundled lld, as the verifier executable
 does. The GNU linker keeps only the first of the per-function coverage
 records (.lcovfun), all of which share one section name, and places the
 flagless coverage sections at address 0, below the image base, so the

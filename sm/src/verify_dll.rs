@@ -1,4 +1,4 @@
-//! Headless verifier host (Windows DLL, Linux shared object), built by Cargo or rustc and loaded by Python.
+//! Headless verifier executable, built by Cargo or rustc and launched by Python.
 //! Each process runs one replay with explicitly owned Game state.
 #![deny(unsafe_op_in_unsafe_fn)]
 #![allow(non_snake_case)]
@@ -8,6 +8,179 @@ use std::ffi::{CStr, c_char, c_int, c_void};
 use std::sync::atomic::{AtomicBool, Ordering};
 
 mod verify;
+
+#[cfg(sm_verify_dll)]
+fn host_identity() -> Result<(String, String), String> {
+    let source = option_env!("SM_VERIFY_SOURCE_HASH")
+        .filter(|hash| hash.len() == 64 && hash.bytes().all(|byte| byte.is_ascii_hexdigit()))
+        .ok_or("verifier executable has no valid source stamp; rebuild")?;
+    let native = unsafe {
+        let pointer = sm_verify_backend_source_hash();
+        if pointer.is_null() {
+            return Err("verifier executable has no native backend source stamp; rebuild".into());
+        }
+        CStr::from_ptr(pointer)
+            .to_str()
+            .map_err(|_| "invalid native backend source stamp")?
+    };
+    if native.len() != 64 || !native.bytes().all(|byte| byte.is_ascii_hexdigit()) {
+        return Err("invalid native backend source stamp".into());
+    }
+    Ok((source.to_owned(), native.to_owned()))
+}
+
+/// Export the same compiled-source evidence the DLL caller checked in memory.
+/// The artifact stays private: it contains source bytes, never machine state.
+#[cfg(sm_verify_dll)]
+fn write_host_info(path: &str) -> Result<(), String> {
+    use std::io::Write;
+
+    let (source, native) = host_identity()?;
+    let mut output = std::io::BufWriter::new(
+        std::fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(path)
+            .map_err(|error| format!("{path}: {error}"))?,
+    );
+    let write = (|| -> std::io::Result<()> {
+        output.write_all(b"SMVERIFY1\n")?;
+        output.write_all(source.as_bytes())?;
+        output.write_all(native.as_bytes())?;
+        output.write_all(&[u8::from(sm::util::native_source_matches())])?;
+        for &(path, data) in sm::verify_source::FILES {
+            let path_len = u64::try_from(path.len())
+                .map_err(|_| std::io::Error::other("source path length exceeds u64"))?;
+            let data_len = u64::try_from(data.len())
+                .map_err(|_| std::io::Error::other("source data length exceeds u64"))?;
+            output.write_all(&path_len.to_le_bytes())?;
+            output.write_all(&data_len.to_le_bytes())?;
+            output.write_all(path.as_bytes())?;
+            output.write_all(data)?;
+        }
+        output.write_all(&[0; 16])?;
+        output.flush()
+    })();
+    write.map_err(|error| format!("{path}: {error}"))
+}
+
+#[cfg(sm_verify_dll)]
+fn check_process_identity() -> Result<(), String> {
+    let (source, native) = host_identity()?;
+    match (
+        std::env::var_os("SM_VERIFY_EXPECTED_SOURCE_HASH"),
+        std::env::var_os("SM_VERIFY_EXPECTED_NATIVE_SHA256"),
+    ) {
+        (None, None) => {}
+        (Some(expected_source), Some(expected_native)) => {
+            if expected_source.to_str() != Some(source.as_str()) {
+                return Err("verifier process source differs from checked executable".into());
+            }
+            if expected_native.to_str() != Some(native.as_str()) {
+                return Err(
+                    "verifier process native backend differs from checked executable".into(),
+                );
+            }
+        }
+        _ => return Err("verifier process identity requires both source and native hashes".into()),
+    }
+    if !sm::util::native_source_matches() {
+        return Err("verifier process native utilities differ; rebuild native utilities".into());
+    }
+    Ok(())
+}
+
+#[cfg(sm_verify_dll)]
+fn capture_player_transitions(args: &[String]) -> Result<(), String> {
+    use std::io::Write;
+
+    if args.len() != 4 {
+        return Err("--host-capture-player-transitions takes ROM CASE OUT".into());
+    }
+    let rom = std::ffi::CString::new(args[1].as_bytes()).map_err(|_| "invalid ROM path")?;
+    let id = args[2]
+        .parse::<u32>()
+        .map_err(|_| "invalid player transition case ID")?;
+    // Preserve the buffer capacity used by both existing constructed-capture callers.
+    let mut bytes = vec![0; 2_097_152];
+    let size = unsafe {
+        sm_verify_player_transitions_rust(rom.as_ptr(), id, bytes.as_mut_ptr(), bytes.len())
+    };
+    if size == 0 || size > bytes.len() {
+        return Err(format!("player transition capture failed for case {id}"));
+    }
+    std::fs::OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(&args[3])
+        .and_then(|mut output| output.write_all(&bytes[..size]))
+        .map_err(|error| format!("{}: {error}", args[3]))
+}
+
+fn main() {
+    let args = match std::env::args_os()
+        .skip(1)
+        .map(|arg| {
+            arg.into_string()
+                .map_err(|_| "verify: argument is not valid UTF-8")
+        })
+        .collect::<Result<Vec<_>, _>>()
+    {
+        Ok(args) if args.len() <= 1024 => args,
+        Ok(_) => {
+            eprintln!("verify: invalid arguments");
+            std::process::exit(2);
+        }
+        Err(error) => {
+            eprintln!("{error}");
+            std::process::exit(2);
+        }
+    };
+    #[cfg(sm_verify_dll)]
+    match args.first().map(String::as_str) {
+        Some("--host-info") => {
+            let result = if args.len() == 2 {
+                write_host_info(&args[1])
+            } else {
+                Err("--host-info takes one private output path".into())
+            };
+            if let Err(error) = result {
+                eprintln!("verify: {error}");
+                std::process::exit(2);
+            }
+            return;
+        }
+        Some("--host-capabilities") if args.len() == 1 => {
+            // These references prove the same actual entry points still compile.
+            let _: unsafe extern "C" fn(u32, *mut u8, usize) -> usize =
+                sm_verify_actor_movement_case;
+            let _: unsafe extern "C" fn(u32, *mut u8, usize) -> usize =
+                sm_verify_actor_movement_table_case;
+            let _: unsafe extern "C" fn(u32, *mut u8, usize) -> usize =
+                sm_verify_actor_population_animation_case;
+            println!("sm_verify_actor_movement_case");
+            println!("sm_verify_actor_movement_table_case");
+            println!("sm_verify_actor_population_animation_case");
+            return;
+        }
+        _ => {}
+    }
+    #[cfg(sm_verify_dll)]
+    if let Err(error) = check_process_identity() {
+        eprintln!("verify: {error}");
+        std::process::exit(2);
+    }
+    #[cfg(sm_verify_dll)]
+    if args.first().map(String::as_str) == Some("--host-capture-player-transitions") {
+        if let Err(error) = capture_player_transitions(&args) {
+            eprintln!("verify: {error}");
+            std::process::exit(2);
+        }
+        return;
+    }
+    // The existing host owns initialization, phases, failures and every replay mode.
+    std::process::exit(unsafe { run(&args) });
+}
 
 #[unsafe(no_mangle)]
 pub extern "C" fn sm_verify_room_level_copy(case: u32) -> bool {

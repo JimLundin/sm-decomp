@@ -27,6 +27,69 @@ Pending and unobserved engine scope is retained in the coordinator and endgame
 snapshots below. Complete any%, 100%, low%, boot/transition/endgame acceptance is
 not established by this documentation cleanup.
 
+## Executable verifier and replay corrections, 2026-11-02
+
+The corrected PR #151 source is
+`64df7aec90d126cea3d157773d07c09be9058f5402026ef53e1248689cd1348e`.
+Independent source review accepts the existing verifier's executable entry
+point, Python orchestration, workflow artifacts, actual child identity guards
+and both existing capture callers. The 154-unit runner and replay algorithms
+remain unchanged. Local formatting, source inventory and ordinary
+`cargo check --locked -p sm --features verify --no-default-features --lib --bin sm_verify`
+pass with warnings denied; no executable or DLL was built or run locally.
+CI build, linking, units and replays remain pending on this corrected source.
+
+The preceding `0fee6028` passed CI but failed hosted replays. Liquid fill wrote
+ascending addresses instead of the original descending `9C66..9C48` words;
+the corrected traversal preserves native word order. Both dialogue adapters
+also read jump binding `09B4` for run-button messages; selecting `09B6` restores
+the original button glyph. Original item and route failures remain retained in
+the dedicated verification owner's hosted failure handoff. The three failed
+replay runs were cancelled after collecting their failures and timeout evidence;
+no overall pass or corrected-source coverage transfers from them.
+
+The `tools/progress.sh --markdown` path classification measures the correction
+at +1 production Rust line and +173 verification Rust lines against `0fee6028`.
+Its totals are 199,834 production and 61,723 verification lines. RAM coupling
+remains 613 sites / 74 files: the full PR still retires 546 sites against main.
+These fixes add no RAM retirement or compactness claim.
+
+Cold checkpoint prefixes also exceeded existing hosted deadlines. Target and
+host producer flags already use Rust optimization level 3. Guarded staged
+capture/reuse and bounded shard packing are pending; timeouts remain failed
+verification. Complete existing any%, 100% and low% acceptance is still open.
+
+## Next ownership slice integration, 2026-11-02
+
+PR #151 head `0fee6028c020227f42e3c17187afc64d3e94e5be` passed CI run
+`41458754589`, including 154 verifier checks and all 29 state-layout tests.
+Its corpus, route and oracle-lock gates remain pending at this observation;
+these passing checks establish neither a landing nor full-movie acceptance.
+
+On branch `land/owned-pattern152`, root applied the next reviewed overlay after
+checking every current source preimage. Its initial packet identity is
+`2cb8bf76c8a8c641ee7a887ac0647142aca2f4389258c1a0591ed40c90afd1b3`.
+It retains 275 additional genuine RAM-access retirements, with two register
+spelling changes excluded from that count. The packet's baseline omits the
+existing `docs/LEGACY.md`; root separately bound that file to the parent Git
+preimage and verified that its existing contents remain an unchanged prefix.
+
+Formatting exposed six generated syntax defects, corrected before the first
+compiler pass. Direct strict metadata compilation passed `sm_data` but failed
+`sm_game` with 2,065 diagnostics, predominantly repeated macro-scope errors.
+Other findings include conflicting imports, duplicate state/trait declarations
+and missing owned actor modules referenced by dispatch. Original compiler
+session 54349 ended with exit 1 and was collected; no compiler remained live.
+The frozen verifier source at that pass was
+`760ff9590a7098a10812178110b2d1caa6041345d29199916ab7382fe5afe830`.
+The original log stays under
+`$TEMP/collab/root-coordination/METADATA152_FIRST/sm_game.log`.
+
+Source owners are correcting complete integration patterns and supplying the
+missing actual actor implementations. This slice has no compiler, native,
+replay or landing qualification. Formatter growth is not implementation savings;
+its final physical line delta will be measured after these corrections.
+
 ## PR #151 hosted qualification correction, 2026-11-02
 
 Published candidate `150fe6ed5ee77fb3a6b794b30e87f391b868b74d` retires

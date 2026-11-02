@@ -1397,14 +1397,14 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
                 .map_err(|_| "audio trace ROM is unbound")?;
             let input_sha = std::env::var("SM_AUDIO_TRACE_INPUT_SHA256")
                 .map_err(|_| "audio trace inputs are unbound")?;
-            let dll_sha = std::env::var("SM_AUDIO_TRACE_DLL_SHA256")
-                .map_err(|_| "audio trace DLL is unbound")?;
+            let binary_sha = std::env::var("SM_AUDIO_TRACE_BINARY_SHA256")
+                .map_err(|_| "audio trace binary is unbound")?;
             for hash in [
                 source,
                 native.as_str(),
                 rom_sha.as_str(),
                 input_sha.as_str(),
-                dll_sha.as_str(),
+                binary_sha.as_str(),
             ] {
                 if hash.len() != 64 || !hash.bytes().all(|b| b.is_ascii_hexdigit()) {
                     return Err("audio trace provenance hash is invalid".into());
@@ -1418,7 +1418,7 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
                     .map_err(|e| format!("{path}: {e}"))?,
             );
             writeln!(writer,
-                "{{\"audio_trace\":1,\"source\":\"{source}\",\"native\":\"{native}\",\"rom\":\"{rom_sha}\",\"inputs\":\"{input_sha}\",\"dll\":\"{dll_sha}\",\"first\":{first},\"ceiling_end\":{end}}}"
+                "{{\"audio_trace\":1,\"source\":\"{source}\",\"native\":\"{native}\",\"rom\":\"{rom_sha}\",\"inputs\":\"{input_sha}\",\"binary\":\"{binary_sha}\",\"first\":{first},\"ceiling_end\":{end}}}"
             ).map_err(|e| e.to_string())?;
             let state = std::rc::Rc::new(std::cell::RefCell::new(AudioTrace {
                 writer,

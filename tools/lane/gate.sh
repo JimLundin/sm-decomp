@@ -1,77 +1,33 @@
 #!/usr/bin/env bash
-# The local gate for a lane commit, run from the worktree root (bash tools/lane/gate.sh).
-# Checks fmt, mutation anchors, clippy, the target crates, the detached host, both sm
-# configurations, verifier DLL metadata, the source inventory and the ROM import test.
-# Prints "GATE OK <hash> <branch>" or "GATE FAILED <branch>"; nothing in it needs a test exe to run.
-# Overrides: SM_RUST_BIN (toolchain bin), SM_PY (Python 3.11+), SM_ROM, SM_GATE_DIR.
+# Local source gate. CI builds/links the verifier executable and runs units/replays.
+# Overrides: SM_RUST_BIN (toolchain bin), SM_PY (Python 3.11+), SM_GATE_DIR.
 R="${SM_RUST_BIN:-$USERPROFILE/.rustup/toolchains/stable-x86_64-pc-windows-gnu/bin}"
 PY="${SM_PY:-/c/Users/Jim.Lundin/AppData/Local/sm-decomp-tools/python-3.13.7/python.exe}"
-ROM="${SM_ROM:-$(git rev-parse --path-format=absolute --git-common-dir)/../rom/sm.smc}"
-O="${SM_GATE_DIR:-$TEMP/sm-gate}/$(git rev-parse --short HEAD)-$$"; mkdir -p "$O/v"; ok=1
-rustc() { "$R/rustc" --edition=2024 -D warnings "$@"; }
-fail() { echo "$1"; [ -n "$2" ] && grep -E "^(error|warning)|-->" "$2" | head -10; ok=0; }
+O="${SM_GATE_DIR:-$TEMP/sm-gate}/$(git rev-parse --short HEAD)-$$"
+mkdir -p "$O"; ok=1
+trap 'rm -f -- "$O/check.log"; rmdir -- "$O" 2>/dev/null || true' EXIT
+fail() { echo "$1"; ok=0; }
 
 "$R/cargo" fmt --all --check >/dev/null 2>&1 || fail "FMT FAIL"
 for f in sm/src/verification/player_detached/mutations.py sm/src/verification/session_mutations.py; do
   "$PY" -c "import sys,runpy,os; sys.path.insert(0, os.path.dirname('$f')); sys.argv=['$f','--check-anchors']; runpy.run_path('$f', run_name='__main__')" >/dev/null 2>&1 || fail "ANCHORS FAIL $f"
 done
 "$PY" -I tools/lane/anchors_gate.py . >/dev/null || fail "MUTATION ANCHORS FAIL"
-tools_pkg=""; [ -f crates/sm_tools/Cargo.toml ] && tools_pkg="-p sm_tools"
-"$R/cargo" clippy --locked -p sm_data -p sm_game -p sm_runtime $tools_pkg --all-targets --no-deps -q >/dev/null 2>"$O/clippy.log" || fail "CLIPPY FAIL" "$O/clippy.log"
+"$PY" -I -c "import sys; sys.path.insert(0,'tools'); import pathlib, verify_dll; verify_dll.check_source_inventory(pathlib.Path('.'))" || fail "SOURCE INVENTORY FAIL"
 
-# Metadata dependency chains match the landing compiler gate; sm_data keeps real codegen
-# for the linked ROM import test. The separately qualified verifier DLL still must
-# compile/link actual target libraries before landing; this gate does not prove DLL codegen.
-# Plain target crates and their consumers; keep common libraries for both stages.
-rustc --crate-name sm_data --crate-type rlib crates/sm_data/src/lib.rs -o "$O/libsm_data.rlib" || ok=0
-ext="--extern sm_data=$O/libsm_data.rlib"
-rustc --crate-name sm_game --crate-type rlib crates/sm_game/src/lib.rs $ext -L "dependency=$O" --emit=metadata -o "$O/libsm_game.rmeta" || ok=0
-rustc --crate-name sm_runtime --crate-type rlib crates/sm_runtime/src/lib.rs $ext -L "dependency=$O" --emit=metadata -o "$O/libsm_runtime.rmeta" || ok=0
-gx="--extern sm_game=$O/libsm_game.rmeta -L dependency=$O --extern sm_runtime=$O/libsm_runtime.rmeta"
-gt=""
-if [ -f crates/sm_tools/src/lib.rs ]; then
-  rustc --crate-name sm_tools --crate-type rlib crates/sm_tools/src/lib.rs $ext --extern sm_game=$O/libsm_game.rmeta -L "dependency=$O" --emit=metadata -o "$O/libsm_tools.rmeta" || ok=0
-  gt="--extern sm_tools=$O/libsm_tools.rmeta"
+# Preserve existing compiler options, including Cargo's higher-precedence flags.
+if [[ -v CARGO_ENCODED_RUSTFLAGS ]]; then
+  export CARGO_ENCODED_RUSTFLAGS="$CARGO_ENCODED_RUSTFLAGS"$'\x1f-D\x1fwarnings'
+else
+  export RUSTFLAGS="${RUSTFLAGS:+$RUSTFLAGS }-D warnings"
 fi
-
-# The detached host; --test has two known unused imports in main.rs.
-rustc sm/src/verification/player_detached/main.rs $gx $ext --emit=metadata -o "$O/detached.rmeta" >"$O/det.log" 2>&1 || fail "DETACHED FAIL" "$O/det.log"
-if ! rustc --test sm/src/verification/player_detached/main.rs $gx $ext --emit=metadata -o "$O/detached.rmeta" >"$O/dett.log" 2>&1; then
-  all=$(grep -c "^error" "$O/dett.log"); unused=$(grep -c "^error: unused import" "$O/dett.log")
-  { [ "$all" -le 3 ] && [ "$unused" -le 2 ]; } || fail "DETACHED --test FAIL" "$O/dett.log"
+if ! "$R/cargo" check --locked --no-default-features -p sm -p sm_data -p sm_game -p sm_runtime -p sm_tools --lib >"$O/check.log" 2>&1; then
+  fail "CARGO CHECK FAIL"
+  rg '^(error|warning)|-->' "$O/check.log" | head -10
 fi
-
-# The plain sm check is the last consumer of the plain target libraries.
-rustc --crate-name sm --crate-type rlib sm/src/lib.rs $gx $gt $ext --emit=metadata -o "$O/libsm.rmeta" >"$O/sm.log" 2>&1 || fail "SM FAIL" "$O/sm.log"
-
-# Retire only this gate's plain libraries before generating the verifier variants.
-rm -f -- "$O/libsm_game.rmeta" "$O/libsm_tools.rmeta" || fail "PLAIN TARGET CLEANUP FAIL"
-
-# Verifier target crates and all remaining consumers retain the same compiler profile.
-rustc --cfg sm_verify_dll --crate-name sm_game --crate-type rlib crates/sm_game/src/lib.rs $ext -L "dependency=$O" --emit=metadata -o "$O/v/libsm_game.rmeta" || ok=0
-gxv="-L dependency=$O/v ${gx/libsm_game.rmeta/v/libsm_game.rmeta}"
-gtv=""
-if [ -f crates/sm_tools/src/lib.rs ]; then
-  rustc --crate-name sm_tools --crate-type rlib crates/sm_tools/src/lib.rs $ext --extern sm_game=$O/v/libsm_game.rmeta -L "dependency=$O/v" -L "dependency=$O" --emit=metadata -o "$O/v/libsm_tools.rmeta" || ok=0
-  gtv="--extern sm_tools=$O/v/libsm_tools.rmeta"
+if [ "$ok" -eq 1 ]; then
+  echo "GATE OK $(git rev-parse --short HEAD) $(git branch --show-current)"
+else
+  echo "GATE FAILED $(git branch --show-current)"
+  exit 1
 fi
-rustc --crate-name sm --crate-type rlib --cfg sm_verify_dll sm/src/lib.rs $gxv $gtv $ext --emit=metadata -o "$O/libsmv.rmeta" >"$O/smv.log" 2>&1 || fail "SM [verify] FAIL" "$O/smv.log"
-# Check the ordinary host against the library exposing checkpoint support, as
-# Cargo's frontend library does; the host itself still has no sm_verify_dll cfg.
-rustc --crate-name sm_verify --crate-type cdylib sm/src/verify_dll.rs --extern sm="$O/libsmv.rmeta" $gxv $gtv $ext --emit=metadata -o "$O/plain-verify.rmeta" >"$O/plain-v.log" 2>&1 || fail "VERIFY_DLL [plain] FAIL" "$O/plain-v.log"
-for t in "" "--test"; do
-  SM_VERIFY_SOURCE_HASH=$(printf '0%.0s' $(seq 64)) rustc $t --crate-name sm_verify --crate-type cdylib --cfg sm_verify_dll sm/src/verify_dll.rs --extern sm="$O/libsmv.rmeta" $gxv $gtv $ext --emit=metadata -o "$O/verify.rmeta" >"$O/v.log" 2>&1 || fail "VERIFY_DLL [$t] FAIL" "$O/v.log"
-done
-"$PY" -I -c "import sys; sys.path.insert(0,'tools'); import pathlib, verify_dll; verify_dll.check_source_inventory(pathlib.Path('.'))" || ok=0
-
-# The ROM import test; test executables may be blocked locally (exit 126), which is not a failure.
-if [ -f crates/sm_data/tests/rom_import.rs ] && [ -f "$ROM" ]; then
-  X="$O/rom_import.exe"
-  if rustc -O --test crates/sm_data/tests/rom_import.rs --extern sm_data=$O/libsm_data.rlib -o "$X" >"$O/ri.log" 2>&1; then
-    SM_ROM="$ROM" "$X" >>"$O/ri.log" 2>&1; st=$?
-    if [ $st -eq 126 ] || grep -q "Access is denied" "$O/ri.log"; then echo "(rom_import built; execution blocked locally)"
-    elif [ $st -ne 0 ]; then fail "ROM IMPORT TEST FAIL" "$O/ri.log"; fi
-  else fail "ROM IMPORT BUILD FAIL" "$O/ri.log"; fi
-fi
-rm -rf "$O"
-[ $ok -eq 1 ] && echo "GATE OK $(git rev-parse --short HEAD) $(git branch --show-current)" || echo "GATE FAILED $(git branch --show-current)"

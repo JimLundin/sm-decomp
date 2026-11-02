@@ -1474,6 +1474,176 @@ def route_frames(source, name):
     return extend_redtower(a)[:ROUTES[name][0]]
 
 
+# Source body inserted into existing tools/movie_inputs.py, not another runner.
+def check_native_phase_capture(receipt, receipt_sha256, movie, full_inputs, rom,
+                               native, native_source, phase_file, stdout, logger,
+                               predecessor):
+    """Authenticate native observations; never turn them into engine-step inputs.
+
+    Root supplies the SHA-bound actual native job receipt after collecting exit0,
+    closed handles and post-provenance. File syntax alone cannot prove that job.
+    Original full input identities remain separate from any qualified work map.
+    """
+    if file_sha256(receipt) != receipt_sha256:
+        raise ValueError('native phase receipt identity differs')
+    with receipt.open('rb') as stream:
+        info = tomllib.load(stream)
+    paths = dict(movie=movie, full_inputs=full_inputs, rom=rom, native=native,
+                 native_source=native_source, phase_file=phase_file, stdout=stdout,
+                 logger=logger, predecessor=predecessor)
+    if (info.get('version') != 1 or info.get('native_exit_code') != 0
+            or info.get('active_processes') != 0 or info.get('native_closed') is not True
+            or info.get('supervisor_closed') is not True or info.get('post_provenance') is not True):
+        raise ValueError('native phase job has no successful closed post-provenance receipt')
+    pins = {role: file_sha256(path) for role, path in paths.items()}
+    if any(info.get(role + '_sha256') != pin for role, pin in pins.items()):
+        raise ValueError('native phase original/source/input/loader/output identity differs')
+    originals = {
+        'e53b1ce15b3f01516eb64c68a6db2911f91bd97197eb05960779561be5c7cbe9':
+            ('7c41d3b87288467bd0d737262e0ba8d33a4094bd8e37777084249c25cc5ae6cb', 129712),
+        '1bd065d89b70c16efb6f9276e82b1c07fd57ec40095f030cc6efe6663458929c':
+            ('80aeef2665bac31156312f205fdb6b03aec2738d36a7857f02938eb45c1e4de7', 222788),
+        '1d217bb073309ae44ea3d972c5ec3201be0ec434c60f034e1e958f94fd1bcda8':
+            ('049d86bc515ecf3bdb4e65024aa21364e99074ce87c342ff3d2345eafb7f846b', 167797),
+    }
+    original = originals.get(pins['movie'])
+    if original is None or pins['full_inputs'] != original[0]:
+        raise ValueError('native phase does not belong to a complete original any/100/low input stream')
+    # Count independently: a video ordinal is never relabelled as an engine step.
+    with full_inputs.open('rb') as stream:
+        words = sum(1 for _ in stream)
+    if words != original[1] or info.get('full_input_words') != words:
+        raise ValueError('native phase full original input identity/count differs')
+    declared, first, through, events = (info.get(name) for name in ('declared_frames', 'first', 'through', 'events'))
+    if (any(type(value) is not int for value in (declared, first, through, events))
+            or declared != words or not 1 <= first <= through or events <= 0):
+        raise ValueError('native phase selected original scope is invalid')
+    header = (f"# native_phase=1 parent={pins['movie']} native={pins['native']} "
+              f"source={pins['native_source']} full_input={pins['full_inputs']} "
+              f"declared={declared} first={first} through={through}\n")
+    observed = info.get('observed_native_frames')
+    if type(observed) is not int or observed < declared or through > observed:
+        raise ValueError('native phase original EOF has not actually been observed')
+    selected_end = through
+    last_index = info.get('last_frame_first_subframe_index')
+    if type(last_index) is not int or last_index < 0:
+        raise ValueError('native phase lacks its observed original EOF input cursor')
+    footer = (f'# native_collection_complete=true original_frames={declared} observed_native_frames={observed} selected_first={first} '
+              f'selected_through={through} selected_events={events} last_frame_first_subframe_index={last_index} '
+              'full_original_input_end=true physical_plan_admitted=false END_NATIVE_PHASE_COLLECTION\n')
+    closed = (f"NATIVE_PHASE_WRITER_CLOSED parent={pins['movie']} native={pins['native']} "
+              f"source={pins['native_source']} original_frames={declared} frames={observed} first={first} through={through} events={events}\n")
+    with stdout.open('r', encoding='utf8', newline='') as stream:
+        if sum(line in (closed, closed[:-1] + '\r\n') for line in stream) != 1:
+            raise ValueError('native phase writer has no exact successful flush/close receipt')
+    count = 0
+    frames = set()
+    latch = None
+    complete_latches = 0
+    unknown_origins = 0
+    native_ports = set()
+    expected_columns = ['sequence', 'kind', 'address', 'value', 'movie_frame', 'input_callback',
+        'frame_first_subframe_index', 'port0_type', 'port1_type', 'port2_type', 'frame_start_serialized',
+        'api', 'source_hash', 'native_port1_type', 'native_port2_type', 'origin', 'reset_generation',
+        'completed_master_clocks', 'frame_boundaries', 'pbpc', 'hcounter', 'vcounter', 'field',
+        'smp_relative_clock', 'ppu_relative_clock', 'port1_relative_clock', 'port2_relative_clock',
+        'auto_counter', 'auto_active', 'auto_enabled', 'joy1', 'joy2', 'joy3', 'joy4']
+    def integer(row, key, low, high):
+        value = row[key]
+        if not value or str(int(value)) != value or not low <= int(value) <= high:
+            raise ValueError('native phase integer identity/range differs: ' + key)
+        return int(value)
+    with phase_file.open('r', encoding='ascii', newline='') as stream:
+        if stream.readline() != header or stream.readline() != ','.join(expected_columns) + '\n':
+            raise ValueError('native phase exact original source/header differs')
+        terminal = False
+        for line in stream:
+            if line.startswith('#'):
+                if line != footer or stream.read(1):
+                    raise ValueError('native phase has no exact terminal record at EOF')
+                terminal = True
+                break
+            if len(line) > 4096 or not line.endswith('\n'):
+                raise ValueError('native phase record is truncated or unbounded')
+            values = next(csv.reader([line]))
+            if len(values) != len(expected_columns):
+                raise ValueError('native phase record shape differs')
+            row = dict(zip(expected_columns, values))
+            count += 1
+            if integer(row, 'sequence', 1, 2**64 - 1) != count:
+                raise ValueError('native phase skips or repeats an event')
+            frame = integer(row, 'movie_frame', first, selected_end)
+            if row['api'] != 'native-physical-v1' or row['source_hash'] != pins['native_source']:
+                raise ValueError('native phase executing source/API differs')
+            for key in ('smp_relative_clock', 'ppu_relative_clock', 'port1_relative_clock', 'port2_relative_clock'):
+                integer(row, key, -(2**63), 2**63 - 1)
+            if row['origin'] == 'actual_reset':
+                for key in ('reset_generation', 'completed_master_clocks', 'frame_boundaries'):
+                    integer(row, key, 1 if key == 'reset_generation' else 0, 2**64 - 1)
+            elif row['origin'] == 'unserialized_origin' and all(row[key] == 'unknown_not_serialized'
+                    for key in ('reset_generation', 'completed_master_clocks', 'frame_boundaries')):
+                unknown_origins += 1
+            else:
+                raise ValueError('native phase invented an unobserved clock/frame origin')
+            for key in ('hcounter', 'vcounter', 'joy1', 'joy2', 'joy3', 'joy4'):
+                integer(row, key, 0, 65535)
+            integer(row, 'field', 0, 1)
+            pbpc = integer(row, 'pbpc', 0, 0xffffff)
+            kind = row['kind']
+            if kind == '0' and (integer(row, 'address', 0, 0xffffff) != 0x808028 or pbpc != 0x808028):
+                raise ValueError('native upload phase is not genuine before-fetch808028')
+            if kind == 'eof_input' and (frame <= declared or row['frame_start_serialized']):
+                raise ValueError('native EOF input was fabricated as an original serialized record')
+            if kind == 'input' and (frame > declared or not row['frame_start_serialized']):
+                raise ValueError('native input callback lost its original all-port record')
+            if kind == 'frame':
+                if frame in frames:
+                    raise ValueError('native phase repeats a selected original frame')
+                frames.add(frame)
+            if kind == '1':
+                if latch is not None:
+                    raise ValueError('native automatic latch is incomplete before the next latch')
+                policy = integer(row, 'value', 0, 1)
+                if integer(row, 'address', 0, 1) != policy:
+                    raise ValueError('native latch raw counter/policy differs')
+                latch = (policy, [], (row['native_port1_type'], row['native_port2_type']))
+            if kind == '2':
+                if latch is None:
+                    raise ValueError('native automatic sample lacks an actual captured latch')
+                policy, samples, ports = latch
+                counter = integer(row, 'address', 0, 34)
+                if counter != (len(samples) if policy == 0 else 3 + 2 * len(samples)):
+                    raise ValueError('native automatic samples are missing/reordered/duplicated')
+                samples.append(integer(row, 'value', 0, 15))
+                if (row['native_port1_type'], row['native_port2_type']) != ports:
+                    raise ValueError('native controller allocation type changed within a latch')
+                if len(samples) == 16:
+                    if any(port not in ('gamepad', 'none') for port in ports):
+                        raise ValueError('native controller data device has no admitted two-port policy')
+                    native_ports.add(ports)
+                    complete_latches += 1
+                    latch = None
+            if kind == '3':
+                address = integer(row, 'address', 0, 0xffffff)
+                bank, offset = address >> 16, address & 0xffff
+                if not (bank < 0x40 or 0x80 <= bank < 0xc0) or offset not in (0x4016, 0x4017, *range(0x4218, 0x4220)):
+                    raise ValueError('native CPU controller read is not an actual port address')
+                integer(row, 'value', 0, 255)
+            if kind not in ('0', '1', '2', '3', '4', 'input', 'eof_input', 'frame'):
+                raise ValueError('native phase event kind is unsupported')
+        if not terminal or count != events or frames != set(range(first, selected_end + 1)) or latch is not None:
+            raise ValueError('native phase selected frame/event/terminal/port scope is incomplete')
+    if complete_latches == 0:
+        raise ValueError('native phase contains no complete actual two-port latch')
+    if any(file_sha256(path) != pins[role] for role, path in paths.items()) or file_sha256(receipt) != receipt_sha256:
+        raise ValueError('native phase original/source/output changed during admission')
+    return dict(original_input_words=words, selected_native_events=count,
+                complete_two_port_latches=complete_latches, unknown_absolute_origins=unknown_origins,
+                whole_original_observation=(first == 1 and selected_end >= declared),
+                actual_eof_continuation_frames=observed - declared,
+                physical_plan_admitted=False)
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('movie', type=Path)
@@ -1491,7 +1661,32 @@ if __name__ == '__main__':
     parser.add_argument('--eof-capture-sha256', help='required pinned EOF metadata SHA-256')
     parser.add_argument('--snes9x-capture', type=Path, help='authenticated original five-port SMV work capture')
     parser.add_argument('--snes9x-capture-sha256', help='required Snes9x metadata SHA-256')
+    parser.add_argument('--native-phase-receipt', type=Path,
+                        help='check authentic original native phase observations, without emitting inputs')
+    parser.add_argument('--native-phase-receipt-sha256')
+    parser.add_argument('--native-phase-inputs', type=Path)
+    parser.add_argument('--native-phase-stdout', type=Path)
+    parser.add_argument('--native-phase-logger', type=Path)
+    parser.add_argument('--native-phase-predecessor', type=Path)
     args = parser.parse_args()
+    if args.native_phase_receipt:
+        if (not all((args.native_phase_receipt_sha256, args.native_phase_inputs,
+                     args.native_phase_stdout, args.native_phase_logger,
+                     args.native_phase_predecessor, args.native, args.native_source))
+                or args.route or args.lag_log or args.frames is not None or args.event_map_only
+                or args.seed or args.eof_capture or args.eof_capture_sha256
+                or args.snes9x_capture or args.snes9x_capture_sha256):
+            parser.error('--native-phase-receipt requires actual closed native/source/input/output handles only')
+        result = check_native_phase_capture(args.native_phase_receipt, args.native_phase_receipt_sha256,
+            args.movie, args.native_phase_inputs, args.rom, args.native, args.native_source,
+            args.output, args.native_phase_stdout, args.native_phase_logger, args.native_phase_predecessor)
+        print(f"Native observation checked: {result['original_input_words']} original inputs; "
+              f"{result['selected_native_events']} selected events; "
+              f"{result['complete_two_port_latches']} actual two-port latches; physical plan not admitted")
+        raise SystemExit(0)
+    if any((args.native_phase_receipt_sha256, args.native_phase_inputs, args.native_phase_stdout,
+            args.native_phase_logger, args.native_phase_predecessor)):
+        parser.error('native phase options require --native-phase-receipt')
     if args.event_map_only:
         if (not args.lag_log or not args.native or not args.native_source or args.seed
                 or args.frames is not None or args.route or args.snes9x_capture

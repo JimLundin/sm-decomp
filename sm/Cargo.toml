@@ -10,11 +10,10 @@ autobins = false
 [lib]
 path = "src/lib.rs"
 
-# Cargo tracks the Windows verifier host and its included source files too.
-[[example]]
+# Cargo tracks the headless verifier and its included source files too.
+[[bin]]
 name = "sm_verify"
 path = "src/verify_dll.rs"
-crate-type = ["cdylib"]
 test = false
 
 # Direct CI compilation checks actual projectile, animation and palette composition.

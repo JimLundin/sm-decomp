@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""Build the verifier DLL (Windows) or shared object (Linux), then run a replay or corpus via ctypes."""
+"""Build the Rust verifier executable, then run the existing replay or corpus."""
 import argparse
-import ctypes
+import struct
+import tempfile
 import hashlib
 import json
 import os
@@ -16,9 +17,9 @@ import time
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import scenario  # noqa: E402
 
-# Windows remains the pinned verifier host; Linux builds the same cdylib as a .so.
+# Windows remains the pinned replay host.
 WINDOWS = os.name == "nt"
-HOST_LIBRARY = "sm_verify.dll" if WINDOWS else "libsm_verify.so"
+HOST_BINARY = "sm_verify.exe" if WINDOWS else "sm_verify"
 HOST_TRIPLE = "x86_64-pc-windows-gnu" if WINDOWS else "x86_64-unknown-linux-gnu"
 
 
@@ -29,6 +30,7 @@ def source_hash(root):
     paths.update((root / "crates").glob("*/Cargo.toml"))
     paths.update((root / "sm" / "src").rglob("*.c"))
     paths.update((root / "sm" / "src").rglob("*.h"))
+    paths.add(root / "tools/movie_inputs.py")
     paths.add(root / "tools/install_native_config.py")
     paths.add(root / "tools/install_native_desktop.py")
     paths.update(root / name for name in (
@@ -45,25 +47,54 @@ def source_hash(root):
 
 
 def check_source(host, expected):
-    if not hasattr(host, "sm_verify_source_hash"):
-        raise RuntimeError("cached DLL has no source stamp; run without --no-build")
-    host.sm_verify_source_hash.argtypes = []
-    host.sm_verify_source_hash.restype = ctypes.c_void_p
-    stamp = host.sm_verify_source_hash()
-    if not stamp or ctypes.string_at(stamp, 64) != expected.encode("ascii"):
-        raise RuntimeError("cached DLL does not match current source; run without --no-build")
+    if host["source"] != expected:
+        raise RuntimeError("cached verifier does not match current source; run without --no-build")
 
 
-def load_host(dll):
-    # Keep SDK search directories alive for as long as this DLL is loaded.
-    directories = []
-    for path in os.environ.get("LIBRARY_PATH", "").split(os.pathsep) if WINDOWS else ():
-        if path:
-            for directory in (Path(path), Path(path).parent / "bin"):
-                if directory.is_dir():
-                    directories.append(os.add_dll_directory(str(directory.resolve())))
-    host = ctypes.CDLL(str(dll))
-    host._sdk_directories = directories
+def host_environment():
+    environment = dict(os.environ)
+    if WINDOWS:
+        directories = []
+        for path in environment.get("LIBRARY_PATH", "").split(os.pathsep):
+            if path:
+                for directory in (Path(path), Path(path).parent / "bin"):
+                    if directory.is_dir():
+                        directories.append(str(directory.resolve()))
+        environment["PATH"] = os.pathsep.join(directories + [environment.get("PATH", "")])
+    return environment
+
+
+def load_host(binary, environment=None):
+    """Read the executable's compiled source inventory through its existing host."""
+    binary = Path(binary).resolve()
+    with tempfile.TemporaryDirectory(prefix="sm-host-info-") as directory:
+        output = Path(directory) / "host-info.bin"
+        subprocess.run([str(binary), "--host-info", str(output)],
+                       env=host_environment() if environment is None else environment, check=True)
+        with output.open("rb") as stream:
+            def read(length):
+                data = stream.read(length)
+                if len(data) != length:
+                    raise RuntimeError("truncated verifier source inventory; rebuild")
+                return data
+            if read(10) != b"SMVERIFY1\n":
+                raise RuntimeError("unrecognized verifier source inventory; rebuild")
+            host = {"binary": binary, "source": read(64).decode("ascii"),
+                    "native": read(64).decode("ascii"), "utilities": read(1), "files": {}}
+            if host["utilities"] not in (b"\0", b"\1"):
+                raise RuntimeError("invalid verifier utility source status; rebuild")
+            while True:
+                path_length, data_length = struct.unpack("<QQ", read(16))
+                if path_length == 0:
+                    if data_length or stream.read(1):
+                        raise RuntimeError("extra verifier source inventory bytes; rebuild")
+                    break
+                if path_length > 32768 or data_length > 64 * 1024 * 1024:
+                    raise RuntimeError("invalid verifier source inventory lengths; rebuild")
+                name = read(path_length).decode("utf-8")
+                if name in host["files"]:
+                    raise RuntimeError("repeated game-library source; rebuild")
+                host["files"][name] = read(data_length)
     return host
 
 
@@ -112,42 +143,21 @@ def write_source_inventory(root, output):
 
 
 def check_library(host, root):
-    """Compare the rlib's compiled source bytes, not the host's environment."""
-    if not hasattr(host, "sm_verify_source_file"):
-        raise RuntimeError("cached DLL has no game-library source data; rebuild")
-
-    class SourceFile(ctypes.Structure):
-        _fields_ = [("path", ctypes.c_void_p), ("path_len", ctypes.c_size_t),
-                    ("data", ctypes.c_void_p), ("data_len", ctypes.c_size_t)]
-
-    host.sm_verify_source_file.argtypes = [ctypes.c_size_t]
-    host.sm_verify_source_file.restype = SourceFile
+    """Compare the library's compiled source bytes, not the host's environment."""
     expected = library_source_paths(root)
-    for index in range(len(expected) + 1):
-        source = host.sm_verify_source_file(index)
-        if source.path_len == 0:
-            break
-        path = ctypes.string_at(source.path, source.path_len).decode("utf-8")
-        if path not in expected:
-            raise RuntimeError(f"unexpected or repeated game-library source: {path}; rebuild")
-        expected.remove(path)
-        if ctypes.string_at(source.data, source.data_len) != (root / path).read_bytes():
-            raise RuntimeError(f"stale game-library source: {path}; rebuild")
+    for name, data in host["files"].items():
+        if name not in expected:
+            raise RuntimeError(f"unexpected game-library source: {name}; rebuild")
+        expected.remove(name)
+        if data != (root / name).read_bytes():
+            raise RuntimeError(f"stale game-library source: {name}; rebuild")
     if expected:
         raise RuntimeError("game-library source list incomplete; rebuild: "
                            + ", ".join(sorted(expected)))
-    if not hasattr(host, "sm_verify_backend_source_hash"):
-        raise RuntimeError("cached DLL has no backend source stamp; rebuild")
-    host.sm_verify_backend_source_hash.restype = ctypes.c_char_p
     bridge = root / "sm/src/snes/backend.c"
-    if host.sm_verify_backend_source_hash() != hashlib.sha256(bridge.read_bytes()).hexdigest().encode():
+    if host["native"] != hashlib.sha256(bridge.read_bytes()).hexdigest():
         raise RuntimeError("stale native backend; rerun tools/install_lakesnes.py backend with --zig and --target, then rebuild")
-
-
-    if not hasattr(host, "sm_verify_util_source_matches"):
-        raise RuntimeError("cached DLL has no utility source stamp; rebuild")
-    host.sm_verify_util_source_matches.restype = ctypes.c_bool
-    if not host.sm_verify_util_source_matches():
+    if host["utilities"] != b"\1":
         raise RuntimeError("stale native utilities; rerun tools/install_native_config.py and rebuild")
 
 
@@ -156,11 +166,11 @@ def cargo_host(root, rustc, output, source, inventory, frontend=False, retry=Tru
     # Backdated files in another checkout can look fresh in a shared target
     # directory. Keep this game's and host's artifacts with their source.
     # The launcher requests the full verification configuration for both the
-    # library and example. Ordinary cargo builds keep the non-verifier profile.
+    # library and executable. Ordinary cargo builds keep the non-verifier profile.
     # One job by default keeps the local loop's memory bounded; CI's runners
     # set CARGO_BUILD_JOBS to their core count.
     jobs = os.environ.get("CARGO_BUILD_JOBS", "1")
-    command = [cargo, "build", "-p", "sm", "--release", "--example", "sm_verify",
+    command = [cargo, "build", "-p", "sm", "--release", "--bin", "sm_verify",
                "--locked", "--features", "sm/verify", "-j", jobs,
                "--target-dir", str(root / "target"),
                "--message-format=json"]
@@ -172,7 +182,7 @@ def cargo_host(root, rustc, output, source, inventory, frontend=False, retry=Tru
         # The desktop binary is the sm_app package's `sm`.
         frontend_command = command.copy()
         frontend_command[frontend_command.index("-p") + 1] = "sm_app"
-        selector = frontend_command.index("--example")
+        selector = frontend_command.index("--bin")
         frontend_command[selector:selector + 2] = ["--bin", "sm"]
         frontend_log = output / "frontend-build.log"
         print(f"Compiling release frontend; log {frontend_log}",
@@ -188,7 +198,7 @@ def cargo_host(root, rustc, output, source, inventory, frontend=False, retry=Tru
     environment["CARGO_ENCODED_RUSTFLAGS"] = (
         flags + ("\x1f" if flags else "") + "--cfg\x1fsm_verify_dll\x1f--cfg\x1fsm_source_inventory"
     )
-    dll = None
+    binary = None
     compiled = []
     log_path = output / "build.log"
     with log_path.open("w", encoding="utf-8") as log:
@@ -208,8 +218,8 @@ def cargo_host(root, rustc, output, source, inventory, frontend=False, retry=Tru
                     if not message["fresh"]:
                         compiled.append(message["target"]["name"])
                     if message["target"]["name"] == "sm_verify":
-                        dll = next((Path(name) for name in message["filenames"]
-                                    if name.endswith(Path(HOST_LIBRARY).suffix)), None)
+                        executable = message.get("executable")
+                        binary = Path(executable) if executable else None
             result = process.wait()
         finally:
             process.stdout.close()
@@ -220,11 +230,11 @@ def cargo_host(root, rustc, output, source, inventory, frontend=False, retry=Tru
           file=sys.stderr, flush=True)
     if result:
         raise subprocess.CalledProcessError(result, command)
-    if dll is None:
-        raise RuntimeError("Cargo did not report the verifier DLL")
-    # Inspect in a separate process so a stale DLL is unloaded before rebuilding.
+    if binary is None:
+        raise RuntimeError("Cargo did not report the verifier executable")
+    # Inspect the executable before reusing the Cargo artifact.
     checked = subprocess.run(
-        [sys.executable, str(root / "tools/verify_dll.py"), "--check-library", str(dll)],
+        [sys.executable, str(root / "tools/verify_dll.py"), "--check-library", str(binary)],
         cwd=root, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
     )
     if checked.returncode:
@@ -244,17 +254,16 @@ def cargo_host(root, rustc, output, source, inventory, frontend=False, retry=Tru
             if target_root.is_file():
                 target_root.touch()
         return cargo_host(root, rustc, output, source, inventory, frontend=frontend, retry=False)
-    # Preserve --no-build's existing path. An unchanged DLL can still be loaded
-    # by another replay; do not overwrite it merely to refresh its timestamp.
-    cached = output / HOST_LIBRARY
-    if not cached.exists() or cached.read_bytes() != dll.read_bytes():
-        shutil.copyfile(dll, cached)
+    # Preserve --no-build's cache without overwriting a running executable.
+    cached = output / HOST_BINARY
+    if not cached.exists() or cached.read_bytes() != binary.read_bytes():
+        shutil.copyfile(binary, cached)
     return cached
 
 
 def build(root, rustc, use_cargo=None, frontend=False):
     source = source_hash(root)
-    output = root / "target" / "verify-dll"
+    output = root / "target" / "verify-host"
     output.mkdir(parents=True, exist_ok=True)
     inventory = write_source_inventory(root, output)
     library = output / "libsm.rlib"
@@ -265,7 +274,7 @@ def build(root, rustc, use_cargo=None, frontend=False):
     runtime = output / "libsm_runtime.rlib" if runtime_root.is_file() else None
     tools_root = root / "crates/sm_tools/src/lib.rs"
     tools = output / "libsm_tools.rlib" if tools_root.is_file() else None
-    dll = output / HOST_LIBRARY
+    binary = output / HOST_BINARY
     sdk = [Path(path) for path in os.environ.get("LIBRARY_PATH", "").split(os.pathsep)
            if path]
     compiler = subprocess.check_output([rustc, "-vV"], cwd=root, text=True)
@@ -278,10 +287,10 @@ def build(root, rustc, use_cargo=None, frontend=False):
     if frontend and not use_cargo:
         raise RuntimeError("--frontend-check requires the Cargo/SDL2 build path")
     if use_cargo:
-        dll = cargo_host(root, rustc, output, source, inventory, frontend)
+        binary = cargo_host(root, rustc, output, source, inventory, frontend)
         if source_hash(root) != source:
             raise RuntimeError("source changed during build; rebuild before replay")
-        return dll
+        return binary
     incremental = os.environ.get("CARGO_INCREMENTAL") != "0"
     # Retain 16 codegen units; incremental compilation otherwise defaults to 256.
     flags = os.environ.get("CARGO_ENCODED_RUSTFLAGS")
@@ -301,7 +310,7 @@ def build(root, rustc, use_cargo=None, frontend=False):
     link = ["-C", f"linker={linker}", "-C", "linker-flavor=ld"] if WINDOWS else []
     # Direct-rustc builds have no Cargo freshness check. Bind reuse to source,
     # compiler/options, native archives and output bytes; inspect in a child so
-    # the DLL is unloaded before any rebuild.
+    # the executable inspection completes before any rebuild.
     stamp = output / "direct-build.json"
     native = sorted({path.resolve() for directory in sdk for path in directory.glob("*.a")})
     # The archives' bytes differ between otherwise identical builds, so a host
@@ -318,25 +327,25 @@ def build(root, rustc, use_cargo=None, frontend=False):
         ]).encode()).hexdigest()
 
     identity = build_identity()
-    if (stamp.exists() and dll.exists() and library.exists() and game.exists()
+    if (stamp.exists() and binary.exists() and library.exists() and game.exists()
             and (data is None or data.exists())
             and (runtime is None or runtime.exists())
             and (tools is None or tools.exists())):
         try:
             saved = json.loads(stamp.read_text())
-            if saved == {"inputs": identity, "dll": hashlib.sha256(dll.read_bytes()).hexdigest(),
+            if saved == {"inputs": identity, "binary": hashlib.sha256(binary.read_bytes()).hexdigest(),
                          "library": hashlib.sha256(library.read_bytes()).hexdigest(),
                          "game": hashlib.sha256(game.read_bytes()).hexdigest(),
                          "data": hashlib.sha256(data.read_bytes()).hexdigest() if data else None,
                          "runtime": hashlib.sha256(runtime.read_bytes()).hexdigest() if runtime else None,
                          "tools": hashlib.sha256(tools.read_bytes()).hexdigest() if tools else None}:
                 checked = subprocess.run(
-                    [sys.executable, str(root / "tools/verify_dll.py"), "--check-library", str(dll)],
+                    [sys.executable, str(root / "tools/verify_dll.py"), "--check-library", str(binary)],
                     cwd=root, capture_output=True, text=True,
                 )
                 if checked.returncode == 0:
                     print("Direct compiler: none (reused)", file=sys.stderr, flush=True)
-                    return dll
+                    return binary
         except (OSError, ValueError):
             pass
     stamp.unlink(missing_ok=True)
@@ -385,13 +394,13 @@ def build(root, rustc, use_cargo=None, frontend=False):
     )
     subprocess.run(
         common + (["-C", f"incremental={output / 'incremental-host'}"] if incremental else [])
-        + ["--crate-name", "sm_verify", "--crate-type", "cdylib",
+        + ["--crate-name", "sm_verify", "--crate-type", "bin",
                   "--cfg", "sm_verify_dll",
                   *link,
                   "sm/src/verify_dll.rs",
                   "--extern", f"sm={library}", "--extern", f"sm_game={game}",
                   *data_flags, *runtime_flags, "-L", f"dependency={output}",
-                  "-o", str(dll)],
+                  "-o", str(binary)],
         cwd=root, env=dict(os.environ, SM_VERIFY_SOURCE_HASH=source), check=True,
     )
     if source_hash(root) != source:
@@ -399,13 +408,13 @@ def build(root, rustc, use_cargo=None, frontend=False):
     if build_identity() != identity:
         raise RuntimeError("native inputs changed during build; rebuild before replay")
     stamp.write_text(json.dumps({"inputs": identity,
-                                "dll": hashlib.sha256(dll.read_bytes()).hexdigest(),
+                                "binary": hashlib.sha256(binary.read_bytes()).hexdigest(),
                                 "library": hashlib.sha256(library.read_bytes()).hexdigest(),
                                 "game": hashlib.sha256(game.read_bytes()).hexdigest(),
                                 "data": hashlib.sha256(data.read_bytes()).hexdigest() if data else None,
                                 "runtime": hashlib.sha256(runtime.read_bytes()).hexdigest() if runtime else None,
                                 "tools": hashlib.sha256(tools.read_bytes()).hexdigest() if tools else None}))
-    return dll
+    return binary
 
 
 
@@ -660,7 +669,7 @@ def run_corpus(root, args):
                     or not isinstance(digest, str) or len(digest) != 64
                     or any(c not in "0123456789abcdef" for c in digest)):
                 raise ValueError(f"corpus {name}: checkpoint requires a flat slug.smvchk and lowercase SHA-256")
-            # A seeded checkpoint binds its seed payload: the DLL rejects it under any other
+            # A seeded checkpoint binds its seed payload: the verifier rejects it under any other
             # seed, and a rejected one regenerates its prefix from the seed, not from boot.
         if "pending" in segment:
             if not isinstance(segment["pending"], str) or not segment["pending"]:
@@ -782,7 +791,7 @@ def run_corpus(root, args):
         # Only the same initial state can share a verified input prefix.
         if segment.get("seed_sha256") != donor.get("seed_sha256"):
             return False
-        # Compare recipe-bound canonical words; the DLL still validates the checkpoint.
+        # Compare recipe-bound canonical words; the verifier still validates the checkpoint.
         for item in (segment, donor):
             digest = item["input_sha256"]
             if digest not in prefix_inputs:
@@ -857,7 +866,7 @@ def run_corpus(root, args):
 
     def with_audio_trace(replay, name):
         # Each row child is a direct --audio-trace replay: it binds its own ROM/input/
-        # native/DLL hashes and runs check_audio_trace on its file before passing.
+        # native/executable hashes and runs check_audio_trace on its file before passing.
         if args.audio_trace_directory is None:
             return replay
         directory = args.audio_trace_directory.resolve()
@@ -1044,7 +1053,7 @@ def main():
     parser.add_argument("--build-only", action="store_true",
                         help="build and check compiled sources without starting a replay")
     parser.add_argument("--unit-tests", action="store_true",
-                        help="run the existing verifier unit tests through the DLL, without a ROM")
+                        help="run the existing verifier unit tests through the executable, without a ROM")
     parser.add_argument("--frontend-check", action="store_true",
                         help="compile/link the ordinary release frontend before the verifier-only Cargo build")
     parser.add_argument("--frames", type=int)
@@ -1084,7 +1093,7 @@ def main():
                         help="stop N additional frames after all required probes first execute; "
                              "fail if the movie or --frames limit ends earlier")
     parser.add_argument("--no-build", action="store_true",
-                        help="reuse target/verify-dll/sm_verify.dll if its source still matches")
+                        help="reuse target/verify-host/sm_verify.exe if its source still matches")
     build_path = parser.add_mutually_exclusive_group()
     build_path.add_argument("--cargo", action="store_const", dest="cargo", const=True,
                             default=None, help="use Cargo release compilation (automatic with SDL2)")
@@ -1125,7 +1134,44 @@ def main():
                         help="write the single-side run's lock entry (running digests)")
     single.add_argument("--free-run", type=Path, metavar="TRACE",
                         help="compare the single-side run with a reference trace, Tick by Tick")
+    parser.add_argument("--original-native-phase", type=Path)
+    parser.add_argument("--original-native-receipt", type=Path)
+    parser.add_argument("--original-native-receipt-sha256")
+    parser.add_argument("--original-native-parent", type=Path)
+    parser.add_argument("--original-native-binary", type=Path)
+    parser.add_argument("--original-native-source", type=Path)
+    parser.add_argument("--original-native-stdout", type=Path)
+    parser.add_argument("--original-native-logger", type=Path)
+    parser.add_argument("--original-native-predecessor", type=Path)
     args = parser.parse_args()
+    original_native = (args.original_native_receipt, args.original_native_receipt_sha256,
+        args.original_native_parent, args.original_native_binary, args.original_native_source,
+        args.original_native_stdout, args.original_native_logger, args.original_native_predecessor)
+    if args.original_native_phase is not None:
+        if (not all(original_native) or args.rom is None or args.inputs is None
+                or args.frames is not None or args.corpus is not None or args.unit_tests
+                or args.checkpoint_in is not None or args.checkpoint_out is not None or args.seed is not None
+                or args.require_hit or args.expect or args.after_hits is not None or args.after_expectations is not None
+                or args.engine_only or args.oracle_only or args.trace_out is not None or args.lock_out is not None
+                or args.free_run is not None or args.audio_trace is not None or args.audio_trace_directory is not None
+                or args.room_pack is not None or args.room_pack_export is not None or args.prepared_room_case is not None
+                or args.prepared_checkpoint_check is not None or args.prepared_checkpoint_reject is not None
+                or args.build_only or args.frontend_check or args.segment
+                or args.no_build or args.cargo is not None or args.oracle is not None or args.oracle_keep is not None
+                or args.mode != "lockstep" or args.lock is not None or args.untyped
+                or args.divergence_report is not None or args.divergence_report_directory is not None
+                or args.room_pack_alternate or args.room_pack_changed):
+            parser.error("original native phase admission takes only actual original/closed source handles")
+        import movie_inputs
+        result = movie_inputs.check_native_phase_capture(args.original_native_receipt,
+            args.original_native_receipt_sha256, args.original_native_parent, args.inputs, args.rom,
+            args.original_native_binary, args.original_native_source, args.original_native_phase,
+            args.original_native_stdout, args.original_native_logger, args.original_native_predecessor)
+        print(f"Original native observation checked: {result['original_input_words']} full inputs; "
+              f"{result['complete_two_port_latches']} actual two-port latches; physical plan not admitted")
+        return 0
+    if any(original_native):
+        parser.error("original native phase options require --original-native-phase")
     single_side = (args.engine_only or args.untyped or args.trace_out is not None
                    or args.lock_out is not None or args.free_run is not None)
     if args.mode != "lockstep" and args.corpus is None:
@@ -1286,45 +1332,38 @@ def main():
                          ("--prepared-checkpoint-reject", args.prepared_checkpoint_reject)):
         if path is not None:
             replay_args.extend([option, str(path.resolve())])
-    dll = root / "target" / "verify-dll" / HOST_LIBRARY
+    binary = root / "target" / "verify-host" / HOST_BINARY
     if not args.no_build:
-        dll = build(root, args.rustc, args.cargo, args.frontend_check)
+        binary = build(root, args.rustc, args.cargo, args.frontend_check)
     os.chdir(root)
-    host = load_host(dll)
+    binary_hash = audio_file_hash(binary)
+    host = load_host(binary)
     check_source(host, source)
     check_library(host, root)
     if source_hash(root) != source:
         raise RuntimeError("source changed before replay; rebuild before replay")
-    print(f"Verifier build/check: {time.perf_counter() - started:.2f}s; source {source}",
+    print(f"Verifier build/check: {time.perf_counter() - started:.2f}s; source {source}; binary {binary_hash}",
           file=sys.stderr, flush=True)
     if args.build_only:
         return 0
     if args.audio_trace is not None:
-        os.environ["SM_AUDIO_TRACE_NATIVE_SHA256"] = host.sm_verify_backend_source_hash().decode("ascii")
+        os.environ["SM_AUDIO_TRACE_NATIVE_SHA256"] = host["native"]
         os.environ["SM_AUDIO_TRACE_ROM_SHA256"] = audio_file_hash(rom)
         os.environ["SM_AUDIO_TRACE_INPUT_SHA256"] = audio_file_hash(inputs)
         audio_identity = {"source": source, "native": os.environ["SM_AUDIO_TRACE_NATIVE_SHA256"],
                           "rom": os.environ["SM_AUDIO_TRACE_ROM_SHA256"],
                           "inputs": os.environ["SM_AUDIO_TRACE_INPUT_SHA256"]}
-        audio_dll_hash = audio_file_hash(dll)
-        os.environ["SM_AUDIO_TRACE_DLL_SHA256"] = audio_dll_hash
-        audio_identity["dll"] = audio_dll_hash
-    if (args.audio_trace is not None or args.divergence_report is not None or single_side
-            or args.oracle_only or args.unit_tests or args.room_pack is not None or producer or prepared_checkpoint or prepared_case
-            or args.seed is not None or args.checkpoint_in is not None or args.checkpoint_out is not None
-            or args.require_hit or args.expect):
-        if not hasattr(host, "sm_verify_args"):
-            raise RuntimeError("cached DLL predates segment options; run without --no-build")
-        host.sm_verify_args.argtypes = [ctypes.c_uint32, ctypes.POINTER(ctypes.c_char_p)]
-        host.sm_verify_args.restype = ctypes.c_int
-        argv = (ctypes.c_char_p * len(replay_args))(
-            *(arg.encode("utf-8") for arg in replay_args))
-        result = host.sm_verify_args(len(replay_args), argv)
-    else:
-        host.sm_verify.argtypes = [ctypes.c_char_p, ctypes.c_char_p, ctypes.c_uint64]
-        host.sm_verify.restype = ctypes.c_int
-        result = host.sm_verify(str(rom).encode("utf-8"), str(inputs).encode("utf-8"),
-                                args.frames or 0)
+        audio_binary_hash = binary_hash
+        os.environ["SM_AUDIO_TRACE_BINARY_SHA256"] = audio_binary_hash
+        audio_identity["binary"] = audio_binary_hash
+    environment = host_environment()
+    environment["SM_VERIFY_EXPECTED_SOURCE_HASH"] = source
+    environment["SM_VERIFY_EXPECTED_NATIVE_SHA256"] = host["native"]
+    result = subprocess.run([str(binary), *replay_args], cwd=root,
+                            env=environment).returncode
+    if audio_file_hash(binary) != binary_hash:
+        raise diagnostic_error("post-replay-provenance", "binary-changed",
+                               RuntimeError("verifier executable changed during replay"))
     try:
         unchanged_source = source_hash(root) == source
     except OSError as error:
@@ -1342,12 +1381,12 @@ def main():
             raise diagnostic_error("post-replay-provenance", "rom-input-changed",
                                    RuntimeError("audio trace ROM/input file changed during replay"))
         try:
-            unchanged_dll = audio_file_hash(dll) == audio_dll_hash
+            unchanged_binary = audio_file_hash(binary) == audio_binary_hash
         except OSError as error:
-            raise diagnostic_error("post-replay-provenance", "dll-read", error)
-        if not unchanged_dll:
-            raise diagnostic_error("post-replay-provenance", "dll-changed",
-                                   RuntimeError("audio trace DLL changed during replay"))
+            raise diagnostic_error("post-replay-provenance", "binary-read", error)
+        if not unchanged_binary:
+            raise diagnostic_error("post-replay-provenance", "binary-changed",
+                                   RuntimeError("audio trace executable changed during replay"))
         if result == 0:
             check_audio_trace(args.audio_trace, audio_identity)
     print(f"Verifier total: {time.perf_counter() - started:.2f}s", file=sys.stderr)

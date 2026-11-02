@@ -30,6 +30,14 @@ Jim retired issue #6 (2026-11-01). Progress and blockers are reported in this
 conversation; durable evidence stays in repository reports and owned artifacts.
 Historical issue references are evidence provenance, not a reporting destination.
 
+Jim's verifier execution direction (2026-11-02): ordinary Rust compilation is
+enough for local compiler checks. Replace the verifier DLL in GitHub Actions
+with a headless Rust executable using the existing verifier and orchestration.
+Preserve its replay modes, units, checkpoint operations, comparisons and actual
+source/native/input identity checks. Windows replay runners remain the current
+platform; changing the executable does not authorize restarting Linux work.
+Existing in-flight replay evidence retains its original artifact identities.
+
 The [accepted destination](target-architecture/README.md) is one deterministic owned
 Session, our renderer/audio and small platform libraries, independent of SNES emulation.
 Map Rando needs custom sprites/palettes, configurable rooms/doors and opt-in re-spin/QoL.
@@ -153,8 +161,9 @@ captures required by state or codec changes under resource admission. Continue
 the complete existing movie scope above; defer new trick/scenario expansion.
 Report reached behavior and mutation sensitivity separately from passing rows.
 
-1. cargo fmt --check; cargo check --no-default-features --lib with warnings denied;
-   one DLL build: python tools/verify_dll.py --build-only. Cargo enforces
+1. cargo fmt --check; cargo check --no-default-features --lib with warnings denied.
+   CI builds the headless verifier executable and runs the existing harness.
+   Cargo enforces
    warnings='deny' in sm/Cargo.toml for every sm target while preserving dependency
    flags. Direct rustc uses explicit -D warnings, including detached/mutation builds.
    Fix diagnostics; blanket suppression and historical warning-bearing builds do

@@ -18,10 +18,12 @@ Read PLAN's 2026-11-01 work order and migration scope before assigning phase wor
 PLAN owns current pacing and reporting; the compiler/fidelity gates and full
 completion scope below remain required.
 
-**Landing rule (Jim, 2026-10-29).** A change lands when the local compiler gate
-(fmt; `rustc --emit=metadata` of `sm` with and without `sm_verify_dll`;
-`player_detached`; source inventory), PR CI and a full corpus on its exact head
-are green. The PR description carries the evidence; no separate qualification
+**Landing rule (Jim, 2026-10-29; local execution clarified 2026-11-02).**
+A change lands when local formatting, ordinary `cargo check` with warnings
+denied and source inventory checks pass, and PR CI and a full corpus on its
+exact head are green. CI builds and links the actual headless verifier
+executable and runs the replays; local checks do not need an executable or DLL
+build. The PR description carries the evidence; no separate qualification
 records, timing tables or resource-ledger prose are required.
 
 ### Direction (Jim, 2026-10-29)

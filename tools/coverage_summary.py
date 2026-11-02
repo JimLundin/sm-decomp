@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Summarise corpus source coverage of the instrumented verifier DLL.
+"""Summarise corpus source coverage of the instrumented verifier executable.
 
 Usage: coverage_summary.py LLVM_COV PROFDATA OBJECT OUTPUT.md [ROUTE_PROFDATA]
            [--unit UNIT_PROFDATA --combined COMBINED_PROFDATA --unit-object TEST_BINARY...]
@@ -90,7 +90,7 @@ def load(llvm_cov, profdata, obj, *others):
 def load_union(llvm_cov, profdata, obj, *others):
     """Per-file (lines hit, lines, functions hit, functions) over several objects.
 
-    The verifier DLL (direct rustc, relative crate roots) and the Cargo-built
+    The verifier executable (direct rustc, relative crate roots) and the Cargo-built
     test binaries spell one source path differently, so llvm-cov reports such
     a file once per spelling; their lines and functions (by start line) are
     united here instead of the last spelling replacing the others.

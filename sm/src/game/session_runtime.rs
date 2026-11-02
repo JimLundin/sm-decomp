@@ -2735,7 +2735,7 @@ impl sm_game::dialogue_ram::Access for Runtime<'_> {
         }
     }
     fn dialogue_binding(&self, shoot: bool) -> u16 {
-        let at = if shoot { 0x9b2 } else { 0x9b4 };
+        let at = if shoot { 0x9b2 } else { 0x9b6 };
         self.word(at)
     }
     fn dialogue_select_pause(&mut self) {

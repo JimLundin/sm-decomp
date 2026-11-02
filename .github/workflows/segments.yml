@@ -65,21 +65,21 @@ jobs:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/windows-native
       - name: Reuse a verifier built from the same sources
-        # verify_dll.py still rebuilds unless the DLL's stamp matches these sources,
+        # verify_dll.py still rebuilds unless the executable's stamp matches these sources,
         # the compiler and its options; the native archives count by their sources.
         uses: actions/cache@v4
         with:
-          path: target/verify-dll
-          key: verifier-direct-${{ hashFiles('crates/**', 'sm/**', 'Cargo.lock', 'rust-toolchain.toml', 'tools/verify_dll.py', 'tools/install_lakesnes.py', 'tools/install_native_*.py', '.github/actions/windows-native/action.yml') }}
-      - name: Build the verifier DLL (direct, as the local Fast loop does)
+          path: target/verify-host
+          key: verifier-executable-direct-${{ hashFiles('crates/**', 'sm/**', 'Cargo.lock', 'rust-toolchain.toml', 'tools/verify_dll.py', 'tools/install_lakesnes.py', 'tools/install_native_*.py', '.github/actions/windows-native/action.yml') }}
+      - name: Build the verifier executable (direct, as the local Fast loop does)
         env:
           # Every native archive is rebuilt here from these pinned sources.
           SM_NATIVE_IDENTITY: ${{ hashFiles('crates/**', 'sm/**', 'tools/install_lakesnes.py', 'tools/install_native_*.py', '.github/actions/windows-native/action.yml') }}
         run: |
           python tools/verify_dll.py --build-only --direct
-          if ($LASTEXITCODE -ne 0) { throw 'Verifier DLL build failed' }
+          if ($LASTEXITCODE -ne 0) { throw 'Verifier executable build failed' }
           New-Item -ItemType Directory -Force -Path verifier | Out-Null
-          Copy-Item target/verify-dll/sm_verify.dll verifier/
+          Copy-Item target/verify-host/sm_verify.exe verifier/
           Copy-Item -Recurse (Split-Path -Parent $env:LIBRARY_PATH) verifier/sdk
       - uses: actions/upload-artifact@v4
         with:
@@ -114,8 +114,8 @@ jobs:
           path: verifier
       - name: Place the verifier
         run: |
-          New-Item -ItemType Directory -Force -Path target/verify-dll | Out-Null
-          Copy-Item verifier/sm_verify.dll target/verify-dll/
+          New-Item -ItemType Directory -Force -Path target/verify-host | Out-Null
+          Copy-Item verifier/sm_verify.exe target/verify-host/
           "LIBRARY_PATH=$((Resolve-Path verifier/sdk/lib).Path)" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
       - name: Cache the pinned movie download
         if: matrix.kind == 'route'
@@ -191,7 +191,7 @@ jobs:
           $rawLog = Join-Path $env:RUNNER_TEMP 'corpus-raw.log'
           $currentRow = ''
           # Only fixed diagnostic categories survive; raw exception text stays private.
-          $diagnostic = '^DIAGNOSTIC stage=(post-replay|audio-trace-validation|post-replay-provenance|corpus-post-replay) category=(required-probes|required-facts|probe-follow-up|fact-follow-up|credits-fact|audio-output-completion|audio-footer-write|audio-footer-flush|checkpoint-origin-read|checkpoint-origin-changed|checkpoint-save|trace-read|trace-format|header-missing|header-provenance|footer-duplicate|output-stream|output-kind|footer-incomplete|output-counts|source-read|source-changed|rom-input-read|rom-input-changed|dll-read|dll-changed|inputs-changed|checkpoint-read|checkpoint-frame) tick=(unknown|[0-9]+)$'
+          $diagnostic = '^DIAGNOSTIC stage=(post-replay|audio-trace-validation|post-replay-provenance|corpus-post-replay) category=(required-probes|required-facts|probe-follow-up|fact-follow-up|credits-fact|audio-output-completion|audio-footer-write|audio-footer-flush|checkpoint-origin-read|checkpoint-origin-changed|checkpoint-save|trace-read|trace-format|header-missing|header-provenance|footer-duplicate|output-stream|output-kind|footer-incomplete|output-counts|source-read|source-changed|rom-input-read|rom-input-changed|binary-read|binary-changed|inputs-changed|checkpoint-read|checkpoint-frame) tick=(unknown|[0-9]+)$'
           python tools/verify_dll.py rom/sm.smc --corpus scenarios --no-build --direct @rows 2>&1 | Tee-Object -FilePath $rawLog | ForEach-Object {
             if (-not $env:AUDIO_TRACE) { $_ }
             elseif ($_ -match '^SEGMENT ([A-Za-z0-9-]+)') { $currentRow = $Matches[1] }

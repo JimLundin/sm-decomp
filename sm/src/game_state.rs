@@ -4728,7 +4728,7 @@ impl sm_game::dialogue_ram::Access for Game {
         }
     }
     fn dialogue_binding(&self, shoot: bool) -> u16 {
-        let at = if shoot { 0x9b2 } else { 0x9b4 };
+        let at = if shoot { 0x9b2 } else { 0x9b6 };
         u16::from_le_bytes([
             self.compatibility_byte(at),
             self.compatibility_byte((at) + 1),

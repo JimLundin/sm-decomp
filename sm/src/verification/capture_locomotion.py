@@ -1,5 +1,5 @@
 """Minimal existing PTRS1 carrier: fresh baseline or byte-exact owned comparison."""
-import argparse,ctypes,hashlib,json,os,struct,subprocess,sys
+import argparse,hashlib,json,os,struct,subprocess,sys
 from pathlib import Path
 if sys.flags.optimize: raise RuntimeError('verification requires Python assertions')
 CAPACITY=2097152
@@ -63,15 +63,20 @@ def main():
     sys.path.insert(0,str(root/'tools'));import verify_dll,player_transitions_compare as comparator
     if args.child is not None:
         case=args.child;assert args.first<=case<=args.last
-        ident=json.loads((out/'identity.json').read_text());assert verify_dll.source_hash(root)==ident['source'] and digest(root/'target/verify-dll/sm_verify.dll')==ident['dll_sha256']
-        sdk=os.add_dll_directory(str(Path(os.environ['LOCALAPPDATA'])/'sm-decomp-tools/SDL2-2.32.10/SDL2-2.32.10/x86_64-w64-mingw32/bin'))
-        host=verify_dll.load_host(root/'target/verify-dll/sm_verify.dll');verify_dll.check_source(host,ident['source']);verify_dll.check_library(host,root)
-        fn=host.sm_verify_player_transitions_rust;fn.argtypes=[ctypes.c_char_p,ctypes.c_uint32,ctypes.c_void_p,ctypes.c_size_t];fn.restype=ctypes.c_size_t
-        buffer=ctypes.create_string_buffer(CAPACITY);size=fn(os.fsencode(rom),case,buffer,len(buffer));assert 0<size<=CAPACITY,('capture failed',case,size)
-        data=buffer.raw[:size];(out/f'{case}.bin').write_bytes(data);check(case,data,comparator)
-        assert verify_dll.source_hash(root)==ident['source'] and digest(root/'target/verify-dll/sm_verify.dll')==ident['dll_sha256'];return
+        ident=json.loads((out/'identity.json').read_text());assert verify_dll.source_hash(root)==ident['source'] and digest(root/'target/verify-host'/verify_dll.HOST_BINARY)==ident['binary_sha256']
+        binary=root/'target/verify-host'/verify_dll.HOST_BINARY
+        environment=verify_dll.host_environment()
+        sdk=Path(os.environ['LOCALAPPDATA'])/'sm-decomp-tools/SDL2-2.32.10/SDL2-2.32.10/x86_64-w64-mingw32/bin'
+        environment['PATH']=str(sdk)+os.pathsep+environment.get('PATH','')
+        host=verify_dll.load_host(binary,environment);verify_dll.check_source(host,ident['source']);verify_dll.check_library(host,root)
+        environment['SM_VERIFY_EXPECTED_SOURCE_HASH']=ident['source']
+        environment['SM_VERIFY_EXPECTED_NATIVE_SHA256']=host['native']
+        output=out/f'{case}.bin'
+        subprocess.run([str(binary),'--host-capture-player-transitions',str(rom),str(case),str(output)],env=environment,check=True)
+        data=output.read_bytes();assert 0<len(data)<=CAPACITY,('capture failed',case,len(data));check(case,data,comparator)
+        assert verify_dll.source_hash(root)==ident['source'] and digest(root/'target/verify-host'/verify_dll.HOST_BINARY)==ident['binary_sha256'];return
     out.mkdir(exist_ok=False)
-    ident=dict(root=str(root),source=verify_dll.source_hash(root),dll_sha256=digest(root/'target/verify-dll/sm_verify.dll'),rom_sha256=digest(rom),driver_sha256=digest(Path(__file__)),export='sm_verify_player_transitions_rust')
+    ident=dict(root=str(root),source=verify_dll.source_hash(root),binary_sha256=digest(root/'target/verify-host'/verify_dll.HOST_BINARY),rom_sha256=digest(rom),driver_sha256=digest(Path(__file__)),export='sm_verify_player_transitions_rust')
     write(out/'identity.json',ident);report=dict(status='RUNNING',identity=ident,cases=[]);write(out/'results.json',report)
     reference=None
     if args.reference:
@@ -87,7 +92,7 @@ def main():
             if reference:
                 saved=next(r for r in prior['cases'] if r['case']==case);assert saved['passed'] and saved['sha256']==digest(reference/f'{case}.bin')
                 assert data==(reference/f'{case}.bin').read_bytes(),('exact baseline mismatch',case)
-            assert verify_dll.source_hash(root)==ident['source'] and digest(root/'target/verify-dll/sm_verify.dll')==ident['dll_sha256'];row['passed']=True
+            assert verify_dll.source_hash(root)==ident['source'] and digest(root/'target/verify-host'/verify_dll.HOST_BINARY)==ident['binary_sha256'];row['passed']=True
         except Exception as error:
             row['error']=repr(error);report['status']='FAILED';write(out/'results.json',report);raise
         write(out/'results.json',report);print('locomotion',case,'PASS',flush=True)
