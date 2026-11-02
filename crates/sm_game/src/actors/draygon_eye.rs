@@ -1,12 +1,12 @@
 //! Draygon's eye, which looks at Samus and puffs breath bubbles (bank
 //! $A5:C46B-$A5:C598), and the function-setting instructions.
 //! Common actor fields use the existing owner; outer boss dispatch stays in bank A5.
-use crate::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
+use crate::actors::access::{AccessMode::Native, ActorKey as Key};
+use crate::actors::draygon_host::Lease;
 use crate::actors::draygon_host::{BODY, EYE, function, instruction_list as list};
-use crate::actors::host::{ActorLease, ActorRuntime as _, BossEffects as _, LeaseActors};
+use crate::actors::host::{ActorLease, ActorRuntime as _, BossEffects as _};
 use crate::actors::queries::angle_from_delta;
 use crate::enemy_script::EnemyScript;
-use crate::player_position::PlayerPosition as _;
 use crate::ram::words;
 
 /// Every 80h frames the eye puffs long breath bubbles (dust cloud / explosion
@@ -31,22 +31,16 @@ pub fn initialize(runtime: &mut impl ActorLease) {
 /// Instruction - enemy function = [[Y]] ($A5:9736), for actor `k`; with `k`
 /// the body or the eye, Draygon body function = [[Y]] ($A5:9F57) or Draygon
 /// eye function = [[Y]] ($A5:C47B). Was `set_mode`.
-pub fn set_function<H: LeaseActors + ?Sized>(
-    k: u16,
-    script: EnemyScript,
-    game: &mut H,
-) -> EnemyScript {
+pub fn set_function(k: u16, script: EnemyScript, runtime: &mut impl ActorLease) -> EnemyScript {
     let function = script.word(0);
-    game.lease()
-        .edit_actor(Key::from_legacy(k), Native, |actor| {
-            actor.variables[0] = function
-        });
+    runtime.edit_actor(Key::from_legacy(k), Native, |actor| {
+        actor.variables[0] = function
+    });
     script.offset(1)
 }
 /// Draygon eye function - facing left ($A5:C48D) or right ($A5:C513): puff
 /// breath bubbles and look towards Samus. Was `advance`.
-pub fn look_at_samus<H: LeaseActors + ?Sized>(k: u16, right: bool, game: &mut H) {
-    let mut runtime = game.lease();
+pub fn look_at_samus<L: Lease + ActorLease>(k: u16, right: bool, runtime: &mut L) {
     let x_offset = if right {
         BUBBLE_X
     } else {
@@ -65,7 +59,7 @@ pub fn look_at_samus<H: LeaseActors + ?Sized>(k: u16, right: bool, game: &mut H)
                 origin.y.whole.wrapping_sub(BUBBLE_Y),
             )
         };
-        runtime.foreign(|game| {
+        ActorLease::foreign(runtime, |game| {
             game.set_projectile_spawn_point(x, y);
             game.spawn_room_projectile(DUST_CLOUD, LONG_BREATH_BUBBLES);
         });

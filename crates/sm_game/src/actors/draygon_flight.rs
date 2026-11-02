@@ -8,7 +8,7 @@ use crate::actors::draygon_host::{
     ARMS, BANK, BODY, Draygon, EYE, Host, INTANGIBLE, SIGN, TAIL, abs16, function,
     instruction_list as list,
 };
-use crate::actors::host::BossEffects as _;
+use crate::actors::host::{ActorLease, BossEffects as _};
 use crate::actors::session_slots::session_slot;
 use crate::display::transfer::{Source, TilemapUpload, queue_tilemap};
 use crate::enemy_script::EnemyScript;
@@ -203,47 +203,23 @@ pub fn initialize_tail_or_arms<S: BossState>(arms: bool, game: &mut S) {
         session_slot!(game, Draygon[k].base.layer = 2);
     }
 }
-fn uses_spore_function(address: u32) -> bool {
-    matches!(address, 10873627 | 10873682 | 10873755 | 10873838)
-}
-
 /// Main AI - Draygon body ($A5:86FC, with `body`) or eye ($A5:C486): run the
-/// part's function, then the body carries the other parts with it. Was `update`.
-pub fn main_ai<L: Lease>(
+/// part's function on the lease, the effects that need the game in foreign
+/// calls, then the body carries the other parts with it. `fallback` runs the
+/// bank's functions that are not Draygon's. Was `update`.
+pub fn main_ai<L: Lease + ActorLease>(
     body: bool,
-    dispatch: impl FnOnce(u32, u16, &mut L::Game),
-    lease_dispatch: impl FnOnce(u32, u16, &mut L),
+    fallback: impl FnOnce(u32, u16, &mut L),
     game: &mut L,
 ) {
-    if !body {
-        let selected = game.foreign(|game| {
-            let k = game.current_enemy() as i32;
-            let state =
-                (u32::from(BANK) << 16) | u32::from(session_slot!(game, Draygon[k].function));
-            if uses_spore_function(state) {
-                Some((state, game.current_enemy()))
-            } else {
-                dispatch(state, game.current_enemy(), game);
-                None
-            }
-        });
-        if let Some((state, k)) = selected {
-            lease_dispatch(state, k, game);
-        }
-        return;
-    }
-    // The body's function runs on the lease, the effects that need the game
-    // in foreign calls.
     let k = game.current_enemy();
     let function = session_slot!(game, Draygon[k as i32].function);
     run_function_on(game, function, k, |game| {
-        let state = (u32::from(BANK) << 16) | u32::from(function);
-        if uses_spore_function(state) {
-            lease_dispatch(state, k, game);
-        } else {
-            game.foreign(|game| dispatch(state, k, game));
-        }
+        fallback((u32::from(BANK) << 16) | u32::from(function), k, game)
     });
+    if !body {
+        return;
+    }
     let x = session_slot!(game, Draygon[BODY].base.x_pos);
     for k in [EYE, TAIL, ARMS] {
         session_slot!(game, Draygon[k].base.x_pos = x);
@@ -255,10 +231,15 @@ pub fn main_ai<L: Lease>(
 }
 
 /// Run the bank $A5 body function `function` for part `k`, as the species
-/// table's dispatch does: the flight, swoop and grab functions on this lease, the rest
-/// through `fallback`, which chooses typed or physical dispatch.
-fn run_function_on<L: Lease>(game: &mut L, function: u16, k: u16, fallback: impl FnOnce(&mut L)) {
-    use crate::actors::{draygon_grab as grab, draygon_sweep as sweep};
+/// table's dispatch does, on this lease; the bank's other functions through `fallback`.
+fn run_function_on<L: Lease + ActorLease>(
+    game: &mut L,
+    function: u16,
+    k: u16,
+    fallback: impl FnOnce(&mut L),
+) {
+    use crate::actors::draygon_sweep as sweep;
+    use crate::actors::{draygon_death as death, draygon_eye as eye, draygon_grab as grab};
     match function {
         function::FIGHT_INTRO_INITIAL_DELAY => fight_intro(true, game),
         function::FIGHT_INTRO_DANCE => fight_intro(false, game),
@@ -266,6 +247,10 @@ fn run_function_on<L: Lease>(game: &mut L, function: u16, k: u16, fallback: impl
         function::SWOOP_RIGHT_DESCENDING => sweep::swoop(true, false, game),
         function::SWOOP_RIGHT_APEX => sweep::swoop_apex(true, game),
         function::SWOOP_RIGHT_ASCENDING => sweep::swoop(true, true, game),
+        function::SWOOP_LEFT_SETUP => {
+            fire_wall_turret(game);
+            sweep::swoop_setup(false, game);
+        }
         function::SWOOP_LEFT_DESCENDING => sweep::swoop(false, false, game),
         function::SWOOP_LEFT_APEX => sweep::swoop_apex(false, game),
         function::SWOOP_LEFT_ASCENDING => sweep::swoop(false, true, game),
@@ -286,8 +271,12 @@ fn run_function_on<L: Lease>(game: &mut L, function: u16, k: u16, fallback: impl
         function::GRABBED_FINAL_TAIL_WHIPS_ONGOING => grab::move_samus_with_draygon(k, game),
         function::FLAIL_TAIL_AND_FLY_STRAIGHT_UP => grab::flail_tail_and_fly_straight_up(game),
         function::FLY_STRAIGHT_UP => grab::fly_straight_up(game),
+        function::DEATH_DRIFT_TO_DEATH_SPOT => death::drift_to_death_spot(game),
+        function::DEATH_WAIT_FOR_EVIRS => death::wait_for_evirs(game),
+        function::DEATH_BURIED_BY_EVIRS => death::buried_by_evirs(game),
+        function::EYE_FACING_LEFT => eye::look_at_samus(k, false, game),
+        function::EYE_FACING_RIGHT => eye::look_at_samus(k, true, game),
         function::NONE => {}
-        // The left swoop setup's diagnostic, the death and anything else.
         _ => fallback(game),
     }
 }

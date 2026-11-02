@@ -14,11 +14,11 @@ use crate::actors::host::{
 };
 use crate::actors::{
     alcoon, bang, beetom, boyon, cacatac, choot, covern, crawlers, dragon, draygon_death,
-    draygon_eye, draygon_flight, draygon_grab, draygon_host, draygon_sweep, elevator, evir,
-    fire_pillar, flies, fune, geruta, gunship, kago, metroid, mini_crocomire, mochtroid,
-    multiviola, oum, phantoon, polyp, puyo, reflec, rinka, rio, rippers, roach, shutters,
-    sidehopper, skree, space_pirates, spike_platform, spore_spawn, squeept, tatori, torizo,
-    tripper, waver, work_robot, wrecked_ship_spark, yard, zoa,
+    draygon_eye, draygon_flight, draygon_grab, elevator, evir, fire_pillar, flies, fune, geruta,
+    gunship, kago, metroid, mini_crocomire, mochtroid, multiviola, oum, phantoon, polyp, puyo,
+    reflec, rinka, rio, rippers, roach, shutters, sidehopper, skree, space_pirates, spike_platform,
+    spore_spawn, squeept, tatori, torizo, tripper, waver, work_robot, wrecked_ship_spark, yard,
+    zoa,
 };
 use crate::combat_rules::LatchMode;
 use crate::enemy_projectiles::host::Effects as _;
@@ -59,7 +59,6 @@ pub trait TouchHost:
     SpeciesHost
     + ActorRuntime
     + LeaseActors
-    + draygon_host::Host
     + space_pirates::Pirates
     + torizo::Ai
     + phantoon::Dispatch
@@ -77,7 +76,6 @@ pub fn touch<H: TouchHost>(ea: u32, game: &mut H) {
         10780707 => game.contact_reaction(Death::Finalize),
         10795344 => (),
         10846284 => (),
-        10851818 => draygon_death::touch(game),
         // Ridley's contact leaves the death pending.
         10936153 => game.contact_reaction(Death::LeavePending),
         10977356 => (),
@@ -99,7 +97,6 @@ pub trait ShotHost:
     SpeciesHost
     + ActorRuntime
     + LeaseActors
-    + draygon_host::Host
     + space_pirates::Pirates
     + torizo::Ai
     + phantoon::Dispatch
@@ -120,7 +117,6 @@ pub fn shot<H: ShotHost>(ea: u32, _j: u16, game: &mut H) {
         10780717 => game.shot_reaction(Shot::Finalize),
         10846253 => game.shot_reaction(Shot::Finalize),
         10846284 => (),
-        10851824 => draygon_death::shot(game),
         10911820 => (),
         10977356 => (),
         10982581 => (),
@@ -134,7 +130,7 @@ pub fn shot<H: ShotHost>(ea: u32, _j: u16, game: &mut H) {
 }
 
 /// What the draw hooks need beyond their actors' own hosts.
-pub trait DrawHookHost: SpeciesHost + LeaseActors + draygon_host::Host {}
+pub trait DrawHookHost: SpeciesHost + LeaseActors {}
 
 /// An enemy species' graphics draw hook, keyed by its address.
 pub fn draw_hook<H: DrawHookHost>(ea: u32, game: &mut H) {
@@ -143,7 +139,6 @@ pub fn draw_hook<H: DrawHookHost>(ea: u32, game: &mut H) {
     }
     match ea {
         10518604 => (),
-        10851138 => draygon_flight::set_bg2_scroll(game),
         11042892 => (),
         11110278 => (),
         _ => game.unknown_routine(),
@@ -186,66 +181,23 @@ pub trait AiHost:
     fn install_draygon_layers(&mut self);
 }
 
-/// The bank $A5 functions Draygon's parts run, keyed by address.
-pub fn draygon_function<H: AiHost>(ea: u32, k: u16, game: &mut H) {
-    match ea {
-        10848691 => {
-            draygon_flight::fire_wall_turret(game);
-            draygon_sweep::swoop_setup(false, game);
-        }
-        10848027 => draygon_flight::fight_intro(true, game),
-        10848139 => draygon_flight::fight_intro(false, game),
-        10850693 => draygon_death::drift_to_death_spot(game),
-        10850964 => draygon_death::wait_for_evirs(game),
-        10850987 => draygon_death::buried_by_evirs(game),
-        10849817 => draygon_grab::chase_samus(game),
-        10850064 => draygon_grab::repelled_by_grapple(game),
-        10850600 => draygon_grab::flail_tail_and_fly_straight_up(game),
-        10850644 => draygon_grab::fly_straight_up(game),
-        10848244 => draygon_sweep::swoop_setup(true, game),
-        10848433 => draygon_sweep::swoop(true, false, game),
-        10848546 => draygon_sweep::swoop_apex(true, game),
-        10848593 => draygon_sweep::swoop(true, true, game),
-        10848768 => draygon_sweep::swoop(false, false, game),
-        10848848 => draygon_sweep::swoop_apex(false, game),
-        10848912 => draygon_sweep::swoop(false, true, game),
-        10849034 => draygon_flight::goop_setup(true, game),
-        10849422 => draygon_flight::goop_setup(false, game),
-        10849106 => draygon_flight::goop_move_until_in_range(true, game),
-        10849492 => draygon_flight::goop_move_until_in_range(false, game),
-        10849198 => draygon_flight::goop_firing(true, game),
-        10849584 => draygon_flight::goop_firing(false, game),
-        10849331 => draygon_flight::goop_move_until_off_screen(true, game),
-        10849714 => draygon_flight::goop_move_until_off_screen(false, game),
-        10850078 => draygon_grab::move_to_target(k, game),
-        10850262 => draygon_grab::rising_spiral(k, game),
-        10850516 => draygon_grab::tail_whip(k, game),
-        10850565 => draygon_grab::final_tail_whips(k, game),
-        10850596 => draygon_grab::move_samus_with_draygon(k, game),
-        10863757 => draygon_eye::look_at_samus(k, false, game),
-        10863891 => draygon_eye::look_at_samus(k, true, game),
-        // Spore Spawn's functions ($A5:EB1A-$A5:EBEE), which the dispatch shares.
-        10846283 | 10873626 => (),
-        10873627 => game.with_lease(spore_spawn::descend),
-        10873682 => game.with_lease(|runtime| spore_spawn::orbit(k, runtime)),
-        10873755 => game.with_lease(spore_spawn::begin_return),
-        10873838 => game.with_lease(spore_spawn::finish_return),
-        _ => game.unknown_routine(),
-    }
-}
-
-/// Dispatch the shared bank $A5 functions while retaining the scheduler's lease.
+/// Run the bank $A5 functions Draygon's dispatch shares but does not own: Spore
+/// Spawn's ($A5:EB1A-$A5:EBEE), while retaining the scheduler's lease.
 pub fn draygon_function_on_lease<L>(ea: u32, k: u16, game: &mut L)
 where
-    L: crate::actors::host::ActorLease + spore_spawn::Lease,
+    L: crate::actors::host::ActorLease
+        + spore_spawn::Lease
+        + crate::actors::boss_lease::BossLease<Game: SpeciesHost>,
 {
-    crate::actors::host::ActorLease::owned_lease_call(game, |game| match ea {
-        10873627 => spore_spawn::descend(game),
-        10873682 => spore_spawn::orbit(k, game),
-        10873755 => spore_spawn::begin_return(game),
-        10873838 => spore_spawn::finish_return(game),
-        _ => unreachable!(),
-    });
+    use crate::actors::host::ActorLease as Owned;
+    match ea {
+        10873626 => (),
+        10873627 => Owned::owned_lease_call(game, spore_spawn::descend),
+        10873682 => Owned::owned_lease_call(game, |game| spore_spawn::orbit(k, game)),
+        10873755 => Owned::owned_lease_call(game, spore_spawn::begin_return),
+        10873838 => Owned::owned_lease_call(game, spore_spawn::finish_return),
+        _ => crate::actors::boss_lease::BossLease::foreign(game, |game| game.unknown_routine()),
+    }
 }
 
 /// The AI routines that run on one actor lease, keyed by address: the lease the scheduler
@@ -347,6 +299,30 @@ pub fn lease_ai<H: LeaseScope + ?Sized>(ea: u32, game: &mut H) -> bool {
         10736560 => game.with_lease(yard::touch),
         10736745 => game.with_lease(yard::shot),
         10863723 => game.with_lease(draygon_eye::initialize),
+        // Draygon ($A5).
+        10847879 => game.with_lease(|runtime| {
+            draygon_flight::initialize(
+                |runtime| {
+                    crate::actors::boss_lease::BossLease::foreign(runtime, |game| {
+                        game.install_draygon_layers()
+                    })
+                },
+                runtime,
+            )
+        }),
+        10847996 | 10863750 => game.with_lease(|runtime| {
+            draygon_flight::main_ai(ea == 10847996, draygon_function_on_lease, runtime)
+        }),
+        10851661 => game.with_lease(draygon_death::hurt_ai),
+        10864025 => {
+            game.with_lease(|runtime| draygon_flight::initialize_tail_or_arms(false, runtime))
+        }
+        10864045 => {
+            game.with_lease(|runtime| draygon_flight::initialize_tail_or_arms(true, runtime))
+        }
+        10851818 => game.with_lease(draygon_death::touch),
+        10851824 => game.with_lease(draygon_death::shot),
+        10851847 => game.with_lease(draygon_death::power_bomb),
         10720486 => game.with_lease(elevator::initialize),
         11048675 => game.with_lease(fune::initialize),
         11048752 => game.with_lease(fune::main_ai),
@@ -606,6 +582,22 @@ pub fn lease_instruction<H: LeaseScope + ?Sized>(
             j
         }
         11195446 => game.with_lease(|runtime| torizo::eye_beam(j, runtime)),
+        // Draygon ($A5).
+        10852159 => game.with_lease(|runtime| draygon_death::spawn_dying_sprite(21, j, runtime)),
+        10852178 => game.with_lease(|runtime| draygon_death::spawn_dying_sprite(3, j, runtime)),
+        10852197 => game.with_lease(|runtime| draygon_death::spawn_dying_sprite(29, j, runtime)),
+        10852216 => game.with_lease(|runtime| draygon_death::spawn_dying_sprite(24, j, runtime)),
+        10854268 | 10854318 => {
+            game.with_lease(|runtime| draygon_death::spawn_goop(ea == 10854318, j, runtime))
+        }
+        10851549 => game.with_lease(|runtime| draygon_flight::set_instruction_lists(j, runtime)),
+        10852150 => game.with_lease(|runtime| draygon_eye::set_function(k, j, runtime)),
+        10852563 => game.with_lease(|runtime| draygon_flight::paralyse_tail_and_arms(j, runtime)),
+        10852591 => game.with_lease(|runtime| draygon_flight::set_intangible(j, runtime)),
+        10853274 => game.with_lease(|runtime| draygon_grab::tail_whip_hit(j, runtime)),
+        10853898 => game.with_lease(|runtime| draygon_flight::displace_graphics(j, runtime)),
+        10854231 => game.with_lease(|runtime| draygon_eye::set_function(0, j, runtime)),
+        10863739 => game.with_lease(|runtime| draygon_eye::set_function(0x40, j, runtime)),
         _ => return Err(j),
     })
 }
@@ -617,6 +609,7 @@ pub fn lease_touch<H: LeaseScope + ?Sized>(ea: u32, game: &mut H) -> bool {
         10670984 => game.with_lease(|runtime| oum::touch(true, runtime)),
         10670988 => game.with_lease(|runtime| oum::touch(false, runtime)),
         11192695 => game.with_lease(torizo::touch),
+        10851818 => game.with_lease(draygon_death::touch),
         _ => return false,
     }
     true
@@ -629,6 +622,7 @@ pub fn lease_shot<H: LeaseScope + ?Sized>(ea: u32, game: &mut H) -> bool {
         10671028 => game.with_lease(oum::shot),
         11192700 => game.with_lease(torizo::shot),
         11192770 => game.with_lease(torizo::standing_shot),
+        10851824 => game.with_lease(draygon_death::shot),
         _ => return false,
     }
     true
@@ -640,6 +634,7 @@ pub fn lease_draw_hook<H: LeaseScope + ?Sized>(ea: u32, game: &mut H) -> bool {
     match ea {
         10738444 => game.with_lease(reflec::cycle_palette),
         11062375 => game.with_lease(work_robot::palette),
+        10851138 => game.with_lease(draygon_flight::set_bg2_scroll),
         _ => return false,
     }
     true
@@ -710,7 +705,6 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         10795344 => (),
         10811067 => (),
         10846284 => (),
-        10851824 => draygon_death::shot(game),
         10864042 => (),
         10864068 => (),
         10874354 => (),
@@ -757,20 +751,8 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         // Bank $AA: the Torizos, Shaktool and the statues.
         0xb20000..=0xb2ffff => space_pirates::dispatch_ai(ea, game),
         // Bank $A5.
-        10847879 => draygon_flight::initialize(|game: &mut H| game.install_draygon_layers(), game),
-        10847996 => game.with_lease(|runtime| {
-            draygon_flight::main_ai(true, draygon_function, draygon_function_on_lease, runtime)
-        }),
-        10863750 => game.with_lease(|runtime| {
-            draygon_flight::main_ai(false, draygon_function, draygon_function_on_lease, runtime)
-        }),
-        10851661 => draygon_death::hurt_ai(game),
-        10864025 => draygon_flight::initialize_tail_or_arms(false, game),
-        10864045 => draygon_flight::initialize_tail_or_arms(true, game),
         10846243 => game.contact_reaction(Death::Finalize),
         10846253 => game.shot_reaction(Shot::Finalize),
-        10851818 => draygon_death::touch(game),
-        10851847 => draygon_death::power_bomb(game),
         // Bank $A3: the crawlers, divers, platforms, bugs and fish.
         10720554 => elevator::main_ai(game),
         10739851 | 10741442 => {
@@ -1009,7 +991,6 @@ pub fn pre_instruction<H: PreInstructionHost>(ea: u32, game: &mut H) {
 pub trait InstructionHost:
     SpeciesHost
     + space_pirates::Pirates
-    + draygon_host::Host
     + LeaseActors
     + torizo::Ai
     + phantoon::Dispatch
@@ -1098,11 +1079,6 @@ pub fn instruction<H: InstructionHost>(
             LeaseActors::lease(game).queue_sound(2, 6, j.word(0));
             j.offset(1)
         }
-        10852159 => draygon_death::spawn_dying_sprite(21, j, game),
-        10852178 => draygon_death::spawn_dying_sprite(3, j, game),
-        10852197 => draygon_death::spawn_dying_sprite(29, j, game),
-        10852216 => draygon_death::spawn_dying_sprite(24, j, game),
-        10854268 | 10854318 => draygon_death::spawn_goop(ea == 10854318, j, game),
         10725992 => sidehopper::queue_sound(j, game),
         10657941 => cacatac::resume_moving(k, j, game),
         10734646 | 10734655 | 10734664 | 10734687 | 10734712 => yard::instruction(ea, k, j, game),
@@ -1138,15 +1114,6 @@ pub fn instruction<H: InstructionHost>(
         // instructions return the script unchanged.
         11190984 | 11196831 => j,
         0xb20000..=0xb2ffff => space_pirates::dispatch_instruction(ea, k, j, game),
-        // Bank $A5.
-        10851549 => draygon_flight::set_instruction_lists(j, game),
-        10852150 => draygon_eye::set_function(k, j, game),
-        10852563 => draygon_flight::paralyse_tail_and_arms(j, game),
-        10852591 => draygon_flight::set_intangible(j, game),
-        10853274 => draygon_grab::tail_whip_hit(j, game),
-        10853898 => draygon_flight::displace_graphics(j, game),
-        10854231 => draygon_eye::set_function(0, j, game),
-        10863739 => draygon_eye::set_function(0x40, j, game),
         10915247 | 10915347..=10915793 => fire_pillar::instruction(ea, j, game),
         10664899 => {
             rio::set_animation_finished(game);

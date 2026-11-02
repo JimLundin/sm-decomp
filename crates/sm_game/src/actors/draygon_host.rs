@@ -125,6 +125,9 @@ pub mod function {
     pub const DEATH_DRIFT_TO_DEATH_SPOT: u16 = 0x9185;
     pub const DEATH_WAIT_FOR_EVIRS: u16 = 0x9294;
     pub const DEATH_BURIED_BY_EVIRS: u16 = 0x92ab;
+    /// The eye's functions while facing left ($A5:C48D) and right ($A5:C513).
+    pub const EYE_FACING_LEFT: u16 = 0xc48d;
+    pub const EYE_FACING_RIGHT: u16 = 0xc513;
     /// $A5:804B, an RTS: the eye's function while it does nothing.
     pub const NONE: u16 = 0x804b;
 }

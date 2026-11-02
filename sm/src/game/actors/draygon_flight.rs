@@ -59,6 +59,7 @@ const _: () = {
         at(f::DEATH_DRIFT_TO_DEATH_SPOT) == 10850693 && at(f::DEATH_WAIT_FOR_EVIRS) == 10850964
     );
     assert!(at(f::DEATH_BURIED_BY_EVIRS) == 10850987 && at(f::NONE) == 10846283);
+    assert!(at(f::EYE_FACING_LEFT) == 10863757 && at(f::EYE_FACING_RIGHT) == 10863891);
 };
 
 impl Host for Game {

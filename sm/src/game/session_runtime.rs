@@ -1497,15 +1497,6 @@ impl Runtime<'_> {
             11001151 => self.owned_call(sm_game::actors::phantoon::hurt),
             11001237 => self.owned_call(sm_game::actors::phantoon::touch),
             11001243 => self.owned_call(sm_game::actors::phantoon::shot),
-            10847996 | 10863750 => self.owned_call(|runtime| {
-                use sm_game::actors::{draygon_flight, species};
-                draygon_flight::main_ai(
-                    routine == 10847996,
-                    species::draygon_function,
-                    species::draygon_function_on_lease,
-                    runtime,
-                )
-            }),
             11771926 => self.owned_call(actors::botwoon::shot),
             11771903 | 11771969 => {
                 self.owned_call(|runtime| actors::botwoon::contact(routine == 11771969, runtime))

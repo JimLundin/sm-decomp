@@ -8,7 +8,7 @@ use crate::actors::draygon_host::{
     ARMS, BANK, BODY, DELETE, Draygon, EYE, GRAPPLE_DROPPED, Host, SIGN, TAIL, abs16, function,
     instruction_list as list,
 };
-use crate::actors::host::{ActorLease as _, BossEffects as _, Death, LeaseActors, Shot};
+use crate::actors::host::{ActorLease, BossEffects as _, Death, Shot};
 use crate::actors::queries::angle_from_delta;
 use crate::actors::session_slots::session_slot;
 use crate::enemy_script::EnemyScript;
@@ -241,27 +241,27 @@ fn dying_smoke<H: Host + ?Sized>(game: &mut H) {
     }
 }
 /// Instruction - spawn dying Draygon sprite object `kind` within 40h px ($A5:973F-$A5:9778).
-pub fn spawn_dying_sprite<H: Host>(kind: u16, script: EnemyScript, game: &mut H) -> EnemyScript {
+pub fn spawn_dying_sprite<L: Lease>(kind: u16, script: EnemyScript, game: &mut L) -> EnemyScript {
     let random = game.roll_random();
     let [dx, dy] = [random, random >> 8].map(|value| (value & 0x7f).wrapping_sub(64));
     let x = session_slot!(game, Draygon[BODY].base.x_pos).wrapping_add(dx);
     let y = session_slot!(game, Draygon[BODY].base.y_pos).wrapping_add(dy);
-    game.create_sprite(x, y, kind, 0);
+    game.foreign(|game| game.create_sprite(x, y, kind, 0));
     script
 }
 /// Instruction - spawn Draygon goop - leftwards ($A5:9F7C) or rightwards ($A5:9FAE).
-pub fn spawn_goop<H: Host + LeaseActors>(
+pub fn spawn_goop<L: Lease + ActorLease>(
     right: bool,
     script: EnemyScript,
-    game: &mut H,
+    game: &mut L,
 ) -> EnemyScript {
     let dx = if right { 24 } else { 0xffe4 };
     let x = session_slot!(game, Draygon[BODY].base.x_pos).wrapping_add(dx);
     let y = session_slot!(game, Draygon[BODY].base.y_pos).wrapping_sub(16);
     game.place_projectile_spawn(x, y);
     let angle = (game.roll_random() & 0x3f) + if right { 192 } else { 128 };
-    LeaseActors::lease(game).write_slice_le(EPROJ_INIT_PARAM_2, angle);
-    let enemy = crate::actors::boss_lease::BossState::current_enemy(game);
+    game.write_slice_le(EPROJ_INIT_PARAM_2, angle);
+    let enemy = game.current_enemy();
     game.spawn_actor_eproj(2, enemy, 0x8e50);
     script
 }
