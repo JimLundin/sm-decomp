@@ -849,8 +849,8 @@ ram_vars! {
 
 // Named SNES word reads, assignments and updates share one caller-side interface.
 // `word!(game.field)` reads; `word!(game.field = value)` writes. Arrays use
-// `field[index]`. Updates use `(game.field, method(argument), reread)` or an
-// expression `(game.field, |old| value)`; `reread` is optional. Ordered stores
+// `field[index]`. Updates use `(game.field += value, reread)` (or `-=`, `&=`) or
+// an expression `(game.field, |old| value)`; `reread` is optional. Ordered stores
 // of one literal use `(game, value; field, other[index])`; different values use
 // `(game; field = value; other[index] = next;)`.
 //
@@ -864,7 +864,7 @@ ram_vars! {
 // is hoisted across ordered stores; update expressions create no closure.
 #[macro_export]
 macro_rules! ram_word {
-    // Compound arithmetic wraps at 16 bits; bits/shifts keep ordinary u16 operations.
+    // Compound arithmetic wraps at 16 bits; `&=` keeps the ordinary u16 operation.
     // Delegate destination capture, old load, RHS evaluation and store to the update arm.
     ($game:ident.$field:ident$([$index:expr])? &= $value:expr $(, $result:ident)? $(,)?) => {
         $crate::ram_word!($game.$field$([$index])?, |old| old & $value $(, $result)?)
@@ -875,34 +875,10 @@ macro_rules! ram_word {
     ($game:ident.$field:ident$([$index:expr])? -= $value:expr $(, $result:ident)? $(,)?) => {
         $crate::ram_word!($game.$field$([$index])?, |old| old.wrapping_sub($value) $(, $result)?)
     };
-    ($game:ident.$field:ident$([$index:expr])? >>= $value:expr $(, $result:ident)? $(,)?) => {
-        $crate::ram_word!($game.$field$([$index])?, |old| old >> $value $(, $result)?)
-    };
-    ($game:ident.$field:ident$([$index:expr])? ^= $value:expr $(, $result:ident)? $(,)?) => {
-        $crate::ram_word!($game.$field$([$index])?, |old| old ^ $value $(, $result)?)
-    };
-    ($game:ident.$field:ident$([$index:expr])? |= $value:expr $(, $result:ident)? $(,)?) => {
-        $crate::ram_word!($game.$field$([$index])?, |old| old | $value $(, $result)?)
-    };
-    // Explicit promoted operations retain their original RHS type and final u16 cast.
-    // Checked operations use ordinary Rust overflow/shift rules before truncation.
-    (bits_i32, $game:ident.$field:ident$([$index:expr])? |= $value:expr $(, $result:ident)? $(,)?) => {
-        $crate::ram_word!($game.$field$([$index])?, |old| ((old as i32) | $value) as u16 $(, $result)?)
-    };
-    (checked_i32, $game:ident.$field:ident$([$index:expr])? *= $value:expr $(, $result:ident)? $(,)?) => {
-        $crate::ram_word!($game.$field$([$index])?, |old| ((old as i32) * $value) as u16 $(, $result)?)
-    };
-    (checked_i32, $game:ident.$field:ident$([$index:expr])? += $value:expr $(, $result:ident)? $(,)?) => {
-        $crate::ram_word!($game.$field$([$index])?, |old| ((old as i32) + $value) as u16 $(, $result)?)
-    };
+    // The explicit promoted subtraction retains its i32 RHS and final u16 cast,
+    // with ordinary Rust overflow rules before truncation.
     (checked_i32, $game:ident.$field:ident$([$index:expr])? -= $value:expr $(, $result:ident)? $(,)?) => {
         $crate::ram_word!($game.$field$([$index])?, |old| ((old as i32) - $value) as u16 $(, $result)?)
-    };
-    (checked_i32, $game:ident.$field:ident$([$index:expr])? <<= $value:expr $(, $result:ident)? $(,)?) => {
-        $crate::ram_word!($game.$field$([$index])?, |old| ((old as i32) << $value) as u16 $(, $result)?)
-    };
-    (wrapping_u32, $game:ident.$field:ident$([$index:expr])? += $value:expr $(, $result:ident)? $(,)?) => {
-        $crate::ram_word!($game.$field$([$index])?, |old| (old as u32).wrapping_add($value) as u16 $(, $result)?)
     };
 
     ($game:ident.$field:ident[$index:expr]) => {
@@ -924,12 +900,6 @@ macro_rules! ram_word {
     };
     ($game:ident, $value:literal; $($field:ident$([$index:expr])?),+ $(,)?) => {
         $($crate::ram_word!($game.$field$([$index])? = $value);)+
-    };
-    ($game:ident.$field:ident$([$index:expr])?, $method:ident($argument:expr $(,)?) $(, $result:ident)? $(,)?) => {
-        $crate::ram_word!($game.$field$([$index])?, |word| word.$method($argument) $(, $result)?)
-    };
-    ($game:ident.$field:ident$([$index:expr])?, |$old:ident| { $value:expr } $(, $result:ident)? $(,)?) => {
-        $crate::ram_word!($game.$field$([$index])?, |$old| $value $(, $result)?)
     };
     ($game:ident.$field:ident[$index:expr], |$old:ident| $value:expr $(, $result:ident)? $(,)?) => {{
         let destination = $crate::ram_word!(@offset $field[$index]);
@@ -1032,73 +1002,6 @@ macro_rules! ram_slot {
         )
         .expect("enemy field outside RAM")
     };
-    (byte $game:ident, $layout:ident[$slot:expr] $(.$field:ident)+ [$lane:expr] = $value:expr) => {
-        match ($value, $crate::ram_slot!(@at $layout, $slot, $($field).+)) {
-            (value, at) => {
-                let value: ::core::primitive::u8 = value;
-                let at = ::core::primitive::usize::try_from(at as ::core::primitive::isize + ($lane) as ::core::primitive::isize)
-                    .expect("enemy field outside RAM");
-                $game.ram().write_byte(at, value);
-            }
-        }
-    };
-    (byte $game:ident, $layout:ident[$slot:expr] $(.$field:ident)+ [$lane:expr]) => {
-        match $crate::ram_slot!(@at $layout, $slot, $($field).+) {
-            at => {
-                let at = ::core::primitive::usize::try_from(
-                    at as ::core::primitive::isize + ($lane) as ::core::primitive::isize,
-                )
-                .expect("enemy field outside RAM");
-                $game.ram().read_byte(at)
-            },
-        }
-    };
-    // Split-word pairs, as `rtl::AddToHiLo`/`SetHiLo`: the value first, then low
-    // is read before high and written before high.
-    ($game:ident, $layout:ident[$slot:expr] $(.$prefix:ident)* ($hi:ident, $lo:ident) += $value:expr) => {
-        match $value {
-            value => {
-                let value: ::core::primitive::u32 = value;
-                let low = ::core::primitive::u32::from($crate::ram_slot!($game, $layout[$slot] $(.$prefix)* .$lo));
-                let high = ::core::primitive::u32::from($crate::ram_slot!($game, $layout[$slot] $(.$prefix)* .$hi));
-                let sum = (low | (high << 16)).wrapping_add(value);
-                $crate::ram_slot!($game, $layout[$slot] $(.$prefix)* .$lo = sum as ::core::primitive::u16);
-                $crate::ram_slot!($game, $layout[$slot] $(.$prefix)* .$hi = (sum >> 16) as ::core::primitive::u16);
-            }
-        }
-    };
-    ($game:ident, $layout:ident[$slot:expr] $(.$prefix:ident)* ($hi:ident, $lo:ident) = $value:expr) => {
-        match $value {
-            value => {
-                let value: ::core::primitive::u32 = value;
-                $crate::ram_slot!($game, $layout[$slot] $(.$prefix)* .$lo = value as ::core::primitive::u16);
-                $crate::ram_slot!($game, $layout[$slot] $(.$prefix)* .$hi = (value >> 16) as ::core::primitive::u16);
-            }
-        }
-    };
-    // Ordered word stores to several fields; the slot is re-evaluated per store.
-    ($game:ident, $layout:ident[$slot:expr] $(.$prefix:ident)*; $($stores:tt)+) => {
-        $crate::ram_slot!(@stores $game, $layout[$slot] ($($prefix)*); $($stores)+)
-    };
-    (@stores $game:ident, $layout:ident[$slot:expr] $prefix:tt; $($field:ident = $value:expr),+ $(,)?) => {
-        $($crate::ram_slot!(@store $game, $layout[$slot] $prefix $field = $value);)+
-    };
-    (@store $game:ident, $layout:ident[$slot:expr] ($($prefix:ident)*) $field:ident = $value:expr) => {
-        $crate::ram_slot!($game, $layout[$slot] $(.$prefix)* .$field = $value)
-    };
-    // Read-modify-write: the old word is read first, as the leading operand of
-    // the replaced `field = field OP ..` value was; the slot is evaluated once.
-    ($game:ident, $layout:ident[$slot:expr] $(.$field:ident)+, |$old:ident| $value:expr) => {
-        match $crate::ram_slot!(@at $layout, $slot, $($field).+) {
-            at => {
-                $crate::ram::word_field::<$layout>(|record| record $(.$field)+);
-                let $old = ::core::primitive::u16::from_ne_bytes([$game.ram().read_byte(at), $game.ram().read_byte(at + 1)]);
-                let bytes = ::core::primitive::u16::to_ne_bytes($value);
-                $game.ram().write_byte(at, bytes[0]);
-                $game.ram().write_byte(at + 1, bytes[1]);
-            }
-        }
-    };
     ($game:ident, $layout:ident[$slot:expr] $(.$field:ident)+ = $value:expr) => {
         match ($value, $crate::ram_slot!(@at $layout, $slot, $($field).+)) {
             (value, at) => {
@@ -1121,18 +1024,6 @@ macro_rules! ram_slot {
 pub use crate::ram_slot as slot;
 /// Compile-time proof that an enemy-record field is one u16 word.
 pub fn word_field<L>(_: fn(L) -> u16) {}
-
-/// A 32-bit value split across a high and a low named word; the high word
-/// is read first. The `i32` form keeps the original signed casts.
-#[macro_export]
-macro_rules! ram_words {
-    (i32, $game:ident.$hi:ident, $lo:ident $(,)?) => {
-        (($crate::ram_word!($game.$hi) as i32) << 16i32) | ($crate::ram_word!($game.$lo) as i32)
-    };
-    ($game:ident.$hi:ident, $lo:ident $(,)?) => {
-        (($crate::ram_word!($game.$hi) as u32) << 16i32) | ($crate::ram_word!($game.$lo) as u32)
-    };
-}
 
 /// The work RAM bytes that mirror PPU and CPU registers ($7E:0051..), written
 /// by game code and copied to the hardware during NMI. Each is checked against

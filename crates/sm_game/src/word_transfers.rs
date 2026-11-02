@@ -94,7 +94,6 @@ macro_rules! word_transfers {
     }};
     (@step ascending) => { 2isize };
     (@step descending) => { -2isize };
-    (@step $stride:expr) => { $stride };
     (@endpoint $game:ident, le($field:ident, $index:expr)) => {
         $crate::word_transfers::WordEndpoint::Ram(
             ($crate::ram::word_arrays::$field as isize)
@@ -113,20 +112,8 @@ macro_rules! word_transfers {
         let offset = ($index as isize).checked_mul(2).unwrap();
         $crate::word_transfers::WordEndpoint::Rom(image, base.checked_add(offset).unwrap())
     }};
-    (@endpoint $game:ident, table($table:ident, $index:expr)) => {
-        $crate::word_transfers::WordEndpoint::Table(&$table, 0).shifted($index as isize)
-    };
     (@endpoint $game:ident, value($value:expr)) => {
         $crate::word_transfers::WordEndpoint::Value($value)
-    };
-    (@endpoint $game:ident, captured($source:ident, $index:expr)) => {
-        $source.shifted($index as isize)
-    };
-    (@endpoint $game:ident, pause_map($index:expr)) => {
-        $crate::word_transfers!(@endpoint $game, native(0x3000 + 2 * ($index)))
-    };
-    (@endpoint $game:ident, cinematic_bg($index:expr)) => {
-        $crate::word_transfers!(@endpoint $game, native(0x3800 + 2 * ($index)))
     };
     (@endpoint $game:ident, xray($index:expr)) => {
         $crate::word_transfers!(@endpoint $game, native(0x4000 + 2 * ($index)))
