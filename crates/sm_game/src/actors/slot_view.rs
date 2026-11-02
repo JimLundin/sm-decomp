@@ -21,6 +21,12 @@
 //! The edit runs it once when it ends; the projected store ran it after each
 //! byte, but nothing can read the observations while the edit holds the host,
 //! so the result is the same. Extended words, as before, have none.
+//!
+//! Slot 0's extended words $7E:801E, $8020, $803C, $8818 and $883E are
+//! Botwoon's death protocol's (`Session::botwoon_death`), which the projection
+//! serves there for any family; the view reads and stores them there too, and
+//! stores to them refresh the observations as record stores do.
+use crate::actors::botwoon_death::DeathProtocol;
 use crate::actors::state::{Actor, ExtendedRam};
 use crate::session_access::SessionAccess;
 
@@ -39,10 +45,21 @@ pub fn slot_index(k: u16) -> usize {
 
 /// The block and word of extended word `var` of `slot`.
 fn extended_at(slot: usize, var: usize) -> (usize, usize) {
-    // Botwoon's death words (slot 0's var_2f, var_30, var_3e, var_4c and var_5f)
-    // keep their own cohort; no view serves them.
-    debug_assert!(slot != 0 || ![0x2f, 0x30, 0x3e, 0x4c, 0x5f].contains(&var));
     (var / 32, slot * 32 + var % 32)
+}
+
+/// Slot 0's extended word `var` when Botwoon's death protocol holds it.
+macro_rules! death_word {
+    ($death:expr, $var:expr, $($borrow:tt)*) => {
+        match $var {
+            0x2f => Some($($borrow)* $death.pending_hit),
+            0x30 => Some($($borrow)* $death.active),
+            0x3e => Some($($borrow)* $death.tail_ready),
+            0x4c => Some($($borrow)* $death.previous_health),
+            0x5f => Some($($borrow)* $death.body_landed),
+            _ => None,
+        }
+    };
 }
 
 /// The extended word number of the layout word at byte `offset` of
@@ -98,20 +115,27 @@ macro_rules! record_word {
 pub struct SlotRef<'a> {
     pub actor: &'a Actor,
     extended: &'a ExtendedRam,
+    death: &'a DeathProtocol,
     slot: usize,
 }
 impl<'a> SlotRef<'a> {
     pub fn of<H: SessionAccess + ?Sized>(host: &'a H, k: u16) -> Self {
-        let actors = &host.session().actors;
+        let session = host.session();
         let slot = slot_index(k);
         Self {
-            actor: &actors.slots[slot],
-            extended: &actors.extended,
+            actor: &session.actors.slots[slot],
+            extended: &session.actors.extended,
+            death: &session.botwoon_death,
             slot,
         }
     }
     /// Extended word `var`.
     pub fn extended(&self, var: usize) -> u16 {
+        if self.slot == 0
+            && let Some(word) = death_word!(self.death, var, &)
+        {
+            return *word;
+        }
         let (block, word) = extended_at(self.slot, var);
         self.extended.blocks[block][word]
     }
@@ -139,8 +163,13 @@ impl<'a, H: SlotState + ?Sized> SlotMut<'a, H> {
     }
     /// Extended word `var`, to store to.
     pub fn extended(&mut self, var: usize) -> &mut u16 {
+        let session = self.host.session_mut();
+        if self.slot == 0 && death_word!(session.botwoon_death, var, &).is_some() {
+            self.record_stored = true;
+            return death_word!(session.botwoon_death, var, &mut).expect("a Botwoon death word");
+        }
         let (block, word) = extended_at(self.slot, var);
-        &mut self.host.session_mut().actors.extended.blocks[block][word]
+        &mut session.actors.extended.blocks[block][word]
     }
 }
 impl<H: SlotState + ?Sized> Drop for SlotMut<'_, H> {
