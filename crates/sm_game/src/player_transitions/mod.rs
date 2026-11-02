@@ -58,15 +58,16 @@ pub fn verify_hit_and_bomb(host: &mut impl effects::Host) {
 }
 /// Reset Samus for a new game, a load or a demo.
 pub fn initialize(h: &mut impl effects::SamusLease) {
-    use crate::{ram::words as ram, samus_palette, visual_state::PaletteBuffer};
+    use crate::{samus_palette, visual_state::PaletteBuffer};
+    use input::set_debug_invincibility;
     use state::*;
-    let debug_invincibility = h.word(ram::DEBUG_INVINCIBILITY);
+    let debug_invincibility = h.session().menu_screens.options_menu.debug_invincibility;
     // This compatibility workspace is only part of Session, including byte aliases.
     for address in (0xa02..=0xe0b).rev() {
         h.set_byte(address, 0);
     }
-    if h.word(ram::GAME_STATE) != 40 {
-        let ceres = h.word(ram::LOADING_GAME_STATE) == 34;
+    if h.session().game_loop.mode != 40 {
+        let ceres = h.session().menu_screens.save_selection.loading_game_state == 34;
         let t = &mut h.session_mut().player.transitions;
         t.frame_alpha = FrameAlphaMode::Empty;
         t.frame_beta = if ceres {
@@ -83,7 +84,7 @@ pub fn initialize(h: &mut impl effects::SamusLease) {
         }
         h.session_mut().player.transitions.input_mode = InputMode::Normal;
         if !ceres {
-            h.write_slice_le(ram::DEBUG_INVINCIBILITY, debug_invincibility);
+            set_debug_invincibility(h, debug_invincibility);
         }
     }
     let escape = h.session().room.area == 6;
@@ -95,8 +96,9 @@ pub fn initialize(h: &mut impl effects::SamusLease) {
         FrameGammaMode::Disabled
     };
     h.session_mut().player.movement_handler = MovementMode::Normal;
-    h.write_slice_le(ram::UNUSED_WORD_7E0A5E, (-2764i16) as u16);
-    h.write_slice_le(ram::SAMUS_PREV_HEALTH_FOR_FLASH, 50);
+    h.write_slice_le(crate::ram::words::UNUSED_WORD_7E0A5E, (-2764i16) as u16);
+    h.session_mut().player.previous_health_for_flash = 50;
+    h.words_stored();
     h.session_mut().presentation.palette_mut().visor_timer = 1537;
     for shot in &mut h.session_mut().projectiles.shots {
         shot.motion = 0xb169;
@@ -124,7 +126,8 @@ pub fn initialize(h: &mut impl effects::SamusLease) {
     p.pose = 0;
     p.movement_and_facing = 0;
     p.history = Default::default();
-    h.write_slice_le(ram::ENEMY_INDEX_TO_SHAKE, u16::MAX);
+    h.session_mut().actors.controls.shake_request = u16::MAX;
+    h.words_stored();
     h.session_mut().projectiles.controls.selected_weapon = 0;
     h.session_mut().projectiles.controls.automatic_weapon = 0;
     let state = h.session_mut();
@@ -132,10 +135,11 @@ pub fn initialize(h: &mut impl effects::SamusLease) {
     p.invincibility = 0;
     p.knockback_timer = 0;
     state.presentation.palette_mut().hurt_flash = 0;
-    h.write_slice_le(ram::DEBUG_INVINCIBILITY, 0);
-    if h.word(ram::GAME_STATE) == 40 {
+    set_debug_invincibility(h, 0);
+    if h.session().game_loop.mode == 40 {
         demo::load_demo(h);
     }
     let health = h.session().inventory.health.current;
-    h.write_slice_le(ram::SAMUS_PREV_HEALTH_FOR_FLASH, health);
+    h.session_mut().player.previous_health_for_flash = health;
+    h.words_stored();
 }

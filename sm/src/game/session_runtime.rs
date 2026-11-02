@@ -1343,6 +1343,10 @@ impl SessionAccess for Runtime<'_> {
     fn refresh_inputs(&mut self) {
         self.refresh_player_observations();
     }
+    /// The projected store's refresh after each byte.
+    fn words_stored(&mut self) {
+        self.refresh_written_inputs();
+    }
     fn probe(&self, name: &'static str) {
         #[cfg(sm_verify_dll)]
         crate::game::visual_runtime::samus_observer::observe(name, self.session(), self.game);

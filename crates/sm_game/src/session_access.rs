@@ -23,5 +23,11 @@ pub trait SessionAccess {
     /// fields they read (the cinematic function, the FX blending, the frozen
     /// time flag, ...); a host that keeps none does nothing.
     fn refresh_inputs(&mut self) {}
+    /// Refresh the external observations after typed stores to the Session's
+    /// named words, as the projected byte store did after each byte; a host
+    /// that keeps none refreshes them as [`refresh_inputs`](Self::refresh_inputs) does.
+    fn words_stored(&mut self) {
+        self.refresh_inputs();
+    }
     fn probe(&self, name: &'static str);
 }
