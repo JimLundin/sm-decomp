@@ -4,6 +4,7 @@ use crate::actors::access::{AccessMode::Native, ActorKey as Key};
 use crate::actors::api::{self, Axis, DeathHandling, MovementResult, SlopePolicy};
 use crate::actors::combat;
 use crate::actors::host::ActorLease;
+use crate::actors::slot_view::{SlotState, slot_view};
 
 /// Mochtroid's actor words, by `variables` lane; its function index is the
 /// pre-instruction word.
@@ -27,9 +28,14 @@ pub mod instruction_list {
     pub const TOUCHING_SAMUS: u16 = 0xa759;
 }
 
-/// $7E:7802: the instruction list last set, and $7E:8000: the damage timer.
-const INSTRUCTION_LIST: usize = 0x7802;
-const DAMAGE_TIMER: usize = 0x8000;
+slot_view! {
+    /// Mochtroid's extended words: the instruction list last set ($7E:7802)
+    /// and the damage timer ($7E:8000).
+    Mochtroid, MochtroidEdit {
+        record: [],
+        extended: [instruction_list = var_01, damage_timer = var_20],
+    }
+}
 /// $A3:A76D: the unused shake's X and Y velocities, by shake timer.
 const SHAKE_VELOCITIES: [(i16, i16); 4] = [(2, 0), (0, -2), (-2, 0), (0, 2)];
 const SHAKE_BITS: u16 = 6;
@@ -44,11 +50,11 @@ const DRAIN_SOUND: u16 = 0x2d;
 const SIGN: u16 = 0x8000;
 
 /// Set the instruction list, if not already set.
-fn set_instruction_list(runtime: &mut impl ActorLease, instruction: u16) {
+fn set_instruction_list(runtime: &mut (impl ActorLease + SlotState), instruction: u16) {
     let key = combat::current(runtime);
-    let cache = INSTRUCTION_LIST + usize::from(key.byte_index());
-    if runtime.lease_native_word(cache) != instruction {
-        runtime.write_slice_native(cache, instruction);
+    let k = key.byte_index();
+    if Mochtroid::of(runtime, k).instruction_list() != instruction {
+        *MochtroidEdit::of(runtime, k).instruction_list() = instruction;
         runtime.edit_actor(key, Native, |actor| {
             actor.instruction = instruction;
             actor.instruction_delay = 1;
@@ -98,7 +104,7 @@ fn track_axis(runtime: &mut impl ActorLease, key: Key, axis: Axis, chasing: bool
     }
 }
 /// Initialisation AI - Mochtroid ($A3:A77D).
-pub fn initialize(runtime: &mut impl ActorLease) {
+pub fn initialize(runtime: &mut (impl ActorLease + SlotState)) {
     let key = combat::current(runtime);
     runtime.edit_actor(key, Native, |actor| actor.layer = 2);
     set_instruction_list(runtime, instruction_list::NOT_TOUCHING_SAMUS);
@@ -108,7 +114,7 @@ pub fn initialize(runtime: &mut impl ActorLease) {
 }
 /// Main AI - Mochtroid ($A3:A790): run its function, then reset it to not
 /// touching Samus. Was `advance`.
-pub fn main_ai(runtime: &mut impl ActorLease) {
+pub fn main_ai(runtime: &mut (impl ActorLease + SlotState)) {
     let key = combat::current(runtime);
     let function = runtime
         .resolve_actor(key, Native)
@@ -155,15 +161,15 @@ pub fn main_ai(runtime: &mut impl ActorLease) {
     }
 }
 /// Enemy touch - Mochtroid ($A3:A953): latch on and drain Samus.
-pub fn touch(runtime: &mut impl ActorLease) {
+pub fn touch(runtime: &mut (impl ActorLease + SlotState)) {
     let key = combat::current(runtime);
     runtime.edit_actor(key, Native, |actor| {
         actor.pre_instruction = function::TOUCHING_SAMUS
     });
     set_instruction_list(runtime, instruction_list::TOUCHING_SAMUS);
-    let timer = DAMAGE_TIMER + usize::from(key.byte_index());
-    let next = runtime.lease_native_word(timer).wrapping_add(1);
-    runtime.write_slice_native(timer, next);
+    let k = key.byte_index();
+    let next = Mochtroid::of(runtime, k).damage_timer().wrapping_add(1);
+    *MochtroidEdit::of(runtime, k).damage_timer() = next;
     let mut damage = runtime.session().player.contact.contact_attack != 0;
     if !damage {
         if runtime.inputs().random_enemy_counter & DRAIN_SOUND_FRAMES == DRAIN_SOUND_FRAMES
@@ -178,9 +184,13 @@ pub fn touch(runtime: &mut impl ActorLease) {
         {
             runtime.queue_sound(3, 6, DRAIN_SOUND);
         }
-        damage = runtime.lease_native_word(timer).wrapping_sub(DAMAGE_FRAMES) & SIGN == 0;
+        damage = Mochtroid::of(runtime, k)
+            .damage_timer()
+            .wrapping_sub(DAMAGE_FRAMES)
+            & SIGN
+            == 0;
         if damage {
-            runtime.write_slice_native(timer, 0);
+            *MochtroidEdit::of(runtime, k).damage_timer() = 0;
         }
     }
     if damage {
