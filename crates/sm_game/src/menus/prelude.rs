@@ -15,12 +15,6 @@ pub type VoidP = u16;
 
 /// Join two words as `(hi << 16) | lo`, optionally as `i32`.
 macro_rules! words {
-    (i32, $game:ident.$hi:ident, $lo:ident $(,)?) => {
-        (($crate::ram::word!($game.$hi) as i32) << 16i32) | ($crate::ram::word!($game.$lo) as i32)
-    };
-    ($game:ident.$hi:ident, $lo:ident $(,)?) => {
-        (($crate::ram::word!($game.$hi) as u32) << 16i32) | ($crate::ram::word!($game.$lo) as u32)
-    };
     (i32, ($hi:expr, $lo:expr $(,)?) $(,)?) => {
         (($hi as i32) << 16i32) | ($lo as i32)
     };
