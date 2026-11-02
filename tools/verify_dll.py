@@ -258,6 +258,8 @@ def cargo_host(root, rustc, output, source, inventory, frontend=False, retry=Tru
     cached = output / HOST_BINARY
     if not cached.exists() or cached.read_bytes() != binary.read_bytes():
         shutil.copyfile(binary, cached)
+    if not WINDOWS:
+        shutil.copymode(binary, cached)
     return cached
 
 

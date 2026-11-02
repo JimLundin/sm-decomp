@@ -27,6 +27,29 @@ Pending and unobserved engine scope is retained in the coordinator and endgame
 snapshots below. Complete any%, 100%, low%, boot/transition/endgame acceptance is
 not established by this documentation cleanup.
 
+## Linux executable and audio-prefix corrections, 2026-11-02 17:58 UTC
+
+PR #151 head `1b810f48a` passes Linux CI `41494319086`, including target tests,
+clippy, detached checks and Windows desktop type-checking. Full Verify
+`41494345180` failed before any replay: Cargo compiled the verifier and its
+original executable passed inspection, but the cached copy lacked Unix execute
+permission. The original watcher ended with exit 4; its handle was collected.
+
+The independently reviewed correction copies the actual checked Cargo artifact's
+mode onto the Unix cache, including an existing byte-identical copy. It leaves
+Windows behavior unchanged and preserves executable bytes and identity checks.
+A separate accepted correction selects physical audio before prefix capture
+when audio tracing is enabled, matching the later checkpoint replay backend.
+Existing backend mismatch rejection remains strict. No captures from the failed
+Linux run are credited.
+
+Combined source is
+`7a69f183abb3ede7532d4a6eeb374f26716ffa4d208b5905e9e3084ffabd7370`.
+Formatting, source inventory, Python syntax, mutation anchors and the ordinary
+warning-denied local Cargo gate pass. No local executable or DLL was built or
+run. New exact-head hosted build and full replay qualification remain pending;
+these verification-only fixes add no engine RAM retirement.
+
 ## Linux qualification forward fix, 2026-11-02
 
 Jim confirmed Linux CI is intentional. PR #151 at `4a4564ad7` has a successful
