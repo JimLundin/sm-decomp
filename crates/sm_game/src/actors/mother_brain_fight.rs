@@ -868,8 +868,9 @@ pub trait Host:
     fn drain_ammo_by_rainbow_beam(&mut self);
     fn add_glass_hits(&mut self, slot: usize, amount: u16);
     fn spawn_palette_effect(&mut self, definition: u16);
-    /// Queue a sprite tile transfer list; nonzero once done.
-    fn queue_mother_brain_sprite_tiles(&mut self, bank: u8, start: u16) -> u8;
+    /// Queue the sprite tile transfer entry at `at` in `bank` unless its size
+    /// is 0; the size.
+    fn queue_sprite_tile_entry(&mut self, bank: u8, at: u16) -> u16;
     fn set_boss_bit_for_current_area(&mut self, mask: u16);
     fn set_event_happened(&mut self, event: u16);
     fn check_event_happened(&mut self, event: u16) -> u16;
@@ -911,7 +912,6 @@ on_game! {
     run_samus_command(command: u16) -> u16 => command_player;
     native_word(offset: usize) -> u16 => native_word;
     set_native_word(offset: usize, value: u16) => set_native_word;
-    queue_mother_brain_sprite_tiles(bank: u8, start: u16) -> u8 => queue_mother_brain_sprite_tiles;
     set_boss_bit_for_current_area(mask: u16) => set_boss_bit_for_current_area;
     set_event_happened(event: u16) => set_event_happened;
     check_event_happened(event: u16) -> u16 => check_event_happened;
@@ -924,6 +924,30 @@ on_game! {
     move_samus_vertically_towards_ceiling_floor(amount: u16) -> u8 => move_samus_vertically_towards_ceiling_floor;
     add_glass_hits(slot: usize, amount: u16) => add_glass_hits;
     spawn_palette_effect(definition: u16) => spawn_palette_effect;
+}
+/// A sprite tile transfer entry's bytes: size, source and destination.
+const SPRITE_TILE_ENTRY: u16 = 7;
+
+/// Process sprite tile transfers: queue one entry of the list in `bank` from
+/// the body's cursor, or from `start` when it is 0; 1 and a cleared cursor
+/// once the list ends. Was `ProcessSpriteTilesTransfers`.
+pub(crate) fn queue_mother_brain_sprite_tiles(bank: u8, start: u16, game: &mut impl Lease) -> u8 {
+    let mut cursor = Body::of(game, BODY_INDEX).sprite_tile_transfer();
+    if cursor == 0 {
+        cursor = start;
+    }
+    let mut size = game.foreign(|game| game.queue_sprite_tile_entry(bank, cursor));
+    if size != 0 {
+        *BodyEdit::of(game, BODY_INDEX).sprite_tile_transfer() =
+            cursor.wrapping_add(SPRITE_TILE_ENTRY);
+        let next = Body::of(game, BODY_INDEX).sprite_tile_transfer();
+        size = crate::cartridge::native_record(bank, next, game).word(0);
+        if size != 0 {
+            return 0;
+        }
+    }
+    *BodyEdit::of(game, BODY_INDEX).sprite_tile_transfer() = size;
+    1
 }
 pub(crate) fn queue_sfx1_max6(sound: u16, game: &mut impl State) {
     game.queue_sound(0, sound as u8, 6)
