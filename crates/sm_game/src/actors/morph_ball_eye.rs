@@ -4,19 +4,22 @@
 use crate::actors::api::angle_from_delta;
 use crate::actors::boss_lease::BossState;
 use crate::actors::host::Axis;
-use crate::actors::layouts::part_view;
-use crate::actors::session_slots::session_slot;
+use crate::actors::slot_view::{SlotState, slot_view};
 
 /// What the morph ball eye needs beyond a boss's state: its beam.
-pub trait Host: BossState + crate::session_access::SessionAccess {
+pub trait Host: BossState + SlotState {
     /// Start the eye's beam effect.
     fn start_beam(&mut self);
 }
 
-part_view! {
+slot_view! {
     /// The eye's view of its slot.
-    Eye: EnemyLayout8 {
-        words: [var_a, var_b, activated, angle, function_timer, function, facing_left, mount],
+    Eye, EyeEdit {
+        record: [
+            activated = var_c, angle = var_d, function_timer = var_e, function = var_f,
+            facing_left = parameter_1, mount = parameter_2,
+        ],
+        extended: [],
     }
 }
 
@@ -67,49 +70,56 @@ const ANGLE_STEP: i32 = 0xf0;
 const MORPH_BALL: u16 = 4;
 const SIGN: u16 = 0x8000;
 
-fn face(eye: i32, right: u16, left: u16, game: &mut (impl Host + ?Sized)) {
-    let instruction = if session_slot!(game, Eye[eye].facing_left) & 1 == 0 {
+fn face(eye: u16, right: u16, left: u16, game: &mut (impl Host + ?Sized)) {
+    let instruction = if Eye::of(game, eye).facing_left() & 1 == 0 {
         right
     } else {
         left
     };
-    session_slot!(game, Eye[eye].base.current_instruction = instruction);
+    EyeEdit::of(game, eye).actor().instruction = instruction;
 }
 fn samus_near(k: u16, columns: u16, game: &mut (impl Host + ?Sized)) -> bool {
     game.player_within(k, Axis::Y, NEAR_ROWS) && game.player_within(k, Axis::X, columns)
 }
-fn aim(eye: i32, game: &mut (impl Host + ?Sized)) -> u16 {
+fn aim(eye: u16, game: &mut (impl Host + ?Sized)) -> u16 {
     let angle = angle_from_delta(
         game.player_x()
-            .wrapping_sub(session_slot!(game, Eye[eye].base.x_pos)),
+            .wrapping_sub(Eye::of(game, eye).actor().x.whole),
         game.player_y()
-            .wrapping_sub(session_slot!(game, Eye[eye].base.y_pos)),
+            .wrapping_sub(Eye::of(game, eye).actor().y.whole),
     );
-    session_slot!(game, Eye[eye].angle = angle);
+    *EyeEdit::of(game, eye).angle() = angle;
     angle
 }
 /// Initialisation AI - morph ball eye ($A8:9058): an eye, or a mount facing
 /// the way its parameter says.
 pub fn initialize(game: &mut (impl Host + ?Sized)) {
-    let eye = game.current_enemy() as i32;
-    session_slot!(game, Eye[eye].base.properties, |old| old
-        | PROCESS_INSTRUCTIONS);
-    session_slot!(game, Eye[eye].base; spritemap_pointer = NO_SPRITEMAP, instruction_timer = 1, timer = 0);
-    if session_slot!(game, Eye[eye].mount) & MOUNT_BIT != 0 {
-        let index = (session_slot!(game, Eye[eye].mount) & MOUNT_FACING) as usize;
-        session_slot!(game, Eye[eye].base.x_pos, |old| old
-            .wrapping_add(MOUNT_X_OFFSETS[index] as u16));
-        session_slot!(game, Eye[eye].base.y_pos, |old| old
-            .wrapping_add(MOUNT_Y_OFFSETS[index] as u16));
-        session_slot!(game, Eye[eye].function = function::MOUNT);
-        session_slot!(
-            game,
-            Eye[eye].base.current_instruction =
-                crate::enemy_lists::eye_instruction_list(game, index as isize)
-        );
+    let eye = game.current_enemy();
+    EyeEdit::of(game, eye).actor().properties |= PROCESS_INSTRUCTIONS;
+    {
+        let mut edit = EyeEdit::of(game, eye);
+        edit.actor().spritemap = NO_SPRITEMAP;
+        edit.actor().instruction_delay = 1;
+        edit.actor().timer = 0;
+    }
+    if Eye::of(game, eye).mount() & MOUNT_BIT != 0 {
+        let index = (Eye::of(game, eye).mount() & MOUNT_FACING) as usize;
+        {
+            let mut edit = EyeEdit::of(game, eye);
+            let old = edit.actor().x.whole;
+            edit.actor().x.whole = old.wrapping_add(MOUNT_X_OFFSETS[index] as u16);
+        }
+        {
+            let mut edit = EyeEdit::of(game, eye);
+            let old = edit.actor().y.whole;
+            edit.actor().y.whole = old.wrapping_add(MOUNT_Y_OFFSETS[index] as u16);
+        }
+        *EyeEdit::of(game, eye).function() = function::MOUNT;
+        let list = crate::enemy_lists::eye_instruction_list(game, index as isize);
+        EyeEdit::of(game, eye).actor().instruction = list;
         crate::word_transfers!(game, descending, 256; native(BEAM_WINDOW_TABLE) <- value(255));
     } else {
-        session_slot!(game, Eye[eye].function = function::WAIT_FOR_SAMUS);
+        *EyeEdit::of(game, eye).function() = function::WAIT_FOR_SAMUS;
         face(
             eye,
             instruction_list::RIGHT_CLOSED,
@@ -125,7 +135,7 @@ pub fn main_ai(game: &mut (impl Host + ?Sized)) {
         return;
     }
     let k = game.current_enemy();
-    let function = session_slot!(game, Eye[k as i32].function);
+    let function = Eye::of(game, k).function();
     if run_function(function, k, game) {
         game.start_beam();
         start_tracking(k, game);
@@ -135,54 +145,59 @@ pub fn main_ai(game: &mut (impl Host + ?Sized)) {
 /// when the eye has opened and its beam should start, after its sound and
 /// before hardware startup and [`start_tracking`]. Was `prepare_update`.
 pub fn run_function(function: u16, k: u16, game: &mut (impl Host + ?Sized)) -> bool {
-    let eye = k as i32;
+    let eye = k;
     match function {
         function::MOUNT => (),
         function::WAIT_FOR_SAMUS => {
             if samus_near(k, NEAR_COLUMNS, game) {
-                session_slot!(game, Eye[eye].function_timer = OPEN_FRAMES);
-                session_slot!(game, Eye[eye].base.instruction_timer = 1);
+                *EyeEdit::of(game, eye).function_timer() = OPEN_FRAMES;
+                EyeEdit::of(game, eye).actor().instruction_delay = 1;
                 face(
                     eye,
                     instruction_list::RIGHT_ACTIVATING,
                     instruction_list::LEFT_ACTIVATING,
                     game,
                 );
-                session_slot!(game, Eye[eye].function = function::ACTIVATING);
+                *EyeEdit::of(game, eye).function() = function::ACTIVATING;
             }
         }
         function::ACTIVE => {
             if samus_near(k, VIEW_COLUMNS, game) {
                 let angle = aim(eye, game);
-                session_slot!(
-                    game,
-                    Eye[eye].base.current_instruction = (((angle as i32 & ANGLE_STEP) >> 2)
-                        + i32::from(instruction_list::ACTIVE))
-                        as u16
-                );
+                let list = (((angle as i32 & ANGLE_STEP) >> 2)
+                    + i32::from(instruction_list::ACTIVE)) as u16;
+                EyeEdit::of(game, eye).actor().instruction = list;
             } else {
                 game.queue_sound(1, SILENCE, 6);
-                session_slot!(game, Eye[eye]; activated = 0, function_timer = OPEN_FRAMES);
+                {
+                    let mut edit = EyeEdit::of(game, eye);
+                    *edit.activated() = 0;
+                    *edit.function_timer() = OPEN_FRAMES;
+                }
                 face(
                     eye,
                     instruction_list::RIGHT_DEACTIVATING,
                     instruction_list::LEFT_DEACTIVATING,
                     game,
                 );
-                session_slot!(game, Eye[eye].function = function::DEACTIVATING);
+                *EyeEdit::of(game, eye).function() = function::DEACTIVATING;
             }
-            session_slot!(game, Eye[eye].base.instruction_timer = 1);
+            EyeEdit::of(game, eye).actor().instruction_delay = 1;
         }
         function::ACTIVATING | function::DEACTIVATING => {
-            let expired = session_slot!(game, Eye[eye].function_timer) == 1;
-            session_slot!(game, Eye[eye].function_timer, |old| old.wrapping_sub(1));
-            let negative = session_slot!(game, Eye[eye].function_timer) & SIGN != 0;
+            let expired = Eye::of(game, eye).function_timer() == 1;
+            {
+                let mut edit = EyeEdit::of(game, eye);
+                let old = *edit.function_timer();
+                *edit.function_timer() = old.wrapping_sub(1);
+            }
+            let negative = Eye::of(game, eye).function_timer() & SIGN != 0;
             if expired || negative {
                 if function == function::ACTIVATING {
                     game.queue_sound(1, RAY_SOUND, 6);
                     return true;
                 }
-                session_slot!(game, Eye[eye].function = function::WAIT_FOR_SAMUS);
+                *EyeEdit::of(game, eye).function() = function::WAIT_FOR_SAMUS;
             }
         }
         _ => unreachable!("morph ball eye function {function:04x}"),
@@ -192,7 +207,7 @@ pub fn run_function(function: u16, k: u16, game: &mut (impl Host + ?Sized)) -> b
 /// The end of activating, after the beam starts: the eye is active and aims at
 /// Samus. Was `finish_beam`.
 pub fn start_tracking(k: u16, game: &mut (impl Host + ?Sized)) {
-    let eye = k as i32;
-    session_slot!(game, Eye[eye].function = function::ACTIVE);
+    let eye = k;
+    *EyeEdit::of(game, eye).function() = function::ACTIVE;
     aim(eye, game);
 }
