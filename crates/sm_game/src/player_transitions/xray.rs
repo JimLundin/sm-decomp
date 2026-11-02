@@ -6,6 +6,7 @@ use super::{
 use crate::player_transitions::effects::SamusLease;
 use crate::ram::words as ram;
 use crate::runtime_access::SessionRam;
+use crate::session_access::SessionAccess;
 use crate::{session::Session, visual_host::Record};
 
 pub fn request(h: &mut impl Host) -> bool {
@@ -178,11 +179,12 @@ pub fn clear_window(h: &mut (impl SessionRam + ?Sized)) {
 }
 
 /// The beam's blend layer: BG3 in FX $24, BG2 in some rooms and boss fights, else BG1.
-pub fn blend_mask(h: &(impl SessionRam + ?Sized)) -> u16 {
-    if h.word(ram::FX_TYPE) == 0x24 {
+pub fn blend_mask(h: &(impl SessionAccess + ?Sized)) -> u16 {
+    let s = h.session();
+    if s.room.liquid.kind == 0x24 {
         0x1000
-    } else if matches!(h.word(ram::ROOM_PTR), 0xa66a | 0xcefb)
-        || matches!(h.word(ram::BOSS_ID), 3 | 6 | 7 | 8 | 10)
+    } else if matches!(s.room_key(), 0xa66a | 0xcefb)
+        || matches!(s.actors.schedule.boss_id, 3 | 6 | 7 | 8 | 10)
     {
         0x2000
     } else {
@@ -191,7 +193,7 @@ pub fn blend_mask(h: &(impl SessionRam + ?Sized)) -> u16 {
 }
 
 /// Set the beam's blend layer and, for BG1 (or BG3 in a dark haze), its colour.
-pub fn apply_blending(h: &mut (impl SessionRam + ?Sized), phase: BlendPhase) {
+pub fn apply_blending(h: &mut (impl SessionRam + SessionAccess + ?Sized), phase: BlendPhase) {
     let mask = blend_mask(h);
     let update_colors = match phase {
         BlendPhase::Restore => false,
@@ -212,12 +214,13 @@ pub fn apply_blending(h: &mut (impl SessionRam + ?Sized), phase: BlendPhase) {
 
 /// Turn the scope when the direction Samus faces away from is held.
 pub fn handle_input(h: &mut (impl Host + SessionRam)) {
+    // The direction bindings are up, down, left and right.
     let binding = if h.session().player.movement_and_facing as u8 == 4 {
-        ram::BUTTON_CONFIG_RIGHT
+        3
     } else {
-        ram::BUTTON_CONFIG_LEFT
+        2
     };
-    let held = h.word(binding) & h.inputs().held != 0;
+    let held = h.session().game_loop.directions[binding] & h.inputs().held != 0;
     turn(h, held);
 }
 
@@ -226,7 +229,8 @@ pub fn initialize(h: &mut (impl Host + SessionRam)) -> bool {
     if !request(h) {
         return false;
     }
-    h.write_slice_le(ram::TIME_IS_FROZEN_FLAG, 1);
+    h.session_mut().timing.time_frozen = 1;
+    h.words_stored();
     h.session_mut().player.transitions.interruption = super::state::InterruptionAction::from_raw(5);
     clear_window(h);
     set_world_running(h.session_mut(), false);
@@ -309,8 +313,9 @@ pub fn advance_beam<H: SamusLease>(h: &mut H, phase: BeamPhase) {
     if phase == BeamPhase::Widening {
         widen(&mut h.session_mut().player.demo);
     } else if phase == BeamPhase::Full {
-        let up = h.word(ram::BUTTON_CONFIG_UP) & h.inputs().held != 0;
-        if up || h.word(ram::BUTTON_CONFIG_DOWN) & h.inputs().held != 0 {
+        let [up, down, ..] = h.session().game_loop.directions;
+        let up = up & h.inputs().held != 0;
+        if up || down & h.inputs().held != 0 {
             let player = &mut h.session_mut().player;
             steer(&mut player.transitions.xray_angle, player.demo.held, up);
         }
