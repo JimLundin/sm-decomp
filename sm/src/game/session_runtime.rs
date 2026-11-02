@@ -646,6 +646,20 @@ impl<'g> Runtime<'g> {
             self.word(at)
         }
     }
+    /// Point the direct-page long pointer scratch at `address` in bank $00: the
+    /// Session's scratch while this lease is current, as the projected bytes
+    /// $00-$02 would store it; those bytes, low to high, otherwise.
+    pub(crate) fn point_scratch_at(&mut self, address: u16) {
+        if self.persistent_is_current() {
+            self.session_mut().pointer_scratch.point_at(address);
+            self.refresh_written_inputs();
+        } else {
+            let [low, high] = address.to_le_bytes();
+            for (at, byte) in [(0, low), (1, high), (2, 0)] {
+                self.set_byte(at, byte);
+            }
+        }
+    }
     /// Store a Session field while this lease is current; the projected word
     /// at `at`, low byte then high, otherwise.
     pub(crate) fn store_owned_session(

@@ -37,6 +37,9 @@ pub trait HudFrameHost:
 {
     /// The raw work-RAM NMI frame counter byte, as the item blink reads it.
     fn raw_frame_counter_byte(&self) -> u8;
+    /// Leave the Session's direct-page long pointer scratch at `address` in bank
+    /// $00, keeping the byte above it (`PointerScratch::point_at`).
+    fn point_scratch_at(&mut self, address: u16);
 }
 
 /// What the whole HUD reads and writes: the frame step's host, plus raw RAM
@@ -335,9 +338,7 @@ pub fn advance<H: HudFrameHost + ?Sized>(game: &mut H) {
     // The digit drawing leaves the ammunition digit tiles in the long pointer scratch: $00 from
     // $80:9BFE and bank $00 in $02 from $80:9B4A, whether or not any digit changed.
     let [low, high, ..] = WEAPON_DIGITS.to_le_bytes();
-    for (at, byte) in [(0, low), (1, high), (2, 0)] {
-        game.compatibility_write_byte(at, byte);
-    }
+    game.point_scratch_at(u16::from_le_bytes([low, high]));
 }
 
 fn highlight<H: HudFrameHost + ?Sized>(selection: u16, palette: u16, game: &mut H) {
