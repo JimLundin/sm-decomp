@@ -5,7 +5,7 @@ description: Run sm-decomp as the root coordinator. Choose lane tasks, brief fre
 
 # Coordinate
 
-You are the root. You own the one landing branch (`land/batch13`), every push to
+You are the root. You own the one landing branch (`land/<slice>`), every push to
 `main`, every ci-data upload, and result updates to Jim in the conversation.
 PLAN owns current migration scope and reporting rules. Lanes do the work.
 
@@ -14,7 +14,7 @@ PLAN owns current migration scope and reporting rules. Lanes do the work.
 1. **Keep lanes busy.** Run about 6–10 lanes at once, each on a different set of
    files. Each lane has one bounded task (see Task kinds).
 2. **Pick what's ready.** When a lane reports a qualified batch, pick it onto
-   `land/batch13`. See `sm-land`.
+   the landing branch. See `sm-land`.
 3. **Land in slices.** Open a slice PR of at most 25 commits; it lands when all
    gates are green.
 4. **Answer decisions fast.** A lane waiting on you is idle. Decide using the rules
@@ -40,7 +40,7 @@ The brief says:
 
 - "Load `sm-lane`, then `<task skill>`." Include any handoff path to read.
 - The goal in one sentence, and how it's measured.
-- The branch name and base (`origin/land/batch13`).
+- The branch name and base (the current landing branch, or `origin/main`).
 - The files or families it owns, and which it must not touch.
 - The evidence you want, and the report cadence (batches of about 5 commits).
 

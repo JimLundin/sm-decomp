@@ -49,7 +49,12 @@ the separate full exact-head result. Local checks remain ordinary Cargo checks;
 the actual executable build and replay run in GitHub Actions. Hosted execution
 of the assembled Linux fix remains pending at this report boundary.
 
-Main remains `558131e72` (PR #150). PR #151 carries 546 genuine RAM-access
+During publication preflight, the independent Linux CI session advanced main
+from `558131e72` to `095129107`. This lands CI/support changes, with no engine
+RAM-access retirement. PR #151 is reconciled with that main while preserving
+the reviewed executable and staged-prefix postimages; its source fingerprint
+remains `56faafb8ab7f0557ac6cfd0363393eaedc72c94f521791a49153e313ba6aa4e2`.
+PR #151 carries 546 genuine RAM-access
 retirements, from 1,159 sites / 88 files to 613 / 74. The separately committed
 next migration, `223466103`, carries 275 further genuine retirements; two spelling
 changes are excluded from that claim. Neither slice has landed, so neither

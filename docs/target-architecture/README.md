@@ -19,7 +19,7 @@ the dated [architecture snapshot](../PROGRESS_REPORT.md#architecture-snapshot).
 
 ## Migration policy
 
-Windows workers may retain the current Rust game's emulated backend and built-in
+Workers may retain the current Rust game's emulated backend and built-in
 oracle while replacing responsibilities. [PLAN](../PLAN.md) and
 [REVIEW](../REVIEW.md) govern current tasks, verification, resources and platform
 restrictions. Do not remove a working comparison path before replacement evidence

@@ -101,14 +101,12 @@ CI holds the ROM in repository secrets and keeps every ROM-derived file
 
 | Workflow | Runs | What it does |
 | --- | --- | --- |
-| [ci.yml](../.github/workflows/ci.yml) | Every pull request and push to main | Format, progress reports, dependency direction, target-crate tests, the ROM import check below, the Windows native and desktop build, verifier unit tests and detached composition checks |
-| [segments.yml](../.github/workflows/segments.yml) | Every 3 hours, on dispatch, and after a push to main that deletes a legacy bank file | The corpus: rows grouped by seed bundle or input into at most 6 parallel shards; checkpoint rows have a 60-minute limit |
-| [full-route.yml](../.github/workflows/full-route.yml) | Nightly and on dispatch | The whole 100% TAS |
-| [coverage.yml](../.github/workflows/coverage.yml) | Manual | The corpus with coverage instrumentation |
+| [ci.yml](../.github/workflows/ci.yml) | Every pull request and push to main | Format, progress reports, dependency direction, target-crate tests, detached composition checks and a type-check of the Windows desktop |
+| [verify.yml](../.github/workflows/verify.yml) | Every pull request and `verify/**` push (gate), nightly (full), on dispatch, and after a push to main that deletes a legacy bank file | One verifier build, then the oracle lock, lockstep for rows it cannot hold, the ROM import check, verifier units; full adds all lockstep; `scope=coverage` reports unexecuted code |
+| [desktop.yml](../.github/workflows/desktop.yml) | Nightly and on dispatch | Links the Windows desktop |
 
-To run selected corpus rows on a branch, dispatch `segments.yml` with
-space-separated row IDs; unknown IDs fail. An empty selection runs the full
-corpus. A change lands after PR CI and a full corpus pass on its exact head.
+To run selected rows on a branch, dispatch `verify.yml` with `scope=rows` and
+space-separated row IDs; unknown IDs fail. `scope=full` runs everything. A change lands after CI and Verify pass on its exact head.
 
 ### ROM import check
 
@@ -123,7 +121,7 @@ run it locally as shown in the [build guide](../docs/ITERATION.md#target-crates-
 
 ### Full route
 
-`full-route.yml` imports `movies/100.inputs` from the 100% movie in
+`verify.yml` imports `movies/100.inputs` from the 100% movie in
 [manifest.toml](manifest.toml) (222,788 frames) and checks its hash. A
 `boundaries` job replays the original from boot and saves a checkpoint every
 20,000 frames; these are cached per source. Each chunk then replays in lockstep
@@ -133,7 +131,7 @@ in parallel. Dispatch with `regenerate` to rebuild the boundary checkpoints.
 
 ### Coverage
 
-`coverage.yml` builds the verifier with `-C instrument-coverage`, runs the
+`verify.yml` with `scope=coverage` builds the verifier with `-C instrument-coverage`, runs the
 selected rows (all by default), merges the profiles and summarises line and
 function coverage of `crates/sm_game` and `sm/src/game` with
 [coverage_summary.py](../tools/coverage_summary.py). The `coverage` artifact

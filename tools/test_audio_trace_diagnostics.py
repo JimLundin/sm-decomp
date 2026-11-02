@@ -25,8 +25,8 @@ class AudioTraceDiagnostics(unittest.TestCase):
                         "AudioOutput ExecutionBegin synthetic",
                         "AudioOutput InputComplete synthetic"]
         workflow = (Path(__file__).resolve().parents[1]
-                    / ".github/workflows/segments.yml").read_text(encoding="utf-8")
-        self.allowed = re.compile(re.search(r"\$diagnostic = '([^']+)'", workflow)[1])
+                    / ".github/scripts/replay_job.py").read_text(encoding="utf-8")
+        self.allowed = re.compile(re.search(r"AUDIO_DIAGNOSTIC = re.compile\(r'([^']+)'\)", workflow)[1])
 
     def write_trace(self, lines):
         self.path.write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
