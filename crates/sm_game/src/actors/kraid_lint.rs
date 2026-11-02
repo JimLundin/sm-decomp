@@ -2,8 +2,8 @@
 //! Samus against the lint hitbox (bank $A7:B96A).
 use crate::actors::boss_lease::BossState;
 use crate::actors::host::Death;
-use crate::actors::layouts::KraidLayout as Kraid;
-use crate::actors::session_slots::session_slot;
+use crate::actors::kraid::{Part, PartEdit};
+use crate::actors::slot_view::SlotState;
 use crate::cartridge::native_record;
 use crate::constants::enemy_properties::K_ENEMY_PROPS_TANGIBLE;
 use crate::ram::word;
@@ -28,9 +28,8 @@ fn hitbox(field: usize, game: &mut (impl BossState + ?Sized)) -> i32 {
 /// Push Samus out of the lint's box, clamp her extra displacement and make the
 /// lint tangible; sign tests are on the low 16 bits as in the original.
 /// Kraid lint / Samus collision handling ($A7:B96A). Was `Kraid_EnemyTouch_Lint`.
-pub fn lint_touch_samus(k: u16, game: &mut (impl BossState + ?Sized)) {
-    let e = i32::from(k);
-    if session_slot!(game, Kraid[e].base.properties) as i32 & K_ENEMY_PROPS_TANGIBLE as i32 != 0
+pub fn lint_touch_samus(k: u16, game: &mut (impl BossState + SlotState + ?Sized)) {
+    if Part::of(game, k).actor().properties as i32 & K_ENEMY_PROPS_TANGIBLE as i32 != 0
         || game.invincibility_timer() != 0
     {
         return;
@@ -39,13 +38,13 @@ pub fn lint_touch_samus(k: u16, game: &mut (impl BossState + ?Sized)) {
         i32::from(game.player_x()),
         i32::from(word!(game.SAMUS_X_RADIUS)),
     );
-    let left = (hitbox(LEFT, game) + i32::from(session_slot!(game, Kraid[e].base.x_pos)) - INSET)
-        as u16 as i32;
+    let left =
+        (hitbox(LEFT, game) + i32::from(Part::of(game, k).actor().x.whole) - INSET) as u16 as i32;
     if (x_radius + samus_x - left) & SIGN != 0 || (samus_x - x_radius - left) & SIGN == 0 {
         return;
     }
-    let top = (hitbox(TOP, game) + i32::from(session_slot!(game, Kraid[e].base.y_pos)) + INSET)
-        as u16 as i32;
+    let top =
+        (hitbox(TOP, game) + i32::from(Part::of(game, k).actor().y.whole) + INSET) as u16 as i32;
     let (samus_y, y_radius) = (
         i32::from(game.player_y()),
         i32::from(word!(game.SAMUS_Y_RADIUS)),
@@ -53,8 +52,8 @@ pub fn lint_touch_samus(k: u16, game: &mut (impl BossState + ?Sized)) {
     if (y_radius + samus_y - top) & SIGN != 0 {
         return;
     }
-    let bottom = (hitbox(BOTTOM, game) + i32::from(session_slot!(game, Kraid[e].base.y_pos))
-        - INSET) as u16 as i32;
+    let bottom =
+        (hitbox(BOTTOM, game) + i32::from(Part::of(game, k).actor().y.whole) - INSET) as u16 as i32;
     if (samus_y - y_radius - bottom) & SIGN == 0 {
         return;
     }
@@ -65,6 +64,5 @@ pub fn lint_touch_samus(k: u16, game: &mut (impl BossState + ?Sized)) {
     }
     word!(game.EXTRA_SAMUS_X_DISPLACEMENT = push);
     game.react_to_contact(Death::Finalize);
-    session_slot!(game, Kraid[e].base.properties, |old| old
-        | K_ENEMY_PROPS_TANGIBLE as u16);
+    PartEdit::of(game, k).actor().properties |= K_ENEMY_PROPS_TANGIBLE as u16;
 }

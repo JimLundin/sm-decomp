@@ -1,8 +1,8 @@
 //! Kraid sinking through the floor after his death: the sinking Kraid table
 //! at $A7:C5E7 and the row clears it queues (bank $A7:C537-$A7:C6FF).
 use crate::actors::boss_lease::BossState;
-use crate::actors::layouts::KraidLayout as Kraid;
-use crate::actors::session_slots::session_slot;
+use crate::actors::kraid::Body;
+use crate::actors::slot_view::SlotState;
 use crate::cartridge::{NativeDiagnostics, native_record};
 use crate::display::transfer::{TILEMAP_QUEUE, TilemapQueue};
 use sm_data::cartridge::RomRecord;
@@ -69,14 +69,14 @@ pub fn queue_row_clear(
 /// Handle Kraid sinking ($A7:C59F): find the row for Kraid's y, queue its
 /// clear unless it has none, and return its crumble routine in bank $A7.
 /// None once the table ends. The table walk of `Kraid_HandleSinking`.
-pub fn handle_sinking(game: &mut (impl BossState + ?Sized)) -> Option<u32> {
+pub fn handle_sinking(game: &mut (impl BossState + SlotState + ?Sized)) -> Option<u32> {
     for index in 0.. {
         let row = sinking_row(index, game);
         let y = row.word(ROW_Y) as i16;
         if y < 0 {
             return None;
         }
-        if i32::from(y) == i32::from(session_slot!(game, Kraid[0].base.y_pos)) {
+        if i32::from(y) == i32::from(Body::of(game, 0).actor().y.whole) {
             if row.word(ROW_TILEMAP) & NO_CLEAR == 0 {
                 let tail = game.tilemap_queue_tail();
                 let bg2_base = game.slot_byte(BG2_TILEMAP_BASE);
