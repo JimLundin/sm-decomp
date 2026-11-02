@@ -6,41 +6,86 @@
 //! $7E:8000; the brain's are at $7E:7840 and $7E:8040. Unnamed words keep
 //! their layout names.
 //!
-//! [`Body`] and [`Brain`] read them as the Session's typed slot state; the
-//! body's RAM-offset view `MotherBrainBody` remains for the compatibility
-//! runtime's body instructions and hand beam projectile accessors, which
-//! still address it.
-use crate::actors::layouts::part_view;
+//! [`Body`] and [`Brain`] read them as the Session's typed slot state.
 use crate::actors::slot_view::{SlotState, slot_view};
 use crate::session_access::SessionAccess;
 
 slot_view! {
     /// The body's slot: the fight's phase and pose, its attacks, the room and
-    /// brain palettes, the brain's instruction list and the rainbow beam.
-    /// Fields as `MotherBrainBody`'s; the beam's right origin X is
-    /// [`beam_right_origin_x`].
+    /// brain palettes, the brain's instruction list and the rainbow beam. The
+    /// beam's right origin X is [`beam_right_origin_x`].
     Body, BodyEdit {
         record: [
-            function = var_a, zebetite_palette_index = var_c, brain_palette_counter = var_d,
-            brain_palette_reload = var_e, function_timer = var_f, cooldown = parameter_1,
+            // $0FA8: the body's bank $A9 function.
+            function = var_a,
+            // $0FAC: the zebetites' palette animation index.
+            zebetite_palette_index = var_c,
+            // $0FAE: brain palette counter (low byte) and timer (high byte).
+            brain_palette_counter = var_d,
+            // $0FB0: brain palette timer reload (low byte) and palette set
+            // (high byte: 0 normal, 2 charging the laser).
+            brain_palette_reload = var_e,
+            // $0FB2: the body function's timer; the bomb's target X.
+            function_timer = var_f,
+            // $0FB4: attack cooldown; rainbow beam explosion index; Samus's
+            // custom X velocity.
+            cooldown = parameter_1,
+            // $0FB6: rainbow beam explosion timer; Samus's custom Y velocity.
             explosion_timer = parameter_2,
         ],
         extended: [
-            form = var_00, initial_brain_instructions = var_01, pose = var_02, hitboxes = var_04,
-            attacks_disabled = var_06, walk_counter = var_07, hdma_object = var_09,
-            neck_base_x = var_0a, neck_base_y = var_0b, neck_palette = var_0c,
-            brain_palette = var_0d, room_palette_list = var_0e, room_palette_timer = var_0f,
-            ring_volleys = var_13, baby_metroid_cry = var_14, beam_sounds_left = var_15,
-            beam_sound_playing = var_16, hand_beam_phase = var_17, attack_phase = var_18,
-            ring_target_angle = var_1a, delete_turrets = var_1d, rinkas = var_1e,
-            corpse_state = var_1f, brain_instruction_timer = var_20, brain_instructions = var_21,
-            sprite_tile_transfer = var_22, hand_beam_x_subpos = var_23, hand_beam_x = var_24,
-            hand_beam_y_subpos = var_25, hand_beam_y = var_26, hand_beam_x_speed = var_27,
-            hand_beam_y_speed = var_28, hand_beam_angle = var_29, beam_angle = var_31,
-            beam_width = var_33, grey_transition = var_37, fake_death_explosion_timer = var_38,
-            fake_death_explosion_index = var_39, beam_right_edge = var_3a,
-            beam_left_edge = var_3b, beam_left_origin_x = var_3c, beam_left_origin_y = var_3d,
-            beam_right_origin_y = var_3f,
+            // $7800: first phase, fake death, second phase, drained, third
+            // phase; $7802: the brain's initial instruction list; $7804:
+            // standing, walking, crouching, hand beam or leaning.
+            form = var_00, initial_brain_instructions = var_01, pose = var_02,
+            // $7808: which of the body, brain and neck hitboxes are enabled.
+            hitboxes = var_04,
+            // $780C: disables the third phase's attacks; $780E: counts walks
+            // to choose the walking direction.
+            attacks_disabled = var_06, walk_counter = var_07,
+            // $7812: the rising and rainbow beam HDMA object.
+            hdma_object = var_09,
+            // $7814, $7816: where the neck starts, from the body's position.
+            neck_base_x = var_0a, neck_base_y = var_0b,
+            // $7818, $781A: neck and brain palette indices.
+            neck_palette = var_0c, brain_palette = var_0d,
+            // $781C, $781E: the room palette flash's instruction list and
+            // timer.
+            room_palette_list = var_0e, room_palette_timer = var_0f,
+            // $7826: blue ring volleys fired at the baby Metroid while it
+            // refills; $7828: play the baby Metroid's cry.
+            ring_volleys = var_13, baby_metroid_cry = var_14,
+            // $782A: rainbow beam sounds still to queue; $782C: the rainbow
+            // beam sound is playing (checked on unpause).
+            beam_sounds_left = var_15, beam_sound_playing = var_16,
+            // $782E: the hand beam attack's phase; $7830: try, cooldown or
+            // end.
+            hand_beam_phase = var_17, attack_phase = var_18,
+            // $7834: the blue rings' target angle.
+            ring_target_angle = var_1a,
+            // $783A: delete the turrets and rinkas once the first phase ends;
+            // $783C: active, moving rinkas; $783E: initial, corpse, or
+            // recovered (phase 2).
+            delete_turrets = var_1d, rinkas = var_1e, corpse_state = var_1f,
+            // $8000, $8002: the brain's instruction timer and list; $8004:
+            // the sprite tile transfer entry.
+            brain_instruction_timer = var_20, brain_instructions = var_21,
+            sprite_tile_transfer = var_22,
+            // $8006-$8012: the hand beam's next position, velocity and angle.
+            hand_beam_x_subpos = var_23, hand_beam_x = var_24, hand_beam_y_subpos = var_25,
+            hand_beam_y = var_26, hand_beam_x_speed = var_27, hand_beam_y_speed = var_28,
+            hand_beam_angle = var_29,
+            // $8022: the rainbow beam's angle; $8026: its width, widened up
+            // to a cap.
+            beam_angle = var_31, beam_width = var_33,
+            // $802E: the grey and room-lights transition counter.
+            grey_transition = var_37,
+            // $8030, $8032: the fake death's explosion timer and index.
+            fake_death_explosion_timer = var_38, fake_death_explosion_index = var_39,
+            // $8034-$803E: the rainbow beam's edge angles and origins (the
+            // right origin X is the Session's Botwoon death word).
+            beam_right_edge = var_3a, beam_left_edge = var_3b, beam_left_origin_x = var_3c,
+            beam_left_origin_y = var_3d, beam_right_origin_y = var_3f,
         ],
     }
 }
@@ -124,128 +169,3 @@ pub fn set_beam_right_origin_x<H: SlotState + ?Sized>(host: &mut H, value: u16) 
 /// The body's and brain's enemy indices, as the slot views take them.
 pub const BODY_INDEX: u16 = 0;
 pub const BRAIN_INDEX: u16 = 0x40;
-
-part_view! {
-    /// The body's view of slot 0: the fight's phase and pose, its attacks,
-    /// the room and brain palettes, the brain's instruction list and the
-    /// rainbow beam.
-    MotherBrainBody: EnemyLayout72 {
-        words: [
-            // $0FA8: the body's bank $A9 function.
-            function,
-            var_b,
-            // $0FAC: the zebetites' palette animation index.
-            zebetite_palette_index,
-            // $0FAE: brain palette counter (low byte) and timer (high byte).
-            brain_palette_counter,
-            // $0FB0: brain palette timer reload (low byte) and palette set
-            // (high byte: 0 normal, 2 charging the laser).
-            brain_palette_reload,
-            // $0FB2: the body function's timer; the bomb's target X.
-            function_timer,
-            // $0FB4: attack cooldown; rainbow beam explosion index; Samus's
-            // custom X velocity.
-            cooldown,
-            // $0FB6: rainbow beam explosion timer; Samus's custom Y velocity.
-            explosion_timer,
-        ],
-        pad1: [u8; 26696],
-        words: [
-            // $7800: first phase, fake death, second phase, drained, third phase.
-            form,
-            // $7802: the brain's initial instruction list.
-            initial_brain_instructions,
-            // $7804: standing, walking, crouching, hand beam or leaning.
-            pose,
-            var_03,
-            // $7808: which of the body, brain and neck hitboxes are enabled.
-            hitboxes,
-            var_05,
-            // $780C: disables the third phase's attacks.
-            attacks_disabled,
-            // $780E: counts walks to choose the walking direction.
-            walk_counter,
-            var_08,
-            // $7812: the rising and rainbow beam HDMA object.
-            hdma_object,
-            // $7814, $7816: where the neck starts, from the body's position.
-            neck_base_x,
-            neck_base_y,
-            // $7818, $781A: neck and brain palette indices.
-            neck_palette,
-            brain_palette,
-            // $781C, $781E: the room palette flash's instruction list and timer.
-            room_palette_list,
-            room_palette_timer,
-            var_10,
-            var_11,
-            var_12,
-            // $7826: blue ring volleys fired at the baby Metroid while it refills.
-            ring_volleys,
-            // $7828: play the baby Metroid's cry.
-            baby_metroid_cry,
-            // $782A: rainbow beam sounds still to queue.
-            beam_sounds_left,
-            // $782C: the rainbow beam sound is playing (checked on unpause).
-            beam_sound_playing,
-            // $782E: the hand beam attack's phase.
-            hand_beam_phase,
-            // $7830: try, cooldown or end.
-            attack_phase,
-            var_19,
-            // $7834: the blue rings' target angle.
-            ring_target_angle,
-            var_1b,
-            var_1c,
-            // $783A: delete the turrets and rinkas once the first phase ends.
-            delete_turrets,
-            // $783C: active, moving rinkas.
-            rinkas,
-            // $783E: initial, corpse, or recovered (phase 2).
-            corpse_state,
-        ],
-        pad2: [u8; 1984],
-        words: [
-            // $8000, $8002: the brain's instruction timer and list.
-            brain_instruction_timer,
-            brain_instructions,
-            // $8004: the sprite tile transfer entry.
-            sprite_tile_transfer,
-            // $8006-$8012: the hand beam's next position, velocity and angle.
-            hand_beam_x_subpos,
-            hand_beam_x,
-            hand_beam_y_subpos,
-            hand_beam_y,
-            hand_beam_x_speed,
-            hand_beam_y_speed,
-            hand_beam_angle,
-            var_2a,
-            var_2b,
-            var_2c,
-            var_2d,
-            var_2e,
-            var_2f,
-            var_30,
-            // $8022: the rainbow beam's angle.
-            beam_angle,
-            var_32,
-            // $8026: the rainbow beam's width, widened up to a cap.
-            beam_width,
-            var_34,
-            var_35,
-            var_36,
-            // $802E: the grey and room-lights transition counter.
-            grey_transition,
-            // $8030, $8032: the fake death's explosion timer and index.
-            fake_death_explosion_timer,
-            fake_death_explosion_index,
-            // $8034-$803E: the rainbow beam's edge angles and origins.
-            beam_right_edge,
-            beam_left_edge,
-            beam_left_origin_x,
-            beam_left_origin_y,
-            beam_right_origin_x,
-            beam_right_origin_y,
-        ],
-    }
-}

@@ -1,17 +1,14 @@
 //! Mother Brain's body script steps: moving the BG2-drawn body and setting its pose.
-//! The body lives in actor slot 0; its pose word stays RAM-authoritative.
+//! The body lives in actor slot 0; its phase and pose are its slot view's.
 #![forbid(unsafe_code)]
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
 use crate::ram_map::word;
-use core::mem::offset_of;
 use sm_game::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
-use sm_game::actors::mother_brain::MotherBrainBody;
+use sm_game::actors::mother_brain::{BODY_INDEX, Body, BodyEdit};
 use sm_game::enemy_script::EnemyScript;
 
-const BODY: Key = Key::from_legacy(0);
-const POSE: usize = 0xf78 + offset_of!(MotherBrainBody, pose);
-const PHASE: usize = 0xf78 + offset_of!(MotherBrainBody, form);
+const BODY: Key = Key::from_legacy(BODY_INDEX);
 
 /// Body poses written by the walking, crouching and beam scripts.
 #[derive(Clone, Copy)]
@@ -82,7 +79,7 @@ fn pose(ea: u32) -> Option<Pose> {
 
 fn footstep(game: &mut Game) {
     word! {game; EARTHQUAKE_TYPE = 1; EARTHQUAKE_TIMER = 4; }
-    if Runtime::new(game).native_word(PHASE) == 3 {
+    if Body::of(&Runtime::new(game), BODY_INDEX).form() == 3 {
         // The original routine stores into ROM here; the port only reports it.
         print!("Write to rom!\n");
     }
@@ -122,7 +119,7 @@ pub(crate) fn dispatch_instruction(
     if let Some(step) = movement(ea) {
         move_body(step, game);
     } else if let Some(pose) = pose(ea) {
-        Runtime::new(game).write_slice_native(POSE, pose as u16);
+        *BodyEdit::of(&mut Runtime::new(game), BODY_INDEX).pose() = pose as u16;
     } else {
         return None;
     }

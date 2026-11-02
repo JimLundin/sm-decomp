@@ -7,8 +7,7 @@
 //! The beam window runs as one of Mother Brain's state steps: its slot words
 //! are the Session's typed slot state, and the tables are named RAM.
 use crate::actors::mother_brain::{
-    BODY_INDEX, BRAIN_INDEX, Body, BodyEdit, Brain, MotherBrainBody, beam_right_origin_x,
-    set_beam_right_origin_x,
+    BODY_INDEX, BRAIN_INDEX, Body, BodyEdit, Brain, beam_right_origin_x, set_beam_right_origin_x,
 };
 use crate::actors::mother_brain_fight::State;
 use crate::beam_windows::advance_window_edges;
@@ -25,9 +24,6 @@ const TOP_ROW: u16 = 32;
 const BOTTOM_ROW: u16 = 232;
 /// A row the beam does not cover: left edge FFh, right edge 0.
 const EMPTY_ROW: u16 = 0xff;
-// The downward rows count from $7E:803E, the body's right origin Y.
-const _: () =
-    assert!(0xf78 + core::mem::offset_of!(MotherBrainBody, beam_right_origin_y) == 0x803e);
 
 /// Which way the beam points, by the octants of its two edges.
 #[derive(Clone, Copy, PartialEq, Eq)]
