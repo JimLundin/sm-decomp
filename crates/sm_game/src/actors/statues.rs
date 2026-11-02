@@ -9,17 +9,16 @@
 //! original's.
 use crate::actors::boss_lease::BossLease;
 use crate::actors::host::{BossEffects, Slopes, abs16};
-use crate::actors::layouts::part_view;
+use crate::actors::slot_view::{SlotState, slot_view};
 use crate::constants::enemy_properties::{
     K_ENEMY_PROPS_DISABLE_SAMUS_COLL, K_ENEMY_PROPS_PROCESSED_OFFSCREEN,
 };
 use crate::enemy_script::EnemyScript;
 use crate::ram::word;
-use crate::session_slot;
 use crate::statue_tables;
 
 /// A lease on a game with the statues' effects.
-pub trait Lease: BossLease<Game: BossEffects> {
+pub trait Lease: BossLease<Game: BossEffects> + SlotState {
     /// The boss word of `area`, in native byte order.
     fn boss_word_native(&mut self, area: u16) -> u16;
     /// Start the room's acid lowering.
@@ -32,20 +31,25 @@ pub trait Lease: BossLease<Game: BossEffects> {
     fn spawn_collision_plm(&mut self, header: u16);
 }
 
-part_view! {
-    /// A chozo statue's view of its slot. `movement` indexes the carry
-    /// movement tables; `activated` starts the carry; `variant` is 0 in
-    /// Wrecked Ship and 2 in Lower Norfair.
-    Statue: EnemyLayout8 {
-        words: [var_a, var_b, movement, var_d, var_e, function, activated, variant],
+slot_view! {
+    /// A chozo statue's slot. `movement` indexes the carry movement tables;
+    /// `activated` starts the carry; `variant` is 0 in Wrecked Ship and 2 in
+    /// Lower Norfair.
+    Statue, StatueEdit {
+        record: [
+            var_a = var_a, var_b = var_b, movement = var_c, function = var_f,
+            activated = parameter_1, variant = parameter_2,
+        ],
+        extended: [],
     }
 }
 
-part_view! {
-    /// The Tourian entrance statue's and n00b tube cracks' view of a slot:
-    /// `kind` picks the statue part.
-    Decoration: EnemyLayout8 {
-        words: [var_a, var_b, var_c, var_d, var_e, var_f, kind, parameter_2],
+slot_view! {
+    /// The Tourian entrance statue's and n00b tube cracks' slot: `kind` picks
+    /// the statue part.
+    Decoration, DecorationEdit {
+        record: [kind = parameter_1],
+        extended: [],
     }
 }
 
@@ -118,15 +122,18 @@ const UNLOCK_SAMUS: u16 = 1;
 /// instruction list; the base also spawns the decoration, Ridley and
 /// Phantoon. Was `TourianEntranceStatue_Init`.
 pub fn initialize_tourian_statue<L: Lease + ?Sized>(game: &mut L) {
-    let me = i32::from(game.current_enemy());
-    session_slot!(game, Decoration[me].base; palette_index = 0, instruction_timer = 1, timer = 0);
-    let list = statue_tables::tourian_statue(
-        game,
-        (session_slot!(game, Decoration[me].kind) >> 1) as isize,
-    )
-    .instruction_list;
-    session_slot!(game, Decoration[me].base.current_instruction = list);
-    if session_slot!(game, Decoration[me].kind) == 0 {
+    let k = game.current_enemy();
+    {
+        let mut decoration = DecorationEdit::of(game, k);
+        let actor = decoration.actor();
+        actor.palette = 0;
+        actor.instruction_delay = 1;
+        actor.timer = 0;
+    }
+    let list = statue_tables::tourian_statue(game, (Decoration::of(game, k).kind() >> 1) as isize)
+        .instruction_list;
+    DecorationEdit::of(game, k).actor().instruction = list;
+    if Decoration::of(game, k).kind() == 0 {
         // The spawns take their initialisation parameter from A: the
         // instruction list just stored, then each spawn's returned slot.
         let base = game.spawn_room_eproj(BASE_DECORATION, list);
@@ -148,29 +155,26 @@ pub fn initialize_tube_cracks<L: Lease + ?Sized>(game: &mut L) {
 /// Initialisation AI - chozo statue ($AA:E725): waits, with its variant's
 /// palettes and slope and spike blocks. Was `ChozoStatue_Init`.
 pub fn initialize_chozo_statue<L: Lease + ?Sized>(game: &mut L) {
-    let me = i32::from(game.current_enemy());
-    session_slot!(
-        game,
-        Statue[me].base.properties = (session_slot!(game, Statue[me].base.properties) as i32
+    let k = game.current_enemy();
+    {
+        let mut statue = StatueEdit::of(game, k);
+        let actor = statue.actor();
+        actor.properties = (actor.properties as i32
             | (K_ENEMY_PROPS_DISABLE_SAMUS_COLL as i32
                 | K_ENEMY_PROPS_PROCESSED_OFFSCREEN as i32
-                | 0x8000)) as u16
-    );
-    session_slot!(
-        game,
-        Statue[me].base.spritemap_pointer = list::NOTHING_SPRITEMAP
-    );
-    session_slot!(game, Statue[me].base; instruction_timer = 1, timer = 0);
-    session_slot!(game, Statue[me]; function = function::NOTHING, activated = 0);
-    session_slot!(game, Statue[me].base.palette_index = 0);
+                | 0x8000)) as u16;
+        actor.spritemap = list::NOTHING_SPRITEMAP;
+        actor.instruction_delay = 1;
+        actor.timer = 0;
+        *statue.function() = function::NOTHING;
+        *statue.activated() = 0;
+        statue.actor().palette = 0;
+    }
     // The original clears slot 0's layer, not the statue's.
-    session_slot!(game, Statue[0].base.layer = 0);
-    let variant: u16 = session_slot!(game, Statue[me].variant);
-    session_slot!(
-        game,
-        Statue[me].base.current_instruction =
-            statue_tables::chozo_statue(game, (variant >> 1) as isize).instruction_list
-    );
+    StatueEdit::of(game, 0).actor().layer = 0;
+    let variant: u16 = Statue::of(game, k).variant();
+    StatueEdit::of(game, k).actor().instruction =
+        statue_tables::chozo_statue(game, (variant >> 1) as isize).instruction_list;
     if variant != 0 {
         crate::word_transfers!(game, descending, 16;
             le(TARGET_PALETTES, 175) <- table(LOWER_NORFAIR_PALETTE_2, 15),
@@ -191,9 +195,8 @@ pub fn initialize_chozo_statue<L: Lease + ?Sized>(game: &mut L) {
 
 /// Main AI - chozo statue ($AA:E7A7): the function. Was `ChozoStatue_Main`.
 pub fn main_ai<L: Lease + ?Sized>(game: &mut L) {
-    let me = i32::from(game.current_enemy());
     let k = game.current_enemy();
-    match session_slot!(game, Statue[me].function) {
+    match Statue::of(game, k).function() {
         function::LOWER_NORFAIR => lower_norfair(game, k),
         function::WRECKED_SHIP => wrecked_ship(game, k),
         function::NOTHING | function::CLEARED | function::SCRIPTED => {}
@@ -204,13 +207,9 @@ pub fn main_ai<L: Lease + ?Sized>(game: &mut L) {
 /// Chozo statue function - Lower Norfair ($AA:E445): activated, it carries
 /// Samus down. Was `sub_AAE445`.
 pub fn lower_norfair<L: Lease + ?Sized>(game: &mut L, k: u16) {
-    let me = k as i32;
-    if session_slot!(game, Statue[me].activated) != 0 {
-        session_slot!(
-            game,
-            Statue[me].base.current_instruction = list::LOWER_NORFAIR_ACTIVATED
-        );
-        session_slot!(game, Statue[me].base.instruction_timer = 1);
+    if Statue::of(game, k).activated() != 0 {
+        StatueEdit::of(game, k).actor().instruction = list::LOWER_NORFAIR_ACTIVATED;
+        StatueEdit::of(game, k).actor().instruction_delay = 1;
     }
 }
 
@@ -218,17 +217,12 @@ pub fn lower_norfair<L: Lease + ?Sized>(game: &mut L, k: u16) {
 /// it is activated, it carries Samus across. Was `Shaktool_PreInstr_0`.
 pub fn wrecked_ship<L: Lease + ?Sized>(game: &mut L, k: u16) {
     let area = game.area();
-    if (game.boss_word_native(area) & 1) != 0 {
-        let me = k as i32;
-        if session_slot!(game, Statue[me].activated) != 0 {
-            session_slot!(
-                game,
-                Statue[me].base.current_instruction = list::WRECKED_SHIP_ACTIVATED
-            );
-            session_slot!(game, Statue[me].base.instruction_timer = 1);
-            // Never read.
-            session_slot!(game, Statue[me]; var_a = 0xff00, var_b = 256);
-        }
+    if (game.boss_word_native(area) & 1) != 0 && Statue::of(game, k).activated() != 0 {
+        StatueEdit::of(game, k).actor().instruction = list::WRECKED_SHIP_ACTIVATED;
+        StatueEdit::of(game, k).actor().instruction_delay = 1;
+        // Never read.
+        *StatueEdit::of(game, k).var_a() = 0xff00;
+        *StatueEdit::of(game, k).var_b() = 256;
     }
 }
 
@@ -267,10 +261,9 @@ pub fn spike_clearing_footstep<L: Lease + ?Sized>(
     k: u16,
     jp: EnemyScript,
 ) -> EnemyScript {
-    let me = k as i32;
     let offset: u16 = jp.word(0);
-    let x = (session_slot!(game, Statue[me].base.x_pos)).wrapping_add(offset);
-    let y = (session_slot!(game, Statue[me].base.y_pos)).wrapping_add(28);
+    let x = (Statue::of(game, k).actor().x.whole).wrapping_add(offset);
+    let y = (Statue::of(game, k).actor().y.whole).wrapping_add(28);
     game.select_block_at(x, y);
     // The block below the selected one.
     let index = word!(game.ROOM_WIDTH_IN_BLOCKS) as i32 + word!(game.CUR_BLOCK_INDEX) as i32;
@@ -286,27 +279,16 @@ pub fn spike_clearing_footstep<L: Lease + ?Sized>(
 /// Instruction - chozo statue movement - index [[Y]] ($AA:E5D8): step the
 /// statue and carry Samus with it. Was `Shaktool_Instr_7`.
 pub fn movement<L: Lease + ?Sized>(game: &mut L, k: u16, jp: EnemyScript) -> EnemyScript {
-    let me = k as i32;
-    session_slot!(game, Statue[me].movement = jp.word(0));
-    let step = statue_tables::movement(
-        game,
-        (session_slot!(game, Statue[me].movement) >> 1) as isize,
-    );
+    *StatueEdit::of(game, k).movement() = jp.word(0);
+    let step = statue_tables::movement(game, (Statue::of(game, k).movement() >> 1) as isize);
     game.move_horizontal(k, (step.x_velocity as i16 as i32) << 8, Slopes::Ignore);
-    let step = statue_tables::movement(
-        game,
-        (session_slot!(game, Statue[me].movement) >> 1) as isize,
-    );
+    let step = statue_tables::movement(game, (Statue::of(game, k).movement() >> 1) as isize);
     game.move_vertical(k, (abs16(step.x_velocity) as i16 as i32) << 8);
     game.snap_to_slopes(k);
-    let index = session_slot!(game, Statue[me].movement) as i32 >> 1;
+    let index = Statue::of(game, k).movement() as i32 >> 1;
     let step = statue_tables::movement(game, index as isize);
-    game.set_player_x(
-        (step.samus_x_offset).wrapping_add(session_slot!(game, Statue[me].base.x_pos)),
-    );
-    game.set_player_y(
-        (step.samus_y_offset).wrapping_add(session_slot!(game, Statue[me].base.y_pos)),
-    );
+    game.set_player_x((step.samus_x_offset).wrapping_add(Statue::of(game, k).actor().x.whole));
+    game.set_player_y((step.samus_y_offset).wrapping_add(Statue::of(game, k).actor().y.whole));
     jp.offset(1)
 }
 
