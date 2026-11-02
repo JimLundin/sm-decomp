@@ -5,10 +5,12 @@
 //! which cycle the colour math backdrop through the rainbow.
 //!
 //! The beam window runs as one of Mother Brain's state steps: its slot words
-//! are the Session's inside a lease, and the tables are named RAM.
-use crate::actors::mother_brain::{BODY, BRAIN, MotherBrainBody, MotherBrainBrain};
+//! are the Session's typed slot state, and the tables are named RAM.
+use crate::actors::mother_brain::{
+    BODY_INDEX, BRAIN_INDEX, Body, BodyEdit, Brain, MotherBrainBody, beam_right_origin_x,
+    set_beam_right_origin_x,
+};
 use crate::actors::mother_brain_fight::State;
-use crate::actors::session_slots::session_slot;
 use crate::beam_windows::advance_window_edges;
 use crate::cartridge::LoadedImage;
 use sm_data::beam_gradients::{ADDRESS as GRADIENTS, BeamGradients};
@@ -77,30 +79,27 @@ fn write(game: &mut impl Host, at: isize, value: u16) {
 /// edges and origin from its angle, width and the brain, then rasterize the
 /// window for the beam's direction.
 pub fn calculate_window(game: &mut impl Host) {
-    let half_width = u16::from(session_slot!(byte game, MotherBrainBody[BODY].beam_width[1]) >> 1);
-    session_slot!(
-        game,
-        MotherBrainBody[BODY].beam_right_edge =
-            session_slot!(game, MotherBrainBody[BODY].beam_angle).wrapping_sub(half_width)
-    );
-    session_slot!(
-        game,
-        MotherBrainBody[BODY].beam_left_edge =
-            half_width.wrapping_add(session_slot!(game, MotherBrainBody[BODY].beam_angle))
-    );
+    let half_width = u16::from(Body::of(game, BODY_INDEX).beam_width().to_le_bytes()[1] >> 1);
+    *BodyEdit::of(game, BODY_INDEX).beam_right_edge() = Body::of(game, BODY_INDEX)
+        .beam_angle()
+        .wrapping_sub(half_width);
+    *BodyEdit::of(game, BODY_INDEX).beam_left_edge() =
+        half_width.wrapping_add(Body::of(game, BODY_INDEX).beam_angle());
     // The brain's X position, read a byte early so that its low byte lands in
     // the high byte, plus Eh pixels.
-    let origin_x = ((i32::from(session_slot!(
-        game,
-        MotherBrainBody[BRAIN + 1].base.enemy_ptr
-    )) + 0xe00)
-        & 0xff00) as u16;
-    session_slot!(game, MotherBrainBody[BODY]; beam_left_origin_x = origin_x, beam_right_origin_x = origin_x);
-    let origin_y = session_slot!(game, MotherBrainBrain[BRAIN].base.y_pos).wrapping_add(5);
-    session_slot!(game, MotherBrainBody[BODY]; beam_left_origin_y = origin_y, beam_right_origin_y = origin_y);
-    let right_octant = 4 * (session_slot!(game, MotherBrainBody[BODY].beam_right_edge) & 0xc0);
-    let octants =
-        (right_octant | (session_slot!(game, MotherBrainBody[BODY].beam_left_edge) & 0xc0)) >> 6;
+    let brain = Brain::of(game, BRAIN_INDEX).actor();
+    let early = u16::from_le_bytes([
+        brain.definition.to_le_bytes()[1],
+        brain.x.whole.to_le_bytes()[0],
+    ]);
+    let origin_x = ((i32::from(early) + 0xe00) & 0xff00) as u16;
+    *BodyEdit::of(game, BODY_INDEX).beam_left_origin_x() = origin_x;
+    set_beam_right_origin_x(game, origin_x);
+    let origin_y = Brain::of(game, BRAIN_INDEX).actor().y.whole.wrapping_add(5);
+    *BodyEdit::of(game, BODY_INDEX).beam_left_origin_y() = origin_y;
+    *BodyEdit::of(game, BODY_INDEX).beam_right_origin_y() = origin_y;
+    let right_octant = 4 * (Body::of(game, BODY_INDEX).beam_right_edge() & 0xc0);
+    let octants = (right_octant | (Body::of(game, BODY_INDEX).beam_left_edge() & 0xc0)) >> 6;
     match octants {
         0 | 12 | 15 => {
             let direction = match direction_bits(game) {
@@ -109,14 +108,14 @@ pub fn calculate_window(game: &mut impl Host) {
                 3 => Direction::DownLeft,
                 _ => panic!("non-null function pointer"),
             };
-            let left = session_slot!(game, MotherBrainBody[BODY].beam_left_origin_x);
-            let right = session_slot!(game, MotherBrainBody[BODY].beam_right_origin_x);
+            let left = Body::of(game, BODY_INDEX).beam_left_origin_x();
+            let right = beam_right_origin_x(game);
             rasterize_vertical(game, direction, left, right);
             write_downward_header(game, 0x9de6);
         }
         1 => {
-            let left = session_slot!(game, MotherBrainBody[BODY].beam_left_origin_x);
-            let right = session_slot!(game, MotherBrainBody[BODY].beam_right_origin_x);
+            let left = Body::of(game, BODY_INDEX).beam_left_origin_x();
+            let right = beam_right_origin_x(game);
             rasterize_rightward(game, left, right);
             write_downward_header(game, 0x9dec);
         }
@@ -128,8 +127,8 @@ pub fn calculate_window(game: &mut impl Host) {
 
 /// The right edge's second-octant bit and the left edge's top-half bit.
 fn direction_bits(game: &mut impl Host) -> u16 {
-    ((session_slot!(game, MotherBrainBody[BODY].beam_right_edge) >> 6) & 2)
-        | ((session_slot!(game, MotherBrainBody[BODY].beam_left_edge) >> 7) & 1)
+    ((Body::of(game, BODY_INDEX).beam_right_edge() >> 6) & 2)
+        | ((Body::of(game, BODY_INDEX).beam_left_edge() >> 7) & 1)
 }
 
 /// The indirect HDMA header for a beam drawn from the top: 10h blank rows,
@@ -154,13 +153,13 @@ fn rasterize_rightward(game: &mut impl Host, mut down_x: u16, mut up_x: u16) {
     write(game, WINDOWS + 2, EMPTY_ROW);
     let down_step = gradient(
         game,
-        session_slot!(byte game, MotherBrainBody[BODY].beam_right_edge[0]) as isize,
+        Body::of(game, BODY_INDEX).beam_right_edge().to_le_bytes()[0] as isize,
     );
     let up_step = gradient(
         game,
-        session_slot!(byte game, MotherBrainBody[BODY].beam_left_edge[0]) as isize,
+        Body::of(game, BODY_INDEX).beam_left_edge().to_le_bytes()[0] as isize,
     );
-    let mut row = session_slot!(game, MotherBrainBody[BODY].beam_right_origin_y);
+    let mut row = Body::of(game, BODY_INDEX).beam_right_origin_y();
     let mut at = WINDOWS + 2 * (row as isize - 32 + 1);
     write(game, at + 2, EMPTY_ROW);
     write(game, at + 4, EMPTY_ROW);
@@ -189,7 +188,7 @@ fn rasterize_rightward(game: &mut impl Host, mut down_x: u16, mut up_x: u16) {
     }
     // Downwards: the right edge until it runs off the screen, then empty rows.
     let mut at = origin_at + 2;
-    let mut row = session_slot!(game, MotherBrainBody[BODY].beam_right_origin_y);
+    let mut row = Body::of(game, BODY_INDEX).beam_right_origin_y();
     loop {
         let (edge, overflow) = down_step.overflowing_add(down_x);
         if overflow {
@@ -223,14 +222,16 @@ fn rasterize_upward(game: &mut impl Host) {
         3 => Direction::UpLeft,
         _ => panic!("non-null function pointer"),
     };
-    let left = session_slot!(game, MotherBrainBody[BODY].beam_left_origin_x);
-    let right = session_slot!(game, MotherBrainBody[BODY].beam_right_origin_x);
+    let left = Body::of(game, BODY_INDEX).beam_left_origin_x();
+    let right = beam_right_origin_x(game);
     rasterize_vertical(game, direction, left, right);
     write(game, HEADER, 16);
     write(game, HEADER + 1, 0x9d00);
     write(game, HEADER + 3, 16);
     write(game, HEADER + 4, 0x9d02);
-    let rows = session_slot!(game, MotherBrainBody[BODY].beam_left_origin_y).wrapping_sub(32);
+    let rows = Body::of(game, BODY_INDEX)
+        .beam_left_origin_y()
+        .wrapping_sub(32);
     if rows >= 0x80 {
         let first = rows.wrapping_sub(127);
         write(game, HEADER + 6, first | 0x80);
@@ -268,18 +269,18 @@ fn rasterize_vertical(game: &mut impl Host, direction: Direction, left: u16, rig
     write(game, WINDOWS + 2, EMPTY_ROW);
     // Going down the left edge is the beam's right edge.
     let left_edge = if down {
-        session_slot!(byte game, MotherBrainBody[BODY].beam_right_edge[0])
+        Body::of(game, BODY_INDEX).beam_right_edge().to_le_bytes()[0]
     } else {
-        session_slot!(byte game, MotherBrainBody[BODY].beam_left_edge[0])
+        Body::of(game, BODY_INDEX).beam_left_edge().to_le_bytes()[0]
     };
     let left_step = gradient(game, edge_angle(left_edge, add_left));
     let right_edge = if down {
-        session_slot!(byte game, MotherBrainBody[BODY].beam_left_edge[0])
+        Body::of(game, BODY_INDEX).beam_left_edge().to_le_bytes()[0]
     } else {
-        session_slot!(byte game, MotherBrainBody[BODY].beam_right_edge[0])
+        Body::of(game, BODY_INDEX).beam_right_edge().to_le_bytes()[0]
     };
     let right_step = gradient(game, edge_angle(right_edge, add_right));
-    let mut row = session_slot!(game, MotherBrainBody[BODY].beam_left_origin_y);
+    let mut row = Body::of(game, BODY_INDEX).beam_left_origin_y();
     let mut at = if down {
         // The rows above the origin are empty.
         let mut remaining = row.wrapping_sub(32);
@@ -292,7 +293,7 @@ fn rasterize_vertical(game: &mut impl Host, direction: Direction, left: u16, rig
                 break;
             }
         }
-        row = session_slot!(game, MotherBrainBody[BODY].beam_left_origin_y);
+        row = Body::of(game, BODY_INDEX).beam_left_origin_y();
         at
     } else {
         let at = WINDOWS + 2 * (row as isize - 32 + 1);
