@@ -6,12 +6,33 @@ use crate::actors::api::{self, Axis};
 use crate::actors::combat::current;
 use crate::actors::host::{ActorLease, BossEffects, LeaseActors};
 use crate::actors::rio::{aim_velocity, bounce_horizontal, move_axis};
+use crate::actors::slot_view::{SlotMut, SlotRef, SlotState, slot_view};
 use crate::enemy_script::EnemyScript;
 use crate::ram::words as W;
 
-// $7E:7800 + enemy: instruction list, animation finished flag, flames Y offset / visible flag.
-const EXTRA: usize = 0x7800;
-const FINISHED: usize = 0x7802;
+/// A lease the Gerutas and Holtzes run on: their slots are the Session's.
+pub trait Lease: ActorLease + SlotState {}
+impl<T: ActorLease + SlotState + ?Sized> Lease for T {}
+
+slot_view! {
+    /// A Geruta's or Holtz's extended words: its instruction list, animation finished
+    /// flag, and flames Y offset (Geruta) or flames visible flag (Holtz).
+    Geruta, GerutaEdit {
+        record: [],
+        extended: [instruction_list = var_00, finished = var_01, flames = var_02],
+    }
+}
+
+/// Store `value` to extended word `var` of enemy `k`, then refresh the lease's
+/// observations, as the slice store did after each byte.
+fn store(runtime: &mut impl Lease, k: u16, var: usize, value: u16) {
+    *SlotMut::of(runtime, k).extended(var) = value;
+    runtime.record_stored();
+}
+/// [`Geruta`]'s extended words, by number.
+const INSTRUCTION_LIST: usize = 0;
+const FINISHED: usize = 1;
+const FLAMES_WORD: usize = 2;
 const IDLE: [u16; 2] = [0xc0f1, 0xc61a]; // instruction lists
 const FLAMES: [u16; 2] = [0xc18f, 0xc6b0];
 const DESCENDING: [u16; 2] = [0xc12f, 0xc65a];
@@ -35,8 +56,8 @@ pub fn instruction<H: LeaseActors>(address: u32, cursor: EnemyScript, game: &mut
         _ => unreachable!("unknown Rio animation command"),
     };
     let mut runtime = game.lease();
-    let at = EXTRA + usize::from(runtime.word(W::CUR_ENEMY_INDEX)) + 2 * variable;
-    runtime.write_slice_native(at, value);
+    let k = runtime.word(W::CUR_ENEMY_INDEX);
+    store(&mut runtime, k, variable, value);
     cursor
 }
 
@@ -54,10 +75,9 @@ pub fn initialize<H: LeaseActors>(holtz: bool, game: &mut H) {
     let mut runtime = game.lease();
     let raw = runtime.word(W::CUR_ENEMY_INDEX);
     let key = Key::from_legacy(raw);
-    let scratch = EXTRA + usize::from(raw);
-    runtime.write_slice_native(scratch + 2, 0);
+    store(&mut runtime, raw, FINISHED, 0);
     if !holtz {
-        runtime.write_slice_native(scratch + 4, 0);
+        store(&mut runtime, raw, FLAMES_WORD, 0);
     }
     let flames = usize::from((runtime.resolve_actor(key, Native).parameters[0] & 0x8000) != 0);
     let (list, function) = [(IDLE, IDLE_FUNCTION), (FLAMES, [0xc281, 0xc72e])][flames];
@@ -65,7 +85,7 @@ pub fn initialize<H: LeaseActors>(holtz: bool, game: &mut H) {
     if holtz {
         set_function(&mut runtime, key, function);
     }
-    runtime.write_slice_native(scratch, list);
+    store(&mut runtime, raw, INSTRUCTION_LIST, list);
     runtime.edit_actor(key, Native, |actor| {
         actor.instruction = list;
         if !holtz {
@@ -78,19 +98,19 @@ pub fn initialize<H: LeaseActors>(holtz: bool, game: &mut H) {
 pub fn flames<H: LeaseActors>(k: u16, holtz: bool, game: &mut H) {
     let mut runtime = game.lease();
     let key = Key::from_legacy(k);
-    let main = 0xe84 + (usize::from(k) >> 1) * 2; // + C8h health, DAh frozen, B6h X, BAh Y
-    let main_extra = EXTRA - 0x40 + usize::from(k);
-    if runtime.word(main + 200) == 0 {
+    let main = k.wrapping_sub(64);
+    if Geruta::of(&runtime, main).actor().health == 0 {
         runtime.edit_actor(key, Native, |actor| actor.properties |= 0x200);
         return;
     }
-    let frozen = runtime.word(main + 218);
+    let frozen = Geruta::of(&runtime, main).actor().frozen;
     runtime.edit_actor(key, Native, |actor| actor.frozen = frozen);
     if !holtz && frozen == 0 {
         runtime.edit_actor(key, Native, |actor| actor.properties &= !0x100);
     }
-    let flames = runtime.lease_native_word(main_extra + 4);
-    let idle = runtime.lease_native_word(main_extra) == IDLE[0];
+    let body = Geruta::of(&runtime, main);
+    let flames = body.flames();
+    let idle = body.instruction_list() == IDLE[0];
     let hidden = [idle, flames == 0][usize::from(holtz)];
     if frozen != 0 || hidden {
         runtime.edit_actor(key, Native, |actor| actor.properties |= 0x100);
@@ -101,9 +121,10 @@ pub fn flames<H: LeaseActors>(k: u16, holtz: bool, game: &mut H) {
         set_instruction_list(&mut runtime, list, 0);
     }
     runtime.edit_actor(key, Native, |actor| actor.properties &= !0x100);
-    let x = runtime.word(main + 182);
+    let x = Geruta::of(&runtime, main).actor().x.whole;
     runtime.edit_actor(key, Native, |actor| actor.x.whole = x);
-    let y = (if holtz { 12 } else { flames }).wrapping_add(runtime.word(main + 186));
+    let y =
+        (if holtz { 12 } else { flames }).wrapping_add(Geruta::of(&runtime, main).actor().y.whole);
     runtime.edit_actor(key, Native, |actor| actor.y.whole = y);
 }
 
@@ -111,7 +132,6 @@ pub fn flames<H: LeaseActors>(k: u16, holtz: bool, game: &mut H) {
 pub fn idle<H: LeaseActors>(k: u16, holtz: bool, game: &mut H) {
     let mut runtime = game.lease();
     let key = Key::from_legacy(k);
-    let finished = FINISHED + usize::from(k);
     let h = usize::from(holtz);
     let distance = (api::player_delta(&runtime, key, Axis::X) as i16).wrapping_abs() as u16;
     if (runtime.word(W::RANDOM_NUMBER) & 0x101) != 0 && distance < [0xc0, 0x70][h] {
@@ -121,8 +141,8 @@ pub fn idle<H: LeaseActors>(k: u16, holtz: bool, game: &mut H) {
         aim_velocity(&mut runtime, key, 2 * h, tables, index);
         set_instruction_list(&mut runtime, [0xc107, 0xc630][h], 0); // start swoop
         set_function(&mut runtime, key, [0xc33f, 0xc7bb][h]); // start swoop
-    } else if holtz || runtime.lease_native_word(finished) != 0 {
-        runtime.write_slice_native(finished, 0);
+    } else if holtz || Geruta::of(&runtime, k).finished() != 0 {
+        store(&mut runtime, k, FINISHED, 0);
         set_instruction_list(&mut runtime, IDLE[h], 0);
     }
 }
@@ -141,11 +161,10 @@ pub fn finish_animation<H: LeaseActors + BossEffects>(
         set_function(&mut runtime, key, IDLE_FUNCTION[0]);
         return;
     }
-    let finished = FINISHED + usize::from(k);
-    if runtime.lease_native_word(finished) == 0 {
+    if Geruta::of(&runtime, k).finished() == 0 {
         return;
     }
-    runtime.write_slice_native(finished, 0);
+    store(&mut runtime, k, FINISHED, 0);
     let h = usize::from(holtz);
     let (list, function) = match (holtz, end) {
         (true, true) => (HOLTZ_SWOOP_COOLDOWN, IDLE_FUNCTION[1]),
@@ -164,12 +183,12 @@ fn set_function(runtime: &mut impl ActorLease, key: Key, function: u16) {
 }
 
 /// Set geruta / holtz / squeept instruction list ($A2:C40D, $A2:C8A3, $A2:C012), cached
-/// `cache_offset` bytes into the enemy's extra RAM: restart only when it changes.
-pub fn set_instruction_list(runtime: &mut impl ActorLease, list: u16, cache_offset: usize) {
+/// `cache_offset` bytes into the enemy's extended words: restart only when it changes.
+pub fn set_instruction_list(runtime: &mut impl Lease, list: u16, cache_offset: usize) {
     let raw = runtime.word(W::CUR_ENEMY_INDEX);
-    let cache = EXTRA + usize::from(raw) + cache_offset;
-    if runtime.lease_native_word(cache) != list {
-        runtime.write_slice_native(cache, list);
+    let cache = cache_offset / 2;
+    if SlotRef::of(runtime, raw).extended(cache) != list {
+        store(runtime, raw, cache, list);
         let key = Key::from_legacy(raw);
         runtime.edit_actor(key, Native, |actor| actor.restart_animation(list));
     }
@@ -203,9 +222,8 @@ pub fn swoop<H: LeaseActors + BossEffects>(k: u16, holtz: bool, descending: bool
         set_function(&mut runtime, key, [0xc406, 0xc888][h]); // finish swoop, swoop cooldown
     } else {
         runtime.edit_actor(key, Native, decelerate);
-        let finished = FINISHED + usize::from(k);
-        if runtime.lease_native_word(finished) != 0 {
-            runtime.write_slice_native(finished, 0);
+        if Geruta::of(&runtime, k).finished() != 0 {
+            store(&mut runtime, k, FINISHED, 0);
             set_instruction_list(&mut runtime, [0xc179, 0xc674][h], 0); // ascending
         }
     }
