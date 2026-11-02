@@ -5,15 +5,15 @@
 //! until the critters-escaped event, then runs for the exit.
 use crate::actors::boss_lease::BossState;
 use crate::actors::host::Slopes;
-use crate::actors::layouts::part_view;
-use crate::actors::session_slots::session_slot;
+use crate::actors::slot_view::{SlotState, slot_view};
 use crate::constants::enemy_properties::*;
 use crate::enemy_script::EnemyScript;
 use crate::ram::word;
 use sm_data::escape_etecoons::EscapeEtecoon;
 
-/// What the escape critters need beyond a boss's state.
-pub trait Host: BossState {
+/// What the escape critters need beyond a boss's state; their slots are the
+/// Session's.
+pub trait Host: BossState + SlotState {
     /// Whether game event `event` has happened.
     fn event_happened(&mut self, event: u16) -> bool;
     /// Etecoon `index`'s initial state at $B3:E718.
@@ -22,10 +22,11 @@ pub trait Host: BossState {
     fn unknown_function(&mut self);
 }
 
-part_view! {
+slot_view! {
     /// A critter's view of its slot.
-    Critter: EnemyLayout8 {
-        words: [x_velocity, var_b, var_c, var_d, var_e, function, etecoon_index, parameter_2],
+    Critter, CritterEdit {
+        record: [x_velocity = var_a, function = var_f, etecoon_index = parameter_1],
+        extended: [],
     }
 }
 
@@ -74,10 +75,9 @@ const SIGN: i32 = 0x8000;
 /// Initialisation AI (escape etecoon $B3:E6CB, escape dachora $B3:EAE5):
 /// once the critters have escaped, delete the critter; otherwise start it.
 pub fn initialize(dachora: bool, game: &mut (impl Host + ?Sized)) {
-    let e = i32::from(game.current_enemy());
+    let e = game.current_enemy();
     if game.event_happened(CRITTERS_ESCAPED) {
-        session_slot!(game, Critter[e].base.properties, |old| old
-            | K_ENEMY_PROPS_DELETED as u16);
+        CritterEdit::of(game, e).actor().properties |= K_ENEMY_PROPS_DELETED as u16;
         return;
     }
     let flags = if dachora {
@@ -85,28 +85,37 @@ pub fn initialize(dachora: bool, game: &mut (impl Host + ?Sized)) {
     } else {
         ETECOON_PROPERTIES
     };
-    session_slot!(game, Critter[e].base.properties, |old| old | flags);
+    CritterEdit::of(game, e).actor().properties |= flags;
     if dachora {
-        session_slot!(game, Critter[e].base; spritemap_pointer = NO_SPRITEMAP, instruction_timer = 1,
-            timer = 0, current_instruction = instruction_list::DACHORA_RUNNING_AROUND_AIMLESSLY);
+        let mut edit = CritterEdit::of(game, e);
+        edit.actor().spritemap = NO_SPRITEMAP;
+        edit.actor().instruction_delay = 1;
+        edit.actor().timer = 0;
+        edit.actor().instruction = instruction_list::DACHORA_RUNNING_AROUND_AIMLESSLY;
     } else {
-        session_slot!(game, Critter[e].base; instruction_timer = 1, timer = 0, palette_index = 0);
-        let index = (session_slot!(game, Critter[e].etecoon_index) >> 1) as isize;
+        {
+            let mut edit = CritterEdit::of(game, e);
+            edit.actor().instruction_delay = 1;
+            edit.actor().timer = 0;
+            edit.actor().palette = 0;
+        }
+        let index = (Critter::of(game, e).etecoon_index() >> 1) as isize;
         let etecoon = game.escape_etecoon(index);
-        session_slot!(game, Critter[e].base; x_pos = etecoon.x_position, y_pos = etecoon.y_position);
-        session_slot!(game, Critter[e].function = etecoon.function);
-        session_slot!(
-            game,
-            Critter[e].base.current_instruction = etecoon.instruction_list
-        );
-        session_slot!(game, Critter[e].x_velocity = etecoon.x_velocity);
+        {
+            let mut edit = CritterEdit::of(game, e);
+            edit.actor().x.whole = etecoon.x_position;
+            edit.actor().y.whole = etecoon.y_position;
+        }
+        *CritterEdit::of(game, e).function() = etecoon.function;
+        CritterEdit::of(game, e).actor().instruction = etecoon.instruction_list;
+        *CritterEdit::of(game, e).x_velocity() = etecoon.x_velocity;
     }
 }
 
 /// Main AI - escape etecoon ($B3:E655): run the etecoon's function.
 pub fn main_ai(game: &mut (impl Host + ?Sized)) {
     let k = game.current_enemy();
-    match session_slot!(game, Critter[i32::from(k)].function) {
+    match Critter::of(game, k).function() {
         function::RUNNING_FOR_ESCAPE => run_for_escape(k, game),
         function::STATIONARY => wait_to_express_gratitude(k, game),
         function::RUNNING_AROUND_AIMLESSLY => run_around_aimlessly(k, game),
@@ -136,19 +145,19 @@ pub fn instruction(
 
 /// Escape etecoon function - running for escape ($B3:E65C). Was `run_right`.
 pub fn run_for_escape(k: u16, game: &mut (impl Host + ?Sized)) {
-    let e = i32::from(k);
-    session_slot!(game, Critter[e].base(x_pos, x_subpos) += ESCAPE_SPEED);
+    let e = k;
+    CritterEdit::of(game, e)
+        .actor()
+        .x
+        .advance(ESCAPE_SPEED.cast_signed());
 }
 
 /// Escape etecoon function - stationary ($B3:E670): wait to express gratitude
 /// once the critters have escaped. Was `await_rescue`.
 pub fn wait_to_express_gratitude(k: u16, game: &mut (impl Host + ?Sized)) {
     if game.event_happened(CRITTERS_ESCAPED) {
-        session_slot!(
-            game,
-            Critter[i32::from(k)].base.current_instruction =
-                instruction_list::ETECOON_EXPRESS_GRATITUDE_THEN_ESCAPE
-        );
+        CritterEdit::of(game, k).actor().instruction =
+            instruction_list::ETECOON_EXPRESS_GRATITUDE_THEN_ESCAPE;
     }
 }
 
@@ -156,25 +165,23 @@ pub fn wait_to_express_gratitude(k: u16, game: &mut (impl Host + ?Sized)) {
 /// walls, run for the escape once the critters have escaped, and fall. Was
 /// `walk`.
 pub fn run_around_aimlessly(k: u16, game: &mut (impl Host + ?Sized)) {
-    let e = i32::from(k);
-    let amount = i32::from(session_slot!(game, Critter[e].x_velocity) as i16) << 8;
+    let e = k;
+    let amount = i32::from(Critter::of(game, e).x_velocity() as i16) << 8;
     let blocked = game.move_horizontal(k, amount, Slopes::Ignore);
     if blocked {
-        session_slot!(game, Critter[e].base.instruction_timer = 1);
-        let left = (-i32::from(session_slot!(game, Critter[e].x_velocity))) & SIGN != 0;
-        let reversed = (-i32::from(session_slot!(game, Critter[e].x_velocity))) as u16;
-        session_slot!(game, Critter[e].x_velocity = reversed);
+        CritterEdit::of(game, e).actor().instruction_delay = 1;
+        let left = (-i32::from(Critter::of(game, e).x_velocity())) & SIGN != 0;
+        let reversed = (-i32::from(Critter::of(game, e).x_velocity())) as u16;
+        *CritterEdit::of(game, e).x_velocity() = reversed;
         let instruction = if left {
             instruction_list::ETECOON_RUNNING_LEFT
         } else {
             instruction_list::ETECOON_RUNNING_RIGHT
         };
-        session_slot!(game, Critter[e].base.current_instruction = instruction);
+        CritterEdit::of(game, e).actor().instruction = instruction;
         if game.event_happened(CRITTERS_ESCAPED) {
-            session_slot!(
-                game,
-                Critter[e].base.current_instruction = instruction_list::ETECOON_RUNNING_FOR_ESCAPE
-            );
+            CritterEdit::of(game, e).actor().instruction =
+                instruction_list::ETECOON_RUNNING_FOR_ESCAPE;
         }
     }
     game.move_vertical(k, 1 << 16);
@@ -201,9 +208,12 @@ pub fn go_to_if(
 
 /// Instruction - enemy X position += [[Y]] ($B3:E610). Was `move_scripted`.
 pub fn move_x(k: u16, script: EnemyScript, game: &mut (impl Host + ?Sized)) -> EnemyScript {
-    let e = i32::from(k);
-    session_slot!(game, Critter[e].base.x_pos, |old| old
-        .wrapping_add(script.word(0)));
+    let e = k;
+    {
+        let mut edit = CritterEdit::of(game, e);
+        let old = edit.actor().x.whole;
+        edit.actor().x.whole = old.wrapping_add(script.word(0));
+    }
     script.offset(1)
 }
 
@@ -214,7 +224,11 @@ pub fn shift_dachora(
     script: EnemyScript,
     game: &mut (impl Host + ?Sized),
 ) -> EnemyScript {
-    let e = i32::from(game.current_enemy());
-    session_slot!(game, Critter[e].base.x_pos, |old| old.wrapping_add(amount));
+    let e = game.current_enemy();
+    {
+        let mut edit = CritterEdit::of(game, e);
+        let old = edit.actor().x.whole;
+        edit.actor().x.whole = old.wrapping_add(amount);
+    }
     script
 }
