@@ -232,12 +232,385 @@ impl DisplayImage {
 /// Synchronous room work uses the same current display and resident image.
 /// Native bridges must export/adopt at their actual boundary; no second owner
 /// or invented room result is supplied by the display component.
+/// Callback authority for the current settlement operation. Ownership borrows
+/// stay private; topology changes use the explicit materializing transition.
+pub struct SettlementContext<'a, 'b> {
+    state: &'a mut DisplayState,
+    image: &'a mut DisplayImage,
+    media: Option<&'a mut Arc<SceneMedia>>,
+    window: Option<&'a mut crate::menu_window_state::WindowState>,
+    controls: Option<&'a mut crate::fx_sources::ExternalControls<'b>>,
+}
+impl<'a, 'b> SettlementContext<'a, 'b> {
+    pub(crate) fn new(
+        state: &'a mut DisplayState,
+        image: &'a mut DisplayImage,
+        media: Option<&'a mut Arc<SceneMedia>>,
+        window: Option<&'a mut crate::menu_window_state::WindowState>,
+        controls: Option<&'a mut crate::fx_sources::ExternalControls<'b>>,
+    ) -> Self {
+        Self {
+            state,
+            image,
+            media,
+            window,
+            controls,
+        }
+    }
+    pub fn state(&self) -> &DisplayState {
+        self.state
+    }
+    pub fn raster_mut(&mut self) -> &mut super::state::RasterState {
+        &mut self.state.raster
+    }
+    pub fn image(&self) -> &DisplayImage {
+        self.image
+    }
+    pub fn image_mut(&mut self) -> &mut DisplayImage {
+        self.image
+    }
+    pub fn media(&self) -> Option<&Arc<SceneMedia>> {
+        self.media.as_deref()
+    }
+    pub fn media_mut(&mut self) -> Option<&mut Arc<SceneMedia>> {
+        self.media.as_deref_mut()
+    }
+    pub fn read_source(
+        &mut self,
+        owner: super::hdma_sources::LiveOwner,
+        offset: usize,
+    ) -> Result<u8, DisplayError> {
+        use super::hdma_sources::LiveSources;
+        if let Some(controls) = self.controls.as_deref_mut() {
+            return crate::fx_sources::CurrentSources {
+                live: &mut self.state.hdma_live,
+                lighting: &mut self.state.visual.fireflea,
+                workspace: &mut self.state.workspace,
+                controls,
+            }
+            .read(&mut self.state.hdma, owner, offset);
+        }
+        crate::fx_sources::DisplaySources {
+            live: &mut self.state.hdma_live,
+            workspace: &mut self.state.workspace,
+            window: self.window.as_deref_mut(),
+            lighting: &mut self.state.visual.fireflea,
+        }
+        .read(&mut self.state.hdma, owner, offset)
+    }
+    pub fn write_source(
+        &mut self,
+        owner: super::hdma_sources::LiveOwner,
+        offset: usize,
+        value: u8,
+    ) -> Result<(), DisplayError> {
+        use super::hdma_sources::LiveSources;
+        if let Some(controls) = self.controls.as_deref_mut() {
+            return crate::fx_sources::CurrentSources {
+                live: &mut self.state.hdma_live,
+                lighting: &mut self.state.visual.fireflea,
+                workspace: &mut self.state.workspace,
+                controls,
+            }
+            .write(&mut self.state.hdma, owner, offset, value);
+        }
+        crate::fx_sources::DisplaySources {
+            live: &mut self.state.hdma_live,
+            workspace: &mut self.state.workspace,
+            window: self.window.as_deref_mut(),
+            lighting: &mut self.state.visual.fireflea,
+        }
+        .write(&mut self.state.hdma, owner, offset, value)
+    }
+    pub fn read_hdma_word(&mut self, word: crate::hdma::Word) -> Result<u16, DisplayError> {
+        let at = word.address();
+        Ok(u16::from_le_bytes([
+            self.read_control_byte(at)?,
+            self.read_control_byte(at + 1)?,
+        ]))
+    }
+    pub fn write_hdma_word(
+        &mut self,
+        word: crate::hdma::Word,
+        value: u16,
+        order: super::state::WordOrder,
+    ) -> Result<(), DisplayError> {
+        let at = word.address();
+        let [first, second] = order.encode(value);
+        self.write_control_byte(at, first)?;
+        self.write_control_byte(at + 1, second)
+    }
+    pub fn read_fx_field(&mut self, field: crate::fx_state::Field) -> Result<u16, DisplayError> {
+        let at = crate::fx_encoding::address(field);
+        Ok(u16::from_le_bytes([
+            self.read_control_byte(at)?,
+            self.read_control_byte(at + 1)?,
+        ]))
+    }
+    pub fn write_fx_field(
+        &mut self,
+        field: crate::fx_state::Field,
+        value: u16,
+    ) -> Result<(), DisplayError> {
+        let at = crate::fx_encoding::address(field);
+        let [first, second] = value.to_le_bytes();
+        self.write_control_byte(at, first)?;
+        self.write_control_byte(at + 1, second)
+    }
+    pub fn read_window_field(
+        &mut self,
+        field: crate::menu_window_state::Field,
+    ) -> Result<u16, DisplayError> {
+        let at = crate::menu_window_encoding::address(field);
+        Ok(u16::from_le_bytes([
+            self.read_control_byte(at)?,
+            self.read_control_byte(at + 1)?,
+        ]))
+    }
+    pub fn write_window_field(
+        &mut self,
+        field: crate::menu_window_state::Field,
+        value: u16,
+    ) -> Result<(), DisplayError> {
+        let at = crate::menu_window_encoding::address(field);
+        let [first, second] = value.to_le_bytes();
+        self.write_control_byte(at, first)?;
+        self.write_control_byte(at + 1, second)
+    }
+    pub fn read_control_byte(&mut self, address: usize) -> Result<u8, DisplayError> {
+        let lane = crate::fx_encoding::control_lane(address).ok_or(DisplayError::Source)?;
+        let controls = self
+            .controls
+            .as_deref_mut()
+            .ok_or(DisplayError::Incomplete)?;
+        crate::fx_sources::CurrentSources {
+            live: &mut self.state.hdma_live,
+            lighting: &mut self.state.visual.fireflea,
+            workspace: &mut self.state.workspace,
+            controls,
+        }
+        .read_control(&self.state.hdma, lane)
+    }
+    pub fn write_control_byte(&mut self, address: usize, value: u8) -> Result<(), DisplayError> {
+        let lane = crate::fx_encoding::control_lane(address).ok_or(DisplayError::Source)?;
+        let controls = self
+            .controls
+            .as_deref_mut()
+            .ok_or(DisplayError::Incomplete)?;
+        crate::fx_sources::CurrentSources {
+            live: &mut self.state.hdma_live,
+            lighting: &mut self.state.visual.fireflea,
+            workspace: &mut self.state.workspace,
+            controls,
+        }
+        .write_control(&mut self.state.hdma, lane, value)
+    }
+    pub fn publish_workspace_byte(
+        &mut self,
+        point: crate::presentation_workspace::Point,
+        value: u8,
+    ) -> Result<(), DisplayError> {
+        crate::fx_sources::publish_workspace_byte(self.state, point, value)
+    }
+    pub fn publish_workspace_slice(
+        &mut self,
+        point: crate::presentation_workspace::Point,
+        bytes: &[u8],
+    ) -> Result<(), DisplayError> {
+        crate::fx_sources::publish_workspace_slice(self.state, point, bytes)
+    }
+    fn materialize_controls(&mut self) -> Result<crate::fx_encoding::ControlOrigins, DisplayError> {
+        let graph = crate::fx_encoding::display_control_graph(self.state)?;
+        let origins = crate::fx_encoding::capture_control_origins(self.state, &graph)?;
+        let controls = self
+            .controls
+            .as_deref_mut()
+            .ok_or(DisplayError::Incomplete)?;
+        let mut values = [0; crate::fx_state::ControlOwnership::LANES];
+        let mut live = crate::fx_sources::CurrentSources {
+            live: &mut self.state.hdma_live,
+            lighting: &mut self.state.visual.fireflea,
+            workspace: &mut self.state.workspace,
+            controls,
+        };
+        let mut expected = crate::fx_state::ControlOwnership {
+            initialized: true,
+            ..Default::default()
+        };
+        for (lane, &owner) in graph.iter().enumerate() {
+            if owner != crate::fx_encoding::ControlOwner::Scalar(lane) {
+                expected.select_source(lane);
+                if live.scalar_byte(&self.state.hdma.common, lane)? != 0 {
+                    return Err(DisplayError::Source);
+                }
+            }
+            values[lane] = live.read_control(&self.state.hdma, lane)?;
+        }
+        if *live.controls.ownership != expected {
+            return Err(DisplayError::Source);
+        }
+        *live.controls.ownership = Default::default();
+        for (lane, value) in values.into_iter().enumerate() {
+            live.store_scalar_byte(&mut self.state.hdma.common, lane, value)?;
+        }
+        Ok(origins)
+    }
+    fn adopt_controls(&mut self) -> Result<(), DisplayError> {
+        let graph = crate::fx_encoding::display_control_graph(self.state)?;
+        let controls = self
+            .controls
+            .as_deref_mut()
+            .ok_or(DisplayError::Incomplete)?;
+        let edges = crate::fx_encoding::display_control_edges(self.state)?;
+        let mut live = crate::fx_sources::CurrentSources {
+            live: &mut self.state.hdma_live,
+            lighting: &mut self.state.visual.fireflea,
+            workspace: &mut self.state.workspace,
+            controls,
+        };
+        let mut ownership = crate::fx_state::ControlOwnership {
+            initialized: true,
+            ..Default::default()
+        };
+        for (lane, &owner) in graph.iter().enumerate() {
+            if owner != crate::fx_encoding::ControlOwner::Scalar(lane) {
+                continue;
+            }
+            let mut cycle = Vec::new();
+            let mut next = lane;
+            loop {
+                if cycle.contains(&next) {
+                    break;
+                }
+                cycle.push(next);
+                let crate::fx_encoding::ControlOwner::Scalar(selected) = edges[next] else {
+                    break;
+                };
+                next = selected;
+            }
+            if next != lane || cycle.len() <= 1 {
+                continue;
+            }
+            let mut first = None;
+            let mut equal = true;
+            let mut selected = None;
+            let mut conflicting = false;
+            for &candidate in &cycle {
+                let value = live.scalar_byte(&self.state.hdma.common, candidate)?;
+                if let Some(previous) = first {
+                    equal &= previous == value;
+                } else {
+                    first = Some(value);
+                }
+                let at = crate::fx_encoding::control_address(candidate);
+                let bank = 0x7e + u8::try_from(at / 65_536).map_err(|_| DisplayError::Source)?;
+                let address = u16::try_from(at % 65_536).map_err(|_| DisplayError::Source)?;
+                if let Some((source, offset)) = live.live.physical_coordinate_with_workspace(
+                    &self.state.hdma,
+                    bank,
+                    address,
+                    live.workspace,
+                )? {
+                    let coordinate = live.live.canonical_coordinate(source, offset)?;
+                    if let Some(origin) = live.live.native_origins().get(&coordinate) {
+                        let origin_lane = crate::fx_encoding::control_lane(origin.address)
+                            .filter(|lane| cycle.contains(lane))
+                            .ok_or(DisplayError::Source)?;
+                        let value = live.scalar_byte(&self.state.hdma.common, origin_lane)?;
+                        conflicting |= selected.is_some_and(|previous| previous != value);
+                        selected = Some(value);
+                    }
+                }
+            }
+            let value = if equal {
+                first.ok_or(DisplayError::Incomplete)?
+            } else if !conflicting {
+                selected.ok_or(DisplayError::Source)?
+            } else {
+                return Err(DisplayError::Source);
+            };
+            live.store_scalar_byte(&mut self.state.hdma.common, lane, value)?;
+        }
+        for (lane, &owner) in graph.iter().enumerate() {
+            if owner != crate::fx_encoding::ControlOwner::Scalar(lane) {
+                ownership.select_source(lane);
+                live.store_scalar_byte(&mut self.state.hdma.common, lane, 0)?;
+            }
+        }
+        *live.controls.ownership = ownership;
+        Ok(())
+    }
+    pub fn rebind_window_controls(
+        &mut self,
+        layout: crate::fx_sources::WindowControlLayout,
+    ) -> Result<(), DisplayError> {
+        if !self
+            .controls
+            .as_deref()
+            .is_some_and(|controls| controls.window.is_initialized())
+        {
+            return Err(DisplayError::Incomplete);
+        }
+        let origins = self.materialize_controls()?;
+        let controls = self
+            .controls
+            .as_deref_mut()
+            .ok_or(DisplayError::Incomplete)?;
+        let result = self
+            .state
+            .hdma_live
+            .bind_window_controls(layout, Some(controls.window));
+        crate::fx_encoding::reconcile_control_origins(self.state, &origins)?;
+        self.adopt_controls()?;
+        result
+    }
+    pub fn replace_workspace_bindings(
+        &mut self,
+        bindings: crate::presentation_workspace::Bindings,
+    ) -> Result<(), DisplayError> {
+        let previous = std::mem::replace(&mut self.state.workspace.bindings, bindings);
+        let result = self.state.workspace.validate(self.state.revision());
+        let bindings = std::mem::replace(&mut self.state.workspace.bindings, previous);
+        result?;
+        let origins = self.materialize_controls()?;
+        self.state.workspace.bindings = bindings;
+        crate::fx_encoding::reconcile_control_origins(self.state, &origins)?;
+        self.adopt_controls()
+    }
+    pub fn rebind_hdma_source(
+        &mut self,
+        channel: usize,
+        source: super::hdma::HdmaSource,
+        binding: super::hdma_sources::SourceBinding,
+    ) -> Result<(), DisplayError> {
+        if self.state.hdma.channels.get(channel).is_none() {
+            return Err(DisplayError::Geometry);
+        }
+        let origins = self.materialize_controls()?;
+        match source {
+            super::hdma::HdmaSource::Table => self.state.hdma.channels[channel].table = binding,
+            super::hdma::HdmaSource::Indirect => self.state.hdma.channels[channel].source = binding,
+        }
+        crate::fx_encoding::reconcile_control_origins(self.state, &origins)?;
+        self.adopt_controls()
+    }
+    pub fn replace_hdma_sources(
+        &mut self,
+        sources: super::hdma_sources::HdmaLiveDescription,
+    ) -> Result<(), DisplayError> {
+        sources.validate_workspace(&self.state.workspace)?;
+        self.materialize_controls()?;
+        self.state.hdma_live = sources;
+        // New origins were explicitly supplied with this moved source owner.
+        crate::fx_encoding::reconcile_control_origins(self.state, &Default::default())?;
+        self.adopt_controls()
+    }
+}
+
 pub trait RoomEffects {
     fn follow_transition(
         &mut self,
-        state: &mut DisplayState,
-        image: &mut DisplayImage,
-        media: &mut Arc<SceneMedia>,
+        context: &mut SettlementContext<'_, '_>,
     ) -> Result<(), DisplayError>;
 }
 
@@ -247,33 +620,75 @@ pub trait RoomEffects {
 pub trait SettlementEffects: RoomEffects + owned_hdma::Destinations {
     fn raster_row(
         &mut self,
-        state: &mut DisplayState,
-        image: &mut DisplayImage,
-        media: &mut Arc<SceneMedia>,
+        context: &mut SettlementContext<'_, '_>,
         row: u16,
     ) -> Result<super::records::ObjectContext, DisplayError>;
 }
 
-struct DisplayEffects<'a, E> {
+struct DisplayEffects<'a, 'b, E> {
     image: &'a mut DisplayImage,
     media: &'a mut Arc<SceneMedia>,
     content: &'a HdmaCatalog,
     effects: &'a mut E,
     producer_history: &'a mut Vec<Arc<[ProducedObject]>>,
+    window: Option<&'a mut crate::menu_window_state::WindowState>,
+    controls: Option<&'a mut crate::fx_sources::ExternalControls<'b>>,
 }
 
-impl<E: RoomEffects> irq::OwnedIrqEffects for DisplayEffects<'_, E> {
+impl<E: RoomEffects> irq::OwnedIrqEffects for DisplayEffects<'_, '_, E> {
     fn follow_transition(&mut self, state: &mut DisplayState) -> Result<(), DisplayError> {
-        self.effects
-            .follow_transition(state, self.image, self.media)
+        let mut context = SettlementContext::new(
+            state,
+            self.image,
+            Some(self.media),
+            self.window.as_deref_mut(),
+            self.controls.as_deref_mut(),
+        );
+        self.effects.follow_transition(&mut context)
     }
 }
 
-impl<E: SettlementEffects> delivery::Effects for DisplayEffects<'_, E> {
+impl<E: SettlementEffects> delivery::Effects for DisplayEffects<'_, '_, E> {
     fn initialize_hdma(&mut self, state: &mut DisplayState) -> Result<(), DisplayError> {
+        if let Some(controls) = self.controls.as_deref_mut() {
+            return owned_hdma::initialize_with_controls(
+                state,
+                self.image,
+                self.content,
+                self.effects,
+                controls,
+            );
+        }
+        if let Some(window) = self.window.as_deref_mut() {
+            return owned_hdma::initialize_with_window(
+                state,
+                self.image,
+                self.content,
+                self.effects,
+                window,
+            );
+        }
         owned_hdma::initialize(state, self.image, self.content, self.effects)
     }
     fn step_hdma(&mut self, state: &mut DisplayState) -> Result<(), DisplayError> {
+        if let Some(controls) = self.controls.as_deref_mut() {
+            return owned_hdma::step_with_controls(
+                state,
+                self.image,
+                self.content,
+                self.effects,
+                controls,
+            );
+        }
+        if let Some(window) = self.window.as_deref_mut() {
+            return owned_hdma::step_with_window(
+                state,
+                self.image,
+                self.content,
+                self.effects,
+                window,
+            );
+        }
         owned_hdma::step(state, self.image, self.content, self.effects)
     }
     fn raster_row(&mut self, state: &mut DisplayState, row: u16) -> Result<(), DisplayError> {
@@ -424,6 +839,45 @@ impl OwnedDisplay {
                 content: &self.hdma_content,
                 effects,
                 producer_history: &mut self.producer_history,
+                window: None,
+                controls: None,
+            },
+        )
+    }
+    /// The current Session supplies its live window authority for aliased sources.
+    pub fn settle_with_window(
+        &mut self,
+        window: &mut crate::menu_window_state::WindowState,
+        effects: &mut impl SettlementEffects,
+    ) -> Result<(), DisplayError> {
+        delivery::settle_owned(
+            &mut self.state,
+            &mut DisplayEffects {
+                image: &mut self.image,
+                media: &mut self.media,
+                content: &self.hdma_content,
+                effects,
+                producer_history: &mut self.producer_history,
+                window: Some(window),
+                controls: None,
+            },
+        )
+    }
+    pub(crate) fn settle_with_controls(
+        &mut self,
+        controls: &mut crate::fx_sources::ExternalControls<'_>,
+        effects: &mut impl SettlementEffects,
+    ) -> Result<(), DisplayError> {
+        delivery::settle_owned(
+            &mut self.state,
+            &mut DisplayEffects {
+                image: &mut self.image,
+                media: &mut self.media,
+                content: &self.hdma_content,
+                effects,
+                producer_history: &mut self.producer_history,
+                window: None,
+                controls: Some(controls),
             },
         )
     }
@@ -647,13 +1101,13 @@ impl RefreshHost for OwnedDisplay {
         Ok(())
     }
     fn hdma_mask(&self, slot: usize) -> u16 {
-        self.state.hdma.bindings[slot].enable
+        self.state.hdma.common.objects[slot].channels
     }
     fn hdma_bank_slot(&self, slot: usize) -> u8 {
-        self.state.hdma.bindings[slot].bank_slot as u8
+        self.state.hdma.common.objects[slot].bank_slot as u8
     }
     fn hdma_table(&self, slot: usize) -> u16 {
-        self.state.hdma.bindings[slot].table
+        self.state.hdma.common.objects[slot].table
     }
     fn bind_hdma(&mut self, bank_slot: u16, table: u16) -> Result<(), DisplayError> {
         // Canonical slot offsets are validated for the portable owner. The native host
@@ -748,27 +1202,42 @@ impl RefreshHost for OwnedDisplay {
         if self.state.readback_tail as u8 == 0 {
             return Ok(());
         }
-        for readback in &self.state.readbacks {
-            if readback.first_word == 0 {
+        let mut readback_index = 0;
+        while let Some(readback) = self.state.readbacks.get(readback_index) {
+            let (first_word, destination_asset, count) =
+                (readback.first_word, readback.destination, readback.count);
+            readback_index += 1;
+            if first_word == 0 {
                 break;
             }
+            let destination = self.state.workspace.source_point(destination_asset, 0).ok();
             let mut bytes = Vec::new();
-            let count = if readback.count == 0 {
+            let count = if count == 0 {
                 65_536
             } else {
-                usize::from(readback.count)
+                usize::from(count)
             };
             for index in 0..count {
-                let word =
-                    usize::from(readback.first_word.wrapping_add((index >> 1) as u16) & 0x7fff);
+                let word = usize::from(first_word.wrapping_add((index >> 1) as u16) & 0x7fff);
                 let value = *self
                     .image
                     .words
                     .get(word)
                     .ok_or(DisplayError::Alias { offset: word })?;
-                bytes.push(value.to_le_bytes()[index & 1]);
+                let byte = value.to_le_bytes()[index & 1];
+                if let Some(point) = destination {
+                    crate::fx_sources::publish_workspace_byte(
+                        &mut self.state,
+                        point.advance(index)?,
+                        byte,
+                    )?;
+                } else {
+                    bytes.push(byte);
+                }
             }
-            self.state.read_results.push((readback.destination, bytes));
+            if destination.is_none() {
+                self.state.read_results.push((destination_asset, bytes));
+            }
         }
         self.state.readback_tail &= 0xff00;
         self.state.readbacks.clear();
@@ -823,17 +1292,35 @@ fn transfer_into(
     image: &mut DisplayImage,
     transfer: &TileTransfer,
 ) -> Result<(), DisplayError> {
+    transfer_with_source(state, image, transfer, None, |state, index| {
+        state.source_byte(&transfer.source, index)
+    })
+}
+trait TransferHost {
+    fn configure(
+        &mut self,
+        destination: &super::state::TileDestination,
+    ) -> Result<(), DisplayError>;
+    fn source(&mut self, index: usize) -> Result<u8, DisplayError>;
+    fn tile_byte(&mut self, word: u16, high: bool, value: u8) -> Result<(), DisplayError>;
+    fn advance_dma(&mut self, channel: Option<usize>) -> Result<(), DisplayError>;
+    fn publish_pointer(&mut self, word: u16) -> Result<(), DisplayError>;
+}
+
+/// One transfer algorithm. Every current source borrow ends before image/latch writes.
+fn transfer_with_host(
+    host: &mut impl TransferHost,
+    transfer: &TileTransfer,
+    dma_channel: Option<usize>,
+) -> Result<(), DisplayError> {
     if transfer.destination.remap > 3 {
         return Err(DisplayError::Geometry);
     }
     let mut word = transfer.destination.word;
-    state.latches.tile_pointer = word;
-    state.latches.tile_increment = transfer.destination.step;
-    state.latches.tile_remap = transfer.destination.remap;
-    state.latches.tile_increment_on_high = transfer.destination.increment_on_high;
+    host.configure(&transfer.destination)?;
     for index in 0..transfer.byte_count() {
         // Mutable staging sources are reacquired for every original source byte.
-        let value = state.source_byte(&transfer.source, index)?;
+        let value = host.source(index)?;
         let high = match transfer.destination.lanes {
             ByteLanes::Both => index & 1 != 0,
             ByteLanes::Low => false,
@@ -845,13 +1332,76 @@ fn transfer_into(
             2 => word & 0xfe00 | (word & 0x01c0) >> 6 | (word & 0x003f) << 3,
             _ => word & 0xfc00 | (word & 0x0380) >> 7 | (word & 0x007f) << 3,
         };
-        image.tile_byte(mapped, high, value)?;
+        host.tile_byte(mapped, high, value)?;
+        host.advance_dma(dma_channel)?;
         if high == transfer.destination.increment_on_high {
             word = word.wrapping_add(transfer.destination.step);
-            state.latches.tile_pointer = word;
+            host.publish_pointer(word)?;
         }
     }
     Ok(())
+}
+
+fn configure_transfer(state: &mut DisplayState, destination: &super::state::TileDestination) {
+    state.latches.tile_pointer = destination.word;
+    state.latches.tile_increment = destination.step;
+    state.latches.tile_remap = destination.remap;
+    state.latches.tile_increment_on_high = destination.increment_on_high;
+}
+fn advance_transfer_dma(state: &mut DisplayState, channel: Option<usize>) {
+    if let Some(channel) = channel {
+        let channel = &mut state.hdma.channels[channel];
+        channel.source_address = channel.source_address.wrapping_add(1);
+        channel.indirect_cursor = channel.indirect_cursor.wrapping_sub(1);
+        channel.transfer_cursor = (channel.transfer_cursor + 1) & 1;
+    }
+}
+struct DirectTransfer<'a, F> {
+    state: &'a mut DisplayState,
+    image: &'a mut DisplayImage,
+    source: &'a mut F,
+}
+impl<F: FnMut(&DisplayState, usize) -> Result<u8, DisplayError>> TransferHost
+    for DirectTransfer<'_, F>
+{
+    fn configure(
+        &mut self,
+        destination: &super::state::TileDestination,
+    ) -> Result<(), DisplayError> {
+        configure_transfer(self.state, destination);
+        Ok(())
+    }
+    fn source(&mut self, index: usize) -> Result<u8, DisplayError> {
+        (self.source)(self.state, index)
+    }
+    fn tile_byte(&mut self, word: u16, high: bool, value: u8) -> Result<(), DisplayError> {
+        self.image.tile_byte(word, high, value)
+    }
+    fn advance_dma(&mut self, channel: Option<usize>) -> Result<(), DisplayError> {
+        advance_transfer_dma(self.state, channel);
+        Ok(())
+    }
+    fn publish_pointer(&mut self, word: u16) -> Result<(), DisplayError> {
+        self.state.latches.tile_pointer = word;
+        Ok(())
+    }
+}
+fn transfer_with_source(
+    state: &mut DisplayState,
+    image: &mut DisplayImage,
+    transfer: &TileTransfer,
+    dma_channel: Option<usize>,
+    mut source: impl FnMut(&DisplayState, usize) -> Result<u8, DisplayError>,
+) -> Result<(), DisplayError> {
+    transfer_with_host(
+        &mut DirectTransfer {
+            state,
+            image,
+            source: &mut source,
+        },
+        transfer,
+        dma_channel,
+    )
 }
 
 struct OwnedSamusUpload<'a> {
@@ -951,13 +1501,20 @@ impl super::samus_tile_upload::Host for OwnedSamusUpload<'_> {
     }
 }
 
-impl<E: SettlementEffects> super::resident_media::RasterHost for DisplayEffects<'_, E> {
+impl<E: SettlementEffects> super::resident_media::RasterHost for DisplayEffects<'_, '_, E> {
     fn draw_row(
         &mut self,
         state: &mut DisplayState,
         row: u16,
     ) -> Result<super::records::ObjectContext, DisplayError> {
-        self.effects.raster_row(state, self.image, self.media, row)
+        let mut context = SettlementContext::new(
+            state,
+            self.image,
+            Some(self.media),
+            self.window.as_deref_mut(),
+            self.controls.as_deref_mut(),
+        );
+        self.effects.raster_row(&mut context, row)
     }
     fn media(&self) -> &SceneMedia {
         self.media.as_ref()
@@ -970,5 +1527,429 @@ impl<E: SettlementEffects> super::resident_media::RasterHost for DisplayEffects<
     }
     fn publish_row(&mut self, records: Arc<[ProducedObject]>) {
         self.producer_history.push(records);
+    }
+}
+
+/// Refresh borrows the current Session. Header aliases read the actual numeric
+/// owners; source tokens borrow symbolic allocations at each transfer byte.
+struct SessionRefresh<'a> {
+    session: &'a mut crate::session::Session,
+}
+impl RefreshHost for SessionRefresh<'_> {
+    fn pending_nmi(&self) -> u8 {
+        self.session
+            .presentation
+            .owner()
+            .expect("owned refresh")
+            .pending_nmi()
+    }
+    fn palette_and_objects(&mut self) -> Result<(), DisplayError> {
+        self.session
+            .presentation
+            .owner_mut()
+            .expect("owned refresh")
+            .palette_and_objects()
+    }
+    fn samus(&mut self) -> Result<(), DisplayError> {
+        self.session
+            .presentation
+            .owner_mut()
+            .expect("owned refresh")
+            .samus()
+    }
+    fn animations(&mut self) -> Result<(), DisplayError> {
+        self.session
+            .presentation
+            .owner_mut()
+            .expect("owned refresh")
+            .animations()
+    }
+    fn controls(&mut self) -> Result<(), DisplayError> {
+        self.session
+            .presentation
+            .owner_mut()
+            .expect("owned refresh")
+            .controls()
+    }
+    fn hdma_mask(&self, slot: usize) -> u16 {
+        self.session
+            .presentation
+            .owner()
+            .expect("owned refresh")
+            .hdma_mask(slot)
+    }
+    fn hdma_bank_slot(&self, slot: usize) -> u8 {
+        self.session
+            .presentation
+            .owner()
+            .expect("owned refresh")
+            .hdma_bank_slot(slot)
+    }
+    fn hdma_table(&self, slot: usize) -> u16 {
+        self.session
+            .presentation
+            .owner()
+            .expect("owned refresh")
+            .hdma_table(slot)
+    }
+    fn bind_hdma(&mut self, bank_slot: u16, table: u16) -> Result<(), DisplayError> {
+        self.session
+            .presentation
+            .owner_mut()
+            .expect("owned refresh")
+            .bind_hdma(bank_slot, table)
+    }
+    fn mode(&self) -> u8 {
+        self.session
+            .presentation
+            .owner()
+            .expect("owned refresh")
+            .mode()
+    }
+    fn fake_mode(&self) -> u8 {
+        self.session
+            .presentation
+            .owner()
+            .expect("owned refresh")
+            .fake_mode()
+    }
+    fn mode7(&mut self) -> Result<(), DisplayError> {
+        self.session
+            .presentation
+            .owner_mut()
+            .expect("owned refresh")
+            .mode7()
+    }
+    fn tilemaps(&mut self) -> Result<(), DisplayError> {
+        if self.session.queued_tilemaps.tail != 0 {
+            self.drain_queue()?;
+            // This semantic list described the same packed queue at import.
+            // Draining both would publish every transfer twice.
+            let owner = self.session.presentation.owner_mut()?;
+            owner.state.uploads.clear();
+            owner.state.upload_tail = 0;
+        }
+        if self.session.presentation.owner()?.state.upload_tail != 0 {
+            let count = self.session.presentation.owner()?.state.uploads.len();
+            for index in 0..count {
+                let transfer = self.session.presentation.owner()?.state.uploads[index]
+                    .transfer
+                    .clone();
+                self.transfer(&transfer)?;
+            }
+        }
+        self.session.presentation.owner_mut()?.state.uploads.clear();
+        self.session.presentation.owner_mut()?.state.upload_tail = 0;
+        for slot in 0..4 {
+            if self.session.presentation.owner()?.state.scrolling[slot].enabled == 0 {
+                continue;
+            }
+            self.session.presentation.owner_mut()?.state.scrolling[slot].enabled = 0;
+            for half in 0..2 {
+                let transfer =
+                    self.session.presentation.owner()?.state.scrolling[slot].first[half].clone();
+                self.transfer(&transfer)?;
+            }
+            if self.session.presentation.owner()?.state.scrolling[slot].wrapped_count != 0 {
+                for half in 0..2 {
+                    let transfer = self.session.presentation.owner()?.state.scrolling[slot].wrapped
+                        [half]
+                        .clone();
+                    self.transfer(&transfer)?;
+                }
+            }
+        }
+        Ok(())
+    }
+    fn readbacks(&mut self) -> Result<(), DisplayError> {
+        self.session
+            .presentation
+            .owner_mut()
+            .expect("owned refresh")
+            .readbacks()
+    }
+    fn hdma_enable(&self) -> u8 {
+        self.session
+            .presentation
+            .owner()
+            .expect("owned refresh")
+            .hdma_enable()
+    }
+    fn publish_hdma(&mut self, value: u8) -> Result<(), DisplayError> {
+        self.session
+            .presentation
+            .owner_mut()
+            .expect("owned refresh")
+            .publish_hdma(value)
+    }
+    fn set_pending_nmi(&mut self, value: u8) {
+        self.session
+            .presentation
+            .owner_mut()
+            .expect("owned refresh")
+            .set_pending_nmi(value)
+    }
+    fn missed(&self) -> u8 {
+        self.session
+            .presentation
+            .owner()
+            .expect("owned refresh")
+            .missed()
+    }
+    fn set_missed(&mut self, value: u8) {
+        self.session
+            .presentation
+            .owner_mut()
+            .expect("owned refresh")
+            .set_missed(value)
+    }
+    fn max_missed(&self) -> u8 {
+        self.session
+            .presentation
+            .owner()
+            .expect("owned refresh")
+            .max_missed()
+    }
+    fn set_max_missed(&mut self, value: u8) {
+        self.session
+            .presentation
+            .owner_mut()
+            .expect("owned refresh")
+            .set_max_missed(value)
+    }
+    fn frame_byte(&self) -> u8 {
+        self.session
+            .presentation
+            .owner()
+            .expect("owned refresh")
+            .frame_byte()
+    }
+    fn set_frame_byte(&mut self, value: u8) {
+        self.session
+            .presentation
+            .owner_mut()
+            .expect("owned refresh")
+            .set_frame_byte(value)
+    }
+    fn frame_word(&self) -> u16 {
+        self.session
+            .presentation
+            .owner()
+            .expect("owned refresh")
+            .frame_word()
+    }
+    fn set_frame_word(&mut self, value: u16) {
+        self.session
+            .presentation
+            .owner_mut()
+            .expect("owned refresh")
+            .set_frame_word(value)
+    }
+    fn including_lag(&self) -> u16 {
+        self.session
+            .presentation
+            .owner()
+            .expect("owned refresh")
+            .including_lag()
+    }
+    fn set_including_lag(&mut self, value: u16) {
+        self.session
+            .presentation
+            .owner_mut()
+            .expect("owned refresh")
+            .set_including_lag(value)
+    }
+}
+impl SessionRefresh<'_> {
+    fn transfer(&mut self, transfer: &TileTransfer) -> Result<(), DisplayError> {
+        self.transfer_channel(transfer, None)
+    }
+    fn transfer_channel(
+        &mut self,
+        transfer: &TileTransfer,
+        channel: Option<usize>,
+    ) -> Result<(), DisplayError> {
+        let result = transfer_with_host(
+            &mut SessionTransfer {
+                session: self.session,
+                source: &transfer.source,
+            },
+            transfer,
+            channel,
+        );
+        if result.is_ok()
+            && let Some(channel) = channel
+        {
+            self.session.presentation.owner_mut()?.state.hdma.channels[channel].dma_active = false;
+        }
+        result
+    }
+    fn header_byte(&self, offset: usize) -> Result<u8, DisplayError> {
+        let at = 0xd0usize.checked_add(offset).ok_or(DisplayError::Queue)?;
+        crate::session_encoding::projected_byte(self.session, at)
+            .ok_or(DisplayError::Alias { offset: at })
+    }
+    fn header_word(&self, offset: usize) -> Result<u16, DisplayError> {
+        // The original drain's word query is LE even when producers use native stores.
+        Ok(u16::from_le_bytes([
+            self.header_byte(offset)?,
+            self.header_byte(offset.checked_add(1).ok_or(DisplayError::Queue)?)?,
+        ]))
+    }
+    fn drain_queue(&mut self) -> Result<(), DisplayError> {
+        // The original writes a slice-word sentinel at the full byte tail before
+        // its DMA setup. Tail aliases may change any later header or source.
+        let tail = usize::from(self.session.queued_tilemaps.tail);
+        let first = 0xd0usize.checked_add(tail).ok_or(DisplayError::Queue)?;
+        let second = first.checked_add(1).ok_or(DisplayError::Queue)?;
+        crate::session_encoding::projected_byte(self.session, first)
+            .ok_or(DisplayError::Alias { offset: first })?;
+        crate::session_encoding::projected_byte(self.session, second)
+            .ok_or(DisplayError::Alias { offset: second })?;
+        if !crate::session_encoding::write_projected_byte(self.session, first, 0)
+            || !crate::session_encoding::write_projected_byte(self.session, second, 0)
+        {
+            return Err(DisplayError::Incomplete);
+        }
+        // DMAP1/BBAD1 setup precedes all original record queries.
+        let channel = &mut self.session.presentation.owner_mut()?.state.hdma.channels[1];
+        channel.mode = 1;
+        channel.destination = 0x18;
+        channel.from_destination = false;
+        channel.indirect = false;
+        channel.fixed = false;
+        channel.decrement = false;
+        channel.unused_bit = false;
+        let mut entry = 0usize;
+        loop {
+            let count = self.header_word(entry)?;
+            if count == 0 {
+                break;
+            }
+            let destination = self.header_word(entry.checked_add(5).ok_or(DisplayError::Queue)?)?;
+            // Preserve the native source-word query before the bank-byte query.
+            let address = self.header_word(entry.checked_add(2).ok_or(DisplayError::Queue)?)?;
+            let bank = self.header_byte(entry.checked_add(4).ok_or(DisplayError::Queue)?)?;
+            let bytes = address.to_le_bytes();
+            let token = [bytes[0], bytes[1], bank];
+            let channel = &mut self.session.presentation.owner_mut()?.state.hdma.channels[1];
+            channel.source_address = address;
+            channel.source_bank = bank;
+            channel.indirect_cursor = count;
+            channel.transfer_cursor = 0;
+            channel.dma_active = true;
+            let source = self
+                .session
+                .presentation
+                .owner()?
+                .state
+                .queued_sources
+                .get(&token)
+                .cloned()
+                .ok_or(DisplayError::Incomplete)?;
+            self.transfer_channel(
+                &TileTransfer {
+                    source,
+                    count,
+                    destination: super::state::TileDestination {
+                        word: destination,
+                        step: if destination & 0x8000 != 0 { 32 } else { 1 },
+                        lanes: ByteLanes::Both,
+                        remap: 0,
+                        increment_on_high: true,
+                    },
+                },
+                Some(1),
+            )?;
+            entry = entry.checked_add(7).ok_or(DisplayError::Queue)?;
+        }
+        self.session.queued_tilemaps.tail = 0;
+        Ok(())
+    }
+}
+pub(crate) fn refresh_session(session: &mut crate::session::Session) -> Result<(), DisplayError> {
+    let owner = session.presentation.owner_mut()?;
+    if owner.state.phase == DisplayPhase::Failed {
+        return Err(DisplayError::Poisoned);
+    }
+    if owner.state.phase != DisplayPhase::Producing {
+        return Err(DisplayError::Phase);
+    }
+    match refresh(&mut SessionRefresh { session }) {
+        Ok(()) => {
+            session.presentation.owner_mut()?.state.phase = DisplayPhase::Refreshed;
+            Ok(())
+        }
+        Err(error) => {
+            session.presentation.owner_mut()?.state.phase = DisplayPhase::Failed;
+            Err(error)
+        }
+    }
+}
+
+struct SessionTransfer<'a> {
+    session: &'a mut crate::session::Session,
+    source: &'a TransferSource,
+}
+impl TransferHost for SessionTransfer<'_> {
+    fn configure(
+        &mut self,
+        destination: &super::state::TileDestination,
+    ) -> Result<(), DisplayError> {
+        configure_transfer(
+            &mut self.session.presentation.owner_mut()?.state,
+            destination,
+        );
+        Ok(())
+    }
+    fn source(&mut self, index: usize) -> Result<u8, DisplayError> {
+        match self.source {
+            TransferSource::ActorState { address } => {
+                let displacement = u16::try_from(index).map_err(|_| DisplayError::Source)?;
+                let address = usize::from(address.wrapping_add(displacement));
+                // This is the current aggregate graph, including actual FX/Window/scalar aliases.
+                // No Presentation borrow survives this byte query or the following destination write.
+                crate::session_encoding::projected_byte(self.session, address)
+                    .ok_or(DisplayError::Alias { offset: address })
+            }
+            TransferSource::QueuedScroll { offset } => {
+                let at = offset.checked_add(index).ok_or(DisplayError::Source)?;
+                self.session
+                    .queued_tilemaps
+                    .scrolling
+                    .get(at >> 1)
+                    .map(|word| word.to_le_bytes()[at & 1])
+                    .ok_or(DisplayError::Alias { offset: at })
+            }
+            // LEGACY(display-state-schema): tag3 has no current RAM origin.
+            // Retained codec/standalone fixtures cannot become a live Session mirror.
+            TransferSource::ActorTilemap { .. } => Err(DisplayError::Incomplete),
+            source => self
+                .session
+                .presentation
+                .owner()?
+                .state
+                .source_byte(source, index),
+        }
+    }
+    fn tile_byte(&mut self, word: u16, high: bool, value: u8) -> Result<(), DisplayError> {
+        self.session
+            .presentation
+            .owner_mut()?
+            .image
+            .tile_byte(word, high, value)
+    }
+    fn advance_dma(&mut self, channel: Option<usize>) -> Result<(), DisplayError> {
+        advance_transfer_dma(&mut self.session.presentation.owner_mut()?.state, channel);
+        Ok(())
+    }
+    fn publish_pointer(&mut self, word: u16) -> Result<(), DisplayError> {
+        self.session
+            .presentation
+            .owner_mut()?
+            .state
+            .latches
+            .tile_pointer = word;
+        Ok(())
     }
 }

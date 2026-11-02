@@ -80,7 +80,7 @@ def library_source_paths(root):
                  for path in (root / "crates").glob("*/Cargo.toml")
                  if not path.is_relative_to(root / "crates" / "sm_app"))
     paths.difference_update(("sm/src/verify.rs", "sm/src/verify_dll.rs",
-                             "sm/src/verify/checkpoint.rs", "sm/src/verify/seed.rs"))
+                             "sm/src/verify/seed.rs"))
     return paths
 
 
@@ -389,7 +389,8 @@ def build(root, rustc, use_cargo=None, frontend=False):
                   "--cfg", "sm_verify_dll",
                   *link,
                   "sm/src/verify_dll.rs",
-                  "--extern", f"sm={library}", *runtime_flags, "-L", f"dependency={output}",
+                  "--extern", f"sm={library}", "--extern", f"sm_game={game}",
+                  *data_flags, *runtime_flags, "-L", f"dependency={output}",
                   "-o", str(dll)],
         cwd=root, env=dict(os.environ, SM_VERIFY_SOURCE_HASH=source), check=True,
     )

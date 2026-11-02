@@ -45,7 +45,7 @@ pub struct CounterSnapshot {
     pub latched: bool,
 }
 crate::typed_struct! {
-    initial; [#[derive(Copy, Clone)] #[repr(C)]];
+    initial; [#[derive(Clone)] #[repr(C)]];
     pub struct Snapshot {
         pub audio: crate::audio_snapshot::AudioSnapshot;
         pub player: crate::audio_snapshot::PlayerSnapshot;
@@ -55,6 +55,7 @@ crate::typed_struct! {
         pub dma: Dma;
         pub snes: Snes;
         pub ram: [u8; 131072];
+        pub(crate) source_publications: crate::game_state::SourcePublicationSnapshot;
         pub sram: [u8; 8192];
         // Per-run observations, not emulated or serialized audio state.
         pub apu_upload_count: u32;
@@ -867,6 +868,7 @@ pub(crate) unsafe fn make_snapshot_with_player_owner(
         s.dma.dmaTimer = dma.dmaTimer;
         s.dma.dmaBusy = dma.dmaBusy;
         ram.copy_out(0, &mut s.ram);
+        s.source_publications = ram.capture_source_publications();
         (*snes.cart)
             .ram
             .read_bytes(0, &mut s.sram[..(*snes.cart).ramSize as usize]);
@@ -944,7 +946,12 @@ unsafe fn restore_snapshot(
         copy_snapshot_fields! {dma, s.dma; channel, hdmaTimer, dmaTimer, dmaBusy}
         backend.set_dma_state(dma);
         copy_snapshot_fields! {snes, s.snes; multiplyA, multiplyResult, divideA, divideResult}
-        ram.copy_in(0, &s.ram);
+        {
+            let _source_restore_publications = ram.pause_source_publications();
+            ram.copy_in(0, &s.ram);
+            // Install at the completed WRAM stage, before later fallible restores.
+            ram.restore_source_publications(&s.source_publications);
+        }
         (*snes.cart).ram.write_bytes(0, &s.sram[..0x2000]);
         (*snes.ppu).vram = s.ppu.vram;
         let ppu = &mut *snes.ppu;

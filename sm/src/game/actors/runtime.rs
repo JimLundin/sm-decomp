@@ -221,7 +221,7 @@ macro_rules! mother_brain_owned {
             Bg2TilemapPending => $($reference)* $session.actors.drawing.tilemap_pending,
             TimerStatus => $($reference)* $session.timing.timer_status,
             JapaneseText => $($reference)* $session.options.japanese_text,
-            FxBlending => $($reference)* $session.room.fx_blending,
+            FxBlending => unreachable!("control words use their selected owner"),
             PaletteFadeStep => unreachable!("presentation words go through its owner"),
             Color(_) => unreachable!("colours go through the visual owner"),
         }
@@ -238,22 +238,8 @@ fn in_owner(word: OwnedWord) -> bool {
         _ => true,
     }
 }
-impl sm_game::sprite_drawing::DisplayObjects for Runtime<'_> {
-    fn owned_objects(&mut self) -> Option<&mut sm_game::scene::state::ObjectStaging> {
-        if !self.display_owned() {
-            return None;
-        }
-        Some(
-            &mut self
-                .session_mut()
-                .presentation
-                .owner_mut()
-                .ok()?
-                .state
-                .objects,
-        )
-    }
-}
+impl sm_game::sprite_drawing::DisplayObjects for Runtime<'_> {}
+
 impl sm_game::actors::mother_brain_fight::OwnedWords for Runtime<'_> {
     fn owned(&self, word: OwnedWord) -> u16 {
         let at = word.address();

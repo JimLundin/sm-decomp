@@ -4,6 +4,7 @@ use crate::display::bg_tile;
 use crate::enemy_projectiles::table::with_file_select;
 use crate::menu_state::MenuState;
 use crate::menu_state::SaveSelection;
+use crate::menu_window_state::ArrowAction;
 
 /// The pause menu's map and equipment BG tilemap buffers in work RAM.
 const PAUSE_TILEMAP: usize = 0x3000;
@@ -26,9 +27,6 @@ const fn cell(row: usize, column: usize) -> usize {
 }
 /// $7E:4154: where the area select map draws the area's label.
 const AREA_LABEL: usize = 0x4154;
-/// The first reserve-energy digit tile, 0, in palette 2.
-const DIGIT_TILES: u16 = bg_tile::tile(4, 2);
-const _: () = assert!(DIGIT_TILES == 2052);
 use super::save_slots;
 use crate::constants::bank_81::{
     ADDR_K_MENU_TILEMAP_DATA_CLEAR, ADDR_K_MENU_TILEMAP_DATA_COPY, ADDR_K_MENU_TILEMAP_EXIT,
@@ -77,7 +75,6 @@ const AREA_SELECT_BG3_TILES: u32 = 0x8e_d600;
 /// $8E:E400: the menu palettes.
 const MENU_PALETTES: u32 = 0x8e_e400;
 use super::options_objects::objects::{self as bindings, Array};
-use crate::ram::word;
 use sm_data::area_select_palettes::{
     ADDRESS as AREA_PALETTES, AreaSelectPalettes, BYTES as AREA_PALETTE_BYTES, INACTIVE_OFFSET,
     RUN_OFFSETS,
@@ -95,7 +92,6 @@ pub fn import_area_palettes(image: &RomImage) -> Option<ImportedAreaPalettes> {
     )
 }
 
-const MENU_PALETTE: usize = enemy_data::FIRST + enemy_data::PALETTE_INDEX;
 const FILE_LABELS: [u16; 3] = [
     ADDR_K_MENU_TILEMAP_SAMUS_A as u16,
     ADDR_K_MENU_TILEMAP_SAMUS_B as u16,
@@ -103,7 +99,7 @@ const FILE_LABELS: [u16; 3] = [
 ];
 
 pub fn set_palette<H: Host + ?Sized>(value: u16, game: &mut H) {
-    game.ram().copy_in(MENU_PALETTE, &value.to_ne_bytes());
+    game.set_file_palette(value);
 }
 
 pub enum FileRowEmphasis {
@@ -186,7 +182,7 @@ fn draw_main_menu<H: Host + ?Sized>(game: &mut H) {
     load(0x688, ADDR_K_MENU_TILEMAP_EXIT as u16, game);
     upload(MENU_TILEMAP_BYTES, MENU_TILEMAP_SOURCE, 0, true, game);
     // The copy arrow's palette timer is outside the Session-owned table.
-    word!(game.FILE_COPY_ARROW_PALETTE_TIMER = 0);
+    game.file_arrow(ArrowAction::Reset(0));
     with_file_select(game, |menu| {
         *menu.missile_animation_timer() = 1;
         *menu.missile_animation_frame() = 0;
@@ -209,18 +205,18 @@ const HELMET_ROWS: [u16; 3] = [47, 87, 127];
 
 /// Requires a live, exclusively accessed SNES backend.
 pub fn prepare_graphics<H: Host + ?Sized>(game: &mut H) {
-    use crate::ram::mirror::{BG1SC, BG2SC, BG3SC, BG12NBA, BG34NBA, OBSEL, TM, TS};
+    use crate::display::preparation::{Field, Store};
     for (register, value) in [
-        (TS, 0),
-        (OBSEL, 3),
-        (BG1SC, 81),
-        (BG2SC, 88),
-        (BG3SC, 92),
-        (BG12NBA, 0),
-        (BG34NBA, 4),
-        (TM, 19),
+        (Field::SubLayers, 0),
+        (Field::ObjectLayout, 3),
+        (Field::Screens0, 81),
+        (Field::Screens1, 88),
+        (Field::Screens2, 92),
+        (Field::Characters0, 0),
+        (Field::Characters1, 4),
+        (Field::MainLayers, 19),
     ] {
-        game.ram().write_byte(register, value);
+        game.store_display_control_byte(register, value, Store::Owned);
     }
     for (source, destination, bytes) in [
         (MENU_BG_TILES, 0, 0x5600),
@@ -233,10 +229,17 @@ pub fn prepare_graphics<H: Host + ?Sized>(game: &mut H) {
 }
 
 pub fn load_palette<H: Host + ?Sized>(game: &mut H) {
-    crate::word_transfers!(game, (4), 128;
-        le(PALETTE_BUFFER, 0) <- rom(MENU_PALETTES, 0),
-        le(PALETTE_BUFFER, 1) <- rom(MENU_PALETTES, 1),
+    let source = crate::word_transfers::WordEndpoint::Rom(
+        game.loaded_rom_image(),
+        sm_data::cartridge::lorom_offset(MENU_PALETTES),
     );
+    for index in 0..128 {
+        for lane in 0..2 {
+            let word = 2 * index + lane;
+            let color = source.read(isize::try_from(2 * word).unwrap());
+            game.palette_write_word(false, 2 * word, color);
+        }
+    }
 }
 
 pub fn upload<H: Host + ?Sized>(
@@ -246,31 +249,40 @@ pub fn upload<H: Host + ?Sized>(
     bank_word: bool,
     game: &mut H,
 ) {
-    let tail = word!(game.VRAM_WRITE_QUEUE_TAIL);
-    let entry = 0xd0 + usize::from(tail);
-    game.ram().copy_in(entry, &size.to_ne_bytes());
-    game.ram()
-        .copy_in(entry + 2, &(source as u16).to_ne_bytes());
-    let bank = (source >> 16) as u8;
+    let tail = game.queue_tail();
+    let entry = usize::from(tail);
+    game.queue_native_slice_at(entry, size);
+    let bytes = source.to_le_bytes();
+    game.queue_native_slice_at(entry + 2, u16::from_le_bytes([bytes[0], bytes[1]]));
     if bank_word {
-        game.ram()
-            .copy_in(entry + 4, &u16::from(bank).to_ne_bytes());
+        game.queue_native_slice_at(entry + 4, u16::from(bytes[2]));
     } else {
-        game.ram().write_byte(entry + 4, bank);
+        game.queue_byte_at(entry + 4, bytes[2]);
     }
-    let destination =
-        u16::from(game.ram().read_byte(crate::ram::mirror::BG1SC + screen) & 0xfc) << 8;
-    game.ram().copy_in(entry + 5, &destination.to_ne_bytes());
-    word!(game.VRAM_WRITE_QUEUE_TAIL = tail.wrapping_add(7));
+    let field = [
+        crate::display::preparation::Field::Screens0,
+        crate::display::preparation::Field::Screens1,
+        crate::display::preparation::Field::Screens2,
+        crate::display::preparation::Field::Background3Map,
+        crate::display::preparation::Field::Screens3,
+        crate::display::preparation::Field::Characters0,
+        crate::display::preparation::Field::Characters1,
+    ]
+    .get(screen)
+    .copied();
+    let screen = match field {
+        Some(field) => game.display_control_byte(field),
+        // Unknown screen identities retain the original linear physical spill.
+        None => game.ram().read_byte(crate::ram::mirror::BG1SC + screen),
+    };
+    let destination = u16::from(screen & 0xfc) << 8;
+    game.queue_native_slice_at(entry + 5, destination);
+    game.store_queue_tail(tail.wrapping_add(7));
 }
 
 fn paint<H: Host + ?Sized>(offset: usize, tile: u16, game: &mut H) {
-    let palette = u16::from_ne_bytes([
-        game.ram().read_byte(MENU_PALETTE),
-        game.ram().read_byte(MENU_PALETTE + 1),
-    ]);
-    let at = MENU_TILEMAP + offset;
-    game.ram().copy_in(at, &(palette | tile).to_ne_bytes());
+    let palette = game.file_palette();
+    game.screen_apply(|workspace| super::canvas::paint_file(workspace, offset, tile, palette));
 }
 
 /// Capture checked native reads after the original low-window diagnostic.
@@ -293,38 +305,27 @@ fn text_word<H: Host + ?Sized>(address: u16, game: &mut H) -> u16 {
 }
 
 pub fn area_label<H: Host + ?Sized>(game: &mut H) {
-    let address =
-        crate::gameplay_tables::area_label(game, crate::room_view::current(game).area as isize);
+    let address = crate::gameplay_tables::area_label(
+        game,
+        crate::gameplay_context::navigation(game).area as isize,
+    );
     let label = native_record(0x820000 | u32::from(address), game);
     for index in 0..12 {
         let tile = label.word(2 * index) & 0xefff;
         let destination = AREA_LABEL + 2 * index;
-        game.ram().copy_in(destination, &tile.to_ne_bytes());
+        game.screen_write_slice(
+            Point::new(Role::SavedBackground, destination - 0x4100),
+            &tile.to_ne_bytes(),
+        );
     }
 }
 
-pub fn load<H: Host + ?Sized>(mut destination: u16, mut source: u16, game: &mut H) {
-    let mut row = i32::from(destination);
-    loop {
-        match text_word(source, game) {
-            0xfffe => {
-                row += 64;
-                destination = row as u16;
-            }
-            0xffff => break,
-            tile => {
-                paint(usize::from(destination), tile, game);
-                destination = destination.wrapping_add(2);
-            }
-        }
-        source = source.wrapping_add(2);
-    }
+pub fn load<H: Host + ?Sized>(destination: u16, source: u16, game: &mut H) {
+    super::canvas::load_text(destination, source, &mut NativeText(game));
 }
 
 fn clear_row<H: Host + ?Sized>(offset: u16, game: &mut H) {
-    let count = 32 - usize::from((offset & 0x3f) >> 1);
-    crate::word_transfers!(game, ascending, count;
-        native(MENU_TILEMAP + usize::from(offset)) <- value(BLANK_TILE));
+    game.screen_apply(|workspace| super::canvas::clear_file_row(workspace, offset));
 }
 
 fn number<H: Host + ?Sized>(offset: usize, value: u16, game: &mut H) {
@@ -339,18 +340,9 @@ pub fn health<H: Host + ?Sized>(empty: u16, offset: u16, game: &mut H) {
         return;
     }
     load(offset, ENERGY_TEXT, game);
-    let mut full = crate::session_cohort::load::<crate::inventory::Inventory, _>(game)
-        .health
-        .current
-        / 100;
-    let remainder = crate::session_cohort::load::<crate::inventory::Inventory, _>(game)
-        .health
-        .current
-        % 100;
-    let maximum = crate::session_cohort::load::<crate::inventory::Inventory, _>(game)
-        .health
-        .maximum
-        / 100;
+    let mut full = crate::gameplay_context::inventory(game).health.current / 100;
+    let remainder = crate::gameplay_context::inventory(game).health.current % 100;
+    let maximum = crate::gameplay_context::inventory(game).health.maximum / 100;
     let mut position = offset.wrapping_add(72);
     let mut columns = 7;
     for _ in 0..maximum {
@@ -376,9 +368,17 @@ pub fn time<H: Host + ?Sized>(empty: u16, offset: u16, game: &mut H) {
     if empty != 0 {
         return;
     }
-    number(usize::from(offset), word!(game.GAME_TIME_HOURS), game);
+    number(
+        usize::from(offset),
+        crate::gameplay_word!(game.GAME_TIME_HOURS),
+        game,
+    );
     load(offset.wrapping_add(4), COLON_TEXT, game);
-    number(usize::from(offset) + 6, word!(game.GAME_TIME_MINUTES), game);
+    number(
+        usize::from(offset) + 6,
+        crate::gameplay_word!(game.GAME_TIME_MINUTES),
+        game,
+    );
 }
 
 pub fn area_palette<H: Host + ?Sized>(area: u16, active: bool, game: &mut H) {
@@ -412,18 +412,15 @@ pub fn area_palette<H: Host + ?Sized>(area: u16, active: bool, game: &mut H) {
 /// Five colours from the foreground palette data at $81:A40E into the buffer.
 fn copy_area_colors<H: Host + ?Sized>(mut source: u16, mut destination: u16, game: &mut H) {
     for _ in 0..5 {
-        word!(
-            game.PALETTE_BUFFER[destination >> 1] =
-                crate::menu_lists::area_select_colour(game, (source >> 1) as isize)
-        );
+        let color = crate::menu_lists::area_select_colour(game, (source >> 1) as isize);
+        game.palette_write_word(false, 2 * usize::from(destination >> 1), color);
         destination = destination.wrapping_add(2);
         source = source.wrapping_add(2);
     }
 }
 
 pub fn clear<H: Host + ?Sized>(game: &mut H) {
-    crate::word_transfers!(game, descending, 1024;
-        native(MENU_TILEMAP + usize::from(MENU_TILEMAP_BYTES) - 2) <- value(BLANK_TILE));
+    game.screen_apply(|workspace| super::canvas::clear_file(workspace));
 }
 
 pub fn controller_bindings<H: Host + ?Sized>(game: &mut H) {
@@ -441,10 +438,16 @@ pub fn controller_bindings<H: Host + ?Sized>(game: &mut H) {
             game.loaded_image().clone(),
             sm_data::cartridge::lorom_offset(address),
         );
-        crate::word_transfers!(game, ascending, 3;
-            native(OPTIONS_TILEMAP as isize + destination as isize) <- captured(source, 0));
-        crate::word_transfers!(game, ascending, 3;
-            native((OPTIONS_TILEMAP + ROW) as isize + destination as isize) <- captured(source, 3));
+        for (row, source_word) in [(0, 0), (ROW, 3)] {
+            let source = source.shifted(source_word);
+            for index in 0..3 {
+                let tile = source.read(isize::try_from(2 * index).unwrap());
+                game.screen_write_native_word(
+                    Point::physical(OPTIONS_TILEMAP + usize::from(destination) + row + 2 * index),
+                    tile,
+                );
+            }
+        }
     }
     // The aim up and aim down rows' 3x2 hint, cleared unless bound to L or R.
     let cleared_hint = [0, 0xe, 0xe, 0x10, 0x1f, 0x1f];
@@ -453,10 +456,14 @@ pub fn controller_bindings<H: Host + ?Sized>(game: &mut H) {
         if bindings::get_at(game, Array::ControllerBindings, index + 5) != 5
             && bindings::get_at(game, Array::ControllerBindings, index + 5) != 6
         {
-            crate::word_transfers!(game, ascending, 3;
-                native(destination) <- table(cleared_hint, 0));
-            crate::word_transfers!(game, ascending, 3;
-                native(destination + ROW) <- table(cleared_hint, 3));
+            for (row, tiles) in cleared_hint.as_chunks::<3>().0.iter().enumerate() {
+                for (column, tile) in tiles.iter().enumerate() {
+                    game.screen_write_native_word(
+                        Point::physical(destination + row * ROW + 2 * column),
+                        *tile,
+                    );
+                }
+            }
         }
     }
 }
@@ -491,24 +498,20 @@ pub fn update_reserve_arrow<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H
 
 pub fn reserve_arrow<H: Host + ?Sized>(mode: ReserveArrow, game: &mut H) {
     let lit = match mode {
-        ReserveArrow::Animated => {
-            crate::session_cohort::load::<crate::inventory::Inventory, _>(game).reserve_mode == 1
-        }
+        ReserveArrow::Animated => crate::gameplay_context::inventory(game).reserve_mode == 1,
         ReserveArrow::On => true,
         ReserveArrow::Off => false,
     };
     if matches!(mode, ReserveArrow::Animated) && lit {
         let index = usize::from(
-            game.ram()
-                .read_byte(crate::ram::bytes::NMI_FRAME_COUNTER_BYTE)
-                & 0x1f,
+            game.display_control_byte(crate::display::preparation::Field::NmiFrameByte) & 0x1f,
         );
-        word!(game.PALETTE_BUFFER[102] = RESERVE_ARROW_COLORS[index]);
-        word!(game.PALETTE_BUFFER[107] = RESERVE_ARROW_SHADOWS[index]);
+        game.palette_write_word(false, 204, RESERVE_ARROW_COLORS[index]);
+        game.palette_write_word(false, 214, RESERVE_ARROW_SHADOWS[index]);
     } else {
         // The idle arrow holds the cycle's first entries, in the opposite slots.
-        word! {game; PALETTE_BUFFER[107] = RESERVE_ARROW_COLORS[0];
-        PALETTE_BUFFER[102] = RESERVE_ARROW_SHADOWS[0]; }
+        game.palette_write_word(false, 214, RESERVE_ARROW_COLORS[0]);
+        game.palette_write_word(false, 204, RESERVE_ARROW_SHADOWS[0]);
     }
     reserve_arrow_tiles(lit, game);
 }
@@ -533,7 +536,7 @@ pub fn copy_native_tiles<H: Host + ?Sized>(
     let source = native_record(0x820000 | u32::from(cursor), game);
     for index in 0..bytes {
         let byte = source.byte(index);
-        game.ram().write_byte(destination + index, byte);
+        game.screen_write_byte(Point::physical(destination + index), byte);
     }
 }
 
@@ -543,19 +546,21 @@ pub fn recolor_native<H: Host + ?Sized>(
     words: usize,
     game: &mut H,
 ) {
+    // Publish each tile before selecting the next one, including failure prefixes.
     for index in 0..words {
-        let address = destination + 2 * index;
-        let tile = u16::from_ne_bytes([
-            game.ram().read_byte(address),
-            game.ram().read_byte(address + 1),
-        ]);
-        crate::word_transfers!(game, ascending, 1;
-            native(address) <- value(bg_tile::recolour(tile, palette)));
+        let point = Point::physical(destination + 2 * index);
+        if (0x3000..0x6fff).contains(&(destination + 2 * index)) {
+            game.screen_apply(|workspace| super::canvas::recolor(workspace, point, palette));
+        } else {
+            // Native ROM destinations can select retained physical aliases.
+            let tile = game.screen_native_word(point);
+            game.screen_write_native_word(point, bg_tile::recolour(tile, palette));
+        }
     }
 }
 
 pub fn equipment_icons<H: Host + ?Sized>(game: &mut H) {
-    if crate::session_cohort::load::<crate::inventory::Inventory, _>(game).reserve_capacity != 0 {
+    if crate::gameplay_context::inventory(game).reserve_capacity != 0 {
         for index in 0..2 {
             let destination = crate::menu_lists::reserve_tank_destination(game, index) as usize;
             let source = crate::menu_lists::reserve_tank_tilemap(game, index);
@@ -569,8 +574,7 @@ pub fn equipment_icons<H: Host + ?Sized>(game: &mut H) {
     ] {
         let destinations = native_record(0x820000 | offsets, game);
         let weapons = offsets == WEAPON_OFFSETS;
-        let hyper = weapons
-            && crate::session_cohort::load::<crate::inventory::Inventory, _>(game).hyper_beam != 0;
+        let hyper = weapons && crate::gameplay_context::inventory(game).hyper_beam != 0;
         let (collected, equipped, bytes) = if weapons {
             (
                 crate::inventory::Word::CollectedBeams,
@@ -589,15 +593,13 @@ pub fn equipment_icons<H: Host + ?Sized>(game: &mut H) {
             if hyper {
                 let source = crate::menu_lists::hyper_beam_tilemap(game, index as isize);
                 copy_native_tiles(destination, source, 10, game);
-            } else if crate::session_cohort::load::<crate::inventory::Inventory, _>(game)
-                .word(collected)
+            } else if crate::gameplay_context::inventory(game).word(collected)
                 & crate::menu_lists::equipment_bit(game, masks, index as isize)
                 != 0
             {
                 let source = crate::menu_lists::equipment_tilemap(game, tiles, index as isize);
                 copy_native_tiles(destination, source, bytes, game);
-                if crate::session_cohort::load::<crate::inventory::Inventory, _>(game)
-                    .word(equipped)
+                if crate::gameplay_context::inventory(game).word(equipped)
                     & crate::menu_lists::equipment_bit(game, masks, index as isize)
                     == 0
                 {
@@ -619,8 +621,10 @@ fn wireframe_rows<H: Host + ?Sized>(
     for row in 0..17 {
         for column in 0..8 {
             let tile = source(game);
-            crate::word_transfers!(game, ascending, 1;
-                native(destination + row_stride * row + 2 * column) <- value(tile));
+            game.screen_write_native_word(
+                Point::physical(destination + row_stride * row + 2 * column),
+                tile,
+            );
         }
     }
 }
@@ -638,23 +642,16 @@ pub fn prepare_equipment_frame<H: Host + ?Sized>(game: &mut H) {
         game,
     );
     equipment_wireframe(game);
-    if crate::session_cohort::load::<crate::inventory::Inventory, _>(game).reserve_capacity != 0 {
-        let hundreds = crate::session_cohort::load::<crate::inventory::Inventory, _>(game)
-            .reserve_health
-            / 100;
-        let remainder = crate::session_cohort::load::<crate::inventory::Inventory, _>(game)
-            .reserve_health
-            % 100;
+    if crate::gameplay_context::inventory(game).reserve_capacity != 0 {
+        let hundreds = crate::gameplay_context::inventory(game).reserve_health / 100;
+        let remainder = crate::gameplay_context::inventory(game).reserve_health % 100;
         reserve_digits(hundreds, remainder, game);
     }
 }
 
 pub fn equipment_wireframe<H: Host + ?Sized>(game: &mut H) {
     let mut cursor = 0u16;
-    while crate::session_cohort::load::<crate::inventory::Inventory, _>(game)
-        .equipment
-        .active
-        & 0x101
+    while crate::gameplay_context::inventory(game).equipment.active & 0x101
         != crate::menu_lists::wireframe_suit(game, (cursor >> 1) as isize)
     {
         cursor = cursor.wrapping_add(2);
@@ -676,31 +673,21 @@ pub fn equipment_wireframe<H: Host + ?Sized>(game: &mut H) {
 
 pub fn reserve_label<H: Host + ?Sized>(tile: impl Fn(usize) -> u16, game: &mut H) {
     for index in 0..4 {
-        let address = EQUIPMENT_TILEMAP + 2 * (327 + index);
-        let previous = u16::from_ne_bytes([
-            game.ram().read_byte(address),
-            game.ram().read_byte(address + 1),
-        ]);
-        crate::word_transfers!(game, ascending, 1;
-            native(address) <- value((previous & !0x3ff) | tile(index)));
+        let point = Point::new(Role::Equipment, 2 * (327 + index));
+        let previous = game.screen_native_word(point);
+        let value = (previous & !0x3ff) | tile(index);
+        game.screen_write_native_word(point, value);
     }
 }
 
 fn reserve_digits<H: Host + ?Sized>(hundreds: u16, remainder: u16, game: &mut H) {
-    for (index, digit) in [
-        (394, remainder % 10),
-        (393, remainder / 10),
-        (392, hundreds),
-    ] {
-        crate::word_transfers!(game, ascending, 1;
-                native(EQUIPMENT_TILEMAP + 2 * index) <- value(digit + DIGIT_TILES));
-    }
+    game.screen_apply(|workspace| super::canvas::reserve_digits(workspace, hundreds, remainder));
 }
 
 pub fn queue_equipment_wireframe<H: Host + ?Sized>(game: &mut H) {
     equipment_wireframe(game);
     crate::display_refresh::queue_native_transfer(
-        word!(game.VRAM_WRITE_QUEUE_TAIL),
+        game.queue_tail(),
         1280,
         |_| (EQUIPMENT_TILEMAP + cell(4, 0)) as u16,
         126,
@@ -711,18 +698,23 @@ pub fn queue_equipment_wireframe<H: Host + ?Sized>(game: &mut H) {
 
 pub fn queue_pause_labels<H: Host + ?Sized>(game: &mut H) {
     crate::display_refresh::queue_native_transfer(
-        word!(game.VRAM_WRITE_QUEUE_TAIL),
+        game.queue_tail(),
         128,
         |_| (PAUSE_TILEMAP + cell(25, 0)) as u16,
         126,
-        |game| (u16::from(game.ram().read_byte(crate::ram::mirror::BG2SC) & 0xfc) << 8) + 800,
+        |game| {
+            (u16::from(
+                game.display_control_byte(crate::display::preparation::Field::Screens1) & 0xfc,
+            ) << 8)
+                + 800
+        },
         game,
     );
 }
 
 pub fn queue_options<H: Host + ?Sized>(game: &mut H) {
     crate::display_refresh::queue_native_transfer(
-        word!(game.VRAM_WRITE_QUEUE_TAIL),
+        game.queue_tail(),
         2048,
         |_| OPTIONS_TILEMAP as u16,
         126,
@@ -732,7 +724,7 @@ pub fn queue_options<H: Host + ?Sized>(game: &mut H) {
 }
 
 fn reserve_palette<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H) -> u16 {
-    if crate::session_cohort::load::<crate::inventory::Inventory, _>(game).reserve_health == 0 {
+    if crate::gameplay_context::inventory(game).reserve_health == 0 {
         return 1536;
     }
     let timer = &mut menu.pausemenu_reserve_tank_animation_timer;
@@ -760,15 +752,12 @@ fn reserve_sprite<H: Host + ?Sized>(sprite: u16, index: usize, palette: u16, gam
 
 pub fn reserve_tanks<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
     let palette = reserve_palette(menu, game);
-    if crate::session_cohort::load::<crate::inventory::Inventory, _>(game).reserve_capacity == 0 {
+    if crate::gameplay_context::inventory(game).reserve_capacity == 0 {
         return;
     }
-    let maximum =
-        crate::session_cohort::load::<crate::inventory::Inventory, _>(game).reserve_capacity / 100;
-    let remainder =
-        crate::session_cohort::load::<crate::inventory::Inventory, _>(game).reserve_health % 100;
-    let full =
-        crate::session_cohort::load::<crate::inventory::Inventory, _>(game).reserve_health / 100;
+    let maximum = crate::gameplay_context::inventory(game).reserve_capacity / 100;
+    let remainder = crate::gameplay_context::inventory(game).reserve_health % 100;
+    let full = crate::gameplay_context::inventory(game).reserve_health / 100;
     for index in 0..usize::from(full) {
         reserve_sprite(0x1b, index, palette, game);
     }
@@ -778,19 +767,11 @@ pub fn reserve_tanks<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
         let mut frame = 2 * (remainder / 14);
         if (i32::from(frame) - 7) & 0x8000 != 0
             && !remainder.is_multiple_of(14)
-            && game
-                .ram()
-                .read_byte(crate::ram::bytes::NMI_FRAME_COUNTER_BYTE)
-                & 4
-                == 0
+            && game.display_control_byte(crate::display::preparation::Field::NmiFrameByte) & 4 == 0
         {
             frame = frame.wrapping_add(2);
         }
-        if (i32::from(
-            crate::session_cohort::load::<crate::inventory::Inventory, _>(game).reserve_health,
-        ) - 100)
-            & 0x8000
-            == 0
+        if (i32::from(crate::gameplay_context::inventory(game).reserve_health) - 100) & 0x8000 == 0
         {
             frame = frame.wrapping_add(16);
         }
@@ -812,31 +793,46 @@ pub fn reserve_tanks<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
 }
 
 pub fn pause_labels<H: Host + ?Sized>(mode: u16, game: &mut H) {
-    // First tile and width of each two-row label in the pause tilemap.
-    const LEFT: (usize, usize) = (805, 5);
-    const START: (usize, usize) = (812, 4);
-    const RIGHT: (usize, usize) = (822, 5);
-    const TILEMAP: usize = PAUSE_TILEMAP;
+    game.screen_apply(|workspace| super::canvas::pause_labels(workspace, mode));
+}
 
-    const LIT: u16 = bg_tile::palette(2);
-    const DIM: u16 = bg_tile::palette(5);
-    // Modes retain the original label order, including the unpause mode (1).
-    let labels = [
-        [(RIGHT, LIT), (START, LIT), (LEFT, DIM)],
-        [(START, LIT), (LEFT, DIM), (RIGHT, DIM)],
-        [(LEFT, LIT), (START, LIT), (RIGHT, DIM)],
-    ][usize::from(mode)];
-    for ((first_tile, width), palette) in labels {
-        for row in [first_tile, first_tile + 32] {
-            for tile in row..row + width {
-                let address = TILEMAP + 2 * tile;
-                let word = u16::from_le_bytes([
-                    game.ram().read_byte(address),
-                    game.ram().read_byte(address + 1),
-                ]);
-                let word = bg_tile::recolour(word, palette);
-                game.ram().copy_in(address, &word.to_le_bytes());
-            }
-        }
+/// Captured loaded allocation, queried one word at a time after each publication.
+pub fn copy_rom_words<H: Host + ?Sized>(
+    first: Point,
+    address: u32,
+    source_word: usize,
+    count: usize,
+    descending: bool,
+    game: &mut H,
+) {
+    let source = crate::word_transfers::WordEndpoint::Rom(
+        game.loaded_rom_image(),
+        sm_data::cartridge::lorom_offset(address),
+    )
+    .shifted(isize::try_from(source_word).unwrap());
+    for index in 0..count {
+        let displacement = isize::try_from(2 * index).unwrap();
+        let displacement = if descending {
+            -displacement
+        } else {
+            displacement
+        };
+        let value = source.read(displacement);
+        let offset = if descending {
+            first.offset - 2 * index
+        } else {
+            first.offset + 2 * index
+        };
+        game.screen_write_native_word(Point::new(first.role, offset), value);
+    }
+}
+
+struct NativeText<'a, H: ?Sized>(&'a mut H);
+impl<H: Host + ?Sized> super::canvas::TextComposition for NativeText<'_, H> {
+    fn word(&mut self, cursor: u16) -> u16 {
+        text_word(cursor, self.0)
+    }
+    fn paint(&mut self, offset: usize, tile: u16) {
+        paint(offset, tile, self.0);
     }
 }

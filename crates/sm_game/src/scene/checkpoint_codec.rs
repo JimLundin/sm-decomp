@@ -44,6 +44,15 @@ impl Field for bool {
         }
     }
 }
+impl<A: Field, B: Field> Field for (A, B) {
+    fn put(&self, bytes: &mut Vec<u8>) {
+        self.0.put(bytes);
+        self.1.put(bytes);
+    }
+    fn get(read: &mut CheckpointReader<'_>) -> Result<Self, String> {
+        Ok((A::get(read)?, B::get(read)?))
+    }
+}
 impl<T: Field> Field for Option<T> {
     fn put(&self, bytes: &mut Vec<u8>) {
         self.is_some().put(bytes);
@@ -613,8 +622,16 @@ variants!(h::LiveOwner, "live owner" {
     6 => SkyBg2,
     7 => CrocomireBg2,
     8 => ObjectVariable { object, variable },
+    9 => LiquidSurface,
+    10 => LiquidBackground,
+    11 => SkyHorizontal,
+    12 => SkyIndirect,
+    13 => ExplosionLeft,
+    14 => ExplosionRight,
+    15 => ExplosionOffscreen,
 });
 variants!(h::HdmaRegionSource, "HDMA region" {
+    2 => Workspace { point },
     0 => Buffer { storage, offset },
     1 => ObjectVariable { object, variable },
 });
@@ -623,26 +640,58 @@ record!(h::HdmaLiveRegion {
     source,
     length
 });
+record!(crate::fx_sources::WindowControlLayout { storage, lanes });
+record!(crate::fx_domain::SourceOrigin {
+    address,
+    normalized
+});
 impl Field for h::HdmaLiveDescription {
     fn put(&self, bytes: &mut Vec<u8>) {
         let (buffers, regions) = self.checkpoint_parts();
         buffers.put(bytes);
         regions.put(bytes);
+        self.window_control_layout().cloned().put(bytes);
+        self.native_origins().put(bytes);
     }
     fn get(read: &mut CheckpointReader<'_>) -> Result<Self, String> {
         let buffers = <BTreeMap<h::LiveOwner, Vec<u8>> as Field>::get(read)?;
         let regions = <BTreeMap<h::LiveOwner, h::HdmaLiveRegion> as Field>::get(read)?;
+        let window_controls = <Option<crate::fx_sources::WindowControlLayout> as Field>::get(read)?;
+        let native_origins =
+            <BTreeMap<(h::LiveOwner, usize), crate::fx_domain::SourceOrigin> as Field>::get(read)?;
         if regions.iter().any(|(key, region)| *key != region.owner) {
             return Err("display checkpoint HDMA region key mismatch".into());
         }
-        Self::new(
+        let mut live = Self::new(
             buffers
                 .into_iter()
                 .map(|(owner, bytes)| h::HdmaOwnedBuffer { owner, bytes })
                 .collect(),
             regions.into_values().collect(),
         )
-        .map_err(|error| format!("display checkpoint HDMA live topology: {error:?}"))
+        .map_err(|error| format!("display checkpoint HDMA live topology: {error:?}"))?;
+        if let Some(layout) = window_controls {
+            // Reject competing persisted lane bytes instead of silently rewriting them.
+            let (buffers, _) = live.checkpoint_parts();
+            let source = buffers
+                .get(&layout.storage)
+                .ok_or("display checkpoint window storage")?;
+            if layout
+                .lanes
+                .iter()
+                .flatten()
+                .any(|&lane| source.get(lane) != Some(&0))
+            {
+                return Err("display checkpoint window authority".into());
+            }
+            live.bind_window_controls(layout, None)
+                .map_err(|error| format!("display checkpoint window topology: {error:?}"))?;
+        }
+        live.bind_native_origins(native_origins)
+            .map_err(|error| format!("display checkpoint native source provenance: {error:?}"))?;
+        live.validate()
+            .map_err(|error| format!("display checkpoint HDMA live topology: {error:?}"))?;
+        Ok(live)
     }
 }
 variants!(h::SourceBinding, "source binding" {
@@ -652,6 +701,62 @@ variants!(h::SourceBinding, "source binding" {
 });
 
 choices!(d::WordOrder { 0 => Little, 1 => Big });
+choices!(crate::presentation_workspace::Role { 0 => Pause, 1 => MessageText, 2 => MessageDescriptor,
+    3 => Menu, 4 => Equipment, 5 => SavedBackground, 6 => Xray });
+variants!(crate::presentation_workspace::Origin, "workspace origin" { 0 => Shared, 1 => Allocation(value) });
+record!(crate::presentation_workspace::Window {
+    bank,
+    address,
+    length
+});
+record!(crate::presentation_workspace::Binding {
+    origin,
+    base,
+    extent,
+    asset,
+    window
+});
+impl Field for crate::presentation_workspace::Bindings {
+    fn put(&self, bytes: &mut Vec<u8>) {
+        self.0.put(bytes);
+    }
+    fn get(read: &mut CheckpointReader<'_>) -> Result<Self, String> {
+        Ok(Self(Field::get(read)?))
+    }
+}
+impl Field for Box<[u8]> {
+    fn put(&self, bytes: &mut Vec<u8>) {
+        self.to_vec().put(bytes);
+    }
+    fn get(read: &mut CheckpointReader<'_>) -> Result<Self, String> {
+        Vec::<u8>::get(read).map(Vec::into_boxed_slice)
+    }
+}
+record!(crate::presentation_workspace::Workspace {
+    initialized,
+    shared,
+    bindings,
+    allocations,
+    native_order
+});
+impl Field for crate::presentation_workspace::Point {
+    fn put(&self, bytes: &mut Vec<u8>) {
+        self.role.put(bytes);
+        self.offset.put(bytes);
+        self.physical_address().put(bytes);
+    }
+    fn get(read: &mut CheckpointReader<'_>) -> Result<Self, String> {
+        let role = Field::get(read)?;
+        let offset = Field::get(read)?;
+        let physical: Option<usize> = Field::get(read)?;
+        match physical {
+            Some(at) => crate::presentation_workspace::Point::physical(at)
+                .advance(offset)
+                .map_err(|error| format!("workspace checkpoint point {error:?}")),
+            None => Ok(Self::new(role, offset)),
+        }
+    }
+}
 record!(d::SourceSpan {
     asset,
     bytes,
@@ -663,6 +768,9 @@ variants!(d::TransferSource, "transfer source" {
     2 => Objects { offset },
     3 => ActorTilemap { offset },
     4 => Scroll { slot, half, wrapped, offset },
+    5 => Workspace { point },
+    6 => QueuedScroll { offset },
+    7 => ActorState { address },
 });
 choices!(d::ByteLanes { 0 => Both, 1 => Low, 2 => High });
 record!(d::TileDestination {
@@ -800,15 +908,28 @@ record!(d::HdmaBinding {
     bank_slot,
     table
 });
-record!(d::HdmaObject {
-    instruction,
-    instruction_cursor,
+record!(crate::hdma::HdmaObject {
+    channels,
+    bank_slot,
+    instruction_list,
+    table,
     instruction_timer,
     pre_instruction,
     pre_instruction_bank,
     timer,
-    variables
+    a,
+    b,
+    c,
+    d,
+    e,
+    f
 });
+record!(crate::hdma::HdmaObjects {
+    enabled,
+    selected,
+    objects
+});
+record!(d::HdmaObject { instruction });
 record!(d::HdmaChannel {
     source,
     table,
@@ -833,11 +954,9 @@ record!(d::HdmaChannel {
     dma_active
 });
 record!(d::HdmaState {
-    bindings,
+    common,
     objects,
     channels,
-    selected,
-    flags,
     hdma_timer,
     dma_timer,
     dma_busy
@@ -924,18 +1043,8 @@ record!(d::RasterState {
     visible
 });
 choices!(d::DisplayPhase { 0 => Committed, 1 => Producing, 2 => Refreshed, 3 => Settling, 4 => Failed });
-// Preserve the original destination/payload result pair and its ordered outbox.
-impl Field for (r::AssetRef, Vec<u8>) {
-    fn put(&self, bytes: &mut Vec<u8>) {
-        self.0.put(bytes);
-        self.1.put(bytes);
-    }
-    fn get(read: &mut CheckpointReader<'_>) -> Result<Self, String> {
-        Ok((r::AssetRef::get(read)?, Vec::<u8>::get(read)?))
-    }
-}
-
 record!(d::DisplayDescription {
+    workspace,
     media_revision,
     phase,
     objects,
@@ -951,6 +1060,7 @@ record!(d::DisplayDescription {
     backgrounds,
     scrolling,
     uploads,
+    queued_sources,
     upload_tail,
     mode7_uploads,
     mode7_tail,
@@ -1187,7 +1297,7 @@ pub fn encode(
     required: &t::DisplayStartRequirements,
 ) -> Result<Vec<u8>, String> {
     let binding = binding(media, metadata, required)?;
-    let mut bytes = Vec::from(b"SMDISPL\x03".as_slice());
+    let mut bytes = Vec::from(b"SMDISPL\x04".as_slice());
     binding.put(&mut bytes);
     description.put(&mut bytes);
     resident.put(&mut bytes);
@@ -1204,7 +1314,7 @@ pub fn decode(
 ) -> Result<t::ValidatedDisplayStart, String> {
     let expected = binding(&media, metadata, required)?;
     let mut read = CheckpointReader(bytes);
-    if read.bytes(8)? != b"SMDISPL\x03" {
+    if read.bytes(8)? != b"SMDISPL\x04" {
         return Err("unsupported display checkpoint schema".into());
     }
     let binding_length = usize::get(&mut read)?;

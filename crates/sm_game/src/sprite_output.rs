@@ -1,9 +1,18 @@
 //! Checked drawing compatibility boundary. Only the native warning remains unsafe.
-use crate::ram::RawRam as _;
-use crate::ram::checked_word as word;
 use crate::sprite_drawing::{Clip, SpriteMap};
 use sm_data::cartridge::RomImage;
 
+/// Sprite inputs already owned by Samus and the player-projectile families.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum SpriteWord {
+    EchoX(usize),
+    EchoY(usize),
+    EchoSpeed(usize),
+    TopHalf,
+    BottomHalf,
+    GrappleEndX,
+    GrappleEndY,
+}
 /// What sprite output reads and writes: named and raw work RAM, the cartridge,
 /// the original's invalid-ROM warning and its failure flag.
 pub trait SpriteHost:
@@ -14,7 +23,14 @@ pub trait SpriteHost:
     + crate::cartridge::LoadedImage
     + crate::cartridge::NativeImage
     + crate::runtime_access::RuntimeAccess
+    + crate::sprite_drawing::ObjectAccess
+    + crate::escape_countdown::Access
 {
+    /// Read the canonical family owner; only real off-table aliases use compatibility.
+    fn sprite_word(&self, word: SpriteWord) -> u16;
+    fn sprite_camera(&self) -> [u16; 2];
+    /// Native-order shot spritemap, preserving the full doubled slot identity.
+    fn projectile_sprite_cursor(&self, slot: u16) -> u16;
     /// Print the original "RomPtr - Invalid access" warning for `address`.
     fn warn_invalid_rom(&mut self, address: u32);
     /// Set the original's failure flag.
@@ -58,8 +74,7 @@ pub fn projectile<H: SpriteHost + ?Sized>(
     game: &mut H,
     content: &mut impl Content<H>,
 ) {
-    let at = 0xcb8 + 2 * usize::from(slot >> 1);
-    let cursor = u16::from_ne_bytes([game.ram().read_byte(at), game.ram().read_byte(at + 1)]);
+    let cursor = game.projectile_sprite_cursor(slot);
     sprite_map(0x93, cursor, game, content).draw(position, |tile| tile, Clip::None, game);
 }
 pub fn samus<H: SpriteHost + ?Sized>(
@@ -94,40 +109,40 @@ impl<H: SpriteHost + ?Sized, C: Content<H>> crate::scene::objects::Host for Nati
     type Error = std::convert::Infallible;
     fn read_native_word(&mut self, offset: usize) -> Result<u16, Self::Error> {
         crate::scene::objects::Host::read_native_word(
-            &mut crate::sprite_drawing::NativeObjects(self.game),
+            &mut crate::sprite_drawing::SessionObjects(self.game),
             offset,
         )
     }
     fn read_little_word(&mut self, offset: usize) -> Result<u16, Self::Error> {
         crate::scene::objects::Host::read_little_word(
-            &mut crate::sprite_drawing::NativeObjects(self.game),
+            &mut crate::sprite_drawing::SessionObjects(self.game),
             offset,
         )
     }
     fn write_byte(&mut self, offset: usize, value: u8) -> Result<(), Self::Error> {
         crate::scene::objects::Host::write_byte(
-            &mut crate::sprite_drawing::NativeObjects(self.game),
+            &mut crate::sprite_drawing::SessionObjects(self.game),
             offset,
             value,
         )
     }
     fn write_native_slice(&mut self, offset: usize, value: u16) -> Result<(), Self::Error> {
         crate::scene::objects::Host::write_native_slice(
-            &mut crate::sprite_drawing::NativeObjects(self.game),
+            &mut crate::sprite_drawing::SessionObjects(self.game),
             offset,
             value,
         )
     }
     fn write_native_bytes(&mut self, offset: usize, value: u16) -> Result<(), Self::Error> {
         crate::scene::objects::Host::write_native_bytes(
-            &mut crate::sprite_drawing::NativeObjects(self.game),
+            &mut crate::sprite_drawing::SessionObjects(self.game),
             offset,
             value,
         )
     }
     fn started(&mut self, clip: Clip) -> Result<(), Self::Error> {
         crate::scene::objects::Host::started(
-            &mut crate::sprite_drawing::NativeObjects(self.game),
+            &mut crate::sprite_drawing::SessionObjects(self.game),
             clip,
         )
     }
@@ -155,22 +170,26 @@ impl<H: SpriteHost + ?Sized, C: Content<H>> crate::scene::samus::Host for Native
 }
 pub fn echo<H: SpriteHost + ?Sized>(slot: u16, game: &mut H, content: &mut impl Content<H>) {
     let index = usize::from(slot >> 1);
-    let y = word!(game.SPEED_ECHO_YPOS[index]);
+    let y = game.sprite_word(SpriteWord::EchoY(index));
     let image = content.image(game);
     let height = image.read(
         sm_data::cartridge::lorom_offset(0x91b629) as usize
             + usize::from(crate::sequence_word!(game.SAMUS_POSE)) * 8
             + 4,
     );
-    let layer1 = crate::camera::current(game).layer1;
+    let layer1 = game.sprite_camera();
     let y = y.wrapping_sub(u16::from(height)).wrapping_sub(layer1[1]);
     if (y as i16) >= 0 && y.wrapping_sub(248) & 0x8000 != 0 {
-        let sprite = word!(game.SAMUS_TOP_HALF_SPRITEMAP_INDEX);
-        let x = word!(game.SPEED_ECHO_XPOS[index]).wrapping_sub(layer1[0]);
+        let sprite = game.sprite_word(SpriteWord::TopHalf);
+        let x = game
+            .sprite_word(SpriteWord::EchoX(index))
+            .wrapping_sub(layer1[0]);
         samus(sprite, (x, y), game, content);
-        if word!(game.SAMUS_BOTTOM_HALF_SPRITEMAP_INDEX) != 0 {
-            let sprite = word!(game.SAMUS_BOTTOM_HALF_SPRITEMAP_INDEX);
-            let x = word!(game.SPEED_ECHO_XPOS[index]).wrapping_sub(layer1[0]);
+        if game.sprite_word(SpriteWord::BottomHalf) != 0 {
+            let sprite = game.sprite_word(SpriteWord::BottomHalf);
+            let x = game
+                .sprite_word(SpriteWord::EchoX(index))
+                .wrapping_sub(layer1[0]);
             samus(sprite, (x, y), game, content);
         }
     }
@@ -178,7 +197,7 @@ pub fn echo<H: SpriteHost + ?Sized>(slot: u16, game: &mut H, content: &mut impl 
 pub fn crash_echoes<H: SpriteHost + ?Sized>(game: &mut H, content: &mut impl Content<H>) {
     if crate::frame_display_word!(game.NmiFrameWordPair) & 1 != 0 {
         for index in [3, 2] {
-            if word!(game.SPEED_ECHO_XSPEED[index]) != 0 {
+            if game.sprite_word(SpriteWord::EchoSpeed(index)) != 0 {
                 echo((index * 2) as u16, game, content);
             }
         }
@@ -187,28 +206,35 @@ pub fn crash_echoes<H: SpriteHost + ?Sized>(game: &mut H, content: &mut impl Con
 
 /// Ordered native OAM stores; end coordinates and extension bits remain live aliases.
 pub fn grapple<H: SpriteHost + ?Sized>(game: &mut H, segment: Option<(u16, u16, u16)>) {
-    let idx = word!(game.OAM_NEXT_PTR);
-    let at = 0x370 + usize::from(idx);
+    let idx = game.object_little_word(544);
+    let at = usize::from(idx);
     if let Some((x, y, tile)) = segment {
-        game.ram().write_byte(at, x as u8);
-        game.ram().write_byte(at + 1, y as u8);
-        game.ram().copy_in(at + 2, &tile.to_ne_bytes());
+        game.object_write_byte(at, x.to_le_bytes()[0]);
+        game.object_write_byte(at + 1, y.to_le_bytes()[0]);
+        game.object_write_native_slice(at + 2, tile);
     } else {
-        let layer1 = crate::camera::current(game).layer1;
-        let x = word!(game.GRAPPLE_BEAM_END_X_POS)
+        let layer1 = game.sprite_camera();
+        let x = game
+            .sprite_word(SpriteWord::GrappleEndX)
             .wrapping_sub(layer1[0])
             .wrapping_sub(4);
-        game.ram().write_byte(at, x as u8);
-        let y = word!(game.GRAPPLE_BEAM_END_Y_POS)
+        game.object_write_byte(at, x.to_le_bytes()[0]);
+        let y = game
+            .sprite_word(SpriteWord::GrappleEndY)
             .wrapping_sub(layer1[1])
             .wrapping_sub(4);
-        game.ram().write_byte(at + 1, y as u8);
-        game.ram().copy_in(at + 2, &14880u16.to_ne_bytes());
-        let extension = word!(game.OAM_EXT[(idx >> 5)]);
+        game.object_write_byte(at + 1, y.to_le_bytes()[0]);
+        game.object_write_native_slice(at + 2, 14880);
+        let extension_at = 512 + 2 * usize::from(idx >> 5);
+        let extension = game.object_little_word(extension_at);
         let bit = (((i32::from(x) & 0x100) >> 8) << (2 * (i32::from(idx) >> 2 & 7))) as u16;
-        word!(game.OAM_EXT[(idx >> 5)] = extension | bit);
+        let [low, high] = (extension | bit).to_le_bytes();
+        game.object_write_byte(extension_at, low);
+        game.object_write_byte(extension_at + 1, high);
     }
-    word!(game.OAM_NEXT_PTR = idx.wrapping_add(4));
+    let [low, high] = idx.wrapping_add(4).to_le_bytes();
+    game.object_write_byte(544, low);
+    game.object_write_byte(545, high);
 }
 
 pub fn paletted<H: SpriteHost + ?Sized>(
@@ -221,7 +247,7 @@ pub fn paletted<H: SpriteHost + ?Sized>(
 ) {
     sprite_map(bank, address, game, &mut Native).draw(
         position,
-        |tile| palette | tile & 0xf1ff,
+        |tile| palette | (tile & 0xf1ff),
         clip,
         game,
     );

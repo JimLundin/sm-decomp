@@ -4,6 +4,36 @@ use crate::ram::{word_arrays as arrays, words as ram};
 use crate::room_entry::{effects::AssetSlot, world::WorldBinding};
 use crate::{external_inputs::ExternalInputs, session::Session};
 use std::sync::Arc;
+macro_rules! hdma_words {
+    ($s:ident, $f:ident, (&mut)) => {
+        let common = $s.hdma_scalar_objects_mut();
+        hdma_words!(@fields common, $f, (&mut), iter_mut);
+    };
+    ($s:ident, $f:ident, (&)) => {
+        let common = $s.hdma_scalar_objects();
+        hdma_words!(@fields common, $f, (&), iter);
+    };
+    (@fields $common:ident, $f:ident, ($($borrow:tt)*), $iter:ident) => {
+        $f(0x18b0,$($borrow)* $common.enabled);
+        $f(0x18b2,$($borrow)* $common.selected);
+        for (index, object) in $common.objects.$iter().enumerate() {
+            $f(0x18b4+index*2,$($borrow)* object.channels);
+            $f(0x18c0+index*2,$($borrow)* object.bank_slot);
+            $f(0x18cc+index*2,$($borrow)* object.instruction_list);
+            $f(0x18d8+index*2,$($borrow)* object.table);
+            $f(0x18e4+index*2,$($borrow)* object.instruction_timer);
+            $f(0x18f0+index*2,$($borrow)* object.pre_instruction);
+            $f(0x18fc+index*2,$($borrow)* object.pre_instruction_bank);
+            $f(0x1908+index*2,$($borrow)* object.timer);
+            $f(0x1914+index*2,$($borrow)* object.a);
+            $f(0x1920+index*2,$($borrow)* object.b);
+            $f(0x192c+index*2,$($borrow)* object.c);
+            $f(0x1938+index*2,$($borrow)* object.d);
+            $f(0x1944+index*2,$($borrow)* object.e);
+            $f(0x1950+index*2,$($borrow)* object.f);
+        }
+    };
+}
 // The camera (`crate::camera`): each axis's x word, then its y word.
 macro_rules! camera_words {
     (($c:expr), $f:ident, ($($borrow:tt)*)) => {
@@ -146,6 +176,24 @@ pub fn flow(bytes: &impl Fn(usize) -> u8) -> crate::flow::Flow {
     let load = |at: usize, value: &mut u16| *value = read(bytes, at);
     flow_words!((flow), load, (&mut));
     flow
+}
+macro_rules! window_words {
+    ($s:ident,$f:ident,(&)) => {
+        for field in crate::menu_window_state::Field::ALL {
+            $f(
+                crate::menu_window_encoding::address(field),
+                &field.get(&$s.menu_window),
+            );
+        }
+    };
+    ($s:ident,$f:ident,(&mut)) => {
+        for field in crate::menu_window_state::Field::ALL {
+            $f(
+                crate::menu_window_encoding::address(field),
+                field.get_mut(&mut $s.menu_window),
+            );
+        }
+    };
 }
 // Head0 owns only these ten bytes; full/odd accesses still project each lane.
 macro_rules! botwoon_death_words {
@@ -352,6 +400,33 @@ macro_rules! presentation_ref {
 
 macro_rules! scalar_words {
     ($s:ident,$f:ident,($($borrow:tt)*))=>{
+        $f(crate::ram::words::GAME_STATE,$($borrow)* $s.game_loop.mode);
+        $f(crate::ram::words::GAME_TIME_FRAMES,$($borrow)* $s.game_loop.clock.frames);
+        $f(crate::ram::words::GAME_TIME_SECONDS,$($borrow)* $s.game_loop.clock.seconds);
+        $f(crate::ram::words::GAME_TIME_MINUTES,$($borrow)* $s.game_loop.clock.minutes);
+        $f(crate::ram::words::GAME_TIME_HOURS,$($borrow)* $s.game_loop.clock.hours);
+        $f(crate::ram::words::ENABLE_DEBUG,$($borrow)* $s.game_loop.debug.enabled);
+        $f(crate::ram::words::JOYPAD_DBG_1,$($borrow)* $s.game_loop.debug.chords[0]);
+        $f(crate::ram::words::JOYPAD_DBG_2,$($borrow)* $s.game_loop.debug.chords[1]);
+        $f(crate::ram::words::JOYPAD_DBG_MISSILES_SWAP,$($borrow)* $s.game_loop.debug.ammunition[0]);
+        $f(crate::ram::words::JOYPAD_DBG_SUPER_MISSILES_SWAP,$($borrow)* $s.game_loop.debug.ammunition[1]);
+        $f(crate::ram::words::JOYPAD_DBG_POWER_BOMBS_SWAP,$($borrow)* $s.game_loop.debug.ammunition[2]);
+        $f(crate::ram::words::JOYPAD_DBG_FLAGS,$($borrow)* $s.game_loop.debug.flags);
+        $f(crate::ram::words::DEBUG_SAVELOAD_SCROLLPOS_TOGGLE,$($borrow)* $s.game_loop.debug.camera_toggle);
+        $f(crate::ram::words::DEBUG_SAVED_XSCROLL,$($borrow)* $s.game_loop.debug.camera[0]);
+        $f(crate::ram::words::DEBUG_SAVED_YSCROLL,$($borrow)* $s.game_loop.debug.camera[1]);
+        $f(crate::ram::words::BUTTON_CONFIG_UP,$($borrow)* $s.game_loop.directions[0]);
+        $f(crate::ram::words::BUTTON_CONFIG_DOWN,$($borrow)* $s.game_loop.directions[1]);
+        $f(crate::ram::words::BUTTON_CONFIG_LEFT,$($borrow)* $s.game_loop.directions[2]);
+        $f(crate::ram::words::BUTTON_CONFIG_RIGHT,$($borrow)* $s.game_loop.directions[3]);
+        $f(crate::ram::words::BUTTON_CONFIG_SHOOT_X_SAVED,$($borrow)* $s.game_loop.saved_bindings[0]);
+        $f(crate::ram::words::BUTTON_CONFIG_JUMP_A_SAVED,$($borrow)* $s.game_loop.saved_bindings[1]);
+        $f(crate::ram::words::BUTTON_CONFIG_RUN_B_SAVED,$($borrow)* $s.game_loop.saved_bindings[2]);
+        $f(crate::ram::words::BUTTON_CONFIG_ITEMCANCEL_Y_SAVED,$($borrow)* $s.game_loop.saved_bindings[3]);
+        $f(crate::ram::words::BUTTON_CONFIG_ITEMSWITCH_SAVED,$($borrow)* $s.game_loop.saved_bindings[4]);
+        $f(crate::ram::words::BUTTON_CONFIG_AIM_DOWN_L_SAVED,$($borrow)* $s.game_loop.saved_bindings[5]);
+        $f(crate::ram::words::BUTTON_CONFIG_AIM_UP_R_SAVED,$($borrow)* $s.game_loop.saved_bindings[6]);
+
         $f(0x0da2,$($borrow)* $s.player.camera_distance[0].whole);
         $f(0x0da4,$($borrow)* $s.player.camera_distance[0].fraction);
         $f(0x0da6,$($borrow)* $s.player.camera_distance[1].whole);
@@ -728,6 +803,7 @@ macro_rules! scalar_words {
         camera_words!(($s.room.camera), $f, ($($borrow)*));
         flow_words!(($s.flow), $f, ($($borrow)*));
         menu_words!(($s.menu), $f, ($($borrow)*));
+        window_words!($s,$f,($($borrow)*));
         $f(ram::MAP_MIN_X_SCROLL,$($borrow)* $s.menu_screens.map.min_x_scroll);
         $f(ram::MAP_MAX_X_SCROLL,$($borrow)* $s.menu_screens.map.max_x_scroll);
         $f(ram::MAP_MIN_Y_SCROLL,$($borrow)* $s.menu_screens.map.min_y_scroll);
@@ -768,6 +844,9 @@ macro_rules! scalar_words {
             }
         }
         $f(0xdc8,$($borrow)* $s.messages.queued);
+        $f(0x1c1f,$($borrow)* $s.messages.active_index);
+        $f(ram::MY_COUNTER,$($borrow)* $s.messages.delay);
+        $f(0x5f9,$($borrow)* $s.messages.selection);
         $f(ram::MESSAGE_BOX_ANIMATION_Y_RADIUS,$($borrow)* $s.messages.box_radius);
         for index in 0..4 {
             $f(0x5a4+2*index,$($borrow)* $s.messages.box_scratch[index]);
@@ -795,24 +874,7 @@ macro_rules! scalar_words {
             $f(0xdebc+index*2,$($borrow)* $s.mechanisms.slots[index].return_program);
             $f(0xdf0c+index*2,$($borrow)* $s.mechanisms.slots[index].work1);
         }
-        $f(0x18b0,$($borrow)* $s.hdma.enabled);
-        $f(0x18b2,$($borrow)* $s.hdma.selected);
-        for index in 0..crate::hdma::OBJECTS {
-            $f(0x18b4+index*2,$($borrow)* $s.hdma.objects[index].channels);
-            $f(0x18c0+index*2,$($borrow)* $s.hdma.objects[index].bank_slot);
-            $f(0x18cc+index*2,$($borrow)* $s.hdma.objects[index].instruction_list);
-            $f(0x18d8+index*2,$($borrow)* $s.hdma.objects[index].table);
-            $f(0x18e4+index*2,$($borrow)* $s.hdma.objects[index].instruction_timer);
-            $f(0x18f0+index*2,$($borrow)* $s.hdma.objects[index].pre_instruction);
-            $f(0x18fc+index*2,$($borrow)* $s.hdma.objects[index].pre_instruction_bank);
-            $f(0x1908+index*2,$($borrow)* $s.hdma.objects[index].timer);
-            $f(0x1914+index*2,$($borrow)* $s.hdma.objects[index].a);
-            $f(0x1920+index*2,$($borrow)* $s.hdma.objects[index].b);
-            $f(0x192c+index*2,$($borrow)* $s.hdma.objects[index].c);
-            $f(0x1938+index*2,$($borrow)* $s.hdma.objects[index].d);
-            $f(0x1944+index*2,$($borrow)* $s.hdma.objects[index].e);
-            $f(0x1950+index*2,$($borrow)* $s.hdma.objects[index].f);
-        }
+        hdma_words!($s, $f, ($($borrow)*));
         $f(0x198d,$($borrow)* $s.enemy_projectiles.flags);
         $f(0x198f,$($borrow)* $s.enemy_projectiles.zoom);
         $f(0x1991,$($borrow)* $s.enemy_projectiles.selected);
@@ -861,6 +923,20 @@ pub fn read(bytes: &impl Fn(usize) -> u8, at: usize) -> u16 {
 }
 pub fn decode(bytes: &impl Fn(usize) -> u8, byte_len: usize, world: Arc<WorldBinding>) -> Session {
     let mut s = Session::with_world(world);
+    s.fx = crate::fx_encoding::decode(bytes);
+    s.presentation.visual_mut().fireflea = crate::fx_encoding::decode_lighting(bytes);
+    s.timing.countdown = crate::escape_countdown::State::initialized(
+        [bytes(0x945), bytes(0x946), bytes(0x947)],
+        [read(bytes, 0x948), read(bytes, 0x94a)],
+        if cfg!(target_endian = "little") {
+            crate::scene::state::WordOrder::Little
+        } else {
+            crate::scene::state::WordOrder::Big
+        },
+    );
+    assert!(byte_len >= 0x7000, "short presentation workspace import");
+    *s.presentation.workspace_mut() =
+        crate::presentation_workspace::Workspace::compatibility(bytes);
     assert!(0x8f7 <= byte_len, "short minimap import");
     for (index, value) in s.minimap.explored.iter_mut().enumerate() {
         *value = bytes(0x7f7 + index);
@@ -896,6 +972,8 @@ pub fn decode(bytes: &impl Fn(usize) -> u8, byte_len: usize, world: Arc<WorldBin
         (0xd830, s.gameplay_flags.used_room_objects.as_mut_slice()),
         (0xd870, s.gameplay_flags.collected_locations.as_mut_slice()),
         (0xd8b0, s.gameplay_flags.opened_doors.as_mut_slice()),
+        (0xd8f8, s.gameplay_flags.used_stations.as_mut_slice()),
+        (0xd908, s.gameplay_flags.map_stations.as_mut_slice()),
     ] {
         let end = base + flags.len();
         assert!(end <= byte_len, "short gameplay flags import");
@@ -906,6 +984,25 @@ pub fn decode(bytes: &impl Fn(usize) -> u8, byte_len: usize, world: Arc<WorldBin
     s.enemy_projectiles.spawn.angle = bytes(0x60b);
     let load = |at: usize, value: &mut u16| *value = read(bytes, at);
     scalar_words!(s,load,(&mut));
+    s.menu_window = crate::menu_window_encoding::decode(bytes);
+    s.fx_sources = Some(crate::fx_encoding::decode_sources(bytes, &s.menu_window));
+    for (index, byte) in s.menu_screens.graphics.bytes.iter_mut().enumerate() {
+        *byte = bytes(0x765 + index);
+    }
+    for word in crate::controller_state::Word::ALL {
+        *word.get_mut(&mut s.control) = read(bytes, word.address());
+    }
+    s.game_loop = crate::game_loop::GameLoop::initialized(
+        0,
+        Default::default(),
+        Default::default(),
+        [0; 4],
+        [0; 7],
+    );
+    for word in crate::game_loop::Word::ALL {
+        *word.get_mut(&mut s.game_loop) = read(bytes, word.address());
+    }
+
     for (index, value) in s.projectiles.launch.displacements.iter_mut().enumerate() {
         *value = ((u32::from(read(bytes, 0xdaa + index * 4)) << 16)
             | u32::from(read(bytes, 0xdac + index * 4))) as i32;
@@ -919,6 +1016,19 @@ pub fn decode(bytes: &impl Fn(usize) -> u8, byte_len: usize, world: Arc<WorldBin
             *value = read(bytes, 0xa000 + index * 8 + corner * 2);
         }
     }
+    assert!(byte_len >= 0x1fa02, "short queued tilemap import");
+    for (index, byte) in s.queued_tilemaps.queue.iter_mut().enumerate() {
+        *byte = bytes(0xd0 + index);
+    }
+    s.queued_tilemaps.tail = read(bytes, 0x330);
+    s.queued_tilemaps.source_block = [read(bytes, 0x990), read(bytes, 0x992)];
+    s.queued_tilemaps.destination_block = [read(bytes, 0x994), read(bytes, 0x996)];
+    for (index, word) in s.queued_tilemaps.scrolling.iter_mut().enumerate() {
+        *word = read(bytes, 0xc8c8 + index * 2);
+    }
+    for (index, word) in s.queued_tilemaps.background_mut().iter_mut().enumerate() {
+        *word = read(bytes, 0x19602 + index * 2);
+    }
     crate::actors::codec::import_common(&mut s, bytes, byte_len);
     assert!(byte_len >= 0x8840, "short Botwoon death import");
     let load = |at, word: &mut u16| *word = read(bytes, at);
@@ -926,6 +1036,76 @@ pub fn decode(bytes: &impl Fn(usize) -> u8, byte_len: usize, world: Arc<WorldBin
     s
 }
 pub fn visit(s: &Session, mut visit: impl FnMut(usize, u16)) {
+    let controls = crate::fx_encoding::session_controls(s);
+    for field in crate::fx_state::Field::ALL {
+        visit(crate::fx_encoding::address(field), field.get(&controls));
+    }
+    let lighting = crate::fx_encoding::session_lighting(s);
+    for field in crate::fx_lighting::Field::ALL {
+        visit(
+            crate::fx_encoding::lighting_address(field),
+            field.get(&lighting),
+        );
+    }
+    // The seven countdown bytes end at Y high; the last pair repeats Y low
+    // rather than borrowing the unowned byte after the countdown.
+    for at in [0x945, 0x947, 0x949, 0x94a] {
+        visit(
+            at,
+            u16::from_le_bytes([
+                projected_byte(s, at).expect("countdown"),
+                projected_byte(s, at + 1).expect("countdown neighbor"),
+            ]),
+        );
+    }
+    // The final byte shares its following word with the existing map owner.
+    for at in (0x765..0x776).step_by(2) {
+        let pair = [
+            projected_byte(s, at).expect("menu graphics"),
+            projected_byte(s, at + 1).expect("menu graphics tail"),
+        ];
+        visit(at, u16::from_le_bytes(pair));
+    }
+    for (index, pair) in s
+        .presentation
+        .workspace()
+        .shared_bytes()
+        .as_chunks::<2>()
+        .0
+        .iter()
+        .enumerate()
+    {
+        visit(
+            crate::presentation_workspace::FIRST + index * 2,
+            u16::from_le_bytes(*pair),
+        );
+    }
+    for (index, pair) in s
+        .queued_tilemaps
+        .queue
+        .as_chunks::<2>()
+        .0
+        .iter()
+        .enumerate()
+    {
+        visit(0xd0 + index * 2, u16::from_le_bytes([pair[0], pair[1]]));
+    }
+    visit(0x330, s.queued_tilemaps.tail);
+    for (index, &word) in s
+        .queued_tilemaps
+        .source_block
+        .iter()
+        .chain(&s.queued_tilemaps.destination_block)
+        .enumerate()
+    {
+        visit(0x990 + index * 2, word);
+    }
+    for (index, &word) in s.queued_tilemaps.scrolling.iter().enumerate() {
+        visit(0xc8c8 + index * 2, word);
+    }
+    for (index, &word) in s.queued_tilemaps.background().iter().enumerate() {
+        visit(0x19602 + index * 2, word);
+    }
     // These signals formerly published immediately, before a fallible export.
     let mut emit = |at, word: &u16| visit(at, *word);
     botwoon_death_words!(s, emit, (&));
@@ -968,12 +1148,21 @@ pub fn visit(s: &Session, mut visit: impl FnMut(usize, u16)) {
         (0xd830, s.gameplay_flags.used_room_objects.as_slice()),
         (0xd870, s.gameplay_flags.collected_locations.as_slice()),
         (0xd8b0, s.gameplay_flags.opened_doors.as_slice()),
+        (0xd8f8, s.gameplay_flags.used_stations.as_slice()),
+        (0xd908, s.gameplay_flags.map_stations.as_slice()),
     ] {
         for (index, pair) in flags.as_chunks::<2>().0.iter().enumerate() {
             visit(base + index * 2, u16::from_le_bytes([pair[0], pair[1]]));
         }
     }
-    let mut emit = |at: usize, value: &u16| visit(at, *value);
+    let mut emit = |at: usize, value: &u16| {
+        if crate::fx_encoding::control_lane(at).is_some() {
+            let current = crate::fx_encoding::control_word(s, at);
+            visit(at, current);
+        } else {
+            visit(at, *value);
+        }
+    };
     scalar_words!(s,emit,(&));
     for (index, &value) in s.projectiles.launch.displacements.iter().enumerate() {
         visit(0xdaa + index * 4, ((value as u32) >> 16) as u16);
@@ -994,10 +1183,53 @@ pub fn encode(s: &Session, mut span: impl FnMut(usize, &[u8])) {
     for (index, cell) in s.room.terrain.cells().iter().enumerate() {
         span(0x16402 + index, &[cell.behavior]);
     }
-    s.presentation.encode_projection(&mut span);
-    s.control.encode_projection(span);
+    s.presentation
+        .encode_projection(&mut |at: usize, bytes: &[u8]| {
+            if crate::fx_encoding::control_lane(at).is_some() {
+                let current: Vec<_> = (at..at + bytes.len())
+                    .map(|at| crate::fx_encoding::control_byte(s, at))
+                    .collect();
+                span(at, &current);
+            } else {
+                span(at, bytes);
+            }
+        });
+    s.control.encode_projection(&mut span);
+    crate::fx_encoding::encode_sources(s, span);
 }
 pub fn projected_byte(s: &Session, at: usize) -> Option<u8> {
+    if crate::fx_encoding::control_lane(at).is_some() {
+        return Some(crate::fx_encoding::control_byte(s, at));
+    }
+    if let Some(byte) = crate::fx_encoding::projected_source_byte(s, at) {
+        return Some(byte);
+    }
+    if let Some(byte) = crate::fx_encoding::projected_byte(&s.fx, at) {
+        return Some(byte);
+    }
+    if let Some(byte) =
+        crate::fx_encoding::projected_lighting_byte(&s.presentation.visual().fireflea, at)
+    {
+        return Some(byte);
+    }
+    if (0x945..0x94c).contains(&at) {
+        return Some(s.timing.countdown.byte(at - 0x945));
+    }
+    if (0xd8f8..0xd908).contains(&at) {
+        return Some(s.gameplay_flags.used_stations[at - 0xd8f8]);
+    }
+    if (0xd908..0xd910).contains(&at) {
+        return Some(s.gameplay_flags.map_stations[at - 0xd908]);
+    }
+    if (0x765..0x776).contains(&at) {
+        return Some(s.menu_screens.graphics.bytes[at - 0x765]);
+    }
+    if let Some(value) = s.presentation.workspace().shared_byte(at) {
+        return Some(value);
+    }
+    if let Some(byte) = queued_byte(s, at) {
+        return Some(byte);
+    }
     if let Some(value) = s.control.projected_byte(at) {
         return Some(value);
     }
@@ -1096,6 +1328,54 @@ pub fn projected_byte(s: &Session, at: usize) -> Option<u8> {
     result
 }
 pub fn write_projected_byte(s: &mut Session, at: usize, value: u8) -> bool {
+    if crate::fx_encoding::control_lane(at).is_some() {
+        crate::fx_encoding::write_control_byte(s, at, value);
+        return true;
+    }
+    if crate::fx_encoding::write_source_byte(s, at, value) {
+        return true;
+    }
+    if crate::fx_encoding::write_byte(&mut s.fx, at, value) {
+        return true;
+    }
+    if crate::fx_encoding::write_lighting_byte(&mut s.presentation.visual_mut().fireflea, at, value)
+    {
+        return true;
+    }
+    if (0x945..0x94c).contains(&at) {
+        let c = &mut s.timing.countdown;
+        match at - 0x945 {
+            0 => c.centiseconds = value,
+            1 => c.seconds = value,
+            2 => c.minutes = value,
+            3 => c.x = (c.x & 0xff00) | u16::from(value),
+            4 => c.x = (c.x & 0xff) | (u16::from(value) << 8),
+            5 => c.y = (c.y & 0xff00) | u16::from(value),
+            6 => c.y = (c.y & 0xff) | (u16::from(value) << 8),
+            _ => unreachable!(),
+        }
+        return true;
+    }
+    if (0xd8f8..0xd908).contains(&at) {
+        s.gameplay_flags.used_stations[at - 0xd8f8] = value;
+        return true;
+    }
+    if (0xd908..0xd910).contains(&at) {
+        s.gameplay_flags.map_stations[at - 0xd908] = value;
+        return true;
+    }
+    if (0x765..0x776).contains(&at) {
+        s.menu_screens.graphics.bytes[at - 0x765] = value;
+        return true;
+    }
+    if s.presentation.workspace().shared_byte(at).is_some() {
+        s.publish_workspace_byte(crate::presentation_workspace::Point::physical(at), value)
+            .expect("current shared Workspace publication");
+        return true;
+    }
+    if write_queued_byte(s, at, value) {
+        return true;
+    }
     if s.control.write_projected_byte(at, value) {
         return true;
     }
@@ -1243,6 +1523,23 @@ pub fn write_projected_byte(s: &mut Session, at: usize, value: u8) -> bool {
 /// typed observations directly, removing their RAM-addressed input boundary.
 pub fn inputs_from_session(s: &Session, bytes: &impl Fn(usize) -> u8) -> ExternalInputs {
     inputs(&|at| {
+        if crate::fx_encoding::control_lane(at).is_some() {
+            return crate::fx_encoding::control_byte(s, at);
+        }
+        // Each byte query observes the same actual owner as projected stores.
+        // Legacy numeric history has no metadata, but is authoritative in this interval.
+        if let Some(word) = crate::controller_state::Word::ALL
+            .iter()
+            .find(|word| (word.address()..word.address() + 2).contains(&at))
+        {
+            return word.get(&s.control).to_le_bytes()[at - word.address()];
+        }
+        if let Some(word) = crate::game_loop::Word::ALL
+            .iter()
+            .find(|word| (word.address()..word.address() + 2).contains(&at))
+        {
+            return word.get(&s.game_loop).to_le_bytes()[at - word.address()];
+        }
         let (base, word) = match at {
             0xa5a..=0xa5b => (0xa5a, s.player.transitions.frame_gamma.to_raw()),
             0xde0..=0xde1 => (0xde0, s.menu_screens.options_menu.debug_invincibility),
@@ -1262,25 +1559,6 @@ pub fn inputs_from_session(s: &Session, bytes: &impl Fn(usize) -> u8) -> Externa
             0x911..=0x912 => (0x911, s.room.camera.layer1[0]),
             0x915..=0x916 => (0x915, s.room.camera.layer1[1]),
             0x93f..=0x940 => (0x93f, s.room.ceres_status),
-            0x8b..=0x8c | 0x8f..=0x90 | 0x9b2..=0x9bf | 0xdfe..=0xe01 => {
-                let Ok(metadata) = s.control.metadata() else {
-                    return bytes(at);
-                };
-                let input = &metadata.input_history;
-                match at {
-                    0x8b..=0x8c => (0x8b, input.ports[0].sampled),
-                    0x8f..=0x90 => (0x8f, input.ports[0].pressed),
-                    0x9b2..=0x9b3 => (0x9b2, input.bindings.shoot),
-                    0x9b4..=0x9b5 => (0x9b4, input.bindings.jump),
-                    0x9b6..=0x9b7 => (0x9b6, input.bindings.run),
-                    0x9b8..=0x9b9 => (0x9b8, input.bindings.cancel),
-                    0x9ba..=0x9bb => (0x9ba, input.bindings.switch),
-                    0x9bc..=0x9bd => (0x9bc, input.bindings.aim_down),
-                    0x9be..=0x9bf => (0x9be, input.bindings.aim_up),
-                    0xdfe..=0xdff => (0xdfe, input.samus_held),
-                    _ => (0xe00, input.samus_pressed),
-                }
-            }
             0x78..=0x7d | 0x80..=0x83 | 0x5b5..=0x5b7 => {
                 let Ok(owner) = s.presentation.owner() else {
                     return bytes(at);
@@ -1349,6 +1627,66 @@ pub fn inputs(bytes: &impl Fn(usize) -> u8) -> ExternalInputs {
         grapple_x: w(ram::X_POS_OF_START_OF_GRAPPLE_BEAM_PREVFRAME),
         grapple_y: w(ram::Y_POS_OF_START_OF_GRAPPLE_BEAM_PREVFRAME),
     }
+}
+
+// The selected machine image retains these exact spans. Detached Session
+// checkpoints additionally encode the complete fixed owner payload.
+fn queued_byte(s: &Session, at: usize) -> Option<u8> {
+    if (0xd0..0x2d0).contains(&at) {
+        return Some(s.queued_tilemaps.queue[at - 0xd0]);
+    }
+    let (value, lane) = if (0x330..0x332).contains(&at) {
+        (s.queued_tilemaps.tail, at - 0x330)
+    } else if (0xc8c8..0xcad8).contains(&at) {
+        let offset = at - 0xc8c8;
+        (s.queued_tilemaps.scrolling[offset / 2], offset % 2)
+    } else if (0x990..0x998).contains(&at) {
+        let offset = at - 0x990;
+        let blocks = if offset < 4 {
+            &s.queued_tilemaps.source_block
+        } else {
+            &s.queued_tilemaps.destination_block
+        };
+        (blocks[(offset % 4) / 2], offset % 2)
+    } else if (0x19602..0x1fa02).contains(&at) {
+        let offset = at - 0x19602;
+        (s.queued_tilemaps.background()[offset / 2], offset % 2)
+    } else {
+        return None;
+    };
+    Some(value.to_le_bytes()[lane])
+}
+fn write_queued_byte(s: &mut Session, at: usize, byte: u8) -> bool {
+    if (0xd0..0x2d0).contains(&at) {
+        s.queued_tilemaps.queue[at - 0xd0] = byte;
+        return true;
+    }
+    let (word, lane) = if (0x330..0x332).contains(&at) {
+        (&mut s.queued_tilemaps.tail, at - 0x330)
+    } else if (0xc8c8..0xcad8).contains(&at) {
+        let offset = at - 0xc8c8;
+        (&mut s.queued_tilemaps.scrolling[offset / 2], offset % 2)
+    } else if (0x990..0x998).contains(&at) {
+        let offset = at - 0x990;
+        let blocks = if offset < 4 {
+            &mut s.queued_tilemaps.source_block
+        } else {
+            &mut s.queued_tilemaps.destination_block
+        };
+        (&mut blocks[(offset % 4) / 2], offset % 2)
+    } else if (0x19602..0x1fa02).contains(&at) {
+        let offset = at - 0x19602;
+        (
+            &mut s.queued_tilemaps.background_mut()[offset / 2],
+            offset % 2,
+        )
+    } else {
+        return false;
+    };
+    let mut bytes = word.to_le_bytes();
+    bytes[lane] = byte;
+    *word = u16::from_le_bytes(bytes);
+    true
 }
 
 #[cfg(test)]

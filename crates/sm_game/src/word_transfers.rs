@@ -192,6 +192,14 @@ mod tests {
             panic!("sequence controls were not supplied");
         }
     }
+    impl crate::gameplay_context::Access for Ram {
+        fn gameplay_word(&self, _: crate::gameplay_context::Word) -> u16 {
+            panic!("gameplay owner was not supplied")
+        }
+        fn set_gameplay_byte(&mut self, _: crate::gameplay_context::Word, _: usize, _: u8) {
+            panic!("gameplay owner was not supplied")
+        }
+    }
     impl CompatibilityRam for Ram {
         fn compatibility_byte(&self, at: usize) -> u8 {
             self.0[at]

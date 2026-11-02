@@ -7,15 +7,15 @@
 //! `HandleCinematicsTransitions*` and `LoadTitleSequenceGraphics` in the
 //! original decompilation. The functions run from `cinematic_function`; the
 //! compat dispatch keeps their ids.
+use crate::cinematic::CinematicDestination;
 use crate::cinematic::{advance_cinematic_fade, clear_cinematic_sprites, set_cinematic_backdrop};
 use crate::cinematic_host::Host;
 use crate::cinematic_objects::CinematicObjects;
 use crate::cinematic_state::Cinematic;
+use crate::display::preparation::Field;
 use crate::display_refresh::GraphicsAsset;
 use crate::menu_state::OptionsMenu;
 use crate::menus::prelude::display_scroll;
-use crate::ram::RawRam as _;
-use crate::ram::word;
 use crate::visual_state::{CinematicDisplay, CinematicFade};
 
 /// Bank $8B cinematic functions, stored in `cinematic_function`.
@@ -117,14 +117,25 @@ fn start_demo_logo<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     *cine.y_speed() = 0;
     *cine.y_subspeed() = 0;
     *cine.skip_to_title_index() = 3;
-    crate::word_transfers!(game, ascending, 128; le(PALETTE_BUFFER, 128) <- rom(TITLE_PALETTES, 128));
+    crate::cinematic::transfer_cinematic_words(
+        128,
+        2,
+        &[(
+            CinematicDestination::Palette {
+                offset: 256,
+                native: false,
+            },
+            crate::cinematic::cinematic_rom_words(TITLE_PALETTES, 128, game),
+        )],
+        game,
+    );
     crate::cinematic::set_cinematic_colors(&[201], 0x7fff, game);
     crate::cinematic::set_cinematic_colors(&[202], 32128, game);
     crate::palette_effects::execution::leased::clear(game);
     crate::palette_effects::execution::leased::spawn(TITLE_GLOW_1, game);
     crate::palette_effects::execution::leased::spawn(TITLE_GLOW_2, game);
     set_cinematic_backdrop(false, game);
-    game.ram().write_byte(crate::ram::mirror::TM, 17);
+    crate::frame_display_byte!(game, Field::MainLayers => 17);
     crate::room_visuals::initialize_title_gradient(game);
 }
 
@@ -146,7 +157,18 @@ pub fn load_graphics<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     crate::cinematic_display::configure_cinematic_display(CinematicDisplay::Title, cine, game);
     crate::frame_display_word!(game.CurrentInterrupt = 0);
     crate::frame_display_word!(game.PendingInterrupt = 0);
-    crate::word_transfers!(game, ascending, 256; le(PALETTE_BUFFER, 0) <- rom(TITLE_PALETTES, 0));
+    crate::cinematic::transfer_cinematic_words(
+        256,
+        2,
+        &[(
+            CinematicDestination::Palette {
+                offset: 0,
+                native: false,
+            },
+            crate::cinematic::cinematic_rom_words(TITLE_PALETTES, 0, game),
+        )],
+        game,
+    );
     GraphicsAsset::Decompress(0x94e000, 0x10000).load(game);
     GraphicsAsset::Decompress(0x96fc04, 0x14000).load(game);
     GraphicsAsset::Decompress(0x9580d8, 0x15000).load(game);
@@ -222,7 +244,7 @@ fn finish<H: Host + ?Sized>(
     clear_index: impl FnOnce(&mut H),
 ) {
     crate::display_refresh::enable(true, game);
-    game.ram().write_byte(crate::ram::mirror::BGMODE, 1);
+    crate::frame_display_byte!(game, Field::Mode => 1);
     crate::screen_fade::store(game, 0, 0);
     display_scroll!(game.Bg2H = 0);
     display_scroll!(game.Bg3H = 0);
@@ -236,7 +258,7 @@ fn finish<H: Host + ?Sized>(
     crate::palette_effects::execution::leased::clear(game);
     cine.clear();
     crate::word_transfers!(game, descending, 256; le(HDMA_TABLE_1, 255) <- value(0));
-    word!(game.GAME_STATE = next);
+    crate::gameplay_word!(game.GAME_STATE = next);
     clear_index(game);
 }
 
@@ -267,7 +289,7 @@ pub fn to_demos<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
 /// Pre-instruction - cinematic sprite object $A0EF ('1994' scrolling text)
 /// ($8B:9CCF): full brightness, once. Was `sub_8B9CCF`.
 pub fn scrolling_1994<H: Host + ?Sized>(k: u16, cine: &mut Cinematic, game: &mut H) {
-    game.ram().write_byte(crate::ram::mirror::INIDISP, 15);
+    crate::frame_display_byte!(game, Field::Brightness => 15);
     *cine.spr_pre_instruction(k >> 1) = NO_PRE_INSTRUCTION;
 }
 

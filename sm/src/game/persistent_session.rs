@@ -45,6 +45,20 @@ pub(crate) fn prepare(
     let gameplay = supplied
         .gameplay
         .ok_or(SessionStartError::MissingGameplay)?;
+    if gameplay.actor_identity.is_poisoned() {
+        return Err(SessionStartError::Binding(DisplayError::Poisoned));
+    }
+    if !gameplay.fx.is_initialized() {
+        return Err(SessionStartError::Binding(DisplayError::Incomplete));
+    }
+    sm_game::fx_encoding::validate_control_ownership(&gameplay)
+        .map_err(SessionStartError::Binding)?;
+    if !gameplay.menu_window.is_initialized() || !gameplay.timing.countdown.initialized {
+        return Err(SessionStartError::UninitializedMenuWindow);
+    }
+    if !gameplay.game_loop.is_initialized() {
+        return Err(SessionStartError::UninitializedGameLoop);
+    }
     if !Arc::ptr_eq(&gameplay.world, game.world())
         || gameplay.world.revision() != game.world().revision()
     {
@@ -68,6 +82,14 @@ pub(crate) fn prepare(
         .display
         .as_ref()
         .ok_or(SessionStartError::Display(StartError::MissingDisplay))?;
+    if let Some(execution) = &gameplay.prepared_dialogue {
+        required
+            .dialogue
+            .as_ref()
+            .ok_or(SessionStartError::GameplayDisplay)?
+            .validate(execution, &display.workspace)
+            .map_err(|_| SessionStartError::GameplayDisplay)?;
+    }
     if *gameplay.presentation.visual() != display.visual
         || *gameplay.presentation.palette() != display.player_palette
         || *gameplay.presentation.atmospheric() != display.atmospheric
@@ -180,6 +202,12 @@ pub(crate) fn prepare(
             .map_err(SessionStartError::Display)?,
     )
     .map_err(SessionStartError::Display)?;
+    if sm_game::controller_state::Word::ALL
+        .iter()
+        .any(|word| word.get(&gameplay.control) != word.get_history(&opened.metadata.input_history))
+    {
+        return Err(SessionStartError::GameplayDisplay);
+    }
     if *gameplay.control.primary() != opened.metadata.continuation.primary
         || *gameplay.control.secondary() != opened.metadata.continuation.secondary
     {
@@ -236,12 +264,16 @@ impl PreparedSessionStart {
             required,
         } = self;
         // Replace, rather than retain, the supplied numeric construction copy.
+        gameplay.fx_sources = None;
+        gameplay.hdma = Default::default();
         gameplay.presentation = Presentation::Owned {
             display: Box::new(display),
             marker,
             actor_queue_projection,
             samus_publications,
         };
+        sm_game::fx_encoding::adopt_control_ownership(&mut gameplay)
+            .expect("prepared control ownership");
         gameplay.control = Control::Owned(Box::new(CurrentControl {
             metadata,
             requests: audio_requests,
@@ -278,11 +310,32 @@ pub(crate) fn validate_normalized_projection(
     prepared: &PreparedSessionStart,
 ) -> Result<(), DisplayError> {
     let mut matches = true;
+    let mut source_error = None;
     crate::game::session_encoding::encode(&prepared.gameplay, |at, bytes| {
         for (part, byte) in bytes.iter().enumerate() {
-            matches &= game.ram().read_byte(at + part) == *byte;
+            match sm_game::fx_encoding::display_source_coordinate(
+                &prepared.display.owner().state,
+                at + part,
+            ) {
+                Ok(Some(_)) => {} // The actual prepared source is checked below.
+                Ok(None) => matches &= game.ram().read_byte(at + part) == *byte,
+                Err(error) => source_error = Some(error),
+            }
         }
     });
+    if let Some(error) = source_error {
+        return Err(error);
+    }
+
+    sm_game::fx_encoding::encode_display_sources(
+        &prepared.display.owner().state,
+        &prepared.gameplay,
+        |at, bytes| {
+            for (part, byte) in bytes.iter().enumerate() {
+                matches &= game.ram().read_byte(at + part) == *byte;
+            }
+        },
+    );
     let continuation = &prepared.metadata.continuation;
     for (at, byte) in [
         (0x611, continuation.outer),
@@ -307,11 +360,16 @@ pub(crate) use sm_game::scene::owned_samus::{bottom_visible, draw_body, draw_spr
 /// The aggregate's current behavior and admission rules remain unchanged.
 pub struct SessionSlot {
     pub(crate) aggregate: AggregateSlot,
+    /// Each foreign interval carries its actual owner. None marks a nested
+    /// Runtime borrowing that frame; its release returns the same owner.
+    pub(crate) foreign_presentations: Vec<Option<Presentation>>,
     pub(crate) menu: std::cell::RefCell<sm_game::menus::state::Domain>,
+    pub(crate) fx: std::cell::RefCell<sm_game::fx_domain::Domain>,
     pub(crate) inventory: std::cell::RefCell<sm_game::inventory_domain::InventoryDomain>,
     pub(crate) frame_display: std::cell::RefCell<sm_game::display::preparation::Domain>,
     pub(crate) scroll: std::cell::RefCell<sm_game::display_scroll::ScrollDomain>,
     pub(crate) sequence: std::cell::RefCell<sm_game::sequence_state::Domain>,
+    pub(crate) gameplay_context: std::cell::RefCell<sm_game::gameplay_context::Domain>,
 }
 
 pub(crate) enum AggregateSlot {
@@ -325,11 +383,14 @@ impl SessionSlot {
     pub(crate) fn new() -> Self {
         Self {
             aggregate: AggregateSlot::Legacy,
+            foreign_presentations: Vec::new(),
             menu: std::cell::RefCell::new(sm_game::menus::state::Domain::Unowned),
+            fx: std::cell::RefCell::new(sm_game::fx_domain::Domain::Unowned),
             inventory: std::cell::RefCell::new(sm_game::inventory_domain::InventoryDomain::Unowned),
             frame_display: std::cell::RefCell::new(sm_game::display::preparation::Domain::Unowned),
             scroll: std::cell::RefCell::new(sm_game::display_scroll::ScrollDomain::Unowned),
             sequence: std::cell::RefCell::new(sm_game::sequence_state::Domain::Unowned),
+            gameplay_context: std::cell::RefCell::new(sm_game::gameplay_context::Domain::Unowned),
         }
     }
 }

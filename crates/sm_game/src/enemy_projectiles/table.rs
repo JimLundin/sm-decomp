@@ -146,6 +146,10 @@ impl FileSelect<'_> {
     pub fn missile_animation_timer(&mut self) -> &mut u16 {
         &mut self.0.flags
     }
+    /// $198F: the file-copy arrow palette timer, shared with Mode7 zoom.
+    pub fn arrow_palette_timer(&mut self) -> &mut u16 {
+        &mut self.0.zoom
+    }
     /// $1991, $1993, $1995: `slot_[abc]_helmet_animation_timer`.
     pub fn helmet_animation_timer(&mut self, helmet: usize) -> &mut u16 {
         match helmet {

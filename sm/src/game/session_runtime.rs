@@ -430,9 +430,16 @@ impl<'g> Runtime<'g> {
             .expect("projectile state unavailable during external effect");
         // Export was authorized before revocation; do not repeat ready preflight
         // while the external interval is deliberately unavailable.
-        export_session_preflighted(state, mutation.game());
+        let spans = state
+            .presentation
+            .owner()
+            .map(|owner| sm_game::fx_encoding::physical_source_spans(&owner.state))
+            .unwrap_or_default();
+        export_session_for_foreign(state, mutation.game());
+        let _source_interval = mutation.game().ram().begin_source_interval(&spans);
         mutation.game().revoke_inventory_domain();
         mutation.game().revoke_menu_domain();
+        mutation.game().revoke_fx_domain();
         mutation.game().revoke_scroll_domain();
         let result = action(mutation.game());
         let payload = mutation.game().capture_samus_snapshot();
@@ -440,7 +447,24 @@ impl<'g> Runtime<'g> {
             .game()
             .prepare_samus_adoption(&payload)
             .expect("Samus resumption rejected");
-        self.state = Some(import_session_preflighted(mutation.game()));
+        let mut state = import_session_image(mutation.game());
+        let presentation = mutation
+            .game()
+            .pop_foreign_presentation()
+            .expect("foreign presentation frame")
+            .expect("foreign presentation returned");
+        adopt_carried_presentation(&mut state, presentation, mutation.game());
+        // Retain the actual owner before a fallible source import. Runtime Drop
+        // quarantines this state without encoding over a completed native prefix.
+        self.state = Some(state);
+        let state = self.state.as_mut().expect("resumed Session owner");
+        if state.fx_sources.is_none() {
+            let ram = mutation.game().ram();
+            sm_game::fx_encoding::adopt_session_sources(state, &|at| ram.read_byte(at), &|at| {
+                ram.source_publication(at)
+            })
+            .expect("native source adoption rejected");
+        }
         mutation.finish(prepared).expect("Samus adoption rejected");
         self.inputs = encoding::inputs(&|at| self.game.ram().read_byte(at));
         result
@@ -507,6 +531,7 @@ impl<'g> Runtime<'g> {
                     .take()
                     .expect("persistent lease epoch");
                 let valid = matching
+                    && sm_game::fx_encoding::validate_control_ownership(&state).is_ok()
                     && epoch == self.game.compatibility_write_epoch()
                     && self.game.preflight_samus_runtime().is_ok();
                 if valid {
@@ -536,10 +561,13 @@ impl<'g> Runtime<'g> {
             let matching = std::sync::Arc::ptr_eq(&state.world, self.game.world())
                 && state.world.revision() == self.game.world().revision();
             if matching
+                && sm_game::fx_encoding::validate_control_ownership(&state).is_ok()
                 && self.game.actor_identity_is_with_session()
                 && self.game.preflight_samus_runtime().is_ok()
             {
-                let kept = self.game.frame_session.active.then(|| state.clone());
+                let kept = (self.game.frame_session.active
+                    && !self.game.foreign_presentation_active())
+                .then(|| state.clone());
                 export_session_preflighted(state, self.game);
                 if let Some(mut kept) = kept {
                     kept.actor_identity =
@@ -550,19 +578,34 @@ impl<'g> Runtime<'g> {
             } else if self.game.actor_identity_is_with_session() {
                 // A rejected foreign call retains this Runtime's identity owner;
                 // discard invalid byte/native publication rather than panic again.
+                let window = state.menu_window;
                 self.game.return_actor_identity(state.actor_identity);
                 self.game.return_inventory_domain(state.inventory, false);
+                self.game.return_fx_domain(
+                    state.fx,
+                    state.presentation.visual().fireflea,
+                    state.fx_sources,
+                    false,
+                );
                 self.game.return_menu_domain(
                     sm_game::menus::state::State {
                         menu: state.menu,
+                        window,
                         screens: state.menu_screens,
                     },
                     false,
                 );
+                if state.presentation.is_owned() {
+                    if let Some(frame) = self.game.last_foreign_presentation_mut() {
+                        assert!(frame.is_none(), "failed nested display owner occupied");
+                        *frame = Some(state.presentation);
+                    }
+                }
                 self.game.revoke_samus_authority();
             } else {
                 self.game.revoke_inventory_domain();
                 self.game.revoke_menu_domain();
+                self.game.revoke_fx_domain();
             }
         }
     }
@@ -586,6 +629,9 @@ impl<'g> Runtime<'g> {
     /// A Session field while this lease is current; the projected word at `at`
     /// otherwise, which is the same value whenever the projection serves it.
     pub(crate) fn owned_session(&self, field: impl Fn(&Session) -> u16, at: usize) -> u16 {
+        if sm_game::fx_encoding::control_lane(at).is_some() {
+            return self.word(at);
+        }
         if self.persistent_is_current() {
             field(self.session())
         } else {
@@ -600,6 +646,9 @@ impl<'g> Runtime<'g> {
         at: usize,
         value: u16,
     ) {
+        if sm_game::fx_encoding::control_lane(at).is_some() {
+            return self.write_word_le(value, at);
+        }
         if self.persistent_is_current() {
             *field(self.session_mut()) = value;
         } else {
@@ -1029,6 +1078,9 @@ pub(crate) fn with_frame_session<R>(game: &mut Game, tick: impl FnOnce(&mut Game
 /// The kept Session for a new lease, when the RAM, world and Samus state still admit it; it
 /// takes the native spawn fields and actor identity as an import would.
 fn reuse_frame_session(game: &mut Game) -> Option<(Session, ExternalInputs)> {
+    if game.foreign_presentation_active() {
+        return None;
+    }
     let (mut state, inputs, epoch) = game.frame_session.kept.take()?;
     let same_world = std::sync::Arc::ptr_eq(&state.world, game.world())
         && state.world.revision() == game.world().revision();
@@ -1057,8 +1109,14 @@ fn reuse_frame_session(game: &mut Game) -> Option<(Session, ExternalInputs)> {
     if let Some(inventory) = game.take_inventory_domain() {
         state.inventory = inventory;
     }
+    if let Some(fx) = game.take_fx_domain() {
+        state.fx = fx.numeric;
+        state.presentation.visual_mut().fireflea = fx.lighting;
+        state.fx_sources = Some(fx.sources);
+    }
     if let Some(menu) = game.take_menu_domain() {
         state.menu = menu.menu;
+        sm_game::fx_encoding::import_window(&mut state, menu.window);
         state.menu_screens = menu.screens;
     }
     Some((state, inputs))
@@ -1069,6 +1127,56 @@ pub(crate) fn import_session(game: &mut Game) -> Session {
     import_session_preflighted(game)
 }
 fn import_session_preflighted(game: &mut Game) -> Session {
+    let mut state = import_session_image(game);
+    if let Some(presentation) = game.last_foreign_presentation_mut().and_then(|frame| {
+        if frame
+            .as_ref()
+            .is_some_and(sm_game::session_owners::Presentation::is_owned)
+        {
+            frame.take()
+        } else {
+            None
+        }
+    }) {
+        adopt_carried_presentation(&mut state, presentation, game);
+        let mut guard = ExportIdentity {
+            state: Some(state),
+            game,
+            carry_presentation: false,
+        };
+        let state = guard.state.as_mut().expect("nested import owner");
+        if state.fx_sources.is_none() {
+            sm_game::fx_encoding::adopt_session_sources(
+                state,
+                &|at| guard.game.ram().read_byte(at),
+                &|at| guard.game.ram().source_publication(at),
+            )
+            .expect("nested native source adoption rejected");
+        }
+        return guard.state.take().expect("nested imported Session");
+    }
+    state
+}
+fn adopt_carried_presentation(
+    state: &mut Session,
+    mut presentation: sm_game::session_owners::Presentation,
+    game: &Game,
+) {
+    if presentation.is_owned() {
+        presentation.adopt_projection(&|at| game.ram().read_byte(at));
+        *presentation.visual_mut() = state.presentation.visual().clone();
+        *presentation.palette_mut() = state.presentation.palette().clone();
+        *presentation.atmospheric_mut() = state.presentation.atmospheric().clone();
+        state.presentation = presentation;
+        state.fx_sources = None;
+        state.hdma = Default::default();
+        sm_game::fx_encoding::adopt_session_sources(state, &|at| game.ram().read_byte(at), &|at| {
+            game.ram().source_publication(at)
+        })
+        .expect("carried control ownership");
+    }
+}
+fn import_session_image(game: &mut Game) -> Session {
     #[cfg(sm_verify_dll)]
     player_normal_transfers::record(game, 1);
     let mut state = encoding::decode(
@@ -1081,13 +1189,20 @@ fn import_session_preflighted(game: &mut Game) -> Session {
     if let Some(inventory) = game.take_inventory_domain() {
         state.inventory = inventory;
     }
+    if let Some(fx) = game.take_fx_domain() {
+        state.fx = fx.numeric;
+        state.presentation.visual_mut().fireflea = fx.lighting;
+        state.fx_sources = Some(fx.sources);
+    }
     if let Some(menu) = game.take_menu_domain() {
         state.menu = menu.menu;
+        sm_game::fx_encoding::import_window(&mut state, menu.window);
         state.menu_screens = menu.screens;
     }
     state
 }
 fn preflight_export(state: &Session, game: &Game) {
+    sm_game::fx_encoding::validate_control_ownership(state).expect("Session control ownership");
     assert!(
         std::sync::Arc::ptr_eq(&state.world, game.world())
             && state.world.revision() == game.world().revision(),
@@ -1104,22 +1219,55 @@ fn preflight_export(state: &Session, game: &Game) {
 struct ExportIdentity<'g> {
     state: Option<Session>,
     game: &'g mut Game,
+    carry_presentation: bool,
 }
 impl Drop for ExportIdentity<'_> {
     fn drop(&mut self) {
         if let Some(state) = self.state.take() {
+            let completed = !std::thread::panicking();
+            let lighting = if completed {
+                sm_game::fx_encoding::session_lighting(&state)
+            } else {
+                state.presentation.visual().fireflea
+            };
+            let window = if completed {
+                sm_game::fx_encoding::session_window(&state)
+            } else {
+                state.menu_window
+            };
+            let numeric = if completed {
+                sm_game::fx_encoding::session_controls(&state)
+            } else {
+                state.fx
+            };
+            let presentation = state.presentation;
             if self.game.actor_identity_is_with_session() {
                 self.game.return_actor_identity(state.actor_identity);
             }
             self.game
                 .return_inventory_domain(state.inventory, !std::thread::panicking());
+            self.game.return_fx_domain(
+                numeric,
+                lighting,
+                state.fx_sources,
+                !std::thread::panicking(),
+            );
             self.game.return_menu_domain(
                 sm_game::menus::state::State {
                     menu: state.menu,
+                    window,
                     screens: state.menu_screens,
                 },
                 !std::thread::panicking(),
             );
+            if self.carry_presentation {
+                self.game.push_foreign_presentation(presentation);
+            } else if presentation.is_owned() {
+                if let Some(frame) = self.game.last_foreign_presentation_mut() {
+                    assert!(frame.is_none(), "nested display owner occupied");
+                    *frame = Some(presentation);
+                }
+            }
         }
     }
 }
@@ -1128,6 +1276,7 @@ pub(crate) fn export_session(state: Session, game: &mut Game) {
     let guard = ExportIdentity {
         state: Some(state),
         game,
+        carry_presentation: false,
     };
     preflight_export(
         guard.state.as_ref().expect("export owns Session"),
@@ -1139,6 +1288,14 @@ fn export_session_preflighted(state: Session, game: &mut Game) {
     encode_session(ExportIdentity {
         state: Some(state),
         game,
+        carry_presentation: false,
+    });
+}
+fn export_session_for_foreign(state: Session, game: &mut Game) {
+    encode_session(ExportIdentity {
+        state: Some(state),
+        game,
+        carry_presentation: true,
     });
 }
 fn encode_session(guard: ExportIdentity<'_>) {
@@ -2126,5 +2283,572 @@ impl sm_game::display::preparation::Access for Runtime<'_> {
         value: u8,
     ) {
         self.set_byte(crate::game_state::frame_field_address(field), value);
+    }
+}
+
+#[forbid(unsafe_code)]
+impl sm_game::gameplay_context::Access for Runtime<'_> {
+    fn grapple_animation(&self) -> sm_game::gameplay_context::GrappleAnimation {
+        if self.persistent_is_current() {
+            let state = &self.session().player.swing;
+            sm_game::gameplay_context::GrappleAnimation {
+                timer: state.start_animation_timer,
+                tiles: state.start_animation_tiles,
+            }
+        } else {
+            sm_game::gameplay_context::Access::grapple_animation(self.game)
+        }
+    }
+    fn commit_grapple_animation(
+        &mut self,
+        before: sm_game::gameplay_context::GrappleAnimation,
+        after: sm_game::gameplay_context::GrappleAnimation,
+    ) {
+        if before.timer != after.timer {
+            self.write_word_le(after.timer, 0xd3e);
+        }
+        if before.tiles != after.tiles {
+            self.write_word_le(after.tiles, 0xd40);
+        }
+    }
+
+    fn inventory_state(&self) -> sm_game::inventory::Inventory {
+        if self.persistent_is_current() {
+            self.session().inventory.clone()
+        } else {
+            sm_game::gameplay_context::Access::inventory_state(self.game)
+        }
+    }
+    fn commit_inventory(
+        &mut self,
+        before: &sm_game::inventory::Inventory,
+        mut after: sm_game::inventory::Inventory,
+    ) {
+        use sm_game::session_cohort::Cohort as _;
+        if before == &after {
+            return;
+        }
+        let mut old = Vec::new();
+        before.clone().words(|_, word| old.push(*word));
+        let mut changes = Vec::new();
+        let mut index = 0;
+        after.words(|at, word| {
+            if old[index] != *word {
+                changes.push((index, at, *word));
+            }
+            index += 1;
+        });
+        if self.persistent_is_current() {
+            let mut index = 0;
+            sm_game::inventory::Inventory::session_words(self.session_mut(), |_, word| {
+                if let Some(&(_, _, value)) = changes.iter().find(|change| change.0 == index) {
+                    *word = value;
+                }
+                index += 1;
+            });
+            self.refresh_inputs();
+        } else {
+            for (_, at, word) in changes {
+                self.write_word_le(word, at);
+            }
+        }
+    }
+
+    fn gameplay_word(&self, word: sm_game::gameplay_context::Word) -> u16 {
+        if self.persistent_is_current() {
+            word.get_session(self.session())
+        } else {
+            sm_game::gameplay_context::Access::gameplay_word(self.game, word)
+        }
+    }
+    fn set_gameplay_byte(&mut self, word: sm_game::gameplay_context::Word, lane: usize, byte: u8) {
+        assert!(lane < 2);
+        if self.persistent_is_current() {
+            let field = word.get_session_mut(self.session_mut());
+            let mut bytes = field.to_le_bytes();
+            bytes[lane] = byte;
+            *field = u16::from_le_bytes(bytes);
+            self.refresh_inputs();
+        } else {
+            sm_game::gameplay_context::Access::set_gameplay_byte(self.game, word, lane, byte);
+        }
+    }
+}
+
+// Actual source authority on the same Runtime lease as the HDMA interpreter.
+impl sm_game::fx_domain::Sources for Runtime<'_> {
+    fn store_source_signed_byte(
+        &mut self,
+        owner: sm_game::scene::hdma_sources::LiveOwner,
+        offset: isize,
+        byte: u8,
+    ) {
+        if let Ok(offset) = usize::try_from(offset) {
+            sm_game::fx_domain::Sources::store_source_byte(self, owner, offset, byte);
+            return;
+        }
+        if self.persistent_is_current() {
+            assert!(
+                self.session().fx_sources.is_some(),
+                "prepared source outside allocation"
+            );
+        }
+        let base = sm_game::fx_encoding::source_address(owner, 0).expect("FX source role");
+        let at = base
+            .checked_add_signed(offset)
+            .expect("source address outside RAM");
+        self.set_byte(at, byte);
+    }
+    fn source_byte(&self, owner: sm_game::scene::hdma_sources::LiveOwner, offset: usize) -> u8 {
+        if self.persistent_is_current() {
+            let selected = self.session();
+            match sm_game::fx_encoding::session_source_byte(selected, owner, offset) {
+                Ok(byte) => return byte,
+                Err(error) if selected.fx_sources.is_none() => {
+                    panic!("prepared FX source: {error:?}")
+                }
+                Err(_) => {}
+            }
+        }
+        let at = sm_game::fx_encoding::source_address(owner, offset).expect("FX source role");
+        self.byte(at)
+    }
+    fn store_source_byte(
+        &mut self,
+        owner: sm_game::scene::hdma_sources::LiveOwner,
+        offset: usize,
+        byte: u8,
+    ) {
+        if self.persistent_is_current() {
+            let selected = self.session_mut();
+            match sm_game::fx_encoding::store_session_source_byte(selected, owner, offset, byte) {
+                Ok(()) => return,
+                Err(error) if selected.fx_sources.is_none() => {
+                    panic!("prepared FX source: {error:?}")
+                }
+                Err(_) => {}
+            }
+        }
+        let at = sm_game::fx_encoding::source_address(owner, offset).expect("FX source role");
+        self.set_byte(at, byte);
+    }
+    fn add_parallax_source(&mut self, selector: u16, delta: u32) {
+        let at = usize::from(selector);
+        let low = u16::from_le_bytes([self.parallax_byte(at), self.parallax_byte(at + 1)]);
+        let high = u16::from_le_bytes([self.parallax_byte(at + 2), self.parallax_byte(at + 3)]);
+        let sum = (u32::from(low) | (u32::from(high) << 16)).wrapping_add(delta);
+        for (offset, byte) in sum.to_le_bytes().into_iter().enumerate() {
+            self.store_parallax_byte(at + offset, byte);
+        }
+    }
+}
+
+impl sm_game::fx_domain::Controls for Runtime<'_> {
+    fn room_blending(&self) -> sm_game::fx_domain::RoomBlending {
+        sm_game::fx_domain::RoomBlending {
+            primary: self.word(0x1982),
+            liquid: self.word(0x1984),
+        }
+    }
+    fn publish_room_blending(&mut self, value: sm_game::fx_domain::RoomBlending, primary: bool) {
+        let (at, value) = if primary {
+            (0x1982, value.primary)
+        } else {
+            (0x1984, value.liquid)
+        };
+        let bytes = value.to_le_bytes();
+        self.set_byte(at, bytes[0]);
+        self.set_byte(at + 1, bytes[1]);
+    }
+    fn fx_controls(&self) -> sm_game::fx_state::FxState {
+        if self.persistent_is_current() {
+            return sm_game::fx_encoding::session_controls(self.session());
+        }
+        sm_game::fx_encoding::decode(&|at| self.byte(at))
+    }
+    fn publish_fx_controls(
+        &mut self,
+        value: sm_game::fx_state::FxState,
+        fields: &[sm_game::fx_state::Field],
+    ) {
+        for &field in fields {
+            let at = sm_game::fx_encoding::address(field);
+            let bytes = field.get(&value).to_le_bytes();
+            self.set_byte(at, bytes[0]);
+            self.set_byte(at + 1, bytes[1]);
+        }
+    }
+}
+impl sm_game::fx_lighting::Access for Runtime<'_> {
+    fn lighting(&self) -> sm_game::visual_state::FirefleaLighting {
+        if self.persistent_is_current() {
+            return sm_game::fx_encoding::session_lighting(self.session());
+        }
+        sm_game::fx_encoding::decode_lighting(&|at| self.byte(at))
+    }
+    fn publish_lighting(
+        &mut self,
+        value: sm_game::visual_state::FirefleaLighting,
+        fields: &[sm_game::fx_lighting::Field],
+    ) {
+        for &field in fields {
+            let at = sm_game::fx_encoding::lighting_address(field);
+            let bytes = field.get(&value).to_le_bytes();
+            self.set_byte(at, bytes[0]);
+            self.set_byte(at + 1, bytes[1]);
+        }
+    }
+}
+
+impl Runtime<'_> {
+    fn parallax_byte(&self, at: usize) -> u8 {
+        if let Some((owner, offset)) =
+            sm_game::fx_encoding::physical_source_coordinate(self.session(), at)
+                .expect("prepared FX source resolution")
+        {
+            return sm_game::fx_domain::Sources::source_byte(self, owner, offset);
+        }
+        sm_game::actors::session_slots::SlotAccess::slot_byte(self, at)
+    }
+    fn store_parallax_byte(&mut self, at: usize, byte: u8) {
+        if let Some((owner, offset)) =
+            sm_game::fx_encoding::physical_source_coordinate(self.session(), at)
+                .expect("prepared FX source resolution")
+        {
+            sm_game::fx_domain::Sources::store_source_byte(self, owner, offset, byte);
+        } else {
+            sm_game::actors::session_slots::SlotAccess::set_slot_byte(self, at, byte);
+        }
+    }
+}
+
+impl Runtime<'_> {
+    pub(crate) fn hdma_domain_word(&self, word: sm_game::hdma::Word) -> u16 {
+        if self.persistent_is_current() {
+            return self.session().hdma_word(word);
+        }
+        self.game.hdma_domain_word(word)
+    }
+    pub(crate) fn store_hdma_domain_byte(
+        &mut self,
+        word: sm_game::hdma::Word,
+        high: bool,
+        value: u8,
+    ) {
+        self.set_byte(word.address() + usize::from(high), value);
+    }
+    pub(crate) fn store_hdma_domain_word(
+        &mut self,
+        word: sm_game::hdma::Word,
+        value: u16,
+        order: sm_game::scene::state::WordOrder,
+    ) {
+        let at = word.address();
+        let [first, second] = order.encode(value);
+        self.set_byte(at, first);
+        self.set_byte(at + 1, second);
+    }
+}
+
+#[forbid(unsafe_code)]
+impl sm_game::presentation_workspace::Access for Runtime<'_> {
+    fn screen_apply<T>(
+        &mut self,
+        action: impl FnOnce(
+            &mut dyn sm_game::presentation_workspace::Canvas,
+        ) -> Result<T, sm_game::scene::state::DisplayError>,
+    ) -> T {
+        action(self.session_mut()).expect("screen operation")
+    }
+    fn screen_byte(&self, point: sm_game::presentation_workspace::Point) -> u8 {
+        let workspace = self.session().presentation.workspace();
+        match workspace.byte(point) {
+            Ok(byte) => byte,
+            Err(error) => match workspace.alias_address(point).expect("screen binding") {
+                Some(at) => self.byte(at),
+                None => panic!("screen allocation {error:?}"),
+            },
+        }
+    }
+    fn screen_write_byte(&mut self, point: sm_game::presentation_workspace::Point, value: u8) {
+        let alias = self
+            .session()
+            .presentation
+            .workspace()
+            .alias_address(point)
+            .expect("screen binding");
+        if let Err(error) = self.session_mut().publish_workspace_byte(point, value) {
+            match alias {
+                Some(at) => self.set_byte(at, value),
+                None => panic!("screen allocation {error:?}"),
+            }
+        }
+    }
+    fn screen_write_slice(&mut self, point: sm_game::presentation_workspace::Point, bytes: &[u8]) {
+        let alias = self
+            .session()
+            .presentation
+            .workspace()
+            .alias_address(point)
+            .expect("screen binding");
+        if let Err(error) = self.session_mut().publish_workspace_slice(point, bytes) {
+            match alias {
+                Some(at) => self.write_slice(at, bytes),
+                None => panic!("screen allocation {error:?}"),
+            }
+        }
+    }
+}
+#[forbid(unsafe_code)]
+impl sm_game::presentation_workspace::PaletteAccess for Runtime<'_> {
+    fn palette_byte(&self, target: bool, offset: usize) -> u8 {
+        self.byte(
+            (if target { 0xc200usize } else { 0xc000usize })
+                .checked_add(offset)
+                .expect("palette offset"),
+        )
+    }
+    fn palette_native_word(&self, target: bool, offset: usize) -> u16 {
+        self.native_word(
+            (if target { 0xc200usize } else { 0xc000usize })
+                .checked_add(offset)
+                .expect("palette offset"),
+        )
+    }
+    fn palette_word(&self, target: bool, offset: usize) -> u16 {
+        self.word(
+            (if target { 0xc200usize } else { 0xc000usize })
+                .checked_add(offset)
+                .expect("palette offset"),
+        )
+    }
+    fn palette_write_word(&mut self, target: bool, offset: usize, value: u16) {
+        self.write_word_le(
+            value,
+            (if target { 0xc200usize } else { 0xc000usize })
+                .checked_add(offset)
+                .expect("palette offset"),
+        );
+    }
+    fn palette_write_native_word(&mut self, target: bool, offset: usize, value: u16) {
+        let at = (if target { 0xc200usize } else { 0xc000usize })
+            .checked_add(offset)
+            .expect("palette offset");
+        let bytes = value.to_ne_bytes();
+        self.set_byte(at, bytes[0]);
+        self.set_byte(at + 1, bytes[1]);
+    }
+    fn palette_write_native_slice(&mut self, target: bool, offset: usize, value: u16) {
+        self.write_slice_native(
+            (if target { 0xc200usize } else { 0xc000usize })
+                .checked_add(offset)
+                .expect("palette offset"),
+            value,
+        );
+    }
+}
+#[forbid(unsafe_code)]
+impl sm_game::presentation_workspace::QueueAccess for Runtime<'_> {
+    fn queue_byte_at(&mut self, offset: usize, value: u8) {
+        self.set_byte(0xd0usize.checked_add(offset).expect("queue offset"), value);
+    }
+    fn queue_native_slice_at(&mut self, offset: usize, value: u16) {
+        self.write_slice_native(0xd0usize.checked_add(offset).expect("queue offset"), value);
+    }
+}
+#[forbid(unsafe_code)]
+impl sm_game::presentation_workspace::ContinuationAccess for Runtime<'_> {
+    fn screen_primary(&self) -> u8 {
+        *self.session().control.primary()
+    }
+    fn screen_set_primary(&mut self, value: u8) {
+        *self.session_mut().control.primary_mut() = value;
+    }
+    fn demo_phase(&self) -> u8 {
+        self.byte(0x614)
+    }
+    fn demo_set_phase(&mut self, value: u8) {
+        self.set_byte(0x614, value);
+    }
+}
+
+#[forbid(unsafe_code)]
+impl sm_game::dialogue_ram::Access for Runtime<'_> {
+    fn dialogue_state(&self) -> sm_game::dialogue::Dialogue<u16> {
+        sm_game::dialogue_ram::decode(sm_game::dialogue_ram::Encoded {
+            index: self.word(0x1c1f),
+            parent: self.byte(0x614),
+            child: self.byte(0x615),
+            delay: self.word(0x77e),
+            radius: self.word(0x5a2),
+            selection: self.word(0x5f9),
+        })
+    }
+    fn dialogue_publish(&mut self, state: sm_game::dialogue::Dialogue<u16>) {
+        let value = sm_game::dialogue_ram::encode(state);
+        self.write_word_le(value.index, 0x1c1f);
+        self.write_word_le(value.delay, 0x77e);
+        self.write_word_le(value.radius, 0x5a2);
+        self.write_word_le(value.selection, 0x5f9);
+        self.set_byte(0x615, value.child);
+        self.set_byte(0x614, value.parent);
+    }
+    fn dialogue_request(&self) -> u16 {
+        self.word(0xdc8)
+    }
+    fn dialogue_set_request(&mut self, value: u16) {
+        self.write_word_le(value, 0xdc8);
+    }
+    fn dialogue_active_index(&self) -> u16 {
+        self.word(0x1c1f)
+    }
+    fn dialogue_clear_active(&mut self) {
+        self.write_word_le(0u16, 0x1c1f);
+    }
+    fn dialogue_selection(&self) -> u16 {
+        self.word(0x5f9)
+    }
+    fn dialogue_set_selection(&mut self, value: u16) {
+        self.write_word_le(value, 0x5f9);
+    }
+    fn dialogue_radius(&self) -> u16 {
+        self.word(0x5a2)
+    }
+    fn dialogue_set_radius(&mut self, value: u16) {
+        self.write_word_le(value, 0x5a2);
+    }
+    fn dialogue_scratch(&self) -> [u16; 4] {
+        [0x5a4, 0x5a6, 0x5a8, 0x5aa].map(|at| self.word(at))
+    }
+    fn dialogue_set_scratch(&mut self, index: usize, value: u16) {
+        sm_data::table::check_index(index, 4);
+        let at = 0x5a4 + 2 * index;
+        self.write_word_le(value, at);
+    }
+    fn dialogue_input(&self) -> sm_game::dialogue::Input {
+        let keys = self.word(0x8f);
+        sm_game::dialogue::Input {
+            confirm: keys & 0x80 != 0,
+            cancel: keys & 0x8000 != 0,
+            toggle: keys & 0x2300 != 0,
+            dismiss: self.word(0x8b) != 0,
+        }
+    }
+    fn dialogue_binding(&self, shoot: bool) -> u16 {
+        let at = if shoot { 0x9b2 } else { 0x9b4 };
+        self.word(at)
+    }
+    fn dialogue_select_pause(&mut self) {
+        self.write_word_le(12u16, 0x998);
+    }
+}
+#[forbid(unsafe_code)]
+impl sm_game::menus::host::MapFacts for Runtime<'_> {
+    fn file_palette(&self) -> u16 {
+        u16::from_ne_bytes([self.byte(0xf96), self.byte(0xf97)])
+    }
+    fn set_file_palette(&mut self, value: u16) {
+        self.write_word_le(value, 0xf96);
+    }
+    fn map_explored_byte(&self, offset: isize) -> u8 {
+        let at = 0x7f7usize.checked_add_signed(offset).expect("map offset");
+        self.byte(at)
+    }
+    fn store_map_explored_byte(&mut self, offset: isize, value: u8) {
+        let at = 0x7f7usize.checked_add_signed(offset).expect("map offset");
+        self.set_byte(at, value);
+    }
+    fn map_station_byte(&self, area: usize) -> u8 {
+        self.byte(0xd908usize.checked_add(area).expect("station offset"))
+    }
+    fn used_station_native_word(&self, offset: usize) -> u16 {
+        let at = 0xd8f8usize.checked_add(offset).expect("station offset");
+        u16::from_ne_bytes([self.byte(at), self.byte(at + 1)])
+    }
+}
+
+#[forbid(unsafe_code)]
+impl sm_game::sprite_drawing::ObjectAccess for Runtime<'_> {
+    fn object_native_word(&self, offset: usize) -> u16 {
+        let order = self
+            .session()
+            .presentation
+            .owner()
+            .ok()
+            .map(|owner| owner.state.objects.native_order);
+        let at = 0x370usize.checked_add(offset).expect("object offset");
+        let bytes = [self.byte(at), self.byte(at + 1)];
+        order.map_or_else(|| u16::from_ne_bytes(bytes), |order| order.decode(bytes))
+    }
+    fn object_little_word(&self, offset: usize) -> u16 {
+        let at = 0x370usize.checked_add(offset).expect("object offset");
+        u16::from_le_bytes([self.byte(at), self.byte(at + 1)])
+    }
+    fn object_write_byte(&mut self, offset: usize, value: u8) {
+        self.set_byte(
+            0x370usize.checked_add(offset).expect("object offset"),
+            value,
+        );
+    }
+    fn object_write_native_slice(&mut self, offset: usize, value: u16) {
+        let order = self
+            .session()
+            .presentation
+            .owner()
+            .ok()
+            .map(|owner| owner.state.objects.native_order);
+        let encoded = order.map_or_else(|| value.to_ne_bytes(), |order| order.encode(value));
+        self.write_slice(
+            0x370usize.checked_add(offset).expect("object offset"),
+            &encoded,
+        );
+    }
+    fn object_write_native_bytes(&mut self, offset: usize, value: u16) {
+        let order = self
+            .session()
+            .presentation
+            .owner()
+            .ok()
+            .map(|owner| owner.state.objects.native_order);
+        let encoded = order.map_or_else(|| value.to_ne_bytes(), |order| order.encode(value));
+        let at = 0x370usize.checked_add(offset).expect("object offset");
+        let bytes = encoded;
+        self.set_byte(at, bytes[0]);
+        self.set_byte(at + 1, bytes[1]);
+    }
+}
+
+#[forbid(unsafe_code)]
+impl sm_game::escape_countdown::Access for Runtime<'_> {
+    fn countdown_apply<T>(
+        &mut self,
+        action: impl FnOnce(&mut sm_game::escape_countdown::State, &mut u16) -> T,
+    ) -> T {
+        let timing = &mut self.session_mut().timing;
+        action(&mut timing.countdown, &mut timing.timer_status)
+    }
+    fn countdown_byte(&self, offset: usize) -> u8 {
+        self.byte(0x945usize.checked_add(offset).expect("countdown offset"))
+    }
+    fn countdown_native_word(&self, offset: usize) -> u16 {
+        if offset < 6 {
+            return self.session().timing.countdown.native_word(offset);
+        }
+        let at = 0x945usize.checked_add(offset).expect("countdown offset");
+        u16::from_ne_bytes([self.byte(at), self.byte(at + 1)])
+    }
+}
+
+#[forbid(unsafe_code)]
+impl sm_game::grapple_swing::TileAccess for Runtime<'_> {
+    fn tile_word(&self, field: sm_game::grapple_swing::TileField) -> u16 {
+        if self.persistent_is_current() {
+            field.current(self.session())
+        } else {
+            self.word(field.sequence_word() as usize)
+        }
+    }
+    fn store_tile_word(&mut self, field: sm_game::grapple_swing::TileField, value: u16) {
+        self.write_word_le(value, field.sequence_word() as usize);
     }
 }

@@ -197,6 +197,13 @@ pub enum LiveOwner {
     WindowRight,
     SkyBg2,
     CrocomireBg2,
+    LiquidSurface,
+    LiquidBackground,
+    SkyHorizontal,
+    SkyIndirect,
+    ExplosionLeft,
+    ExplosionRight,
+    ExplosionOffscreen,
     ObjectVariable { object: u8, variable: HdmaVariable },
 }
 
@@ -230,6 +237,10 @@ pub struct HdmaOwnedBuffer {
 }
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum HdmaRegionSource {
+    /// A view into the sole current presentation workspace. No bytes are retained here.
+    Workspace {
+        point: crate::presentation_workspace::Point,
+    },
     Buffer {
         storage: LiveOwner,
         offset: usize,
@@ -254,10 +265,13 @@ pub struct HdmaLiveRegion {
 pub struct HdmaLiveDescription {
     buffers: BTreeMap<LiveOwner, Vec<u8>>,
     regions: BTreeMap<LiveOwner, HdmaLiveRegion>,
+    window_controls: Option<crate::fx_sources::WindowControlLayout>,
+    native_origins: BTreeMap<(LiveOwner, usize), crate::fx_domain::SourceOrigin>,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum CanonicalOwner {
+    Workspace(crate::presentation_workspace::Origin),
     Buffer(LiveOwner),
     ObjectVariable { object: u8, variable: HdmaVariable },
 }
@@ -285,6 +299,8 @@ impl HdmaLiveDescription {
         let mut result = Self {
             buffers: BTreeMap::new(),
             regions: BTreeMap::new(),
+            window_controls: None,
+            native_origins: BTreeMap::new(),
         };
         for buffer in buffers {
             if matches!(buffer.owner, LiveOwner::ObjectVariable { .. })
@@ -305,12 +321,400 @@ impl HdmaLiveDescription {
         result.validate()?;
         Ok(result)
     }
+    /// Supply the current numeric control owner before removing its buffer lanes.
+    /// This is an explicit starting ownership transfer, never a byte-image mirror.
+    pub fn bind_window_controls(
+        &mut self,
+        layout: crate::fx_sources::WindowControlLayout,
+        window: Option<&crate::menu_window_state::WindowState>,
+    ) -> Result<(), DisplayError> {
+        if self.window_controls.as_ref() == Some(&layout) {
+            return self.validate();
+        }
+        if self.window_controls.is_some() && !window.is_some_and(|window| window.is_initialized()) {
+            return Err(DisplayError::Incomplete);
+        }
+        let length = self
+            .buffers
+            .get(&layout.storage)
+            .ok_or(DisplayError::Source)?
+            .len();
+        let mut lanes = std::collections::BTreeSet::new();
+        for lane in layout.lanes.iter().flatten().copied() {
+            if lane >= length || !lanes.insert(lane) {
+                return Err(DisplayError::Source);
+            }
+        }
+        // Validate the replacement first, then return former lanes to real source ownership.
+        if let Some(previous) = &self.window_controls {
+            let window = window.ok_or(DisplayError::Incomplete)?;
+            let bytes = self
+                .buffers
+                .get_mut(&previous.storage)
+                .ok_or(DisplayError::Source)?;
+            for (index, lane) in previous.lanes.iter().enumerate() {
+                if let Some(lane) = lane {
+                    bytes[*lane] = crate::menu_window_state::Field::ALL[index / 2]
+                        .get(window)
+                        .to_le_bytes()[index % 2];
+                }
+            }
+        }
+        let bytes = self
+            .buffers
+            .get_mut(&layout.storage)
+            .ok_or(DisplayError::Source)?;
+        for lane in lanes {
+            bytes[lane] = 0;
+        }
+        self.window_controls = Some(layout);
+        Ok(())
+    }
+    pub fn window_control_layout(&self) -> Option<&crate::fx_sources::WindowControlLayout> {
+        self.window_controls.as_ref()
+    }
+    /// Buffer-only producers need no fabricated HDMA object state.
+    pub fn read_buffer(&self, owner: LiveOwner, offset: usize) -> Result<u8, DisplayError> {
+        if self.window_control_lane(owner, offset)?.is_some() {
+            return Err(DisplayError::Incomplete);
+        }
+        let HdmaRegionSource::Buffer {
+            storage,
+            offset: first,
+        } = self.region(owner, offset)?.source
+        else {
+            return Err(DisplayError::Source);
+        };
+        let at = first
+            .checked_add(offset)
+            .ok_or(DisplayError::Alias { offset })?;
+        self.buffers
+            .get(&storage)
+            .and_then(|bytes| bytes.get(at))
+            .copied()
+            .ok_or(DisplayError::Alias { offset: at })
+    }
+    pub fn write_buffer(
+        &mut self,
+        owner: LiveOwner,
+        offset: usize,
+        value: u8,
+    ) -> Result<(), DisplayError> {
+        if self.window_control_lane(owner, offset)?.is_some() {
+            return Err(DisplayError::Incomplete);
+        }
+        let HdmaRegionSource::Buffer {
+            storage,
+            offset: first,
+        } = self.region(owner, offset)?.source
+        else {
+            return Err(DisplayError::Source);
+        };
+        let at = first
+            .checked_add(offset)
+            .ok_or(DisplayError::Alias { offset })?;
+        *self
+            .buffers
+            .get_mut(&storage)
+            .and_then(|bytes| bytes.get_mut(at))
+            .ok_or(DisplayError::Alias { offset: at })? = value;
+        Ok(())
+    }
+    /// A successful typed publication replaces the saved native selection of
+    /// this exact canonical source byte. Failed publications retain the origin.
+    pub fn forget_native_origin(
+        &mut self,
+        owner: LiveOwner,
+        offset: usize,
+    ) -> Result<(), DisplayError> {
+        let coordinate = self.canonical_coordinate(owner, offset)?;
+        self.native_origins.remove(&coordinate);
+        Ok(())
+    }
+    pub(crate) fn forget_origin_coordinate(&mut self, coordinate: (LiveOwner, usize)) {
+        self.native_origins.remove(&coordinate);
+    }
+    pub fn native_origins(&self) -> &BTreeMap<(LiveOwner, usize), crate::fx_domain::SourceOrigin> {
+        &self.native_origins
+    }
+    pub fn bind_native_origins(
+        &mut self,
+        origins: BTreeMap<(LiveOwner, usize), crate::fx_domain::SourceOrigin>,
+    ) -> Result<(), DisplayError> {
+        for (&(storage, offset), origin) in &origins {
+            if origin.address >= 131_072
+                || self.canonical_coordinate(storage, offset)? != (storage, offset)
+            {
+                return Err(DisplayError::Source);
+            }
+        }
+        self.native_origins = origins;
+        Ok(())
+    }
+    pub fn note_native_origin(
+        &mut self,
+        storage: LiveOwner,
+        offset: usize,
+        at: usize,
+    ) -> Result<(), DisplayError> {
+        if at >= 131_072 || self.canonical_coordinate(storage, offset)? != (storage, offset) {
+            return Err(DisplayError::Source);
+        }
+        self.native_origins.insert(
+            (storage, offset),
+            crate::fx_domain::SourceOrigin {
+                address: at,
+                normalized: false,
+            },
+        );
+        Ok(())
+    }
+    pub fn note_source_normalization(
+        &mut self,
+        owner: LiveOwner,
+        offset: usize,
+        at: usize,
+    ) -> Result<(), DisplayError> {
+        let coordinate = self.canonical_coordinate(owner, offset)?;
+        if at >= 131_072 {
+            return Err(DisplayError::Source);
+        }
+        self.native_origins.insert(
+            coordinate,
+            crate::fx_domain::SourceOrigin {
+                address: at,
+                normalized: true,
+            },
+        );
+        Ok(())
+    }
+    pub fn canonical_coordinate(
+        &self,
+        owner: LiveOwner,
+        offset: usize,
+    ) -> Result<(LiveOwner, usize), DisplayError> {
+        let region = self.region(owner, offset)?;
+        Ok(match region.source {
+            // This nominal pair is only a metadata key; workspace-aware validation
+            // and adoption resolve the actual allocation coordinate separately.
+            HdmaRegionSource::Workspace { .. } => (owner, offset),
+            HdmaRegionSource::Buffer {
+                storage,
+                offset: first,
+            } => (
+                storage,
+                first.checked_add(offset).ok_or(DisplayError::Source)?,
+            ),
+            HdmaRegionSource::ObjectVariable { object, variable } => {
+                (LiveOwner::ObjectVariable { object, variable }, offset)
+            }
+        })
+    }
+    pub fn buffer_coordinate(
+        &self,
+        owner: LiveOwner,
+        offset: usize,
+    ) -> Result<Option<(LiveOwner, usize)>, DisplayError> {
+        let region = self.region(owner, offset)?;
+        Ok(match region.source {
+            HdmaRegionSource::Buffer {
+                storage,
+                offset: first,
+            } => Some((
+                storage,
+                first.checked_add(offset).ok_or(DisplayError::Source)?,
+            )),
+            HdmaRegionSource::ObjectVariable { .. } | HdmaRegionSource::Workspace { .. } => None,
+        })
+    }
+    pub fn workspace_point(
+        &self,
+        owner: LiveOwner,
+        offset: usize,
+    ) -> Result<Option<crate::presentation_workspace::Point>, DisplayError> {
+        Ok(match self.region(owner, offset)?.source {
+            HdmaRegionSource::Workspace { point } => Some(point.advance(offset)?),
+            _ => None,
+        })
+    }
+    /// Direct Workspace selection precedes all Buffer/ObjectVariable fallbacks.
+    pub fn workspace_coordinate(
+        &self,
+        workspace: &crate::presentation_workspace::Workspace,
+        owner: LiveOwner,
+        offset: usize,
+    ) -> Result<Option<crate::presentation_workspace::SourcePoint>, DisplayError> {
+        self.workspace_point(owner, offset)?
+            .map(|point| workspace.source_coordinate(point))
+            .transpose()
+    }
+    pub fn validate_workspace(
+        &self,
+        workspace: &crate::presentation_workspace::Workspace,
+    ) -> Result<(), DisplayError> {
+        self.validate()?;
+        for region in self.regions.values() {
+            if matches!(
+                region.owner,
+                LiveOwner::MessageDescriptor | LiveOwner::MessageScanlines
+            ) && !matches!(region.source, HdmaRegionSource::Workspace { .. })
+            {
+                return Err(DisplayError::Source);
+            }
+            if let HdmaRegionSource::Workspace { point } = region.source {
+                if workspace.available(point)? < region.length {
+                    return Err(DisplayError::Source);
+                }
+                workspace.coordinate(point)?;
+            }
+        }
+        Ok(())
+    }
+    pub fn workspace_aliases(
+        &self,
+        workspace: &crate::presentation_workspace::Workspace,
+        point: crate::presentation_workspace::Point,
+    ) -> Result<Vec<(LiveOwner, usize)>, DisplayError> {
+        let (origin, at) = workspace.coordinate(point)?;
+        let mut aliases = Vec::new();
+        for region in self.regions.values() {
+            if let HdmaRegionSource::Workspace { point } = region.source {
+                let (candidate, first) = workspace.coordinate(point)?;
+                if candidate == origin
+                    && let Some(offset) = at
+                        .checked_sub(first)
+                        .filter(|&offset| offset < region.length)
+                {
+                    aliases.push((region.owner, offset));
+                }
+            }
+        }
+        Ok(aliases)
+    }
+    /// Resolve actual native allocation provenance; full bus windows remain supplied.
+    pub fn physical_coordinate(
+        &self,
+        state: &HdmaState,
+        bank: u8,
+        address: u16,
+    ) -> Result<Option<(LiveOwner, usize)>, DisplayError> {
+        self.physical_coordinate_inner(state, bank, address, None)
+    }
+    pub fn physical_coordinate_with_workspace(
+        &self,
+        state: &HdmaState,
+        bank: u8,
+        address: u16,
+        workspace: &crate::presentation_workspace::Workspace,
+    ) -> Result<Option<(LiveOwner, usize)>, DisplayError> {
+        self.physical_coordinate_inner(state, bank, address, Some(workspace))
+    }
+    fn physical_coordinate_inner(
+        &self,
+        state: &HdmaState,
+        bank: u8,
+        address: u16,
+        workspace: Option<&crate::presentation_workspace::Workspace>,
+    ) -> Result<Option<(LiveOwner, usize)>, DisplayError> {
+        let Some(wanted) = crate::fx_encoding::physical_work_ram(bank, address) else {
+            return Ok(None);
+        };
+        let mut found = None;
+        for binding in state
+            .channels
+            .iter()
+            .flat_map(|channel| [&channel.table, &channel.source])
+            .chain(state.objects.iter().map(|object| &object.instruction))
+        {
+            let SourceBinding::LiveOwner { owner, windows } = binding else {
+                continue;
+            };
+            for window in windows.iter() {
+                let Some(first) =
+                    crate::fx_encoding::physical_work_ram(window.bank, window.address)
+                else {
+                    continue;
+                };
+                let Some(displacement) = wanted.checked_sub(first).filter(|&at| at < window.length)
+                else {
+                    continue;
+                };
+                let selected = u16::try_from(usize::from(window.address) + displacement)
+                    .map_err(|_| DisplayError::Source)?;
+                if crate::fx_encoding::physical_work_ram(window.bank, selected) != Some(wanted) {
+                    continue;
+                }
+                let offset = window
+                    .offset
+                    .checked_add(displacement)
+                    .ok_or(DisplayError::Source)?;
+                let coordinate = self.backing_coordinate(*owner, offset, workspace)?;
+                if found.is_some_and(|(prior, _)| prior != coordinate) {
+                    return Err(DisplayError::Source);
+                }
+                found = Some((coordinate, (*owner, offset)));
+            }
+        }
+        Ok(found.map(|(_, selection)| selection))
+    }
+    fn backing_coordinate(
+        &self,
+        owner: LiveOwner,
+        offset: usize,
+        workspace: Option<&crate::presentation_workspace::Workspace>,
+    ) -> Result<(CanonicalOwner, usize), DisplayError> {
+        Ok(match self.region(owner, offset)?.source {
+            HdmaRegionSource::Workspace { point } => {
+                let (origin, at) = workspace
+                    .ok_or(DisplayError::Incomplete)?
+                    .coordinate(point.advance(offset)?)?;
+                (CanonicalOwner::Workspace(origin), at)
+            }
+            HdmaRegionSource::Buffer {
+                storage,
+                offset: first,
+            } => (
+                CanonicalOwner::Buffer(storage),
+                first.checked_add(offset).ok_or(DisplayError::Source)?,
+            ),
+            HdmaRegionSource::ObjectVariable { object, variable } => {
+                (CanonicalOwner::ObjectVariable { object, variable }, offset)
+            }
+        })
+    }
+    /// Resolve aliases before determining whether the menu owns the selected lane.
+    pub fn window_control_lane(
+        &self,
+        owner: LiveOwner,
+        offset: usize,
+    ) -> Result<Option<(crate::menu_window_state::Field, usize)>, DisplayError> {
+        let region = self.region(owner, offset)?;
+        let HdmaRegionSource::Buffer {
+            storage,
+            offset: first,
+        } = region.source
+        else {
+            return Ok(None);
+        };
+        let at = first
+            .checked_add(offset)
+            .ok_or(DisplayError::Alias { offset })?;
+        Ok(self
+            .window_controls
+            .as_ref()
+            .and_then(|layout| layout.lane(storage, at)))
+    }
     pub fn validate(&self) -> Result<(), DisplayError> {
         for region in self.regions.values() {
             if region.length == 0 {
                 return Err(DisplayError::Source);
             }
             match region.source {
+                HdmaRegionSource::Workspace { .. } => {
+                    if matches!(region.owner, LiveOwner::ObjectVariable { .. }) {
+                        return Err(DisplayError::Source);
+                    }
+                }
                 HdmaRegionSource::Buffer { storage, offset } => {
                     if matches!(region.owner, LiveOwner::ObjectVariable { .. }) {
                         return Err(DisplayError::Source);
@@ -348,17 +752,59 @@ impl HdmaLiveDescription {
                 return Err(DisplayError::Source);
             }
         }
+        if let Some(layout) = &self.window_controls {
+            let bytes = self
+                .buffers
+                .get(&layout.storage)
+                .ok_or(DisplayError::Source)?;
+            let mut lanes = std::collections::BTreeSet::new();
+            for lane in layout.lanes.iter().flatten().copied() {
+                if !lanes.insert(lane) || bytes.get(lane) != Some(&0) {
+                    return Err(DisplayError::Source);
+                }
+            }
+        }
         Ok(())
     }
     /// Compare declared physical aliases without reading execution bytes.
     /// Caller validates individual definitions/windows before this cross-binding check.
     pub fn validate_canonical_aliases(&self, state: &HdmaState) -> Result<(), DisplayError> {
+        self.validate_canonical_aliases_inner(state, None)
+    }
+    pub fn validate_canonical_aliases_with_workspace(
+        &self,
+        state: &HdmaState,
+        workspace: &crate::presentation_workspace::Workspace,
+    ) -> Result<(), DisplayError> {
+        self.validate_workspace(workspace)?;
+        self.validate_canonical_aliases_inner(state, Some(workspace))
+    }
+    fn validate_canonical_aliases_inner(
+        &self,
+        state: &HdmaState,
+        workspace: Option<&crate::presentation_workspace::Workspace>,
+    ) -> Result<(), DisplayError> {
         let bindings = state
             .channels
             .iter()
             .flat_map(|channel| [&channel.table, &channel.source])
             .chain(state.objects.iter().map(|object| &object.instruction));
         let mut mapped: Vec<CanonicalWindow> = Vec::new();
+        if let Some(workspace) = workspace {
+            for binding in workspace.bindings.0.values() {
+                if let Some(window) = binding.window {
+                    mapped.push(CanonicalWindow {
+                        window: BankWindow {
+                            bank: window.bank,
+                            address: window.address,
+                            offset: 0,
+                            length: window.length,
+                        },
+                        live: Some((CanonicalOwner::Workspace(binding.origin), binding.base)),
+                    });
+                }
+            }
+        }
         for binding in bindings {
             if matches!(binding, SourceBinding::Unbound) {
                 continue;
@@ -366,40 +812,58 @@ impl HdmaLiveDescription {
             for window in binding.windows()? {
                 let live = match binding {
                     SourceBinding::LiveOwner { owner, .. } => {
-                        let region = self.region(*owner, window.offset)?;
-                        Some(match region.source {
-                            HdmaRegionSource::Buffer { storage, offset } => (
-                                CanonicalOwner::Buffer(storage),
-                                offset
-                                    .checked_add(window.offset)
-                                    .ok_or(DisplayError::Source)?,
-                            ),
-                            HdmaRegionSource::ObjectVariable { object, variable } => (
-                                CanonicalOwner::ObjectVariable { object, variable },
-                                window.offset,
-                            ),
-                        })
+                        Some(self.backing_coordinate(*owner, window.offset, workspace)?)
                     }
                     SourceBinding::Prepared { .. } => None,
                     SourceBinding::Unbound => unreachable!(),
                 };
                 for prior in &mapped {
-                    if window.bank != prior.window.bank {
-                        continue;
-                    }
-                    let start = usize::from(window.address).max(usize::from(prior.window.address));
-                    let end = (usize::from(window.address) + window.length)
-                        .min(usize::from(prior.window.address) + prior.window.length);
+                    // WRAM mirrors name the same allocation; other bus windows
+                    // overlap only within their original bank.
+                    let physical =
+                        crate::fx_encoding::physical_work_ram(window.bank, window.address);
+                    let prior_physical = crate::fx_encoding::physical_work_ram(
+                        prior.window.bank,
+                        prior.window.address,
+                    );
+                    let (first, length, prior_first, prior_length) =
+                        match (physical, prior_physical) {
+                            _ if window.bank == prior.window.bank => (
+                                usize::from(window.address),
+                                window.length,
+                                usize::from(prior.window.address),
+                                prior.window.length,
+                            ),
+                            (Some(first), Some(prior_first)) => {
+                                let length = if matches!(window.bank, 0x7e | 0x7f) {
+                                    window.length
+                                } else {
+                                    window.length.min(0x2000 - usize::from(window.address))
+                                };
+                                let prior_length = if matches!(prior.window.bank, 0x7e | 0x7f) {
+                                    prior.window.length
+                                } else {
+                                    prior
+                                        .window
+                                        .length
+                                        .min(0x2000 - usize::from(prior.window.address))
+                                };
+                                (first, length, prior_first, prior_length)
+                            }
+                            _ => continue,
+                        };
+                    let start = first.max(prior_first);
+                    let end = (first + length).min(prior_first + prior_length);
                     if start >= end {
                         continue;
                     }
                     match (live, prior.live) {
                         (Some((owner, offset)), Some((prior_owner, prior_offset))) => {
                             let at = offset
-                                .checked_add(start - usize::from(window.address))
+                                .checked_add(start - first)
                                 .ok_or(DisplayError::Source)?;
                             let prior_at = prior_offset
-                                .checked_add(start - usize::from(prior.window.address))
+                                .checked_add(start - prior_first)
                                 .ok_or(DisplayError::Source)?;
                             // Both mappings advance one backing byte per physical byte.
                             if owner != prior_owner || at != prior_at {
@@ -433,7 +897,28 @@ impl HdmaLiveDescription {
         owner: LiveOwner,
         offset: usize,
     ) -> Result<u8, DisplayError> {
+        self.read_with_common(&state.common, owner, offset)
+    }
+    pub fn write(
+        &mut self,
+        state: &mut HdmaState,
+        owner: LiveOwner,
+        offset: usize,
+        value: u8,
+    ) -> Result<(), DisplayError> {
+        self.write_with_common(&mut state.common, owner, offset, value)
+    }
+    pub fn read_with_common(
+        &self,
+        state: &crate::hdma::HdmaObjects,
+        owner: LiveOwner,
+        offset: usize,
+    ) -> Result<u8, DisplayError> {
+        if self.window_control_lane(owner, offset)?.is_some() {
+            return Err(DisplayError::Incomplete);
+        }
         match self.region(owner, offset)?.source {
+            HdmaRegionSource::Workspace { .. } => Err(DisplayError::Incomplete),
             HdmaRegionSource::Buffer {
                 storage,
                 offset: first,
@@ -452,7 +937,8 @@ impl HdmaLiveDescription {
                     .objects
                     .get(usize::from(object))
                     .ok_or(DisplayError::Source)?;
-                object.variables[variable.index()]
+                object
+                    .variable(variable.index())
                     .to_le_bytes()
                     .get(offset)
                     .copied()
@@ -460,14 +946,18 @@ impl HdmaLiveDescription {
             }
         }
     }
-    pub fn write(
+    pub fn write_with_common(
         &mut self,
-        state: &mut HdmaState,
+        state: &mut crate::hdma::HdmaObjects,
         owner: LiveOwner,
         offset: usize,
         value: u8,
     ) -> Result<(), DisplayError> {
+        if self.window_control_lane(owner, offset)?.is_some() {
+            return Err(DisplayError::Incomplete);
+        }
         match self.region(owner, offset)?.source {
+            HdmaRegionSource::Workspace { .. } => return Err(DisplayError::Incomplete),
             HdmaRegionSource::Buffer {
                 storage,
                 offset: first,
@@ -486,7 +976,7 @@ impl HdmaLiveDescription {
                     .objects
                     .get_mut(usize::from(object))
                     .ok_or(DisplayError::Source)?;
-                let word = &mut object.variables[variable.index()];
+                let word = object.variable_mut(variable.index());
                 let mut bytes = word.to_le_bytes();
                 *bytes
                     .get_mut(offset)
@@ -742,14 +1232,18 @@ impl SourceBinding {
         state: &HdmaState,
         object: usize,
     ) -> Result<(), DisplayError> {
-        let binding = state.bindings.get(object).ok_or(DisplayError::Source)?;
+        let binding = state
+            .common
+            .objects
+            .get(object)
+            .ok_or(DisplayError::Source)?;
         // Only explicit object disable or global HDMA-object disable permits
         // missing program provenance. Timer/sleep is not proof of inactivity.
         self.validate(
             catalog,
             live,
             ContentKind::Program,
-            state.flags & 0x8000 != 0 && binding.enable as u8 != 0,
+            state.common.enabled & 0x8000 != 0 && binding.channels as u8 != 0,
         )
     }
 }

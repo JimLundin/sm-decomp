@@ -6,9 +6,7 @@ use crate::rtl::{DMAP1, MDMAEN, VMAIN, write_reg, write_reg_word};
 pub(crate) use sm_game::display::transfer::ScrollingLayout as ScrollingDmaLayout;
 use sm_game::display::video::Upload;
 use sm_game::display_refresh as refresh;
-pub(crate) use sm_game::display_refresh::{
-    fade, native_word, queue_scrolling_tiles, set_blank, set_native_word, wait,
-};
+pub(crate) use sm_game::display_refresh::{fade, native_word, set_blank, set_native_word, wait};
 
 impl refresh::DisplayOwner for Game {
     fn write_owned_byte(&mut self, at: usize, value: u8) {
@@ -108,6 +106,17 @@ impl sm_game::display::video::Video for Game {
 
 /// A byte a DMA reads from the CPU bus: work RAM or the cartridge.
 fn bus_byte(game: &Game, bank: u8, address: u16) -> u8 {
+    use sm_game::display::queued_tilemaps::{LiveByte, live_byte};
+    if let Some(owner) = live_byte(bank, address) {
+        return match owner {
+            LiveByte::Hud { tile, lane } => game.live_queued_hud_byte(tile, lane),
+            LiveByte::Scrolling { word, lane } => {
+                // compatibility_byte serves the current Session's scrolling
+                // owner; a callback-invalidated owner reads the actual image.
+                game.compatibility_byte(0xc8c8 + word * 2 + lane)
+            }
+        };
+    }
     match bank {
         0x7e | 0x7f => game
             .ram()
@@ -203,4 +212,165 @@ pub fn decompress_to_vram(src: u32, dst_addr: u16, game: &mut Game) {
 /// Decompress a prepared stream into VRAM, with its PPU readback.
 pub(crate) fn decompress_prepared_vram(stream: &[u8], destination: u16, game: &mut Game) {
     refresh::decompress_prepared_vram(stream, destination, game);
+}
+
+use sm_game::display::queued_tilemaps::{Coordinate, QueueAccess, Request, Scrolling, Selection};
+fn scrolling_parameter(selection: Selection, field: Request) -> usize {
+    let base = if matches!(selection.layout, ScrollingDmaLayout::Row) {
+        0x964
+    } else {
+        0x956
+    };
+    base + usize::from(selection.layer_offset) + usize::from(field as u8) * 2
+}
+fn scrolling_coordinate(field: Coordinate) -> usize {
+    match field {
+        Coordinate::SourceX => 0x990,
+        Coordinate::SourceY => 0x992,
+        Coordinate::DestinationX => 0x994,
+        Coordinate::DestinationY => 0x996,
+        Coordinate::BackgroundSize => 0x98e,
+    }
+}
+fn scrolling_probe(row: bool, background: bool) {
+    crate::verify_probe::hit(match (row, background) {
+        (false, false) => "scroll_tiles.column.bg1",
+        (false, true) => "scroll_tiles.column.bg2",
+        (true, false) => "scroll_tiles.row.bg1",
+        (true, true) => "scroll_tiles.row.bg2",
+    });
+}
+impl QueueAccess for Game {
+    fn queue_live_source(
+        &mut self,
+        address: u16,
+        bank: u8,
+        source: sm_game::scene::state::TransferSource,
+    ) {
+        let mut runtime = crate::game::session_runtime::Runtime::new(self);
+        QueueAccess::queue_live_source(&mut runtime, address, bank, source);
+    }
+    fn queue_tail(&self) -> u16 {
+        self.vram_write_queue_tail()
+    }
+    fn store_queue_tail(&mut self, value: u16) {
+        self.set_vram_write_queue_tail(value);
+    }
+    fn queue_native_word(&mut self, cursor: u16, value: u16) {
+        let at = 0xd0 + usize::from(cursor);
+        let [low, high] = value.to_ne_bytes();
+        self.compatibility_write_byte(at, low);
+        self.compatibility_write_byte(at + 1, high);
+    }
+}
+impl Scrolling for Game {
+    fn mode7_enabled(&self, selection: Selection) -> bool {
+        let enabled = u16::from_le_bytes([
+            self.compatibility_byte(0x783),
+            self.compatibility_byte(0x784),
+        ]) != 0;
+        if !enabled {
+            scrolling_probe(
+                matches!(selection.layout, ScrollingDmaLayout::Row),
+                selection.layer_offset != 0,
+            );
+        }
+        enabled
+    }
+    fn coordinate(&self, field: Coordinate) -> u16 {
+        let at = scrolling_coordinate(field);
+        u16::from_le_bytes([self.compatibility_byte(at), self.compatibility_byte(at + 1)])
+    }
+    fn room_width(&self) -> u16 {
+        sm_game::gameplay_context::navigation(self).width
+    }
+    fn request(&self, selection: Selection, field: Request) -> u16 {
+        native_word(scrolling_parameter(selection, field), self)
+    }
+    fn store_request(&mut self, selection: Selection, field: Request, value: u16) {
+        set_native_word(scrolling_parameter(selection, field), value, self);
+    }
+    fn block(&self, source: u16, delta: u16) -> u16 {
+        native_word(
+            0x10000 + usize::from(source) + 2 * usize::from(delta >> 1),
+            self,
+        )
+    }
+    fn tile(&self, definition: usize, corner: usize) -> u16 {
+        let at = 0xa000 + definition * 8 + corner * 2;
+        u16::from_le_bytes([self.compatibility_byte(at), self.compatibility_byte(at + 1)])
+    }
+    fn store_scrolling(&mut self, word: usize, value: u16) {
+        let at = 0xc8c8 + word * 2;
+        let [low, high] = value.to_le_bytes();
+        self.compatibility_write_byte(at, low);
+        self.compatibility_write_byte(at + 1, high);
+    }
+}
+impl QueueAccess for crate::game::session_runtime::Runtime<'_> {
+    fn queue_live_source(
+        &mut self,
+        address: u16,
+        bank: u8,
+        source: sm_game::scene::state::TransferSource,
+    ) {
+        let bytes = self.session().queued_tilemaps.native_order.encode(address);
+        let token = [bytes[0], bytes[1], bank];
+        // Only this actual query identity denotes the supplied symbolic HUD source.
+        // Other native-order aliases retain the compatibility transfer path.
+        if u16::from_le_bytes(bytes) != address {
+            return;
+        }
+        if let Ok(owner) = self.session_mut().presentation.owner_mut() {
+            owner.state.queued_sources.insert(token, source);
+        }
+    }
+    fn queue_tail(&self) -> u16 {
+        self.owned_session(|s| s.queued_tilemaps.tail, 0x330)
+    }
+    fn store_queue_tail(&mut self, value: u16) {
+        self.write_word_le(value, 0x330);
+    }
+    fn queue_native_word(&mut self, cursor: u16, value: u16) {
+        let at = 0xd0 + usize::from(cursor);
+        let [low, high] = value.to_ne_bytes();
+        self.set_byte(at, low);
+        self.set_byte(at + 1, high);
+    }
+}
+impl Scrolling for crate::game::session_runtime::Runtime<'_> {
+    fn mode7_enabled(&self, selection: Selection) -> bool {
+        let enabled = self.word(0x783) != 0;
+        if !enabled {
+            scrolling_probe(
+                matches!(selection.layout, ScrollingDmaLayout::Row),
+                selection.layer_offset != 0,
+            );
+        }
+        enabled
+    }
+    fn coordinate(&self, field: Coordinate) -> u16 {
+        self.word(scrolling_coordinate(field))
+    }
+    fn room_width(&self) -> u16 {
+        self.owned_session(|s| s.room.width, 0x7a5)
+    }
+    fn request(&self, selection: Selection, field: Request) -> u16 {
+        self.native_word(scrolling_parameter(selection, field))
+    }
+    fn store_request(&mut self, selection: Selection, field: Request, value: u16) {
+        let at = scrolling_parameter(selection, field);
+        let [low, high] = value.to_ne_bytes();
+        sm_game::display_refresh::DisplayOwner::write_owned_byte(self, at, low);
+        sm_game::display_refresh::DisplayOwner::write_owned_byte(self, at + 1, high);
+    }
+    fn block(&self, source: u16, delta: u16) -> u16 {
+        self.native_word(0x10000 + usize::from(source) + 2 * usize::from(delta >> 1))
+    }
+    fn tile(&self, definition: usize, corner: usize) -> u16 {
+        self.word(0xa000 + definition * 8 + corner * 2)
+    }
+    fn store_scrolling(&mut self, word: usize, value: u16) {
+        self.write_word_le(value, 0xc8c8 + word * 2);
+    }
 }

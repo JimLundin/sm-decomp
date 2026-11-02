@@ -254,13 +254,16 @@ fn before_script<H: Host + ?Sized>(slot: u16, options: &OptionsMenu, game: &mut 
         preinstruction::OPTION_MODE_BORDER => {
             if game.observed_inputs().transitions.game_state != 2
                 || options.screen_index == 6
-                    && game.ram().read_byte(crate::ram::mirror::INIDISP) == 0x80
+                    && game.display_control_byte(crate::display::preparation::Field::Brightness)
+                        == 0x80
             {
                 end_script(slot, game);
             }
         }
         preinstruction::CONTROLLER_SETTING_MODE_BORDER => match options.screen_index {
-            6 if game.ram().read_byte(crate::ram::mirror::INIDISP) == 0x80 => {
+            6 if game.display_control_byte(crate::display::preparation::Field::Brightness)
+                == 0x80 =>
+            {
                 end_script(slot, game)
             }
             9 => {
@@ -275,7 +278,7 @@ fn before_script<H: Host + ?Sized>(slot: u16, options: &OptionsMenu, game: &mut 
         },
         preinstruction::SPECIAL_SETTING_MODE_BORDER => {
             if options.screen_index == 6
-                && game.ram().read_byte(crate::ram::mirror::INIDISP) == 0x80
+                && game.display_control_byte(crate::display::preparation::Field::Brightness) == 0x80
             {
                 end_script(slot, game);
             }

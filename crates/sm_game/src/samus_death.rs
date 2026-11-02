@@ -41,7 +41,7 @@ pub fn advance_death_pose<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
         *timer == 0 || *timer & 0x8000 != 0
     });
     if expired {
-        word!(game.GAME_STATE += 1);
+        crate::gameplay_word!(game.GAME_STATE += 1);
     }
     0
 }
@@ -74,7 +74,7 @@ pub fn begin_death<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
         game.set_player_x(x);
         let y = game.player_y().wrapping_sub(layer1[1]);
         game.set_player_y(y);
-        word!(game.GAME_STATE += 1);
+        crate::gameplay_word!(game.GAME_STATE += 1);
     }
     0
 }
@@ -108,14 +108,14 @@ pub fn flash_death<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
             screens.death.counter = 0;
             advance_suit_explosion(game, screens);
             let stage = u16::from(
-                word!(game.JOYPAD2_LAST) as i32 & 0xb0
+                crate::gameplay_word!(game.JOYPAD2_LAST) as i32 & 0xb0
                     == K_BUTTON_A as i32 | K_BUTTON_L as i32 | K_BUTTON_R as i32,
             );
             crate::sequence_state::with_words(
                 game,
                 |_, words: &mut crate::session_words::SessionWords| words.substate = stage,
             );
-            word!(game.GAME_STATE += 1);
+            crate::gameplay_word!(game.GAME_STATE += 1);
         }
         0
     })
@@ -184,7 +184,7 @@ pub fn explode_suit<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
     });
     if exploded {
         crate::screen_fade::store(game, 1, 1);
-        word!(game.GAME_STATE += 1);
+        crate::gameplay_word!(game.GAME_STATE += 1);
     }
     0
 }

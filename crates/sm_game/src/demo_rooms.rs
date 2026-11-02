@@ -1,4 +1,5 @@
 //! Attract-mode playback, room selection, placement and delayed setup.
+use crate::display::preparation::Field;
 use crate::imported::Imported;
 use crate::menus::menu_tilemap::native_record;
 use crate::menus::prelude::{EnemyData, do_until};
@@ -57,7 +58,7 @@ pub fn reset<H: crate::menus::host::Host + ?Sized>(game: &mut H) -> u8 {
     if crate::sequence_state::Access::sequence_flow(&*game).num_demo_sets == 4 {
         crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| flow.demo_set = 3);
     }
-    word!(game.GAME_STATE += 1);
+    crate::gameplay_word!(game.GAME_STATE += 1);
     0
 }
 
@@ -66,7 +67,7 @@ pub fn play<H: crate::menus::host::Host + ?Sized>(
     gameplay: impl FnOnce(&mut H) -> u8,
 ) -> u8 {
     crate::probe::hit("coroutine.demo");
-    let resume = game.ram().read_byte(0x614);
+    let resume = game.demo_phase();
     'done: {
         if resume > 2 {
             break 'done;
@@ -75,10 +76,10 @@ pub fn play<H: crate::menus::host::Host + ?Sized>(
             if resume != 1 {
                 let yielded: u8 = gameplay(game);
                 if yielded != 0 {
-                    game.ram().write_byte(0x614, 2);
+                    game.demo_set_phase(2);
                     return yielded;
                 }
-                if word!(game.JOYPAD1_NEWKEYS) != 0 {
+                if crate::gameplay_word!(game.JOYPAD1_NEWKEYS) != 0 {
                     crate::sequence_word!(game.SUBSTATE = 1);
                     break 'finish_demo;
                 }
@@ -102,21 +103,21 @@ pub fn play<H: crate::menus::host::Host + ?Sized>(
             do_until! { word!(game.MY_COUNTER -= 1, reread) == 0;
                 let yielded: u8 = crate::display_refresh::wait(true, game);
                 if yielded != 0 {
-                    game.ram().write_byte(0x614, 1);
+                    game.demo_set_phase(1);
                     return yielded;
                 }
-                if word!(game.JOYPAD1_NEWKEYS) != 0 {
+                if crate::gameplay_word!(game.JOYPAD1_NEWKEYS) != 0 {
                     crate::sequence_word!(game.SUBSTATE = 1);
                     break;
                 }
             }
         }
-        word!(game.GAME_STATE += 1);
+        crate::gameplay_word!(game.GAME_STATE += 1);
         crate::sequence_word!(game.DEBUG_DISABLE_SOUNDS = 0);
-        game.ram().write_byte(0x51, 0x80);
+        crate::frame_display_byte!(game, Field::Brightness => 0x80);
         crate::screen_fade::store(game, 1, 1);
     }
-    game.ram().write_byte(0x614, 0);
+    game.demo_set_phase(0);
     0
 }
 
@@ -270,7 +271,11 @@ pub fn run_room_hook<H: crate::menus::host::Host + ?Sized>(address: u32, game: &
     match address {
         0x82891a => game.ram().write_byte(0xcd20 + 33, 0),
         0x828924 => {}
-        0x828925 => game.ram().copy_in(0x59, &74u16.to_ne_bytes()),
+        0x828925 => {
+            let [low, high] = 74u16.to_ne_bytes();
+            crate::frame_display_byte!(game, Field::Screens1 => low);
+            crate::frame_display_byte!(game, Field::Screens2 => high);
+        }
         0x82892b => session_slot!(game, EnemyData[0].ai_preinstr = 60),
         0x828932 => crate::progress::leased::set_boss_byte_at(1, 1, game),
         _ => {

@@ -1,9 +1,7 @@
-//! Compatibility encoding only; effects consume the model before touching RAM.
+//! Dialogue control encoding and access to the existing presentation owner.
 use crate::dialogue::{
     ChildContinuation, Continuation, Cycle, Dialogue, Input, Message, Phase, Script, Selection,
 };
-use crate::ram::RawRam as _;
-use crate::ram::words as ram;
 
 /// Script steps encode above the child's named continuations.
 const STEPS: u8 = 16;
@@ -19,18 +17,46 @@ pub fn message(id: u16) -> Message<u16> {
         id => Message::Content(id),
     }
 }
-fn read<H: crate::ram::RamHost + ?Sized>(game: &H, at: usize) -> u16 {
-    u16::from_le_bytes([game.ram().read_byte(at), game.ram().read_byte(at + 1)])
+/// The existing control continuation lanes and message state at a boundary.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Encoded {
+    pub index: u16,
+    pub parent: u8,
+    pub child: u8,
+    pub delay: u16,
+    pub radius: u16,
+    pub selection: u16,
 }
-fn write<H: crate::ram::RamHost + ?Sized>(game: &mut H, at: usize, value: u16) {
-    game.ram().copy_in(at, &value.to_le_bytes());
+/// Implementations use one current Session owner and publish before effects.
+pub trait Access {
+    fn dialogue_state(&self) -> Dialogue<u16>;
+    fn dialogue_publish(&mut self, state: Dialogue<u16>);
+    fn dialogue_request(&self) -> u16;
+    fn dialogue_set_request(&mut self, value: u16);
+    fn dialogue_active_index(&self) -> u16;
+    fn dialogue_clear_active(&mut self);
+    fn dialogue_selection(&self) -> u16;
+    fn dialogue_set_selection(&mut self, value: u16);
+    fn dialogue_scratch(&self) -> [u16; 4];
+    fn dialogue_set_scratch(&mut self, index: usize, value: u16);
+    fn dialogue_radius(&self) -> u16;
+    fn dialogue_set_radius(&mut self, value: u16);
+    fn dialogue_input(&self) -> Input;
+    fn dialogue_binding(&self, shoot: bool) -> u16;
+    fn dialogue_select_pause(&mut self);
 }
-pub fn import<H: crate::ram::RamHost + ?Sized>(game: &H) -> Dialogue<u16> {
+pub fn import<H: Access + ?Sized>(game: &H) -> Dialogue<u16> {
+    game.dialogue_state()
+}
+pub fn publish<H: Access + ?Sized>(state: Dialogue<u16>, game: &mut H) {
+    game.dialogue_publish(state);
+}
+pub fn decode(encoded: Encoded) -> Dialogue<u16> {
     use Continuation::*;
     use Phase::*;
     Dialogue {
-        message: message(read(game, ram::MESSAGE_BOX_INDEX)),
-        continuation: match game.ram().read_byte(0x614) {
+        message: message(encoded.index),
+        continuation: match encoded.parent {
             0 => Start,
             2 => Waiting(Opening(Cycle::Message)),
             3 => Waiting(Interacting(Cycle::Message)),
@@ -45,8 +71,8 @@ pub fn import<H: crate::ram::RamHost + ?Sized>(game: &H) -> Dialogue<u16> {
             12 => Waiting(Running(Script::Close)),
             value => Invalid(value),
         },
-        delay_remaining: read(game, ram::MY_COUNTER),
-        child: match game.ram().read_byte(0x615) {
+        delay_remaining: encoded.delay,
+        child: match encoded.child {
             0 => ChildContinuation::Start,
             1 => ChildContinuation::Waiting,
             2 => ChildContinuation::ReadingDelay,
@@ -56,21 +82,19 @@ pub fn import<H: crate::ram::RamHost + ?Sized>(game: &H) -> Dialogue<u16> {
             value @ STEPS.. => ChildContinuation::Step(value - STEPS),
             value => ChildContinuation::Invalid(value),
         },
-        radius: message_box::get(game, message_box::Word::Radius),
-        selection: match read(game, ram::SAVE_CONFIRMATION_SELECTION) {
+        radius: encoded.radius,
+        selection: match encoded.selection {
             0 => Selection::Accept,
             2 => Selection::Decline,
             value => Selection::Other(value),
         },
     }
 }
-pub fn publish<H: crate::ram::RamHost + ?Sized>(state: Dialogue<u16>, game: &mut H) {
+pub fn encode(state: Dialogue<u16>) -> Encoded {
     use Continuation::*;
     use Phase::*;
-    write(
-        game,
-        ram::MESSAGE_BOX_INDEX,
-        match state.message {
+    Encoded {
+        index: match state.message {
             Message::MapAcquired => 20,
             Message::EnergyRestored => 21,
             Message::MissilesRestored => 22,
@@ -79,21 +103,14 @@ pub fn publish<H: crate::ram::RamHost + ?Sized>(state: Dialogue<u16>, game: &mut
             Message::SavePrompt => 28,
             Message::Content(id) => id,
         },
-    );
-    write(game, ram::MY_COUNTER, state.delay_remaining);
-    message_box::set(game, message_box::Word::Radius, state.radius);
-    write(
-        game,
-        ram::SAVE_CONFIRMATION_SELECTION,
-        match state.selection {
+        delay: state.delay_remaining,
+        radius: state.radius,
+        selection: match state.selection {
             Selection::Accept => 0,
             Selection::Decline => 2,
             Selection::Other(value) => value,
         },
-    );
-    game.ram().write_byte(
-        0x615,
-        match state.child {
+        child: match state.child {
             ChildContinuation::Start => 0,
             ChildContinuation::Waiting => 1,
             ChildContinuation::ReadingDelay => 2,
@@ -103,10 +120,7 @@ pub fn publish<H: crate::ram::RamHost + ?Sized>(state: Dialogue<u16>, game: &mut
             ChildContinuation::Step(step) => STEPS + step,
             ChildContinuation::Invalid(value) => value,
         },
-    );
-    game.ram().write_byte(
-        0x614,
-        match state.continuation {
+        parent: match state.continuation {
             Start => 0,
             Waiting(Opening(Cycle::Message)) => 2,
             Waiting(Interacting(Cycle::Message)) => 3,
@@ -121,48 +135,11 @@ pub fn publish<H: crate::ram::RamHost + ?Sized>(state: Dialogue<u16>, game: &mut
             Waiting(Running(Script::Close)) => 12,
             Invalid(value) => value,
         },
-    );
-}
-pub fn input<H: crate::ram::RamHost + ?Sized>(game: &H) -> Input {
-    use crate::constants::buttons::*;
-    let keys = read(game, ram::JOYPAD1_NEWKEYS);
-    // LOOP_INPUT ($85:84A3) accepts held input after the reading delay.
-    let dismiss = read(game, ram::JOYPAD1_LASTKEYS) != 0;
-    Input {
-        confirm: keys & K_BUTTON_A as u16 != 0,
-        cancel: keys & K_BUTTON_B as u16 != 0,
-        toggle: keys & (K_BUTTON_SELECT | K_BUTTON_LEFT | K_BUTTON_RIGHT) as u16 != 0,
-        dismiss,
     }
 }
-pub fn select_pause<H: crate::ram::RamHost + ?Sized>(game: &mut H) {
-    write(game, ram::GAME_STATE, 12);
+pub fn input<H: Access + ?Sized>(game: &H) -> Input {
+    game.dialogue_input()
 }
-
-/// The message box's animation words, which the Session holds as
-/// `messages.box_radius` and `messages.box_scratch`, read and stored through
-/// the host's projected bytes.
-pub mod message_box {
-    use crate::ram::CompatibilityRam;
-    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-    pub enum Word {
-        Radius = 0x5a2,
-        Scratch0 = 0x5a4,
-        Scratch1 = 0x5a6,
-        Scratch2 = 0x5a8,
-        Scratch3 = 0x5aa,
-    }
-    /// The scratch words in RAM order.
-    pub const SCRATCH: [Word; 4] = [
-        Word::Scratch0,
-        Word::Scratch1,
-        Word::Scratch2,
-        Word::Scratch3,
-    ];
-    pub fn get<H: CompatibilityRam + ?Sized>(h: &H, word: Word) -> u16 {
-        crate::projection::word(h, word as usize)
-    }
-    pub fn set<H: CompatibilityRam + ?Sized>(h: &mut H, word: Word, value: u16) {
-        crate::projection::set_word(h, word as usize, value);
-    }
+pub fn select_pause<H: Access + ?Sized>(game: &mut H) {
+    game.dialogue_select_pause();
 }

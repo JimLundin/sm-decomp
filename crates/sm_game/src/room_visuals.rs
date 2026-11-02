@@ -1,9 +1,11 @@
 //! Room visual effects: HDMA effect setup, Fireflea lighting, earthquakes, the Tourian statue and weather.
 use crate::constants::bank_86::ADDR_K_EPROJ_TOURIAN_STATUE_DUST_CLOUDS;
+use crate::display::preparation::{Field as DisplayField, Store as DisplayStore};
+use crate::fx_domain::native_order;
 use crate::hdma_objects::{HdmaEffect, spawn_bg3_scroll, spawn_hdma};
 use crate::menus::prelude::HdmaObjectDefinition;
-use crate::ram::RawRam as _;
 use crate::ram::word;
+use crate::scene::hdma_sources::LiveOwner;
 use crate::session_access::SessionAccess;
 use crate::visual_state::{TourianStatuePhase, Weather};
 
@@ -43,48 +45,25 @@ pub fn initialize_title_gradient<H: crate::menus::host::Host + ?Sized>(game: &mu
     game.spawn_hdma(0x88, &HdmaObjectDefinition::new(0, 0x31, 0xeb85));
 }
 
-const FIREFLEA_FLASH: [u16; 12] = [
-    0, 0x100, 0x200, 0x300, 0x400, 0x500, 0x600, 0x500, 0x400, 0x300, 0x200, 0x100,
-];
-
-const FIREFLEA_DARKNESS: [u16; 6] = [0, 0x600, 0xc00, 0x1200, 0x1800, 0x1900];
-
 pub fn darken_fireflea_room<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    if word!(game.FIREFLEA_DARKNESS_LEVEL).wrapping_sub(12) & 0x8000 != 0 {
-        word!(game.FIREFLEA_DARKNESS_LEVEL += 2);
-    }
+    crate::fx_lighting::darken_current(game);
 }
 
 pub fn initialize_fireflea_lighting<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    word! {game; FIREFLEA_FLASHING_TIMER = 6; FIREFLEA_FLASHING_INDEX = 0; }
+    crate::fx_lighting::begin_current(game);
     game.spawn_hdma(0x88, &HdmaObjectDefinition::new(0x42, 0x11, 0xb0ac));
-    crate::word_transfers!(game, ascending, 1; native(0x9e00) <- value(0));
-    word! { game, 0; UNUSED_WORD_7E177C, FIREFLEA_DARKNESS_LEVEL }
-    word!(game.UNUSED_WORD_7E1780 = 24);
-    word!(game.UNUSED_WORD_7E1782 = FIREFLEA_FLASH[0]);
+    game.store_source_word(LiveOwner::WindowLeft, 0, native_order(), 0);
+    crate::fx_lighting::finish_current(game);
 }
 
 pub fn advance_fireflea_lighting<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    word!(game.FX_LAYER_BLENDING_CONFIG_C = word!(game.FX_LAYER_BLENDING_CONFIG_C) & 0xff00 | 0xc);
-    if crate::sequence_word!(game.TIME_IS_FROZEN_FLAG) != 0 {
-        return;
-    }
-    if word!(game.FIREFLEA_FLASHING_TIMER -= 1, reread) == 0 {
-        word!(game.FIREFLEA_FLASHING_TIMER = 6);
-        let next = if word!(game.FIREFLEA_DARKNESS_LEVEL).wrapping_sub(10) & 0x8000 != 0 {
-            let next = word!(game.FIREFLEA_FLASHING_INDEX).wrapping_add(1);
-            if next >= 12 { 0 } else { next }
-        } else {
-            6
-        };
-        word!(game.FIREFLEA_FLASHING_INDEX = next);
-    }
-    let shade = (FIREFLEA_DARKNESS[usize::from(word!(game.FIREFLEA_DARKNESS_LEVEL) >> 1)]
-        .wrapping_add(FIREFLEA_FLASH[usize::from(word!(game.FIREFLEA_FLASHING_INDEX))])
-        >> 8) as u8;
-    game.ram().write_byte(0x75, shade | 0x80);
-    game.ram().write_byte(0x76, shade | 0x40);
-    game.ram().write_byte(0x74, shade | 0x20);
+    // Time is an external owner; preserve this callback's original sampling point.
+    // Blending is published before the freeze read, as in the original routine.
+    let mut fx = crate::fx_domain::Controls::fx_controls(game);
+    fx.blending = (fx.blending & 0xff00) | 0xc;
+    crate::fx_domain::Controls::publish_fx_controls(game, fx, &[crate::fx_state::Field::Blending]);
+    let frozen = word!(game.TIME_IS_FROZEN_FLAG) != 0;
+    crate::fx_lighting::advance_after_blending(game, frozen);
 }
 
 /// The least earthquake timer a room shake sets.
@@ -98,10 +77,16 @@ pub fn shake_room_with_sound<H: crate::menus::host::Host + ?Sized>(
     static SOUNDS: [u16; 17] = [
         0x46, 1, 0x46, 3, 0x46, 2, 0x46, 1, 0x46, 1, 0x46, 2, 0x46, 2, 0x46, 1, 0x8000,
     ];
-    if word!(game.EARTHQUAKE_SFX_TIMER) & 0x8000 == 0
-        && word!(game.EARTHQUAKE_SFX_TIMER -= 1, reread) & 0x8000 != 0
+    if game.fx_controls().earthquake_sound_timer & 0x8000 == 0 && {
+        let fx_value = game.fx_controls().earthquake_sound_timer.wrapping_sub(1);
+        let mut fx = game.fx_controls();
+        fx.earthquake_sound_timer = fx_value;
+        game.publish_fx_controls(fx, &[crate::fx_state::Field::EarthquakeSoundTimer]);
+        game.fx_controls().earthquake_sound_timer
+    } & 0x8000
+        != 0
     {
-        let mut index = word!(game.EARTHQUAKE_SFX_INDEX);
+        let mut index = game.fx_controls().earthquake_sound_index;
         let mut sound = SOUNDS[usize::from(index >> 1)];
         if sound & 0x8000 != 0 {
             index = 0;
@@ -112,19 +97,30 @@ pub fn shake_room_with_sound<H: crate::menus::host::Host + ?Sized>(
         // CPX #$0C, but for the first object the one the handler was entered with. The main game
         // loop's PLP restores that every frame from power-on, where loading the save slots
         // ($80:8261) leaves it set.
-        let carry = u16::from(word!(game.HDMA_OBJECT_INDEX) == 0 && handler_carry);
-        word!(
-            game.EARTHQUAKE_SFX_TIMER = SOUNDS[usize::from(index >> 1) + 1]
-                .wrapping_add(word!(game.RANDOM_NUMBER) & 3)
-                .wrapping_add(carry)
+        let carry = u16::from(
+            crate::hdma_objects::HdmaTable::hdma_word(game, crate::hdma::Word::Selected) == 0
+                && handler_carry,
         );
-        word!(game.EARTHQUAKE_SFX_INDEX = index.wrapping_add(4));
+        {
+            let fx_value = SOUNDS[usize::from(index >> 1) + 1]
+                .wrapping_add(word!(game.RANDOM_NUMBER) & 3)
+                .wrapping_add(carry);
+            let mut fx = game.fx_controls();
+            fx.earthquake_sound_timer = fx_value;
+            game.publish_fx_controls(fx, &[crate::fx_state::Field::EarthquakeSoundTimer]);
+        };
+        {
+            let fx_value = index.wrapping_add(4);
+            let mut fx = game.fx_controls();
+            fx.earthquake_sound_index = fx_value;
+            game.publish_fx_controls(fx, &[crate::fx_state::Field::EarthquakeSoundIndex]);
+        };
     }
-    crate::room_view::set_effect(game, crate::room_view::EffectWord::EarthquakeKind, kind);
-    crate::room_view::set_effect(
+    crate::gameplay_context::set_effect(game, crate::room_view::EffectWord::EarthquakeKind, kind);
+    crate::gameplay_context::set_effect(
         game,
         crate::room_view::EffectWord::EarthquakeTimer,
-        crate::room_view::effects(game).earthquake_timer | EARTHQUAKE_TIMER,
+        crate::gameplay_context::room_effects(game).earthquake_timer | EARTHQUAKE_TIMER,
     );
 }
 
@@ -133,7 +129,7 @@ pub fn initialize_tourian_statue<H: crate::menus::host::Host + ?Sized>(game: &mu
         crate::room_mechanisms::creation::spawn_hardcoded(6, 12, 0xb777, game);
         crate::word_transfers!(game, ascending, 1; native(0xcd20) <- value(514));
     }
-    game.ram().write_byte(0x59, 74);
+    game.store_display_control_byte(DisplayField::Screens1, 74, DisplayStore::Named);
     crate::liquid::LiquidWords::set(game, |words| &mut words.liquid.rising, 0xc428);
     crate::liquid::LiquidWords::set(
         game,
@@ -146,7 +142,7 @@ pub fn initialize_tourian_statue<H: crate::menus::host::Host + ?Sized>(game: &mu
 }
 
 pub fn advance_tourian_statue<H: crate::menus::host::Host + StatueHost + ?Sized>(
-    object: &mut crate::hdma::HdmaObject,
+    hdma_index: usize,
     phase: TourianStatuePhase,
     handler_carry: bool,
     game: &mut H,
@@ -161,13 +157,13 @@ pub fn advance_tourian_statue<H: crate::menus::host::Host + StatueHost + ?Sized>
                 .all(|event| crate::progress::leased::event_has_happened(event, game) & 1 != 0)
                 && game.begin_statue_animation()
             {
-                object.c = 300;
-                advance_statue_program(object);
+                crate::hdma_word!(game, hdma_index, C => 300);
+                advance_statue_program(hdma_index, game);
             }
         }
         Shaking => {
-            object.c = object.c.wrapping_sub(1);
-            if object.c & 0x8000 != 0 {
+            crate::hdma_word!(game, hdma_index, C => crate::hdma_word!(game, hdma_index, C).wrapping_sub(1));
+            if crate::hdma_word!(game, hdma_index, C) & 0x8000 != 0 {
                 // The spawns take their initialisation parameter from A: the
                 // shake's earthquake timer 20h ($88:DC2C), then each spawn's
                 // returned slot.
@@ -179,7 +175,7 @@ pub fn advance_tourian_statue<H: crate::menus::host::Host + StatueHost + ?Sized>
                         game,
                     );
                 }
-                advance_statue_program(object);
+                advance_statue_program(hdma_index, game);
             }
         }
         Sinking => {
@@ -187,13 +183,15 @@ pub fn advance_tourian_statue<H: crate::menus::host::Host + StatueHost + ?Sized>
                 return;
             }
             // A is the fraction and B the whole of the statue's scroll offset.
-            let position = (u32::from(object.a) | u32::from(object.b) << 16).wrapping_sub(0x4000);
-            object.a = position as u16;
-            object.b = (position >> 16) as u16;
-            if object.b == 0xff10 {
+            let position = (u32::from(crate::hdma_word!(game, hdma_index, A))
+                | u32::from(crate::hdma_word!(game, hdma_index, B)) << 16)
+                .wrapping_sub(0x4000);
+            crate::hdma_word!(game, hdma_index, A => position as u16);
+            crate::hdma_word!(game, hdma_index, B => (position >> 16) as u16);
+            if crate::hdma_word!(game, hdma_index, B) == 0xff10 {
                 crate::room_mechanisms::creation::spawn_hardcoded(6, 12, 0xb773, game);
                 crate::progress::leased::mark_event(0xa, game);
-                advance_statue_program(object);
+                advance_statue_program(hdma_index, game);
             }
         }
         Finished => {
@@ -201,13 +199,17 @@ pub fn advance_tourian_statue<H: crate::menus::host::Host + StatueHost + ?Sized>
             crate::word_transfers!(game, ascending, 1; native(0xcd20) <- value(514));
         }
     }
-    let scroll = crate::camera::current(game).layer1[1].wrapping_add(object.b);
-    crate::word_transfers!(game, ascending, 1; native(0x9e00) <- value(scroll));
+    let scroll =
+        crate::camera::current(game).layer1[1].wrapping_add(crate::hdma_word!(game, hdma_index, B));
+    game.store_source_word(LiveOwner::WindowLeft, 0, native_order(), scroll);
 }
 
-fn advance_statue_program(object: &mut crate::hdma::HdmaObject) {
-    object.instruction_timer = 1;
-    object.instruction_list = object.instruction_list.wrapping_add(2);
+fn advance_statue_program<H: crate::hdma_objects::HdmaTable + ?Sized>(
+    hdma_index: usize,
+    game: &mut H,
+) {
+    crate::hdma_word!(game, hdma_index, InstructionTimer => 1);
+    crate::hdma_word!(game, hdma_index, InstructionList => crate::hdma_word!(game, hdma_index, InstructionList).wrapping_add(2));
 }
 
 pub fn initialize_weather<H: crate::menus::host::Host + ?Sized>(weather: Weather, game: &mut H) {
@@ -217,7 +219,7 @@ pub fn initialize_weather<H: crate::menus::host::Host + ?Sized>(weather: Weather
         Weather::Spores => (0x42, 0xda2d, Some(ADDR_K_ANIMTILES_SPORES)),
         Weather::Fog => (0x43, 0xdb19, None),
     };
-    game.ram().write_byte(0x5b, 92);
+    game.store_display_control_byte(DisplayField::Background3Map, 92, DisplayStore::Named);
     game.spawn_hdma(0x88, &HdmaObjectDefinition::new(control, 0x11, program));
     if let Some(tiles) = tiles {
         spawn_bg3_scroll(game);
@@ -268,9 +270,13 @@ pub fn scroll_weather<H: crate::menus::host::Host + ?Sized>(
     weather: Weather,
     game: &mut H,
 ) {
-    use crate::ram::checked_word;
-    game.ram().write_byte(0x5b, 92);
-    checked_word!(game.FX_LAYER_BLENDING_CONFIG_C = checked_word!(game.FX_LAYER_BLENDING_CONFIG_B));
+    game.store_display_control_byte(DisplayField::Background3Map, 92, DisplayStore::Named);
+    {
+        let fx_value = game.room_blending().liquid;
+        let mut fx = game.fx_controls();
+        fx.blending = fx_value;
+        game.publish_fx_controls(fx, &[crate::fx_state::Field::Blending]);
+    };
     if crate::sequence_word!(game.TIME_IS_FROZEN_FLAG) != 0 {
         return;
     }

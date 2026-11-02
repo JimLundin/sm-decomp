@@ -410,3 +410,17 @@ impl<I: Inputs> TileHost for Owned<'_, I> {
         Ok(())
     }
 }
+
+/// The fresh definition observation after the body has finished its tile requests.
+pub fn definition_byte_owned(
+    state: &mut DisplayState,
+    media: &SceneMedia,
+    inputs: &mut impl Inputs,
+) -> Result<u8, DisplayError> {
+    definition(&mut Owned {
+        state,
+        media,
+        inputs,
+    })?
+    .byte(0)
+}

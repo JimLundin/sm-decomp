@@ -113,14 +113,21 @@ pub use crate::geometry::{FixedMotion, Point, Position, Rectangle, Vector32};
 use crate::item_pickups::Inventory;
 #[derive(Clone, Debug, PartialEq)]
 pub struct Session {
+    pub game_loop: crate::game_loop::GameLoop,
     pub actor_identity: crate::actors::identity::ActorIdentityState,
     pub actors: crate::actors::state::Actors,
     pub botwoon_death: crate::actors::botwoon_death::DeathProtocol,
     pub timing: Timing,
+    pub fx: crate::fx_state::FxState,
+    pub fx_control_ownership: crate::fx_state::ControlOwnership,
+    /// Legacy source authority is absent once the actual Display owner adopts it.
+    pub fx_sources: Option<crate::scene::hdma_sources::HdmaLiveDescription>,
     pub options: Options,
     pub flow: crate::flow::Flow,
     pub menu: crate::menu_state::MenuState,
+    pub menu_window: crate::menu_window_state::WindowState,
     pub menu_screens: crate::menu_state::MenuScreens,
+    pub prepared_dialogue: Option<crate::message_composition::prepared::ExecutionDescription>,
     pub world: std::sync::Arc<crate::room_entry::world::WorldBinding>,
     pub control: crate::session_owners::Control,
     pub gameplay_flags: crate::gameplay_flag_state::GameplayFlags,
@@ -135,8 +142,9 @@ pub struct Session {
     pub inventory: Inventory,
     pub mechanisms: Mechanisms,
     pub room: Room,
+    pub queued_tilemaps: crate::display::queued_tilemaps::QueuedTilemaps,
     pub feedback: Feedback,
-    /// HDMA objects ($18B0â€“$195B); see `crate::hdma`.
+    /// HDMA objects ($18B0ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“$195B); see `crate::hdma`.
     pub hdma: crate::hdma::HdmaObjects,
     pub messages: MessageRequests,
     pub spawn_scratch: SpawnScratch,
@@ -147,6 +155,124 @@ pub struct Session {
     pub pointer_scratch: PointerScratch,
 }
 impl Session {
+    pub fn publish_workspace_byte(
+        &mut self,
+        point: crate::presentation_workspace::Point,
+        value: u8,
+    ) -> Result<(), crate::scene::state::DisplayError> {
+        if self.presentation.is_owned() {
+            crate::fx_sources::publish_workspace_byte(
+                &mut self.presentation.owner_mut()?.state,
+                point,
+                value,
+            )
+        } else {
+            self.presentation.workspace_mut().write_byte(point, value)
+        }
+    }
+    pub fn publish_workspace_slice(
+        &mut self,
+        point: crate::presentation_workspace::Point,
+        bytes: &[u8],
+    ) -> Result<(), crate::scene::state::DisplayError> {
+        if self.presentation.is_owned() {
+            crate::fx_sources::publish_workspace_slice(
+                &mut self.presentation.owner_mut()?.state,
+                point,
+                bytes,
+            )
+        } else {
+            self.presentation.workspace_mut().write_slice(point, bytes)
+        }
+    }
+
+    /// Bind aliases only after all actual window fields have been supplied.
+    pub fn bind_fx_window_sources(
+        &mut self,
+        layout: crate::fx_sources::WindowControlLayout,
+    ) -> Result<(), crate::scene::state::DisplayError> {
+        if !self.menu_window.is_initialized() {
+            return Err(crate::scene::state::DisplayError::Incomplete);
+        }
+        // Return every former selected value before changing canonical owners.
+        let origins = if self.fx_control_ownership.initialized {
+            let display = &self.presentation.owner()?.state;
+            let graph = crate::fx_encoding::display_control_graph(display)?;
+            let origins = crate::fx_encoding::capture_control_origins(display, &graph)?;
+            crate::fx_encoding::materialize_controls(self)?;
+            origins
+        } else {
+            Default::default()
+        };
+        let result = self
+            .presentation
+            .owner_mut()?
+            .state
+            .hdma_live
+            .bind_window_controls(layout, Some(&self.menu_window));
+        crate::fx_encoding::reconcile_control_origins(
+            &mut self.presentation.owner_mut()?.state,
+            &origins,
+        )?;
+        crate::fx_encoding::adopt_control_ownership(self)?;
+        result
+    }
+    /// Prepared settlement borrows the same window used by menu transitions.
+    pub fn settle_display(
+        &mut self,
+        effects: &mut impl crate::scene::commit::SettlementEffects,
+    ) -> Result<(), crate::scene::state::DisplayError> {
+        let mut controls = crate::fx_sources::ExternalControls {
+            fx: &mut self.fx,
+            window: &mut self.menu_window,
+            room_primary: &mut self.room.fx_blending,
+            room_liquid: &mut self.room.fx_layer3_blending,
+            ownership: &mut self.fx_control_ownership,
+        };
+        self.presentation
+            .owner_mut()?
+            .settle_with_controls(&mut controls, effects)
+    }
+    /// Interpreter and live ObjectVariable bindings borrow the same active table.
+    /// Readonly snapshot for capture, extraction and display refresh epochs.
+    pub fn hdma_objects(&self) -> crate::hdma::HdmaObjects {
+        crate::fx_encoding::session_common(self)
+    }
+    pub fn hdma_word(&self, word: crate::hdma::Word) -> u16 {
+        crate::fx_encoding::control_word(self, word.address())
+    }
+    pub fn store_hdma_word(
+        &mut self,
+        word: crate::hdma::Word,
+        value: u16,
+        order: crate::scene::state::WordOrder,
+    ) {
+        let at = word.address();
+        let [first, second] = order.encode(value);
+        crate::fx_encoding::write_control_byte(self, at, first);
+        crate::fx_encoding::write_control_byte(self, at + 1, second);
+    }
+    pub fn store_hdma_byte(&mut self, word: crate::hdma::Word, high: bool, value: u8) {
+        crate::fx_encoding::write_control_byte(self, word.address() + usize::from(high), value);
+    }
+    /// Scalar storage access is restricted to projection import, codecs and the
+    /// provider resolver. Active consumers use hdma_word/store_hdma_word.
+    pub fn hdma_scalar_objects(&self) -> &crate::hdma::HdmaObjects {
+        match &self.presentation {
+            crate::session_owners::Presentation::Owned { display, .. } => {
+                &display.owner().state.hdma.common
+            }
+            crate::session_owners::Presentation::Legacy(_) => &self.hdma,
+        }
+    }
+    pub fn hdma_scalar_objects_mut(&mut self) -> &mut crate::hdma::HdmaObjects {
+        match &mut self.presentation {
+            crate::session_owners::Presentation::Owned { display, .. } => {
+                &mut display.owner_mut().state.hdma.common
+            }
+            crate::session_owners::Presentation::Legacy(_) => &mut self.hdma,
+        }
+    }
     /// The current room's compatibility key, as $079B encodes it.
     pub fn room_key(&self) -> u16 {
         self.world.room_key(&self.room.entry.room)
@@ -164,15 +290,22 @@ impl Session {
     }
     pub fn with_world(world: std::sync::Arc<crate::room_entry::world::WorldBinding>) -> Self {
         Self {
+            game_loop: crate::game_loop::GameLoop::default(),
             actor_identity: crate::actors::identity::ActorIdentityState::empty(),
             actors: Default::default(),
             botwoon_death: Default::default(),
             timing: Default::default(),
+            fx: Default::default(),
+            fx_control_ownership: Default::default(),
+            fx_sources: None,
             options: Default::default(),
             flow: Default::default(),
             menu: Default::default(),
+            menu_window: Default::default(),
             menu_screens: Default::default(),
+            prepared_dialogue: None,
             room: Room::with_world(&world),
+            queued_tilemaps: crate::display::queued_tilemaps::QueuedTilemaps::initialized(),
             world,
             control: crate::session_owners::Control::legacy(),
             gameplay_flags: Default::default(),
@@ -498,6 +631,9 @@ pub struct Feedback {
 }
 #[derive(Clone, Default, Debug, PartialEq)]
 pub struct MessageRequests {
+    pub active_index: u16,
+    pub delay: u16,
+    pub selection: u16,
     pub queued: u16,
     /// The message box's animation Y radius ($7E:05A2).
     pub box_radius: u16,
@@ -624,6 +760,7 @@ pub struct Options {
 
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct Timing {
+    pub countdown: crate::escape_countdown::State,
     pub frame_counter: u16,
     /// The last random number ($7E:05E5).
     pub random_number: u16,
@@ -631,4 +768,33 @@ pub struct Timing {
     pub time_frozen: u16,
     /// The HUD timer's state ($7E:0943): 0 off, then counting phases.
     pub timer_status: u16,
+}
+
+impl crate::presentation_workspace::SliceWriter for Session {
+    fn write_slice(
+        &mut self,
+        point: crate::presentation_workspace::Point,
+        bytes: &[u8],
+    ) -> Result<(), crate::scene::state::DisplayError> {
+        self.publish_workspace_slice(point, bytes)
+    }
+}
+
+impl crate::presentation_workspace::Canvas for Session {
+    fn byte(
+        &self,
+        point: crate::presentation_workspace::Point,
+    ) -> Result<u8, crate::scene::state::DisplayError> {
+        self.presentation.workspace().byte(point)
+    }
+    fn native_order(&self) -> crate::scene::state::WordOrder {
+        self.presentation.workspace().native_order
+    }
+    fn write_byte(
+        &mut self,
+        point: crate::presentation_workspace::Point,
+        value: u8,
+    ) -> Result<(), crate::scene::state::DisplayError> {
+        self.publish_workspace_byte(point, value)
+    }
 }

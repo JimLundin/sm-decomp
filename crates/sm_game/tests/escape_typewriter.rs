@@ -113,6 +113,14 @@ impl sm_game::display_scroll::Access for World {
         self.ram[0xb1 + 2 * usize::from(word) + usize::from(high)] = value;
     }
 }
+impl sm_game::gameplay_context::Access for World {
+    fn gameplay_word(&self, _: sm_game::gameplay_context::Word) -> u16 {
+        panic!("input and game-loop owner was not supplied")
+    }
+    fn set_gameplay_byte(&mut self, _: sm_game::gameplay_context::Word, _: usize, _: u8) {
+        panic!("input and game-loop owner was not supplied")
+    }
+}
 impl CompatibilityRam for World {
     fn compatibility_byte(&self, at: usize) -> u8 {
         self.ram[at]

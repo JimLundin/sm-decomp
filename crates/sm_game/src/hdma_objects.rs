@@ -1,11 +1,14 @@
 //! HDMA objects: allocation, channel setup, the per-frame program interpreter and the room effect reset.
 use crate::cinematic::cinematic_native_record;
+use crate::display::preparation::{Field as DisplayField, Store as DisplayStore};
 use crate::display::registers::{DMAP0, HDMAEN, MDMAEN};
 use crate::display::sequence::Registers;
 use crate::display_refresh::DisplayOwner;
 use crate::imported::word as table_word;
 use crate::ram::RawRam as _;
 use crate::ram::{checked_word, word};
+use crate::scene::hdma_sources::LiveOwner;
+use crate::scene::state::WordOrder;
 use crate::session_access::SessionAccess;
 
 /// The HDMA effects whose state the host's session view projects.
@@ -87,31 +90,16 @@ pub fn spawn_hdma_words<H: crate::menus::host::Host + ?Sized>(
     place_hdma(None, bank, read_word, game)
 }
 
-/// The HDMA object table's owner: a lease's Session, or what `with_table`
-/// opens for a host that holds none.
+/// Current common-table access through the actual HDMA source owner.
 pub trait HdmaTable {
-    fn with_hdma_table<T>(&mut self, action: impl FnOnce(&mut crate::hdma::HdmaObjects) -> T) -> T;
-}
-
-/// Run `action` on the HDMA table: the owned Session's under one lease when
-/// one can open, otherwise a copy decoded from RAM and stored back if
-/// `action` changed it.
-pub fn with_table<H, T>(game: &mut H, action: impl FnOnce(&mut crate::hdma::HdmaObjects) -> T) -> T
-where
-    H: crate::ram::WorkRamAccess + crate::runtime_access::RuntimeAccess + ?Sized,
-{
-    use crate::session_access::SessionAccess;
-    if game.runtime_admissible() {
-        action(&mut game.runtime().session_mut().hdma)
-    } else {
-        let mut bridge = Bridged::load(game);
-        let before = bridge.objects;
-        let result = action(&mut bridge.objects);
-        if bridge.objects != before {
-            bridge.store();
-        }
-        result
-    }
+    fn hdma_word(&self, word: crate::hdma::Word) -> u16;
+    fn store_hdma_word(
+        &mut self,
+        word: crate::hdma::Word,
+        value: u16,
+        order: crate::scene::state::WordOrder,
+    );
+    fn store_hdma_byte(&mut self, word: crate::hdma::Word, high: bool, value: u8);
 }
 
 /// Initialize object `slot`, or the first free one, from bank `bank`'s
@@ -124,25 +112,23 @@ fn place_hdma<H: crate::menus::host::Host + ?Sized>(
     read_word: impl Fn(usize) -> u16,
     game: &mut H,
 ) -> u16 {
-    let placed = game.with_hdma_table(|table| {
-        let slot = slot.or_else(|| (0..6).find(|&slot| table.objects[slot].channels == 0))?;
-        let object = &mut table.objects[slot];
-        object.pre_instruction = 0x84b8;
-        object.pre_instruction_bank = 0x88;
-        object.instruction_list = read_word(1);
-        object.instruction_timer = 1;
-        object.timer = 0;
-        object.a = 0;
-        object.b = 0;
-        object.c = 0;
-        object.d = 0;
-        object.channels = 4 << slot;
-        object.bank_slot = (u16::from(bank) << 8) | channel(slot);
-        Some(slot)
+    let slot = slot.or_else(|| {
+        (0..crate::hdma::OBJECTS).find(|&slot| crate::hdma_word!(&*game, slot, Channels) == 0)
     });
-    let Some(slot) = placed else {
+    let Some(slot) = slot else {
         return u16::MAX;
     };
+    crate::hdma_word!(game, slot, PreInstruction => 0x84b8);
+    crate::hdma_word!(game, slot, PreInstructionBank => 0x88);
+    crate::hdma_word!(game, slot, InstructionList => read_word(1));
+    crate::hdma_word!(game, slot, InstructionTimer => 1);
+    crate::hdma_word!(game, slot, Timer => 0);
+    crate::hdma_word!(game, slot, A => 0);
+    crate::hdma_word!(game, slot, B => 0);
+    crate::hdma_word!(game, slot, C => 0);
+    crate::hdma_word!(game, slot, D => 0);
+    crate::hdma_word!(game, slot, Channels => 4 << slot);
+    crate::hdma_word!(game, slot, BankSlot => (u16::from(bank) << 8) | channel(slot));
     let control = read_word(0);
     let register = DMAP0 as u16 + channel(slot);
     game.write_dma_register(register, control as u8);
@@ -157,9 +143,8 @@ fn channel(slot: usize) -> u16 {
 
 /// Set or clear the flag that runs the objects each frame (bit 15).
 pub fn set_hdma_enabled<H: HdmaTable + ?Sized>(enabled: bool, game: &mut H) {
-    game.with_hdma_table(|table| {
-        table.enabled = (table.enabled & 0x7fff) | (u16::from(enabled) << 15);
-    });
+    let value = (game.hdma_word(crate::hdma::Word::Enabled) & 0x7fff) | (u16::from(enabled) << 15);
+    game.store_hdma_word(crate::hdma::Word::Enabled, value, WordOrder::Little);
 }
 
 /// Free the object at byte slot `slot` by clearing its channel mask, as the
@@ -170,11 +155,12 @@ where
     H: crate::ram::WorkRamAccess
         + crate::ram::CompatibilityRam
         + crate::runtime_access::RuntimeAccess
+        + HdmaTable
         + ?Sized,
 {
     let index = usize::from(slot >> 1);
     if index < crate::hdma::OBJECTS {
-        with_table(game, |table| table.objects[index].channels = 0);
+        crate::hdma_word!(game, index, Channels => 0);
     } else {
         checked_word!(game.HDMA_OBJECT_CHANNELS_BITMASK[index] = 0);
     }
@@ -182,7 +168,7 @@ where
 
 /// Clear the whole flag word, as the map screen does on entry.
 pub fn clear_hdma_flags<H: HdmaTable + ?Sized>(game: &mut H) {
-    game.with_hdma_table(|table| table.enabled = 0);
+    game.store_hdma_word(crate::hdma::Word::Enabled, 0, WordOrder::Little);
 }
 
 /// Free every object and clear the HDMA channel enable mirror.
@@ -192,11 +178,9 @@ pub fn clear_hdma_channels<
     game: &mut H,
 ) {
     crate::frame_display_byte!(game, crate::display::preparation::Field::HdmaEnable => 0);
-    game.with_hdma_table(|table| {
-        for object in table.objects.iter_mut().rev() {
-            object.channels = 0;
-        }
-    });
+    for index in (0..crate::hdma::OBJECTS).rev() {
+        crate::hdma_word!(game, index, Channels => 0);
+    }
 }
 
 pub fn clear_hdma<
@@ -217,6 +201,7 @@ where
         + crate::ram::CompatibilityRam
         + DisplayOwner
         + SessionAccess
+        + crate::fx_domain::Controls
         + ?Sized,
 {
     use crate::display::registers::{WMADDH, WMADDL, WMADDM};
@@ -225,7 +210,12 @@ where
         word!(game.ROOM_PTR),
         0x9804 | 0x96ba | 0xb32e | 0xb457 | 0xdd58 | 0xdede
     ) {
-        word!(game.EARTHQUAKE_SFX_TIMER = 0xffff);
+        {
+            let fx_value = 0xffff;
+            let mut fx = game.fx_controls();
+            fx.earthquake_sound_timer = fx_value;
+            game.publish_fx_controls(fx, &[crate::fx_state::Field::EarthquakeSoundTimer]);
+        };
     }
     word!(game.DEBUG_DISABLE_MINIMAP = 0);
     for channel in (0x20..0x80u16).step_by(0x10) {
@@ -242,15 +232,35 @@ where
         |words| &mut words.liquid.lava_acid.whole,
         -1i32 as u16,
     );
-    word!(game.HUD_BG3_XPOS = 0);
-    word!(game.HUD_BG3_YPOS = 0);
-    word!(game.BG3_XPOS = 0);
-    word!(game.BG3_YPOS = 0);
+    {
+        let fx_value = 0;
+        let mut fx = game.fx_controls();
+        fx.hud_scroll[0] = fx_value;
+        game.publish_fx_controls(fx, &[crate::fx_state::Field::HudHorizontal]);
+    };
+    {
+        let fx_value = 0;
+        let mut fx = game.fx_controls();
+        fx.hud_scroll[1] = fx_value;
+        game.publish_fx_controls(fx, &[crate::fx_state::Field::HudVertical]);
+    };
+    {
+        let fx_value = 0;
+        let mut fx = game.fx_controls();
+        fx.effect_scroll[0] = fx_value;
+        game.publish_fx_controls(fx, &[crate::fx_state::Field::EffectHorizontal]);
+    };
+    {
+        let fx_value = 0;
+        let mut fx = game.fx_controls();
+        fx.effect_scroll[1] = fx_value;
+        game.publish_fx_controls(fx, &[crate::fx_state::Field::EffectVertical]);
+    };
     word!(game.IRQ_ENABLE_MODE7 = 0);
     word!(game.CAMERA_DISTANCE_INDEX = 0);
     game.session_mut().mechanisms.statue_animation = 0;
     game.session_mut().mechanisms.statue_finished = 0;
-    crate::room_view::set_effect(game, crate::room_view::EffectWord::EarthquakeTimer, 0);
+    crate::gameplay_context::set_effect(game, crate::room_view::EffectWord::EarthquakeTimer, 0);
     word!(game.PHANTOM_RELATED_LAYER_FLAG = 0);
     let session = game.session_mut();
     session.projectiles.power_bomb.explosion_status = 0;
@@ -267,7 +277,12 @@ where
     crate::liquid::LiquidWords::set(game, |words| &mut words.liquid.tide_phase, 0);
     crate::liquid::LiquidWords::set(game, |words| &mut words.liquid.offset.fraction, 0);
     crate::liquid::LiquidWords::set(game, |words| &mut words.liquid.offset.whole, 0);
-    crate::sequence_word!(game.FX_LAYER_BLENDING_CONFIG_A = 2);
+    {
+        let fx_value = 2;
+        let mut room_blending = game.room_blending();
+        room_blending.primary = fx_value;
+        game.publish_room_blending(room_blending, true);
+    };
     {
         crate::display_scroll::write(game, crate::display_scroll::Word::Bg3H, 0);
         crate::display_scroll::write(game, crate::display_scroll::Word::Bg3V, 0);
@@ -326,10 +341,13 @@ where
         spawn_hdma(0x88, &HdmaObjectDefinition::new(0x40, 0x28, 0x8ace), game);
         spawn_hdma(0x88, &HdmaObjectDefinition::new(0x40, 0x29, 0x8b80), game);
     }
-    checked_word!(
-        game.FX_LAYER_BLENDING_CONFIG_C = crate::sequence_word!(game.FX_LAYER_BLENDING_CONFIG_A)
-    );
-    if checked_word!(game.HDMA_OBJECTS_ENABLE_FLAG) & 0x8000 != 0 {
+    {
+        let fx_value = game.room_blending().primary;
+        let mut fx = game.fx_controls();
+        fx.blending = fx_value;
+        game.publish_fx_controls(fx, &[crate::fx_state::Field::Blending]);
+    };
+    if game.hdma_word(crate::hdma::Word::Enabled) & 0x8000 != 0 {
         crate::hdma_program::run_objects(handler_carry, game);
         crate::layer_blending::update(game);
     }
@@ -344,7 +362,7 @@ pub(crate) fn refresh_title_gradient<H: crate::menus::host::Host + ?Sized>(game:
     );
     for slot in 0usize.. {
         let value = cinematic_native_record::<0x8c>(cursor, game).word(0);
-        word!(game.HDMA_TABLE_1[slot] = value);
+        game.store_source_word(LiveOwner::HdmaTable1, 2 * slot, WordOrder::Little, value);
         if value == 0 {
             break;
         }
@@ -367,41 +385,46 @@ pub fn advance_intro_crossfade<H: crate::menus::host::Host + ?Sized>(game: &mut 
     }
 }
 
-/// The table's RAM words, decoded.
-pub fn read_table<H: crate::ram::WorkRamAccess + ?Sized>(game: &H) -> crate::hdma::HdmaObjects {
-    let ram = game.ram();
+/// Readonly capture of the actual current common-table source values.
+pub fn read_table<H: HdmaTable + ?Sized>(game: &H) -> crate::hdma::HdmaObjects {
     let mut objects = crate::hdma::HdmaObjects::default();
     crate::hdma_program::table_words(&mut objects, |at, word| {
-        *word = u16::from_le_bytes([ram.read_byte(at), ram.read_byte(at + 1)]);
+        let key = match at {
+            0x18b0 => crate::hdma::Word::Enabled,
+            0x18b2 => crate::hdma::Word::Selected,
+            _ => {
+                let offset = at - 0x18b4;
+                crate::hdma::Word::Object {
+                    index: (offset % 12) / 2,
+                    field: crate::hdma::ObjectWord::ALL[offset / 12],
+                }
+            }
+        };
+        *word = game.hdma_word(key);
     });
     objects
 }
 
-/// The table decoded from RAM, for hosts that cannot open a lease now.
+/// Nonleased interpreter access; callbacks and words share the same host owner.
 pub(crate) struct Bridged<'a, H: ?Sized> {
     game: &'a mut H,
-    objects: crate::hdma::HdmaObjects,
 }
 
-impl<'a, H: crate::ram::WorkRamAccess + ?Sized> Bridged<'a, H> {
+impl<'a, H: ?Sized> Bridged<'a, H> {
     pub(crate) fn load(game: &'a mut H) -> Self {
-        let mut bridge = Self {
-            game,
-            objects: crate::hdma::HdmaObjects::default(),
-        };
-        bridge.reload();
-        bridge
+        Self { game }
     }
-    fn reload(&mut self) {
-        self.objects = read_table(self.game);
+}
+
+impl<H: HdmaTable + ?Sized> HdmaTable for Bridged<'_, H> {
+    fn hdma_word(&self, word: crate::hdma::Word) -> u16 {
+        self.game.hdma_word(word)
     }
-    pub(crate) fn store(&mut self) {
-        let ram = self.game.ram();
-        crate::hdma_program::table_words(&mut self.objects, |at, word| {
-            let [low, high] = word.to_le_bytes();
-            ram.write_byte(at, low);
-            ram.write_byte(at + 1, high);
-        });
+    fn store_hdma_word(&mut self, word: crate::hdma::Word, value: u16, order: WordOrder) {
+        self.game.store_hdma_word(word, value, order);
+    }
+    fn store_hdma_byte(&mut self, word: crate::hdma::Word, high: bool, value: u8) {
+        self.game.store_hdma_byte(word, high, value);
     }
 }
 
@@ -409,9 +432,6 @@ impl<H: crate::hdma_dispatch::DispatchHost + ?Sized> crate::hdma_program::Interp
     for Bridged<'_, H>
 {
     type Game = H;
-    fn objects(&mut self) -> &mut crate::hdma::HdmaObjects {
-        &mut self.objects
-    }
     fn byte(&self, at: usize) -> u8 {
         self.game.ram().read_byte(at)
     }
@@ -422,10 +442,7 @@ impl<H: crate::hdma_dispatch::DispatchHost + ?Sized> crate::hdma_program::Interp
         self.game.native_image()
     }
     fn foreign<T>(&mut self, action: impl FnOnce(&mut H) -> T) -> T {
-        self.store();
-        let result = action(self.game);
-        self.reload();
-        result
+        action(self.game)
     }
 }
 
@@ -438,6 +455,6 @@ pub(crate) fn write_channel_register<H: crate::menus::host::Host + ?Sized>(
 }
 
 pub(crate) fn restart_title_gradient<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    game.ram().write_byte(0x6f, 0);
+    game.store_display_control_byte(DisplayField::ColorSelection, 0, DisplayStore::Named);
     refresh_title_gradient(game);
 }

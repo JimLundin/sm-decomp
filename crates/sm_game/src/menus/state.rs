@@ -1,12 +1,13 @@
 //! Committed menu UI authority and rollback-preserving working values.
 #![forbid(unsafe_code)]
 use crate::menu_state::{
-    DeathSequence, MapScreenState, MenuScreens, MenuState, OptionsMenu, SaveSelection,
+    DeathSequence, MapScreenState, MenuGraphics, MenuScreens, MenuState, OptionsMenu, SaveSelection,
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct State {
     pub menu: MenuState,
+    pub window: crate::menu_window_state::WindowState,
     pub screens: MenuScreens,
 }
 
@@ -112,6 +113,28 @@ value!(
     [menu_option_index, debug_invincibility, screen_index]
 );
 value!(DeathSequence, screens.death, [index, counter, flash_timer]);
+impl Value for MenuGraphics {
+    fn get(state: &State) -> Self {
+        state.screens.graphics
+    }
+    fn replace(value: &Self, state: &mut State) {
+        state.screens.graphics = *value;
+    }
+    fn merge(before: &Self, after: &Self, state: &mut State) {
+        for ((target, old), new) in state
+            .screens
+            .graphics
+            .bytes
+            .iter_mut()
+            .zip(before.bytes)
+            .zip(after.bytes)
+        {
+            if old != new {
+                *target = new;
+            }
+        }
+    }
+}
 
 impl Value for MenuScreens {
     fn get(state: &State) -> Self {
@@ -125,6 +148,7 @@ impl Value for MenuScreens {
         SaveSelection::merge(&before.save_selection, &after.save_selection, state);
         OptionsMenu::merge(&before.options_menu, &after.options_menu, state);
         DeathSequence::merge(&before.death, &after.death, state);
+        MenuGraphics::merge(&before.graphics, &after.graphics, state);
     }
 }
 

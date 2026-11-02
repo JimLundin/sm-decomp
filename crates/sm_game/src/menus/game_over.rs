@@ -11,7 +11,6 @@ use crate::menu_state::MenuState;
 use crate::menu_state::SaveSelection;
 use crate::menus::menu_tilemap;
 use crate::menus::save_slots;
-use crate::ram::RawRam as _;
 use crate::session_slot;
 
 /// Requires a live, exclusively accessed graphics backend and native ROM allocation
@@ -37,7 +36,7 @@ pub fn advance<H: crate::menus::host::Host + ?Sized>(game: &mut H) -> CoroutineR
 fn prepare<H: crate::menus::host::Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
     if !super::resuming(game) {
         game.fade(false);
-        if game.ram().read_byte(crate::ram::mirror::INIDISP) & 0xf != 0 {
+        if game.display_control_byte(crate::display::preparation::Field::Brightness) & 0xf != 0 {
             return;
         }
     }
@@ -47,8 +46,19 @@ fn prepare<H: crate::menus::host::Host + ?Sized>(menu: &mut MenuState, game: &mu
     game.queue_sound(2, 1_u8, 6);
     crate::hdma_objects::set_hdma_enabled(false, game);
     crate::hdma_objects::clear_hdma(game);
-    crate::word_transfers!(game, ascending, 256; pause_map(384) <- le(PALETTE_BUFFER, 0));
-    crate::word_transfers!(game, ascending, 27; pause_map(640) <- native(0x51));
+    for index in 0..256 {
+        let color = game.palette_word(false, 2 * index);
+        game.screen_write_native_word(Point::new(Role::Pause, 2 * (384 + index)), color);
+    }
+    for index in 0..27 {
+        // Native device/control spill bytes remain an explicit readback boundary.
+        let address = 0x51 + 2 * index;
+        let value = u16::from_ne_bytes([
+            game.compatibility_byte(address),
+            game.compatibility_byte(address + 1),
+        ]);
+        game.screen_write_native_word(Point::new(Role::Pause, 2 * (640 + index)), value);
+    }
     menu_tilemap::prepare_graphics(game);
     display_scroll! { game, 0; Bg1H, Bg2H, Bg3H, Bg1V, Bg2V, Bg3V }
     menu_tilemap::load_palette(game);
@@ -72,8 +82,14 @@ fn initialize<H: crate::menus::host::Host + ?Sized>(menu: &mut MenuState, game: 
 
 /// Index 1 up to the clear-forced-blank wait: the menu, the baby and the gradient.
 fn draw_menu<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    for (at, value) in [(0x69, 17), (0x74, 32), (0x75, 64), (0x76, 0x80)] {
-        game.ram().write_byte(at, value);
+    use crate::display::preparation::{Field, Store};
+    for (field, value) in [
+        (Field::MainLayers, 17),
+        (Field::FixedColor0, 32),
+        (Field::FixedColor1, 64),
+        (Field::FixedColor2, 0x80),
+    ] {
+        game.store_display_control_byte(field, value, Store::Owned);
     }
     crate::music_requests::queue_delayed_8(0, game);
     crate::music_requests::queue_delayed_8(0xff03, game);
@@ -81,7 +97,15 @@ fn draw_menu<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
         *menu.missile_animation_timer() = 1;
         *menu.missile_animation_frame() = 0;
     });
-    crate::word_transfers!(game, ascending, 1024; native(menu_tilemap::MENU_TILEMAP) <- value(menu_tilemap::BLANK_TILE));
+    game.screen_apply(|workspace| {
+        super::canvas::fill_native(
+            workspace,
+            Point::new(Role::Menu, 0),
+            1024,
+            false,
+            menu_tilemap::BLANK_TILE,
+        )
+    });
     menu_tilemap::upload(
         menu_tilemap::MENU_TILEMAP_BYTES,
         menu_tilemap::MENU_TILEMAP_SOURCE,
@@ -103,9 +127,10 @@ fn draw_menu<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     animate_baby(game, |game| {
         game.rtl_unreachable();
     });
-    let color = u16::from(game.ram().read_byte(crate::ram::bytes::GAMEPLAY_CGWSEL)) << 8;
-    game.ram()
-        .copy_in(crate::ram::mirror::CGWSEL, &color.to_ne_bytes());
+    let color = u16::from(game.display_control_byte(Field::PreviousColorSelection)) << 8;
+    let bytes = color.to_ne_bytes();
+    game.store_display_control_byte(Field::ColorSelection, bytes[0], Store::Owned);
+    game.store_display_control_byte(Field::PreviousColorSelection, bytes[1], Store::Owned);
     crate::hdma_objects::set_hdma_enabled(false, game);
     crate::hdma_objects::clear_hdma(game);
     crate::hdma_objects::set_hdma_enabled(true, game);
@@ -138,7 +163,8 @@ fn fade<H: crate::menus::host::Host + ?Sized>(
     });
     crate::sprite_output::menu_selection(game);
     game.fade(fade_in);
-    if game.ram().read_byte(crate::ram::mirror::INIDISP) & 0xf == brightness {
+    if game.display_control_byte(crate::display::preparation::Field::Brightness) & 0xf == brightness
+    {
         menu.menu_index = menu.menu_index.wrapping_add(1);
     }
 }
@@ -161,7 +187,7 @@ fn choose<H: crate::menus::host::Host + ?Sized>(menu: &mut MenuState, game: &mut
             menu.menu_index = 7;
         } else {
             if selection.loading_game_state == K_GAME_STATE_31_SET_UP_NEW_GAME as u16 {
-                word!(game.GAME_STATE = selection.loading_game_state);
+                crate::gameplay_word!(game.GAME_STATE = selection.loading_game_state);
             } else {
                 menu.menu_index = menu.menu_index.wrapping_add(1);
             }
@@ -193,7 +219,7 @@ fn place_missile<H: Host + ?Sized>(y: u16, game: &mut H) {
 fn load_map<H: crate::menus::host::Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
     crate::hdma_objects::set_hdma_enabled(false, game);
     crate::hdma_objects::clear_hdma(game);
-    word!(game.GAME_STATE = K_GAME_STATE_5_FILE_SELECT_MAP as u16);
+    crate::gameplay_word!(game.GAME_STATE = K_GAME_STATE_5_FILE_SELECT_MAP as u16);
     menu.menu_index = 0;
 }
 
@@ -203,7 +229,7 @@ fn fade_to_title<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
         game.rtl_unreachable();
     });
     game.fade(false);
-    if game.ram().read_byte(crate::ram::mirror::INIDISP) & 0xf == 0 {
+    if game.display_control_byte(crate::display::preparation::Field::Brightness) & 0xf == 0 {
         game.request_reset();
     }
 }
@@ -280,7 +306,7 @@ fn draw_baby<H: crate::menus::host::Host + ?Sized>(cursor: u16, game: &mut H) {
     let palette = baby_record(cursor, game).word(4);
     for index in 0..16 {
         let color = baby_record(palette.wrapping_add(2 * index), game).word(0);
-        word!(game.PALETTE_BUFFER[192 + usize::from(index)] = color);
+        game.palette_write_word(false, 2 * (192 + usize::from(index)), color);
     }
     let sprite = baby_record(cursor, game).word(2);
     crate::sprite_output::menu(sprite, 0x7c, 0x50, 2048, game);

@@ -92,6 +92,7 @@ pub struct WorkRam(
     Rc<Cell<u64>>,
     Rc<Cell<u64>>,
     Rc<Cell<u64>>,
+    Rc<std::cell::RefCell<SourcePublications>>,
 );
 #[forbid(unsafe_code)]
 impl WorkRam {
@@ -107,6 +108,7 @@ impl WorkRam {
             Rc::new(Cell::new(0)),
             Rc::new(Cell::new(0)),
             Rc::new(Cell::new(0)),
+            Rc::new(std::cell::RefCell::new(SourcePublications::default())),
         )
     }
 
@@ -121,8 +123,10 @@ impl WorkRam {
         self.note_menu_write(at..at + 1);
         self.note_scroll_write(at..at + 1);
         self.note_frame_display_write(at..at + 1);
+        self.note_context_write((at..at + 1).clone());
         self.note_sequence_write(at..at + 1);
         cell.set(value);
+        self.note_source_publication(at);
     }
 
     pub fn len(&self) -> usize {
@@ -139,17 +143,20 @@ impl WorkRam {
             self.note_menu_write(destination..destination + count);
             self.note_scroll_write(destination..destination + count);
             self.note_frame_display_write(destination..destination + count);
+            self.note_context_write((destination..destination + count).clone());
             self.note_sequence_write(destination..destination + count);
         }
         if destination > source.start {
             for offset in (0..count).rev() {
                 let byte = self.0.bytes[source.start + offset].get();
                 self.0.bytes[destination + offset].set(byte);
+                self.note_source_publication(destination + offset);
             }
         } else {
             for offset in 0..count {
                 let byte = self.0.bytes[source.start + offset].get();
                 self.0.bytes[destination + offset].set(byte);
+                self.note_source_publication(destination + offset);
             }
         }
     }
@@ -171,14 +178,17 @@ impl WorkRam {
             self.note_menu_write(at..end);
             self.note_scroll_write(at..end);
             self.note_frame_display_write(at..end);
+            self.note_context_write((at..end).clone());
             self.note_sequence_write(at..end);
         }
-        for (cell, &byte) in cells.iter().zip(input) {
+        for (offset, (cell, &byte)) in cells.iter().zip(input).enumerate() {
             cell.set(byte);
+            self.note_source_publication(at + offset);
         }
     }
 
     pub fn fill(&self, range: Range<usize>, value: u8) {
+        let source_first = range.start;
         let cells = &self.0.bytes[range.clone()];
         if !cells.is_empty() {
             self.note_write();
@@ -186,10 +196,12 @@ impl WorkRam {
             self.note_menu_write(range.clone());
             self.note_scroll_write(range.clone());
             self.note_frame_display_write(range.clone());
+            self.note_context_write((range).clone());
             self.note_sequence_write(range);
         }
-        for cell in cells {
+        for (offset, cell) in cells.iter().enumerate() {
             cell.set(value);
+            self.note_source_publication(source_first + offset);
         }
     }
 
@@ -202,6 +214,7 @@ impl WorkRam {
             Rc::clone(&self.4),
             Rc::clone(&self.5),
             Rc::clone(&self.6),
+            Rc::clone(&self.7),
         )
     }
     fn note_write(&self) {
@@ -239,6 +252,82 @@ impl WorkRam {
     }
     pub(crate) fn scroll_epoch(&self) -> u64 {
         self.4.get()
+    }
+    fn note_context_write(&self, range: Range<usize>) {
+        if [
+            0x87..0x89,
+            0x89..0x8b,
+            0x8b..0x8d,
+            0x8d..0x8f,
+            0x8f..0x91,
+            0x91..0x93,
+            0x93..0x95,
+            0x95..0x97,
+            0x97..0x99,
+            0x99..0x9b,
+            0xa3..0xa5,
+            0xa5..0xa7,
+            0xc2..0xc4,
+            0x5c5..0x5c7,
+            0x5c7..0x5c9,
+            0x5c9..0x5cb,
+            0x5cb..0x5cd,
+            0x5cd..0x5cf,
+            0x5cf..0x5d1,
+            0x5d1..0x5d3,
+            0x5d3..0x5d5,
+            0x5d5..0x5d7,
+            0x5d7..0x5d9,
+            0x5d9..0x5db,
+            0x5db..0x5dd,
+            0x5dd..0x5df,
+            0x5df..0x5e1,
+            0x5e1..0x5e3,
+            0x5e3..0x5e5,
+            0x793..0x795,
+            0x79f..0x7a1,
+            0x7a1..0x7a3,
+            0x7a3..0x7a5,
+            0x7a5..0x7a7,
+            0x7a7..0x7a9,
+            0x7a9..0x7ab,
+            0x7ab..0x7ad,
+            0x998..0x99a,
+            0x9aa..0x9ac,
+            0x9ac..0x9ae,
+            0x9ae..0x9b0,
+            0x9b0..0x9b2,
+            0x9b2..0x9b4,
+            0x9b4..0x9b6,
+            0x9b6..0x9b8,
+            0x9b8..0x9ba,
+            0x9ba..0x9bc,
+            0x9bc..0x9be,
+            0x9be..0x9c0,
+            0x9da..0x9dc,
+            0x9dc..0x9de,
+            0x9de..0x9e0,
+            0x9e0..0x9e2,
+            0xd82..0xd84,
+            0xd84..0xd86,
+            0xd86..0xd88,
+            0xd88..0xd8a,
+            0xd8a..0xd8c,
+            0xd8c..0xd8e,
+            0xd8e..0xd90,
+            0xdfe..0xe00,
+            0xe00..0xe02,
+            0x183e..0x1840,
+            0x1840..0x1842,
+        ]
+        .iter()
+        .any(|owned| range.start < owned.end && owned.start < range.end)
+        {
+            self.6.set(self.6.get().wrapping_add(1));
+        }
+    }
+    pub(crate) fn context_epoch(&self) -> u64 {
+        self.6.get()
     }
     fn note_sequence_write(&self, range: Range<usize>) {
         if sequence_ranges()
@@ -1323,7 +1412,7 @@ impl Game {
             if self.persistent_ram_epoch == self.ram.write_epoch()
                 && self.preflight_samus_runtime().is_ok()
             {
-                return state.gameplay.hdma;
+                return state.gameplay.hdma_objects();
             }
         }
         sm_game::hdma_objects::read_table(self)
@@ -1381,7 +1470,7 @@ impl Game {
             });
             self.persistent_ram_epoch = self.ram.write_epoch();
             *self.persistent_session.menu.get_mut() = sm_game::menus::state::Domain::InSession {
-                epoch: self.ram.menu_epoch(),
+                epoch: self.menu_owner_epoch(),
             };
             if matches!(
                 self.persistent_session.inventory.get_mut(),
@@ -1450,17 +1539,19 @@ impl Game {
         self.samus.install(binding);
         self.actor_identity = None;
         self.persistent_ram_epoch = self.ram.write_epoch();
+        self.persistent_session.foreign_presentations.clear();
         self.persistent_session.aggregate = SessionSlot::Ready(Box::new(session));
         *self.persistent_session.inventory.get_mut() =
             sm_game::inventory_domain::InventoryDomain::InSession {
                 epoch: self.ram.inventory_epoch(),
             };
         *self.persistent_session.menu.get_mut() = sm_game::menus::state::Domain::InSession {
-            epoch: self.ram.menu_epoch(),
+            epoch: self.menu_owner_epoch(),
         };
         self.adopt_scroll_image();
         self.adopt_frame_display_image();
         self.adopt_sequence_image();
+        self.adopt_gameplay_context();
         Ok(())
     }
     /// Whether `Runtime::new` would succeed now, without changing any state:
@@ -1482,6 +1573,27 @@ impl Game {
             persistent_session::AggregateSlot::Ready(_)
         ) && self.session_lease_admissible()
     }
+    pub(crate) fn foreign_presentation_active(&self) -> bool {
+        !self.persistent_session.foreign_presentations.is_empty()
+    }
+    pub(crate) fn pop_foreign_presentation(
+        &mut self,
+    ) -> Option<Option<sm_game::session_owners::Presentation>> {
+        self.persistent_session.foreign_presentations.pop()
+    }
+    pub(crate) fn last_foreign_presentation_mut(
+        &mut self,
+    ) -> Option<&mut Option<sm_game::session_owners::Presentation>> {
+        self.persistent_session.foreign_presentations.last_mut()
+    }
+    pub(crate) fn push_foreign_presentation(
+        &mut self,
+        presentation: sm_game::session_owners::Presentation,
+    ) {
+        self.persistent_session
+            .foreign_presentations
+            .push(Some(presentation));
+    }
     pub(crate) fn lease_persistent_session(
         &mut self,
     ) -> Result<Option<persistent_session::PersistentSession>, DisplayError> {
@@ -1499,6 +1611,7 @@ impl Game {
                 *self.persistent_session.inventory.get_mut() =
                     sm_game::inventory_domain::InventoryDomain::Leased;
                 *self.persistent_session.menu.get_mut() = sm_game::menus::state::Domain::Leased;
+                *self.persistent_session.fx.get_mut() = sm_game::fx_domain::Domain::Leased;
                 Ok(Some(*session))
             }
             other => {
@@ -1538,22 +1651,33 @@ impl Game {
         *self.persistent_session.menu.get_mut() =
             if completed && admitted_epoch == self.ram.write_epoch() {
                 sm_game::menus::state::Domain::InSession {
-                    epoch: self.ram.menu_epoch(),
+                    epoch: self.menu_owner_epoch(),
                 }
             } else {
                 sm_game::menus::state::Domain::Revoked
+            };
+        *self.persistent_session.fx.get_mut() =
+            if completed && admitted_epoch == self.ram.write_epoch() {
+                sm_game::fx_domain::Domain::InSession {
+                    epoch: self.ram.write_epoch(),
+                }
+            } else {
+                sm_game::fx_domain::Domain::Revoked
             };
         if completed && admitted_epoch == self.ram.write_epoch() {
             self.adopt_scroll_image();
             self.adopt_frame_display_image();
             self.adopt_sequence_image();
+            self.adopt_gameplay_context();
         } else {
             self.revoke_scroll_domain();
             self.revoke_frame_display_domain();
             self.revoke_sequence_domain();
+            self.revoke_gameplay_context();
         }
     }
     fn poison_persistent_session(&mut self) {
+        self.revoke_fx_domain();
         // Explicit aggregate failure also ends the detached FrameDisplay interval.
         self.revoke_frame_display_domain();
         use persistent_session::AggregateSlot as SessionSlot;
@@ -1599,9 +1723,11 @@ impl Game {
         ) {
             self.adopt_inventory_image();
             self.adopt_menu_image();
+            self.adopt_fx_image();
             self.adopt_scroll_image();
             self.adopt_frame_display_image();
             self.adopt_sequence_image();
+            self.adopt_gameplay_context();
             return Ok(());
         }
         if self.persistent_ram_epoch != self.ram.write_epoch() {
@@ -1616,9 +1742,11 @@ impl Game {
         if result.is_ok() {
             self.adopt_inventory_image();
             self.adopt_menu_image();
+            self.adopt_fx_image();
             self.adopt_scroll_image();
             self.adopt_frame_display_image();
             self.adopt_sequence_image();
+            self.adopt_gameplay_context();
         }
         result
     }
@@ -1633,7 +1761,31 @@ impl Game {
         &mut self,
         prepared: persistent_session::PreparedSessionAdoption,
     ) -> Result<(), persistent_session::SessionStartError> {
-        if let Some(start) = prepared.0 {
+        if let Some(mut start) = prepared.0 {
+            sm_game::fx_encoding::adopt_display_sources(
+                &mut start.display.owner_mut().state,
+                &mut start.gameplay.menu_window,
+                &|at| self.ram.read_byte(at),
+                &|_| None,
+            )
+            .map_err(persistent_session::SessionStartError::Binding)?;
+            sm_game::fx_encoding::normalize_display_common(&mut start.display.owner_mut().state)
+                .map_err(persistent_session::SessionStartError::Binding)?;
+            let gameplay = &mut start.gameplay;
+            if gameplay.presentation.is_owned() {
+                sm_game::fx_encoding::adopt_session_sources(
+                    gameplay,
+                    &|at| self.ram.read_byte(at),
+                    &|_| None,
+                )
+                .map_err(persistent_session::SessionStartError::Binding)?;
+            }
+            if start.gameplay.fx_sources.is_some() {
+                start.gameplay.fx_sources = Some(sm_game::fx_encoding::decode_sources(
+                    &|at| self.ram.read_byte(at),
+                    &start.gameplay.menu_window,
+                ));
+            }
             persistent_session::validate_normalized_projection(self, &start)
                 .map_err(persistent_session::SessionStartError::Binding)?;
             self.install_session_start_inner(start, true)?;
@@ -1647,17 +1799,21 @@ impl Game {
         }
         self.adopt_inventory_image();
         self.adopt_menu_image();
+        self.adopt_fx_image();
         self.adopt_scroll_image();
         self.adopt_frame_display_image();
         self.adopt_sequence_image();
+        self.adopt_gameplay_context();
         Ok(())
     }
     pub(crate) fn revoke_session_authority(&mut self) {
         self.revoke_inventory_domain();
         self.revoke_menu_domain();
+        self.revoke_fx_domain();
         self.revoke_scroll_domain();
         self.revoke_frame_display_domain();
         self.revoke_sequence_domain();
+        self.revoke_gameplay_context();
         self.revoke_samus_authority();
     }
     pub(crate) fn take_actor_identity(
@@ -1745,9 +1901,11 @@ impl Game {
     pub(crate) fn revoke_samus_authority(&mut self) {
         self.revoke_inventory_domain();
         self.revoke_menu_domain();
+        self.revoke_fx_domain();
         self.revoke_scroll_domain();
         self.revoke_frame_display_domain();
         self.revoke_sequence_domain();
+        self.revoke_gameplay_context();
         self.poison_persistent_session();
         self.samus.revoke();
     }
@@ -1772,9 +1930,11 @@ impl Game {
         self.samus.begin_mutation(legacy)?;
         self.revoke_inventory_domain();
         self.revoke_menu_domain();
+        self.revoke_fx_domain();
         self.revoke_scroll_domain();
         self.revoke_frame_display_domain();
         self.revoke_sequence_domain();
+        self.revoke_gameplay_context();
         Ok(SamusMutation {
             game: self,
             completed: false,
@@ -1835,9 +1995,11 @@ impl Game {
         self.samus.adopt(payload.binding);
         self.adopt_inventory_image();
         self.adopt_menu_image();
+        self.adopt_fx_image();
         self.adopt_scroll_image();
         self.adopt_frame_display_image();
         self.adopt_sequence_image();
+        self.adopt_gameplay_context();
         Ok(())
     }
     pub(crate) fn samus_execution(&self) -> Result<Option<SamusExecution>, DisplayError> {
@@ -2250,9 +2412,11 @@ impl sm_game::inventory_domain::InventoryAccess for Game {
 }
 
 // Exact UI encoding lanes; all aliases, bulk stores and CPU writes advance this epoch.
-fn menu_ranges() -> [Range<usize>; 10] {
+fn menu_ranges() -> [Range<usize>; 12] {
     [
-        0x727..0x765,
+        0x727..0x776,
+        0x9e20..0x9e24,
+        0x9e30..0x9e52,
         0x5ac..0x5b4,
         0x5fb..0x601,
         0x776..0x77c,
@@ -2278,16 +2442,25 @@ impl Game {
             });
             value
         }
-        sm_game::menus::state::State {
+        let mut state = sm_game::menus::state::State {
             menu: decode(self),
+            window: sm_game::menu_window_encoding::decode(&|at| self.suspended_control_byte(at)),
             screens: decode(self),
+        };
+        // The saved pause display is byte-owned and deliberately outside Cohort.
+        for (index, byte) in state.screens.graphics.bytes.iter_mut().enumerate() {
+            *byte = self.ram.read_byte(0x765 + index);
         }
+        state
     }
     fn menu_byte(&self, at: usize) -> u8 {
         use sm_game::menus::state::Access;
         use sm_game::session_cohort::Cohort;
         let state = self.menu_state();
-        let mut value = (state.menu, state.screens);
+        if (0x765..0x776).contains(&at) {
+            return state.screens.graphics.bytes[at - 0x765];
+        }
+        let mut value = ((state.menu, state.screens), state.window);
         let mut byte = None;
         value.words(|start, word| {
             if at == start || at == start + 1 {
@@ -2304,7 +2477,7 @@ impl Game {
         if matches!(self.persistent_session.menu.get_mut(), Domain::Leased) {
             return;
         }
-        let epoch = self.ram.menu_epoch();
+        let epoch = self.menu_owner_epoch();
         if matches!(self.persistent_session.menu.get_mut(),
             Domain::Owned { epoch: current, .. } | Domain::InSession { epoch: current }
             if *current == epoch)
@@ -2316,6 +2489,7 @@ impl Game {
             persistent_session::AggregateSlot::Ready(session)
             | persistent_session::AggregateSlot::Failed(Some(session)) => {
                 session.gameplay.menu = state.menu;
+                sm_game::fx_encoding::import_window(&mut session.gameplay, state.window);
                 session.gameplay.menu_screens = state.screens;
                 *self.persistent_session.menu.get_mut() = Domain::InSession { epoch };
             }
@@ -2326,7 +2500,7 @@ impl Game {
         use sm_game::menus::state::Domain;
         let domain = std::mem::replace(self.persistent_session.menu.get_mut(), Domain::Leased);
         match domain {
-            Domain::Owned { state, epoch } if epoch == self.ram.menu_epoch() => Some(state),
+            Domain::Owned { state, epoch } if epoch == self.menu_owner_epoch() => Some(state),
             _ => None,
         }
     }
@@ -2339,7 +2513,7 @@ impl Game {
         *self.persistent_session.menu.get_mut() = if completed {
             Domain::Owned {
                 state,
-                epoch: self.ram.menu_epoch(),
+                epoch: self.menu_owner_epoch(),
             }
         } else {
             Domain::Revoked
@@ -2382,7 +2556,7 @@ impl sm_game::menus::state::Access for Game {
     }
     fn menu_state(&self) -> sm_game::menus::state::State {
         use sm_game::menus::state::{Domain, State};
-        let epoch = self.ram.menu_epoch();
+        let epoch = self.menu_owner_epoch();
         let mut domain = self.persistent_session.menu.borrow_mut();
         match &*domain {
             Domain::Owned {
@@ -2396,6 +2570,7 @@ impl sm_game::menus::state::Access for Game {
                 {
                     return State {
                         menu: session.gameplay.menu,
+                        window: sm_game::fx_encoding::session_window(&session.gameplay),
                         screens: session.gameplay.menu_screens,
                     };
                 }
@@ -2422,10 +2597,17 @@ impl sm_game::menus::state::Access for Game {
             let session = runtime.session_mut();
             let mut state = State {
                 menu: session.menu,
+                window: sm_game::fx_encoding::session_window(session),
                 screens: session.menu_screens,
             };
             C::merge(before, &after, &mut state);
             session.menu = state.menu;
+            for field in sm_game::menu_window_state::Field::ALL {
+                let at = sm_game::menu_window_encoding::address(field);
+                if field.get(&state.window) != sm_game::fx_encoding::control_word(session, at) {
+                    sm_game::fx_encoding::write_control_word(session, at, field.get(&state.window));
+                }
+            }
             session.menu_screens = state.screens;
             runtime.refresh_inputs();
             return;
@@ -2452,6 +2634,15 @@ impl sm_game::menus::state::Access for Game {
             }
             index += 1;
         });
+        let graphics_changes: Vec<_> = original
+            .screens
+            .graphics
+            .bytes
+            .into_iter()
+            .zip(changed.screens.graphics.bytes)
+            .enumerate()
+            .filter_map(|(index, (old, new))| (old != new).then_some((0x765 + index, new)))
+            .collect();
         struct Publish<'a> {
             game: &'a mut Game,
             state: State,
@@ -2472,6 +2663,9 @@ impl sm_game::menus::state::Access for Game {
             let [low, high] = word.to_le_bytes();
             publish.game.compatibility_write_byte(at, low);
             publish.game.compatibility_write_byte(at + 1, high);
+        }
+        for (at, byte) in graphics_changes {
+            publish.game.compatibility_write_byte(at, byte);
         }
         publish.completed = true;
     }
@@ -2784,6 +2978,7 @@ impl Game {
         };
         if needs_selected_image {
             self.adopt_sequence_image();
+            self.adopt_gameplay_context();
         }
         let slot = std::mem::replace(self.persistent_session.sequence.get_mut(), Domain::Leased);
         let mut state = match slot {
@@ -3295,5 +3490,1395 @@ impl sm_game::display::preparation::Access for Game {
         value: u8,
     ) {
         self.ram.write_byte(frame_field_address(field), value);
+    }
+}
+
+#[forbid(unsafe_code)]
+impl Game {
+    fn selected_gameplay_context(&self) -> sm_game::gameplay_context::State {
+        use sm_game::{controller_state, game_loop, gameplay_context::State};
+        let mut input = controller_state::ControllerState::default();
+        for word in controller_state::Word::ALL {
+            *word.get_state_mut(&mut input) = u16::from_le_bytes([
+                self.compatibility_byte(word.address()),
+                self.compatibility_byte(word.address() + 1),
+            ]);
+        }
+        let mut game_loop = game_loop::GameLoop::initialized(
+            0,
+            Default::default(),
+            Default::default(),
+            [0; 4],
+            [0; 7],
+        );
+        for word in game_loop::Word::ALL {
+            *word.get_mut(&mut game_loop) = u16::from_le_bytes([
+                self.compatibility_byte(word.address()),
+                self.compatibility_byte(word.address() + 1),
+            ]);
+        }
+        State {
+            input,
+            game_loop,
+            room: sm_game::session_encoding::room_geometry(&|at| self.compatibility_byte(at)),
+            effects: sm_game::session_encoding::room_effects(&|at| self.compatibility_byte(at)),
+        }
+    }
+    pub(crate) fn revoke_gameplay_context(&mut self) {
+        *self.persistent_session.gameplay_context.get_mut() =
+            sm_game::gameplay_context::Domain::Revoked;
+    }
+    pub(crate) fn adopt_gameplay_context(&mut self) {
+        use sm_game::gameplay_context::Domain;
+        let epoch = self.ram.context_epoch();
+        *self.persistent_session.gameplay_context.get_mut() = if self.persistent_session_current() {
+            Domain::InSession { epoch }
+        } else {
+            Domain::Owned {
+                state: self.selected_gameplay_context(),
+                epoch,
+            }
+        };
+    }
+    fn gameplay_context(&self) -> sm_game::gameplay_context::State {
+        use sm_game::gameplay_context::{Domain, State};
+        if self.persistent_session_current() {
+            if let persistent_session::AggregateSlot::Ready(state) =
+                &self.persistent_session.aggregate
+            {
+                return State::from_session(&state.gameplay);
+            }
+        }
+        let mut domain = self.persistent_session.gameplay_context.borrow_mut();
+        if matches!(*domain, Domain::Unowned)
+            || (matches!(&*domain, Domain::Owned { epoch, .. } if *epoch != self.ram.context_epoch())
+                && matches!(
+                    self.persistent_session.aggregate,
+                    persistent_session::AggregateSlot::Legacy
+                ))
+        {
+            *domain = Domain::Owned {
+                state: self.selected_gameplay_context(),
+                epoch: self.ram.context_epoch(),
+            };
+        }
+        match &*domain {
+            Domain::Owned { state, epoch } if *epoch == self.ram.context_epoch() => state.clone(),
+            _ => self.selected_gameplay_context(),
+        }
+    }
+}
+#[forbid(unsafe_code)]
+impl sm_game::gameplay_context::Access for Game {
+    fn grapple_animation(&self) -> sm_game::gameplay_context::GrappleAnimation {
+        let state = sm_game::sequence_state::Access::sequence_words(self);
+        sm_game::gameplay_context::GrappleAnimation {
+            timer: state.grapple_point_anim_timer,
+            tiles: state.grapple_point_anim_ptr,
+        }
+    }
+    fn commit_grapple_animation(
+        &mut self,
+        before: sm_game::gameplay_context::GrappleAnimation,
+        after: sm_game::gameplay_context::GrappleAnimation,
+    ) {
+        if before.timer != after.timer {
+            sm_game::sequence_state::Access::set_sequence_word(
+                self,
+                sm_game::session_words::Word::GrapplePointAnimTimer,
+                after.timer,
+            );
+        }
+        if before.tiles != after.tiles {
+            sm_game::sequence_state::Access::set_sequence_word(
+                self,
+                sm_game::session_words::Word::GrapplePointAnimPtr,
+                after.tiles,
+            );
+        }
+    }
+
+    fn inventory_state(&self) -> sm_game::inventory::Inventory {
+        self.context_inventory()
+    }
+    fn commit_inventory(
+        &mut self,
+        before: &sm_game::inventory::Inventory,
+        after: sm_game::inventory::Inventory,
+    ) {
+        use sm_game::{session_access::SessionAccess as _, session_cohort::Cohort as _};
+        if before == &after {
+            return;
+        }
+        let mut old = Vec::new();
+        before.clone().words(|_, value| old.push(*value));
+        let mut changed = Vec::new();
+        let mut index = 0;
+        after.clone().words(|at, value| {
+            if old[index] != *value {
+                changed.push((index, at, *value));
+            }
+            index += 1;
+        });
+        if self.persistent_session_current() {
+            let mut runtime = crate::game::session_runtime::Runtime::new(self);
+            let mut index = 0;
+            sm_game::inventory::Inventory::session_words(runtime.session_mut(), |_, word| {
+                if let Some(&(_, _, value)) = changed.iter().find(|change| change.0 == index) {
+                    *word = value;
+                }
+                index += 1;
+            });
+            runtime.refresh_inputs();
+            return;
+        }
+        let inventory = self.take_inventory_domain();
+        struct Publish<'a> {
+            game: &'a mut Game,
+            inventory: Option<sm_game::inventory::Inventory>,
+            completed: bool,
+        }
+        impl Drop for Publish<'_> {
+            fn drop(&mut self) {
+                if let Some(inventory) = self.inventory.take() {
+                    self.game.return_inventory_domain(inventory, self.completed);
+                } else {
+                    self.game.revoke_inventory_domain();
+                }
+            }
+        }
+        let mut publish = Publish {
+            game: self,
+            inventory,
+            completed: false,
+        };
+        if let Some(inventory) = &mut publish.inventory {
+            let mut index = 0;
+            inventory.words(|_, word| {
+                if let Some(&(_, _, value)) = changed.iter().find(|change| change.0 == index) {
+                    *word = value;
+                }
+                index += 1;
+            });
+        }
+        for (_, at, value) in changed {
+            let [low, high] = value.to_le_bytes();
+            publish.game.compatibility_write_byte(at, low);
+            publish.game.compatibility_write_byte(at + 1, high);
+        }
+        publish.completed = true;
+    }
+
+    fn gameplay_word(&self, word: sm_game::gameplay_context::Word) -> u16 {
+        word.get(&self.gameplay_context())
+    }
+    fn set_gameplay_byte(&mut self, word: sm_game::gameplay_context::Word, lane: usize, byte: u8) {
+        use sm_game::gameplay_context::Domain;
+        assert!(lane < 2);
+        let needs_image = {
+            let domain = self.persistent_session.gameplay_context.borrow();
+            matches!(*domain, Domain::Unowned)
+                || (matches!(&*domain, Domain::Owned { epoch, .. } if *epoch != self.ram.context_epoch())
+                    && matches!(
+                        self.persistent_session.aggregate,
+                        persistent_session::AggregateSlot::Legacy
+                    ))
+        };
+        if needs_image {
+            self.adopt_gameplay_context();
+        }
+        let slot = std::mem::replace(
+            self.persistent_session.gameplay_context.get_mut(),
+            Domain::Leased,
+        );
+        let state = match slot {
+            Domain::Owned { state, epoch } if epoch == self.ram.context_epoch() => Some(state),
+            _ => None,
+        };
+        struct Publish<'a> {
+            game: &'a mut Game,
+            state: Option<sm_game::gameplay_context::State>,
+            completed: bool,
+        }
+        impl Drop for Publish<'_> {
+            fn drop(&mut self) {
+                *self.game.persistent_session.gameplay_context.get_mut() = if self.completed {
+                    self.state
+                        .take()
+                        .map_or(Domain::Revoked, |state| Domain::Owned {
+                            state,
+                            epoch: self.game.ram.context_epoch(),
+                        })
+                } else {
+                    Domain::Revoked
+                };
+            }
+        }
+        let mut publish = Publish {
+            game: self,
+            state,
+            completed: false,
+        };
+        if let Some(state) = &mut publish.state {
+            let field = word.get_mut(state);
+            let mut bytes = field.to_le_bytes();
+            bytes[lane] = byte;
+            *field = u16::from_le_bytes(bytes);
+        }
+        publish
+            .game
+            .compatibility_write_byte(word.address() + lane, byte);
+        publish.completed = true;
+    }
+}
+
+#[forbid(unsafe_code)]
+impl Game {
+    fn context_inventory(&self) -> sm_game::inventory::Inventory {
+        use sm_game::inventory_domain::InventoryDomain;
+        let mut domain = self.persistent_session.inventory.borrow_mut();
+        // First domain entry establishes only inventory, never an incomplete Session.
+        // Dirty/revoked owners remain byte-authoritative until scoped adoption.
+        if matches!(*domain, InventoryDomain::Unowned) {
+            *domain = InventoryDomain::Owned {
+                inventory: sm_game::inventory::decode(&|at| self.ram.read_byte(at)),
+                epoch: self.ram.inventory_epoch(),
+            };
+        }
+        match &*domain {
+            InventoryDomain::Owned { inventory, epoch } if *epoch == self.ram.inventory_epoch() => {
+                inventory.clone()
+            }
+            InventoryDomain::InSession { epoch } if *epoch == self.ram.inventory_epoch() => {
+                match &self.persistent_session.aggregate {
+                    persistent_session::AggregateSlot::Ready(state)
+                    | persistent_session::AggregateSlot::Failed(Some(state)) => {
+                        state.gameplay.inventory.clone()
+                    }
+                    _ => panic!("inventory resident outside Session"),
+                }
+            }
+            _ => sm_game::inventory::decode(&|at| self.ram.read_byte(at)),
+        }
+    }
+}
+
+impl Game {
+    /// A queued HUD DMA reads exactly its selected byte. Peek only a current
+    /// owner; never decode/rebuild the HUD or sample the other byte lane here.
+    pub(crate) fn live_queued_hud_byte(&self, tile: usize, lane: usize) -> u8 {
+        use sm_game::display::preparation::Domain;
+        let at = 0xc608 + tile * 2 + lane;
+        if let persistent_session::AggregateSlot::Ready(session) =
+            &self.persistent_session.aggregate
+            && self.persistent_ram_epoch == self.ram.write_epoch()
+            && self.preflight_samus_runtime().is_ok()
+            && let Some(byte) = crate::game::session_encoding::projected_byte(&session.gameplay, at)
+        {
+            return byte;
+        }
+        if let Domain::Owned { state, epoch } = &*self.persistent_session.frame_display.borrow()
+            && *epoch == self.ram.frame_display_epoch()
+            && let Some(word) = state.tile(tile)
+        {
+            return word.to_le_bytes()[lane];
+        }
+        // Fifteen minimap cells remain with their Session owner; suspended,
+        // dirty and legacy intervals observe the actual selected byte image.
+        self.ram.read_byte(at)
+    }
+}
+
+#[forbid(unsafe_code)]
+impl sm_game::menu_window_state::Access for Game {
+    fn window_state(&self) -> sm_game::menu_window_state::WindowState {
+        use sm_game::menus::state::Access;
+        self.menu_state().window
+    }
+    fn publish_window(
+        &mut self,
+        value: sm_game::menu_window_state::WindowState,
+        fields: &[sm_game::menu_window_state::Field],
+    ) {
+        use sm_game::menus::state::{Access, Domain};
+        if self.persistent_session_current() {
+            let mut runtime = crate::game::session_runtime::Runtime::new(self);
+            for &field in fields {
+                let at = sm_game::menu_window_encoding::address(field);
+                runtime.write_word_le(field.get(&value), at);
+            }
+            return;
+        }
+        let mut state = self.menu_state();
+        for &field in fields {
+            *field.get_mut(&mut state.window) = field.get(&value);
+        }
+        struct Publish<'a> {
+            game: &'a mut Game,
+            state: sm_game::menus::state::State,
+            completed: bool,
+        }
+        impl Drop for Publish<'_> {
+            fn drop(&mut self) {
+                self.game.return_menu_domain(self.state, self.completed);
+            }
+        }
+        *self.persistent_session.menu.get_mut() = Domain::Leased;
+        let mut publish = Publish {
+            game: self,
+            state,
+            completed: false,
+        };
+        for &field in fields {
+            let at = sm_game::menu_window_encoding::address(field);
+            for (lane, byte) in field.get(&value).to_le_bytes().into_iter().enumerate() {
+                // Retain the old named/native physical store, including equal values.
+                publish.game.compatibility_write_byte(at + lane, byte);
+            }
+        }
+        publish.completed = true;
+    }
+}
+
+#[forbid(unsafe_code)]
+impl sm_game::menu_window_state::ArrowAccess for Game {
+    fn file_arrow(&mut self, action: sm_game::menu_window_state::ArrowAction) -> bool {
+        use sm_game::menu_window_state::{ArrowAction, update_arrow};
+        // A reset used no read/preflight. Advance selects the exact former named
+        // read policy without constructing or admitting a gameplay Runtime.
+        let current = matches!(
+            self.persistent_session.aggregate,
+            persistent_session::AggregateSlot::Ready(_)
+        ) && self.persistent_ram_epoch == self.ram.write_epoch()
+            && (matches!(action, ArrowAction::Reset(_)) || self.preflight_samus_runtime().is_ok());
+        let mut fallback = match action {
+            ArrowAction::Reset(value) => value,
+            ArrowAction::Advance
+                if !current
+                    || !matches!(
+                        self.persistent_session.aggregate,
+                        persistent_session::AggregateSlot::Ready(_)
+                    ) =>
+            {
+                u16::from_le_bytes([self.ram.read_byte(0x198f), self.ram.read_byte(0x1990)])
+            }
+            ArrowAction::Advance => 0,
+        };
+        let change = if current {
+            if let persistent_session::AggregateSlot::Ready(state) =
+                &mut self.persistent_session.aggregate
+            {
+                let mut menu = sm_game::enemy_projectiles::table::FileSelect(
+                    &mut state.gameplay.enemy_projectiles,
+                );
+                update_arrow(menu.arrow_palette_timer(), action)
+            } else {
+                update_arrow(&mut fallback, action)
+            }
+        } else {
+            update_arrow(&mut fallback, action)
+        };
+        for value in change.publications.into_iter().flatten() {
+            let [low, high] = value.to_le_bytes();
+            // These physical stores revoke semantic authority exactly as before;
+            // the existing selected-image adoption imports the completed prefix.
+            self.compatibility_write_byte(0x198f, low);
+            self.compatibility_write_byte(0x1990, high);
+        }
+        change.rotate
+    }
+}
+
+// FX numeric/source ownership outside the scheduler's Session interval.
+#[forbid(unsafe_code)]
+impl Game {
+    fn selected_fx_image(&self) -> sm_game::fx_domain::State {
+        use sm_game::menus::state::Access;
+        let window = self.menu_state().window;
+        sm_game::fx_domain::State {
+            numeric: sm_game::fx_encoding::decode(&|at| self.ram.read_byte(at)),
+            lighting: sm_game::fx_encoding::decode_lighting(&|at| self.ram.read_byte(at)),
+            sources: sm_game::fx_encoding::decode_sources(&|at| self.ram.read_byte(at), &window),
+        }
+    }
+    pub(crate) fn revoke_fx_domain(&mut self) {
+        *self.persistent_session.fx.get_mut() = sm_game::fx_domain::Domain::Revoked;
+    }
+    pub(crate) fn adopt_fx_image(&mut self) {
+        use sm_game::fx_domain::Domain;
+        if matches!(self.persistent_session.fx.get_mut(), Domain::Leased) {
+            return;
+        }
+        let epoch = self.ram.write_epoch();
+        if self.persistent_session_current() {
+            *self.persistent_session.fx.get_mut() = Domain::InSession { epoch };
+            return;
+        }
+        if matches!(self.persistent_session.fx.get_mut(),
+            Domain::Owned { epoch: current, .. } | Domain::InSession { epoch: current }
+            if *current == epoch)
+        {
+            return;
+        }
+        if self.persistent_session_current() {
+            *self.persistent_session.fx.get_mut() = Domain::InSession { epoch };
+        } else {
+            let state = Box::new(self.selected_fx_image());
+            *self.persistent_session.fx.get_mut() = Domain::Owned { state, epoch };
+        }
+    }
+    pub(crate) fn take_fx_domain(&mut self) -> Option<sm_game::fx_domain::State> {
+        use sm_game::fx_domain::Domain;
+        match std::mem::replace(self.persistent_session.fx.get_mut(), Domain::Leased) {
+            Domain::Owned { state, epoch } if epoch == self.ram.write_epoch() => Some(*state),
+            _ => None,
+        }
+    }
+    pub(crate) fn return_fx_domain(
+        &mut self,
+        numeric: sm_game::fx_state::FxState,
+        lighting: sm_game::visual_state::FirefleaLighting,
+        sources: Option<sm_game::scene::hdma_sources::HdmaLiveDescription>,
+        completed: bool,
+    ) {
+        use sm_game::fx_domain::{Domain, State};
+        *self.persistent_session.fx.get_mut() = if !completed {
+            Domain::Revoked
+        } else if let Some(sources) = sources {
+            Domain::Owned {
+                state: Box::new(State {
+                    numeric,
+                    lighting,
+                    sources,
+                }),
+                epoch: self.ram.write_epoch(),
+            }
+        } else {
+            Domain::InSession {
+                epoch: self.ram.write_epoch(),
+            }
+        };
+    }
+    fn ensure_fx_domain(&self) {
+        use sm_game::fx_domain::Domain;
+        let epoch = self.ram.write_epoch();
+        let mut domain = self.persistent_session.fx.borrow_mut();
+        if self.persistent_session_current() && !matches!(&*domain, Domain::Leased) {
+            *domain = Domain::InSession { epoch };
+            return;
+        }
+        if matches!(&*domain, Domain::Owned { epoch: current, .. } | Domain::InSession { epoch: current }
+            if *current == epoch)
+            || matches!(&*domain, Domain::Leased)
+        {
+            return;
+        }
+        *domain = if self.persistent_session_current() {
+            Domain::InSession { epoch }
+        } else {
+            Domain::Owned {
+                state: Box::new(self.selected_fx_image()),
+                epoch,
+            }
+        };
+    }
+    fn store_fx_byte(&mut self, at: usize, byte: u8) {
+        use sm_game::fx_domain::Domain;
+        // Match the byte's physical bounds failure before publishing a typed mutation.
+        self.ram.read_byte(at);
+        if self.persistent_session_current() {
+            self.compatibility_write_owned_byte(at, byte);
+            *self.persistent_session.fx.get_mut() = Domain::InSession {
+                epoch: self.ram.write_epoch(),
+            };
+            return;
+        }
+        self.ensure_fx_domain();
+        let slot = std::mem::replace(self.persistent_session.fx.get_mut(), Domain::Leased);
+        struct Publication<'a> {
+            game: &'a mut Game,
+            slot: Option<Domain>,
+            complete: bool,
+        }
+        impl Drop for Publication<'_> {
+            fn drop(&mut self) {
+                if !matches!(self.game.persistent_session.fx.get_mut(), Domain::Leased) {
+                    return;
+                }
+                *self.game.persistent_session.fx.get_mut() = if self.complete {
+                    match self.slot.take() {
+                        Some(Domain::Owned { state, .. }) => Domain::Owned {
+                            state,
+                            epoch: self.game.ram.write_epoch(),
+                        },
+                        _ => Domain::Revoked,
+                    }
+                } else {
+                    Domain::Revoked
+                };
+            }
+        }
+        let mut publication = Publication {
+            game: self,
+            slot: Some(slot),
+            complete: false,
+        };
+        if let Some(Domain::Owned { state, .. }) = &mut publication.slot {
+            if !sm_game::fx_encoding::write_byte(&mut state.numeric, at, byte)
+                && !sm_game::fx_encoding::write_lighting_byte(&mut state.lighting, at, byte)
+            {
+                if let Some((owner, offset)) = sm_game::fx_encoding::source_coordinate(at) {
+                    if state
+                        .sources
+                        .window_control_lane(owner, offset)
+                        .ok()
+                        .flatten()
+                        .is_none()
+                    {
+                        // Missing bindings/out-of-owner aliases retain the physical fallback.
+                        let _ = state.sources.write_buffer(owner, offset, byte);
+                    }
+                }
+            }
+        }
+        // A control lane is a real ordered native alias publication. Its menu epoch
+        // revokes the previous control image; the next read adopts this actual prefix.
+        publication.game.compatibility_write_byte(at, byte);
+        publication.complete = true;
+    }
+}
+
+#[forbid(unsafe_code)]
+impl sm_game::fx_domain::Controls for Game {
+    fn room_blending(&self) -> sm_game::fx_domain::RoomBlending {
+        if self.persistent_session_current() {
+            if let persistent_session::AggregateSlot::Ready(state) =
+                &self.persistent_session.aggregate
+            {
+                return sm_game::fx_encoding::session_room_blending(&state.gameplay);
+            }
+        }
+        if self.suspended_display().is_some() {
+            return sm_game::fx_domain::RoomBlending {
+                primary: u16::from_le_bytes([
+                    self.suspended_control_byte(0x1982),
+                    self.suspended_control_byte(0x1983),
+                ]),
+                liquid: u16::from_le_bytes([
+                    self.suspended_control_byte(0x1984),
+                    self.suspended_control_byte(0x1985),
+                ]),
+            };
+        }
+        sm_game::fx_domain::RoomBlending {
+            primary: u16::from_le_bytes([
+                self.compatibility_byte(0x1982),
+                self.compatibility_byte(0x1983),
+            ]),
+            liquid: u16::from_le_bytes([
+                self.compatibility_byte(0x1984),
+                self.compatibility_byte(0x1985),
+            ]),
+        }
+    }
+    fn publish_room_blending(&mut self, value: sm_game::fx_domain::RoomBlending, primary: bool) {
+        let (at, value) = if primary {
+            (0x1982, value.primary)
+        } else {
+            (0x1984, value.liquid)
+        };
+        let bytes = value.to_le_bytes();
+        self.compatibility_write_owned_byte(at, bytes[0]);
+        self.compatibility_write_owned_byte(at + 1, bytes[1]);
+    }
+    fn fx_controls(&self) -> sm_game::fx_state::FxState {
+        use sm_game::fx_domain::Domain;
+        if self.persistent_session_current() {
+            if let persistent_session::AggregateSlot::Ready(state) =
+                &self.persistent_session.aggregate
+            {
+                return sm_game::fx_encoding::session_controls(&state.gameplay);
+            }
+        }
+        if self.suspended_display().is_some() {
+            return sm_game::fx_encoding::decode(&|at| self.suspended_control_byte(at));
+        }
+        self.ensure_fx_domain();
+        match &*self.persistent_session.fx.borrow() {
+            Domain::Owned { state, epoch } if *epoch == self.ram.write_epoch() => state.numeric,
+            _ => sm_game::fx_encoding::decode(&|at| self.ram.read_byte(at)),
+        }
+    }
+    fn publish_fx_controls(
+        &mut self,
+        value: sm_game::fx_state::FxState,
+        fields: &[sm_game::fx_state::Field],
+    ) {
+        for &field in fields {
+            let at = sm_game::fx_encoding::address(field);
+            let bytes = field.get(&value).to_le_bytes();
+            self.store_fx_byte(at, bytes[0]);
+            self.store_fx_byte(at + 1, bytes[1]);
+        }
+    }
+}
+
+#[forbid(unsafe_code)]
+impl sm_game::fx_domain::Sources for Game {
+    fn store_source_signed_byte(
+        &mut self,
+        owner: sm_game::scene::hdma_sources::LiveOwner,
+        offset: isize,
+        byte: u8,
+    ) {
+        if let Ok(offset) = usize::try_from(offset) {
+            sm_game::fx_domain::Sources::store_source_byte(self, owner, offset, byte);
+            return;
+        }
+        if self.persistent_session_current() {
+            if let persistent_session::AggregateSlot::Ready(state) =
+                &self.persistent_session.aggregate
+            {
+                assert!(
+                    state.gameplay.fx_sources.is_some(),
+                    "prepared source outside allocation"
+                );
+            }
+        }
+        assert!(
+            self.suspended_display().is_none(),
+            "prepared source outside allocation"
+        );
+        let base = sm_game::fx_encoding::source_address(owner, 0).expect("FX source role");
+        let at = base
+            .checked_add_signed(offset)
+            .expect("source address outside RAM");
+        self.store_fx_byte(at, byte);
+    }
+    fn add_parallax_source(&mut self, selector: u16, delta: u32) {
+        let at = usize::from(selector);
+        let low = u16::from_ne_bytes([self.parallax_byte(at), self.parallax_byte(at + 1)]);
+        let high = u16::from_ne_bytes([self.parallax_byte(at + 2), self.parallax_byte(at + 3)]);
+        let sum = (u32::from(low) | (u32::from(high) << 16)).wrapping_add(delta);
+        let low = u16::try_from(sum & 0xffff).unwrap().to_ne_bytes();
+        let high = u16::try_from(sum >> 16).unwrap().to_ne_bytes();
+        for (offset, byte) in low.into_iter().chain(high).enumerate() {
+            self.store_parallax_byte(at + offset, byte);
+        }
+    }
+    fn source_byte(&self, owner: sm_game::scene::hdma_sources::LiveOwner, offset: usize) -> u8 {
+        use sm_game::fx_domain::Domain;
+        use sm_game::menus::state::Access;
+        if self.persistent_session_current() {
+            if let persistent_session::AggregateSlot::Ready(state) =
+                &self.persistent_session.aggregate
+            {
+                match sm_game::fx_encoding::session_source_byte(&state.gameplay, owner, offset) {
+                    Ok(byte) => return byte,
+                    Err(error) if state.gameplay.fx_sources.is_none() => {
+                        panic!("prepared FX source: {error:?}")
+                    }
+                    Err(_) => {}
+                }
+            }
+        }
+        if let Some(display) = self.suspended_display() {
+            return sm_game::fx_encoding::suspended_source_byte(
+                display,
+                &self.menu_state().window,
+                owner,
+                offset,
+                &|at| self.ram.read_byte(at),
+                &|at| self.ram.source_publication(at),
+            )
+            .expect("suspended prepared FX source");
+        }
+        let at = sm_game::fx_encoding::source_address(owner, offset).expect("FX source role");
+        if let Some((field, lane)) = sm_game::menu_window_encoding::lane(at) {
+            return field.get(&self.menu_state().window).to_le_bytes()[lane];
+        }
+        self.ensure_fx_domain();
+        let domain = self.persistent_session.fx.borrow();
+        if let Domain::Owned { state, epoch } = &*domain {
+            if *epoch == self.ram.write_epoch() {
+                if let Ok(byte) = state.sources.read_buffer(owner, offset) {
+                    return byte;
+                }
+            }
+        }
+        self.ram.read_byte(at)
+    }
+    fn store_source_byte(
+        &mut self,
+        owner: sm_game::scene::hdma_sources::LiveOwner,
+        offset: usize,
+        byte: u8,
+    ) {
+        if self.persistent_session_current() {
+            if let persistent_session::AggregateSlot::Ready(state) =
+                &mut self.persistent_session.aggregate
+            {
+                if state.gameplay.fx_sources.is_none() {
+                    sm_game::fx_encoding::store_session_source_byte(
+                        &mut state.gameplay,
+                        owner,
+                        offset,
+                        byte,
+                    )
+                    .expect("prepared FX source publication");
+                    return;
+                }
+            }
+        }
+        if let Some(display) = self.suspended_display() {
+            let at = sm_game::fx_encoding::suspended_source_address(
+                display,
+                owner,
+                offset,
+                &|at| self.ram.read_byte(at),
+                &|at| self.ram.source_publication(at),
+            )
+            .expect("suspended prepared FX source");
+            if let Some(at) = at {
+                self.compatibility_write_byte(at, byte);
+            } else {
+                let presentation = self
+                    .persistent_session
+                    .foreign_presentations
+                    .last_mut()
+                    .and_then(Option::as_mut)
+                    .expect("suspended presentation");
+                let display = presentation.owner_mut().expect("suspended display");
+                sm_game::fx_encoding::store_display_source(&mut display.state, owner, offset, byte)
+                    .expect("suspended nonphysical FX source publication");
+            }
+            return;
+        }
+        let at = sm_game::fx_encoding::source_address(owner, offset).expect("FX source role");
+        self.store_fx_byte(at, byte);
+    }
+}
+
+#[forbid(unsafe_code)]
+impl sm_game::fx_lighting::Access for Game {
+    fn lighting(&self) -> sm_game::visual_state::FirefleaLighting {
+        use sm_game::fx_domain::Domain;
+        if self.persistent_session_current() {
+            if let persistent_session::AggregateSlot::Ready(state) =
+                &self.persistent_session.aggregate
+            {
+                return sm_game::fx_encoding::session_lighting(&state.gameplay);
+            }
+        }
+        if self.suspended_display().is_some() {
+            return sm_game::fx_encoding::decode_lighting(&|at| self.suspended_control_byte(at));
+        }
+        self.ensure_fx_domain();
+        match &*self.persistent_session.fx.borrow() {
+            Domain::Owned { state, epoch } if *epoch == self.ram.write_epoch() => state.lighting,
+            _ => sm_game::fx_encoding::decode_lighting(&|at| self.ram.read_byte(at)),
+        }
+    }
+    fn publish_lighting(
+        &mut self,
+        value: sm_game::visual_state::FirefleaLighting,
+        fields: &[sm_game::fx_lighting::Field],
+    ) {
+        for &field in fields {
+            let at = sm_game::fx_encoding::lighting_address(field);
+            let bytes = field.get(&value).to_le_bytes();
+            self.store_fx_byte(at, bytes[0]);
+            self.store_fx_byte(at + 1, bytes[1]);
+        }
+    }
+}
+
+// Compat bookkeeping only. Source bytes remain in their actual exclusive owner.
+#[derive(Default)]
+struct SourcePublications {
+    last: std::collections::BTreeMap<usize, Option<u64>>,
+    ordinal: u64,
+    restore_depth: usize,
+    native_depth: usize,
+}
+#[derive(Clone)]
+pub(crate) struct SourcePublicationSnapshot {
+    pub(crate) last: std::collections::BTreeMap<usize, Option<u64>>,
+    pub(crate) ordinal: u64,
+}
+impl crate::initial_state::InitialState for SourcePublicationSnapshot {
+    const INITIAL: Self = Self {
+        last: std::collections::BTreeMap::new(),
+        ordinal: 0,
+    };
+}
+pub(crate) struct SourceRestorePublications(Rc<std::cell::RefCell<SourcePublications>>);
+pub(crate) struct SourceNativePublications(Rc<std::cell::RefCell<SourcePublications>>);
+impl Drop for SourceNativePublications {
+    fn drop(&mut self) {
+        self.0.borrow_mut().native_depth -= 1;
+    }
+}
+impl Drop for SourceRestorePublications {
+    fn drop(&mut self) {
+        let mut publications = self.0.borrow_mut();
+        publications.restore_depth -= 1;
+    }
+}
+impl WorkRam {
+    pub(crate) fn begin_source_interval(&self, spans: &[Range<usize>]) -> SourceNativePublications {
+        if self.7.borrow().native_depth == 0 {
+            self.track_source_spans(spans);
+        } else {
+            let mut publications = self.7.borrow_mut();
+            for at in spans.iter().flat_map(|span| span.clone()) {
+                assert!(at < Self::LEN, "source publication outside WRAM");
+                publications.last.entry(at).or_insert(None);
+            }
+        }
+        self.7.borrow_mut().native_depth += 1;
+        SourceNativePublications(Rc::clone(&self.7))
+    }
+    pub(crate) fn track_source_spans(&self, spans: &[Range<usize>]) {
+        let mut publications = self.7.borrow_mut();
+        publications.last.clear();
+        publications.ordinal = 0;
+        for at in spans.iter().flat_map(|span| span.clone()) {
+            assert!(at < Self::LEN, "source publication outside WRAM");
+            publications.last.insert(at, None);
+        }
+    }
+    fn note_source_publication(&self, at: usize) {
+        let mut publications = self.7.borrow_mut();
+        if publications.restore_depth != 0 || !publications.last.contains_key(&at) {
+            return;
+        }
+        if publications.ordinal == u64::MAX {
+            // Rebase ranks before rollover; the last writer must remain latest.
+            let mut ordered: Vec<_> = publications
+                .last
+                .iter()
+                .filter_map(|(&at, &ordinal)| ordinal.map(|ordinal| (ordinal, at)))
+                .collect();
+            ordered.sort_unstable();
+            for (rank, &(_, at)) in ordered.iter().enumerate() {
+                publications
+                    .last
+                    .insert(at, Some(u64::try_from(rank).unwrap() + 1));
+            }
+            publications.ordinal = u64::try_from(ordered.len()).unwrap();
+        }
+        publications.ordinal += 1;
+        let ordinal = publications.ordinal;
+        publications.last.insert(at, Some(ordinal));
+    }
+    pub(crate) fn source_publication(&self, at: usize) -> Option<u64> {
+        self.7.borrow().last.get(&at).copied().flatten()
+    }
+    pub(crate) fn capture_source_publications(&self) -> SourcePublicationSnapshot {
+        let publications = self.7.borrow();
+        SourcePublicationSnapshot {
+            last: publications.last.clone(),
+            ordinal: publications.ordinal,
+        }
+    }
+    pub(crate) fn restore_source_publications(&self, source: &SourcePublicationSnapshot) {
+        let mut publications = self.7.borrow_mut();
+        publications.last.clone_from(&source.last);
+        publications.ordinal = source.ordinal;
+    }
+    /// Restoration chooses a previously captured branch. The physical copy's
+    /// traversal order cannot become that branch's native gameplay provenance.
+    pub(crate) fn pause_source_publications(&self) -> SourceRestorePublications {
+        let mut publications = self.7.borrow_mut();
+        publications.restore_depth += 1;
+        SourceRestorePublications(Rc::clone(&self.7))
+    }
+}
+
+#[forbid(unsafe_code)]
+impl Game {
+    fn parallax_coordinate(
+        &self,
+        at: usize,
+    ) -> Option<(sm_game::scene::hdma_sources::LiveOwner, usize)> {
+        if self.persistent_session_current() {
+            if let persistent_session::AggregateSlot::Ready(state) =
+                &self.persistent_session.aggregate
+            {
+                return sm_game::fx_encoding::physical_source_coordinate(&state.gameplay, at)
+                    .expect("prepared FX source resolution");
+            }
+        }
+        if let Some(display) = self.suspended_display() {
+            return sm_game::fx_encoding::display_source_coordinate(display, at)
+                .expect("suspended prepared FX source resolution");
+        }
+        sm_game::fx_encoding::source_coordinate(at)
+    }
+    fn parallax_byte(&self, at: usize) -> u8 {
+        if let Some((owner, offset)) = self.parallax_coordinate(at) {
+            return sm_game::fx_domain::Sources::source_byte(self, owner, offset);
+        }
+        sm_game::actors::session_slots::SlotAccess::slot_byte(self, at)
+    }
+    fn store_parallax_byte(&mut self, at: usize, byte: u8) {
+        if let Some((owner, offset)) = self.parallax_coordinate(at) {
+            sm_game::fx_domain::Sources::store_source_byte(self, owner, offset, byte);
+        } else {
+            sm_game::actors::session_slots::SlotAccess::set_slot_byte(self, at, byte);
+        }
+    }
+}
+
+impl Game {
+    fn suspended_display(&self) -> Option<&sm_game::scene::state::DisplayState> {
+        self.persistent_session
+            .foreign_presentations
+            .last()
+            .and_then(Option::as_ref)
+            .and_then(|presentation| presentation.owner().ok())
+            .map(|display| &display.state)
+    }
+}
+
+impl Game {
+    /// Native control consumers select the same actual canonical source and
+    /// current publication rank as suspended source producers/consumers.
+    pub(crate) fn menu_owner_epoch(&self) -> u64 {
+        if self.suspended_display().is_some() {
+            self.ram.write_epoch()
+        } else {
+            self.ram.menu_epoch()
+        }
+    }
+    fn suspended_control_byte(&self, at: usize) -> u8 {
+        if let Some(display) = self.suspended_display() {
+            // Decode fallback Window bytes directly, avoiding recursion through
+            // menu_state while its domain is borrowed or being reconstructed.
+            let window = sm_game::menu_window_encoding::decode(&|at| self.ram.read_byte(at));
+            return sm_game::fx_encoding::suspended_domain_byte(
+                display,
+                &window,
+                at,
+                &|at| self.ram.read_byte(at),
+                &|at| self.ram.source_publication(at),
+            )
+            .expect("suspended control owner");
+        }
+        self.ram.read_byte(at)
+    }
+    pub(crate) fn hdma_domain_word(&self, word: sm_game::hdma::Word) -> u16 {
+        let at = word.address();
+        if let persistent_session::AggregateSlot::Ready(state) = &self.persistent_session.aggregate
+        {
+            if self.persistent_ram_epoch == self.ram.write_epoch()
+                && self.preflight_samus_runtime().is_ok()
+            {
+                return state.gameplay.hdma_word(word);
+            }
+        }
+        u16::from_le_bytes([
+            self.suspended_control_byte(at),
+            self.suspended_control_byte(at + 1),
+        ])
+    }
+    pub(crate) fn store_hdma_domain_byte(
+        &mut self,
+        word: sm_game::hdma::Word,
+        high: bool,
+        value: u8,
+    ) {
+        self.compatibility_write_owned_byte(word.address() + usize::from(high), value);
+    }
+    pub(crate) fn store_hdma_domain_word(
+        &mut self,
+        word: sm_game::hdma::Word,
+        value: u16,
+        order: sm_game::scene::state::WordOrder,
+    ) {
+        let at = word.address();
+        let [first, second] = order.encode(value);
+        self.compatibility_write_owned_byte(at, first);
+        self.compatibility_write_owned_byte(at + 1, second);
+    }
+}
+
+#[forbid(unsafe_code)]
+impl sm_game::presentation_workspace::Access for Game {
+    fn screen_apply<T>(
+        &mut self,
+        action: impl FnOnce(
+            &mut dyn sm_game::presentation_workspace::Canvas,
+        ) -> Result<T, sm_game::scene::state::DisplayError>,
+    ) -> T {
+        let mut runtime = crate::game::session_runtime::Runtime::new(self);
+        sm_game::presentation_workspace::Access::screen_apply(&mut runtime, action)
+    }
+    fn screen_byte(&self, point: sm_game::presentation_workspace::Point) -> u8 {
+        if self.persistent_session_current() {
+            if let persistent_session::AggregateSlot::Ready(state) =
+                &self.persistent_session.aggregate
+            {
+                let workspace = state.gameplay.presentation.workspace();
+                return match workspace.byte(point) {
+                    Ok(byte) => byte,
+                    Err(error) => match workspace.alias_address(point).expect("screen binding") {
+                        Some(at) => self.compatibility_byte(at),
+                        None => panic!("screen allocation {error:?}"),
+                    },
+                };
+            }
+        }
+        self.compatibility_byte(point.compatibility_address().expect("screen offset"))
+    }
+    fn screen_write_byte(&mut self, point: sm_game::presentation_workspace::Point, value: u8) {
+        let mut runtime = crate::game::session_runtime::Runtime::new(self);
+        sm_game::presentation_workspace::Access::screen_write_byte(&mut runtime, point, value);
+    }
+    fn screen_write_slice(&mut self, point: sm_game::presentation_workspace::Point, bytes: &[u8]) {
+        let mut runtime = crate::game::session_runtime::Runtime::new(self);
+        sm_game::presentation_workspace::Access::screen_write_slice(&mut runtime, point, bytes);
+    }
+}
+#[forbid(unsafe_code)]
+impl sm_game::presentation_workspace::PaletteAccess for Game {
+    fn palette_byte(&self, target: bool, offset: usize) -> u8 {
+        self.compatibility_byte(
+            (if target { 0xc200usize } else { 0xc000usize })
+                .checked_add(offset)
+                .expect("palette offset"),
+        )
+    }
+    fn palette_native_word(&self, target: bool, offset: usize) -> u16 {
+        let at = (if target { 0xc200usize } else { 0xc000usize })
+            .checked_add(offset)
+            .expect("palette offset");
+        u16::from_ne_bytes([self.compatibility_byte(at), self.compatibility_byte(at + 1)])
+    }
+    fn palette_word(&self, target: bool, offset: usize) -> u16 {
+        let at = (if target { 0xc200usize } else { 0xc000usize })
+            .checked_add(offset)
+            .expect("palette offset");
+        u16::from_le_bytes([self.compatibility_byte(at), self.compatibility_byte(at + 1)])
+    }
+    fn palette_write_word(&mut self, target: bool, offset: usize, value: u16) {
+        let mut runtime = crate::game::session_runtime::Runtime::new(self);
+        sm_game::presentation_workspace::PaletteAccess::palette_write_word(
+            &mut runtime,
+            target,
+            offset,
+            value,
+        );
+    }
+    fn palette_write_native_word(&mut self, target: bool, offset: usize, value: u16) {
+        let mut runtime = crate::game::session_runtime::Runtime::new(self);
+        sm_game::presentation_workspace::PaletteAccess::palette_write_native_word(
+            &mut runtime,
+            target,
+            offset,
+            value,
+        );
+    }
+    fn palette_write_native_slice(&mut self, target: bool, offset: usize, value: u16) {
+        let mut runtime = crate::game::session_runtime::Runtime::new(self);
+        sm_game::presentation_workspace::PaletteAccess::palette_write_native_slice(
+            &mut runtime,
+            target,
+            offset,
+            value,
+        );
+    }
+}
+#[forbid(unsafe_code)]
+impl sm_game::presentation_workspace::QueueAccess for Game {
+    fn queue_byte_at(&mut self, offset: usize, value: u8) {
+        self.compatibility_write_owned_byte(
+            0xd0usize.checked_add(offset).expect("queue offset"),
+            value,
+        );
+    }
+    fn queue_native_slice_at(&mut self, offset: usize, value: u16) {
+        self.compatibility_copy_in(
+            0xd0usize.checked_add(offset).expect("queue offset"),
+            &value.to_ne_bytes(),
+        );
+    }
+}
+#[forbid(unsafe_code)]
+impl sm_game::presentation_workspace::ContinuationAccess for Game {
+    fn screen_primary(&self) -> u8 {
+        self.compatibility_byte(0x612)
+    }
+    fn screen_set_primary(&mut self, value: u8) {
+        self.compatibility_write_owned_byte(0x612, value);
+    }
+    fn demo_phase(&self) -> u8 {
+        self.compatibility_byte(0x614)
+    }
+    fn demo_set_phase(&mut self, value: u8) {
+        self.compatibility_write_owned_byte(0x614, value);
+    }
+}
+
+#[forbid(unsafe_code)]
+impl sm_game::dialogue_ram::Access for Game {
+    fn dialogue_state(&self) -> sm_game::dialogue::Dialogue<u16> {
+        sm_game::dialogue_ram::decode(sm_game::dialogue_ram::Encoded {
+            index: u16::from_le_bytes([
+                self.compatibility_byte(0x1c1f),
+                self.compatibility_byte((0x1c1f) + 1),
+            ]),
+            parent: self.compatibility_byte(0x614),
+            child: self.compatibility_byte(0x615),
+            delay: u16::from_le_bytes([
+                self.compatibility_byte(0x77e),
+                self.compatibility_byte((0x77e) + 1),
+            ]),
+            radius: u16::from_le_bytes([
+                self.compatibility_byte(0x5a2),
+                self.compatibility_byte((0x5a2) + 1),
+            ]),
+            selection: u16::from_le_bytes([
+                self.compatibility_byte(0x5f9),
+                self.compatibility_byte((0x5f9) + 1),
+            ]),
+        })
+    }
+    fn dialogue_publish(&mut self, state: sm_game::dialogue::Dialogue<u16>) {
+        let value = sm_game::dialogue_ram::encode(state);
+        self.compatibility_write_owned_byte(0x1c1f, (value.index).to_le_bytes()[0]);
+        self.compatibility_write_owned_byte((0x1c1f) + 1, (value.index).to_le_bytes()[1]);
+        self.compatibility_write_owned_byte(0x77e, (value.delay).to_le_bytes()[0]);
+        self.compatibility_write_owned_byte((0x77e) + 1, (value.delay).to_le_bytes()[1]);
+        self.compatibility_write_owned_byte(0x5a2, (value.radius).to_le_bytes()[0]);
+        self.compatibility_write_owned_byte((0x5a2) + 1, (value.radius).to_le_bytes()[1]);
+        self.compatibility_write_owned_byte(0x5f9, (value.selection).to_le_bytes()[0]);
+        self.compatibility_write_owned_byte((0x5f9) + 1, (value.selection).to_le_bytes()[1]);
+        self.compatibility_write_owned_byte(0x615, value.child);
+        self.compatibility_write_owned_byte(0x614, value.parent);
+    }
+    fn dialogue_request(&self) -> u16 {
+        u16::from_le_bytes([
+            self.compatibility_byte(0xdc8),
+            self.compatibility_byte((0xdc8) + 1),
+        ])
+    }
+    fn dialogue_set_request(&mut self, value: u16) {
+        self.compatibility_write_owned_byte(0xdc8, (value).to_le_bytes()[0]);
+        self.compatibility_write_owned_byte((0xdc8) + 1, (value).to_le_bytes()[1]);
+    }
+    fn dialogue_active_index(&self) -> u16 {
+        u16::from_le_bytes([
+            self.compatibility_byte(0x1c1f),
+            self.compatibility_byte((0x1c1f) + 1),
+        ])
+    }
+    fn dialogue_clear_active(&mut self) {
+        self.compatibility_write_owned_byte(0x1c1f, (0u16).to_le_bytes()[0]);
+        self.compatibility_write_owned_byte((0x1c1f) + 1, (0u16).to_le_bytes()[1]);
+    }
+    fn dialogue_selection(&self) -> u16 {
+        u16::from_le_bytes([
+            self.compatibility_byte(0x5f9),
+            self.compatibility_byte((0x5f9) + 1),
+        ])
+    }
+    fn dialogue_set_selection(&mut self, value: u16) {
+        self.compatibility_write_owned_byte(0x5f9, (value).to_le_bytes()[0]);
+        self.compatibility_write_owned_byte((0x5f9) + 1, (value).to_le_bytes()[1]);
+    }
+    fn dialogue_radius(&self) -> u16 {
+        u16::from_le_bytes([
+            self.compatibility_byte(0x5a2),
+            self.compatibility_byte((0x5a2) + 1),
+        ])
+    }
+    fn dialogue_set_radius(&mut self, value: u16) {
+        self.compatibility_write_owned_byte(0x5a2, (value).to_le_bytes()[0]);
+        self.compatibility_write_owned_byte((0x5a2) + 1, (value).to_le_bytes()[1]);
+    }
+    fn dialogue_scratch(&self) -> [u16; 4] {
+        [0x5a4, 0x5a6, 0x5a8, 0x5aa].map(|at| {
+            u16::from_le_bytes([
+                self.compatibility_byte(at),
+                self.compatibility_byte((at) + 1),
+            ])
+        })
+    }
+    fn dialogue_set_scratch(&mut self, index: usize, value: u16) {
+        sm_data::table::check_index(index, 4);
+        let at = 0x5a4 + 2 * index;
+        self.compatibility_write_owned_byte(at, (value).to_le_bytes()[0]);
+        self.compatibility_write_owned_byte((at) + 1, (value).to_le_bytes()[1]);
+    }
+    fn dialogue_input(&self) -> sm_game::dialogue::Input {
+        let keys = u16::from_le_bytes([
+            self.compatibility_byte(0x8f),
+            self.compatibility_byte((0x8f) + 1),
+        ]);
+        sm_game::dialogue::Input {
+            confirm: keys & 0x80 != 0,
+            cancel: keys & 0x8000 != 0,
+            toggle: keys & 0x2300 != 0,
+            dismiss: u16::from_le_bytes([
+                self.compatibility_byte(0x8b),
+                self.compatibility_byte((0x8b) + 1),
+            ]) != 0,
+        }
+    }
+    fn dialogue_binding(&self, shoot: bool) -> u16 {
+        let at = if shoot { 0x9b2 } else { 0x9b4 };
+        u16::from_le_bytes([
+            self.compatibility_byte(at),
+            self.compatibility_byte((at) + 1),
+        ])
+    }
+    fn dialogue_select_pause(&mut self) {
+        self.compatibility_write_owned_byte(0x998, (12u16).to_le_bytes()[0]);
+        self.compatibility_write_owned_byte((0x998) + 1, (12u16).to_le_bytes()[1]);
+    }
+}
+#[forbid(unsafe_code)]
+impl sm_game::menus::host::MapFacts for Game {
+    fn file_palette(&self) -> u16 {
+        u16::from_ne_bytes([
+            self.compatibility_byte(0xf96),
+            self.compatibility_byte(0xf97),
+        ])
+    }
+    fn set_file_palette(&mut self, value: u16) {
+        self.compatibility_write_owned_byte(0xf96, (value).to_le_bytes()[0]);
+        self.compatibility_write_owned_byte((0xf96) + 1, (value).to_le_bytes()[1]);
+    }
+    fn map_explored_byte(&self, offset: isize) -> u8 {
+        let at = 0x7f7usize.checked_add_signed(offset).expect("map offset");
+        self.compatibility_byte(at)
+    }
+    fn store_map_explored_byte(&mut self, offset: isize, value: u8) {
+        let at = 0x7f7usize.checked_add_signed(offset).expect("map offset");
+        self.compatibility_write_owned_byte(at, value);
+    }
+    fn map_station_byte(&self, area: usize) -> u8 {
+        self.compatibility_byte(0xd908usize.checked_add(area).expect("station offset"))
+    }
+    fn used_station_native_word(&self, offset: usize) -> u16 {
+        let at = 0xd8f8usize.checked_add(offset).expect("station offset");
+        u16::from_ne_bytes([self.compatibility_byte(at), self.compatibility_byte(at + 1)])
+    }
+}
+
+#[forbid(unsafe_code)]
+impl sm_game::sprite_drawing::ObjectAccess for Game {
+    fn object_native_word(&self, offset: usize) -> u16 {
+        let order = if self.persistent_session_current() {
+            match &self.persistent_session.aggregate {
+                persistent_session::AggregateSlot::Ready(state) => state
+                    .gameplay
+                    .presentation
+                    .owner()
+                    .ok()
+                    .map(|owner| owner.state.objects.native_order),
+                _ => None,
+            }
+        } else {
+            None
+        };
+        let at = 0x370usize.checked_add(offset).expect("object offset");
+        let bytes = [self.compatibility_byte(at), self.compatibility_byte(at + 1)];
+        order.map_or_else(|| u16::from_ne_bytes(bytes), |order| order.decode(bytes))
+    }
+    fn object_little_word(&self, offset: usize) -> u16 {
+        let at = 0x370usize.checked_add(offset).expect("object offset");
+        u16::from_le_bytes([self.compatibility_byte(at), self.compatibility_byte(at + 1)])
+    }
+    fn object_write_byte(&mut self, offset: usize, value: u8) {
+        self.compatibility_write_owned_byte(
+            0x370usize.checked_add(offset).expect("object offset"),
+            value,
+        );
+    }
+    fn object_write_native_slice(&mut self, offset: usize, value: u16) {
+        let order = if self.persistent_session_current() {
+            match &self.persistent_session.aggregate {
+                persistent_session::AggregateSlot::Ready(state) => state
+                    .gameplay
+                    .presentation
+                    .owner()
+                    .ok()
+                    .map(|owner| owner.state.objects.native_order),
+                _ => None,
+            }
+        } else {
+            None
+        };
+        let encoded = order.map_or_else(|| value.to_ne_bytes(), |order| order.encode(value));
+        self.compatibility_copy_in(
+            0x370usize.checked_add(offset).expect("object offset"),
+            &encoded,
+        );
+    }
+    fn object_write_native_bytes(&mut self, offset: usize, value: u16) {
+        let order = if self.persistent_session_current() {
+            match &self.persistent_session.aggregate {
+                persistent_session::AggregateSlot::Ready(state) => state
+                    .gameplay
+                    .presentation
+                    .owner()
+                    .ok()
+                    .map(|owner| owner.state.objects.native_order),
+                _ => None,
+            }
+        } else {
+            None
+        };
+        let encoded = order.map_or_else(|| value.to_ne_bytes(), |order| order.encode(value));
+        let at = 0x370usize.checked_add(offset).expect("object offset");
+        let bytes = encoded;
+        self.compatibility_write_owned_byte(at, bytes[0]);
+        self.compatibility_write_owned_byte(at + 1, bytes[1]);
+    }
+}
+
+#[forbid(unsafe_code)]
+impl sm_game::escape_countdown::Access for Game {
+    fn countdown_apply<T>(
+        &mut self,
+        action: impl FnOnce(&mut sm_game::escape_countdown::State, &mut u16) -> T,
+    ) -> T {
+        let mut runtime = crate::game::session_runtime::Runtime::new(self);
+        sm_game::escape_countdown::Access::countdown_apply(&mut runtime, action)
+    }
+    fn countdown_byte(&self, offset: usize) -> u8 {
+        self.compatibility_byte(0x945usize.checked_add(offset).expect("countdown offset"))
+    }
+    fn countdown_native_word(&self, offset: usize) -> u16 {
+        if offset < 6 && self.persistent_session_current() {
+            if let persistent_session::AggregateSlot::Ready(state) =
+                &self.persistent_session.aggregate
+            {
+                return state.gameplay.timing.countdown.native_word(offset);
+            }
+        }
+        let at = 0x945usize.checked_add(offset).expect("countdown offset");
+        u16::from_ne_bytes([self.compatibility_byte(at), self.compatibility_byte(at + 1)])
+    }
+}
+
+#[forbid(unsafe_code)]
+impl sm_game::grapple_swing::TileAccess for Game {
+    fn tile_word(&self, field: sm_game::grapple_swing::TileField) -> u16 {
+        if self.persistent_session_current() {
+            if let persistent_session::AggregateSlot::Ready(state) =
+                &self.persistent_session.aggregate
+            {
+                return field.current(&state.gameplay);
+            }
+        }
+        let at = field.sequence_word() as usize;
+        u16::from_le_bytes([self.compatibility_byte(at), self.compatibility_byte(at + 1)])
+    }
+    fn store_tile_word(&mut self, field: sm_game::grapple_swing::TileField, value: u16) {
+        sm_game::sequence_state::Access::set_sequence_word(self, field.sequence_word(), value);
     }
 }

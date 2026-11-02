@@ -99,12 +99,14 @@ fn display_body(
     required: &t::DisplayStartRequirements,
 ) {
     use super::super::component::DisplayCheckpoint;
-    assert_eq!(&bytes[..8], b"SMDISPL\x03");
-    // Schema 2: 8-byte magic, u64 binding length, binding, 32-byte Revision, phase.
+    assert_eq!(&bytes[..8], b"SMDISPL\x04");
+    assert!(DisplayCheckpoint::decode_checkpoint(bytes, media.clone(), metadata, required).is_ok());
+    // Schema 4 places Workspace before Revision; use the actual field codecs.
     let binding = usize::try_from(u64::from_le_bytes(bytes[8..16].try_into().unwrap())).unwrap();
-    let body = 16 + binding;
-    let phase = body + 32;
-    assert_eq!(&bytes[body..phase], media.revision().0.as_slice());
+    let mut read = CheckpointReader(&bytes[16 + binding..]);
+    let _workspace = crate::presentation_workspace::Workspace::get(&mut read).unwrap();
+    assert_eq!(r::Revision::get(&mut read).unwrap(), media.revision());
+    let phase = bytes.len() - read.0.len();
     assert_eq!(bytes[phase], 0);
     let mut malformed = bytes.to_vec();
     malformed[phase] = 5;

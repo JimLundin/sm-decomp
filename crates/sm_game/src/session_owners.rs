@@ -730,6 +730,7 @@ pub trait AudioHost {
 
 #[derive(Clone)]
 pub struct SessionStartRequirements {
+    pub dialogue: Option<crate::prepared_dialogue::Content>,
     pub display: DisplayStartRequirements,
     pub roles: ContentDescription,
     pub marker: MarkerPublication,
@@ -741,7 +742,7 @@ pub struct SessionStartRequirements {
 /// Current input, runner and semantic audio owners, exclusive with legacy bytes.
 #[derive(Clone, Debug, PartialEq)]
 pub enum Control {
-    Legacy(crate::room_entry::state::SharedContinuations),
+    Legacy(crate::controller_state::LegacyControl),
     Owned(Box<CurrentControl>),
 }
 macro_rules! control_words {
@@ -787,10 +788,7 @@ impl Control {
         }
     }
     pub fn legacy() -> Self {
-        Self::Legacy(crate::room_entry::state::SharedContinuations {
-            primary: 0,
-            secondary: 0,
-        })
+        Self::Legacy(crate::controller_state::LegacyControl::default())
     }
     pub fn primary(&self) -> &u8 {
         match self {
@@ -829,6 +827,12 @@ impl Control {
         }
     }
     pub fn projected_byte(&self, at: usize) -> Option<u8> {
+        if let Some(word) = crate::controller_state::Word::ALL
+            .iter()
+            .find(|word| (word.address()..word.address() + 2).contains(&at))
+        {
+            return Some(word.get(self).to_le_bytes()[at - word.address()]);
+        }
         if at == 0x612 {
             return Some(*self.primary());
         }
@@ -859,6 +863,16 @@ impl Control {
         value
     }
     pub fn write_projected_byte(&mut self, at: usize, byte: u8) -> bool {
+        if let Some(word) = crate::controller_state::Word::ALL
+            .iter()
+            .find(|word| (word.address()..word.address() + 2).contains(&at))
+        {
+            let field = word.get_mut(self);
+            let mut bytes = field.to_le_bytes();
+            bytes[at - word.address()] = byte;
+            *field = u16::from_le_bytes(bytes);
+            return true;
+        }
         if at == 0x612 {
             *self.primary_mut() = byte;
             return true;
@@ -906,6 +920,11 @@ impl Control {
         found
     }
     pub fn encode_projection(&self, mut span: impl FnMut(usize, &[u8])) {
+        if let Self::Legacy(_) = self {
+            for word in crate::controller_state::Word::ALL {
+                span(word.address(), &word.get(self).to_le_bytes());
+            }
+        }
         if let Self::Owned(control) = self {
             control.requests.encode_projection(&mut span);
             let m = &control.metadata;
@@ -932,6 +951,7 @@ pub enum Presentation {
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct LegacyPresentation {
+    pub workspace: crate::presentation_workspace::Workspace,
     visual: crate::visual_state::Visuals,
     palette: crate::visual_state::PlayerPalette,
     atmospheric: crate::player_transitions::state::AtmosphericEffects,
@@ -1003,28 +1023,62 @@ macro_rules! display_words {
         for index in 0..96 {
             $f(0xc608+2*index,$($borrow)* $s.hud.tiles[index]);
         }
-        $f(0x18b0,$($borrow)* $s.hdma.flags);
-        $f(0x18b2,$($borrow)* $s.hdma.selected);
+        $f(0x18b0,$($borrow)* $s.hdma.common.enabled);
+        $f(0x18b2,$($borrow)* $s.hdma.common.selected);
         for index in 0..6 {
-            $f(0x18b4+2*index,$($borrow)* $s.hdma.bindings[index].enable);
-            $f(0x18c0+2*index,$($borrow)* $s.hdma.bindings[index].bank_slot);
-            $f(0x18cc+2*index,$($borrow)* $s.hdma.objects[index].instruction_cursor);
-            $f(0x18d8+2*index,$($borrow)* $s.hdma.bindings[index].table);
-            $f(0x18e4+2*index,$($borrow)* $s.hdma.objects[index].instruction_timer);
-            $f(0x18f0+2*index,$($borrow)* $s.hdma.objects[index].pre_instruction);
-            $f(0x18fc+2*index,$($borrow)* $s.hdma.objects[index].pre_instruction_bank);
-            $f(0x1908+2*index,$($borrow)* $s.hdma.objects[index].timer);
-            for variable in 0..6 {
-                $f(0x1914+12*variable+2*index,$($borrow)* $s.hdma.objects[index].variables[variable]);
-            }
+            $f(0x18b4+2*index,$($borrow)* $s.hdma.common.objects[index].channels);
+            $f(0x18c0+2*index,$($borrow)* $s.hdma.common.objects[index].bank_slot);
+            $f(0x18cc+2*index,$($borrow)* $s.hdma.common.objects[index].instruction_list);
+            $f(0x18d8+2*index,$($borrow)* $s.hdma.common.objects[index].table);
+            $f(0x18e4+2*index,$($borrow)* $s.hdma.common.objects[index].instruction_timer);
+            $f(0x18f0+2*index,$($borrow)* $s.hdma.common.objects[index].pre_instruction);
+            $f(0x18fc+2*index,$($borrow)* $s.hdma.common.objects[index].pre_instruction_bank);
+            $f(0x1908+2*index,$($borrow)* $s.hdma.common.objects[index].timer);
+            $f(0x1914+2*index,$($borrow)* $s.hdma.common.objects[index].a);
+            $f(0x1920+2*index,$($borrow)* $s.hdma.common.objects[index].b);
+            $f(0x192c+2*index,$($borrow)* $s.hdma.common.objects[index].c);
+            $f(0x1938+2*index,$($borrow)* $s.hdma.common.objects[index].d);
+            $f(0x1944+2*index,$($borrow)* $s.hdma.common.objects[index].e);
+            $f(0x1950+2*index,$($borrow)* $s.hdma.common.objects[index].f);
         }
     };
 }
 impl Presentation {
+    /// Import only this owner's numeric projection after a selected native interval.
+    /// Prepared source bindings and authored producer/media identities stay supplied.
+    pub fn adopt_projection(&mut self, bytes: &impl Fn(usize) -> u8) {
+        let Self::Owned { display, .. } = self else {
+            return;
+        };
+        let state = &mut display.owner_mut().state;
+        let load_byte = |at: usize, byte: &mut u8| *byte = bytes(at);
+        display_bytes!(state,load_byte,(&mut));
+        let load_word =
+            |at: usize, word: &mut u16| *word = u16::from_le_bytes([bytes(at), bytes(at + 1)]);
+        display_words!(state,load_word,(&mut));
+        for at in 0x370..0x592 {
+            state
+                .objects
+                .write_byte(at - 0x370, bytes(at))
+                .expect("owned object projection");
+        }
+        state.nmi.pending = bytes(0x5b4);
+        state.nmi.frame_byte = bytes(0x5b5);
+        load_word(0x5b6, &mut state.nmi.frame_word);
+        load_word(0x5b8, &mut state.nmi.including_lag);
+        state.nmi.missed = bytes(0x5ba);
+        state.nmi.max_missed = bytes(0x5bb);
+        for (index, half) in state.samus.iter_mut().enumerate() {
+            half.enabled = bytes(0x71d + index);
+            load_word(0x71f + 2 * index, &mut half.pointer);
+        }
+        state.nmi.acknowledgment = bytes(0x782);
+    }
+
     pub fn requires_semantic_counterpart(at: usize) -> bool {
         // Publishing these numeric requests also needs supplied source/audio
         // identities. Their actual semantic publication seams are not closed.
-        (0xd0..0x330).contains(&at) || (0x340..0x360).contains(&at) || (0x956..0x98e).contains(&at)
+        (0x2d0..0x330).contains(&at) || (0x340..0x360).contains(&at) || (0x956..0x98e).contains(&at)
     }
     pub fn projected_byte(&self, at: usize) -> Option<u8> {
         let Self::Owned { display, .. } = self else {
@@ -1137,12 +1191,25 @@ impl Presentation {
     }
     pub fn legacy() -> Self {
         Self::Legacy(Box::new(LegacyPresentation {
+            workspace: crate::presentation_workspace::Workspace::empty(),
             visual: Default::default(),
             palette: Default::default(),
             atmospheric: Default::default(),
             actor_entries: [0; 114],
             actor_sizes: [0; 8],
         }))
+    }
+    pub fn workspace(&self) -> &crate::presentation_workspace::Workspace {
+        match self {
+            Self::Legacy(state) => &state.workspace,
+            Self::Owned { display, .. } => &display.owner().state.workspace,
+        }
+    }
+    pub fn workspace_mut(&mut self) -> &mut crate::presentation_workspace::Workspace {
+        match self {
+            Self::Legacy(state) => &mut state.workspace,
+            Self::Owned { display, .. } => &mut display.owner_mut().state.workspace,
+        }
     }
     pub fn visual(&self) -> &crate::visual_state::Visuals {
         match self {

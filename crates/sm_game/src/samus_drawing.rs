@@ -86,7 +86,13 @@ impl samus_position_tiles::Table for RoleTable {
 
 /// Who owns Samus's presentation and role tables, as the owned-Session view
 /// sees it.
-pub trait Authority: SessionAccess + SessionRam + Content<Record = RomRecord> + Effects {
+pub trait Authority:
+    SessionAccess
+    + SessionRam
+    + Content<Record = RomRecord>
+    + Effects
+    + crate::sprite_drawing::ObjectAccess
+{
     fn frame_counter(&self) -> u16;
     fn camera(&self) -> (u16, u16);
     fn has_owned_display(&self) -> bool;

@@ -140,6 +140,8 @@ pub struct MenuScreens {
     pub save_selection: SaveSelection,
     pub options_menu: OptionsMenu,
     pub death: DeathSequence,
+    /// Byte-encoded by the Session/menu compatibility boundary, outside word Cohort.
+    pub graphics: MenuGraphics,
 }
 
 impl Cohort for MenuScreens {
@@ -278,4 +280,11 @@ pub struct DeathSequence {
     pub index: u16,
     pub counter: u16,
     pub flash_timer: u16,
+}
+
+/// Hidden pause display restore image, in its original save/publication order.
+/// The compatibility codec maps these seventeen bytes to 0765..0775.
+#[derive(Clone, Copy, Default, Debug, PartialEq, Eq)]
+pub struct MenuGraphics {
+    pub bytes: [u8; 17],
 }

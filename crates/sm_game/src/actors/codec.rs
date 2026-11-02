@@ -5,14 +5,6 @@ use crate::session::Session;
 
 // Both borrow modes use exactly the same lane map. Byte-only bank/hurt-time
 // lanes are intentionally absent; no Rust struct layout is serialized.
-macro_rules! presentation_visual {
-    ($s:ident, (&)) => {
-        $s.presentation.visual()
-    };
-    ($s:ident, (&mut)) => {
-        $s.presentation.visual_mut()
-    };
-}
 macro_rules! presentation_queue {
     ($s:ident, entry, $index:expr, (&)) => {
         $s.presentation.actor_entry($index)
@@ -151,12 +143,6 @@ macro_rules! common_word {
             0x0e7a => Some($($borrow)* $s.actors.staging.descriptor_write_position),
             0x0e7c => Some($($borrow)* $s.actors.staging.transfer_source),
             0x0e7e => Some($($borrow)* $s.actors.staging.transfer_destination),
-            0x1778 => Some($($borrow)* presentation_visual!($s, ($($borrow)*)).fireflea.timer),
-            0x177a => Some($($borrow)* presentation_visual!($s, ($($borrow)*)).fireflea.flash_index),
-            0x177c => Some($($borrow)* presentation_visual!($s, ($($borrow)*)).fireflea.compatibility_word),
-            0x177e => Some($($borrow)* presentation_visual!($s, ($($borrow)*)).fireflea.darkness),
-            0x1780 => Some($($borrow)* presentation_visual!($s, ($($borrow)*)).fireflea.compatibility_limit),
-            0x1782 => Some($($borrow)* presentation_visual!($s, ($($borrow)*)).fireflea.compatibility_shade),
             0x179a => Some($($borrow)* $s.actors.drawing.tilemap_size),
             0x179c => Some($($borrow)* $s.actors.schedule.boss_id),
             0x17a4 => Some($($borrow)* $s.actors.schedule.active_write_position),
@@ -215,6 +201,9 @@ macro_rules! common_byte {
 }
 
 pub fn projected_byte(s: &Session, at: usize) -> Option<u8> {
+    if (0x1778..0x1784).contains(&at) {
+        return Some(crate::fx_encoding::control_byte(s, at));
+    }
     if let Some(value) = common_byte!(s, at, (&)) {
         return Some(*value);
     }
@@ -223,6 +212,10 @@ pub fn projected_byte(s: &Session, at: usize) -> Option<u8> {
 
 /// Returns false without mutation for every address owned elsewhere.
 pub fn write_projected_byte(s: &mut Session, at: usize, value: u8) -> bool {
+    if (0x1778..0x1784).contains(&at) {
+        crate::fx_encoding::write_control_byte(s, at, value);
+        return true;
+    }
     if let Some(byte) = common_byte!(s, at, (&mut)) {
         *byte = value;
         return true;

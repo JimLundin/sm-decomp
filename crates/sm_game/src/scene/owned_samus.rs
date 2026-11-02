@@ -48,6 +48,60 @@ pub trait SamusSources: crate::cartridge::NativeDiagnostics {
     fn samus_spritemaps(&self) -> Result<Option<Arc<samus::SamusCatalog>>, DisplayError>;
 }
 
+/// The capabilities used by the shared producer, without a native image API.
+/// The compatibility implementation below retains its original diagnostics.
+pub trait DrawingSources {
+    fn prepared_role(
+        &self,
+        role: Role,
+        registration: Registration,
+        displacement: usize,
+    ) -> Result<Option<RoleLease<PreparedBytes>>, DisplayError>;
+    fn role_base(
+        &self,
+        role: Role,
+        registration: Registration,
+    ) -> Result<Option<usize>, DisplayError>;
+    fn request(
+        &self,
+        half: samus_body::Half,
+        pointer: u16,
+    ) -> Result<Option<positions::TileRequest>, DisplayError>;
+    fn spritemaps(&self) -> Result<Option<Arc<samus::SamusCatalog>>, DisplayError>;
+    fn diagnostic(&mut self, address: u32) -> Result<(), DisplayError>;
+}
+impl<G: SamusSources + ?Sized> DrawingSources for G {
+    fn prepared_role(
+        &self,
+        role: Role,
+        registration: Registration,
+        displacement: usize,
+    ) -> Result<Option<RoleLease<PreparedBytes>>, DisplayError> {
+        self.prepared_samus_role(role, registration, displacement)
+    }
+    fn role_base(
+        &self,
+        role: Role,
+        registration: Registration,
+    ) -> Result<Option<usize>, DisplayError> {
+        self.samus_role_base(role, registration)
+    }
+    fn request(
+        &self,
+        half: samus_body::Half,
+        pointer: u16,
+    ) -> Result<Option<positions::TileRequest>, DisplayError> {
+        self.samus_request(half, pointer)
+    }
+    fn spritemaps(&self) -> Result<Option<Arc<samus::SamusCatalog>>, DisplayError> {
+        self.samus_spritemaps()
+    }
+    fn diagnostic(&mut self, address: u32) -> Result<(), DisplayError> {
+        self.native_rom_diagnostic(address);
+        Ok(())
+    }
+}
+
 struct PreparedTable(RoleLease<PreparedBytes>);
 impl positions::Table for PreparedTable {
     type Error = DisplayError;
@@ -68,7 +122,7 @@ impl samus_body::Table for PreparedTable {
     }
 }
 
-struct BodyInputs<'a, G: SamusSources + ?Sized> {
+struct BodyInputs<'a, G: DrawingSources + ?Sized> {
     game: &'a mut G,
     player: &'a mut crate::session::Player,
     observations: &'a ExternalInputs,
@@ -76,7 +130,7 @@ struct BodyInputs<'a, G: SamusSources + ?Sized> {
     palette: MediaRef,
     raster: crate::scene::state::RasterState,
 }
-impl<G: SamusSources + ?Sized> BodyInputs<'_, G> {
+impl<G: DrawingSources + ?Sized> BodyInputs<'_, G> {
     fn source(
         &self,
         role: Role,
@@ -84,20 +138,17 @@ impl<G: SamusSources + ?Sized> BodyInputs<'_, G> {
         displacement: usize,
     ) -> Result<PreparedTable, DisplayError> {
         self.game
-            .prepared_samus_role(role, registration, displacement)?
+            .prepared_role(role, registration, displacement)?
             .map(PreparedTable)
             .ok_or(DisplayError::Incomplete)
     }
 }
-impl<G: SamusSources + ?Sized> samus::Inputs for BodyInputs<'_, G> {
+impl<G: DrawingSources + ?Sized> samus::Inputs for BodyInputs<'_, G> {
     fn content(&mut self, _: &DisplayState) -> Result<Arc<samus::SamusCatalog>, DisplayError> {
-        self.game
-            .samus_spritemaps()?
-            .ok_or(DisplayError::Incomplete)
+        self.game.spritemaps()?.ok_or(DisplayError::Incomplete)
     }
     fn invalid_map(&mut self, _: &mut DisplayState, cursor: u16) -> Result<(), DisplayError> {
-        self.game
-            .native_rom_diagnostic(0x920000 | u32::from(cursor));
+        self.game.diagnostic(0x920000 | u32::from(cursor))?;
         Ok(())
     }
     fn object_context(
@@ -122,7 +173,7 @@ impl<G: SamusSources + ?Sized> samus::Inputs for BodyInputs<'_, G> {
         })
     }
 }
-impl<G: SamusSources + ?Sized> positions::Inputs for BodyInputs<'_, G> {
+impl<G: DrawingSources + ?Sized> positions::Inputs for BodyInputs<'_, G> {
     type Table = PreparedTable;
     fn ceres(&mut self) -> Result<u16, DisplayError> {
         Ok(self.observations.ceres)
@@ -222,13 +273,12 @@ impl<G: SamusSources + ?Sized> positions::Inputs for BodyInputs<'_, G> {
         cursor: u16,
     ) -> Result<PreparedTable, DisplayError> {
         if cursor & 0x8000 == 0 {
-            self.game
-                .native_rom_diagnostic(0x920000 | u32::from(cursor));
+            self.game.diagnostic(0x920000 | u32::from(cursor))?;
         }
         let mapped = sm_data::cartridge::lorom_offset(0x920000 | u32::from(cursor)) as usize;
         let base = self
             .game
-            .samus_role_base(Role::TileDefinition, Registration::Native)?
+            .role_base(Role::TileDefinition, Registration::Native)?
             .ok_or(DisplayError::Incomplete)?;
         self.source(
             Role::TileDefinition,
@@ -273,11 +323,11 @@ impl<G: SamusSources + ?Sized> positions::Inputs for BodyInputs<'_, G> {
         pointer: u16,
     ) -> Result<positions::TileRequest, DisplayError> {
         self.game
-            .samus_request(half, pointer)?
+            .request(half, pointer)?
             .ok_or(DisplayError::Incomplete)
     }
 }
-impl<G: SamusSources + ?Sized> samus_body::Inputs for BodyInputs<'_, G> {
+impl<G: DrawingSources + ?Sized> samus_body::Inputs for BodyInputs<'_, G> {
     type BodyTable = PreparedTable;
     fn knockback(&mut self) -> Result<u16, DisplayError> {
         Ok(self.player.knockback_timer)
@@ -311,7 +361,7 @@ impl<G: SamusSources + ?Sized> samus_body::Inputs for BodyInputs<'_, G> {
 }
 
 /// The inputs an owned Display draws Samus with.
-fn inputs<'a, G: SamusSources + ?Sized>(
+fn inputs<'a, G: DrawingSources + ?Sized>(
     owner: &crate::scene::commit::OwnedDisplay,
     game: &'a mut G,
     player: &'a mut crate::session::Player,
@@ -328,7 +378,7 @@ fn inputs<'a, G: SamusSources + ?Sized>(
     }
 }
 
-pub fn draw_body<G: SamusSources + ?Sized>(
+pub fn draw_body<G: DrawingSources + ?Sized>(
     owner: &mut crate::scene::commit::OwnedDisplay,
     game: &mut G,
     player: &mut crate::session::Player,
@@ -349,7 +399,7 @@ pub fn draw_body<G: SamusSources + ?Sized>(
         &mut inputs,
     )
 }
-pub fn bottom_visible<G: SamusSources + ?Sized>(
+pub fn bottom_visible<G: DrawingSources + ?Sized>(
     owner: &mut crate::scene::commit::OwnedDisplay,
     game: &mut G,
     player: &mut crate::session::Player,
@@ -368,7 +418,7 @@ pub struct Sprite {
     pub index: u16,
     pub position: (u16, u16),
 }
-pub fn draw_sprite<G: SamusSources + ?Sized>(
+pub fn draw_sprite<G: DrawingSources + ?Sized>(
     owner: &mut crate::scene::commit::OwnedDisplay,
     game: &mut G,
     player: &mut crate::session::Player,
@@ -391,4 +441,17 @@ pub fn draw_sprite<G: SamusSources + ?Sized>(
         position,
         &mut inputs,
     )
+}
+
+/// Repeat the original post-body definition query for the PLM scratch argument.
+pub fn definition_byte<G: DrawingSources + ?Sized>(
+    owner: &mut crate::scene::commit::OwnedDisplay,
+    game: &mut G,
+    player: &mut crate::session::Player,
+    observations: &ExternalInputs,
+    publications: Arc<SamusPublications>,
+) -> Result<u8, DisplayError> {
+    let media = owner.media().clone();
+    let mut inputs = inputs(owner, game, player, observations, publications);
+    positions::definition_byte_owned(&mut owner.state, &media, &mut inputs)
 }

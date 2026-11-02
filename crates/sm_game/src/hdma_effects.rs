@@ -1,8 +1,9 @@
 //! HDMA wave, layer, haze and eye-beam effects over the host's session view.
 use crate::actors::access::{AccessMode::LittleEndian as Le, ActorAccess, ActorKey as Key};
-use crate::hdma::HdmaObject;
 use crate::player_projectiles::access::Store;
 use crate::runtime_access::SessionRam;
+use crate::scene::hdma_sources::LiveOwner;
+use crate::scene::state::WordOrder;
 use crate::session_access::SessionAccess;
 use crate::visual_host::{Content, Record, Source};
 use crate::visual_state::{EyeBeamPhase, HazePhase, HdmaWave, Weather};
@@ -10,50 +11,50 @@ use crate::visual_state::{EyeBeamPhase, HazePhase, HdmaWave, Weather};
 /// The session view these effects read and write: the lease's live RAM and
 /// Session projection, plus the eye beam's window table outside it.
 pub trait Host:
-    SessionRam + SessionAccess + ActorAccess + Content + crate::display_scroll::Access
+    crate::fx_domain::Controls
+    + crate::fx_domain::Sources
+    + crate::display::preparation::Access
+    + SessionRam
+    + SessionAccess
+    + ActorAccess
+    + Content
+    + crate::display_scroll::Access
+    + crate::hdma_objects::HdmaTable
 {
     /// Build the eye beam's window table outside the session view.
     fn calculate_xray_window(&mut self, window: crate::beam_windows::XrayWindow);
 }
 
-/// Low and high bytes of an object word, as the original's byte stores.
-fn set_low(word: &mut u16, value: u8) {
-    *word = (*word & 0xff00) | u16::from(value);
-}
-fn set_high(word: &mut u16, value: u8) {
-    *word = (*word & 0x00ff) | u16::from(value) << 8;
-}
 fn high(word: u16) -> u8 {
     (word >> 8) as u8
 }
 
-/// The color bytes the haze and eye beam keep in A's two bytes and B's low byte.
-fn colors(object: &HdmaObject) -> [u8; 3] {
-    [object.a as u8, high(object.a), object.b as u8]
+/// Read each color byte at its original field expression.
+fn colors<H: crate::hdma_objects::HdmaTable + ?Sized>(index: usize, game: &H) -> [u8; 3] {
+    [
+        crate::hdma_word!(game, index, A) as u8,
+        high(crate::hdma_word!(game, index, A)),
+        crate::hdma_word!(game, index, B) as u8,
+    ]
 }
-fn set_colors(object: &mut HdmaObject, [red, green, blue]: [u8; 3]) {
-    set_low(&mut object.a, red);
-    set_high(&mut object.a, green);
-    set_low(&mut object.b, blue);
+fn set_colors<H: crate::hdma_objects::HdmaTable + ?Sized>(
+    index: usize,
+    [red, green, blue]: [u8; 3],
+    game: &mut H,
+) {
+    crate::hdma_byte!(game, index, A, false => red);
+    crate::hdma_byte!(game, index, A, true => green);
+    crate::hdma_byte!(game, index, B, false => blue);
 }
-
-/// Step an object's program past its wait.
-fn advance_program(object: &mut HdmaObject) {
-    object.instruction_list = object.instruction_list.wrapping_add(2);
-    object.instruction_timer = 1;
+fn advance_program<H: crate::hdma_objects::HdmaTable + ?Sized>(index: usize, game: &mut H) {
+    crate::hdma_word!(game, index, InstructionList =>
+        crate::hdma_word!(&*game, index, InstructionList).wrapping_add(2));
+    crate::hdma_word!(game, index, InstructionTimer => 1);
 }
 
 pub trait HdmaEffects: Host {
-    /// The HDMA object at byte slot `slot`. Every caller passes the
-    /// interpreter's even slot below 12, or 0.
-    fn hdma_object(&mut self, slot: u16) -> &mut HdmaObject {
-        &mut self.session_mut().hdma.objects[usize::from(slot >> 1)]
-    }
-
-    /// The object the interpreter is running.
-    fn current_hdma_object(&mut self) -> &mut HdmaObject {
-        let selected = self.session().hdma.selected;
-        self.hdma_object(selected)
+    fn current_hdma_index(&self) -> usize {
+        usize::from(self.hdma_word(crate::hdma::Word::Selected) >> 1)
     }
 
     fn initialize_wave_pair(&mut self, base: usize, primary: u16) {
@@ -70,11 +71,11 @@ pub trait HdmaEffects: Host {
     }
 
     fn reset_hdma_wave(&mut self, slot: u16) {
-        let object = self.hdma_object(slot);
-        object.a = 0xfffe;
-        object.b = 1;
-        object.c = 0;
-        object.d = 0;
+        let hdma_index = usize::from(slot >> 1);
+        crate::hdma_word!(self, hdma_index, A => 0xfffe);
+        crate::hdma_word!(self, hdma_index, B => 1);
+        crate::hdma_word!(self, hdma_index, C => 0);
+        crate::hdma_word!(self, hdma_index, D => 0);
     }
 
     fn initialize_phantoon_wave(&mut self, slot: u16) {
@@ -111,7 +112,11 @@ pub trait HdmaEffects: Host {
         use crate::actors::access::AccessMode::Native;
         use crate::ram::words as ram;
         if self.word(ram::PHANTOM_RELATED_LAYER_FLAG) & 0x4000 != 0 {
-            self.write_slice_le(ram::FX_LAYER_BLENDING_CONFIG_C, 26);
+            {
+                let mut fx = self.fx_controls();
+                fx.blending = 26;
+                self.publish_fx_controls(fx, &[crate::fx_state::Field::Blending]);
+            };
         } else {
             // The native first byte belongs to EnemyData record 3, parameter 1.
             let alpha = self
@@ -119,10 +124,18 @@ pub trait HdmaEffects: Host {
                 .parameters[0]
                 .to_ne_bytes()[0];
             match alpha {
-                0 => self.write_slice_le(ram::FX_LAYER_BLENDING_CONFIG_C, 4),
+                0 => {
+                    let mut fx = self.fx_controls();
+                    fx.blending = 4;
+                    self.publish_fx_controls(fx, &[crate::fx_state::Field::Blending]);
+                }
                 0xff => {
-                    self.write_slice_le(ram::FX_LAYER_BLENDING_CONFIG_C, 4);
-                    advance_program(self.current_hdma_object());
+                    {
+                        let mut fx = self.fx_controls();
+                        fx.blending = 4;
+                        self.publish_fx_controls(fx, &[crate::fx_state::Field::Blending]);
+                    };
+                    advance_program(self.current_hdma_index(), self);
                 }
                 _ => {}
             }
@@ -148,16 +161,16 @@ pub trait HdmaEffects: Host {
         } else {
             0xdf65
         };
-        let object = self.hdma_object(slot);
-        object.instruction_timer = 1;
-        object.instruction_list = program;
+        let hdma_index = usize::from(slot >> 1);
+        crate::hdma_word!(self, hdma_index, InstructionTimer => 1);
+        crate::hdma_word!(self, hdma_index, InstructionList => program);
     }
 
     fn advance_hdma_wave(&mut self, slot: u16, wave: HdmaWave) {
         use crate::actors::access::AccessMode::Native;
         use crate::player_projectiles::access::Store;
         use crate::projectile_geometry::SINE_COSINE;
-        use crate::ram::{word_arrays as arrays, words as ram};
+        use crate::ram::words as ram;
         let controller = Key::from_legacy(0x40);
         let motion = Key::from_legacy(0xc0);
         let phantoon = matches!(wave, HdmaWave::Phantoon);
@@ -172,11 +185,11 @@ pub trait HdmaEffects: Host {
         }
         let step = if phantoon && mode & 1 == 0 { 8 } else { 4 };
         let advance = if phantoon {
-            let object = self.hdma_object(slot);
-            let delay = object.b;
-            object.b = delay.wrapping_sub(1);
+            let hdma_index = usize::from(slot >> 1);
+            let delay = crate::hdma_word!(self, hdma_index, B);
+            crate::hdma_word!(self, hdma_index, B => delay.wrapping_sub(1));
             if delay == 1 {
-                object.b = 1;
+                crate::hdma_word!(self, hdma_index, B => 1);
             }
             delay == 1
         } else {
@@ -188,23 +201,15 @@ pub trait HdmaEffects: Host {
             } else {
                 self.word(ram::LOOP_COUNTER_TRANSFER_ENEMIES_TO_VRAM)
             };
-            let object = self.hdma_object(slot);
-            object.a = speed.wrapping_mul(2).wrapping_add(object.a) & 0x1ff;
+            let hdma_index = usize::from(slot >> 1);
+            crate::hdma_word!(self, hdma_index, A => speed.wrapping_mul(2).wrapping_add(crate::hdma_word!(self, hdma_index, A)) & 0x1ff);
         }
-        let mut phase = self.hdma_object(slot).a;
+        let mut phase = crate::hdma_word!(self, usize::from(slot >> 1), A);
         // Cinematic BG3 data is separate from Phantoon's BG2 table.
-        let (scroll, store, table) = if phantoon {
-            (
-                crate::display_scroll::Word::Bg2H,
-                Store::SliceNative,
-                ram::PHANTOON_WAVES,
-            )
+        let (scroll, store) = if phantoon {
+            (crate::display_scroll::Word::Bg2H, Store::SliceNative)
         } else {
-            (
-                crate::display_scroll::Word::Bg3H,
-                Store::SliceLe,
-                arrays::HDMA_TABLE_1,
-            )
+            (crate::display_scroll::Word::Bg3H, Store::SliceLe)
         };
         for row in 0..256 / step {
             let sample = SINE_COSINE[usize::from(phase >> 1) + 64];
@@ -217,7 +222,21 @@ pub trait HdmaEffects: Host {
             let offset = hdma_wave_offset(sample, low, high);
             phase = phase.wrapping_add(step) & 0x1ff;
             let value = self.scroll_word(scroll).wrapping_add(offset);
-            store_word(self, table + 2 * usize::from(row), value, store);
+            if phantoon {
+                store_word(
+                    self,
+                    ram::PHANTOON_WAVES + 2 * usize::from(row),
+                    value,
+                    store,
+                );
+            } else {
+                self.store_source_word(
+                    LiveOwner::HdmaTable1,
+                    2 * usize::from(row),
+                    WordOrder::Little,
+                    value,
+                );
+            }
         }
         // Phantoon samples its mode again after the first half is published.
         let narrow = phantoon && self.resolve_actor(controller, Native).parameters[0] & 1 == 0;
@@ -227,48 +246,61 @@ pub trait HdmaEffects: Host {
                 .scroll_word(scroll)
                 .wrapping_add(self.scroll_word(scroll));
             let sample = if phantoon {
-                self.native_word(table + 2 * row)
+                self.native_word(ram::PHANTOON_WAVES + 2 * row)
             } else {
-                self.word(table + 2 * row)
+                self.source_word(LiveOwner::HdmaTable1, 2 * row, WordOrder::Little)
             };
             let value = origin.wrapping_sub(sample);
-            store_word(self, table + 2 * (rows + row), value, store);
+            if phantoon {
+                store_word(self, ram::PHANTOON_WAVES + 2 * (rows + row), value, store);
+            } else {
+                self.store_source_word(
+                    LiveOwner::HdmaTable1,
+                    2 * (rows + row),
+                    WordOrder::Little,
+                    value,
+                );
+            }
         }
     }
 
     fn begin_haze(&mut self, slot: u16, color: u16) {
-        let object = self.hdma_object(slot);
-        object.b = color;
-        object.a = 0;
+        let hdma_index = usize::from(slot >> 1);
+        crate::hdma_word!(self, hdma_index, B => color);
+        crate::hdma_word!(self, hdma_index, A => 0);
         if self.session().room.entry.transition_selector == 0xe737 {
-            self.hdma_object(slot).pre_instruction = 0xde2d;
+            crate::hdma_word!(self, usize::from(slot >> 1), PreInstruction => 0xde2d);
             self.advance_haze(slot, HazePhase::FadingIn);
         }
     }
 
     fn advance_haze(&mut self, slot: u16, phase: HazePhase) {
         self.write_slice(0x74, &[0x20, 0x40, 0x80]);
-        self.write_slice_le(0x1986, 44);
+        {
+            let mut fx = self.fx_controls();
+            fx.blending = 44;
+            self.publish_fx_controls(fx, &[crate::fx_state::Field::Blending]);
+        };
         // A is the haze level and B's low byte its color.
-        let level = self.hdma_object(slot).a;
+        let level = crate::hdma_word!(self, usize::from(slot >> 1), A);
         match phase {
             HazePhase::FadedIn => {
                 if self.session().room.entry.transition_selector == 0xe2db {
-                    self.hdma_object(slot).pre_instruction = 0xde96;
+                    crate::hdma_word!(self, usize::from(slot >> 1), PreInstruction => 0xde96);
                 }
                 return;
             }
             HazePhase::FadingIn if level == 16 => {
-                self.hdma_object(slot).pre_instruction = 0xde74;
+                crate::hdma_word!(self, usize::from(slot >> 1), PreInstruction => 0xde74);
                 return;
             }
             HazePhase::FadingOut if level == 0 => return,
             _ => {}
         }
-        let color = self.hdma_object(slot).b as u8;
+        let color = crate::hdma_word!(self, usize::from(slot >> 1), B) as u8;
         let mut shade = level as u8 as i8;
         for row in (0..16).rev() {
-            self.set_byte(0x9d00 + row, color | shade as u8);
+            self.store_source_byte(LiveOwner::HdmaTable2, row, color | shade as u8);
             shade = shade.wrapping_sub(1);
             if shade < 0 {
                 shade = 0;
@@ -279,12 +311,12 @@ pub trait HdmaEffects: Host {
         } else {
             u16::MAX
         };
-        let object = self.hdma_object(slot);
-        object.a = object.a.wrapping_add(delta);
+        let hdma_index = usize::from(slot >> 1);
+        crate::hdma_word!(self, hdma_index, A => crate::hdma_word!(self, hdma_index, A).wrapping_add(delta));
     }
 
     fn advance_hdma_program(&mut self) {
-        advance_program(self.current_hdma_object());
+        advance_program(self.current_hdma_index(), self);
     }
 
     fn add_eye_beam_fixed(&mut self, whole: usize, fraction: usize, increment: u32) -> u32 {
@@ -296,9 +328,13 @@ pub trait HdmaEffects: Host {
     }
 
     fn initialize_eye_beam(&mut self, slot: u16) {
-        set_colors(self.hdma_object(slot), [0x30, 0x50, 0x80]);
+        set_colors(usize::from(slot >> 1), [0x30, 0x50, 0x80], self);
         self.write_slice(0x74, &[0x30, 0x50, 0x80]);
-        self.write_slice_le(0x1986, 16);
+        {
+            let mut fx = self.fx_controls();
+            fx.blending = 16;
+            self.publish_fx_controls(fx, &[crate::fx_state::Field::Blending]);
+        };
         // The original stores also clear the byte after the HDMA terminator.
         self.write_slice(
             0x9000,
@@ -306,25 +342,31 @@ pub trait HdmaEffects: Host {
         );
         self.edit_actor(Key::from_legacy(0x40), Le, |actor| actor.variables[2] = 1);
         // C and D are the beam's width, whole and fraction.
-        let object = self.hdma_object(slot);
-        object.c = 0;
-        object.d = 0;
+        let hdma_index = usize::from(slot >> 1);
+        crate::hdma_word!(self, hdma_index, C => 0);
+        crate::hdma_word!(self, hdma_index, D => 0);
         self.write_slice(0x9080, &[0; 4]);
         self.write_slice_le(0x9090, 0);
     }
 
     fn advance_eye_beam(&mut self, slot: u16, phase: EyeBeamPhase) {
-        self.write_slice_le(0x1986, 16);
+        {
+            let mut fx = self.fx_controls();
+            fx.blending = 16;
+            self.publish_fx_controls(fx, &[crate::fx_state::Field::Blending]);
+        };
         match phase {
             EyeBeamPhase::Widening => {
                 let speed = self.add_eye_beam_fixed(0x9080, 0x9082, 0x4000);
-                let object = self.hdma_object(slot);
-                let width = (u32::from(object.d) | u32::from(object.c) << 16).wrapping_add(speed);
-                object.d = width as u16;
-                object.c = (width >> 16) as u16;
+                let hdma_index = usize::from(slot >> 1);
+                let width = (u32::from(crate::hdma_word!(self, hdma_index, D))
+                    | u32::from(crate::hdma_word!(self, hdma_index, C)) << 16)
+                    .wrapping_add(speed);
+                crate::hdma_word!(self, hdma_index, D => width as u16);
+                crate::hdma_word!(self, hdma_index, C => (width >> 16) as u16);
                 if ((width >> 16) as u16).wrapping_sub(4) as i16 >= 0 {
                     // Keep the fractional width when the integer part reaches the limit.
-                    object.c = 4;
+                    crate::hdma_word!(self, hdma_index, C => 4);
                     self.advance_hdma_program();
                 }
                 self.draw_eye_beam(slot);
@@ -337,16 +379,16 @@ pub trait HdmaEffects: Host {
                     let index = usize::from(self.word(0x9090).wrapping_mul(4));
                     let table = self.table(Source::Loaded, 0x88ea8b);
                     let cycle = [0, 1, 2].map(|lane| table.byte(index + lane));
-                    set_colors(self.hdma_object(slot), cycle);
+                    set_colors(usize::from(slot >> 1), cycle, self);
                     self.write_slice_le(0x9090, self.word(0x9090).wrapping_add(1) & 0xf);
                 }
             }
             EyeBeamPhase::Fading => {
-                if high(self.hdma_object(slot).a) == 0x40 {
+                if high(crate::hdma_word!(self, usize::from(slot >> 1), A)) == 0x40 {
                     self.write_slice(0x74, &[0x20, 0x40, 0x80]);
-                    let object = self.hdma_object(slot);
-                    object.d = 0;
-                    object.c = 0;
+                    let hdma_index = usize::from(slot >> 1);
+                    crate::hdma_word!(self, hdma_index, D => 0);
+                    crate::hdma_word!(self, hdma_index, C => 0);
                     for entry in (0x9100..0x9300).step_by(2).rev() {
                         self.write_slice_le(entry, 0xff);
                     }
@@ -354,14 +396,14 @@ pub trait HdmaEffects: Host {
                     self.advance_hdma_program();
                 } else {
                     self.draw_eye_beam(slot);
-                    let object = self.current_hdma_object();
-                    let mut faded = colors(object);
+                    let hdma_index = self.current_hdma_index();
+                    let mut faded = colors(hdma_index, &*self);
                     for (value, black) in faded.iter_mut().zip([0x20, 0x40, 0x80]) {
                         if *value != black {
                             *value = value.wrapping_sub(1);
                         }
                     }
-                    set_colors(object, faded);
+                    set_colors(hdma_index, faded, self);
                 }
             }
         }
@@ -370,7 +412,7 @@ pub trait HdmaEffects: Host {
     fn draw_eye_beam(&mut self, slot: u16) {
         let actor = self.resolve_actor(Key::from_legacy(0x40), Le);
         let angle = actor.variables[3];
-        let width = self.session().hdma.objects[usize::from(slot >> 1)].c;
+        let width = crate::hdma_word!(&*self, usize::from(slot >> 1), C);
         let y = actor.y.whole.wrapping_sub(self.inputs().camera_y);
         let x = actor.x.whole.wrapping_sub(self.inputs().camera_x);
         self.calculate_xray_window(crate::beam_windows::XrayWindow {
@@ -381,7 +423,7 @@ pub trait HdmaEffects: Host {
             off_screen: x >= 256,
             table: 0x9100,
         });
-        let colors = colors(self.hdma_object(slot));
+        let colors = colors(usize::from(slot >> 1), &*self);
         for (target, color) in (0x74..).zip(colors) {
             self.set_byte(target, color);
         }
@@ -396,12 +438,24 @@ pub trait HdmaEffects: Host {
         // rain's camera history (E and F). Finish each axis, including the
         // history, before reading the next.
         for (vertical, camera, output) in [(true, 1, ram::BG3_YPOS), (false, 0, ram::BG3_XPOS)] {
-            let object = *self.hdma_object(slot);
+            let hdma_index = usize::from(slot >> 1);
             let (phase, history) = match (spores, vertical) {
-                (false, true) => (object.a, object.e),
-                (false, false) => (object.b, object.f),
-                (true, true) => (object.c, object.e),
-                (true, false) => (object.d, object.f),
+                (false, true) => (
+                    crate::hdma_word!(self, hdma_index, A),
+                    crate::hdma_word!(self, hdma_index, E),
+                ),
+                (false, false) => (
+                    crate::hdma_word!(self, hdma_index, B),
+                    crate::hdma_word!(self, hdma_index, F),
+                ),
+                (true, true) => (
+                    crate::hdma_word!(self, hdma_index, C),
+                    crate::hdma_word!(self, hdma_index, E),
+                ),
+                (true, false) => (
+                    crate::hdma_word!(self, hdma_index, D),
+                    crate::hdma_word!(self, hdma_index, F),
+                ),
             };
             let origin = if rain {
                 let layer1 = self.session().room.camera.layer1[camera];
@@ -414,25 +468,32 @@ pub trait HdmaEffects: Host {
             let delta = match (weather, vertical) {
                 (Weather::Rain, true) => 0u16.wrapping_sub(1536),
                 (_, true) => 0u16.wrapping_sub(64),
-                (Weather::Rain, false) => self.hdma_object(slot).d,
+                (Weather::Rain, false) => crate::hdma_word!(self, usize::from(slot >> 1), D),
                 (Weather::Fog, false) => 80,
                 // Spores retain the original idempotent horizontal-phase store.
                 (Weather::Spores, false) => 0,
             };
             let camera = self.session().room.camera.layer1[camera];
-            let object = self.hdma_object(slot);
+            let hdma_index = usize::from(slot >> 1);
             let phase_word = match (spores, vertical) {
-                (false, true) => &mut object.a,
-                (false, false) => &mut object.b,
-                (true, true) => &mut object.c,
-                (true, false) => &mut object.d,
+                (false, true) => crate::hdma::ObjectWord::A,
+                (false, false) => crate::hdma::ObjectWord::B,
+                (true, true) => crate::hdma::ObjectWord::C,
+                (true, false) => crate::hdma::ObjectWord::D,
             };
-            *phase_word = phase.wrapping_add(delta);
+            self.store_hdma_word(
+                crate::hdma::Word::Object {
+                    index: hdma_index,
+                    field: phase_word,
+                },
+                phase.wrapping_add(delta),
+                WordOrder::Little,
+            );
             if rain {
                 if vertical {
-                    object.e = camera;
+                    crate::hdma_word!(self, hdma_index, E => camera);
                 } else {
-                    object.f = camera;
+                    crate::hdma_word!(self, hdma_index, F => camera);
                 }
             }
         }

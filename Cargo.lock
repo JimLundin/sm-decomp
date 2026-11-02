@@ -75,6 +75,9 @@ dependencies = [
  "gl",
  "sdl2-sys",
  "sm",
+ "sm_data",
+ "sm_game",
+ "sm_runtime",
 ]
 
 [[package]]

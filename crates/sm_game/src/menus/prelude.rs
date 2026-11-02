@@ -144,3 +144,7 @@ pub(crate) use do_until;
 /// The boss interaction's existing typed Session facet.
 macro_rules! battle { ($($t:tt)*) => { owned!([$crate::actors::boss_interaction] $($t)*) }; }
 pub(crate) use battle;
+
+pub use crate::display::queued_tilemaps::QueueAccess as _;
+pub use crate::presentation_workspace::QueueAccess as _;
+pub use crate::presentation_workspace::{Access as _, PaletteAccess as _, Point, Role};

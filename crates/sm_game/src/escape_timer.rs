@@ -1,118 +1,38 @@
-//! Ceres and Tourian escape countdowns, movement and sprite output.
-use crate::ram::RawRam as _;
-use crate::ram::word;
+//! Escape countdown transitions and ordered sprite publication.
 use crate::sprite_drawing::Clip;
 use crate::sprite_output;
 
 pub fn advance<H: crate::sprite_output::SpriteHost + ?Sized>(game: &mut H) -> u8 {
     let states: [fn(&mut H) -> u8; 7] = [
         |_| 0,
-        |game| start(0x100, game),
-        |game| start(0x300, game),
-        |game| delay(0x10, false, game),
-        |game| delay(0x60, true, game),
-        move_into_place,
+        |game| prepare(1, game),
+        |game| prepare(2, game),
+        |game| prepare(3, game),
+        |game| prepare(4, game),
+        |game| prepare(5, game),
         tick,
     ];
-    states[crate::sequence_word!(game.TIMER_STATUS) as u8 as usize](game)
+    states[usize::from(crate::sequence_word!(game.TIMER_STATUS).to_le_bytes()[0])](game)
 }
-
-fn set_digits<H: crate::sprite_output::SpriteHost + ?Sized>(minutes: u16, game: &mut H) {
-    // These native words overlap at the seconds byte; retain both ordered writes.
-    game.ram().copy_in(0x945, &0u16.to_ne_bytes());
-    game.ram().copy_in(0x946, &minutes.to_ne_bytes());
-}
-
-pub fn clear<H: crate::sprite_output::SpriteHost + ?Sized>(game: &mut H) {
-    word! { game, 0x8000; TIMER_X_POS, TIMER_Y_POS }
-    set_digits(0, game);
-    crate::sequence_word!(game.TIMER_STATUS = 0);
-}
-
-fn start<H: crate::sprite_output::SpriteHost + ?Sized>(minutes: u16, game: &mut H) -> u8 {
-    clear(game);
-    set_digits(minutes, game);
-    crate::sequence_word!(game.TIMER_STATUS = 0x8003);
-    0
-}
-
-fn delay<H: crate::sprite_output::SpriteHost + ?Sized>(
-    limit: u8,
-    count_down: bool,
-    game: &mut H,
-) -> u8 {
-    game.ram()
-        .write_byte(0x948, (word!(game.TIMER_X_POS) as u8).wrapping_add(1));
-    if word!(game.TIMER_X_POS) as u8 >= limit {
-        if count_down {
-            game.ram().write_byte(0x948, 0);
-        }
-        game.ram().write_byte(
-            0x943,
-            (crate::sequence_word!(game.TIMER_STATUS) as u8).wrapping_add(1),
-        );
-    }
+fn prepare<H: crate::sprite_output::SpriteHost + ?Sized>(state: u8, game: &mut H) -> u8 {
+    let count_down = game.countdown_apply(|timer, status| timer.prepare(status, state));
     if count_down { tick(game) } else { 0 }
 }
-
-fn move_into_place<H: crate::sprite_output::SpriteHost + ?Sized>(game: &mut H) -> u8 {
-    let x = word!(game.TIMER_X_POS).wrapping_add(224);
-    let x_ready = x >= 0xdc00;
-    word!(game.TIMER_X_POS = if x_ready { 0xdc00 } else { x });
-    let y = word!(game.TIMER_Y_POS).wrapping_sub(193);
-    let y_ready = y < 0x3000;
-    word!(game.TIMER_Y_POS = if y_ready { 0x3000 } else { y });
-    if x_ready && y_ready {
-        crate::sequence_word!(game.TIMER_STATUS += 1);
-    }
-    tick(game)
-}
-
-fn decrement_decimal<H: crate::sprite_output::SpriteHost + ?Sized>(
-    game: &H,
-    at: usize,
-    value: u8,
-) -> bool {
-    let mut result = (game.ram().read_byte(at) as i32 & 0xf) + (!(value as i32) & 0xf) + 1;
-    if result < 0x10 {
-        result = (result - 0x6) & (if result - 0x6 < 0 { 0xf } else { 0x1f });
-    }
-    result += (game.ram().read_byte(at) as i32 & 0xf0) + (!(value as i32) & 0xf0);
-    if result < 0x100 {
-        result -= 0x60;
-    }
-    game.ram().write_byte(at, result as u8);
-    result < 0x100
-}
-
 fn tick<H: crate::sprite_output::SpriteHost + ?Sized>(game: &mut H) -> u8 {
-    const CENTISECOND_DECREMENTS: [u8; 128] = [
-        1, 2, 2, 1, 2, 2, 1, 2, 2, 1, 2, 2, 2, 1, 2, 2, 1, 2, 2, 1, 2, 2, 1, 2, 1, 2, 2, 1, 2, 2,
-        1, 2, 1, 2, 2, 1, 2, 2, 1, 2, 2, 1, 2, 2, 2, 1, 2, 2, 1, 2, 2, 1, 2, 2, 1, 2, 1, 2, 2, 1,
-        2, 2, 1, 2, 1, 2, 2, 1, 2, 2, 1, 2, 2, 1, 2, 2, 2, 1, 2, 2, 1, 2, 2, 1, 2, 2, 1, 2, 1, 2,
-        2, 1, 2, 2, 1, 2, 1, 2, 2, 1, 2, 2, 1, 2, 2, 1, 2, 2, 2, 1, 2, 2, 1, 2, 2, 1, 2, 2, 1, 2,
-        2, 1, 2, 2, 2, 1, 2, 2,
-    ];
-    let amount = CENTISECOND_DECREMENTS
-        [usize::from(crate::frame_display_word!(game.NmiFrameWordPair) & 0x7f)];
-    if decrement_decimal(game, 0x945, amount) && decrement_decimal(game, 0x946, 1) {
-        if decrement_decimal(game, 0x947, 1) {
-            game.ram().write_byte(0x945, 0);
-            game.ram().write_byte(0x946, 0);
-            game.ram().write_byte(0x947, 0);
-        } else {
-            game.ram().write_byte(0x946, 0x59);
-        }
-    }
-    ((game.ram().read_byte(0x945) | game.ram().read_byte(0x946) | game.ram().read_byte(0x947)) == 0)
-        as u8
+    // Preparation is already committed; no owner borrow crosses this live query.
+    let frame = crate::frame_display_word!(game.NmiFrameWordPair);
+    // Reacquire the selected current image if the query caused external adoption.
+    game.countdown_apply(|timer, _| timer.tick(frame))
+}
+pub fn clear<H: crate::sprite_output::SpriteHost + ?Sized>(game: &mut H) {
+    game.countdown_apply(|timer, status| timer.clear(status));
 }
 
 pub fn draw<H: crate::sprite_output::SpriteHost + ?Sized>(game: &mut H) {
     draw_sprite(0, 0xa060, game);
-    for (at, offset) in [(0x947, 0xffe4u16), (0x946, 0xfffc), (0x945, 0x14)] {
+    for (at, offset) in [(2, 0xffe4u16), (1, 0xfffc), (0, 0x14)] {
         // The overlapping native word is read after the preceding sprite output.
-        let value = u16::from_ne_bytes([game.ram().read_byte(at), game.ram().read_byte(at + 1)]);
+        let value = game.countdown_native_word(at);
         for (shift, x) in [(4, offset), (0, offset.wrapping_add(8))] {
             let map =
                 crate::menu_lists::timer_digit_spritemap(game, ((value >> shift) & 0xf) as isize);
@@ -126,8 +46,8 @@ fn draw_sprite<H: crate::sprite_output::SpriteHost + ?Sized>(offset: u16, map: u
         0x80,
         map,
         (
-            offset.wrapping_add(u16::from(game.ram().read_byte(0x949))),
-            u16::from(game.ram().read_byte(0x94b)),
+            offset.wrapping_add(u16::from(game.countdown_byte(4))),
+            u16::from(game.countdown_byte(6)),
         ),
         0xa00,
         Clip::Bounded,

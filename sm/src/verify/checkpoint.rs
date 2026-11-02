@@ -129,6 +129,8 @@ impl Archive<'_> {
         Ok(())
     }
     fn work_ram(&mut self, ram: &WorkRam) -> Result<(), String> {
+        let _source_restore =
+            matches!(self, Self::Load(_)).then(|| ram.pause_source_publications());
         for at in 0..ram.len() {
             match self {
                 Self::Save(output) => output.push(ram.read_byte(at)),
@@ -142,6 +144,60 @@ impl Archive<'_> {
                     *input = tail;
                 }
             }
+        }
+        self.source_publications(ram)?;
+        Ok(())
+    }
+
+    fn source_publications(&mut self, ram: &WorkRam) -> Result<(), String> {
+        use crate::game_state::SourcePublicationSnapshot;
+        let saving = matches!(self, Self::Save(_));
+        let snapshot = ram.capture_source_publications();
+        let mut ordinal_bytes = snapshot.ordinal.to_le_bytes();
+        let mut count_bytes = u32::try_from(snapshot.last.len()).unwrap().to_le_bytes();
+        self.bytes(&mut ordinal_bytes)?;
+        self.bytes(&mut count_bytes)?;
+        let ordinal = u64::from_le_bytes(ordinal_bytes);
+        let count = u32::from_le_bytes(count_bytes);
+        if count > u32::try_from(WorkRam::LEN).unwrap() {
+            return Err("invalid source publication count".into());
+        }
+        let mut saved = snapshot.last.into_iter();
+        let mut selected = SourcePublicationSnapshot {
+            last: Default::default(),
+            ordinal,
+        };
+        let mut ranks = std::collections::BTreeSet::new();
+        for _ in 0..count {
+            let (at, rank) = if saving {
+                saved.next().unwrap()
+            } else {
+                (0, None)
+            };
+            let mut at_bytes = u32::try_from(at).unwrap().to_le_bytes();
+            let mut present = [u8::from(rank.is_some())];
+            let mut rank_bytes = rank.unwrap_or(0).to_le_bytes();
+            self.bytes(&mut at_bytes)?;
+            self.bytes(&mut present)?;
+            if present[0] > 1 {
+                return Err("invalid source publication flag".into());
+            }
+            let present = present[0] == 1;
+            if present {
+                self.bytes(&mut rank_bytes)?;
+            }
+            let rank = u64::from_le_bytes(rank_bytes);
+            let at = usize::try_from(u32::from_le_bytes(at_bytes)).unwrap();
+            if at >= WorkRam::LEN
+                || (present && (rank == 0 || rank > ordinal))
+                || (present && !ranks.insert(rank))
+                || selected.last.insert(at, present.then_some(rank)).is_some()
+            {
+                return Err("invalid source publication entry".into());
+            }
+        }
+        if matches!(self, Self::Load(_)) {
+            ram.restore_source_publications(&selected);
         }
         Ok(())
     }
@@ -481,6 +537,7 @@ macro_rules! machine_state {
         fn machine_layout(layout: &mut String) {
             layout.push_str("machine{work_ram:");
             <[u8; WorkRam::LEN]>::layout(layout);
+            layout.push_str("source-publications{ordinal:u64-le;count:u32-le;entries:[address:u32-le;present:bool-u8;present=>rank:u64-le]}:");
             $(field_layout::<Game, _>(layout, stringify!($field), |game| &game.$field);)*
             $(layout.push_str(concat!(stringify!($name), ":")); <$ty>::layout(layout);)*
             layout.push('}');

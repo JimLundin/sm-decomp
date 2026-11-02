@@ -1,10 +1,12 @@
 //! Ending graphics: logo palette steps, icon and beam transfers, and the item percentage.
+use crate::cinematic::CinematicDestination;
 use crate::cinematic::cinematic_native_record;
 use crate::cinematic_state::Cinematic;
 use crate::imported::{Imported, grid_word, load, word as table_word};
-use crate::ram::RawRam as _;
-use crate::ram::{checked_word, word};
+use crate::presentation_workspace::{Point, Role};
+use crate::ram::checked_word;
 use crate::visual_state::EndingGraphics;
+use crate::word_transfers::WordEndpoint;
 use sm_data::credits::{
     BEAM_BIT_ADDRESS, BEAM_DESTINATION_ADDRESS, BEAM_SOURCE_ADDRESS, CAPACITY_ADDRESS,
     CAPACITY_DIVISOR_ADDRESS, DIGIT_TILE_ADDRESS, ICON_PALETTE_ADDRESS, ICON_TRANSFER_ADDRESS,
@@ -31,7 +33,7 @@ pub fn advance_ending_logo_palette<H: crate::menus::host::Host + ?Sized>(
             let color = cinematic_native_record::<0x8c>(source, game).word(0);
             // The second band originally wrote native RAM words.
             let color = if offset == 16 { color } else { color.to_le() };
-            word!(game.PALETTE_BUFFER[offset + index] = color);
+            game.palette_write_word(false, 2 * (offset + index), color);
             source = source.wrapping_sub(2);
         }
     }
@@ -61,7 +63,7 @@ pub fn advance_ending_graphics<H: crate::menus::host::Host + ?Sized>(
         Background => 4 * i32::from(frame),
         Samus => i32::from(frame.wrapping_mul(2) >> 1),
     };
-    let tail = word!(game.VRAM_WRITE_QUEUE_TAIL);
+    let tail = game.queue_tail();
     // Each ROM word stays between the preceding queue stores; bank indices wrap separately.
     for field in [0u16, 2, 4, 5] {
         let value = match (graphics, field) {
@@ -102,14 +104,18 @@ pub fn advance_ending_graphics<H: crate::menus::host::Host + ?Sized>(
                 index as isize,
             ),
         };
-        let destination = 0xd0 + usize::from(tail.wrapping_add(field));
+        let destination = tail.wrapping_add(field);
         if field == 4 {
-            game.ram().write_byte(destination, value as u8);
+            crate::presentation_workspace::QueueAccess::queue_byte_at(
+                game,
+                usize::from(destination),
+                value.to_le_bytes()[0],
+            );
         } else {
-            crate::word_transfers!(game, ascending, 1; native(destination) <- value(value));
+            game.queue_native_word(destination, value);
         }
     }
-    word!(game.VRAM_WRITE_QUEUE_TAIL = tail.wrapping_add(7));
+    game.store_queue_tail(tail.wrapping_add(7));
     *cine.var14() = cine.var14().wrapping_add(1);
 }
 
@@ -140,9 +146,7 @@ pub fn draw_cinematic_item_percentage<H: crate::menus::host::Host + ?Sized>(game
             game,
             ITEM_BIT_ADDRESS,
             index,
-        ) & crate::session_cohort::load::<crate::inventory::Inventory, _>(game)
-            .equipment
-            .owned
+        ) & crate::gameplay_context::inventory(game).equipment.owned
             != 0
         {
             count = count.wrapping_add(1);
@@ -154,9 +158,7 @@ pub fn draw_cinematic_item_percentage<H: crate::menus::host::Host + ?Sized>(game
             game,
             BEAM_BIT_ADDRESS,
             index,
-        ) & crate::session_cohort::load::<crate::inventory::Inventory, _>(game)
-            .beams
-            .owned
+        ) & crate::gameplay_context::inventory(game).beams.owned
             != 0
         {
             count = count.wrapping_add(1);
@@ -170,13 +172,41 @@ pub fn draw_cinematic_item_percentage<H: crate::menus::host::Host + ?Sized>(game
         if visible {
             let index = (digit.wrapping_mul(4) >> 1) as isize;
             for row in 0..2 {
-                crate::word_transfers!(game, ascending, 1; pause_map(column + row * 32) <- value(
-                    grid_word(&game.visual_tables().digit_tiles, game, DIGIT_TILE_ADDRESS, index + row)
-                ));
+                crate::cinematic::transfer_cinematic_words(
+                    1,
+                    2,
+                    &[(
+                        CinematicDestination::Screen(Point::new(
+                            Role::Pause,
+                            usize::try_from(2 * (column + row * 32)).unwrap(),
+                        )),
+                        WordEndpoint::Value(grid_word(
+                            &game.visual_tables().digit_tiles,
+                            game,
+                            DIGIT_TILE_ADDRESS,
+                            index + row,
+                        )),
+                    )],
+                    game,
+                );
             }
         }
     }
-    crate::word_transfers!(game, ascending, 1; pause_map(465) <- value(14442), pause_map(497) <- value(14458));
+    crate::cinematic::transfer_cinematic_words(
+        1,
+        2,
+        &[
+            (
+                CinematicDestination::Screen(Point::new(Role::Pause, 930)),
+                WordEndpoint::Value(14442),
+            ),
+            (
+                CinematicDestination::Screen(Point::new(Role::Pause, 994)),
+                WordEndpoint::Value(14458),
+            ),
+        ],
+        game,
+    );
 }
 
 /// The original's 16-by-8 division, with its zero-divisor result.

@@ -3,7 +3,6 @@ use super::menu_tilemap;
 use super::options_objects::definition;
 use super::prelude::*;
 use crate::menu_state::{OptionsMenu, SaveSelection};
-use crate::ram::word;
 
 /// The options screen's BG tilemap buffer ($7E:3000, `ram3000`).
 const TILEMAP: usize = 0x3000;
@@ -11,18 +10,38 @@ const TILEMAP: usize = 0x3000;
 const LANGUAGE_HIGHLIGHT_TILE: usize = TILEMAP + 0x3b8;
 
 pub fn initialize<H: Host + ?Sized>(game: &mut H, options: &mut OptionsMenu, upload: fn(&mut H)) {
-    game.ram().write_byte(crate::ram::mirror::BG12NBA, 0);
-    game.ram().write_byte(
-        crate::ram::mirror::TM,
-        crate::display::control::Layers::BG1_BG2_SPRITES.byte(),
+    game.store_display_control_byte(
+        crate::display::preparation::Field::Characters0,
+        0,
+        crate::display::preparation::Store::Owned,
     );
-    for mirror in [0x6b, 0x6c, 0x6d, 0x6e, 0x71, 0x6f] {
-        game.ram().write_byte(mirror, 0);
+    game.store_display_control_byte(
+        crate::display::preparation::Field::MainLayers,
+        crate::display::control::Layers::BG1_BG2_SPRITES.byte(),
+        crate::display::preparation::Store::Owned,
+    );
+    use crate::display::preparation::{Field, Store};
+    for field in [
+        Field::SubLayers,
+        Field::MainWindow,
+        Field::SubWindow,
+        Field::NextColorSelection,
+        Field::NextColorMath,
+        Field::ColorSelection,
+    ] {
+        game.store_display_control_byte(field, 0, Store::Owned);
     }
     upload(game);
     display_scroll! { game, 0; Bg1H, Bg1V, Bg2H, Bg2V }
     options.debug_invincibility = 0;
-    crate::word_transfers!(game, descending, 256; le(PALETTE_BUFFER, 255) <- rom(0x8ee400, 255));
+    let palette = crate::word_transfers::WordEndpoint::Rom(
+        game.loaded_rom_image(),
+        sm_data::cartridge::lorom_offset(0x8ee400),
+    );
+    for index in (0..256).rev() {
+        let color = palette.read(isize::try_from(2 * index).unwrap());
+        game.palette_write_word(false, 2 * index, color);
+    }
     for (index, source) in [0x978df4, 0x978fcd, 0x9791c4, 0x97938d, 0x97953a]
         .into_iter()
         .enumerate()
@@ -31,10 +50,7 @@ pub fn initialize<H: Host + ?Sized>(game: &mut H, options: &mut OptionsMenu, upl
     }
     copy_screen(0x1c7fe, false, game);
     // The ROM keeps the final copied tile in A through the object clear.
-    let initial_tile = u16::from_le_bytes([
-        game.ram().read_byte(TILEMAP),
-        game.ram().read_byte(TILEMAP + 1),
-    ]);
+    let initial_tile = game.screen_word(Point::physical(TILEMAP));
     options.menu_option_index = 0;
     super::options_objects::clear(game);
     super::options_objects::spawn(initial_tile, definition::MENU_SELECTION_MISSILE, game);
@@ -74,7 +90,8 @@ pub fn main_menu<H: Host + ?Sized>(game: &mut H, options: &mut OptionsMenu) {
 }
 
 fn start<H: Host + ?Sized>(game: &mut H, options: &mut OptionsMenu) {
-    if word!(game.ENABLE_DEBUG) != 0 && game.observed_inputs().held & K_BUTTON_L as u16 == 0
+    if crate::gameplay_word!(game.ENABLE_DEBUG) != 0
+        && game.observed_inputs().held & K_BUTTON_L as u16 == 0
         || crate::menus::state::load::<SaveSelection, _>(game).loading_game_state == 5
     {
         options.screen_index = 4;
@@ -88,8 +105,8 @@ pub fn finish_start<H: Host + ?Sized>(game: &mut H) {
     crate::menus::state::with(game, |_, options: &mut OptionsMenu| {
         options.screen_index = 0
     });
-    if word!(game.ENABLE_DEBUG) != 0 && (game.observed_inputs().held & 0x20) == 0 {
-        word!(game.GAME_STATE = 5);
+    if crate::gameplay_word!(game.ENABLE_DEBUG) != 0 && (game.observed_inputs().held & 0x20) == 0 {
+        crate::gameplay_word!(game.GAME_STATE = 5);
         let slot = crate::menus::state::with(game, |_, selection: &mut SaveSelection| {
             let unsaved = selection.loading_game_state != 5;
             selection.loading_game_state = 5;
@@ -101,7 +118,7 @@ pub fn finish_start<H: Host + ?Sized>(game: &mut H) {
     } else if let loading @ 1.. =
         crate::menus::state::load::<SaveSelection, _>(game).loading_game_state
     {
-        word!(game.GAME_STATE = loading);
+        crate::gameplay_word!(game.GAME_STATE = loading);
         if loading == 34 {
             crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
                 flow.cinematic_function = 0xc11b
@@ -112,7 +129,7 @@ pub fn finish_start<H: Host + ?Sized>(game: &mut H) {
             options.screen_index = 0;
         });
     } else {
-        word!(game.GAME_STATE = 30);
+        crate::gameplay_word!(game.GAME_STATE = 30);
         crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
             flow.cinematic_function = 0xa395
         });
@@ -124,7 +141,11 @@ pub fn finish_start<H: Host + ?Sized>(game: &mut H) {
 }
 
 fn dissolve<H: Host + ?Sized>(game: &mut H, options: &mut OptionsMenu) {
-    game.ram().write_byte(crate::ram::mirror::MOSAIC, 3);
+    game.store_display_control_byte(
+        crate::display::preparation::Field::Mosaic,
+        3,
+        crate::display::preparation::Store::Owned,
+    );
     crate::screen_fade::store(game, 0, 0);
     options.screen_index = 5;
 }
@@ -253,7 +274,7 @@ pub fn controller<H: Host + ?Sized>(game: &mut H, options: &mut OptionsMenu) {
             reset_bindings,
         ];
         actions[usize::from(options.menu_option_index)](game, options);
-    } else if word!(game.JOYPAD2_NEW_KEYS) != 0
+    } else if crate::gameplay_word!(game.JOYPAD2_NEW_KEYS) != 0
         && options.menu_option_index == 8
         && (i32::from(options.debug_invincibility) - 16) & 0x8000 != 0
     {
@@ -262,7 +283,7 @@ pub fn controller<H: Host + ?Sized>(game: &mut H, options: &mut OptionsMenu) {
             0x80, 0x80,
         ];
         let code = CODE[usize::from(options.debug_invincibility)];
-        if code & word!(game.JOYPAD2_NEW_KEYS) == code {
+        if code & crate::gameplay_word!(game.JOYPAD2_NEW_KEYS) == code {
             options.debug_invincibility += 1;
         } else {
             options.debug_invincibility = 0;
@@ -303,18 +324,22 @@ pub fn fade_out<H: Host + ?Sized>(
     enable: fn(&mut H),
 ) {
     game.fade(false);
-    if screen == 5 && game.ram().read_byte(crate::ram::mirror::MOSAIC) != 0xf3 {
-        game.ram().write_byte(
-            crate::ram::mirror::MOSAIC,
-            game.ram()
-                .read_byte(crate::ram::mirror::MOSAIC)
+    if screen == 5 && game.display_control_byte(crate::display::preparation::Field::Mosaic) != 0xf3
+    {
+        game.store_display_control_byte(
+            crate::display::preparation::Field::Mosaic,
+            game.display_control_byte(crate::display::preparation::Field::Mosaic)
                 .wrapping_add(16),
+            crate::display::preparation::Store::Owned,
         );
     }
-    if game.ram().read_byte(crate::ram::mirror::INIDISP) != 0x80 {
-        if screen == 0 && game.ram().read_byte(crate::ram::mirror::INIDISP) == 14 {
-            let subscreen = u16::from(game.ram().read_byte(crate::ram::mirror::TS));
-            if game.ram().read_byte(crate::ram::mirror::TS) & 4 == 0 {
+    if game.display_control_byte(crate::display::preparation::Field::Brightness) != 0x80 {
+        if screen == 0
+            && game.display_control_byte(crate::display::preparation::Field::Brightness) == 14
+        {
+            let subscreen =
+                u16::from(game.display_control_byte(crate::display::preparation::Field::SubLayers));
+            if game.display_control_byte(crate::display::preparation::Field::SubLayers) & 4 == 0 {
                 super::options_objects::spawn(subscreen, definition::SAMUS_DATA_BORDER, game);
             }
         }
@@ -330,7 +355,7 @@ pub fn fade_out<H: Host + ?Sized>(
             replace_screen(game, options);
         }
         11 => {
-            word!(game.GAME_STATE = 4);
+            crate::gameplay_word!(game.GAME_STATE = 4);
             crate::menus::state::with(game, |_, menu: &mut crate::menu_state::MenuState| {
                 menu.menu_index = 0
             });
@@ -342,19 +367,23 @@ pub fn fade_out<H: Host + ?Sized>(
 
 pub fn fade_in<const DISSOLVE: bool, H: Host + ?Sized>(game: &mut H, options: &mut OptionsMenu) {
     game.fade(true);
-    if DISSOLVE && game.ram().read_byte(crate::ram::mirror::MOSAIC) != 3 {
-        game.ram().write_byte(
-            crate::ram::mirror::MOSAIC,
-            game.ram()
-                .read_byte(crate::ram::mirror::MOSAIC)
+    if DISSOLVE && game.display_control_byte(crate::display::preparation::Field::Mosaic) != 3 {
+        game.store_display_control_byte(
+            crate::display::preparation::Field::Mosaic,
+            game.display_control_byte(crate::display::preparation::Field::Mosaic)
                 .wrapping_sub(16),
+            crate::display::preparation::Store::Owned,
         );
     }
-    if game.ram().read_byte(crate::ram::mirror::INIDISP) != 15 {
+    if game.display_control_byte(crate::display::preparation::Field::Brightness) != 15 {
         return;
     }
     if DISSOLVE {
-        game.ram().write_byte(crate::ram::mirror::MOSAIC, 0);
+        game.store_display_control_byte(
+            crate::display::preparation::Field::Mosaic,
+            0,
+            crate::display::preparation::Store::Owned,
+        );
     }
     crate::screen_fade::store(game, 0, 0);
     if !DISSOLVE {
@@ -382,10 +411,7 @@ pub fn replace_screen<H: Host + ?Sized>(game: &mut H, options: &mut OptionsMenu)
                 + usize::from(crate::session_words::current(game).japanese_text_flag != 0) * 0x800;
             copy_screen(source, true, game);
             // The controller initializer receives the final native word copied to tile zero.
-            let tile = u16::from_ne_bytes([
-                game.ram().read_byte(TILEMAP),
-                game.ram().read_byte(TILEMAP + 1),
-            ]);
+            let tile = game.screen_native_word(Point::physical(TILEMAP));
             spawn(tile, definition::CONTROLLER_SETTING_MODE_BORDER, game);
             super::controller_input::load_binding_choices(game);
             menu_tilemap::controller_bindings(game);
@@ -394,18 +420,27 @@ pub fn replace_screen<H: Host + ?Sized>(game: &mut H, options: &mut OptionsMenu)
         copy_screen(0x1c7fe, false, game);
         highlight_language(game);
         // The ROM passes the final language-highlight tile left in A (82:EFD7).
-        let tile = u16::from_le_bytes([
-            game.ram().read_byte(LANGUAGE_HIGHLIGHT_TILE),
-            game.ram().read_byte(LANGUAGE_HIGHLIGHT_TILE + 1),
-        ]);
+        let tile = game.screen_word(Point::physical(LANGUAGE_HIGHLIGHT_TILE));
         spawn(tile, definition::OPTION_MODE_BORDER, game);
     }
 }
 
 // Descending native destination words; Japanese/special and main sources retain LE reads.
 pub fn copy_screen<H: Host + ?Sized>(last_word: usize, native: bool, game: &mut H) {
-    let source = crate::word_transfers::WordEndpoint::Ram(last_word as isize, native);
-    crate::word_transfers!(game, descending, 1024; pause_map(1023) <- captured(source, 0));
+    for index in 0..1024 {
+        let address = last_word - 2 * index;
+        // The decompressed allocation stays an explicit native-content boundary.
+        let bytes = [
+            game.compatibility_byte(address),
+            game.compatibility_byte(address + 1),
+        ];
+        let tile = if native {
+            u16::from_ne_bytes(bytes)
+        } else {
+            u16::from_le_bytes(bytes)
+        };
+        game.screen_write_native_word(Point::new(Role::Pause, 2 * (1023 - index)), tile);
+    }
 }
 
 pub fn advance<H: Host + ?Sized>(game: &mut H, upload: fn(&mut H), enable: fn(&mut H)) -> u8 {

@@ -140,3 +140,47 @@ impl CompatibilityRam for SessionProjection {
         ));
     }
 }
+
+#[cfg(test)]
+impl crate::gameplay_context::Access for SessionProjection {
+    fn inventory_state(&self) -> crate::inventory::Inventory {
+        self.0.inventory.clone()
+    }
+    fn commit_inventory(
+        &mut self,
+        before: &crate::inventory::Inventory,
+        mut after: crate::inventory::Inventory,
+    ) {
+        use crate::session_cohort::Cohort as _;
+        let mut old = Vec::new();
+        before.clone().words(|_, value| old.push(*value));
+        let mut changes = Vec::new();
+        let mut index = 0;
+        after.words(|at, value| {
+            if old[index] != *value {
+                changes.push((at, *value));
+            }
+            index += 1;
+        });
+        for (at, value) in changes {
+            for (lane, byte) in value.to_le_bytes().into_iter().enumerate() {
+                assert!(crate::session_encoding::write_projected_byte(
+                    &mut self.0,
+                    at + lane,
+                    byte
+                ));
+            }
+        }
+    }
+
+    fn gameplay_word(&self, word: crate::gameplay_context::Word) -> u16 {
+        word.get_session(&self.0)
+    }
+    fn set_gameplay_byte(&mut self, word: crate::gameplay_context::Word, lane: usize, byte: u8) {
+        assert!(lane < 2);
+        let field = word.get_session_mut(&mut self.0);
+        let mut bytes = field.to_le_bytes();
+        bytes[lane] = byte;
+        *field = u16::from_le_bytes(bytes);
+    }
+}

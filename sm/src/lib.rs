@@ -723,6 +723,8 @@ pub fn verify_room_contact_start_case(id: u32) -> Option<Vec<u8>> {
     room_contact_start_cases::capture_case(id, room_contact_start_cases::run)
 }
 
+#[path = "verification/grapple_tile_alias_checks.rs"]
+mod grapple_tile_alias_checks;
 #[path = "verification/room_runtime_checks.rs"]
 pub(crate) mod room_runtime_checks;
 #[path = "verification/room_world_cases.rs"]
@@ -731,6 +733,8 @@ pub(crate) mod room_world_cases;
 pub(crate) mod room_world_fixture;
 #[path = "verification/room_world_resources.rs"]
 pub(crate) mod room_world_resources;
+pub use grapple_tile_alias_checks::verify_grapple_tile_alias_prefixes;
+
 pub fn verify_room_runtime_guard() -> bool {
     room_runtime_checks::run()
 }
@@ -851,5 +855,10 @@ mod persistent_session_cases;
 #[cfg(sm_verify_dll)]
 pub use persistent_session_cases::{
     bank_upload_physical_prefixes, bank_upload_physical_timeout_boundaries,
+    persistent_session_game_owner_rejects_forged_fx_admission,
     persistent_session_native_rebinding_preserves_ready_owner,
+    persistent_session_rejects_conflicting_cold_fx_cycles,
+    persistent_session_rejects_forged_legacy_fx_ownership,
+    persistent_session_settlement_rebind_queries_current_workspace,
+    persistent_session_workspace_publication_exports_actual_aliases,
 };

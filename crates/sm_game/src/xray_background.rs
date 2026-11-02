@@ -1,7 +1,7 @@
 //! X-ray background capture, hidden-block overlay and restoration.
 use crate::display_refresh::enqueue_readback;
-use crate::hdma::HdmaObject;
 use crate::player_transitions::xray::BlendPhase;
+use crate::presentation_workspace::{Point, Role};
 use crate::ram::{RawRam, word};
 use crate::runtime_access::{RuntimeAccess, SessionView};
 use crate::session_access::SessionAccess;
@@ -17,6 +17,9 @@ pub trait Host:
     + crate::effects::SoundEffects
     + crate::cartridge::NativeDiagnostics
     + RuntimeAccess
+    + crate::presentation_workspace::Access
+    + crate::presentation_workspace::QueueAccess
+    + crate::hdma_objects::HdmaTable
 {
     fn xray_blend_mask(&mut self) -> u16;
     fn apply_xray_blending(&mut self, phase: BlendPhase);
@@ -64,15 +67,15 @@ fn set_backdrop_color<H: Host + ?Sized>(color: u16, game: &mut H) {
     runtime.session_mut().presentation.visual_mut().colors[0] = color;
 }
 fn upload_screen<H: Host + ?Sized>(source: u16, screen: u16, game: &mut H) {
-    let tail = word!(game.VRAM_WRITE_QUEUE_TAIL);
-    let entry = 0xd0 + usize::from(tail);
-    word_transfers!(game, ascending, 1;
-        native(entry) <- value(2048),
-        native(entry + 2) <- value(source),
-        native(entry + 4) <- value(126));
-    let target = ((game.ram().read_byte(0x59) as u16 & 0xfc) << 8).wrapping_add(screen * 1024);
-    word_transfers!(game, ascending, 1; native(entry + 5) <- value(target));
-    word!(game.VRAM_WRITE_QUEUE_TAIL = tail.wrapping_add(7));
+    let tail = game.queue_tail();
+    let entry = usize::from(tail);
+    for (offset, value) in [(0, 2048), (2, source), (4, 126)] {
+        game.queue_native_slice_at(entry + offset, value);
+    }
+    let layers = game.display_control_byte(crate::display::preparation::Field::Screens1);
+    let target = (u16::from(layers & 0xfc) << 8).wrapping_add(screen * 1024);
+    game.queue_native_slice_at(entry + 5, target);
+    game.store_queue_tail(tail.wrapping_add(7));
 }
 
 // Capture all four source tiles before the reverse-order writes, even when RAM aliases.
@@ -80,7 +83,7 @@ fn write_block<R: SessionView>(destination: u16, tile: u16, offsets: [usize; 4],
     let tiles = h.session().room.terrain.tiles()[usize::from(tile)];
     for corner in (0..4).rev() {
         let at = 0x4000 + usize::from(destination) + 2 * offsets[corner];
-        h.write_slice(at, &tiles[corner].to_le_bytes());
+        store_xray(h, at, &tiles[corner].to_le_bytes());
     }
 }
 
@@ -100,15 +103,13 @@ fn copy_background<H: Host + ?Sized>(game: &mut H) {
             let source = usize::from(screen_row + column) + 4096;
             let tiles = corners.map(|corner| {
                 let index = source + corner;
-                let () = [(); 0x3000 / 2][index];
-                let mut bytes = [0; 2];
-                game.ram().copy_out(0x4000 + 2 * index, &mut bytes);
-                u16::from_ne_bytes(bytes)
+                sm_data::table::check_index(index, 0x3000 / 2);
+                game.screen_native_word(Point::new(Role::Xray, 2 * index))
             });
             let destination = row * 64 + if block < 16 { block * 2 } else { 1024 };
             for corner in (0..4).rev() {
                 let at = 0x4000 + 2 * (destination + corners[corner]);
-                game.ram().copy_in(at, &tiles[corner].to_ne_bytes());
+                game.screen_write_native_slice(Point::physical(at), tiles[corner]);
             }
             column += 2;
         }
@@ -118,17 +119,17 @@ fn copy_background<H: Host + ?Sized>(game: &mut H) {
 
 /// Back up BG2's scroll in A and B and the layer blending byte in C's low
 /// byte; `restore_left` puts them back.
-pub fn freeze_and_backup<H: Host + ?Sized>(object: &mut HdmaObject, game: &mut H) {
+pub fn freeze_and_backup<H: Host + ?Sized>(hdma_index: usize, game: &mut H) {
     game.ram().write_byte(0xa78, 1);
-    object.a = u16::from_le_bytes([
+    crate::hdma_word!(game, hdma_index, A => u16::from_le_bytes([
         crate::menus::prelude::display_scroll!(game.Bg2H) as u8,
         game.physical_scroll_byte(crate::display_scroll::Word::Bg2H, true),
-    ]);
-    object.b = u16::from_le_bytes([
+    ]));
+    crate::hdma_word!(game, hdma_index, B => u16::from_le_bytes([
         crate::menus::prelude::display_scroll!(game.Bg2V) as u8,
         game.physical_scroll_byte(crate::display_scroll::Word::Bg2V, true),
-    ]);
-    object.c = (object.c & 0xff00) | u16::from(game.ram().read_byte(0x59));
+    ]));
+    crate::hdma_byte!(game, hdma_index, C, false => game.ram().read_byte(0x59));
 }
 pub fn capture_bg1_right<H: Host + ?Sized>(game: &mut H) {
     enqueue_readback(0x58, 1024, 0x6800, 2048, false, game);
@@ -215,7 +216,7 @@ fn write_neighbor<R: SessionView>(destination: u16, tile: u16, offsets: [usize; 
             }
         };
         let at = 0x4000 + usize::from(destination) + 2 * offset;
-        h.write_slice(at, &bytes);
+        store_xray(h, at, &bytes);
     }
 }
 
@@ -369,7 +370,7 @@ pub fn reveal_room_block<R: SessionView>(tile: u16, x: u16, y: u16, game: &mut R
 }
 pub fn capture_bg2_right<H: Host + ?Sized>(game: &mut H) {
     if can_reveal_blocks(game) {
-        if crate::room_view::effects(game).earthquake_timer != 0 {
+        if crate::gameplay_context::room_effects(game).earthquake_timer != 0 {
             let camera = camera(game);
             {
                 crate::menus::prelude::display_scroll!(
@@ -416,7 +417,7 @@ pub fn setup_blending<H: Host + ?Sized>(_k: u16, game: &mut H) {
 pub fn set_backdrop<H: Host + ?Sized>(game: &mut H) {
     set_backdrop_color(0xc63, game);
 }
-pub fn restore_left<H: Host + ?Sized>(object: &mut HdmaObject, game: &mut H) {
+pub fn restore_left<H: Host + ?Sized>(hdma_index: usize, game: &mut H) {
     word_transfers!(game, ascending, 1; native(0xa88) <- value(1));
     game.ram().write_byte(0xa8a, 0x98);
     word_transfers!(game, ascending, 1; native(0xa8b) <- value(0));
@@ -424,9 +425,10 @@ pub fn restore_left<H: Host + ?Sized>(object: &mut HdmaObject, game: &mut H) {
     word!(game.HDMA_TABLE_1[0] = 255);
     game.apply_xray_blending(BlendPhase::Restore);
     set_backdrop_color(0, game);
-    crate::menus::prelude::display_scroll!(game.Bg2H = object.a);
-    crate::menus::prelude::display_scroll!(game.Bg2V = object.b);
-    game.ram().write_byte(0x59, object.c as u8);
+    crate::menus::prelude::display_scroll!(game.Bg2H = crate::hdma_word!(game, hdma_index, A));
+    crate::menus::prelude::display_scroll!(game.Bg2V = crate::hdma_word!(game, hdma_index, B));
+    game.ram()
+        .write_byte(0x59, crate::hdma_word!(game, hdma_index, C) as u8);
     if (word!(game.VRAM_WRITE_QUEUE_TAIL) as i16).wrapping_sub(240) < 0 {
         upload_screen(0x5000, 0, game);
         advance_stage(game);
@@ -452,7 +454,7 @@ pub fn restore_right<H: Host + ?Sized>(game: &mut H) {
         advance_stage(game);
     }
 }
-pub fn finish_restore<H: Host + ?Sized>(object: &mut HdmaObject, game: &mut H) {
+pub fn finish_restore<H: Host + ?Sized>(hdma_index: usize, game: &mut H) {
     game.apply_xray_blending(BlendPhase::Restore);
     if crate::sequence_word!(game.TIME_IS_FROZEN_FLAG) != 0 {
         crate::sequence_word!(game.TIME_IS_FROZEN_FLAG = 0);
@@ -462,7 +464,7 @@ pub fn finish_restore<H: Host + ?Sized>(object: &mut HdmaObject, game: &mut H) {
         word_transfers!(game, ascending, 1; native(0xa8b) <- value(0));
         clear_previous_demo_input(game);
         game.finish_xray();
-        object.channels = 0;
+        crate::hdma_word!(game, hdma_index, Channels => 0);
         game.queue_sound(0, 0xa, 6);
         if (crate::liquid::LiquidWords::read(game).liquid.kind as u8) != 36 {
             game.ram().write_byte(0x76, 0x80);
@@ -494,5 +496,15 @@ pub fn reveal_room_items<R: SessionView>(game: &mut R) {
             );
             offset += 4;
         }
+    }
+}
+
+/// Known owned overlay bytes use the single screen allocation; full native
+/// identities spilling outside it retain the existing Session alias protocol.
+fn store_xray<R: SessionView>(host: &mut R, at: usize, bytes: &[u8]) {
+    let point = Point::physical(at);
+    match host.session_mut().publish_workspace_slice(point, bytes) {
+        Ok(()) => {}
+        Err(_) => host.write_slice(at, bytes),
     }
 }

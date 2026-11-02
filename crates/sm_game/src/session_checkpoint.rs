@@ -3,6 +3,7 @@ use crate::actors::snapshot::ActorsCheckpoint;
 use crate::actors::snapshot::CheckpointImages;
 use crate::actors::snapshot::CheckpointReader;
 use crate::checkpoint_binding::{audio_reference_bytes, observation_binding};
+use crate::fx_encoding::{checkpoint as checkpoint_fx, read_checkpoint as checkpoint_read_fx};
 use crate::scene::{
     component::DisplayStartMetadata,
     records::{AssetId, AssetRef, Revision},
@@ -18,12 +19,18 @@ use std::sync::Arc;
 /// installed as a competing gameplay owner or filled from a live Session.
 #[derive(Clone, Debug, PartialEq)]
 pub struct AuxiliaryGameplayCheckpoint {
+    pub game_loop: crate::game_loop::GameLoop,
+    pub queued_tilemaps: crate::display::queued_tilemaps::QueuedTilemaps,
+    pub fx: crate::fx_state::FxState,
+    pub fx_control_ownership: crate::fx_state::ControlOwnership,
+    pub menu_window: crate::menu_window_state::WindowState,
     pub botwoon_death: crate::actors::botwoon_death::DeathProtocol,
     pub timing: crate::session::Timing,
     pub options: crate::session::Options,
     pub flow: crate::flow::Flow,
     pub menu: crate::menu_state::MenuState,
     pub menu_screens: crate::menu_state::MenuScreens,
+    pub prepared_dialogue: Option<crate::message_composition::prepared::ExecutionDescription>,
     pub gameplay_flags: crate::gameplay_flag_state::GameplayFlags,
     pub flag_compatibility: crate::gameplay_flag_state::FlagCompatibility,
     pub sprite_effects: crate::sprite_effect_state::SpriteEffects,
@@ -1476,7 +1483,8 @@ checkpoint_fields!(checkpoint_mechanisms, checkpoint_read_mechanisms, Mechanisms
 checkpoint_fields!(checkpoint_flags, checkpoint_read_flags, GameplayFlags,
     events: checkpoint_bytes/checkpoint_read_bytes, bosses_by_area: checkpoint_bytes/checkpoint_read_bytes,
     used_room_objects: checkpoint_bytes/checkpoint_read_bytes, collected_locations: checkpoint_bytes/checkpoint_read_bytes,
-    opened_doors: checkpoint_bytes/checkpoint_read_bytes);
+    opened_doors: checkpoint_bytes/checkpoint_read_bytes,
+    used_stations: checkpoint_bytes/checkpoint_read_bytes, map_stations: checkpoint_bytes/checkpoint_read_bytes);
 checkpoint_fields!(checkpoint_flag_compatibility, checkpoint_read_flag_compatibility, FlagCompatibility,
     bitmask: checkpoint_word/checkpoint_read_word);
 checkpoint_fields!(checkpoint_sprite, checkpoint_read_sprite, SpriteEffect,
@@ -1508,12 +1516,42 @@ checkpoint_fields!(checkpoint_feedback, checkpoint_read_feedback, Feedback,
     earthquake_kind: checkpoint_word/checkpoint_read_word, earthquake_timer: checkpoint_word/checkpoint_read_word,
     sound_disabled: checkpoint_word/checkpoint_read_word);
 checkpoint_fields!(checkpoint_messages, checkpoint_read_messages, MessageRequests,
+    active_index: checkpoint_word/checkpoint_read_word, delay: checkpoint_word/checkpoint_read_word, selection: checkpoint_word/checkpoint_read_word,
     queued: checkpoint_word/checkpoint_read_word, box_radius: checkpoint_word/checkpoint_read_word,
     box_scratch: checkpoint_words/audio_words);
 checkpoint_fields!(checkpoint_spawn_scratch, checkpoint_read_spawn_scratch, SpawnScratch,
     header: checkpoint_word/checkpoint_read_word, coordinates: checkpoint_word/checkpoint_read_word,
     argument: checkpoint_word/checkpoint_read_word);
+fn checkpoint_countdown(out: &mut Vec<u8>, c: &crate::escape_countdown::State) {
+    out.extend_from_slice(&[c.centiseconds, c.seconds, c.minutes]);
+    checkpoint_word(out, &c.x);
+    checkpoint_word(out, &c.y);
+    out.extend_from_slice(&[
+        u8::from(c.native_order == crate::scene::state::WordOrder::Big),
+        u8::from(c.initialized),
+    ]);
+}
+fn checkpoint_read_countdown(
+    read: &mut CheckpointReader<'_>,
+) -> Result<crate::escape_countdown::State, String> {
+    let digits = [read.byte()?, read.byte()?, read.byte()?];
+    let position = [read.word()?, read.word()?];
+    let native_order = match read.byte()? {
+        0 => crate::scene::state::WordOrder::Little,
+        1 => crate::scene::state::WordOrder::Big,
+        _ => return Err("countdown order".into()),
+    };
+    let initialized = match read.byte()? {
+        0 => false,
+        1 => true,
+        _ => return Err("countdown initialization".into()),
+    };
+    let mut result = crate::escape_countdown::State::initialized(digits, position, native_order);
+    result.initialized = initialized;
+    Ok(result)
+}
 checkpoint_fields!(checkpoint_timing, checkpoint_read_timing, Timing,
+    countdown: checkpoint_countdown/checkpoint_read_countdown,
     frame_counter: checkpoint_word/checkpoint_read_word, random_number: checkpoint_word/checkpoint_read_word,
     time_frozen: checkpoint_word/checkpoint_read_word, timer_status: checkpoint_word/checkpoint_read_word);
 checkpoint_fields!(checkpoint_options, checkpoint_read_options, crate::session::Options,
@@ -1528,7 +1566,10 @@ checkpoint_fields!(checkpoint_options_menu, checkpoint_read_options_menu, crate:
     menu_option_index: checkpoint_word/checkpoint_read_word, debug_invincibility: checkpoint_word/checkpoint_read_word, screen_index: checkpoint_word/checkpoint_read_word);
 checkpoint_fields!(checkpoint_death, checkpoint_read_death, crate::menu_state::DeathSequence,
     index: checkpoint_word/checkpoint_read_word, counter: checkpoint_word/checkpoint_read_word, flash_timer: checkpoint_word/checkpoint_read_word);
+checkpoint_fields!(checkpoint_menu_graphics, checkpoint_read_menu_graphics, crate::menu_state::MenuGraphics,
+    bytes: checkpoint_bytes/checkpoint_read_bytes);
 checkpoint_fields!(checkpoint_menu_screens, checkpoint_read_menu_screens, crate::menu_state::MenuScreens,
+    graphics: checkpoint_menu_graphics/checkpoint_read_menu_graphics,
     map: checkpoint_map_screen/checkpoint_read_map_screen, save_selection: checkpoint_save_selection/checkpoint_read_save_selection, options_menu: checkpoint_options_menu/checkpoint_read_options_menu, death: checkpoint_death/checkpoint_read_death);
 checkpoint_fields!(checkpoint_flow, checkpoint_read_flow, crate::flow::Flow,
     cinematic_function: checkpoint_word/checkpoint_read_word, demo_timer: checkpoint_word/checkpoint_read_word,
@@ -1551,10 +1592,14 @@ macro_rules! checkpoint_auxiliary {
     ($( $field:ident: $encode:ident / $decode:ident ),+ $(,)?) => {
         impl Session {
             pub fn encode_auxiliary_checkpoint(&self, metadata: &DisplayStartMetadata) -> Result<Vec<u8>, String> {
+                if !self.game_loop.is_initialized() { return Err("game loop start is not initialized".into()); }
+                crate::fx_encoding::validate_control_ownership(self).map_err(|error| format!("control checkpoint ownership {error:?}"))?;
+                if !self.fx.is_initialized() { return Err("FX start is not initialized".into()); }
                 if metadata.identity.reference != metadata.reference.fingerprint {
                     return Err("auxiliary gameplay checkpoint Reference identity mismatch".into());
                 }
-                let mut bytes = Vec::from(b"SMAUXGS\x0c".as_slice());
+                if !self.menu_window.is_initialized() { return Err("unsupplied map-menu window checkpoint".into()); }
+                let mut bytes = Vec::from(b"SMAUXGS\x0d".as_slice());
                 let binding = observation_binding(metadata);
                 bytes.extend_from_slice(&(binding.len() as u64).to_le_bytes());
                 bytes.extend_from_slice(&binding);
@@ -1563,7 +1608,7 @@ macro_rules! checkpoint_auxiliary {
             }
             pub fn decode_auxiliary_checkpoint(bytes: &[u8], metadata: &DisplayStartMetadata) -> Result<AuxiliaryGameplayCheckpoint, String> {
                 let mut read = CheckpointReader(bytes);
-                if read.bytes(8)? != b"SMAUXGS\x0c" { return Err("unsupported auxiliary gameplay checkpoint schema".into()); }
+                if read.bytes(8)? != b"SMAUXGS\x0d" { return Err("unsupported auxiliary gameplay checkpoint schema".into()); }
                 let size = usize::try_from(read.counter()?).map_err(|_| "auxiliary gameplay checkpoint binding length overflow")?;
                 if metadata.identity.reference != metadata.reference.fingerprint || read.bytes(size)? != observation_binding(metadata) {
                     return Err("auxiliary gameplay checkpoint source identity or Reference changed".into());
@@ -1612,13 +1657,66 @@ fn checkpoint_read_hdma(
         objects,
     })
 }
+fn checkpoint_game_loop(bytes: &mut Vec<u8>, value: &crate::game_loop::GameLoop) {
+    bytes.push(u8::from(value.is_initialized()));
+    for word in crate::game_loop::Word::ALL {
+        checkpoint_word(bytes, word.get(value));
+    }
+}
+fn checkpoint_read_game_loop(
+    read: &mut CheckpointReader<'_>,
+) -> Result<crate::game_loop::GameLoop, String> {
+    if read.byte()? != 1 {
+        return Err("game loop checkpoint is not initialized".into());
+    }
+    let mut value = crate::game_loop::GameLoop::initialized(
+        0,
+        Default::default(),
+        Default::default(),
+        [0; 4],
+        [0; 7],
+    );
+    for word in crate::game_loop::Word::ALL {
+        *word.get_mut(&mut value) = read.word()?;
+    }
+    Ok(value)
+}
+fn checkpoint_prepared_dialogue(
+    out: &mut Vec<u8>,
+    execution: &Option<crate::message_composition::prepared::ExecutionDescription>,
+) {
+    out.push(u8::from(execution.is_some()));
+    if let Some(execution) = execution {
+        let bytes = crate::prepared_dialogue::encode(execution);
+        out.extend_from_slice(&(bytes.len() as u64).to_le_bytes());
+        out.extend_from_slice(&bytes);
+    }
+}
+fn checkpoint_read_prepared_dialogue(
+    read: &mut CheckpointReader<'_>,
+) -> Result<Option<crate::message_composition::prepared::ExecutionDescription>, String> {
+    match read.byte()? {
+        0 => Ok(None),
+        1 => {
+            let length = usize::try_from(read.counter()?).map_err(|_| "dialogue length")?;
+            crate::prepared_dialogue::decode(read.bytes(length)?).map(Some)
+        }
+        _ => Err("dialogue owner".into()),
+    }
+}
 checkpoint_auxiliary!(
+    game_loop: checkpoint_game_loop/checkpoint_read_game_loop,
+    queued_tilemaps: checkpoint_queued_tilemaps/checkpoint_read_queued_tilemaps,
+    menu_window: checkpoint_menu_window/checkpoint_read_menu_window,
+    fx: checkpoint_fx/checkpoint_read_fx,
+    fx_control_ownership: checkpoint_control_ownership/checkpoint_read_control_ownership,
     botwoon_death: checkpoint_botwoon_death/checkpoint_read_botwoon_death,
     timing: checkpoint_timing/checkpoint_read_timing,
     options: checkpoint_options/checkpoint_read_options,
     flow: checkpoint_flow/checkpoint_read_flow,
     menu: checkpoint_menu/checkpoint_read_menu,
     menu_screens: checkpoint_menu_screens/checkpoint_read_menu_screens,
+    prepared_dialogue: checkpoint_prepared_dialogue/checkpoint_read_prepared_dialogue,
     gameplay_flags: checkpoint_flags/checkpoint_read_flags,
     flag_compatibility: checkpoint_flag_compatibility/checkpoint_read_flag_compatibility,
     sprite_effects: checkpoint_sprite_effects/checkpoint_read_sprite_effects,
@@ -2230,12 +2328,18 @@ impl NumericGameplayCheckpoint {
         presentation: crate::session_owners::Presentation,
     ) -> Session {
         let AuxiliaryGameplayCheckpoint {
+            game_loop,
+            queued_tilemaps,
+            fx,
+            fx_control_ownership,
+            menu_window,
             botwoon_death,
             timing,
             options,
             flow,
             menu,
             menu_screens,
+            prepared_dialogue,
             gameplay_flags,
             flag_compatibility,
             sprite_effects,
@@ -2255,6 +2359,7 @@ impl NumericGameplayCheckpoint {
         // Exhaustive construction also makes future Session/auxiliary fields a
         // compiler error until their checkpoint participation is explicit.
         Session {
+            game_loop,
             actor_identity,
             actors: self.actors,
             botwoon_death,
@@ -2262,7 +2367,9 @@ impl NumericGameplayCheckpoint {
             options,
             flow,
             menu,
+            menu_window,
             menu_screens,
+            prepared_dialogue,
             world: self.world,
             control,
             gameplay_flags,
@@ -2277,6 +2384,10 @@ impl NumericGameplayCheckpoint {
             inventory,
             mechanisms,
             room: self.room,
+            fx_sources: None,
+            queued_tilemaps,
+            fx,
+            fx_control_ownership,
             feedback,
             hdma,
             messages,
@@ -2287,4 +2398,115 @@ impl NumericGameplayCheckpoint {
             pointer_scratch,
         }
     }
+}
+
+fn checkpoint_menu_window(bytes: &mut Vec<u8>, value: &crate::menu_window_state::WindowState) {
+    bytes.push(u8::from(value.is_initialized()));
+    for field in crate::menu_window_state::Field::ALL {
+        checkpoint_word(bytes, &field.get(value));
+    }
+}
+fn checkpoint_read_menu_window(
+    read: &mut CheckpointReader<'_>,
+) -> Result<crate::menu_window_state::WindowState, String> {
+    let mut fields = CheckpointReader(read.bytes(39)?);
+    if fields.byte()? != 1 {
+        return Err("unsupplied map-menu window checkpoint".into());
+    }
+    let mut value = crate::menu_window_state::WindowState::initialized(
+        0,
+        0,
+        Default::default(),
+        Default::default(),
+        0,
+    );
+    for field in crate::menu_window_state::Field::ALL {
+        *field.get_mut(&mut value) = fields.word()?;
+    }
+    Ok(value)
+}
+fn checkpoint_queued_tilemaps(
+    bytes: &mut Vec<u8>,
+    value: &crate::display::queued_tilemaps::QueuedTilemaps,
+) {
+    bytes.push(u8::from(
+        value.native_order == crate::scene::state::WordOrder::Big,
+    ));
+    checkpoint_bytes(bytes, &value.queue);
+    checkpoint_word(bytes, &value.tail);
+    checkpoint_words(bytes, &value.scrolling);
+    checkpoint_words(bytes, &value.source_block);
+    checkpoint_words(bytes, &value.destination_block);
+    for word in value.background() {
+        checkpoint_word(bytes, word);
+    }
+}
+fn checkpoint_read_queued_tilemaps(
+    read: &mut CheckpointReader<'_>,
+) -> Result<crate::display::queued_tilemaps::QueuedTilemaps, String> {
+    let native_order = match read.byte()? {
+        0 => crate::scene::state::WordOrder::Little,
+        1 => crate::scene::state::WordOrder::Big,
+        _ => return Err("queue order".into()),
+    };
+    use crate::display::queued_tilemaps::{
+        BACKGROUND_BLOCKS, QUEUE_BYTES, QueuedTilemaps, SCROLL_WORDS,
+    };
+    // Bound this entire new fixed payload before allocating its background.
+    let mut fields =
+        CheckpointReader(read.bytes(QUEUE_BYTES + 10 + SCROLL_WORDS * 2 + BACKGROUND_BLOCKS * 2)?);
+    let queue = checkpoint_read_bytes(&mut fields)?;
+    let tail = fields.word()?;
+    let mut scrolling = [0; SCROLL_WORDS];
+    for word in &mut scrolling {
+        *word = fields.word()?;
+    }
+    let source_block = [fields.word()?, fields.word()?];
+    let destination_block = [fields.word()?, fields.word()?];
+    let mut background = Vec::with_capacity(BACKGROUND_BLOCKS);
+    for _ in 0..BACKGROUND_BLOCKS {
+        background.push(fields.word()?);
+    }
+    QueuedTilemaps::from_owned(
+        queue,
+        tail,
+        scrolling,
+        background.into_boxed_slice(),
+        source_block,
+        destination_block,
+        native_order,
+    )
+    .ok_or_else(|| "queued tilemap checkpoint capacity".into())
+}
+
+fn checkpoint_control_ownership(bytes: &mut Vec<u8>, value: &crate::fx_state::ControlOwnership) {
+    for (index, &mask) in value.source_lanes.iter().enumerate() {
+        let encoded = if index == 3 {
+            mask | (u64::from(value.initialized) << 63)
+        } else {
+            mask
+        };
+        bytes.extend_from_slice(&encoded.to_le_bytes());
+    }
+}
+fn checkpoint_read_control_ownership(
+    read: &mut CheckpointReader<'_>,
+) -> Result<crate::fx_state::ControlOwnership, String> {
+    let mut source_lanes = [0; 4];
+    for mask in &mut source_lanes {
+        *mask = read.counter()?;
+    }
+    let initialized = (source_lanes[3] >> 63) != 0;
+    source_lanes[3] &= !(1_u64 << 63);
+    if source_lanes
+        .iter()
+        .zip(crate::fx_state::ControlOwnership::VALID)
+        .any(|(&mask, valid)| mask & !valid != 0)
+    {
+        return Err("control ownership checkpoint mask".into());
+    }
+    Ok(crate::fx_state::ControlOwnership {
+        initialized,
+        source_lanes,
+    })
 }

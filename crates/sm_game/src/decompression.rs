@@ -1,11 +1,10 @@
 //! Shared byte decoder for room, graphics and tilemap assets.
-use crate::ram::RawRam as _;
 
 pub use crate::room_entry::prepared_tables::{Output, decode};
 
 /// What decompression reads and writes: raw work RAM, the original's source
 /// cursor and the loaded image's bytes.
-pub trait DecompressionHost: crate::ram::WorkRamAccess {
+pub trait DecompressionHost: crate::runtime_access::SessionRam {
     /// The original's 24-bit source cursor.
     fn decompress_source(&self) -> u32;
     fn set_decompress_source(&mut self, source: u32);
@@ -43,13 +42,17 @@ impl<H: DecompressionHost + ?Sized> Output for RamOutput<'_, H> {
         }
     }
     fn read(&mut self, position: i32) -> u8 {
-        self.game
-            .ram()
-            .read_byte(self.base.checked_add_signed(position as isize).unwrap())
+        self.game.byte(
+            self.base
+                .checked_add_signed(isize::try_from(position).expect("decoded position"))
+                .expect("decoded source"),
+        )
     }
     fn write(&mut self, position: i32, value: u8, _back_reference: bool) {
-        self.game.ram().write_byte(
-            self.base.checked_add_signed(position as isize).unwrap(),
+        self.game.set_byte(
+            self.base
+                .checked_add_signed(isize::try_from(position).expect("decoded position"))
+                .expect("decoded destination"),
             value,
         );
         self.produced = self

@@ -198,6 +198,9 @@ impl Definitions {
     pub fn revision(&self) -> Revision {
         self.revision
     }
+    pub fn entries(&self) -> impl Iterator<Item = &MessageDefinition> {
+        self.messages.values()
+    }
     pub fn font(&self) -> &FontDefinition {
         &self.font
     }

@@ -137,6 +137,17 @@ impl SourceSpan {
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum TransferSource {
+    /// Original allocation coordinate; bytes are read from the current typed owners.
+    /// This compatibility origin is not a prepared media or frozen image identity.
+    ActorState {
+        address: u16,
+    },
+    Workspace {
+        point: crate::presentation_workspace::Point,
+    },
+    QueuedScroll {
+        offset: usize,
+    },
     Asset(SourceSpan),
     Hud {
         offset: usize,
@@ -144,6 +155,8 @@ pub enum TransferSource {
     Objects {
         offset: usize,
     },
+    /// LEGACY(display-state-schema): standalone tag3 metadata lacks a RAM origin.
+    /// Current Session actor sources must use ActorState instead.
     ActorTilemap {
         offset: usize,
     },
@@ -446,6 +459,8 @@ pub struct ActorTileStaging {
     pub destination: u16,
     pub transfer_source: u16,
     pub transfer_destination: u16,
+    /// LEGACY(display-state-schema): retained codec and standalone fixture data.
+    /// Session transfers reject tag3 rather than read these as current actor bytes.
     pub tilemap_bytes: Vec<u8>,
 }
 
@@ -501,12 +516,6 @@ pub struct HdmaBinding {
 #[derive(Clone, Debug, PartialEq)]
 pub struct HdmaObject {
     pub instruction: SourceBinding,
-    pub instruction_cursor: u16,
-    pub instruction_timer: u16,
-    pub pre_instruction: u16,
-    pub pre_instruction_bank: u16,
-    pub timer: u16,
-    pub variables: [u16; 6],
 }
 #[derive(Clone, Debug, PartialEq)]
 pub struct HdmaChannel {
@@ -534,11 +543,10 @@ pub struct HdmaChannel {
 }
 #[derive(Clone, Debug, PartialEq)]
 pub struct HdmaState {
-    pub bindings: [HdmaBinding; 6],
+    /// The complete interpreter table; numeric aliases share this one owner.
+    pub common: crate::hdma::HdmaObjects,
     pub objects: [HdmaObject; 6],
     pub channels: [HdmaChannel; 8],
-    pub selected: u16,
-    pub flags: u16,
     pub hdma_timer: u16,
     pub dma_timer: u32,
     pub dma_busy: bool,
@@ -657,6 +665,7 @@ pub struct DisplayDescription {
     pub media_revision: Revision,
     pub phase: DisplayPhase,
     pub objects: ObjectStaging,
+    pub workspace: crate::presentation_workspace::Workspace,
     pub hud: HudState,
     /// Move these existing owners at the handoff; do not retain active Session copies.
     pub visual: Visuals,
@@ -672,6 +681,9 @@ pub struct DisplayDescription {
     pub backgrounds: [BackgroundState; 3],
     pub scrolling: [ScrollTransfer; 4],
     pub uploads: Vec<QueuedUpload>,
+    /// Supplied packed-source tokens resolve to actual symbolic live allocations.
+    /// Header bytes are identities; their native address meaning stays in import.
+    pub queued_sources: std::collections::BTreeMap<[u8; 3], TransferSource>,
     pub upload_tail: u16,
     pub mode7_uploads: Vec<Mode7Upload>,
     pub mode7_tail: u16,
@@ -700,6 +712,7 @@ impl DisplayDescription {
         self.media_revision
     }
     pub fn validate(&self) -> Result<(), DisplayError> {
+        self.workspace.validate(self.media_revision)?;
         if self.phase != DisplayPhase::Committed {
             return Err(DisplayError::Phase);
         }
@@ -726,6 +739,9 @@ impl DisplayDescription {
                 Ok(())
             }
         };
+        for binding in self.workspace.bindings.0.values() {
+            identity(binding.asset)?;
+        }
         identity(self.hud.media)?;
         for background in &self.backgrounds {
             identity(background.tilemap)?;
@@ -751,6 +767,11 @@ impl DisplayDescription {
             || self.scrolling[3].layout != ScrollLayout::Row
         {
             return Err(DisplayError::Queue);
+        }
+        for source in self.queued_sources.values() {
+            if let TransferSource::Asset(span) = source {
+                span.validate(self.media_revision)?;
+            }
         }
         for upload in &self.uploads {
             upload.transfer.validate(self.media_revision)?;
@@ -781,7 +802,7 @@ impl DisplayDescription {
             }
         }
         self.actor_tiles.source.validate(self.media_revision)?;
-        self.hdma_live.validate()?;
+        self.hdma_live.validate_workspace(&self.workspace)?;
         for channel in &self.hdma.channels {
             if channel.mode > 7 {
                 return Err(DisplayError::Geometry);
@@ -796,6 +817,11 @@ impl DisplayDescription {
     ) -> Result<u8, DisplayError> {
         let add = |offset: usize| offset.checked_add(displacement).ok_or(DisplayError::Source);
         match source {
+            TransferSource::Workspace { point } => {
+                self.workspace.byte(point.advance(displacement)?)
+            }
+            TransferSource::QueuedScroll { .. } => Err(DisplayError::Incomplete),
+            TransferSource::ActorState { .. } => Err(DisplayError::Source),
             TransferSource::Asset(source) => source.byte(displacement),
             TransferSource::Hud { offset } => {
                 let at = add(*offset)?;
@@ -833,6 +859,12 @@ impl DisplayDescription {
         let remaining =
             |length: usize, offset: usize| length.checked_sub(offset).ok_or(DisplayError::Source);
         match source {
+            TransferSource::Workspace { point } => self.workspace.available(*point),
+            TransferSource::QueuedScroll { offset } => {
+                remaining(crate::display::queued_tilemaps::SCROLL_WORDS * 2, *offset)
+            }
+            // Query-only Session source. Bounds are checked on the actual byte, lazily.
+            TransferSource::ActorState { .. } => Ok(65_536),
             TransferSource::Asset(source) => remaining(source.bytes.len(), source.offset),
             TransferSource::Hud { offset } => remaining(192, *offset),
             TransferSource::Objects { offset } => remaining(546, *offset),
@@ -859,6 +891,12 @@ impl DisplayDescription {
         }
     }
     pub fn validate_media(&self, media: &SceneMedia) -> Result<(), DisplayError> {
+        for source in self.queued_sources.values() {
+            if let TransferSource::Asset(span) = source {
+                span.validate_media(media)?;
+            }
+        }
+
         self.atmosphere_catalog.validate(media)?;
         for (index, record) in self.objects.produced.iter().enumerate() {
             record.validate(media).map_err(|_| DisplayError::Scene)?;
@@ -891,6 +929,9 @@ impl DisplayDescription {
             }
             Ok(())
         };
+        for binding in self.workspace.bindings.0.values() {
+            identity(binding.asset)?;
+        }
         identity(self.hud.media)?;
         for background in &self.backgrounds {
             identity(background.tilemap)?;
@@ -939,7 +980,7 @@ impl DisplayDescription {
         Ok(())
     }
     pub fn validate_hdma_sources(&self, catalog: &HdmaCatalog) -> Result<(), DisplayError> {
-        self.hdma_live.validate()?;
+        self.hdma_live.validate_workspace(&self.workspace)?;
         for (index, channel) in self.hdma.channels.iter().enumerate() {
             SourceBinding::validate_channel(
                 &channel.table,
@@ -955,7 +996,8 @@ impl DisplayDescription {
                 .instruction
                 .validate_program(catalog, &self.hdma_live, &self.hdma, index)?;
         }
-        self.hdma_live.validate_canonical_aliases(&self.hdma)
+        self.hdma_live
+            .validate_canonical_aliases_with_workspace(&self.hdma, &self.workspace)
     }
     pub fn begin_interval(&mut self, fresh_entry: bool) -> Result<(), DisplayError> {
         if self.phase == DisplayPhase::Failed {

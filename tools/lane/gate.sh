@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # The local gate for a lane commit, run from the worktree root (bash tools/lane/gate.sh).
 # Checks fmt, mutation anchors, clippy, the target crates, the detached host, both sm
-# configurations, the verifier DLL, the source inventory and the ROM import test.
+# configurations, verifier DLL metadata, the source inventory and the ROM import test.
 # Prints "GATE OK <hash> <branch>" or "GATE FAILED <branch>"; nothing in it needs a test exe to run.
 # Overrides: SM_RUST_BIN (toolchain bin), SM_PY (Python 3.11+), SM_ROM, SM_GATE_DIR.
 R="${SM_RUST_BIN:-$USERPROFILE/.rustup/toolchains/stable-x86_64-pc-windows-gnu/bin}"
@@ -19,16 +19,19 @@ done
 tools_pkg=""; [ -f crates/sm_tools/Cargo.toml ] && tools_pkg="-p sm_tools"
 "$R/cargo" clippy --locked -p sm_data -p sm_game -p sm_runtime $tools_pkg --all-targets --no-deps -q >/dev/null 2>"$O/clippy.log" || fail "CLIPPY FAIL" "$O/clippy.log"
 
+# Metadata dependency chains match the landing compiler gate; sm_data keeps real codegen
+# for the linked ROM import test. The separately qualified verifier DLL still must
+# compile/link actual target libraries before landing; this gate does not prove DLL codegen.
 # Plain target crates and their consumers; keep common libraries for both stages.
 rustc --crate-name sm_data --crate-type rlib crates/sm_data/src/lib.rs -o "$O/libsm_data.rlib" || ok=0
 ext="--extern sm_data=$O/libsm_data.rlib"
-rustc --crate-name sm_game --crate-type rlib crates/sm_game/src/lib.rs $ext -L "dependency=$O" -o "$O/libsm_game.rlib" || ok=0
-rustc --crate-name sm_runtime --crate-type rlib crates/sm_runtime/src/lib.rs $ext -L "dependency=$O" -o "$O/libsm_runtime.rlib" || ok=0
-gx="--extern sm_game=$O/libsm_game.rlib -L dependency=$O --extern sm_runtime=$O/libsm_runtime.rlib"
+rustc --crate-name sm_game --crate-type rlib crates/sm_game/src/lib.rs $ext -L "dependency=$O" --emit=metadata -o "$O/libsm_game.rmeta" || ok=0
+rustc --crate-name sm_runtime --crate-type rlib crates/sm_runtime/src/lib.rs $ext -L "dependency=$O" --emit=metadata -o "$O/libsm_runtime.rmeta" || ok=0
+gx="--extern sm_game=$O/libsm_game.rmeta -L dependency=$O --extern sm_runtime=$O/libsm_runtime.rmeta"
 gt=""
 if [ -f crates/sm_tools/src/lib.rs ]; then
-  rustc --crate-name sm_tools --crate-type rlib crates/sm_tools/src/lib.rs $ext --extern sm_game=$O/libsm_game.rlib -L "dependency=$O" -o "$O/libsm_tools.rlib" || ok=0
-  gt="--extern sm_tools=$O/libsm_tools.rlib"
+  rustc --crate-name sm_tools --crate-type rlib crates/sm_tools/src/lib.rs $ext --extern sm_game=$O/libsm_game.rmeta -L "dependency=$O" --emit=metadata -o "$O/libsm_tools.rmeta" || ok=0
+  gt="--extern sm_tools=$O/libsm_tools.rmeta"
 fi
 
 # The detached host; --test has two known unused imports in main.rs.
@@ -42,15 +45,15 @@ fi
 rustc --crate-name sm --crate-type rlib sm/src/lib.rs $gx $gt $ext --emit=metadata -o "$O/libsm.rmeta" >"$O/sm.log" 2>&1 || fail "SM FAIL" "$O/sm.log"
 
 # Retire only this gate's plain libraries before generating the verifier variants.
-rm -f -- "$O/libsm_game.rlib" "$O/libsm_tools.rlib" || fail "PLAIN TARGET CLEANUP FAIL"
+rm -f -- "$O/libsm_game.rmeta" "$O/libsm_tools.rmeta" || fail "PLAIN TARGET CLEANUP FAIL"
 
 # Verifier target crates and all remaining consumers retain the same compiler profile.
-rustc --cfg sm_verify_dll --crate-name sm_game --crate-type rlib crates/sm_game/src/lib.rs $ext -L "dependency=$O" -o "$O/v/libsm_game.rlib" || ok=0
-gxv="-L dependency=$O/v ${gx/libsm_game.rlib/v/libsm_game.rlib}"
+rustc --cfg sm_verify_dll --crate-name sm_game --crate-type rlib crates/sm_game/src/lib.rs $ext -L "dependency=$O" --emit=metadata -o "$O/v/libsm_game.rmeta" || ok=0
+gxv="-L dependency=$O/v ${gx/libsm_game.rmeta/v/libsm_game.rmeta}"
 gtv=""
 if [ -f crates/sm_tools/src/lib.rs ]; then
-  rustc --crate-name sm_tools --crate-type rlib crates/sm_tools/src/lib.rs $ext --extern sm_game=$O/v/libsm_game.rlib -L "dependency=$O/v" -L "dependency=$O" -o "$O/v/libsm_tools.rlib" || ok=0
-  gtv="--extern sm_tools=$O/v/libsm_tools.rlib"
+  rustc --crate-name sm_tools --crate-type rlib crates/sm_tools/src/lib.rs $ext --extern sm_game=$O/v/libsm_game.rmeta -L "dependency=$O/v" -L "dependency=$O" --emit=metadata -o "$O/v/libsm_tools.rmeta" || ok=0
+  gtv="--extern sm_tools=$O/v/libsm_tools.rmeta"
 fi
 rustc --crate-name sm --crate-type rlib --cfg sm_verify_dll sm/src/lib.rs $gxv $gtv $ext --emit=metadata -o "$O/libsmv.rmeta" >"$O/smv.log" 2>&1 || fail "SM [verify] FAIL" "$O/smv.log"
 # Check the ordinary host against the library exposing checkpoint support, as

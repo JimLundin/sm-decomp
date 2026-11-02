@@ -68,6 +68,9 @@ pub trait MenuRuntime:
     + PlayerRuntime
     + crate::inventory_domain::InventoryAccess
     + super::state::Access
+    + crate::menu_window_state::Access
+    + crate::menu_window_state::ArrowAccess
+    + MapFacts
 {
     /// Upload `bytes` from `source` to VRAM word address `destination`.
     fn load_vram_words(&mut self, source: u32, destination: u16, bytes: u16);
@@ -121,7 +124,16 @@ pub trait MenuRuntime:
 }
 
 pub trait Host:
-    crate::display::preparation::Access
+    crate::fx_domain::Controls
+    + crate::fx_domain::Sources
+    + crate::fx_lighting::Access
+    + crate::display::preparation::Access
+    + crate::dialogue_ram::Access
+    + crate::presentation_workspace::ContinuationAccess
+    + crate::presentation_workspace::Access
+    + crate::presentation_workspace::PaletteAccess
+    + crate::presentation_workspace::QueueAccess
+    + crate::display::transfer::Mode7Queue
     + CompatibilityRam
     + crate::runtime_access::SessionRam
     + crate::player_position::PlayerPosition
@@ -158,4 +170,15 @@ pub trait Host:
     /// Controller 1's word as auto-joypad read latches it at this vblank: the
     /// live controller, or the next recorded frame's word during a replay.
     fn nmi_controller_word(&mut self) -> u16;
+}
+
+/// Map presentation reads and rotations use the existing progress/minimap owners.
+/// Exceptional offsets retain physical aliases instead of clamping a collection.
+pub trait MapFacts {
+    fn file_palette(&self) -> u16;
+    fn set_file_palette(&mut self, value: u16);
+    fn map_explored_byte(&self, offset: isize) -> u8;
+    fn store_map_explored_byte(&mut self, offset: isize, value: u8);
+    fn map_station_byte(&self, area: usize) -> u8;
+    fn used_station_native_word(&self, byte_offset: usize) -> u16;
 }

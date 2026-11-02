@@ -6,6 +6,8 @@ pub struct GameplayFlags {
     pub used_room_objects: [u8; 64],
     pub collected_locations: [u8; 64],
     pub opened_doors: [u8; 64],
+    pub used_stations: [u8; 16],
+    pub map_stations: [u8; 8],
 }
 // Required by Session::default for import construction. This is NOT the behavior
 // of save_slots::initialize or demo initialization; neither may be replaced with Default.
@@ -17,6 +19,8 @@ impl Default for GameplayFlags {
             used_room_objects: [0; 64],
             collected_locations: [0; 64],
             opened_doors: [0; 64],
+            used_stations: [0; 16],
+            map_stations: [0; 8],
         }
     }
 }

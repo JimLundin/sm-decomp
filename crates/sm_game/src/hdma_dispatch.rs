@@ -224,11 +224,11 @@ where
         Some((_, HdmaCall::FreezeAndBackup)) => {
             it.with_object(index, xray_background::freeze_and_backup)
         }
-        Some((_, HdmaCall::FinishPowerBomb)) => it.with_object(index, |object, game| {
-            explosion_window::finish_power_bomb(object, slot, game)
+        Some((_, HdmaCall::FinishPowerBomb)) => it.with_object(index, |index, game| {
+            explosion_window::finish_power_bomb(index, slot, game)
         }),
-        Some((_, HdmaCall::FinishCrystalFlash)) => it.with_object(index, |object, game| {
-            explosion_window::finish_crystal_flash(object, slot, game)
+        Some((_, HdmaCall::FinishCrystalFlash)) => it.with_object(index, |index, game| {
+            explosion_window::finish_crystal_flash(index, slot, game)
         }),
         _ => it.foreign(|game| hdma_call(address, slot, game)),
     }
@@ -260,12 +260,12 @@ where
     use HdmaPreAction::*;
     match target {
         Nothing => {}
-        LavaSurface => it.with_object(index, |object, game| {
-            liquid_effects::lava_surface(object, handler_carry, game)
+        LavaSurface => it.with_object(index, |index, game| {
+            liquid_effects::lava_surface(index, handler_carry, game)
         }),
         LavaBackground => it.with_object(index, liquid_effects::lava_background),
-        WaterSurface => it.with_object(index, |object, game| {
-            liquid_effects::water_surface(object, handler_carry, game)
+        WaterSurface => it.with_object(index, |index, game| {
+            liquid_effects::water_surface(index, handler_carry, game)
         }),
         WaterBackground => it.with_object(index, liquid_effects::water_background),
         WaterWave => it.with_object(index, liquid_effects::water_wave),
@@ -281,8 +281,8 @@ where
                 PreFlashScaled => Phase::PreFlash,
                 _ => Phase::CrystalFlash,
             };
-            it.with_object(index, |object, game| {
-                explosion_window::update_scaled(object, slot, phase, game)
+            it.with_object(index, |index, game| {
+                explosion_window::update_scaled(index, slot, phase, game)
             })
         }
         PowerBombPrescaled | PreFlashPrescaled => {
@@ -290,8 +290,8 @@ where
                 PowerBombPrescaled => Phase::PowerBomb,
                 _ => Phase::PreFlash,
             };
-            it.with_object(index, |object, game| {
-                explosion_window::update_prescaled(object, slot, phase, game)
+            it.with_object(index, |index, game| {
+                explosion_window::update_prescaled(index, slot, phase, game)
             })
         }
         StatueWaiting | StatueShaking | StatueSinking | StatueFinished => {
@@ -301,8 +301,8 @@ where
                 StatueSinking => TourianStatuePhase::Sinking,
                 _ => TourianStatuePhase::Finished,
             };
-            it.with_object(index, |object, game| {
-                room_visuals::advance_tourian_statue(object, phase, handler_carry, game)
+            it.with_object(index, |index, game| {
+                room_visuals::advance_tourian_statue(index, phase, handler_carry, game)
             })
         }
         _ => it.foreign(|game| host_pre_action(target, slot, game)),

@@ -27,6 +27,232 @@ Pending and unobserved engine scope is retained in the coordinator and endgame
 snapshots below. Complete any%, 100%, low%, boot/transition/endgame acceptance is
 not established by this documentation cleanup.
 
+## Pause graphics adoption correction, 2026-11-02
+
+Current corrected source is `fc299d1d9c38272c94cb4ab88f9d008cec7a6b876586ee086ef54c998248ee98`
+with 927 members. Main remains `558131e7208334a86a6de6945890fd8d4a73f616`,
+and PR #150 remains the latest landing. The first migration's 546 candidate
+RAM-access retirements remain unlanded: 1,159 sites / 88 files to 613 / 74.
+This correction adds 20 compatibility production lines; it claims no additional
+RAM retirement, format change or compactness improvement.
+
+Preceding `d1d2686f` passed compiler 66992, DLL/loader 28791, all 154 unit
+checks and all seven fixtures. Original replay family 77998 passed the return
+parameter row and both options-tour lockstep and check-lock commands. The next
+command, the 1,512-frame pause-menu tour, failed the RAM comparison at tick 0.
+The generic word decoder omitted 17 byte-owned saved pause graphics values;
+menu adoption replaced the actual seed values with defaults before export.
+
+Root stopped that already-failing native Job with exit 73 while retaining its
+original supervisor. The supervisor collected the original child and all Job
+members, recorded zero active descendants and closed both handles. This is
+failed, partial replay evidence; the full pause row and remaining commands
+remain unproved. Result `e000572a95c2adfd16eb60def112019b7e2bbf069e7d3263c0750a9c5a552f6f`,
+closed receipt `2f15047f6c74b3d46fb9839e1fb28588b29a729ec677a2c7169d598946c78be2`
+and log `049c16ec01b3e2b7d177ce5e7d4d0e27fd4b3b6aaa041c20af09c6473ebb3704`
+are retained under `$TEMP/collab/post150-build-runway-resources/PRIMARY151_NATIVE_TWO_FIXTURE/rows/`.
+
+Independent source review passed the correction's actual-byte import, epoch
+invalidation, projection and changed-byte publication through the existing
+Drop guard. Root applied its exact hunks; all 927 actual bytes, formatting and
+diff checks pass. Fresh compiler 63904 passed in 82.75 seconds and DLL/loader
+76174 passed in 169.65 seconds; both original families were collected with zero
+active descendants and closed handles. The DLL is
+`66f40af4eec75a0867d46d854d204751260e25b6f93f152e357d7e675610517d`.
+Its four unchanged target libraries retain their original producer proofs;
+compatibility and host code were freshly compiled. Corrected unit, fixture and
+replay results remain pending. Hosted gates will qualify the published branch;
+the unused local native packets retain their old HEAD and remain unexecuted.
+Source and causal records are under `$TEMP/collab/pause-menu-window-drift-fix/`
+and `runtime-corrections-source-review/FIRST_GRAPHICS_FIX/`.
+
+The next composed source `5f147d5d97ce61f1a416b454af74cf877347afd524b7aaa77e6a6544675dfeb1`
+has independently passed source review only. It retires 275 additional real
+accesses, excluding two register spelling changes, and measures 336 sites / 44
+files against the preceding 613 / 74. Its Rust growth is 45,214 target, 2,322
+compatibility and 33 verification lines. Its current fixture corrections and
+actual 12-byte suspended-work prelude are preserved; the new graphics fix
+still needs sparse composition. No compiler, replay or landing proof transfers.
+
+The save/death row's old 69,400-frame checkpoint has a stale layout. None of
+the three newly generated checkpoints matches its input prefix. Prepared
+continuation covers the entire boot prefix in seven genuine chunks and then
+the original row, facts and tails; no chunk or remaining movie is counted as
+executed. Full owned engine and complete any%, 100% and low% acceptance remain
+unproved.
+
+## Complete fixture lifecycle correction, 2026-11-02
+
+Current source is `d1d2686f8195a36045756ea58435f3ed4dc968a5a2431bf80593442cdee50232`
+with 927 members. The migration remains 546 candidate RAM-site retirements,
+unlanded; main is still `558131e7208334a86a6de6945890fd8d4a73f616`.
+
+Preceding `dbf5bc66` passed compiler 55846 and DLL/loader 50000. Actual units
+82750 completed 154 checks: 152 passed and two failed, without a resource stop.
+The numeric helper created an unrelated uninitialized Session; it now clones
+the actual admitted checkpoint Session. Its ten-byte Botwoon assertion is
+retained at the position derived from the current preceding owner sizes.
+The cold-FX fixture now declares its genuine variable-B live region before
+recording that region's native origin. All original rejection and value
+assertions remain. No production validation or checkpoint format changed.
+
+Independent source review passed for the formatted two-file patch. The
+initial relative-string inventory ordering produced an incorrect source pin;
+root, reviewer and author independently recomputed the canonical Windows-Path
+ordering above, retaining the erroneous receipt. No checkpoint was restamped.
+Fresh compiler, DLL and native qualification remain pending. Exact evidence
+is under `$TEMP/collab/owned-movie-start-verification-source/FINAL_TWO_FIXTURES/`,
+`runtime-corrections-source-review/TWO_FAILS/` and `root-coordination/PRIMARY151_TWO_FIXTURES/`.
+Full owned engine and whole original movie acceptance remain unproved.
+## Supplied controller-history correction, 2026-11-02
+
+Current candidate source is `dbf5bc66713045dc6951e653d1611a8bde9a8a948d3257f0152182a70e495d96`
+with 927 members. The migration still measures 1,159 to 613 RAM sites: 546
+candidate retirements, unlanded. Main remains `558131e7208334a86a6de6945890fd8d4a73f616`.
+
+Preceding source `f839bff8` passed compiler gate 52890 and genuine DLL/loader
+30716, with original families collected and handles closed. Its units run
+29763 completed all 154 checks: 148 passed and six failed, without a resource
+stop. All six supplied-session starts rejected inconsistent controller history.
+The shared fixture copied continuation fields but omitted its explicitly
+supplied Display history. Four added lines copy all 28 typed history fields;
+production validation and every registered check remain unchanged.
+
+Independent source review and lossless patch reconstruction passed. Fresh
+compiler, DLL, runtime, replay and capture qualification of `dbf5bc66` remain
+pending. Exact records are under `$TEMP/collab/runtime-corrections-source-review/PERSISTENT_START/`,
+`owned-movie-start-verification-source/PERSISTENT_FIXTURE_HISTORY/` and
+`root-coordination/PRIMARY151_FIXTURE_HISTORY/`. Failed DLL 29337 and units
+29763 retain their original results; neither supplies passing behavior proof.
+Full owned boot-to-credits and complete existing movies remain unproved.
+## Current qualification and cleanup, 2026-11-02
+
+Main remains `558131e7208334a86a6de6945890fd8d4a73f616`; PR #150 is the latest
+landing. Root applied five independently reviewed runtime, build and fixture
+corrections to the first migration candidate. Current source is
+`f839bff8221869d86171786481803147ac275beb19628a5f5034a4d3d2174b58`,
+with 927 members. Format, diff and ratchet checks passed; fresh compiler, DLL
+and runtime qualification of this corrected source remain pending.
+
+| Measure | Landed baseline | Corrected candidate | Scope |
+| --- | ---: | ---: | --- |
+| Counted sm_game RAM sites | 1,159 | 613 | 546 candidate retirements, unlanded |
+| Coupled files | 88 | 74 | 14 fewer, unlanded |
+| Production ratchet counter | 173,506 | 199,373 | Advisory growth of 25,867; no compactness claim |
+
+The preceding source `90a6f7799816365917c6d9c8338736190a7a99c07c413d880ab61cbf17051547`
+passed the full strict compiler gate, original session 93757, and actual DLL
+and separate loader checks, session 63124. Both original process families were
+collected with zero descendants and closed handles. The DLL is
+`1a7538c3e40065bfdfabc11b4287c9b5fb3f03394c3876070f09672899e18355`.
+These results qualify that preceding source only.
+
+Actual units session 36416 on that DLL failed and aborted during destructor
+cleanup, exit 3221226505, without a resource stop. The original child was
+collected and handles closed. The suite did not finish all 154 registered checks.
+The corrections address an export that queried the unowned byte after the
+seven countdown bytes, an optional FX projection that queried a nonexistent
+cold Display, missing direct host dependencies in the authoritative build tool,
+and two stale fixture assumptions. The display fixture now parses Workspace
+before Revision through the actual field codecs. An independent complete
+24,145-byte layout expansion proves that the source-publications descriptor
+alone explains the schema fingerprint change; the whole-layout and required
+descriptor checks remain. No checkpoint header was restamped.
+
+Original failed gate 17188 on `2111be2f` retains its three Rust borrowing errors;
+the subsequent corrected gate passed. DLL attempts 3419 and 59677 retain their
+storage-cap failures and unverified final charges. Attempt 59677 completed five
+library producers before exposing the missing host dependency arguments.
+Session 63124 reused those exact completed libraries and compiled and loaded a
+fresh corrected host. No failed attempt transfers DLL or replay proof. Full
+receipts are under `$TEMP/collab/post150-build-runway-resources/`; corrected
+source and review are under `root-coordination/PRIMARY151_RUNTIME_CORRECTIONS/`
+and `runtime-corrections-source-review/`.
+
+Autonomous cleanup completed: registered worktrees fell from 270 to the primary
+alone, local branches from 582 to main and the current landing branch, and
+remote heads from 114 to main alone. All 146 retained and 14 archive refs,
+the obsolete baseline tag and five abandoned stashes were deleted. Root freshly
+verified the remaining registrations and local and remote branches. Eight
+minimal data providers retain 1,640 required files at their original paths,
+without Git registrations. Primary source and index, 903 baseline files,
+465 inputs and 115 canonical compiled artifacts match their pins. Cleanup's
+earlier accidental deletion recovered 84 historical proof artifacts; 48 remain
+explicitly absent. The current guard records that archival exception and checks
+the 357 remaining protected entries; no historical preservation is claimed.
+Cleanup handoff is `$TEMP/collab/abandoned-worktree-cleanup/HANDOFF.md`,
+SHA-256 `c097d91da8cc47a674fced8b62ba634279a8f94782ba5aadbab17702c4f5163b`.
+
+The next actor union measures 413 sites / 45 files against the first candidate's
+613 / 74: 200 further candidate retirements. Its source review found a missing
+Prepared Kraid observer method and failed-prefix publication suppression. The
+first correction introduced an incomplete diagnostic enum consumer; the composer
+is preparing a small second correction. No actor compiler or replay pass is
+claimed. Its earlier target-package growth of 44,665 lines remains a cost; the
+shared HDMA fallback retires zero raw callback sites, and full Prepared scheduling
+remains unwired. Dedicated verification continues migration qualification;
+new trick expansion waits. Complete any%, 100%, low%, boot, transitions and
+endgame and the independent owned engine remain unproved.
+
+## Landed RAM burndown, 2026-11-02
+
+Root observed PR #150 merged at `2026-11-02T01:52:39Z`, with remote main
+`558131e7208334a86a6de6945890fd8d4a73f616`. Original background watcher
+37245 exited 0 after `bash tools/lane/watch.sh 150`. These are landed
+observations; the older NEXT609 sections below retain their original scope.
+
+| Landed source | Counted RAM sites | Coupled files | Sites retired in that slice |
+| --- | ---: | ---: | ---: |
+| Before PR #149 | 2,057 | 93 | — |
+| PR #149, `811a77f9e` | 1,768 | 89 | 289 |
+| PR #150, `558131e72` | 1,159 | 88 | 609 |
+
+The two broad slices retire 898 counted sites. PR #150 moves sequence/control,
+boss interactions, numeric display controls and HUD consumers to typed Session
+owners. Its 487 direct RAM byte-call sites remain unchanged and are measured
+separately; overlapping measures are never added. Target production increases
+1,747 lines, compatibility 1,065 and verification 320; no line savings or
+complete backend independence are claimed.
+
+Exact source is `12b0fc3a8409a9371eec7db5fc599218c1e755c4f3151b46424537d42742b927`;
+DLL is `b74760ac572af850648ada9730f5751c9c95c243bd65ca710f67a27acc9ea3f6`.
+Strict gate, attested build, 148 registered checks, seven existing fixture
+comparisons and 94 local replay jobs over 59 existing IDs passed. Replays include
+the mandatory smokes, Morph1200, credits15900 and chain rooms 1, 6, 100, 200 and
+320. Hosted CI, corpus `41362646223`, route and oracle-lock gates passed on that
+exact head. Original handles and full guards are retained under
+`$TEMP/collab/owned150-qualification/run-e/`.
+
+The existing room/actor guard accepts the canonical DLL and rejects an isolated
+omitted-descend mutant: actual boolean results 1/0, child exits 0/0. Original
+build 87396 and witness 6225 completed with exit 0, no resource stop and closed
+handles. Their complete guards and earlier behavior-neutral predicate mutant
+are preserved in `$TEMP/collab/owned150-descend-mutant/run-a/HANDOFF.md`
+(`e525e4cb33c2d5bc3d67b8197f061cf14c054c54838e13008f74a2be0f8e9a3b`).
+The routine registration of this existing guard remains a separate prepared
+patch; PR #150's registered table still has 148 cases.
+
+After reconciling the primary checkout to landed main, root ran
+`python -B tools/ram_ratchet.py --update`: measured 1,159 sites / 88 files and
+physical production 183,835. The lowered baseline is pending with the next
+code slice. The original primary baseline edit was preserved before checkout
+reconciliation; the qualified source and DLL remain immutable.
+
+**Pending:** the next gameplay/queue/window/FX and presentation source has not
+landed. FX common-table, suspended Window and native alias ownership need a
+complete corrective implementation and combined qualification. The bounded
+Workspace ambiguity correction passed independent source review only.
+Prepared actor execution and an existing-verifier upload observation producer
+have dedicated source owners. No new scenario expansion is assigned.
+
+**Unproved completion scope:** full existing any%, 100% and low% movies,
+boot-to-endgame continuity, native upload suspension and complete owned engine
+execution. The fresh source audit preserves the full-any missing-gameplay-fact
+failure; seeded rooms and credits do not establish full movie continuation.
+Its exact pins and next source contracts are in
+`$TEMP/collab/migration-verification-reach-source/HANDOFF.md`
+(`b699665844e5c9235380d6eb2eb1655efef5488d6d9b3abe784972abb9d1ee88`).
+
 ## Composition evidence, 2026-11-01
 
 Root checked the working composition built from parent `260d11ef6406eb2a4ea053a7c633877f29a0b74e`
@@ -904,3 +1130,73 @@ The exact two-line amendment adds the Sized bound only to the scheduler's associ
 ### PR150 final compiler findings, 2026-11-01
 
 The original gate on `ef85eff` resolved the Sized errors and exposed two remaining issues: `sequence_runtime` needed the SessionAccess trait import for its existing refresh_inputs calls, and a test projection had a blank line after its cfg attribute. Gate session 15124 closed with exit 1 without a resource stop; source and historical guards passed. The reviewed import/spacing amendment `e6580fb2...` preserves both refresh_inputs calls and the projection impl. Its one compatibility import line and one removed verification blank line are accounted separately. Fresh source qualification remains required; the combined 609 RAM-access retirement scope is unchanged.
+
+### Broad ownership composition and build runway, 2026-11-02
+
+Main and origin/main were freshly reconciled at `558131e7208334a86a6de6945890fd8d4a73f616`; PR150 remains merged. No new migration landed in this coordination cycle. The actual queue/Window/FX/Workspace/common-HDMA/actor-presentation overlay is pinned separately from its component drafts. Its current cold-start correction is source `cd0220d732a62ae0fc61bcf1146fd21e21ca7b935838db939101cc381e84c47c` with 920 framed members. Root verified the preceding combined source guard; the owner verified the corrected successor. Exact receipts live under `$TEMP/collab/broad-fx-dependency-composition/` and `$TEMP/collab/fx-ownerclosure-review/TARGET_REVIEW.md`.
+
+The single overlay measures 1,159/88 to 760/85 counted RAM sites/coupled files: 399 candidate retirements. Direct byte-call syntax measures 487 to 412: 75 candidates, reported separately rather than added to the first counter. These are unlanded source measurements. The cold/owned/checkpoint correction passed focused source review; whole-source acceptance still requires callback ownership transitions, complete Workspace physical alias export/publication invalidation and actor DMA current-source closure. A reader-only Windows framing-order failure was preserved and corrected in a separate reader; it changed no engine bytes. No compiler, DLL, replay or current-codec proof is implied.
+
+Concrete projectile and mechanism binding packets, the expanded Draygon/Ceres/Spore bodies and the genuine native frame-edge AV callback were delivered as source components. Ordinary typed access is distinguished from exceptional full/odd/native alias boundaries. Global player/control/save and Samus presentation bindings remain under implementation. Complete any%, 100% and low% movies, engine publication during native upload and suspended audio lifecycle remain unproved; the original full-any failure and accepted 94 replay results retain their original scope.
+
+Root recovered 100,724,736 allocated bytes through lossless compression of three closed DLLs and thirteen closed metadata/library files. Every original SHA and logical length was preserved; the canonical 115-member compiled inventory and 405 protected members passed after compression. No proof or cache was retired. A cluster-rounding preflight failure caused no mutation; a later log-name collision stopped after seven completed files, and the remaining six ran separately with the partial receipt preserved. Exact results are `$TEMP/collab/root-coordination/post150-retained-dll-compression.json`, `post150-retained-metadata-compression.json` and `post150-retained-metadata-remaining-compression.json`. The smaller 200 MiB direct-workflow budget was rejected by measured source/output sizes; retain the 300 MiB fresh-workflow rule and freshly sample all reservations before compiler or capture admission.
+
+### Daily status and module recovery, 2026-11-02
+
+GitHub confirms PR150 merged at 01:52:39 UTC (02:52 Stockholm), main `558131e7208334a86a6de6945890fd8d4a73f616`. Its 609-site retirement lowered the landed ratchet from 1,768/89 to 1,159/88. Original strict gate/DLL, 148 checks, seven fixture comparisons and 94 replay jobs covering 59 existing IDs passed; this does not prove full movies.
+
+Root staged the exact 32-file module-closure correction `6f5544af...` over reviewed `bc2b718c.../924`, preserving pending report, LEGACY and ratchet edits. All primary preimages matched before writes. Receipt: `$TEMP/collab/root-coordination/module-closure-primary-staging.json`. `cargo fmt --all` and `git diff --check` now pass. The formatted working source remains uncommitted and needs a new source pin, composed review, strict compiler/DLL and replay/codec qualification. The previous focused FX source acceptance does not transfer blanket acceptance to recovered leaves.
+
+The current working tree ratchet independently confirms **619 sites/75 files**, against landed **1,159/88**: **540 candidate retirements**. These are not landed or behavior-qualified. Direct byte-call syntax was separately measured as 487 to 108 before formatting; counters overlap and are never added. The frozen overlay's target production grew 6,672 physical lines; adapters and retained compatibility remain counted, and no compactness or net source savings is claimed.
+
+All 51 remaining ordinary actor bodies are supplied as source, alongside player/control/save, room/terrain, projectile and presentation components. Actual provider integration, compiler closure and behavior remain open. Hardware/presentation and major-boss owners are active on the next broad actor batch. The dedicated verification owner was renewed for affected existing rows and genuine current-codec capture/reopen/continuation commands; no new scenarios or tricks were authorized.
+
+Full any%, 100% and low% acceptance, including boot/transitions/endgame continuation, remains unproved. Available physical RAM sampled at 3,534,952 KiB is below the existing compiler/DLL cap plus 2 GiB reserve; no compiler/DLL/replay job was admitted. Resource qualification and source integration are the immediate landing bottlenecks.
+
+### Formatted-source checks and recovered build runway, 2026-11-02
+
+Root applied the exact one-file mutation-anchor amendment `1778a9b4...`, preserving both mutations and their named witnesses. Existing session anchors now pass 52/52; detached anchors pass 56/56; anchor gate and source inventory pass. These are source checks, not executed mutant kills. The formatted engine source is `3dffdb678d2a9c22390c1cd7d2d8b036ffd48b1d3eb31989cdf9bcd7f3a3b449/926`; Python mutation support is pinned separately. Independent review found a recovered menu canvas/provider type mismatch, and the verification owner found that actual compatibility Session admission validates FX less strictly than target admission. Both corrections are in progress; compiler and behavioral qualification remain unrun.
+
+The original producer of three retained collab-8b outputs was established from actual coverage-composition-15ac85f18 build60590 receipts, source/log/output pins, original explicit handle-closure handoff and supervisor finalizer. Six unpinned incremental outputs were excluded. Root then losslessly compressed the three exact outputs, recovering **140,234,752 allocated bytes**. All original logical lengths and SHA-256 values were preserved, and the original canonical 115-member compiled inventory and 405 protected members passed afterward. Receipt: `$TEMP/collab/root-coordination/post150-landing-three-compression.json`. Compressor session25961 exited0 and was collected. No proof or cache was deleted. Disk runway improved; full compiler/DLL RAM admission remains unavailable.
+
+Hardware/presentation supplied 17 sparse source entries with actual helper and publisher bodies. A renewed owner is closing their real selected-image import/export and raster consumers. Actor composition now explicitly includes recovered shared sequence ownership and the omitted Room.scrolls dependency, and retains incomplete boss registries as open obligations. These are source progress, not callable or full-movie acceptance.
+
+### Final composed FX source accepted, 2026-11-02
+
+Root staged the independently reviewed public GameOwner admission correction `036d0164...` (four files) and narrow menu Canvas correction `474bdca1...` (five disjoint files). The real compatibility admission now rejects poisoned, uninitialized or conflicting FX ownership before installation, matching target validation. Menu composition uses lazy reads and current native order through publication-aware Session ports; successful byte prefixes invalidate actual source origins before the next access. No raw Workspace borrow was restored.
+
+After collecting formatter session65923 exit0, the final source is **45cba02d4045bf6481a57f635d52bdee00da32c2f682b8e1d2e9113fcb9bab9c/926**. The earlier during-format `dacac1c1...` observation is transient and conveys no proof. The immutable reader is `$TEMP/collab/broad-fx-dependency-composition/FINAL_FORMATTED/frozen_reader.py` SHA `ea082c4b2e296bb9514b72eb77212ab1406922146a7cd22603256866fa196c72`. Final source review passes in `$TEMP/collab/fx-ownerclosure-review/FINAL_FORMATTED_SOURCE_ACCEPT.md`. All source guards and 833-declaration module closure pass. Format, diff check, inventory and mutation anchors (56 detached, 52 Session) pass. Compiler, DLL, executed checks, mutants, current owned codec captures and replays remain unrun.
+
+Final single-overlay coupling remains 1,159/88 to **619/75**: 540 candidate RAM-site retirements. Direct syntax independently measures 487 to 108 and overlaps the ratchet. There are 153 proposed checks; all five added guards are under 100 formatted lines (44/89/77/50/76). All eight new mutation sites are reanchored and uniquely present in separately pinned support `2228cb61...`; none executed.
+
+Whole-source physical costs remain explicit: target +12,963, compat +2,598, verification +797, external +77; gross target +13,014. Formatting contributes target +6,240, compat +1,102, verification +351 and external +40, with no benefit claimed. Implementation contributes target +6,723, compat +1,496, verification +446 and external +37. Exact accounting and retention maps are in FINAL_FORMATTED. The completion size goal remains open.
+
+Room-scroll and remaining actor provider successors were supplied as source, with real physical/Phantoon/save/media obligations still named. A fresh global-frame source owner is extracting the authoritative frame/boot continuation into a narrow owned driver and connecting its actual production consumer. Genuine prepared-start import and Pending upload providers remain missing; constructed Session fixtures and legacy movie transport are not full movie proof. Root has delegated executable strict-gate preparation against the frozen source and will admit it only with freshly sampled full resource reservations. No PR or new landing has been created.
+
+### First FX gate failure and ordered correction, 2026-11-02
+
+The original strict gate on `45cba02d.../926` ran and closed with exit 1, zero active descendants and both original handles closed. This was a compiler failure, not a resource stop: peak private commitment was 1,600,851,968 bytes and minimum available RAM 3,428,118,528 bytes. Original gate log, diagnostics and closure remain immutable under `$TEMP/collab/post150-build-runway-resources/primary151-prep`. The root diagnostic index records 112 sm_game causes and 18 derived/lock diagnostics; the original canonical 115 compiled and 405 protected member guards passed before source correction.
+
+Root preserved the original Cargo.lock and resolved its three missing application dependencies with full offline metadata; no dependency versions changed. Reviewed compiler, native-path and grapple-order packets were staged in 38 files and cargo fmt completed successfully. The grapple correction preserves fresh aliased tile/charge reads and timer/queue publication before fallible lookup; its new 51-line real-Game regression is appended as check 154. Ordered source review passes, while final formatted source/lock binding, fresh compilation and all runtime qualification remain pending.
+
+The post-correction ratchet now measures **613 sites in 74 coupled files**, versus landed **1,159/88**: **546 candidate retirements and 14 fewer coupled files**. This supersedes the earlier 619/75 candidate measurement; it claims no new landing. The tool's production-line counter is 199,391 against 173,506 (+25,885), an advisory increase in that counter's scope, not a target-package-only measure. Compactness remains unresolved. git diff --check passes. No mutant has executed.
+
+The next actor union includes source-guarded hardware graph and shared suspension corrections. Major-boss candidate bodies are excluded from complete READY until callable registries, admitted source providers, Kraid pause readback and actual native diagnostics close. Global frame/native upload implementation and a renewed dedicated verification owner continue; observed capture/reopen transport alone does not establish authentic owned movie starts. Complete any%, 100% and low% movies, boot, transitions and carried EOF remain unproved. Root is preparing a separately bound run-b gate; the failed original run must not be overwritten or relabeled.
+
+### Corrected FX strict gate, 2026-11-02
+
+The independently reviewed formatted correction is source `19dd55789457b0ae0b24d1919083418347cfa63a71ae933fca033f1c4b4a0173/927`; root verified all 927 exact working-tree payloads against the immutable reader. Fresh strict gate run-b launched under admission `188b7839...`, original tool session 85322, and closed with exit 1, zero active descendants and all original handles closed. There was no resource stop. Its eight sm_game diagnostics are one redundant tuple Field implementation, five missing finite Mode7Queue bounds and two unnecessary mutable bindings. Root's immutable diagnostic index is `$TEMP/collab/root-coordination/primary151-run-b-errors.json`. Derived missing-extern diagnostics do not represent additional engine causes.
+
+Windows rejected the gate cleanup.ps1 -File invocation because script execution is disabled. No security policy was changed and no rejected deletion was retried. Original compiler outputs, logs, source/support pins and receipts are preserved. The next gate is being prepared with explicit intermediate retention and freshly measured storage admission, rather than claiming cleanup succeeded. Run-b lasted 89.18 seconds, peaked at 1,684,914,176 bytes private commitment, and charged 148,107,264 output bytes under its admitted 300 MiB ceiling.
+
+The source owner is correcting those eight findings without changing tuple field order, queue behavior or ownership semantics. The next actor union reconciles the reviewed compiler/grapple correction through sparse exact preimages; major-boss incomplete registries/providers remain excluded. The migration ratchet remains an unlanded 546-site candidate. Compiler, DLL, runtime/codec/replays and all complete-movie acceptance remain open; no new landing is claimed.
+
+### Strict FX lint closure and prepared-content integration, 2026-11-02
+
+Original run-c session 25706 closed with exit 1, zero active descendants and all original handles closed. There was no resource stop. It reached beyond the eight previous type errors and exposed 19 lint/unused-code findings. Its explicit retention mode kept outputs and logs without invoking the rejected PowerShell cleanup script. Root preserved the complete index in `$TEMP/collab/root-coordination/primary151-run-c-errors.json`; the original run charged 158,048,256 output bytes and lasted 92.11 seconds.
+
+Independent source review accepted the 13-file correction `7d58e524...` on source `07a18221.../927`. Lazy let-chains, loop selectors, array-row remainder behavior, source origins and ordered codec fields were reviewed. Boxing the legacy FX Owned state introduces three allocation sites plus take/deallocation/reboxing costs; this is an explicit resource change with unproved performance/OOM equivalence, not solely formatting. Root staged the exact reviewed files, cargo fmt and diff checks pass. Formatting changed two files and requires a new source pin and receipt binding before the next gate. Compiler, DLL and runtime/codec/replay qualification remain open.
+
+The actor compositor repaired mutable fallback dependencies without changing source `ebe24c35.../1041`: the new reader embeds actual postimages and uses only the independently verified main558 base, with complete per-file/whole-source guards. Major-boss registries, packed pause/readback and native diagnostic source were supplied; hardware methods and actual prepared-content admission still require integration. A dedicated source owner is connecting the missing actor presentation Description assembly to the existing session-start prepare/admission seam.
+
+The verification owner implemented sparse original-input phase attribution and audited 24 authentic mapped steps while preserving unsupported-step rejection. Full any%, 100% and low% input-file identities are now checked separately from engine-step/physical-frame interpretation. Genuine physical phase and second-port admission are missing, so complete movies, boot/transitions and carried EOF remain unproved. No new landing is claimed; the pending migration still measures 546 candidate RAM-site retirements.

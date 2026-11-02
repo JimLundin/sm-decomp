@@ -21,7 +21,7 @@ pub(super) fn run() -> i32 {
     macro_rules! cases {
             ($($test:ident),+ $(,)?) => { [$( (stringify!($test), $test as fn()), )+] };
         }
-    let tests: [(&str, fn()); 148] = cases![
+    let tests: [(&str, fn()); 154] = cases![
         checkpoint_serialized_schema_matches_actual_compiled_codecs,
         seeded_checkpoint_origin_binds_its_seed_payload,
         prepared_message_pixels_delay_queue_and_checkpoint,
@@ -72,6 +72,11 @@ pub(super) fn run() -> i32 {
         samus_game_panicking_callback_keeps_prefix,
         samus_game_adoption_uses_captured_target,
         persistent_session_native_rebinding_preserves_ready_owner,
+        persistent_session_rejects_forged_legacy_fx_ownership,
+        persistent_session_rejects_conflicting_cold_fx_cycles,
+        persistent_session_workspace_publication_exports_actual_aliases,
+        persistent_session_settlement_rebind_queries_current_workspace,
+        persistent_session_game_owner_rejects_forged_fx_admission,
         samus_game_body_projection_roundtrip,
         samus_game_body_projection_crossing_writes,
         samus_game_body_foreign_adoption_and_prefix,
@@ -170,6 +175,7 @@ pub(super) fn run() -> i32 {
         owned_player_initialization_and_transfers_preserve_native_boundaries,
         owned_player_creation_replacement_starts_fresh,
         owned_player_snapshots_restore_state_ram_and_dsp,
+        grapple_tile_queue_aliases_keep_late_reads_and_failure_prefixes,
     ];
     let mut failed = 0usize;
     for (name, test) in &tests {
@@ -1226,15 +1232,67 @@ fn prepared_message_pixels(
     }
 }
 
+/// Explicit complete synthetic hidden storage for the existing standalone witness.
+/// Every byte is authored here; this fixture makes no native-capture claim.
+fn prepared_message_workspace(
+    start: &sm_data::message::PreparedStart,
+) -> sm_game::presentation_workspace::Workspace {
+    use sm_game::presentation_workspace::{
+        BYTES, Binding, Bindings, FIRST, Origin, Role, Workspace,
+    };
+    let mut shared = vec![0u8; BYTES];
+    for (index, word) in start.tile_workspace.iter().enumerate() {
+        let at = Role::MessageText.compatibility_base() - FIRST + 2 * index;
+        shared[at..at + 2].copy_from_slice(&word.to_le_bytes());
+    }
+    let revision = sm_data::scene::Revision(start.active.revision.0);
+    let bindings = Bindings(
+        Role::ALL
+            .into_iter()
+            .enumerate()
+            .map(|(index, role)| {
+                let base = role.compatibility_base() - FIRST;
+                (
+                    role,
+                    Binding {
+                        origin: Origin::Shared,
+                        base,
+                        extent: BYTES - base,
+                        asset: sm_data::scene::AssetRef {
+                            id: sm_data::scene::AssetId(100 + u32::try_from(index).unwrap()),
+                            revision,
+                        },
+                        window: None,
+                    },
+                )
+            })
+            .collect(),
+    );
+    Workspace::from_owned(
+        shared.into_boxed_slice(),
+        bindings,
+        Default::default(),
+        sm_game::scene::state::WordOrder::Little,
+        revision,
+    )
+    .unwrap()
+}
+
 fn prepared_message_waits(
     owner: &mut PreparedOwner,
+    workspace: &mut sm_game::presentation_workspace::Workspace,
     sample: InputSample,
     intervals: std::ops::RangeInclusive<u64>,
 ) -> StepOutput<MessageFrame> {
     intervals
         .map(|interval| {
             let step = owner
-                .resume(interval, sample, sm_runtime::message::render)
+                .resume(
+                    interval,
+                    sample,
+                    &mut *workspace,
+                    sm_runtime::message::render,
+                )
                 .unwrap();
             assert_eq!(step.outcome, Outcome::Suspended);
             assert_eq!(step.effects, [Effect::AdvanceAudio]);
@@ -1246,12 +1304,18 @@ fn prepared_message_waits(
 
 fn prepared_message_step(
     owner: &mut PreparedOwner,
+    workspace: &mut sm_game::presentation_workspace::Workspace,
     interval: u64,
     sample: InputSample,
     effects: &[Effect],
 ) -> StepOutput<MessageFrame> {
     let step = owner
-        .resume(interval, sample, sm_runtime::message::render)
+        .resume(
+            interval,
+            sample,
+            &mut *workspace,
+            sm_runtime::message::render,
+        )
         .unwrap();
     assert_eq!(step.outcome, Outcome::Suspended);
     assert_eq!(step.effects, effects);
@@ -1262,9 +1326,11 @@ fn prepared_message_step(
 #[cfg_attr(test, test)]
 fn prepared_message_pixels_delay_queue_and_checkpoint() {
     let (definitions, start) = prepared_message_fixture(0x3801);
+    let mut workspace = prepared_message_workspace(&start);
     let (mut owner, frame) = PreparedOwner::open(
         definitions.clone(),
         start.clone(),
+        &mut workspace,
         sm_runtime::message::render,
     )
     .unwrap();
@@ -1275,95 +1341,119 @@ fn prepared_message_pixels_delay_queue_and_checkpoint() {
         bug_fix_counter: 1,
     };
     assert_eq!(
-        owner.resume(1, sample, sm_runtime::message::render).err(),
+        owner
+            .resume(1, sample, &mut workspace, sm_runtime::message::render)
+            .err(),
         Some(Fault::NoRequest)
     );
     owner.queue(MessageId(1)).unwrap();
     // The original prepares the box over 8 lag frames before it opens.
-    let step = prepared_message_step(&mut owner, 1, sample, &[Effect::CancelSounds]);
+    let step = prepared_message_step(
+        &mut owner,
+        &mut workspace,
+        1,
+        sample,
+        &[Effect::CancelSounds],
+    );
     prepared_message_pixels(&step.frame, [[0, 255, 0, 0], [0, 0, 255, 0]], 0..224);
-    prepared_message_step(&mut owner, 2, sample, &[]);
-    let checkpoint = owner.checkpoint().unwrap();
+    prepared_message_step(&mut owner, &mut workspace, 2, sample, &[]);
+    let checkpoint = owner.checkpoint(&workspace).unwrap();
     (owner, _) = PreparedOwner::reopen(
         definitions.clone(),
         start.clone(),
         checkpoint,
+        &mut workspace,
         sm_runtime::message::render,
     )
     .unwrap();
-    let mut step = prepared_message_waits(&mut owner, sample, 3..=4);
+    let mut step = prepared_message_waits(&mut owner, &mut workspace, sample, 3..=4);
     prepared_message_pixels(&step.frame, [[0; 4]; 2], 0..224);
-    step = prepared_message_waits(&mut owner, sample, 5..=22);
+    step = prepared_message_waits(&mut owner, &mut workspace, sample, 5..=22);
     prepared_message_pixels(&step.frame, [[0, 0, 255, 0], [16, 239, 140, 0]], 119..127);
     assert_eq!(
-        owner.resume(22, sample, sm_runtime::message::render).err(),
+        owner
+            .resume(22, sample, &mut workspace, sm_runtime::message::render)
+            .err(),
         Some(Fault::Interval)
     );
     assert_eq!(owner.poll(MessageId(2)).unwrap(), None);
     owner.queue(MessageId(999)).unwrap();
-    step = prepared_message_waits(&mut owner, sample, 23..=222);
-    let checkpoint = owner.checkpoint().unwrap();
+    step = prepared_message_waits(&mut owner, &mut workspace, sample, 23..=222);
+    let checkpoint = owner.checkpoint(&workspace).unwrap();
     let reopened = PreparedOwner::reopen(
         definitions.clone(),
         start.clone(),
         checkpoint,
+        &mut workspace,
         sm_runtime::message::render,
     )
     .unwrap();
     assert_eq!(reopened.1.pixels, step.frame.pixels);
     owner = reopened.0;
-    prepared_message_waits(&mut owner, sample, 223..=382);
+    prepared_message_waits(&mut owner, &mut workspace, sample, 223..=382);
     let dismiss = InputSample {
         held_keys: 1,
         ..sample
     };
-    prepared_message_step(&mut owner, 383, sample, &[]);
-    prepared_message_step(&mut owner, 384, dismiss, &[]);
+    prepared_message_step(&mut owner, &mut workspace, 383, sample, &[]);
+    prepared_message_step(&mut owner, &mut workspace, 384, dismiss, &[]);
     // Closing clears BG3, restores the PPU over 2 lag frames, then plays 2 more.
     let restoring = [
         Effect::UpdateHdma,
         Effect::AdvanceSoundEffects,
         Effect::ResumeMovementSound,
     ];
-    prepared_message_waits(&mut owner, sample, 385..=398);
-    prepared_message_step(&mut owner, 399, sample, &[]);
-    prepared_message_step(&mut owner, 400, sample, &restoring);
-    prepared_message_waits(&mut owner, sample, 401..=401);
+    prepared_message_waits(&mut owner, &mut workspace, sample, 385..=398);
+    prepared_message_step(&mut owner, &mut workspace, 399, sample, &[]);
+    prepared_message_step(&mut owner, &mut workspace, 400, sample, &restoring);
+    prepared_message_waits(&mut owner, &mut workspace, sample, 401..=401);
     step = owner
-        .resume(402, sample, sm_runtime::message::render)
+        .resume(402, sample, &mut workspace, sm_runtime::message::render)
         .unwrap();
     assert_eq!(step.outcome, Outcome::Complete);
     assert_eq!(step.effects, [Effect::AdvanceAudio]);
     prepared_message_pixels(&step.frame, [[255, 0, 0, 0], [0, 255, 0, 0]], 0..224);
     assert_eq!(
-        owner.resume(403, sample, sm_runtime::message::render).err(),
+        owner
+            .resume(403, sample, &mut workspace, sm_runtime::message::render)
+            .err(),
         Some(Fault::NoRequest)
     );
     owner.queue(MessageId(2)).unwrap();
-    prepared_message_step(&mut owner, 403, sample, &[Effect::CancelSounds]);
+    prepared_message_step(
+        &mut owner,
+        &mut workspace,
+        403,
+        sample,
+        &[Effect::CancelSounds],
+    );
     assert_eq!(owner.poll(MessageId(1)).unwrap(), Some(0));
     owner.queue(MessageId(999)).unwrap();
-    prepared_message_step(&mut owner, 404, sample, &[]);
-    prepared_message_waits(&mut owner, sample, 405..=434);
-    prepared_message_step(&mut owner, 435, dismiss, &[]);
-    prepared_message_waits(&mut owner, sample, 436..=449);
-    prepared_message_step(&mut owner, 450, sample, &[]);
-    prepared_message_step(&mut owner, 451, sample, &restoring);
-    prepared_message_waits(&mut owner, sample, 452..=452);
+    prepared_message_step(&mut owner, &mut workspace, 404, sample, &[]);
+    prepared_message_waits(&mut owner, &mut workspace, sample, 405..=434);
+    prepared_message_step(&mut owner, &mut workspace, 435, dismiss, &[]);
+    prepared_message_waits(&mut owner, &mut workspace, sample, 436..=449);
+    prepared_message_step(&mut owner, &mut workspace, 450, sample, &[]);
+    prepared_message_step(&mut owner, &mut workspace, 451, sample, &restoring);
+    prepared_message_waits(&mut owner, &mut workspace, sample, 452..=452);
     step = owner
-        .resume(453, sample, sm_runtime::message::render)
+        .resume(453, sample, &mut workspace, sm_runtime::message::render)
         .unwrap();
     assert_eq!(step.outcome, Outcome::Complete);
     assert_eq!(step.effects, [Effect::AdvanceAudio, Effect::SelectPause]);
     prepared_message_pixels(&step.frame, [[255, 0, 0, 0], [0, 255, 0, 0]], 0..224);
     assert_eq!(owner.poll(MessageId(2)).unwrap(), Some(0));
     assert_eq!(
-        owner.resume(454, sample, sm_runtime::message::render).err(),
+        owner
+            .resume(454, sample, &mut workspace, sm_runtime::message::render)
+            .err(),
         Some(Fault::NoRequest)
     );
     owner.queue(MessageId(999)).unwrap();
     assert_eq!(
-        owner.resume(454, sample, sm_runtime::message::render).err(),
+        owner
+            .resume(454, sample, &mut workspace, sm_runtime::message::render)
+            .err(),
         Some(Fault::MissingMessage(MessageId(999)))
     );
 }
@@ -1372,9 +1462,11 @@ fn prepared_message_pixels_delay_queue_and_checkpoint() {
 #[cfg_attr(test, test)]
 fn prepared_message_rejects_changed_content_and_resets() {
     let (definitions, start) = prepared_message_fixture(0x3801);
+    let mut workspace = prepared_message_workspace(&start);
     let (mut owner, _) = PreparedOwner::open(
         definitions.clone(),
         start.clone(),
+        &mut workspace,
         sm_runtime::message::render,
     )
     .unwrap();
@@ -1385,9 +1477,9 @@ fn prepared_message_rejects_changed_content_and_resets() {
     };
     owner.queue(MessageId(1)).unwrap();
     owner
-        .resume(1, sample, sm_runtime::message::render)
+        .resume(1, sample, &mut workspace, sm_runtime::message::render)
         .unwrap();
-    let checkpoint = owner.checkpoint().unwrap();
+    let checkpoint = owner.checkpoint(&workspace).unwrap();
     for index in 0..3 {
         let mut missing = start.clone();
         match index {
@@ -1398,12 +1490,18 @@ fn prepared_message_rejects_changed_content_and_resets() {
         .media_id = AssetId(0);
         assert_eq!(
             owner
-                .reset(missing.clone(), sm_runtime::message::render)
+                .reset(missing.clone(), &mut workspace, sm_runtime::message::render)
                 .err(),
             Some(Fault::MissingDisplay)
         );
         assert_eq!(
-            PreparedOwner::open(definitions.clone(), missing, sm_runtime::message::render).err(),
+            PreparedOwner::open(
+                definitions.clone(),
+                missing,
+                &mut workspace,
+                sm_runtime::message::render
+            )
+            .err(),
             Some(Fault::MissingDisplay)
         );
         let mut changed = start.clone();
@@ -1418,6 +1516,7 @@ fn prepared_message_rejects_changed_content_and_resets() {
                 definitions.clone(),
                 changed,
                 checkpoint.clone(),
+                &mut workspace,
                 sm_runtime::message::render
             )
             .err(),
@@ -1430,6 +1529,7 @@ fn prepared_message_rejects_changed_content_and_resets() {
             changed,
             start.clone(),
             checkpoint.clone(),
+            &mut workspace,
             sm_runtime::message::render
         )
         .err(),
@@ -1449,6 +1549,7 @@ fn prepared_message_rejects_changed_content_and_resets() {
                 definitions.clone(),
                 changed,
                 checkpoint.clone(),
+                &mut workspace,
                 sm_runtime::message::render
             )
             .err(),
@@ -1462,21 +1563,26 @@ fn prepared_message_rejects_changed_content_and_resets() {
             definitions.clone(),
             changed,
             checkpoint,
+            &mut workspace,
             sm_runtime::message::render
         )
         .err(),
         Some(Fault::ChangedContent)
     );
-    let (mut reset, frame) = owner.reset(start, sm_runtime::message::render).unwrap();
+    let (mut reset, frame) = owner
+        .reset(start, &mut workspace, sm_runtime::message::render)
+        .unwrap();
     prepared_message_pixels(&frame, [[0, 255, 0, 0], [0, 0, 255, 0]], 0..224);
     assert_eq!(
-        reset.resume(1, sample, sm_runtime::message::render).err(),
+        reset
+            .resume(1, sample, &mut workspace, sm_runtime::message::render)
+            .err(),
         Some(Fault::NoRequest)
     );
     reset.queue(MessageId(1)).unwrap();
     assert_eq!(
         reset
-            .resume(1, sample, sm_runtime::message::render)
+            .resume(1, sample, &mut workspace, sm_runtime::message::render)
             .unwrap()
             .effects,
         [Effect::CancelSounds]
@@ -2808,6 +2914,37 @@ fn scene_display_description(
         },
     );
     ds::DisplayDescription {
+        workspace: {
+            use sm_game::presentation_workspace::{
+                BYTES, Binding, Bindings, Origin, Role, Workspace,
+            };
+            let bindings = Bindings(
+                Role::ALL
+                    .into_iter()
+                    .map(|role| {
+                        (
+                            role,
+                            Binding {
+                                origin: Origin::Shared,
+                                base: 0,
+                                extent: BYTES,
+                                asset: reference(1),
+                                window: None,
+                            },
+                        )
+                    })
+                    .collect(),
+            );
+            Workspace::from_owned(
+                vec![0u8; BYTES].into_boxed_slice(),
+                bindings,
+                Default::default(),
+                ds::WordOrder::Little,
+                revision,
+            )
+            .unwrap()
+        },
+        queued_sources: Default::default(),
         media_revision: revision,
         phase: ds::DisplayPhase::Committed,
         objects: ds::ObjectStaging {
@@ -2957,19 +3094,28 @@ fn scene_display_description(
             committed_fake_mode: 1,
         },
         hdma: ds::HdmaState {
-            bindings: [ds::HdmaBinding {
-                enable: 1,
-                bank_slot: 0,
-                table: 0x9000,
-            }; 6],
+            common: sm_game::hdma::HdmaObjects {
+                enabled: 0x8000,
+                selected: 0,
+                objects: [sm_game::hdma::HdmaObject {
+                    channels: 1,
+                    bank_slot: 0,
+                    table: 0x9000,
+                    instruction_list: 0x8000,
+                    instruction_timer: 0,
+                    pre_instruction: 0,
+                    pre_instruction_bank: 0x88,
+                    timer: 0,
+                    a: 0x3344,
+                    b: 0x5566,
+                    c: 0,
+                    d: 0,
+                    e: 0,
+                    f: 0,
+                }; 6],
+            },
             objects: core::array::from_fn(|_| ds::HdmaObject {
                 instruction: program.clone(),
-                instruction_cursor: 0x8000,
-                instruction_timer: 0,
-                pre_instruction: 0,
-                pre_instruction_bank: 0x88,
-                timer: 0,
-                variables: [0x3344, 0x5566, 0, 0, 0, 0],
             }),
             channels: core::array::from_fn(|_| ds::HdmaChannel {
                 source: indirect.clone(),
@@ -2994,8 +3140,6 @@ fn scene_display_description(
                 unused_byte: 0,
                 dma_active: false,
             }),
-            selected: 0,
-            flags: 0x8000,
             hdma_timer: 17,
             dma_timer: 19,
             dma_busy: false,
@@ -3701,7 +3845,7 @@ fn scene_component_reset_preserves_complete_owned_buffers_and_alias_views() {
             .unwrap(),
         0xee
     );
-    assert_eq!(reset_state.hdma.objects[0].variables[0], 0xaa44);
+    assert_eq!(reset_state.hdma.common.objects[0].a, 0xaa44);
     let (retained_state, _) = retained.into_start_description(scene_copy_metadata(&metadata));
     let retained_state = retained_state.display.unwrap();
     assert_eq!(
@@ -3711,7 +3855,7 @@ fn scene_component_reset_preserves_complete_owned_buffers_and_alias_views() {
             .unwrap(),
         0x12
     );
-    assert_eq!(retained_state.hdma.objects[0].variables[0], 0x3344);
+    assert_eq!(retained_state.hdma.common.objects[0].a, 0x3344);
     reset.display.as_mut().unwrap().hud.health = 143;
     reset.display.as_mut().unwrap().nmi.acknowledgment = 5;
     let expected_reset = format!("{:?}", reset.display.as_ref().unwrap());
@@ -3750,7 +3894,7 @@ fn scene_component_reset_preserves_complete_owned_buffers_and_alias_views() {
             .unwrap(),
         0xee
     );
-    assert_eq!(state.hdma.objects[0].variables[0], 0xaa44);
+    assert_eq!(state.hdma.common.objects[0].a, 0xaa44);
 }
 
 // Movies cannot reach authored portable missing resident/history or failed replacement admission.
@@ -4093,7 +4237,7 @@ fn scene_component_rejects_wrong_hdma_kinds_and_required_unbound_sources() {
                 ds::DisplayError::Incomplete
             }
             4 => {
-                state.hdma.objects[0].instruction_timer = 0x8000;
+                state.hdma.common.objects[0].instruction_timer = 0x8000;
                 state.hdma.objects[0].instruction = hs::SourceBinding::Unbound;
                 ds::DisplayError::Incomplete
             }
@@ -4181,12 +4325,11 @@ fn scene_component_admits_explicitly_disabled_hdma_sources() {
         channel.table = hs::SourceBinding::Unbound;
         channel.source = hs::SourceBinding::Unbound;
     }
-    for binding in &mut state.hdma.bindings {
-        binding.enable = 0;
+    for binding in &mut state.hdma.common.objects {
+        binding.channels = 0;
     }
     for object in &mut state.hdma.objects {
         object.instruction = hs::SourceBinding::Unbound;
-        object.instruction_timer = 0x8000;
     }
     let expected = format!("{:?}", start.display.as_ref().unwrap());
     let opened = sd::DisplayComponent::open(
@@ -4203,7 +4346,7 @@ fn scene_component_admits_explicitly_disabled_hdma_sources() {
         expected
     );
     let state = description.display.unwrap();
-    assert_eq!(state.hdma.flags, 0x8000);
+    assert_eq!(state.hdma.common.enabled, 0x8000);
     assert!(state.hdma.channels.iter().all(|channel| matches!(
         (&channel.table, &channel.source),
         (hs::SourceBinding::Unbound, hs::SourceBinding::Unbound)
@@ -4472,7 +4615,7 @@ fn scene_component_reset_preserves_coherent_physical_hdma_aliases() {
         scene_hdma_bound_byte(state, &requirements.hdma_content, 4, 0x7f, 0x9800),
         0xab
     );
-    assert_eq!(state.hdma.objects[0].variables[0], 0xcd44);
+    assert_eq!(state.hdma.common.objects[0].a, 0xcd44);
     let (mut retained, _) = before.into_start_description(opened.metadata);
     let state = retained.display.as_mut().unwrap();
     assert_eq!(
@@ -4483,7 +4626,7 @@ fn scene_component_reset_preserves_coherent_physical_hdma_aliases() {
         scene_hdma_bound_byte(state, &requirements.hdma_content, 3, 0x7e, 0x9001),
         0x33
     );
-    assert_eq!(state.hdma.objects[0].variables[0], 0x3344);
+    assert_eq!(state.hdma.common.objects[0].a, 0x3344);
 }
 
 // Movies cannot author the explicit Small/Large identities for a portable geometry size set.
@@ -4781,8 +4924,8 @@ fn scene_atmospheric_settlement_fixture(
     state.controls.color_selection = 0;
     state.controls.color_math = 0;
     state.controls.geometry = 0;
-    for binding in &mut state.hdma.bindings {
-        binding.enable = 0;
+    for binding in &mut state.hdma.common.objects {
+        binding.channels = 0;
     }
     for channel in &mut state.hdma.channels {
         channel.active = false;
@@ -6376,7 +6519,7 @@ fn scene_read_results_codec_and_reopen() {
     assert_eq!(captured.display.as_ref().unwrap().read_results, expected);
     scene_owner_unchanged(&display, &before, &metadata);
     let bytes = before.encode_checkpoint(&metadata, &requirements).unwrap();
-    assert_eq!(&bytes[..8], b"SMDISPL\x03");
+    assert_eq!(&bytes[..8], b"SMDISPL\x04");
     let decoded =
         sd::DisplayCheckpoint::decode_checkpoint(&bytes, media.clone(), &metadata, &requirements)
             .unwrap();
@@ -10582,10 +10725,11 @@ fn checkpoint_serialized_schema_matches_actual_compiled_codecs() {
     let layout = checkpoint::serialized_layout();
     assert_eq!(
         checkpoint::fingerprint(layout.as_bytes()),
-        0x7110b4dec014d09b
+        0x4ba11337feb704ef
     );
     for required in [
         "work_ram:array[131072]{u8-le;}",
+        "source-publications{ordinal:u64-le;count:u32-le;entries:[address:u32-le;present:bool-u8;present=>rank:u64-le]}:",
         "RecordingBytes{length:u64-le;bytes:length*u8;}",
         "base-snapshot{length0:reset;length-sram:array[8192]{u8-le;}",
         "bool-u8-0-or-1;",
@@ -10616,4 +10760,60 @@ fn checkpoint_serialized_schema_matches_actual_compiled_codecs() {
         snapshot.find("work_ram:array[131072]").unwrap()
             < snapshot.find("ramAdr:u32-ne-le;").unwrap()
     );
+}
+
+// Movies cannot forge portable FX ownership declarations or supply scalar alias cycles.
+#[cfg_attr(test, test)]
+fn persistent_session_rejects_forged_legacy_fx_ownership() {
+    let (requirements, start, media, variants) = scene_namespace_marker_fixture();
+    sm::persistent_session_rejects_forged_legacy_fx_ownership(requirements, start, media, variants);
+}
+
+// Movies cannot forge portable FX ownership declarations or supply scalar alias cycles.
+#[cfg_attr(test, test)]
+fn persistent_session_rejects_conflicting_cold_fx_cycles() {
+    let (requirements, start, media, variants) = scene_namespace_marker_fixture();
+    sm::persistent_session_rejects_conflicting_cold_fx_cycles(requirements, start, media, variants);
+}
+
+// Movies cannot forge portable FX ownership declarations or supply scalar alias cycles.
+#[cfg_attr(test, test)]
+fn persistent_session_workspace_publication_exports_actual_aliases() {
+    let (requirements, start, media, variants) = scene_namespace_marker_fixture();
+    sm::persistent_session_workspace_publication_exports_actual_aliases(
+        requirements,
+        start,
+        media,
+        variants,
+    );
+}
+
+// Movies cannot forge portable FX ownership declarations or supply scalar alias cycles.
+#[cfg_attr(test, test)]
+fn persistent_session_settlement_rebind_queries_current_workspace() {
+    let (requirements, start, media, variants) = scene_namespace_marker_fixture();
+    sm::persistent_session_settlement_rebind_queries_current_workspace(
+        requirements,
+        start,
+        media,
+        variants,
+    );
+}
+
+// Movies cannot forge supplied FX state at the public GameOwner admission boundary.
+#[cfg_attr(test, test)]
+fn persistent_session_game_owner_rejects_forged_fx_admission() {
+    let (requirements, start, media, variants) = scene_namespace_marker_fixture();
+    sm::persistent_session_game_owner_rejects_forged_fx_admission(
+        requirements,
+        start,
+        media,
+        variants,
+    );
+}
+
+// Movies do not intentionally select full-u16 VRAM queue aliases or truncate loaded tables.
+#[cfg_attr(test, test)]
+fn grapple_tile_queue_aliases_keep_late_reads_and_failure_prefixes() {
+    sm::verify_grapple_tile_alias_prefixes();
 }

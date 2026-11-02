@@ -13,6 +13,7 @@ use crate::constants::bank_81::{
 };
 use crate::menu_state::MenuState;
 use crate::menu_state::SaveSelection;
+use crate::menu_window_state::ArrowAction;
 use crate::save_file::header;
 
 use crate::enemy_projectiles::table::with_file_select as file_select;
@@ -46,7 +47,6 @@ fn restart_missile<H: Host + ?Sized>(game: &mut H) {
     });
 }
 
-const PALETTE_BUFFER: usize = crate::ram::word_arrays::PALETTE_BUFFER;
 /// The MOSAIC mirror and the BG1SC mirror after it, read as one word.
 const MOSAIC: usize = crate::ram::mirror::MOSAIC;
 
@@ -104,7 +104,7 @@ fn border<H: Host + ?Sized>(sprite: u16, game: &mut H) {
 fn prepare<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
     if !super::resuming(game) {
         game.fade(false);
-        if (game.ram().read_byte(crate::ram::mirror::INIDISP) & 0xf) != 0 {
+        if (game.display_control_byte(crate::display::preparation::Field::Brightness) & 0xf) != 0 {
             return;
         }
     }
@@ -124,8 +124,8 @@ fn fade_to_options<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
     border(0x48, game);
     crate::sprite_output::file_helmets(false, game);
     game.fade(false);
-    if (game.ram().read_byte(crate::ram::mirror::INIDISP) & 0xf) == 0 {
-        word!(game.GAME_STATE = K_GAME_STATE_2_GAME_OPTIONS_MENU as u16);
+    if (game.display_control_byte(crate::display::preparation::Field::Brightness) & 0xf) == 0 {
+        crate::gameplay_word!(game.GAME_STATE = K_GAME_STATE_2_GAME_OPTIONS_MENU as u16);
         menu.menu_index = 0;
         // Clear the menu's reused RAM, $198D..BC.
         crate::word_transfers!(game, ascending, 24;
@@ -136,7 +136,7 @@ fn fade_to_title<H: Host + ?Sized>(game: &mut H) {
     border(0x48, game);
     crate::sprite_output::file_helmets(false, game);
     game.fade(false);
-    if (game.ram().read_byte(crate::ram::mirror::INIDISP) & 0xf) == 0 {
+    if (game.display_control_byte(crate::display::preparation::Field::Brightness) & 0xf) == 0 {
         game.request_reset();
     }
 }
@@ -154,13 +154,17 @@ fn fade_to_main<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
 /// Fade out with the mosaic growing as the brightness falls; true once black.
 fn fade_out_mosaic<H: Host + ?Sized>(game: &mut H) -> bool {
     game.fade(false);
-    game.ram().write_byte(
-        crate::ram::mirror::MOSAIC,
-        (game.ram().read_byte(crate::ram::mirror::MOSAIC) as i32 & 0xf
-            | (16 * (game.ram().read_byte(crate::ram::mirror::INIDISP) as i32 & 0xf)) ^ 0xf0)
-            as u8,
+    game.store_display_control_byte(
+        crate::display::preparation::Field::Mosaic,
+        (game.display_control_byte(crate::display::preparation::Field::Mosaic) as i32 & 0xf
+            | (16
+                * (game.display_control_byte(crate::display::preparation::Field::Brightness)
+                    as i32
+                    & 0xf))
+                ^ 0xf0) as u8,
+        crate::display::preparation::Store::Owned,
     );
-    (game.ram().read_byte(crate::ram::mirror::INIDISP) & 0xf) == 0
+    (game.display_control_byte(crate::display::preparation::Field::Brightness) & 0xf) == 0
 }
 fn restore_cursor<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
     crate::sprite_output::file_menu_cursor(selected_slot(game), game);
@@ -169,13 +173,17 @@ fn restore_cursor<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
 fn fade_in<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
     crate::sprite_output::menu_selection(game);
     game.fade(true);
-    game.ram().write_byte(
-        crate::ram::mirror::MOSAIC,
-        (game.ram().read_byte(crate::ram::mirror::MOSAIC) as i32 & 0xf
-            | (16 * (game.ram().read_byte(crate::ram::mirror::INIDISP) as i32 & 0xf)) ^ 0xf0)
-            as u8,
+    game.store_display_control_byte(
+        crate::display::preparation::Field::Mosaic,
+        (game.display_control_byte(crate::display::preparation::Field::Mosaic) as i32 & 0xf
+            | (16
+                * (game.display_control_byte(crate::display::preparation::Field::Brightness)
+                    as i32
+                    & 0xf))
+                ^ 0xf0) as u8,
+        crate::display::preparation::Store::Owned,
     );
-    if (game.ram().read_byte(crate::ram::mirror::INIDISP) & 0xf) == 15 {
+    if (game.display_control_byte(crate::display::preparation::Field::Brightness) & 0xf) == 15 {
         menu.menu_index = menu.menu_index.wrapping_add(1);
     }
 }
@@ -251,7 +259,7 @@ fn choose_source<const COPY: bool, H: Host + ?Sized>(menu: &mut MenuState, game:
     let movement_high = if COPY {
         0
     } else {
-        game.ram().read_byte(crate::ram::words::JOYPAD1_NEWKEYS + 1)
+        game.observed_inputs().pressed.to_le_bytes()[1]
     };
     if game.observed_inputs().pressed as i32 & (K_BUTTON_START as i32 | K_BUTTON_A as i32) != 0 {
         game.queue_sound(0, 0x37_u8, 6);
@@ -272,8 +280,10 @@ fn choose_source<const COPY: bool, H: Host + ?Sized>(menu: &mut MenuState, game:
         }
     } else {
         if let Some(slot) = next_occupied_slot(game) {
-            game.ram()
-                .write_byte(crate::ram::word_arrays::CINEMATICBG_ARR1, slot);
+            file_select(game, |menu| {
+                let selection = menu.file_copy_selection();
+                crate::menu_state::set_menu_byte(selection, 0, slot);
+            });
             let sound = if COPY {
                 0x37
             } else {
@@ -380,7 +390,7 @@ fn begin_confirmation<const COPY: bool, H: Host + ?Sized>(menu: &mut MenuState, 
     menu.menu_index = menu.menu_index.wrapping_add(1);
     set_copy_selection(0, game);
     if COPY {
-        word!(game.FILE_COPY_ARROW_PALETTE_TIMER = 8);
+        game.file_arrow(ArrowAction::Reset(8));
     }
 }
 fn draw_confirmation<H: Host + ?Sized>(game: &mut H) {
@@ -388,7 +398,9 @@ fn draw_confirmation<H: Host + ?Sized>(game: &mut H) {
     menu_tilemap::load(0x514, ADDR_K_MENU_TILEMAP_IS_THIS_OK as u16, game);
     menu_tilemap::set_palette(0, game);
     menu_tilemap::load(0x59c, ADDR_K_MENU_TILEMAP_YES as u16, game);
-    crate::word_transfers!(game, ascending, 32; native(0x3c80) <- value(15));
+    game.screen_apply(|workspace| {
+        super::canvas::fill_native(workspace, Point::new(Role::Menu, 0x680), 32, false, 15)
+    });
     menu_tilemap::set_palette(0, game);
     menu_tilemap::load(0x65c, ADDR_K_MENU_TILEMAP_NO as u16, game);
     menu_tilemap::file_rows(menu_tilemap::FileRowEmphasis::Confirmation, game);
@@ -451,15 +463,14 @@ fn confirm_choice<const COPY: bool, H: Host + ?Sized>(menu: &mut MenuState, game
     });
 }
 fn animate_copy_arrow<H: Host + ?Sized>(game: &mut H) {
-    if word!(game.FILE_COPY_ARROW_PALETTE_TIMER) != 0
-        && word!(game.FILE_COPY_ARROW_PALETTE_TIMER -= 1, reread) == 0
-    {
-        word!(game.FILE_COPY_ARROW_PALETTE_TIMER = 4);
+    if game.file_arrow(ArrowAction::Advance) {
         // Rotate the arrow's six colours, 145..151, by one entry.
-        let first: u16 = word!(game.PALETTE_BUFFER[145]);
-        crate::word_transfers!(game, ascending, 6;
-                native(PALETTE_BUFFER + 2 * 145) <- native(PALETTE_BUFFER + 2 * 146));
-        word!(game.PALETTE_BUFFER[151] = first);
+        let first = game.palette_word(false, 290);
+        for index in 145..151 {
+            let color = game.palette_native_word(false, 2 * (index + 1));
+            game.palette_write_native_word(false, 2 * index, color);
+        }
+        game.palette_write_word(false, 302, first);
     }
 }
 fn copy_slot<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
@@ -501,16 +512,22 @@ fn copy_slot<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
         mirrored_checksum,
     );
     menu.menu_index = menu.menu_index.wrapping_add(1);
-    crate::word_transfers!(game, ascending, 288; native(0x3b00) <- value(15));
+    game.screen_apply(|workspace| {
+        super::canvas::fill_native(workspace, Point::new(Role::Menu, 0x500), 288, false, 15)
+    });
     let copied = BIT_SHL_16BIT[usize::from(copy_destination(game))];
     crate::menus::state::with(game, |_, slots: &mut SaveSelection| {
         slots.nonempty_slots |= copied
     });
     let row = ((4 * i32::from(copy_destination(game)) + 9) << 6) + 24;
-    crate::word_transfers!(game, (2), 11;
-        native(menu_tilemap::MENU_TILEMAP + row as usize) <- value(menu_tilemap::BLANK_TILE),
-        native(0x35c0 + row as usize) <- value(15),
-    );
+    let row = usize::try_from(row).unwrap();
+    for index in 0..11 {
+        game.screen_write_native_word(
+            Point::new(Role::Menu, row + 2 * index),
+            menu_tilemap::BLANK_TILE,
+        );
+        game.screen_write_native_word(Point::new(Role::Pause, 0x5c0 + row + 2 * index), 15);
+    }
     menu_tilemap::set_palette(0, game);
     menu_tilemap::load(0x510, ADDR_K_MENU_TILEMAP_COPY_COMPLETED as u16, game);
     menu_tilemap::file_rows(menu_tilemap::FileRowEmphasis::Confirmation, game);
@@ -569,9 +586,11 @@ fn clear_slot<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
     save_slots::initialize(game);
     save_slots::load(copy_source(game), game);
     let source = copy_source(game);
-    crate::room_view::set(game, crate::room_view::Word::Area, source);
+    crate::gameplay_context::set_room(game, crate::room_view::Word::Area, source);
     crate::menus::state::with(game, |game, selection| load_area_map(selection, game));
-    crate::word_transfers!(game, ascending, 288; native(0x3b00) <- value(15));
+    game.screen_apply(|workspace| {
+        super::canvas::fill_native(workspace, Point::new(Role::Menu, 0x500), 288, false, 15)
+    });
     let cleared = BIT_SHL_NOT[usize::from(copy_source(game))];
     crate::menus::state::with(game, |_, slots: &mut SaveSelection| {
         slots.nonempty_slots &= cleared
@@ -602,7 +621,14 @@ fn turn_helmet<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
 }
 fn load_background<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
     // This menu spans $3600..$3dff, beyond the pause-map union field.
-    crate::word_transfers!(game, descending, 1024; native(0x3dfe) <- rom(0x8edc00, 1023));
+    menu_tilemap::copy_rom_words(
+        Point::new(Role::Menu, 0x7fe),
+        0x8edc00,
+        1023,
+        1024,
+        true,
+        game,
+    );
     menu_tilemap::upload(
         menu_tilemap::MENU_TILEMAP_BYTES,
         menu_tilemap::MENU_TILEMAP_SOURCE,
@@ -628,7 +654,7 @@ fn fade_in_main<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
     crate::sprite_output::menu_selection(game);
     border(0x48, game);
     game.fade(true);
-    if (game.ram().read_byte(crate::ram::mirror::INIDISP) & 0xf) == 15 {
+    if (game.display_control_byte(crate::display::preparation::Field::Brightness) & 0xf) == 15 {
         menu.menu_index = menu.menu_index.wrapping_add(1);
     }
 }
@@ -736,5 +762,10 @@ fn native_word<H: Host + ?Sized>(offset: usize, game: &H) -> u16 {
 }
 
 fn set_native_word<H: Host + ?Sized>(offset: usize, value: u16, game: &mut H) {
-    game.ram().copy_in(offset, &value.to_ne_bytes());
+    if (0x3000..0x7000).contains(&offset) {
+        game.screen_write_native_slice(Point::new(Role::Pause, offset - 0x3000), value);
+    } else {
+        // Full native addresses include the MOSAIC register-address alias at2106.
+        game.ram().copy_in(offset, &value.to_ne_bytes());
+    }
 }

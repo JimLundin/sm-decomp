@@ -8,6 +8,7 @@
 //! log. The functions run from `cinematic_function`; the compat dispatch keeps
 //! their ids.
 use crate::actors::host::below;
+use crate::cinematic::CinematicDestination;
 use crate::cinematic::{
     capture_cinematic_palette, clear_cinematic_background, clear_cinematic_colors,
     clear_cinematic_sprites, compose_cinematic_palette, fade_cinematic_colors,
@@ -16,14 +17,15 @@ use crate::cinematic::{
 };
 use crate::cinematic_host::Host;
 use crate::cinematic_objects::CinematicObjects;
-use crate::cinematic_state::{Cinematic, Word, cinematic};
+use crate::cinematic_state::{Cinematic, Word};
+use crate::display::preparation::Field;
 use crate::display_refresh::GraphicsAsset;
 use crate::intro_sequence::countdown;
 use crate::menus::prelude::display_scroll;
-use crate::ram::RawRam as _;
-use crate::ram::mirror;
+use crate::presentation_workspace::{Point, Role};
 use crate::ram::word;
 use crate::visual_state::{CinematicDisplay, CinematicFade, CinematicTilemap};
+use crate::word_transfers::WordEndpoint;
 
 /// Bank $8B cinematic functions, stored in `cinematic_function`.
 pub mod function {
@@ -145,7 +147,18 @@ pub fn setup<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     }
     crate::cinematic_display::configure_cinematic_display(CinematicDisplay::Escape, cine, game);
     cine.clear();
-    crate::word_transfers!(game, ascending, 256; le(PALETTE_BUFFER, 0) <- rom(ESCAPE_PALETTES, 0));
+    crate::cinematic::transfer_cinematic_words(
+        256,
+        2,
+        &[(
+            CinematicDestination::Palette {
+                offset: 0,
+                native: false,
+            },
+            crate::cinematic::cinematic_rom_words(ESCAPE_PALETTES, 0, game),
+        )],
+        game,
+    );
     GraphicsAsset::Decompress(0x98bcd6, 0x10000).load(game);
     GraphicsAsset::Decompress(0x99a56f, 0x14000).load(game);
     GraphicsAsset::Decompress(0x99d17e, 0x18000).load(game);
@@ -169,7 +182,7 @@ pub fn setup<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     *cine.mode7_zoom() = 64;
     *cine.x() = 0;
     *cine.y() = 0;
-    cinematic!(game.DoorExit = 0);
+    crate::cinematic::clear_cinematic_exit(game);
     crate::sequence_state::with_words(game, |_, words: &mut crate::session_words::SessionWords| {
         words.layer1_x_pos = 0
     });
@@ -244,10 +257,21 @@ pub fn scene_2_setup<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     GraphicsAsset::VramWords(0x7ff000, 0x7800, 0x800).load(game);
     GraphicsAsset::VramWords(0x7ff800, 0x7c00, 0x800).load(game);
     GraphicsAsset::VramWords(0x7ea000, 0x5000, 0x1000).load(game);
-    game.ram().write_byte(mirror::OBSEL, 2);
+    crate::frame_display_byte!(game, Field::ObjectLayout => 2);
     crate::palette_effects::execution::leased::clear(game);
     clear_cinematic_sprites(cine);
-    crate::word_transfers!(game, ascending, 128; le(PALETTE_BUFFER, 128) <- rom(SPACE_PALETTES, 128));
+    crate::cinematic::transfer_cinematic_words(
+        128,
+        2,
+        &[(
+            CinematicDestination::Palette {
+                offset: 256,
+                native: false,
+            },
+            crate::cinematic::cinematic_rom_words(SPACE_PALETTES, 128, game),
+        )],
+        game,
+    );
     // The palette copy and each initializer leave A for the next spawn.
     let palette_tail =
         crate::session_cohort::load::<crate::cinematic::PaletteBuffer, _>(game).0[255];
@@ -302,29 +326,40 @@ pub fn scene_2<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     }
     *cine.function_timer() = cine.function_timer().wrapping_sub(1);
     if (*cine.function_timer() & 0x8000) != 0 {
-        crate::word_transfers!(game, ascending, 128; le(PALETTE_BUFFER, 0) <- rom(SPACE_PALETTES, 0));
-        for (at, value) in [
-            (mirror::M7SEL, 0),
-            (mirror::BG1SC, 112),
-            (mirror::BG2SC, 120),
-            (mirror::BG3SC, 0),
-            (mirror::BG4SC, 0),
-            (mirror::BG12NBA, 68),
-            (mirror::BG34NBA, 0),
-            (mirror::TM, 16),
-            (mirror::TS, 0),
-            (mirror::TMW, 0),
-            (mirror::TSW, 0),
-            (0x6e, 0),
-            (0x71, 0),
-            (0x6f, 0),
-            (0x72, 0),
+        crate::cinematic::transfer_cinematic_words(
+            128,
+            2,
+            &[(
+                CinematicDestination::Palette {
+                    offset: 0,
+                    native: false,
+                },
+                crate::cinematic::cinematic_rom_words(SPACE_PALETTES, 0, game),
+            )],
+            game,
+        );
+        for (field, value) in [
+            (Field::AffineSelection, 0),
+            (Field::Screens0, 112),
+            (Field::Screens1, 120),
+            (Field::Screens2, 0),
+            (Field::Screens3, 0),
+            (Field::Characters0, 68),
+            (Field::Characters1, 0),
+            (Field::MainLayers, 16),
+            (Field::SubLayers, 0),
+            (Field::MainWindow, 0),
+            (Field::SubWindow, 0),
+            (Field::NextColorSelection, 0),
+            (Field::NextColorMath, 0),
+            (Field::ColorSelection, 0),
+            (Field::ColorMath, 0),
         ] {
-            game.ram().write_byte(at, value);
+            crate::frame_display_byte!(game, field => value);
         }
         game.write_register(crate::display::registers::COLDATA as u16, 0xe0);
         set_fixed_color([32, 64, 0x80], game);
-        game.ram().write_byte(mirror::MOSAIC, 0);
+        crate::frame_display_byte!(game, Field::Mosaic => 0);
         *cine.x_sub() = 0;
         *cine.x() = 0;
         *cine.y_sub() = 0;
@@ -356,7 +391,7 @@ pub fn upload_tiles<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     game.advance_ending_tile_upload(page);
     *cine.function_timer() = page.wrapping_add(1);
     if page.wrapping_add(1).wrapping_sub(16) & 0x8000 == 0 {
-        game.ram().write_byte(0x55, 1);
+        crate::frame_display_byte!(game, Field::Mode => 1);
         *cine.function_timer() = 0;
         crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
             flow.cinematic_function = 0xdb9d
@@ -381,12 +416,12 @@ pub fn change_music<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
 /// ($8B:DBC4). Was `CinematicFunction_Intro_Func120`.
 pub fn gunship_setup<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     if crate::music_requests::has_queued_music(game) & 1 == 0 {
-        game.ram().write_byte(mirror::BGMODE, 7);
-        game.ram().write_byte(mirror::M7SEL, 0x80);
+        crate::frame_display_byte!(game, Field::Mode => 7);
+        crate::frame_display_byte!(game, Field::AffineSelection => 0x80);
         set_cinematic_blend(17, 0, 0, 48, game);
         set_fixed_color([63, 95, 0x9f], game);
-        game.ram().write_byte(mirror::BG1SC, 0);
-        game.ram().write_byte(mirror::BG12NBA, 0);
+        crate::frame_display_byte!(game, Field::Screens0 => 0);
+        crate::frame_display_byte!(game, Field::Characters0 => 0);
         crate::cinematic::set_cinematic_colors(&[0, 16, 128], 0, game);
         crate::palette_effects::execution::leased::spawn(SPACE_GLOW_1, game);
         crate::palette_effects::execution::leased::spawn(SPACE_GLOW_2, game);
@@ -435,7 +470,18 @@ pub fn gunship_fly_into_camera<H: Host + ?Sized>(cine: &mut Cinematic, game: &mu
         crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
             flow.cinematic_function = function::GUNSHIP_FREEZE_FRAME
         });
-        crate::word_transfers!(game, descending, 16; le(PALETTE_BUFFER, 95) <- table(GUNSHIP_GREY, 15));
+        crate::cinematic::transfer_cinematic_words(
+            16,
+            -2,
+            &[(
+                CinematicDestination::Palette {
+                    offset: 190,
+                    native: false,
+                },
+                WordEndpoint::Table(&GUNSHIP_GREY, 0).shifted(15),
+            )],
+            game,
+        );
     } else {
         *cine.mode7_zoom() = cine.mode7_zoom().wrapping_sub(4);
     }
@@ -461,7 +507,18 @@ pub fn credits_setup<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     crate::cinematic_display::configure_cinematic_display(CinematicDisplay::Credits, cine, game);
     clear_cinematic_sprites(cine);
     crate::palette_effects::execution::leased::clear(game);
-    crate::word_transfers!(game, ascending, 128; le(PALETTE_BUFFER, 0) <- rom(CREDITS_PALETTES, 0));
+    crate::cinematic::transfer_cinematic_words(
+        128,
+        2,
+        &[(
+            CinematicDestination::Palette {
+                offset: 0,
+                native: false,
+            },
+            crate::cinematic::cinematic_rom_words(CREDITS_PALETTES, 0, game),
+        )],
+        game,
+    );
     GraphicsAsset::Decompress(0x979803, 0x10000).load(game);
     GraphicsAsset::Decompress(0x97b957, 0x2000).load(game);
     GraphicsAsset::Decompress(0x97d7fc, 0x6000).load(game);
@@ -478,7 +535,10 @@ pub fn credits_setup<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     GraphicsAsset::VramWords(0x7fe000, 0x4c00, 0x800).load(game);
     GraphicsAsset::Decompress(0x99e089, 0x6000).load(game);
     GraphicsAsset::Decompress(0x99ecc4, 0x8000).load(game);
-    if below(word!(game.GAME_TIME_HOURS), FAST_CLEAR_HOURS) {
+    if below(
+        crate::gameplay_word!(game.GAME_TIME_HOURS),
+        FAST_CLEAR_HOURS,
+    ) {
         GraphicsAsset::VramWords(0x7e2000, 0x0000, 0x4000).load(game);
     } else {
         GraphicsAsset::VramWords(0x7f0000, 0x0000, 0x4000).load(game);
@@ -489,7 +549,7 @@ pub fn credits_setup<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     *cine.mode7_angle() = 0;
     *cine.mode7_zoom() = 2304;
     crate::display_refresh::enable(true, game);
-    game.ram().write_byte(mirror::INIDISP, 15);
+    crate::frame_display_byte!(game, Field::Brightness => 15);
     crate::sequence_state::with_words(game, |_, words: &mut crate::session_words::SessionWords| {
         words.layer1_x_pos = 0
     });
@@ -516,7 +576,7 @@ pub fn blank_screen<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
             flow.cinematic_function = function::FADE_IN_SHOOTING_STARS
         });
         *cine.function_timer() = 120;
-        game.ram().write_byte(mirror::TM, 16);
+        crate::frame_display_byte!(game, Field::MainLayers => 16);
     }
 }
 
@@ -524,7 +584,7 @@ pub fn blank_screen<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
 /// Was `CinematicFunction_Intro_Func130`.
 pub fn fade_in_shooting_stars<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     crate::display_refresh::fade(true, game);
-    if game.ram().read_byte(mirror::INIDISP) == 15 {
+    if game.display_control_byte(Field::Brightness) == 15 {
         set_cinematic_blend(2, 16, 2, 34, game);
         crate::screen_fade::store(game, 0, 0);
         capture_cinematic_palette(game);
@@ -558,7 +618,15 @@ pub fn fade_in_samus<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
 pub fn wavy_samus<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     display_scroll!(game.Bg3V += 2);
     if countdown(cine) {
-        crate::word_transfers!(game, ascending, 288; pause_map(288) <- rom(DEER_FORCE_TILES, 0));
+        crate::cinematic::transfer_cinematic_words(
+            288,
+            2,
+            &[(
+                CinematicDestination::Screen(Point::new(Role::Pause, 576)),
+                crate::cinematic::cinematic_rom_words(DEER_FORCE_TILES, 0, game),
+            )],
+            game,
+        );
         queue_cinematic_tilemap(CinematicTilemap::FullText, cine, game);
         set_cinematic_blend(1, 0, 0, 0, game);
         *cine.function_timer() = 180;
@@ -576,8 +644,10 @@ pub fn nintendo_1994<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     *cine.var13() = cine.var13().wrapping_sub(1);
     let expired = (*cine.var13() & 0x8000) != 0;
     if *cine.var13() == 0 || expired {
-        if below(word!(game.GAME_TIME_HOURS), FAST_CLEAR_HOURS)
-            || below(word!(game.GAME_TIME_HOURS), CLEAR_HOURS)
+        if below(
+            crate::gameplay_word!(game.GAME_TIME_HOURS),
+            FAST_CLEAR_HOURS,
+        ) || below(crate::gameplay_word!(game.GAME_TIME_HOURS), CLEAR_HOURS)
         {
             set_cinematic_blend(2, 16, 2, 34, game);
             crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
@@ -619,8 +689,30 @@ pub fn fade_from_white<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
             cine,
             game,
         );
-        crate::word_transfers!(game, descending, 16; le(PALETTE_BUFFER, 31) <- value(0));
-        crate::word_transfers!(game, descending, 16; native(ICON_PALETTE_END) <- rom(ICON_PALETTE, 15));
+        crate::cinematic::transfer_cinematic_words(
+            16,
+            -2,
+            &[(
+                CinematicDestination::Palette {
+                    offset: 62,
+                    native: false,
+                },
+                WordEndpoint::Value(0),
+            )],
+            game,
+        );
+        crate::cinematic::transfer_cinematic_words(
+            16,
+            -2,
+            &[(
+                CinematicDestination::Palette {
+                    offset: ICON_PALETTE_END - 0xc000,
+                    native: true,
+                },
+                crate::cinematic::cinematic_rom_words(ICON_PALETTE, 15, game),
+            )],
+            game,
+        );
     }
 }
 

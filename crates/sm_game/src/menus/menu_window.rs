@@ -1,6 +1,6 @@
 //! Map-menu window animation and its ordered indirect-HDMA projection.
 use super::prelude::*;
-use crate::ram::checked_word as word;
+use crate::menu_window_state::Field;
 
 /// Work RAM ($7E) layout of the map-menu window.
 pub(super) mod ram {
@@ -12,9 +12,6 @@ pub(super) mod ram {
     pub const CLOSED_1: u16 = 0x9e22;
     pub const LEFT_EDGE: u16 = 0x9e32;
     pub const RIGHT_EDGE: u16 = 0x9e36;
-    /// The four 16.16 edge positions (left, right, top, bottom) and velocities.
-    pub const EDGE_POSITIONS: usize = 0x9e30;
-    pub const EDGE_VELOCITIES: usize = 0x9e40;
     /// The high byte of the indirect table addresses, and their bank.
     pub const PAGE: u8 = 0x9e;
     pub const BANK: u8 = 0x7e;
@@ -34,8 +31,10 @@ const LAST_SCANLINE: u8 = 0xe0;
 
 /// Requires a live, exclusively accessed SNES backend.
 pub fn initialize<H: Host + ?Sized>(game: &mut H) {
-    word!(game.EXPAND_SQ_TOPBOTTOM_MARGIN_RIGHT_POS = 0);
-    word!(game.EXPAND_SQ_TOPBOTTOM_MARGIN_LEFT_POS = u16::MAX);
+    let mut window = game.window_state();
+    window.right_margin = 0;
+    window.left_margin = u16::MAX;
+    game.publish_window(window, &[Field::RightMargin, Field::LeftMargin]);
     game.ram().write_byte(usize::from(ram::LEFT_EDGE), 127);
     game.ram().write_byte(usize::from(ram::RIGHT_EDGE), 129);
     for (table, margin, middle, channel, window) in [
@@ -77,11 +76,11 @@ pub fn open_from_center<H: Host + ?Sized>(game: &mut H) -> bool {
     }
     game.ram().write_byte(
         usize::from(ram::LEFT_EDGE),
-        (word!(game.EXPAND_SQ_LEFT_POS) as u8).wrapping_sub(4),
+        game.window_state().positions[0].whole.to_le_bytes()[0].wrapping_sub(4),
     );
     game.ram().write_byte(
         usize::from(ram::RIGHT_EDGE),
-        (word!(game.EXPAND_SQ_RIGHT_POS) as u8).wrapping_add(4),
+        game.window_state().positions[1].whole.to_le_bytes()[0].wrapping_add(4),
     );
     false
 }
@@ -114,19 +113,22 @@ fn append<H: Host + ?Sized>(
 }
 
 pub fn project<H: Host + ?Sized>(game: &mut H) {
-    let top = word!(game.EXPAND_SQ_TOP_POS);
+    let top = game.window_state().positions[2].whole;
     let (one, two) = (ram::WINDOW_1_TABLE, ram::WINDOW_2_TABLE);
     append(one, 0, top, ram::CLOSED_1, game);
     let mut cursor = append(two, 0, top, ram::CLOSED_2, game);
-    let mut middle = word!(game.EXPAND_SQ_BOTTOM_POS).wrapping_sub(word!(game.EXPAND_SQ_TOP_POS));
-    if word!(game.EXPAND_SQ_BOTTOM_POS) as u8 == word!(game.EXPAND_SQ_TOP_POS) as u8 {
+    let mut middle = game.window_state().positions[3]
+        .whole
+        .wrapping_sub(game.window_state().positions[2].whole);
+    if game.window_state().positions[3].whole as u8 == game.window_state().positions[2].whole as u8
+    {
         middle = 1;
     }
     append(one, cursor, middle, ram::LEFT_EDGE, game);
     cursor = append(two, cursor, middle, ram::RIGHT_EDGE, game);
     let mut bottom =
-        (0xff00 | u16::from(LAST_SCANLINE)).wrapping_sub(word!(game.EXPAND_SQ_BOTTOM_POS));
-    if word!(game.EXPAND_SQ_BOTTOM_POS) as u8 == LAST_SCANLINE {
+        (0xff00 | u16::from(LAST_SCANLINE)).wrapping_sub(game.window_state().positions[3].whole);
+    if game.window_state().positions[3].whole as u8 == LAST_SCANLINE {
         bottom = 1;
     }
     append(one, cursor, bottom, ram::CLOSED_1, game);
@@ -140,8 +142,23 @@ pub fn load_velocities<H: Host + ?Sized>(area: u16, game: &mut H) {
     let image = game.native_image();
     let base =
         sm_data::cartridge::lorom_offset(AREA_WINDOW_VELOCITIES) as usize + 16 * usize::from(area);
-    for component in 0..8 {
-        word!(game, ram::EDGE_VELOCITIES + 2 * component; = image.table_word(base, component as isize));
+    let mut window = game.window_state();
+    for (component, field) in [
+        Field::VelocityFraction(0),
+        Field::VelocityWhole(0),
+        Field::VelocityFraction(1),
+        Field::VelocityWhole(1),
+        Field::VelocityFraction(2),
+        Field::VelocityWhole(2),
+        Field::VelocityFraction(3),
+        Field::VelocityWhole(3),
+    ]
+    .into_iter()
+    .enumerate()
+    {
+        *field.get_mut(&mut window) = image.table_word(base, isize::try_from(component).unwrap());
+        // The prior velocity words survive a later native-ROM bounds failure.
+        game.publish_window(window, &[field]);
     }
 }
 
@@ -151,38 +168,14 @@ pub enum Motion {
 }
 
 pub fn advance<H: Host + ?Sized>(motion: Motion, game: &mut H) {
-    for (edge, boundary, limit, minimum) in [
-        (0, 1, 1, true),
-        (4, 256, 255, false),
-        (8, 1, 1, true),
-        (12, 224, 224, false),
-    ] {
-        let position = ram::EDGE_POSITIONS + edge;
-        let velocity = ram::EDGE_VELOCITIES + edge;
-        let delta =
-            (u32::from(word!(game, velocity + 2;)) << 16) | u32::from(word!(game, velocity;));
-        let delta = match motion {
-            Motion::Expand => delta,
-            // Retain the signed negation's overflow behavior before any position write.
-            Motion::Contract => (-(delta as i32)) as u32,
-        };
-        let low = u16::from_ne_bytes([
-            game.ram().read_byte(position),
-            game.ram().read_byte(position + 1),
-        ]);
-        let high = u16::from_ne_bytes([
-            game.ram().read_byte(position + 2),
-            game.ram().read_byte(position + 3),
-        ]);
-        let sum = (u32::from(low) | (u32::from(high) << 16)).wrapping_add(delta);
-        game.ram().copy_in(position, &(sum as u16).to_ne_bytes());
-        game.ram()
-            .copy_in(position + 2, &((sum >> 16) as u16).to_ne_bytes());
-        if matches!(motion, Motion::Expand) {
-            let below = (word!(game, position + 2;).wrapping_sub(boundary) as i16) < 0;
-            if below == minimum {
-                word!(game, position + 2; = limit);
-            }
+    for (edge, _) in game.window_state().positions.into_iter().enumerate() {
+        let mut window = game.window_state();
+        let contract = matches!(motion, Motion::Contract);
+        window.advance_edge(edge, contract);
+        game.publish_window(window, &[Field::Fraction(edge), Field::Whole(edge)]);
+        window = game.window_state();
+        if !contract && window.clamp_edge(edge) {
+            game.publish_window(window, &[Field::Whole(edge)]);
         }
     }
     project(game);

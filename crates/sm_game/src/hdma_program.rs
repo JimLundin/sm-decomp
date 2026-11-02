@@ -1,19 +1,10 @@
-//! The per-frame HDMA object interpreter on the Session-owned object table
-//! (step 2 of `crate::hdma`).
-//!
-//! The interpreter reads and writes `HdmaObjects` as typed fields. It runs
-//! on one owned-Session lease per frame when the host can open one, and
-//! otherwise on a copy of the table decoded from RAM. Host callbacks (the
-//! pre-instructions, calls and effects) still run on the compatibility host:
-//! the lease publishes the Session around each one and imports it after, and
-//! the RAM copy is stored before each one and reloaded after. No table value
-//! is held across a callback.
-
+//! HDMA programs use current owner fields and captured object identities.
 use crate::enemy_script::{EnemyScript as Script, bank_base};
-use crate::hdma::{HdmaObject, HdmaObjects, OBJECTS};
+use crate::hdma::{HdmaObjects, OBJECTS};
 use crate::hdma_dispatch::DispatchHost;
 use crate::hdma_objects::Bridged;
 use crate::hdma_objects::HdmaEffect;
+use crate::hdma_objects::HdmaTable;
 use crate::menus::host::{Host, MenuRuntime as _};
 use sm_data::cartridge::RomImage;
 
@@ -22,23 +13,21 @@ pub trait HdmaLease:
     crate::session_access::SessionAccess
     + crate::runtime_access::SessionRam
     + crate::cartridge::NativeImage
+    + HdmaTable
 {
     type Game: DispatchHost + ?Sized;
     /// Run `action` on the compatibility host with the Session published.
     fn foreign<T>(&mut self, action: impl FnOnce(&mut Self::Game) -> T) -> T;
 }
 
-/// Run `action` on the lease's host with the object the interpreter is
-/// running lent to it, as `Interpreter::with_object`.
+/// Capture the selected slot before publishing to the compatibility host.
 pub fn with_current_object<L: HdmaLease + ?Sized, T>(
     lease: &mut L,
-    action: impl FnOnce(&mut HdmaObject, &mut L::Game) -> T,
+    action: impl FnOnce(usize, &mut L::Game) -> T,
 ) -> T {
-    let index = usize::from(lease.session().hdma.selected >> 1);
-    let mut object = lease.session().hdma.objects[index];
-    let result = lease.foreign(|game| action(&mut object, game));
-    lease.session_mut().hdma.objects[index] = object;
-    result
+    let index = usize::from(lease.hdma_word(crate::hdma::Word::Selected) >> 1);
+    sm_data::table::check_index(index, OBJECTS);
+    lease.foreign(|game| action(index, game))
 }
 
 /// A host that can lease its Session to the interpreter.
@@ -51,9 +40,8 @@ pub trait LeaseHdma: crate::runtime_access::RuntimeAccess {
 }
 
 /// What one interpreter frame needs from either the lease or the RAM copy.
-pub(crate) trait Interpreter {
+pub(crate) trait Interpreter: HdmaTable {
     type Game: DispatchHost + ?Sized;
-    fn objects(&mut self) -> &mut HdmaObjects;
     /// Work RAM outside the object table.
     fn byte(&self, at: usize) -> u8;
     fn set_byte(&mut self, at: usize, value: u8);
@@ -62,18 +50,13 @@ pub(crate) trait Interpreter {
     fn word(&self, at: usize) -> u16 {
         u16::from_le_bytes([self.byte(at), self.byte(at + 1)])
     }
-    /// Run `action` on the compatibility host with object `index` lent to it
-    /// as typed fields. `action` must not read the host's copy of that object;
-    /// its words are restored from the lent object after.
     fn with_object<T>(
         &mut self,
         index: usize,
-        action: impl FnOnce(&mut HdmaObject, &mut Self::Game) -> T,
+        action: impl FnOnce(usize, &mut Self::Game) -> T,
     ) -> T {
-        let mut object = self.objects().objects[index];
-        let result = self.foreign(|game| action(&mut object, game));
-        self.objects().objects[index] = object;
-        result
+        sm_data::table::check_index(index, OBJECTS);
+        self.foreign(|game| action(index, game))
     }
     fn set_word(&mut self, at: usize, value: u16) {
         let [low, high] = value.to_le_bytes();
@@ -84,11 +67,25 @@ pub(crate) trait Interpreter {
 
 struct Leased<L>(L);
 
+impl<L: HdmaLease> HdmaTable for Leased<L> {
+    fn hdma_word(&self, word: crate::hdma::Word) -> u16 {
+        self.0.hdma_word(word)
+    }
+    fn store_hdma_word(
+        &mut self,
+        word: crate::hdma::Word,
+        value: u16,
+        order: crate::scene::state::WordOrder,
+    ) {
+        self.0.store_hdma_word(word, value, order);
+    }
+    fn store_hdma_byte(&mut self, word: crate::hdma::Word, high: bool, value: u8) {
+        self.0.store_hdma_byte(word, high, value);
+    }
+}
+
 impl<L: HdmaLease> Interpreter for Leased<L> {
     type Game = L::Game;
-    fn objects(&mut self) -> &mut HdmaObjects {
-        &mut self.0.session_mut().hdma
-    }
     fn byte(&self, at: usize) -> u8 {
         self.0.byte(at)
     }
@@ -141,7 +138,6 @@ pub fn run_objects<H: DispatchHost + LeaseHdma + ?Sized>(handler_carry: bool, ga
     } else {
         let mut bridge = Bridged::load(game);
         run(&mut bridge, handler_carry);
-        bridge.store();
     }
 }
 
@@ -149,15 +145,19 @@ fn run<I: Interpreter>(it: &mut I, handler_carry: bool) {
     it.set_byte(0x85, 0);
     let mut slot = 0usize;
     loop {
-        it.objects().selected = slot as u16;
+        it.store_hdma_word(
+            crate::hdma::Word::Selected,
+            slot as u16,
+            crate::scene::state::WordOrder::Little,
+        );
         // The loop is the only writer of `selected`, so `slot` stays an
         // even offset below 12 and names object `slot / 2`.
-        let channels = it.objects().objects[slot >> 1].channels as u8;
+        let channels = crate::hdma_word!(&*it, slot >> 1, Channels) as u8;
         if channels != 0 {
             let enabled = it.byte(0x85) | channels;
             it.set_byte(0x85, enabled);
             run_program(slot >> 1, it, handler_carry);
-            slot = usize::from(it.objects().selected);
+            slot = usize::from(it.hdma_word(crate::hdma::Word::Selected));
         }
         slot += 2;
         if slot == 2 * OBJECTS {
@@ -167,18 +167,16 @@ fn run<I: Interpreter>(it: &mut I, handler_carry: bool) {
 }
 
 fn run_program<I: Interpreter>(index: usize, it: &mut I, handler_carry: bool) {
-    let object = it.objects().objects[index];
-    let pre_instruction =
-        (u32::from(object.pre_instruction_bank) << 16) | u32::from(object.pre_instruction);
+    let pre_instruction = (u32::from(crate::hdma_word!(it, index, PreInstructionBank)) << 16)
+        | u32::from(crate::hdma_word!(it, index, PreInstruction));
     crate::hdma_dispatch::run_pre_action(pre_instruction, index, it, handler_carry);
-    let object = &mut it.objects().objects[index];
-    let timer = object.instruction_timer;
-    object.instruction_timer = timer.wrapping_sub(1);
+    let timer = crate::hdma_word!(it, index, InstructionTimer);
+    crate::hdma_word!(it, index, InstructionTimer => timer.wrapping_sub(1));
     if timer != 1 {
         return;
     }
-    let base = bank_base((object.bank_slot >> 8) as u8);
-    let program = object.instruction_list;
+    let base = bank_base((crate::hdma_word!(it, index, BankSlot) >> 8) as u8);
+    let program = crate::hdma_word!(it, index, InstructionList);
     let image = it.image();
     let position = base + program as isize;
     let mut script = Script::at(
@@ -192,14 +190,9 @@ fn run_program<I: Interpreter>(index: usize, it: &mut I, handler_carry: bool) {
         };
         script = next;
     }
-    let object = &mut it.objects().objects[index];
-    object.instruction_timer = script.word(0);
-    object.table = script.word(2);
-    object.instruction_list = script.advance(4).offset_from(base) as u16;
-}
-
-fn set_low_byte(word: &mut u16, value: u8) {
-    *word = (*word & 0xff00) | u16::from(value);
+    crate::hdma_word!(it, index, InstructionTimer => script.word(0));
+    crate::hdma_word!(it, index, Table => script.word(2));
+    crate::hdma_word!(it, index, InstructionList => script.advance(4).offset_from(base) as u16);
 }
 
 fn execute<I: Interpreter>(handler: u16, index: usize, script: Script, it: &mut I) -> Script {
@@ -213,16 +206,15 @@ fn execute<I: Interpreter>(handler: u16, index: usize, script: Script, it: &mut 
     match command {
         Command::Nothing => {}
         Command::Delete => {
-            it.objects().objects[index].channels = 0;
+            crate::hdma_word!(it, index, Channels => 0);
             return Script::Stop;
         }
         Command::SetPreInstruction => {
-            let object = &mut it.objects().objects[index];
-            object.pre_instruction = script.word(0);
-            set_low_byte(&mut object.pre_instruction_bank, script.byte(2));
+            crate::hdma_word!(it, index, PreInstruction => script.word(0));
+            crate::hdma_byte!(it, index, PreInstructionBank, false => script.byte(2));
             return script.advance(3);
         }
-        Command::ClearPreInstruction => it.objects().objects[index].pre_instruction = 0x858a,
+        Command::ClearPreInstruction => crate::hdma_word!(it, index, PreInstruction => 0x858a),
         Command::Call => {
             let address = script.load24(0);
             crate::hdma_dispatch::run_call(address, index, it);
@@ -234,9 +226,8 @@ fn execute<I: Interpreter>(handler: u16, index: usize, script: Script, it: &mut 
                 Command::GotoRelative | Command::DecrementGoto { relative: true }
             );
             if let Command::DecrementGoto { .. } = command {
-                let object = &mut it.objects().objects[index];
-                let timer = object.timer;
-                object.timer = timer.wrapping_sub(1);
+                let timer = crate::hdma_word!(it, index, Timer);
+                crate::hdma_word!(it, index, Timer => timer.wrapping_sub(1));
                 if timer == 1 {
                     return script.advance(if relative { 1 } else { 2 });
                 }
@@ -248,7 +239,7 @@ fn execute<I: Interpreter>(handler: u16, index: usize, script: Script, it: &mut 
             };
         }
         Command::SetTimer => {
-            set_low_byte(&mut it.objects().objects[index].timer, script.byte(0));
+            crate::hdma_byte!(it, index, Timer, false => script.byte(0));
             return script.advance(1);
         }
         Command::SetChannelRegister(register) => {
@@ -258,7 +249,7 @@ fn execute<I: Interpreter>(handler: u16, index: usize, script: Script, it: &mut 
                 ChannelRegister::TableBank => A1B0,
                 ChannelRegister::IndirectBank => DAS00,
             } as u16;
-            let channel = it.objects().objects[index].bank_slot & 0xff;
+            let channel = crate::hdma_word!(it, index, BankSlot) & 0xff;
             let value = script.byte(0);
             it.foreign(|game| {
                 crate::hdma_objects::write_channel_register(register + channel, value, game)
@@ -266,16 +257,16 @@ fn execute<I: Interpreter>(handler: u16, index: usize, script: Script, it: &mut 
             return script.advance(1);
         }
         Command::SetTable => {
-            it.objects().objects[index].table = script.word(0);
+            crate::hdma_word!(it, index, Table => script.word(0));
             return script.advance(2);
         }
         Command::Sleep => {
-            let base = bank_base((it.objects().objects[index].bank_slot >> 8) as u8);
-            it.objects().objects[index].instruction_list = (script.offset_from(base) - 2) as u16;
+            let base = bank_base((crate::hdma_word!(it, index, BankSlot) >> 8) as u8);
+            crate::hdma_word!(it, index, InstructionList => (script.offset_from(base) - 2) as u16);
             return Script::Stop;
         }
-        Command::SetVariableB => it.objects().objects[index].b = 1,
-        Command::SetVariableC => it.objects().objects[index].c = 112,
+        Command::SetVariableB => crate::hdma_word!(it, index, B => 1),
+        Command::SetVariableC => crate::hdma_word!(it, index, C => 112),
         Command::SelectCeresTable => it.set_word(crate::ram::words::HDMA_DATA_TABLE_IN_CERES, 9),
         Command::PickBg3Velocity => {
             let random = it.word(crate::ram::words::RANDOM_NUMBER);
@@ -287,16 +278,15 @@ fn execute<I: Interpreter>(handler: u16, index: usize, script: Script, it: &mut 
                     ((random >> 1 & 6) >> 1) as isize,
                 )
             });
-            it.objects().objects[index].d = velocity;
+            crate::hdma_word!(it, index, D => velocity);
         }
         Command::EventScroll => {
-            let object = &mut it.objects().objects[index];
-            object.c = 0;
-            object.a = 0;
+            crate::hdma_word!(it, index, C => 0);
+            crate::hdma_word!(it, index, A => 0);
             let opened =
                 it.foreign(|game| crate::progress::leased::event_has_happened(0xa, game)) != 0;
             let offset: u16 = if opened { 0xff10 } else { 0 };
-            it.objects().objects[index].b = offset;
+            crate::hdma_word!(it, index, B => offset);
             let [low, high] = offset.to_ne_bytes();
             it.set_byte(0x9e00, low);
             it.set_byte(0x9e01, high);

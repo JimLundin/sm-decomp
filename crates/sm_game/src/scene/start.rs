@@ -174,6 +174,7 @@ pub struct DisplayStartRequirements {
 
 /// Optional fields express missing construction inputs, not runtime defaults.
 /// The validated result below contains every required field.
+#[derive(Clone)]
 pub struct DisplayStartDescription {
     pub identity: Option<StartIdentity>,
     pub reference: Option<ReferenceProfile>,

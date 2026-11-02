@@ -50,14 +50,23 @@ fn roles(
     roles
 }
 
+struct PersistentFixture {
+    owner: Box<GameOwner>,
+    supplied: SuppliedSessionStart,
+    native: PreparedSamusBinding,
+    codec_required: ss::DisplayStartRequirements,
+    binary_contract: crate::game_state::persistent_session::SessionStartContract,
+    binary_media: Arc<sc::SceneMedia>,
+}
+
 /// Reuses the host's complete explicit Scene/Reference/input/audio/marker fixture.
 /// Numeric gameplay starts empty; this is a synthetic lifecycle, not a captured game start.
-pub fn persistent_session_native_rebinding_preserves_ready_owner(
+fn persistent_fixture(
     display_required: ss::DisplayStartRequirements,
     mut display: ss::DisplayStartDescription,
     media: Arc<sc::SceneMedia>,
     marker_variants: Arc<sc::ObjectVariants>,
-) {
+) -> PersistentFixture {
     let reference = |id| sc::AssetRef {
         id: sc::AssetId(id),
         revision: media.revision(),
@@ -125,6 +134,7 @@ pub fn persistent_session_native_rebinding_preserves_ready_owner(
         media.revision(),
     );
     let required = SessionStartRequirements {
+        dialogue: None,
         display: display_required,
         roles: expected_roles,
         marker: marker.clone(),
@@ -145,6 +155,28 @@ pub fn persistent_session_native_rebinding_preserves_ready_owner(
         game.register_native_rom(binding::image());
     });
     let mut gameplay = owner.with(|game| Session::with_world(game.world().clone()));
+    // Explicitly authored zero values for this synthetic lifecycle fixture.
+    gameplay.fx = sm_game::fx_state::FxState::supplied([0; 11]);
+    gameplay.menu_window = sm_game::menu_window_state::WindowState::initialized(
+        0,
+        0,
+        Default::default(),
+        Default::default(),
+        0,
+    );
+    gameplay.game_loop = sm_game::game_loop::GameLoop::initialized(
+        0,
+        Default::default(),
+        Default::default(),
+        [0; 4],
+        [0; 7],
+    );
+    *gameplay.presentation.workspace_mut() = state.workspace.clone();
+    gameplay.timing.countdown = sm_game::escape_countdown::State::initialized(
+        [0; 3],
+        [0; 2],
+        sm_game::scene::state::WordOrder::Little,
+    );
     *gameplay.presentation.visual_mut() = state.visual.clone();
     *gameplay.presentation.palette_mut() = state.player_palette.clone();
     *gameplay.presentation.atmospheric_mut() = state.atmospheric.clone();
@@ -154,6 +186,10 @@ pub fn persistent_session_native_rebinding_preserves_ready_owner(
             *gameplay.presentation.actor_entry_mut(layout.first + index) =
                 state.actor_queues[layer].actors[index];
         }
+    }
+    let input_history = display.input_history.unwrap();
+    for word in sm_game::controller_state::Word::ALL {
+        *word.get_mut(&mut gameplay.control) = *word.get_history(&input_history);
     }
     let continuation = display.continuation.unwrap();
     *gameplay.control.primary_mut() = continuation.primary;
@@ -180,54 +216,79 @@ pub fn persistent_session_native_rebinding_preserves_ready_owner(
         )
         .unwrap()
     });
-    owner
-        .start_supplied_session(SuppliedSessionStart::new(
-            SessionStartDescription {
-                gameplay: Some(gameplay),
-                observations: Some(observations),
-                display,
-                roles: Some(supplied_roles),
-                marker: Some(marker),
-                actor_queue_projection: Some(projection),
-                samus_publications: Some(publications),
-                audio_requests: Some(crate::game_state::persistent_session::AudioRequests {
-                    music: crate::game_state::persistent_session::MusicRequests {
-                        tracks: [0; 8],
-                        delays: [0; 8],
-                        write: 0,
+    let supplied = SuppliedSessionStart::new(
+        SessionStartDescription {
+            gameplay: Some(gameplay),
+            observations: Some(observations),
+            display,
+            roles: Some(supplied_roles),
+            marker: Some(marker),
+            actor_queue_projection: Some(projection),
+            samus_publications: Some(publications),
+            audio_requests: Some(crate::game_state::persistent_session::AudioRequests {
+                music: crate::game_state::persistent_session::MusicRequests {
+                    tracks: [0; 8],
+                    delays: [0; 8],
+                    write: 0,
+                    read: 0,
+                    entry: 0,
+                    timer: 0,
+                    current_track: 0,
+                    data_index: 0,
+                    track_index: 0,
+                    meanings: core::array::from_fn(|_| None),
+                    entry_meaning: None,
+                    current_meaning: None,
+                },
+                sounds: core::array::from_fn(|_| {
+                    crate::game_state::persistent_session::SoundRequests {
                         read: 0,
-                        entry: 0,
-                        timer: 0,
-                        current_track: 0,
-                        data_index: 0,
-                        track_index: 0,
+                        write: 0,
+                        state: 0,
+                        current: 0,
+                        clear_delay: 0,
+                        maximum_queued: 0,
+                        queue: [0; 16],
                         meanings: core::array::from_fn(|_| None),
-                        entry_meaning: None,
                         current_meaning: None,
-                    },
-                    sounds: core::array::from_fn(|_| {
-                        crate::game_state::persistent_session::SoundRequests {
-                            read: 0,
-                            write: 0,
-                            state: 0,
-                            current: 0,
-                            clear_delay: 0,
-                            maximum_queued: 0,
-                            queue: [0; 16],
-                            meanings: core::array::from_fn(|_| None),
-                            current_meaning: None,
-                        }
-                    }),
-                    uploading: 0,
-                    downtime: 0,
-                    catalog: required.audio_catalog.clone(),
-                    pending_mutation: false,
+                    }
                 }),
-            },
-            media,
-            required,
-        ))
-        .unwrap();
+                uploading: 0,
+                downtime: 0,
+                catalog: required.audio_catalog.clone(),
+                pending_mutation: false,
+            }),
+        },
+        media,
+        required,
+    );
+    PersistentFixture {
+        owner,
+        supplied,
+        native,
+        codec_required,
+        binary_contract,
+        binary_media,
+    }
+}
+
+/// Reuses the host's complete explicit Scene/Reference/input/audio/marker fixture.
+/// Numeric gameplay starts empty; this is a synthetic lifecycle, not a captured game start.
+pub fn persistent_session_native_rebinding_preserves_ready_owner(
+    display_required: ss::DisplayStartRequirements,
+    display: ss::DisplayStartDescription,
+    media: Arc<sc::SceneMedia>,
+    marker_variants: Arc<sc::ObjectVariants>,
+) {
+    let PersistentFixture {
+        owner,
+        supplied,
+        native,
+        codec_required,
+        binary_contract,
+        binary_media,
+    } = persistent_fixture(display_required, display, media, marker_variants);
+    owner.start_supplied_session(supplied).unwrap();
     assert_audio_reference_binding(&owner, &codec_required);
     assert_projectiles_checkpoint(&owner, &codec_required);
     let (numeric_start, _) = owner.checkpoint_session().unwrap().into_start().unwrap();
@@ -249,6 +310,7 @@ pub fn persistent_session_native_rebinding_preserves_ready_owner(
         );
     });
     crate::game::session_checkpoint::assert_gameplay_checkpoint(
+        numeric_start.gameplay.as_ref().unwrap(),
         numeric_start
             .gameplay
             .as_ref()
@@ -645,4 +707,529 @@ fn record_observed(
 ) {
     crate::game::player_collision_owned_checks::record_launch(direction, amount);
     motion.record_movement(direction, amount);
+}
+
+/// Movies cannot forge initialized Legacy ownership masks before the public admission gate.
+pub fn persistent_session_rejects_forged_legacy_fx_ownership(
+    required: ss::DisplayStartRequirements,
+    display: ss::DisplayStartDescription,
+    media: Arc<sc::SceneMedia>,
+    variants: Arc<sc::ObjectVariants>,
+) {
+    use sm_game::persistent_session::{SessionStartError, ValidatedSessionStart};
+    let fixture = || {
+        persistent_fixture(
+            required.clone(),
+            display.clone(),
+            media.clone(),
+            variants.clone(),
+        )
+    };
+    let valid = fixture();
+    let world = valid.owner.with(|game| game.world().clone());
+    let mut admitted = ValidatedSessionStart::construct(valid.supplied, &world)
+        .unwrap()
+        .open();
+    admitted.checkpoint().unwrap();
+    for lanes in [[0; 4], [1, 0, 0, 0], [0, 0, 0, 1 << 63]] {
+        let supplied = fixture();
+        let (mut start, media, required) = supplied.supplied.into_parts();
+        let gameplay = start.gameplay.as_mut().unwrap();
+        assert!(!gameplay.presentation.is_owned());
+        assert!(gameplay.fx.is_initialized());
+        gameplay.fx_control_ownership = sm_game::fx_state::ControlOwnership {
+            initialized: true,
+            source_lanes: lanes,
+        };
+        let world = supplied.owner.with(|game| game.world().clone());
+        let result = ValidatedSessionStart::construct(
+            SuppliedSessionStart::new(start, media, required),
+            &world,
+        );
+        assert!(matches!(
+            result,
+            Err(SessionStartError::Binding(DisplayError::Source))
+        ));
+    }
+    admitted.gameplay.fx_control_ownership.initialized = false;
+    assert!(matches!(admitted.checkpoint(), Err(DisplayError::Source)));
+}
+
+/// Movies cannot supply independently conflicting cold scalar cycles with no publication origin.
+pub fn persistent_session_rejects_conflicting_cold_fx_cycles(
+    required: ss::DisplayStartRequirements,
+    display: ss::DisplayStartDescription,
+    media: Arc<sc::SceneMedia>,
+    variants: Arc<sc::ObjectVariants>,
+) {
+    use sm_game::scene::hdma_sources::{
+        BankWindow, HdmaLiveDescription, HdmaLiveRegion, HdmaOwnedBuffer, HdmaRegionSource,
+        HdmaVariable, LiveOwner, SourceBinding,
+    };
+    use sm_game::{fx_encoding as fx, persistent_session::ValidatedSessionStart};
+    let supplied = persistent_fixture(required, display, media, variants);
+    let world = supplied.owner.with(|game| game.world().clone());
+    let mut session = ValidatedSessionStart::construct(supplied.supplied, &world)
+        .unwrap()
+        .open()
+        .gameplay;
+    let owner = |variable| LiveOwner::ObjectVariable {
+        object: 0,
+        variable,
+    };
+    let window = |owner, address| SourceBinding::LiveOwner {
+        owner,
+        windows: vec![BankWindow {
+            bank: 0x7e,
+            address,
+            offset: 0,
+            length: 2,
+        }]
+        .into(),
+    };
+    let state = &mut session.presentation.owner_mut().unwrap().state;
+    // A is already declared by the shared fixture; this cycle also supplies B.
+    let (buffers, regions) = state.hdma_live.checkpoint_parts();
+    let buffers = buffers
+        .iter()
+        .map(|(&owner, bytes)| HdmaOwnedBuffer {
+            owner,
+            bytes: bytes.clone(),
+        })
+        .collect();
+    let mut regions = regions.values().copied().collect::<Vec<_>>();
+    regions.push(HdmaLiveRegion {
+        owner: owner(HdmaVariable::B),
+        source: HdmaRegionSource::ObjectVariable {
+            object: 0,
+            variable: HdmaVariable::B,
+        },
+        length: 2,
+    });
+    let mut live = HdmaLiveDescription::new(buffers, regions).unwrap();
+    if let Some(layout) = state.hdma_live.window_control_layout() {
+        live.bind_window_controls(layout.clone(), None).unwrap();
+    }
+    live.bind_native_origins(state.hdma_live.native_origins().clone())
+        .unwrap();
+    state.hdma_live = live;
+    state.hdma.channels[6].source = window(owner(HdmaVariable::A), 0x1920);
+    state.hdma.channels[7].source = window(owner(HdmaVariable::B), 0x1914);
+    state.hdma.common.objects[0].a = 0x1111;
+    state.hdma.common.objects[0].b = 0x2222;
+    session.fx_control_ownership = Default::default();
+    assert!(matches!(
+        fx::adopt_control_ownership(&mut session),
+        Err(DisplayError::Source)
+    ));
+    assert_eq!(
+        session
+            .presentation
+            .owner()
+            .unwrap()
+            .state
+            .hdma
+            .common
+            .objects[0]
+            .a,
+        0x1111
+    );
+    assert_eq!(
+        session
+            .presentation
+            .owner()
+            .unwrap()
+            .state
+            .hdma
+            .common
+            .objects[0]
+            .b,
+        0x2222
+    );
+    let mut selected = session.clone();
+    for variable in [HdmaVariable::A, HdmaVariable::B] {
+        for byte in 0..2 {
+            selected
+                .presentation
+                .owner_mut()
+                .unwrap()
+                .state
+                .hdma_live
+                .note_native_origin(owner(variable), byte, 0x1920 + byte)
+                .unwrap();
+        }
+    }
+    fx::adopt_control_ownership(&mut selected).unwrap();
+    assert_eq!(fx::control_word(&selected, 0x1914), 0x2222);
+    assert_eq!(fx::control_word(&selected, 0x1920), 0x2222);
+    let state = &mut session.presentation.owner_mut().unwrap().state;
+    state.hdma.common.objects[0].a = 0x3333;
+    state.hdma.common.objects[0].b = 0x3333;
+    fx::adopt_control_ownership(&mut session).unwrap();
+    fx::validate_control_ownership(&session).unwrap();
+    assert_eq!(fx::control_word(&session, 0x1914), 0x3333);
+    assert_eq!(fx::control_word(&session, 0x1920), 0x3333);
+    let state = &session.presentation.owner().unwrap().state;
+    assert_eq!(state.hdma.common.objects[0].a, 0x3333);
+    assert_eq!(state.hdma.common.objects[0].b, 0);
+}
+
+/// Movies cannot construct independent native windows over one supplied Workspace allocation.
+fn workspace_alias_fixture(session: &mut Session) {
+    use sm_game::presentation_workspace::{Binding, Origin, Point, Role, Window};
+    use sm_game::scene::hdma_sources::{
+        BankWindow, HdmaLiveDescription, HdmaLiveRegion, HdmaRegionSource, HdmaVariable, LiveOwner,
+        SourceBinding,
+    };
+    let state = &mut session.presentation.owner_mut().unwrap().state;
+    let revision = state.revision();
+    for binding in state.workspace.bindings.0.values_mut() {
+        binding.window = None;
+    }
+    state.workspace.allocations.insert(901, vec![0; 2]);
+    for (role, address, id) in [
+        (Role::MessageText, 0x4000, 9901),
+        (Role::MessageDescriptor, 0x5000, 9902),
+    ] {
+        state.workspace.bindings.0.insert(
+            role,
+            Binding {
+                origin: Origin::Allocation(901),
+                base: 0,
+                extent: 2,
+                asset: sc::AssetRef {
+                    id: sc::AssetId(id),
+                    revision,
+                },
+                window: Some(Window {
+                    bank: 0x7e,
+                    address,
+                    length: 2,
+                }),
+            },
+        );
+    }
+    state.workspace.validate(state.revision()).unwrap();
+    state.hdma_live = HdmaLiveDescription::new(
+        vec![],
+        vec![
+            HdmaLiveRegion {
+                owner: LiveOwner::MessageScanlines,
+                source: HdmaRegionSource::Workspace {
+                    point: Point::new(Role::MessageText, 0),
+                },
+                length: 2,
+            },
+            HdmaLiveRegion {
+                owner: LiveOwner::ObjectVariable {
+                    object: 0,
+                    variable: HdmaVariable::A,
+                },
+                source: HdmaRegionSource::ObjectVariable {
+                    object: 0,
+                    variable: HdmaVariable::A,
+                },
+                length: 2,
+            },
+        ],
+    )
+    .unwrap();
+    state
+        .hdma_live
+        .validate_workspace(&state.workspace)
+        .unwrap();
+    for channel in &mut state.hdma.channels {
+        channel.source = SourceBinding::Unbound;
+        channel.table = SourceBinding::Unbound;
+        channel.active = false;
+        channel.dma_active = false;
+    }
+    for object in &mut state.hdma.objects {
+        object.instruction = SourceBinding::Unbound;
+    }
+    state.hdma.channels[0].source = SourceBinding::LiveOwner {
+        owner: LiveOwner::MessageScanlines,
+        windows: vec![BankWindow {
+            bank: 0x7e,
+            address: 0x6000,
+            offset: 0,
+            length: 2,
+        }]
+        .into(),
+    };
+    session.fx_control_ownership = Default::default();
+    sm_game::fx_encoding::adopt_control_ownership(session).unwrap();
+}
+
+/// Movies cannot alias supplied allocation bytes at 4000/5000 then inject a selected-origin restore.
+pub fn persistent_session_workspace_publication_exports_actual_aliases(
+    required: ss::DisplayStartRequirements,
+    display: ss::DisplayStartDescription,
+    media: Arc<sc::SceneMedia>,
+    variants: Arc<sc::ObjectVariants>,
+) {
+    use sm_game::presentation_workspace::{Point, Role};
+    use sm_game::scene::hdma_sources::LiveOwner;
+    use sm_game::{fx_encoding as fx, persistent_session::ValidatedSessionStart};
+    let supplied = persistent_fixture(required, display, media, variants);
+    let world = supplied.owner.with(|game| game.world().clone());
+    let mut session = ValidatedSessionStart::construct(supplied.supplied, &world)
+        .unwrap()
+        .open()
+        .gameplay;
+    workspace_alias_fixture(&mut session);
+    let read = |session: &Session| {
+        fx::session_source_byte(session, LiveOwner::MessageScanlines, 0).unwrap()
+    };
+    let mut native = std::collections::BTreeMap::new();
+    for (at, value) in [(0x4000, 0x11), (0x5000, 0x22), (0x6000, 0x33)] {
+        native.insert(at, value);
+        native.insert(at + 1, value + 1);
+    }
+    fx::adopt_session_sources(
+        &mut session,
+        &|at| native.get(&at).copied().unwrap_or(0),
+        &|at| (0x5000..0x5002).contains(&at).then_some(2),
+    )
+    .unwrap();
+    assert_eq!(read(&session), 0x22);
+    let origins = session
+        .presentation
+        .owner()
+        .unwrap()
+        .state
+        .hdma_live
+        .native_origins();
+    assert_eq!(
+        origins
+            .get(&(LiveOwner::MessageScanlines, 0))
+            .unwrap()
+            .address,
+        0x5000
+    );
+    session
+        .publish_workspace_byte(Point::new(Role::MessageDescriptor, 0), 0x7b)
+        .unwrap();
+    let origins = session
+        .presentation
+        .owner()
+        .unwrap()
+        .state
+        .hdma_live
+        .native_origins();
+    assert!(!origins.contains_key(&(LiveOwner::MessageScanlines, 0)));
+    assert!(origins.contains_key(&(LiveOwner::MessageScanlines, 1)));
+    assert_eq!(read(&session), 0x7b);
+    let mut exported = std::collections::BTreeMap::new();
+    fx::encode_sources(&session, |at, bytes| {
+        for (offset, &byte) in bytes.iter().enumerate() {
+            exported.insert(at + offset, byte);
+        }
+    });
+    for at in [0x4000, 0x5000, 0x6000] {
+        assert_eq!(exported.get(&at), Some(&0x7b));
+        assert_eq!(exported.get(&(at + 1)), Some(&0x23));
+    }
+    fx::adopt_session_sources(
+        &mut session,
+        &|at| exported.get(&at).copied().unwrap_or(0),
+        &|_| None,
+    )
+    .unwrap();
+    assert_eq!(read(&session), 0x7b);
+    fx::validate_control_ownership(&session).unwrap();
+}
+
+/// Movies cannot replace the live Workspace binding inside a supplied raster callback.
+struct RebindSettlement {
+    reached: bool,
+}
+
+/// Movies cannot inject an unsupported room callback into this quiescent settlement fixture.
+impl sm_game::scene::commit::RoomEffects for RebindSettlement {
+    fn follow_transition(
+        &mut self,
+        _: &mut sm_game::scene::commit::SettlementContext<'_, '_>,
+    ) -> Result<(), DisplayError> {
+        Err(DisplayError::Source)
+    }
+}
+
+/// Movies cannot invoke unsupported destination callbacks in this quiescent fixture.
+impl sm_game::scene::owned_hdma::Destinations for RebindSettlement {
+    fn read_destination(
+        &mut self,
+        _: &mut sm_game::scene::commit::SettlementContext<'_, '_>,
+        _: u8,
+    ) -> Result<u8, DisplayError> {
+        Err(DisplayError::Source)
+    }
+    fn write_destination(
+        &mut self,
+        _: &mut sm_game::scene::commit::SettlementContext<'_, '_>,
+        _: u8,
+        _: u8,
+    ) -> Result<(), DisplayError> {
+        Err(DisplayError::Source)
+    }
+}
+
+/// Movies cannot inject a legal role rebind and deliberately end immediately after its next query.
+impl sm_game::scene::commit::SettlementEffects for RebindSettlement {
+    fn raster_row(
+        &mut self,
+        context: &mut sm_game::scene::commit::SettlementContext<'_, '_>,
+        _: u16,
+    ) -> Result<sc::ObjectContext, DisplayError> {
+        use sm_game::presentation_workspace::{Origin, Role};
+        use sm_game::scene::hdma_sources::{HdmaVariable, LiveOwner};
+        let scalar_source = LiveOwner::ObjectVariable {
+            object: 0,
+            variable: HdmaVariable::A,
+        };
+        assert_eq!(context.read_control_byte(0x1914)?, 0x11);
+        assert_eq!(context.read_source(scalar_source, 0)?, 0x11);
+        let mut bindings = context.state().workspace.bindings.clone();
+        let binding = bindings.0.get_mut(&Role::MessageText).unwrap();
+        binding.origin = Origin::Allocation(902);
+        binding.window = None;
+        context.replace_workspace_bindings(bindings)?;
+        assert_eq!(context.read_source(LiveOwner::MessageScanlines, 0)?, 0x22);
+        assert_eq!(context.read_source(scalar_source, 0)?, 0x22);
+        assert_eq!(context.read_control_byte(0x1914)?, 0x22);
+        context.write_control_byte(0x1914, 0x7b)?;
+        assert_eq!(context.read_source(LiveOwner::MessageScanlines, 0)?, 0x7b);
+        self.reached = true;
+        Err(DisplayError::Geometry)
+    }
+}
+
+/// Movies cannot supply independent allocations then replace their role binding during settlement.
+pub fn persistent_session_settlement_rebind_queries_current_workspace(
+    required: ss::DisplayStartRequirements,
+    display: ss::DisplayStartDescription,
+    media: Arc<sc::SceneMedia>,
+    variants: Arc<sc::ObjectVariants>,
+) {
+    use sm_game::scene::hdma_sources::{BankWindow, SourceBinding};
+    use sm_game::{fx_encoding as fx, persistent_session::ValidatedSessionStart};
+    let supplied = persistent_fixture(required, display, media, variants);
+    let world = supplied.owner.with(|game| game.world().clone());
+    let mut session = ValidatedSessionStart::construct(supplied.supplied, &world)
+        .unwrap()
+        .open()
+        .gameplay;
+    workspace_alias_fixture(&mut session);
+    let state = &mut session.presentation.owner_mut().unwrap().state;
+    state
+        .workspace
+        .allocations
+        .get_mut(&901)
+        .unwrap()
+        .fill(0x11);
+    state.workspace.allocations.insert(902, vec![0x22; 2]);
+    let SourceBinding::LiveOwner { windows, .. } = &mut state.hdma.channels[0].source else {
+        panic!("constructed live source")
+    };
+    Arc::make_mut(windows)[0] = BankWindow {
+        bank: 0x7e,
+        address: 0x1914,
+        offset: 0,
+        length: 2,
+    };
+    state.delivery.horizontal_irq_enabled = false;
+    state.delivery.vertical_irq_enabled = false;
+    state.delivery.nmi_wanted = false;
+    session.fx_control_ownership = Default::default();
+    fx::adopt_control_ownership(&mut session).unwrap();
+    let display = session.presentation.owner_mut().unwrap();
+    display.begin_interval(false).unwrap();
+    display.refresh().unwrap();
+    display.begin_settlement().unwrap();
+    let mut effects = RebindSettlement { reached: false };
+    assert!(matches!(
+        session.settle_display(&mut effects),
+        Err(DisplayError::Geometry)
+    ));
+    assert!(effects.reached);
+    assert_eq!(session.presentation.workspace().allocations[&901][0], 0x11);
+    assert_eq!(session.presentation.workspace().allocations[&902][0], 0x7b);
+}
+
+/// Movies cannot forge supplied FX initialization or ownership masks at the public GameOwner gate.
+pub fn persistent_session_game_owner_rejects_forged_fx_admission(
+    required: ss::DisplayStartRequirements,
+    display: ss::DisplayStartDescription,
+    media: Arc<sc::SceneMedia>,
+    variants: Arc<sc::ObjectVariants>,
+) {
+    use sm_game::fx_state::{ControlOwnership, FxState};
+    use sm_game::persistent_session::SessionStartError;
+    let fixture = || {
+        persistent_fixture(
+            required.clone(),
+            display.clone(),
+            media.clone(),
+            variants.clone(),
+        )
+    };
+    let valid = fixture();
+    valid.owner.start_supplied_session(valid.supplied).unwrap();
+    valid.owner.checkpoint_session().unwrap();
+    for case in 0..4 {
+        let supplied = fixture();
+        let (mut start, media, required) = supplied.supplied.into_parts();
+        let gameplay = start.gameplay.as_mut().unwrap();
+        assert!(!gameplay.presentation.is_owned());
+        match case {
+            0 => gameplay.fx = FxState::default(),
+            1 => {
+                gameplay.fx_control_ownership = ControlOwnership {
+                    initialized: true,
+                    source_lanes: [0; 4],
+                }
+            }
+            2 => {
+                gameplay.fx_control_ownership = ControlOwnership {
+                    initialized: false,
+                    source_lanes: [1, 0, 0, 0],
+                }
+            }
+            _ => {
+                gameplay.fx_control_ownership = ControlOwnership {
+                    initialized: true,
+                    source_lanes: [0, 0, 0, 1 << 63],
+                }
+            }
+        }
+        let before = supplied.owner.with(|game| {
+            (
+                game.compatibility_write_epoch(),
+                game.actor_identity().clone(),
+                (0..game.ram().len())
+                    .map(|at| game.compatibility_byte(at))
+                    .collect::<Vec<_>>(),
+            )
+        });
+        let result = supplied
+            .owner
+            .start_supplied_session(SuppliedSessionStart::new(start, media, required));
+        match (case, result) {
+            (0, Err(SessionStartError::Binding(DisplayError::Incomplete)))
+            | (1..=3, Err(SessionStartError::Binding(DisplayError::Source))) => {}
+            _ => panic!("constructed FX admission result"),
+        }
+        supplied.owner.with(|game| {
+            assert!(!game.persistent_session_current());
+            assert_eq!(game.compatibility_write_epoch(), before.0);
+            assert_eq!(*game.actor_identity(), before.1);
+            assert!(
+                before
+                    .2
+                    .iter()
+                    .enumerate()
+                    .all(|(at, &byte)| { game.compatibility_byte(at) == byte })
+            );
+        });
+    }
 }

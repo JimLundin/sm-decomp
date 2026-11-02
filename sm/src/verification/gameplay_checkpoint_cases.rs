@@ -1,9 +1,10 @@
 //! Numeric composition is checked separately from full binary Session restore.
 use super::{DisplayStartMetadata, Session};
 
-pub(crate) fn assert_gameplay_checkpoint(metadata: &DisplayStartMetadata) {
-    let world = crate::room_world_fixture::binding(false);
-    let mut expected = Session::with_world(world.clone());
+pub(crate) fn assert_gameplay_checkpoint(start: &Session, metadata: &DisplayStartMetadata) {
+    // Keep the actual admitted lifecycle owners while exercising numeric composition.
+    let world = start.world.clone();
+    let mut expected = start.clone();
     expected.botwoon_death.pending_hit = 0x8001;
     expected.botwoon_death.active = 0xffff;
     expected.botwoon_death.tail_ready = 0x1234;
@@ -72,8 +73,25 @@ pub(crate) fn assert_gameplay_checkpoint(metadata: &DisplayStartMetadata) {
     );
     let auxiliary = expected.encode_auxiliary_checkpoint(metadata).unwrap();
     let binding = u64::from_le_bytes(auxiliary[8..16].try_into().unwrap()) as usize;
+    // Current auxiliary order retains all five owners before the Botwoon words.
+    let queue = &expected.queued_tilemaps;
+    let preceding = 1
+        + 2 * sm_game::game_loop::Word::ALL.len()
+        + 1
+        + queue.queue.len()
+        + 2
+        + 2 * (queue.scrolling.len()
+            + queue.source_block.len()
+            + queue.destination_block.len()
+            + queue.background().len())
+        + 1
+        + 2 * sm_game::menu_window_state::Field::ALL.len()
+        + 1
+        + 2 * sm_game::fx_state::Field::ALL.len()
+        + 8 * expected.fx_control_ownership.source_lanes.len();
+    let botwoon = 16 + binding + preceding;
     assert_eq!(
-        &auxiliary[16 + binding..26 + binding],
+        &auxiliary[botwoon..botwoon + 10],
         &[1, 0x80, 0xff, 0xff, 0x34, 0x12, 0xdc, 0xfe, 0, 0x80]
     );
     let mut old_schema = auxiliary;

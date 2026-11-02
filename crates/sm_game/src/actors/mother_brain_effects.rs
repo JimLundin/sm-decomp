@@ -7,7 +7,6 @@ use crate::cartridge::NativeDiagnostics;
 use crate::cartridge::native_record;
 use crate::cartridge::rom_table_word;
 use crate::palette_copies::copy_rom_colors_to_palette;
-use crate::ram::CompatibilityRam;
 use sm_data::cartridge::lorom_offset;
 
 /// What Mother Brain's effects still reach in the compatibility runtime.
@@ -70,7 +69,10 @@ const EXPLODING_SOUND: u8 = 0x13;
 
 /// Write Mother Brain palette ($A9:BD1D) from `source` in bank $AD. Was
 /// `MotherBrain_WritePalette`.
-pub fn write_palette(source: u16, game: &mut (impl CompatibilityRam + NativeDiagnostics + ?Sized)) {
+pub fn write_palette(
+    source: u16,
+    game: &mut (impl crate::presentation_workspace::PaletteAccess + NativeDiagnostics + ?Sized),
+) {
     copy_rom_colors_to_palette(BODY_PALETTE, PALETTE_BANK, source, COLORS, game);
     copy_rom_colors_to_palette(SPRITE_PALETTE_1, PALETTE_BANK, source, COLORS, game);
     copy_rom_colors_to_palette(

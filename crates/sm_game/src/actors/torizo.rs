@@ -17,7 +17,6 @@ use crate::constants::enemy_properties::{
 use crate::enemy_script::EnemyScript;
 use crate::menus::prelude::battle;
 use crate::menus::prelude::owned;
-use crate::ram::word;
 use crate::records::Records;
 
 /// A lease on a game with the Torizos' effects.
@@ -789,7 +788,7 @@ pub fn initialize<L: Lease>(game: &mut L) {
     game.foreign(|game| game.initialize_palette_targets());
     if game.area() != 0 {
         game.foreign(|game| game.set_palette_targets(Palettes::GoldenStart));
-        if word!(game.JOYPAD1_LASTKEYS) == DEBUG_KEYS {
+        if crate::gameplay_word!(game.JOYPAD1_LASTKEYS) == DEBUG_KEYS {
             battle!(game.SamusHealth = 700);
             battle!(game.SamusMaxHealth = 700);
             battle!(game.SamusMaxReserveHealth = 300);
@@ -1351,7 +1350,8 @@ pub fn jump_forwards_if_samus_far<L: Lease>(k: u16, jp: EnemyScript, game: &mut 
     }
     let e = i32::from(k);
     if session_slot!(game, TorizoSlot[e].space_jump_frames) <= 0x168
-        && ((word!(game.JOYPAD1_LASTKEYS) & 0x300) == 0 || (game.roll_random() & 0x101) == 0)
+        && ((crate::gameplay_word!(game.JOYPAD1_LASTKEYS) & 0x300) == 0
+            || (game.roll_random() & 0x101) == 0)
     {
         return jp.offset(1);
     }

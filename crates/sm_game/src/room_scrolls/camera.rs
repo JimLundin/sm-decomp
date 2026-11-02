@@ -331,14 +331,14 @@ pub fn calculate_blocks<H: Host + ?Sized>(game: &mut H) {
 }
 
 pub fn debug_position<H: Host + ?Sized>(game: &mut H) {
-    if (word!(game.JOYPAD2_NEW_KEYS) & 0x40) != 0 {
-        word!(game.DEBUG_SAVELOAD_SCROLLPOS_TOGGLE += 1);
+    if (crate::gameplay_word!(game.JOYPAD2_NEW_KEYS) & 0x40) != 0 {
+        crate::gameplay_word!(game.DEBUG_SAVELOAD_SCROLLPOS_TOGGLE += 1);
     }
-    if word!(game.DEBUG_SAVELOAD_SCROLLPOS_TOGGLE) & 1 != 0 {
-        set_layer1(game, 0, word!(game.DEBUG_SAVED_XSCROLL));
-        set_layer1(game, 1, word!(game.DEBUG_SAVED_YSCROLL));
+    if crate::gameplay_word!(game.DEBUG_SAVELOAD_SCROLLPOS_TOGGLE) & 1 != 0 {
+        set_layer1(game, 0, crate::gameplay_word!(game.DEBUG_SAVED_XSCROLL));
+        set_layer1(game, 1, crate::gameplay_word!(game.DEBUG_SAVED_YSCROLL));
     } else {
-        word!(game.DEBUG_SAVED_XSCROLL = game.session().room.camera.layer1[0]);
-        word!(game.DEBUG_SAVED_YSCROLL = game.session().room.camera.layer1[1]);
+        crate::gameplay_word!(game.DEBUG_SAVED_XSCROLL = game.session().room.camera.layer1[0]);
+        crate::gameplay_word!(game.DEBUG_SAVED_YSCROLL = game.session().room.camera.layer1[1]);
     };
 }

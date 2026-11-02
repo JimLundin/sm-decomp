@@ -252,7 +252,7 @@ pub fn begin_pickup<H: SamusLease>(h: &mut H, gravity: bool) {
     h.spawn_hdma_object(&HdmaObjectDefinition::new(0x41, 0x26, program));
 }
 /// Advance the suit pickup's window, then end it and release Samus.
-pub fn advance_pickup<H: SamusLease>(h: &mut H, gravity: bool) {
+pub fn advance_pickup<H: SamusLease + crate::hdma_objects::HdmaTable>(h: &mut H, gravity: bool) {
     use crate::{
         player_transitions::xray,
         ram::{word_arrays as arrays, words as ram},
@@ -284,9 +284,21 @@ pub fn advance_pickup<H: SamusLease>(h: &mut H, gravity: bool) {
     let palette = h.session_mut().presentation.palette_mut();
     palette.suit_red_green = 0;
     palette.crystal_flash_delay = 0;
-    let offset = usize::from(h.word(ram::HDMA_OBJECT_INDEX) >> 1) * 2;
+    // Retain the original full selector identity before any subsequent store.
+    let offset = usize::from(h.hdma_word(crate::hdma::Word::Selected) >> 1) * 2;
     let program = arrays::HDMA_OBJECT_INSTRUCTION_LIST_POINTERS + offset;
-    h.write_slice_le(program, h.word(program).wrapping_add(2));
-    h.write_slice_le(arrays::HDMA_OBJECT_INSTRUCTION_TIMERS + offset, 1);
+    if let Some(word) = crate::hdma::Word::at_address(program) {
+        let value = h.hdma_word(word).wrapping_add(2);
+        h.store_hdma_word(word, value, crate::scene::state::WordOrder::Little);
+    } else {
+        // This full identity is outside the common owner, as in the original.
+        h.write_slice_le(program, h.word(program).wrapping_add(2));
+    }
+    let timer = arrays::HDMA_OBJECT_INSTRUCTION_TIMERS + offset;
+    if let Some(word) = crate::hdma::Word::at_address(timer) {
+        h.store_hdma_word(word, 1, crate::scene::state::WordOrder::Little);
+    } else {
+        h.write_slice_le(timer, 1);
+    }
     h.native_player_command(0xb);
 }

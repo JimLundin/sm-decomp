@@ -1,11 +1,12 @@
 //! Title screen: Metroid palettes and cry, camera pans, skip and wait, sprite placement.
+use crate::cinematic::CinematicDestination;
 use crate::cinematic::{place_cinematic_sprite, set_cinematic_backdrop};
 use crate::cinematic_objects::CinematicObjects;
 use crate::cinematic_state::{Cinematic, Word};
 use crate::constants::buttons::{K_BUTTON_A, K_BUTTON_B, K_BUTTON_START};
+use crate::display::preparation::Field;
 use crate::menus::prelude::words;
-use crate::ram::RawRam as _;
-use crate::ram::word;
+use crate::word_transfers::WordEndpoint;
 
 /// Bank $8B cinematic functions of the title sequence.
 mod function {
@@ -71,7 +72,18 @@ pub fn title_metroid_palette<H: crate::menus::host::Host + ?Sized>(
     cursor: u16,
     game: &mut H,
 ) -> u16 {
-    crate::word_transfers!(game, descending, 16; le(PALETTE_BUFFER, 63) <- table(palette, 15));
+    crate::cinematic::transfer_cinematic_words(
+        16,
+        -2,
+        &[(
+            CinematicDestination::Palette {
+                offset: 126,
+                native: false,
+            },
+            WordEndpoint::Table(&palette, 0).shifted(15),
+        )],
+        game,
+    );
     cursor
 }
 
@@ -87,7 +99,7 @@ pub fn start_title_pan<H: crate::menus::host::Host + ?Sized>(
         (function::PAN_DOWN, 96, -177i16 as u16, -160i16 as u16),
         (function::ZOOM_OUT, 67, 0, 0),
     ][stage];
-    game.ram().write_byte(crate::ram::mirror::TM, 17);
+    crate::frame_display_byte!(game, Field::MainLayers => 17);
     crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
         flow.cinematic_function = next
     });
@@ -125,7 +137,7 @@ pub fn advance_title_pan<H: crate::menus::host::Host + ?Sized>(
     let negative = (*cine.word(whole) as i32 + cutoff) & 0x8000 != 0;
     // The vertical pan ends on the opposite side of its cutoff.
     if negative != (stage == 2) {
-        game.ram().write_byte(crate::ram::mirror::TM, 16);
+        crate::frame_display_byte!(game, Field::MainLayers => 16);
         crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
             flow.cinematic_function = function::IDLE
         });
@@ -149,7 +161,7 @@ pub fn request_title_skip<H: crate::menus::host::Host + ?Sized>(
         + (function::TITLE_SCREEN.wrapping_neg() as i32 + 1))
         & 0x8000
         != 0
-        && word!(game.JOYPAD1_NEWKEYS) & CONFIRM_BUTTONS != 0
+        && crate::gameplay_word!(game.JOYPAD1_NEWKEYS) & CONFIRM_BUTTONS != 0
         && *cine.skip_to_title_index() == 0
     {
         *cine.skip_to_title_index() = 1;
@@ -173,7 +185,7 @@ pub fn advance_title_wait<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
             flow.cinematic_function = function::TO_DEMOS
         });
     } else {
-        if word!(game.JOYPAD1_NEWKEYS) & CONFIRM_BUTTONS == 0 {
+        if crate::gameplay_word!(game.JOYPAD1_NEWKEYS) & CONFIRM_BUTTONS == 0 {
             return;
         }
         crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {

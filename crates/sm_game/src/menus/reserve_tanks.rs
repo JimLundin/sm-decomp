@@ -3,7 +3,6 @@ use super::menu_tilemap;
 use super::prelude::*;
 use crate::inventory::Inventory;
 use crate::menu_state::MenuState;
-use crate::session_cohort;
 
 pub fn prepare_menu<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
     display_scroll! {game; Bg4H = display_scroll!(game.Bg1H); Bg4V = display_scroll!(game.Bg1V); }
@@ -111,7 +110,7 @@ pub fn transfer_manual<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
 }
 
 pub fn refill_auto<H: Host + ?Sized>(game: &mut H) -> u8 {
-    session_cohort::with(game, |game, inventory: &mut Inventory| {
+    crate::gameplay_context::with_inventory(game, |game, inventory: &mut Inventory| {
         if inventory.reserve_health != 0 {
             if game.observed_inputs().frame & 7 == 0 {
                 game.queue_sound(2, 0x2d_u8, 3);

@@ -1,8 +1,6 @@
 //! Ordered display refresh and the NMI request/completion handshake, plus the
 //! gameplay and pause display setup, graphics loads and tilemap queues.
-use crate::constants::bank_60::{
-    ADDR_UNK_6053E0, ADDR_UNK_605000, ADDR_UNK_605400, ADDR_UNK_605880,
-};
+use crate::constants::bank_60::ADDR_UNK_605880;
 use crate::decompression::{self, decompress_to_ram};
 use crate::display::control::{
     BgMode, FixedColor, Layers, MainScreen, MainWindowMask, ScreenSettings, SubScreen,
@@ -20,7 +18,7 @@ use crate::display::sequence::{Registers, register_writes, write_register_and_mi
 use crate::display::transfer::{ScrollingLayout, setup_transfer};
 use crate::display::video::Upload;
 use crate::ram::words;
-use crate::ram::{CompatibilityRam, RawRam, checked_word, checked_word as at, word, word_arrays};
+use crate::ram::{CompatibilityRam, RawRam, checked_word, word};
 use crate::scene::irq;
 use crate::scene::state::DisplayError;
 use crate::word_transfers;
@@ -36,7 +34,8 @@ pub trait DisplayOwner {
 /// What the display refresh needs besides RAM, registers and the cartridge:
 /// owned display stores and the uploads the compatibility runtime still owns.
 pub trait Host:
-    crate::display::preparation::Access
+    crate::fx_domain::Controls
+    + crate::display::preparation::Access
     + CompatibilityRam
     + crate::ram::WorkRamAccess
     + Registers
@@ -45,7 +44,9 @@ pub trait Host:
     + crate::decompression::DecompressionHost
     + crate::records::Records
     + DisplayOwner
+    + crate::display::queued_tilemaps::Scrolling
     + crate::display::video::Video
+    + crate::hdma_objects::HdmaTable
 {
     /// The HDMA object table as the compatibility projection reads it.
     fn hdma_objects(&self) -> crate::hdma::HdmaObjects;
@@ -516,13 +517,22 @@ impl<H: Host + ?Sized> crate::scene::commit::RefreshHost for Refresh<'_, H> {
         Ok(())
     }
     fn hdma_mask(&self, slot: usize) -> u16 {
-        self.0.hdma_objects().objects[slot].channels
+        self.0.hdma_word(crate::hdma::Word::Object {
+            index: slot,
+            field: crate::hdma::ObjectWord::Channels,
+        })
     }
     fn hdma_bank_slot(&self, slot: usize) -> u8 {
-        self.0.hdma_objects().objects[slot].bank_slot as u8
+        self.0.hdma_word(crate::hdma::Word::Object {
+            index: slot,
+            field: crate::hdma::ObjectWord::BankSlot,
+        }) as u8
     }
     fn hdma_table(&self, slot: usize) -> u16 {
-        self.0.hdma_objects().objects[slot].table
+        self.0.hdma_word(crate::hdma::Word::Object {
+            index: slot,
+            field: crate::hdma::ObjectWord::Table,
+        })
     }
     fn bind_hdma(&mut self, bank_slot: u16, table: u16) -> Result<(), DisplayError> {
         self.0.write_register_word(A1T0L as u16 + bank_slot, table);
@@ -734,112 +744,19 @@ pub fn decompress_prepared_vram<H: Host + ?Sized>(stream: &[u8], destination: u1
 }
 
 pub(crate) fn mult8x8(a: u8, b: u8) -> u16 {
-    (a as i32 * b as i32) as u16
+    u16::from(a) * u16::from(b)
 }
 
-pub fn queue_scrolling_tiles<H: Host + ?Sized>(k: u16, layout: ScrollingLayout, game: &mut H) {
-    if word!(game.IRQ_ENABLE_MODE7) != 0 {
-        return;
-    }
-    let row = matches!(layout, ScrollingLayout::Row);
-    crate::probe::hit(match (row, k != 0) {
-        (false, false) => "scroll_tiles.column.bg1",
-        (false, true) => "scroll_tiles.column.bg2",
-        (true, false) => "scroll_tiles.row.bg1",
-        (true, true) => "scroll_tiles.row.bg2",
-    });
-    let product = mult8x8(
-        word!(game.BLOCKS_TO_UPDATE_Y_BLOCK) as u8,
-        crate::room_view::current(game).width as u8,
-    );
-    let mut source_offset = product
-        .wrapping_add(word!(game.BLOCKS_TO_UPDATE_X_BLOCK))
-        .wrapping_mul(2)
-        .wrapping_add(2);
-    if k != 0 {
-        source_offset = source_offset.wrapping_add(0x9600);
-    }
-    let source = 0x10000 + usize::from(source_offset);
-    let parameters = (if row { 0x964 } else { 0x956 }) + usize::from(k);
-    // Columns store the wrapped size first; rows store the unwrapped size first.
-    if row {
-        let within_screen = word!(game.VRAM_BLOCKS_TO_UPDATE_X_BLOCK) & 15;
-        set_native_word(parameters, 4 * (16 - within_screen), game);
-        set_native_word(parameters + 2, 4 * (within_screen + 1), game);
-    } else {
-        let wrapped = 4 * (word!(game.VRAM_BLOCKS_TO_UPDATE_Y_BLOCK) & 15);
-        set_native_word(parameters + 2, wrapped, game);
-        set_native_word(parameters, (wrapped ^ 0x3f) + 1, game);
-    }
-    let tile_row = mult8x8(word!(game.VRAM_BLOCKS_TO_UPDATE_Y_BLOCK) as u8 & 15, 0x40);
-    let tile_column = word!(game.VRAM_BLOCKS_TO_UPDATE_X_BLOCK) & 31;
-    let origin = tile_row.wrapping_add(2 * tile_column);
-    let mut screen = if tile_column >= 16 {
-        ADDR_UNK_6053E0 as u16
-    } else {
-        ADDR_UNK_605000 as u16
-    };
-    if k != 0 {
-        screen = screen.wrapping_sub(word!(game.SIZE_OF_BG2));
-    }
-    set_native_word(parameters + 4, origin.wrapping_add(screen), game);
-    let wrapped_destination = if row {
-        let mut wrapped_screen = if tile_column >= 16 {
-            ADDR_UNK_605000 as u16
-        } else {
-            ADDR_UNK_605400 as u16
-        };
-        if k != 0 {
-            wrapped_screen = wrapped_screen.wrapping_sub(word!(game.SIZE_OF_BG2));
-        }
-        tile_row.wrapping_add(wrapped_screen)
-    } else {
-        (2 * tile_column).wrapping_add(screen)
-    };
-    set_native_word(parameters + 6, wrapped_destination, game);
-    let buffer_base = if row {
-        word_arrays::BG1_COLUMN_UPDATE_TILEMAP_TOP_HALVES
-    } else {
-        word_arrays::BG1_COLUMN_UPDATE_TILEMAP_LEFT_HALVES
-    };
-    let buffer = buffer_base + if k != 0 { 264 } else { 0 };
-    let half_bytes = if row { 68 } else { 64 };
-    let wrapped_source = native_word(parameters, game).wrapping_add(buffer as u16);
-    set_native_word(parameters + 8, wrapped_source, game);
-    set_native_word(
-        parameters + 10,
-        wrapped_source.wrapping_add(half_bytes),
-        game,
-    );
-    let mut source_delta = 0u16;
-    for block_index in 0..if row { 17 } else { 16 } {
-        let block = native_word(source + 2 * usize::from(source_delta >> 1), game);
-        let first = buffer + 4 * block_index;
-        let second = first + usize::from(half_bytes);
-        let destinations = if row {
-            [first, first + 2, second, second + 2]
-        } else {
-            [first, second, first + 2, second + 2]
-        };
-        let flip = usize::from((block >> 10) & 3);
-        let tile_flip = (block & 0x0c00) << 4;
-        let first_tile = usize::from(block & 0x03ff) * 4;
-        for (corner, destination) in destinations.into_iter().enumerate() {
-            // Read each tile immediately before storing it: staging may overlap the table.
-            let source = 0xa000 + 2 * (first_tile + (corner ^ flip));
-            let tile = at!(game, source;) ^ tile_flip;
-            at!(game, destination; = tile);
-        }
-        // The column stride is reread after drawing each block.
-        source_delta = source_delta.wrapping_add(if row {
-            2
-        } else {
-            crate::room_view::current(game).width.wrapping_mul(2)
-        });
-    }
-    set_native_word(
-        parameters + 12,
-        native_word(parameters + 12, game).wrapping_add(1),
+pub fn queue_scrolling_tiles<H: crate::display::queued_tilemaps::Scrolling + ?Sized>(
+    k: u16,
+    layout: ScrollingLayout,
+    game: &mut H,
+) {
+    crate::display::queued_tilemaps::queue_scrolling(
+        crate::display::queued_tilemaps::Selection {
+            layout,
+            layer_offset: k,
+        },
         game,
     );
 }

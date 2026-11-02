@@ -38,8 +38,12 @@ macro_rules! session_words {
             pub fn apply_changed(self, before: &Self, session: &mut Session) {
                 $({
                     if self.$field != before.$field {
-                        let $s = &mut *session;
-                        $path = self.$field;
+                        if $at == 0x1982 {
+                            crate::fx_encoding::write_control_word(session, $at, self.$field);
+                        } else {
+                            let $s = &mut *session;
+                            $path = self.$field;
+                        }
                     }
                 })+
             }
@@ -57,8 +61,15 @@ macro_rules! session_words {
             }
             fn session_words(session: &mut Session, mut visit: impl FnMut(usize, &mut u16)) {
                 $({
-                    let $s = &mut *session;
-                    visit($at, &mut $path);
+                    if $at == 0x1982 {
+                        let mut value = crate::fx_encoding::control_word(session, $at);
+                        let before = value;
+                        visit($at, &mut value);
+                        if value != before { crate::fx_encoding::write_control_word(session, $at, value); }
+                    } else {
+                        let $s = &mut *session;
+                        visit($at, &mut $path);
+                    }
                 })+
             }
         }
@@ -150,7 +161,7 @@ impl SessionWords {
             substate: s.shared_sequence.stage,
             suit_pickup_light_beam_pos: s.shared_sequence.value,
             debug_disable_sprite_interact: s.actors.diagnostics.sprite_contacts_disabled,
-            fx_layer_blending_config_a: s.room.fx_blending,
+            fx_layer_blending_config_a: crate::fx_encoding::control_word(s, 0x1982),
             samus_invincibility_timer: s.player.invincibility,
             samus_knockback_timer: s.player.knockback_timer,
             palette_change_num: s.presentation.visual().palette_fade.step,

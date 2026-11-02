@@ -8,22 +8,24 @@
 //! names now come from the bank log. The functions run from
 //! `cinematic_function`; the compat dispatch keeps their ids.
 use crate::actors::host::below;
+use crate::cinematic::CinematicDestination;
 use crate::cinematic::{
     clear_cinematic_background, clear_cinematic_sprites, enable_cinematic_background,
     fade_cinematic_fixed_color, set_cinematic_tilemap_updates, set_fixed_color,
 };
 use crate::cinematic_host::Host;
 use crate::cinematic_objects::CinematicObjects;
-use crate::cinematic_state::{Cinematic, Word, cinematic};
+use crate::cinematic_state::{Cinematic, Word};
+use crate::display::preparation::Field;
 use crate::display_refresh::GraphicsAsset;
 use crate::inventory;
 use crate::menu_state::OptionsMenu;
 use crate::menu_state::SaveSelection;
 use crate::menus::prelude::display_scroll;
-use crate::ram::RawRam as _;
+use crate::presentation_workspace::{Point, Role};
 use crate::ram::mirror;
-use crate::ram::word;
 use crate::visual_state::CinematicDisplay;
+use crate::word_transfers::WordEndpoint;
 
 /// Bank $8B cinematic functions, stored in `cinematic_function`.
 pub mod function {
@@ -166,24 +168,38 @@ pub fn initial<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     crate::cinematic_display::configure_cinematic_display(CinematicDisplay::Intro, cine, game);
     crate::frame_display_word!(game.CurrentInterrupt = 0);
     crate::frame_display_word!(game.PendingInterrupt = 0);
-    crate::room_view::set(game, crate::room_view::Word::Area, 0);
-    crate::room_view::set(game, crate::room_view::Word::Width, 16);
-    crate::room_view::set(game, crate::room_view::Word::Height, 16);
+    crate::gameplay_context::set_room(game, crate::room_view::Word::Area, 0);
+    crate::gameplay_context::set_room(game, crate::room_view::Word::Width, 16);
+    crate::gameplay_context::set_room(game, crate::room_view::Word::Height, 16);
     game.initialize_player();
     game.update_beam_tiles_and_palette();
-    crate::session_cohort::with(game, |_, inventory: &mut inventory::Inventory| {
+    crate::gameplay_context::with_inventory(game, |_, inventory: &mut inventory::Inventory| {
         inventory.ammunition[0] = inventory::Supply {
             current: INTRO_MISSILES,
             maximum: INTRO_MISSILES,
         };
     });
     *cine.intro_samus_display() = 0;
-    word!(game.SAMUS_DRAW_HANDLER = DEFAULT_DRAW_HANDLER);
+    crate::cinematic::set_cinematic_draw_mode(
+        crate::player_transitions::state::DrawMode::from_raw(DEFAULT_DRAW_HANDLER),
+        game,
+    );
     crate::menus::controller_input::use_cinematic_bindings(game);
     game.set_invincibility_timer(0);
     game.set_knockback_timer(0);
     clear_cinematic_objects(cine);
-    crate::word_transfers!(game, ascending, 256; le(PALETTE_BUFFER, 0) <- rom(INTRO_PALETTES, 0));
+    crate::cinematic::transfer_cinematic_words(
+        256,
+        2,
+        &[(
+            CinematicDestination::Palette {
+                offset: 0,
+                native: false,
+            },
+            crate::cinematic::cinematic_rom_words(INTRO_PALETTES, 0, game),
+        )],
+        game,
+    );
     GraphicsAsset::Decompress(0x95f90e, 0x10000).load(game);
     GraphicsAsset::Decompress(0x95d089, 0x18000).load(game);
     GraphicsAsset::Decompress(0x9788cc, 0x19000).load(game);
@@ -203,7 +219,7 @@ pub fn initial<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     crate::hdma_objects::set_hdma_enabled(true, game);
     crate::palette_effects::execution::leased::clear(game);
     crate::palette_effects::execution::leased::set_enabled(true, game);
-    cinematic!(game.DoorExit = 0);
+    crate::cinematic::clear_cinematic_exit(game);
     crate::sequence_state::with_words(game, |_, words: &mut crate::session_words::SessionWords| {
         words.layer1_x_pos = 0
     });
@@ -211,8 +227,24 @@ pub fn initial<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
         words.layer1_y_pos = 0
     });
     *cine.intro_japanese_text_timer() = 0;
-    crate::word_transfers!(game, descending, 1024; cinematic_bg(1023) <- native(BG_SOURCE));
-    crate::word_transfers!(game, descending, 128; pause_map(127) <- rom(INTRO_PAUSE_MAP, 127));
+    crate::cinematic::transfer_cinematic_words(
+        1024,
+        -2,
+        &[(
+            CinematicDestination::Screen(Point::new(Role::Equipment, 2046)),
+            WordEndpoint::Ram(isize::try_from(BG_SOURCE).unwrap(), true),
+        )],
+        game,
+    );
+    crate::cinematic::transfer_cinematic_words(
+        128,
+        -2,
+        &[(
+            CinematicDestination::Screen(Point::new(Role::Pause, 254)),
+            crate::cinematic::cinematic_rom_words(INTRO_PAUSE_MAP, 127, game),
+        )],
+        game,
+    );
     *cine.intro_frame_counter() = 0xffff;
     crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
         flow.cinematic_function = function::WAIT_FOR_MUSIC_AND_FADE_IN
@@ -275,13 +307,34 @@ pub fn set_up_text_page_1<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) 
     enable_cinematic_background(cine);
     set_cinematic_tilemap_updates(true, cine);
     *cine.bg_vram_address() = 0x4c00;
-    crate::word_transfers!(game, descending, 128;
-        pause_map(127) <- value(BLANK_TEXT_TILE),
-        pause_map(1023) <- value(BLANK_TEXT_TILE),
+    crate::cinematic::transfer_cinematic_words(
+        128,
+        -2,
+        &[
+            (
+                CinematicDestination::Screen(Point::new(Role::Pause, 254)),
+                WordEndpoint::Value(BLANK_TEXT_TILE),
+            ),
+            (
+                CinematicDestination::Screen(Point::new(Role::Pause, 2046)),
+                WordEndpoint::Value(BLANK_TEXT_TILE),
+            ),
+        ],
+        game,
     );
-    crate::word_transfers!(game, ascending, 128; pause_map(768) <- rom(TEXT_PAGE_1, 0));
-    game.ram()
-        .copy_in(NEXT_PAGE_ARROW, &NEXT_PAGE_ARROW_TILES.to_ne_bytes());
+    crate::cinematic::transfer_cinematic_words(
+        128,
+        2,
+        &[(
+            CinematicDestination::Screen(Point::new(Role::Pause, 1536)),
+            crate::cinematic::cinematic_rom_words(TEXT_PAGE_1, 0, game),
+        )],
+        game,
+    );
+    game.screen_write_slice(
+        Point::new(Role::Pause, NEXT_PAGE_ARROW - 0x3000),
+        &NEXT_PAGE_ARROW_TILES.to_ne_bytes(),
+    );
     sprites(cine, game, object::TEXT_CARET, 0x1c29);
     *cine.function_timer() = 127;
     spawn(
@@ -311,7 +364,18 @@ pub fn ceres_initial<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     clear_cinematic_sprites(cine);
     crate::frame_display_word!(game.CurrentInterrupt = 0);
     crate::frame_display_word!(game.PendingInterrupt = 0);
-    crate::word_transfers!(game, ascending, 256; le(PALETTE_BUFFER, 0) <- rom(SPACE_PALETTES, 0));
+    crate::cinematic::transfer_cinematic_words(
+        256,
+        2,
+        &[(
+            CinematicDestination::Palette {
+                offset: 0,
+                native: false,
+            },
+            crate::cinematic::cinematic_rom_words(SPACE_PALETTES, 0, game),
+        )],
+        game,
+    );
     load_space_graphics(game);
     GraphicsAsset::VramLowBytes(0x7f4000, 0x0000, 0x300).load_planes(0x8c, true, game);
     crate::cinematic_display::reset_cinematic_transform(56, 24, game);
@@ -336,7 +400,7 @@ pub fn ceres_initial<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
 /// display ($8B:BDE4). Was `CinematicFunction_Intro_Func55`.
 pub fn ceres_wait_for_music<H: Host + ?Sized>(game: &mut H) {
     if crate::music_requests::has_queued_music(game) & 1 == 0 {
-        game.ram().write_byte(mirror::INIDISP, 15);
+        crate::frame_display_byte!(game, Field::Brightness => 15);
         crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
             flow.cinematic_function = function::CERES_FLYING_INTO_CAMERA
         });
@@ -347,8 +411,8 @@ pub fn ceres_wait_for_music<H: Host + ?Sized>(game: &mut H) {
 /// in, then show Ceres under attack. Was `CinematicFunction_Intro_Func56`.
 pub fn ceres_flying_into_camera<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     if below(*cine.mode7_zoom(), 32) {
-        game.ram().write_byte(0x6f, 0);
-        game.ram().write_byte(0x72, 49);
+        crate::frame_display_byte!(game, Field::ColorSelection => 0);
+        crate::frame_display_byte!(game, Field::ColorMath => 49);
         set_fixed_color([63, 95, 0x9f], game);
         clear_cinematic_sprites(cine);
         crate::display::transfer::enqueue_mode7_rom(0x8b, mode7::FLYING_INTO_CERES, game);
@@ -381,11 +445,11 @@ pub fn ceres_flying_into_ceres<H: Host + ?Sized>(cine: &mut Cinematic, game: &mu
     } else if below(*cine.mode7_zoom(), 0x2000) {
         *cine.mode7_zoom() = cine.mode7_zoom().wrapping_add(32);
     } else {
-        game.ram().write_byte(mirror::TM, 17);
-        game.ram().write_byte(mirror::BGMODE, 1);
-        game.ram().write_byte(mirror::M7SEL, 0);
-        game.ram().write_byte(mirror::BG1SC, 92);
-        game.ram().write_byte(mirror::BG12NBA, 6);
+        crate::frame_display_byte!(game, Field::MainLayers => 17);
+        crate::frame_display_byte!(game, Field::Mode => 1);
+        crate::frame_display_byte!(game, Field::AffineSelection => 0);
+        crate::frame_display_byte!(game, Field::Screens0 => 92);
+        crate::frame_display_byte!(game, Field::Characters0 => 6);
         *cine.mode7_zoom() = 256;
         *cine.mode7_angle() = 0;
         *cine.x_sub() = 0;
@@ -412,8 +476,8 @@ pub fn ceres_flying_into_ceres<H: Host + ?Sized>(cine: &mut Cinematic, game: &mu
 pub fn start_game_at_ceres<H: Host + ?Sized>(game: &mut H) {
     let slot = crate::session_cohort::with(game, |game, selection: &mut SaveSelection| {
         selection.loading_game_state = SET_UP_NEW_GAME;
-        word!(game.GAME_STATE = SET_UP_NEW_GAME);
-        crate::room_view::set(game, crate::room_view::Word::Area, CERES);
+        crate::gameplay_word!(game.GAME_STATE = SET_UP_NEW_GAME);
+        crate::gameplay_context::set_room(game, crate::room_view::Word::Area, CERES);
         selection.load_station = 0;
         selection.selected_slot
     });
@@ -428,14 +492,25 @@ pub fn boom_initial<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     }
     crate::cinematic_display::configure_cinematic_display(CinematicDisplay::Station, cine, game);
     clear_cinematic_objects(cine);
-    cinematic!(game.DoorExit = 0);
+    crate::cinematic::clear_cinematic_exit(game);
     crate::sequence_state::with_words(game, |_, words: &mut crate::session_words::SessionWords| {
         words.layer1_x_pos = 0
     });
     crate::sequence_state::with_words(game, |_, words: &mut crate::session_words::SessionWords| {
         words.layer1_y_pos = 0
     });
-    crate::word_transfers!(game, ascending, 256; le(PALETTE_BUFFER, 0) <- rom(SPACE_PALETTES, 0));
+    crate::cinematic::transfer_cinematic_words(
+        256,
+        2,
+        &[(
+            CinematicDestination::Palette {
+                offset: 0,
+                native: false,
+            },
+            crate::cinematic::cinematic_rom_words(SPACE_PALETTES, 0, game),
+        )],
+        game,
+    );
     load_space_graphics(game);
     GraphicsAsset::VramLowBytes(0x7f4600, 0x0000, 0x600).load_planes(0x8c, false, game);
     GraphicsAsset::VramWords(0x9ad200, 0x6000, 0x1a00).load(game);
@@ -463,7 +538,7 @@ pub fn boom_initial<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     });
     crate::music_requests::queue_delayed_8(NO_MUSIC, game);
     crate::music_requests::queue_delayed_8(CERES_MUSIC_DATA, game);
-    if word!(game.GAME_STATE) == BOOM_WITH_SAMUS {
+    if crate::gameplay_word!(game.GAME_STATE) == BOOM_WITH_SAMUS {
         crate::music_requests::queue_delayed(8, SONG_DELAY, game);
     } else {
         crate::music_requests::queue_delayed(7, SONG_DELAY, game);
@@ -487,7 +562,7 @@ pub fn boom_small_explosions<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut 
     cine.add_pair(Word::X, Word::XSub, -0x4000i32 as u32);
     *cine.mode7_zoom() = cine.mode7_zoom().wrapping_add(1);
     crate::display_refresh::fade(true, game);
-    if game.ram().read_byte(mirror::INIDISP) == 15 {
+    if game.display_control_byte(Field::Brightness) == 15 {
         crate::screen_fade::store(game, 0, 0);
         crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
             flow.cinematic_function = function::BOOM_EXPLOSIONS
@@ -517,11 +592,11 @@ pub fn boom_explosions<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
         );
         crate::hdma_objects::set_hdma_enabled(true, game);
         game.spawn_power_bomb();
-        game.ram().write_byte(0x6f, 16);
-        game.ram().write_byte(0x72, 55);
+        crate::frame_display_byte!(game, Field::ColorSelection => 16);
+        crate::frame_display_byte!(game, Field::ColorMath => 55);
         *cine.mode7_zoom() = 768;
         sprites(cine, game, object::CERES_EXPLOSION_GUNSHIP, 0);
-        if word!(game.GAME_STATE) == BOOM_WITH_SAMUS {
+        if crate::gameplay_word!(game.GAME_STATE) == BOOM_WITH_SAMUS {
             crate::display::transfer::enqueue_mode7_rom(0x8b, mode7::BOOM_WITH_SAMUS, game);
         } else {
             crate::display::transfer::enqueue_mode7_rom(0x8b, mode7::BOOM, game);
@@ -536,8 +611,8 @@ pub fn boom_explosions<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
 /// Cinematic function - Ceres goes boom - gunship flying away ($8B:C5CA).
 /// Was `CinematicFunction_Intro_Func77`.
 pub fn boom_gunship_flying_away<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
-    game.ram().write_byte(0x6f, 16);
-    game.ram().write_byte(0x72, 55);
+    crate::frame_display_byte!(game, Field::ColorSelection => 16);
+    crate::frame_display_byte!(game, Field::ColorMath => 55);
     *cine.x() = cine.x().wrapping_add(2);
     *cine.mode7_angle() = (*cine.mode7_angle() as u8).wrapping_sub(1) as u16;
     if below(*cine.mode7_zoom(), 16) {
@@ -566,10 +641,10 @@ pub fn boom_wait<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
 /// `CinematicFunction_Intro_Func85`.
 pub fn boom_fade_out<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     crate::display_refresh::fade(false, game);
-    if game.ram().read_byte(mirror::INIDISP) == 0x80 {
+    if game.display_control_byte(Field::Brightness) == 0x80 {
         crate::display_refresh::enable(true, game);
         crate::screen_fade::store(game, 0, 0);
-        if word!(game.GAME_STATE) == BOOM_WITH_SAMUS {
+        if crate::gameplay_word!(game.GAME_STATE) == BOOM_WITH_SAMUS {
             crate::music_requests::queue_delayed_8(NO_MUSIC, game);
             crate::sequence_state::with_words(
                 game,
@@ -591,13 +666,13 @@ pub fn boom_fade_out<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
                     words.fx_layer_blending_config_a = 0
                 },
             );
-            game.ram().write_byte(0x6e, 0);
-            game.ram().write_byte(0x71, 0);
-            game.ram().write_byte(mirror::TM, 16);
-            game.ram().write_byte(mirror::TS, 0);
-            game.ram().write_byte(mirror::TMW, 0);
-            game.ram().write_byte(mirror::TSW, 0);
-            game.ram().write_byte(mirror::BGMODE, 9);
+            crate::frame_display_byte!(game, Field::NextColorSelection => 0);
+            crate::frame_display_byte!(game, Field::NextColorMath => 0);
+            crate::frame_display_byte!(game, Field::MainLayers => 16);
+            crate::frame_display_byte!(game, Field::SubLayers => 0);
+            crate::frame_display_byte!(game, Field::MainWindow => 0);
+            crate::frame_display_byte!(game, Field::SubWindow => 0);
+            crate::frame_display_byte!(game, Field::Mode => 9);
             crate::session_cohort::with(game, |_, options: &mut OptionsMenu| {
                 options.screen_index = 0
             });
@@ -607,7 +682,7 @@ pub fn boom_fade_out<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
             for index in (8..=135).rev() {
                 *cine.bg_arr7(index) = 0;
             }
-            word!(game.GAME_STATE = SAMUS_NO_HEALTH);
+            crate::gameplay_word!(game.GAME_STATE = SAMUS_NO_HEALTH);
         } else {
             crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
                 flow.cinematic_function = function::ZEBES_INITIAL
@@ -635,7 +710,7 @@ pub fn zebes_initial<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     crate::hdma_objects::clear_hdma(game);
     crate::palette_effects::execution::leased::clear(game);
     crate::palette_effects::execution::leased::set_enabled(true, game);
-    game.ram().write_byte(mirror::MOSAIC, 0x81);
+    crate::frame_display_byte!(game, Field::Mosaic => 0x81);
     crate::palette_effects::execution::leased::spawn(CERES_GLOW_1, game);
     crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
         flow.cinematic_function = function::ZEBES_FADING_IN
@@ -657,10 +732,10 @@ pub fn zebes_hold<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
 /// Cinematic function - fly to Zebes - load game data ($8B:CADF). Was
 /// `CinematicFunction_Intro_Func95`.
 pub fn zebes_load_game_data<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
-    game.ram().write_byte(mirror::INIDISP, 0x80);
+    crate::frame_display_byte!(game, Field::Brightness => 0x80);
     clear_cinematic_objects(cine);
-    word!(game.GAME_STATE = LOADING_GAME_DATA);
-    crate::session_cohort::with(game, |_, inventory: &mut inventory::Inventory| {
+    crate::gameplay_word!(game.GAME_STATE = LOADING_GAME_DATA);
+    crate::gameplay_context::with_inventory(game, |_, inventory: &mut inventory::Inventory| {
         inventory.health.current = inventory.health.maximum;
     });
 }

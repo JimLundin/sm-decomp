@@ -1,17 +1,28 @@
 //! The credits roll: script commands, text uploads and the ending handoff.
+use crate::cinematic::CinematicDestination;
 use crate::cinematic::{cinematic_native_record, queue_cinematic_tilemap};
 use crate::cinematic_state::Cinematic;
-use crate::ram::RawRam as _;
+use crate::display::preparation::Field;
+use crate::presentation_workspace::{Point, Role};
 use crate::visual_state::CinematicTilemap;
+use crate::word_transfers::WordEndpoint;
 
 // The credits stream shares the background pre-instructions and text tilemap.
-// RAM remains authoritative across script callbacks and the ending handoff.
+// The cinematic table shares enemy-projectile state across callbacks and handoff.
 pub fn prepare_credit_roll<H: crate::menus::host::Host + ?Sized>(
     definition: u16,
     cine: &mut Cinematic,
     game: &mut H,
 ) -> u32 {
-    crate::word_transfers!(game, descending, 1024; native(0x37fe) <- value(0x7f));
+    crate::cinematic::transfer_cinematic_words(
+        1024,
+        -2,
+        &[(
+            CinematicDestination::Screen(Point::new(Role::Pause, 0x7fe)),
+            WordEndpoint::Value(0x7f),
+        )],
+        game,
+    );
     *cine.credits_tilemap_row() = 0;
     *cine.credits_instruction_list() = 0;
     *cine.credits_instruction_timer() = 0;
@@ -78,9 +89,20 @@ pub fn advance_credit_roll<H: crate::menus::host::Host + ?Sized>(
             }
             0x8bf6fe => {
                 *cine.credits_enabled() &= !0x8000;
-                crate::word_transfers!(game, ascending, 252; le(PALETTE_BUFFER, 4) <- rom(0x8ce7e9, 4));
-                game.ram().write_byte(0x69, 0); // reg_TM
-                game.ram().write_byte(0x51, 0x80); // reg_INIDISP
+                crate::cinematic::transfer_cinematic_words(
+                    252,
+                    2,
+                    &[(
+                        CinematicDestination::Palette {
+                            offset: 8,
+                            native: false,
+                        },
+                        crate::cinematic::cinematic_rom_words(0x8ce7e9, 4, game),
+                    )],
+                    game,
+                );
+                crate::frame_display_byte!(game, Field::MainLayers => 0); // reg_TM
+                crate::frame_display_byte!(game, Field::Brightness => 0x80); // reg_INIDISP
                 crate::screen_fade::store(game, 0, 0);
                 *cine.y_sub() = 0;
                 *cine.y() = 0;
@@ -98,7 +120,15 @@ pub fn advance_credit_roll<H: crate::menus::host::Host + ?Sized>(
     }
     let destination = u16::from(*cine.credits_tilemap_row() as u8) * 0x40;
     let source = 0x10000 + u32::from(cinematic_native_record::<0x8c>(cursor, game).word(2));
-    crate::word_transfers!(game, ascending, 32; native(0x3000 + destination) <- native(source));
+    crate::cinematic::transfer_cinematic_words(
+        32,
+        2,
+        &[(
+            CinematicDestination::Screen(Point::new(Role::Pause, usize::from(destination))),
+            WordEndpoint::Ram(isize::try_from(source).unwrap(), true),
+        )],
+        game,
+    );
     *cine.credits_tilemap_row() = (*cine.credits_tilemap_row()).wrapping_add(1) & 0x1f;
     *cine.credits_instruction_list() = cursor.wrapping_add(4);
     true

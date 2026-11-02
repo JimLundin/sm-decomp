@@ -121,7 +121,7 @@ pub fn apply<H: Host + ?Sized>(address: u32, game: &mut H) -> bool {
 // Camera effects keep their legacy publication order until layer state is owned.
 use crate::camera::set_layer1;
 use crate::player_collision::operations::Axis;
-use crate::ram::{bytes as fields_bytes, word, words as fields};
+use crate::ram::{bytes as fields_bytes, word};
 use crate::ram_words as words;
 use crate::word_transfers;
 use camera::{auto_x, auto_y, trigger_down, trigger_left, trigger_right, trigger_up};
@@ -295,17 +295,17 @@ pub fn fill_viewport<H: Host + ?Sized>(game: &mut H) {
     calculate_blocks(game);
     for _ in 0..17 {
         let camera = game.session().room.camera;
-        word!(game.BLOCKS_TO_UPDATE_X_BLOCK = camera.layer1_block[0]);
-        word!(game.BLOCKS_TO_UPDATE_Y_BLOCK = camera.layer1_block[1]);
-        word!(game.VRAM_BLOCKS_TO_UPDATE_X_BLOCK = camera.bg1_block[0]);
-        word!(game.VRAM_BLOCKS_TO_UPDATE_Y_BLOCK = camera.bg1_block[1]);
+        game.session_mut().queued_tilemaps.source_block[0] = camera.layer1_block[0];
+        game.session_mut().queued_tilemaps.source_block[1] = camera.layer1_block[1];
+        game.session_mut().queued_tilemaps.destination_block[0] = camera.bg1_block[0];
+        game.session_mut().queued_tilemaps.destination_block[1] = camera.bg1_block[1];
         game.queue_scrolling_tiles(0x0, ScrollingDmaLayout::Column);
         if layer2_policy(game, 0) & 1 == 0 {
             let camera = game.session().room.camera;
-            word!(game.BLOCKS_TO_UPDATE_X_BLOCK = camera.layer2_block[0]);
-            word!(game.BLOCKS_TO_UPDATE_Y_BLOCK = camera.layer2_block[1]);
-            word!(game.VRAM_BLOCKS_TO_UPDATE_X_BLOCK = camera.bg2_block[0]);
-            word!(game.VRAM_BLOCKS_TO_UPDATE_Y_BLOCK = camera.bg2_block[1]);
+            game.session_mut().queued_tilemaps.source_block[0] = camera.layer2_block[0];
+            game.session_mut().queued_tilemaps.source_block[1] = camera.layer2_block[1];
+            game.session_mut().queued_tilemaps.destination_block[0] = camera.bg2_block[0];
+            game.session_mut().queued_tilemaps.destination_block[1] = camera.bg2_block[1];
             game.queue_scrolling_tiles(0x1c, ScrollingDmaLayout::Column);
         }
         game.flush_tilemaps();
@@ -396,10 +396,10 @@ pub fn update_backgrounds<H: Host + ?Sized>(game: &mut H) {
                 } else {
                     (camera.layer1_block, camera.bg1_block)
                 };
-                word!(@write game, fields::BLOCKS_TO_UPDATE_X_BLOCK + 2 * coordinate,
-                    (i32::from(block[coordinate]) + edge) as u16);
-                word!(@write game, fields::VRAM_BLOCKS_TO_UPDATE_X_BLOCK + 2 * coordinate,
-                    (i32::from(bg[coordinate]) + edge) as u16);
+                game.session_mut().queued_tilemaps.source_block[coordinate] =
+                    (i32::from(block[coordinate]) + edge) as u16;
+                game.session_mut().queued_tilemaps.destination_block[coordinate] =
+                    (i32::from(bg[coordinate]) + edge) as u16;
             }
             game.queue_scrolling_tiles(parameter, layout);
         }

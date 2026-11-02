@@ -6,56 +6,9 @@
 //! Within one record no register write reaches RAM before the transfer, so a
 //! record's fields are read together before its first register write.
 
-/// A CPU-bus source: a 24-bit address split as the DMA registers hold it.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct Source {
-    pub address: u16,
-    pub bank: u8,
-}
-
-/// Where a Mode 7 queue record writes.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Mode7Target {
-    /// VRAM at `address` with the VMAIN `increment` byte. `high_byte` selects
-    /// the VMDATAH port (Mode 7 pixels) instead of VMDATAL (the tilemap).
-    Vram {
-        high_byte: bool,
-        address: u16,
-        increment: u8,
-    },
-    /// CGRAM from colour `index`.
-    Cgram { index: u8 },
-}
-
-/// One Mode 7 queue record: `bytes` from `source` through DMA mode `mode`.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct Mode7Upload {
-    pub mode: u8,
-    pub source: Source,
-    pub bytes: u16,
-    pub target: Mode7Target,
-}
-
-/// One VRAM readback record: `bytes` from VRAM `vram_address` into `destination`,
-/// using DMA `control` and B-bus `port` (normally $81 and RDVRAML).
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct VramReadback {
-    pub vram_address: u16,
-    pub control: u8,
-    pub port: u8,
-    pub destination: Source,
-    pub bytes: u16,
-}
-
-/// One tilemap queue record: `bytes` from `source` to VRAM `vram_address`.
-/// `column` selects the 32-word VMAIN increment.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct TilemapUpload {
-    pub bytes: u16,
-    pub source: Source,
-    pub column: bool,
-    pub vram_address: u16,
-}
+pub use super::transfer_types::{
+    Mode7Target, Mode7Upload, ScrollingLayout, Source, TilemapUpload, VramReadback,
+};
 
 /// RAM reads for a queue and the sink that performs each decoded transfer.
 pub trait TransferHost {
@@ -71,20 +24,26 @@ pub trait TransferHost {
 /// ended by a tag without bits 6 or 7.
 pub const MODE7_QUEUE: usize = 0x2d0;
 
+/// The current packed Mode 7 queue, preserving linear byte offsets and aliases.
+pub trait Mode7Queue {
+    fn mode7_queue_tail(&self) -> u16;
+    fn set_mode7_queue_tail(&mut self, tail: u16);
+    fn set_mode7_queue_byte(&mut self, offset: usize, value: u8);
+}
+
 /// Append bank `bank`'s Mode 7 record list at `cursor` to the queue, each
 /// record's terminating sentinel stored before its bytes.
 pub fn enqueue_mode7_rom<H>(bank: u8, cursor: u16, game: &mut H)
 where
-    H: crate::ram::CompatibilityRam + crate::decompression::DecompressionHost + ?Sized,
+    H: Mode7Queue + crate::decompression::DecompressionHost + ?Sized,
 {
-    use crate::ram::{RawRam as _, checked_word as word};
     let address = (u32::from(bank) << 16) | u32::from(cursor);
     if address & 0x8000 == 0 {
         game.report_invalid_rom_address(address);
     }
     let address = address | 0x8000;
     let mut source = 0;
-    let mut destination = MODE7_QUEUE + usize::from(word!(game.MODE7_VRAM_WRITE_QUEUE_TAIL));
+    let mut destination = usize::from(game.mode7_queue_tail());
     loop {
         let tag = game.read_rom_byte(address, source);
         let length = if tag & 0x80 != 0 {
@@ -96,15 +55,17 @@ where
         };
         // The sentinel precedes the copy. Both cursors advance linearly, without
         // the per-record u16 wrap used by the direct cinematic producers.
-        game.ram().write_byte(destination + length, 0);
+        game.set_mode7_queue_byte(destination + length, 0);
         for index in 0..length {
             let value = game.read_rom_byte(address, source + index);
-            game.ram().write_byte(destination + index, value);
+            game.set_mode7_queue_byte(destination + index, value);
         }
         source += length;
         destination += length;
     }
-    word!(game.MODE7_VRAM_WRITE_QUEUE_TAIL = (destination - MODE7_QUEUE) as u16);
+    game.set_mode7_queue_tail(
+        u16::try_from(destination & usize::from(u16::MAX)).expect("mode7 queue tail"),
+    );
 }
 
 pub fn drain_mode7(host: &mut (impl TransferHost + ?Sized)) {
@@ -199,42 +160,19 @@ pub fn queue_tilemap(host: &mut (impl TilemapQueue + ?Sized), upload: TilemapUpl
 }
 
 pub fn drain_tilemaps(host: &mut (impl TransferHost + ?Sized)) {
-    let mut entry = TILEMAP_QUEUE;
-    loop {
-        let bytes = host.word(entry);
-        if bytes == 0 {
-            break;
+    struct Reader<'a, H: ?Sized>(&'a mut H);
+    impl<H: TransferHost + ?Sized> super::queued_tilemaps::TilemapDrain for Reader<'_, H> {
+        fn queue_byte(&self, offset: usize) -> u8 {
+            self.0.byte(TILEMAP_QUEUE + offset)
         }
-        let destination = host.word(entry + 5);
-        let upload = TilemapUpload {
-            bytes,
-            source: Source {
-                address: host.word(entry + 2),
-                bank: host.byte(entry + 4),
-            },
-            column: destination & 0x8000 != 0,
-            vram_address: destination,
-        };
-        host.upload_tilemap(upload);
-        entry += 7;
-    }
-}
-
-/// How a scrolling tilemap buffer's two halves lie in VRAM.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum ScrollingLayout {
-    Column,
-    Row,
-}
-
-impl ScrollingLayout {
-    /// The second half's VRAM address for a first half at `address`.
-    pub fn second_half_destination(self, address: u16) -> u16 {
-        match self {
-            Self::Column => address.wrapping_add(1),
-            Self::Row => address | 0x20,
+        fn queue_word(&self, offset: usize) -> u16 {
+            self.0.word(TILEMAP_QUEUE + offset)
+        }
+        fn upload_tilemap(&mut self, upload: TilemapUpload) {
+            self.0.upload_tilemap(upload);
         }
     }
+    super::queued_tilemaps::drain(&mut Reader(host));
 }
 
 /// Program DMA channel 1's mode, 24-bit source and byte count, in the

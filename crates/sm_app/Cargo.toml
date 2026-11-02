@@ -11,12 +11,20 @@ autobins = false
 [[bin]]
 name = "sm"
 path = "src/main.rs"
+required-features = ["frontend"]
+
+[features]
+default = ["frontend"]
+frontend = ["dep:sm", "dep:gl", "dep:sdl2-sys"]
 
 # The compatibility runtime stays a dependency until it is replaced.
 [dependencies]
-sm = { path = "../../sm", features = ["frontend"] }
-gl = "0.14.0"
-sdl2-sys = "0.38.0"
+sm = { path = "../../sm", features = ["frontend"], optional = true }
+sm_game = { path = "../sm_game" }
+sm_runtime = { path = "../sm_runtime" }
+sm_data = { path = "../sm_data" }
+gl = { version = "0.14.0", optional = true }
+sdl2-sys = { version = "0.38.0", optional = true }
 
 [lints.rust]
 warnings = { level = "deny", priority = -1 }

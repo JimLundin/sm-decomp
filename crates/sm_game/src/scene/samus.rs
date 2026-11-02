@@ -222,62 +222,95 @@ impl<I: Inputs> Host for Owned<'_, I> {
         let context = self
             .inputs
             .object_context(&self.state.controls, &self.state.effective)?;
-        // Native full/odd aliases complete their original writes before rejection.
-        if entry >= 512 || entry & 3 != 0 {
-            return Err(DisplayError::Alias { offset: entry });
-        }
-        let bits = self.state.objects.byte(512 + entry / 16)? >> (2 * ((entry / 4) & 3));
-        let size = if bits & 2 != 0 {
-            ObjectSize::Large
-        } else {
-            ObjectSize::Small
-        };
-        let binding = part
-            .variants
-            .binding(context.selection.size_set, size)
-            .map_err(|_| DisplayError::Incomplete)?;
-        let definition = binding
-            .definition(self.media)
-            .map_err(|_| DisplayError::Scene)?;
-        let record = ProducedObject {
-            producer: self.producer,
-            variants: part.variants.clone(),
-            context,
-            native_word: word,
-            object: SceneObject {
-                order: (entry / 4) as u16,
-                visual: binding.visual,
-                frame: binding.frame,
-                part: binding.part,
-                atlas: definition.atlas,
-                material: definition.material,
-                tile: word & 255,
-                position: ScreenPosition {
-                    x: x as i16,
-                    y: y as i16,
-                },
-                size,
-                palette: ((word >> 9) & 7) as u8,
-                priority: ((word >> 12) & 3) as u8,
-                flip_horizontal: word & 0x4000 != 0,
-                flip_vertical: word & 0x8000 != 0,
+        publish_object(
+            self.state,
+            self.media,
+            ObjectPublication {
+                producer: self.producer,
+                variants: part.variants.clone(),
+                context,
+                entry,
+                position: (x, y),
+                word,
             },
-        }
-        .for_line(self.media, context, &self.state.objects.bytes)
-        .map_err(|_| DisplayError::Scene)?;
-        self.state
-            .producer_ids
-            .validate_id(record.producer)
-            .map_err(|_| DisplayError::Identity)?;
-        self.state
-            .objects
-            .produced
-            .retain(|old| old.object.order != record.object.order);
-        self.state.objects.produced.push(record);
-        self.state
-            .objects
-            .produced
-            .sort_by_key(|record| record.object.order);
-        Ok(())
+        )
     }
+}
+
+pub(crate) struct ObjectPublication {
+    pub producer: ProducerObjectId,
+    pub variants: Arc<ObjectVariants>,
+    pub context: ObjectContext,
+    pub entry: usize,
+    pub position: (u16, u16),
+    pub word: u16,
+}
+/// Shared completed-record publication into the one object owner.
+pub(crate) fn publish_object(
+    state: &mut DisplayState,
+    media: &SceneMedia,
+    publication: ObjectPublication,
+) -> Result<(), DisplayError> {
+    let ObjectPublication {
+        producer,
+        variants,
+        context,
+        entry,
+        position: (x, y),
+        word,
+    } = publication;
+    // Native full/odd aliases complete their original writes before rejection.
+    if entry >= 512 || entry & 3 != 0 {
+        return Err(DisplayError::Alias { offset: entry });
+    }
+    let bits = state.objects.byte(512 + entry / 16)? >> (2 * ((entry / 4) & 3));
+    let size = if bits & 2 != 0 {
+        ObjectSize::Large
+    } else {
+        ObjectSize::Small
+    };
+    let binding = variants
+        .binding(context.selection.size_set, size)
+        .map_err(|_| DisplayError::Incomplete)?;
+    let definition = binding.definition(media).map_err(|_| DisplayError::Scene)?;
+    let record = ProducedObject {
+        producer,
+        variants: variants.clone(),
+        context,
+        native_word: word,
+        object: SceneObject {
+            order: (entry / 4) as u16,
+            visual: binding.visual,
+            frame: binding.frame,
+            part: binding.part,
+            atlas: definition.atlas,
+            material: definition.material,
+            tile: word & 255,
+            position: ScreenPosition {
+                x: x as i16,
+                y: y as i16,
+            },
+            size,
+            palette: ((word >> 9) & 7) as u8,
+            priority: ((word >> 12) & 3) as u8,
+            flip_horizontal: word & 0x4000 != 0,
+            flip_vertical: word & 0x8000 != 0,
+        },
+    }
+    .for_line(media, context, &state.objects.bytes)
+    .map_err(|_| DisplayError::Scene)?;
+    state
+        .producer_ids
+        .validate_id(record.producer)
+        .map_err(|_| DisplayError::Identity)?;
+    state
+        .objects
+        .produced
+        .retain(|old| old.object.order != record.object.order);
+    state.objects.produced.push(record);
+    state
+        .objects
+        .produced
+        .sort_by_key(|record| record.object.order);
+    Ok(())
 }

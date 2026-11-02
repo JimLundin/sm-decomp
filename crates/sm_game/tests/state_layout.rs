@@ -103,6 +103,43 @@ impl sm_game::display_scroll::Access for Projection {
         panic!("physical image was not supplied")
     }
 }
+impl sm_game::gameplay_context::Access for Projection {
+    fn gameplay_word(&self, word: sm_game::gameplay_context::Word) -> u16 {
+        word.get_session(&self.0)
+    }
+    fn set_gameplay_byte(&mut self, word: sm_game::gameplay_context::Word, lane: usize, byte: u8) {
+        assert!(lane < 2);
+        let field = word.get_session_mut(&mut self.0);
+        let mut bytes = field.to_le_bytes();
+        bytes[lane] = byte;
+        *field = u16::from_le_bytes(bytes);
+    }
+    fn inventory_state(&self) -> sm_game::inventory::Inventory {
+        self.0.inventory.clone()
+    }
+    fn commit_inventory(
+        &mut self,
+        before: &sm_game::inventory::Inventory,
+        mut after: sm_game::inventory::Inventory,
+    ) {
+        use sm_game::session_cohort::Cohort as _;
+        let mut old = Vec::new();
+        before.clone().words(|_, word| old.push(*word));
+        let mut changed = Vec::new();
+        let mut index = 0;
+        after.words(|at, word| {
+            if old[index] != *word {
+                changed.push((at, *word));
+            }
+            index += 1;
+        });
+        for (at, word) in changed {
+            for (lane, byte) in word.to_le_bytes().into_iter().enumerate() {
+                assert!(write_projected_byte(&mut self.0, at + lane, byte));
+            }
+        }
+    }
+}
 impl CompatibilityRam for Projection {
     fn compatibility_byte(&self, at: usize) -> u8 {
         projected_byte(&self.0, at).unwrap_or_else(|| panic!("{at:#x} is not projected"))
@@ -281,6 +318,37 @@ fn flow_round_trips_every_field() {
         expected.flow,
         "flow view reads"
     );
+}
+
+fn menu_window_lanes() -> Vec<Lane> {
+    let mut lanes: Vec<Lane> = vec![
+        (0x9e20, 0, |s, _| &mut s.menu_window.right_margin),
+        (0x9e22, 0, |s, _| &mut s.menu_window.left_margin),
+        (0x9e50, 0, |s, _| &mut s.menu_window.timer),
+    ];
+    lanes.extend(array(0x9e30, 4, 4, |s, i| {
+        &mut s.menu_window.positions[i].fraction
+    }));
+    lanes.extend(array(0x9e32, 4, 4, |s, i| {
+        &mut s.menu_window.positions[i].whole
+    }));
+    lanes.extend(array(0x9e40, 4, 4, |s, i| {
+        &mut s.menu_window.velocities[i].fraction
+    }));
+    lanes.extend(array(0x9e42, 4, 4, |s, i| {
+        &mut s.menu_window.velocities[i].whole
+    }));
+    lanes
+}
+#[test]
+fn supplied_menu_window_round_trips_all_hidden_fields() {
+    assert!(!session().menu_window.is_initialized());
+    check_owner("map-menu window", &menu_window_lanes());
+    let bytes = Random::ram(0x9e20_9e50);
+    let value = decoded(&bytes);
+    assert!(value.menu_window.is_initialized());
+    let image = sm_game::menu_window_encoding::decode(&|at| bytes[at]);
+    assert_eq!(image, value.menu_window);
 }
 
 fn menu_lanes() -> Vec<Lane> {
@@ -1134,6 +1202,7 @@ fn all_owner_lanes() -> Vec<(&'static str, Vec<Lane>)> {
         ("camera", camera_lanes()),
         ("flow", flow_lanes()),
         ("menu_state", menu_lanes()),
+        ("map-menu window", menu_window_lanes()),
         ("map screen", map_screen_lanes()),
         ("death sequence", death_sequence_lanes()),
         ("power bomb", power_bomb_lanes()),

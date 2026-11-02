@@ -1,9 +1,12 @@
 //! The cinematic object engine: sprite, Mode 7 and background objects, their scripts and drawing.
+use crate::cinematic::CinematicDestination;
 use crate::cinematic_state::{Array, Cinematic, Word};
+use crate::display::preparation::Field;
 use crate::ending_graphics::draw_cinematic_item_percentage;
-use crate::ram::RawRam as _;
+use crate::presentation_workspace::{Point, Role};
 use crate::ram::word;
 use crate::visual_state::CeresExplosion;
+use crate::word_transfers::WordEndpoint;
 use crate::{cinematic::*, ending_screens::*, intro_objects::*, title_screen::*};
 
 use crate::ending_sequence::object as ending;
@@ -160,9 +163,31 @@ pub fn advance_intro_mother_brain<H: crate::menus::host::Host + ?Sized>(
         let timer = *cine.spr_arr6(slot);
         if timer != 0 {
             if timer & 1 != 0 {
-                crate::word_transfers!(game, descending, 16; native(0xc1fe) <- rom(0x8ce3e9, 255));
+                crate::cinematic::transfer_cinematic_words(
+                    16,
+                    -2,
+                    &[(
+                        CinematicDestination::Palette {
+                            offset: 0xc1fe - 0xc000,
+                            native: true,
+                        },
+                        crate::cinematic::cinematic_rom_words(0x8ce3e9, 255, game),
+                    )],
+                    game,
+                );
             } else {
-                crate::word_transfers!(game, descending, 16; native(0xc1fe) <- value(0x7fff));
+                crate::cinematic::transfer_cinematic_words(
+                    16,
+                    -2,
+                    &[(
+                        CinematicDestination::Palette {
+                            offset: 0xc1fe - 0xc000,
+                            native: true,
+                        },
+                        WordEndpoint::Value(0x7fff),
+                    )],
+                    game,
+                );
             }
             *cine.spr_arr6(slot) = cine.spr_arr6(slot).wrapping_sub(1);
         }
@@ -234,7 +259,7 @@ pub fn execute_cinematic_sprite_instruction<H: crate::menus::host::Host + ?Sized
             },
             // A is the slot for the head, then the palette its initializer loaded.
             9172308 => {
-            let head = if (word!(game.GAME_TIME_HOURS) as i32 - 10i32) & 0x8000 != 0 {
+            let head = if (crate::gameplay_word!(game.GAME_TIME_HOURS) as i32 - 10i32) & 0x8000 != 0 {
                 samus::SUITED_JUMP_HEAD_WITHOUT_HELMET
             } else {
                 samus::SUITED_JUMP_HEAD_WITH_HELMET
@@ -261,8 +286,8 @@ pub fn execute_cinematic_sprite_instruction<H: crate::menus::host::Host + ?Sized
             9161149 => { crate::palette_effects::execution::leased::spawn(crate::intro_sequence::ZEBES_TEXT_FADE_OUT, game);         },
             9171550 => {
             set_cinematic_blend(3, 16, 2, 34, game);
-            game.ram().write_byte(0x5d, 100);
-            game.ram().write_byte(0x59, 84);
+            crate::frame_display_byte!(game, Field::Characters0 => 100);
+            crate::frame_display_byte!(game, Field::Screens1 => 84);
             *cine.function_timer() = 0;
     crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| flow.cinematic_function = 0xe58a);
                 },
@@ -276,7 +301,7 @@ pub fn execute_cinematic_sprite_instruction<H: crate::menus::host::Host + ?Sized
                 },
             9171639 => {
             set_cinematic_blend(17, 2, 2, 17, game);
-            game.ram().write_byte(0x59, 124);
+            crate::frame_display_byte!(game, Field::Screens1 => 124);
             spawn_cinematic_sprite_at(ending::ZEBES_STARS_RIGHT, 0, 0xf27c, cine, game);
             spawn_cinematic_sprite_at(ending::ZEBES_STARS_LEFT, 2, 2, cine, game);
             crate::palette_effects::execution::leased::spawn(ending_effect::EXPLOSION_WIDE_FOREGROUND, game);
@@ -285,16 +310,18 @@ pub fn execute_cinematic_sprite_instruction<H: crate::menus::host::Host + ?Sized
                 },
             9171706 => {
             set_cinematic_blend(3, 18, 2, 51, game);
-            game.ram().write_byte(0x58, 116);
-            game.ram().write_byte(0x59, 120);
+            crate::frame_display_byte!(game, Field::Screens0 => 116);
+            crate::frame_display_byte!(game, Field::Screens1 => 120);
             crate::palette_effects::execution::leased::spawn(ending_effect::EXPLOSION_FINALE, game);
             spawn_cinematic_sprite_at(ending::ZEBES_AFTERGLOW, 6, 6, cine, game);
                 },
             9171755 => {
-            game.ram().write_byte(0x69, 0);
-            game.ram().write_byte(0x6b, 0);
+            crate::frame_display_byte!(game, Field::MainLayers => 0);
+            crate::frame_display_byte!(game, Field::SubLayers => 0);
             set_cinematic_colors(&[0, 128], 0x7fff, game);
-            crate::word_transfers!(game, descending, 16; le(PALETTE_BUFFER, 31) <- value(0x7fff));
+            crate::cinematic::transfer_cinematic_words(16, -2, &[
+        (CinematicDestination::Palette { offset: 62, native: false }, WordEndpoint::Value(0x7fff))
+    ], game);
             crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| flow.cinematic_function = 0xdb9e);
     *cine.function_timer() = 120;
                 },
@@ -776,11 +803,27 @@ fn cinematic_background_command<H: crate::menus::host::Host + ?Sized>(
         9168423 => draw_cinematic_item_percentage(game),
         9168745 => {
             if crate::session_words::current(game).japanese_text_flag != 0 {
-                crate::word_transfers!(game, descending, 64; pause_map(799) <- rom(0x8cdf5b, 63));
+                crate::cinematic::transfer_cinematic_words(
+                    64,
+                    -2,
+                    &[(
+                        CinematicDestination::Screen(Point::new(Role::Pause, 1598)),
+                        crate::cinematic::cinematic_rom_words(0x8cdf5b, 63, game),
+                    )],
+                    game,
+                );
             }
         }
         9168768 => {
-            crate::word_transfers!(game, descending, 64; native(0x363e) <- value(127));
+            crate::cinematic::transfer_cinematic_words(
+                64,
+                -2,
+                &[(
+                    CinematicDestination::Screen(Point::new(Role::Pause, 0x63e)),
+                    WordEndpoint::Value(127),
+                )],
+                game,
+            );
             crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
                 flow.cinematic_function = 0xe797
             });

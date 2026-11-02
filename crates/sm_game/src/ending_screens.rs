@@ -1,11 +1,13 @@
 //! Ending and post-credits screens: sprite pairs, gunship, Samus, clouds, time and zoom.
+use crate::cinematic::CinematicDestination;
 use crate::cinematic::*;
 use crate::cinematic_objects::CinematicObjects;
 use crate::cinematic_state::{Cinematic, Word};
-use crate::menus::prelude::words;
+use crate::display::preparation::Field;
+use crate::presentation_workspace::{Point, Role};
 use crate::ram::RawRam as _;
-use crate::ram::{word, words as ram_words};
 use crate::visual_state::{CinematicTilemap, EndingGraphics};
+use crate::word_transfers::WordEndpoint;
 
 /// Bank $8B cinematic functions the ending sets, with the bank log's names.
 pub mod function {
@@ -132,12 +134,12 @@ pub fn fade_ending_gunship_backdrop<H: crate::menus::host::Host + ?Sized>(
         != 0;
     if *cine.function_timer() == 0 || expired {
         fade_cinematic_fixed_color(game);
-        if game.ram().read_byte(crate::ram::mirror::COLDATA) == 32
-            && game.ram().read_byte(crate::ram::bytes::REG_COLDATA + 1) == 64
-            && game.ram().read_byte(crate::ram::bytes::REG_COLDATA + 2) == 0x80
+        if game.display_control_byte(Field::FixedColor0) == 32
+            && game.display_control_byte(Field::FixedColor1) == 64
+            && game.display_control_byte(Field::FixedColor2) == 0x80
         {
-            game.ram().write_byte(crate::ram::mirror::CGWSEL, 0);
-            game.ram().write_byte(crate::ram::mirror::CGADSUB, 0);
+            crate::frame_display_byte!(game, Field::ColorSelection => 0);
+            crate::frame_display_byte!(game, Field::ColorMath => 0);
         }
         *cine.function_timer() = 8;
     }
@@ -194,9 +196,7 @@ pub fn advance_ending_samus_jump<H: crate::menus::host::Host + ?Sized>(
     if phase == 2 {
         crate::ending_graphics::advance_ending_graphics(EndingGraphics::Samus, cine, game);
     }
-    let low = ram_words::SAMUS_Y_SUBSPEED;
-    add_native_pair(low + 2, low, 0x3800, game);
-    let velocity = words!(game.SAMUS_Y_SPEED, SAMUS_Y_SUBSPEED);
+    let velocity = advance_cinematic_jump_velocity(game);
     advance_cinematic_coordinate(object, true, velocity, cine);
     let slot = usize::from(object >> 1);
     if phase == 2 {
@@ -208,7 +208,7 @@ pub fn advance_ending_samus_jump<H: crate::menus::host::Host + ?Sized>(
         }
     } else if (*cine.bg_arr8(slot) as i32 + 80) & 0x8000 != 0 {
         if phase == 0 {
-            game.ram().write_byte(crate::ram::mirror::OBSEL, 3);
+            crate::frame_display_byte!(game, Field::ObjectLayout => 3);
         }
         *cine.spr_instruction_timer(slot) = 1;
         *cine.spr_instruction_pointer(slot) = if phase == 0 {
@@ -231,7 +231,7 @@ pub fn position_ending_samus_head<H: crate::menus::host::Host + ?Sized>(
     game: &mut H,
 ) -> u16 {
     let slot = usize::from(object >> 1) + 1;
-    let under_ten = (word!(game.GAME_TIME_HOURS) as i32 - 10) & 0x8000 != 0;
+    let under_ten = (crate::gameplay_word!(game.GAME_TIME_HOURS) as i32 - 10) & 0x8000 != 0;
     let (x, y) = [[(118, 120), (120, 120)], [(120, 114), (121, 116)]][usize::from(jumping)]
         [usize::from(under_ten)];
     *cine.bg_arr7(slot) = x;
@@ -245,7 +245,7 @@ pub fn fade_postcredits_samus_suit<H: crate::menus::host::Host + ?Sized>(
 ) {
     if *cine.function_timer() & 3 == 0 {
         fade_cinematic_colors(0x40, 0x10, false, game);
-        if (word!(game.GAME_TIME_HOURS) as i32 - 3) & 0x8000 == 0 {
+        if (crate::gameplay_word!(game.GAME_TIME_HOURS) as i32 - 3) & 0x8000 == 0 {
             fade_cinematic_colors(0x1c0, 0x10, true, game);
         }
         fade_cinematic_colors(0x1a0, 0x10, true, game);
@@ -273,17 +273,18 @@ pub fn advance_postcredits_samus_reveal<H: crate::menus::host::Host + ?Sized>(
         *cine.function_timer() = 127;
     } else {
         set_cinematic_blend(16, 0, 0, 0, game);
-        game.ram().write_byte(crate::ram::mirror::BGMODE, 7);
-        game.ram().write_byte(crate::ram::mirror::M7SEL, 0x80);
-        game.ram().write_byte(crate::ram::mirror::BG1SC, 0);
-        game.ram().write_byte(crate::ram::mirror::BG12NBA, 0);
+        crate::frame_display_byte!(game, Field::Mode => 7);
+        crate::frame_display_byte!(game, Field::AffineSelection => 0x80);
+        crate::frame_display_byte!(game, Field::Screens0 => 0);
+        crate::frame_display_byte!(game, Field::Characters0 => 0);
         crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
             flow.cinematic_function = function::IDLE
         });
         *cine.var14() = 0;
     }
-    let under_three = (word!(game.GAME_TIME_HOURS) as i32 - 3) & 0x8000 != 0;
-    let under_ten = under_three || (word!(game.GAME_TIME_HOURS) as i32 - 10) & 0x8000 != 0;
+    let under_three = (crate::gameplay_word!(game.GAME_TIME_HOURS) as i32 - 3) & 0x8000 != 0;
+    let under_ten =
+        under_three || (crate::gameplay_word!(game.GAME_TIME_HOURS) as i32 - 10) & 0x8000 != 0;
     if initial && under_ten {
         capture_cinematic_palette(game);
         prepare_cinematic_palette_fade(game);
@@ -317,7 +318,7 @@ pub fn advance_postcredits_samus_reveal<H: crate::menus::host::Host + ?Sized>(
     let mut parameter = if initial && under_ten {
         crate::session_cohort::load::<crate::cinematic::FadePlanes, _>(game).0[2047]
     } else {
-        word!(game.GAME_TIME_HOURS)
+        crate::gameplay_word!(game.GAME_TIME_HOURS)
     };
     for &definition in sprites {
         CinematicObjects::Sprites.spawn(definition, parameter, cine, game);
@@ -378,8 +379,24 @@ pub fn advance_postcredits_samus_message<H: crate::menus::host::Host + ?Sized>(
         & 0x8000
         != 0
     {
-        crate::word_transfers!(game, descending, 288; native(0x347e) <- value(127));
-        crate::word_transfers!(game, ascending, 64; pause_map(384) <- rom(0x8cdedb, 0));
+        crate::cinematic::transfer_cinematic_words(
+            288,
+            -2,
+            &[(
+                CinematicDestination::Screen(Point::new(Role::Pause, 0x47e)),
+                WordEndpoint::Value(127),
+            )],
+            game,
+        );
+        crate::cinematic::transfer_cinematic_words(
+            64,
+            2,
+            &[(
+                CinematicDestination::Screen(Point::new(Role::Pause, 768)),
+                crate::cinematic::cinematic_rom_words(0x8cdedb, 0, game),
+            )],
+            game,
+        );
         queue_cinematic_tilemap(CinematicTilemap::FullText, cine, game);
         set_cinematic_blend(1, 0, 0, 0, game);
         *cine.var13() = 180;
@@ -431,12 +448,12 @@ pub fn move_ending_cloud(object: u16, velocity: (i16, i16), cine: &mut Cinematic
 }
 
 pub fn prepare_ending_time<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    let hours = word!(game.GAME_TIME_HOURS);
+    let hours = crate::gameplay_word!(game.GAME_TIME_HOURS);
     crate::sequence_state::with_words(game, |_, words: &mut crate::session_words::SessionWords| {
         words.substate = hours / 10;
         words.suit_pickup_light_beam_pos = hours % 10;
     });
-    let minutes = word!(game.GAME_TIME_MINUTES);
+    let minutes = crate::gameplay_word!(game.GAME_TIME_MINUTES);
     crate::word_transfers!(game, ascending, 1;
         native(0xdf0) <- value(minutes / 10), native(0xdf2) <- value(minutes % 10),
     );
@@ -504,13 +521,24 @@ pub fn advance_postcredits_zoom<H: crate::menus::host::Host + ?Sized>(
         *cine.function_timer()
     } == 0
     {
-        game.ram().write_byte(crate::ram::mirror::BGMODE, 1);
+        crate::frame_display_byte!(game, Field::Mode => 1);
         set_cinematic_blend(17, 0, 0, 49, game);
         set_fixed_color([63, 95, 159], game);
-        game.ram().write_byte(crate::ram::mirror::M7SEL, 0);
-        game.ram().write_byte(crate::ram::mirror::BG1SC, 78);
-        game.ram().write_byte(crate::ram::mirror::BG12NBA, 84);
-        crate::word_transfers!(game, ascending, 16; le(PALETTE_BUFFER, 192) <- rom(0x8ce7e9, 192));
+        crate::frame_display_byte!(game, Field::AffineSelection => 0);
+        crate::frame_display_byte!(game, Field::Screens0 => 78);
+        crate::frame_display_byte!(game, Field::Characters0 => 84);
+        crate::cinematic::transfer_cinematic_words(
+            16,
+            2,
+            &[(
+                CinematicDestination::Palette {
+                    offset: 384,
+                    native: false,
+                },
+                crate::cinematic::cinematic_rom_words(0x8ce7e9, 192, game),
+            )],
+            game,
+        );
         *cine.x() = 0;
         *cine.y() = 0;
         crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
@@ -520,7 +548,15 @@ pub fn advance_postcredits_zoom<H: crate::menus::host::Host + ?Sized>(
         enable_cinematic_background(cine);
         set_cinematic_tilemap_updates(true, cine);
         *cine.bg_vram_address() = 19456;
-        crate::word_transfers!(game, descending, 64; native(0x337e) <- value(127));
+        crate::cinematic::transfer_cinematic_words(
+            64,
+            -2,
+            &[(
+                CinematicDestination::Screen(Point::new(Role::Pause, 0x37e)),
+                WordEndpoint::Value(127),
+            )],
+            game,
+        );
         queue_cinematic_tilemap(CinematicTilemap::FullText, cine, game);
     }
 }

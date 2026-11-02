@@ -1,10 +1,13 @@
 //! Intro and Zebes cinematic objects: Rinkas, the baby, explosions, flights, scenes and transforms.
+use crate::cinematic::CinematicDestination;
 use crate::cinematic::*;
 use crate::cinematic_objects::CinematicObjects;
 use crate::cinematic_state::{Cinematic, Word};
+use crate::display::preparation::Field;
 use crate::menus::prelude::display_scroll;
-use crate::ram::RawRam as _;
+use crate::presentation_workspace::{Point, Role};
 use crate::visual_state::{CeresExplosion, CinematicFade};
+use crate::word_transfers::WordEndpoint;
 
 const RINKA_POSITIONS: [(u16, u16); 4] = [(112, 72), (192, 56), (128, 48), (232, 80)];
 
@@ -180,14 +183,13 @@ pub fn advance_intro_landing_mosaic<H: crate::menus::host::Host + ?Sized>(
     game: &mut H,
 ) {
     if *cine.frame_counter() & 3 == 0 {
-        game.ram()
-            .write_byte(0x57, game.ram().read_byte(0x57).wrapping_sub(16));
-        if !fading && game.ram().read_byte(0x57) & 0xf0 == 0 {
-            game.ram().write_byte(0x55, 7);
-            game.ram().write_byte(0x5f, 0x80);
-            game.ram().write_byte(0x58, 0);
-            game.ram().write_byte(0x5d, 0);
-            game.ram().write_byte(0x69, 17);
+        crate::frame_display_byte!(game, Field::Mosaic => game.display_control_byte(Field::Mosaic).wrapping_sub(16));
+        if !fading && game.display_control_byte(Field::Mosaic) & 0xf0 == 0 {
+            crate::frame_display_byte!(game, Field::Mode => 7);
+            crate::frame_display_byte!(game, Field::AffineSelection => 0x80);
+            crate::frame_display_byte!(game, Field::Screens0 => 0);
+            crate::frame_display_byte!(game, Field::Characters0 => 0);
+            crate::frame_display_byte!(game, Field::MainLayers => 17);
             *cine.x() = 128;
             *cine.y() = -104i32 as u16;
             *cine.mode7_angle() = 32;
@@ -209,7 +211,7 @@ pub fn advance_intro_landing_mosaic<H: crate::menus::host::Host + ?Sized>(
     }
     if fading {
         game.fade(true);
-        if game.ram().read_byte(0x51) == 15 {
+        if game.display_control_byte(Field::Brightness) == 15 {
             crate::screen_fade::store(game, 0, 0);
             crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
                 flow.cinematic_function = 0xc7ca
@@ -260,7 +262,7 @@ pub fn advance_zebes_flight<H: crate::menus::host::Host + ?Sized>(
     let negative = (*cine.word(threshold) as i32 - limit) & 0x8000 != 0;
     if negative == (stage == 2) {
         if stage == 3 {
-            game.ram().write_byte(0x69, 16);
+            crate::frame_display_byte!(game, Field::MainLayers => 16);
         }
         crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
             flow.cinematic_function = next
@@ -423,8 +425,19 @@ pub fn draw_cinematic_rectangle<H: crate::menus::host::Host + ?Sized>(
         loop {
             // The cursor wraps before the next lookup; the word at +4 does not.
             let tile = cinematic_native_record::<0x8c>(definition, game).word(4);
-            let at = if text { 0x3000 } else { 0x3800 } + usize::from(destination);
-            crate::word_transfers!(game, ascending, 1; native(at) <- value(tile));
+
+            crate::cinematic::transfer_cinematic_words(
+                1,
+                2,
+                &[(
+                    CinematicDestination::Screen(Point::new(
+                        if text { Role::Pause } else { Role::Equipment },
+                        usize::from(destination),
+                    )),
+                    WordEndpoint::Value(tile),
+                )],
+                game,
+            );
             definition = definition.wrapping_add(2);
             destination = destination.wrapping_add(2);
             remaining = remaining.wrapping_sub(1);

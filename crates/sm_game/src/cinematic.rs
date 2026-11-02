@@ -1,7 +1,8 @@
-//! Cinematic palettes, fades, tilemap queueing and sprite resumption over RAM.
+//! Cinematic palettes, fades, live tilemap queueing and sprite resumption.
 use crate::cinematic_state::Cinematic;
-use crate::ram::RawRam as _;
-use crate::ram::word;
+use crate::display::preparation::Field;
+use crate::presentation_workspace::{Point, Role};
+use crate::word_transfers::WordEndpoint;
 
 /// A bank-`BANK` cinematic record at `cursor`, after the low-half diagnostic.
 pub fn cinematic_native_record<const BANK: u8>(
@@ -191,7 +192,7 @@ pub fn queue_cinematic_tilemap<H: crate::menus::host::Host + ?Sized>(
     game: &mut H,
 ) {
     use crate::visual_state::CinematicTilemap::*;
-    if !matches!(tiles, Japanese | JapaneseIntro) && game.ram().read_byte(0x55) == 7 {
+    if !matches!(tiles, Japanese | JapaneseIntro) && game.display_control_byte(Field::Mode) == 7 {
         return;
     }
     let (size, source) = match tiles {
@@ -202,7 +203,7 @@ pub fn queue_cinematic_tilemap<H: crate::menus::host::Host + ?Sized>(
         JapaneseIntro => (256, 0x3000),
     };
     crate::display_refresh::queue_native_transfer(
-        word!(game.VRAM_WRITE_QUEUE_TAIL),
+        game.queue_tail(),
         size,
         |_| source,
         126,
@@ -224,10 +225,10 @@ pub fn set_cinematic_blend<H: crate::menus::host::Host + ?Sized>(
     color_math: u8,
     game: &mut H,
 ) {
-    game.ram().write_byte(0x69, main_screen);
-    game.ram().write_byte(0x6b, sub_screen);
-    game.ram().write_byte(0x6f, color_window);
-    game.ram().write_byte(0x72, color_math);
+    crate::frame_display_byte!(game, Field::MainLayers => main_screen);
+    crate::frame_display_byte!(game, Field::SubLayers => sub_screen);
+    crate::frame_display_byte!(game, Field::ColorSelection => color_window);
+    crate::frame_display_byte!(game, Field::ColorMath => color_math);
 }
 
 pub fn set_cinematic_tilemap_updates(enabled: bool, cine: &mut Cinematic) {
@@ -249,20 +250,26 @@ pub fn cinematic_color_indices(mut offset: u16, count: u16) -> impl Iterator<Ite
     })
 }
 
-// Native split words retain low-before-high reads and writes.
-pub fn add_native_pair<H: crate::menus::host::Host + ?Sized>(
-    high: usize,
-    low: usize,
-    velocity: u32,
+/// Advance the ending jump's actual player velocity, fraction before whole.
+pub fn advance_cinematic_jump_velocity<H: crate::sequence_state::Access + ?Sized>(
     game: &mut H,
-) {
-    let fraction = u16::from_ne_bytes([game.ram().read_byte(low), game.ram().read_byte(low + 1)]);
-    let whole = u16::from_ne_bytes([game.ram().read_byte(high), game.ram().read_byte(high + 1)]);
-    let position = (u32::from(fraction) | (u32::from(whole) << 16)).wrapping_add(velocity);
-    crate::word_transfers!(game, ascending, 1;
-        native(low) <- value(position as u16),
-        native(high) <- value((position >> 16) as u16),
+) -> u32 {
+    use crate::session_words::Word;
+    let speed = game.sequence_words();
+    let pair = (u32::from(speed.samus_y_subspeed.to_le())
+        | (u32::from(speed.samus_y_speed.to_le()) << 16))
+        .wrapping_add(0x3800);
+    let [low_0, low_1, high_0, high_1] = pair.to_le_bytes();
+    game.set_sequence_word(
+        Word::SamusYSubspeed,
+        u16::from_le_bytes([low_0, low_1]).to_le(),
     );
+    game.set_sequence_word(
+        Word::SamusYSpeed,
+        u16::from_le_bytes([high_0, high_1]).to_le(),
+    );
+    let speed = game.sequence_words();
+    (u32::from(speed.samus_y_speed) << 16) | u32::from(speed.samus_y_subspeed)
 }
 
 /// Add the 16.16 `velocity` to sprite object `object`'s X or Y position, its
@@ -316,8 +323,8 @@ where
 }
 
 pub fn set_cinematic_backdrop<H: crate::menus::host::Host + ?Sized>(lit: bool, game: &mut H) {
-    game.ram().write_byte(0x6f, 0);
-    game.ram().write_byte(0x72, if lit { 0x81 } else { 0 });
+    crate::frame_display_byte!(game, Field::ColorSelection => 0);
+    crate::frame_display_byte!(game, Field::ColorMath => if lit { 0x81 } else { 0 });
     let color = if lit { [56, 88, 0x80] } else { [32, 64, 0x80] };
     set_fixed_color(color, game);
 }
@@ -355,13 +362,15 @@ pub fn capture_cinematic_palette<H: crate::menus::host::Host + ?Sized>(game: &mu
 }
 
 pub fn fade_cinematic_fixed_color<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    for (lane, black) in [0x20u8, 0x40, 0x80].into_iter().enumerate() {
-        let at = 0x74 + lane;
+    for (field, black) in [
+        (Field::FixedColor0, 0x20u8),
+        (Field::FixedColor1, 0x40),
+        (Field::FixedColor2, 0x80),
+    ] {
         // Keep decrement and clamp as separate stores in channel order.
-        game.ram()
-            .write_byte(at, game.ram().read_byte(at).wrapping_sub(1));
-        if game.ram().read_byte(at).wrapping_sub(black) & 0x80 != 0 {
-            game.ram().write_byte(at, black);
+        crate::frame_display_byte!(game, field => game.display_control_byte(field).wrapping_sub(1));
+        if game.display_control_byte(field).wrapping_sub(black) & 0x80 != 0 {
+            crate::frame_display_byte!(game, field => black);
         }
     }
 }
@@ -383,7 +392,15 @@ pub fn clear_cinematic_background<H: crate::menus::host::Host + ?Sized>(
     cine: &mut Cinematic,
     game: &mut H,
 ) {
-    crate::word_transfers!(game, descending, 1024; native(0x37fe) <- value(fill));
+    crate::cinematic::transfer_cinematic_words(
+        1024,
+        -2,
+        &[(
+            CinematicDestination::Screen(Point::new(Role::Pause, 0x7fe)),
+            WordEndpoint::Value(fill),
+        )],
+        game,
+    );
     // The original's four-word clear runs one word past CINEMATICBG_ARR1.
     for slot in 0..4 {
         *cine.bg_arr1(slot) = 0;
@@ -396,15 +413,94 @@ pub fn scaled_cinematic_value(value: u16, scale: u16) -> u16 {
     ((i32::from(value as i16) * i32::from(scale as i16)) >> 8) as u16
 }
 
-/// Project `point` through the cinematic Mode 7 matrix and centre in RAM.
-pub fn project_cinematic_point<H: crate::ram::WorkRamAccess + ?Sized>(
+/// Project a point through the live cinematic matrix and centre, preserving
+/// every original query and each word's low-before-high reads.
+pub fn project_cinematic_point<H: crate::display::preparation::Access + ?Sized>(
     point: crate::geometry::Point,
     game: &H,
 ) -> crate::geometry::Point {
-    use crate::ram::RawRam as _;
-    project_cinematic_point_reads(point, |at| {
-        u16::from_le_bytes([game.ram().read_byte(at), game.ram().read_byte(at + 1)])
+    use crate::display::preparation::Place;
+    project_cinematic_point_reads(point, |address| {
+        let (low, high) = match address {
+            0x78 => (Field::AffineWords0Low, Field::AffineWords0High),
+            0x7a => (Field::AffineWords1Low, Field::AffineWords1High),
+            0x7c => (Field::AffineWords2Low, Field::AffineWords2High),
+            0x80 => (Field::AffineWords4Low, Field::AffineWords4High),
+            0x82 => (Field::AffineWords5Low, Field::AffineWords5High),
+            _ => unreachable!(),
+        };
+        Place::Controls(low, high).read(game)
     })
+}
+
+/// A destination in the existing presentation owners. Displacements stay full
+/// width; only the source algorithms decide when their cursors wrap.
+#[derive(Clone, Copy)]
+pub enum CinematicDestination {
+    Screen(crate::presentation_workspace::Point),
+    Palette { offset: usize, native: bool },
+}
+
+/// Copy captured lanes in their original traversal and publication order.
+/// Native room-payload sources remain a disclosed compatibility boundary.
+pub fn transfer_cinematic_words<H: crate::menus::host::Host + ?Sized>(
+    count: usize,
+    step: isize,
+    lanes: &[(
+        CinematicDestination,
+        crate::word_transfers::WordEndpoint<'_>,
+    )],
+    game: &mut H,
+) {
+    use crate::word_transfers::{WordEndpoint, address};
+    for index in 0..count {
+        let displacement = isize::try_from(index).unwrap().checked_mul(step).unwrap();
+        for (destination, source) in lanes {
+            let value = match source {
+                WordEndpoint::Ram(base, native) => {
+                    let at = address(*base, displacement);
+                    let bytes = [game.compatibility_byte(at), game.compatibility_byte(at + 1)];
+                    if *native {
+                        u16::from_ne_bytes(bytes)
+                    } else {
+                        u16::from_le_bytes(bytes)
+                    }
+                }
+                source => source.read(displacement),
+            };
+            match *destination {
+                CinematicDestination::Screen(point) => {
+                    let offset = address(isize::try_from(point.offset).unwrap(), displacement);
+                    game.screen_write_native_word(
+                        crate::presentation_workspace::Point::new(point.role, offset),
+                        value,
+                    );
+                }
+                CinematicDestination::Palette { offset, native } => {
+                    let offset = address(isize::try_from(offset).unwrap(), displacement);
+                    if native {
+                        game.palette_write_native_word(false, offset, value);
+                    } else {
+                        game.palette_write_word(false, offset, value);
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Capture the current ROM allocation at the transfer endpoint's original phase.
+pub fn cinematic_rom_words<H: crate::word_transfers::LoadedRom + ?Sized>(
+    address: u32,
+    index: isize,
+    game: &H,
+) -> crate::word_transfers::WordEndpoint<'static> {
+    let image = game.loaded_rom_image();
+    let base = crate::word_transfers::lorom_offset(address);
+    crate::word_transfers::WordEndpoint::Rom(
+        image,
+        base.checked_add(index.checked_mul(2).unwrap()).unwrap(),
+    )
 }
 
 /// Project `point` with the matrix and centre words `read` returns by RAM address.
@@ -422,4 +518,34 @@ pub fn project_cinematic_point_reads(
         x: projected_x.wrapping_add(read(0x80)),
         y: read(0x82).wrapping_sub(projected_y),
     }
+}
+
+/// Clear the cinematic entrance's exit through the supplied world identity map.
+pub fn clear_cinematic_exit<H: crate::runtime_access::RuntimeAccess + ?Sized>(game: &mut H) {
+    use crate::session_access::SessionAccess as _;
+    let mut runtime = game.runtime();
+    runtime.session_mut().set_exit_key(0);
+    runtime.refresh_inputs();
+}
+
+/// Set the intro drawing dispatch on its existing player transition owner.
+pub fn set_cinematic_draw_mode<H: crate::runtime_access::RuntimeAccess + ?Sized>(
+    mode: crate::player_transitions::state::DrawMode,
+    game: &mut H,
+) {
+    use crate::session_access::SessionAccess as _;
+    let mut runtime = game.runtime();
+    runtime.session_mut().player.transitions.draw_handler = mode;
+    runtime.refresh_inputs();
+}
+
+/// Set scene two's player frame dispatch in alpha-before-beta order.
+pub fn set_cinematic_frame_modes<H: crate::runtime_access::RuntimeAccess + ?Sized>(game: &mut H) {
+    use crate::player_transitions::state::{FrameAlphaMode, FrameBetaMode};
+    use crate::session_access::SessionAccess as _;
+    let mut runtime = game.runtime();
+    let transitions = &mut runtime.session_mut().player.transitions;
+    transitions.frame_alpha = FrameAlphaMode::from_raw(0xe6c9);
+    transitions.frame_beta = FrameBetaMode::from_raw(0xe833);
+    runtime.refresh_inputs();
 }

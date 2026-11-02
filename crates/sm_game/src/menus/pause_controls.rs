@@ -4,7 +4,6 @@ use super::{equipment_menu, map_menu, menu_tilemap};
 use crate::menu_state::MenuScreens;
 use crate::menu_state::MenuState;
 use crate::ram::RawRam as _;
-use crate::ram::word;
 
 pub fn hook_address<H: crate::menus::host::Host + ?Sized>(pausing: bool, game: &H) -> u32 {
     let offset = if pausing { 0x601 } else { 0x604 };
@@ -29,7 +28,7 @@ pub fn initialize<H: crate::menus::host::Host + ?Sized>(menu: &mut MenuState, ga
         screens.map.scrolling_speed_index = 0;
     });
     crate::display_refresh::queue_fx_clear(game);
-    word!(game.GAME_STATE += 1);
+    crate::gameplay_word!(game.GAME_STATE += 1);
 }
 
 pub fn fade_in<H: crate::menus::host::Host + ?Sized>(game: &mut H) -> u8 {
@@ -40,9 +39,9 @@ pub fn fade_in<H: crate::menus::host::Host + ?Sized>(game: &mut H) -> u8 {
             crate::menus::state::with(game, |game, screens| draw_map(menu, game, screens));
         }
         game.fade(true);
-        if game.ram().read_byte(crate::ram::mirror::INIDISP) == 15 {
+        if game.display_control_byte(crate::display::preparation::Field::Brightness) == 15 {
             crate::screen_fade::store(game, 0, 0);
-            word!(game.GAME_STATE += 1);
+            crate::gameplay_word!(game.GAME_STATE += 1);
         }
         0
     })
@@ -76,7 +75,7 @@ pub fn fade_tab<const EQUIPMENT: bool, H: crate::menus::host::Host + ?Sized>(
     }
     menu.pause_screen_mode = u16::from(EQUIPMENT);
     game.fade(true);
-    if game.ram().read_byte(crate::ram::mirror::INIDISP) == 15 {
+    if game.display_control_byte(crate::display::preparation::Field::Brightness) == 15 {
         crate::screen_fade::store(game, 0, 0);
         let mut selected = menu.pausemenu_button_label_mode;
         if menu.pausemenu_button_label_mode != 0 {
@@ -107,7 +106,7 @@ pub fn fade_out_tab<H: crate::menus::host::Host + ?Sized>(
         menu.pause_screen_mode = 0;
     }
     game.fade(false);
-    if game.ram().read_byte(crate::ram::mirror::INIDISP) == 0x80 {
+    if game.display_control_byte(crate::display::preparation::Field::Brightness) == 0x80 {
         enable(game);
         crate::screen_fade::store(game, 0, 0);
         menu.menu_index = menu.menu_index.wrapping_add(1);
@@ -202,18 +201,22 @@ pub fn save_graphics<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
             let _high = game.physical_scroll_byte(word, true);
             low
         } else {
-            game.ram().read_byte(source)
+            let field = graphics_field(index);
+            match field {
+                Some(field) => game.display_control_byte(field),
+                // Layer-2 scroll bytes stay with their current room control owner.
+                None => game.ram().read_byte(source),
+            }
         };
-        game.ram()
-            .write_byte(crate::ram::bytes::PAUSEMENU_BAK_BG1SC + index, value);
+        super::state::with(game, |_, graphics: &mut crate::menu_state::MenuGraphics| {
+            graphics.bytes[index] = value;
+        });
     }
 }
 
 pub fn restore_graphics<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     for index in [13, 14, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, 15, 16] {
-        let value = game
-            .ram()
-            .read_byte(crate::ram::bytes::PAUSEMENU_BAK_BG1SC + index);
+        let value = super::state::load::<crate::menu_state::MenuGraphics, _>(game).bytes[index];
         if (6..12).contains(&index) {
             let word = [
                 crate::display_scroll::Word::Bg1H,
@@ -225,7 +228,14 @@ pub fn restore_graphics<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
             ][index - 6];
             game.write_physical_scroll_byte(word, false, value);
         } else {
-            game.ram().write_byte(GRAPHICS_MIRRORS[index], value);
+            match graphics_field(index) {
+                Some(field) => game.store_display_control_byte(
+                    field,
+                    value,
+                    crate::display::preparation::Store::Owned,
+                ),
+                None => game.ram().write_byte(GRAPHICS_MIRRORS[index], value),
+            }
         }
     }
 }
@@ -234,7 +244,7 @@ fn advance<H: crate::menus::host::Host + ?Sized>(menu: &mut MenuState, game: &mu
     shoulder_input(menu, game);
     map_menu::animate_pause_sprite(2, 0x18, 0xd0, menu, game);
     map_menu::animate_pause_sprite(2, 0xe8, 0xd0, menu, game);
-    if word!(game.NEWLY_HELD_DOWN_TIMED_HELD_INPUT) & K_BUTTON_START as u16 != 0 {
+    if crate::gameplay_word!(game.NEWLY_HELD_DOWN_TIMED_HELD_INPUT) & K_BUTTON_START as u16 != 0 {
         game.queue_sound(0, 0x38_u8, 6);
         crate::screen_fade::store(game, 1, 1);
         let previous = menu.pausemenu_button_label_mode;
@@ -242,19 +252,20 @@ fn advance<H: crate::menus::host::Host + ?Sized>(menu: &mut MenuState, game: &mu
         menu_tilemap::pause_labels(menu.pausemenu_button_label_mode, game);
         menu.pausemenu_button_label_mode = previous;
         menu.pausemenu_start_lr_pressed_highlight_timer = 11;
-        word!(game.GAME_STATE += 1);
+        crate::gameplay_word!(game.GAME_STATE += 1);
     }
     menu_tilemap::queue_pause_labels(game);
 }
 
 fn shoulder_input<H: crate::menus::host::Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
     let (index, highlight, mode) =
-        if word!(game.NEWLY_HELD_DOWN_TIMED_HELD_INPUT) & K_BUTTON_L as u16 != 0 {
+        if crate::gameplay_word!(game.NEWLY_HELD_DOWN_TIMED_HELD_INPUT) & K_BUTTON_L as u16 != 0 {
             if menu.pausemenu_button_label_mode == 0 {
                 return;
             }
             (5, 1, 0)
-        } else if word!(game.NEWLY_HELD_DOWN_TIMED_HELD_INPUT) & K_BUTTON_R as u16 != 0
+        } else if crate::gameplay_word!(game.NEWLY_HELD_DOWN_TIMED_HELD_INPUT) & K_BUTTON_R as u16
+            != 0
             && menu.pausemenu_button_label_mode != 2
         {
             (2, 2, 2)
@@ -291,5 +302,21 @@ pub fn draw_shoulder<H: crate::menus::host::Host + ?Sized>(menu: &mut MenuState,
 fn draw_start<H: crate::menus::host::Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
     if tick_highlight(menu) {
         crate::sprite_output::menu(0x2b, 0x90, 0xd0, 0, game);
+    }
+}
+
+fn graphics_field(index: usize) -> Option<crate::display::preparation::Field> {
+    use crate::display::preparation::Field;
+    match index {
+        0 => Some(Field::Screens0),
+        1 => Some(Field::Screens1),
+        2 => Some(Field::Screens2),
+        3 => Some(Field::Characters0),
+        4 => Some(Field::Characters1),
+        5 => Some(Field::ObjectLayout),
+        12 => Some(Field::Mode),
+        15 => Some(Field::Mosaic),
+        16 => Some(Field::NextColorMath),
+        _ => None,
     }
 }

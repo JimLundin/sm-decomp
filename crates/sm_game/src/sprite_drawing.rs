@@ -1,6 +1,5 @@
-//! ROM spritemap decoding and the native host for shared object staging.
-use crate::ram::RawRam as _;
-use crate::{scene::objects, sprite_output::SpriteHost};
+//! Lazy spritemap geometry and access to the canonical object staging owner.
+use crate::scene::objects;
 use sm_data::cartridge::RomImage;
 use std::convert::Infallible;
 
@@ -17,7 +16,7 @@ impl SpriteMap {
     fn word(&self, offset: usize) -> u16 {
         u16::from_ne_bytes([self.byte(offset), self.byte(offset + 1)])
     }
-    pub fn draw<H: SpriteHost + ?Sized>(
+    pub fn draw<H: ObjectAccess + ?Sized>(
         self,
         position: (u16, u16),
         tile_word: impl Fn(u16) -> u16,
@@ -64,50 +63,44 @@ impl<G: Geometry, E> objects::Geometry for NativeGeometry<'_, G, E> {
         Ok(self.0.tile(record))
     }
 }
-pub struct NativeObjects<'a, H: ?Sized>(pub &'a mut H);
-impl<H: SpriteHost + ?Sized> objects::Host for NativeObjects<'_, H> {
+/// Canonical object storage, with narrow compatibility handling for actual spill aliases.
+/// Offsets retain the original full byte identity relative to staging.
+pub trait ObjectAccess {
+    fn object_native_word(&self, offset: usize) -> u16;
+    fn object_little_word(&self, offset: usize) -> u16;
+    fn object_write_byte(&mut self, offset: usize, value: u8);
+    /// Preflight both bytes before storing either.
+    fn object_write_native_slice(&mut self, offset: usize, value: u16);
+    /// Store the first byte before attempting the second.
+    fn object_write_native_bytes(&mut self, offset: usize, value: u16);
+}
+/// The same canonical owner serves ordinary, Samus and boss drawing.
+pub struct SessionObjects<'a, H: ?Sized>(pub &'a mut H);
+impl<H: ObjectAccess + ?Sized> objects::Host for SessionObjects<'_, H> {
     type Error = Infallible;
     fn read_native_word(&mut self, offset: usize) -> Result<u16, Infallible> {
-        let at = 0x370 + offset;
-        Ok(u16::from_ne_bytes([
-            self.0.ram().read_byte(at),
-            self.0.ram().read_byte(at + 1),
-        ]))
+        Ok(self.0.object_native_word(offset))
     }
     fn read_little_word(&mut self, offset: usize) -> Result<u16, Infallible> {
-        let at = 0x370 + offset;
-        Ok(u16::from_le_bytes([
-            self.0.ram().read_byte(at),
-            self.0.ram().read_byte(at + 1),
-        ]))
+        Ok(self.0.object_little_word(offset))
     }
     fn write_byte(&mut self, offset: usize, value: u8) -> Result<(), Infallible> {
-        self.0.ram().write_byte(0x370 + offset, value);
+        self.0.object_write_byte(offset, value);
         Ok(())
     }
     fn write_native_slice(&mut self, offset: usize, value: u16) -> Result<(), Infallible> {
-        self.0.ram().copy_in(0x370 + offset, &value.to_ne_bytes());
+        self.0.object_write_native_slice(offset, value);
         Ok(())
     }
     fn write_native_bytes(&mut self, offset: usize, value: u16) -> Result<(), Infallible> {
-        let at = 0x370 + offset;
-        let bytes = value.to_ne_bytes();
-        self.0.ram().write_byte(at, bytes[0]);
-        self.0.ram().write_byte(at + 1, bytes[1]);
+        self.0.object_write_native_bytes(offset, value);
         Ok(())
     }
-    fn started(&mut self, clip: Clip) -> Result<(), Infallible> {
-        crate::probe::hit(match clip {
-            Clip::None => "sprites.wrap",
-            Clip::Inside | Clip::EnemyInside => "sprites.inside",
-            Clip::Outside | Clip::EnemyOutside => "sprites.outside",
-            Clip::Bounded => "sprites.bounded",
-            Clip::BoundedOutside => "sprites.bounded-outside",
-        });
+    fn started(&mut self, _clip: Clip) -> Result<(), Infallible> {
         Ok(())
     }
 }
-pub fn draw<H: SpriteHost + ?Sized>(
+pub fn draw<H: ObjectAccess + ?Sized>(
     map: &impl Geometry,
     position: (u16, u16),
     tile_word: impl Fn(u16) -> u16,
@@ -115,7 +108,7 @@ pub fn draw<H: SpriteHost + ?Sized>(
     game: &mut H,
 ) {
     objects::draw(
-        &mut NativeObjects(game),
+        &mut SessionObjects(game),
         &mut NativeGeometry(map, std::marker::PhantomData),
         position,
         clip,
@@ -123,41 +116,13 @@ pub fn draw<H: SpriteHost + ?Sized>(
     )
     .unwrap();
 }
-/// Object staging as the host's session view projects it ($7E:0370..$0591).
-pub struct SessionObjects<'a, H: ?Sized>(pub &'a mut H);
-impl<H: crate::runtime_access::SessionRam + ?Sized> objects::Host for SessionObjects<'_, H> {
-    type Error = Infallible;
-    fn read_native_word(&mut self, offset: usize) -> Result<u16, Infallible> {
-        Ok(self.0.native_word(0x370 + offset))
-    }
-    fn read_little_word(&mut self, offset: usize) -> Result<u16, Infallible> {
-        Ok(self.0.word(0x370 + offset))
-    }
-    fn write_byte(&mut self, offset: usize, value: u8) -> Result<(), Infallible> {
-        self.0.set_byte(0x370 + offset, value);
-        Ok(())
-    }
-    fn write_native_slice(&mut self, offset: usize, value: u16) -> Result<(), Infallible> {
-        self.0.write_slice_native(0x370 + offset, value);
-        Ok(())
-    }
-    fn write_native_bytes(&mut self, offset: usize, value: u16) -> Result<(), Infallible> {
-        let [first, second] = value.to_ne_bytes();
-        self.0.set_byte(0x370 + offset, first);
-        self.0.set_byte(0x371 + offset, second);
-        Ok(())
-    }
-    fn started(&mut self, _clip: Clip) -> Result<(), Infallible> {
-        Ok(())
-    }
-}
 /// Point the object cursor back at the first entry, on the projected objects.
-pub fn reset_cursor<H: crate::runtime_access::SessionRam + ?Sized>(game: &mut H) {
+pub fn reset_cursor<H: ObjectAccess + ?Sized>(game: &mut H) {
     let Ok(()) = objects::reset_cursor(&mut SessionObjects(game));
 }
 /// The ending's unused-sprite fill, on the projected objects; see
 /// `objects::hide_unused_large`.
-pub fn hide_unused_large<H: crate::runtime_access::SessionRam + ?Sized>(game: &mut H) {
+pub fn hide_unused_large<H: ObjectAccess + ?Sized>(game: &mut H) {
     let Ok(()) = objects::hide_unused_large(&mut SessionObjects(game));
 }
 /// A boss's room-coordinate spritemap on `host`'s objects; see
@@ -174,14 +139,8 @@ pub fn draw_room<H: objects::Host>(
     objects::draw_room(host, &mut geometry, origin, camera, palette, clip)
 }
 
-/// The display's objects, for the bosses' own spritemap routines: the
-/// display's staging when the Session owns the display, otherwise the
-/// objects as the session view projects them.
-pub trait DisplayObjects: crate::runtime_access::SessionRam {
-    fn owned_objects(&mut self) -> Option<&mut crate::scene::state::ObjectStaging> {
-        None
-    }
-    /// Add `map` at room position `origin` to OAM; see `objects::draw_room`.
+/// Boss room drawing uses the same storage protocol as every public draw path.
+pub trait DisplayObjects: ObjectAccess {
     fn draw_room_spritemap(
         &mut self,
         map: &SpriteMap,
@@ -190,23 +149,19 @@ pub trait DisplayObjects: crate::runtime_access::SessionRam {
         palette: u16,
         clip: objects::RoomClip,
     ) {
-        if let Some(objects) = self.owned_objects() {
-            draw_room(objects, map, origin, camera, palette, clip).expect("display objects");
-        } else {
-            let Ok(()) = draw_room(
-                &mut SessionObjects(self),
-                map,
-                origin,
-                camera,
-                palette,
-                clip,
-            );
-        }
+        let Ok(()) = draw_room(
+            &mut SessionObjects(self),
+            map,
+            origin,
+            camera,
+            palette,
+            clip,
+        );
     }
 }
-pub fn finish_frame<H: SpriteHost + ?Sized>(game: &mut H) {
-    objects::finish_frame(&mut NativeObjects(game)).unwrap();
+pub fn finish_frame<H: ObjectAccess + ?Sized>(game: &mut H) {
+    objects::finish_frame(&mut SessionObjects(game)).unwrap();
 }
-pub fn clear_high_table<H: SpriteHost + ?Sized>(game: &mut H) {
-    objects::clear_high_table(&mut NativeObjects(game)).unwrap();
+pub fn clear_high_table<H: ObjectAccess + ?Sized>(game: &mut H) {
+    objects::clear_high_table(&mut SessionObjects(game)).unwrap();
 }

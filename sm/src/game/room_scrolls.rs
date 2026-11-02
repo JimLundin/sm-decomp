@@ -10,7 +10,9 @@ impl sm_game::room_scrolls::Host for crate::game::session_runtime::Runtime<'_> {
         k: u16,
         layout: sm_game::display::transfer::ScrollingLayout,
     ) {
-        self.foreign(|game| crate::game::display_refresh::queue_scrolling_tiles(k, layout, game));
+        self.owned_call(|runtime| {
+            sm_game::display_refresh::queue_scrolling_tiles(k, layout, runtime)
+        });
     }
     fn flush_tilemaps(&mut self) {
         // SAFETY: room scrolling runs from the frame loop or a room-entry

@@ -7,22 +7,21 @@
 //! `GameState_37_CeresGoesBoomWithSamus_`, `GameState_39_EndingAndCredits_`,
 //! `MaybeHandleCinematicBgObjects`, `CallCinematicSprInstr` and
 //! `SetSomeStuffForSpriteObject_7`/`9` in the original decompilation.
+use crate::cinematic::CinematicDestination;
 use crate::cinematic::{advance_cinematic_coordinate, advance_cinematic_fade, set_fixed_color};
 use crate::cinematic_host::Host;
 use crate::cinematic_objects::CinematicObjects;
 use crate::cinematic_state::Cinematic;
+use crate::display::preparation::Field;
 use crate::display::registers as reg;
 use crate::display_refresh::GraphicsAsset;
 use crate::menu_state::OptionsMenu;
-use crate::ram::RawRam as _;
 use crate::ram::mirror;
 use crate::ram::word;
 use crate::visual_state::CinematicFade;
 
 /// The cinematic functions run in bank $8B.
 const BANK: u32 = 0x8b;
-/// $7E:0612, the logo coroutine's stage.
-const LOGO_STAGE: usize = 0x612;
 /// The Nintendo logo's spritemap at $8C:80BB, centred.
 const NINTENDO_LOGO: u16 = 0x80bb;
 const NINTENDO_LOGO_POSITION: (u16, u16) = (128, 112);
@@ -84,30 +83,27 @@ fn run_function<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     crate::cinematic_dispatch::run_function(address, cine, game);
 }
 
-/// $0612: the NMIs a cinematic function still waits for.
-const NMI_WAITS: usize = 0x612;
-
 /// Whether the cinematic function resumes after a wait for NMIs.
 pub fn resuming<H: Host + ?Sized>(game: &H) -> bool {
-    game.ram().read_byte(NMI_WAITS) != 0
+    game.screen_primary() != 0
 }
 
 /// Wait for `count` NMIs inside a cinematic function (`LDX #count-1;
 /// JSL $808338; DEX; BPL`): true while the function must return and the
 /// game state yield; the next frame's call of the same function resumes here.
 pub fn wait_for_nmis<H: Host + ?Sized>(count: u8, game: &mut H) -> bool {
-    let mut left = game.ram().read_byte(NMI_WAITS);
+    let mut left = game.screen_primary();
     if left == 0 {
         left = count;
     }
     while crate::display_refresh::wait(true, game) == 0 {
         left -= 1;
         if left == 0 {
-            game.ram().write_byte(NMI_WAITS, 0);
+            game.screen_set_primary(0);
             return false;
         }
     }
-    game.ram().write_byte(NMI_WAITS, left);
+    game.screen_set_primary(left);
     true
 }
 
@@ -136,7 +132,7 @@ pub fn draw_nintendo_logo<H: Host + ?Sized>(game: &mut H) {
 /// Was `InitializeIoDisplayLogo_Async`.
 pub fn nintendo_logo<H: Host + ?Sized>(game: &mut H) -> u8 {
     crate::probe::hit("coroutine.logo");
-    let mut stage = game.compatibility_byte(LOGO_STAGE);
+    let mut stage = game.screen_primary();
     if stage == 0 {
         crate::display::sequence::write_register_and_mirror(
             game,
@@ -188,8 +184,19 @@ pub fn nintendo_logo<H: Host + ?Sized>(game: &mut H) -> u8 {
         );
         GraphicsAsset::Decompress(0x9580d8, 0x15000).load(game);
         GraphicsAsset::VramWords(0x7f5000, 0x6000, 0x4000).load(game);
-        game.ram().write_byte(mirror::INIDISP, 0x80);
-        crate::word_transfers!(game, ascending, 256; le(PALETTE_BUFFER, 0) <- rom(TITLE_PALETTES, 0));
+        crate::frame_display_byte!(game, Field::Brightness => 0x80);
+        crate::cinematic::transfer_cinematic_words(
+            256,
+            2,
+            &[(
+                CinematicDestination::Palette {
+                    offset: 0,
+                    native: false,
+                },
+                crate::cinematic::cinematic_rom_words(TITLE_PALETTES, 0, game),
+            )],
+            game,
+        );
         crate::display_refresh::enable(true, game);
         crate::screen_fade::store(game, 1, 1);
     }
@@ -198,7 +205,7 @@ pub fn nintendo_logo<H: Host + ?Sized>(game: &mut H) -> u8 {
         if stage != 0 {
             let yielded: u8 = crate::display_refresh::wait(true, game);
             if yielded != 0 {
-                game.write_owned_byte(LOGO_STAGE, stage);
+                game.screen_set_primary(stage);
                 return yielded;
             }
             match stage {
@@ -252,7 +259,7 @@ pub fn nintendo_logo<H: Host + ?Sized>(game: &mut H) -> u8 {
         };
         crate::sprite_drawing::finish_frame(game);
     }
-    game.write_owned_byte(LOGO_STAGE, 0);
+    game.screen_set_primary(0);
     0
 }
 

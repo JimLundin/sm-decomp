@@ -15,34 +15,45 @@ impl<T> Host for T where
 }
 
 pub fn finish_health_and_time<H: Host + ?Sized>(game: &mut H) {
-    let inventory = crate::session_cohort::load::<crate::inventory::Inventory, _>(game);
+    let inventory = crate::gameplay_context::inventory(game);
     if (inventory.health.current as i16) <= 0 {
         if (inventory.reserve_mode & 1) != 0 && inventory.reserve_health != 0 {
             crate::sequence_word!(game.TIME_IS_FROZEN_FLAG = 0x8000);
-            word!(game.GAME_STATE = K_GAME_STATE_27_RESERVE_TANKS_AUTO as u16);
+            crate::gameplay_word!(game.GAME_STATE = K_GAME_STATE_27_RESERVE_TANKS_AUTO as u16);
             game.player_command(0x1b);
-        } else if word!(game.GAME_STATE) as i32 != K_GAME_STATE_8_MAIN_GAMEPLAY as i32 {
+        } else if crate::gameplay_word!(game.GAME_STATE) as i32
+            != K_GAME_STATE_8_MAIN_GAMEPLAY as i32
+        {
             return;
         } else {
             crate::sequence_word!(game.TIME_IS_FROZEN_FLAG = 0x8000);
             game.player_command(0x11);
-            word!(game.GAME_STATE = K_GAME_STATE_19_SAMUS_NO_HEALTH as u16);
+            crate::gameplay_word!(game.GAME_STATE = K_GAME_STATE_19_SAMUS_NO_HEALTH as u16);
         }
     }
     // Clock words are frames, seconds, minutes, then hours in ascending RAM order.
     'carry: {
-        for timer in (fields::GAME_TIME_FRAMES..fields::GAME_TIME_HOURS).step_by(2) {
-            checked_word!(game, timer; += 1);
-            if (checked_word!(game, timer;).wrapping_sub(60) as i16) < 0 {
+        for timer in [
+            crate::game_loop::Word::GameTimeFrames,
+            crate::game_loop::Word::GameTimeSeconds,
+            crate::game_loop::Word::GameTimeMinutes,
+        ]
+        .map(crate::gameplay_context::Word::Loop)
+        {
+            let value = crate::gameplay_context::Access::gameplay_word(game, timer).wrapping_add(1);
+            crate::gameplay_context::Access::set_gameplay_word(game, timer, value);
+            if (crate::gameplay_context::Access::gameplay_word(game, timer).wrapping_sub(60) as i16)
+                < 0
+            {
                 break 'carry;
             }
-            checked_word!(game, timer; = 0);
+            crate::gameplay_context::Access::set_gameplay_word(game, timer, 0);
         }
-        word!(game.GAME_TIME_HOURS += 1);
+        crate::gameplay_word!(game.GAME_TIME_HOURS += 1);
     }
-    if (word!(game.GAME_TIME_HOURS).wrapping_sub(100) as i16) >= 0 {
-        word! { game, 59; GAME_TIME_FRAMES, GAME_TIME_SECONDS, GAME_TIME_MINUTES }
-        word!(game.GAME_TIME_HOURS = 99);
+    if (crate::gameplay_word!(game.GAME_TIME_HOURS).wrapping_sub(100) as i16) >= 0 {
+        crate::gameplay_word! { game, 59; GAME_TIME_FRAMES, GAME_TIME_SECONDS, GAME_TIME_MINUTES }
+        crate::gameplay_word!(game.GAME_TIME_HOURS = 99);
     }
 }
 
@@ -56,7 +67,7 @@ const ROOM_SHAKES: [u16; 144] = [
 ];
 
 pub fn finish_frame<H: Host + ?Sized>(game: &mut H) {
-    let quake = crate::room_view::effects(game);
+    let quake = crate::gameplay_context::room_effects(game);
     if quake.earthquake_timer != 0
         && crate::sequence_word!(game.TIME_IS_FROZEN_FLAG) == 0
         && (quake.earthquake_kind as i16).wrapping_sub(36) < 0
@@ -81,7 +92,7 @@ pub fn finish_frame<H: Host + ?Sized>(game: &mut H) {
             let value = old.wrapping_add(ROOM_SHAKES[index + offset].wrapping_mul(direction));
             game.set_scroll_word(register, value);
         }
-        crate::room_view::set_effect(
+        crate::gameplay_context::set_effect(
             game,
             crate::room_view::EffectWord::EarthquakeTimer,
             quake.earthquake_timer.wrapping_sub(1),

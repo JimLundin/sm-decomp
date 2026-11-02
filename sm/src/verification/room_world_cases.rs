@@ -1143,9 +1143,7 @@ struct VerificationSettlement {
 impl sm_game::scene::commit::RoomEffects for VerificationSettlement {
     fn follow_transition(
         &mut self,
-        _: &mut sm_game::scene::state::DisplayDescription,
-        _: &mut sm_game::scene::commit::DisplayImage,
-        _: &mut std::sync::Arc<crate::game::scene::records::SceneMedia>,
+        _: &mut sm_game::scene::commit::SettlementContext<'_, '_>,
     ) -> Result<(), sm_game::scene::state::DisplayError> {
         Err(sm_game::scene::state::DisplayError::Source)
     }
@@ -1156,16 +1154,14 @@ impl sm_game::scene::commit::RoomEffects for VerificationSettlement {
 impl sm_game::scene::owned_hdma::Destinations for VerificationSettlement {
     fn read_destination(
         &mut self,
-        _: &mut sm_game::scene::state::DisplayDescription,
-        _: &mut sm_game::scene::commit::DisplayImage,
+        _: &mut sm_game::scene::commit::SettlementContext<'_, '_>,
         _: u8,
     ) -> Result<u8, sm_game::scene::state::DisplayError> {
         Err(sm_game::scene::state::DisplayError::Source)
     }
     fn write_destination(
         &mut self,
-        _: &mut sm_game::scene::state::DisplayDescription,
-        _: &mut sm_game::scene::commit::DisplayImage,
+        _: &mut sm_game::scene::commit::SettlementContext<'_, '_>,
         _: u8,
         _: u8,
     ) -> Result<(), sm_game::scene::state::DisplayError> {
@@ -1178,9 +1174,7 @@ impl sm_game::scene::owned_hdma::Destinations for VerificationSettlement {
 impl sm_game::scene::commit::SettlementEffects for VerificationSettlement {
     fn raster_row(
         &mut self,
-        state: &mut sm_game::scene::state::DisplayDescription,
-        image: &mut sm_game::scene::commit::DisplayImage,
-        media: &mut std::sync::Arc<crate::game::scene::records::SceneMedia>,
+        settlement: &mut sm_game::scene::commit::SettlementContext<'_, '_>,
         row: u16,
     ) -> Result<crate::game::scene::records::ObjectContext, sm_game::scene::state::DisplayError>
     {
@@ -1188,6 +1182,9 @@ impl sm_game::scene::commit::SettlementEffects for VerificationSettlement {
             crate::game::scene::records::{ObjectContext, ObjectSelection},
             sm_game::scene::state::DisplayError,
         };
+        let state = settlement.state();
+        let image = settlement.image();
+        let media = settlement.media().ok_or(DisplayError::Incomplete)?;
         let mut context = ObjectContext {
             selection: ObjectSelection {
                 even_frame: state.raster.even_frame,
@@ -1196,9 +1193,12 @@ impl sm_game::scene::commit::SettlementEffects for VerificationSettlement {
             palette: image.palette,
         };
         let rendered = verification_settlement_raster(state, image, media, context, row)?;
-        state.raster.range_overflow = rendered.sprites.overflow.range;
-        state.raster.time_overflow = rendered.sprites.overflow.time;
-        state.raster.has_objects = rendered.sprites.has_tiles;
+        let raster = settlement.raster_mut();
+        raster.range_overflow = rendered.sprites.overflow.range;
+        raster.time_overflow = rendered.sprites.overflow.time;
+        raster.has_objects = rendered.sprites.has_tiles;
+        let image = settlement.image();
+        let media = settlement.media().ok_or(DisplayError::Incomplete)?;
         self.rendered.push(rendered);
         if self.fail_row == Some(row) {
             context.selection.size_set = 7;

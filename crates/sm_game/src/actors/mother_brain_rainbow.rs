@@ -40,8 +40,19 @@ enum Direction {
 
 /// What the beam window reads beyond Mother Brain's state: the loaded
 /// cartridge's edge gradients, and the Session's HDMA objects.
-pub trait Host: State + LoadedImage + crate::session_access::SessionAccess {}
-impl<T: State + LoadedImage + crate::session_access::SessionAccess + ?Sized> Host for T {}
+pub trait Host:
+    State + LoadedImage + crate::session_access::SessionAccess + crate::hdma_objects::HdmaTable
+{
+}
+impl<
+    T: State
+        + LoadedImage
+        + crate::session_access::SessionAccess
+        + crate::hdma_objects::HdmaTable
+        + ?Sized,
+> Host for T
+{
+}
 
 /// $7E:0998 and $7E:186E: the game state and the beam's layer blending.
 const GAME_STATE: usize = crate::ram::words::GAME_STATE;
@@ -363,8 +374,10 @@ pub fn initialize_hdma(game: &mut impl Host) {
 pub fn advance_hdma(game: &mut impl Host) {
     if game.word(GAME_STATE) == DEATH_SEQUENCE_START {
         // Delete the HDMA object being run.
-        let hdma = &mut game.session_mut().hdma;
-        hdma.objects[usize::from(hdma.selected >> 1)].channels = 0;
+        let index = usize::from(
+            crate::hdma_objects::HdmaTable::hdma_word(game, crate::hdma::Word::Selected) >> 1,
+        );
+        crate::hdma_word!(game, index, Channels => 0);
     } else {
         game.write_word_le(BEAM_BLENDING, LAYER_BLENDING);
         if game.word(GAME_STATE) != RESERVE_TANKS_AUTO {
@@ -389,12 +402,12 @@ fn rainbow_colour(game: &mut impl Host, index: isize) -> u16 {
 /// next colour of the rainbow, wrapping to its first at the end marker.
 fn set_backdrop_colour(game: &mut impl Host) {
     // The colour index is HDMA object 0's A, a byte offset into the rainbow.
-    let index = game.session().hdma.objects[0].a;
+    let index = crate::hdma_word!(game, 0, A);
     let mut colour = rainbow_colour(game, (index >> 1) as isize);
     if colour & 0x8000 == 0 {
-        game.session_mut().hdma.objects[0].a = index.wrapping_add(4);
+        crate::hdma_word!(game, 0, A => index.wrapping_add(4));
     } else {
-        game.session_mut().hdma.objects[0].a = 0;
+        crate::hdma_word!(game, 0, A => 0);
         colour = rainbow_colour(game, 0);
     }
     game.set_byte(BACKDROP, ((colour as u8) & 0x1f) | 0x20);

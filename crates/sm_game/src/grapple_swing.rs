@@ -359,11 +359,11 @@ pub fn change_length<H: Host + ?Sized>(game: &mut H) -> u8 {
     0
 }
 pub fn apply_input<H: Host + ?Sized>(game: &mut H) {
-    if word!(game.JOYPAD1_NEWKEYS) & K_BUTTON_UP as u16 != 0 {
+    if crate::gameplay_word!(game.JOYPAD1_NEWKEYS) & K_BUTTON_UP as u16 != 0 {
         if game.session().player.grapple_length != 0 {
             game.session_mut().player.swing.length_delta = (-2i16) as u16;
         }
-    } else if word!(game.JOYPAD1_NEWKEYS) & K_BUTTON_DOWN as u16 != 0 {
+    } else if crate::gameplay_word!(game.JOYPAD1_NEWKEYS) & K_BUTTON_DOWN as u16 != 0 {
         if (i32::from(game.session().player.grapple_length) - 64) & 0x8000 != 0 {
             game.session_mut().player.swing.length_delta = 2;
         } else {
@@ -372,9 +372,9 @@ pub fn apply_input<H: Host + ?Sized>(game: &mut H) {
     }
     let angle = u16::from(game.grapple_angle()) << 8;
     if (0x4000..0xc000).contains(&angle) {
-        let direction = if word!(game.JOYPAD1_LASTKEYS) & 0x200 != 0 {
+        let direction = if crate::gameplay_word!(game.JOYPAD1_LASTKEYS) & 0x200 != 0 {
             1i16
-        } else if word!(game.JOYPAD1_LASTKEYS) & 0x100 != 0 {
+        } else if crate::gameplay_word!(game.JOYPAD1_LASTKEYS) & 0x100 != 0 {
             -1
         } else {
             0
@@ -459,7 +459,9 @@ pub fn accelerate(player: &mut crate::session::Player) {
 
 pub fn rebound_jump<H: Host + ?Sized>(game: &mut H) {
     if game.session().player.swing.kick_cooldown == 0
-        || word!(game.BUTTON_CONFIG_JUMP_A) & word!(game.JOYPAD1_NEWKEYS) == 0
+        || crate::gameplay_word!(game.BUTTON_CONFIG_JUMP_A)
+            & crate::gameplay_word!(game.JOYPAD1_NEWKEYS)
+            == 0
     {
         return;
     }
@@ -623,13 +625,13 @@ fn draygon_direction<H: Host + ?Sized>(pose: u16, game: &mut H) -> u16 {
     } else {
         (K_BUTTON_RIGHT, 3, 1, 2)
     };
-    if word!(game.JOYPAD1_LASTKEYS) as i32 & toward as i32 == 0 {
+    if crate::gameplay_word!(game.JOYPAD1_LASTKEYS) as i32 & toward as i32 == 0 {
         return straight;
     }
-    if word!(game.JOYPAD1_LASTKEYS) as i32 & K_BUTTON_DOWN as i32 != 0 {
+    if crate::gameplay_word!(game.JOYPAD1_LASTKEYS) as i32 & K_BUTTON_DOWN as i32 != 0 {
         return down;
     }
-    if word!(game.JOYPAD1_LASTKEYS) as i32 & K_BUTTON_UP as i32 != 0 {
+    if crate::gameplay_word!(game.JOYPAD1_LASTKEYS) as i32 & K_BUTTON_UP as i32 != 0 {
         return up;
     }
     straight
@@ -1002,54 +1004,80 @@ fn connected_to_block<H: Host + ?Sized>(game: &mut H) -> bool {
     connected
 }
 
-/// The grapple point's tile upload runs on the compat game: it queues native
-/// VRAM transfers, so it needs only RAM words, the display owner and records.
+/// Each field is reacquired at the original read, and each write publishes immediately.
+#[derive(Clone, Copy)]
+pub enum TileField {
+    Timer,
+    Tiles,
+    Charge,
+}
+impl TileField {
+    pub const fn sequence_word(self) -> crate::session_words::Word {
+        match self {
+            Self::Timer => crate::session_words::Word::GrapplePointAnimTimer,
+            Self::Tiles => crate::session_words::Word::GrapplePointAnimPtr,
+            Self::Charge => crate::session_words::Word::FlareCounter,
+        }
+    }
+    pub fn current(self, session: &crate::session::Session) -> u16 {
+        match self {
+            Self::Timer => session.player.swing.start_animation_timer,
+            Self::Tiles => session.player.swing.start_animation_tiles,
+            Self::Charge => session.projectiles.controls.charge,
+        }
+    }
+}
+pub trait TileAccess {
+    fn tile_word(&self, field: TileField) -> u16;
+    fn store_tile_word(&mut self, field: TileField, value: u16);
+}
+
+/// The native transfer queue can alias animation and charge fields at full u16 cursors.
 pub fn update_tiles<
     H: crate::ram::CompatibilityRam
         + crate::display_refresh::DisplayOwner
         + crate::player_position::PlayerFacts
         + crate::records::Records
+        + TileAccess
         + ?Sized,
 >(
     game: &mut H,
 ) {
-    crate::session_cohort::with_projected(
+    use TileField::{Charge, Tiles, Timer};
+    let timer = game.tile_word(Timer).wrapping_sub(1);
+    game.store_tile_word(Timer, timer);
+    if game.tile_word(Timer) & 0x8000 != 0 {
+        game.store_tile_word(Timer, 5);
+        let tiles = game.tile_word(Tiles).wrapping_add(512);
+        game.store_tile_word(Tiles, tiles);
+        let tiles = game.tile_word(Tiles);
+        if (tiles as i16).wrapping_sub(grapple_aim::point_animation(game).end as i16) >= 0 {
+            let first = grapple_aim::point_animation(game).first;
+            game.store_tile_word(Tiles, first);
+        }
+    }
+    let cursor = crate::display_refresh::queue_native_transfer(
+        word!(game.VRAM_WRITE_QUEUE_TAIL),
+        32,
+        |game: &H| game.tile_word(Tiles),
+        0x9a,
+        |_: &H| 0x6200,
         game,
-        |game, words: &mut crate::session_words::SessionWords| {
-            let timer = &mut words.grapple_point_anim_timer;
-            *timer = timer.wrapping_sub(1);
-            if *timer & 0x8000 != 0 {
-                *timer = 5;
-                let tiles = &mut words.grapple_point_anim_ptr;
-                *tiles = tiles.wrapping_add(512);
-                if (*tiles as i16).wrapping_sub(grapple_aim::point_animation(game).end as i16) >= 0
-                {
-                    *tiles = grapple_aim::point_animation(game).first;
-                }
-            }
-            let tiles = words.grapple_point_anim_ptr;
-            let cursor = crate::display_refresh::queue_native_transfer(
-                word!(game.VRAM_WRITE_QUEUE_TAIL),
-                32,
-                |_: &H| tiles,
-                0x9a,
-                |_: &H| 0x6200,
-                game,
-            );
-            let index = (game.grapple_angle() >> 1 & 0xfe) >> 1;
-            crate::display_refresh::queue_native_transfer(
-                cursor,
-                128,
-                |game: &H| crate::gameplay_tables::grapple_point_tile(game, isize::from(index)),
-                0x9a,
-                |_: &H| 0x6210,
-                game,
-            );
-            if words.flare_counter.wrapping_sub(120) & 0x8000 != 0 {
-                words.flare_counter = words.flare_counter.wrapping_add(1);
-            }
-        },
     );
+    let index = ((game.grapple_angle() >> 1) & 0xfe) >> 1;
+    crate::display_refresh::queue_native_transfer(
+        cursor,
+        128,
+        |game: &H| crate::gameplay_tables::grapple_point_tile(game, isize::from(index)),
+        0x9a,
+        |_: &H| 0x6210,
+        game,
+    );
+    let charge = game.tile_word(Charge);
+    if charge.wrapping_sub(120) & 0x8000 != 0 {
+        let charge = game.tile_word(Charge).wrapping_add(1);
+        game.store_tile_word(Charge, charge);
+    }
 }
 
 pub fn update<H: Host + ?Sized>(game: &mut H) {
@@ -1081,14 +1109,18 @@ pub fn update<H: Host + ?Sized>(game: &mut H) {
 }
 
 fn shoot_held<H: Host + ?Sized>(game: &H) -> bool {
-    word!(game.BUTTON_CONFIG_SHOOT_X) & word!(game.JOYPAD1_LASTKEYS) != 0
+    crate::gameplay_word!(game.BUTTON_CONFIG_SHOOT_X) & crate::gameplay_word!(game.JOYPAD1_LASTKEYS)
+        != 0
 }
 
 fn dispatch<H: Host + ?Sized>(ea: u32, game: &mut H) {
     match ea {
         0x9bc4f0 => {
-            if (word!(game.BUTTON_CONFIG_SHOOT_X) & word!(game.JOYPAD1_NEWKEYS)) != 0
-                || (word!(game.BUTTON_CONFIG_SHOOT_X) & word!(game.JOYPAD1_NEWINPUT_SAMUSFILTER))
+            if (crate::gameplay_word!(game.BUTTON_CONFIG_SHOOT_X)
+                & crate::gameplay_word!(game.JOYPAD1_NEWKEYS))
+                != 0
+                || (crate::gameplay_word!(game.BUTTON_CONFIG_SHOOT_X)
+                    & crate::gameplay_word!(game.JOYPAD1_NEWINPUT_SAMUSFILTER))
                     != 0
             {
                 start_firing(game);

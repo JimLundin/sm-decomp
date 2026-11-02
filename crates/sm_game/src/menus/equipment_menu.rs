@@ -36,7 +36,7 @@ pub fn import(image: &sm_data::cartridge::RomImage) -> ImportedTables {
 
 /// Samus's inventory as the host's projection holds it.
 fn inventory<H: Host + ?Sized>(game: &H) -> Inventory {
-    crate::session_cohort::load(game)
+    crate::gameplay_context::inventory(game)
 }
 
 /// Category `index`'s tables; other images and indices run the four original
@@ -260,7 +260,7 @@ fn scan<H: Host + ?Sized>(
 }
 
 fn exclude_other_beam<H: Host + ?Sized>(previous: u16, game: &mut H) {
-    let removed = crate::session_cohort::with(game, |_, inventory: &mut Inventory| {
+    let removed = crate::gameplay_context::with_inventory(game, |_, inventory: &mut Inventory| {
         let beams = &mut inventory.beams.active;
         let added = *beams & !previous;
         let (remove, tile) = if added & 4 != 0 {

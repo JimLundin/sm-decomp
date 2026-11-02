@@ -32,20 +32,36 @@ impl sm_game::runtime_access::RuntimeAccess for Game {
 }
 
 impl sm_game::hdma_objects::HdmaTable for Game {
-    fn with_hdma_table<T>(
+    fn hdma_word(&self, word: sm_game::hdma::Word) -> u16 {
+        self.hdma_domain_word(word)
+    }
+    fn store_hdma_word(
         &mut self,
-        action: impl FnOnce(&mut sm_game::hdma::HdmaObjects) -> T,
-    ) -> T {
-        sm_game::hdma_objects::with_table(self, action)
+        word: sm_game::hdma::Word,
+        value: u16,
+        order: sm_game::scene::state::WordOrder,
+    ) {
+        self.store_hdma_domain_word(word, value, order);
+    }
+    fn store_hdma_byte(&mut self, word: sm_game::hdma::Word, high: bool, value: u8) {
+        self.store_hdma_domain_byte(word, high, value);
     }
 }
 
 impl sm_game::hdma_objects::HdmaTable for crate::game::session_runtime::Runtime<'_> {
-    fn with_hdma_table<T>(
+    fn hdma_word(&self, word: sm_game::hdma::Word) -> u16 {
+        self.hdma_domain_word(word)
+    }
+    fn store_hdma_word(
         &mut self,
-        action: impl FnOnce(&mut sm_game::hdma::HdmaObjects) -> T,
-    ) -> T {
-        action(&mut self.session_mut().hdma)
+        word: sm_game::hdma::Word,
+        value: u16,
+        order: sm_game::scene::state::WordOrder,
+    ) {
+        self.store_hdma_domain_word(word, value, order);
+    }
+    fn store_hdma_byte(&mut self, word: sm_game::hdma::Word, high: bool, value: u8) {
+        self.store_hdma_domain_byte(word, high, value);
     }
 }
 

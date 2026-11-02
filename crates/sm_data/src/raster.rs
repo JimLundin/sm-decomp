@@ -96,6 +96,12 @@ impl IndexedImage {
 }
 
 impl IndexedImage {
+    pub fn words(&self) -> &[u16] {
+        &self.words
+    }
+    pub fn colors(&self) -> &[u16; 256] {
+        &self.palette
+    }
     pub fn word(&self, index: usize) -> Result<u16, RasterFault> {
         self.words
             .get(index)

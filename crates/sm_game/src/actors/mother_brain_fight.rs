@@ -836,7 +836,7 @@ pub trait OwnedWords {
 pub trait Lease:
     State + escape_typewriter::Host + crate::mother_brain_visuals::PaletteHost
 {
-    type Game: Host;
+    type Game: Host + crate::hdma_objects::HdmaTable;
     fn foreign<T>(&mut self, action: impl FnOnce(&mut Self::Game) -> T) -> T;
 }
 

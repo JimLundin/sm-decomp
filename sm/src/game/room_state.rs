@@ -9,7 +9,17 @@ pub(crate) fn pause_draygon(game: &mut Game) {
 }
 
 pub(crate) fn unpause_draygon(game: &mut Game) -> crate::types::CoroutineRet {
-    if word!(game.HDMA_OBJECT_CHANNELS_BITMASK[1]) == 8 {
+    if u16::from_ne_bytes(
+        sm_game::hdma_objects::HdmaTable::hdma_word(
+            game,
+            sm_game::hdma::Word::Object {
+                index: 1,
+                field: sm_game::hdma::ObjectWord::Channels,
+            },
+        )
+        .to_le_bytes(),
+    ) == 8
+    {
         word!(game.IRQHANDLER_NEXT_HANDLER = 12);
     }
     0

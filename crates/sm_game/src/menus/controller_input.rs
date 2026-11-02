@@ -5,49 +5,72 @@ use crate::constants::buttons::{
     K_BUTTON_A, K_BUTTON_B, K_BUTTON_DOWN, K_BUTTON_L, K_BUTTON_LEFT, K_BUTTON_R, K_BUTTON_RIGHT,
     K_BUTTON_SELECT, K_BUTTON_START, K_BUTTON_UP, K_BUTTON_X, K_BUTTON_Y,
 };
-use crate::ram::{checked_word as at, word, words as fields};
+use crate::ram::{checked_word as at, word};
 
 fn repeat<H: Host + ?Sized>(offset: usize, sampled: u16, game: &mut H) {
-    let last = fields::JOYPAD1_LASTKEYS + offset;
-    let pressed = fields::JOYPAD1_NEWKEYS + offset;
-    let repeated = fields::JOYPAD1_NEWKEYS2_UNUSED + offset;
-    let previous = fields::JOYPAD1_PREV + offset;
-    let counter = fields::JOYPAD1_KEYREPEAT_CTR + offset;
-    at!(game, last; = sampled);
-    at!(game, pressed; = sampled & (at!(game, previous;) ^ sampled));
-    at!(game, repeated; = sampled & (at!(game, previous;) ^ sampled));
-    if sampled != 0 && sampled == at!(game, previous;) {
-        at!(game, counter; = at!(game, counter;).wrapping_sub(1));
-        if at!(game, counter;) == 0 {
-            at!(game, repeated; = at!(game, last;));
-            at!(game, counter; = word!(game.JOYPAD_CTR_REPEAT_NEXT));
+    use crate::{controller_state::Word as Input, gameplay_context::Word};
+    let [last, pressed, repeated, previous, counter] = match offset {
+        0 => [
+            Input::Joypad1Lastkeys,
+            Input::Joypad1Newkeys,
+            Input::Joypad1Newkeys2Unused,
+            Input::Joypad1Prev,
+            Input::Joypad1KeyrepeatCtr,
+        ],
+        2 => [
+            Input::Joypad2Last,
+            Input::Joypad2NewKeys,
+            Input::Joypad2Newkeys2,
+            Input::Joypad2Prev,
+            Input::Joypad2KeyrepeatCtr,
+        ],
+        _ => unreachable!("controller repeat has exactly two fixed callers"),
+    }
+    .map(Word::Input);
+    game.set_gameplay_word(last, sampled);
+    game.set_gameplay_word(
+        pressed,
+        crate::controller_state::pressed(sampled, game.gameplay_word(previous)),
+    );
+    game.set_gameplay_word(
+        repeated,
+        crate::controller_state::pressed(sampled, game.gameplay_word(previous)),
+    );
+    if sampled != 0 && sampled == game.gameplay_word(previous) {
+        game.set_gameplay_word(counter, game.gameplay_word(counter).wrapping_sub(1));
+        if game.gameplay_word(counter) == 0 {
+            game.set_gameplay_word(repeated, game.gameplay_word(last));
+            game.set_gameplay_word(counter, crate::gameplay_word!(game.JOYPAD_CTR_REPEAT_NEXT));
         }
     } else {
-        at!(game, counter; = word!(game.JOYPAD_CTR_REPEAT_FIRST));
+        game.set_gameplay_word(counter, crate::gameplay_word!(game.JOYPAD_CTR_REPEAT_FIRST));
     }
-    at!(game, previous; = at!(game, last;));
+    game.set_gameplay_word(previous, game.gameplay_word(last));
 }
 
 pub fn filter<H: Host + ?Sized>(delay: u16, game: &mut H) {
-    word!(game.TIMED_HELD_INPUT_TIMER_RESET = delay);
+    crate::gameplay_word!(game.TIMED_HELD_INPUT_TIMER_RESET = delay);
     let held = !game.observed_inputs().pressed & game.observed_inputs().held;
-    let unchanged = held == word!(game.JOYPAD_RELEASED_KEYS);
-    word!(game.JOYPAD_RELEASED_KEYS = held);
+    let unchanged = held == crate::gameplay_word!(game.JOYPAD_RELEASED_KEYS);
+    crate::gameplay_word!(game.JOYPAD_RELEASED_KEYS = held);
     if !unchanged {
-        word!(game.TIMED_HELD_INPUT_TIMER = word!(game.TIMED_HELD_INPUT_TIMER_RESET));
-        word!(game.TIMED_HELD_INPUT = 0);
-    } else if word!(game.TIMED_HELD_INPUT_TIMER -= 1, reread) & 0x8000 == 0 {
-        word!(game.TIMED_HELD_INPUT = 0);
+        crate::gameplay_word!(
+            game.TIMED_HELD_INPUT_TIMER = crate::gameplay_word!(game.TIMED_HELD_INPUT_TIMER_RESET)
+        );
+        crate::gameplay_word!(game.TIMED_HELD_INPUT = 0);
+    } else if crate::gameplay_word!(game.TIMED_HELD_INPUT_TIMER -= 1, reread) & 0x8000 == 0 {
+        crate::gameplay_word!(game.TIMED_HELD_INPUT = 0);
     } else {
-        word! { game;
+        crate::gameplay_word! { game;
             TIMED_HELD_INPUT_TIMER = 0;
-            PREVIOUS_TIMED_HELD_INPUT = word!(game.TIMED_HELD_INPUT);
+            PREVIOUS_TIMED_HELD_INPUT = crate::gameplay_word!(game.TIMED_HELD_INPUT);
             TIMED_HELD_INPUT = held;
         }
     }
-    word!(
-        game.NEWLY_HELD_DOWN_TIMED_HELD_INPUT = word!(game.TIMED_HELD_INPUT)
-            & (word!(game.PREVIOUS_TIMED_HELD_INPUT) ^ word!(game.TIMED_HELD_INPUT))
+    crate::gameplay_word!(
+        game.NEWLY_HELD_DOWN_TIMED_HELD_INPUT = crate::gameplay_word!(game.TIMED_HELD_INPUT)
+            & (crate::gameplay_word!(game.PREVIOUS_TIMED_HELD_INPUT)
+                ^ crate::gameplay_word!(game.TIMED_HELD_INPUT))
     );
 }
 
@@ -66,7 +89,7 @@ pub fn sample_latched<H: Host + ?Sized>(game: &mut H) {
 
 fn sample_word<H: Host + ?Sized>(first: u16, game: &mut H) {
     repeat(0, first, game);
-    if word!(game.ENABLE_DEBUG) != 0 {
+    if crate::gameplay_word!(game.ENABLE_DEBUG) != 0 {
         let second = { game.read_register_word(JOY2L as u16) };
         repeat(2, second, game);
         debug_controls(game);
@@ -76,36 +99,43 @@ fn sample_word<H: Host + ?Sized>(first: u16, game: &mut H) {
 fn debug_controls<H: Host + ?Sized>(game: &mut H) {
     let reset = (K_BUTTON_SELECT | K_BUTTON_START | K_BUTTON_L | K_BUTTON_R) as u16;
     if word!(game.IS_UPLOADING_APU) != 0 || game.observed_inputs().held != reset {
-        if word!(game.ENABLE_DEBUG) != 0 {
-            word! { game, 0; JOYPAD_DBG_1, JOYPAD_DBG_2 }
-            if (word!(game.JOYPAD_DBG_FLAGS) & 0x4000) == 0 {
+        if crate::gameplay_word!(game.ENABLE_DEBUG) != 0 {
+            crate::gameplay_word! { game, 0; JOYPAD_DBG_1, JOYPAD_DBG_2 }
+            if (crate::gameplay_word!(game.JOYPAD_DBG_FLAGS) & 0x4000) == 0 {
                 for (button, target) in [
-                    (K_BUTTON_L, fields::JOYPAD_DBG_1),
-                    (K_BUTTON_R, fields::JOYPAD_DBG_2),
+                    (
+                        K_BUTTON_L,
+                        crate::gameplay_context::Word::Loop(crate::game_loop::Word::JoypadDbg1),
+                    ),
+                    (
+                        K_BUTTON_R,
+                        crate::gameplay_context::Word::Loop(crate::game_loop::Word::JoypadDbg2),
+                    ),
                 ] {
                     let chord = (K_BUTTON_SELECT | button) as u16;
                     if game.observed_inputs().held & chord == chord {
-                        at!(game, target; = game.observed_inputs().pressed);
-                        word! { game, 0; JOYPAD1_LASTKEYS, JOYPAD1_NEWKEYS }
+                        let value = game.observed_inputs().pressed;
+                        crate::gameplay_context::Access::set_gameplay_word(game, target, value);
+                        crate::gameplay_word! { game, 0; JOYPAD1_LASTKEYS, JOYPAD1_NEWKEYS }
                     }
                 }
-                if (word!(game.JOYPAD_DBG_2) & 0x80) != 0 {
+                if (crate::gameplay_word!(game.JOYPAD_DBG_2) & 0x80) != 0 {
                     at!(game, crate::ram::mirror::NMITIMEN; ^= 0x30);
                 }
-                if (word!(game.JOYPAD_DBG_2) & 0x8000) != 0 {
-                    let entering_swap = (!(word!(game.JOYPAD_DBG_FLAGS)) & 0x8000) != 0;
-                    word!(game.JOYPAD_DBG_FLAGS ^= (0x8000u16));
+                if (crate::gameplay_word!(game.JOYPAD_DBG_2) & 0x8000) != 0 {
+                    let entering_swap =
+                        (!(crate::gameplay_word!(game.JOYPAD_DBG_FLAGS)) & 0x8000) != 0;
+                    crate::gameplay_word!(game.JOYPAD_DBG_FLAGS ^= (0x8000u16));
                     if entering_swap {
-                        let [missiles, supers, bombs] =
-                            crate::session_cohort::load::<crate::inventory::Inventory, _>(game)
-                                .ammunition
-                                .map(|supply| supply.current);
-                        word! { game;
+                        let [missiles, supers, bombs] = crate::gameplay_context::inventory(game)
+                            .ammunition
+                            .map(|supply| supply.current);
+                        crate::gameplay_word! { game;
                             JOYPAD_DBG_MISSILES_SWAP = missiles;
                             JOYPAD_DBG_SUPER_MISSILES_SWAP = supers;
                             JOYPAD_DBG_POWER_BOMBS_SWAP = bombs;
                         }
-                        crate::session_cohort::with(
+                        crate::gameplay_context::with_inventory(
                             game,
                             |_, inventory: &mut crate::inventory::Inventory| {
                                 for supply in &mut inventory.ammunition {
@@ -115,11 +145,11 @@ fn debug_controls<H: Host + ?Sized>(game: &mut H) {
                         );
                     } else {
                         let swapped = [
-                            word!(game.JOYPAD_DBG_MISSILES_SWAP),
-                            word!(game.JOYPAD_DBG_SUPER_MISSILES_SWAP),
-                            word!(game.JOYPAD_DBG_POWER_BOMBS_SWAP),
+                            crate::gameplay_word!(game.JOYPAD_DBG_MISSILES_SWAP),
+                            crate::gameplay_word!(game.JOYPAD_DBG_SUPER_MISSILES_SWAP),
+                            crate::gameplay_word!(game.JOYPAD_DBG_POWER_BOMBS_SWAP),
                         ];
-                        crate::session_cohort::with(
+                        crate::gameplay_context::with_inventory(
                             game,
                             |_, inventory: &mut crate::inventory::Inventory| {
                                 for (supply, value) in inventory.ammunition.iter_mut().zip(swapped)
@@ -130,14 +160,14 @@ fn debug_controls<H: Host + ?Sized>(game: &mut H) {
                         );
                     }
                 }
-                if (word!(game.JOYPAD_DBG_2) & 0x40) != 0 {
-                    word!(game.JOYPAD_DBG_FLAGS ^= (0x2000u16));
+                if (crate::gameplay_word!(game.JOYPAD_DBG_2) & 0x40) != 0 {
+                    crate::gameplay_word!(game.JOYPAD_DBG_FLAGS ^= (0x2000u16));
                 }
             }
         } else {
-            word! { game, 0; JOYPAD_DBG_1, JOYPAD_DBG_2 }
-            word!(game.JOYPAD2_LAST &= (0x10u16));
-            word!(game.JOYPAD2_NEW_KEYS &= (0x10u16));
+            crate::gameplay_word! { game, 0; JOYPAD_DBG_1, JOYPAD_DBG_2 }
+            crate::gameplay_word!(game.JOYPAD2_LAST &= (0x10u16));
+            crate::gameplay_word!(game.JOYPAD2_NEW_KEYS &= (0x10u16));
         }
     } else {
         crate::sequence_state::with_words(
@@ -152,9 +182,51 @@ fn debug_controls<H: Host + ?Sized>(game: &mut H) {
 
 // Intro playback saves only action bindings; its directional defaults remain after restoration.
 pub fn use_cinematic_bindings<H: Host + ?Sized>(game: &mut H) {
-    crate::word_transfers!(game, ascending, 7;
-        little(fields::BUTTON_CONFIG_SHOOT_X_SAVED) <- little(fields::BUTTON_CONFIG_SHOOT_X));
-    word! {game; BUTTON_CONFIG_UP = K_BUTTON_UP as u16; BUTTON_CONFIG_DOWN = K_BUTTON_DOWN as u16;
+    for (current, saved) in [
+        (
+            crate::gameplay_context::Word::Input(crate::controller_state::Word::ButtonConfigShootX),
+            crate::gameplay_context::Word::Loop(crate::game_loop::Word::ButtonConfigShootXSaved),
+        ),
+        (
+            crate::gameplay_context::Word::Input(crate::controller_state::Word::ButtonConfigJumpA),
+            crate::gameplay_context::Word::Loop(crate::game_loop::Word::ButtonConfigJumpASaved),
+        ),
+        (
+            crate::gameplay_context::Word::Input(crate::controller_state::Word::ButtonConfigRunB),
+            crate::gameplay_context::Word::Loop(crate::game_loop::Word::ButtonConfigRunBSaved),
+        ),
+        (
+            crate::gameplay_context::Word::Input(
+                crate::controller_state::Word::ButtonConfigItemcancelY,
+            ),
+            crate::gameplay_context::Word::Loop(
+                crate::game_loop::Word::ButtonConfigItemcancelYSaved,
+            ),
+        ),
+        (
+            crate::gameplay_context::Word::Input(
+                crate::controller_state::Word::ButtonConfigItemswitch,
+            ),
+            crate::gameplay_context::Word::Loop(
+                crate::game_loop::Word::ButtonConfigItemswitchSaved,
+            ),
+        ),
+        (
+            crate::gameplay_context::Word::Input(
+                crate::controller_state::Word::ButtonConfigAimDownL,
+            ),
+            crate::gameplay_context::Word::Loop(crate::game_loop::Word::ButtonConfigAimDownLSaved),
+        ),
+        (
+            crate::gameplay_context::Word::Input(crate::controller_state::Word::ButtonConfigAimUpR),
+            crate::gameplay_context::Word::Loop(crate::game_loop::Word::ButtonConfigAimUpRSaved),
+        ),
+    ] {
+        let value = crate::gameplay_context::Access::gameplay_word(game, current);
+        crate::gameplay_context::Access::set_gameplay_word(game, saved, value);
+    }
+
+    crate::gameplay_word! {game; BUTTON_CONFIG_UP = K_BUTTON_UP as u16; BUTTON_CONFIG_DOWN = K_BUTTON_DOWN as u16;
     BUTTON_CONFIG_LEFT = K_BUTTON_LEFT as u16; BUTTON_CONFIG_RIGHT = K_BUTTON_RIGHT as u16;
     BUTTON_CONFIG_SHOOT_X = K_BUTTON_X as u16; BUTTON_CONFIG_JUMP_A = K_BUTTON_A as u16;
     BUTTON_CONFIG_RUN_B = K_BUTTON_B as u16; BUTTON_CONFIG_ITEMCANCEL_Y = K_BUTTON_Y as u16;
@@ -163,8 +235,49 @@ pub fn use_cinematic_bindings<H: Host + ?Sized>(game: &mut H) {
 }
 
 pub fn restore_cinematic_bindings<H: Host + ?Sized>(game: &mut H) {
-    crate::word_transfers!(game, ascending, 7;
-        little(fields::BUTTON_CONFIG_SHOOT_X) <- little(fields::BUTTON_CONFIG_SHOOT_X_SAVED));
+    for (current, saved) in [
+        (
+            crate::gameplay_context::Word::Input(crate::controller_state::Word::ButtonConfigShootX),
+            crate::gameplay_context::Word::Loop(crate::game_loop::Word::ButtonConfigShootXSaved),
+        ),
+        (
+            crate::gameplay_context::Word::Input(crate::controller_state::Word::ButtonConfigJumpA),
+            crate::gameplay_context::Word::Loop(crate::game_loop::Word::ButtonConfigJumpASaved),
+        ),
+        (
+            crate::gameplay_context::Word::Input(crate::controller_state::Word::ButtonConfigRunB),
+            crate::gameplay_context::Word::Loop(crate::game_loop::Word::ButtonConfigRunBSaved),
+        ),
+        (
+            crate::gameplay_context::Word::Input(
+                crate::controller_state::Word::ButtonConfigItemcancelY,
+            ),
+            crate::gameplay_context::Word::Loop(
+                crate::game_loop::Word::ButtonConfigItemcancelYSaved,
+            ),
+        ),
+        (
+            crate::gameplay_context::Word::Input(
+                crate::controller_state::Word::ButtonConfigItemswitch,
+            ),
+            crate::gameplay_context::Word::Loop(
+                crate::game_loop::Word::ButtonConfigItemswitchSaved,
+            ),
+        ),
+        (
+            crate::gameplay_context::Word::Input(
+                crate::controller_state::Word::ButtonConfigAimDownL,
+            ),
+            crate::gameplay_context::Word::Loop(crate::game_loop::Word::ButtonConfigAimDownLSaved),
+        ),
+        (
+            crate::gameplay_context::Word::Input(crate::controller_state::Word::ButtonConfigAimUpR),
+            crate::gameplay_context::Word::Loop(crate::game_loop::Word::ButtonConfigAimUpRSaved),
+        ),
+    ] {
+        let value = crate::gameplay_context::Access::gameplay_word(game, saved);
+        crate::gameplay_context::Access::set_gameplay_word(game, current, value);
+    }
 }
 
 // The editor assigns the first seven buttons; saved choices also accept Left and Right.
@@ -196,7 +309,7 @@ pub fn load_binding_choices<H: Host + ?Sized>(game: &mut H) {
 }
 
 pub fn reset_binding_choices<H: Host + ?Sized>(game: &mut H) {
-    word! {game; BUTTON_CONFIG_SHOOT_X = K_BUTTON_X as u16;
+    crate::gameplay_word! {game; BUTTON_CONFIG_SHOOT_X = K_BUTTON_X as u16;
     BUTTON_CONFIG_JUMP_A = K_BUTTON_A as u16; BUTTON_CONFIG_RUN_B = K_BUTTON_B as u16;
     BUTTON_CONFIG_ITEMCANCEL_Y = K_BUTTON_Y as u16; BUTTON_CONFIG_ITEMSWITCH = K_BUTTON_SELECT as u16;
     BUTTON_CONFIG_AIM_UP_R = K_BUTTON_R as u16; BUTTON_CONFIG_AIM_DOWN_L = K_BUTTON_L as u16; }

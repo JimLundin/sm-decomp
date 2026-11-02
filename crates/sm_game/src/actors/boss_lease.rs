@@ -18,7 +18,10 @@ use crate::actors::session_slots::SlotAccess;
 
 /// What a boss's state steps read, write and call.
 pub trait BossState:
-    SlotAccess
+    crate::fx_domain::Sources
+    + crate::presentation_workspace::PaletteAccess
+    + crate::display::preparation::Access
+    + SlotAccess
     + crate::ram::CompatibilityRam
     + crate::effects::SoundEffects
     + crate::cartridge::LoadedImage

@@ -101,9 +101,11 @@ fn apply(h: &mut impl FxHost, definition: &FxRecord, palette: PaletteBuffer) {
     room.liquid_target = definition.word(4);
     room.liquid_velocity = definition.word(6);
     room.liquid_delay = u16::from(definition.byte(8));
-    room.fx_blending = u16::from(definition.byte(10));
-    room.fx_layer3_blending = u16::from(definition.byte(11));
-    room.liquid_options = u16::from(definition.byte(12));
+    let primary = u16::from(definition.byte(10));
+    crate::fx_encoding::write_control_word(h.session_mut(), 0x1982, primary);
+    let liquid = u16::from(definition.byte(11));
+    crate::fx_encoding::write_control_word(h.session_mut(), 0x1984, liquid);
+    h.session_mut().room.liquid_options = u16::from(definition.byte(12));
     let blend = definition.byte(15);
     for color in if blend == 0 { 27..28 } else { 25..28 } {
         let value = if blend == 0 {

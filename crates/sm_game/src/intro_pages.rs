@@ -1,9 +1,13 @@
 //! Intro narrative pages, scene entry, crossfades and Japanese text continuations.
-//! Numeric callbacks select these operations; Game retains the cinematic state.
+//! Numeric callbacks retain their captured cinematic table and shared presentation owners.
+use crate::cinematic::CinematicDestination;
 use crate::cinematic_objects::CinematicObjects;
 use crate::cinematic_state::{Array, Cinematic};
+use crate::display::preparation::Field;
 use crate::imported::Imported;
+use crate::presentation_workspace::{Point, Role};
 use crate::ram::RawRam as _;
+use crate::word_transfers::WordEndpoint;
 
 use crate::cinematic::{
     advance_cinematic_fade, clear_cinematic_colors, compose_cinematic_palette,
@@ -14,7 +18,6 @@ use crate::constants::bank_8d::ADDR_K_PALFX_E1BC;
 use crate::constants::bank_91::{ADDR_STRU_91877E, ADDR_STRU_918784};
 use crate::constants::samus_poses::K_POSE_02_FACE_L_NORMAL;
 use crate::menus::prelude::{HdmaObjectDefinition, display_scroll, do_until};
-use crate::ram::word;
 use crate::visual_state::{CinematicFade, CinematicTilemap};
 use sm_data::intro_palette::{
     ADDRESS as INTRO_PALETTE, BYTES as INTRO_PALETTE_BYTES, IntroPalette,
@@ -44,7 +47,7 @@ fn load_japanese_line<H: crate::menus::host::Host + ?Sized>(address: u16, game: 
             let source = 0x1a000 + usize::from(record.word(cursor + word_offset));
             for byte in 0..16 {
                 let value = game.ram().read_byte(source + byte);
-                game.ram().write_byte(target + byte, value);
+                game.screen_write_byte(Point::new(Role::Xray, target + byte - 0x4000), value);
             }
         }
         destination = destination.wrapping_add(16);
@@ -116,11 +119,30 @@ pub fn reset_caret(cine: &mut Cinematic) {
 }
 
 pub fn clear_english_text<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    crate::word_transfers!(game, ascending, 640; pause_map(128) <- value(47));
+    crate::cinematic::transfer_cinematic_words(
+        640,
+        2,
+        &[(
+            CinematicDestination::Screen(Point::new(Role::Pause, 256)),
+            WordEndpoint::Value(47),
+        )],
+        game,
+    );
 }
 pub fn clear_japanese_tiles<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     for start in (0..768).step_by(8) {
-        crate::word_transfers!(game, ascending, 8; xray(start) <- native(0x18290));
+        crate::cinematic::transfer_cinematic_words(
+            8,
+            2,
+            &[(
+                CinematicDestination::Screen(Point::new(
+                    Role::Xray,
+                    usize::try_from(2 * (start)).unwrap(),
+                )),
+                WordEndpoint::Ram(isize::try_from(0x18290).unwrap(), true),
+            )],
+            game,
+        );
     }
 }
 
@@ -189,7 +211,7 @@ fn page_input_ready<H: crate::menus::host::Host + ?Sized>(
         *cine.intro_japanese_text_timer() = cine.intro_japanese_text_timer().wrapping_sub(1);
         false
     } else {
-        word!(game.JOYPAD1_NEWKEYS) != 0
+        crate::gameplay_word!(game.JOYPAD1_NEWKEYS) != 0
     }
 }
 
@@ -237,11 +259,10 @@ pub fn wait_for_scene<H: crate::menus::host::Host + ?Sized>(
     let palette = match scene {
         Scene::MotherBrain | Scene::BabyMetroid => {
             let mother_brain = matches!(scene, Scene::MotherBrain);
-            game.ram()
-                .write_byte(0x58, if mother_brain { 80 } else { 84 });
+            crate::frame_display_byte!(game, Field::Screens0 => if mother_brain { 80 } else { 84 });
             if !mother_brain {
-                crate::room_view::set(game, crate::room_view::Word::Width, 32);
-                crate::room_view::set(game, crate::room_view::Word::Height, 16);
+                crate::gameplay_context::set_room(game, crate::room_view::Word::Width, 32);
+                crate::gameplay_context::set_room(game, crate::room_view::Word::Height, 16);
             }
             crate::sequence_state::with_words(
                 game,
@@ -299,8 +320,7 @@ pub fn wait_for_scene<H: crate::menus::host::Host + ?Sized>(
                     |_, words: &mut crate::session_words::SessionWords| words.hud_item_index = 0,
                 );
             }
-            word!(game.FRAME_HANDLER_ALFA = (0x90e6c9i32) as u16);
-            word!(game.FRAME_HANDLER_BETA = (0x90e833i32) as u16);
+            crate::cinematic::set_cinematic_frame_modes(game);
             game.demo_start();
             let input = if mother_brain {
                 ADDR_STRU_918784
@@ -314,7 +334,7 @@ pub fn wait_for_scene<H: crate::menus::host::Host + ?Sized>(
         }
         Scene::ScientistPage3 | Scene::ScientistPage4 => {
             let scientist = matches!(scene, Scene::ScientistPage3);
-            game.ram().write_byte(0x58, if scientist { 88 } else { 92 });
+            crate::frame_display_byte!(game, Field::Screens0 => if scientist { 88 } else { 92 });
             *cine.x() = if scientist { 32 } else { 0 };
             *cine.y() = if scientist { 8 } else { -24i16 as u16 };
             *cine.var13() = 127;
@@ -358,10 +378,18 @@ pub fn fade_to_scene<H: crate::menus::host::Host + ?Sized>(
     } & 0x8000)
         != 0
     {
-        game.ram().write_byte(0x69, 21);
-        game.ram().write_byte(0x6b, 0);
-        game.ram().write_byte(0x6f, 0);
-        crate::word_transfers!(game, ascending, 640; pause_map(128) <- value(47));
+        crate::frame_display_byte!(game, Field::MainLayers => 21);
+        crate::frame_display_byte!(game, Field::SubLayers => 0);
+        crate::frame_display_byte!(game, Field::ColorSelection => 0);
+        crate::cinematic::transfer_cinematic_words(
+            640,
+            2,
+            &[(
+                CinematicDestination::Screen(Point::new(Role::Pause, 256)),
+                WordEndpoint::Value(47),
+            )],
+            game,
+        );
         clear_japanese_tiles(game);
         crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
             flow.cinematic_function = 0xa391
@@ -458,12 +486,23 @@ pub fn fade_to_page<H: crate::menus::host::Host + ?Sized>(
     } & 0x8000)
         != 0
     {
-        game.ram().write_byte(0x69, 22);
-        game.ram().write_byte(0x6b, 0);
-        game.ram().write_byte(0x6f, 0);
-        game.ram().write_byte(0x72, 0);
+        crate::frame_display_byte!(game, Field::MainLayers => 22);
+        crate::frame_display_byte!(game, Field::SubLayers => 0);
+        crate::frame_display_byte!(game, Field::ColorSelection => 0);
+        crate::frame_display_byte!(game, Field::ColorMath => 0);
         if matches!(palette, Palette::Scientist) {
-            crate::word_transfers!(game, ascending, 7; native(0xc1c0) <- rom(0x8ce3e9, 224));
+            crate::cinematic::transfer_cinematic_words(
+                7,
+                2,
+                &[(
+                    CinematicDestination::Palette {
+                        offset: 0xc1c0 - 0xc000,
+                        native: true,
+                    },
+                    crate::cinematic::cinematic_rom_words(0x8ce3e9, 224, game),
+                )],
+                game,
+            );
         }
         crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
             flow.cinematic_function = 0xa391
@@ -530,7 +569,7 @@ pub fn continue_japanese_text<H: crate::menus::host::Host + ?Sized>(
     cine: &mut Cinematic,
     game: &mut H,
 ) {
-    if word!(game.JOYPAD1_NEWKEYS) != 0 {
+    if crate::gameplay_word!(game.JOYPAD1_NEWKEYS) != 0 {
         let slot = k as usize >> 1;
         *cine.mode7_instruction_pointer(slot) = next;
         *cine.mode7_instruction_timer(slot) = 1;
@@ -612,7 +651,7 @@ pub fn fade_out_to_ceres<H: crate::menus::host::Host + ?Sized>(
     game: &mut H,
 ) {
     game.fade(false);
-    if game.ram().read_byte(0x51) == 0x80 {
+    if game.display_control_byte(Field::Brightness) == 0x80 {
         crate::display_refresh::enable(true, game);
         crate::screen_fade::store(game, 0, 0);
         display_scroll!(game, 0; Bg2H, Bg3H, Bg2V, Bg3V);
@@ -623,9 +662,12 @@ pub fn fade_out_to_ceres<H: crate::menus::host::Host + ?Sized>(
         });
         if restore_samus {
             crate::menus::controller_input::restore_cinematic_bindings(game);
-            crate::session_cohort::with(game, |_, inventory: &mut crate::inventory::Inventory| {
-                inventory.ammunition[0] = crate::inventory::Supply::default();
-            });
+            crate::gameplay_context::with_inventory(
+                game,
+                |_, inventory: &mut crate::inventory::Inventory| {
+                    inventory.ammunition[0] = crate::inventory::Supply::default();
+                },
+            );
         }
     }
 }
@@ -696,9 +738,17 @@ fn advance_text_glow_object<H: crate::menus::host::Host + ?Sized>(
         let mut column = row;
         let mut remaining = width;
         loop {
-            let at = 0x3000 + usize::from(column);
-            let tile = u16::from_ne_bytes([game.ram().read_byte(at), game.ram().read_byte(at + 1)]);
-            crate::word_transfers!(game, ascending, 1; native(at) <- value(palette | (tile & 0xe3ff)));
+            let point = Point::new(Role::Pause, usize::from(column));
+            let tile = game.screen_native_word(point);
+            crate::cinematic::transfer_cinematic_words(
+                1,
+                2,
+                &[(
+                    CinematicDestination::Screen(point),
+                    WordEndpoint::Value(palette | (tile & 0xe3ff)),
+                )],
+                game,
+            );
             column = column.wrapping_add(2);
             remaining -= 1;
             if remaining == 0 {

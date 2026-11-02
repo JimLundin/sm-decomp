@@ -1,8 +1,11 @@
 //! Scrolling sky setup, parallax, HDMA bands and tile uploads.
+use crate::display::preparation::{Field as DisplayField, Store as DisplayStore};
+use crate::fx_domain::native_order;
 use crate::liquid_effects::WATER_WAVE;
 use crate::menus::menu_tilemap::native_record;
 use crate::menus::prelude::*;
-use crate::session_slot;
+use crate::scene::hdma_sources::LiveOwner;
+use crate::scene::state::WordOrder;
 
 pub fn initialize_banded_sky<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     crate::liquid::LiquidWords::set(game, |words| &mut words.liquid.surface.whole, 1248);
@@ -25,9 +28,14 @@ fn sky_table_word<H: crate::menus::host::Host + ?Sized>(
         .table_word(sm_data::cartridge::lorom_offset(address) as usize, index)
 }
 fn build_vertical_bands<H: crate::menus::host::Host + ?Sized>(game: &mut H) -> u16 {
-    word!(game.FX22_SCREEN_Y = 32);
-    crate::word_transfers!(game, ascending, 1; native(0x9c00) <- value(31));
-    crate::word_transfers!(game, ascending, 1; native(0x9c01) <- value(0));
+    {
+        let fx_value = 32;
+        let mut fx = game.fx_controls();
+        fx.sky_screen_row = fx_value;
+        game.publish_fx_controls(fx, &[crate::fx_state::Field::SkyScreenRow]);
+    };
+    game.store_source_word(LiveOwner::LiquidSurface, 0, native_order(), 31);
+    game.store_source_word(LiveOwner::LiquidSurface, 1, native_order(), 0);
     let mut row = 3u16;
     let mut y = crate::camera::current(game).layer1[1].wrapping_add(32);
     let mut band = 0usize;
@@ -48,16 +56,31 @@ fn build_vertical_bands<H: crate::menus::host::Host + ?Sized>(game: &mut H) -> u
             }
         }
         let height_word = sky_table_word(0x88a8ea, (band * 3) as isize, game).wrapping_sub(inset);
-        crate::word_transfers!(game, ascending, 1; native(0x9c00 + row as isize) <- value(height_word));
+        game.store_source_word(
+            LiveOwner::LiquidSurface,
+            row as usize,
+            native_order(),
+            height_word,
+        );
         let scroll_word = sky_table_word(0x88a8ec, (band * 3) as isize, game)
             .wrapping_add(inset)
-            .wrapping_sub(word!(game.FX22_SCREEN_Y));
-        crate::word_transfers!(game, ascending, 1; native(0x9c01 + row as isize) <- value(scroll_word));
-        let height = u16::from(game.ram().read_byte(0x9c00 + usize::from(row)));
+            .wrapping_sub(game.fx_controls().sky_screen_row);
+        game.store_source_word(
+            LiveOwner::LiquidSurface,
+            1 + row as usize,
+            native_order(),
+            scroll_word,
+        );
+        let height = u16::from(game.source_byte(LiveOwner::LiquidSurface, usize::from(row)));
         y = y.wrapping_add(height);
         row = row.wrapping_add(3);
-        word!(game.FX22_SCREEN_Y += height);
-        if word!(game.FX22_SCREEN_Y).wrapping_sub(224) & 0x8000 == 0 {
+        {
+            let fx_value = game.fx_controls().sky_screen_row.wrapping_add(height);
+            let mut fx = game.fx_controls();
+            fx.sky_screen_row = fx_value;
+            game.publish_fx_controls(fx, &[crate::fx_state::Field::SkyScreenRow]);
+        };
+        if game.fx_controls().sky_screen_row.wrapping_sub(224) & 0x8000 == 0 {
             return row;
         }
         inset = 0;
@@ -66,41 +89,46 @@ fn build_vertical_bands<H: crate::menus::host::Host + ?Sized>(game: &mut H) -> u
 pub fn update_vertical_scroll<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     damage_above_screen(game);
     let row = build_vertical_bands(game);
-    crate::word_transfers!(game, ascending, 1; native(0x9c00 + row as isize) <- value(0));
+    game.store_source_word(LiveOwner::LiquidSurface, row as usize, native_order(), 0);
 }
 pub fn update_horizontal_scroll<H: crate::menus::host::Host + ?Sized>(
-    object: &mut crate::hdma::HdmaObject,
+    hdma_index: usize,
     game: &mut H,
 ) {
     let layer1_y = crate::camera::current(game).layer1[1];
     if (layer1_y as i32 - 1024i32) & 0x8000 != 0 {
-        if (game.ram().read_byte(0x5b5) & 1) == 0 {
-            word!(
-                game.FX22_X_TABLE_SIZE = ((word!(game.FX22_X_TABLE_SIZE) as i32 + 2) & 0x1e) as u16
-            );
+        if (game.display_control_byte(DisplayField::NmiFrameByte) & 1) == 0 {
+            {
+                let fx_value = ((game.fx_controls().sky_wave_phase as i32 + 2) & 0x1e) as u16;
+                let mut fx = game.fx_controls();
+                fx.sky_wave_phase = fx_value;
+                game.publish_fx_controls(fx, &[crate::fx_state::Field::SkyWavePhase]);
+            };
         }
-        let mut v1: u16 = word!(game.FX22_X_TABLE_SIZE);
+        let mut v1: u16 = game.fx_controls().sky_wave_phase;
         let mut v2: u16 = 0;
         do_until! { ((v1) as i16).wrapping_sub(32) >= 0 ;
-            word!(
-                game.FX22_X_TABLE[(v2 >> 1)] =
-                    crate::gameplay_tables::sky_scroll_wave(game, (v1 >> 1) as isize)
-            );
+            let value = crate::gameplay_tables::sky_scroll_wave(game, isize::try_from(v1 >> 1).expect("sky wave index"));
+            game.store_source_word(LiveOwner::SkyHorizontal, usize::from(v2), WordOrder::Little, value);
             v2 = (v2).wrapping_add(2);
             v1 = (v1).wrapping_add(2);
         }
     } else {
-        let timer = object.b;
-        object.b = timer.wrapping_sub(1);
+        let timer = crate::hdma_word!(game, hdma_index, B);
+        crate::hdma_word!(game, hdma_index, B => timer.wrapping_sub(1));
         if timer == 1 {
-            object.b = 6;
-            object.a = ((object.a as i32 + 2) & 0x1f) as u16;
+            crate::hdma_word!(game, hdma_index, B => 6);
+            crate::hdma_word!(game, hdma_index, A => ((crate::hdma_word!(game, hdma_index, A) as i32 + 2) & 0x1f) as u16);
         }
-        let mut v5: u16 = object.a;
+        let mut v5: u16 = crate::hdma_word!(game, hdma_index, A);
         for i in (0i32..=30).rev().step_by(2) {
-            word!(
-                game.FX22_X_TABLE[(v5 >> 1)] = ((WATER_WAVE[(i >> 1) as usize]) as u16)
-                    .wrapping_add(crate::menus::prelude::display_scroll!(game.Bg1H))
+            let value = (WATER_WAVE[(i >> 1) as usize] as u16)
+                .wrapping_add(crate::menus::prelude::display_scroll!(game.Bg1H));
+            game.store_source_word(
+                LiveOwner::SkyHorizontal,
+                2 * usize::from(v5 >> 1),
+                WordOrder::Little,
+                value,
             );
             v5 = ((v5 as i32 - 2i32) & 0x1f) as u16;
         }
@@ -160,14 +188,24 @@ fn append_upper_band<H: crate::menus::host::Host + ?Sized>(
                 break;
             }
             r24 = v2 as u16;
-            crate::word_transfers!(game, ascending, 1; native(0x9e00 + v0 as isize) <- value(r22 | 0x10));
-            crate::word_transfers!(game, ascending, 1; native(0x9e01 + v0 as isize) <- value(r20));
+            game.store_source_word(
+                LiveOwner::WindowLeft,
+                v0 as usize,
+                native_order(),
+                r22 | 0x10,
+            );
+            game.store_source_word(LiveOwner::WindowLeft, 1 + v0 as usize, native_order(), r20);
             v0 = v0.wrapping_add(3);
         }
         height
     };
-    crate::word_transfers!(game, ascending, 1; native(0x9e00 + v0 as isize) <- value(r22 | r24));
-    crate::word_transfers!(game, ascending, 1; native(0x9e01 + v0 as isize) <- value(r20));
+    game.store_source_word(
+        LiveOwner::WindowLeft,
+        v0 as usize,
+        native_order(),
+        r22 | r24,
+    );
+    game.store_source_word(LiveOwner::WindowLeft, 1 + v0 as usize, native_order(), r20);
     height
 }
 static LAND_SCROLL: HdmaObjectDefinition = HdmaObjectDefinition::new(0x42, 0xf, 0xad76 as VoidP);
@@ -178,12 +216,30 @@ pub fn initialize_land<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     game.ram()
         .write_byte(0x91c, game.ram().read_byte(0x91c) | 1);
     game.spawn_hdma(0x88, &LAND_SCROLL);
-    word! {game; SET_TO_E0_BY_SCROLLING_SKY = 224; UNUSED_WORD_7E059C = 0; }
+    let mut fx = game.fx_controls();
+    fx.sky_visible_height = 224;
+    fx.sky_compatibility_word = 0;
+    game.publish_fx_controls(
+        fx,
+        &[
+            crate::fx_state::Field::SkyVisibleHeight,
+            crate::fx_state::Field::SkyCompatibilityWord,
+        ],
+    );
 }
 pub fn initialize_ocean<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    game.ram().write_byte(0x59, 74);
+    game.store_display_control_byte(DisplayField::Screens1, 74, DisplayStore::Named);
     game.spawn_hdma(0x88, &OCEAN_SCROLL);
-    word! {game; SET_TO_E0_BY_SCROLLING_SKY = 224; UNUSED_WORD_7E059C = 0; }
+    let mut fx = game.fx_controls();
+    fx.sky_visible_height = 224;
+    fx.sky_compatibility_word = 0;
+    game.publish_fx_controls(
+        fx,
+        &[
+            crate::fx_state::Field::SkyVisibleHeight,
+            crate::fx_state::Field::SkyCompatibilityWord,
+        ],
+    );
 }
 fn damage_above_screen<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     if ((game.player_y()) as i16).wrapping_sub((word!(game.SAMUS_Y_RADIUS)) as i16) < 0
@@ -192,24 +248,30 @@ fn damage_above_screen<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
         word!(game.SAMUS_PERIODIC_DAMAGE = 8);
     }
 }
-fn write_sky_word<H: crate::ram::CompatibilityRam + ?Sized>(
-    value: u16,
-    offset: isize,
-    game: &mut H,
-) {
-    crate::word_transfers!(game, ascending, 1; native(0x9f00 + offset) <- value(value));
+fn write_sky_word<H: crate::fx_domain::Sources + ?Sized>(value: u16, offset: isize, game: &mut H) {
+    game.store_source_signed_word(LiveOwner::SkyIndirect, offset, native_order(), value);
 }
 
 /// Advance the scrolling sky's parallax, on the lease the HDMA object opens.
-pub fn advance_parallax<L: crate::actors::boss_lease::BossState + ?Sized>(game: &mut L) {
-    game.compatibility_write_byte(0x59, 74);
+pub fn advance_parallax<
+    L: crate::actors::boss_lease::BossState
+        + crate::fx_domain::Sources
+        + crate::display::preparation::Access
+        + ?Sized,
+>(
+    game: &mut L,
+) {
+    game.store_display_control_byte(DisplayField::Screens1, 74, DisplayStore::Named);
     for v1 in 0u16..23 {
         let entry = native_record(0x88aec1 + 8 * u32::from(v1), game);
-        let at = i32::from(entry.word(6)) - 0xf78;
-        let value = words!((entry.word(4), entry.word(2)));
-        session_slot!(game, PairU16[at](j, k) += value);
+        let selector = entry.word(6);
+        let high = entry.word(4);
+        let low = entry.word(2);
+        let delta = (u32::from(high) << 16) | u32::from(low);
+        game.add_parallax_source(selector, delta);
     }
-    word! { game, 0; SCROLLING_SKY_BG2_HDMA_DATA[44], SCROLLING_SKY_BG2_HDMA_DATA[45] }
+    game.store_source_word(LiveOwner::SkyBg2, 88, WordOrder::Little, 0);
+    game.store_source_word(LiveOwner::SkyBg2, 90, WordOrder::Little, 0);
     write_sky_word(31, 0, game);
     write_sky_word(1438, 1, game);
     let layer1_y = crate::camera::current(game).layer1[1];
@@ -254,7 +316,14 @@ pub fn advance_parallax<L: crate::actors::boss_lease::BossState + ?Sized>(game: 
     write_sky_word(0, v6 as isize + 3, game);
 }
 /// Advance the parallax unless time is frozen.
-pub fn update_parallax<L: crate::actors::boss_lease::BossState + ?Sized>(game: &mut L) {
+pub fn update_parallax<
+    L: crate::actors::boss_lease::BossState
+        + crate::fx_domain::Sources
+        + crate::display::preparation::Access
+        + ?Sized,
+>(
+    game: &mut L,
+) {
     if crate::sequence_word!(game.TIME_IS_FROZEN_FLAG) == 0 {
         advance_parallax(game);
     }
@@ -289,7 +358,7 @@ fn queue_tile_rows<H: crate::menus::host::Host + ?Sized>(address: u32, game: &mu
         for row in 0..4 {
             game.ram().write_byte(v1 + row * stride + 4, 0x8a);
         }
-        let t: i32 = (game.ram().read_byte(0x59) as i32 & 0xfc) << 8;
+        let t: i32 = (game.display_control_byte(DisplayField::Screens1) as i32 & 0xfc) << 8;
         let v6: u16 = (t + 4 * ((layer1_y as i32 - 16i32) & 0x1f8)) as u16;
         crate::word_transfers!(game, ascending, 1; native(v1 + 5) <- value(v6));
         crate::word_transfers!(game, ascending, 1; native(v1 + stride + 5) <- value(v6.wrapping_add(32)));
@@ -311,6 +380,6 @@ fn write_scroll_pair<H: crate::menus::host::Host + ?Sized>(
     value: u16,
     game: &mut H,
 ) {
-    crate::word_transfers!(game, ascending, 1; native(0x9e00 + offset as isize) <- value(value));
+    game.store_source_word(LiveOwner::WindowLeft, offset, native_order(), value);
     write_sky_word(value, offset as isize, game);
 }

@@ -27,7 +27,8 @@ pub trait HudPlayer {
 /// What the HUD's frame step needs: RAM words, its player values, sound
 /// effects and the native cartridge. A Session lease can provide it.
 pub trait HudFrameHost:
-    HudPlayer
+    crate::display::queued_tilemaps::QueueAccess
+    + HudPlayer
     + crate::display::preparation::Access
     + crate::ram::CompatibilityRam
     + crate::player_position::PlayerFacts
@@ -48,7 +49,6 @@ impl<T> HudHost for T where
     T: HudFrameHost + crate::ram::RamHost + crate::display::sequence::Registers + ?Sized
 {
 }
-use crate::ram::word;
 
 /// $80:9DD3: the ammunition digit tiles, 0 to 9.
 const WEAPON_DIGITS: u32 = 0x80_9dd3;
@@ -63,7 +63,6 @@ const TOP_ROW_BYTES: u16 = 0x40;
 const ITEM_OFFSETS: [u16; 5] = [0x14, 0x1c, 0x22, 0x28, 0x2e];
 
 /// The HUD tilemap in work RAM ($7E:C608), its VRAM home and size.
-const TILEMAP_RAM: usize = 0xc608;
 const TILEMAP_VRAM: u16 = 0x5800;
 const TILEMAP_BYTES: u16 = 192;
 /// The VRAM word address of the HUD's second row, where the queued copy lands.
@@ -123,6 +122,7 @@ const _: () = {
     }
     assert!(WEAPON_DIGITS == 8429011 && HEALTH_DIGITS == 8428991);
     assert!(TILEMAP_QUEUED_VRAM == 0x5820);
+    assert!(TILEMAP_BYTES == 192 && WORK_RAM_BANK == 0x7e);
 };
 
 #[derive(Clone, Copy)]
@@ -264,7 +264,9 @@ fn ammunition<H: HudFrameHost + ?Sized>(initial: bool, game: &mut H) {
                     crate::frame_display_history!(game, previous => game.ammunition(index));
                 }
                 let three = index == 0
-                    || (!initial && index == 1 && word!(game.JOYPAD_DBG_FLAGS) & 0x1f40 != 0);
+                    || (!initial
+                        && index == 1
+                        && crate::gameplay_word!(game.JOYPAD_DBG_FLAGS) & 0x1f40 != 0);
                 let count = if !initial && index == 1 {
                     crate::display::preparation::Access::display_history_word(&*game, previous)
                 } else {
@@ -328,18 +330,7 @@ pub fn advance<H: HudFrameHost + ?Sized>(game: &mut H) {
             UNSELECTED_PALETTE
         };
         highlight(game.automatic_item(), palette, game);
-        let tail = word!(game.VRAM_WRITE_QUEUE_TAIL);
-        // Wrap each field cursor before widening; the native bank word overlaps destination.
-        for (offset, value) in [
-            (0, TILEMAP_BYTES),
-            (2, TILEMAP_RAM as u16),
-            (4, WORK_RAM_BANK),
-            (5, TILEMAP_QUEUED_VRAM),
-        ] {
-            crate::word_transfers!(game, ascending, 1;
-                native(0xd0 + usize::from(tail.wrapping_add(offset))) <- value(value));
-        }
-        word!(game.VRAM_WRITE_QUEUE_TAIL = tail.wrapping_add(7));
+        crate::display::queued_tilemaps::queue_hud(game);
     }
     // The digit drawing leaves the ammunition digit tiles in the long pointer scratch: $00 from
     // $80:9BFE and bank $00 in $02 from $80:9B4A, whether or not any digit changed.

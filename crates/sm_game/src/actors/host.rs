@@ -15,6 +15,7 @@ pub trait ActorHost:
     + LoadedImage
     + Random
     + crate::player_position::PlayerPosition
+    + crate::presentation_workspace::PaletteAccess
 {
 }
 
@@ -25,6 +26,7 @@ impl<T> ActorHost for T where
         + LoadedImage
         + Random
         + crate::player_position::PlayerPosition
+        + crate::presentation_workspace::PaletteAccess
         + ?Sized
 {
 }
@@ -189,6 +191,7 @@ pub trait ActorLease:
     + crate::room_mechanisms::host::Host
     + crate::room_mechanisms::host::Effects
     + crate::player_position::PlayerPosition
+    + crate::presentation_workspace::PaletteAccess
     + crate::actors::session_slots::SessionSlots
     + crate::player_projectiles::host::Host
     + crate::display::transfer::TilemapQueue

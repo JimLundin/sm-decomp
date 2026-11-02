@@ -4,6 +4,29 @@ use sm_game::menus::host::{Host, MenuRuntime};
 use sm_game::save_file::SaveRam;
 
 impl sm_game::sprite_output::SpriteHost for Game {
+    fn sprite_word(&self, word: sm_game::sprite_output::SpriteWord) -> u16 {
+        use sm_game::sprite_output::SpriteWord::*;
+        let at = match word {
+            EchoX(i) => 0xab0usize.checked_add(2 * i).expect("echo offset"),
+            EchoY(i) => 0xab8usize.checked_add(2 * i).expect("echo offset"),
+            EchoSpeed(i) => 0xac0usize.checked_add(2 * i).expect("echo offset"),
+            TopHalf => 0xac8,
+            BottomHalf => 0xaca,
+            GrappleEndX => 0xd08,
+            GrappleEndY => 0xd0c,
+        };
+        u16::from_le_bytes([self.compatibility_byte(at), self.compatibility_byte(at + 1)])
+    }
+    fn sprite_camera(&self) -> [u16; 2] {
+        [0x911, 0x915].map(|at| {
+            u16::from_le_bytes([self.compatibility_byte(at), self.compatibility_byte(at + 1)])
+        })
+    }
+    fn projectile_sprite_cursor(&self, slot: u16) -> u16 {
+        let at = 0xcb8 + 2 * usize::from(slot >> 1);
+        u16::from_ne_bytes([self.compatibility_byte(at), self.compatibility_byte(at + 1)])
+    }
+
     fn warn_invalid_rom(&mut self, address: u32) {
         // SAFETY: a C-string literal and one integer argument, as the format expects.
         unsafe {

@@ -1,11 +1,12 @@
 //! Prepared message state and ordered extraction through the existing dialogue runner.
 use super::*;
 use crate::dialogue as d;
+use crate::message_workspace as canvas;
+use crate::presentation_workspace::{Point, Role, Workspace};
 pub use sm_data::message::{Display, DisplayLine, FullDisplay, PreparedStart};
 use std::sync::Arc;
 const MAP_BASE: usize = 0x5880;
 const MAP_WORDS: usize = 896;
-const WORK_WORDS: usize = 768;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct InputSample {
@@ -71,9 +72,7 @@ impl RunnerState {
 #[derive(Clone)]
 struct State {
     runner: RunnerState,
-    tiles: [u16; WORK_WORDS],
     map: [u16; MAP_WORDS],
-    backup: [u16; MAP_WORDS],
     request: Option<MessageId>,
     completed: Option<(MessageId, u16)>,
     visible: bool,
@@ -82,11 +81,31 @@ struct State {
     last_interval: u64,
     drawn_scroll: RadiusValues,
 }
+/// Complete supplied execution state for a selected image or a checkpoint.
+/// Workspace sources are borrowed separately; this map is the actual VRAM result.
+#[derive(Clone)]
+pub struct ExecutionDescription {
+    pub message: d::Message<MessageId>,
+    pub continuation: d::Continuation,
+    pub child: d::ChildContinuation,
+    pub radius: u16,
+    pub selection: d::Selection,
+    pub delay: u16,
+    pub map: [u16; MAP_WORDS],
+    pub request: Option<MessageId>,
+    pub completed: Option<(MessageId, u16)>,
+    pub visible: bool,
+    pub restored: bool,
+    pub wait_pending: bool,
+    pub last_interval: u64,
+    pub drawn_scroll: RadiusValues,
+}
 #[derive(Clone)]
 pub struct Checkpoint {
     schema: u16,
     definitions: Arc<Definitions>,
     start: Arc<PreparedStart>,
+    workspace: Workspace,
     state: State,
 }
 pub struct PreparedOwner {
@@ -131,47 +150,143 @@ fn selection(selection: d::Selection) -> u16 {
     }
 }
 
-impl PreparedOwner {
-    pub fn open<Frame>(
-        definitions: Arc<Definitions>,
-        start: PreparedStart,
-        mut render: impl FnMut(Display<'_>) -> Result<Frame, Fault>,
-    ) -> Result<(Self, Frame), Fault> {
-        if start.saved.media_id.0 == 0
-            || start.active.media_id.0 == 0
-            || start.restored.media_id.0 == 0
+fn validate_content(definitions: &Definitions, start: &PreparedStart) -> Result<(), Fault> {
+    if start.saved.media_id.0 == 0 || start.active.media_id.0 == 0 || start.restored.media_id.0 == 0
+    {
+        return Err(Fault::MissingDisplay);
+    }
+    if definitions.revision() != start.active.revision
+        || start.saved.revision != start.active.revision
+        || start.restored.revision != start.active.revision
+    {
+        return Err(Fault::ChangedContent);
+    }
+    for (index, word) in definitions.font().words.iter().enumerate() {
+        if start
+            .active
+            .media
+            .word(usize::from(definitions.font().first_word) + index)?
+            != *word
         {
             return Err(Fault::MissingDisplay);
         }
-        if definitions.revision() != start.active.revision
-            || start.saved.revision != start.active.revision
-            || start.restored.revision != start.active.revision
+    }
+    for line in start.active.lines.iter() {
+        if line.mode != 1
+            || line.backgrounds[2].map_words != 0x5800
+            || line.backgrounds[2].tile_words != definitions.font().first_word
+            || line.backgrounds[2].horizontal_scroll != 0
+            || line.backgrounds[2].wider
+            || line.backgrounds[2].higher
         {
-            return Err(Fault::ChangedContent);
+            return Err(Fault::MissingDisplay);
         }
-        for (index, word) in definitions.font().words.iter().enumerate() {
-            if start
-                .active
-                .media
-                .word(usize::from(definitions.font().first_word) + index)?
-                != *word
+    }
+    Ok(())
+}
+fn validate_execution(
+    start: &PreparedStart,
+    description: &ExecutionDescription,
+    workspace: &Workspace,
+) -> Result<(), Fault> {
+    workspace
+        .validate(crate::scene::records::Revision(start.active.revision.0))
+        .map_err(|_| Fault::MissingDisplay)?;
+    if description.last_interval < start.initial_interval {
+        return Err(Fault::Interval);
+    }
+    // Active, pending and completed IDs remain full values. Resolve them only
+    // at the original draw/request/poll phase, including after suspension.
+    Ok(())
+}
+impl From<ExecutionDescription> for State {
+    fn from(description: ExecutionDescription) -> Self {
+        Self {
+            runner: RunnerState {
+                message: description.message,
+                continuation: description.continuation,
+                child: description.child,
+                radius: description.radius,
+                selection: description.selection,
+                delay: description.delay,
+            },
+            map: description.map,
+            request: description.request,
+            completed: description.completed,
+            visible: description.visible,
+            restored: description.restored,
+            wait_pending: description.wait_pending,
+            last_interval: description.last_interval,
+            drawn_scroll: description.drawn_scroll,
+        }
+    }
+}
+impl PreparedOwner {
+    /// Restore complete supplied execution without rendering or emitting effects.
+    /// The content envelope must already carry the validated full display/media closure.
+    pub fn from_execution(
+        definitions: Arc<Definitions>,
+        start: Arc<PreparedStart>,
+        execution: ExecutionDescription,
+        workspace: &Workspace,
+    ) -> Result<Self, Fault> {
+        validate_content(&definitions, &start)?;
+        for display in [&start.saved, &start.active, &start.restored] {
+            for line in display.lines.iter() {
+                if line.extended_background {
+                    return Err(Fault::ExtendedBackground);
+                }
+                if line.mode != 1 && line.mode != 7 {
+                    return Err(sm_data::raster::RasterFault::Mode(line.mode).into());
+                }
+            }
+        }
+        validate_execution(&start, &execution, workspace)?;
+        for (role, required) in [
+            (Role::MessageText, 1536),
+            (Role::SavedBackground, 1792),
+            (Role::Pause, 0x1e0),
+            (Role::MessageDescriptor, 0x6c),
+            (Role::Equipment, 0x700),
+        ] {
+            if workspace
+                .available(Point::new(role, 0))
+                .map_err(|_| Fault::MissingDisplay)?
+                < required
             {
                 return Err(Fault::MissingDisplay);
             }
         }
-        for line in start.active.lines.iter() {
-            if line.mode != 1
-                || line.backgrounds[2].map_words != 0x5800
-                || line.backgrounds[2].tile_words != definitions.font().first_word
-                || line.backgrounds[2].horizontal_scroll != 0
-                || line.backgrounds[2].wider
-                || line.backgrounds[2].higher
+        Ok(Self {
+            definitions,
+            start,
+            state: execution.into(),
+            effects: Vec::new(),
+            fault: None,
+            sample: None,
+        })
+    }
+    pub fn open<Frame>(
+        definitions: Arc<Definitions>,
+        start: PreparedStart,
+        workspace: &mut Workspace,
+        mut render: impl FnMut(Display<'_>) -> Result<Frame, Fault>,
+    ) -> Result<(Self, Frame), Fault> {
+        validate_content(&definitions, &start)?;
+        workspace
+            .validate(crate::scene::records::Revision(start.active.revision.0))
+            .map_err(|_| Fault::MissingDisplay)?;
+        for (index, tile) in start.tile_workspace.iter().enumerate() {
+            if workspace
+                .word(Point::new(Role::MessageText, index * 2))
+                .map_err(|_| Fault::MissingDisplay)?
+                != *tile
             {
                 return Err(Fault::MissingDisplay);
             }
         }
-        let mut backup = [0; MAP_WORDS];
-        for (index, word) in backup.iter_mut().enumerate() {
+        let mut map = [0; MAP_WORDS];
+        for (index, word) in map.iter_mut().enumerate() {
             *word = start.saved.media.word(MAP_BASE + index)?;
         }
         let state = State {
@@ -183,9 +298,7 @@ impl PreparedOwner {
                 selection: d::Selection::Accept,
                 delay: 0,
             },
-            tiles: start.tile_workspace,
-            map: backup,
-            backup,
+            map,
             request: None,
             completed: None,
             visible: false,
@@ -206,7 +319,7 @@ impl PreparedOwner {
         let initial = render(owner.extract_display(&owner.start.saved, None, false))?;
         let clear_map = [0x000e; MAP_WORDS];
         render(owner.extract_display(&owner.start.active, Some(&clear_map), true))?;
-        render(owner.extract_display(&owner.start.restored, Some(&owner.state.backup), false))?;
+        render(owner.extract_display(&owner.start.restored, Some(&owner.state.map), false))?;
         Ok((owner, initial))
     }
     /// Keep a live request; content is read when a new message starts.
@@ -229,10 +342,40 @@ impl PreparedOwner {
         self.queue(id)?;
         Ok(None)
     }
+    /// Extraction-only compatibility entry; coupled execution uses resume_with_effects.
     pub fn resume<Frame>(
         &mut self,
         interval: u64,
         sample: InputSample,
+        workspace: &mut Workspace,
+        render: impl FnMut(Display<'_>) -> Result<Frame, Fault>,
+    ) -> Result<StepOutput<Frame>, Fault> {
+        self.resume_with_effects(interval, sample, workspace, |_, _, _| Ok(()), render)
+    }
+    /// Deliver each effect at its original runner phase. Returned effects are receipts;
+    /// a caller that used this sink must never deliver them a second time.
+    pub fn resume_with_effects<Frame>(
+        &mut self,
+        interval: u64,
+        sample: InputSample,
+        workspace: &mut Workspace,
+        effects: impl FnMut(Effect, &mut Workspace, &mut ExecutionDescription) -> Result<(), Fault>,
+        render: impl FnMut(Display<'_>) -> Result<Frame, Fault>,
+    ) -> Result<StepOutput<Frame>, Fault> {
+        self.resume_with_publications(
+            interval,
+            sample,
+            workspace,
+            &mut ExtractionEffects(effects),
+            render,
+        )
+    }
+    pub fn resume_with_publications<Frame>(
+        &mut self,
+        interval: u64,
+        sample: InputSample,
+        workspace: &mut Workspace,
+        effects: &mut impl WorkspaceEffects,
         render: impl FnMut(Display<'_>) -> Result<Frame, Fault>,
     ) -> Result<StepOutput<Frame>, Fault> {
         self.healthy()?;
@@ -248,11 +391,22 @@ impl PreparedOwner {
         };
         self.sample = Some(sample);
         self.effects.clear();
-        let (state, outcome) = d::run(self.state.runner.dialogue(), request, self);
-        self.state.runner = RunnerState::from_dialogue(state);
+        let state = self.state.runner.dialogue();
+        let (state, outcome) = d::run(
+            state,
+            request,
+            &mut Runner {
+                owner: self,
+                workspace: &mut *workspace,
+                effects,
+            },
+        );
+        // A failed context already holds the actual selected prefix. The
+        // shared runner's remaining local bookkeeping is not a committed state.
         if let Some(fault) = self.fault {
             return Err(fault);
         }
+        self.state.runner = RunnerState::from_dialogue(state);
         if outcome == d::Outcome::Complete {
             let completed = match definition(&self.definitions, self.state.runner.message) {
                 Ok(message) => message.id,
@@ -265,7 +419,7 @@ impl PreparedOwner {
             // Completion clears the current live request, even if it changed while suspended.
             self.state.request = None;
         }
-        let frame = match self.render(render) {
+        let frame = match self.render(workspace, render) {
             Ok(frame) => frame,
             Err(fault) => {
                 self.fault = Some(fault);
@@ -283,12 +437,55 @@ impl PreparedOwner {
             effects: std::mem::take(&mut self.effects),
         })
     }
-    pub fn checkpoint(&self) -> Result<Checkpoint, Fault> {
+    pub fn execution(&self) -> ExecutionDescription {
+        ExecutionDescription {
+            message: self.state.runner.message,
+            continuation: self.state.runner.continuation,
+            child: self.state.runner.child,
+            radius: self.state.runner.radius,
+            selection: self.state.runner.selection,
+            delay: self.state.runner.delay,
+            map: self.state.map,
+            request: self.state.request,
+            completed: self.state.completed,
+            visible: self.state.visible,
+            restored: self.state.restored,
+            wait_pending: self.state.wait_pending,
+            last_interval: self.state.last_interval,
+            drawn_scroll: self.state.drawn_scroll,
+        }
+    }
+    /// Adopt the complete actual selected state after an external writer.
+    /// A rejected description revokes the previous executable state.
+    pub fn adopt_execution(
+        &mut self,
+        description: ExecutionDescription,
+        workspace: &Workspace,
+    ) -> Result<(), Fault> {
+        let valid = validate_execution(&self.start, &description, workspace);
+        if let Err(fault) = valid {
+            self.state = description.into();
+            self.fault = Some(fault);
+            return Err(fault);
+        }
+        self.state = description.into();
+        self.effects.clear();
+        self.sample = None;
+        self.fault = None;
+        Ok(())
+    }
+    pub fn checkpoint(&self, workspace: &Workspace) -> Result<Checkpoint, Fault> {
         self.healthy()?;
+        workspace
+            .validate(crate::scene::records::Revision(
+                self.start.active.revision.0,
+            ))
+            .map_err(|_| Fault::MissingDisplay)?;
         Ok(Checkpoint {
             schema: 1,
             definitions: self.definitions.clone(),
             start: self.start.clone(),
+            workspace: workspace.clone(),
             state: self.state.clone(),
         })
     }
@@ -296,14 +493,19 @@ impl PreparedOwner {
         definitions: Arc<Definitions>,
         start: PreparedStart,
         checkpoint: Checkpoint,
+        workspace: &mut Workspace,
         render: impl FnMut(Display<'_>) -> Result<Frame, Fault>,
     ) -> Result<(Self, Frame), Fault> {
         if checkpoint.schema != 1
             || *definitions != *checkpoint.definitions
             || start != *checkpoint.start
+            || *workspace != checkpoint.workspace
         {
             return Err(Fault::ChangedContent);
         }
+        workspace
+            .validate(crate::scene::records::Revision(start.active.revision.0))
+            .map_err(|_| Fault::MissingDisplay)?;
         let owner = Self {
             definitions,
             start: Arc::new(start),
@@ -312,15 +514,16 @@ impl PreparedOwner {
             fault: None,
             sample: None,
         };
-        let frame = owner.render(render)?;
+        let frame = owner.render(workspace, render)?;
         Ok((owner, frame))
     }
     pub fn reset<Frame>(
         &self,
         start: PreparedStart,
+        workspace: &mut Workspace,
         render: impl FnMut(Display<'_>) -> Result<Frame, Fault>,
     ) -> Result<(Self, Frame), Fault> {
-        Self::open(self.definitions.clone(), start, render)
+        Self::open(self.definitions.clone(), start, workspace, render)
     }
     fn healthy(&self) -> Result<(), Fault> {
         if self.fault.is_some() {
@@ -331,9 +534,15 @@ impl PreparedOwner {
     }
     pub fn render<Frame>(
         &self,
+        workspace: &Workspace,
         mut render: impl FnMut(Display<'_>) -> Result<Frame, Fault>,
     ) -> Result<Frame, Fault> {
         self.healthy()?;
+        workspace
+            .validate(crate::scene::records::Revision(
+                self.start.active.revision.0,
+            ))
+            .map_err(|_| Fault::MissingDisplay)?;
         let display = if self.state.visible {
             &self.start.active
         } else if self.state.restored {
@@ -357,35 +566,6 @@ impl PreparedOwner {
             scroll: self.state.drawn_scroll,
         }
     }
-    fn prepare(&mut self, message: d::Message<MessageId>) -> Result<(), Fault> {
-        let message = definition(&self.definitions, message)?;
-        let mut cursor = TextCursor::new((message.text.len() * 2) as u16);
-        self.state.tiles[..32].copy_from_slice(border(message.size));
-        loop {
-            let tile = message.text[usize::from(cursor.source_offset >> 1)];
-            let offset = destination_byte_offset(cursor.word);
-            self.state.tiles[(offset - 0x200) / 2] = tile;
-            if cursor.advance() {
-                break;
-            }
-        }
-        let end = usize::from(cursor.word);
-        self.state.tiles[end..end + 32].copy_from_slice(border(message.size));
-        if message.modifier != ButtonModifier::None {
-            let buttons = if message.modifier == ButtonModifier::Shoot {
-                self.start.shoot_button
-            } else {
-                self.start.run_button
-            };
-            self.state.tiles
-                [usize::from(message.button_byte_offset.ok_or(Fault::Definition)?) / 2] =
-                button_letter(buttons);
-        }
-        let length = usize::from(dma_length((message.text.len() * 2) as u16)) / 2;
-        let first = message.upload_offset();
-        self.state.map[first..first + length].copy_from_slice(&self.state.tiles[..length]);
-        Ok(())
-    }
     fn event(&mut self, effect: Effect) {
         if self.effects.len() == 16 {
             self.fault = Some(Fault::EffectLimit);
@@ -395,69 +575,243 @@ impl PreparedOwner {
     }
 }
 
-impl d::Context for PreparedOwner {
+struct Runner<'a> {
+    owner: &'a mut PreparedOwner,
+    workspace: &'a mut Workspace,
+    effects: &'a mut dyn WorkspaceEffects,
+}
+impl Runner<'_> {
+    fn emit(&mut self, state: d::Dialogue<MessageId>, effect: Effect) -> d::Dialogue<MessageId> {
+        self.owner.state.runner = RunnerState::from_dialogue(state);
+        self.owner.event(effect);
+        if self.owner.fault.is_some() {
+            return self.owner.state.runner.dialogue();
+        }
+        let mut execution = self.owner.execution();
+        // The sink hands the sole Workspace and published execution back to
+        // their owner before cross-owner effects, then returns the actual prefix.
+        let delivered = self.effects.effect(effect, self.workspace, &mut execution);
+        // Adopt the actual typed prefix without eagerly querying changed live
+        // requests or media. Their original consuming phases decide failure.
+        self.owner.state = execution.into();
+        self.owner.fault = delivered.err();
+        self.owner.state.runner.dialogue()
+    }
+    fn apply(
+        &mut self,
+        action: impl FnOnce(
+            &mut dyn crate::presentation_workspace::SliceWriter,
+        ) -> Result<(), crate::scene::state::DisplayError>,
+    ) {
+        let mut workspace = crate::presentation_workspace::PublishedWorkspace {
+            workspace: self.workspace,
+            publication: self.effects,
+        };
+        if action(&mut workspace).is_err() {
+            self.owner.fault = Some(Fault::Definition);
+        }
+    }
+    fn upload(&mut self, first: usize, bytes: usize, role: Role) {
+        for (index, destination) in self.owner.state.map[first..first + bytes / 2]
+            .iter_mut()
+            .enumerate()
+        {
+            match self.workspace.word(Point::new(role, index * 2)) {
+                Ok(word) => *destination = word,
+                Err(_) => {
+                    self.owner.fault = Some(Fault::MissingDisplay);
+                    break;
+                }
+            }
+        }
+    }
+}
+impl d::Context for Runner<'_> {
     type Id = MessageId;
     fn effect(
         &mut self,
-        mut state: d::Dialogue<MessageId>,
+        state: d::Dialogue<MessageId>,
         effect: d::Effect,
     ) -> d::Dialogue<MessageId> {
-        if self.fault.is_some() {
+        if self.owner.fault.is_some() {
             return state;
         }
+        // Fallible canvas operations publish their current runner prefix too.
+        self.owner.state.runner = RunnerState::from_dialogue(state);
+        let mut state = self.owner.state.runner.dialogue();
         match effect {
-            d::Effect::CancelSounds => self.event(Effect::CancelSounds),
+            d::Effect::CancelSounds => return self.emit(state, Effect::CancelSounds),
             d::Effect::ClearSelection => state.selection = d::Selection::Accept,
-            d::Effect::PrepareDisplay => self.state.visible = true,
-            // The map holds VRAM, so only the uploads change it.
-            d::Effect::SaveBackground
-            | d::Effect::FillBackground
-            | d::Effect::DrawTopBorder
-            | d::Effect::PrepareScroll
-            | d::Effect::EnableScroll => {}
-            d::Effect::UploadBackground => self.state.map.fill(0x000e),
-            d::Effect::WriteMessage => state.radius = 0,
-            d::Effect::UploadMessage => {
-                if let Err(fault) = self.prepare(state.message) {
-                    self.fault = Some(fault);
+            d::Effect::PrepareDisplay => {
+                self.owner.state.visible = true;
+                self.apply(|workspace| {
+                    workspace.write_slice(Point::new(Role::Pause, 0), &[0; 0x82])
+                });
+            }
+            d::Effect::SaveBackground => {
+                for (index, word) in self.owner.state.map.iter().enumerate() {
+                    if (crate::presentation_workspace::PublishedWorkspace {
+                        workspace: self.workspace,
+                        publication: self.effects,
+                    })
+                    .write_slice(
+                        Point::new(Role::SavedBackground, index * 2),
+                        &word.to_le_bytes(),
+                    )
+                    .is_err()
+                    {
+                        self.owner.fault = Some(Fault::MissingDisplay);
+                        break;
+                    }
                 }
             }
-            d::Effect::SaveSound => self.event(Effect::SaveSound),
-            d::Effect::AdvanceAudio => self.event(Effect::AdvanceAudio),
-            d::Effect::AdvanceSoundEffects => self.event(Effect::AdvanceSoundEffects),
-            d::Effect::UpdateHdma => self.event(Effect::UpdateHdma),
-            d::Effect::RestoreBackground => self.state.map = self.state.backup,
-            d::Effect::RestoreDisplay => {
-                self.state.visible = false;
-                self.state.restored = true;
+            d::Effect::FillBackground => self.apply(|workspace| canvas::background(workspace)),
+            d::Effect::UploadBackground => self.upload(0, MAP_WORDS * 2, Role::Equipment),
+            d::Effect::DrawTopBorder => match definition(&self.owner.definitions, state.message) {
+                Ok(message) => {
+                    let size = message.size;
+                    self.apply(|workspace| canvas::row(workspace, 0, border(size)));
+                }
+                Err(fault) => self.owner.fault = Some(fault),
+            },
+            d::Effect::WriteMessage => {
+                state.radius = 0;
+                self.owner.state.runner.radius = 0;
+                self.apply(|workspace| {
+                    workspace.write_slice(Point::new(Role::Pause, 0), &[0; 0xe0])
+                });
+                if self.owner.fault.is_some() {
+                    return state;
+                }
+                match definition(&self.owner.definitions, state.message) {
+                    Ok(message) => {
+                        let size = message.size;
+                        let mut cursor = TextCursor::new(
+                            u16::try_from(message.text.len() * 2)
+                                .expect("validated message length"),
+                        );
+                        loop {
+                            let tile = message.text[usize::from(cursor.source_offset >> 1)];
+                            if canvas::tile(
+                                &mut crate::presentation_workspace::PublishedWorkspace {
+                                    workspace: self.workspace,
+                                    publication: self.effects,
+                                },
+                                cursor.word,
+                                tile,
+                            )
+                            .is_err()
+                            {
+                                self.owner.fault = Some(Fault::Definition);
+                                break;
+                            }
+                            if cursor.advance() {
+                                break;
+                            }
+                        }
+                        if self.owner.fault.is_none() {
+                            let end = cursor.word;
+                            self.apply(|workspace| canvas::row(workspace, end, border(size)));
+                        }
+                    }
+                    Err(fault) => self.owner.fault = Some(fault),
+                }
             }
-            d::Effect::ResumeMovementSound => self.event(Effect::ResumeMovementSound),
-            d::Effect::SelectPause => self.event(Effect::SelectPause),
-            d::Effect::DrawRadius => self.state.drawn_scroll = radius_values(state.radius),
+            d::Effect::PrepareScroll => match definition(&self.owner.definitions, state.message) {
+                Ok(message) => {
+                    let modifier = message.modifier;
+                    let offset = message.button_byte_offset;
+                    if modifier != ButtonModifier::None {
+                        let buttons = if modifier == ButtonModifier::Shoot {
+                            self.owner.start.shoot_button
+                        } else {
+                            self.owner.start.run_button
+                        };
+                        if let Some(offset) = offset {
+                            self.apply(|workspace| {
+                                workspace.write_slice(
+                                    Point::new(Role::MessageText, usize::from(offset)),
+                                    &button_letter(buttons).to_le_bytes(),
+                                )
+                            });
+                        } else {
+                            self.owner.fault = Some(Fault::Definition);
+                        }
+                    }
+                    if self.owner.fault.is_none() {
+                        self.apply(|workspace| {
+                            workspace.write_slice(
+                                Point::new(Role::MessageDescriptor, 0),
+                                &HDMA_DESCRIPTOR,
+                            )
+                        });
+                    }
+                }
+                Err(fault) => self.owner.fault = Some(fault),
+            },
+            d::Effect::EnableScroll => {}
+            d::Effect::UploadMessage => match definition(&self.owner.definitions, state.message) {
+                Ok(message) => {
+                    let first = message.upload_offset();
+                    let bytes = usize::from(dma_length(
+                        u16::try_from(message.text.len() * 2).expect("validated message length"),
+                    ));
+                    self.upload(first, bytes, Role::MessageText);
+                }
+                Err(fault) => self.owner.fault = Some(fault),
+            },
+            d::Effect::SaveSound => return self.emit(state, Effect::SaveSound),
+            d::Effect::AdvanceAudio => return self.emit(state, Effect::AdvanceAudio),
+            d::Effect::AdvanceSoundEffects => return self.emit(state, Effect::AdvanceSoundEffects),
+            d::Effect::UpdateHdma => return self.emit(state, Effect::UpdateHdma),
+            d::Effect::RestoreBackground => self.upload(0, MAP_WORDS * 2, Role::SavedBackground),
+            d::Effect::RestoreDisplay => {
+                self.owner.state.visible = false;
+                self.owner.state.restored = true;
+            }
+            d::Effect::ResumeMovementSound => return self.emit(state, Effect::ResumeMovementSound),
+            d::Effect::SelectPause => return self.emit(state, Effect::SelectPause),
+            d::Effect::DrawRadius => {
+                match canvas::radius(
+                    &mut crate::presentation_workspace::PublishedWorkspace {
+                        workspace: self.workspace,
+                        publication: self.effects,
+                    },
+                    state.radius,
+                ) {
+                    Ok(values) => self.owner.state.drawn_scroll = values,
+                    Err(_) => self.owner.fault = Some(Fault::Definition),
+                }
+            }
             d::Effect::StageSelection => {
-                self.state.tiles[128..160]
-                    .copy_from_slice(selection_row(selection(state.selection)));
+                self.apply(|workspace| {
+                    canvas::row(workspace, 128, selection_row(selection(state.selection)))
+                });
             }
             d::Effect::UploadSelection => {
                 let first = 0x5800 + usize::from(map_offset(BoxSize::Large)) - MAP_BASE;
-                self.state.map[first..first + 192].copy_from_slice(&self.state.tiles[..192]);
+                self.upload(first, 0x180, Role::MessageText);
             }
-            d::Effect::SelectionSound => self.event(Effect::SelectionSound),
+            d::Effect::SelectionSound => return self.emit(state, Effect::SelectionSound),
+        }
+        if self.owner.fault.is_none() {
+            self.owner.state.runner = RunnerState::from_dialogue(state);
+            return self.owner.state.runner.dialogue();
         }
         state
     }
     fn wait(&mut self, state: d::Dialogue<MessageId>) -> (d::Dialogue<MessageId>, d::Outcome) {
-        if self.fault.is_some() {
+        if self.owner.fault.is_some() {
             return (
                 state,
                 d::Outcome::Suspended(std::num::NonZeroU8::new(1).unwrap()),
             );
         }
-        if self.state.wait_pending {
-            self.state.wait_pending = false;
+        if self.owner.state.wait_pending {
+            self.owner.state.wait_pending = false;
             (state, d::Outcome::Complete)
         } else {
-            self.state.wait_pending = true;
+            self.owner.state.wait_pending = true;
             (
                 state,
                 d::Outcome::Suspended(std::num::NonZeroU8::new(1).unwrap()),
@@ -465,7 +819,21 @@ impl d::Context for PreparedOwner {
         }
     }
     fn input(&mut self, state: d::Dialogue<MessageId>) -> (d::Dialogue<MessageId>, d::Input) {
+        if self.owner.fault.is_some() {
+            // This inert result drains only discarded local runner bookkeeping;
+            // it never samples input or changes the retained failed execution.
+            return (
+                state,
+                d::Input {
+                    confirm: false,
+                    cancel: false,
+                    toggle: false,
+                    dismiss: false,
+                },
+            );
+        }
         let sample = self
+            .owner
             .sample
             .expect("resume admits input before dialogue polling");
         (
@@ -479,3 +847,38 @@ impl d::Context for PreparedOwner {
         )
     }
 }
+
+/// One sink receives byte publication while the actual allocation is leased,
+/// and receives synchronous effects only after its actual execution is exposed.
+pub trait WorkspaceEffects: crate::presentation_workspace::Publication {
+    fn effect(
+        &mut self,
+        effect: Effect,
+        workspace: &mut Workspace,
+        execution: &mut ExecutionDescription,
+    ) -> Result<(), Fault>;
+}
+struct ExtractionEffects<F>(F);
+impl<F> crate::presentation_workspace::Publication for ExtractionEffects<F> {
+    fn published(
+        &mut self,
+        _: &Workspace,
+        _: crate::presentation_workspace::SourcePoint,
+        _: usize,
+    ) {
+    }
+}
+impl<F: FnMut(Effect, &mut Workspace, &mut ExecutionDescription) -> Result<(), Fault>>
+    WorkspaceEffects for ExtractionEffects<F>
+{
+    fn effect(
+        &mut self,
+        effect: Effect,
+        workspace: &mut Workspace,
+        execution: &mut ExecutionDescription,
+    ) -> Result<(), Fault> {
+        (self.0)(effect, workspace, execution)
+    }
+}
+
+use crate::presentation_workspace::SliceWriter as _;

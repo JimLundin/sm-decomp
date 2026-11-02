@@ -42,3 +42,16 @@ pub(super) unsafe fn process(game: &mut Game) {
     game.ram().fill(QUEUE..QUEUE + 2, 0);
     word!(game.MODE7_VRAM_WRITE_QUEUE_TAIL = 0);
 }
+
+#[forbid(unsafe_code)]
+impl sm_game::display::transfer::Mode7Queue for Game {
+    fn mode7_queue_tail(&self) -> u16 {
+        word!(self.MODE7_VRAM_WRITE_QUEUE_TAIL)
+    }
+    fn set_mode7_queue_tail(&mut self, tail: u16) {
+        word!(self.MODE7_VRAM_WRITE_QUEUE_TAIL = tail);
+    }
+    fn set_mode7_queue_byte(&mut self, offset: usize, value: u8) {
+        self.ram().write_byte(QUEUE + offset, value);
+    }
+}

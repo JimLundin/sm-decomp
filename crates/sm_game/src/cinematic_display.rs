@@ -1,11 +1,14 @@
 //! Cinematic display setup: PPU modes, layers and mirrors per scene, the Mode 7 reset and intro sprite order.
+use crate::cinematic::CinematicDestination;
 use crate::cinematic::set_fixed_color;
 use crate::cinematic_objects::draw_cinematic_sprites;
 use crate::cinematic_state::Cinematic;
 use crate::display::control::{Brightness, Layers, MainWindowMask, SubScreen};
+use crate::display::preparation::Field;
 use crate::menu_state::OptionsMenu;
 use crate::menus::prelude::display_scroll;
-use crate::ram::RawRam as _;
+use crate::presentation_workspace::{Point, Role};
+use crate::word_transfers::WordEndpoint;
 
 pub fn configure_cinematic_display<H: crate::menus::host::Host + ?Sized>(
     display: crate::visual_state::CinematicDisplay,
@@ -42,7 +45,7 @@ pub fn configure_cinematic_display<H: crate::menus::host::Host + ?Sized>(
     }
     match display {
         Title | Station | Escape => {
-            game.ram().write_byte(0x58, 0);
+            crate::frame_display_byte!(game, Field::Screens0 => 0);
             crate::display::sequence::register_writes! { game;
                 mirror(BG1SC as u16, 0, 0x59, false); mirror(BG2SC as u16, 0, 0x5a, false);
                 mirror(BG3SC as u16, 0, 0x5c, false); mirror(BG4SC as u16, 0, 0x5d, false);
@@ -54,7 +57,7 @@ pub fn configure_cinematic_display<H: crate::menus::host::Host + ?Sized>(
                 mirror(BG1SC as u16, 0x50, 0x58, true); mirror(BG2SC as u16, 0x48, 0x59, true);
                 mirror(BG3SC as u16, 0x4c, 0x5a, true);
             }
-            game.ram().write_byte(0x5c, 0);
+            crate::frame_display_byte!(game, Field::Screens3 => 0);
             crate::display::sequence::register_writes! { game;
                 mirror(BG4SC as u16, 0, 0x5d, false); byte(BG12NBA as u16, 0);
                 mirror(BG34NBA as u16, 4, 0x5e, true);
@@ -68,7 +71,7 @@ pub fn configure_cinematic_display<H: crate::menus::host::Host + ?Sized>(
                 0x58,
                 true,
             );
-            game.ram().write_byte(0x59, 0);
+            crate::frame_display_byte!(game, Field::Screens1 => 0);
             crate::display::sequence::register_writes! { game;
                 mirror(BG2SC as u16, 0, 0x5a, false); mirror(BG3SC as u16, 0, 0x5c, false);
                 byte(BG4SC as u16, 0); mirror(BG12NBA as u16, 6, 0x5d, true);
@@ -93,8 +96,16 @@ pub fn configure_cinematic_display<H: crate::menus::host::Host + ?Sized>(
         mirror(TM as u16, layers, 0x69, false); show_mirror(SubScreen(Layers::NONE), 0x6b, false);
     }
     if tiled {
-        for at in [0x60, 0x61, 0x62, 0x6c, 0x6d, 0x6f, 0x72] {
-            game.ram().write_byte(at, 0);
+        for field in [
+            Field::WindowSelection0,
+            Field::WindowSelection1,
+            Field::WindowSelection2,
+            Field::MainWindow,
+            Field::SubWindow,
+            Field::ColorSelection,
+            Field::ColorMath,
+        ] {
+            crate::frame_display_byte!(game, field => 0);
         }
         if display == Credits {
             set_fixed_color([32, 64, 0x80], game);
@@ -117,8 +128,8 @@ pub fn configure_cinematic_display<H: crate::menus::host::Host + ?Sized>(
         mirror(CGWSEL as u16, 0, 0x6e, false); mirror(CGADSUB as u16, 0, 0x71, false);
     }
     if escape {
-        game.ram().write_byte(0x6f, 0);
-        game.ram().write_byte(0x72, 0);
+        crate::frame_display_byte!(game, Field::ColorSelection => 0);
+        crate::frame_display_byte!(game, Field::ColorMath => 0);
     }
     // One COLDATA write, as the compat sink did.
     crate::display::sequence::register_writes! { game;
@@ -129,17 +140,25 @@ pub fn configure_cinematic_display<H: crate::menus::host::Host + ?Sized>(
     }
     if !title {
         if !escape {
-            game.ram().write_byte(0x6f, 0);
-            game.ram().write_byte(0x72, 0);
+            crate::frame_display_byte!(game, Field::ColorSelection => 0);
+            crate::frame_display_byte!(game, Field::ColorMath => 0);
         }
         set_fixed_color([32, 64, 0x80], game);
         if !escape {
-            game.ram().write_byte(0x57, 0);
+            crate::frame_display_byte!(game, Field::Mosaic => 0);
         }
     }
     if title || intro {
         let fill = if title { 0 } else { 0x2f };
-        crate::word_transfers!(game, ascending, 0x3ff; native(0x3000) <- value(fill));
+        crate::cinematic::transfer_cinematic_words(
+            0x3ff,
+            2,
+            &[(
+                CinematicDestination::Screen(Point::new(Role::Pause, 0x0)),
+                WordEndpoint::Value(fill),
+            )],
+            game,
+        );
     }
     match display {
         Title => {
@@ -165,10 +184,13 @@ pub fn configure_cinematic_display<H: crate::menus::host::Host + ?Sized>(
                 menu.pausemenu_reserve_tank_delay_ctr = 0;
                 menu.unused_word_7e0759 = 0;
             });
-            crate::session_cohort::with(game, |_, inventory: &mut crate::inventory::Inventory| {
-                inventory.reserve_health = 0;
-                inventory.reserve_missiles = 0;
-            });
+            crate::gameplay_context::with_inventory(
+                game,
+                |_, inventory: &mut crate::inventory::Inventory| {
+                    inventory.reserve_health = 0;
+                    inventory.reserve_missiles = 0;
+                },
+            );
             *cine.mode7_angle() = 0;
         }
         Intro => {
@@ -221,20 +243,22 @@ fn set_mode7_transform<H: crate::menus::host::Host + ?Sized>(
     transform: crate::display::control::Mode7Transform,
     game: &mut H,
 ) {
+    use crate::display::preparation::Place;
     use crate::display::registers::{M7A, M7B, M7C, M7D, M7X, M7Y};
-    use crate::ram::words;
     let registers = [M7A, M7B, M7C, M7D, M7X, M7Y];
     let mirrors = [
-        words::REG_M7A,
-        words::REG_M7B,
-        words::REG_M7C,
-        words::REG_M7D,
-        words::REG_M7X,
-        words::REG_M7Y,
+        (Field::AffineWords0Low, Field::AffineWords0High),
+        (Field::AffineWords1Low, Field::AffineWords1High),
+        (Field::AffineWords2Low, Field::AffineWords2High),
+        (Field::AffineWords3Low, Field::AffineWords3High),
+        (Field::AffineWords4Low, Field::AffineWords4High),
+        (Field::AffineWords5Low, Field::AffineWords5High),
     ];
-    for ((register, mirror), value) in registers.into_iter().zip(mirrors).zip(transform.words()) {
+    for ((register, (low, high)), value) in
+        registers.into_iter().zip(mirrors).zip(transform.words())
+    {
         game.write_register_word(register as u16, value);
-        crate::ram::checked_word!(game, mirror; = value);
+        Place::Controls(low, high).write(game, value);
     }
 }
 

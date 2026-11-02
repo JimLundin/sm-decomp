@@ -12,6 +12,16 @@ Do not add new dependencies of these kinds. When a check is changed so it no
 longer needs an entry, remove the held behavior, its tags and its row here in
 the same change.
 
+## Retained standalone display schema
+
+`LEGACY(display-state-schema)` retains `TransferSource::ActorTilemap` (wire tag 3)
+and `DisplayState::actor_tiles.tilemap_bytes` for standalone display codec and
+fixture compatibility. The owned Session transfer path rejects this source: real
+actor tile staging uses `ActorState` provenance and reads the current canonical
+actor/projectile owner. No production constructor of tag 3 was found in the
+reviewed source. Remove the tag, retained payload and standalone fixture together
+when their schema consumers migrate; they are not an independent live RAM owner.
+
 ## Faithful-oracle known divergences
 
 `SM_ORACLE=faithful` runs the original game without snesrev's patches. Some
