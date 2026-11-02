@@ -110,6 +110,14 @@ macro_rules! record_word {
     };
 }
 
+/// Store `value` to byte `lane` (0 the low, 1 the high) of `word`, as a byte
+/// store to the word's RAM does.
+pub fn store_byte(word: &mut u16, lane: usize, value: u8) {
+    let mut bytes = word.to_le_bytes();
+    bytes[lane] = value;
+    *word = u16::from_le_bytes(bytes);
+}
+
 /// One slot's state, read.
 #[derive(Clone, Copy)]
 pub struct SlotRef<'a> {

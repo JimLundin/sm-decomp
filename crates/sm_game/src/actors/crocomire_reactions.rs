@@ -6,9 +6,9 @@ use crate::actors::access::{AccessMode, ActorAccess, ActorKey as Key};
 use crate::actors::boss_interaction as interaction;
 use crate::actors::boss_lease::BossLease;
 use crate::actors::boss_lease::bg2_staging;
-use crate::actors::crocomire_attack::{Crocomire, flag, lane};
+use crate::actors::crocomire_attack::{Crocomire, CrocomireEdit, flag, lane};
 use crate::actors::host::{BossEffects, Death, Slopes};
-use crate::actors::session_slots::session_slot;
+use crate::actors::slot_view::{SlotState, store_byte};
 use crate::carry::{adc, sbc};
 use crate::constants::{
     bank_86::{
@@ -32,11 +32,15 @@ use sm_data::crocomire::{
 /// Crocomire's melt words, which the Session holds as `actors.crocomire_melt`,
 /// read and stored through the host's projected bytes.
 pub trait Lease:
-    BossLease<Game: Host> + ActorAccess + crate::actors::boss_interaction::Access
+    BossLease<Game: Host> + ActorAccess + crate::actors::boss_interaction::Access + SlotState
 {
 }
-impl<T: BossLease<Game: Host> + ActorAccess + crate::actors::boss_interaction::Access + ?Sized>
-    Lease for T
+impl<T> Lease for T where
+    T: BossLease<Game: Host>
+        + ActorAccess
+        + crate::actors::boss_interaction::Access
+        + SlotState
+        + ?Sized
 {
 }
 
@@ -146,16 +150,22 @@ pub mod instruction {
 
 /// The death sequence's next step: its index is a word offset, raised a byte
 /// at a time as the original does.
-fn next_death_step<L: Lease + ?Sized>(k: i32, game: &mut L) {
+fn next_death_step<L: Lease + ?Sized>(k: u16, game: &mut L) {
     for _ in 0..2 {
-        session_slot!(game, Crocomire[k].death_sequence_index, |old| old
-            .wrapping_add(1));
+        {
+            let mut crocomire = CrocomireEdit::of(game, k);
+            let old = crocomire.death_sequence_index();
+            *old = old.wrapping_add(1);
+        }
     }
 }
 /// The death sequence's next step in one store.
-fn skip_death_step<L: Lease + ?Sized>(k: i32, game: &mut L) {
-    session_slot!(game, Crocomire[k].death_sequence_index, |old| old
-        .wrapping_add(2));
+fn skip_death_step<L: Lease + ?Sized>(k: u16, game: &mut L) {
+    {
+        let mut crocomire = CrocomireEdit::of(game, k);
+        let old = crocomire.death_sequence_index();
+        *old = old.wrapping_add(2);
+    }
 }
 fn cap_byte(value: u8, limit: u8) -> u8 {
     if value.wrapping_sub(limit) as i8 >= 0 {
@@ -170,92 +180,124 @@ pub fn fill_scroll<L: Lease + ?Sized>(game: &mut L) {
 }
 pub fn melt_down<L: Lease + ?Sized>(game: &mut L) {
     fill_scroll(game);
-    session_slot!(game, Crocomire[0].fight_flags, |old| old & !flag::DAMAGED);
+    *CrocomireEdit::of(game, 0).fight_flags() &= !flag::DAMAGED;
     update_background(game.current_enemy(), game);
-    let key = game.current_enemy() as i32;
-    if (session_slot!(game, Crocomire[key].base.y_pos) as i32 - 280) & 0x8000 != 0 {
+    let key = game.current_enemy();
+    if (Crocomire::of(game, key).actor().y.whole as i32 - 280) & 0x8000 != 0 {
         let mut cursor = (8 * ((display_scroll!(game.Bg2V) as i32 + 288) & 0xfff8)) as u16;
         for _ in 0..32 {
             bg2_staging::set(game, usize::from(cursor >> 1), 824);
             cursor = cursor.wrapping_add(2);
         }
         battle!(game.EnemyTilemapPending = 1);
-        session_slot!(game, Crocomire[0].base.extra_properties, |old| old
-            & !0x8000);
-        let low = session_slot!(game, Crocomire[key].step_counter) as u8;
-        session_slot!(byte game, Crocomire[key].step_counter[0] = low.wrapping_add(0x80));
+        CrocomireEdit::of(game, 0).actor().extra_properties &= !0x8000;
+        let low = Crocomire::of(game, key).step_counter() as u8;
+        store_byte(
+            CrocomireEdit::of(game, key).step_counter(),
+            0,
+            low.wrapping_add(0x80),
+        );
         let next = (low.overflowing_add(0x80).1 as u8)
-            .wrapping_add(session_slot!(byte game, Crocomire[key].step_counter[1]))
+            .wrapping_add(Crocomire::of(game, key).step_counter().to_le_bytes()[1])
             .wrapping_add(3);
         let high = cap_byte(next, 48);
-        session_slot!(byte game, Crocomire[key].step_counter[1] = high);
-        let carry = session_slot!(byte game, Crocomire[key].y_velocity[0])
+        store_byte(CrocomireEdit::of(game, key).step_counter(), 1, high);
+        let carry = Crocomire::of(game, key).y_velocity().to_le_bytes()[0]
             .overflowing_add(high)
             .1;
-        session_slot!(byte game, Crocomire[key].y_velocity[0] = session_slot!(byte game, Crocomire[key].y_velocity[0]).wrapping_add(high));
+        {
+            let value: u8 =
+                Crocomire::of(game, key).y_velocity().to_le_bytes()[0].wrapping_add(high);
+            store_byte(CrocomireEdit::of(game, key).y_velocity(), 0, value);
+        }
         let high = cap_byte(
-            (carry as u8).wrapping_add(session_slot!(byte game, Crocomire[key].y_velocity[1])),
+            (carry as u8).wrapping_add(Crocomire::of(game, key).y_velocity().to_le_bytes()[1]),
             3,
         );
-        session_slot!(byte game, Crocomire[key].y_velocity[1] = high);
-        let velocity = session_slot!(game, Crocomire[key].y_velocity) as u8;
-        let carry = session_slot!(byte game, Crocomire[key].projectile_counter[1])
+        store_byte(CrocomireEdit::of(game, key).y_velocity(), 1, high);
+        let velocity = Crocomire::of(game, key).y_velocity() as u8;
+        let carry = Crocomire::of(game, key).projectile_counter().to_le_bytes()[1]
             .overflowing_add(velocity)
             .1;
-        session_slot!(byte game, Crocomire[key].projectile_counter[1] = session_slot!(byte game, Crocomire[key].projectile_counter[1]).wrapping_add(velocity));
+        {
+            let value: u8 = Crocomire::of(game, key).projectile_counter().to_le_bytes()[1]
+                .wrapping_add(velocity);
+            store_byte(CrocomireEdit::of(game, key).projectile_counter(), 1, value);
+        }
         let (step, carry) =
-            (carry as u8).overflowing_add(session_slot!(byte game, Crocomire[key].y_velocity[1]));
+            (carry as u8).overflowing_add(Crocomire::of(game, key).y_velocity().to_le_bytes()[1]);
         let carry = carry
-            | session_slot!(byte game, Crocomire[key].base.y_pos[0])
+            | Crocomire::of(game, key).actor().y.whole.to_le_bytes()[0]
                 .overflowing_add(step)
                 .1;
-        session_slot!(byte game, Crocomire[key].base.y_pos[0] = session_slot!(byte game, Crocomire[key].base.y_pos[0]).wrapping_add(step));
-        session_slot!(byte game, Crocomire[key].base.y_pos[1] = session_slot!(byte game, Crocomire[key].base.y_pos[1]).wrapping_add(carry as u8));
+        {
+            let value: u8 =
+                Crocomire::of(game, key).actor().y.whole.to_le_bytes()[0].wrapping_add(step);
+            store_byte(&mut CrocomireEdit::of(game, key).actor().y.whole, 0, value);
+        }
+        {
+            let value: u8 =
+                Crocomire::of(game, key).actor().y.whole.to_le_bytes()[1].wrapping_add(carry as u8);
+            store_byte(&mut CrocomireEdit::of(game, key).actor().y.whole, 1, value);
+        }
     } else {
         next_death_step(key, game);
-        session_slot!(game, Crocomire[0].step_counter = 48);
+        *CrocomireEdit::of(game, 0).step_counter() = 48;
     }
 }
 pub fn melt_up<L: Lease + ?Sized>(game: &mut L) {
     fill_scroll(game);
-    let key = game.current_enemy() as i32;
-    if (session_slot!(game, Crocomire[key].base.y_pos) as i32 - 218) & 0x8000 != 0 {
+    let key = game.current_enemy();
+    if (Crocomire::of(game, key).actor().y.whole as i32 - 218) & 0x8000 != 0 {
         next_death_step(key, game);
     } else {
         update_background(game.current_enemy(), game);
-        let mut acceleration =
-            (session_slot!(game, Crocomire[0].step_counter) as i16).wrapping_add(256);
-        if (session_slot!(game, Crocomire[0].step_counter) as i32 - 7680) & 0x8000 == 0 {
+        let mut acceleration = (Crocomire::of(game, 0).step_counter() as i16).wrapping_add(256);
+        if (Crocomire::of(game, 0).step_counter() as i32 - 7680) & 0x8000 == 0 {
             acceleration = 7936;
         }
-        session_slot!(game, Crocomire[0].step_counter = acceleration as u16);
-        let low = session_slot!(game, Crocomire[0].y_velocity) as u8;
-        let borrow = low < session_slot!(byte game, Crocomire[0].step_counter[1]);
-        session_slot!(byte game, Crocomire[0].y_velocity[0] = low.wrapping_sub(session_slot!(byte game, Crocomire[0].step_counter[1])));
+        *CrocomireEdit::of(game, 0).step_counter() = acceleration as u16;
+        let low = Crocomire::of(game, 0).y_velocity() as u8;
+        let borrow = low < Crocomire::of(game, 0).step_counter().to_le_bytes()[1];
+        {
+            let value: u8 =
+                low.wrapping_sub(Crocomire::of(game, 0).step_counter().to_le_bytes()[1]);
+            store_byte(CrocomireEdit::of(game, 0).y_velocity(), 0, value);
+        }
         let mut high =
-            (session_slot!(byte game, Crocomire[0].y_velocity[1]) as i8).wrapping_sub(borrow as i8);
+            (Crocomire::of(game, 0).y_velocity().to_le_bytes()[1] as i8).wrapping_sub(borrow as i8);
         if high < 0 {
-            session_slot!(byte game, Crocomire[0].y_velocity[0] = 0xff);
+            store_byte(CrocomireEdit::of(game, 0).y_velocity(), 0, 0xff);
             high = 0;
         }
-        session_slot!(byte game, Crocomire[0].y_velocity[1] = high as u8);
-        let fraction = session_slot!(byte game, Crocomire[0].projectile_counter[1]);
-        let borrow = fraction < session_slot!(byte game, Crocomire[0].y_velocity[0]);
-        session_slot!(byte game, Crocomire[0].projectile_counter[1] = fraction.wrapping_sub(session_slot!(byte game, Crocomire[0].y_velocity[0])));
-        let y = session_slot!(game, Crocomire[0].base.y_pos) as u8;
+        store_byte(CrocomireEdit::of(game, 0).y_velocity(), 1, high as u8);
+        let fraction = Crocomire::of(game, 0).projectile_counter().to_le_bytes()[1];
+        let borrow = fraction < Crocomire::of(game, 0).y_velocity().to_le_bytes()[0];
+        {
+            let value: u8 =
+                fraction.wrapping_sub(Crocomire::of(game, 0).y_velocity().to_le_bytes()[0]);
+            store_byte(CrocomireEdit::of(game, 0).projectile_counter(), 1, value);
+        }
+        let y = Crocomire::of(game, 0).actor().y.whole as u8;
         let step =
-            (borrow as u8).wrapping_add(session_slot!(byte game, Crocomire[0].y_velocity[1]));
-        session_slot!(byte game, Crocomire[0].base.y_pos[0] = y.wrapping_sub(step));
-        session_slot!(byte game, Crocomire[0].base.y_pos[1] = session_slot!(byte game, Crocomire[0].base.y_pos[1]).wrapping_sub((y < step) as u8));
+            (borrow as u8).wrapping_add(Crocomire::of(game, 0).y_velocity().to_le_bytes()[1]);
+        store_byte(
+            &mut CrocomireEdit::of(game, 0).actor().y.whole,
+            0,
+            y.wrapping_sub(step),
+        );
+        {
+            let value: u8 = Crocomire::of(game, 0).actor().y.whole.to_le_bytes()[1]
+                .wrapping_sub((y < step) as u8);
+            store_byte(&mut CrocomireEdit::of(game, 0).actor().y.whole, 1, value);
+        }
     }
 }
 pub fn update_background<L: Lease + ?Sized>(k: u16, game: &mut L) {
-    display_scroll!(
-        game.Bg2V = 67u16.wrapping_sub(session_slot!(game, Crocomire[k as i32].base.y_pos))
-    );
+    display_scroll!(game.Bg2V = 67u16.wrapping_sub(Crocomire::of(game, k).actor().y.whole));
     let mut index = 32u16;
     let spritemap = loop {
-        let candidate = session_slot!(game, Crocomire[0].base.spritemap_pointer);
+        let candidate = Crocomire::of(game, 0).actor().spritemap;
         let spritemap = game.foreign(|game| {
             game.crocomire_table_word(SCROLL_SPRITEMAP_ADDRESS, (index >> 1) as isize)
         });
@@ -276,19 +318,18 @@ pub fn update_background<L: Lease + ?Sized>(k: u16, game: &mut L) {
 }
 /// Position Crocomire's second body part and align its BG2 image with the camera.
 fn align_background<L: Lease + ?Sized>(game: &mut L) {
-    use crate::actors::layouts::EnemyLayout72 as Layout;
-    let primary = i32::from(game.current_enemy());
-    let secondary = i32::from(game.current_enemy()) + 64;
-    session_slot!(
-        game,
-        Layout[secondary].base.x_pos = session_slot!(game, Layout[secondary].var_a)
-            .wrapping_add(session_slot!(game, Layout[primary].base.x_pos))
-    );
-    session_slot!(
-        game,
-        Layout[secondary].base.y_pos = session_slot!(game, Layout[primary].base.y_pos)
-    );
-    let relative = session_slot!(game, Layout[primary].base.x_pos)
+    let primary = game.current_enemy();
+    let secondary = primary + 64;
+    // The second part's first variable is its X offset from the first part.
+    CrocomireEdit::of(game, secondary).actor().x.whole =
+        Crocomire::of(game, secondary).actor().variables[0]
+            .wrapping_add(Crocomire::of(game, primary).actor().x.whole);
+    CrocomireEdit::of(game, secondary).actor().y.whole =
+        Crocomire::of(game, primary).actor().y.whole;
+    let relative = Crocomire::of(game, primary)
+        .actor()
+        .x
+        .whole
         .wrapping_sub(game.camera().layer1[0]) as i16;
     let offset = 51u16.wrapping_sub(relative as u16);
     crate::menus::prelude::display_scroll!(
@@ -301,8 +342,7 @@ fn align_background<L: Lease + ?Sized>(game: &mut L) {
 }
 pub fn update_palette<L: Lease + ?Sized>(game: &mut L) {
     if battle!(game.DoorTransitionEnemies) == 0 {
-        if session_slot!(game, Crocomire[0].base.flash_timer) != 0
-            && (battle!(game.RandomEnemyCounter) & 2) != 0
+        if Crocomire::of(game, 0).actor().flash != 0 && (battle!(game.RandomEnemyCounter) & 2) != 0
         {
             crate::word_transfers!(game, descending, 8; native(BG_PALETTE_7_RAM) <- value(0x7fff));
         } else {
@@ -375,18 +415,18 @@ pub fn behind_wall_rumbling<L: Lease + ?Sized>(game: &mut L) {
 }
 /// Handle playing Crocomire acid damage sound effect ($A4:8D1F). Was `rumble`.
 pub fn play_acid_damage_sound<L: Lease + ?Sized>(game: &mut L) {
-    let remaining = session_slot!(game, Crocomire[0].acid_damage_sound_timer);
+    let remaining = Crocomire::of(game, 0).acid_damage_sound_timer();
     if remaining != 0 {
-        session_slot!(game, Crocomire[0].acid_damage_sound_timer = remaining - 1);
+        *CrocomireEdit::of(game, 0).acid_damage_sound_timer() = remaining - 1;
         if remaining == 1 {
-            session_slot!(game, Crocomire[0].acid_damage_sound_timer = 32);
+            *CrocomireEdit::of(game, 0).acid_damage_sound_timer() = 32;
             game.queue_sound(2, 0x22, 6);
         }
     }
 }
 fn contact_edge<L: Lease + ?Sized>(game: &mut L) -> i32 {
-    session_slot!(game, Crocomire[0].base.x_pos) as i32
-        - session_slot!(game, Crocomire[0].base.x_width) as i32
+    Crocomire::of(game, 0).actor().x.whole as i32
+        - Crocomire::of(game, 0).actor().radius.x as i32
         - battle!(game.SamusXRadius) as i32
 }
 fn contact<L: Lease + ?Sized>(game: &mut L) {
@@ -395,20 +435,19 @@ fn contact<L: Lease + ?Sized>(game: &mut L) {
 /// Enemy touch - Crocomire - claws ($A4:B93D).
 pub fn touch<L: Lease + ?Sized>(game: &mut L) {
     contact(game);
-    session_slot!(game, Crocomire[0].fight_flags, |flags| flags
-        | flag::SAMUS_HIT_BY_CLAW);
+    *CrocomireEdit::of(game, 0).fight_flags() |= flag::SAMUS_HIT_BY_CLAW;
     battle!(game.ExtraSamusXDisplacement = -4i32 as u16);
 }
 /// Crocomire / Samus collision handling ($A4:8C95). Was `push_player`.
 pub fn samus_collision<L: Lease + ?Sized>(game: &mut L) {
     // The test's subtracts carry their borrows on, as the original's do ($A4:8C9A).
     let (edge, carry) = sbc(
-        session_slot!(game, Crocomire[0].base.x_pos),
-        session_slot!(game, Crocomire[0].base.x_width),
+        Crocomire::of(game, 0).actor().x.whole,
+        Crocomire::of(game, 0).actor().radius.x,
         true,
     );
     let (edge, carry) = sbc(edge, battle!(game.SamusXRadius), carry);
-    if session_slot!(game, Crocomire[0].death_sequence_index) == 0
+    if Crocomire::of(game, 0).death_sequence_index() == 0
         && (sbc(edge, game.player_x(), carry).0 as i16) < 0
     {
         contact(game);
@@ -424,8 +463,8 @@ fn next_hit_count(flags: u16) -> u16 {
 }
 /// Enemy shot - Crocomire - nothing ($A4:B951): count the hit.
 pub fn count_hit<L: Lease + ?Sized>(game: &mut L) {
-    let count = next_hit_count(session_slot!(game, Crocomire[0].fight_flags));
-    session_slot!(game, Crocomire[0].fight_flags, |flags| flags | count);
+    let count = next_hit_count(Crocomire::of(game, 0).fight_flags());
+    *CrocomireEdit::of(game, 0).fight_flags() |= count;
 }
 /// Enemy shot - Crocomire - spawn shot explosion ($A4:B968, $A4:BAB4).
 pub fn impact<L: Lease + ?Sized>(game: &mut L) {
@@ -443,9 +482,9 @@ pub fn impact<L: Lease + ?Sized>(game: &mut L) {
 }
 /// Enemy shot - Crocomire - open mouth ($A4:BA05).
 pub fn hit<L: Lease + ?Sized>(game: &mut L) {
-    session_slot!(game, Crocomire[0].base.invincibility_timer = 0);
-    let mut advance = ((session_slot!(game, Crocomire[0].base.x_pos) as i32
-        - session_slot!(game, Crocomire[0].base.x_width) as i32
+    CrocomireEdit::of(game, 0).actor().invincibility = 0;
+    let mut advance = ((Crocomire::of(game, 0).actor().x.whole as i32
+        - Crocomire::of(game, 0).actor().radius.x as i32
         - 256
         - game.camera().layer1[0] as i32) as i16)
         >= 0;
@@ -456,7 +495,7 @@ pub fn hit<L: Lease + ?Sized>(game: &mut L) {
             battle!(game.CollisionDetectionIndex),
         );
         if projectile & 0xf10 == 0 {
-            session_slot!(game, Crocomire[0].base.instruction_timer = 8);
+            CrocomireEdit::of(game, 0).actor().instruction_delay = 8;
             impact(game);
             return;
         }
@@ -466,28 +505,41 @@ pub fn hit<L: Lease + ?Sized>(game: &mut L) {
             .unwrap_or(0);
         advance = recoil != 0;
         if advance {
-            session_slot!(game, Crocomire[0].step_counter, |old| old
-                .wrapping_add(recoil));
+            {
+                let mut crocomire = CrocomireEdit::of(game, 0);
+                let old = crocomire.step_counter();
+                *old = old.wrapping_add(recoil);
+            }
         }
     }
     if advance {
-        let count = next_hit_count(session_slot!(game, Crocomire[0].fight_flags));
-        if session_slot!(game, Crocomire[0].fight_flags) & flag::DAMAGED == 0 {
+        let count = next_hit_count(Crocomire::of(game, 0).fight_flags());
+        if Crocomire::of(game, 0).fight_flags() & flag::DAMAGED == 0 {
             let mut delay = 8;
-            if session_slot!(game, Crocomire[0].fight_function) == 8 {
+            if Crocomire::of(game, 0).fight_function() == 8 {
                 delay = 8;
             }
-            session_slot!(game, Crocomire[0].base.instruction_timer, |old| old
-                .wrapping_add(delay));
+            {
+                let mut crocomire = CrocomireEdit::of(game, 0);
+                let old = &mut crocomire.actor().instruction_delay;
+                *old = old.wrapping_add(delay);
+            }
         }
-        session_slot!(game, Crocomire[0].fight_flags, |old| count
-            | old & !(flag::HIT_COUNT | flag::DAMAGED | flag::SAMUS_HIT_BY_CLAW)
-            | flag::DAMAGED);
-        session_slot!(game, Crocomire[0].y_velocity = 10);
+        {
+            let mut crocomire = CrocomireEdit::of(game, 0);
+            let old = crocomire.fight_flags();
+            *old = count
+                | *old & !(flag::HIT_COUNT | flag::DAMAGED | flag::SAMUS_HIT_BY_CLAW)
+                | flag::DAMAGED;
+        }
+        *CrocomireEdit::of(game, 0).y_velocity() = 10;
     }
-    session_slot!(game, Crocomire[0].base.flash_timer, |old| old
-        .wrapping_add(14));
-    session_slot!(game, Crocomire[0].base.ai_handler_bits, |old| old | 2);
+    {
+        let mut crocomire = CrocomireEdit::of(game, 0);
+        let old = &mut crocomire.actor().flash;
+        *old = old.wrapping_add(14);
+    }
+    CrocomireEdit::of(game, 0).actor().ai_handlers |= 2;
 }
 
 pub fn select_melt_animation<const SKELETON: bool, L: Lease + ?Sized>(key: Key, game: &mut L) {
@@ -529,7 +581,7 @@ pub fn emit_lava_plume<L: Lease + ?Sized>(game: &mut L) {
         if (battle!(game.Random) & 2) == 0 {
             v0 = !(v0 as i32) as u16;
         }
-        let x: u16 = (session_slot!(game, Crocomire[0i32].base.x_pos)).wrapping_add(v0);
+        let x: u16 = (Crocomire::of(game, 0).actor().x.whole).wrapping_add(v0);
         let y: u16 = (battle!(game.LavaAcidY) as i32 + 16
             - (((battle!(game.Random)) & (0x1f00u16)) as i32 >> 8)) as u16;
         game.foreign(|game| game.create_sprite(x, y, 21, 0));
@@ -610,22 +662,30 @@ fn load_melt_tilemap<L: Lease + ?Sized>(table: u32, game: &mut L) {
 pub fn hop_3_load_melting_tilemap<L: Lease + ?Sized>(game: &mut L) {
     game.set_slot_byte(PIXELS_TO_ERASE, 48);
     battle!(game.MeltEraseTarget = 48);
-    let e: i32 = game.current_enemy() as i32;
+    let e = game.current_enemy();
     next_death_step(e, game);
-    session_slot!(game, Crocomire[e].base; current_instruction = ADDR_K_CROCOMIRE_ILIST_BF64 as u16, instruction_timer = 1);
+    {
+        let mut crocomire = CrocomireEdit::of(game, e);
+        let actor = crocomire.actor();
+        actor.instruction = ADDR_K_CROCOMIRE_ILIST_BF64 as u16;
+        actor.instruction_delay = 1;
+    }
     battle!(game.EnemyTilemapPending = 1);
-    let e1: i32 = game.current_enemy() as i32 + 64;
-    session_slot!(game, Crocomire[e1].base; current_instruction = ADDR_K_CROCOMIRE_ILIST_BF98 as u16, instruction_timer = 1);
-    session_slot!(game, Crocomire[e1].base.properties, |old| old & 0xd2ff
-        | 0x2c00);
-    session_slot!(
-        game,
-        Crocomire[e1].base.x_pos = session_slot!(game, Crocomire[e].base.x_pos)
-    );
-    session_slot!(
-        game,
-        Crocomire[e1].base.y_pos = (session_slot!(game, Crocomire[e].base.y_pos)).wrapping_add(16)
-    );
+    let e1 = game.current_enemy() + 64;
+    {
+        let mut crocomire = CrocomireEdit::of(game, e1);
+        let actor = crocomire.actor();
+        actor.instruction = ADDR_K_CROCOMIRE_ILIST_BF98 as u16;
+        actor.instruction_delay = 1;
+    }
+    {
+        let mut crocomire = CrocomireEdit::of(game, e1);
+        let properties = &mut crocomire.actor().properties;
+        *properties = (*properties & 0xd2ff) | 0x2c00;
+    }
+    CrocomireEdit::of(game, e1).actor().x.whole = Crocomire::of(game, e).actor().x.whole;
+    CrocomireEdit::of(game, e1).actor().y.whole =
+        (Crocomire::of(game, e).actor().y.whole).wrapping_add(16);
     crate::word_transfers!(game, (4), 256;
         le(TILEMAP_STUFF, 0) <- value(824),
         le(TILEMAP_STUFF, 1) <- value(824),
@@ -637,15 +697,12 @@ pub fn hop_3_load_melting_tilemap<L: Lease + ?Sized>(game: &mut L) {
 /// `prepare_skeleton_tilemap`.
 pub fn hop_6_load_melting_tilemap<L: Lease + ?Sized>(game: &mut L) {
     fill_scroll(game);
-    let e: i32 = game.current_enemy() as i32;
+    let e = game.current_enemy();
     next_death_step(e, game);
-    session_slot!(game, Crocomire[e].base.instruction_timer = 1);
+    CrocomireEdit::of(game, e).actor().instruction_delay = 1;
     game.set_slot_byte(PIXELS_TO_ERASE, 48);
     battle!(game.MeltEraseTarget = 48);
-    session_slot!(
-        game,
-        Crocomire[e].base.current_instruction = ADDR_K_CROCOMIRE_ILIST_BF7E as u16
-    );
+    CrocomireEdit::of(game, e).actor().instruction = ADDR_K_CROCOMIRE_ILIST_BF7E as u16;
     bg2_staging::fill(game, 0..1024, 824);
     load_melt_tilemap(SKELETON_TILEMAP_ADDRESS, game);
 }
@@ -687,7 +744,7 @@ pub fn queue_melt_graphics<L: Lease + ?Sized>(offset: u16, live_size: bool, game
 pub fn upload_melting_tiles<L: Lease + ?Sized>(game: &mut L) {
     let offset = battle!(game.MeltSubindex);
     if native_graphics_word!(game, MELTING_TILES_SOURCE, battle!(game.MeltSubindex)) == 0xffff {
-        let e: i32 = game.current_enemy() as i32;
+        let e = game.current_enemy();
         next_death_step(e, game);
         battle!(game.MeltSubindex = 0);
     } else {
@@ -699,7 +756,7 @@ pub fn upload_melting_tiles<L: Lease + ?Sized>(game: &mut L) {
 /// Crocomire main AI - death sequence index 12h/2Eh - hop 3/6 - load melting tiles ($A4:943D). Was
 /// `prepare_melt_graphics`.
 pub fn load_melting_tiles<L: Lease + ?Sized>(game: &mut L) {
-    let e: i32 = game.current_enemy() as i32;
+    let e = game.current_enemy();
     skip_death_step(e, game);
     battle!(game; MeltDisplacement = 256; MeltColumn = 0; MeltMaxY = native_graphics_word!(game, MELTING_TILES_SOURCE, battle!(game.MeltIndex)); MeltYOffset = battle!(game.MeltMaxY); MeltUnread = native_graphics_word!(game, MELTING_TILES_DESTINATION, battle!(game.MeltIndex)); MeltWords = native_graphics_word!(game, MELTING_TILES_SIZE, battle!(game.MeltIndex));
     );
@@ -724,20 +781,25 @@ pub fn load_melting_tiles<L: Lease + ?Sized>(game: &mut L) {
 
 /// Power bomb reaction - Crocomire ($A4:B992).
 pub fn power_bomb<L: Lease + ?Sized>(game: &mut L) {
-    let e: i32 = 0;
-    if session_slot!(game, Crocomire[e].death_sequence_index) == 0 {
-        session_slot!(game, Crocomire[e].step_counter = 3);
-        if session_slot!(game, Crocomire[e].fight_function) != 24 {
-            session_slot!(game, Crocomire[e].fight_flags, |old| old
-                & !(flag::HIT_COUNT | flag::SAMUS_HIT_BY_CLAW | flag::AWAKE)
-                | flag::AWAKE);
-            session_slot!(game, Crocomire[e].y_velocity = 10);
-            session_slot!(game, Crocomire[e].base.flash_timer, |old| old
-                .wrapping_add(4));
-            session_slot!(game, Crocomire[e].base.ai_handler_bits, |old| old | 2u16);
-            session_slot!(game, Crocomire[e].fight_function = 24);
-            let mut spritemap_pointer: u16 =
-                session_slot!(game, Crocomire[e].base.spritemap_pointer);
+    let e: u16 = 0;
+    if Crocomire::of(game, e).death_sequence_index() == 0 {
+        *CrocomireEdit::of(game, e).step_counter() = 3;
+        if Crocomire::of(game, e).fight_function() != 24 {
+            {
+                let mut crocomire = CrocomireEdit::of(game, e);
+                let flags = crocomire.fight_flags();
+                *flags = (*flags & !(flag::HIT_COUNT | flag::SAMUS_HIT_BY_CLAW | flag::AWAKE))
+                    | flag::AWAKE;
+            }
+            *CrocomireEdit::of(game, e).y_velocity() = 10;
+            {
+                let mut crocomire = CrocomireEdit::of(game, e);
+                let old = &mut crocomire.actor().flash;
+                *old = old.wrapping_add(4);
+            }
+            CrocomireEdit::of(game, e).actor().ai_handlers |= 2u16;
+            *CrocomireEdit::of(game, e).fight_function() = 24;
+            let mut spritemap_pointer: u16 = Crocomire::of(game, e).actor().spritemap;
             let mut n: i32 =
                 native_graphics_word!(game, BANK << 16 | u32::from(spritemap_pointer), 0) as i32;
             let instruction = loop {
@@ -754,7 +816,12 @@ pub fn power_bomb<L: Lease + ?Sized>(game: &mut L) {
                     break ADDR_K_CROCOMIRE_ILIST_BDB6 as u16;
                 }
             };
-            session_slot!(game, Crocomire[e].base; current_instruction = instruction, instruction_timer = 1);
+            {
+                let mut crocomire = CrocomireEdit::of(game, e);
+                let actor = crocomire.actor();
+                actor.instruction = instruction;
+                actor.instruction_delay = 1;
+            }
         }
     }
 }
@@ -771,18 +838,18 @@ pub fn not_started<L: Lease + ?Sized>(game: &mut L) {
 }
 
 fn update_wall<L: Lease + ?Sized>(game: &mut L) {
-    let e0: i32 = 0;
-    if (session_slot!(game, Crocomire[e0].base.x_pos) as i32 - 1536i32) & 0x8000 != 0 {
+    let e0: u16 = 0;
+    if (Crocomire::of(game, e0).actor().x.whole as i32 - 1536i32) & 0x8000 != 0 {
         battle!(game, 0; QuakeSoundTimer, CrocomireBridge1, CrocomireBridge2, CrocomireUnread);
-    } else if (session_slot!(game, Crocomire[e0].base.x_pos) as i32 - 1552i32) & 0x8000 != 0 {
+    } else if (Crocomire::of(game, e0).actor().x.whole as i32 - 1552i32) & 0x8000 != 0 {
         if battle!(game.QuakeSoundTimer) == 0 {
             battle!(game.QuakeSoundTimer = 1);
             game.place_projectile_spawn(1536, 176);
             game.spawn_room_projectile(ADDR_K_EPROJ_DUST_CLOUD_EXPLOSION as u16, 0x15);
         }
-    } else if (session_slot!(game, Crocomire[e0].base.x_pos) as i32 - 1552i32) & 0x8000 != 0 {
+    } else if (Crocomire::of(game, e0).actor().x.whole as i32 - 1552i32) & 0x8000 != 0 {
         battle!(game, 0; CrocomireBridge1, CrocomireBridge2, CrocomireUnread);
-    } else if (session_slot!(game, Crocomire[e0].base.x_pos) as i32 - 1568i32) & 0x8000 != 0 {
+    } else if (Crocomire::of(game, e0).actor().x.whole as i32 - 1568i32) & 0x8000 != 0 {
         if battle!(game.CrocomireBridge1) == 0 {
             battle!(game.CrocomireBridge1 = 1);
             game.foreign(|game| game.spawn_plm(0x61, BRIDGE_ROW, CRUMBLE_BRIDGE_BLOCK));
@@ -790,7 +857,7 @@ fn update_wall<L: Lease + ?Sized>(game: &mut L) {
             game.spawn_room_projectile(ADDR_K_EPROJ_DUST_CLOUD_EXPLOSION as u16, 0x15);
         }
     } else {
-        let x_pos: u16 = session_slot!(game, Crocomire[e0].base.x_pos);
+        let x_pos: u16 = Crocomire::of(game, e0).actor().x.whole;
         if (x_pos as i32 - 1568i32) & 0x8000 != 0 {
             battle!(game, 0; CrocomireBridge2, CrocomireUnread);
         } else if (x_pos as i32 - 1584i32) & 0x8000 != 0 {
@@ -805,31 +872,43 @@ fn update_wall<L: Lease + ?Sized>(game: &mut L) {
             }
         } else if ((x_pos) as i16).wrapping_sub((1600u16) as i16) >= 0 {
             demolish_wall(game);
-            session_slot!(game, Crocomire[e0].acid_damage_sound_timer = 1);
+            *CrocomireEdit::of(game, e0).acid_damage_sound_timer() = 1;
             battle!(game.CrocomireAcidSmoke = 1);
             let _v3: u16 = game.current_enemy();
-            let ek: i32 = game.current_enemy() as i32;
+            let ek = game.current_enemy();
             skip_death_step(ek, game);
-            for key in (0..=0x140i32).step_by(0x40) {
-                session_slot!(game, Crocomire[key].unread_7800 = 2);
+            for key in (0..=0x140u16).step_by(0x40) {
+                *CrocomireEdit::of(game, key).unread_7800() = 2;
             }
-            for key in (0..=0x140i32).step_by(0x40) {
-                session_slot!(game, Crocomire[key].unread_7802 = 0);
+            for key in (0..=0x140u16).step_by(0x40) {
+                *CrocomireEdit::of(game, key).unread_7802() = 0;
             }
             game.queue_sound(1, 0x3b, 6);
             crate::word_transfers!(game, ascending, 1; native(CRUMBLING_BRIDGE_INDEX) <- value(0));
             game.foreign(|game| game.spawn_plm(0x4e, WALL_ROW, CREATE_INVISIBLE_WALL));
-            session_slot!(game, Crocomire[ek].base; current_instruction = ADDR_K_CROCOMIRE_ILIST_BFB0 as u16, instruction_timer = 1);
-            session_slot!(game, Crocomire[ek].base.properties, |old| old
-                | ((K_ENEMY_PROPS_TANGIBLE) as u16));
-            let e1: i32 = game.current_enemy() as i32 + 64;
-            session_slot!(game, Crocomire[e1].base; instruction_timer = 0x7fff, current_instruction = ADDR_K_CROCOMIRE_ILIST_BF62 as u16);
-            session_slot!(game, Crocomire[0x40i32].base.properties, |old| old
-                | (0x100u16));
+            {
+                let mut crocomire = CrocomireEdit::of(game, ek);
+                let actor = crocomire.actor();
+                actor.instruction = ADDR_K_CROCOMIRE_ILIST_BFB0 as u16;
+                actor.instruction_delay = 1;
+            }
+            CrocomireEdit::of(game, ek).actor().properties |= K_ENEMY_PROPS_TANGIBLE as u16;
+            let e1 = game.current_enemy() + 64;
+            {
+                let mut crocomire = CrocomireEdit::of(game, e1);
+                let actor = crocomire.actor();
+                actor.instruction_delay = 0x7fff;
+                actor.instruction = ADDR_K_CROCOMIRE_ILIST_BF62 as u16;
+            }
+            CrocomireEdit::of(game, 0x40).actor().properties |= 0x100u16;
 
-            session_slot!(game, Crocomire[ek]; y_velocity = 0, projectile_counter = 0);
-            session_slot!(game, Crocomire[ek].step_counter = 2048);
-            session_slot!(game, Crocomire[0i32].base.y_height = 16);
+            {
+                let mut crocomire = CrocomireEdit::of(game, ek);
+                *crocomire.y_velocity() = 0;
+                *crocomire.projectile_counter() = 0;
+            }
+            *CrocomireEdit::of(game, ek).step_counter() = 2048;
+            CrocomireEdit::of(game, 0).actor().radius.y = 16;
         }
     };
 }
@@ -855,13 +934,13 @@ pub fn advance_death_sequence<L: Lease + ?Sized>(game: &mut L) {
 /// Crocomire main AI - death sequence index 20h/26h - hop 4/5 - resting ($A4:8D47). Was
 /// `wait_for_melt`.
 pub fn hop_4_5_resting<L: Lease + ?Sized>(game: &mut L) {
-    let e: i32 = 0;
-    let counter: u16 = session_slot!(game, Crocomire[e].step_counter);
+    let e: u16 = 0;
+    let counter: u16 = Crocomire::of(game, e).step_counter();
     if counter != 0 {
-        session_slot!(game, Crocomire[e].step_counter = (counter).wrapping_sub(1));
+        *CrocomireEdit::of(game, e).step_counter() = (counter).wrapping_sub(1);
     } else {
         next_death_step(e, game);
-        session_slot!(game, Crocomire[e].y_velocity = 768);
+        *CrocomireEdit::of(game, e).y_velocity() = 768;
     };
 }
 
@@ -876,10 +955,10 @@ pub fn hop_1_2_resting<L: Lease + ?Sized>(game: &mut L) {
 /// Crocomire main AI - death sequence index 42h - behind wall - no more rumbling ($A4:990A). Was
 /// `prepare_spike_wall`.
 pub fn behind_wall_no_more_rumbling<L: Lease + ?Sized>(game: &mut L) {
-    let e: i32 = 0;
-    let counter: u16 = session_slot!(game, Crocomire[e].step_counter);
+    let e: u16 = 0;
+    let counter: u16 = Crocomire::of(game, e).step_counter();
     if counter != 0 {
-        session_slot!(game, Crocomire[e].step_counter = (counter).wrapping_sub(1));
+        *CrocomireEdit::of(game, e).step_counter() = (counter).wrapping_sub(1);
         let v3: i16 = battle!(game.MeltEraseTarget) as i16;
         let v4: i32 = battle!(game.MeltEraseTarget) as i32 >> 1;
         let tile =
@@ -905,17 +984,31 @@ pub fn behind_wall_no_more_rumbling<L: Lease + ?Sized>(game: &mut L) {
             battle!(game.MeltEraseTarget = ((v3) as u16).wrapping_add(2));
         }
     } else {
-        session_slot!(game, Crocomire[e].base; x_pos = 480, y_pos = 54);
-        session_slot!(game, Crocomire[0x80i32].step_counter = 80);
-        session_slot!(game, Crocomire[e]; y_velocity = 0, projectile_counter = 0);
+        {
+            let mut crocomire = CrocomireEdit::of(game, e);
+            let actor = crocomire.actor();
+            actor.x.whole = 480;
+            actor.y.whole = 54;
+        }
+        *CrocomireEdit::of(game, 0x80).step_counter() = 80;
+        {
+            let mut crocomire = CrocomireEdit::of(game, e);
+            *crocomire.y_velocity() = 0;
+            *crocomire.projectile_counter() = 0;
+        }
         game.foreign(|game| {
             game.spawn_plm(0x20, WALL_ROW, CLEAR_INVISIBLE_WALL);
             game.spawn_plm(0x1e, WALL_ROW, CREATE_INVISIBLE_WALL);
             game.spawn_plm(0x70, BRIDGE_ROW, CLEAR_BRIDGE);
         });
         game.queue_sound(1, 0x29, 6);
-        session_slot!(game, Crocomire[e].base; current_instruction = ADDR_K_CROCOMIRE_ILIST_E158 as u16, instruction_timer = 1);
-        session_slot!(game, Crocomire[e].base.palette_index = 0);
+        {
+            let mut crocomire = CrocomireEdit::of(game, e);
+            let actor = crocomire.actor();
+            actor.instruction = ADDR_K_CROCOMIRE_ILIST_E158 as u16;
+            actor.instruction_delay = 1;
+        }
+        CrocomireEdit::of(game, e).actor().palette = 0;
         crate::word_transfers!(game, descending, 16; le(PALETTE_BUFFER, 159) <- rom(PALETTE_SPRITE_4, 15));
         game.foreign(|game| game.clear_enemy_projectiles());
         let mut v8: u16 = 8;
@@ -932,18 +1025,22 @@ pub fn behind_wall_no_more_rumbling<L: Lease + ?Sized>(game: &mut L) {
 /// `advance_melt_scroll`.
 pub fn melting<L: Lease + ?Sized>(game: &mut L) {
     emit_lava_plume(game);
-    let e0: i32 = 0;
-    let e1: i32 = 0x40;
-    let e2: i32 = 0x80;
-    let mut counter: u16 = session_slot!(game, Crocomire[e2].step_counter);
-    session_slot!(game, Crocomire[e1].step_counter, |old| old.wrapping_sub(1));
+    let e0: u16 = 0;
+    let e1: u16 = 0x40;
+    let e2: u16 = 0x80;
+    let mut counter: u16 = Crocomire::of(game, e2).step_counter();
+    {
+        let mut crocomire = CrocomireEdit::of(game, e1);
+        let old = crocomire.step_counter();
+        *old = old.wrapping_sub(1);
+    }
     // A is 0 or the shifted X position here, and the erase keeps its low byte.
     let mut bug = 0;
-    if (session_slot!(game, Crocomire[e1].step_counter) & 2) != 0 {
+    if (Crocomire::of(game, e1).step_counter() & 2) != 0 {
         counter = (counter).wrapping_add(4);
         [bug, _] = counter.to_le_bytes();
     }
-    session_slot!(game, Crocomire[e0].base.x_pos = counter);
+    CrocomireEdit::of(game, e0).actor().x.whole = counter;
     if erase_melt_columns(game, bug) != 0 {
         update_background(game.current_enemy(), game);
         let mut v4: u16 = (battle!(game.MeltYOffset)).wrapping_sub(3);
@@ -962,8 +1059,7 @@ pub fn melting<L: Lease + ?Sized>(game: &mut L) {
             }
             battle!(game.MeltDisplacement = v5);
             let mut r18: u16 = 0;
-            let mut v6: u16 =
-                (2 * (session_slot!(game, Crocomire[e1].base.y_pos) as i32 - 72i32)) as u16;
+            let mut v6: u16 = (2 * (Crocomire::of(game, e1).actor().y.whole as i32 - 72i32)) as u16;
             let mut v7: u16 = battle!(game.MeltYOffset);
             battle!(game.MessageBoxScratch1 = battle!(game.MeltYOffset));
             do_until! { ((v7) as i16).wrapping_sub((battle!(game.MeltMaxY)) as i16) >= 0 ;
@@ -991,14 +1087,14 @@ pub fn melting<L: Lease + ?Sized>(game: &mut L) {
             return;
         }
     }
-    let ek: i32 = game.current_enemy() as i32;
+    let ek = game.current_enemy();
     skip_death_step(ek, game);
     let mut i: i32 = battle!(game.MeltIndex) as i32;
     while native_graphics_word!(game, MELTING_TILES_SOURCE, i) != 0xffff {
         i += 8;
     }
     battle!(game.MeltIndex = (i + 2) as u16);
-    let object = session_slot!(game, Crocomire[e0].melting_hdma_object);
+    let object = Crocomire::of(game, e0).melting_hdma_object();
     game.foreign(|game| crate::hdma_objects::free_hdma_object(object, game));
 }
 
@@ -1108,36 +1204,54 @@ pub fn initialize<L: Lease + ?Sized>(game: &mut L) {
         crate::word_transfers!(game, ascending, 1; native(SCROLLS_0_1) <- value(257));
         crate::word_transfers!(game, ascending, 1; native(SCROLLS_2_3) <- value(257));
         battle!(game.MeltEraseTarget = 0);
-        let e: i32 = 0;
-        session_slot!(game, Crocomire[e].base.properties, |old| old & 0x7bff
-            | 0x400);
+        let e: u16 = 0;
+        {
+            let mut crocomire = CrocomireEdit::of(game, e);
+            let properties = &mut crocomire.actor().properties;
+            *properties = (*properties & 0x7bff) | 0x400;
+        }
         game.foreign(|game| {
             game.spawn_plm(0x20, WALL_ROW, CLEAR_INVISIBLE_WALL);
             game.spawn_plm(0x1e, WALL_ROW, CLEAR_INVISIBLE_WALL);
             game.spawn_plm(0x61, BRIDGE_ROW, CLEAR_BRIDGE);
         });
-        session_slot!(
-            game,
-            Crocomire[e].death_sequence_index = death::SET_INDEX_56
-        );
-        session_slot!(game, Crocomire[e].base; current_instruction = ADDR_K_CROCOMIRE_ILIST_E1CC as u16, instruction_timer = 1);
-        session_slot!(game, Crocomire[e].base.x_pos = 576);
-        session_slot!(game, Crocomire[e].base; y_pos = 144, y_height = 28, x_width = 40);
+        *CrocomireEdit::of(game, e).death_sequence_index() = death::SET_INDEX_56;
+        {
+            let mut crocomire = CrocomireEdit::of(game, e);
+            let actor = crocomire.actor();
+            actor.instruction = ADDR_K_CROCOMIRE_ILIST_E1CC as u16;
+            actor.instruction_delay = 1;
+        }
+        CrocomireEdit::of(game, e).actor().x.whole = 576;
+        {
+            let mut crocomire = CrocomireEdit::of(game, e);
+            let actor = crocomire.actor();
+            actor.y.whole = 144;
+            actor.radius.y = 28;
+            actor.radius.x = 40;
+        }
         queue_tilemap_upload(2048, 0xfc, game);
     } else {
         game.foreign(|game| game.disable_minimap_for_boss());
         battle!(game.MeltIndex = 0);
-        let e_0: i32 = game.current_enemy() as i32;
-        session_slot!(game, Crocomire[e_0]; death_sequence_index = 0, y_velocity = 0);
+        let e_0 = game.current_enemy();
+        {
+            let mut crocomire = CrocomireEdit::of(game, e_0);
+            *crocomire.death_sequence_index() = 0;
+            *crocomire.y_velocity() = 0;
+        }
         crate::word_transfers!(game, ascending, 1; native(SCROLLS_0_1) <- value(0));
         crate::word_transfers!(game, descending, 17;
             le(TARGET_PALETTES, 176) <- rom(PALETTE_TARGET_SPRITE_3, 16),
             le(TARGET_PALETTES, 224) <- rom(PALETTE_TARGET_SPRITE_6, 16),
         );
-        session_slot!(game, Crocomire[e_0].fight_function = 4);
+        *CrocomireEdit::of(game, e_0).fight_function() = 4;
         battle!(game; Unused179E = 16; EnemyTilemapSize = 1024;);
         battle!(game.CameraDistance = 2);
-        session_slot!(game, Crocomire[e_0].base; current_instruction = ADDR_K_CROCOMIRE_ILIST_BADE as u16, extra_properties = (session_slot!(game, Crocomire[e_0].base.extra_properties)) | (4u16), instruction_timer = 1);
+        CrocomireEdit::of(game, e_0).actor().instruction = ADDR_K_CROCOMIRE_ILIST_BADE as u16;
+        CrocomireEdit::of(game, e_0).actor().extra_properties =
+            (Crocomire::of(game, e_0).actor().extra_properties) | (4u16);
+        CrocomireEdit::of(game, e_0).actor().instruction_delay = 1;
     }
 }
 
@@ -1148,21 +1262,14 @@ pub fn hop_6_sinking<L: Lease + ?Sized>(game: &mut L) {
     select_melt_animation::<true, _>(key, game);
     emit_lava_plume(game);
     melt_down(game);
-    let e: i32 = 0;
-    if session_slot!(game, Crocomire[e].death_sequence_index) == death::BEHIND_WALL_WAIT_FOR_SAMUS {
+    let e: u16 = 0;
+    if Crocomire::of(game, e).death_sequence_index() == death::BEHIND_WALL_WAIT_FOR_SAMUS {
         game.foreign(|game| game.queue_music_delayed(6));
-        session_slot!(
-            game,
-            Crocomire[e].death_sequence_index = death::FLOWING_DOWN_THE_RIVER
-        );
-        session_slot!(
-            game,
-            Crocomire[e].base.current_instruction = ADDR_K_CROCOMIRE_ILIST_E1D2 as u16
-        );
+        *CrocomireEdit::of(game, e).death_sequence_index() = death::FLOWING_DOWN_THE_RIVER;
+        CrocomireEdit::of(game, e).actor().instruction = ADDR_K_CROCOMIRE_ILIST_E1D2 as u16;
         crate::word_transfers!(game, ascending, 1; native(SCROLLS_4_5) <- value(257));
         battle!(game.MinimapDisabled = 0);
-        session_slot!(game, Crocomire[0x40i32].base.properties, |old| old
-            | (0x200u16));
+        CrocomireEdit::of(game, 0x40).actor().properties |= 0x200u16;
 
         game.foreign(|game| game.spawn_plm(0x4e, WALL_ROW, CLEAR_INVISIBLE_WALL));
         battle!(game.CameraDistance = 0);
@@ -1371,20 +1478,16 @@ pub fn unlock_camera<L: Lease + ?Sized>(game: &mut L) {
 }
 
 pub fn prepare_scroll_hdma<L: Lease + ?Sized>(game: &mut L) {
-    let mut v1: u16 =
-        (2 * (session_slot!(game, Crocomire[0x40i32].base.y_pos) as i32 - 72i32)) as u16;
+    let mut v1: u16 = (2 * (Crocomire::of(game, 0x40).actor().y.whole as i32 - 72i32)) as u16;
     let v2: u16 = display_scroll!(game.Bg2V);
     do_until! { (v1 & 0x8000) != 0 ;
         word!(game.CROCOMIRE_BG2_SCROLL_HDMA_DATA[(v1 >> 1)] = v2);
         v1 = (v1).wrapping_sub(2);
     }
-    let e: i32 = game.current_enemy() as i32;
+    let e = game.current_enemy();
     next_death_step(e, game);
-    let v4: i32 = 0;
-    session_slot!(
-        game,
-        Crocomire[0x80i32].step_counter = session_slot!(game, Crocomire[v4].base.x_pos)
-    );
+    let v4: u16 = 0;
+    *CrocomireEdit::of(game, 0x80).step_counter() = Crocomire::of(game, v4).actor().x.whole;
     crate::word_transfers!(game, ascending, 1; native(SCROLL_HDMA_TABLE) <- value(255));
     crate::word_transfers!(game, ascending, 1; native(SCROLL_HDMA_TABLE + 1) <- value(-13584i32 as u16));
     crate::word_transfers!(game, ascending, 1; native(SCROLL_HDMA_TABLE + 3) <- value(225));
@@ -1402,8 +1505,7 @@ pub fn main_ai<L: Lease + ?Sized>(game: &mut L) {
         game.queue_sound(1, request as u16 as u8, 6);
         prepare_scroll_hdma(game);
         let object = game.foreign(|game| crate::hdma_objects::spawn_hdma(0xa4, &DEFINITION, game));
-        use crate::actors::layouts::EnemyLayout72 as Layout;
-        session_slot!(game, Layout[0].var_1f = object);
+        *CrocomireEdit::of(game, 0).melting_hdma_object() = object;
     }
     samus_collision(game);
     update_palette(game);
@@ -1463,7 +1565,7 @@ pub fn execute_phase<L: Lease + ?Sized>(game: &mut L) -> Option<ScrollRequest> {
         Some(dead_from_room_entry as fn(&mut L)),
         Some(flowing_down_the_river as fn(&mut L)),
     ];
-    let phase = (session_slot!(game, Crocomire[0i32].death_sequence_index) as i32 >> 1) as usize;
+    let phase = (Crocomire::of(game, 0).death_sequence_index() as i32 >> 1) as usize;
     match phases[phase] {
         Some(execute) => {
             execute(game);
@@ -1482,15 +1584,19 @@ fn dead<L: Lease + ?Sized>(_game: &mut L) {}
 /// Crocomire main AI - death sequence index 32h - set index 34h ($A4:9576). Was
 /// `advance_selected_phase`.
 fn set_index_34<L: Lease + ?Sized>(game: &mut L) {
-    let e: i32 = game.current_enemy() as i32;
+    let e = game.current_enemy();
     skip_death_step(e, game);
 }
 /// Crocomire main AI - death sequence index 1Ch/3Ah - hop 3/6 - clear tilemap ($A4:9653). Was
 /// `reset_melt_tilemap`.
 fn clear_tilemap<L: Lease + ?Sized>(game: &mut L) {
-    let e: i32 = game.current_enemy() as i32;
-    session_slot!(game, Crocomire[e]; y_velocity = 0, projectile_counter = 0);
-    session_slot!(game, Crocomire[e].step_counter = 2048);
+    let e = game.current_enemy();
+    {
+        let mut crocomire = CrocomireEdit::of(game, e);
+        *crocomire.y_velocity() = 0;
+        *crocomire.projectile_counter() = 0;
+    }
+    *CrocomireEdit::of(game, e).step_counter() = 2048;
     bg2_staging::fill(game, (0..=2047).rev(), 824);
     queue_tilemap_upload(2048, 0xfe, game);
     advance_death_sequence(game);
@@ -1551,25 +1657,24 @@ pub fn hurt<L: Lease + ?Sized>(game: &mut L) {
 }
 /// Initialisation AI - Crocomire tongue ($A4:F67A).
 pub fn initialize_tongue<L: Lease + ?Sized>(game: &mut L) {
-    let e: i32 = game.current_enemy() as i32;
+    let e = game.current_enemy();
     if ({
         let area = game.area();
         game.foreign(|game| game.boss_word_native(area))
     } & 2)
         != 0
     {
-        session_slot!(game, Crocomire[e].base.properties, |old| old & 0xdcff
-            | 0x300);
+        {
+            let mut crocomire = CrocomireEdit::of(game, e);
+            let properties = &mut crocomire.actor().properties;
+            *properties = (*properties & 0xdcff) | 0x300;
+        }
     } else {
-        session_slot!(
-            game,
-            Crocomire[e].base.current_instruction = ADDR_K_CROCOMIRE_ILIST_BE56 as u16
-        );
-        session_slot!(game, Crocomire[e].base.extra_properties, |old| old
-            | (0x404u16));
-        session_slot!(game, Crocomire[e].base.instruction_timer = 1);
-        session_slot!(game, Crocomire[e].death_sequence_index = 23);
-        session_slot!(game, Crocomire[e].base.palette_index = 3584);
+        CrocomireEdit::of(game, e).actor().instruction = ADDR_K_CROCOMIRE_ILIST_BE56 as u16;
+        CrocomireEdit::of(game, e).actor().extra_properties |= 0x404u16;
+        CrocomireEdit::of(game, e).actor().instruction_delay = 1;
+        *CrocomireEdit::of(game, e).death_sequence_index() = 23;
+        CrocomireEdit::of(game, e).actor().palette = 3584;
     };
 }
 const DUST_OFFSETS: [u16; 13] = [
