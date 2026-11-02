@@ -7,7 +7,7 @@
 //! their reads and writes keep the original order. Mother Brain's shared
 //! helpers come from `mother_brain_fight`.
 use crate::actors::baby_metroid::{BabyMetroid, BabyMetroidEdit};
-use crate::actors::corpses::Corpse;
+use crate::actors::corpses::DeadMonsterEdit;
 use crate::actors::host::abs16;
 use crate::actors::mother_brain_fight::OwnedWord;
 use crate::actors::mother_brain_fight::random_number;
@@ -19,7 +19,6 @@ use crate::actors::mother_brain_fight::{
     player_mother_brain, queue_music, queue_sfx2_max6, run_samus_command,
     set_enemy_instruction_list, spawn_plm,
 };
-use crate::actors::session_slots::session_slot;
 use crate::runtime_access::SessionRam;
 // The game's traits, for the calls made on it through `foreign`.
 
@@ -205,7 +204,7 @@ crate::dispatch::callback_dispatch! {
         }
     };
     [11137317] make_sidehopper_rottable [] {
-        session_slot!(game, Corpse[0x40i32].drained_palette_index = 1);
+        *DeadMonsterEdit::of(game, 0x40).drained_palette_index() = 1;
         let e = k;
         *BabyMetroidEdit::of(game, e).function() = function::MOVE_UP_AND_UNLOCK_CAMERA;
         *BabyMetroidEdit::of(game, e).function_timer() = 192;

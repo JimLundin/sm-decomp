@@ -9,7 +9,6 @@
 //! functions and their reads and writes keep the original order. Mother
 //! Brain's shared helpers come from `mother_brain_fight`.
 use crate::actors::host::{Death, Slopes};
-use crate::actors::layouts::part_view;
 use crate::actors::mother_brain_fight::OwnedWord;
 use crate::actors::mother_brain_fight::random_number;
 use crate::actors::mother_brain_fight::{BANK, BANK_BASE, Host as _, Lease, State, cgram, sound};
@@ -18,7 +17,6 @@ use crate::actors::mother_brain_fight::{
     native_word, queue_sfx2_max3, queue_sfx2_max6, set_enemy_instruction_list,
     set_graphics_drawn_hook, set_native_word, spawn_room_projectile,
 };
-use crate::actors::session_slots::session_slot;
 use crate::actors::slot_view::{SlotState, slot_view};
 use crate::runtime_access::SessionRam;
 // The game's traits, for the calls made on it through `foreign`.
@@ -115,53 +113,28 @@ const _: () = {
     assert!(at(f::SKREE_ROTTING) == 11131644);
 };
 
-part_view! {
-    /// A corpse's view of its slot: the dead sidehopper's hop and drain, the
-    /// pre-rot delay and the corpse rotting state at $7E:8802-$7E:8837. Slot
-    /// 0's $7E:8802-$7E:8813 hold the working copy for the corpse rotting.
-    Corpse: EnemyLayout72Late {
-        words: [
-            function, pre_rot_delay, var_c, var_d, var_e, function_timer, parameter_1,
-            parameter_2,
+slot_view! {
+    /// A corpse's rotting state, at $7E:8802-$7E:8837: the rot entry being
+    /// copied or moved; slot 0's working copy of the rot entry copy and move
+    /// functions, row offsets, height, last and second last rows, next row
+    /// offset and finished hook; the rot table pointer and VRAM transfers; the
+    /// rot entry copy and move functions; the tile data row offsets; the sprite
+    /// height and that less one and two; the offset from pixel row 6 of a tile
+    /// row to row 0 of the next; the rot entry finished hook; and slot 0's
+    /// sprite tile transfer entry at $7E:8004, which the corpses share with
+    /// Mother Brain.
+    Corpse, CorpseEdit {
+        record: [],
+        extended: [
+            sprite_tile_transfer = var_22, rot_entry = var_41,
+            active_copy_function = var_42, active_move_function = var_43,
+            active_row_offsets = var_44, active_height = var_45, active_last_row = var_46,
+            active_second_last_row = var_47, active_next_row_offset = var_48,
+            active_finished_hook = var_49, rot_table = var_52, vram_transfers = var_53,
+            copy_function = var_54, move_function = var_55, row_offsets = var_56,
+            height = var_57, last_row = var_58, second_last_row = var_59,
+            next_row_offset = var_5a, finished_hook = var_5b,
         ],
-        pad1: [u8; 26696],
-        words: [
-            var_00, var_01, var_02, var_03, var_04, var_05,
-            // $7E:780C: the sidehopper's hop index.
-            hop,
-            // $7E:780E and $7E:7810: the drained palette timer and index (8
-            // and over: drained).
-            drained_palette_timer, drained_palette_index, var_09,
-            // $7E:7814 and $7E:7816: the hop's velocities.
-            x_velocity, y_velocity,
-            var_0c, var_0d, var_0e, var_0f, var_10, var_11,
-            var_12, var_13, var_14, var_15, var_16, var_17,
-            var_18, var_19, var_1a, var_1b, var_1c, var_1d,
-            var_1e, var_1f,
-        ],
-        pad3: [u8; 4032],
-        words: [
-            var_40,
-            // $7E:8802: the rot entry being copied or moved.
-            rot_entry,
-            // $7E:8804-$7E:8813 (slot 0): the working copy of $7E:8828-$7E:8837.
-            active_copy_function, active_move_function, active_row_offsets, active_height,
-            active_last_row, active_second_last_row, active_next_row_offset,
-            active_finished_hook,
-            var_4a, var_4b, var_4c, var_4d, var_4e, var_4f, var_50, var_51,
-            // $7E:8824: the rot table pointer; $7E:8826: the VRAM transfers.
-            rot_table, vram_transfers,
-            // $7E:8828 and $7E:882A: the rot entry copy and move functions.
-            copy_function, move_function,
-            // $7E:882C: the tile data row offsets; $7E:882E: the sprite height
-            // and $7E:8830/$7E:8832 that less one and two.
-            row_offsets, height, last_row, second_last_row,
-            // $7E:8834: from pixel row 6 of a tile row to row 0 of the next.
-            next_row_offset,
-            // $7E:8836: the rot entry finished hook.
-            finished_hook,
-        ],
-        _: [u16; 4],
     }
 }
 
@@ -203,19 +176,6 @@ impl<T: Lease + SlotState + ?Sized> Corpses for T {}
 /// The state the corpse-only reactions run on: its slots are the Session's.
 pub trait CorpseState: State + SlotState {}
 impl<T: State + SlotState + ?Sized> CorpseState for T {}
-
-part_view! {
-    /// Slot 0's sprite tile transfer entry at $7E:8004, which the corpses
-    /// share with Mother Brain.
-    CorpseTiles: EnemyLayout40Late {
-        words: [var_a, var_b, var_c, var_d, var_e, var_f, parameter_1, parameter_2],
-        pad2: [u8; 28744],
-        words: [
-            var_20, var_21, sprite_tile_transfer,
-        ],
-        _: [u16; 29],
-    }
-}
 
 /// $B7:A800, $B7:C000 and $B7:CE00: the dead Torizo's, the dead monsters' and
 /// Mother Brain's corpse tile data.
@@ -469,9 +429,11 @@ crate::dispatch::instruction_callbacks! {
         }
     };
     normal_corpse_rotting_finished [] {
-        let v0: i32 = game.current_enemy() as i32;
+        let k = game.current_enemy();
         {
-            let (x, y) = ((session_slot!(game, Corpse[v0].base.x_pos) as i32 + (random_number(game) as i32 & 0x1a) - 14i32) as u16, ((session_slot!(game, Corpse[v0].base.y_pos)).wrapping_add(16)));
+            let x_pos = Corpse::of(game, k).actor().x.whole;
+            let x = (x_pos as i32 + (random_number(game) as i32 & 0x1a) - 14i32) as u16;
+            let y = Corpse::of(game, k).actor().y.whole.wrapping_add(16);
             game.foreign(|game| crate::actors::host::BossEffects::set_projectile_spawn_point(game, x, y));
         }
         spawn_room_projectile(ADDR_K_EPROJ_DUST_CLOUD_EXPLOSION as u16, 0xa, game);
@@ -822,10 +784,15 @@ pub fn corpse_pre_rot_delay(k: u16, j: u16, game: &mut impl CorpseState) {
 pub use self::geemer_rotting as ripper_corpse_rotting;
 pub use self::geemer_rotting as skree_corpse_rotting;
 pub fn process_corpse_rotting(k: u16, game: &mut impl Lease) -> u8 {
-    let ek: i32 = k as i32;
-    let mut e0: i32 = 0;
-    session_slot! { game, Corpse[e0]; active_height = session_slot!(game, Corpse[ek].height), active_last_row = session_slot!(game, Corpse[ek].last_row), active_second_last_row = session_slot!(game, Corpse[ek].second_last_row), active_next_row_offset = session_slot!(game, Corpse[ek].next_row_offset), active_finished_hook = session_slot!(game, Corpse[ek].finished_hook), active_row_offsets = session_slot!(game, Corpse[ek].row_offsets), active_copy_function = session_slot!(game, Corpse[ek].copy_function), active_move_function = session_slot!(game, Corpse[ek].move_function) };
-    let mut rot_entry_at: u16 = session_slot!(game, Corpse[ek].rot_table);
+    *CorpseEdit::of(game, 0).active_height() = Corpse::of(game, k).height();
+    *CorpseEdit::of(game, 0).active_last_row() = Corpse::of(game, k).last_row();
+    *CorpseEdit::of(game, 0).active_second_last_row() = Corpse::of(game, k).second_last_row();
+    *CorpseEdit::of(game, 0).active_next_row_offset() = Corpse::of(game, k).next_row_offset();
+    *CorpseEdit::of(game, 0).active_finished_hook() = Corpse::of(game, k).finished_hook();
+    *CorpseEdit::of(game, 0).active_row_offsets() = Corpse::of(game, k).row_offsets();
+    *CorpseEdit::of(game, 0).active_copy_function() = Corpse::of(game, k).copy_function();
+    *CorpseEdit::of(game, 0).active_move_function() = Corpse::of(game, k).move_function();
+    let mut rot_entry_at: u16 = Corpse::of(game, k).rot_table();
     let mut v4: u16 = 0;
     loop {
         let v15: u16 = v4;
@@ -837,15 +804,13 @@ pub fn process_corpse_rotting(k: u16, game: &mut impl Lease) -> u8 {
                 let v8: i16 = (v7).wrapping_sub(1);
                 set_native_word(v5 + 2, v8 as u16, game);
                 if (v8 as u16) < 4 {
-                    e0 = 0;
-                    let mut r18: u16 = session_slot!(game, Corpse[e0].active_copy_function);
-                    if v15 >= session_slot!(game, Corpse[e0].active_second_last_row) {
-                        r18 = session_slot!(game, Corpse[e0].active_move_function);
+                    let mut r18: u16 = Corpse::of(game, 0).active_copy_function();
+                    if v15 >= Corpse::of(game, 0).active_second_last_row() {
+                        r18 = Corpse::of(game, 0).active_move_function();
                     }
                     copy_move_corpse_rotting_rot_entry(
                         native_record(
-                            BANK_BASE
-                                | u32::from(session_slot!(game, Corpse[e0].active_row_offsets)),
+                            BANK_BASE | u32::from(Corpse::of(game, 0).active_row_offsets()),
                             game,
                         ),
                         native_word(v6, game),
@@ -854,11 +819,11 @@ pub fn process_corpse_rotting(k: u16, game: &mut impl Lease) -> u8 {
                     );
                 }
             } else {
-                let r18_0: u16 = session_slot!(game, Corpse[0i32].active_move_function);
+                let r18_0: u16 = Corpse::of(game, 0).active_move_function();
                 let v11: usize = rot_entry_at as usize;
                 copy_move_corpse_rotting_rot_entry(
                     native_record(
-                        BANK_BASE | u32::from(session_slot!(game, Corpse[0i32].active_row_offsets)),
+                        BANK_BASE | u32::from(Corpse::of(game, 0).active_row_offsets()),
                         game,
                     ),
                     native_word(v11, game),
@@ -866,15 +831,14 @@ pub fn process_corpse_rotting(k: u16, game: &mut impl Lease) -> u8 {
                     game,
                 );
                 let v12: u16 = (native_word(v11, game)).wrapping_add(2);
-                if v12 < session_slot!(game, Corpse[0i32].active_last_row) {
+                if v12 < Corpse::of(game, 0).active_last_row() {
                     set_native_word(v11, v12, game);
                 } else {
                     run_rot_entry_finished_hook(
-                        ((session_slot!(game, Corpse[0i32].active_finished_hook)) as u32)
-                            | (BANK_BASE),
+                        u32::from(Corpse::of(game, 0).active_finished_hook()) | BANK_BASE,
                         game,
                     );
-                    if v15 >= session_slot!(game, Corpse[0i32].active_last_row) {
+                    if v15 >= Corpse::of(game, 0).active_last_row() {
                         break;
                     }
                     set_native_word(v11, -1i32 as u16, game);
@@ -883,22 +847,23 @@ pub fn process_corpse_rotting(k: u16, game: &mut impl Lease) -> u8 {
         }
         rot_entry_at = (rot_entry_at).wrapping_add(4);
         v4 = (v15).wrapping_add(1);
-        e0 = 0;
-        if ((v15 as i32 + 1 - session_slot!(game, Corpse[e0].active_height) as i32) as i16) >= 0 {
-            return ((v15).wrapping_add(1) >= session_slot!(game, Corpse[e0].active_height)) as u8;
+        if ((v15 as i32 + 1 - Corpse::of(game, 0).active_height() as i32) as i16) >= 0 {
+            return ((v15).wrapping_add(1) >= Corpse::of(game, 0).active_height()) as u8;
         }
     }
     0
 }
 pub fn copy_move_corpse_rotting_rot_entry(r20: RomRecord, a: u16, r18: u16, game: &mut impl Lease) {
-    session_slot!(game, Corpse[0i32].rot_entry = a);
+    *CorpseEdit::of(game, 0).rot_entry() = a;
     let v1: u16 = ((a) & (0xfff8u16)) >> 2;
     let v2: u16 = (a) & (7u16);
     let v6: u16 = (r20.table_word((v1 >> 1) as isize) as i32 + 2 * v2 as i32) as u16;
     if v2 >= 6 {
         run_rot_entry_copy_or_move(
             ((r18) as u32) | (BANK_BASE),
-            (session_slot!(game, Corpse[0i32].active_next_row_offset)).wrapping_add(v6),
+            Corpse::of(game, 0)
+                .active_next_row_offset()
+                .wrapping_add(v6),
             v6,
             game,
         );
@@ -919,22 +884,30 @@ pub fn initialize_corpse_rotting_data_table(mut table: usize, a: u16, game: &mut
 }
 pub fn initialize_enemy_corpse_rotting(k: u16, j: u16, game: &mut impl Lease) {
     let v2 = native_record(BANK_BASE | u32::from(j), game);
-    let e: i32 = k as i32;
-    session_slot! { game, Corpse[e]; rot_table = v2.word(0), vram_transfers = v2.word(2), copy_function = v2.word(4), move_function = v2.word(6), finished_hook = v2.word(14) };
     let v4: u16 = v2.word(12);
-    session_slot!(game, Corpse[e].row_offsets = v4);
-    session_slot!(
-        game,
-        Corpse[e].next_row_offset = native_record(BANK_BASE | u32::from(v4), game)
-            .word(2)
-            .wrapping_sub(12)
-    );
+    {
+        let mut corpse = CorpseEdit::of(game, k);
+        *corpse.rot_table() = v2.word(0);
+        *corpse.vram_transfers() = v2.word(2);
+        *corpse.copy_function() = v2.word(4);
+        *corpse.move_function() = v2.word(6);
+        *corpse.finished_hook() = v2.word(14);
+        *corpse.row_offsets() = v4;
+    }
+    let next_row_offset = native_record(BANK_BASE | u32::from(v4), game)
+        .word(2)
+        .wrapping_sub(12);
+    *CorpseEdit::of(game, k).next_row_offset() = next_row_offset;
     let v5 = v2;
     let mut v6: u16 = v5.word(8);
     let fresh5 = v6;
     v6 = v6.wrapping_sub(1);
-    session_slot! { game, Corpse[e]; height = fresh5, last_row = v6 }
-    session_slot!(game, Corpse[e].second_last_row = (v6).wrapping_sub(1));
+    {
+        let mut corpse = CorpseEdit::of(game, k);
+        *corpse.height() = fresh5;
+        *corpse.last_row() = v6;
+        *corpse.second_last_row() = v6.wrapping_sub(1);
+    }
     initialize_corpse_rotting_data_table(v5.word(0) as usize, v5.word(8), game);
     run_corpse_rotting_initialization(((v5.word(10)) as u32) | (BANK_BASE), game);
 }
@@ -953,7 +926,7 @@ pub fn process_corpse_rotting_vram_transfers(k: u16, game: &mut impl Lease) {
         offset += 8;
         v2 = p.word(offset);
     }
-    session_slot!(game, CorpseTiles[0i32].sprite_tile_transfer = 0);
+    *CorpseEdit::of(game, 0).sprite_tile_transfer() = 0;
     word!(game.VRAM_WRITE_QUEUE_TAIL = v1);
 }
 pub fn sidehopper_corpse_rottable_contact(game: &mut impl CorpseState) {
@@ -1009,7 +982,7 @@ fn transfer_corpse_tiles(
         (k as usize >> 1) * 2
     };
     for (row, &minimum) in row_gates.iter().enumerate() {
-        let progress = || session_slot!(game, Corpse[0i32].rot_entry);
+        let progress = || Corpse::of(game, 0).rot_entry();
         if minimum != 0 && progress() < minimum {
             continue;
         }
