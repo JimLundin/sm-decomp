@@ -12,16 +12,16 @@ advice. PLAN remains authoritative for the Fast loop, Git, resources and commit
 rules; the accepted architecture, ADRs and ENGINE_STATE_MIGRATION are unchanged.
 Primary (Jim, 2026-10-29 evening): the collaborator session is the sole Git
 writer for main; root releases main and hands in-flight work over as patches.
-Linux stays stopped.
+Jim, 2026-11-02: CI replays run on Linux; PLAN's CI direction replaces the earlier stop.
 
 Read PLAN's 2026-11-01 work order and migration scope before assigning phase work.
 PLAN owns current pacing and reporting; the compiler/fidelity gates and full
 completion scope below remain required.
 
-**Landing rule (Jim, 2026-10-29).** A change lands when the local compiler gate
-(fmt; `rustc --emit=metadata` of `sm` with and without `sm_verify_dll`;
-`player_detached`; source inventory), PR CI and a full corpus on its exact head
-are green. The PR description carries the evidence; no separate qualification
+**Landing rule (Jim, 2026-10-29; gate changed 2026-11-02).** A change lands when the
+local compiler gate (`tools/lane/gate.sh`), and CI and Verify on its exact head, are
+green. Verify's gate is the oracle lock plus lockstep for what the lock cannot hold;
+full lockstep runs nightly. The PR description carries the evidence; no separate qualification
 records, timing tables or resource-ledger prose are required.
 
 ### Direction (Jim, 2026-10-29)

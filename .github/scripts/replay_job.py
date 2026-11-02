@@ -20,8 +20,8 @@ LOCK_NAMES = re.compile(r"^(SEGMENT|PASS|FAIL|UNLOCKED|KNOWN|REGRESSION|Corpus|j
                         r"[A-Za-z0-9-]+: (lock |lockstep |free run |Free run|Free-run|@|no current|localization))")
 SUMMARY_NAMES = re.compile(r"^(PASS|FAIL|Corpus|RESULT|DOMAIN|DIAGNOSTIC|EXIT|"
                            r"[A-Za-z0-9-]+: (lock |lockstep |free run |Free run|@))")
-AUDIO_DIAGNOSTIC = re.compile(r"^DIAGNOSTIC stage=(post-replay|audio-trace-validation|post-replay-provenance|corpus-post-replay) "
-                              r"category=([a-z-]+) tick=(unknown|[0-9]+)$")
+# Only fixed diagnostic categories survive; raw exception text stays private.
+AUDIO_DIAGNOSTIC = re.compile(r'^DIAGNOSTIC stage=(post-replay|audio-trace-validation|post-replay-provenance|corpus-post-replay) category=(required-probes|required-facts|probe-follow-up|fact-follow-up|credits-fact|audio-output-completion|audio-footer-write|audio-footer-flush|checkpoint-origin-read|checkpoint-origin-changed|checkpoint-save|trace-read|trace-format|header-missing|header-provenance|footer-duplicate|output-stream|output-kind|footer-incomplete|output-counts|source-read|source-changed|rom-input-read|rom-input-changed|dll-read|dll-changed|inputs-changed|checkpoint-read|checkpoint-frame) tick=(unknown|[0-9]+)$')
 ROOM_LOGS = {
     "SM_CROSS_RENDER_LOG": ("Cross-renderer", "lines differ", 5),
     "SM_NATIVE_LINES_LOG": ("Native PPU lines", "differing lines or resyncs", None),

@@ -1,5 +1,9 @@
 # Verification sharding investigation, 2026-11-01
 
+This is a dated record of the Windows workflows, since replaced by
+[verify.yml](../.github/workflows/verify.yml) and
+[plan_verify.py](../.github/scripts/plan_verify.py).
+
 The published room chains already use the existing scenario runner and balanced
 shards. Keep that subdivision. Reduce the three replay matrices from eight to six
 concurrent jobs each as a bounded scheduling experiment, preserving their rows,

@@ -26,6 +26,16 @@ The root's current slice target is at least 200 access retirements. Counts and
 the landed burndown belong in the dated PROGRESS_REPORT, with unresolved access
 candidates and pending work separate from proved eliminations.
 
+Jim's CI direction (2026-11-02): verification runs on GitHub Actions, on Linux, through
+one workflow ([verify.yml](../.github/workflows/verify.yml)). Pull requests gate on the
+oracle digest lock plus lockstep for rows it cannot hold; full lockstep runs nightly. This
+replaces the 2026-10-27 stop on Linux. Windows CI only links the desktop nightly until
+`sm_app` moves off the Windows-only bridge. Local machines compile-check; they don't need
+a verifier build or replays. Push a slice once and let its gate finish unless fixing a
+failure, because a new commit cancels it. The production-line ratchet stays advisory until
+RAM migration finishes, then becomes enforced so the code shrinks toward the 100,000-line
+target. PR descriptions carry landing evidence; don't grow PROGRESS_REPORT for each landing.
+
 Jim retired issue #6 (2026-11-01). Progress and blockers are reported in this
 conversation; durable evidence stays in repository reports and owned artifacts.
 Historical issue references are evidence provenance, not a reporting destination.
@@ -35,7 +45,7 @@ Session, our renderer/audio and small platform libraries, independent of SNES em
 Map Rando needs custom sprites/palettes, configurable rooms/doors and opt-in re-spin/QoL.
 Keep content, topology and options separate from platform and ROM/RAM compatibility;
 vanilla is the first fidelity profile. Map Rando is the first use case and acceptance
-bar; further clear modularity is welcome. Windows migration may retain backend/oracle.
+bar; further clear modularity is welcome. Migration may retain backend/oracle.
 
 ## Authority, lanes and Git
 Read [REVIEW.md](REVIEW.md) next and its Milestone plan at each item's start; it
@@ -56,7 +66,6 @@ only. Before every Git write, fetch/reconcile current origin/main, recheck HEAD/
 and preserve others' work. Never delete another process's lock or force-push main.
 Primary transfer requires explicit RELEASE and verified terminal writer/turn
 state; preserve live jobs and reservations. Main is the default, isolation optional.
-Linux development is stopped by the user (2026-10-27); preserve its frozen handoffs.
 Only the primary writes Git; optional branches can carry coherent source with
 pending checks named. Main requires qualification.
 Run named local rows on a tip reconciled with current origin/main, commit to main
@@ -153,8 +162,8 @@ captures required by state or codec changes under resource admission. Continue
 the complete existing movie scope above; defer new trick/scenario expansion.
 Report reached behavior and mutation sensitivity separately from passing rows.
 
-1. cargo fmt --check; cargo check --no-default-features --lib with warnings denied;
-   one DLL build: python tools/verify_dll.py --build-only. Cargo enforces
+1. cargo fmt --check; cargo check --no-default-features --lib with warnings denied.
+   CI builds the verifier and runs the replays. Cargo enforces
    warnings='deny' in sm/Cargo.toml for every sm target while preserving dependency
    flags. Direct rustc uses explicit -D warnings, including detached/mutation builds.
    Fix diagnostics; blanket suppression and historical warning-bearing builds do
@@ -165,81 +174,22 @@ Report reached behavior and mutation sensitivity separately from passing rows.
 3. Nothing extra routinely: no mutation/independent controls/frontend metadata, optimized
    rebuilds, clean-source reruns or full replays. Once before deleting a bank, scoped
    cargo-mutants <=30min; full corpus runs on main AFTER deletion, also at review waypoints.
-   Windows uses AST mutants through existing DLL rows; Cargo/nextest cannot run here.
-   Stable GNU coverage lacks profiler_builtins (E0463); LLVM tools alone do not fix it.
 4. Every comparison failure gets a regression row with its fix (a `scenario cut` once
    the harness has it); never weaken
    comparisons/expectations. Retry a flaky step once; a second failure is real.
 
-For each sequential phase, collect the prior original handle, confirm terminal
-descendants and release its budget. Freshly sample RAM/CPU/paging/disk and all
-remaining reservations; notify root and launch the already prepared admitted
-successor without a prose ACK. Wake completed owners with followup_task;
-send_message alone does not activate them. Send actual START and frozen pins
-before warning inventories/report prose. Prepare executable commands, environment,
-pinned I/O and next source/review/build/replay recipients before upstream READY.
-Keep bounded Windows core source/review/build/replay owners supplied with disjoint
-files/interfaces and exact root grants; Linux stays stopped. The default source
-handoff is one lossless canonical patch/inventory against actual main under the
-granted 64 MiB allowance. Transfer unchanged accepted proofs by exact hashes.
-After each qualified cycle, compare actual last-hour landed deltas and source/
-review/build/capture/replay/publication gaps; correct the measured bottleneck.
-Partition independent groups/use spare CPU; preserve shared prefixes and all identity
-guards. Run ready original-seed subsets during serial capture dependencies, then complete
-checkpoint rows without repeating accepted work absent a source change/new concern.
-Changed layout identifiers or wire formats require genuine initialized machine/payload/
-continuation checks and fresh captures; preserve round-trip, extra-byte and input-prefix
-rejections. Use genuine bytes without header restamps; source length is not payload size.
-Cross-recipe reuse requires SHA-bound identical canonical input prefixes; keep source,
-ROM/native/full-input/loader guards and save matching manifest starts during setup.
 Use [movies/README](../movies/README.md) for commands; inspect masks/hardware/audio/persistence when touched.
 
 The primary publishes qualified migration slices to main and fixes known CI failures.
 Observe the actual CI workflow and commit; continue independent implementation
-while hosted checks run. Free runners only; Windows full corpus runs every 3h,
-after bank deletion and at review waypoints, at most 6 parallel shards. Checkpoint
-rows have 60-minute replay/65-minute job limits; timeout is failure, not coverage. Routine
-pushes run CI without a separate no-op replay run. Lane S moves the corpus gate to
-engine-only free run against committed oracle digests (REVIEW lane S condition 8); until
-that switch, live lockstep stays authoritative. Manual row IDs are space-separated;
-unknown IDs fail. Keep seed/lag/source guards; Linux development remains stopped.
+while hosted checks run. Free runners only; full lockstep runs nightly, after bank
+deletion and at review waypoints. Checkpoint rows have 65-minute job limits, 240 for the
+long-prefix rows; timeout is failure, not coverage. Manual row IDs are space-separated;
+unknown IDs fail. Keep seed/lag/source guards.
 
 ## Toolchain, resources and completion
-Edition2024, stable1.99.1 (58cf8f9c3 2026-10-13), x86_64-pc-windows-gnu.
-Nightly2026-10-22 is ASR1121-blocked; do not alter security/spoof hosted variables.
-Standalone tests/denied compiler and build scripts remain restricted; use permitted
-DLL/ctypes. Ordinary frontend linking passes with the exact dependency-only seed.
-Bundled verifier cfg still reaches denied khronos_api scripts; use the separate normal
-frontend and existing direct DLL with unchanged source/native/cache guards.
-Keep crate-root unsafe-op enforcement; paths in [ITERATION](ITERATION.md#windows-shell-setup).
-
-Use fixed interfaces and one writer; isolate outputs when useful. Frozen formatted
-source may compile during final review; DLL/publication bind the reviewed final pin.
-Never edit checked source or rebuild loaded DLLs. Budget each workflow's launcher/
-descendants, remaining physical growth and private commitment once; confirmed
-terminal evidence releases the allowance. Start compilers above 3 GiB available
-and leave >=2 GiB after all remaining growth. Current sequential ceilings are
-2 GiB library, 3.25 GiB direct DLL and 2.5 GiB frontend; the primary's exact
-workload/profile grant and fresh shared ledger determine admission.
-Below2GiB/resource errors stop newest producer, not every lightweight reader.
-Measure CPU/RAM/paging/disk/useful throughput. Raise concurrency only when budgets
-fit and the next useful batch improves measured throughput; -j1 permits parallel codegen.
-Streaming TAS imports reserve200MiB; old whole-log imports reserve3GiB.
-For the retained memory observation, read the [resource snapshot](PROGRESS_REPORT.md#resource-snapshot).
-
-Check disk/storage runway at session start, before batches and during artifact jobs.
-Keep >=50GiB after budgets; cleanup below75GiB to restore100GiB. Below50GiB hold new
-builds/copies/captures; bounded running jobs may finish and existing-artifact/source work continues.
-Budget copies/temporaries/retained outputs/captures:300MiB fresh workflow or200MiB
-remaining for copied direct-only work, ABOVE reserve. Seed dependencies, not full targets;
-reuse checked builds and keep incremental caches enabled, bound to toolchain/profile
-and source/native/output identities. Preserve others' caches and compare warnings
-in the same profile.
-Assign cleanup ownership; preserve source/results/reusable checkpoints/loaded DLLs.
-Resolve paths/verify unneeded artifacts first; explicit compiler-file allowlists, nonrecursive
-non-force deletion preferred. Never delete another worker's artifacts/locks/directories.
-NTFS compression needs unchanged hashes. Report policy rejection immediately; never retry
-through another tool or use tiny compression gains to continue below the reserve.
+Edition 2024, stable Rust; CI uses `x86_64-unknown-linux-gnu`, and the desktop link
+`x86_64-pc-windows-gnu`. See [sm-resources](../.agents/skills/sm-resources/SKILL.md).
 
 Done: Fast loop passes; measure tools/progress.sh and retain explained deltas and
 exact qualification evidence. Fetch/reconcile/recheck HEAD/index, commit the coherent

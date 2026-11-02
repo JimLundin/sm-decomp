@@ -5,8 +5,16 @@ description: Choose and run the checks that prove an sm-decomp change. Covers th
 
 # Prove a change
 
-Every commit passes `bash tools/lane/gate.sh`. Then prove the behaviour with replays,
-picked by what you touched.
+Every commit passes `bash tools/lane/gate.sh`. Then prove the behaviour with replays
+on GitHub Actions, picked by what you touched. Replays run on Linux, and a lane's
+commits need no local verifier build.
+
+## Run replays
+
+Push your branch as `verify/<name>` to run the whole gate on it. To run chosen rows:
+`gh workflow run verify.yml --ref <branch> -f scope=rows -f segments="ID ID"`,
+adding `-f oracle=faithful` for the unpatched game. `scope=full` adds lockstep of
+everything. The commands below also work locally if you have a ROM.
 
 ## The modes
 
@@ -49,5 +57,11 @@ result. Never commit the mutant.
 - Expectation "not observed" with 0 failing frames: the inputs no longer reach
   the event. Re-time the row.
 - "checkpoint ... differs": a stale checkpoint. The row regenerates its prefix.
+- A digest differing only on one operating system is a platform dependency in the
+  engine or oracle. Fix it; never re-record over it.
+
+The gate runs every locked row in check-lock and lockstep for the rows the lock can't
+hold. Three rows with long cold prefixes (`shot-gate-spawn-parameter`, `save-death-reload`,
+`save-memory`) wait for the nightly full run, or `scope=rows`.
 
 Done when every row you listed passed and you have the counts for your report.

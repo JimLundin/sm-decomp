@@ -26,7 +26,7 @@ The root alone pushes to `main` and `land/*` and uploads to ci-data. Give Jim
 progress updates in the conversation and keep durable evidence in the repository.
 
 Before changing ownership, interfaces or backend architecture, read the
-[accepted destination](docs/target-architecture/README.md) and its Windows policy.
+[accepted destination](docs/target-architecture/README.md) and its migration policy.
 
 `sm/src` and the real game are the authority for behaviour. Use the oracle,
 `ram_map.rs` and the [bank logs](https://patrickjohnston.org/bank/) for unclear
@@ -43,7 +43,7 @@ original's behaviour, not its C shapes:
   such as `[(); N][i];`.
 - Use `From`/`TryFrom` and `wrapping_*` instead of chains of `as` casts.
 - Use `std::fs` and owned buffers, not libc `fopen`/`fread`/`malloc`.
-- Store text files with LF line endings (`.gitattributes` enforces it).
+- Store text files with LF line endings (`.gitattributes` and CI enforce it).
 
 `cargo clippy -p sm_data -p sm_game -p sm_runtime -p sm_tools --all-targets` must
 pass in CI. Fix findings; don't add `allow`s for these patterns.

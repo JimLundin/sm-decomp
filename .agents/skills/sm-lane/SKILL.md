@@ -7,15 +7,13 @@ description: Start here for any sm-decomp lane task. It covers the worktree, the
 
 You are a lane agent. The root coordinator gave you one bounded task, a branch
 name and a base. You commit on your branch. The root picks your commits onto
-`land/batch13` and lands them on `main`.
+the landing branch and lands them on `main`.
 
 ## Set up
 
-1. From `C:\Users\Jim.Lundin\Documents\Projects\sm-decomp`:
-   `git fetch -q origin && git worktree add -b <branch> <path> origin/land/batch13`
-   with `<path>` = `C:\Users\Jim.Lundin\AppData\Local\sm-decomp-experiments\<yyyymmdd>\<lane>`.
-2. In the worktree: `git config --worktree core.autocrlf false`.
-3. Read `AGENTS.md` (Rust style) and the task skill your brief names.
+1. From your clone: `git fetch -q origin && git worktree add -b <branch> <path> <base>`,
+   with the base your brief names.
+2. Read `AGENTS.md` (Rust style) and the task skill your brief names.
 
 Done when `git log -1` shows your base and `git status` is clean.
 
@@ -40,7 +38,7 @@ Production lines are advisory; add none without a reason.
 ## Check every commit
 
 Run `bash tools/lane/gate.sh` until it prints `GATE OK <hash> <branch>`.
-Then run the replays your change needs: see the `sm-check` skill.
+Then get the replays your change needs through CI: see the `sm-check` skill.
 
 ## Report
 
@@ -57,14 +55,9 @@ the handoff and stop your background jobs.
 
 ## Traps
 
-- "stale native utilities": run `python tools/install_native_config.py`, then rebuild.
-- Rebuild the DLL after any source change, revert or rebase; its source stamp
-  must match. Don't edit `tools/verify_dll.py` while a long run uses it.
-- Test executables can't run on this machine (exit 126). Detached-host tests run in CI only.
-- The embedded Python doesn't put the script's folder on `sys.path`; use `-I`
-  only for scripts that don't import siblings.
-- Bash heredocs collapse backslashes; write such scripts with the Write tool.
-  Python on Windows writes CRLF unless you pass `newline="\n"`.
-- `gh` can time out here; wrap it in `timeout 600`.
-- Other lanes fetch in the shared repo, so `origin/land/batch13` moves while you
+- A locked-down Windows machine can't run test executables (exit 126). Compile-check
+  there and replay in CI.
+- Python on Windows writes CRLF unless you pass `newline="\n"`.
+- `gh` can time out; wrap it in `timeout 600`.
+- Other lanes fetch in the shared repo, so the landing branch moves while you
   work. Compare against explicit hashes.
