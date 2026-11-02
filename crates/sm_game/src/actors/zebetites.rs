@@ -83,19 +83,6 @@ pub fn main_ai<L: Lease + ?Sized>(game: &mut L) {
     game.foreign(|game| owned::main_ai(&mut crate::runtime_access::RuntimeAccess::runtime(game)))
 }
 
-/// A pair's first zebetite spawns the second and links them. Was `Zebetites_Func_1`.
-
-/// Waits for the door transition to finish. Was `Zebetites_Func_2`.
-
-/// Glows, shows its health stage and regrows; once destroyed, counts itself
-/// and makes way for the next zebetite. Was `Zebetites_Func_3`.
-
-/// Adds this zebetite to the destroyed count in the event flags. Was
-/// `Zebetites_Func_6`/`Zebetites_Func_7`.
-
-/// Shows the animation for the current health: five stages from full to
-/// almost destroyed. Was `Zebetites_Func_5`.
-
 /// Advances the shared glow one frame, when no palette change is pending and
 /// this is a pair's first zebetite. Was `Zebetites_Func_4`.
 pub fn glow<L: Lease + ?Sized>(game: &mut L) {

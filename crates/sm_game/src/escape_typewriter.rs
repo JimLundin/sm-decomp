@@ -56,8 +56,6 @@ const SET_TIMER_RESET: u16 = 1;
 const SET_VRAM_ADDRESS: u16 = 13;
 const CERES: u16 = 6;
 
-/// The text word at `cursor` in bank $A6.
-
 /// Set up Zebes escape typewriter ($A6:C23F).
 pub fn set_up_zebes<H: Host + ?Sized>(game: &mut H) {
     owned::set_up_zebes(&mut Compatibility(game))

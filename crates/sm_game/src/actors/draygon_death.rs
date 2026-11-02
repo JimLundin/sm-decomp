@@ -131,8 +131,6 @@ pub fn drift_to_death_spot<L: Lease>(game: &mut L) {
         owned::drift_to_death_spot(&mut crate::runtime_access::RuntimeAccess::runtime(game))
     })
 }
-/// Handle dying Draygon smoke ($A5:92EA): every 8 frames, a big dust cloud low in the room.
-
 /// Instruction - spawn dying Draygon sprite object `kind` within 40h px ($A5:973F-$A5:9778).
 pub fn spawn_dying_sprite<H: owned::Host>(
     kind: u16,

@@ -169,12 +169,6 @@ pub fn echo<L: Lease>(game: &mut L, k: u16) {
     game.foreign(|game| owned::echo(&mut crate::runtime_access::RuntimeAccess::runtime(game), k));
 }
 
-/// Speeds the run up to the top speed, shining once there, while falling
-/// onto the floor; the horizontal step. Was `Dachora_Func_6`.
-
-/// Places the next free echo where the dachora is, one each interval. Was
-/// `Dachora_Func_9`.
-
 /// Steps the shinespark palette, cycling through four. Was `Dachora_Func_10`.
 pub fn load_shine_palette<L: Lease>(game: &mut L, k: u16) {
     let me = k as i32;

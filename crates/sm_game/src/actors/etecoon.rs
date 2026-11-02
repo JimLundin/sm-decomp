@@ -90,16 +90,6 @@ const FLEX_SOUND: u8 = 0x35;
 const WALL_JUMP_SOUND: u8 = 0x32;
 const HOP_SOUND: u8 = 0x33;
 
-/// Counts down the timer; true when it reaches zero or below.
-
-/// Freezes the etecoon for 128 frames while a quake shakes the room. Was
-/// `Etecoon_Func_1`.
-
-/// Moves by the X velocity; true when blocked. Was `Etecoon_Func_2`.
-
-/// Moves by the Y velocity, then falls faster up to 5 px a frame; true when
-/// blocked. Was `Etecoon_Func_3`.
-
 /// Initialisation AI. Was `Etecoon_Init`.
 pub fn initialize<L: Lease>(game: &mut L) {
     game.foreign(|game| {
@@ -112,8 +102,6 @@ pub fn initialize<L: Lease>(game: &mut L) {
 pub fn main_ai<L: Lease>(game: &mut L) {
     game.foreign(|game| owned::main_ai(&mut crate::runtime_access::RuntimeAccess::runtime(game)));
 }
-
-/// Run the etecoon's bank $A7 function at `address` for the current enemy.
 
 /// Waits, flexing when Samus comes near, then starts hopping. Was
 /// `Etecoon_Func_4`.
@@ -181,12 +169,6 @@ pub fn landed_from_jump<L: Lease>(game: &mut L, k: u16) {
         owned::landed_from_jump(&mut crate::runtime_access::RuntimeAccess::runtime(game), k)
     });
 }
-
-/// Was `Etecoon_Func_13`.
-
-/// Was `Etecoon_Func_14`.
-
-/// Was `Etecoon_Func_15`.
 
 /// Was `Etecoon_Func_16`.
 pub fn run_to_left_run_up_point<L: Lease>(game: &mut L, k: u16) {

@@ -113,17 +113,11 @@ pub fn main_ai<L: Lease + owned::Host + crate::actors::draygon_sweep::owned::Hos
     });
 }
 
-/// Run the bank $A5 body function `function` for part `k`, as the species
-/// table's dispatch does: the flight, swoop and grab functions on this lease, the rest
-/// through `fallback`, which chooses typed or physical dispatch.
-
 /// Enemy graphics drawn hook - Draygon - set BG2 X/Y scroll ($A5:9342). Was
 /// `scroll_layer`.
 pub fn set_bg2_scroll<S: entry::Host>(game: &mut S) {
     entry::set_bg2_scroll(game);
 }
-/// Oscillate around the goop height and move on.
-
 /// Move the body right, or left, by its X speed. Was `displace`.
 pub fn move_horizontally<S: crate::actors::session_slots::SlotAccess>(right: bool, game: &mut S) {
     owned::move_horizontally(right, game)

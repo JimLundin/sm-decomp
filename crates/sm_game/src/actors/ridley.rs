@@ -439,11 +439,6 @@ pub struct Rect {
     pub h: u16,
 }
 
-/// Check for enemy collision with rectangle ($A9:EF06, as the baby Metroid's):
-/// whether enemy `k`'s hitbox is clear of `rect`.
-
-/// Count down Ridley's function timer; true once it is negative.
-
 /// The work RAM address of tail word `index`.
 const fn tail_address(index: usize) -> u16 {
     (TAIL_RAM + 2 * index) as u16
@@ -485,21 +480,6 @@ enum Deceleration {
     DoubleStep,
 }
 
-/// One axis of Ridley's accelerations toward `target`, with the carry the
-/// original chains through it: the position comparison's carry feeds the
-/// first step add or subtract that no `CLC`/`SEC` precedes, and each one's
-/// carry the next. So a step takes or adds one more when `position` and
-/// `target` compare differently signed and unsigned. Distance, acceleration
-/// and the limit test wrap at sixteen bits; the limit is a signed-difference
-/// test, not an ordinary clamp.
-
-/// Move the current enemy by its X and Y velocities: subpixels in the low
-/// bytes, pixels in the signed high bytes. Was `MoveEnemyWithVelocity`.
-
-/// Handle baby metroid ($A6:A2DC): run its function, then hook the Ceres
-/// door and baby metroid drawing once Ridley moves, or draw them now. Was
-/// `Ridley_A2DC`.
-
 /// Enemy graphics drawn hook - Ceres Ridley - draw baby metroid and door
 /// ($A6:A2F2). Was `Ridley_A2F2`.
 pub fn draw_baby_metroid_and_door<L: Lease + owned::Host>(game: &mut L) {
@@ -525,142 +505,8 @@ pub fn draw_baby_metroid_and_door<L: Lease + owned::Host>(game: &mut L) {
     }
 }
 
-/// Main AI - enemy $E17F (Ridley) ($A6:B227). Was `Ridley_Main`.
-
-/// Run Ridley's bank $A6 function `function` on this lease; false when it
-/// is not one of Norfair Ridley's.
-
-/// Time is frozen AI - enemy $E17F (Ridley) ($A6:B28A). Was `Ridley_Func_2`.
-
-/// Hurt AI - enemy $E17F (Ridley) ($A6:B297): on even frames Ridley acts as in
-/// `main`; then the grabbed Samus lags until the timer reaches its limit.
-/// Was `Ridley_Hurt`.
-
 /// Ridley grabbed Samus movement hurt AI lag time ($A6:B288).
 const GRABBED_HURT_LAG: u16 = 8;
-
-/// Ridley function - liftoff ($A6:B2F3). Was `Ridley_Func_3`.
-
-/// Ridley function - decide action ($A6:B321): a random one of the eight
-/// choices. Was `Ridley_Func_3b`.
-
-/// Get fight action choices ($A6:B335). Was `Ridley_Func_4`.
-
-/// Ridley function - lunge missed - setup ($A6:B3EC). Was `Ridley_Func_5`.
-
-/// Ridley function - lunge missed - move to position ($A6:B3F8). Was
-/// `Ridley_Func_6`.
-
-/// Y = [$B439 + [Ridley acceleration index] * 2] ($A6:B42E): the acceleration
-/// factor for lunge missed and dodging power bomb. Was `Ridley_Func_7`.
-
-/// Ridley action - swoop ($A6:B441). Was `Ridley_Func_8`.
-
-/// Ridley function - swoop - move to position ($A6:B455). Was `Ridley_B455`.
-
-/// One swoop stage: steer by `angle_step` towards `target_angle` at
-/// `target_speed`, mirrored when facing left, until the timer runs out.
-
-/// Ridley function - swoop - descending - aiming down ($A6:B493). Was
-/// `Ridley_Func_9`.
-
-/// Ridley function - swoop - descending - aiming horizontal ($A6:B4D1). Was
-/// `Ridley_Func_10`.
-
-/// Ridley function - swoop - ascending - aiming up ($A6:B516). Was
-/// `Ridley_Func_11`.
-
-/// Ridley function - swoop - ascending - aiming up faster ($A6:B554). Was
-/// `Ridley_Func_12`.
-
-/// Ridley function - swoop - ascending - decelerate ($A6:B594). Was
-/// `Ridley_Func_13`.
-
-/// Ridley action - hover ($A6:B5C4). Was `Ridley_Func_14`.
-
-/// Ridley function - hover - move to wall behind Ridley ($A6:B5E5). Was
-/// `Ridley_Func_15`.
-
-/// Ridley function - hover - move to wall in front of Ridley ($A6:B613). Was
-/// `Ridley_Func_16`.
-
-/// Ridley hover movement ($A6:B641): hover towards `x`; pogo unless Samus
-/// spin jumps, and cross to the other wall (`timeout`) when the function
-/// timer runs out. Was `advance_ridley_instruction_with_timeout`.
-
-/// Ridley hover movement ($A6:B641): the movement towards (`x`, Samus's Y, at
-/// most 352), with a tail whip and sometimes fireballs while Samus spin
-/// jumps; true when she does not, so the pogo starts. Was `Ridley_Func_17`.
-
-/// Set up Ridley pogo from hover ($A6:B68B). Was `Ridley_Func_18`.
-
-/// Ridley action / function - pogo - fly to position ($A6:B6A7). Was
-/// `Ridley_Func_19`.
-
-/// Ridley function - pogo - wait at position ($A6:B6DD). Was `Ridley_Func_20`.
-
-/// Ridley function - pogo - descending ($A6:B70E): grab Samus, or bounce off
-/// the floor with a dust cloud, a quake and every other time fireballs. Was
-/// `Ridley_Func_21`.
-
-/// Ridley function - pogo - ascending ($A6:B7B9). Was `Ridley_Func_22`.
-
-/// Check for tail collision with floor ($A6:B7E7): the tip, then segments 5
-/// down to 2, just below each. Was `Ridley_Func_23`.
-
-/// Set neutral Ridley tail ($A6:B84D). Was `Ridley_Func_24`.
-
-/// Check if Samus is grabbable ($A6:B859). Was `Ridley_Func_25`.
-
-/// Check for Samus collision with Ridley feet ($A6:B865), with feet radii
-/// `x_radius` and `y_radius`. Was `Ridley_Func_26`.
-
-/// Ridley grabs Samus from pogo ($A6:B889): Y velocity = -max(200h, |Y
-/// velocity|). Was `Ridley_Func_27`.
-
-/// Set Ridley pogo X movement direction ($A6:B8A9): towards the room inside
-/// at the bounds, otherwise mostly towards Samus. Was `Ridley_Func_28`.
-
-/// Move Samus with Ridley's feet ($A6:B9E1): the grabbed offsets settle 4px
-/// a frame towards the feet. Was `Ridley_Func_30`.
-
-/// A grabbed offset 4px closer to 0, or `None` when it is already 0. Was
-/// `reduce_ridley_axis_speed`.
-
-/// Set grabbed Samus X/Y offset ($A6:BA54). Was `Ridley_Func_31`.
-
-/// Ridley lunge missed Samus ($A6:BA85): dodge a power bomb, retreat, or after
-/// ten lunges at no health, die. Was `Ridley_Func_32`.
-
-/// Ridley action / function - lunge ($A6:BAB7): while Samus is below and on
-/// the lunging side, home in on her and grab her when the feet touch. Was
-/// `Ridley_Func_33`.
-
-/// Ridley function - grabbed Samus - setup ($A6:BB8F). Was `Ridley_Func_33b`.
-
-/// Ridley function - grabbed Samus - rising to up to 40h px ($A6:BBC4). Was
-/// `Ridley_Func_34`.
-
-/// Ridley function - grabbed Samus - rising to room middle ($A6:BBF1). Was
-/// `Ridley_Func_35`.
-
-/// Ridley function - grabbed Samus - release Samus ($A6:BC2E). Was
-/// `Ridley_Func_36`.
-
-/// Grab Samus ($A6:BC68). Was `Ridley_Func_37`.
-
-/// Release Samus ($A6:BC84). Was `Ridley_Func_38`.
-
-/// Set Ridley tangibility ($A6:BCB4): intangible off-screen while fighting,
-/// and tangible again when the intangibility timer runs out. Was
-/// `Ridley_Func_39`.
-
-/// Check if Samus is morphed or spin jumping / damage boosting ($A6:BCF1):
-/// the carry, Samus is neither spin jumping nor damage boosting. Was
-/// `Ridley_Func_40_Carry`.
-
-/// Check if Samus is morphed or spin jumping / damage boosting ($A6:BCF1):
-/// the overflow, Samus is morphed. Was `Ridley_Func_40_Sign`.
 
 /// $A6:BD04, by Samus movement type: bit 7 not spin jumping or damage
 /// boosting, bit 6 morphed.
@@ -668,49 +514,6 @@ const MOVEMENT_TYPE_FLAGS: [u8; 28] = [
     0x80, 0x80, 0x80, 0, 0xff, 0x80, 0x80, 0xff, 0xff, 0xff, 0x80, 0, 0, 0x80, 0x80, 0x80, 0x80,
     0xff, 0xff, 0xff, 0x80, 0x80, 0, 0x80, 0x80, 0, 0, 0x80,
 ];
-
-/// Check if Samus is in pogo zone ($A6:BD20): at or below Y 352. Was
-/// `Ridley_Func_41`.
-
-/// Lunge if power bomb active and not holding Samus ($A6:BD2C). Was
-/// `Ridley_Func_42`.
-
-/// Ridley function - dodging power bomb ($A6:BD4E): to the corner away from
-/// the explosion, then back to the fight. Was `Ridley_Func_43`.
-
-/// Ridley function - fake retreat - move to position ($A6:BD9A). Was
-/// `Ridley_Func_44`.
-
-/// Ridley function - fake retreat - rising ($A6:BDBC): off the top of the
-/// screen, then drop the baby metroid. Was `Ridley_Func_45`.
-
-/// Ridley function - fake retreat - drop baby metroid ($A6:BDF2). Was
-/// `Ridley_Func_46`.
-
-/// Ridley function - fake retreat - retrieve baby metroid ($A6:BE03): swoop
-/// down and catch it in the feet, then retreat for real. Was
-/// `Ridley_Func_47`.
-
-/// Check for baby metroid collision with rectangle ($A6:BE61); the baby
-/// metroid's radii are 4. Was `Ridley_Func_48`.
-
-/// Run the bank $A6 baby metroid instruction `instruction`, whose arguments
-/// start at `arguments`; the next instruction's address.
-
-/// Run Ridley's bank $A6 instruction at `ea` with its arguments at `script`;
-/// the script back when it is not one of his.
-
-/// Execute baby metroid function ($A6:BE93). Was `Ridley_Func_49`.
-
-/// Baby metroid function - held by Ridley ($A6:BE9C). Was `Ridley_Func_50`.
-
-/// Baby metroid function - held by Ridley's feet ($A6:BEB3). Was
-/// `Ridley_Func_51`.
-
-/// Baby metroid function - start falling ($A6:BECA). Was `Ridley_Func_52`.
-
-/// Baby metroid function - falling ($A6:BEDC): accelerate down to the floor
-/// at Y 192. Was `Ridley_Func_53`.
 
 /// Draw baby metroid ($A6:BF1A), in palette 0. Was `DrawBabyMetroid_0`.
 pub fn draw_baby_metroid<L: Lease + owned::Host>(game: &mut L) {
@@ -722,9 +525,6 @@ pub fn draw_baby_metroid<L: Lease + owned::Host>(game: &mut L) {
     add_spritemap(spritemap, x, y, 0, game);
 }
 
-/// Baby metroid instruction - go to [[X]] with 50% chance if not moving
-/// ($A6:BFC9), else the flapping sound. Was `BabyMetroid_Instr_2`.
-
 /// Baby metroid instruction - load palette data [[X]] ($A6:BFE1). Was
 /// `BabyMetroid_Instr_3`.
 pub fn baby_metroid_load_palette<L: Lease + crate::actors::minor_interaction::NativeCapture>(
@@ -735,55 +535,6 @@ pub fn baby_metroid_load_palette<L: Lease + crate::actors::minor_interaction::Na
     crate::actors::minor_interaction::native_palette(game, false, 0x162, 0xa6, colours, 0xf);
     k.wrapping_add(2)
 }
-
-/// Baby metroid instruction - go to [[X]] if moving ($A6:BFF2). Was
-/// `BabyMetroid_Instr_1`.
-
-/// Baby metroid instruction - go to [[X]] ($A6:BFF8). Was `BabyMetroid_Goto`.
-
-/// Ridley function - dying - grabbed Samus ($A6:C538). Was `Ridley_Func_63`.
-
-/// Ridley function - death sequence - death roar ($A6:C53E). Was
-/// `Ridley_C53E`.
-
-/// Ridley function - death sequence - move to death spot ($A6:C551): then stop
-/// and lower the acid. Was `Ridley_C551`.
-
-/// Ridley function - death sequence - lowering acid and release Samus
-/// ($A6:C588). Was `Ridley_Func_64`.
-
-/// Ridley function - death sequence - start falling apart ($A6:C5A8). Was
-/// `Ridley_Func_65`.
-
-/// Ridley function - death sequence - falling apart ($A6:C5C8). Was
-/// `Ridley_Func_66`.
-
-/// Ridley function - death sequence - still falling apart ($A6:C5DA): the boss
-/// is defeated, his drops scatter and the music returns. Was
-/// `Ridley_Func_67`.
-
-/// Move Ridley to death spot ($A6:C601); true once he is there. Was
-/// `Ridley_Func_68`.
-
-/// Spawn small explosion near Ridley ($A6:C623): a dust cloud every five
-/// frames, cycling through ten offsets. Was `Ridley_Func_69`.
-
-/// Initialisation AI - enemy $E1BF (Ridley explosion) ($A6:C696): the part
-/// picks the place and instruction list; a random X drift. Was
-/// `RidleysExplosion_Init`.
-
-/// Ridley explosion initialisation - index = Eh..16h ($A6:C7DA..C8A2): explosion
-/// `e` on Ridley's `part`, its X from the part's placement for his facing and
-/// its Y `y_offset` from his. Was `place_ridley_explosion_x`.
-
-/// Main AI - enemy $E1BF (Ridley explosion) ($A6:C8D4): flicker, slow the
-/// drift, fall, and die when the lifetime runs out. Was
-/// `RidleysExplosion_Main`.
-
-/// Handle flickering ($A6:C913): explosion `k` is invisible on odd frames.
-/// Was `RidleysExplosion_Func_1`.
-
-/// Spawn Ridley explosion enemies ($A6:C932). Was `RidleysExplosion_Func_2`.
 
 /// Ceres escape sequence "emergency" text glow ($A6:C19C): every fourth frame
 /// without a palette change or door transition, the next of 16 glow steps.
@@ -806,119 +557,6 @@ pub fn emergency_text_glow<L: Lease + ?Sized>(game: &mut L) {
     }
 }
 
-/// Handle Ridley tail ($A6:CAF5): the whip sound, the tail function, the
-/// segment positions and distances, and the tail hitting Samus. Was
-/// `Ridley_Func_70`.
-
-/// Set up Ridley pogo tail ($A6:CB33), tail function index 2. Was
-/// `Ridley_Func_71`.
-
-/// Ridley tail function index 3 - pogo - point tail down ($A6:CB45). Was
-/// `Ridley_Func_72`.
-
-/// Ridley tail function index 6 - pogo - descending - stab ($A6:CB4E). Was
-/// `Ridley_Func_73`.
-
-/// Ridley tail function index 7 - unused - pogo descending - stab ($A6:CB60).
-/// Was `Ridley_Func_74`.
-
-/// Ridley pogo tail movement with tail pointed down ($A6:CB72): whip towards
-/// straight down, then the normal pogo tail once no segment moves. Was
-/// `Ridley_Func_75`.
-
-/// Ridley tail function index 1 - neutral (natural tail movement + tail
-/// whips) ($A6:CBC0). Was `Ridley_CBC0`.
-
-/// Ridley pogo tail movement / Ridley tail function index 4 - pogo - normal
-/// ($A6:CBC7). Was `Ridley_CBC7`.
-
-/// Ridley tail function index 5 - pogo - descending - stab setup ($A6:CBCE).
-/// Was `Ridley_CBCE`.
-
-/// Ridley tail function index 8 - unused - neutral with spinny tail whips
-/// ($A6:CBD5). Was `Ridley_CBD5`.
-
-/// Update Ridley tail segment angles ($A6:CBDC). Was `Ridley_CBDC`.
-
-/// Set Ridley tail angle extrema ($A6:CBFE), by facing direction. Was
-/// `Ridley_Func_77`.
-
-/// Check if all Ridley tail segments are active ($A6:CC1E), tip first. Was
-/// `Ridley_Func_78`.
-
-/// Whether any tail segment is active, tip first.
-
-/// Handle Ridley tail whip ($A6:CC39). Was `Ridley_Func_79`.
-
-/// The end of the tail whip handlers ($A6:CC39, CCBD): once every segment
-/// rests, swing again from the base, faster when Samus is right of 70h. Was
-/// `start_ridley_tile_effect_when_idle`.
-
-/// Configure Ridley tail whip ($A6:CC7D): on a whip request, at random while
-/// idle whips are enabled, or when Samus is near; true when a whip started.
-/// Was `Ridley_Func_80_DoubleRet`.
-
-/// Unused. Handle Ridley tail whip with extra spinning ($A6:CCBD). Was
-/// `Ridley_Func_81`.
-
-/// Unused. Configure Ridley tail whip with extra spinning ($A6:CD0C); true
-/// when a whip started. Was `Ridley_Func_82_DoubleRet`.
-
-/// The pogo tail's whip when Samus is near or at random, shared by
-/// `handle_normal_pogo_tail` and `handle_pogo_tail_stab`.
-
-/// Handle normal Ridley pogo tail ($A6:CD24): whip, or once the tail rests
-/// count down to its next swing; set up the stab while rising. Was
-/// `Ridley_Func_83`.
-
-/// Handle Ridley pogo tail stab ($A6:CDAA): as the normal pogo tail, but
-/// falling it points the tail straight down at full length. Was
-/// `Ridley_Func_84`.
-
-/// Set tail angle high bytes to 40h ($A6:CE65), through raw work RAM. Was
-/// `Ridley_Func_85`.
-
-/// Calculate Ridley tail segment positions ($A6:CEBA): each segment is the
-/// previous one plus its offset; facing forward the tail hangs straight
-/// down. Was `Ridley_Func_86`.
-
-/// Segments 1 to 6 of one axis from segment 0's `first` word: two segments at
-/// a time, the second from both offsets rather than the first's new value.
-
-/// Update Ridley tail segment distances ($A6:CF5A): segments 1 to 6 extend
-/// towards their target distances or relax to their resting ones. Was
-/// `Ridley_Func_87`.
-
-/// Update Ridley tail segment angle ($A6:D09F): an active segment staggers,
-/// then swings between the angle extrema or towards a whip target, and stops
-/// at a target once the segment before it has; every segment then takes its
-/// offset from its angle and distance. Was `Ridley_Func_88`.
-
-/// At a whip target a segment stops once the one before it has.
-
-/// Set Ridley tail whip target ($A6:D19D): aim the whip at a missile near the
-/// tip, or else at Samus, within reach of the facing side. Was
-/// `Ridley_Func_89`.
-
-/// Detect (super) missile near Ridley tail ($A6:D242): the first missile or
-/// super missile within 64px of the tip. Was `Ridley_Func_90`.
-
-/// The low nibble of projectile `n`'s type high byte: its weapon.
-
-/// Whether projectile `n`'s hitbox overlaps `rect`.
-
-/// Handle Ridley tail whip sound effect ($A6:D2AA): every 16 frames of a fast
-/// tail, unless roaring. Was `Ridley_Func_91`.
-
-/// Initialise Ridley tail RAM ($A6:D2D6). Was `Ridley_Func_92`.
-
-/// Ridley tail segment active flags = 8000h ($A6:D3D9). Was `Ridley_Func_95`.
-
-/// Ridley tail segment active flags = [A] ($A6:D3DC). Was `Ridley_Func_D3DC`.
-
-/// Flip Ridley tail ($A6:D3F9): mirror every segment's angle and turn it
-/// anticlockwise. Was `Ridley_Func_96`.
-
 /// The damage deal suit-adjusted enemy damage to Samus ($A6:D453) deals: the
 /// current enemy's contact damage, from its definition. Mother Brain shares it.
 pub fn contact_damage(game: &mut (impl BossState + ?Sized)) -> u16 {
@@ -930,12 +568,6 @@ pub fn contact_damage(game: &mut (impl BossState + ?Sized)) -> u16 {
         game,
     ))
 }
-
-/// Set Ridley instruction list ($A6:D467). Was `Ridley_Func_99`.
-
-/// Norfair Ridley health-based palette handling ($A6:D474): below 9000, 5400
-/// and 1800 health Ridley accelerates harder and glows redder. Was
-/// `Ridley_Func_100`.
 
 /// Load Ridley health-based palette ($A6:D495) `index` into sprite palette 7
 /// unless a palette change is pending. Was `Ridley_D495`.
@@ -980,56 +612,10 @@ pub fn hurt_flash<S: State + crate::session_access::SessionAccess + ?Sized>(game
     session_slot!(game, Ridley[RIDLEY].palette = palette);
 }
 
-/// Check for collision with non-air block ($A6:D4F9): whether the level data
-/// block at (`x`, `y`) has a type. Was `ridley_offscreen`.
-
-/// Ridley acceleration ($A6:D523): enemy `k` homes in on (`x`, `y`) with
-/// inertia `inertia`. Was `Ridley_Func_104_0`.
-
-/// Ridley death spot acceleration ($A6:D526): as `accelerate`, with `force`
-/// extra when reversing. Was `Ridley_Func_104`.
-
 /// Ridley inertia table ($A6:D61F).
 const INERTIA: [u8; 16] = [
     0x10, 0xf, 0xe, 0xd, 0xc, 0xb, 0xa, 9, 8, 7, 6, 5, 4, 3, 2, 1,
 ];
-
-/// Ridley X acceleration ($A6:D5A9). Was `Ridley_Func_105`.
-
-/// Ceres Ridley acceleration ($A6:D62F): reversing doubles the step. Was
-/// `Ridley_Func_106`.
-
-/// Ceres Ridley X acceleration ($A6:D6A6). Was `Ridley_Func_107`.
-
-/// Calculate swoop velocities ($A6:D800): bring the swoop speed 20h a frame
-/// towards `target_speed`, turn the swoop angle by `angle_step` up to
-/// `target_angle`, and split the speed along it. Was `Ridley_Func_111`.
-
-/// Move Ridley ($A6:D86B): the current enemy by its velocities, clamped to
-/// Ridley's bounds; `hit_boundary` records the side hit (1 left, 2 right, 4
-/// top, 8 bottom). Was `Ridley_Func_112`.
-
-/// Trigger Ceres Ridley earthquake if moving fast enough ($A6:D914): enemy `k`
-/// hitting the left wall at 280h or more, outside Norfair. Was
-/// `Ridley_Func_113`.
-
-/// Turn Ridley around if not facing room middle ($A6:D955). Was
-/// `Ridley_Func_114`.
-
-/// Whether Ridley's X position mod 100h is at least 80h. The original reads
-/// the word at $0F79, whose sign is that bit.
-
-/// Update Ridley wings animation ($A6:D97D): ten frames, faster at speed.
-/// Was `Ridley_Func_115`.
-
-/// Calculate Ridley wings animation timer ($A6:D9A8): the timer delta from
-/// the larger velocity, halved while rising. Was `Ridley_Func_116`.
-
-/// Initialise Ridley ribs animation ($A6:D9FD). Was `Ridley_Func_117`.
-
-/// Handle Ridley ribs animation ($A6:DA0C): when the timer runs out, follow
-/// the table to its next frame and queue the frame's two tile rows. Was
-/// `Ridley_Func_118`.
 
 /// Draw Ridley's feet ($A6:DA8B): queue the clenched or unclenched tiles. Was
 /// `Ridley_Func_119`.
@@ -1083,19 +669,12 @@ pub fn draw_tail<L: Lease + owned::Host>(game: &mut L) {
     }
 }
 
-/// The tail tip's direction in 16 sectors: segment 5 and 6 angles' low bytes.
-
 /// Add Ridley spritemap to OAM ($A6:DBC2), in his spritemap palette. Was
 /// `sub_A6DBC2`.
 pub fn add_ridley_spritemap<L: Lease + ?Sized>(spritemap: u16, x: u16, y: u16, game: &mut L) {
     let palette = session_slot!(game, Ridley[RIDLEY].palette);
     add_spritemap(spritemap, x, y, palette, game);
 }
-
-/// Y = baby metroid spritemap pointer ($A6:DBCB): advance the baby metroid's
-/// instruction list, running its instructions; its spritemap, or `None` when
-/// the list is stopped and nothing is drawn. Was
-/// `BabyMetroid_DBCB_DoubleRetEx`.
 
 /// Add spritemap to OAM ($A6:DC13): the bank $A6 spritemap `spritemap` at
 /// (`x`, `y`) with palette bits `palette`; a count, then 5-byte entries of X
@@ -1118,79 +697,6 @@ pub fn add_spritemap<L: Lease + ?Sized>(
     let clip = crate::scene::objects::RoomClip::Rows;
     game.draw_room_spritemap(&map, (x, y), camera, palette, clip);
 }
-
-/// Check if Ridley is on screen ($A6:DE7A): true when he is off it, with a
-/// 20h px margin. Was `Ridley_Func_121`.
-
-/// Check for projectile collision with rectangle ($A6:DEA6): the first of
-/// Samus's beams (types below 3) in `rect`, which moves to its centre and
-/// is marked deflected. Was `Ridley_Func_122`.
-
-/// Check for Samus collision with rectangle ($A6:DF29). Was `Ridley_Func_124`.
-
-/// Enemy touch - Ridley ($A6:DF59). Was `sub_A6DF59`.
-
-/// Enemy shot - enemy $E13F/$E17F (Ridley) ($A6:DF8A): Norfair Ridley reacts
-/// normally; Ceres Ridley flashes and counts the hit. Was `Ridley_Shot`.
-
-/// Power bomb reaction - enemy $E13F/$E17F (Ridley) ($A6:DFB2). Was
-/// `Ridley_Powerbomb`.
-
-/// Start Norfair Ridley death sequence ($A6:DFB7), once, at no health. Was
-/// `Ridley_Func_126`.
-
-/// Ridley tail / Samus collision handling ($A6:DFD9): the tip hurts and knocks
-/// Samus back. Was `Ridley_Func_127`.
-
-/// Ridley tail / projectile collision handling ($A6:E088): a beam on the tip
-/// or segment 5 deflects in a dust cloud, missiles with a clank. Was
-/// `Ridley_Func_129`.
-
-/// Instruction - roar ($A6:E4BE). Was `Ridley_Instr_5`.
-
-/// Instruction - clear roaring flag ($A6:E4CA). Was `Ridley_Instr_6`.
-
-/// Instruction - go to [[Y]] if not Norfair and Samus has low health
-/// ($A6:E4D2): below 30. Was `Ridley_Instr_10`.
-
-/// Unused. Instruction - go to [[Y]] if holding Samus, else go to [[Y] + 2]
-/// ($A6:E4EE). Was `Ridley_Instr_4`.
-
-/// Unused. Instruction - go to [[Y]] if not holding Samus ($A6:E4F8). Was
-/// `Ridley_Instr_3`.
-
-/// Instruction - Ridley feet distance index = [[Y]] ($A6:E501); Samus's
-/// previous position catches up. Was `Ridley_Instr_2`.
-
-/// Instruction - go to [[Y]] if not facing left ($A6:E517). Was
-/// `Ridley_Instr_1`.
-
-/// Instruction - move Ridley ([[Y]], [[Y] + 2]) pixels ($A6:E51F). Was
-/// `Ridley_Instr_14`.
-
-/// Instruction - flip Ridley left ($A6:E71C). Was `Ridley_Instr_9`.
-
-/// Instruction - face Ridley forward ($A6:E727). Was `Ridley_Instr_7`.
-
-/// Instruction - flip Ridley right ($A6:E72F). Was `Ridley_Instr_8`.
-
-/// Instruction - calculate fireball X/Y velocities ($A6:E84D): 500h towards
-/// Samus from the mouth, within the facing side's cone. Was
-/// `Ridley_Instr_11`.
-
-/// Instruction - spawn Ridley's fireball enemy projectile - with afterburn
-/// ($A6:E904). Was `Ridley_Instr_12`.
-
-/// Instruction - spawn Ridley's fireball enemy projectile - without afterburn
-/// ($A6:E909). Was `Ridley_Instr_13`.
-
-/// Spawn Ridley's fireball enemy projectile ($A6:E90C): `afterburn` 0 spawns
-/// the afterburn. Was `Ridley_E90C`.
-
-/// Instruction - start liftoff - Ceres Ridley ($A6:E969). Was `Ridley_Instr_15`.
-
-/// Instruction - start liftoff - Norfair Ridley ($A6:E976). Was
-/// `Ridley_Instr_16`.
 
 // The named bank $A6 functions are the decompilation's; the two RTS
 // terminators are its locret labels.

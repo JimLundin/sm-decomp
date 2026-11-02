@@ -327,8 +327,6 @@ fn signed_step(gradient: u16, positive: bool) -> u32 {
     }
 }
 
-/// The colour math subscreen backdrop colour mirror ($7E:0074..76).
-
 /// Layer blending configuration 24h: the beam's colour math window.
 const BEAM_BLENDING: u16 = 0x24;
 /// Game states: death sequence start, and reserve tanks auto.

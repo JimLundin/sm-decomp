@@ -129,18 +129,6 @@ pub trait Host: crate::ram::WorkRamAccess + crate::runtime_access::RuntimeAccess
 pub fn initialize<L: Lease>(game: &mut L) {
     game.foreign(|game| owned::initialize(&mut crate::runtime_access::RuntimeAccess::runtime(game)))
 }
-/// Yapping maw function - neutral ($A8:A235): wait for Samus in reach.
-
-/// Yapping maw function - attack ($A8:A28C), calculating the origin
-/// ($A8:A310). Was `start_reach`.
-
-/// Move Samus with yapping maw pincers ($A8:A665). Was `carry_player`.
-
-/// Yapping maw function - attacking ($A8:A445), updating the angular speed
-/// ($A8:A63E). Was `stretch`.
-
-/// Yapping maw function - cooldown ($A8:A68A). Was `release_player`.
-
 /// Main AI - Yapping Maw ($A8:A211): run its function. False selects the
 /// existing runtime's unknown-address failure before attachments update. Was
 /// `advance`.

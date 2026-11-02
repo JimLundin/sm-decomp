@@ -90,8 +90,6 @@ const ROAR_SOUND: u8 = 0x16;
 /// The death animation in Mini Kraid's spawn parameter, for all four drops.
 const DEATH_ANIMATION: u16 = 3;
 
-/// Face Samus.
-
 /// Sets up Mini Kraid with random timers, facing Samus. Was `FakeKraid_Init`.
 pub fn initialize<L: Lease + ?Sized>(game: &mut L) {
     game.foreign(|game| owned::initialize(&mut crate::runtime_access::RuntimeAccess::runtime(game)))
@@ -101,14 +99,6 @@ pub fn initialize<L: Lease + ?Sized>(game: &mut L) {
 pub fn main_ai<L: Lease + ?Sized>(game: &mut L) {
     game.foreign(|game| owned::main_ai(&mut crate::runtime_access::RuntimeAccess::runtime(game)))
 }
-
-/// Counts down belly spike timer `spike` (a byte offset) of Mini Kraid `k`;
-/// at zero it fires spikes the way Mini Kraid faces and rearms the timer.
-/// Was `FakeKraid_Func_1`.
-
-/// Spits two rocks: velocity pairs from row `row` (a byte offset into
-/// [`SPIT_VELOCITIES`]), `offset` pixels from the mouth. Was
-/// `FakeKraid_InstrHelper_45`.
 
 /// Instruction: one step. Turns around when the walk runs out or a wall
 /// blocks it, then faces Samus. Was `FakeKraid_Instr_2`.
@@ -139,8 +129,6 @@ pub fn spit_right<L: Lease + ?Sized>(game: &mut L) {
     game.foreign(|game| owned::spit_right(&mut crate::runtime_access::RuntimeAccess::runtime(game)))
 }
 
-/// Where a death's drops start.
-
 /// Touched by Samus. Was `FakeKraid_Touch`.
 pub fn touch<L: Lease + ?Sized>(game: &mut L) {
     game.foreign(|game| owned::touch(&mut crate::runtime_access::RuntimeAccess::runtime(game)))
@@ -150,8 +138,6 @@ pub fn touch<L: Lease + ?Sized>(game: &mut L) {
 pub fn shot<L: Lease + ?Sized>(game: &mut L) {
     game.foreign(|game| owned::shot(&mut crate::runtime_access::RuntimeAccess::runtime(game)))
 }
-
-/// Dies with its drop once out of health. Was `FakeKraid_9C50`.
 
 #[path = "mini_kraid_owned.rs"]
 pub mod owned;

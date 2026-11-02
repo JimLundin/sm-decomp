@@ -21,8 +21,6 @@ use crate::actors::layouts::EnemyLayout72 as Bug;
 use crate::actors::queries;
 use crate::session_slot;
 
-/// A lease on a game with the zebs' effects.
-
 /// Main AI - zeb ($B3:887A): run its state routine.
 pub fn main_ai<H: Host>(game: &mut H) {
     let k = game.current_enemy();

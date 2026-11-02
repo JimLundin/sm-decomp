@@ -387,7 +387,6 @@ const MAX_OFFSET: u16 = 255;
 const HIDDEN_LAYER: u16 = 7;
 const SHOWN_LAYER: u16 = 2;
 /// $7E:060B: the spit projectile angle; spits fan out 10h apart.
-
 const SPIT_SPREAD: u8 = 16;
 /// $B3:9E77: the spit speeds by speed table index.
 const SPIT_SPEEDS: [u16; 3] = [2, 3, 4];

@@ -13,9 +13,6 @@ const ARMS_OUT_INDEX: u16 = 0x68;
 /// The right swoop ends at X 2A0h.
 const RIGHT_END_X: i32 = 0x2a0;
 
-/// Calculate Draygon swoop Y positions ($A5:8817): fall with the swoop Y
-/// acceleration to the reset Y, then set the X speed that reaches Samus.
-
 /// Draygon body function - swoop right ($A5:87F4) or left ($A5:89B3) - setup.
 /// Was `begin`.
 pub fn swoop_setup<L: Lease>(right: bool, game: &mut L) {

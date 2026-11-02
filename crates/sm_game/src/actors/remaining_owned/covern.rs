@@ -87,9 +87,6 @@ const INITIAL_PROPERTIES: u16 = 0x2500;
 const INTANGIBLE: u16 = 0x400;
 const INVISIBLE: u16 = 0x100;
 const MATERIALISED_KEEP: u16 = 0xfaff;
-/// $7E:0AF6 and $7E:0AFA: Samus's X and Y position, read here with the
-/// enemy's index added, as the original's buggy reads did.
-
 fn selected(runtime: &impl Host) -> Key {
     Key::from_legacy(runtime.session().actors.controls.selected)
 }

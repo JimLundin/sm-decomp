@@ -53,8 +53,6 @@ const DUST_CLOUD_Y: u16 = 0x10;
 /// Angles are measured from the top, clockwise; 40h less is the maths angle.
 const QUARTER_TURN: u8 = 0x40;
 
-/// While the grapple is connected to a block, flash and run the hurt AI.
-
 /// Draygon body function - chase Samus ($A5:8E19): fly at Samus and grab her,
 /// unless the grapple repels Draygon. Was `acquire`.
 pub fn chase_samus<L: Lease>(game: &mut L) {

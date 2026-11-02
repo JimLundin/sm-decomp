@@ -20,8 +20,6 @@ use crate::actors::layouts::EnemyLayout72 as Bug;
 use crate::session_slot;
 use sm_data::enemy_speeds::SpeedTable;
 
-/// A lease on a game with the geegas' effects.
-
 /// Main AI - geega ($B3:8FAE): run its state routine.
 pub fn main_ai<H: Host>(game: &mut H) {
     match state_address(game) {

@@ -130,8 +130,6 @@ fn begin_deflating(game: &mut impl Host, body: i32) {
     session_slot!(game, Powamp[body]; function = DEFLATING, function_timer = 10);
     session_slot!(game, Balloon[body - BALLOON_SLOT].base; instruction_timer = 1, current_instruction = DEFLATE);
 }
-/// A lease on a game with the powamps' effects.
-
 /// Main AI - powamp ($A8:C21C): run its function.
 pub fn main_ai(game: &mut impl Host) {
     let k = game.current_enemy();
