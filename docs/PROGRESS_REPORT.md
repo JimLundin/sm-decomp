@@ -27,6 +27,36 @@ Pending and unobserved engine scope is retained in the coordinator and endgame
 snapshots below. Complete any%, 100%, low%, boot/transition/endgame acceptance is
 not established by this documentation cleanup.
 
+## Guarded checkpoint staging, 2026-11-02
+
+Composed verifier source
+`56faafb8ab7f0557ac6cfd0363393eaedc72c94f521791a49153e313ba6aa4e2`
+passes strict ordinary Cargo checking of the library and verifier binary.
+Independent source review accepts the existing corpus planner, workflow and
+checkpoint orchestration changes. Metadata-only planner execution confirms
+all 164 existing runnable corpus rows exactly once: 156 ready rows and eight
+checkpoint rows, with 19 populated prefix stages for the current input scope.
+No verifier executable, DLL, capture or replay was built or run locally.
+
+Capture stages retain genuine state at configured checkpoint boundaries and
+advance at most 8,192 setup ticks per stage. Successful encrypted artifacts bind
+actual source, executable, native archives, ROM, full inputs, origins, codec and
+payload bytes. Missing or mismatched predecessors fail their own chain; strict
+import never silently falls back to cold boot. Independent ready rows use three
+slots while captures use three; checkpoint rows use six after both phases
+terminate. An unrelated failed row does not suppress valid dependent work, and
+any failure keeps the overall workflow red. No rows, comparisons or setup gaps
+are removed. Existing lock consumers retain the complete planner matrix.
+
+Previous `0fd725d69` cancelled jobs demonstrate genuine expensive cold prefixes:
+153,606-prefix job 125383628058 reached 10,000 setup ticks in 1,145.45 seconds;
+69,400-prefix job 125383628074 reached 10,000 in 942.17 seconds. Neither finished.
+These observations predate the FX optimization and prove no current speedup.
+CI `41479613031` passed on FX head `c14a41079`; its replays remain pending and
+provide no qualification for this subsequent scheduler source. Exact composed
+head CI and all replay gates are still required before landing. Complete
+original-movie acceptance and the full engine migration remain open.
+
 ## FX cache invalidation correction, 2026-11-02
 
 The reviewed candidate source is
