@@ -1,0 +1,34 @@
+name: Linux native toolchain
+description: >
+  The repository's Rust toolchain, pinned Zig, and the pinned native archives the
+  headless verifier links.
+runs:
+  using: composite
+  steps:
+    - name: Install the repository toolchain
+      shell: bash
+      run: rustup show
+    - name: Install pinned Zig
+      shell: bash
+      run: |
+        native="$RUNNER_TEMP/sm-native"
+        mkdir -p "$native/lib"
+        printf '%s\n' 'ziglang==0.15.2 --hash=sha256:806316453d1ede7174ed3fefb8e5348154629089c3bb5fe812dfd0e172fac130' > "$native/zig-requirements.txt"
+        python3 -m venv "$native/zig-env"
+        "$native/zig-env/bin/pip" install --quiet --require-hashes --only-binary :all: -r "$native/zig-requirements.txt"
+        printf '#!/bin/sh\nexec "%s/zig-env/bin/python" -m ziglang "$@"\n' "$native" > "$native/zig"
+        chmod +x "$native/zig"
+        {
+          echo "SM_NATIVE=$native"
+          echo "SM_ZIG=$native/zig"
+          echo "LIBRARY_PATH=$native/lib"
+        } >> "$GITHUB_ENV"
+    - name: Build pinned native dependencies
+      # Rebuild stamped archives from this checkout; never cache these objects.
+      # SDL's headers come from the locked sdl2-sys crate; nothing links SDL here.
+      shell: bash
+      run: |
+        cargo fetch --locked
+        sdl=$(ls -d "${CARGO_HOME:-$HOME/.cargo}"/registry/src/*/sdl2-sys-*/SDL/include | head -1)
+        python3 tools/install_native_dependencies.py --zig "$SM_ZIG" --target x86_64-linux-gnu \
+          --prefix "$SM_NATIVE" --library-directory "$LIBRARY_PATH" --sdl-include "$sdl"

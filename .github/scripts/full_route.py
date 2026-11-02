@@ -236,7 +236,8 @@ def plan():
             continue
         planned = subprocess.run([sys.executable, __file__, "jobs"], env=dict(os.environ, FULL_ROUTE=route),
                                  check=True, capture_output=True, text=True).stdout
-        include += [dict(job, route=route, asset=asset) for job in json.loads(planned)]
+        include += [{**{key: value for key, value in job.items() if key != "ids"}, "route": route, "asset": asset}
+                    for job in json.loads(planned)]
     if not include:
         raise SystemExit(f"no chain bundle is published; see the route pins in {scenario.LOCK}")
     # Start the heaviest jobs first across both routes.
@@ -248,7 +249,8 @@ def plan():
 
 def job_list():
     print(json.dumps([{"index": i, "name": f"{ROUTE}-{i:02d}-{len(group)}-rooms",
-                       "steps": sum(int(entry["steps"]) for entry in group)} for i, group in enumerate(jobs())]))
+                       "steps": sum(int(entry["steps"]) for entry in group),
+                       "ids": [entry["id"] for entry in group]} for i, group in enumerate(jobs())]))
 
 
 def locked(extra):

@@ -12,7 +12,11 @@ advice. PLAN remains authoritative for the Fast loop, Git, resources and commit
 rules; the accepted architecture, ADRs and ENGINE_STATE_MIGRATION are unchanged.
 Primary (Jim, 2026-10-29 evening): the collaborator session is the sole Git
 writer for main; root releases main and hands in-flight work over as patches.
-Linux stays stopped.
+Jim, 2026-11-02: CI replays run on Linux; PLAN's CI direction replaces the earlier stop.
+
+Jim clarified on 2026-11-02 that Linux CI is intentional. PLAN records this
+hosted-platform direction and the continuing local Cargo-check policy. Earlier
+Windows CI evidence keeps its exact source, host and artifact identities.
 
 Read PLAN's 2026-11-01 work order and migration scope before assigning phase work.
 PLAN owns current pacing and reporting; the compiler/fidelity gates and full
@@ -64,7 +68,7 @@ M seams and cycle cuts, B bank retirement.
    the `f158` seed asset; split the checkpoint shard to at most ~60 minutes. Run
    `tools/cycle_report.py` in CI. *Exit:* two consecutive green full-corpus runs
    on main, scheduled or dispatched (Jim, 2026-10-29: the schedule fired only
-   every 4–9 h, so dispatched runs count). The retained exit evidence is in
+   every 4â€“9 h, so dispatched runs count). The retained exit evidence is in
    [Phase 0 qualification](PROGRESS_REPORT.md#phase-0-qualification).
 1. **Package graph and seams (M).** Add `sm_data`, `sm_game` and `sm_runtime`
    to the workspace; `sm` becomes compat plus oracle tools. Put the CONTRACTS
@@ -109,7 +113,7 @@ M seams and cycle cuts, B bank retirement.
    minimal `sm_app`, headless replay in `sm_tools`, compared to the oracle
    through the scenario harness's projections (lane S, below) in free-run mode.
    *Exit:* VALIDATION Gate 1 evidence.
-4. **Gates 2–5**, then Map Rando import through the same `sm_data` IDs.
+4. **Gates 2â€“5**, then Map Rando import through the same `sm_data` IDs.
 
 SPC700 CPU and APU bus emulation are frozen compat (unsafe permitted, outside
 the unsafe goal). The N-SPC sequencer (`spc_player.rs`) and S-DSP are the seed

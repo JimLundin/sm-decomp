@@ -3,7 +3,7 @@
 # Stops at the first conflict and leaves it for you; prints "picked", "CONFLICT <commit>: <files>".
 # scenarios/lock.toml conflicts are resolved as a union and re-checked; every other file is yours.
 set -u
-PY="${SM_PY:-/c/Users/Jim.Lundin/AppData/Local/sm-decomp-tools/python-3.13.7/python.exe}"
+PY="${SM_PY:-$(command -v python3 || command -v python)}"
 if git status | grep -qE "rebase in progress|cherry-picking|You have unmerged"; then echo "BUSY: finish or abort first"; exit 1; fi
 for c in "$@"; do
   if git cherry-pick "$c" >/dev/null 2>&1; then echo "picked $c"; continue; fi

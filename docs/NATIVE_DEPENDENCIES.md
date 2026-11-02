@@ -45,7 +45,8 @@ binaries, and keep upstream licences with cached source.
 
 `--target x86_64-linux-gnu` builds PIC archives and omits the desktop bridge,
 which needs Windows' 32-bit `long`. A Linux configuration archive does not make
-a working Linux frontend, and Linux development is currently stopped.
+a working Linux frontend. CI builds the verifier this way; see
+[the action](../.github/actions/linux-native/action.yml).
 
 For a scoped rebuild, run the corresponding installer with the same target,
 Zig, library-directory and optional prefix arguments; the configuration and

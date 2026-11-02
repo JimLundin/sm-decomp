@@ -5,7 +5,7 @@
 set -u
 pr=$1; here=$(dirname "$0")
 branch=$(gh pr view "$pr" --json headRefName --jq .headRefName)
-gates='["CI","Corpus replay","Full 100% route","Engine against the oracle lock"]'
+gates='["CI","Verify"]'
 for _ in $(seq 1 90); do
   out=$(bash "$here/land.sh" "$pr" 2>&1); rc=$?; echo "$out" | tail -1
   [ $rc = 0 ] && exit 0

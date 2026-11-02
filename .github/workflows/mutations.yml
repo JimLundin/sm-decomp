@@ -16,53 +16,45 @@ on:
 
 permissions:
   contents: read
+  actions: read
 
 concurrency:
   group: mutations-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  mutations:
-    # Mutation execution stays hosted: the local Defender policy blocks it.
-    runs-on: windows-2022
-    timeout-minutes: 300
-    env:
-      RUSTUP_TOOLCHAIN: stable-x86_64-pc-windows-gnu
-      CARGO_BUILD_JOBS: 1
-    defaults:
-      run:
-        shell: pwsh
+  plan:
+    runs-on: ubuntu-24.04
+    outputs:
+      skip: ${{ steps.passed.outputs.skip }}
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.13'
-      - uses: msys2/setup-msys2@v2
-        id: msys
-        with:
-          msystem: MINGW64
-          install: mingw-w64-x86_64-gcc
-      - name: Install the GNU Rust toolchain and linker
+      - id: passed
         env:
-          MSYS_LOCATION: ${{ steps.msys.outputs.msys2-location }}
-        run: |
-          rustup toolchain install stable-x86_64-pc-windows-gnu --profile minimal
-          if ($LASTEXITCODE -ne 0) { throw 'Rust toolchain installation failed' }
-          $linker = Join-Path $env:MSYS_LOCATION 'mingw64/bin'
-          if (!(Test-Path -LiteralPath "$linker/gcc.exe")) { throw 'MinGW GCC is missing' }
-          $linker | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
-          "CARGO_TARGET_X86_64_PC_WINDOWS_GNU_LINKER=$linker/gcc.exe" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          GH_TOKEN: ${{ github.token }}
+          WORKFLOW: mutations.yml
+        run: python3 .github/scripts/already_passed.py
+
+  mutations:
+    needs: plan
+    if: needs.plan.outputs.skip != 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 300
+    env:
+      CARGO_BUILD_JOBS: 1
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install the repository toolchain
+        run: rustup show
       - name: Kill every detached-core mutant
         # Each fault is built in its own copy; the baseline must pass first.
         run: |
-          $started = Get-Date
-          python sm/src/verification/player_detached/mutations.py
-          if ($LASTEXITCODE -ne 0) { throw 'A mutant survived or the mutation run failed' }
-          "mutation run took $([int]((Get-Date) - $started).TotalMinutes) minutes"
+          started=$SECONDS
+          python3 sm/src/verification/player_detached/mutations.py
+          echo "mutation run took $(( (SECONDS - started) / 60 )) minutes"
       - name: Kill every Session mapping mutant
         # Each perturbed RAM mapping must fail its named sm_game unit test.
         run: |
-          $started = Get-Date
-          python sm/src/verification/session_mutations.py
-          if ($LASTEXITCODE -ne 0) { throw 'A Session mapping mutant survived or the run failed' }
-          "session mutation run took $([int]((Get-Date) - $started).TotalMinutes) minutes"
+          started=$SECONDS
+          python3 sm/src/verification/session_mutations.py
+          echo "session mutation run took $(( (SECONDS - started) / 60 )) minutes"

@@ -49,10 +49,11 @@ The target crates build and test with plain Cargo on any platform:
 cargo test -p sm_data -p sm_game -p sm_runtime
 ```
 
-The desktop game and the verifier currently build only for Windows x86-64 with
-the GNU toolchain. They need pinned native libraries built with Zig, SDL2 and
-Python 3.11+; the [build guide](docs/ITERATION.md) covers setup, controls and
-options. Once those are installed:
+The verifier builds on Linux and Windows, and CI runs it on Linux. The desktop
+game still links only for Windows x86-64 with the GNU toolchain. Both need pinned
+native libraries built with Zig and Python 3.11+, and the desktop also needs SDL2;
+the [build guide](docs/ITERATION.md) covers setup, controls and options. Once those
+are installed:
 
 ```sh
 cargo run --release -p sm_app -- rom/sm.smc
@@ -68,16 +69,17 @@ port state, and the rendered 256x240 image. Any difference fails the run. The
 [verification guide](movies/README.md) explains how to run it locally.
 
 Read the workflow definitions for their current triggers and selections:
-[PR CI](.github/workflows/ci.yml), [corpus](.github/workflows/segments.yml),
-[full route](.github/workflows/full-route.yml) and [coverage](.github/workflows/coverage.yml).
+[PR CI](.github/workflows/ci.yml), [Verify](.github/workflows/verify.yml) (the replays and
+coverage) and [desktop link](.github/workflows/desktop.yml).
 The [report](docs/PROGRESS_REPORT.md#workflow-inventory-snapshot) retains the old
 inventory; selected-frame counts alone do not prove complete movie coverage.
 
 The ROM for CI comes from repository secrets. The ROM import check confirms
 that every `sm_data` record accepts the real cartridge; a record that rejected
 it would leave the game on its old ROM reads and the replays would not exercise
-it. A change lands after PR CI and a full corpus pass on its exact head; main
-is then fast-forwarded.
+it. A change lands after CI and Verify pass on its exact head; main is then
+fast-forwarded. Verify checks every locked scenario against committed oracle digests
+and runs lockstep for the rest; the nightly run adds lockstep of everything.
 
 What this does not cover:
 
@@ -91,7 +93,7 @@ What this does not cover:
 - A fixed list of WRAM ranges is normalised before comparison
   (`normalize_snapshot_ram` in `sm/src/cpu_infra.rs`); those bytes are not
   checked by the comparison.
-- The desktop build and the verifier run only on Windows.
+- The desktop build links only on Windows.
 - Self-consistency of the target crates is not fidelity: the target-engine
   gates in [VALIDATION](docs/target-architecture/VALIDATION.md) require their own
   evidence; consult the dated [report](docs/PROGRESS_REPORT.md#architecture-snapshot).

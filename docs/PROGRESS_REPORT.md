@@ -27,6 +27,57 @@ Pending and unobserved engine scope is retained in the coordinator and endgame
 snapshots below. Complete any%, 100%, low%, boot/transition/endgame acceptance is
 not established by this documentation cleanup.
 
+## Published Linux migration qualification, 2026-11-02 17:52 UTC
+
+PR #151 is published at `1b810f48a4763ea48c6374eb524e9ba7926ca986`,
+reconciled with Linux main `095129107`. Full Verify `41494345180` is running
+with the faithful lock sample and physical audio trace enabled. PR CI
+`41494319086` is running; the redundant partial gate and three superseded
+Windows runs were cancelled after retaining their exact failures and captures.
+The third genuine imported second stage, shot-gate job `125421630626`, also
+succeeded before cancellation. All seven first stages and three second stages
+are retained as ten encrypted artifacts with verified ciphertext receipts.
+Complete prefixes, full exact-head replays and engine landings remain pending.
+
+The next 275-access migration also receives the same reviewed CI changes while
+retaining source `132548a10940d03e397e73de34b5b0d1f5a9c095f077e29d340ede0b33887a23`.
+Its previously passed ordinary Cargo checks retain that exact source scope;
+no new local executable or replay was run. Main's engine burndown is unchanged.
+
+## Linux qualification forward fix, 2026-11-02
+
+Jim confirmed Linux CI is intentional. PR #151 at `4a4564ad7` has a successful
+CI build (`41481486141`, attempt 3), but two oracle-lock shards and four route
+shards failed their cumulative 55-minute limits. The observed failed logs show
+passing completed rows before timeout; they establish no result for unfinished
+rows. Failed logs remain with the dedicated verification owner.
+
+All seven initial capture groups succeeded. Two genuine imported second stages
+also succeeded: save-memory job `125421630200` and save-death job `125421630209`.
+Encrypted predecessor artifacts and receipts retain their original source,
+executable, native, ROM, input, codec and payload identities. These are partial
+prefix proofs, not complete 69,400/153,606-prefix or whole-movie acceptance.
+
+The reviewed CI-only forward fix consolidates hosted replay on Linux, retaining
+the headless executable and actual native archive identities. Planning covers
+all 164 runnable corpus rows, eight checkpoint recipes and 19 prefix stages.
+The frequent gate explicitly excludes three long-prefix rows; landing requires
+the separate full exact-head result. Local checks remain ordinary Cargo checks;
+the actual executable build and replay run in GitHub Actions. Hosted execution
+of the assembled Linux fix remains pending at this report boundary.
+
+During publication preflight, the independent Linux CI session advanced main
+from `558131e72` to `095129107`. This lands CI/support changes, with no engine
+RAM-access retirement. PR #151 is reconciled with that main while preserving
+the reviewed executable and staged-prefix postimages; its source fingerprint
+remains `56faafb8ab7f0557ac6cfd0363393eaedc72c94f521791a49153e313ba6aa4e2`.
+PR #151 carries 546 genuine RAM-access
+retirements, from 1,159 sites / 88 files to 613 / 74. The separately committed
+next migration, `223466103`, carries 275 further genuine retirements; two spelling
+changes are excluded from that claim. Neither slice has landed, so neither
+changes the landed burndown. Full owned engine and complete existing any%, 100%
+and low% verification remain open. No additional tricks or scenarios are assigned.
+
 ## Captured record transport and hosted gates, 2026-11-02 17:08 UTC
 
 The next migration source is now
@@ -440,7 +491,7 @@ observations; the older NEXT609 sections below retain their original scope.
 
 | Landed source | Counted RAM sites | Coupled files | Sites retired in that slice |
 | --- | ---: | ---: | ---: |
-| Before PR #149 | 2,057 | 93 | — |
+| Before PR #149 | 2,057 | 93 | â€” |
 | PR #149, `811a77f9e` | 1,768 | 89 | 289 |
 | PR #150, `558131e72` | 1,159 | 88 | 609 |
 
@@ -665,7 +716,7 @@ handoffs above for live qualification and new source, preserving donor patches.
 
 | Branch | State | Handoff |
 | --- | --- | --- |
-| `lane/l4-cohorts` (`f8863ac38`) | 13 commits, typed copies for scroll, camera, rooms, melt, liquids, message box and fade; RAM sites 1835 → 1496. Rebased on `170979ac2`. Gate on the rebased tip, check-lock, and commit 13's replays still to run | `docs/handoff/l4-cohorts.md` |
+| `lane/l4-cohorts` (`f8863ac38`) | 13 commits, typed copies for scroll, camera, rooms, melt, liquids, message box and fade; RAM sites 1835 â†’ 1496. Rebased on `170979ac2`. Gate on the rebased tip, check-lock, and commit 13's replays still to run | `docs/handoff/l4-cohorts.md` |
 | `lane/l5-slot-access` (`22bcb8d48`) | batch 1 has landed. Batch 2 (10 families, 1809 sites) is gated but not replay-qualified. The top commit is a Crocomire WIP with 2 compile errors. 58 errors remain before `SlotAccess for Game` can go | `docs/handoff/l5-slot-access.md` |
 | `lane/l6-hosts-kraid` (`910e393ba`, on L5's `0cc19efe8`) | 7 families: fire arc, boulders, statues, etecoons, dachora, Mini Kraid, Kraid. 1803 sites. The first 5 pass lockstep; Mini Kraid and Kraid not replayed; no check-lock | `docs/handoff/l6-hosts-kraid.md` |
 | `lane/d-free-run-drift` (`00ef5d5b1`) | 3 engine fixes: a held button dismisses a message box; the escape timer and liquids leave `$16`. 26 listed drift rows now match the lock. Needs lockstep on both oracles, then remove their `unlocked` notes and `lock --record`. The top commit is a WIP oracle change for item-gravity, which needs a full lock re-record | `docs/handoff/d-free-run-drift.md` |
@@ -784,7 +835,7 @@ unexecuted cases and exclusions in the original owned qualification receipts.
 The [147 record](https://github.com/JimLundin/sm-decomp/blob/2c2928e725dc30cf6e1df32bfd5070c805bda3ef/docs/PLAN.md#current-work-and-limits),
 [146 record](https://github.com/JimLundin/sm-decomp/blob/0ec67ed08e303adc0078c84ee54cb961df3563ba/docs/PLAN.md#current-work-and-limits),
 [DSP93/earlier cohorts](https://github.com/JimLundin/sm-decomp/blob/170bc5351c64f0846bbcb7b4714064a7230db153/docs/PLAN.md#current-work-and-limits),
-[SOURCE15–38](https://github.com/JimLundin/sm-decomp/blob/4c302a50/docs/PLAN.md#qualified-history)
+[SOURCE15â€“38](https://github.com/JimLundin/sm-decomp/blob/4c302a50/docs/PLAN.md#qualified-history)
 and [M1a audit](archive/M1A-REVIEW.md) preserve historical proofs and scoped contracts.
 Reach the applicable frozen record when touching its owner; history assigns no
 work and authorizes no repeated accepted campaign.
@@ -864,7 +915,7 @@ Completed room/renderer/message/Scene/delivery reports are in the
 
 | Cohort | Qualified source / DLL | Retained evidence |
 | --- | --- | --- |
-| Room, 0fed8911 | 9787b619 / composition04–05 | 38 cases; 21,481 comparisons / 0; exact transfer/failure lineage |
+| Room, 0fed8911 | 9787b619 / composition04â€“05 | 38 cases; 21,481 comparisons / 0; exact transfer/failure lineage |
 | Shared renderer | c942fe04 / b01c2561 | 24 units; original 17 rows / 26,638 / 0; independent pixel witnesses |
 | Message composition | 5787 / 8d58 | 26 units; 26 rows / 51,456 / 0; prepared display and content identity |
 | Scene/native sharing | edbe402d / d02d370b | 46 units; original 26 rows / 199,063 / 0; atmospheric failure lineage |
@@ -1016,7 +1067,7 @@ oracle (target `sm_tools`). They don't block a native build:
 | # | Blocker | What it means | Suggested owner |
 | --- | --- | --- | --- |
 | 1 | **The RAM image is the state** | `Game`'s `WorkRam` (`game_state.rs`) is still where much of the game's state lives. `sm_game` reaches it through `CompatibilityRam`/`RawRam` in about 60 files, and `cycle_report` counts 3,534 RAM sites in 101 coupled files. A native build needs those fields in the owned `Session`, with no `Game`. | Domain lanes (one per subsystem cohort), tracked by the RAM ratchet |
-| 2 | **Video goes through the emulated PPU** | `draw_frame_to_ppu` settles the frame on the emulated beam. VRAM, CGRAM and OAM transfers and register writes (`display_transfers.rs`, `display_refresh.rs`, `rtl` `WriteReg`, the `Registers` trait in 13 `sm_game` files) land in `snes/ppu.rs`. `sm_runtime`'s scanline renderer reads that PPU state. A native build needs Scene → `sm_runtime` renderer, with the PPU-state inputs owned by `sm_game`/`sm_runtime`. | Rendering lane (the `sm_runtime` owner) |
+| 2 | **Video goes through the emulated PPU** | `draw_frame_to_ppu` settles the frame on the emulated beam. VRAM, CGRAM and OAM transfers and register writes (`display_transfers.rs`, `display_refresh.rs`, `rtl` `WriteReg`, the `Registers` trait in 13 `sm_game` files) land in `snes/ppu.rs`. `sm_runtime`'s scanline renderer reads that PPU state. A native build needs Scene â†’ `sm_runtime` renderer, with the PPU-state inputs owned by `sm_game`/`sm_runtime`. | Rendering lane (the `sm_runtime` owner) |
 | 3 | **Beam, NMI and IRQ timing** | The frame settlement, scanline IRQs (`scanline_irq.rs`) and HDMA (`hdma*` in `sm_game`, executed by `snes/dma.rs`) depend on emulated `hPos`/`vPos` and `nmiWanted`. Mid-frame effects (HUD split, Draygon and Phantoon waves, room-loading IRQ commands) need a native per-scanline effect model in the renderer. | Rendering lane, with the HDMA/IRQ owners |
 | 4 | **Audio is the SPC700** | `spc_player.rs`, `native_audio.rs`, `audio_*`, `apu_*` and `snes/spc.rs`/`dsp.rs` are about 4k lines. `sm_game` only queues cues (`queue_sound`/`queue_music` in 90 files). A native build needs the `sm_runtime` sequencer, voices and mixer, driven by the cue queue, plus `cpal` output in `sm_app`. | Audio lane (O, if the oracle work frees up) |
 | 5 | **ROM reads at run time** | `rtl::rom_record`, `rom_table_word!` and native records (`native_rom.rs`, `rom.rs`, `Records`/`LoadedImage` in `sm_game`; table reads in 64 `sm_game` files) still read the cartridge image while playing. A native build needs prepared `sm_data` records loaded once (an `sm_tools` importer), with no ROM image in `Game`. | Data lane (the `sm_data` owner) |
@@ -1054,7 +1105,7 @@ Run-time reads fall in three families. Counts are call sites in `sm_game`.
    data, and the instruction lists of PLMs, enemies, sprite objects, palette
    effects, animated tiles and HDMA objects. Fixed tables cannot cover these.
    They need typed content keyed by the original address, such as a palette
-   bank (`address → [u16; 16]`) or a decoded instruction-list arena per
+   bank (`address â†’ [u16; 16]`) or a decoded instruction-list arena per
    interpreter, imported once. The biggest consumers are `actors` (138 sites),
    `menus` (69), `player_projectiles` (33), `animated_tiles` and
    `palette_effects` (14 and 13). Each interpreter's lists are one
@@ -1087,7 +1138,7 @@ gameplay step, it still does these things in `sm`:
 The input side is small: the frame reads controller 1 only through
 `menus::host::Host::nmi_controller_word`, the joypad register in NMI, and
 the driver sets nothing else. The output side is the hard part. Display is
-items 2–3 (the emulated PPU and beam), and audio is item 4 (the SPC700).
+items 2â€“3 (the emulated PPU and beam), and audio is item 4 (the SPC700).
 
 **Plan.**
 
@@ -1103,7 +1154,7 @@ items 2–3 (the emulated PPU and beam), and audio is item 4 (the SPC700).
    counter stays oracle-only.
 4. Return a `TickOutput` from `tick`: the frame's queued sound cues (already
    Session state) and the owned Display's Scene. `sm_app` then drives
-   `sm_runtime` with them. This depends on items 2–4.
+   `sm_runtime` with them. This depends on items 2â€“4.
 5. With items 1, 5 and 7 done, `tick` runs on the Session with no `Game`,
    and the Samus mutation and native adoption steps go away.
 ##### Item 2: video (2026-10-31)
@@ -1174,7 +1225,7 @@ row with no new runner.
 
 1. Items 1 and 7 together. The Session owns state, and leases become borrows. Everything else depends on this.
 2. Item 5, so no ROM image is needed at run time.
-3. Items 2–4: video, timing and audio in `sm_runtime`.
+3. Items 2â€“4: video, timing and audio in `sm_runtime`.
 4. Items 6, 8 and 9: the shell, the hosts and saves.
 5. Item 10 at any point.
 
@@ -1191,7 +1242,7 @@ Status: **accepted by Jim, 2026-10-31; admitted under
 steps 1 to 3 landed (the standalone recorder is open): engine-only free run against
 the committed oracle digest lock is the frequent gate (Jim, 2026-10-31, Decision 4);
 step 4 in progress: scenarios as data, with `scenario lock` and `scenario cut`.** It expands
-[Validation · Verification strategy](target-architecture/VALIDATION.md#verification-strategy)
+[Validation Â· Verification strategy](target-architecture/VALIDATION.md#verification-strategy)
 into a concrete design. It is PLAN's one runner: the harness grows inside the current
 verifier and then replaces it, and never runs beside it as a second framework. Its code
 counts as verification, reported separately from production lines.
@@ -1211,7 +1262,7 @@ not lockable yet: they need an oracle-side prefix first.
 Document date: 2026-10-31 design; adoption decision 2026-10-31. Source: [`docs/SCENARIO_HARNESS.md`](https://github.com/JimLundin/sm-decomp/blob/260d11ef6406eb2a4ea053a7c633877f29a0b74e/docs/SCENARIO_HARNESS.md).
 These are retained document assertions, not checks rerun by this cleanup.
 
-Design inventory: 34 normalization ranges; 3 snapshots and 2–3 restores per frame.
+Design inventory: 34 normalization ranges; 3 snapshots and 2â€“3 restores per frame.
 Manifest migration: all 687 rows came back unchanged; old formats deleted.
 Adoption comparison: on the five step-1 rooms, engine-only free run measured
 about 1.4x faster than lockstep (#6). This is historical timing, not a current
