@@ -1,23 +1,31 @@
 //! Beetom crawls, hops and lunges at Samus, then drains her until shaken off ($A8:B65E-$A8:C142).
 use crate::actors::access::AccessMode::Native;
 use crate::actors::api::{self, Axis, DeathHandling, MovementResult::Blocked, ShotHandling};
-use crate::actors::combat::{self, current_slot};
+use crate::actors::combat;
 use crate::actors::host::{ActorLease, LeaseActors};
-use crate::actors::{layouts::part_view, sidehopper::initial_hop_phase};
+use crate::actors::sidehopper::initial_hop_phase;
+use crate::actors::slot_view::{SlotState, slot_view};
 use crate::enemy_projectiles::host::Effects as _;
 use crate::player_projectiles::content::table;
 use crate::ram::words;
-use crate::session_slot;
 
-part_view! {
-    Beetom: EnemyLayout40 {
-        words: [var_a, y_speed_index, function, function_timer, button_counter, previous_input, parameter_1, parameter_2],
-        pad1: [u8; 26696],
-        words: [
-            instruction_list, var_01, short_hop_y_speed_index, long_hop_y_speed_index, lunge_y_speed_index,
-            falling, samus_x_offset, samus_y_offset, attached, direction,
+/// A lease on a game whose slots are the Session's typed storage.
+pub trait Lease: ActorLease + SlotState {}
+impl<T: ActorLease + SlotState + ?Sized> Lease for T {}
+
+slot_view! {
+    /// A beetom's slot.
+    Beetom, BeetomEdit {
+        record: [
+            var_a = var_a, y_speed_index = var_b, function = var_c, function_timer = var_d,
+            button_counter = var_e, previous_input = var_f,
         ],
-        _: [u16; 22],
+        extended: [
+            instruction_list = var_00, short_hop_y_speed_index = var_02,
+            long_hop_y_speed_index = var_03, lunge_y_speed_index = var_04, falling = var_05,
+            samus_x_offset = var_06, samus_y_offset = var_07, attached = var_08,
+            direction = var_09,
+        ],
     }
 }
 
@@ -64,73 +72,89 @@ const BUTTON_PRESSES: u16 = 64;
 const MAX_FALL_SPEED: u16 = 64;
 const SIGN: u16 = 0x8000;
 
-fn facing(runtime: &impl ActorLease, beetom: i32) -> usize {
-    usize::from(session_slot!(runtime, Beetom[beetom].direction) != 0)
+fn facing(runtime: &impl Lease, beetom: u16) -> usize {
+    usize::from(Beetom::of(runtime, beetom).direction() != 0)
 }
-fn set_function(runtime: &mut impl ActorLease, beetom: i32, function: u16) {
-    session_slot!(runtime, Beetom[beetom].function = function);
+fn set_function(runtime: &mut impl Lease, beetom: u16, function: u16) {
+    *BeetomEdit::of(runtime, beetom).function() = function;
 }
 /// Set beetom instruction list ($A8:B762).
-fn set_instruction_list(runtime: &mut impl ActorLease, beetom: i32, list: u16) {
-    session_slot!(runtime, Beetom[beetom].instruction_list = list);
+fn set_instruction_list(runtime: &mut impl Lease, beetom: u16, list: u16) {
+    *BeetomEdit::of(runtime, beetom).instruction_list() = list;
     let key = combat::current(runtime);
     runtime.edit_actor(key, Native, |actor| actor.restart_animation(list));
 }
-fn moved_horizontally(runtime: &mut impl ActorLease, amount: i32) -> bool {
+fn moved_horizontally(runtime: &mut impl Lease, amount: i32) -> bool {
     let key = combat::current(runtime);
     api::move_horizontal(runtime, key, amount, api::SlopePolicy::Ignore) == Blocked
 }
-fn blocked_vertically(runtime: &mut impl ActorLease, amount: i32) -> bool {
+fn blocked_vertically(runtime: &mut impl Lease, amount: i32) -> bool {
     let key = combat::current(runtime);
     api::move_vertical(runtime, key, amount) == Blocked
 }
-fn samus_left(runtime: &impl ActorLease) -> bool {
+fn samus_left(runtime: &impl Lease) -> bool {
     api::player_delta(runtime, combat::current(runtime), Axis::X) & SIGN != 0
 }
-fn reverse(runtime: &mut impl ActorLease, beetom: i32) {
-    session_slot!(runtime, Beetom[beetom].direction, |direction| direction ^ 1);
+fn reverse(runtime: &mut impl Lease, beetom: u16) {
+    *BeetomEdit::of(runtime, beetom).direction() ^= 1;
     set_function(runtime, beetom, function::START_DROPPING);
 }
 /// Initialisation AI - beetom ($A8:B776).
-pub fn initialize(runtime: &mut impl ActorLease) {
-    let beetom = current_slot(runtime);
-    session_slot!(runtime, Beetom[beetom]; function_timer = 0, function = 0, falling = 0, attached = 0,
-        var_a = 0, button_counter = BUTTON_PRESSES);
+pub fn initialize(runtime: &mut impl Lease) {
+    let beetom = combat::current(runtime).byte_index();
+    {
+        let mut part = BeetomEdit::of(runtime, beetom);
+        *part.function_timer() = 0;
+        *part.function() = 0;
+        *part.falling() = 0;
+        *part.attached() = 0;
+        *part.var_a() = 0;
+        *part.button_counter() = BUTTON_PRESSES;
+    }
     let input = runtime.word(words::JOYPAD1_LASTKEYS);
-    session_slot!(runtime, Beetom[beetom].previous_input = input);
+    *BeetomEdit::of(runtime, beetom).previous_input() = input;
     runtime.write_slice_le(words::RANDOM_NUMBER, 0x17);
     for (hop, (height, step)) in HOPS.into_iter().enumerate() {
         let phase = initial_hop_phase(height, step, runtime.native_image());
         match hop {
-            0 => session_slot!(runtime, Beetom[beetom].short_hop_y_speed_index = phase),
-            1 => session_slot!(runtime, Beetom[beetom].long_hop_y_speed_index = phase),
-            _ => session_slot!(runtime, Beetom[beetom].lunge_y_speed_index = phase),
+            0 => *BeetomEdit::of(runtime, beetom).short_hop_y_speed_index() = phase,
+            1 => *BeetomEdit::of(runtime, beetom).long_hop_y_speed_index() = phase,
+            _ => *BeetomEdit::of(runtime, beetom).lunge_y_speed_index() = phase,
         }
     }
     let list = CRAWLING_LISTS[usize::from(!samus_left(runtime))];
     set_instruction_list(runtime, beetom, list);
     set_function(runtime, beetom, function::DECIDE_ACTION);
 }
-fn start_hop(runtime: &mut impl ActorLease, beetom: i32, long: bool, left: bool) {
+fn start_hop(runtime: &mut impl Lease, beetom: u16, long: bool, left: bool) {
     use function::*;
     let phase = match long {
-        false => session_slot!(runtime, Beetom[beetom].short_hop_y_speed_index),
-        true => session_slot!(runtime, Beetom[beetom].long_hop_y_speed_index),
+        false => Beetom::of(runtime, beetom).short_hop_y_speed_index(),
+        true => Beetom::of(runtime, beetom).long_hop_y_speed_index(),
     };
     let hops = [
         [SHORT_HOP_RIGHT, SHORT_HOP_LEFT],
         [LONG_HOP_RIGHT, LONG_HOP_LEFT],
     ];
     let function = hops[usize::from(long)][usize::from(left)];
-    session_slot!(runtime, Beetom[beetom]; y_speed_index = phase, function = function, falling = 0);
+    {
+        let mut part = BeetomEdit::of(runtime, beetom);
+        *part.y_speed_index() = phase;
+        *part.function() = function;
+        *part.falling() = 0;
+    }
     set_instruction_list(runtime, beetom, HOP_LISTS[usize::from(!left)]);
 }
 /// Beetom function - crawling left ($A8:B9C1) or right ($A8:BA24); turn at a wall or drop.
-fn crawl(runtime: &mut impl ActorLease, beetom: i32, left: bool) {
-    let timer = session_slot!(runtime, Beetom[beetom].function_timer).wrapping_sub(1);
-    session_slot!(runtime, Beetom[beetom].function_timer = timer);
+fn crawl(runtime: &mut impl Lease, beetom: u16, left: bool) {
+    let timer = Beetom::of(runtime, beetom).function_timer().wrapping_sub(1);
+    *BeetomEdit::of(runtime, beetom).function_timer() = timer;
     if timer & SIGN != 0 {
-        session_slot!(runtime, Beetom[beetom]; function_timer = 0x40, function = function::DECIDE_ACTION);
+        {
+            let mut part = BeetomEdit::of(runtime, beetom);
+            *part.function_timer() = 0x40;
+            *part.function() = function::DECIDE_ACTION;
+        }
         return;
     }
     let turn = [
@@ -139,25 +163,32 @@ fn crawl(runtime: &mut impl ActorLease, beetom: i32, left: bool) {
     ];
     let turn = turn[usize::from(left)];
     let ahead: u16 = if left { 0xfff8 } else { 8 };
-    let x = session_slot!(runtime, Beetom[beetom].base.x_pos);
-    session_slot!(runtime, Beetom[beetom].base.x_pos = x.wrapping_add(ahead));
+    let x = Beetom::of(runtime, beetom).actor().x.whole;
+    BeetomEdit::of(runtime, beetom).actor().x.whole = x.wrapping_add(ahead);
     if blocked_vertically(runtime, 1 << 16) {
-        session_slot!(runtime, Beetom[beetom].base.x_pos, |x| x
-            .wrapping_sub(ahead));
+        {
+            let mut part = BeetomEdit::of(runtime, beetom);
+            let x = part.actor().x.whole;
+            part.actor().x.whole = x.wrapping_sub(ahead);
+        }
         if moved_horizontally(runtime, if left { -0x4000 } else { 0x4000 }) {
             set_function(runtime, beetom, turn);
         }
     } else {
         set_function(runtime, beetom, turn);
-        session_slot!(runtime, Beetom[beetom].base.y_pos, |old| old
-            .wrapping_sub(1));
-        session_slot!(runtime, Beetom[beetom].base.x_pos, |x| x
-            .wrapping_sub(ahead));
+        {
+            let mut part = BeetomEdit::of(runtime, beetom);
+            let old = part.actor().y.whole;
+            part.actor().y.whole = old.wrapping_sub(1);
+        }
+        let mut part = BeetomEdit::of(runtime, beetom);
+        let x = part.actor().x.whole;
+        part.actor().x.whole = x.wrapping_sub(ahead);
     }
 }
 /// Beetom Y movement - rising or falling, by Y speed index `step`.
-fn move_vertically(runtime: &mut impl ActorLease, beetom: i32, falling: bool, step: u16) {
-    let phase = session_slot!(runtime, Beetom[beetom].y_speed_index);
+fn move_vertically(runtime: &mut impl Lease, beetom: u16, falling: bool, step: u16) {
+    let phase = Beetom::of(runtime, beetom).y_speed_index();
     let offset = 8 * usize::from(phase) + if falling { 0 } else { 4 };
     let amount = runtime.lease_enemy_speed32(offset) as i32;
     if blocked_vertically(runtime, amount) {
@@ -168,16 +199,18 @@ fn move_vertically(runtime: &mut impl ActorLease, beetom: i32, falling: bool, st
         true => phase.wrapping_add(step),
         false => phase.wrapping_sub(step),
     };
-    session_slot!(runtime, Beetom[beetom].y_speed_index = next);
+    *BeetomEdit::of(runtime, beetom).y_speed_index() = next;
     if falling && next.wrapping_sub(MAX_FALL_SPEED) & SIGN == 0 {
-        session_slot!(runtime, Beetom[beetom].y_speed_index = MAX_FALL_SPEED);
+        *BeetomEdit::of(runtime, beetom).y_speed_index() = MAX_FALL_SPEED;
     } else if !falling && next & SIGN != 0 {
-        session_slot!(runtime, Beetom[beetom]; y_speed_index = 0, falling = 1);
+        let mut part = BeetomEdit::of(runtime, beetom);
+        *part.y_speed_index() = 0;
+        *part.falling() = 1;
     }
 }
 /// Beetom function - short hop, long hop or lunge, left or right; drop at a wall.
-fn hop(runtime: &mut impl ActorLease, beetom: i32, long: bool, lunge: bool, left: bool) {
-    let falling = session_slot!(runtime, Beetom[beetom].falling) != 0;
+fn hop(runtime: &mut impl Lease, beetom: u16, long: bool, lunge: bool, left: bool) {
+    let falling = Beetom::of(runtime, beetom).falling() != 0;
     let step = match (lunge && falling, long || lunge) {
         (true, _) => 3,
         (false, true) => 5,
@@ -190,33 +223,37 @@ fn hop(runtime: &mut impl ActorLease, beetom: i32, long: bool, lunge: bool, left
     }
 }
 /// Beetom function - draining Samus - facing left ($A8:BCF8) or right ($A8:BD42).
-fn drain(runtime: &mut impl ActorLease, beetom: i32, push_left: bool) {
-    if session_slot!(runtime, Beetom[beetom].button_counter) != 0 {
+fn drain(runtime: &mut impl Lease, beetom: u16, push_left: bool) {
+    if Beetom::of(runtime, beetom).button_counter() != 0 {
         let x = runtime.word(words::SAMUS_X_POS);
-        session_slot!(runtime, Beetom[beetom].base.x_pos = x);
+        BeetomEdit::of(runtime, beetom).actor().x.whole = x;
         let y = runtime.word(words::SAMUS_Y_POS).wrapping_sub(4);
-        session_slot!(runtime, Beetom[beetom].base.y_pos = y);
+        BeetomEdit::of(runtime, beetom).actor().y.whole = y;
         // Update beetom button counter ($A8:BD8C).
         let input = runtime.word(words::JOYPAD1_LASTKEYS);
-        if input != session_slot!(runtime, Beetom[beetom].previous_input) {
-            let count = session_slot!(runtime, Beetom[beetom].button_counter).wrapping_sub(1);
-            session_slot!(runtime, Beetom[beetom]; previous_input = input, button_counter = count);
+        if input != Beetom::of(runtime, beetom).previous_input() {
+            let count = Beetom::of(runtime, beetom).button_counter().wrapping_sub(1);
+            let mut part = BeetomEdit::of(runtime, beetom);
+            *part.previous_input() = input;
+            *part.button_counter() = count;
         }
         return;
     }
     let push = if push_left { -16 << 16 } else { 16 << 16 };
     if moved_horizontally(runtime, push) {
-        session_slot!(runtime, Beetom[beetom].direction = u16::from(!push_left));
+        *BeetomEdit::of(runtime, beetom).direction() = u16::from(!push_left);
         moved_horizontally(runtime, -2 * push);
     }
-    session_slot!(runtime, Beetom[beetom]; attached = 0, function = function::START_BEING_FLUNG);
+    let mut part = BeetomEdit::of(runtime, beetom);
+    *part.attached() = 0;
+    *part.function() = function::START_BEING_FLUNG;
 }
 /// Main AI - beetom ($A8:B80D): run its function.
 pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
     use function::*;
     let runtime = &mut game.lease();
-    let beetom = current_slot(runtime);
-    let function = session_slot!(runtime, Beetom[beetom].function);
+    let beetom = combat::current(runtime).byte_index();
+    let function = Beetom::of(runtime, beetom).function();
     match function {
         DECIDE_ACTION => {
             let key = combat::current(runtime);
@@ -229,10 +266,12 @@ pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
             let random = runtime.word(words::RANDOM_NUMBER);
             let next = table(runtime, FAR_FUNCTIONS, (random & 7) as isize);
             set_function(runtime, beetom, next);
-            session_slot!(runtime, Beetom[beetom].direction = random & 1);
+            *BeetomEdit::of(runtime, beetom).direction() = random & 1;
         }
         START_IDLING => {
-            session_slot!(runtime, Beetom[beetom]; function_timer = 0x20, function = IDLING);
+            let mut part = BeetomEdit::of(runtime, beetom);
+            *part.function_timer() = 0x20;
+            *part.function() = IDLING;
         }
         START_CRAWLING_LEFT | START_CRAWLING_RIGHT => {
             let right = usize::from(function == START_CRAWLING_RIGHT);
@@ -248,13 +287,17 @@ pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
             start_hop(runtime, beetom, long, left);
         }
         DECIDE_ACTION_SAMUS_NEAR => {
-            let phase = session_slot!(runtime, Beetom[beetom].lunge_y_speed_index);
+            let phase = Beetom::of(runtime, beetom).lunge_y_speed_index();
             let right = !samus_left(runtime);
             let lunge = [LUNGE_LEFT, LUNGE_RIGHT][usize::from(right)];
-            session_slot!(runtime, Beetom[beetom]; y_speed_index = phase, function = lunge,
-                direction = u16::from(right));
+            {
+                let mut part = BeetomEdit::of(runtime, beetom);
+                *part.y_speed_index() = phase;
+                *part.function() = lunge;
+                *part.direction() = u16::from(right);
+            }
             set_instruction_list(runtime, beetom, HOP_LISTS[usize::from(right)]);
-            session_slot!(runtime, Beetom[beetom].falling = 0);
+            *BeetomEdit::of(runtime, beetom).falling() = 0;
         }
         START_DRAINING_FACING_LEFT | START_DRAINING_FACING_RIGHT => {
             let right = usize::from(function == START_DRAINING_FACING_RIGHT);
@@ -265,14 +308,18 @@ pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
         START_DROPPING => {
             let list = CRAWLING_LISTS[facing(runtime, beetom)];
             set_instruction_list(runtime, beetom, list);
-            session_slot!(runtime, Beetom[beetom]; falling = 0, function = DROPPING);
+            let mut part = BeetomEdit::of(runtime, beetom);
+            *part.falling() = 0;
+            *part.function() = DROPPING;
         }
         START_BEING_FLUNG => {
-            session_slot!(runtime, Beetom[beetom]; y_speed_index = 0, function = BEING_FLUNG);
+            let mut part = BeetomEdit::of(runtime, beetom);
+            *part.y_speed_index() = 0;
+            *part.function() = BEING_FLUNG;
         }
         IDLING => {
-            let timer = session_slot!(runtime, Beetom[beetom].function_timer).wrapping_sub(1);
-            session_slot!(runtime, Beetom[beetom].function_timer = timer);
+            let timer = Beetom::of(runtime, beetom).function_timer().wrapping_sub(1);
+            *BeetomEdit::of(runtime, beetom).function_timer() = timer;
             if timer & SIGN != 0 {
                 set_function(runtime, beetom, DECIDE_ACTION);
             }
@@ -310,18 +357,22 @@ pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
 pub fn touch<H: LeaseActors + ?Sized>(game: &mut H) {
     use function::*;
     let runtime = &mut game.lease();
-    let beetom = current_slot(runtime);
-    if session_slot!(runtime, Beetom[beetom].attached) == 0 {
+    let beetom = combat::current(runtime).byte_index();
+    if Beetom::of(runtime, beetom).attached() == 0 {
         let start = [START_DRAINING_FACING_LEFT, START_DRAINING_FACING_RIGHT];
         set_function(runtime, beetom, start[facing(runtime, beetom)]);
-        session_slot!(runtime, Beetom[beetom]; attached = 1, button_counter = BUTTON_PRESSES);
-        session_slot!(runtime, Beetom[beetom].base.layer = 2);
-        let x = session_slot!(runtime, Beetom[beetom].base.x_pos);
+        {
+            let mut part = BeetomEdit::of(runtime, beetom);
+            *part.attached() = 1;
+            *part.button_counter() = BUTTON_PRESSES;
+        }
+        BeetomEdit::of(runtime, beetom).actor().layer = 2;
+        let x = Beetom::of(runtime, beetom).actor().x.whole;
         let x = runtime.word(words::SAMUS_X_POS).wrapping_sub(x);
-        session_slot!(runtime, Beetom[beetom].samus_x_offset = x);
-        let y = session_slot!(runtime, Beetom[beetom].base.y_pos);
+        *BeetomEdit::of(runtime, beetom).samus_x_offset() = x;
+        let y = Beetom::of(runtime, beetom).actor().y.whole;
         let y = runtime.word(words::SAMUS_Y_POS).wrapping_sub(y);
-        session_slot!(runtime, Beetom[beetom].samus_y_offset = y);
+        *BeetomEdit::of(runtime, beetom).samus_y_offset() = y;
     }
     let hurt = runtime.word(words::SAMUS_CONTACT_DAMAGE_INDEX) != 0 || {
         if runtime.word(words::RANDOM_ENEMY_COUNTER) & 7 == 7
@@ -329,7 +380,7 @@ pub fn touch<H: LeaseActors + ?Sized>(game: &mut H) {
         {
             runtime.queue_sound(3, 6, 0x2d); // Health tick.
         }
-        session_slot!(runtime, Beetom[beetom].base.frame_counter) & 0x3f == 0x3f
+        Beetom::of(runtime, beetom).actor().frame & 0x3f == 0x3f
     };
     if hurt {
         combat::contact_reaction(runtime, DeathHandling::Finalize);
@@ -342,12 +393,12 @@ pub fn shot<H: LeaseActors + ?Sized>(game: &mut H) {
     use function::*;
     let runtime = &mut game.lease();
     combat::shot_reaction(runtime, ShotHandling::Finalize);
-    let beetom = current_slot(runtime);
-    let function = session_slot!(runtime, Beetom[beetom].function);
-    if session_slot!(runtime, Beetom[beetom].base.frozen_timer) != 0
+    let beetom = combat::current(runtime).byte_index();
+    let function = Beetom::of(runtime, beetom).function();
+    if Beetom::of(runtime, beetom).actor().frozen != 0
         && matches!(function, DRAINING_FACING_LEFT | DRAINING_FACING_RIGHT)
     {
         set_function(runtime, beetom, START_DROPPING);
     }
-    session_slot!(runtime, Beetom[beetom].attached = 0);
+    *BeetomEdit::of(runtime, beetom).attached() = 0;
 }
