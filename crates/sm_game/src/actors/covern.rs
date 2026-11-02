@@ -3,23 +3,29 @@
 //! (bank $A8:99AC-$A8:9F4F). Was `wrecked_ship_ghost`.
 use crate::actors::access::{AccessMode::Native, ActorKey as Key};
 use crate::actors::host::ActorLease;
-use crate::actors::layouts::part_view;
+use crate::actors::slot_view::{SlotState, slot_view};
 use crate::ram::{word_arrays as A, words as W};
-use crate::session_slot;
 
-part_view! {
-    /// Covern's view of its slot and extended RAM.
-    Covern: EnemyLayout40 {
-        words: [function, function_timer, palette_delay_index, var_d, var_e, var_f, parameter_1, parameter_2],
-        pad1: [u8; 26696],
-        words: [
-            hover_centre_y, hover_y_subvelocity, hover_y_velocity, var_03, var_04,
-            previous_x_direction, previous_samus_x, zone_left, zone_right, previous_y_direction,
-            previous_samus_y, zone_top, zone_bottom, lock_on_timer, directed_movement_timer,
+slot_view! {
+    /// Covern's extended words: its hover centre and velocity (whole over sub
+    /// words), Samus's previous X and Y movement directions and positions, the
+    /// lock-on zone, and the lock-on and directed movement timers. Its function,
+    /// function timer and palette delay index are its actor words ([`lane`]).
+    Covern, CovernEdit {
+        record: [],
+        extended: [
+            hover_centre_y = var_00, hover_y_subvelocity = var_01, hover_y_velocity = var_02,
+            previous_x_direction = var_05, previous_samus_x = var_06, zone_left = var_07,
+            zone_right = var_08, previous_y_direction = var_09, previous_samus_y = var_0a,
+            zone_top = var_0b, zone_bottom = var_0c, lock_on_timer = var_0d,
+            directed_movement_timer = var_0e,
         ],
-        _: [u16; 17],
     }
 }
+
+/// A lease the Coverns run on: its slots are the Session's.
+pub trait Lease: ActorLease + SlotState {}
+impl<T: ActorLease + SlotState + ?Sized> Lease for T {}
 
 /// The Covern's actor words, by `variables` lane.
 mod lane {
@@ -82,10 +88,10 @@ const MATERIALISED_KEEP: u16 = 0xfaff;
 const SAMUS_X_INDEXED: usize = 0xaf6;
 const SAMUS_Y_INDEXED: usize = 0xafa;
 
-fn selected(runtime: &impl ActorLease) -> Key {
+fn selected(runtime: &impl Lease) -> Key {
     Key::from_legacy(runtime.word(W::CUR_ENEMY_INDEX))
 }
-fn palette_start(runtime: &impl ActorLease, key: Key) -> u16 {
+fn palette_start(runtime: &impl Lease, key: Key) -> u16 {
     runtime
         .resolve_actor(key, Native)
         .palette
@@ -93,15 +99,20 @@ fn palette_start(runtime: &impl ActorLease, key: Key) -> u16 {
         .wrapping_mul(16)
         .wrapping_add(256)
 }
-fn set_target(runtime: &mut impl ActorLease, key: Key, colours: impl IntoIterator<Item = u16>) {
+fn set_target(runtime: &mut impl Lease, key: Key, colours: impl IntoIterator<Item = u16>) {
     let mut at = palette_start(runtime, key);
     for colour in colours {
         runtime.write_slice_le(A::TARGET_PALETTES + usize::from(at), colour);
         at = at.wrapping_add(2);
     }
 }
+/// The Covern's 16.16 hover velocity.
+fn hover_velocity(runtime: &impl Lease, covern: u16) -> u32 {
+    let view = Covern::of(runtime, covern);
+    (u32::from(view.hover_y_velocity()) << 16) | u32::from(view.hover_y_subvelocity())
+}
 /// Initialisation AI - Covern ($A8:9AEE).
-pub fn initialize(runtime: &mut impl ActorLease) {
+pub fn initialize(runtime: &mut impl Lease) {
     let key = selected(runtime);
     runtime.edit_actor(key, Native, |actor| {
         actor.properties |= INITIAL_PROPERTIES;
@@ -115,7 +126,7 @@ pub fn initialize(runtime: &mut impl ActorLease) {
     set_target(runtime, key, [0; COLOURS + 1]);
 }
 /// Process Covern palette transition delay ($A8:9C31): flicker visible.
-fn process_palette_delay(runtime: &mut impl ActorLease, key: Key) {
+fn process_palette_delay(runtime: &mut impl Lease, key: Key) {
     runtime.edit_actor(key, Native, |actor| {
         let mut visible = actor.variables[lane::FUNCTION_TIMER] == 0;
         if !visible {
@@ -142,7 +153,7 @@ fn process_palette_delay(runtime: &mut impl ActorLease, key: Key) {
 }
 /// Advance Covern palette transition ($A8:9E88): step each colour channel one
 /// towards its target; the number of channels changed.
-fn advance_palette_transition(runtime: &mut impl ActorLease) -> u16 {
+fn advance_palette_transition(runtime: &mut impl Lease) -> u16 {
     if runtime.word(W::DOOR_TRANSITION_FLAG_ENEMIES) != 0 {
         return 0;
     }
@@ -172,7 +183,7 @@ fn advance_palette_transition(runtime: &mut impl ActorLease) -> u16 {
     changed
 }
 /// Covern function - materialising - fade to white ($A8:9B42).
-fn fade_to_white(runtime: &mut impl ActorLease, key: Key) {
+fn fade_to_white(runtime: &mut impl Lease, key: Key) {
     process_palette_delay(runtime, key);
     let key = selected(runtime);
     let mut at = palette_start(runtime, key);
@@ -194,7 +205,7 @@ fn fade_to_white(runtime: &mut impl ActorLease, key: Key) {
 }
 /// Covern function - materialising - fade from white ($A8:9BAD): once faded,
 /// materialise and set up the hover and the lock-on zone.
-fn fade_from_white(runtime: &mut impl ActorLease) {
+fn fade_from_white(runtime: &mut impl Lease) {
     let changed = advance_palette_transition(runtime);
     let key = selected(runtime);
     process_palette_delay(runtime, key);
@@ -202,58 +213,62 @@ fn fade_from_white(runtime: &mut impl ActorLease) {
     if runtime.resolve_actor(key, Native).variables[lane::FUNCTION_TIMER] | changed != 0 {
         return;
     }
-    let covern = i32::from(key.byte_index());
+    let covern = key.byte_index();
     let y = runtime.edit_actor(key, Native, |actor| {
         actor.properties &= MATERIALISED_KEEP;
         actor.variables[lane::FUNCTION] = function::MATERIALISED;
         actor.y.whole
     });
-    session_slot!(runtime, Covern[covern].hover_centre_y = y);
+    *CovernEdit::of(runtime, covern).hover_centre_y() = y;
     runtime.edit_actor(key, Native, |actor| {
         actor.variables[lane::FUNCTION_TIMER] = 1;
         actor.variables[lane::PALETTE_DELAY_INDEX] = 2;
     });
-    session_slot!(runtime, Covern[covern]; hover_y_subvelocity = 0,
-        hover_y_velocity = INITIAL_HOVER_VELOCITY);
+    {
+        let mut edit = CovernEdit::of(runtime, covern);
+        *edit.hover_y_subvelocity() = 0;
+        *edit.hover_y_velocity() = INITIAL_HOVER_VELOCITY;
+    }
     runtime.edit_actor(key, Native, |actor| {
         actor.variables[lane::FUNCTION_TIMER] = MATERIALISED_FRAMES
     });
-    session_slot!(
-        runtime,
-        Covern[covern].previous_x_direction = X_DIRECTION_STEP
-    );
+    *CovernEdit::of(runtime, covern).previous_x_direction() = X_DIRECTION_STEP;
     let x = runtime.player_x();
-    session_slot!(runtime, Covern[covern]; previous_samus_x = x, zone_left = x, zone_right = x);
-    session_slot!(
-        runtime,
-        Covern[covern].previous_y_direction = Y_DIRECTION_STEP
-    );
+    {
+        let mut edit = CovernEdit::of(runtime, covern);
+        *edit.previous_samus_x() = x;
+        *edit.zone_left() = x;
+        *edit.zone_right() = x;
+        *edit.previous_y_direction() = Y_DIRECTION_STEP;
+    }
     let y =
         runtime.lease_native_word(SAMUS_Y_INDEXED + usize::from(runtime.word(W::CUR_ENEMY_INDEX)));
-    session_slot!(runtime, Covern[covern]; previous_samus_y = y, zone_top = y, zone_bottom = y,
-        lock_on_timer = STATIONARY_FRAMES, directed_movement_timer = DIRECTED_MOVES);
+    let mut edit = CovernEdit::of(runtime, covern);
+    *edit.previous_samus_y() = y;
+    *edit.zone_top() = y;
+    *edit.zone_bottom() = y;
+    *edit.lock_on_timer() = STATIONARY_FRAMES;
+    *edit.directed_movement_timer() = DIRECTED_MOVES;
 }
 /// Covern function - materialised ($A8:9C8A): hover about the centre until
 /// the timer runs out, then dematerialise.
-fn materialised(runtime: &mut impl ActorLease, key: Key) {
-    let covern = i32::from(key.byte_index());
-    let speed = session_slot!(
-        runtime,
-        Covern[covern](hover_y_velocity, hover_y_subvelocity)
-    );
+fn materialised(runtime: &mut impl Lease, key: Key) {
+    let covern = key.byte_index();
+    let speed = hover_velocity(runtime, covern);
     runtime.edit_actor(key, Native, |actor| actor.y.advance(speed as i32));
     let above = (runtime.resolve_actor(key, Native).y.whole as i16)
-        .wrapping_sub(session_slot!(runtime, Covern[covern].hover_centre_y) as i16)
+        .wrapping_sub(Covern::of(runtime, covern).hover_centre_y() as i16)
         < 0;
-    let low = session_slot!(runtime, Covern[covern].hover_y_subvelocity);
-    let high = session_slot!(runtime, Covern[covern].hover_y_velocity);
-    let speed = ((u32::from(high) << 16) | u32::from(low)).wrapping_add(if above {
+    let speed = hover_velocity(runtime, covern).wrapping_add(if above {
         HOVER_ACCELERATION
     } else {
         HOVER_ACCELERATION.wrapping_neg()
     });
-    session_slot!(runtime, Covern[covern]; hover_y_subvelocity = speed as u16,
-        hover_y_velocity = (speed >> 16) as u16);
+    {
+        let mut edit = CovernEdit::of(runtime, covern);
+        *edit.hover_y_subvelocity() = speed as u16;
+        *edit.hover_y_velocity() = (speed >> 16) as u16;
+    }
     let timer = runtime.edit_actor(key, Native, |actor| {
         actor.variables[lane::FUNCTION_TIMER] =
             actor.variables[lane::FUNCTION_TIMER].wrapping_sub(1);
@@ -269,36 +284,34 @@ fn materialised(runtime: &mut impl ActorLease, key: Key) {
 }
 /// Whether Samus has stayed in the lock-on zone long enough, or moved one way
 /// long enough, for the Covern to materialise.
-fn ready_to_materialise(runtime: &mut impl ActorLease, key: Key) -> bool {
-    let covern = i32::from(key.byte_index());
+fn ready_to_materialise(runtime: &mut impl Lease, key: Key) -> bool {
+    let covern = key.byte_index();
     let outside = (runtime.player_x() as i16)
-        .wrapping_sub(session_slot!(runtime, Covern[covern].zone_left) as i16)
+        .wrapping_sub(Covern::of(runtime, covern).zone_left() as i16)
         < 0
         || (runtime.player_x() as i16)
-            .wrapping_sub(session_slot!(runtime, Covern[covern].zone_right) as i16)
+            .wrapping_sub(Covern::of(runtime, covern).zone_right() as i16)
             >= 0
         || {
             let y =
                 runtime.lease_native_word(SAMUS_Y_INDEXED + usize::from(key.byte_index())) as i16;
-            y.wrapping_sub(session_slot!(runtime, Covern[covern].zone_top) as i16) < 0
-                || y.wrapping_sub(session_slot!(runtime, Covern[covern].zone_bottom) as i16) >= 0
+            let zone = Covern::of(runtime, covern);
+            y.wrapping_sub(zone.zone_top() as i16) < 0
+                || y.wrapping_sub(zone.zone_bottom() as i16) >= 0
         };
+    let mut edit = CovernEdit::of(runtime, covern);
     if !outside {
-        let timer = session_slot!(runtime, Covern[covern].lock_on_timer).wrapping_sub(1);
-        session_slot!(runtime, Covern[covern].lock_on_timer = timer);
-        if timer == 0 {
-            session_slot!(
-                runtime,
-                Covern[covern].previous_x_direction = X_DIRECTION_STEP
-            );
-            session_slot!(
-                runtime,
-                Covern[covern].previous_y_direction = Y_DIRECTION_STEP
-            );
+        let timer = edit.lock_on_timer();
+        *timer = timer.wrapping_sub(1);
+        let finished = *timer == 0;
+        if finished {
+            *edit.previous_x_direction() = X_DIRECTION_STEP;
+            *edit.previous_y_direction() = Y_DIRECTION_STEP;
         }
-        return timer == 0;
+        return finished;
     }
-    session_slot!(runtime, Covern[covern].lock_on_timer = STATIONARY_FRAMES);
+    *edit.lock_on_timer() = STATIONARY_FRAMES;
+    drop(edit);
     // Only inspect vertical movement if the horizontal direction still matches.
     for vertical in [false, true] {
         let (position, step) = if vertical {
@@ -306,10 +319,11 @@ fn ready_to_materialise(runtime: &mut impl ActorLease, key: Key) -> bool {
         } else {
             (W::SAMUS_X_POS, X_DIRECTION_STEP)
         };
+        let view = Covern::of(runtime, covern);
         let previous = if vertical {
-            session_slot!(runtime, Covern[covern].previous_samus_y)
+            view.previous_samus_y()
         } else {
-            session_slot!(runtime, Covern[covern].previous_samus_x)
+            view.previous_samus_x()
         };
         let delta = (runtime.word(position) as i16).wrapping_sub(previous as i16);
         let value = if delta < 0 {
@@ -319,44 +333,42 @@ fn ready_to_materialise(runtime: &mut impl ActorLease, key: Key) -> bool {
         } else {
             2 * step
         };
+        let mut edit = CovernEdit::of(runtime, covern);
         let direction = if vertical {
-            session_slot!(runtime, Covern[covern].previous_y_direction)
+            edit.previous_y_direction()
         } else {
-            session_slot!(runtime, Covern[covern].previous_x_direction)
+            edit.previous_x_direction()
         };
-        if value != direction {
-            if vertical {
-                session_slot!(runtime, Covern[covern].previous_y_direction = value);
-            } else {
-                session_slot!(runtime, Covern[covern].previous_x_direction = value);
-            }
-            session_slot!(
-                runtime,
-                Covern[covern].directed_movement_timer = DIRECTED_MOVES
-            );
+        if value != *direction {
+            *direction = value;
+            *edit.directed_movement_timer() = DIRECTED_MOVES;
             return false;
         }
     }
-    let timer = session_slot!(runtime, Covern[covern].directed_movement_timer).wrapping_sub(1);
-    session_slot!(runtime, Covern[covern].directed_movement_timer = timer);
-    timer == 0
+    let mut edit = CovernEdit::of(runtime, covern);
+    let timer = edit.directed_movement_timer();
+    *timer = timer.wrapping_sub(1);
+    *timer == 0
 }
 /// Covern function - dematerialised - awake ($A8:9D36): follow Samus's zone
 /// and materialise near her when ready.
-fn awake(runtime: &mut impl ActorLease, key: Key) {
+fn awake(runtime: &mut impl Lease, key: Key) {
     crate::probe::hit("covern.awake");
-    let covern = i32::from(key.byte_index());
+    let covern = key.byte_index();
     if ready_to_materialise(runtime, key) {
         runtime.edit_actor(key, Native, |actor| {
             actor.variables[lane::FUNCTION] = function::FADE_TO_WHITE
         });
-        session_slot!(runtime, Covern[covern]; lock_on_timer = STATIONARY_FRAMES,
-            directed_movement_timer = DIRECTED_MOVES);
-        let index = usize::from(
-            session_slot!(runtime, Covern[covern].previous_y_direction)
-                .wrapping_add(session_slot!(runtime, Covern[covern].previous_x_direction))
-                >> 1,
-        );
+        let index = {
+            let mut edit = CovernEdit::of(runtime, covern);
+            *edit.lock_on_timer() = STATIONARY_FRAMES;
+            *edit.directed_movement_timer() = DIRECTED_MOVES;
+            usize::from(
+                edit.previous_y_direction()
+                    .wrapping_add(*edit.previous_x_direction())
+                    >> 1,
+            )
+        };
         let x = OFFSETS[index].wrapping_add(
             runtime.lease_native_word(SAMUS_X_INDEXED + usize::from(key.byte_index())),
         );
@@ -374,20 +386,21 @@ fn awake(runtime: &mut impl ActorLease, key: Key) {
             };
             let value = runtime.word(position);
             let next = runtime.word(position).wrapping_add(1);
+            let mut edit = CovernEdit::of(runtime, covern);
             if vertical {
-                session_slot!(runtime, Covern[covern]; previous_samus_y = value,
-                    zone_top = value.wrapping_sub(1));
-                session_slot!(runtime, Covern[covern].zone_bottom = next);
+                *edit.previous_samus_y() = value;
+                *edit.zone_top() = value.wrapping_sub(1);
+                *edit.zone_bottom() = next;
             } else {
-                session_slot!(runtime, Covern[covern]; previous_samus_x = value,
-                    zone_left = value.wrapping_sub(1));
-                session_slot!(runtime, Covern[covern].zone_right = next);
+                *edit.previous_samus_x() = value;
+                *edit.zone_left() = value.wrapping_sub(1);
+                *edit.zone_right() = next;
             }
         }
     }
 }
 /// Main AI - coven ($A8:9B3C): run its function. Was `advance`.
-pub fn main_ai(runtime: &mut impl ActorLease) {
+pub fn main_ai(runtime: &mut impl Lease) {
     crate::probe::hit("covern.main_ai");
     let key = selected(runtime);
     match runtime.resolve_actor(key, Native).variables[lane::FUNCTION] {
