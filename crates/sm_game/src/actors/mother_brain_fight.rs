@@ -862,7 +862,8 @@ pub trait Host:
     fn set_projectile_spawn_r22(&mut self, value: u16);
     /// A dud shot reaction, in one actor lease.
     fn create_dud(&mut self);
-    fn seal_wall(&mut self);
+    /// The wall seal's dust clouds and wall blocks.
+    fn spawn_wall_seal(&mut self);
     fn drain_health_by_rainbow_beam(&mut self);
     fn drain_ammo_by_rainbow_beam(&mut self);
     fn add_glass_hits(&mut self, slot: usize, amount: u16);
@@ -2449,7 +2450,7 @@ pub fn body_phase1(game: &mut impl Lease) {
             crate::probe::hit("mother-brain.form-1");
             game.foreign(|game| game.disable_minimap_for_boss());
             queue_music(music::SONG_1, game);
-            game.foreign(|game| game.seal_wall());
+            crate::mother_brain_visuals::seal_wall(game);
         }
     }
     samus_collision_detection(game);

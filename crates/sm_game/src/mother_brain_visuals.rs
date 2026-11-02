@@ -1,9 +1,9 @@
 //! Mother Brain encounter palettes, fades, wall sealing, body flicker and HDMA spawns.
 use crate::actors::boss_lease::BossState;
 use crate::actors::host::BossEffects;
-use crate::actors::layouts::EnemyBase;
-use crate::actors::mother_brain::{MotherBrainBody, MotherBrainBrain};
-use crate::actors::mother_brain_fight::Fade;
+use crate::actors::mother_brain::{BODY_INDEX, BRAIN_INDEX, Body, BodyEdit, Brain};
+use crate::actors::mother_brain_fight::{Fade, Lease};
+use crate::actors::slot_view::SlotState;
 use crate::constants::bank_86::ADDR_K_EPROJ_DUST_CLOUD_EXPLOSION;
 use crate::constants::enemy_properties::K_ENEMY_PROPS_INVISIBLE;
 use crate::display::hdma_spawn::HdmaObjectDefinition;
@@ -11,7 +11,6 @@ use crate::imported::{Imported, word};
 use crate::menus::host::Host;
 use crate::palette_copies::copy_rom_colors_to_palette;
 use crate::runtime_access::SessionRam;
-use crate::session_slot as slot_view;
 use sm_data::mother_brain::{
     BACK_LEG_PALETTES_ADDRESS, BODY_PALETTES_ADDRESS, HealthPalettes, PALETTES_BYTES,
     import_health_palettes,
@@ -45,16 +44,19 @@ pub fn import(image: &sm_data::cartridge::RomImage) -> ImportedTables {
     }
 }
 
-/// The palette and layer steps' host: a boss state's slot words, palette
+/// The palette and layer steps' host: a boss state's slot state, palette
 /// copies and cartridge, the projected RAM words, and the encounter's tables.
-pub trait PaletteHost: BossState + SessionRam {
+pub trait PaletteHost: BossState + SessionRam + SlotState {
     fn mother_brain_visuals(&self) -> &ImportedTables;
 }
 
-/// The wall seal's host besides: the menus host's spawns and the boss effects'
-/// spawn point.
-pub trait VisualsHost: PaletteHost + Host + BossEffects {}
-impl<T: PaletteHost + Host + BossEffects + ?Sized> VisualsHost for T {}
+/// The wall seal's spawns' host: the menus host's spawns and the boss
+/// effects' spawn point.
+pub trait VisualsHost: Host + BossEffects {}
+impl<T: Host + BossEffects + ?Sized> VisualsHost for T {}
+
+/// $A9:881D: Mother Brain body function - fake death - descent - initial pause.
+const FAKE_DEATH_DESCENT_INITIAL_PAUSE: u16 = 0x881d;
 
 /// Step fade `kind` to `frame`; returns 1 once its colour list ends.
 pub fn fade<H: PaletteHost + ?Sized>(kind: Fade, frame: u16, game: &mut H) -> u8 {
@@ -101,10 +103,10 @@ pub fn fade<H: PaletteHost + ?Sized>(kind: Fade, frame: u16, game: &mut H) -> u8
 
 /// Mother Brain's body and back-leg palettes for her current health band.
 pub fn update_health_palette<H: PaletteHost + ?Sized>(game: &mut H) {
-    if slot_view!(game, MotherBrainBody[0].corpse_state) < 2 {
+    if Body::of(game, BODY_INDEX).corpse_state() < 2 {
         return;
     }
-    let band = match slot_view!(game, MotherBrainBrain[0x40].base.health) {
+    let band = match Brain::of(game, BRAIN_INDEX).actor().health {
         9000.. => 0,
         5400.. => 1,
         1800.. => 2,
@@ -127,9 +129,15 @@ pub fn lights_off<H: PaletteHost + ?Sized>(game: &mut H) {
     }
 }
 
-/// Seal the wall behind Mother Brain: two dust clouds, two wall blocks, then
-/// her next function.
-pub fn seal_wall<H: VisualsHost + ?Sized>(game: &mut H) {
+/// Seal the wall behind Mother Brain: two dust clouds and two wall blocks on
+/// the game, then her next function.
+pub fn seal_wall(game: &mut impl Lease) {
+    game.foreign(crate::actors::mother_brain_fight::Host::spawn_wall_seal);
+    *BodyEdit::of(game, BODY_INDEX).function() = FAKE_DEATH_DESCENT_INITIAL_PAUSE;
+}
+
+/// The wall seal's two dust clouds and two wall blocks.
+pub fn spawn_wall_seal<H: VisualsHost + ?Sized>(game: &mut H) {
     for y in [72, 152] {
         game.set_projectile_spawn_point(248, y);
         crate::enemy_projectiles::lifecycle::spawn_room_leased(
@@ -141,21 +149,18 @@ pub fn seal_wall<H: VisualsHost + ?Sized>(game: &mut H) {
     for y in [4, 9] {
         crate::room_mechanisms::creation::spawn_hardcoded(0xf, y, 0xb673, game);
     }
-    slot_view!(game, MotherBrainBody[0].function = 0x881d);
 }
 
 /// Flicker Mother Brain's body layer and visibility on alternate frames.
 pub fn flicker_body<H: PaletteHost + ?Sized>(game: &mut H) {
     let invisible = K_ENEMY_PROPS_INVISIBLE as u16;
     let screen = game.word(MAIN_SCREEN);
-    if slot_view!(game, EnemyBase[0].frame_counter) & 1 != 0 {
+    if Body::of(game, BODY_INDEX).actor().frame & 1 != 0 {
         game.write_word_le(screen | 2, MAIN_SCREEN);
-        slot_view!(game, EnemyBase[0].properties, |properties| properties
-            & !invisible);
+        BodyEdit::of(game, BODY_INDEX).actor().properties &= !invisible;
     } else {
         game.write_word_le(screen & !2, MAIN_SCREEN);
-        slot_view!(game, EnemyBase[0].properties, |properties| properties
-            | invisible);
+        BodyEdit::of(game, BODY_INDEX).actor().properties |= invisible;
     }
 }
 

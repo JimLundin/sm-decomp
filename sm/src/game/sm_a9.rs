@@ -277,8 +277,8 @@ impl sm_game::actors::mother_brain_fight::Host for Game {
         ));
     }
 
-    fn seal_wall(&mut self) {
-        crate::game::mother_brain_visuals::seal_wall(self);
+    fn spawn_wall_seal(&mut self) {
+        crate::game::mother_brain_visuals::spawn_wall_seal(self);
     }
 
     fn drain_health_by_rainbow_beam(&mut self) {
