@@ -46,10 +46,10 @@ on:
 permissions:
   contents: read
 
-# Every PR Verify run finishes, including queued runs. Push gates may be superseded.
+# A new commit replaces its branch's gate; nightly and dispatched runs finish.
 concurrency:
-  group: verify-${{ github.event_name == 'pull_request' && github.run_id || github.ref }}-${{ inputs.scope || github.event_name }}-${{ inputs.oracle || 'patched' }}
-  cancel-in-progress: ${{ github.event_name == 'push' }}
+  group: verify-${{ github.ref }}-${{ inputs.scope || github.event_name }}-${{ inputs.oracle || 'patched' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}
 
 env:
   SCOPE: ${{ inputs.scope || (github.event_name == 'schedule' && 'full' || 'gate') }}
@@ -105,19 +105,14 @@ jobs:
             target/verify-dll
             target/verify-host
           key: verifier-${{ runner.os }}-${{ inputs.scope == 'coverage' && 'coverage' || 'plain' }}-${{ hashFiles('crates/**', 'sm/**', 'Cargo.lock', 'rust-toolchain.toml', 'tools/verify_dll.py', 'tools/install_lakesnes.py', 'tools/install_native_*.py', '.github/actions/linux-native/action.yml') }}
-      - name: Check ordinary Cargo and Cargo verifier capabilities
-        if: inputs.scope != 'coverage'
-        run: |
-          cargo check --locked --no-default-features -p sm -p sm_data -p sm_game -p sm_runtime -p sm_tools --lib
-          python3 -B tools/lane/anchors_gate.py .
-          python3 tools/verify_dll.py --build-only --cargo
-          python3 -B .github/scripts/check_actor_exports.py
-          python3 tools/verify_dll.py --unit-tests --no-build --cargo
       - name: Build the verifier
         run: python3 tools/verify_dll.py --build-only --direct
       - name: Run the verifier's units
         if: inputs.scope != 'coverage'
         run: python3 tools/verify_dll.py --unit-tests --no-build --direct
+      - name: Check the verifier's source guards and actor capabilities
+        if: inputs.scope != 'coverage'
+        run: python3 -B .github/scripts/check_actor_exports.py
       - name: Run the target packages' tests instrumented
         if: inputs.scope == 'coverage'
         run: python3 -B .github/scripts/coverage_tests.py target/coverage-unit

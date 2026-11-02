@@ -38,6 +38,15 @@ Session would retire the list.
 | `$84:8243`, `$84:EFD3` unpause item-GFX load | `pause-menu-tour` @1378, `boss-kraid-pause-400` @588, `-950` @1138, `-1030` @1218, `-1960` @2148, route `chain-0211` @368 | garbage transfers into empty item-GFX slots |
 | `$80:9AF3` broken mini-map init | `samus-scripted-intro` @8316, any% chain room 11 (`chain-any-0011-DF45`) @2115 | one frame of HUD mini-map tiles from scratch, while blanked |
 
+## Rows waiting to be re-cut
+
+`boss-bomb-torizo`, `samus-bomb-jump-vertical` and `wall-crawler-slope-step` start from
+saved checkpoints that their seed `100-input-phase:27` and inputs cannot rebuild. Forced
+to rebuild on main at `e692794`, each replays with 0 failing frames
+but misses its facts (`boss:bomb-torizo`, `samus.jump.bomb`, `room:92FD`). Any state layout
+change rejects those checkpoints, so the rows are `pending` until re-cut from a seed that
+reaches their behaviour. Their coverage is off until then.
+
 ## Oracle digest lock: scenarios kept on lockstep
 
 The engine-only gate (`verify.yml`) checks every seeded and boot corpus row

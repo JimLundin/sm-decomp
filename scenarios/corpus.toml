@@ -110,6 +110,7 @@ ticks = 2491
 facts = ["boss:bomb-torizo"]
 after_expectations = 120
 tags = ["required"]
+pending = "checkpoint cannot be rebuilt from its seed and inputs; re-cut from a seed that reaches this row (docs/LEGACY.md)"
 
 [[scenario]]
 id = "boss-spore-spawn"
@@ -614,6 +615,7 @@ start = "seed:c402c17601f3ac1b274a8c1914e306ed304371b8e65031975d5b67947591528c"
 prefix = 6762
 ticks = 800
 facts = ["area:crateria", "probe:samus.jump.bomb"]
+pending = "checkpoint cannot be rebuilt from its seed and inputs; re-cut from a seed that reaches this row (docs/LEGACY.md)"
 
 # Onscreen dust writes its last bound before the following Crocomire drop:
 # dust at step 3852, then the defeat's pickup drops at 3853.
@@ -784,6 +786,7 @@ start = "seed:c402c17601f3ac1b274a8c1914e306ed304371b8e65031975d5b67947591528c"
 prefix = 6762
 ticks = 8
 facts = ["area:crateria", "room:92FD"]
+pending = "checkpoint cannot be rebuilt from its seed and inputs; re-cut from a seed that reaches this row (docs/LEGACY.md)"
 
 # Original item words through frame666, then authored standing/select/run/release input.
 # Fixed2131 frames retain activation and the return to the normal pose after release.

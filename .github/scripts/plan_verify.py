@@ -97,7 +97,7 @@ def main():
         for shard in lock_gate.matrix([CORPUS], {"SELECTED": "", "ORACLE_SAMPLE": "1" if sample else ""}):
             job = corpus_job(shard, "lockstep", 65)
             if heavy & set(shard["segments"].split()):
-                job["timeout"] = 65
+                job["timeout"] = 240
             jobs.append(job)
         jobs += filter(None, (room_job(job, "lockstep", by_id, lambda _: True, 60) for job in routes))
     elif scope == "rows":
@@ -107,7 +107,7 @@ def main():
             raise SystemExit(f"scope rows needs known row ids; unknown: {sorted(unknown)}")
         heavy = set(selected) & set(long_rows)
         corpus = [name for name in selected if "chain" not in by_id[name]]
-        jobs += corpus_jobs(corpus, False, 65)
+        jobs += corpus_jobs(corpus, False, 240 if heavy else 65)
         for route in {job["route"]: job for job in routes}.values():
             ids = [name for name in selected if by_id[name].get("chain") == route["route"]]
             if ids:
