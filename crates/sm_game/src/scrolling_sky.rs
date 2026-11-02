@@ -37,7 +37,7 @@ fn build_vertical_bands<H: crate::menus::host::Host + ?Sized>(game: &mut H) -> u
     game.store_source_word(LiveOwner::LiquidSurface, 0, native_order(), 31);
     game.store_source_word(LiveOwner::LiquidSurface, 1, native_order(), 0);
     let mut row = 3u16;
-    let mut y = crate::camera::current(game).layer1[1].wrapping_add(32);
+    let mut y = crate::sequence_word!(game.LAYER1_Y_POS).wrapping_add(32);
     let mut band = 0usize;
     let mut inset = y & if y.wrapping_sub(1248) & 0x8000 != 0 {
         15
@@ -95,7 +95,7 @@ pub fn update_horizontal_scroll<H: crate::menus::host::Host + ?Sized>(
     hdma_index: usize,
     game: &mut H,
 ) {
-    let layer1_y = crate::camera::current(game).layer1[1];
+    let layer1_y = crate::sequence_word!(game.LAYER1_Y_POS);
     if (layer1_y as i32 - 1024i32) & 0x8000 != 0 {
         if (game.display_control_byte(DisplayField::NmiFrameByte) & 1) == 0 {
             {
@@ -166,7 +166,7 @@ fn append_upper_band<H: crate::menus::host::Host + ?Sized>(
     r22: u16,
     game: &mut H,
 ) -> u16 {
-    let layer1_y = crate::camera::current(game).layer1[1];
+    let layer1_y = crate::sequence_word!(game.LAYER1_Y_POS);
     let visible = 1216u16.wrapping_sub(layer1_y);
     if (1216i16).wrapping_sub(layer1_y as i16) < 0 || layer1_y == 1216 {
         return r18;
@@ -335,7 +335,7 @@ fn queue_tile_rows<H: crate::menus::host::Host + ?Sized>(address: u32, game: &mu
     if crate::sequence_word!(game.TIME_IS_FROZEN_FLAG) != 0 {
         write_sky_word(0, 0, game);
     } else {
-        let layer1_y = crate::camera::current(game).layer1[1];
+        let layer1_y = crate::sequence_word!(game.LAYER1_Y_POS);
         crate::menus::prelude::display_scroll!(game.Bg2V = layer1_y);
         // Four queue entries: two rows above the screen and two below it.
         let tail = game.queue_tail();
