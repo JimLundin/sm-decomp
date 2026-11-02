@@ -6,11 +6,11 @@
 use crate::actors::boss_lease::BossLease;
 use crate::actors::host::BossEffects;
 pub use crate::actors::host::abs16;
-use crate::actors::layouts::{EnemyBase, same_words};
+use crate::actors::slot_view::{SlotState, slot_view};
 
 /// A lease on a game with Draygon's effects.
-pub trait Lease: BossLease<Game: Host> {}
-impl<T: BossLease<Game: Host> + ?Sized> Lease for T {}
+pub trait Lease: BossLease<Game: Host> + SlotState {}
+impl<T: BossLease<Game: Host> + SlotState + ?Sized> Lease for T {}
 
 pub trait Host: BossEffects + BossLease<Game = Self> {
     fn draygon_spawn_trails(&mut self);
@@ -25,73 +25,53 @@ pub trait Host: BossEffects + BossLease<Game = Self> {
     fn scatter_draygon_drop(&mut self, area: u16);
 }
 
-/// A Draygon part's view of its slot; the named words are the body's.
-#[derive(Clone, Copy)]
-#[repr(C)]
-pub struct Draygon {
-    pub base: EnemyBase,
-    pub function: u16,
-    /// The function timer, which the swoop uses as its Y position index.
-    pub function_timer: u16,
-    /// The swoop's duration, times 4.
-    pub swoop_duration: u16,
-    pub x_speed: u16,
-    pub x_subspeed: u16,
-    pad_0fb2: [u8; 26702],
-    pub left_reset_x: u16,
-    pub reset_y: u16,
-    pub right_reset_x: u16,
-    pub goop_counter: u16,
-    pad_7808: [u16; 1],
-    pub spiral_x_radius: u16,
-    pub spiral_x: u16,
-    pub spiral_y: u16,
-    pub spiral_angle: u16,
-    pub spiral_x_subradius: u16,
-    pub spiral_y_subpixel: u16,
-    pub spiral_angle_delta: u16,
-    pub tail_whip_timer: u16,
-    pub goop_y_angle: u16,
-    pub health_palette: u16,
-    pub swoop_y_acceleration: u16,
-    pad_7820: [u8; 2016],
-    pub facing_right: u16,
-    pad_8002: [u16; 7],
-    /// The death drift's speeds, which nothing reads.
-    pub death_x_speed: u16,
-    pub death_x_subspeed: u16,
-    pub death_y_speed: u16,
-    pub death_y_subspeed: u16,
-    pad_8018: [u8; 2024],
-    /// Indexed by the turret's byte offset, as a slot.
-    pub turret_destroyed: u16,
-    pad_8802: [u16; 2],
-    pub death_angle: u16,
-    pad_8808: [u16; 1],
-    pub turret_5_destroyed: u16,
-    pad_880c: [u16; 24],
-    pub graphics_x_displacement: u16,
-    pub graphics_y_displacement: u16,
+slot_view! {
+    /// A Draygon part's slot; the named words are the body's: its function and
+    /// function timer (the swoop's Y position index), the swoop's duration
+    /// (times 4) and X speed, the reset positions, the goop counter and Y
+    /// angle, the grab's spiral, the tail whip timer, the health palette, the
+    /// swoop's Y acceleration, the facing, the death drift's speeds (which
+    /// nothing reads) and angle, the destroyed turrets and the graphics
+    /// displacement.
+    Draygon, DraygonEdit {
+        record: [
+            function = var_a, function_timer = var_b, swoop_duration = var_c, x_speed = var_d,
+            x_subspeed = var_e,
+        ],
+        extended: [
+            left_reset_x = var_00, reset_y = var_01, right_reset_x = var_02,
+            goop_counter = var_03, spiral_x_radius = var_05, spiral_x = var_06,
+            spiral_y = var_07, spiral_angle = var_08, spiral_x_subradius = var_09,
+            spiral_y_subpixel = var_0a, spiral_angle_delta = var_0b, tail_whip_timer = var_0c,
+            goop_y_angle = var_0d, health_palette = var_0e, swoop_y_acceleration = var_0f,
+            facing_right = var_20, death_x_speed = var_28, death_x_subspeed = var_29,
+            death_y_speed = var_2a, death_y_subspeed = var_2b, turret_2_destroyed = var_42,
+            death_angle = var_43, turret_4_destroyed = var_44, turret_5_destroyed = var_45,
+            graphics_x_displacement = var_5e, graphics_y_displacement = var_5f,
+        ],
+    }
 }
 
-same_words!(Draygon: EnemyLayout104 {
-    function = var_a, function_timer = var_b, swoop_duration = var_c, x_speed = var_d,
-    x_subspeed = var_e, left_reset_x = var_00, reset_y = var_01, right_reset_x = var_02,
-    goop_counter = var_03, spiral_x_radius = var_05, spiral_x = var_06, spiral_y = var_07,
-    spiral_angle = var_08, spiral_x_subradius = var_09, spiral_y_subpixel = var_0a,
-    spiral_angle_delta = var_0b, tail_whip_timer = var_0c, goop_y_angle = var_0d,
-    health_palette = var_0e, swoop_y_acceleration = var_0f, facing_right = var_20,
-    death_x_speed = var_28, death_x_subspeed = var_29, death_y_speed = var_2a,
-    death_y_subspeed = var_2b, turret_destroyed = var_40, death_angle = var_43,
-    turret_5_destroyed = var_45, graphics_x_displacement = var_5e,
-    graphics_y_displacement = var_5f,
-});
+impl Draygon<'_> {
+    /// Whether wall turret `index` (its byte offset, 4 to 10) is destroyed:
+    /// the body's word at `index` past `var_40`, so turret 3's is the death
+    /// angle.
+    pub fn turret_destroyed(&self, index: u16) -> u16 {
+        match index {
+            4 => self.turret_2_destroyed(),
+            6 => self.death_angle(),
+            8 => self.turret_4_destroyed(),
+            10 => self.turret_5_destroyed(),
+            _ => unreachable!("Draygon turret offset {index:#x}"),
+        }
+    }
+}
 
 /// The parts' slots.
-pub const BODY: i32 = 0;
-pub const EYE: i32 = 0x40;
-pub const TAIL: i32 = 0x80;
-pub const ARMS: i32 = 0xc0;
+pub const BODY: u16 = 0;
+pub const EYE: u16 = 0x40;
+pub const TAIL: u16 = 0x80;
+pub const ARMS: u16 = 0xc0;
 
 /// Bank $A5 Draygon body functions, stored in `function`.
 pub mod function {

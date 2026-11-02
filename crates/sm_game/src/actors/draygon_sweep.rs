@@ -1,15 +1,14 @@
 //! Draygon's swoops: the swoop Y positions, setups, descents, apexes and
 //! ascents, mirrored for each side (bank $A5:87F4-$A5:8B09).
 //! The native table remains authoritative and may alias other compatibility state.
-use crate::actors::boss_lease::BossState;
 use crate::actors::draygon_host::Lease;
 use crate::actors::host::BossEffects as _;
-use crate::actors::session_slots::session_slot;
+
 use crate::menus::prelude::{boss, owned};
 
 use crate::actors::draygon_flight::{body_bubble, fire_wall_turret, move_horizontally};
 use crate::actors::draygon_host::{
-    ARMS, BODY, Draygon, SIGN, abs16, function, instruction_list as list,
+    ARMS, BODY, Draygon, DraygonEdit, SIGN, abs16, function, instruction_list as list,
 };
 use crate::ram::word;
 
@@ -24,7 +23,7 @@ const ARMS_OUT_INDEX: u16 = 0x68;
 /// The right swoop ends at X 2A0h.
 const RIGHT_END_X: i32 = 0x2a0;
 
-fn write_y_position<S: BossState>(index: u16, value: u16, game: &mut S) {
+fn write_y_position<S: Lease>(index: u16, value: u16, game: &mut S) {
     let at = SWOOP_Y_POSITIONS + usize::from(index);
     let bytes = value.to_ne_bytes();
     game.set_slot_byte(at, bytes[0]);
@@ -35,9 +34,9 @@ fn write_y_position<S: BossState>(index: u16, value: u16, game: &mut S) {
 fn calculate_swoop_y_positions<L: Lease>(game: &mut L) {
     let (mut height, mut velocity, mut index) = (SWOOP_START_Y, 0u16, 0u16);
     loop {
-        velocity = velocity.wrapping_add(session_slot!(game, Draygon[BODY].swoop_y_acceleration));
+        velocity = velocity.wrapping_add(Draygon::of(game, BODY).swoop_y_acceleration());
         let next = height.wrapping_sub(u16::from(velocity.to_ne_bytes()[1]));
-        if (next as i16).wrapping_sub(session_slot!(game, Draygon[BODY].reset_y) as i16) < 0 {
+        if (next as i16).wrapping_sub(Draygon::of(game, BODY).reset_y() as i16) < 0 {
             break;
         }
         height = next;
@@ -47,14 +46,25 @@ fn calculate_swoop_y_positions<L: Lease>(game: &mut L) {
             game.foreign(|game| game.unreachable());
         }
     }
-    let distance =
-        abs16(session_slot!(game, Draygon[BODY].left_reset_x).wrapping_sub(game.player_x()));
+    let distance = abs16(
+        Draygon::of(game, BODY)
+            .left_reset_x()
+            .wrapping_sub(game.player_x()),
+    );
     let speed = (u32::from(distance) << 16)
         .checked_div(u32::from(index >> 2))
         .unwrap_or(0);
-    session_slot!(game, Draygon[BODY](x_speed, x_subspeed) = speed);
-    write_y_position(index, session_slot!(game, Draygon[BODY].base.y_pos), game);
-    session_slot!(game, Draygon[BODY]; function_timer = index, swoop_duration = index);
+    {
+        let mut draygon = DraygonEdit::of(game, BODY);
+        *draygon.x_subspeed() = speed as u16;
+        *draygon.x_speed() = (speed >> 16) as u16;
+    }
+    write_y_position(index, Draygon::of(game, BODY).actor().y.whole, game);
+    {
+        let mut draygon = DraygonEdit::of(game, BODY);
+        *draygon.function_timer() = index;
+        *draygon.swoop_duration() = index;
+    }
     // The swoop's speed, last Y position and index stay in $0E22..$0E26.
     word! {game; REMOVED_VAR_E22 = velocity; REMOVED_VAR_E24 = height; REMOVED_VAR_E26 = index;}
 }
@@ -67,54 +77,72 @@ pub fn swoop_setup<L: Lease>(right: bool, game: &mut L) {
     } else {
         // The duration is $0E26's quarter: the last swoop Y position index or
         // chase X subspeed stored there, not the swoop duration meant.
-        let distance =
-            abs16(session_slot!(game, Draygon[BODY].right_reset_x).wrapping_sub(game.player_x()));
+        let distance = abs16(
+            Draygon::of(game, BODY)
+                .right_reset_x()
+                .wrapping_sub(game.player_x()),
+        );
         let speed = (u32::from(distance) << 16)
             .checked_div(u32::from(word!(game.REMOVED_VAR_E26) >> 2))
             .unwrap_or(0);
-        session_slot!(game, Draygon[BODY](x_speed, x_subspeed) = speed);
-    }
-    session_slot!(
-        game,
-        Draygon[BODY].function = if right {
-            function::SWOOP_RIGHT_DESCENDING
-        } else {
-            function::SWOOP_LEFT_DESCENDING
+        {
+            let mut draygon = DraygonEdit::of(game, BODY);
+            *draygon.x_subspeed() = speed as u16;
+            *draygon.x_speed() = (speed >> 16) as u16;
         }
-    );
-    session_slot!(game, Draygon[BODY].base; current_instruction = if right { list::BODY_RIGHT_RESET } else { list::BODY_LEFT_RESET }, instruction_timer = 1);
-    session_slot!(game, Draygon[BODY].facing_right = u16::from(right));
+    }
+    *DraygonEdit::of(game, BODY).function() = if right {
+        function::SWOOP_RIGHT_DESCENDING
+    } else {
+        function::SWOOP_LEFT_DESCENDING
+    };
+    {
+        let mut draygon = DraygonEdit::of(game, BODY);
+        let actor = draygon.actor();
+        actor.instruction = if right {
+            list::BODY_RIGHT_RESET
+        } else {
+            list::BODY_LEFT_RESET
+        };
+        actor.instruction_delay = 1;
+    }
+    *DraygonEdit::of(game, BODY).facing_right() = u16::from(right);
     if !right {
-        let copied = session_slot!(game, Draygon[BODY].swoop_duration);
-        session_slot!(game, Draygon[BODY].function_timer = copied);
+        let copied = Draygon::of(game, BODY).swoop_duration();
+        *DraygonEdit::of(game, BODY).function_timer() = copied;
     }
 }
 /// Draygon body function - swoop right ($A5:8922) or left ($A5:8A50) - apex:
 /// set the X speed that reaches the far side in the swoop's duration. Was `turn`.
-pub fn swoop_apex<S: BossState>(right: bool, game: &mut S) {
+pub fn swoop_apex<S: Lease>(right: bool, game: &mut S) {
     fire_wall_turret(game);
-    let count = u32::from(session_slot!(game, Draygon[BODY].swoop_duration) >> 2);
-    let x = session_slot!(game, Draygon[BODY].base.x_pos) as i32;
+    let count = u32::from(Draygon::of(game, BODY).swoop_duration() >> 2);
+    let x = Draygon::of(game, BODY).actor().x.whole as i32;
     let distance = if right {
         RIGHT_END_X - x
     } else {
-        x - session_slot!(game, Draygon[BODY].left_reset_x) as i32
+        x - Draygon::of(game, BODY).left_reset_x() as i32
     };
     let speed = ((distance << 16) as u32).checked_div(count).unwrap_or(0);
     if right {
-        session_slot!(game, Draygon[BODY](x_speed, x_subspeed) = speed);
+        {
+            let mut draygon = DraygonEdit::of(game, BODY);
+            *draygon.x_subspeed() = speed as u16;
+            *draygon.x_speed() = (speed >> 16) as u16;
+        }
     } else {
         // The left apex writes high then low; other speed setters write low first.
-        session_slot!(game, Draygon[BODY]; x_speed = (speed >> 16) as u16, x_subspeed = speed as u16);
-    }
-    session_slot!(
-        game,
-        Draygon[BODY].function = if right {
-            function::SWOOP_RIGHT_ASCENDING
-        } else {
-            function::SWOOP_LEFT_ASCENDING
+        {
+            let mut draygon = DraygonEdit::of(game, BODY);
+            *draygon.x_speed() = (speed >> 16) as u16;
+            *draygon.x_subspeed() = speed as u16;
         }
-    );
+    }
+    *DraygonEdit::of(game, BODY).function() = if right {
+        function::SWOOP_RIGHT_ASCENDING
+    } else {
+        function::SWOOP_LEFT_ASCENDING
+    };
 }
 /// Draygon body function - swoop right or left - descending ($A5:88B1,
 /// $A5:8A00) or, with `ascending`, ascending ($A5:8951, $A5:8A90): follow the
@@ -124,7 +152,7 @@ pub fn swoop<L: Lease>(right: bool, ascending: bool, game: &mut L) {
     if !right || !ascending {
         body_bubble(turret, game);
     }
-    let index = session_slot!(game, Draygon[BODY].function_timer);
+    let index = Draygon::of(game, BODY).function_timer();
     if index == ARMS_OUT_INDEX {
         let instruction = match (right, ascending) {
             (true, false) => list::ARMS_RIGHT_NEAR_SWOOP_APEX,
@@ -132,54 +160,55 @@ pub fn swoop<L: Lease>(right: bool, ascending: bool, game: &mut L) {
             (false, false) => list::ARMS_LEFT_NEAR_SWOOP_APEX,
             (false, true) => list::ARMS_LEFT_IDLE,
         };
-        session_slot!(game, Draygon[ARMS].base; current_instruction = instruction, instruction_timer = 1);
+        {
+            let mut draygon = DraygonEdit::of(game, ARMS);
+            let actor = draygon.actor();
+            actor.instruction = instruction;
+            actor.instruction_delay = 1;
+        }
     }
     let at = SWOOP_Y_POSITIONS + usize::from(index);
     let height = u16::from_ne_bytes([game.slot_byte(at), game.slot_byte(at + 1)]);
-    session_slot!(
-        game,
-        Draygon[game.current_enemy() as i32].base.y_pos = height
-    );
+    let k = game.current_enemy();
+    DraygonEdit::of(game, k).actor().y.whole = height;
     // A broad selected slot can alias the body's index: reread after its Y store.
-    let index = session_slot!(game, Draygon[BODY].function_timer);
+    let index = Draygon::of(game, BODY).function_timer();
     let next = if ascending {
         index.wrapping_add(SWOOP_STEP)
     } else {
         index.wrapping_sub(SWOOP_STEP)
     };
-    session_slot!(game, Draygon[BODY].function_timer = next);
+    *DraygonEdit::of(game, BODY).function_timer() = next;
     if !ascending {
         if next == 0 {
-            session_slot!(
-                game,
-                Draygon[BODY].function = if right {
-                    function::SWOOP_RIGHT_APEX
-                } else {
-                    function::SWOOP_LEFT_APEX
-                }
-            );
+            *DraygonEdit::of(game, BODY).function() = if right {
+                function::SWOOP_RIGHT_APEX
+            } else {
+                function::SWOOP_LEFT_APEX
+            };
         } else {
             move_horizontally(right, game);
         }
-    } else if next != session_slot!(game, Draygon[BODY].swoop_duration) {
+    } else if next != Draygon::of(game, BODY).swoop_duration() {
         move_horizontally(right, game);
     } else if right {
-        session_slot!(game, Draygon[BODY].function_timer = 0);
-        session_slot!(
-            game,
-            Draygon[BODY].function = if boss!(game.Random) & 1 != 0 {
-                function::SWOOP_LEFT_SETUP
-            } else {
-                function::GOOP_LEFT_SETUP
-            }
-        );
+        *DraygonEdit::of(game, BODY).function_timer() = 0;
+        *DraygonEdit::of(game, BODY).function() = if boss!(game.Random) & 1 != 0 {
+            function::SWOOP_LEFT_SETUP
+        } else {
+            function::GOOP_LEFT_SETUP
+        };
     } else if boss!(game.Random) & 1 != 0 {
-        session_slot!(game, Draygon[BODY]; function = function::SWOOP_RIGHT_SETUP, function_timer = 0);
-        session_slot!(game, Draygon[BODY].base; x_pos = session_slot!(game, Draygon[BODY].left_reset_x),
-            y_pos = session_slot!(game, Draygon[BODY].reset_y));
+        {
+            let mut draygon = DraygonEdit::of(game, BODY);
+            *draygon.function() = function::SWOOP_RIGHT_SETUP;
+            *draygon.function_timer() = 0;
+        }
+        DraygonEdit::of(game, BODY).actor().x.whole = Draygon::of(game, BODY).left_reset_x();
+        DraygonEdit::of(game, BODY).actor().y.whole = Draygon::of(game, BODY).reset_y();
     } else {
-        session_slot!(game, Draygon[BODY].function = function::GOOP_RIGHT_SETUP);
-        let copied = session_slot!(game, Draygon[BODY].left_reset_x);
-        session_slot!(game, Draygon[BODY].base.x_pos = copied);
+        *DraygonEdit::of(game, BODY).function() = function::GOOP_RIGHT_SETUP;
+        let copied = Draygon::of(game, BODY).left_reset_x();
+        DraygonEdit::of(game, BODY).actor().x.whole = copied;
     }
 }
