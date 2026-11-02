@@ -4,23 +4,31 @@ use crate::actors::access::ActorKey;
 use crate::actors::api::{
     self, Axis, DeathHandling, MovementResult::Blocked, ShotHandling, SlopePolicy,
 };
-use crate::actors::combat::{self, current_slot};
+use crate::actors::combat;
 use crate::actors::host::{ActorLease, LeaseActors};
-use crate::actors::layouts::part_view;
+use crate::actors::slot_view::{SlotState, slot_view};
 use crate::actors::species::{PreInstructionHost, SpeciesHost, pre_instruction};
 use crate::enemy_script::EnemyScript;
 use crate::player_projectiles::content::table;
 use crate::ram::words;
-use crate::session_slot;
 use sm_data::enemy_speeds::SpeedTable::Linear;
 
-part_view! {
-    Oum: EnemyLayout40 {
-        words: [function, y_speed_index, attack_cooldown, direction, bounces, bounce_function, parameter_1, parameter_2],
-        pad1: [u8; 26696],
-        words: [new_list_index, list_index, animation_finished, attack_rotates, touching, samus_left, previous_x, var_07,
-            previous_y, var_09, var_0a, stop],
-        _: [u16; 20],
+/// A lease on a game whose slots are the Session's typed storage.
+pub trait Lease: ActorLease + SlotState {}
+impl<T: ActorLease + SlotState + ?Sized> Lease for T {}
+
+slot_view! {
+    /// An oum's slot.
+    Oum, OumEdit {
+        record: [
+            function = var_a, y_speed_index = var_b, attack_cooldown = var_c, direction = var_d,
+            bounces = var_e, bounce_function = var_f,
+        ],
+        extended: [
+            new_list_index = var_00, list_index = var_01, animation_finished = var_02,
+            attack_rotates = var_03, touching = var_04, samus_left = var_05, previous_x = var_06,
+            previous_y = var_08, var_0a = var_0a, stop = var_0b,
+        ],
     }
 }
 
@@ -35,101 +43,139 @@ const LISTS: u32 = 0xa2_cb77;
 const ATTACK_COOLDOWN: u16 = 0x80;
 const BOUNCES: u16 = 3;
 
-fn left(runtime: &impl ActorLease) -> bool {
+fn left(runtime: &impl Lease) -> bool {
     api::player_delta(runtime, combat::current(runtime), Axis::X) & 0x8000 != 0
 }
-fn near(runtime: &mut impl ActorLease, axis: Axis, distance: u16) -> bool {
+fn near(runtime: &mut impl Lease, axis: Axis, distance: u16) -> bool {
     let key = combat::current(runtime);
     api::player_within(runtime, key, axis, distance)
 }
 /// Set oum instruction list ($A2:CFDF), if its index changed.
-fn set_instruction_list(runtime: &mut impl ActorLease, oum: i32) {
-    let index = session_slot!(runtime, Oum[oum].new_list_index);
-    if index != session_slot!(runtime, Oum[oum].list_index) {
-        session_slot!(runtime, Oum[oum].list_index = index);
+fn set_instruction_list(runtime: &mut impl Lease, oum: u16) {
+    let index = Oum::of(runtime, oum).new_list_index();
+    if index != Oum::of(runtime, oum).list_index() {
+        *OumEdit::of(runtime, oum).list_index() = index;
         let list = table(runtime, LISTS, index as isize);
-        session_slot!(runtime, Oum[oum].base; current_instruction = list, instruction_timer = 1, timer = 0);
+        let mut part = OumEdit::of(runtime, oum);
+        part.actor().instruction = list;
+        part.actor().instruction_delay = 1;
+        part.actor().timer = 0;
     }
 }
 /// Initialisation AI - oum ($A2:CCD4).
-pub fn initialize(runtime: &mut impl ActorLease) {
-    let oum = current_slot(runtime);
-    session_slot!(runtime, Oum[oum]; y_speed_index = 0, direction = 0, new_list_index = 0, list_index = 0,
-        animation_finished = 0, attack_rotates = 0, var_0a = 0, bounces = BOUNCES, attack_cooldown = ATTACK_COOLDOWN);
-    session_slot!(runtime, Oum[oum].base.current_instruction = 0xca4b);
-    session_slot!(runtime, Oum[oum]; function = IDLE, bounce_function = FALLING);
+pub fn initialize(runtime: &mut impl Lease) {
+    let oum = combat::current(runtime).byte_index();
+    {
+        let mut part = OumEdit::of(runtime, oum);
+        *part.y_speed_index() = 0;
+        *part.direction() = 0;
+        *part.new_list_index() = 0;
+        *part.list_index() = 0;
+        *part.animation_finished() = 0;
+        *part.attack_rotates() = 0;
+        *part.var_0a() = 0;
+        *part.bounces() = BOUNCES;
+        *part.attack_cooldown() = ATTACK_COOLDOWN;
+    }
+    OumEdit::of(runtime, oum).actor().instruction = 0xca4b;
+    let mut part = OumEdit::of(runtime, oum);
+    *part.function() = IDLE;
+    *part.bounce_function() = FALLING;
 }
 /// Check if touching Samus and update previous position ($A2:CD23); the function.
-fn prepare(runtime: &mut impl ActorLease, oum: i32) -> u16 {
-    session_slot!(runtime, Oum[oum]; touching = 0, samus_left = 0);
+fn prepare(runtime: &mut impl Lease, oum: u16) -> u16 {
+    {
+        let mut part = OumEdit::of(runtime, oum);
+        *part.touching() = 0;
+        *part.samus_left() = 0;
+    }
     if near(runtime, Axis::Y, 0x20) && near(runtime, Axis::X, 0x18) {
-        session_slot!(runtime, Oum[oum].touching = 1);
+        *OumEdit::of(runtime, oum).touching() = 1;
         if left(runtime) {
-            session_slot!(runtime, Oum[oum].samus_left = 1);
+            *OumEdit::of(runtime, oum).samus_left() = 1;
         }
     }
-    let x = session_slot!(runtime, Oum[oum].base.x_pos);
-    let y = session_slot!(runtime, Oum[oum].base.y_pos);
-    session_slot!(runtime, Oum[oum]; previous_x = x, previous_y = y);
-    session_slot!(runtime, Oum[oum].function)
+    let x = Oum::of(runtime, oum).actor().x.whole;
+    let y = Oum::of(runtime, oum).actor().y.whole;
+    {
+        let mut part = OumEdit::of(runtime, oum);
+        *part.previous_x() = x;
+        *part.previous_y() = y;
+    }
+    Oum::of(runtime, oum).function()
 }
 /// Oum function - idle ($A2:CDE6) or rolling ($A2:CE2B), up to its bounce function; the
 /// bounce function still to run.
-fn begin_action(runtime: &mut impl ActorLease, oum: i32, rolling: bool) -> Option<u16> {
-    if session_slot!(runtime, Oum[oum].bounces) != 0 {
-        return Some(session_slot!(runtime, Oum[oum].bounce_function));
+fn begin_action(runtime: &mut impl Lease, oum: u16, rolling: bool) -> Option<u16> {
+    if Oum::of(runtime, oum).bounces() != 0 {
+        return Some(Oum::of(runtime, oum).bounce_function());
     }
     let key = combat::current(runtime);
     if rolling {
         if api::move_vertical(runtime, key, 1 << 16) != Blocked {
-            session_slot!(runtime, Oum[oum]; y_speed_index = 0, bounce_function = FALLING, bounces = BOUNCES);
+            let mut part = OumEdit::of(runtime, oum);
+            *part.y_speed_index() = 0;
+            *part.bounce_function() = FALLING;
+            *part.bounces() = BOUNCES;
         }
         return None;
     }
-    session_slot!(runtime, Oum[oum].new_list_index = 0);
+    *OumEdit::of(runtime, oum).new_list_index() = 0;
     if left(runtime) {
-        session_slot!(runtime, Oum[oum]; direction = 1, new_list_index = 1);
+        let mut part = OumEdit::of(runtime, oum);
+        *part.direction() = 1;
+        *part.new_list_index() = 1;
     }
     set_instruction_list(runtime, oum);
     if near(runtime, Axis::X, 0x18) {
-        session_slot!(runtime, Oum[oum].new_list_index, |index| index | 2);
+        *OumEdit::of(runtime, oum).new_list_index() |= 2;
         set_instruction_list(runtime, oum);
-        session_slot!(runtime, Oum[oum].function = ROLLING);
+        *OumEdit::of(runtime, oum).function() = ROLLING;
     }
     None
 }
-fn pushed(runtime: &impl ActorLease, oum: i32) -> bool {
-    session_slot!(runtime, Oum[oum].touching) != 0
-        && session_slot!(runtime, Oum[oum].direction) == session_slot!(runtime, Oum[oum].samus_left)
+fn pushed(runtime: &impl Lease, oum: u16) -> bool {
+    Oum::of(runtime, oum).touching() != 0
+        && Oum::of(runtime, oum).direction() == Oum::of(runtime, oum).samus_left()
 }
 /// Oum rolling, unless stopped: attack Samus near, or roll on, turning at a wall.
-fn roll(runtime: &mut impl ActorLease, oum: i32) {
+fn roll(runtime: &mut impl Lease, oum: u16) {
     crate::probe::hit("oum.roll");
-    if session_slot!(runtime, Oum[oum].stop) != 0 {
+    if Oum::of(runtime, oum).stop() != 0 {
         return;
     }
-    let cooldown = session_slot!(runtime, Oum[oum].attack_cooldown).wrapping_sub(1);
-    session_slot!(runtime, Oum[oum].attack_cooldown = cooldown);
+    let cooldown = Oum::of(runtime, oum).attack_cooldown().wrapping_sub(1);
+    *OumEdit::of(runtime, oum).attack_cooldown() = cooldown;
     let expired = cooldown & 0x8000 != 0;
     if expired {
-        session_slot!(runtime, Oum[oum].attack_cooldown = 0);
+        *OumEdit::of(runtime, oum).attack_cooldown() = 0;
     }
     if expired
         && near(runtime, Axis::X, 0x20)
-        && session_slot!(runtime, Oum[oum].attack_rotates) != 0
-        && session_slot!(runtime, Oum[oum].bounces) == 0
+        && Oum::of(runtime, oum).attack_rotates() != 0
+        && Oum::of(runtime, oum).bounces() == 0
     {
-        session_slot!(runtime, Oum[oum]; new_list_index = 0, direction = 0);
-        if left(runtime) {
-            session_slot!(runtime, Oum[oum]; new_list_index = 1, direction = 1);
+        {
+            let mut part = OumEdit::of(runtime, oum);
+            *part.new_list_index() = 0;
+            *part.direction() = 0;
         }
-        session_slot!(runtime, Oum[oum].attack_cooldown = ATTACK_COOLDOWN);
-        session_slot!(runtime, Oum[oum].new_list_index, |index| index & 1 | 4);
+        if left(runtime) {
+            let mut part = OumEdit::of(runtime, oum);
+            *part.new_list_index() = 1;
+            *part.direction() = 1;
+        }
+        *OumEdit::of(runtime, oum).attack_cooldown() = ATTACK_COOLDOWN;
+        {
+            let mut part = OumEdit::of(runtime, oum);
+            let index = *part.new_list_index();
+            *part.new_list_index() = (index & 1) | 4;
+        }
         set_instruction_list(runtime, oum);
-        session_slot!(runtime, Oum[oum].function = ATTACKING);
+        *OumEdit::of(runtime, oum).function() = ATTACKING;
         return;
     }
-    let left = session_slot!(runtime, Oum[oum].direction) != 0;
+    let left = Oum::of(runtime, oum).direction() != 0;
     let index = if left { 66 } else { 64 };
     let fraction = runtime.lease_enemy_speed(Linear, index + 1);
     let mut whole = runtime.lease_enemy_speed(Linear, index);
@@ -141,50 +187,56 @@ fn roll(runtime: &mut impl ActorLease, oum: i32) {
     let speed = ((u32::from(whole) << 16) | u32::from(fraction)) as i32;
     let blocked = api::move_horizontal(runtime, key, speed, SlopePolicy::Solid) == Blocked;
     if pushed(runtime, oum) {
-        let back = if session_slot!(runtime, Oum[oum].direction) != 0 {
+        let back = if Oum::of(runtime, oum).direction() != 0 {
             0x10
         } else {
             0xfff0
         };
-        session_slot!(runtime, Oum[oum].base.x_pos, |old| old.wrapping_add(back));
+        let mut part = OumEdit::of(runtime, oum);
+        let old = part.actor().x.whole;
+        part.actor().x.whole = old.wrapping_add(back);
     }
     if blocked {
-        session_slot!(runtime, Oum[oum].direction, |direction| direction ^ 1);
-        session_slot!(runtime, Oum[oum].new_list_index, |index| index ^ 4);
+        *OumEdit::of(runtime, oum).direction() ^= 1;
+        *OumEdit::of(runtime, oum).new_list_index() ^= 4;
         set_instruction_list(runtime, oum);
     }
 }
 /// Oum function - attacking ($A2:CF40): roll again once the attack's animation finishes.
-fn attack(runtime: &mut impl ActorLease, oum: i32) {
-    if session_slot!(runtime, Oum[oum].animation_finished) != 0 {
-        session_slot!(runtime, Oum[oum].animation_finished = 0);
-        session_slot!(runtime, Oum[oum].new_list_index, |old| old.wrapping_sub(2));
+fn attack(runtime: &mut impl Lease, oum: u16) {
+    if Oum::of(runtime, oum).animation_finished() != 0 {
+        *OumEdit::of(runtime, oum).animation_finished() = 0;
+        {
+            let mut part = OumEdit::of(runtime, oum);
+            let old = *part.new_list_index();
+            *part.new_list_index() = old.wrapping_sub(2);
+        }
         set_instruction_list(runtime, oum);
-        session_slot!(runtime, Oum[oum].function = ROLLING);
+        *OumEdit::of(runtime, oum).function() = ROLLING;
     }
 }
 /// Handle pushing Samus ($A2:CD35) and stop if player is pressing towards oum ($A2:CD77):
 /// carry her first, then resist.
-fn finish(runtime: &mut impl ActorLease, oum: i32) {
-    session_slot!(runtime, Oum[oum].stop = 0);
+fn finish(runtime: &mut impl Lease, oum: u16) {
+    *OumEdit::of(runtime, oum).stop() = 0;
     if api::touches_player_from_above(runtime, combat::current(runtime)) {
-        let y = session_slot!(runtime, Oum[oum].base.y_pos);
-        let moved = y.wrapping_sub(session_slot!(runtime, Oum[oum].previous_y));
+        let y = Oum::of(runtime, oum).actor().y.whole;
+        let moved = y.wrapping_sub(Oum::of(runtime, oum).previous_y());
         runtime.write_slice_le(words::EXTRA_SAMUS_Y_DISPLACEMENT, moved);
     }
-    if session_slot!(runtime, Oum[oum].touching) == 0 {
+    if Oum::of(runtime, oum).touching() == 0 {
         return;
     }
-    let x = session_slot!(runtime, Oum[oum].base.x_pos);
-    let moved = x.wrapping_sub(session_slot!(runtime, Oum[oum].previous_x)) as i16;
-    let side = session_slot!(runtime, Oum[oum].samus_left) != 0;
+    let x = Oum::of(runtime, oum).actor().x.whole;
+    let moved = x.wrapping_sub(Oum::of(runtime, oum).previous_x()) as i16;
+    let side = Oum::of(runtime, oum).samus_left() != 0;
     if (moved < 0) == side {
         let carried = runtime
             .word(words::EXTRA_SAMUS_X_DISPLACEMENT)
             .wrapping_add(moved as u16);
         runtime.write_slice_le(words::EXTRA_SAMUS_X_DISPLACEMENT, carried);
     }
-    if moved == 0 && (session_slot!(runtime, Oum[oum].direction) != 0) != side {
+    if moved == 0 && (Oum::of(runtime, oum).direction() != 0) != side {
         return;
     }
     let towards = if (moved == 0 && side) || moved < 0 {
@@ -193,9 +245,10 @@ fn finish(runtime: &mut impl ActorLease, oum: i32) {
         0x200
     }; // Right, left.
     if runtime.word(words::JOYPAD1_LASTKEYS) & towards != 0 {
-        let x = session_slot!(runtime, Oum[oum].previous_x);
-        session_slot!(runtime, Oum[oum]; stop = 1);
-        session_slot!(runtime, Oum[oum].base.x_pos = x);
+        let x = Oum::of(runtime, oum).previous_x();
+        let mut part = OumEdit::of(runtime, oum);
+        *part.stop() = 1;
+        part.actor().x.whole = x;
     }
 }
 /// Main AI - oum ($A2:CD13), each step one lease; the bounce function runs through the
@@ -203,7 +256,7 @@ fn finish(runtime: &mut impl ActorLease, oum: i32) {
 pub fn main_ai<H: LeaseActors + PreInstructionHost + SpeciesHost>(game: &mut H) {
     let (oum, function) = {
         let mut lease = game.lease();
-        let oum = current_slot(&lease);
+        let oum = combat::current(&lease).byte_index();
         (oum, prepare(&mut lease, oum))
     };
     match function {
@@ -218,46 +271,54 @@ pub fn main_ai<H: LeaseActors + PreInstructionHost + SpeciesHost>(game: &mut H) 
         }
         ATTACKING => {
             let mut lease = game.lease();
-            let oum = current_slot(&lease);
+            let oum = combat::current(&lease).byte_index();
             attack(&mut lease, oum);
         }
         _ => game.unknown_routine(),
     }
     let mut lease = game.lease();
-    let oum = current_slot(&lease);
+    let oum = combat::current(&lease).byte_index();
     finish(&mut lease, oum);
 }
 /// Oum bounce function - falling ($A2:CF66) or rising ($A2:CFA9), for enemy `k`.
 pub fn bounce<H: LeaseActors + ?Sized>(rising: bool, k: u16, game: &mut H) {
     let runtime = &mut game.lease();
-    let oum = i32::from(k);
+    let oum = k;
     let step = if rising { 0xfe80 } else { 0x180 };
-    let mut index = session_slot!(runtime, Oum[oum].y_speed_index).wrapping_add(step);
+    let mut index = Oum::of(runtime, oum).y_speed_index().wrapping_add(step);
     if !rising && index.wrapping_sub(0x4000) & 0x8000 == 0 {
         index = 0x4000;
     }
-    session_slot!(runtime, Oum[oum].y_speed_index = index);
+    *OumEdit::of(runtime, oum).y_speed_index() = index;
     if rising && (index as i16) < 0 {
-        session_slot!(runtime, Oum[oum]; y_speed_index = 0, bounce_function = FALLING);
+        {
+            let mut part = OumEdit::of(runtime, oum);
+            *part.y_speed_index() = 0;
+            *part.bounce_function() = FALLING;
+        }
         return;
     }
     let offset = 8 * usize::from(index >> 8) + if rising { 4 } else { 0 };
     let speed = runtime.lease_enemy_speed32(offset) as i32;
     let blocked = api::move_vertical(runtime, ActorKey::from_legacy(k), speed) == Blocked;
     if !rising && blocked {
-        let bounces = session_slot!(runtime, Oum[oum].bounces).wrapping_sub(1);
-        let next = (session_slot!(runtime, Oum[oum].y_speed_index) as i16).wrapping_sub(0x1000);
+        let bounces = Oum::of(runtime, oum).bounces().wrapping_sub(1);
+        let next = (Oum::of(runtime, oum).y_speed_index() as i16).wrapping_sub(0x1000);
         let bounces = if next < 0 { 0 } else { bounces };
-        session_slot!(runtime, Oum[oum]; bounces = bounces, y_speed_index = next as u16, bounce_function = RISING);
+        let mut part = OumEdit::of(runtime, oum);
+        *part.bounces() = bounces;
+        *part.y_speed_index() = next as u16;
+        *part.bounce_function() = RISING;
     }
 }
 /// Enemy touch - oum - hurts Samus ($A2:D388) or doesn't ($A2:D38C): push her aside 4 px.
-pub fn touch(hurts: bool, runtime: &mut impl ActorLease) {
+pub fn touch(hurts: bool, runtime: &mut impl Lease) {
     if hurts {
         combat::contact_reaction(runtime, DeathHandling::Finalize);
     }
     if !api::touches_player_from_above(runtime, combat::current(runtime)) {
-        let x = session_slot!(runtime, Oum[current_slot(runtime)].base.x_pos);
+        let oum = combat::current(runtime).byte_index();
+        let x = Oum::of(runtime, oum).actor().x.whole;
         let left = (runtime.word(words::SAMUS_X_POS).wrapping_sub(x) as i16) < 0;
         let push = if left { 0xfffc } else { 4 };
         let displacement = runtime
@@ -267,7 +328,7 @@ pub fn touch(hurts: bool, runtime: &mut impl ActorLease) {
     }
 }
 /// Enemy shot - oum ($A2:D3B4).
-pub fn shot(lease: &mut impl ActorLease) {
+pub fn shot(lease: &mut impl Lease) {
     combat::shot_reaction(lease, ShotHandling::Finalize);
     lease.queue_sound(2, 6, 0x57);
 }
@@ -275,11 +336,11 @@ pub fn shot(lease: &mut impl ActorLease) {
 /// flag = 1 ($A2:CCBE) or 0 ($A2:CCC9).
 pub fn instruction<H: LeaseActors + ?Sized>(ea: u32, j: EnemyScript, game: &mut H) -> EnemyScript {
     let runtime = &mut game.lease();
-    let oum = current_slot(runtime);
+    let oum = combat::current(runtime).byte_index();
     let rotates = u16::from(ea == 0xa2_ccbe);
     match ea {
-        0xa2_ccb3 => session_slot!(runtime, Oum[oum].animation_finished = 1),
-        _ => session_slot!(runtime, Oum[oum].attack_rotates = rotates),
+        0xa2_ccb3 => *OumEdit::of(runtime, oum).animation_finished() = 1,
+        _ => *OumEdit::of(runtime, oum).attack_rotates() = rotates,
     }
     j
 }
