@@ -1,11 +1,95 @@
 //! Mother Brain's two slots: the body in slot 0 and the brain in slot $40.
 //!
 //! Was `Enemy_MotherBrain` (`EnemyLayout72`) in the original decompilation.
-//! Each view names its slot words over the same RAM bytes, after the
-//! Mother Brain notes in the bank logs. The body's extra words are the
-//! fight-wide state at $7E:7800 and $7E:8000; the brain's are at $7E:7840 and
-//! $7E:8040. Unnamed words keep their layout names.
+//! Each view names its slot words after the Mother Brain notes in the bank
+//! logs. The body's extra words are the fight-wide state at $7E:7800 and
+//! $7E:8000; the brain's are at $7E:7840 and $7E:8040. Unnamed words keep
+//! their layout names.
+//!
+//! [`Body`] and [`Brain`] read them as the Session's typed slot state; the
+//! RAM-offset views `MotherBrainBody` and `MotherBrainBrain` remain for the
+//! code that still addresses them.
 use crate::actors::layouts::part_view;
+use crate::actors::slot_view::{SlotState, slot_view};
+use crate::session_access::SessionAccess;
+
+slot_view! {
+    /// The body's slot: the fight's phase and pose, its attacks, the room and
+    /// brain palettes, the brain's instruction list and the rainbow beam.
+    /// Fields as `MotherBrainBody`'s; the beam's right origin X is
+    /// [`beam_right_origin_x`].
+    Body, BodyEdit {
+        record: [
+            function = var_a, zebetite_palette_index = var_c, brain_palette_counter = var_d,
+            brain_palette_reload = var_e, function_timer = var_f, cooldown = parameter_1,
+            explosion_timer = parameter_2,
+        ],
+        extended: [
+            form = var_00, initial_brain_instructions = var_01, pose = var_02, hitboxes = var_04,
+            attacks_disabled = var_06, walk_counter = var_07, hdma_object = var_09,
+            neck_base_x = var_0a, neck_base_y = var_0b, neck_palette = var_0c,
+            brain_palette = var_0d, room_palette_list = var_0e, room_palette_timer = var_0f,
+            ring_volleys = var_13, baby_metroid_cry = var_14, beam_sounds_left = var_15,
+            beam_sound_playing = var_16, hand_beam_phase = var_17, attack_phase = var_18,
+            ring_target_angle = var_1a, delete_turrets = var_1d, rinkas = var_1e,
+            corpse_state = var_1f, brain_instruction_timer = var_20, brain_instructions = var_21,
+            sprite_tile_transfer = var_22, hand_beam_x_subpos = var_23, hand_beam_x = var_24,
+            hand_beam_y_subpos = var_25, hand_beam_y = var_26, hand_beam_x_speed = var_27,
+            hand_beam_y_speed = var_28, hand_beam_angle = var_29, beam_angle = var_31,
+            beam_width = var_33, grey_transition = var_37, fake_death_explosion_timer = var_38,
+            fake_death_explosion_index = var_39, beam_right_edge = var_3a,
+            beam_left_edge = var_3b, beam_left_origin_x = var_3c, beam_left_origin_y = var_3d,
+            beam_right_origin_y = var_3f,
+        ],
+    }
+}
+
+slot_view! {
+    /// The brain's slot: its shake, the painful walk, the baby Metroid,
+    /// palettes, drool and breath, the third phase's neck and walk, the neck's
+    /// joints and segments, and the corpse's VRAM transfers. Fields as
+    /// `MotherBrainBrain`'s.
+    Brain, BrainEdit {
+        record: [function = var_a, subfunction = var_e, subfunction_timer = var_f],
+        extended: [
+            shake_timer = var_00, beam_palette_index = var_01, unpause_hook = var_02,
+            bombs = var_05, painful_walk_stage = var_06, painful_walk_delay = var_07,
+            painful_walk_function = var_08, painful_walk_timer = var_09, baby_metroid = var_0a,
+            baby_metroid_released = var_0b, brain_palette_enabled = var_10,
+            health_palette_enabled = var_11, drool_enabled = var_12, drool_parameter = var_13,
+            breath_enabled = var_14, breath_active = var_15, samus_rainbow_function = var_16,
+            neck_function = var_18, neck_timer = var_19, walk_function = var_1a,
+            target_x = var_1b, crouch_timer = var_1c, samus_rainbow_counter = var_1d,
+            lower_angle = var_20, upper_angle = var_21, segment_1_x = var_22,
+            segment_1_y = var_23, segment_1_length = var_24, segment_2_x = var_25,
+            segment_2_y = var_26, segment_2_length = var_27, segment_3_x = var_28,
+            segment_3_y = var_29, segment_3_length = var_2a, segment_4_x = var_2b,
+            segment_4_y = var_2c, segment_4_length = var_2d, segment_5_x = var_2e,
+            segment_5_y = var_2f, segment_5_length = var_30, neck_moving = var_31,
+            lower_motion = var_32, upper_motion = var_33, neck_speed = var_34,
+            // $7E:8866: the corpse rotting's VRAM transfers (`Corpse`'s).
+            corpse_vram_transfers = var_53,
+        ],
+    }
+}
+
+/// $7E:803C: the body's rainbow beam right origin X. The Session keeps this
+/// word as Botwoon's death signal (`botwoon_death.tail_ready`), not in the
+/// extended words.
+pub fn beam_right_origin_x<H: SessionAccess + ?Sized>(host: &H) -> u16 {
+    host.session().botwoon_death.tail_ready
+}
+
+/// Store the body's rainbow beam right origin X, refreshing the host's
+/// observations as the projected store did.
+pub fn set_beam_right_origin_x<H: SlotState + ?Sized>(host: &mut H, value: u16) {
+    host.session_mut().botwoon_death.tail_ready = value;
+    host.record_stored();
+}
+
+/// The body's and brain's enemy indices, as the slot views take them.
+pub const BODY_INDEX: u16 = 0;
+pub const BRAIN_INDEX: u16 = 0x40;
 
 part_view! {
     /// The body's view of slot 0: the fight's phase and pose, its attacks,

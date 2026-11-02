@@ -20,6 +20,7 @@ use crate::actors::mother_brain_effects::{
 };
 use crate::actors::mother_brain_neck::function as neck;
 use crate::actors::session_slots::{SlotAccess, session_slot};
+use crate::actors::slot_view::SlotState;
 use crate::escape_typewriter;
 use crate::runtime_access::SessionRam;
 // The game's traits, for the calls made on it through `foreign`.
@@ -834,7 +835,7 @@ pub trait OwnedWords {
 /// A lease on the game for one frame of an AI: the state steps run on it, and
 /// `foreign` runs the rest on the game it leases.
 pub trait Lease:
-    State + escape_typewriter::Host + crate::mother_brain_visuals::PaletteHost
+    State + escape_typewriter::Host + crate::mother_brain_visuals::PaletteHost + SlotState
 {
     type Game: Host + crate::hdma_objects::HdmaTable;
     fn foreign<T>(&mut self, action: impl FnOnce(&mut Self::Game) -> T) -> T;

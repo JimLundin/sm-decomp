@@ -232,15 +232,6 @@ impl Runtime<'_> {
     }
 }
 
-// The game is its own lease: the fight's lease code runs on it directly
-// outside a frame's Session lease.
-impl sm_game::actors::mother_brain_fight::Lease for Game {
-    type Game = Game;
-    fn foreign<T>(&mut self, action: impl FnOnce(&mut Game) -> T) -> T {
-        action(self)
-    }
-}
-
 // On the game the Session-owned words are their RAM words, read and stored
 // as word! does.
 impl sm_game::sprite_drawing::DisplayObjects for Game {}

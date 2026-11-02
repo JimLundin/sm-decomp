@@ -41,13 +41,13 @@ enum Direction {
 /// What the beam window reads beyond Mother Brain's state: the loaded
 /// cartridge's edge gradients, and the Session's HDMA objects.
 pub trait Host:
-    State + LoadedImage + crate::session_access::SessionAccess + crate::hdma_objects::HdmaTable
+    State + LoadedImage + crate::actors::slot_view::SlotState + crate::hdma_objects::HdmaTable
 {
 }
 impl<
     T: State
         + LoadedImage
-        + crate::session_access::SessionAccess
+        + crate::actors::slot_view::SlotState
         + crate::hdma_objects::HdmaTable
         + ?Sized,
 > Host for T
