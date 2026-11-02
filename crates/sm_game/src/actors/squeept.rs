@@ -3,11 +3,18 @@
 use crate::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 use crate::actors::geruta::set_instruction_list;
 use crate::actors::host::{ActorLease, BossEffects, LeaseActors};
+use crate::actors::slot_view::slot_view;
 use crate::player_projectiles::content::table;
-use crate::ram::words as W;
+use crate::session_access::SessionAccess as _;
 
-// $7E:7800 + enemy: the animation finished flag, then the cached instruction list.
-const FINISHED: usize = 0x7800;
+slot_view! {
+    /// The squeept's extended words: its animation finished flag, then the
+    /// instruction list `set_instruction_list` caches.
+    Squeept, SqueeptEdit {
+        record: [],
+        extended: [animation_finished = var_00, instruction_list = var_01],
+    }
+}
 // Instruction lists rising and flipping / falling; functions.
 const RISING_LIST: u16 = 0xbe3c;
 const JUMP: u16 = 0xbf1a;
@@ -22,9 +29,9 @@ pub enum Flight {
 /// Initialisation AI - enemy $D2BF (squeept) ($A2:BE99): the main part or its flames.
 pub fn initialize<H: LeaseActors>(game: &mut H) {
     let mut runtime = game.lease();
-    let raw = runtime.word(W::CUR_ENEMY_INDEX);
-    runtime.write_slice_native(FINISHED + usize::from(raw), 0);
-    runtime.write_slice_native(FINISHED + 2 + usize::from(raw), 0);
+    let raw = runtime.session().actors.controls.selected;
+    *SqueeptEdit::of(&mut runtime, raw).animation_finished() = 0;
+    *SqueeptEdit::of(&mut runtime, raw).instruction_list() = 0;
     runtime.edit_actor(Key::from_legacy(raw), Native, |actor| {
         if (actor.parameters[0] & 0x8000) != 0 {
             (actor.instruction, actor.pre_instruction) = (0xbe62, 0xbedc);
@@ -38,8 +45,8 @@ pub fn initialize<H: LeaseActors>(game: &mut H) {
 /// Instruction - set animation finished flag ($A2:BE8E).
 pub fn set_animation_finished<H: LeaseActors>(game: &mut H) {
     let mut runtime = game.lease();
-    let at = FINISHED + usize::from(runtime.word(W::CUR_ENEMY_INDEX));
-    runtime.write_slice_native(at, 1);
+    let k = runtime.session().actors.controls.selected;
+    *SqueeptEdit::of(&mut runtime, k).animation_finished() = 1;
 }
 
 /// Squeept function - flame ($A2:BEDC): shown while the main part's Y velocity is negative.
@@ -99,9 +106,8 @@ pub fn fly<H: LeaseActors>(k: u16, phase: Flight, game: &mut H) {
     if phase == Flight::Rising && speed >= 0xfc00 {
         set_instruction_list(&mut runtime, 0xbe42, 2);
         runtime.edit_actor(key, Native, |actor| actor.pre_instruction = 0xbf7c);
-    } else if phase == Flight::Flipping && runtime.lease_native_word(FINISHED + usize::from(k)) != 0
-    {
-        runtime.write_slice_native(FINISHED + usize::from(k), 0);
+    } else if phase == Flight::Flipping && Squeept::of(&runtime, k).animation_finished() != 0 {
+        *SqueeptEdit::of(&mut runtime, k).animation_finished() = 0;
         runtime.edit_actor(key, Native, |actor| actor.pre_instruction = 0xbfbc);
     }
 }
