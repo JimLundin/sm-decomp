@@ -4,6 +4,7 @@ use crate::actors::access::{AccessMode::Native, ActorAccess as _, ActorKey as Ke
 use crate::actors::api::{DeathHandling, DeathKind, ShotHandling, angle_from_delta};
 use crate::actors::combat;
 use crate::actors::host::{ActorLease, ActorRuntime as _, BossEffects as _, LeaseActors};
+use crate::actors::slot_view::{SlotState, slot_view};
 use crate::actors::{population, scheduling};
 use crate::enemy_projectiles::shared_pre::{x_velocity_at_angle, y_velocity_at_angle};
 use crate::enemy_script::EnemyScript;
@@ -22,9 +23,29 @@ const INVISIBLE: u16 = 0x100;
 const INTANGIBLE: u16 = 0x400;
 const OFF_SCREEN: u16 = 0x800;
 const DELETE: u16 = 0x200;
-/// $7E:783A: Mother Brain's room rinkas finished; $7E:783C: the rinka counter.
-const FINISHED: usize = 0x783a;
-const COUNTER: usize = 0x783c;
+/// A lease the rinkas run on: their slots are the Session's.
+pub trait Lease: ActorLease + SlotState {}
+impl<T: ActorLease + SlotState + ?Sized> Lease for T {}
+
+slot_view! {
+    /// The rinkas' shared words, in the first enemy slot's extended words: Mother
+    /// Brain's room rinkas finished ($7E:783A), and the rinka counter ($7E:783C).
+    Rinkas, RinkasEdit {
+        record: [],
+        extended: [finished = var_1d, counter = var_1e],
+    }
+}
+/// The enemy slot that holds [`Rinkas`].
+const SHARED: u16 = 0;
+fn finished(runtime: &impl Lease) -> bool {
+    Rinkas::of(runtime, SHARED).finished() != 0
+}
+/// Store the rinka counter, then refresh the lease's observations, as the
+/// slice store did after each byte.
+fn set_counter(runtime: &mut impl Lease, count: u16) {
+    *RinkasEdit::of(runtime, SHARED).counter() = count;
+    runtime.record_stored();
+}
 /// $A2:B75B: Mother Brain's room spawn X, Y and availability index, 11 rows; $7E:87FE:
 /// the spawn point availability words; $7E:7020: each enemy's spawn position.
 const SPAWNS: u32 = 0xa2_b75b;
@@ -32,17 +53,17 @@ const SPAWN_ROWS: usize = 33;
 const AVAILABILITY: usize = 0x87fe;
 const SPAWN_POSITION: usize = 0x7020;
 
-fn spawn_word(runtime: &impl ActorLease, index: usize) -> u16 {
+fn spawn_word(runtime: &impl Lease, index: usize) -> u16 {
     table(runtime, SPAWNS, index as isize)
 }
-fn occupied(runtime: &impl ActorLease, id: u16) -> bool {
+fn occupied(runtime: &impl Lease, id: u16) -> bool {
     runtime.lease_native_word(AVAILABILITY + usize::from(id)) & 1 != 0
 }
-fn mother_brains(runtime: &impl ActorLease, key: Key) -> bool {
+fn mother_brains(runtime: &impl Lease, key: Key) -> bool {
     runtime.resolve_actor(key, Native).parameters[0] != 0
 }
 /// Check if position is on screen ($A2:B8FF), as the source does: the Y sign twice.
-fn outside_spawn_view(runtime: &impl ActorLease, x: u16, y: u16) -> bool {
+fn outside_spawn_view(runtime: &impl Lease, x: u16, y: u16) -> bool {
     let (left, top) = (
         runtime.word(words::LAYER1_X_POS),
         runtime.word(words::LAYER1_Y_POS),
@@ -55,7 +76,7 @@ fn outside_spawn_view(runtime: &impl ActorLease, x: u16, y: u16) -> bool {
         || x.wrapping_sub(left).wrapping_sub(256) & 0x8000 == 0
 }
 /// Get availability index of enemy spawn position ($A2:B79D).
-fn saved_spawn(runtime: &impl ActorLease, index: u16) -> u16 {
+fn saved_spawn(runtime: &impl Lease, index: u16) -> u16 {
     let saved = SPAWN_POSITION + usize::from(index);
     for row in (0..SPAWN_ROWS).step_by(3) {
         if spawn_word(runtime, row) == runtime.lease_native_word(saved)
@@ -68,7 +89,7 @@ fn saved_spawn(runtime: &impl ActorLease, index: u16) -> u16 {
 }
 /// Spawn Mother Brain's room rinka ($A2:B69B): its own point if on screen and free, else
 /// the first free on screen, else the first free.
-fn select_spawn(runtime: &mut impl ActorLease, index: u16) {
+fn select_spawn(runtime: &mut impl Lease, index: u16) {
     let key = Key::from_legacy(index);
     let saved = SPAWN_POSITION + usize::from(index);
     let (x, y) = (
@@ -109,7 +130,7 @@ fn select_spawn(runtime: &mut impl ActorLease, index: u16) {
     }
 }
 /// Reset rinka ($A2:B654): wait to fire, or go if Mother Brain's room is finished.
-fn reset(runtime: &mut impl ActorLease, key: Key) {
+fn reset(runtime: &mut impl Lease, key: Key) {
     runtime.edit_actor(key, Native, |actor| {
         actor.variables[0] = WAITING_TO_FIRE;
         actor.pre_instruction = 26;
@@ -117,7 +138,7 @@ fn reset(runtime: &mut impl ActorLease, key: Key) {
         actor.variables[2] = 0;
     });
     let mother_brains = mother_brains(runtime, key);
-    if mother_brains && runtime.lease_native_word(FINISHED) != 0 {
+    if mother_brains && finished(runtime) {
         runtime.edit_actor(key, Native, |actor| actor.properties |= DELETE);
     } else {
         // Instruction list - Mother Brain's room ($A2:BA0C) or not ($A2:B9E0).
@@ -126,7 +147,7 @@ fn reset(runtime: &mut impl ActorLease, key: Key) {
     }
 }
 /// Respawn rinka ($A2:B63E).
-fn respawn(runtime: &mut impl ActorLease, index: u16) {
+fn respawn(runtime: &mut impl Lease, index: u16) {
     let key = Key::from_legacy(index);
     if mother_brains(runtime, key) {
         select_spawn(runtime, index);
@@ -139,15 +160,15 @@ fn respawn(runtime: &mut impl ActorLease, index: u16) {
     reset(runtime, key);
 }
 /// Decrement rinka counter ($A2:B880), for a visible Mother Brain's room rinka.
-fn decrement_counter(runtime: &mut impl ActorLease, key: Key) {
+fn decrement_counter(runtime: &mut impl Lease, key: Key) {
     if mother_brains(runtime, key) && runtime.resolve_actor(key, Native).properties & INVISIBLE == 0
     {
-        let count = runtime.lease_native_word(COUNTER).wrapping_sub(1) as i16;
-        runtime.write_slice_native(COUNTER, count.max(0) as u16);
+        let count = Rinkas::of(runtime, SHARED).counter().wrapping_sub(1) as i16;
+        set_counter(runtime, count.max(0) as u16);
     }
 }
 /// Mark rinka spawn point available ($A2:B8BB).
-fn release_spawn(runtime: &mut impl ActorLease, key: Key) {
+fn release_spawn(runtime: &mut impl Lease, key: Key) {
     if mother_brains(runtime, key) {
         let id = runtime.resolve_actor(key, Native).variables[3];
         if id != 0 {
@@ -157,7 +178,7 @@ fn release_spawn(runtime: &mut impl ActorLease, key: Key) {
     }
 }
 /// Check if rinka is on screen ($A2:B8D3), with 10h px of margin.
-fn off_screen(runtime: &impl ActorLease, key: Key) -> bool {
+fn off_screen(runtime: &impl Lease, key: Key) -> bool {
     let actor = runtime.resolve_actor(key, Native);
     let (x, y) = (actor.x.whole, actor.y.whole);
     let top = y
@@ -175,12 +196,12 @@ fn off_screen(runtime: &impl ActorLease, key: Key) -> bool {
     !on_screen
 }
 /// Delete and respawn rinka ($A2:B865).
-fn recycle(runtime: &mut impl ActorLease, index: u16) {
+fn recycle(runtime: &mut impl Lease, index: u16) {
     let key = Key::from_legacy(index);
     let mut delete = false;
     if mother_brains(runtime, key) {
         release_spawn(runtime, key);
-        delete = runtime.lease_native_word(FINISHED) != 0;
+        delete = finished(runtime);
     }
     decrement_counter(runtime, key);
     if delete {
@@ -200,12 +221,12 @@ fn advance_native(position: &mut Position, velocity: u16) {
         .wrapping_add_signed(i16::from((velocity >> 8) as i8))
         .wrapping_add(carry >> 8);
 }
-fn die(runtime: &mut impl ActorLease) {
+fn die(runtime: &mut impl Lease) {
     combat::die(runtime, DeathKind::Rinka { animation: 0 });
 }
 /// Rinka shared contact reaction ($A2:B960): a dead Mother Brain's room rinka bursts and
 /// waits to respawn; any other dies.
-fn react_to_death(runtime: &mut impl ActorLease, index: u16) {
+fn react_to_death(runtime: &mut impl Lease, index: u16) {
     let key = Key::from_legacy(index);
     if runtime.resolve_actor(key, Native).health != 0 {
         return;
@@ -232,7 +253,7 @@ fn react_to_death(runtime: &mut impl ActorLease, index: u16) {
     });
 }
 /// Initialisation AI - rinka ($A2:B602).
-pub fn initialize(runtime: &mut impl ActorLease) {
+pub fn initialize(runtime: &mut impl Lease) {
     let key = combat::current(runtime);
     let properties = if mother_brains(runtime, key) {
         select_spawn(runtime, key.byte_index());
@@ -250,7 +271,7 @@ pub fn initialize(runtime: &mut impl ActorLease) {
 pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) -> bool {
     let runtime = &mut game.lease();
     let key = combat::current(runtime);
-    if mother_brains(runtime, key) && runtime.lease_native_word(FINISHED) != 0 {
+    if mother_brains(runtime, key) && finished(runtime) {
         decrement_counter(runtime, key);
         release_spawn(runtime, key);
         die(runtime);
@@ -305,20 +326,20 @@ pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) -> bool {
     true
 }
 /// Frozen AI - rinka ($A2:B929): thaw off screen; go once Mother Brain's room is finished.
-pub fn frozen(runtime: &mut impl ActorLease) {
+pub fn frozen(runtime: &mut impl Lease) {
     let key = combat::current(runtime);
     if off_screen(runtime, key) {
         runtime.edit_actor(key, Native, |actor| actor.frozen = 0);
     }
     scheduling::update_frozen_enemy(runtime);
-    if runtime.lease_native_word(FINISHED) != 0 {
+    if finished(runtime) {
         decrement_counter(runtime, key);
         release_spawn(runtime, key);
         die(runtime);
     }
 }
 /// Power bomb reaction - rinka ($A2:B953), only when visible.
-pub fn power_bomb(runtime: &mut impl ActorLease) {
+pub fn power_bomb(runtime: &mut impl Lease) {
     let key = combat::current(runtime);
     if runtime.resolve_actor(key, Native).properties & INVISIBLE == 0 {
         combat::power_bomb_reaction(runtime, DeathHandling::LeavePending);
@@ -326,7 +347,7 @@ pub fn power_bomb(runtime: &mut impl ActorLease) {
     }
 }
 /// Enemy touch ($A2:B947) or shot ($A2:B94D) - rinka.
-pub fn react(shot: bool, runtime: &mut impl ActorLease) {
+pub fn react(shot: bool, runtime: &mut impl Lease) {
     if shot {
         combat::shot_reaction(runtime, ShotHandling::ReactionOnly);
     } else {
@@ -337,15 +358,15 @@ pub fn react(shot: bool, runtime: &mut impl ActorLease) {
 }
 /// Instructions - set enemy as intangible and invisible ($A2:B9B3), also active off
 /// screen ($A2:B9BD), or fire rinka ($A2:B9C7), for enemy `k`.
-pub fn instruction(ea: u32, k: u16, j: EnemyScript, runtime: &mut impl ActorLease) -> EnemyScript {
+pub fn instruction(ea: u32, k: u16, j: EnemyScript, runtime: &mut impl Lease) -> EnemyScript {
     let key = Key::from_legacy(k);
     if ea == 0xa2_b9c7 {
         runtime.edit_actor(key, Native, |actor| {
             actor.properties &= !(INTANGIBLE | INVISIBLE);
             actor.variables[0] = FIRE;
         });
-        let count = runtime.lease_native_word(COUNTER).wrapping_add(1);
-        runtime.write_slice_native(COUNTER, count);
+        let count = Rinkas::of(runtime, SHARED).counter().wrapping_add(1);
+        set_counter(runtime, count);
     } else {
         let off_screen = if ea == 0xa2_b9bd { OFF_SCREEN } else { 0 };
         runtime.edit_actor(key, Native, |actor| {
