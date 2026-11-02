@@ -97,9 +97,7 @@ pub fn init<L: Host + ?Sized>(game: &mut L) {
         session_slot!(game, Ridley[RIDLEY].base.layer = 5);
         session_slot!(game, Ridley[RIDLEY]; fight_mode = 0, movement_enabled = 1, min_y = 64, max_y = 416,
             min_x = 64, max_x = 224, facing = FACING_RIGHT, tail_damage = 120, );
-        {
-            game.copy_target_palette(0xa6, 0x140, ceres_data::NORFAIR_PALETTES, 0x20)
-        };
+        game.copy_target_palette(0xa6, 0x140, ceres_data::NORFAIR_PALETTES, 0x20);
         game.clear_initial_palettes(true);
     } else {
         session_slot!(game, Ridley[RIDLEY].base; x_pos = 186, y_pos = 169);
@@ -110,9 +108,7 @@ pub fn init<L: Host + ?Sized>(game: &mut L) {
         session_slot!(game, Ridley[RIDLEY]; x_velocity = 0, y_velocity = 0);
         session_slot!(game, Ridley[RIDLEY]; min_y = -32i32 as u16, max_y = 176, min_x = 40,
             max_x = 224);
-        {
-            game.copy_target_palette(0xa6, 0x140, ceres_data::CERES_PALETTES, 0x20)
-        };
+        game.copy_target_palette(0xa6, 0x140, ceres_data::CERES_PALETTES, 0x20);
         game.clear_initial_palettes(false);
         session_slot!(
             game,

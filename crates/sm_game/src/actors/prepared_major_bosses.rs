@@ -247,7 +247,7 @@ fn crocomire_instruction(address: u32) -> bool {
             | MOVE_RIGHT_4PX_IF_ON_SCREEN_AND_SPAWN_DUST
             | MOVE_RIGHT_4PX_AND_SPAWN_DUST
     ) || ((SPAWN_DUST_FIRST..=SPAWN_DUST_LAST).contains(&address)
-        && (address - SPAWN_DUST_FIRST) % 5 == 0)
+        && (address - SPAWN_DUST_FIRST).is_multiple_of(5))
 }
 /// Full original addresses; the low word is extracted only after recognition.
 pub fn try_pause(routine: ActorRoutine, host: &mut PreparedActorState<'_>) -> bool {
@@ -322,7 +322,7 @@ fn body_instruction(
         ) == 3
         {
             // Original returning diagnostic: no mutation or fatal edge.
-            print!("Write to rom!\n");
+            println!("Write to rom!");
         }
     }
     let x = host.edit_actor(ActorKey::from_legacy(0), AccessMode::Native, |body| {

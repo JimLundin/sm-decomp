@@ -8,7 +8,7 @@ pub trait Host:
 {
     fn native_kraid_part(&mut self, bank: u8, address: u16) -> sm_data::cartridge::RomRecord;
 }
-pub(crate) fn native_record<H: Host + ?Sized>(
+pub(crate) fn native_record<H: Host>(
     bank: u8,
     address: u16,
     host: &mut H,

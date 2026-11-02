@@ -29,7 +29,7 @@ const START_DELAY: u16 = 0x40;
 
 /// Kraid's fingernails initialisation AI ($A7:BCF2), for good and bad
 /// fingernails. Was `KraidFingernailInit`.
-pub fn initialize(k: u16, game: &mut (impl BossState + ?Sized)) {
+pub fn initialize(k: u16, game: &mut impl BossState) {
     let palette_index = session_slot!(game, Kraid[0].base.palette_index);
     let nail = i32::from(k);
     session_slot!(game, Fingernail[nail].base.palette_index = palette_index);

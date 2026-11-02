@@ -182,12 +182,8 @@ pub fn initialize<L: Lease>(game: &mut L) {
         session_slot!(game, Spore[0].base.current_instruction = list::DEAD);
         session_slot!(game, Spore[0].function = function::NOTHING);
         session_slot!(game, Spore[0].base.properties, |old| old | 0x8000);
-        {
-            {
-                game.update_spore_stem();
-                game.remaining_spawn_plm(7, 30, CLOSE_CEILING);
-            }
-        };
+        game.update_spore_stem();
+        game.remaining_spawn_plm(7, 30, CLOSE_CEILING);
         battle!(game.ScrollingFinishedHook = 0);
     } else {
         session_slot!(game, Spore[0].base.current_instruction = list::FIGHT_INTRO);
@@ -199,9 +195,7 @@ pub fn initialize<L: Lease>(game: &mut L) {
         for part in 0..4 {
             game.spawn_actor_eproj(part, spawn_key, SPORE_SPAWNERS);
         }
-        {
-            game.update_spore_stem()
-        };
+        game.update_spore_stem();
     }
 }
 
@@ -222,9 +216,7 @@ pub fn run_instruction<L: Lease>(
         instruction::SET_FUNCTION => set_function(script, game),
         // Instruction - spawn Spore Spawn's death drops ($A5:E8B1).
         10873009 => {
-            {
-                game.scatter_spore_spawn_drop(k)
-            };
+            game.scatter_spore_spawn_drop(k);
             script
         }
         10873034 | 10873116 => fade(address == 10873116, script, game),
@@ -247,17 +239,6 @@ pub fn main_ai<L: Lease>(game: &mut L) {
     }
 }
 
-/// Function - descend ($A5:EB1B): sink a pixel a frame to the middle, then
-/// start swinging.
-
-/// Function - orbit ($A5:EB52): swing round the origin, half as high as wide,
-/// by the angle delta's low byte a frame.
-
-/// Function - begin return ($A5:EB9B): aim at the middle at 1 px a frame.
-
-/// Function - finish return ($A5:EBEE): move back to the middle, then hang
-/// still, bubbling.
-
 /// After contact or a shot: once dead, start the death sequence, mark it dead
 /// and open the ceiling.
 pub fn after_damage<L: Lease>(game: &mut L) {
@@ -276,16 +257,12 @@ pub fn after_damage<L: Lease>(game: &mut L) {
     session_slot!(game, Spore[0].base; current_instruction = list::DEATH, instruction_timer = 1);
     let area = crate::actors::owned_common_lifecycle::BossState::area(game);
     {
-        {
-            let bits =
-                crate::progress::boss_word_at(game, area, crate::progress::BossWordOrder::Little);
-            crate::progress::set_boss_word_le(game, area, bits | DEAD);
-        }
-    };
+        let bits =
+            crate::progress::boss_word_at(game, area, crate::progress::BossWordOrder::Little);
+        crate::progress::set_boss_word_le(game, area, bits | DEAD);
+    }
     battle!(game.ScrollingFinishedHook = 0);
-    {
-        game.remaining_spawn_plm(7, 30, OPEN_CEILING)
-    };
+    game.remaining_spawn_plm(7, 30, OPEN_CEILING);
 }
 
 /// Touch AI ($A5:EDEC).
@@ -373,9 +350,7 @@ pub fn emit_hurt<L: Lease>(script: EnemyScript, game: &mut L) -> EnemyScript {
     let y = session_slot!(game, Spore[0].base.y_pos)
         .wrapping_add((random >> 8) & 0x3f)
         .wrapping_sub(32);
-    {
-        game.remaining_create_sprite(x, y, 3, 0)
-    };
+    game.remaining_create_sprite(x, y, 3, 0);
     crate::effects::SoundEffects::queue_sound(game, 1, 0x25, 6);
     script
 }

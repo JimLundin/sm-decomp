@@ -199,10 +199,10 @@ impl PreparedActorState<'_> {
         }
         let columns = if index == 0 { 3 } else { 2 };
         let missiles = [0x344b, 0x3449, 0x744b, 0x344c, 0x344a, 0x744c];
-        for i in 0..2 * columns {
+        for (i, &missile) in missiles.iter().enumerate().take(2 * columns) {
             let word = native
                 .as_ref()
-                .map_or_else(|| missiles[i], |record| record.word(2 * i));
+                .map_or_else(|| missile, |record| record.word(2 * i));
             self.session_mut()
                 .presentation
                 .owner_mut()

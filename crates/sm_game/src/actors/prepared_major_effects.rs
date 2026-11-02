@@ -40,7 +40,7 @@ impl crate::actors::mother_brain_effects_owned::Host for PreparedActorState<'_> 
             self,
             {
                 let [low, high, _, _] =
-                    (crate::constants::bank_86::ADDR_K_EPROJ_MOTHER_BRAIN_DEATH_EXPLOSION as u32)
+                    crate::constants::bank_86::ADDR_K_EPROJ_MOTHER_BRAIN_DEATH_EXPLOSION
                         .to_le_bytes();
                 u16::from_le_bytes([low, high])
             },

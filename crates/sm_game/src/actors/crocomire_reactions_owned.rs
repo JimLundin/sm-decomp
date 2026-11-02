@@ -1215,7 +1215,7 @@ pub fn melting<H: CrocomireHost>(game: &mut H) {
             let mut v7: u16 = battle!(game.MeltYOffset);
             battle!(game.MessageBoxScratch1 = battle!(game.MeltYOffset));
             do_until! { ((v7) as i16).wrapping_sub((battle!(game.MeltMaxY)) as i16) >= 0 ;
-                store_scroll(game,usize::try_from(v6 >> 1).expect("scroll index"),(display_scroll!(game.Bg2V) as i32 + v7 as i32
+                store_scroll(game,usize::from(v6 >> 1),(display_scroll!(game.Bg2V) as i32 + v7 as i32
                             - battle!(game.MessageBoxScratch1) as i32)
                             as u16);
                 let v8: bool = u16::overflowing_add(battle!(game.MeltDisplacement), r18).1;
@@ -1229,7 +1229,7 @@ pub fn melting<H: CrocomireHost>(game: &mut H) {
             if ((v6) as i16).wrapping_sub(512) < 0 {
                 let v9: u16 = display_scroll!(game.Bg2V);
                 do_until! { ((v6) as i16).wrapping_sub(512) >= 0 ;
-                    store_scroll(game,usize::try_from(v6 >> 1).expect("scroll index"),v9);
+                    store_scroll(game,usize::from(v6 >> 1),v9);
                     v6 = (v6).wrapping_add(2);
                 }
             }
@@ -1675,7 +1675,7 @@ pub fn prepare_scroll_hdma<H: CrocomireHost>(game: &mut H) {
         (2 * (session_slot!(game, Crocomire[0x40i32].base.y_pos) as i32 - 72i32)) as u16;
     let v2: u16 = display_scroll!(game.Bg2V);
     do_until! { (v1 & 0x8000) != 0 ;
-        store_scroll(game,usize::try_from(v1 >> 1).expect("scroll index"),v2);
+        store_scroll(game,usize::from(v1 >> 1),v2);
         v1 = (v1).wrapping_sub(2);
     }
     let e: i32 = game.current_enemy() as i32;

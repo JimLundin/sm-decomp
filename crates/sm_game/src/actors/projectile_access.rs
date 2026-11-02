@@ -257,15 +257,15 @@ impl SpeciesActors for PreparedActorState<'_> {
         if cursor.is_multiple_of(4) && cursor < 0x400 {
             return self.owner.gameplay.actors.extended.botwoon_history[usize::from(cursor) / 4].x;
         }
-        if cursor.is_multiple_of(2) && usize::from(cursor) / 2 + 0 < 1006 {
+        if cursor.is_multiple_of(2) && usize::from(cursor) / 2 < 1006 {
             *self
                 .owner
                 .gameplay
                 .actors
                 .extended
-                .word(3, usize::from(cursor) / 2 + 0)
+                .word(3, usize::from(cursor) / 2)
         } else {
-            self.current_word(0x9000 + usize::from(cursor) + 0)
+            self.current_word(0x9000 + usize::from(cursor))
         }
     }
     fn set_botwoon_history_x(&mut self, cursor: u16, value: u16) {
@@ -281,10 +281,10 @@ impl SpeciesActors for PreparedActorState<'_> {
             }
             return;
         }
-        if cursor.is_multiple_of(2) && usize::from(cursor) / 2 + 0 < 1006 {
-            self.store_extended_actor_word(3, 0, usize::from(cursor) / 2 + 0, value);
+        if cursor.is_multiple_of(2) && usize::from(cursor) / 2 < 1006 {
+            self.store_extended_actor_word(3, 0, usize::from(cursor) / 2, value);
         } else {
-            self.write_current_word_le(0x9000 + usize::from(cursor) + 0, value);
+            self.write_current_word_le(0x9000 + usize::from(cursor), value);
         }
     }
     fn botwoon_history_y(&self, cursor: u16) -> u16 {

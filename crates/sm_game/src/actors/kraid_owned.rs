@@ -1471,9 +1471,9 @@ fn death_fade_out<H: Host>(game: &mut H) {
             {
                 let count: usize = 128;
                 let step: isize = 4;
-                let destination0 = isize::try_from(0x4000 + 2 * (0)).expect("transfer destination");
+                let destination0: isize = 0x4000;
                 let source0: u16 = 0;
-                let destination1 = isize::try_from(0x4000 + 2 * (1)).expect("transfer destination");
+                let destination1: isize = 0x4000 + 2;
                 let source1: u16 = 0;
                 for index in 0..count {
                     let offset = isize::try_from(index)

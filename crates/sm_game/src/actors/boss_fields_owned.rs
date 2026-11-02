@@ -372,7 +372,7 @@ pub(crate) fn field_address(slot: i32, field: Field) -> usize {
         .expect("actor field outside allocation")
 }
 pub(crate) fn read_owned_at<S: State + ?Sized>(s: &S, at: usize) -> Option<u16> {
-    if at % 2 != 0 {
+    if !at.is_multiple_of(2) {
         return None;
     }
     let s = s.session();
@@ -430,7 +430,7 @@ pub(crate) fn read_owned_at<S: State + ?Sized>(s: &S, at: usize) -> Option<u16> 
     }
 }
 pub(crate) fn store_owned_at<S: State + ?Sized>(s: &mut S, at: usize, value: u16) -> bool {
-    if at % 2 != 0 {
+    if !at.is_multiple_of(2) {
         return false;
     }
     let s = s.session_mut();

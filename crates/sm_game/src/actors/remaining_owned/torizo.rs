@@ -656,13 +656,9 @@ pub fn hurt<L: Lease>(game: &mut L) {
     ) & 1
         != 0
     {
-        {
-            game.flash_palette()
-        };
+        game.flash_palette();
     } else {
-        {
-            game.restore_palette()
-        };
+        game.restore_palette();
     }
 }
 
@@ -676,9 +672,7 @@ pub fn golden_hurt<L: Lease>(game: &mut L) {
     ) & 1
         != 0
     {
-        {
-            game.flash_palette()
-        };
+        game.flash_palette();
     } else {
         health_palette(game.current_enemy(), game);
     }
@@ -688,9 +682,7 @@ pub fn golden_hurt<L: Lease>(game: &mut L) {
 /// `Torizo_Func_11`.
 fn health_palette<L: Lease>(k: u16, game: &mut L) {
     let health = session_slot!(game, TorizoSlot[k as i32].base.health);
-    {
-        game.health_palette(health)
-    };
+    game.health_palette(health);
 }
 
 /// Enemy touch - torizos ($AA:C977). Was `GoldTorizo_Touch`.
@@ -832,13 +824,9 @@ pub fn initialize<L: Lease>(game: &mut L) {
     );
     session_slot!(game, TorizoSlot[e].base; x_pos = START_X[torizo], y_pos = START_Y[torizo]);
     session_slot!(game, TorizoSlot[e]; x_velocity = 0, y_velocity = LANDED_Y_VELOCITY);
-    {
-        game.initialize_palette_targets()
-    };
+    game.initialize_palette_targets();
     if crate::actors::owned_common_lifecycle::BossState::area(game) != 0 {
-        {
-            game.set_palette_targets(Palettes::GoldenStart)
-        };
+        game.set_palette_targets(Palettes::GoldenStart);
         if game.inputs().held == DEBUG_KEYS {
             battle!(game.SamusHealth = 700);
             battle!(game.SamusMaxHealth = 700);
@@ -856,12 +844,8 @@ pub fn initialize<L: Lease>(game: &mut L) {
             battle!(game.CollectedBeams = 4111);
         }
     } else {
-        {
-            {
-                game.set_palette_targets(Palettes::BombStart);
-                game.spawn_haze();
-            }
-        };
+        game.set_palette_targets(Palettes::BombStart);
+        game.spawn_haze();
     }
 }
 
@@ -921,53 +905,32 @@ pub fn fade_to_black<L: Lease>(game: &mut L) {
 /// Instruction - set boss bit, queue elevator music, spawn item drops
 /// ($AA:B24D). Was `Torizo_Instr_38`.
 pub fn defeated<L: Lease>(k: u16, game: &mut L) {
-    {
-        {
-            game.set_boss_bit(TORIZO_DEAD);
-            game.queue_music_delayed(ELEVATOR_MUSIC);
-        }
-    };
+    game.set_boss_bit(TORIZO_DEAD);
+    game.queue_music_delayed(ELEVATOR_MUSIC);
     if crate::actors::owned_common_lifecycle::BossState::area(game) != 0 {
-        {
-            {
-                game.scatter_enemy_drop(
-                    crate::enemy_projectiles::drops::DropSource::GoldenTorizo,
-                    k,
-                )
-            }
-        };
+        game.scatter_enemy_drop(crate::enemy_projectiles::drops::DropSource::GoldenTorizo, k);
     } else {
-        {
-            game.scatter_enemy_drop(crate::enemy_projectiles::drops::DropSource::BombTorizo, k)
-        };
+        game.scatter_enemy_drop(crate::enemy_projectiles::drops::DropSource::BombTorizo, k);
     }
 }
 
 /// Instruction - advance gradual colour change ($AA:B271). Was
 /// `Torizo_Instr_6`.
 pub fn advance_colour_change<L: Lease>(game: &mut L) {
-    {
-        game.fade_torizo_palettes(0x600)
-    };
+    game.fade_torizo_palettes(0x600);
 }
 
 /// Instruction - set up palette transition to normal torizo ($AA:B94D). Was
 /// `Torizo_Instr_5`.
 pub fn fade_to_active<L: Lease>(game: &mut L) {
-    {
-        game.set_palette_targets(Palettes::BombActive)
-    };
+    game.set_palette_targets(Palettes::BombActive);
 }
 
 /// Instruction - start fight music and Bomb Torizo belly palette FX
 /// ($AA:B951). Was `Torizo_Instr_9`.
 pub fn start_fight<L: Lease>(game: &mut L) {
-    {
-        {
-            game.queue_music_delayed(FIGHT_MUSIC);
-            game.spawn_palette_effect(BOMB_BELLY_GLOW);
-        }
-    };
+    game.queue_music_delayed(FIGHT_MUSIC);
+    game.spawn_palette_effect(BOMB_BELLY_GLOW);
 }
 
 /// Instruction - set animation lock ($AA:C2C9). Was `Torizo_Instr_2`.
@@ -1230,22 +1193,16 @@ pub fn branch_if_airborne<L: Lease>(k: u16, jp: EnemyScript, game: &mut L) -> En
 /// Instruction - load Golden Torizo palettes ($AA:CADE). Was
 /// `Torizo_Instr_41`.
 pub fn golden_palettes<L: Lease>(game: &mut L) {
-    {
-        game.set_palette_targets(Palettes::GoldenActive)
-    };
+    game.set_palette_targets(Palettes::GoldenActive);
 }
 
 /// Instruction - start fight music and Golden Torizo belly palette FX
 /// ($AA:CAE2). Was `Torizo_Instr_42`.
 pub fn start_golden_fight<L: Lease>(k: u16, game: &mut L) {
-    {
-        game.queue_music_delayed(FIGHT_MUSIC)
-    };
+    game.queue_music_delayed(FIGHT_MUSIC);
     let e = i32::from(k);
     session_slot!(game, TorizoSlot[e].base; x_width = 18, y_height = 48);
-    {
-        game.spawn_palette_effect(GOLDEN_BELLY_GLOW)
-    };
+    game.spawn_palette_effect(GOLDEN_BELLY_GLOW);
 }
 
 /// Instruction - clear torizo caught super missile flag ($AA:CDD7). Was

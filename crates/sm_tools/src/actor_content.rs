@@ -369,10 +369,10 @@ fn description(
                     return Err(DisplayError::Identity);
                 }
             }
-            if let QueueDeclaration::ActorState { address } = value {
-                if token[2] != 0x7e || *address != u16::from_le_bytes([token[0], token[1]]) {
-                    return Err(DisplayError::Identity);
-                }
+            if let QueueDeclaration::ActorState { address } = value
+                && (token[2] != 0x7e || *address != u16::from_le_bytes([token[0], token[1]]))
+            {
+                return Err(DisplayError::Identity);
             }
             Ok((*token, queue(value, sources, media)?))
         })

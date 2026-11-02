@@ -672,9 +672,7 @@ pub fn position_swing<H: Host>(game: &mut H) {
 
 pub fn clamp_swing_position<H: Host>(game: &mut H) {
     let v0: i16 = ((game.player_x()) as i16).wrapping_sub((game.previous_player_x()) as i16);
-    {
-        pt::clamp_previous_position(crate::session_access::SessionAccess::session_mut(game), v0)
-    };
+    pt::clamp_previous_position(crate::session_access::SessionAccess::session_mut(game), v0);
 }
 
 pub fn position_anchored<H: Host>(game: &mut H) {
@@ -991,12 +989,7 @@ fn dispatch<H: Host>(ea: u32, game: &mut H) {
                 game.session_mut().projectiles.controls.flare_timers[0] = 0;
                 game.session_mut().projectiles.controls.flare_timers[1] = 0;
                 game.session_mut().projectiles.controls.flare_timers[2] = 0;
-                {
-                    crate::samus_palette::load_suit(
-                        game,
-                        crate::visual_state::PaletteBuffer::Current,
-                    )
-                };
+                crate::samus_palette::load_suit(game, crate::visual_state::PaletteBuffer::Current);
             }
         }
         0x9bc703 => {

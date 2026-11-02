@@ -1629,7 +1629,7 @@ crate::dispatch::callback_dispatch! {
         if session_slot!(game, MotherBrainBody[e].form) != 0 {
             phase2_or_phase3_shot_reaction(game);
             if session_slot!(game, MotherBrainBody[e].form) == 1 {
-                game.guarded_actor_call(|game| crate::actors::combat::create_dud(game));
+                game.guarded_actor_call(crate::actors::combat::create_dud);
             } else {
                 game.guarded_actor_call(|game| game.shot_reaction(crate::actors::host::Shot::ReactionOnly));
             }
@@ -2280,7 +2280,7 @@ pub fn body_phase1(game: &mut PreparedActorState<'_>) {
             && session_slot!(game, MotherBrainBrain[BRAIN].base.health) == 0
         {
             session_slot! { game, MotherBrainBody[BODY]; delete_turrets = 1, form = 1 }
-            game.guarded_actor_call(|game| crate::player_update::minimap::disable_for_boss(game));
+            game.guarded_actor_call(crate::player_update::minimap::disable_for_boss);
             queue_music(music::SONG_1, game);
             game.guarded_actor_call(|game| {
                 crate::actors::mother_brain_visuals_owned::seal_wall(game)
@@ -3316,7 +3316,7 @@ pub fn brain_main_ai(game: &mut PreparedActorState<'_>) {
     }
 }
 pub fn body_shot(game: &mut PreparedActorState<'_>) {
-    game.guarded_actor_call(|game| crate::actors::combat::create_dud(game));
+    game.guarded_actor_call(crate::actors::combat::create_dud);
 }
 pub fn brain_touch(game: &mut PreparedActorState<'_>) {
     if game.session().player.movement_and_facing.to_le_bytes()[1] == 3 {

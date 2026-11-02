@@ -87,12 +87,12 @@ pub enum Word {
 }
 pub fn control(session: &Session, word: Word) -> &u16 {
     match word {
-        Word::QuakeSoundTimer => &*session.actors.extended.word(3, 0),
-        Word::CrocomireBridge1 => &*session.actors.extended.word(3, 1),
-        Word::CrocomireBridge2 => &*session.actors.extended.word(3, 3),
-        Word::CrocomireUnread => &*session.actors.extended.word(3, 5),
-        Word::CrocomireAcidSmoke => &*session.actors.extended.word(3, 12),
-        Word::PhantoonMaterialisationSound => &*session.actors.extended.word(3, 25),
+        Word::QuakeSoundTimer => session.actors.extended.word(3, 0),
+        Word::CrocomireBridge1 => session.actors.extended.word(3, 1),
+        Word::CrocomireBridge2 => session.actors.extended.word(3, 3),
+        Word::CrocomireUnread => session.actors.extended.word(3, 5),
+        Word::CrocomireAcidSmoke => session.actors.extended.word(3, 12),
+        Word::PhantoonMaterialisationSound => session.actors.extended.word(3, 25),
         Word::EnemyTilemapPending => &session.actors.drawing.tilemap_pending,
         Word::EnemyTilemapSize => &session.actors.drawing.tilemap_size,
         Word::BossId => &session.actors.schedule.boss_id,
