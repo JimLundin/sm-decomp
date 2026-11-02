@@ -68,6 +68,125 @@ impl Drop for SamusMutation<'_> {
         }
     }
 }
+// The owned RAM groups a write can touch, as bits of one table entry per RAM byte.
+const WRITE_INVENTORY: u8 = 1 << 0;
+const WRITE_MENU: u8 = 1 << 1;
+const WRITE_SCROLL: u8 = 1 << 2;
+const WRITE_FRAME_DISPLAY: u8 = 1 << 3;
+const WRITE_CONTEXT: u8 = 1 << 4;
+const WRITE_SEQUENCE: u8 = 1 << 5;
+const WRITE_FX: u8 = 1 << 6;
+
+fn write_classes() -> &'static [u8; WorkRam::LEN] {
+    static CLASSES: std::sync::OnceLock<Box<[u8; WorkRam::LEN]>> = std::sync::OnceLock::new();
+    CLASSES.get_or_init(|| {
+        let mut classes = Box::new([0; WorkRam::LEN]);
+        let mut mark = |ranges: &[Range<usize>], class: u8| {
+            for range in ranges {
+                for entry in &mut classes[range.clone()] {
+                    *entry |= class;
+                }
+            }
+        };
+        mark(
+            &[
+                0x9a2..0x9aa,
+                0x9c0..0x9d2,
+                0x9d4..0x9da,
+                0xa4c..0xa4e,
+                0xa76..0xa78,
+            ],
+            WRITE_INVENTORY,
+        );
+        mark(&menu_ranges(), WRITE_MENU);
+        mark(&[0xb1..0xc1], WRITE_SCROLL);
+        mark(&frame_display_ranges(), WRITE_FRAME_DISPLAY);
+        mark(
+            &[
+                0x87..0x89,
+                0x89..0x8b,
+                0x8b..0x8d,
+                0x8d..0x8f,
+                0x8f..0x91,
+                0x91..0x93,
+                0x93..0x95,
+                0x95..0x97,
+                0x97..0x99,
+                0x99..0x9b,
+                0xa3..0xa5,
+                0xa5..0xa7,
+                0xc2..0xc4,
+                0x5c5..0x5c7,
+                0x5c7..0x5c9,
+                0x5c9..0x5cb,
+                0x5cb..0x5cd,
+                0x5cd..0x5cf,
+                0x5cf..0x5d1,
+                0x5d1..0x5d3,
+                0x5d3..0x5d5,
+                0x5d5..0x5d7,
+                0x5d7..0x5d9,
+                0x5d9..0x5db,
+                0x5db..0x5dd,
+                0x5dd..0x5df,
+                0x5df..0x5e1,
+                0x5e1..0x5e3,
+                0x5e3..0x5e5,
+                0x793..0x795,
+                0x79f..0x7a1,
+                0x7a1..0x7a3,
+                0x7a3..0x7a5,
+                0x7a5..0x7a7,
+                0x7a7..0x7a9,
+                0x7a9..0x7ab,
+                0x7ab..0x7ad,
+                0x998..0x99a,
+                0x9aa..0x9ac,
+                0x9ac..0x9ae,
+                0x9ae..0x9b0,
+                0x9b0..0x9b2,
+                0x9b2..0x9b4,
+                0x9b4..0x9b6,
+                0x9b6..0x9b8,
+                0x9b8..0x9ba,
+                0x9ba..0x9bc,
+                0x9bc..0x9be,
+                0x9be..0x9c0,
+                0x9da..0x9dc,
+                0x9dc..0x9de,
+                0x9de..0x9e0,
+                0x9e0..0x9e2,
+                0xd82..0xd84,
+                0xd84..0xd86,
+                0xd86..0xd88,
+                0xd88..0xd8a,
+                0xd8a..0xd8c,
+                0xd8c..0xd8e,
+                0xd8e..0xd90,
+                0xdfe..0xe00,
+                0xe00..0xe02,
+                0x183e..0x1840,
+                0x1840..0x1842,
+            ],
+            WRITE_CONTEXT,
+        );
+        mark(&sequence_ranges(), WRITE_SEQUENCE);
+        mark(
+            &[
+                0x596..0x59e,
+                0x607..0x60b,
+                0x1778..0x1784,
+                0x1986..0x1988,
+                0x9800..0xa000,
+                0xc406..0xc608,
+                0xcad8..0xcae0,
+            ],
+            WRITE_FX,
+        );
+        classes
+    })
+}
+
 // Cell preserves the native byte representation while permitting shared byte
 // writes. Both owners copy byte values; no live u8 reference or raw base escapes.
 #[repr(C, align(16))]
@@ -121,13 +240,7 @@ impl WorkRam {
     pub fn write_byte(&self, at: usize, value: u8) {
         let cell = &self.0.bytes[at];
         self.note_write();
-        self.note_inventory_write(at..at + 1);
-        self.note_menu_write(at..at + 1);
-        self.note_scroll_write(at..at + 1);
-        self.note_frame_display_write(at..at + 1);
-        self.note_context_write((at..at + 1).clone());
-        self.note_sequence_write(at..at + 1);
-        self.note_fx_write(at..at + 1);
+        self.note_owned_write(at..at + 1);
         cell.set(value);
         self.note_source_publication(at);
     }
@@ -142,13 +255,7 @@ impl WorkRam {
         assert!(destination <= self.len() - count, "dest is out of bounds");
         if count != 0 {
             self.note_write();
-            self.note_inventory_write(destination..destination + count);
-            self.note_menu_write(destination..destination + count);
-            self.note_scroll_write(destination..destination + count);
-            self.note_frame_display_write(destination..destination + count);
-            self.note_context_write((destination..destination + count).clone());
-            self.note_sequence_write(destination..destination + count);
-            self.note_fx_write(destination..destination + count);
+            self.note_owned_write(destination..destination + count);
         }
         if destination > source.start {
             for offset in (0..count).rev() {
@@ -178,13 +285,7 @@ impl WorkRam {
         let cells = &self.0.bytes[at..end];
         if !cells.is_empty() {
             self.note_write();
-            self.note_inventory_write(at..end);
-            self.note_menu_write(at..end);
-            self.note_scroll_write(at..end);
-            self.note_frame_display_write(at..end);
-            self.note_context_write((at..end).clone());
-            self.note_sequence_write(at..end);
-            self.note_fx_write(at..end);
+            self.note_owned_write(at..end);
         }
         for (offset, (cell, &byte)) in cells.iter().zip(input).enumerate() {
             cell.set(byte);
@@ -197,13 +298,7 @@ impl WorkRam {
         let cells = &self.0.bytes[range.clone()];
         if !cells.is_empty() {
             self.note_write();
-            self.note_inventory_write(range.clone());
-            self.note_menu_write(range.clone());
-            self.note_scroll_write(range.clone());
-            self.note_frame_display_write(range.clone());
-            self.note_context_write((range).clone());
-            self.note_sequence_write(range.clone());
-            self.note_fx_write(range);
+            self.note_owned_write(range);
         }
         for (offset, cell) in cells.iter().enumerate() {
             cell.set(value);
@@ -224,133 +319,48 @@ impl WorkRam {
             Rc::clone(&self.8),
         )
     }
-    fn note_write(&self) {
-        self.1.set(self.1.get().wrapping_add(1));
-    }
-    fn note_inventory_write(&self, range: Range<usize>) {
-        if [
-            0x9a2..0x9aa,
-            0x9c0..0x9d2,
-            0x9d4..0x9da,
-            0xa4c..0xa4e,
-            0xa76..0xa78,
-        ]
-        .iter()
-        .any(|owned| range.start < owned.end && owned.start < range.end)
-        {
+    /// Bump the epoch of every owned RAM group this write overlaps. Every RAM write
+    /// passes here, so the overlap test is one table lookup per written byte.
+    fn note_owned_write(&self, range: Range<usize>) {
+        let classes = write_classes()[range]
+            .iter()
+            .fold(0, |all, &class| all | class);
+        if classes == 0 {
+            return;
+        }
+        if classes & WRITE_INVENTORY != 0 {
             self.2.set(self.2.get().wrapping_add(1));
         }
-    }
-    fn note_menu_write(&self, range: Range<usize>) {
-        if menu_ranges()
-            .iter()
-            .any(|owned| range.start < owned.end && owned.start < range.end)
-        {
+        if classes & WRITE_MENU != 0 {
             self.3.set(self.3.get().wrapping_add(1));
         }
+        if classes & WRITE_SCROLL != 0 {
+            self.4.set(self.4.get().wrapping_add(1));
+        }
+        if classes & WRITE_FRAME_DISPLAY != 0 {
+            self.6.set(self.6.get().wrapping_add(1));
+        }
+        if classes & WRITE_CONTEXT != 0 {
+            self.6.set(self.6.get().wrapping_add(1));
+        }
+        if classes & WRITE_SEQUENCE != 0 {
+            self.5.set(self.5.get().wrapping_add(1));
+        }
+        if classes & WRITE_FX != 0 {
+            self.8.set(self.8.get().wrapping_add(1));
+        }
+    }
+    fn note_write(&self) {
+        self.1.set(self.1.get().wrapping_add(1));
     }
     fn menu_epoch(&self) -> u64 {
         self.3.get()
     }
-    fn note_scroll_write(&self, range: Range<usize>) {
-        if range.start < 0xc1 && 0xb1 < range.end {
-            self.4.set(self.4.get().wrapping_add(1));
-        }
-    }
     pub(crate) fn scroll_epoch(&self) -> u64 {
         self.4.get()
     }
-    fn note_context_write(&self, range: Range<usize>) {
-        if [
-            0x87..0x89,
-            0x89..0x8b,
-            0x8b..0x8d,
-            0x8d..0x8f,
-            0x8f..0x91,
-            0x91..0x93,
-            0x93..0x95,
-            0x95..0x97,
-            0x97..0x99,
-            0x99..0x9b,
-            0xa3..0xa5,
-            0xa5..0xa7,
-            0xc2..0xc4,
-            0x5c5..0x5c7,
-            0x5c7..0x5c9,
-            0x5c9..0x5cb,
-            0x5cb..0x5cd,
-            0x5cd..0x5cf,
-            0x5cf..0x5d1,
-            0x5d1..0x5d3,
-            0x5d3..0x5d5,
-            0x5d5..0x5d7,
-            0x5d7..0x5d9,
-            0x5d9..0x5db,
-            0x5db..0x5dd,
-            0x5dd..0x5df,
-            0x5df..0x5e1,
-            0x5e1..0x5e3,
-            0x5e3..0x5e5,
-            0x793..0x795,
-            0x79f..0x7a1,
-            0x7a1..0x7a3,
-            0x7a3..0x7a5,
-            0x7a5..0x7a7,
-            0x7a7..0x7a9,
-            0x7a9..0x7ab,
-            0x7ab..0x7ad,
-            0x998..0x99a,
-            0x9aa..0x9ac,
-            0x9ac..0x9ae,
-            0x9ae..0x9b0,
-            0x9b0..0x9b2,
-            0x9b2..0x9b4,
-            0x9b4..0x9b6,
-            0x9b6..0x9b8,
-            0x9b8..0x9ba,
-            0x9ba..0x9bc,
-            0x9bc..0x9be,
-            0x9be..0x9c0,
-            0x9da..0x9dc,
-            0x9dc..0x9de,
-            0x9de..0x9e0,
-            0x9e0..0x9e2,
-            0xd82..0xd84,
-            0xd84..0xd86,
-            0xd86..0xd88,
-            0xd88..0xd8a,
-            0xd8a..0xd8c,
-            0xd8c..0xd8e,
-            0xd8e..0xd90,
-            0xdfe..0xe00,
-            0xe00..0xe02,
-            0x183e..0x1840,
-            0x1840..0x1842,
-        ]
-        .iter()
-        .any(|owned| range.start < owned.end && owned.start < range.end)
-        {
-            self.6.set(self.6.get().wrapping_add(1));
-        }
-    }
     pub(crate) fn context_epoch(&self) -> u64 {
         self.6.get()
-    }
-    fn note_sequence_write(&self, range: Range<usize>) {
-        if sequence_ranges()
-            .iter()
-            .any(|owned| range.start < owned.end && owned.start < range.end)
-        {
-            self.5.set(self.5.get().wrapping_add(1));
-        }
-    }
-    fn note_frame_display_write(&self, range: Range<usize>) {
-        if frame_display_ranges()
-            .iter()
-            .any(|owned| range.start < owned.end && owned.start < range.end)
-        {
-            self.6.set(self.6.get().wrapping_add(1));
-        }
     }
     fn frame_display_epoch(&self) -> u64 {
         self.6.get()
@@ -364,22 +374,6 @@ impl WorkRam {
     // Cached legacy FX owns only the fixed numeric/lighting words and source
     // allocations in fx_encoding. Window-control lanes are included; dynamic
     // prepared/suspended topology and aggregate authority retain the global epoch.
-    fn note_fx_write(&self, range: Range<usize>) {
-        if [
-            0x596..0x59e,
-            0x607..0x60b,
-            0x1778..0x1784,
-            0x1986..0x1988,
-            0x9800..0xa000,
-            0xc406..0xc608,
-            0xcad8..0xcae0,
-        ]
-        .iter()
-        .any(|owned| range.start < owned.end && owned.start < range.end)
-        {
-            self.8.set(self.8.get().wrapping_add(1));
-        }
-    }
     fn fx_epoch(&self) -> u64 {
         self.8.get()
     }
