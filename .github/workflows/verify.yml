@@ -118,7 +118,8 @@ jobs:
       - name: Package the verifier
         # A tar keeps the executable bit, and the paths verify_dll.py expects.
         run: |
-          files=$(ls target/verify-dll/libsm_verify.so target/verify-host/sm_verify target/coverage-unit 2>/dev/null)
+          files=$(ls -d target/verify-dll/libsm_verify.so target/verify-host/sm_verify target/coverage-unit 2>/dev/null || true)
+          test -n "$files"
           tar -cf verifier.tar $files
       - uses: actions/upload-artifact@v4
         with:
