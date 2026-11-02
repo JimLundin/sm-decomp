@@ -167,10 +167,6 @@ impl sm_game::player_position::PlayerFacts for Game {
 }
 
 impl sm_game::actors::mother_brain_tubes::Host for Game {
-    fn end_screen_flash(&mut self) {
-        crate::game::sm_a9::end_screen_flashing(self);
-    }
-
     fn start_earthquake(&mut self, kind: u16) {
         crate::game::mother_brain_visuals::start_earthquake(kind, self);
     }

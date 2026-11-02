@@ -16,9 +16,6 @@ use crate::actors::host::{ActorRuntime as _, BossEffects as _};
 
 /// What the falling tubes still reach in the compatibility runtime.
 pub trait Host {
-    /// End the room-wide flash and restore the room palette.
-    /// Was `MotherBrain_Pal_EndScreenFlash`.
-    fn end_screen_flash(&mut self);
     /// Start an earthquake of `kind`. Was `MotherBrain`'s `start_earthquake`.
     fn start_earthquake(&mut self, kind: u16);
 }
@@ -171,8 +168,8 @@ fn fall_with_brain(game: &mut impl Lease, k: u16) {
     if (Tube::of(game, BRAIN_INDEX).actor().y.whole as i32 - BRAIN_LANDING_Y as i32) & 0x8000 != 0 {
         trail_smoke(game, k);
     } else {
+        crate::actors::mother_brain_fight::end_screen_flashing(game);
         game.foreign(|game| {
-            Host::end_screen_flash(game);
             Host::start_earthquake(game, LANDING_EARTHQUAKE);
             crate::hdma_objects::free_hdma_object(0, game);
             crate::hdma_objects::free_hdma_object(2, game);
