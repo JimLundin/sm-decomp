@@ -608,12 +608,11 @@ prefix = 1000
 ticks = 1000
 facts = ["room:E0B5", "probe:samus.bomb.falling-x"]
 
-# Vertical bomb-jump lifecycle and subsequent gameplay.
+# Genuine Bomb Torizo roomseed and historical 1057-word bomb-jump recipe.
 [[scenario]]
 id = "samus-bomb-jump-vertical"
 start = "seed:c402c17601f3ac1b274a8c1914e306ed304371b8e65031975d5b67947591528c"
-prefix = 6762
-ticks = 800
+ticks = 1057
 facts = ["area:crateria", "probe:samus.jump.bomb"]
 pending = "checkpoint cannot be rebuilt from its seed and inputs; re-cut from a seed that reaches this row (docs/LEGACY.md)"
 
@@ -779,11 +778,10 @@ start = "seed:cebb82e3b4a7ba2c89aec1b5f783c160a6dc857dd5a72b65fc8a784c954215ae"
 ticks = 300
 facts = ["area:crateria", "room:91F8"]
 
-# Fixed window starts at the authenticated Stone Zoomer movement mismatch.
+# Genuine 92FD roomseed and eight authenticated aligned movie words.
 [[scenario]]
 id = "wall-crawler-slope-step"
-start = "seed:c402c17601f3ac1b274a8c1914e306ed304371b8e65031975d5b67947591528c"
-prefix = 6762
+start = "seed:78064d156224580b594e2da71ca253a794bdb4318eeac9f3bc5f01701e61477b"
 ticks = 8
 facts = ["area:crateria", "room:92FD"]
 pending = "checkpoint cannot be rebuilt from its seed and inputs; re-cut from a seed that reaches this row (docs/LEGACY.md)"

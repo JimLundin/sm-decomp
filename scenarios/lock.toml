@@ -16,6 +16,7 @@ bundles = [
     { name = "seeds-v1-enemies-dd825e69ee36457f.tar.gz.enc", sha256 = "dd825e69ee36457f9c24627b860246e0313ef67ee6754830d7f6331c05125c16" },
     { name = "seeds-v1-file-copy-51a67d39af3c9628.tar.gz.enc", sha256 = "51a67d39af3c9628bd3959e295d33a6667e5f3c5e9abe7d939a2a410629a619d" },
     { name = "seeds-v1-final-whips-6295d2432aa88773.tar.gz.enc", sha256 = "6295d2432aa88773bbedbcaaf4ddc4276878951281787e171620a9d40d13a9ce" },
+    { name = "seeds-v1-genuine-roomrows-aa4756f127e835bd.tar.gz.enc", sha256 = "aa4756f127e835bd9ea1f7b25828137a644f438b18a6483a0bcf2888542b1091" },
     { name = "seeds-v1-golden-3b895ada4be8fcb4.tar.gz.enc", sha256 = "3b895ada4be8fcb4e1b77941f0f4c4530150c626588b53d2e8cf5c2dc2cbeb0e" },
     { name = "seeds-v1-grapplewall-4f6db9f4f7fc408a.tar.gz.enc", sha256 = "4f6db9f4f7fc408aec578994afc84a8b6a61de58acef46ec9f123515e0784061" },
     { name = "seeds-v1-handwings-6302cac975d0049c.tar.gz.enc", sha256 = "6302cac975d0049c512dc2ab254e6a4ba03f8f396027544c7160e82645b45675" },
@@ -689,7 +690,7 @@ pins = [
     { id = "power-bomb-red-tower-refill-door", bundle = "seeds-v1-reseeded-bf1451e13f4e2680.tar.gz.enc", seed = "100-input-phase:176", inputs = "authored-red-tower-refill-door.inputs", input_sha256 = "644ad5b2703895704516c4476d079b0be4ab23a3659bf475f8555be875010ac3" },
     { id = "power-bomb-room-entry", bundle = "seeds-v1-reseeded-bf1451e13f4e2680.tar.gz.enc", seed = "100-input-phase:178", inputs = "authored-power-bomb-room-entry.inputs", input_sha256 = "b386b720f57d268554f805a8651ef0c49315d24fabc81d9a9447fc285c6308d8" },
     { id = "power-bomb-warehouse-elevator-entry", bundle = "seeds-v1-reseeded-bf1451e13f4e2680.tar.gz.enc", seed = "100-input-phase:167", inputs = "authored-warehouse-elevator-entry.inputs", input_sha256 = "1ec2b020f79e3f5e8feca667f7f9727b95c1181d6972b0825d9a7f7358133b85" },
-    { id = "samus-bomb-jump-vertical", bundle = "seeds-v1-seeded-checkpoints-f4e03e50190ab6dd.tar.gz.enc", seed = "100-input-phase:27", inputs = "authored-bomb-jump.inputs", input_sha256 = "65a524cd11d5b4a35bf9add300b091d64ce39888083e529633210eac5ced2d3c", checkpoint = "bomb-jump-seeded-6762.smvchk", checkpoint_sha256 = "78cfe367caaf404ada1654e8f73fb0def11870040be62106296c8f48fa3d908c" },
+    { id = "samus-bomb-jump-vertical", bundle = "seeds-v1-genuine-roomrows-aa4756f127e835bd.tar.gz.enc", seed = "100-input-phase:27", inputs = "authored-genuine-samus-bomb-jump-vertical.inputs", input_sha256 = "42c5d0cea0ef134fe24bb583d08d62520b1c83f73ec11767f43802e32e9da122" },
     { id = "samus-ceres-push", bundle = "seeds-v1-routeenemies-ad7fd75a7035bea2.tar.gz.enc", seed = "100-input-phase:6", inputs = "authored-ceres-push.inputs", input_sha256 = "d1df9777e5ebdad599b50eeadcd4d96051eb29c4cc21183ee375e270c6873d50" },
     { id = "samus-crystal-flash", bundle = "seeds-v1-tricks-95f7c4352cb18fbe.tar.gz.enc", seed = "scenario-crystal-flash:305", inputs = "authored-crystal-flash.inputs", input_sha256 = "2a639c88ac8ed2affb5cba9a4812d2f7c0eaafd2df3b07a2fd34afeb4622f666" },
     { id = "samus-forced-ceres", bundle = "seeds-v1-six-3a87864fbffb215a.tar.gz.enc", seed = "100-input-phase:6", inputs = "seed-forced-ceres.inputs", input_sha256 = "63549693555e451bdf3c65147dc4fb3020049bc7acf765123bebc6c7a1d9f96d" },
@@ -726,7 +727,7 @@ pins = [
     { id = "terrain-quicksand", bundle = "seeds-v1-terrain-grapple-c77a6dd6e1e0de4e.tar.gz.enc", seed = "100-input-phase:253", inputs = "seed-quicksand-d5ec.inputs", input_sha256 = "7aaeac6d3fcd24f25c6f2285a67fcae82b13845fed65a16742bceb1db3226b94" },
     { id = "terrain-wrecked-ship-hand", bundle = "seeds-v1-handwings-6302cac975d0049c.tar.gz.enc", seed = "scenario-wrecked-ship-hand:211", inputs = "authored-wrecked-ship-hand.inputs", input_sha256 = "54d06a14b23c3afe2241eaae2812fc4f984736bbe934f6e81d37bcd461a83174" },
     { id = "volcano-room-lavaquake", bundle = "seeds-v1-offroute-4b5962a5bc7f6aaa.tar.gz.enc", seed = "low-input-phase:85", inputs = "authored-volcano-room.inputs", input_sha256 = "32d9f08bdfd0b2bac2f6f56b45f27867d30287a2b0a0ae3f9938892971ffc550" },
-    { id = "wall-crawler-slope-step", bundle = "seeds-v1-seeded-checkpoints-f4e03e50190ab6dd.tar.gz.enc", seed = "100-input-phase:27", inputs = "authored-bomb-jump.inputs", input_sha256 = "65a524cd11d5b4a35bf9add300b091d64ce39888083e529633210eac5ced2d3c", checkpoint = "bomb-jump-seeded-6762.smvchk", checkpoint_sha256 = "78cfe367caaf404ada1654e8f73fb0def11870040be62106296c8f48fa3d908c" },
+    { id = "wall-crawler-slope-step", bundle = "seeds-v1-genuine-roomrows-aa4756f127e835bd.tar.gz.enc", seed = "100-input-phase:29", inputs = "authored-genuine-wall-crawler-slope-step.inputs", input_sha256 = "c28d29dcdc947f8ff9c821b2558ce5937e157815550aa874efa530ad8b884c00" },
     { id = "xray-activate-release", bundle = "seeds-v1-xray-activation-9c5ad92da3d5d2dc.tar.gz.enc", seed = "any-boundary:50", inputs = "stand-select-four-scan.inputs", input_sha256 = "79d55dec3a45f88c92d155ca415ea17e3e930f9f31f4f450a59523d3b3bea537" },
     { id = "xray-scan-91f8", bundle = "seeds-v1-tricks-95f7c4352cb18fbe.tar.gz.enc", seed = "100-input-phase:305", inputs = "authored-xray-scan-305.inputs", input_sha256 = "89a05f8ca28cb02556f38ff91b80171b2e6d587e43697c7efe5a9c154acd3c87" },
     { id = "xray-scan-92fd", bundle = "seeds-v1-tricks-95f7c4352cb18fbe.tar.gz.enc", seed = "100-input-phase:300", inputs = "authored-xray-scan-300.inputs", input_sha256 = "6224de335f4a52a40fa0b9d9edec551d3ec2d806260d7c2fb3176a323cfde1ec" },
@@ -7971,6 +7972,18 @@ digests = { "wram" = "438017c53140b06b", "sram" = "1cbb4204853e0b9f", "vram" = "
 marks = {  }
 
 [[scenario]]
+id = "samus-bomb-jump-vertical"
+oracle = "faithful"
+start = "seed:c402c17601f3ac1b274a8c1914e306ed304371b8e65031975d5b67947591528c"
+inputs = "42c5d0cea0ef134fe24bb583d08d62520b1c83f73ec11767f43802e32e9da122"
+frames = 1057
+format = 1
+ticks = 1057
+combined = "7833fa3712eb51a2"
+digests = { "wram" = "19d9dc3a015007ca", "sram" = "f5ebca7f5c2c6c6b", "vram" = "7d45a5a9677e435a", "cgram" = "c31227c1d68d29df", "oam" = "9398550280cd7faf", "ppu" = "d36b0080819a1bdd", "video" = "97ac852ca904aaab", "apu" = "28daf68e13cb2b5b", "input" = "3b82e9fddcfa4f90", "samus" = "f4bb88f746ab944b", "camera" = "859cc61d4f835e06", "room" = "4ea4584bc54a2d25", "progress" = "d5212ca10a4d6370", "actors" = "21988e9bf3c9bf82", "effects" = "303406fb3250786c" }
+marks = { "1000" = "58e1a78e349d4071" }
+
+[[scenario]]
 id = "samus-ceres-push"
 oracle = "faithful"
 start = "seed:0a6d988b41a6ed6baf83f194d23219f8a98f47c38cea6c2bf81520d5461a2938"
@@ -8292,6 +8305,18 @@ format = 1
 ticks = 841
 combined = "a6aa70e300e6a291"
 digests = { "wram" = "3de528eb888ebc3f", "sram" = "918ac1a7737507c7", "vram" = "ce201b6a143b350a", "cgram" = "e35bf3ff8ceac288", "oam" = "006741a0bd4464ca", "ppu" = "01b82756f0d65fd1", "video" = "480efaada3bb2e02", "apu" = "4f5c057bb23517fb", "input" = "9b25001db4e2bc7f", "samus" = "efe73ac992bf6fdd", "camera" = "f46484bc30313ba4", "room" = "68352534665b35e6", "progress" = "31bff87b2b83c373", "actors" = "8fb2ff95ead8aefc", "effects" = "3b4ff46416974ac3" }
+marks = {  }
+
+[[scenario]]
+id = "wall-crawler-slope-step"
+oracle = "faithful"
+start = "seed:78064d156224580b594e2da71ca253a794bdb4318eeac9f3bc5f01701e61477b"
+inputs = "c28d29dcdc947f8ff9c821b2558ce5937e157815550aa874efa530ad8b884c00"
+frames = 8
+format = 1
+ticks = 8
+combined = "22842bbc3b1fa944"
+digests = { "wram" = "abd5d28e6ba33bd1", "sram" = "06e30668e01dcbb5", "vram" = "cc2733a570d8e518", "cgram" = "163c4708ff939bf5", "oam" = "e29dd0a304ba4347", "ppu" = "9ef41fc577088877", "video" = "8e527413db629ee7", "apu" = "2c09bfebcc1561dc", "input" = "74bea445240fe751", "samus" = "063a2721753c7cc1", "camera" = "b635fe9bb8b3c5e1", "room" = "87dd28b8c540c5cb", "progress" = "b21cc2e408c72340", "actors" = "f763c3f123f9724d", "effects" = "648ab015cdaebdca" }
 marks = {  }
 
 [[scenario]]
