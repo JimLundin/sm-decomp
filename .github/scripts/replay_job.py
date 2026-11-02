@@ -194,7 +194,10 @@ def main():
             arguments += ["--segment", name]
         if os.environ["PREFIX_STAGE"] != "0":
             arguments += ["--prefix-in", "prefix-import/checkpoint.tar.gz.enc"]
-        return subprocess.run(arguments, cwd=ROOT, env=dict(os.environ, SM_ORACLE=JOB["oracle"])).returncode
+        environment = dict(os.environ, SM_ORACLE=JOB["oracle"])
+        if os.environ.get("AUDIO_TRACE"):
+            environment["SM_VERIFY_PHYSICAL_AUDIO"] = "1"
+        return subprocess.run(arguments, cwd=ROOT, env=environment).returncode
     if JOB["mode"] == "rom-import":
         return rom_import()
     if JOB["mode"] == "record":

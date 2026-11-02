@@ -599,6 +599,109 @@ pub struct SceneObject {
     pub flip_horizontal: bool,
     pub flip_vertical: bool,
 }
+/// Exact geometry and raster attributes of a slot with no authored visual.
+/// These records retain traversal/encoding, but may only be used on rows where
+/// the original object evaluator cannot fetch any of their tiles.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct UnauthoredObject {
+    pub order: u16,
+    pub position: ScreenPosition,
+    pub size: ObjectSize,
+    pub tile: u8,
+    pub second_atlas: bool,
+    pub palette: u8,
+    pub priority: u8,
+    pub flip_horizontal: bool,
+    pub flip_vertical: bool,
+}
+impl UnauthoredObject {
+    pub fn from_slot(objects: &[u8; 544], order: u16) -> Result<Self, SceneError> {
+        if order >= 128 {
+            return Err(SceneError::Geometry);
+        }
+        let index = usize::from(order);
+        let offset = index * 4;
+        let extension = (objects[512 + index / 4] >> ((index & 3) * 2)) & 3;
+        let attributes = u16::from_le_bytes([objects[offset + 2], objects[offset + 3]]);
+        Ok(Self {
+            order,
+            position: ScreenPosition {
+                x: i16::from(objects[offset]) | (i16::from(extension & 1) << 8),
+                y: i16::from(objects[offset + 1]),
+            },
+            size: if extension & 2 != 0 {
+                ObjectSize::Large
+            } else {
+                ObjectSize::Small
+            },
+            tile: objects[offset + 2],
+            second_atlas: attributes & 0x100 != 0,
+            palette: u8::try_from((attributes >> 9) & 7).unwrap(),
+            priority: u8::try_from((attributes >> 12) & 3).unwrap(),
+            flip_horizontal: attributes & 0x4000 != 0,
+            flip_vertical: attributes & 0x8000 != 0,
+        })
+    }
+    pub fn remaining(
+        objects: &[u8; 544],
+        authored: &[SceneObject],
+    ) -> Result<Vec<Self>, SceneError> {
+        let mut assigned = [false; 128];
+        for object in authored {
+            let slot = assigned
+                .get_mut(usize::from(object.order))
+                .ok_or(SceneError::Order)?;
+            if std::mem::replace(slot, true) {
+                return Err(SceneError::Order);
+            }
+        }
+        assigned
+            .iter()
+            .enumerate()
+            .filter(|(_, assigned)| !**assigned)
+            .map(|(order, _)| Self::from_slot(objects, u16::try_from(order).unwrap()))
+            .collect()
+    }
+    /// Same wrapped Y, signed nine-bit X and square size sets as evaluate_sprites.
+    /// Interlace halves the admitted height before selecting either frame parity.
+    pub fn invisible_on_row(
+        &self,
+        selection: ObjectSelection,
+        row: u16,
+    ) -> Result<bool, SceneError> {
+        let sizes = [
+            [8u16, 16],
+            [8, 32],
+            [8, 64],
+            [16, 32],
+            [16, 64],
+            [32, 64],
+            [16, 32],
+            [16, 32],
+        ];
+        let sizes = sizes
+            .get(usize::from(selection.size_set))
+            .ok_or(SceneError::Geometry)?;
+        let size = sizes[usize::from(self.size == ObjectSize::Large)];
+        let height = if selection.interlaced { size / 2 } else { size };
+        let relative_row = row.to_le_bytes()[0].wrapping_sub(self.position.y.to_le_bytes()[0]);
+        let x = self.position.x & 0x1ff;
+        let x = if x > 255 { x - 512 } else { x };
+        Ok(u16::from(relative_row) >= height || x <= -i16::try_from(size).unwrap())
+    }
+    pub fn raster_words(&self) -> [u16; 2] {
+        let x = u16::from_le_bytes(self.position.x.to_le_bytes()) & 0x1ff;
+        [
+            (x & 255) | (u16::from(self.position.y.to_le_bytes()[0]) << 8),
+            u16::from(self.tile)
+                | (u16::from(self.second_atlas) << 8)
+                | (u16::from(self.palette) << 9)
+                | (u16::from(self.priority) << 12)
+                | (u16::from(self.flip_horizontal) << 14)
+                | (u16::from(self.flip_vertical) << 15),
+        ]
+    }
+}
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ProducedObject {
     pub producer: ProducerObjectId,
@@ -836,6 +939,8 @@ pub struct SceneLine {
     pub blank: bool,
     pub planes: [ScenePlane; 3],
     pub objects: Arc<[SceneObject]>,
+    /// All remaining OAM slots, without fabricated visual or producer IDs.
+    pub unauthored_objects: Arc<[UnauthoredObject]>,
     pub object_selection: ObjectSelection,
     pub windows: SceneWindows,
     pub routing: [ScreenRouting; 2],
@@ -843,6 +948,40 @@ pub struct SceneLine {
     pub pixelation: ScenePixelation,
     pub color: SceneColor,
     pub object_aliases: Arc<[SignedObjectPixel]>,
+}
+impl SceneLine {
+    pub fn capture_unauthored(&mut self, bytes: &[u8; 544]) -> Result<(), SceneError> {
+        self.unauthored_objects = UnauthoredObject::remaining(bytes, &self.objects)?.into();
+        Ok(())
+    }
+    pub fn validate_object_slots(&self, row: u16) -> Result<(), SceneError> {
+        let mut assigned = [false; 128];
+        for order in self
+            .objects
+            .iter()
+            .map(|object| object.order)
+            .chain(self.unauthored_objects.iter().map(|object| object.order))
+        {
+            let slot = assigned
+                .get_mut(usize::from(order))
+                .ok_or(SceneError::Order)?;
+            if std::mem::replace(slot, true) {
+                return Err(SceneError::Order);
+            }
+        }
+        if assigned.iter().any(|assigned| !assigned) {
+            return Err(SceneError::Incomplete);
+        }
+        for object in self.unauthored_objects.iter() {
+            if object.palette > 7 || object.priority > 3 {
+                return Err(SceneError::Geometry);
+            }
+            if !self.blank && !object.invisible_on_row(self.object_selection, row)? {
+                return Err(SceneError::Incomplete);
+            }
+        }
+        Ok(())
+    }
 }
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct SceneDescription {
@@ -967,7 +1106,7 @@ impl Scene {
             }
         };
         resident(self.description.view.room)?;
-        for line in self.lines() {
+        for (row, line) in self.lines().iter().enumerate() {
             resident(line.media.asset)?;
             resident(line.palette.asset)?;
             for plane in &line.planes {
@@ -986,7 +1125,11 @@ impl Scene {
             if line.object_selection.even_frame != geometry.even_frame {
                 return Err(SceneError::Geometry);
             }
-            validate_line(line, media)?;
+            validate_line(
+                line,
+                media,
+                u16::try_from(row).map_err(|_| SceneError::Geometry)?,
+            )?;
         }
         self.validate_producer_history()?;
         Ok(())
@@ -1000,11 +1143,18 @@ impl Scene {
             return Err(SceneError::Incomplete);
         }
         for (line, records) in self.lines().iter().zip(self.producer_history.iter()) {
+            if records.len() != line.objects.len() {
+                return Err(SceneError::Incomplete);
+            }
             for (index, record) in records.iter().enumerate() {
                 if record.producer.0 == 0 {
                     return Err(SceneError::Identity);
                 }
-                if line.objects.get(usize::from(record.object.order)) != Some(&record.object)
+                if line
+                    .objects
+                    .iter()
+                    .find(|object| object.order == record.object.order)
+                    != Some(&record.object)
                     || record.context.selection != line.object_selection
                     || record.context.palette != line.palette
                     || records[..index]
@@ -1019,7 +1169,8 @@ impl Scene {
         Ok(())
     }
 }
-fn validate_line(line: &SceneLine, media: &SceneMedia) -> Result<(), SceneError> {
+fn validate_line(line: &SceneLine, media: &SceneMedia, row: u16) -> Result<(), SceneError> {
+    line.validate_object_slots(row)?;
     let image = media.image(line.media)?;
     media.palette(line.palette)?;
     if image.palette != line.palette {
@@ -1115,8 +1266,7 @@ fn validate_line(line: &SceneLine, media: &SceneMedia) -> Result<(), SceneError>
             }
         }
     }
-    if line.objects.len() != 128
-        || line.object_selection.size_set > 7
+    if line.object_selection.size_set > 7
         || line.object_selection.first_order.is_some_and(|v| v >= 128)
     {
         return Err(SceneError::Incomplete);
@@ -1128,10 +1278,7 @@ fn validate_line(line: &SceneLine, media: &SceneMedia) -> Result<(), SceneError>
             return Err(SceneError::Definition(atlas.id));
         }
     }
-    for (index, object) in line.objects.iter().enumerate() {
-        if usize::from(object.order) != index {
-            return Err(SceneError::Order);
-        }
+    for object in line.objects.iter() {
         let visual = match media.asset(object.visual)? {
             SceneAsset::Visual(v) => v,
             _ => return Err(SceneError::AssetKind(object.visual.id)),

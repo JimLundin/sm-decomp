@@ -83,6 +83,8 @@ pub fn render_row(
         .palette(line.palette)
         .map_err(|error| failure(error, None, None))?;
     let source = SceneIndexedSource { image, palette };
+    line.validate_object_slots(index)
+        .map_err(|error| failure(error, None, None))?;
     let sprites = encode_objects(line, image).map_err(|error| failure(error, None, None))?;
     let mut object_line = r::SpriteLine::cleared(overflow);
     if !line.blank {
@@ -190,8 +192,9 @@ fn encode_objects(line: &SceneLine, image: &CompiledImage) -> Result<EncodedObje
     };
     // Consume already selected source order. No actor, pose, material or frame
     // selection is repeated, and no asset-ID ordering drives object allocation.
-    for (index, object) in line.objects.iter().enumerate() {
-        if index >= 128 || usize::from(object.order) != index {
+    for object in line.objects.iter() {
+        let index = usize::from(object.order);
+        if index >= 128 {
             return Err(SceneError::Order);
         }
         let x = object.position.x as u16 & 0x1ff;
@@ -204,6 +207,18 @@ fn encode_objects(line: &SceneLine, image: &CompiledImage) -> Result<EncodedObje
             | (u16::from(object.flip_horizontal) << 14)
             | (u16::from(object.flip_vertical) << 15);
         let high = ((x >> 8) as u8) | (u8::from(object.size == ObjectSize::Large) << 1);
+        output.extension[index / 4] |= high << ((index % 4) * 2);
+    }
+    for object in line.unauthored_objects.iter() {
+        let index = usize::from(object.order);
+        if index >= 128 {
+            return Err(SceneError::Order);
+        }
+        let words = object.raster_words();
+        output.words[index * 2..index * 2 + 2].copy_from_slice(&words);
+        let x = u16::from_le_bytes(object.position.x.to_le_bytes()) & 0x1ff;
+        let high =
+            u8::try_from(x >> 8).unwrap() | (u8::from(object.size == ObjectSize::Large) << 1);
         output.extension[index / 4] |= high << ((index % 4) * 2);
     }
     Ok(output)

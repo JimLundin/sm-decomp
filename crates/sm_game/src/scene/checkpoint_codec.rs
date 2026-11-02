@@ -419,6 +419,17 @@ record!(r::ScenePixelation {
 });
 variants!(r::SceneMode, "mode" { 0 => TilePlanes, 1 => AffinePlane { extended } });
 record!(r::SignedObjectPixel { x, value });
+record!(r::UnauthoredObject {
+    order,
+    position,
+    size,
+    tile,
+    second_atlas,
+    palette,
+    priority,
+    flip_horizontal,
+    flip_vertical
+});
 record!(r::SceneLine {
     media,
     palette,
@@ -426,6 +437,7 @@ record!(r::SceneLine {
     blank,
     planes,
     objects,
+    unauthored_objects,
     object_selection,
     windows,
     routing,
@@ -1350,7 +1362,7 @@ pub fn encode(
     required: &t::DisplayStartRequirements,
 ) -> Result<Vec<u8>, String> {
     let binding = binding(media, metadata, required)?;
-    let mut bytes = Vec::from(b"SMDISPL\x05".as_slice());
+    let mut bytes = Vec::from(b"SMDISPL\x06".as_slice());
     binding.put(&mut bytes);
     description.put(&mut bytes);
     resident.put(&mut bytes);
@@ -1367,7 +1379,7 @@ pub fn decode(
 ) -> Result<t::ValidatedDisplayStart, String> {
     let expected = binding(&media, metadata, required)?;
     let mut read = CheckpointReader(bytes);
-    if read.bytes(8)? != b"SMDISPL\x05" {
+    if read.bytes(8)? != b"SMDISPL\x06" {
         return Err("unsupported display checkpoint schema".into());
     }
     let binding_length = usize::get(&mut read)?;

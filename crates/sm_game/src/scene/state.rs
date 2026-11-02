@@ -262,6 +262,8 @@ impl ObjectStaging {
         // All 32 high bytes are owned; this host cannot fail at these offsets.
         super::objects::clear_high_table(self).expect("owned object high table");
     }
+    /// Each completed filler byte revokes authored metadata through write_byte.
+    /// Scene captures the remaining exact geometry from the delivered object image.
     pub fn finish_frame(&mut self) -> Result<(), DisplayError> {
         super::objects::finish_frame(self)
     }

@@ -405,6 +405,7 @@ fn scene_fixture() -> (sc::SceneDescription, Arc<sc::SceneMedia>) {
                     ),
                 ],
                 objects: objects.clone(),
+                unauthored_objects: Arc::from([]),
                 object_selection: sc::ObjectSelection {
                     atlases: [reference(2); 2],
                     size_set: 0,
@@ -927,7 +928,27 @@ fn scene_start_prefix() -> (
         audio_revision,
         audio_programs: declarations,
     };
-    // The fixture has no atmospheric publications on any of its 224 visible lines.
+    // These synthetic start slots have no authored lifetime. Their exact
+    // original signed X=-256 geometry is invisible for every admitted size.
+    for line in Arc::make_mut(&mut scene.lines) {
+        line.unauthored_objects = line
+            .objects
+            .iter()
+            .map(|object| sc::UnauthoredObject {
+                order: object.order,
+                position: object.position,
+                size: object.size,
+                tile: u8::try_from(object.tile).unwrap(),
+                second_atlas: object.atlas != line.object_selection.atlases[0],
+                palette: object.palette,
+                priority: object.priority,
+                flip_horizontal: object.flip_horizontal,
+                flip_vertical: object.flip_vertical,
+            })
+            .collect::<Vec<_>>()
+            .into();
+        line.objects = Arc::from([]);
+    }
     let producer_history: Arc<[Arc<[sc::ProducedObject]>]> = vec![Arc::from([]); 224].into();
     let description = ss::DisplayStartDescription {
         identity: Some(identity),
@@ -6601,7 +6622,7 @@ fn scene_read_results_codec_and_reopen() {
     assert_eq!(captured.display.as_ref().unwrap().read_results, expected);
     scene_owner_unchanged(&display, &before, &metadata);
     let bytes = before.encode_checkpoint(&metadata, &requirements).unwrap();
-    assert_eq!(&bytes[..8], b"SMDISPL\x05");
+    assert_eq!(&bytes[..8], b"SMDISPL\x06");
     let decoded =
         sd::DisplayCheckpoint::decode_checkpoint(&bytes, media.clone(), &metadata, &requirements)
             .unwrap();

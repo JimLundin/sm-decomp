@@ -222,10 +222,11 @@ pub fn reset_cursor<H: Host>(host: &mut H) -> Result<(), H::Error> {
     host.write_byte(545, 0)
 }
 
-/// Hide the entries after the cursor as large sprites at X 80h, Y 0, as the
-/// ending's sprite pass does: their high-table pairs become 01 (large), then
-/// each entry's X/Y word is 0080h. Nothing is done once the cursor has
-/// reached the end of OAM.
+/// Hide the entries after the cursor at signed nine-bit X -128, Y 0.
+/// The ending's sprite pass sets X high, preserving size bits in the first
+/// partial high-table group. Later groups become 01 pairs, clearing size bits.
+/// The X/Y word then becomes 0080h, outside even a 64-pixel sprite's range.
+/// Nothing is done past the OAM end.
 pub fn hide_unused_large<H: Host>(host: &mut H) -> Result<(), H::Error> {
     let cursor = host.read_little_word(544)?;
     if cursor >= 0x200 {

@@ -27,6 +27,65 @@ Pending and unobserved engine scope is retained in the coordinator and endgame
 snapshots below. Complete any%, 100%, low%, boot/transition/endgame acceptance is
 not established by this documentation cleanup.
 
+## Inactive OAM ownership family, 2026-11-02 18:05 UTC
+
+The next migration now has source
+`32e20618415d28177c4cba7010a54ef723b7ce763525842b1384321012f55851`.
+Independent source review accepts the complete bounded Scene/schema/renderer/
+catalogue/caller family: every OAM slot retains its exact geometry, with genuine
+authored identity where supplied and an explicit unauthored record elsewhere.
+Missing visual content is admitted only for forced blank or exact geometric
+invisibility on that row. All 128 slots, rotation, range/time traversal and
+original producer failure/alias order remain. Visible slots still need actual
+content supply; this does not complete the separate native display draft.
+
+Two reached fixture defects were corrected before acceptance: the codec assertion
+now expects SMDISPL6, and the synthetic start's exact invisible geometry uses
+unauthored records with its empty history. No IDs, tolerances or skipped slots
+were invented. The format change requires genuine fresh initialized captures,
+payload/continuation and rejection checks; prior headers are not restamped.
+
+Local formatting, inventory, anchors and the ordinary Cargo gate pass. The actual
+verifier library and binary configuration also passes ordinary warning-denied
+Cargo checking with source inventory enabled in 34.79 seconds. Original handles
+60190 and 84398 are collected, with no compiler descendants. No local executable,
+DLL, capture or replay ran. Exact-head hosted qualification remains pending.
+
+Canonical family delta is +188 production / +21 verification physical lines,
+giving 258,482 production, 62,315 verification and 379 legacy-bank lines under
+the existing path classification. Additional genuine RAM retirements remain 275;
+the expression counter is 336 sites / 44 files. This family claims no further
+RAM retirement or compactness. The dependent native-draft overlay was not applied.
+All 1,121 source members are frozen in `NEXT152_INACTIVE_OAM_32E206`, zip SHA256
+`b02be9bc616cb189cf17c5986bffb659e8030c27e81c2c203f73d564cdca8a6e`.
+
+PR #151 is separately published at `da93b9bb1`. Its CI `41495830571` passes;
+full Linux Verify `41495855357` remains in executable build/qualification with
+physical audio enabled. No new engine landing or full-movie proof is claimed.
+
+## Linux executable and audio-prefix corrections, 2026-11-02 17:58 UTC
+
+PR #151 head `1b810f48a` passes Linux CI `41494319086`, including target tests,
+clippy, detached checks and Windows desktop type-checking. Full Verify
+`41494345180` failed before any replay: Cargo compiled the verifier and its
+original executable passed inspection, but the cached copy lacked Unix execute
+permission. The original watcher ended with exit 4; its handle was collected.
+
+The independently reviewed correction copies the actual checked Cargo artifact's
+mode onto the Unix cache, including an existing byte-identical copy. It leaves
+Windows behavior unchanged and preserves executable bytes and identity checks.
+A separate accepted correction selects physical audio before prefix capture
+when audio tracing is enabled, matching the later checkpoint replay backend.
+Existing backend mismatch rejection remains strict. No captures from the failed
+Linux run are credited.
+
+Combined source is
+`7a69f183abb3ede7532d4a6eeb374f26716ffa4d208b5905e9e3084ffabd7370`.
+Formatting, source inventory, Python syntax, mutation anchors and the ordinary
+warning-denied local Cargo gate pass. No local executable or DLL was built or
+run. New exact-head hosted build and full replay qualification remain pending;
+these verification-only fixes add no engine RAM retirement.
+
 ## Published Linux migration qualification, 2026-11-02 17:52 UTC
 
 PR #151 is published at `1b810f48a4763ea48c6374eb524e9ba7926ca986`,

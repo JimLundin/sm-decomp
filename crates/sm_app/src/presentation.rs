@@ -279,14 +279,6 @@ impl<E: RoomEffects + Destinations> SettlementEffects for RasterEffects<'_, E> {
             sources.push(entry.record.clone());
         }
         sources.sort_by_key(|record| record.object.order);
-        if sources.len() != 128
-            || sources
-                .iter()
-                .enumerate()
-                .any(|(index, record)| usize::from(record.object.order) != index)
-        {
-            return Err(DisplayError::Incomplete);
-        }
         let records = sources
             .iter()
             .map(|record| {
@@ -306,6 +298,8 @@ impl<E: RoomEffects + Destinations> SettlementEffects for RasterEffects<'_, E> {
                 .map(|record| record.object.clone())
                 .collect::<Vec<_>>(),
         );
+        line.capture_unauthored(&context.image().objects)
+            .map_err(|_| DisplayError::Scene)?;
         let overflow = sm_runtime::rendering::Overflow {
             range: context.state().raster.range_overflow,
             time: context.state().raster.time_overflow,
@@ -562,6 +556,7 @@ impl RasterCatalog {
             blank: effective.forced_blank,
             planes: [plane(0)?, plane(1)?, plane(2)?],
             objects: Arc::from([]),
+            unauthored_objects: Arc::from([]),
             object_selection: selection,
             windows: SceneWindows {
                 extents: core::array::from_fn(|index| WindowExtent {
@@ -650,7 +645,23 @@ impl RasterCatalog {
                     && binding.word == word
                     && binding.large == (extension & 2 != 0)
             });
-            let binding = matches.next().ok_or(DisplayError::Source)?;
+            let binding = match matches.next() {
+                Some(binding) => binding,
+                None => {
+                    let geometry =
+                        sm_data::scene::UnauthoredObject::from_slot(&resident.objects, order)
+                            .map_err(|_| DisplayError::Geometry)?;
+                    let index = row.checked_sub(1).ok_or(DisplayError::Geometry)?;
+                    if line.blank
+                        || geometry
+                            .invisible_on_row(selection, index)
+                            .map_err(|_| DisplayError::Geometry)?
+                    {
+                        continue;
+                    }
+                    return Err(DisplayError::Source);
+                }
+            };
             if matches.next().is_some() {
                 return Err(DisplayError::Source);
             }
