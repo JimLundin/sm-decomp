@@ -1,12 +1,12 @@
 //! Fune and namihe, the wall-mounted fire spitters (bank $A8:959D-$A8:97B3):
 //! a fune spits on a timer, a namihe when Samus comes into its vertical range.
-//! The saved instruction list pointers word remains RAM-authoritative.
 use crate::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 use crate::actors::api::{Axis, player_within};
 use crate::actors::host::{ActorLease, ActorRuntime as _, LeaseActors};
+use crate::actors::slot_view::{SlotState, slot_view};
 use crate::enemy_projectiles::host::Effects as _;
 use crate::enemy_script::EnemyScript;
-use crate::ram::words;
+use crate::session_access::SessionAccess as _;
 
 /// The actor words fune and namihe use, by `variables` lane.
 mod lane {
@@ -48,10 +48,14 @@ const ACTIVE: u16 = 4;
 /// Parameter 1's low nibble selects the variant, its high nibble faces right.
 const VARIANT_BITS: u16 = 0xf;
 const RIGHT_BITS: u16 = 0xf0;
-/// $7E:7800: the namihe's saved instruction list pointers pointer, and
-/// $7E:1995: enemy projectile initialisation parameter 1, never read.
-const SAVED_LISTS: usize = 0x7800;
-const PROJECTILE_PARAMETER: usize = 0x1995;
+slot_view! {
+    /// The namihe's extended word: its saved instruction list pointers
+    /// pointer ($7E:7800).
+    Namihe, NamiheEdit {
+        record: [],
+        extended: [saved_lists = var_00],
+    }
+}
 /// The namihe and fune fireball projectiles, and the fune spit sound (1Fh,
 /// library 2, at most 9 queued).
 const NAMIHE_FIREBALL: u16 = 0xdfbc;
@@ -59,7 +63,7 @@ const FUNE_FIREBALL: u16 = 0xdfca;
 const SPIT_SOUND: u16 = 0x1f;
 
 fn selected(runtime: &impl ActorLease) -> Key {
-    Key::from_legacy(runtime.word(words::CUR_ENEMY_INDEX))
+    Key::from_legacy(runtime.session().actors.controls.selected)
 }
 /// Set fune / namihe instruction list ($A8:979B).
 fn set_instruction_list(runtime: &mut impl ActorLease) {
@@ -96,7 +100,7 @@ pub fn initialize(runtime: &mut impl ActorLease) {
     });
 }
 /// Main AI - fune / namihe ($A8:9730): run its function. Was `advance`.
-pub fn main_ai(runtime: &mut impl ActorLease) {
+pub fn main_ai(runtime: &mut (impl ActorLease + SlotState)) {
     let key = selected(runtime);
     match runtime.resolve_actor(key, Native).variables[lane::FUNCTION] {
         // Fune / namihe function - wait for timer (fune) ($A8:9737).
@@ -121,23 +125,23 @@ pub fn main_ai(runtime: &mut impl ActorLease) {
         }
         // Fune / namihe function - wait for Samus to get near (namihe) ($A8:975C).
         function::WAIT_FOR_SAMUS => {
-            let saved = SAVED_LISTS + usize::from(key.byte_index());
+            let k = key.byte_index();
             let lists = runtime.resolve_actor(key, Native).variables[lane::LISTS];
-            runtime.write_slice_native(saved, lists);
+            *NamiheEdit::of(runtime, k).saved_lists() = lists;
             let live = selected(runtime);
             let range = runtime.resolve_actor(live, Native).variables[lane::Y_PROXIMITY];
             if player_within(runtime, live, Axis::Y, range) {
-                let table = runtime.lease_native_word(saved);
+                let table = Namihe::of(runtime, k).saved_lists();
                 runtime.edit_actor(key, Native, |actor| actor.variables[lane::LISTS] = table);
                 let table = table.wrapping_sub(ACTIVE);
-                runtime.write_slice_native(saved, table);
+                *NamiheEdit::of(runtime, k).saved_lists() = table;
                 runtime.edit_actor(key, Native, |actor| actor.variables[lane::LISTS] = table);
                 set_instruction_list(runtime);
                 runtime.edit_actor(key, Native, |actor| {
                     actor.variables[lane::FUNCTION] = function::NAMIHE_ACTIVE
                 });
             }
-            let table = runtime.lease_native_word(saved);
+            let table = Namihe::of(runtime, k).saved_lists();
             runtime.edit_actor(key, Native, |actor| actor.variables[lane::LISTS] = table);
         }
         function::FUNE_ACTIVE | function::NAMIHE_ACTIVE => {}
@@ -160,8 +164,9 @@ pub fn instruction<H: LeaseActors + ?Sized>(
         | SPAWN_RIGHTWARDS_FUNE_FIREBALL => {
             let key = selected(&runtime);
             let parameter = runtime.resolve_actor(key, Native).parameters[1].to_ne_bytes()[0];
-            runtime.write_slice_le(PROJECTILE_PARAMETER, u16::from(parameter));
-            let actor = runtime.word(words::CUR_ENEMY_INDEX);
+            // Enemy projectile initialisation parameter 2 ($7E:1995), never read.
+            runtime.session_mut().enemy_projectiles.spawn.secondary = u16::from(parameter);
+            let actor = runtime.session().actors.controls.selected;
             let right = u16::from(matches!(
                 address,
                 SPAWN_RIGHTWARDS_NAMIHE_FIREBALL | SPAWN_RIGHTWARDS_FUNE_FIREBALL
