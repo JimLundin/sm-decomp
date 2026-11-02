@@ -302,6 +302,13 @@ pub struct PreparedActorState<'a> {
     pub(crate) presentation: &'a crate::scene::actor_presentation::Binding,
     pub(crate) samus_content: SamusContentBinding<'a>,
 }
+/// Whether a store at `at` can change an external observation. Enemy records
+/// ($0F78..$1777), saved records ($7000..$77FF) and extended slot words
+/// ($7800..$8FFF) feed none except enemy 0's health at $0F8C.
+fn observes_slot_byte(at: usize) -> bool {
+    !matches!(at, 0x0f78..=0x1777 | 0x7000..=0x8fff) || matches!(at, 0x0f8c | 0x0f8d)
+}
+
 impl<'a> PreparedActorState<'a> {
     /// Reborrow the exact fields of an already admitted actor interval.
     /// No state/source copy, resource admission or runner is created here.
@@ -381,7 +388,19 @@ impl<'a> PreparedActorState<'a> {
                 .state
                 .phase = crate::scene::state::DisplayPhase::Failed;
         }
-        crate::session_access::SessionAccess::refresh_inputs(self);
+        if observes_slot_byte(at) {
+            crate::session_access::SessionAccess::refresh_inputs(self);
+        } else {
+            // Enemy records, saved records and extended slot words feed no
+            // observation except enemy 0's health; rebuilding them is a no-op.
+            debug_assert!(
+                self.owner.observations
+                    == crate::session_encoding::inputs_from_session(&self.owner.gameplay, &|at| {
+                        self.current_byte(at)
+                    }),
+                "slot byte {at:#x} changed an observation"
+            );
+        }
     }
     pub(crate) fn write_current_slice(&mut self, at: usize, bytes: &[u8]) {
         // Runtime::write_slice admitted the full 128-KiB allocation before
