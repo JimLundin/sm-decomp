@@ -2,7 +2,6 @@
 use super::prelude::*;
 use crate::imported::Imported;
 use crate::menu_state::SaveSelection;
-use crate::ram::checked_word as word;
 use crate::ram::word as game_word;
 use crate::save_file::{self, SaveHost};
 use sm_data::cartridge::{RomImage, lorom_offset};
@@ -167,22 +166,19 @@ pub fn initialize<H: Host + ?Sized>(game: &mut H) {
     crate::sequence_word!(game.JAPANESE_TEXT_FLAG = 0);
     game_word! { game, 0; MOONWALK_FLAG, HUD_AUTO_CANCEL_FLAG }
     game_word! { game, 1; DEBUG_FLAG, UNUSED_WORD_7E09E8 }
-    crate::word_transfers!(game, ascending, 4;
-        native(0xd830) <- value(0),
-        native(0xd870) <- value(0),
-        native(0xd870) <- value(0),
-        native(0xd8b0) <- value(0),
-        le(UNUSED_WORD_7ED8F0, 0) <- value(0),
-        native(0xd908) <- value(0),
-        native(0xd8f8) <- value(0),
-        native(0xd900) <- value(0),
-    );
-    crate::word_transfers!(game, ascending, 28;
-        native(0xd838) <- value(0),
-        native(0xd878) <- value(0),
-        native(0xd878) <- value(0),
-        native(0xd8b8) <- value(0),
-    );
+    // A new game has used no room object, item, door, station or map station
+    // ($D830..$D8EF, $D8F8..$D90F); the event and boss bits are left alone.
+    {
+        use crate::session_access::SessionAccess as _;
+        let mut runtime = game.runtime();
+        let flags = &mut runtime.session_mut().gameplay_flags;
+        flags.used_room_objects.fill(0);
+        flags.collected_locations.fill(0);
+        flags.opened_doors.fill(0);
+        flags.used_stations.fill(0);
+        flags.map_stations.fill(0);
+    }
+    crate::word_transfers!(game, ascending, 4; le(UNUSED_WORD_7ED8F0, 0) <- value(0));
     crate::word_transfers!(game, ascending, 896; le(EXPLORED_MAP_TILES_SAVED, 0) <- value(0));
 }
 
@@ -228,8 +224,11 @@ pub fn save_area_map<H: Host + ?Sized>(game: &mut H) {
         crate::word_transfers!(game, ascending, 1; le(EXPLORED_MAP_TILES_SAVED, saved) <- native(0x7f7 + active * 2));
     }
     if crate::menus::state::load::<SaveSelection, _>(game).has_area_map != 0 {
-        let flag = 0xd908 + usize::from(crate::gameplay_context::navigation(game).area);
-        word!(game, flag; = word!(game, flag;) | 0xff);
+        // The original ORs $00FF into the word at $D908 + area: the area's map
+        // station byte becomes $FF and the byte after it is stored unchanged.
+        use crate::session_access::SessionAccess as _;
+        let area = usize::from(crate::gameplay_context::navigation(game).area);
+        game.runtime().session_mut().gameplay_flags.map_stations[area] = 0xff;
     }
 }
 
