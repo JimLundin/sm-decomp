@@ -1202,10 +1202,12 @@ impl crate::player_position::PlayerPosition for PreparedActorState<'_> {
         for (lane, value) in value.to_le_bytes().into_iter().enumerate() {
             let player = &mut self.owner.gameplay.player;
             let field = match word {
+                PeriodicDamage => &mut player.periodic_damage,
                 X => &mut player.x,
                 XFraction => &mut player.x_fraction,
                 Y => &mut player.y,
                 YFraction => &mut player.y_fraction,
+                YRadius => &mut player.contact.radius,
                 PreviousX => &mut player.previous_position.x.whole,
                 PreviousXFraction => &mut player.previous_position.x.fraction,
                 PreviousY => &mut player.previous_position.y.whole,
