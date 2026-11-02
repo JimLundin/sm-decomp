@@ -1,14 +1,6 @@
 #!/usr/bin/env python3
-# Prepare the original ROM and selected seed or movie-route corpus inputs.
-import base64, gzip, hashlib, io, os, pathlib, subprocess, sys, time, tomllib, urllib.error, urllib.request, zipfile
-encoded = "".join(os.environ[f"ROM_{i:02d}"] for i in range(45))
-if not encoded:
-    raise SystemExit("ROM secrets are missing")
-rom = gzip.decompress(base64.b64decode(encoded))
-if hashlib.sha1(rom).hexdigest() != 'da957f0d63d14cb441d215462904c4fa8519c613':
-    raise SystemExit('wrong ROM')
-pathlib.Path('rom').mkdir(exist_ok=True)
-pathlib.Path('rom/sm.smc').write_bytes(rom)
+# Prepare selected seed or movie-route corpus inputs; prepare_rom.py already restored the ROM.
+import hashlib, io, os, pathlib, subprocess, sys, time, tomllib, urllib.error, urllib.request, zipfile
 if os.environ['KIND'] != 'route':
     bundle = pathlib.Path(os.environ['RUNNER_TEMP']) / 'seeds-v1.tar.gz.enc'
     asset, digest = os.environ['SEED_ASSET'], os.environ['SEED_SHA256']

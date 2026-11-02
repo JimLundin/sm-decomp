@@ -38,7 +38,6 @@ def script(name, *arguments, **environment):
 
 def restore():
     if JOB["kinds"] == "room":
-        script("prepare_rom.py")
         bundle = TEMP / "chain.tar.gz.enc"
         urllib.request.urlretrieve(
             f"https://github.com/JimLundin/sm-decomp/releases/download/ci-data/{JOB['asset']}", bundle)
@@ -49,8 +48,6 @@ def restore():
             script("prepare_corpus_inputs.py", KIND=shard["kind"], SEED_ASSET=shard["seed_asset"],
                    SEED_SHA256=shard["seed_sha256"], SEGMENTS=shard["segments"],
                    ROUTE=shard["route"], INPUTS=shard["inputs"])
-    else:
-        script("prepare_rom.py")
 
 
 def rom_import():
