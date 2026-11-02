@@ -8,7 +8,6 @@ use crate::enemy_projectiles::access::{set_shot_direction, shot_word};
 use crate::enemy_projectiles::host::ShotMember;
 use crate::enemy_script::EnemyScript;
 use crate::player_projectiles::{access::shot, content, host::Host as _, motion};
-use crate::ram::{word_arrays, words};
 use crate::session_access::SessionAccess as _;
 
 /// $A3:DABC: the palette cycle colours, 4 a frame of 8; $A3:DC0B: the initial
@@ -21,14 +20,13 @@ const REFLECTIONS: u32 = 0xa3_dcae;
 const DEATH_LISTS: u32 = 0xa3_dca6;
 const ABSORB: u16 = 0x8000;
 /// $7E:178C: the enemy graphics drawn hook, the reflec palette cycle ($A3:DB0C).
-const GFX_DRAWN_HOOK: usize = 0x178c;
-const GFX_DRAWN_HOOK_BANK: usize = 0x178e;
 const PALETTE_CYCLE_HOOK: u16 = 0xdb0c;
 const BANK: u16 = 0xa3;
-/// The hook's variables: the palette's byte offset, the colour set and the timer.
+/// The hook's variables ($7E:1794): the palette's byte offset, the colour set
+/// and the timer.
 const HOOK_PALETTE: usize = 0;
-const HOOK_COLOUR_SET: usize = 2;
-const HOOK_TIMER: usize = 4;
+const HOOK_COLOUR_SET: usize = 1;
+const HOOK_TIMER: usize = 2;
 const CYCLE_FRAMES: u16 = 16;
 const COLOUR_SETS: u16 = 7;
 const COLOURS: usize = 4;
@@ -50,34 +48,30 @@ const SIGN: u16 = 0x8000;
 /// Enemy graphics drawn hook - reflec - periodically cycle between palettes
 /// ($A3:DB0C). Was `palette`.
 pub fn cycle_palette(runtime: &mut impl ActorLease) {
-    let hook = word_arrays::VARIABLES_FOR_ENEMY_GRAPHICS_DRAWN_HOOK;
-    if runtime.word(words::DOOR_TRANSITION_FLAG_ENEMIES) != 0 {
+    if runtime.session().room.entry.enemy_interlock != 0 {
         return;
     }
-    runtime.write_slice_le(
-        hook + HOOK_TIMER,
-        runtime.word(hook + HOOK_TIMER).wrapping_sub(1),
-    );
-    if runtime.word(hook + HOOK_TIMER) != 0 {
+    let hook = &mut runtime.session_mut().actors.drawing.hook_work;
+    hook[HOOK_TIMER] = hook[HOOK_TIMER].wrapping_sub(1);
+    if hook[HOOK_TIMER] != 0 {
         return;
     }
-    runtime.write_slice_le(hook + HOOK_TIMER, CYCLE_FRAMES);
-    let mut destination = runtime.word(hook + HOOK_PALETTE);
-    let mut source = runtime.word(hook + HOOK_COLOUR_SET).wrapping_mul(8);
+    hook[HOOK_TIMER] = CYCLE_FRAMES;
+    let mut destination = hook[HOOK_PALETTE];
+    let mut source = hook[HOOK_COLOUR_SET].wrapping_mul(8);
     let image = runtime.leased_image().expect("ROM must be loaded");
     for _ in 0..COLOURS {
         let colour = image.table_word(content::offset(CYCLE_COLOURS), (source >> 1) as isize);
-        runtime.write_slice_native(
-            word_arrays::PALETTE_BUFFER + 2 * (usize::from(destination >> 1) + FIRST_GLOW_COLOUR),
+        runtime.palette_write_native_slice(
+            false,
+            2 * (usize::from(destination >> 1) + FIRST_GLOW_COLOUR),
             colour,
         );
         source = source.wrapping_add(2);
         destination = destination.wrapping_add(2);
     }
-    runtime.write_slice_le(
-        hook + HOOK_COLOUR_SET,
-        (u16::from(runtime.lease_byte(hook + HOOK_COLOUR_SET)) + 1) & COLOUR_SETS,
-    );
+    let hook = &mut runtime.session_mut().actors.drawing.hook_work;
+    hook[HOOK_COLOUR_SET] = (u16::from(hook[HOOK_COLOUR_SET].to_le_bytes()[0]) + 1) & COLOUR_SETS;
 }
 /// Initialisation AI - reflec ($A3:DBD3).
 pub fn initialize(runtime: &mut impl ActorLease) {
@@ -87,18 +81,14 @@ pub fn initialize(runtime: &mut impl ActorLease) {
     let image = runtime.leased_image().expect("ROM must be loaded");
     let instruction = image.table_word(content::offset(INITIAL_LISTS), axis as isize);
     runtime.edit_actor(key, Native, |actor| actor.instruction = instruction);
-    runtime.write_slice_native(GFX_DRAWN_HOOK, PALETTE_CYCLE_HOOK);
-    runtime.write_slice_native(GFX_DRAWN_HOOK_BANK, BANK);
+    let [low, high] = PALETTE_CYCLE_HOOK.to_le_bytes();
+    let [bank, bank_high] = BANK.to_le_bytes();
+    runtime.session_mut().actors.drawing.hook_address = [low, high, bank, bank_high];
     let palette =
         (((16 * u32::from(runtime.resolve_actor(key, Native).palette)) & 0xff00) >> 8) as u16;
-    runtime.write_slice_le(
-        word_arrays::VARIABLES_FOR_ENEMY_GRAPHICS_DRAWN_HOOK + HOOK_PALETTE,
-        palette,
-    );
-    runtime.write_slice_le(
-        word_arrays::VARIABLES_FOR_ENEMY_GRAPHICS_DRAWN_HOOK + HOOK_TIMER,
-        CYCLE_FRAMES,
-    );
+    let hook = &mut runtime.session_mut().actors.drawing.hook_work;
+    hook[HOOK_PALETTE] = palette;
+    hook[HOOK_TIMER] = CYCLE_FRAMES;
 }
 /// Enemy shot - reflec ($A3:DC1C), its first half: reflect the shot by the
 /// reflection axis, or mark it to be absorbed and return the reflection
@@ -107,7 +97,9 @@ pub fn initialize(runtime: &mut impl ActorLease) {
 pub fn reflect_shot<H: LeaseActors + ?Sized>(game: &mut H) -> Option<u16> {
     let runtime = &mut game.lease();
     let raw = runtime
-        .word(words::COLLISION_DETECTION_INDEX)
+        .session()
+        .room
+        .collision_detection_index
         .wrapping_mul(2);
     let key = combat::current(runtime);
     runtime.edit_actor(key, Native, |actor| actor.invincibility = INVINCIBLE_FRAMES);
