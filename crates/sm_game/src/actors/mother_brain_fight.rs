@@ -12,9 +12,7 @@
 //! helpers at the end of this module.
 use crate::actors::corpses;
 use crate::actors::host::abs16;
-use crate::actors::mother_brain::{
-    BODY_INDEX, BRAIN_INDEX, Body, BodyEdit, Brain, BrainEdit, MotherBrainBody,
-};
+use crate::actors::mother_brain::{BODY_INDEX, BRAIN_INDEX, Body, BodyEdit, Brain, BrainEdit};
 use crate::actors::mother_brain_effects::{
     generate_explosions as generate_body_explosions,
     handle_rainbow_palette as handle_body_rainbow_palette,
@@ -489,12 +487,6 @@ pub(crate) mod cgram {
 
 /// Bank $A6, where Ridley's escape tiles Mother Brain loads live.
 const BANK_A6: u8 = 0xa6;
-/// $7E:781C: the body's room palette instruction list pointer.
-const ROOM_PALETTE_INSTRUCTIONS: u16 = 0x781c;
-const _: () = assert!(
-    0xf78 + core::mem::offset_of!(MotherBrainBody, room_palette_list)
-        == ROOM_PALETTE_INSTRUCTIONS as usize
-);
 /// $86:CC5B: Mother Brain's top-right tube falling enemy projectile.
 const TOP_RIGHT_TUBE_FALLING_PROJECTILE: u16 = 0xcc5b;
 /// $A9:8B15: the tubes falling enemy 3 population (bottom-middle-right).
@@ -3315,7 +3307,7 @@ pub fn process_invincibility_palette(game: &mut impl State) {
     }
 }
 pub fn handle_room_palette(game: &mut impl Lease) {
-    let j: u16 = handle_room_palette_instruction_list(ROOM_PALETTE_INSTRUCTIONS, game);
+    let j: u16 = handle_room_palette_instruction_list(game);
     if j != 0 {
         write_room_palette(j, game);
     }
@@ -3337,17 +3329,37 @@ pub fn write_room_palette(j: u16, game: &mut impl State) {
         game,
     );
 }
-pub fn handle_room_palette_instruction_list(a: u16, game: &mut impl Lease) -> u16 {
-    let st: usize = a as usize;
-    if native_word(st, game) & 0x8000 == 0 {
+/// The body's room palette instruction list pointer and timer ($7E:781C,
+/// $7E:781E). The original read and stored them through the RAM image, one
+/// foreign call each; the round trips stay.
+fn room_palette_list(game: &mut impl Lease) -> u16 {
+    let list = Body::of(game, BODY_INDEX).room_palette_list();
+    game.foreign(|_| list)
+}
+fn room_palette_timer(game: &mut impl Lease) -> u16 {
+    let timer = Body::of(game, BODY_INDEX).room_palette_timer();
+    game.foreign(|_| timer)
+}
+fn set_room_palette_list(game: &mut impl Lease, list: u16) {
+    *BodyEdit::of(game, BODY_INDEX).room_palette_list() = list;
+    game.foreign(|_| ());
+}
+fn set_room_palette_timer(game: &mut impl Lease, timer: u16) {
+    *BodyEdit::of(game, BODY_INDEX).room_palette_timer() = timer;
+    game.foreign(|_| ());
+}
+/// Run the body's room palette instruction list: the colours to write, or 0.
+pub fn handle_room_palette_instruction_list(game: &mut impl Lease) -> u16 {
+    if room_palette_list(game) & 0x8000 == 0 {
         return 0;
     }
-    let mut v2: u16 = native_word(st, game);
+    let mut v2: u16 = room_palette_list(game);
     let mut v3 = native_record(BANK_BASE | u32::from(v2), game);
     let mut execute_instruction: bool = (v3.word(0) & 0x8000 != 0)
         || ({
-            if native_word(st + 2, game) != v3.word(0) {
-                set_native_word(st + 2, native_word(st + 2, game).wrapping_add(1), game);
+            if room_palette_timer(game) != v3.word(0) {
+                let timer = room_palette_timer(game).wrapping_add(1);
+                set_room_palette_timer(game, timer);
                 return v3.word(2);
             }
             v2 = v2.wrapping_add(4);
@@ -3367,12 +3379,12 @@ pub fn handle_room_palette_instruction_list(a: u16, game: &mut impl Lease) -> u1
         }
     }
     if v3.word(0) == 0 {
-        set_native_word(st, 0, game);
-        set_native_word(st + 2, 0, game);
+        set_room_palette_list(game, 0);
+        set_room_palette_timer(game, 0);
         0
     } else {
-        set_native_word(st + 2, 1, game);
-        set_native_word(st, v2, game);
+        set_room_palette_timer(game, 1);
+        set_room_palette_list(game, v2);
         v3.word(2)
     }
 }
