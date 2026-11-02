@@ -5,21 +5,28 @@
 use crate::actors::api::DeathKind;
 use crate::actors::boss_lease::BossLease;
 use crate::actors::host::{BossEffects, Death, Shot};
-use crate::actors::layouts::part_view;
+use crate::actors::slot_view::{SlotState, slot_view};
 use crate::enemy_lists::floater_spike_instruction_list;
-use crate::session_slot;
 
-part_view! {
+slot_view! {
     /// A Powamp body's slot. Its Y velocity is a whole word over a subword; `dying` is set
     /// once it takes fatal damage.
-    Powamp: EnemyLayout8 {
-        words: [y_velocity, y_subvelocity, wiggle_index, wiggle_timer, function_timer, function, parameter_1, dying],
+    Powamp, PowampEdit {
+        record: [
+            y_velocity = var_a, y_subvelocity = var_b, wiggle_index = var_c, wiggle_timer = var_d,
+            function_timer = var_e, function = var_f, dying = parameter_2,
+        ],
+        extended: [],
     }
 }
-part_view! {
+slot_view! {
     /// A Powamp balloon's slot: its spawn position and the height a grappled body rises to.
-    Balloon: EnemyLayout8 {
-        words: [spawn_x, spawn_y, var_c, grappled_rise, var_e, function, balloon, parameter_2],
+    Balloon, BalloonEdit {
+        record: [
+            spawn_x = var_a, spawn_y = var_b, grappled_rise = var_d, function = var_f,
+            balloon = parameter_1, parameter_2 = parameter_2,
+        ],
+        extended: [],
     }
 }
 
@@ -38,7 +45,7 @@ const DEATH_SEQUENCE: u16 = 0xc59f;
 /// The body's wiggle X offsets, by wiggle index.
 const WIGGLE: [u16; 12] = [0, 1, 2, 3, 2, 1, 0, 0xffff, 0xfffe, 0xfffd, 0xfffe, 0xffff];
 /// The body is the slot after its balloon.
-const BALLOON_SLOT: i32 = 64;
+const BALLOON_SLOT: u16 = 64;
 
 /// Spawn powamp spike enemy projectiles ($A8:C223), in all eight directions.
 fn spawn_spikes(game: &mut impl Lease, k: u16) {
@@ -47,11 +54,11 @@ fn spawn_spikes(game: &mut impl Lease, k: u16) {
     }
 }
 /// Set powamp balloon Y position ($A8:C234): over the body, by the balloon's inflation.
-fn place_balloon(game: &mut impl Lease, body: i32) {
+fn place_balloon(game: &mut impl Lease, body: u16) {
     let balloon = body - BALLOON_SLOT;
-    let list = session_slot!(game, Balloon[balloon].base.current_instruction);
-    let y = balloon_offset(list).wrapping_add(session_slot!(game, Powamp[body].base.y_pos));
-    session_slot!(game, Balloon[balloon].base.y_pos = y);
+    let list = Balloon::of(game, balloon).actor().instruction;
+    let y = balloon_offset(list).wrapping_add(Powamp::of(game, body).actor().y.whole);
+    BalloonEdit::of(game, balloon).actor().y.whole = y;
 }
 /// Instruction lists - balloon - inflate ($A8:C183) and deflate ($A8:C191).
 pub const INFLATE: u16 = 0xc183;
@@ -77,88 +84,120 @@ pub fn balloon_offset(list: u16) -> u16 {
     offsets[usize::from(frame >> 1)]
 }
 /// Wiggle the body each 5 frames; true only when a requested stop at the centre is reached.
-fn wiggle(game: &mut impl Lease, body: i32, stop_at_centre: bool) -> bool {
-    let expired = session_slot!(game, Powamp[body].wiggle_timer) == 1;
-    session_slot!(game, Powamp[body].wiggle_timer, |old| old.wrapping_sub(1));
-    if !expired && session_slot!(game, Powamp[body].wiggle_timer) & 0x8000 == 0 {
+fn wiggle(game: &mut impl Lease, body: u16, stop_at_centre: bool) -> bool {
+    let expired = Powamp::of(game, body).wiggle_timer() == 1;
+    {
+        let mut part = PowampEdit::of(game, body);
+        let old = *part.wiggle_timer();
+        *part.wiggle_timer() = old.wrapping_sub(1);
+    }
+    if !expired && Powamp::of(game, body).wiggle_timer() & 0x8000 == 0 {
         return false;
     }
-    session_slot!(game, Powamp[body].wiggle_timer = 5);
+    *PowampEdit::of(game, body).wiggle_timer() = 5;
     let balloon = body - BALLOON_SLOT;
-    let spawn_x = session_slot!(game, Balloon[balloon].spawn_x);
-    let x = WIGGLE[session_slot!(game, Powamp[body].wiggle_index) as usize].wrapping_add(spawn_x);
-    session_slot!(game, Balloon[balloon].base.x_pos = x);
-    session_slot!(game, Powamp[body].base.x_pos = x);
+    let spawn_x = Balloon::of(game, balloon).spawn_x();
+    let x = WIGGLE[Powamp::of(game, body).wiggle_index() as usize].wrapping_add(spawn_x);
+    BalloonEdit::of(game, balloon).actor().x.whole = x;
+    PowampEdit::of(game, body).actor().x.whole = x;
     if stop_at_centre && centred(game, body) {
         return true;
     }
-    let index = session_slot!(game, Powamp[body].wiggle_index);
+    let index = Powamp::of(game, body).wiggle_index();
     let wrap = match stop_at_centre {
         true => (index.wrapping_add(1) as i32 - 12) & 0x8000 == 0,
         false => (index as i32 - 11) & 0x8000 == 0,
     };
-    session_slot!(
-        game,
-        Powamp[body].wiggle_index = if wrap { 0 } else { index.wrapping_add(1) }
-    );
+    *PowampEdit::of(game, body).wiggle_index() = if wrap { 0 } else { index.wrapping_add(1) };
     false
 }
-fn centred(game: &impl Lease, body: i32) -> bool {
-    matches!(session_slot!(game, Powamp[body].wiggle_index), 0 | 6)
+fn centred(game: &impl Lease, body: u16) -> bool {
+    matches!(Powamp::of(game, body).wiggle_index(), 0 | 6)
 }
 /// Move the body by its Y velocity; whether blocked.
-fn move_vertically(game: &mut impl Lease, body: i32) -> bool {
-    // The zero acceleration still reads and publishes the split native words.
-    session_slot!(game, Powamp[body](y_velocity, y_subvelocity) += 0);
-    let amount = session_slot!(game, Powamp[body](y_velocity, y_subvelocity));
-    game.move_vertical(body as u16, amount as i32)
+fn move_vertically(game: &mut impl Lease, body: u16) -> bool {
+    let amount = {
+        // The zero acceleration stores the velocity back, refreshing the observations.
+        let mut powamp = PowampEdit::of(game, body);
+        let (velocity, subvelocity) = (*powamp.y_velocity(), *powamp.y_subvelocity());
+        *powamp.y_subvelocity() = subvelocity;
+        *powamp.y_velocity() = velocity;
+        (u32::from(velocity) << 16) | u32::from(subvelocity)
+    };
+    game.move_vertical(body, amount as i32)
 }
-fn begin_deflating(game: &mut impl Lease, body: i32) {
-    session_slot!(game, Powamp[body]; function = DEFLATING, function_timer = 10);
-    session_slot!(game, Balloon[body - BALLOON_SLOT].base; instruction_timer = 1, current_instruction = DEFLATE);
+fn begin_deflating(game: &mut impl Lease, body: u16) {
+    {
+        let mut part = PowampEdit::of(game, body);
+        *part.function() = DEFLATING;
+        *part.function_timer() = 10;
+    }
+    let mut part = BalloonEdit::of(game, body - BALLOON_SLOT);
+    part.actor().instruction_delay = 1;
+    part.actor().instruction = DEFLATE;
 }
 /// A lease on a game with the powamps' effects.
-pub trait Lease: BossLease<Game: BossEffects> {}
-impl<T: BossLease<Game: BossEffects> + ?Sized> Lease for T {}
+pub trait Lease: BossLease<Game: BossEffects> + SlotState {}
+impl<T: BossLease<Game: BossEffects> + SlotState + ?Sized> Lease for T {}
 
 /// Main AI - powamp ($A8:C21C): run its function.
 pub fn main_ai(game: &mut impl Lease) {
     let k = game.current_enemy();
-    let function = session_slot!(game, Powamp[i32::from(k)].function);
+    let function = Powamp::of(game, k).function();
     run(game, function, k);
 }
 /// Powamp function - body, by `function`; then set the balloon's Y position.
 pub fn run(game: &mut impl Lease, mut function: u16, k: u16) {
-    let body = i32::from(k);
+    let body = k;
     let balloon = body - BALLOON_SLOT;
-    let grappled = |game: &mut _| session_slot!(game, Powamp[body].base.ai_handler_bits) & 1 != 0;
+    let grappled = |game: &mut _| Powamp::of(game, body).actor().ai_handlers & 1 != 0;
     if function == RISING && grappled(game) {
-        session_slot!(game, Powamp[body].function = GRAPPLED_RISING);
+        *PowampEdit::of(game, body).function() = GRAPPLED_RISING;
         function = GRAPPLED_RISING;
     }
     match function {
         DEFLATED_RESTING | INFLATING | DEFLATING | DEATH_SEQUENCE => {
-            let expired = session_slot!(game, Powamp[body].function_timer) == 1;
-            session_slot!(game, Powamp[body].function_timer, |old| old.wrapping_sub(1));
-            if !expired && session_slot!(game, Powamp[body].function_timer) & 0x8000 == 0 {
+            let expired = Powamp::of(game, body).function_timer() == 1;
+            {
+                let mut part = PowampEdit::of(game, body);
+                let old = *part.function_timer();
+                *part.function_timer() = old.wrapping_sub(1);
+            }
+            if !expired && Powamp::of(game, body).function_timer() & 0x8000 == 0 {
                 return place_balloon(game, body);
             }
             match function {
                 DEFLATED_RESTING => {
-                    session_slot!(game, Balloon[balloon].base; instruction_timer = 1, current_instruction = INFLATE);
-                    session_slot!(game, Powamp[body]; function = INFLATING, function_timer = 10);
+                    {
+                        let mut part = BalloonEdit::of(game, balloon);
+                        part.actor().instruction_delay = 1;
+                        part.actor().instruction = INFLATE;
+                    }
+                    let mut part = PowampEdit::of(game, body);
+                    *part.function() = INFLATING;
+                    *part.function_timer() = 10;
                 }
                 INFLATING => {
-                    session_slot!(game, Powamp[body]; function = RISING, y_velocity = 0xffff, y_subvelocity = 0x8000);
+                    {
+                        let mut part = PowampEdit::of(game, body);
+                        *part.function() = RISING;
+                        *part.y_velocity() = 0xffff;
+                        *part.y_subvelocity() = 0x8000;
+                    }
                     // Instruction list - body - fast ($A8:C163).
-                    session_slot!(game, Powamp[body].base; instruction_timer = 1, current_instruction = 0xc163);
+                    let mut part = PowampEdit::of(game, body);
+                    part.actor().instruction_delay = 1;
+                    part.actor().instruction = 0xc163;
                 }
                 DEFLATING => {
-                    session_slot!(game, Powamp[body]; function = SINKING, y_velocity = 1, y_subvelocity = 0);
+                    let mut part = PowampEdit::of(game, body);
+                    *part.function() = SINKING;
+                    *part.y_velocity() = 1;
+                    *part.y_subvelocity() = 0;
                 }
                 _ => {
-                    session_slot!(game, Balloon[balloon].base.health = 0);
-                    session_slot!(game, Balloon[balloon].base.properties, |old| old | 0x200);
+                    BalloonEdit::of(game, balloon).actor().health = 0;
+                    BalloonEdit::of(game, balloon).actor().properties |= 0x200;
                     spawn_spikes(game, k);
                     return game.kill_current(DeathKind::Normal { animation: 0 });
                 }
@@ -167,38 +206,39 @@ pub fn run(game: &mut impl Lease, mut function: u16, k: u16) {
         RISING | GRAPPLED_RISING => {
             let grappled_rise = function == GRAPPLED_RISING;
             if grappled_rise && !grappled(game) {
-                return session_slot!(game, Powamp[body].function = FINISH_WIGGLE);
+                *PowampEdit::of(game, body).function() = FINISH_WIGGLE;
+                return;
             }
             wiggle(game, body, false);
             let reached = move_vertically(game, body) || {
-                let home = session_slot!(game, Balloon[balloon].spawn_y);
+                let home = Balloon::of(game, balloon).spawn_y();
                 let rise = if grappled_rise {
-                    session_slot!(game, Balloon[balloon].grappled_rise)
+                    Balloon::of(game, balloon).grappled_rise()
                 } else {
                     0x40
                 };
-                (home as i32 - rise as i32 - session_slot!(game, Powamp[body].base.y_pos) as i32)
-                    as i16
+                (home as i32 - rise as i32 - Powamp::of(game, body).actor().y.whole as i32) as i16
                     >= 0
             };
             if reached {
                 match (centred(game, body), grappled_rise) {
-                    (true, true) => session_slot!(game, Powamp[body].function = GRAPPLED_RESTING),
+                    (true, true) => *PowampEdit::of(game, body).function() = GRAPPLED_RESTING,
                     (true, false) => begin_deflating(game, body),
                     (false, true) => {
-                        session_slot!(game, Powamp[body].function = GRAPPLED_FINISH_WIGGLE)
+                        *PowampEdit::of(game, body).function() = GRAPPLED_FINISH_WIGGLE
                     }
-                    (false, false) => session_slot!(game, Powamp[body].function = FINISH_WIGGLE),
+                    (false, false) => *PowampEdit::of(game, body).function() = FINISH_WIGGLE,
                 }
             }
         }
         FINISH_WIGGLE | GRAPPLED_FINISH_WIGGLE => {
             let grappled_wiggle = function == GRAPPLED_FINISH_WIGGLE;
             if grappled_wiggle && !grappled(game) {
-                return session_slot!(game, Powamp[body].function = FINISH_WIGGLE);
+                *PowampEdit::of(game, body).function() = FINISH_WIGGLE;
+                return;
             }
             match (wiggle(game, body, true), grappled_wiggle) {
-                (true, true) => session_slot!(game, Powamp[body].function = GRAPPLED_RESTING),
+                (true, true) => *PowampEdit::of(game, body).function() = GRAPPLED_RESTING,
                 (true, false) => begin_deflating(game, body),
                 (false, _) => _ = move_vertically(game, body),
             }
@@ -210,25 +250,34 @@ pub fn run(game: &mut impl Lease, mut function: u16, k: u16) {
         }
         SINKING => {
             move_vertically(game, body);
-            let home = session_slot!(game, Balloon[balloon].spawn_y);
-            if (session_slot!(game, Powamp[body].base.y_pos) as i16).wrapping_sub(home as i16) >= 0
-            {
-                session_slot!(game, Powamp[body].base.y_pos = home);
-                session_slot!(game, Powamp[body]; function = DEFLATED_RESTING, function_timer = 60);
+            let home = Balloon::of(game, balloon).spawn_y();
+            if (Powamp::of(game, body).actor().y.whole as i16).wrapping_sub(home as i16) >= 0 {
+                PowampEdit::of(game, body).actor().y.whole = home;
+                {
+                    let mut part = PowampEdit::of(game, body);
+                    *part.function() = DEFLATED_RESTING;
+                    *part.function_timer() = 60;
+                }
                 // Instruction list - body - slow ($A8:C173).
-                session_slot!(game, Powamp[body].base; instruction_timer = 1, current_instruction = 0xc173);
+                let mut part = PowampEdit::of(game, body);
+                part.actor().instruction_delay = 1;
+                part.actor().instruction = 0xc173;
             }
         }
         FATAL_DAMAGE => {
-            let list = session_slot!(game, Balloon[balloon].base.current_instruction);
+            let list = Balloon::of(game, balloon).actor().instruction;
             if (list as i32 + 0x3e6f) & 0x8000 == 0 {
                 let index = (list as i32 - 4 + 15983) as u16 >> 1;
                 if index != 0 {
                     let list = floater_spike_instruction_list(game, (index >> 1) as isize);
-                    session_slot!(game, Balloon[balloon].base; current_instruction = list, instruction_timer = 1);
+                    let mut part = BalloonEdit::of(game, balloon);
+                    part.actor().instruction = list;
+                    part.actor().instruction_delay = 1;
                 }
             }
-            session_slot!(game, Powamp[body]; function = DEATH_SEQUENCE, function_timer = 32);
+            let mut part = PowampEdit::of(game, body);
+            *part.function() = DEATH_SEQUENCE;
+            *part.function_timer() = 32;
         }
         BALLOON => return,
         _ => return game.foreign(|game| game.unreachable()),
@@ -237,79 +286,100 @@ pub fn run(game: &mut impl Lease, mut function: u16, k: u16) {
 }
 /// Initialisation AI - powamp ($A8:C1C9): the balloon or the body.
 pub fn initialize(game: &mut impl Lease) {
-    let powamp = i32::from(game.current_enemy());
-    session_slot!(game, Powamp[powamp].base.properties, |old| old | 0x2000);
-    session_slot!(game, Powamp[powamp].base; spritemap_pointer = 0x804d, instruction_timer = 1, timer = 0);
-    if session_slot!(game, Balloon[powamp].balloon) != 0 {
+    let powamp = game.current_enemy();
+    PowampEdit::of(game, powamp).actor().properties |= 0x2000;
+    {
+        let mut part = PowampEdit::of(game, powamp);
+        part.actor().spritemap = 0x804d;
+        part.actor().instruction_delay = 1;
+        part.actor().timer = 0;
+    }
+    if Balloon::of(game, powamp).balloon() != 0 {
         let (x, y) = (
-            session_slot!(game, Balloon[powamp].base.x_pos),
-            session_slot!(game, Balloon[powamp].base.y_pos),
+            Balloon::of(game, powamp).actor().x.whole,
+            Balloon::of(game, powamp).actor().y.whole,
         );
-        session_slot!(game, Balloon[powamp]; spawn_x = x, spawn_y = y, function = BALLOON);
-        session_slot!(game, Balloon[powamp].base.current_instruction = 0xc199);
-        let height = session_slot!(game, Balloon[powamp].parameter_2);
-        session_slot!(game, Balloon[powamp].grappled_rise = height);
+        {
+            let mut part = BalloonEdit::of(game, powamp);
+            *part.spawn_x() = x;
+            *part.spawn_y() = y;
+            *part.function() = BALLOON;
+        }
+        BalloonEdit::of(game, powamp).actor().instruction = 0xc199;
+        let height = Balloon::of(game, powamp).parameter_2();
+        *BalloonEdit::of(game, powamp).grappled_rise() = height;
     } else {
-        session_slot!(game, Powamp[powamp]; function_timer = 60, function = DEFLATED_RESTING);
-        session_slot!(game, Powamp[powamp].base.current_instruction = 0xc173);
+        {
+            let mut part = PowampEdit::of(game, powamp);
+            *part.function_timer() = 60;
+            *part.function() = DEFLATED_RESTING;
+        }
+        PowampEdit::of(game, powamp).actor().instruction = 0xc173;
     }
 }
 /// Enemy touch - powamp ($A8:C5BE): killed, it bursts into spikes.
 pub fn touch(game: &mut impl Lease) {
-    let body = i32::from(game.current_enemy());
-    if session_slot!(game, Powamp[body].dying) != 0 {
+    let body = game.current_enemy();
+    if Powamp::of(game, body).dying() != 0 {
         return;
     }
-    let palette = session_slot!(game, Powamp[body].base.palette_index);
+    let palette = Powamp::of(game, body).actor().palette;
     game.contact_reaction(Death::Finalize);
-    if session_slot!(game, Powamp[body].base.health) == 0 {
-        let balloon = i32::from(game.current_enemy()) - BALLOON_SLOT;
-        session_slot!(game, Balloon[balloon].base.properties, |old| old | 0x200);
-        session_slot!(game, Powamp[body].base.palette_index = palette);
+    if Powamp::of(game, body).actor().health == 0 {
+        let balloon = game.current_enemy() - BALLOON_SLOT;
+        BalloonEdit::of(game, balloon).actor().properties |= 0x200;
+        PowampEdit::of(game, body).actor().palette = palette;
         spawn_spikes(game, game.current_enemy());
-        session_slot!(game, Powamp[body].base.palette_index = 2560);
+        PowampEdit::of(game, body).actor().palette = 2560;
     }
 }
 /// Enemy shot - powamp ($A8:C5EF): the balloon shares its frozen and flash state.
 pub fn shot(game: &mut impl Lease) {
-    let body = i32::from(game.current_enemy());
-    if session_slot!(game, Powamp[body].dying) != 0 {
+    let body = game.current_enemy();
+    if Powamp::of(game, body).dying() != 0 {
         return;
     }
     game.shot_reaction(Shot::ReactionOnly);
-    let balloon = i32::from(game.current_enemy()) - BALLOON_SLOT;
-    if session_slot!(game, Powamp[body].base.ai_handler_bits) & 4 != 0 {
-        let frozen = session_slot!(game, Powamp[body].base.frozen_timer);
-        session_slot!(game, Balloon[balloon].base.frozen_timer = frozen);
-        session_slot!(game, Balloon[balloon].base.ai_handler_bits, |old| old | 4);
+    let balloon = game.current_enemy() - BALLOON_SLOT;
+    if Powamp::of(game, body).actor().ai_handlers & 4 != 0 {
+        let frozen = Powamp::of(game, body).actor().frozen;
+        BalloonEdit::of(game, balloon).actor().frozen = frozen;
+        BalloonEdit::of(game, balloon).actor().ai_handlers |= 4;
     }
-    if session_slot!(game, Powamp[body].base.ai_handler_bits) & 2 != 0 {
-        let flash = session_slot!(game, Powamp[body].base.flash_timer);
-        session_slot!(game, Balloon[balloon].base.flash_timer = flash);
-        session_slot!(game, Balloon[balloon].base.ai_handler_bits, |old| old | 2);
+    if Powamp::of(game, body).actor().ai_handlers & 2 != 0 {
+        let flash = Powamp::of(game, body).actor().flash;
+        BalloonEdit::of(game, balloon).actor().flash = flash;
+        BalloonEdit::of(game, balloon).actor().ai_handlers |= 2;
     }
-    if session_slot!(game, Powamp[body].base.health) == 0 {
-        session_slot!(game, Powamp[body]; function = FATAL_DAMAGE, dying = 1);
+    if Powamp::of(game, body).actor().health == 0 {
+        let mut part = PowampEdit::of(game, body);
+        *part.function() = FATAL_DAMAGE;
+        *part.dying() = 1;
     }
 }
 /// Power bomb reaction - powamp ($A8:C63F): the balloon shares its reaction state, or is
 /// deleted with it.
 pub fn power_bomb(game: &mut impl Lease) {
     game.power_bomb_reaction(Death::Finalize);
-    let body = i32::from(game.current_enemy());
+    let body = game.current_enemy();
     let balloon = body - BALLOON_SLOT;
-    if session_slot!(game, Powamp[body].base.health) == 0 {
-        return session_slot!(game, Balloon[balloon].base.properties, |old| old | 0x200);
+    if Powamp::of(game, body).actor().health == 0 {
+        BalloonEdit::of(game, balloon).actor().properties |= 0x200;
+        return;
     }
     let (shake, invincibility) = (
-        session_slot!(game, Powamp[body].base.shake_timer),
-        session_slot!(game, Powamp[body].base.invincibility_timer),
+        Powamp::of(game, body).actor().shake,
+        Powamp::of(game, body).actor().invincibility,
     );
     let (flash, frozen) = (
-        session_slot!(game, Powamp[body].base.flash_timer),
-        session_slot!(game, Powamp[body].base.frozen_timer),
+        Powamp::of(game, body).actor().flash,
+        Powamp::of(game, body).actor().frozen,
     );
-    let bits = session_slot!(game, Powamp[body].base.ai_handler_bits);
-    session_slot!(game, Balloon[balloon].base; shake_timer = shake, invincibility_timer = invincibility,
-        flash_timer = flash, frozen_timer = frozen, ai_handler_bits = bits);
+    let bits = Powamp::of(game, body).actor().ai_handlers;
+    let mut part = BalloonEdit::of(game, balloon);
+    part.actor().shake = shake;
+    part.actor().invincibility = invincibility;
+    part.actor().flash = flash;
+    part.actor().frozen = frozen;
+    part.actor().ai_handlers = bits;
 }
