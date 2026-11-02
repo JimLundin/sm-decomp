@@ -1,0 +1,254 @@
+name: Verify
+
+# The one replay workflow: one verifier build, one matrix, on Linux.
+#   Pull requests and verify/** pushes run the gate: every locked scenario engine-only
+#   against the oracle lock, lockstep for what the lock cannot hold, the ROM import check.
+#   The nightly run adds lockstep of the whole corpus and both routes, every-frame PPU
+#   model checks and a rotating faithful-oracle sample. It stops if this commit already passed.
+#   Dispatch runs any scope. Coverage reports what the corpus never executes.
+# See .github/scripts/plan_verify.py. The ROM comes from repository secrets; ROM-derived
+# files stay private, and pull requests need those secrets, so only in-repo branches run it.
+on:
+  pull_request:
+  push:
+    branches: ['verify/**']
+  schedule:
+    - cron: '17 2 * * *'
+  workflow_dispatch:
+    inputs:
+      scope:
+        description: What to run
+        type: choice
+        options: [gate, full, rows, coverage]
+        default: gate
+      segments:
+        description: Space-separated row ids (scope rows)
+        required: false
+        default: ''
+      oracle:
+        description: Oracle for lockstep (patched = snesrev compatibility patches, faithful = original game logic)
+        type: choice
+        options: [patched, faithful]
+        default: patched
+      audio_trace:
+        description: Check each lockstep row's ordered Cue/port trace against the physical-audio oracle
+        type: boolean
+        default: false
+      oracle_sample:
+        description: With scope full, re-record a rotating sample of at least 30 faithful locks
+        type: boolean
+        default: false
+      cover_routes:
+        description: With scope coverage, also replay both routes instrumented
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+# A new commit replaces its branch's gate; nightly and dispatched runs finish.
+concurrency:
+  group: verify-${{ github.ref }}-${{ inputs.scope || github.event_name }}-${{ inputs.oracle || 'patched' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}
+
+env:
+  SCOPE: ${{ inputs.scope || (github.event_name == 'schedule' && 'full' || 'gate') }}
+
+jobs:
+  plan:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      skip: ${{ steps.passed.outputs.skip }}
+      matrix: ${{ steps.plan.outputs.matrix }}
+      movie_file: ${{ steps.plan.outputs.movie_file }}
+      movie_sha256: ${{ steps.plan.outputs.movie_sha256 }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: passed
+        env:
+          GH_TOKEN: ${{ github.token }}
+          WORKFLOW: verify.yml
+        run: python3 .github/scripts/already_passed.py
+      - id: plan
+        env:
+          SELECTED: ${{ inputs.segments }}
+          ORACLE_SAMPLE: ${{ (github.event_name == 'schedule' || inputs.oracle_sample) && '1' || '' }}
+          COVER_ROUTES: ${{ inputs.cover_routes && '1' || '' }}
+        run: python3 .github/scripts/plan_verify.py
+
+  build:
+    needs: plan
+    if: needs.plan.outputs.skip != 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    outputs:
+      rust: ${{ steps.rust.outputs.version }}
+    env:
+      CARGO_INCREMENTAL: '0'
+      CARGO_BUILD_JOBS: '4'
+      RUSTFLAGS: ${{ inputs.scope == 'coverage' && '-C instrument-coverage -C link-dead-code' || '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/linux-native
+      - id: rust
+        run: echo "version=$(rustc --version | cut -d' ' -f2)" >> "$GITHUB_OUTPUT"
+      - name: Reuse a verifier built from the same sources
+        # verify_dll.py still rebuilds unless the verifier's stamp matches these sources,
+        # the compiler and its options; the native archives count by their sources.
+        uses: actions/cache@v4
+        with:
+          path: |
+            target/verify-dll
+            target/verify-host
+          key: verifier-${{ runner.os }}-${{ inputs.scope == 'coverage' && 'coverage' || 'plain' }}-${{ hashFiles('crates/**', 'sm/**', 'Cargo.lock', 'rust-toolchain.toml', 'tools/verify_dll.py', 'tools/install_lakesnes.py', 'tools/install_native_*.py', '.github/actions/linux-native/action.yml') }}
+      - name: Build the verifier
+        env:
+          # Every native archive is rebuilt here from these pinned sources.
+          SM_NATIVE_IDENTITY: ${{ hashFiles('crates/**', 'sm/**', 'tools/install_lakesnes.py', 'tools/install_native_*.py', '.github/actions/linux-native/action.yml') }}
+        run: python3 tools/verify_dll.py --build-only --direct
+      - name: Run the verifier's units
+        if: inputs.scope != 'coverage'
+        run: python3 tools/verify_dll.py --unit-tests --no-build --direct
+      - name: Run the target packages' tests instrumented
+        if: inputs.scope == 'coverage'
+        run: python3 -B .github/scripts/coverage_tests.py target/coverage-unit
+      - name: Package the verifier
+        # A tar keeps the executable bit, and the paths verify_dll.py expects.
+        run: |
+          files=$(ls target/verify-dll/libsm_verify.so target/verify-host/sm_verify target/coverage-unit 2>/dev/null)
+          tar -cf verifier.tar $files
+      - uses: actions/upload-artifact@v4
+        with:
+          name: verifier
+          path: verifier.tar
+          retention-days: 1
+
+  replay:
+    needs: [plan, build]
+    if: needs.plan.outputs.skip != 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: ${{ matrix.timeout }}
+    strategy:
+      fail-fast: false
+      # Other repositories share the account's 20 jobs; leave two for them and CI.
+      max-parallel: 18
+      matrix: ${{ fromJson(needs.plan.outputs.matrix) }}
+    name: ${{ matrix.name }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: verifier
+      - run: tar -xf verifier.tar
+      - name: Cache the pinned movie download
+        if: contains(matrix.kinds, 'route')
+        uses: actions/cache@v4
+        with:
+          path: movies/${{ needs.plan.outputs.movie_file }}
+          key: ${{ runner.os }}-movie-${{ needs.plan.outputs.movie_sha256 }}
+      - name: Restore and replay
+        env:
+          JOB: ${{ toJSON(matrix) }}
+          ORACLE: ${{ inputs.oracle }}
+          AUDIO_TRACE: ${{ inputs.audio_trace && '1' || '' }}
+          LLVM_PROFILE_FILE: ${{ inputs.scope == 'coverage' && format('{0}/profiles/%p-%m.profraw', github.workspace) || '' }}
+          ROM_00: ${{ secrets.SM_ROM_00 }}
+          ROM_01: ${{ secrets.SM_ROM_01 }}
+          ROM_02: ${{ secrets.SM_ROM_02 }}
+          ROM_03: ${{ secrets.SM_ROM_03 }}
+          ROM_04: ${{ secrets.SM_ROM_04 }}
+          ROM_05: ${{ secrets.SM_ROM_05 }}
+          ROM_06: ${{ secrets.SM_ROM_06 }}
+          ROM_07: ${{ secrets.SM_ROM_07 }}
+          ROM_08: ${{ secrets.SM_ROM_08 }}
+          ROM_09: ${{ secrets.SM_ROM_09 }}
+          ROM_10: ${{ secrets.SM_ROM_10 }}
+          ROM_11: ${{ secrets.SM_ROM_11 }}
+          ROM_12: ${{ secrets.SM_ROM_12 }}
+          ROM_13: ${{ secrets.SM_ROM_13 }}
+          ROM_14: ${{ secrets.SM_ROM_14 }}
+          ROM_15: ${{ secrets.SM_ROM_15 }}
+          ROM_16: ${{ secrets.SM_ROM_16 }}
+          ROM_17: ${{ secrets.SM_ROM_17 }}
+          ROM_18: ${{ secrets.SM_ROM_18 }}
+          ROM_19: ${{ secrets.SM_ROM_19 }}
+          ROM_20: ${{ secrets.SM_ROM_20 }}
+          ROM_21: ${{ secrets.SM_ROM_21 }}
+          ROM_22: ${{ secrets.SM_ROM_22 }}
+          ROM_23: ${{ secrets.SM_ROM_23 }}
+          ROM_24: ${{ secrets.SM_ROM_24 }}
+          ROM_25: ${{ secrets.SM_ROM_25 }}
+          ROM_26: ${{ secrets.SM_ROM_26 }}
+          ROM_27: ${{ secrets.SM_ROM_27 }}
+          ROM_28: ${{ secrets.SM_ROM_28 }}
+          ROM_29: ${{ secrets.SM_ROM_29 }}
+          ROM_30: ${{ secrets.SM_ROM_30 }}
+          ROM_31: ${{ secrets.SM_ROM_31 }}
+          ROM_32: ${{ secrets.SM_ROM_32 }}
+          ROM_33: ${{ secrets.SM_ROM_33 }}
+          ROM_34: ${{ secrets.SM_ROM_34 }}
+          ROM_35: ${{ secrets.SM_ROM_35 }}
+          ROM_36: ${{ secrets.SM_ROM_36 }}
+          ROM_37: ${{ secrets.SM_ROM_37 }}
+          ROM_38: ${{ secrets.SM_ROM_38 }}
+          ROM_39: ${{ secrets.SM_ROM_39 }}
+          ROM_40: ${{ secrets.SM_ROM_40 }}
+          ROM_41: ${{ secrets.SM_ROM_41 }}
+          ROM_42: ${{ secrets.SM_ROM_42 }}
+          ROM_43: ${{ secrets.SM_ROM_43 }}
+          ROM_44: ${{ secrets.SM_ROM_44 }}
+        run: python3 -B .github/scripts/replay_job.py
+      - uses: actions/upload-artifact@v4
+        if: always() && inputs.scope == 'coverage'
+        with:
+          name: profiles-${{ matrix.kinds == 'room' && 'route-' || '' }}${{ strategy.job-index }}
+          path: profiles
+          retention-days: 2
+          if-no-files-found: warn
+
+  coverage-report:
+    needs: [build, replay]
+    if: always() && inputs.scope == 'coverage' && needs.build.result == 'success'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: verifier
+      - run: tar -xf verifier.tar
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: profiles-*
+          path: all-profiles
+          # One directory per job: jobs reuse process ids, so merged names would collide.
+          merge-multiple: false
+      - name: Merge the profiles and summarise engine coverage
+        env:
+          RUST_VERSION: ${{ needs.build.outputs.rust }}
+        run: python3 -B .github/scripts/coverage_report.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage.md
+          retention-days: 30
+
+  result:
+    name: Verify result
+    needs: [plan, build, replay]
+    if: always()
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Require every job to pass
+        env:
+          SKIP: ${{ needs.plan.outputs.skip }}
+          PLAN: ${{ needs.plan.result }}
+          BUILD: ${{ needs.build.result }}
+          REPLAY: ${{ needs.replay.result }}
+        run: |
+          echo "plan $PLAN, build $BUILD, replay $REPLAY, already passed: $SKIP"
+          test "$PLAN" = success
+          if [ "$SKIP" != true ]; then test "$BUILD" = success && test "$REPLAY" = success; fi

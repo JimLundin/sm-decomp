@@ -4,7 +4,7 @@ from pathlib import Path
 import runpy
 root = Path.cwd()
 verifier = runpy.run_path(str(root / 'tools/verify_dll.py'))
-host = verifier['load_host'](root / 'target/verify-dll/sm_verify.dll')
+host = verifier['load_host'](root / 'target/verify-dll' / verifier['HOST_LIBRARY'])
 verifier['check_source'](host, verifier['source_hash'](root))
 verifier['check_library'](host, root)
 for name in ('sm_verify_actor_movement_case', 'sm_verify_actor_movement_table_case',

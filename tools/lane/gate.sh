@@ -4,10 +4,10 @@
 # configurations, the verifier DLL, the source inventory and the ROM import test.
 # Prints "GATE OK <hash> <branch>" or "GATE FAILED <branch>"; nothing in it needs a test exe to run.
 # Overrides: SM_RUST_BIN (toolchain bin), SM_PY (Python 3.11+), SM_ROM, SM_GATE_DIR.
-R="${SM_RUST_BIN:-$USERPROFILE/.rustup/toolchains/stable-x86_64-pc-windows-gnu/bin}"
-PY="${SM_PY:-/c/Users/Jim.Lundin/AppData/Local/sm-decomp-tools/python-3.13.7/python.exe}"
+R="${SM_RUST_BIN:-$(dirname "$(command -v cargo)")}"
+PY="${SM_PY:-$(command -v python3 || command -v python)}"
 ROM="${SM_ROM:-$(git rev-parse --path-format=absolute --git-common-dir)/../rom/sm.smc}"
-O="${SM_GATE_DIR:-$TEMP/sm-gate}/$(git rev-parse --short HEAD)-$$"; mkdir -p "$O/v"; ok=1
+O="${SM_GATE_DIR:-${TEMP:-/tmp}/sm-gate}/$(git rev-parse --short HEAD)-$$"; mkdir -p "$O/v"; ok=1
 rustc() { "$R/rustc" --edition=2024 -D warnings "$@"; }
 fail() { echo "$1"; [ -n "$2" ] && grep -E "^(error|warning)|-->" "$2" | head -10; ok=0; }
 

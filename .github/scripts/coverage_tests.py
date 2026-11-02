@@ -7,15 +7,9 @@ Run with RUSTFLAGS carrying -C instrument-coverage. Builds every lib and
 tests/*.rs test binary of sm_data, sm_game and sm_runtime, copies them to
 OUT_DIR/bin (llvm-cov needs them as objects) and runs each as `cargo test`
 would, from its package root, with LLVM_PROFILE_FILE under OUT_DIR/profiles.
-OUT_DIR/objects.txt names the binaries that ran; one that Windows cannot
-start is skipped with a warning. Doc-tests are not
+OUT_DIR/objects.txt names the binaries that ran; one that cannot start
+is skipped with a warning. Doc-tests are not
 instrumented and are left to CI's test step. Exits non-zero if a binary fails.
-
-On Windows the executables link with Rust's bundled lld, as the verifier DLL
-does. The GNU linker keeps only the first of the per-function coverage
-records (.lcovfun), all of which share one section name, and places the
-flagless coverage sections at address 0, below the image base, so the
-executable is not a valid PE ("%1 is not a valid Win32 application").
 """
 import json
 import os
@@ -36,14 +30,6 @@ def main():
     for package in PACKAGES:
         command += ["-p", package]
     build_environment = dict(os.environ)
-    if os.name == "nt":
-        host = next(line.split(": ", 1)[1] for line in subprocess.check_output(
-            ["rustc", "-vV"], text=True).splitlines() if line.startswith("host: "))
-        sysroot = pathlib.Path(subprocess.check_output(["rustc", "--print", "sysroot"], text=True).strip())
-        linker = sysroot / "lib" / "rustlib" / host / "bin" / "gcc-ld" / "ld.lld.exe"
-        build_environment[f"CARGO_TARGET_{host.upper().replace('-', '_')}_LINKER"] = str(linker)
-        build_environment["RUSTFLAGS"] = " ".join(
-            filter(None, [os.environ.get("RUSTFLAGS"), "-C linker-flavor=ld"]))
     built = subprocess.run(command, check=True, stdout=subprocess.PIPE, text=True, env=build_environment).stdout
     binaries = []
     for line in built.splitlines():
@@ -66,7 +52,7 @@ def main():
         try:
             result = subprocess.run([str(binary)], cwd=package, env=environment)
         except OSError as error:
-            # A binary Windows cannot start is left out of the report.
+            # A binary that cannot start is left out of the report.
             print(f"::warning::{binary.name} could not start: {error}", flush=True)
             continue
         ran.append(binary.name)
