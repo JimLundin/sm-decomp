@@ -133,6 +133,20 @@ impl ImportedAliases for Runtime<'_> {
     }
 }
 impl Host for Runtime<'_> {}
+impl ClosingContent for Runtime<'_> {
+    fn capture_closing_door(
+        &mut self,
+        exit: &sm_game::room_entry::world::Identity<sm_game::room_entry::world::ExitId>,
+    ) -> sm_game::room_entry::content::ClosingDoorCapture {
+        sm_game::room_entry::content::EntryContent::capture_closing_door(self, exit)
+    }
+    fn capture_closing_header(
+        &mut self,
+        direction: u16,
+    ) -> sm_game::room_entry::content::ClosingHeaderCapture {
+        sm_game::room_entry::content::EntryContent::capture_closing_header(self, direction)
+    }
+}
 impl Effects for Runtime<'_> {
     fn sound(&mut self, channel: SoundChannel, maximum: u8, cue: u16) {
         self.foreign(|game| {
@@ -272,19 +286,30 @@ impl Effects for Runtime<'_> {
         }
     }
     fn diagnostic(&mut self, diagnostic: Diagnostic) -> u8 {
-        self.foreign(|game|match diagnostic {
-            Diagnostic::MissingScroll=>loop {},
-            Diagnostic::MissingDisplacement=>unsafe{
-                crate::c_library::printf(c"ERROR: PlmSetup_QuicksandSurfaceB is broken!!\n".as_ptr());
-                crate::rtl::report_unreachable(game);0
-            },
-            Diagnostic::Unreachable=>crate::rtl::report_unreachable(game) as u8,
-            Diagnostic::UnsupportedSetup=>{
-                unsafe{crate::native_assertion! { '_c2rust_label; b"0\0", b"src/sm_84.c\0", 1370, b"uint8 UNUSED_sub_84B3E3(uint16)\0" };}
-            },
-            Diagnostic::InvalidRamDraw(address)=>{
-                unsafe{crate::native_assertion! { '_c2rust_label: address < 0x2000; b"addr < 0x2000\0", b"src/sm_84.c\0", 265, b"uint8 *RomPtr_84orRAM(uint16_t)\0" };}0
-            },
-        })
+        self.foreign(|game| prepared_actor_diagnostic(diagnostic, game))
+    }
+}
+
+pub(crate) fn prepared_actor_diagnostic(
+    diagnostic: Diagnostic,
+    game: &mut crate::game_state::Game,
+) -> u8 {
+    match diagnostic {
+        Diagnostic::MissingScroll => loop {},
+        Diagnostic::MissingDisplacement => unsafe {
+            crate::c_library::printf(c"ERROR: PlmSetup_QuicksandSurfaceB is broken!!\n".as_ptr());
+            crate::rtl::report_unreachable(game);
+            0
+        },
+        Diagnostic::Unreachable => crate::rtl::report_unreachable(game) as u8,
+        Diagnostic::UnsupportedSetup => unsafe {
+            crate::native_assertion! { '_c2rust_label; b"0\0", b"src/sm_84.c\0", 1370, b"uint8 UNUSED_sub_84B3E3(uint16)\0" };
+        },
+        Diagnostic::InvalidRamDraw(address) => {
+            unsafe {
+                crate::native_assertion! { '_c2rust_label: address < 0x2000; b"addr < 0x2000\0", b"src/sm_84.c\0", 265, b"uint8 *RomPtr_84orRAM(uint16_t)\0" };
+            }
+            0
+        }
     }
 }

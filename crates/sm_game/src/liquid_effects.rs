@@ -18,7 +18,7 @@ fn initialize_hot<H: crate::menus::host::Host + ?Sized>(tiles: u16, game: &mut H
     crate::liquid::LiquidWords::set(
         game,
         |words| &mut words.liquid.lava_acid.whole,
-        crate::liquid::LiquidWords::read(game).height,
+        crate::cinematic_access::load::<crate::liquid::LiquidWords, _>(game).height,
     );
     static SURFACE: HdmaObjectDefinition = HdmaObjectDefinition::new(0x42, 0x12, 0xc3e1);
     static BACKGROUND: HdmaObjectDefinition = HdmaObjectDefinition::new(0x42, 0x10, 0xc3f0);
@@ -32,12 +32,12 @@ pub fn initialize_water<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     crate::liquid::LiquidWords::set(
         game,
         |words| &mut words.liquid.surface.whole,
-        crate::liquid::LiquidWords::read(game).height,
+        crate::cinematic_access::load::<crate::liquid::LiquidWords, _>(game).height,
     );
     static SURFACE: HdmaObjectDefinition = HdmaObjectDefinition::new(0x42, 0x11, 0xd856);
     static BACKGROUND: HdmaObjectDefinition = HdmaObjectDefinition::new(0x42, 0xf, 0xd847);
     game.spawn_hdma(0x88, &SURFACE);
-    if crate::liquid::LiquidWords::read(game).options & 2 != 0 {
+    if crate::cinematic_access::load::<crate::liquid::LiquidWords, _>(game).options & 2 != 0 {
         game.spawn_hdma(0x88, &BACKGROUND);
     }
     crate::hdma_objects::spawn_bg3_scroll(game);
@@ -80,7 +80,7 @@ where
         words.store(room);
         result
     } else {
-        let mut words = LiquidWords::read(game);
+        let mut words = crate::cinematic_access::load::<LiquidWords, _>(game);
         let result = update(&mut words);
         words.write(game);
         result
@@ -141,15 +141,18 @@ pub fn lava_surface<H: crate::menus::host::Host + ?Sized>(
             game.publish_fx_controls(fx, &[crate::fx_state::Field::EffectVertical]);
         };
         let scroll = surface_scroll(
-            crate::liquid::LiquidWords::read(game)
+            crate::cinematic_access::load::<crate::liquid::LiquidWords, _>(game)
                 .liquid
                 .lava_acid
                 .whole,
             crate::camera::current(game).layer1[1],
         );
         game.store_source_word(LiveOwner::LiquidSurface, 2, native_order(), scroll);
-        if crate::liquid::LiquidWords::read(game).liquid.kind == 2
-            && (crate::liquid::LiquidWords::read(game)
+        if crate::cinematic_access::load::<crate::liquid::LiquidWords, _>(game)
+            .liquid
+            .kind
+            == 2
+            && (crate::cinematic_access::load::<crate::liquid::LiquidWords, _>(game)
                 .liquid
                 .lava_acid
                 .whole
@@ -170,7 +173,7 @@ pub fn lava_surface<H: crate::menus::host::Host + ?Sized>(
         }
         word!(game.RANDOM_NUMBER = u16::swap_bytes(word!(game.RANDOM_NUMBER)));
         let v8 = table_height(
-            crate::liquid::LiquidWords::read(game)
+            crate::cinematic_access::load::<crate::liquid::LiquidWords, _>(game)
                 .liquid
                 .lava_acid
                 .whole,
@@ -198,7 +201,10 @@ pub fn water_surface<H: crate::menus::host::Host + ?Sized>(
     let layer1 = crate::camera::current(game).layer1;
     {
         let fx_value = surface_scroll(
-            crate::liquid::LiquidWords::read(game).liquid.surface.whole,
+            crate::cinematic_access::load::<crate::liquid::LiquidWords, _>(game)
+                .liquid
+                .surface
+                .whole,
             layer1[1],
         );
         let mut fx = game.fx_controls();
@@ -224,11 +230,14 @@ pub fn water_surface<H: crate::menus::host::Host + ?Sized>(
         );
         v7 = ((v7 as i32 - 2i32) & 0x1e) as u8;
     }
-    if (crate::liquid::LiquidWords::read(game).options & 1) != 0 {
+    if (crate::cinematic_access::load::<crate::liquid::LiquidWords, _>(game).options & 1) != 0 {
         crate::hdma_word!(game, hdma_index, C => crate::hdma_word!(game, hdma_index, C).wrapping_add(64));
     }
     let v9 = table_height(
-        crate::liquid::LiquidWords::read(game).liquid.surface.whole,
+        crate::cinematic_access::load::<crate::liquid::LiquidWords, _>(game)
+            .liquid
+            .surface
+            .whole,
         crate::camera::current(game).layer1[1],
         true,
     );
@@ -298,8 +307,9 @@ pub fn lava_background<H: crate::menus::host::Host + ?Sized>(hdma_index: usize, 
         crate::menus::prelude::display_scroll!(game.Bg2V),
     );
     let active = crate::sequence_word!(game.TIME_IS_FROZEN_FLAG) == 0
-        && crate::liquid::LiquidWords::read(game).options & 6 != 0;
-    let horizontal = active && crate::liquid::LiquidWords::read(game).options & 2 == 0;
+        && crate::cinematic_access::load::<crate::liquid::LiquidWords, _>(game).options & 6 != 0;
+    let horizontal = active
+        && crate::cinematic_access::load::<crate::liquid::LiquidWords, _>(game).options & 2 == 0;
     game.write_register(
         (crate::hdma_word!(game, hdma_index, BankSlot) & 0xff).wrapping_add(BBAD0 as u16),
         if horizontal { 0xf } else { 0x10 },
@@ -336,14 +346,18 @@ pub fn water_background<H: crate::menus::host::Host + ?Sized>(hdma_index: usize,
     );
     if crate::sequence_word!(game.TIME_IS_FROZEN_FLAG) != 0 {
         water_flat(game);
-    } else if crate::liquid::LiquidWords::read(game).options & 2 == 0 {
+    } else if crate::cinematic_access::load::<crate::liquid::LiquidWords, _>(game).options & 2 == 0
+    {
         crate::hdma_word!(game, hdma_index, Channels => 0);
         water_flat(game);
     } else {
         water_wave(hdma_index, game);
     }
     let height = table_height(
-        crate::liquid::LiquidWords::read(game).liquid.surface.whole,
+        crate::cinematic_access::load::<crate::liquid::LiquidWords, _>(game)
+            .liquid
+            .surface
+            .whole,
         crate::camera::current(game).layer1[1],
         true,
     );

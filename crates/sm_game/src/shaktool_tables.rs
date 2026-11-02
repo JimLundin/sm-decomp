@@ -8,7 +8,7 @@ use crate::records::Records;
 use sm_data::cartridge::RomImage;
 use sm_data::shaktool::*;
 
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ImportedShaktool {
     pieces: Option<Imported<Pieces>>,
     head_directions: Option<Imported<HeadDirections>>,

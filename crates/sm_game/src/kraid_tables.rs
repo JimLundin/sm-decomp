@@ -14,7 +14,7 @@ use sm_data::kraid::{
     import_body_hitbox, import_fingernail_boundaries, import_foot_targets, import_sprite_palettes,
 };
 
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ImportedKraid {
     body_hitbox: Option<Imported<BodyHitbox>>,
     fingernail_boundaries: Option<Imported<FingernailBoundaries>>,

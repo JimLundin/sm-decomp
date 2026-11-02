@@ -8,9 +8,7 @@ use crate::cartridge::NativeDiagnostics;
 use crate::display::sequence::scroll::{self, Word::Bg2H, Word::Bg2V};
 use crate::display::transfer::{Source, TilemapQueue, TilemapUpload, queue_tilemap};
 use crate::effects::SoundEffects;
-use crate::player_projectiles::content;
 use crate::ram::CompatibilityRam;
-use crate::session_slot;
 
 /// The typewriter's view of slot 0.
 #[derive(Clone, Copy)]
@@ -59,87 +57,67 @@ const SET_VRAM_ADDRESS: u16 = 13;
 const CERES: u16 = 6;
 
 /// The text word at `cursor` in bank $A6.
-fn text_word(game: &mut (impl Host + ?Sized), cursor: u16) -> u16 {
-    let address = 0xa6_0000 | u32::from(cursor);
-    if address & 0x8000 == 0 {
-        game.native_rom_diagnostic(address);
-    }
-    content::captured(game.native_image(), address).word(0)
-}
 
 /// Set up Zebes escape typewriter ($A6:C23F).
 pub fn set_up_zebes<H: Host + ?Sized>(game: &mut H) {
-    // Sprite palette 1 colours Dh..Eh = BG1/2 palette 7 colours Dh..Eh.
-    for index in [125, 126] {
-        let colour = game.colour(index);
-        game.set_colour(index + 32, colour);
-    }
-    session_slot!(game, Typewriter[0].text = ZEBES_ESCAPE_TEXT);
-    session_slot!(game, Typewriter[0]; vram_address = 0, timer = 0, timer_reset = 0, stroke_timer = 0);
-    scroll::write(game, Bg2H, 0);
-    scroll::write(game, Bg2V, 0);
+    owned::set_up_zebes(&mut Compatibility(game))
 }
 
 /// Handle typewriter text ($A6:C2B1), drawing 'A' as `tiles`; true once the text ends.
 pub fn handle_text<H: Host + ?Sized>(game: &mut H, tiles: u16) -> bool {
-    let timer = session_slot!(game, Typewriter[0].timer);
-    if timer != 0 {
-        session_slot!(game, Typewriter[0].timer = timer.wrapping_sub(1));
-        return false;
+    owned::handle_text(&mut Compatibility(game), tiles)
+}
+
+#[path = "escape_typewriter_owned.rs"]
+pub mod owned;
+struct Compatibility<'a, H: Host + ?Sized>(&'a mut H);
+impl<H: Host + ?Sized> SlotAccess for Compatibility<'_, H> {
+    fn slot_word(&self, at: usize) -> u16 {
+        self.0.slot_word(at)
     }
-    let reset = session_slot!(game, Typewriter[0].timer_reset);
-    session_slot!(game, Typewriter[0].timer = reset);
-    let mut cursor = session_slot!(game, Typewriter[0].text);
-    let code = loop {
-        match text_word(game, cursor) {
-            END => return true,
-            SET_TIMER_RESET => {
-                let reset = text_word(game, cursor.wrapping_add(2));
-                session_slot!(game, Typewriter[0].timer_reset = reset);
-            }
-            SET_VRAM_ADDRESS => {
-                let address = text_word(game, cursor.wrapping_add(2));
-                session_slot!(game, Typewriter[0].vram_address = address);
-            }
-            code => break code,
-        }
-        cursor = cursor.wrapping_add(4);
-    };
-    session_slot!(game, Typewriter[0].text = cursor.wrapping_add(1));
-    let character = match code as u8 {
-        b' ' => {
-            session_slot!(game, Typewriter[0].vram_address, |address| address
-                .wrapping_add(1));
-            return false;
-        }
-        b'!' => 91,
-        character => u16::from(character),
-    };
-    session_slot!(
-        game,
-        Typewriter[0].tilemap_entry = tiles.wrapping_add(character).wrapping_sub(65)
-    );
-    let address = session_slot!(game, Typewriter[0].vram_address);
-    let source = Source {
-        address: 0x8034,
-        bank: 0x7e,
-    };
-    let upload = TilemapUpload {
-        bytes: 2,
-        source,
-        column: address & 0x8000 != 0,
-        vram_address: address,
-    };
-    queue_tilemap(game, upload);
-    session_slot!(game, Typewriter[0].vram_address = address.wrapping_add(1));
-    let strokes = session_slot!(game, Typewriter[0].stroke_timer).wrapping_add(1);
-    session_slot!(game, Typewriter[0].stroke_timer = strokes);
-    if strokes.wrapping_sub(2) & 0x8000 == 0 {
-        session_slot!(game, Typewriter[0].stroke_timer = 0);
-        match game.area_index() {
-            CERES => game.queue_sound(1, 0x45, 3),
-            _ => game.queue_sound(2, 0xd, 3),
-        }
+    fn set_slot_word(&mut self, at: usize, value: u16) {
+        self.0.set_slot_word(at, value);
     }
-    false
+    fn slot_byte(&self, at: usize) -> u8 {
+        self.0.slot_byte(at)
+    }
+    fn set_slot_byte(&mut self, at: usize, value: u8) {
+        self.0.set_slot_byte(at, value);
+    }
+}
+impl<H: Host + ?Sized> SoundEffects for Compatibility<'_, H> {
+    fn queue_sound(&mut self, bank: usize, sound: u8, max: u8) {
+        self.0.queue_sound(bank, sound, max);
+    }
+}
+impl<H: Host + ?Sized> owned::Host for Compatibility<'_, H> {
+    fn text_record(&mut self, cursor: u16) -> sm_data::cartridge::RomRecord {
+        crate::cartridge::native_record(0xa6, cursor, self.0)
+    }
+    fn colour(&self, index: usize) -> u16 {
+        self.0.colour(index)
+    }
+    fn set_colour(&mut self, index: usize, value: u16) {
+        self.0.set_colour(index, value);
+    }
+    fn set_bg2_scroll(&mut self, horizontal: bool, value: u16) {
+        scroll::write(self.0, if horizontal { Bg2H } else { Bg2V }, value);
+    }
+    fn area_index(&self) -> u16 {
+        self.0.area_index()
+    }
+    fn queue_typewriter_tile(&mut self, address: u16) {
+        queue_tilemap(
+            self.0,
+            TilemapUpload {
+                bytes: 2,
+                source: Source {
+                    address: 0x8034,
+                    bank: 0x7e,
+                },
+                column: address & 0x8000 != 0,
+                vram_address: address,
+            },
+        );
+    }
 }

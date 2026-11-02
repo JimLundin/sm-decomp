@@ -62,7 +62,23 @@ pub fn dispatch_instruction<H: ActorHost + Host>(
     key: ActorKey,
     pc: EnemyScript,
 ) -> EnemyScript {
-    match address {
+    match dispatch_common_instruction(h, address, key, pc) {
+        Ok(next) => next,
+        Err(pc) => h.actor_instruction(ActorRoutine::from_legacy(address), key, pc),
+    }
+}
+
+pub fn dispatch_common_instruction<
+    H: crate::actors::access::ActorAccess
+        + crate::actors::access::ActorCollections
+        + crate::enemy_projectiles::host::Graphics,
+>(
+    h: &mut H,
+    address: u32,
+    key: ActorKey,
+    pc: EnemyScript,
+) -> Result<EnemyScript, EnemyScript> {
+    Ok(match address {
         10846332 | 11174012 => {
             let value = h.resolve_actor(key, LE).properties | 0x200;
             h.edit_actor(key, LE, |a| a.properties = value);
@@ -129,6 +145,6 @@ pub fn dispatch_instruction<H: ActorHost + Host>(
         }
         10649837 | 10715373 | 10780909 | 10846445 | 10911981 | 10977517 | 11043053 | 11174125
         | 11698413 | 11763949 => EnemyScript::jump(pc.word(0)),
-        _ => h.actor_instruction(ActorRoutine::from_legacy(address), key, pc),
-    }
+        _ => return Err(pc),
+    })
 }

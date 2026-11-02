@@ -10,7 +10,7 @@ use sm_data::grapple_aim::{
 };
 
 /// Imported from the loaded image by `register_rom`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ImportedAim {
     extensions: Option<Imported<Extensions>>,
     connections: Option<Imported<Connections>>,

@@ -269,7 +269,7 @@ pub fn touch(hurts: bool, runtime: &mut impl ActorLease) {
 /// Enemy shot - oum ($A2:D3B4).
 pub fn shot(lease: &mut impl ActorLease) {
     combat::shot_reaction(lease, ShotHandling::Finalize);
-    lease.queue_sound(2, 6, 0x57);
+    crate::enemy_projectiles::host::Effects::queue_sound(lease, 2, 6, 0x57);
 }
 /// Instructions - set animation finished flag ($A2:CCB3), and attack allowing rotation
 /// flag = 1 ($A2:CCBE) or 0 ($A2:CCC9).

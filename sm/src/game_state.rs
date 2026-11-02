@@ -62,6 +62,9 @@ impl SamusMutation<'_> {
 }
 impl Drop for SamusMutation<'_> {
     fn drop(&mut self) {
+        // Preserve actual partial device effects before any authority revocation.
+        // Nested scopes import only the current retained presentation, never export.
+        self.game.import_retained_hardware();
         self.game.samus.end_mutation();
         if !self.completed {
             self.game.revoke_samus_authority();
@@ -372,7 +375,7 @@ impl WorkRam {
             0x1986..0x1988,
             0x9800..0xa000,
             0xc406..0xc608,
-            0xcad8..0xcae0,
+            0xcad8..0xccf0,
         ]
         .iter()
         .any(|owned| range.start < owned.end && owned.start < range.end)
@@ -461,6 +464,8 @@ pub struct Game {
     pub k_out: u16,
 
     pub g_sram: sm_game::save_file::SaveRam,
+    pub(crate) prepared_save_requests: Vec<sm_game::player_effects::save::SaveRequest>,
+    prepared_message: Option<crate::game::actors::prepared_dialogue_ports::PreparedMessageFrame>,
     pub g_rtl_memory_ptr: *mut u8,
     pub g_rtl_runframe: Option<RunFrameFunc>,
     pub g_rtl_syncall: Option<SyncAllFunc>,
@@ -661,6 +666,17 @@ impl Game {
         if self.backend.is_none() {
             let backend = crate::snes::snes::Backend::new(self.ram.share_for_backend());
             (self.g_snes, self.g_cpu) = backend.views();
+            if let persistent_session::AggregateSlot::Ready(session) =
+                &self.persistent_session.aggregate
+            {
+                if let Ok(owner) = session.gameplay.presentation.owner() {
+                    backend.restore_owned_hardware(sm_game::scene::hardware::export(&owner.state));
+                    let current = backend.capture_owned_video();
+                    backend
+                        .restore_owned_video(&owner.physical_image(current.caches))
+                        .expect("owned resident physical export rejected");
+                }
+            }
             self.backend = Some(backend);
         }
     }
@@ -824,6 +840,7 @@ impl Game {
     }
 
     pub(crate) fn request_reset(&mut self) {
+        self.prepared_message = None;
         crate::ram_map::word!(self.GAME_STATE = u16::MAX);
     }
 
@@ -1201,6 +1218,8 @@ impl Game {
             message_box_das0l_value: 0,
             k_out: 0,
             g_sram: Default::default(),
+            prepared_save_requests: Vec::new(),
+            prepared_message: None,
             g_rtl_memory_ptr: core::ptr::null_mut(),
             g_rtl_runframe: None,
             g_rtl_syncall: None,
@@ -1248,6 +1267,9 @@ pub struct GameOwner {
 }
 // Shared Rc-backed state can escape with(), so this owner cannot implement Sync.
 impl GameOwner {
+    pub fn take_prepared_save_requests(&self) -> Vec<sm_game::player_effects::save::SaveRequest> {
+        self.with(Game::take_prepared_save_requests)
+    }
     pub fn new() -> Box<Self> {
         Self::with_world(WorldBinding::canonical_legacy())
     }
@@ -1274,8 +1296,7 @@ impl GameOwner {
         &self,
         supplied: persistent_session::SuppliedSessionStart,
     ) -> Result<(), persistent_session::SessionStartError> {
-        let (start, media, required) = supplied.into_parts();
-        self.start_session(start, media, &required)
+        self.with(|game| game.start_supplied_actor_session(supplied))
     }
     pub fn checkpoint_session(
         &self,
@@ -1345,8 +1366,7 @@ impl GameOwner {
                     policy_dependent: &crate::rom_patches::policy_dependent,
                 },
             )?;
-            let (description, media, required) = supplied.into_parts();
-            let prepared = persistent_session::prepare(game, description, media, &required)
+            let prepared = crate::game::actors::prepared_content::prepare_supplied(game, supplied)
                 .map_err(|error| format!("Session restore validation {error:?}"))?;
             game.install_session_start(prepared)
                 .map_err(|error| format!("Session restore installation {error:?}"))
@@ -1522,15 +1542,19 @@ impl Game {
             self.compatibility_write_owned_byte(at + offset, byte);
         }
     }
+    /// Complete admission while the caller already holds exclusive Game access.
+    pub fn start_supplied_actor_session(
+        &mut self,
+        supplied: persistent_session::SuppliedSessionStart,
+    ) -> Result<(), persistent_session::SessionStartError> {
+        let prepared = crate::game::actors::prepared_content::prepare_supplied(self, supplied)?;
+        self.install_session_start(prepared)
+    }
     pub fn start_pending_supplied_session(
         &mut self,
     ) -> Option<Result<(), persistent_session::SessionStartError>> {
         let supplied = self.pending_supplied_start.take()?;
-        let (start, media, required) = supplied.into_parts();
-        Some(
-            persistent_session::prepare(self, start, media, &required)
-                .and_then(|prepared| self.install_session_start(prepared)),
-        )
+        Some(self.start_supplied_actor_session(supplied))
     }
     pub(crate) fn install_session_start(
         &mut self,
@@ -1543,6 +1567,7 @@ impl Game {
         prepared: persistent_session::PreparedSessionStart,
         scoped_adoption: bool,
     ) -> Result<(), persistent_session::SessionStartError> {
+        self.prepared_message = None;
         use persistent_session::{AggregateSlot as SessionSlot, SessionStartError};
         if matches!(self.persistent_session.aggregate, SessionSlot::Leased)
             || (!scoped_adoption && self.samus.mutation_depth() != 0)
@@ -1557,7 +1582,7 @@ impl Game {
         if prepared.gameplay.actor_identity.is_poisoned() {
             return Err(SessionStartError::Binding(DisplayError::Poisoned));
         }
-        let (session, binding) = prepared.into_session();
+        let (session, binding) = prepared.into_session()?;
         // An encoding failure leaves the completed compatibility prefix and
         // prevents the prior owner from resuming against those changed bytes.
         self.poison_persistent_session();
@@ -1565,6 +1590,7 @@ impl Game {
             self.ram.copy_in(at, bytes)
         });
         crate::game::session_runtime::export_native_spawn(&session.gameplay, self);
+        self.export_owned_hardware(&session.gameplay);
         self.samus.install(binding);
         self.actor_identity = None;
         self.persistent_ram_epoch = self.ram.write_epoch();
@@ -1665,6 +1691,7 @@ impl Game {
             self.persistent_ram_epoch = admitted_epoch;
             SessionSlot::Ready(Box::new(session))
         } else {
+            self.prepared_message = None;
             self.samus.force_revoke();
             session.poison();
             SessionSlot::Failed(Some(Box::new(session)))
@@ -1706,6 +1733,7 @@ impl Game {
         }
     }
     fn poison_persistent_session(&mut self) {
+        self.prepared_message = None;
         self.revoke_fx_domain();
         // Explicit aggregate failure also ends the detached FrameDisplay interval.
         self.revoke_frame_display_domain();
@@ -1790,7 +1818,35 @@ impl Game {
         &mut self,
         prepared: persistent_session::PreparedSessionAdoption,
     ) -> Result<(), persistent_session::SessionStartError> {
+        self.prepared_message = None;
         if let Some(mut start) = prepared.0 {
+            // The oracle/rewind path has already chosen and normalized the physical
+            // PPU. Adopt that selection before installation can publish any state.
+            if let Some(image) = self.capture_owned_hardware() {
+                sm_game::scene::hardware::import(&mut start.display.owner_mut().state, image);
+                if start.gameplay.presentation.is_owned() {
+                    sm_game::scene::hardware::import(
+                        &mut start
+                            .gameplay
+                            .presentation
+                            .owner_mut()
+                            .map_err(persistent_session::SessionStartError::Binding)?
+                            .state,
+                        image,
+                    );
+                }
+            }
+            if let Some(physical) = self.capture_owned_video() {
+                start.display.owner_mut().adopt_physical_image(&physical);
+                if start.gameplay.presentation.is_owned() {
+                    start
+                        .gameplay
+                        .presentation
+                        .owner_mut()
+                        .map_err(persistent_session::SessionStartError::Binding)?
+                        .adopt_physical_image(&physical);
+                }
+            }
             sm_game::fx_encoding::adopt_display_sources(
                 &mut start.display.owner_mut().state,
                 &mut start.gameplay.menu_window,
@@ -1928,6 +1984,7 @@ impl Game {
         self.samus.authority(self.samus_images())
     }
     pub(crate) fn revoke_samus_authority(&mut self) {
+        self.import_retained_hardware();
         self.revoke_inventory_domain();
         self.revoke_menu_domain();
         self.revoke_fx_domain();
@@ -1938,10 +1995,109 @@ impl Game {
         self.poison_persistent_session();
         self.samus.revoke();
     }
+    /// No backend is a legitimate headless owner; never construct default devices
+    /// just to manufacture an image for import.
+    pub fn capture_owned_video(&self) -> Option<sm_game::scene::hardware::PhysicalVideoImage> {
+        self.backend
+            .as_ref()
+            .map(|backend| backend.capture_owned_video())
+    }
+    pub fn restore_owned_video(
+        &mut self,
+        image: &sm_game::scene::hardware::PhysicalVideoImage,
+    ) -> Result<(), sm_game::scene::state::DisplayError> {
+        self.note_samus_external_mutation();
+        self.backend
+            .as_ref()
+            .ok_or(sm_game::scene::state::DisplayError::Incomplete)?
+            .restore_owned_video(image)
+    }
+    pub fn take_owned_raster(
+        &self,
+    ) -> Result<sm_game::scene::hardware::PhysicalRasterHistory, sm_game::scene::state::DisplayError>
+    {
+        self.backend
+            .as_ref()
+            .ok_or(sm_game::scene::state::DisplayError::Incomplete)?
+            .finish_owned_raster()
+    }
+    /// Collect both admitted backend PPU allocations and return the actually
+    /// selected terminal history, including an operation's returned failure prefix.
+    pub fn with_owned_raster<T, E>(
+        &mut self,
+        operation: impl FnOnce(&mut Self) -> Result<T, E>,
+    ) -> Result<
+        (
+            Result<T, E>,
+            sm_game::scene::hardware::PhysicalRasterHistory,
+        ),
+        sm_game::scene::state::DisplayError,
+    > {
+        self.backend
+            .as_ref()
+            .ok_or(sm_game::scene::state::DisplayError::Incomplete)?
+            .begin_owned_raster()?;
+        struct Cancel;
+        impl Drop for Cancel {
+            fn drop(&mut self) {
+                crate::game::owned_hardware_codec::cancel_raster();
+            }
+        }
+        let _cancel = Cancel;
+        let result = operation(self);
+        let history = self
+            .backend
+            .as_ref()
+            .ok_or(sm_game::scene::state::DisplayError::Incomplete)?
+            .finish_owned_raster()?;
+        Ok((result, history))
+    }
+    pub(crate) fn capture_owned_hardware(&self) -> Option<sm_game::scene::hardware::DeviceImage> {
+        self.backend
+            .as_ref()
+            .map(|backend| backend.capture_owned_hardware())
+    }
+    pub(crate) fn export_owned_hardware(&self, state: &sm_game::session::Session) {
+        if let (Some(backend), Ok(owner)) = (&self.backend, state.presentation.owner()) {
+            backend.restore_owned_hardware(sm_game::scene::hardware::export(&owner.state));
+            let current = backend.capture_owned_video();
+            backend
+                .restore_owned_video(&owner.physical_image(current.caches))
+                .expect("owned resident physical export rejected");
+        }
+    }
+    fn import_retained_hardware(&mut self) {
+        let Some(image) = self.capture_owned_hardware() else {
+            return;
+        };
+        let physical = self.capture_owned_video();
+        // During a foreign lease the top frame is the sole carried display.
+        if let Some(Some(presentation)) = self.persistent_session.foreign_presentations.last_mut() {
+            if let Ok(owner) = presentation.owner_mut() {
+                sm_game::scene::hardware::import(&mut owner.state, image);
+                if let Some(physical) = &physical {
+                    owner.adopt_physical_image(physical);
+                }
+            }
+            return;
+        }
+        use persistent_session::AggregateSlot;
+        if let AggregateSlot::Ready(session) | AggregateSlot::Failed(Some(session)) =
+            &mut self.persistent_session.aggregate
+        {
+            if let Ok(owner) = session.gameplay.presentation.owner_mut() {
+                sm_game::scene::hardware::import(&mut owner.state, image);
+                if let Some(physical) = &physical {
+                    owner.adopt_physical_image(physical);
+                }
+            }
+        }
+    }
     /// Unscoped backend/ROM writers invalidate resumption. Scoped writers remain
     /// revoked until their guard successfully adopts the actual selected state.
     pub(crate) fn note_samus_external_mutation(&mut self) {
         if self.samus.mutation_depth() == 0 {
+            self.import_retained_hardware();
             self.revoke_samus_authority();
         }
     }
@@ -1956,18 +2112,35 @@ impl Game {
             self.persistent_session.aggregate,
             persistent_session::AggregateSlot::Legacy
         );
+        let outer = self.samus.mutation_depth() == 0;
+        let current = self.persistent_ram_epoch == self.ram.write_epoch();
         self.samus.begin_mutation(legacy)?;
-        self.revoke_inventory_domain();
-        self.revoke_menu_domain();
-        self.revoke_fx_domain();
-        self.revoke_scroll_domain();
-        self.revoke_frame_display_domain();
-        self.revoke_sequence_domain();
-        self.revoke_gameplay_context();
-        Ok(SamusMutation {
+        let mutation = SamusMutation {
             game: self,
             completed: false,
-        })
+        };
+        if outer && current {
+            if let (Some(backend), persistent_session::AggregateSlot::Ready(session)) = (
+                &mutation.game.backend,
+                &mutation.game.persistent_session.aggregate,
+            ) {
+                if let Ok(owner) = session.gameplay.presentation.owner() {
+                    backend.restore_owned_hardware(sm_game::scene::hardware::export(&owner.state));
+                    let current = backend.capture_owned_video();
+                    backend
+                        .restore_owned_video(&owner.physical_image(current.caches))
+                        .expect("owned resident physical export rejected");
+                }
+            }
+        }
+        mutation.game.revoke_inventory_domain();
+        mutation.game.revoke_menu_domain();
+        mutation.game.revoke_fx_domain();
+        mutation.game.revoke_scroll_domain();
+        mutation.game.revoke_frame_display_domain();
+        mutation.game.revoke_sequence_domain();
+        mutation.game.revoke_gameplay_context();
+        Ok(mutation)
     }
     /// Legacy reference imports have no supplied semantic content payload. Keep
     /// their whole load/patch/restore interval revoked, including callback drops.
@@ -4473,6 +4646,9 @@ impl Game {
 }
 
 impl Game {
+    pub(crate) fn hdma_has_suspended_display(&self) -> bool {
+        self.suspended_display().is_some()
+    }
     fn suspended_display(&self) -> Option<&sm_game::scene::state::DisplayState> {
         self.persistent_session
             .foreign_presentations
@@ -4583,6 +4759,33 @@ impl sm_game::presentation_workspace::Access for Game {
     }
 }
 #[forbid(unsafe_code)]
+impl sm_game::cinematic_access::Access for Game {
+    fn cinematic_value<C: sm_game::cinematic_access::Value>(&self) -> C {
+        if self.persistent_session_current() {
+            match &self.persistent_session.aggregate {
+                persistent_session::AggregateSlot::Ready(session)
+                | persistent_session::AggregateSlot::Failed(Some(session)) => {
+                    return C::current(&session.gameplay);
+                }
+                _ => unreachable!("current cinematic owner"),
+            }
+        }
+        sm_game::session_cohort::load(self)
+    }
+    fn commit_cinematic<C: sm_game::cinematic_access::Value>(&mut self, before: &C, after: C) {
+        if after == *before {
+            return;
+        }
+        if self.persistent_session_current() {
+            let mut runtime = crate::game::session_runtime::Runtime::new(self);
+            C::merge(before, &after, runtime.session_mut());
+            sm_game::session_access::SessionAccess::refresh_inputs(&mut runtime);
+        } else {
+            sm_game::session_cohort::store(self, before, after);
+        }
+    }
+}
+
 impl sm_game::presentation_workspace::PaletteAccess for Game {
     fn palette_byte(&self, target: bool, offset: usize) -> u8 {
         self.compatibility_byte(
@@ -4923,3 +5126,117 @@ impl sm_game::grapple_swing::TileAccess for Game {
         sm_game::sequence_state::Access::set_sequence_word(self, field.sequence_word(), value);
     }
 }
+
+impl Game {
+    /// Drain actual pending save outputs; draining does not claim durable storage.
+    pub fn take_prepared_save_requests(
+        &mut self,
+    ) -> Vec<sm_game::player_effects::save::SaveRequest> {
+        std::mem::take(&mut self.prepared_save_requests)
+    }
+}
+
+impl Game {
+    pub(crate) fn revoke_prepared_message_frame(&mut self) {
+        self.prepared_message = None;
+    }
+    pub(crate) fn fail_prepared_actor_return(&mut self) {
+        self.prepared_message = None;
+        self.poison_persistent_session();
+        self.samus.force_revoke();
+    }
+    pub(crate) fn submit_prepared_message_frame(
+        &mut self,
+        owner: &sm_game::persistent_session::PersistentSession,
+        media: sm_data::message::AssetId,
+        frame: sm_runtime::message::MessageFrame,
+    ) -> Result<(), sm_data::message::Fault> {
+        use sm_data::message::Fault;
+        if !matches!(
+            self.persistent_session.aggregate,
+            persistent_session::AggregateSlot::Leased
+        ) {
+            return Err(Fault::MissingDisplay);
+        }
+        let content = owner
+            .required
+            .dialogue
+            .as_ref()
+            .ok_or(Fault::ChangedContent)?;
+        let execution = owner
+            .gameplay
+            .prepared_dialogue
+            .as_ref()
+            .ok_or(Fault::MissingDisplay)?;
+        let display = if execution.visible {
+            &content.start.active
+        } else if execution.restored {
+            &content.start.restored
+        } else {
+            &content.start.saved
+        };
+        if media != display.media_id
+            || frame.revision != display.revision
+            || frame.pixels.len() != 256 * 224
+        {
+            return Err(Fault::ChangedContent);
+        }
+        self.prepared_message = Some(
+            crate::game::actors::prepared_dialogue_ports::PreparedMessageFrame {
+                manifest: content.manifest,
+                input_record: owner.metadata().identity.next_input_record,
+                media,
+                revision: frame.revision,
+                compatibility_epoch: self.compatibility_write_epoch(),
+                frame,
+            },
+        );
+        Ok(())
+    }
+    /// The device can consume a receipt only for the current, returned owner.
+    pub fn prepared_message_frame(&self) -> Option<&sm_runtime::message::MessageFrame> {
+        if !self.persistent_session_current() {
+            return None;
+        }
+        let persistent_session::AggregateSlot::Ready(owner) = &self.persistent_session.aggregate
+        else {
+            return None;
+        };
+        let receipt = self.prepared_message.as_ref()?;
+        let content = owner.required.dialogue.as_ref()?;
+        let execution = owner.gameplay.prepared_dialogue.as_ref()?;
+        let display = if execution.visible {
+            &content.start.active
+        } else if execution.restored {
+            &content.start.restored
+        } else {
+            &content.start.saved
+        };
+        if receipt.compatibility_epoch != self.compatibility_write_epoch()
+            || receipt.input_record != owner.metadata().identity.next_input_record
+            || receipt.manifest != content.manifest
+            || receipt.media != display.media_id
+            || receipt.revision != display.revision
+            || receipt.frame.pixels.len() != 256 * 224
+        {
+            return None;
+        }
+        Some(&receipt.frame)
+    }
+    pub(crate) fn finalize_prepared_message_frame(&mut self) {
+        if !self.persistent_session_current() {
+            self.prepared_message = None;
+            return;
+        }
+        let epoch = self.compatibility_write_epoch();
+        if let Some(receipt) = &mut self.prepared_message {
+            receipt.compatibility_epoch = epoch;
+        }
+        if self.prepared_message_frame().is_none() {
+            self.prepared_message = None;
+        }
+    }
+}
+
+#[path = "game_state/palette_migration.rs"]
+mod palette_migration;

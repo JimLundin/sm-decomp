@@ -11,7 +11,11 @@ pub(super) fn calculate_angle_from_xy(x: u16, y: u16, _game: &mut Game) -> u16 {
 }
 
 pub(super) fn ridley_offscreen(x: u16, y: u16, game: &mut Game) -> u8 {
-    u8::from(sm_game::actors::ridley::solid_block_at(x, y, game))
+    u8::from(sm_game::actors::ridley::solid_block_at(
+        x,
+        y,
+        &mut Runtime::new(game),
+    ))
 }
 
 pub(super) fn unreachable(game: &mut Game) {

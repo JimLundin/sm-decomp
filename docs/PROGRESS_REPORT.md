@@ -27,6 +27,66 @@ Pending and unobserved engine scope is retained in the coordinator and endgame
 snapshots below. Complete any%, 100%, low%, boot/transition/endgame acceptance is
 not established by this documentation cleanup.
 
+## Qualified migration source, 2026-11-02
+
+The next actor/boss/room/display composition is frozen at source
+`848016e0211e12784381b2e8a59ab47e9a564447087f05d212485de740616d5a`.
+Combined source review accepts the target cores, correction/pruning batches,
+finite compatibility providers, captured record provenance and existing fixture
+updates. Ordinary Cargo checking passed for all target libraries and compat;
+the verifier library/binary also passes with warnings denied in 2.63 seconds.
+Formatting, source inventory and all 56 player / 52 Session mutation anchors
+pass. No executable, DLL, capture or replay was built or run locally.
+
+The expression counter is 336 RAM sites / 44 coupled files, versus the preceding
+candidate's 613 / 74. Genuine additional retirements remain 275 after excluding
+two register-spelling changes. Main still has 1,159 / 88; the first 546 and next
+275 genuine retirements remain unlanded. Neither packet establishes complete
+owned Session, full boot-to-credits fidelity or original-movie acceptance.
+
+Physical path-classified totals are 258,286 production Rust lines, 62,294
+verification lines and 379 legacy-bank lines. Against the first published
+candidate's 199,875 / 61,723 this is +58,411 production and +571 verification.
+This includes actual previously missing actor cores, prepared consumers,
+capabilities, records, codec and compatibility providers. Superseded private
+boss fields/helpers were removed where no live caller remains; every retained
+adapter still counts. No compactness claim is made.
+
+Captured ROM images remain shared, but the new captured RomRecords Clone
+copies present tables. Its three optional program-bank payloads alone total
+98,304 bytes, plus other rows and a 1,280-byte speed table, once per prepared
+actor entry and each reached native allocation-refresh edge. Dynamic frequency
+and replay cost are unmeasured. Runtime qualification must assess this cost;
+shared immutable captured-record transport is a remaining improvement.
+
+The reviewed FX invalidation correction is composed with the next decoder's
+additional Crocomire buffer, tracking all 3,124 fixed dependency bytes while
+retaining global Session authority guards. The accepted checkpoint scheduler
+is also composed; existing mutation faults now target their actual current
+codec/slot fields. Runtime mutant kills remain unexecuted. Exact final source,
+Zip inventory and lossless reader are retained in
+`$TEMP/collab/root-coordination/NEXT152_FINAL_848016E/`.
+
+## Executable CI and next migration check, 2026-11-02 15:57 UTC
+
+PR #151 head `0fd725d697c88d332dc305b5ba539e9f3f536ebc` passed CI
+`41475314926`: all 154 verifier checks and 29 state-layout checks, formatting,
+strict compiler/lints and detached-package checks. CI built the headless Rust
+verifier executable successfully. Route `41475315272`, oracle lock
+`41475314900` and corpus `41475592224` still have pending replay jobs. Main
+remains `558131e7208334a86a6de6945890fd8d4a73f616`; no new landing is claimed.
+
+Root forward-composed the executable integration and both replay corrections
+into the next ownership migration, preserving its existing source fixes.
+The additional owned liquid implementation now retains the same descending
+native destination order. The combined ordinary Cargo check with warnings
+denied failed with 285 diagnostics, after the preceding 689-diagnostic pass.
+The compiler terminated and its original session was collected. Three source
+owners are fixing disjoint residual actor/boss/room/player-effect bindings;
+compiler success and behavior qualification remain pending. Original evidence
+is retained in `$TEMP/collab/root-coordination/next152-combined-check.utf8.log`.
+No executable, DLL or replay was built or run locally during this continuation.
+
 ## Guarded checkpoint staging, 2026-11-02
 
 Composed verifier source

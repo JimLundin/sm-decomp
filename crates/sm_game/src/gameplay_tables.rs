@@ -8,7 +8,7 @@ use crate::records::Records;
 use sm_data::cartridge::RomImage;
 use sm_data::gameplay_tables::*;
 
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ImportedGameplayTables {
     area_labels: ImportedWords<AREA_LABELS, AREAS>,
     torizo_low: ImportedWords<TORIZO_LOW_PALETTE_BANDS, TORIZO_PALETTE_WORDS>,

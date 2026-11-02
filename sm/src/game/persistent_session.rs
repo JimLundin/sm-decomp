@@ -23,6 +23,8 @@ use {
 /// close native suspension/adoption, and never retain the supplied duplicate
 /// numeric presentation fields as independently writable live state.
 pub struct PreparedSessionStart {
+    pub(crate) actor_content:
+        Option<std::rc::Rc<sm_game::actors::presentation_content::PreparedActorContent>>,
     pub(crate) gameplay: Session,
     pub(crate) observations: ExternalInputs,
     pub(crate) display: DisplayComponent,
@@ -42,6 +44,12 @@ pub(crate) fn prepare(
     media: Arc<SceneMedia>,
     required: &SessionStartRequirements,
 ) -> Result<PreparedSessionStart, SessionStartError> {
+    crate::game::actors::prepared_content::validate_retained(
+        game,
+        &media,
+        &supplied.actor_content,
+        required,
+    )?;
     let gameplay = supplied
         .gameplay
         .ok_or(SessionStartError::MissingGameplay)?;
@@ -234,6 +242,7 @@ pub(crate) fn prepare(
         return Err(SessionStartError::GameplayDisplay);
     }
     Ok(PreparedSessionStart {
+        actor_content: supplied.actor_content,
         gameplay,
         observations,
         display: opened.display,
@@ -249,8 +258,11 @@ pub(crate) fn prepare(
 }
 
 impl PreparedSessionStart {
-    pub(crate) fn into_session(self) -> (PersistentSession, PreparedSamusBinding) {
+    pub(crate) fn into_session(
+        self,
+    ) -> Result<(PersistentSession, PreparedSamusBinding), SessionStartError> {
         let Self {
+            actor_content,
             mut gameplay,
             observations,
             display,
@@ -273,20 +285,24 @@ impl PreparedSessionStart {
             samus_publications,
         };
         sm_game::fx_encoding::adopt_control_ownership(&mut gameplay)
-            .expect("prepared control ownership");
+            .map_err(SessionStartError::Binding)?;
         gameplay.control = Control::Owned(Box::new(CurrentControl {
             metadata,
             requests: audio_requests,
         }));
-        (
-            PersistentSession {
-                gameplay,
-                observations,
-                roles,
-                required,
-            },
-            binding,
-        )
+        let mut session = PersistentSession {
+            gameplay,
+            observations,
+            roles,
+            required,
+            actor_content,
+        };
+        if let Some(content) = session.actor_content.clone() {
+            content
+                .admit(&mut session.gameplay)
+                .map_err(SessionStartError::Binding)?;
+        }
+        Ok((session, binding))
     }
 }
 

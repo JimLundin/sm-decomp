@@ -19,6 +19,8 @@ use {
 };
 
 pub struct SessionStartDescription {
+    pub actor_content:
+        Option<std::rc::Rc<crate::actors::presentation_content::PreparedActorContent>>,
     pub gameplay: Option<Session>,
     pub observations: Option<ExternalInputs>,
     pub display: DisplayStartDescription,
@@ -40,6 +42,7 @@ pub enum SessionStartError {
     MissingActorQueueProjection,
     MissingSamusPublications,
     MissingAudioRequests,
+    MissingActorContent,
     World,
     GameplayDisplay,
     Observations,
@@ -52,6 +55,7 @@ pub enum SessionStartError {
 /// Tools supplies the complete semantic construction and independent contract.
 /// The app transports this value without access to mutable gameplay internals.
 pub struct SuppliedSessionStart {
+    actor_import: Option<crate::actors::presentation_content::ActorImportRequest>,
     description: SessionStartDescription,
     media: Arc<SceneMedia>,
     required: SessionStartRequirements,
@@ -65,10 +69,24 @@ impl SuppliedSessionStart {
         required: SessionStartRequirements,
     ) -> Self {
         Self {
+            actor_import: None,
             description,
             media,
             required,
         }
+    }
+    /// Content-load boundary supplies two independently authored actor manifests.
+    pub fn with_actor_import(
+        mut self,
+        request: crate::actors::presentation_content::ActorImportRequest,
+    ) -> Self {
+        self.actor_import = Some(request);
+        self
+    }
+    pub fn take_actor_import(
+        &mut self,
+    ) -> Option<crate::actors::presentation_content::ActorImportRequest> {
+        self.actor_import.take()
     }
     pub fn into_parts(
         self,
@@ -94,10 +112,26 @@ impl SessionStartContract {
 pub struct ValidatedSessionStart(PersistentSession);
 impl ValidatedSessionStart {
     pub fn construct(
-        supplied: SuppliedSessionStart,
+        mut supplied: SuppliedSessionStart,
         world: &Arc<crate::room_entry::world::WorldBinding>,
     ) -> Result<Self, SessionStartError> {
+        // Tools must consume raw import requests; the engine admits prepared content.
+        if supplied.take_actor_import().is_some() {
+            return Err(SessionStartError::MissingActorContent);
+        }
         let (supplied, media, required) = supplied.into_parts();
+        if let Some(content) = &supplied.actor_content {
+            content
+                .validate_request(
+                    required
+                        .actor_manifest
+                        .as_ref()
+                        .ok_or(SessionStartError::MissingActorContent)?,
+                )
+                .map_err(SessionStartError::Binding)?;
+        } else if world.actors().revision().is_some() || required.actor_manifest.is_some() {
+            return Err(SessionStartError::MissingActorContent);
+        }
         let required = &required;
         let mut gameplay = supplied
             .gameplay
@@ -314,12 +348,18 @@ impl ValidatedSessionStart {
             crate::fx_encoding::adopt_control_ownership(&mut gameplay)
                 .map_err(SessionStartError::Binding)?;
         }
-        let session = PersistentSession {
+        let mut session = PersistentSession {
+            actor_content: supplied.actor_content,
             gameplay,
             observations,
             roles,
             required: Arc::new(required.clone()),
         };
+        if let Some(content) = session.actor_content.clone() {
+            content
+                .admit(&mut session.gameplay)
+                .map_err(SessionStartError::Binding)?;
+        }
         session.checkpoint().map_err(SessionStartError::Binding)?;
         Ok(Self(session))
     }
@@ -332,6 +372,8 @@ impl ValidatedSessionStart {
 /// it never decodes a second Session while this owner exists.
 #[derive(Clone)]
 pub struct PersistentSession {
+    pub actor_content:
+        Option<std::rc::Rc<crate::actors::presentation_content::PreparedActorContent>>,
     pub gameplay: Session,
     pub observations: ExternalInputs,
     pub roles: ContentDescription,
@@ -361,7 +403,9 @@ impl PersistentSession {
             .checkpoint()
             .map_err(SessionStartError::Binding)?;
         if session_required_declarations(&checkpoint.0.required)
+            .map_err(SessionStartError::Binding)?
             != session_required_declarations(contract.requirements())
+                .map_err(SessionStartError::Binding)?
         {
             return Err(SessionStartError::Binding(DisplayError::Identity));
         }
@@ -410,6 +454,19 @@ impl PersistentSession {
             .begin_interval(fresh_entry)
     }
     pub fn checkpoint(&self) -> Result<SessionCheckpoint, DisplayError> {
+        if let Some(content) = &self.actor_content {
+            content.validate_request(
+                self.required
+                    .actor_manifest
+                    .as_ref()
+                    .ok_or(DisplayError::Incomplete)?,
+            )?;
+            content.check(&self.gameplay)?;
+        } else if self.gameplay.world.actors().revision().is_some()
+            || self.required.actor_manifest.is_some()
+        {
+            return Err(DisplayError::Incomplete);
+        }
         crate::fx_encoding::validate_control_ownership(&self.gameplay)?;
         if !self.gameplay.game_loop.is_initialized()
             || !self.gameplay.menu_window.is_initialized()
@@ -530,6 +587,7 @@ impl PersistentSession {
             .take()
             .ok_or(Fault::MissingDisplay)?;
         execution.request = request;
+        execution.delay = self.gameplay.messages.delay;
         let mut workspace = self.gameplay.presentation.workspace_mut().take();
         let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
             content.resume(
@@ -578,10 +636,30 @@ impl PersistentSession {
         description: crate::scene::records::SceneDescription,
         media: Arc<SceneMedia>,
     ) -> Result<crate::scene::records::Scene, DisplayError> {
+        self.finish_interval_with_description(effects, |_, _, _, _| Ok((description, media)))
+    }
+    /// Extract immutable history after actual row callbacks, before commitment.
+    /// Read-only current state/media and prior visible history are explicit inputs.
+    pub fn finish_interval_with_description<E: crate::scene::commit::SettlementEffects>(
+        &mut self,
+        effects: &mut E,
+        publish: impl FnOnce(
+            &mut E,
+            &crate::scene::state::DisplayState,
+            &crate::scene::records::Scene,
+            &Arc<SceneMedia>,
+        ) -> Result<
+            (crate::scene::records::SceneDescription, Arc<SceneMedia>),
+            DisplayError,
+        >,
+    ) -> Result<crate::scene::records::Scene, DisplayError> {
         self.refresh_display()?;
         let result = (|| {
             self.gameplay.presentation.owner_mut()?.begin_settlement()?;
             self.gameplay.settle_display(effects)?;
+            let owner = self.gameplay.presentation.owner()?;
+            let (description, media) =
+                publish(effects, &owner.state, owner.committed(), owner.media())?;
             self.gameplay
                 .presentation
                 .owner_mut()?
@@ -620,10 +698,8 @@ impl SessionCheckpoint {
         let Presentation::Owned { display, .. } = &state.gameplay.presentation else {
             return Err("no owned Session display checkpoint".into());
         };
-        let declarations = session_required_declarations(&state.required);
-        if declarations != session_required_declarations(&state.required) {
-            return Err("Session checkpoint immutable bindings differ".into());
-        }
+        let declarations = session_required_declarations(&state.required)
+            .map_err(|error| format!("Session immutable declarations {error:?}"))?;
         let components = [
             declarations,
             state.gameplay.control.encode_checkpoint(&state.required)?,
@@ -665,7 +741,10 @@ impl SessionCheckpoint {
         if read.bytes(10)? != b"SMSESSION\x01" {
             return Err("unsupported Session checkpoint schema".into());
         }
-        if session_binary_component(&mut read)? != session_required_declarations(&required) {
+        if session_binary_component(&mut read)?
+            != session_required_declarations(&required)
+                .map_err(|error| format!("Session immutable declarations {error:?}"))?
+        {
             return Err("Session checkpoint immutable bindings changed".into());
         }
         let control = Control::decode_checkpoint(session_binary_component(&mut read)?, &required)?;
@@ -722,6 +801,7 @@ impl SessionCheckpoint {
                 gameplay: Some(gameplay),
                 observations: Some(observations),
                 display: display_start,
+                actor_content: None,
                 roles: Some(required.roles.clone()),
                 marker: Some(required.marker.clone()),
                 actor_queue_projection: Some(required.actor_queue_projection),
@@ -739,6 +819,7 @@ impl SessionCheckpoint {
             observations,
             roles,
             required: _,
+            actor_content,
         } = self.0;
         let metadata = gameplay.control.metadata()?.clone();
         let audio_requests = gameplay.control.requests()?.clone();
@@ -762,6 +843,7 @@ impl SessionCheckpoint {
                 gameplay: Some(gameplay),
                 observations: Some(observations),
                 display,
+                actor_content,
                 roles: Some(roles),
                 marker: Some(marker),
                 actor_queue_projection: Some(projection),
@@ -773,7 +855,9 @@ impl SessionCheckpoint {
     }
 }
 
-fn session_required_declarations(required: &SessionStartRequirements) -> Vec<u8> {
+fn session_required_declarations(
+    required: &SessionStartRequirements,
+) -> Result<Vec<u8>, DisplayError> {
     let mut declarations = crate::scene::checkpoint_codec::session_declarations(
         &required.roles,
         &required.marker,
@@ -784,7 +868,17 @@ fn session_required_declarations(required: &SessionStartRequirements) -> Vec<u8>
     if let Some(content) = &required.dialogue {
         declarations.extend_from_slice(&content.declarations());
     }
-    declarations
+    if let Some(request) = &required.actor_manifest {
+        let content = request.declarations()?;
+        declarations.extend_from_slice(b"SMACTORCONTRACT\x01");
+        declarations.extend_from_slice(
+            &u64::try_from(content.len())
+                .map_err(|_| DisplayError::Source)?
+                .to_le_bytes(),
+        );
+        declarations.extend_from_slice(&content);
+    }
+    Ok(declarations)
 }
 fn session_binary_component<'a>(
     read: &mut crate::actors::snapshot::CheckpointReader<'a>,
@@ -997,6 +1091,41 @@ impl<E> crate::presentation_workspace::Publication for SessionDialogue<'_, E> {
 impl<E: crate::prepared_dialogue::Effects> crate::message_composition::prepared::WorkspaceEffects
     for SessionDialogue<'_, E>
 {
+    fn wait(
+        &mut self,
+        workspace: &mut crate::presentation_workspace::Workspace,
+        published: &mut crate::message_composition::prepared::ExecutionDescription,
+    ) -> Result<crate::dialogue::Outcome, sm_data::message::Fault> {
+        *self.session.gameplay.presentation.workspace_mut() = workspace.take();
+        self.session.gameplay.prepared_dialogue = Some(published.clone());
+        let result = crate::prepared_dialogue::publish(&mut self.session.gameplay, self.content)
+            .and_then(|()| self.effects.wait(&mut self.session.gameplay));
+        *workspace = self.session.gameplay.presentation.workspace_mut().take();
+        if let Some(selected) = self.session.gameplay.prepared_dialogue.take() {
+            *published = selected;
+        } else {
+            return Err(sm_data::message::Fault::MissingDisplay);
+        }
+        result
+    }
+    fn input(
+        &mut self,
+        workspace: &mut crate::presentation_workspace::Workspace,
+        published: &mut crate::message_composition::prepared::ExecutionDescription,
+        sample: crate::message_composition::prepared::InputSample,
+    ) -> Result<crate::message_composition::prepared::InputSample, sm_data::message::Fault> {
+        *self.session.gameplay.presentation.workspace_mut() = workspace.take();
+        self.session.gameplay.prepared_dialogue = Some(published.clone());
+        let result = crate::prepared_dialogue::publish(&mut self.session.gameplay, self.content)
+            .and_then(|()| self.effects.input_owner(self.session, sample));
+        *workspace = self.session.gameplay.presentation.workspace_mut().take();
+        if let Some(selected) = self.session.gameplay.prepared_dialogue.take() {
+            *published = selected;
+        } else {
+            return Err(sm_data::message::Fault::MissingDisplay);
+        }
+        result
+    }
     fn effect(
         &mut self,
         effect: crate::message_composition::prepared::Effect,
@@ -1006,9 +1135,10 @@ impl<E: crate::prepared_dialogue::Effects> crate::message_composition::prepared:
         *self.session.gameplay.presentation.workspace_mut() = workspace.take();
         self.session.gameplay.prepared_dialogue = Some(published.clone());
         let result = crate::prepared_dialogue::publish(&mut self.session.gameplay, self.content)
-            .and_then(|()| self.effects.apply(effect, &mut self.session.gameplay));
+            .and_then(|()| self.effects.apply_owner(effect, self.session));
         *workspace = self.session.gameplay.presentation.workspace_mut().take();
-        if let Some(selected) = self.session.gameplay.prepared_dialogue.take() {
+        if let Some(mut selected) = self.session.gameplay.prepared_dialogue.take() {
+            selected.delay = self.session.gameplay.messages.delay;
             *published = selected;
         } else {
             return Err(sm_data::message::Fault::MissingDisplay);

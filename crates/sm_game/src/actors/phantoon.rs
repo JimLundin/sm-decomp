@@ -529,8 +529,11 @@ fn set_native_word<S: State + ?Sized>(game: &mut S, at: isize, value: u16) {
         return;
     }
     if (0x9000..0x97dc).contains(&at) && at.is_multiple_of(2) {
-        game.session_mut().actors.extended.blocks[3][(at - 0x9000) / 2] =
-            u16::from_le_bytes(value.to_ne_bytes());
+        *game
+            .session_mut()
+            .actors
+            .extended
+            .word_mut(3, (at - 0x9000) / 2) = u16::from_le_bytes(value.to_ne_bytes());
         return;
     }
     let bytes = u16::to_ne_bytes(value);
@@ -578,14 +581,14 @@ fn close_eye<S: State + ?Sized>(game: &mut S, eye_list: u16) {
 pub fn materialisation_sound<S: State + ?Sized>(game: &mut S) {
     let sound = crate::boss_lists::phantoon_materialisation_sound(
         game,
-        game.session().actors.extended.blocks[3][25] as isize,
+        *game.session().actors.extended.word(3, 25) as isize,
     );
     game.queue_sound(1, sound as u8, 6);
-    let mut next: u16 = (game.session().actors.extended.blocks[3][25]).wrapping_add(1);
-    if !below(game.session().actors.extended.blocks[3][25], 2) {
+    let mut next: u16 = (*game.session().actors.extended.word(3, 25)).wrapping_add(1);
+    if !below(*game.session().actors.extended.word(3, 25), 2) {
         next = 0;
     }
-    game.session_mut().actors.extended.blocks[3][25] = next;
+    *game.session_mut().actors.extended.word_mut(3, 25) = next;
 }
 
 /// Instruction: opens the eye for the figure-8's vulnerable window. Was
@@ -911,7 +914,11 @@ fn divide(dividend: i32, divisor: u8) -> u16 {
 /// Was `Phantoon_Init`.
 pub fn initialize<H: Lease + ?Sized>(game: &mut H) {
     for index in (0..=2047).rev() {
-        game.session_mut().actors.extended.blocks[4 + index / 1024][index % 1024] = BLANK_BG2_TILE;
+        *game
+            .session_mut()
+            .actors
+            .extended
+            .word_mut(4 + index / 1024, index % 1024) = BLANK_BG2_TILE;
     }
     for index in (0..1024).rev() {
         set_native_word(game, 0x9000 + 2 * index, 0);
@@ -924,7 +931,7 @@ pub fn initialize<H: Lease + ?Sized>(game: &mut H) {
     let me = current(game);
     part!(game, Body[me].timer = 120);
     part!(game, Body[me]; movement_index = 0, speed_subpixel = 0);
-    game.session_mut().actors.extended.blocks[3][25] = 0;
+    *game.session_mut().actors.extended.word_mut(3, 25) = 0;
     part!(game, Eye[EYE]; background_held = 0, parameter_2 = 0);
     part!(
         game,
@@ -1497,7 +1504,7 @@ pub fn almost_dead<S: State + ?Sized>(game: &mut S, k: u16) {
     part!(game, Eye[EYE].fade_complete = 0);
     part!(game, Body[BODY].base; x_pos = 384, y_pos = 128);
     for index in (0..=511).rev() {
-        game.session_mut().actors.extended.blocks[4][index] = BLANK_BG2_TILE;
+        *game.session_mut().actors.extended.word_mut(4, index) = BLANK_BG2_TILE;
     }
     // A VRAM write queue entry: 400h bytes from $7E:2000 to VRAM $4800.
     let source = Source {

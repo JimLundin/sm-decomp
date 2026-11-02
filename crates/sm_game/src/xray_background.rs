@@ -12,7 +12,8 @@ use crate::word_transfers;
 /// the blend mask and blending owned by the player view, and the original's
 /// failure reports.
 pub trait Host:
-    crate::display_refresh::Host
+    crate::cinematic_access::Access
+    + crate::display_refresh::Host
     + crate::player_position::PlayerFacts
     + crate::effects::SoundEffects
     + crate::cartridge::NativeDiagnostics
@@ -466,7 +467,11 @@ pub fn finish_restore<H: Host + ?Sized>(hdma_index: usize, game: &mut H) {
         game.finish_xray();
         crate::hdma_word!(game, hdma_index, Channels => 0);
         game.queue_sound(0, 0xa, 6);
-        if (crate::liquid::LiquidWords::read(game).liquid.kind as u8) != 36 {
+        if (crate::cinematic_access::load::<crate::liquid::LiquidWords, _>(game)
+            .liquid
+            .kind as u8)
+            != 36
+        {
             game.ram().write_byte(0x76, 0x80);
             game.ram().write_byte(0x75, 64);
             game.ram().write_byte(0x74, 32);

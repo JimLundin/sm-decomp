@@ -1,0 +1,253 @@
+#![forbid(unsafe_code)]
+//! The glass tubes that break off and fall when Mother Brain's tank is
+//! destroyed: each drops, trails smoke, and bursts into dust on the floor.
+//! The tube falling with the brain also ends the screen flash and sets up the
+//! neck for the fake death's ascent.
+//!
+//! Was `MotherBrainsTubesFalling_*` in the original decompilation (bank
+//! $A9:8B35-$A9:8C69). Its state words name the slot fields over the same RAM
+//! bytes as `EnemyLayout8`.
+
+use crate::actors::mother_brain_neck_owned;
+use crate::actors::mother_brain_state_owned::part;
+use crate::constants::enemy_properties::{K_ENEMY_PROPS_DELETED, K_ENEMY_PROPS_INVISIBLE};
+
+/// Ordered effects of the falling tubes, supplied by the prepared aggregate.
+pub trait Host: mother_brain_neck_owned::Host + crate::effects::SoundEffects {
+    fn falling_tube(&self, index: isize) -> sm_data::mother_brain::FallingTube;
+    fn current_enemy(&self) -> u16;
+    fn set_projectile_spawn_point(&mut self, x: u16, y: u16);
+    fn spawn_room_projectile(&mut self, definition: u16, parameter: u16) -> u16;
+    fn free_hdma_object(&mut self, slot: u16);
+
+    /// End the room-wide flash and restore the room palette.
+    /// Was `MotherBrain_Pal_EndScreenFlash`.
+    fn end_screen_flash(&mut self);
+    /// Start an earthquake of `kind`. Was `MotherBrain`'s `start_earthquake`.
+    fn start_earthquake(&mut self, kind: u16);
+}
+
+/// Bank $A9 functions, stored in the `function` word.
+pub mod function {
+    /// Falls until it reaches its `burst_y`.
+    pub const FALL: u16 = 0x8b88;
+    /// The tube with the brain: waits `fall_delay` frames before falling.
+    pub const WAIT_TO_FALL: u16 = 0x8bcb;
+    /// The tube with the brain, falling.
+    pub const FALL_WITH_BRAIN: u16 = 0x8bd6;
+}
+
+/// The dust cloud projectile and the parameters of a burst and of smoke.
+pub const DUST_CLOUD: u16 = 0xe509;
+const BURST_PARAMETER: u16 = 3;
+const SMOKE_PARAMETER: u16 = 9;
+const BURST_SOUND: u8 = 0x24;
+/// Sizes and burst heights by tube kind (the `parameter_1` word index).
+const WIDTHS: [u16; 5] = [0x10, 0x10, 8, 8, 0x10];
+const HEIGHTS: [u16; 5] = [0x20, 0x20, 0x18, 0x18, 0x20];
+const BURST_HEIGHTS: [u16; 5] = [0xf8, 0xf8, 0xf0, 0xf0, 0xf6];
+/// Horizontal smoke offsets, cycled per puff.
+const SMOKE_OFFSETS: [u16; 4] = [0xfff8, 2, 0xfffc, 6];
+const SMOKE_Y: u16 = 208;
+const SMOKE_DELAY: u16 = 8;
+/// Pixels per frame the fall speeds up by.
+const GRAVITY: u16 = 6;
+/// The tube with the brain: hidden once this low, and the brain is this far above it.
+const HIDE_Y: u16 = 244;
+const BRAIN_OFFSET: u16 = 56;
+/// The brain's landing height and where the fake death puts the body.
+const BRAIN_LANDING_Y: u16 = 0xc4;
+const BODY_X: u16 = 59;
+const BODY_Y: u16 = 279;
+/// The earthquake the brain's landing starts.
+const LANDING_EARTHQUAKE: u16 = 0x19;
+/// Mother Brain's body slot and its brain slot.
+const BODY: i32 = 0;
+const BRAIN: i32 = 0x40;
+/// The slot the landing's STZ $0FAC,x ($A9:8C12) clears. It meant the tube's
+/// Y velocity, but X is the $FE the room palette writes ($A9:D2E4) leave, so
+/// it clears $7E:10AA: slot 4's $0FAA, its burst height if it is a tube.
+const STALE_SLOT: i32 = 0x100;
+/// The body's function once the brain has landed: the fake death's ascent.
+pub const BODY_ASCENT: u16 = 0x8c87;
+
+fn current(game: &impl Host) -> i32 {
+    game.current_enemy() as i32
+}
+
+/// Sets up a tube from its kind. Was `MotherBrainsTubesFalling_Init`.
+pub fn initialize(game: &mut impl Host) {
+    let me = current(game);
+    let kind = part!(game, Tube[me].parameter_1) as usize >> 1;
+    part!(game, Tube[me].base; x_width = WIDTHS[kind], y_height = HEIGHTS[kind]);
+    part!(game, Tube[me].burst_y = BURST_HEIGHTS[kind]);
+    part!(game, Tube[me]; smoke_timer = 0, smoke_index = 0, fall_speed = 0);
+    part!(
+        game,
+        Tube[me].function = game.falling_tube(kind as isize).function
+    );
+}
+
+/// Runs the tube's current function. Was `MotherBrainsTubesFalling_Main`.
+pub fn main_ai(game: &mut impl Host, k: u16) {
+    let me = k as i32;
+    match part!(game, Tube[me].function) {
+        function::FALL => fall(game, k),
+        function::WAIT_TO_FALL => wait_to_fall(game, k),
+        function::FALL_WITH_BRAIN => fall_with_brain(game, k),
+        _ => game.report_unreachable(),
+    }
+}
+
+/// Adds `amount` (8.8 pixels) to the slot's Y position, carrying through the
+/// subpixel high byte. Was `Enemy_IncreaseYpos`.
+fn move_down(game: &mut impl Host, me: i32, amount: u16) {
+    let carry: i32 =
+        part!(byte game, Tube[me].base.y_subpos[1]) as i32 + amount.to_ne_bytes()[0] as i32;
+    part!(byte game, Tube[me].base.y_subpos[1] = carry as u8);
+    part!(game, Tube[me].base.y_pos, |old| (old as i32
+        + ((amount >> 8) as i8 as i32 + (carry >> 8)))
+        as u16);
+}
+
+/// Speeds up and falls, trailing smoke until the tube reaches its burst height.
+/// Was `MotherBrainsTubesFalling_Main_NonMain`.
+fn fall(game: &mut impl Host, k: u16) {
+    let me = k as i32;
+    let speed = part!(game, Tube[me].fall_speed).wrapping_add(GRAVITY);
+    part!(game, Tube[me].fall_speed = speed);
+    move_down(game, me, speed);
+    if (part!(game, Tube[me].base.y_pos) as i16).wrapping_sub(part!(game, Tube[me].burst_y) as i16)
+        < 0
+    {
+        trail_smoke(game, k);
+    } else {
+        burst(game, k);
+    }
+}
+
+/// Counts down to the next puff of smoke. Was `MotherBrainsTubesFalling_HandleSmoke`.
+fn trail_smoke(game: &mut impl Host, k: u16) {
+    let me = k as i32;
+    part!(game, Tube[me].smoke_timer, |smoke_timer| smoke_timer
+        .wrapping_sub(1));
+    if part!(game, Tube[me].smoke_timer) & 0x8000 != 0 {
+        puff_smoke(game, k);
+    }
+}
+
+/// Deletes the tube and bursts it into dust. Was `MotherBrainsTubesFalling_Explode`.
+fn burst(game: &mut impl Host, k: u16) {
+    let me = k as i32;
+    part!(game, Tube[me].base.properties, |old| old
+        | K_ENEMY_PROPS_DELETED as u16);
+    let x = part!(game, Tube[me].base.x_pos);
+    let y = part!(game, Tube[me].base.y_pos);
+    {
+        game.set_projectile_spawn_point(x, y);
+        game.spawn_room_projectile(DUST_CLOUD, BURST_PARAMETER);
+    }
+    game.queue_sound(1, BURST_SOUND, 3);
+}
+
+/// Waits out the fall delay. Was `MotherBrainsTubesFalling_WaitToFall`.
+fn wait_to_fall(game: &mut impl Host, k: u16) {
+    let me = k as i32;
+    part!(game, Tube[me].fall_delay, |fall_delay| fall_delay
+        .wrapping_sub(1));
+    if part!(game, Tube[me].fall_delay) & 0x8000 != 0 {
+        part!(game, Tube[me].function = function::FALL_WITH_BRAIN);
+        fall_with_brain(game, k);
+    }
+}
+
+/// Falls with the brain above it. When the brain lands it ends the flash,
+/// shakes the room, moves the body into place for the fake death's ascent and
+/// bursts. Was `MotherBrainsTubesFalling_Falling`.
+fn fall_with_brain(game: &mut impl Host, k: u16) {
+    let me = k as i32;
+    let speed = part!(game, Tube[me].fall_speed).wrapping_add(GRAVITY);
+    part!(game, Tube[me].fall_speed = speed);
+    move_down(game, me, speed);
+    let y = part!(game, Tube[me].base.y_pos);
+    if (y as i32 - HIDE_Y as i32) & 0x8000 == 0 {
+        part!(game, Tube[me].base.properties, |old| old
+            | K_ENEMY_PROPS_INVISIBLE as u16);
+    }
+    part!(game, Tube[BRAIN].base.y_pos = y.wrapping_sub(BRAIN_OFFSET));
+    if (part!(game, Tube[BRAIN].base.y_pos) as i32 - BRAIN_LANDING_Y as i32) & 0x8000 != 0 {
+        trail_smoke(game, k);
+    } else {
+        {
+            Host::end_screen_flash(game);
+            Host::start_earthquake(game, LANDING_EARTHQUAKE);
+            game.free_hdma_object(0);
+            game.free_hdma_object(2);
+        }
+        part!(game, Tube[STALE_SLOT].burst_y = 0);
+        part!(game, Tube[BRAIN].base.y_pos = BRAIN_LANDING_Y);
+        part!(game, Tube[BODY].base; x_pos = BODY_X, y_pos = BODY_Y);
+        mother_brain_neck_owned::setup_for_fake_ascent(game);
+        part!(game, Tube[BODY].function = BODY_ASCENT);
+        let current = game.current_enemy();
+        burst(game, current);
+    }
+}
+
+/// Puffs smoke below the tube, cycling its horizontal offset.
+/// Was `MotherBrainsTubesFalling_SpawnSmoke`.
+fn puff_smoke(game: &mut impl Host, k: u16) {
+    let me = k as i32;
+    part!(game, Tube[me].smoke_timer = SMOKE_DELAY);
+    let index = ((part!(game, Tube[me].smoke_index) as i32 + 1) & 3) as u16;
+    part!(game, Tube[me].smoke_index = index);
+    let x = part!(game, Tube[me].base.x_pos).wrapping_add(SMOKE_OFFSETS[index as usize]);
+    {
+        game.set_projectile_spawn_point(x, SMOKE_Y);
+        game.spawn_room_projectile(DUST_CLOUD, SMOKE_PARAMETER);
+    }
+}
+
+// The falling tubes' bank $A9 functions are the ones `CallMotherBrainsTubesFalling` dispatched on.
+const _: () = {
+    use crate::actors::mother_brain_tubes_owned::{self as tubes, function as f};
+    const fn at(word: u16) -> u32 {
+        0xa9_0000 | word as u32
+    }
+    assert!(at(f::FALL) == 11111304 && at(f::WAIT_TO_FALL) == 11111371);
+    assert!(at(f::FALL_WITH_BRAIN) == 11111382);
+    // MotherBrainBody_FakeDeath_Ascent_0_DrawBG1Row23.
+    assert!(at(tubes::BODY_ASCENT) == 11111559);
+    assert!(
+        tubes::DUST_CLOUD == crate::constants::bank_86::ADDR_K_EPROJ_DUST_CLOUD_EXPLOSION as u16
+    );
+};
+
+impl Host for crate::actors::owned_execution::PreparedActorState<'_> {
+    fn falling_tube(&self, index: isize) -> sm_data::mother_brain::FallingTube {
+        crate::actors::mother_brain_tables_owned::falling_tube(self, index)
+    }
+    fn current_enemy(&self) -> u16 {
+        crate::session_access::SessionAccess::session(self)
+            .actors
+            .controls
+            .selected
+    }
+    fn set_projectile_spawn_point(&mut self, x: u16, y: u16) {
+        crate::actors::mother_brain_fight_owned::set_projectile_spawn_point(self, x, y);
+    }
+    fn spawn_room_projectile(&mut self, definition: u16, parameter: u16) -> u16 {
+        crate::enemy_projectiles::lifecycle::spawn_room(self, definition, parameter)
+    }
+    fn free_hdma_object(&mut self, slot: u16) {
+        crate::actors::boss_hdma_owned::free_hdma(slot, self);
+    }
+    fn end_screen_flash(&mut self) {
+        crate::actors::mother_brain_fight_owned::end_screen_flashing(self);
+    }
+    fn start_earthquake(&mut self, kind: u16) {
+        let session = crate::session_access::SessionAccess::session_mut(self);
+        session.feedback.earthquake_kind = kind;
+        session.feedback.earthquake_timer = 20;
+    }
+}

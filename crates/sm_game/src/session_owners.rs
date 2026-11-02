@@ -730,6 +730,7 @@ pub trait AudioHost {
 
 #[derive(Clone)]
 pub struct SessionStartRequirements {
+    pub actor_manifest: Option<Arc<crate::actors::presentation_content::ActorImportRequest>>,
     pub dialogue: Option<crate::prepared_dialogue::Content>,
     pub display: DisplayStartRequirements,
     pub roles: ContentDescription,
@@ -998,6 +999,9 @@ macro_rules! display_bytes {
         $f(0x84,$($borrow)* $s.controls.nmi_enable);
         $f(0x85,$($borrow)* $s.controls.hdma_enable);
         $f(0x7ec,$($borrow)* $s.controls.committed_fake_mode);
+        for index in 0..96 { $f(0x2d0+index,$($borrow)* $s.mode7_queue[index]); }
+        for index in 0..2 { $f(0x332+index,$($borrow)* $s.mode7_gap[index]); }
+        for (index,byte) in ($($borrow)* $s.readback_queue).into_iter().enumerate() { $f(0x340+index,byte); }
     };
 }
 macro_rules! display_words {
@@ -1008,6 +1012,7 @@ macro_rules! display_words {
         for index in 0..8 {
             $f(0xb1+2*index,$($borrow)* $s.controls.scroll_words[index]);
         }
+        $f(0x783,$($borrow)* $s.interrupt.mode7);
         $f(0xa7,$($borrow)* $s.interrupt.pending);
         $f(0xab,$($borrow)* $s.interrupt.current);
         $f(0x330,$($borrow)* $s.upload_tail);
@@ -1078,7 +1083,7 @@ impl Presentation {
     pub fn requires_semantic_counterpart(at: usize) -> bool {
         // Publishing these numeric requests also needs supplied source/audio
         // identities. Their actual semantic publication seams are not closed.
-        (0x2d0..0x330).contains(&at) || (0x340..0x360).contains(&at) || (0x956..0x98e).contains(&at)
+        (0x2d0..0x330).contains(&at) || (0x956..0x98e).contains(&at)
     }
     pub fn projected_byte(&self, at: usize) -> Option<u8> {
         let Self::Owned { display, .. } = self else {

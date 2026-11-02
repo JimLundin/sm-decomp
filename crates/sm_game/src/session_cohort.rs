@@ -168,7 +168,7 @@ std::thread_local! {
 
 /// Mark `cohort`'s words held; returns the previous held count.
 #[cfg(sm_verify_dll)]
-fn hold<C: Cohort>(cohort: &mut C) -> usize {
+pub(crate) fn hold<C: Cohort>(cohort: &mut C) -> usize {
     HELD.with(|held| {
         let mut held = held.borrow_mut();
         let previous = held.words.len();
@@ -182,7 +182,7 @@ fn hold<C: Cohort>(cohort: &mut C) -> usize {
 }
 
 #[cfg(sm_verify_dll)]
-fn release(previous: usize) {
+pub(crate) fn release(previous: usize) {
     HELD.with(|held| {
         let mut held = held.borrow_mut();
         let released = held.words.split_off(previous);

@@ -161,7 +161,7 @@ pub fn spawn(c: &mut impl Host, source: SpawnSource, displacement: &mut Contact<
         },
     )
 }
-pub fn close_door(c: &mut (impl Host + crate::room_entry::content::EntryContent)) {
+pub fn close_door(c: &mut (impl Host + ClosingContent)) {
     use crate::room_entry::content::Axis;
     let exit = c.session().room.entry.exit;
     let door = c.capture_closing_door(&exit);

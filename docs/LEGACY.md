@@ -120,3 +120,13 @@ background verifier can change the loaded ROM at these exact boundaries.
 This is verification compatibility, not an emulated PPU write or a second video
 producer. Remove these hooks when that verifier consumes equivalent typed video
 effects and preserves its source-mutation, failure-prefix and snapshot checks.
+
+- `LEGACY(checkpoint)` — `actors::state::ExtendedRam::legacy_death_checkpoint_shadow`
+  retains the five ignored numeric actor-checkpoint words at801e,8020,803c,8818,883e.
+  Canonical gameplay stores use named Botwoon head/path fields; these shadow values
+  participate only in old checkpoint decoding/encoding. Retire them with a validated
+  actor checkpoint schema conversion.
+
+- `LEGACY(verifier)` - Kraid fade-in phases retain the actual Game capture/probe
+  observer at stages 0/1/2/3 and the original finite callback preflight. Retire the
+  observer after equivalent owned semantic phase captures and probes are qualified.

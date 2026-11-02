@@ -193,7 +193,7 @@ pub fn advance_intro_mother_brain<H: crate::menus::host::Host + ?Sized>(
         }
     }
     if stage == 0 {
-        let shots: ShotWords = crate::session_cohort::load(game);
+        let shots: ShotWords = crate::cinematic_access::load(game);
         let Some(projectile) = (0..5).rfind(|&i| shots.kind[i] & 0xfff == 256) else {
             return;
         };

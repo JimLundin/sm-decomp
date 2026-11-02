@@ -20,8 +20,6 @@ use crate::actors::{
     sidehopper, skree, space_pirates, spike_platform, spore_spawn, squeept, tatori, torizo,
     tripper, waver, work_robot, wrecked_ship_spark, yard, zoa,
 };
-use crate::combat_rules::LatchMode;
-use crate::enemy_projectiles::host::Effects as _;
 use crate::enemy_script::EnemyScript;
 use crate::ram::word;
 use crate::session_access::SessionAccess as _;
@@ -63,7 +61,6 @@ pub trait TouchHost:
     + space_pirates::Pirates
     + torizo::Ai
     + phantoon::Dispatch
-    + spore_spawn::Host
 {
 }
 
@@ -103,7 +100,6 @@ pub trait ShotHost:
     + space_pirates::Pirates
     + torizo::Ai
     + phantoon::Dispatch
-    + spore_spawn::Host
 {
     fn native_shot(&mut self, shot: NativeShot);
 }
@@ -143,7 +139,7 @@ pub fn draw_hook<H: DrawHookHost>(ea: u32, game: &mut H) {
     }
     match ea {
         10518604 => (),
-        10851138 => draygon_flight::set_bg2_scroll(game),
+        10851138 => game.with_lease(draygon_flight::set_bg2_scroll),
         11042892 => (),
         11110278 => (),
         _ => game.unknown_routine(),
@@ -174,7 +170,6 @@ pub trait AiHost:
     + PreInstructionHost
     + crate::actors::host::EnemyHost
     + crate::effects::SoundEffects
-    + spore_spawn::Host
 {
     /// An AI routine whose arm is still in the compatibility table.
     fn native_ai(&mut self, ea: u32);
@@ -190,38 +185,38 @@ pub trait AiHost:
 pub fn draygon_function<H: AiHost>(ea: u32, k: u16, game: &mut H) {
     match ea {
         10848691 => {
-            draygon_flight::fire_wall_turret(game);
+            game.with_lease(draygon_flight::fire_wall_turret);
             draygon_sweep::swoop_setup(false, game);
         }
-        10848027 => draygon_flight::fight_intro(true, game),
-        10848139 => draygon_flight::fight_intro(false, game),
+        10848027 => game.with_lease(|runtime| draygon_flight::entry::fight_intro(true, runtime)),
+        10848139 => game.with_lease(|runtime| draygon_flight::entry::fight_intro(false, runtime)),
         10850693 => draygon_death::drift_to_death_spot(game),
         10850964 => draygon_death::wait_for_evirs(game),
         10850987 => draygon_death::buried_by_evirs(game),
         10849817 => draygon_grab::chase_samus(game),
-        10850064 => draygon_grab::repelled_by_grapple(game),
+        10850064 => game.with_lease(|runtime| draygon_grab::repelled_by_grapple(runtime)),
         10850600 => draygon_grab::flail_tail_and_fly_straight_up(game),
-        10850644 => draygon_grab::fly_straight_up(game),
+        10850644 => game.with_lease(|runtime| draygon_grab::fly_straight_up(runtime)),
         10848244 => draygon_sweep::swoop_setup(true, game),
         10848433 => draygon_sweep::swoop(true, false, game),
-        10848546 => draygon_sweep::swoop_apex(true, game),
+        10848546 => game.with_lease(|runtime| draygon_sweep::swoop_apex(true, runtime)),
         10848593 => draygon_sweep::swoop(true, true, game),
         10848768 => draygon_sweep::swoop(false, false, game),
-        10848848 => draygon_sweep::swoop_apex(false, game),
+        10848848 => game.with_lease(|runtime| draygon_sweep::swoop_apex(false, runtime)),
         10848912 => draygon_sweep::swoop(false, true, game),
-        10849034 => draygon_flight::goop_setup(true, game),
-        10849422 => draygon_flight::goop_setup(false, game),
+        10849034 => game.with_lease(|runtime| draygon_flight::goop_setup(true, runtime)),
+        10849422 => game.with_lease(|runtime| draygon_flight::goop_setup(false, runtime)),
         10849106 => draygon_flight::goop_move_until_in_range(true, game),
         10849492 => draygon_flight::goop_move_until_in_range(false, game),
-        10849198 => draygon_flight::goop_firing(true, game),
-        10849584 => draygon_flight::goop_firing(false, game),
+        10849198 => game.with_lease(|runtime| draygon_flight::goop_firing(true, runtime)),
+        10849584 => game.with_lease(|runtime| draygon_flight::goop_firing(false, runtime)),
         10849331 => draygon_flight::goop_move_until_off_screen(true, game),
         10849714 => draygon_flight::goop_move_until_off_screen(false, game),
-        10850078 => draygon_grab::move_to_target(k, game),
+        10850078 => game.with_lease(|runtime| draygon_grab::move_to_target(k, runtime)),
         10850262 => draygon_grab::rising_spiral(k, game),
-        10850516 => draygon_grab::tail_whip(k, game),
-        10850565 => draygon_grab::final_tail_whips(k, game),
-        10850596 => draygon_grab::move_samus_with_draygon(k, game),
+        10850516 => game.with_lease(|runtime| draygon_grab::tail_whip(k, runtime)),
+        10850565 => game.with_lease(|runtime| draygon_grab::final_tail_whips(k, runtime)),
+        10850596 => game.with_lease(|runtime| draygon_grab::move_samus_with_draygon(k, runtime)),
         10863757 => draygon_eye::look_at_samus(k, false, game),
         10863891 => draygon_eye::look_at_samus(k, true, game),
         // Spore Spawn's functions ($A5:EB1A-$A5:EBEE), which the dispatch shares.
@@ -651,24 +646,13 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
     if lease_ai(ea, game) {
         return;
     }
-    use crate::actors::combat::{die, latch, resume_ai, select_frozen_ai};
+    if let Some(kind) = crate::actors::owned_execution::CommonAi::from_routine(
+        crate::actors::content::ActorRoutine(ea),
+    ) {
+        crate::actors::owned_execution::common_ai(kind, &mut LeaseActors::lease(game));
+        return;
+    }
     match ea {
-        // The common enemy AI ($A0:8000-$A0:8041) the enemy banks share: grapple AI - no
-        // interaction, Samus latches on (with or without invincibility), kill enemy and
-        // cancel grapple beam, and the normal enemy frozen AI.
-        10715136 | 10846208 | 10911744 | 10977280 | 11042816 | 11763712 => {
-            resume_ai(&mut LeaseActors::lease(game))
-        }
-        10649605 | 10780677 => latch(&mut LeaseActors::lease(game), LatchMode::Passive),
-        11042836 => latch(&mut LeaseActors::lease(game), LatchMode::Active),
-        10649610 | 10715146 | 11042826 | 11763722 => die(
-            &mut LeaseActors::lease(game),
-            crate::actors::api::DeathKind::Grapple,
-        ),
-        10649615 | 10715151 | 10846223 | 10911759 | 10977295 | 11042831 | 11042846 | 11173903
-        | 11763727 => select_frozen_ai(&mut LeaseActors::lease(game)),
-        10649665 | 10715201 | 10780737 | 10846273 | 10911809 | 10977345 | 11042881 | 11173953
-        | 11763777 => crate::actors::scheduling::update_frozen_enemy(&mut LeaseActors::lease(game)),
         // Initialisation AI - enemy $F153 (unused spinning turtle eye) ($B3:86FB).
         11765499 => {
             let mut runtime = LeaseActors::lease(game);
@@ -765,8 +749,12 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
             draygon_flight::main_ai(false, draygon_function, draygon_function_on_lease, runtime)
         }),
         10851661 => draygon_death::hurt_ai(game),
-        10864025 => draygon_flight::initialize_tail_or_arms(false, game),
-        10864045 => draygon_flight::initialize_tail_or_arms(true, game),
+        10864025 => {
+            game.with_lease(|runtime| draygon_flight::initialize_tail_or_arms(false, runtime))
+        }
+        10864045 => {
+            game.with_lease(|runtime| draygon_flight::initialize_tail_or_arms(true, runtime))
+        }
         10846243 => game.contact_reaction(Death::Finalize),
         10846253 => game.shot_reaction(Shot::Finalize),
         10851818 => draygon_death::touch(game),
@@ -830,7 +818,7 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         10667763 => geruta::initialize(true, game),
         10665625 => squeept::initialize(game),
         10662175 | 10665682 | 10666615 | 10667812 => {
-            game.next_random();
+            crate::actors::host::Random::next_random(game);
             pre_instruction(geruta::function(game), game);
         }
         10661995 => flies::initialize(game),
@@ -1019,7 +1007,6 @@ pub trait InstructionHost:
     + phantoon::Dispatch
     + crate::actors::host::EnemyHost
     + crate::effects::SoundEffects
-    + spore_spawn::Host
 {
     /// An instruction whose arm is still in the compatibility table.
     fn native_instruction(&mut self, ea: u32, k: u16, j: EnemyScript) -> EnemyScript;
@@ -1065,12 +1052,17 @@ pub fn instruction<H: InstructionHost>(
                 10657578 => 0x34,
                 _ => 0x7c,
             };
-            game.queue_sound(1, sound, 6);
+            crate::effects::SoundEffects::queue_sound(game, 1, sound, 6);
             j
         }
         // Instruction - queue sound [[Y]], sound library 2 or 3, max 6 ($A5:9F60, $A5:9F6E).
         10854240 | 10854254 => {
-            LeaseActors::lease(game).queue_sound(if ea == 10854240 { 2 } else { 3 }, 6, j.word(0));
+            crate::enemy_projectiles::host::Effects::queue_sound(
+                &mut LeaseActors::lease(game),
+                if ea == 10854240 { 2 } else { 3 },
+                6,
+                j.word(0),
+            );
             j.offset(1)
         }
         // Instruction - spawn mini-Crocomire ($A2:897E) or cacatac spike ($A2:A0A7) projectile.
@@ -1099,14 +1091,21 @@ pub fn instruction<H: InstructionHost>(
             j.offset(1)
         }
         10872981 => {
-            LeaseActors::lease(game).queue_sound(2, 6, j.word(0));
+            crate::enemy_projectiles::host::Effects::queue_sound(
+                &mut LeaseActors::lease(game),
+                2,
+                6,
+                j.word(0),
+            );
             j.offset(1)
         }
-        10852159 => draygon_death::spawn_dying_sprite(21, j, game),
-        10852178 => draygon_death::spawn_dying_sprite(3, j, game),
-        10852197 => draygon_death::spawn_dying_sprite(29, j, game),
-        10852216 => draygon_death::spawn_dying_sprite(24, j, game),
-        10854268 | 10854318 => draygon_death::spawn_goop(ea == 10854318, j, game),
+        10852159 => game.with_lease(|runtime| draygon_death::spawn_dying_sprite(21, j, runtime)),
+        10852178 => game.with_lease(|runtime| draygon_death::spawn_dying_sprite(3, j, runtime)),
+        10852197 => game.with_lease(|runtime| draygon_death::spawn_dying_sprite(29, j, runtime)),
+        10852216 => game.with_lease(|runtime| draygon_death::spawn_dying_sprite(24, j, runtime)),
+        10854268 | 10854318 => {
+            game.with_lease(|runtime| draygon_death::spawn_goop(ea == 10854318, j, runtime))
+        }
         10725992 => sidehopper::queue_sound(j, game),
         10657941 => cacatac::resume_moving(k, j, game),
         10734646 | 10734655 | 10734664 | 10734687 | 10734712 => yard::instruction(ea, k, j, game),
@@ -1121,7 +1120,7 @@ pub fn instruction<H: InstructionHost>(
         10742437 => metroid::draining_sound(j, game),
         // Bang's queue acquired suit sound effect: 56h, library 2.
         10730104 => {
-            game.queue_sound(1, 0x56, 6);
+            crate::effects::SoundEffects::queue_sound(game, 1, 0x56, 6);
             j
         }
         10738632 => reflec::set_reflection_axis(k, j, game),

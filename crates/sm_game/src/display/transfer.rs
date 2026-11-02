@@ -42,63 +42,45 @@ where
         game.report_invalid_rom_address(address);
     }
     let address = address | 0x8000;
-    let mut source = 0;
-    let mut destination = usize::from(game.mode7_queue_tail());
-    loop {
-        let tag = game.read_rom_byte(address, source);
-        let length = if tag & 0x80 != 0 {
-            9
-        } else if tag & 0x40 != 0 {
-            7
-        } else {
-            break;
-        };
-        // The sentinel precedes the copy. Both cursors advance linearly, without
-        // the per-record u16 wrap used by the direct cinematic producers.
-        game.set_mode7_queue_byte(destination + length, 0);
-        for index in 0..length {
-            let value = game.read_rom_byte(address, source + index);
-            game.set_mode7_queue_byte(destination + index, value);
-        }
-        source += length;
-        destination += length;
+    struct Legacy<'a, H: ?Sized> {
+        game: &'a mut H,
+        address: u32,
     }
-    game.set_mode7_queue_tail(
-        u16::try_from(destination & usize::from(u16::MAX)).expect("mode7 queue tail"),
-    );
+    impl<H: Mode7Queue + crate::decompression::DecompressionHost + ?Sized>
+        crate::display::mode7_owned::Append for Legacy<'_, H>
+    {
+        fn source_byte(&mut self, offset: usize) -> u8 {
+            self.game.read_rom_byte(self.address, offset)
+        }
+        fn tail(&self) -> u16 {
+            self.game.mode7_queue_tail()
+        }
+        fn write_byte(&mut self, at: usize, value: u8) {
+            self.game.set_mode7_queue_byte(at - MODE7_QUEUE, value);
+        }
+        fn publish_tail(&mut self, value: u16) {
+            self.game.set_mode7_queue_tail(value);
+        }
+    }
+    crate::display::mode7_owned::append(&mut Legacy { game, address });
 }
 
 pub fn drain_mode7(host: &mut (impl TransferHost + ?Sized)) {
-    let mut entry = MODE7_QUEUE;
-    loop {
-        let tag = host.byte(entry);
-        if tag & 0xc0 == 0 {
-            break;
+    struct Legacy<'a, H: ?Sized>(&'a mut H);
+    impl<H: TransferHost + ?Sized> crate::display::mode7_owned::Drain for Legacy<'_, H> {
+        type Error = core::convert::Infallible;
+        fn byte(&mut self, at: usize) -> Result<u8, Self::Error> {
+            Ok(self.0.byte(at))
         }
-        let vram = tag & 0x80 != 0;
-        let target = if vram {
-            Mode7Target::Vram {
-                high_byte: tag & 0x40 != 0,
-                address: host.word(entry + 6),
-                increment: host.byte(entry + 8),
-            }
-        } else {
-            Mode7Target::Cgram {
-                index: host.byte(entry + 6),
-            }
-        };
-        let upload = Mode7Upload {
-            mode: tag & 0x1f,
-            source: Source {
-                address: host.word(entry + 1),
-                bank: host.byte(entry + 3),
-            },
-            bytes: host.word(entry + 4),
-            target,
-        };
-        host.upload_mode7(upload);
-        entry += if vram { 9 } else { 7 };
+        fn word(&mut self, at: usize) -> Result<u16, Self::Error> {
+            Ok(self.0.word(at))
+        }
+        fn upload(&mut self, upload: Mode7Upload) -> Result<(), Self::Error> {
+            self.0.upload_mode7(upload);
+            Ok(())
+        }
     }
+    let Ok(()) = crate::display::mode7_owned::drain(&mut Legacy(host));
 }
 
 /// The VRAM readback queue at $7E:0340: 9-byte records ended by a zero word.

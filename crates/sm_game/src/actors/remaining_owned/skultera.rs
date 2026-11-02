@@ -1,0 +1,187 @@
+//! Skultera, Maridia's bony fish, which swims a wave left and right and turns
+//! at walls (bank $A3:900A-$A3:94AA). Was `maridia_fish`.
+#![forbid(unsafe_code)]
+
+use crate::actors::owned_common_lifecycle::BossState;
+use crate::actors::session_slots::SessionSlots;
+use crate::effects::SoundEffects;
+use crate::player_position::PlayerPosition;
+use crate::records::Records;
+pub trait Host: BossState + SessionSlots + Records + PlayerPosition + SoundEffects {
+    fn unreachable(&mut self);
+}
+impl Host for crate::actors::owned_execution::PreparedActorState<'_> {
+    fn unreachable(&mut self) {
+        self.unknown_function();
+    }
+}
+use crate::actors::host::Slopes;
+use crate::actors::layouts::part_view;
+use crate::actors::session_slots::session_slot;
+use crate::enemy_script::EnemyScript;
+use sm_data::enemy_speeds::SpeedTable;
+
+// What Skultera needs beyond the shared actor operations.
+
+part_view! {
+    /// Skultera's view of its slot.
+    Skultera: EnemyLayout40 {
+        words: [
+            function, right_subvelocity, right_velocity, left_subvelocity, left_velocity, angle,
+            parameter_1, parameter_2,
+        ],
+        pad1: [u8; 26696],
+        words: [
+            radius, turn_finished, angle_delta, previous_y_offset, y_offset,
+        ],
+        _: [u16; 27],
+    }
+}
+
+/// Bank $A3 Skultera functions, stored in `function`.
+pub mod function {
+    pub const SWIMMING_LEFT: u16 = 0x9132;
+    pub const SWIMMING_RIGHT: u16 = 0x91ab;
+    pub const TURNING_RIGHT: u16 = 0x9224;
+    pub const TURNING_LEFT: u16 = 0x9256;
+}
+
+/// Bank $A3 Skultera instruction lists.
+pub mod instruction_list {
+    pub const SWIMMING_LEFT: u16 = 0x902a;
+    pub const TURNING_RIGHT: u16 = 0x903c;
+    pub const SWIMMING_RIGHT: u16 = 0x9060;
+    pub const TURNING_LEFT: u16 = 0x9072;
+}
+
+/// Bank $A3 instructions its scripts call.
+pub mod instruction {
+    pub const LAYER_6: u32 = 0xa3_9096;
+    pub const LAYER_2: u32 = 0xa3_90a0;
+    pub const SET_TURN_FINISHED: u32 = 0xa3_90aa;
+}
+
+fn current(game: &impl Host) -> i32 {
+    i32::from(game.current_enemy())
+}
+/// The wave's Y offset at the fish's angle.
+fn y_offset(fish: i32, game: &mut impl Host) -> u16 {
+    let angle = session_slot!(game, Skultera[fish].angle);
+    let radius = session_slot!(game, Skultera[fish].radius);
+    game.scaled_sine(angle, radius)
+}
+/// Initialisation AI - Skultera ($A3:90B5).
+pub fn initialize(game: &mut impl Host) {
+    let fish = current(game);
+    session_slot!(
+        game,
+        Skultera[fish].base.current_instruction = instruction_list::SWIMMING_LEFT
+    );
+    session_slot!(game, Skultera[fish].function = function::SWIMMING_LEFT);
+    if session_slot!(byte game, Skultera[fish].parameter_1[1]) == 0 {
+        session_slot!(
+            game,
+            Skultera[fish].base.current_instruction = instruction_list::SWIMMING_RIGHT
+        );
+        session_slot!(game, Skultera[fish].function = function::SWIMMING_RIGHT);
+    }
+    let index = 4 * isize::from(session_slot!(byte game, Skultera[fish].parameter_1[0]));
+    let value = game.enemy_speed(SpeedTable::Linear, index);
+    session_slot!(game, Skultera[fish].right_velocity = value);
+    let value = game.enemy_speed(SpeedTable::Linear, index + 1);
+    session_slot!(game, Skultera[fish].right_subvelocity = value);
+    let value = game.enemy_speed(SpeedTable::Linear, index + 2);
+    session_slot!(game, Skultera[fish].left_velocity = value);
+    let value = game.enemy_speed(SpeedTable::Linear, index + 3);
+    session_slot!(game, Skultera[fish].left_subvelocity = value);
+    let value = u16::from(session_slot!(byte game, Skultera[fish].parameter_2[0]));
+    session_slot!(game, Skultera[fish].radius = value);
+    let value = u16::from(session_slot!(byte game, Skultera[fish].parameter_2[1]));
+    session_slot!(game, Skultera[fish]; angle_delta = value, angle = 0, turn_finished = 0);
+    let offset = y_offset(fish, game);
+    session_slot!(game, Skultera[fish].previous_y_offset = offset);
+}
+fn set_instruction_list(fish: i32, instruction: u16, game: &mut impl Host) {
+    session_slot!(game, Skultera[fish].base; instruction_timer = 1, timer = 0,
+        current_instruction = instruction);
+}
+fn turn(fish: i32, left: bool, game: &mut impl Host) {
+    let (function, list) = if left {
+        (function::TURNING_RIGHT, instruction_list::TURNING_RIGHT)
+    } else {
+        (function::TURNING_LEFT, instruction_list::TURNING_LEFT)
+    };
+    session_slot!(game, Skultera[fish].function = function);
+    set_instruction_list(fish, list, game);
+}
+/// Skultera function - swimming left ($A3:9132) or right ($A3:91AB): swim on
+/// the wave, turning at walls and blocks.
+fn swim(fish: i32, left: bool, game: &mut impl Host) {
+    let k = game.current_enemy();
+    let amount = if left {
+        (u32::from(session_slot!(game, Skultera[fish].left_velocity)) << 16)
+            | u32::from(session_slot!(game, Skultera[fish].left_subvelocity))
+    } else {
+        (u32::from(session_slot!(game, Skultera[fish].right_velocity)) << 16)
+            | u32::from(session_slot!(game, Skultera[fish].right_subvelocity))
+    } as i32;
+    if game.move_horizontal(k, amount, Slopes::Ignore) {
+        turn(fish, left, game);
+    } else {
+        let offset = y_offset(fish, game);
+        session_slot!(game, Skultera[fish].y_offset = offset);
+        let k = game.current_enemy();
+        let amount = i32::from(
+            (offset as i16)
+                .wrapping_sub(session_slot!(game, Skultera[fish].previous_y_offset) as i16),
+        ) << 16;
+        if game.move_vertical(k, amount) {
+            turn(fish, left, game);
+        } else {
+            let angle = session_slot!(byte game, Skultera[fish].angle_delta[0])
+                .wrapping_add(session_slot!(game, Skultera[fish].angle) as u8);
+            session_slot!(game, Skultera[fish].angle = u16::from(angle));
+        }
+    }
+    session_slot!(
+        game,
+        Skultera[fish].previous_y_offset = session_slot!(game, Skultera[fish].y_offset)
+    );
+}
+/// Skultera function - turning right ($A3:9224) or left ($A3:9256): once the
+/// turn has finished, swim the other way.
+fn finish_turn(fish: i32, right: bool, game: &mut impl Host) {
+    if session_slot!(game, Skultera[fish].turn_finished) != 0 {
+        session_slot!(game, Skultera[fish].turn_finished = 0);
+        let (function, list) = if right {
+            (function::SWIMMING_RIGHT, instruction_list::SWIMMING_RIGHT)
+        } else {
+            (function::SWIMMING_LEFT, instruction_list::SWIMMING_LEFT)
+        };
+        session_slot!(game, Skultera[fish].function = function);
+        session_slot!(game, Skultera[fish].angle_delta, |old| old.wrapping_neg());
+        set_instruction_list(fish, list, game);
+    }
+}
+/// Main AI - Skultera ($A3:912B). Was `advance`.
+pub fn main_ai(game: &mut impl Host) {
+    let fish = current(game);
+    match session_slot!(game, Skultera[fish].function) {
+        function::SWIMMING_LEFT => swim(fish, true, game),
+        function::SWIMMING_RIGHT => swim(fish, false, game),
+        function::TURNING_RIGHT => finish_turn(fish, true, game),
+        function::TURNING_LEFT => finish_turn(fish, false, game),
+        _ => Host::unreachable(game),
+    }
+}
+/// Run one of Skultera's script instructions (one of [`instruction`]).
+pub fn instruction(address: u32, script: EnemyScript, game: &mut impl Host) -> EnemyScript {
+    let fish = current(game);
+    match address {
+        instruction::LAYER_6 => session_slot!(game, Skultera[fish].base.layer = 6),
+        instruction::LAYER_2 => session_slot!(game, Skultera[fish].base.layer = 2),
+        instruction::SET_TURN_FINISHED => session_slot!(game, Skultera[fish].turn_finished = 1),
+        _ => unreachable!("unrecognized Skultera instruction"),
+    }
+    script
+}

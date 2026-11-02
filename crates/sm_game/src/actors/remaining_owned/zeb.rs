@@ -1,0 +1,142 @@
+//! Zeb emergence, horizontal flight, reset and animation selection.
+//! Native actor words remain authoritative across the existing query boundaries.
+#![forbid(unsafe_code)]
+
+use crate::actors::owned_common_lifecycle::BossState;
+use crate::actors::session_slots::SessionSlots;
+use crate::effects::SoundEffects;
+use crate::player_position::PlayerPosition;
+use crate::records::Records;
+pub trait Host: BossState + SessionSlots + Records + PlayerPosition + SoundEffects {
+    fn unreachable(&mut self);
+}
+impl Host for crate::actors::owned_execution::PreparedActorState<'_> {
+    fn unreachable(&mut self) {
+        self.unknown_function();
+    }
+}
+use crate::actors::access::ActorKey as Key;
+use crate::actors::host::{Axis, abs16};
+use crate::actors::layouts::EnemyLayout72 as Bug;
+use crate::actors::queries;
+use crate::session_slot;
+
+/// A lease on a game with the zebs' effects.
+
+/// Main AI - zeb ($B3:887A): run its state routine.
+pub fn main_ai<H: Host>(game: &mut H) {
+    let k = game.current_enemy();
+    match state_address(game) {
+        11765888 => await_view(k, game),
+        11765904 => await_player(k, game),
+        11765987 => rise(k, game),
+        11766044 => fly(k, game),
+        11766142 => cooldown(k, game),
+        _ => Host::unreachable(game),
+    }
+}
+
+pub fn initialize<H: Host>(game: &mut H) {
+    let e = i32::from(game.current_enemy());
+    session_slot!(game, Bug[e].var_b = session_slot!(game, Bug[e].base.x_pos));
+    let y = session_slot!(game, Bug[e].base.y_pos);
+    session_slot!(game, Bug[e]; var_c = y, var_00 = y.wrapping_sub(16), var_f = 0x8880, var_d = 48, var_e = 0, var_01 = 0);
+    session_slot!(game, Bug[e].base.current_instruction = 0x87ab);
+    if session_slot!(game, Bug[e].parameter_1) != 0 {
+        session_slot!(game, Bug[e].base.current_instruction = 0x8a1d);
+    }
+}
+pub fn state_address<H: Host>(game: &H) -> u32 {
+    let e = i32::from(game.current_enemy());
+    0xb30000 | u32::from(session_slot!(game, Bug[e].var_f))
+}
+fn update_animation<H: Host>(game: &mut H) {
+    let e = i32::from(game.current_enemy());
+    let phase = session_slot!(game, Bug[e].var_e);
+    if phase != session_slot!(game, Bug[e].var_01) {
+        session_slot!(game, Bug[e].var_01 = phase);
+        let alternate = session_slot!(game, Bug[e].parameter_1) != 0;
+        session_slot!(game, Bug[e].base; current_instruction = crate::enemy_lists::pipe_bug_instruction_list(game, alternate, phase as isize), instruction_timer = 1, timer = 0);
+    }
+}
+pub fn await_view<H: Host>(_: u16, game: &mut H) {
+    if !game.current_outside_screen() {
+        let current = i32::from(game.current_enemy());
+        session_slot!(game, Bug[current].var_f = 0x8890);
+    }
+}
+pub fn await_player<H: Host>(k: u16, game: &mut H) {
+    let e = i32::from(k);
+    let dy = game.player_delta(k, Axis::Y) as i16;
+    if dy < 0 && (i32::from(dy) + 96) & 0x8000 == 0 {
+        let dx = game.player_delta(k, Axis::X);
+        session_slot!(game, Bug[e].var_a, |direction| direction & 0x7fff
+            | dx & 0x8000);
+        if abs16(session_slot!(game, Bug[e].base.x_pos).wrapping_sub(game.player_x())) < 0x40 {
+            session_slot!(game, Bug[e].var_f = 0x88e3);
+            session_slot!(game, Bug[e].base.properties, |properties| properties
+                & !0x100);
+            session_slot!(game, Bug[e].base.timer = 0);
+            session_slot!(
+                game,
+                Bug[e].var_e = if session_slot!(game, Bug[e].var_a) & 0x8000 != 0 {
+                    0
+                } else {
+                    2
+                }
+            );
+            update_animation(game);
+        }
+    }
+}
+pub fn rise<H: Host>(k: u16, game: &mut H) {
+    let e = i32::from(k);
+    let previous = session_slot!(game, Bug[e].base.y_subpos);
+    session_slot!(game, Bug[e].base.y_subpos, |old| old.wrapping_sub(1));
+    session_slot!(
+        game,
+        Bug[e].base.y_pos = (i32::from(session_slot!(game, Bug[e].base.y_pos))
+            + i32::from(previous != 0)
+            - 2) as u16
+    );
+    if (session_slot!(game, Bug[e].var_00) as i16)
+        .wrapping_sub(session_slot!(game, Bug[e].base.y_pos) as i16)
+        >= 0
+        && session_slot!(game, Bug[e].base.y_pos) < game.player_y()
+    {
+        session_slot!(game, Bug[e].var_e, |phase| phase | 1);
+        update_animation(game);
+        session_slot!(game, Bug[e].var_f = 0x891c);
+    }
+}
+pub fn fly<H: Host>(k: u16, game: &mut H) {
+    let e = i32::from(k);
+    let step = if session_slot!(game, Bug[e].var_a) & 0x8000 == 0 {
+        2
+    } else {
+        0xfffe
+    };
+    session_slot!(
+        game,
+        Bug[e].base.x_subpos = session_slot!(game, Bug[e].base.x_subpos)
+    );
+    session_slot!(game, Bug[e].base.x_pos, |old| old.wrapping_add(step));
+    if queries::leaving_screen(&*game, Key::from_legacy(k)) as u8 & 1 != 0 {
+        session_slot!(game, Bug[e].base; x_pos = session_slot!(game, Bug[e].var_b), x_subpos = 0);
+        let y = session_slot!(game, Bug[e].var_c);
+        session_slot!(game, Bug[e].base; y_pos = y, y_subpos = y);
+        session_slot!(game, Bug[e].var_e = 0);
+        update_animation(game);
+        session_slot!(game, Bug[e].base.properties, |properties| properties
+            | 0x100);
+        session_slot!(game, Bug[e]; var_d = 48, var_f = 0x897e);
+    }
+}
+pub fn cooldown<H: Host>(k: u16, game: &mut H) {
+    let e = i32::from(k);
+    let previous = session_slot!(game, Bug[e].var_d);
+    session_slot!(game, Bug[e].var_d, |old| old.wrapping_sub(1));
+    if previous == 1 {
+        session_slot!(game, Bug[e].var_f = 0x8890);
+    }
+}

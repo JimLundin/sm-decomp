@@ -5,7 +5,7 @@ use crate::actors::api::ShotHandling;
 use crate::actors::combat::{self, current_slot};
 use crate::actors::host::{ActorLease, LeaseActors};
 use crate::actors::layouts::part_view;
-use crate::actors::session_slots::SlotAccess as _;
+
 use crate::enemy_script::EnemyScript;
 use crate::player_projectiles::content::table;
 use crate::session_slot;

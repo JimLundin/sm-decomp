@@ -12,7 +12,7 @@ use sm_data::ceres_doors::{
     STEAM_KINDS, Steam, SteamKind, import_steam,
 };
 
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ImportedCeresDoors {
     steam: Option<Imported<Steam>>,
     door_instructions: ImportedWords<DOOR_INSTRUCTION_ADDRESS, DOOR_KINDS>,

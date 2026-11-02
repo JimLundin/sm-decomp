@@ -279,7 +279,7 @@ fn run_function(runtime: &mut impl ActorLease, raw: u16, function: u16) -> bool 
                 session_slot!(runtime, Tatori[slot]; acceleration_sub = accel as u16, acceleration = (accel >> 16) as u16);
                 runtime.write_slice_le(words::EARTHQUAKE_TYPE, 0);
                 runtime.write_slice_le(words::EARTHQUAKE_TIMER, 16);
-                runtime.queue_sound(2, 6, 0x1b);
+                crate::enemy_projectiles::host::Effects::queue_sound(runtime, 2, 6, 0x1b);
             } else {
                 // Handle Samus landing on hovering tatori ($A2:8F5F): carry her along.
                 if api::touches_player_from_above(runtime, key) {

@@ -8,6 +8,7 @@ pub(crate) use sm_game::room_mechanisms::host;
 use sm_game::room_mechanisms::pre;
 use sm_game::room_mechanisms::presentation;
 mod runtime;
+pub(crate) use runtime::prepared_actor_diagnostic;
 use sm_game::room_mechanisms::setup;
 mod rules {
     pub(super) use sm_game::room_mechanisms::rules::crumbling_wall;

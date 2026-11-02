@@ -114,6 +114,14 @@ const COMMON_RANGES: [(usize, usize); 26] = [
 ];
 const COMMON_END: usize = 0xef78;
 
+macro_rules! extended_word {
+    ($s:ident,$block:expr,$word:expr,(&)) => {
+        $s.actors.extended.word($block, $word)
+    };
+    ($s:ident,$block:expr,$word:expr,(&mut)) => {
+        $s.actors.extended.word_mut($block, $word)
+    };
+}
 macro_rules! common_word {
     ($s:ident, $at:expr, ($($borrow:tt)*)) => {
         match $at {
@@ -122,10 +130,8 @@ macro_rules! common_word {
             at @ 0x7000..=0x77fe => spawn_word!(
                 $s.actors.saved[(at - 0x7000) / 64], (at - 0x7000) % 64, ($($borrow)*)),
             0x801e | 0x8020 | 0x803c | 0x8818 | 0x883e => None,
-            at @ 0x7800..=0x97da => Some($($borrow)* $s.actors.extended.blocks[(at - 0x7800) / 0x800]
-                [(at - 0x7800) % 0x800 / 2]),
-            at @ 0x2000..=0x2ffe => Some($($borrow)* $s.actors.extended.blocks[4 + (at - 0x2000) / 0x800]
-                [(at - 0x2000) % 0x800 / 2]),
+            at @ 0x7800..=0x97da => Some(extended_word!($s,(at - 0x7800) / 0x800,(at - 0x7800) % 0x800 / 2,($($borrow)*))),
+            at @ 0x2000..=0x2ffe => Some(extended_word!($s,4 + (at - 0x2000) / 0x800,(at - 0x2000) % 0x800 / 2,($($borrow)*))),
             at @ 0x0688..=0x069a => Some($($borrow)* $s.actors.crocomire_melt.words[(at - 0x0688) / 2]),
             0x0e12 => Some($($borrow)* $s.actors.diagnostics.sprite_contacts_disabled),
             0x0e1c => Some($($borrow)* $s.actors.controls.shake_request),

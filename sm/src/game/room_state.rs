@@ -38,7 +38,14 @@ impl sm_game::room_state::EnemyGraphicsHost for Game {
     }
 }
 
-pub(crate) use sm_game::room_state::{copy_level_planes, load_sprite_palettes};
+pub(crate) use sm_game::room_state::copy_level_planes;
+
+/// Retained physical-port palette leaf. Owned room execution uses the Session kernel.
+pub(crate) fn load_sprite_palettes(game: &mut Game) {
+    sm_game::word_transfers!(game, descending, 16; le(TARGET_PALETTES, 223) <- rom(0x9a8000, 223));
+    sm_game::word_transfers!(game, descending, 16; native(0xc3de) <- native(0xc1de));
+    sm_game::word_transfers!(game, descending, 16; native(0xc31e) <- rom(0x9afc00, 15));
+}
 
 impl sm_game::room_state::MainCodeHost for Runtime<'_> {
     fn command_player(&mut self, command: u16) {
@@ -78,20 +85,8 @@ use sm_game::room_state::fx::Initializer;
 
 impl sm_game::room_state::fx::FxHost for Runtime<'_> {
     fn initialize_fx(&mut self, initializer: Initializer) {
-        use crate::game::visual_runtime::*;
-        use sm_game::{liquid_effects, scrolling_sky};
-        self.foreign(|game| match initializer {
-            Initializer::Lava => liquid_effects::initialize_lava(game),
-            Initializer::Acid => liquid_effects::initialize_acid(game),
-            Initializer::Water => liquid_effects::initialize_water(game),
-            Initializer::Weather(weather) => initialize_weather(weather, game),
-            Initializer::Land => scrolling_sky::initialize_land(game),
-            Initializer::BandedSky => scrolling_sky::initialize_banded_sky(game),
-            Initializer::FirefleaLighting => initialize_fireflea_lighting(game),
-            Initializer::TourianStatue => initialize_tourian_statue(game),
-            Initializer::CeresRidley => initialize_ceres_ridley(game),
-            Initializer::CeresElevator => initialize_ceres_elevator(game),
-            Initializer::Haze => initialize_room_haze(game),
+        self.owned_call(|runtime| {
+            sm_game::owned_hdma_update::lifecycle::FxHost::room_initialize_fx(runtime, initializer);
         });
     }
     fn spawn_fx_palette(&mut self, definition: u16) {
@@ -106,5 +101,15 @@ pub(crate) fn advance_room(game: &mut Game) {
     let script = word!(game.ROOM_MAIN_CODE_PTR);
     if script != 0 {
         sm_game::room_state::execute_main_code(script, &mut Runtime::new(game));
+    }
+}
+
+impl sm_game::owned_hdma_update::lifecycle::FxHost for Runtime<'_> {}
+impl sm_game::owned_hdma_update::lifecycle::ResetHost for Runtime<'_> {
+    fn room_mode7(&mut self, value: u16) {
+        sm_game::actors::session_slots::SlotAccess::set_slot_word(self, 0x783, value);
+    }
+    fn room_register(&mut self, register: u16, value: u8) {
+        sm_game::owned_hdma_update::context::Context::hdma_register(self, register, value);
     }
 }

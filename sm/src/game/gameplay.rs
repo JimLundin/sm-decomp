@@ -45,7 +45,7 @@ impl sm_game::gameplay_frame::Host for Game {
     }
     fn update_hdma(&mut self) {
         // The main game loop's PLP restores the carry loading the save slots ($80:8261) set.
-        crate::game::visual_runtime::update_hdma(true, self)
+        crate::game::hdma_owned_runtime::update_hdma(true, self)
     }
     fn advance_random(&mut self) {
         self.next_random();
@@ -97,16 +97,36 @@ impl sm_game::gameplay_frame::Host for Game {
     fn pause_hook(&mut self, hook: PauseHook) {
         match hook {
             PauseHook::Draygon => crate::game::room_state::pause_draygon(self),
-            PauseHook::Kraid => sm_game::actors::kraid_pause::pause(self),
+            PauseHook::Kraid => Runtime::new(self).owned_call(sm_game::actors::kraid_pause::pause),
         }
     }
     fn unpause_hook(&mut self, hook: UnpauseHook) -> u8 {
         use sm_game::actors::kraid_pause::{unpause_alive, unpause_dead, unpause_sinking};
+        let routine = match hook {
+            UnpauseHook::KraidDead => None,
+            UnpauseHook::KraidAlive => None,
+            UnpauseHook::KraidSinking => None,
+            UnpauseHook::MotherBrain => Some(11110243),
+            UnpauseHook::Draygon => None,
+        };
+        if self.world().actors().revision().is_some() {
+            if let Some(routine) = routine {
+                return self
+                    .prepared_actor_call(|host| {
+                        sm_game::actors::prepared_major_bosses::try_unpause(
+                            sm_game::actors::content::ActorRoutine(routine),
+                            host,
+                        )
+                        .expect("registered prepared unpause hook")
+                    })
+                    .expect("prepared unpause binding");
+            }
+        }
         match hook {
             UnpauseHook::Draygon => crate::game::room_state::unpause_draygon(self),
-            UnpauseHook::KraidDead => unpause_dead(self),
-            UnpauseHook::KraidAlive => unpause_alive(self),
-            UnpauseHook::KraidSinking => unpause_sinking(self),
+            UnpauseHook::KraidDead => Runtime::new(self).owned_call(unpause_dead),
+            UnpauseHook::KraidAlive => Runtime::new(self).owned_call(unpause_alive),
+            UnpauseHook::KraidSinking => Runtime::new(self).owned_call(unpause_sinking),
             UnpauseHook::MotherBrain => crate::game::sm_a9::body_unpause_hook(self),
         }
     }

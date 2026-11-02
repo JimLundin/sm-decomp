@@ -1,4 +1,10 @@
 //! One aggregate authority for player, projectiles, mechanisms and their room.
+#[path = "actors/crocomire_owned_runtime.rs"]
+mod crocomire_owned_runtime;
+#[path = "actors/interaction_owned_runtime.rs"]
+mod interaction_owned_runtime;
+#[path = "actors/kraid_owned_runtime.rs"]
+mod kraid_owned_runtime;
 use crate::game::enemy_speeds::SpeedTable;
 use crate::{
     game_state::Game,
@@ -94,6 +100,7 @@ pub struct Runtime<'g> {
     persistent: Option<(
         sm_game::scene::samus_content::ContentDescription,
         std::sync::Arc<crate::game_state::persistent_session::SessionStartRequirements>,
+        Option<std::rc::Rc<sm_game::actors::presentation_content::PreparedActorContent>>,
     )>,
 }
 
@@ -207,7 +214,7 @@ impl<'g> Runtime<'g> {
             return Self {
                 state: Some(session.gameplay),
                 inputs: session.observations,
-                persistent: Some((session.roles, session.required)),
+                persistent: Some((session.roles, session.required, session.actor_content)),
                 persistent_epoch: Some(game.compatibility_write_epoch()),
                 game,
             };
@@ -523,7 +530,7 @@ impl<'g> Runtime<'g> {
             if let Some(observer) = self.game.observation.as_mut() {
                 observer.leases.capture(&state);
             }
-            if let Some((roles, required)) = self.persistent.take() {
+            if let Some((roles, required, actor_content)) = self.persistent.take() {
                 let matching = std::sync::Arc::ptr_eq(&state.world, self.game.world())
                     && state.world.revision() == self.game.world().revision();
                 let mut epoch = self
@@ -552,6 +559,7 @@ impl<'g> Runtime<'g> {
                         observations: self.inputs.clone(),
                         roles,
                         required,
+                        actor_content,
                     },
                     completed,
                     epoch,
@@ -1163,6 +1171,22 @@ fn adopt_carried_presentation(
     game: &Game,
 ) {
     if presentation.is_owned() {
+        // Device effects are independent of the RAM projection and staged words.
+        if let Some(image) = game.capture_owned_hardware() {
+            sm_game::scene::hardware::import(
+                &mut presentation
+                    .owner_mut()
+                    .expect("carried display owner")
+                    .state,
+                image,
+            );
+        }
+        if let Some(physical) = game.capture_owned_video() {
+            presentation
+                .owner_mut()
+                .expect("carried display owner")
+                .adopt_physical_image(&physical);
+        }
         presentation.adopt_projection(&|at| game.ram().read_byte(at));
         *presentation.visual_mut() = state.presentation.visual().clone();
         *presentation.palette_mut() = state.presentation.palette().clone();
@@ -1304,10 +1328,12 @@ fn encode_session(guard: ExportIdentity<'_>) {
     let state = guard.state.as_ref().expect("export owns Session");
     encoding::encode(state, |at, bytes| guard.game.ram().copy_in(at, bytes));
     export_native_spawn(state, guard.game);
+    guard.game.export_owned_hardware(state);
     // Drop moves identity exactly once, after the byte/native publication.
 }
 #[forbid(unsafe_code)]
 pub(crate) fn import_native_spawn(state: &mut Session, game: &Game) {
+    state.suspended_work.decompression_source = game.decompress_src;
     let spawn = &mut state.enemy_projectiles.spawn;
     spawn.rectangle.origin.x = game.eproj_spawn_rect.x;
     spawn.rectangle.origin.y = game.eproj_spawn_rect.y;
@@ -1320,6 +1346,7 @@ pub(crate) fn import_native_spawn(state: &mut Session, game: &Game) {
 }
 #[forbid(unsafe_code)]
 pub(crate) fn export_native_spawn(state: &Session, game: &mut Game) {
+    game.decompress_src = state.suspended_work.decompression_source;
     let spawn = &state.enemy_projectiles.spawn;
     game.eproj_spawn_rect.x = spawn.rectangle.origin.x;
     game.eproj_spawn_rect.y = spawn.rectangle.origin.y;
@@ -2600,6 +2627,36 @@ impl sm_game::presentation_workspace::Access for Runtime<'_> {
     }
 }
 #[forbid(unsafe_code)]
+impl sm_game::cinematic_access::Access for Runtime<'_> {
+    fn cinematic_value<C: sm_game::cinematic_access::Value>(&self) -> C {
+        if self.persistent_is_current() {
+            C::current(self.session())
+        } else {
+            sm_game::session_cohort::load(self)
+        }
+    }
+    fn commit_cinematic<C: sm_game::cinematic_access::Value>(&mut self, before: &C, mut after: C) {
+        if after == *before {
+            return;
+        }
+        if self.persistent_is_current() {
+            C::merge(before, &after, self.session_mut());
+            self.refresh_inputs();
+        } else {
+            // A noncurrent interval retains ordered changed-word publication.
+            let mut old = Vec::new();
+            before.clone().words(|_, word| old.push(*word));
+            let mut index = 0;
+            after.words(|at, word| {
+                if old[index] != *word {
+                    sm_game::projection::set_word(self, at, *word);
+                }
+                index += 1;
+            });
+        }
+    }
+}
+
 impl sm_game::presentation_workspace::PaletteAccess for Runtime<'_> {
     fn palette_byte(&self, target: bool, offset: usize) -> u8 {
         self.byte(
@@ -2850,5 +2907,229 @@ impl sm_game::grapple_swing::TileAccess for Runtime<'_> {
     }
     fn store_tile_word(&mut self, field: sm_game::grapple_swing::TileField, value: u16) {
         self.write_word_le(value, field.sequence_word() as usize);
+    }
+}
+
+impl Game {
+    /// Native diagnostic boundary for the actual prepared boss owner. This is
+    /// callable by ImportedActorAllocation::report_invalid_decompression_address.
+    /// rtl's operation writes g_fail and prints, and does not advance the decoder.
+    /// No low-window record is fetched before the diagnostic returns.
+    pub(crate) fn report_owned_invalid_decompression_address(
+        &mut self,
+        owner: &mut sm_game::persistent_session::PersistentSession,
+        address: u32,
+    ) {
+        preflight_export(&owner.gameplay, self);
+        let spans = sm_game::fx_encoding::physical_source_spans(
+            &owner
+                .gameplay
+                .presentation
+                .owner()
+                .expect("boss native display")
+                .state,
+        );
+        let mut mutation = self.samus_mutation();
+        // Publish the current ordered effect prefix, including the full native cursor.
+        encoding::encode(&owner.gameplay, |at, bytes| {
+            mutation.game().ram().copy_in(at, bytes)
+        });
+        export_native_spawn(&owner.gameplay, mutation.game());
+        let _sources = mutation.game().ram().begin_source_interval(&spans);
+        crate::rtl::report_invalid_rom_address(address, mutation.game());
+        let native_game = &*mutation.game();
+        // The diagnostic owns no RAM writer. Adopt actual presentation/native fields
+        // before the fallible source adoption and retain its prefix on any failure.
+        owner
+            .gameplay
+            .presentation
+            .adopt_projection(&|at| native_game.ram().read_byte(at));
+        import_native_spawn(&mut owner.gameplay, native_game);
+        let adoption = sm_game::fx_encoding::adopt_session_sources(
+            &mut owner.gameplay,
+            &|at| native_game.ram().read_byte(at),
+            &|at| native_game.ram().source_publication(at),
+        );
+        owner.observations =
+            sm_game::session_encoding::inputs_from_session(&owner.gameplay, &|at| {
+                native_game.ram().read_byte(at)
+            });
+        mutation
+            .finish_current()
+            .expect("boss diagnostic Samus adoption");
+        adoption.expect("boss diagnostic source adoption");
+    }
+}
+
+// Finite native-resource entry points for the exclusive prepared actor interval.
+// These helpers do not run a recovered actor dispatcher or create a Runtime lease.
+pub(crate) fn prepared_loaded_actor_record(bank: u8, address: u16, game: &mut Game) -> RomRecord {
+    // SAFETY: caller owns Game and the admitted current native resource interval.
+    unsafe { crate::rtl::rom_record(bank, address, game) }
+}
+pub(crate) fn prepared_actor_bus_byte(address: u32, game: &mut Game) -> u8 {
+    // SAFETY: preserve the original carried bank/address and actual bus read.
+    unsafe { game.execution().read(address) }
+}
+pub(crate) fn prepared_wram_pointer_register(register: u16, value: u8, game: &mut Game) {
+    assert!((0x2181..=0x2183).contains(&register));
+    // SAFETY: this finite WRAM-pointer resource port runs under physical_effect.
+    unsafe { crate::rtl::write_reg(register, value, game) }
+}
+pub(crate) fn prepared_dialogue_controller_word(register: u16, game: &mut Game) -> u16 {
+    assert!(matches!(register, 0x4218 | 0x421a));
+    // SAFETY: exact auto-read register word on the current resource interval.
+    unsafe { crate::rtl::read_reg_word(register, game) }
+}
+pub(crate) fn prepared_dialogue_request_reset(game: &mut Game) {
+    sm_game::menus::host::ResetRequest::request_reset(game);
+}
+pub(crate) fn prepared_dialogue_sound_effect(
+    channel: u8,
+    value: u8,
+    meaning: Option<&sm_game::session_owners::QueuedSoundMeaning>,
+    game: &mut Game,
+) {
+    // SAFETY: preserve actual dialogue native audio cue and source-order delivery.
+    unsafe {
+        crate::native_audio::emit(
+            crate::native_audio::sound_cue(channel, sm_data::OriginalSoundEffect(value), meaning),
+            sm_data::CuePhase::DialogueSound,
+            game,
+        )
+    }
+}
+pub(crate) fn prepared_sprite_diagnostic(
+    source: sm_game::scene::actor_presentation::SpriteAllocation,
+    bank: u8,
+    address: u16,
+    game: &mut Game,
+) {
+    match source {
+        sm_game::scene::actor_presentation::SpriteAllocation::Loaded => {
+            let _ = prepared_loaded_actor_record(bank, address, game);
+        }
+        sm_game::scene::actor_presentation::SpriteAllocation::Native => {
+            native_rom_diagnostic((u32::from(bank) << 16) | u32::from(address), game);
+        }
+    }
+}
+pub(crate) fn prepared_remaining_actor_diagnostic(
+    diagnostic: sm_game::actors::remaining_owned::bindings::Diagnostic,
+    game: &mut Game,
+) {
+    match diagnostic {
+        sm_game::actors::remaining_owned::bindings::Diagnostic::Reflection => {
+            sm_game::actors::species::AiHost::warn_reflection(game)
+        }
+        sm_game::actors::remaining_owned::bindings::Diagnostic::LavaHeight(value) => {
+            warn_lava_height(value)
+        }
+    }
+}
+pub(crate) fn prepared_music_effect(
+    selector: Option<sm_data::OriginalMusicBank>,
+    effect: sm_game::music_requests::MusicEffect,
+    meaning: Option<&sm_game::session_owners::QueuedMusicMeaning>,
+    game: &mut Game,
+) {
+    // SAFETY: exact resource cue delivery under the exclusive native resource interval.
+    unsafe {
+        match effect {
+            sm_game::music_requests::MusicEffect::UploadBank => crate::native_audio::emit(
+                crate::native_audio::music_bank_cue(
+                    selector.expect("captured music bank selector"),
+                    meaning,
+                ),
+                sm_data::CuePhase::MusicBank,
+                game,
+            ),
+            sm_game::music_requests::MusicEffect::WriteTrack(track) => crate::native_audio::emit(
+                crate::native_audio::music_cue(sm_data::OriginalMusicTrack(track), meaning),
+                sm_data::CuePhase::MusicTrack,
+                game,
+            ),
+        }
+    }
+}
+
+impl Game {
+    /// Compatibility resource boundary. Adopt only changed projected fields and
+    /// actual hardware/source publications into the same retained typed owner.
+    pub(crate) fn prepared_actor_physical_effect<R>(
+        &mut self,
+        state: &mut Session,
+        operation: impl FnOnce(&mut Game) -> R,
+    ) -> R {
+        preflight_export(state, self);
+        let spans = sm_game::fx_encoding::physical_source_spans(
+            &state
+                .presentation
+                .owner()
+                .expect("prepared physical display")
+                .state,
+        );
+        let mut before = std::collections::BTreeMap::new();
+        let mut mutation = self.samus_mutation();
+        encoding::encode(state, |at, bytes| {
+            for (offset, &value) in bytes.iter().enumerate() {
+                before.insert(at + offset, value);
+            }
+            mutation.game().ram().copy_in(at, bytes);
+        });
+        export_native_spawn(state, mutation.game());
+        mutation.game().export_owned_hardware(state);
+        let _interval = mutation.game().ram().begin_source_interval(&spans);
+        let result =
+            std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| operation(mutation.game())));
+        // Preserve the native prefix before any fallible semantic source adoption.
+        for (at, previous) in before {
+            let value = mutation.game().ram().read_byte(at);
+            if value != previous {
+                let _projected = sm_game::session_encoding::write_projected_byte(state, at, value);
+            }
+        }
+        import_native_spawn(state, mutation.game());
+        if let Some(image) = mutation.game().capture_owned_hardware() {
+            sm_game::scene::hardware::import(
+                &mut state
+                    .presentation
+                    .owner_mut()
+                    .expect("prepared physical hardware")
+                    .state,
+                image,
+            );
+        }
+        if let Some(image) = mutation.game().capture_owned_video() {
+            state
+                .presentation
+                .owner_mut()
+                .expect("prepared physical video")
+                .adopt_physical_image(&image);
+        }
+        let native_game = &*mutation.game();
+        state
+            .presentation
+            .adopt_projection(&|at| native_game.ram().read_byte(at));
+        let adoption = sm_game::fx_encoding::adopt_session_sources(
+            state,
+            &|at| native_game.ram().read_byte(at),
+            &|at| native_game.ram().source_publication(at),
+        );
+        let samus = mutation.finish_current();
+        if result.is_err() || adoption.is_err() || samus.is_err() {
+            state.actor_identity.retain_poison();
+            if let Ok(owner) = state.presentation.owner_mut() {
+                owner.state.phase = sm_game::scene::state::DisplayPhase::Failed;
+            }
+        }
+        match result {
+            Err(payload) => std::panic::resume_unwind(payload),
+            Ok(value) => {
+                adoption.expect("prepared physical source adoption");
+                samus.expect("prepared physical Samus adoption");
+                value
+            }
+        }
     }
 }

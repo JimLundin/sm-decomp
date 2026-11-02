@@ -8,7 +8,7 @@ use crate::records::Records;
 use sm_data::cartridge::RomImage;
 use sm_data::mother_brain::*;
 
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ImportedMotherBrain {
     fake_death_explosions: Option<Imported<FakeDeathExplosions>>,
     brain_attacks: Option<Imported<BrainAttacks>>,

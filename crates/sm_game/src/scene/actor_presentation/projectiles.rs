@@ -48,6 +48,7 @@ impl Binding {
         session: &mut Session,
         observations: &ExternalInputs,
         drawing: Drawing,
+        content: &crate::scene::prepared_samus::PreparedSamusContent,
         diagnostics: &mut dyn Diagnostics,
     ) -> Result<(), DisplayError> {
         self.check(session)?;
@@ -102,7 +103,7 @@ impl Binding {
                 if session.presentation.owner()?.state.nmi.frame_word & 1 != 0 {
                     for echo in [3, 2] {
                         if session.projectiles.echoes.x_speed[echo] != 0 {
-                            self.draw_echo(session, observations, echo, diagnostics)?;
+                            self.draw_echo(session, observations, echo, content, diagnostics)?;
                         }
                     }
                 }
@@ -120,6 +121,7 @@ impl Binding {
         session: &mut Session,
         observations: &ExternalInputs,
         echo: usize,
+        content: &crate::scene::prepared_samus::PreparedSamusContent,
         diagnostics: &mut dyn Diagnostics,
     ) -> Result<(), DisplayError> {
         let y = session.projectiles.echoes.y[echo];
@@ -139,13 +141,27 @@ impl Binding {
         if i16::from_ne_bytes(y.to_ne_bytes()) >= 0 && y.wrapping_sub(248) & 0x8000 != 0 {
             let index = session.player.top_sprite;
             let x = session.projectiles.echoes.x[echo].wrapping_sub(session.room.camera.layer1[0]);
-            diagnostics.draw_echo_sprite(session, observations, echo, index, Point { x, y })?;
+            diagnostics.draw_echo_sprite(
+                session,
+                observations,
+                content,
+                echo,
+                index,
+                Point { x, y },
+            )?;
             // The first draw can replace the selected state; both queries remain fresh.
             if session.player.bottom_sprite != 0 {
                 let index = session.player.bottom_sprite;
                 let x =
                     session.projectiles.echoes.x[echo].wrapping_sub(session.room.camera.layer1[0]);
-                diagnostics.draw_echo_sprite(session, observations, echo, index, Point { x, y })?;
+                diagnostics.draw_echo_sprite(
+                    session,
+                    observations,
+                    content,
+                    echo,
+                    index,
+                    Point { x, y },
+                )?;
             }
         }
         Ok(())
@@ -316,7 +332,7 @@ fn publish(
 ) -> Result<(), DisplayError> {
     let owner = session.presentation.owner_mut()?;
     let media = owner.media().clone();
-    let context = diagnostics.object_context(&owner.state)?;
+    let context = diagnostics.object_context(owner)?;
     let producer = owner
         .state
         .producer_ids

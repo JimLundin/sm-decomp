@@ -398,78 +398,66 @@ fn sprite_index<A: Authority>(h: &mut A, half: Half, pose: u16, little_endian: b
 
 /// Draw the speed-boost echoes, converging them first while they return.
 pub fn draw_echoes<A: Authority>(h: &mut A) {
-    let converging = h.session().projectiles.echoes.index & 0x8000 != 0;
-    if !converging && h.session().player.contact.speed_boost & 0xff00 != 0x400 {
-        return;
-    }
-    for index in [1, 0] {
-        if h.session().projectiles.echoes.x[index] == 0 {
-            continue;
-        }
-        if converging {
-            let s = h.session_mut();
-            let e = &mut s.projectiles.echoes;
-            if e.y[index] != s.player.y {
-                e.y[index] = if (e.y[index].wrapping_sub(s.player.y) as i16) < 0 {
-                    e.y[index].wrapping_add(2)
-                } else {
-                    e.y[index].wrapping_sub(2)
-                };
-            }
-            e.x[index] = e.x[index].wrapping_add(e.x_speed[index]);
-            let left = (e.x[index].wrapping_sub(s.player.x) as i16) < 0;
-            if left == (e.x_speed[index] & 0x8000 != 0) {
-                e.x[index] = 0;
-                continue;
-            }
-        }
-        if h.has_owned_display() {
-            h.draw_owned_echo((index * 2) as u16);
-        } else {
-            h.draw_native_echo((index * 2) as u16);
-        }
-    }
-    if converging && h.session().projectiles.echoes.x[..2] == [0, 0] {
-        h.session_mut().projectiles.echoes.index = 0;
-    }
+    let Ok(()) = crate::scene::player_echoes::draw(&mut LegacyEcho(h));
 }
 
 /// Draw the shinespark crash echo in slot `k` on odd frames.
 pub fn draw_shinespark_crash_echoes<A: Authority>(k: u16, h: &mut A) {
-    if h.frame_counter() & 1 == 0 {
-        return;
+    let Ok(()) = crate::scene::player_echoes::crash(k, &mut LegacyEcho(h));
+}
+struct LegacyEcho<'a, A>(&'a mut A);
+impl<A: Authority> crate::scene::player_echoes::Host for LegacyEcho<'_, A> {
+    type Error = Infallible;
+    fn session(&self) -> &crate::session::Session {
+        self.0.session()
     }
-    let pose = h.session().player.pose;
-    let top = sprite_index(h, Half::Top, pose, false);
-    let table = if h.has_owned_display() {
-        h.prepared_role(Role::PositionFallback, Registration::Native, 0)
-    } else {
-        let record = h.table(Source::Native, 0x91b629);
-        h.captured_role(Role::PositionFallback, Registration::Native, record)
-    };
-    let height = table.byte(usize::from(h.session().player.pose) * 8 + 4);
-    let y = h
-        .word(0xab8 + usize::from(k & !1))
-        .wrapping_sub(u16::from(height))
-        .wrapping_sub(h.camera().1);
-    if !(0..248).contains(&y) {
-        return;
+    fn session_mut(&mut self) -> &mut crate::session::Session {
+        self.0.session_mut()
     }
-    let x = h
-        .word(0xab0 + usize::from(k & !1))
-        .wrapping_sub(h.camera().0);
-    h.draw_echo_samus_sprite(k, top, x, y);
-    if if h.has_owned_display() {
-        h.owned_bottom_visible()
-    } else {
-        bottom_visible(h)
-    } {
-        let pose = h.session().player.pose;
-        let bottom = sprite_index(h, Half::Bottom, pose, false);
-        let x = h
-            .word(0xab0 + usize::from(k & !1))
-            .wrapping_sub(h.camera().0);
-        h.draw_echo_samus_sprite(k, bottom, x, y);
+    fn draw_echo_slot(&mut self, slot: u16) -> Result<(), Infallible> {
+        if self.0.has_owned_display() {
+            self.0.draw_owned_echo(slot);
+        } else {
+            self.0.draw_native_echo(slot);
+        }
+        Ok(())
+    }
+    fn frame_counter(&self) -> u16 {
+        self.0.frame_counter()
+    }
+    fn sprite_index(&mut self, half: Half, pose: u16) -> Result<u16, Infallible> {
+        Ok(sprite_index(self.0, half, pose, false))
+    }
+    fn height(&mut self) -> Result<u8, Infallible> {
+        let table = if self.0.has_owned_display() {
+            self.0
+                .prepared_role(Role::PositionFallback, Registration::Native, 0)
+        } else {
+            let record = self.0.table(Source::Native, 0x91b629);
+            self.0
+                .captured_role(Role::PositionFallback, Registration::Native, record)
+        };
+        Ok(table.byte(usize::from(self.0.session().player.pose) * 8 + 4))
+    }
+    fn echo_x(&mut self, slot: u16) -> Result<u16, Infallible> {
+        Ok(self.0.word(0xab0 + usize::from(slot & !1)))
+    }
+    fn echo_y(&mut self, slot: u16) -> Result<u16, Infallible> {
+        Ok(self.0.word(0xab8 + usize::from(slot & !1)))
+    }
+    fn camera(&self) -> (u16, u16) {
+        self.0.camera()
+    }
+    fn draw_sprite(&mut self, slot: u16, index: u16, x: u16, y: u16) -> Result<(), Infallible> {
+        self.0.draw_echo_samus_sprite(slot, index, x, y);
+        Ok(())
+    }
+    fn bottom_visible(&mut self) -> Result<bool, Infallible> {
+        Ok(if self.0.has_owned_display() {
+            self.0.owned_bottom_visible()
+        } else {
+            bottom_visible(self.0)
+        })
     }
 }
 

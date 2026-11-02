@@ -16,7 +16,6 @@ use crate::constants::enemy_properties::{
 };
 use crate::enemy_script::EnemyScript;
 use crate::menus::prelude::battle;
-use crate::menus::prelude::owned;
 use crate::records::Records;
 
 /// A lease on a game with the Torizos' effects.
@@ -858,11 +857,11 @@ pub fn set_invisible<L: Lease>(k: u16, game: &mut L) {
 
 /// Instruction - set up palette transition to black ($AA:B238). Was
 /// `Torizo_Instr_35`.
-pub fn fade_to_black<L: Lease>(game: &mut L) {
-    crate::word_transfers!(game, descending, 16;
-        le(TARGET_PALETTES, 175) <- value(0),
-        le(TARGET_PALETTES, 159) <- value(0),
-    );
+pub fn fade_to_black<H: crate::session_access::SessionAccess + ?Sized>(game: &mut H) {
+    for index in (0..16).rev() {
+        game.session_mut().presentation.visual_mut().targets[160 + index] = 0;
+        game.session_mut().presentation.visual_mut().targets[144 + index] = 0;
+    }
 }
 
 /// Instruction - set boss bit, queue elevator music, spawn item drops

@@ -10,11 +10,11 @@ use {
     },
 };
 
-fn current(h: &impl ActorAccess) -> ActorKey {
+fn current(h: &(impl ActorAccess + ?Sized)) -> ActorKey {
     ActorKey::from_legacy(h.session().actors.controls.selected)
 }
 
-pub fn touches_player_from_above<H: ActorAccess>(h: &H, key: ActorKey) -> bool {
+pub fn touches_player_from_above<H: ActorAccess + ?Sized>(h: &H, key: ActorKey) -> bool {
     let actor = h.resolve_actor(key, LittleEndian);
     if !axis_overlaps(
         h.session().player.x,
@@ -33,7 +33,7 @@ pub fn touches_player_from_above<H: ActorAccess>(h: &H, key: ActorKey) -> bool {
     let radius = h.session().player.contact.radius;
     distance < radius || distance.wrapping_sub(radius) <= actor.radius.y
 }
-pub fn overlaps_player_with_padding<H: ActorAccess>(h: &H, key: ActorKey) -> bool {
+pub fn overlaps_player_with_padding<H: ActorAccess + ?Sized>(h: &H, key: ActorKey) -> bool {
     let actor = h.resolve_actor(key, LittleEndian);
     let distance = (h.session().player.x.wrapping_sub(actor.x.whole) as i16).wrapping_abs() as u16;
     let radius = h.session().player.contact.x_radius;
@@ -52,12 +52,12 @@ fn outside(position: u16, camera: u16, padding: u16, upper: u16) -> bool {
     (position.wrapping_add(padding).wrapping_sub(camera) as i16) < 0
         || (camera.wrapping_add(upper).wrapping_sub(position) as i16) < 0
 }
-pub fn current_outside_screen<H: ActorAccess>(h: &H) -> bool {
+pub fn current_outside_screen<H: ActorAccess + ?Sized>(h: &H) -> bool {
     let actor = h.resolve_actor(current(h), LittleEndian);
     outside(actor.x.whole, h.inputs().camera_x, 0, 256)
         || outside(actor.y.whole, h.inputs().camera_y, 0, 256)
 }
-pub fn current_outside_padded_screen<H: ActorAccess>(h: &H, padding: u16) -> bool {
+pub fn current_outside_padded_screen<H: ActorAccess + ?Sized>(h: &H, padding: u16) -> bool {
     let actor = h.resolve_actor(current(h), LittleEndian);
     outside(
         actor.x.whole,
@@ -71,7 +71,7 @@ pub fn current_outside_padded_screen<H: ActorAccess>(h: &H, padding: u16) -> boo
         padding.wrapping_add(256),
     )
 }
-pub fn current_normal_sprite_outside_screen<H: ActorAccess>(h: &H) -> bool {
+pub fn current_normal_sprite_outside_screen<H: ActorAccess + ?Sized>(h: &H) -> bool {
     let actor = h.resolve_actor(current(h), LittleEndian);
     outside(
         actor.x.whole,
@@ -80,7 +80,7 @@ pub fn current_normal_sprite_outside_screen<H: ActorAccess>(h: &H) -> bool {
         actor.radius.x.wrapping_add(256),
     ) || outside(actor.y.whole, h.inputs().camera_y, 8, 248)
 }
-pub fn leaving_screen<H: ActorAccess>(h: &H, key: ActorKey) -> bool {
+pub fn leaving_screen<H: ActorAccess + ?Sized>(h: &H, key: ActorKey) -> bool {
     let actor = h.resolve_actor(key, LittleEndian);
     let x = actor.x.whole;
     if (x as i16) < 0 {
@@ -94,19 +94,24 @@ pub fn leaving_screen<H: ActorAccess>(h: &H, key: ActorKey) -> bool {
     let past = edge.wrapping_sub(256).wrapping_sub(actor.radius.x);
     (edge as i16) < 0 || (past as i16) >= 0
 }
-pub fn player_delta<H: ActorAccess>(h: &H, key: ActorKey, axis: Axis) -> u16 {
+pub fn player_delta<H: ActorAccess + ?Sized>(h: &H, key: ActorKey, axis: Axis) -> u16 {
     let actor = h.resolve_actor(key, LittleEndian);
     match axis {
         Axis::X => h.session().player.x.wrapping_sub(actor.x.whole),
         Axis::Y => h.session().player.y.wrapping_sub(actor.y.whole),
     }
 }
-pub fn player_within<H: ActorAccess>(h: &mut H, key: ActorKey, axis: Axis, distance: u16) -> bool {
+pub fn player_within<H: ActorAccess + ?Sized>(
+    h: &mut H,
+    key: ActorKey,
+    axis: Axis,
+    distance: u16,
+) -> bool {
     h.session_mut().compatibility_enemy_scratch = distance;
     let delta = player_delta(h, key, axis);
     (((delta as i16).wrapping_abs() as u16).wrapping_sub(distance) as i16) < 0
 }
-pub fn direction_to_player<H: ActorAccess>(h: &mut H) -> PlayerDirection {
+pub fn direction_to_player<H: ActorAccess + ?Sized>(h: &mut H) -> PlayerDirection {
     if player_within(h, current(h), Axis::Y, 32) {
         return if player_delta(h, current(h), Axis::X) & 0x8000 != 0 {
             PlayerDirection::Left
@@ -156,12 +161,12 @@ pub fn angle_from_delta(x: u16, y: u16) -> u16 {
         _ => unreachable!(),
     })
 }
-pub fn angle_to_player<H: ActorAccess>(h: &H, key: ActorKey) -> u16 {
+pub fn angle_to_player<H: ActorAccess + ?Sized>(h: &H, key: ActorKey) -> u16 {
     let x = player_delta(h, key, Axis::X);
     let y = player_delta(h, key, Axis::Y);
     angle_from_delta(x, y)
 }
-pub fn angle_between<H: ActorAccess>(h: &H, from: ActorKey, to: ActorKey) -> u16 {
+pub fn angle_between<H: ActorAccess + ?Sized>(h: &H, from: ActorKey, to: ActorKey) -> u16 {
     let x = h
         .resolve_actor(from, LittleEndian)
         .x

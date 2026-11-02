@@ -4,7 +4,6 @@
 use crate::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 use crate::actors::api::{DeathHandling, ShotHandling};
 use crate::actors::boss_lease::BossLease;
-use crate::actors::boss_lease::boss_ram;
 use crate::actors::botwoon_death;
 use crate::actors::host::BossEffects as _;
 use crate::actors::layouts::{EnemyBase, same_words};
@@ -284,12 +283,24 @@ fn health_palette<R: RuntimeHost>(game: &mut R) {
         let mut source = 16u16.wrapping_mul(session_slot!(game, Botwoon[e].health_palette_index));
         let mut target = session_slot!(game, Botwoon[e].palette_data_offset);
         loop {
-            boss_ram::set_at(
-                game,
-                boss_ram::Array::PaletteBuffer,
-                target >> 1,
-                crate::cartridge::rom_table_word!(game, HEALTH_PALETTES, (source >> 1) as isize),
-            );
+            let index = usize::from(target >> 1);
+            let value =
+                crate::cartridge::rom_table_word!(game, HEALTH_PALETTES, (source >> 1) as isize);
+            if let Some(color) = game
+                .session_mut()
+                .presentation
+                .visual_mut()
+                .colors
+                .get_mut(index)
+            {
+                *color = value;
+            } else {
+                // Preserve the original full-width off-palette alias, low byte first.
+                let at = 0xc000 + (index * 2);
+                let [low, high] = value.to_le_bytes();
+                game.set_slot_byte(at, low);
+                game.set_slot_byte(at + 1, high);
+            }
             source = source.wrapping_add(2);
             target = target.wrapping_add(2);
             if target == PALETTE_END {

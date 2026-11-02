@@ -127,6 +127,37 @@ impl Drop for ExecutionLease<'_> {
 /// Executes the original synchronous game effect at its emitted source phase.
 /// All current owners, including the exact selected execution, are rejoined.
 pub trait Effects {
+    /// Existing extraction-only callers retain their admitted wait state.
+    /// The actor binding overrides this with the actual 0782 request/ack owner.
+    fn wait(&mut self, session: &mut crate::session::Session) -> Result<d::Outcome, Fault> {
+        let execution = session
+            .prepared_dialogue
+            .as_mut()
+            .ok_or(Fault::MissingDisplay)?;
+        let pending = execution.wait_pending;
+        execution.wait_pending = !pending;
+        Ok(if pending {
+            d::Outcome::Complete
+        } else {
+            d::Outcome::Suspended(std::num::NonZeroU8::new(1).unwrap())
+        })
+    }
+    /// Rejoin the existing full owner only when an effect needs actor execution.
+    /// Existing extraction callers continue to use their Session-only sink.
+    fn apply_owner(
+        &mut self,
+        effect: crate::message_composition::prepared::Effect,
+        owner: &mut crate::persistent_session::PersistentSession,
+    ) -> Result<(), Fault> {
+        self.apply(effect, &mut owner.gameplay)
+    }
+    fn input_owner(
+        &mut self,
+        _owner: &mut crate::persistent_session::PersistentSession,
+        sample: crate::message_composition::prepared::InputSample,
+    ) -> Result<crate::message_composition::prepared::InputSample, Fault> {
+        Ok(sample)
+    }
     fn apply(
         &mut self,
         effect: crate::message_composition::prepared::Effect,

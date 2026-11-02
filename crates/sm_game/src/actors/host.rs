@@ -46,6 +46,99 @@ pub enum Slopes {
     Follow,
 }
 
+/// Spatial queries over canonical actors/player state. No motion, content,
+/// mechanism, species callback or compatibility capability is required.
+pub trait ActorQueries: crate::actors::access::ActorAccess {
+    fn player_delta(&mut self, key: u16, axis: Axis) -> u16 {
+        crate::actors::queries::player_delta(
+            self,
+            crate::actors::access::ActorKey::from_legacy(key),
+            match axis {
+                Axis::X => crate::actors::api::Axis::X,
+                Axis::Y => crate::actors::api::Axis::Y,
+            },
+        )
+    }
+    fn player_within(&mut self, key: u16, axis: Axis, distance: u16) -> bool {
+        crate::actors::queries::player_within(
+            self,
+            crate::actors::access::ActorKey::from_legacy(key),
+            match axis {
+                Axis::X => crate::actors::api::Axis::X,
+                Axis::Y => crate::actors::api::Axis::Y,
+            },
+            distance,
+        )
+    }
+    fn current_outside_screen(&mut self) -> bool {
+        crate::actors::queries::current_outside_screen(self)
+    }
+    fn angle_to_player(&mut self, key: u16) -> u16 {
+        crate::actors::queries::angle_to_player(
+            self,
+            crate::actors::access::ActorKey::from_legacy(key),
+        )
+    }
+    fn touches_player_from_above(&mut self, key: u16) -> bool {
+        crate::actors::queries::touches_player_from_above(
+            self,
+            crate::actors::access::ActorKey::from_legacy(key),
+        )
+    }
+}
+impl<T: crate::actors::access::ActorAccess + ?Sized> ActorQueries for T {}
+
+/// Real actor collision motion; immediate spike allocation stays on the
+/// current mechanism owner before the captured actor's motion resumes.
+pub trait ActorMotion:
+    ActorQueries + crate::actors::movement::MovementHost + crate::room_mechanisms::host::Host
+{
+    fn apply_vector(&mut self, phase: u16, vector: crate::geometry::Vector32)
+    where
+        Self: Sized,
+    {
+        crate::actors::movement::apply_vector(self, phase, vector);
+    }
+    fn move_horizontal(&mut self, key: u16, amount: i32, slopes: Slopes) -> bool
+    where
+        Self: Sized,
+    {
+        crate::actors::movement::move_horizontal(
+            self,
+            crate::actors::access::ActorKey::from_legacy(key),
+            amount,
+            match slopes {
+                Slopes::Ignore => crate::actors::api::SlopePolicy::Ignore,
+                Slopes::Solid => crate::actors::api::SlopePolicy::Solid,
+                Slopes::Follow => crate::actors::api::SlopePolicy::Follow,
+            },
+        ) == crate::actors::api::MovementResult::Blocked
+    }
+    fn move_vertical(&mut self, key: u16, amount: i32) -> bool
+    where
+        Self: Sized,
+    {
+        crate::actors::movement::move_vertical(
+            self,
+            crate::actors::access::ActorKey::from_legacy(key),
+            amount,
+        ) == crate::actors::api::MovementResult::Blocked
+    }
+    fn snap_to_slopes(&mut self, key: u16)
+    where
+        Self: Sized,
+    {
+        crate::actors::movement::snap_to_slopes(
+            self,
+            crate::actors::access::ActorKey::from_legacy(key),
+        );
+    }
+}
+impl<T: crate::actors::movement::MovementHost + crate::room_mechanisms::host::Host + ?Sized>
+    ActorMotion for T
+{
+}
+
 /// Whether a reaction finalizes the death it causes.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Death {
@@ -198,6 +291,27 @@ pub trait ActorLease:
     + crate::ram::CompatibilityRam
     + crate::cartridge::LoadedImage
     + crate::actors::gunship::Host
+    + crate::actors::rippers::owned::Host
+    + crate::actors::choot::owned::Host
+    + crate::actors::zoa::owned::Host
+    + crate::actors::roach::owned::Host
+    + crate::actors::tripper::owned::Host
+    + crate::actors::sidehopper::owned::Host
+    + crate::actors::draygon_death::owned::Host
+    + crate::actors::draygon_sweep::owned::Host
+    + crate::actors::etecoon::owned::Host
+    + crate::actors::dachora_run::owned::Host
+    + crate::actors::mini_kraid::owned::Host
+    + crate::actors::zebetites::owned::Host
+    + crate::actors::kraid_lint::owned::Host
+    + crate::actors::yapping_maw::owned::Host
+    + crate::actors::statues::owned::Host
+    + crate::actors::draygon_flight::entry::Host
+    + crate::actors::draygon_eye::owned::Host
+    + crate::actors::ceres_ridley::owned::Host
+    + crate::actors::ridley::owned::Host
+    + crate::actors::spore_spawn::owned_return::Host
+    + crate::escape_typewriter::owned::Host
 {
     type Game: BossEffects
         + LeaseActors

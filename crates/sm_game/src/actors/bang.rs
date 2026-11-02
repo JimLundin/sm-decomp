@@ -240,7 +240,7 @@ fn fire_charged_beam(runtime: &mut impl ActorLease, direction: u16) -> u16 {
     shot!(runtime, slot, damage = damage);
     let beam = shot!(runtime, slot, kind) & 15;
     let sound = table(runtime, CHARGED_SOUNDS, usize::from(beam).cast_signed());
-    runtime.queue_sound(0, sound as u8, 6);
+    crate::effects::SoundEffects::queue_sound(runtime, 0, sound as u8, 6);
     0
 }
 /// Bang movement function - movement delay ($A3:BCA5). Was `wait`.

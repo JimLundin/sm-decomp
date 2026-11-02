@@ -113,6 +113,22 @@ impl sm_game::actors::deaths::Deaths for Game {
     }
 }
 
+impl sm_game::actors::deaths::Deaths for crate::game::session_runtime::Runtime<'_> {
+    fn normal_death(&mut self, animation: u16) {
+        crate::game::actors::combat::die(
+            self,
+            crate::game::actors::api::DeathKind::Normal { animation },
+        );
+    }
+    fn scatter_enemy_drop(
+        &mut self,
+        source: sm_game::enemy_projectiles::drops::DropSource,
+        index: u16,
+    ) {
+        self.foreign(|game| crate::game::enemy_projectiles::scatter_drop(source, index, game));
+    }
+}
+
 impl sm_game::actors::zebetites::Lease for crate::game::session_runtime::Runtime<'_> {
     fn event_happened(&mut self, event: u16) -> u16 {
         self.foreign(|game| crate::game::gameplay_flag_runtime::event_has_happened(event, game))
@@ -237,34 +253,6 @@ impl sm_game::actors::phantoon::Lease for crate::game::session_runtime::Runtime<
     }
 }
 
-impl sm_game::actors::kraid::Lease for crate::game::session_runtime::Runtime<'_> {
-    fn touches_player_from_above(&mut self, k: u16) -> bool {
-        crate::game::actors::api::touches_player_from_above(
-            self,
-            sm_game::actors::access::ActorKey::from_legacy(k),
-        )
-    }
-}
-
-impl sm_game::actors::kraid::Host for Game {
-    fn boss_word_native(&mut self, area: u16) -> u16 {
-        crate::game::gameplay_flag_runtime::boss_word_at(
-            area,
-            sm_game::gameplay_flag_host::BossWordOrder::Native,
-            self,
-        )
-    }
-
-    fn set_boss_word_native(&mut self, area: u16, value: u16) {
-        crate::game::gameplay_flag_runtime::set_boss_word_native(area, value, self);
-    }
-
-    #[cfg(sm_verify_dll)]
-    fn observe_kraid_flags(&mut self, step: u8) {
-        crate::kraid_flags_observer::observe(step, self);
-    }
-}
-
 impl sm_game::actors::etecoon::Lease for crate::game::session_runtime::Runtime<'_> {
     fn probe_horizontal(&mut self, k: u16, amount: i32) -> bool {
         crate::game::actors::api::probe_horizontal(
@@ -317,15 +305,15 @@ impl sm_game::actors::ceres_ridley::Host for crate::game::session_runtime::Runti
     }
 
     fn queue_escape_timer_tiles(&mut self) -> bool {
-        self.foreign(|game| crate::game::rom_vram_entries::queue_escape_timer_tiles(game) & 1 != 0)
+        self.owned_call(sm_game::actors::boss_vram_entries_owned::queue_escape_timer_tiles) & 1 != 0
     }
 
     fn queue_getaway_tiles(&mut self) {
-        self.foreign(crate::game::rom_vram_entries::queue_getaway_tiles);
+        self.owned_call(sm_game::actors::boss_vram_entries_owned::queue_getaway_tiles);
     }
 
     fn queue_escape_tile_table(&mut self) {
-        self.foreign(crate::game::rom_vram_entries::queue_escape_tile_table);
+        self.owned_call(sm_game::actors::boss_vram_entries_owned::queue_escape_tile_table);
     }
 }
 
@@ -595,4 +583,13 @@ impl sm_game::hud::HudFrameHost for crate::game::session_runtime::Runtime<'_> {
             .ram()
             .read_byte(sm_game::ram::bytes::NMI_FRAME_COUNTER_BYTE)
     }
+}
+
+/// LEGACY(verifier): retain the actual Kraid capture/probe callback and its
+/// original finite Game boundary until semantic phase captures replace it.
+pub(crate) fn observe_kraid_flags(step: u8, game: &mut Game) {
+    #[cfg(sm_verify_dll)]
+    crate::kraid_flags_observer::observe(step, game);
+    #[cfg(not(sm_verify_dll))]
+    let _ = (step, game);
 }

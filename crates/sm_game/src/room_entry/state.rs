@@ -10,6 +10,7 @@ use super::world::{ExitId, Identity, RoomId, StateId};
 /// they must not reconstruct a value from the selected State and ignore alias writes.
 #[derive(Clone, Debug, PartialEq)]
 pub struct RoomEntry {
+    pub execution: RoomEntryExecution,
     pub exit: Identity<ExitId>,   // 078D, two projected bytes.
     pub direction: u16,           // 0791
     pub elevator_properties: u16, // 0793
@@ -61,4 +62,9 @@ pub struct RoomEntry {
 pub struct SharedContinuations {
     pub primary: u8,   // 0612
     pub secondary: u8, // 0613
+}
+
+#[derive(Clone, Default, Debug, PartialEq)]
+pub struct RoomEntryExecution {
+    pub signal: Option<super::api::EntrySignal>,
 }

@@ -229,11 +229,13 @@ pub enum CollectionWindow {
     GraphicsRoutes,
     TileLoad,
     VramQueue,
+    /// Species extended words, retaining full/odd native store semantics.
+    SpeciesExtended,
     /// Caller performs the original draw assertion before access.
     AbsoluteDrawAddress(u16),
 }
 impl CollectionWindow {
-    fn address(self, offset: usize) -> usize {
+    pub(crate) fn address(self, offset: usize) -> usize {
         let base: usize = match self {
             Self::Active => 0x17ac,
             Self::Interactive => 0x17ec,
@@ -245,6 +247,7 @@ impl CollectionWindow {
             Self::GraphicsRoutes => 0xef6c,
             Self::TileLoad => 0x0e5a,
             Self::VramQueue => 0x00d0,
+            Self::SpeciesExtended => 0x7800,
             Self::AbsoluteDrawAddress(address) => usize::from(address),
         };
         base.checked_add(offset).expect("actor collection address")

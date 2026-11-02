@@ -8,7 +8,7 @@ use crate::records::Records;
 use sm_data::cartridge::RomImage;
 use sm_data::torizo_corpse::*;
 
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ImportedTorizoCorpse {
     even_transfers: Option<Imported<TileTransfers>>,
     odd_transfers: Option<Imported<TileTransfers>>,

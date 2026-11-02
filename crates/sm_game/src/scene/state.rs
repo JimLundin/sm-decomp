@@ -553,6 +553,8 @@ pub struct HdmaState {
 }
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct InterruptState {
+    /// Actual physical word $0783; distinct from pending/current scanline handlers.
+    pub mode7: u16,
     pub current: u16,
     pub pending: u16,
     /// Effective delivered timers, independent of staged control bytes.
@@ -593,8 +595,42 @@ pub struct DisplayDeliveryDescription {
     pub raster_suppressed: bool,
 }
 /// Effective values consumed by IRQ output and vblank, not staged controls.
+/// Effective physical inputs not represented by the staged control mirrors.
+/// Construction and external adoption supply every field; there is no reset fallback.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct RasterInputs {
+    /// BG1, BG2 and BG4; BG3 retains its existing effective map owner.
+    pub map_words: [u16; 3],
+    pub map_wider: [bool; 3],
+    pub map_higher: [bool; 3],
+    pub tile_words: [u16; 4],
+    pub object_tile_words: [u16; 2],
+    pub object_size: u8,
+    pub object_priority: bool,
+    pub object_interlaced: bool,
+    pub extended_background: bool,
+    pub pseudo_hires: bool,
+    pub window_positions: [u8; 4],
+    pub window_logic: [u8; 6],
+    /// Preserve the unused top byte of the native cached window selector.
+    pub window_native_flags: u32,
+    pub sub_layers: u8,
+    pub screen_windowed: [u8; 2],
+    pub fixed_color: [u8; 3],
+    pub brightness: u8,
+    pub mosaic_enabled: [bool; 4],
+    pub mosaic_native_enabled: u8,
+    pub mosaic_size: u8,
+    pub mosaic_modulo: [u8; 256],
+}
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct EffectiveDisplayDescription {
+    pub raster_inputs: RasterInputs,
+    /// Effective physical M7 registers; staged controls retain their own lifetime.
+    pub affine: sm_data::hardware::Affine,
+    pub mode_byte: u8,
+    pub scroll: [u16; 8],
+    pub window_selection: [u8; 3],
     pub background3_map_words: u16,
     pub background3_map_wider: bool,
     pub background3_map_higher: bool,
@@ -687,7 +723,14 @@ pub struct DisplayDescription {
     pub upload_tail: u16,
     pub mode7_uploads: Vec<Mode7Upload>,
     pub mode7_tail: u16,
+    /// Packed bytes $02d0..$032f. Tail aliases remain their existing scalar owners.
+    pub mode7_queue: [u8; 96],
+    /// Unknown physical gap $0332..$0333, following the tilemap tail.
+    pub mode7_gap: [u8; 2],
+    pub arithmetic: sm_data::hardware::Arithmetic,
     pub readbacks: Vec<Readback>,
+    /// Actual packed bytes $0340..$035f, acquired at start and on native adoption.
+    pub readback_queue: [u8; 32],
     pub readback_tail: u16,
     /// Ordered completed readbacks awaiting G consumption; capture never drains them.
     pub read_results: Vec<(AssetRef, Vec<u8>)>,
@@ -1016,4 +1059,10 @@ impl DisplayDescription {
         }
         Ok(())
     }
+}
+
+/// Capture the actual packed queue at the compatibility start boundary.
+/// Tools supplies these bytes from its authenticated observation; no header is decoded.
+pub fn capture_readback_queue(bytes: &impl Fn(usize) -> u8) -> [u8; 32] {
+    core::array::from_fn(|offset| bytes(0x340 + offset))
 }

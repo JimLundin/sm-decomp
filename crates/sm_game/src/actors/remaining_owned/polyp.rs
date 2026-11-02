@@ -1,0 +1,64 @@
+//! Polyp, lava vents shooting rocks at Samus (bank $A2:B51A-$A2:B601). Was `lavaquake`.
+#![forbid(unsafe_code)]
+
+use crate::actors::remaining_owned::Core;
+
+pub trait Host: Core {}
+impl Host for crate::actors::owned_execution::PreparedActorState<'_> {}
+use crate::actors::access::AccessMode::Native;
+use crate::actors::api::{self, Axis};
+use crate::actors::combat::current;
+
+use crate::player_projectiles::content::table;
+
+const WAIT_FOR_SAMUS_TO_GET_NEAR: u16 = 0xb596;
+const SHOOT_ROCK: u16 = 0xb5b2;
+const COOLDOWN: u16 = 0xb5ea;
+
+fn random_entry(runtime: &mut impl Host, address: u32, mask: u16) -> u16 {
+    let index = (runtime.roll_random() & mask) >> 1;
+    table(runtime, address, index as isize)
+}
+
+/// Initialisation AI - enemy $D1FF (polyp) ($A2:B570): also seeds the random number with 11h.
+pub fn initialize(runtime: &mut impl Host) {
+    let key = current(runtime);
+    runtime.edit_actor(key, Native, |actor| {
+        actor.restart_animation(0xb51a);
+        actor.variables[0] = WAIT_FOR_SAMUS_TO_GET_NEAR;
+    });
+    runtime.session_mut().timing.random_number = 0x11;
+    runtime.refresh_inputs();
+}
+
+/// Main AI ($A2:B58F): Samus within 40h px, a random rock ($A2:B550/30), random cooldown ($A2:B520).
+pub fn main_ai<H: Host>(game: &mut H) {
+    let runtime = &mut *game;
+    let key = current(&*runtime);
+    match runtime.resolve_actor(key, Native).variables[0] {
+        WAIT_FOR_SAMUS_TO_GET_NEAR => {
+            let mut near = |axis| api::player_within(&mut *runtime, key, axis, 0x40);
+            if near(Axis::X) && near(Axis::Y) {
+                runtime.edit_actor(key, Native, |actor| actor.variables[0] = SHOOT_ROCK);
+            }
+        }
+        SHOOT_ROCK => {
+            let x_velocity = random_entry(&mut *runtime, 0xa2_b550, 0x1e);
+            runtime.session_mut().enemy_projectiles.spawn.secondary = x_velocity;
+            let y_speed_index = random_entry(&mut *runtime, 0xa2_b530, 0x1e);
+            let k = runtime.session().actors.controls.selected;
+            runtime.spawn_actor_eproj(y_speed_index, k, 0xbd5a);
+            let key = current(&*runtime);
+            runtime.edit_actor(key, Native, |actor| actor.variables[0] = COOLDOWN);
+            let cooldown = random_entry(&mut *runtime, 0xa2_b520, 0xe);
+            runtime.edit_actor(key, Native, |actor| actor.variables[1] = cooldown);
+        }
+        COOLDOWN => runtime.edit_actor(key, Native, |actor| {
+            actor.variables[1] = actor.variables[1].wrapping_sub(1);
+            if (actor.variables[1] & 0x8000) != 0 {
+                actor.variables[0] = WAIT_FOR_SAMUS_TO_GET_NEAR;
+            }
+        }),
+        _ => runtime.remaining_unknown(),
+    }
+}

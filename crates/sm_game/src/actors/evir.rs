@@ -216,7 +216,7 @@ fn run_function(runtime: &mut impl ActorLease, evir: i32) {
             set_instruction_list(runtime, evir, PROJECTILE_LIST);
             session_slot!(runtime, Evir[evir]; regenerating = 0, moving = 0, function = function::PROJECTILE_IDLE);
         }
-        _ => runtime.unreachable(),
+        _ => crate::enemy_projectiles::host::Effects::unreachable(runtime),
     }
 }
 /// Main AI - evir ($A8:891B).
@@ -250,7 +250,7 @@ pub fn react(address: u32, runtime: &mut impl ActorLease) {
         routine::SHOT => combat::contact_reaction(runtime, Finalize),
         routine::POWER_BOMB => combat::power_bomb_reaction(runtime, Finalize),
         routine::TOUCH => combat::shot_reaction(runtime, ShotHandling::Finalize),
-        _ => return runtime.unreachable(),
+        _ => return crate::enemy_projectiles::host::Effects::unreachable(runtime),
     }
     let evir = current_slot(runtime);
     let (arms, projectile) = (evir + SLOT, evir + 2 * SLOT);
@@ -280,7 +280,9 @@ pub fn instruction(
 ) -> EnemyScript {
     let evir = current_slot(runtime);
     match address {
-        routine::QUEUE_SPIT_SOUND => runtime.queue_sound(2, 6, SPIT_SOUND),
+        routine::QUEUE_SPIT_SOUND => {
+            crate::enemy_projectiles::host::Effects::queue_sound(runtime, 2, 6, SPIT_SOUND)
+        }
         routine::SET_INITIAL_REGENERATION_X_OFFSET => {
             let offset = INITIAL_REGENERATION_X_OFFSETS[body_facing_right(runtime, evir)];
             session_slot!(runtime, Evir[evir].regeneration_x_offset = offset);
@@ -295,7 +297,7 @@ pub fn instruction(
             session_slot!(runtime, Evir[evir]; regenerating = 0, moving = 0, function = function::PROJECTILE_IDLE);
         }
         _ => {
-            runtime.unreachable();
+            crate::enemy_projectiles::host::Effects::unreachable(runtime);
             return EnemyScript::Stop;
         }
     }

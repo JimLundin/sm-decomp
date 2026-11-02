@@ -69,20 +69,79 @@ pub struct CrocomireMelt {
     pub words: [u16; 10],
     pub column_heights: [[u8; 32]; 4],
 }
-/// The slots' extended RAM ($7E:7800..$7E:8FFF): three blocks of 32 words per
-/// slot, the original's `var_00`..`var_5f`, as the words of each block in RAM
-/// order (40h bytes per slot). It lives beside the slot records rather than in
-/// `Actor`, because clearing or spawning a slot leaves it untouched, as the
-/// original does. A fourth block holds the bosses' shared RAM ($7E:9000..$7E:97DB)
-/// and the last two the BG2 tilemap staging RAM ($7E:2000..$7E:2FFF).
+/// Extended actor state survives ordinary slot deletion and reuse. Aliases of
+/// the body table, head, path and history select this same owner. The raw tail
+/// and tilemap arrays retain responsibilities outside the Botwoon domain.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExtendedRam {
-    pub blocks: [[u16; 1024]; 6],
+    pub botwoon_body: [super::botwoon_state::BotwoonBodyRecord; 32],
+    pub botwoon_head: [super::botwoon_state::BotwoonHeadState; 32],
+    pub botwoon_path: [super::botwoon_state::BotwoonPathState; 32],
+    pub botwoon_history: [Point; 256],
+    pub shared_tail: [u16; 512],
+    pub tilemaps: [[u16; 1024]; 2],
+    // LEGACY(checkpoint): ignored pre-migration numeric snapshot lanes only.
+    // Gameplay/projection codecs never resolve or publish these shadow words.
+    pub(super) legacy_death_checkpoint_shadow: [u16; 5],
 }
 impl Default for ExtendedRam {
     fn default() -> Self {
         Self {
-            blocks: [[0; 1024]; 6],
+            botwoon_body: core::array::from_fn(|_| Default::default()),
+            botwoon_head: core::array::from_fn(|_| Default::default()),
+            botwoon_path: core::array::from_fn(|_| Default::default()),
+            botwoon_history: [Point::default(); 256],
+            shared_tail: [0; 512],
+            tilemaps: [[0; 1024]; 2],
+            legacy_death_checkpoint_shadow: [0; 5],
+        }
+    }
+}
+impl ExtendedRam {
+    /// Compatibility encoding and explicit physical aliases only. A reference
+    /// resolves one word, never a second writable image of the typed records.
+    pub fn word(&self, block: usize, index: usize) -> &u16 {
+        sm_data::table::check_index(index, 1024);
+        match block {
+            0 => self.botwoon_body[index / 32].word(index % 32),
+            1 => self.botwoon_head[index / 32].word(index % 32),
+            2 => self.botwoon_path[index / 32].word(index % 32),
+            3 if index < 512 => {
+                let point = &self.botwoon_history[index / 2];
+                if index.is_multiple_of(2) {
+                    &point.x
+                } else {
+                    &point.y
+                }
+            }
+            3 => &self.shared_tail[index - 512],
+            4..6 => &self.tilemaps[block - 4][index],
+            _ => panic!("actor extension block"),
+        }
+    }
+    pub fn word_mut(&mut self, block: usize, index: usize) -> &mut u16 {
+        sm_data::table::check_index(index, 1024);
+        match block {
+            0 => self.botwoon_body[index / 32].word_mut(index % 32),
+            1 => self.botwoon_head[index / 32].word_mut(index % 32),
+            2 => self.botwoon_path[index / 32].word_mut(index % 32),
+            3 if index < 512 => {
+                let point = &mut self.botwoon_history[index / 2];
+                if index.is_multiple_of(2) {
+                    &mut point.x
+                } else {
+                    &mut point.y
+                }
+            }
+            3 => &mut self.shared_tail[index - 512],
+            4..6 => &mut self.tilemaps[block - 4][index],
+            _ => panic!("actor extension block"),
+        }
+    }
+    /// Preserve ascending physical clear order and each completed prefix.
+    pub fn clear_words(&mut self, block: usize, range: core::ops::Range<usize>) {
+        for index in range {
+            *self.word_mut(block, index) = 0;
         }
     }
 }

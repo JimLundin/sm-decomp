@@ -1,6 +1,6 @@
 //! The sm_data records imported from the loaded cartridge for bank-specific tables.
 /// Imported by `register_rom`; each record serves only its source allocation.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct RomRecords {
     pub sand_heap: Option<crate::sand_heap::ImportedSandHeap>,
     pub ceres_rotation: Option<crate::ceres_elevator::ImportedRotation>,

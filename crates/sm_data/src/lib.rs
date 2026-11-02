@@ -233,3 +233,4 @@ pub struct EmittedCue {
     pub cue: Cue,
     pub phase: CuePhase,
 }
+pub mod hardware;

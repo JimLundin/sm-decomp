@@ -66,6 +66,8 @@ impl EnemyProjectiles {
             0x1991 => return Some(&mut self.selected),
             0x1993 => return Some(&mut self.spawn.primary),
             0x1995 => return Some(&mut self.spawn.secondary),
+            0xf434 => return Some(&mut self.drop_origin.x),
+            0xf436 => return Some(&mut self.drop_origin.y),
             _ => {}
         }
         let (field, base) = SLOT_WORD_BASES
@@ -86,6 +88,8 @@ impl crate::session_cohort::Cohort for EnemyProjectiles {
         visit(0x1991, &mut self.selected);
         visit(0x1993, &mut self.spawn.primary);
         visit(0x1995, &mut self.spawn.secondary);
+        visit(0xf434, &mut self.drop_origin.x);
+        visit(0xf436, &mut self.drop_origin.y);
         slot_words(&mut self.slots, visit);
     }
     fn session_words(session: &mut crate::session::Session, visit: impl FnMut(usize, &mut u16)) {
@@ -100,6 +104,8 @@ fn table_words(projectiles: &mut EnemyProjectiles, mut each: impl FnMut(usize, &
     each(0x1991, &mut projectiles.selected);
     each(0x1993, &mut projectiles.spawn.primary);
     each(0x1995, &mut projectiles.spawn.secondary);
+    each(0xf434, &mut projectiles.drop_origin.x);
+    each(0xf436, &mut projectiles.drop_origin.y);
     slot_words(&mut projectiles.slots, each);
 }
 

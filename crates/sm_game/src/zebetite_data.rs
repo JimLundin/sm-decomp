@@ -12,7 +12,7 @@ use sm_data::zebetites::{
     import_placements,
 };
 
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ImportedZebetites {
     placements: Option<Imported<Placements>>,
     health_lists: Option<Imported<HealthStages>>,

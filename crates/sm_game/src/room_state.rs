@@ -1,5 +1,6 @@
 //! Room state rules that run on named RAM and the owned-Session view.
 pub mod fx;
+pub mod setup;
 use crate::enemy_projectiles::host::Effects;
 use crate::menu_state::SaveSelection;
 use crate::ram::RawRam as _;
@@ -32,37 +33,57 @@ impl<T> Host for T where
 }
 
 pub fn copy_level_planes<H: Host + ?Sized>(game: &mut H) {
-    let size = usize::from(checked_word!(game.RAM7_F_START));
-    for (source, destination, count) in [
-        (0x10002 + size + size / 2, 0x19602, size),
-        (0x10002 + size, 0x16402, size / 2),
-    ] {
-        // Valid room arrays can overlap. Preserve their pre-copy contents;
-        // malformed extents retain the checked forward loop's write prefix.
-        if source < destination + count
-            && destination < source + count
-            && source + count <= 0x20000
-            && destination + count <= 0x20000
-        {
-            crate::probe::hit(if destination == 0x19602 {
-                "room.level.layer2_overlap"
-            } else {
-                "room.level.bts_overlap"
-            });
-            game.ram().copy_within(source..source + count, destination);
-        } else {
-            for index in 0..count {
-                game.ram()
-                    .write_byte(destination + index, game.ram().read_byte(source + index));
-            }
-        }
+    crate::room_terrain::copy_level_planes(&mut game.runtime());
+}
+
+/// Publish the complete sprite-palette operation on its already admitted owner.
+/// Cartridge allocation capture and descending word/byte order match the original.
+pub fn load_sprite_palettes<
+    H: crate::session_access::SessionAccess + crate::cartridge::LoadedImage + ?Sized,
+>(
+    game: &mut H,
+) {
+    let image = game.loaded_image().clone();
+    let source =
+        usize::try_from(sm_data::cartridge::lorom_offset(0x9a8000)).expect("sprite palette source");
+    for word in (208..224).rev() {
+        let offset = source + word * 2;
+        let value = u16::from_ne_bytes([image.read(offset), image.read(offset + 1)]);
+        store_target_color_bytes(game.session_mut(), word, value.to_le_bytes());
+    }
+    for word in (224..240).rev() {
+        // Native decode followed by native encoding preserves these canonical bytes.
+        let bytes = game
+            .session()
+            .presentation
+            .visual()
+            .colors
+            .get(word)
+            .expect("sprite palette index")
+            .to_le_bytes();
+        store_target_color_bytes(game.session_mut(), word, bytes);
+    }
+    let image = game.loaded_image().clone();
+    let source =
+        usize::try_from(sm_data::cartridge::lorom_offset(0x9afc00)).expect("room palette source");
+    for word in (0..16).rev() {
+        let offset = source + word * 2;
+        // ROM-native to destination-native preserves the captured image's bytes.
+        let bytes = [image.read(offset), image.read(offset + 1)];
+        store_target_color_bytes(game.session_mut(), 128 + word, bytes);
     }
 }
 
-pub fn load_sprite_palettes<H: Host + ?Sized>(game: &mut H) {
-    word_transfers!(game, descending, 16; le(TARGET_PALETTES, 223) <- rom(0x9a8000, 223));
-    word_transfers!(game, descending, 16; native(0xc3de) <- native(0xc1de));
-    word_transfers!(game, descending, 16; native(0xc31e) <- rom(0x9afc00, 15));
+/// Each first byte becomes current before its following byte is published.
+fn store_target_color_bytes(session: &mut crate::session::Session, word: usize, bytes: [u8; 2]) {
+    let color = session
+        .presentation
+        .visual_mut()
+        .targets
+        .get_mut(word)
+        .expect("target palette index");
+    *color = (*color & 0xff00) | u16::from(bytes[0]);
+    *color = (*color & 0x00ff) | (u16::from(bytes[1]) << 8);
 }
 
 /// What room setup and door ASM need: the menus' runtime and the owned Session.
@@ -72,17 +93,12 @@ impl<T: crate::menus::host::Host + ?Sized> ScriptHost for T {}
 /// Execute room setup ASM ($8F:E88F): the room state's setup routine
 /// `script`. Was `RunRoomSetupCode`.
 pub fn execute_setup_code<H: ScriptHost + ?Sized>(script: u16, game: &mut H) {
+    if setup::execute(script, &mut game.runtime()) {
+        return;
+    }
     use crate::constants::bank_87::*;
     use crate::scrolling_sky;
     match script {
-        // Clear Crateria mainstreet escape passage if critters escaped and shake screen.
-        0x9194 => {
-            spawn_hardcoded(0x3d, 0xb, 0xbb30, game);
-            word! {game; EARTHQUAKE_TYPE = 24; EARTHQUAKE_TIMER = u16::MAX; }
-        }
-        // Make old Tourian escape shaft fake wall explode; spawn critters escape block.
-        0x91a9 => spawn_hardcoded(0x10, 0x87, 0xb964, game),
-        0x91b2 => spawn_hardcoded(0xf, 0xa, 0xb9ed, game),
         // Scrolling sky land, shake screen; scrolling sky land; ocean.
         0x91bd => {
             word! {game; EARTHQUAKE_TYPE = 6; EARTHQUAKE_TIMER = u16::MAX; }
@@ -101,18 +117,7 @@ pub fn execute_setup_code<H: ScriptHost + ?Sized>(script: u16, game: &mut H) {
                 crate::animated_tiles::execution::leased::spawn(animation as u16, game);
             }
         }
-        // Spawn pre-Phantoon room enemy projectile.
-        0xc8c8 => {
-            use crate::constants::bank_86::ADDR_K_EPROJ_PRE_PHANTOM_ROOM;
-            crate::enemy_projectiles::lifecycle::spawn_room_leased(
-                ADDR_K_EPROJ_PRE_PHANTOM_ROOM as u16,
-                0xc8c8,
-                game,
-            );
-        }
-        // Shaktool's room.
-        0xc8d3 => spawn_hardcoded(0, 0, 0xb8eb, game),
-        // Set pausing code for Draygon: native-order addresses, then the bank.
+        // Existing menu/control owner retains native hook word then bank order.
         0xc8dd => {
             for (at, hook) in [(0x601, 0xc8f6), (0x604, 0xc8fc)] {
                 word_transfers!(game, ascending, 1; native(at) <- value(hook));
@@ -129,32 +134,6 @@ pub fn execute_setup_code<H: ScriptHost + ?Sized>(script: u16, game: &mut H) {
                 selection.has_area_map = collected;
             });
         }
-        // Set Zebes timebomb event and set light horizontal room shaking.
-        0xc91f => {
-            crate::progress::leased::mark_event(0xe, game);
-            word! {game; EARTHQUAKE_TYPE = 18; EARTHQUAKE_TIMER = u16::MAX; }
-        }
-        // Light horizontal shaking; rising acid and medium horizontal shaking.
-        0xc933 | 0xc953 => {
-            let kind = if script == 0xc953 {
-                spawn_hardcoded(0x10, 0x10, 0xb968, game);
-                21
-            } else {
-                18
-            };
-            word!(game.EARTHQUAKE_TYPE = kind);
-            {
-                let mut runtime = game.runtime();
-                let room = &mut runtime.session_mut().room;
-                room.set_main_native(1, kind);
-                room.set_main_native(0, 0);
-            }
-            word!(game.EARTHQUAKE_TIMER = u16::MAX);
-        }
-        // Set medium horizontal room shaking.
-        0xc946 => {
-            word! {game; EARTHQUAKE_TYPE = 21; EARTHQUAKE_TIMER = u16::MAX; }
-        }
         // Ceres door to solid blocks, Ceres haze, BG1/2 tiles base and haze.
         0xc96e => {
             spawn_hardcoded(0xf, 0x26, 0xba48, game);
@@ -166,8 +145,6 @@ pub fn execute_setup_code<H: ScriptHost + ?Sized>(script: u16, game: &mut H) {
             crate::room_visuals::initialize_room_haze(game);
             word!(game.HDMA_DATA_TABLE_IN_CERES = 9);
         }
-        0x91bb | 0x91bc | 0x91d3 | 0x91d4 | 0x91d5 | 0x91d6 | 0x91f4 | 0x91f5 | 0x91f6 | 0x91f7
-        | 0xc8c7 | 0xc8d0 | 0xc8d1 | 0xc8d2 | 0xc8dc | 0xc91e => {}
         _ => {
             game.rtl_unreachable();
         }

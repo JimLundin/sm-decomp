@@ -1,0 +1,246 @@
+#![forbid(unsafe_code)]
+//! The baby Metroid, hatched from the last Metroid (bank
+//! $A9:EED1-$A9:FB6F): its hitbox tests, camera wait, screen test, steering
+//! and cry.
+use crate::actors::boss_fields_owned::{State, mother_brain_part as session_slot};
+use crate::actors::host::abs16;
+use crate::effects::SoundEffects;
+
+pub trait Host: State + SoundEffects {
+    fn current_enemy(&self) -> u16;
+    fn set_camera_x(&mut self, value: u16);
+    fn scroll_byte(&self, index: usize) -> u8;
+    fn set_scroll_word_native(&mut self, index: usize, value: u16);
+    fn spawn_wall(&mut self, x: u8, y: u8, definition: u16);
+}
+
+/// $A9:F02B: Shitroid function - let sidehopper live for a bit.
+pub const LET_SIDEHOPPER_LIVE: u16 = 0xf02b;
+/// PLM $B767, the baby Metroid invisible wall, at its two blocks.
+const INVISIBLE_WALL: u16 = 0xb767;
+const INVISIBLE_WALLS: [(u8, u8); 2] = [(0x30, 3), (0x1f, 3)];
+/// The camera stops at X 200h.
+const CAMERA_STOP_X: u16 = 0x200;
+/// $7E:CD20 and $7E:CD22, scrolls 1 and 3, which the camera stop turns red.
+const SCROLLS: [usize; 2] = [0, 2];
+
+/// The screen test's margins: 60h above and below, 10h left and right of a
+/// 120h by 1A0h area.
+const SCREEN_Y_MARGIN: i32 = 0x60;
+const SCREEN_HEIGHT: i32 = 0x1a0;
+const SCREEN_X_MARGIN: i32 = 0x10;
+const SCREEN_WIDTH: i32 = 0x120;
+const SIGN: i32 = 0x8000;
+
+/// Velocities are capped at 500h (1/100h px a frame).
+const MAX_SPEED: u16 = 0x500;
+
+/// The cry plays on palette frame 5 of every fourth cycle; below palette
+/// handler delay 0Ah it is the draining sound instead.
+const CRY_FRAME: u16 = 5;
+const CRY_CYCLES: u16 = 4;
+const DRAINING_DELAY: u16 = 0xa;
+const CRY: u8 = 0x72;
+const DRAINING: u8 = 0x78;
+
+/// Check for enemy collision with enemy ($A9:EED1): 1 when actor `k`'s and
+/// actor `j`'s hitboxes do not overlap. Was `BabyMetroid_Func_1`.
+pub fn separated_from_enemy(k: u16, j: u16, game: &mut (impl Host + ?Sized)) -> u8 {
+    let e = i32::from(j);
+    let g = i32::from(k);
+    let width = (session_slot!(game, BabyMetroid[g].base.x_width) as i32
+        + session_slot!(game, BabyMetroid[e].base.x_width) as i32
+        + 1) as u16;
+    let dx = abs16(
+        session_slot!(game, BabyMetroid[e].base.x_pos)
+            .wrapping_sub(session_slot!(game, BabyMetroid[g].base.x_pos)),
+    );
+    if dx < width {
+        let height = (session_slot!(game, BabyMetroid[g].base.y_height) as i32
+            + session_slot!(game, BabyMetroid[e].base.y_height) as i32
+            + 1) as u16;
+        return (abs16(
+            session_slot!(game, BabyMetroid[e].base.y_pos)
+                .wrapping_sub(session_slot!(game, BabyMetroid[g].base.y_pos)),
+        ) >= height) as u8;
+    }
+    1
+}
+
+/// Check for enemy collision with rectangle ($A9:EF06): 1 when actor `k`'s
+/// hitbox does not overlap `rect`. Was `BabyMetroid_Func_2`.
+/// `rect` is (x, y, half width, half height).
+pub fn separated_from_rect(
+    k: u16,
+    rect: (u16, u16, u16, u16),
+    game: &mut (impl Host + ?Sized),
+) -> u8 {
+    let (x, y, w, h) = rect;
+    let e = i32::from(k);
+    let width = (session_slot!(game, BabyMetroid[e].base.x_width) as i32 + w as i32 + 1) as u16;
+    let dx = abs16(x.wrapping_sub(session_slot!(game, BabyMetroid[e].base.x_pos)));
+    if dx < width {
+        let height =
+            (session_slot!(game, BabyMetroid[e].base.y_height) as i32 + h as i32 + 1) as u16;
+        return (abs16(y.wrapping_sub(session_slot!(game, BabyMetroid[e].base.y_pos))) >= height)
+            as u8;
+    }
+    1
+}
+
+/// Baby Metroid function - wait for camera ($A9:EFE6): once the camera is left of
+/// the stop, pin it there, turn scrolls 1 and 3 red, raise the invisible walls,
+/// let the sidehopper live and enable the cry. Was `BabyMetroid_Func_4`.
+pub fn wait_for_camera(game: &mut impl Host) {
+    if ((i32::from(game.session().room.camera.layer1[0]) - (i32::from(CAMERA_STOP_X) + 1)) & SIGN)
+        != 0
+    {
+        game.set_camera_x(CAMERA_STOP_X);
+        // Red is the scroll word's low byte with its high byte cleared.
+        for scroll in SCROLLS {
+            let value = u16::from(game.scroll_byte(scroll));
+            game.set_scroll_word_native(scroll, value);
+        }
+        for (block_x, block_y) in INVISIBLE_WALLS {
+            game.spawn_wall(block_x, block_y, INVISIBLE_WALL);
+        }
+        let e = i32::from(game.current_enemy());
+        session_slot!(game, BabyMetroid[e]; function = LET_SIDEHOPPER_LIVE, cry_enabled = 1);
+    }
+}
+
+/// Check if enemy is vaguely on screen ($A9:F57A): 0 while actor `k` is within
+/// the screen margins, 1 otherwise. Was `BabyMetroid_CheckIfOnScreen`.
+pub fn is_off_screen(k: u16, game: &mut (impl Host + ?Sized)) -> u8 {
+    let e = i32::from(k);
+    let y_pos = session_slot!(game, BabyMetroid[e].base.y_pos) as i16;
+    if y_pos >= 0 {
+        let y =
+            (y_pos as i32 + SCREEN_Y_MARGIN - game.session().room.camera.layer1[1] as i32) as i16;
+        if y >= 0 && (y as i32 - SCREEN_HEIGHT) & SIGN != 0 {
+            let x_pos = session_slot!(game, BabyMetroid[e].base.x_pos) as i16;
+            if x_pos >= 0 {
+                let x = (x_pos as i32 + SCREEN_X_MARGIN
+                    - game.session().room.camera.layer1[0] as i32) as i16;
+                if x >= 0 && (x as i32 - SCREEN_WIDTH) & SIGN != 0 {
+                    return 0;
+                }
+            }
+        }
+    }
+    1
+}
+
+/// Accelerate baby Metroid towards Y position ($A9:F5B5): accelerate the Y
+/// velocity by `acceleration` towards `target`, capped at 500h; 1 once there.
+/// Was `BabyMetroid_AccelerateTowardsY`.
+pub fn accelerate_towards_y(
+    k: u16,
+    target: u16,
+    acceleration: u16,
+    game: &mut (impl Host + ?Sized),
+) -> u16 {
+    let e = i32::from(k);
+    let mut result: u16 = 0;
+    let offset =
+        (session_slot!(game, BabyMetroid[e].base.y_pos) as i16).wrapping_sub(target as i16);
+    if offset == 0 {
+        result = result.wrapping_add(1);
+    } else if offset >= 0 {
+        let mut velocity =
+            session_slot!(game, BabyMetroid[e].y_velocity).wrapping_sub(acceleration);
+        if (velocity as i32 + i32::from(MAX_SPEED)) & SIGN != 0 {
+            velocity = MAX_SPEED.wrapping_neg();
+        }
+        session_slot!(game, BabyMetroid[e].y_velocity = velocity);
+        if ((session_slot!(game, BabyMetroid[e].base.y_pos) as i32 + (velocity >> 8) as i8 as i32
+            - target as i32) as i16)
+            <= 0
+        {
+            session_slot!(game, BabyMetroid[e].y_velocity = 0);
+            result = result.wrapping_add(1);
+        }
+    } else {
+        let mut velocity =
+            acceleration.wrapping_add(session_slot!(game, BabyMetroid[e].y_velocity));
+        if (velocity as i32 - i32::from(MAX_SPEED)) & SIGN == 0 {
+            velocity = MAX_SPEED;
+        }
+        session_slot!(game, BabyMetroid[e].y_velocity = velocity);
+        if ((session_slot!(game, BabyMetroid[e].base.y_pos) as i32 + (velocity >> 8) as i8 as i32
+            - target as i32) as i16)
+            >= 0
+        {
+            session_slot!(game, BabyMetroid[e].y_velocity = 0);
+            result = result.wrapping_add(1);
+        }
+    }
+    result
+}
+
+/// Accelerate baby Metroid towards X position ($A9:F615): accelerate the X
+/// velocity by `acceleration` towards `target`, capped at 500h; 1 once there.
+/// Was `BabyMetroid_AccelerateTowardsX`.
+pub fn accelerate_towards_x(
+    k: u16,
+    target: u16,
+    acceleration: u16,
+    game: &mut (impl Host + ?Sized),
+) -> u16 {
+    let e = i32::from(k);
+    let mut result: u16 = 0;
+    if (session_slot!(game, BabyMetroid[e].base.x_pos) as i16).wrapping_sub(target as i16) >= 0 {
+        let mut velocity =
+            session_slot!(game, BabyMetroid[e].x_velocity).wrapping_sub(acceleration);
+        if (velocity as i32 + i32::from(MAX_SPEED)) & SIGN != 0 {
+            velocity = MAX_SPEED.wrapping_neg();
+        }
+        session_slot!(game, BabyMetroid[e].x_velocity = velocity);
+        if ((session_slot!(game, BabyMetroid[e].base.x_pos) as i32 + (velocity >> 8) as i8 as i32
+            - target as i32) as i16)
+            <= 0
+        {
+            session_slot!(game, BabyMetroid[e].x_velocity = 0);
+            result = result.wrapping_add(1);
+        }
+    } else {
+        let mut velocity =
+            acceleration.wrapping_add(session_slot!(game, BabyMetroid[e].x_velocity));
+        if (velocity as i32 - i32::from(MAX_SPEED)) & SIGN == 0 {
+            velocity = MAX_SPEED;
+        }
+        session_slot!(game, BabyMetroid[e].x_velocity = velocity);
+        if ((session_slot!(game, BabyMetroid[e].base.x_pos) as i32 + (velocity >> 8) as i8 as i32
+            - target as i32) as i16)
+            >= 0
+        {
+            session_slot!(game, BabyMetroid[e].x_velocity = 0);
+            result = result.wrapping_add(1);
+        }
+    }
+    result
+}
+
+/// Handle baby Metroid cry sound effect ($A9:F751): on palette frame 5, cry every
+/// fourth time while the cry is enabled. Was `BabyMetroid_HandleCrySoundEffect`.
+pub fn handle_cry(k: u16, a: u16, game: &mut (impl Host + ?Sized)) -> u16 {
+    if a == CRY_FRAME {
+        let e = i32::from(k);
+        if session_slot!(game, BabyMetroid[e].cry_enabled) != 0 {
+            let count = session_slot!(game, BabyMetroid[e].cry_timer).wrapping_add(1);
+            session_slot!(game, BabyMetroid[e].cry_timer = count);
+            if count >= CRY_CYCLES {
+                session_slot!(game, BabyMetroid[e].cry_timer = 0);
+                let effect =
+                    if session_slot!(game, BabyMetroid[e].palette_handler_delay) < DRAINING_DELAY {
+                        DRAINING
+                    } else {
+                        CRY
+                    };
+                game.queue_sound(1, effect, 6);
+            }
+        }
+        return CRY_FRAME;
+    }
+    a
+}

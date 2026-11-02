@@ -1,20 +1,19 @@
-//! Camera limits and scroll-cell rules; live callers retain RAM authority.
-use super::Host;
-use crate::camera::set_layer1;
-use crate::ram::word;
+//! Camera limits and scroll-cell rules over canonical room/player state.
+use super::{CameraHost, Host, set_layer1};
+
 use crate::room_entry::content::Axis;
 
 // Multiplication uses the width's low byte. A column may include a full-word
 // row stride; it is added afterward, with the original word wrapping.
-fn camera_scroll_value<H: Host + ?Sized>(column: u16, row: u8, game: &H) -> u8 {
+fn camera_scroll_value<H: CameraHost + ?Sized>(column: u16, row: u8, game: &H) -> u8 {
     let index =
         (u16::from(row) * u16::from(game.session().room.scroll_width as u8)).wrapping_add(column);
-    game.byte(0xcd20 + usize::from(index))
+    game.camera_scroll_byte(usize::from(index))
 }
 
-pub fn auto_x<H: Host + ?Sized>(game: &mut H) {
+pub fn auto_x<H: CameraHost + ?Sized>(game: &mut H) {
     crate::probe::hit("camera.auto_x");
-    if crate::sequence_word!(game.TIME_IS_FROZEN_FLAG) != 0 {
+    if game.session().timing.time_frozen != 0 {
         return;
     }
     let previous = game.session().room.camera.layer1[0];
@@ -39,7 +38,7 @@ pub fn auto_x<H: Host + ?Sized>(game: &mut H) {
         }
         let boundary = position & 0xff00;
         let next = previous
-            .wrapping_sub(word!(game.ABSOLUTE_MOVED_LAST_FRAME_X))
+            .wrapping_sub(game.session().player.camera_distance[0].whole)
             .wrapping_sub(2);
         if (next.wrapping_sub(boundary) as i16) < 0 {
             boundary
@@ -51,7 +50,7 @@ pub fn auto_x<H: Host + ?Sized>(game: &mut H) {
     } else {
         let boundary = (position & 0xff00).wrapping_add(256);
         let next = previous
-            .wrapping_add(word!(game.ABSOLUTE_MOVED_LAST_FRAME_X))
+            .wrapping_add(game.session().player.camera_distance[0].whole)
             .wrapping_add(2);
         if next >= boundary {
             boundary
@@ -68,7 +67,7 @@ pub fn auto_x<H: Host + ?Sized>(game: &mut H) {
     };
     set_layer1(game, 0, next);
 }
-pub fn trigger_right<H: Host + ?Sized>(game: &mut H) {
+pub fn trigger_right<H: CameraHost + ?Sized>(game: &mut H) {
     crate::probe::hit("camera.trigger_right");
     let previous = game.session().room.camera.layer1[0];
     if (game.session().room.camera.ideal_layer1[0]
@@ -97,11 +96,15 @@ pub fn trigger_right<H: Host + ?Sized>(game: &mut H) {
         set_layer1(
             game,
             0,
-            retreat_to_boundary(previous, word!(game.ABSOLUTE_MOVED_LAST_FRAME_X), boundary),
+            retreat_to_boundary(
+                previous,
+                game.session().player.camera_distance[0].whole,
+                boundary,
+            ),
         );
     }
 }
-pub fn trigger_left<H: Host + ?Sized>(game: &mut H) {
+pub fn trigger_left<H: CameraHost + ?Sized>(game: &mut H) {
     crate::probe::hit("camera.trigger_left");
     let previous = game.session().room.camera.layer1[0];
     if (game.session().room.camera.layer1[0]
@@ -122,14 +125,14 @@ pub fn trigger_left<H: Host + ?Sized>(game: &mut H) {
     {
         let boundary = (position & 0xff00).wrapping_add(256);
         let next = previous
-            .wrapping_add(word!(game.ABSOLUTE_MOVED_LAST_FRAME_X))
+            .wrapping_add(game.session().player.camera_distance[0].whole)
             .wrapping_add(2);
         set_layer1(game, 0, next.min(boundary));
     }
 }
-pub fn auto_y<H: Host + ?Sized>(game: &mut H) {
+pub fn auto_y<H: CameraHost + ?Sized>(game: &mut H) {
     crate::probe::hit("camera.auto_y");
-    if crate::sequence_word!(game.TIME_IS_FROZEN_FLAG) != 0 {
+    if game.session().timing.time_frozen != 0 {
         return;
     }
     let column = game.session().room.camera.layer1[0].wrapping_add(128) >> 8;
@@ -162,7 +165,7 @@ pub fn auto_y<H: Host + ?Sized>(game: &mut H) {
     if camera_scroll_value(column, row, game) == 0 {
         let boundary = (position & 0xff00).wrapping_add(256);
         let next = previous
-            .wrapping_add(word!(game.ABSOLUTE_MOVED_LAST_FRAME_Y))
+            .wrapping_add(game.session().player.camera_distance[1].whole)
             .wrapping_add(2);
         let next = if next >= boundary {
             boundary
@@ -181,7 +184,7 @@ pub fn auto_y<H: Host + ?Sized>(game: &mut H) {
         let boundary = padding.wrapping_add(position & 0xff00);
         if boundary < position {
             let next = previous
-                .wrapping_sub(word!(game.ABSOLUTE_MOVED_LAST_FRAME_Y))
+                .wrapping_sub(game.session().player.camera_distance[1].whole)
                 .wrapping_sub(2);
             let next = if (next.wrapping_sub(boundary) as i16) < 0 {
                 boundary
@@ -194,7 +197,7 @@ pub fn auto_y<H: Host + ?Sized>(game: &mut H) {
         }
     }
 }
-pub fn trigger_down<H: Host + ?Sized>(game: &mut H) {
+pub fn trigger_down<H: CameraHost + ?Sized>(game: &mut H) {
     crate::probe::hit("camera.trigger_down");
     let previous = game.session().room.camera.layer1[1];
     let column = game.session().room.camera.layer1[0].wrapping_add(128) >> 8;
@@ -233,11 +236,15 @@ pub fn trigger_down<H: Host + ?Sized>(game: &mut H) {
         set_layer1(
             game,
             1,
-            retreat_to_boundary(previous, word!(game.ABSOLUTE_MOVED_LAST_FRAME_Y), boundary),
+            retreat_to_boundary(
+                previous,
+                game.session().player.camera_distance[1].whole,
+                boundary,
+            ),
         );
     }
 }
-pub fn trigger_up<H: Host + ?Sized>(game: &mut H) {
+pub fn trigger_up<H: CameraHost + ?Sized>(game: &mut H) {
     crate::probe::hit("camera.trigger_up");
     let previous = game.session().room.camera.layer1[1];
     if (game.session().room.camera.layer1[1]
@@ -258,7 +265,7 @@ pub fn trigger_up<H: Host + ?Sized>(game: &mut H) {
     {
         let boundary = (position & 0xff00).wrapping_add(256);
         let next = previous
-            .wrapping_add(word!(game.ABSOLUTE_MOVED_LAST_FRAME_Y))
+            .wrapping_add(game.session().player.camera_distance[1].whole)
             .wrapping_add(2);
         set_layer1(game, 1, next.min(boundary));
     }
@@ -272,12 +279,13 @@ fn retreat_to_boundary(previous: u16, distance: u16, boundary: u16) -> u16 {
     }
 }
 
-pub fn layer2_position<H: Host + ?Sized>(axis: Axis, game: &mut H) -> u8 {
-    let (control, index) = match axis {
-        Axis::X => (0x91b, 0),
-        Axis::Y => (0x91c, 1),
+pub fn layer2_position<H: CameraHost + ?Sized>(axis: Axis, game: &mut H) -> u8 {
+    let index = match axis {
+        Axis::X => 0,
+        Axis::Y => 1,
     };
-    let scale = game.byte(control);
+    let entry = &game.session().room.entry;
+    let scale = [entry.layer2_x, entry.layer2_y][index];
     if scale == 1 {
         return 1;
     }
@@ -331,14 +339,15 @@ pub fn calculate_blocks<H: Host + ?Sized>(game: &mut H) {
 }
 
 pub fn debug_position<H: Host + ?Sized>(game: &mut H) {
-    if (crate::gameplay_word!(game.JOYPAD2_NEW_KEYS) & 0x40) != 0 {
-        crate::gameplay_word!(game.DEBUG_SAVELOAD_SCROLLPOS_TOGGLE += 1);
+    if (crate::controller_state::Word::Joypad2NewKeys.get(&game.session().control) & 0x40) != 0 {
+        let toggle = &mut game.session_mut().game_loop.debug.camera_toggle;
+        *toggle = toggle.wrapping_add(1);
     }
-    if crate::gameplay_word!(game.DEBUG_SAVELOAD_SCROLLPOS_TOGGLE) & 1 != 0 {
-        set_layer1(game, 0, crate::gameplay_word!(game.DEBUG_SAVED_XSCROLL));
-        set_layer1(game, 1, crate::gameplay_word!(game.DEBUG_SAVED_YSCROLL));
+    if game.session().game_loop.debug.camera_toggle & 1 != 0 {
+        set_layer1(game, 0, game.session().game_loop.debug.camera[0]);
+        set_layer1(game, 1, game.session().game_loop.debug.camera[1]);
     } else {
-        crate::gameplay_word!(game.DEBUG_SAVED_XSCROLL = game.session().room.camera.layer1[0]);
-        crate::gameplay_word!(game.DEBUG_SAVED_YSCROLL = game.session().room.camera.layer1[1]);
+        game.session_mut().game_loop.debug.camera[0] = game.session().room.camera.layer1[0];
+        game.session_mut().game_loop.debug.camera[1] = game.session().room.camera.layer1[1];
     };
 }

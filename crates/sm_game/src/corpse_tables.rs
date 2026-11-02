@@ -8,7 +8,7 @@ use crate::records::Records;
 use sm_data::cartridge::RomImage;
 use sm_data::corpses::*;
 
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ImportedCorpses {
     hops: Option<Imported<Hops>>,
     geemer: Option<Imported<Variants<GEEMER_ROWS>>>,

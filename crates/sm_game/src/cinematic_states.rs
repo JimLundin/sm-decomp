@@ -209,7 +209,7 @@ pub fn nintendo_logo<H: Host + ?Sized>(game: &mut H) -> u8 {
                 return yielded;
             }
             match stage {
-                2 => crate::session_cohort::with(game, |_, options: &mut OptionsMenu| {
+                2 => crate::menus::state::with(game, |_, options: &mut OptionsMenu| {
                     options.screen_index = LOGO_HOLD
                 }),
                 4 => {
@@ -242,7 +242,7 @@ pub fn nintendo_logo<H: Host + ?Sized>(game: &mut H) -> u8 {
             }
             2 | 3 => {
                 crate::probe::hit("coroutine.logo.hold");
-                let held = crate::session_cohort::with(game, |_, options: &mut OptionsMenu| {
+                let held = crate::menus::state::with(game, |_, options: &mut OptionsMenu| {
                     options.screen_index = options.screen_index.wrapping_sub(1);
                     options.screen_index
                 });
@@ -265,7 +265,7 @@ pub fn nintendo_logo<H: Host + ?Sized>(game: &mut H) -> u8 {
 
 /// Game state 1 - title sequence ($8B:9A22). Was `GameState_1_OpeningCinematic_`.
 pub fn title_sequence<H: Host + ?Sized>(game: &mut H) -> u8 {
-    crate::session_cohort::with(game, |game, cine: &mut Cinematic| {
+    crate::cinematic_access::with(game, |game, cine: &mut Cinematic| {
         run_function(cine, game);
         CinematicObjects::Sprites.advance(cine, game);
         CinematicObjects::Mode7.advance(cine, game);
@@ -296,7 +296,7 @@ pub fn handle_samus_during_intro<H: Host + ?Sized>(display: u16, game: &mut H) {
 /// Ceres goes boom with Samus) ($8B:A35B). Was
 /// `GameState_37_CeresGoesBoomWithSamus_`.
 pub fn intro<H: Host + ?Sized>(game: &mut H) -> u8 {
-    let display = crate::session_cohort::with(game, |game, cine: &mut Cinematic| {
+    let display = crate::cinematic_access::with(game, |game, cine: &mut Cinematic| {
         run_function(cine, game);
         if resuming(game) {
             return None;
@@ -310,7 +310,7 @@ pub fn intro<H: Host + ?Sized>(game: &mut H) -> u8 {
     // Samus's frame reads the table as enemy projectiles, so it runs between
     // two copies, on the table as the cinematic function left it.
     handle_samus_during_intro(display, game);
-    crate::session_cohort::with(game, |game, cine: &mut Cinematic| {
+    crate::cinematic_access::with(game, |game, cine: &mut Cinematic| {
         CinematicObjects::Sprites.advance(cine, game);
         CinematicObjects::Mode7.advance(cine, game);
         CinematicObjects::Background.advance(cine, game);
@@ -325,7 +325,7 @@ pub fn intro<H: Host + ?Sized>(game: &mut H) -> u8 {
 /// Game state 27h (ending and credits) ($8B:D443). Was
 /// `GameState_39_EndingAndCredits_`.
 pub fn ending_and_credits<H: Host + ?Sized>(game: &mut H) -> u8 {
-    crate::session_cohort::with(game, |game, cine: &mut Cinematic| {
+    crate::cinematic_access::with(game, |game, cine: &mut Cinematic| {
         run_function(cine, game);
         if resuming(game) {
             return 1;

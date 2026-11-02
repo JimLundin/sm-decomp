@@ -9,7 +9,7 @@ use crate::records::Records;
 use sm_data::boss_lists::*;
 use sm_data::cartridge::RomImage;
 
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ImportedBossLists {
     kraid_rocks: ImportedWords<KRAID_ROCK_X_POSITIONS, KRAID_ROCKS>,
     kraid_rock_spits: ImportedWords<KRAID_ROCK_SPIT_X_VELOCITIES, KRAID_ROCK_SPITS>,

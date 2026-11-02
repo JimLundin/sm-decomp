@@ -1,8 +1,6 @@
 //! Crocomire's phases and scripts run in `sm_game::actors::crocomire_reactions`;
 //! its imported tables, BG2 alignment, boss word, projectiles and drop come from here.
 #![forbid(unsafe_code)]
-use crate::game::enemy_projectiles::{clear_eprojs, scatter_drop};
-use crate::game::gameplay_flag_runtime;
 use crate::game_state::Game;
 use sm_data::crocomire::{
     BRIDGE_DEBRIS, BRIDGE_DEBRIS_ADDRESS, BridgeDebris, FLESH_TILEMAP_ADDRESS, MELT_TILEMAP_BYTES,
@@ -27,8 +25,6 @@ const _: () = {
     assert!(i::MOVE_RIGHT_4PX_AND_SPAWN_DUST == 10784916);
     assert!(i::SPAWN_DUST_FIRST == 10787483 && i::SPAWN_DUST_LAST == 10787543);
 };
-use sm_game::enemy_projectiles::drops::DropSource;
-use sm_game::gameplay_flag_host::BossWordOrder;
 
 #[derive(Default)]
 pub(crate) struct ImportedTables {
@@ -103,17 +99,5 @@ impl Host for Game {
             _ => &None,
         };
         Imported::from(imported, rom).map(|tilemap| *tilemap.tiles())
-    }
-
-    fn boss_word_native(&mut self, area: u16) -> u16 {
-        gameplay_flag_runtime::boss_word_at(area, BossWordOrder::Native, self)
-    }
-
-    fn clear_enemy_projectiles(&mut self) {
-        clear_eprojs(self);
-    }
-
-    fn scatter_crocomire_drop(&mut self, area: u16) {
-        scatter_drop(DropSource::Crocomire, area, self);
     }
 }

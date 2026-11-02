@@ -19,13 +19,15 @@ pub fn scatter(source: DropSource, index: u16, h: &mut impl Host) {
         match spread {
             Spread::Nearby(_) => {
                 // X precedes RNG; Y and the random high byte are live afterward.
-                let x = h.inputs().drop_origin_x;
+                let x = h.session().enemy_projectiles.drop_origin.x;
                 let random = { h.next_random() };
                 h.session_mut().enemy_projectiles.spawn.point.x =
                     x.wrapping_add(random & 0x1f).wrapping_sub(16);
                 h.session_mut().enemy_projectiles.spawn.point.y = h
-                    .inputs()
-                    .drop_origin_y
+                    .session()
+                    .enemy_projectiles
+                    .drop_origin
+                    .y
                     .wrapping_add((h.inputs().random & 0x1f00) >> 8)
                     .wrapping_sub(16);
             }

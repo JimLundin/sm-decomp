@@ -5,7 +5,6 @@ use crate::actors::combat::{self, current_slot};
 use crate::actors::host::{ActorLease, BossEffects as _, LeaseActors};
 use crate::actors::session_slots::SlotAccess as _;
 use crate::actors::{layouts::part_view, scheduling};
-use crate::enemy_projectiles::host::Effects as _;
 use crate::enemy_script::EnemyScript;
 use crate::player_projectiles::content::table;
 use crate::ram::{word_arrays, words};
@@ -220,7 +219,7 @@ fn drain(runtime: &mut impl ActorLease, metroid: i32) {
     let subhealth = previous.wrapping_sub(amount);
     session_slot!(runtime, Metroid[metroid].samus_subhealth = subhealth);
     if previous < amount {
-        runtime.damage_player(1);
+        crate::enemy_projectiles::host::Effects::damage_player(runtime, 1);
     }
 }
 /// Enemy touch - metroid ($A3:EDEB): knocked back, or drain Samus and latch on within 8 px.
@@ -240,7 +239,7 @@ pub fn touch<H: LeaseActors + ?Sized>(game: &mut H) {
         if runtime.word(words::RANDOM_ENEMY_COUNTER) & 7 == 7
             && runtime.word(words::SAMUS_HEALTH).wrapping_sub(30) & 0x8000 == 0
         {
-            runtime.queue_sound(3, 6, 0x2d); // Health tick.
+            crate::enemy_projectiles::host::Effects::queue_sound(runtime, 3, 6, 0x2d); // Health tick.
         }
         drain(runtime, metroid);
     }
@@ -287,9 +286,9 @@ pub fn shot<H: LeaseActors + ?Sized>(game: &mut H) {
     if runtime.resolve_actor(key, Native).frozen != 0 {
         if matches!(kind & PROJECTILE_KIND, MISSILE | SUPER_MISSILE) {
             let x = runtime.resolve_actor(key, Native).x.whole;
-            runtime.write_slice_le(words::SPECIAL_DEATH_ITEM_DROP_X_ORIGIN_POS, x);
+            runtime.session_mut().enemy_projectiles.drop_origin.x = x;
             let y = runtime.resolve_actor(key, Native).y.whole;
-            runtime.write_slice_le(words::SPECIAL_DEATH_ITEM_DROP_Y_ORIGIN_POS, y);
+            runtime.session_mut().enemy_projectiles.drop_origin.y = y;
             combat::shot_reaction(runtime, ShotHandling::ReactionOnly);
             if runtime.resolve_actor(key, Native).health == 0 {
                 runtime.edit_actor(key, Native, |actor| actor.variables[1] = 0);
@@ -311,7 +310,7 @@ pub fn shot<H: LeaseActors + ?Sized>(game: &mut H) {
     } else {
         recoil(runtime, false, 0);
         if runtime.word(word_arrays::PROJECTILE_TYPE + 2 * projectile) & 2 != 0 {
-            runtime.queue_sound(3, 6, 0xa); // Ice beam: enemy frozen.
+            crate::enemy_projectiles::host::Effects::queue_sound(runtime, 3, 6, 0xa); // Ice beam: enemy frozen.
             let damage = runtime.word(word_arrays::PROJECTILE_DAMAGE + 2 * projectile);
             let threshold = session_slot!(runtime, Metroid[metroid].freeze_threshold);
             runtime.edit_actor(key, Native, |actor| actor.flash = 4);
@@ -325,18 +324,18 @@ pub fn shot<H: LeaseActors + ?Sized>(game: &mut H) {
                 return;
             }
         }
-        runtime.queue_sound(2, 6, 0x5a); // Shot metroid.
+        crate::enemy_projectiles::host::Effects::queue_sound(runtime, 2, 6, 0x5a); // Shot metroid.
     }
 }
 /// Instruction - play Metroid draining Samus ($A3:EAA5).
 pub fn draining_sound<H: LeaseActors + ?Sized>(script: EnemyScript, game: &mut H) -> EnemyScript {
-    game.lease().queue_sound(2, 6, 0x50);
+    crate::enemy_projectiles::host::Effects::queue_sound(&mut game.lease(), 2, 6, 0x50);
     script
 }
 /// Instruction - play random Metroid cry ($A3:EAB1).
 pub fn random_cry(script: EnemyScript, runtime: &mut impl ActorLease) -> EnemyScript {
     let index = runtime.next_random() & 7;
     let cry = table(runtime, CRIES, index as isize);
-    runtime.queue_sound(2, 6, cry);
+    crate::enemy_projectiles::host::Effects::queue_sound(runtime, 2, 6, cry);
     script
 }

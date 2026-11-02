@@ -5,7 +5,7 @@ use super::host::{
     TileDefinitionCorner, TilemapDestination,
 };
 use crate::game::session_runtime::Runtime;
-use crate::game::xray_background::reveal_room_block;
+use sm_game::owned_hdma_update::reveal_room_block;
 
 #[forbid(unsafe_code)]
 impl Runtime<'_> {

@@ -14,7 +14,7 @@ use sm_data::ridley::{
     TailAngleLimits, TailAngles, WING_SPRITEMAP_ADDRESS, WING_SPRITEMAPS, import_tail_angles,
 };
 
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ImportedRidley {
     hover_behind: ImportedWords<HOVER_BEHIND_ADDRESS, FACINGS>,
     hover_in_front: ImportedWords<HOVER_IN_FRONT_ADDRESS, FACINGS>,

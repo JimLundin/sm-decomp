@@ -46,6 +46,10 @@ impl sm_game::sprite_output::SpriteHost for Game {
 // SAFETY (all `unsafe` calls below): the menus run from the frame loop with
 // the SNES backend installed, and `&mut self` excludes any other access.
 impl MenuRuntime for Game {
+    fn hdma_raw_table_interval(&self) -> bool {
+        !self.persistent_session_current() && !self.hdma_has_suspended_display()
+    }
+
     fn load_vram_words(&mut self, source: u32, destination: u16, bytes: u16) {
         crate::game::display_refresh::GraphicsAsset::VramWords(source, destination, bytes)
             .load(self)
@@ -61,7 +65,7 @@ impl MenuRuntime for Game {
     }
     fn run_hdma_objects(&mut self) {
         // Closing the box ($85:8589) ends on a borrow, and nothing up to the handler sets C.
-        crate::game::visual_runtime::update_hdma(false, self);
+        crate::game::hdma_owned_runtime::update_hdma(false, self);
     }
     fn advance_dialogue_sound_effects(&mut self) {
         crate::game::music::advance_sound_effects(self, |channel, value, meaning, game| {

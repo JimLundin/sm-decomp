@@ -414,6 +414,7 @@ pub mod game {
     mod transition_representation_tests;
     pub(crate) use sm_game::sprite_effect_state;
     pub(crate) use sm_game::visual_host;
+    pub(crate) mod hdma_owned_runtime;
     pub(crate) mod visual_runtime;
     pub(crate) use sm_game::visual_state;
 
@@ -429,6 +430,7 @@ pub mod game {
     pub mod sm_a9;
     pub(crate) mod space_pirates;
     pub use sm_game::sprite_objects;
+    pub mod owned_hardware_codec;
 }
 
 /// Emulated SNES hardware. Also runs the original ROM as the differential

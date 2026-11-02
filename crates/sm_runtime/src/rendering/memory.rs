@@ -89,13 +89,7 @@ pub struct Ports {
 impl Ports {
     /// The VRAM word the pointer selects after VMAIN's address translation.
     pub fn vram_address(&self) -> u16 {
-        let address = self.vram_pointer;
-        match self.vram_remap {
-            1 => (address & 0xff00) | ((address & 0xe0) >> 5) | ((address & 0x1f) << 3),
-            2 => (address & 0xfe00) | ((address & 0x1c0) >> 6) | ((address & 0x3f) << 3),
-            3 => (address & 0xfc00) | ((address & 0x380) >> 7) | ((address & 0x7f) << 3),
-            _ => address,
-        }
+        sm_data::hardware::tile_address(self.vram_pointer, self.vram_remap)
     }
 
     fn prefetch(&mut self, memory: &impl VideoMemory) {

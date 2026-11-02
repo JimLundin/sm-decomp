@@ -156,6 +156,28 @@ pub fn draw_room<H: Host>(
     palette: u16,
     clip: RoomClip,
 ) -> Result<(), H::Error> {
+    draw_room_with_publication(
+        host,
+        map,
+        origin,
+        camera,
+        palette,
+        clip,
+        |_, _, _, _, _, _| Ok(()),
+    )
+}
+
+/// Publish a room-coordinate record only after all its original OAM bytes succeed.
+/// Native and owned room drawing share this one carry/row/count implementation.
+pub fn draw_room_with_publication<H: Host>(
+    host: &mut H,
+    map: &mut impl Geometry<Error = H::Error>,
+    origin: (u16, u16),
+    camera: (u16, u16),
+    palette: u16,
+    clip: RoomClip,
+    mut published: impl FnMut(&mut H, usize, usize, u16, u16, u16) -> Result<(), H::Error>,
+) -> Result<(), H::Error> {
     let mut index = usize::from(host.read_little_word(544)?);
     let count = map.count()?;
     let records = if count == 0 {
@@ -186,6 +208,7 @@ pub fn draw_room<H: Host>(
         let [low, high] = (host.read_little_word(offset)? | bits).to_le_bytes();
         host.write_byte(offset, low)?;
         host.write_byte(offset + 1, high)?;
+        published(host, record, index, x, u16::from(y.to_le_bytes()[0]), tile)?;
         index = (index + 4) & 0x1ff;
     }
     let [low, high] = (index as u16).to_le_bytes();

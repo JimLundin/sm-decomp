@@ -55,13 +55,13 @@ pub trait SessionSlots: SessionAccess {
 impl<T: SessionSlots + ?Sized> SlotAccess for T {
     fn slot_word(&self, at: usize) -> u16 {
         if let Some((block, index)) = extended_index(at) {
-            return self.session().actors.extended.blocks[block][index];
+            return *self.session().actors.extended.word(block, index);
         }
         u16::from_le_bytes([self.slot_byte(at), self.slot_byte(at + 1)])
     }
     fn set_slot_word(&mut self, at: usize, value: u16) {
         if let Some((block, index)) = extended_index(at) {
-            self.session_mut().actors.extended.blocks[block][index] = value;
+            *self.session_mut().actors.extended.word_mut(block, index) = value;
             return;
         }
         let [low, high] = value.to_le_bytes();
@@ -70,13 +70,13 @@ impl<T: SessionSlots + ?Sized> SlotAccess for T {
     }
     fn slot_byte(&self, at: usize) -> u8 {
         if let Some((block, index)) = extended_index(at & !1) {
-            return self.session().actors.extended.blocks[block][index].to_le_bytes()[at & 1];
+            return (*self.session().actors.extended.word(block, index)).to_le_bytes()[at & 1];
         }
         self.projected_slot_byte(at)
     }
     fn set_slot_byte(&mut self, at: usize, value: u8) {
         if let Some((block, index)) = extended_index(at & !1) {
-            let word = &mut self.session_mut().actors.extended.blocks[block][index];
+            let word = &mut *self.session_mut().actors.extended.word_mut(block, index);
             let mut bytes = word.to_le_bytes();
             bytes[at & 1] = value;
             *word = u16::from_le_bytes(bytes);

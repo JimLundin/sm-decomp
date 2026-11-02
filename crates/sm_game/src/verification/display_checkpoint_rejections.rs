@@ -99,7 +99,7 @@ fn display_body(
     required: &t::DisplayStartRequirements,
 ) {
     use super::super::component::DisplayCheckpoint;
-    assert_eq!(&bytes[..8], b"SMDISPL\x04");
+    assert_eq!(&bytes[..8], b"SMDISPL\x05");
     assert!(DisplayCheckpoint::decode_checkpoint(bytes, media.clone(), metadata, required).is_ok());
     // Schema 4 places Workspace before Revision; use the actual field codecs.
     let binding = usize::try_from(u64::from_le_bytes(bytes[8..16].try_into().unwrap())).unwrap();

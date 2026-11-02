@@ -9,6 +9,7 @@ description = "Super Metroid verification tooling: scenario observations, their 
 # Verification tooling over the target packages. CI rejects any dependency on
 # sm, and any target package depending on this one.
 [dependencies]
+sm_data = { path = "../sm_data" }
 sm_game = { path = "../sm_game" }
 
 [lints.rust]

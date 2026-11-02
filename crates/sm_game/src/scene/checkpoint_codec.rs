@@ -652,6 +652,7 @@ impl Field for h::HdmaLiveDescription {
         regions.put(bytes);
         self.window_control_layout().cloned().put(bytes);
         self.native_origins().put(bytes);
+        self.producer_bindings().put(bytes);
     }
     fn get(read: &mut CheckpointReader<'_>) -> Result<Self, String> {
         let buffers = <BTreeMap<h::LiveOwner, Vec<u8>> as Field>::get(read)?;
@@ -659,6 +660,7 @@ impl Field for h::HdmaLiveDescription {
         let window_controls = <Option<crate::fx_sources::WindowControlLayout> as Field>::get(read)?;
         let native_origins =
             <BTreeMap<(h::LiveOwner, usize), crate::fx_domain::SourceOrigin> as Field>::get(read)?;
+        let producers = <BTreeMap<h::MajorHdmaRole, h::SourceBinding> as Field>::get(read)?;
         if regions.iter().any(|(key, region)| *key != region.owner) {
             return Err("display checkpoint HDMA region key mismatch".into());
         }
@@ -687,6 +689,10 @@ impl Field for h::HdmaLiveDescription {
             live.bind_window_controls(layout, None)
                 .map_err(|error| format!("display checkpoint window topology: {error:?}"))?;
         }
+        if !producers.is_empty() {
+            live.bind_producers(producers)
+                .map_err(|error| format!("display checkpoint producer bindings: {error:?}"))?;
+        }
         live.bind_native_origins(native_origins)
             .map_err(|error| format!("display checkpoint native source provenance: {error:?}"))?;
         live.validate()
@@ -694,6 +700,7 @@ impl Field for h::HdmaLiveDescription {
         Ok(live)
     }
 }
+choices!(h::MajorHdmaRole {0=>MotherBrainHeader,1=>MotherBrainWindows,2=>CrocomireScroll});
 variants!(h::SourceBinding, "source binding" {
     0 => Prepared { reference, windows },
     1 => LiveOwner { owner, windows },
@@ -962,6 +969,7 @@ record!(d::HdmaState {
     dma_busy
 });
 record!(d::InterruptState {
+    mode7,
     current,
     pending,
     vertical,
@@ -988,7 +996,48 @@ record!(d::DisplayDeliveryDescription {
     counter_latch_gate,
     raster_suppressed
 });
+record!(sm_data::hardware::Arithmetic {
+    multiplicand,
+    product,
+    dividend,
+    quotient
+});
+record!(sm_data::hardware::Affine {
+    matrix,
+    horizontal_flip,
+    vertical_flip,
+    large_field,
+    character_fill
+});
+record!(d::RasterInputs {
+    map_words,
+    map_wider,
+    map_higher,
+    tile_words,
+    object_tile_words,
+    object_size,
+    object_priority,
+    object_interlaced,
+    extended_background,
+    pseudo_hires,
+    window_positions,
+    window_logic,
+    window_native_flags,
+    sub_layers,
+    screen_windowed,
+    fixed_color,
+    brightness,
+    mosaic_enabled,
+    mosaic_native_enabled,
+    mosaic_size,
+    mosaic_modulo
+});
 record!(d::EffectiveDisplayDescription {
+    raster_inputs,
+    affine,
+    mode_byte,
+    scroll,
+    window_selection,
     background3_map_words,
     background3_map_wider,
     background3_map_higher,
@@ -1064,7 +1113,11 @@ record!(d::DisplayDescription {
     upload_tail,
     mode7_uploads,
     mode7_tail,
+    mode7_queue,
+    mode7_gap,
+    arithmetic,
     readbacks,
+    readback_queue,
     readback_tail,
     read_results,
     actor_queues,
@@ -1297,7 +1350,7 @@ pub fn encode(
     required: &t::DisplayStartRequirements,
 ) -> Result<Vec<u8>, String> {
     let binding = binding(media, metadata, required)?;
-    let mut bytes = Vec::from(b"SMDISPL\x04".as_slice());
+    let mut bytes = Vec::from(b"SMDISPL\x05".as_slice());
     binding.put(&mut bytes);
     description.put(&mut bytes);
     resident.put(&mut bytes);
@@ -1314,7 +1367,7 @@ pub fn decode(
 ) -> Result<t::ValidatedDisplayStart, String> {
     let expected = binding(&media, metadata, required)?;
     let mut read = CheckpointReader(bytes);
-    if read.bytes(8)? != b"SMDISPL\x04" {
+    if read.bytes(8)? != b"SMDISPL\x05" {
         return Err("unsupported display checkpoint schema".into());
     }
     let binding_length = usize::get(&mut read)?;

@@ -1,0 +1,121 @@
+#![forbid(unsafe_code)]
+//! Phantoon, the Wrecked Ship's ghost: its flames, wave amplitude, health
+//! palette and leftover debug toggle (bank $A7:CF0C-$A7:DC49).
+//!
+//! Phantoon is four enemies: the body in slot 0, then the eye, tentacles and
+//! mouth. The mouth's slot holds the wavy fade's amplitude.
+use crate::actors::phantoon_owned::{State, part};
+
+fn native_record(bank: u8, address: u16, game: &mut impl State) -> sm_data::cartridge::RomRecord {
+    crate::actors::phantoon_owned::State::native_record(game, bank, address)
+}
+macro_rules! rom_table_word {
+    ($game:ident, $address:expr, $index:expr $(,)?) => {
+        $game.loaded_word($address, $index)
+    };
+}
+
+/// The Phantoon destroyable flames enemy projectile ($86:9C29).
+pub const DESTROYABLE_FLAMES: u16 = 0x9c29;
+
+const BANK: u8 = 0xa7;
+/// The mouth's slot.
+pub const MOUTH: i32 = 0xc0;
+
+/// Flame projectile parameters: the spiral's 600h, flame rain's 400h, with the
+/// rain's fall time in bits 4-7.
+const SPIRAL: u16 = 0x600;
+const RAIN: i32 = 0x400;
+const SPIRAL_FLAMES: u16 = 8;
+const RAIN_FLAMES: i32 = 8;
+const RAIN_POSITIONS: i16 = 9;
+/// $A7:CFC2: the position of each flame rain pattern's first flame, a byte each.
+const RAIN_FIRST_POSITIONS: u16 = 0xcfc2;
+/// Phantoon's flame (1Dh) and materialises attack (28h), library 3.
+const FLAME_SOUND: u8 = 0x1d;
+const MATERIALISE_SOUND: u8 = 0x28;
+
+/// The health palette steps every 312 health ($9C4 / 8), up to step 7.
+const HEALTH_STEP: u16 = 312;
+const HEALTH_STEPS: i32 = 7;
+/// $A7:DC4A: the palette of each health step.
+const HEALTH_PALETTES: u32 = 0xa7_dc4a;
+const SIGN: i32 = 0x8000;
+
+/// Grow/shrink Phantoon wave amplitude ($A7:CF27) by the delta in `amount`'s
+/// low word, growing up to the maximum in its high word; 1 once shrinking has
+/// taken it below zero. Was `approach_speed`.
+pub fn grow_or_shrink_wave_amplitude(amount: i32, game: &mut impl State) -> u8 {
+    let (delta, max) = (amount as u16, (amount >> 16) as u16);
+    let amplitude = part!(game, Mouth[MOUTH].wave_amplitude);
+    if part!(game, Mouth[MOUTH].wave_shrinking) != 0 {
+        part!(
+            game,
+            Mouth[MOUTH].wave_amplitude = amplitude.wrapping_sub(delta)
+        );
+        if amplitude < delta {
+            part!(game, Mouth[MOUTH].wave_amplitude = 0);
+            return 1;
+        }
+    } else {
+        let next = delta.wrapping_add(amplitude);
+        part!(game, Mouth[MOUTH].wave_amplitude = next);
+        if (i32::from(next >> 8) - i32::from(max >> 8)) & SIGN == 0 {
+            part!(game, Mouth[MOUTH].wave_amplitude = max);
+        }
+    }
+    0
+}
+
+/// Spawn casual flame ($A7:CF5E). Was `spawn_fireball`.
+pub fn spawn_casual_flame(k: u16, game: &mut impl State) {
+    game.spawn_actor_eproj(0, k, DESTROYABLE_FLAMES);
+    crate::effects::SoundEffects::queue_sound(game, 2, FLAME_SOUND, 6);
+}
+
+/// Phantoon materialisation flame spiral ($A7:CF70). Was `spawn_fireball_circle`.
+pub fn spawn_flame_spiral(k: u16, game: &mut impl State) {
+    for i in (0..SPIRAL_FLAMES).rev() {
+        game.spawn_actor_eproj(i | SPIRAL, k, DESTROYABLE_FLAMES);
+    }
+    crate::effects::SoundEffects::queue_sound(game, 2, MATERIALISE_SOUND, 6);
+}
+
+/// Spawn flame rain enemy projectiles ($A7:CF8B): eight flames at consecutive
+/// positions of nine from the pattern's first, leaving one gap, each falling
+/// for longer. Was `spawn_fireball_pattern`.
+pub fn spawn_flame_rain(k: u16, pattern: u16, game: &mut impl State) {
+    let mut position =
+        i16::from(native_record(BANK, RAIN_FIRST_POSITIONS, game).byte(usize::from(pattern)));
+    for flame in 1..=RAIN_FLAMES {
+        let current = position;
+        position += 1;
+        game.spawn_actor_eproj(
+            ((16 * flame) | current as i32 | RAIN) as u16,
+            k,
+            DESTROYABLE_FLAMES,
+        );
+        if current.wrapping_sub(RAIN_POSITIONS - 1) >= 0 {
+            position = 0;
+        }
+    }
+}
+
+/// Get Phantoon health-based palette colour ($A7:DC0F): the colour at `base`
+/// in the palette for the current part's health step; returns (base, colour).
+/// Was `Phantoon_SetColorBasedOnHp_FindEntry`.
+pub fn health_palette_colour(base: u16, game: &mut impl State) -> (u16, u16) {
+    let (mut bound, mut step) = (HEALTH_STEP, 0u16);
+    while (bound as i16)
+        .wrapping_sub(part!(game, Part[i32::from(game.current_enemy())].base.health) as i16)
+        < 0
+    {
+        bound = bound.wrapping_add(HEALTH_STEP);
+        step = step.wrapping_add(1);
+        if (i32::from(step) - HEALTH_STEPS) & SIGN == 0 {
+            break;
+        }
+    }
+    let entry = base.wrapping_add(rom_table_word!(game, HEALTH_PALETTES, step as isize));
+    (base, native_record(BANK, entry, game).word(0))
+}

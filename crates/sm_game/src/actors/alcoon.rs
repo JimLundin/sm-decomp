@@ -5,7 +5,6 @@ use crate::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 use crate::actors::api::{self, MovementResult::Blocked, SlopePolicy};
 use crate::actors::host::{ActorLease, ActorRuntime as _, LeaseActors, abs16};
 use crate::actors::layouts::part_view;
-use crate::enemy_projectiles::host::Effects as _;
 use crate::enemy_script::EnemyScript;
 use crate::ram::words as W;
 use crate::session_slot;
@@ -219,7 +218,7 @@ pub fn main_ai(runtime: &mut impl ActorLease) {
             runtime.edit_actor(key, Native, |actor| {
                 actor.variables[lane::FUNCTION] = function::EMERGING_RISING
             });
-            runtime.queue_sound(2, 6, CRY_SOUND);
+            crate::enemy_projectiles::host::Effects::queue_sound(runtime, 2, 6, CRY_SOUND);
         }
         // Alcoon function - emerging - rising ($A8:DDC6), hiding - rising
         // ($A8:DECD) and hiding - falling ($A8:DEEC).
@@ -311,7 +310,7 @@ pub fn main_ai(runtime: &mut impl ActorLease) {
             }
         }
         function::RTL => {}
-        _ => runtime.unreachable(),
+        _ => crate::enemy_projectiles::host::Effects::unreachable(runtime),
     }
 }
 /// Run one of Alcoon's script instructions (one of [`instruction`]).
@@ -335,7 +334,7 @@ pub fn instruction<H: LeaseActors + ?Sized>(
             runtime.foreign(|game| {
                 game.spawn_projectile(index, key.byte_index(), FIREBALL);
             });
-            runtime.queue_sound(2, 6, FIREBALL_SOUND);
+            crate::enemy_projectiles::host::Effects::queue_sound(runtime, 2, 6, FIREBALL_SOUND);
         }
         START_WALKING => {
             runtime.edit_actor(key, Native, |actor| {
@@ -381,7 +380,7 @@ pub fn instruction<H: LeaseActors + ?Sized>(
             api::snap_to_slopes(runtime, live);
         }
         _ => {
-            runtime.unreachable();
+            crate::enemy_projectiles::host::Effects::unreachable(runtime);
             return EnemyScript::Stop;
         }
     }

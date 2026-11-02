@@ -258,11 +258,51 @@ pub struct HdmaLiveRegion {
     pub length: usize,
 }
 
+/// Mutable source roles independently supplied by the gameplay/content owner.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+pub enum MajorHdmaRole {
+    MotherBrainHeader,
+    MotherBrainWindows,
+    CrocomireScroll,
+}
+impl MajorHdmaRole {
+    pub const ALL: [Self; 3] = [
+        Self::MotherBrainHeader,
+        Self::MotherBrainWindows,
+        Self::CrocomireScroll,
+    ];
+    /// Original producer address authority; this declares topology, never bytes.
+    pub fn declaration(self) -> SourceBinding {
+        let (address, length) = match self {
+            Self::MotherBrainHeader => (0x9c00, 256),
+            Self::MotherBrainWindows => (0x9d00, 768),
+            Self::CrocomireScroll => (0xcae0, 528),
+        };
+        SourceBinding::LiveOwner {
+            owner: self.owner(),
+            windows: Arc::from([BankWindow {
+                bank: 0x7e,
+                address,
+                offset: 0,
+                length,
+            }]),
+        }
+    }
+    fn owner(self) -> LiveOwner {
+        match self {
+            Self::MotherBrainHeader => LiveOwner::LiquidSurface,
+            Self::MotherBrainWindows => LiveOwner::HdmaTable2,
+            Self::CrocomireScroll => LiveOwner::CrocomireBg2,
+        }
+    }
+}
+
 /// All live HDMA buffers needed by sealed construction, checkpoint and reset.
 /// Clone snapshots each allocation once and preserves region alias topology.
 /// Reset consumes that snapshot; it needs no external source lifetime or host.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct HdmaLiveDescription {
+    producer_bindings: BTreeMap<MajorHdmaRole, SourceBinding>,
     buffers: BTreeMap<LiveOwner, Vec<u8>>,
     regions: BTreeMap<LiveOwner, HdmaLiveRegion>,
     window_controls: Option<crate::fx_sources::WindowControlLayout>,
@@ -284,6 +324,48 @@ struct CanonicalWindow {
 }
 
 impl HdmaLiveDescription {
+    pub fn producer_bindings(&self) -> &BTreeMap<MajorHdmaRole, SourceBinding> {
+        &self.producer_bindings
+    }
+    pub fn bind_producers(
+        &mut self,
+        bindings: BTreeMap<MajorHdmaRole, SourceBinding>,
+    ) -> Result<(), DisplayError> {
+        if bindings.len() != MajorHdmaRole::ALL.len() {
+            return Err(DisplayError::Incomplete);
+        }
+        for role in MajorHdmaRole::ALL {
+            let binding = bindings.get(&role).ok_or(DisplayError::Incomplete)?;
+            if binding != &role.declaration() {
+                return Err(DisplayError::Identity);
+            }
+            let SourceBinding::LiveOwner { owner, windows } = binding else {
+                return Err(DisplayError::Source);
+            };
+            if *owner != role.owner() || windows.is_empty() {
+                return Err(DisplayError::Source);
+            }
+            let length = LiveSources::length(self, *owner)?;
+            for window in windows.iter() {
+                window.validate(length)?;
+            }
+        }
+        self.producer_bindings = bindings;
+        Ok(())
+    }
+    /// Includes dormant producers. A boss can write its source before allocating a channel.
+    pub fn source_bindings<'a>(
+        &'a self,
+        state: &'a HdmaState,
+    ) -> impl Iterator<Item = &'a SourceBinding> {
+        state
+            .channels
+            .iter()
+            .flat_map(|channel| [&channel.table, &channel.source])
+            .chain(state.objects.iter().map(|object| &object.instruction))
+            .chain(self.producer_bindings.values())
+    }
+
     pub fn checkpoint_parts(
         &self,
     ) -> (
@@ -301,6 +383,7 @@ impl HdmaLiveDescription {
             regions: BTreeMap::new(),
             window_controls: None,
             native_origins: BTreeMap::new(),
+            producer_bindings: BTreeMap::new(),
         };
         for buffer in buffers {
             if matches!(buffer.owner, LiveOwner::ObjectVariable { .. })
@@ -620,12 +703,7 @@ impl HdmaLiveDescription {
             return Ok(None);
         };
         let mut found = None;
-        for binding in state
-            .channels
-            .iter()
-            .flat_map(|channel| [&channel.table, &channel.source])
-            .chain(state.objects.iter().map(|object| &object.instruction))
-        {
+        for binding in self.source_bindings(state) {
             let SourceBinding::LiveOwner { owner, windows } = binding else {
                 continue;
             };
@@ -784,11 +862,7 @@ impl HdmaLiveDescription {
         state: &HdmaState,
         workspace: Option<&crate::presentation_workspace::Workspace>,
     ) -> Result<(), DisplayError> {
-        let bindings = state
-            .channels
-            .iter()
-            .flat_map(|channel| [&channel.table, &channel.source])
-            .chain(state.objects.iter().map(|object| &object.instruction));
+        let bindings = self.source_bindings(state);
         let mut mapped: Vec<CanonicalWindow> = Vec::new();
         if let Some(workspace) = workspace {
             for binding in workspace.bindings.0.values() {

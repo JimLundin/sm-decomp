@@ -2,18 +2,10 @@
 //! $A5:9185-$A5:9701).
 //! Boss words remain native compatibility state; player and sprites use their owners.
 use crate::actors::boss_lease::boss_ram;
-use crate::actors::draygon_flight::{facing_animation, foam_at_mouth};
 use crate::actors::draygon_host::Lease;
-use crate::actors::draygon_host::{
-    ARMS, BANK, BODY, DELETE, Draygon, EYE, GRAPPLE_DROPPED, Host, SIGN, TAIL, abs16, function,
-    instruction_list as list,
-};
-use crate::actors::host::{ActorLease as _, BossEffects as _, Death, LeaseActors, Shot};
-use crate::actors::queries::angle_from_delta;
+use crate::actors::draygon_host::{BANK, BODY, Draygon};
 use crate::actors::session_slots::session_slot;
 use crate::enemy_script::EnemyScript;
-use crate::menus::prelude::{boss, owned};
-use crate::ram::{word, words::EPROJ_INIT_PARAM_2};
 
 /// Colours 9-12 of BG1/2 palette 5, as palette words and in RAM at $7E:C000.
 const HEALTH_COLOURS: core::ops::Range<usize> = 89..93;
@@ -82,25 +74,23 @@ fn copy_hurt_palette<L: Lease>(default: u16, target: usize, game: &mut L) {
 }
 /// Hurt AI - Draygon ($A5:954D): flash the palettes and, while grappled,
 /// drain health. Was `hurt`.
-pub fn hurt_ai<L: Lease>(game: &mut L) {
+pub fn apply_hurt_palettes<L: Lease>(game: &mut L) {
     copy_hurt_palette(BG_PALETTE_5, BG_PALETTE_5_RAM, game);
     let k = game.current_enemy() as i32;
     if session_slot!(game, Draygon[k].base.flash_timer) & FLASHING == 0 {
         write_health_palette(false, game);
     }
     copy_hurt_palette(SPRITE_PALETTE_7, SPRITE_PALETTE_7_RAM, game);
-    if boss!(game.SamusGrappleFlags) & GRAPPLE_FLAG != 0
-        && session_slot!(game, Draygon[BODY].base.frame_counter) & GRAPPLE_FRAMES == 0
-    {
-        let health = (session_slot!(game, Draygon[BODY].base.health) as i16)
-            .wrapping_sub(GRAPPLE_DRAIN)
-            .max(0);
-        session_slot!(game, Draygon[BODY].base.health = health as u16);
-        reaction(game);
-    }
+}
+
+pub fn hurt_ai<L: Lease>(game: &mut L) {
+    apply_hurt_palettes(game);
+    game.foreign(|game| {
+        owned::hurt_grapple_drain(&mut crate::runtime_access::RuntimeAccess::runtime(game))
+    });
 }
 /// Draygon health-based palette handling ($A5:9701).
-fn update_health_palette<L: Lease>(game: &mut L) {
+pub fn update_health_palette<L: Lease>(game: &mut L) {
     let mut cursor: i32 = 0;
     while (session_slot!(game, Draygon[BODY].base.health) as i16).wrapping_sub(
         crate::actor_tables::word(
@@ -119,189 +109,57 @@ fn update_health_palette<L: Lease>(game: &mut L) {
 }
 /// Enemy shot - Draygon ($A5:95F0).
 pub fn shot<L: Lease>(game: &mut L) {
-    if session_slot!(game, Draygon[BODY].swoop_y_acceleration).wrapping_sub(MAX_ACCELERATION) & SIGN
-        != 0
-    {
-        session_slot!(game, Draygon[BODY].swoop_y_acceleration, |old| old
-            .wrapping_add(ACCELERATION_STEP));
-    }
-    game.shot_reaction(Shot::ReactionOnly);
-    reaction(game);
+    game.foreign(|game| owned::shot(&mut crate::runtime_access::RuntimeAccess::runtime(game)))
 }
 /// Enemy touch - Draygon ($A5:95EA).
 pub fn touch<L: Lease>(game: &mut L) {
-    game.contact_reaction(Death::LeavePending);
-    reaction(game);
+    game.foreign(|game| owned::touch(&mut crate::runtime_access::RuntimeAccess::runtime(game)))
 }
 /// Power bomb reaction - Draygon ($A5:9607).
 pub fn power_bomb<L: Lease>(game: &mut L) {
-    game.power_bomb_reaction(Death::LeavePending);
-    reaction(game);
+    game.foreign(|game| owned::power_bomb(&mut crate::runtime_access::RuntimeAccess::runtime(game)))
 }
 /// Draygon reaction ($A5:960D): update the health palette, or on death drop
 /// the grapple, let go of Samus and drift to the death spot. Was `after_damage`.
 pub fn reaction<L: Lease>(game: &mut L) {
-    let k = game.current_enemy() as i32;
-    if session_slot!(game, Draygon[k].base.health) != 0 {
-        update_health_palette(game);
-        return;
-    }
-    boss!(game.GrappleBeamFunction = GRAPPLE_DROPPED);
-    facing_animation(
-        BODY,
-        BODY,
-        [list::BODY_LEFT_DYING, list::BODY_RIGHT_DYING],
-        game,
-    );
-    facing_animation(
-        BODY,
-        EYE,
-        [list::EYE_LEFT_DYING, list::EYE_RIGHT_DYING],
-        game,
-    );
-    session_slot!(game, Draygon[EYE].function = function::NONE);
-    session_slot!(
-        game,
-        Draygon[BODY].function = function::DEATH_DRIFT_TO_DEATH_SPOT
-    );
-    game.foreign(|game| game.release_samus());
-    boss!(game.SamusGrappleFlags = 0);
-    let dx = DEATH_X.wrapping_sub(session_slot!(game, Draygon[BODY].base.x_pos));
-    let dy = DEATH_Y.wrapping_sub(session_slot!(game, Draygon[BODY].base.y_pos));
-    session_slot!(
-        game,
-        Draygon[BODY].death_angle =
-            u16::from(QUARTER_TURN.wrapping_sub(angle_from_delta(dx, dy) as u8))
-    );
-    let vector = {
-        let angle = u16::from(session_slot!(byte game, Draygon[BODY].death_angle[0]));
-        game.direction_step(angle, 1)
-    };
-    session_slot!(game, Draygon[BODY]; death_x_speed = (vector.x >> 16) as u16,
-        death_x_subspeed = vector.x as u16, death_y_speed = (vector.y >> 16) as u16,
-        death_y_subspeed = vector.y as u16);
+    game.foreign(|game| owned::reaction(&mut crate::runtime_access::RuntimeAccess::runtime(game)))
 }
 /// Draygon body function - death sequence - drift to death spot ($A5:9185).
 /// Was `approach`.
 pub fn drift_to_death_spot<L: Lease>(game: &mut L) {
-    let k = game.current_enemy() as i32;
-    foam_at_mouth(k as u16, FOAM_FRAMES, game);
-    // The angle is from the position rounded to its 4x4 pixel block.
-    let dx = (i32::from(DEATH_X >> 2)
-        - (i32::from(session_slot!(game, Draygon[BODY].base.x_pos)) >> 2)) as u16;
-    let dy = (i32::from(DEATH_Y >> 2)
-        - (i32::from(session_slot!(game, Draygon[BODY].base.y_pos)) >> 2)) as u16;
-    session_slot!(
-        game,
-        Draygon[BODY].death_angle =
-            u16::from(QUARTER_TURN.wrapping_sub(angle_from_delta(dx, dy) as u8))
-    );
-    let vector = {
-        let angle = u16::from(session_slot!(byte game, Draygon[BODY].death_angle[0]));
-        game.direction_step(angle, 1)
-    };
-    crate::actors::draygon_grab::store_speeds(vector, game);
-    let scratch = u16::from(session_slot!(byte game, Draygon[BODY].death_angle[0]));
-    game.set_step_scratch(scratch);
-    let angle = u16::from(session_slot!(byte game, Draygon[BODY].death_angle[0]));
-    game.step_along(angle, vector);
-    if abs16(session_slot!(game, Draygon[BODY].base.x_pos).wrapping_sub(DEATH_X))
-        .wrapping_sub(DEATH_SPOT_RANGE)
-        & SIGN
-        == 0
-    {
-        return;
-    }
-    if abs16(session_slot!(game, Draygon[BODY].base.y_pos).wrapping_sub(DEATH_Y))
-        .wrapping_sub(DEATH_SPOT_RANGE)
-        & SIGN
-        == 0
-    {
-        return;
-    }
-    game.foreign(|game| game.draygon_spawn_ring());
-    session_slot!(
-        game,
-        Draygon[BODY].function = function::DEATH_WAIT_FOR_EVIRS
-    );
-    game.foreign(|game| game.queue_music_delayed(ELEVATOR_MUSIC));
-    session_slot!(game, Draygon[BODY].function_timer = EVIR_FRAMES);
-    session_slot!(game, Draygon[BODY].base; current_instruction = list::SLEEP, instruction_timer = 1);
-    let properties = session_slot!(game, Draygon[BODY].base.properties) | DELETE;
-    session_slot!(game, Draygon[TAIL].base.properties = properties);
-    session_slot!(game, Draygon[ARMS].base.properties = properties);
-    facing_animation(BODY, EYE, [list::EYE_LEFT_DEAD, list::EYE_RIGHT_DEAD], game);
-    session_slot!(game, Draygon[EYE].function = function::NONE);
+    game.foreign(|game| {
+        owned::drift_to_death_spot(&mut crate::runtime_access::RuntimeAccess::runtime(game))
+    })
 }
 /// Handle dying Draygon smoke ($A5:92EA): every 8 frames, a big dust cloud low in the room.
-fn dying_smoke<H: Host + ?Sized>(game: &mut H) {
-    if game.frame() & 7 == 0 {
-        let random = game.roll_random();
-        game.create_sprite((random & 0x7f) + 192, ((random >> 8) & 0x3f) + 400, 21, 0);
-    }
-}
+
 /// Instruction - spawn dying Draygon sprite object `kind` within 40h px ($A5:973F-$A5:9778).
-pub fn spawn_dying_sprite<H: Host>(kind: u16, script: EnemyScript, game: &mut H) -> EnemyScript {
-    let random = game.roll_random();
-    let [dx, dy] = [random, random >> 8].map(|value| (value & 0x7f).wrapping_sub(64));
-    let x = session_slot!(game, Draygon[BODY].base.x_pos).wrapping_add(dx);
-    let y = session_slot!(game, Draygon[BODY].base.y_pos).wrapping_add(dy);
-    game.create_sprite(x, y, kind, 0);
-    script
-}
-/// Instruction - spawn Draygon goop - leftwards ($A5:9F7C) or rightwards ($A5:9FAE).
-pub fn spawn_goop<H: Host + LeaseActors>(
-    right: bool,
+pub fn spawn_dying_sprite<H: owned::Host>(
+    kind: u16,
     script: EnemyScript,
     game: &mut H,
 ) -> EnemyScript {
-    let dx = if right { 24 } else { 0xffe4 };
-    let x = session_slot!(game, Draygon[BODY].base.x_pos).wrapping_add(dx);
-    let y = session_slot!(game, Draygon[BODY].base.y_pos).wrapping_sub(16);
-    game.place_projectile_spawn(x, y);
-    let angle = (game.roll_random() & 0x3f) + if right { 192 } else { 128 };
-    LeaseActors::lease(game).write_slice_le(EPROJ_INIT_PARAM_2, angle);
-    let enemy = crate::actors::boss_lease::BossState::current_enemy(game);
-    game.spawn_actor_eproj(2, enemy, 0x8e50);
-    script
+    owned::spawn_dying_sprite(kind, script, game)
+}
+/// Instruction - spawn Draygon goop - leftwards ($A5:9F7C) or rightwards ($A5:9FAE).
+pub fn spawn_goop<H: owned::Host>(right: bool, script: EnemyScript, game: &mut H) -> EnemyScript {
+    owned::spawn_goop(right, script, game)
 }
 /// Draygon body function - death sequence - wait for evirs ($A5:9294). Was
 /// `ring`.
 pub fn wait_for_evirs<L: Lease>(game: &mut L) {
-    game.foreign(dying_smoke);
-    session_slot!(game, Draygon[BODY].function_timer, |old| old
-        .wrapping_sub(1));
-    if session_slot!(game, Draygon[BODY].function_timer) != 0 {
-        // Moving left, the evirs also take $0E24, whatever was left there ($A5:A01C).
-        let bias = word!(game.REMOVED_VAR_E24);
-        game.foreign(|game| game.draygon_motion(bias));
-    } else {
-        session_slot!(
-            game,
-            Draygon[BODY].function = function::DEATH_BURIED_BY_EVIRS
-        );
-    }
+    game.foreign(|game| {
+        owned::wait_for_evirs(&mut crate::runtime_access::RuntimeAccess::runtime(game))
+    })
 }
 /// Draygon body function - death sequence - buried by evirs ($A5:92AB): sink
 /// until buried, then delete Draygon, set its boss bit and drop its rewards.
 /// Was `sink`.
 pub fn buried_by_evirs<L: Lease>(game: &mut L) {
-    game.foreign(dying_smoke);
-    let bias = word!(game.REMOVED_VAR_E24);
-    game.foreign(|game| game.draygon_motion(bias));
-    session_slot!(game, Draygon[BODY].base.y_pos, |old| old.wrapping_add(1));
-    if session_slot!(game, Draygon[BODY].base.y_pos).wrapping_sub(BURIED_Y) & SIGN == 0 {
-        session_slot!(game, Draygon[BODY].base; current_instruction = list::DELETE, instruction_timer = 1);
-        let properties = session_slot!(game, Draygon[BODY].base.properties) | DELETE;
-        session_slot!(game, Draygon[BODY].base.properties = properties);
-        session_slot!(game, Draygon[EYE].base.properties = properties);
-        let drop_index = game.area();
-        let area = game.area();
-        let bits = game.foreign(|game| game.boss_word(area));
-        game.foreign(|game| {
-            game.set_boss_word(area, bits | DRAYGON_DEAD);
-            game.scatter_draygon_drop(drop_index);
-            game.retire_all_sprites();
-        });
-    }
+    game.foreign(|game| {
+        owned::buried_by_evirs(&mut crate::runtime_access::RuntimeAccess::runtime(game))
+    })
 }
+
+#[path = "draygon_death_owned.rs"]
+pub mod owned;

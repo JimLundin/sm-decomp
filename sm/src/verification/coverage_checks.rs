@@ -3038,12 +3038,26 @@ fn scene_display_description(
             transfer_mode: 0,
         }],
         mode7_tail: 7,
+        // Standalone semantic uploads above are supplied independently of the
+        // packed native queue, whose first tag explicitly terminates this fixture.
+        mode7_queue: [0; 96],
+        // Authored retained bytes in the physical gap after the tilemap tail.
+        mode7_gap: [0x35, 0x79],
+        // This fixture supplies the actual CPU hard-reset arithmetic registers.
+        arithmetic: sm_data::hardware::Arithmetic {
+            multiplicand: 0xff,
+            product: 0xfe01,
+            dividend: 0xffff,
+            quotient: 0x0101,
+        },
         readbacks: vec![ds::Readback {
             cursor: 0,
             destination: reference(2),
             first_word: 0,
             count: 2,
         }],
+        // Standalone semantic fixture; its current packed queue is explicitly empty.
+        readback_queue: [0; 32],
         readback_tail: 9,
         // This original supplied start had no completed undrained readbacks.
         read_results: vec![],
@@ -3146,6 +3160,8 @@ fn scene_display_description(
         },
         hdma_live,
         interrupt: ds::InterruptState {
+            // The authored room has no Mode7 request at physical $0783.
+            mode7: 0,
             current: 0,
             pending: 0,
             vertical: 0,
@@ -3174,6 +3190,39 @@ fn scene_display_description(
             raster_suppressed: false,
         },
         effective: ds::EffectiveDisplayDescription {
+            affine: sm_data::hardware::Affine {
+                matrix: [0; 8],
+                horizontal_flip: false,
+                vertical_flip: false,
+                large_field: false,
+                character_fill: false,
+            },
+            mode_byte: 0,
+            scroll: [0; 8],
+            window_selection: [0; 3],
+            raster_inputs: ds::RasterInputs {
+                map_words: [0; 3],
+                map_wider: [false; 3],
+                map_higher: [false; 3],
+                tile_words: [0; 4],
+                object_tile_words: [0; 2],
+                object_size: 0,
+                object_priority: false,
+                object_interlaced: false,
+                extended_background: false,
+                pseudo_hires: false,
+                window_positions: [0; 4],
+                window_logic: [0; 6],
+                window_native_flags: 0,
+                sub_layers: 0,
+                screen_windowed: [0; 2],
+                fixed_color: [0; 3],
+                brightness: 0,
+                mosaic_enabled: [false; 4],
+                mosaic_native_enabled: 0,
+                mosaic_size: 1,
+                mosaic_modulo: [0; 256],
+            },
             background3_map_words: 0x2c00,
             background3_map_wider: true,
             background3_map_higher: false,
@@ -3652,6 +3701,39 @@ fn scene_component_preserves_schema3_delivery_effective_and_written_selection() 
     assert_eq!(
         state.effective,
         ds::EffectiveDisplayDescription {
+            affine: sm_data::hardware::Affine {
+                matrix: [0; 8],
+                horizontal_flip: false,
+                vertical_flip: false,
+                large_field: false,
+                character_fill: false
+            },
+            mode_byte: 0,
+            scroll: [0; 8],
+            window_selection: [0; 3],
+            raster_inputs: ds::RasterInputs {
+                map_words: [0; 3],
+                map_wider: [false; 3],
+                map_higher: [false; 3],
+                tile_words: [0; 4],
+                object_tile_words: [0; 2],
+                object_size: 0,
+                object_priority: false,
+                object_interlaced: false,
+                extended_background: false,
+                pseudo_hires: false,
+                window_positions: [0; 4],
+                window_logic: [0; 6],
+                window_native_flags: 0,
+                sub_layers: 0,
+                screen_windowed: [0; 2],
+                fixed_color: [0; 3],
+                brightness: 0,
+                mosaic_enabled: [false; 4],
+                mosaic_native_enabled: 0,
+                mosaic_size: 1,
+                mosaic_modulo: [0; 256],
+            },
             background3_map_words: 0x2c00,
             background3_map_wider: true,
             background3_map_higher: false,
@@ -6519,7 +6601,7 @@ fn scene_read_results_codec_and_reopen() {
     assert_eq!(captured.display.as_ref().unwrap().read_results, expected);
     scene_owner_unchanged(&display, &before, &metadata);
     let bytes = before.encode_checkpoint(&metadata, &requirements).unwrap();
-    assert_eq!(&bytes[..8], b"SMDISPL\x04");
+    assert_eq!(&bytes[..8], b"SMDISPL\x05");
     let decoded =
         sd::DisplayCheckpoint::decode_checkpoint(&bytes, media.clone(), &metadata, &requirements)
             .unwrap();

@@ -397,7 +397,44 @@ numeric_checkpoint!(
     diagnostics
 );
 numeric_checkpoint!(CrocomireMelt, words, column_heights);
-numeric_checkpoint!(ExtendedRam, blocks);
+impl NumericCheckpoint for ExtendedRam {
+    fn write(&self, bytes: &mut Vec<u8>) {
+        for block in 0..6 {
+            for index in 0..1024 {
+                let shadow = match (block, index) {
+                    (1, 15) => Some(0),
+                    (1, 16) => Some(1),
+                    (1, 30) => Some(2),
+                    (2, 12) => Some(3),
+                    (2, 31) => Some(4),
+                    _ => None,
+                };
+                let value = shadow.map_or_else(
+                    || *self.word(block, index),
+                    |shadow| self.legacy_death_checkpoint_shadow[shadow],
+                );
+                value.write(bytes);
+            }
+        }
+    }
+    fn read(read: &mut CheckpointReader<'_>) -> Result<Self, String> {
+        let mut value = Self::default();
+        for block in 0..6 {
+            for index in 0..1024 {
+                let word = read.word()?;
+                match (block, index) {
+                    (1, 15) => value.legacy_death_checkpoint_shadow[0] = word,
+                    (1, 16) => value.legacy_death_checkpoint_shadow[1] = word,
+                    (1, 30) => value.legacy_death_checkpoint_shadow[2] = word,
+                    (2, 12) => value.legacy_death_checkpoint_shadow[3] = word,
+                    (2, 31) => value.legacy_death_checkpoint_shadow[4] = word,
+                    _ => *value.word_mut(block, index) = word,
+                }
+            }
+        }
+        Ok(value)
+    }
+}
 /// The actor table's numeric checkpoint, bound to its display start metadata.
 pub trait ActorsCheckpoint: Sized {
     fn encode_numeric_checkpoint(&self, metadata: &DisplayStartMetadata)

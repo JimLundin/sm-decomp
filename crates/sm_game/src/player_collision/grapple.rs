@@ -241,23 +241,41 @@ pub fn react_beam(
 /// $0D82..$0D8F, the grapple beam collision temporaries; extension keeps its
 /// X and Y quarter velocities in the first eight bytes.
 const COLLISION_TEMPORARIES: usize = 0xd82;
+
+/// The fourteen collision bytes shared with the intro wave descriptors.
+/// Reads resolve the current owner separately; word stores publish low then high.
+pub trait Scratch {
+    fn collision_scratch_byte(&self, offset: usize) -> u8;
+    /// Admit the complete fourteen-byte extent before the first store.
+    fn clear_collision_scratch(&mut self);
+    fn store_collision_scratch_word(&mut self, offset: usize, value: u16);
+}
+impl<T: crate::runtime_access::SessionRam + ?Sized> Scratch for T {
+    fn collision_scratch_byte(&self, offset: usize) -> u8 {
+        sm_data::table::check_index(offset, 14);
+        self.byte(COLLISION_TEMPORARIES + offset)
+    }
+    fn clear_collision_scratch(&mut self) {
+        self.write_slice(COLLISION_TEMPORARIES, &[0; 14]);
+    }
+    fn store_collision_scratch_word(&mut self, offset: usize, value: u16) {
+        sm_data::table::check_index(offset, 13);
+        self.write_word_le(value, COLLISION_TEMPORARIES + offset);
+    }
+}
 /// Firing the beam clears the collision temporaries ($9B:C651).
-pub fn clear_temporaries(h: &mut impl crate::runtime_access::SessionRam) {
-    h.write_slice(COLLISION_TEMPORARIES, &[0; 14]);
+pub fn clear_temporaries(h: &mut impl Scratch) {
+    h.clear_collision_scratch();
 }
 /// Four signed fixed-point substeps; each setup callback can change the next one.
 /// $94:A85B's quarter velocity: it stores `velocity` at `at + 1`, rotates the
 /// two words at `at` right twice (carry chained between them, so the stale
 /// bytes at `at` and `at + 3` shift in), then sign-extends a negative velocity.
-/// The words stay in RAM for the next extension; returns the 32-bit step.
-fn quarter_velocity(
-    h: &mut impl crate::runtime_access::SessionRam,
-    at: usize,
-    velocity: u16,
-) -> u32 {
+/// The words stay in the shared owner for the next extension; returns the 32-bit step.
+fn quarter_velocity(h: &mut impl Scratch, at: usize, velocity: u16) -> u32 {
     let [velocity_low, velocity_high] = velocity.to_le_bytes();
-    let mut low = u16::from_le_bytes([h.byte(at), velocity_low]);
-    let mut high = u16::from_le_bytes([velocity_high, h.byte(at + 3)]);
+    let mut low = u16::from_le_bytes([h.collision_scratch_byte(at), velocity_low]);
+    let mut high = u16::from_le_bytes([velocity_high, h.collision_scratch_byte(at + 3)]);
     let mut carry = false;
     for _ in 0..2 {
         for word in [&mut high, &mut low] {
@@ -269,8 +287,8 @@ fn quarter_velocity(
     if velocity & 0x8000 != 0 {
         high |= 0xffc0;
     }
-    h.write_word_le(low, at);
-    h.write_word_le(high, at + 2);
+    h.store_collision_scratch_word(at, low);
+    h.store_collision_scratch_word(at + 2, high);
     (u32::from(high) << 16) | u32::from(low)
 }
 pub fn extend_beam(
@@ -278,13 +296,13 @@ pub fn extend_beam(
              impl crate::player_projectiles::host::Host
              + crate::room_mechanisms::host::Host
              + crate::projectile_block_reactions::Definitions
-             + crate::runtime_access::SessionRam
+             + Scratch
          ),
 ) -> u8 {
     let velocity = h.session().player.grapple_velocity;
     let velocity = [
-        quarter_velocity(h, COLLISION_TEMPORARIES, velocity.x),
-        quarter_velocity(h, COLLISION_TEMPORARIES + 4, velocity.y),
+        quarter_velocity(h, 0, velocity.x),
+        quarter_velocity(h, 4, velocity.y),
     ];
     let mut result = 0;
     for _ in 0..4 {

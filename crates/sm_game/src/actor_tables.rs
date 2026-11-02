@@ -8,7 +8,7 @@ use crate::records::Records;
 use sm_data::actor_tables::*;
 use sm_data::cartridge::RomImage;
 
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ImportedActorTables {
     pub botwoon_head_lists: ImportedWords<BOTWOON_HEAD_INSTRUCTION_LISTS, EIGHTHS>,
     pub botwoon_spit_lists: ImportedWords<BOTWOON_SPIT_INSTRUCTION_LISTS, EIGHTHS>,

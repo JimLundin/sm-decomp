@@ -195,3 +195,35 @@ pub fn interrupt_enable(state: &mut DisplayState, value: u8) {
         state.delivery.irq_wanted = false;
     }
 }
+
+/// The same phase/failure contract while borrowing the actual display owner,
+/// including its current semantic image palette at an object publication point.
+pub fn in_owner_phase<T>(
+    owner: &mut super::commit::OwnedDisplay,
+    phase: DisplayPhase,
+    operation: impl FnOnce(&mut super::commit::OwnedDisplay) -> Result<T, DisplayError>,
+) -> Result<T, DisplayError> {
+    if owner.state.phase == DisplayPhase::Failed {
+        return Err(DisplayError::Poisoned);
+    }
+    if owner.state.phase != phase {
+        return Err(DisplayError::Phase);
+    }
+    struct OwnerGuard<'a> {
+        owner: &'a mut super::commit::OwnedDisplay,
+        armed: bool,
+    }
+    impl Drop for OwnerGuard<'_> {
+        fn drop(&mut self) {
+            if self.armed {
+                self.owner.state.phase = DisplayPhase::Failed;
+            }
+        }
+    }
+    let mut guard = OwnerGuard { owner, armed: true };
+    let result = operation(&mut *guard.owner);
+    if result.is_ok() {
+        guard.armed = false;
+    }
+    result
+}

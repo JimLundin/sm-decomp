@@ -8,7 +8,7 @@ use crate::records::Records;
 use sm_data::cartridge::RomImage;
 use sm_data::torizo::*;
 
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ImportedTorizos {
     torizos: Option<Imported<Torizos>>,
 }

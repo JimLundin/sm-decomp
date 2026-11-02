@@ -62,7 +62,7 @@ pub fn advance_fireflea_lighting<H: crate::menus::host::Host + ?Sized>(game: &mu
     let mut fx = crate::fx_domain::Controls::fx_controls(game);
     fx.blending = (fx.blending & 0xff00) | 0xc;
     crate::fx_domain::Controls::publish_fx_controls(game, fx, &[crate::fx_state::Field::Blending]);
-    let frozen = word!(game.TIME_IS_FROZEN_FLAG) != 0;
+    let frozen = crate::sequence_word!(game.TIME_IS_FROZEN_FLAG) != 0;
     crate::fx_lighting::advance_after_blending(game, frozen);
 }
 
@@ -134,7 +134,7 @@ pub fn initialize_tourian_statue<H: crate::menus::host::Host + ?Sized>(game: &mu
     crate::liquid::LiquidWords::set(
         game,
         |words| &mut words.liquid.surface.whole,
-        crate::liquid::LiquidWords::read(game).height,
+        crate::cinematic_access::load::<crate::liquid::LiquidWords, _>(game).height,
     );
     game.spawn_hdma(0x88, &HdmaObjectDefinition::new(0x42, 0x11, 0xd856));
     game.spawn_hdma(0x88, &HdmaObjectDefinition::new(0x42, 0x10, 0xdcfa));

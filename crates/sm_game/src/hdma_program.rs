@@ -1,9 +1,7 @@
 //! HDMA programs use current owner fields and captured object identities.
-use crate::enemy_script::{EnemyScript as Script, bank_base};
 use crate::hdma::{HdmaObjects, OBJECTS};
 use crate::hdma_dispatch::DispatchHost;
 use crate::hdma_objects::Bridged;
-use crate::hdma_objects::HdmaEffect;
 use crate::hdma_objects::HdmaTable;
 use crate::menus::host::{Host, MenuRuntime as _};
 use sm_data::cartridge::RomImage;
@@ -32,7 +30,7 @@ pub fn with_current_object<L: HdmaLease + ?Sized, T>(
 
 /// A host that can lease its Session to the interpreter.
 pub trait LeaseHdma: crate::runtime_access::RuntimeAccess {
-    type Lease<'a>: HdmaLease
+    type Lease<'a>: HdmaLease + crate::owned_hdma_update::context::Context
     where
         Self: 'a;
     /// One owned-Session view; open it only while `runtime_admissible`.
@@ -62,41 +60,6 @@ pub(crate) trait Interpreter: HdmaTable {
         let [low, high] = value.to_le_bytes();
         self.set_byte(at, low);
         self.set_byte(at + 1, high);
-    }
-}
-
-struct Leased<L>(L);
-
-impl<L: HdmaLease> HdmaTable for Leased<L> {
-    fn hdma_word(&self, word: crate::hdma::Word) -> u16 {
-        self.0.hdma_word(word)
-    }
-    fn store_hdma_word(
-        &mut self,
-        word: crate::hdma::Word,
-        value: u16,
-        order: crate::scene::state::WordOrder,
-    ) {
-        self.0.store_hdma_word(word, value, order);
-    }
-    fn store_hdma_byte(&mut self, word: crate::hdma::Word, high: bool, value: u8) {
-        self.0.store_hdma_byte(word, high, value);
-    }
-}
-
-impl<L: HdmaLease> Interpreter for Leased<L> {
-    type Game = L::Game;
-    fn byte(&self, at: usize) -> u8 {
-        self.0.byte(at)
-    }
-    fn set_byte(&mut self, at: usize, value: u8) {
-        self.0.set_byte(at, value);
-    }
-    fn image(&self) -> RomImage {
-        self.0.native_image()
-    }
-    fn foreign<T>(&mut self, action: impl FnOnce(&mut L::Game) -> T) -> T {
-        self.0.foreign(action)
     }
 }
 
@@ -134,182 +97,110 @@ pub(crate) fn table_words(objects: &mut HdmaObjects, mut each: impl FnMut(usize,
 /// `update_hdma`.
 pub fn run_objects<H: DispatchHost + LeaseHdma + ?Sized>(handler_carry: bool, game: &mut H) {
     if game.runtime_admissible() {
-        run(&mut Leased(game.hdma_lease()), handler_carry);
+        crate::owned_hdma_update::run_prepared(&mut game.hdma_lease(), handler_carry);
     } else {
-        let mut bridge = Bridged::load(game);
-        run(&mut bridge, handler_carry);
+        let bridge = Bridged::load(game);
+        crate::owned_hdma_update::run_prepared(&mut SharedFallback(bridge), handler_carry);
     }
 }
 
-fn run<I: Interpreter>(it: &mut I, handler_carry: bool) {
-    it.set_byte(0x85, 0);
-    let mut slot = 0usize;
-    loop {
-        it.store_hdma_word(
-            crate::hdma::Word::Selected,
-            slot as u16,
-            crate::scene::state::WordOrder::Little,
-        );
-        // The loop is the only writer of `selected`, so `slot` stays an
-        // even offset below 12 and names object `slot / 2`.
-        let channels = crate::hdma_word!(&*it, slot >> 1, Channels) as u8;
-        if channels != 0 {
-            let enabled = it.byte(0x85) | channels;
-            it.set_byte(0x85, enabled);
-            run_program(slot >> 1, it, handler_carry);
-            slot = usize::from(it.hdma_word(crate::hdma::Word::Selected));
-        }
-        slot += 2;
-        if slot == 2 * OBJECTS {
-            break;
-        }
+struct SharedFallback<I>(I);
+impl<I: Interpreter> HdmaTable for SharedFallback<I> {
+    fn hdma_word(&self, word: crate::hdma::Word) -> u16 {
+        self.0.hdma_word(word)
+    }
+    fn store_hdma_word(
+        &mut self,
+        word: crate::hdma::Word,
+        value: u16,
+        order: crate::scene::state::WordOrder,
+    ) {
+        self.0.store_hdma_word(word, value, order)
+    }
+    fn store_hdma_byte(&mut self, word: crate::hdma::Word, high: bool, value: u8) {
+        self.0.store_hdma_byte(word, high, value)
     }
 }
-
-fn run_program<I: Interpreter>(index: usize, it: &mut I, handler_carry: bool) {
-    let pre_instruction = (u32::from(crate::hdma_word!(it, index, PreInstructionBank)) << 16)
-        | u32::from(crate::hdma_word!(it, index, PreInstruction));
-    crate::hdma_dispatch::run_pre_action(pre_instruction, index, it, handler_carry);
-    let timer = crate::hdma_word!(it, index, InstructionTimer);
-    crate::hdma_word!(it, index, InstructionTimer => timer.wrapping_sub(1));
-    if timer != 1 {
-        return;
+impl<I: Interpreter> crate::cartridge::NativeImage for SharedFallback<I> {
+    fn native_image(&self) -> RomImage {
+        self.0.image()
     }
-    let base = bank_base((crate::hdma_word!(it, index, BankSlot) >> 8) as u8);
-    let program = crate::hdma_word!(it, index, InstructionList);
-    let image = it.image();
-    let position = base + program as isize;
-    let mut script = Script::at(
-        image.clone(),
-        usize::try_from(position).expect("HDMA program outside ROM"),
-    );
-    while script.word(0) & 0x8000 != 0 {
-        let next = execute(script.word(0), index, script.advance(2), it);
-        let Some(next) = next.resolve(&image, base) else {
-            return;
-        };
-        script = next;
-    }
-    crate::hdma_word!(it, index, InstructionTimer => script.word(0));
-    crate::hdma_word!(it, index, Table => script.word(2));
-    crate::hdma_word!(it, index, InstructionList => script.advance(4).offset_from(base) as u16);
 }
-
-fn execute<I: Interpreter>(handler: u16, index: usize, script: Script, it: &mut I) -> Script {
-    use crate::display::registers::{A1B0, BBAD0, DAS00, DMAP0};
-    use sm_data::hdma_programs::{ChannelRegister, Command};
-    let slot = 2 * index as u16;
-    let Some(command) = Command::decode(handler) else {
-        it.foreign(|game| game.rtl_unreachable());
-        return Script::Stop;
-    };
-    match command {
-        Command::Nothing => {}
-        Command::Delete => {
-            crate::hdma_word!(it, index, Channels => 0);
-            return Script::Stop;
-        }
-        Command::SetPreInstruction => {
-            crate::hdma_word!(it, index, PreInstruction => script.word(0));
-            crate::hdma_byte!(it, index, PreInstructionBank, false => script.byte(2));
-            return script.advance(3);
-        }
-        Command::ClearPreInstruction => crate::hdma_word!(it, index, PreInstruction => 0x858a),
-        Command::Call => {
-            let address = script.load24(0);
-            crate::hdma_dispatch::run_call(address, index, it);
-            return script.advance(3);
-        }
-        Command::Goto | Command::GotoRelative | Command::DecrementGoto { .. } => {
-            let relative = matches!(
-                command,
-                Command::GotoRelative | Command::DecrementGoto { relative: true }
-            );
-            if let Command::DecrementGoto { .. } = command {
-                let timer = crate::hdma_word!(it, index, Timer);
-                crate::hdma_word!(it, index, Timer => timer.wrapping_sub(1));
-                if timer == 1 {
-                    return script.advance(if relative { 1 } else { 2 });
-                }
-            }
-            return if relative {
-                script.advance(script.byte(0) as i8 as isize)
-            } else {
-                Script::jump(script.word(0))
-            };
-        }
-        Command::SetTimer => {
-            crate::hdma_byte!(it, index, Timer, false => script.byte(0));
-            return script.advance(1);
-        }
-        Command::SetChannelRegister(register) => {
-            let register = match register {
-                ChannelRegister::Control => DMAP0,
-                ChannelRegister::Target => BBAD0,
-                ChannelRegister::TableBank => A1B0,
-                ChannelRegister::IndirectBank => DAS00,
-            } as u16;
-            let channel = crate::hdma_word!(it, index, BankSlot) & 0xff;
-            let value = script.byte(0);
-            it.foreign(|game| {
-                crate::hdma_objects::write_channel_register(register + channel, value, game)
-            });
-            return script.advance(1);
-        }
-        Command::SetTable => {
-            crate::hdma_word!(it, index, Table => script.word(0));
-            return script.advance(2);
-        }
-        Command::Sleep => {
-            let base = bank_base((crate::hdma_word!(it, index, BankSlot) >> 8) as u8);
-            crate::hdma_word!(it, index, InstructionList => (script.offset_from(base) - 2) as u16);
-            return Script::Stop;
-        }
-        Command::SetVariableB => crate::hdma_word!(it, index, B => 1),
-        Command::SetVariableC => crate::hdma_word!(it, index, C => 112),
-        Command::SelectCeresTable => it.set_word(crate::ram::words::HDMA_DATA_TABLE_IN_CERES, 9),
-        Command::PickBg3Velocity => {
-            let random = it.word(crate::ram::words::RANDOM_NUMBER);
-            let velocity = it.foreign(|game| {
-                crate::imported::word(
-                    &game.visual_tables().bg3_x_velocities,
-                    game,
-                    sm_data::hdma_objects::BG3_X_VELOCITY_ADDRESS,
-                    ((random >> 1 & 6) >> 1) as isize,
-                )
-            });
-            crate::hdma_word!(it, index, D => velocity);
-        }
-        Command::EventScroll => {
-            crate::hdma_word!(it, index, C => 0);
-            crate::hdma_word!(it, index, A => 0);
-            let opened =
-                it.foreign(|game| crate::progress::leased::event_has_happened(0xa, game)) != 0;
-            let offset: u16 = if opened { 0xff10 } else { 0 };
-            crate::hdma_word!(it, index, B => offset);
-            let [low, high] = offset.to_ne_bytes();
-            it.set_byte(0x9e00, low);
-            it.set_byte(0x9e01, high);
-            if opened {
-                return Script::jump(script.word(0));
-            }
-            let [low, high] = 1u16.to_ne_bytes();
-            it.set_byte(0xcd20, low);
-            it.set_byte(0xcd21, high);
-            return script.advance(2);
-        }
-        Command::InitializePhantoonWave => it.foreign(|game| {
-            crate::hdma_effects::apply_leased(HdmaEffect::InitializePhantoonWave, slot, game)
-        }),
-        Command::InitializeEyeBeam => it.foreign(|game| {
-            crate::hdma_effects::apply_leased(HdmaEffect::InitializeEyeBeam, slot, game)
-        }),
-        Command::ResetWave => {
-            it.foreign(|game| crate::hdma_effects::apply_leased(HdmaEffect::ResetWave, slot, game))
-        }
-        Command::RestartTitleGradient => it.foreign(crate::hdma_objects::restart_title_gradient),
+impl<I: Interpreter> crate::owned_hdma_update::Host for SharedFallback<I> {
+    fn enable_byte(&self) -> u8 {
+        self.0.byte(0x85)
     }
-    script
+    fn store_enable_byte(&mut self, value: u8) {
+        self.0.set_byte(0x85, value)
+    }
+    fn random_number(&self) -> u16 {
+        self.0.word(crate::ram::words::RANDOM_NUMBER)
+    }
+    fn event_happened(&mut self, event: u16) -> bool {
+        self.0
+            .foreign(|game| crate::progress::leased::event_has_happened(event, game))
+            != 0
+    }
+    fn pre_instruction(
+        &mut self,
+        action: crate::hdma_dispatch::HdmaPreAction,
+        captured: usize,
+        carry: bool,
+    ) {
+        let address = crate::hdma_dispatch::HDMA_PRE_ACTIONS
+            .iter()
+            .find(|(_, candidate)| *candidate == action)
+            .expect("registered preinstruction")
+            .0;
+        crate::hdma_dispatch::run_pre_action(address, captured, &mut self.0, carry);
+    }
+    fn call(&mut self, action: crate::hdma_dispatch::HdmaCall, captured: usize) {
+        let address = crate::hdma_dispatch::HDMA_CALLS
+            .iter()
+            .find(|(_, candidate)| *candidate == action)
+            .expect("registered call")
+            .0;
+        crate::hdma_dispatch::run_call(address, captured, &mut self.0);
+    }
+    fn effect(&mut self, effect: crate::hdma_objects::HdmaEffect, captured: usize) {
+        let slot = 2 * u16::try_from(captured).expect("captured HDMA effect");
+        self.0
+            .foreign(|game| crate::hdma_effects::apply_leased(effect, slot, game));
+    }
+    fn channel_register(&mut self, address: u16, value: u8) {
+        self.0
+            .foreign(|game| crate::hdma_objects::write_channel_register(address, value, game));
+    }
+    fn bg3_velocity(&mut self, index: isize) -> u16 {
+        self.0.foreign(|game| {
+            crate::imported::word(
+                &game.visual_tables().bg3_x_velocities,
+                game,
+                sm_data::hdma_objects::BG3_X_VELOCITY_ADDRESS,
+                index,
+            )
+        })
+    }
+    fn select_ceres_table(&mut self, value: u16) {
+        self.0
+            .set_word(crate::ram::words::HDMA_DATA_TABLE_IN_CERES, value)
+    }
+    fn statue_scroll(&mut self, value: u16) {
+        let [first, second] = value.to_ne_bytes();
+        self.0.set_byte(0x9e00, first);
+        self.0.set_byte(0x9e01, second);
+    }
+    fn statue_tiles(&mut self, value: u16) {
+        let [first, second] = value.to_ne_bytes();
+        self.0.set_byte(0xcd20, first);
+        self.0.set_byte(0xcd21, second);
+    }
+    fn restart_title_gradient(&mut self) {
+        self.0.foreign(crate::hdma_objects::restart_title_gradient)
+    }
+    fn unreachable(&mut self) {
+        self.0.foreign(|game| game.rtl_unreachable());
+    }
 }
 
 #[cfg(test)]

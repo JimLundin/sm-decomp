@@ -9,17 +9,16 @@ use super::{
 use crate::display::sequence::scroll;
 
 pub trait EntryHost:
-    crate::visual_host::Host
-    + crate::enemy_projectiles::host::Host
-    + crate::player_projectiles::host::Host
+    crate::enemy_projectiles::host::Host
+    + crate::progress::FlagHost
     + EntryContent
     + EntryEffects
+    + crate::player_projectiles::host::Host
+    + crate::visual_host::Host
 {
 }
 pub trait EntryEffects:
-    crate::session_access::SessionAccess
-    + crate::runtime_access::SessionRam
-    + crate::ram::CompatibilityRam
+    crate::session_access::SessionAccess + crate::display_scroll::Access
 {
     fn read_external(&mut self, field: ExternalField) -> u16;
     fn write_external(&mut self, field: ExternalField, value: u16);
@@ -37,8 +36,14 @@ pub trait EntryEffects:
         // Layer 1 and BG1's offsets publish through the bytes: they are
         // also the lease's camera observations.
         match field.word() {
-            CameraWord::Layer1(axis) => crate::camera::set_layer1(self, axis, value),
-            CameraWord::Bg1Offset(axis) => crate::camera::set_bg1_offset(self, axis, value),
+            CameraWord::Layer1(axis) => {
+                self.session_mut().room.camera.layer1[axis] = value;
+                self.refresh_inputs();
+            }
+            CameraWord::Bg1Offset(axis) => {
+                self.session_mut().room.camera.bg1_offset[axis] = value;
+                self.refresh_inputs();
+            }
             CameraWord::Layer2(axis) => self.session_mut().room.camera.layer2[axis] = value,
             CameraWord::Bg2Scroll(axis) => self.session_mut().room.camera.bg2_scroll[axis] = value,
             CameraWord::Mirror(word) => scroll::write(self, word, value),

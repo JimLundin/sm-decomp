@@ -22,13 +22,11 @@ use sm_game::geometry::Point;
 /// its function, then its body segments; the multiplicand writes and an
 /// unknown function's failure run on the game.
 pub(crate) fn run_main_ai(runtime: &mut Runtime<'_>) {
-    let known = main_ai(runtime, |operand, runtime: &mut Runtime<'_>| {
-        runtime.foreign(|game| write_multiplicand(operand, game));
-    });
+    let known = owned::main_ai(runtime);
     if !known {
         runtime.foreign(|game| crate::rtl::report_unreachable(game));
     }
-    update_segments(runtime);
+    owned::update_segments(runtime);
 }
 
 impl Host for Game {
@@ -68,5 +66,76 @@ impl Host for Game {
 
     fn update_frozen_enemy(&mut self) {
         scheduling::update_frozen_enemy(&mut Runtime::new(self));
+    }
+}
+
+impl owned::Host for Runtime<'_> {
+    fn create_sprite(&mut self, x: u16, y: u16, kind: u16, appearance: u16) -> u16 {
+        self.foreign(|game| sprites::create_sprite(x, y, kind, appearance, game))
+    }
+    fn spawn_projectile(&mut self, parameter: u16, key: u16, definition: u16) -> u16 {
+        sm_game::enemy_projectiles::lifecycle::spawn_from_enemy(self, parameter, key, definition)
+    }
+    fn distance_and_direction(&mut self, origin: Point, target: Point) -> (u16, u16) {
+        let pair = sm_game::actors::queries::distance_and_direction(self, origin, target);
+        (pair.distance, pair.direction)
+    }
+    fn command_player(&mut self, command: u16) {
+        sm_game::player_transitions::command(
+            self,
+            command,
+            sm_game::player_transitions::commands::finish_ceres_arrival,
+        );
+    }
+    fn correct_previous_position(&mut self) {
+        sm_game::player_position::correct_previous_position(self);
+    }
+    fn write_maw_operand(&mut self, operand: u8) {
+        self.foreign(|game| write_multiplicand(operand, game));
+    }
+    fn enemy_sine(&mut self, index: isize) -> u16 {
+        sm_game::gameplay_tables::enemy_sine(self, index)
+    }
+    fn attack_list(&mut self, index: isize) -> u16 {
+        sm_game::actor_tables::word(self, |tables| &tables.maw_attack_lists, index)
+    }
+    fn attachment_offset(&mut self, y: bool, native: bool, index: isize) -> u16 {
+        let address = if y { 0xa8a0a9 } else { 0xa8a0a7 };
+        let image = if native {
+            self.native_image()
+        } else {
+            self.loaded_image().expect("Maw loaded source")
+        };
+        image.table_word(
+            usize::try_from(sm_data::cartridge::lorom_offset(address)).expect("Maw offset table"),
+            index,
+        )
+    }
+    fn enemy_speed(&self, table: sm_data::enemy_speeds::SpeedTable, index: isize) -> u16 {
+        Runtime::enemy_speed(self, table, index)
+    }
+    fn update_maw_visibility(&mut self, key: i32) {
+        Runtime::update_maw_visibility(self, key);
+    }
+    fn update_maw_segment(&mut self, part: u8) {
+        sm_game::enemy_projectiles::attachments_spore_maw::update_maw_segment(part, self);
+    }
+    fn maw_appearance(&mut self, handle: u16, appearance: u16, key: u16) {
+        self.foreign(|game| sprites::maw_appearance(handle, appearance, key, game));
+    }
+    fn shot_reaction(&mut self, shot: sm_game::actors::host::Shot) {
+        sm_game::actors::host::ActorRuntime::shot_reaction(self, shot);
+    }
+    fn free_projectile(&mut self, key: u16) {
+        self.write_slice_native(0x1997 + usize::from(key), 0);
+    }
+    fn retire_sprite(&mut self, handle: u16) {
+        self.foreign(|game| sprites::retire(handle, game));
+    }
+    fn update_frozen_enemy(&mut self) {
+        scheduling::update_frozen_enemy(self);
+    }
+    fn update_maw_palette(&mut self, handle: u16) {
+        sm_game::enemy_projectiles::attachments_spore_maw::update_maw_palette(handle, self);
     }
 }

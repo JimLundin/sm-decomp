@@ -8,7 +8,7 @@ use crate::records::Records;
 use sm_data::cartridge::RomImage;
 use sm_data::enemy_lists::*;
 
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ImportedEnemyLists {
     orb: ImportedWords<ORB_INSTRUCTION_LISTS, ORB_DIRECTIONS>,
     spark: ImportedWords<SPARK_INSTRUCTION_LISTS, SPARK_KINDS>,

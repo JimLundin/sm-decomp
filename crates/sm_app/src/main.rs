@@ -1,4 +1,5 @@
 #![deny(unsafe_op_in_unsafe_fn)]
+mod message_display;
 use core::ffi::{c_char, c_void};
 use core::ptr::null_mut;
 use sdl2_sys::SDL_MessageBoxFlags::{SDL_MESSAGEBOX_ERROR, SDL_MESSAGEBOX_WARNING};
@@ -126,11 +127,14 @@ pub unsafe fn rtl_draw_ppu_frame(
             &raw mut PIXELS as *mut u8
         };
         for y in 0usize..240 {
+            let source = message_display::row(game, y).map_or_else(
+                || ppu_pixels.offset(y.wrapping_mul(256 * 4) as isize) as *const c_void,
+                |row| row.as_ptr().cast::<c_void>(),
+            );
             memcpy(
-                (pixel_buffer).offset(y.wrapping_mul(pitch) as isize) as *mut c_void,
-                ppu_pixels.offset(y.wrapping_mul(256 as usize).wrapping_mul(4 as usize) as isize)
-                    as *const c_void,
-                (256 * 4) as usize,
+                pixel_buffer.offset(y.wrapping_mul(pitch) as isize) as *mut c_void,
+                source,
+                256 * 4,
             );
         }
     }

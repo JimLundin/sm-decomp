@@ -224,6 +224,18 @@ pub trait Effects {
     fn statue_wait_actor(&mut self, actor: u16, waiting: bool);
     fn diagnostic(&mut self, diagnostic: Diagnostic) -> u8;
 }
+/// Door closure only acquires these two records. Allocation and reuse stay in
+/// the mechanism core; this does not require unrelated room loading operations.
+pub trait ClosingContent {
+    fn capture_closing_door(
+        &mut self,
+        exit: &crate::room_entry::world::Identity<crate::room_entry::world::ExitId>,
+    ) -> crate::room_entry::content::ClosingDoorCapture;
+    fn capture_closing_header(
+        &mut self,
+        direction: u16,
+    ) -> crate::room_entry::content::ClosingHeaderCapture;
+}
 pub trait Host:
     SessionAccess + crate::gameplay_flag_host::Host + ImportedAliases + Content + Graphics + Effects
 {

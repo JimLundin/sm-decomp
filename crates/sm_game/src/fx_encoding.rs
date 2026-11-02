@@ -134,6 +134,7 @@ pub fn source_address(owner: LiveOwner, offset: usize) -> Option<usize> {
         LiveOwner::SkyHorizontal => 0x9e80,
         LiveOwner::SkyIndirect => 0x9f00,
         LiveOwner::SkyBg2 => 0x9f80,
+        LiveOwner::CrocomireBg2 => 0xcae0,
         _ => return None,
     };
     first.checked_add(offset)
@@ -142,6 +143,7 @@ pub fn source_coordinate(at: usize) -> Option<(LiveOwner, usize)> {
     match at {
         0xc406..=0xc607 => Some((LiveOwner::ExplosionLeft, at - 0xc406)),
         0x9800..=0x9bff => Some((LiveOwner::HdmaTable1, at - 0x9800)),
+        0xcae0..=0xccef => Some((LiveOwner::CrocomireBg2, at - 0xcae0)),
         0x9d00..=0x9dff => Some((LiveOwner::HdmaTable2, at - 0x9d00)),
         0x9c00..=0x9cff => Some((LiveOwner::LiquidSurface, at - 0x9c00)),
         0x9e00..=0x9fff => Some((LiveOwner::WindowLeft, at - 0x9e00)),
@@ -167,15 +169,15 @@ pub fn decode_sources(
         },
         HdmaOwnedBuffer {
             owner: LiveOwner::HdmaTable2,
-            bytes: (0x9d00..0x9e00).map(bytes).collect(),
+            bytes: (0x9d00..0xa000).map(bytes).collect(),
         },
         HdmaOwnedBuffer {
             owner: LiveOwner::LiquidSurface,
             bytes: (0x9c00..0x9d00).map(bytes).collect(),
         },
         HdmaOwnedBuffer {
-            owner: LiveOwner::WindowLeft,
-            bytes: (0x9e00..0xa000).map(bytes).collect(),
+            owner: LiveOwner::CrocomireBg2,
+            bytes: (0xcae0..0xccf0).map(bytes).collect(),
         },
     ];
     let mut regions: Vec<_> = [
@@ -193,7 +195,7 @@ pub fn decode_sources(
             2,
         ),
         (LiveOwner::HdmaTable1, LiveOwner::HdmaTable1, 0, 1024),
-        (LiveOwner::HdmaTable2, LiveOwner::HdmaTable2, 0, 256),
+        (LiveOwner::HdmaTable2, LiveOwner::HdmaTable2, 0, 768),
         (LiveOwner::LiquidSurface, LiveOwner::LiquidSurface, 0, 256),
         (
             LiveOwner::LiquidBackground,
@@ -201,21 +203,22 @@ pub fn decode_sources(
             0x46,
             256 - 0x46,
         ),
-        (LiveOwner::WindowLeft, LiveOwner::WindowLeft, 0, 512),
+        (LiveOwner::WindowLeft, LiveOwner::HdmaTable2, 256, 512),
+        (LiveOwner::CrocomireBg2, LiveOwner::CrocomireBg2, 0, 528),
         (
             LiveOwner::WindowRight,
-            LiveOwner::WindowLeft,
-            0x10,
+            LiveOwner::HdmaTable2,
+            0x110,
             512 - 0x10,
         ),
         (
             LiveOwner::SkyHorizontal,
-            LiveOwner::WindowLeft,
-            0x80,
+            LiveOwner::HdmaTable2,
+            0x180,
             512 - 0x80,
         ),
-        (LiveOwner::SkyIndirect, LiveOwner::WindowLeft, 0x100, 256),
-        (LiveOwner::SkyBg2, LiveOwner::WindowLeft, 0x180, 128),
+        (LiveOwner::SkyIndirect, LiveOwner::HdmaTable2, 0x200, 256),
+        (LiveOwner::SkyBg2, LiveOwner::HdmaTable2, 0x280, 128),
     ]
     .into_iter()
     .map(|(owner, storage, offset, length)| HdmaLiveRegion {
@@ -245,18 +248,25 @@ pub fn decode_sources(
     let lanes = core::array::from_fn(|index| {
         Some(
             crate::menu_window_encoding::address(crate::menu_window_state::Field::ALL[index / 2])
-                - 0x9e00
+                - 0x9d00
                 + index % 2,
         )
     });
     live.bind_window_controls(
         crate::fx_sources::WindowControlLayout {
-            storage: LiveOwner::WindowLeft,
+            storage: LiveOwner::HdmaTable2,
             lanes,
         },
         Some(window),
     )
     .expect("FX window source topology");
+    live.bind_producers(
+        crate::scene::hdma_sources::MajorHdmaRole::ALL
+            .into_iter()
+            .map(|role| (role, role.declaration()))
+            .collect(),
+    )
+    .expect("original boss producer source topology");
     live
 }
 pub fn physical_source_coordinate(
@@ -310,7 +320,7 @@ pub fn write_source_byte(session: &mut crate::session::Session, at: usize, byte:
 }
 pub fn encode_sources(session: &crate::session::Session, mut span: impl FnMut(usize, &[u8])) {
     if session.fx_sources.is_some() {
-        for at in (0x9800..0xa000).chain(0xc406..0xc608) {
+        for at in (0x9800..0xa000).chain(0xc406..0xc608).chain(0xcae0..0xccf0) {
             if crate::menu_window_encoding::lane(at).is_some() {
                 continue;
             }
@@ -332,19 +342,7 @@ pub fn encode_display_sources(
     mut span: impl FnMut(usize, &[u8]),
 ) {
     let graph = display_control_graph(display).expect("source export topology");
-    for binding in display
-        .hdma
-        .channels
-        .iter()
-        .flat_map(|channel| [&channel.table, &channel.source])
-        .chain(
-            display
-                .hdma
-                .objects
-                .iter()
-                .map(|object| &object.instruction),
-        )
-    {
+    for binding in display.hdma_live.source_bindings(&display.hdma) {
         let crate::scene::hdma_sources::SourceBinding::LiveOwner { owner, windows } = binding
         else {
             continue;
@@ -485,19 +483,7 @@ pub fn physical_source_spans(
             at..at + 1
         })
         .collect();
-    for binding in display
-        .hdma
-        .channels
-        .iter()
-        .flat_map(|channel| [&channel.table, &channel.source])
-        .chain(
-            display
-                .hdma
-                .objects
-                .iter()
-                .map(|object| &object.instruction),
-        )
-    {
+    for binding in display.hdma_live.source_bindings(&display.hdma) {
         let crate::scene::hdma_sources::SourceBinding::LiveOwner { owner, windows } = binding
         else {
             continue;
@@ -549,19 +535,7 @@ pub fn adopt_display_sources(
 ) -> Result<(), crate::scene::state::DisplayError> {
     adopt_workspace_sources(display, bytes, order)?;
     let mut candidates = std::collections::BTreeMap::new();
-    for binding in display
-        .hdma
-        .channels
-        .iter()
-        .flat_map(|channel| [&channel.table, &channel.source])
-        .chain(
-            display
-                .hdma
-                .objects
-                .iter()
-                .map(|object| &object.instruction),
-        )
-    {
+    for binding in display.hdma_live.source_bindings(&display.hdma) {
         let crate::scene::hdma_sources::SourceBinding::LiveOwner { owner, windows } = binding
         else {
             continue;
@@ -664,19 +638,7 @@ fn adopt_workspace_sources(
         saved: Option<crate::fx_domain::SourceOrigin>,
     }
     let mut candidates = std::collections::BTreeMap::new();
-    for binding in display
-        .hdma
-        .channels
-        .iter()
-        .flat_map(|channel| [&channel.table, &channel.source])
-        .chain(
-            display
-                .hdma
-                .objects
-                .iter()
-                .map(|object| &object.instruction),
-        )
-    {
+    for binding in display.hdma_live.source_bindings(&display.hdma) {
         let crate::scene::hdma_sources::SourceBinding::LiveOwner { owner, windows } = binding
         else {
             continue;
@@ -1553,19 +1515,7 @@ pub(crate) fn visit_owner_addresses(
     selected: ControlOwner,
     mut visit: impl FnMut(usize),
 ) -> Result<(), crate::scene::state::DisplayError> {
-    for binding in display
-        .hdma
-        .channels
-        .iter()
-        .flat_map(|channel| [&channel.table, &channel.source])
-        .chain(
-            display
-                .hdma
-                .objects
-                .iter()
-                .map(|object| &object.instruction),
-        )
-    {
+    for binding in display.hdma_live.source_bindings(&display.hdma) {
         let crate::scene::hdma_sources::SourceBinding::LiveOwner { owner, windows } = binding
         else {
             continue;
@@ -1630,19 +1580,7 @@ fn display_owner_address(
             latest = Some((rank, at));
         }
     };
-    for binding in display
-        .hdma
-        .channels
-        .iter()
-        .flat_map(|channel| [&channel.table, &channel.source])
-        .chain(
-            display
-                .hdma
-                .objects
-                .iter()
-                .map(|object| &object.instruction),
-        )
-    {
+    for binding in display.hdma_live.source_bindings(&display.hdma) {
         let crate::scene::hdma_sources::SourceBinding::LiveOwner { owner, windows } = binding
         else {
             continue;
@@ -1814,19 +1752,7 @@ pub fn adopt_session_sources(
     let graph = control_graph(session)?;
     let display = &session.presentation.owner()?.state;
     let mut coordinates = std::collections::BTreeSet::new();
-    for binding in display
-        .hdma
-        .channels
-        .iter()
-        .flat_map(|channel| [&channel.table, &channel.source])
-        .chain(
-            display
-                .hdma
-                .objects
-                .iter()
-                .map(|object| &object.instruction),
-        )
-    {
+    for binding in display.hdma_live.source_bindings(&display.hdma) {
         let crate::scene::hdma_sources::SourceBinding::LiveOwner { owner, windows } = binding
         else {
             continue;

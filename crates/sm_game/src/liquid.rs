@@ -182,6 +182,24 @@ impl LiquidWords {
     }
 }
 
+impl crate::session_cohort::Cohort for LiquidWords {
+    fn words(&mut self, mut visit: impl FnMut(usize, &mut u16)) {
+        for (at, word) in self.slots() {
+            visit(at, word);
+        }
+    }
+    fn session_words(
+        session: &mut crate::session::Session,
+        mut visit: impl FnMut(usize, &mut u16),
+    ) {
+        let mut words = Self::of(&session.room);
+        for (at, word) in words.slots() {
+            visit(at, word);
+        }
+        words.store(&mut session.room);
+    }
+}
+
 /// The bank $88 handlers in `Liquid::rising`: lava and acid ("hot") liquids and
 /// water each idle, count down `Room::liquid_delay`, then move to the target.
 pub mod rising {

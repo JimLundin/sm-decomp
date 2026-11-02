@@ -201,16 +201,9 @@ pub fn command<H: Host + player_projectiles::host::Host>(
             0
         }
         0x14 => {
-            if h.session().inventory.health.current.wrapping_sub(31) & 0x8000 != 0 {
-                VisualEffects::sound(h, 3, 6, 2);
-            }
-            if h.session().player.grapple != 0xc4f0 {
-                VisualEffects::sound(h, 1, 6, 6);
-            } else if h.session().player.movement_and_facing as u8 == 3 {
-                // This command tests facing, unlike the movement-sound command.
-                let cue = spin_sound(h.session().player.pose);
-                VisualEffects::sound(h, 1, 6, cue);
-            }
+            super::message_sound::restore_control(h, |h, channel, limit, sound| {
+                VisualEffects::sound(h, channel, limit, sound);
+            });
             0
         }
         0x15 => {

@@ -20,7 +20,7 @@ pub fn advance_cinematic_fade<H: crate::menus::host::Host + ?Sized>(
 }
 
 /// The cinematic palette fades' working planes: the BG2 tilemap buffer
-/// $7E:2000..$7E:2FFF (`actors.extended.blocks[4..6]`), by word. Word
+/// $7E:2000..$7E:2FFF (`actors.extended.tilemaps`), by word. Word
 /// `index` of plane `n` (0..8) is word `256 * n + index`.
 #[derive(Clone, Debug, PartialEq)]
 pub struct FadePlanes(pub Box<[u16; 2048]>);
@@ -41,7 +41,7 @@ impl crate::session_cohort::Cohort for FadePlanes {
         session: &mut crate::session::Session,
         mut visit: impl FnMut(usize, &mut u16),
     ) {
-        let blocks = &mut session.actors.extended.blocks[4..6];
+        let blocks = &mut session.actors.extended.tilemaps;
         for (index, word) in blocks.iter_mut().flatten().enumerate() {
             visit(0x2000 + 2 * index, word);
         }
@@ -112,7 +112,7 @@ pub fn set_cinematic_colors<H: crate::menus::host::Host + ?Sized>(
     value: u16,
     game: &mut H,
 ) {
-    crate::session_cohort::with(game, |_, palette: &mut PaletteBuffer| {
+    crate::cinematic_access::with(game, |_, palette: &mut PaletteBuffer| {
         for &index in indices {
             palette.0[index] = value;
         }
@@ -124,7 +124,7 @@ pub fn clear_cinematic_colors<H: crate::menus::host::Host + ?Sized>(
     count: u16,
     game: &mut H,
 ) {
-    crate::session_cohort::with(game, |_, planes: &mut FadePlanes| {
+    crate::cinematic_access::with(game, |_, planes: &mut FadePlanes| {
         for index in cinematic_color_indices(offset, count) {
             for plane in [256, 512, 768, 1024] {
                 planes.0[index + plane] = 0;
@@ -134,7 +134,7 @@ pub fn clear_cinematic_colors<H: crate::menus::host::Host + ?Sized>(
 }
 
 pub fn compose_cinematic_palette<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    crate::session_cohort::with(
+    crate::cinematic_access::with(
         game,
         |_, (planes, palette): &mut (FadePlanes, PaletteBuffer)| {
             for index in 0..256 {
@@ -156,7 +156,7 @@ pub fn fade_cinematic_colors<H: crate::menus::host::Host + ?Sized>(
     increasing: bool,
     game: &mut H,
 ) {
-    crate::session_cohort::with(game, |_, planes: &mut FadePlanes| {
+    crate::cinematic_access::with(game, |_, planes: &mut FadePlanes| {
         for index in cinematic_color_indices(offset, count) {
             for plane in [512, 768, 1024] {
                 let current = index + plane;
@@ -173,7 +173,7 @@ pub fn fade_cinematic_colors<H: crate::menus::host::Host + ?Sized>(
 }
 
 pub fn prepare_cinematic_palette_fade<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    crate::session_cohort::with(game, |_, planes: &mut FadePlanes| {
+    crate::cinematic_access::with(game, |_, planes: &mut FadePlanes| {
         for index in 0..256 {
             let color = planes.0[index + 256];
             for channel in 0..3 {

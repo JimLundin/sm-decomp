@@ -420,6 +420,6 @@ pub fn main_ai(runtime: &mut impl ActorLease) {
             });
         }
         function::AWAKE => awake(runtime, key),
-        _ => runtime.unreachable(),
+        _ => crate::enemy_projectiles::host::Effects::unreachable(runtime),
     }
 }

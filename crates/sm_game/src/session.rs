@@ -113,10 +113,10 @@ pub use crate::geometry::{FixedMotion, Point, Position, Rectangle, Vector32};
 use crate::item_pickups::Inventory;
 #[derive(Clone, Debug, PartialEq)]
 pub struct Session {
+    pub suspended_work: crate::suspended_work::SuspendedWork,
     pub game_loop: crate::game_loop::GameLoop,
     pub actor_identity: crate::actors::identity::ActorIdentityState,
     pub actors: crate::actors::state::Actors,
-    pub botwoon_death: crate::actors::botwoon_death::DeathProtocol,
     pub timing: Timing,
     pub fx: crate::fx_state::FxState,
     pub fx_control_ownership: crate::fx_state::ControlOwnership,
@@ -127,6 +127,7 @@ pub struct Session {
     pub menu: crate::menu_state::MenuState,
     pub menu_window: crate::menu_window_state::WindowState,
     pub menu_screens: crate::menu_state::MenuScreens,
+    pub save_state: crate::player_effects::save::State,
     pub prepared_dialogue: Option<crate::message_composition::prepared::ExecutionDescription>,
     pub world: std::sync::Arc<crate::room_entry::world::WorldBinding>,
     pub control: crate::session_owners::Control,
@@ -290,10 +291,10 @@ impl Session {
     }
     pub fn with_world(world: std::sync::Arc<crate::room_entry::world::WorldBinding>) -> Self {
         Self {
+            suspended_work: Default::default(),
             game_loop: crate::game_loop::GameLoop::default(),
             actor_identity: crate::actors::identity::ActorIdentityState::empty(),
             actors: Default::default(),
-            botwoon_death: Default::default(),
             timing: Default::default(),
             fx: Default::default(),
             fx_control_ownership: Default::default(),
@@ -303,6 +304,7 @@ impl Session {
             menu: Default::default(),
             menu_window: Default::default(),
             menu_screens: Default::default(),
+            save_state: Default::default(),
             prepared_dialogue: None,
             room: Room::with_world(&world),
             queued_tilemaps: crate::display::queued_tilemaps::QueuedTilemaps::initialized(),
@@ -464,8 +466,11 @@ pub struct Cell {
 }
 pub const TERRAIN_CELLS: usize = 12_800;
 pub const TILE_DEFINITIONS: usize = 1_024;
+pub const LAYER2_WORDS: usize = 13_567;
 #[derive(Clone, Debug, PartialEq)]
 pub struct Terrain {
+    pub decompressed_size: u16,
+    layer2: Box<[u16]>,
     cells: Box<[Cell]>,
     tiles: Box<[[u16; 4]]>,
 }
@@ -473,16 +478,36 @@ pub struct Terrain {
 pub enum ShapeError {
     TerrainCapacity,
     TileCapacity,
+    Layer2Capacity,
 }
 impl Terrain {
-    pub fn from_owned(cells: Box<[Cell]>, tiles: Box<[[u16; 4]]>) -> Result<Self, ShapeError> {
+    pub fn from_owned(
+        cells: Box<[Cell]>,
+        tiles: Box<[[u16; 4]]>,
+        decompressed_size: u16,
+        layer2: Box<[u16]>,
+    ) -> Result<Self, ShapeError> {
         if cells.len() != TERRAIN_CELLS {
             return Err(ShapeError::TerrainCapacity);
         }
         if tiles.len() != TILE_DEFINITIONS {
             return Err(ShapeError::TileCapacity);
         }
-        Ok(Self { cells, tiles })
+        if layer2.len() != LAYER2_WORDS {
+            return Err(ShapeError::Layer2Capacity);
+        }
+        Ok(Self {
+            cells,
+            tiles,
+            decompressed_size,
+            layer2,
+        })
+    }
+    pub fn layer2(&self) -> &[u16] {
+        &self.layer2
+    }
+    pub fn layer2_mut(&mut self) -> &mut [u16] {
+        &mut self.layer2
     }
     pub fn cells(&self) -> &[Cell] {
         &self.cells
@@ -506,6 +531,8 @@ pub struct Room {
     pub area: u16,
     pub width: u16,
     pub height: u16,
+    /// The fifty room scroll bytes at CD20..CD51.
+    pub scrolls: [u8; 50],
     pub scroll_width: u16,
     pub scroll_height: u16,
     pub size_bytes: u16,
@@ -592,11 +619,13 @@ impl Room {
                 elevator_flags: 0,
                 elevator_status: 0,
                 irq_policy: 0,
+                execution: Default::default(),
             },
             terrain: Default::default(),
             area: 0,
             width: 0,
             height: 0,
+            scrolls: [0; 50],
             scroll_width: 0,
             scroll_height: 0,
             size_bytes: 0,
@@ -645,6 +674,8 @@ pub struct MessageRequests {
 impl Default for Terrain {
     fn default() -> Self {
         Self {
+            decompressed_size: 0,
+            layer2: vec![0; LAYER2_WORDS].into_boxed_slice(),
             cells: vec![Cell::default(); TERRAIN_CELLS].into_boxed_slice(),
             tiles: vec![[0; 4]; TILE_DEFINITIONS].into_boxed_slice(),
         }
@@ -749,6 +780,8 @@ pub struct EnemyProjectiles {
     pub selected: u16,
     pub spawn: SpawnContext,
     pub drop_bias: u16,
+    /// Shared origin for synchronous enemy drops; survives slot retirement/reuse.
+    pub drop_origin: Point,
 }
 
 /// The game options the session reads.

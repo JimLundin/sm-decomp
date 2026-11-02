@@ -128,7 +128,12 @@ fn advance_player(rt: &mut impl ActorLease, amount: i32) {
 fn entrance(rt: &mut impl ActorLease, index: u16, opening: bool) {
     set_instruction(rt, part(index, PAD), if opening { 0xa5be } else { 0xa5ee });
     session_slot!(rt, Gunship[0].entrance_timer = 144);
-    rt.queue_sound(3, 6, if opening { 0x14 } else { 0x15 });
+    crate::enemy_projectiles::host::Effects::queue_sound(
+        rt,
+        3,
+        6,
+        if opening { 0x14 } else { 0x15 },
+    );
 }
 fn save(rt: &mut impl ActorLease) {
     crate::probe::hit("gunship.save");
@@ -231,7 +236,7 @@ fn hover(rt: &mut impl ActorLease, index: u16) {
 pub fn main(rt: &mut impl ActorLease) -> u32 {
     let bottom = combat::current_slot(rt) + BOTTOM_PART;
     if hover_expired(rt, bottom) {
-        rt.queue_sound(2, 6, 0x4d);
+        crate::enemy_projectiles::host::Effects::queue_sound(rt, 2, 6, 0x4d);
         session_slot!(rt, Gunship[bottom].hover_timer = 70);
     }
     let top = combat::current_slot(rt);
@@ -349,7 +354,7 @@ fn move_player(rt: &mut impl ActorLease, index: u16, function: u16) {
 /// Samus entered - go to liftoff or restore Samus health / ammo ($A2:AAA2).
 fn refill(rt: &mut impl ActorLease, index: u16) {
     let top = part(index, TOP);
-    if rt.event_happened(0xe) {
+    if Host::event_happened(rt, 0xe) {
         session_slot!(rt, Gunship[top].function = LOAD_DUST_CLOUD_TILES);
         session_slot!(rt, Gunship[part(index, BOTTOM_PART)]; function = 0, step = 0);
         rt.write_slice_le(W::SUBSTATE, 0);

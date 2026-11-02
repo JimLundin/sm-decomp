@@ -9,7 +9,6 @@ use crate::ram::RawRam as _;
 use crate::ram::{checked_word, word};
 use crate::scene::hdma_sources::LiveOwner;
 use crate::scene::state::WordOrder;
-use crate::session_access::SessionAccess;
 
 /// The HDMA effects whose state the host's session view projects.
 #[derive(Clone, Copy)]
@@ -46,7 +45,6 @@ pub enum HdmaEffect {
     InitializeRainbowBeam,
     AdvanceRainbowBeam,
 }
-use crate::cinematic::set_fixed_color;
 use crate::menus::prelude::HdmaObjectDefinition;
 use sm_data::title_screen::GRADIENT_ADDRESS;
 
@@ -194,130 +192,8 @@ pub fn clear_hdma<
     clear_hdma_channels(game);
 }
 
-pub fn initialize_room_effects<H>(game: &mut H)
-where
-    H: Registers
-        + crate::display::preparation::Access
-        + crate::ram::CompatibilityRam
-        + DisplayOwner
-        + SessionAccess
-        + crate::fx_domain::Controls
-        + ?Sized,
-{
-    use crate::display::registers::{WMADDH, WMADDL, WMADDM};
-    word! { game, 0; EARTHQUAKE_SFX_INDEX, EARTHQUAKE_SFX_TIMER }
-    if matches!(
-        word!(game.ROOM_PTR),
-        0x9804 | 0x96ba | 0xb32e | 0xb457 | 0xdd58 | 0xdede
-    ) {
-        {
-            let fx_value = 0xffff;
-            let mut fx = game.fx_controls();
-            fx.earthquake_sound_timer = fx_value;
-            game.publish_fx_controls(fx, &[crate::fx_state::Field::EarthquakeSoundTimer]);
-        };
-    }
-    word!(game.DEBUG_DISABLE_MINIMAP = 0);
-    for channel in (0x20..0x80u16).step_by(0x10) {
-        for register in [0, 1, 2, 3, 4, 5, 6, 8, 9] {
-            let value = if register == 1 { 0x13 } else { 0 };
-            game.write_register(0x4300 + channel + register, value);
-        }
-    }
-    crate::liquid::LiquidWords::set(game, |words| &mut words.liquid.surface.fraction, 0);
-    crate::liquid::LiquidWords::set(game, |words| &mut words.liquid.surface.whole, -1i32 as u16);
-    crate::liquid::LiquidWords::set(game, |words| &mut words.liquid.lava_acid.fraction, 0);
-    crate::liquid::LiquidWords::set(
-        game,
-        |words| &mut words.liquid.lava_acid.whole,
-        -1i32 as u16,
-    );
-    {
-        let fx_value = 0;
-        let mut fx = game.fx_controls();
-        fx.hud_scroll[0] = fx_value;
-        game.publish_fx_controls(fx, &[crate::fx_state::Field::HudHorizontal]);
-    };
-    {
-        let fx_value = 0;
-        let mut fx = game.fx_controls();
-        fx.hud_scroll[1] = fx_value;
-        game.publish_fx_controls(fx, &[crate::fx_state::Field::HudVertical]);
-    };
-    {
-        let fx_value = 0;
-        let mut fx = game.fx_controls();
-        fx.effect_scroll[0] = fx_value;
-        game.publish_fx_controls(fx, &[crate::fx_state::Field::EffectHorizontal]);
-    };
-    {
-        let fx_value = 0;
-        let mut fx = game.fx_controls();
-        fx.effect_scroll[1] = fx_value;
-        game.publish_fx_controls(fx, &[crate::fx_state::Field::EffectVertical]);
-    };
-    word!(game.IRQ_ENABLE_MODE7 = 0);
-    word!(game.CAMERA_DISTANCE_INDEX = 0);
-    game.session_mut().mechanisms.statue_animation = 0;
-    game.session_mut().mechanisms.statue_finished = 0;
-    crate::gameplay_context::set_effect(game, crate::room_view::EffectWord::EarthquakeTimer, 0);
-    word!(game.PHANTOM_RELATED_LAYER_FLAG = 0);
-    let session = game.session_mut();
-    session.projectiles.power_bomb.explosion_status = 0;
-    session.projectiles.power_bomb.flag = 0;
-    session.room.power_bomb_radius = 0;
-    crate::liquid::LiquidWords::set(game, |words| &mut words.liquid.tilemap, 0);
-    crate::liquid::LiquidWords::set(game, |words| &mut words.liquid.kind, 0);
-    crate::liquid::LiquidWords::set(game, |words| &mut words.liquid.base_fraction, 0x8000);
-    crate::liquid::LiquidWords::set(game, |words| &mut words.height, 0);
-    crate::liquid::LiquidWords::set(game, |words| &mut words.target, 0);
-    crate::liquid::LiquidWords::set(game, |words| &mut words.velocity, 0);
-    crate::liquid::LiquidWords::set(game, |words| &mut words.options, 0);
-    crate::liquid::LiquidWords::set(game, |words| &mut words.delay, 0);
-    crate::liquid::LiquidWords::set(game, |words| &mut words.liquid.tide_phase, 0);
-    crate::liquid::LiquidWords::set(game, |words| &mut words.liquid.offset.fraction, 0);
-    crate::liquid::LiquidWords::set(game, |words| &mut words.liquid.offset.whole, 0);
-    {
-        let fx_value = 2;
-        let mut room_blending = game.room_blending();
-        room_blending.primary = fx_value;
-        game.publish_room_blending(room_blending, true);
-    };
-    {
-        crate::display_scroll::write(game, crate::display_scroll::Word::Bg3H, 0);
-        crate::display_scroll::write(game, crate::display_scroll::Word::Bg3V, 0);
-    }
-    game.session_mut().room.camera.layer2 = [0, 0];
-    word!(game.ROOM_LOADING_IRQ_HANDLER = 0);
-    crate::word_transfers! { game, ascending, 1;
-        native(0x602) <- value(0x8800), native(0x605) <- value(0x8800),
-        native(0x601) <- value(0x83e1), native(0x604) <- value(0x83e1),
-    }
-    crate::display::sequence::register_writes! { game;
-        byte(WMADDL as u16, 0xf0); byte(WMADDM as u16, 0xff);
-        byte(WMADDH as u16, 1);
-    }
-    crate::frame_display_byte!(game, crate::display::preparation::Field::HdmaEnable => 0);
-    set_fixed_color([32, 64, 0x80], game);
-    // Mosaic, main layers, colour selection and math, BG character and screen bases.
-    for (field, value) in [
-        (crate::display::preparation::Field::Mosaic, 0),
-        (crate::display::preparation::Field::MainLayers, 19),
-        (crate::display::preparation::Field::ColorSelection, 0),
-        (crate::display::preparation::Field::ColorMath, 0),
-        (crate::display::preparation::Field::Characters0, 0),
-        (crate::display::preparation::Field::Characters1, 4),
-        (crate::display::preparation::Field::Screens1, 73),
-        (crate::display::preparation::Field::Screens2, 90),
-        (crate::display::preparation::Field::Background3Map, 90),
-    ] {
-        crate::display::preparation::Access::store_display_control_byte(
-            &mut *game,
-            field,
-            value,
-            crate::display::preparation::Store::Owned,
-        );
-    }
+pub fn initialize_room_effects<H: crate::owned_hdma_update::lifecycle::ResetHost>(game: &mut H) {
+    crate::owned_hdma_update::lifecycle::ResetHost::room_initialize_special_effects(game);
 }
 
 /// Run the HDMA object handler ($88:84B9) with `handler_carry`, the carry it
@@ -329,13 +205,13 @@ where
 {
     game.handle_music_queue();
     if crate::sequence_word!(game.TIME_IS_FROZEN_FLAG) == 0
-        && crate::session_cohort::load::<crate::explosion_window::Explosion, _>(game)
+        && crate::cinematic_access::load::<crate::explosion_window::Explosion, _>(game)
             .bomb
             .explosion_status
             & 0x4000
             != 0
     {
-        crate::session_cohort::with(game, |_, e: &mut crate::explosion_window::Explosion| {
+        crate::cinematic_access::with(game, |_, e: &mut crate::explosion_window::Explosion| {
             e.bomb.explosion_status = 0x8000;
         });
         spawn_hdma(0x88, &HdmaObjectDefinition::new(0x40, 0x28, 0x8ace), game);
@@ -408,23 +284,41 @@ pub fn read_table<H: HdmaTable + ?Sized>(game: &H) -> crate::hdma::HdmaObjects {
 /// Nonleased interpreter access; callbacks and words share the same host owner.
 pub(crate) struct Bridged<'a, H: ?Sized> {
     game: &'a mut H,
+    objects: Option<crate::hdma::HdmaObjects>,
 }
 
-impl<'a, H: ?Sized> Bridged<'a, H> {
+impl<'a, H: crate::hdma_dispatch::DispatchHost + ?Sized> Bridged<'a, H> {
     pub(crate) fn load(game: &'a mut H) -> Self {
-        Self { game }
+        let objects = game
+            .hdma_raw_table_interval()
+            .then(|| capture_raw_table(game));
+        Self { game, objects }
     }
 }
 
-impl<H: HdmaTable + ?Sized> HdmaTable for Bridged<'_, H> {
+impl<H: crate::hdma_dispatch::DispatchHost + ?Sized> HdmaTable for Bridged<'_, H> {
     fn hdma_word(&self, word: crate::hdma::Word) -> u16 {
-        self.game.hdma_word(word)
+        self.objects.as_ref().map_or_else(
+            || self.game.hdma_word(word),
+            |objects| *table_field(objects, word),
+        )
     }
     fn store_hdma_word(&mut self, word: crate::hdma::Word, value: u16, order: WordOrder) {
+        // The original actual compatibility publication preserves poisoning,
+        // byte order, idempotent epoch changes and source-publication rank.
         self.game.store_hdma_word(word, value, order);
+        if let Some(objects) = &mut self.objects {
+            *table_field_mut(objects, word) = u16::from_le_bytes(order.encode(value));
+        }
     }
     fn store_hdma_byte(&mut self, word: crate::hdma::Word, high: bool, value: u8) {
         self.game.store_hdma_byte(word, high, value);
+        if let Some(objects) = &mut self.objects {
+            let target = table_field_mut(objects, word);
+            let mut bytes = target.to_le_bytes();
+            bytes[usize::from(high)] = value;
+            *target = u16::from_le_bytes(bytes);
+        }
     }
 }
 
@@ -442,7 +336,78 @@ impl<H: crate::hdma_dispatch::DispatchHost + ?Sized> crate::hdma_program::Interp
         self.game.native_image()
     }
     fn foreign<T>(&mut self, action: impl FnOnce(&mut H) -> T) -> T {
-        action(self.game)
+        // No table value survives while the actual Game callback owns access.
+        self.objects.take();
+        let result = action(self.game);
+        self.objects = self
+            .game
+            .hdma_raw_table_interval()
+            .then(|| capture_raw_table(self.game));
+        result
+    }
+}
+
+fn capture_raw_table<H: crate::hdma_dispatch::DispatchHost + ?Sized>(
+    host: &H,
+) -> crate::hdma::HdmaObjects {
+    let mut objects = crate::hdma::HdmaObjects::default();
+    crate::hdma_program::table_words(&mut objects, |at, word| {
+        *word = u16::from_le_bytes([host.ram().read_byte(at), host.ram().read_byte(at + 1)])
+    });
+    objects
+}
+fn table_field(objects: &crate::hdma::HdmaObjects, word: crate::hdma::Word) -> &u16 {
+    use crate::hdma::{ObjectWord, Word};
+    match word {
+        Word::Enabled => &objects.enabled,
+        Word::Selected => &objects.selected,
+        Word::Object { index, field } => {
+            sm_data::table::check_index(index, crate::hdma::OBJECTS);
+            let object = &objects.objects[index];
+            match field {
+                ObjectWord::Channels => &object.channels,
+                ObjectWord::BankSlot => &object.bank_slot,
+                ObjectWord::InstructionList => &object.instruction_list,
+                ObjectWord::Table => &object.table,
+                ObjectWord::InstructionTimer => &object.instruction_timer,
+                ObjectWord::PreInstruction => &object.pre_instruction,
+                ObjectWord::PreInstructionBank => &object.pre_instruction_bank,
+                ObjectWord::Timer => &object.timer,
+                ObjectWord::A => &object.a,
+                ObjectWord::B => &object.b,
+                ObjectWord::C => &object.c,
+                ObjectWord::D => &object.d,
+                ObjectWord::E => &object.e,
+                ObjectWord::F => &object.f,
+            }
+        }
+    }
+}
+fn table_field_mut(objects: &mut crate::hdma::HdmaObjects, word: crate::hdma::Word) -> &mut u16 {
+    use crate::hdma::{ObjectWord, Word};
+    match word {
+        Word::Enabled => &mut objects.enabled,
+        Word::Selected => &mut objects.selected,
+        Word::Object { index, field } => {
+            sm_data::table::check_index(index, crate::hdma::OBJECTS);
+            let object = &mut objects.objects[index];
+            match field {
+                ObjectWord::Channels => &mut object.channels,
+                ObjectWord::BankSlot => &mut object.bank_slot,
+                ObjectWord::InstructionList => &mut object.instruction_list,
+                ObjectWord::Table => &mut object.table,
+                ObjectWord::InstructionTimer => &mut object.instruction_timer,
+                ObjectWord::PreInstruction => &mut object.pre_instruction,
+                ObjectWord::PreInstructionBank => &mut object.pre_instruction_bank,
+                ObjectWord::Timer => &mut object.timer,
+                ObjectWord::A => &mut object.a,
+                ObjectWord::B => &mut object.b,
+                ObjectWord::C => &mut object.c,
+                ObjectWord::D => &mut object.d,
+                ObjectWord::E => &mut object.e,
+                ObjectWord::F => &mut object.f,
+            }
+        }
     }
 }
 

@@ -116,16 +116,10 @@ impl GameEffects for Runtime<'_> {
         self.foreign(crate::game::visual_runtime::update_beam_tiles_and_palette);
     }
     fn draw_xray_window_table(&mut self, window: sm_game::beam_windows::XrayWindow) {
-        self.foreign(|game| sm_game::beam_windows::calculate_xray_window(window, game));
+        sm_game::owned_hdma_update::calculate_xray_window(window, self);
     }
     fn restore_xray_background(&mut self, step: XrayRestore) {
-        use crate::game::xray_background::{finish_restore, restore_left, restore_right};
-        use sm_game::hdma_program::with_current_object;
-        match step {
-            XrayRestore::Left => with_current_object(self, restore_left),
-            XrayRestore::Right => self.foreign(restore_right),
-            XrayRestore::Finish => with_current_object(self, finish_restore),
-        }
+        sm_game::owned_hdma_update::restore_xray(step, self);
     }
     fn spawn_xray_scope_hdma(&mut self) {
         self.foreign(|game| {

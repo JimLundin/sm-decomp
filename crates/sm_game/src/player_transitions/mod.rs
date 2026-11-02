@@ -11,6 +11,7 @@ pub mod equipment;
 pub mod input;
 pub mod jump;
 pub mod landing;
+pub mod message_sound;
 pub mod mother_brain;
 pub mod normalization;
 pub mod pose;

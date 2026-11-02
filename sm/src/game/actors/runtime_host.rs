@@ -150,3 +150,126 @@ impl ActorRuntime for Runtime<'_> {
         Runtime::enemy_speed(self, table, index)
     }
 }
+
+impl sm_game::actors::rippers::owned::Host for Runtime<'_> {
+    fn ripper_speed(&self, table: sm_data::enemy_speeds::SpeedTable, index: isize) -> u16 {
+        Runtime::enemy_speed(self, table, index)
+    }
+    fn finalized_shot_reaction(&mut self) {
+        combat::shot_reaction(self, api::ShotHandling::Finalize);
+    }
+}
+
+impl sm_game::actors::choot::owned::Host for Runtime<'_> {
+    fn choot_speed(&self, table: sm_data::enemy_speeds::SpeedTable, index: isize) -> u16 {
+        Runtime::enemy_speed(self, table, index)
+    }
+    fn choot_table(&self, table: sm_game::actors::choot::owned::Table, index: isize) -> u16 {
+        let address = match table {
+            sm_game::actors::choot::owned::Table::Patterns => 0xa2_df5e,
+            sm_game::actors::choot::owned::Table::PatternYDistances => 0xa2_df6a,
+        };
+        sm_game::player_projectiles::content::table(self, address, index)
+    }
+    fn choot_record(&mut self, address: u16) -> sm_data::cartridge::RomRecord {
+        self.legacy_native_record(0xa2, address)
+    }
+    fn unknown_choot_function(&mut self) {
+        sm_game::enemy_projectiles::host::Effects::unreachable(self);
+    }
+}
+impl sm_game::actors::zoa::owned::Host for Runtime<'_> {
+    fn zoa_table(&self, table: sm_game::actors::zoa::owned::Table, index: isize) -> u16 {
+        let address = match table {
+            sm_game::actors::zoa::owned::Table::InstructionLists => 0xa3_b40d,
+            sm_game::actors::zoa::owned::Table::XSpeeds => 0xa3_b415,
+        };
+        sm_game::player_projectiles::content::table(self, address, index)
+    }
+    fn unknown_zoa_function(&mut self) {
+        sm_game::enemy_projectiles::host::Effects::unreachable(self);
+    }
+}
+
+impl sm_game::actors::roach::owned::Host for Runtime<'_> {
+    fn roach_table(&self, table: sm_game::actors::roach::owned::RoachTable, index: isize) -> u16 {
+        use sm_game::actors::roach::owned::RoachTable::*;
+        let address = match table {
+            InstructionLists => 0xa3_a111,
+            ActivateFunctions => 0xa3_a121,
+        };
+        sm_game::player_projectiles::content::table(self, address, index)
+    }
+    fn roach_direction_vector(
+        &mut self,
+        angle: u16,
+        amplitude: u16,
+    ) -> sm_game::geometry::Vector32 {
+        sm_game::enemy_projectiles::host::Effects::convert_angle_to_xy(self, angle, amplitude)
+    }
+    fn roach_cosine_full(&mut self, angle: u16, amplitude: u16) -> u32 {
+        self.foreign(|game| {
+            sm_game::actors::host::BossEffects::actor_cosine_full(game, angle, amplitude)
+        })
+    }
+    fn roach_sine_full(&mut self, angle: u16, amplitude: u16) -> u32 {
+        self.foreign(|game| {
+            sm_game::actors::host::BossEffects::actor_sine_full(game, angle, amplitude)
+        })
+    }
+    fn roach_random(&mut self) -> u16 {
+        sm_game::enemy_projectiles::host::Effects::next_random(self)
+    }
+    fn unknown_roach_function(&mut self) {
+        sm_game::enemy_projectiles::host::Effects::unreachable(self)
+    }
+}
+impl sm_game::actors::tripper::owned::Host for Runtime<'_> {
+    fn tripper_speed(&self, table: sm_data::enemy_speeds::SpeedTable, index: isize) -> u16 {
+        Runtime::enemy_speed(self, table, index)
+    }
+    fn finalized_tripper_shot_reaction(&mut self) {
+        sm_game::actors::combat::shot_reaction(self, sm_game::actors::api::ShotHandling::Finalize)
+    }
+}
+impl sm_game::actors::sidehopper::owned::Host for Runtime<'_> {
+    fn sidehopper_table(
+        &self,
+        table: sm_game::actors::sidehopper::owned::SidehopperTable,
+        index: isize,
+    ) -> u16 {
+        use sm_game::actors::sidehopper::owned::SidehopperTable::*;
+        let address = match table {
+            LandedUp => 0xa3_aac2,
+            LandedDown => 0xa3_aaca,
+            HoppingUp => 0xa3_aad2,
+            HoppingDown => 0xa3_aada,
+            HopFunctions => 0xa3_aae2,
+            SmallDelta => 0xa3_aae6,
+            SmallSpeed => 0xa3_aaea,
+            SmallHeight => 0xa3_aaee,
+            BigDelta => 0xa3_aaf2,
+            BigSpeed => 0xa3_aaf6,
+            BigHeight => 0xa3_aafa,
+        };
+        sm_game::player_projectiles::content::table(self, address, index)
+    }
+    fn sidehopper_speed(&self, table: sm_data::enemy_speeds::SpeedTable, index: isize) -> u16 {
+        Runtime::enemy_speed(self, table, index)
+    }
+    fn sidehopper_variant(&mut self, definition: u16) -> u16 {
+        sm_game::player_projectiles::host::Host::record(self, 0xa0, definition).word(0x2a)
+    }
+    fn capture_hop_speeds(&self) -> sm_data::cartridge::RomImage {
+        sm_game::cartridge::NativeImage::native_image(self)
+    }
+    fn sidehopper_random(&mut self) -> u16 {
+        sm_game::enemy_projectiles::host::Effects::next_random(self)
+    }
+    fn sidehopper_sound(&mut self, sound: u16) {
+        sm_game::enemy_projectiles::host::Effects::queue_sound(self, 2, 3, sound)
+    }
+    fn unknown_sidehopper_function(&mut self) {
+        sm_game::enemy_projectiles::host::Effects::unreachable(self)
+    }
+}

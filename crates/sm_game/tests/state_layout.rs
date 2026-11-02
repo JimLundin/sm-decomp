@@ -981,7 +981,10 @@ fn actor_extended_lanes() -> Vec<Lane> {
         .filter(|at| !BOTWOON.contains(at))
         .map(|at| -> Lane {
             (at, at - 0x7800, |s, offset| {
-                &mut s.actors.extended.blocks[offset / 0x800][offset % 0x800 / 2]
+                &mut *s
+                    .actors
+                    .extended
+                    .word_mut(offset / 0x800, offset % 0x800 / 2)
             })
         })
         .collect()
@@ -1023,7 +1026,7 @@ fn boss_ram_round_trips_every_word() {
 
 fn boss_ram_lanes() -> Vec<Lane> {
     array(0x9000, 2, 0x3ee, |s, index| {
-        &mut s.actors.extended.blocks[3][index]
+        &mut *s.actors.extended.word_mut(3, index)
     })
     .collect()
 }
@@ -1035,7 +1038,7 @@ fn bg2_staging_round_trips_every_word() {
 
 fn bg2_staging_lanes() -> Vec<Lane> {
     array(0x2000, 2, 0x800, |s, index| {
-        &mut s.actors.extended.blocks[4 + index / 0x400][index % 0x400]
+        &mut *s.actors.extended.word_mut(4 + index / 0x400, index % 0x400)
     })
     .collect()
 }
@@ -1045,11 +1048,21 @@ fn botwoon_death_words_round_trip() {
     check_owner(
         "Botwoon death",
         &[
-            (0x801e, 0, |s, _| &mut s.botwoon_death.pending_hit),
-            (0x8020, 0, |s, _| &mut s.botwoon_death.active),
-            (0x803c, 0, |s, _| &mut s.botwoon_death.tail_ready),
-            (0x8818, 0, |s, _| &mut s.botwoon_death.previous_health),
-            (0x883e, 0, |s, _| &mut s.botwoon_death.body_landed),
+            (0x801e, 0, |s, _| {
+                &mut s.actors.extended.botwoon_head[0].pending_hit
+            }),
+            (0x8020, 0, |s, _| {
+                &mut s.actors.extended.botwoon_head[0].active
+            }),
+            (0x803c, 0, |s, _| {
+                &mut s.actors.extended.botwoon_head[0].tail_ready
+            }),
+            (0x8818, 0, |s, _| {
+                &mut s.actors.extended.botwoon_path[0].previous_health
+            }),
+            (0x883e, 0, |s, _| {
+                &mut s.actors.extended.botwoon_path[0].body_landed
+            }),
         ],
     );
 }

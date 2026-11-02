@@ -15,26 +15,22 @@ use {
             AccessMode::{LittleEndian, Native},
             ActorAccess, ActorKey,
         },
-        effects::ActorHost,
+        content::ActorContent,
     },
 };
+/// Actor motion never dispatches a species callback. Spike reactions still
+/// allocate the real room mechanism synchronously through MechanismHost.
+pub trait MovementHost: ActorAccess + ActorContent {}
+impl<T: ActorAccess + ActorContent + ?Sized> MovementHost for T {}
+
 fn current(h: &impl ActorAccess) -> ActorKey {
     ActorKey::from_legacy(h.session().actors.controls.selected)
 }
 fn level<H: ActorAccess + ImportedAliases>(h: &H, byte_offset: usize) -> u16 {
-    if byte_offset & 1 == 0
-        && let Some(cell) = h.session().room.terrain.cells().get(byte_offset / 2)
-    {
-        return cell.level;
-    }
-    ImportedAliases::terrain_word(h, byte_offset, ByteOrder::Little)
+    crate::room_terrain::level_word(h, byte_offset, ByteOrder::Little)
 }
 fn behavior<H: ActorAccess + ImportedAliases>(h: &H, block: usize) -> u8 {
-    if let Some(cell) = h.session().room.terrain.cells().get(block) {
-        cell.behavior
-    } else {
-        ImportedAliases::behavior_byte(h, block)
-    }
+    crate::room_terrain::bts(h, block)
 }
 fn packed(p: Position) -> u32 {
     (u32::from(p.whole) << 16) | u32::from(p.fraction)
@@ -185,7 +181,7 @@ fn square<H: ActorAccess>(h: &H, scan: &MoveScan, bts: u8, vertical: bool) -> bo
         other,
     )
 }
-fn horizontal_curve<H: ActorHost>(h: &mut H, scan: &mut MoveScan) -> bool {
+fn horizontal_curve<H: MovementHost>(h: &mut H, scan: &mut MoveScan) -> bool {
     match scan.slopes {
         SlopePolicy::Ignore => return false,
         SlopePolicy::Solid => return true,
@@ -202,7 +198,7 @@ fn horizontal_curve<H: ActorHost>(h: &mut H, scan: &mut MoveScan) -> bool {
     scan.displacement = displacement.wrapping_mul(multiplier);
     false
 }
-fn vertical_curve<H: ActorHost + ImportedAliases>(h: &mut H, scan: &MoveScan) -> bool {
+fn vertical_curve<H: MovementHost + ImportedAliases>(h: &mut H, scan: &MoveScan) -> bool {
     let block = h.session().room.collision_cursor;
     let width = u16::from(h.session().room.width as u8);
     let column = if width == 0 { block } else { block % width };
@@ -247,7 +243,7 @@ fn vertical_curve<H: ActorHost + ImportedAliases>(h: &mut H, scan: &MoveScan) ->
     true
 }
 /// One common type switch, while keeping the two axis-specific slope rules.
-fn react<H: ActorHost + MechanismHost>(
+fn react<H: MovementHost + MechanismHost>(
     h: &mut H,
     scan: &mut MoveScan,
     block: u16,
@@ -303,7 +299,7 @@ fn react<H: ActorHost + MechanismHost>(
 fn coordinate(actor: &mut crate::actors::state::Actor, vertical: bool) -> &mut Position {
     if vertical { &mut actor.y } else { &mut actor.x }
 }
-fn move_axis<H: ActorHost + MechanismHost>(
+fn move_axis<H: MovementHost + MechanismHost>(
     h: &mut H,
     key: ActorKey,
     amount: i32,
@@ -399,7 +395,7 @@ fn move_axis<H: ActorHost + MechanismHost>(
     });
     MovementResult::Blocked
 }
-pub fn move_horizontal<H: ActorHost + MechanismHost>(
+pub fn move_horizontal<H: MovementHost + MechanismHost>(
     h: &mut H,
     key: ActorKey,
     amount: i32,
@@ -407,7 +403,7 @@ pub fn move_horizontal<H: ActorHost + MechanismHost>(
 ) -> MovementResult {
     move_axis(h, key, amount, slopes, false)
 }
-pub fn move_vertical<H: ActorHost + MechanismHost>(
+pub fn move_vertical<H: MovementHost + MechanismHost>(
     h: &mut H,
     key: ActorKey,
     amount: i32,
@@ -418,7 +414,7 @@ pub fn select_block_at<H: ActorAccess>(h: &mut H, point: Point) {
     let product = u16::from((point.y >> 4) as u8) * u16::from(h.session().room.width as u8);
     h.session_mut().room.collision_cursor = product.wrapping_add(point.x >> 4);
 }
-pub fn snap_to_slopes<H: ActorHost + ImportedAliases>(h: &mut H, key: ActorKey) -> bool {
+pub fn snap_to_slopes<H: MovementHost + ImportedAliases>(h: &mut H, key: ActorKey) -> bool {
     let mut hit = false;
     let (x, y) = {
         let a = h.resolve_actor(key, Native);
@@ -482,7 +478,7 @@ pub fn snap_to_slopes<H: ActorHost + ImportedAliases>(h: &mut H, key: ActorKey) 
 
 /// The spike PLM spawn with the verifier's movement-case observations around it.
 #[cfg(sm_verify_dll)]
-fn observed_spike<H: ActorHost + MechanismHost>(h: &mut H, header: u16) -> u8 {
+fn observed_spike<H: MovementHost + MechanismHost>(h: &mut H, header: u16) -> u8 {
     use std::panic::{AssertUnwindSafe, catch_unwind, resume_unwind};
     if !h.actor_spike_armed(header) {
         return creation::spawn(h, SpawnSource::Collision { header }, &mut Contact::Absent);

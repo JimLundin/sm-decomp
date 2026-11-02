@@ -13,7 +13,7 @@ use sm_data::ceres_ridley::{
     Getaway, GetawayVelocity, WING_FRAME_ADDRESS, WING_FRAMES,
 };
 
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ImportedCeresRidley {
     background_fade: ImportedWords<BACKGROUND_FADE_ADDRESS, BACKGROUND_FADE_FRAMES>,
     attacks: ImportedWords<ATTACK_ADDRESS, ATTACKS>,

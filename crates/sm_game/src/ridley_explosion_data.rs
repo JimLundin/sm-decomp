@@ -11,7 +11,7 @@ use sm_data::ridley_explosion::{
     import_part,
 };
 
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ImportedRidleyExplosion {
     lifetimes: ImportedWords<LIFETIME_ADDRESS, LIFETIMES>,
     parts: [Option<Imported<Part>>; PART_ADDRESSES.len()],

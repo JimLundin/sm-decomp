@@ -40,14 +40,12 @@ pub fn movement_sound(h: &mut impl Host) {
     }
 }
 pub fn restore_sound(h: &mut impl Host) {
-    if h.session().player.contact.speed_boost & 0xff00 == 0x400 {
-        h.sound(3, 6, 0x2b);
-    }
-    if h.session().projectiles.controls.charge.wrapping_sub(16) & 0x8000 == 0 {
-        h.sound(1, 6, 0x41);
-    }
+    crate::player_transitions::message_sound::resume_movement(h, |h, bank, limit, sound| {
+        h.sound(bank, limit, sound);
+    });
     h.player_step(PlayerStep::RestoreControl);
 }
+
 fn native(value: u16) -> u16 {
     u16::from_ne_bytes(value.to_le_bytes())
 }

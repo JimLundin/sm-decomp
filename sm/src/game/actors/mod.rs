@@ -17,6 +17,13 @@ pub(crate) mod shaktool;
 pub(in crate::game) mod skultera;
 pub(crate) mod torizo;
 
+mod owned_entry_ports;
+mod owned_player_ports;
+pub(crate) mod prepared_content;
+pub(crate) mod prepared_dialogue_ports;
+pub(crate) mod prepared_execution;
+mod prepared_player_frame_ports;
+mod prepared_room_ports;
 mod runtime;
 
 mod content_runtime;
@@ -90,3 +97,5 @@ pub(in crate::game) mod fune;
 pub(crate) mod magdollite;
 pub(crate) mod spore_spawn;
 pub(crate) mod yapping_maw;
+
+pub(crate) mod minor_interaction_ports;

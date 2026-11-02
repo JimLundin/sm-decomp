@@ -6,6 +6,7 @@
 //! projection stays with the oracle in `sm`.
 #![forbid(unsafe_code)]
 
+pub mod actor_content;
 pub mod engine;
 pub mod free_run;
 pub mod lockstep;

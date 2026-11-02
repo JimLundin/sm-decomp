@@ -5,9 +5,33 @@ use crate::constants::buttons::{
     K_BUTTON_A, K_BUTTON_B, K_BUTTON_DOWN, K_BUTTON_L, K_BUTTON_LEFT, K_BUTTON_R, K_BUTTON_RIGHT,
     K_BUTTON_SELECT, K_BUTTON_START, K_BUTTON_UP, K_BUTTON_X, K_BUTTON_Y,
 };
-use crate::ram::{checked_word as at, word};
+/// The complete repeat/debug interaction needs no menu or player Runtime.
+pub trait Sampling: crate::gameplay_context::Access + crate::sequence_state::Access {
+    fn sampling_controller_word(&mut self, register: u16) -> u16;
+    fn sampling_inputs(&self) -> crate::external_inputs::ExternalInputs;
+    fn sampling_uploading_apu(&self) -> u16;
+    fn sampling_toggle_nmi(&mut self);
+    fn sampling_reset(&mut self);
+}
+impl<T: Host + ?Sized> Sampling for T {
+    fn sampling_controller_word(&mut self, register: u16) -> u16 {
+        self.read_register_word(register)
+    }
+    fn sampling_inputs(&self) -> crate::external_inputs::ExternalInputs {
+        self.observed_inputs()
+    }
+    fn sampling_uploading_apu(&self) -> u16 {
+        crate::ram::word!(self.IS_UPLOADING_APU)
+    }
+    fn sampling_toggle_nmi(&mut self) {
+        crate::ram::checked_word!(self, crate::ram::mirror::NMITIMEN; ^= 0x30);
+    }
+    fn sampling_reset(&mut self) {
+        self.request_reset();
+    }
+}
 
-fn repeat<H: Host + ?Sized>(offset: usize, sampled: u16, game: &mut H) {
+fn repeat<H: Sampling + ?Sized>(offset: usize, sampled: u16, game: &mut H) {
     use crate::{controller_state::Word as Input, gameplay_context::Word};
     let [last, pressed, repeated, previous, counter] = match offset {
         0 => [
@@ -75,8 +99,8 @@ pub fn filter<H: Host + ?Sized>(delay: u16, game: &mut H) {
 }
 
 /// Requires a live, exclusively accessed SNES backend for controller register reads.
-pub fn sample<H: Host + ?Sized>(game: &mut H) {
-    let first = { game.read_register_word(JOY1L as u16) };
+pub fn sample<H: Sampling + ?Sized>(game: &mut H) {
+    let first = { game.sampling_controller_word(JOY1L as u16) };
     sample_word(first, game);
 }
 
@@ -87,18 +111,18 @@ pub fn sample_latched<H: Host + ?Sized>(game: &mut H) {
     sample_word(first, game);
 }
 
-fn sample_word<H: Host + ?Sized>(first: u16, game: &mut H) {
+fn sample_word<H: Sampling + ?Sized>(first: u16, game: &mut H) {
     repeat(0, first, game);
     if crate::gameplay_word!(game.ENABLE_DEBUG) != 0 {
-        let second = { game.read_register_word(JOY2L as u16) };
+        let second = { game.sampling_controller_word(JOY2L as u16) };
         repeat(2, second, game);
         debug_controls(game);
     }
 }
 
-fn debug_controls<H: Host + ?Sized>(game: &mut H) {
+fn debug_controls<H: Sampling + ?Sized>(game: &mut H) {
     let reset = (K_BUTTON_SELECT | K_BUTTON_START | K_BUTTON_L | K_BUTTON_R) as u16;
-    if word!(game.IS_UPLOADING_APU) != 0 || game.observed_inputs().held != reset {
+    if game.sampling_uploading_apu() != 0 || game.sampling_inputs().held != reset {
         if crate::gameplay_word!(game.ENABLE_DEBUG) != 0 {
             crate::gameplay_word! { game, 0; JOYPAD_DBG_1, JOYPAD_DBG_2 }
             if (crate::gameplay_word!(game.JOYPAD_DBG_FLAGS) & 0x4000) == 0 {
@@ -113,14 +137,14 @@ fn debug_controls<H: Host + ?Sized>(game: &mut H) {
                     ),
                 ] {
                     let chord = (K_BUTTON_SELECT | button) as u16;
-                    if game.observed_inputs().held & chord == chord {
-                        let value = game.observed_inputs().pressed;
+                    if game.sampling_inputs().held & chord == chord {
+                        let value = game.sampling_inputs().pressed;
                         crate::gameplay_context::Access::set_gameplay_word(game, target, value);
                         crate::gameplay_word! { game, 0; JOYPAD1_LASTKEYS, JOYPAD1_NEWKEYS }
                     }
                 }
                 if (crate::gameplay_word!(game.JOYPAD_DBG_2) & 0x80) != 0 {
-                    at!(game, crate::ram::mirror::NMITIMEN; ^= 0x30);
+                    game.sampling_toggle_nmi();
                 }
                 if (crate::gameplay_word!(game.JOYPAD_DBG_2) & 0x8000) != 0 {
                     let entering_swap =
@@ -176,7 +200,7 @@ fn debug_controls<H: Host + ?Sized>(game: &mut H) {
                 words.debug_disable_sounds = 0;
             },
         );
-        game.request_reset();
+        game.sampling_reset();
     }
 }
 

@@ -4,7 +4,6 @@
 use crate::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 use crate::actors::api::{Axis, player_within};
 use crate::actors::host::{ActorLease, ActorRuntime as _, LeaseActors};
-use crate::enemy_projectiles::host::Effects as _;
 use crate::enemy_script::EnemyScript;
 use crate::ram::words;
 
@@ -141,7 +140,7 @@ pub fn main_ai(runtime: &mut impl ActorLease) {
             runtime.edit_actor(key, Native, |actor| actor.variables[lane::LISTS] = table);
         }
         function::FUNE_ACTIVE | function::NAMIHE_ACTIVE => {}
-        _ => runtime.unreachable(),
+        _ => crate::enemy_projectiles::host::Effects::unreachable(runtime),
     }
 }
 /// Run one of fune's and namihe's script instructions (one of [`instruction`]).
@@ -153,7 +152,9 @@ pub fn instruction<H: LeaseActors + ?Sized>(
     use instruction::*;
     let mut runtime = game.lease();
     match address {
-        QUEUE_SPIT_SOUND => runtime.queue_sound(2, 9, SPIT_SOUND),
+        QUEUE_SPIT_SOUND => {
+            crate::enemy_projectiles::host::Effects::queue_sound(&mut runtime, 2, 9, SPIT_SOUND)
+        }
         SPAWN_LEFTWARDS_NAMIHE_FIREBALL
         | SPAWN_RIGHTWARDS_NAMIHE_FIREBALL
         | SPAWN_LEFTWARDS_FUNE_FIREBALL
@@ -186,7 +187,7 @@ pub fn instruction<H: LeaseActors + ?Sized>(
             });
         }
         _ => {
-            runtime.unreachable();
+            crate::enemy_projectiles::host::Effects::unreachable(&mut runtime);
             return EnemyScript::Stop;
         }
     }

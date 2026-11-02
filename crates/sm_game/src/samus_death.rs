@@ -10,7 +10,6 @@ use crate::scene::samus_body::Body;
 use crate::session_access::SessionAccess as _;
 use crate::sprite_output;
 use crate::visual_host::{Content, Record, Source};
-use crate::word_transfers;
 
 /// What the death sequence needs from the game.
 pub trait Host:
@@ -169,8 +168,26 @@ fn whiten_death_palette<H: Host + ?Sized>(game: &mut H, screens: &mut MenuScreen
             0x56b5, 0x5ad6, 0x5ef7, 0x6318, 0x6739, 0x6b5a, 0x6f7b, 0x739c, 0x77bd, 0x7bde, 0x7fff,
         ];
         let shade = SHADES[usize::from(screens.death.counter)];
-        word_transfers!(game, ascending, 192; native(0xc000) <- value(shade));
-        word_transfers!(game, ascending, 32; native(0xc1a0) <- value(shade));
+        game.palette_transfer(crate::palette_migration::Transfer {
+            destination: crate::palette_migration::Span {
+                buffer: crate::palette_migration::Buffer::Current,
+                first: 0,
+                words: 192,
+                descending: false,
+                order: crate::fx_domain::native_order(),
+            },
+            source: crate::palette_migration::Source::Fill(shade),
+        });
+        game.palette_transfer(crate::palette_migration::Transfer {
+            destination: crate::palette_migration::Span {
+                buffer: crate::palette_migration::Buffer::Current,
+                first: 416,
+                words: 32,
+                descending: false,
+                order: crate::fx_domain::native_order(),
+            },
+            source: crate::palette_migration::Source::Fill(shade),
+        });
         if screens.death.counter.wrapping_sub(20) & 0x8000 != 0 {
             screens.death.counter = screens.death.counter.wrapping_add(1);
         }

@@ -119,6 +119,55 @@ impl Backend {
         &self.my_ppu
     }
 
+    /// Copy the physically selected image; never follow an arbitrary device link.
+    pub(crate) fn capture_owned_hardware(&self) -> sm_game::scene::hardware::DeviceImage {
+        crate::game::owned_hardware_codec::capture(
+            &self.snes.get(),
+            &self.selected_video_cell().get(),
+        )
+    }
+    pub(crate) fn restore_owned_hardware(&self, image: sm_game::scene::hardware::DeviceImage) {
+        let selected = self.selected_video_cell();
+        let mut snes = self.snes.get();
+        let mut ppu = selected.get();
+        crate::game::owned_hardware_codec::restore(image, &mut snes, &mut ppu);
+        self.snes.set(snes);
+        selected.set(ppu);
+    }
+
+    pub(crate) fn capture_owned_video(&self) -> sm_game::scene::hardware::PhysicalVideoImage {
+        crate::game::owned_hardware_codec::capture_video(
+            &self.snes.get(),
+            &self.selected_video_cell().get(),
+        )
+    }
+    pub(crate) fn restore_owned_video(
+        &self,
+        image: &sm_game::scene::hardware::PhysicalVideoImage,
+    ) -> Result<(), sm_game::scene::state::DisplayError> {
+        let selected = self.selected_video_cell();
+        let mut snes = self.snes.get();
+        let mut ppu = selected.get();
+        crate::game::owned_hardware_codec::restore_video(image, &mut snes, &mut ppu)?;
+        self.snes.set(snes);
+        selected.set(ppu);
+        Ok(())
+    }
+    pub(crate) fn begin_owned_raster(&self) -> Result<(), sm_game::scene::state::DisplayError> {
+        crate::game::owned_hardware_codec::begin_raster([
+            self.my_ppu.as_ptr() as usize,
+            self.snes_ppu.as_ptr() as usize,
+        ])
+    }
+    pub(crate) fn finish_owned_raster(
+        &self,
+    ) -> Result<
+        crate::game::owned_hardware_codec::NativeRasterHistory,
+        sm_game::scene::state::DisplayError,
+    > {
+        let key = self.selected_video_cell().as_ptr() as usize;
+        crate::game::owned_hardware_codec::finish_raster(key, self.capture_owned_video())
+    }
     pub(crate) fn samus_vram_mode(&mut self) {
         let cell = self.selected_video_cell();
         crate::snes::ppu::samus_vram_mode(cell);
@@ -499,7 +548,9 @@ impl crate::execution::Execution<'_> {
                     (*snes).ppuLatch = val & 0x80 != 0;
                 }
                 0x4202 => (*snes).multiplyA = val,
-                0x4203 => (*snes).multiplyResult = u16::from((*snes).multiplyA) * u16::from(val),
+                0x4203 => {
+                    (*snes).multiplyResult = sm_data::hardware::multiply((*snes).multiplyA, val)
+                }
                 0x4204 => (*snes).divideA = ((*snes).divideA & 0xff00) | u16::from(val),
                 0x4205 => (*snes).divideA = ((*snes).divideA & 0xff) | (u16::from(val) << 8),
                 0x4206 => {

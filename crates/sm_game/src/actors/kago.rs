@@ -71,7 +71,7 @@ pub fn main_ai(runtime: &mut impl ActorLease) {
             runtime.edit_actor(key, Native, |actor| actor.variables[0] = function::RTL)
         }
         function::RTL => (),
-        _ => runtime.unreachable(),
+        _ => crate::enemy_projectiles::host::Effects::unreachable(runtime),
     }
 }
 /// Enemy shot - Kago ($A8:AB83): shake the screen, speed up, count the hit,

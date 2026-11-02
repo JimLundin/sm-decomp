@@ -4,6 +4,7 @@ use sm_data::cartridge::{RomImage, lorom_offset};
 use sm_data::table::{Rows, grid, words};
 
 /// A record and the allocation it was imported from.
+#[derive(Clone)]
 pub struct Imported<T> {
     image: RomImage,
     record: T,
@@ -99,7 +100,7 @@ pub fn row_of(index: isize, words: usize) -> Option<usize> {
 }
 
 /// A word list at LoROM `ADDRESS`, read by word index.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ImportedWords<const ADDRESS: u32, const ROWS: usize>(Option<Imported<Rows<u16, ROWS>>>);
 
 impl<const ADDRESS: u32, const ROWS: usize> ImportedWords<ADDRESS, ROWS> {
@@ -118,7 +119,7 @@ impl<const ADDRESS: u32, const ROWS: usize> ImportedWords<ADDRESS, ROWS> {
 }
 
 /// Rows of `WORDS` words at LoROM `ADDRESS`, read by word index across rows.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ImportedGrid<const ADDRESS: u32, const WORDS: usize, const ROWS: usize>(
     Option<Imported<Rows<[u16; WORDS], ROWS>>>,
 );

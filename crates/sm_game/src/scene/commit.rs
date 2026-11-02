@@ -260,6 +260,9 @@ impl<'a, 'b> SettlementContext<'a, 'b> {
     pub fn state(&self) -> &DisplayState {
         self.state
     }
+    pub fn write_raster(&mut self, destination: u8, value: u8) -> bool {
+        super::hardware::write_raster(self.state, destination, value)
+    }
     pub fn raster_mut(&mut self) -> &mut super::state::RasterState {
         &mut self.state.raster
     }
@@ -762,6 +765,152 @@ impl OwnedDisplay {
     pub fn media(&self) -> &Arc<SceneMedia> {
         &self.media
     }
+
+    pub(crate) fn mode7_pointer_byte(&mut self, high: bool, value: u8) -> Result<(), DisplayError> {
+        self.write_tile_pointer_byte(high, value)
+    }
+    pub fn write_tile_pointer_byte(&mut self, high: bool, value: u8) -> Result<(), DisplayError> {
+        let mut bytes = self.state.latches.tile_pointer.to_le_bytes();
+        bytes[usize::from(high)] = value;
+        self.state.latches.tile_pointer = u16::from_le_bytes(bytes);
+        let word = sm_data::hardware::tile_address(
+            self.state.latches.tile_pointer,
+            self.state.latches.tile_remap,
+        );
+        self.state.latches.tile_read_buffer = *self
+            .image
+            .words
+            .get(usize::from(word & 0x7fff))
+            .ok_or(DisplayError::Incomplete)?;
+        Ok(())
+    }
+    pub fn write_tile_mode(&mut self, value: u8) {
+        self.state.latches.tile_increment = match value & 3 {
+            0 => 1,
+            1 => 32,
+            _ => 128,
+        };
+        self.state.latches.tile_remap = (value >> 2) & 3;
+        self.state.latches.tile_increment_on_high = value & 0x80 != 0;
+    }
+    /// The native read returns the old buffer, prefetches the CURRENT pointer,
+    /// then advances it on the selected byte. Do not replace this with image indexing.
+    pub fn read_tile_port(&mut self, high: bool) -> Result<u8, DisplayError> {
+        let value = self.state.latches.tile_read_buffer.to_le_bytes()[usize::from(high)];
+        if high == self.state.latches.tile_increment_on_high {
+            let word = sm_data::hardware::tile_address(
+                self.state.latches.tile_pointer,
+                self.state.latches.tile_remap,
+            ) & 0x7fff;
+            self.state.latches.tile_read_buffer = *self
+                .image
+                .words
+                .get(usize::from(word))
+                .ok_or(DisplayError::Incomplete)?;
+            self.state.latches.tile_pointer = self
+                .state
+                .latches
+                .tile_pointer
+                .wrapping_add(self.state.latches.tile_increment);
+        }
+        self.state.latches.ppu_open_bus[0] = value;
+        Ok(value)
+    }
+    pub(crate) fn mode7_destination(
+        &mut self,
+        destination: u8,
+        value: u8,
+    ) -> Result<(), DisplayError> {
+        match destination {
+            0x18 | 0x19 => {
+                let high = destination == 0x19;
+                let word = sm_data::hardware::tile_address(
+                    self.state.latches.tile_pointer,
+                    self.state.latches.tile_remap,
+                );
+                self.image.tile_byte(word & 0x7fff, high, value)?;
+                if high == self.state.latches.tile_increment_on_high {
+                    self.state.latches.tile_pointer = self
+                        .state
+                        .latches
+                        .tile_pointer
+                        .wrapping_add(self.state.latches.tile_increment);
+                }
+            }
+            0x1a => self.state.effective.affine.select(value),
+            0x1b..=0x20 => super::hardware::write_affine(
+                &mut self.state,
+                usize::from(destination - 0x1b),
+                value,
+            ),
+            0x22 => {
+                if self.state.latches.palette_second {
+                    self.image.colors[usize::from(self.state.latches.palette_pointer)] =
+                        u16::from_le_bytes([self.state.latches.palette_buffer, value & 0x7f]);
+                    self.state.latches.palette_pointer =
+                        self.state.latches.palette_pointer.wrapping_add(1);
+                } else {
+                    self.state.latches.palette_buffer = value;
+                }
+                self.state.latches.palette_second = !self.state.latches.palette_second;
+            }
+            0x23..=0x25 => {
+                super::hardware::write_raster(&mut self.state, destination, value);
+            }
+            _ => {
+                if !super::hardware::write_raster(&mut self.state, destination, value) {
+                    return Err(DisplayError::Geometry);
+                }
+            }
+        }
+        Ok(())
+    }
+
+    /// External rejoin adopts the actual selected numeric image. Its next
+    /// publication still requires explicit authored media incarnations/bindings.
+    pub fn adopt_physical_image(&mut self, physical: &super::hardware::PhysicalVideoImage) {
+        physical.adopt_state(&mut self.state);
+        self.image.words = physical.words.to_vec();
+        self.image.colors = physical.colors;
+        self.image.objects = physical.objects;
+        // Numeric changes cannot invent another producer or authored tile part.
+        // The finite native catalog must bind entries whose source word changed.
+        self.image.produced.retain(|record| {
+            let offset = usize::from(record.object.order) * 4;
+            let bytes = &physical.objects[offset + 2..offset + 4];
+            record.native_word == u16::from_le_bytes([bytes[0], bytes[1]])
+        });
+    }
+    /// Export current owned resident values while retaining actual native-only
+    /// renderer caches supplied at this exclusive boundary.
+    pub fn physical_image(
+        &self,
+        caches: super::hardware::PhysicalRenderCaches,
+    ) -> super::hardware::PhysicalVideoImage {
+        let raster = self.state.raster;
+        let mut words = self.image.words.clone();
+        words[0x8000..0x8005].copy_from_slice(&latch_alias_words(&self.state));
+        words[0x8005..0x801f].copy_from_slice(&self.image.colors[..26]);
+        super::hardware::PhysicalVideoImage {
+            effective: self.state.effective,
+            latches: self.state.latches,
+            raster: super::hardware::PhysicalRaster {
+                range_overflow: raster.range_overflow,
+                time_overflow: raster.time_overflow,
+                has_objects: raster.has_objects,
+                even_frame: raster.even_frame,
+                interlaced: raster.interlaced,
+                frame_interlaced: raster.frame_interlaced,
+                overscan: raster.overscan,
+                frame_overscan: raster.frame_overscan,
+                mosaic_origin: raster.mosaic_origin,
+            },
+            words: Arc::from(words),
+            colors: self.image.colors,
+            objects: self.image.objects,
+            caches,
+        }
+    }
     pub fn image(&self) -> &DisplayImage {
         &self.image
     }
@@ -1097,7 +1246,7 @@ impl RefreshHost for OwnedDisplay {
         // These current SETINI flags latch later at overscan/vblank source points.
         self.state.raster.interlaced = self.state.controls.geometry & 1 != 0;
         self.state.raster.overscan = self.state.controls.geometry & 4 != 0;
-        self.state.controls.committed_fake_mode = self.state.controls.fake_mode;
+        super::hardware::refresh_latches(&mut self.state);
         Ok(())
     }
     fn hdma_mask(&self, slot: usize) -> u16 {
@@ -1326,12 +1475,7 @@ fn transfer_with_host(
             ByteLanes::Low => false,
             ByteLanes::High => true,
         };
-        let mapped = match transfer.destination.remap {
-            0 => word,
-            1 => word & 0xff00 | (word & 0x00e0) >> 5 | (word & 0x001f) << 3,
-            2 => word & 0xfe00 | (word & 0x01c0) >> 6 | (word & 0x003f) << 3,
-            _ => word & 0xfc00 | (word & 0x0380) >> 7 | (word & 0x007f) << 3,
-        };
+        let mapped = sm_data::hardware::tile_address(word, transfer.destination.remap);
         host.tile_byte(mapped, high, value)?;
         host.advance_dma(dma_channel)?;
         if high == transfer.destination.increment_on_high {
@@ -1614,11 +1758,7 @@ impl RefreshHost for SessionRefresh<'_> {
             .fake_mode()
     }
     fn mode7(&mut self) -> Result<(), DisplayError> {
-        self.session
-            .presentation
-            .owner_mut()
-            .expect("owned refresh")
-            .mode7()
+        super::mode7_delivery::drain(self.session)
     }
     fn tilemaps(&mut self) -> Result<(), DisplayError> {
         if self.session.queued_tilemaps.tail != 0 {
@@ -1662,11 +1802,7 @@ impl RefreshHost for SessionRefresh<'_> {
         Ok(())
     }
     fn readbacks(&mut self) -> Result<(), DisplayError> {
-        self.session
-            .presentation
-            .owner_mut()
-            .expect("owned refresh")
-            .readbacks()
+        self.drain_readback_queue()
     }
     fn hdma_enable(&self) -> u8 {
         self.session
@@ -1761,6 +1897,155 @@ impl RefreshHost for SessionRefresh<'_> {
     }
 }
 impl SessionRefresh<'_> {
+    fn readback_byte(&self, at: usize) -> Result<u8, DisplayError> {
+        crate::session_encoding::projected_byte(self.session, at)
+            .ok_or(DisplayError::Alias { offset: at })
+    }
+    fn readback_word(&self, at: usize) -> Result<u16, DisplayError> {
+        // Original RawQueue::word is LE, including unaligned record fields.
+        Ok(u16::from_le_bytes([
+            self.readback_byte(at)?,
+            self.readback_byte(at + 1)?,
+        ]))
+    }
+    fn drain_readback_queue(&mut self) -> Result<(), DisplayError> {
+        let tail = self
+            .session
+            .presentation
+            .owner()?
+            .state
+            .readback_tail
+            .to_le_bytes()[0];
+        if tail == 0 {
+            return Ok(());
+        }
+        let sentinel = 0x340 + usize::from(tail);
+        self.readback_store(sentinel, 0)?;
+        self.session.presentation.owner_mut()?.write_tile_mode(0x80);
+        let mut entry = 0x340;
+        loop {
+            let vram_address = self.readback_word(entry)?;
+            if vram_address == 0 {
+                break;
+            }
+            // All fields are acquired after the preceding DMA, before this DMA's registers.
+            let control = self.readback_byte(entry + 2)?;
+            let port = self.readback_byte(entry + 3)?;
+            let destination = self.readback_word(entry + 4)?;
+            let bank = self.readback_byte(entry + 6)?;
+            let size = self.readback_word(entry + 7)?;
+            self.execute_readback(vram_address, control, port, destination, bank, size)?;
+            entry += 9;
+        }
+        self.readback_store(0x360, 0)?;
+        Ok(())
+    }
+    fn readback_store(&mut self, at: usize, value: u8) -> Result<(), DisplayError> {
+        if crate::session_encoding::write_projected_byte(self.session, at, value) {
+            Ok(())
+        } else {
+            Err(DisplayError::Alias { offset: at })
+        }
+    }
+    // Exact source: sm/src/snes/dma.rs B_BUS_OFFSETS.
+    fn execute_readback(
+        &mut self,
+        address: u16,
+        control: u8,
+        port: u8,
+        destination: u16,
+        bank: u8,
+        size: u16,
+    ) -> Result<(), DisplayError> {
+        {
+            let owner = self.session.presentation.owner_mut()?;
+            let [low, high] = address.to_le_bytes();
+            owner.write_tile_pointer_byte(false, low)?;
+            owner.write_tile_pointer_byte(true, high)?;
+            owner.read_tile_port(false)?;
+            owner.read_tile_port(true)?;
+            let channel = &mut owner.state.hdma.channels[1];
+            channel.mode = control & 7;
+            channel.from_destination = control & 0x80 != 0;
+            channel.indirect = control & 0x40 != 0;
+            channel.unused_bit = control & 0x20 != 0;
+            channel.decrement = control & 0x10 != 0;
+            channel.fixed = control & 8 != 0;
+            channel.destination = port;
+            channel.source_address = destination;
+            channel.source_bank = bank;
+            channel.indirect_cursor = size;
+            channel.transfer_cursor = 0;
+            channel.indirect_bank = 0;
+            channel.table_cursor &= 0x00ff;
+            channel.repeat_count = 0;
+            for (index, channel) in owner.state.hdma.channels.iter_mut().enumerate() {
+                channel.dma_active = index == 1;
+            }
+            owner.state.hdma.dma_busy = true;
+            owner.state.hdma.dma_timer = 0;
+        }
+        const B_BUS_OFFSETS: [[u8; 4]; 8] = [
+            [0, 0, 0, 0],
+            [0, 1, 0, 1],
+            [0, 0, 0, 0],
+            [0, 0, 1, 1],
+            [0, 1, 2, 3],
+            [0, 1, 0, 1],
+            [0, 0, 0, 0],
+            [0, 0, 1, 1],
+        ];
+        let count = if size == 0 { 65536 } else { usize::from(size) };
+        for index in 0..count {
+            let channel = self.session.presentation.owner()?.state.hdma.channels[1].clone();
+            let offset =
+                B_BUS_OFFSETS[usize::from(channel.mode)][usize::from(channel.transfer_cursor)];
+            // Original dma.rs increments before either bus access.
+            self.session.presentation.owner_mut()?.state.hdma.channels[1].transfer_cursor =
+                channel.transfer_cursor.wrapping_add(1);
+            let selected = channel.destination.wrapping_add(offset);
+            if !channel.from_destination {
+                return Err(DisplayError::Incomplete);
+            }
+            let value = match selected {
+                0x39 => self
+                    .session
+                    .presentation
+                    .owner_mut()?
+                    .read_tile_port(false)?,
+                0x3a => self
+                    .session
+                    .presentation
+                    .owner_mut()?
+                    .read_tile_port(true)?,
+                _ => return Err(DisplayError::Incomplete),
+            };
+            let at = match channel.source_bank {
+                0x7e => usize::from(channel.source_address),
+                0x7f => 0x10000 + usize::from(channel.source_address),
+                _ => return Err(DisplayError::Source),
+            };
+            // A destination may alias a later queue entry or any currently projected owner.
+            self.readback_store(at, value)?;
+            let channel = &mut self.session.presentation.owner_mut()?.state.hdma.channels[1];
+            if !channel.fixed {
+                channel.source_address = if channel.decrement {
+                    channel.source_address.wrapping_sub(1)
+                } else {
+                    channel.source_address.wrapping_add(1)
+                };
+            }
+            channel.indirect_cursor = channel.indirect_cursor.wrapping_sub(1);
+            channel.transfer_cursor = u8::try_from((index + 1) & 3).expect("DMA transfer index");
+        }
+        let hdma = &mut self.session.presentation.owner_mut()?.state.hdma;
+        hdma.channels[1].transfer_cursor = 0;
+        hdma.channels[1].dma_active = false;
+        hdma.dma_timer = 0;
+        hdma.dma_busy = false;
+        Ok(())
+    }
+
     fn transfer(&mut self, transfer: &TileTransfer) -> Result<(), DisplayError> {
         self.transfer_channel(transfer, None)
     }
@@ -1952,4 +2237,58 @@ impl TransferHost for SessionTransfer<'_> {
             .tile_pointer = word;
         Ok(())
     }
+}
+
+/// Immediate boss graphics uses the existing current Session transfer kernel.
+/// Counts retain the original GraphicsAsset::VramWords byte unit.
+pub fn boss_graphics(
+    session: &mut crate::session::Session,
+    source: TransferSource,
+    token: [u8; 3],
+    destination: u16,
+    count: u16,
+) -> Result<(), DisplayError> {
+    {
+        let owner = session.presentation.owner_mut()?;
+        let [low, high] = destination.to_le_bytes();
+        owner.write_tile_pointer_byte(false, low)?;
+        owner.write_tile_pointer_byte(true, high)?;
+        owner.write_tile_mode(0x80);
+        let channel = &mut owner.state.hdma.channels[1];
+        channel.mode = 1;
+        channel.destination = 0x18;
+        channel.from_destination = false;
+        channel.fixed = false;
+        channel.decrement = false;
+        channel.unused_bit = false;
+        channel.indirect = false;
+        channel.source_address = u16::from_le_bytes([token[0], token[1]]);
+        channel.source_bank = token[2];
+        channel.indirect_cursor = count;
+        for (index, channel) in owner.state.hdma.channels.iter_mut().enumerate() {
+            channel.dma_active = index == 1;
+        }
+        owner.state.hdma.dma_busy = true;
+    }
+    let result = SessionRefresh { session }.transfer_channel(
+        &TileTransfer {
+            source,
+            count,
+            destination: super::state::TileDestination {
+                word: destination,
+                step: 1,
+                lanes: ByteLanes::Both,
+                remap: 0,
+                increment_on_high: true,
+            },
+        },
+        Some(1),
+    );
+    if result.is_ok() {
+        let hdma = &mut session.presentation.owner_mut()?.state.hdma;
+        hdma.channels[1].transfer_cursor = 0;
+        hdma.dma_busy = false;
+        hdma.dma_timer = 0;
+    }
+    result
 }

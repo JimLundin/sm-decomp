@@ -34,7 +34,8 @@ pub trait DisplayOwner {
 /// What the display refresh needs besides RAM, registers and the cartridge:
 /// owned display stores and the uploads the compatibility runtime still owns.
 pub trait Host:
-    crate::fx_domain::Controls
+    crate::palette_migration::Host
+    + crate::fx_domain::Controls
     + crate::display::preparation::Access
     + CompatibilityRam
     + crate::ram::WorkRamAccess
@@ -144,7 +145,23 @@ pub fn initialize_gameplay<H: Host + ?Sized>(game: &mut H) {
     GraphicsAsset::VramWords(0x9ad200, 0x6000, 0x2e00).load(game);
     GraphicsAsset::VramWords(0x7e4000, 0x5000, 0x1000).load(game);
     GraphicsAsset::VramWords(0x7e4000, 0x5800, 0x800).load(game);
-    word_transfers!(game, ascending, 256; le(PALETTE_BUFFER, 0) <- rom(0x9a8000, 0));
+    {
+        let image = crate::word_transfers::LoadedRom::loaded_rom_image(&*game);
+        game.palette_transfer(crate::palette_migration::Transfer {
+            destination: crate::palette_migration::Span {
+                buffer: crate::palette_migration::Buffer::Current,
+                first: 0,
+                words: 256,
+                descending: false,
+                order: crate::scene::state::WordOrder::Little,
+            },
+            source: crate::palette_migration::Source::Rom {
+                image,
+                first: usize::try_from(sm_data::cartridge::lorom_offset(0x9a8000))
+                    .expect("palette ROM offset"),
+            },
+        });
+    }
 }
 
 /// Read the room's BG2 tilemap back into RAM for the pause screen.

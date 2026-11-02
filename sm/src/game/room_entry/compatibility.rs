@@ -57,6 +57,9 @@ impl EntryEffects for Runtime<'_> {
                 game::samus_palette::load_suit(self, game::visual_state::PaletteBuffer::Target)
             }
             LeafEffect::LoadFxHeader => sm_game::room_state::fx::load_header(self),
+            LeafEffect::LoadSpritePalettes => {
+                self.owned_call(sm_game::room_state::load_sprite_palettes)
+            }
             LeafEffect::StopHdmaEffects => game::visual_runtime::clear_hdma_channels(self),
             LeafEffect::WaitVblankClearHdma => game::visual_runtime::clear_hdma(self),
             LeafEffect::InitializeRoomSpecialEffects => {
@@ -232,10 +235,15 @@ impl EntryEffects for Runtime<'_> {
         room_mechanisms::creation::close_door(self);
     }
     fn write_scroll_byte(&mut self, cell: u8, value: u8) {
-        self.set_byte(0xcd20 + usize::from(cell), value);
+        sm_game::room_scrolls::CameraHost::set_camera_scroll_byte(self, usize::from(cell), value);
     }
     fn write_scroll_pair(&mut self, byte_offset: u16, value: [u8; 2]) {
-        self.write_slice(0xcd20 + usize::from(byte_offset), &value);
+        let index = usize::from(byte_offset);
+        if index + 2 <= self.session().room.scrolls.len() {
+            self.session_mut().room.scrolls[index..index + 2].copy_from_slice(&value);
+        } else {
+            self.write_slice(0xcd20 + index, &value);
+        }
     }
     fn device_word(&mut self, register: DeviceWord, value: u16) {
         let reg = match register {
@@ -412,10 +420,7 @@ impl EntryEffects for Runtime<'_> {
             let stream = assets
                 .stream(&source)
                 .expect("selected Level stream is unavailable");
-            self.foreign(|game| {
-                sm_game::decompression::decompress_prepared_table(&stream, 0x10000, game);
-                game::room_state::copy_level_planes(game);
-            });
+            sm_game::room_terrain::load_prepared(&stream, self);
         } else {
             let source = source.compatibility_address(&self.session().world);
             self.foreign(|game| game::room_state::decompress_level(source, game));
@@ -423,6 +428,9 @@ impl EntryEffects for Runtime<'_> {
     }
     fn setup(&mut self, action: SetupAction) {
         let (kind, code) = action.compatibility_code(&self.session().world);
+        if matches!(kind, SetupKind::Room) && sm_game::room_state::setup::execute(code, self) {
+            return;
+        }
         self.foreign(|game| match kind {
             SetupKind::Room => sm_game::room_state::execute_setup_code(code, game),
             SetupKind::Door => sm_game::room_state::execute_door_code(code, game),
@@ -459,5 +467,39 @@ impl EntryEffects for Runtime<'_> {
                 );
             }
         }
+    }
+}
+
+impl sm_game::room_terrain::PlaneAliases for Runtime<'_> {
+    fn imported_level_byte(&self, offset: isize) -> u8 {
+        let at = 0x10000usize
+            .checked_add_signed(offset)
+            .expect("level allocation offset");
+        sm_game::runtime_access::SessionRam::byte(self, at)
+    }
+    fn set_imported_level_byte(&mut self, offset: isize, value: u8) {
+        let at = 0x10000usize
+            .checked_add_signed(offset)
+            .expect("level allocation offset");
+        sm_game::runtime_access::SessionRam::set_byte(self, at, value);
+    }
+}
+impl sm_game::room_state::setup::Host for Runtime<'_> {
+    fn setup_mechanism(&mut self, x: u8, y: u8, definition: u16) {
+        sm_game::room_mechanisms::creation::spawn(
+            self,
+            sm_game::room_mechanisms::host::SpawnSource::Hardcoded {
+                x,
+                y,
+                header: definition,
+            },
+            &mut sm_game::room_mechanisms::host::Contact::Absent,
+        );
+    }
+    fn setup_room_projectile(&mut self, definition: u16, parameter: u16) {
+        sm_game::enemy_projectiles::lifecycle::spawn_room(self, definition, parameter);
+    }
+    fn setup_event(&mut self, event: u16) {
+        sm_game::progress::set_event(self, event);
     }
 }

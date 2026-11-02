@@ -1,21 +1,42 @@
 //! Room scroll definitions, camera following and their shared executors.
 //! Dispatch identities retain the full address; cell writes retain their order.
 mod camera;
+pub mod state;
 pub use camera::{calculate_blocks, calculate_scrolls, debug_position, layer2_position};
 pub mod door;
 
 use crate::display::transfer::ScrollingLayout as ScrollingDmaLayout;
 
-/// Room scrolling runs on the owned-Session view: the camera is
-/// `Session::room.camera`, other words are read and written through the
-/// view's projected bytes, and the display work is the runtime's.
+/// Camera following reads canonical room/player fields and live scroll aliases.
+/// Mixed display producers retain their separate compatibility Host below.
+pub trait CameraHost: state::Aliases {
+    fn camera_scroll_byte(&self, index: usize) -> u8 {
+        state::byte(self, index)
+    }
+    fn set_camera_scroll_byte(&mut self, index: usize, value: u8) {
+        state::store_byte(self, index, value);
+    }
+    fn camera_unreachable(&mut self) -> bool;
+    fn publish_camera_position(&mut self, axis: usize, value: u16);
+}
+
+pub(super) fn set_layer1<H: CameraHost + ?Sized>(h: &mut H, axis: usize, value: u16) {
+    h.session_mut().room.camera.layer1[axis] = value;
+    h.publish_camera_position(axis, value);
+}
+
+pub(super) fn set_bg1_offset<H: CameraHost + ?Sized>(h: &mut H, axis: usize, value: u16) {
+    h.session_mut().room.camera.bg1_offset[axis] = value;
+    h.refresh_inputs();
+}
+
 pub trait Host:
-    crate::session_access::SessionAccess
-    + crate::runtime_access::SessionRam
-    + crate::ram::CompatibilityRam
-    + crate::player_position::PlayerPosition
-    + crate::player_position::PlayerFacts
+    CameraHost + crate::display_scroll::Access + crate::player_position::PlayerPosition
 {
+    /// Acquire each live screen base separately in the original source order.
+    fn camera_screen_base(&self, second: bool) -> u8;
+    /// This scrolling-transfer scratch word remains with its transfer consumer.
+    fn store_camera_background_size(&mut self, value: u16);
     /// The original's unreachable-state failure.
     fn unreachable(&mut self) -> bool;
     /// Queue the scrolling tile transfer for layer offset `k`.
@@ -35,7 +56,7 @@ enum Scroll {
 use Scroll::{Blue, Green, Red};
 
 /// Returns false for other door effects without changing RAM.
-pub fn apply<H: Host + ?Sized>(address: u32, game: &mut H) -> bool {
+pub fn apply<H: CameraHost + ?Sized>(address: u32, game: &mut H) -> bool {
     let cells: &[(u8, Scroll)] = match address {
         0x8fb981 | 0x8fba21 | 0x8fbe1a => &[(6, Green)],
         0x8fb98c | 0x8fc0d3 => &[(0, Blue)],
@@ -113,46 +134,45 @@ pub fn apply<H: Host + ?Sized>(address: u32, game: &mut H) -> bool {
         _ => return false,
     };
     for &(cell, color) in cells {
-        game.set_byte(0xcd20 + usize::from(cell), color as u8);
+        game.set_camera_scroll_byte(usize::from(cell), color as u8);
     }
     true
 }
 
 // Camera effects keep their legacy publication order until layer state is owned.
-use crate::camera::set_layer1;
 use crate::player_collision::operations::Axis;
-use crate::ram::{bytes as fields_bytes, word};
-use crate::ram_words as words;
-use crate::word_transfers;
 use camera::{auto_x, auto_y, trigger_down, trigger_left, trigger_right, trigger_up};
 // Native split motion reads low then high and writes low then high.
-fn add_native_motion<H: Host + ?Sized>(high: usize, low: usize, amount: u32, game: &mut H) {
-    let low_word = u16::from_ne_bytes([game.byte(low), game.byte(low + 1)]);
-    let high_word = u16::from_ne_bytes([game.byte(high), game.byte(high + 1)]);
-    let position = u32::from(low_word) | (u32::from(high_word) << 16);
-    let next = position.wrapping_add(amount);
-    word_transfers!(game, ascending, 1;
-        native(low) <- value(next as u16),
-        native(high) <- value((next >> 16) as u16),
-    );
+fn add_player_motion<H: CameraHost + ?Sized>(axis: CameraAxis, amount: u32, game: &mut H) {
+    let player = &mut game.session_mut().player;
+    let (whole, fraction) = match axis {
+        CameraAxis::X => (&mut player.x, &mut player.x_fraction),
+        CameraAxis::Y => (&mut player.y, &mut player.y_fraction),
+    };
+    let low = u16::from_ne_bytes(fraction.to_le_bytes());
+    let high = u16::from_ne_bytes(whole.to_le_bytes());
+    let next = (u32::from(low) | (u32::from(high) << 16)).wrapping_add(amount);
+    let [low0, low1, high0, high1] = next.to_le_bytes();
+    *fraction = u16::from_le_bytes(u16::from_le_bytes([low0, low1]).to_ne_bytes());
+    *whole = u16::from_le_bytes(u16::from_le_bytes([high0, high1]).to_ne_bytes());
 }
 
 /// Samus's camera distance from layer 1 within which slow grapple scrolling
 /// leaves the camera alone, per axis: (near, far).
 const SLOW_SCROLL_WINDOW: [(u16, u16); 2] = [(0x60, 0xa0), (0x70, 0x90)];
 
-pub fn advance_camera<H: Host + ?Sized>(game: &mut H) {
-    if word!(game.SLOW_GRABBLE_SCROLLING_FLAG) != 0 {
+pub fn advance_camera<H: CameraHost + ?Sized>(game: &mut H) {
+    if game.session().player.grapple_slow_scrolling != 0 {
         // Slow grapple scrolling steps the camera 3 px toward Samus.
-        let player = [game.player_x(), game.player_y()];
-        for axis in 0..2 {
-            if player[axis] & 0x8000 != 0 {
+        let player = [game.session().player.x, game.session().player.y];
+        for (axis, &coordinate) in player.iter().enumerate() {
+            if coordinate & 0x8000 != 0 {
                 break;
             }
             let layer1 = game.session().room.camera.layer1[axis];
-            let offset = player[axis].wrapping_sub(layer1);
+            let offset = coordinate.wrapping_sub(layer1);
             let (near, far) = SLOW_SCROLL_WINDOW[axis];
-            if player[axis] < layer1 || offset < near {
+            if coordinate < layer1 || offset < near {
                 set_layer1(game, axis, layer1.wrapping_sub(3));
             } else if offset >= far {
                 set_layer1(game, axis, layer1.wrapping_add(3));
@@ -174,13 +194,13 @@ pub fn advance_camera<H: Host + ?Sized>(game: &mut H) {
             }
         }
         _ => {
-            game.unreachable();
+            game.camera_unreachable();
         }
     }
-    game.set_previous_player_x(game.player_x());
-    game.set_previous_player_x_fraction(game.player_x_fraction());
-    game.set_previous_player_y(game.player_y());
-    game.set_previous_player_y_fraction(game.player_y_fraction());
+    game.session_mut().player.previous_position.x.whole = game.session().player.x;
+    game.session_mut().player.previous_position.x.fraction = game.session().player.x_fraction;
+    game.session_mut().player.previous_position.y.whole = game.session().player.y;
+    game.session_mut().player.previous_position.y.fraction = game.session().player.y_fraction;
 }
 
 /// The room's scrolling-finished hooks: none, or keep layer 1 at y >= 464.
@@ -189,7 +209,7 @@ const STOP_LAYER1_ABOVE_464: u16 = 0x9589;
 
 // Layer 1's fraction and whole position form one native split motion, as
 // add_native_motion: native loads of fraction then whole, stores likewise.
-fn add_layer1_motion<H: Host + ?Sized>(axis: usize, amount: u32, game: &mut H) {
+fn add_layer1_motion<H: CameraHost + ?Sized>(axis: usize, amount: u32, game: &mut H) {
     let camera = game.session().room.camera;
     let low = u16::from_ne_bytes(camera.layer1_fraction[axis].to_le_bytes());
     let high = u16::from_ne_bytes(camera.layer1[axis].to_le_bytes());
@@ -214,9 +234,13 @@ macro_rules! chase_ideal_layer_position {
             let negative =
                 (camera.ideal_layer1[$axis] as i16).wrapping_sub(camera.layer1[$axis] as i16) < 0;
             let amount = if negative {
-                -(words!(i32, $game.$movement, $movement_fraction)) as u32
+                0u32.wrapping_sub(
+                    (u32::from($game.session().player.camera_distance[$axis].whole) << 16)
+                        | u32::from($game.session().player.camera_distance[$axis].fraction),
+                )
             } else {
-                words!($game.$movement, $movement_fraction)
+                (u32::from($game.session().player.camera_distance[$axis].whole) << 16)
+                    | u32::from($game.session().player.camera_distance[$axis].fraction)
             };
             add_layer1_motion($axis, amount, $game);
             if negative {
@@ -233,21 +257,21 @@ macro_rules! chase_ideal_layer_position {
 const FACE_LEFT_DISTANCES: [u16; 4] = [0xa0, 0x50, 0x20, 0xe0];
 const FACE_RIGHT_DISTANCES: [u16; 4] = [0x60, 0x40, 0x20, 0xe0];
 
-fn follow_x<H: Host + ?Sized>(game: &mut H) {
-    if game.previous_player_x() == game.player_x() {
+fn follow_x<H: CameraHost + ?Sized>(game: &mut H) {
+    if game.session().player.previous_position.x.whole == game.session().player.x {
         auto_x(game);
         return;
     }
-    let pushed = word!(game.KNOCKBACK_DIR) != 0
-        || game.movement_type() == 16
-        || word!(game.SAMUS_X_ACCEL_MODE) == 1;
-    let distances = if pushed != (game.facing() != 4) {
+    let pushed = game.session().player.knockback_x_direction != 0
+        || game.session().player.movement_and_facing.to_le_bytes()[1] == 16
+        || game.session().player.contact.acceleration_mode == 1;
+    let distances = if pushed != (game.session().player.movement_and_facing.to_le_bytes()[0] != 4) {
         &FACE_RIGHT_DISTANCES
     } else {
         &FACE_LEFT_DISTANCES
     };
-    let distance = distances[usize::from(word!(game.CAMERA_DISTANCE_INDEX) >> 1)];
-    game.session_mut().room.camera.ideal_layer1[0] = game.player_x().wrapping_sub(distance);
+    let distance = distances[usize::from(game.session().room.camera.distance_index >> 1)];
+    game.session_mut().room.camera.ideal_layer1[0] = game.session().player.x.wrapping_sub(distance);
     chase_ideal_layer_position!(
         game,
         0,
@@ -257,17 +281,17 @@ fn follow_x<H: Host + ?Sized>(game: &mut H) {
         trigger_right
     );
 }
-fn follow_y<H: Host + ?Sized>(game: &mut H) {
-    if game.previous_player_y() == game.player_y() {
+fn follow_y<H: CameraHost + ?Sized>(game: &mut H) {
+    if game.session().player.previous_position.y.whole == game.session().player.y {
         auto_y(game);
         return;
     }
-    let scroller = if word!(game.SAMUS_Y_DIR) == 1 {
+    let scroller = if game.session().player.contact.y_direction == 1 {
         game.session().room.entry.scroll_down
     } else {
         game.session().room.entry.scroll_up
     };
-    game.session_mut().room.camera.ideal_layer1[1] = game.player_y().wrapping_sub(scroller);
+    game.session_mut().room.camera.ideal_layer1[1] = game.session().player.y.wrapping_sub(scroller);
     chase_ideal_layer_position!(
         game,
         1,
@@ -280,7 +304,7 @@ fn follow_y<H: Host + ?Sized>(game: &mut H) {
 
 /// Layer 2's scroll policy byte on `axis` (0 = x, 1 = y): 0 follows layer 1,
 /// 1 is fixed, otherwise bits 1-7 scale layer 1's position.
-pub(crate) fn layer2_policy<H: Host + ?Sized>(game: &H, axis: usize) -> u8 {
+pub(crate) fn layer2_policy<H: CameraHost + ?Sized>(game: &H, axis: usize) -> u8 {
     let entry = &game.session().room.entry;
     [entry.layer2_x, entry.layer2_y][axis]
 }
@@ -288,10 +312,9 @@ pub(crate) fn layer2_policy<H: Host + ?Sized>(game: &H, axis: usize) -> u8 {
 /// Queue the whole visible room: 17 columns from the camera's left edge,
 /// flushing each, layer 2 too unless it is fixed.
 pub fn fill_viewport<H: Host + ?Sized>(game: &mut H) {
-    let screens = (i32::from(game.byte(fields_bytes::REG_BG1SC))
-        - i32::from(game.byte(fields_bytes::REG_BG2SC)))
-        << 8;
-    word!(game.SIZE_OF_BG2 = (screens & 0xf800) as u16);
+    let screens =
+        (i32::from(game.camera_screen_base(false)) - i32::from(game.camera_screen_base(true))) << 8;
+    game.store_camera_background_size(u16::try_from(screens & 0xf800).expect("background size"));
     calculate_blocks(game);
     for _ in 0..17 {
         let camera = game.session().room.camera;
@@ -327,7 +350,7 @@ pub fn update_map<H: Host + ?Sized>(game: &mut H) {
 }
 
 pub fn update_scrolls<H: Host + ?Sized>(game: &mut H) {
-    if crate::sequence_word!(game.TIME_IS_FROZEN_FLAG) != 0 {
+    if game.session().timing.time_frozen != 0 {
         return;
     }
     let camera = game.session().room.camera;

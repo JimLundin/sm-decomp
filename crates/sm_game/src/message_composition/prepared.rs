@@ -807,16 +807,18 @@ impl d::Context for Runner<'_> {
                 d::Outcome::Suspended(std::num::NonZeroU8::new(1).unwrap()),
             );
         }
-        if self.owner.state.wait_pending {
-            self.owner.state.wait_pending = false;
-            (state, d::Outcome::Complete)
-        } else {
-            self.owner.state.wait_pending = true;
-            (
-                state,
-                d::Outcome::Suspended(std::num::NonZeroU8::new(1).unwrap()),
-            )
-        }
+        self.owner.state.runner = RunnerState::from_dialogue(state);
+        let mut execution = self.owner.execution();
+        let result = self.effects.wait(self.workspace, &mut execution);
+        self.owner.state = execution.into();
+        let outcome = match result {
+            Ok(outcome) => outcome,
+            Err(fault) => {
+                self.owner.fault = Some(fault);
+                d::Outcome::Suspended(std::num::NonZeroU8::new(1).unwrap())
+            }
+        };
+        (self.owner.state.runner.dialogue(), outcome)
     }
     fn input(&mut self, state: d::Dialogue<MessageId>) -> (d::Dialogue<MessageId>, d::Input) {
         if self.owner.fault.is_some() {
@@ -836,8 +838,27 @@ impl d::Context for Runner<'_> {
             .owner
             .sample
             .expect("resume admits input before dialogue polling");
+        self.owner.state.runner = RunnerState::from_dialogue(state);
+        let mut execution = self.owner.execution();
+        let sampled = self.effects.input(self.workspace, &mut execution, sample);
+        self.owner.state = execution.into();
+        let sample = match sampled {
+            Ok(sample) => sample,
+            Err(fault) => {
+                self.owner.fault = Some(fault);
+                return (
+                    self.owner.state.runner.dialogue(),
+                    d::Input {
+                        confirm: false,
+                        cancel: false,
+                        toggle: false,
+                        dismiss: false,
+                    },
+                );
+            }
+        };
         (
-            state,
+            self.owner.state.runner.dialogue(),
             d::Input {
                 confirm: sample.new_keys & 0x80 != 0,
                 cancel: sample.new_keys & 0x8000 != 0,
@@ -851,6 +872,29 @@ impl d::Context for Runner<'_> {
 /// One sink receives byte publication while the actual allocation is leased,
 /// and receives synchronous effects only after its actual execution is exposed.
 pub trait WorkspaceEffects: crate::presentation_workspace::Publication {
+    /// Extraction keeps its supplied wait state; coupled execution overrides this
+    /// with the existing display acknowledgment owner at the actual wait phase.
+    fn wait(
+        &mut self,
+        _workspace: &mut Workspace,
+        execution: &mut ExecutionDescription,
+    ) -> Result<d::Outcome, Fault> {
+        let pending = execution.wait_pending;
+        execution.wait_pending = !pending;
+        Ok(if pending {
+            d::Outcome::Complete
+        } else {
+            d::Outcome::Suspended(std::num::NonZeroU8::new(1).unwrap())
+        })
+    }
+    fn input(
+        &mut self,
+        _workspace: &mut Workspace,
+        _execution: &mut ExecutionDescription,
+        sample: InputSample,
+    ) -> Result<InputSample, Fault> {
+        Ok(sample)
+    }
     fn effect(
         &mut self,
         effect: Effect,

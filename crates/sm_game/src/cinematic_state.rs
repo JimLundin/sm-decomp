@@ -187,7 +187,7 @@ pub enum Array {
     // Other owners' tables the cinematics share.
     /// `PALETTE_BUFFER`, 256 words: the presentation's colours.
     PaletteBuffer = 0xc000,
-    /// `TILEMAP_STUFF`, 2048 words: `actors.extended.blocks[4..6]`.
+    /// `TILEMAP_STUFF`, 2048 words: `actors.extended.tilemaps`.
     TilemapStuff = 0x2000,
     /// `PROJECTILE_X_POS`, 10 words: `projectiles.shots[i].x`.
     ProjectileX = 0x0b64,

@@ -840,6 +840,11 @@ pub trait Lease:
     fn foreign<T>(&mut self, action: impl FnOnce(&mut Self::Game) -> T) -> T;
 }
 
+/// Only execution owners with the migrated corpse domains may run the
+/// dispatcher paths that initialize or update the brain's corpse.
+pub trait CorpseLease: Lease + crate::actors::corpses::Host {}
+impl<T: Lease + crate::actors::corpses::Host> CorpseLease for T {}
+
 /// What the fight still reaches in the compatibility runtime.
 pub trait Host:
     crate::actors::host::BossEffects
@@ -970,7 +975,7 @@ pub fn corpse_rotting_finished(game: &mut impl Lease) {
 }
 
 crate::dispatch::callback_dispatch! {
-    pub fn run_function(ea: u32, game: &mut impl Lease) => ea;
+    pub fn run_function(ea: u32, game: &mut impl CorpseLease) => ea;
     call (game); default { bank_unreachable(game); };
     @body checked;
     @functions [pub fn (game: &mut impl Lease)];
@@ -987,11 +992,13 @@ crate::dispatch::callback_dispatch! {
             function_timer = 64);
         fake_death_descent_lock_samus_and_set_scroll_region(game);
     };
+    @functions [pub fn (game: &mut impl CorpseLease)];
     [11110611] fake_death_descent_collapse_tubes [] {
         let e: i32 = BRAIN;
         run_function(((session_slot!(game, MotherBrainBrain[e].subfunction)) as u32) | (BANK_BASE), game);
         handle_fake_death_explosions(game);
     };
+    @functions [pub fn (game: &mut impl Lease)];
     [11110729] wait_then_spawn_tubes_falling_enemy_0 [] {
         let free = game.foreign(|game| {
             crate::enemy_projectiles::table::with_slots(game, |slots| {
@@ -1177,6 +1184,7 @@ crate::dispatch::callback_dispatch! {
                 function_timer = 32);
         }
     };
+    @functions [pub fn (game: &mut impl CorpseLease)];
     [11121109] phase3_death_corpse_rots_away [] {
         if corpses::process_corpse_rotting(BRAIN as u16, game) & 1 != 0 {
             let vram_transfers: u16 = session_slot!(game, Corpse[BRAIN].vram_transfers);
@@ -1193,6 +1201,7 @@ crate::dispatch::callback_dispatch! {
             phase3_death_20_frame_delay(game);
         };
     };
+    @functions [pub fn (game: &mut impl Lease)];
     [11121240] phase3_death_load_escape_timer_tiles [] {
         if queue_mother_brain_sprite_tiles(BANK_A6, ADDR_STRU_A6C4CB as u16, game) != 0 {
             session_slot!(game, MotherBrainBody[0i32].function = function::PHASE_3_DEATH_START_ESCAPE_SEQUENCE);
@@ -1573,7 +1582,7 @@ crate::dispatch::callback_dispatch! {
             }
         }
     };
-    @functions [pub fn (game: &mut impl Lease)];
+    @functions [pub fn (game: &mut impl CorpseLease)];
     @prefix { let e: i32 = 0; };
     [11110578] fake_death_descent_transition_palette_to_grey [] {
         session_slot!(game, MotherBrainBody[e].function_timer, |old| old.wrapping_sub(1));
@@ -1587,6 +1596,8 @@ crate::dispatch::callback_dispatch! {
         }
         fake_death_descent_collapse_tubes(game);
     };
+    @functions [pub fn (game: &mut impl Lease)];
+    @prefix { let e: i32 = 0; };
     handle_fake_death_explosions [] {
         let v1: i16 = ((session_slot!(game, MotherBrainBody[e].fake_death_explosion_timer)) as i16).wrapping_sub(1);
         if v1 < 0 {
@@ -3270,8 +3281,18 @@ pub fn set_up_brain_palette_for_laser(game: &mut impl State) {
 }
 
 // Mother Brain's AI and instruction entries, forwarded from the bank's dispatch.
-pub fn initialize_body(game: &mut impl Lease) {
-    word_transfers!(game, descending, 2048; le(TILEMAP_STUFF, 2047) <- value(824));
+pub fn initialize_body(game: &mut (impl Lease + crate::session_access::SessionAccess)) {
+    // TILEMAP_STUFF is the two actor tilemaps; retain descending word order.
+    for tile in crate::session_access::SessionAccess::session_mut(game)
+        .actors
+        .extended
+        .tilemaps
+        .iter_mut()
+        .rev()
+        .flat_map(|tilemap| tilemap.iter_mut().rev())
+    {
+        *tile = 824;
+    }
     set_body_instruction_list(ADDR_K_MOTHER_BRAIN_ILIST_9C13 as u16, game);
     session_slot!(game, MotherBrainBody[BODY].base.vram_tiles_index = 0);
     session_slot!(
@@ -3310,7 +3331,7 @@ pub fn initialize_body(game: &mut impl Lease) {
         spawn_room_projectile(ADDR_K_EPROJ_MOTHER_BRAIN_ROOM_TURRETS as u16, v3, game);
     }
 }
-pub fn initialize_brain(game: &mut impl Lease) {
+pub fn initialize_brain(game: &mut impl CorpseLease) {
     corpses::initialize_enemy_corpse_rotting(BRAIN as u16, ADDR_STRU_A9DE08 as u16, game);
     session_slot!(game, MotherBrainBrain[BRAIN].base.health = 3000);
     set_brain_unused_instruction_list(ADDR_K_MOTHER_BRAIN_ILIST_9C13 as u16, game);
@@ -3320,7 +3341,7 @@ pub fn initialize_brain(game: &mut impl Lease) {
     set_up_brain_normal_palette(game);
 }
 /// Main AI - Mother Brain body.
-pub fn body_main_ai(game: &mut impl Lease) {
+pub fn body_main_ai(game: &mut impl CorpseLease) {
     handle_room_palette(game);
     if session_slot!(game, MotherBrainBody[BODY].function) == function::FIRST_PHASE {
         body_phase1(game);
@@ -3337,12 +3358,12 @@ pub fn body_main_ai(game: &mut impl Lease) {
         write_long_pointer(UNPAUSE_HOOK, UNPAUSE_BODY_HOOK, game);
     }
 }
-pub fn power_bomb_reaction(game: &mut impl Lease) {
+pub fn power_bomb_reaction(game: &mut impl CorpseLease) {
     game.foreign(|game| game.power_bomb_reaction(crate::actors::host::Death::LeavePending));
     brain_main_ai(game);
 }
 /// Main AI - Mother Brain brain.
-pub fn brain_main_ai(game: &mut impl Lease) {
+pub fn brain_main_ai(game: &mut impl CorpseLease) {
     set_graphics_drawn_hook(NO_DRAW_HOOK, game);
     if (session_slot!(game, MotherBrainBrain[BRAIN].base.properties) & 0x100) != 0 {
         run_function(

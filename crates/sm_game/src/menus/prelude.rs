@@ -41,12 +41,12 @@ macro_rules! owned {
         $($v)*::set($game, $($v)*::Word::$word, value)
     }};
     ([$($v:tt)*] $game:ident.$word:ident $op:tt $value:expr, reread $(,)?) => {{
-        owned!([$($v)*] $game.$word $op $value);
+        $crate::menus::prelude::owned!([$($v)*] $game.$word $op $value);
         $($v)*::get(&*$game, $($v)*::Word::$word)
     }};
     ([$($v:tt)*] $game:ident.$word:ident $op:tt $value:expr $(,)?) => {{
         let old = $($v)*::get(&*$game, $($v)*::Word::$word);
-        let value: u16 = owned!(@op old $op $value);
+        let value: u16 = $crate::menus::prelude::owned!(@op old $op $value);
         $($v)*::set($game, $($v)*::Word::$word, value)
     }};
     (@op $old:ident += $value:expr) => { $old.wrapping_add($value) };
@@ -55,10 +55,10 @@ macro_rules! owned {
     (@op $old:ident |= $value:expr) => { $old | $value };
     (@op $old:ident ^= $value:expr) => { $old ^ $value };
     ($view:tt $game:ident, $value:expr; $($word:ident),+ $(,)?) => {
-        $(owned!($view $game.$word = $value);)+
+        $($crate::menus::prelude::owned!($view $game.$word = $value);)+
     };
     ($view:tt $game:ident; $($word:ident = $value:expr;)+) => {
-        $(owned!($view $game.$word = $value);)+
+        $($crate::menus::prelude::owned!($view $game.$word = $value);)+
     };
 }
 pub(crate) use owned;
@@ -86,9 +86,6 @@ macro_rules! display_scroll {
     };
 }
 pub(crate) use display_scroll;
-/// The bosses' shared RAM words ([`crate::actors::boss_lease::boss_ram::Word`]).
-macro_rules! boss { ($($t:tt)*) => { owned!([$crate::actors::boss_lease::boss_ram] $($t)*) }; }
-pub(crate) use boss;
 
 /// A word pair addressed as an enemy-slot record, as the original's `PairU16`.
 #[derive(Copy, Clone)]
@@ -142,7 +139,7 @@ macro_rules! do_until {
 pub(crate) use do_until;
 
 /// The boss interaction's existing typed Session facet.
-macro_rules! battle { ($($t:tt)*) => { owned!([$crate::actors::boss_interaction] $($t)*) }; }
+macro_rules! battle { ($($t:tt)*) => { $crate::menus::prelude::owned!([$crate::actors::boss_interaction] $($t)*) }; }
 pub(crate) use battle;
 
 pub use crate::display::queued_tilemaps::QueueAccess as _;

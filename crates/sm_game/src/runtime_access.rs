@@ -25,6 +25,8 @@ pub trait SessionView:
     + crate::player_movement::effects::Host
     + crate::progress::FlagHost
     + crate::room_scrolls::Host
+    + crate::room_terrain::PlaneAliases
+    + crate::room_state::setup::Host
 {
 }
 impl<T> SessionView for T where
@@ -46,6 +48,8 @@ impl<T> SessionView for T where
         + crate::player_movement::effects::Host
         + crate::progress::FlagHost
         + crate::room_scrolls::Host
+        + crate::room_terrain::PlaneAliases
+        + crate::room_state::setup::Host
 {
 }
 
@@ -105,6 +109,7 @@ pub trait RuntimeAccess: crate::screen_fade::Owner {
         + crate::hdma_effects::HdmaEffects
         + crate::actors::mother_brain_rainbow::Host
         + crate::actors::boss_lease::BossState
+        + crate::actors::host::ActorLease
     where
         Self: 'a;
     /// A fresh owned-Session view; publication happens when it is dropped.

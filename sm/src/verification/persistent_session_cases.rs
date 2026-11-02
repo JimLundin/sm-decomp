@@ -134,6 +134,7 @@ fn persistent_fixture(
         media.revision(),
     );
     let required = SessionStartRequirements {
+        actor_manifest: None,
         dialogue: None,
         display: display_required,
         roles: expected_roles,
@@ -218,6 +219,7 @@ fn persistent_fixture(
     });
     let supplied = SuppliedSessionStart::new(
         SessionStartDescription {
+            actor_content: None,
             gameplay: Some(gameplay),
             observations: Some(observations),
             display,

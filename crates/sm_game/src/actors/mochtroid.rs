@@ -176,7 +176,7 @@ pub fn touch(runtime: &mut impl ActorLease) {
                 & SIGN
                 == 0
         {
-            runtime.queue_sound(3, 6, DRAIN_SOUND);
+            crate::enemy_projectiles::host::Effects::queue_sound(runtime, 3, 6, DRAIN_SOUND);
         }
         damage = runtime.lease_native_word(timer).wrapping_sub(DAMAGE_FRAMES) & SIGN == 0;
         if damage {

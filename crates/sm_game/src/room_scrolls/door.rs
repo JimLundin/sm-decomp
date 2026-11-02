@@ -1,9 +1,7 @@
 //! Door camera setup and stepping; RAM remains authoritative between callbacks.
 use super::Host;
-use super::{add_native_motion, calculate_blocks, calculate_scrolls, layer2_position, update_map};
-use crate::camera::{set_bg1_offset, set_layer1};
-use crate::ram::words as fields;
-use crate::ram_words as words;
+use super::{add_player_motion, calculate_blocks, calculate_scrolls, layer2_position, update_map};
+use super::{set_bg1_offset, set_layer1};
 use crate::room_entry::content::Axis;
 
 // Door steps retain native split-word and scrolling tilemap publication order.
@@ -128,12 +126,10 @@ pub fn fix_up<H: Host + ?Sized>(game: &mut H) {
 
 pub fn horizontal<H: Host + ?Sized>(left: bool, game: &mut H) -> u8 {
     let frame = game.session().room.entry.frame;
-    let speed = words!(
-        game.SAMUS_DOOR_TRANSITION_SPEED,
-        SAMUS_DOOR_TRANSITION_SUBSPEED
-    );
+    let entry = &game.session().room.entry;
+    let speed = (u32::from(entry.speed_whole) << 16) | u32::from(entry.speed_fraction);
     let speed = if left { -(speed as i32) as u32 } else { speed };
-    add_native_motion(fields::SAMUS_X_POS, fields::SAMUS_X_SUBPOS, speed, game);
+    add_player_motion(Axis::X, speed, game);
     game.set_previous_player_x(game.player_x());
     let delta = if left { 0xfffc } else { 4 };
     set_layer1(
@@ -176,13 +172,10 @@ pub fn down<H: Host + ?Sized>(game: &mut H) -> u8 {
     if frame == 0 {
         first_vertical_frame(15, u16::MAX, game);
     } else if frame < 0x39 {
-        add_native_motion(
-            fields::SAMUS_Y_POS,
-            fields::SAMUS_Y_SUBPOS,
-            words!(
-                game.SAMUS_DOOR_TRANSITION_SPEED,
-                SAMUS_DOOR_TRANSITION_SUBSPEED
-            ),
+        add_player_motion(
+            Axis::Y,
+            (u32::from(game.session().room.entry.speed_whole) << 16)
+                | u32::from(game.session().room.entry.speed_fraction),
             game,
         );
         game.set_previous_player_y(game.player_y());
@@ -208,14 +201,12 @@ pub fn up<H: Host + ?Sized>(game: &mut H) -> u8 {
     if frame == 0 {
         first_vertical_frame(16, 1, game);
     } else {
-        add_native_motion(
-            fields::SAMUS_Y_POS,
-            fields::SAMUS_Y_SUBPOS,
-            -(words!(
-                i32,
-                game.SAMUS_DOOR_TRANSITION_SPEED,
-                SAMUS_DOOR_TRANSITION_SUBSPEED
-            )) as u32,
+        add_player_motion(
+            Axis::Y,
+            0u32.wrapping_sub(
+                (u32::from(game.session().room.entry.speed_whole) << 16)
+                    | u32::from(game.session().room.entry.speed_fraction),
+            ),
             game,
         );
         game.set_previous_player_y(game.player_y());

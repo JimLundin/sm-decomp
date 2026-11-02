@@ -117,7 +117,7 @@ impl Kind {
 /// Play gate opening/closing sound effect if on-screen ($A2:EF5A).
 fn movement_sound(runtime: &mut impl ActorLease) {
     if !api::current_outside_screen(runtime) {
-        runtime.queue_sound(3, 6, 0xe);
+        crate::enemy_projectiles::host::Effects::queue_sound(runtime, 3, 6, 0xe);
     }
 }
 
@@ -227,7 +227,7 @@ pub fn main_ai(kind: Kind, runtime: &mut impl ActorLease) {
         &HORIZONTAL
     };
     let Some(phase) = p.phase(function) else {
-        return runtime.unreachable();
+        return crate::enemy_projectiles::host::Effects::unreachable(runtime);
     };
     match phase {
         Initial | WaitForSamusToGetNear => {
@@ -548,6 +548,6 @@ fn grow(runtime: &mut impl ActorLease) {
                 }
             }
         }
-        _ => runtime.unreachable(),
+        _ => crate::enemy_projectiles::host::Effects::unreachable(runtime),
     }
 }

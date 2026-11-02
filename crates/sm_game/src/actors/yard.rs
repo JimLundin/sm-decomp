@@ -8,7 +8,7 @@ use crate::actors::api::{
 use crate::actors::combat;
 use crate::actors::host::{ActorLease, LeaseActors, Random as _};
 use crate::actors::layouts::part_view;
-use crate::actors::session_slots::SlotAccess as _;
+
 use crate::effects::SoundEffects as _;
 use crate::enemy_script::EnemyScript;
 use crate::player_projectiles::content::{self, table};

@@ -180,7 +180,7 @@ pub fn main_ai(kind: Kind, runtime: &mut impl ActorLease) {
             runtime.edit_actor(key, Native, |actor| {
                 actor.variables[lane::FUNCTION] = profile.functions[LAUNCHED]
             });
-            runtime.queue_sound(2, 6, LAUNCH_SOUND);
+            crate::enemy_projectiles::host::Effects::queue_sound(runtime, 2, 6, LAUNCH_SOUND);
         }
     } else if function == profile.functions[LAUNCHED] {
         // Launched attack: dive towards Samus until the ground.
@@ -198,7 +198,7 @@ pub fn main_ai(kind: Kind, runtime: &mut impl ActorLease) {
                 actor.timer = 0;
                 actor.variables[lane::FUNCTION] = profile.functions[BURROWING];
             });
-            runtime.queue_sound(2, 6, GROUND_SOUND);
+            crate::enemy_projectiles::host::Effects::queue_sound(runtime, 2, 6, GROUND_SOUND);
         } else {
             let speed = kind.speed(runtime, key);
             runtime.edit_actor(key, Native, |actor| {
@@ -239,7 +239,7 @@ pub fn main_ai(kind: Kind, runtime: &mut impl ActorLease) {
             });
         }
     } else {
-        runtime.unreachable();
+        crate::enemy_projectiles::host::Effects::unreachable(runtime);
     }
 }
 /// Instruction - set attack ready flag ($A3:8956, $A3:C6A4). Was `ready`.

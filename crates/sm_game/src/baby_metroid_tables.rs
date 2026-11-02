@@ -8,7 +8,7 @@ use crate::records::Records;
 use sm_data::baby_metroid::*;
 use sm_data::cartridge::RomImage;
 
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ImportedBabyMetroid {
     shell_palettes: Option<Imported<HealthPalettes>>,
     innards_palettes: Option<Imported<HealthPalettes>>,

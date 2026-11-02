@@ -192,9 +192,7 @@ impl Registers {
     }
 
     fn affine_word(&mut self, value: u8) -> i16 {
-        let word = i16::from_le_bytes([self.affine_latch, value]);
-        self.affine_latch = value;
-        word
+        sm_data::hardware::affine_word(&mut self.affine_latch, value)
     }
 
     pub fn line(&self) -> LineRegisters {

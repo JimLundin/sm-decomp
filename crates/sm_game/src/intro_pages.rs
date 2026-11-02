@@ -545,7 +545,7 @@ pub fn draw_japanese_text<H: crate::menus::host::Host + ?Sized>(
 ) -> u16 {
     set_cinematic_tilemap_updates(false, cine);
     if restore_palette {
-        crate::session_cohort::with(
+        crate::cinematic_access::with(
             game,
             |game, palette: &mut crate::cinematic::PaletteBuffer| {
                 for color in 17..20 {

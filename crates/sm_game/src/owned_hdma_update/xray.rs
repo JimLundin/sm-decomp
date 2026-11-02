@@ -1,0 +1,519 @@
+//! X-ray capture/reveal/restore on the same prepared owner.
+//! Readback delivery remains the explicit physical port; raw off-table aliases remain disclosed.
+#![forbid(unsafe_code)]
+use super::context::Context;
+
+use crate::player_transitions::xray::BlendPhase;
+use crate::presentation_workspace::{Point, Role};
+
+use crate::visual_host::{Record, Source};
+fn enqueue_readback<H: Context>(
+    register: usize,
+    offset: u16,
+    destination: u16,
+    size: u16,
+    retain: bool,
+    game: &mut H,
+) {
+    game.hdma_readback(register, offset, destination, size, retain);
+}
+fn level<H: Context>(h: &H, block: usize) -> u16 {
+    match h.session().room.terrain.cells().get(block) {
+        Some(cell) => cell.level,
+        None => h.current_word(0x10002 + 2 * block),
+    }
+}
+
+fn behavior<H: Context>(h: &H, block: i32) -> u8 {
+    let block = usize::try_from(block).expect("X-ray BTS outside RAM");
+    match h.session().room.terrain.cells().get(block) {
+        Some(cell) => cell.behavior,
+        None => h.current_byte(0x16402 + block),
+    }
+}
+
+fn camera<H: Context>(game: &mut H) -> crate::camera::Camera {
+    game.session().room.camera
+}
+
+/// Stop demo playback's program and input and set the beam's angle.
+fn stop_demo<H: Context>(angle: u16, game: &mut H) {
+    let runtime = &mut *game;
+    let player = &mut runtime.session_mut().player;
+    let demo = &mut player.demo;
+    demo.pre_action = 0;
+    demo.delay = 0;
+    demo.program = 0;
+    demo.held = 0;
+    demo.pressed = 0;
+    player.transitions.xray_angle = angle;
+}
+fn set_backdrop_color<H: Context>(color: u16, game: &mut H) {
+    let runtime = &mut *game;
+    runtime.session_mut().presentation.visual_mut().colors[0] = color;
+}
+fn upload_screen<H: Context>(source: u16, screen: u16, game: &mut H) {
+    let tail = game.queue_tail();
+    let entry = usize::from(tail);
+    for (offset, value) in [(0, 2048), (2, source), (4, 126)] {
+        game.queue_native_slice_at(entry + offset, value);
+    }
+    let layers = game.display_control_byte(crate::display::preparation::Field::Screens1);
+    let target = (u16::from(layers & 0xfc) << 8).wrapping_add(screen * 1024);
+    game.queue_native_slice_at(entry + 5, target);
+    game.store_queue_tail(tail.wrapping_add(7));
+}
+
+// Capture all four source tiles before the reverse-order writes, even when RAM aliases.
+fn write_block<H: Context>(destination: u16, tile: u16, offsets: [usize; 4], h: &mut H) {
+    let tiles = h.session().room.terrain.tiles()[usize::from(tile)];
+    for corner in (0..4).rev() {
+        let at = 0x4000 + usize::from(destination) + 2 * offsets[corner];
+        store_xray(h, at, &tiles[corner].to_le_bytes());
+    }
+}
+
+fn copy_background<H: Context>(game: &mut H) {
+    let camera = camera(game);
+    let [x, y] = [0, 1].map(|axis| camera.layer1[axis] as u32 + camera.bg1_offset[axis] as u32);
+    let mut origin = (4 * (y & 0xf0) + ((x & 0xf0) >> 3) + 4 * (x & 0x100)) as u16;
+    let corners = [0usize, 1, 32, 33];
+    for row in 0..16 {
+        let mut screen_row = origin & 0x7e0;
+        let mut column = origin & 0x1f;
+        for block in 0..17 {
+            if column >= 32 {
+                screen_row = (screen_row + 1024) & 0x7e0;
+                column = 0;
+            }
+            let source = usize::from(screen_row + column) + 4096;
+            let tiles = corners.map(|corner| {
+                let index = source + corner;
+                sm_data::table::check_index(index, 0x3000 / 2);
+                game.screen_native_word(Point::new(Role::Xray, 2 * index))
+            });
+            let destination = row * 64 + if block < 16 { block * 2 } else { 1024 };
+            for corner in (0..4).rev() {
+                let at = 0x4000 + 2 * (destination + corners[corner]);
+                game.screen_write_native_slice(Point::physical(at), tiles[corner]);
+            }
+            column += 2;
+        }
+        origin = (origin & 0x400) + (origin.wrapping_add(64) & 0x3ff);
+    }
+}
+
+/// Back up BG2's scroll in A and B and the layer blending byte in C's low
+/// byte; `restore_left` puts them back.
+pub fn freeze_and_backup<H: Context>(hdma_index: usize, game: &mut H) {
+    let frozen = game.session().timing.time_frozen.to_ne_bytes();
+    game.session_mut().timing.time_frozen = u16::from_ne_bytes([1, frozen[1]]);
+    crate::hdma_word!(game, hdma_index, A => u16::from_le_bytes([
+        crate::menus::prelude::display_scroll!(game.Bg2H) as u8,
+        game.physical_scroll_byte(crate::display_scroll::Word::Bg2H, true),
+    ]));
+    crate::hdma_word!(game, hdma_index, B => u16::from_le_bytes([
+        crate::menus::prelude::display_scroll!(game.Bg2V) as u8,
+        game.physical_scroll_byte(crate::display_scroll::Word::Bg2V, true),
+    ]));
+    crate::hdma_byte!(game, hdma_index, C, false => game.display_control_byte(crate::display::preparation::Field::Screens1));
+}
+pub fn capture_bg1_right<H: Context>(game: &mut H) {
+    enqueue_readback(0x58, 1024, 0x6800, 2048, false, game);
+}
+pub fn capture_bg1_left<H: Context>(game: &mut H) {
+    enqueue_readback(0x58, 0, 0x6000, 2048, false, game);
+}
+/// Copy the visible BG1 into the overlay and reveal the hidden blocks of its
+/// 16 rows of 17 blocks, then the room's revealed items, and queue the BG2
+/// readback.
+pub fn build_overlay<H: Context>(game: &mut H) {
+    copy_background(game);
+    if (camera(game).layer1[1] >> 12) != 0 {
+        game.hdma_overlay_origin_assertion();
+    }
+    {
+        // Reveal the screen's 16 rows of 16 blocks and the block past the right edge.
+        let h = &mut *game;
+        let room = &h.session().room;
+        let width = room.width;
+        let [x, y] = room.camera.layer1.map(|position| position >> 4);
+        let mut row_start = (u16::from(y as u8) * u16::from(width as u8)).wrapping_add(x);
+        let mut destination: u16 = 0;
+        for _ in 0..16 {
+            reveal_left_neighbor(destination, row_start, h);
+            let mut block = row_start;
+            for columns_left in (1..=16).rev() {
+                reveal_block(columns_left, destination, block, h);
+                destination = destination.wrapping_add(4);
+                block = block.wrapping_add(1);
+            }
+            reveal_block(0, destination.wrapping_add(1984), block, h);
+            destination = destination.wrapping_add(64);
+            row_start = row_start.wrapping_add(width);
+        }
+        reveal_room_items(h);
+    }
+    enqueue_readback(0x59, 0, 0x5000, 2048, false, game);
+}
+
+fn native_record<H: Context>(bank: u8, address: u16, h: &mut H) -> sm_data::cartridge::RomRecord {
+    Context::legacy_native_record(h, bank, address)
+}
+
+fn definition_word<H: Context>(index: usize, h: &H) -> u16 {
+    h.table(Source::Native, 0x91d2d6).native_word(2 * index)
+}
+
+fn block_definition<H: Context>(k: u16, game: &mut H) -> Option<sm_data::cartridge::RomRecord> {
+    let bts = u16::from(behavior(game, i32::from(k)));
+    let kind = level(game, usize::from(k)) & 0xf000;
+    let mut index = 0i32;
+    loop {
+        let value = definition_word(2 * index as usize, game);
+        if value == 0xffff {
+            return None;
+        }
+        if value == kind {
+            let entries = native_record(0x91, definition_word(2 * index as usize + 1, game), game);
+            let mut offset = 0;
+            loop {
+                let value = entries.native_word(offset);
+                if value == 0xffff {
+                    return None;
+                }
+                if value == 0xff00 || value == bts {
+                    return Some(native_record(0x91, entries.native_word(offset + 2), game));
+                }
+                offset += 4;
+            }
+        }
+        index += 1;
+    }
+}
+
+// Neighbor tiles read each corner immediately before its ascending store, including aliases.
+fn write_neighbor<H: Context>(destination: u16, tile: u16, offsets: [usize; 4], h: &mut H) {
+    for (corner, offset) in offsets.into_iter().enumerate() {
+        let bytes = match h.session().room.terrain.tiles().get(usize::from(tile)) {
+            Some(tile) => tile[corner].to_le_bytes(),
+            None => {
+                let source = 0xa000 + 8 * usize::from(tile) + 2 * corner;
+                [h.current_byte(source), h.current_byte(source + 1)]
+            }
+        };
+        let at = 0x4000 + usize::from(destination) + 2 * offset;
+        store_xray(h, at, &bytes);
+    }
+}
+
+/// Reveal the part of a two-wide block left of the screen that overhangs the
+/// first column at `destination`.
+pub fn reveal_left_neighbor<H: Context>(destination: u16, row_block: u16, game: &mut H) {
+    if row_block == 0 {
+        return;
+    }
+    let Some(descriptor) = block_definition(row_block.wrapping_sub(1), game) else {
+        return;
+    };
+    if descriptor.native_word(0) != 0xcf4e {
+        if descriptor.native_word(0) != 0xcf6f {
+            return;
+        }
+        write_neighbor(
+            destination,
+            descriptor.native_word(8),
+            [64, 65, 96, 97],
+            game,
+        );
+    }
+    write_neighbor(destination, descriptor.native_word(4), [0, 1, 32, 33], game);
+}
+
+/// Follow an extension block's chain to the block it extends and reveal that
+/// block's tile at `destination`, starting vertically when `vertical`.
+fn follow_extension<H: Context>(destination: u16, block: u16, vertical: bool, game: &mut H) {
+    let width = game.session().room.width;
+    let mut y = (block as i32 / width as i32) as u16;
+    let mut x = (block as i32 % width as i32) as u16;
+    let mut kind = level(game, usize::from(block)) & 0xf000;
+    let mut step = behavior(game, i32::from(block)) as i8 as i32;
+    if step != 0 {
+        let mut vertical = vertical;
+        loop {
+            let variable = if vertical { &mut y } else { &mut x };
+            if ((*variable as i32 + step) as i16) < 0 {
+                write_block(destination, 0xff, [0, 1, 32, 33], game);
+                return;
+            }
+            *variable = (*variable as i32 + step) as u16;
+            let pos = y as i32 * game.session().room.width as i32 + x as i32;
+            step = behavior(game, pos) as i8 as i32;
+            let at = usize::try_from(pos).expect("word address outside RAM");
+            kind = level(game, at) & 0xf000;
+            if kind == 0xd000 {
+                vertical = true;
+            } else {
+                if kind != 0x5000 {
+                    break;
+                }
+                if step < 0 {
+                    vertical = false;
+                }
+            }
+        }
+    }
+    if definition_word(2, game) == kind {
+        let entries = native_record(0x91, definition_word(3, game), game);
+        let mut offset = 0;
+        while entries.native_word(offset) != 0xffff {
+            if entries.native_word(offset) == 0xff00
+                || entries.native_word(offset) as i32 == step & 0xff
+            {
+                let address = entries.native_word(offset + 2).wrapping_add(2);
+                let tile = native_record(0x91, address, game).native_word(0);
+                write_block(destination, tile, [0, 1, 32, 33], game);
+                return;
+            }
+            offset += 4;
+        }
+    }
+}
+
+fn dispatch_reveal<H: Context>(
+    ea: u32,
+    descriptor: &sm_data::cartridge::RomRecord,
+    columns_left: u16,
+    destination: u16,
+    block: u16,
+    game: &mut H,
+) {
+    let (width, height, repeat_tile) = match ea {
+        0x91ce79 => {
+            follow_extension(destination, block, true, game);
+            return;
+        }
+        0x91cebb => {
+            follow_extension(destination, block, false, game);
+            return;
+        }
+        0x91cf3e if game.session().room.area != 1 => return,
+        0x91cf36 | 0x91cf3e => (1, 1, false),
+        0x91cf4e => (2, 1, false),
+        0x91cf62 => (1, 2, true),
+        0x91cf6f => (2, 2, false),
+        _ => {
+            crate::player_projectiles::host::Host::unknown(game);
+            return;
+        }
+    };
+    for row in 0..height {
+        for column in 0..width {
+            if column == 1 && columns_left == 1 {
+                continue;
+            }
+            let tile_offset = if repeat_tile {
+                2
+            } else {
+                2 + 2 * (row * width + column)
+            };
+            let tile = descriptor.native_word(tile_offset);
+            let base = row * 64 + column * 2;
+            write_block(
+                destination,
+                tile,
+                [base, base + 1, base + 32, base + 33],
+                game,
+            );
+        }
+    }
+}
+
+/// Reveal hidden block `block` at `destination`, `columns_left` columns from
+/// the screen's right edge.
+pub fn reveal_block<H: Context>(columns_left: u16, destination: u16, block: u16, game: &mut H) {
+    if let Some(descriptor) = block_definition(block, game) {
+        dispatch_reveal(
+            u32::from(descriptor.native_word(0)) | 0x910000,
+            &descriptor,
+            columns_left,
+            destination,
+            block,
+            game,
+        );
+    }
+}
+
+/// Reveal room item block `tile` at room block (`x`, `y`) when it is on screen.
+pub fn reveal_room_block<H: Context>(tile: u16, x: u16, y: u16, game: &mut H) {
+    let layer1 = game.session().room.camera.layer1;
+    let screen_x = (x as i32 - (layer1[0] as i32 >> 4)) as u16;
+    let screen_y = (y as i32 - (layer1[1] as i32 >> 4)) as u16;
+    if screen_x < 16 && screen_y < 16 {
+        let destination = 4 * (screen_x + 32 * screen_y);
+        let offsets = [0, 1, 32, 33].map(|corner| corner ^ usize::from((tile & 0x800) >> 6));
+        write_block(destination, tile & 0x3ff, offsets, game);
+    }
+}
+pub fn capture_bg2_right<H: Context>(game: &mut H) {
+    if can_reveal_blocks(game) {
+        if game.session().feedback.earthquake_timer != 0 {
+            let camera = camera(game);
+            {
+                crate::menus::prelude::display_scroll!(
+                    game.Bg1H = camera.layer1[0].wrapping_add(camera.bg1_offset[0])
+                );
+                crate::menus::prelude::display_scroll!(
+                    game.Bg1V = camera.layer1[1].wrapping_add(camera.bg1_offset[1])
+                );
+            }
+        }
+        crate::menus::prelude::display_scroll!(
+            game.Bg2H = (crate::menus::prelude::display_scroll!(game.Bg1H)) & (0xfu16)
+        );
+        crate::menus::prelude::display_scroll!(
+            game.Bg2V = (crate::menus::prelude::display_scroll!(game.Bg1V)) & (0xfu16)
+        );
+        game.store_display_control_byte(
+            crate::display::preparation::Field::Screens1,
+            73,
+            crate::display::preparation::Store::Owned,
+        );
+    }
+    enqueue_readback(0x59, 1024, 0x5800, 2048, true, game);
+}
+pub fn can_reveal_blocks<H: Context>(game: &mut H) -> bool {
+    super::player::blend_mask(game) == 0x4000
+}
+pub fn upload_left<H: Context>(game: &mut H) {
+    if can_reveal_blocks(game) {
+        upload_screen(0x4000, 0, game);
+    }
+}
+pub fn upload_right<H: Context>(game: &mut H) {
+    if can_reveal_blocks(game) {
+        upload_screen(0x4800, 1, game);
+    }
+    for (at, value) in [(0xa88, 0x9800e4u32), (0xa8b, 0x98c8e4), (0xa8e, 0x999098)] {
+        game.hdma_slice_native(at, value as u16);
+        game.set_current_byte(at + 2, (value >> 16) as u8);
+    }
+    game.hdma_slice_le(0xa92, 0);
+    let angle = if game.session().player.movement_and_facing.to_le_bytes()[0] == 4 {
+        192
+    } else {
+        64
+    };
+    stop_demo(angle, game);
+}
+pub fn set_backdrop<H: Context>(game: &mut H) {
+    set_backdrop_color(0xc63, game);
+}
+pub fn restore_left<H: Context>(hdma_index: usize, game: &mut H) {
+    game.hdma_slice_native(0xa88, 1);
+    game.set_current_byte(0xa8a, 0x98);
+    game.hdma_slice_native(0xa8b, 0);
+    clear_previous_demo_input(game);
+    super::player::set_window_word(game, 0, 255);
+    super::player::apply_blending(game, BlendPhase::Restore);
+    set_backdrop_color(0, game);
+    crate::menus::prelude::display_scroll!(game.Bg2H = crate::hdma_word!(game, hdma_index, A));
+    crate::menus::prelude::display_scroll!(game.Bg2V = crate::hdma_word!(game, hdma_index, B));
+    game.store_display_control_byte(
+        crate::display::preparation::Field::Screens1,
+        crate::hdma_word!(game, hdma_index, C) as u8,
+        crate::display::preparation::Store::Owned,
+    );
+    if (game.queue_tail() as i16).wrapping_sub(240) < 0 {
+        upload_screen(0x5000, 0, game);
+        advance_stage(game);
+    }
+}
+/// Step the x-ray background's restore stage, kept in the demo pre-action.
+fn advance_stage<H: Context>(game: &mut H) {
+    let runtime = &mut *game;
+    let demo = &mut runtime.session_mut().player.demo;
+    demo.pre_action = demo.pre_action.wrapping_add(1);
+}
+/// Clear the demo's previous input and the controller backup after it.
+fn clear_previous_demo_input<H: Context>(game: &mut H) {
+    game.session_mut()
+        .projectiles
+        .preparation
+        .demo_filtered_held = 0;
+    let runtime = &mut *game;
+    let demo = &mut runtime.session_mut().player.demo;
+    (demo.previous_held, demo.previous_pressed) = (0, 0);
+}
+pub fn restore_right<H: Context>(game: &mut H) {
+    super::player::apply_blending(game, BlendPhase::Restore);
+    if (game.queue_tail() as i16).wrapping_sub(240) < 0 {
+        upload_screen(0x5800, 1, game);
+        advance_stage(game);
+    }
+}
+pub fn finish_restore<H: Context>(hdma_index: usize, game: &mut H) {
+    super::player::apply_blending(game, BlendPhase::Restore);
+    if game.session().timing.time_frozen != 0 {
+        game.session_mut().timing.time_frozen = 0;
+        stop_demo(0, game);
+        game.hdma_slice_native(0xa88, 1);
+        game.set_current_byte(0xa8a, 0x98);
+        game.hdma_slice_native(0xa8b, 0);
+        clear_previous_demo_input(game);
+        crate::player_transitions::xray::finish(game);
+        crate::hdma_word!(game, hdma_index, Channels => 0);
+        crate::effects::SoundEffects::queue_sound(game, 0, 0xa, 6);
+        if (crate::liquid::LiquidWords::of(&game.session().room)
+            .liquid
+            .kind as u8)
+            != 36
+        {
+            use crate::display::preparation::{Field, Store};
+            for (field, value) in [
+                (Field::FixedColor2, 0x80),
+                (Field::FixedColor1, 64),
+                (Field::FixedColor0, 32),
+            ] {
+                game.store_display_control_byte(field, value, Store::Owned);
+            }
+        }
+        for row in (0..256).rev() {
+            super::player::set_window_word(game, row, 255);
+        }
+        let runtime = &mut *game;
+        let controls = &mut runtime.session_mut().projectiles.controls;
+        if controls.automatic_weapon != 0 {
+            (controls.selected_weapon, controls.automatic_weapon) = (0, 0);
+        }
+    }
+}
+
+pub fn reveal_room_items<H: Context>(game: &mut H) {
+    crate::room_mechanisms::graphics::reveal_items(game);
+    let state = game.session().state_key();
+    let state = native_record(0x8f, state, game);
+    if state.native_word(0x10) != 0 {
+        let entries = native_record(0x8f, state.native_word(0x10), game);
+        let mut offset = 0;
+        while entries.byte(offset) != 0 || entries.byte(offset + 1) != 0 {
+            reveal_room_block(
+                entries.native_word(offset + 2),
+                entries.byte(offset) as u16,
+                entries.byte(offset + 1) as u16,
+                game,
+            );
+            offset += 4;
+        }
+    }
+}
+
+/// Known owned overlay bytes use the single screen allocation; full native
+/// identities spilling outside it retain the existing Session alias protocol.
+fn store_xray<H: Context>(host: &mut H, at: usize, bytes: &[u8]) {
+    let point = Point::physical(at);
+    match host.session_mut().publish_workspace_slice(point, bytes) {
+        Ok(()) => {}
+        Err(_) => host.write_current_slice(at, bytes),
+    }
+}

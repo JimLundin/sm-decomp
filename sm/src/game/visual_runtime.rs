@@ -1,13 +1,11 @@
 //! Visual adapters on the one aggregate Session, with explicit legacy effects.
 pub(crate) use sm_game::hdma_objects::{
     clear_hdma, clear_hdma_channels, initialize_room_effects, set_hdma_enabled, spawn_bg3_scroll,
-    spawn_hdma, spawn_hdma_words, update_hdma,
+    spawn_hdma, spawn_hdma_words,
 };
 pub(crate) use sm_game::room_visuals::{
-    initialize_bomb_torizo_haze, initialize_ceres_elevator, initialize_ceres_ridley,
-    initialize_draygon_layer, initialize_fireflea_lighting, initialize_morph_eye_beam,
-    initialize_phantoon_motion, initialize_room_haze, initialize_tourian_statue,
-    initialize_weather,
+    initialize_bomb_torizo_haze, initialize_draygon_layer, initialize_morph_eye_beam,
+    initialize_phantoon_motion,
 };
 
 pub(crate) use crate::game::hosts::update_beam_tiles_and_palette;

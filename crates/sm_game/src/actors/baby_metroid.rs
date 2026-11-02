@@ -7,6 +7,7 @@ use crate::actors::session_slots::{SlotAccess, session_slot};
 use crate::effects::SoundEffects;
 use crate::ram::CompatibilityRam;
 use crate::runtime_access::SessionRam;
+use crate::session_access::SessionAccess;
 
 part_view! {
     /// The baby Metroid's view of its slot.
@@ -130,17 +131,20 @@ pub fn wait_for_camera(game: &mut impl crate::actors::mother_brain_fight::Lease)
 
 /// Check if enemy is vaguely on screen ($A9:F57A): 0 while actor `k` is within
 /// the screen margins, 1 otherwise. Was `BabyMetroid_CheckIfOnScreen`.
-pub fn is_off_screen(k: u16, game: &mut (impl SlotAccess + CompatibilityRam + ?Sized)) -> u8 {
+pub fn is_off_screen(
+    k: u16,
+    game: &mut (impl SlotAccess + CompatibilityRam + SessionAccess + ?Sized),
+) -> u8 {
     let e = i32::from(k);
     let y_pos = session_slot!(game, BabyMetroid[e].base.y_pos) as i16;
     if y_pos >= 0 {
         let y =
-            (y_pos as i32 + SCREEN_Y_MARGIN - crate::camera::current(game).layer1[1] as i32) as i16;
+            (y_pos as i32 + SCREEN_Y_MARGIN - game.session().room.camera.layer1[1] as i32) as i16;
         if y >= 0 && (y as i32 - SCREEN_HEIGHT) & SIGN != 0 {
             let x_pos = session_slot!(game, BabyMetroid[e].base.x_pos) as i16;
             if x_pos >= 0 {
                 let x = (x_pos as i32 + SCREEN_X_MARGIN
-                    - crate::camera::current(game).layer1[0] as i32) as i16;
+                    - game.session().room.camera.layer1[0] as i32) as i16;
                 if x >= 0 && (x as i32 - SCREEN_WIDTH) & SIGN != 0 {
                     return 0;
                 }

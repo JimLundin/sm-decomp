@@ -5,6 +5,7 @@
 //! observe live RAM. Only the entry resume point is held across those callbacks.
 use crate::actors;
 use crate::animated_tiles::execution as animated_tiles;
+use crate::cinematic_access;
 use crate::constants::game_states::*;
 use crate::constants::loading_game_states::*;
 use crate::demo_rooms;
@@ -28,7 +29,6 @@ use crate::room_entry::content::LoadMode;
 use crate::room_scrolls::{advance_camera, debug_position, fill_viewport, update_scrolls};
 use crate::runtime_access::RuntimeAccess;
 use crate::session_access::SessionAccess;
-use crate::session_cohort;
 use crate::word_transfers;
 use crate::{escape_timer, hud, message_boxes, samus_death, sprite_drawing};
 
@@ -411,7 +411,22 @@ fn initialize<H: Host>(game: &mut H) -> CoroutineRet {
             return yielded;
         }
         hud::initialize(game);
-        word_transfers!(game, ascending, 16; native(0xc380) <- native(0xc180));
+        game.palette_transfer(crate::palette_migration::Transfer {
+            destination: crate::palette_migration::Span {
+                buffer: crate::palette_migration::Buffer::Target,
+                first: 384,
+                words: 16,
+                descending: false,
+                order: crate::fx_domain::native_order(),
+            },
+            source: crate::palette_migration::Source::Colors(crate::palette_migration::Span {
+                buffer: crate::palette_migration::Buffer::Current,
+                first: 384,
+                words: 16,
+                descending: false,
+                order: crate::fx_domain::native_order(),
+            }),
+        });
         crate::screen_fade::store(game, 1, 1);
         crate::display_refresh::enable(true, game);
         enemy_projectiles::lifecycle::set_enabled(&mut game.runtime(), true);
@@ -462,12 +477,36 @@ fn initialize<H: Host>(game: &mut H) -> CoroutineRet {
         } else {
             crate::gameplay_word!(game.GAME_STATE += 1);
         }
-        word_transfers!(game, ascending, 256; native(0xc000) <- le(TARGET_PALETTES, 0));
+        game.palette_transfer(crate::palette_migration::Transfer {
+            destination: crate::palette_migration::Span {
+                buffer: crate::palette_migration::Buffer::Current,
+                first: 0,
+                words: 256,
+                descending: false,
+                order: crate::fx_domain::native_order(),
+            },
+            source: crate::palette_migration::Source::Colors(crate::palette_migration::Span {
+                buffer: crate::palette_migration::Buffer::Target,
+                first: 0,
+                words: 256,
+                descending: false,
+                order: crate::scene::state::WordOrder::Little,
+            }),
+        });
         if stage == 4 {
             if u32::from(crate::menus::state::load::<SaveSelection, _>(game).loading_game_state)
                 == K_LOADING_GAME_STATE_1F_STARTING_AT_CERES
             {
-                word!(game.PALETTE_BUFFER[223] = 0);
+                game.palette_transfer(crate::palette_migration::Transfer {
+                    destination: crate::palette_migration::Span {
+                        buffer: crate::palette_migration::Buffer::Current,
+                        first: 446,
+                        words: 1,
+                        descending: false,
+                        order: crate::scene::state::WordOrder::Little,
+                    },
+                    source: crate::palette_migration::Source::Fill(0),
+                });
                 game.player_command(8);
             } else {
                 game.player_command(9);
@@ -550,7 +589,23 @@ fn setup_pause<H: Host>(game: &mut H) -> CoroutineRet {
         let value = game.palette_word(false, index * 2);
         game.screen_write_word(Point::new(Role::Pause, (384 + index) * 2), value);
     }
-    word_transfers!(game, ascending, 256; le(PALETTE_BUFFER, 0) <- rom(0xb6f000, 0));
+    {
+        let image = crate::word_transfers::LoadedRom::loaded_rom_image(&*game);
+        game.palette_transfer(crate::palette_migration::Transfer {
+            destination: crate::palette_migration::Span {
+                buffer: crate::palette_migration::Buffer::Current,
+                first: 0,
+                words: 256,
+                descending: false,
+                order: crate::scene::state::WordOrder::Little,
+            },
+            source: crate::palette_migration::Source::Rom {
+                image,
+                first: usize::try_from(sm_data::cartridge::lorom_offset(0xb6f000))
+                    .expect("palette ROM offset"),
+            },
+        });
+    }
     display_refresh::pause_graphics(true, game);
     crate::menus::state::with(game, |game, menu: &mut MenuState| {
         pause_controls::initialize(menu, game)
@@ -899,9 +954,12 @@ fn finish_pass<H: Host>(entry: Entry, game: &mut H) {
                     crate::screen_fade::store(game, 0, 0);
                     word_transfers!(game, descending, 128; le(EPROJ_Y_SUBPOS, 142) <- value(0));
                     crate::gameplay_word!(game.GAME_STATE += 1);
-                    session_cohort::with(game, |_, e: &mut crate::explosion_window::Explosion| {
-                        e.bomb.explosion_status = 0;
-                    });
+                    cinematic_access::with(
+                        game,
+                        |_, e: &mut crate::explosion_window::Explosion| {
+                            e.bomb.explosion_status = 0;
+                        },
+                    );
                     cancel_sound_effects(game, 15);
                     crate::music_requests::queue_delayed_8(0, game);
                     crate::music_requests::queue_delayed_8(0xff39, game);
@@ -922,9 +980,42 @@ fn finish_pass<H: Host>(entry: Entry, game: &mut H) {
                 let value = game.palette_word(false, index * 2);
                 game.screen_write_word(Point::new(Role::Pause, (384 + index) * 2), value);
             }
-            word_transfers!(game, descending, 192; le(TARGET_PALETTES, 191) <- value(0));
-            word_transfers!(game, descending, 48; le(TARGET_PALETTES, 255) <- value(0));
-            word_transfers!(game, descending, 16; le(TARGET_PALETTES, 207) <- le(PALETTE_BUFFER, 207));
+            game.palette_transfer(crate::palette_migration::Transfer {
+                destination: crate::palette_migration::Span {
+                    buffer: crate::palette_migration::Buffer::Target,
+                    first: 382,
+                    words: 192,
+                    descending: true,
+                    order: crate::scene::state::WordOrder::Little,
+                },
+                source: crate::palette_migration::Source::Fill(0),
+            });
+            game.palette_transfer(crate::palette_migration::Transfer {
+                destination: crate::palette_migration::Span {
+                    buffer: crate::palette_migration::Buffer::Target,
+                    first: 510,
+                    words: 48,
+                    descending: true,
+                    order: crate::scene::state::WordOrder::Little,
+                },
+                source: crate::palette_migration::Source::Fill(0),
+            });
+            game.palette_transfer(crate::palette_migration::Transfer {
+                destination: crate::palette_migration::Span {
+                    buffer: crate::palette_migration::Buffer::Target,
+                    first: 414,
+                    words: 16,
+                    descending: true,
+                    order: crate::scene::state::WordOrder::Little,
+                },
+                source: crate::palette_migration::Source::Colors(crate::palette_migration::Span {
+                    buffer: crate::palette_migration::Buffer::Current,
+                    first: 414,
+                    words: 16,
+                    descending: true,
+                    order: crate::scene::state::WordOrder::Little,
+                }),
+            });
             begin_death_sequence(game, 0);
             crate::sequence_state::with_words(
                 game,

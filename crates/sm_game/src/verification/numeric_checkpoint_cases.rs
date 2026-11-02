@@ -23,8 +23,8 @@ pub fn assert_numeric_checkpoint(metadata: &DisplayStartMetadata) {
     expected.compatibility.pre_hook[7] = 0x7f;
     expected.compatibility.scratch[2] = 0x024a;
     expected.crocomire_melt.column_heights[3][31] = 0x30;
-    expected.extended.blocks[3][0x3ed] = 0x9abc;
-    expected.extended.blocks[5][0x3ff] = 0x0338;
+    *expected.extended.word_mut(3, 0x3ed) = 0x9abc;
+    *expected.extended.word_mut(5, 0x3ff) = 0x0338;
     expected.diagnostics.spawn.y = 0x2468;
     expected.diagnostics.gap = [0x55, 0xaa];
     expected.diagnostics.sprite_contacts_disabled = 0xff01;

@@ -198,11 +198,11 @@ macro_rules! window_words {
 // Head0 owns only these ten bytes; full/odd accesses still project each lane.
 macro_rules! botwoon_death_words {
     ($s:ident, $f:ident, ($($borrow:tt)*)) => {
-        $f(0x801e, $($borrow)* $s.botwoon_death.pending_hit);
-        $f(0x8020, $($borrow)* $s.botwoon_death.active);
-        $f(0x803c, $($borrow)* $s.botwoon_death.tail_ready);
-        $f(0x8818, $($borrow)* $s.botwoon_death.previous_health);
-        $f(0x883e, $($borrow)* $s.botwoon_death.body_landed);
+        $f(0x801e, $($borrow)* $s.actors.extended.botwoon_head[0].pending_hit);
+        $f(0x8020, $($borrow)* $s.actors.extended.botwoon_head[0].active);
+        $f(0x803c, $($borrow)* $s.actors.extended.botwoon_head[0].tail_ready);
+        $f(0x8818, $($borrow)* $s.actors.extended.botwoon_path[0].previous_health);
+        $f(0x883e, $($borrow)* $s.actors.extended.botwoon_path[0].body_landed);
     };
 }
 fn botwoon_death_byte(s: &Session, at: usize) -> Option<u8> {
@@ -457,7 +457,9 @@ macro_rules! scalar_words {
         $f(0x0d3e,$($borrow)* $s.player.swing.start_animation_timer);
         $f(0x0d40,$($borrow)* $s.player.swing.start_animation_tiles);
         $f(0x0d16,$($borrow)* $s.player.swing.start.x);
+        $f(0x0d1a,$($borrow)* $s.player.swing.previous_start.x);
         $f(0x0d18,$($borrow)* $s.player.swing.start.y);
+        $f(0x0d1c,$($borrow)* $s.player.swing.previous_start.y);
         $f(0x0d26,$($borrow)* $s.player.swing.angular_velocity);
         $f(0x0d28,$($borrow)* $s.player.swing.angle_acceleration);
         $f(0x0d2a,$($borrow)* $s.player.swing.input_acceleration);
@@ -881,6 +883,8 @@ macro_rules! scalar_words {
         $f(0x1993,$($borrow)* $s.enemy_projectiles.spawn.primary);
         $f(0x1995,$($borrow)* $s.enemy_projectiles.spawn.secondary);
         $f(ram::HEALTH_DROP_BIAS_FLAG,$($borrow)* $s.enemy_projectiles.drop_bias);
+        $f(ram::SPECIAL_DEATH_ITEM_DROP_X_ORIGIN_POS,$($borrow)* $s.enemy_projectiles.drop_origin.x);
+        $f(ram::SPECIAL_DEATH_ITEM_DROP_Y_ORIGIN_POS,$($borrow)* $s.enemy_projectiles.drop_origin.y);
         $f(ram::SAMUS_RESERVE_HEALTH,$($borrow)* $s.inventory.reserve_health);
         $f(ram::SAMUS_RESERVE_MISSILES,$($borrow)* $s.inventory.reserve_missiles);
         $f(ram::SAMUS_X_SPEED_DIVISOR,$($borrow)* $s.player.speed_divisor);
@@ -923,6 +927,9 @@ pub fn read(bytes: &impl Fn(usize) -> u8, at: usize) -> u16 {
 }
 pub fn decode(bytes: &impl Fn(usize) -> u8, byte_len: usize, world: Arc<WorldBinding>) -> Session {
     let mut s = Session::with_world(world);
+    for (index, value) in s.room.scrolls.iter_mut().enumerate() {
+        *value = bytes(0xcd20 + index);
+    }
     s.fx = crate::fx_encoding::decode(bytes);
     s.presentation.visual_mut().fireflea = crate::fx_encoding::decode_lighting(bytes);
     s.timing.countdown = crate::escape_countdown::State::initialized(
@@ -962,6 +969,13 @@ pub fn decode(bytes: &impl Fn(usize) -> u8, byte_len: usize, world: Arc<WorldBin
         };
     }
     room_assets!(load_asset);
+    s.suspended_work = crate::suspended_work::SuspendedWork {
+        // Opaque cursor is imported by import_native_spawn before admission.
+        decompression_source: 0,
+        queue_cursor: read(bytes, 0x780),
+        pause: [bytes(0x601), bytes(0x602), bytes(0x603)],
+        unpause: [bytes(0x604), bytes(0x605), bytes(0x606)],
+    };
     *s.control.primary_mut() = bytes(0x612);
     *s.control.secondary_mut() = bytes(0x613);
     s.room.entry.layer2_x = bytes(0x91b);
@@ -1007,6 +1021,13 @@ pub fn decode(bytes: &impl Fn(usize) -> u8, byte_len: usize, world: Arc<WorldBin
         *value = ((u32::from(read(bytes, 0xdaa + index * 4)) << 16)
             | u32::from(read(bytes, 0xdac + index * 4))) as i32;
     }
+    for (index, value) in s.room.scrolls.iter_mut().enumerate() {
+        *value = bytes(0xcd20 + index);
+    }
+    s.room.terrain.decompressed_size = read(bytes, 0x10000);
+    for (index, value) in s.room.terrain.layer2_mut().iter_mut().enumerate() {
+        *value = read(bytes, 0x19602 + index * 2);
+    }
     for (index, cell) in s.room.terrain.cells_mut().iter_mut().enumerate() {
         cell.level = read(bytes, 0x10002 + index * 2);
         cell.behavior = bytes(0x16402 + index);
@@ -1033,6 +1054,8 @@ pub fn decode(bytes: &impl Fn(usize) -> u8, byte_len: usize, world: Arc<WorldBin
     assert!(byte_len >= 0x8840, "short Botwoon death import");
     let load = |at, word: &mut u16| *word = read(bytes, at);
     botwoon_death_words!(s, load, (&mut));
+    assert!(byte_len >= 0xde1c, "short save workspace import");
+    s.save_state = crate::player_effects::save::State::import(bytes);
     s
 }
 pub fn visit(s: &Session, mut visit: impl FnMut(usize, u16)) {
@@ -1109,6 +1132,12 @@ pub fn visit(s: &Session, mut visit: impl FnMut(usize, u16)) {
     // These signals formerly published immediately, before a fallible export.
     let mut emit = |at, word: &u16| visit(at, *word);
     botwoon_death_words!(s, emit, (&));
+    visit(0x780, s.suspended_work.queue_cursor);
+    let [p0, p1, p2] = s.suspended_work.pause;
+    let [u0, u1, u2] = s.suspended_work.unpause;
+    visit(0x601, u16::from_le_bytes([p0, p1]));
+    visit(0x603, u16::from_le_bytes([p2, u0]));
+    visit(0x605, u16::from_le_bytes([u1, u2]));
     for (index, pair) in s.minimap.explored.as_chunks::<2>().0.iter().enumerate() {
         visit(0x7f7 + 2 * index, u16::from_le_bytes([pair[0], pair[1]]));
     }
@@ -1168,6 +1197,10 @@ pub fn visit(s: &Session, mut visit: impl FnMut(usize, u16)) {
         visit(0xdaa + index * 4, ((value as u32) >> 16) as u16);
         visit(0xdac + index * 4, value as u16);
     }
+    visit(0x10000, s.room.terrain.decompressed_size);
+    for (index, &value) in s.room.terrain.layer2().iter().enumerate() {
+        visit(0x19602 + index * 2, value);
+    }
     for (index, cell) in s.room.terrain.cells().iter().enumerate() {
         visit(0x10002 + index * 2, cell.level);
     }
@@ -1178,6 +1211,7 @@ pub fn visit(s: &Session, mut visit: impl FnMut(usize, u16)) {
     }
 }
 pub fn encode(s: &Session, mut span: impl FnMut(usize, &[u8])) {
+    span(0xcd20, &s.room.scrolls);
     span(0x60b, &[s.enemy_projectiles.spawn.angle]);
     visit(s, |at, value| {
         let bytes = value.to_le_bytes();
@@ -1205,10 +1239,20 @@ pub fn encode(s: &Session, mut span: impl FnMut(usize, &[u8])) {
                 span(at, bytes);
             }
         });
+    s.save_state.export(&mut span);
     s.control.encode_projection(&mut span);
     crate::fx_encoding::encode_sources(s, span);
 }
 pub fn projected_byte(s: &Session, at: usize) -> Option<u8> {
+    if let Some(byte) = s.suspended_work.projected_byte(at) {
+        return Some(byte);
+    }
+    if (0xcd20..0xcd52).contains(&at) {
+        return Some(s.room.scrolls[at - 0xcd20]);
+    }
+    if let Some(value) = s.save_state.byte(at) {
+        return Some(value);
+    }
     if crate::fx_encoding::control_lane(at).is_some() {
         return Some(crate::fx_encoding::control_byte(s, at));
     }
@@ -1308,6 +1352,16 @@ pub fn projected_byte(s: &Session, at: usize) -> Option<u8> {
     if at == 0x60b {
         return Some(s.enemy_projectiles.spawn.angle);
     }
+    if (0xcd20..0xcd52).contains(&at) {
+        return Some(s.room.scrolls[at - 0xcd20]);
+    }
+    if (0x10000..0x10002).contains(&at) {
+        return Some(s.room.terrain.decompressed_size.to_le_bytes()[at - 0x10000]);
+    }
+    if (0x19602..0x20000).contains(&at) {
+        let offset = at - 0x19602;
+        return Some(s.room.terrain.layer2()[offset / 2].to_le_bytes()[offset % 2]);
+    }
     if (0x10002..0x16402).contains(&at) {
         let offset = at - 0x10002;
         return Some(s.room.terrain.cells()[offset / 2].level.to_le_bytes()[offset % 2]);
@@ -1339,6 +1393,16 @@ pub fn projected_byte(s: &Session, at: usize) -> Option<u8> {
     result
 }
 pub fn write_projected_byte(s: &mut Session, at: usize, value: u8) -> bool {
+    if s.suspended_work.write_projected_byte(at, value) {
+        return true;
+    }
+    if (0xcd20..0xcd52).contains(&at) {
+        s.room.scrolls[at - 0xcd20] = value;
+        return true;
+    }
+    if s.save_state.set_byte(at, value) {
+        return true;
+    }
     if crate::fx_encoding::control_lane(at).is_some() {
         crate::fx_encoding::write_control_byte(s, at, value);
         return true;
@@ -1481,7 +1545,16 @@ pub fn write_projected_byte(s: &mut Session, at: usize, value: u8) -> bool {
         s.room.terrain.cells_mut()[at - 0x16402].behavior = value;
         return true;
     }
-    let word = if (0x10002..0x16402).contains(&at) {
+    if (0xcd20..0xcd52).contains(&at) {
+        s.room.scrolls[at - 0xcd20] = value;
+        return true;
+    }
+    let word = if (0x10000..0x10002).contains(&at) {
+        Some((&mut s.room.terrain.decompressed_size, at - 0x10000))
+    } else if (0x19602..0x20000).contains(&at) {
+        let offset = at - 0x19602;
+        Some((&mut s.room.terrain.layer2_mut()[offset / 2], offset % 2))
+    } else if (0x10002..0x16402).contains(&at) {
         Some((
             &mut s.room.terrain.cells_mut()[(at - 0x10002) / 2].level,
             (at - 0x10002) % 2,
@@ -1560,6 +1633,8 @@ pub fn inputs_from_session(s: &Session, bytes: &impl Fn(usize) -> u8) -> Externa
             0x1962..=0x1963 => (0x1962, s.room.liquid.lava_acid.whole),
             0x196e..=0x196f => (0x196e, s.room.liquid.kind),
             0xe54..=0xe55 => (0xe54, s.actors.controls.selected),
+            0xf434..=0xf435 => (0xf434, s.enemy_projectiles.drop_origin.x),
+            0xf436..=0xf437 => (0xf436, s.enemy_projectiles.drop_origin.y),
             0x5e5..=0x5e6 => (0x5e5, s.timing.random_number),
             0xe44..=0xe45 => (0xe44, s.actors.controls.phase_counter),
             0x195e..=0x195f => (0x195e, s.room.liquid.surface.whole),
@@ -1745,7 +1820,9 @@ mod player_lane_tests {
         (0xd3e, |s| &mut s.player.swing.start_animation_timer),
         (0xd40, |s| &mut s.player.swing.start_animation_tiles),
         (0xd16, |s| &mut s.player.swing.start.x),
+        (0x0d1a, |s| &mut s.player.swing.previous_start.x),
         (0xd18, |s| &mut s.player.swing.start.y),
+        (0x0d1c, |s| &mut s.player.swing.previous_start.y),
         (0xd26, |s| &mut s.player.swing.angular_velocity),
         (0xd28, |s| &mut s.player.swing.angle_acceleration),
         (0xd2a, |s| &mut s.player.swing.input_acceleration),

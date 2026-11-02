@@ -19,6 +19,7 @@ use std::sync::Arc;
 /// installed as a competing gameplay owner or filled from a live Session.
 #[derive(Clone, Debug, PartialEq)]
 pub struct AuxiliaryGameplayCheckpoint {
+    pub suspended_work: crate::suspended_work::SuspendedWork,
     pub game_loop: crate::game_loop::GameLoop,
     pub queued_tilemaps: crate::display::queued_tilemaps::QueuedTilemaps,
     pub fx: crate::fx_state::FxState,
@@ -30,6 +31,7 @@ pub struct AuxiliaryGameplayCheckpoint {
     pub flow: crate::flow::Flow,
     pub menu: crate::menu_state::MenuState,
     pub menu_screens: crate::menu_state::MenuScreens,
+    pub save_state: crate::player_effects::save::State,
     pub prepared_dialogue: Option<crate::message_composition::prepared::ExecutionDescription>,
     pub gameplay_flags: crate::gameplay_flag_state::GameplayFlags,
     pub flag_compatibility: crate::gameplay_flag_state::FlagCompatibility,
@@ -1278,7 +1280,7 @@ checkpoint_fields!(checkpoint_player, checkpoint_read_player, Player,
 checkpoint_fields!(checkpoint_swing, checkpoint_read_swing, crate::grapple_swing::SwingState,
     mirrored_angle: checkpoint_word/checkpoint_read_word,
     length_delta: checkpoint_word/checkpoint_read_word,
-    start: checkpoint_point/checkpoint_read_point,
+    start: checkpoint_point/checkpoint_read_point, previous_start: checkpoint_point/checkpoint_read_point,
     angular_velocity: checkpoint_word/checkpoint_read_word,
     angle_acceleration: checkpoint_word/checkpoint_read_word,
     input_acceleration: checkpoint_word/checkpoint_read_word,
@@ -1297,7 +1299,7 @@ impl Player {
         if metadata.identity.reference != metadata.reference.fingerprint {
             return Err("player checkpoint Reference identity mismatch".into());
         }
-        let mut bytes = Vec::from(b"SMPLAYER\x04".as_slice());
+        let mut bytes = Vec::from(b"SMPLAYER\x05".as_slice());
         let binding = observation_binding(metadata);
         bytes.extend_from_slice(&(binding.len() as u64).to_le_bytes());
         bytes.extend_from_slice(&binding);
@@ -1309,7 +1311,7 @@ impl Player {
         metadata: &DisplayStartMetadata,
     ) -> Result<Self, String> {
         let mut read = CheckpointReader(bytes);
-        if read.bytes(9)? != b"SMPLAYER\x04" {
+        if read.bytes(9)? != b"SMPLAYER\x05" {
             return Err("unsupported player checkpoint schema".into());
         }
         let size = usize::try_from(read.counter()?)
@@ -1354,7 +1356,7 @@ impl EnemyProjectiles {
         if metadata.identity.reference != metadata.reference.fingerprint {
             return Err("enemy projectile checkpoint Reference identity mismatch".into());
         }
-        let mut bytes = Vec::from(b"SMESHOT\x02".as_slice());
+        let mut bytes = Vec::from(b"SMESHOT\x03".as_slice());
         let binding = observation_binding(metadata);
         bytes.extend_from_slice(&(binding.len() as u64).to_le_bytes());
         bytes.extend_from_slice(&binding);
@@ -1366,6 +1368,7 @@ impl EnemyProjectiles {
         checkpoint_word(&mut bytes, &self.selected);
         checkpoint_spawn_context(&mut bytes, &self.spawn);
         checkpoint_word(&mut bytes, &self.drop_bias);
+        checkpoint_point(&mut bytes, &self.drop_origin);
         Ok(bytes)
     }
     pub fn decode_checkpoint(
@@ -1373,7 +1376,7 @@ impl EnemyProjectiles {
         metadata: &DisplayStartMetadata,
     ) -> Result<Self, String> {
         let mut read = CheckpointReader(bytes);
-        if read.bytes(8)? != b"SMESHOT\x02" {
+        if read.bytes(8)? != b"SMESHOT\x03" {
             return Err("unsupported enemy projectile checkpoint schema".into());
         }
         let size = usize::try_from(read.counter()?)
@@ -1396,6 +1399,7 @@ impl EnemyProjectiles {
             selected: read.word()?,
             spawn: checkpoint_read_spawn_context(&mut read)?,
             drop_bias: read.word()?,
+            drop_origin: checkpoint_read_point(&mut read)?,
         };
         if !read.0.is_empty() {
             return Err("trailing enemy projectile checkpoint fields".into());
@@ -1588,6 +1592,20 @@ checkpoint_fields!(checkpoint_botwoon_death, checkpoint_read_botwoon_death, crat
 
 // One complete subset table encodes from the actual Session's borrowed fields,
 // then constructs detached fields solely from the bounded binary reader.
+macro_rules! auxiliary_field {
+    ($s:ident,botwoon_death) => {
+        &crate::actors::botwoon_death::DeathProtocol {
+            pending_hit: $s.actors.extended.botwoon_head[0].pending_hit,
+            active: $s.actors.extended.botwoon_head[0].active,
+            tail_ready: $s.actors.extended.botwoon_head[0].tail_ready,
+            previous_health: $s.actors.extended.botwoon_path[0].previous_health,
+            body_landed: $s.actors.extended.botwoon_path[0].body_landed,
+        }
+    };
+    ($s:ident,$field:ident) => {
+        &$s.$field
+    };
+}
 macro_rules! checkpoint_auxiliary {
     ($( $field:ident: $encode:ident / $decode:ident ),+ $(,)?) => {
         impl Session {
@@ -1599,16 +1617,16 @@ macro_rules! checkpoint_auxiliary {
                     return Err("auxiliary gameplay checkpoint Reference identity mismatch".into());
                 }
                 if !self.menu_window.is_initialized() { return Err("unsupplied map-menu window checkpoint".into()); }
-                let mut bytes = Vec::from(b"SMAUXGS\x0d".as_slice());
+                let mut bytes = Vec::from(b"SMAUXGS\x0e".as_slice());
                 let binding = observation_binding(metadata);
                 bytes.extend_from_slice(&(binding.len() as u64).to_le_bytes());
                 bytes.extend_from_slice(&binding);
-                $($encode(&mut bytes, &self.$field);)+
+                $($encode(&mut bytes, auxiliary_field!(self,$field));)+
                 Ok(bytes)
             }
             pub fn decode_auxiliary_checkpoint(bytes: &[u8], metadata: &DisplayStartMetadata) -> Result<AuxiliaryGameplayCheckpoint, String> {
                 let mut read = CheckpointReader(bytes);
-                if read.bytes(8)? != b"SMAUXGS\x0d" { return Err("unsupported auxiliary gameplay checkpoint schema".into()); }
+                if read.bytes(8)? != b"SMAUXGS\x0e" { return Err("unsupported auxiliary gameplay checkpoint schema".into()); }
                 let size = usize::try_from(read.counter()?).map_err(|_| "auxiliary gameplay checkpoint binding length overflow")?;
                 if metadata.identity.reference != metadata.reference.fingerprint || read.bytes(size)? != observation_binding(metadata) {
                     return Err("auxiliary gameplay checkpoint source identity or Reference changed".into());
@@ -1655,6 +1673,49 @@ fn checkpoint_read_hdma(
         enabled,
         selected,
         objects,
+    })
+}
+fn checkpoint_save_state(out: &mut Vec<u8>, state: &crate::player_effects::save::State) {
+    out.push(u8::from(state.initialized));
+    for word in state.player_words {
+        out.extend_from_slice(&word.to_le_bytes());
+    }
+    out.extend_from_slice(state.area_maps.as_ref());
+    out.extend_from_slice(state.packed_map.as_ref());
+    out.extend_from_slice(&state.unused);
+}
+fn checkpoint_read_save_state(
+    read: &mut CheckpointReader<'_>,
+) -> Result<crate::player_effects::save::State, String> {
+    let initialized = match read.byte()? {
+        0 => false,
+        1 => true,
+        _ => return Err("save workspace initialization tag".into()),
+    };
+    let mut player_words = [0; 48];
+    for word in &mut player_words {
+        *word = read.word()?;
+    }
+    let area_maps = Box::new(
+        read.bytes(2048)?
+            .try_into()
+            .map_err(|_| "save area map extent")?,
+    );
+    let packed_map = Box::new(
+        read.bytes(1280)?
+            .try_into()
+            .map_err(|_| "packed map extent")?,
+    );
+    let unused = read
+        .bytes(8)?
+        .try_into()
+        .map_err(|_| "save unused extent")?;
+    Ok(crate::player_effects::save::State {
+        player_words,
+        area_maps,
+        packed_map,
+        unused,
+        initialized,
     })
 }
 fn checkpoint_game_loop(bytes: &mut Vec<u8>, value: &crate::game_loop::GameLoop) {
@@ -1704,7 +1765,24 @@ fn checkpoint_read_prepared_dialogue(
         _ => Err("dialogue owner".into()),
     }
 }
+fn checkpoint_suspended_work(bytes: &mut Vec<u8>, value: &crate::suspended_work::SuspendedWork) {
+    checkpoint_word(bytes, &value.queue_cursor);
+    bytes.extend_from_slice(&value.pause);
+    bytes.extend_from_slice(&value.unpause);
+    checkpoint_id32(bytes, value.decompression_source);
+}
+fn checkpoint_read_suspended_work(
+    read: &mut CheckpointReader<'_>,
+) -> Result<crate::suspended_work::SuspendedWork, String> {
+    Ok(crate::suspended_work::SuspendedWork {
+        queue_cursor: read.word()?,
+        pause: read.bytes(3)?.try_into().unwrap(),
+        unpause: read.bytes(3)?.try_into().unwrap(),
+        decompression_source: checkpoint_read_id32(read)?,
+    })
+}
 checkpoint_auxiliary!(
+    suspended_work: checkpoint_suspended_work/checkpoint_read_suspended_work,
     game_loop: checkpoint_game_loop/checkpoint_read_game_loop,
     queued_tilemaps: checkpoint_queued_tilemaps/checkpoint_read_queued_tilemaps,
     menu_window: checkpoint_menu_window/checkpoint_read_menu_window,
@@ -1716,6 +1794,7 @@ checkpoint_auxiliary!(
     flow: checkpoint_flow/checkpoint_read_flow,
     menu: checkpoint_menu/checkpoint_read_menu,
     menu_screens: checkpoint_menu_screens/checkpoint_read_menu_screens,
+    save_state: checkpoint_save_state/checkpoint_read_save_state,
     prepared_dialogue: checkpoint_prepared_dialogue/checkpoint_read_prepared_dialogue,
     gameplay_flags: checkpoint_flags/checkpoint_read_flags,
     flag_compatibility: checkpoint_flag_compatibility/checkpoint_read_flag_compatibility,
@@ -2077,8 +2156,50 @@ checkpoint_fields!(checkpoint_room_entry, checkpoint_read_room_entry, RoomEntry,
     speed_whole: checkpoint_word/checkpoint_read_word, elevator_delay: checkpoint_word/checkpoint_read_word,
     completion: checkpoint_word/checkpoint_read_word, transition_selector: checkpoint_word/checkpoint_read_word,
     elevator_flags: checkpoint_word/checkpoint_read_word, elevator_status: checkpoint_word/checkpoint_read_word,
-    irq_policy: checkpoint_word/checkpoint_read_word);
+    irq_policy: checkpoint_word/checkpoint_read_word,
+    execution: checkpoint_room_execution/checkpoint_read_room_execution);
+fn checkpoint_room_execution(
+    bytes: &mut Vec<u8>,
+    value: &crate::room_entry::state::RoomEntryExecution,
+) {
+    use crate::room_entry::api::EntrySignal::*;
+    bytes.push(match value.signal {
+        None => 0,
+        Some(Initial) => 1,
+        Some(DoorState9) => 2,
+        Some(DoorState10) => 3,
+        Some(DoorState11) => 4,
+        Some(ScrollIrq) => 5,
+    });
+}
+fn checkpoint_read_room_execution(
+    read: &mut CheckpointReader<'_>,
+) -> Result<crate::room_entry::state::RoomEntryExecution, String> {
+    use crate::room_entry::api::EntrySignal::*;
+    let signal = match read.byte()? {
+        0 => None,
+        1 => Some(Initial),
+        2 => Some(DoorState9),
+        3 => Some(DoorState10),
+        4 => Some(DoorState11),
+        5 => Some(ScrollIrq),
+        _ => return Err("room execution tag".to_owned()),
+    };
+    Ok(crate::room_entry::state::RoomEntryExecution { signal })
+}
+fn checkpoint_scrolls(bytes: &mut Vec<u8>, value: &[u8; 50]) {
+    bytes.extend_from_slice(value);
+}
+fn checkpoint_read_scrolls(read: &mut CheckpointReader<'_>) -> Result<[u8; 50], String> {
+    read.bytes(50)?
+        .try_into()
+        .map_err(|_| "room scroll length".to_owned())
+}
 fn checkpoint_terrain(bytes: &mut Vec<u8>, value: &Terrain) {
+    checkpoint_word(bytes, &value.decompressed_size);
+    for word in value.layer2() {
+        checkpoint_word(bytes, word);
+    }
     for cell in value.cells() {
         checkpoint_word(bytes, &cell.level);
         bytes.push(cell.behavior);
@@ -2090,8 +2211,13 @@ fn checkpoint_terrain(bytes: &mut Vec<u8>, value: &Terrain) {
 fn checkpoint_read_terrain(read: &mut CheckpointReader<'_>) -> Result<Terrain, String> {
     // Bound the complete allocation before allocating; capacities are physical,
     // independent of geometry and compatibility accesses beyond the room edge.
-    let size = TERRAIN_CELLS * 3 + TILE_DEFINITIONS * 8;
+    let size = TERRAIN_CELLS * 3 + TILE_DEFINITIONS * 8 + 2 + crate::session::LAYER2_WORDS * 2;
     let mut terrain = CheckpointReader(read.bytes(size)?);
+    let decompressed_size = terrain.word()?;
+    let mut layer2 = Vec::with_capacity(crate::session::LAYER2_WORDS);
+    for _ in 0..crate::session::LAYER2_WORDS {
+        layer2.push(terrain.word()?);
+    }
     let mut cells = Vec::with_capacity(TERRAIN_CELLS);
     for _ in 0..TERRAIN_CELLS {
         cells.push(Cell {
@@ -2103,8 +2229,13 @@ fn checkpoint_read_terrain(read: &mut CheckpointReader<'_>) -> Result<Terrain, S
     for _ in 0..TILE_DEFINITIONS {
         tiles.push(audio_words(&mut terrain)?);
     }
-    Terrain::from_owned(cells.into_boxed_slice(), tiles.into_boxed_slice())
-        .map_err(|error| format!("room checkpoint {error:?}"))
+    Terrain::from_owned(
+        cells.into_boxed_slice(),
+        tiles.into_boxed_slice(),
+        decompressed_size,
+        layer2.into_boxed_slice(),
+    )
+    .map_err(|error| format!("room checkpoint {error:?}"))
 }
 checkpoint_fields!(checkpoint_liquid, checkpoint_read_liquid, crate::liquid::Liquid,
     surface: checkpoint_position/checkpoint_read_position, lava_acid: checkpoint_position/checkpoint_read_position,
@@ -2113,6 +2244,7 @@ checkpoint_fields!(checkpoint_liquid, checkpoint_read_liquid, crate::liquid::Liq
     tide_phase: checkpoint_word/checkpoint_read_word, base_fraction: checkpoint_word/checkpoint_read_word);
 checkpoint_fields!(checkpoint_room, checkpoint_read_room, Room,
     entry: checkpoint_room_entry/checkpoint_read_room_entry, terrain: checkpoint_terrain/checkpoint_read_terrain,
+    scrolls: checkpoint_scrolls/checkpoint_read_scrolls,
     area: checkpoint_word/checkpoint_read_word, width: checkpoint_word/checkpoint_read_word,
     height: checkpoint_word/checkpoint_read_word, scroll_width: checkpoint_word/checkpoint_read_word,
     scroll_height: checkpoint_word/checkpoint_read_word, size_bytes: checkpoint_word/checkpoint_read_word,
@@ -2328,6 +2460,7 @@ impl NumericGameplayCheckpoint {
         presentation: crate::session_owners::Presentation,
     ) -> Session {
         let AuxiliaryGameplayCheckpoint {
+            suspended_work,
             game_loop,
             queued_tilemaps,
             fx,
@@ -2339,6 +2472,7 @@ impl NumericGameplayCheckpoint {
             flow,
             menu,
             menu_screens,
+            save_state,
             prepared_dialogue,
             gameplay_flags,
             flag_compatibility,
@@ -2358,11 +2492,17 @@ impl NumericGameplayCheckpoint {
         } = self.auxiliary;
         // Exhaustive construction also makes future Session/auxiliary fields a
         // compiler error until their checkpoint participation is explicit.
+        let mut actors = self.actors;
+        actors.extended.botwoon_head[0].pending_hit = botwoon_death.pending_hit;
+        actors.extended.botwoon_head[0].active = botwoon_death.active;
+        actors.extended.botwoon_head[0].tail_ready = botwoon_death.tail_ready;
+        actors.extended.botwoon_path[0].previous_health = botwoon_death.previous_health;
+        actors.extended.botwoon_path[0].body_landed = botwoon_death.body_landed;
         Session {
+            suspended_work,
             game_loop,
             actor_identity,
-            actors: self.actors,
-            botwoon_death,
+            actors,
             timing,
             options,
             flow,
@@ -2382,6 +2522,7 @@ impl NumericGameplayCheckpoint {
             player: self.player,
             minimap,
             inventory,
+            save_state,
             mechanisms,
             room: self.room,
             fx_sources: None,

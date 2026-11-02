@@ -34,5 +34,8 @@ pub use commit::ResidentDisplayDescription;
 pub mod samus_content;
 pub mod samus_native_content;
 
+pub mod hardware;
+pub mod hdma_table;
+pub mod mode7_delivery;
 pub mod player_echoes;
 pub mod prepared_samus;

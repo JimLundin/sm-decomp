@@ -9,7 +9,7 @@ use crate::records::Records;
 use sm_data::cartridge::RomImage;
 use sm_data::menu_lists::*;
 
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ImportedMenuLists {
     area_select_colours: ImportedWords<AREA_SELECT_COLOURS, AREA_SELECT_COLOUR_WORDS>,
     binding_destinations: ImportedWords<BINDING_DESTINATIONS, BINDING_ROWS>,

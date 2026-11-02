@@ -3,7 +3,42 @@ use super::effects::Host;
 use crate::visual_host::Record;
 
 use crate::progress::exploration::{MapWindow, explored_byte, mark_byte, mark_explored};
-pub fn disable_for_boss(h: &mut impl Host) {
+/// Boss suppression needs only exploration and lazy descriptor observations.
+pub trait BossMap:
+    crate::session_access::SessionAccess + crate::progress::exploration::ExplorationHost
+{
+    type Coordinates: Copy;
+    type CoordinateRecord: Record;
+    fn selected_boss(&self) -> u16;
+    fn descriptor_boss(&self, index: usize) -> u16;
+    fn descriptor_coordinates(&self, index: usize) -> Self::Coordinates;
+    fn coordinate_record(
+        &mut self,
+        coordinates: Self::Coordinates,
+        index: usize,
+    ) -> Self::CoordinateRecord;
+}
+impl<T: Host> BossMap for T {
+    type Coordinates = <T as super::content::Content>::BossCoordinates;
+    type CoordinateRecord = <T as crate::player_collision::effects::Content>::Record;
+    fn selected_boss(&self) -> u16 {
+        self.minimap_boss_id()
+    }
+    fn descriptor_boss(&self, index: usize) -> u16 {
+        self.boss_map_id(index)
+    }
+    fn descriptor_coordinates(&self, index: usize) -> Self::Coordinates {
+        self.boss_coordinates(index)
+    }
+    fn coordinate_record(
+        &mut self,
+        coordinates: Self::Coordinates,
+        index: usize,
+    ) -> Self::CoordinateRecord {
+        self.boss_coordinate(coordinates, index)
+    }
+}
+pub fn disable_for_boss(h: &mut impl BossMap) {
     h.session_mut().minimap.disabled = 1;
     for column in 0..5 {
         for row in 0..3 {
@@ -12,7 +47,7 @@ pub fn disable_for_boss(h: &mut impl Host) {
     }
     let mut descriptor = 5;
     loop {
-        if h.minimap_boss_id() == h.boss_map_id(descriptor) {
+        if h.selected_boss() == h.descriptor_boss(descriptor) {
             break;
         }
         if descriptor == 0 {
@@ -20,10 +55,10 @@ pub fn disable_for_boss(h: &mut impl Host) {
         }
         descriptor -= 1;
     }
-    let coordinates = h.boss_coordinates(descriptor);
+    let coordinates = h.descriptor_coordinates(descriptor);
     let mut index = 0;
     loop {
-        let record = h.boss_coordinate(coordinates, index);
+        let record = h.coordinate_record(coordinates, index);
         if record.native_word(0) & 0x8000 != 0 {
             break;
         }

@@ -87,12 +87,12 @@ pub enum Word {
 }
 pub fn control(session: &Session, word: Word) -> &u16 {
     match word {
-        Word::QuakeSoundTimer => &session.actors.extended.blocks[3][0],
-        Word::CrocomireBridge1 => &session.actors.extended.blocks[3][1],
-        Word::CrocomireBridge2 => &session.actors.extended.blocks[3][3],
-        Word::CrocomireUnread => &session.actors.extended.blocks[3][5],
-        Word::CrocomireAcidSmoke => &session.actors.extended.blocks[3][12],
-        Word::PhantoonMaterialisationSound => &session.actors.extended.blocks[3][25],
+        Word::QuakeSoundTimer => &*session.actors.extended.word(3, 0),
+        Word::CrocomireBridge1 => &*session.actors.extended.word(3, 1),
+        Word::CrocomireBridge2 => &*session.actors.extended.word(3, 3),
+        Word::CrocomireUnread => &*session.actors.extended.word(3, 5),
+        Word::CrocomireAcidSmoke => &*session.actors.extended.word(3, 12),
+        Word::PhantoonMaterialisationSound => &*session.actors.extended.word(3, 25),
         Word::EnemyTilemapPending => &session.actors.drawing.tilemap_pending,
         Word::EnemyTilemapSize => &session.actors.drawing.tilemap_size,
         Word::BossId => &session.actors.schedule.boss_id,
@@ -167,12 +167,12 @@ pub fn control(session: &Session, word: Word) -> &u16 {
 }
 pub fn control_mut(session: &mut Session, word: Word) -> &mut u16 {
     match word {
-        Word::QuakeSoundTimer => &mut session.actors.extended.blocks[3][0],
-        Word::CrocomireBridge1 => &mut session.actors.extended.blocks[3][1],
-        Word::CrocomireBridge2 => &mut session.actors.extended.blocks[3][3],
-        Word::CrocomireUnread => &mut session.actors.extended.blocks[3][5],
-        Word::CrocomireAcidSmoke => &mut session.actors.extended.blocks[3][12],
-        Word::PhantoonMaterialisationSound => &mut session.actors.extended.blocks[3][25],
+        Word::QuakeSoundTimer => &mut *session.actors.extended.word_mut(3, 0),
+        Word::CrocomireBridge1 => &mut *session.actors.extended.word_mut(3, 1),
+        Word::CrocomireBridge2 => &mut *session.actors.extended.word_mut(3, 3),
+        Word::CrocomireUnread => &mut *session.actors.extended.word_mut(3, 5),
+        Word::CrocomireAcidSmoke => &mut *session.actors.extended.word_mut(3, 12),
+        Word::PhantoonMaterialisationSound => &mut *session.actors.extended.word_mut(3, 25),
         Word::EnemyTilemapPending => &mut session.actors.drawing.tilemap_pending,
         Word::EnemyTilemapSize => &mut session.actors.drawing.tilemap_size,
         Word::BossId => &mut session.actors.schedule.boss_id,
@@ -294,6 +294,69 @@ pub trait Access: crate::session_access::SessionAccess {
     fn set_boss_control(&mut self, word: Word, value: u16);
     fn boss_collection(&self, array: Array, index: usize) -> u16;
     fn set_boss_collection(&mut self, array: Array, index: usize, value: u16);
+}
+
+impl Access for crate::actors::owned_execution::PreparedActorState<'_> {
+    fn boss_control(&self, word: Word) -> u16 {
+        *control(crate::session_access::SessionAccess::session(self), word)
+    }
+    fn set_boss_control(&mut self, word: Word, value: u16) {
+        for (lane, byte) in value.to_le_bytes().into_iter().enumerate() {
+            let field = control_mut(
+                crate::session_access::SessionAccess::session_mut(self),
+                word,
+            );
+            let mut bytes = field.to_le_bytes();
+            bytes[lane] = byte;
+            *field = u16::from_le_bytes(bytes);
+            crate::session_access::SessionAccess::refresh_inputs(self);
+        }
+    }
+    fn boss_collection(&self, array: Array, index: usize) -> u16 {
+        if let Some(value) = collection(
+            crate::session_access::SessionAccess::session(self),
+            array,
+            index,
+        ) {
+            return *value;
+        }
+        let base = match array {
+            Array::ProjectileXPos => 0xb64,
+            Array::ProjectileYPos => 0xb78,
+            Array::ProjectileXRadius => 0xbb4,
+            Array::ProjectileYRadius => 0xbc8,
+            Array::ProjectileDir => 0xc04,
+            Array::ProjectileType => 0xc18,
+            Array::PaletteBuffer => 0xc000,
+        };
+        let at = base + 2 * index;
+        u16::from_le_bytes([self.current_byte(at), self.current_byte(at + 1)])
+    }
+    fn set_boss_collection(&mut self, array: Array, index: usize, value: u16) {
+        for (lane, byte) in value.to_le_bytes().into_iter().enumerate() {
+            if let Some(field) = collection_mut(
+                crate::session_access::SessionAccess::session_mut(self),
+                array,
+                index,
+            ) {
+                let mut bytes = field.to_le_bytes();
+                bytes[lane] = byte;
+                *field = u16::from_le_bytes(bytes);
+                crate::session_access::SessionAccess::refresh_inputs(self);
+            } else {
+                let base = match array {
+                    Array::ProjectileXPos => 0xb64,
+                    Array::ProjectileYPos => 0xb78,
+                    Array::ProjectileXRadius => 0xbb4,
+                    Array::ProjectileYRadius => 0xbc8,
+                    Array::ProjectileDir => 0xc04,
+                    Array::ProjectileType => 0xc18,
+                    Array::PaletteBuffer => 0xc000,
+                };
+                self.set_current_byte(base + 2 * index + lane, byte);
+            }
+        }
+    }
 }
 pub fn get<H: Access + ?Sized>(host: &H, word: Word) -> u16 {
     host.boss_control(word)

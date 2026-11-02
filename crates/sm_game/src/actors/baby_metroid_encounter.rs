@@ -21,6 +21,7 @@ use crate::actors::mother_brain_fight::{
 };
 use crate::actors::session_slots::session_slot;
 use crate::runtime_access::SessionRam;
+use crate::session_access::SessionAccess;
 // The game's traits, for the calls made on it through `foreign`.
 
 use crate::constants::bank_a9::*;
@@ -28,7 +29,6 @@ use crate::constants::enemy_properties::*;
 use crate::enemy_projectiles::shared_pre::{x_velocity_at_angle, y_velocity_at_angle};
 use crate::enemy_script::EnemyScript;
 use crate::palette_copies::{copy_rom_colors_to_palette, copy_rom_colors_to_target_palette};
-use crate::word_transfers;
 
 /// What the baby Metroid reaches beyond Mother Brain's fight and its own helpers.
 /// The bank $A9 functions these slots run, named after the bank log's headings.
@@ -119,7 +119,7 @@ pub trait Host: crate::actors::mother_brain_fight::Host {
 }
 
 /// A Mother Brain lease whose game is this module's host.
-pub trait Lease: FightLease<Game: Host> {
+pub trait Lease: FightLease<Game: Host> + SessionAccess {
     /// Run the camera wait on the current Session, retaining the former
     /// foreign entry's preflight and publication if an effect fails.
     fn wait_for_camera(&mut self);
@@ -507,7 +507,7 @@ pub fn gradually_accelerate_horizontally(
     r18: u16,
     r24: u16,
     r26: u16,
-    game: &mut impl State,
+    game: &mut (impl State + SessionAccess),
 ) {
     let e: i32 = k as i32;
     let position = session_slot!(game, BabyMetroid[e].base.x_pos);
@@ -620,8 +620,19 @@ crate::dispatch::instruction_callbacks! { pub fn (_k: u16, _jp: EnemyScript) -> 
     go_to_latched_on [EnemyScript::jump(ADDR_K_BABY_METROID_ILIST_F924 as u16)] { };
     go_to_remorse [EnemyScript::jump(ADDR_K_BABY_METROID_ILIST_F93A as u16)] { };
 }
-pub fn initialize(game: &mut impl State) {
-    word_transfers!(game, descending, 2048; le(TILEMAP_STUFF, 2047) <- value(0));
+pub fn initialize(game: &mut (impl State + SessionAccess)) {
+    // TILEMAP_STUFF is the two actor tilemaps; retain descending word order.
+    for tile in game
+        .session_mut()
+        .actors
+        .extended
+        .tilemaps
+        .iter_mut()
+        .rev()
+        .flat_map(|tilemap| tilemap.iter_mut().rev())
+    {
+        *tile = 0;
+    }
     let e: i32 = game.current_enemy() as i32;
     session_slot!(game, BabyMetroid[e].base.properties, |old| (old as i32
         | (K_ENEMY_PROPS_DISABLE_SAMUS_COLL as i32 | K_ENEMY_PROPS_BLOCK_PLASMA_BEAM as i32))
@@ -630,7 +641,7 @@ pub fn initialize(game: &mut impl State) {
     session_slot! { game, BabyMetroid[e].base; current_instruction = ADDR_K_BABY_METROID_ILIST_F90E as u16, instruction_timer = 1 }
     session_slot!(game, BabyMetroid[e].base.timer = 0);
     let mut v2: u16 = function::WAIT_FOR_CAMERA;
-    if (crate::camera::current(game).layer1[0] & 0x8000) != 0 {
+    if (game.session().room.camera.layer1[0] & 0x8000) != 0 {
         session_slot!(game, BabyMetroid[e].base.properties, |old| (old as i32
             | (K_ENEMY_PROPS_TANGIBLE as i32 | K_ENEMY_PROPS_INVISIBLE as i32))
             as u16);

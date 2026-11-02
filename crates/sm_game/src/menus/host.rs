@@ -72,6 +72,10 @@ pub trait MenuRuntime:
     + crate::menu_window_state::ArrowAccess
     + MapFacts
 {
+    /// A compatibility table cohort may capture physical HDMA bytes only when
+    /// neither a current Session nor a suspended canonical Display supplies them.
+    fn hdma_raw_table_interval(&self) -> bool;
+
     /// Upload `bytes` from `source` to VRAM word address `destination`.
     fn load_vram_words(&mut self, source: u32, destination: u16, bytes: u16);
     /// Run bank $8B's cinematic sprite pre-instruction `pre` for `object`.
@@ -124,7 +128,9 @@ pub trait MenuRuntime:
 }
 
 pub trait Host:
-    crate::fx_domain::Controls
+    crate::palette_migration::Host
+    + crate::cinematic_access::Access
+    + crate::fx_domain::Controls
     + crate::fx_domain::Sources
     + crate::fx_lighting::Access
     + crate::display::preparation::Access
@@ -134,6 +140,7 @@ pub trait Host:
     + crate::presentation_workspace::PaletteAccess
     + crate::presentation_workspace::QueueAccess
     + crate::display::transfer::Mode7Queue
+    + crate::cinematic_access::Access
     + CompatibilityRam
     + crate::runtime_access::SessionRam
     + crate::player_position::PlayerPosition

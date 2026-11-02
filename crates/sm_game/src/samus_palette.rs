@@ -12,7 +12,7 @@ use sm_data::cartridge::RomImage;
 use sm_data::samus_palettes::*;
 
 /// Samus's palette pointer tables, imported from the loaded image.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ImportedPaletteTables {
     suits: ImportedWords<SUIT_PALETTES, SUITS>,
     charge_sequences: ImportedWords<CHARGE_SEQUENCES, SUITS>,

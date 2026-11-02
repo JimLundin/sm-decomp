@@ -8,7 +8,7 @@ use crate::records::Records;
 use sm_data::cartridge::RomImage;
 use sm_data::statues::*;
 
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ImportedStatues {
     tourian: Option<Imported<TourianStatues>>,
     chozo: Option<Imported<ChozoStatues>>,

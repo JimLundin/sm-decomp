@@ -16,7 +16,6 @@ use crate::actors::host::abs16;
 
 use crate::projectile_geometry::SINE_COSINE;
 use crate::projectile_room::Axis;
-use crate::ram::word;
 
 /// What the grapple controller needs from the runtime besides named RAM,
 /// sound, the cartridge images and the owned-Session view.
@@ -65,6 +64,8 @@ pub struct SwingState {
     pub length_delta: u16,
     /// $0D16/$0D18: the beam's start position.
     pub start: crate::geometry::Point,
+    /// Previous-frame rope start; both words are part of the same player owner.
+    pub previous_start: crate::geometry::Point,
     /// $0D26: angular velocity, pi/8000h radians; positive is clockwise.
     pub angular_velocity: u16,
     /// $0D28: angular acceleration due to the swing's angle.
@@ -604,17 +605,13 @@ macro_rules! initialize_grapple_endpoints {
         $game.session_mut().player.grapple_origin_offset.y = origin.y.wrapping_sub($y_adjustment);
         $game.session_mut().player.grapple_endpoint.x = origin.x.wrapping_add($game.player_x());
         $game.session_mut().player.swing.start.x = $game.session().player.grapple_endpoint.x;
-        word!(
-            $game.X_POS_OF_START_OF_GRAPPLE_BEAM_PREVFRAME =
-                origin.previous_x.wrapping_add($game.player_x())
-        );
+        $game.session_mut().player.swing.previous_start.x =
+            origin.previous_x.wrapping_add($game.player_x());
         $game.session_mut().player.grapple_endpoint.y =
             (origin.y as i32 + $game.player_y() as i32 - $y_adjustment as i32) as u16;
         $game.session_mut().player.swing.start.y = $game.session().player.grapple_endpoint.y;
-        word!(
-            $game.Y_POS_OF_START_OF_GRAPPLE_BEAM_PREVFRAME =
-                (origin.previous_y as i32 + $game.player_y() as i32 - $y_adjustment as i32) as u16
-        );
+        $game.session_mut().player.swing.previous_start.y =
+            (origin.previous_y as i32 + $game.player_y() as i32 - $y_adjustment as i32) as u16;
     };
 }
 
@@ -669,16 +666,12 @@ macro_rules! restore_grapple_start_positions {
         let v1: i32 = $pose_offset as i32 >> 1;
         let origin = grapple_origins::origin($game, OriginSet::$set, v1 as isize);
         $game.session_mut().player.swing.start.x = origin.x.wrapping_add($game.player_x());
-        word!(
-            $game.X_POS_OF_START_OF_GRAPPLE_BEAM_PREVFRAME =
-                origin.previous_x.wrapping_add($game.player_x())
-        );
+        $game.session_mut().player.swing.previous_start.x =
+            origin.previous_x.wrapping_add($game.player_x());
         $game.session_mut().player.swing.start.y =
             (origin.y as i32 + $game.player_y() as i32 - $y_adjustment as i32) as u16;
-        word!(
-            $game.Y_POS_OF_START_OF_GRAPPLE_BEAM_PREVFRAME =
-                (origin.previous_y as i32 + $game.player_y() as i32 - $y_adjustment as i32) as u16
-        );
+        $game.session_mut().player.swing.previous_start.y =
+            (origin.previous_y as i32 + $game.player_y() as i32 - $y_adjustment as i32) as u16;
     };
 }
 
@@ -723,8 +716,8 @@ pub fn position_swing<H: Host + ?Sized>(game: &mut H) {
     } else {
         place_samus_relative_to_grapple_origin!(game, 0x9bc302, v2);
     }
-    word!(game.X_POS_OF_START_OF_GRAPPLE_BEAM_PREVFRAME = game.session().player.swing.start.x);
-    word!(game.Y_POS_OF_START_OF_GRAPPLE_BEAM_PREVFRAME = game.session().player.swing.start.y);
+    game.session_mut().player.swing.previous_start.x = game.session().player.swing.start.x;
+    game.session_mut().player.swing.previous_start.y = game.session().player.swing.start.y;
     clamp_swing_position(game);
 }
 
@@ -739,15 +732,11 @@ pub fn position_anchored<H: Host + ?Sized>(game: &mut H) {
     let v0: i32 = game.session().player.grapple_direction as i32;
     let origin = grapple_origins::origin(game, OriginSet::Standard, v0 as isize);
     game.set_player_x((game.session().player.swing.start.x).wrapping_sub(origin.x));
-    word!(
-        game.X_POS_OF_START_OF_GRAPPLE_BEAM_PREVFRAME =
-            origin.previous_x.wrapping_add(game.player_x())
-    );
+    game.session_mut().player.swing.previous_start.x =
+        origin.previous_x.wrapping_add(game.player_x());
     game.set_player_y((game.session().player.swing.start.y).wrapping_sub(origin.y));
-    word!(
-        game.Y_POS_OF_START_OF_GRAPPLE_BEAM_PREVFRAME =
-            origin.previous_y.wrapping_add(game.player_y())
-    );
+    game.session_mut().player.swing.previous_start.y =
+        origin.previous_y.wrapping_add(game.player_y());
 }
 
 pub fn restore_start_positions<H: Host + ?Sized>(game: &mut H) {
@@ -856,7 +845,7 @@ pub fn start_firing<H: Host + ?Sized>(game: &mut H) {
     game.session_mut().player.transitions.draw_handler = DrawMode::Grapple;
     game.session_mut().player.transitions.grapple_walljump_timer = 0;
     game.with_lease(|lease| crate::samus_palette::write_beam_palette(lease, 2));
-    word!(game.PALETTE_BUFFER[223] = 32657);
+    game.session_mut().presentation.visual_mut().colors[223] = 32657;
     game.session_mut().player.grapple = (0x9bc703i32) as u16;
     game.queue_sound(0, 5_u8, 1);
     game.session_mut().projectiles.controls.charge = 1;
@@ -1039,6 +1028,7 @@ pub fn update_tiles<
         + crate::player_position::PlayerFacts
         + crate::records::Records
         + TileAccess
+        + crate::display::transfer::TilemapQueue
         + ?Sized,
 >(
     game: &mut H,
@@ -1057,7 +1047,7 @@ pub fn update_tiles<
         }
     }
     let cursor = crate::display_refresh::queue_native_transfer(
-        word!(game.VRAM_WRITE_QUEUE_TAIL),
+        game.tilemap_queue_tail(),
         32,
         |game: &H| game.tile_word(Tiles),
         0x9a,

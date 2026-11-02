@@ -5,11 +5,11 @@ pub(crate) fn assert_gameplay_checkpoint(start: &Session, metadata: &DisplayStar
     // Keep the actual admitted lifecycle owners while exercising numeric composition.
     let world = start.world.clone();
     let mut expected = start.clone();
-    expected.botwoon_death.pending_hit = 0x8001;
-    expected.botwoon_death.active = 0xffff;
-    expected.botwoon_death.tail_ready = 0x1234;
-    expected.botwoon_death.previous_health = 0xfedc;
-    expected.botwoon_death.body_landed = 0x8000;
+    expected.actors.extended.botwoon_head[0].pending_hit = 0x8001;
+    expected.actors.extended.botwoon_head[0].active = 0xffff;
+    expected.actors.extended.botwoon_head[0].tail_ready = 0x1234;
+    expected.actors.extended.botwoon_path[0].previous_health = 0xfedc;
+    expected.actors.extended.botwoon_path[0].body_landed = 0x8000;
     expected.player.x = 0xfffd;
     expected.player.x_fraction = 0x1357;
     expected.projectiles.shots[9].y_fraction = 0x9876;
@@ -73,9 +73,14 @@ pub(crate) fn assert_gameplay_checkpoint(start: &Session, metadata: &DisplayStar
     );
     let auxiliary = expected.encode_auxiliary_checkpoint(metadata).unwrap();
     let binding = u64::from_le_bytes(auxiliary[8..16].try_into().unwrap()) as usize;
-    // Current auxiliary order retains all five owners before the Botwoon words.
+    // Current auxiliary order retains SuspendedWork and five owners before Botwoon.
+    let work = &expected.suspended_work;
     let queue = &expected.queued_tilemaps;
-    let preceding = 1
+    let preceding = work.queue_cursor.to_le_bytes().len()
+        + work.pause.len()
+        + work.unpause.len()
+        + work.decompression_source.to_le_bytes().len()
+        + 1
         + 2 * sm_game::game_loop::Word::ALL.len()
         + 1
         + queue.queue.len()

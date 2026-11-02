@@ -216,6 +216,9 @@ unsafe fn ppu_line_config<'a>(ppu: *mut Ppu) -> raster::LineConfig<'a> {
 
 pub(crate) unsafe fn ppu_run_line(ppu: *mut Ppu, line: i32, new_ppu: &bool) {
     unsafe {
+        // Production capture is explicitly activated by an exclusive Game interval.
+        // It does not use the verifier's reconstructed native model.
+        crate::game::owned_hardware_codec::raster_before(&*(*ppu).snes, &*ppu, line);
         if line == 0 {
             set_fields! {[(*ppu)]; mosaicStartLine = 1, rangeOver = false,
             timeOver = false, evenFrame = !(*ppu).evenFrame, };
@@ -253,6 +256,9 @@ pub(crate) unsafe fn ppu_run_line(ppu: *mut Ppu, line: i32, new_ppu: &bool) {
                 }
             }
         };
+        if line != 0 {
+            crate::game::owned_hardware_codec::raster_after(&*ppu);
+        }
     }
 }
 
