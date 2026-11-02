@@ -3,27 +3,24 @@
 //! `falling_platforms`.
 use crate::actors::access::{AccessMode::Native, ActorKey as Key};
 use crate::actors::api::{self, MovementResult, ShotHandling, SlopePolicy};
-use crate::actors::combat::{self, current_slot};
+use crate::actors::combat;
 use crate::actors::host::ActorLease;
-use crate::actors::layouts::part_view;
+use crate::actors::slot_view::{SlotState, slot_view};
 use crate::enemy_script::EnemyScript;
-use crate::session_slot;
 use sm_data::enemy_speeds::SpeedTable;
 
-part_view! {
+/// A lease the trippers and suspensor platforms run on: their slots are the Session's.
+pub trait Lease: ActorLease + SlotState {}
+impl<T: ActorLease + SlotState + ?Sized> Lease for T {}
+
+slot_view! {
     /// The platform's view of its slot.
-    Platform: EnemyLayout40 {
-        words: [
-            target_y, right_subvelocity, right_velocity, left_subvelocity, left_velocity,
-            y_speed_index, direction, speed,
-        ],
-        pad1: [u8; 26696],
-        words: [
-            y_movement_function, previous_position, x_movement_function, vertically_moving,
-            vertically_still, max_y_speed_index, previous_y_movement_function, var_07, var_08,
-            var_09, var_0a, var_0b, var_0c, var_0d, var_0e, var_0f, var_10, var_11, var_12, var_13,
-            var_14, var_15, var_16, var_17, var_18, var_19, var_1a, var_1b, var_1c, var_1d, var_1e,
-            suspensor_platform,
+    Platform, PlatformEdit {
+        record: [],
+        extended: [
+            y_movement_function = var_00, previous_position = var_01, x_movement_function = var_02,
+            vertically_moving = var_03, vertically_still = var_04, max_y_speed_index = var_05,
+            previous_y_movement_function = var_06, suspensor_platform = var_1f,
         ],
     }
 }
@@ -56,9 +53,9 @@ const SIGN: u16 = 0x8000;
 
 /// Set the instruction list for the platform's kind, motion and direction
 /// ($A3:9E47-$A3:9E9E).
-fn set_instruction_list(runtime: &mut impl ActorLease, moving: bool, right: bool) {
-    let platform = current_slot(runtime);
-    let suspensor = session_slot!(runtime, Platform[platform].suspensor_platform) & SIGN != 0;
+fn set_instruction_list(runtime: &mut impl Lease, moving: bool, right: bool) {
+    let platform = combat::current(runtime).byte_index();
+    let suspensor = Platform::of(runtime, platform).suspensor_platform() & SIGN != 0;
     let instruction = [
         [
             instruction_list::TRIPPER_STILL_LEFT,
@@ -75,38 +72,38 @@ fn set_instruction_list(runtime: &mut impl ActorLease, moving: bool, right: bool
 }
 /// Set tripper / suspensor platform instruction list - vertically moving
 /// ($A3:9EBB) or still ($A3:9EE1), once.
-fn set_vertical_motion(runtime: &mut impl ActorLease, moving: bool) {
-    let platform = current_slot(runtime);
+fn set_vertical_motion(runtime: &mut impl Lease, moving: bool) {
+    let platform = combat::current(runtime).byte_index();
     let flag = if moving {
-        session_slot!(runtime, Platform[platform].vertically_moving)
+        Platform::of(runtime, platform).vertically_moving()
     } else {
-        session_slot!(runtime, Platform[platform].vertically_still)
+        Platform::of(runtime, platform).vertically_still()
     };
     if flag == 0 {
         if moving {
-            session_slot!(runtime, Platform[platform].vertically_moving = 1);
+            *PlatformEdit::of(runtime, platform).vertically_moving() = 1;
         } else {
-            session_slot!(runtime, Platform[platform].vertically_still = 1);
+            *PlatformEdit::of(runtime, platform).vertically_still() = 1;
         }
-        let right = session_slot!(runtime, Platform[platform].x_movement_function) != 0;
+        let right = Platform::of(runtime, platform).x_movement_function() != 0;
         set_instruction_list(runtime, moving, right);
     }
     if moving {
-        session_slot!(runtime, Platform[platform].vertically_still = 0);
+        *PlatformEdit::of(runtime, platform).vertically_still() = 0;
     } else {
-        session_slot!(runtime, Platform[platform].vertically_moving = 0);
+        *PlatformEdit::of(runtime, platform).vertically_moving() = 0;
     }
 }
 /// Initialisation AI - suspensor platform ($A3:9C9F, `suspensor`) or tripper
 /// ($A3:9CBA), and their common initialisation AI ($A3:9CCC).
-pub fn initialize(suspensor: bool, runtime: &mut impl ActorLease) {
+pub fn initialize(suspensor: bool, runtime: &mut impl Lease) {
     let key = combat::current(runtime);
-    let platform = current_slot(runtime);
+    let platform = combat::current(runtime).byte_index();
     if suspensor {
-        session_slot!(runtime, Platform[platform].suspensor_platform = 0xffff);
+        *PlatformEdit::of(runtime, platform).suspensor_platform() = 0xffff;
     }
     let direction = runtime.resolve_actor(key, Native).parameters[0];
-    session_slot!(runtime, Platform[platform].x_movement_function = direction);
+    *PlatformEdit::of(runtime, platform).x_movement_function() = direction;
     // Initialization selects by kind; the fast variant retains its saved sign word.
     let instruction = if suspensor {
         instruction_list::SUSPENSOR_STILL_LEFT
@@ -124,25 +121,26 @@ pub fn initialize(suspensor: bool, runtime: &mut impl ActorLease) {
         let value = runtime.lease_enemy_speed(SpeedTable::Linear, index + offset as isize);
         runtime.edit_actor(key, Native, |actor| actor.variables[variable] = value);
     }
-    session_slot!(runtime, Platform[platform]; y_movement_function = 0, vertically_moving = 0,
-        vertically_still = 0);
+    {
+        let mut edit = PlatformEdit::of(runtime, platform);
+        *edit.y_movement_function() = 0;
+        *edit.vertically_moving() = 0;
+        *edit.vertically_still() = 0;
+    }
     runtime.edit_actor(key, Native, |actor| {
         actor.variables[lane::TARGET_Y] = actor.y.whole.wrapping_add(1);
         actor.pre_instruction = 0;
     });
     let maximum = runtime.resolve_actor(key, Native).parameters[1].to_ne_bytes()[1];
-    session_slot!(
-        runtime,
-        Platform[platform].max_y_speed_index = u16::from(maximum)
-    );
+    *PlatformEdit::of(runtime, platform).max_y_speed_index() = u16::from(maximum);
 }
 /// Increment the Y speed table index, up to the maximum.
-fn accelerate(runtime: &mut impl ActorLease, key: Key) -> u16 {
+fn accelerate(runtime: &mut impl Lease, key: Key) -> u16 {
     runtime.edit_actor(key, Native, |actor| {
         actor.pre_instruction = actor.pre_instruction.wrapping_add(1)
     });
-    let platform = i32::from(key.byte_index());
-    let maximum = session_slot!(runtime, Platform[platform].max_y_speed_index);
+    let platform = key.byte_index();
+    let maximum = Platform::of(runtime, platform).max_y_speed_index();
     runtime.edit_actor(key, Native, |actor| {
         if (actor.pre_instruction as i16).wrapping_sub(maximum as i16) >= 0 {
             actor.pre_instruction = maximum;
@@ -152,11 +150,11 @@ fn accelerate(runtime: &mut impl ActorLease, key: Key) -> u16 {
 }
 /// Tripper / suspensor platform X movement function - moving left ($A3:9D5E)
 /// or right ($A3:9D83): turn round at walls.
-fn move_x(runtime: &mut impl ActorLease, right: bool) {
+fn move_x(runtime: &mut impl Lease, right: bool) {
     let key = combat::current(runtime);
-    let platform = current_slot(runtime);
+    let platform = combat::current(runtime).byte_index();
     let x = runtime.resolve_actor(key, Native).x.whole;
-    session_slot!(runtime, Platform[platform].previous_position = x);
+    *PlatformEdit::of(runtime, platform).previous_position() = x;
     let current = combat::current(runtime);
     let amount = {
         let actor = runtime.resolve_actor(key, Native);
@@ -170,18 +168,15 @@ fn move_x(runtime: &mut impl ActorLease, right: bool) {
     if api::move_horizontal(runtime, current, amount, SlopePolicy::Ignore)
         == MovementResult::Blocked
     {
-        session_slot!(
-            runtime,
-            Platform[platform].x_movement_function = u16::from(!right)
-        );
+        *PlatformEdit::of(runtime, platform).x_movement_function() = u16::from(!right);
         set_instruction_list(runtime, false, !right);
     }
 }
 /// Tripper / suspensor platform Y movement function - rising ($A3:9DA8) back
 /// to the target Y, or sinking ($A3:9DE4) under Samus, carrying her.
-fn move_y(runtime: &mut impl ActorLease, sinking: bool) {
+fn move_y(runtime: &mut impl Lease, sinking: bool) {
     let key = combat::current(runtime);
-    let platform = current_slot(runtime);
+    let platform = combat::current(runtime).byte_index();
     let mut stopped = !sinking && {
         let actor = runtime.resolve_actor(key, Native);
         (actor.y.whole as i16).wrapping_sub(actor.variables[lane::TARGET_Y] as i16) < 0
@@ -196,11 +191,11 @@ fn move_y(runtime: &mut impl ActorLease, sinking: bool) {
                 .resolve_actor(key, Native)
                 .x
                 .whole
-                .wrapping_sub(session_slot!(runtime, Platform[platform].previous_position));
+                .wrapping_sub(Platform::of(runtime, platform).previous_position());
             let carry = &mut runtime.session_mut().player.contact.external_x.whole;
             *carry = carry.wrapping_add(delta);
             let y = runtime.resolve_actor(key, Native).y.whole;
-            session_slot!(runtime, Platform[platform].previous_position = y);
+            *PlatformEdit::of(runtime, platform).previous_position() = y;
         }
         let current = combat::current(runtime);
         let index = 4 * step as isize + if sinking { 0 } else { 2 };
@@ -218,7 +213,7 @@ fn move_y(runtime: &mut impl ActorLease, sinking: bool) {
             .resolve_actor(key, Native)
             .y
             .whole
-            .wrapping_sub(session_slot!(runtime, Platform[platform].previous_position));
+            .wrapping_sub(Platform::of(runtime, platform).previous_position());
         let carry = &mut runtime.session_mut().player.contact.external_y.whole;
         *carry = carry.wrapping_add(delta);
     }
@@ -226,43 +221,34 @@ fn move_y(runtime: &mut impl ActorLease, sinking: bool) {
 /// Main AI - tripper / suspensor platform ($A3:9D16): sink while Samus stands
 /// on it, else rise, moving sideways; a change of direction restarts the
 /// speed. Was `advance`.
-pub fn main_ai(runtime: &mut impl ActorLease) {
+pub fn main_ai(runtime: &mut impl Lease) {
     let key = combat::current(runtime);
-    let platform = current_slot(runtime);
-    session_slot!(runtime, Platform[platform].y_movement_function = 0);
+    let platform = combat::current(runtime).byte_index();
+    *PlatformEdit::of(runtime, platform).y_movement_function() = 0;
     if api::touches_player_from_above(runtime, combat::current(runtime)) {
-        session_slot!(runtime, Platform[platform].y_movement_function = 1);
+        *PlatformEdit::of(runtime, platform).y_movement_function() = 1;
     }
     // Full native dispatch indices keep both original two-entry bounds checks.
-    let right = [false, true][usize::from(session_slot!(
-        runtime,
-        Platform[platform].x_movement_function
-    ))];
+    let right = [false, true][usize::from(Platform::of(runtime, platform).x_movement_function())];
     move_x(runtime, right);
-    let current = current_slot(runtime);
-    let sinking = [false, true][usize::from(session_slot!(
-        runtime,
-        Platform[current].y_movement_function
-    ))];
+    let current = combat::current(runtime).byte_index();
+    let sinking = [false, true][usize::from(Platform::of(runtime, current).y_movement_function())];
     move_y(runtime, sinking);
-    if session_slot!(runtime, Platform[platform].y_movement_function)
-        != session_slot!(runtime, Platform[platform].previous_y_movement_function)
+    if Platform::of(runtime, platform).y_movement_function()
+        != Platform::of(runtime, platform).previous_y_movement_function()
     {
         runtime.edit_actor(key, Native, |actor| actor.pre_instruction = 0);
     }
-    let function = session_slot!(runtime, Platform[platform].y_movement_function);
-    session_slot!(
-        runtime,
-        Platform[platform].previous_y_movement_function = function
-    );
+    let function = Platform::of(runtime, platform).y_movement_function();
+    *PlatformEdit::of(runtime, platform).previous_y_movement_function() = function;
 }
 /// Enemy shot - tripper ($A3:9F08): frozen, it keeps its facing spritemap.
-pub fn shot(runtime: &mut impl ActorLease) {
+pub fn shot(runtime: &mut impl Lease) {
     combat::shot_reaction(runtime, ShotHandling::Finalize);
     let key = combat::current(runtime);
     if runtime.resolve_actor(key, Native).frozen != 0 {
-        let platform = current_slot(runtime);
-        let right = session_slot!(runtime, Platform[platform].x_movement_function) != 0;
+        let platform = combat::current(runtime).byte_index();
+        let right = Platform::of(runtime, platform).x_movement_function() != 0;
         runtime.edit_actor(key, Native, |actor| {
             actor.spritemap = if right { FROZEN_RIGHT } else { FROZEN_LEFT }
         });
@@ -270,15 +256,8 @@ pub fn shot(runtime: &mut impl ActorLease) {
 }
 /// Instruction - set moving left or right X movement ($A3:9C6B-$A3:9C8C).
 /// Was `direction`.
-pub fn set_x_movement(
-    right: bool,
-    script: EnemyScript,
-    runtime: &mut impl ActorLease,
-) -> EnemyScript {
-    let platform = current_slot(runtime);
-    session_slot!(
-        runtime,
-        Platform[platform].x_movement_function = u16::from(right)
-    );
+pub fn set_x_movement(right: bool, script: EnemyScript, runtime: &mut impl Lease) -> EnemyScript {
+    let platform = combat::current(runtime).byte_index();
+    *PlatformEdit::of(runtime, platform).x_movement_function() = u16::from(right);
     script
 }
