@@ -1030,72 +1030,26 @@ pub fn word_field<L>(_: fn(L) -> u16) {}
 /// `RAM_VARS` by name.
 pub mod mirror {
     pub const INIDISP: usize = 0x51;
-    pub const OBSEL: usize = 0x52;
-    pub const BGMODE: usize = 0x55;
     pub const MOSAIC: usize = 0x57;
     pub const BG1SC: usize = 0x58;
     pub const BG2SC: usize = 0x59;
-    pub const BG3SC: usize = 0x5a;
-    pub const BG4SC: usize = 0x5c;
-    pub const BG12NBA: usize = 0x5d;
-    pub const BG34NBA: usize = 0x5e;
-    pub const M7SEL: usize = 0x5f;
-    pub const W12SEL: usize = 0x60;
-    pub const W34SEL: usize = 0x61;
-    pub const WOBJSEL: usize = 0x62;
-    pub const WH0: usize = 0x63;
-    pub const WH1: usize = 0x64;
-    pub const WH2: usize = 0x65;
-    pub const WH3: usize = 0x66;
-    pub const WBGLOG: usize = 0x67;
-    pub const WOBJLOG: usize = 0x68;
     pub const TM: usize = 0x69;
-    pub const TS: usize = 0x6b;
-    pub const TMW: usize = 0x6c;
-    pub const TSW: usize = 0x6d;
-    pub const CGWSEL: usize = 0x6f;
-    pub const CGADSUB: usize = 0x72;
     pub const COLDATA: usize = 0x74;
     pub const SETINI: usize = 0x77;
     pub const NMITIMEN: usize = 0x84;
-    pub const HDMAEN: usize = 0x85;
-    pub const MEMSEL: usize = 0x86;
 
     #[cfg(test)]
     #[test]
     fn match_the_named_ram_table() {
         for (addr, name) in [
             (INIDISP, "REG_INIDISP"),
-            (OBSEL, "REG_OBSEL"),
-            (BGMODE, "REG_BGMODE"),
             (MOSAIC, "REG_MOSAIC"),
             (BG1SC, "REG_BG1SC"),
             (BG2SC, "REG_BG2SC"),
-            (BG3SC, "REG_BG3SC"),
-            (BG4SC, "REG_BG4SC"),
-            (BG12NBA, "REG_BG12NBA"),
-            (BG34NBA, "REG_BG34NBA"),
-            (M7SEL, "REG_M7SEL"),
-            (W12SEL, "REG_W12SEL"),
-            (W34SEL, "REG_W34SEL"),
-            (WOBJSEL, "REG_WOBJSEL"),
-            (WH0, "REG_WH0"),
-            (WH1, "REG_WH1"),
-            (WH2, "REG_WH2"),
-            (WH3, "REG_WH3"),
-            (WBGLOG, "REG_WBGLOG"),
-            (WOBJLOG, "REG_WOBJLOG"),
             (TM, "REG_TM"),
-            (TS, "REG_TS"),
-            (TMW, "REG_TMW"),
-            (TSW, "REG_TSW"),
-            (CGWSEL, "REG_CGWSEL"),
-            (CGADSUB, "REG_CGADSUB"),
             (COLDATA, "REG_COLDATA"),
             (SETINI, "REG_SETINI"),
             (NMITIMEN, "REG_NMITIMEN"),
-            (HDMAEN, "REG_HDMAEN"),
-            (MEMSEL, "REG_MEMSEL"),
         ] {
             let row = super::RAM_VARS
                 .iter()
