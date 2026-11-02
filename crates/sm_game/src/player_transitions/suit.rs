@@ -271,13 +271,11 @@ pub fn advance_pickup<H: SamusLease + crate::hdma_objects::HdmaTable>(h: &mut H,
     h.write_slice_native(0xa88, 1);
     h.set_byte(0xa8a, 0x98);
     h.write_slice_native(0xa8b, 0);
-    for address in [
-        ram::DEMO_INPUT_PREV,
-        ram::DEMO_INPUT_PREV_NEW,
-        ram::DEMO_BACKUP_PREV_CONTROLLER_INPUT,
-    ] {
-        h.write_slice_le(address, 0);
-    }
+    let s = h.session_mut();
+    s.player.demo.previous_held = 0;
+    s.player.demo.previous_pressed = 0;
+    s.projectiles.preparation.demo_filtered_held = 0;
+    h.words_stored();
     xray::set_window_word(h, 0, 255);
     h.session_mut().shared_sequence.stage = 0;
     h.session_mut().shared_sequence.value = 0;
