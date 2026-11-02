@@ -120,9 +120,7 @@ jobs:
         # A tar keeps the executable bit, and the paths verify_dll.py expects.
         run: |
           test -x target/verify-host/sm_verify
-          mkdir -p target/verify-native/lib
-          cp "$LIBRARY_PATH"/*.a target/verify-native/lib/
-          files="target/verify-host/sm_verify target/verify-native"
+          files="target/verify-host/sm_verify"
           if [ -d target/coverage-unit ]; then files="$files target/coverage-unit"; fi
           tar -cf verifier.tar $files
       - uses: actions/upload-artifact@v4
@@ -147,9 +145,7 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: verifier
-      - run: |
-          tar -xf verifier.tar
-          echo "LIBRARY_PATH=$GITHUB_WORKSPACE/target/verify-native/lib" >> "$GITHUB_ENV"
+      - run: tar -xf verifier.tar
       - name: Cache the pinned movie download
         if: contains(matrix.kinds, 'route')
         uses: actions/cache@v4
@@ -192,9 +188,7 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: verifier
-      - run: |
-          tar -xf verifier.tar
-          echo "LIBRARY_PATH=$GITHUB_WORKSPACE/target/verify-native/lib" >> "$GITHUB_ENV"
+      - run: tar -xf verifier.tar
       - uses: actions/download-artifact@v4
         with:
           pattern: profiles-*

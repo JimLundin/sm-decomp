@@ -619,254 +619,10 @@ def run_single_side(root, args, segment, replay, report, tomllib):
         return code
 
 
-# Bounded scheduling of the existing verified checkpoint-in/out operation.
-PREFIX_FRAMES = 8192
-PREFIX_STAGES = 28  # Covers the existing any/100/low input lengths; excess fails closed.
-PREFIX_BYTES = 64 * 1024 * 1024
-
-
-def prefix_identity(root, args, source, rom_hash, rows):
-    if source_hash(root) != source:
-        raise ValueError("prefix source changed")
-    for row in rows:
-        if (audio_file_hash(row["inputs"]) != row["input_sha256"]
-                or audio_file_hash(row["_checkpoint_path"]) != row["checkpoint_sha256"]
-                or prefix_header(row["_checkpoint_path"])[0] != row["_checkpoint_frame"]):
-            raise ValueError("prefix recipe-bound actual bytes changed")
-    binary = root / "target/verify-host" / HOST_BINARY
-    host = load_host(binary)
-    check_source(host, source)
-    check_library(host, root)
-    archives = sorted({path.resolve() for directory in os.environ.get("LIBRARY_PATH", "").split(os.pathsep)
-                       if directory for path in Path(directory).glob("*.a")})
-    if not archives:
-        raise ValueError("prefix requires actual native archives")
-    files = [(path.name, audio_file_hash(path)) for path in archives]
-    inputs = {row["input_sha256"] for row in rows}
-    seeds = {row.get("seed_sha256", "") for row in rows}
-    origins = {row["_checkpoint_path"].read_bytes()[16:24] for row in rows}
-    if len(inputs) != 1 or len(seeds) != 1 or len(origins) != 1:
-        raise ValueError("prefix rows have different actual origins or inputs")
-    parts = [source, audio_file_hash(binary), host["native"], rom_hash,
-             next(iter(inputs)), next(iter(seeds)), next(iter(origins)).hex(),
-             os.environ.get("SM_ORACLE", "patched"), os.environ.get("SM_ORACLE_KEEP", ""),
-             os.environ.get("AUDIO_TRACE", ""), *[name + ":" + digest for name, digest in files]]
-    identity = hashlib.sha256("\0".join(parts).encode()).hexdigest()
-    targets = hashlib.sha256("\0".join(
-        f"{row['id']}:{row['checkpoint_sha256']}:{row['_checkpoint_frame']}"
-        for row in sorted(rows, key=lambda row: row["id"])).encode()).hexdigest()
-    return identity, targets
-
-
-def prefix_header(path):
-    with path.open("rb") as stream:
-        header = stream.read(56)
-    if len(header) != 56 or header[:8] != b"SMVERIFY":
-        raise ValueError("invalid verified prefix checkpoint header")
-    return int.from_bytes(header[32:40], "little"), header[8:16].hex()
-
-
-def prefix_unpack(root, args, source, rom_hash, rows, bundle, stage, directory):
-    import ci_seed_data
-    import tarfile
-    import tomllib
-    from types import SimpleNamespace
-
-    expected = bundle.with_suffix(bundle.suffix + ".sha256").read_text().strip()
-    if re.fullmatch(r"[0-9a-f]{64}", expected) is None or audio_file_hash(bundle) != expected:
-        raise ValueError("prefix ciphertext identity differs")
-    identity, targets = prefix_identity(root, args, source, rom_hash, rows)
-    command, environment = ci_seed_data.cipher(SimpleNamespace(
-        rom=args.rom, bundle=bundle, openssl=shutil.which("openssl") or "openssl"), decrypt=True)
-    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=environment)
-    files, sizes, metadata = {}, 0, None
-    try:
-        with tarfile.open(fileobj=process.stdout, mode="r|gz") as archive:
-            for member in archive:
-                if not member.isfile() or member.size < 0:
-                    raise ValueError("prefix member is not a regular file")
-                sizes += member.size
-                if sizes > PREFIX_BYTES:
-                    raise ValueError("prefix transfer exceeds bounded bytes")
-                stream = archive.extractfile(member)
-                if member.name == "identity.toml" and metadata is None and not files:
-                    if member.size > 65536:
-                        raise ValueError("prefix identity is too large")
-                    metadata = tomllib.loads(stream.read().decode("utf-8"))
-                    if set(metadata) != {"version", "stage", "completed", "codec", "identity", "targets", "checkpoints"}:
-                        raise ValueError("prefix identity fields differ")
-                    if (metadata["version"] != 1 or metadata["stage"] != stage
-                            or metadata["identity"] != identity or metadata["targets"] != targets):
-                        raise ValueError("prefix source/native/input/origin identity differs")
-                    completed = min((stage + 1) * PREFIX_FRAMES,
-                                    max(row["_checkpoint_frame"] for row in rows))
-                    if metadata["completed"] != completed:
-                        raise ValueError("prefix completed frame differs")
-                    entries = metadata["checkpoints"]
-                    if not isinstance(entries, list) or not entries:
-                        raise ValueError("prefix checkpoints are missing")
-                    required = {completed} | {row["_checkpoint_frame"] for row in rows
-                                              if row["_checkpoint_frame"] <= completed}
-                    if {entry["frame"] for entry in entries} != required or len(entries) != len(required):
-                        raise ValueError("prefix required boundaries differ")
-                    continue
-                if metadata is None:
-                    raise ValueError("prefix identity must precede checkpoints")
-                entry = next((item for item in metadata["checkpoints"]
-                              if member.name == f"{item['frame']}.smvchk"), None)
-                if entry is None or set(entry) != {"frame", "sha256", "size"} or entry["frame"] in files:
-                    raise ValueError("unexpected prefix checkpoint member")
-                if member.size != entry["size"]:
-                    raise ValueError("prefix checkpoint size differs")
-                path = directory / member.name
-                with path.open("xb") as output:
-                    shutil.copyfileobj(stream, output, length=65536)
-                if audio_file_hash(path) != entry["sha256"] or prefix_header(path) != (entry["frame"], metadata["codec"]):
-                    raise ValueError("prefix checkpoint actual bytes or codec differ")
-                files[entry["frame"]] = path
-        while process.stdout.read(65536):
-            pass
-        if process.wait() or metadata is None or len(files) != len(metadata["checkpoints"]):
-            raise ValueError("prefix decrypt failed or checkpoint members are missing")
-    finally:
-        process.stdout.close()
-        process.stderr.close()
-        if process.poll() is None:
-            process.terminate()
-            process.wait()
-    return files, metadata
-
-
-def prefix_pack(root, args, source, rom_hash, rows, files, stage, bundle):
-    import ci_seed_data
-    import io
-    import tarfile
-    from types import SimpleNamespace
-
-    identity, targets = prefix_identity(root, args, source, rom_hash, rows)
-    headers = [prefix_header(path) for path in files.values()]
-    codecs = {codec for _, codec in headers}
-    completed = min((stage + 1) * PREFIX_FRAMES, max(row["_checkpoint_frame"] for row in rows))
-    required = {completed} | {row["_checkpoint_frame"] for row in rows if row["_checkpoint_frame"] <= completed}
-    if set(files) != required or len(codecs) != 1:
-        raise ValueError("prefix completion or codec differs")
-    lines = ["version = 1", f"stage = {stage}", f"completed = {completed}",
-             f'codec = "{next(iter(codecs))}"', f'identity = "{identity}"', f'targets = "{targets}"']
-    for frame, path in sorted(files.items()):
-        if prefix_header(path)[0] != frame:
-            raise ValueError("prefix checkpoint frame differs")
-        lines += ["", "[[checkpoints]]", f"frame = {frame}",
-                  f'sha256 = "{audio_file_hash(path)}"', f"size = {path.stat().st_size}"]
-    text = ("\n".join(lines) + "\n").encode()
-    if len(text) + sum(path.stat().st_size for path in files.values()) > PREFIX_BYTES:
-        raise ValueError("prefix transfer exceeds bounded bytes")
-    command, environment = ci_seed_data.cipher(SimpleNamespace(
-        rom=args.rom, bundle=bundle, openssl=shutil.which("openssl") or "openssl"))
-    bundle.parent.mkdir(parents=True, exist_ok=True)
-    with bundle.open("xb") as output:
-        process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=output,
-                                   stderr=subprocess.PIPE, env=environment)
-        try:
-            with tarfile.open(fileobj=process.stdin, mode="w|gz") as archive:
-                member = tarfile.TarInfo("identity.toml")
-                member.size = len(text)
-                archive.addfile(member, io.BytesIO(text))
-                for frame, path in sorted(files.items()):
-                    archive.add(path, arcname=f"{frame}.smvchk", recursive=False)
-            process.stdin.close()
-            if process.wait():
-                raise ValueError("prefix encryption failed")
-        finally:
-            process.stderr.close()
-            if process.poll() is None:
-                process.terminate()
-                process.wait()
-    bundle.with_suffix(bundle.suffix + ".sha256").write_text(audio_file_hash(bundle) + "\n", newline="\n")
-
-
-def prefix_failure_log(args, log):
-    import ci_seed_data
-    from types import SimpleNamespace
-    bundle = args.prefix_out.with_name("failure.log.enc")
-    bundle.parent.mkdir(parents=True, exist_ok=True)
-    command, environment = ci_seed_data.cipher(SimpleNamespace(
-        rom=args.rom, bundle=bundle, openssl=shutil.which("openssl") or "openssl"))
-    with log.open("rb") as source, bundle.open("xb") as output:
-        result = subprocess.run(command, stdin=source, stdout=output,
-                                stderr=subprocess.PIPE, env=environment)
-    if result.returncode:
-        raise ValueError("prefix failure log encryption failed")
-    bundle.with_suffix(bundle.suffix + ".sha256").write_text(audio_file_hash(bundle) + "\n", newline="\n")
-
-
-def run_prefix_stage(root, args, source, rom_hash, rows, command):
-    import tempfile
-    if (not rows or any("checkpoint" not in row for row in rows)
-            or not 0 <= args.prefix_stage < PREFIX_STAGES or args.prefix_out is None
-            or args.mode != "lockstep" or args.untyped or args.oracle_only or args.engine_only):
-        raise ValueError("invalid bounded prefix stage")
-    if bool(args.prefix_in) != bool(args.prefix_stage):
-        raise ValueError("prefix stage predecessor is missing or unexpected")
-    identity = prefix_identity(root, args, source, rom_hash, rows)
-    targets = {row["_checkpoint_frame"] for row in rows}
-    maximum = max(targets)
-    begin, end = min(args.prefix_stage * PREFIX_FRAMES, maximum), min((args.prefix_stage + 1) * PREFIX_FRAMES, maximum)
-    if maximum > PREFIX_FRAMES * PREFIX_STAGES:
-        raise ValueError("prefix exceeds existing movie scheduling bound")
-    args.prefix_out.parent.mkdir(parents=True, exist_ok=True)
-    log_path = args.prefix_out.with_name("active.log")
-    with log_path.open("x", encoding="utf-8", newline="\n"):
-        pass
-    with tempfile.TemporaryDirectory(prefix="verified-prefix-") as work:
-        directory = Path(work)
-        files = {}
-        if args.prefix_in:
-            files, _ = prefix_unpack(root, args, source, rom_hash, rows, args.prefix_in,
-                                     args.prefix_stage - 1, directory)
-        previous = files.get(begin)
-        for stop in sorted({end} | {frame for frame in targets if begin < frame <= end}):
-            if stop == begin:
-                continue
-            output = directory / f"{stop}.smvchk"
-            replay = command + [str(args.rom.resolve()), str(rows[0]["inputs"]), "--no-build",
-                                "--frames", str(stop - begin), "--checkpoint-out", str(output)]
-            if previous:
-                replay += ["--checkpoint-in", str(previous)]
-            if "seed" in rows[0]:
-                replay += ["--seed", str(rows[0]["_seed_path"])]
-            before = audio_file_hash(previous) if previous else None
-            with log_path.open("a", encoding="utf-8", newline="\n") as log:
-                result = subprocess.run(replay, cwd=root, stdout=log, stderr=subprocess.STDOUT)
-            if result.returncode or not output.is_file() or prefix_header(output)[0] != stop:
-                prefix_failure_log(args, log_path)
-                raise ValueError("verified prefix stage failed")
-            if previous and audio_file_hash(previous) != before:
-                raise ValueError("prefix input checkpoint changed during execution")
-            files[stop], previous = output, output
-            print(f"PREFIX verified input frames {begin}..{stop}", flush=True)
-            begin = stop
-        files = {frame: path for frame, path in files.items() if frame in targets or frame == end}
-        if prefix_identity(root, args, source, rom_hash, rows) != identity:
-            raise ValueError("prefix source/native/input identities changed")
-        for row in rows:
-            if audio_file_hash(row["inputs"]) != row["input_sha256"]:
-                raise ValueError("prefix inputs changed")
-        prefix_pack(root, args, source, rom_hash, rows, files, args.prefix_stage, args.prefix_out)
-    return 0
-
-
-
 def run_corpus(root, args):
     import re
     import tomllib
     import uuid
-    import tempfile
-
-    # Environment transfer is corpus-only; direct child replays do not inherit CLI mode.
-    if args.prefix_import is None and os.environ.get("SM_CORPUS_PREFIX_IMPORT"):
-        args.prefix_import = Path(os.environ["SM_CORPUS_PREFIX_IMPORT"])
-        args.prefix_import_stage = int(os.environ["SM_CORPUS_PREFIX_STAGE"])
-        args.prefix_members = os.environ["SM_CORPUS_PREFIX_MEMBERS"].split()
 
     # The corpus is the scenarios directory (tools/scenario.py): every
     # scenario's row, with its pinned files under the checkout.
@@ -1016,34 +772,6 @@ def run_corpus(root, args):
         for segment in runnable:
             print(f"FAIL {segment['id']}: build/source check failed", flush=True)
         return result
-    if args.prefix_stage is not None:
-        if failures:
-            raise ValueError("prefix recipe validation failed")
-        return run_prefix_stage(root, args, source, rom_hash, runnable, command)
-    prepared_prefixes = {}
-    prefix_hashes = {}
-    prefix_directory = None
-    if args.prefix_import is not None:
-        if failures or args.prefix_import_stage is None or not args.prefix_members:
-            raise ValueError("prefix completion is missing")
-        names = set(args.prefix_members)
-        if (len(names) != len(args.prefix_members) or not set(selected) <= names
-                or names - segments.keys()):
-            raise ValueError("prefix member selection differs")
-        members = [segments[name] for name in sorted(names)]
-        for member in members:
-            if "checkpoint" not in member or not input_matches(member):
-                raise ValueError("prefix member recipe differs")
-        prefix_directory = tempfile.TemporaryDirectory(prefix="verified-corpus-prefix-")
-        files, metadata = prefix_unpack(root, args, source, rom_hash, members,
-                                        args.prefix_import, args.prefix_import_stage,
-                                        Path(prefix_directory.name))
-        if metadata["completed"] != max(member["_checkpoint_frame"] for member in members):
-            raise ValueError("full configured prefix has not completed")
-        for member in members:
-            path = files[member["_checkpoint_frame"]]
-            prepared_prefixes[member["id"]] = path
-            prefix_hashes[member["id"]] = audio_file_hash(path)
     cache = root / "target" / "verify-corpus"
 
     def cache_directory(segment):
@@ -1095,10 +823,7 @@ def run_corpus(root, args):
         candidates = []
         if not force_boot and "checkpoint" in segment:
             # Never let a later cache donor skip this row's required checked setup gap.
-            checkpoint = prepared_prefixes.get(segment["id"], segment["_checkpoint_path"])
-            if segment["id"] in prepared_prefixes and audio_file_hash(checkpoint) != prefix_hashes[segment["id"]]:
-                raise ValueError("verified prefix checkpoint bytes changed")
-            candidates.append((segment["_checkpoint_frame"], checkpoint))
+            candidates.append((segment["_checkpoint_frame"], segment["_checkpoint_path"]))
         elif not force_boot:
             for donor in donors.values():
                 for path in cache_directory(donor).glob("*.smvchk"):
@@ -1136,8 +861,6 @@ def run_corpus(root, args):
                 continue
             if not checkpoint or not rejected or regenerated:
                 return None
-            if args.prefix_import is not None:
-                raise ValueError("verified source-bound prefix was rejected during setup")
             print(f"Checkpoint rejected for {segment['id']}; regenerate prefix from its origin", flush=True)
             previous, checkpoint = 0, None
             regenerated = True
@@ -1228,8 +951,6 @@ def run_corpus(root, args):
                     + (["--checkpoint-in", str(checkpoint)] if checkpoint else []), root)
                 if code == 0 or not checkpoint or not rejected or attempt:
                     break
-                if args.prefix_import is not None:
-                    raise ValueError("verified source-bound prefix was rejected")
                 checkpoint = prefix(segment, force_boot=True)
                 if checkpoint is None:
                     raise RuntimeError("checkpoint regeneration failed")
@@ -1368,12 +1089,6 @@ def main():
                         help="observe N additional frames after all expectations are met")
     parser.add_argument("--corpus", type=Path, metavar="SCENARIOS",
                         help="run scenarios (the scenarios directory) as corpus rows")
-    parser.add_argument("--prefix-stage", type=int, help="capture one bounded verified corpus prefix interval")
-    parser.add_argument("--prefix-in", type=Path, help="successful encrypted predecessor stage")
-    parser.add_argument("--prefix-out", type=Path, help="new encrypted successful stage")
-    parser.add_argument("--prefix-import", type=Path, help="completed source-bound prefix stage for corpus rows")
-    parser.add_argument("--prefix-import-stage", type=int)
-    parser.add_argument("--prefix-members", nargs="+", default=[])
     parser.add_argument("--segment", action="append", default=[], metavar="ID",
                         help="run selected corpus segments only; reports partial coverage")
     parser.add_argument("--after-hits", type=int, metavar="N",
@@ -1431,15 +1146,6 @@ def main():
     parser.add_argument("--original-native-logger", type=Path)
     parser.add_argument("--original-native-predecessor", type=Path)
     args = parser.parse_args()
-    if (args.prefix_stage is not None or args.prefix_in is not None or args.prefix_out is not None
-            or args.prefix_import is not None or args.prefix_import_stage is not None or args.prefix_members):
-        if args.corpus is None:
-            parser.error("verified prefix scheduling requires corpus mode")
-        if args.prefix_stage is None and (args.prefix_in is not None or args.prefix_out is not None):
-            parser.error("prefix predecessor/output require a stage")
-        if args.prefix_stage is not None and args.prefix_import is not None:
-            parser.error("capture and completed-prefix replay are distinct modes")
-
     original_native = (args.original_native_receipt, args.original_native_receipt_sha256,
         args.original_native_parent, args.original_native_binary, args.original_native_source,
         args.original_native_stdout, args.original_native_logger, args.original_native_predecessor)
