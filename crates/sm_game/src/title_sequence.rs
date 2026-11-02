@@ -257,7 +257,16 @@ fn finish<H: Host + ?Sized>(
     crate::palette_effects::execution::leased::set_enabled(false, game);
     crate::palette_effects::execution::leased::clear(game);
     cine.clear();
-    crate::word_transfers!(game, descending, 256; le(HDMA_TABLE_1, 255) <- value(0));
+    // Clear the title gradient's HDMA table ($9800..$99FF), last word first.
+    for word in (0..256).rev() {
+        crate::fx_domain::Sources::store_source_word(
+            game,
+            crate::scene::hdma_sources::LiveOwner::HdmaTable1,
+            2 * word,
+            crate::scene::state::WordOrder::Little,
+            0,
+        );
+    }
     crate::gameplay_word!(game.GAME_STATE = next);
     clear_index(game);
 }
