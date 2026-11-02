@@ -27,6 +27,32 @@ Pending and unobserved engine scope is retained in the coordinator and endgame
 snapshots below. Complete any%, 100%, low%, boot/transition/endgame acceptance is
 not established by this documentation cleanup.
 
+## FX cache invalidation correction, 2026-11-02
+
+The reviewed candidate source is
+`e7747479e76a97dd5af1ee0f221940600e62105d3114732ffca2e4125ef080ef`.
+Strict ordinary Cargo checking of the verifier library and binary passed in
+41.66 seconds. Formatting, source inventory, all 56 player mutation anchors,
+all 52 Session mutation anchors and the RAM ratchet pass. No executable or DLL
+was built or run locally.
+
+Cached standalone FX state now invalidates on writes to its complete fixed
+numeric, lighting, window-control and source-buffer ranges. Unrelated RAM
+writes retain that decoded cache. The four actual shared WorkRam mutation
+primitives update the new epoch before their existing byte publication; backend
+clones share the same epoch. Session admission, aggregate authority, suspended
+topology, selected-image adoption and failure invalidation retain their global
+write guards. Independent source review found no concrete defect.
+
+The five cached source buffers total 2,562 bytes on this source. This count
+excludes the additional Crocomire buffer in the unqualified next migration.
+The prior audit's 3,090-byte figure described that different source. No replay
+speedup is measured or claimed. Exact-head CI build, units and full replay gates
+remain required; successful CI on `0fd725d69` does not transfer to this source.
+The patch adds 41 production Rust lines, with no extra RAM retirement:
+613 sites / 74 files remain, 546 retirements against main. Physical path counts
+are 199,875 production and 61,723 verification Rust lines.
+
 ## Executable verifier and replay corrections, 2026-11-02
 
 The corrected PR #151 source is

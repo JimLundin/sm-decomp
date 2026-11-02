@@ -93,6 +93,7 @@ pub struct WorkRam(
     Rc<Cell<u64>>,
     Rc<Cell<u64>>,
     Rc<std::cell::RefCell<SourcePublications>>,
+    Rc<Cell<u64>>,
 );
 #[forbid(unsafe_code)]
 impl WorkRam {
@@ -109,6 +110,7 @@ impl WorkRam {
             Rc::new(Cell::new(0)),
             Rc::new(Cell::new(0)),
             Rc::new(std::cell::RefCell::new(SourcePublications::default())),
+            Rc::new(Cell::new(0)),
         )
     }
 
@@ -125,6 +127,7 @@ impl WorkRam {
         self.note_frame_display_write(at..at + 1);
         self.note_context_write((at..at + 1).clone());
         self.note_sequence_write(at..at + 1);
+        self.note_fx_write(at..at + 1);
         cell.set(value);
         self.note_source_publication(at);
     }
@@ -145,6 +148,7 @@ impl WorkRam {
             self.note_frame_display_write(destination..destination + count);
             self.note_context_write((destination..destination + count).clone());
             self.note_sequence_write(destination..destination + count);
+            self.note_fx_write(destination..destination + count);
         }
         if destination > source.start {
             for offset in (0..count).rev() {
@@ -180,6 +184,7 @@ impl WorkRam {
             self.note_frame_display_write(at..end);
             self.note_context_write((at..end).clone());
             self.note_sequence_write(at..end);
+            self.note_fx_write(at..end);
         }
         for (offset, (cell, &byte)) in cells.iter().zip(input).enumerate() {
             cell.set(byte);
@@ -197,7 +202,8 @@ impl WorkRam {
             self.note_scroll_write(range.clone());
             self.note_frame_display_write(range.clone());
             self.note_context_write((range).clone());
-            self.note_sequence_write(range);
+            self.note_sequence_write(range.clone());
+            self.note_fx_write(range);
         }
         for (offset, cell) in cells.iter().enumerate() {
             cell.set(value);
@@ -215,6 +221,7 @@ impl WorkRam {
             Rc::clone(&self.5),
             Rc::clone(&self.6),
             Rc::clone(&self.7),
+            Rc::clone(&self.8),
         )
     }
     fn note_write(&self) {
@@ -353,6 +360,28 @@ impl WorkRam {
     }
     fn inventory_epoch(&self) -> u64 {
         self.2.get()
+    }
+    // Cached legacy FX owns only the fixed numeric/lighting words and source
+    // allocations in fx_encoding. Window-control lanes are included; dynamic
+    // prepared/suspended topology and aggregate authority retain the global epoch.
+    fn note_fx_write(&self, range: Range<usize>) {
+        if [
+            0x596..0x59e,
+            0x607..0x60b,
+            0x1778..0x1784,
+            0x1986..0x1988,
+            0x9800..0xa000,
+            0xc406..0xc608,
+            0xcad8..0xcae0,
+        ]
+        .iter()
+        .any(|owned| range.start < owned.end && owned.start < range.end)
+        {
+            self.8.set(self.8.get().wrapping_add(1));
+        }
+    }
+    fn fx_epoch(&self) -> u64 {
+        self.8.get()
     }
     fn write_epoch(&self) -> u64 {
         self.1.get()
@@ -3890,6 +3919,8 @@ impl sm_game::menu_window_state::ArrowAccess for Game {
 }
 
 // FX numeric/source ownership outside the scheduler's Session interval.
+// Owned epochs track fixed legacy FX dependencies. InSession epochs keep the
+// global WRAM admission token; an unrelated native store still suspends Session.
 #[forbid(unsafe_code)]
 impl Game {
     fn selected_fx_image(&self) -> sm_game::fx_domain::State {
@@ -3909,19 +3940,24 @@ impl Game {
         if matches!(self.persistent_session.fx.get_mut(), Domain::Leased) {
             return;
         }
-        let epoch = self.ram.write_epoch();
+        let epoch = self.ram.fx_epoch();
         if self.persistent_session_current() {
-            *self.persistent_session.fx.get_mut() = Domain::InSession { epoch };
+            *self.persistent_session.fx.get_mut() = Domain::InSession {
+                epoch: self.ram.write_epoch(),
+            };
             return;
         }
         if matches!(self.persistent_session.fx.get_mut(),
-            Domain::Owned { epoch: current, .. } | Domain::InSession { epoch: current }
-            if *current == epoch)
+            Domain::Owned { epoch: current, .. } if *current == epoch)
+            || matches!(self.persistent_session.fx.get_mut(),
+                Domain::InSession { epoch: current } if *current == self.ram.write_epoch())
         {
             return;
         }
         if self.persistent_session_current() {
-            *self.persistent_session.fx.get_mut() = Domain::InSession { epoch };
+            *self.persistent_session.fx.get_mut() = Domain::InSession {
+                epoch: self.ram.write_epoch(),
+            };
         } else {
             let state = Box::new(self.selected_fx_image());
             *self.persistent_session.fx.get_mut() = Domain::Owned { state, epoch };
@@ -3930,7 +3966,7 @@ impl Game {
     pub(crate) fn take_fx_domain(&mut self) -> Option<sm_game::fx_domain::State> {
         use sm_game::fx_domain::Domain;
         match std::mem::replace(self.persistent_session.fx.get_mut(), Domain::Leased) {
-            Domain::Owned { state, epoch } if epoch == self.ram.write_epoch() => Some(*state),
+            Domain::Owned { state, epoch } if epoch == self.ram.fx_epoch() => Some(*state),
             _ => None,
         }
     }
@@ -3951,7 +3987,7 @@ impl Game {
                     lighting,
                     sources,
                 }),
-                epoch: self.ram.write_epoch(),
+                epoch: self.ram.fx_epoch(),
             }
         } else {
             Domain::InSession {
@@ -3961,20 +3997,25 @@ impl Game {
     }
     fn ensure_fx_domain(&self) {
         use sm_game::fx_domain::Domain;
-        let epoch = self.ram.write_epoch();
+        let epoch = self.ram.fx_epoch();
         let mut domain = self.persistent_session.fx.borrow_mut();
         if self.persistent_session_current() && !matches!(&*domain, Domain::Leased) {
-            *domain = Domain::InSession { epoch };
+            *domain = Domain::InSession {
+                epoch: self.ram.write_epoch(),
+            };
             return;
         }
-        if matches!(&*domain, Domain::Owned { epoch: current, .. } | Domain::InSession { epoch: current }
-            if *current == epoch)
+        if matches!(&*domain, Domain::Owned { epoch: current, .. } if *current == epoch)
+            || matches!(&*domain,
+                Domain::InSession { epoch: current } if *current == self.ram.write_epoch())
             || matches!(&*domain, Domain::Leased)
         {
             return;
         }
         *domain = if self.persistent_session_current() {
-            Domain::InSession { epoch }
+            Domain::InSession {
+                epoch: self.ram.write_epoch(),
+            }
         } else {
             Domain::Owned {
                 state: Box::new(self.selected_fx_image()),
@@ -4009,7 +4050,7 @@ impl Game {
                     match self.slot.take() {
                         Some(Domain::Owned { state, .. }) => Domain::Owned {
                             state,
-                            epoch: self.game.ram.write_epoch(),
+                            epoch: self.game.ram.fx_epoch(),
                         },
                         _ => Domain::Revoked,
                     }
@@ -4105,7 +4146,7 @@ impl sm_game::fx_domain::Controls for Game {
         }
         self.ensure_fx_domain();
         match &*self.persistent_session.fx.borrow() {
-            Domain::Owned { state, epoch } if *epoch == self.ram.write_epoch() => state.numeric,
+            Domain::Owned { state, epoch } if *epoch == self.ram.fx_epoch() => state.numeric,
             _ => sm_game::fx_encoding::decode(&|at| self.ram.read_byte(at)),
         }
     }
@@ -4200,7 +4241,7 @@ impl sm_game::fx_domain::Sources for Game {
         self.ensure_fx_domain();
         let domain = self.persistent_session.fx.borrow();
         if let Domain::Owned { state, epoch } = &*domain {
-            if *epoch == self.ram.write_epoch() {
+            if *epoch == self.ram.fx_epoch() {
                 if let Ok(byte) = state.sources.read_buffer(owner, offset) {
                     return byte;
                 }
@@ -4275,7 +4316,7 @@ impl sm_game::fx_lighting::Access for Game {
         }
         self.ensure_fx_domain();
         match &*self.persistent_session.fx.borrow() {
-            Domain::Owned { state, epoch } if *epoch == self.ram.write_epoch() => state.lighting,
+            Domain::Owned { state, epoch } if *epoch == self.ram.fx_epoch() => state.lighting,
             _ => sm_game::fx_encoding::decode_lighting(&|at| self.ram.read_byte(at)),
         }
     }
