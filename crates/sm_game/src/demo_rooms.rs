@@ -237,10 +237,13 @@ pub fn load<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
         })
     };
     // A demo has every room object, item, station and map station used and
-    // no event, boss or door ($D820..$D8EF, $D8F8..$D90F).
+    // no event, boss or door ($D820..$D8EF, $D8F8..$D90F). Its minimap is on
+    // ($05F7); the stores are disjoint, so they share one Session view.
     {
         let mut runtime = game.runtime();
-        let flags = &mut runtime.session_mut().gameplay_flags;
+        let session = runtime.session_mut();
+        session.minimap.disabled = 0;
+        let flags = &mut session.gameplay_flags;
         flags.events.fill(0);
         flags.bosses_by_area.fill(0);
         flags.used_room_objects.fill(u8::MAX);
@@ -251,10 +254,20 @@ pub fn load<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     }
     crate::word_transfers!(game, ascending, 4; le(UNUSED_WORD_7ED8F0, 0) <- value(u16::MAX));
     crate::word_transfers!(game, ascending, 768; le(EXPLORED_MAP_TILES_SAVED, 0) <- value(0));
-    word! { game, 0;
-        SAMUS_MAX_RESERVE_HEALTH, SAMUS_RESERVE_HEALTH, RESERVE_HEALTH_MODE,
-        LOADING_GAME_STATE, DEBUG_DISABLE_MINIMAP,
-    }
+    crate::gameplay_context::with_inventory(
+        game,
+        |_, inventory: &mut crate::inventory::Inventory| {
+            inventory.reserve_capacity = 0;
+            inventory.reserve_health = 0;
+            inventory.reserve_mode = 0;
+        },
+    );
+    crate::menus::state::with(
+        game,
+        |_, selection: &mut crate::menu_state::SaveSelection| {
+            selection.loading_game_state = 0;
+        },
+    );
 }
 
 pub fn finish_setup<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
