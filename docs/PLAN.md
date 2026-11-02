@@ -32,7 +32,7 @@ oracle digest lock plus lockstep for rows it cannot hold; full lockstep runs nig
 replaces the 2026-10-27 stop on Linux. Windows CI only links the desktop nightly until
 `sm_app` moves off the Windows-only bridge. Local machines compile-check; they don't need
 a verifier build or replays. Push a slice once and let its gate finish unless fixing a
-failure. PR Verify runs, including queued runs, finish without cancellation.
+failure. New commits supersede their branch's PR and push gates; nightly and dispatched runs finish.
 The production-line ratchet stays advisory until
 RAM migration finishes, then becomes enforced so the code shrinks toward the 100,000-line
 target. PR descriptions carry landing evidence; don't grow PROGRESS_REPORT for each landing.
@@ -57,11 +57,14 @@ all rows, actual source/executable/native/ROM/input identities and checkpoint
 guards. Preserve live Windows and Linux runs with their original proof scope;
 integrating CI does not transfer qualification between different heads or hosts.
 
-Jim's gate clarification (2026-11-02): land on exact-head PR CI and PR Verify's
-lock-first gate; dispatched full runs are extra evidence and full lockstep runs
-nightly. Remove staged-prefix workflow jobs and reseed the three long checkpoint
-rows from room seeds through the existing setup. Keep PR Verify runs, including
-queued runs. Do not add ROM-secret blocks; use the private ci-data ROM restore.
+Jim's current gate clarification (2026-11-02): land on exact-head PR CI and PR
+Verify's lock-first gate; dispatched full runs are extra evidence and full lockstep
+runs nightly. Preserve the fetched branch's direct headless verifier build and
+source/native/capability guards. New commits supersede PR and push gates;
+nightly and dispatched runs finish. This supersedes the earlier no-cancellation
+direction. Re-cut the parked regression rows from genuine starts, preserving
+required facts and continuation checks. Staged-prefix workflow jobs stay removed;
+use the private ci-data ROM restore without adding ROM-secret blocks.
 
 The [accepted destination](target-architecture/README.md) is one deterministic owned
 Session, our renderer/audio and small platform libraries, independent of SNES emulation.
@@ -98,7 +101,7 @@ Land verified work promptly; holding it over an hour is a stall. No docs-only co
 without a code commit beside them. Update PLAN only for active direction or blockers.
 
 Use a descriptive subject, retaining A:, M: or B:sm_XX when useful. Keep the body
-to 2â€“3 short lines explaining the behavior change and relevant verification.
+to 2Ã¢â‚¬â€œ3 short lines explaining the behavior change and relevant verification.
 Measure with tools/progress.sh and retain exact production/legacy/unsafe/verification/
 support deltas, B replacement ratio/reason, source/native/codec/input pins and actual
 check results in the owned qualification/publication record. Commit messages need

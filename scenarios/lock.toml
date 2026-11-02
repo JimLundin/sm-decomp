@@ -17,6 +17,7 @@ bundles = [
     { name = "seeds-v1-file-copy-51a67d39af3c9628.tar.gz.enc", sha256 = "51a67d39af3c9628bd3959e295d33a6667e5f3c5e9abe7d939a2a410629a619d" },
     { name = "seeds-v1-final-whips-6295d2432aa88773.tar.gz.enc", sha256 = "6295d2432aa88773bbedbcaaf4ddc4276878951281787e171620a9d40d13a9ce" },
     { name = "seeds-v1-genuine-roomrows-aa4756f127e835bd.tar.gz.enc", sha256 = "aa4756f127e835bd9ea1f7b25828137a644f438b18a6483a0bcf2888542b1091" },
+    { name = "seeds-v1-genuine-roomrows-b262ce4202be01bc.tar.gz.enc", sha256 = "b262ce4202be01bc6097e44d576d75279d47dd24d9652ad147b3cdad1ba5e563" },
     { name = "seeds-v1-golden-3b895ada4be8fcb4.tar.gz.enc", sha256 = "3b895ada4be8fcb4e1b77941f0f4c4530150c626588b53d2e8cf5c2dc2cbeb0e" },
     { name = "seeds-v1-grapplewall-4f6db9f4f7fc408a.tar.gz.enc", sha256 = "4f6db9f4f7fc408aec578994afc84a8b6a61de58acef46ec9f123515e0784061" },
     { name = "seeds-v1-handwings-6302cac975d0049c.tar.gz.enc", sha256 = "6302cac975d0049c512dc2ab254e6a4ba03f8f396027544c7160e82645b45675" },
@@ -713,7 +714,7 @@ pins = [
     { id = "samus-walljump-22", bundle = "seeds-v1-tricks-95f7c4352cb18fbe.tar.gz.enc", seed = "100-input-phase:305", inputs = "authored-samus-walljump-22.inputs", input_sha256 = "1f85556c93573636b405fdaa40b7d8d72406c697dd28cfa38834574cda8aaf03" },
     { id = "samus-walljump-28", bundle = "seeds-v1-tricks-95f7c4352cb18fbe.tar.gz.enc", seed = "100-input-phase:305", inputs = "authored-samus-walljump-28.inputs", input_sha256 = "7498790845006368be4b86119f42dd528458792163eef68024d224c773f9f15e" },
     { id = "save-death-reload", bundle = "seeds-v1-realigned-ef199d44b0070294.tar.gz.enc", inputs = "corpus-save-death-continue.inputs", input_sha256 = "af79d24c791c1414cd4b1b83f040da0787a2a69bd0d2c4d6b73fc667b7d74467", checkpoint = "save-in-kago-69400.smvchk", checkpoint_sha256 = "7c2af1918857b0008cfe536313d932df7dc55acecf7f608f0c4c93db67ee3fb9" },
-    { id = "save-memory", bundle = "seeds-v1-realigned-ef199d44b0070294.tar.gz.enc", inputs = "corpus-speed-booster.inputs", input_sha256 = "bc907fc429252418216b7f575e26be148f7cf863a71c3947b4ffa3c6c6027de6", checkpoint = "save-in-kago-69400.smvchk", checkpoint_sha256 = "7c2af1918857b0008cfe536313d932df7dc55acecf7f608f0c4c93db67ee3fb9" },
+    { id = "save-memory", bundle = "seeds-v1-genuine-roomrows-b262ce4202be01bc.tar.gz.enc", seed = "any-boundary:110", inputs = "authored-genuine-save-memory.inputs", input_sha256 = "2fb0ad2d423f7deda2f0680ab490fa16898ffcc00f065da7eeca513fdae0badf" },
     { id = "shot-gate-spawn-parameter", bundle = "layout150-f158-faithful2-d4050aa32a965168.tar.gz.enc", inputs = "corpus-wave-gate.inputs", input_sha256 = "1ce640c865d508ff2aab0f79c043c6da8aff9b74d6a1444d3a994e20d68db123", checkpoint = "gate-153606.smvchk", checkpoint_sha256 = "f264cb96c3b0315859b1b74b30a592d1582699f55610b3905751e17940bfa65a" },
     { id = "space-jump-bubble-word-counter", bundle = "seeds-v1-spore-6b6b2c8fd70bc713.tar.gz.enc", seed = "100-boundary:260", inputs = "seed-space-jump.inputs", input_sha256 = "a50f19a46b89b310a412155002fde5d4501df5b45164341c6e957f01d3fd7524" },
     { id = "special-beam-ice", bundle = "seeds-v1-special-beam-42ef643c82c0b3e4.tar.gz.enc", seed = "scenario-special-beam-ice:305", inputs = "authored-special-beam.inputs", input_sha256 = "407f8362380ffcddbeaa020c91b8bd434e60e25c4618c4640c85ffe8ddaa0e5b" },
@@ -8197,6 +8198,18 @@ format = 1
 ticks = 169
 combined = "1263e706d3681859"
 digests = { "wram" = "9b7824abdf38dd35", "sram" = "db22e7b1b56561dd", "vram" = "39d44186f836909d", "cgram" = "be0660e4233c5af0", "oam" = "76d61ff9b2a31e69", "ppu" = "9744c58c84b8c8cf", "video" = "c3a33c4b05a94b36", "apu" = "cf10e3f85303d7c7", "input" = "7dda5df272be6dbc", "samus" = "bb3e762300cccc3b", "camera" = "ebaa3a5e9c348e1a", "room" = "158debd54c27f97d", "progress" = "5ee2ffa5452597e8", "actors" = "8b1ccaff756f5c6a", "effects" = "b415610a4b5d0e7a" }
+marks = {  }
+
+[[scenario]]
+id = "save-memory"
+oracle = "faithful"
+start = "seed:670d845285be942918cc19ba9375c8c6e8001116362afbbd67558cf0a31eb30f"
+inputs = "2fb0ad2d423f7deda2f0680ab490fa16898ffcc00f065da7eeca513fdae0badf"
+frames = 609
+format = 1
+ticks = 609
+combined = "383fc39451839b13"
+digests = { "wram" = "6b50890185848030", "sram" = "f472cf09f25b21ff", "vram" = "c823a7098f574816", "cgram" = "91c4b0657b26becb", "oam" = "765d48dd915d1733", "ppu" = "6f60759f724db660", "video" = "f9a0f205d9417fc5", "apu" = "1a37f241b8a31573", "input" = "3588731f4fc878e4", "samus" = "2fb4f8a9b12ca967", "camera" = "3c64deda1f869b9d", "room" = "dfec36ab0186349d", "progress" = "c5fa9141de8aa615", "actors" = "878263d3e1f24f19", "effects" = "b6818a95a2aeff2d" }
 marks = {  }
 
 [[scenario]]

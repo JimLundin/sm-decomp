@@ -533,19 +533,13 @@ after_expectations = 120
 after_hits = 120
 tags = ["required"]
 
-# Additional diagnostic; does not satisfy the required save-death-reload scenario.
-# Both save rows start from save-in-kago-69400.smvchk, cut by e8dc97f92's
-# replay from save-before-kago: their route's authored doors predate the
-# original 2-frame sound-request delay (c91431d90), so the current build no
-# longer reaches the save room from the earlier checkpoint.
-# The checkpoint keeps e8dc97f92's pre-c91431d90 timing; a scenario cut by the
-# harness will replace it.
+# Genuine Norfair save-room start and authored save input.
+# Replaces the old A201 start; A201 coverage remains unproved.
 [[scenario]]
 id = "save-memory"
-start = "boot"
-prefix = 69400
-ticks = 2400
-facts = ["room:A201", "probe:save.sram.committed"]
+start = "seed:670d845285be942918cc19ba9375c8c6e8001116362afbbd67558cf0a31eb30f"
+ticks = 609
+facts = ["room:B167", "probe:save.sram.committed"]
 after_expectations = 120
 after_hits = 120
 
@@ -614,7 +608,6 @@ id = "samus-bomb-jump-vertical"
 start = "seed:c402c17601f3ac1b274a8c1914e306ed304371b8e65031975d5b67947591528c"
 ticks = 1057
 facts = ["area:crateria", "probe:samus.jump.bomb"]
-pending = "checkpoint cannot be rebuilt from its seed and inputs; re-cut from a seed that reaches this row (docs/LEGACY.md)"
 
 # Onscreen dust writes its last bound before the following Crocomire drop:
 # dust at step 3852, then the defeat's pickup drops at 3853.
@@ -784,7 +777,6 @@ id = "wall-crawler-slope-step"
 start = "seed:78064d156224580b594e2da71ca253a794bdb4318eeac9f3bc5f01701e61477b"
 ticks = 8
 facts = ["area:crateria", "room:92FD"]
-pending = "checkpoint cannot be rebuilt from its seed and inputs; re-cut from a seed that reaches this row (docs/LEGACY.md)"
 
 # Original item words through frame666, then authored standing/select/run/release input.
 # Fixed2131 frames retain activation and the return to the normal pose after release.

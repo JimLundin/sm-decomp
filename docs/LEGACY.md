@@ -40,12 +40,10 @@ Session would retire the list.
 
 ## Rows waiting to be re-cut
 
-`boss-bomb-torizo`, `samus-bomb-jump-vertical` and `wall-crawler-slope-step` start from
-saved checkpoints that their seed `100-input-phase:27` and inputs cannot rebuild. Forced
-to rebuild on main at `e692794`, each replays with 0 failing frames
-but misses its facts (`boss:bomb-torizo`, `samus.jump.bomb`, `room:92FD`). Any state layout
-change rejects those checkpoints, so the rows are `pending` until re-cut from a seed that
-reaches their behaviour. Their coverage is off until then.
+`boss-bomb-torizo` retains a checkpoint that its seed and inputs cannot rebuild
+into the defeat episode. The rebuilt replay agrees with the oracle but misses
+the required boss fact. Keep the row pending until genuine controller inputs
+reach that episode and its continuation checks pass.
 
 ## Oracle digest lock: scenarios kept on lockstep
 
