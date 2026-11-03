@@ -12,7 +12,6 @@ fail() { echo "$1"; ok=0; }
 for f in sm/src/verification/player_detached/mutations.py sm/src/verification/session_mutations.py; do
   "$PY" -c "import sys,runpy,os; sys.path.insert(0, os.path.dirname('$f')); sys.argv=['$f','--check-anchors']; runpy.run_path('$f', run_name='__main__')" >/dev/null 2>&1 || fail "ANCHORS FAIL $f"
 done
-"$PY" -I tools/lane/anchors_gate.py . >/dev/null || fail "MUTATION ANCHORS FAIL"
 "$PY" -I -c "import sys; sys.path.insert(0,'tools'); import pathlib, verify_dll; verify_dll.check_source_inventory(pathlib.Path('.'))" || fail "SOURCE INVENTORY FAIL"
 
 # Preserve existing compiler options, including Cargo's higher-precedence flags.

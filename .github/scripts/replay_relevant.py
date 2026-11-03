@@ -22,8 +22,6 @@ IRRELEVANT = [
     "tools/cycle_report.py",
     "tools/progress.sh",
     "tools/progress_accounting.py",
-    "tools/accountability_report.py",
-    "tools/treemap.py",
     ".github/scripts/replay_relevant.py",
     # Tests the Quality jobs already run: target-package integration tests (cargo
     # test) and the mutation lists, whose anchors Quality checks.
@@ -35,15 +33,15 @@ IRRELEVANT = [
 ]
 
 
-def irrelevant(path):
+def irrelevant(path: str) -> bool:
     return any(fnmatch.fnmatch(path, pattern) for pattern in IRRELEVANT)
 
 
-def git(*args):
+def git(*args: str) -> str:
     return subprocess.run(["git", *args], check=True, capture_output=True, text=True).stdout
 
 
-def changed(base, head):
+def changed(base: str, head: str) -> list[str] | None:
     """The files changed between two commits, or None when either cannot be fetched."""
     try:
         git("fetch", "--quiet", "--depth=1", "origin", base, head)
@@ -52,21 +50,22 @@ def changed(base, head):
         return None
 
 
-def passed_heads(branch):
+def passed_heads(branch: str) -> list[str]:
     """Head commits of recent successful pull request Verify runs on this branch."""
     path = (f"repos/{os.environ['GITHUB_REPOSITORY']}/actions/workflows/{os.environ['WORKFLOW']}/runs"
             f"?event=pull_request&status=success&branch={branch}&per_page=5")
     try:
-        runs = json.loads(subprocess.check_output(["gh", "api", path]))["workflow_runs"]
+        runs: list[dict[str, str]] = json.loads(subprocess.check_output(["gh", "api", path]))["workflow_runs"]
     except (subprocess.CalledProcessError, KeyError, ValueError):
         return []
     return [run["head_sha"] for run in runs]
 
 
-def main():
+def main() -> None:
     skip, reason = False, "not a pull request"
     if os.environ["GITHUB_EVENT_NAME"] == "pull_request":
-        event = json.load(open(os.environ["GITHUB_EVENT_PATH"], encoding="utf-8"))["pull_request"]
+        with open(os.environ["GITHUB_EVENT_PATH"], encoding="utf-8") as source:
+            event = json.load(source)["pull_request"]
         head = event["head"]["sha"]
         reason = "replay-relevant files changed"
         for base in [event["base"]["sha"], *passed_heads(event["head"]["ref"])]:

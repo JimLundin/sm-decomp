@@ -8,4 +8,3 @@ mypy_path = ["tools", ".github/scripts", "sm/src/verification/player_detached"]
 strict = true
 warn_unreachable = true
 # Verify's skip decision is owned by the workflow restructuring; type it there.
-exclude = ['^\.github/scripts/replay_relevant\.py$']
