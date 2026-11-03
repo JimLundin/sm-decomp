@@ -450,10 +450,17 @@ const FADE_STEPS: u16 = 0xc;
 const MOSAIC: usize = 0x57;
 const MAIN_SCREEN_LAYERS: usize = 0x69;
 const BG2_ENABLED: u8 = 2;
-/// Native RAM: the BG2 scroll HDMA table, Phantoon's palette 7 source
-/// colours, and the ends of the regions the fight clears.
-const BG2_SCROLL_TABLE: isize = 0x9100;
-const SOURCE_PALETTES: isize = 0xc000;
+/// The first colour of palette 7, Phantoon's.
+const PALETTE_7: usize = 112;
+/// Phantoon's BG2 scroll HDMA rows ($7E:9100): words of the bosses' shared
+/// RAM, the Session's fourth extended actor block (`actors.extended.blocks[3]`,
+/// $7E:9000..$7E:97DB).
+const SHARED_BLOCK: usize = 3;
+const BG2_SCROLL_ROWS: usize = 0x80;
+/// The shared block's words ($7E:9000..$7E:97DB), and the enemy projectiles'
+/// angles that follow them to $7E:97FF.
+const SHARED_WORDS: usize = (0x97dc - 0x9000) / 2;
+const SHARED_TAIL_ANGLES: usize = (0x9800 - 0x97dc) / 2;
 const WHITE: u16 = 0x7fff;
 /// The bank $84 PLMs spawned when the fight starts and when Phantoon dies.
 const FIGHT_START_PLM: u16 = 0xb781;
@@ -501,46 +508,22 @@ fn current<S: State + ?Sized>(game: &S) -> i32 {
     game.current_enemy() as i32
 }
 
-fn native_word<S: State + ?Sized>(game: &S, at: isize) -> u16 {
-    let at = usize::try_from(at).expect("native word outside RAM");
-    if (0xc000..0xc200).contains(&at) && at.is_multiple_of(2) {
-        return u16::from_ne_bytes(
-            game.session().presentation.visual().colors[(at - 0xc000) / 2].to_le_bytes(),
-        );
-    }
-    u16::from_ne_bytes([game.slot_byte(at), game.slot_byte(at + 1)])
+/// A Session word as the native-order RAM word the fight reads and writes:
+/// the Session holds each word little-endian.
+fn from_session(word: u16) -> u16 {
+    u16::from_ne_bytes(word.to_le_bytes())
+}
+fn to_session(value: u16) -> u16 {
+    u16::from_le_bytes(value.to_ne_bytes())
 }
 
-fn set_native_word<S: State + ?Sized>(game: &mut S, at: isize, value: u16) {
-    let at = usize::try_from(at).expect("native word outside RAM");
-    if (0xc000..0xc200).contains(&at) && at.is_multiple_of(2) {
-        game.session_mut().presentation.visual_mut().colors[(at - 0xc000) / 2] =
-            u16::from_le_bytes(value.to_ne_bytes());
-        return;
-    }
-    if (0xc200..0xc400).contains(&at) && at.is_multiple_of(2) {
-        game.session_mut().presentation.visual_mut().targets[(at - 0xc200) / 2] =
-            u16::from_le_bytes(value.to_ne_bytes());
-        return;
-    }
-    if (0x97dc..0x9800).contains(&at) && at.is_multiple_of(2) {
-        game.session_mut().enemy_projectiles.slots[(at - 0x97dc) / 2].angle =
-            u16::from_le_bytes(value.to_ne_bytes());
-        return;
-    }
-    if (0x9000..0x97dc).contains(&at) && at.is_multiple_of(2) {
-        game.session_mut().actors.extended.blocks[3][(at - 0x9000) / 2] =
-            u16::from_le_bytes(value.to_ne_bytes());
-        return;
-    }
-    let bytes = u16::to_ne_bytes(value);
-    game.set_slot_byte(at, bytes[0]);
-    game.set_slot_byte(at + 1, bytes[1]);
+/// Colour `index` of palette 7, which Phantoon fades and flashes
+/// ($7E:C0E0 + 2 * `index`).
+fn palette_colour<S: State + ?Sized>(game: &S, index: usize) -> u16 {
+    from_session(game.session().presentation.visual().colors[PALETTE_7 + index])
 }
-
-/// Palette RAM word `index` of the colours Phantoon fades from.
-fn palette_source(index: i32) -> isize {
-    SOURCE_PALETTES + (index as isize) * 2
+fn set_palette_colour<S: State + ?Sized>(game: &mut S, index: usize, value: u16) {
+    game.session_mut().presentation.visual_mut().colors[PALETTE_7 + index] = to_session(value);
 }
 
 /// Counts down the function timer of part `k`; true when it runs out.
@@ -756,12 +739,12 @@ fn start_dying<S: State + ?Sized>(game: &mut S, k: u16) {
     part!(game, Eye[EYE]; movement_reversed = 0, fade_complete = 0);
     look_at_samus(game);
     let scroll: u16 = bg2_scroll(game, 0);
-    for offset in (0i16..=510).rev().step_by(2) {
-        set_native_word(
-            game,
-            BG2_SCROLL_TABLE + (offset as u16 as i32 as isize),
-            scroll,
-        );
+    let rows = &mut game.session_mut().actors.extended.blocks[SHARED_BLOCK];
+    for row in rows[BG2_SCROLL_ROWS..BG2_SCROLL_ROWS + 256]
+        .iter_mut()
+        .rev()
+    {
+        *row = to_session(scroll);
     }
     game.session_mut().room.fx_layer_flags |= HIDE_BG2;
     part!(game, Mouth[MOUTH].shot_roll = 1);
@@ -797,7 +780,7 @@ fn fade_step_toward_target<S: State + ?Sized>(game: &mut S) -> u8 {
             {
                 let value = transition_color(
                     part!(game, Eye[EYE].fade_step),
-                    native_word(game, palette_source((i >> 1) + 112)),
+                    palette_colour(game, (i >> 1) as usize),
                     crate::boss_lists::fade_out_target_colour(game, (i >> 1) as isize),
                     game,
                 );
@@ -819,9 +802,9 @@ fn fade_step_toward_health<S: State + ?Sized>(game: &mut S) -> u8 {
     if (part!(game, Eye[EYE].fade_steps)).wrapping_add(1) >= part!(game, Eye[EYE].fade_step) {
         for base in (0u16..32).step_by(2) {
             let (index, colour) = phantoon_actions::health_palette_colour(base, game);
-            let from = native_word(game, palette_source((index as i32 >> 1) + 112));
+            let from = palette_colour(game, usize::from(index >> 1));
             let value = transition_color(part!(game, Eye[EYE].fade_step), from, colour, game);
-            set_native_word(game, palette_source((base as i32 >> 1) + 112), value);
+            set_palette_colour(game, usize::from(base >> 1), value);
         }
         part!(game, Eye[EYE].fade_step, |old| old.wrapping_add(1));
         0
@@ -913,11 +896,27 @@ pub fn initialize<H: Lease + ?Sized>(game: &mut H) {
     for index in (0..=2047).rev() {
         game.session_mut().actors.extended.blocks[4 + index / 1024][index % 1024] = BLANK_BG2_TILE;
     }
-    for index in (0..1024).rev() {
-        set_native_word(game, 0x9000 + 2 * index, 0);
+    // Clear $7E:9000..$7E:97FF, last word first: the enemy projectiles'
+    // angles ($7E:97DC..$7E:97FF), then the bosses' shared RAM.
+    let session = game.session_mut();
+    for slot in session.enemy_projectiles.slots[..SHARED_TAIL_ANGLES]
+        .iter_mut()
+        .rev()
+    {
+        slot.angle = 0;
     }
-    for index in (0..16).rev() {
-        set_native_word(game, 0xc2e0 + 2 * index, 0);
+    for word in session.actors.extended.blocks[SHARED_BLOCK][..SHARED_WORDS]
+        .iter_mut()
+        .rev()
+    {
+        *word = 0;
+    }
+    // Then palette 7's fade targets ($7E:C2E0..$7E:C2FF), last first.
+    for target in session.presentation.visual_mut().targets[PALETTE_7..PALETTE_7 + 16]
+        .iter_mut()
+        .rev()
+    {
+        *target = 0;
     }
     game.session_mut().actors.drawing.tilemap_size = BG2_TILEMAP_SIZE;
     game.disable_minimap();
@@ -1049,8 +1048,8 @@ pub fn hurt<S: State + ?Sized>(game: &mut S) {
             }
         } else {
             if part!(byte game, Tentacles[TENTACLES].hurt_flash[1]) == 0 {
-                for index in (112..128).rev() {
-                    set_native_word(game, palette_source(index), WHITE);
+                for index in (0..16).rev() {
+                    set_palette_colour(game, index, WHITE);
                 }
                 part!(game, Tentacles[TENTACLES].hurt_flash, |old| old | 0x100);
             }
@@ -1060,7 +1059,7 @@ pub fn hurt<S: State + ?Sized>(game: &mut S) {
     let mut base: u16 = 30;
     loop {
         let (index, colour) = phantoon_actions::health_palette_colour(base, game);
-        set_native_word(game, palette_source((index as i32 >> 1) + 112), colour);
+        set_palette_colour(game, usize::from(index >> 1), colour);
         base = index.wrapping_sub(2);
         if (index as i16).wrapping_sub(2) < 0 {
             break;
