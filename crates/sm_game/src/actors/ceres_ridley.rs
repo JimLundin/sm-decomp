@@ -336,8 +336,7 @@ pub fn fade_in_eye<L: Lease>(game: &mut L) {
         return;
     }
     *RidleyEdit::of(game, RIDLEY).function_timer() = 0;
-    let step = game
-        .native_image()
+    let step = crate::cartridge::NativeImage::native_image(game)
         .read(lorom_offset(EYE_FADE_STEPS) as usize + usize::from(index));
     if step == 0xff {
         *RidleyEdit::of(game, RIDLEY).fade_index() = 0;

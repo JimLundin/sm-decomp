@@ -13,7 +13,7 @@
 use crate::actors::api::angle_from_delta;
 use crate::actors::boss_interaction as interaction;
 use crate::actors::boss_lease::bg2_staging;
-use crate::actors::boss_lease::{BossLease, BossState};
+use crate::actors::boss_lease::{BossLease, BossState, steps};
 use crate::actors::deaths::Deaths as _;
 use crate::actors::host::BossEffects as _;
 use crate::actors::host::{Death, Shot, abs16, below};
@@ -54,6 +54,7 @@ pub trait Lease:
     + crate::presentation_workspace::PaletteAccess
     + crate::cartridge::NativeDiagnostics
     + crate::player_update::effects::Host
+    + crate::player_projectiles::host::Host
 {
 }
 impl<T> Lease for T where
@@ -65,6 +66,7 @@ impl<T> Lease for T where
         + crate::presentation_workspace::PaletteAccess
         + crate::cartridge::NativeDiagnostics
         + crate::player_update::effects::Host
+        + crate::player_projectiles::host::Host
 {
 }
 
@@ -1924,7 +1926,7 @@ pub fn explosion_init<L: Lease>(game: &mut L) {
             // Ridley explosion initialisation - index = Ch (tail tip).
             ExplosionEdit::of(game, k).actor().x.whole = bg2_staging::get(game, tail::x(6));
             ExplosionEdit::of(game, k).actor().y.whole = bg2_staging::get(game, tail::y(6));
-            let list = game.native_image().table_word(
+            let list = crate::cartridge::NativeImage::native_image(game).table_word(
                 lorom_offset(TAIL_TIP_EXPLOSION_LISTS) as usize,
                 tail_tip_sector(game),
             );
@@ -1983,7 +1985,7 @@ pub fn explosion_main<L: Lease>(game: &mut L) {
     move_with_velocity(game);
     *ExplosionEdit::of(game, k).lifetime() = Explosion::of(game, k).lifetime().wrapping_sub(1);
     if (Explosion::of(game, k).lifetime() & 0x8000) != 0 {
-        game.foreign(|game| game.normal_death(0));
+        steps::normal_death(game, 0);
     }
 }
 
@@ -3362,9 +3364,9 @@ pub fn tail_samus_collision<L: Lease>(game: &mut L) {
     };
     if samus_in_rect(rect, game) {
         let damage = Ridley::of(game, RIDLEY).tail_damage();
-        game.foreign(|game| {
-            let amount = game.suit_damage(damage);
-            game.damage_player(amount);
+        game.owned_step(|game| {
+            let amount = crate::actors::combat::suit_damage(game, damage);
+            crate::samus_periodic_damage::contact(game, amount);
         });
         battle!(game.SamusInvincibilityTimer = 96);
         battle!(game.SamusKnockbackTimer = 5);
