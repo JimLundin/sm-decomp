@@ -61,7 +61,7 @@ jobs:
       contents: read
       actions: read
     outputs:
-      skip: ${{ steps.passed.outputs.skip }}
+      skip: ${{ (steps.passed.outputs.skip == 'true' || steps.relevant.outputs.skip == 'true') && 'true' || 'false' }}
       matrix: ${{ steps.plan.outputs.matrix }}
       movie_file: ${{ steps.plan.outputs.movie_file }}
       movie_sha256: ${{ steps.plan.outputs.movie_sha256 }}
@@ -72,6 +72,12 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           WORKFLOW: verify.yml
         run: python3 .github/scripts/already_passed.py
+      # A pull request that changes only docs, skills or measurement tools replays nothing.
+      - id: relevant
+        env:
+          GH_TOKEN: ${{ github.token }}
+          WORKFLOW: verify.yml
+        run: python3 -B .github/scripts/replay_relevant.py
       - id: plan
         env:
           ORACLE: ${{ inputs.oracle || 'patched' }}
