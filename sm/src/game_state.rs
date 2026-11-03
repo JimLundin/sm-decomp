@@ -77,6 +77,22 @@ const WRITE_CONTEXT: u8 = 1 << 4;
 const WRITE_SEQUENCE: u8 = 1 << 5;
 const WRITE_FX: u8 = 1 << 6;
 
+/// The owned RAM groups, in the order `SpanCopy` counts them.
+const WRITE_CLASSES: [u8; 7] = [
+    WRITE_INVENTORY,
+    WRITE_MENU,
+    WRITE_SCROLL,
+    WRITE_FRAME_DISPLAY,
+    WRITE_CONTEXT,
+    WRITE_SEQUENCE,
+    WRITE_FX,
+];
+/// The owned RAM groups a write of `range` overlaps.
+fn written_classes(range: Range<usize>) -> u8 {
+    write_classes()[range]
+        .iter()
+        .fold(0, |all, &class| all | class)
+}
 fn write_classes() -> &'static [u8; WorkRam::LEN] {
     static CLASSES: std::sync::OnceLock<Box<[u8; WorkRam::LEN]>> = std::sync::OnceLock::new();
     CLASSES.get_or_init(|| {
@@ -321,36 +337,37 @@ impl WorkRam {
     /// Bump the epoch of every owned RAM group this write overlaps. Every RAM write
     /// passes here, so the overlap test is one table lookup per written byte.
     fn note_owned_write(&self, range: Range<usize>) {
-        let classes = write_classes()[range]
-            .iter()
-            .fold(0, |all, &class| all | class);
-        if classes == 0 {
-            return;
+        let classes = written_classes(range);
+        for (class, &bit) in WRITE_CLASSES.iter().enumerate() {
+            if classes & bit != 0 {
+                self.add_owned_writes(class, 1);
+            }
         }
-        if classes & WRITE_INVENTORY != 0 {
-            self.2.set(self.2.get().wrapping_add(1));
-        }
-        if classes & WRITE_MENU != 0 {
-            self.3.set(self.3.get().wrapping_add(1));
-        }
-        if classes & WRITE_SCROLL != 0 {
-            self.4.set(self.4.get().wrapping_add(1));
-        }
-        if classes & WRITE_FRAME_DISPLAY != 0 {
-            self.6.set(self.6.get().wrapping_add(1));
-        }
-        if classes & WRITE_CONTEXT != 0 {
-            self.6.set(self.6.get().wrapping_add(1));
-        }
-        if classes & WRITE_SEQUENCE != 0 {
-            self.5.set(self.5.get().wrapping_add(1));
-        }
-        if classes & WRITE_FX != 0 {
-            self.8.set(self.8.get().wrapping_add(1));
-        }
+    }
+    /// Count `writes` overlapping the group `WRITE_CLASSES[class]` in its epoch.
+    fn add_owned_writes(&self, class: usize, writes: u64) {
+        let epoch = match WRITE_CLASSES[class] {
+            WRITE_INVENTORY => &self.2,
+            WRITE_MENU => &self.3,
+            WRITE_SCROLL => &self.4,
+            WRITE_FRAME_DISPLAY | WRITE_CONTEXT => &self.6,
+            WRITE_SEQUENCE => &self.5,
+            _ => &self.8,
+        };
+        epoch.set(epoch.get().wrapping_add(writes));
     }
     fn note_write(&self) {
         self.1.set(self.1.get().wrapping_add(1));
+    }
+    /// Copy many spans as that many `copy_in` calls would, with the same bytes,
+    /// epochs and source publication ranks, taking the bookkeeping once.
+    pub fn copy_spans<R>(&self, copy: impl FnOnce(&mut SpanCopy<'_>) -> R) -> R {
+        copy(&mut SpanCopy {
+            ram: self,
+            publications: self.7.borrow_mut(),
+            writes: 0,
+            owned_writes: [0; WRITE_CLASSES.len()],
+        })
     }
     fn menu_epoch(&self) -> u64 {
         self.3.get()
@@ -378,6 +395,53 @@ impl WorkRam {
     }
     fn write_epoch(&self) -> u64 {
         self.1.get()
+    }
+}
+
+/// `WorkRam::copy_spans`'s writer. The epochs take its counts when it drops,
+/// so they are current again before anything can read them.
+pub struct SpanCopy<'r> {
+    ram: &'r WorkRam,
+    publications: std::cell::RefMut<'r, SourcePublications>,
+    writes: u64,
+    owned_writes: [u64; WRITE_CLASSES.len()],
+}
+impl SpanCopy<'_> {
+    /// `WorkRam::copy_in`.
+    pub fn copy_in(&mut self, at: usize, input: &[u8]) {
+        let end = at.checked_add(input.len()).expect("RAM range overflow");
+        let cells = &self.ram.0.bytes[at..end];
+        if !cells.is_empty() {
+            self.writes += 1;
+            let classes = written_classes(at..end);
+            for (count, &bit) in self.owned_writes.iter_mut().zip(&WRITE_CLASSES) {
+                if classes & bit != 0 {
+                    *count += 1;
+                }
+            }
+        }
+        for (cell, &byte) in cells.iter().zip(input) {
+            cell.set(byte);
+        }
+        let publications = &mut *self.publications;
+        if publications.restore_depth == 0 && publications.tracked.any(at..end) {
+            for at in at..end {
+                if publications.tracked.contains(at) {
+                    publications.publish(at);
+                }
+            }
+        }
+    }
+}
+impl Drop for SpanCopy<'_> {
+    fn drop(&mut self) {
+        let ram = self.ram;
+        ram.1.set(ram.1.get().wrapping_add(self.writes));
+        for (class, &writes) in self.owned_writes.iter().enumerate() {
+            if writes != 0 {
+                ram.add_owned_writes(class, writes);
+            }
+        }
     }
 }
 
@@ -1562,8 +1626,10 @@ impl Game {
         // An encoding failure leaves the completed compatibility prefix and
         // prevents the prior owner from resuming against those changed bytes.
         self.poison_persistent_session();
-        crate::game::session_encoding::encode(&session.gameplay, |at, bytes| {
-            self.ram.copy_in(at, bytes)
+        self.ram.copy_spans(|ram| {
+            crate::game::session_encoding::encode(&session.gameplay, |at, bytes| {
+                ram.copy_in(at, bytes)
+            })
         });
         crate::game::session_runtime::export_native_spawn(&session.gameplay, self);
         self.samus.install(binding);
