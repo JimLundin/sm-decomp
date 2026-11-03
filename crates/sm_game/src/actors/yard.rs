@@ -8,11 +8,11 @@ use crate::actors::api::{
 use crate::actors::combat;
 use crate::actors::host::{ActorLease, LeaseActors, Random as _};
 use crate::actors::slot_view::{SlotState, slot_view};
+use crate::controller_state::Word as Input;
 use crate::effects::SoundEffects as _;
 use crate::enemy_script::EnemyScript;
 use crate::player_projectiles::content::{self, table};
-use crate::player_projectiles::host::Host as _;
-use crate::ram::{word_arrays, words};
+use crate::player_projectiles::{access::shot, host::Host as _};
 use crate::session_access::SessionAccess as _;
 
 /// A lease on a game whose slots are the Session's typed storage.
@@ -22,13 +22,15 @@ impl<T: ActorLease + SlotState + ?Sized> Lease for T {}
 slot_view! {
     /// A yard's extended RAM, with its airborne velocities. Its crawling X and Y velocities,
     /// facing, hiding instruction list and consecutive turn count are its first five actor
-    /// words, and its movement function its pre-instruction word.
+    /// words, and its movement function its pre-instruction word. `bounced` ($7E:8000 in
+    /// slot 0, a word past the first extended block) flags the airborne yard hitting a wall.
     Yard, YardEdit {
         record: [],
         extended: [
             y_subvelocity = var_00, y_velocity = var_01, x_subvelocity = var_02,
             x_velocity = var_03, turn_disable_counter = var_04, turn_disabled = var_05,
             crawling_speed = var_06, direction = var_07, behaviour = var_08,
+            bounced = var_20,
         ],
     }
 }
@@ -50,10 +52,10 @@ const DIRECTIONS: u32 = 0xa3_cd42;
 const SIGNS: u32 = 0xa3_cd82;
 const OPPOSITES: u32 = 0xa3_cdc2;
 const MOVEMENT_FUNCTIONS: u32 = 0xa3_cdd2;
-/// $7E:8000: a byte past the extended RAM the airborne yard flags when it hits a wall.
-const BOUNCED: usize = 0x8000;
-/// $7E:0A1E: Samus's pose X direction.
-const SAMUS_POSE_X_DIRECTION: usize = 0xa1e;
+/// Samus's pose X direction ($7E:0A1E), the movement and facing word's low byte.
+fn pose_x_direction(runtime: &impl Lease) -> u8 {
+    runtime.session().player.movement_and_facing.to_le_bytes()[0]
+}
 
 fn slot(key: Key) -> u16 {
     key.byte_index()
@@ -162,7 +164,7 @@ fn face_samus(runtime: &mut impl Lease, key: Key) {
 /// Check if player is directing towards enemy ($A3:D421).
 fn pressing_towards(runtime: &impl Lease, key: Key) -> bool {
     let facing = runtime.resolve_actor(key, Native).variables[2] & 1;
-    if (runtime.word(words::JOYPAD1_LASTKEYS) & 0x300) >> 8 == 1 {
+    if (*Input::Joypad1Lastkeys.get(&runtime.session().control) & 0x300) >> 8 == 1 {
         facing == 0
     } else {
         facing != 0
@@ -311,7 +313,7 @@ fn handle_hiding(runtime: &mut impl Lease, key: Key) {
         } else {
             8
         };
-        if runtime.lease_byte(SAMUS_POSE_X_DIRECTION) == facing_it {
+        if pose_x_direction(runtime) == facing_it {
             if behaviour == HIDING {
                 return;
             }
@@ -333,7 +335,7 @@ fn handle_hiding(runtime: &mut impl Lease, key: Key) {
 fn set_solidity(runtime: &mut impl Lease, key: Key) {
     let mut solid = false;
     if runtime.resolve_actor(key, Native).pre_instruction != AIRBORNE {
-        let still = runtime.word(words::SAMUS_HAS_MOMENTUM_FLAG) == 0;
+        let still = runtime.session().player.contact.momentum == 0;
         let behaviour = Yard::of(runtime, slot(key)).behaviour();
         solid = if behaviour == SAMUS_ON_TOP {
             still && runtime.resolve_actor(key, Native).pre_instruction == NO_MOVEMENT
@@ -420,7 +422,7 @@ pub fn airborne<H: LeaseActors + ?Sized>(raw: u16, game: &mut H) {
         let amount = velocity_pair(runtime, yard, Axis::X) as i32;
         if api::move_horizontal(runtime, key, amount, SlopePolicy::Ignore) == Blocked {
             negate_pair(runtime, yard, Axis::X);
-            runtime.write_slice_native(BOUNCED + usize::from(raw), 1);
+            *YardEdit::of(runtime, yard).bounced() = 1;
             bounce_sound(runtime);
         } else {
             let delta = if Yard::of(runtime, yard).x_velocity() & 0x8000 != 0 {
@@ -447,7 +449,8 @@ pub fn airborne<H: LeaseActors + ?Sized>(raw: u16, game: &mut H) {
     }
     if !(0..3).contains(&(Yard::of(runtime, yard).y_velocity() as i16)) {
         negate_pair(runtime, yard, Axis::Y);
-        return runtime.write_slice_native(BOUNCED + usize::from(raw), 0);
+        *YardEdit::of(runtime, yard).bounced() = 0;
+        return;
     }
     {
         let mut part = YardEdit::of(runtime, yard);
@@ -486,9 +489,9 @@ pub fn airborne<H: LeaseActors + ?Sized>(raw: u16, game: &mut H) {
 fn kick(runtime: &mut impl Lease, key: Key) {
     go_airborne(runtime, key, KICKED, 0xa3_d50f);
     let yard = slot(key);
-    let fraction = runtime.word(words::ABSOLUTE_MOVED_LAST_FRAME_X_FRACT);
+    let fraction = runtime.session().player.camera_distance[0].fraction;
     *YardEdit::of(runtime, yard).x_subvelocity() = fraction;
-    let distance = runtime.word(words::ABSOLUTE_MOVED_LAST_FRAME_X);
+    let distance = runtime.session().player.camera_distance[0].whole;
     *YardEdit::of(runtime, yard).x_velocity() = distance;
     let index = (distance.min(15).wrapping_mul(4) >> 1) as isize;
     let sub = table(runtime, 0xa3_d517, index);
@@ -498,7 +501,7 @@ fn kick(runtime: &mut impl Lease, key: Key) {
         *part.y_subvelocity() = sub;
         *part.y_velocity() = whole;
     }
-    if runtime.lease_byte(SAMUS_POSE_X_DIRECTION) & 4 != 0 {
+    if pose_x_direction(runtime) & 4 != 0 {
         negate_pair(runtime, yard, Axis::X);
     }
 }
@@ -512,7 +515,7 @@ pub fn touch(runtime: &mut impl Lease) {
     let ridden = behaviour == SAMUS_ON_TOP
         && function != NO_MOVEMENT
         && pressing_towards(runtime, combat::current(runtime));
-    if !ridden && (function == AIRBORNE || runtime.word(words::SAMUS_HAS_MOMENTUM_FLAG) != 0) {
+    if !ridden && (function == AIRBORNE || runtime.session().player.contact.momentum != 0) {
         let current = combat::current(runtime);
         kick(runtime, current);
         if runtime.resolve_actor(key, Native).pre_instruction == AIRBORNE {
@@ -532,8 +535,12 @@ pub fn touch(runtime: &mut impl Lease) {
 /// Enemy shot - yard ($A3:D469): power bombs and bombs hurt it; anything else shoots it
 /// into the air ($A3:D557).
 pub fn shot(runtime: &mut impl Lease) {
-    let index = usize::from(runtime.word(words::COLLISION_DETECTION_INDEX));
-    let kind = runtime.word(word_arrays::PROJECTILE_TYPE + 2 * index) & 0xff00;
+    let raw = runtime
+        .session()
+        .room
+        .collision_detection_index
+        .wrapping_mul(2);
+    let kind = shot!(runtime, raw, kind) & 0xff00;
     if kind == 0x300 || kind == 0x500 {
         return combat::shot_reaction(runtime, ShotHandling::Finalize);
     }
@@ -542,7 +549,7 @@ pub fn shot(runtime: &mut impl Lease) {
     if !matches!(behaviour, DROPPED | KICKED) {
         let current = combat::current(runtime);
         go_airborne(runtime, current, SHOT, 0xa3_d5a4);
-        let away = if runtime.lease_byte(SAMUS_POSE_X_DIRECTION) == 4 {
+        let away = if pose_x_direction(runtime) == 4 {
             0xffff
         } else {
             1
