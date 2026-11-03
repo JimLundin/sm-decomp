@@ -2,7 +2,6 @@
 use crate::enemy_script::{EnemyScript as Script, bank_base};
 use crate::hdma::{HdmaObjects, OBJECTS};
 use crate::hdma_dispatch::DispatchHost;
-use crate::hdma_objects::Bridged;
 use crate::hdma_objects::HdmaEffect;
 use crate::hdma_objects::HdmaTable;
 use crate::menus::host::Host;
@@ -36,11 +35,11 @@ pub trait LeaseHdma: crate::runtime_access::RuntimeAccess {
     type Lease<'a>: HdmaLease
     where
         Self: 'a;
-    /// One owned-Session view; open it only while `runtime_admissible`.
+    /// One owned-Session view for the frame's objects.
     fn hdma_lease(&mut self) -> Self::Lease<'_>;
 }
 
-/// What one interpreter frame needs from either the lease or the RAM copy.
+/// What one interpreter frame needs from the lease.
 pub(crate) trait Interpreter: HdmaTable {
     type Game: DispatchHost + ?Sized;
     /// Work RAM outside the object table.
@@ -48,8 +47,7 @@ pub(crate) trait Interpreter: HdmaTable {
     fn set_byte(&mut self, at: usize, value: u8);
     fn image(&self) -> RomImage;
     fn foreign<T>(&mut self, action: impl FnOnce(&mut Self::Game) -> T) -> T;
-    /// The original's unreachable-state failure: the lease's own, or the
-    /// game's on the RAM copy.
+    /// The original's unreachable-state failure, reported by the lease.
     fn unreachable(&mut self);
     fn word(&self, at: usize) -> u16 {
         u16::from_le_bytes([self.byte(at), self.byte(at + 1)])
@@ -139,13 +137,12 @@ pub(crate) fn table_words(objects: &mut HdmaObjects, mut each: impl FnMut(usize,
 
 /// Run every active object's program once, as the enabled branch of
 /// `update_hdma`.
+///
+/// The objects always run on the lease. A host that cannot open one cannot
+/// publish this frame's Session either, so no completed frame ran the RAM
+/// copy the interpreter once fell back to.
 pub fn run_objects<H: DispatchHost + LeaseHdma + ?Sized>(handler_carry: bool, game: &mut H) {
-    if game.runtime_admissible() {
-        run(&mut Leased(game.hdma_lease()), handler_carry);
-    } else {
-        let mut bridge = Bridged::load(game);
-        run(&mut bridge, handler_carry);
-    }
+    run(&mut Leased(game.hdma_lease()), handler_carry);
 }
 
 fn run<I: Interpreter>(it: &mut I, handler_carry: bool) {

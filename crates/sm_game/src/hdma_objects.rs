@@ -7,7 +7,6 @@ use crate::display::sequence::Registers;
 use crate::display_refresh::DisplayOwner;
 use crate::imported::word as table_word;
 use crate::projection::Field;
-use crate::ram::RawRam as _;
 use crate::scene::hdma_sources::LiveOwner;
 use crate::scene::state::WordOrder;
 use crate::session::HookSlot;
@@ -440,50 +439,6 @@ pub fn read_table<H: HdmaTable + ?Sized>(game: &H) -> crate::hdma::HdmaObjects {
         *word = game.hdma_word(key);
     });
     objects
-}
-
-/// Nonleased interpreter access; callbacks and words share the same host owner.
-pub(crate) struct Bridged<'a, H: ?Sized> {
-    game: &'a mut H,
-}
-
-impl<'a, H: ?Sized> Bridged<'a, H> {
-    pub(crate) fn load(game: &'a mut H) -> Self {
-        Self { game }
-    }
-}
-
-impl<H: HdmaTable + ?Sized> HdmaTable for Bridged<'_, H> {
-    fn hdma_word(&self, word: crate::hdma::Word) -> u16 {
-        self.game.hdma_word(word)
-    }
-    fn store_hdma_word(&mut self, word: crate::hdma::Word, value: u16, order: WordOrder) {
-        self.game.store_hdma_word(word, value, order);
-    }
-    fn store_hdma_byte(&mut self, word: crate::hdma::Word, high: bool, value: u8) {
-        self.game.store_hdma_byte(word, high, value);
-    }
-}
-
-impl<H: crate::hdma_dispatch::DispatchHost + ?Sized> crate::hdma_program::Interpreter
-    for Bridged<'_, H>
-{
-    type Game = H;
-    fn byte(&self, at: usize) -> u8 {
-        self.game.ram().read_byte(at)
-    }
-    fn set_byte(&mut self, at: usize, value: u8) {
-        self.game.ram().write_byte(at, value);
-    }
-    fn image(&self) -> sm_data::cartridge::RomImage {
-        self.game.native_image()
-    }
-    fn foreign<T>(&mut self, action: impl FnOnce(&mut H) -> T) -> T {
-        action(self.game)
-    }
-    fn unreachable(&mut self) {
-        self.game.rtl_unreachable();
-    }
 }
 
 pub(crate) fn write_channel_register<H: crate::menus::host::Host + ?Sized>(
