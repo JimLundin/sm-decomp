@@ -260,29 +260,59 @@ impl<C: crate::session_cohort::Cohort> Layout for C {
     }
 }
 
-/// A value `session_encoding` decodes from the projection.
+/// A value `session_encoding` decodes from the projection, and the Session
+/// fields it copies.
 pub trait Decode {
     fn decode(bytes: &impl Fn(usize) -> u8) -> Self;
+    /// The value as `session` holds it; equal to [`Self::decode`] of its
+    /// projection.
+    fn from_session(session: &Session) -> Self;
 }
 
 impl Decode for crate::camera::Camera {
     fn decode(bytes: &impl Fn(usize) -> u8) -> Self {
         crate::session_encoding::camera(bytes)
     }
+    fn from_session(session: &Session) -> Self {
+        session.room.camera
+    }
 }
 impl Decode for crate::flow::Flow {
     fn decode(bytes: &impl Fn(usize) -> u8) -> Self {
         crate::session_encoding::flow(bytes)
+    }
+    fn from_session(session: &Session) -> Self {
+        session.flow
     }
 }
 impl Decode for crate::room_view::RoomGeometry {
     fn decode(bytes: &impl Fn(usize) -> u8) -> Self {
         crate::session_encoding::room_geometry(bytes)
     }
+    fn from_session(session: &Session) -> Self {
+        let room = &session.room;
+        Self {
+            area: room.area,
+            width: room.width,
+            height: room.height,
+            scroll_width: room.scroll_width,
+            scroll_height: room.scroll_height,
+        }
+    }
 }
 impl Decode for crate::room_view::RoomEffects {
     fn decode(bytes: &impl Fn(usize) -> u8) -> Self {
         crate::session_encoding::room_effects(bytes)
+    }
+    fn from_session(session: &Session) -> Self {
+        let entry = &session.room.entry;
+        Self {
+            earthquake_kind: session.feedback.earthquake_kind,
+            earthquake_timer: session.feedback.earthquake_timer,
+            map_x: entry.map_x,
+            map_y: entry.map_y,
+            elevator_properties: entry.elevator_properties,
+        }
     }
 }
 
@@ -682,6 +712,30 @@ mod tests {
             Field::RoomHeader,
         ]);
         fields
+    }
+
+    /// Each decoded value copied from the Session is its projection's decode.
+    fn check_decode<T: Decode + PartialEq + core::fmt::Debug>() {
+        let mut session = session();
+        let addresses = core::cell::RefCell::new(Vec::new());
+        T::decode(&|at| {
+            addresses.borrow_mut().push(at);
+            0
+        });
+        for (index, at) in addresses.into_inner().into_iter().enumerate() {
+            let value = 0x31u8.wrapping_add((index as u8).wrapping_mul(0x1d));
+            assert!(write_projected_byte(&mut session, at, value), "{at:#x}");
+        }
+        let decoded = T::decode(&|at| projected_byte(&session, at).expect("decoded byte"));
+        assert_eq!(T::from_session(&session), decoded);
+    }
+
+    #[test]
+    fn decoded_views_are_their_session_fields() {
+        check_decode::<crate::camera::Camera>();
+        check_decode::<crate::flow::Flow>();
+        check_decode::<crate::room_view::RoomGeometry>();
+        check_decode::<crate::room_view::RoomEffects>();
     }
 
     /// A Session field read directly is the word the projection decodes at

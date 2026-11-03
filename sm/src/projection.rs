@@ -135,6 +135,14 @@ impl Views for Runtime<'_> {
         set_byte(self, field.address(), value);
     }
     fn decode_view<T: Decode>(&self) -> T {
+        if self.persistent_is_current() {
+            #[cfg(sm_verify_dll)]
+            T::decode(&|at| {
+                sm_game::session_cohort::check_not_held(at);
+                0
+            });
+            return T::from_session(self.session());
+        }
         T::decode(&|at| byte(self, at))
     }
     fn load_words(&self, words: &mut impl Layout) {
