@@ -21,13 +21,13 @@ NATIVE_INPUTS = ("crates/sm_app/src/main.rs", "sm/src/native_desktop.c", "sm/src
                  "tools/install_native_config.py")
 
 
-def desktop_source(source):
+def desktop_source(source: str) -> str:
     names = """ChangeWindowScale HitTestCallback DrawPpuFrameWithPerf
         SdlRenderer_Init SdlRenderer_Destroy SdlRenderer_BeginDraw SdlRenderer_EndDraw
         main RenderDigit RenderNumber HandleCommand HandleCommand_Locked HandleInput
         OpenOneGamepad RemapSdlButton HandleGamepadInput HandleVolumeAdjustment
         ApproximateAtan2 HandleGamepadAxisInput SwitchDirectory""".split()
-    routines = {}
+    routines: dict[str, str] = {}
     for name in names:
         match = re.search(r"^(?:static )?\w+(?: SDLCALL)? " + name +
                           r"\([^\n]*\) \{\n.*?^\}", source, re.M | re.S)
@@ -35,7 +35,7 @@ def desktop_source(source):
             raise ValueError(f"Missing pinned desktop function: {name}")
         routines[name] = match[0]
 
-    def replace(name, old, new):
+    def replace(name: str, old: str, new: str) -> None:
         if routines[name].count(old) != 1:
             raise ValueError(f"Desktop patch no longer matches {name}: {old}")
         routines[name] = routines[name].replace(old, new)
@@ -199,7 +199,7 @@ def desktop_source(source):
     return result.replace("fprintf(stderr,", "fprintf(sm_host_stderr(),")
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--zig", required=True, type=Path)
     parser.add_argument("--target", required=True, choices=("x86_64-windows-gnu",),
