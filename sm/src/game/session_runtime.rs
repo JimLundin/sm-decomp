@@ -557,13 +557,11 @@ impl<'g> Runtime<'g> {
                 && self.game.actor_identity_is_with_session()
                 && self.game.preflight_samus_runtime().is_ok()
             {
-                let kept = (self.game.frame_session.active
-                    && !self.game.foreign_presentation_active())
-                .then(|| state.clone());
-                export_session_preflighted(state, self.game);
-                if let Some(mut kept) = kept {
+                if self.game.frame_session.active && !self.game.foreign_presentation_active() {
+                    let mut kept = state.clone();
                     kept.actor_identity =
                         crate::game::actors::identity::ActorIdentityState::empty();
+                    let kept = export_frame_session(state, kept, self.game);
                     self.game.frame_session.kept = Some(KeptSession {
                         state: kept,
                         inputs: self.inputs.clone(),
@@ -571,6 +569,8 @@ impl<'g> Runtime<'g> {
                         crossed: false,
                     });
                     self.game.ram().open_write_log();
+                } else {
+                    export_session_preflighted(state, self.game);
                 }
             } else if self.game.actor_identity_is_with_session() {
                 // A rejected foreign call retains this Runtime's identity owner;
@@ -1097,9 +1097,20 @@ pub(crate) fn run_mechanisms(
 pub(crate) struct FrameSession {
     active: bool,
     kept: Option<KeptSession>,
+    /// The span layouts of the frame Session exports, by shape.
+    layouts: Vec<(ExportShape, std::rc::Rc<crate::game_state::ExportLayout>)>,
+}
+impl FrameSession {
+    fn layout(&self, shape: ExportShape) -> Option<std::rc::Rc<crate::game_state::ExportLayout>> {
+        self.layouts
+            .iter()
+            .find(|(known, _)| *known == shape)
+            .map(|(_, layout)| std::rc::Rc::clone(layout))
+    }
 }
 struct KeptSession {
-    state: Session,
+    /// `None` while it is the Session of RAM's deferred export.
+    state: Option<Session>,
     inputs: ExternalInputs,
     /// The RAM write epoch after the export.
     epoch: u64,
@@ -1138,12 +1149,15 @@ fn reuse_frame_session(game: &mut Game) -> Option<(Session, ExternalInputs)> {
         return None;
     }
     let KeptSession {
-        mut state,
+        state,
         mut inputs,
         epoch,
         crossed,
     } = game.frame_session.kept.take()?;
     let written = game.ram().close_write_log();
+    let mut state = state
+        .or_else(|| game.ram().take_deferred_session())
+        .expect("kept Session");
     if !same_world(&state, game) {
         return None;
     }
@@ -1165,8 +1179,11 @@ fn reuse_frame_session(game: &mut Game) -> Option<(Session, ExternalInputs)> {
     #[cfg(sm_verify_dll)]
     player_normal_transfers::record(game, 1);
     import_native_spawn(&mut state, game);
+    // A Session whose export never reached RAM is the very Session the last lease released.
     #[cfg(sm_verify_dll)]
-    assert_projects_ram(&state, game);
+    if !game.ram().export_deferred() {
+        assert_projects_ram(&state, game);
+    }
     take_game_owners(&mut state, game);
     Some((state, inputs))
 }
@@ -1384,6 +1401,63 @@ fn export_session_preflighted(state: Session, game: &mut Game) {
         game,
         carry_presentation: false,
     });
+}
+/// What decides a Session export's span layout; everything else it writes has a fixed place.
+/// Only Sessions with a Legacy presentation and control have a shape: the owned ones lay out
+/// their own spans.
+#[derive(Clone, Copy, PartialEq, Eq)]
+struct ExportShape {
+    sources: bool,
+    workspace: usize,
+}
+impl ExportShape {
+    fn of(state: &Session) -> Option<Self> {
+        (!state.presentation.is_owned()
+            && matches!(state.control, sm_game::session_owners::Control::Legacy(_)))
+        .then(|| Self {
+            sources: state.fx_sources.is_some(),
+            workspace: state.presentation.workspace().shared_bytes().len(),
+        })
+    }
+}
+/// Export a frame lease's Session `state`, of which the frame keeps the copy `exported`.
+/// Once an export of its shape has recorded the layout, and while the write log is closed,
+/// RAM takes the export's epochs and source publications now and its bytes when RAM they
+/// cover is next read or written; the kept Session is then the deferred one (`None`).
+fn export_frame_session(state: Session, exported: Session, game: &mut Game) -> Option<Session> {
+    let shape = ExportShape::of(&exported);
+    let known = shape.and_then(|shape| game.frame_session.layout(shape));
+    let guard = ExportIdentity {
+        state: Some(state),
+        game,
+        carry_presentation: false,
+    };
+    #[cfg(sm_verify_dll)]
+    player_normal_transfers::record(guard.game, 2);
+    let state = guard.state.as_ref().expect("export owns Session");
+    if let Some(layout) = known
+        .as_ref()
+        .filter(|_| !guard.game.ram().write_log_open())
+    {
+        guard.game.ram().defer_export(exported, layout);
+        export_native_spawn(state, guard.game);
+        // Drop moves identity exactly once, after the byte/native publication.
+        return None;
+    }
+    let layout = guard
+        .game
+        .ram()
+        .copy_spans_recorded(|ram| encoding::encode_spans(state, ram));
+    export_native_spawn(state, guard.game);
+    guard.game.ram().forget_written_export();
+    if let (Some(shape), None) = (shape, known) {
+        guard
+            .game
+            .frame_session
+            .layouts
+            .push((shape, std::rc::Rc::new(layout)));
+    }
+    Some(exported)
 }
 fn export_session_for_foreign(state: Session, game: &mut Game) {
     encode_session(ExportIdentity {
