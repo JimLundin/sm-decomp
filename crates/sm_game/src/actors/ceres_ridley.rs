@@ -10,7 +10,6 @@
 #![forbid(unsafe_code)]
 use crate::actors::boss_interaction as interaction;
 use crate::actors::boss_lease::{BossState, bg2_staging};
-use crate::actors::host::BossEffects as _;
 use crate::actors::host::{abs16, below};
 use crate::actors::ridley::{
     self, FACING_RIGHT, NORFAIR, RIDLEY, Rect, Ridley, RidleyEdit, function, instruction_list, tail,

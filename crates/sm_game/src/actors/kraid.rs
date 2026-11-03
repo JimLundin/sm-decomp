@@ -12,7 +12,6 @@
 use crate::actors::boss_interaction as interaction;
 use crate::actors::boss_lease::bg2_staging;
 use crate::actors::boss_lease::{BossLease, BossState, steps};
-use crate::actors::host::BossEffects as _;
 use crate::actors::host::{Death, Shot, Slopes, below};
 use crate::actors::layouts::EnemyLayout104;
 use crate::actors::slot_view::{SlotState, extended_var, slot_view};
