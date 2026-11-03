@@ -241,7 +241,7 @@ fn cinematic_element_mut(
 }
 
 /// The actor block and word of fade plane word `index`: the fade planes are
-/// actor blocks 4 and 5 ([`crate::cinematic::FadePlanes`]).
+/// actor blocks 4 and 5 ([`crate::cinematic::fade_planes`]).
 fn fade_plane_word(index: usize) -> Option<(usize, usize)> {
     (index < 2048).then_some((4 + index / 1024, index % 1024))
 }
@@ -827,9 +827,6 @@ mod tests {
         check_layout::<crate::menu_state::MenuScreens>();
         check_layout::<crate::session_words::SessionWords>();
         check_layout::<crate::cinematic_state::Cinematic>();
-        check_layout::<crate::cinematic::FadePlanes>();
-        check_layout::<crate::cinematic::PaletteBuffer>();
-        check_layout::<crate::cinematic::ShotWords>();
         check_layout::<crate::menu_window_state::WindowState>();
         check_layout::<(
             crate::menu_state::OptionsMenu,

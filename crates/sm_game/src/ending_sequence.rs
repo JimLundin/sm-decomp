@@ -274,7 +274,7 @@ pub fn scene_2_setup<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     );
     // The palette copy and each initializer leave A for the next spawn.
     let palette_tail =
-        crate::session_cohort::load::<crate::cinematic::PaletteBuffer, _>(game).0[255];
+        crate::session_part::get(game, |session| &session.presentation.visual().colors[255]);
     sprites(cine, game, object::EXPLODING_ZEBES, palette_tail);
     sprites(cine, game, object::LAVA, 0x0e00);
     sprites(cine, game, object::PURPLE_GLOW, 0x0a00);

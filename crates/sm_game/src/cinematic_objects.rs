@@ -193,11 +193,12 @@ pub fn advance_intro_mother_brain<H: crate::menus::host::Host + ?Sized>(
         }
     }
     if stage == 0 {
-        let shots: ShotWords = crate::session_cohort::load(game);
-        let Some(projectile) = (0..5).rfind(|&i| shots.kind[i] & 0xfff == 256) else {
+        // Samus's projectiles' kinds and X positions ($7E:0C18, $7E:0B64).
+        let shots = crate::session_part::get(game, |session| &session.projectiles.shots);
+        let Some(projectile) = (0..5).rfind(|&i| shots[i].kind & 0xfff == 256) else {
             return;
         };
-        if (shots.x[projectile] as i32 - 84) & 0x8000 == 0 {
+        if (shots[projectile].x as i32 - 84) & 0x8000 == 0 {
             return;
         }
         game.retire_projectile(2 * projectile as u16);

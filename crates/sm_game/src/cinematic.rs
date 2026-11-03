@@ -2,6 +2,8 @@
 use crate::cinematic_state::Cinematic;
 use crate::display::preparation::Field;
 use crate::presentation_workspace::{Point, Role};
+use crate::session::Session;
+use crate::session_part;
 use crate::word_transfers::WordEndpoint;
 
 /// A bank-`BANK` cinematic record at `cursor`, after the low-half diagnostic.
@@ -20,108 +22,17 @@ pub fn advance_cinematic_fade<H: crate::menus::host::Host + ?Sized>(
 }
 
 /// The cinematic palette fades' working planes: the BG2 tilemap buffer
-/// $7E:2000..$7E:2FFF (`actors.extended.blocks[4..6]`), by word. Word
-/// `index` of plane `n` (0..8) is word `256 * n + index`.
-#[derive(Clone, Debug, PartialEq)]
-pub struct FadePlanes(pub Box<[u16; 2048]>);
-
-impl Default for FadePlanes {
-    fn default() -> Self {
-        Self(Box::new([0; 2048]))
-    }
-}
-
-impl crate::session_cohort::Cohort for FadePlanes {
-    fn words(&mut self, mut visit: impl FnMut(usize, &mut u16)) {
-        for (index, word) in self.0.iter_mut().enumerate() {
-            visit(0x2000 + 2 * index, word);
-        }
-    }
-    fn session_words(
-        session: &mut crate::session::Session,
-        mut visit: impl FnMut(usize, &mut u16),
-    ) {
-        let blocks = &mut session.actors.extended.blocks[4..6];
-        for (index, word) in blocks.iter_mut().flatten().enumerate() {
-            visit(0x2000 + 2 * index, word);
-        }
-    }
-    fn session_copy(session: &crate::session::Session) -> Self {
-        let mut planes = Self::default();
-        let blocks = &session.actors.extended.blocks[4..6];
-        for (plane, word) in planes.0.iter_mut().zip(blocks.iter().flatten()) {
-            *plane = *word;
-        }
-        planes
-    }
-}
-
-/// Samus's projectiles' X positions and kinds ($7E:0B64, $7E:0C18), which
-/// the intro's Mother Brain watches.
-#[derive(Clone, Default, Debug, PartialEq)]
-pub struct ShotWords {
-    pub x: [u16; 10],
-    pub kind: [u16; 10],
-}
-
-impl crate::session_cohort::Cohort for ShotWords {
-    fn words(&mut self, mut visit: impl FnMut(usize, &mut u16)) {
-        for (index, x) in self.x.iter_mut().enumerate() {
-            visit(0xb64 + 2 * index, x);
-        }
-        for (index, kind) in self.kind.iter_mut().enumerate() {
-            visit(0xc18 + 2 * index, kind);
-        }
-    }
-    fn session_words(
-        session: &mut crate::session::Session,
-        mut visit: impl FnMut(usize, &mut u16),
-    ) {
-        let shots = &mut session.projectiles.shots;
-        for (index, shot) in shots.iter_mut().enumerate() {
-            visit(0xb64 + 2 * index, &mut shot.x);
-        }
-        for (index, shot) in shots.iter_mut().enumerate() {
-            visit(0xc18 + 2 * index, &mut shot.kind);
-        }
-    }
-    fn session_copy(session: &crate::session::Session) -> Self {
-        let shots = &session.projectiles.shots;
-        Self {
-            x: shots.map(|shot| shot.x),
-            kind: shots.map(|shot| shot.kind),
-        }
-    }
+/// $7E:2000..$7E:2FFF, actor extended blocks 4 and 5. Word `index` of plane
+/// `n` (0..8) is word `256 * n + index` of the two blocks.
+pub fn fade_planes(session: &mut Session) -> &mut [[u16; 1024]; 2] {
+    (&mut session.actors.extended.blocks[4..6])
+        .try_into()
+        .expect("the fade planes are two actor blocks")
 }
 
 /// The palette buffer $7E:C000..$7E:C1FF, the presentation's colours.
-#[derive(Clone, Debug, PartialEq)]
-pub struct PaletteBuffer(pub [u16; 256]);
-
-impl Default for PaletteBuffer {
-    fn default() -> Self {
-        Self([0; 256])
-    }
-}
-
-impl crate::session_cohort::Cohort for PaletteBuffer {
-    fn words(&mut self, mut visit: impl FnMut(usize, &mut u16)) {
-        for (index, word) in self.0.iter_mut().enumerate() {
-            visit(0xc000 + 2 * index, word);
-        }
-    }
-    fn session_words(
-        session: &mut crate::session::Session,
-        mut visit: impl FnMut(usize, &mut u16),
-    ) {
-        let colors = &mut session.presentation.visual_mut().colors;
-        for (index, word) in colors.iter_mut().enumerate() {
-            visit(0xc000 + 2 * index, word);
-        }
-    }
-    fn session_copy(session: &crate::session::Session) -> Self {
-        Self(session.presentation.visual().colors)
-    }
+pub fn palette_buffer(session: &mut Session) -> &mut [u16; 256] {
+    &mut session.presentation.visual_mut().colors
 }
 
 /// Store `value` to palette buffer colours `indices`.
@@ -130,9 +41,9 @@ pub fn set_cinematic_colors<H: crate::menus::host::Host + ?Sized>(
     value: u16,
     game: &mut H,
 ) {
-    crate::session_cohort::with(game, |_, palette: &mut PaletteBuffer| {
+    session_part::update(game, palette_buffer, |palette| {
         for &index in indices {
-            palette.0[index] = value;
+            palette[index] = value;
         }
     });
 }
@@ -142,30 +53,37 @@ pub fn clear_cinematic_colors<H: crate::menus::host::Host + ?Sized>(
     count: u16,
     game: &mut H,
 ) {
-    crate::session_cohort::with(game, |_, planes: &mut FadePlanes| {
+    session_part::update(game, fade_planes, |planes| {
+        let planes = planes.as_flattened_mut();
         for index in cinematic_color_indices(offset, count) {
             for plane in [256, 512, 768, 1024] {
-                planes.0[index + plane] = 0;
+                planes[index + plane] = 0;
             }
         }
     });
 }
 
 pub fn compose_cinematic_palette<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    crate::session_cohort::with(
-        game,
-        |_, (planes, palette): &mut (FadePlanes, PaletteBuffer)| {
-            for index in 0..256 {
-                // Red is the high byte of plane 2's word.
-                let red = u16::from(planes.0[index + 512].to_le_bytes()[1] & 31);
-                let green = (planes.0[index + 768] >> 3) & 0x3e0;
-                let blue = (planes.0[index + 1024] << 2) & 0x7c00;
-                let color = red | green | blue;
-                planes.0[index] = color;
-                palette.0[index] = color;
-            }
-        },
-    );
+    use crate::session_access::SessionAccess as _;
+    let mut runtime = game.runtime();
+    let session = runtime.session_mut();
+    let mut changed = false;
+    for index in 0..256 {
+        let planes = fade_planes(session).as_flattened_mut();
+        // Red is the high byte of plane 2's word.
+        let red = u16::from(planes[index + 512].to_le_bytes()[1] & 31);
+        let green = (planes[index + 768] >> 3) & 0x3e0;
+        let blue = (planes[index + 1024] << 2) & 0x7c00;
+        let color = red | green | blue;
+        changed |= planes[index] != color;
+        planes[index] = color;
+        let palette = palette_buffer(session);
+        changed |= palette[index] != color;
+        palette[index] = color;
+    }
+    if changed {
+        runtime.refresh_inputs();
+    }
 }
 
 pub fn fade_cinematic_colors<H: crate::menus::host::Host + ?Sized>(
@@ -174,12 +92,13 @@ pub fn fade_cinematic_colors<H: crate::menus::host::Host + ?Sized>(
     increasing: bool,
     game: &mut H,
 ) {
-    crate::session_cohort::with(game, |_, planes: &mut FadePlanes| {
+    session_part::update(game, fade_planes, |planes| {
+        let planes = planes.as_flattened_mut();
         for index in cinematic_color_indices(offset, count) {
             for plane in [512, 768, 1024] {
                 let current = index + plane;
-                let step = planes.0[current + 768];
-                let word = &mut planes.0[current];
+                let step = planes[current + 768];
+                let word = &mut planes[current];
                 *word = if increasing {
                     step.wrapping_add(*word) & 0x1fff
                 } else {
@@ -191,14 +110,15 @@ pub fn fade_cinematic_colors<H: crate::menus::host::Host + ?Sized>(
 }
 
 pub fn prepare_cinematic_palette_fade<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    crate::session_cohort::with(game, |_, planes: &mut FadePlanes| {
+    session_part::update(game, fade_planes, |planes| {
+        let planes = planes.as_flattened_mut();
         for index in 0..256 {
-            let color = planes.0[index + 256];
+            let color = planes[index + 256];
             for channel in 0..3 {
                 let component = (color >> (5 * channel)) & 31;
                 let current = index + 512 + 256 * channel;
-                planes.0[current] = component << 8;
-                planes.0[current + 768] = component << 3;
+                planes[current] = component << 8;
+                planes[current + 768] = component << 3;
             }
         }
     });

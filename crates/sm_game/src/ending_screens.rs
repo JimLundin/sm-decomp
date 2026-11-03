@@ -316,7 +316,7 @@ pub fn advance_postcredits_samus_reveal<H: crate::menus::host::Host + ?Sized>(
     // decomposition its last blue delta ($7E:2FFE); each later one the
     // palette index the previous initializer loaded.
     let mut parameter = if initial && under_ten {
-        crate::session_cohort::load::<crate::cinematic::FadePlanes, _>(game).0[2047]
+        crate::session_part::get(game, |session| &session.actors.extended.blocks[5][1023])
     } else {
         crate::gameplay_word!(game.GAME_TIME_HOURS)
     };

@@ -545,14 +545,10 @@ pub fn draw_japanese_text<H: crate::menus::host::Host + ?Sized>(
 ) -> u16 {
     set_cinematic_tilemap_updates(false, cine);
     if restore_palette {
-        crate::session_cohort::with(
-            game,
-            |game, palette: &mut crate::cinematic::PaletteBuffer| {
-                for color in 17..20 {
-                    palette.0[color] = intro_color(game, color);
-                }
-            },
-        );
+        let colors = [17, 18, 19].map(|color| intro_color(game, color));
+        crate::session_part::update(game, crate::cinematic::palette_buffer, |palette| {
+            palette[17..20].copy_from_slice(&colors);
+        });
     }
     clear_japanese_tiles(game);
     for &line in lines {

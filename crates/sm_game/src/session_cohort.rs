@@ -279,8 +279,5 @@ mod tests {
     #[test]
     fn the_cinematic_table_loads_from_its_projected_words() {
         check_encoding::<crate::cinematic_state::Cinematic>();
-        check_encoding::<crate::cinematic::FadePlanes>();
-        check_encoding::<crate::cinematic::PaletteBuffer>();
-        check_encoding::<crate::cinematic::ShotWords>();
     }
 }
