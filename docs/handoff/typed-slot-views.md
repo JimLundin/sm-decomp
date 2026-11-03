@@ -193,3 +193,33 @@ Left:
   request.
 - The melt copies, whose destinations come from a ROM table.
 - The menu prelude's `RawRam` re-export. Nine menu files still call `.ram()`.
+
+## Saves lane 2 (2026-11-04, `collab/rs-saves2`)
+
+New owners: `Session::saved_player` (`save_file::SavedPlayer`, $D7C0..$D81F, the save's
+48-word copy of the player block, SMAUXGS 17) and, on `Player`, the HUD auto-cancel flag
+$09EA (`hud_auto_cancel`, an input observation `inputs_from_session` and the scroll
+refresh now take from the Session) and the ten spare words $09EE..$0A01 (`spare_09ee`,
+SMPLAYER 8). New `projection::Field` keys `Player(PlayerWord)` and `SavedPlayer(PlayerWord)`
+name the block's words by `save_file::PlayerWord`; `Player` reads each from its owner
+(inventory, game loop, control bindings, selected weapon, options, player), and the
+control's bindings and the frame display's $09EC store through the byte path. The save
+and load copies go through them on Game in the original word order. The SRAM transfer of
+$D7C0..$DE1C and the boot clear stay raw RAM on Game, re-adopted at the next lease.
+
+Crocomire's heights clear stores the overflow word $071C/$071D through
+`legacy_overflow::set_slot_word` (LEGACY row updated) and clears
+`crocomire_melt.column_heights` typed. The heights already had an owner.
+
+Left:
+- The melt copies ($A4:943D). Their ROM destinations are $7E:4000.. in the melting tiles
+  buffer, which the presentation workspace's shared bytes own; the workspace has no role
+  for it, so a typed store needs a melt-buffer role (or an owner) first. `Point::physical`
+  would be an address API.
+- The demo stop's $077C..$0997 clear (`gameplay_frame::stop_demo`, on Game, no lease open).
+  It needs a `Field` (or typed reset) for each of about thirty owners, stored in the
+  original descending word order; on Game every typed store takes the byte path, so the
+  bytes are unchanged once each word has a key.
+- The menu prelude's `RawRam` re-export: about 45 `.ram()` calls across nine menu files
+  (menu_window 15, map_menu 8, save_slots 7, options_settings 5, ...). Dropping the
+  re-export only pays once all of them are typed; per-file imports would count instead.

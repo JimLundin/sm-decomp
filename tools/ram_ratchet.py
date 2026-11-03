@@ -50,8 +50,8 @@ import cycle_report  # noqa: E402
 # writes in 6 files that store their WRAM display mirror ($51..$86) by RAM offset
 # through raw work RAM (313 becomes 432); the ratchet saw only one RawRam import.
 BASELINE = {
-    "sm_game_ram_sites": 88,
-    "sm_game_coupled_files": 15,
+    "sm_game_ram_sites": 85,
+    "sm_game_coupled_files": 14,
     "production_lines": 173506,
     # Engine inventory (Jim, 2026-11-02): address-shaped access is RAM access.
     # First measured on main 0115740f5 (ROM record reads excluded). Address APIs and raw calls are enforced:
