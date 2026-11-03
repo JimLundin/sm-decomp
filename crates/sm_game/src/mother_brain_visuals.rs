@@ -27,8 +27,6 @@ const PALETTE_BANK: u8 = 0xad;
 /// The lights-off colours ($AD:F22F) for the brain and leg lines.
 const LIGHTS_OFF_COLORS: u16 = 0xf22f;
 /// The main-screen designation mirror the body flicker toggles BG2 in.
-const MAIN_SCREEN: usize = 0x69;
-
 /// The encounter's health palette tables, imported from the loaded image.
 #[derive(Default)]
 pub struct ImportedTables {
@@ -46,7 +44,9 @@ pub fn import(image: &sm_data::cartridge::RomImage) -> ImportedTables {
 
 /// The palette and layer steps' host: a boss state's slot state, palette
 /// copies and cartridge, the projected RAM words, and the encounter's tables.
-pub trait PaletteHost: BossState + SessionRam + SlotState {
+pub trait PaletteHost:
+    BossState + SessionRam + SlotState + crate::display::preparation::Access
+{
     fn mother_brain_visuals(&self) -> &ImportedTables;
 }
 
@@ -154,12 +154,13 @@ pub fn spawn_wall_seal<H: VisualsHost + ?Sized>(game: &mut H) {
 /// Flicker Mother Brain's body layer and visibility on alternate frames.
 pub fn flicker_body<H: PaletteHost + ?Sized>(game: &mut H) {
     let invisible = K_ENEMY_PROPS_INVISIBLE as u16;
-    let screen = game.word(MAIN_SCREEN);
+    // The main screen layers and the previous main screen layers after them.
+    let screen = crate::frame_display_word!(game.MainLayersPair);
     if Body::of(game, BODY_INDEX).actor().frame & 1 != 0 {
-        game.write_word_le(screen | 2, MAIN_SCREEN);
+        crate::frame_display_word!(game.MainLayersPair = screen | 2);
         BodyEdit::of(game, BODY_INDEX).actor().properties &= !invisible;
     } else {
-        game.write_word_le(screen & !2, MAIN_SCREEN);
+        crate::frame_display_word!(game.MainLayersPair = screen & !2);
         BodyEdit::of(game, BODY_INDEX).actor().properties |= invisible;
     }
 }
