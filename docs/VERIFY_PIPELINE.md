@@ -135,7 +135,13 @@ its check has passed in CI, and the check is deleted with it.
    check_actor_exports.py, the inline result check; about 55 lines). Fully
    independent. *Proof:* the same run's outputs (`skip`, the decrypted ROM's
    SHA-1, the capability list, the result) on one gate run and one scheduled
-   run.
+   run. *Done:* verify.yml's verify-plan `passed` step (`gh api --jq
+   .total_count`), its Decrypt the ROM step (`openssl enc -d`, then `sha1sum
+   --check`; bench.yml has the same lines), the capability step (`sm_verify
+   --host-capabilities` and `grep -x`; the units step before it already runs
+   check_source and check_library, so the script's copies of them were
+   repeats) and Verify result (`needs.*.result`, every failing job named).
+   already_passed.py, prepare_rom.py and check_actor_exports.py are deleted.
 3. **`relevant` and `test-summary`** (174 lines of Python, about 200 of
    Rust). Independent. *Proof:* `relevant` reproduces replay_relevant.py's
    verdict over the changed-file lists of the last 50 merged pull requests
