@@ -109,7 +109,7 @@ pub fn generate_explosions(interval: u16, kinds: u16, count: u16, game: &mut imp
     let position = EXPLOSION_ROW_BYTES.wrapping_mul(*brain.explosion_index());
     drop(brain);
     game.foreign(|game| spawn_explosions(position, kinds, count, game));
-    game.queue_sound(2, EXPLODING_SOUND, 3);
+    crate::effects::SoundEffects::queue_sound(game, 2, EXPLODING_SOUND, 3);
 }
 
 /// Spawns `count` explosions from offset row byte `position`, each kind

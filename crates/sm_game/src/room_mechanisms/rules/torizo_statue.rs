@@ -23,3 +23,15 @@ pub fn present(c: &impl Host) -> bool {
         .rev()
         .any(|slot| mechanism!(c, slot, header) == 0xd6ea)
 }
+
+/// Hold Torizo actor `index` waiting while the statue stands; once it has
+/// crumbled, queue music track 6 and release the actor to its next
+/// instruction.
+pub fn wait_for_removal(c: &mut impl Host, index: u16) {
+    c.statue_wait_actor(index, true);
+    if present(c) {
+        return;
+    }
+    c.music(6);
+    c.statue_wait_actor(index, false);
+}

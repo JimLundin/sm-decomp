@@ -243,18 +243,6 @@ impl sm_game::actors::kraid::Lease for crate::game::session_runtime::Runtime<'_>
 }
 
 impl sm_game::actors::kraid::Host for Game {
-    fn boss_word_native(&mut self, area: u16) -> u16 {
-        crate::game::gameplay_flag_runtime::boss_word_at(
-            area,
-            sm_game::gameplay_flag_host::BossWordOrder::Native,
-            self,
-        )
-    }
-
-    fn set_boss_word_native(&mut self, area: u16, value: u16) {
-        crate::game::gameplay_flag_runtime::set_boss_word_native(area, value, self);
-    }
-
     #[cfg(sm_verify_dll)]
     fn observe_kraid_flags(&mut self, step: u8) {
         crate::kraid_flags_observer::observe(step, self);

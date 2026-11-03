@@ -141,7 +141,7 @@ fn burst(game: &mut impl Lease, k: u16) {
         game.set_projectile_spawn_point(x, y);
         game.spawn_room_projectile(DUST_CLOUD, BURST_PARAMETER);
     });
-    game.queue_sound(1, BURST_SOUND, 3);
+    crate::effects::SoundEffects::queue_sound(game, 1, BURST_SOUND, 3);
 }
 
 /// Waits out the fall delay. Was `MotherBrainsTubesFalling_WaitToFall`.

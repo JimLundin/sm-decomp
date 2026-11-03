@@ -212,7 +212,4 @@ pub mod leased {
     pub fn set_boss_word_le<H: RuntimeAccess + ?Sized>(area: u16, value: u16, game: &mut H) {
         super::set_boss_word_le(&mut game.runtime(), area, value);
     }
-    pub fn set_boss_word_native<H: RuntimeAccess + ?Sized>(area: u16, value: u16, game: &mut H) {
-        super::set_boss_word_native(&mut game.runtime(), area, value);
-    }
 }

@@ -88,6 +88,58 @@ pub trait BossState:
 pub trait BossLease: BossState {
     type Game: ?Sized;
     fn foreign<T>(&mut self, action: impl FnOnce(&mut Self::Game) -> T) -> T;
+    /// Run `action` on the lease itself where a `foreign` call ran it on the
+    /// game: the external observations are refreshed on entry, as the game's
+    /// RAM was current there, and on return, as `foreign` re-imported them.
+    fn owned_step<T>(&mut self, action: impl FnOnce(&mut Self) -> T) -> T;
+}
+
+/// The steps a boss's frame ran on a fresh lease of the game, each in one
+/// `foreign` call, run on the boss's own lease in [`BossLease::owned_step`].
+pub mod steps {
+    use super::BossLease;
+    use crate::gameplay_flag_host::BossWordOrder;
+
+    /// Spawn the hardcoded PLM `header` at block (`block_x`, `block_y`).
+    pub fn spawn_plm<L>(game: &mut L, block_x: u8, block_y: u8, header: u16)
+    where
+        L: BossLease + crate::room_mechanisms::host::Host,
+    {
+        game.owned_step(|game| {
+            crate::room_mechanisms::creation::spawn_hardcoded_in(game, block_x, block_y, header);
+        });
+    }
+
+    /// Create sprite object `selector` at (`x`, `y`) with appearance 0.
+    pub fn create_sprite<L>(game: &mut L, x: u16, y: u16, selector: u16)
+    where
+        L: BossLease + crate::sprite_effect_host::Host,
+    {
+        use crate::sprite_effect_state::{LegacySpriteDefinition, SpriteSpawn};
+        game.owned_step(|game| {
+            let spawn = SpriteSpawn {
+                position: crate::geometry::Point { x, y },
+                definition: LegacySpriteDefinition(selector),
+                appearance: 0,
+            };
+            crate::sprite_objects::spawn(game, spawn);
+        });
+    }
+
+    /// The boss word of `area` in `order`.
+    pub fn boss_word<L>(game: &mut L, area: u16, order: BossWordOrder) -> u16
+    where
+        L: BossLease + crate::progress::FlagHost,
+    {
+        game.owned_step(|game| crate::progress::boss_word_at(game, area, order))
+    }
+
+    /// Kill the current actor with the normal death `animation`.
+    pub fn normal_death<L: BossLease>(game: &mut L, animation: u16) {
+        game.owned_step(|game| {
+            game.kill_current(crate::actors::api::DeathKind::Normal { animation });
+        });
+    }
 }
 
 /// The BG2 tilemap staging RAM ($7E:2000..$7E:2FFF) by word index: the

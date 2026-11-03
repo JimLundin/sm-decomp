@@ -106,6 +106,9 @@ impl BossLease for Game {
     fn foreign<T>(&mut self, action: impl FnOnce(&mut Game) -> T) -> T {
         action(self)
     }
+    fn owned_step<T>(&mut self, action: impl FnOnce(&mut Game) -> T) -> T {
+        action(self)
+    }
 }
 
 // Each effect is the one the game ran on a lease of its own, here on this one.
@@ -197,6 +200,9 @@ impl BossLease for Runtime<'_> {
     type Game = Game;
     fn foreign<T>(&mut self, action: impl FnOnce(&mut Game) -> T) -> T {
         Runtime::foreign(self, action)
+    }
+    fn owned_step<T>(&mut self, action: impl FnOnce(&mut Self) -> T) -> T {
+        self.owned_player_call(action)
     }
 }
 
