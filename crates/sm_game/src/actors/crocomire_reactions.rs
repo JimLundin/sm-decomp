@@ -18,6 +18,7 @@ use crate::constants::{
     bank_a4::*,
     enemy_properties::K_ENEMY_PROPS_TANGIBLE,
 };
+use crate::display::preparation::Field;
 use crate::display::transfer::{Source, TilemapUpload, queue_tilemap};
 use crate::enemy_script::EnemyScript;
 use crate::menus::prelude::battle;
@@ -615,7 +616,7 @@ pub fn hop_1_2_rising<L: Lease + ?Sized>(game: &mut L) {
 }
 
 pub fn queue_tilemap_upload<L: Lease + ?Sized>(size: u16, bg_mask: u8, game: &mut L) {
-    let vram_address = u16::from(game.slot_byte(0x59) & bg_mask) << 8;
+    let vram_address = u16::from(game.display_control_byte(Field::Screens1) & bg_mask) << 8;
     let source = Source {
         address: 0x2000,
         bank: 0x7e,
@@ -976,7 +977,8 @@ pub fn behind_wall_no_more_rumbling<L: Lease + ?Sized>(game: &mut L) {
             let address = game.foreign(|game| {
                 game.crocomire_table_word(SPIKE_WALL_DESTINATION_ADDRESS, v4 as isize)
             });
-            let vram_address = tile.wrapping_add(u16::from(game.slot_byte(0x52) & 7) << 13);
+            let vram_address = tile
+                .wrapping_add(u16::from(game.display_control_byte(Field::ObjectLayout) & 7) << 13);
             let source = Source {
                 address,
                 bank: 0xad,
