@@ -2,7 +2,7 @@
 
 This is a dated record of the Windows workflows, since replaced by
 [ci.yml](../.github/workflows/ci.yml) Verify and
-[plan_verify.py](../.github/scripts/plan_verify.py).
+the Rust planner [sm_pipeline](../crates/sm_tools/src/bin/sm_pipeline/plan.rs).
 
 The published room chains already use the existing scenario runner and balanced
 shards. Keep that subdivision. Reduce the three replay matrices from eight to six

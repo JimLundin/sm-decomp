@@ -23,8 +23,7 @@ Local (needs the ROM, the movie and the original capture with its lag logs):
                          scenarios (steps, next room) and their pins
   pack BUNDLE            encrypt the seeds and inputs with the ROM-derived key
                          and pin the bundle
-CI:
-  plan                   write the job matrix to GITHUB_OUTPUT
+CI (sm_pipeline plan packs the rooms into jobs as jobs() does):
   restore BUNDLE         restore the pinned bundle (ROM in rom/sm.smc)
   run JOB [ARGS...]      replay that job's rooms through verify_dll --corpus,
                          passing ARGS (e.g. --mode check-lock --lock F, which
@@ -33,7 +32,7 @@ CI:
 Nothing ROM-derived is committed: the scenarios and the room-seed CSVs hold
 room ids, step counts, frame numbers and SHA-256 digests only.
 """
-import csv, hashlib, io, json, os, pathlib, re, subprocess, sys, tarfile
+import csv, hashlib, io, os, pathlib, re, subprocess, sys, tarfile
 from collections.abc import Callable
 from typing import Any, TypedDict
 
@@ -241,33 +240,6 @@ def jobs() -> list[list[dict[str, Any]]]:
     return sorted((group for group in groups if group), key=lambda group: -sum(int(e["steps"]) for e in group))
 
 
-def plan() -> None:
-    """One matrix over every published route; each job names its route and asset."""
-    include: list[dict[str, Any]] = []
-    for route in ROUTES:
-        asset = published(route)[0]
-        if asset is None:
-            print(f"route {route}: chain bundle not published yet; skipped")
-            continue
-        planned = subprocess.run([sys.executable, __file__, "jobs"], env=dict(os.environ, FULL_ROUTE=route),
-                                 check=True, capture_output=True, text=True).stdout
-        include += [{**{key: value for key, value in job.items() if key != "ids"}, "route": route, "asset": asset}
-                    for job in json.loads(planned)]
-    if not include:
-        raise SystemExit(f"no chain bundle is published; see the route pins in {scenario.LOCK}")
-    # Start the heaviest jobs first across both routes.
-    include.sort(key=lambda job: -job["steps"])
-    with open(os.environ["GITHUB_OUTPUT"], "a") as out:
-        out.write(f"matrix={json.dumps({'include': include})}\n")
-    print(f"{len(include)} jobs: " + ", ".join(job["name"] for job in include))
-
-
-def job_list() -> None:
-    print(json.dumps([{"index": i, "name": f"{ROUTE}-{i:02d}-{len(group)}-rooms",
-                       "steps": sum(int(entry["steps"]) for entry in group),
-                       "ids": [entry["id"] for entry in group]} for i, group in enumerate(jobs())]))
-
-
 def locked(extra: tuple[str, ...]) -> set[str] | None:
     """The scenario ids an oracle digest lock passed as --lock F holds, if any."""
     if "--lock" not in extra:
@@ -300,6 +272,6 @@ def run(job: str, *extra: str) -> None:
 
 
 if __name__ == "__main__":
-    commands: dict[str, Callable[..., None]] = {"inputs": inputs, "pack": pack, "plan": plan, "jobs": job_list,
-                                                "restore": restore, "run": run}
+    commands: dict[str, Callable[..., None]] = {"inputs": inputs, "pack": pack, "restore": restore,
+                                                "run": run}
     commands[sys.argv[1]](*sys.argv[2:])

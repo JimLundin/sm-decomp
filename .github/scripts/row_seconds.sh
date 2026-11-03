@@ -37,7 +37,7 @@ done | awk '
 sort -k1,1 -k2,2 | awk -v runs="$*" '
   BEGIN {
     print "# Measured seconds of each scenario replay on a CI runner, by verifier mode."
-    print "# .github/scripts/pack.py packs replay jobs by them; a row missing here is"
+    print "# sm_pipeline plan (pack.rs) packs replay jobs by them; a row missing here is"
     print "# estimated from its frames. Regenerate with .github/scripts/row_seconds.sh."
     print "# Runs: " runs
   }

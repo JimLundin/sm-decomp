@@ -20,7 +20,7 @@ mod scenario;
 mod toml;
 
 #[cfg(test)]
-mod equivalence;
+mod plan_golden;
 
 use std::io::Write as _;
 use std::path::PathBuf;

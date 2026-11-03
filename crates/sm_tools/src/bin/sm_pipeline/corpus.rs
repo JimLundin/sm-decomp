@@ -1,5 +1,5 @@
 //! Select and shard the corpus scenarios (every scenario but the route rooms)
-//! by the seed bundle or movie route they restore (`.github/scripts/plan_corpus.py`),
+//! by the seed bundle or movie route they restore (the deleted `.github/scripts/plan_corpus.py`),
 //! and the rotating faithful-oracle sample (`lock_gate.oracle_sample`).
 
 use std::collections::{BTreeMap, BTreeSet};

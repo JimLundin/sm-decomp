@@ -3,54 +3,24 @@
 
 Every pull request and push runs the engine alone over every scenario that
 scenarios/lock.toml locks and compares its running digests with the faithful
-oracle's (docs/SCENARIO_HARNESS.md, Decision 4; ci.yml Verify). The plan first
-runs `tools/scenario.py lock --check`, which fails on a stale lock (an entry
-whose start, inputs or budget no longer match its scenario, an entry for no
-scenario, or a lockable scenario neither locked nor `unlocked`); it never
-re-records.
+oracle's (docs/SCENARIO_HARNESS.md, Decision 4; ci.yml Verify). The planner
+(`sm_pipeline plan`) first checks the lock as `tools/scenario.py lock --check`
+does: it fails on a stale lock (an entry whose start, inputs or budget no longer
+match its scenario, an entry for no scenario, or a lockable scenario neither
+locked nor `unlocked`); it never re-records.
 
   record-oracle    re-record SEGMENTS privately and compare their committed entries
 
 Recording (faithful oracle; docs/SCENARIO_HARNESS.md, "Oracle digest lock"):
   python tools/scenario.py lock --record
 """
-import datetime, hashlib, json, os, pathlib, subprocess, sys, tempfile
-from collections.abc import Collection, Mapping
+import hashlib, os, pathlib, subprocess, sys, tempfile
+from collections.abc import Mapping
 from typing import Any
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools"))
 import scenario  # noqa: E402
-
-
-def oracle_sample(rows: list[dict[str, Any]], locked: Collection[str], slot: int, minimum: int = 30) -> list[str]:
-    """Rotate equally through the corpus and each route every three-hour UTC slot."""
-    pools: dict[str, list[str]] = {}
-    for row in rows:
-        if row["id"] in locked:
-            pools.setdefault(row.get("chain", "corpus"), []).append(row["id"])
-    if sum(map(len, pools.values())) < minimum:
-        raise ValueError(f"oracle sample needs at least {minimum} locked scenarios")
-    selected: list[str] = []
-    for index, (_, pool) in enumerate(sorted(pools.items())):
-        pool.sort()
-        quota = minimum // len(pools) + (index < minimum % len(pools))
-        start = (slot * quota) % len(pool)
-        selected.extend(pool[(start + i) % len(pool)] for i in range(min(quota, len(pool))))
-    # Small pools contribute all their rows; fill the remaining places from the others.
-    remaining = sorted((set(locked) & {row["id"] for row in rows}) - set(selected))
-    short = minimum - len(selected)
-    if short:
-        start = (slot * short) % len(remaining)
-        selected.extend(remaining[(start + i) % len(remaining)] for i in range(short))
-    return selected
-
-
-def oracle_slot() -> int:
-    # ORACLE_SLOT pins the slot, as for comparing planners (sm_pipeline's equivalence test).
-    if os.environ.get("ORACLE_SLOT"):
-        return int(os.environ["ORACLE_SLOT"])
-    return int(datetime.datetime.now(datetime.timezone.utc).timestamp()) // (3 * 60 * 60)
 
 
 def compare_oracle(locked: Mapping[str, dict[str, Any]], recorded: Mapping[str, dict[str, Any]],
@@ -108,46 +78,6 @@ def record_oracle() -> None:
         entry = expected[name]
         print(f"PASS {name}: oracle lock matches; {entry['ticks']} ticks; "
               f"domains {', '.join(sorted(entry['digests']))}; hash {entry['combined']}", flush=True)
-
-
-def matrix(command: list[str], environment: dict[str, str]) -> list[dict[str, Any]]:
-    """The job matrix one of the lockstep workflows' planners writes."""
-    with tempfile.TemporaryDirectory() as work:
-        output, summary = pathlib.Path(work, "output"), pathlib.Path(work, "summary")
-        subprocess.run([sys.executable, *command], cwd=ROOT, check=True, stdout=subprocess.DEVNULL,
-                       env=dict(os.environ, GITHUB_OUTPUT=str(output),
-                                GITHUB_STEP_SUMMARY=str(summary), **environment))
-        line = next(line for line in output.read_text().splitlines() if line.startswith("matrix="))
-        include: list[dict[str, Any]] = json.loads(line.removeprefix("matrix="))["include"]
-        return include
-
-
-def jobs() -> list[dict[str, Any]]:
-    """The engine-only jobs: every locked room and corpus row."""
-    locked = scenario.check(ROOT)
-    corpus = sorted(locked & {row["id"] for row in scenario.rows(ROOT) if "chain" not in row})
-    # Rooms run as the route jobs do (a room job checks only the rooms the lock
-    # holds). Corpus rows shard by seed bundle as the lockstep corpus does, and
-    # the shards pack into jobs of about a room job's frames, each restoring its
-    # shards' bundles in turn.
-    rooms = [dict(job, kind="room", name=f"route-{job['name']}")
-             for job in matrix([".github/scripts/full_route.py", "plan"], {})]
-    shards = matrix([".github/scripts/plan_corpus.py"], {"SELECTED": " ".join(corpus)})
-    size = max(job["steps"] for job in rooms)
-    bins: list[list[dict[str, Any]]] = [[] for _ in range(max(1, round(sum(shard["cost"] for shard in shards) / size)))]
-    for shard in sorted(shards, key=lambda shard: -shard["cost"]):
-        min(bins, key=lambda group: sum(shard["cost"] for shard in group)).append(shard)
-    packed = rooms + [
-        dict(kind="corpus", name=f"corpus-{index:02d}-{sum(len(s['segments'].split()) for s in group)}-rows",
-             steps=sum(shard["cost"] for shard in group),
-             segments=" ".join(shard["segments"] for shard in group),
-             kinds=" ".join(sorted({shard["kind"] for shard in group})),
-             shards=json.dumps([{key: shard[key] for key in ("kind", "seed_asset", "seed_sha256",
-                                                             "segments", "route", "inputs")}
-                                for shard in group]))
-        for index, group in enumerate(bins) if group]
-    packed.sort(key=lambda job: -job["steps"])
-    return packed
 
 
 if __name__ == "__main__":

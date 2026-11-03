@@ -6,7 +6,7 @@ name: Verify
 # request that changes no replay-relevant file skips it (.github/scripts/replay_relevant.py).
 # Scope full adds lockstep of the whole corpus and both routes, and stops if a scheduled run
 # already passed this commit. Scope rows runs chosen rows; scope coverage reports what the
-# corpus never executes. See .github/scripts/plan_verify.py.
+# corpus never executes. See crates/sm_tools/src/bin/sm_pipeline/plan.rs.
 # The ROM is encrypted in the private ci-data repository. ROM-derived files stay private,
 # and fetching it needs secrets, so only in-repo branches run it.
 # A called workflow sees its caller's github context: run lookups name ci.yml.
@@ -81,8 +81,8 @@ jobs:
           SELECTED: ${{ inputs.segments }}
           ORACLE_SAMPLE: ${{ inputs.oracle_sample && '1' || '' }}
           COVER_ROUTES: ${{ inputs.cover_routes && '1' || '' }}
-        # The Rust planner (crates/sm_tools/src/bin/sm_pipeline). A Quality test keeps it
-        # byte-identical to plan_verify.py until the Python planner is deleted.
+        # The Rust planner (crates/sm_tools/src/bin/sm_pipeline). Its golden plans test
+        # (plan_golden.rs) holds it to the plans the deleted plan_verify.py wrote.
         run: rustc --edition=2024 -O -o "$RUNNER_TEMP/sm_pipeline" crates/sm_tools/src/bin/sm_pipeline/main.rs && "$RUNNER_TEMP/sm_pipeline" plan
 
   verify-build:
@@ -178,7 +178,7 @@ jobs:
           retention-days: 2
           if-no-files-found: warn
 
-  # The gate's longest jobs (plan_verify.py) set its wall time. Each builds its own
+  # The gate's longest jobs (sm_pipeline plan's floor jobs) set its wall time. Each builds its own
   # verifier, so it queues for a runner alongside verify-build rather than after it.
   verify-replay-first:
     needs: verify-plan

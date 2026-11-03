@@ -121,10 +121,16 @@ its check has passed in CI, and the check is deleted with it.
    checkpoint and any% rows, one corpus row, one room) and two that must fail
    in both; coverage with and without routes. All thirteen matched on
    902d429d2 (run 41683753650, Quality, 73 s). *Switch:* one line in ci.yml
-   verify-plan (below). *Deletes after the switch:* plan_verify.py and
-   plan_corpus.py (307 lines), lock_gate.py `jobs`/`matrix`/`oracle_sample`,
-   full_route.py `plan`/`jobs`/`job_list`. pack.py stays until step 6 (replay
-   uses `partition`).
+   verify-plan (below), live since e85282582. *Deleted after the switch:*
+   plan_verify.py and plan_corpus.py (307 lines), lock_gate.py
+   `jobs`/`matrix`/`oracle_sample`/`oracle_slot`, full_route.py
+   `plan`/`job_list` and pack.py's planning (`budget`, `floor`, `pack`,
+   `estimate`): 520 lines in all. full_route.py `jobs` stays for the local
+   `run JOB`, and pack.py's `partition` until step 6 (replay uses it).
+   The equivalence test went with them; `plan_golden.rs` keeps its thirteen
+   cases as golden plans over a frozen root (`sm_pipeline/fixture`, 56 rows
+   cut from the committed scenarios with their lock entries, seconds and
+   capture indexes), written once by plan_verify.py at e85282582.
 2. **Shell for the four trivial scripts** (already_passed.py, prepare_rom.py,
    check_actor_exports.py, the inline result check; about 55 lines). Fully
    independent. *Proof:* the same run's outputs (`skip`, the decrypted ROM's
@@ -190,13 +196,13 @@ ORACLE_SAMPLE, COVER_ROUTES and GITHUB_OUTPUT) as they are:
 ```
 
 `rustc` picks up rust-toolchain.toml through rustup on the runner, as the
-detached job's rustc steps do. Once that change has run green on a gate and
-a scheduled full run, delete the Python listed under step 1 and the
-equivalence test with it.
+detached job's rustc steps do. It is live; the Python listed under step 1
+and the equivalence test are deleted.
 
 ## How the planner matches Python exactly
 
-Notes for anyone changing either planner while both exist:
+Why the planner does what it does where Python decided the shape (the
+golden plans in `plan_golden.rs` depend on each):
 
 - **Float sums.** CPython 3.12 and later sums floats with Neumaier
   compensation; `pack::py_sum` does the same, and the packing comparisons
@@ -206,7 +212,7 @@ Notes for anyone changing either planner while both exist:
   (`route::lightest`).
 - **Dict order.** Matrix objects keep Python's insertion order, including
   where a key is updated in place (`Object::set`).
-- **Inherited environment.** `lock_gate.jobs` passes its environment to
+- **Inherited environment.** `lock_gate.jobs` passed its environment to
   plan_corpus.py, so in the full scope the oracle sample's shards also join
   the lock jobs' corpus bins. The Rust planner does the same; it is a quirk to
   revisit once Python is gone, not a rule.
