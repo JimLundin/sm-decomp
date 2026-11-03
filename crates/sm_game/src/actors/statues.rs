@@ -111,8 +111,9 @@ const CLEAR_SPIKE_PLM: u16 = 0xd113;
 const SPIKE_BLOCK: u16 = 0xa000;
 /// $7F:0002, the level data.
 const LEVEL_DATA: usize = 0x10002;
-/// $7E:CD26-$7E:CD2E, which the release clears and sets.
-const RELEASE_LIMITS: usize = 0xcd26;
+/// Scroll cells 6..14 ($7E:CD26-$7E:CD2E, `room.scrolls`), which the release
+/// clears and sets.
+const RELEASE_LIMITS: usize = 6;
 const GRAB_SOUND: u8 = 0x1c;
 const FOOTSTEP_SOUND: u8 = 0x4b;
 /// Samus command 1: unlock Samus.
@@ -296,9 +297,12 @@ pub fn movement<L: Lease + ?Sized>(game: &mut L, k: u16, jp: EnemyScript) -> Ene
 /// `Shaktool_Instr_14`.
 pub fn release_samus<L: Lease + ?Sized>(game: &mut L) {
     game.foreign(|game| game.command_player(UNLOCK_SAMUS));
-    for (offset, value) in [(0, 0), (2, 0), (3, 0), (7, 1)] {
-        game.set_slot_word(RELEASE_LIMITS + offset, value);
+    for (offset, value) in [(0, 0u16), (2, 0), (3, 0), (7, 1)] {
+        game.session_mut()
+            .room
+            .set_scroll_pair(RELEASE_LIMITS + offset, value.to_le_bytes());
     }
+    game.words_stored();
     game.foreign(|game| game.spawn_plm(0x17, 0x1d, WRECKED_SHIP_SLOPE_PLM));
 }
 
