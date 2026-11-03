@@ -27,7 +27,6 @@ use crate::constants::enemy_properties::*;
 use crate::enemy_projectiles::shared_pre::{x_velocity_at_angle, y_velocity_at_angle};
 use crate::enemy_script::EnemyScript;
 use crate::palette_copies::{copy_rom_colors_to_palette, copy_rom_colors_to_target_palette};
-use crate::word_transfers;
 
 /// What the baby Metroid reaches beyond Mother Brain's fight and its own helpers.
 /// The bank $A9 functions these slots run, named after the bank log's headings.
@@ -630,7 +629,8 @@ crate::dispatch::instruction_callbacks! { pub fn (_k: u16, _jp: EnemyScript) -> 
     go_to_remorse [EnemyScript::jump(ADDR_K_BABY_METROID_ILIST_F93A as u16)] { };
 }
 pub fn initialize(game: &mut impl State) {
-    word_transfers!(game, descending, 2048; le(TILEMAP_STUFF, 2047) <- value(0));
+    // Clear the BG2 tilemap staging, last word first.
+    crate::actors::boss_lease::bg2_staging::fill(game, (0..2048).rev(), 0);
     let e = game.current_enemy();
     BabyMetroidEdit::of(game, e).actor().properties = (BabyMetroid::of(game, e).actor().properties
         as i32
@@ -641,7 +641,7 @@ pub fn initialize(game: &mut impl State) {
     BabyMetroidEdit::of(game, e).actor().instruction_delay = 1;
     BabyMetroidEdit::of(game, e).actor().timer = 0;
     let mut v2: u16 = function::WAIT_FOR_CAMERA;
-    if (crate::camera::current(game).layer1[0] & 0x8000) != 0 {
+    if (game.session().room.camera.layer1[0] & 0x8000) != 0 {
         BabyMetroidEdit::of(game, e).actor().properties =
             (BabyMetroid::of(game, e).actor().properties as i32
                 | (K_ENEMY_PROPS_TANGIBLE as i32 | K_ENEMY_PROPS_INVISIBLE as i32))

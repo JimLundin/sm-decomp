@@ -133,12 +133,12 @@ pub fn is_off_screen(k: u16, game: &mut (impl SlotState + CompatibilityRam + ?Si
     let y_pos = BabyMetroid::of(game, k).actor().y.whole as i16;
     if y_pos >= 0 {
         let y =
-            (y_pos as i32 + SCREEN_Y_MARGIN - crate::camera::current(game).layer1[1] as i32) as i16;
+            (y_pos as i32 + SCREEN_Y_MARGIN - game.session().room.camera.layer1[1] as i32) as i16;
         if y >= 0 && (y as i32 - SCREEN_HEIGHT) & SIGN != 0 {
             let x_pos = BabyMetroid::of(game, k).actor().x.whole as i16;
             if x_pos >= 0 {
                 let x = (x_pos as i32 + SCREEN_X_MARGIN
-                    - crate::camera::current(game).layer1[0] as i32) as i16;
+                    - game.session().room.camera.layer1[0] as i32) as i16;
                 if x >= 0 && (x as i32 - SCREEN_WIDTH) & SIGN != 0 {
                     return 0;
                 }
