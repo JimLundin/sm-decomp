@@ -1000,7 +1000,7 @@ impl Host for Runtime<'_> {
         }
     }
     fn enable_hdma(&mut self) {
-        self.foreign(|g| crate::game::visual_runtime::set_hdma_enabled(true, g));
+        self.owned_call(|runtime| crate::game::visual_runtime::set_hdma_enabled(true, runtime));
     }
     fn spawn_power_bomb(&mut self) {
         self.foreign(|g| sm_game::explosion_window::spawn_power_bomb(g));
