@@ -108,3 +108,19 @@ Left on Game: Kraid's pause hooks ($077E is `messages.delay`, $0780 has no owner
 start's object cursor and Samus half requests, the demo stop's $077C..$0997 clear, and the lava
 surface's random number swap and the liquid background reads (HDMA pre-actions run in a foreign
 call with no lease to take the values from).
+
+## Macro callers lane (2026-11-03, `collab/rs-callers`)
+
+New owner: `Room::background_size` ($098E, the size of BG2), a scalar word with a room-state
+layout lane (SMROOMS 11). Lease callers read and store their Session fields (zebetites, escape
+critters, Shaktool's previous piece, the room effects reset, the camera chase and door scrolls);
+Game-hosted callers go through their existing owners (`TilemapQueue`, `Mode7Queue`, FX controls,
+the gameplay and inventory owners, display fields, `sprite_drawing::reset_cursor`). Two ROM
+address tables now resolve to typed words and fail on an address outside them: the controller
+binding table ($82:F54A) and the ending's capacity table. `ram_words!` and two unused arms of
+`word!`/`checked_word!` are gone. The remaining arms all have callers in sm/, so ram.rs and
+word_transfers.rs can only shrink once sm/ stops using them or takes its own copy. Left: the
+save slots' $0A00/$D7C0/$CD52 block copies and the demo's $D8F0 words (no owners), the palette
+and tile buffer fills in `initialize_gameplay` (Game-hosted; `PaletteAccess` on Game opens a
+lease per word), the VRAM read queue tail, the audio upload flag (only `audio_word` reaches
+it), Samus's half requests on the logo screen, and the files the brief excluded.
