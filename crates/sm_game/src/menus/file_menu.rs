@@ -14,6 +14,7 @@ use crate::constants::bank_81::{
 use crate::menu_state::MenuState;
 use crate::menu_state::SaveSelection;
 use crate::menu_window_state::ArrowAction;
+use crate::projection::Field;
 use crate::save_file::header;
 
 use crate::enemy_projectiles::table::with_file_select as file_select;
@@ -119,6 +120,34 @@ fn prepare<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
     display_scroll! { game, 0; Bg1H, Bg2H, Bg3H, Bg1V, Bg2V, Bg3V }
     menu_tilemap::load_palette(game);
 }
+/// The file select menu's words, $198D..$19BC, by the cinematic names of the
+/// projectile table words it reuses, in RAM order.
+fn menu_words() -> impl Iterator<Item = Field> {
+    use crate::cinematic_state::{Array, Word};
+    let elements =
+        |array, count| (0..count).map(move |index| Field::CinematicElement(array, index));
+    [
+        Word::Mode7Angle,
+        Word::Mode7Zoom,
+        Word::XSub,
+        Word::X,
+        Word::YSub,
+        Word::Y,
+        Word::XSubspeed,
+        Word::XSpeed,
+        Word::YSubspeed,
+        Word::YSpeed,
+    ]
+    .map(Field::Cinematic)
+    .into_iter()
+    .chain(elements(Array::Mode7InstructionPointer, 2))
+    .chain(elements(Array::Mode7PreInstruction, 2))
+    .chain(elements(Array::Mode7InstructionTimer, 2))
+    .chain(elements(Array::Mode7GotoTimer, 2))
+    .chain([Word::Mode7ObjectIndex, Word::Mode7SpawnParameter].map(Field::Cinematic))
+    // The table's three words, then the word after it ($19BB).
+    .chain(elements(Array::BgArr1, 4))
+}
 fn fade_to_options<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
     crate::sprite_output::menu_selection(game);
     border(0x48, game);
@@ -127,9 +156,10 @@ fn fade_to_options<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
     if (game.display_control_byte(crate::display::preparation::Field::Brightness) & 0xf) == 0 {
         crate::gameplay_word!(game.GAME_STATE = K_GAME_STATE_2_GAME_OPTIONS_MENU as u16);
         menu.menu_index = 0;
-        // Clear the menu's reused RAM, $198D..BC.
-        crate::word_transfers!(game, ascending, 24;
-            native(crate::ram::words::MENU_SELECTION_MISSILE_ANIMATION_TIMER) <- value(0));
+        // Clear the menu's words, $198D..BC, in order.
+        for field in menu_words() {
+            game.set_view_word(field, 0);
+        }
     }
 }
 fn fade_to_title<H: Host + ?Sized>(game: &mut H) {
