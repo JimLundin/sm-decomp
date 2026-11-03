@@ -5,14 +5,40 @@ use crate::actors::combat;
 use crate::actors::host::{ActorLease, BossEffects as _, LeaseActors};
 use crate::actors::scheduling;
 use crate::actors::slot_view::{SlotState, slot_view};
+use crate::enemy_projectiles::drops::DropSource;
 use crate::enemy_projectiles::host::Effects as _;
 use crate::enemy_script::EnemyScript;
 use crate::player_projectiles::{access::shot, content::table, host::Host as _};
 use crate::session_access::SessionAccess as _;
+use crate::sprite_effect_controllers as controllers;
+use crate::sprite_effect_state::{
+    LegacySpriteDefinition, LegacySpriteHandle, LegacySpriteProgram, SpriteSpawn,
+};
 
-/// A lease the metroids run on: their slots are the Session's.
-pub trait Lease: ActorLease + SlotState {}
-impl<T: ActorLease + SlotState + ?Sized> Lease for T {}
+/// A lease the metroids run on: their slots are the Session's, and their
+/// sprite objects and drop are the lease's.
+pub trait Lease:
+    ActorLease
+    + SlotState
+    + crate::actors::boss_lease::BossLease
+    + crate::sprite_effect_host::Host
+    + crate::enemy_projectiles::host::Host
+{
+}
+impl<T> Lease for T where
+    T: ActorLease
+        + SlotState
+        + crate::actors::boss_lease::BossLease
+        + crate::sprite_effect_host::Host
+        + crate::enemy_projectiles::host::Host
+{
+}
+
+/// Run `action` on the lease where a `foreign` call ran it on the game,
+/// keeping that call's observation refresh on entry and return.
+fn owned_step<L: Lease, T>(runtime: &mut L, action: impl FnOnce(&mut L) -> T) -> T {
+    crate::actors::boss_lease::BossLease::owned_step(runtime, action)
+}
 
 slot_view! {
     /// A metroid's slot: its X and Y velocities (16.16, in the actor's first
@@ -136,7 +162,14 @@ pub fn initialize<H: LeaseActors + ?Sized>(game: &mut H) {
     for (part, kind) in SPRITES.into_iter().enumerate() {
         let actor = runtime.resolve_actor(key, Native);
         let (x, y, appearance) = (actor.x.whole, actor.y.whole, actor.tile | actor.palette);
-        let handle = runtime.foreign(|game| game.create_sprite(x, y, kind, appearance));
+        let handle = owned_step(runtime, |runtime| {
+            let spawn = SpriteSpawn {
+                position: crate::geometry::Point { x, y },
+                definition: LegacySpriteDefinition(kind),
+                appearance,
+            };
+            crate::sprite_objects::legacy_result(crate::sprite_objects::spawn(runtime, spawn)).0
+        });
         let mut edit = MetroidEdit::of(runtime, metroid);
         *match part {
             0 => edit.electricity_sprite(),
@@ -159,7 +192,10 @@ pub fn frozen<H: LeaseActors + ?Sized>(game: &mut H) {
     });
     let handles = sprites(runtime, combat::current(runtime).byte_index());
     for (handle, program) in handles.into_iter().zip(FROZEN_PROGRAMS) {
-        runtime.foreign(|game| game.freeze_sprite_attachment(handle, 0xc00, program));
+        owned_step(runtime, |runtime| {
+            let program = LegacySpriteProgram(program);
+            controllers::freeze_attachment(runtime, LegacySpriteHandle(handle), 0xc00, program);
+        });
     }
     runtime.probe("sprite.metroid.frozen");
 }
@@ -169,7 +205,9 @@ pub fn hurt<H: LeaseActors + ?Sized>(game: &mut H) {
     let actor = runtime.resolve_actor(combat::current(runtime), Native);
     let appearance = [0, actor.palette][usize::from(actor.flash & 2 != 0)];
     for handle in sprites(runtime, combat::current(runtime).byte_index()) {
-        runtime.foreign(|game| game.flash_sprite_attachment(handle, appearance));
+        owned_step(runtime, |runtime| {
+            controllers::flash_attachment(runtime, LegacySpriteHandle(handle), appearance);
+        });
     }
     runtime.probe("sprite.metroid.hurt");
 }
@@ -196,7 +234,10 @@ pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
     let actor = runtime.resolve_actor(key, Native);
     let appearance = actor.tile | actor.palette;
     for handle in sprites(runtime, combat::current(runtime).byte_index()) {
-        runtime.foreign(|game| game.attach_sprite(handle, key.byte_index(), appearance));
+        owned_step(runtime, |runtime| {
+            let handle = LegacySpriteHandle(handle);
+            controllers::attach_actor(runtime, handle, key.byte_index(), appearance);
+        });
     }
     runtime.probe("sprite.metroid.main");
 }
@@ -283,7 +324,9 @@ pub fn touch<H: LeaseActors + ?Sized>(game: &mut H) {
 fn retire_sprites(runtime: &mut impl Lease, metroid: u16) -> u16 {
     let handles = sprites(runtime, metroid);
     for handle in handles {
-        runtime.foreign(|game| game.retire_sprite_natively(handle));
+        owned_step(runtime, |runtime| {
+            controllers::retire_native(runtime, LegacySpriteHandle(handle));
+        });
     }
     handles[1]
 }
@@ -323,7 +366,9 @@ pub fn shot<H: LeaseActors + ?Sized>(game: &mut H) {
                 combat::die(runtime, DeathKind::Normal { animation: 4 }); // Big explosion.
                 runtime.foreign(|game| game.command_player(DISABLE_BLUE_FLASHING));
                 let handle = retire_sprites(runtime, metroid);
-                runtime.foreign(|game| game.scatter_metroid_drop(handle));
+                owned_step(runtime, |runtime| {
+                    crate::enemy_projectiles::drops::scatter(DropSource::Metroid, handle, runtime);
+                });
             }
         }
     } else if runtime.resolve_actor(key, Native).pre_instruction == LATCHED_ONTO_SAMUS {
@@ -364,6 +409,6 @@ pub fn draining_sound<H: LeaseActors + ?Sized>(script: EnemyScript, game: &mut H
 pub fn random_cry(script: EnemyScript, runtime: &mut impl Lease) -> EnemyScript {
     let index = runtime.next_random() & 7;
     let cry = table(runtime, CRIES, index as isize);
-    runtime.queue_sound(2, 6, cry);
+    crate::enemy_projectiles::host::Effects::queue_sound(runtime, 2, 6, cry);
     script
 }
