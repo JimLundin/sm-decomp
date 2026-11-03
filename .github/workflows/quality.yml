@@ -75,7 +75,8 @@ jobs:
         run: |
           if cargo test --locked -p sm_data -p sm_game -p sm_runtime -p sm_tools --no-fail-fast > test.log 2>&1; then status=0; else status=$?; fi
           cat test.log
-          python3 .github/scripts/test_summary.py test.log crates/sm_data crates/sm_game crates/sm_runtime crates/sm_tools || status=1
+          rustc --edition=2024 -O -o "$RUNNER_TEMP/sm_pipeline" crates/sm_tools/src/bin/sm_pipeline/main.rs || status=1
+          "$RUNNER_TEMP/sm_pipeline" test-summary test.log crates/sm_data crates/sm_game crates/sm_runtime crates/sm_tools || status=1
           exit $status
       - name: Run the full corpus after bank retirement
         # A called workflow sees its caller's event, so this is ci.yml's push to main.

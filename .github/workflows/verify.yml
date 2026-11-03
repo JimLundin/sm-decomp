@@ -3,10 +3,10 @@ name: Verify
 # Verify: the replay pipeline. One plan, one verifier build, the replay matrix, coverage
 # when asked, and one result. Scope gate replays every locked scenario engine-only against
 # the oracle lock, lockstep for what the lock cannot hold, and the ROM import check; a pull
-# request that changes no replay-relevant file skips it (.github/scripts/replay_relevant.py).
+# request that changes no replay-relevant file skips it (sm_pipeline relevant).
 # Scope full adds lockstep of the whole corpus and both routes, and stops if a scheduled run
 # already passed this commit. Scope rows runs chosen rows; scope coverage reports what the
-# corpus never executes. See .github/scripts/plan_verify.py.
+# corpus never executes. See crates/sm_tools/src/bin/sm_pipeline/plan.rs.
 # The ROM is encrypted in the private ci-data repository. ROM-derived files stay private,
 # and fetching it needs secrets, so only in-repo branches run it.
 # A called workflow sees its caller's github context: run lookups name ci.yml.
@@ -64,26 +64,60 @@ jobs:
       movie_sha256: ${{ steps.plan.outputs.movie_sha256 }}
     steps:
       - uses: actions/checkout@v4
+      # The pipeline tool (crates/sm_tools/src/bin/sm_pipeline) needs only the standard library.
+      - name: Build sm_pipeline
+        run: rustc --edition=2024 -O -o "$RUNNER_TEMP/sm_pipeline" crates/sm_tools/src/bin/sm_pipeline/main.rs
+      # A scheduled run stops when an earlier scheduled run passed this commit.
       - id: passed
         env:
           GH_TOKEN: ${{ github.token }}
           WORKFLOW: ci.yml
-        run: python3 .github/scripts/already_passed.py
-      # A pull request that changes only docs, skills or measurement tools replays nothing.
+        run: |
+          skip=false
+          if [ "$GITHUB_EVENT_NAME" = schedule ]; then
+            passed=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/$WORKFLOW/runs?event=schedule&status=success&head_sha=$GITHUB_SHA&per_page=1" --jq .total_count)
+            if [ "$passed" -gt 0 ]; then skip=true; fi
+          fi
+          echo "skip=$skip" | tee -a "$GITHUB_OUTPUT"
+      # A pull request that changes only docs, skills or measurement tools replays nothing:
+      # it skips when every file it changes against its base, or against a recent head that
+      # passed Verify on its branch, is irrelevant. A comparison that cannot be fetched
+      # counts as relevant. Scheduled and dispatched runs never skip here.
       - id: relevant
         env:
           GH_TOKEN: ${{ github.token }}
           WORKFLOW: ci.yml
-        run: python3 -B .github/scripts/replay_relevant.py
+        run: |
+          skip=false
+          reason="not a pull request"
+          if [ "$GITHUB_EVENT_NAME" = pull_request ]; then
+            reason="replay-relevant files changed"
+            head=$(jq -r .pull_request.head.sha "$GITHUB_EVENT_PATH")
+            branch=$(jq -r .pull_request.head.ref "$GITHUB_EVENT_PATH")
+            base=$(jq -r .pull_request.base.sha "$GITHUB_EVENT_PATH")
+            passed=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/$WORKFLOW/runs?event=pull_request&status=success&branch=$branch&per_page=5" --jq '.workflow_runs[].head_sha' || true)
+            for since in $base $passed; do
+              if git fetch --quiet --depth=1 origin "$since" "$head" \
+                && files=$(git diff --name-only "$since" "$head") \
+                && "$RUNNER_TEMP/sm_pipeline" relevant <<<"$files"; then
+                skip=true
+                reason="only non-replay files changed since ${since:0:12}: $(paste -sd ' ' <<<"$files")"
+                break
+              fi
+            done
+          fi
+          echo "skip=$skip" >> "$GITHUB_OUTPUT"
+          echo "skip=$skip: $reason"
       - id: plan
         env:
           ORACLE: ${{ inputs.oracle }}
           SELECTED: ${{ inputs.segments }}
           ORACLE_SAMPLE: ${{ inputs.oracle_sample && '1' || '' }}
           COVER_ROUTES: ${{ inputs.cover_routes && '1' || '' }}
-        # The Rust planner (crates/sm_tools/src/bin/sm_pipeline). A Quality test keeps it
-        # byte-identical to plan_verify.py until the Python planner is deleted.
-        run: rustc --edition=2024 -O -o "$RUNNER_TEMP/sm_pipeline" crates/sm_tools/src/bin/sm_pipeline/main.rs && "$RUNNER_TEMP/sm_pipeline" plan
+        # The Rust planner. Its golden plans test (plan_golden.rs) holds it to the plans
+        # the deleted plan_verify.py wrote.
+        run: |
+          "$RUNNER_TEMP/sm_pipeline" plan
 
   verify-build:
     needs: verify-plan
@@ -106,9 +140,18 @@ jobs:
       - name: Run the verifier's units
         if: inputs.scope != 'coverage'
         run: python3 tools/verify_dll.py --unit-tests --no-build --direct
-      - name: Check the verifier's source guards and actor capabilities
+      # The units step above already checked the verifier's source stamp and library.
+      - name: Check the verifier's actor capabilities
         if: inputs.scope != 'coverage'
-        run: python3 -B .github/scripts/check_actor_exports.py
+        run: |
+          capabilities=$(target/verify-host/sm_verify --host-capabilities)
+          for name in sm_verify_actor_movement_case sm_verify_actor_movement_table_case sm_verify_actor_population_animation_case; do
+            if ! grep -qxF "$name" <<<"$capabilities"; then
+              echo "Cargo verifier missing required capability: $name"
+              exit 1
+            fi
+          done
+          echo "Cargo verifier has all three actor capabilities"
       - name: Run the target packages' tests instrumented
         if: inputs.scope == 'coverage'
         run: python3 -B .github/scripts/coverage_tests.py target/coverage-unit
@@ -157,11 +200,20 @@ jobs:
           ssh-key: ${{ secrets.SM_ROM_DEPLOY_KEY }}
           path: .ci-data
           persist-credentials: false
+      # Decrypt the ROM, check its SHA-1, then remove the ci-data checkout.
       - &decrypt
         name: Decrypt the ROM
         env:
           SM_ROM_KEY: ${{ secrets.SM_ROM_KEY }}
-        run: python3 -B .github/scripts/prepare_rom.py
+        run: |
+          mkdir -p rom
+          openssl enc -d -aes-256-cbc -pbkdf2 -iter 600000 -pass env:SM_ROM_KEY -in .ci-data/payload.enc -out rom/sm.smc
+          if ! echo "da957f0d63d14cb441d215462904c4fa8519c613  rom/sm.smc" | sha1sum --check; then
+            rm -f rom/sm.smc
+            echo "wrong ROM"
+            exit 1
+          fi
+          rm -rf .ci-data
       - &replay
         name: Restore and replay
         env:
@@ -178,7 +230,7 @@ jobs:
           retention-days: 2
           if-no-files-found: warn
 
-  # The gate's longest jobs (plan_verify.py) set its wall time. Each builds its own
+  # The gate's longest jobs (sm_pipeline plan's floor jobs) set its wall time. Each builds its own
   # verifier, so it queues for a runner alongside verify-build rather than after it.
   verify-replay-first:
     needs: verify-plan
@@ -236,17 +288,24 @@ jobs:
     steps:
       - name: Require every planned job to pass
         env:
-          RESULTS: ${{ toJSON(needs) }}
+          PLAN: ${{ needs.verify-plan.result }}
+          BUILD: ${{ needs.verify-build.result }}
+          REPLAY: ${{ needs.verify-replay.result }}
+          REPLAY_FIRST: ${{ needs.verify-replay-first.result }}
+          COVERAGE: ${{ needs.verify-coverage.result }}
           SKIP: ${{ needs.verify-plan.outputs.skip }}
           FIRST: ${{ needs.verify-plan.outputs.first_count }}
         run: |
-          python3 -B - <<'PY'
-          import json, os
-          needs = json.loads(os.environ['RESULTS'])
-          assert needs['verify-plan']['result'] == 'success'
-          if os.environ['SKIP'] != 'true':
-              assert needs['verify-build']['result'] == 'success'
-              assert needs['verify-replay']['result'] == 'success'
-              if os.environ['FIRST'] != '0': assert needs['verify-replay-first']['result'] == 'success'
-              if os.environ['SCOPE'] == 'coverage': assert needs['verify-coverage']['result'] == 'success'
-          PY
+          failed=0
+          require() {
+            echo "$1: $2"
+            if [ "$2" != success ]; then failed=1; fi
+          }
+          require verify-plan "$PLAN"
+          if [ "$SKIP" != true ]; then
+            require verify-build "$BUILD"
+            require verify-replay "$REPLAY"
+            if [ "$FIRST" != 0 ]; then require verify-replay-first "$REPLAY_FIRST"; fi
+            if [ "$SCOPE" = coverage ]; then require verify-coverage "$COVERAGE"; fi
+          fi
+          exit "$failed"

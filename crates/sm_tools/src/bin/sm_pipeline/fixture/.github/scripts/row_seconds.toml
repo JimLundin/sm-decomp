@@ -1,0 +1,53 @@
+# Measured seconds of each scenario replay on a CI runner, by verifier mode.
+# .github/scripts/pack.py packs replay jobs by them; a row missing here is
+# estimated from its frames. Regenerate with .github/scripts/row_seconds.sh.
+# Runs: 41614471917 41623630668 41635354363 41635345561 41635341176
+
+[lock]
+area-ceres = 26
+area-crateria = 35
+area-wrecked-ship = 15
+boss-phantoon = 305
+boss-phantoon-second-round = 132
+chain-0001-DF45 = 43
+chain-0003-DFD7 = 28
+chain-0004-E021 = 23
+chain-0005-E06B = 33
+chain-0006-E0B5 = 210
+chain-0007-E06B = 27
+chain-0008-E021 = 21
+chain-0010-DF8D = 26
+chain-0012-91F8 = 140
+chain-any-0001-DF45 = 45
+chain-any-0002-DF8D = 16
+chain-any-0003-DFD7 = 32
+chain-any-0004-E021 = 20
+chain-any-0006-E0B5 = 189
+chain-any-0007-E06B = 21
+chain-any-0008-E021 = 24
+coverage-botwoon-spit = 129
+coverage-metroid-bomb-release = 130
+coverage-metroid-ice-shatter = 82
+credits-explosion-slot = 100
+credits-time-minutes-units-spawn = 120
+door-transition = 38
+enemy-boulder-roll = 69
+enemy-etecoon-run-left = 43
+file-copy-clear = 203
+options-menu-tour = 99
+phantoon-exit-spawn-parameter = 283
+power-bomb-red-tower-refill-door = 40
+samus-shinespark-up-left = 51
+special-beam-plasma = 57
+xray-scan-9a44 = 34
+
+[lockstep]
+boss-kraid-pause-950 = 170
+chain-0011-DF45 = 101
+chain-any-0011-DF45 = 85
+demo-attract-setup = 47
+elevator-up = 57
+item-charge = 51
+options-menu-return-parameter = 30
+samus-scripted-intro = 328
+tas-ceres-four-doors = 54

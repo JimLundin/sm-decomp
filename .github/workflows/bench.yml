@@ -54,8 +54,15 @@ jobs:
           SM_ROM_KEY: ${{ secrets.SM_ROM_KEY }}
           FULL_ROUTE: any
         run: |
-          # prepare_rom.py removes the ci-data checkout, so decrypt once and copy.
-          python3 -B .github/scripts/prepare_rom.py
+          # Decrypting removes the ci-data checkout, so decrypt once and copy.
+          mkdir -p rom
+          openssl enc -d -aes-256-cbc -pbkdf2 -iter 600000 -pass env:SM_ROM_KEY -in .ci-data/payload.enc -out rom/sm.smc
+          if ! echo "da957f0d63d14cb441d215462904c4fa8519c613  rom/sm.smc" | sha1sum --check; then
+            rm -f rom/sm.smc
+            echo "wrong ROM"
+            exit 1
+          fi
+          rm -rf .ci-data
           mkdir -p .bench-base/rom
           cp rom/sm.smc .bench-base/rom/sm.smc
           base_url=https://github.com/JimLundin/sm-decomp/releases/download/ci-data

@@ -121,25 +121,63 @@ its check has passed in CI, and the check is deleted with it.
    checkpoint and any% rows, one corpus row, one room) and two that must fail
    in both; coverage with and without routes. All thirteen matched on
    902d429d2 (run 41683753650, Quality, 73 s). *Switch:* one line in ci.yml
-   verify-plan (below). *Deletes after the switch:* plan_verify.py and
-   plan_corpus.py (307 lines), lock_gate.py `jobs`/`matrix`/`oracle_sample`,
-   full_route.py `plan`/`jobs`/`job_list`. pack.py stays until step 6 (replay
-   uses `partition`).
+   verify-plan (below), live since e85282582. *Deleted after the switch:*
+   plan_verify.py and plan_corpus.py (307 lines), lock_gate.py
+   `jobs`/`matrix`/`oracle_sample`/`oracle_slot`, full_route.py
+   `plan`/`job_list` and pack.py's planning (`budget`, `floor`, `pack`,
+   `estimate`): 520 lines in all. full_route.py `jobs` stays for the local
+   `run JOB`, and pack.py's `partition` until step 6 (replay uses it).
+   The equivalence test went with them; `plan_golden.rs` keeps its thirteen
+   cases as golden plans over a frozen root (`sm_pipeline/fixture`, 56 rows
+   cut from the committed scenarios with their lock entries, seconds and
+   capture indexes), written once by plan_verify.py at e85282582.
 2. **Shell for the four trivial scripts** (already_passed.py, prepare_rom.py,
    check_actor_exports.py, the inline result check; about 55 lines). Fully
    independent. *Proof:* the same run's outputs (`skip`, the decrypted ROM's
    SHA-1, the capability list, the result) on one gate run and one scheduled
-   run.
+   run. *Done:* verify.yml's verify-plan `passed` step (`gh api --jq
+   .total_count`), its Decrypt the ROM step (`openssl enc -d`, then `sha1sum
+   --check`; bench.yml has the same lines), the capability step (`sm_verify
+   --host-capabilities` and `grep -x`; the units step before it already runs
+   check_source and check_library, so the script's copies of them were
+   repeats) and Verify result (`needs.*.result`, every failing job named).
+   already_passed.py, prepare_rom.py and check_actor_exports.py are deleted.
 3. **`relevant` and `test-summary`** (174 lines of Python, about 200 of
    Rust). Independent. *Proof:* `relevant` reproduces replay_relevant.py's
    verdict over the changed-file lists of the last 50 merged pull requests
    (a unit test over the pattern table, plus a one-off comparison script in
    CI); `test-summary` reproduces the Markdown table byte for byte from the
    `test.log` of recent Quality runs, and fails on the same missing binaries.
+   *Done:* `relevant.rs` holds the pattern table (its two script entries
+   renamed to relevant.rs and test_summary.rs) and a `fnmatchcase` matcher;
+   its test requires replay_relevant.py's verdict on all 618 files (596 the
+   last 50 merged pull requests, #123 to #179, changed, and 22 more edge cases)
+   and on each of the 50 pull requests (5 skip). verify-plan's `relevant` step
+   is shell around it (`jq` on the event, `gh api --jq` for passed heads,
+   `git fetch` and `git diff --name-only` piped in); a stub run of that shell
+   covered skip by base, skip by a passed head, no skip, an unfetchable base
+   and an empty diff. `test_summary.rs` reads the log as Python's text mode
+   and `splitlines` do and matches the three patterns by hand; its test holds
+   the stdout, stderr and verdict test_summary.py gave on the test.log of
+   three Quality runs (41687356099 passing; 41619370268 and 41457358300
+   failing, each table checked against the run's own), and on four derived
+   logs (an unbuilt tests/*.rs, a binary cut off before its result, Windows
+   executable paths, CRLF). Quality runs `sm_pipeline test-summary`.
+   replay_relevant.py and test_summary.py are deleted.
 4. **`lock-check`** (exposes what `plan` already ports; removes the Quality
    need for scenario.py `lock --check`). *Proof:* the equivalence test
    already requires the same locked set; add negative cases (a stale entry,
    a missing pin, an unlocked lockable row) that both must reject.
+   *Done:* `sm_pipeline lock-check [--root DIR]` prints scenario.py's line or
+   exits 1 naming every problem. `lock_golden.rs` holds scenario.py's verdict
+   and output over the plan fixture and six broken copies: a stale entry, a
+   missing pin of an unlocked row, a lockable row neither locked nor
+   unlocked, one both locked and unlocked, and a scenario removed under its
+   pin and entry, all with the same messages; and a missing pin of a locked
+   row, where scenario.py crashes (KeyError in `lock_key`) and Rust names the
+   problems, so both reject it. No CI step ran `lock --check` (verify-plan's
+   planner already checks the lock); the skills keep the Python command for
+   local use until people build sm_pipeline there.
 5. **`restore`** (prepare_corpus_inputs.py's seed half, ci_seed_data.py
    `restore`, full_route.py `restore`: about 250 lines of Python, about 400
    of Rust with SHA-256). Needs the scenario model only. *Proof:* a CI job
@@ -190,13 +228,13 @@ ORACLE_SAMPLE, COVER_ROUTES and GITHUB_OUTPUT) as they are:
 ```
 
 `rustc` picks up rust-toolchain.toml through rustup on the runner, as the
-detached job's rustc steps do. Once that change has run green on a gate and
-a scheduled full run, delete the Python listed under step 1 and the
-equivalence test with it.
+detached job's rustc steps do. It is live; the Python listed under step 1
+and the equivalence test are deleted.
 
 ## How the planner matches Python exactly
 
-Notes for anyone changing either planner while both exist:
+Why the planner does what it does where Python decided the shape (the
+golden plans in `plan_golden.rs` depend on each):
 
 - **Float sums.** CPython 3.12 and later sums floats with Neumaier
   compensation; `pack::py_sum` does the same, and the packing comparisons
@@ -206,7 +244,7 @@ Notes for anyone changing either planner while both exist:
   (`route::lightest`).
 - **Dict order.** Matrix objects keep Python's insertion order, including
   where a key is updated in place (`Object::set`).
-- **Inherited environment.** `lock_gate.jobs` passes its environment to
+- **Inherited environment.** `lock_gate.jobs` passed its environment to
   plan_corpus.py, so in the full scope the oracle sample's shards also join
   the lock jobs' corpus bins. The Rust planner does the same; it is a quirk to
   revisit once Python is gone, not a rule.

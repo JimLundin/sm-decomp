@@ -1,4 +1,5 @@
-//! Plan one ci.yml Verify run as a single job matrix (`.github/scripts/plan_verify.py`).
+//! Plan one ci.yml Verify run as a single job matrix (ported from the deleted
+//! `.github/scripts/plan_verify.py`; `plan_golden` holds it to that planner's plans).
 //!
 //! The scope selects what runs:
 //! - gate: every locked scenario engine-only against the oracle lock, lockstep
@@ -387,7 +388,7 @@ impl Planner<'_> {
             .collect::<BTreeSet<_>>()
             .into_iter()
             .collect();
-        // lock_gate.jobs passes its own environment to plan_corpus.py, so the
+        // lock_gate.jobs passed its own environment to plan_corpus.py, so the
         // run's oracle sample joins these shards too.
         let shards = self.shards(&corpus, self.settings.oracle_sample)?;
         let size = routes

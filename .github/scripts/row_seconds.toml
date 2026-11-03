@@ -1,5 +1,5 @@
 # Measured seconds of each scenario replay on a CI runner, by verifier mode.
-# .github/scripts/pack.py packs replay jobs by them; a row missing here is
+# sm_pipeline plan (pack.rs) packs replay jobs by them; a row missing here is
 # estimated from its frames. Regenerate with .github/scripts/row_seconds.sh.
 # Runs: 41614471917 41623630668 41635354363 41635345561 41635341176
 

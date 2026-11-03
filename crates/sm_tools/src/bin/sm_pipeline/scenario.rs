@@ -564,6 +564,13 @@ pub fn problems(root: &Path, lock: &Lock, loaded: &[Row]) -> Result<Vec<String>,
     Ok(found)
 }
 
+/// `scenario.py lock --check` over a root: the line it prints, or an error naming every problem.
+pub fn lock_check(root: &Path) -> Result<String, String> {
+    let lock = read_lock(root)?;
+    let loaded = rows(root, &lock)?;
+    check(root, &lock, &loaded).map(|(_, line)| line)
+}
+
 /// The locked ids and the line `scenario.py lock --check` prints; an error names every problem.
 pub fn check(
     root: &Path,

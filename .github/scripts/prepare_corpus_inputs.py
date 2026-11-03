@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Prepare selected seed or movie-route corpus inputs; prepare_rom.py already restored the ROM.
+# Prepare selected seed or movie-route corpus inputs; the Decrypt the ROM step already restored it.
 import hashlib, io, os, pathlib, subprocess, sys, time, tomllib, urllib.error, urllib.request, zipfile
 if os.environ['KIND'] != 'route':
     bundle = pathlib.Path(os.environ['RUNNER_TEMP']) / 'seeds-v1.tar.gz.enc'
