@@ -92,8 +92,18 @@ pub(crate) fn create_sprite(
     appearance: u16,
     game: &mut Game,
 ) -> u16 {
+    create_sprite_in(&mut Runtime::new(game), x, y, selector, appearance)
+}
+/// Create the sprite object on a lease that is already open.
+pub(crate) fn create_sprite_in(
+    runtime: &mut Runtime<'_>,
+    x: u16,
+    y: u16,
+    selector: u16,
+    appearance: u16,
+) -> u16 {
     let result = sprite_objects::spawn(
-        &mut Runtime::new(game),
+        runtime,
         SpriteSpawn {
             position: Point { x, y },
             definition: LegacySpriteDefinition(selector),

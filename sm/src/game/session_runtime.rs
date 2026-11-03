@@ -118,7 +118,9 @@ impl sm_game::actors::species::PreInstructionHost for Game {
 
 impl sm_game::actors::gunship::Host for Runtime<'_> {
     fn spawn_palette_effect(&mut self, definition: u16) {
-        self.foreign(|game| crate::game::palette_effects::spawn(definition, game));
+        self.owned_call(|runtime| {
+            crate::game::palette_effects::execution::spawn(runtime, definition)
+        });
     }
     fn face_player_forward(&mut self) {
         self.owned_player_call(crate::game::player_transitions::equipment::face_forward);

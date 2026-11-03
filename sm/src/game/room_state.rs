@@ -47,10 +47,12 @@ impl sm_game::room_state::MainCodeHost for Runtime<'_> {
         });
     }
     fn ceres_rotation_step(&mut self, word: isize) -> sm_data::ceres_elevator::RotationStep {
-        self.foreign(|game| sm_game::ceres_elevator::step(game, word))
+        self.owned_call(|runtime| sm_game::ceres_elevator::step(runtime, word))
     }
     fn create_explosion(&mut self, x: u16, y: u16, kind: u16) {
-        self.foreign(|game| crate::game::sprite_effect_runtime::create_sprite(x, y, kind, 0, game));
+        self.owned_call(|runtime| {
+            crate::game::sprite_effect_runtime::create_sprite_in(runtime, x, y, kind, 0)
+        });
     }
     fn queue_sky_rows(&mut self, ocean: bool) {
         use sm_game::scrolling_sky::{queue_land_rows, queue_ocean_rows};
@@ -63,8 +65,8 @@ impl sm_game::room_state::MainCodeHost for Runtime<'_> {
         });
     }
     fn spawn_room_projectile(&mut self, definition: u16, parameter: u16) {
-        self.foreign(|game| {
-            crate::game::enemy_projectiles::spawn_with_room_gfx(definition, parameter, game);
+        self.owned_call(|runtime| {
+            sm_game::enemy_projectiles::lifecycle::spawn_room(runtime, definition, parameter);
         });
     }
     fn handle_ceres_getaway(&mut self) {
@@ -111,10 +113,14 @@ impl sm_game::room_state::fx::FxHost for Runtime<'_> {
         });
     }
     fn spawn_fx_palette(&mut self, definition: u16) {
-        self.foreign(|game| crate::game::palette_effects::spawn(definition, game));
+        self.owned_call(|runtime| {
+            crate::game::palette_effects::execution::spawn(runtime, definition)
+        });
     }
     fn spawn_fx_animated_tiles(&mut self, definition: u16) {
-        self.foreign(|game| crate::game::animated_tiles::spawn(definition, game));
+        self.owned_call(|runtime| {
+            crate::game::animated_tiles::execution::spawn(runtime, definition)
+        });
     }
 }
 
