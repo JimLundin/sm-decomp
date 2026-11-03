@@ -844,6 +844,7 @@ pub trait Lease:
     + crate::actors::effects::ActorHost
     + crate::enemy_projectiles::host::Host
     + crate::player_update::effects::Host
+    + crate::hdma_objects::HdmaTable
 {
     type Game: Host + crate::hdma_objects::HdmaTable + SessionRam;
     fn foreign<T>(&mut self, action: impl FnOnce(&mut Self::Game) -> T) -> T;
@@ -1470,7 +1471,7 @@ crate::dispatch::callback_dispatch! {
                 *body.explosion_timer() = 0;
             }
             let hdma_object = Body::of(game, BODY_INDEX).hdma_object();
-            game.foreign(|game| crate::hdma_objects::free_hdma_object(hdma_object, game));
+            crate::hdma_objects::free_hdma_object(hdma_object, game);
             game.set_owned(OwnedWord::EarthquakeTimer, 0);
             set_brain_instruction_list(animation::BRAIN_NEUTRAL_PHASE_2, game);
             set_up_brain_normal_palette(game);
@@ -1715,7 +1716,7 @@ crate::dispatch::callback_dispatch! {
             BodyEdit::of(game, e).actor().y.whole = 188;
             game.set_owned(OwnedWord::EarthquakeTimer, 0);
             let hdma_object = Body::of(game, e).hdma_object();
-            game.foreign(|game| crate::hdma_objects::free_hdma_object(hdma_object, game));
+            crate::hdma_objects::free_hdma_object(hdma_object, game);
             set_body_instruction_list(animation::BODY_STAND_UP_FROM_CROUCH_SLOW, game);
             *BodyEdit::of(game, e).function() = function::FAKE_DEATH_ASCENT_WAIT_UNTIL_MOTHER_BRAIN_HAS_FINISHED_UNCROUCHING;
             fake_death_ascent_wait_for_uncrouching(game);

@@ -163,12 +163,7 @@ pub fn set_hdma_enabled<H: HdmaTable + ?Sized>(enabled: bool, game: &mut H) {
 /// `u16::MAX`) keeps the original's store to the word it names.
 pub fn free_hdma_object<H>(slot: u16, game: &mut H)
 where
-    H: crate::ram::WorkRamAccess
-        + crate::ram::CompatibilityRam
-        + crate::runtime_access::RuntimeAccess
-        + crate::runtime_access::SessionRam
-        + HdmaTable
-        + ?Sized,
+    H: crate::runtime_access::SessionRam + HdmaTable + ?Sized,
 {
     let index = usize::from(slot >> 1);
     if index < crate::hdma::OBJECTS {
