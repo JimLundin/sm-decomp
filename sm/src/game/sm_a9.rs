@@ -11,7 +11,6 @@ pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_a6::*;
 pub use crate::game::constants::bank_a9::*;
 
-use crate::game::mother_brain_samus_vitals as vitals;
 use sm_game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
 
 pub use crate::types::ConstsB7;
@@ -146,18 +145,6 @@ impl baby_metroid_encounter::Lease for Runtime<'_> {
     }
 }
 
-impl baby_metroid_encounter::Host for Game {
-    fn drain_health_by_baby_metroid(&mut self) {
-        vitals::drain_health_by_baby_metroid(self);
-    }
-}
-
-impl baby_metroid_cutscene::Host for Game {
-    fn heal_by_baby_metroid(&mut self) -> bool {
-        vitals::heal_by_baby_metroid(self)
-    }
-}
-
 impl Runtime<'_> {
     /// Bank $A9's AI, reactions and draw hooks that run on this lease: Mother
     /// Brain's, the tubes', the baby Metroid's and the corpses'; false when
@@ -257,14 +244,6 @@ impl sm_game::actors::mother_brain_fight::Host for Game {
 
     fn spawn_wall_seal(&mut self) {
         crate::game::mother_brain_visuals::spawn_wall_seal(self);
-    }
-
-    fn drain_health_by_rainbow_beam(&mut self) {
-        crate::game::mother_brain_samus_vitals::drain_health_by_rainbow_beam(self);
-    }
-
-    fn drain_ammo_by_rainbow_beam(&mut self) {
-        crate::game::mother_brain_samus_vitals::drain_ammo_by_rainbow_beam(self);
     }
 
     fn add_glass_hits(&mut self, slot: usize, amount: u16) {

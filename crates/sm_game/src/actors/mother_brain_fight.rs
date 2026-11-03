@@ -870,8 +870,6 @@ pub trait Host:
     fn bank_unreachable(&mut self) -> bool;
     /// The wall seal's dust clouds and wall blocks.
     fn spawn_wall_seal(&mut self);
-    fn drain_health_by_rainbow_beam(&mut self);
-    fn drain_ammo_by_rainbow_beam(&mut self);
     fn add_glass_hits(&mut self, slot: usize, amount: u16);
     fn spawn_palette_effect(&mut self, definition: u16);
     /// Queue the sprite tile transfer entry at `at` in `bank` unless its size
@@ -1446,9 +1444,9 @@ crate::dispatch::callback_dispatch! {
         handle_body_rainbow_palette(game);
         aim_rainbow_beam_and_increase_width(game);
         handle_rainbow_beam_explosions(game);
-        game.foreign(|game| {
-            game.drain_health_by_rainbow_beam();
-            game.drain_ammo_by_rainbow_beam();
+        game.owned_step(|game| {
+            crate::actors::mother_brain_vitals::drain_health_by_rainbow_beam(game);
+            crate::actors::mother_brain_vitals::drain_ammo_by_rainbow_beam(game);
         });
         move_samus_towards_middle_of_wall(game);
         *BodyEdit::of(game, BODY_INDEX).function_timer() = Body::of(game, BODY_INDEX).function_timer().wrapping_sub(1);

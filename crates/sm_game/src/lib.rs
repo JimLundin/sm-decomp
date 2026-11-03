@@ -201,6 +201,7 @@ pub mod actors {
     pub mod mother_brain_neck;
     pub mod mother_brain_rainbow;
     pub mod mother_brain_tubes;
+    pub mod mother_brain_vitals;
     pub mod movement;
     pub mod multiviola;
     pub mod oum;
