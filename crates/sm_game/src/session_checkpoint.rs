@@ -46,6 +46,7 @@ pub struct AuxiliaryGameplayCheckpoint {
     pub shared_sequence: crate::player_collision::state::SequenceWorkspace,
     pub multiply_scratch: crate::player_collision::state::MultiplyScratch,
     pub pointer_scratch: crate::session::PointerScratch,
+    pub wavy_samus: crate::session::WavySamus,
 }
 fn audio_asset(bytes: &mut Vec<u8>, asset: AssetRef) {
     bytes.extend_from_slice(&asset.id.0.to_le_bytes());
@@ -1082,7 +1083,8 @@ checkpoint_fields!(checkpoint_demo, checkpoint_read_demo, crate::player_transiti
     pre_action: checkpoint_word/checkpoint_read_word, delay: checkpoint_word/checkpoint_read_word,
     program: checkpoint_word/checkpoint_read_word, held: checkpoint_word/checkpoint_read_word,
     pressed: checkpoint_word/checkpoint_read_word, enabled: checkpoint_word/checkpoint_read_word,
-    previous_held: checkpoint_word/checkpoint_read_word, previous_pressed: checkpoint_word/checkpoint_read_word);
+    previous_held: checkpoint_word/checkpoint_read_word, previous_pressed: checkpoint_word/checkpoint_read_word,
+    input_frames: checkpoint_word/checkpoint_read_word);
 checkpoint_fields!(checkpoint_pose_record, checkpoint_read_pose_record, collision::PoseRecord,
     pose: checkpoint_word/checkpoint_read_word, movement_and_facing: checkpoint_word/checkpoint_read_word);
 checkpoint_fields!(checkpoint_history, checkpoint_read_history, collision::PoseHistory,
@@ -1257,6 +1259,7 @@ checkpoint_fields!(checkpoint_player, checkpoint_read_player, Player,
     x: checkpoint_word/checkpoint_read_word, y: checkpoint_word/checkpoint_read_word,
     body_position: checkpoint_point/checkpoint_read_point,
     pose: checkpoint_word/checkpoint_read_word, previous_health_for_flash: checkpoint_word/checkpoint_read_word,
+    spare_0a5e: checkpoint_word/checkpoint_read_word,
     top_sprite: checkpoint_word/checkpoint_read_word, bottom_sprite: checkpoint_word/checkpoint_read_word,
     scripted_movement_direction: checkpoint_word/checkpoint_read_word,
     crouch_transition_work: checkpoint_word/checkpoint_read_word,
@@ -1297,7 +1300,7 @@ impl Player {
         if metadata.identity.reference != metadata.reference.fingerprint {
             return Err("player checkpoint Reference identity mismatch".into());
         }
-        let mut bytes = Vec::from(b"SMPLAYER\x04".as_slice());
+        let mut bytes = Vec::from(b"SMPLAYER\x05".as_slice());
         let binding = observation_binding(metadata);
         bytes.extend_from_slice(&(binding.len() as u64).to_le_bytes());
         bytes.extend_from_slice(&binding);
@@ -1309,7 +1312,7 @@ impl Player {
         metadata: &DisplayStartMetadata,
     ) -> Result<Self, String> {
         let mut read = CheckpointReader(bytes);
-        if read.bytes(9)? != b"SMPLAYER\x04" {
+        if read.bytes(9)? != b"SMPLAYER\x05" {
             return Err("unsupported player checkpoint schema".into());
         }
         let size = usize::try_from(read.counter()?)
@@ -1583,6 +1586,9 @@ checkpoint_fields!(checkpoint_multiply, checkpoint_read_multiply, collision::Mul
     left: checkpoint_word/checkpoint_read_word, right: checkpoint_word/checkpoint_read_word);
 checkpoint_fields!(checkpoint_pointer, checkpoint_read_pointer, crate::session::PointerScratch,
     address: checkpoint_word/checkpoint_read_word, bank: checkpoint_word/checkpoint_read_word);
+checkpoint_fields!(checkpoint_wavy_samus, checkpoint_read_wavy_samus, crate::session::WavySamus,
+    enabled: checkpoint_word/checkpoint_read_word, amplitude: checkpoint_word/checkpoint_read_word,
+    speed: checkpoint_word/checkpoint_read_word);
 checkpoint_fields!(checkpoint_botwoon_death, checkpoint_read_botwoon_death, crate::actors::botwoon_death::DeathProtocol,
     pending_hit: checkpoint_word/checkpoint_read_word, active: checkpoint_word/checkpoint_read_word,
     tail_ready: checkpoint_word/checkpoint_read_word, previous_health: checkpoint_word/checkpoint_read_word,
@@ -1601,7 +1607,7 @@ macro_rules! checkpoint_auxiliary {
                     return Err("auxiliary gameplay checkpoint Reference identity mismatch".into());
                 }
                 if !self.menu_window.is_initialized() { return Err("unsupplied map-menu window checkpoint".into()); }
-                let mut bytes = Vec::from(b"SMAUXGS\x0d".as_slice());
+                let mut bytes = Vec::from(b"SMAUXGS\x0e".as_slice());
                 let binding = observation_binding(metadata);
                 bytes.extend_from_slice(&(binding.len() as u64).to_le_bytes());
                 bytes.extend_from_slice(&binding);
@@ -1610,7 +1616,7 @@ macro_rules! checkpoint_auxiliary {
             }
             pub fn decode_auxiliary_checkpoint(bytes: &[u8], metadata: &DisplayStartMetadata) -> Result<AuxiliaryGameplayCheckpoint, String> {
                 let mut read = CheckpointReader(bytes);
-                if read.bytes(8)? != b"SMAUXGS\x0d" { return Err("unsupported auxiliary gameplay checkpoint schema".into()); }
+                if read.bytes(8)? != b"SMAUXGS\x0e" { return Err("unsupported auxiliary gameplay checkpoint schema".into()); }
                 let size = usize::try_from(read.counter()?).map_err(|_| "auxiliary gameplay checkpoint binding length overflow")?;
                 if metadata.identity.reference != metadata.reference.fingerprint || read.bytes(size)? != observation_binding(metadata) {
                     return Err("auxiliary gameplay checkpoint source identity or Reference changed".into());
@@ -1733,7 +1739,8 @@ checkpoint_auxiliary!(
     compatibility_enemy_scratch: checkpoint_word/checkpoint_read_word,
     shared_sequence: checkpoint_sequence/checkpoint_read_sequence,
     multiply_scratch: checkpoint_multiply/checkpoint_read_multiply,
-    pointer_scratch: checkpoint_pointer/checkpoint_read_pointer);
+    pointer_scratch: checkpoint_pointer/checkpoint_read_pointer,
+    wavy_samus: checkpoint_wavy_samus/checkpoint_read_wavy_samus);
 
 use crate::room_entry::{content as room_content, state::RoomEntry, world};
 use crate::session::{Cell, Room, TERRAIN_CELLS, TILE_DEFINITIONS, Terrain};
@@ -2358,6 +2365,7 @@ impl NumericGameplayCheckpoint {
             shared_sequence,
             multiply_scratch,
             pointer_scratch,
+            wavy_samus,
         } = self.auxiliary;
         // Exhaustive construction also makes future Session/auxiliary fields a
         // compiler error until their checkpoint participation is explicit.
@@ -2399,6 +2407,7 @@ impl NumericGameplayCheckpoint {
             shared_sequence,
             multiply_scratch,
             pointer_scratch,
+            wavy_samus,
         }
     }
 }

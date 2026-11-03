@@ -12,6 +12,10 @@ pub struct DemoInput {
     pub enabled: u16,
     pub previous_held: u16,
     pub previous_pressed: u16,
+    /// $0A8A, the demo's input frame count word. The X-ray and suit pickup
+    /// HDMA tables at $0A88 overlay it with their first pointer's bank and
+    /// their second line count.
+    pub input_frames: u16,
 }
 
 use super::{
@@ -27,6 +31,7 @@ use crate::{
 pub fn start(s: &mut Session) {
     s.player.demo = DemoInput {
         enabled: 0x8000,
+        input_frames: s.player.demo.input_frames,
         ..DemoInput::default()
     };
     s.presentation.palette_mut().xray_progress = 0;

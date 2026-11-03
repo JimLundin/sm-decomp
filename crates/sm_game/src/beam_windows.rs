@@ -1,6 +1,6 @@
 //! HDMA window tables for the X-ray beam (Mother Brain's rainbow beam is in
 //! `actors::mother_brain_rainbow`, which shares the edge stepper).
-use crate::actors::session_slots::SlotAccess;
+
 use crate::legacy_overflow;
 use crate::menus::host::Host;
 use crate::menus::prelude::do_until;
@@ -21,8 +21,8 @@ const CLOSED: u16 = 255;
 /// it wraps the 16-bit index before adding the table base (row zero's anchor
 /// and reopened rows reach base + FFFEh, in the following WRAM bank), and the
 /// cleanup passes run on signed offsets past either end.
-pub trait BeamHost: Host + SessionRam + SlotAccess {}
-impl<T: Host + SessionRam + SlotAccess + ?Sized> BeamHost for T {}
+pub trait BeamHost: Host + SessionRam {}
+impl<T: Host + SessionRam + ?Sized> BeamHost for T {}
 
 /// Advance the two 8.8 fixed-point edges and pack one SNES window word.
 pub(crate) fn advance_window_edges(edges: &mut [u32; 2], steps: [u32; 2], saturated: bool) -> u16 {

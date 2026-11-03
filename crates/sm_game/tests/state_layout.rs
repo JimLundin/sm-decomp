@@ -1112,6 +1112,33 @@ fn crocomire_melt_lanes() -> Vec<Lane> {
 }
 
 #[test]
+fn player_spare_words_round_trip_every_word() {
+    check_owner("player spare words", &player_spare_lanes());
+}
+
+/// $0A5E, which nothing reads, and $0A8A, the demo's input frame count that
+/// the X-ray and suit pickup HDMA tables overlay.
+fn player_spare_lanes() -> Vec<Lane> {
+    vec![
+        (0x0a5e, 0, (|s, _| &mut s.player.spare_0a5e) as Field),
+        (0x0a8a, 0, (|s, _| &mut s.player.demo.input_frames) as Field),
+    ]
+}
+
+#[test]
+fn wavy_samus_round_trips_every_word() {
+    check_owner("wavy Samus", &wavy_samus_lanes());
+}
+
+fn wavy_samus_lanes() -> Vec<Lane> {
+    vec![
+        (0x0d9c, 0, (|s, _| &mut s.wavy_samus.enabled) as Field),
+        (0x0d9e, 0, (|s, _| &mut s.wavy_samus.amplitude) as Field),
+        (0x0da0, 0, (|s, _| &mut s.wavy_samus.speed) as Field),
+    ]
+}
+
+#[test]
 fn pause_hooks_round_trip_every_word() {
     check_owner("pause hooks", &pause_hook_lanes());
 }
@@ -1357,6 +1384,8 @@ fn all_owner_lanes() -> Vec<(&'static str, Vec<Lane>)> {
         ("actor spare words", actor_spare_lanes()),
         ("Crocomire melt", crocomire_melt_lanes()),
         ("pause hooks", pause_hook_lanes()),
+        ("player spare words", player_spare_lanes()),
+        ("wavy Samus", wavy_samus_lanes()),
         ("Work Robot palette", work_robot_palette_lanes()),
         ("room scrolls", room_scroll_lanes()),
         ("boss RAM", boss_ram_lanes()),

@@ -48,7 +48,7 @@ pub fn initialize<H: Host + ?Sized>(game: &mut H, options: &mut OptionsMenu, upl
     {
         crate::decompression::decompress_to_ram(source, 0x1c000 + index * 0x800, game);
     }
-    copy_screen(0x1c7fe, false, game);
+    copy_screen(MAIN_SCREEN, false, game);
     // The ROM keeps the final copied tile in A through the object clear.
     let initial_tile = game.screen_word(Point::physical(TILEMAP));
     options.menu_option_index = 0;
@@ -401,15 +401,15 @@ pub fn replace_screen<H: Host + ?Sized>(game: &mut H, options: &mut OptionsMenu)
     if options.menu_option_index != 0 {
         if options.menu_option_index & 4 != 0 {
             let japanese = crate::session_words::current(game).japanese_text_flag != 0;
-            copy_screen(0x1dffe + usize::from(japanese) * 0x800, !japanese, game);
+            copy_screen(SPECIAL_SCREEN + usize::from(japanese), !japanese, game);
             highlight_special(0, game);
             highlight_special(1, game);
             options.menu_option_index = 4;
             spawn(4, definition::SPECIAL_SETTING_MODE_BORDER, game);
         } else {
-            let source = 0x1cffe
-                + usize::from(crate::session_words::current(game).japanese_text_flag != 0) * 0x800;
-            copy_screen(source, true, game);
+            let screen = CONTROLLER_SCREEN
+                + usize::from(crate::session_words::current(game).japanese_text_flag != 0);
+            copy_screen(screen, true, game);
             // The controller initializer receives the final native word copied to tile zero.
             let tile = game.screen_native_word(Point::physical(TILEMAP));
             spawn(tile, definition::CONTROLLER_SETTING_MODE_BORDER, game);
@@ -417,7 +417,7 @@ pub fn replace_screen<H: Host + ?Sized>(game: &mut H, options: &mut OptionsMenu)
             menu_tilemap::controller_bindings(game);
         }
     } else {
-        copy_screen(0x1c7fe, false, game);
+        copy_screen(MAIN_SCREEN, false, game);
         highlight_language(game);
         // The ROM passes the final language-highlight tile left in A (82:EFD7).
         let tile = game.screen_word(Point::physical(LANGUAGE_HIGHLIGHT_TILE));
@@ -425,21 +425,28 @@ pub fn replace_screen<H: Host + ?Sized>(game: &mut H, options: &mut OptionsMenu)
     }
 }
 
-// Descending native destination words; Japanese/special and main sources retain LE reads.
-pub fn copy_screen<H: Host + ?Sized>(last_word: usize, native: bool, game: &mut H) {
-    for index in 0..1024 {
-        let address = last_word - 2 * index;
-        // The decompressed allocation stays an explicit native-content boundary.
-        let bytes = [
-            game.compatibility_byte(address),
-            game.compatibility_byte(address + 1),
-        ];
+/// The five option screens are decompressed into the custom background blocks
+/// from $7F:C000, 1024 tilemap words each: the main screen, the controller
+/// screen in English and Japanese, then the special screen in both.
+const SCREENS_BLOCK: usize = (0x1c000 - 0x19602) / 2;
+const SCREEN_WORDS: usize = 1024;
+const MAIN_SCREEN: usize = 0;
+const CONTROLLER_SCREEN: usize = 1;
+const SPECIAL_SCREEN: usize = 3;
+
+/// Copy option screen `screen` to the pause tilemap, last word first, reading
+/// each word in native order when `native` (the controller screens and the
+/// English special screen), little-endian otherwise.
+pub fn copy_screen<H: Host + ?Sized>(screen: usize, native: bool, game: &mut H) {
+    let first = SCREENS_BLOCK + screen * SCREEN_WORDS;
+    for index in (0..SCREEN_WORDS).rev() {
+        let block = game.background_block(first + index);
         let tile = if native {
-            u16::from_ne_bytes(bytes)
+            u16::from_ne_bytes(block.to_le_bytes())
         } else {
-            u16::from_le_bytes(bytes)
+            block
         };
-        game.screen_write_native_word(Point::new(Role::Pause, 2 * (1023 - index)), tile);
+        game.screen_write_native_word(Point::new(Role::Pause, 2 * index), tile);
     }
 }
 

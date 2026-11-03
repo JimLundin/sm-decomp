@@ -16,27 +16,69 @@
 //! the call site and listed in docs/LEGACY.md. Code whose index is provably in
 //! range uses its typed owner instead.
 use crate::actors::host::ActorLease;
-use crate::actors::session_slots::SlotAccess;
 use crate::runtime_access::SessionRam;
+use crate::session_access::SessionAccess;
 
-// LEGACY(original-overflow): the slot word, as `SlotAccess` resolves it.
-/// The word at RAM address `at`, through the host's slot access.
-pub fn slot_word<H: SlotAccess + ?Sized>(h: &H, at: usize) -> u16 {
-    h.slot_word(at)
+/// The extended RAM's span, less the Botwoon death words its own cohort keeps.
+fn extended_index(at: usize) -> Option<(usize, usize)> {
+    match at {
+        0x801e | 0x8020 | 0x803c | 0x8818 | 0x883e => None,
+        0x7800..0x9000 if at.is_multiple_of(2) => {
+            Some(((at - 0x7800) / 0x800, (at - 0x7800) % 0x800 / 2))
+        }
+        _ => None,
+    }
 }
-// LEGACY(original-overflow): the slot word store, as `SlotAccess` resolves it.
-/// Store `value` to the word at RAM address `at`, through the host's slot access.
-pub fn set_slot_word<H: SlotAccess + ?Sized>(h: &mut H, at: usize, value: u16) {
-    h.set_slot_word(at, value);
+
+// LEGACY(original-overflow): the bytes an out-of-range slot index reaches.
+/// The RAM byte at `at` as the overflow paths below reach it: on a Session
+/// lease, the actors' extended RAM ($7E:7800..$8FFF, less the Botwoon death
+/// words) from `Actors::extended` and every other byte through the lease's
+/// projection; on a host that still holds the RAM image, that image's byte.
+pub trait SlotBytes {
+    fn slot_byte(&self, at: usize) -> u8;
+    fn set_slot_byte(&mut self, at: usize, value: u8);
 }
-// LEGACY(original-overflow): the slot byte, as `SlotAccess` resolves it.
-/// The byte at RAM address `at`, through the host's slot access.
-pub fn slot_byte<H: SlotAccess + ?Sized>(h: &H, at: usize) -> u8 {
+
+impl<T: SessionAccess + SessionRam + ?Sized> SlotBytes for T {
+    fn slot_byte(&self, at: usize) -> u8 {
+        if let Some((block, index)) = extended_index(at & !1) {
+            return self.session().actors.extended.blocks[block][index].to_le_bytes()[at & 1];
+        }
+        self.byte(at)
+    }
+    fn set_slot_byte(&mut self, at: usize, value: u8) {
+        if let Some((block, index)) = extended_index(at & !1) {
+            let word = &mut self.session_mut().actors.extended.blocks[block][index];
+            let mut bytes = word.to_le_bytes();
+            bytes[at & 1] = value;
+            *word = u16::from_le_bytes(bytes);
+            return;
+        }
+        self.set_byte(at, value);
+    }
+}
+
+// LEGACY(original-overflow): the slot word, low byte then high.
+/// The little-endian word at RAM address `at`, through the host's slot bytes.
+pub fn slot_word<H: SlotBytes + ?Sized>(h: &H, at: usize) -> u16 {
+    u16::from_le_bytes([h.slot_byte(at), h.slot_byte(at + 1)])
+}
+// LEGACY(original-overflow): the slot word store, low byte then high.
+/// Store `value` little-endian at RAM address `at`, through the host's slot bytes.
+pub fn set_slot_word<H: SlotBytes + ?Sized>(h: &mut H, at: usize, value: u16) {
+    let [low, high] = value.to_le_bytes();
+    h.set_slot_byte(at, low);
+    h.set_slot_byte(at + 1, high);
+}
+// LEGACY(original-overflow): the slot byte.
+/// The byte at RAM address `at`, through the host's slot bytes.
+pub fn slot_byte<H: SlotBytes + ?Sized>(h: &H, at: usize) -> u8 {
     h.slot_byte(at)
 }
-// LEGACY(original-overflow): the slot byte store, as `SlotAccess` resolves it.
-/// Store `value` to the byte at RAM address `at`, through the host's slot access.
-pub fn set_slot_byte<H: SlotAccess + ?Sized>(h: &mut H, at: usize, value: u8) {
+// LEGACY(original-overflow): the slot byte store.
+/// Store `value` to the byte at RAM address `at`, through the host's slot bytes.
+pub fn set_slot_byte<H: SlotBytes + ?Sized>(h: &mut H, at: usize, value: u8) {
     h.set_slot_byte(at, value);
 }
 

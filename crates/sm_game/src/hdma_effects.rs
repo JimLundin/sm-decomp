@@ -224,14 +224,13 @@ pub trait HdmaEffects: Host {
     fn advance_hdma_wave(&mut self, slot: u16, wave: HdmaWave) {
         use crate::actors::access::AccessMode::Native;
         use crate::projectile_geometry::SINE_COSINE;
-        use crate::ram::words as ram;
         let controller = Key::from_legacy(0x40);
         let motion = Key::from_legacy(0xc0);
         let phantoon = matches!(wave, HdmaWave::Phantoon);
         let mode = if phantoon {
             self.resolve_actor(controller, Native).parameters[0]
         } else {
-            self.word(0xd9c)
+            self.session().wavy_samus.enabled
         };
         if mode == 0 {
             self.advance_hdma_program();
@@ -253,7 +252,7 @@ pub trait HdmaEffects: Host {
             let speed = if phantoon {
                 self.resolve_actor(motion, Native).pre_instruction
             } else {
-                self.word(ram::LOOP_COUNTER_TRANSFER_ENEMIES_TO_VRAM)
+                self.session().wavy_samus.speed
             };
             let hdma_index = usize::from(slot >> 1);
             crate::hdma_word!(self, hdma_index, A => speed.wrapping_mul(2).wrapping_add(crate::hdma_word!(self, hdma_index, A)) & 0x1ff);
@@ -271,7 +270,8 @@ pub trait HdmaEffects: Host {
                 let amplitude = self.resolve_actor(motion, Native).variables[3];
                 (amplitude as u8, amplitude.to_ne_bytes()[1])
             } else {
-                (self.byte(0xd9e), self.byte(0xd9f))
+                let [low, high] = self.session().wavy_samus.amplitude.to_le_bytes();
+                (low, high)
             };
             let offset = hdma_wave_offset(sample, low, high);
             phase = phase.wrapping_add(step) & 0x1ff;

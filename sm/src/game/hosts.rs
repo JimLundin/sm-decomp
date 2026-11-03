@@ -534,6 +534,9 @@ impl sm_game::hud::HudFrameHost for Game {
         self.ram()
             .read_byte(sm_game::ram::bytes::NMI_FRAME_COUNTER_BYTE)
     }
+    fn point_pointer_scratch(&mut self, address: u16) {
+        Game::point_pointer_scratch(self, address);
+    }
 }
 
 /// On a lease the HUD reads Samus's values from the owned Session.
@@ -578,5 +581,8 @@ impl sm_game::hud::HudFrameHost for crate::game::session_runtime::Runtime<'_> {
         self.samus_game()
             .ram()
             .read_byte(sm_game::ram::bytes::NMI_FRAME_COUNTER_BYTE)
+    }
+    fn point_pointer_scratch(&mut self, address: u16) {
+        crate::game::session_runtime::Runtime::point_pointer_scratch(self, address);
     }
 }

@@ -134,6 +134,7 @@ pub trait Host:
     + crate::presentation_workspace::PaletteAccess
     + crate::presentation_workspace::QueueAccess
     + crate::display::transfer::Mode7Queue
+    + crate::display::queued_tilemaps::BackgroundBlocks
     + CompatibilityRam
     + crate::runtime_access::SessionRam
     + crate::player_position::PlayerPosition

@@ -250,19 +250,20 @@ pub fn initialize(h: &mut (impl Host + SessionRam)) -> bool {
     clear_window(h);
     set_world_running(h.session_mut(), false);
     // $7E:0A88, the HDMA pointer's low word, is the demo's enable word.
-    h.session_mut().player.demo.enabled = u16::from_le_bytes(1u16.to_ne_bytes());
-    h.words_stored();
-    h.set_byte(0xa8a, 0x98);
-    h.write_slice_native(0xa8b, 0);
-    h.session_mut().player.demo.previous_held = 0x98c8;
+    // The bank byte $98 at $7E:0A8A and the zero word after it: the demo's
+    // input frame count, and the previous held input's low byte, which the
+    // next store replaces.
+    let demo = &mut h.session_mut().player.demo;
+    demo.enabled = u16::from_le_bytes(1u16.to_ne_bytes());
+    demo.input_frames = 0x98;
+    demo.previous_held = 0x98c8;
     // $7E:0A8E is the demo's previous newly pressed input.
-    h.session_mut().player.demo.previous_pressed = u16::from_le_bytes(0x9098u16.to_ne_bytes());
-    h.words_stored();
-    h.set_byte(0xa90, 0x99);
-    // $7E:0A91..$7E:0A92 (the X-ray HDMA table's end) are the high byte of
-    // the demo's filtered held input and the low byte of its filtered newly
-    // pressed input.
+    demo.previous_pressed = u16::from_le_bytes(0x9098u16.to_ne_bytes());
+    // $7E:0A90..$7E:0A92 (the last bank byte and the X-ray HDMA table's end)
+    // are the demo's filtered held input and the low byte of its filtered
+    // newly pressed input.
     let preparation = &mut h.session_mut().projectiles.preparation;
+    crate::actors::slot_view::store_byte(&mut preparation.demo_filtered_held, 0, 0x99);
     crate::actors::slot_view::store_byte(&mut preparation.demo_filtered_held, 1, 0);
     crate::actors::slot_view::store_byte(&mut preparation.demo_filtered_pressed, 0, 0);
     h.words_stored();

@@ -63,6 +63,14 @@ impl QueuedTilemaps {
     }
 }
 
+/// The custom background blocks ($7F:9602..$7F:FA01) as the host holds
+/// them: `QueuedTilemaps`'s while a Session is current, RAM otherwise. The
+/// options menu decompresses its screens into them.
+pub trait BackgroundBlocks {
+    /// Little-endian block word `index`.
+    fn background_block(&self, index: usize) -> u16;
+}
+
 /// Publication lane distinguishes native queue words from a scrolling request
 /// word. Compatibility hosts retain their distinct per-byte write policies.
 pub trait QueueAccess {

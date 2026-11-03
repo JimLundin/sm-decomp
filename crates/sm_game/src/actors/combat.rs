@@ -31,7 +31,7 @@ use {
 pub fn current(h: &impl ActorAccess) -> ActorKey {
     ActorKey::from_legacy(h.session().actors.controls.selected)
 }
-/// The current actor's slot, as `session_slot!` indexes it.
+/// The current actor's slot index, as the slot views take it.
 pub fn current_slot(h: &impl ActorAccess) -> i32 {
     i32::from(current(h).byte_index())
 }

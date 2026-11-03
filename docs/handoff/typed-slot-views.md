@@ -2,7 +2,7 @@
 
 Branch `collab/typed-all` (PR #155) converts the address-API layer to typed Session
 fields. Engine address APIs (`ram_ratchet.py`, ROM record reads excluded) fall from
-5805 on main `0115740f5` to 36.
+5805 on main `0115740f5` to 36, and `collab/f36-owners` takes them to 27.
 
 ## Pattern
 
@@ -34,7 +34,7 @@ landed this way:
 - right border ($1874)
 - Work Robot palette ($D652..$D657)
 
-The resulting checkpoint formats are SMROOMS 9 and SMACTORS 9 (the ending's star records add four spare-word owners). Replays can't check
+The resulting checkpoint formats are SMROOMS 9 and SMACTORS 9 (the ending's star records add four spare-word owners). Owners whose writers stay on Game, which stores RAM and is re-adopted at the next lease, are scalar words like their neighbours: the demo input frame count $0A8A and spare $0A5E (SMPLAYER 5), and the ending's wavy Samus words $0D9C..$0DA1 (SMAUXGS 14). Replays can't check
 $1874, because the verifier masks $186E..$1886.
 
 The first scroll attempt diverged `boss-crocomire` at $CD24 (run 41561271426). Six
@@ -46,7 +46,7 @@ Raw RAM accesses to the scroll cells still run on Game:
 - `hdma_program.rs:297-298`
 - the boot WRAM clear
 
-## Remaining 36 sites, by blocker
+## Remaining sites, by blocker
 
 1. **New Session owners, plus all of their writers.**
    - (Drop origin $F434/$F436 is now owned by `enemy_projectiles.drop_origin` (SMESHOT 3). The $3000..$6FFF tile buffer is owned by the presentation workspace; Kraid's `load_bg2` reads it typed.)
@@ -58,7 +58,10 @@ Raw RAM accesses to the scroll cells still run on Game:
 3. **Still on `Game`.**
    - The game-over menu: 11 sites. A cohort patch exists at `$TEMP/typed-hosts/game_over_cohort.patch` but raises `sm_game_ram_sites` by 3.
    - `beam_windows`/`calculate_xray_window`, which runs inside `foreign`.
-   - `hud` (direct-page digit pointer $00..$02, no owner), `options_settings` (decompressed screens at $7F:C000.., no owner), the game-over `prepare` display mirrors ($53/$54/$86 have no display Field).
+   - (The HUD's digit pointer $00..$02 stores `Session::pointer_scratch`; the options screens at $7F:C000.. are read as `QueuedTilemaps` background blocks.)
+   - The game-over `prepare` display mirrors: $53/$54/$86 have no display `Field`. Adding them changes `preparation::State`, `DisplayControls`, the Owned presentation's projection and checkpoint, and Game's frame-display ranges.
+   - The demo's setup words $09E4/$09E6/$09E8/$0DF8/$0DFC: $09E4 and $0DF8 are input observations that `inputs_from_session` reads from RAM, and save loads and new games write them on Game.
+   - The X-ray/suit window table at $9800 (`xray::set_window_word`): `fx_domain::Sources` owns it only while the Session has FX sources or an Owned presentation, and its store panics where the RAM store succeeds.
    - Game-side routines that touch enemy 0 (the game-over baby, demo rooms, Kraid's unpause) read and store a typed `Actor` through `ActorImage`, which `Game` implements over RAM in sm/.
 4. **Address-indexed by design.**
    - Out-of-range fallbacks: Phantoon's part and shot fallbacks, `visual_host` handles, `bg2_staging::set_unbounded` for Crocomire's melt cursor.
@@ -66,7 +69,7 @@ Raw RAM accesses to the scroll cells still run on Game:
    - Level-data indexes that run past the cells.
    - A typed index would panic where RAM didn't, so these need a LEGACY entry or a bounded typed fallback.
    - Done (2026-11-03): these go through `legacy_overflow` (`LEGACY(original-overflow)` in docs/LEGACY.md), typed where in range; cycle_report counts them as `legacy_overflow`.
-5. **Machinery.** `session_slots.rs`, `projection.rs` and `ram.rs`. Delete them once 1-4 are gone.
+5. **Machinery.** `session_slots.rs` is gone (`session_slot!`, `SlotAccess`, `SessionSlots`); overflow paths resolve through `legacy_overflow::SlotBytes`. `projection.rs`/`ram.rs` remain: the `CompatibilityRam` byte helpers behind ~30 views, which Game serves from its RAM image off a lease.
 6. **Counter noise.** `enemy_projectiles/content` (a `self` ROM record) and `menus/canvas` (a workspace `Point`) are not RAM.
 
 ## Caveat

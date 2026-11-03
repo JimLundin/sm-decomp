@@ -532,12 +532,14 @@ macro_rules! scalar_words {
         $f(0xb04,$($borrow)* $s.player.body_position.x);
         $f(0xb06,$($borrow)* $s.player.body_position.y);
         $f(0xa62,$($borrow)* $s.player.scripted_movement_direction);
+        $f(ram::UNUSED_WORD_7E0A5E,$($borrow)* $s.player.spare_0a5e);
         $f(0xa7a,$($borrow)* $s.player.demo.pre_action);
         $f(0xa7c,$($borrow)* $s.player.demo.delay);
         $f(0xa7e,$($borrow)* $s.player.demo.program);
         $f(0xa84,$($borrow)* $s.player.demo.held);
         $f(0xa86,$($borrow)* $s.player.demo.pressed);
         $f(0xa88,$($borrow)* $s.player.demo.enabled);
+        $f(0xa8a,$($borrow)* $s.player.demo.input_frames);
         $f(0xa8c,$($borrow)* $s.player.demo.previous_held);
         $f(0xa8e,$($borrow)* $s.player.demo.previous_pressed);
         $f(0xa48,$($borrow)* presentation_ref!($s, palette, ($($borrow)*)).hurt_flash);
@@ -720,6 +722,9 @@ macro_rules! scalar_words {
         $f(0x5eb,$($borrow)* $s.multiply_scratch.right);
         $f(0x0,$($borrow)* $s.pointer_scratch.address);
         $f(0x2,$($borrow)* $s.pointer_scratch.bank);
+        $f(ram::WAVY_SAMUS_ENABLED,$($borrow)* $s.wavy_samus.enabled);
+        $f(0xd9e,$($borrow)* $s.wavy_samus.amplitude);
+        $f(ram::LOOP_COUNTER_TRANSFER_ENEMIES_TO_VRAM,$($borrow)* $s.wavy_samus.speed);
         $f(0xa20,$($borrow)* $s.player.history.previous.pose);
         $f(0xa22,$($borrow)* $s.player.history.previous.movement_and_facing);
         $f(0xa26,$($borrow)* $s.player.history.last_different.movement_and_facing);

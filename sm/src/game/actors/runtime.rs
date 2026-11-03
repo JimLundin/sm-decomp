@@ -274,14 +274,6 @@ impl sm_game::actors::mother_brain_fight::OwnedWords for Runtime<'_> {
         );
     }
 }
-impl sm_game::actors::session_slots::SessionSlots for Runtime<'_> {
-    fn projected_slot_byte(&self, at: usize) -> u8 {
-        self.byte(at)
-    }
-    fn store_projected_slot_byte(&mut self, at: usize, value: u8) {
-        self.set_byte(at, value);
-    }
-}
 impl sm_game::actors::slot_view::SlotState for Runtime<'_> {
     /// The projected store's refresh after each record byte.
     fn record_stored(&mut self) {
