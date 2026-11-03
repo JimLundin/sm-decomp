@@ -119,15 +119,6 @@ macro_rules! word_transfers {
     (@endpoint $game:ident, value($value:expr)) => {
         $crate::word_transfers::WordEndpoint::Value($value)
     };
-    (@endpoint $game:ident, captured($source:ident, $index:expr)) => {
-        $source.shifted($index as isize)
-    };
-    (@endpoint $game:ident, pause_map($index:expr)) => {
-        $crate::word_transfers!(@endpoint $game, native(0x3000 + 2 * ($index)))
-    };
-    (@endpoint $game:ident, cinematic_bg($index:expr)) => {
-        $crate::word_transfers!(@endpoint $game, native(0x3800 + 2 * ($index)))
-    };
     (@endpoint $game:ident, xray($index:expr)) => {
         $crate::word_transfers!(@endpoint $game, native(0x4000 + 2 * ($index)))
     };
