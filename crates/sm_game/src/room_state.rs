@@ -275,7 +275,12 @@ pub fn execute_door_code<H: ScriptHost + ?Sized>(script: u16, game: &mut H) {
         // To Ceres elevator shaft.
         0xe4e0 => {
             game.ram().write_byte(0x56, 7);
-            game.write_register(crate::display::registers::BGMODE as u16, 7);
+            game.apply(
+                "ceres elevator shaft",
+                crate::display::video::Command::Control(
+                    crate::display::video::Control::BackgroundMode(7),
+                ),
+            );
             {
                 crate::frame_display_word!(game.AffineWords0Pair = 256);
                 crate::frame_display_word!(game.AffineWords3Pair = 256);
