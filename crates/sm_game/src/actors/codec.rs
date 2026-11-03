@@ -299,19 +299,36 @@ pub fn import_common(s: &mut Session, bytes: &impl Fn(usize) -> u8, byte_len: us
     }
 }
 
-/// Each new owned byte is emitted once, including raw byte-array pairs.
-pub fn visit_common(s: &Session, mut visit: impl FnMut(usize, u16)) {
+/// Each new owned byte is emitted once, including raw byte-array pairs, as
+/// runs of consecutive little-endian words in address order.
+pub fn visit_common(s: &Session, mut run: impl FnMut(usize, &[[u8; 2]])) {
+    const WORDS: usize = 256;
+    let mut buffer = [[0u8; 2]; WORDS];
     for (start, end) in COMMON_RANGES {
+        let mut first = start;
+        let mut count = 0;
         for at in (start..end).step_by(2) {
             let whole = is_whole_word(at)
                 .then(|| common_word!(s, at, (&)).copied())
                 .flatten();
-            let word = whole.unwrap_or_else(|| {
-                let low = projected_byte(s, at).expect("actor common low byte");
-                let high = projected_byte(s, at + 1).expect("actor common high byte");
-                u16::from_le_bytes([low, high])
-            });
-            visit(at, word);
+            buffer[count] = whole.map_or_else(
+                || {
+                    [
+                        projected_byte(s, at).expect("actor common low byte"),
+                        projected_byte(s, at + 1).expect("actor common high byte"),
+                    ]
+                },
+                u16::to_le_bytes,
+            );
+            count += 1;
+            if count == WORDS {
+                run(first, &buffer);
+                first = at + 2;
+                count = 0;
+            }
+        }
+        if count != 0 {
+            run(first, &buffer[..count]);
         }
     }
 }
@@ -472,7 +489,11 @@ mod word_paths {
         }
         assert!(by_word == by_byte, "import_common differs from byte stores");
         let mut visited = Vec::new();
-        visit_common(&by_word, |at, word| visited.push((at, word)));
+        visit_common(&by_word, |at, pairs| {
+            for (index, &pair) in pairs.iter().enumerate() {
+                visited.push((at + index * 2, u16::from_le_bytes(pair)));
+            }
+        });
         let mut expected = Vec::new();
         for (start, end) in COMMON_RANGES {
             for at in (start..end).step_by(2) {

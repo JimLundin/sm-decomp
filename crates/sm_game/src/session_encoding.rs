@@ -1200,7 +1200,7 @@ fn visit_owned_words(s: &Session, mut visit: impl Words) {
     let mut emit = |at, word: &u16| visit.word(at, *word);
     botwoon_death_words!(s, emit, (&));
     visit.le_words(0x7f7, s.minimap.explored.as_chunks::<2>().0);
-    crate::actors::codec::visit_common(s, |at, word| visit.word(at, word));
+    crate::actors::codec::visit_common(s, |at, pairs| visit.le_words(at, pairs));
     macro_rules! emit_key {
         ($at:expr, $field:ident, $get:ident, $set:ident) => {
             visit.word($at, s.world.$get(&s.room.entry.$field));
