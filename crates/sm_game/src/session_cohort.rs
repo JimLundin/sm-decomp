@@ -43,24 +43,35 @@ impl<A: Cohort, B: Cohort> Cohort for (A, B) {
 /// The group as the host's projection holds it.
 pub fn load<C: Cohort, H: CompatibilityRam + ?Sized>(game: &H) -> C {
     let mut cohort = C::default();
-    cohort.words(|at, word| *word = crate::projection::word(game, at));
+    game.load_words(&mut cohort);
     cohort
 }
 
-/// The words `after` changed from `before`: each one's index, RAM address
-/// and value.
-fn changes<C: Cohort>(before: &C, mut after: C) -> Vec<(usize, usize, u16)> {
+/// The words `after` changed from `before`: each one's index and value.
+fn changes<C: Cohort>(before: &C, mut after: C) -> Vec<(usize, u16)> {
     let mut previous = Vec::new();
     before.clone().words(|_, word| previous.push(*word));
     let mut changes = Vec::new();
     let mut index = 0;
-    after.words(|at, word| {
+    after.words(|_, word| {
         if previous[index] != *word {
-            changes.push((index, at, *word));
+            changes.push((index, *word));
         }
         index += 1;
     });
     changes
+}
+
+/// Store the words of `after` that `changes` lists through the host's
+/// projection, low byte then high, as the named word stores did.
+fn store_projected<C, H>(game: &mut H, changes: &[(usize, u16)], mut after: C)
+where
+    C: Cohort,
+    H: CompatibilityRam + ?Sized,
+{
+    game.store_words(&mut after, |index| {
+        changes.iter().any(|change| change.0 == index)
+    });
 }
 
 /// Store the words `after` changed from `before`.
@@ -72,13 +83,13 @@ where
     if after == *before {
         return;
     }
-    let changes = changes(before, after);
+    let changes = changes(before, after.clone());
     if game.session_retained() {
         use crate::session_access::SessionAccess as _;
         let mut lease = game.runtime();
         let mut index = 0;
         C::session_words(lease.session_mut(), |_, word| {
-            if let Some(&(_, _, value)) = changes.iter().find(|change| change.0 == index) {
+            if let Some(&(_, value)) = changes.iter().find(|change| change.0 == index) {
                 *word = value;
             }
             index += 1;
@@ -87,9 +98,7 @@ where
         // its observations with the Session.
         lease.refresh_inputs();
     } else {
-        for (_, at, value) in changes {
-            crate::projection::set_word(game, at, value);
-        }
+        store_projected(game, &changes, after);
     }
 }
 
@@ -126,9 +135,8 @@ where
     #[cfg(sm_verify_dll)]
     release(held);
     if cohort != before {
-        for (_, at, value) in changes(&before, cohort) {
-            crate::projection::set_word(game, at, value);
-        }
+        let changes = changes(&before, cohort.clone());
+        store_projected(game, &changes, cohort);
     }
     result
 }

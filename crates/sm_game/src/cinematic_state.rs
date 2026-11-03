@@ -334,12 +334,12 @@ cinematic_fields! {
 
 /// `word` as the host's projection holds it, low byte then high.
 pub fn get<H: CompatibilityRam + ?Sized>(h: &H, word: Word) -> u16 {
-    crate::projection::word(h, word as usize)
+    h.view_word(crate::projection::Field::Cinematic(word))
 }
 
 /// Store `value` to `word`, low byte then high, as the named word store did.
 pub fn set<H: CompatibilityRam + ?Sized>(h: &mut H, word: Word, value: u16) {
-    crate::projection::set_word(h, word as usize, value);
+    h.set_view_word(crate::projection::Field::Cinematic(word), value);
 }
 
 /// The address of word `index` of `array`; like the named tables, the index
@@ -351,13 +351,19 @@ pub fn at<I: TryInto<isize>>(array: Array, index: I) -> usize {
         .expect("word address outside RAM")
 }
 
+/// Word `index` of `array` as a view field.
+fn element<I: TryInto<isize>>(array: Array, index: I) -> crate::projection::Field {
+    let index: isize = index.try_into().ok().expect("word index overflow");
+    crate::projection::Field::CinematicElement(array, index)
+}
+
 /// Word `index` of `array`.
 pub fn get_at<H: CompatibilityRam + ?Sized, I: TryInto<isize>>(
     h: &H,
     array: Array,
     index: I,
 ) -> u16 {
-    crate::projection::word(h, at(array, index))
+    h.view_word(element(array, index))
 }
 
 /// Store `value` to word `index` of `array`, low byte then high.
@@ -367,7 +373,7 @@ pub fn set_at<H: CompatibilityRam + ?Sized, I: TryInto<isize>>(
     index: I,
     value: u16,
 ) {
-    crate::projection::set_word(h, at(array, index), value);
+    h.set_view_word(element(array, index), value);
 }
 
 #[cfg(test)]

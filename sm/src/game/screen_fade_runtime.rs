@@ -13,8 +13,8 @@ impl Owner for Game {
         // owner or acquire a rejected lease. The selected projection owns this
         // compatibility interval; import its actual words and publish changes.
         let before = ScreenFade {
-            delay: sm_game::projection::word(self, 0x723),
-            counter: sm_game::projection::word(self, 0x725),
+            delay: crate::projection::word(self, 0x723),
+            counter: crate::projection::word(self, 0x725),
         };
         let mut screen = before;
         let result = action(&mut screen);
@@ -30,7 +30,7 @@ impl Owner for Game {
                     .enumerate()
                 {
                     if new != old {
-                        sm_game::projection::set_byte(self, at + offset, new);
+                        crate::projection::set_byte(self, at + offset, new);
                     }
                 }
             }
@@ -43,10 +43,10 @@ impl Owner for Game {
             return Runtime::new(self).tick_screen_fade();
         }
         let (counter, due) =
-            sm_game::screen_fade::countdown(sm_game::projection::word(self, 0x725), || {
-                sm_game::projection::word(self, 0x723)
+            sm_game::screen_fade::countdown(crate::projection::word(self, 0x725), || {
+                crate::projection::word(self, 0x723)
             });
-        sm_game::projection::set_word(self, 0x725, counter);
+        crate::projection::set_word(self, 0x725, counter);
         due
     }
 
@@ -59,8 +59,8 @@ impl Owner for Game {
         let slow = matches!(fade, CinematicFade::SlowIn | CinematicFade::SlowOut);
         if slow {
             let (delay, ready) =
-                sm_game::screen_fade::cinematic_countdown(sm_game::projection::word(self, 0x723));
-            sm_game::projection::set_byte(self, 0x723, delay.to_le_bytes()[0]);
+                sm_game::screen_fade::cinematic_countdown(crate::projection::word(self, 0x723));
+            crate::projection::set_byte(self, 0x723, delay.to_le_bytes()[0]);
             if !ready {
                 return false;
             }
@@ -72,7 +72,7 @@ impl Owner for Game {
         let step = if slow {
             1
         } else {
-            sm_game::projection::word(self, 0x725).to_le_bytes()[0]
+            crate::projection::word(self, 0x725).to_le_bytes()[0]
         };
         let (next, complete) = sm_game::screen_fade::cinematic_brightness(fade, brightness, step)
             .expect("nonzero outgoing brightness");
@@ -81,11 +81,11 @@ impl Owner for Game {
             let delay = if complete {
                 0
             } else {
-                sm_game::projection::word(self, 0x725).to_le_bytes()[0]
+                crate::projection::word(self, 0x725).to_le_bytes()[0]
             };
-            sm_game::projection::set_byte(self, 0x723, delay);
+            crate::projection::set_byte(self, 0x723, delay);
             if complete {
-                sm_game::projection::set_byte(self, 0x725, 0);
+                crate::projection::set_byte(self, 0x725, 0);
             }
         }
         complete
@@ -96,8 +96,8 @@ impl Owner for Game {
             Runtime::new(self).set_screen_fade(delay, counter);
         } else {
             // Preserve both unconditional word stores and their byte order.
-            sm_game::projection::set_word(self, 0x723, delay);
-            sm_game::projection::set_word(self, 0x725, counter);
+            crate::projection::set_word(self, 0x723, delay);
+            crate::projection::set_word(self, 0x725, counter);
         }
     }
 
@@ -105,7 +105,7 @@ impl Owner for Game {
         if self.session_lease_admissible() {
             Runtime::new(self).set_screen_fade_counter(counter);
         } else {
-            sm_game::projection::set_word(self, 0x725, counter);
+            crate::projection::set_word(self, 0x725, counter);
         }
     }
 }

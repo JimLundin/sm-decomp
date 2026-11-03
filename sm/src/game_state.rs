@@ -2082,6 +2082,9 @@ impl sm_game::ram::CompatibilityRam for Game {
     fn compatibility_write_byte(&mut self, at: usize, value: u8) {
         Game::compatibility_write_byte(self, at, value)
     }
+    fn observed_inputs(&self) -> sm_game::external_inputs::ExternalInputs {
+        crate::projection::observed_inputs(self)
+    }
 }
 
 impl sm_game::effects::SoundEffects for Game {

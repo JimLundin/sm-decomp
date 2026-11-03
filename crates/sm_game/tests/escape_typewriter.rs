@@ -18,6 +18,7 @@ use sm_game::display::transfer::TilemapQueue;
 use sm_game::effects::SoundEffects;
 use sm_game::escape_typewriter::{Host, Typewriter, handle_text, set_up_zebes, timer_reset};
 use sm_game::external_inputs::ExternalInputs;
+use sm_game::projection::{Decode, Field, Layout, Views};
 use sm_game::ram::CompatibilityRam;
 use sm_game::room_entry::world::WorldBinding;
 use sm_game::session::Session;
@@ -168,6 +169,35 @@ impl CompatibilityRam for World {
     }
     fn compatibility_write_byte(&mut self, at: usize, value: u8) {
         self.ram[at] = value;
+    }
+    fn observed_inputs(&self) -> ExternalInputs {
+        sm_game::session_encoding::inputs(&|at| self.ram[at])
+    }
+}
+impl Views for World {
+    fn view_word(&self, field: Field) -> u16 {
+        self.word(field.address())
+    }
+    fn set_view_word(&mut self, field: Field, value: u16) {
+        self.set_word(field.address(), value);
+    }
+    fn set_view_low_byte(&mut self, field: Field, value: u8) {
+        self.ram[field.address()] = value;
+    }
+    fn decode_view<T: Decode>(&self) -> T {
+        T::decode(&|at| self.ram[at])
+    }
+    fn load_words(&self, words: &mut impl Layout) {
+        words.visit(|at, word| *word = self.word(at));
+    }
+    fn store_words(&mut self, words: &mut impl Layout, mut select: impl FnMut(usize) -> bool) {
+        let mut index = 0;
+        words.visit(|at, word| {
+            if select(index) {
+                self.set_word(at, *word);
+            }
+            index += 1;
+        });
     }
 }
 impl TilemapQueue for World {

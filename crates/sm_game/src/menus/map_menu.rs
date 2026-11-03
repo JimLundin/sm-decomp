@@ -580,7 +580,7 @@ fn initialize_room<H: Host + ?Sized>(
     );
     crate::hdma_objects::set_hdma_enabled(false, game);
     crate::hdma_objects::clear_hdma(game);
-    let header = crate::projection::word(game, crate::ram::words::ROOM_PTR);
+    let header = game.view_word(crate::projection::Field::RoomHeader);
     let room = menu_tilemap::native_record(0x8f0000 | u32::from(header), game);
     crate::gameplay_context::enter_header(game, [1, 2, 3].map(|at| room.byte(at)));
     reset_animations(&mut screens.map, menu, game);

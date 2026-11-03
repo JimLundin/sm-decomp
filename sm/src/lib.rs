@@ -473,6 +473,7 @@ pub mod host;
 
 mod execution;
 pub mod game_state;
+mod projection;
 pub use game_state::persistent_session::{
     PreparedSessionStart, SessionCheckpoint, SessionStartContract, SessionStartError,
     SuppliedSessionStart,

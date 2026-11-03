@@ -1,33 +1,29 @@
 //! Palette transitions over the Session-owned current and target colours and
 //! fade cursor (`Visuals::palette_fade`), read and stored through the projection.
-use crate::projection;
+use crate::projection::{self, Field};
 use crate::ram::RamHost;
 use crate::visual_state::PaletteFade;
 
-/// The current colours, then the targets, then the fade's step, duration and
-/// cursor words, as `session_encoding` lays them out.
-const COLORS: usize = 0xc000;
-const TARGETS: usize = 0xc200;
-const FADE: [usize; 3] = [0xc400, 0xc402, 0xc404];
+/// The fade's step, duration and cursor words, after the current colours and
+/// the targets, as `session_encoding` lays them out.
+impl projection::Layout for PaletteFade {
+    fn visit(&mut self, mut visit: impl FnMut(usize, &mut u16)) {
+        visit(0xc400, &mut self.step);
+        visit(0xc402, &mut self.duration);
+        visit(0xc404, &mut self.cursor);
+    }
+}
 
 fn read_fade<H: RamHost + ?Sized>(game: &H) -> PaletteFade {
-    let [step, duration, cursor] = FADE.map(|at| projection::word(game, at));
-    PaletteFade {
-        step,
-        duration,
-        cursor,
-    }
+    let mut fade = PaletteFade::default();
+    game.load_words(&mut fade);
+    fade
 }
 
 /// Store the fade's words; each fade stores its duration, so every word it
 /// leaves unchanged is stored with its own value.
-fn store_fade<H: RamHost + ?Sized>(fade: PaletteFade, game: &mut H) {
-    for (at, value) in FADE
-        .into_iter()
-        .zip([fade.step, fade.duration, fade.cursor])
-    {
-        projection::set_word(game, at, value);
-    }
+fn store_fade<H: RamHost + ?Sized>(mut fade: PaletteFade, game: &mut H) {
+    game.store_words(&mut fade, |_| true);
 }
 
 /// Start a fade of `duration` steps; a step past its end restarts it and reports done.
@@ -74,8 +70,8 @@ fn blend<H: RamHost + ?Sized>(
     native: bool,
     game: &mut H,
 ) {
-    let current = projection::word(game, COLORS + 2 * index);
-    let target = projection::word(game, TARGETS + 2 * index);
+    let current = game.view_word(Field::PaletteColor(index));
+    let target = game.view_word(Field::PaletteTarget(index));
     // Native fade loops leave identical colors, including their high bit, untouched.
     if !native || current != target {
         let color = transition(step, current, target, fade.duration);
@@ -84,7 +80,7 @@ fn blend<H: RamHost + ?Sized>(
         } else {
             color.to_le_bytes()
         };
-        projection::copy_into_image(game, COLORS + 2 * index, &bytes);
+        projection::copy_into_image(game, Field::PaletteColor(index).address(), &bytes);
     }
 }
 

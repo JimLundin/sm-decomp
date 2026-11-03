@@ -116,13 +116,19 @@ pub mod objects {
     };
 
     pub fn get<H: CompatibilityRam + ?Sized>(h: &H, word: Word) -> u16 {
-        crate::projection::word(h, word as usize)
+        h.view_word(crate::projection::Field::OptionsObject(word))
     }
     pub fn set<H: CompatibilityRam + ?Sized>(h: &mut H, word: Word, value: u16) {
-        crate::projection::set_word(h, word as usize, value);
+        h.set_view_word(crate::projection::Field::OptionsObject(word), value);
     }
-    fn at<I: TryInto<usize, Error: core::fmt::Debug>>(array: Array, index: I) -> usize {
-        array as usize + 2 * index.try_into().expect("options object index")
+    fn at<I: TryInto<usize, Error: core::fmt::Debug>>(
+        array: Array,
+        index: I,
+    ) -> crate::projection::Field {
+        crate::projection::Field::OptionsObjectElement(
+            array,
+            index.try_into().expect("options object index"),
+        )
     }
     /// Word `index` of `array`.
     pub fn get_at<H, I>(h: &H, array: Array, index: I) -> u16
@@ -130,7 +136,7 @@ pub mod objects {
         H: CompatibilityRam + ?Sized,
         I: TryInto<usize, Error: core::fmt::Debug>,
     {
-        crate::projection::word(h, at(array, index))
+        h.view_word(at(array, index))
     }
     /// Store `value` to word `index` of `array`.
     pub fn set_at<H, I>(h: &mut H, array: Array, index: I, value: u16)
@@ -138,7 +144,7 @@ pub mod objects {
         H: CompatibilityRam + ?Sized,
         I: TryInto<usize, Error: core::fmt::Debug>,
     {
-        crate::projection::set_word(h, at(array, index), value);
+        h.set_view_word(at(array, index), value);
     }
 }
 

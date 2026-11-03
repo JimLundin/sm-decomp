@@ -153,9 +153,7 @@ impl LiquidWords {
     }
     pub fn read(ram: &(impl crate::ram::CompatibilityRam + ?Sized)) -> Self {
         let mut words = Self::default();
-        for (at, word) in words.slots() {
-            *word = crate::projection::word(ram, at);
-        }
+        ram.load_words(&mut words);
         words
     }
     /// Store `value` to the one word `field` selects, low byte then high,
@@ -166,18 +164,25 @@ impl LiquidWords {
         value: u16,
     ) {
         let mut words = Self::default();
-        let target: *const u16 = field(&mut words);
-        let at = words
+        let target = field(&mut words);
+        *target = value;
+        let target: *const u16 = target;
+        let index = words
             .slots()
             .into_iter()
-            .find(|(_, word)| core::ptr::eq(&**word, target))
-            .map(|(at, _)| at)
+            .position(|(_, word)| core::ptr::eq(&*word, target))
             .expect("liquid word");
-        crate::projection::set_word(ram, at, value);
+        ram.store_words(&mut words, |slot| slot == index);
     }
     pub fn write(mut self, ram: &mut (impl crate::ram::CompatibilityRam + ?Sized)) {
+        ram.store_words(&mut self, |_| true);
+    }
+}
+
+impl crate::projection::Layout for LiquidWords {
+    fn visit(&mut self, mut visit: impl FnMut(usize, &mut u16)) {
         for (at, word) in self.slots() {
-            crate::projection::set_word(ram, at, *word);
+            visit(at, word);
         }
     }
 }

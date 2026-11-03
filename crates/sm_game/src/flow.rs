@@ -50,7 +50,7 @@ impl crate::session_cohort::Cohort for Flow {
 
 /// The flow as the host's projection holds it.
 pub fn current<H: CompatibilityRam + ?Sized>(h: &H) -> Flow {
-    crate::session_encoding::flow(&crate::projection::reader(h))
+    crate::projection::Views::decode_view(h)
 }
 
 /// A flow word, by its RAM name.
@@ -65,7 +65,7 @@ pub enum Word {
 
 /// Store `value` to `word`, low byte then high, as the named word store did.
 pub fn set<H: CompatibilityRam + ?Sized>(h: &mut H, word: Word, value: u16) {
-    crate::projection::set_word(h, crate::session_encoding::FLOW + 2 * word as usize, value);
+    h.set_view_word(crate::projection::Field::Flow(word), value);
 }
 
 impl Flow {

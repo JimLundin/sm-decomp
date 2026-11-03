@@ -16,6 +16,7 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use sm_game::external_inputs::ExternalInputs;
+use sm_game::projection::{Decode, Field as ViewField, Layout, Views};
 use sm_game::ram::{CompatibilityRam, words as ram};
 use sm_game::room_entry::world::WorldBinding;
 use sm_game::session::Session;
@@ -150,6 +151,45 @@ impl CompatibilityRam for Projection {
             write_projected_byte(&mut self.0, at, value),
             "{at:#x} is not projected"
         );
+    }
+    fn observed_inputs(&self) -> ExternalInputs {
+        sm_game::session_encoding::inputs(&|at| self.compatibility_byte(at))
+    }
+}
+impl Projection {
+    fn word(&self, at: usize) -> u16 {
+        u16::from_le_bytes([self.compatibility_byte(at), self.compatibility_byte(at + 1)])
+    }
+    fn set_word(&mut self, at: usize, value: u16) {
+        for (lane, byte) in value.to_le_bytes().into_iter().enumerate() {
+            self.compatibility_write_byte(at + lane, byte);
+        }
+    }
+}
+impl Views for Projection {
+    fn view_word(&self, field: ViewField) -> u16 {
+        self.word(field.address())
+    }
+    fn set_view_word(&mut self, field: ViewField, value: u16) {
+        self.set_word(field.address(), value);
+    }
+    fn set_view_low_byte(&mut self, field: ViewField, value: u8) {
+        self.compatibility_write_byte(field.address(), value);
+    }
+    fn decode_view<T: Decode>(&self) -> T {
+        T::decode(&|at| self.compatibility_byte(at))
+    }
+    fn load_words(&self, words: &mut impl Layout) {
+        words.visit(|at, word| *word = self.word(at));
+    }
+    fn store_words(&mut self, words: &mut impl Layout, mut select: impl FnMut(usize) -> bool) {
+        let mut index = 0;
+        words.visit(|at, word| {
+            if select(index) {
+                self.set_word(at, *word);
+            }
+            index += 1;
+        });
     }
 }
 
@@ -1230,8 +1270,9 @@ fn botwoon_death_words_round_trip() {
 
 #[test]
 fn projection_words_are_little_endian_byte_pairs() {
+    use sm_game::flow::Word;
     let mut host = Projection(session());
-    sm_game::projection::set_word(&mut host, 0x1f53, 0xbeef);
+    host.set_view_word(ViewField::Flow(Word::DemoTimer), 0xbeef);
     assert_eq!(
         host.0.flow.demo_timer, 0xbeef,
         "set_word stores low then high"
@@ -1247,14 +1288,14 @@ fn projection_words_are_little_endian_byte_pairs() {
         "high byte second"
     );
     assert_eq!(
-        sm_game::projection::word(&host, 0x1f53),
+        host.view_word(ViewField::Flow(Word::DemoTimer)),
         0xbeef,
         "word reads the pair"
     );
-    sm_game::projection::set_byte(&mut host, 0x1f54, 0x12);
-    assert_eq!(sm_game::projection::byte(&host, 0x1f54), 0x12, "byte store");
+    host.set_view_low_byte(ViewField::Flow(Word::DemoTimer), 0x12);
+    assert_eq!(projected_byte(&host.0, 0x1f53), Some(0x12), "byte store");
     assert_eq!(
-        host.0.flow.demo_timer, 0x12ef,
+        host.0.flow.demo_timer, 0xbe12,
         "a byte store changes one lane"
     );
 }

@@ -132,10 +132,10 @@ impl sm_game::actors::zebetites::Lease for crate::game::session_runtime::Runtime
 /// did: through the projected bytes, low then high.
 impl PlayerPosition for Game {
     fn player_word(&self, word: PlayerWord) -> u16 {
-        sm_game::projection::word(self, word.address())
+        crate::projection::word(self, word.address())
     }
     fn set_player_word(&mut self, word: PlayerWord, value: u16) {
-        sm_game::projection::set_word(self, word.address(), value)
+        crate::projection::set_word(self, word.address(), value)
     }
 }
 
