@@ -10,6 +10,7 @@ use crate::actors::slot_view::{SlotState, slot_index, slot_view};
 use crate::constants::enemy_properties::{
     K_ENEMY_PROPS_DISABLE_SAMUS_COLL, K_ENEMY_PROPS_INVISIBLE, K_ENEMY_PROPS_TANGIBLE,
 };
+use crate::display::transfer::{Source, TilemapUpload, queue_tilemap};
 use crate::enemy_script::EnemyScript;
 use crate::palette_copies::{copy_rom_colors_to_palette, copy_rom_colors_to_target_palette};
 use crate::ram::word;
@@ -75,10 +76,9 @@ pub const DOOR_SPRITEMAP: u16 = 0xfac7;
 const BEACON_PALETTES: u16 = 0xf871;
 /// The pre-explosion door overlay tiles in bank $B0, and their VRAM address.
 const OVERLAY_TILES: u16 = 0xc400;
-const OVERLAY_TILES_BANK: u16 = 0xb000;
+const OVERLAY_TILES_BANK: u8 = 0xb0;
 const OVERLAY_VRAM: u16 = 0x7000;
 const OVERLAY_SIZE: u16 = 1024;
-const VRAM_WRITE_QUEUE: usize = 0xd0;
 /// Bank $86 dust cloud / explosion enemy projectile and its kinds.
 const DUST_CLOUD: u16 = 0xe509;
 const SMALL_EXPLOSION: u16 = 3;
@@ -153,12 +153,6 @@ pub fn steam_touch<L: Lease + ?Sized>(game: &mut L) {
     let steam = current(game);
     SteamEdit::of(game, steam).actor().health = 0x7fff;
     game.react_to_contact(Death::Finalize);
-}
-
-fn store_word<L: Lease + ?Sized>(game: &mut L, at: usize, value: u16) {
-    let bytes = value.to_ne_bytes();
-    game.set_slot_byte(at, bytes[0]);
-    game.set_slot_byte(at + 1, bytes[1]);
 }
 
 /// Initialisation AI - enemy $E1FF (steam) ($A6:EFB1): its kind picks the
@@ -278,13 +272,20 @@ pub fn load_overlay_tiles<L: Lease + ?Sized>(k: u16, game: &mut L) {
     if Door::of(game, k).kind() != ELEVATOR_DOOR_OVERLAY {
         return;
     }
-    let tail = word!(game.VRAM_WRITE_QUEUE_TAIL);
-    let entry = VRAM_WRITE_QUEUE + usize::from(word!(game.VRAM_WRITE_QUEUE_TAIL));
-    store_word(game, entry, OVERLAY_SIZE);
-    store_word(game, entry + 3, OVERLAY_TILES_BANK);
-    store_word(game, entry + 2, OVERLAY_TILES);
-    store_word(game, entry + 5, OVERLAY_VRAM);
-    word!(game.VRAM_WRITE_QUEUE_TAIL = tail.wrapping_add(7));
+    // The original stores the bank's word before the source's, whose high byte
+    // then overwrites the bank's low byte: the record is the plain upload.
+    queue_tilemap(
+        game,
+        TilemapUpload {
+            bytes: OVERLAY_SIZE,
+            source: Source {
+                address: OVERLAY_TILES,
+                bank: OVERLAY_TILES_BANK,
+            },
+            column: false,
+            vram_address: OVERLAY_VRAM,
+        },
+    );
 }
 
 /// Main AI - enemy $E23F (Ceres door) ($A6:F765). Was `CeresDoor_Main`.
