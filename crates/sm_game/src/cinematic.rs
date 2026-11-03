@@ -441,6 +441,40 @@ pub enum CinematicDestination {
     Palette { offset: usize, native: bool },
 }
 
+/// The bank $7F buffers the intro and the credits decompress their tilemaps
+/// into, by the owners of the level data they overlay.
+const LEVEL_SIZE: usize = 0x10000;
+const LEVEL_WORDS: usize = 0x10002;
+const LEVEL_BEHAVIOR: usize = 0x16402;
+const BACKGROUND_BLOCKS: usize = 0x19602;
+const BACKGROUND_END: usize = 0x1fa02;
+
+/// The byte at `at` of the decompressed tilemaps in bank $7F: the level data
+/// size word ($7F:0000), the room terrain's level words ($7F:0002..$7F:6401)
+/// and behaviour bytes ($7F:6402..$7F:9601), then the custom background
+/// blocks ($7F:9602..$7F:FA01). The credits rows come from $7F:0000..$7F:1FFF,
+/// the intro's Japanese text tiles from $7F:8290 and its background from
+/// $7F:9000..$7F:97FF, across the behaviour bytes and the background blocks.
+fn decompressed_byte<H: crate::menus::host::Host + ?Sized>(game: &H, at: usize) -> u8 {
+    let lane = |word: u16, offset: usize| word.to_le_bytes()[offset % 2];
+    match at {
+        LEVEL_SIZE..LEVEL_WORDS => lane(game.level_data_size(), at - LEVEL_SIZE),
+        LEVEL_WORDS..LEVEL_BEHAVIOR => {
+            let offset = at - LEVEL_WORDS;
+            lane(game.level_word(offset / 2), offset)
+        }
+        LEVEL_BEHAVIOR..BACKGROUND_BLOCKS => game.level_behavior(at - LEVEL_BEHAVIOR),
+        BACKGROUND_BLOCKS..BACKGROUND_END => {
+            let offset = at - BACKGROUND_BLOCKS;
+            lane(game.background_block(offset / 2), offset)
+        }
+        // LEGACY(original-overflow): a source outside these buffers (a credits
+        // row offset from the ROM past the background blocks) reads whatever
+        // RAM lies there.
+        _ => crate::legacy_overflow::ram_byte(game, at),
+    }
+}
+
 /// Copy captured lanes in their original traversal and publication order.
 /// Native room-payload sources remain a disclosed compatibility boundary.
 pub fn transfer_cinematic_words<H: crate::menus::host::Host + ?Sized>(
@@ -459,7 +493,7 @@ pub fn transfer_cinematic_words<H: crate::menus::host::Host + ?Sized>(
             let value = match source {
                 WordEndpoint::Ram(base, native) => {
                     let at = address(*base, displacement);
-                    let bytes = [game.compatibility_byte(at), game.compatibility_byte(at + 1)];
+                    let bytes = [decompressed_byte(game, at), decompressed_byte(game, at + 1)];
                     if *native {
                         u16::from_ne_bytes(bytes)
                     } else {

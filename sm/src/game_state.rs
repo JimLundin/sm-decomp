@@ -2226,6 +2226,21 @@ impl sm_game::display::queued_tilemaps::BackgroundBlocks for Game {
     }
 }
 
+/// The level data through the compatibility projection.
+impl sm_game::room_state::LevelData for Game {
+    fn level_data_size(&self) -> u16 {
+        let at = sm_game::ram::words::RAM7_F_START;
+        u16::from_le_bytes([self.compatibility_byte(at), self.compatibility_byte(at + 1)])
+    }
+    fn level_word(&self, cell: usize) -> u16 {
+        let at = sm_game::ram::word_arrays::LEVEL_DATA + 2 * cell;
+        u16::from_le_bytes([self.compatibility_byte(at), self.compatibility_byte(at + 1)])
+    }
+    fn level_behavior(&self, cell: usize) -> u8 {
+        self.compatibility_byte(sm_game::ram::bytes::BTS + cell)
+    }
+}
+
 /// Game's projection: compatibility reads and RAM-image stores, as named RAM words use.
 impl sm_game::runtime_access::SessionRam for Game {
     fn byte(&self, at: usize) -> u8 {
