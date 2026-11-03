@@ -862,26 +862,27 @@ fn advance_gameplay<H: Host>(game: &mut H) -> CoroutineRet {
             game.set_resume_point(ResumePoint::RoomObjects as u8);
             return yielded;
         }
-        animated_tiles::advance(&mut game.runtime());
-        // This is a new read: earlier callbacks may change interaction policy.
-        if crate::session_words::current(game).debug_disable_sprite_interact == 0 {
-            enemy_projectiles::contact::enemy_projectiles_hit_samus(&mut game.runtime());
-            enemy_projectiles::contact::shoot_enemy_projectiles(&mut game.runtime());
-            actors::contacts::apply_power_bomb_to_enemies(&mut game.runtime());
-        }
-        advance_camera(&mut game.runtime());
-        let debug_scrolling_enabled: i32 = 0;
-        if debug_scrolling_enabled != 0 {
-            debug_position(&mut game.runtime());
-        }
-        actors::drawing::draw_scene(&mut game.runtime());
         {
-            // The HUD reads Samus's owned values on the actor-tile lease.
+            // The animated tiles, contacts, camera, scene, HUD and scrolls run on one lease.
             let mut lease = game.runtime();
+            animated_tiles::advance(&mut lease);
+            // This is a new read: earlier callbacks may change interaction policy.
+            if lease.session().actors.diagnostics.sprite_contacts_disabled == 0 {
+                enemy_projectiles::contact::enemy_projectiles_hit_samus(&mut lease);
+                enemy_projectiles::contact::shoot_enemy_projectiles(&mut lease);
+                actors::contacts::apply_power_bomb_to_enemies(&mut lease);
+            }
+            advance_camera(&mut lease);
+            let debug_scrolling_enabled: i32 = 0;
+            if debug_scrolling_enabled != 0 {
+                debug_position(&mut lease);
+            }
+            actors::drawing::draw_scene(&mut lease);
+            // The HUD reads Samus's owned values after the actor tiles.
             actors::staging::queue_actor_tiles(&mut lease);
             hud::advance(&mut lease);
+            update_scrolls(&mut lease);
         }
-        update_scrolls(&mut game.runtime());
         game.advance_room();
         finish_health_and_time(game);
         finish_frame(game);
