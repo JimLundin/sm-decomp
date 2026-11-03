@@ -132,10 +132,10 @@ pub fn freeze_and_backup<H: Host + ?Sized>(hdma_index: usize, game: &mut H) {
     crate::hdma_byte!(game, hdma_index, C, false => game.display_control_byte(Field::Screens1));
 }
 pub fn capture_bg1_right<H: Host + ?Sized>(game: &mut H) {
-    enqueue_readback(0x58, 1024, 0x6800, 2048, false, game);
+    enqueue_readback(Field::Screens0, 1024, 0x6800, 2048, false, game);
 }
 pub fn capture_bg1_left<H: Host + ?Sized>(game: &mut H) {
-    enqueue_readback(0x58, 0, 0x6000, 2048, false, game);
+    enqueue_readback(Field::Screens0, 0, 0x6000, 2048, false, game);
 }
 /// Copy the visible BG1 into the overlay and reveal the hidden blocks of its
 /// 16 rows of 17 blocks, then the room's revealed items, and queue the BG2
@@ -167,7 +167,7 @@ pub fn build_overlay<H: Host + ?Sized>(game: &mut H) {
         }
         reveal_room_items(h);
     }
-    enqueue_readback(0x59, 0, 0x5000, 2048, false, game);
+    enqueue_readback(Field::Screens1, 0, 0x5000, 2048, false, game);
 }
 
 fn native_record<R: SessionView>(bank: u8, address: u16, h: &mut R) -> <R as Content>::Record {
@@ -389,7 +389,7 @@ pub fn capture_bg2_right<H: Host + ?Sized>(game: &mut H) {
         );
         game.store_display_control_byte(Field::Screens1, 73, Store::Named);
     }
-    enqueue_readback(0x59, 1024, 0x5800, 2048, true, game);
+    enqueue_readback(Field::Screens1, 1024, 0x5800, 2048, true, game);
 }
 pub fn can_reveal_blocks<H: Host + ?Sized>(game: &mut H) -> bool {
     game.xray_blend_mask() == 0x4000

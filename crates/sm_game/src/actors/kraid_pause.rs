@@ -180,6 +180,5 @@ fn kraid_y<H: Host + ?Sized>(game: &H) -> u16 {
 /// Pause hook - Kraid ($A7:C325): read his BG2 tiles back to $7E:5000. Was
 /// `PauseHook_Kraid`.
 pub fn pause<H: Host + ?Sized>(game: &mut H) {
-    // The readback names its screen base by the BG12NBA mirror's address.
-    enqueue_readback(0x5d, 15872, 0x5000, 1024, false, game);
+    enqueue_readback(BG12_TILES_BASE, 15872, 0x5000, 1024, false, game);
 }

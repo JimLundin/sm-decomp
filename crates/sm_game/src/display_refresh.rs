@@ -15,7 +15,7 @@ use crate::display::transfer::{ScrollingLayout, TilemapQueue, setup_transfer};
 use crate::display::video::{
     Background, Command, Control, Mirror, Upload, apply_controls, apply_mirrored,
 };
-use crate::ram::{CompatibilityRam, RawRam};
+use crate::ram::CompatibilityRam;
 use crate::scene::irq;
 use crate::scene::state::DisplayError;
 use crate::word_transfers;
@@ -58,6 +58,8 @@ pub trait Host:
     /// next 9-byte record at $7E:0340.
     fn readback_queue_tail(&self) -> u16;
     fn set_readback_queue_tail(&mut self, tail: u16);
+    /// Store byte `offset` of the VRAM readback queue's records ($7E:0340).
+    fn store_readback_byte(&mut self, offset: usize, value: u8);
     fn flush_tilemaps(&mut self);
     /// Fill VRAM's low bytes with `fill` from address 0, resetting the
     /// address as one word or two bytes.
@@ -1017,14 +1019,14 @@ pub fn queue_fx_clear<H: CompatibilityRam + DisplayOwner + TilemapQueue + ?Sized
 
 fn write_readback_word<H: Host + ?Sized>(game: &mut H, offset: usize, value: u16) {
     let bytes = value.to_ne_bytes();
-    game.ram().write_byte(offset, bytes[0]);
-    game.ram().write_byte(offset + 1, bytes[1]);
+    game.store_readback_byte(offset, bytes[0]);
+    game.store_readback_byte(offset + 1, bytes[1]);
 }
 
 /// Queue a VRAM readback of `size` bytes into WRAM at `destination`, from
-/// the screen base in the register mirror at `register` plus `vram_offset`.
+/// the screen base in the register mirror `register` plus `vram_offset`.
 pub fn enqueue_readback<H: Host + ?Sized>(
-    register: usize,
+    register: crate::display::preparation::Field,
     vram_offset: u16,
     destination: u16,
     size: u16,
@@ -1032,9 +1034,9 @@ pub fn enqueue_readback<H: Host + ?Sized>(
     game: &mut H,
 ) {
     let tail = game.readback_queue_tail();
-    let entry = 0x340 + usize::from(tail);
+    let entry = usize::from(tail);
     let target =
-        ((u16::from(game.ram().read_byte(register)) & 0xfc) << 8).wrapping_add(vram_offset);
+        ((u16::from(game.display_control_byte(register)) & 0xfc) << 8).wrapping_add(vram_offset);
     write_readback_word(game, entry, target);
     if !retain_mode {
         write_readback_word(game, entry + 2, 129);
