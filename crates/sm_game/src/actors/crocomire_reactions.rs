@@ -24,7 +24,6 @@ use crate::enemy_script::EnemyScript;
 use crate::legacy_overflow;
 use crate::menus::prelude::battle;
 use crate::menus::prelude::{display_scroll, do_until, owned};
-use crate::ram::word;
 use sm_data::crocomire::{
     BRIDGE_DEBRIS_ADDRESS, FLESH_TILEMAP_ADDRESS, MELT_TILES, SCROLL_SPRITEMAP_ADDRESS,
     SKELETON_TILEMAP_ADDRESS, SPIKE_WALL_DESTINATION_ADDRESS, SPIKE_WALL_TILE_ADDRESS,
@@ -116,8 +115,9 @@ const MELTING_Y_OFFSETS: usize = 0x69c;
 /// $7E:068C: the pixels to erase per column a frame, the low byte of the
 /// melt's third word.
 const PIXELS_TO_ERASE: usize = 2;
-/// $7E:CAE0: Crocomire's BG2 Y scroll indirect HDMA table.
-const SCROLL_HDMA_TABLE: usize = 0xcae0;
+/// $7E:CAF0: the first BG2 Y scroll line of Crocomire's HDMA tables
+/// (`actors.crocomire_scroll`).
+const SCROLL_LINES: usize = 0xcaf0;
 /// The scroll cells ($7E:CD20 + cell, `room.scrolls`) the death sequence
 /// writes a pair at a time: 0 is red, 1 blue.
 const SCROLLS_0_1: usize = 0;
@@ -200,7 +200,33 @@ fn load_colours<L: Lease + ?Sized>(game: &mut L, first: usize, address: u32, cou
 }
 pub fn fill_scroll<L: Lease + ?Sized>(game: &mut L) {
     let scroll = display_scroll!(game.Bg2V);
-    crate::word_transfers!(game, descending, 256; le(CROCOMIRE_BG2_SCROLL_HDMA_DATA, 255) <- value(scroll));
+    game.session_mut().actors.crocomire_scroll.lines = [scroll; 256];
+    game.words_stored();
+}
+/// Store `value` to BG2 Y scroll line `line` ($7E:CAF0 + 2 * line).
+fn set_scroll_line<L: Lease + ?Sized>(game: &mut L, line: u16, value: u16) {
+    let index = usize::from(line);
+    if let Some(word) = game
+        .session_mut()
+        .actors
+        .crocomire_scroll
+        .lines
+        .get_mut(index)
+    {
+        *word = value;
+        game.words_stored();
+    } else {
+        // LEGACY(original-overflow): a line from Crocomire's Y position
+        // (y - 72, which wraps below 72) or the melt's steps can pass the 256 lines.
+        legacy_overflow::set_slot_word(game, SCROLL_LINES + 2 * index, value);
+    }
+}
+/// Store `value` in native byte order at byte `offset` of the scroll's
+/// indirect HDMA table ($7E:CAE0).
+fn set_indirect_native<L: Lease + ?Sized>(game: &mut L, offset: usize, value: u16) {
+    game.session_mut().actors.crocomire_scroll.indirect[offset..offset + 2]
+        .copy_from_slice(&value.to_ne_bytes());
+    game.words_stored();
 }
 pub fn melt_down<L: Lease + ?Sized>(game: &mut L) {
     fill_scroll(game);
@@ -1112,12 +1138,9 @@ pub fn melting<L: Lease + ?Sized>(game: &mut L) {
             let mut v7: u16 = battle!(game.MeltYOffset);
             battle!(game.MessageBoxScratch1 = battle!(game.MeltYOffset));
             do_until! { ((v7) as i16).wrapping_sub((battle!(game.MeltMaxY)) as i16) >= 0 ;
-                word!(
-                    game.CROCOMIRE_BG2_SCROLL_HDMA_DATA[(v6 >> 1)] =
-                        (display_scroll!(game.Bg2V) as i32 + v7 as i32
-                            - battle!(game.MessageBoxScratch1) as i32)
-                            as u16
-                );
+                let scroll = (display_scroll!(game.Bg2V) as i32 + v7 as i32
+                    - battle!(game.MessageBoxScratch1) as i32) as u16;
+                set_scroll_line(game, v6 >> 1, scroll);
                 let v8: bool = u16::overflowing_add(battle!(game.MeltDisplacement), r18).1;
                 r18 = (r18).wrapping_add(battle!(game.MeltDisplacement));
                 if !v8 {
@@ -1129,7 +1152,7 @@ pub fn melting<L: Lease + ?Sized>(game: &mut L) {
             if ((v6) as i16).wrapping_sub(512) < 0 {
                 let v9: u16 = display_scroll!(game.Bg2V);
                 do_until! { ((v6) as i16).wrapping_sub(512) >= 0 ;
-                    word!(game.CROCOMIRE_BG2_SCROLL_HDMA_DATA[(v6 >> 1)] = v9);
+                    set_scroll_line(game, v6 >> 1, v9);
                     v6 = (v6).wrapping_add(2);
                 }
             }
@@ -1561,18 +1584,18 @@ pub fn prepare_scroll_hdma<L: Lease + ?Sized>(game: &mut L) {
     let mut v1: u16 = (2 * (Crocomire::of(game, 0x40).actor().y.whole as i32 - 72i32)) as u16;
     let v2: u16 = display_scroll!(game.Bg2V);
     do_until! { (v1 & 0x8000) != 0 ;
-        word!(game.CROCOMIRE_BG2_SCROLL_HDMA_DATA[(v1 >> 1)] = v2);
+        set_scroll_line(game, v1 >> 1, v2);
         v1 = (v1).wrapping_sub(2);
     }
     let e = game.current_enemy();
     next_death_step(e, game);
     let v4: u16 = 0;
     *CrocomireEdit::of(game, 0x80).step_counter() = Crocomire::of(game, v4).actor().x.whole;
-    crate::word_transfers!(game, ascending, 1; native(SCROLL_HDMA_TABLE) <- value(255));
-    crate::word_transfers!(game, ascending, 1; native(SCROLL_HDMA_TABLE + 1) <- value(-13584i32 as u16));
-    crate::word_transfers!(game, ascending, 1; native(SCROLL_HDMA_TABLE + 3) <- value(225));
-    crate::word_transfers!(game, ascending, 1; native(SCROLL_HDMA_TABLE + 4) <- value(-13330i32 as u16));
-    crate::word_transfers!(game, ascending, 1; native(SCROLL_HDMA_TABLE + 6) <- value(0));
+    // 127 lines from $7E:CAF0, then 97 from $7E:CBEE, then the terminator;
+    // each count is stored as a word whose high byte the pointer after it overwrites.
+    for (offset, value) in [(0, 0x00ff), (1, 0xcaf0), (3, 0x00e1), (4, 0xcbee), (6, 0)] {
+        set_indirect_native(game, offset, value);
+    }
 }
 
 // Returned only for the two synchronous hardware phases of the fixed actor-0 driver.
