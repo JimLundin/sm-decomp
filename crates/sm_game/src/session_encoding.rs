@@ -1490,6 +1490,24 @@ fn input_lanes() -> &'static [usize] {
         lanes.into_boxed_slice()
     })
 }
+/// The index in `input_lanes` of the input byte at `at`.
+fn input_lane(at: usize) -> Option<usize> {
+    static INDEX: std::sync::OnceLock<Box<[u8]>> = std::sync::OnceLock::new();
+    let index = INDEX.get_or_init(|| {
+        let mut index = vec![u8::MAX; 0x20000].into_boxed_slice();
+        for (lane, &at) in input_lanes().iter().enumerate() {
+            index[at] = u8::try_from(lane)
+                .ok()
+                .filter(|&lane| lane != u8::MAX)
+                .expect("input lane count");
+        }
+        index
+    });
+    index
+        .get(at)
+        .filter(|&&lane| lane != u8::MAX)
+        .map(|&lane| usize::from(lane))
+}
 /// `projected_byte` at the bytes `inputs` reads, taken in one pass over the scalar words
 /// rather than one pass per byte.
 pub struct InputProjection<'s> {
@@ -1501,14 +1519,10 @@ impl<'s> InputProjection<'s> {
         let lanes = input_lanes();
         let mut bytes: Box<[Option<u8>]> = lanes.iter().map(|&at| owned_byte(s, at)).collect();
         let mut scalars = vec![None; lanes.len()];
-        let (first, last) = (lanes[0], lanes[lanes.len() - 1]);
         let mut select = |base: usize, value: &u16| {
-            for (lane, &byte) in value.to_le_bytes().iter().enumerate() {
-                let at = base + lane;
-                if (first..=last).contains(&at)
-                    && let Ok(index) = lanes.binary_search(&at)
-                {
-                    scalars[index] = Some(byte);
+            for (offset, &byte) in value.to_le_bytes().iter().enumerate() {
+                if let Some(lane) = input_lane(base + offset) {
+                    scalars[lane] = Some(byte);
                 }
             }
         };
@@ -1522,9 +1536,9 @@ impl<'s> InputProjection<'s> {
     }
     /// `projected_byte(s, at)`.
     pub fn byte(&self, at: usize) -> Option<u8> {
-        match input_lanes().binary_search(&at) {
-            Ok(index) => self.bytes[index],
-            Err(_) => projected_byte(self.session, at),
+        match input_lane(at) {
+            Some(lane) => self.bytes[lane],
+            None => projected_byte(self.session, at),
         }
     }
 }
