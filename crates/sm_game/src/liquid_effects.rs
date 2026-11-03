@@ -172,13 +172,15 @@ pub fn lava_surface<H: crate::menus::host::Host + ?Sized>(
                 crate::hdma_word!(game, hdma_index, C => 112);
                 game.queue_sound(
                     1,
-                    (LAVA_SOUND_EFFECTS[(word!(game.RANDOM_NUMBER) as i32 & 7) as usize] as u16)
-                        as u8,
+                    (LAVA_SOUND_EFFECTS[(game.view_word(crate::projection::Field::RandomNumber)
+                        as i32
+                        & 7) as usize] as u16) as u8,
                     6,
                 );
             }
         }
-        word!(game.RANDOM_NUMBER = u16::swap_bytes(word!(game.RANDOM_NUMBER)));
+        let random = game.view_word(crate::projection::Field::RandomNumber);
+        game.set_view_word(crate::projection::Field::RandomNumber, random.swap_bytes());
         let v8 = table_height(words.liquid.lava_acid.whole, camera.layer1[1], false);
         crate::hdma_word!(game, hdma_index, Table => (3 * (((v8 as i32 ^ 0x1ff) + 1) & 0x3ff) + 0xb62a) as u16);
     }

@@ -54,6 +54,8 @@ pub enum Field {
     /// Whether an APU upload is under way ($0617), as the owned audio
     /// requests hold it; with legacy control the byte path answers.
     ApuUploading,
+    /// The random number generator's last result ($05E5).
+    RandomNumber,
 }
 
 impl Field {
@@ -78,6 +80,7 @@ impl Field {
             Self::MessageDelay => words::MY_COUNTER,
             Self::UnpauseQueueTail => words::MY_COUNTER2,
             Self::ApuUploading => words::IS_UPLOADING_APU,
+            Self::RandomNumber => words::RANDOM_NUMBER,
         }
     }
 
@@ -124,6 +127,7 @@ impl Field {
                 crate::session_owners::Control::Owned(control) => control.requests.uploading,
                 crate::session_owners::Control::Legacy(_) => return None,
             },
+            Self::RandomNumber => session.timing.random_number,
         })
     }
 
@@ -171,6 +175,7 @@ impl Field {
             Self::MessageDelay => &mut session.messages.delay,
             Self::UnpauseQueueTail => &mut session.room.unpause_queue_tail,
             Self::ApuUploading => return None,
+            Self::RandomNumber => &mut session.timing.random_number,
         })
     }
 }
