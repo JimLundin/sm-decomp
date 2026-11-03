@@ -175,6 +175,13 @@ pub struct ActorCompatibility {
     /// $7E:1874, the removed spritemap collision's right border word, which
     /// the bang still stores its beam direction to.
     pub right_border: u16,
+    /// The spare words among the enemy globals, which no gameplay routine
+    /// uses and the ending's shooting stars keep records in: $7E:0E0C..$0E11,
+    /// $0E14, $0E2C..$0E3F and $0E42.
+    pub spare_0e0c: [u16; 3],
+    pub spare_0e14: u16,
+    pub spare_0e2c: [u16; 10],
+    pub spare_0e42: u16,
 }
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct ActorDiagnostics {

@@ -82,16 +82,21 @@ macro_rules! spawn_word {
 // extended RAM 7800..9000 is owned here except the five Botwoon death words
 // (801E, 8020, 803C, 8818, 883E), which keep their own cohort; the bosses'
 // RAM 9000..97DC is owned here too, and the angles 97DC..9800 stay with eproj.
-// The Work Robot's palette cycle D652..D658 is owned here.
+// The Work Robot's palette cycle D652..D658 is owned here, and so are the spare
+// enemy-global words E0C..E12, E14, E2C..E40 and E42 the ending's stars use.
 // Lighting 1778..1784 stays with the canonical FX control owner; actor alias
 // readers/writers below resolve that provider without importing/emitting twice.
-const COMMON_RANGES: [(usize, usize); 28] = [
+const COMMON_RANGES: [(usize, usize); 32] = [
     (0x0688, 0x071c),
     (0x2000, 0x3000),
+    (0x0e0c, 0x0e12),
     (0x0e12, 0x0e14),
+    (0x0e14, 0x0e16),
     (0x0e1c, 0x0e20),
     (0x0e22, 0x0e2c),
+    (0x0e2c, 0x0e40),
     (0x0e40, 0x0e42),
+    (0x0e42, 0x0e44),
     (0x0e44, 0x0e50),
     (0x0e54, 0x0e84),
     (0x0e84, 0x0f78),
@@ -133,11 +138,15 @@ macro_rules! common_word {
             0xd652 => Some($($borrow)* $s.actors.work_robot_palette.palette_index),
             0xd654 => Some($($borrow)* $s.actors.work_robot_palette.timer),
             0xd656 => Some($($borrow)* $s.actors.work_robot_palette.cursor),
+            at @ 0x0e0c..=0x0e10 => Some($($borrow)* $s.actors.compatibility.spare_0e0c[(at - 0x0e0c) / 2]),
             0x0e12 => Some($($borrow)* $s.actors.diagnostics.sprite_contacts_disabled),
+            0x0e14 => Some($($borrow)* $s.actors.compatibility.spare_0e14),
             0x0e1c => Some($($borrow)* $s.actors.controls.shake_request),
             0x0e1e => Some($($borrow)* $s.actors.drawing.tilemap_pending),
             at @ 0x0e22..=0x0e2a => Some($($borrow)* $s.actors.compatibility.scratch[(at - 0x0e22) / 2]),
+            at @ 0x0e2c..=0x0e3e => Some($($borrow)* $s.actors.compatibility.spare_0e2c[(at - 0x0e2c) / 2]),
             0x0e40 => Some($($borrow)* $s.actors.combat.last_power),
+            0x0e42 => Some($($borrow)* $s.actors.compatibility.spare_0e42),
             0x0e44 => Some($($borrow)* $s.actors.controls.phase_counter),
             0x0e46 => Some($($borrow)* $s.actors.controls.selection_visits),
             0x0e48 => Some($($borrow)* $s.actors.controls.population_scratch),
@@ -206,6 +215,12 @@ macro_rules! common_byte {
             _ => None,
         }
     };
+}
+
+/// The word field the codec projects at byte `offset` of an actor's record;
+/// `None` at the `bank` and `hurt_time` bytes (offset 2Eh) and past the record.
+pub fn record_word_mut(actor: &mut Actor, offset: usize) -> Option<&mut u16> {
+    actor_word!(actor, offset, (&mut))
 }
 
 pub fn projected_byte(s: &Session, at: usize) -> Option<u8> {
