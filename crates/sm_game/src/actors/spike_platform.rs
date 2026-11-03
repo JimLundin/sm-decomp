@@ -5,7 +5,6 @@ use crate::actors::combat;
 use crate::actors::host::{ActorLease, LeaseActors, abs16};
 use crate::actors::slot_view::{SlotState, slot_view};
 use crate::enemy_projectiles::host::Effects as _;
-use crate::ram::words as W;
 use sm_data::enemy_speeds::SpeedTable;
 
 slot_view! {
@@ -155,16 +154,14 @@ fn carry_samus(rt: &mut impl Lease, k: u16, start: u16) {
     let actor = SpikePlatform::of(rt, k).actor();
     let (x, y, width, height) = (actor.x.whole, actor.y.whole, actor.radius.x, actor.radius.y);
     let dx = abs16(rt.player_x().wrapping_sub(x));
-    let samus_width = rt.word(W::SAMUS_X_RADIUS);
+    let samus_width = rt.session().player.contact.x_radius;
     let feet = rt.player_y().wrapping_add(5);
     if (dx >= samus_width && dx - samus_width >= width) || feet.wrapping_sub(y) & 0x8000 == 0 {
         return;
     }
-    let (gap, samus_height) = (y.wrapping_sub(feet), rt.word(W::SAMUS_Y_RADIUS));
+    let (gap, samus_height) = (y.wrapping_sub(feet), rt.session().player.contact.radius);
     if gap < samus_height || gap - samus_height <= height {
-        let moved = rt
-            .word(W::EXTRA_SAMUS_Y_DISPLACEMENT)
-            .wrapping_add(y.wrapping_sub(start));
-        rt.write_slice_le(W::EXTRA_SAMUS_Y_DISPLACEMENT, moved);
+        let displacement = &mut rt.session_mut().player.contact.external_y.whole;
+        *displacement = displacement.wrapping_add(y.wrapping_sub(start));
     }
 }
