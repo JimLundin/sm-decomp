@@ -166,6 +166,8 @@ impl<'g> Runtime<'g> {
     pub fn new(game: &'g mut Game) -> Self {
         #[cfg(sm_verify_dll)]
         player_normal_transfers::record(game, 0);
+        #[cfg(sm_verify_dll)]
+        lease_counters::lease(game.foreign_presentation_active());
         if let Some(session) = game
             .lease_persistent_session()
             .expect("Session lease rejected")
@@ -179,6 +181,8 @@ impl<'g> Runtime<'g> {
             };
         }
         let (state, inputs) = reuse_frame_session(game).unwrap_or_else(|| {
+            #[cfg(sm_verify_dll)]
+            lease_counters::import();
             let state = import_session(game);
             (state, encoding::inputs(&|at| game.ram().read_byte(at)))
         });
@@ -387,6 +391,8 @@ impl<'g> Runtime<'g> {
         .expect("owned Samus publication");
     }
     pub fn foreign<R>(&mut self, action: impl FnOnce(&mut Game) -> R) -> R {
+        #[cfg(sm_verify_dll)]
+        lease_counters::foreign();
         assert!(self.persistent_is_current(), "Session lease is dirty");
         preflight_export(self.session(), self.game);
         let mut mutation = self.game.samus_mutation();
@@ -1190,6 +1196,8 @@ pub(crate) fn with_frame_session<R>(game: &mut Game, tick: impl FnOnce(&mut Game
     if let Some(kept) = game.frame_session.kept.as_mut() {
         kept.crossed = true;
     }
+    #[cfg(sm_verify_dll)]
+    lease_counters::tick();
     result
 }
 
@@ -2125,6 +2133,9 @@ pub(crate) mod player_minimap_boss;
 #[path = "../verification/player_minimap_edges.rs"]
 pub(crate) mod player_minimap_edges;
 
+#[cfg(sm_verify_dll)]
+#[path = "../verification/lease_counters.rs"]
+mod lease_counters;
 #[cfg(sm_verify_dll)]
 #[path = "../verification/player_normal_transfers.rs"]
 pub(crate) mod player_normal_transfers;
