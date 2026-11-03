@@ -45,13 +45,13 @@ BASELINE = {
     "sm_game_coupled_files": 74,
     "production_lines": 173506,
     # Engine inventory (Jim, 2026-11-02): address-shaped access is RAM access.
-    # First measured on main 0115740f5. Address APIs and raw calls are enforced:
+    # First measured on main 0115740f5 (ROM record reads excluded). Address APIs and raw calls are enforced:
     # converting counted sites into them is not a retirement, and the address
     # decoding behind them slows every replay. The lexical unresolved-method and
     # legacy-engine measures are reported only.
-    "engine_ram_address_sites": 5887,
+    "engine_ram_address_sites": 5805,
     "engine_raw_ram_calls": 115,
-    "engine_unresolved_ram_methods": 1284,
+    "engine_unresolved_ram_methods": 1084,
     "legacy_engine_ram_sites": 546,
 }
 ADVISORY = {"production_lines", "engine_unresolved_ram_methods", "legacy_engine_ram_sites"}
