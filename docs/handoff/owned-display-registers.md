@@ -70,7 +70,8 @@ Replays always run the Legacy presentation, where the emulated PPU is the author
    encoding and leave sm_game.
 3. `display/sequence.rs` (the trait and macro, 9) goes when its last caller does.
 
-Ratchet blind spot: `write_register_and_mirror` stores the display mirrors through raw
-`WorkRamAccess::ram()`, which the ratchet counts only as one `RawRam` import. Before the Owned
-presentation runs on Game, these stores must become `preparation::Field` stores
-(`store_display_control_byte`).
+Mirror stores (lane `mirrors`): `write_register_and_mirror` and the `mirror`/`show_mirror`
+arms (sm_game's and rtl's) now take a `preparation::Field` and store it with
+`store_display_control_byte(.., Store::Named)`, the same RAM byte on Game. The ratchet counts
+any call whose mirror is still a RAM offset ("raw display mirror stores"); there are none.
+The register half of each call is still a register write.
