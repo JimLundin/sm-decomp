@@ -1,8 +1,8 @@
 //! X-ray background capture, hidden-block overlay and restoration.
+use crate::display::preparation::{Field, Store};
 use crate::display_refresh::enqueue_readback;
 use crate::player_transitions::xray::BlendPhase;
 use crate::presentation_workspace::{Point, Role};
-use crate::ram::RawRam;
 use crate::runtime_access::{RuntimeAccess, SessionView, with_session};
 use crate::session_access::SessionAccess;
 use crate::visual_host::{Content, Record, Source};
@@ -119,7 +119,8 @@ fn copy_background<H: Host + ?Sized>(game: &mut H) {
 /// Back up BG2's scroll in A and B and the layer blending byte in C's low
 /// byte; `restore_left` puts them back.
 pub fn freeze_and_backup<H: Host + ?Sized>(hdma_index: usize, game: &mut H) {
-    game.ram().write_byte(0xa78, 1);
+    // Freeze time: a byte store, so the flag's high byte is kept.
+    crate::sequence_word!(game.TIME_IS_FROZEN_FLAG, |frozen| (frozen & 0xff00) | 1);
     crate::hdma_word!(game, hdma_index, A => u16::from_le_bytes([
         crate::menus::prelude::display_scroll!(game.Bg2H) as u8,
         game.physical_scroll_byte(crate::display_scroll::Word::Bg2H, true),
@@ -128,7 +129,7 @@ pub fn freeze_and_backup<H: Host + ?Sized>(hdma_index: usize, game: &mut H) {
         crate::menus::prelude::display_scroll!(game.Bg2V) as u8,
         game.physical_scroll_byte(crate::display_scroll::Word::Bg2V, true),
     ]));
-    crate::hdma_byte!(game, hdma_index, C, false => game.ram().read_byte(0x59));
+    crate::hdma_byte!(game, hdma_index, C, false => game.display_control_byte(Field::Screens1));
 }
 pub fn capture_bg1_right<H: Host + ?Sized>(game: &mut H) {
     enqueue_readback(0x58, 1024, 0x6800, 2048, false, game);
@@ -386,7 +387,7 @@ pub fn capture_bg2_right<H: Host + ?Sized>(game: &mut H) {
         crate::menus::prelude::display_scroll!(
             game.Bg2V = (crate::menus::prelude::display_scroll!(game.Bg1V)) & (0xfu16)
         );
-        game.ram().write_byte(0x59, 73);
+        game.store_display_control_byte(Field::Screens1, 73, Store::Named);
     }
     enqueue_readback(0x59, 1024, 0x5800, 2048, true, game);
 }
@@ -442,8 +443,8 @@ pub fn restore_left<H: Host + ?Sized>(hdma_index: usize, game: &mut H) {
     set_backdrop_color(0, game);
     crate::menus::prelude::display_scroll!(game.Bg2H = crate::hdma_word!(game, hdma_index, A));
     crate::menus::prelude::display_scroll!(game.Bg2V = crate::hdma_word!(game, hdma_index, B));
-    game.ram()
-        .write_byte(0x59, crate::hdma_word!(game, hdma_index, C) as u8);
+    let screens = crate::hdma_word!(game, hdma_index, C) as u8;
+    game.store_display_control_byte(Field::Screens1, screens, Store::Named);
     if (game.queue_tail() as i16).wrapping_sub(240) < 0 {
         upload_screen(0x5000, 0, game);
         advance_stage(game);
@@ -487,9 +488,9 @@ pub fn finish_restore<H: Host + ?Sized>(hdma_index: usize, game: &mut H) {
         crate::hdma_word!(game, hdma_index, Channels => 0);
         game.queue_sound(0, 0xa, 6);
         if (game.runtime().session().room.liquid.kind as u8) != 36 {
-            game.ram().write_byte(0x76, 0x80);
-            game.ram().write_byte(0x75, 64);
-            game.ram().write_byte(0x74, 32);
+            game.store_display_control_byte(Field::FixedColor2, 0x80, Store::Named);
+            game.store_display_control_byte(Field::FixedColor1, 64, Store::Named);
+            game.store_display_control_byte(Field::FixedColor0, 32, Store::Named);
         }
         crate::player_transitions::xray::clear_window(&mut game.runtime());
         let mut runtime = game.runtime();
