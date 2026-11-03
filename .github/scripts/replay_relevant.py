@@ -23,6 +23,8 @@ IRRELEVANT = [
     "tools/progress.sh",
     "tools/progress_accounting.py",
     ".github/scripts/replay_relevant.py",
+    # Measured row seconds only decide how rows pack into jobs, not what any row replays.
+    ".github/scripts/row_seconds.*",
     # Tests the Quality jobs already run: target-package integration tests (cargo
     # test) and the mutation lists, whose anchors Quality checks.
     # sm/src/verification/*.rs is the verifier itself and stays relevant.
