@@ -18,7 +18,7 @@ impl Effects for Runtime<'_> {
         })
     }
     fn calculate_angle_from_xy(&mut self, x: u16, y: u16) -> u16 {
-        self.owned_call(|_| crate::game::actors::api::angle_from_delta(x, y))
+        self.owned_player_call(|_| crate::game::actors::api::angle_from_delta(x, y))
     }
     fn damage_player(&mut self, damage: u16) -> () {
         self.owned_call(|runtime| sm_game::samus_periodic_damage::contact(runtime, damage))
@@ -64,7 +64,7 @@ impl Effects for Runtime<'_> {
         crate::verify_probe::hit("eproj.drawn");
     }
     fn respawn_enemy(&mut self, index: u16) {
-        self.owned_call(|runtime| {
+        self.owned_player_call(|runtime| {
             crate::game::actors::population::respawn(
                 runtime,
                 crate::game::actors::access::ActorKey::from_legacy(index),

@@ -118,7 +118,7 @@ impl sm_game::actors::species::PreInstructionHost for Game {
 
 impl sm_game::actors::gunship::Host for Runtime<'_> {
     fn spawn_palette_effect(&mut self, definition: u16) {
-        self.owned_call(|runtime| {
+        self.owned_player_call(|runtime| {
             crate::game::palette_effects::execution::spawn(runtime, definition)
         });
     }
@@ -1000,7 +1000,9 @@ impl Host for Runtime<'_> {
         }
     }
     fn enable_hdma(&mut self) {
-        self.owned_call(|runtime| crate::game::visual_runtime::set_hdma_enabled(true, runtime));
+        self.owned_player_call(|runtime| {
+            crate::game::visual_runtime::set_hdma_enabled(true, runtime)
+        });
     }
     fn spawn_power_bomb(&mut self) {
         self.foreign(|g| sm_game::explosion_window::spawn_power_bomb(g));

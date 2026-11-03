@@ -116,13 +116,15 @@ impl sm_game::actors::deaths::Deaths for Game {
 impl sm_game::actors::zebetites::Lease for crate::game::session_runtime::Runtime<'_> {
     // The flag rules ran on a nested lease of the game; they run on this one.
     fn event_happened(&mut self, event: u16) -> u16 {
-        self.owned_call(|runtime| u16::from(sm_game::progress::event_happened(runtime, event)))
+        self.owned_player_call(|runtime| {
+            u16::from(sm_game::progress::event_happened(runtime, event))
+        })
     }
     fn set_event(&mut self, event: u16) {
-        self.owned_call(|runtime| sm_game::progress::set_event(runtime, event));
+        self.owned_player_call(|runtime| sm_game::progress::set_event(runtime, event));
     }
     fn clear_event(&mut self, event: u16) {
-        self.owned_call(|runtime| sm_game::progress::clear_event(runtime, event));
+        self.owned_player_call(|runtime| sm_game::progress::clear_event(runtime, event));
     }
     fn spawn_population(&mut self, bank: u8, population: u16) -> u16 {
         crate::game::actors::population::spawn_legacy(self, bank, population)
@@ -268,7 +270,7 @@ impl sm_game::actors::ridley::Host for crate::game::session_runtime::Runtime<'_>
     }
 
     fn set_boss_bit(&mut self, mask: u16) {
-        self.owned_call(|runtime| sm_game::progress::mark_boss_defeated(runtime, mask));
+        self.owned_player_call(|runtime| sm_game::progress::mark_boss_defeated(runtime, mask));
     }
 
     fn hardware_sine_cosine(&mut self, amplitude: u16, angle: u16) -> (u16, u16) {
@@ -288,7 +290,7 @@ impl sm_game::actors::ridley::Host for crate::game::session_runtime::Runtime<'_>
 
 impl sm_game::actors::ceres_ridley::Host for crate::game::session_runtime::Runtime<'_> {
     fn boss_byte(&mut self, area: u16) -> u8 {
-        self.owned_call(|runtime| sm_game::progress::boss_byte_at(runtime, area))
+        self.owned_player_call(|runtime| sm_game::progress::boss_byte_at(runtime, area))
     }
 
     fn queue_mode7_transfer(&mut self, bank: u8, list: u16) {
@@ -356,7 +358,7 @@ impl sm_game::actors::fire_arc::Lease for crate::game::session_runtime::Runtime<
 
 impl sm_game::actors::ceres_doors::Lease for crate::game::session_runtime::Runtime<'_> {
     fn area_boss_flags(&mut self) -> u8 {
-        self.owned_call(|runtime| {
+        self.owned_player_call(|runtime| {
             let area = runtime.session().room.area;
             sm_game::progress::boss_byte_at(runtime, area)
         })
@@ -369,7 +371,7 @@ impl sm_game::actors::ceres_doors::Lease for crate::game::session_runtime::Runti
 
 impl sm_game::actors::statues::Lease for crate::game::session_runtime::Runtime<'_> {
     fn boss_word_native(&mut self, area: u16) -> u16 {
-        self.owned_call(|runtime| {
+        self.owned_player_call(|runtime| {
             sm_game::progress::boss_word_at(runtime, area, sm_game::progress::BossWordOrder::Native)
         })
     }
