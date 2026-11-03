@@ -141,6 +141,7 @@ impl sm_game::actors::species::AiHost for Game {
 impl sm_game::actors::species::PreInstructionHost for Game {
     fn native_pre_instruction(&mut self, ea: u32, k: u16) {
         match ea {
+            11767039 => Runtime::new(self).owned_call(sm_game::actors::gamet::settle),
             11771328 | 11771517 | 11771616 | 11771700 | 11771770 => {
                 Runtime::new(self)
                     .owned_call(|runtime| actors::botwoon::pre_instruction(ea, k, runtime));

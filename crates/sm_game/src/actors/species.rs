@@ -147,8 +147,7 @@ pub fn draw_hook<H: DrawHookHost>(ea: u32, game: &mut H) {
 pub fn b3_pre_instruction<H: PreInstructionHost>(ea: u32, k: u16, game: &mut H) {
     match ea {
         11763835 => (),
-        11767039 => crate::actors::gamet::settle(game),
-        11771328 | 11771517 | 11771616 | 11771700 | 11771770 => {
+        11767039 | 11771328 | 11771517 | 11771616 | 11771700 | 11771770 => {
             game.native_pre_instruction(ea, k);
         }
         _ => {

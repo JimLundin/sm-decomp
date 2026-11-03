@@ -2,9 +2,7 @@
 //! Native actor words remain authoritative across the existing query boundaries.
 use crate::actors::boss_lease::{BossLease, BossState};
 use crate::actors::host::{Axis, BossEffects};
-use crate::actors::layouts::EnemyLayout72 as Bug;
 use crate::actors::slot_view::{SlotState, slot_view};
-use crate::session_slot;
 use sm_data::enemy_speeds::SpeedTable;
 
 /// A boss state whose slots are the Session's typed storage.
@@ -164,11 +162,13 @@ pub fn rise<H: Lease + ?Sized>(game: &mut H) {
         GametEdit::of(game, k).actor().instruction = instruction;
     }
 }
-/// Also a bank $B3 pre-instruction the game dispatches, so it keeps the address API.
-pub fn settle<H: BossState + ?Sized>(game: &mut H) {
-    let e = i32::from(game.current_enemy());
-    session_slot!(game, Bug[e].var_c, |old| old.wrapping_add(1));
-    session_slot!(game, Bug[e].var_a = 0x8e5a);
+/// Also a bank $B3 pre-instruction, which the game dispatches on a lease.
+pub fn settle<H: Lease + ?Sized>(game: &mut H) {
+    let k = game.current_enemy();
+    let mut gamet = GametEdit::of(game, k);
+    let counter = gamet.counter();
+    *counter = counter.wrapping_add(1);
+    *gamet.state() = 0x8e5a;
 }
 pub fn move_to_limit<H: Lease + ?Sized>(offset: i32, game: &mut H) {
     let k = game.current_enemy();
