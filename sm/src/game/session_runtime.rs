@@ -1709,6 +1709,9 @@ impl Runtime<'_> {
             self.owned_call(actors::magdollite::cycle_palette);
         } else if routine == 11069550 {
             self.owned_call(sm_game::actors::blue_brinstar_face_block::cycle_palette);
+        } else if species::EMPTY_DRAW_HOOKS.contains(&routine) {
+            // Nothing to draw; keep the former foreign call's observation refresh.
+            self.owned_player_call(|_| ());
         } else if !self.bank_a9_routine(routine) && !species::lease_draw_hook(routine, self) {
             self.foreign(|game| species::draw_hook(routine, game));
         }
