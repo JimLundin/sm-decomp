@@ -25,6 +25,16 @@ IRRELEVANT = [
     "tools/accountability_report.py",
     "tools/treemap.py",
     ".github/scripts/replay_relevant.py",
+    # Tests CI already runs: target-package integration tests (ci.yml cargo test)
+    # and the mutation lists, whose anchors ci.yml checks and whose mutants run
+    # nightly. sm/src/verification/*.rs is the verifier itself and stays relevant.
+    "crates/*/tests/*",
+    "sm/src/verification/*mutations.py",
+    ".github/scripts/test_summary.py",
+    # Workflows other than this one do not change what Verify replays.
+    ".github/workflows/ci.yml",
+    ".github/workflows/desktop.yml",
+    ".github/workflows/mutations.yml",
 ]
 
 
