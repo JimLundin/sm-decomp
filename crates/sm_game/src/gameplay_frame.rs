@@ -105,7 +105,6 @@ pub trait Host:
     fn advance_low_health_warning(&mut self);
 
     // Gameplay pass.
-    fn player_projectiles_hit_samus(&mut self);
     fn run_room_mechanisms(&mut self) -> u8;
     fn advance_room(&mut self);
 }
@@ -113,6 +112,8 @@ pub trait Host:
 /// The gameplay pass phases the compatibility runtime runs on a lease the pass
 /// already holds.
 pub trait PassLease {
+    /// Samus's own projectiles against her: the bomb jump.
+    fn player_projectiles_hit_samus(&mut self);
     /// Samus's frame: the frame handler's beta and gamma work.
     fn advance_player(&mut self);
 }
@@ -818,17 +819,16 @@ fn advance_gameplay<H: Host>(game: &mut H) -> CoroutineRet {
     crate::probe::hit("coroutine.gameplay");
     let resume = ResumePoint::read(game);
     if resume == ResumePoint::Start {
-        {
-            // Actor selection, the palette effects and Samus's projectiles run on one lease.
-            let mut lease = game.runtime();
-            actors::scheduling::select(&mut lease);
-            palette_effects::advance(&mut lease);
-            prepare_player_projectiles(&mut lease);
+        // Actor selection, the palette effects, Samus's projectiles and the enemies run on
+        // one lease.
+        let mut lease = game.runtime();
+        actors::scheduling::select(&mut lease);
+        palette_effects::advance(&mut lease);
+        prepare_player_projectiles(&mut lease);
+        if lease.session().actors.diagnostics.sprite_contacts_disabled == 0 {
+            lease.player_projectiles_hit_samus();
         }
-        if crate::session_words::current(game).debug_disable_sprite_interact == 0 {
-            game.player_projectiles_hit_samus();
-        }
-        actors::scheduling::advance_selected(&mut game.runtime());
+        actors::scheduling::advance_selected(&mut lease);
     }
     // Read the queue after enemy callbacks, even when they changed it this pass.
     if resume == ResumePoint::EnemyMessage

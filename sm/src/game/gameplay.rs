@@ -11,6 +11,9 @@ use sm_game::room_entry::api::EntrySignal;
 pub(crate) use sm_game::gameplay_frame::{TickInput, tick};
 
 impl sm_game::gameplay_frame::PassLease for Runtime<'_> {
+    fn player_projectiles_hit_samus(&mut self) {
+        crate::game::projectile_contact::player_projectiles_hit_samus(self);
+    }
     fn advance_player(&mut self) {
         crate::game::session_runtime::player_update_runtime::advance_frame(self);
     }
@@ -123,9 +126,6 @@ impl sm_game::gameplay_frame::Host for Game {
         crate::game::session_runtime::player_update_runtime::low_health(self);
     }
 
-    fn player_projectiles_hit_samus(&mut self) {
-        unsafe { crate::game::projectile_contact::player_projectiles_hit_samus(self) }
-    }
     fn run_room_mechanisms(&mut self) -> u8 {
         unsafe { crate::game::room_mechanisms::run(self) }
     }
