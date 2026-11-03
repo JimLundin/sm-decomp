@@ -83,6 +83,7 @@ pub struct Layers {
 
 impl Layers {
     pub const NONE: Self = Self::of(false, false, false, false, false);
+    pub const BG1: Self = Self::of(true, false, false, false, false);
     pub const BG2: Self = Self::of(false, true, false, false, false);
     pub const BG3: Self = Self::of(false, false, true, false, false);
     pub const SPRITES: Self = Self::of(false, false, false, false, true);
