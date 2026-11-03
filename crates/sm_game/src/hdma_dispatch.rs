@@ -285,6 +285,34 @@ where
         WaterBackground => it.on_lease(|lease| liquid_effects::water_background(index, lease)),
         WaterWave => it.on_lease(|lease| liquid_effects::water_wave(index, lease)),
         WaterFlat => it.on_lease(liquid_effects::water_flat),
+        SetupXrayBlending => it.on_lease(|lease| {
+            crate::player_transitions::xray::apply_blending(
+                lease,
+                crate::player_transitions::xray::BlendPhase::Setup,
+            )
+        }),
+        PowerBombBlending => it.on_lease(explosion_window::set_power_bomb_blending),
+        CrystalFlashBlending => it.on_lease(explosion_window::set_crystal_flash_blending),
+        SkyParallax => it.on_lease(scrolling_sky::update_parallax),
+        AdvanceSkyParallax => it.on_lease(scrolling_sky::advance_parallax),
+        FirefleaLighting => it.on_lease(room_visuals::advance_fireflea_lighting),
+        Rain | Spores | Fog => {
+            let weather = match target {
+                Rain => Weather::Rain,
+                Spores => Weather::Spores,
+                _ => Weather::Fog,
+            };
+            it.on_lease(|lease| room_visuals::scroll_weather(slot, weather, lease))
+        }
+        StatueBlending => it.on_lease(|lease| {
+            let mut fx = crate::fx_domain::Controls::fx_controls(lease);
+            fx.blending = 44;
+            crate::fx_domain::Controls::publish_fx_controls(
+                lease,
+                fx,
+                &[crate::fx_state::Field::Blending],
+            );
+        }),
         RestoreLeft => it.with_object(index, xray_background::restore_left),
         FinishRestore => it.with_object(index, xray_background::finish_restore),
         SkyHorizontalScroll => it.with_object(index, scrolling_sky::update_horizontal_scroll),
@@ -320,7 +348,7 @@ where
                 room_visuals::advance_tourian_statue(index, phase, handler_carry, game)
             })
         }
-        _ => it.foreign(|game| host_pre_action(target, slot, game)),
+        _ => it.foreign(|game| host_pre_action(target, game)),
     }
 }
 
@@ -352,7 +380,7 @@ fn pre_action_effect(target: HdmaPreAction) -> Option<HdmaEffect> {
 }
 
 /// A pre-instruction target that runs on the compatibility host.
-fn host_pre_action<H: DispatchHost + ?Sized>(target: HdmaPreAction, k: u16, game: &mut H) {
+fn host_pre_action<H: DispatchHost + ?Sized>(target: HdmaPreAction, game: &mut H) {
     use HdmaPreAction::*;
     match target {
         Nothing
@@ -394,23 +422,19 @@ fn host_pre_action<H: DispatchHost + ?Sized>(target: HdmaPreAction, k: u16, game
         | EyeBeamWidening
         | EyeBeamFull
         | EyeBeamFading
-        | IntroWave => unreachable!("run_pre_action runs {target:?}"),
-        SetupXrayBlending => xray_background::setup_blending(k, game),
+        | IntroWave
+        | SetupXrayBlending
+        | PowerBombBlending
+        | CrystalFlashBlending
+        | SkyParallax
+        | AdvanceSkyParallax
+        | FirefleaLighting
+        | Rain
+        | Spores
+        | Fog
+        | StatueBlending => unreachable!("run_pre_action runs {target:?}"),
         RestoreRight => xray_background::restore_right(game),
-        PowerBombBlending => explosion_window::set_power_bomb_blending(k, game),
-        CrystalFlashBlending => explosion_window::set_crystal_flash_blending(k, game),
         SkyVerticalScroll => scrolling_sky::update_vertical_scroll(game),
-        SkyParallax => scrolling_sky::update_parallax(&mut game.runtime()),
-        AdvanceSkyParallax => scrolling_sky::advance_parallax(&mut game.runtime()),
-        FirefleaLighting => room_visuals::advance_fireflea_lighting(game),
-        Rain => room_visuals::scroll_weather(k, Weather::Rain, game),
-        Spores => room_visuals::scroll_weather(k, Weather::Spores, game),
-        Fog => room_visuals::scroll_weather(k, Weather::Fog, game),
-        StatueBlending => {
-            let mut fx = game.fx_controls();
-            fx.blending = 44;
-            game.publish_fx_controls(fx, &[crate::fx_state::Field::Blending]);
-        }
         TitleGradientBackdrop => hdma_objects::advance_title_gradient(true, game),
         TitleGradient => hdma_objects::advance_title_gradient(false, game),
         IntroCrossfade => hdma_objects::advance_intro_crossfade(game),

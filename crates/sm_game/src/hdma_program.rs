@@ -19,6 +19,8 @@ pub trait HdmaLease:
     + crate::player_transitions::effects::SamusLease
     + crate::liquid_effects::Host
     + crate::progress::FlagHost
+    + crate::actors::boss_lease::BossState
+    + crate::fx_lighting::Access
 {
     type Game: DispatchHost + ?Sized;
     /// Run `action` on the compatibility host with the Session published.

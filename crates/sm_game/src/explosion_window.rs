@@ -205,7 +205,7 @@ pub fn finish_power_bomb<H: Host + ?Sized>(hdma_index: usize, v0: u16, game: &mu
     }
     game.player_command(0x1e);
 }
-pub fn set_power_bomb_blending<H: Host + ?Sized>(_k: u16, game: &mut H) {
+pub fn set_power_bomb_blending<H: crate::fx_domain::Controls + ?Sized>(game: &mut H) {
     {
         let fx_value = game.fx_controls().blending | (0x8000u16);
         let mut fx = game.fx_controls();
@@ -507,7 +507,7 @@ pub fn finish_crystal_flash<H: Host + ?Sized>(hdma_index: usize, k: u16, game: &
         );
     }
 }
-pub fn set_crystal_flash_blending<H: Host + ?Sized>(_k: u16, game: &mut H) {
+pub fn set_crystal_flash_blending<H: crate::display::preparation::Access + ?Sized>(game: &mut H) {
     game.store_display_control_byte(DisplayField::WindowSelection0, 0, DisplayStore::Named);
     game.store_display_control_byte(DisplayField::WindowSelection1, 8, DisplayStore::Named);
     game.store_display_control_byte(DisplayField::WindowSelection2, 0x80, DisplayStore::Named);
