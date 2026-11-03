@@ -87,3 +87,14 @@ tables and the cinematic $7F tilemap transfers read and store through their owne
 remnants go through `legacy_overflow` (60 sites). What remains of the 14: `legacy_overflow.rs`
 internals (11), `projection.rs`/`ram.rs` (the `CompatibilityRam` byte helpers Game serves from its
 RAM image). No engine call site outside these three files names a RAM address.
+
+## Cohort copies: a failed attempt (2026-11-03)
+
+Replacing the RAM-backed `session_cohort` copies with a `session_part` helper failed. The helper
+opened a fresh lease (`read`/`with`/`edit`) from Game-hosted code in the middle of a frame. Commit
+`65b617006` (the power bomb explosion on `session_part`) alone breaks rows unrelated to power bombs:
+item-speed-booster, enemy-fire-arc and music-fir-selector10. A sound effect queued in RAM goes
+missing at `$0643..$0665` (SFX queue 1); CI bisect run 41643239578 isolated it. That lane was left
+out of #170. A rework must not open extra leases mid-frame: either take the values from a lease the
+caller already holds, or keep the Session authoritative for the whole tick (docs/PERFORMANCE.md
+step 2).
