@@ -98,3 +98,13 @@ missing at `$0643..$0665` (SFX queue 1); CI bisect run 41643239578 isolated it. 
 out of #170. A rework must not open extra leases mid-frame: either take the values from a lease the
 caller already holds, or keep the Session authoritative for the whole tick (docs/PERFORMANCE.md
 step 2).
+
+## Named words lane (2026-11-03, `collab/rs-words`)
+
+New owners: `Room::mode7_irq` ($0783) and `Room::ceres_hdma_table` ($07EB), scalar words with
+room-state layout lanes (SMROOMS 10). Every sm_game writer stores the field; the HDMA
+instruction's $07EB store and sm's scroll DMA reads of $0783 reach them through the projection.
+Left on Game: Kraid's pause hooks ($077E is `messages.delay`, $0780 has no owner), the frame
+start's object cursor and Samus half requests, the demo stop's $077C..$0997 clear, and the lava
+surface's random number swap and the liquid background reads (HDMA pre-actions run in a foreign
+call with no lease to take the values from).

@@ -12,7 +12,6 @@ use crate::actors::slot_view::{SlotState, slot_view};
 use crate::constants::enemy_properties::{
     K_ENEMY_PROPS_DISABLE_SAMUS_COLL, K_ENEMY_PROPS_INVISIBLE,
 };
-use crate::ram::word;
 
 slot_view! {
     /// The dachora's slot. `speed` is its 16.16 running speed, and while it
@@ -114,7 +113,8 @@ const SHINESPARK_SOUND: u8 = 0x3b;
 const LAND_SOUND: u8 = 0x3c;
 
 fn gravity<L: Lease>(game: &L) -> u32 {
-    ((word!(game.SAMUS_Y_ACCEL) as u32) << 16) | word!(game.SAMUS_Y_SUBACCEL) as u32
+    let acceleration = &game.session().player.contact.y_acceleration;
+    (u32::from(acceleration.whole) << 16) | u32::from(acceleration.fraction)
 }
 
 /// Initialisation AI: a dachora idles, an echo waits. Was `Dachora_Init`.
