@@ -513,6 +513,24 @@ impl<'g> Runtime<'g> {
             "the Session's control projects no audio request byte"
         );
     }
+    /// The cue port: deliver `cue` to the APU at its original call point, with the lease
+    /// open. The APU side reads only the upload flags ($0617, $0618) from RAM. Only an upload
+    /// writes them, to RAM, and it leaves them clear, so RAM and the Session's audio owner
+    /// hold the same flags.
+    pub(crate) fn emit_cue(
+        &mut self,
+        cue: crate::native_audio::CompatibilityCue<'_>,
+        phase: sm_data::CuePhase,
+    ) {
+        #[cfg(sm_verify_dll)]
+        for at in [0x617, 0x618] {
+            assert!(
+                self.session().control.projected_byte(at) == Some(self.game.ram().read_byte(at)),
+                "the lease's audio upload flags differ from RAM at a cue"
+            );
+        }
+        unsafe { crate::native_audio::emit(cue, phase, self.game) }
+    }
     fn refresh_actor_observations(&mut self) {
         self.inputs.enemy_zero_health = self.native_word(0xF8C);
         self.inputs.current_enemy = self.word(0xE54);

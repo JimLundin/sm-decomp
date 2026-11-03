@@ -23,6 +23,26 @@ impl sm_game::gameplay_frame::PassLease for Runtime<'_> {
     fn advance_room(&mut self) {
         crate::game::room_state::advance_room(self);
     }
+    fn advance_sound_effects(&mut self) {
+        self.advance_sound_requests();
+    }
+    fn report_broken_coroutine(&mut self, state: [u8; 4]) {
+        report_broken_coroutine(state);
+    }
+}
+
+/// The original's warning when a frame ends with pass continuation bytes set.
+fn report_broken_coroutine(state: [u8; 4]) {
+    unsafe {
+        printf(
+            c"Coroutine state: %d, %d, %d, %d\n".as_ptr(),
+            state[0] as i32,
+            state[1] as i32,
+            state[2] as i32,
+            state[3] as i32,
+        );
+        crate::host::report_warning(c"Coroutine State is broken!".as_ptr());
+    }
 }
 
 impl sm_game::gameplay_frame::Host for Game {
@@ -47,16 +67,7 @@ impl sm_game::gameplay_frame::Host for Game {
         unsafe { crate::host::fatal_error(c"Incorrect coroutine_state_0".as_ptr()) }
     }
     fn report_broken_coroutine(&mut self, state: [u8; 4]) {
-        unsafe {
-            printf(
-                c"Coroutine state: %d, %d, %d, %d\n".as_ptr(),
-                state[0] as i32,
-                state[1] as i32,
-                state[2] as i32,
-                state[3] as i32,
-            );
-            crate::host::report_warning(c"Coroutine State is broken!".as_ptr());
-        }
+        report_broken_coroutine(state);
     }
     fn update_hdma(&mut self) {
         // The main game loop's PLP restores the carry loading the save slots ($80:8261) set.
