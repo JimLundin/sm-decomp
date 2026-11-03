@@ -69,8 +69,8 @@ port state, and the rendered 256x240 image. Any difference fails the run. The
 [verification guide](movies/README.md) explains how to run it locally.
 
 Read the workflow definitions for their current triggers and selections:
-[PR CI](.github/workflows/ci.yml), [Verify](.github/workflows/verify.yml) (the replays and
-coverage) and [desktop link](.github/workflows/desktop.yml).
+[CI](.github/workflows/ci.yml): its Quality jobs (format, lints, ratchets, tests) and
+Verify jobs (the replays and coverage).
 The [report](docs/PROGRESS_REPORT.md#workflow-inventory-snapshot) retains the old
 inventory; selected-frame counts alone do not prove complete movie coverage.
 

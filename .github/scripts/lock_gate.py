@@ -3,7 +3,7 @@
 
 Every pull request and push runs the engine alone over every scenario that
 scenarios/lock.toml locks and compares its running digests with the faithful
-oracle's (docs/SCENARIO_HARNESS.md, Decision 4; verify.yml). The plan first
+oracle's (docs/SCENARIO_HARNESS.md, Decision 4; ci.yml Verify). The plan first
 runs `tools/scenario.py lock --check`, which fails on a stale lock (an entry
 whose start, inputs or budget no longer match its scenario, an entry for no
 scenario, or a lockable scenario neither locked nor `unlocked`); it never

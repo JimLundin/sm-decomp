@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Plan one verify.yml run as a single job matrix.
+"""Plan one ci.yml Verify run as a single job matrix.
 
 SCOPE selects what runs:
   gate      every locked scenario engine-only against the oracle lock, lockstep
