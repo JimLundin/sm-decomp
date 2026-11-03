@@ -4,8 +4,8 @@ use super::{
     state::{InputMode, MovementMode, PoseRequestWord},
 };
 use crate::player_transitions::effects::SamusLease;
-use crate::ram::words as ram;
 use crate::runtime_access::SessionRam;
+use crate::session_access::SessionAccess;
 use crate::{session::Session, visual_host::Record};
 
 pub fn request(h: &mut impl Host) -> bool {
@@ -178,11 +178,12 @@ pub fn clear_window(h: &mut (impl SessionRam + ?Sized)) {
 }
 
 /// The beam's blend layer: BG3 in FX $24, BG2 in some rooms and boss fights, else BG1.
-pub fn blend_mask(h: &(impl SessionRam + ?Sized)) -> u16 {
-    if h.word(ram::FX_TYPE) == 0x24 {
+pub fn blend_mask(h: &(impl SessionAccess + ?Sized)) -> u16 {
+    let s = h.session();
+    if s.room.liquid.kind == 0x24 {
         0x1000
-    } else if matches!(h.word(ram::ROOM_PTR), 0xa66a | 0xcefb)
-        || matches!(h.word(ram::BOSS_ID), 3 | 6 | 7 | 8 | 10)
+    } else if matches!(s.room_key(), 0xa66a | 0xcefb)
+        || matches!(s.actors.schedule.boss_id, 3 | 6 | 7 | 8 | 10)
     {
         0x2000
     } else {
@@ -191,33 +192,50 @@ pub fn blend_mask(h: &(impl SessionRam + ?Sized)) -> u16 {
 }
 
 /// Set the beam's blend layer and, for BG1 (or BG3 in a dark haze), its colour.
-pub fn apply_blending(h: &mut (impl SessionRam + ?Sized), phase: BlendPhase) {
+pub fn apply_blending(
+    h: &mut (
+             impl SessionAccess
+             + crate::fx_domain::Controls
+             + crate::display::preparation::Access
+             + ?Sized
+         ),
+    phase: BlendPhase,
+) {
+    use crate::display::preparation::Field::{FixedColor0, FixedColor1, FixedColor2, Geometry};
     let mask = blend_mask(h);
     let update_colors = match phase {
         BlendPhase::Restore => false,
         BlendPhase::Beam => mask == 0x4000,
-        BlendPhase::Setup => mask == 0x4000 || (mask == 0x1000 && (h.byte(0x74) & 0x1f) < 7),
+        BlendPhase::Setup => {
+            mask == 0x4000 || (mask == 0x1000 && (h.display_control_byte(FixedColor0) & 0x1f) < 7)
+        }
     };
     if update_colors {
         // Preserve the overlapping native words, including the final zero byte.
-        for (offset, value) in [(0x74, 0x27), (0x75, 0x47), (0x76, 0x87)] {
-            h.write_slice_native(offset, value);
+        for (fields, value) in [
+            ([FixedColor0, FixedColor1], 0x27u16),
+            ([FixedColor1, FixedColor2], 0x47),
+            ([FixedColor2, Geometry], 0x87),
+        ] {
+            for (field, byte) in fields.into_iter().zip(value.to_ne_bytes()) {
+                crate::frame_display_byte!(h, field => byte);
+            }
         }
     }
-    h.write_slice_le(
-        ram::FX_LAYER_BLENDING_CONFIG_C,
-        h.word(ram::FX_LAYER_BLENDING_CONFIG_C) | mask,
-    );
+    let mut fx = h.fx_controls();
+    fx.blending |= mask;
+    h.publish_fx_controls(fx, &[crate::fx_state::Field::Blending]);
 }
 
 /// Turn the scope when the direction Samus faces away from is held.
 pub fn handle_input(h: &mut (impl Host + SessionRam)) {
+    // The direction bindings are up, down, left and right.
     let binding = if h.session().player.movement_and_facing as u8 == 4 {
-        ram::BUTTON_CONFIG_RIGHT
+        3
     } else {
-        ram::BUTTON_CONFIG_LEFT
+        2
     };
-    let held = h.word(binding) & h.inputs().held != 0;
+    let held = h.session().game_loop.directions[binding] & h.inputs().held != 0;
     turn(h, held);
 }
 
@@ -226,17 +244,28 @@ pub fn initialize(h: &mut (impl Host + SessionRam)) -> bool {
     if !request(h) {
         return false;
     }
-    h.write_slice_le(ram::TIME_IS_FROZEN_FLAG, 1);
+    h.session_mut().timing.time_frozen = 1;
+    h.words_stored();
     h.session_mut().player.transitions.interruption = super::state::InterruptionAction::from_raw(5);
     clear_window(h);
     set_world_running(h.session_mut(), false);
-    h.write_slice_native(0xa88, 1);
+    // $7E:0A88, the HDMA pointer's low word, is the demo's enable word.
+    h.session_mut().player.demo.enabled = u16::from_le_bytes(1u16.to_ne_bytes());
+    h.words_stored();
     h.set_byte(0xa8a, 0x98);
     h.write_slice_native(0xa8b, 0);
     h.session_mut().player.demo.previous_held = 0x98c8;
-    h.write_slice_native(0xa8e, 0x9098);
+    // $7E:0A8E is the demo's previous newly pressed input.
+    h.session_mut().player.demo.previous_pressed = u16::from_le_bytes(0x9098u16.to_ne_bytes());
+    h.words_stored();
     h.set_byte(0xa90, 0x99);
-    h.write_slice_le(ram::XRAY_HDMA_TABLE_END, 0);
+    // $7E:0A91..$7E:0A92 (the X-ray HDMA table's end) are the high byte of
+    // the demo's filtered held input and the low byte of its filtered newly
+    // pressed input.
+    let preparation = &mut h.session_mut().projectiles.preparation;
+    crate::actors::slot_view::store_byte(&mut preparation.demo_filtered_held, 1, 0);
+    crate::actors::slot_view::store_byte(&mut preparation.demo_filtered_pressed, 0, 0);
+    h.words_stored();
     let demo = &mut h.session_mut().player.demo;
     demo.pre_action = 0;
     demo.delay = 0;
@@ -278,10 +307,16 @@ pub fn draw_window<H: SamusLease>(h: &mut H) {
         off_screen,
         table: 0x9800,
     };
-    h.draw_xray_window_table(window);
+    if let Some(row) = h.draw_xray_window_table(window) {
+        h.session_mut().player.grapple_extension_compatibility.x = row;
+    }
 }
 /// The X-ray background step: blend, then the beam's or the restore's stage.
-pub fn advance_background<H: SamusLease>(h: &mut H) {
+pub fn advance_background<
+    H: SamusLease + crate::fx_domain::Controls + crate::display::preparation::Access,
+>(
+    h: &mut H,
+) {
     use super::effects::XrayRestore;
     apply_blending(h, BlendPhase::Beam);
     let stages: [fn(&mut H); 6] = [
@@ -309,8 +344,9 @@ pub fn advance_beam<H: SamusLease>(h: &mut H, phase: BeamPhase) {
     if phase == BeamPhase::Widening {
         widen(&mut h.session_mut().player.demo);
     } else if phase == BeamPhase::Full {
-        let up = h.word(ram::BUTTON_CONFIG_UP) & h.inputs().held != 0;
-        if up || h.word(ram::BUTTON_CONFIG_DOWN) & h.inputs().held != 0 {
+        let [up, down, ..] = h.session().game_loop.directions;
+        let up = up & h.inputs().held != 0;
+        if up || down & h.inputs().held != 0 {
             let player = &mut h.session_mut().player;
             steer(&mut player.transitions.xray_angle, player.demo.held, up);
         }

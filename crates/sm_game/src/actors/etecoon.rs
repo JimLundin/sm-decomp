@@ -7,26 +7,29 @@
 use crate::actors::api::PlayerDirection;
 use crate::actors::boss_lease::BossLease;
 use crate::actors::host::{Axis, BossEffects, Slopes, below};
-use crate::actors::layouts::part_view;
-use crate::actors::session_slots::session_slot;
+use crate::actors::slot_view::{SlotState, slot_view};
 use crate::constants::enemy_properties::K_ENEMY_PROPS_DISABLE_SAMUS_COLL;
 use crate::ram::word;
 
 /// A lease on a game with the etecoons' effects.
-pub trait Lease: BossLease<Game: BossEffects> {
+pub trait Lease: BossLease<Game: BossEffects> + SlotState {
     /// Whether moving actor `k` by `amount` (16.16) horizontally would be
     /// blocked, without moving it.
     fn probe_horizontal(&mut self, k: u16, amount: i32) -> bool;
 }
 
-part_view! {
-    /// An etecoon's view of its slot: its 16.16 velocities, the function
-    /// timer and function. `facing` is 1 facing right in its low byte and
-    /// counts the hops at the top of the room in its high byte. `route` picks
-    /// the run-up point in its low byte (bit 1 also lets the etecoon wait for
-    /// Samus) and holds the quake freeze timer in its high byte.
-    Etecoon: EnemyLayout8 {
-        words: [y_speed, y_subspeed, x_speed, x_subspeed, timer, function, facing, route],
+slot_view! {
+    /// An etecoon's slot: its 16.16 velocities, the function timer and
+    /// function. `facing` is 1 facing right in its low byte and counts the
+    /// hops at the top of the room in its high byte. `route` picks the run-up
+    /// point in its low byte (bit 1 also lets the etecoon wait for Samus) and
+    /// holds the quake freeze timer in its high byte.
+    Etecoon, EtecoonEdit {
+        record: [
+            y_speed = var_a, y_subspeed = var_b, x_speed = var_c, x_subspeed = var_d,
+            timer = var_e, function = var_f, facing = parameter_1, route = parameter_2,
+        ],
+        extended: [],
     }
 }
 
@@ -98,10 +101,9 @@ const HOP_SOUND: u8 = 0x33;
 
 /// Counts down the timer; true when it reaches zero or below.
 fn timer_expired<L: Lease>(game: &mut L, k: u16) -> bool {
-    let me = k as i32;
-    let last = session_slot!(game, Etecoon[me].timer) == 1;
-    session_slot!(game, Etecoon[me].timer, |old| old.wrapping_sub(1));
-    let negative = (session_slot!(game, Etecoon[me].timer) & 0x8000) != 0;
+    let last = Etecoon::of(game, k).timer() == 1;
+    *EtecoonEdit::of(game, k).timer() = Etecoon::of(game, k).timer().wrapping_sub(1);
+    let negative = (Etecoon::of(game, k).timer() & 0x8000) != 0;
     last || negative
 }
 
@@ -111,73 +113,76 @@ fn sound_near_samus<L: Lease>(game: &mut L, sound: u8) {
     }
 }
 
-fn set_hop<L: Lease>(game: &mut L, me: i32) {
-    session_slot!(game, Etecoon[me]; y_speed = HOP_SPEED, y_subspeed = 0);
+fn set_hop<L: Lease>(game: &mut L, k: u16) {
+    *EtecoonEdit::of(game, k).y_speed() = HOP_SPEED;
+    *EtecoonEdit::of(game, k).y_subspeed() = 0;
 }
 
-fn set_run<L: Lease>(game: &mut L, me: i32, speed: u16) {
-    session_slot!(game, Etecoon[me]; x_speed = speed, x_subspeed = 0);
+fn set_run<L: Lease>(game: &mut L, k: u16, speed: u16) {
+    *EtecoonEdit::of(game, k).x_speed() = speed;
+    *EtecoonEdit::of(game, k).x_subspeed() = 0;
 }
 
 /// Freezes the etecoon for 128 frames while a quake shakes the room. Was
 /// `Etecoon_Func_1`.
 fn freeze_if_quake<L: Lease>(game: &mut L, k: u16) {
     if word!(game.EARTHQUAKE_TIMER) != 0 {
-        let me = k as i32;
-        session_slot!(
-            game,
-            Etecoon[me].route = (session_slot!(byte game, Etecoon[me].route[0]) as u16) | 0x8000
-        );
-        session_slot!(game, Etecoon[me].base.instruction_timer, |old| old
-            .wrapping_add(128));
+        *EtecoonEdit::of(game, k).route() =
+            (Etecoon::of(game, k).route().to_le_bytes()[0] as u16) | 0x8000;
+        EtecoonEdit::of(game, k).actor().instruction_delay = Etecoon::of(game, k)
+            .actor()
+            .instruction_delay
+            .wrapping_add(128);
     }
 }
 
 /// Moves by the X velocity; true when blocked. Was `Etecoon_Func_2`.
 fn move_horizontally<L: Lease>(game: &mut L, k: u16) -> bool {
-    let me = k as i32;
-    let amount = (((session_slot!(game, Etecoon[me].x_speed) as u32) << 16)
-        | session_slot!(game, Etecoon[me].x_subspeed) as u32) as i32;
+    let amount = (((Etecoon::of(game, k).x_speed() as u32) << 16)
+        | Etecoon::of(game, k).x_subspeed() as u32) as i32;
     game.move_horizontal(k, amount, Slopes::Ignore)
 }
 
 /// Moves by the Y velocity, then falls faster up to 5 px a frame; true when
 /// blocked. Was `Etecoon_Func_3`.
 fn move_vertically<L: Lease>(game: &mut L, k: u16) -> bool {
-    let me = k as i32;
-    let amount = (((session_slot!(game, Etecoon[me].y_speed) as u32) << 16)
-        | session_slot!(game, Etecoon[me].y_subspeed) as u32) as i32;
-    if below(session_slot!(game, Etecoon[me].y_speed), 5) {
+    let amount = (((Etecoon::of(game, k).y_speed() as u32) << 16)
+        | Etecoon::of(game, k).y_subspeed() as u32) as i32;
+    if below(Etecoon::of(game, k).y_speed(), 5) {
         let gravity =
             ((word!(game.SAMUS_Y_ACCEL) as u32) << 16) | word!(game.SAMUS_Y_SUBACCEL) as u32;
-        session_slot!(game, Etecoon[me](y_speed, y_subspeed) += gravity);
+        {
+            let mut edit = EtecoonEdit::of(game, k);
+            let sum = ((u32::from(*edit.y_speed()) << 16) | u32::from(*edit.y_subspeed()))
+                .wrapping_add(gravity);
+            *edit.y_subspeed() = sum as u16;
+            *edit.y_speed() = (sum >> 16) as u16;
+        }
     }
     game.move_vertical(k, amount)
 }
 
 /// Initialisation AI. Was `Etecoon_Init`.
 pub fn initialize<L: Lease>(game: &mut L) {
-    let me = game.current_enemy() as i32;
-    session_slot!(game, Etecoon[me].base.properties, |old| old
-        | (K_ENEMY_PROPS_DISABLE_SAMUS_COLL as u16));
-    session_slot!(
-        game,
-        Etecoon[me].base.spritemap_pointer = list::NOTHING_SPRITEMAP
-    );
-    session_slot!(game, Etecoon[me].base; instruction_timer = 1, timer = 0,
-        current_instruction = list::INITIAL);
-    session_slot!(game, Etecoon[me]; function = function::INITIAL, timer = 0xffff);
+    let k = game.current_enemy();
+    EtecoonEdit::of(game, k).actor().properties |= K_ENEMY_PROPS_DISABLE_SAMUS_COLL as u16;
+    EtecoonEdit::of(game, k).actor().spritemap = list::NOTHING_SPRITEMAP;
+    EtecoonEdit::of(game, k).actor().instruction_delay = 1;
+    EtecoonEdit::of(game, k).actor().timer = 0;
+    EtecoonEdit::of(game, k).actor().instruction = list::INITIAL;
+    *EtecoonEdit::of(game, k).function() = function::INITIAL;
+    *EtecoonEdit::of(game, k).timer() = 0xffff;
 }
 
 /// Main AI: count down a quake freeze, else run the function. Was
 /// `Etecoon_Main`.
 pub fn main_ai<L: Lease>(game: &mut L) {
     crate::probe::hit("etecoon.main_ai");
-    let me = game.current_enemy() as i32;
-    if session_slot!(byte game, Etecoon[me].route[1]) != 0 {
-        session_slot!(game, Etecoon[me].route, |old| old.wrapping_sub(256));
+    let k = game.current_enemy();
+    if Etecoon::of(game, k).route().to_le_bytes()[1] != 0 {
+        *EtecoonEdit::of(game, k).route() = Etecoon::of(game, k).route().wrapping_sub(256);
     } else {
-        let address = session_slot!(game, Etecoon[me].function);
+        let address = Etecoon::of(game, k).function();
         run_function(game, address);
     }
 }
@@ -214,21 +219,19 @@ fn run_function<L: Lease>(game: &mut L, address: u16) {
 /// `Etecoon_Func_4`.
 pub fn initial<L: Lease>(game: &mut L, k: u16) {
     if word!(game.DOOR_TRANSITION_FLAG_ENEMIES) == 0 {
-        let me = k as i32;
-        if (session_slot!(game, Etecoon[me].timer) & 0x8000) == 0 {
+        if (Etecoon::of(game, k).timer() & 0x8000) == 0 {
             if timer_expired(game, k) {
-                session_slot!(
-                    game,
-                    Etecoon[me].base.current_instruction = list::HOPPING_FACING_LEFT
-                );
-                session_slot!(game, Etecoon[me]; function = function::START_HOP_BOTTOM, timer = 11);
+                EtecoonEdit::of(game, k).actor().instruction = list::HOPPING_FACING_LEFT;
+                *EtecoonEdit::of(game, k).function() = function::START_HOP_BOTTOM;
+                *EtecoonEdit::of(game, k).timer() = 11;
             }
         } else if game.player_within(k, Axis::Y, 0x80) {
-            if (session_slot!(game, Etecoon[me].route) & 3) == 0 {
+            if (Etecoon::of(game, k).route() & 3) == 0 {
                 game.queue_sound(1, FLEX_SOUND, 15);
             }
-            session_slot!(game, Etecoon[me].base; instruction_timer = 1, current_instruction = list::FLEXING);
-            session_slot!(game, Etecoon[me].timer = 256);
+            EtecoonEdit::of(game, k).actor().instruction_delay = 1;
+            EtecoonEdit::of(game, k).actor().instruction = list::FLEXING;
+            *EtecoonEdit::of(game, k).timer() = 256;
         }
     }
 }
@@ -238,10 +241,11 @@ pub fn start_hop_bottom<L: Lease>(game: &mut L, k: u16) {
     if !timer_expired(game, k) {
         return;
     }
-    let me = k as i32;
-    set_hop(game, me);
-    session_slot!(game, Etecoon[me].base; current_instruction = (session_slot!(game, Etecoon[me].base.current_instruction)).wrapping_add(2), instruction_timer = 1);
-    session_slot!(game, Etecoon[me].function = function::HOPPING_BOTTOM);
+    set_hop(game, k);
+    EtecoonEdit::of(game, k).actor().instruction =
+        (Etecoon::of(game, k).actor().instruction).wrapping_add(2);
+    EtecoonEdit::of(game, k).actor().instruction_delay = 1;
+    *EtecoonEdit::of(game, k).function() = function::HOPPING_BOTTOM;
     sound_near_samus(game, HOP_SOUND);
 }
 
@@ -249,8 +253,7 @@ pub fn start_hop_bottom<L: Lease>(game: &mut L, k: u16) {
 /// `Etecoon_Func_6`.
 pub fn hopping_bottom<L: Lease>(game: &mut L, k: u16) {
     if move_vertically(game, k) {
-        let me = k as i32;
-        if (session_slot!(game, Etecoon[me].y_speed) & 0x8000) == 0 {
+        if (Etecoon::of(game, k).y_speed() & 0x8000) == 0 {
             if game.player_within(k, Axis::Y, 0x40) && game.player_within(k, Axis::X, LOOK_DISTANCE)
             {
                 let samus_right_or_level = matches!(
@@ -263,34 +266,32 @@ pub fn hopping_bottom<L: Lease>(game: &mut L, k: u16) {
                 );
                 if samus_right_or_level {
                     crate::probe::hit("etecoon.look_right_run_left");
-                    session_slot!(
-                        game,
-                        Etecoon[me].base.current_instruction = list::LOOK_RIGHT_AND_RUN_LEFT
-                    );
-                    session_slot!(game, Etecoon[me].facing = 0);
+                    EtecoonEdit::of(game, k).actor().instruction = list::LOOK_RIGHT_AND_RUN_LEFT;
+                    *EtecoonEdit::of(game, k).facing() = 0;
                 } else {
-                    session_slot!(
-                        game,
-                        Etecoon[me].base.current_instruction = list::LOOK_LEFT_AND_RUN_RIGHT
-                    );
-                    session_slot!(game, Etecoon[me].facing = 1);
+                    EtecoonEdit::of(game, k).actor().instruction = list::LOOK_LEFT_AND_RUN_RIGHT;
+                    *EtecoonEdit::of(game, k).facing() = 1;
                 }
-                session_slot!(game, Etecoon[me].timer = 32);
-                session_slot!(game, Etecoon[me].base.instruction_timer = 1);
-                session_slot!(game, Etecoon[me].function = function::LOOK_AT_SAMUS);
+                *EtecoonEdit::of(game, k).timer() = 32;
+                EtecoonEdit::of(game, k).actor().instruction_delay = 1;
+                *EtecoonEdit::of(game, k).function() = function::LOOK_AT_SAMUS;
             } else {
-                session_slot!(game, Etecoon[me]; timer = 11, function = function::START_HOP_BOTTOM);
-                session_slot!(game, Etecoon[me].base; instruction_timer = 1, current_instruction = list::HOPPING_FACING_LEFT);
+                *EtecoonEdit::of(game, k).timer() = 11;
+                *EtecoonEdit::of(game, k).function() = function::START_HOP_BOTTOM;
+                EtecoonEdit::of(game, k).actor().instruction_delay = 1;
+                EtecoonEdit::of(game, k).actor().instruction = list::HOPPING_FACING_LEFT;
             }
         } else {
-            hit_ceiling(game, me);
+            hit_ceiling(game, k);
         }
     }
 }
 
-fn hit_ceiling<L: Lease>(game: &mut L, me: i32) {
-    session_slot!(game, Etecoon[me]; y_speed = 0, y_subspeed = 0);
-    session_slot!(game, Etecoon[me].base; instruction_timer = 3, current_instruction = list::HIT_CEILING);
+fn hit_ceiling<L: Lease>(game: &mut L, k: u16) {
+    *EtecoonEdit::of(game, k).y_speed() = 0;
+    *EtecoonEdit::of(game, k).y_subspeed() = 0;
+    EtecoonEdit::of(game, k).actor().instruction_delay = 3;
+    EtecoonEdit::of(game, k).actor().instruction = list::HIT_CEILING;
 }
 
 /// Looks at Samus, then runs away from her. Was `Etecoon_Func_7`.
@@ -298,35 +299,36 @@ pub fn look_at_samus<L: Lease>(game: &mut L, k: u16) {
     if !timer_expired(game, k) {
         return;
     }
-    let me = k as i32;
-    session_slot!(game, Etecoon[me].base; current_instruction = (session_slot!(game, Etecoon[me].base.current_instruction)).wrapping_add(2), instruction_timer = 1);
-    if session_slot!(game, Etecoon[me].facing) != 0 {
-        set_run(game, me, RUN_RIGHT_SPEED);
-        session_slot!(game, Etecoon[me].function = function::RUNNING_RIGHT);
+    EtecoonEdit::of(game, k).actor().instruction =
+        (Etecoon::of(game, k).actor().instruction).wrapping_add(2);
+    EtecoonEdit::of(game, k).actor().instruction_delay = 1;
+    if Etecoon::of(game, k).facing() != 0 {
+        set_run(game, k, RUN_RIGHT_SPEED);
+        *EtecoonEdit::of(game, k).function() = function::RUNNING_RIGHT;
     } else {
-        set_run(game, me, RUN_LEFT_SPEED);
-        session_slot!(game, Etecoon[me].function = function::RUNNING_LEFT);
+        set_run(game, k, RUN_LEFT_SPEED);
+        *EtecoonEdit::of(game, k).function() = function::RUNNING_LEFT;
     }
-    set_hop(game, me);
+    set_hop(game, k);
 }
 
 /// Runs left until the wall, then turns right. Was `Etecoon_Func_8`.
 pub fn running_left<L: Lease>(game: &mut L, k: u16) {
     if move_horizontally(game, k) {
-        let me = k as i32;
-        set_run(game, me, RUN_RIGHT_SPEED);
-        session_slot!(game, Etecoon[me].function = function::RUNNING_RIGHT);
-        session_slot!(game, Etecoon[me].base; instruction_timer = 1, current_instruction = list::RUNNING_RIGHT);
-        session_slot!(game, Etecoon[me].facing = 1);
+        set_run(game, k, RUN_RIGHT_SPEED);
+        *EtecoonEdit::of(game, k).function() = function::RUNNING_RIGHT;
+        EtecoonEdit::of(game, k).actor().instruction_delay = 1;
+        EtecoonEdit::of(game, k).actor().instruction = list::RUNNING_RIGHT;
+        *EtecoonEdit::of(game, k).facing() = 1;
     }
 }
 
 /// Runs right, jumping 32 px before the wall. Was `Etecoon_Func_9`.
 pub fn running_right<L: Lease>(game: &mut L, k: u16) {
     if game.probe_horizontal(k, (32u32 << 16) as i32) {
-        let me = k as i32;
-        session_slot!(game, Etecoon[me].base; instruction_timer = 1, current_instruction = list::JUMPING_RIGHT);
-        session_slot!(game, Etecoon[me].function = function::JUMPING);
+        EtecoonEdit::of(game, k).actor().instruction_delay = 1;
+        EtecoonEdit::of(game, k).actor().instruction = list::JUMPING_RIGHT;
+        *EtecoonEdit::of(game, k).function() = function::JUMPING;
     } else {
         move_horizontally(game, k);
     }
@@ -338,38 +340,28 @@ pub fn jumping<L: Lease>(game: &mut L, k: u16) {
     crate::probe::hit("etecoon.jumping");
     freeze_if_quake(game, k);
     if move_horizontally(game, k) {
-        let me = k as i32;
-        if session_slot!(game, Etecoon[me].facing) != 0 {
-            session_slot!(
-                game,
-                Etecoon[me].base.current_instruction = list::WALL_JUMP_LEFT_ELIGIBLE
-            );
-            session_slot!(game, Etecoon[me].facing = 0);
+        if Etecoon::of(game, k).facing() != 0 {
+            EtecoonEdit::of(game, k).actor().instruction = list::WALL_JUMP_LEFT_ELIGIBLE;
+            *EtecoonEdit::of(game, k).facing() = 0;
         } else {
-            session_slot!(
-                game,
-                Etecoon[me].base.current_instruction = list::WALL_JUMP_RIGHT_ELIGIBLE
-            );
-            session_slot!(game, Etecoon[me].facing = 1);
+            EtecoonEdit::of(game, k).actor().instruction = list::WALL_JUMP_RIGHT_ELIGIBLE;
+            *EtecoonEdit::of(game, k).facing() = 1;
         }
-        session_slot!(game, Etecoon[me].base.instruction_timer = 1);
-        session_slot!(game, Etecoon[me]; function = function::WALL_JUMP, timer = 8);
+        EtecoonEdit::of(game, k).actor().instruction_delay = 1;
+        *EtecoonEdit::of(game, k).function() = function::WALL_JUMP;
+        *EtecoonEdit::of(game, k).timer() = 8;
         sound_near_samus(game, WALL_JUMP_SOUND);
     } else if move_vertically(game, k) {
-        let me = k as i32;
-        if session_slot!(game, Etecoon[me].facing) != 0 {
-            session_slot!(
-                game,
-                Etecoon[me].base.current_instruction = list::HOPPING_FACING_LEFT
-            );
+        if Etecoon::of(game, k).facing() != 0 {
+            EtecoonEdit::of(game, k).actor().instruction = list::HOPPING_FACING_LEFT;
         } else {
-            session_slot!(
-                game,
-                Etecoon[me].base.current_instruction = list::HOPPING_FACING_RIGHT
-            );
+            EtecoonEdit::of(game, k).actor().instruction = list::HOPPING_FACING_RIGHT;
         }
-        session_slot!(game, Etecoon[me].base.instruction_timer = 1);
-        session_slot!(game, Etecoon[me]; timer = 11, function = function::LANDED_FROM_JUMP, y_speed = HOP_SPEED, y_subspeed = 0);
+        EtecoonEdit::of(game, k).actor().instruction_delay = 1;
+        *EtecoonEdit::of(game, k).timer() = 11;
+        *EtecoonEdit::of(game, k).function() = function::LANDED_FROM_JUMP;
+        *EtecoonEdit::of(game, k).y_speed() = HOP_SPEED;
+        *EtecoonEdit::of(game, k).y_subspeed() = 0;
     }
 }
 
@@ -377,23 +369,16 @@ pub fn jumping<L: Lease>(game: &mut L, k: u16) {
 pub fn wall_jump<L: Lease>(game: &mut L, k: u16) {
     freeze_if_quake(game, k);
     if timer_expired(game, k) {
-        let me = k as i32;
-        if session_slot!(game, Etecoon[me].facing) != 0 {
-            session_slot!(
-                game,
-                Etecoon[me].base.current_instruction = list::WALL_JUMP_RIGHT
-            );
-            set_run(game, me, RUN_RIGHT_SPEED);
+        if Etecoon::of(game, k).facing() != 0 {
+            EtecoonEdit::of(game, k).actor().instruction = list::WALL_JUMP_RIGHT;
+            set_run(game, k, RUN_RIGHT_SPEED);
         } else {
-            session_slot!(
-                game,
-                Etecoon[me].base.current_instruction = list::WALL_JUMP_LEFT
-            );
-            set_run(game, me, RUN_LEFT_SPEED);
+            EtecoonEdit::of(game, k).actor().instruction = list::WALL_JUMP_LEFT;
+            set_run(game, k, RUN_LEFT_SPEED);
         }
-        session_slot!(game, Etecoon[me].base.instruction_timer = 1);
-        session_slot!(game, Etecoon[me].function = function::JUMPING);
-        set_hop(game, me);
+        EtecoonEdit::of(game, k).actor().instruction_delay = 1;
+        *EtecoonEdit::of(game, k).function() = function::JUMPING;
+        set_hop(game, k);
     }
 }
 
@@ -403,65 +388,58 @@ pub fn landed_from_jump<L: Lease>(game: &mut L, k: u16) {
     if !timer_expired(game, k) {
         return;
     }
-    let me = k as i32;
-    set_hop(game, me);
-    let routes: [fn(&mut L, i32); 3] = [
+    set_hop(game, k);
+    let routes: [fn(&mut L, u16); 3] = [
         run_to_left_run_up,
         run_to_right_run_up,
         hop_at_centre_run_up,
     ];
-    routes[session_slot!(byte game, Etecoon[me].route[0]) as usize](game, me);
-    session_slot!(game, Etecoon[me].base.instruction_timer = 1);
+    routes[Etecoon::of(game, k).route().to_le_bytes()[0] as usize](game, k);
+    EtecoonEdit::of(game, k).actor().instruction_delay = 1;
 }
 
 /// Was `Etecoon_Func_13`.
-fn run_to_left_run_up<L: Lease>(game: &mut L, me: i32) {
-    session_slot!(game, Etecoon[me].function = function::RUN_TO_LEFT_RUN_UP);
-    session_slot!(
-        game,
-        Etecoon[me].base.current_instruction = list::RUNNING_LEFT
-    );
-    set_run(game, me, RUN_LEFT_SPEED);
+fn run_to_left_run_up<L: Lease>(game: &mut L, k: u16) {
+    *EtecoonEdit::of(game, k).function() = function::RUN_TO_LEFT_RUN_UP;
+    EtecoonEdit::of(game, k).actor().instruction = list::RUNNING_LEFT;
+    set_run(game, k, RUN_LEFT_SPEED);
 }
 
 /// Was `Etecoon_Func_14`.
-fn run_to_right_run_up<L: Lease>(game: &mut L, me: i32) {
-    session_slot!(game, Etecoon[me].function = function::RUN_TO_RIGHT_RUN_UP);
-    session_slot!(
-        game,
-        Etecoon[me].base.current_instruction = list::RUNNING_RIGHT
-    );
-    set_run(game, me, RUN_RIGHT_SPEED);
+fn run_to_right_run_up<L: Lease>(game: &mut L, k: u16) {
+    *EtecoonEdit::of(game, k).function() = function::RUN_TO_RIGHT_RUN_UP;
+    EtecoonEdit::of(game, k).actor().instruction = list::RUNNING_RIGHT;
+    set_run(game, k, RUN_RIGHT_SPEED);
 }
 
 /// Was `Etecoon_Func_15`.
-fn hop_at_centre_run_up<L: Lease>(game: &mut L, me: i32) {
-    session_slot!(game, Etecoon[me].function = function::HOPPING_TOP);
-    session_slot!(game, Etecoon[me].base.current_instruction, |old| old
-        .wrapping_add(2));
-    set_run(game, me, RUN_RIGHT_SPEED);
+fn hop_at_centre_run_up<L: Lease>(game: &mut L, k: u16) {
+    *EtecoonEdit::of(game, k).function() = function::HOPPING_TOP;
+    EtecoonEdit::of(game, k).actor().instruction =
+        Etecoon::of(game, k).actor().instruction.wrapping_add(2);
+    set_run(game, k, RUN_RIGHT_SPEED);
 }
 
-fn start_top_hops<L: Lease>(game: &mut L, me: i32) {
-    session_slot!(game, Etecoon[me]; timer = 11, function = function::START_HOP_TOP);
-    session_slot!(game, Etecoon[me].base; instruction_timer = 1, current_instruction = list::HOPPING_FACING_LEFT);
+fn start_top_hops<L: Lease>(game: &mut L, k: u16) {
+    *EtecoonEdit::of(game, k).timer() = 11;
+    *EtecoonEdit::of(game, k).function() = function::START_HOP_TOP;
+    EtecoonEdit::of(game, k).actor().instruction_delay = 1;
+    EtecoonEdit::of(game, k).actor().instruction = list::HOPPING_FACING_LEFT;
 }
 
 /// Was `Etecoon_Func_16`.
 pub fn run_to_left_run_up_point<L: Lease>(game: &mut L, k: u16) {
     move_horizontally(game, k);
-    let me = k as i32;
-    if below(session_slot!(game, Etecoon[me].base.x_pos), LEFT_RUN_UP_X) {
-        start_top_hops(game, me);
+    if below(Etecoon::of(game, k).actor().x.whole, LEFT_RUN_UP_X) {
+        start_top_hops(game, k);
     }
 }
 
 /// Was `Etecoon_Func_17`.
 pub fn run_to_right_run_up_point<L: Lease>(game: &mut L, k: u16) {
     move_horizontally(game, k);
-    let me = k as i32;
-    if !below(session_slot!(game, Etecoon[me].base.x_pos), RIGHT_RUN_UP_X) {
-        start_top_hops(game, me);
+    if !below(Etecoon::of(game, k).actor().x.whole, RIGHT_RUN_UP_X) {
+        start_top_hops(game, k);
     }
 }
 
@@ -469,11 +447,12 @@ pub fn run_to_right_run_up_point<L: Lease>(game: &mut L, k: u16) {
 /// `Etecoon_Func_18`.
 pub fn running_for_tunnel_jump<L: Lease>(game: &mut L, k: u16) {
     move_horizontally(game, k);
-    let me = k as i32;
-    if !below(session_slot!(game, Etecoon[me].base.x_pos), RIGHT_RUN_UP_X) {
-        session_slot!(game, Etecoon[me]; function = function::TUNNEL_JUMP,
-            y_speed = TUNNEL_JUMP_SPEED, y_subspeed = 0);
-        session_slot!(game, Etecoon[me].base; instruction_timer = 1, current_instruction = list::JUMPING_RIGHT);
+    if !below(Etecoon::of(game, k).actor().x.whole, RIGHT_RUN_UP_X) {
+        *EtecoonEdit::of(game, k).function() = function::TUNNEL_JUMP;
+        *EtecoonEdit::of(game, k).y_speed() = TUNNEL_JUMP_SPEED;
+        *EtecoonEdit::of(game, k).y_subspeed() = 0;
+        EtecoonEdit::of(game, k).actor().instruction_delay = 1;
+        EtecoonEdit::of(game, k).actor().instruction = list::JUMPING_RIGHT;
     }
 }
 
@@ -482,27 +461,22 @@ pub fn tunnel_jump<L: Lease>(game: &mut L, k: u16) {
     crate::probe::hit("etecoon.tunnel_jump");
     move_horizontally(game, k);
     move_vertically(game, k);
-    let me = k as i32;
-    if !below(session_slot!(game, Etecoon[me].base.x_pos), TUNNEL_X) {
-        session_slot!(game, Etecoon[me].base; instruction_timer = 1, current_instruction = list::RUNNING_RIGHT);
-        session_slot!(
-            game,
-            Etecoon[me].function = function::RUNNING_THROUGH_TUNNEL
-        );
+    if !below(Etecoon::of(game, k).actor().x.whole, TUNNEL_X) {
+        EtecoonEdit::of(game, k).actor().instruction_delay = 1;
+        EtecoonEdit::of(game, k).actor().instruction = list::RUNNING_RIGHT;
+        *EtecoonEdit::of(game, k).function() = function::RUNNING_THROUGH_TUNNEL;
     }
 }
 
 /// Was `Etecoon_Func_20`.
 pub fn running_through_tunnel<L: Lease>(game: &mut L, k: u16) {
     move_horizontally(game, k);
-    let me = k as i32;
-    if !below(session_slot!(game, Etecoon[me].base.x_pos), TUNNEL_LEDGE_X) {
-        session_slot!(game, Etecoon[me].base; instruction_timer = 1, current_instruction = list::JUMPING_RIGHT);
-        session_slot!(
-            game,
-            Etecoon[me].function = function::FALLING_FROM_TUNNEL_LEDGE
-        );
-        session_slot!(game, Etecoon[me]; y_speed = 0xffff, y_subspeed = 0);
+    if !below(Etecoon::of(game, k).actor().x.whole, TUNNEL_LEDGE_X) {
+        EtecoonEdit::of(game, k).actor().instruction_delay = 1;
+        EtecoonEdit::of(game, k).actor().instruction = list::JUMPING_RIGHT;
+        *EtecoonEdit::of(game, k).function() = function::FALLING_FROM_TUNNEL_LEDGE;
+        *EtecoonEdit::of(game, k).y_speed() = 0xffff;
+        *EtecoonEdit::of(game, k).y_subspeed() = 0;
     }
 }
 
@@ -510,10 +484,10 @@ pub fn running_through_tunnel<L: Lease>(game: &mut L, k: u16) {
 pub fn falling_from_tunnel_ledge<L: Lease>(game: &mut L, k: u16) {
     move_horizontally(game, k);
     if move_vertically(game, k) {
-        let me = k as i32;
-        session_slot!(game, Etecoon[me].timer = 11);
-        session_slot!(game, Etecoon[me].base; instruction_timer = 1, current_instruction = list::HOPPING_FACING_LEFT);
-        session_slot!(game, Etecoon[me].function = function::START_HOP_TOP);
+        *EtecoonEdit::of(game, k).timer() = 11;
+        EtecoonEdit::of(game, k).actor().instruction_delay = 1;
+        EtecoonEdit::of(game, k).actor().instruction = list::HOPPING_FACING_LEFT;
+        *EtecoonEdit::of(game, k).function() = function::START_HOP_TOP;
     }
 }
 
@@ -522,22 +496,19 @@ pub fn falling_from_tunnel_ledge<L: Lease>(game: &mut L, k: u16) {
 pub fn hopping_top<L: Lease>(game: &mut L, k: u16) {
     freeze_if_quake(game, k);
     if move_vertically(game, k) {
-        let me = k as i32;
-        if (session_slot!(game, Etecoon[me].y_speed) & 0x8000) == 0 {
-            session_slot!(game, Etecoon[me].timer = 11);
-            session_slot!(game, Etecoon[me].base; instruction_timer = 1, current_instruction = list::HOPPING_FACING_LEFT);
-            if (session_slot!(game, Etecoon[me].route) & 2) != 0
-                && below(
-                    session_slot!(game, Etecoon[me].base.x_pos),
-                    WAIT_FOR_SAMUS_X,
-                )
+        if (Etecoon::of(game, k).y_speed() & 0x8000) == 0 {
+            *EtecoonEdit::of(game, k).timer() = 11;
+            EtecoonEdit::of(game, k).actor().instruction_delay = 1;
+            EtecoonEdit::of(game, k).actor().instruction = list::HOPPING_FACING_LEFT;
+            if (Etecoon::of(game, k).route() & 2) != 0
+                && below(Etecoon::of(game, k).actor().x.whole, WAIT_FOR_SAMUS_X)
             {
-                session_slot!(game, Etecoon[me].function = function::HOP_UNTIL_SAMUS_NEAR);
+                *EtecoonEdit::of(game, k).function() = function::HOP_UNTIL_SAMUS_NEAR;
             } else {
-                session_slot!(game, Etecoon[me].function = function::START_HOP_TOP);
+                *EtecoonEdit::of(game, k).function() = function::START_HOP_TOP;
             }
         } else {
-            hit_ceiling(game, me);
+            hit_ceiling(game, k);
         }
     }
 }
@@ -547,32 +518,23 @@ pub fn hopping_top<L: Lease>(game: &mut L, k: u16) {
 pub fn start_hop_top<L: Lease>(game: &mut L, k: u16) {
     freeze_if_quake(game, k);
     if timer_expired(game, k) {
-        let me = k as i32;
-        let hops: u16 = (session_slot!(game, Etecoon[me].facing)).wrapping_add(256);
-        session_slot!(game, Etecoon[me].facing = hops);
+        let hops: u16 = (Etecoon::of(game, k).facing()).wrapping_add(256);
+        *EtecoonEdit::of(game, k).facing() = hops;
         if below(hops & 0xff00, TOP_HOPS << 8) || {
-            session_slot!(
-                game,
-                Etecoon[me].facing = session_slot!(byte game, Etecoon[me].facing[0]) as u16
-            );
-            (session_slot!(game, Etecoon[me].route) & 2) != 0
+            *EtecoonEdit::of(game, k).facing() =
+                Etecoon::of(game, k).facing().to_le_bytes()[0] as u16;
+            (Etecoon::of(game, k).route() & 2) != 0
         } {
-            session_slot!(game, Etecoon[me].function = function::HOPPING_TOP);
-            session_slot!(game, Etecoon[me].base.current_instruction, |old| old
-                .wrapping_add(2));
+            *EtecoonEdit::of(game, k).function() = function::HOPPING_TOP;
+            EtecoonEdit::of(game, k).actor().instruction =
+                Etecoon::of(game, k).actor().instruction.wrapping_add(2);
         } else {
-            session_slot!(
-                game,
-                Etecoon[me].function = function::RUNNING_FOR_FAILED_TUNNEL_JUMP
-            );
-            session_slot!(
-                game,
-                Etecoon[me].base.current_instruction = list::RUNNING_RIGHT
-            );
-            set_run(game, me, RUN_RIGHT_SPEED);
+            *EtecoonEdit::of(game, k).function() = function::RUNNING_FOR_FAILED_TUNNEL_JUMP;
+            EtecoonEdit::of(game, k).actor().instruction = list::RUNNING_RIGHT;
+            set_run(game, k, RUN_RIGHT_SPEED);
         }
-        set_hop(game, me);
-        session_slot!(game, Etecoon[me].base.instruction_timer = 1);
+        set_hop(game, k);
+        EtecoonEdit::of(game, k).actor().instruction_delay = 1;
         sound_near_samus(game, HOP_SOUND);
     }
 }
@@ -582,34 +544,27 @@ pub fn start_hop_top<L: Lease>(game: &mut L, k: u16) {
 pub fn hop_until_samus_near<L: Lease>(game: &mut L, k: u16) {
     freeze_if_quake(game, k);
     if timer_expired(game, k) {
-        let me = k as i32;
         if game.player_within(k, Axis::Y, 0x40) && game.player_within(k, Axis::X, 0x30) {
-            session_slot!(
-                game,
-                Etecoon[me].base.current_instruction = list::RUNNING_RIGHT
-            );
-            session_slot!(
-                game,
-                Etecoon[me].function = function::RUNNING_FOR_TUNNEL_JUMP
-            );
+            EtecoonEdit::of(game, k).actor().instruction = list::RUNNING_RIGHT;
+            *EtecoonEdit::of(game, k).function() = function::RUNNING_FOR_TUNNEL_JUMP;
         } else {
-            set_hop(game, me);
-            session_slot!(game, Etecoon[me].base.current_instruction, |old| old
-                .wrapping_add(2));
-            session_slot!(game, Etecoon[me].function = function::HOPPING_TOP);
+            set_hop(game, k);
+            EtecoonEdit::of(game, k).actor().instruction =
+                Etecoon::of(game, k).actor().instruction.wrapping_add(2);
+            *EtecoonEdit::of(game, k).function() = function::HOPPING_TOP;
             sound_near_samus(game, HOP_SOUND);
         }
-        session_slot!(game, Etecoon[me].base.instruction_timer = 1);
+        EtecoonEdit::of(game, k).actor().instruction_delay = 1;
     }
 }
 
 /// Was `Etecoon_Func_25`.
 pub fn running_for_failed_tunnel_jump<L: Lease>(game: &mut L, k: u16) {
     move_horizontally(game, k);
-    let me = k as i32;
-    if !below(session_slot!(game, Etecoon[me].base.x_pos), RIGHT_RUN_UP_X) {
-        session_slot!(game, Etecoon[me].function = function::FAILED_TUNNEL_JUMP);
-        session_slot!(game, Etecoon[me].base; instruction_timer = 1, current_instruction = list::JUMPING_RIGHT);
+    if !below(Etecoon::of(game, k).actor().x.whole, RIGHT_RUN_UP_X) {
+        *EtecoonEdit::of(game, k).function() = function::FAILED_TUNNEL_JUMP;
+        EtecoonEdit::of(game, k).actor().instruction_delay = 1;
+        EtecoonEdit::of(game, k).actor().instruction = list::JUMPING_RIGHT;
     }
 }
 
@@ -617,8 +572,12 @@ pub fn running_for_failed_tunnel_jump<L: Lease>(game: &mut L, k: u16) {
 pub fn failed_tunnel_jump<L: Lease>(game: &mut L, k: u16) {
     move_horizontally(game, k);
     if move_vertically(game, k) {
-        let me = k as i32;
-        session_slot!(game, Etecoon[me]; x_speed = RUN_LEFT_SPEED, x_subspeed = 0, function = function::RUNNING_LEFT, y_speed = HOP_SPEED, y_subspeed = 0);
-        session_slot!(game, Etecoon[me].base; instruction_timer = 1, current_instruction = list::RUNNING_LEFT);
+        *EtecoonEdit::of(game, k).x_speed() = RUN_LEFT_SPEED;
+        *EtecoonEdit::of(game, k).x_subspeed() = 0;
+        *EtecoonEdit::of(game, k).function() = function::RUNNING_LEFT;
+        *EtecoonEdit::of(game, k).y_speed() = HOP_SPEED;
+        *EtecoonEdit::of(game, k).y_subspeed() = 0;
+        EtecoonEdit::of(game, k).actor().instruction_delay = 1;
+        EtecoonEdit::of(game, k).actor().instruction = list::RUNNING_LEFT;
     }
 }

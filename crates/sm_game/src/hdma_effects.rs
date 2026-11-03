@@ -1,6 +1,5 @@
 //! HDMA wave, layer, haze and eye-beam effects over the host's session view.
 use crate::actors::access::{AccessMode::LittleEndian as Le, ActorAccess, ActorKey as Key};
-use crate::player_projectiles::access::Store;
 use crate::runtime_access::SessionRam;
 use crate::scene::hdma_sources::LiveOwner;
 use crate::scene::state::WordOrder;
@@ -21,12 +20,47 @@ pub trait Host:
     + crate::display_scroll::Access
     + crate::hdma_objects::HdmaTable
 {
-    /// Build the eye beam's window table outside the session view.
-    fn calculate_xray_window(&mut self, window: crate::beam_windows::XrayWindow);
+    /// Build the eye beam's window table outside the session view; returns
+    /// the $0D1E word the view stores
+    /// (see [`crate::beam_windows::calculate_xray_window`]).
+    fn calculate_xray_window(&mut self, window: crate::beam_windows::XrayWindow) -> Option<u16>;
 }
 
 fn high(word: u16) -> u8 {
     (word >> 8) as u8
+}
+
+/// Phantoon's wave tables and the eye beam's tables and counters live in the
+/// bosses' shared RAM ($7E:9000..$7E:97DB): the Session's fourth extended
+/// actor block (`actors.extended.blocks[3]`), whose words hold the RAM's bytes
+/// little-endian, as the actor codec projects them. Offsets below are bytes
+/// from $7E:9000.
+const SHARED_BLOCK: usize = 3;
+/// $7E:9100: Phantoon's BG2 wave rows and the eye beam's window rows.
+const WAVE_ROWS: usize = 0x100;
+/// $7E:9080/$7E:9082: the eye beam's widening speed, whole and fraction.
+const BEAM_SPEED: usize = 0x80;
+const BEAM_SPEED_FRACTION: usize = 0x82;
+/// $7E:9090: the eye beam's colour cycle index.
+const BEAM_COLOR_INDEX: usize = 0x90;
+
+/// Store `bytes` from shared byte `offset` on, in order, then refresh the
+/// host's observations as the projected byte stores did.
+fn store_shared_bytes<H: SessionAccess + ?Sized>(h: &mut H, offset: usize, bytes: &[u8]) {
+    let block = &mut h.session_mut().actors.extended.blocks[SHARED_BLOCK];
+    for (at, &byte) in (offset..).zip(bytes) {
+        crate::actors::slot_view::store_byte(&mut block[at / 2], at % 2, byte);
+    }
+    h.words_stored();
+}
+/// Shared word at even byte `offset`.
+fn shared_word<H: SessionAccess + ?Sized>(h: &H, offset: usize) -> u16 {
+    h.session().actors.extended.blocks[SHARED_BLOCK][offset / 2]
+}
+/// Store shared word at even byte `offset`, then refresh the observations.
+fn store_shared_word<H: SessionAccess + ?Sized>(h: &mut H, offset: usize, value: u16) {
+    h.session_mut().actors.extended.blocks[SHARED_BLOCK][offset / 2] = value;
+    h.words_stored();
 }
 
 /// Read each color byte at its original field expression.
@@ -87,31 +121,31 @@ pub trait HdmaEffects: Host {
         if self.resolve_actor(motion, Native).parameters[0] & 1 != 0 {
             self.initialize_wave_pair(0x9000, 0x9100);
         } else {
-            for at in [0x9000, 0x9006, 0x900c, 0x900f, 0x9012, 0x9015] {
-                self.write_slice_le(at, 160);
+            // The narrow wave's indirect table at $7E:9000, store by store.
+            for at in [0x00, 0x06, 0x0c, 0x0f, 0x12, 0x15] {
+                store_shared_bytes(self, at, &160u16.to_le_bytes());
             }
-            for at in [0x9001, 0x9007] {
-                self.write_slice(at + 2, &0xa09100u32.to_ne_bytes()[2..]);
-                self.write_slice_native(at, 0x9100);
+            for at in [0x01, 0x07] {
+                store_shared_bytes(self, at + 2, &0xa09100u32.to_ne_bytes()[2..]);
+                store_shared_bytes(self, at, &0x9100u16.to_ne_bytes());
             }
-            for at in [0x900d, 0x9013] {
-                self.write_slice_native(at, 0x9100);
+            for at in [0x0d, 0x13] {
+                store_shared_bytes(self, at, &0x9100u16.to_ne_bytes());
             }
-            for at in [0x9004, 0x900a] {
-                self.write_slice_le(at, 0x9140);
+            for at in [0x04, 0x0a] {
+                store_shared_bytes(self, at, &0x9140u16.to_le_bytes());
             }
-            for at in [0x9010, 0x9016] {
-                self.write_slice_native(at, 0x9140);
+            for at in [0x10, 0x16] {
+                store_shared_bytes(self, at, &0x9140u16.to_ne_bytes());
             }
-            self.write_slice_le(0x9018, 0);
+            store_shared_bytes(self, 0x18, &0u16.to_le_bytes());
         }
         self.reset_hdma_wave(slot);
     }
 
     fn select_phantoon_layer(&mut self) {
         use crate::actors::access::AccessMode::Native;
-        use crate::ram::words as ram;
-        if self.word(ram::PHANTOM_RELATED_LAYER_FLAG) & 0x4000 != 0 {
+        if self.session().room.fx_layer_flags & 0x4000 != 0 {
             {
                 let mut fx = self.fx_controls();
                 fx.blending = 26;
@@ -168,7 +202,6 @@ pub trait HdmaEffects: Host {
 
     fn advance_hdma_wave(&mut self, slot: u16, wave: HdmaWave) {
         use crate::actors::access::AccessMode::Native;
-        use crate::player_projectiles::access::Store;
         use crate::projectile_geometry::SINE_COSINE;
         use crate::ram::words as ram;
         let controller = Key::from_legacy(0x40);
@@ -206,10 +239,10 @@ pub trait HdmaEffects: Host {
         }
         let mut phase = crate::hdma_word!(self, usize::from(slot >> 1), A);
         // Cinematic BG3 data is separate from Phantoon's BG2 table.
-        let (scroll, store) = if phantoon {
-            (crate::display_scroll::Word::Bg2H, Store::SliceNative)
+        let scroll = if phantoon {
+            crate::display_scroll::Word::Bg2H
         } else {
-            (crate::display_scroll::Word::Bg3H, Store::SliceLe)
+            crate::display_scroll::Word::Bg3H
         };
         for row in 0..256 / step {
             let sample = SINE_COSINE[usize::from(phase >> 1) + 64];
@@ -223,12 +256,8 @@ pub trait HdmaEffects: Host {
             phase = phase.wrapping_add(step) & 0x1ff;
             let value = self.scroll_word(scroll).wrapping_add(offset);
             if phantoon {
-                store_word(
-                    self,
-                    ram::PHANTOON_WAVES + 2 * usize::from(row),
-                    value,
-                    store,
-                );
+                // Native byte order, as Phantoon's slice store wrote it.
+                store_shared_bytes(self, WAVE_ROWS + 2 * usize::from(row), &value.to_ne_bytes());
             } else {
                 self.store_source_word(
                     LiveOwner::HdmaTable1,
@@ -246,13 +275,13 @@ pub trait HdmaEffects: Host {
                 .scroll_word(scroll)
                 .wrapping_add(self.scroll_word(scroll));
             let sample = if phantoon {
-                self.native_word(ram::PHANTOON_WAVES + 2 * row)
+                u16::from_ne_bytes(shared_word(self, WAVE_ROWS + 2 * row).to_le_bytes())
             } else {
                 self.source_word(LiveOwner::HdmaTable1, 2 * row, WordOrder::Little)
             };
             let value = origin.wrapping_sub(sample);
             if phantoon {
-                store_word(self, ram::PHANTOON_WAVES + 2 * (rows + row), value, store);
+                store_shared_bytes(self, WAVE_ROWS + 2 * (rows + row), &value.to_ne_bytes());
             } else {
                 self.store_source_word(
                     LiveOwner::HdmaTable1,
@@ -319,11 +348,13 @@ pub trait HdmaEffects: Host {
         advance_program(self.current_hdma_index(), self);
     }
 
-    fn add_eye_beam_fixed(&mut self, whole: usize, fraction: usize, increment: u32) -> u32 {
-        let value = (u32::from(self.word(fraction)) | u32::from(self.word(whole)) << 16)
+    /// Add `increment` to the eye beam's 16.16 widening speed; the new speed.
+    fn add_eye_beam_speed(&mut self, increment: u32) -> u32 {
+        let value = (u32::from(shared_word(self, BEAM_SPEED_FRACTION))
+            | (u32::from(shared_word(self, BEAM_SPEED)) << 16))
             .wrapping_add(increment);
-        self.write_slice_le(fraction, value as u16);
-        self.write_slice_le(whole, (value >> 16) as u16);
+        store_shared_word(self, BEAM_SPEED_FRACTION, value as u16);
+        store_shared_word(self, BEAM_SPEED, (value >> 16) as u16);
         value
     }
 
@@ -336,8 +367,9 @@ pub trait HdmaEffects: Host {
             self.publish_fx_controls(fx, &[crate::fx_state::Field::Blending]);
         };
         // The original stores also clear the byte after the HDMA terminator.
-        self.write_slice(
-            0x9000,
+        store_shared_bytes(
+            self,
+            0,
             &[0xe4, 0x00, 0x91, 0xe4, 0xc8, 0x91, 0x98, 0x90, 0x92, 0, 0],
         );
         self.edit_actor(Key::from_legacy(0x40), Le, |actor| actor.variables[2] = 1);
@@ -345,8 +377,8 @@ pub trait HdmaEffects: Host {
         let hdma_index = usize::from(slot >> 1);
         crate::hdma_word!(self, hdma_index, C => 0);
         crate::hdma_word!(self, hdma_index, D => 0);
-        self.write_slice(0x9080, &[0; 4]);
-        self.write_slice_le(0x9090, 0);
+        store_shared_bytes(self, BEAM_SPEED, &[0; 4]);
+        store_shared_word(self, BEAM_COLOR_INDEX, 0);
     }
 
     fn advance_eye_beam(&mut self, slot: u16, phase: EyeBeamPhase) {
@@ -357,7 +389,7 @@ pub trait HdmaEffects: Host {
         };
         match phase {
             EyeBeamPhase::Widening => {
-                let speed = self.add_eye_beam_fixed(0x9080, 0x9082, 0x4000);
+                let speed = self.add_eye_beam_speed(0x4000);
                 let hdma_index = usize::from(slot >> 1);
                 let width = (u32::from(crate::hdma_word!(self, hdma_index, D))
                     | u32::from(crate::hdma_word!(self, hdma_index, C)) << 16)
@@ -376,11 +408,12 @@ pub trait HdmaEffects: Host {
                     self.advance_hdma_program();
                 } else {
                     self.draw_eye_beam(slot);
-                    let index = usize::from(self.word(0x9090).wrapping_mul(4));
+                    let index = usize::from(shared_word(self, BEAM_COLOR_INDEX).wrapping_mul(4));
                     let table = self.table(Source::Loaded, 0x88ea8b);
                     let cycle = [0, 1, 2].map(|lane| table.byte(index + lane));
                     set_colors(usize::from(slot >> 1), cycle, self);
-                    self.write_slice_le(0x9090, self.word(0x9090).wrapping_add(1) & 0xf);
+                    let next = shared_word(self, BEAM_COLOR_INDEX).wrapping_add(1) & 0xf;
+                    store_shared_word(self, BEAM_COLOR_INDEX, next);
                 }
             }
             EyeBeamPhase::Fading => {
@@ -389,10 +422,13 @@ pub trait HdmaEffects: Host {
                     let hdma_index = usize::from(slot >> 1);
                     crate::hdma_word!(self, hdma_index, D => 0);
                     crate::hdma_word!(self, hdma_index, C => 0);
-                    for entry in (0x9100..0x9300).step_by(2).rev() {
-                        self.write_slice_le(entry, 0xff);
+                    // Close the beam's window rows, last first.
+                    let block = &mut self.session_mut().actors.extended.blocks[SHARED_BLOCK];
+                    for row in block[WAVE_ROWS / 2..WAVE_ROWS / 2 + 256].iter_mut().rev() {
+                        *row = 0xff;
                     }
-                    self.write_slice(0x9000, &[0; 10]);
+                    self.words_stored();
+                    store_shared_bytes(self, 0, &[0; 10]);
                     self.advance_hdma_program();
                 } else {
                     self.draw_eye_beam(slot);
@@ -415,7 +451,7 @@ pub trait HdmaEffects: Host {
         let width = crate::hdma_word!(&*self, usize::from(slot >> 1), C);
         let y = actor.y.whole.wrapping_sub(self.inputs().camera_y);
         let x = actor.x.whole.wrapping_sub(self.inputs().camera_x);
-        self.calculate_xray_window(crate::beam_windows::XrayWindow {
+        let crossing = self.calculate_xray_window(crate::beam_windows::XrayWindow {
             x,
             y,
             angle,
@@ -423,6 +459,9 @@ pub trait HdmaEffects: Host {
             off_screen: x >= 256,
             table: 0x9100,
         });
+        if let Some(row) = crossing {
+            self.session_mut().player.grapple_extension_compatibility.x = row;
+        }
         let colors = colors(usize::from(slot >> 1), &*self);
         for (target, color) in (0x74..).zip(colors) {
             self.set_byte(target, color);
@@ -431,13 +470,14 @@ pub trait HdmaEffects: Host {
 
     /// Scroll BG3 by the weather's phases and the camera, through the session view.
     fn scroll_weather_layers(&mut self, slot: u16, weather: Weather) {
-        use crate::ram::words as ram;
+        use crate::fx_state::Field::{EffectHorizontal, EffectVertical};
         let spores = matches!(weather, Weather::Spores);
         let rain = matches!(weather, Weather::Rain);
         // Each axis has a phase word (A and B, or C and D for spores) and
         // rain's camera history (E and F). Finish each axis, including the
         // history, before reading the next.
-        for (vertical, camera, output) in [(true, 1, ram::BG3_YPOS), (false, 0, ram::BG3_XPOS)] {
+        for (vertical, camera, output) in [(true, 1, EffectVertical), (false, 0, EffectHorizontal)]
+        {
             let hdma_index = usize::from(slot >> 1);
             let (phase, history) = match (spores, vertical) {
                 (false, true) => (
@@ -464,7 +504,9 @@ pub trait HdmaEffects: Host {
                 self.session().room.camera.layer1[camera]
             };
             let scroll = origin.wrapping_add(high(phase) as i8 as u16);
-            self.write_slice_le(output, scroll);
+            let mut fx = self.fx_controls();
+            *output.get_mut(&mut fx) = scroll;
+            self.publish_fx_controls(fx, &[output]);
             let delta = match (weather, vertical) {
                 (Weather::Rain, true) => 0u16.wrapping_sub(1536),
                 (_, true) => 0u16.wrapping_sub(64),
@@ -524,15 +566,6 @@ fn hdma_wave_offset(sample: i16, amplitude_low: u8, amplitude_high: u8) -> u16 {
         offset.wrapping_neg()
     } else {
         offset
-    }
-}
-
-/// One table word through the projection, in the store's byte order.
-fn store_word<H: Host + ?Sized>(h: &mut H, at: usize, value: u16, store: Store) {
-    match store {
-        Store::PrefixLe => h.write_word_le(value, at),
-        Store::SliceLe => h.write_slice_le(at, value),
-        Store::SliceNative => h.write_slice_native(at, value),
     }
 }
 

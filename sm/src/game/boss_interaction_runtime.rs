@@ -82,6 +82,7 @@ fn address(word: Word) -> usize {
         Word::MeltUnread => 0x696,
         Word::MeltMaxY => 0x698,
         Word::MeltIndex => 0x69a,
+        Word::PaletteChangeNum => 0xc400,
     }
 }
 fn collection_address(array: Array, index: usize) -> usize {

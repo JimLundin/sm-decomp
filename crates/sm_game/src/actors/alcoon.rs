@@ -4,21 +4,23 @@
 use crate::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 use crate::actors::api::{self, MovementResult::Blocked, SlopePolicy};
 use crate::actors::host::{ActorLease, ActorRuntime as _, LeaseActors, abs16};
-use crate::actors::layouts::part_view;
+use crate::actors::slot_view::{SlotState, slot_view};
 use crate::enemy_projectiles::host::Effects as _;
 use crate::enemy_script::EnemyScript;
-use crate::ram::words as W;
-use crate::session_slot;
+use crate::session_access::SessionAccess as _;
 
-part_view! {
+/// A lease the alcoons run on: their slots are the Session's.
+pub trait Lease: ActorLease + SlotState {}
+impl<T: ActorLease + SlotState + ?Sized> Lease for T {}
+
+slot_view! {
     /// Alcoon's view of its slot and extended RAM.
-    Alcoon: EnemyLayout40 {
-        words: [function, y_velocity, y_subvelocity, x_velocity, unread_0fb0, spawn_y, parameter_1, parameter_2],
-        pad1: [u8; 26696],
-        words: [
-            y_acceleration, y_subacceleration, spawn_x, landing_y, step_counter,
+    Alcoon, AlcoonEdit {
+        record: [y_velocity = var_b, y_subvelocity = var_c],
+        extended: [
+            y_acceleration = var_00, y_subacceleration = var_01, spawn_x = var_02,
+            landing_y = var_03, step_counter = var_04,
         ],
-        _: [u16; 27],
     }
 }
 
@@ -88,15 +90,11 @@ const CRY_SOUND: u16 = 0x5e;
 const FIREBALL_SOUND: u16 = 0x3f;
 const FIREBALL: u16 = 0x9e90;
 const SIGN: u16 = 0x8000;
-/// $7E:0F7E and $7E:0FAA: the Y position and Y velocity words, read as
-/// whole-and-fraction pairs from the slot record.
-const Y_POSITION: usize = 0xf7e;
-const Y_VELOCITY: usize = 0xfaa;
 
-fn selected(runtime: &impl ActorLease) -> Key {
-    Key::from_legacy(runtime.word(W::CUR_ENEMY_INDEX))
+fn selected(runtime: &impl Lease) -> Key {
+    Key::from_legacy(runtime.session().actors.controls.selected)
 }
-fn face(runtime: &mut impl ActorLease, key: Key, left: u16, right: u16) {
+fn face(runtime: &mut impl Lease, key: Key, left: u16, right: u16) {
     runtime.edit_actor(key, Native, |actor| {
         actor.instruction = if actor.variables[lane::X_VELOCITY] & SIGN != 0 {
             left
@@ -107,41 +105,42 @@ fn face(runtime: &mut impl ActorLease, key: Key, left: u16, right: u16) {
     });
 }
 /// Set up jump movement ($A8:DD37).
-fn set_up_jump(runtime: &mut impl ActorLease, key: Key) {
+fn set_up_jump(runtime: &mut impl Lease, key: Key) {
     runtime.edit_actor(key, Native, |actor| {
         actor.variables[lane::Y_VELOCITY] = JUMP_VELOCITY as u16;
         actor.variables[lane::Y_SUBVELOCITY] = 0;
         actor.variables[lane::X_VELOCITY] = 0;
         actor.variables[lane::UNREAD] = 0;
     });
-    let alcoon = i32::from(key.byte_index());
-    session_slot!(runtime, Alcoon[alcoon]; y_acceleration = 0, y_subacceleration = JUMP_ACCELERATION);
+    let alcoon = key.byte_index();
+    let mut edit = AlcoonEdit::of(runtime, alcoon);
+    *edit.y_acceleration() = 0;
+    *edit.y_subacceleration() = JUMP_ACCELERATION;
 }
-fn pair(runtime: &impl ActorLease, at: usize) -> u32 {
-    (u32::from(runtime.lease_native_word(at)) << 16) | u32::from(runtime.lease_native_word(at + 2))
-}
-fn add_pair(runtime: &mut impl ActorLease, at: usize, amount: u32) -> u16 {
-    let low = runtime.lease_native_word(at + 2);
-    let high = runtime.lease_native_word(at);
-    let next = ((u32::from(high) << 16) | u32::from(low)).wrapping_add(amount);
-    runtime.write_slice_native(at + 2, next as u16);
-    runtime.write_slice_native(at, (next >> 16) as u16);
-    (next >> 16) as u16
-}
-fn velocity(runtime: &impl ActorLease, key: Key) -> u32 {
-    pair(runtime, Y_VELOCITY + usize::from(key.byte_index()))
+/// Alcoon's Y velocity (16.16): its velocity word above its subvelocity.
+fn velocity(runtime: &impl Lease, key: Key) -> u32 {
+    let alcoon = Alcoon::of(runtime, key.byte_index());
+    (u32::from(alcoon.y_velocity()) << 16) | u32::from(alcoon.y_subvelocity())
 }
 /// Alcoon Y acceleration ($A8:DD55); the new Y velocity.
-fn accelerate(runtime: &mut impl ActorLease, key: Key) -> u16 {
-    let alcoon = i32::from(key.byte_index());
-    let amount = session_slot!(runtime, Alcoon[alcoon](y_acceleration, y_subacceleration));
-    add_pair(runtime, Y_VELOCITY + usize::from(key.byte_index()), amount)
+fn accelerate(runtime: &mut impl Lease, key: Key) -> u16 {
+    let mut alcoon = AlcoonEdit::of(runtime, key.byte_index());
+    let amount =
+        (u32::from(*alcoon.y_acceleration()) << 16) | u32::from(*alcoon.y_subacceleration());
+    let velocity = (u32::from(*alcoon.y_velocity()) << 16) | u32::from(*alcoon.y_subvelocity());
+    let next = velocity.wrapping_add(amount);
+    *alcoon.y_subvelocity() = next as u16;
+    *alcoon.y_velocity() = (next >> 16) as u16;
+    (next >> 16) as u16
 }
-fn drift(runtime: &mut impl ActorLease, key: Key) {
+fn drift(runtime: &mut impl Lease, key: Key) {
     let amount = velocity(runtime, key);
-    add_pair(runtime, Y_POSITION + usize::from(key.byte_index()), amount);
+    AlcoonEdit::of(runtime, key.byte_index())
+        .actor()
+        .y
+        .advance(amount.cast_signed());
 }
-fn samus_offset(runtime: &impl ActorLease, key: Key) -> u16 {
+fn samus_offset(runtime: &impl Lease, key: Key) -> u16 {
     runtime
         .player_x()
         .wrapping_sub(runtime.resolve_actor(key, Native).x.whole)
@@ -155,13 +154,13 @@ fn direction(left: bool) -> u16 {
 }
 /// Initialisation AI - Alcoon ($A8:DCCD): simulate a jump to find the
 /// landing Y position.
-pub fn initialize(runtime: &mut impl ActorLease) {
+pub fn initialize(runtime: &mut impl Lease) {
     let key = selected(runtime);
-    let alcoon = i32::from(key.byte_index());
-    session_slot!(runtime, Alcoon[alcoon].step_counter = 0);
+    let alcoon = key.byte_index();
+    *AlcoonEdit::of(runtime, alcoon).step_counter() = 0;
     runtime.edit_actor(key, Native, |actor| actor.pre_instruction = actor.y.whole);
     let x = runtime.resolve_actor(key, Native).x.whole;
-    session_slot!(runtime, Alcoon[alcoon].spawn_x = x);
+    *AlcoonEdit::of(runtime, alcoon).spawn_x() = x;
     runtime.edit_actor(key, Native, |actor| {
         actor.properties |= PROCESS_INSTRUCTIONS;
         actor.instruction = instruction_list::LEFT_WALKING;
@@ -186,19 +185,20 @@ pub fn initialize(runtime: &mut impl ActorLease) {
         accelerate(runtime, live);
     }
     let y = runtime.resolve_actor(key, Native).y.whole;
-    session_slot!(runtime, Alcoon[alcoon].landing_y = y);
+    *AlcoonEdit::of(runtime, alcoon).landing_y() = y;
     runtime.edit_actor(key, Native, |actor| actor.y.whole = actor.pre_instruction);
 }
 /// Main AI - Alcoon ($A8:DD6B): run its function. Was `advance`.
-pub fn main_ai(runtime: &mut impl ActorLease) {
+pub fn main_ai(runtime: &mut impl Lease) {
     let key = selected(runtime);
-    let alcoon = i32::from(key.byte_index());
+    let alcoon = key.byte_index();
     let function = runtime.resolve_actor(key, Native).variables[lane::FUNCTION];
     match function {
         // Alcoon function - wait for Samus to get near ($A8:DD71).
         function::WAIT_FOR_SAMUS => {
-            let dy =
-                session_slot!(runtime, Alcoon[alcoon].landing_y).wrapping_sub(runtime.player_y());
+            let dy = Alcoon::of(runtime, alcoon)
+                .landing_y()
+                .wrapping_sub(runtime.player_y());
             if abs16(dy).wrapping_sub(EMERGE_Y) & SIGN == 0 {
                 return;
             }
@@ -230,7 +230,7 @@ pub fn main_ai(runtime: &mut impl ActorLease) {
                 && (actor.y.whole as i16).wrapping_sub(actor.pre_instruction as i16) >= 0
             {
                 runtime.edit_actor(key, Native, |actor| actor.y.whole = actor.pre_instruction);
-                let x = session_slot!(runtime, Alcoon[alcoon].spawn_x);
+                let x = Alcoon::of(runtime, alcoon).spawn_x();
                 runtime.edit_actor(key, Native, |actor| {
                     actor.x.whole = x;
                     actor.variables[lane::FUNCTION] = function::WAIT_FOR_SAMUS;
@@ -270,7 +270,7 @@ pub fn main_ai(runtime: &mut impl ActorLease) {
                 runtime.edit_actor(key, Native, |actor| {
                     actor.variables[lane::FUNCTION] = function::EMERGED
                 });
-                session_slot!(runtime, Alcoon[alcoon].step_counter = 1);
+                *AlcoonEdit::of(runtime, alcoon).step_counter() = 1;
             } else {
                 accelerate(runtime, key);
             }
@@ -279,7 +279,8 @@ pub fn main_ai(runtime: &mut impl ActorLease) {
         // else spit fireballs at Samus once she is ahead.
         function::EMERGED => {
             api::move_vertical(runtime, key, PUSH_DOWN);
-            let dx = session_slot!(runtime, Alcoon[alcoon].spawn_x)
+            let dx = Alcoon::of(runtime, alcoon)
+                .spawn_x()
                 .wrapping_sub(runtime.resolve_actor(key, Native).x.whole);
             if (abs16(dx) as i16).wrapping_sub(HIDE_X) >= 0 {
                 runtime.edit_actor(key, Native, |actor| {
@@ -293,7 +294,7 @@ pub fn main_ai(runtime: &mut impl ActorLease) {
                     instruction_list::LEFT_LOOKING_FORWARD,
                     instruction_list::RIGHT_LOOKING_FORWARD,
                 );
-            } else if session_slot!(runtime, Alcoon[alcoon].step_counter) == 0 {
+            } else if Alcoon::of(runtime, alcoon).step_counter() == 0 {
                 let left = samus_offset(runtime, key) & SIGN != 0;
                 if left
                     == (runtime.resolve_actor(key, Native).variables[lane::X_VELOCITY] & SIGN != 0)
@@ -323,7 +324,7 @@ pub fn instruction<H: LeaseActors + ?Sized>(
     use instruction::*;
     let runtime = &mut game.lease();
     let key = selected(runtime);
-    let alcoon = i32::from(key.byte_index());
+    let alcoon = key.byte_index();
     match address {
         // Spawn alcoon fireball with Y velocity index [A] ($A8:DF20).
         SPAWN_FIREBALL_0 | SPAWN_FIREBALL_2 | SPAWN_FIREBALL_4 => {
@@ -341,11 +342,8 @@ pub fn instruction<H: LeaseActors + ?Sized>(
             runtime.edit_actor(key, Native, |actor| {
                 actor.variables[lane::FUNCTION] = function::EMERGED
             });
-            let count = runtime.word(W::RANDOM_NUMBER) & 3;
-            session_slot!(
-                runtime,
-                Alcoon[alcoon].step_counter = if count == 0 { 2 } else { count }
-            );
+            let count = runtime.session().timing.random_number & 3;
+            *AlcoonEdit::of(runtime, alcoon).step_counter() = if count == 0 { 2 } else { count };
             return EnemyScript::jump(
                 if runtime.resolve_actor(key, Native).variables[lane::X_VELOCITY] & SIGN != 0 {
                     instruction_list::LEFT_WALKING
@@ -356,9 +354,9 @@ pub fn instruction<H: LeaseActors + ?Sized>(
         }
         STEP_AND_MOVE_HORIZONTALLY | MOVE_HORIZONTALLY => {
             if address == STEP_AND_MOVE_HORIZONTALLY {
-                let count = session_slot!(runtime, Alcoon[alcoon].step_counter);
+                let count = Alcoon::of(runtime, alcoon).step_counter();
                 if count != 0 {
-                    session_slot!(runtime, Alcoon[alcoon].step_counter = count.wrapping_sub(1));
+                    *AlcoonEdit::of(runtime, alcoon).step_counter() = count.wrapping_sub(1);
                 }
             }
             let key = selected(runtime);

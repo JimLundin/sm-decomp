@@ -5,26 +5,32 @@ use crate::actors::access::{
     ActorAccess as _, ActorKey as Key,
 };
 use crate::actors::api::{self, DeathHandling, MovementResult::Blocked, ShotHandling, SlopePolicy};
-use crate::actors::combat::{self, current_slot};
+use crate::actors::combat;
 use crate::actors::host::{ActorLease, LeaseActors, abs16};
-use crate::actors::layouts::{EnemyBase, part_view};
+use crate::actors::slot_view::{SlotState, slot_view};
 use crate::enemy_script::EnemyScript;
 use crate::player_projectiles::content;
-use crate::ram::words;
-use crate::session_slot;
 
-part_view! {
-    /// A tatori's extended RAM; its X velocity is a velocity word in its fifth actor word
-    /// over `x_subvelocity`. The first word of a mini-tatori is its function, its second its
-    /// tatori's slot, then its spawn X and top Y, then its X velocity.
-    Tatori: EnemyLayout40 {
-        words: [var_a, var_b, var_c, var_d, var_e, var_f, parameter_1, parameter_2],
-        pad1: [u8; 26696],
-        words: [timer, acceleration_sub, acceleration, x_subvelocity, y_velocity, hide_timer, child_height,
-            y_subvelocity],
-        _: [u16; 24],
+slot_view! {
+    /// A tatori's slot: its function, its timer, its acceleration (sub and whole
+    /// words), its X subvelocity (under the velocity word in its fifth actor
+    /// word), its Y velocity (whole over sub), its hide timer and the height of
+    /// a mini-tatori it carries. The first word of a mini-tatori is its function,
+    /// its second its tatori's slot, then its spawn X and top Y, then its X
+    /// velocity.
+    Tatori, TatoriEdit {
+        record: [function = var_a, parent = var_b],
+        extended: [
+            timer = var_00, acceleration_sub = var_01, acceleration = var_02,
+            x_subvelocity = var_03, y_velocity = var_04, hide_timer = var_05,
+            child_height = var_06, y_subvelocity = var_07,
+        ],
     }
 }
+
+/// A lease the tatoris run on: its slots are the Session's.
+pub trait Lease: ActorLease + SlotState {}
+impl<T: ActorLease + SlotState + ?Sized> Lease for T {}
 
 const INITIAL: u16 = 0x8dd8;
 const IDLE: u16 = 0x8e09; // An RTS, while its instruction list runs.
@@ -44,12 +50,14 @@ const SPINNING_STOPPABLE: u16 = 0x9239;
 const CRAWLING_CARRYING: u16 = 0x925e;
 const CRAWLING_LEFT: u16 = 0x8b80;
 const CRAWLING_RIGHT: u16 = 0x8c72;
-/// $7E:05B5: the NMI frame counter's low byte; $7E:0A1E: Samus's pose X direction.
-const SAMUS_DX: usize = words::EXTRA_SAMUS_X_DISPLACEMENT;
-const SAMUS_SUB_DX: usize = words::EXTRA_SAMUS_X_SUBDISPLACEMENT;
-const SAMUS_DY: usize = words::EXTRA_SAMUS_Y_DISPLACEMENT;
+/// Samus's extra displacement, X ($7E:0B58) or Y ($7E:0B5C).
+#[derive(Clone, Copy)]
+enum Displacement {
+    X,
+    Y,
+}
+/// $7E:05B5: the NMI frame counter's low byte.
 const NMI_FRAME_COUNTER: usize = 0x5b5;
-const SAMUS_POSE_X_DIRECTION: usize = 0xa1e;
 /// $A2:8E80: the sleeping tatori shell's height either side of its centre, right then left.
 const SHELL_HEIGHT: [i16; 48] = [
     -16, -16, -16, -16, -15, -15, -15, -15, -15, -14, -13, -13, -12, -11, -10, -9, -8, -7, -6, -5,
@@ -57,52 +65,61 @@ const SHELL_HEIGHT: [i16; 48] = [
     -3, -3, -2, 0, 0, 0, 0,
 ];
 
-fn set_list(runtime: &mut impl ActorLease, key: Key, list: u16) {
+fn set_list(runtime: &mut impl Lease, key: Key, list: u16) {
     runtime.edit_actor(key, Native, |actor| {
         actor.instruction = list;
         actor.instruction_delay = 1;
     });
 }
-fn set_function(runtime: &mut impl ActorLease, key: Key, function: u16) {
+fn set_function(runtime: &mut impl Lease, key: Key, function: u16) {
     runtime.edit_actor(key, Native, |actor| actor.variables[0] = function);
 }
-fn forward(runtime: &impl ActorLease, key: Key) -> bool {
+fn forward(runtime: &impl Lease, key: Key) -> bool {
     runtime.resolve_actor(key, Native).variables[4] & 0x8000 == 0
 }
-fn samus_right(runtime: &impl ActorLease, key: Key) -> bool {
+fn samus_right(runtime: &impl Lease, key: Key) -> bool {
     let x = runtime.resolve_actor(key, Native).x.whole;
-    (x.wrapping_sub(runtime.word(words::SAMUS_X_POS)) as i16) < 0
+    (x.wrapping_sub(runtime.session().player.x) as i16) < 0
 }
-fn crawl_again(runtime: &mut impl ActorLease, key: Key) {
+fn crawl_again(runtime: &mut impl Lease, key: Key) {
     let list = [CRAWLING_LEFT, CRAWLING_RIGHT][usize::from(forward(runtime, key))];
     set_list(runtime, key, list);
     set_function(runtime, key, CRAWLING);
 }
-fn displace(runtime: &mut impl ActorLease, field: usize, delta: u16) {
-    let moved = runtime.word(field).wrapping_add(delta);
-    runtime.write_slice_le(field, moved);
+fn displace(runtime: &mut impl Lease, axis: Displacement, delta: u16) {
+    let contact = &mut runtime.session_mut().player.contact;
+    let whole = match axis {
+        Displacement::X => &mut contact.external_x.whole,
+        Displacement::Y => &mut contact.external_y.whole,
+    };
+    *whole = whole.wrapping_add(delta);
 }
-fn horizontal(runtime: &mut impl ActorLease, key: Key, speed: i32) -> bool {
+fn horizontal(runtime: &mut impl Lease, key: Key, speed: i32) -> bool {
     api::move_horizontal(runtime, key, speed, SlopePolicy::Ignore) == Blocked
 }
-fn vertical(runtime: &mut impl ActorLease, key: Key, speed: i32) -> bool {
+fn vertical(runtime: &mut impl Lease, key: Key, speed: i32) -> bool {
     api::move_vertical(runtime, key, speed) == Blocked
 }
-fn riding(runtime: &impl ActorLease) -> bool {
+fn riding(runtime: &impl Lease) -> bool {
     api::touches_player_from_above(runtime, combat::current(runtime))
 }
 /// The velocity whole word in the fifth actor word over `x_subvelocity`.
-fn x_velocity(runtime: &impl ActorLease, key: Key, slot: i32) -> u32 {
+fn x_velocity(runtime: &impl Lease, key: Key) -> u32 {
     let whole = runtime.resolve_actor(key, Native).variables[4];
-    (u32::from(whole) << 16) | u32::from(session_slot!(runtime, Tatori[slot].x_subvelocity))
+    (u32::from(whole) << 16) | u32::from(Tatori::of(runtime, key.byte_index()).x_subvelocity())
 }
-fn set_x_velocity(runtime: &mut impl ActorLease, key: Key, slot: i32, velocity: u32) {
-    session_slot!(runtime, Tatori[slot].x_subvelocity = velocity as u16);
+fn set_x_velocity(runtime: &mut impl Lease, key: Key, velocity: u32) {
+    *TatoriEdit::of(runtime, key.byte_index()).x_subvelocity() = velocity as u16;
     let whole = (velocity >> 16) as u16;
     runtime.edit_actor(key, Native, |actor| actor.variables[4] = whole);
 }
+/// The tatori's 16.16 acceleration.
+fn acceleration(runtime: &impl Lease, slot: u16) -> u32 {
+    let tatori = Tatori::of(runtime, slot);
+    (u32::from(tatori.acceleration()) << 16) | u32::from(tatori.acceleration_sub())
+}
 /// Tatori / Samus collision detection ($A2:9315), against the tatori in slot 0.
-fn collide(runtime: &mut impl ActorLease) {
+fn collide(runtime: &mut impl Lease) {
     let (left, right, top, bottom) = {
         let actor = runtime.resolve_actor(Key::from_legacy(0), Native);
         (
@@ -112,21 +129,22 @@ fn collide(runtime: &mut impl ActorLease) {
             actor.y.whole.wrapping_add(actor.radius.y).wrapping_sub(4),
         )
     };
-    let x = i32::from(runtime.word(words::SAMUS_X_POS));
-    let width = i32::from(runtime.word(words::SAMUS_X_RADIUS));
-    let y = i32::from(runtime.word(words::SAMUS_Y_POS));
-    let height = i32::from(runtime.word(words::SAMUS_Y_RADIUS));
+    let player = &runtime.session().player;
+    let x = i32::from(player.x);
+    let width = i32::from(player.contact.x_radius);
+    let y = i32::from(player.y);
+    let height = i32::from(player.contact.radius);
     if (x - width - 1 - i32::from(right)) & 0x8000 != 0
         && (width + x - i32::from(left)) & 0x8000 == 0
         && (y - height + 1 - i32::from(bottom)) & 0x8000 != 0
         && (height + y - i32::from(top)) & 0x8000 == 0
-        && runtime.word(words::SAMUS_INVINCIBILITY_TIMER) == 0
+        && runtime.session().player.invincibility == 0
     {
         combat::contact_reaction(runtime, DeathHandling::Finalize);
     }
 }
 /// One fewer mini-tatori for its tatori to wait on.
-fn detach_child(runtime: &mut impl ActorLease) {
+fn detach_child(runtime: &mut impl Lease) {
     let key = combat::current(runtime);
     let parent = Key::from_legacy(runtime.resolve_actor(key, Native).variables[1]);
     runtime.edit_actor(parent, Native, |actor| {
@@ -136,7 +154,7 @@ fn detach_child(runtime: &mut impl ActorLease) {
     });
 }
 /// Initialisation AI - tatori ($A2:8D6C) or mini-tatori ($A2:8D9D).
-pub fn initialize(child: bool, lease: &mut impl ActorLease) {
+pub fn initialize(child: bool, lease: &mut impl Lease) {
     let key = combat::current(lease);
     lease.edit_actor(key, Le, |actor| {
         actor.instruction_delay = 1;
@@ -167,31 +185,35 @@ pub fn main_ai<H: LeaseActors + ?Sized>(child: bool, game: &mut H) -> bool {
     let key = combat::current(runtime);
     if child {
         let parent = runtime.resolve_actor(key, Le).variables[1];
-        session_slot!(runtime, Tatori[i32::from(parent)].child_height = 0);
+        *TatoriEdit::of(runtime, parent).child_height() = 0;
     }
     let function = runtime.resolve_actor(key, Le).variables[0];
     run_function(runtime, key.byte_index(), function)
 }
-fn run_function(runtime: &mut impl ActorLease, raw: u16, function: u16) -> bool {
+fn run_function(runtime: &mut impl Lease, raw: u16, function: u16) -> bool {
     let key = Key::from_legacy(raw);
-    let slot = i32::from(raw);
+    let slot = raw;
     match function {
         // Hand its palette, tiles and slot to its four mini-tatoris.
         INITIAL => {
-            let base = crate::ram_slot!(@at Tatori, slot, base);
-            for field in [
-                core::mem::offset_of!(EnemyBase, palette_index),
-                core::mem::offset_of!(EnemyBase, vram_tiles_index),
-            ] {
-                let value = runtime.word(base + field);
-                for child in [64, 128, 192, 256] {
-                    runtime.write_slice_le(base + child + field, value);
+            const CHILDREN: [u16; 4] = [64, 128, 192, 256];
+            for tiles in [false, true] {
+                let actor = Tatori::of(runtime, slot).actor();
+                let value = if tiles { actor.tile } else { actor.palette };
+                for child in CHILDREN {
+                    let mut edit = TatoriEdit::of(runtime, slot + child);
+                    let actor = edit.actor();
+                    *if tiles {
+                        &mut actor.tile
+                    } else {
+                        &mut actor.palette
+                    } = value;
                 }
             }
-            for child in [64, 128, 192, 256] {
-                runtime.write_slice_le(base + child + 0x32, raw);
+            for child in CHILDREN {
+                *TatoriEdit::of(runtime, slot + child).parent() = raw;
             }
-            runtime.write_slice_le(base + 0x30, ASLEEP);
+            *TatoriEdit::of(runtime, slot).function() = ASLEEP;
         }
         ASLEEP if runtime.resolve_actor(key, Le).pre_instruction == 0 => {
             runtime.edit_actor(key, Le, |actor| {
@@ -203,7 +225,7 @@ fn run_function(runtime: &mut impl ActorLease, raw: u16, function: u16) -> bool 
         ASLEEP => {
             runtime.edit_actor(key, Le, |actor| actor.radius.y = 0);
             let x = runtime.resolve_actor(key, Le).x.whole;
-            let delta = x.wrapping_sub(runtime.word(words::SAMUS_X_POS));
+            let delta = x.wrapping_sub(runtime.session().player.x);
             let magnitude = abs16(delta);
             if magnitude < 24 {
                 let index = magnitude + if delta & 0x8000 != 0 { 24 } else { 0 };
@@ -216,10 +238,10 @@ fn run_function(runtime: &mut impl ActorLease, raw: u16, function: u16) -> bool 
                 if api::touches_player_from_above(runtime, live) {
                     let actor = runtime.resolve_actor(key, Le);
                     let top = actor.y.whole.wrapping_sub(actor.radius.y);
-                    let feet = runtime.word(words::SAMUS_Y_RADIUS);
-                    let feet = feet.wrapping_add(runtime.word(words::SAMUS_Y_POS));
+                    let player = &runtime.session().player;
+                    let feet = player.contact.radius.wrapping_add(player.y);
                     if feet.wrapping_sub(top) as i16 >= 0 {
-                        displace(runtime, SAMUS_DY, top.wrapping_sub(feet));
+                        displace(runtime, Displacement::Y, top.wrapping_sub(feet));
                     }
                 }
             }
@@ -228,7 +250,7 @@ fn run_function(runtime: &mut impl ActorLease, raw: u16, function: u16) -> bool 
             collide(runtime);
             if runtime.lease_byte(NMI_FRAME_COUNTER) & 1 == 0 {
                 if api::touches_player_from_above(runtime, key) {
-                    displace(runtime, SAMUS_DX, u16::MAX);
+                    displace(runtime, Displacement::X, u16::MAX);
                 }
                 runtime.edit_actor(key, Native, |actor| {
                     actor.y.whole = actor.y.whole.wrapping_sub(1);
@@ -252,52 +274,55 @@ fn run_function(runtime: &mut impl ActorLease, raw: u16, function: u16) -> bool 
             collide(runtime);
             if !vertical(runtime, key, -1 << 16) {
                 if api::touches_player_from_above(runtime, key) {
-                    displace(runtime, SAMUS_DY, u16::MAX);
+                    displace(runtime, Displacement::Y, u16::MAX);
                 }
-                let timer = session_slot!(runtime, Tatori[slot].timer).wrapping_sub(1);
-                session_slot!(runtime, Tatori[slot].timer = timer);
+                let timer = Tatori::of(runtime, slot).timer().wrapping_sub(1);
+                *TatoriEdit::of(runtime, slot).timer() = timer;
                 if timer == 0 {
                     let index = if samus_right(runtime, key) { 2 } else { 0 };
                     let image = runtime.native_image();
                     let low = image.table_word(content::offset(0xa2_8d56), index);
-                    session_slot!(runtime, Tatori[slot].acceleration_sub = low);
+                    *TatoriEdit::of(runtime, slot).acceleration_sub() = low;
                     let high = image.table_word(content::offset(0xa2_8d58), index);
-                    session_slot!(runtime, Tatori[slot].acceleration = high);
+                    *TatoriEdit::of(runtime, slot).acceleration() = high;
                     runtime.edit_actor(key, Native, |actor| actor.variables[4] = 0);
-                    session_slot!(runtime, Tatori[slot].x_subvelocity = 0);
+                    *TatoriEdit::of(runtime, slot).x_subvelocity() = 0;
                     set_function(runtime, key, HOVERING);
                 }
             }
         }
         HOVERING => {
             collide(runtime);
-            if horizontal(runtime, key, x_velocity(runtime, key, slot) as i32) {
-                let speed = (-(x_velocity(runtime, key, slot) as i32)) as u32;
-                set_x_velocity(runtime, key, slot, speed);
-                let accel = session_slot!(runtime, Tatori[slot](acceleration, acceleration_sub));
-                let accel = (-(accel as i32)) as u32;
-                session_slot!(runtime, Tatori[slot]; acceleration_sub = accel as u16, acceleration = (accel >> 16) as u16);
-                runtime.write_slice_le(words::EARTHQUAKE_TYPE, 0);
-                runtime.write_slice_le(words::EARTHQUAKE_TIMER, 16);
+            if horizontal(runtime, key, x_velocity(runtime, key) as i32) {
+                let speed = (-(x_velocity(runtime, key) as i32)) as u32;
+                set_x_velocity(runtime, key, speed);
+                let accel = acceleration(runtime, slot).wrapping_neg();
+                let mut edit = TatoriEdit::of(runtime, slot);
+                *edit.acceleration_sub() = accel as u16;
+                *edit.acceleration() = (accel >> 16) as u16;
+                drop(edit);
+                let feedback = &mut runtime.session_mut().feedback;
+                feedback.earthquake_kind = 0;
+                feedback.earthquake_timer = 16;
                 runtime.queue_sound(2, 6, 0x1b);
             } else {
                 // Handle Samus landing on hovering tatori ($A2:8F5F): carry her along.
                 if api::touches_player_from_above(runtime, key) {
                     set_function(runtime, key, RISING_TO_PEAK);
-                    let delta = (-(x_velocity(runtime, key, slot) as i32)) as u32;
-                    let low = u32::from(runtime.lease_native_word(SAMUS_SUB_DX));
-                    let high = u32::from(runtime.lease_native_word(SAMUS_DX));
+                    let delta = (-(x_velocity(runtime, key) as i32)) as u32;
+                    let external = &mut runtime.session_mut().player.contact.external_x;
+                    let low = u32::from(external.fraction);
+                    let high = u32::from(external.whole);
                     let moved = (low | (high << 16)).wrapping_add(delta);
-                    runtime.write_slice_native(SAMUS_SUB_DX, moved as u16);
-                    runtime.write_slice_native(SAMUS_DX, (moved >> 16) as u16);
-                    let whole = i32::from(runtime.word(SAMUS_DX));
-                    if (whole + 16) & 0x8000 != 0 {
-                        runtime.write_slice_le(SAMUS_DX, (-16i16) as u16);
+                    external.fraction = moved as u16;
+                    external.whole = (moved >> 16) as u16;
+                    if (i32::from(external.whole) + 16) & 0x8000 != 0 {
+                        external.whole = (-16i16) as u16;
                     }
                 }
-                let accel = session_slot!(runtime, Tatori[slot](acceleration, acceleration_sub));
-                let speed = x_velocity(runtime, key, slot).wrapping_add(accel);
-                set_x_velocity(runtime, key, slot, speed);
+                let accel = acceleration(runtime, slot);
+                let speed = x_velocity(runtime, key).wrapping_add(accel);
+                set_x_velocity(runtime, key, speed);
                 runtime.edit_actor(key, Native, |actor| {
                     let speed = actor.variables[4];
                     if (abs16(speed) as i16).wrapping_sub(3) >= 0 {
@@ -314,24 +339,26 @@ fn run_function(runtime: &mut impl ActorLease, raw: u16, function: u16) -> bool 
             collide(runtime);
             let next =
                 if (runtime.resolve_actor(key, Native).y.whole as i16).wrapping_sub(0x1e8) < 0 {
-                    session_slot!(runtime, Tatori[slot].timer = 30);
+                    *TatoriEdit::of(runtime, slot).timer() = 30;
                     HOVERING_AT_PEAK
                 } else if api::touches_player_from_above(runtime, key) {
                     runtime.edit_actor(key, Native, |actor| {
                         actor.y.whole = actor.y.whole.wrapping_sub(7)
                     });
-                    displace(runtime, SAMUS_DY, (-7i16) as u16);
+                    displace(runtime, Displacement::Y, (-7i16) as u16);
                     return true;
                 } else {
                     FALLING
                 };
             set_function(runtime, key, next);
-            session_slot!(runtime, Tatori[slot]; y_subvelocity = 0, y_velocity = 0);
+            let mut edit = TatoriEdit::of(runtime, slot);
+            *edit.y_subvelocity() = 0;
+            *edit.y_velocity() = 0;
         }
         HOVERING_AT_PEAK => {
             collide(runtime);
-            let timer = session_slot!(runtime, Tatori[slot].timer).wrapping_sub(1);
-            session_slot!(runtime, Tatori[slot].timer = timer);
+            let timer = Tatori::of(runtime, slot).timer().wrapping_sub(1);
+            *TatoriEdit::of(runtime, slot).timer() = timer;
             if timer == 0 {
                 set_function(runtime, key, FALLING);
             }
@@ -339,12 +366,15 @@ fn run_function(runtime: &mut impl ActorLease, raw: u16, function: u16) -> bool 
         FALLING => {
             collide(runtime);
             // As the source does, the slot 0 tatori's fall speed caps every one.
-            if (session_slot!(runtime, Tatori[0].y_velocity) as i16).wrapping_sub(4) < 0 {
-                let speed = session_slot!(runtime, Tatori[slot](y_velocity, y_subvelocity))
-                    .wrapping_add(0x2000);
-                session_slot!(runtime, Tatori[slot]; y_subvelocity = speed as u16, y_velocity = (speed >> 16) as u16);
+            if (Tatori::of(runtime, 0).y_velocity() as i16).wrapping_sub(4) < 0 {
+                let mut edit = TatoriEdit::of(runtime, slot);
+                let speed = ((u32::from(*edit.y_velocity()) << 16)
+                    | u32::from(*edit.y_subvelocity()))
+                .wrapping_add(0x2000);
+                *edit.y_subvelocity() = speed as u16;
+                *edit.y_velocity() = (speed >> 16) as u16;
             }
-            let speed = i32::from(session_slot!(runtime, Tatori[slot].y_velocity) as i16) << 16;
+            let speed = i32::from(Tatori::of(runtime, slot).y_velocity() as i16) << 16;
             if vertical(runtime, key, speed) {
                 // Facing right or left - leave shell.
                 let list = [0x8c4a, 0x8d28][usize::from(forward(runtime, key))];
@@ -354,37 +384,34 @@ fn run_function(runtime: &mut impl ActorLease, raw: u16, function: u16) -> bool 
         }
         CRAWLING if api::touches_player_from_above(runtime, key) => {
             set_function(runtime, key, HIDING_CARRYING);
-            session_slot!(runtime, Tatori[slot].hide_timer = 4);
+            *TatoriEdit::of(runtime, slot).hide_timer() = 4;
             // Facing right or left - hiding.
             let list = [0x8c30, 0x8d14][usize::from(forward(runtime, key))];
             set_list(runtime, key, list);
         }
         CRAWLING => {}
         HIDING_CARRYING if api::touches_player_from_above(runtime, key) => {
-            session_slot!(runtime, Tatori[slot].hide_timer = 4)
+            *TatoriEdit::of(runtime, slot).hide_timer() = 4;
         }
         HIDING_CARRYING => {
-            let timer = session_slot!(runtime, Tatori[slot].hide_timer).wrapping_sub(1);
-            session_slot!(runtime, Tatori[slot].hide_timer = timer);
+            let timer = Tatori::of(runtime, slot).hide_timer().wrapping_sub(1);
+            *TatoriEdit::of(runtime, slot).hide_timer() = timer;
             if timer == 0 {
                 set_function(runtime, key, HIDING);
-                session_slot!(runtime, Tatori[slot].timer = 60);
+                *TatoriEdit::of(runtime, slot).timer() = 60;
             }
         }
         HIDING if api::touches_player_from_above(runtime, key) => {
             set_function(runtime, key, SPINNING_UNSTOPPABLE);
             set_list(runtime, key, 0x8bd2); // Spinning.
-            session_slot!(runtime, Tatori[slot].y_velocity = 1);
-            let speed = if runtime.lease_byte(SAMUS_POSE_X_DIRECTION) & 15 == 8 {
-                3
-            } else {
-                (-3i16) as u16
-            };
+            *TatoriEdit::of(runtime, slot).y_velocity() = 1;
+            let facing = runtime.session().player.movement_and_facing.to_le_bytes()[0];
+            let speed = if facing & 15 == 8 { 3 } else { (-3i16) as u16 };
             runtime.edit_actor(key, Native, |actor| actor.variables[4] = speed);
         }
         HIDING => {
-            let timer = session_slot!(runtime, Tatori[slot].timer).wrapping_sub(1);
-            session_slot!(runtime, Tatori[slot].timer = timer);
+            let timer = Tatori::of(runtime, slot).timer().wrapping_sub(1);
+            *TatoriEdit::of(runtime, slot).timer() = timer;
             if timer == 0 {
                 crawl_again(runtime, key);
             }
@@ -399,7 +426,7 @@ fn run_function(runtime: &mut impl ActorLease, raw: u16, function: u16) -> bool 
                     actor.variables[4] = actor.variables[4].wrapping_neg()
                 });
             } else {
-                let speed = i32::from(session_slot!(runtime, Tatori[slot].y_velocity) as i16) << 16;
+                let speed = i32::from(Tatori::of(runtime, slot).y_velocity() as i16) << 16;
                 vertical(runtime, key, speed);
             }
         }
@@ -407,7 +434,7 @@ fn run_function(runtime: &mut impl ActorLease, raw: u16, function: u16) -> bool 
             let key = combat::current(runtime);
             let parent = runtime.resolve_actor(key, Native).variables[1];
             let height = runtime.resolve_actor(key, Native).radius.y;
-            session_slot!(runtime, Tatori[i32::from(parent)].child_height = height);
+            *TatoriEdit::of(runtime, parent).child_height() = height;
             if !riding(runtime) {
                 let current = combat::current(runtime);
                 set_function(runtime, current, CRAWLING);
@@ -419,16 +446,15 @@ fn run_function(runtime: &mut impl ActorLease, raw: u16, function: u16) -> bool 
     true
 }
 /// Enemy touch - tatori ($A2:9281) or mini-tatori ($A2:929F).
-pub fn touch(child: bool, runtime: &mut impl ActorLease) {
+pub fn touch(child: bool, runtime: &mut impl Lease) {
     crate::probe::hit("tatori.touch");
     let key = combat::current(runtime);
-    let slot = current_slot(runtime);
     if !child {
         // Awaken tatori ($A2:92FF) when Samus hits it outside its shell.
         if runtime.resolve_actor(key, Native).properties & 0x8000 == 0 {
             combat::contact_reaction(runtime, DeathHandling::Finalize);
             set_function(runtime, key, FALLING);
-            session_slot!(runtime, Tatori[slot].y_velocity = 2);
+            *TatoriEdit::of(runtime, key.byte_index()).y_velocity() = 2;
         }
         return;
     }
@@ -442,10 +468,8 @@ pub fn touch(child: bool, runtime: &mut impl ActorLease) {
         actor.variables[4] = if right { 1 } else { u16::MAX };
         actor.instruction_delay = 1;
     });
-    let (samus, radius) = (
-        runtime.word(words::SAMUS_X_POS),
-        runtime.word(words::SAMUS_X_RADIUS),
-    );
+    let player = &runtime.session().player;
+    let (samus, radius) = (player.x, player.contact.x_radius);
     let x = if !samus_right(runtime, key) {
         runtime
             .resolve_actor(key, Native)
@@ -469,7 +493,7 @@ pub fn touch(child: bool, runtime: &mut impl ActorLease) {
     detach_child(runtime);
 }
 /// Enemy shot - mini-tatori ($A2:930F).
-pub fn shot(lease: &mut impl ActorLease) {
+pub fn shot(lease: &mut impl Lease) {
     combat::shot_reaction(lease, ShotHandling::Finalize);
     detach_child(lease);
 }
@@ -483,7 +507,7 @@ pub fn instruction<H: LeaseActors + ?Sized>(ea: u32, j: EnemyScript, game: &mut 
             let riding = riding(runtime);
             if riding {
                 let speed = runtime.resolve_actor(key, Native).variables[4];
-                displace(runtime, SAMUS_DX, speed);
+                displace(runtime, Displacement::X, speed);
             }
             let old_y = runtime.edit_actor(key, Native, |actor| {
                 core::mem::replace(&mut actor.y.whole, actor.variables[3])
@@ -513,7 +537,7 @@ pub fn instruction<H: LeaseActors + ?Sized>(ea: u32, j: EnemyScript, game: &mut 
                         .resolve_actor(combat::current(runtime), Native)
                         .y
                         .whole;
-                    displace(runtime, SAMUS_DY, y.wrapping_sub(old_y));
+                    displace(runtime, Displacement::Y, y.wrapping_sub(old_y));
                 }
             }
         }
@@ -539,7 +563,8 @@ pub fn instruction<H: LeaseActors + ?Sized>(ea: u32, j: EnemyScript, game: &mut 
                 actor.variables[0] = RISE_TO_HOVER;
                 actor.variables[4] = if ea == 0xa2_9451 { u16::MAX } else { 1 };
             });
-            session_slot!(runtime, Tatori[current_slot(runtime)].timer = 16);
+            let current = combat::current(runtime).byte_index();
+            *TatoriEdit::of(runtime, current).timer() = 16;
             return EnemyScript::jump(0x8c02); // Spinning.
         }
         // Instruction - mini-tatori - leave shell ($A2:9485), facing right or left.

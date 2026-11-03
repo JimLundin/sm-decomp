@@ -2,28 +2,25 @@
 //! $A8:E230-$A8:E489). Was `wrecked_ship_orbs`.
 use crate::actors::boss_lease::BossState;
 use crate::actors::host::Axis;
-use crate::actors::layouts::part_view;
-use crate::actors::session_slots::session_slot;
+use crate::actors::slot_view::{SlotState, slot_view};
 use sm_data::enemy_speeds::SpeedTable;
 
 /// What Atomic needs beyond the shared actor operations: its instruction lists
 /// and the unreachable diagnostic.
-pub trait Host: BossState {
+pub trait Host: BossState + SlotState {
     fn unreachable(&mut self);
 }
 
-part_view! {
+slot_view! {
     /// Atomic's view of its slot.
-    Atomic: EnemyLayout40 {
-        words: [
-            y_movement_function, x_movement_function, var_c, var_d, var_e, var_f, direction,
-            speed_index,
+    Atomic, AtomicEdit {
+        record: [
+            y_movement_function = var_a, x_movement_function = var_b, direction = parameter_1,
+            speed_index = parameter_2,
         ],
-        pad1: [u8; 26696],
-        words: [
-            subspeed, speed, negated_subspeed, negated_speed,
+        extended: [
+            subspeed = var_00, speed = var_01, negated_subspeed = var_02, negated_speed = var_03,
         ],
-        _: [u16; 28],
     }
 }
 
@@ -37,23 +34,29 @@ pub mod function {
 
 const SIGN: u16 = 0x8000;
 
-fn current(game: &(impl Host + ?Sized)) -> i32 {
-    i32::from(game.current_enemy())
+fn current(game: &(impl Host + ?Sized)) -> u16 {
+    game.current_enemy()
 }
 /// Initialisation AI - Atomic ($A8:E388).
 pub fn initialize(game: &mut (impl Host + ?Sized)) {
     let atomic = current(game);
-    session_slot!(game, Atomic[atomic].base; instruction_timer = 1, timer = 0,
-    current_instruction = crate::enemy_lists::orb_instruction_list(
-        game,
-        session_slot!(game, Atomic[atomic].direction) as isize
-    ));
-    let index = 4 * session_slot!(game, Atomic[atomic].speed_index) as isize;
-    session_slot!(game, Atomic[atomic];
-        speed = game.enemy_speed(SpeedTable::Linear, index),
-        subspeed = game.enemy_speed(SpeedTable::Linear, index + 1),
-        negated_speed = game.enemy_speed(SpeedTable::Linear, index + 2),
-        negated_subspeed = game.enemy_speed(SpeedTable::Linear, index + 3));
+    let direction = {
+        let mut edit = AtomicEdit::of(game, atomic);
+        edit.actor().instruction_delay = 1;
+        edit.actor().timer = 0;
+        *edit.direction()
+    };
+    let list = crate::enemy_lists::orb_instruction_list(game, direction as isize);
+    AtomicEdit::of(game, atomic).actor().instruction = list;
+    let index = 4 * Atomic::of(game, atomic).speed_index() as isize;
+    let speed = game.enemy_speed(SpeedTable::Linear, index);
+    *AtomicEdit::of(game, atomic).speed() = speed;
+    let subspeed = game.enemy_speed(SpeedTable::Linear, index + 1);
+    *AtomicEdit::of(game, atomic).subspeed() = subspeed;
+    let negated_speed = game.enemy_speed(SpeedTable::Linear, index + 2);
+    *AtomicEdit::of(game, atomic).negated_speed() = negated_speed;
+    let negated_subspeed = game.enemy_speed(SpeedTable::Linear, index + 3);
+    *AtomicEdit::of(game, atomic).negated_subspeed() = negated_subspeed;
 }
 /// Atomic Y movement function - move up or down ($A8:E405, $A8:E424), or X
 /// movement function - move left or right ($A8:E443, $A8:E462).
@@ -61,13 +64,13 @@ fn move_atomic(horizontal: bool, function: u16, game: &mut (impl Host + ?Sized))
     let atomic = current(game);
     let amount = match (horizontal, function) {
         (false, function::MOVE_UP) | (true, function::MOVE_LEFT) => {
-            let high = session_slot!(game, Atomic[atomic].negated_speed);
-            let low = session_slot!(game, Atomic[atomic].negated_subspeed);
+            let high = Atomic::of(game, atomic).negated_speed();
+            let low = Atomic::of(game, atomic).negated_subspeed();
             (u32::from(high) << 16) | u32::from(low)
         }
         (false, function::MOVE_DOWN) | (true, function::MOVE_RIGHT) => {
-            let high = session_slot!(game, Atomic[atomic].speed);
-            let low = session_slot!(game, Atomic[atomic].subspeed);
+            let high = Atomic::of(game, atomic).speed();
+            let low = Atomic::of(game, atomic).subspeed();
             (u32::from(high) << 16) | u32::from(low)
         }
         _ => {
@@ -76,44 +79,33 @@ fn move_atomic(horizontal: bool, function: u16, game: &mut (impl Host + ?Sized))
         }
     };
     if horizontal {
-        session_slot!(game, Atomic[atomic].base(x_pos, x_subpos) += amount);
+        AtomicEdit::of(game, atomic)
+            .actor()
+            .x
+            .advance(amount.cast_signed());
     } else {
-        session_slot!(game, Atomic[atomic].base(y_pos, y_subpos) += amount);
+        AtomicEdit::of(game, atomic)
+            .actor()
+            .y
+            .advance(amount.cast_signed());
     }
 }
 /// Main AI - Atomic ($A8:E3C3): set the Y ($A8:E3D9) and X ($A8:E3EF)
 /// movement functions towards Samus, then run them. Was `advance`.
 pub fn main_ai(game: &mut (impl Host + ?Sized)) {
     let atomic = current(game);
-    session_slot!(game, Atomic[atomic].y_movement_function = function::MOVE_UP);
+    *AtomicEdit::of(game, atomic).y_movement_function() = function::MOVE_UP;
     let k = game.current_enemy();
     if game.player_delta(k, Axis::Y) & SIGN == 0 {
-        session_slot!(
-            game,
-            Atomic[atomic].y_movement_function = function::MOVE_DOWN
-        );
+        *AtomicEdit::of(game, atomic).y_movement_function() = function::MOVE_DOWN;
     }
     let atomic = current(game);
-    session_slot!(
-        game,
-        Atomic[atomic].x_movement_function = function::MOVE_LEFT
-    );
+    *AtomicEdit::of(game, atomic).x_movement_function() = function::MOVE_LEFT;
     let k = game.current_enemy();
     if game.player_delta(k, Axis::X) & SIGN == 0 {
-        session_slot!(
-            game,
-            Atomic[atomic].x_movement_function = function::MOVE_RIGHT
-        );
+        *AtomicEdit::of(game, atomic).x_movement_function() = function::MOVE_RIGHT;
     }
     let atomic = current(game);
-    move_atomic(
-        false,
-        session_slot!(game, Atomic[atomic].y_movement_function),
-        game,
-    );
-    move_atomic(
-        true,
-        session_slot!(game, Atomic[atomic].x_movement_function),
-        game,
-    );
+    move_atomic(false, Atomic::of(game, atomic).y_movement_function(), game);
+    move_atomic(true, Atomic::of(game, atomic).x_movement_function(), game);
 }

@@ -1,8 +1,7 @@
 //! Mother Brain's body effects: its rainbow beam palette cycle and the
 //! explosions around it as it dies (bank $A9:B03E-$A9:BD44).
-use crate::actors::layouts::{EnemyLayout72 as Body, part_view};
+use crate::actors::mother_brain::{BODY_INDEX, BRAIN_INDEX, Body, Brain, BrainEdit};
 use crate::actors::mother_brain_fight::{Lease, State};
-use crate::actors::session_slots::session_slot;
 use crate::cartridge::NativeDiagnostics;
 use crate::cartridge::native_record;
 use crate::cartridge::rom_table_word;
@@ -16,30 +15,6 @@ pub trait Host {
     /// Spawn a death explosion of `kind` at the projectile spawn point.
     fn spawn_death_explosion(&mut self, kind: u16);
 }
-
-part_view! {
-    /// The brain's slot, which holds the body's explosion and rainbow state.
-    Brain: EnemyLayout72 {
-        words: [
-            var_a, var_b, var_c, var_d, explosion_timer, explosion_index, parameter_1,
-            parameter_2,
-        ],
-        pad1: [u8; 26696],
-        words: [
-            var_00, rainbow_palette_index, var_02, var_03, var_04, var_05, var_06, var_07, var_08,
-            var_09, var_0a, var_0b, var_0c, var_0d, var_0e, var_0f, var_10, var_11, var_12, var_13,
-            var_14, var_15, var_16, var_17, var_18, var_19, var_1a, var_1b, var_1c, var_1d, var_1e,
-            var_1f,
-        ],
-        pad2: [u8; 1984],
-        words: [],
-        _: [u16; 32],
-    }
-}
-
-/// The body is slot 0 and the brain slot 1.
-const BODY: i32 = 0;
-const BRAIN: i32 = 0x40;
 
 /// Mother Brain's palettes are in bank $AD.
 const PALETTE_BANK: u8 = 0xad;
@@ -89,10 +64,10 @@ pub fn write_palette(
 /// the link plus 2 and write the palette it names. Was
 /// `MotherBrain_HandleRainbowBeamPalette`.
 pub fn handle_rainbow_palette(game: &mut (impl State + ?Sized)) {
-    if session_slot!(game, Body[BODY].base.frame_counter) & RAINBOW_FRAME_BIT == 0 {
+    if Body::of(game, BODY_INDEX).actor().frame & RAINBOW_FRAME_BIT == 0 {
         return;
     }
-    let mut cursor = session_slot!(game, Brain[BRAIN].rainbow_palette_index);
+    let mut cursor = Brain::of(game, BRAIN_INDEX).beam_palette_index();
     let mut link;
     loop {
         link = cursor;
@@ -102,7 +77,7 @@ pub fn handle_rainbow_palette(game: &mut (impl State + ?Sized)) {
         }
     }
     let next = link.wrapping_add(2);
-    session_slot!(game, Brain[BRAIN].rainbow_palette_index = next);
+    *BrainEdit::of(game, BRAIN_INDEX).beam_palette_index() = next;
     // The palette word is read from the native image two bytes before `next`.
     let image = game.native_image();
     let at = (lorom_offset(RAINBOW_PALETTES) + next as isize - 2) as usize;
@@ -117,19 +92,22 @@ pub fn handle_rainbow_palette(game: &mut (impl State + ?Sized)) {
 /// explosions at the next row of offsets, each kind drawn from the three words
 /// at `kinds`. Was `MotherBrain_GenerateExplosions`.
 pub fn generate_explosions(interval: u16, kinds: u16, count: u16, game: &mut impl Lease) {
-    let timer = session_slot!(game, Brain[BRAIN].explosion_timer).wrapping_sub(1);
-    session_slot!(game, Brain[BRAIN].explosion_timer = timer);
+    let timer = Brain::of(game, BRAIN_INDEX)
+        .explosion_timer()
+        .wrapping_sub(1);
+    *BrainEdit::of(game, BRAIN_INDEX).explosion_timer() = timer;
     if (timer as i16) >= 0 {
         return;
     }
-    session_slot!(game, Brain[BRAIN].explosion_timer = interval);
-    let row = session_slot!(game, Brain[BRAIN].explosion_index).wrapping_sub(1);
-    session_slot!(game, Brain[BRAIN].explosion_index = row);
+    let mut brain = BrainEdit::of(game, BRAIN_INDEX);
+    *brain.explosion_timer() = interval;
+    let row = brain.explosion_index().wrapping_sub(1);
+    *brain.explosion_index() = row;
     if (row as i16) < 0 {
-        session_slot!(game, Brain[BRAIN].explosion_index = LAST_EXPLOSION_ROW);
+        *brain.explosion_index() = LAST_EXPLOSION_ROW;
     }
-    let position =
-        EXPLOSION_ROW_BYTES.wrapping_mul(session_slot!(game, Brain[BRAIN].explosion_index));
+    let position = EXPLOSION_ROW_BYTES.wrapping_mul(*brain.explosion_index());
+    drop(brain);
     game.foreign(|game| spawn_explosions(position, kinds, count, game));
     game.queue_sound(2, EXPLODING_SOUND, 3);
 }

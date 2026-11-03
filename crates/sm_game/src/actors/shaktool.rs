@@ -5,37 +5,39 @@
 //! final piece, the left one. The pieces occupy consecutive enemy slots, and
 //! every piece names its primary piece's slot.
 use crate::actors::boss_lease::BossState;
-use crate::actors::layouts::part_view;
-use crate::actors::session_slots::session_slot;
+use crate::actors::slot_view::{SlotState, slot_view};
+use crate::actors::state::Actor;
 use crate::enemy_script::EnemyScript;
+use crate::geometry::Position;
 use crate::projectile_geometry::SINE_COSINE;
 use crate::ram::word;
 
 /// What the Shaktool pieces need beyond a boss's state: the bank $AA
 /// functions they do not run themselves, and the angle between two actors.
-pub trait Lease: BossState {
+pub trait Lease: BossState + SlotState {
     /// Run the bank $AA function at `address` for the current piece.
     fn run_function(&mut self, address: u32);
     /// The angle from actor `from` to actor `to`.
     fn angle_between(&mut self, from: u16, to: u16) -> u16;
 }
 
-part_view! {
+slot_view! {
     /// A piece's view of its slot.
-    Piece: EnemyLayout8 {
-        words: [
-            facing_angle, neighbour_angle, neighbour_angle_delta,
-            // The head's direction and flip flag, or a piece's curl angle.
-            direction, primary_piece, function, movement_options, piece_index,
+    Piece, PieceEdit {
+        record: [
+            facing_angle = var_a, neighbour_angle = var_b, neighbour_angle_delta = var_c,
+            direction = var_d, primary_piece = var_e, function = var_f,
+            movement_options = parameter_1, piece_index = parameter_2,
         ],
+        extended: [],
     }
 }
 
 /// Bytes between consecutive piece slots.
-const PIECE: i32 = 64;
-const PIECES: i32 = 7;
-const HEAD: i32 = 3 * PIECE;
-const FINAL_PIECE: i32 = 6 * PIECE;
+const PIECE: u16 = 64;
+const PIECES: u16 = 7;
+const HEAD: u16 = 3 * PIECE;
+const FINAL_PIECE: u16 = 6 * PIECE;
 
 /// `direction` bit 15 flips the head.
 const FLIPPED: u16 = 0x8000;
@@ -58,6 +60,7 @@ const PREVIOUS_X_SUBPOS: usize = 92;
 const PREVIOUS_Y_POS: usize = 93;
 const PREVIOUS_Y_SUBPOS: usize = 94;
 const _: () = {
+    use crate::actors::layouts::EnemyLayout104 as Piece;
     use crate::ram::word_arrays::ENEMY_DRAWING_QUEUE;
     use core::mem::offset_of;
     const fn previous(field: usize) -> usize {
@@ -74,8 +77,8 @@ const _: () = {
 };
 
 /// The seven piece slots, from the primary piece's slot `primary`.
-pub fn segments(primary: u16) -> impl Iterator<Item = i32> {
-    (0..PIECES).map(move |piece| i32::from(primary) + piece * PIECE)
+pub fn segments(primary: u16) -> impl Iterator<Item = u16> {
+    (0..PIECES).map(move |piece| primary + piece * PIECE)
 }
 
 /// Move Shaktool piece 1px ($AA:D956): move piece `k` one pixel along angle
@@ -86,40 +89,42 @@ pub fn move_piece_one_pixel<L: Lease>(
     a: u16,
     game: &mut L,
 ) -> EnemyScript {
-    let piece = i32::from(k);
+    let piece = k;
     let angle = a as u8 as usize;
-    session_slot!(
-        game,
-        Piece[piece].base(x_pos, x_subpos) += ((SINE_COSINE[angle + 64] as i32) << 8) as u32
-    );
-    session_slot!(
-        game,
-        Piece[piece].base(y_pos, y_subpos) += ((SINE_COSINE[angle] as i32) << 8) as u32
-    );
+    let amount: u32 = ((SINE_COSINE[angle + 64] as i32) << 8) as u32;
+    PieceEdit::of(game, piece)
+        .actor()
+        .x
+        .advance(amount.cast_signed());
+    let amount: u32 = ((SINE_COSINE[angle] as i32) << 8) as u32;
+    PieceEdit::of(game, piece)
+        .actor()
+        .y
+        .advance(amount.cast_signed());
     jp
 }
 
 /// Shaktool pieces movement options = `a` ($AA:DB0E). Was `Shaktool_DB0E`.
 pub fn set_movement_options<L: Lease>(k: u16, a: u16, game: &mut L) {
-    let primary = session_slot!(game, Piece[k as i32].primary_piece);
+    let primary = Piece::of(game, k).primary_piece();
     for piece in segments(primary) {
-        session_slot!(game, Piece[piece].movement_options = a);
+        *PieceEdit::of(game, piece).movement_options() = a;
     }
 }
 
 /// Shaktool pieces facing angle = `a` ($AA:DB27). Was `Shaktool_DB27`.
 pub fn set_facing_angles<L: Lease>(k: u16, a: u16, game: &mut L) {
-    let primary = session_slot!(game, Piece[k as i32].primary_piece);
+    let primary = Piece::of(game, k).primary_piece();
     for piece in segments(primary) {
-        session_slot!(game, Piece[piece].facing_angle = a);
+        *PieceEdit::of(game, piece).facing_angle() = a;
     }
 }
 
 /// Shaktool pieces neighbour angle = `a` ($AA:DB40). Was `Shaktool_DB40`.
 pub fn set_neighbour_angles<L: Lease>(k: u16, a: u16, game: &mut L) {
-    let primary = session_slot!(game, Piece[k as i32].primary_piece);
+    let primary = Piece::of(game, k).primary_piece();
     for piece in segments(primary) {
-        session_slot!(game, Piece[piece].neighbour_angle = a);
+        *PieceEdit::of(game, piece).neighbour_angle() = a;
     }
 }
 
@@ -128,40 +133,37 @@ pub fn set_neighbour_angles<L: Lease>(k: u16, a: u16, game: &mut L) {
 /// centre the arm pieces and head. Was `Shaktool_DB59`.
 pub fn flip<L: Lease>(k: u16, game: &mut L) {
     crate::probe::hit("shaktool.flip");
-    let primary: u16 = session_slot!(game, Piece[k as i32].primary_piece);
-    let head = i32::from(primary) + HEAD;
-    session_slot!(game, Piece[head].direction, |old| old ^ FLIPPED);
+    let primary: u16 = Piece::of(game, k).primary_piece();
+    let head = primary + HEAD;
+    *PieceEdit::of(game, head).direction() ^= FLIPPED;
     for near_offset in [PIECE, 2 * PIECE, HEAD] {
-        let far = i32::from(primary) + 7 * PIECE - near_offset;
-        let far_angle: u16 = session_slot!(game, Piece[far].neighbour_angle);
-        let near = i32::from(primary) + near_offset;
-        session_slot!(
-            game,
-            Piece[far].neighbour_angle =
-                (session_slot!(game, Piece[near].neighbour_angle) ^ HALF_TURN) & WHOLE_ANGLE
-        );
-        session_slot!(
-            game,
-            Piece[near].neighbour_angle = (far_angle ^ HALF_TURN) & WHOLE_ANGLE
-        );
+        let far = primary + 7 * PIECE - near_offset;
+        let far_angle: u16 = Piece::of(game, far).neighbour_angle();
+        let near = primary + near_offset;
+        let near_angle = Piece::of(game, near).neighbour_angle();
+        *PieceEdit::of(game, far).neighbour_angle() = (near_angle ^ HALF_TURN) & WHOLE_ANGLE;
+        *PieceEdit::of(game, near).neighbour_angle() = (far_angle ^ HALF_TURN) & WHOLE_ANGLE;
     }
-    let last = i32::from(primary) + FINAL_PIECE;
-    let first = i32::from(primary);
-    macro_rules! swap_saw_hands {
-        ($($field:ident),+) => {
-            $(
-                let value: u16 = session_slot!(game, Piece[last].base.$field);
-                session_slot!(game, Piece[last].base.$field = session_slot!(game, Piece[first].base.$field));
-                session_slot!(game, Piece[first].base.$field = value);
-            )+
-        };
-    }
-    swap_saw_hands!(x_subpos, y_subpos, x_pos, y_pos);
-    for piece in segments(primary).skip(1).take(5) {
-        session_slot!(game, Piece[piece].base.x_subpos = HALF_PIXEL);
+    let last = primary + FINAL_PIECE;
+    let first = primary;
+    // The saw hands swap subpixels first, then pixels.
+    let words: [fn(&mut Actor) -> &mut u16; 4] = [
+        |actor| &mut actor.x.fraction,
+        |actor| &mut actor.y.fraction,
+        |actor| &mut actor.x.whole,
+        |actor| &mut actor.y.whole,
+    ];
+    for word in words {
+        let value = *word(PieceEdit::of(game, last).actor());
+        let other = *word(PieceEdit::of(game, first).actor());
+        *word(PieceEdit::of(game, last).actor()) = other;
+        *word(PieceEdit::of(game, first).actor()) = value;
     }
     for piece in segments(primary).skip(1).take(5) {
-        session_slot!(game, Piece[piece].base.y_subpos = HALF_PIXEL);
+        PieceEdit::of(game, piece).actor().x.fraction = HALF_PIXEL;
+    }
+    for piece in segments(primary).skip(1).take(5) {
+        PieceEdit::of(game, piece).actor().y.fraction = HALF_PIXEL;
     }
 }
 
@@ -169,18 +171,18 @@ pub fn flip<L: Lease>(k: u16, game: &mut L) {
 /// a quarter of the whole-angle difference between the facing and neighbour
 /// angles, in the direction of travel. Was `Shaktool_DC07`.
 pub fn set_collision_angle_delta<L: Lease>(k: u16, game: &mut L) {
-    let piece = i32::from(k);
-    let delta: u16 = if session_slot!(game, Piece[piece].movement_options) & ANTICLOCKWISE != 0 {
-        session_slot!(game, Piece[piece].neighbour_angle)
-            .wrapping_sub(session_slot!(game, Piece[piece].facing_angle))
+    let piece = k;
+    let delta: u16 = if Piece::of(game, piece).movement_options() & ANTICLOCKWISE != 0 {
+        Piece::of(game, piece)
+            .neighbour_angle()
+            .wrapping_sub(Piece::of(game, piece).facing_angle())
     } else {
-        session_slot!(game, Piece[piece].facing_angle)
-            .wrapping_sub(session_slot!(game, Piece[piece].neighbour_angle))
+        Piece::of(game, piece)
+            .facing_angle()
+            .wrapping_sub(Piece::of(game, piece).neighbour_angle())
     };
-    session_slot!(
-        game,
-        Piece[piece].neighbour_angle_delta = 4u16.wrapping_mul(delta.to_ne_bytes()[1] as u16)
-    );
+    *PieceEdit::of(game, piece).neighbour_angle_delta() =
+        4u16.wrapping_mul(delta.to_ne_bytes()[1] as u16);
 }
 
 /// The previous piece's whole and subpixel position words, high word first.
@@ -193,45 +195,46 @@ fn previous_position<L: Lease>(queue: usize, high: usize, low: usize, game: &mut
 /// Position Shaktool piece relative to previous piece ($AA:DC2A): place piece
 /// `k` at its neighbour angle from the previous piece. Was `Shaktool_DC2A`.
 pub fn position_relative_to_previous<L: Lease>(k: u16, game: &mut L) {
-    let piece = i32::from(k);
-    let angle = session_slot!(byte game, Piece[piece].neighbour_angle[1]) as isize;
+    let piece = k;
+    let angle = isize::from(Piece::of(game, piece).neighbour_angle().to_le_bytes()[1]);
     let queue = usize::from(k) >> 1;
-    session_slot!(
-        game,
-        Piece[piece].base(x_pos, x_subpos) =
-            (((crate::shaktool_tables::sine(game, angle) as i16 as i32) << 8i32) as u32)
-                .wrapping_add(previous_position(
-                    queue,
-                    PREVIOUS_X_POS,
-                    PREVIOUS_X_SUBPOS,
-                    game
-                ))
-    );
-    session_slot!(
-        game,
-        Piece[piece].base(y_pos, y_subpos) =
-            (((crate::shaktool_tables::negative_cosine(game, angle) as i16 as i32) << 8i32) as u32)
-                .wrapping_add(previous_position(
-                    queue,
-                    PREVIOUS_Y_POS,
-                    PREVIOUS_Y_SUBPOS,
-                    game
-                ))
-    );
+    let x =
+        (((crate::shaktool_tables::sine(game, angle) as i16 as i32) << 8i32) as u32).wrapping_add(
+            previous_position(queue, PREVIOUS_X_POS, PREVIOUS_X_SUBPOS, game),
+        );
+    set_position(game, piece, |actor| &mut actor.x, x);
+    let y = (((crate::shaktool_tables::negative_cosine(game, angle) as i16 as i32) << 8i32) as u32)
+        .wrapping_add(previous_position(
+            queue,
+            PREVIOUS_Y_POS,
+            PREVIOUS_Y_SUBPOS,
+            game,
+        ));
+    set_position(game, piece, |actor| &mut actor.y, y);
+}
+
+/// Store a 16.16 `position` to piece `k`'s axis, the subpixel first.
+fn set_position<L: Lease>(
+    game: &mut L,
+    k: u16,
+    axis: fn(&mut Actor) -> &mut Position,
+    position: u32,
+) {
+    let mut piece = PieceEdit::of(game, k);
+    let axis = axis(piece.actor());
+    axis.fraction = position as u16;
+    axis.whole = (position >> 16) as u16;
 }
 
 /// Set Shaktool pieces neighbour angle and angle delta for curling ($AA:DC6F):
 /// every piece's neighbour angle becomes piece `k`'s facing angle, with the
 /// curling angle deltas. Was `Shaktool_DC6F`.
 pub fn set_curling_angles<L: Lease>(k: u16, game: &mut L) {
-    let piece = i32::from(k);
-    set_neighbour_angles(k, session_slot!(game, Piece[piece].facing_angle), game);
-    let primary = session_slot!(game, Piece[piece].primary_piece);
+    let piece = k;
+    set_neighbour_angles(k, Piece::of(game, piece).facing_angle(), game);
+    let primary = Piece::of(game, piece).primary_piece();
     for (index, piece) in segments(primary).enumerate() {
-        session_slot!(
-            game,
-            Piece[piece].neighbour_angle_delta = CURL_ANGLE_DELTAS[index]
-        );
+        *PieceEdit::of(game, piece).neighbour_angle_delta() = CURL_ANGLE_DELTAS[index];
     }
 }
 
@@ -276,7 +279,7 @@ pub fn instruction<L: Lease>(address: u32, k: u16, jp: EnemyScript, game: &mut L
 pub fn main_ai<L: Lease>(game: &mut L) {
     crate::probe::hit("shaktool.main_ai");
     let k = game.current_enemy();
-    match session_slot!(game, Piece[i32::from(k)].function) {
+    match Piece::of(game, k).function() {
         function::NOTHING => {}
         function::ARM_PIECE => arm_piece(k, game),
         function::HEAD => head(k, game),
@@ -288,38 +291,37 @@ pub fn main_ai<L: Lease>(game: &mut L) {
 /// Initialisation AI ($AA:DE43): piece `piece_index` from the piece table,
 /// placed from the previous piece. Was `Shaktool_Init`.
 pub fn initialize<L: Lease>(game: &mut L) {
-    let piece = i32::from(game.current_enemy());
-    session_slot!(game, Piece[piece].base; instruction_timer = 1, timer = 0);
-    session_slot!(game, Piece[piece]; facing_angle = 0, direction = 0);
-    let offset: u16 = session_slot!(game, Piece[piece].piece_index);
+    let piece = game.current_enemy();
+    let offset = {
+        let mut part = PieceEdit::of(game, piece);
+        let actor = part.actor();
+        actor.instruction_delay = 1;
+        actor.timer = 0;
+        *part.facing_angle() = 0;
+        *part.direction() = 0;
+        *part.piece_index()
+    };
     let data = crate::shaktool_tables::piece(game, (offset as i32 >> 1) as isize);
-    session_slot!(game, Piece[piece].base.properties, |old| old
-        | data.properties);
-    session_slot!(
-        game,
-        Piece[piece].primary_piece = (game.current_enemy()).wrapping_sub(data.ram_offset)
-    );
-    session_slot!(
-        game,
-        Piece[piece].function =
-            crate::cartridge::native_record(BANK, PIECE_FUNCTIONS, game).word(offset as usize)
-    );
+    PieceEdit::of(game, piece).actor().properties |= data.properties;
+    let primary = game.current_enemy().wrapping_sub(data.ram_offset);
+    *PieceEdit::of(game, piece).primary_piece() = primary;
+    let function =
+        crate::cartridge::native_record(BANK, PIECE_FUNCTIONS, game).word(offset as usize);
+    *PieceEdit::of(game, piece).function() = function;
     // The curl angle deltas are read at the byte offset, as the original did.
     let at = offset as usize;
     let curl = u16::from_ne_bytes([
         CURL_ANGLE_DELTAS[at / 2].to_ne_bytes()[at % 2],
         CURL_ANGLE_DELTAS[at.div_ceil(2)].to_ne_bytes()[(at + 1) % 2],
     ]);
-    session_slot!(
-        game,
-        Piece[piece].neighbour_angle_delta = curl.wrapping_sub(data.zero)
-    );
-    session_slot!(game, Piece[piece].neighbour_angle = data.neighbour_angle);
-    session_slot!(
-        game,
-        Piece[piece].base.current_instruction = data.instruction_list
-    );
-    session_slot!(game, Piece[piece].base.layer = data.layer);
+    {
+        let mut part = PieceEdit::of(game, piece);
+        *part.neighbour_angle_delta() = curl.wrapping_sub(data.zero);
+        *part.neighbour_angle() = data.neighbour_angle;
+        let actor = part.actor();
+        actor.instruction = data.instruction_list;
+        actor.layer = data.layer;
+    }
     if offset != 0 {
         position_relative_to_previous(game.current_enemy(), game);
     }
@@ -334,37 +336,37 @@ pub fn touch<L: Lease>(game: &mut L) {
 /// `Shaktool_Shot`.
 pub fn shot<L: Lease>(game: &mut L) {
     game.shot_reaction(crate::actors::host::Shot::Finalize);
-    let piece = i32::from(game.current_enemy());
-    if session_slot!(game, Piece[piece].base.health) == 0 {
-        let primary: u16 = session_slot!(game, Piece[piece].primary_piece);
+    let piece = game.current_enemy();
+    if Piece::of(game, piece).actor().health == 0 {
+        let primary: u16 = Piece::of(game, piece).primary_piece();
         for segment in segments(primary) {
-            session_slot!(game, Piece[segment].base.properties = DEAD_PROPERTIES);
+            PieceEdit::of(game, segment).actor().properties = DEAD_PROPERTIES;
         }
     }
 }
 
 /// Instruction - reset Shaktool functions ($AA:D9BA). Was `Shaktool_Instr_1`.
 pub fn reset_functions<L: Lease>(k: u16, jp: EnemyScript, game: &mut L) -> EnemyScript {
-    let primary: u16 = session_slot!(game, Piece[k as i32].primary_piece);
+    let primary: u16 = Piece::of(game, k).primary_piece();
     for (index, segment) in segments(primary).enumerate() {
         let function = crate::shaktool_tables::piece(game, index as isize).function;
-        session_slot!(game, Piece[segment].function = function);
+        *PieceEdit::of(game, segment).function() = function;
     }
     jp
 }
 
 /// The head's direction, which the unused projectile-relative moves follow.
 fn head_direction<L: Lease>(k: u16, game: &mut L) -> u16 {
-    let head = session_slot!(game, Piece[k as i32].primary_piece) as i32 + HEAD;
-    session_slot!(game, Piece[head].direction)
+    let head = Piece::of(game, k).primary_piece() + HEAD;
+    Piece::of(game, head).direction()
 }
 
 /// The facing angle's whole byte over the neighbour angle's low byte.
 fn facing_whole_angle<L: Lease>(k: u16, game: &mut L) -> u16 {
-    let piece = k as i32;
+    let piece = Piece::of(game, k);
     u16::from_ne_bytes([
-        session_slot!(byte game, Piece[piece].facing_angle[1]),
-        session_slot!(byte game, Piece[piece].facing_angle[2]),
+        piece.facing_angle().to_le_bytes()[1],
+        piece.neighbour_angle().to_le_bytes()[0],
     ])
 }
 
@@ -398,35 +400,35 @@ pub fn raise<L: Lease>(k: u16, jp: EnemyScript, game: &mut L) -> EnemyScript {
 /// turn the neighbour angle, by a whole step once curled. Was `Shaktool_DCAC`.
 pub fn arm_piece<L: Lease>(k: u16, game: &mut L) {
     position_relative_to_previous(k, game);
-    let piece = i32::from(k);
-    let delta: u16 = if (session_slot!(game, Piece[piece].movement_options) & CURLED) != 0 {
-        session_slot!(game, Piece[piece].facing_angle, |old| old.wrapping_add(256));
+    let piece = k;
+    let delta: u16 = if (Piece::of(game, piece).movement_options() & CURLED) != 0 {
+        let mut part = PieceEdit::of(game, piece);
+        let facing = part.facing_angle();
+        *facing = facing.wrapping_add(256);
         256
     } else {
-        session_slot!(game, Piece[piece].neighbour_angle_delta)
+        Piece::of(game, piece).neighbour_angle_delta()
     };
-    session_slot!(
-        game,
-        Piece[piece].neighbour_angle = (session_slot!(game, Piece[piece].neighbour_angle) as i32
-            + if session_slot!(game, Piece[piece].movement_options) & ANTICLOCKWISE != 0 {
-                -(delta as i32)
-            } else {
-                delta as i32
-            }) as u16
-    );
+    let mut piece = PieceEdit::of(game, piece);
+    let turn = if *piece.movement_options() & ANTICLOCKWISE != 0 {
+        -(delta as i32)
+    } else {
+        delta as i32
+    };
+    let angle = piece.neighbour_angle();
+    *angle = (*angle as i32 + turn) as u16;
 }
 
 /// Shaktool function - head ($AA:DCD7): an arm piece that aims between its
 /// neighbours. Was `Shaktool_DCD7`.
 pub fn head<L: Lease>(k: u16, game: &mut L) {
     arm_piece(k, game);
-    let piece = i32::from(k);
-    let behind: u16 = (session_slot!(game, Piece[piece].neighbour_angle)) ^ HALF_TURN;
+    let piece = k;
+    let behind: u16 = (Piece::of(game, piece).neighbour_angle()) ^ HALF_TURN;
     let mut aim: i16 = (behind as i32
-        + (((session_slot!(game, Piece[piece + PIECE].neighbour_angle)).wrapping_sub(behind))
-            as i32
-            >> 1)) as i16;
-    if (session_slot!(game, Piece[piece].direction) & FLIPPED) != 0 {
+        + (((Piece::of(game, piece + PIECE).neighbour_angle()).wrapping_sub(behind)) as i32 >> 1))
+        as i16;
+    if (Piece::of(game, piece).direction() & FLIPPED) != 0 {
         aim = {
             let mut bytes = aim.to_ne_bytes();
             bytes[1] ^= 0x80;
@@ -435,108 +437,120 @@ pub fn head<L: Lease>(k: u16, game: &mut L) {
     }
     // The aim rounded to one of eight directions.
     let direction: u16 = ((aim.to_ne_bytes()[1] as i32 + 8) & 0xe0) as u16;
-    session_slot!(byte game, Piece[piece].direction[0] = direction as u8);
-    session_slot!(
-        game,
-        Piece[piece].base.current_instruction =
-            crate::shaktool_tables::head_direction(game, ((direction >> 4) >> 1) as isize)
-                .instruction_list
-    );
-    session_slot!(game, Piece[piece].base.instruction_timer = 1);
+    {
+        let mut head = PieceEdit::of(game, piece);
+        let rounded = head.direction();
+        *rounded = (*rounded & 0xff00) | (direction & 0xff);
+    }
+    let list = crate::shaktool_tables::head_direction(game, ((direction >> 4) >> 1) as isize)
+        .instruction_list;
+    let mut head = PieceEdit::of(game, piece);
+    let actor = head.actor();
+    actor.instruction = list;
+    actor.instruction_delay = 1;
 }
 
 /// Shaktool function - final piece ($AA:DD25): moves as an arm piece; on a
 /// block it flips once, then reverses, and head-bobs; else it curls. Was
 /// `Shaktool_DD25`.
 pub fn final_piece<L: Lease>(mut k: u16, game: &mut L) {
-    let piece = i32::from(k);
-    let y: u16 = session_slot!(game, Piece[piece].base.y_pos);
-    let x: u16 = session_slot!(game, Piece[piece].base.x_pos);
+    let piece = k;
+    let y: u16 = Piece::of(game, piece).actor().y.whole;
+    let x: u16 = Piece::of(game, piece).actor().x.whole;
     arm_piece(k, game);
-    let target_y: u16 = session_slot!(game, Piece[piece].base.y_pos);
-    let target_x: u16 = session_slot!(game, Piece[piece].base.x_pos);
-    session_slot!(game, Piece[piece].base; x_pos = x, y_pos = y);
+    let target_y: u16 = Piece::of(game, piece).actor().y.whole;
+    let target_x: u16 = Piece::of(game, piece).actor().x.whole;
+    {
+        let mut part = PieceEdit::of(game, piece);
+        part.actor().x.whole = x;
+        part.actor().y.whole = y;
+    }
     if game.move_horizontal(
         k,
         (((target_x as i16).wrapping_sub(x as i16)) as i32) << 16,
         crate::actors::host::Slopes::Ignore,
     ) || {
-        session_slot!(game, Piece[piece].base.y_pos = y);
+        PieceEdit::of(game, piece).actor().y.whole = y;
         game.move_vertical(k, (((target_y as i16).wrapping_sub(y as i16)) as i32) << 16)
     } {
-        if (session_slot!(game, Piece[piece].movement_options) & FLIPPED_AT_BLOCK) != 0 {
+        if (Piece::of(game, piece).movement_options() & FLIPPED_AT_BLOCK) != 0 {
             set_movement_options(
                 k,
-                (session_slot!(game, Piece[piece].movement_options) ^ ANTICLOCKWISE) & 0x8fff,
+                (Piece::of(game, piece).movement_options() ^ ANTICLOCKWISE) & 0x8fff,
                 game,
             );
         } else {
-            session_slot!(game, Piece[piece].base; x_pos = x, y_pos = y);
+            {
+                let mut part = PieceEdit::of(game, piece);
+                part.actor().x.whole = x;
+                part.actor().y.whole = y;
+            }
             flip(k, game);
             set_movement_options(
                 game.current_enemy(),
-                (session_slot!(game, Piece[piece].movement_options)) | FLIPPED_AT_BLOCK,
+                (Piece::of(game, piece).movement_options()) | FLIPPED_AT_BLOCK,
                 game,
             );
             set_movement_options(
                 game.current_enemy(),
-                (session_slot!(game, Piece[piece].movement_options)) & !CURLED,
+                (Piece::of(game, piece).movement_options()) & !CURLED,
                 game,
             );
         }
-        session_slot!(game, Piece[piece].direction = 0);
-        let primary: u16 = session_slot!(game, Piece[piece].primary_piece);
+        *PieceEdit::of(game, piece).direction() = 0;
+        let primary: u16 = Piece::of(game, piece).primary_piece();
         let angle: u16 = game.angle_between(k, primary);
         let whole = ((angle as i32) << 8) as i16 as u16;
-        let facing: u16 =
-            if (session_slot!(game, Piece[piece].movement_options) & ANTICLOCKWISE) != 0 {
-                whole.wrapping_sub(QUARTER_TURN)
-            } else {
-                whole.wrapping_add(QUARTER_TURN)
-            };
+        let facing: u16 = if (Piece::of(game, piece).movement_options() & ANTICLOCKWISE) != 0 {
+            whole.wrapping_sub(QUARTER_TURN)
+        } else {
+            whole.wrapping_add(QUARTER_TURN)
+        };
         set_facing_angles(k, facing, game);
         for index in (0..PIECES).rev() {
             set_collision_angle_delta(k, game);
-            let bobbing = i32::from(k);
-            session_slot!(game, Piece[bobbing].function = function::NOTHING);
-            session_slot!(
-                game,
-                Piece[bobbing].base.current_instruction =
-                    crate::shaktool_tables::piece(game, index as isize).head_bob
-            );
-            session_slot!(game, Piece[bobbing].base.instruction_timer = 1);
-            k = k.wrapping_sub(PIECE as u16);
+            let bobbing = k;
+            *PieceEdit::of(game, bobbing).function() = function::NOTHING;
+            let list = crate::shaktool_tables::piece(game, index as isize).head_bob;
+            let mut part = PieceEdit::of(game, bobbing);
+            let actor = part.actor();
+            actor.instruction = list;
+            actor.instruction_delay = 1;
+            k = k.wrapping_sub(PIECE);
         }
     } else {
-        session_slot!(game, Piece[piece].base; x_pos = target_x, y_pos = target_y);
-        if (session_slot!(game, Piece[piece].movement_options) & CURLED) != 0 {
-            session_slot!(game, Piece[piece].facing_angle, |old| old.wrapping_add(256));
+        {
+            let mut part = PieceEdit::of(game, piece);
+            part.actor().x.whole = target_x;
+            part.actor().y.whole = target_y;
+        }
+        if (Piece::of(game, piece).movement_options() & CURLED) != 0 {
+            let mut part = PieceEdit::of(game, piece);
+            let facing = part.facing_angle();
+            *facing = facing.wrapping_add(256);
         } else {
-            if ((session_slot!(game, Piece[piece].facing_angle)
-                ^ session_slot!(game, Piece[piece].neighbour_angle))
+            if ((Piece::of(game, piece).facing_angle() ^ Piece::of(game, piece).neighbour_angle())
                 & WHOLE_ANGLE)
                 == 0
             {
                 set_curling_angles(k, game);
-                session_slot!(game, Piece[piece].direction = CURL_RESTART);
+                *PieceEdit::of(game, piece).direction() = CURL_RESTART;
                 set_movement_options(
                     k,
-                    (session_slot!(game, Piece[piece].movement_options)) & !FLIPPED_AT_BLOCK,
+                    (Piece::of(game, piece).movement_options()) & !FLIPPED_AT_BLOCK,
                     game,
                 );
-                session_slot!(
-                    game,
-                    Piece[piece].direction =
-                        ((session_slot!(byte game, Piece[piece].direction[1]) as i32) << 8) as u16
-                );
+                let mut part = PieceEdit::of(game, piece);
+                let curl = part.direction();
+                *curl = ((curl.to_le_bytes()[1] as i32) << 8) as u16;
             }
-            let curl: u16 = (session_slot!(game, Piece[piece].direction))
-                .wrapping_add(session_slot!(game, Piece[piece].neighbour_angle_delta));
-            session_slot!(game, Piece[piece].direction = curl);
+            let curl: u16 = (Piece::of(game, piece).direction())
+                .wrapping_add(Piece::of(game, piece).neighbour_angle_delta());
+            *PieceEdit::of(game, piece).direction() = curl;
             if curl >= CURL_END {
                 set_movement_options(
                     k,
-                    (session_slot!(game, Piece[piece].movement_options)) | CURLED,
+                    (Piece::of(game, piece).movement_options()) | CURLED,
                     game,
                 );
             }

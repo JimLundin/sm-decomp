@@ -102,11 +102,21 @@ fn multiply_8x8(a: u8, b: u8) -> u16 {
 /// change the live block index before requesting another reaction.
 fn react_to_block<H: Host + ?Sized>(game: &mut H, mut react: impl FnMut(u16, &mut H) -> u8) -> u8 {
     loop {
-        let offset = 0x10002 + usize::from(game.session().room.collision_cursor) * 2;
-        let block = u16::from_le_bytes([
-            game.compatibility_byte(offset),
-            game.compatibility_byte(offset + 1),
-        ]);
+        let cursor = usize::from(game.session().room.collision_cursor);
+        let block = match game.session().room.terrain.cells().get(cursor) {
+            Some(cell) => cell.level,
+            // LEGACY(original-overflow): a collision block index past the 3200h
+            // level-data cells reads $7F:0002 + 2 * index anyway. This host has
+            // only the compatibility projection, which `legacy_overflow` does
+            // not take (it would couple one more file to RAM).
+            None => {
+                let offset = 0x10002 + cursor * 2;
+                u16::from_le_bytes([
+                    game.compatibility_byte(offset),
+                    game.compatibility_byte(offset + 1),
+                ])
+            }
+        };
         let result = react(block >> 12, game);
         if result & 0x80 == 0 {
             return result;

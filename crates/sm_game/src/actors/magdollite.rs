@@ -3,12 +3,10 @@
 //!
 //! Was `NorfairLavaMan` in the original decompilation (bank $A8:AC9C-$A8:B40C).
 //! The three parts occupy consecutive enemy slots, head first. Each part reads
-//! and writes its neighbours' slot fields; the views below name those fields
-//! over the same RAM bytes.
+//! and writes its neighbours' slot fields; the view below names them.
 use crate::actors::boss_lease::BossLease;
 use crate::actors::host::{Axis, BossEffects, Death, Shot};
-use crate::actors::layouts::part_view;
-use crate::actors::session_slots::session_slot;
+use crate::actors::slot_view::{SlotState, slot_view};
 use crate::constants::enemy_properties::{K_ENEMY_PROPS_DELETED, K_ENEMY_PROPS_INVISIBLE};
 use crate::enemy_script::EnemyScript;
 use crate::ram::word;
@@ -16,8 +14,8 @@ use sm_data::enemy_speeds::SpeedTable;
 use sm_data::magdollite::{ARM_GROWTH_ADDRESS, ARM_INSTRUCTION_ADDRESS, ARM_Y_OFFSET_ADDRESS};
 
 /// A lease on a game with Magdollite's effects.
-pub trait Lease: BossLease<Game: Host + BossEffects> {}
-impl<T: BossLease<Game: Host + BossEffects> + ?Sized> Lease for T {}
+pub trait Lease: BossLease<Game: Host + BossEffects> + SlotState {}
+impl<T: BossLease<Game: Host + BossEffects> + SlotState + ?Sized> Lease for T {}
 
 /// What Magdollite needs beyond the shared actor operations: its tables.
 pub trait Host {
@@ -33,60 +31,30 @@ pub trait Host {
 pub const SPAWN_DATA_BYTES: usize = 64;
 
 /// Bytes between consecutive enemy slots: head, arm, hand.
-const SLOT: i32 = 64;
+const SLOT: u16 = 64;
 
-part_view! {
-    /// The words every part uses.
-    Part: EnemyLayout40 {
-        words: [var_a, var_b, shown_animation, animation, var_e, state, kind, parameters],
-        pad1: [u8; 26696],
-        words: [
-            var_00, animation_active, var_02, home_y, cooldown, var_05, var_06, shrink_subspeed,
-            shrink_speed, grow_subspeed, grow_speed,
+slot_view! {
+    /// A Magdollite part's slot. Every part has its shown and requested
+    /// animation, state, kind, parameters (the head's throw range in the low
+    /// byte, the speed entry in the high byte), animation flag, home Y,
+    /// cooldown and the shrink and grow speeds. The head (which surfaces, idles
+    /// facing Samus and submerges) also has its facing and its wait for the arm;
+    /// the arm (which grows one segment at a time up to Samus's height) its
+    /// growth level, extension and grown and retracted flags; the hand (which
+    /// rides the arm's tip and throws lava) its throw side, home X and throw
+    /// position.
+    Magdollite, MagdolliteEdit {
+        record: [
+            growth_level = var_b, throw_right = var_b, shown_animation = var_c,
+            animation = var_d, extension = var_e, state = var_f, kind = parameter_1,
+            parameters = parameter_2,
         ],
-        _: [u16; 21],
-    }
-}
-
-part_view! {
-    /// The head, which surfaces, idles facing Samus and submerges.
-    Head: EnemyLayout40 {
-        words: [var_a, var_b, shown_animation, animation, var_e, state, kind, parameters],
-        pad1: [u8; 26696],
-        words: [
-            facing_right, animation_active, waiting_for_arm, home_y, cooldown, var_05, var_06,
-            shrink_subspeed, shrink_speed, grow_subspeed, grow_speed,
+        extended: [
+            facing_right = var_00, animation_active = var_01, waiting_for_arm = var_02,
+            home_y = var_03, cooldown = var_04, shrink_subspeed = var_07, shrink_speed = var_08,
+            grow_subspeed = var_09, grow_speed = var_0a, fully_grown = var_0c,
+            hold_retracted = var_0d, home_x = var_11, throw_x = var_12, throw_y = var_13,
         ],
-        _: [u16; 21],
-    }
-}
-
-part_view! {
-    /// The arm, which grows one segment at a time up to Samus's height.
-    Arm: EnemyLayout40 {
-        words: [
-            var_a, growth_level, shown_animation, animation, extension, state, kind, parameters,
-        ],
-        pad1: [u8; 26696],
-        words: [
-            var_00, animation_active, var_02, home_y, cooldown, var_05, var_06, shrink_subspeed,
-            shrink_speed, grow_subspeed, grow_speed, var_0b, fully_grown, hold_retracted,
-        ],
-        _: [u16; 18],
-    }
-}
-
-part_view! {
-    /// The hand, which rides the arm's tip and throws lava.
-    Hand: EnemyLayout40 {
-        words: [var_a, throw_right, shown_animation, animation, var_e, state, kind, parameters],
-        pad1: [u8; 26696],
-        words: [
-            var_00, animation_active, var_02, home_y, cooldown, var_05, var_06, shrink_subspeed,
-            shrink_speed, grow_subspeed, grow_speed, var_0b, var_0c, var_0d, var_0e, var_0f, var_10,
-            home_x, throw_x, throw_y,
-        ],
-        _: [u16; 12],
     }
 }
 
@@ -147,9 +115,8 @@ pub mod reaction {
     pub const SHOT: u32 = 0xa8_b40c;
 }
 
-/// $7E:178C, the enemy graphics drawn hook (a long pointer), and the hook
-/// Magdollite installs there: its palette cycle at $A8:B0B2.
-const GFX_DRAWN_HOOK: usize = 0x178c;
+/// The hook Magdollite installs as the enemy graphics drawn hook ($7E:178C,
+/// a long pointer): its palette cycle at $A8:B0B2.
 const PALETTE_CYCLE_HOOK: u16 = 0xb0b2;
 const AI_BANK: u16 = 0xa8;
 
@@ -166,9 +133,6 @@ const GLOW_PALETTES: u16 = 4;
 const COLORS_PER_PALETTE: isize = 16;
 const FIRST_GLOW_COLOR: usize = 9;
 
-/// `parameters` lanes: the head's throw range and every part's speed entry.
-const THROW_RANGE_LANE: usize = 0;
-const SPEED_LANE: usize = 1;
 const SPEED_ENTRY_WORDS: isize = 4;
 
 /// AI handler bit 2: run the frozen AI.
@@ -192,36 +156,9 @@ const HAND_REACH: u16 = 8;
 const OPEN_HAND_RAISE: u16 = 4;
 const CLOSED_HAND_RAISE: u16 = 8;
 
-// The original reads some neighbour fields by other RAM names. From the hand's
-// slot, these word indices reach the head's y position, hitbox height and
-// state and the arm's y position (`enemy_drawing_queue`, $7E:0E84) and the
-// arm's growth level (`enemy_drawing_queue_sizes`, $7E:0F68).
-const HEAD_Y_POS: usize = 61;
-const HEAD_Y_HEIGHT: usize = 64;
-const HEAD_STATE: usize = 87;
-const ARM_Y_POS: usize = 93;
-const ARM_GROWTH_LEVEL: usize = 1;
-const _: () = {
-    use crate::ram::word_arrays::{ENEMY_DRAWING_QUEUE, ENEMY_DRAWING_QUEUE_SIZES};
-    use core::mem::offset_of;
-    const fn from_hand(neighbour: i32, field: usize) -> usize {
-        (0x0f78 + neighbour * SLOT) as usize + field
-    }
-    assert!(ENEMY_DRAWING_QUEUE + 2 * HEAD_Y_POS == from_hand(-2, offset_of!(Head, base.y_pos)));
-    assert!(
-        ENEMY_DRAWING_QUEUE + 2 * HEAD_Y_HEIGHT == from_hand(-2, offset_of!(Head, base.y_height))
-    );
-    assert!(ENEMY_DRAWING_QUEUE + 2 * HEAD_STATE == from_hand(-2, offset_of!(Head, state)));
-    assert!(ENEMY_DRAWING_QUEUE + 2 * ARM_Y_POS == from_hand(-1, offset_of!(Arm, base.y_pos)));
-    assert!(
-        ENEMY_DRAWING_QUEUE_SIZES + 2 * ARM_GROWTH_LEVEL
-            == from_hand(-1, offset_of!(Arm, growth_level))
-    );
-};
-
 /// The current enemy's slot, read afresh at each use as the original did.
-fn current<L: Lease>(game: &L) -> i32 {
-    i32::from(game.current_enemy())
+fn current<L: Lease>(game: &L) -> u16 {
+    game.current_enemy()
 }
 fn is_negative(value: u16) -> bool {
     (value as i16) < 0
@@ -241,77 +178,107 @@ fn arm_step<L: Lease>(game: &mut L, address: u32, index: isize) -> u16 {
 /// Start the part's requested animation if it isn't the one showing.
 fn animate<L: Lease>(game: &mut L) {
     let part = current(game);
-    let requested = session_slot!(game, Part[part].animation);
-    if requested != session_slot!(game, Part[part].shown_animation) {
-        session_slot!(game, Part[part].base.current_instruction = requested);
-        session_slot!(game, Part[part].shown_animation = requested);
-        session_slot!(game, Part[part].base; instruction_timer = 1, timer = 0);
+    let view = Magdollite::of(game, part);
+    let requested = view.animation();
+    if requested != view.shown_animation() {
+        let mut edit = MagdolliteEdit::of(game, part);
+        edit.actor().instruction = requested;
+        *edit.shown_animation() = requested;
+        let actor = edit.actor();
+        actor.instruction_delay = 1;
+        actor.timer = 0;
     }
 }
 fn initialize_head<L: Lease>(game: &mut L) {
     let head = current(game);
-    session_slot!(game, Head[head]; shown_animation = 0, facing_right = 0, waiting_for_arm = 0);
-    let copied = session_slot!(game, Head[head].base.y_pos);
-    session_slot!(game, Head[head].home_y = copied);
+    {
+        let mut edit = MagdolliteEdit::of(game, head);
+        *edit.shown_animation() = 0;
+        *edit.facing_right() = 0;
+        *edit.waiting_for_arm() = 0;
+        let copied = edit.actor().y.whole;
+        *edit.home_y() = copied;
+    }
     // Set from the opposite test; the first idle frame replaces it before use.
     if player_left(game) {
-        session_slot!(game, Head[head].facing_right = 1);
+        *MagdolliteEdit::of(game, head).facing_right() = 1;
     }
-    session_slot!(game, Head[head].animation = animation::HEAD_IDLE_LEFT);
-    if session_slot!(game, Head[head].facing_right) == 0 {
-        session_slot!(game, Head[head].animation = animation::HEAD_IDLE_RIGHT);
+    {
+        let mut edit = MagdolliteEdit::of(game, head);
+        *edit.animation() = animation::HEAD_IDLE_LEFT;
+        if *edit.facing_right() == 0 {
+            *edit.animation() = animation::HEAD_IDLE_RIGHT;
+        }
     }
     animate(game);
-    session_slot!(game, Head[head].state = state::HEAD_IDLE);
+    *MagdolliteEdit::of(game, head).state() = state::HEAD_IDLE;
 }
 fn initialize_arm<L: Lease>(game: &mut L) {
     let arm = current(game);
-    let copied = session_slot!(game, Arm[arm].base.y_pos);
-    session_slot!(game, Arm[arm].home_y = copied);
-    session_slot!(game, Arm[arm]; shown_animation = 0, fully_grown = 0, hold_retracted = 1,
-        animation = animation::ARM_GROWTH_0);
+    {
+        let mut edit = MagdolliteEdit::of(game, arm);
+        let copied = edit.actor().y.whole;
+        *edit.home_y() = copied;
+        *edit.shown_animation() = 0;
+        *edit.fully_grown() = 0;
+        *edit.hold_retracted() = 1;
+        *edit.animation() = animation::ARM_GROWTH_0;
+    }
     animate(game);
-    session_slot!(game, Arm[arm].base.y_pos, |old| old
-        .wrapping_add(START_DEPTH));
-    session_slot!(game, Arm[arm].state = state::ARM_WAIT_HEAD_SUBMERGED);
-    session_slot!(game, Arm[arm].base.properties, |old| old
-        | K_ENEMY_PROPS_INVISIBLE as u16);
+    let mut edit = MagdolliteEdit::of(game, arm);
+    let actor = edit.actor();
+    actor.y.whole = actor.y.whole.wrapping_add(START_DEPTH);
+    *edit.state() = state::ARM_WAIT_HEAD_SUBMERGED;
+    edit.actor().properties |= K_ENEMY_PROPS_INVISIBLE as u16;
 }
 fn initialize_hand<L: Lease>(game: &mut L) {
     let hand = current(game);
-    let copied = session_slot!(game, Hand[hand].base.y_pos);
-    session_slot!(game, Hand[hand].home_y = copied);
-    let copied = session_slot!(game, Hand[hand].base.x_pos);
-    session_slot!(game, Hand[hand].home_x = copied);
-    session_slot!(game, Hand[hand]; shown_animation = 0, cooldown = 0, animation = animation::HAND_STUB);
+    {
+        let mut edit = MagdolliteEdit::of(game, hand);
+        let copied = edit.actor().y.whole;
+        *edit.home_y() = copied;
+        let copied = edit.actor().x.whole;
+        *edit.home_x() = copied;
+        *edit.shown_animation() = 0;
+        *edit.cooldown() = 0;
+        *edit.animation() = animation::HAND_STUB;
+    }
     animate(game);
-    session_slot!(game, Hand[hand].base.y_pos, |old| old
-        .wrapping_add(START_DEPTH));
-    session_slot!(game, Hand[hand].state = state::HAND_IDLE);
-    session_slot!(game, Hand[hand].base.properties, |old| old
-        | K_ENEMY_PROPS_INVISIBLE as u16);
+    let mut edit = MagdolliteEdit::of(game, hand);
+    let actor = edit.actor();
+    actor.y.whole = actor.y.whole.wrapping_add(START_DEPTH);
+    *edit.state() = state::HAND_IDLE;
+    edit.actor().properties |= K_ENEMY_PROPS_INVISIBLE as u16;
 }
 /// Initialisation AI ($A8:AF8B): set up the part `kind` names, then its speeds
 /// and the shared palette cycle.
 pub fn initialize<L: Lease>(game: &mut L) {
-    let kind = 2u16.wrapping_mul(session_slot!(game, Part[current(game)].kind)) >> 1;
+    let kind = 2u16.wrapping_mul(Magdollite::of(game, current(game)).kind()) >> 1;
     let initialize: [fn(&mut L); 3] = [initialize_head, initialize_arm, initialize_hand];
     initialize[kind as usize](game);
     let part = current(game);
+    // The speed entry is the parameters' high byte.
     let speed =
-        SPEED_ENTRY_WORDS * session_slot!(byte game, Part[part].parameters[SPEED_LANE]) as isize;
-    session_slot!(game, Part[part];
-        shrink_speed = game.enemy_speed(SpeedTable::Linear, speed),
-        shrink_subspeed = game.enemy_speed(SpeedTable::Linear, speed + 1),
-        grow_speed = game.enemy_speed(SpeedTable::Linear, speed + 2),
-        grow_subspeed = game.enemy_speed(SpeedTable::Linear, speed + 3));
+        SPEED_ENTRY_WORDS * isize::from(Magdollite::of(game, part).parameters().to_le_bytes()[1]);
+    let shrink_speed = game.enemy_speed(SpeedTable::Linear, speed);
+    let shrink_subspeed = game.enemy_speed(SpeedTable::Linear, speed + 1);
+    let grow_speed = game.enemy_speed(SpeedTable::Linear, speed + 2);
+    let grow_subspeed = game.enemy_speed(SpeedTable::Linear, speed + 3);
+    {
+        let mut edit = MagdolliteEdit::of(game, part);
+        *edit.shrink_speed() = shrink_speed;
+        *edit.shrink_subspeed() = shrink_subspeed;
+        *edit.grow_speed() = grow_speed;
+        *edit.grow_subspeed() = grow_subspeed;
+    }
     let part = current(game);
-    game.set_slot_word(GFX_DRAWN_HOOK, PALETTE_CYCLE_HOOK);
-    game.set_slot_word(GFX_DRAWN_HOOK + 2, AI_BANK);
+    let hook = &mut game.session_mut().actors.drawing.hook_address;
+    hook[..2].copy_from_slice(&PALETTE_CYCLE_HOOK.to_le_bytes());
+    hook[2..].copy_from_slice(&AI_BANK.to_le_bytes());
+    let palette = Magdollite::of(game, part).actor().palette;
     word!(
         game.VARIABLES_FOR_ENEMY_GRAPHICS_DRAWN_HOOK[HOOK_PALETTE] =
-            ((session_slot!(game, Part[part].base.palette_index) & SPRITE_PALETTE_BITS) >> 4)
-                + SPRITE_PALETTES_BYTE
+            ((palette & SPRITE_PALETTE_BITS) >> 4) + SPRITE_PALETTES_BYTE
     );
     word!(game.VARIABLES_FOR_ENEMY_GRAPHICS_DRAWN_HOOK[HOOK_TIMER] = PALETTE_CYCLE_FRAMES);
     word!(game.VARIABLES_FOR_ENEMY_GRAPHICS_DRAWN_HOOK[HOOK_FRAME] = 0);
@@ -341,8 +308,12 @@ pub fn cycle_palette<L: Lease>(game: &mut L) {
 pub fn main_ai<L: Lease>(game: &mut L) {
     crate::probe::hit("magdollite.main_ai");
     let part = current(game);
-    session_slot!(game, Part[part].cooldown, |old| old.wrapping_sub(1));
-    match session_slot!(game, Part[part].state) {
+    {
+        let mut edit = MagdolliteEdit::of(game, part);
+        let cooldown = edit.cooldown();
+        *cooldown = cooldown.wrapping_sub(1);
+    }
+    match Magdollite::of(game, part).state() {
         state::ARM_GROWN => {}
         state::ARM_SHRINKING => shrink_arm(game),
         state::ARM_GROWING => {
@@ -375,37 +346,41 @@ pub fn damage<L: Lease>(address: u32, game: &mut L) {
     let head = current(game);
     let arm = current(game) + SLOT;
     let hand = current(game) + 2 * SLOT;
-    if session_slot!(game, Head[head].base.health) == 0 {
-        session_slot!(game, Arm[arm].base.properties, |old| old
-            | K_ENEMY_PROPS_DELETED as u16);
-        session_slot!(game, Hand[hand].base.properties, |old| old
-            | K_ENEMY_PROPS_DELETED as u16);
+    if Magdollite::of(game, head).actor().health == 0 {
+        MagdolliteEdit::of(game, arm).actor().properties |= K_ENEMY_PROPS_DELETED as u16;
+        MagdolliteEdit::of(game, hand).actor().properties |= K_ENEMY_PROPS_DELETED as u16;
     }
-    let frozen = session_slot!(game, Head[head].base.frozen_timer);
+    let frozen = Magdollite::of(game, head).actor().frozen;
     if frozen != 0 {
-        session_slot!(game, Arm[arm].base.frozen_timer = frozen);
-        session_slot!(game, Arm[arm].base.ai_handler_bits, |old| old | FROZEN_AI);
-        session_slot!(game, Hand[hand].base.frozen_timer = frozen);
-        session_slot!(game, Hand[hand].base.ai_handler_bits, |old| old | FROZEN_AI);
+        for part in [arm, hand] {
+            let mut edit = MagdolliteEdit::of(game, part);
+            let actor = edit.actor();
+            actor.frozen = frozen;
+            actor.ai_handlers |= FROZEN_AI;
+        }
     }
 }
 /// Face the head towards Samus with the left or right animation.
-fn face_samus<L: Lease>(head: i32, left: u16, right: u16, game: &mut L) {
-    session_slot!(game, Head[head].animation = left);
+fn face_samus<L: Lease>(head: u16, left: u16, right: u16, game: &mut L) {
+    *MagdolliteEdit::of(game, head).animation() = left;
     if !player_left(game) {
-        session_slot!(game, Head[head].animation = right);
+        *MagdolliteEdit::of(game, head).animation() = right;
     }
     animate(game);
 }
-/// Stretch the head's hitbox up to the hand, through the original RAM names.
+/// Stretch the head's hitbox up to the hand.
 fn stretch_head_hitbox<L: Lease>(hand: u16, game: &mut L) {
-    let index = hand as usize >> 1;
-    let height = word!(game.ENEMY_DRAWING_QUEUE[index + HEAD_Y_POS])
-        .wrapping_sub(session_slot!(game, Hand[hand as i32].base.y_pos))
+    let head = hand - 2 * SLOT;
+    let height = Magdollite::of(game, head)
+        .actor()
+        .y
+        .whole
+        .wrapping_sub(Magdollite::of(game, hand).actor().y.whole)
         .wrapping_add(HITBOX_MARGIN);
-    word!(game.ENEMY_DRAWING_QUEUE[index + HEAD_Y_HEIGHT] = height);
+    let mut edit = MagdolliteEdit::of(game, head);
+    edit.actor().radius.y = height;
     if is_negative(height.wrapping_sub(MIN_HITBOX_HEIGHT)) {
-        word!(game.ENEMY_DRAWING_QUEUE[index + HEAD_Y_HEIGHT] = MIN_HITBOX_HEIGHT);
+        edit.actor().radius.y = MIN_HITBOX_HEIGHT;
     }
 }
 /// Growing arm ($A8:B204), part one: move up at the head's grow speed. Returns
@@ -414,21 +389,21 @@ pub fn grow_arm<L: Lease>(game: &mut L) -> (u16, Option<i32>) {
     crate::probe::hit("magdollite.grow_arm");
     let arm = current(game);
     let head = current(game) - SLOT;
-    let value = u32::from(session_slot!(game, Head[head].grow_subspeed))
-        + u32::from(session_slot!(game, Arm[arm].base.y_subpos));
-    session_slot!(game, Arm[arm].base.y_subpos = value as u16);
-    session_slot!(game, Arm[arm].base.y_pos, |old| (u32::from(old)
-        + u32::from(session_slot!(game, Head[head].grow_speed))
-        + (value >> 16))
-        as u16);
-    session_slot!(game, Arm[arm].extension, |old| (u32::from(old)
-        + u32::from(session_slot!(game, Head[head].grow_speed))
-        + (value >> 16))
-        as u16);
+    let value = u32::from(Magdollite::of(game, head).grow_subspeed())
+        + u32::from(Magdollite::of(game, arm).actor().y.fraction);
+    let grow_speed = u32::from(Magdollite::of(game, head).grow_speed());
+    {
+        let mut edit = MagdolliteEdit::of(game, arm);
+        let y = &mut edit.actor().y;
+        y.fraction = value as u16;
+        y.whole = (u32::from(y.whole) + grow_speed + (value >> 16)) as u16;
+        let extension = edit.extension();
+        *extension = (u32::from(*extension) + grow_speed + (value >> 16)) as u16;
+    }
     let k = game.current_enemy();
-    let reach = |game: &mut L| -(session_slot!(game, Arm[k as i32].extension) as i32);
-    let warning = if !negative_16(reach(game) - ARM_WARNING_EXTENSION) {
-        Some(-(session_slot!(game, Arm[k as i32].extension) as i16 as i32))
+    let extension = Magdollite::of(game, k).extension();
+    let warning = if !negative_16(-i32::from(extension) - ARM_WARNING_EXTENSION) {
+        Some(-i32::from(extension as i16))
     } else {
         None
     };
@@ -437,19 +412,23 @@ pub fn grow_arm<L: Lease>(game: &mut L) -> (u16, Option<i32>) {
 /// Growing arm, part two: once at Samus's height (or the warning extension),
 /// stop and let the hand throw; otherwise add a segment at each growth level.
 pub fn finish_arm_growth<L: Lease>(k: u16, game: &mut L) {
-    let arm = k as i32;
-    let level = session_slot!(game, Arm[arm].growth_level);
-    let reach = |game: &mut L| -(session_slot!(game, Arm[arm].extension) as i32);
+    let arm = k;
+    let level = Magdollite::of(game, arm).growth_level();
+    let reach = |game: &mut L| -i32::from(Magdollite::of(game, arm).extension());
     let mut step = 0isize;
     let at_samus = !negative_16(reach(game) - ARM_WARNING_EXTENSION) || {
         step = (level >> 1) as isize;
-        ((session_slot!(game, Arm[arm].base.y_pos) as i32
-            - arm_step(game, ARM_Y_OFFSET_ADDRESS, step) as i32
-            - game.player_y() as i32) as i16)
+        let y = i32::from(Magdollite::of(game, arm).actor().y.whole);
+        ((y - i32::from(arm_step(game, ARM_Y_OFFSET_ADDRESS, step)) - i32::from(game.player_y()))
+            as i16)
             < 0
     };
     let next_level = if at_samus {
-        session_slot!(game, Arm[arm]; state = state::ARM_GROWN, fully_grown = 1);
+        {
+            let mut edit = MagdolliteEdit::of(game, arm);
+            *edit.state() = state::ARM_GROWN;
+            *edit.fully_grown() = 1;
+        }
         if ((reach(game) - arm_step(game, ARM_GROWTH_ADDRESS, (level >> 1) as isize) as i32) as i16)
             < 0
         {
@@ -460,13 +439,16 @@ pub fn finish_arm_growth<L: Lease>(k: u16, game: &mut L) {
         (reach(game) - arm_step(game, ARM_GROWTH_ADDRESS, step) as i32) as i16 >= 0
     };
     if next_level {
-        session_slot!(game, Arm[arm].growth_level, |old| old.wrapping_add(1));
-        session_slot!(game, Arm[arm].growth_level, |old| old.wrapping_add(1));
-        session_slot!(game, Arm[arm].base.y_pos, |old| old
-            .wrapping_add(SEGMENT_PIXELS));
-        let level = session_slot!(game, Arm[arm].growth_level);
+        let level = {
+            let mut edit = MagdolliteEdit::of(game, arm);
+            let level = edit.growth_level();
+            *level = level.wrapping_add(2);
+            let y = &mut edit.actor().y.whole;
+            *y = y.wrapping_add(SEGMENT_PIXELS);
+            *edit.growth_level()
+        };
         let animation = arm_step(game, ARM_INSTRUCTION_ADDRESS, (level >> 1) as isize);
-        session_slot!(game, Arm[arm].animation = animation);
+        *MagdolliteEdit::of(game, arm).animation() = animation;
         animate(game);
     }
 }
@@ -475,46 +457,51 @@ pub fn finish_arm_growth<L: Lease>(k: u16, game: &mut L) {
 pub fn shrink_arm<L: Lease>(game: &mut L) {
     let arm = current(game);
     let head = current(game) - SLOT;
-    let carry = session_slot!(game, Head[head].shrink_subspeed)
-        .overflowing_add(session_slot!(game, Arm[arm].base.y_subpos))
-        .1;
-    session_slot!(
-        game,
-        Arm[arm].base.y_subpos = session_slot!(game, Head[head].shrink_subspeed)
-            .wrapping_add(session_slot!(game, Arm[arm].base.y_subpos))
-    );
-    session_slot!(game, Arm[arm].base.y_pos, |old| (old as i32
-        + session_slot!(game, Head[head].shrink_speed) as i32
-        + i32::from(carry))
-        as u16);
-    session_slot!(game, Arm[arm].extension, |old| (old as i32
-        + session_slot!(game, Head[head].shrink_speed) as i32
-        + i32::from(carry))
-        as u16);
+    let subspeed = Magdollite::of(game, head).shrink_subspeed();
+    let (subposition, carry) =
+        subspeed.overflowing_add(Magdollite::of(game, arm).actor().y.fraction);
+    let speed = Magdollite::of(game, head).shrink_speed();
+    {
+        let mut edit = MagdolliteEdit::of(game, arm);
+        let y = &mut edit.actor().y;
+        y.fraction = subposition;
+        y.whole = y.whole.wrapping_add(speed).wrapping_add(u16::from(carry));
+        let extension = edit.extension();
+        *extension = extension.wrapping_add(speed).wrapping_add(u16::from(carry));
+    }
     let k = game.current_enemy();
-    let arm = k as i32;
-    let extension = session_slot!(game, Arm[arm].extension) as i16;
+    let arm = k;
+    let extension = Magdollite::of(game, arm).extension() as i16;
     if extension >= 0 {
-        session_slot!(game, Arm[arm].hold_retracted = 1);
-        let at = crate::ram_slot!(@at Head, arm - SLOT, waiting_for_arm);
-        game.set_slot_word(at, 0u16);
-        session_slot!(game, Arm[arm].state = state::ARM_WAIT_HEAD_SUBMERGED);
-    } else if ((-(extension as i32)
-        - arm_step(
-            game,
-            ARM_GROWTH_ADDRESS,
-            (session_slot!(game, Arm[arm].growth_level).wrapping_sub(2) >> 1) as isize,
-        ) as i32) as i16)
+        *MagdolliteEdit::of(game, arm).hold_retracted() = 1;
+        *MagdolliteEdit::of(game, arm - SLOT).waiting_for_arm() = 0;
+        *MagdolliteEdit::of(game, arm).state() = state::ARM_WAIT_HEAD_SUBMERGED;
+        return;
+    }
+    let previous = (Magdollite::of(game, arm).growth_level().wrapping_sub(2) >> 1) as isize;
+    if ((-i32::from(extension) - i32::from(arm_step(game, ARM_GROWTH_ADDRESS, previous))) as i16)
         < 0
     {
-        session_slot!(game, Arm[arm].growth_level, |old| old.wrapping_sub(2));
-        session_slot!(game, Arm[arm].base.y_pos, |old| old
-            .wrapping_sub(SEGMENT_PIXELS));
-        let level = session_slot!(game, Arm[arm].growth_level);
+        let level = {
+            let mut edit = MagdolliteEdit::of(game, arm);
+            let level = edit.growth_level();
+            *level = level.wrapping_sub(2);
+            let y = &mut edit.actor().y.whole;
+            *y = y.wrapping_sub(SEGMENT_PIXELS);
+            *edit.growth_level()
+        };
         let animation = arm_step(game, ARM_INSTRUCTION_ADDRESS, (level >> 1) as isize);
-        session_slot!(game, Arm[arm].animation = animation);
+        *MagdolliteEdit::of(game, arm).animation() = animation;
         animate(game);
     }
+}
+/// Set the hand's Y to the arm's tip: the arm's Y less its growth level's offset.
+fn follow_arm<L: Lease>(game: &mut L) {
+    let arm = Magdollite::of(game, current(game) - SLOT);
+    let (arm_y, level) = (arm.actor().y.whole, arm.growth_level());
+    let offset = arm_step(game, ARM_Y_OFFSET_ADDRESS, (level >> 1) as isize);
+    let hand = current(game);
+    MagdolliteEdit::of(game, hand).actor().y.whole = arm_y.wrapping_sub(offset);
 }
 /// Run the current part's state function `state` (one of [`state`]).
 pub fn run_state<L: Lease>(state: u16, game: &mut L) {
@@ -522,131 +509,138 @@ pub fn run_state<L: Lease>(state: u16, game: &mut L) {
     match state {
         state::HEAD_IDLE => {
             let head = part;
-            session_slot!(game, Head[head]; facing_right = 0, animation = animation::HEAD_IDLE_LEFT);
+            {
+                let mut edit = MagdolliteEdit::of(game, head);
+                *edit.facing_right() = 0;
+                *edit.animation() = animation::HEAD_IDLE_LEFT;
+            }
             if !player_left(game) {
-                session_slot!(game, Head[head]; animation = animation::HEAD_IDLE_RIGHT, facing_right = 1);
+                let mut edit = MagdolliteEdit::of(game, head);
+                *edit.animation() = animation::HEAD_IDLE_RIGHT;
+                *edit.facing_right() = 1;
             }
             animate(game);
             let hand = current(game) + 2 * SLOT;
-            if is_negative(session_slot!(game, Hand[hand].cooldown)) {
-                session_slot!(game, Hand[hand].cooldown = 0);
+            if is_negative(Magdollite::of(game, hand).cooldown()) {
+                *MagdolliteEdit::of(game, hand).cooldown() = 0;
                 let k = game.current_enemy();
-                let range =
-                    session_slot!(byte game, Head[head].parameters[THROW_RANGE_LANE]) as u16;
+                // The throw range is the parameters' low byte.
+                let range = Magdollite::of(game, head).parameters() & 0xff;
                 if game.player_within(k, Axis::X, range) {
-                    session_slot!(game, Head[head].animation = animation::HEAD_SUBMERGE_LEFT);
-                    if session_slot!(game, Head[head].facing_right) != 0 {
-                        session_slot!(game, Head[head].animation = animation::HEAD_SUBMERGE_RIGHT);
+                    {
+                        let mut edit = MagdolliteEdit::of(game, head);
+                        *edit.animation() = animation::HEAD_SUBMERGE_LEFT;
+                        if *edit.facing_right() != 0 {
+                            *edit.animation() = animation::HEAD_SUBMERGE_RIGHT;
+                        }
                     }
                     animate(game);
-                    session_slot!(game, Head[head].state = state::HEAD_WAIT_SUBMERGED);
+                    *MagdolliteEdit::of(game, head).state() = state::HEAD_WAIT_SUBMERGED;
                 }
             }
         }
         state::HEAD_WAIT_SUBMERGED => {
             let head = part;
-            if session_slot!(game, Head[head].animation_active) == 0 {
-                session_slot!(game, Head[head].waiting_for_arm = 1);
-                session_slot!(game, Arm[current(game) + SLOT].hold_retracted = 0);
-                session_slot!(game, Head[head].state = state::HEAD_EMERGE_WHEN_READY);
+            if Magdollite::of(game, head).animation_active() == 0 {
+                *MagdolliteEdit::of(game, head).waiting_for_arm() = 1;
+                let arm = current(game) + SLOT;
+                *MagdolliteEdit::of(game, arm).hold_retracted() = 0;
+                *MagdolliteEdit::of(game, head).state() = state::HEAD_EMERGE_WHEN_READY;
             }
         }
         state::HEAD_EMERGE_WHEN_READY => {
             let head = part;
-            if session_slot!(game, Head[head].waiting_for_arm) == 0 {
+            if Magdollite::of(game, head).waiting_for_arm() == 0 {
                 face_samus(
                     head,
                     animation::HEAD_EMERGE_LEFT,
                     animation::HEAD_EMERGE_RIGHT,
                     game,
                 );
-                session_slot!(game, Head[head].state = state::HEAD_WAIT_EMERGED);
+                *MagdolliteEdit::of(game, head).state() = state::HEAD_WAIT_EMERGED;
             }
         }
         state::HEAD_WAIT_EMERGED => {
             let head = part;
-            if session_slot!(game, Head[head].animation_active) == 0 {
+            if Magdollite::of(game, head).animation_active() == 0 {
                 face_samus(
                     head,
                     animation::HEAD_IDLE_LEFT,
                     animation::HEAD_IDLE_RIGHT,
                     game,
                 );
-                session_slot!(game, Head[head].state = state::HEAD_IDLE);
+                *MagdolliteEdit::of(game, head).state() = state::HEAD_IDLE;
             }
         }
         state::ARM_WAIT_HEAD_SUBMERGED => {
             let arm = part;
-            if session_slot!(game, Arm[arm].hold_retracted) == 0 {
-                session_slot!(game, Arm[arm]; state = state::ARM_GROWING, extension = 0,
-                    hold_retracted = 0, growth_level = 2);
-                let copied = session_slot!(game, Arm[arm].home_y);
-                session_slot!(game, Arm[arm].base.y_pos = copied);
+            if Magdollite::of(game, arm).hold_retracted() == 0 {
+                let mut edit = MagdolliteEdit::of(game, arm);
+                *edit.state() = state::ARM_GROWING;
+                *edit.extension() = 0;
+                *edit.hold_retracted() = 0;
+                *edit.growth_level() = 2;
+                let copied = *edit.home_y();
+                edit.actor().y.whole = copied;
             }
         }
         state::HAND_IDLE => {
             let head = current(game) - 2 * SLOT;
-            if session_slot!(game, Head[head].state) == state::HEAD_WAIT_SUBMERGED {
-                session_slot!(game, Hand[current(game)].state = state::HAND_GROW_AND_THROW);
+            if Magdollite::of(game, head).state() == state::HEAD_WAIT_SUBMERGED {
+                let hand = current(game);
+                *MagdolliteEdit::of(game, hand).state() = state::HAND_GROW_AND_THROW;
             }
         }
         state::HAND_THROW_AND_SHRINK => {
             let hand = part;
-            if session_slot!(game, Hand[hand].animation_active) == 0 {
-                session_slot!(game, Hand[hand].animation = animation::HAND_STUB);
+            if Magdollite::of(game, hand).animation_active() == 0 {
+                *MagdolliteEdit::of(game, hand).animation() = animation::HAND_STUB;
                 animate(game);
-                let at = crate::ram_slot!(@at Arm, current(game) - SLOT, state);
-                game.set_slot_word(at, state::ARM_SHRINKING);
-                session_slot!(game, Hand[hand].state = state::HAND_FOLLOW_SHRINKING_ARM);
-                let at = crate::ram_slot!(@at Arm, current(game) - SLOT, fully_grown);
-                game.set_slot_word(at, 0u16);
-                let copied = session_slot!(game, Hand[hand].throw_x);
-                session_slot!(game, Hand[hand].base.x_pos = copied);
-                let copied = session_slot!(game, Hand[hand].throw_y);
-                session_slot!(game, Hand[hand].base.y_pos = copied);
+                let arm = current(game) - SLOT;
+                *MagdolliteEdit::of(game, arm).state() = state::ARM_SHRINKING;
+                *MagdolliteEdit::of(game, hand).state() = state::HAND_FOLLOW_SHRINKING_ARM;
+                let arm = current(game) - SLOT;
+                *MagdolliteEdit::of(game, arm).fully_grown() = 0;
+                let mut edit = MagdolliteEdit::of(game, hand);
+                let copied = *edit.throw_x();
+                edit.actor().x.whole = copied;
+                let copied = *edit.throw_y();
+                edit.actor().y.whole = copied;
             }
             stretch_head_hitbox(game.current_enemy(), game);
         }
         state::HAND_GROW_AND_THROW => {
-            if session_slot!(game, Arm[current(game) - SLOT].fully_grown) != 0 {
+            if Magdollite::of(game, current(game) - SLOT).fully_grown() != 0 {
                 let hand = current(game);
-                session_slot!(game, Hand[hand]; animation = animation::HAND_THROW_LEFT, throw_right = 0);
+                {
+                    let mut edit = MagdolliteEdit::of(game, hand);
+                    *edit.animation() = animation::HAND_THROW_LEFT;
+                    *edit.throw_right() = 0;
+                }
                 if !player_left(game) {
-                    session_slot!(game, Hand[hand]; animation = animation::HAND_THROW_RIGHT, throw_right = 1);
+                    let mut edit = MagdolliteEdit::of(game, hand);
+                    *edit.animation() = animation::HAND_THROW_RIGHT;
+                    *edit.throw_right() = 1;
                 }
                 animate(game);
-                session_slot!(game, Hand[hand]; state = state::HAND_THROW_AND_SHRINK,
-                    throw_x = session_slot!(game, Hand[hand].base.x_pos),
-                    throw_y = session_slot!(game, Hand[hand].base.y_pos));
+                let mut edit = MagdolliteEdit::of(game, hand);
+                *edit.state() = state::HAND_THROW_AND_SHRINK;
+                let copied = edit.actor().x.whole;
+                *edit.throw_x() = copied;
+                let copied = edit.actor().y.whole;
+                *edit.throw_y() = copied;
             } else {
-                let arm_y = session_slot!(game, Arm[current(game) - SLOT].base.y_pos);
-                let offset = arm_step(game, ARM_Y_OFFSET_ADDRESS, {
-                    (session_slot!(game, Arm[current(game) - SLOT].growth_level) >> 1) as isize
-                });
-                session_slot!(
-                    game,
-                    Hand[current(game)].base.y_pos = arm_y.wrapping_sub(offset)
-                );
+                follow_arm(game);
             }
             stretch_head_hitbox(game.current_enemy(), game);
         }
         state::HAND_FOLLOW_SHRINKING_ARM => {
-            // The head's state, the arm's y and its growth level, by their
-            // original RAM names (see `HEAD_STATE`).
-            let index = game.current_enemy() as usize >> 1;
-            if word!(game.ENEMY_DRAWING_QUEUE[index + HEAD_STATE]) == state::HEAD_IDLE {
-                session_slot!(game, Hand[current(game)].state = state::HAND_IDLE);
+            let head = current(game) - 2 * SLOT;
+            if Magdollite::of(game, head).state() == state::HEAD_IDLE {
+                let hand = current(game);
+                *MagdolliteEdit::of(game, hand).state() = state::HAND_IDLE;
             } else {
-                let arm_y = word!(game.ENEMY_DRAWING_QUEUE[index + ARM_Y_POS]);
-                let offset = arm_step(
-                    game,
-                    ARM_Y_OFFSET_ADDRESS,
-                    (word!(game.ENEMY_DRAWING_QUEUE_SIZES[index + ARM_GROWTH_LEVEL]) >> 1) as isize,
-                );
-                session_slot!(
-                    game,
-                    Hand[current(game)].base.y_pos = arm_y.wrapping_sub(offset)
-                );
+                follow_arm(game);
             }
             stretch_head_hitbox(game.current_enemy(), game);
         }
@@ -672,27 +666,28 @@ pub fn instruction<L: Lease>(address: u32, script: EnemyScript, game: &mut L) ->
                 u16::MAX
             };
             let head = part;
-            session_slot!(game, Head[head].base.y_pos, |old| old.wrapping_add(step));
             // The 2px moves step the head twice; the 1px moves step the arm too.
             let second = if matches!(address, HEAD_DOWN_2PX | HEAD_UP_2PX) {
                 head
             } else {
                 current(game) + SLOT
             };
-            session_slot!(game, Part[second].base.y_pos, |old| old.wrapping_add(step));
+            for moved in [head, second] {
+                let mut edit = MagdolliteEdit::of(game, moved);
+                let y = &mut edit.actor().y.whole;
+                *y = y.wrapping_add(step);
+            }
         }
         SET_ANIMATION_ACTIVE | CLEAR_ANIMATION_ACTIVE => {
-            session_slot!(
-                game,
-                Part[part].animation_active = u16::from(address == SET_ANIMATION_ACTIVE)
-            );
+            *MagdolliteEdit::of(game, part).animation_active() =
+                u16::from(address == SET_ANIMATION_ACTIVE);
         }
         SUBMERGED_POSITION_SHOW_ARM | EMERGED_POSITION_HIDE_ARM => {
             let head = part;
             let hide = address == EMERGED_POSITION_HIDE_ARM;
             let depth = if hide { EMERGED_DEPTH } else { SUBMERGED_DEPTH };
-            let y = session_slot!(game, Head[head].home_y).wrapping_add(depth);
-            session_slot!(game, Head[head].base.y_pos = y);
+            let y = Magdollite::of(game, head).home_y().wrapping_add(depth);
+            MagdolliteEdit::of(game, head).actor().y.whole = y;
             let invisible = K_ENEMY_PROPS_INVISIBLE as u16;
             let show_or_hide = |old: u16| {
                 if hide {
@@ -702,21 +697,28 @@ pub fn instruction<L: Lease>(address: u32, script: EnemyScript, game: &mut L) ->
                 }
             };
             let arm = current(game) + SLOT;
-            session_slot!(game, Arm[arm].base.y_pos = y);
-            session_slot!(game, Arm[arm].base.properties, |old| show_or_hide(old));
+            {
+                let mut edit = MagdolliteEdit::of(game, arm);
+                let actor = edit.actor();
+                actor.y.whole = y;
+                actor.properties = show_or_hide(actor.properties);
+            }
             let hand = current(game) + 2 * SLOT;
-            session_slot!(game, Hand[hand].base.properties, |old| show_or_hide(old));
+            let mut edit = MagdolliteEdit::of(game, hand);
+            let actor = edit.actor();
+            actor.properties = show_or_hide(actor.properties);
         }
         RESET_POSITION => {
             let head = part;
-            let y = session_slot!(game, Head[head].home_y);
-            session_slot!(game, Head[head].base.y_pos = y);
-            session_slot!(game, Arm[current(game) + SLOT].base.y_pos = y);
+            let y = Magdollite::of(game, head).home_y();
+            MagdolliteEdit::of(game, head).actor().y.whole = y;
+            let arm = current(game) + SLOT;
+            MagdolliteEdit::of(game, arm).actor().y.whole = y;
         }
         SPAWN_LAVA => {
             let hand = part;
             game.spawn_projectile(
-                session_slot!(game, Hand[hand].throw_right),
+                Magdollite::of(game, hand).throw_right(),
                 game.current_enemy(),
                 crate::constants::bank_86::ADDR_K_EPROJ_LAVA_THROWN_BY_MAGDOLLITE as u16,
             );
@@ -729,19 +731,20 @@ pub fn instruction<L: Lease>(address: u32, script: EnemyScript, game: &mut L) ->
             } else {
                 HAND_REACH.wrapping_neg()
             };
-            let copied = session_slot!(game, Hand[hand].throw_x).wrapping_add(reach);
-            session_slot!(game, Hand[hand].base.x_pos = copied);
             // Only the right closed hand rises further, as in the original.
             let raise = if address == CLOSED_HAND_RIGHT {
                 CLOSED_HAND_RAISE
             } else {
                 OPEN_HAND_RAISE
             };
-            let copied = session_slot!(game, Hand[hand].throw_y).wrapping_sub(raise);
-            session_slot!(game, Hand[hand].base.y_pos = copied);
+            let mut edit = MagdolliteEdit::of(game, hand);
+            let copied = edit.throw_x().wrapping_add(reach);
+            edit.actor().x.whole = copied;
+            let copied = edit.throw_y().wrapping_sub(raise);
+            edit.actor().y.whole = copied;
         }
         RESET_COOLDOWN => {
-            session_slot!(game, Hand[part].cooldown = THROW_COOLDOWN);
+            *MagdolliteEdit::of(game, part).cooldown() = THROW_COOLDOWN;
         }
         _ => unreachable!("Magdollite instruction {address:06x}"),
     }

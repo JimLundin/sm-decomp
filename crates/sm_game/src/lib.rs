@@ -59,6 +59,7 @@ pub mod item_pickups;
 pub mod launch_motion;
 pub mod layer_blending;
 pub mod lease;
+pub mod legacy_overflow;
 pub mod liquid;
 pub mod liquid_effects;
 pub mod liquid_surface;
@@ -226,6 +227,7 @@ pub mod actors {
     pub mod sidehopper;
     pub mod skree;
     pub mod skultera;
+    pub mod slot_view;
     pub mod snapshot;
     pub mod space_pirates;
     pub mod species;

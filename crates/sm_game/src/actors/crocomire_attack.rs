@@ -1,44 +1,31 @@
 //! Crocomire's fight AI: the instruction that runs its fight function, and the
 //! functions, by index (bank $A4:86A6-$A4:8A10).
 use crate::actors::access::{AccessMode, ActorKey as Key};
-use crate::actors::layouts::{EnemyBase, same_words};
+use crate::actors::slot_view::slot_view;
 use crate::constants::bank_86::ADDR_STRU_868F8F;
 use crate::enemy_projectiles::host::Host;
 use crate::enemy_script::{EnemyScript, bank_base};
 use core::ffi::c_long;
 
-/// Crocomire's view of its slot.
-#[derive(Clone, Copy)]
-#[repr(C)]
-pub struct Crocomire {
-    pub base: EnemyBase,
-    /// The death sequence index, also the melting tiles' table subindex.
-    pub death_sequence_index: u16,
-    pub fight_flags: u16,
-    pub fight_function: u16,
-    /// The step and hop counter; in the death sequence its high byte is
-    /// the Y acceleration.
-    pub step_counter: u16,
-    /// The death sequence's Y velocity.
-    pub y_velocity: u16,
-    /// The projectile counter; in the death sequence its high byte is
-    /// the Y subposition.
-    pub projectile_counter: u16,
-    pad_0fb4: [u8; 26700],
-    pub unread_7800: u16,
-    pub unread_7802: u16,
-    pad_7804: [u16; 29],
-    pub melting_hdma_object: u16,
-    pad_7840: [u8; 1984],
-    pub acid_damage_sound_timer: u16,
-    pad_8002: [u16; 31],
+slot_view! {
+    /// Crocomire's slot: the death sequence index (also the melting tiles'
+    /// table subindex), the fight flags and function, the step and hop counter
+    /// (in the death sequence its high byte is the Y acceleration), the death
+    /// sequence's Y velocity, the projectile counter (in the death sequence
+    /// its high byte is the Y subposition), the melting HDMA object and the
+    /// acid damage sound timer; `unread_7800` and `unread_7802` are stored
+    /// but never read.
+    Crocomire, CrocomireEdit {
+        record: [
+            death_sequence_index = var_a, fight_flags = var_b, fight_function = var_c,
+            step_counter = var_d, y_velocity = var_e, projectile_counter = var_f,
+        ],
+        extended: [
+            unread_7800 = var_00, unread_7802 = var_01, melting_hdma_object = var_1f,
+            acid_damage_sound_timer = var_20,
+        ],
+    }
 }
-
-same_words!(Crocomire: EnemyLayout72 {
-    death_sequence_index = var_a, fight_flags = var_b, fight_function = var_c,
-    step_counter = var_d, y_velocity = var_e, projectile_counter = var_f, unread_7800 = var_00,
-    unread_7802 = var_01, melting_hdma_object = var_1f, acid_damage_sound_timer = var_20,
-});
 
 /// The actor words Crocomire's fight uses, by `variables` lane.
 pub mod lane {

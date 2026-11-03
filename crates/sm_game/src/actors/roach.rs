@@ -2,32 +2,25 @@
 //! (bank $A3:A051-$A3:A611).
 use crate::actors::access::AccessMode::Native;
 use crate::actors::api::{self, Axis, MovementResult, SlopePolicy};
-use crate::actors::combat::{self, current_slot};
+use crate::actors::combat;
 use crate::actors::host::{ActorLease, BossEffects as _};
-use crate::actors::layouts::part_view;
-use crate::actors::session_slots::SlotAccess as _;
+use crate::actors::slot_view::{SlotMut, SlotRef, SlotState, slot_view};
 use crate::geometry::Vector32;
 use crate::player_projectiles::content::table;
-use crate::session_slot;
 
-part_view! {
-    /// The roach's view of its slot and extended RAM. Each velocity is a
-    /// subvelocity word then a velocity word.
-    Roach: EnemyLayout72 {
-        words: [reverse_timer, function, custom_angle, var_d, var_e, movement_timer, speed_and_angle, range_and_activation],
-        pad1: [u8; 26696],
-        words: [
-            forward_x, forward_x_high, forward_y, forward_y_high, left_x, left_x_high, left_y,
-            left_y_high, right_x, right_x_high, right_y, right_y_high, custom_x, custom_x_high,
-            custom_y, custom_y_high, var_10, var_11, var_12, var_13, var_14, var_15, var_16, var_17,
-            var_18, var_19, var_1a, var_1b, var_1c, var_1d, var_1e, var_1f,
+/// A lease the roaches run on: their slots are the Session's.
+pub trait Lease: ActorLease + SlotState {}
+impl<T: ActorLease + SlotState + ?Sized> Lease for T {}
+
+slot_view! {
+    /// The roach's instruction list indices facing forwards, left, right and
+    /// at its custom angle, and its new and current instruction lists.
+    Roach, RoachEdit {
+        record: [],
+        extended: [
+            forward_list_index = var_20, left_list_index = var_21, right_list_index = var_22,
+            custom_list_index = var_23, new_instruction_list = var_24, instruction_list = var_25,
         ],
-        pad2: [u8; 1984],
-        words: [
-            forward_list_index, left_list_index, right_list_index, custom_list_index,
-            new_instruction_list, instruction_list,
-        ],
-        _: [u16; 26],
     }
 }
 
@@ -85,51 +78,43 @@ const HALF_TURN_FACINGS: u16 = 4;
 const FACINGS: u16 = 7;
 const SIGN: u16 = 0x8000;
 
-/// The 16.16 velocity whose subvelocity word is at `at`.
-fn velocity(runtime: &impl ActorLease, at: usize) -> u32 {
-    (u32::from(runtime.slot_word(at + 2)) << 16) | u32::from(runtime.slot_word(at))
+/// The roach's forward, left, right and custom velocities, by the extended word
+/// each starts at: an X subvelocity, X velocity, Y subvelocity and Y velocity.
+const FORWARD: usize = 0x00;
+const LEFT: usize = 0x04;
+const RIGHT: usize = 0x08;
+const CUSTOM: usize = 0x0c;
+/// The 16.16 velocity whose subvelocity is extended word `var`.
+fn velocity(runtime: &impl Lease, roach: u16, var: usize) -> u32 {
+    let slot = SlotRef::of(runtime, roach);
+    (u32::from(slot.extended(var + 1)) << 16) | u32::from(slot.extended(var))
 }
-fn store_velocity(runtime: &mut impl ActorLease, at: usize, value: u32) {
-    runtime.set_slot_word(at, value as u16);
-    runtime.set_slot_word(at + 2, (value >> 16) as u16);
-}
-fn forward_x(roach: i32) -> usize {
-    crate::ram_slot!(@at Roach, roach, forward_x)
-}
-fn left_x(roach: i32) -> usize {
-    crate::ram_slot!(@at Roach, roach, left_x)
-}
-fn right_x(roach: i32) -> usize {
-    crate::ram_slot!(@at Roach, roach, right_x)
-}
-fn custom_x(roach: i32) -> usize {
-    crate::ram_slot!(@at Roach, roach, custom_x)
+fn store_velocity(runtime: &mut impl Lease, roach: u16, var: usize, value: u32) {
+    let mut slot = SlotMut::of(runtime, roach);
+    *slot.extended(var) = value as u16;
+    *slot.extended(var + 1) = (value >> 16) as u16;
 }
 /// Set roach instruction list ($A3:A12F), if it changed.
-fn set_instruction_list(runtime: &mut impl ActorLease) {
-    let roach = current_slot(runtime);
-    let instruction = session_slot!(runtime, Roach[roach].new_instruction_list);
-    if instruction != session_slot!(runtime, Roach[roach].instruction_list) {
-        session_slot!(runtime, Roach[roach].instruction_list = instruction);
+fn set_instruction_list(runtime: &mut impl Lease) {
+    let roach = combat::current(runtime).byte_index();
+    let instruction = Roach::of(runtime, roach).new_instruction_list();
+    if instruction != Roach::of(runtime, roach).instruction_list() {
+        *RoachEdit::of(runtime, roach).instruction_list() = instruction;
         let key = combat::current(runtime);
         runtime.edit_actor(key, Native, |actor| actor.restart_animation(instruction));
     }
 }
-fn face(runtime: &mut impl ActorLease, roach: i32, index: u16) {
+fn face(runtime: &mut impl Lease, roach: u16, index: u16) {
     let instruction = table(runtime, INSTRUCTION_LISTS, (index >> 1) as isize);
-    session_slot!(runtime, Roach[roach].new_instruction_list = instruction);
+    *RoachEdit::of(runtime, roach).new_instruction_list() = instruction;
     set_instruction_list(runtime);
 }
 /// Calculate the X and Y velocities at `velocities` for the roach's angle,
 /// adjusted, or its custom angle ($A3:A1F3, $A3:A23E, $A3:A3CA).
-fn calculate_velocities(
-    runtime: &mut impl ActorLease,
-    x: impl Fn(i32) -> usize,
-    adjustment: Option<u8>,
-) {
+fn calculate_velocities(runtime: &mut impl Lease, x: usize, adjustment: Option<u8>) {
     let key = combat::current(runtime);
-    let roach = current_slot(runtime);
-    for (axis_offset, cosine) in [(0, true), (4, false)] {
+    let roach = combat::current(runtime).byte_index();
+    for (axis_offset, cosine) in [(0, true), (2, false)] {
         let (angle, speed) = {
             let actor = runtime.resolve_actor(key, Native);
             let angle = match adjustment {
@@ -145,74 +130,79 @@ fn calculate_velocities(
                 game.actor_sine_full(angle, speed)
             }
         });
-        store_velocity(runtime, x(roach) + axis_offset, value);
+        store_velocity(runtime, roach, x + axis_offset, value);
     }
 }
 /// Calculate the custom velocities and determine the custom instruction list
 /// index ($A3:A3B5).
-fn retarget(runtime: &mut impl ActorLease, roach: i32) {
-    calculate_velocities(runtime, custom_x, None);
+fn retarget(runtime: &mut impl Lease, roach: u16) {
+    calculate_velocities(runtime, CUSTOM, None);
     let key = combat::current(runtime);
-    let current = current_slot(runtime);
+    let current = combat::current(runtime).byte_index();
     let angle = runtime.resolve_actor(key, Native).variables[lane::CUSTOM_ANGLE] as u8;
-    session_slot!(
-        runtime,
-        Roach[current].custom_list_index = 2 * u16::from(angle.wrapping_sub(FORWARD_FACING) >> 5)
-    );
-    let index = session_slot!(runtime, Roach[roach].custom_list_index);
+    *RoachEdit::of(runtime, current).custom_list_index() =
+        2 * u16::from(angle.wrapping_sub(FORWARD_FACING) >> 5);
+    let index = Roach::of(runtime, roach).custom_list_index();
     face(runtime, roach, index);
 }
 /// Move the roach by the velocities at `x`.
-fn translate(runtime: &mut impl ActorLease, x: impl Fn(i32) -> usize) {
+fn translate(runtime: &mut impl Lease, x: usize) {
     let key = combat::current(runtime);
-    let roach = current_slot(runtime);
-    let dx = velocity(runtime, x(roach));
+    let roach = combat::current(runtime).byte_index();
+    let dx = velocity(runtime, roach, x);
     runtime.edit_actor(key, Native, |actor| actor.x.advance(dx as i32));
-    let dy = velocity(runtime, x(roach) + 4);
+    let dy = velocity(runtime, roach, x + 2);
     runtime.edit_actor(key, Native, |actor| actor.y.advance(dy as i32));
 }
 /// Move roach forward ($A3:A578), along its angle with the forward speeds.
-fn move_forward(runtime: &mut impl ActorLease) {
+fn move_forward(runtime: &mut impl Lease) {
     let key = combat::current(runtime);
-    let roach = current_slot(runtime);
+    let roach = combat::current(runtime).byte_index();
     let angle = u16::from(runtime.resolve_actor(key, Native).parameters[0].to_ne_bytes()[1]);
     let point = Vector32 {
-        x: velocity(runtime, forward_x(roach)),
-        y: velocity(runtime, forward_x(roach) + 4),
+        x: velocity(runtime, roach, FORWARD),
+        y: velocity(runtime, roach, FORWARD + 2),
     };
     runtime.session_mut().compatibility_enemy_scratch = angle;
     api::apply_vector(runtime, angle, point);
 }
 /// Reverse roach custom angle ($A3:A52A).
-fn reverse(runtime: &mut impl ActorLease) {
-    let roach = current_slot(runtime);
-    let at = custom_x(roach);
-    // Each native word is negated independently; this is not 32-bit negation.
-    for offset in [2, 0, 6, 4] {
-        runtime.set_slot_word(at + offset, runtime.slot_word(at + offset).wrapping_neg());
+fn reverse(runtime: &mut impl Lease) {
+    let roach = combat::current(runtime).byte_index();
+    // Each word is negated independently; this is not 32-bit negation.
+    let mut slot = SlotMut::of(runtime, roach);
+    for offset in [1, 0, 3, 2] {
+        let word = slot.extended(CUSTOM + offset);
+        *word = word.wrapping_neg();
     }
-    let index = session_slot!(runtime, Roach[roach].custom_list_index)
+    drop(slot);
+    let index = Roach::of(runtime, roach)
+        .custom_list_index()
         .wrapping_add(HALF_TURN_FACINGS)
         & FACINGS;
-    session_slot!(runtime, Roach[roach].custom_list_index = index);
+    *RoachEdit::of(runtime, roach).custom_list_index() = index;
     face(runtime, roach, index);
 }
 /// Initialisation AI - roach ($A3:A14D).
-pub fn initialize(runtime: &mut impl ActorLease) {
+pub fn initialize(runtime: &mut impl Lease) {
     let key = combat::current(runtime);
-    let roach = current_slot(runtime);
-    session_slot!(runtime, Roach[roach]; instruction_list = 0, new_instruction_list = 0);
+    let roach = combat::current(runtime).byte_index();
+    {
+        let mut edit = RoachEdit::of(runtime, roach);
+        *edit.instruction_list() = 0;
+        *edit.new_instruction_list() = 0;
+    }
     // Calculate moving forward speeds ($A3:A183).
-    let live = current_slot(runtime);
+    let live = combat::current(runtime).byte_index();
     let parameter = runtime
         .resolve_actor(combat::current(runtime), Native)
         .parameters[0]
         .to_ne_bytes();
     let point = runtime.convert_angle_to_xy(u16::from(parameter[1]), u16::from(parameter[0]));
-    store_velocity(runtime, forward_x(live), point.x);
-    store_velocity(runtime, forward_x(live) + 4, point.y);
-    calculate_velocities(runtime, left_x, Some(0u8.wrapping_sub(SIDE_ANGLE)));
-    calculate_velocities(runtime, right_x, Some(SIDE_ANGLE));
+    store_velocity(runtime, live, FORWARD, point.x);
+    store_velocity(runtime, live, FORWARD + 2, point.y);
+    calculate_velocities(runtime, LEFT, Some(0u8.wrapping_sub(SIDE_ANGLE)));
+    calculate_velocities(runtime, RIGHT, Some(SIDE_ANGLE));
     // Determine the facing forward, left and right instruction list indices
     // ($A3:A289, $A3:A29E, $A3:A2B7).
     for (left, adjustment) in [
@@ -220,29 +210,29 @@ pub fn initialize(runtime: &mut impl ActorLease) {
         (Some(true), LEFT_FACING),
         (Some(false), RIGHT_FACING),
     ] {
-        let live = current_slot(runtime);
+        let live = combat::current(runtime).byte_index();
         let angle = runtime
             .resolve_actor(combat::current(runtime), Native)
             .parameters[0]
             .to_ne_bytes()[1];
         let index = 2 * u16::from(angle.wrapping_sub(adjustment) >> 5);
         match left {
-            None => session_slot!(runtime, Roach[live].forward_list_index = index),
-            Some(true) => session_slot!(runtime, Roach[live].left_list_index = index),
-            Some(false) => session_slot!(runtime, Roach[live].right_list_index = index),
+            None => *RoachEdit::of(runtime, live).forward_list_index() = index,
+            Some(true) => *RoachEdit::of(runtime, live).left_list_index() = index,
+            Some(false) => *RoachEdit::of(runtime, live).right_list_index() = index,
         }
     }
-    let index = session_slot!(runtime, Roach[roach].forward_list_index);
+    let index = Roach::of(runtime, roach).forward_list_index();
     face(runtime, roach, index);
     runtime.edit_actor(key, Native, |actor| {
         actor.variables[lane::FUNCTION] = function::WAIT_FOR_SAMUS
     });
 }
 /// Main AI - roach ($A3:A2D0): run its function. Was `advance`.
-pub fn main_ai(runtime: &mut impl ActorLease) {
+pub fn main_ai(runtime: &mut impl Lease) {
     crate::probe::hit("roach.main_ai");
     let key = combat::current(runtime);
-    let roach = current_slot(runtime);
+    let roach = combat::current(runtime).byte_index();
     let function = runtime.resolve_actor(key, Native).variables[lane::FUNCTION];
     match function {
         // Roach function - wait for Samus to get near ($A3:A2D7).
@@ -279,7 +269,8 @@ pub fn main_ai(runtime: &mut impl ActorLease) {
                     actor.variables[lane::REVERSE_TIMER] = REVERSE_FRAMES
                 });
             }
-            runtime.write_slice_le(crate::ram::words::RANDOM_NUMBER, RANDOM_SEED);
+            runtime.session_mut().timing.random_number = RANDOM_SEED;
+            runtime.words_stored();
             let current = combat::current(runtime);
             runtime.edit_actor(current, Native, |actor| {
                 actor.variables[lane::FUNCTION] = if function == function::ACTIVATE_RANDOM {
@@ -305,7 +296,7 @@ pub fn main_ai(runtime: &mut impl ActorLease) {
                 api::angle_to_player(runtime, current) as u8
             };
             let current = combat::current(runtime);
-            let current_roach = current_slot(runtime);
+            let current_roach = combat::current(runtime).byte_index();
             runtime.edit_actor(current, Native, |actor| {
                 actor.variables[lane::CUSTOM_ANGLE] = if random {
                     actor.variables[lane::CUSTOM_ANGLE]
@@ -339,14 +330,14 @@ pub fn main_ai(runtime: &mut impl ActorLease) {
         function::ZIGZAG => {
             let second = runtime.resolve_actor(key, Native).frame & 0x10 != 0;
             let index = if second {
-                session_slot!(runtime, Roach[roach].right_list_index)
+                Roach::of(runtime, roach).right_list_index()
             } else {
-                session_slot!(runtime, Roach[roach].left_list_index)
+                Roach::of(runtime, roach).left_list_index()
             };
             face(runtime, roach, index);
-            translate(runtime, if second { right_x } else { left_x });
+            translate(runtime, if second { RIGHT } else { LEFT });
         }
-        function::TOWARDS_SAMUS | function::AWAY_FROM_SAMUS => translate(runtime, custom_x),
+        function::TOWARDS_SAMUS | function::AWAY_FROM_SAMUS => translate(runtime, CUSTOM),
         function::FORWARDS_THEN_WAIT | function::CUSTOM_ANGLE_WAIT => {
             let expired = runtime.edit_actor(key, Native, |actor| {
                 actor.pre_instruction = actor.pre_instruction.wrapping_sub(1);
@@ -364,12 +355,12 @@ pub fn main_ai(runtime: &mut impl ActorLease) {
                 move_forward(runtime);
             } else {
                 let current = combat::current(runtime);
-                let current_roach = current_slot(runtime);
-                let x = velocity(runtime, custom_x(current_roach)) as i32;
+                let current_roach = combat::current(runtime).byte_index();
+                let x = velocity(runtime, current_roach, CUSTOM) as i32;
                 let mut blocked = api::move_horizontal(runtime, current, x, SlopePolicy::Ignore)
                     == MovementResult::Blocked;
                 if !blocked {
-                    let y = velocity(runtime, custom_x(current_roach) + 4) as i32;
+                    let y = velocity(runtime, current_roach, CUSTOM + 2) as i32;
                     blocked = api::move_vertical(runtime, current, y) == MovementResult::Blocked;
                 }
                 if blocked {
@@ -409,7 +400,7 @@ pub fn main_ai(runtime: &mut impl ActorLease) {
                     reverse(runtime);
                 }
             }
-            translate(runtime, custom_x);
+            translate(runtime, CUSTOM);
         }
         _ => runtime.unreachable(),
     }

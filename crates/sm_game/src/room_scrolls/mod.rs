@@ -4,6 +4,7 @@ mod camera;
 pub use camera::{calculate_blocks, calculate_scrolls, debug_position, layer2_position};
 pub mod door;
 
+use crate::display::preparation::Field;
 use crate::display::transfer::ScrollingLayout as ScrollingDmaLayout;
 
 /// Room scrolling runs on the owned-Session view: the camera is
@@ -11,6 +12,7 @@ use crate::display::transfer::ScrollingLayout as ScrollingDmaLayout;
 /// view's projected bytes, and the display work is the runtime's.
 pub trait Host:
     crate::session_access::SessionAccess
+    + crate::display::preparation::Access
     + crate::runtime_access::SessionRam
     + crate::ram::CompatibilityRam
     + crate::player_position::PlayerPosition
@@ -121,7 +123,7 @@ pub fn apply<H: Host + ?Sized>(address: u32, game: &mut H) -> bool {
 // Camera effects keep their legacy publication order until layer state is owned.
 use crate::camera::set_layer1;
 use crate::player_collision::operations::Axis;
-use crate::ram::{bytes as fields_bytes, word};
+use crate::ram::word;
 use crate::ram_words as words;
 use crate::word_transfers;
 use camera::{auto_x, auto_y, trigger_down, trigger_left, trigger_right, trigger_up};
@@ -288,8 +290,8 @@ pub(crate) fn layer2_policy<H: Host + ?Sized>(game: &H, axis: usize) -> u8 {
 /// Queue the whole visible room: 17 columns from the camera's left edge,
 /// flushing each, layer 2 too unless it is fixed.
 pub fn fill_viewport<H: Host + ?Sized>(game: &mut H) {
-    let screens = (i32::from(game.byte(fields_bytes::REG_BG1SC))
-        - i32::from(game.byte(fields_bytes::REG_BG2SC)))
+    let screens = (i32::from(game.display_control_byte(Field::Screens0))
+        - i32::from(game.display_control_byte(Field::Screens1)))
         << 8;
     word!(game.SIZE_OF_BG2 = (screens & 0xf800) as u16);
     calculate_blocks(game);

@@ -2,45 +2,43 @@
 //! movers (shootable and destroyable shutters, the up/down mover platform) and the horizontal
 //! shutter. Was `moving_platforms`. Each frame runs on one actor lease.
 use crate::actors::api::{self, Axis, ShotHandling};
-use crate::actors::combat::{self, current_slot};
+use crate::actors::combat;
 use crate::actors::host::ActorLease;
-use crate::actors::layouts::part_view;
+use crate::actors::slot_view::{SlotState, slot_view};
+use crate::controller_state::Word as Input;
 use crate::player_projectiles::content::table;
-use crate::ram::words as W;
-use crate::session_slot;
 use sm_data::enemy_speeds::SpeedTable::Linear;
 
-part_view! {
+slot_view! {
     /// An up/down mover's or horizontal shutter's slot. "Positive" is down or right.
-    Mover: EnemyLayout72 {
-        words: [function, function_timer, positive_subvelocity, positive_velocity, negative_subvelocity,
-            negative_velocity, parameter_1, parameter_2],
-        pad1: [u8; 26696],
-        words: [speed_index, primary_direction, negative_rest_parameter, positive_rest_parameter, trigger_mode,
-            distance, proximity, initial_function_index, negative_rest_time, positive_rest_time, moving_samus,
-            var_0b, triggered, previous_x, previous_y, minimum_y, maximum_y, minimum_x, maximum_x, pushing_samus,
-            var_14, samus_x, samus_x_fraction, var_17, var_18, var_19, var_1a, var_1b, var_1c, var_1d, var_1e,
-            var_1f],
-        pad2: [u8; 1984],
-        words: [reaction_direction, var_21, var_22, var_23, var_24, var_25, var_26, var_27, var_28, var_29,
-            var_2a, var_2b, var_2c, var_2d, var_2e, var_2f, var_30, var_31, var_32, var_33, var_34, var_35, var_36,
-            var_37, var_38, var_39, var_3a, var_3b, var_3c, var_3d, var_3e, var_3f],
+    Mover, MoverEdit {
+        record: [
+            function = var_a, function_timer = var_b, positive_subvelocity = var_c,
+            positive_velocity = var_d, negative_subvelocity = var_e, negative_velocity = var_f,
+            parameter_1 = parameter_1, parameter_2 = parameter_2,
+        ],
+        extended: [
+            speed_index = var_00, primary_direction = var_01, negative_rest_parameter = var_02,
+            positive_rest_parameter = var_03, trigger_mode = var_04, distance = var_05,
+            proximity = var_06, initial_function_index = var_07, negative_rest_time = var_08,
+            positive_rest_time = var_09, moving_samus = var_0a, var_0b = var_0b,
+            triggered = var_0c, previous_x = var_0d, previous_y = var_0e, minimum_y = var_0f,
+            maximum_y = var_10, minimum_x = var_11, maximum_x = var_12, pushing_samus = var_13,
+            samus_x = var_15, samus_x_fraction = var_16, reaction_direction = var_20,
+        ],
     }
 }
 
-part_view! {
+slot_view! {
     /// The growing shutter's slot: the Y position of each growth level, the speed, and the Y
     /// position at the start of the frame.
-    Growing: EnemyLayout72Late {
-        words: [function, level_0_y, level_1_y, level_2_y, level_3_y, growth_level, parameter_1, parameter_2],
-        pad1: [u8; 26696],
-        words: [speed, subspeed, var_02, var_03, var_04, var_05, var_06, var_07, var_08, var_09, var_0a, var_0b,
-            var_0c, var_0d, var_0e, var_0f, var_10, var_11, var_12, var_13, var_14, var_15, var_16, var_17, var_18,
-            var_19, var_1a, var_1b, var_1c, var_1d, var_1e, var_1f],
-        pad3: [u8; 4032],
-        words: [previous_y, var_41, var_42, var_43, var_44, var_45, var_46, var_47, var_48, var_49, var_4a,
-            var_4b, var_4c, var_4d, var_4e, var_4f, var_50, var_51, var_52, var_53, var_54, var_55, var_56, var_57,
-            var_58, var_59, var_5a, var_5b, var_5c, var_5d, var_5e, var_5f],
+    Growing, GrowingEdit {
+        record: [
+            function = var_a, level_0_y = var_b, level_1_y = var_c, level_2_y = var_d,
+            level_3_y = var_e, growth_level = var_f, parameter_1 = parameter_1,
+            parameter_2 = parameter_2,
+        ],
+        extended: [speed = var_00, subspeed = var_01, previous_y = var_40],
     }
 }
 
@@ -72,6 +70,10 @@ enum Phase {
     Nothing,
 }
 use Phase::*;
+
+/// A lease on a game whose slots are the Session's typed storage.
+pub trait Lease: ActorLease + SlotState {}
+impl<T: ActorLease + SlotState + ?Sized> Lease for T {}
 
 /// An axis's functions, by phase.
 struct Motion {
@@ -115,74 +117,97 @@ impl Kind {
 }
 
 /// Play gate opening/closing sound effect if on-screen ($A2:EF5A).
-fn movement_sound(runtime: &mut impl ActorLease) {
+fn movement_sound(runtime: &mut impl Lease) {
     if !api::current_outside_screen(runtime) {
         runtime.queue_sound(3, 6, 0xe);
     }
 }
 
-fn near(runtime: &mut impl ActorLease, distance: u16) -> bool {
+fn near(runtime: &mut impl Lease, distance: u16) -> bool {
     let key = combat::current(runtime);
     api::player_within(runtime, key, Axis::X, distance)
 }
 
 /// Initialisation AI ($A2:E9DA, $A2:EE05, $A2:EE12, $A2:F111).
-pub fn initialize(kind: Kind, runtime: &mut impl ActorLease) {
-    let e = current_slot(runtime);
+pub fn initialize(kind: Kind, runtime: &mut impl Lease) {
+    let e = combat::current(runtime).byte_index();
     if kind == Kind::GrowingShutter {
-        let index = session_slot!(runtime, Growing[e].base.current_instruction) as i32
-            + 2 * session_slot!(runtime, Growing[e].base.extra_properties) as i32;
+        let index = Growing::of(runtime, e).actor().instruction as i32
+            + 2 * Growing::of(runtime, e).actor().extra_properties as i32;
         // $A2:EA4E: the initial functions.
         let function = table(runtime, 0xa2_ea4e, index as isize);
-        session_slot!(runtime, Growing[e].function = function);
-        let step = if session_slot!(runtime, Growing[e].base.extra_properties) != 0 {
+        *GrowingEdit::of(runtime, e).function() = function;
+        let step = if Growing::of(runtime, e).actor().extra_properties != 0 {
             -8i16 as u16
         } else {
             8
         };
-        let y = session_slot!(runtime, Growing[e].base.y_pos);
+        let y = Growing::of(runtime, e).actor().y.whole;
         let levels = [
             y,
             y.wrapping_add(step),
             y.wrapping_add(step).wrapping_add(step),
             y.wrapping_add(step.wrapping_mul(3)),
         ];
-        session_slot!(runtime, Growing[e]; level_0_y = levels[0], level_1_y = levels[1], level_2_y = levels[2],
-            level_3_y = levels[3]);
-        session_slot!(runtime, Growing[e].base; extra_properties = 0, current_instruction = 0xe998);
-        session_slot!(runtime, Growing[e].growth_level = 0);
-        let index = 2 * isize::from(session_slot!(runtime, Growing[e].parameter_2) as u8);
+        let index = {
+            let mut growing = GrowingEdit::of(runtime, e);
+            *growing.level_0_y() = levels[0];
+            *growing.level_1_y() = levels[1];
+            *growing.level_2_y() = levels[2];
+            *growing.level_3_y() = levels[3];
+            let actor = growing.actor();
+            actor.extra_properties = 0;
+            actor.instruction = 0xe998;
+            *growing.growth_level() = 0;
+            2 * isize::from(*growing.parameter_2() as u8)
+        };
         let mut timer =
             |index| runtime.foreign(|game| crate::gameplay_tables::shutter_timer(game, index));
         let (speed, subspeed) = (timer(index), timer(index + 1));
-        session_slot!(runtime, Growing[e]; speed = speed, subspeed = subspeed);
+        {
+            let mut part = GrowingEdit::of(runtime, e);
+            *part.speed() = speed;
+            *part.subspeed() = subspeed;
+        }
         return;
     }
     let p = kind.motion();
-    let instruction = session_slot!(runtime, Mover[e].base.current_instruction);
+    let instruction = Mover::of(runtime, e).actor().instruction;
     let index = 4 * isize::from(instruction as u8);
     let [positive, positive_sub, negative, negative_sub] =
         [0, 1, 2, 3].map(|offset| runtime.lease_enemy_speed(Linear, index + offset));
     let [rest_negative, rest_positive] =
-        session_slot!(runtime, Mover[e].base.extra_properties).to_le_bytes();
-    let [trigger, distance] = session_slot!(runtime, Mover[e].parameter_1).to_le_bytes();
-    let proximity = session_slot!(runtime, Mover[e].parameter_2);
-    session_slot!(runtime, Mover[e]; speed_index = u16::from(instruction as u8), positive_velocity = positive,
-        positive_subvelocity = positive_sub, negative_velocity = negative, negative_subvelocity = negative_sub,
-        primary_direction = instruction >> 8, reaction_direction = (instruction >> 8) ^ u16::from(p.horizontal),
-        negative_rest_parameter = u16::from(rest_negative), negative_rest_time = 16 * u16::from(rest_negative),
-        positive_rest_parameter = u16::from(rest_positive), positive_rest_time = 16 * u16::from(rest_positive),
-        trigger_mode = u16::from(trigger), initial_function_index = 2 * u16::from(trigger),
-        distance = u16::from(distance), proximity = proximity, function_timer = proximity);
+        Mover::of(runtime, e).actor().extra_properties.to_le_bytes();
+    let [trigger, distance] = Mover::of(runtime, e).parameter_1().to_le_bytes();
+    let proximity = Mover::of(runtime, e).parameter_2();
+    {
+        let mut part = MoverEdit::of(runtime, e);
+        *part.speed_index() = u16::from(instruction as u8);
+        *part.positive_velocity() = positive;
+        *part.positive_subvelocity() = positive_sub;
+        *part.negative_velocity() = negative;
+        *part.negative_subvelocity() = negative_sub;
+        *part.primary_direction() = instruction >> 8;
+        *part.reaction_direction() = (instruction >> 8) ^ u16::from(p.horizontal);
+        *part.negative_rest_parameter() = u16::from(rest_negative);
+        *part.negative_rest_time() = 16 * u16::from(rest_negative);
+        *part.positive_rest_parameter() = u16::from(rest_positive);
+        *part.positive_rest_time() = 16 * u16::from(rest_positive);
+        *part.trigger_mode() = u16::from(trigger);
+        *part.initial_function_index() = 2 * u16::from(trigger);
+        *part.distance() = u16::from(distance);
+        *part.proximity() = proximity;
+        *part.function_timer() = proximity;
+    }
     let (position, upward) = if p.horizontal {
         (
-            session_slot!(runtime, Mover[e].base.x_pos),
-            session_slot!(runtime, Mover[e].primary_direction) == 0,
+            Mover::of(runtime, e).actor().x.whole,
+            Mover::of(runtime, e).primary_direction() == 0,
         )
     } else {
         (
-            session_slot!(runtime, Mover[e].base.y_pos),
-            session_slot!(runtime, Mover[e].primary_direction) == 0,
+            Mover::of(runtime, e).actor().y.whole,
+            Mover::of(runtime, e).primary_direction() == 0,
         )
     };
     let (low, high) = if upward {
@@ -191,36 +216,40 @@ pub fn initialize(kind: Kind, runtime: &mut impl ActorLease) {
         (position, u16::from(distance).wrapping_add(position))
     };
     if p.horizontal {
-        session_slot!(runtime, Mover[e]; minimum_x = low, maximum_x = high);
+        let mut part = MoverEdit::of(runtime, e);
+        *part.minimum_x() = low;
+        *part.maximum_x() = high;
     } else {
-        session_slot!(runtime, Mover[e]; minimum_y = low, maximum_y = high);
+        let mut part = MoverEdit::of(runtime, e);
+        *part.minimum_y() = low;
+        *part.maximum_y() = high;
     }
-    session_slot!(runtime, Mover[e].function = p.function(Initial));
+    *MoverEdit::of(runtime, e).function() = p.function(Initial);
     if p.horizontal {
         let x = runtime.player_x();
-        session_slot!(runtime, Mover[e].samus_x = x);
+        *MoverEdit::of(runtime, e).samus_x() = x;
     }
-    session_slot!(runtime, Mover[e].base.extra_properties = 0);
-    session_slot!(runtime, Mover[e].moving_samus = 0);
+    MoverEdit::of(runtime, e).actor().extra_properties = 0;
+    *MoverEdit::of(runtime, e).moving_samus() = 0;
     if p.horizontal {
-        session_slot!(runtime, Mover[e].var_0b = 0);
+        *MoverEdit::of(runtime, e).var_0b() = 0;
     }
     let list = match kind {
         Kind::Platform => 0xede7,
         Kind::VerticalShutter => 0xe9aa,
         _ => 0xe9d4,
     };
-    session_slot!(runtime, Mover[e].base.current_instruction = list);
+    MoverEdit::of(runtime, e).actor().instruction = list;
 }
 
 /// Main AI ($A2:EAB6, $A2:EED1, $A2:F1DE).
-pub fn main_ai(kind: Kind, runtime: &mut impl ActorLease) {
+pub fn main_ai(kind: Kind, runtime: &mut impl Lease) {
     if kind == Kind::GrowingShutter {
         return grow(runtime);
     }
-    let e = current_slot(runtime);
+    let e = combat::current(runtime).byte_index();
     // Both original entry points dispatch both axes' functions.
-    let function = session_slot!(runtime, Mover[e].function);
+    let function = Mover::of(runtime, e).function();
     let p = if VERTICAL.functions.contains(&function) {
         &VERTICAL
     } else {
@@ -234,20 +263,20 @@ pub fn main_ai(kind: Kind, runtime: &mut impl ActorLease) {
             let trigger = if phase == WaitForSamusToGetNear {
                 1
             } else {
-                session_slot!(runtime, Mover[e].initial_function_index) >> 1
+                Mover::of(runtime, e).initial_function_index() >> 1
             };
             let ready = match trigger {
                 0 => {
-                    let timer = session_slot!(runtime, Mover[e].function_timer);
-                    session_slot!(runtime, Mover[e].function_timer = timer.wrapping_sub(1));
+                    let timer = Mover::of(runtime, e).function_timer();
+                    *MoverEdit::of(runtime, e).function_timer() = timer.wrapping_sub(1);
                     if timer == 1 {
-                        let reload = session_slot!(runtime, Mover[e].proximity);
-                        session_slot!(runtime, Mover[e].function_timer = reload);
+                        let reload = Mover::of(runtime, e).proximity();
+                        *MoverEdit::of(runtime, e).function_timer() = reload;
                     }
                     timer == 1
                 }
                 1 => {
-                    let distance = session_slot!(runtime, Mover[e].proximity);
+                    let distance = Mover::of(runtime, e).proximity();
                     near(runtime, distance)
                 }
                 2 => true,
@@ -255,13 +284,13 @@ pub fn main_ai(kind: Kind, runtime: &mut impl ActorLease) {
                 _ => panic!("mechanism trigger index out of bounds"),
             };
             if ready {
-                let positive = session_slot!(runtime, Mover[e].primary_direction) != 0;
+                let positive = Mover::of(runtime, e).primary_direction() != 0;
                 let phase = if positive {
                     MovingPositive
                 } else {
                     MovingNegative
                 };
-                session_slot!(runtime, Mover[e].function = p.function(phase));
+                *MoverEdit::of(runtime, e).function() = p.function(phase);
                 if !p.horizontal {
                     movement_sound(runtime);
                 }
@@ -269,8 +298,8 @@ pub fn main_ai(kind: Kind, runtime: &mut impl ActorLease) {
         }
         MovingNegative | MovingPositive => travel(runtime, p, phase == MovingPositive),
         StoppedNegative | StoppedPositive => {
-            let timer = session_slot!(runtime, Mover[e].function_timer).wrapping_sub(1);
-            session_slot!(runtime, Mover[e].function_timer = timer);
+            let timer = Mover::of(runtime, e).function_timer().wrapping_sub(1);
+            *MoverEdit::of(runtime, e).function_timer() = timer;
             if (timer & 0x8000) != 0 {
                 if !p.horizontal && phase == StoppedPositive {
                     movement_sound(runtime);
@@ -280,19 +309,16 @@ pub fn main_ai(kind: Kind, runtime: &mut impl ActorLease) {
                 } else {
                     MovingNegative
                 };
-                session_slot!(runtime, Mover[e].function = p.function(next));
-                if session_slot!(runtime, Mover[e].trigger_mode) == 1
-                    && (session_slot!(runtime, Mover[e].primary_direction) != 0)
+                *MoverEdit::of(runtime, e).function() = p.function(next);
+                if Mover::of(runtime, e).trigger_mode() == 1
+                    && (Mover::of(runtime, e).primary_direction() != 0)
                         == (phase == StoppedNegative)
                 {
-                    session_slot!(
-                        runtime,
-                        Mover[e].function = p.function(WaitForSamusToGetNear)
-                    );
+                    *MoverEdit::of(runtime, e).function() = p.function(WaitForSamusToGetNear);
                 }
                 if !p.horizontal
                     && phase == StoppedNegative
-                    && session_slot!(runtime, Mover[e].base.enemy_ptr) != 0xd83f
+                    && Mover::of(runtime, e).actor().definition != 0xd83f
                 {
                     movement_sound(runtime);
                 }
@@ -302,75 +328,92 @@ pub fn main_ai(kind: Kind, runtime: &mut impl ActorLease) {
     }
     let p = kind.motion();
     // The enemy Samus collides with as a solid enemy, in all four directions.
+    let colliding = runtime.session().actors.schedule.colliding;
     let collision = [3, 2, 1, 0]
-        .map(|direction| {
-            runtime.word(crate::ram::word_arrays::ENEMY_INDEX_COLLIDING_DIRS + 2 * direction)
-        })
+        .map(|direction| colliding[direction])
         .into_iter()
         .fold(0xffff, |all, index| all & index);
-    let function = session_slot!(runtime, Mover[e].function);
+    let function = Mover::of(runtime, e).function();
     if function != p.function(MovingNegative)
         && function != p.function(MovingPositive)
         && collision != 0xffff
-        && collision == runtime.word(W::CUR_ENEMY_INDEX)
+        && collision == runtime.session().actors.controls.selected
         && runtime.session().player.contact.contact_attack != 0
     {
         activate(runtime, p);
     }
     if p.horizontal {
         let (x, fraction) = (runtime.player_x(), runtime.player_x_fraction());
-        session_slot!(runtime, Mover[e]; samus_x = x, samus_x_fraction = fraction);
+        let mut part = MoverEdit::of(runtime, e);
+        *part.samus_x() = x;
+        *part.samus_x_fraction() = fraction;
     }
 }
 
 /// Up/down mover function - moving up and down ($A2:EF68, $A2:EFD4), horizontal shutter
 /// function - moving left and right ($A2:F272, $A2:F2E4): carry Samus, stop at the end.
-fn travel(runtime: &mut impl ActorLease, p: &Motion, positive: bool) {
-    let e = current_slot(runtime);
-    let speed = if positive {
-        session_slot!(runtime, Mover[e](positive_velocity, positive_subvelocity))
+fn travel(runtime: &mut impl Lease, p: &Motion, positive: bool) {
+    let e = combat::current(runtime).byte_index();
+    let mover = Mover::of(runtime, e);
+    let (velocity, subvelocity) = if positive {
+        (mover.positive_velocity(), mover.positive_subvelocity())
     } else {
-        session_slot!(runtime, Mover[e](negative_velocity, negative_subvelocity))
+        (mover.negative_velocity(), mover.negative_subvelocity())
     };
+    let speed = (u32::from(velocity) << 16) | u32::from(subvelocity);
     let key = combat::current(runtime);
     let (position, limit) = if p.horizontal {
-        let x = session_slot!(runtime, Mover[e].base.x_pos);
-        session_slot!(runtime, Mover[e]; previous_x = x, pushing_samus = 0);
+        let x = Mover::of(runtime, e).actor().x.whole;
+        {
+            let mut part = MoverEdit::of(runtime, e);
+            *part.previous_x() = x;
+            *part.pushing_samus() = 0;
+        }
         let samus_side = (runtime.player_x() as i16).wrapping_sub(x as i16) >= 0;
         if api::overlaps_player_with_padding(runtime, key) && samus_side == positive {
-            session_slot!(runtime, Mover[e].pushing_samus = 1);
+            *MoverEdit::of(runtime, e).pushing_samus() = 1;
         }
-        session_slot!(runtime, Mover[e].base(x_pos, x_subpos) += speed);
-        if session_slot!(runtime, Mover[e].pushing_samus) != 0 {
+        MoverEdit::of(runtime, e)
+            .actor()
+            .x
+            .advance(speed.cast_signed());
+        if Mover::of(runtime, e).pushing_samus() != 0 {
             let contact = &mut runtime.session_mut().player.contact;
             (contact.external_x.fraction, contact.external_x.whole) =
                 (speed as u16, (speed >> 16) as u16);
             eject_samus(runtime, positive);
         }
         let limit = if positive {
-            session_slot!(runtime, Mover[e].maximum_x)
+            Mover::of(runtime, e).maximum_x()
         } else {
-            session_slot!(runtime, Mover[e].minimum_x)
+            Mover::of(runtime, e).minimum_x()
         };
-        (session_slot!(runtime, Mover[e].base.x_pos), limit)
+        (Mover::of(runtime, e).actor().x.whole, limit)
     } else {
-        let y = session_slot!(runtime, Mover[e].base.y_pos);
-        session_slot!(runtime, Mover[e]; previous_y = y, moving_samus = 0);
-        if api::touches_player_from_above(runtime, key) {
-            session_slot!(runtime, Mover[e].moving_samus = 1);
+        let y = Mover::of(runtime, e).actor().y.whole;
+        {
+            let mut part = MoverEdit::of(runtime, e);
+            *part.previous_y() = y;
+            *part.moving_samus() = 0;
         }
-        session_slot!(runtime, Mover[e].base(y_pos, y_subpos) += speed);
-        if session_slot!(runtime, Mover[e].moving_samus) != 0 {
-            let moved = session_slot!(runtime, Mover[e].base.y_pos)
-                .wrapping_sub(session_slot!(runtime, Mover[e].previous_y));
+        if api::touches_player_from_above(runtime, key) {
+            *MoverEdit::of(runtime, e).moving_samus() = 1;
+        }
+        MoverEdit::of(runtime, e)
+            .actor()
+            .y
+            .advance(speed.cast_signed());
+        if Mover::of(runtime, e).moving_samus() != 0 {
+            let mover = Mover::of(runtime, e);
+            let moved = mover.actor().y.whole.wrapping_sub(mover.previous_y());
             runtime.session_mut().player.contact.external_y.whole = moved;
         }
         let limit = if positive {
-            session_slot!(runtime, Mover[e].maximum_y)
+            Mover::of(runtime, e).maximum_y()
         } else {
-            session_slot!(runtime, Mover[e].minimum_y)
+            Mover::of(runtime, e).minimum_y()
         };
-        (session_slot!(runtime, Mover[e].base.y_pos), limit)
+        (Mover::of(runtime, e).actor().y.whole, limit)
     };
     let past = if positive {
         position.wrapping_sub(limit)
@@ -379,27 +422,29 @@ fn travel(runtime: &mut impl ActorLease, p: &Motion, positive: bool) {
     };
     if (past as i16) >= 0 {
         let rest = if positive {
-            session_slot!(runtime, Mover[e].positive_rest_time)
+            Mover::of(runtime, e).positive_rest_time()
         } else {
-            session_slot!(runtime, Mover[e].negative_rest_time)
+            Mover::of(runtime, e).negative_rest_time()
         };
         if rest == 4080 {
-            session_slot!(runtime, Mover[e].function = p.function(Nothing));
+            *MoverEdit::of(runtime, e).function() = p.function(Nothing);
         } else {
             let phase = if positive {
                 StoppedPositive
             } else {
                 StoppedNegative
             };
-            session_slot!(runtime, Mover[e]; function_timer = rest, function = p.function(phase));
+            let mut part = MoverEdit::of(runtime, e);
+            *part.function_timer() = rest;
+            *part.function() = p.function(phase);
         }
     }
 }
 
 /// Eject Samus if pressing right or left ($A2:F356, $A2:F371).
-fn eject_samus(runtime: &mut impl ActorLease, right: bool) {
+fn eject_samus(runtime: &mut impl Lease, right: bool) {
     let button = if right { 0x200 } else { 0x100 };
-    if (runtime.word(W::JOYPAD1_LASTKEYS) & button) != 0 {
+    if (*Input::Joypad1Lastkeys.get(&runtime.session().control) & button) != 0 {
         let contact = &mut runtime.session_mut().player.contact;
         contact.external_x.whole =
             contact
@@ -411,31 +456,36 @@ fn eject_samus(runtime: &mut impl ActorLease, right: bool) {
 }
 
 /// Activate up/down mover / horizontal shutter ($A2:EF44, $A2:F25F) and the mover reactions.
-fn activate(runtime: &mut impl ActorLease, p: &Motion) {
-    let e = current_slot(runtime);
-    if (session_slot!(runtime, Mover[e].initial_function_index).wrapping_sub(6) & 0x8000) == 0 {
-        if session_slot!(runtime, Mover[e].initial_function_index) != 8 {
-            if session_slot!(runtime, Mover[e].triggered) != 0 {
+fn activate(runtime: &mut impl Lease, p: &Motion) {
+    let e = combat::current(runtime).byte_index();
+    if (Mover::of(runtime, e)
+        .initial_function_index()
+        .wrapping_sub(6)
+        & 0x8000)
+        == 0
+    {
+        if Mover::of(runtime, e).initial_function_index() != 8 {
+            if Mover::of(runtime, e).triggered() != 0 {
                 return;
             }
-            session_slot!(runtime, Mover[e].triggered = 1);
+            *MoverEdit::of(runtime, e).triggered() = 1;
         }
-        let function = session_slot!(runtime, Mover[e].function);
+        let function = Mover::of(runtime, e).function();
         if function == p.function(MovingNegative) || function == p.function(MovingPositive) {
             return;
         }
         if p.horizontal {
-            session_slot!(runtime, Mover[e].reaction_direction, |old| old ^ 1);
+            *MoverEdit::of(runtime, e).reaction_direction() ^= 1;
         }
-        let positive = session_slot!(runtime, Mover[e].reaction_direction) != 0;
+        let positive = Mover::of(runtime, e).reaction_direction() != 0;
         let phase = if positive {
             MovingPositive
         } else {
             MovingNegative
         };
-        session_slot!(runtime, Mover[e].function = p.function(phase));
+        *MoverEdit::of(runtime, e).function() = p.function(phase);
         if !p.horizontal {
-            session_slot!(runtime, Mover[e].reaction_direction, |old| old ^ 1);
+            *MoverEdit::of(runtime, e).reaction_direction() ^= 1;
         }
     }
     if !p.horizontal {
@@ -444,7 +494,7 @@ fn activate(runtime: &mut impl ActorLease, p: &Motion) {
 }
 
 /// Enemy touch, shot and power bomb reactions ($A2:F09D-$A2:F0B6, $A2:F3D8-$A2:F41A).
-pub fn reaction(kind: Kind, event: Event, runtime: &mut impl ActorLease) {
+pub fn reaction(kind: Kind, event: Event, runtime: &mut impl Lease) {
     if let Event::Shot = event {
         match kind {
             Kind::VerticalShutter => combat::shot_reaction(runtime, ShotHandling::Finalize),
@@ -453,13 +503,13 @@ pub fn reaction(kind: Kind, event: Event, runtime: &mut impl ActorLease) {
         }
     }
     if kind == Kind::HorizontalShutter && matches!(event, Event::Touch) {
-        let e = current_slot(runtime);
-        if session_slot!(runtime, Mover[e].function) == HORIZONTAL.function(Nothing) {
+        let e = combat::current(runtime).byte_index();
+        if Mover::of(runtime, e).function() == HORIZONTAL.function(Nothing) {
             let right = (runtime.player_x() as i16)
-                .wrapping_sub(session_slot!(runtime, Mover[e].base.x_pos) as i16)
+                .wrapping_sub(Mover::of(runtime, e).actor().x.whole as i16)
                 >= 0;
             let button = if right { 0x200 } else { 0x100 };
-            if (runtime.word(W::JOYPAD1_LASTKEYS) & button) != 0 {
+            if (*Input::Joypad1Lastkeys.get(&runtime.session().control) & button) != 0 {
                 let contact = &mut runtime.session_mut().player.contact;
                 (contact.external_x.whole, contact.external_y.fraction) =
                     (if right { 4 } else { -4i16 as u16 }, 0);
@@ -472,17 +522,18 @@ pub fn reaction(kind: Kind, event: Event, runtime: &mut impl ActorLease) {
 
 /// Growing shutter functions ($A2:EABD-$A2:ED32): wait for the timer or for Samus to get near,
 /// then grow or shrink a growth level at a time, carrying Samus standing on it.
-fn grow(runtime: &mut impl ActorLease) {
-    let e = current_slot(runtime);
-    let function = session_slot!(runtime, Growing[e].function);
+fn grow(runtime: &mut impl Lease) {
+    let e = combat::current(runtime).byte_index();
+    let function = Growing::of(runtime, e).function();
     match function {
         0xeabd | 0xead1 | 0xeae7 | 0xeafd => {
             let ready = if function == 0xead1 || function == 0xeae7 {
-                let distance = session_slot!(runtime, Growing[e].parameter_1);
+                let distance = Growing::of(runtime, e).parameter_1();
                 near(runtime, distance)
-            } else if session_slot!(runtime, Growing[e].parameter_1) != 0 {
-                session_slot!(runtime, Growing[e].parameter_1, |timer| timer
-                    .wrapping_sub(1));
+            } else if Growing::of(runtime, e).parameter_1() != 0 {
+                let mut growing = GrowingEdit::of(runtime, e);
+                let timer = growing.parameter_1();
+                *timer = timer.wrapping_sub(1);
                 false
             } else {
                 true
@@ -490,37 +541,35 @@ fn grow(runtime: &mut impl ActorLease) {
             if ready {
                 movement_sound(runtime);
                 let upwards = function == 0xeabd || function == 0xead1;
-                session_slot!(
-                    runtime,
-                    Growing[e].function = if upwards { 0xec13 } else { 0xeb11 }
-                );
+                *GrowingEdit::of(runtime, e).function() = if upwards { 0xec13 } else { 0xeb11 };
             }
         }
         0xeb11 | 0xec13 => {
             let upwards = function == 0xec13;
             if upwards {
-                let y = session_slot!(runtime, Growing[e].base.y_pos);
-                session_slot!(runtime, Growing[e].previous_y = y);
+                let y = Growing::of(runtime, e).actor().y.whole;
+                *GrowingEdit::of(runtime, e).previous_y() = y;
             }
-            let level = session_slot!(runtime, Growing[e].growth_level);
+            let level = Growing::of(runtime, e).growth_level();
             let level = usize::from(if upwards { level & 0x7fff } else { level });
             assert!(level < 5, "timed shutter stage out of bounds");
             if level < 4 {
-                let speed = session_slot!(runtime, Growing[e](speed, subspeed));
-                session_slot!(
-                    runtime,
-                    Growing[e].base(y_pos, y_subpos) +=
-                        if upwards { speed.wrapping_neg() } else { speed }
-                );
+                let growing = Growing::of(runtime, e);
+                let speed = (u32::from(growing.speed()) << 16) | u32::from(growing.subspeed());
+                let amount: u32 = if upwards { speed.wrapping_neg() } else { speed };
+                GrowingEdit::of(runtime, e)
+                    .actor()
+                    .y
+                    .advance(amount.cast_signed());
                 let stop = [
-                    session_slot!(runtime, Growing[e].level_0_y),
-                    session_slot!(runtime, Growing[e].level_1_y),
-                    session_slot!(runtime, Growing[e].level_2_y),
-                    session_slot!(runtime, Growing[e].level_3_y),
+                    Growing::of(runtime, e).level_0_y(),
+                    Growing::of(runtime, e).level_1_y(),
+                    Growing::of(runtime, e).level_2_y(),
+                    Growing::of(runtime, e).level_3_y(),
                 ][level];
                 let limit = stop.wrapping_add(if upwards { -16i16 as u16 } else { 16 });
-                let past = (limit as i16)
-                    .wrapping_sub(session_slot!(runtime, Growing[e].base.y_pos) as i16);
+                let past =
+                    (limit as i16).wrapping_sub(Growing::of(runtime, e).actor().y.whole as i16);
                 if (upwards && past >= 0) || (!upwards && past < 0) {
                     let y = if level == 3 {
                         limit
@@ -529,19 +578,23 @@ fn grow(runtime: &mut impl ActorLease) {
                     } else {
                         stop.wrapping_add(9)
                     };
-                    session_slot!(runtime, Growing[e].base.y_pos = y);
-                    session_slot!(runtime, Growing[e].growth_level, |old| old.wrapping_add(1));
+                    let mut growing = GrowingEdit::of(runtime, e);
+                    growing.actor().y.whole = y;
+                    let grown = growing.growth_level();
+                    *grown = grown.wrapping_add(1);
                     if level != 3 {
                         let list = [0xe99e, 0xe9a4, 0xe9aa][level];
-                        session_slot!(runtime, Growing[e].base; instruction_timer = 1, current_instruction = list,
-                            y_height = [16, 24, 32][level]);
+                        let actor = growing.actor();
+                        actor.instruction_delay = 1;
+                        actor.instruction = list;
+                        actor.radius.y = [16, 24, 32][level];
                     }
                 }
             }
             let key = combat::current(runtime);
             if upwards && api::touches_player_from_above(runtime, key) {
-                let moved = session_slot!(runtime, Growing[e].base.y_pos)
-                    .wrapping_sub(session_slot!(runtime, Growing[e].previous_y));
+                let growing = Growing::of(runtime, e);
+                let moved = growing.actor().y.whole.wrapping_sub(growing.previous_y());
                 if (moved as i16) < 0 {
                     let carry = &mut runtime.session_mut().player.contact.external_y.whole;
                     *carry = carry.wrapping_add(moved);

@@ -141,6 +141,7 @@ impl sm_game::actors::species::AiHost for Game {
 impl sm_game::actors::species::PreInstructionHost for Game {
     fn native_pre_instruction(&mut self, ea: u32, k: u16) {
         match ea {
+            11767039 => Runtime::new(self).owned_call(sm_game::actors::gamet::settle),
             11771328 | 11771517 | 11771616 | 11771700 | 11771770 => {
                 Runtime::new(self)
                     .owned_call(|runtime| actors::botwoon::pre_instruction(ea, k, runtime));
@@ -724,7 +725,7 @@ impl<'g> Runtime<'g> {
     pub(crate) fn set_byte(&mut self, at: usize, value: u8) {
         if (0xb1..0xc1).contains(&at) && self.persistent_is_current() && !self.display_owned() {
             self.game.set_scroll_byte(at, value);
-            self.inputs = encoding::inputs(&|lane| self.game.ram().read_byte(lane));
+            self.refresh_scroll_inputs();
             return;
         }
         if !self.persistent_is_current() {
@@ -760,7 +761,16 @@ impl<'g> Runtime<'g> {
         }
         self.refresh_written_inputs();
     }
-    fn refresh_written_inputs(&mut self) {
+    /// The scroll stores' refresh while the Session is current: the external
+    /// observations as RAM holds them, except the drop origin, which the
+    /// Session owns and RAM holds only once it is published.
+    pub(crate) fn refresh_scroll_inputs(&mut self) {
+        self.inputs = encoding::inputs(&|lane| self.game.ram().read_byte(lane));
+        let origin = self.session().enemy_projectiles.drop_origin;
+        self.inputs.drop_origin_x = origin.x;
+        self.inputs.drop_origin_y = origin.y;
+    }
+    pub(crate) fn refresh_written_inputs(&mut self) {
         self.inputs =
             encoding::inputs_from_session(self.session(), &|at| self.game.ram().read_byte(at));
         // Preserve observation refresh timing while A5A is owned by Session.
@@ -1343,6 +1353,10 @@ impl SessionAccess for Runtime<'_> {
     fn refresh_inputs(&mut self) {
         self.refresh_player_observations();
     }
+    /// The projected store's refresh after each byte.
+    fn words_stored(&mut self) {
+        self.refresh_written_inputs();
+    }
     fn probe(&self, name: &'static str) {
         #[cfg(sm_verify_dll)]
         crate::game::visual_runtime::samus_observer::observe(name, self.session(), self.game);
@@ -1497,15 +1511,6 @@ impl Runtime<'_> {
             11001151 => self.owned_call(sm_game::actors::phantoon::hurt),
             11001237 => self.owned_call(sm_game::actors::phantoon::touch),
             11001243 => self.owned_call(sm_game::actors::phantoon::shot),
-            10847996 | 10863750 => self.owned_call(|runtime| {
-                use sm_game::actors::{draygon_flight, species};
-                draygon_flight::main_ai(
-                    routine == 10847996,
-                    species::draygon_function,
-                    species::draygon_function_on_lease,
-                    runtime,
-                )
-            }),
             11771926 => self.owned_call(actors::botwoon::shot),
             11771903 | 11771969 => {
                 self.owned_call(|runtime| actors::botwoon::contact(routine == 11771969, runtime))

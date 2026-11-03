@@ -167,10 +167,6 @@ impl sm_game::player_position::PlayerFacts for Game {
 }
 
 impl sm_game::actors::mother_brain_tubes::Host for Game {
-    fn end_screen_flash(&mut self) {
-        crate::game::sm_a9::end_screen_flashing(self);
-    }
-
     fn start_earthquake(&mut self, kind: u16) {
         crate::game::mother_brain_visuals::start_earthquake(kind, self);
     }
@@ -338,18 +334,6 @@ impl sm_game::display::transfer::TilemapQueue for crate::game::session_runtime::
     }
     fn set_tilemap_queue_byte(&mut self, at: usize, value: u8) {
         self.set_byte(at, value);
-    }
-}
-
-impl sm_game::escape_typewriter::Host for Game {
-    fn colour(&self, index: usize) -> u16 {
-        crate::ram_map::word!(self.PALETTE_BUFFER[index])
-    }
-    fn set_colour(&mut self, index: usize, value: u16) {
-        crate::ram_map::word!(self.PALETTE_BUFFER[index] = value);
-    }
-    fn area_index(&self) -> u16 {
-        crate::ram_map::word!(self.AREA_INDEX)
     }
 }
 

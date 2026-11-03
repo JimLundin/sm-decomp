@@ -6,7 +6,8 @@ use super::{
     jump::initialize_jump,
     state::{BombJump, JumpKind, MomentumAction, PoseRequestWord},
 };
-use crate::ram::words as ram;
+use crate::controller_state::Word as Input;
+use crate::session_access::SessionAccess;
 use crate::{
     external_inputs::ExternalInputs,
     visual_host::{Content, Record},
@@ -143,11 +144,12 @@ pub fn dispatch_input<H: SessionView + Lease>(h: &mut H) {
             let pressed = h.inputs().pressed;
             let timer = h.session().player.contact.auto_jump;
             if timer != 0 && (timer.wrapping_sub(9) as i16) < 0 {
-                h.write_slice_le(ram::JOYPAD1_NEWKEYS, pressed | h.inputs().jump_button);
+                let jump = h.inputs().jump_button;
+                store_input(h, Input::Joypad1Newkeys, pressed | jump);
                 h.session_mut().player.contact.auto_jump = 0;
             }
             handle_frame_input(h);
-            h.write_slice_le(ram::JOYPAD1_NEWKEYS, pressed);
+            store_input(h, Input::Joypad1Newkeys, pressed);
             h.session_mut().player.transitions.input_mode = InputMode::Normal;
         }
         InputMode::Disabled => {}
@@ -167,11 +169,11 @@ fn handle_demo_input<H: SessionView + Lease>(h: &mut H) {
     if super::demo::advance(h) {
         // The joypad words do not alias the demo's ($0A84-$0A8E).
         let demo = h.session().player.demo.clone();
-        h.write_slice_le(ram::JOYPAD1_INPUT_SAMUSFILTER, demo.previous_held);
-        h.write_slice_le(ram::JOYPAD1_NEWINPUT_SAMUSFILTER, demo.previous_pressed);
-        h.write_slice_le(ram::JOYPAD1_LASTKEYS, demo.held);
+        store_input(h, Input::Joypad1InputSamusfilter, demo.previous_held);
+        store_input(h, Input::Joypad1NewinputSamusfilter, demo.previous_pressed);
+        store_input(h, Input::Joypad1Lastkeys, demo.held);
         h.session_mut().player.demo.previous_held = demo.held;
-        h.write_slice_le(ram::JOYPAD1_NEWKEYS, demo.pressed);
+        store_input(h, Input::Joypad1Newkeys, demo.pressed);
         h.session_mut().player.demo.previous_pressed = demo.pressed;
     }
     handle_frame_input(h);
@@ -180,27 +182,46 @@ fn handle_demo_input<H: SessionView + Lease>(h: &mut H) {
 pub fn finish_frame<H: SessionView + Lease>(h: &mut H) {
     let inputs = h.inputs().clone();
     finish_input(h.session_mut(), &inputs);
-    h.write_slice_le(ram::JOYPAD1_INPUT_SAMUSFILTER, inputs.held);
-    h.write_slice_le(ram::JOYPAD1_NEWINPUT_SAMUSFILTER, inputs.pressed);
+    store_input(h, Input::Joypad1InputSamusfilter, inputs.held);
+    store_input(h, Input::Joypad1NewinputSamusfilter, inputs.pressed);
     h.owned_call(crate::player_projectiles::feedback::movement_sound);
-    if h.word(ram::ENABLE_DEBUG) != 0 {
+    if h.session().game_loop.debug.enabled != 0 {
         if matches!(h.session().player.pose, 0 | 0x9b) {
-            if h.word(ram::JOYPAD2_LAST) & 0x30 == 0x30 && h.word(ram::JOYPAD2_NEW_KEYS) & 0x80 != 0
+            let control = &h.session().control;
+            if *Input::Joypad2Last.get(control) & 0x30 == 0x30
+                && *Input::Joypad2NewKeys.get(control) & 0x80 != 0
             {
-                h.write_slice_le(ram::DEBUG_INVINCIBILITY, 7);
+                set_debug_invincibility(h, 7);
             }
         } else {
-            if (h.word(ram::DEBUG_INVINCIBILITY).wrapping_sub(7) as i16) >= 0 {
+            let invincibility = h.session().menu_screens.options_menu.debug_invincibility;
+            if (invincibility.wrapping_sub(7) as i16) >= 0 {
                 return;
             }
-            h.write_slice_le(ram::DEBUG_INVINCIBILITY, 0);
+            set_debug_invincibility(h, 0);
         }
     }
     if h.owned_call(|h| crate::progress::event_happened(h, 0xe))
         && h.session().player.transitions.frame_gamma
             == super::state::FrameGammaMode::DrawEscapeTimer
-        && h.word(ram::GAME_STATE) != 35
+        && h.session().game_loop.mode != 35
     {
-        h.write_slice_le(ram::GAME_STATE, 35);
+        h.session_mut().game_loop.mode = 35;
+        h.words_stored();
     }
+}
+
+/// Store joypad word `word`; the observations refresh after it.
+fn store_input<H: SessionAccess + ?Sized>(h: &mut H, word: Input, value: u16) {
+    *word.get_mut(&mut h.session_mut().control) = value;
+    h.words_stored();
+}
+
+/// Store the debug invincibility; the observations refresh after it.
+pub(super) fn set_debug_invincibility<H: SessionAccess + ?Sized>(h: &mut H, value: u16) {
+    h.session_mut()
+        .menu_screens
+        .options_menu
+        .debug_invincibility = value;
+    h.words_stored();
 }

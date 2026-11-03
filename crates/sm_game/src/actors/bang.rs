@@ -2,38 +2,35 @@
 //! $A3:B702-$A3:BF2F): its movement functions and shot reaction.
 use crate::actors::access::AccessMode::Native;
 use crate::actors::api::{self, DeathKind};
-use crate::actors::combat::{self, current_slot};
+use crate::actors::combat;
 use crate::actors::host::{ActorLease, BossEffects as _, LeaseActors, sign_extend8};
-use crate::actors::layouts::part_view;
+use crate::actors::slot_view::{SlotState, slot_view};
 use crate::enemy_projectiles::access::shot_word;
 use crate::enemy_projectiles::host::ShotMember;
 use crate::enemy_script::EnemyScript;
 use crate::player_projectiles::content::{self, table};
 use crate::player_projectiles::motion;
-use crate::ram::words as W;
-use crate::session_slot;
 use crate::shot;
 
-part_view! {
+/// A lease on a game whose slots are the Session's typed storage.
+pub trait Lease: ActorLease + SlotState {}
+impl<T: ActorLease + SlotState + ?Sized> Lease for T {}
+
+slot_view! {
     /// Bang's view of its slot and extended RAM.
-    Bang: EnemyLayout72 {
-        words: [
-            var_a, idle_palette, var_c, unread_0fae, damage, movement_function, ai_function,
-            parameter_2,
+    Bang, BangEdit {
+        record: [
+            idle_palette = var_b, damage = var_e, movement_function = var_f,
+            ai_function = parameter_1,
         ],
-        pad1: [u8; 26696],
-        words: [
-            movement_delay_timer, angle, angle_to_samus, var_03, var_04, var_05, var_06,
-            moving_left, moving_up, acceleration, speed, max_speed, acceleration_interval_timer,
-            acceleration_interval_reset, deceleration_interval_reset, var_0f, var_10, var_11,
-            var_12, var_13, var_14, var_15, var_16, var_17, var_18, var_19, var_1a, var_1b, var_1c,
-            var_1d, var_1e, var_1f,
+        extended: [
+            movement_delay_timer = var_00, angle = var_01, angle_to_samus = var_02,
+            moving_left = var_07, moving_up = var_08, acceleration = var_09, speed = var_0a,
+            max_speed = var_0b, acceleration_interval_timer = var_0c,
+            acceleration_interval_reset = var_0d, deceleration_interval_reset = var_0e,
+            new_instruction_list_index = var_20, instruction_list_index = var_21,
+            finished_growing = var_22,
         ],
-        pad2: [u8; 1984],
-        words: [
-            new_instruction_list_index, instruction_list_index, finished_growing,
-        ],
-        _: [u16; 29],
     }
 }
 
@@ -80,7 +77,7 @@ const KNOCKED_ACCELERATION: u16 = 0x100;
 const FULLY_GROWN: u16 = 9;
 const SIGN: u16 = 0x8000;
 /// The electricity, core and shell are consecutive slots.
-const PART: i32 = 64;
+const PART: u16 = 64;
 /// The electricity's and shell's instruction lists follow the core's ten.
 const ELECTRICITY_LISTS: u16 = 10;
 const SHELL_LISTS: u16 = 20;
@@ -97,40 +94,46 @@ const CHARGED_SOUNDS: u32 = 0xa3_bc4a;
 /// Sign-extend the low byte when bit 7 is set; otherwise keep the high byte,
 /// as the original did.
 /// Set bang instruction list: start the list for the new index if it changed.
-fn set_instruction_list(runtime: &mut impl ActorLease) {
-    let bang = current_slot(runtime);
-    let index = session_slot!(runtime, Bang[bang].new_instruction_list_index);
-    if index != session_slot!(runtime, Bang[bang].instruction_list_index) {
-        session_slot!(runtime, Bang[bang].instruction_list_index = index);
+fn set_instruction_list(runtime: &mut impl Lease) {
+    let bang = combat::current(runtime).byte_index();
+    let index = Bang::of(runtime, bang).new_instruction_list_index();
+    if index != Bang::of(runtime, bang).instruction_list_index() {
+        *BangEdit::of(runtime, bang).instruction_list_index() = index;
         let instruction = table(runtime, INSTRUCTION_LISTS, index as isize);
         let key = combat::current(runtime);
         runtime.edit_actor(key, Native, |actor| actor.restart_animation(instruction));
     }
 }
 /// Initialisation AI - bang ($A3:BAB3).
-pub fn initialize(runtime: &mut impl ActorLease) {
+pub fn initialize(runtime: &mut impl Lease) {
     let key = combat::current(runtime);
-    let bang = current_slot(runtime);
+    let bang = combat::current(runtime).byte_index();
     runtime.edit_actor(key, Native, |actor| {
         actor.variables[1] = actor.palette;
         actor.properties |= BLOCK_PLASMA;
         actor.pre_instruction = function::MOVEMENT_DELAY;
     });
-    session_slot!(
-        runtime,
-        Bang[bang].movement_delay_timer = MOVEMENT_DELAY_FRAMES
-    );
-    session_slot!(runtime, Bang[bang]; angle = 0, angle_to_samus = 0,
-        new_instruction_list_index = 0, instruction_list_index = 0, finished_growing = 0);
+    *BangEdit::of(runtime, bang).movement_delay_timer() = MOVEMENT_DELAY_FRAMES;
+    {
+        let mut part = BangEdit::of(runtime, bang);
+        *part.angle() = 0;
+        *part.angle_to_samus() = 0;
+        *part.new_instruction_list_index() = 0;
+        *part.instruction_list_index() = 0;
+        *part.finished_growing() = 0;
+    }
     let parameter = runtime.resolve_actor(key, Native).parameters[1].to_ne_bytes();
     let limit = table(runtime, MAX_SPEEDS, parameter[0] as isize);
-    session_slot!(runtime, Bang[bang].max_speed = limit);
+    *BangEdit::of(runtime, bang).max_speed() = limit;
     let index = 2 * parameter[1] as isize;
     let interval = table(runtime, INTERVALS, index);
-    session_slot!(runtime, Bang[bang]; acceleration_interval_timer = interval,
-        acceleration_interval_reset = interval);
+    {
+        let mut part = BangEdit::of(runtime, bang);
+        *part.acceleration_interval_timer() = interval;
+        *part.acceleration_interval_reset() = interval;
+    }
     let interval = table(runtime, INTERVALS, index + 1);
-    session_slot!(runtime, Bang[bang].deceleration_interval_reset = interval);
+    *BangEdit::of(runtime, bang).deceleration_interval_reset() = interval;
     runtime.edit_actor(key, Native, |actor| {
         if actor.instruction == 0 {
             actor.pre_instruction = function::NO_MOVEMENT;
@@ -142,8 +145,8 @@ pub fn initialize(runtime: &mut impl ActorLease) {
 /// electricity, the core or the shell, three consecutive slots.
 pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
     let runtime = &mut game.lease();
-    let bang = current_slot(runtime);
-    match session_slot!(runtime, Bang[bang].ai_function) {
+    let bang = combat::current(runtime).byte_index();
+    match Bang::of(runtime, bang).ai_function() {
         ai::ELECTRICITY => follow_core(runtime, bang + PART, ELECTRICITY_LISTS),
         ai::SHELL => follow_core(runtime, bang - PART, SHELL_LISTS),
         ai::CORE => core(runtime),
@@ -152,21 +155,22 @@ pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
 }
 /// Bang AI - electricity ($A3:BB2B) or shell ($A3:BB4A): the core's growth level in
 /// this part's instruction lists, and intangible.
-fn follow_core(runtime: &mut impl ActorLease, core: i32, lists: u16) {
-    let bang = current_slot(runtime);
-    let index = session_slot!(runtime, Bang[core].new_instruction_list_index).wrapping_add(lists);
-    session_slot!(runtime, Bang[bang].new_instruction_list_index = index);
+fn follow_core(runtime: &mut impl Lease, core: u16, lists: u16) {
+    let bang = combat::current(runtime).byte_index();
+    let index = Bang::of(runtime, core)
+        .new_instruction_list_index()
+        .wrapping_add(lists);
+    *BangEdit::of(runtime, bang).new_instruction_list_index() = index;
     set_instruction_list(runtime);
-    let bang = current_slot(runtime);
-    session_slot!(runtime, Bang[bang].base.properties, |properties| properties
-        | INTANGIBLE);
+    let bang = combat::current(runtime).byte_index();
+    BangEdit::of(runtime, bang).actor().properties |= INTANGIBLE;
 }
 /// Bang AI - core ($A3:BB66): move, carry the electricity and shell along, flash while
 /// growing, and once fully grown fire a charged beam at Samus and die with its parts.
-fn core(runtime: &mut impl ActorLease) {
+fn core(runtime: &mut impl Lease) {
     // Execute bang movement function ($A3:BC9E).
-    let bang = current_slot(runtime);
-    match session_slot!(runtime, Bang[bang].movement_function) {
+    let bang = combat::current(runtime).byte_index();
+    match Bang::of(runtime, bang).movement_function() {
         function::MOVEMENT_DELAY => delay(runtime),
         function::NO_MOVEMENT => {}
         function::TARGET_SAMUS => target(runtime),
@@ -174,49 +178,45 @@ fn core(runtime: &mut impl ActorLease) {
         function::DECELERATING => move_bang(true, runtime),
         _ => runtime.foreign(|game| game.unreachable()),
     }
-    let x = session_slot!(runtime, Bang[bang].base.x_pos);
-    session_slot!(runtime, Bang[bang - PART].base.x_pos = x);
-    session_slot!(runtime, Bang[bang + PART].base.x_pos = x);
-    let y = session_slot!(runtime, Bang[bang].base.y_pos);
-    session_slot!(runtime, Bang[bang - PART].base.y_pos = y);
-    session_slot!(runtime, Bang[bang + PART].base.y_pos = y);
-    let growing = session_slot!(runtime, Bang[bang].new_instruction_list_index) & 1 != 0;
+    let x = Bang::of(runtime, bang).actor().x.whole;
+    BangEdit::of(runtime, bang - PART).actor().x.whole = x;
+    BangEdit::of(runtime, bang + PART).actor().x.whole = x;
+    let y = Bang::of(runtime, bang).actor().y.whole;
+    BangEdit::of(runtime, bang - PART).actor().y.whole = y;
+    BangEdit::of(runtime, bang + PART).actor().y.whole = y;
+    let growing = Bang::of(runtime, bang).new_instruction_list_index() & 1 != 0;
     let palette = match growing {
         true => GROWING_PALETTE,
-        false => session_slot!(runtime, Bang[bang].idle_palette),
+        false => Bang::of(runtime, bang).idle_palette(),
     };
-    session_slot!(runtime, Bang[bang].base.palette_index = palette);
+    BangEdit::of(runtime, bang).actor().palette = palette;
     set_instruction_list(runtime);
-    if session_slot!(runtime, Bang[bang].finished_growing) == 0 {
+    if Bang::of(runtime, bang).finished_growing() == 0 {
         return;
     }
-    session_slot!(runtime, Bang[bang].finished_growing = 0);
-    let index = session_slot!(runtime, Bang[bang].new_instruction_list_index);
+    *BangEdit::of(runtime, bang).finished_growing() = 0;
+    let index = Bang::of(runtime, bang).new_instruction_list_index();
     if index != FULLY_GROWN {
-        let bang = current_slot(runtime);
-        session_slot!(
-            runtime,
-            Bang[bang].new_instruction_list_index = index.wrapping_add(1)
-        );
+        let bang = combat::current(runtime).byte_index();
+        *BangEdit::of(runtime, bang).new_instruction_list_index() = index.wrapping_add(1);
         return set_instruction_list(runtime);
     }
-    session_slot!(runtime, Bang[bang].base.invincibility_timer = 16);
-    session_slot!(runtime, Bang[bang].base.properties, |properties| properties
-        | INTANGIBLE);
+    BangEdit::of(runtime, bang).actor().invincibility = 16;
+    BangEdit::of(runtime, bang).actor().properties |= INTANGIBLE;
     let direction = api::direction_to_player(runtime).projectile_direction();
     let animation = fire_charged_beam(runtime, direction);
     combat::die(runtime, DeathKind::Normal { animation });
-    let bang = current_slot(runtime);
+    let bang = combat::current(runtime).byte_index();
     for part in [bang + PART, bang - PART] {
-        session_slot!(runtime, Bang[part].base.properties, |properties| properties
-            | DELETED);
+        BangEdit::of(runtime, part).actor().properties |= DELETED;
     }
 }
 /// Fire charged beam at Samus ($A3:BBEB) in projectile `direction`, as Samus's own
 /// charged beam with the bang's damage; the death animation: a small explosion, or
 /// with five projectiles out already, the Samus-contact death.
-fn fire_charged_beam(runtime: &mut impl ActorLease, direction: u16) -> u16 {
-    runtime.write_slice_le(W::REMOVED_ENEMY_RIGHT_BORDER_COLLISION, direction);
+fn fire_charged_beam(runtime: &mut impl Lease, direction: u16) -> u16 {
+    runtime.session_mut().actors.compatibility.right_border = direction;
+    runtime.words_stored();
     if runtime.session().projectiles.count.wrapping_sub(5) & SIGN == 0 {
         return 1;
     }
@@ -224,10 +224,10 @@ fn fire_charged_beam(runtime: &mut impl ActorLease, direction: u16) -> u16 {
     while shot!(runtime, slot, damage) != 0 {
         slot += 2;
     }
-    let bang = current_slot(runtime);
-    let x = session_slot!(runtime, Bang[bang].base.x_pos);
+    let bang = combat::current(runtime).byte_index();
+    let x = Bang::of(runtime, bang).actor().x.whole;
     shot!(runtime, slot, x = x);
-    let y = session_slot!(runtime, Bang[bang].base.y_pos);
+    let y = Bang::of(runtime, bang).actor().y.whole;
     shot!(runtime, slot, y = y);
     shot!(runtime, slot, direction = direction);
     let beam = runtime.session().inventory.beams.active & 15;
@@ -236,7 +236,7 @@ fn fire_charged_beam(runtime: &mut impl ActorLease, direction: u16) -> u16 {
     runtime.session_mut().projectiles.count = count;
     runtime.session_mut().spawn_scratch.coordinates = slot;
     motion::reflect(runtime, slot);
-    let damage = session_slot!(runtime, Bang[bang].damage);
+    let damage = Bang::of(runtime, bang).damage();
     shot!(runtime, slot, damage = damage);
     let beam = shot!(runtime, slot, kind) & 15;
     let sound = table(runtime, CHARGED_SOUNDS, usize::from(beam).cast_signed());
@@ -247,22 +247,21 @@ fn fire_charged_beam(runtime: &mut impl ActorLease, direction: u16) -> u16 {
 pub fn movement_delay<H: LeaseActors + ?Sized>(game: &mut H) {
     delay(&mut game.lease());
 }
-fn delay(runtime: &mut impl ActorLease) {
-    let bang = current_slot(runtime);
-    let remaining = session_slot!(runtime, Bang[bang].movement_delay_timer).wrapping_sub(1);
-    session_slot!(runtime, Bang[bang].movement_delay_timer = remaining);
+fn delay(runtime: &mut impl Lease) {
+    let bang = combat::current(runtime).byte_index();
+    let remaining = Bang::of(runtime, bang)
+        .movement_delay_timer()
+        .wrapping_sub(1);
+    *BangEdit::of(runtime, bang).movement_delay_timer() = remaining;
     if remaining == 0 {
-        session_slot!(
-            runtime,
-            Bang[bang].movement_delay_timer = MOVEMENT_DELAY_FRAMES
-        );
+        *BangEdit::of(runtime, bang).movement_delay_timer() = MOVEMENT_DELAY_FRAMES;
         let key = combat::current(runtime);
         runtime.edit_actor(key, Native, |actor| {
             actor.pre_instruction = function::TARGET_SAMUS
         });
     }
 }
-fn angle_to_samus(runtime: &impl ActorLease) -> u16 {
+fn angle_to_samus(runtime: &impl Lease) -> u16 {
     u16::from(
         (api::angle_to_player(runtime, combat::current(runtime)) as u8).wrapping_sub(QUARTER_TURN),
     )
@@ -271,15 +270,19 @@ fn angle_to_samus(runtime: &impl ActorLease) -> u16 {
 pub fn target_samus<H: LeaseActors + ?Sized>(game: &mut H) {
     target(&mut game.lease());
 }
-fn target(runtime: &mut impl ActorLease) {
+fn target(runtime: &mut impl Lease) {
     let angle = angle_to_samus(runtime);
-    let bang = current_slot(runtime);
-    session_slot!(runtime, Bang[bang].angle = angle);
+    let bang = combat::current(runtime).byte_index();
+    *BangEdit::of(runtime, bang).angle() = angle;
     let key = combat::current(runtime);
     runtime.edit_actor(key, Native, |actor| {
         actor.pre_instruction = function::ACCELERATING
     });
-    session_slot!(runtime, Bang[bang]; moving_left = 0, moving_up = 0, acceleration = 0, speed = 0);
+    let mut part = BangEdit::of(runtime, bang);
+    *part.moving_left() = 0;
+    *part.moving_up() = 0;
+    *part.acceleration() = 0;
+    *part.speed() = 0;
 }
 /// Bang movement function - accelerating ($A3:BD1C) or, with `decelerating`,
 /// decelerating ($A3:BD2C): move along the angle (bang X and Y movement,
@@ -288,24 +291,24 @@ fn target(runtime: &mut impl ActorLease) {
 pub fn fly<H: LeaseActors + ?Sized>(decelerating: bool, game: &mut H) {
     move_bang(decelerating, &mut game.lease());
 }
-fn move_bang(decelerating: bool, runtime: &mut impl ActorLease) {
+fn move_bang(decelerating: bool, runtime: &mut impl Lease) {
     for (x, adjustment) in [(true, QUARTER_TURN), (false, 0)] {
-        let bang = current_slot(runtime);
-        let angle = (session_slot!(runtime, Bang[bang].angle) as u8).wrapping_add(adjustment);
+        let bang = combat::current(runtime).byte_index();
+        let angle = (Bang::of(runtime, bang).angle() as u8).wrapping_add(adjustment);
         let sine = table(runtime, SINE, angle as isize);
         if sine & SIGN != 0 {
             if x {
-                session_slot!(runtime, Bang[bang].moving_left = 1);
+                *BangEdit::of(runtime, bang).moving_left() = 1;
             } else {
-                session_slot!(runtime, Bang[bang].moving_up = 1);
+                *BangEdit::of(runtime, bang).moving_up() = 1;
             }
         }
         let mut velocity = i32::from((sine as i16).unsigned_abs() >> 8)
-            * i32::from(session_slot!(runtime, Bang[bang].speed));
+            * i32::from(Bang::of(runtime, bang).speed());
         let reversed = if x {
-            session_slot!(runtime, Bang[bang].moving_left)
+            Bang::of(runtime, bang).moving_left()
         } else {
-            session_slot!(runtime, Bang[bang].moving_up)
+            Bang::of(runtime, bang).moving_up()
         };
         if reversed != 0 {
             velocity = -velocity;
@@ -319,39 +322,41 @@ fn move_bang(decelerating: bool, runtime: &mut impl ActorLease) {
             }
         });
     }
-    let bang = current_slot(runtime);
-    let remaining = session_slot!(runtime, Bang[bang].acceleration_interval_timer).wrapping_sub(1);
-    session_slot!(runtime, Bang[bang].acceleration_interval_timer = remaining);
+    let bang = combat::current(runtime).byte_index();
+    let remaining = Bang::of(runtime, bang)
+        .acceleration_interval_timer()
+        .wrapping_sub(1);
+    *BangEdit::of(runtime, bang).acceleration_interval_timer() = remaining;
     if remaining & SIGN != 0 {
         let interval = if decelerating {
-            session_slot!(runtime, Bang[bang].deceleration_interval_reset)
+            Bang::of(runtime, bang).deceleration_interval_reset()
         } else {
-            session_slot!(runtime, Bang[bang].acceleration_interval_reset)
+            Bang::of(runtime, bang).acceleration_interval_reset()
         };
-        session_slot!(runtime, Bang[bang].acceleration_interval_timer = interval);
-        let speed = session_slot!(runtime, Bang[bang].speed);
-        if decelerating
-            || speed.wrapping_sub(session_slot!(runtime, Bang[bang].max_speed)) & SIGN != 0
-        {
+        *BangEdit::of(runtime, bang).acceleration_interval_timer() = interval;
+        let speed = Bang::of(runtime, bang).speed();
+        if decelerating || speed.wrapping_sub(Bang::of(runtime, bang).max_speed()) & SIGN != 0 {
             let acceleration =
-                session_slot!(runtime, Bang[bang].acceleration).wrapping_add(if decelerating {
-                    ACCELERATION_STEP.wrapping_neg()
-                } else {
-                    ACCELERATION_STEP
-                });
-            session_slot!(runtime, Bang[bang].acceleration = acceleration);
+                Bang::of(runtime, bang)
+                    .acceleration()
+                    .wrapping_add(if decelerating {
+                        ACCELERATION_STEP.wrapping_neg()
+                    } else {
+                        ACCELERATION_STEP
+                    });
+            *BangEdit::of(runtime, bang).acceleration() = acceleration;
             let next = if decelerating {
                 speed.wrapping_sub(acceleration)
             } else {
                 speed.wrapping_add(acceleration)
             };
-            session_slot!(runtime, Bang[bang].speed = next);
+            *BangEdit::of(runtime, bang).speed() = next;
         }
     }
     if decelerating {
-        let bang = current_slot(runtime);
-        if session_slot!(runtime, Bang[bang].speed) != 0
-            || session_slot!(runtime, Bang[bang].acceleration) as i16 <= 0
+        let bang = combat::current(runtime).byte_index();
+        if Bang::of(runtime, bang).speed() != 0
+            || Bang::of(runtime, bang).acceleration() as i16 <= 0
         {
             let key = combat::current(runtime);
             runtime.edit_actor(key, Native, |actor| {
@@ -360,9 +365,9 @@ fn move_bang(decelerating: bool, runtime: &mut impl ActorLease) {
         }
     } else {
         let angle = angle_to_samus(runtime);
-        let bang = current_slot(runtime);
-        session_slot!(runtime, Bang[bang].angle_to_samus = angle);
-        let difference = sign_extend8(angle.wrapping_sub(session_slot!(runtime, Bang[bang].angle)));
+        let bang = combat::current(runtime).byte_index();
+        *BangEdit::of(runtime, bang).angle_to_samus() = angle;
+        let difference = sign_extend8(angle.wrapping_sub(Bang::of(runtime, bang).angle()));
         if (difference as i16).unsigned_abs().wrapping_sub(OFF_TARGET) & SIGN == 0 {
             let key = combat::current(runtime);
             runtime.edit_actor(key, Native, |actor| {
@@ -372,27 +377,27 @@ fn move_bang(decelerating: bool, runtime: &mut impl ActorLease) {
     }
 }
 /// Enemy shot - bang ($A3:BEFD): knock the bang away and grow it.
-pub fn shot(runtime: &mut impl ActorLease) {
+pub fn shot(runtime: &mut impl Lease) {
     let key = combat::current(runtime);
-    let bang = current_slot(runtime);
+    let bang = combat::current(runtime).byte_index();
     if runtime.resolve_actor(key, Native).pre_instruction != function::NO_MOVEMENT {
         let image = runtime.leased_image().expect("ROM must be loaded");
         let index = runtime.session().room.collision_detection_index as isize;
         let direction = shot_word(runtime, ShotMember::Direction, index) & 15;
         let angle = image.table_word(content::offset(SHOT_ANGLES), direction as isize);
-        session_slot!(runtime, Bang[bang].angle = angle);
+        *BangEdit::of(runtime, bang).angle() = angle;
         runtime.edit_actor(key, Native, |actor| {
             actor.pre_instruction = function::DECELERATING
         });
-        session_slot!(runtime, Bang[bang]; moving_left = 0, moving_up = 0,
-            acceleration = KNOCKED_ACCELERATION, speed = KNOCKED_SPEED);
+        let mut part = BangEdit::of(runtime, bang);
+        *part.moving_left() = 0;
+        *part.moving_up() = 0;
+        *part.acceleration() = KNOCKED_ACCELERATION;
+        *part.speed() = KNOCKED_SPEED;
     }
-    let stage = session_slot!(runtime, Bang[bang].new_instruction_list_index);
+    let stage = Bang::of(runtime, bang).new_instruction_list_index();
     if stage != FULLY_GROWN {
-        session_slot!(
-            runtime,
-            Bang[bang].new_instruction_list_index = stage.wrapping_add(1)
-        );
+        *BangEdit::of(runtime, bang).new_instruction_list_index() = stage.wrapping_add(1);
         set_instruction_list(runtime);
         let index = runtime.session().room.collision_detection_index as isize;
         let damage = shot_word(runtime, ShotMember::Damage, index);
@@ -400,14 +405,14 @@ pub fn shot(runtime: &mut impl ActorLease) {
             actor.variables[4] = actor.variables[4].wrapping_add(damage)
         });
         combat::mark_shot(runtime, index);
-        if session_slot!(runtime, Bang[bang].new_instruction_list_index) == FULLY_GROWN {
+        if Bang::of(runtime, bang).new_instruction_list_index() == FULLY_GROWN {
             runtime.edit_actor(key, Native, |actor| actor.variables[3] = 1);
         }
     }
 }
 /// Instruction - enemy finished growing flag = 1 ($A3:BAA8). Was `arm`.
-pub fn set_finished_growing(cursor: EnemyScript, runtime: &mut impl ActorLease) -> EnemyScript {
-    let bang = current_slot(runtime);
-    session_slot!(runtime, Bang[bang].finished_growing = 1);
+pub fn set_finished_growing(cursor: EnemyScript, runtime: &mut impl Lease) -> EnemyScript {
+    let bang = combat::current(runtime).byte_index();
+    *BangEdit::of(runtime, bang).finished_growing() = 1;
     cursor
 }

@@ -303,6 +303,8 @@ RAM_INVENTORY_RULES = {
     "ram_view": "Existing named RAM/view call patterns; may project owned fields at runtime",
     "cohort_copy": "session_cohort load/with/with_projected calls, including file-local import aliases",
     "address_api": "SessionRam/SlotAccess/native-order methods, .word/.byte with imported RAM selector namespace, and session_slot macro; may use typed storage, never added to raw calls",
+    "legacy_overflow": "calls into crate::legacy_overflow (path or imported alias): original-game reads and stores past their tables, tagged LEGACY(original-overflow); the module's own internals count as their kinds",
+    "rom_read": "native_word/word read through a let-bound or chained ROM record/table producer, or a ?-propagated (fallible) native_word content read; not RAM",
     "unresolved_method": "word/byte/read/write/copy method without explicit raw receiver or known address API spelling",
     "backend_reference": "Game/raw/interface/native/compat symbols and import aliases; references, not calls",
 }
@@ -396,15 +398,20 @@ def inventory_sites(text):
     code = rust_inventory_code(text)
     imports = inventory_imports(code)
     modules, copies = {"session_cohort"}, set()
+    overflow_modules, overflow_functions = {"legacy_overflow"}, set()
     spellings = {name: name for name in ("word", "checked_word", "ram_word", "ram_checked_word", "slot", "word_transfers", "boss", "scroll", "inventory", "melt", "menu", "cinematic", "map_screen", "save_selection", "options_menu", "death_sequence", "power_bomb", "session_word", "session_slot", "register_writes", "SlotAccess")}
     ram_namespaces = set()
     dependencies = {"Game", "RawRam", "CompatibilityRam", "SessionRam", "SlotAccess", "WorkRamAccess", "ram_map", "g_ram"}
     raw_aliases = {"g_ram"}
     for _ in range(len(imports) + 1):
-        before = (len(modules), len(copies), len(dependencies), len(spellings), len(ram_namespaces))
+        before = (len(modules), len(copies), len(dependencies), len(spellings), len(ram_namespaces), len(overflow_modules), len(overflow_functions))
         for path, alias in imports:
             parts = path.split("::")
             leaf = parts[-1]
+            if leaf in overflow_modules or (leaf == "self" and len(parts) > 1 and parts[-2] in overflow_modules):
+                overflow_modules.add(alias if alias != "self" else parts[-2])
+            elif len(parts) > 1 and parts[-2] in overflow_modules:
+                overflow_functions.add(alias)
             if leaf in modules or (leaf == "self" and len(parts) > 1 and parts[-2] in modules):
                 modules.add(alias if alias != "self" else parts[-2])
             elif len(parts) > 1 and parts[-2] in modules and leaf in ("load", "with", "with_projected"):
@@ -421,7 +428,7 @@ def inventory_sites(text):
                 ram_namespaces.add(alias)
             if leaf == "g_ram":
                 raw_aliases.add(alias)
-        if before == (len(modules), len(copies), len(dependencies), len(spellings), len(ram_namespaces)):
+        if before == (len(modules), len(copies), len(dependencies), len(spellings), len(ram_namespaces), len(overflow_modules), len(overflow_functions)):
             break
     # Imports are dependency evidence, not executable call sites.
     calls = re.sub(r"\buse\s+[^;]+;", lambda m: " " * len(m.group()), code)
@@ -457,6 +464,8 @@ def inventory_sites(text):
         leaf = parts[-1]
         if (len(parts) > 1 and parts[-2] in modules and leaf in ("load", "with", "with_projected")) or (len(parts) == 1 and leaf in copies):
             add(match.start(), match.end(1), "cohort_copy", path)
+        elif (len(parts) > 1 and parts[-2] in overflow_modules) or (len(parts) == 1 and leaf in overflow_functions):
+            add(match.start(), match.end(1), "legacy_overflow", path)
         elif any(spellings.get(part) == "SlotAccess" for part in parts) and leaf in ("slot_word", "set_slot_word", "slot_byte", "set_slot_byte"):
             add(match.start(), match.end(1), "address_api", path)
     # Preserve the existing view taxonomy, but do not count type-only RawRam references as calls.
@@ -468,6 +477,13 @@ def inventory_sites(text):
     raw_methods = {"read_byte", "write_byte", "copy_in", "copy_out", "fill", "copy_within"}
     address_methods = {"native_word", "lease_native_word", "write_word_le", "write_word_native", "write_slice_le", "write_slice_native", "slot_word", "set_slot_word", "slot_byte", "set_slot_byte", "compatibility_byte", "compatibility_write_byte", "projected_slot_byte", "store_projected_slot_byte"}
     generic = {"word", "byte", "set_byte", "read_byte", "write_byte", "read_word", "write_word", "write_slice", "copy_in", "copy_out", "copy_within"}
+    # ROM content: reads through a record or table a ROM producer returned,
+    # bound by a simple let or chained directly. Reads only; parameters and
+    # other receivers stay address APIs.
+    rom_producer = r"\b\w*(?:record|table|_tiles|coordinate|exploration_mask)\w*\s*\("
+    rom_receivers = {match.group(1) for match in re.finditer(r"\blet\s+(?:mut\s+)?(\w+)\s*=\s*([^;]+);", calls)
+                     if re.search(rom_producer, match.group(2))}
+    rom_chain = re.compile(r"\b\w*(?:record|table|_tiles|coordinate|exploration_mask)\w*\s*\((?:[^()]|\([^()]*\))*\)\s*$")
     for match in re.finditer(r"\.\s*(\w+)\s*\(", calls):
         method = match.group(1)
         if method not in raw_methods | address_methods | generic:
@@ -476,7 +492,19 @@ def inventory_sites(text):
         raw = re.search(r"\.ram\s*\(\s*\)\s*$", prefix)
         receiver = re.search(r"\b(\w+)\s*$", prefix)
         raw = bool(raw or (receiver and receiver.group(1) in ram_receivers))
-        if raw and method in raw_methods:
+        rom = method in ("native_word", "word") and not raw and (
+            (receiver and receiver.group(1) in rom_receivers) or rom_chain.search(prefix))
+        if method == "native_word" and not raw and not rom:
+            # RAM address APIs return a plain u16. A `?`-propagated read is a
+            # fallible content or display-staging read, not RAM.
+            depth, end = 1, match.end()
+            while end < len(calls) and depth:
+                depth += {"(": 1, ")": -1}.get(calls[end], 0)
+                end += 1
+            rom = calls[end:end + 1] == "?"
+        if rom:
+            kind = "rom_read"
+        elif raw and method in raw_methods:
             kind = "raw_ram_call"
         elif method in address_methods or (method in ("word", "byte", "set_byte", "write_slice") and any(re.match(r"\s*" + re.escape(name) + r"\s*::", calls[match.end():]) for name in ram_namespaces)):
             kind = "address_api"

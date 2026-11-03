@@ -2,25 +2,30 @@
 //! Samus, on the floor or upside down on the ceiling (bank $A3:AA48-$A3:B3A0).
 use crate::actors::access::AccessMode::Native;
 use crate::actors::api::{self, Axis, MovementResult::Blocked, SlopePolicy::Ignore};
-use crate::actors::combat::{self, current_slot};
+use crate::actors::combat;
 use crate::actors::host::{ActorLease, LeaseActors};
-use crate::actors::layouts::part_view;
+use crate::actors::slot_view::{SlotState, slot_view};
 use crate::enemy_projectiles::host::Effects as _;
 use crate::enemy_script::EnemyScript;
 use crate::player_projectiles::content::{self, table};
-use crate::session_slot;
 use sm_data::{cartridge::RomImage, enemy_speeds::SpeedTable::Quadratic};
 
-part_view! {
+/// A lease the sidehoppers run on: their slots are the Session's.
+pub trait Lease: ActorLease + SlotState {}
+impl<T: ActorLease + SlotState + ?Sized> Lease for T {}
+
+slot_view! {
     /// A sidehopper's slot and extended RAM; a non-zero first parameter is upside down.
-    Sidehopper: EnemyLayout40 {
-        words: [var_a, function, y_speed_index, x_velocity, y_speed_index_delta, var_f, parameter_1, parameter_2],
-        pad1: [u8; 26696],
-        words: [
-            new_instruction_list, small_hop_y_speed_index, big_hop_y_speed_index, falling, ready_to_hop,
-            hop_table_index, variant_index,
+    Sidehopper, SidehopperEdit {
+        record: [
+            function = var_b, y_speed_index = var_c, x_velocity = var_d,
+            y_speed_index_delta = var_e, parameter_1 = parameter_1,
         ],
-        _: [u16; 25],
+        extended: [
+            new_instruction_list = var_00, small_hop_y_speed_index = var_01,
+            big_hop_y_speed_index = var_02, falling = var_03, ready_to_hop = var_04,
+            hop_table_index = var_05, variant_index = var_06,
+        ],
     }
 }
 
@@ -61,17 +66,19 @@ const SUPER_HOPS: u16 = 2;
 const MAX_FALLING_Y_SPEED_INDEX: u16 = 64;
 const SIGN: u16 = 0x8000;
 
-fn upside_down(runtime: &impl ActorLease, hopper: i32) -> usize {
-    usize::from(session_slot!(runtime, Sidehopper[hopper].parameter_1) != 0)
+fn upside_down(runtime: &impl Lease, hopper: u16) -> usize {
+    usize::from(Sidehopper::of(runtime, hopper).parameter_1() != 0)
 }
-fn negate_x_velocity(runtime: &mut impl ActorLease, hopper: i32) {
-    session_slot!(runtime, Sidehopper[hopper].x_velocity, |v| v.wrapping_neg());
+fn negate_x_velocity(runtime: &mut impl Lease, hopper: u16) {
+    let mut edit = SidehopperEdit::of(runtime, hopper);
+    let v = *edit.x_velocity();
+    *edit.x_velocity() = v.wrapping_neg();
 }
 /// Store the variant's list in `lists`; set enemy instruction list ($A3:ABBB) unless `stored_only`.
-fn store_list(runtime: &mut impl ActorLease, hopper: i32, lists: u32, stored_only: bool) {
-    let index = (session_slot!(runtime, Sidehopper[hopper].variant_index) >> 1) as isize;
+fn store_list(runtime: &mut impl Lease, hopper: u16, lists: u32, stored_only: bool) {
+    let index = (Sidehopper::of(runtime, hopper).variant_index() >> 1) as isize;
     let list = table(runtime, lists, index);
-    session_slot!(runtime, Sidehopper[hopper].new_instruction_list = list);
+    *SidehopperEdit::of(runtime, hopper).new_instruction_list() = list;
     if !stored_only {
         let key = combat::current(runtime);
         runtime.edit_actor(key, Native, |actor| actor.restart_animation(list));
@@ -91,37 +98,43 @@ pub fn initial_hop_phase(height: u16, step: u16, image: RomImage) -> u16 {
     }
 }
 /// Initialisation AI - sidehopper / desgeega / super variants ($A3:AB09).
-pub fn initialize(runtime: &mut impl ActorLease) {
-    runtime.write_slice_le(crate::ram::words::RANDOM_NUMBER, RANDOM_SEED);
+pub fn initialize(runtime: &mut impl Lease) {
+    runtime.session_mut().timing.random_number = RANDOM_SEED;
+    runtime.words_stored();
     runtime.next_random();
-    let hopper = current_slot(runtime);
-    session_slot!(runtime, Sidehopper[hopper]; falling = 0, ready_to_hop = 0, hop_table_index = 0);
-    let definition = session_slot!(runtime, Sidehopper[hopper].base.enemy_ptr);
+    let hopper = combat::current(runtime).byte_index();
+    {
+        let mut edit = SidehopperEdit::of(runtime, hopper);
+        *edit.falling() = 0;
+        *edit.ready_to_hop() = 0;
+        *edit.hop_table_index() = 0;
+    }
+    let definition = Sidehopper::of(runtime, hopper).actor().definition;
     let variant =
         crate::player_projectiles::host::Host::record(runtime, 0xa0, definition).word(0x2a);
     let index = variant.wrapping_mul(2);
-    session_slot!(runtime, Sidehopper[hopper].variant_index = index);
+    *SidehopperEdit::of(runtime, hopper).variant_index() = index;
     let lists = LANDED_LISTS[upside_down(runtime, hopper)];
     store_list(runtime, hopper, lists, false);
     if variant != 0 {
-        session_slot!(runtime, Sidehopper[hopper].hop_table_index = SUPER_HOPS);
+        *SidehopperEdit::of(runtime, hopper).hop_table_index() = SUPER_HOPS;
     }
     for (hop, big) in HOP_TABLES.into_iter().zip([false, true]) {
-        let index = (session_slot!(runtime, Sidehopper[hopper].hop_table_index) >> 1) as isize;
+        let index = (Sidehopper::of(runtime, hopper).hop_table_index() >> 1) as isize;
         let height = table(runtime, hop + HEIGHT, index);
         let step = table(runtime, hop, index);
         let phase = initial_hop_phase(height, step, runtime.native_image());
         match big {
-            false => session_slot!(runtime, Sidehopper[hopper].small_hop_y_speed_index = phase),
-            true => session_slot!(runtime, Sidehopper[hopper].big_hop_y_speed_index = phase),
+            false => *SidehopperEdit::of(runtime, hopper).small_hop_y_speed_index() = phase,
+            true => *SidehopperEdit::of(runtime, hopper).big_hop_y_speed_index() = phase,
         }
     }
-    session_slot!(runtime, Sidehopper[hopper].function = function::HOP);
+    *SidehopperEdit::of(runtime, hopper).function() = function::HOP;
 }
 /// Move down (or up) by the Y speed index's quadratic speed, then right by the X velocity,
 /// turning at a wall; whether each was blocked, skipping the second after a blocked first.
-fn move_by_velocity(runtime: &mut impl ActorLease, hopper: i32, up: bool) -> (bool, bool) {
-    let index = 4 * session_slot!(runtime, Sidehopper[hopper].y_speed_index) as isize;
+fn move_by_velocity(runtime: &mut impl Lease, hopper: u16, up: bool) -> (bool, bool) {
+    let index = 4 * Sidehopper::of(runtime, hopper).y_speed_index() as isize;
     let index = index + if up { 2 } else { 0 };
     let high = runtime.lease_enemy_speed(Quadratic, index + 1);
     let speed = (u32::from(high) << 16) | u32::from(runtime.lease_enemy_speed(Quadratic, index));
@@ -129,7 +142,7 @@ fn move_by_velocity(runtime: &mut impl ActorLease, hopper: i32, up: bool) -> (bo
     if api::move_vertical(runtime, key, speed as i32) == Blocked {
         return (true, false);
     }
-    let velocity = i32::from(session_slot!(runtime, Sidehopper[hopper].x_velocity) as i16);
+    let velocity = i32::from(Sidehopper::of(runtime, hopper).x_velocity() as i16);
     let blocked = api::move_horizontal(runtime, key, velocity << 16, Ignore) == Blocked;
     if blocked {
         negate_x_velocity(runtime, hopper);
@@ -137,7 +150,7 @@ fn move_by_velocity(runtime: &mut impl ActorLease, hopper: i32, up: bool) -> (bo
     (false, blocked)
 }
 /// Sidehopper movement - jumping - upside up ($A3:AD6D) or down ($A3:AE27).
-fn jump(runtime: &mut impl ActorLease, hopper: i32, upside_down: usize) {
+fn jump(runtime: &mut impl Lease, hopper: u16, upside_down: usize) {
     runtime.probe(["hop.Sidehopper_Func_19", "hop.Sidehopper_Func_21"][upside_down]);
     let falls = match move_by_velocity(runtime, hopper, upside_down == 0) {
         (true, _) => {
@@ -146,41 +159,48 @@ fn jump(runtime: &mut impl ActorLease, hopper: i32, upside_down: usize) {
         }
         (false, true) => true,
         (false, false) => {
-            let delta = session_slot!(runtime, Sidehopper[hopper].y_speed_index_delta);
-            let index =
-                session_slot!(runtime, Sidehopper[hopper].y_speed_index).wrapping_sub(delta);
+            let delta = Sidehopper::of(runtime, hopper).y_speed_index_delta();
+            let index = Sidehopper::of(runtime, hopper)
+                .y_speed_index()
+                .wrapping_sub(delta);
             let top = index & SIGN != 0;
             let index = if top { 0 } else { index };
-            session_slot!(runtime, Sidehopper[hopper].y_speed_index = index);
+            *SidehopperEdit::of(runtime, hopper).y_speed_index() = index;
             top
         }
     };
     if falls {
-        session_slot!(runtime, Sidehopper[hopper].falling = 1);
+        *SidehopperEdit::of(runtime, hopper).falling() = 1;
     }
 }
 /// Sidehopper movement - falling - upside up ($A3:ADD4) or down ($A3:AE8E).
-fn fall(runtime: &mut impl ActorLease, hopper: i32, upside_down: usize) {
+fn fall(runtime: &mut impl Lease, hopper: u16, upside_down: usize) {
     runtime.probe(["hop.Sidehopper_Func_20", "hop.Sidehopper_Func_22"][upside_down]);
     if move_by_velocity(runtime, hopper, upside_down != 0).0 {
-        session_slot!(runtime, Sidehopper[hopper]; falling = 0, function = function::LANDED);
+        {
+            let mut edit = SidehopperEdit::of(runtime, hopper);
+            *edit.falling() = 0;
+            *edit.function() = function::LANDED;
+        }
         return;
     }
-    let delta = session_slot!(runtime, Sidehopper[hopper].y_speed_index_delta);
-    session_slot!(runtime, Sidehopper[hopper].y_speed_index, |index| {
+    let delta = Sidehopper::of(runtime, hopper).y_speed_index_delta();
+    let mut edit = SidehopperEdit::of(runtime, hopper);
+    let index = *edit.y_speed_index();
+    *edit.y_speed_index() = {
         let next = index.wrapping_add(delta);
         match next.wrapping_sub(MAX_FALLING_Y_SPEED_INDEX) & SIGN {
             0 => MAX_FALLING_Y_SPEED_INDEX,
             _ => next,
         }
-    });
+    };
 }
 /// Main AI - sidehopper / desgeega / super variants ($A3:ABCF): run its function.
 pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
     use function::*;
     let runtime = &mut game.lease();
-    let hopper = current_slot(runtime);
-    let phase = session_slot!(runtime, Sidehopper[hopper].function);
+    let hopper = combat::current(runtime).byte_index();
+    let phase = Sidehopper::of(runtime, hopper).function();
     let next = match phase {
         HOP => {
             let index = (runtime.next_random() & 1) as isize;
@@ -188,15 +208,19 @@ pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
         }
         SMALL_HOP | BIG_HOP => {
             let hop = HOP_TABLES[usize::from(phase == BIG_HOP)];
-            let index = (session_slot!(runtime, Sidehopper[hopper].hop_table_index) >> 1) as isize;
+            let index = (Sidehopper::of(runtime, hopper).hop_table_index() >> 1) as isize;
             let delta = table(runtime, hop, index);
             let speed = table(runtime, hop + X_SPEED, index);
             let initial = match phase {
-                BIG_HOP => session_slot!(runtime, Sidehopper[hopper].big_hop_y_speed_index),
-                _ => session_slot!(runtime, Sidehopper[hopper].small_hop_y_speed_index),
+                BIG_HOP => Sidehopper::of(runtime, hopper).big_hop_y_speed_index(),
+                _ => Sidehopper::of(runtime, hopper).small_hop_y_speed_index(),
             };
-            session_slot!(runtime, Sidehopper[hopper]; y_speed_index_delta = delta, x_velocity = speed,
-                y_speed_index = initial);
+            {
+                let mut edit = SidehopperEdit::of(runtime, hopper);
+                *edit.y_speed_index_delta() = delta;
+                *edit.x_velocity() = speed;
+                *edit.y_speed_index() = initial;
+            }
             [HOP_UPSIDE_UP, HOP_UPSIDE_DOWN][upside_down(runtime, hopper)]
         }
         // Hop backwards, or forwards when Samus is to the right.
@@ -239,22 +263,22 @@ pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
         | JUMPING_UPSIDE_DOWN
         | JUMPING_UPSIDE_DOWN_CLONE => {
             let down = usize::from(phase >= JUMPING_UPSIDE_DOWN);
-            match session_slot!(runtime, Sidehopper[hopper].falling) {
+            match Sidehopper::of(runtime, hopper).falling() {
                 0 => jump(runtime, hopper, down),
                 _ => fall(runtime, hopper, down),
             }
             return;
         }
-        WAIT_TO_HOP => match session_slot!(runtime, Sidehopper[hopper].ready_to_hop) {
+        WAIT_TO_HOP => match Sidehopper::of(runtime, hopper).ready_to_hop() {
             0 => return,
             _ => {
-                session_slot!(runtime, Sidehopper[hopper].ready_to_hop = 0);
+                *SidehopperEdit::of(runtime, hopper).ready_to_hop() = 0;
                 HOP
             }
         },
         _ => return runtime.unreachable(),
     };
-    session_slot!(runtime, Sidehopper[hopper].function = next);
+    *SidehopperEdit::of(runtime, hopper).function() = next;
 }
 /// Instruction - queue sound [[Y]], sound library 2, max queued sounds allowed = 3 ($A3:AA68).
 pub fn queue_sound<H: LeaseActors + ?Sized>(script: EnemyScript, game: &mut H) -> EnemyScript {
@@ -262,7 +286,8 @@ pub fn queue_sound<H: LeaseActors + ?Sized>(script: EnemyScript, game: &mut H) -
     script.offset(1)
 }
 /// Instruction - ready to hop ($A3:AAFE).
-pub fn ready_to_hop(script: EnemyScript, runtime: &mut impl ActorLease) -> EnemyScript {
-    session_slot!(runtime, Sidehopper[current_slot(runtime)].ready_to_hop = 1);
+pub fn ready_to_hop(script: EnemyScript, runtime: &mut impl Lease) -> EnemyScript {
+    let hopper = combat::current(runtime).byte_index();
+    *SidehopperEdit::of(runtime, hopper).ready_to_hop() = 1;
     script
 }

@@ -12,19 +12,17 @@
 //! - every second character sounds the stroke: sound 45h on library 2 in Ceres
 //!   (area 6), else sound Dh on library 3, at most 3 queued.
 use sm_data::cartridge::RomImage;
-use sm_game::actors::session_slots::SlotAccess;
+use sm_game::actors::slot_view::SlotState;
 use sm_game::cartridge::{NativeDiagnostics, NativeImage};
 use sm_game::display::transfer::TilemapQueue;
 use sm_game::effects::SoundEffects;
-use sm_game::escape_typewriter::{Host, handle_text, set_up_zebes};
+use sm_game::escape_typewriter::{Host, Typewriter, handle_text, set_up_zebes, timer_reset};
+use sm_game::external_inputs::ExternalInputs;
 use sm_game::ram::CompatibilityRam;
+use sm_game::room_entry::world::WorldBinding;
+use sm_game::session::Session;
+use sm_game::session_access::SessionAccess;
 
-const TILEMAP_ENTRY: usize = 0x8034;
-const TEXT: usize = 0x8036;
-const VRAM_ADDRESS: usize = 0x8038;
-const TIMER: usize = 0x803a;
-const TIMER_RESET: usize = 0x803c;
-const STROKE_TIMER: usize = 0x803e;
 const QUEUE_TAIL: usize = 0x330;
 const QUEUE: usize = 0xd0;
 /// $A6:8000, where the test's text starts, in the LoROM image.
@@ -32,7 +30,11 @@ const TEXT_START: u16 = 0x8000;
 const TEXT_OFFSET: usize = 0x13_0000;
 const TILES: u16 = 0x2610;
 
+/// The typewriter's state is slot 0's, in the Session; the rest of the world
+/// (scroll, tilemap queue) is a RAM image.
 struct World {
+    session: Session,
+    inputs: ExternalInputs,
     ram: Vec<u8>,
     rom: RomImage,
     colours: [u16; 256],
@@ -46,14 +48,41 @@ impl World {
         rom[TEXT_OFFSET..TEXT_OFFSET + text.len()].copy_from_slice(text);
         let rom = RomImage::from(rom);
         let mut world = Self {
+            session: Session::with_world(WorldBinding::canonical_legacy()),
+            inputs: ExternalInputs::default(),
             ram: vec![0; 0x2_0000],
             rom,
             colours: [0; 256],
             area: 0,
             sounds: Vec::new(),
         };
-        world.set_word(TEXT, TEXT_START);
+        world.set_state(|state| state.text = TEXT_START);
         world
+    }
+    /// The typewriter's state.
+    fn state(&self) -> State {
+        let view = Typewriter::of(self, 0);
+        State {
+            tilemap_entry: view.tilemap_entry(),
+            text: view.text(),
+            vram_address: view.vram_address(),
+            timer: view.timer(),
+            timer_reset: timer_reset(self),
+            stroke_timer: view.stroke_timer(),
+        }
+    }
+    /// Store the typewriter's state as `change` leaves it.
+    fn set_state(&mut self, change: impl FnOnce(&mut State)) {
+        let mut state = self.state();
+        change(&mut state);
+        let mut edit = sm_game::escape_typewriter::TypewriterEdit::of(self, 0);
+        *edit.tilemap_entry() = state.tilemap_entry;
+        *edit.text() = state.text;
+        *edit.vram_address() = state.vram_address;
+        *edit.timer() = state.timer;
+        *edit.stroke_timer() = state.stroke_timer;
+        drop(edit);
+        sm_game::escape_typewriter::set_timer_reset(self, state.timer_reset);
     }
     fn word(&self, at: usize) -> u16 {
         u16::from_le_bytes([self.ram[at], self.ram[at + 1]])
@@ -63,19 +92,31 @@ impl World {
     }
 }
 
-impl SlotAccess for World {
-    fn slot_word(&self, at: usize) -> u16 {
-        self.word(at)
+/// Slot 0's typewriter words ($7E:8034..$7E:803F).
+#[derive(Clone, Copy, Debug, PartialEq)]
+struct State {
+    tilemap_entry: u16,
+    text: u16,
+    vram_address: u16,
+    timer: u16,
+    timer_reset: u16,
+    stroke_timer: u16,
+}
+
+impl SessionAccess for World {
+    fn session(&self) -> &Session {
+        &self.session
     }
-    fn set_slot_word(&mut self, at: usize, value: u16) {
-        self.set_word(at, value);
+    fn session_mut(&mut self) -> &mut Session {
+        &mut self.session
     }
-    fn slot_byte(&self, at: usize) -> u8 {
-        self.ram[at]
+    fn inputs(&self) -> &ExternalInputs {
+        &self.inputs
     }
-    fn set_slot_byte(&mut self, at: usize, value: u8) {
-        self.ram[at] = value;
-    }
+    fn probe(&self, _: &'static str) {}
+}
+impl SlotState for World {
+    fn record_stored(&mut self) {}
 }
 impl SoundEffects for World {
     fn queue_sound(&mut self, channel: usize, sound: u8, max_queued: u8) {
@@ -171,19 +212,32 @@ fn zebes_setup_copies_the_text_colours_and_clears_the_state() {
     let mut world = World::new(&[]);
     world.colours[125] = 0x1234;
     world.colours[126] = 0x5678;
-    for at in [VRAM_ADDRESS, TIMER, TIMER_RESET, STROKE_TIMER, 0xb5, 0xb7] {
+    world.set_state(|state| {
+        state.vram_address = 0xffff;
+        state.timer = 0xffff;
+        state.timer_reset = 0xffff;
+        state.stroke_timer = 0xffff;
+    });
+    for at in [0xb5, 0xb7] {
         world.set_word(at, 0xffff);
     }
     set_up_zebes(&mut world);
     assert_eq!((world.colours[157], world.colours[158]), (0x1234, 0x5678));
     assert_eq!(
-        world.word(TEXT),
+        world.state().text,
         0xc49c,
         "Typewriter text - Zebes escape timer"
     );
-    for at in [VRAM_ADDRESS, TIMER, TIMER_RESET, STROKE_TIMER] {
-        assert_eq!(world.word(at), 0, "{at:#x}");
-    }
+    let state = world.state();
+    assert_eq!(
+        (
+            state.vram_address,
+            state.timer,
+            state.timer_reset,
+            state.stroke_timer
+        ),
+        (0, 0, 0, 0)
+    );
     assert_eq!(
         (world.word(0xb5), world.word(0xb7)),
         (0, 0),
@@ -198,40 +252,40 @@ fn types_each_character_after_the_timer_runs_out() {
     // Frame 1: the timer reloads from the old reset value (0) before the instructions
     // set the new one, then 'A' is typed as the base tilemap value.
     assert!(!handle_text(&mut world, TILES));
-    assert_eq!(world.word(TIMER_RESET), 3);
-    assert_eq!(world.word(TIMER), 0);
-    assert_eq!(world.word(TILEMAP_ENTRY), TILES);
+    assert_eq!(world.state().timer_reset, 3);
+    assert_eq!(world.state().timer, 0);
+    assert_eq!(world.state().tilemap_entry, TILES);
     assert_eq!(record(&world, 0), (2, 0x8034, 0x7e, 0x5000));
     assert_eq!(world.word(QUEUE_TAIL), 7);
-    assert_eq!(world.word(VRAM_ADDRESS), 0x5001);
+    assert_eq!(world.state().vram_address, 0x5001);
     assert_eq!(
-        world.word(TEXT),
+        world.state().text,
         TEXT_START + 9,
         "past the instructions and one byte"
     );
-    assert_eq!(world.word(STROKE_TIMER), 1);
+    assert_eq!(world.state().stroke_timer, 1);
     assert!(world.sounds.is_empty(), "the first stroke is silent");
 
     // Frame 2: a space advances the VRAM address without a transfer.
     assert!(!handle_text(&mut world, TILES));
-    assert_eq!(world.word(TIMER), 3);
-    assert_eq!(world.word(VRAM_ADDRESS), 0x5002);
+    assert_eq!(world.state().timer, 3);
+    assert_eq!(world.state().vram_address, 0x5002);
     assert_eq!(world.word(QUEUE_TAIL), 7);
-    assert_eq!(world.word(STROKE_TIMER), 1);
+    assert_eq!(world.state().stroke_timer, 1);
 
     // Frames 3 to 5 count the timer down.
     for timer in [2, 1, 0] {
         assert!(!handle_text(&mut world, TILES));
-        assert_eq!(world.word(TIMER), timer);
+        assert_eq!(world.state().timer, timer);
     }
-    assert_eq!(world.word(TEXT), TEXT_START + 10);
+    assert_eq!(world.state().text, TEXT_START + 10);
 
     // Frame 6: '!' is drawn as character 5Bh, and the second stroke sounds.
     assert!(!handle_text(&mut world, TILES));
-    assert_eq!(world.word(TILEMAP_ENTRY), TILES + 0x5b - 0x41);
+    assert_eq!(world.state().tilemap_entry, TILES + 0x5b - 0x41);
     assert_eq!(record(&world, 7), (2, 0x8034, 0x7e, 0x5002));
     assert_eq!(world.word(QUEUE_TAIL), 14);
-    assert_eq!(world.word(STROKE_TIMER), 0);
+    assert_eq!(world.state().stroke_timer, 0);
     assert_eq!(world.sounds, [(1, 0x45, 3)], "Ceres: library 2 sound 45h");
 
     for _ in 0..3 {
@@ -242,7 +296,7 @@ fn types_each_character_after_the_timer_runs_out() {
         "the end word finishes the text"
     );
     assert_eq!(
-        world.word(TEXT),
+        world.state().text,
         TEXT_START + 11,
         "the end leaves the pointer on it"
     );
@@ -253,7 +307,7 @@ fn zebes_strokes_use_library_three() {
     let mut world = World::new(&[b'A', b'B', 0, 0]);
     assert!(!handle_text(&mut world, 0));
     assert!(!handle_text(&mut world, 0));
-    assert_eq!(world.word(TILEMAP_ENTRY), 1, "'B' is one past the base");
+    assert_eq!(world.state().tilemap_entry, 1, "'B' is one past the base");
     assert_eq!(world.sounds, [(2, 0x0d, 3)]);
 }
 
@@ -262,7 +316,7 @@ fn a_vram_address_with_bit_15_keeps_it_in_the_record() {
     let mut world = World::new(&[13, 0, 0x00, 0x80, b'A', 0, 0]);
     assert!(!handle_text(&mut world, 0));
     assert_eq!(record(&world, 0).3, 0x8000);
-    assert_eq!(world.word(VRAM_ADDRESS), 0x8001);
+    assert_eq!(world.state().vram_address, 0x8001);
 }
 
 impl sm_game::sequence_state::Access for World {

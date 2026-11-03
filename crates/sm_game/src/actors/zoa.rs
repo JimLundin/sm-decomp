@@ -5,6 +5,7 @@ use crate::actors::access::AccessMode::Native;
 use crate::actors::api::{self, Axis};
 use crate::actors::combat;
 use crate::actors::host::ActorLease;
+use crate::actors::slot_view::{SlotState, slot_view};
 use crate::enemy_script::EnemyScript;
 use crate::player_projectiles::content::table;
 
@@ -32,8 +33,13 @@ pub mod instruction {}
 const LEFT_SHOOTING: u16 = 0xb3c1;
 const INSTRUCTION_LISTS: u32 = 0xa3_b40d;
 const X_SPEEDS: u32 = 0xa3_b415;
-/// $7E:7800: Zoa's X speed table index.
-const X_SPEED_INDEX: usize = 0x7800;
+slot_view! {
+    /// Zoa's slot: its X speed table index ($7E:7800 + slot).
+    Zoa, ZoaEdit {
+        record: [],
+        extended: [x_speed_index = var_00],
+    }
+}
 /// Instruction list indices: facing left or right, rising (shooting is one less).
 const LEFT_RISING: u16 = 1;
 const RIGHT_RISING: u16 = 3;
@@ -44,8 +50,9 @@ const RISE: i32 = -0x8000;
 const INVISIBLE: u16 = 0x100;
 const SIGN: u16 = 0x8000;
 
-fn x_speed_index(runtime: &impl ActorLease) -> usize {
-    X_SPEED_INDEX + usize::from(combat::current(runtime).byte_index())
+/// The current Zoa's slot.
+fn current(runtime: &impl ActorLease) -> u16 {
+    combat::current(runtime).byte_index()
 }
 /// Start the instruction list for Zoa's instruction list index, if it changed.
 fn set_instruction_list(runtime: &mut impl ActorLease) {
@@ -61,15 +68,15 @@ fn set_instruction_list(runtime: &mut impl ActorLease) {
     }
 }
 /// Initialisation AI - Zoa ($A3:B44A).
-pub fn initialize(runtime: &mut impl ActorLease) {
+pub fn initialize(runtime: &mut (impl ActorLease + SlotState)) {
     let key = combat::current(runtime);
     runtime.edit_actor(key, Native, |actor| {
         actor.parameters[0] = function::WAIT_FOR_SAMUS;
         actor.variables[lane::INSTRUCTION_LIST_INDEX] = 0;
         actor.variables[lane::PREVIOUS_INSTRUCTION_LIST_INDEX] = 0;
     });
-    let at = x_speed_index(runtime);
-    runtime.write_slice_native(at, 0);
+    let zoa = current(runtime);
+    *ZoaEdit::of(runtime, zoa).x_speed_index() = 0;
     runtime.edit_actor(key, Native, |actor| {
         actor.instruction = LEFT_SHOOTING;
         actor.properties |= INVISIBLE;
@@ -78,7 +85,7 @@ pub fn initialize(runtime: &mut impl ActorLease) {
     });
 }
 /// Main AI - Zoa ($A3:B47C): run its function. Was `advance`.
-pub fn main_ai(runtime: &mut impl ActorLease) {
+pub fn main_ai(runtime: &mut (impl ActorLease + SlotState)) {
     let key = combat::current(runtime);
     match runtime.resolve_actor(key, Native).parameters[0] {
         // Zoa function - wait for Samus to get near ($A3:B482).
@@ -119,7 +126,7 @@ pub fn main_ai(runtime: &mut impl ActorLease) {
         // Zoa function - shooting ($A3:B4D6): shoot sideways until off
         // screen, then return to the spawn point and wait.
         function::SHOOTING => {
-            let index = (runtime.lease_native_word(x_speed_index(runtime)) >> 1) as isize;
+            let index = (Zoa::of(runtime, current(runtime)).x_speed_index() >> 1) as isize;
             let high = table(runtime, X_SPEEDS, index);
             let low = table(runtime, X_SPEEDS, index + 1);
             let speed = ((u32::from(high) << 16) | u32::from(low)) as i32;
@@ -156,9 +163,9 @@ pub fn main_ai(runtime: &mut impl ActorLease) {
 pub fn set_x_speed_index(
     value: u16,
     script: EnemyScript,
-    runtime: &mut impl ActorLease,
+    runtime: &mut (impl ActorLease + SlotState),
 ) -> EnemyScript {
-    let at = x_speed_index(runtime);
-    runtime.write_slice_native(at, value);
+    let zoa = current(runtime);
+    *ZoaEdit::of(runtime, zoa).x_speed_index() = value;
     script
 }

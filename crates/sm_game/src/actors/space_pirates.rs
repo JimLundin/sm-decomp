@@ -1,12 +1,14 @@
 //! Space pirates in bank $B2: wall-jumping pirates, ninja pirates and walking
-//! pirates. They share checked actor state and movement; the extended species
-//! words stay authoritative in RAM.
+//! pirates. They share checked actor state and movement; their extended words
+//! are the Session's, through [`Pirate`].
 use crate::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 use crate::actors::api::{self, Axis, MovementResult};
 use crate::actors::combat;
+use crate::actors::slot_view::{SlotState, slot_view};
 use crate::enemy_projectiles::host::Effects;
 use crate::enemy_script::EnemyScript;
-use crate::ram::{CompatibilityRam, word_arrays as arrays, words as fields};
+use crate::player_projectiles::{access::shot, host::Host as _};
+use crate::ram::CompatibilityRam;
 use crate::session_access::SessionAccess;
 use sm_data::cartridge::RomRecord;
 
@@ -18,19 +20,19 @@ pub const VULNERABILITY_POWER: usize = 0;
 pub const VULNERABILITY_PLASMA_ICE_WAVE: usize = 11;
 
 /// One original `Runtime`: the actor, projectile and mechanism access a
-/// pirate routine edits through, the session-aware RAM words, and `foreign`.
+/// pirate routine edits through, the slots on the Session, the session-aware
+/// RAM words, and `foreign`.
 pub trait PirateLease:
     crate::actors::effects::ActorHost
     + crate::enemy_projectiles::host::Host
     + crate::room_mechanisms::host::Host
     + crate::room_mechanisms::host::Effects
+    + crate::player_projectiles::host::Host
+    + SlotState
 {
     type Game: Pirates + ?Sized;
     /// The compatibility word at `at`, through the session projection.
     fn word(&self, at: usize) -> u16;
-    /// The native-order word at `at`, through the session projection.
-    fn native_word(&self, at: usize) -> u16;
-    fn write_slice_native(&mut self, at: usize, value: u16);
     fn write_word_le(&mut self, value: u16, at: usize);
     fn foreign<T>(&mut self, action: impl FnOnce(&mut Self::Game) -> T) -> T;
     /// The actor content record at `bank:address`, as the original actor read.
@@ -180,18 +182,56 @@ pub mod state {
     pub const WALKING_IDLE: u32 = 0xb2fe4a;
 }
 
-/// Per-enemy words outside the enemy slots, at the slot offset from these bases.
-pub mod extra {
-    /// Ninja: speed, its high byte the per-frame movement. Walking: X backup.
-    pub const SPEED: usize = 0x7800;
-    /// Ninja: the divekick's midpoint X (never read).
-    pub const DIVEKICK_MIDPOINT_X: usize = 0x7806;
-    /// Ninja: spawn Y, restored after a divekick.
-    pub const SPAWN_Y: usize = 0x7810;
-    /// Wall: the arc's right and left target angles and its per-frame angle step.
-    pub const ARC_RIGHT_TARGET: usize = 0x8000;
-    pub const ARC_LEFT_TARGET: usize = 0x8002;
-    pub const ARC_ANGLE_DELTA: usize = 0x8004;
+slot_view! {
+    /// A pirate's extended words. Ninja: its speed, the high byte the per-frame
+    /// movement (walking: an X backup), the divekick's midpoint X (never read)
+    /// and its spawn Y, restored after a divekick. Wall: the arc's right and
+    /// left target angles and its per-frame angle step.
+    Pirate, PirateEdit {
+        record: [],
+        extended: [
+            speed = var_00, divekick_midpoint_x = var_03, spawn_y = var_08,
+            arc_right_target = var_20, arc_left_target = var_21, arc_angle_delta = var_22,
+        ],
+    }
+}
+
+/// A pirate's extended words, as [`Pirate`] names them.
+#[derive(Clone, Copy)]
+enum Extra {
+    Speed,
+    DivekickMidpointX,
+    SpawnY,
+    ArcRightTarget,
+    ArcLeftTarget,
+    ArcAngleDelta,
+}
+/// Pirate `index`'s extended word `word`.
+fn extra(runtime: &impl SlotState, index: u16, word: Extra) -> u16 {
+    let pirate = Pirate::of(runtime, index);
+    match word {
+        Extra::Speed => pirate.speed(),
+        Extra::DivekickMidpointX => pirate.divekick_midpoint_x(),
+        Extra::SpawnY => pirate.spawn_y(),
+        Extra::ArcRightTarget => pirate.arc_right_target(),
+        Extra::ArcLeftTarget => pirate.arc_left_target(),
+        Extra::ArcAngleDelta => pirate.arc_angle_delta(),
+    }
+}
+/// Store `value` to pirate `index`'s extended word `word`, then refresh the
+/// lease's observations, as the slice store did after each byte.
+fn set_extra(runtime: &mut impl SlotState, index: u16, word: Extra, value: u16) {
+    let mut pirate = PirateEdit::of(runtime, index);
+    *match word {
+        Extra::Speed => pirate.speed(),
+        Extra::DivekickMidpointX => pirate.divekick_midpoint_x(),
+        Extra::SpawnY => pirate.spawn_y(),
+        Extra::ArcRightTarget => pirate.arc_right_target(),
+        Extra::ArcLeftTarget => pirate.arc_left_target(),
+        Extra::ArcAngleDelta => pirate.arc_angle_delta(),
+    } = value;
+    drop(pirate);
+    runtime.record_stored();
 }
 
 // Enemy variable slots ($0FA8 + 2n). `pre_instruction` ($0FB2) is the right
@@ -222,7 +262,7 @@ const GOLD_NINJA: u16 = 0xf593;
 const DEFAULT_VULNERABILITY: u16 = 0xec1c;
 
 fn current<R: PirateLease>(runtime: &R) -> Key {
-    Key::from_legacy(runtime.word(0xe54))
+    Key::from_legacy(runtime.session().actors.controls.selected)
 }
 
 fn offset_x(x: u16, amount: u16, right: bool) -> u16 {
@@ -239,7 +279,7 @@ fn snap_to_wall(x: u16) -> u16 {
 
 fn initialize_wall<G: Pirates + ?Sized>(game: &mut G) {
     let mut runtime = game.lease();
-    let index = runtime.word(0xe54);
+    let index = runtime.session().actors.controls.selected;
     let key = Key::from_legacy(index);
     runtime.edit_actor(key, Native, |actor| {
         actor.instruction = if actor.parameters[0] & 1 == 0 {
@@ -248,21 +288,21 @@ fn initialize_wall<G: Pirates + ?Sized>(game: &mut G) {
             list::MOVING_DOWN_RIGHT_WALL
         };
     });
-    for (at, value) in [
-        (extra::ARC_RIGHT_TARGET, 190),
-        (extra::ARC_LEFT_TARGET, 66),
-        (extra::ARC_ANGLE_DELTA, 2),
+    for (word, value) in [
+        (Extra::ArcRightTarget, 190),
+        (Extra::ArcLeftTarget, 66),
+        (Extra::ArcAngleDelta, 2),
     ] {
-        runtime.write_slice_native(at + usize::from(index), value);
+        set_extra(&mut runtime, index, word, value);
     }
     if runtime.resolve_actor(key, Native).parameters[0] & PARAMETER_ALTERNATE == 0 {
-        for (at, delta) in [
-            (extra::ARC_RIGHT_TARGET, 2u16),
-            (extra::ARC_LEFT_TARGET, u16::MAX - 1),
-            (extra::ARC_ANGLE_DELTA, 2),
+        for (word, delta) in [
+            (Extra::ArcRightTarget, 2u16),
+            (Extra::ArcLeftTarget, u16::MAX - 1),
+            (Extra::ArcAngleDelta, 2),
         ] {
-            let at = at + usize::from(index);
-            runtime.write_slice_native(at, runtime.native_word(at).wrapping_add(delta));
+            let value = extra(&runtime, index, word).wrapping_add(delta);
+            set_extra(&mut runtime, index, word, value);
         }
     }
     runtime.edit_actor(key, Native, |actor| {
@@ -293,7 +333,7 @@ fn climb_wall<G: Pirates + ?Sized>(right: bool, game: &mut G) {
 
 fn wall_jump<G: Pirates + ?Sized>(right: bool, game: &mut G) {
     let mut runtime = game.lease();
-    let index = runtime.word(0xe54);
+    let index = runtime.session().actors.controls.selected;
     let key = Key::from_legacy(index);
     let actor = runtime.resolve_actor(key, Native);
     let (origin, phase, radius) = (
@@ -315,21 +355,21 @@ fn wall_jump<G: Pirates + ?Sized>(right: bool, game: &mut G) {
         .resolve_actor(key, Native)
         .pre_instruction
         .to_ne_bytes()[0];
-    let step = runtime
-        .native_word(extra::ARC_ANGLE_DELTA + usize::from(index))
-        .to_ne_bytes()[0];
+    let step = Pirate::of(&runtime, index).arc_angle_delta().to_le_bytes()[0];
     let phase = u16::from(if right {
         phase.wrapping_sub(step)
     } else {
         phase.wrapping_add(step)
     });
     runtime.edit_actor(key, Native, |actor| actor.pre_instruction = phase);
-    let end = runtime.native_word(
-        (if right {
-            extra::ARC_RIGHT_TARGET
+    let end = extra(
+        &runtime,
+        index,
+        if right {
+            Extra::ArcRightTarget
         } else {
-            extra::ARC_LEFT_TARGET
-        }) + usize::from(index),
+            Extra::ArcLeftTarget
+        },
     );
     if phase == end {
         runtime.edit_actor(key, Native, |actor| {
@@ -492,8 +532,7 @@ fn landing_dust<R: PirateLease>(runtime: &mut R, key: Key) {
 fn spin_jump<G: Pirates + ?Sized>(index: u16, right: bool, descending: bool, game: &mut G) {
     let mut runtime = game.lease();
     let key = Key::from_legacy(index);
-    let velocity_at = extra::SPEED + usize::from(index);
-    let speed = u16::from(runtime.native_word(velocity_at).to_ne_bytes()[1]);
+    let speed = Pirate::of(&runtime, index).speed() >> 8;
     runtime.edit_actor(key, Native, |actor| {
         actor.x.whole = offset_x(actor.x.whole, speed, right);
     });
@@ -505,10 +544,10 @@ fn spin_jump<G: Pirates + ?Sized>(index: u16, right: bool, descending: bool, gam
                 .wrapping_add(if descending { 1 } else { u16::MAX });
         });
     }
-    let velocity = runtime
-        .native_word(velocity_at)
+    let velocity = Pirate::of(&runtime, index)
+        .speed()
         .wrapping_add(if descending { 0xffe0 } else { 32 });
-    runtime.write_slice_native(velocity_at, velocity);
+    set_extra(&mut runtime, index, Extra::Speed, velocity);
     if descending {
         if velocity == 0 {
             runtime.edit_actor(key, Native, |actor| {
@@ -555,15 +594,14 @@ enum DivekickPhase {
 fn divekick<G: Pirates + ?Sized>(index: u16, right: bool, phase: DivekickPhase, game: &mut G) {
     let mut runtime = game.lease();
     let key = Key::from_legacy(index);
-    let velocity_at = extra::SPEED + usize::from(index);
     match phase {
         DivekickPhase::Jump => {
-            let speed = u16::from(runtime.native_word(velocity_at).to_ne_bytes()[1]);
+            let speed = Pirate::of(&runtime, index).speed() >> 8;
             runtime.edit_actor(key, Native, |actor| {
                 actor.y.whole = actor.y.whole.wrapping_sub(speed)
             });
-            let velocity = (runtime.native_word(velocity_at) as i16).wrapping_sub(64);
-            runtime.write_slice_native(velocity_at, velocity as u16);
+            let velocity = (Pirate::of(&runtime, index).speed() as i16).wrapping_sub(64);
+            set_extra(&mut runtime, index, Extra::Speed, velocity as u16);
             if velocity < 0 {
                 runtime.edit_actor(key, Native, |actor| {
                     actor.variables[FUNCTION] = if right {
@@ -578,19 +616,19 @@ fn divekick<G: Pirates + ?Sized>(index: u16, right: bool, phase: DivekickPhase, 
                     };
                     actor.instruction_delay = 1;
                 });
-                runtime.write_slice_native(velocity_at, 1536);
+                set_extra(&mut runtime, index, Extra::Speed, 1536);
             }
         }
         DivekickPhase::Divekick => {
             runtime.edit_actor(key, Native, |actor| {
                 actor.x.whole = offset_x(actor.x.whole, 5, right);
             });
-            let [fraction, whole] = runtime.native_word(velocity_at).to_ne_bytes();
+            let [fraction, whole] = Pirate::of(&runtime, index).speed().to_le_bytes();
             let amount = (i32::from(whole) << 16) | i32::from(fraction);
             let finished = api::move_vertical(&mut runtime, key, amount) == MovementResult::Blocked
                 || {
-                    let velocity = (runtime.native_word(velocity_at) as i16).wrapping_sub(64);
-                    runtime.write_slice_native(velocity_at, velocity as u16);
+                    let velocity = (Pirate::of(&runtime, index).speed() as i16).wrapping_sub(64);
+                    set_extra(&mut runtime, index, Extra::Speed, velocity as u16);
                     velocity < 0 || velocity as u16 & 0xff00 == 0
                 };
             if finished {
@@ -607,7 +645,7 @@ fn divekick<G: Pirates + ?Sized>(index: u16, right: bool, phase: DivekickPhase, 
                     };
                     actor.instruction_delay = 1;
                 });
-                let y = runtime.native_word(extra::SPAWN_Y + usize::from(index));
+                let y = Pirate::of(&runtime, index).spawn_y();
                 runtime.edit_actor(key, Native, |actor| actor.y.whole = y);
                 landing_dust(&mut runtime, key);
             }
@@ -636,13 +674,12 @@ fn divekick<G: Pirates + ?Sized>(index: u16, right: bool, phase: DivekickPhase, 
 }
 
 fn stop_ninja<G: Pirates + ?Sized>(index: u16, game: &mut G) {
-    game.lease()
-        .write_slice_native(extra::SPEED + usize::from(index), 0);
+    set_extra(&mut game.lease(), index, Extra::Speed, 0);
 }
 
 fn set_divekick_speed<G: Pirates + ?Sized>(index: u16, right: bool, game: &mut G) {
     let mut runtime = game.lease();
-    runtime.write_slice_native(extra::SPEED + usize::from(index), 1536);
+    set_extra(&mut runtime, index, Extra::Speed, 1536);
     let actor = runtime.resolve_actor(Key::from_legacy(index), Native);
     let (start, end) = if right {
         (
@@ -653,12 +690,12 @@ fn set_divekick_speed<G: Pirates + ?Sized>(index: u16, right: bool, game: &mut G
         (actor.variables[POSTS_MIDPOINT_X], actor.pre_instruction)
     };
     let midpoint = start.wrapping_add(end.wrapping_sub(start) >> 1);
-    runtime.write_slice_native(extra::DIVEKICK_MIDPOINT_X + usize::from(index), midpoint);
+    set_extra(&mut runtime, index, Extra::DivekickMidpointX, midpoint);
 }
 
 fn initialize_ninja<G: Pirates + ?Sized>(game: &mut G) {
     let mut runtime = game.lease();
-    let index = runtime.word(0xe54);
+    let index = runtime.session().actors.controls.selected;
     let y = runtime.edit_actor(Key::from_legacy(index), Native, |actor| {
         let right = actor.parameters[0] & 1 != 0;
         actor.instruction = if right {
@@ -695,7 +732,7 @@ fn initialize_ninja<G: Pirates + ?Sized>(game: &mut G) {
         actor.variables[FUNCTION] = function::NONE;
         actor.y.whole
     });
-    runtime.write_slice_native(extra::SPAWN_Y + usize::from(index), y);
+    set_extra(&mut runtime, index, Extra::SpawnY, y);
     runtime.foreign(|game| game.load_ninja_palette());
 }
 
@@ -779,12 +816,14 @@ fn ready_to_divekick<G: Pirates + ?Sized>(game: &mut G) {
 fn damage<R: PirateLease>(runtime: &mut R) {
     let key = current(runtime);
     let x = runtime.resolve_actor(key, Native).x.whole;
-    runtime.write_word_le(x, fields::SPECIAL_DEATH_ITEM_DROP_X_ORIGIN_POS);
+    runtime.session_mut().enemy_projectiles.drop_origin.x = x;
+    runtime.words_stored();
     let y = runtime.resolve_actor(key, Native).y.whole;
-    runtime.write_word_le(y, fields::SPECIAL_DEATH_ITEM_DROP_Y_ORIGIN_POS);
+    runtime.session_mut().enemy_projectiles.drop_origin.y = y;
+    runtime.words_stored();
     combat::shot_reaction(runtime, api::ShotHandling::ReactionOnly);
     if runtime.resolve_actor(key, Native).health == 0 {
-        let index = runtime.word(fields::CUR_ENEMY_INDEX);
+        let index = runtime.session().actors.controls.selected;
         let drop_items = runtime.resolve_actor(key, Native).definition == GOLD_NINJA;
         runtime.edit_actor(key, Native, |actor| {
             actor.variables[NINJA_INITIAL_SPEED] = 0
@@ -815,8 +854,12 @@ pub fn shot<G: Pirates + ?Sized>(game: &mut G) {
 pub fn check_shot<G: Pirates + ?Sized>(game: &mut G) {
     let mut runtime = game.lease();
     if runtime.resolve_actor(current(&runtime), Native).definition == GOLD_NINJA {
-        let index = usize::from(runtime.word(fields::COLLISION_DETECTION_INDEX));
-        let kind = runtime.word(arrays::PROJECTILE_TYPE + 2 * index);
+        let raw = runtime
+            .session()
+            .room
+            .collision_detection_index
+            .wrapping_mul(2);
+        let kind = shot!(runtime, raw, kind);
         let class = kind & 0xf00;
         if class >= 0x300 {
             return;
@@ -857,13 +900,13 @@ fn reflect_shot<R: PirateLease>(runtime: &mut R) {
         return;
     }
     let reflection_index = runtime
-        .word(fields::COLLISION_DETECTION_INDEX)
+        .session()
+        .room
+        .collision_detection_index
         .wrapping_mul(2);
-    // Array reads keep the unwrapped element index; the reflection argument wraps.
-    let index = 2 * usize::from(runtime.word(fields::COLLISION_DETECTION_INDEX));
-    let class = runtime.word(arrays::PROJECTILE_TYPE + index) & 0xf00;
+    let class = shot!(runtime, reflection_index, kind) & 0xf00;
     if class == 0x200 {
-        if runtime.word(arrays::PROJECTILE_VARIABLES + index) == 0 {
+        if shot!(runtime, reflection_index, variable) == 0 {
             return;
         }
     } else if class >= 0x300 {
@@ -871,13 +914,12 @@ fn reflect_shot<R: PirateLease>(runtime: &mut R) {
     }
     let key = current(runtime);
     runtime.edit_actor(key, Native, |actor| actor.invincibility = 10);
-    let direction_at = arrays::PROJECTILE_DIR + index;
-    let direction = match runtime.word(direction_at) & 15 {
+    let direction = match shot!(runtime, reflection_index, direction) & 15 {
         7 => 1,
         2 => 8,
         _ => 5,
     };
-    runtime.write_word_le(direction, direction_at);
+    shot!(runtime, reflection_index, direction = direction; PrefixLe);
     runtime.foreign(|game| game.reflect_player_projectile(reflection_index));
     runtime.queue_sound(2, 6, 0x66);
 }
@@ -910,7 +952,7 @@ fn walking_instruction<R: PirateLease>(runtime: &R, key: Key, attack: bool) -> u
 
 fn walk<G: Pirates + ?Sized>(right: bool, game: &mut G) {
     let mut runtime = game.lease();
-    let index = runtime.word(fields::CUR_ENEMY_INDEX);
+    let index = runtime.session().actors.controls.selected;
     let key = Key::from_legacy(index);
     if api::player_within(&mut runtime, key, Axis::Y, 16) {
         let instruction = walking_instruction(&runtime, key, true);
@@ -925,13 +967,13 @@ fn walk<G: Pirates + ?Sized>(right: bool, game: &mut G) {
         return;
     }
     let x = runtime.resolve_actor(key, Native).x.whole;
-    runtime.write_slice_native(extra::SPEED + usize::from(index), x);
+    set_extra(&mut runtime, index, Extra::Speed, x);
     runtime.edit_actor(key, Native, |actor| {
         actor.x.whole = offset_x(x, if right { 16 } else { 17 }, right)
     });
     let mover = current(&runtime);
     let floor = api::move_vertical(&mut runtime, mover, 1 << 16) == MovementResult::Blocked;
-    let x = runtime.native_word(extra::SPEED + usize::from(index));
+    let x = Pirate::of(&runtime, index).speed();
     runtime.edit_actor(key, Native, |actor| actor.x.whole = x);
     let turn = !floor || {
         if !right {
@@ -971,7 +1013,7 @@ fn advance<G: Pirates + ?Sized>(walking: bool, game: &mut G) {
     let mut runtime = game.lease();
     let key = current(&runtime);
     let state = u32::from(runtime.resolve_actor(key, Native).variables[FUNCTION]) | 0xb20000;
-    let index = runtime.word(fields::CUR_ENEMY_INDEX);
+    let index = runtime.session().actors.controls.selected;
     runtime.foreign(|game| dispatch_state(state, index, game));
     if walking && runtime.resolve_actor(key, Native).parameters[0] & PARAMETER_ALTERNATE != 0 {
         runtime.foreign(|game| flinch_from_projectile(true, game));
@@ -1005,12 +1047,12 @@ pub fn dispatch_instruction<G: Pirates + ?Sized>(
     match ea {
         instruction::FIRE_LASER_LEFT => {
             let mut runtime = game.lease();
-            let index = runtime.word(fields::CUR_ENEMY_INDEX);
+            let index = runtime.session().actors.controls.selected;
             let definition = runtime
                 .resolve_actor(Key::from_legacy(index), Native)
                 .definition;
             let value = runtime.legacy_native_record(0xa0, definition).word(6);
-            runtime.write_word_le(value, fields::EPROJ_INIT_PARAM_1);
+            runtime.session_mut().enemy_projectiles.spawn.primary = value;
             drop(runtime);
             fire_laser(false, 16, game);
             script

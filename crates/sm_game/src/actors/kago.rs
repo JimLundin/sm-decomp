@@ -4,21 +4,14 @@ use crate::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 use crate::actors::api::{DeathKind, ShotHandling};
 use crate::actors::combat;
 use crate::actors::host::{ActorLease, ActorRuntime as _, LeaseActors};
-use crate::actors::layouts::part_view;
-use crate::ram::words;
-use crate::session_slot;
+use crate::actors::slot_view::{SlotState, slot_view};
+use crate::session_access::SessionAccess as _;
 
-part_view! {
-    /// Kago's view of its slot.
-    Kago: EnemyLayout40 {
-        words: [
-            function, fast_animation, var_c, var_d, unread_0fb0, unread_0fb2, hits, parameter_2,
-        ],
-        pad1: [u8; 26696],
-        words: [
-            var_00, var_01, var_02, var_03, hit_counter,
-        ],
-        _: [u16; 27],
+slot_view! {
+    /// Kago's slot: the hits left before it dies.
+    Kago, KagoEdit {
+        record: [],
+        extended: [hit_counter = var_04],
     }
 }
 
@@ -37,9 +30,7 @@ pub mod instruction_list {
 
 /// Properties bit 13: process instructions.
 const PROCESS_INSTRUCTIONS: u16 = 0x2000;
-/// $7E:183E and $7E:1840: the earthquake type (BG1 only, 1 px, diagonal) and timer.
-const EARTHQUAKE_TYPE: usize = 0x183e;
-const EARTHQUAKE_TIMER: usize = 0x1840;
+/// The earthquake type (BG1 only, 1 px, diagonal) and its frames.
 const DIAGONAL_1PX: u16 = 2;
 const SHAKE_FRAMES: u16 = 16;
 /// The big explosion death, and the Kago bug projectile ($86:D02E).
@@ -47,8 +38,8 @@ const BIG_EXPLOSION: u16 = 4;
 const KAGO_BUG: u16 = 0xd02e;
 
 /// Initialisation AI - Kago ($A8:AB46).
-pub fn initialize(runtime: &mut impl ActorLease) {
-    let index = runtime.word(words::CUR_ENEMY_INDEX);
+pub fn initialize(runtime: &mut (impl ActorLease + SlotState)) {
+    let index = runtime.session().actors.controls.selected;
     let key = Key::from_legacy(index);
     runtime.edit_actor(key, Native, |actor| {
         actor.properties |= PROCESS_INSTRUCTIONS;
@@ -60,12 +51,12 @@ pub fn initialize(runtime: &mut impl ActorLease) {
         actor.pre_instruction = 0;
     });
     let hits = runtime.resolve_actor(key, Native).parameters[0];
-    session_slot!(runtime, Kago[i32::from(index)].hit_counter = hits);
+    *KagoEdit::of(runtime, index).hit_counter() = hits;
 }
 /// Main AI - Kago ($A8:AB75): Kago function - nothing ($A8:AB7B) becomes an
 /// RTL. Was `advance`.
-pub fn main_ai(runtime: &mut impl ActorLease) {
-    let key = Key::from_legacy(runtime.word(words::CUR_ENEMY_INDEX));
+pub fn main_ai(runtime: &mut (impl ActorLease + SlotState)) {
+    let key = Key::from_legacy(runtime.session().actors.controls.selected);
     match runtime.resolve_actor(key, Native).variables[0] {
         function::NOTHING => {
             runtime.edit_actor(key, Native, |actor| actor.variables[0] = function::RTL)
@@ -79,11 +70,12 @@ pub fn main_ai(runtime: &mut impl ActorLease) {
 pub fn shot<H: LeaseActors + ?Sized>(game: &mut H) {
     let runtime = &mut game.lease();
     combat::shot_reaction(runtime, ShotHandling::Finalize);
-    runtime.write_slice_le(EARTHQUAKE_TYPE, DIAGONAL_1PX);
-    runtime.write_slice_le(EARTHQUAKE_TIMER, SHAKE_FRAMES);
+    let feedback = &mut runtime.session_mut().feedback;
+    feedback.earthquake_kind = DIAGONAL_1PX;
+    feedback.earthquake_timer = SHAKE_FRAMES;
     // Damage may select another actor. Retain that identity through death,
     // then use the live selection only for the projectile's graphics source.
-    let index = runtime.word(words::CUR_ENEMY_INDEX);
+    let index = runtime.session().actors.controls.selected;
     let key = Key::from_legacy(index);
     if runtime.resolve_actor(key, Native).variables[1] == 0 {
         runtime.edit_actor(key, Native, |actor| {
@@ -92,9 +84,8 @@ pub fn shot<H: LeaseActors + ?Sized>(game: &mut H) {
             actor.instruction_delay = 1;
         });
     }
-    let kago = i32::from(index);
-    let hits = session_slot!(runtime, Kago[kago].hit_counter).wrapping_sub(1);
-    session_slot!(runtime, Kago[kago].hit_counter = hits);
+    let hits = Kago::of(runtime, index).hit_counter().wrapping_sub(1);
+    *KagoEdit::of(runtime, index).hit_counter() = hits;
     if (hits as i16) < 0 {
         combat::die(
             runtime,
@@ -105,7 +96,7 @@ pub fn shot<H: LeaseActors + ?Sized>(game: &mut H) {
         runtime.edit_actor(key, Native, |actor| actor.pre_instruction = 1);
     }
     let y = runtime.resolve_actor(key, Native).y.whole;
-    let current = runtime.word(words::CUR_ENEMY_INDEX);
+    let current = runtime.session().actors.controls.selected;
     runtime.foreign(|game| {
         game.spawn_projectile(y, current, KAGO_BUG);
     });

@@ -28,8 +28,7 @@ impl Access for Runtime<'_> {
             }
         } else if self.persistent_is_current() {
             self.game.set_scroll_word(word, value);
-            self.inputs =
-                crate::game::session_encoding::inputs(&|at| self.game.ram().read_byte(at));
+            self.refresh_scroll_inputs();
         } else {
             // Match the original dirty Runtime's raw-byte fallback and refresh.
             for (offset, byte) in value.to_le_bytes().into_iter().enumerate() {

@@ -3,13 +3,25 @@
 use crate::actors::access::{ActorAccess, ActorKey as Key};
 use crate::actors::boss_lease::BossLease;
 use crate::actors::host::{Axis, BossEffects, abs16};
-use crate::actors::layouts::EnemyLayout72 as Bug;
 use crate::actors::queries;
-use crate::session_slot;
+use crate::actors::slot_view::{SlotState, slot_view};
 
 /// A lease on a game with the zebs' effects.
-pub trait Lease: BossLease<Game: BossEffects> + ActorAccess {}
-impl<T: BossLease<Game: BossEffects> + ActorAccess + ?Sized> Lease for T {}
+pub trait Lease: BossLease<Game: BossEffects> + ActorAccess + SlotState {}
+impl<T: BossLease<Game: BossEffects> + ActorAccess + SlotState + ?Sized> Lease for T {}
+
+slot_view! {
+    /// A zeb's slot: its direction (bit 15 left), spawn position, cooldown,
+    /// animation phase and state routine; the Y it rises to and the phase
+    /// whose instruction list is set. Parameter 1 picks the alternate lists.
+    Zeb, ZebEdit {
+        record: [
+            direction = var_a, spawn_x = var_b, spawn_y = var_c, cooldown = var_d,
+            phase = var_e, state = var_f, parameter_1 = parameter_1,
+        ],
+        extended: [rise_target_y = var_00, shown_phase = var_01],
+    }
+}
 
 /// Main AI - zeb ($B3:887A): run its state routine.
 pub fn main_ai<H: Lease>(game: &mut H) {
@@ -25,106 +37,124 @@ pub fn main_ai<H: Lease>(game: &mut H) {
 }
 
 pub fn initialize<H: Lease>(game: &mut H) {
-    let e = i32::from(game.current_enemy());
-    session_slot!(game, Bug[e].var_b = session_slot!(game, Bug[e].base.x_pos));
-    let y = session_slot!(game, Bug[e].base.y_pos);
-    session_slot!(game, Bug[e]; var_c = y, var_00 = y.wrapping_sub(16), var_f = 0x8880, var_d = 48, var_e = 0, var_01 = 0);
-    session_slot!(game, Bug[e].base.current_instruction = 0x87ab);
-    if session_slot!(game, Bug[e].parameter_1) != 0 {
-        session_slot!(game, Bug[e].base.current_instruction = 0x8a1d);
+    let k = game.current_enemy();
+    let mut zeb = ZebEdit::of(game, k);
+    let (x, y) = (zeb.actor().x.whole, zeb.actor().y.whole);
+    *zeb.spawn_x() = x;
+    *zeb.spawn_y() = y;
+    *zeb.rise_target_y() = y.wrapping_sub(16);
+    *zeb.state() = 0x8880;
+    *zeb.cooldown() = 48;
+    *zeb.phase() = 0;
+    *zeb.shown_phase() = 0;
+    zeb.actor().instruction = 0x87ab;
+    if *zeb.parameter_1() != 0 {
+        zeb.actor().instruction = 0x8a1d;
     }
 }
 pub fn state_address<H: Lease>(game: &H) -> u32 {
-    let e = i32::from(game.current_enemy());
-    0xb30000 | u32::from(session_slot!(game, Bug[e].var_f))
+    0xb30000 | u32::from(Zeb::of(game, game.current_enemy()).state())
 }
 fn update_animation<H: Lease>(game: &mut H) {
-    let e = i32::from(game.current_enemy());
-    let phase = session_slot!(game, Bug[e].var_e);
-    if phase != session_slot!(game, Bug[e].var_01) {
-        session_slot!(game, Bug[e].var_01 = phase);
-        let alternate = session_slot!(game, Bug[e].parameter_1) != 0;
-        session_slot!(game, Bug[e].base; current_instruction = crate::enemy_lists::pipe_bug_instruction_list(game, alternate, phase as isize), instruction_timer = 1, timer = 0);
+    let k = game.current_enemy();
+    let zeb = Zeb::of(game, k);
+    let phase = zeb.phase();
+    if phase != zeb.shown_phase() {
+        *ZebEdit::of(game, k).shown_phase() = phase;
+        let alternate = Zeb::of(game, k).parameter_1() != 0;
+        let list = crate::enemy_lists::pipe_bug_instruction_list(game, alternate, phase as isize);
+        let mut zeb = ZebEdit::of(game, k);
+        let actor = zeb.actor();
+        actor.instruction = list;
+        actor.instruction_delay = 1;
+        actor.timer = 0;
     }
 }
 pub fn await_view<H: Lease>(_: u16, game: &mut H) {
     if !game.current_outside_screen() {
-        let current = i32::from(game.current_enemy());
-        session_slot!(game, Bug[current].var_f = 0x8890);
+        let current = game.current_enemy();
+        *ZebEdit::of(game, current).state() = 0x8890;
     }
 }
 pub fn await_player<H: Lease>(k: u16, game: &mut H) {
-    let e = i32::from(k);
     let dy = game.player_delta(k, Axis::Y) as i16;
     if dy < 0 && (i32::from(dy) + 96) & 0x8000 == 0 {
         let dx = game.player_delta(k, Axis::X);
-        session_slot!(game, Bug[e].var_a, |direction| direction & 0x7fff
-            | dx & 0x8000);
-        if abs16(session_slot!(game, Bug[e].base.x_pos).wrapping_sub(game.player_x())) < 0x40 {
-            session_slot!(game, Bug[e].var_f = 0x88e3);
-            session_slot!(game, Bug[e].base.properties, |properties| properties
-                & !0x100);
-            session_slot!(game, Bug[e].base.timer = 0);
-            session_slot!(
-                game,
-                Bug[e].var_e = if session_slot!(game, Bug[e].var_a) & 0x8000 != 0 {
-                    0
-                } else {
-                    2
-                }
-            );
+        {
+            let mut zeb = ZebEdit::of(game, k);
+            let direction = zeb.direction();
+            *direction = (*direction & 0x7fff) | (dx & 0x8000);
+        }
+        if abs16(
+            Zeb::of(game, k)
+                .actor()
+                .x
+                .whole
+                .wrapping_sub(game.player_x()),
+        ) < 0x40
+        {
+            {
+                let mut zeb = ZebEdit::of(game, k);
+                *zeb.state() = 0x88e3;
+                zeb.actor().properties &= !0x100;
+                zeb.actor().timer = 0;
+                *zeb.phase() = if *zeb.direction() & 0x8000 != 0 { 0 } else { 2 };
+            }
             update_animation(game);
         }
     }
 }
 pub fn rise<H: Lease>(k: u16, game: &mut H) {
-    let e = i32::from(k);
-    let previous = session_slot!(game, Bug[e].base.y_subpos);
-    session_slot!(game, Bug[e].base.y_subpos, |old| old.wrapping_sub(1));
-    session_slot!(
-        game,
-        Bug[e].base.y_pos = (i32::from(session_slot!(game, Bug[e].base.y_pos))
-            + i32::from(previous != 0)
-            - 2) as u16
-    );
-    if (session_slot!(game, Bug[e].var_00) as i16)
-        .wrapping_sub(session_slot!(game, Bug[e].base.y_pos) as i16)
-        >= 0
-        && session_slot!(game, Bug[e].base.y_pos) < game.player_y()
     {
-        session_slot!(game, Bug[e].var_e, |phase| phase | 1);
+        let mut zeb = ZebEdit::of(game, k);
+        let y = &mut zeb.actor().y;
+        let previous = y.fraction;
+        y.fraction = previous.wrapping_sub(1);
+        y.whole = (i32::from(y.whole) + i32::from(previous != 0) - 2) as u16;
+    }
+    let zeb = Zeb::of(game, k);
+    let y = zeb.actor().y.whole;
+    if (zeb.rise_target_y() as i16).wrapping_sub(y as i16) >= 0 && y < game.player_y() {
+        *ZebEdit::of(game, k).phase() |= 1;
         update_animation(game);
-        session_slot!(game, Bug[e].var_f = 0x891c);
+        *ZebEdit::of(game, k).state() = 0x891c;
     }
 }
 pub fn fly<H: Lease>(k: u16, game: &mut H) {
-    let e = i32::from(k);
-    let step = if session_slot!(game, Bug[e].var_a) & 0x8000 == 0 {
-        2
-    } else {
-        0xfffe
-    };
-    session_slot!(
-        game,
-        Bug[e].base.x_subpos = session_slot!(game, Bug[e].base.x_subpos)
-    );
-    session_slot!(game, Bug[e].base.x_pos, |old| old.wrapping_add(step));
+    {
+        let mut zeb = ZebEdit::of(game, k);
+        let step = if *zeb.direction() & 0x8000 == 0 {
+            2
+        } else {
+            0xfffe
+        };
+        // The original also stores the X subposition to itself here.
+        let x = &mut zeb.actor().x;
+        x.whole = x.whole.wrapping_add(step);
+    }
     if queries::leaving_screen(&*game, Key::from_legacy(k)) as u8 & 1 != 0 {
-        session_slot!(game, Bug[e].base; x_pos = session_slot!(game, Bug[e].var_b), x_subpos = 0);
-        let y = session_slot!(game, Bug[e].var_c);
-        session_slot!(game, Bug[e].base; y_pos = y, y_subpos = y);
-        session_slot!(game, Bug[e].var_e = 0);
+        {
+            let mut zeb = ZebEdit::of(game, k);
+            let (spawn_x, spawn_y) = (*zeb.spawn_x(), *zeb.spawn_y());
+            let actor = zeb.actor();
+            actor.x.whole = spawn_x;
+            actor.x.fraction = 0;
+            actor.y.whole = spawn_y;
+            actor.y.fraction = spawn_y;
+            *zeb.phase() = 0;
+        }
         update_animation(game);
-        session_slot!(game, Bug[e].base.properties, |properties| properties
-            | 0x100);
-        session_slot!(game, Bug[e]; var_d = 48, var_f = 0x897e);
+        let mut zeb = ZebEdit::of(game, k);
+        zeb.actor().properties |= 0x100;
+        *zeb.cooldown() = 48;
+        *zeb.state() = 0x897e;
     }
 }
 pub fn cooldown<H: Lease>(k: u16, game: &mut H) {
-    let e = i32::from(k);
-    let previous = session_slot!(game, Bug[e].var_d);
-    session_slot!(game, Bug[e].var_d, |old| old.wrapping_sub(1));
+    let mut zeb = ZebEdit::of(game, k);
+    let previous = *zeb.cooldown();
+    *zeb.cooldown() = previous.wrapping_sub(1);
     if previous == 1 {
-        session_slot!(game, Bug[e].var_f = 0x8890);
+        *zeb.state() = 0x8890;
     }
 }

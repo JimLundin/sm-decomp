@@ -127,3 +127,31 @@ background verifier can change the loaded ROM at these exact boundaries.
 This is verification compatibility, not an emulated PPU write or a second video
 producer. Remove these hooks when that verifier consumes equivalent typed video
 effects and preserves its source-mutation, failure-prefix and snapshot checks.
+
+## `LEGACY(original-overflow)`: the original's reads and stores past their tables
+
+Some original routines index a table with a value that can leave it, and the
+CPU reads or stores whatever RAM lies there. A typed index into the table's
+Session owner would panic or give a different result, so these paths keep the
+original RAM address. They go through `crates/sm_game/src/legacy_overflow.rs`,
+whose functions resolve the address exactly as the address API they wrap (the
+projected bytes, which already own the neighbouring RAM). Each call site carries
+a `LEGACY(original-overflow)` comment; `tools/cycle_report.py` counts the calls
+as kind `legacy_overflow` and `tools/ram_ratchet.py` reports them as
+`engine_legacy_overflow_sites`. Where an index is in range, the site uses its
+typed owner and only the out-of-range branch goes through the module.
+
+| Family | Sites | What the original does | What a hardware-faithful typed replacement needs |
+| --- | --- | --- | --- |
+| Crocomire's melt | `crocomire_reactions::erase_melt_columns`, `data_bank_byte`; `boss_lease::bg2_staging::set_unbounded` | Erase melting pixel column ($A4:96C8) reads X offsets past their 49-entry table into its own code, with the caller's A as the index's high byte; the column heights ($7E:069C + offset) and tile offsets built from them reach $8xxx, $Cxxx and $10xxx; the bus read of a carried index reaches low RAM. The melt cursor and tilemap store past the BG2 staging words ($7E:2000..$2FFF) | a typed model of every RAM block those offsets can reach (in effect a whole-WRAM owner), or proof from the melt's reachable states that the offsets stay in the 49 heights and the tiles buffer |
+| Enemy index added to another table | `covern` (Samus X/Y at $0AF6/$0AFA + enemy index), `evir` (parameter 2 high byte at 8 * speed entry into the enemy table), `squeept` flame in slot 0 ($0F38 + field), `phantoon` part fallbacks (no slot at the part offset) and shot kinds past the 10 projectiles ($0C18) | the indexed load uses an enemy index or derived offset on a table it does not index, reading neighbouring RAM (Samus's state after $0AF6, any enemy table byte, the 40h bytes before the table) | the neighbouring owners' bytes by address, or per-site proof that the index stays within the table (covern's reads Samus's position only for the enemy in slot 0) |
+| Rinka's spawn availability | `rinka::occupied`, `set_availability` | $7E:87FE + availability index; the spawn table's indexes 2..16h are slot 0's extended words $7E:8800..$8814 (typed), any other value (a stale index) reaches other RAM | proof that a Mother Brain's room rinka's fourth variable is only ever 0 or a spawn table index |
+| Draygon's swoop table | `draygon_sweep` (`write_y_position`, the swoop step's read) | the swoop Y positions at $7E:9002 + index, up to 800h bytes, run past the shared boss block's end ($7E:97DC) into the enemy projectile angles and beyond, and Draygon's function timer indexes it wherever it is | a typed swoop table that also owns $7E:97DC..$9802 and the bytes past it, or proof of the timer's range |
+| Level data past the cells | `statues::spike_clearing_footstep`, `room_state::random_explosion`, `crawlers::slope_x_velocity`; `grapple_swing::react_to_block` (still a direct `compatibility_byte`: its host has only that projection, and taking it into the module would couple one more file) | $7F:0002 + 2 * block index, with indexes past the 3200h cells (block + room width, a random tile, the collision cursor) reading the behaviour bytes and RAM after them | typed cells extended by the RAM that follows ($7F:6402 behaviour bytes and beyond) |
+| Visual handles past their slots | `visual_host::session_aliases` (palette effect and animated tile members, the palette flag word, palette colour stores) | a palette-effect or animated-tile handle, or a colour index, past its slot table reaches the next table's RAM ($7E:1E7D.., $7E:1EF5.., $7E:C000..) | the visual owners' neighbouring tables addressed together, or proof that handles stay in range |
+| X-ray beam window rows | `beam_windows` (on-screen and off-screen positive rows, the anchor and reopened rows, the generic row writer) | the ROM wraps the 16-bit row offset before adding the table base, so row zero's anchor and reopened rows reach base + FFFEh (the next WRAM bank), and cleanup runs on signed offsets past either end of the 230-row table | a typed window table plus the RAM either side of it, or proof that the beam's start row never wraps |
+| Dachora's palette destination | `dachora::load_palette` | a palette index past the 8-entry destination table ($A7:F55F) reads a destination from the code after it; the 32 byte stores go there, below palette RAM or between its words | a typed palette with byte-granular stores into whatever the ROM-derived destination names, or proof that dachora's palette index stays in bits 9-11 |
+
+To retire a row: prove the index in range (then use the typed owner and delete
+the fallback) or give the Session an owner for the RAM the overflow reaches;
+remove the calls, their tags and the row together.

@@ -8,7 +8,7 @@ use crate::actors::host::{ActorLease, LeaseActors};
 use crate::enemy_projectiles::host::Effects as _;
 use crate::enemy_script::EnemyScript;
 use crate::player_projectiles::content::table;
-use crate::ram::words as W;
+use crate::session_access::SessionAccess as _;
 
 const MOVING_LEFT: [u16; 2] = [0x8932, 0x8a43]; // instruction list, function
 const MOVING_RIGHT: [u16; 2] = [0x8958, 0x8a5c];
@@ -62,7 +62,7 @@ pub fn patrol<H: LeaseActors>(right: bool, game: &mut H) {
     runtime.next_random();
     let key = current(&runtime);
     let frame = runtime.resolve_actor(key, Le).frame as u8;
-    if frame.wrapping_add(runtime.word(W::RANDOM_NUMBER) as u8) < 2 {
+    if frame.wrapping_add(runtime.session().timing.random_number as u8) < 2 {
         runtime.edit_actor(key, Le, |actor| actor.pre_instruction = 0x8a75); // attacking: RTS
         animate(&mut runtime, if right { 0x896e } else { 0x8948 });
     }

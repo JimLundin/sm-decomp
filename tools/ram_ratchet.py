@@ -15,6 +15,19 @@ The production line count is advisory for now (Jim, 2026-10-31: shipping
 faster comes first; strict code-volume reduction comes later). It is still
 reported, but only the RAM coupling measures fail the check.
 
+The engine inventory (Jim, 2026-11-02) also counts what the sm_game measure
+misses: address APIs (session_slot!, SlotAccess, native_word, write_slice_*),
+direct .ram() calls and unresolved word/byte methods in the target packages, and
+all RAM access in the legacy engine under sm/src/game. Completion means these
+reach zero too. Address APIs and raw calls may not rise above main's baseline;
+the other two are reported.
+
+Calls into crate::legacy_overflow (cycle_report kind legacy_overflow) are the
+original game's reads and stores past their tables, tagged
+LEGACY(original-overflow) and listed in docs/LEGACY.md. They are not address
+APIs (the module's own internals still count as their kinds); their count,
+engine_legacy_overflow_sites, is reported only.
+
 Run from the repository root: python3 tools/ram_ratchet.py [--update]
 """
 import os
@@ -34,11 +47,22 @@ import cycle_report  # noqa: E402
 # union adds two files: 1842/99 becomes 2145/101. This is not the lower queued
 # batch-13 count; lower it only after that landing. Production remains advisory.
 BASELINE = {
-    "sm_game_ram_sites": 613,
-    "sm_game_coupled_files": 74,
+    "sm_game_ram_sites": 563,
+    "sm_game_coupled_files": 72,
     "production_lines": 173506,
+    # Engine inventory (Jim, 2026-11-02): address-shaped access is RAM access.
+    # First measured on main 0115740f5 (ROM record reads excluded). Address APIs and raw calls are enforced:
+    # converting counted sites into them is not a retirement, and the address
+    # decoding behind them slows every replay. The lexical unresolved-method and
+    # legacy-engine measures are reported only.
+    "engine_ram_address_sites": 91,
+    "engine_raw_ram_calls": 115,
+    "engine_unresolved_ram_methods": 1027,
+    "legacy_engine_ram_sites": 529,
+    # Original-game overflow paths (LEGACY(original-overflow)), reported only.
+    "engine_legacy_overflow_sites": 49,
 }
-ADVISORY = {"production_lines"}
+ADVISORY = {"production_lines", "engine_unresolved_ram_methods", "legacy_engine_ram_sites", "engine_legacy_overflow_sites"}
 
 
 CFG_TEST = re.compile(r"^\s*#\[cfg\(test\)\]\s*$")
@@ -106,12 +130,49 @@ def harness_lines():
     return total
 
 
+def engine_inventory():
+    """Address-shaped and raw RAM access the sm_game measure does not see.
+
+    cycle_report's source inventory over the engine: the target packages
+    (crates/*/src outside verification and sm_tools) and the legacy engine
+    (sm/src/game outside compat and verification). Address APIs such as
+    session_slot!, SlotAccess and native_word still name SNES RAM addresses even
+    when typed Session storage answers them, so they count as RAM access.
+    """
+    kinds = {"target": {}, "legacy_engine": {}}
+    for top in ("crates", os.path.join("sm", "src", "game")):
+        for root, _, names in os.walk(top):
+            for name in names:
+                if not name.endswith(".rs"):
+                    continue
+                path = os.path.join(root, name).replace("\\", "/")
+                if path.startswith("crates/") and "/src/" not in path:
+                    continue
+                counts = kinds.get(cycle_report.inventory_scope(path)[0])
+                if counts is None:
+                    continue
+                with open(path, encoding="utf-8", errors="replace") as source:
+                    text = source.read()
+                for record in cycle_report.inventory_sites(text):
+                    counts[record[2]] = counts.get(record[2], 0) + 1
+    target, legacy = kinds["target"], kinds["legacy_engine"]
+    access = ("raw_ram_call", "raw_base", "ram_macro", "ram_view", "address_api", "cohort_copy")
+    return {
+        "engine_ram_address_sites": target.get("address_api", 0),
+        "engine_raw_ram_calls": target.get("raw_ram_call", 0) + target.get("raw_base", 0),
+        "engine_unresolved_ram_methods": target.get("unresolved_method", 0),
+        "legacy_engine_ram_sites": sum(legacy.get(kind, 0) for kind in access),
+        "engine_legacy_overflow_sites": target.get("legacy_overflow", 0),
+    }
+
+
 def measure():
     ram = cycle_report.sm_game_ram_couplings()
     return {
         "sm_game_ram_sites": sum(ram["sites"].values()),
         "sm_game_coupled_files": ram["coupled_files"],
         "production_lines": production_lines(),
+        **engine_inventory(),
     }
 
 

@@ -1,11 +1,11 @@
 //! Shooting-star motion and drawing for the ending's star field.
 use crate::imported::word as table_word;
 use crate::menus::host::Host;
-use crate::ram::words::OAM_NEXT_PTR;
 use sm_data::shooting_stars::TILE_ADDRESS as STAR_TILE_ADDRESS;
 
 /// The 40 16-byte star records: state (index, frame high, bit 15 waiting), X
-/// and Y positions with fractions, timer, and speeds; OAM and reset values.
+/// and Y positions with fractions, timer, and speeds; the object cursor's
+/// offset in OAM, and reset values.
 const RECORDS: core::ops::Range<usize> = 0xe0c..0x108c;
 const STATE: usize = 0;
 const X: usize = 2;
@@ -15,7 +15,7 @@ const Y_FRACTION: usize = 8;
 const TIMER: usize = 10;
 const X_SPEED: usize = 12;
 const Y_SPEED: usize = 14;
-const OAM: usize = 0x370;
+const OBJECT_CURSOR: usize = 0x220;
 const CENTRE: u16 = 128;
 const RESET_WAIT: u16 = 32;
 const CENTRED: [(usize, u16); 4] = [(X, CENTRE), (Y, CENTRE), (X_FRACTION, 0), (Y_FRACTION, 0)];
@@ -83,19 +83,19 @@ pub fn advance_shooting_stars<H: Host + ?Sized>(enabled: u16, game: &mut H) {
             game.write_word_le(moved, at + position);
         }
     }
-    let mut output = game.word(OAM_NEXT_PTR);
+    let mut output = game.object_little_word(OBJECT_CURSOR);
     for at in RECORDS.step_by(16) {
         if (game.word(at + STATE) as i16) < 0 {
             continue;
         }
         let x = game.word(at + X) as i16;
-        let oam = OAM + usize::from(output);
+        let entry = usize::from(output);
         let y: i16;
         if game.byte(at + X + 1) != 0
             || ((i32::from(x) - 4) & 0xff00) != 0
             || {
                 // This overlapping word write precedes even the Y rejection.
-                game.write_slice_native(oam, (x as u16).wrapping_sub(4));
+                game.object_write_native_slice(entry, (x as u16).wrapping_sub(4));
                 y = game.word(at + Y) as i16;
                 game.byte(at + Y + 1) != 0
             }
@@ -107,7 +107,7 @@ pub fn advance_shooting_stars<H: Host + ?Sized>(enabled: u16, game: &mut H) {
             rewind(game, at);
             continue;
         }
-        game.write_slice_native(oam + 1, (y as u16).wrapping_sub(4));
+        game.object_write_native_slice(entry + 1, (y as u16).wrapping_sub(4));
         let timer = game.word(at + TIMER).wrapping_sub(1);
         game.write_slice_native(at + TIMER, timer);
         if timer as i16 <= 0 {
@@ -125,9 +125,11 @@ pub fn advance_shooting_stars<H: Host + ?Sized>(enabled: u16, game: &mut H) {
                 STAR_TILE_ADDRESS,
                 frame,
             );
-            game.write_slice_native(oam + 2, tile);
+            game.object_write_native_slice(entry + 2, tile);
             output = output.wrapping_add(4);
         }
     }
-    game.write_word_le(output, OAM_NEXT_PTR);
+    for (lane, byte) in output.to_le_bytes().into_iter().enumerate() {
+        game.object_write_byte(OBJECT_CURSOR + lane, byte);
+    }
 }

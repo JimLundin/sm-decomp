@@ -3,7 +3,7 @@ pub mod fx;
 use crate::enemy_projectiles::host::Effects;
 use crate::menu_state::SaveSelection;
 use crate::ram::RawRam as _;
-use crate::ram::{checked_word, word, words as fields};
+use crate::ram::{checked_word, word};
 use crate::room_mechanisms::creation::spawn_hardcoded;
 use crate::runtime_access::SessionView;
 use crate::session_access::SessionAccess as _;
@@ -253,7 +253,7 @@ pub fn execute_door_code<H: ScriptHost + ?Sized>(script: u16, game: &mut H) {
 /// What the room main code needs beyond the owned-Session view: the Samus
 /// pose command, the imported Ceres rotation table, and the sprite object,
 /// sky, projectile and cutscene effects of the compatibility runtime.
-pub trait MainCodeHost: SessionView {
+pub trait MainCodeHost: SessionView + crate::display::preparation::Access {
     fn command_player(&mut self, command: u16);
     fn ceres_rotation_step(&mut self, word: isize) -> sm_data::ceres_elevator::RotationStep;
     /// Create sprite object `kind` at (`x`, `y`) ($B4:BC26).
@@ -281,10 +281,8 @@ pub fn execute_main_code<H: MainCodeHost>(script: u16, h: &mut H) {
                 h.queue_sky_rows(false);
             }
             random_explosion(1, true, h);
-            h.write_word_le(
-                h.word(fields::EARTHQUAKE_TIMER) | 0x8000,
-                fields::EARTHQUAKE_TIMER,
-            );
+            h.session_mut().feedback.earthquake_timer |= 0x8000;
+            h.words_stored();
         }
         // Main ASM - scroll screen right in Dachora room.
         0xc1e6 => {
@@ -306,7 +304,7 @@ pub fn execute_main_code<H: MainCodeHost>(script: u16, h: &mut H) {
                 room.main_variables[0] = room.main_variables[0].wrapping_sub(1);
                 if (room.main_native(0) as i16) < 0 {
                     room.main_variables[0] = 8;
-                    let definition = if (h.word(fields::RANDOM_NUMBER) & 0x8000) != 0 {
+                    let definition = if (h.session().timing.random_number & 0x8000) != 0 {
                         ADDR_STRU_869742
                     } else {
                         ADDR_STRU_869734
@@ -314,7 +312,7 @@ pub fn execute_main_code<H: MainCodeHost>(script: u16, h: &mut H) {
                     let x = [
                         0x50, 0x60, 0x70, 0x80, 0x90, 0xa0, 0xb0, 0xc0, 0xd0, 0xe0, 0xf0, 0x110,
                         0x130, 0x150, 0x170, 0x190,
-                    ][usize::from(h.word(fields::RANDOM_NUMBER) & 15)];
+                    ][usize::from(h.session().timing.random_number & 15)];
                     h.spawn_room_projectile(definition, x);
                 }
             }
@@ -329,7 +327,8 @@ pub fn execute_main_code<H: MainCodeHost>(script: u16, h: &mut H) {
         // medium diagonal.
         0xe57c => {
             if let Some(kind) = select_earthquake(18, 0x200, 23, h) {
-                h.write_word_le(kind, fields::EARTHQUAKE_TYPE);
+                h.session_mut().feedback.earthquake_kind = kind;
+                h.words_stored();
             }
             random_explosion(3, false, h);
         }
@@ -341,7 +340,9 @@ pub fn execute_main_code<H: MainCodeHost>(script: u16, h: &mut H) {
             if let Some(kind) = select_earthquake(21, 0x180, 26, h) {
                 h.session_mut().room.set_main_native(1, kind);
             }
-            h.write_word_le(h.session().room.main_native(1), fields::EARTHQUAKE_TYPE);
+            let kind = h.session().room.main_native(1);
+            h.session_mut().feedback.earthquake_kind = kind;
+            h.words_stored();
             random_explosion(3, false, h);
         }
         0xe8cd => shake_crocomire(h),
@@ -354,8 +355,8 @@ pub fn execute_main_code<H: MainCodeHost>(script: u16, h: &mut H) {
 /// ($8F:C131, `on_tile`) or on every fourth frame ($8F:C183), then at
 /// ([$12], [$14]) ($8F:C1A9).
 fn random_explosion<H: MainCodeHost>(mask: u16, on_tile: bool, h: &mut H) {
-    if h.word(fields::TIME_IS_FROZEN_FLAG) != 0
-        || (h.word(fields::NMI_FRAME_COUNTER_WORD) & mask) != 0
+    if h.session().timing.time_frozen != 0
+        || (crate::frame_display_word!(h.NmiFrameWordPair) & mask) != 0
     {
         return;
     }
@@ -367,9 +368,22 @@ fn random_explosion<H: MainCodeHost>(mask: u16, on_tile: bool, h: &mut H) {
     // block index the tile check ($8F:C131) left.
     let mut entry_x = 0;
     if on_tile {
-        let row = u16::from((y >> 4) as u8) * u16::from(h.word(fields::ROOM_WIDTH_IN_BLOCKS) as u8);
+        let row = u16::from((y >> 4) as u8) * u16::from(h.session().room.width as u8);
         entry_x = row.wrapping_add(x >> 4).wrapping_mul(2);
-        if (h.native_word(0x10002 + usize::from(entry_x)) & 0x3ff) == 255 {
+        let block = match h
+            .session()
+            .room
+            .terrain
+            .cells()
+            .get(usize::from(entry_x / 2))
+        {
+            // The native-order word the RAM bytes hold.
+            Some(cell) => u16::from_ne_bytes(cell.level.to_le_bytes()),
+            // LEGACY(original-overflow): the random tile's block index past the
+            // 3200h level-data cells reads $7F:0002 + index anyway.
+            None => crate::legacy_overflow::ram_native_word(h, 0x10002 + usize::from(entry_x)),
+        };
+        if (block & 0x3ff) == 255 {
             return;
         }
     }
@@ -415,13 +429,14 @@ pub fn advance_ceres_elevator<H: MainCodeHost + ?Sized>(h: &mut H) {
             && (144i16).wrapping_sub(h.session().player.x as i16) >= 0
             && (h.session().player.y as i32 - 128i32) & 0x8000 != 0
             && (h.session().player.y as i32 - 75i32) & 0x8000 == 0
-            && h.word(fields::SAMUS_Y_SPEED) == 0
-            && h.word(fields::SAMUS_Y_SUBSPEED) == 0
-            && h.word(fields::GAME_STATE) as i32 == 8
+            && h.session().player.contact.y_speed.whole == 0
+            && h.session().player.contact.y_speed.fraction == 0
+            && h.session().game_loop.mode == 8
         {
             h.command_player(2);
             h.session_mut().presentation.visual_mut().screen_fade = Default::default();
-            h.write_word_le(32, fields::GAME_STATE);
+            h.session_mut().game_loop.mode = 32;
+            h.words_stored();
         }
         // Variable 1 counts frames to the next rotation step; variable 0 is
         // the signed step index, negative while rotating back.
@@ -432,10 +447,13 @@ pub fn advance_ceres_elevator<H: MainCodeHost + ?Sized>(h: &mut H) {
             let step_word = 6u16.wrapping_mul(room.main_native(0)) >> 1;
             let step = h.ceres_rotation_step(step_word as isize);
             h.session_mut().room.set_main_native(1, step.frames);
-            h.write_word_le(step.mode7_b, fields::REG_M7B);
-            h.write_word_le(-(h.word(fields::REG_M7B) as i32) as u16, fields::REG_M7C);
-            h.write_word_le(step.mode7_a, fields::REG_M7A);
-            h.write_word_le(h.word(fields::REG_M7A), fields::REG_M7D);
+            // The Mode 7 matrix: B, C = -B, A, then D = A.
+            crate::frame_display_word!(h.AffineWords1Pair = step.mode7_b);
+            let b = crate::frame_display_word!(h.AffineWords1Pair);
+            crate::frame_display_word!(h.AffineWords2Pair = b.wrapping_neg());
+            crate::frame_display_word!(h.AffineWords0Pair = step.mode7_a);
+            let a = crate::frame_display_word!(h.AffineWords0Pair);
+            crate::frame_display_word!(h.AffineWords3Pair = a);
             let index = h.session().room.main_native(0);
             let next = if (index as i16) < 0 {
                 if index == 0x8001 {

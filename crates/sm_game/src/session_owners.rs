@@ -957,7 +957,12 @@ pub struct LegacyPresentation {
     atmospheric: crate::player_transitions::state::AtmosphericEffects,
     actor_entries: [u16; 114],
     actor_sizes: [u16; 8],
+    /// The object table, its high table and the cursor ($0370..$0591). Legacy
+    /// staging records no authored publications.
+    objects: crate::scene::state::ObjectStaging,
 }
+/// The object staging bytes, from the table's first entry through the cursor.
+pub const OBJECTS: std::ops::Range<usize> = 0x370..0x592;
 // These are byte/word views of the current Display owner, including odd aliases.
 // Semantic source bindings and request identities are never decoded from them.
 macro_rules! display_bytes {
@@ -1081,13 +1086,13 @@ impl Presentation {
         (0x2d0..0x330).contains(&at) || (0x340..0x360).contains(&at) || (0x956..0x98e).contains(&at)
     }
     pub fn projected_byte(&self, at: usize) -> Option<u8> {
+        if OBJECTS.contains(&at) {
+            return self.objects().byte(at - OBJECTS.start).ok();
+        }
         let Self::Owned { display, .. } = self else {
             return None;
         };
         let state = &display.owner().state;
-        if (0x370..0x592).contains(&at) {
-            return state.objects.byte(at - 0x370).ok();
-        }
         let mut projected = None;
         let mut select_byte = |base: usize, byte: &u8| {
             if base == at {
@@ -1121,17 +1126,16 @@ impl Presentation {
         }
     }
     pub fn write_projected_byte(&mut self, at: usize, value: u8) -> bool {
+        if OBJECTS.contains(&at) {
+            self.objects_mut()
+                .write_byte(at - OBJECTS.start, value)
+                .expect("object projection");
+            return true;
+        }
         let Self::Owned { display, .. } = self else {
             return false;
         };
         let state = &mut display.owner_mut().state;
-        if (0x370..0x592).contains(&at) {
-            state
-                .objects
-                .write_byte(at - 0x370, value)
-                .expect("owned object projection");
-            return true;
-        }
         let write_word = |word: &mut u16, part: usize| {
             let mut bytes = word.to_le_bytes();
             bytes[part] = value;
@@ -1173,6 +1177,14 @@ impl Presentation {
         true
     }
     pub fn encode_projection(&self, mut span: impl FnMut(usize, &[u8])) {
+        if let Self::Legacy(state) = self {
+            let objects = &state.objects;
+            span(OBJECTS.start, &objects.bytes);
+            span(
+                OBJECTS.start + objects.bytes.len(),
+                &objects.native_order.encode(objects.cursor),
+            );
+        }
         if let Self::Owned { display, .. } = self {
             let state = &display.owner().state;
             let mut emit_byte = |at: usize, byte: &u8| span(at, &[*byte]);
@@ -1197,7 +1209,44 @@ impl Presentation {
             atmospheric: Default::default(),
             actor_entries: [0; 114],
             actor_sizes: [0; 8],
+            objects: crate::scene::state::ObjectStaging {
+                bytes: [0; 544],
+                cursor: 0,
+                native_order: if cfg!(target_endian = "little") {
+                    crate::scene::state::WordOrder::Little
+                } else {
+                    crate::scene::state::WordOrder::Big
+                },
+                produced: Vec::new(),
+            },
         }))
+    }
+    /// Load the Legacy object staging from RAM; an owned Display adopts its
+    /// own objects with the rest of its projection.
+    pub fn import_objects(&mut self, bytes: &impl Fn(usize) -> u8) {
+        if let Self::Legacy(state) = self {
+            let objects = &mut state.objects;
+            for (offset, byte) in objects.bytes.iter_mut().enumerate() {
+                *byte = bytes(OBJECTS.start + offset);
+            }
+            let cursor = OBJECTS.start + objects.bytes.len();
+            objects.cursor = objects
+                .native_order
+                .decode([bytes(cursor), bytes(cursor + 1)]);
+        }
+    }
+    /// The object table, its high table and the cursor, from the selected owner.
+    pub fn objects(&self) -> &crate::scene::state::ObjectStaging {
+        match self {
+            Self::Legacy(state) => &state.objects,
+            Self::Owned { display, .. } => &display.owner().state.objects,
+        }
+    }
+    pub fn objects_mut(&mut self) -> &mut crate::scene::state::ObjectStaging {
+        match self {
+            Self::Legacy(state) => &mut state.objects,
+            Self::Owned { display, .. } => &mut display.owner_mut().state.objects,
+        }
     }
     pub fn workspace(&self) -> &crate::presentation_workspace::Workspace {
         match self {

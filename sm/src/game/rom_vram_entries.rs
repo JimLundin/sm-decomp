@@ -6,7 +6,6 @@ use crate::game_state::Game;
 use crate::ram_map::{slot, word};
 use crate::rom::RomRecord;
 use crate::types::EnemyData;
-use sm_game::actors::mother_brain::MotherBrainBody;
 
 const QUEUE: usize = 0xd0;
 const ENTRY: u16 = 7;
@@ -68,32 +67,13 @@ pub(crate) fn queue_escape_timer_tiles(game: &mut Game) -> u8 {
     1
 }
 
-/// One Mother Brain sprite-tile entry per call from `bank`, starting at `start`;
-/// 1 and a cleared cursor once the table is exhausted.
-/// Was ProcessSpriteTilesTransfers.
-pub(crate) fn queue_mother_brain_sprite_tiles(bank: u8, start: u16, game: &mut Game) -> u8 {
-    let mut cursor = slot!(game, MotherBrainBody[0].sprite_tile_transfer);
-    if cursor == 0 {
-        cursor = start;
-    }
-    let entry = read(bank, cursor, game);
-    let mut size = entry.word(0);
+/// Queue the Mother Brain sprite-tile entry at `at` in `bank` unless its size
+/// is 0; the size. The body's cursor through the list is the fight's.
+pub(crate) fn queue_sprite_tile_entry(bank: u8, at: u16, game: &mut Game) -> u16 {
+    let entry = read(bank, at, game);
+    let size = entry.word(0);
     if size != 0 {
         push(&entry, game);
-        slot!(
-            game,
-            MotherBrainBody[0].sprite_tile_transfer = cursor.wrapping_add(ENTRY)
-        );
-        size = read(
-            bank,
-            slot!(game, MotherBrainBody[0].sprite_tile_transfer),
-            game,
-        )
-        .word(0);
-        if size != 0 {
-            return 0;
-        }
     }
-    slot!(game, MotherBrainBody[0].sprite_tile_transfer = size);
-    1
+    size
 }

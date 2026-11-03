@@ -1,46 +1,10 @@
 //! Kraid's fingernails, the good and bad claws Kraid flicks across the room
 //! (bank $A7:BCEF-$A7:BE8E): the initialisation they share.
 use crate::actors::boss_lease::BossState;
-use crate::actors::layouts::{EnemyBase, KraidLayout as Kraid, same_words};
-use crate::actors::session_slots::session_slot;
+use crate::actors::kraid::{Body, FingernailEdit};
+use crate::actors::slot_view::SlotState;
 use crate::cartridge::native_record;
 use crate::constants::enemy_properties::K_ENEMY_PROPS_INVISIBLE;
-
-/// A fingernail's view of its slot.
-#[derive(Clone, Copy)]
-#[repr(C)]
-pub struct Fingernail {
-    pub base: EnemyBase,
-    pub function: u16,
-    pub x_subvelocity: u16,
-    pad_0fac: [u16; 3],
-    pub function_timer: u16,
-    pad_0fb4: [u8; 26700],
-    pub next_function: u16,
-    pub unread_7802: u16,
-    pub unread_7804: u16,
-    pub kraid_thinking: u16,
-    pub kraid_min_y_pos_eject: u16,
-    pub kraid_mouth_flags: u16,
-    pub health_eighths: [u16; 8],
-    pad_781c: [u16; 1],
-    pub kraid_target_x: u16,
-    pub health_quarters: [u16; 4],
-    pad_7828: [u16; 1],
-    pub kraid_hurt_frame: u16,
-    pub kraid_hurt_frame_timer: u16,
-    pub unread_782e: [u16; 9],
-}
-
-same_words!(Fingernail: KraidLayout {
-    function = kraid_var_a, x_subvelocity = kraid_var_b, function_timer = kraid_var_f,
-    next_function = kraid_next, unread_7802 = field_2, unread_7804 = field_4,
-    kraid_thinking = kraid_thinking, kraid_min_y_pos_eject = kraid_min_y_pos_eject,
-    kraid_mouth_flags = kraid_mouth_flags, health_eighths = kraid_healths_8ths,
-    kraid_target_x = kraid_target_x, health_quarters = kraid_healths_4ths,
-    kraid_hurt_frame = kraid_hurt_frame, kraid_hurt_frame_timer = kraid_hurt_frame_timer,
-    unread_782e = field_2e,
-});
 
 /// Bank $A7 instruction lists.
 pub mod instruction_list {
@@ -65,24 +29,16 @@ const START_DELAY: u16 = 0x40;
 
 /// Kraid's fingernails initialisation AI ($A7:BCF2), for good and bad
 /// fingernails. Was `KraidFingernailInit`.
-pub fn initialize(k: u16, game: &mut (impl BossState + ?Sized)) {
-    let palette_index = session_slot!(game, Kraid[0].base.palette_index);
-    let nail = i32::from(k);
-    session_slot!(game, Fingernail[nail].base.palette_index = palette_index);
-    session_slot!(game, Fingernail[nail].x_subvelocity = X_SUBVELOCITY);
-    session_slot!(game, Fingernail[nail].base.properties, |old| old
-        | K_ENEMY_PROPS_INVISIBLE as u16);
-    session_slot!(game, Fingernail[nail].base;
-        instruction_timer = HOLD, current_instruction = instruction_list::FINGERNAIL);
+pub fn initialize(k: u16, game: &mut (impl BossState + SlotState + ?Sized)) {
+    let palette_index = Body::of(game, 0).actor().palette;
+    FingernailEdit::of(game, k).actor().palette = palette_index;
+    *FingernailEdit::of(game, k).x_subspeed() = X_SUBVELOCITY;
+    FingernailEdit::of(game, k).actor().properties |= K_ENEMY_PROPS_INVISIBLE as u16;
+    FingernailEdit::of(game, k).actor().instruction_delay = HOLD;
+    FingernailEdit::of(game, k).actor().instruction = instruction_list::FINGERNAIL;
     let spritemap = native_record(BANK, instruction_list::FINGERNAIL, game).word(2);
-    session_slot!(game, Fingernail[nail].base.spritemap_pointer = spritemap);
-    session_slot!(
-        game,
-        Fingernail[nail].next_function = function::INITIALISE_FINGERNAIL
-    );
-    session_slot!(
-        game,
-        Fingernail[nail].function = function::HANDLE_FUNCTION_TIMER
-    );
-    session_slot!(game, Fingernail[nail].function_timer = START_DELAY);
+    FingernailEdit::of(game, k).actor().spritemap = spritemap;
+    *FingernailEdit::of(game, k).next_function() = function::INITIALISE_FINGERNAIL;
+    *FingernailEdit::of(game, k).function() = function::HANDLE_FUNCTION_TIMER;
+    *FingernailEdit::of(game, k).function_timer() = START_DELAY;
 }

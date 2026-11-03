@@ -7,26 +7,31 @@ use crate::actors::api::{
 };
 use crate::actors::combat;
 use crate::actors::host::{ActorLease, LeaseActors, Random as _};
-use crate::actors::layouts::part_view;
-use crate::actors::session_slots::SlotAccess as _;
+use crate::actors::slot_view::{SlotState, slot_view};
+use crate::controller_state::Word as Input;
 use crate::effects::SoundEffects as _;
 use crate::enemy_script::EnemyScript;
 use crate::player_projectiles::content::{self, table};
-use crate::player_projectiles::host::Host as _;
-use crate::ram::{word_arrays, words};
+use crate::player_projectiles::{access::shot, host::Host as _};
 use crate::session_access::SessionAccess as _;
-use crate::session_slot;
 
-part_view! {
+/// A lease on a game whose slots are the Session's typed storage.
+pub trait Lease: ActorLease + SlotState {}
+impl<T: ActorLease + SlotState + ?Sized> Lease for T {}
+
+slot_view! {
     /// A yard's extended RAM, with its airborne velocities. Its crawling X and Y velocities,
     /// facing, hiding instruction list and consecutive turn count are its first five actor
-    /// words, and its movement function its pre-instruction word.
-    Yard: EnemyLayout40 {
-        words: [var_a, var_b, var_c, var_d, var_e, var_f, parameter_1, parameter_2],
-        pad1: [u8; 26696],
-        words: [y_subvelocity, y_velocity, x_subvelocity, x_velocity,
-            turn_disable_counter, turn_disabled, crawling_speed, direction, behaviour],
-        _: [u16; 23],
+    /// words, and its movement function its pre-instruction word. `bounced` ($7E:8000 in
+    /// slot 0, a word past the first extended block) flags the airborne yard hitting a wall.
+    Yard, YardEdit {
+        record: [],
+        extended: [
+            y_subvelocity = var_00, y_velocity = var_01, x_subvelocity = var_02,
+            x_velocity = var_03, turn_disable_counter = var_04, turn_disabled = var_05,
+            crawling_speed = var_06, direction = var_07, behaviour = var_08,
+            bounced = var_20,
+        ],
     }
 }
 
@@ -47,15 +52,15 @@ const DIRECTIONS: u32 = 0xa3_cd42;
 const SIGNS: u32 = 0xa3_cd82;
 const OPPOSITES: u32 = 0xa3_cdc2;
 const MOVEMENT_FUNCTIONS: u32 = 0xa3_cdd2;
-/// $7E:8000: a byte past the extended RAM the airborne yard flags when it hits a wall.
-const BOUNCED: usize = 0x8000;
-/// $7E:0A1E: Samus's pose X direction.
-const SAMUS_POSE_X_DIRECTION: usize = 0xa1e;
-
-fn slot(key: Key) -> i32 {
-    i32::from(key.byte_index())
+/// Samus's pose X direction ($7E:0A1E), the movement and facing word's low byte.
+fn pose_x_direction(runtime: &impl Lease) -> u8 {
+    runtime.session().player.movement_and_facing.to_le_bytes()[0]
 }
-fn direction_data(runtime: &impl ActorLease, direction: u16, field: isize) -> u16 {
+
+fn slot(key: Key) -> u16 {
+    key.byte_index()
+}
+fn direction_data(runtime: &impl Lease, direction: u16, field: isize) -> u16 {
     let record = content::captured(runtime.native_image(), DIRECTIONS);
     record.table_word(isize::try_from(direction).unwrap() * 4 + field)
 }
@@ -65,7 +70,7 @@ pub fn signed_speed(speed: u16, [flip, add]: [u16; 2]) -> u16 {
     (speed ^ flip).wrapping_add(add)
 }
 /// Set yard crawling velocities ($A3:CE27).
-fn set_velocities(runtime: &mut impl ActorLease, key: Key, offset: u16) {
+fn set_velocities(runtime: &mut impl Lease, key: Key, offset: u16) {
     let index = isize::try_from(offset >> 1).unwrap();
     let signs = [0, 1, 2, 3].map(|i| table(runtime, SIGNS, index + i));
     for axis in 0..2 {
@@ -76,15 +81,15 @@ fn set_velocities(runtime: &mut impl ActorLease, key: Key, offset: u16) {
     }
 }
 /// Set the instruction list and hiding instruction list from the pair at `index`.
-fn set_list_pair(runtime: &mut impl ActorLease, key: Key, address: u32, index: isize) {
+fn set_list_pair(runtime: &mut impl Lease, key: Key, address: u32, index: isize) {
     let instruction = table(runtime, address, index);
     runtime.edit_actor(key, Native, |actor| actor.instruction = instruction);
     let hiding = table(runtime, address, index + 1);
     runtime.edit_actor(key, Native, |actor| actor.variables[3] = hiding);
 }
 /// Set yard airborne instruction list ($A3:D2FA) for `behaviour`, and go airborne.
-fn go_airborne(runtime: &mut impl ActorLease, key: Key, behaviour: u16, address: u32) {
-    session_slot!(runtime, Yard[slot(key)].behaviour = behaviour);
+fn go_airborne(runtime: &mut impl Lease, key: Key, behaviour: u16, address: u32) {
+    *YardEdit::of(runtime, slot(key)).behaviour() = behaviour;
     runtime.edit_actor(key, Native, |actor| actor.pre_instruction = AIRBORNE);
     let facing = runtime.resolve_actor(key, Native).variables[2];
     let index = if behaviour == DROPPED {
@@ -99,14 +104,17 @@ fn go_airborne(runtime: &mut impl ActorLease, key: Key, behaviour: u16, address:
     });
 }
 /// Drop yard ($A3:D164).
-fn drop(runtime: &mut impl ActorLease, key: Key) {
-    if session_slot!(runtime, Yard[slot(key)].behaviour) != DROPPED {
+fn drop(runtime: &mut impl Lease, key: Key) {
+    if Yard::of(runtime, slot(key)).behaviour() != DROPPED {
         go_airborne(runtime, key, DROPPED, 0xa3_d1ab);
-        session_slot!(runtime, Yard[slot(key)]; x_subvelocity = 0, x_velocity = 0,
-            y_subvelocity = 0, y_velocity = 0);
+        let mut part = YardEdit::of(runtime, slot(key));
+        *part.x_subvelocity() = 0;
+        *part.x_velocity() = 0;
+        *part.y_subvelocity() = 0;
+        *part.y_velocity() = 0;
     }
 }
-fn orient(runtime: &mut impl ActorLease, key: Key, direction: u16, replace: bool) {
+fn orient(runtime: &mut impl Lease, key: Key, direction: u16, replace: bool) {
     let instruction = direction_data(runtime, direction, 0);
     runtime.edit_actor(key, Native, |actor| actor.instruction = instruction);
     let properties = direction_data(runtime, direction, 1);
@@ -124,15 +132,15 @@ fn orient(runtime: &mut impl ActorLease, key: Key, direction: u16, replace: bool
     }
 }
 /// Turn yard around ($A3:D356), unless hiding or still.
-fn turn_around(runtime: &mut impl ActorLease, key: Key) {
-    if session_slot!(runtime, Yard[slot(key)].behaviour) == HIDING
+fn turn_around(runtime: &mut impl Lease, key: Key) {
+    if Yard::of(runtime, slot(key)).behaviour() == HIDING
         || runtime.resolve_actor(key, Native).pre_instruction == NO_MOVEMENT
     {
         return;
     }
-    let direction = session_slot!(runtime, Yard[slot(key)].direction) as isize;
+    let direction = Yard::of(runtime, slot(key)).direction() as isize;
     let direction = table(runtime, OPPOSITES, direction);
-    session_slot!(runtime, Yard[slot(key)].direction = direction);
+    *YardEdit::of(runtime, slot(key)).direction() = direction;
     orient(runtime, key, direction, true);
     set_velocities(runtime, key, direction.wrapping_mul(8));
     // Set yard crawling movement function ($A3:CE57).
@@ -141,7 +149,7 @@ fn turn_around(runtime: &mut impl ActorLease, key: Key) {
     disable_turns(runtime, key, true);
 }
 /// Make yard face Samus horizontally ($A3:D33E).
-fn face_samus(runtime: &mut impl ActorLease, key: Key) {
+fn face_samus(runtime: &mut impl Lease, key: Key) {
     let actor = runtime.resolve_actor(key, Native);
     let x = runtime.session().player.x;
     let turn = if actor.variables[2] != 0 {
@@ -154,32 +162,39 @@ fn face_samus(runtime: &mut impl ActorLease, key: Key) {
     }
 }
 /// Check if player is directing towards enemy ($A3:D421).
-fn pressing_towards(runtime: &impl ActorLease, key: Key) -> bool {
+fn pressing_towards(runtime: &impl Lease, key: Key) -> bool {
     let facing = runtime.resolve_actor(key, Native).variables[2] & 1;
-    if (runtime.word(words::JOYPAD1_LASTKEYS) & 0x300) >> 8 == 1 {
+    if (*Input::Joypad1Lastkeys.get(&runtime.session().control) & 0x300) >> 8 == 1 {
         facing == 0
     } else {
         facing != 0
     }
 }
 /// Handle turn transition disabling ($A3:D124): disable for 10h frames after a turn.
-fn disable_turns(runtime: &mut impl ActorLease, key: Key, turned: bool) {
+fn disable_turns(runtime: &mut impl Lease, key: Key, turned: bool) {
     let yard = slot(key);
     if turned {
-        session_slot!(runtime, Yard[yard]; turn_disabled = 1, turn_disable_counter = 0);
-    } else if session_slot!(runtime, Yard[yard].turn_disable_counter).wrapping_add(1) >= 16 {
-        session_slot!(runtime, Yard[yard].turn_disabled = 0);
+        let mut part = YardEdit::of(runtime, yard);
+        *part.turn_disabled() = 1;
+        *part.turn_disable_counter() = 0;
+    } else if Yard::of(runtime, yard)
+        .turn_disable_counter()
+        .wrapping_add(1)
+        >= 16
+    {
+        *YardEdit::of(runtime, yard).turn_disabled() = 0;
     } else {
-        session_slot!(runtime, Yard[yard].turn_disable_counter, |c| c
-            .wrapping_add(1));
+        let mut part = YardEdit::of(runtime, yard);
+        let c = *part.turn_disable_counter();
+        *part.turn_disable_counter() = c.wrapping_add(1);
     }
 }
-fn snap(runtime: &mut impl ActorLease, key: Key) {
+fn snap(runtime: &mut impl Lease, key: Key) {
     let on_slope = api::snap_to_slopes(runtime, key);
     disable_turns(runtime, key, on_slope);
 }
 /// Set enemy instruction list and disable turn transition ($A3:D14C).
-fn turn_list(runtime: &mut impl ActorLease, key: Key, instruction: u16) {
+fn turn_list(runtime: &mut impl Lease, key: Key, instruction: u16) {
     runtime.edit_actor(key, Native, |actor| {
         actor.instruction = instruction;
         actor.instruction_delay = 1;
@@ -187,7 +202,7 @@ fn turn_list(runtime: &mut impl ActorLease, key: Key, instruction: u16) {
     disable_turns(runtime, key, true);
 }
 /// Move enemy ahead for ($A3:D0F8) or back from ($A3:D10D) the outside turn check.
-fn shift(runtime: &mut impl ActorLease, key: Key, read: impl Fn(usize) -> u16, back: bool) {
+fn shift(runtime: &mut impl Lease, key: Key, read: impl Fn(usize) -> u16, back: bool) {
     for axis in 0..2 {
         let actor = runtime.resolve_actor(key, Native);
         let position = [actor.x.whole, actor.y.whole][axis];
@@ -203,7 +218,7 @@ fn shift(runtime: &mut impl ActorLease, key: Key, read: impl Fn(usize) -> u16, b
     }
 }
 /// $14.$12 = ±[A] / 100h + `leading` * sgn([A]) ($A3:CF8F) for the crawling velocity on `axis`.
-fn velocity(runtime: &impl ActorLease, key: Key, axis: usize, leading: i32) -> i32 {
+fn velocity(runtime: &impl Lease, key: Key, axis: usize, leading: i32) -> i32 {
     let speed = i32::from(runtime.resolve_actor(key, Native).variables[axis] as i16) << 8;
     speed
         + if speed < 0 {
@@ -212,7 +227,7 @@ fn velocity(runtime: &impl ActorLease, key: Key, axis: usize, leading: i32) -> i
             leading << 16
         }
 }
-fn move_axis(runtime: &mut impl ActorLease, key: Key, axis: usize, amount: i32) -> bool {
+fn move_axis(runtime: &mut impl Lease, key: Key, axis: usize, amount: i32) -> bool {
     let result = match axis {
         0 => api::move_horizontal(runtime, key, amount, SlopePolicy::Follow),
         _ => api::move_vertical(runtime, key, amount),
@@ -225,7 +240,7 @@ pub fn crawl<H: LeaseActors + ?Sized>(raw: u16, axis: Axis, turn: u32, game: &mu
     let runtime = &mut game.lease();
     let key = Key::from_legacy(raw);
     let axis = usize::from(axis == Axis::Y);
-    let turn = if axis == 1 && session_slot!(runtime, Yard[slot(key)].turn_disabled) != 0 {
+    let turn = if axis == 1 && Yard::of(runtime, slot(key)).turn_disabled() != 0 {
         0xa3_cd22 + (turn - 0xa3_cce2) / 2
     } else {
         turn
@@ -265,7 +280,7 @@ pub fn crawl<H: LeaseActors + ?Sized>(raw: u16, axis: Axis, turn: u32, game: &mu
     }
 }
 /// Initialisation AI - yard ($A3:CDE2).
-pub fn initialize(runtime: &mut impl ActorLease) {
+pub fn initialize(runtime: &mut impl Lease) {
     let key = combat::current(runtime);
     runtime.edit_actor(key, Native, |actor| {
         actor.pre_instruction = NO_MOVEMENT;
@@ -275,14 +290,18 @@ pub fn initialize(runtime: &mut impl ActorLease) {
     let direction = runtime.resolve_actor(key, Native).instruction;
     orient(runtime, key, direction, false);
     let speed = runtime.resolve_actor(key, Native).parameters[0];
-    session_slot!(runtime, Yard[slot(key)]; behaviour = IDLE_CRAWLING, crawling_speed = speed);
+    {
+        let mut part = YardEdit::of(runtime, slot(key));
+        *part.behaviour() = IDLE_CRAWLING;
+        *part.crawling_speed() = speed;
+    }
     let key = combat::current(runtime);
     set_velocities(runtime, key, direction.wrapping_mul(8));
 }
 /// Handle yard hiding ($A3:CE9A): hide from Samus facing it from the side within 60h px
 /// above, or crawl again.
-fn handle_hiding(runtime: &mut impl ActorLease, key: Key) {
-    let behaviour = session_slot!(runtime, Yard[slot(key)].behaviour);
+fn handle_hiding(runtime: &mut impl Lease, key: Key) {
+    let behaviour = Yard::of(runtime, slot(key)).behaviour();
     if matches!(behaviour, SAMUS_ON_TOP | DROPPED | KICKED | SHOT) {
         return;
     }
@@ -294,7 +313,7 @@ fn handle_hiding(runtime: &mut impl ActorLease, key: Key) {
         } else {
             8
         };
-        if runtime.lease_byte(SAMUS_POSE_X_DIRECTION) == facing_it {
+        if pose_x_direction(runtime) == facing_it {
             if behaviour == HIDING {
                 return;
             }
@@ -305,23 +324,24 @@ fn handle_hiding(runtime: &mut impl ActorLease, key: Key) {
                     actor.instruction_delay = 1;
                     actor.timer = 0;
                 });
-                return session_slot!(runtime, Yard[slot(key)].behaviour = HIDING);
+                *YardEdit::of(runtime, slot(key)).behaviour() = HIDING;
+                return;
             }
         }
     }
-    session_slot!(runtime, Yard[slot(key)].behaviour = IDLE_CRAWLING);
+    *YardEdit::of(runtime, slot(key)).behaviour() = IDLE_CRAWLING;
 }
 /// Determine if yard hitbox is solid to Samus ($A3:CF11).
-fn set_solidity(runtime: &mut impl ActorLease, key: Key) {
+fn set_solidity(runtime: &mut impl Lease, key: Key) {
     let mut solid = false;
     if runtime.resolve_actor(key, Native).pre_instruction != AIRBORNE {
-        let still = runtime.word(words::SAMUS_HAS_MOMENTUM_FLAG) == 0;
-        let behaviour = session_slot!(runtime, Yard[slot(key)].behaviour);
+        let still = runtime.session().player.contact.momentum == 0;
+        let behaviour = Yard::of(runtime, slot(key)).behaviour();
         solid = if behaviour == SAMUS_ON_TOP {
             still && runtime.resolve_actor(key, Native).pre_instruction == NO_MOVEMENT
         } else {
             still && {
-                let behaviour = session_slot!(runtime, Yard[slot(key)].behaviour);
+                let behaviour = Yard::of(runtime, slot(key)).behaviour();
                 behaviour == HIDING || behaviour != DROPPED && behaviour != SHOT
             }
         };
@@ -341,7 +361,7 @@ pub fn prepare<H: LeaseActors + ?Sized>(game: &mut H) -> u32 {
     let key = combat::current(runtime);
     let feedback = &runtime.session().feedback;
     let quake = feedback.earthquake_timer == 30 && feedback.earthquake_kind == 20;
-    let behaviour = session_slot!(runtime, Yard[slot(key)].behaviour);
+    let behaviour = Yard::of(runtime, slot(key)).behaviour();
     if !matches!(behaviour, DROPPED | KICKED | SHOT) && quake {
         drop(runtime, key);
     }
@@ -356,7 +376,7 @@ pub fn prepare<H: LeaseActors + ?Sized>(game: &mut H) -> u32 {
 pub fn hiding<H: LeaseActors + ?Sized>(raw: u16, game: &mut H) {
     let runtime = &mut game.lease();
     let key = Key::from_legacy(raw);
-    let axis = usize::from(session_slot!(runtime, Yard[slot(key)].direction) >= 4);
+    let axis = usize::from(Yard::of(runtime, slot(key)).direction() >= 4);
     let amount = velocity(runtime, key, axis, 7);
     let result = match axis {
         1 => api::probe_vertical(runtime, key, amount),
@@ -366,12 +386,31 @@ pub fn hiding<H: LeaseActors + ?Sized>(raw: u16, game: &mut H) {
         drop(runtime, key);
     }
 }
-fn negate_pair(runtime: &mut impl ActorLease, at: usize) {
-    for offset in [0, 2] {
-        runtime.set_slot_word(at + offset, runtime.slot_word(at + offset).wrapping_neg());
+/// Yard `yard`'s 16.16 airborne velocity on `axis`, the velocity read first.
+fn velocity_pair(runtime: &impl Lease, yard: u16, axis: Axis) -> u32 {
+    let yard = Yard::of(runtime, yard);
+    let (whole, sub) = match axis {
+        Axis::X => (yard.x_velocity(), yard.x_subvelocity()),
+        Axis::Y => (yard.y_velocity(), yard.y_subvelocity()),
+    };
+    (u32::from(whole) << 16) | u32::from(sub)
+}
+/// Negate the subvelocity and then the velocity of yard `yard`'s `axis`, each as a word.
+fn negate_pair(runtime: &mut impl Lease, yard: u16, axis: Axis) {
+    let mut yard = YardEdit::of(runtime, yard);
+    let negate = |word: &mut u16| *word = word.wrapping_neg();
+    match axis {
+        Axis::X => {
+            negate(yard.x_subvelocity());
+            negate(yard.x_velocity());
+        }
+        Axis::Y => {
+            negate(yard.y_subvelocity());
+            negate(yard.y_velocity());
+        }
     }
 }
-fn bounce_sound(runtime: &mut impl ActorLease) {
+fn bounce_sound(runtime: &mut impl Lease) {
     runtime.foreign(|game| game.queue_sound(1, 0x70, 3));
 }
 /// Yard movement function - airborne ($A3:D1B3): fly, bouncing off walls, then land.
@@ -379,50 +418,57 @@ pub fn airborne<H: LeaseActors + ?Sized>(raw: u16, game: &mut H) {
     let runtime = &mut game.lease();
     let key = Key::from_legacy(raw);
     let yard = slot(key);
-    let x_at = crate::ram_slot!(@at Yard, yard, x_subvelocity);
-    let y_at = crate::ram_slot!(@at Yard, yard, y_subvelocity);
-    if session_slot!(runtime, Yard[yard].behaviour) != DROPPED {
-        let amount = session_slot!(runtime, Yard[yard](x_velocity, x_subvelocity)) as i32;
+    if Yard::of(runtime, yard).behaviour() != DROPPED {
+        let amount = velocity_pair(runtime, yard, Axis::X) as i32;
         if api::move_horizontal(runtime, key, amount, SlopePolicy::Ignore) == Blocked {
-            negate_pair(runtime, x_at);
-            runtime.write_slice_native(BOUNCED + usize::from(raw), 1);
+            negate_pair(runtime, yard, Axis::X);
+            *YardEdit::of(runtime, yard).bounced() = 1;
             bounce_sound(runtime);
         } else {
-            let delta = if session_slot!(runtime, Yard[yard].x_velocity) & 0x8000 != 0 {
+            let delta = if Yard::of(runtime, yard).x_velocity() & 0x8000 != 0 {
                 0x1000
             } else {
                 -0x1000i32 as u32
             };
-            let next = session_slot!(runtime, Yard[yard](x_velocity, x_subvelocity));
+            let next = velocity_pair(runtime, yard, Axis::X);
             let next = next.wrapping_add(delta);
-            session_slot!(runtime, Yard[yard].x_subvelocity = next as u16);
+            *YardEdit::of(runtime, yard).x_subvelocity() = next as u16;
             if next >> 16 != 0 {
-                session_slot!(runtime, Yard[yard].x_velocity = (next >> 16) as u16);
+                *YardEdit::of(runtime, yard).x_velocity() = (next >> 16) as u16;
             }
         }
     }
-    let amount = session_slot!(runtime, Yard[yard](y_velocity, y_subvelocity)) as i32;
+    let amount = velocity_pair(runtime, yard, Axis::Y) as i32;
     if api::move_vertical(runtime, key, amount) != Blocked {
-        let next =
-            session_slot!(runtime, Yard[yard](y_velocity, y_subvelocity)).wrapping_add(0x2000);
-        session_slot!(runtime, Yard[yard].y_subvelocity = next as u16);
+        let next = velocity_pair(runtime, yard, Axis::Y).wrapping_add(0x2000);
+        *YardEdit::of(runtime, yard).y_subvelocity() = next as u16;
         if (next >> 16).wrapping_sub(4) & 0x8000 != 0 {
-            session_slot!(runtime, Yard[yard].y_velocity = (next >> 16) as u16);
+            *YardEdit::of(runtime, yard).y_velocity() = (next >> 16) as u16;
         }
         return;
     }
-    if !(0..3).contains(&(session_slot!(runtime, Yard[yard].y_velocity) as i16)) {
-        negate_pair(runtime, y_at);
-        return runtime.write_slice_native(BOUNCED + usize::from(raw), 0);
+    if !(0..3).contains(&(Yard::of(runtime, yard).y_velocity() as i16)) {
+        negate_pair(runtime, yard, Axis::Y);
+        *YardEdit::of(runtime, yard).bounced() = 0;
+        return;
     }
-    session_slot!(runtime, Yard[yard]; x_velocity = 0, x_subvelocity = 0, y_velocity = 0,
-        y_subvelocity = 0);
+    {
+        let mut part = YardEdit::of(runtime, yard);
+        *part.x_velocity() = 0;
+        *part.x_subvelocity() = 0;
+        *part.y_velocity() = 0;
+        *part.y_subvelocity() = 0;
+    }
     runtime.edit_actor(key, Native, |actor| actor.variables[4] = 0);
-    session_slot!(runtime, Yard[yard]; turn_disable_counter = 0, turn_disabled = 1);
-    if session_slot!(runtime, Yard[yard].behaviour) == DROPPED {
-        session_slot!(runtime, Yard[yard].behaviour = IDLE_CRAWLING);
+    {
+        let mut part = YardEdit::of(runtime, yard);
+        *part.turn_disable_counter() = 0;
+        *part.turn_disabled() = 1;
+    }
+    if Yard::of(runtime, yard).behaviour() == DROPPED {
+        *YardEdit::of(runtime, yard).behaviour() = IDLE_CRAWLING;
     } else {
-        session_slot!(runtime, Yard[yard].behaviour = SAMUS_ON_TOP);
+        *YardEdit::of(runtime, yard).behaviour() = SAMUS_ON_TOP;
         runtime.edit_actor(key, Native, |actor| actor.parameters[0] = 8);
         face_samus(runtime, key);
         let index = (runtime.resolve_actor(key, Native).variables[2].wrapping_mul(4) >> 1) as isize;
@@ -440,32 +486,36 @@ pub fn airborne<H: LeaseActors + ?Sized>(raw: u16, game: &mut H) {
     });
 }
 /// Kick yard into air ($A3:D49F), at the speed Samus moved last frame.
-fn kick(runtime: &mut impl ActorLease, key: Key) {
+fn kick(runtime: &mut impl Lease, key: Key) {
     go_airborne(runtime, key, KICKED, 0xa3_d50f);
     let yard = slot(key);
-    let fraction = runtime.word(words::ABSOLUTE_MOVED_LAST_FRAME_X_FRACT);
-    session_slot!(runtime, Yard[yard].x_subvelocity = fraction);
-    let distance = runtime.word(words::ABSOLUTE_MOVED_LAST_FRAME_X);
-    session_slot!(runtime, Yard[yard].x_velocity = distance);
+    let fraction = runtime.session().player.camera_distance[0].fraction;
+    *YardEdit::of(runtime, yard).x_subvelocity() = fraction;
+    let distance = runtime.session().player.camera_distance[0].whole;
+    *YardEdit::of(runtime, yard).x_velocity() = distance;
     let index = (distance.min(15).wrapping_mul(4) >> 1) as isize;
     let sub = table(runtime, 0xa3_d517, index);
     let whole = table(runtime, 0xa3_d517, index + 1);
-    session_slot!(runtime, Yard[yard]; y_subvelocity = sub, y_velocity = whole);
-    if runtime.lease_byte(SAMUS_POSE_X_DIRECTION) & 4 != 0 {
-        negate_pair(runtime, crate::ram_slot!(@at Yard, yard, x_subvelocity));
+    {
+        let mut part = YardEdit::of(runtime, yard);
+        *part.y_subvelocity() = sub;
+        *part.y_velocity() = whole;
+    }
+    if pose_x_direction(runtime) & 4 != 0 {
+        negate_pair(runtime, yard, Axis::X);
     }
 }
 /// Enemy touch - yard ($A3:D3B0): kicked when Samus runs into it or it is airborne;
 /// otherwise it hurts her and turns.
-pub fn touch(runtime: &mut impl ActorLease) {
+pub fn touch(runtime: &mut impl Lease) {
     let key = combat::current(runtime);
     let yard = slot(key);
     let function = runtime.resolve_actor(key, Native).pre_instruction;
-    let behaviour = session_slot!(runtime, Yard[yard].behaviour);
+    let behaviour = Yard::of(runtime, yard).behaviour();
     let ridden = behaviour == SAMUS_ON_TOP
         && function != NO_MOVEMENT
         && pressing_towards(runtime, combat::current(runtime));
-    if !ridden && (function == AIRBORNE || runtime.word(words::SAMUS_HAS_MOMENTUM_FLAG) != 0) {
+    if !ridden && (function == AIRBORNE || runtime.session().player.contact.momentum != 0) {
         let current = combat::current(runtime);
         kick(runtime, current);
         if runtime.resolve_actor(key, Native).pre_instruction == AIRBORNE {
@@ -473,34 +523,40 @@ pub fn touch(runtime: &mut impl ActorLease) {
         }
     } else if function != NO_MOVEMENT && behaviour != KICKED && behaviour != DROPPED {
         api::contact_reaction(runtime, DeathHandling::Finalize);
-        let speed = session_slot!(runtime, Yard[yard].crawling_speed);
+        let speed = Yard::of(runtime, yard).crawling_speed();
         runtime.edit_actor(key, Native, |actor| actor.parameters[0] = speed);
-        if session_slot!(runtime, Yard[yard].behaviour) != IDLE_CRAWLING {
+        if Yard::of(runtime, yard).behaviour() != IDLE_CRAWLING {
             let current = combat::current(runtime);
             turn_around(runtime, current);
         }
-        session_slot!(runtime, Yard[yard].behaviour = IDLE_CRAWLING);
+        *YardEdit::of(runtime, yard).behaviour() = IDLE_CRAWLING;
     }
 }
 /// Enemy shot - yard ($A3:D469): power bombs and bombs hurt it; anything else shoots it
 /// into the air ($A3:D557).
-pub fn shot(runtime: &mut impl ActorLease) {
-    let index = usize::from(runtime.word(words::COLLISION_DETECTION_INDEX));
-    let kind = runtime.word(word_arrays::PROJECTILE_TYPE + 2 * index) & 0xff00;
+pub fn shot(runtime: &mut impl Lease) {
+    let raw = runtime
+        .session()
+        .room
+        .collision_detection_index
+        .wrapping_mul(2);
+    let kind = shot!(runtime, raw, kind) & 0xff00;
     if kind == 0x300 || kind == 0x500 {
         return combat::shot_reaction(runtime, ShotHandling::Finalize);
     }
     let key = combat::current(runtime);
-    let behaviour = session_slot!(runtime, Yard[slot(key)].behaviour);
+    let behaviour = Yard::of(runtime, slot(key)).behaviour();
     if !matches!(behaviour, DROPPED | KICKED) {
         let current = combat::current(runtime);
         go_airborne(runtime, current, SHOT, 0xa3_d5a4);
-        let away = if runtime.lease_byte(SAMUS_POSE_X_DIRECTION) == 4 {
+        let away = if pose_x_direction(runtime) == 4 {
             0xffff
         } else {
             1
         };
-        session_slot!(runtime, Yard[slot(key)]; y_velocity = 0xffff, x_velocity = away);
+        let mut part = YardEdit::of(runtime, slot(key));
+        *part.y_velocity() = 0xffff;
+        *part.x_velocity() = away;
     }
     bounce_sound(runtime);
 }
@@ -524,8 +580,8 @@ pub fn instruction<H: LeaseActors + ?Sized>(
             });
         }
         0xa3_cc48 => {
-            session_slot!(runtime, Yard[slot(key)].direction = j.word(0));
-            let direction = session_slot!(runtime, Yard[slot(key)].direction);
+            *YardEdit::of(runtime, slot(key)).direction() = j.word(0);
+            let direction = Yard::of(runtime, slot(key)).direction();
             let facing = direction_data(runtime, direction, 3);
             runtime.edit_actor(key, Native, |actor| actor.variables[2] = facing);
         }
@@ -534,7 +590,7 @@ pub fn instruction<H: LeaseActors + ?Sized>(
             return j.offset(2);
         }
         _ => {
-            let hiding = session_slot!(runtime, Yard[slot(key)].behaviour) == HIDING;
+            let hiding = Yard::of(runtime, slot(key)).behaviour() == HIDING;
             return if hiding || runtime.foreign(|game| game.next_random()) & 1 != 0 {
                 j.offset(-3)
             } else {

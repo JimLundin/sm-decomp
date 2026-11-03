@@ -7,13 +7,13 @@ use crate::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 use crate::actors::api::{self, Axis, MovementResult, SlopePolicy};
 use crate::actors::combat;
 use crate::actors::host::{ActorLease, LeaseActors};
-use crate::actors::layouts::part_view;
+use crate::actors::slot_view::{SlotState, slot_view};
 use crate::enemy_script::EnemyScript;
 use crate::geometry::Point;
+use crate::legacy_overflow;
 use crate::player_projectiles::content::{self, table};
 use crate::ram::word_arrays;
 use crate::session_access::SessionAccess as _;
-use crate::session_slot;
 
 /// Which crawler is initialising, by species.
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -40,15 +40,16 @@ impl Kind {
     }
 }
 
-part_view! {
-    /// A crawler's view of its slot and extended RAM.
-    Crawler: EnemyLayout40 {
-        words: [x_velocity, y_velocity, var_c, var_d, var_e, function, speed_index, instruction_lists],
-        pad1: [u8; 26696],
-        words: [
-            var_00, falling_y_subvelocity, falling_y_velocity, non_falling_function, turn_counter,
+slot_view! {
+    /// A crawler's extended words: its 16.16 falling Y velocity, the function
+    /// it returns to after falling, and the turns it has made without
+    /// touching a surface.
+    Crawler, CrawlerEdit {
+        record: [],
+        extended: [
+            falling_y_subvelocity = var_01, falling_y_velocity = var_02,
+            non_falling_function = var_03, turn_counter = var_04,
         ],
-        _: [u16; 27],
     }
 }
 
@@ -191,10 +192,9 @@ pub fn set_function<H: LeaseActors + ?Sized>(
     script.offset(1)
 }
 /// Start falling, remembering the function to return to.
-fn fall(runtime: &mut impl ActorLease, key: Key) {
-    let crawler = i32::from(key.byte_index());
+fn fall(runtime: &mut (impl ActorLease + SlotState), key: Key) {
     let function = runtime.resolve_actor(key, Native).pre_instruction;
-    session_slot!(runtime, Crawler[crawler].non_falling_function = function);
+    *CrawlerEdit::of(runtime, key.byte_index()).non_falling_function() = function;
     runtime.edit_actor(key, Native, |actor| {
         actor.pre_instruction = function::FALLING
     });
@@ -261,7 +261,13 @@ fn slope_x_velocity(runtime: &mut impl ActorLease) -> i32 {
     };
     api::select_block_at(runtime, point);
     let index = usize::from(runtime.session().room.collision_cursor);
-    if runtime.word(word_arrays::LEVEL_DATA + 2 * index) & BLOCK_TYPE == SLOPE_BLOCK
+    let block = match runtime.session().room.terrain.cells().get(index) {
+        Some(cell) => cell.level,
+        // LEGACY(original-overflow): a block index past the 3200h level-data
+        // cells reads $7F:0002 + 2 * index anyway.
+        None => legacy_overflow::lease_word(runtime, word_arrays::LEVEL_DATA + 2 * index),
+    };
+    if block & BLOCK_TYPE == SLOPE_BLOCK
         && runtime.lease_byte(BTS + usize::from(runtime.session().room.collision_cursor))
             & SLOPE_BTS_BITS
             >= FIRST_STEEP_SLOPE
@@ -295,7 +301,6 @@ pub fn crawl<H: LeaseActors + ?Sized>(raw: u16, axis: Axis, orange: bool, game: 
     let axis = usize::from(axis == Axis::Y);
     let runtime = &mut game.lease();
     let key = Key::from_legacy(raw);
-    let crawler = i32::from(raw);
     if runtime.session().feedback.earthquake_timer == SHAKE_TIMER
         && runtime.session().feedback.earthquake_kind == SHAKE_KIND
     {
@@ -304,7 +309,7 @@ pub fn crawl<H: LeaseActors + ?Sized>(raw: u16, axis: Axis, orange: bool, game: 
     let speed = i32::from(runtime.resolve_actor(key, Native).variables[axis] as i16) << 8;
     let leading = speed + if speed < 0 { -0x10000 } else { 0x10000 };
     if move_axis(runtime, key, axis, leading, orange) {
-        session_slot!(runtime, Crawler[crawler].turn_counter = 0);
+        *CrawlerEdit::of(runtime, raw).turn_counter() = 0;
         if axis == X_VELOCITY {
             api::snap_to_slopes(runtime, key);
         }
@@ -339,8 +344,8 @@ pub fn crawl<H: LeaseActors + ?Sized>(raw: u16, axis: Axis, orange: bool, game: 
             }
         }
     } else {
-        let turns = session_slot!(runtime, Crawler[crawler].turn_counter).wrapping_add(1);
-        session_slot!(runtime, Crawler[crawler].turn_counter = turns);
+        let turns = Crawler::of(runtime, raw).turn_counter().wrapping_add(1);
+        *CrawlerEdit::of(runtime, raw).turn_counter() = turns;
         if turns.wrapping_sub(MAX_TURNS) & SIGN != 0 {
             runtime.edit_actor(key, Native, |actor| {
                 actor.variables[1 - axis] = actor.variables[1 - axis].wrapping_neg()
@@ -356,11 +361,9 @@ pub fn crawl<H: LeaseActors + ?Sized>(raw: u16, axis: Axis, orange: bool, game: 
 pub fn falling<H: LeaseActors + ?Sized>(raw: u16, game: &mut H) {
     let runtime = &mut game.lease();
     let key = Key::from_legacy(raw);
-    let crawler = i32::from(raw);
-    let velocity = session_slot!(
-        runtime,
-        Crawler[crawler](falling_y_velocity, falling_y_subvelocity)
-    );
+    let crawler = Crawler::of(runtime, raw);
+    let velocity = (u32::from(crawler.falling_y_velocity()) << 16)
+        | u32::from(crawler.falling_y_subvelocity());
     if api::move_vertical(runtime, key, velocity as i32) == MovementResult::Blocked {
         runtime.edit_actor(key, Native, |actor| {
             if actor.parameters[0] == KEEP_SPEED {
@@ -368,24 +371,30 @@ pub fn falling<H: LeaseActors + ?Sized>(raw: u16, game: &mut H) {
                 actor.variables[1] = LANDED_SPEED;
             }
         });
-        session_slot!(runtime, Crawler[crawler]; falling_y_subvelocity = 0, falling_y_velocity = 0,
-            turn_counter = 0);
-        let function = session_slot!(runtime, Crawler[crawler].non_falling_function);
+        let mut crawler = CrawlerEdit::of(runtime, raw);
+        *crawler.falling_y_subvelocity() = 0;
+        *crawler.falling_y_velocity() = 0;
+        *crawler.turn_counter() = 0;
+        drop(crawler);
+        let function = Crawler::of(runtime, raw).non_falling_function();
         runtime.edit_actor(key, Native, |actor| actor.pre_instruction = function);
     } else {
-        if session_slot!(runtime, Crawler[crawler].falling_y_velocity).wrapping_sub(MAX_FALL_SPEED)
+        if Crawler::of(runtime, raw)
+            .falling_y_velocity()
+            .wrapping_sub(MAX_FALL_SPEED)
             & SIGN
             != 0
         {
-            let low = session_slot!(runtime, Crawler[crawler].falling_y_subvelocity);
-            let high = session_slot!(runtime, Crawler[crawler].falling_y_velocity);
+            let crawler = Crawler::of(runtime, raw);
+            let low = crawler.falling_y_subvelocity();
+            let high = crawler.falling_y_velocity();
             let next = ((u32::from(high) << 16) | u32::from(low)).wrapping_add(FALL_ACCELERATION);
-            session_slot!(runtime, Crawler[crawler]; falling_y_subvelocity = next as u16,
-                falling_y_velocity = (next >> 16) as u16);
+            let mut crawler = CrawlerEdit::of(runtime, raw);
+            *crawler.falling_y_subvelocity() = next as u16;
+            *crawler.falling_y_velocity() = (next >> 16) as u16;
         }
-        if session_slot!(runtime, Crawler[crawler].falling_y_subvelocity) == 0
-            && session_slot!(runtime, Crawler[crawler].falling_y_velocity) == 0
-        {
+        let crawler = Crawler::of(runtime, raw);
+        if crawler.falling_y_subvelocity() == 0 && crawler.falling_y_velocity() == 0 {
             runtime.edit_actor(key, Native, |actor| {
                 actor.pre_instruction = function::CRAWLING_VERTICALLY
             });

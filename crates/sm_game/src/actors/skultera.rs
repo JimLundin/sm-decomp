@@ -2,28 +2,28 @@
 //! at walls (bank $A3:900A-$A3:94AA). Was `maridia_fish`.
 use crate::actors::boss_lease::BossState;
 use crate::actors::host::Slopes;
-use crate::actors::layouts::part_view;
-use crate::actors::session_slots::session_slot;
+use crate::actors::slot_view::{SlotState, slot_view};
 use crate::enemy_script::EnemyScript;
 use sm_data::enemy_speeds::SpeedTable;
 
-/// What Skultera needs beyond the shared actor operations.
-pub trait Host: BossState {
+/// What Skultera needs beyond the shared actor operations; its slot is the
+/// Session's.
+pub trait Host: BossState + SlotState {
     fn unreachable(&mut self);
 }
 
-part_view! {
+slot_view! {
     /// Skultera's view of its slot.
-    Skultera: EnemyLayout40 {
-        words: [
-            function, right_subvelocity, right_velocity, left_subvelocity, left_velocity, angle,
-            parameter_1, parameter_2,
+    Skultera, SkulteraEdit {
+        record: [
+            function = var_a, right_subvelocity = var_b, right_velocity = var_c,
+            left_subvelocity = var_d, left_velocity = var_e, angle = var_f,
+            parameter_1 = parameter_1, parameter_2 = parameter_2,
         ],
-        pad1: [u8; 26696],
-        words: [
-            radius, turn_finished, angle_delta, previous_y_offset, y_offset,
+        extended: [
+            radius = var_00, turn_finished = var_01, angle_delta = var_02,
+            previous_y_offset = var_03, y_offset = var_04,
         ],
-        _: [u16; 27],
     }
 }
 
@@ -50,112 +50,114 @@ pub mod instruction {
     pub const SET_TURN_FINISHED: u32 = 0xa3_90aa;
 }
 
-fn current(game: &(impl Host + ?Sized)) -> i32 {
-    i32::from(game.current_enemy())
+fn current(game: &(impl Host + ?Sized)) -> u16 {
+    game.current_enemy()
 }
 /// The wave's Y offset at the fish's angle.
-fn y_offset(fish: i32, game: &mut (impl Host + ?Sized)) -> u16 {
-    let angle = session_slot!(game, Skultera[fish].angle);
-    let radius = session_slot!(game, Skultera[fish].radius);
+fn y_offset(fish: u16, game: &mut (impl Host + ?Sized)) -> u16 {
+    let angle = Skultera::of(game, fish).angle();
+    let radius = Skultera::of(game, fish).radius();
     game.scaled_sine(angle, radius)
 }
 /// Initialisation AI - Skultera ($A3:90B5).
 pub fn initialize(game: &mut (impl Host + ?Sized)) {
     let fish = current(game);
-    session_slot!(
-        game,
-        Skultera[fish].base.current_instruction = instruction_list::SWIMMING_LEFT
-    );
-    session_slot!(game, Skultera[fish].function = function::SWIMMING_LEFT);
-    if session_slot!(byte game, Skultera[fish].parameter_1[1]) == 0 {
-        session_slot!(
-            game,
-            Skultera[fish].base.current_instruction = instruction_list::SWIMMING_RIGHT
-        );
-        session_slot!(game, Skultera[fish].function = function::SWIMMING_RIGHT);
+    SkulteraEdit::of(game, fish).actor().instruction = instruction_list::SWIMMING_LEFT;
+    *SkulteraEdit::of(game, fish).function() = function::SWIMMING_LEFT;
+    if Skultera::of(game, fish).parameter_1().to_le_bytes()[1] == 0 {
+        SkulteraEdit::of(game, fish).actor().instruction = instruction_list::SWIMMING_RIGHT;
+        *SkulteraEdit::of(game, fish).function() = function::SWIMMING_RIGHT;
     }
-    let index = 4 * isize::from(session_slot!(byte game, Skultera[fish].parameter_1[0]));
+    let index = 4 * isize::from(Skultera::of(game, fish).parameter_1().to_le_bytes()[0]);
     let value = game.enemy_speed(SpeedTable::Linear, index);
-    session_slot!(game, Skultera[fish].right_velocity = value);
+    *SkulteraEdit::of(game, fish).right_velocity() = value;
     let value = game.enemy_speed(SpeedTable::Linear, index + 1);
-    session_slot!(game, Skultera[fish].right_subvelocity = value);
+    *SkulteraEdit::of(game, fish).right_subvelocity() = value;
     let value = game.enemy_speed(SpeedTable::Linear, index + 2);
-    session_slot!(game, Skultera[fish].left_velocity = value);
+    *SkulteraEdit::of(game, fish).left_velocity() = value;
     let value = game.enemy_speed(SpeedTable::Linear, index + 3);
-    session_slot!(game, Skultera[fish].left_subvelocity = value);
-    let value = u16::from(session_slot!(byte game, Skultera[fish].parameter_2[0]));
-    session_slot!(game, Skultera[fish].radius = value);
-    let value = u16::from(session_slot!(byte game, Skultera[fish].parameter_2[1]));
-    session_slot!(game, Skultera[fish]; angle_delta = value, angle = 0, turn_finished = 0);
+    *SkulteraEdit::of(game, fish).left_subvelocity() = value;
+    let value = u16::from(Skultera::of(game, fish).parameter_2().to_le_bytes()[0]);
+    *SkulteraEdit::of(game, fish).radius() = value;
+    let value = u16::from(Skultera::of(game, fish).parameter_2().to_le_bytes()[1]);
+    {
+        let mut edit = SkulteraEdit::of(game, fish);
+        *edit.angle_delta() = value;
+        *edit.angle() = 0;
+        *edit.turn_finished() = 0;
+    }
     let offset = y_offset(fish, game);
-    session_slot!(game, Skultera[fish].previous_y_offset = offset);
+    *SkulteraEdit::of(game, fish).previous_y_offset() = offset;
 }
-fn set_instruction_list(fish: i32, instruction: u16, game: &mut (impl Host + ?Sized)) {
-    session_slot!(game, Skultera[fish].base; instruction_timer = 1, timer = 0,
-        current_instruction = instruction);
+fn set_instruction_list(fish: u16, instruction: u16, game: &mut (impl Host + ?Sized)) {
+    let mut edit = SkulteraEdit::of(game, fish);
+    edit.actor().instruction_delay = 1;
+    edit.actor().timer = 0;
+    edit.actor().instruction = instruction;
 }
-fn turn(fish: i32, left: bool, game: &mut (impl Host + ?Sized)) {
+fn turn(fish: u16, left: bool, game: &mut (impl Host + ?Sized)) {
     let (function, list) = if left {
         (function::TURNING_RIGHT, instruction_list::TURNING_RIGHT)
     } else {
         (function::TURNING_LEFT, instruction_list::TURNING_LEFT)
     };
-    session_slot!(game, Skultera[fish].function = function);
+    *SkulteraEdit::of(game, fish).function() = function;
     set_instruction_list(fish, list, game);
 }
 /// Skultera function - swimming left ($A3:9132) or right ($A3:91AB): swim on
 /// the wave, turning at walls and blocks.
-fn swim(fish: i32, left: bool, game: &mut (impl Host + ?Sized)) {
+fn swim(fish: u16, left: bool, game: &mut (impl Host + ?Sized)) {
     let k = game.current_enemy();
     let amount = if left {
-        (u32::from(session_slot!(game, Skultera[fish].left_velocity)) << 16)
-            | u32::from(session_slot!(game, Skultera[fish].left_subvelocity))
+        (u32::from(Skultera::of(game, fish).left_velocity()) << 16)
+            | u32::from(Skultera::of(game, fish).left_subvelocity())
     } else {
-        (u32::from(session_slot!(game, Skultera[fish].right_velocity)) << 16)
-            | u32::from(session_slot!(game, Skultera[fish].right_subvelocity))
+        (u32::from(Skultera::of(game, fish).right_velocity()) << 16)
+            | u32::from(Skultera::of(game, fish).right_subvelocity())
     } as i32;
     if game.move_horizontal(k, amount, Slopes::Ignore) {
         turn(fish, left, game);
     } else {
         let offset = y_offset(fish, game);
-        session_slot!(game, Skultera[fish].y_offset = offset);
+        *SkulteraEdit::of(game, fish).y_offset() = offset;
         let k = game.current_enemy();
         let amount = i32::from(
-            (offset as i16)
-                .wrapping_sub(session_slot!(game, Skultera[fish].previous_y_offset) as i16),
+            (offset as i16).wrapping_sub(Skultera::of(game, fish).previous_y_offset() as i16),
         ) << 16;
         if game.move_vertical(k, amount) {
             turn(fish, left, game);
         } else {
-            let angle = session_slot!(byte game, Skultera[fish].angle_delta[0])
-                .wrapping_add(session_slot!(game, Skultera[fish].angle) as u8);
-            session_slot!(game, Skultera[fish].angle = u16::from(angle));
+            let angle = Skultera::of(game, fish).angle_delta().to_le_bytes()[0]
+                .wrapping_add(Skultera::of(game, fish).angle() as u8);
+            *SkulteraEdit::of(game, fish).angle() = u16::from(angle);
         }
     }
-    session_slot!(
-        game,
-        Skultera[fish].previous_y_offset = session_slot!(game, Skultera[fish].y_offset)
-    );
+    let value = Skultera::of(game, fish).y_offset();
+    *SkulteraEdit::of(game, fish).previous_y_offset() = value;
 }
 /// Skultera function - turning right ($A3:9224) or left ($A3:9256): once the
 /// turn has finished, swim the other way.
-fn finish_turn(fish: i32, right: bool, game: &mut (impl Host + ?Sized)) {
-    if session_slot!(game, Skultera[fish].turn_finished) != 0 {
-        session_slot!(game, Skultera[fish].turn_finished = 0);
+fn finish_turn(fish: u16, right: bool, game: &mut (impl Host + ?Sized)) {
+    if Skultera::of(game, fish).turn_finished() != 0 {
+        *SkulteraEdit::of(game, fish).turn_finished() = 0;
         let (function, list) = if right {
             (function::SWIMMING_RIGHT, instruction_list::SWIMMING_RIGHT)
         } else {
             (function::SWIMMING_LEFT, instruction_list::SWIMMING_LEFT)
         };
-        session_slot!(game, Skultera[fish].function = function);
-        session_slot!(game, Skultera[fish].angle_delta, |old| old.wrapping_neg());
+        *SkulteraEdit::of(game, fish).function() = function;
+        {
+            let mut edit = SkulteraEdit::of(game, fish);
+            let old = *edit.angle_delta();
+            *edit.angle_delta() = old.wrapping_neg();
+        }
         set_instruction_list(fish, list, game);
     }
 }
 /// Main AI - Skultera ($A3:912B). Was `advance`.
 pub fn main_ai(game: &mut (impl Host + ?Sized)) {
     let fish = current(game);
-    match session_slot!(game, Skultera[fish].function) {
+    match Skultera::of(game, fish).function() {
         function::SWIMMING_LEFT => swim(fish, true, game),
         function::SWIMMING_RIGHT => swim(fish, false, game),
         function::TURNING_RIGHT => finish_turn(fish, true, game),
@@ -171,9 +173,9 @@ pub fn instruction(
 ) -> EnemyScript {
     let fish = current(game);
     match address {
-        instruction::LAYER_6 => session_slot!(game, Skultera[fish].base.layer = 6),
-        instruction::LAYER_2 => session_slot!(game, Skultera[fish].base.layer = 2),
-        instruction::SET_TURN_FINISHED => session_slot!(game, Skultera[fish].turn_finished = 1),
+        instruction::LAYER_6 => SkulteraEdit::of(game, fish).actor().layer = 6,
+        instruction::LAYER_2 => SkulteraEdit::of(game, fish).actor().layer = 2,
+        instruction::SET_TURN_FINISHED => *SkulteraEdit::of(game, fish).turn_finished() = 1,
         _ => unreachable!("unrecognized Skultera instruction"),
     }
     script

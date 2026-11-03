@@ -1354,7 +1354,7 @@ impl EnemyProjectiles {
         if metadata.identity.reference != metadata.reference.fingerprint {
             return Err("enemy projectile checkpoint Reference identity mismatch".into());
         }
-        let mut bytes = Vec::from(b"SMESHOT\x02".as_slice());
+        let mut bytes = Vec::from(b"SMESHOT\x03".as_slice());
         let binding = observation_binding(metadata);
         bytes.extend_from_slice(&(binding.len() as u64).to_le_bytes());
         bytes.extend_from_slice(&binding);
@@ -1366,6 +1366,7 @@ impl EnemyProjectiles {
         checkpoint_word(&mut bytes, &self.selected);
         checkpoint_spawn_context(&mut bytes, &self.spawn);
         checkpoint_word(&mut bytes, &self.drop_bias);
+        checkpoint_point(&mut bytes, &self.drop_origin);
         Ok(bytes)
     }
     pub fn decode_checkpoint(
@@ -1373,7 +1374,7 @@ impl EnemyProjectiles {
         metadata: &DisplayStartMetadata,
     ) -> Result<Self, String> {
         let mut read = CheckpointReader(bytes);
-        if read.bytes(8)? != b"SMESHOT\x02" {
+        if read.bytes(8)? != b"SMESHOT\x03" {
             return Err("unsupported enemy projectile checkpoint schema".into());
         }
         let size = usize::try_from(read.counter()?)
@@ -1396,6 +1397,7 @@ impl EnemyProjectiles {
             selected: read.word()?,
             spawn: checkpoint_read_spawn_context(&mut read)?,
             drop_bias: read.word()?,
+            drop_origin: checkpoint_read_point(&mut read)?,
         };
         if !read.0.is_empty() {
             return Err("trailing enemy projectile checkpoint fields".into());
@@ -2127,7 +2129,8 @@ checkpoint_fields!(checkpoint_room, checkpoint_read_room, Room,
     loaded_items: checkpoint_word/checkpoint_read_word, power_bomb_radius: checkpoint_word/checkpoint_read_word,
     enemy_processing_stage: checkpoint_word/checkpoint_read_word, collision_detection_index: checkpoint_word/checkpoint_read_word,
     slope_behavior: checkpoint_word/checkpoint_read_word, ceres_status: checkpoint_word/checkpoint_read_word,
-    main_variables: checkpoint_words/audio_words,
+    main_variables: checkpoint_words/audio_words, pause_hooks: checkpoint_words/audio_words,
+    scrolls: checkpoint_words/audio_words,
     camera: checkpoint_camera/checkpoint_read_camera);
 checkpoint_fields!(checkpoint_camera, checkpoint_read_camera, crate::camera::Camera,
     layer1_block: checkpoint_words/audio_words, layer2_block: checkpoint_words/audio_words,
@@ -2177,7 +2180,7 @@ impl Room {
         }
         let topology = checkpoint_world_binding(binding)?;
         checkpoint_validate_room(self, binding)?;
-        let mut bytes = Vec::from(b"SMROOMS\x08".as_slice());
+        let mut bytes = Vec::from(b"SMROOMS\x09".as_slice());
         let source = observation_binding(metadata);
         checkpoint_count(&mut bytes, source.len());
         bytes.extend_from_slice(&source);
@@ -2192,7 +2195,7 @@ impl Room {
         expected: &world::WorldBinding,
     ) -> Result<Self, String> {
         let mut read = CheckpointReader(bytes);
-        if read.bytes(8)? != b"SMROOMS\x08" {
+        if read.bytes(8)? != b"SMROOMS\x09" {
             return Err("unsupported room checkpoint schema".into());
         }
         let size = usize::try_from(read.counter()?)

@@ -46,7 +46,9 @@ pub trait GameEffects {
     fn spawn_hdma_object(&mut self, definition: &crate::display::hdma_spawn::HdmaObjectDefinition);
     /// Rebuild the beam tiles and palette for the equipped beams.
     fn update_beam_graphics(&mut self);
-    fn draw_xray_window_table(&mut self, window: crate::beam_windows::XrayWindow);
+    /// Fill the beam's window table; returns the $0D1E word the lease stores
+    /// (see [`crate::beam_windows::calculate_xray_window`]).
+    fn draw_xray_window_table(&mut self, window: crate::beam_windows::XrayWindow) -> Option<u16>;
     fn restore_xray_background(&mut self, step: XrayRestore);
     /// Spawn the scope's HDMA object from its $91:CAF2 definition.
     fn spawn_xray_scope_hdma(&mut self);

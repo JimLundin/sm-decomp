@@ -74,14 +74,6 @@ impl PirateLease for Runtime<'_> {
         Runtime::word(self, at)
     }
 
-    fn native_word(&self, at: usize) -> u16 {
-        Runtime::native_word(self, at)
-    }
-
-    fn write_slice_native(&mut self, at: usize, value: u16) {
-        Runtime::write_slice_native(self, at, value);
-    }
-
     fn write_word_le(&mut self, value: u16, at: usize) {
         Runtime::write_word_le(self, value, at);
     }

@@ -794,6 +794,12 @@ fn enemy_projectile_lanes() -> Vec<Lane> {
         (ram::HEALTH_DROP_BIAS_FLAG, 0, |s, _| {
             &mut s.enemy_projectiles.drop_bias
         }),
+        (ram::SPECIAL_DEATH_ITEM_DROP_X_ORIGIN_POS, 0, |s, _| {
+            &mut s.enemy_projectiles.drop_origin.x
+        }),
+        (ram::SPECIAL_DEATH_ITEM_DROP_Y_ORIGIN_POS, 0, |s, _| {
+            &mut s.enemy_projectiles.drop_origin.y
+        }),
     ];
     lanes.extend(array(0x1997, 2, SLOTS, |s, i| {
         &mut s.enemy_projectiles.slots[i].definition
@@ -1001,6 +1007,11 @@ fn actor_scratch_lanes() -> Vec<Lane> {
     array(0x0e22, 2, 5, |s, index| {
         &mut s.actors.compatibility.scratch[index]
     })
+    .chain([(
+        0x1874,
+        0,
+        (|s, _| &mut s.actors.compatibility.right_border) as Field,
+    )])
     .collect()
 }
 
@@ -1012,6 +1023,41 @@ fn crocomire_melt_round_trips_every_word() {
 fn crocomire_melt_lanes() -> Vec<Lane> {
     array(0x688, 2, 10, |s, index| {
         &mut s.actors.crocomire_melt.words[index]
+    })
+    .collect()
+}
+
+#[test]
+fn pause_hooks_round_trip_every_word() {
+    check_owner("pause hooks", &pause_hook_lanes());
+}
+
+fn pause_hook_lanes() -> Vec<Lane> {
+    array(0x601, 2, 3, |s, index| &mut s.room.pause_hooks[index]).collect()
+}
+
+#[test]
+fn room_scrolls_round_trip_every_word() {
+    check_owner("room scrolls", &room_scroll_lanes());
+}
+
+fn room_scroll_lanes() -> Vec<Lane> {
+    array(0xcd20, 2, 25, |s, index| &mut s.room.scrolls[index]).collect()
+}
+
+#[test]
+fn work_robot_palette_round_trips_every_word() {
+    check_owner("Work Robot palette", &work_robot_palette_lanes());
+}
+
+fn work_robot_palette_lanes() -> Vec<Lane> {
+    array(0xd652, 2, 3, |s, index| {
+        let palette = &mut s.actors.work_robot_palette;
+        match index {
+            0 => &mut palette.palette_index,
+            1 => &mut palette.timer,
+            _ => &mut palette.cursor,
+        }
     })
     .collect()
 }
@@ -1225,6 +1271,9 @@ fn all_owner_lanes() -> Vec<(&'static str, Vec<Lane>)> {
         ("actor extended RAM", actor_extended_lanes()),
         ("actor speed scratch", actor_scratch_lanes()),
         ("Crocomire melt", crocomire_melt_lanes()),
+        ("pause hooks", pause_hook_lanes()),
+        ("Work Robot palette", work_robot_palette_lanes()),
+        ("room scrolls", room_scroll_lanes()),
         ("boss RAM", boss_ram_lanes()),
         ("message box", message_box_lanes()),
         ("BG2 staging", bg2_staging_lanes()),
@@ -1349,5 +1398,44 @@ impl sm_game::sequence_state::Access for Projection {
         after: sm_game::session_words::SessionWords,
     ) {
         after.apply_changed(before, &mut self.0);
+    }
+}
+
+/// The Legacy object staging owns the object table, its high table and the
+/// cursor byte by byte; each store reaches only its own byte.
+#[test]
+fn legacy_objects_round_trip_every_byte() {
+    const OBJECTS: std::ops::Range<usize> = 0x370..0x592;
+    assert_eq!(OBJECTS, sm_game::session_owners::OBJECTS);
+    let base = session();
+    assert!(!base.presentation.is_owned());
+    for at in OBJECTS {
+        let value = (at as u8) | 1;
+        let mut s = base.clone();
+        assert!(write_projected_byte(&mut s, at, value), "store {at:#x}");
+        for other in OBJECTS {
+            let expected = if other == at { value } else { 0 };
+            assert_eq!(
+                projected_byte(&s, other),
+                Some(expected),
+                "storing {at:#x} -> projection {other:#x}"
+            );
+        }
+    }
+    for seed in [5, 0x0a11_0e5e] {
+        let ram = Random::ram(seed);
+        let s = decoded(&ram);
+        let objects = s.presentation.objects();
+        assert_eq!(objects.bytes.as_slice(), &ram[0x370..0x590]);
+        assert_eq!(
+            objects.cursor,
+            u16::from_ne_bytes([ram[0x590], ram[0x591]]),
+            "cursor decodes in native order"
+        );
+        let bytes = encoded(&s);
+        for at in OBJECTS {
+            assert_eq!(bytes.get(&at), Some(&ram[at]), "encode {at:#x}");
+            assert_eq!(projected_byte(&s, at), Some(ram[at]), "projection {at:#x}");
+        }
     }
 }
