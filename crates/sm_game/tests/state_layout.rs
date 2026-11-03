@@ -1400,3 +1400,42 @@ impl sm_game::sequence_state::Access for Projection {
         after.apply_changed(before, &mut self.0);
     }
 }
+
+/// The Legacy object staging owns the object table, its high table and the
+/// cursor byte by byte; each store reaches only its own byte.
+#[test]
+fn legacy_objects_round_trip_every_byte() {
+    const OBJECTS: std::ops::Range<usize> = 0x370..0x592;
+    assert_eq!(OBJECTS, sm_game::session_owners::OBJECTS);
+    let base = session();
+    assert!(!base.presentation.is_owned());
+    for at in OBJECTS {
+        let value = (at as u8) | 1;
+        let mut s = base.clone();
+        assert!(write_projected_byte(&mut s, at, value), "store {at:#x}");
+        for other in OBJECTS {
+            let expected = if other == at { value } else { 0 };
+            assert_eq!(
+                projected_byte(&s, other),
+                Some(expected),
+                "storing {at:#x} -> projection {other:#x}"
+            );
+        }
+    }
+    for seed in [5, 0x0a11_0e5e] {
+        let ram = Random::ram(seed);
+        let s = decoded(&ram);
+        let objects = s.presentation.objects();
+        assert_eq!(objects.bytes.as_slice(), &ram[0x370..0x590]);
+        assert_eq!(
+            objects.cursor,
+            u16::from_ne_bytes([ram[0x590], ram[0x591]]),
+            "cursor decodes in native order"
+        );
+        let bytes = encoded(&s);
+        for at in OBJECTS {
+            assert_eq!(bytes.get(&at), Some(&ram[at]), "encode {at:#x}");
+            assert_eq!(projected_byte(&s, at), Some(ram[at]), "projection {at:#x}");
+        }
+    }
+}
