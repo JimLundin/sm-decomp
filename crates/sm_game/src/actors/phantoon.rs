@@ -18,6 +18,7 @@ use crate::constants::enemy_properties::{
     K_ENEMY_PROPS_TANGIBLE,
 };
 use crate::display::hdma_spawn::HdmaObjectDefinition;
+use crate::display::preparation::Field as DisplayField;
 use crate::display::transfer::{Source, TilemapUpload, queue_tilemap};
 use crate::enemy_projectiles::drops::DropSource;
 
@@ -446,9 +447,7 @@ const SMALL_EXPLOSION_SOUND: u8 = 0x2b;
 const HIDE_BG2: u16 = 0x4000;
 /// Steps of a normal fade in or out.
 const FADE_STEPS: u16 = 0xc;
-/// RAM mirrors of the mosaic and main screen layer registers.
-const MOSAIC: usize = 0x57;
-const MAIN_SCREEN_LAYERS: usize = 0x69;
+/// The main screen layers' BG2 bit.
 const BG2_ENABLED: u8 = 2;
 /// The first colour of palette 7, Phantoon's.
 const PALETTE_7: usize = 112;
@@ -481,18 +480,21 @@ fn bg2_scroll<S: State + ?Sized>(game: &S, axis: usize) -> u16 {
 fn set_bg2_scroll<S: State + ?Sized>(game: &mut S, axis: usize, value: u16) {
     game.set_scroll_word(crate::display_scroll::WORDS[2 + axis], value);
 }
+// The Legacy presentation keeps the display controls as their mirrors' bytes, the
+// physical lanes; an owned Display keeps them as its fields, written without the
+// physical stores' input refresh.
 fn set_mosaic<S: State + ?Sized>(game: &mut S, value: u8) {
     match game.session_mut().presentation.owner_mut() {
         Ok(display) => display.state.controls.mosaic = value,
-        Err(_) => game.set_slot_byte(MOSAIC, value),
+        Err(_) => game.store_physical_display_control_byte(DisplayField::Mosaic, value),
     }
 }
 fn enable_bg2<S: State + ?Sized>(game: &mut S) {
     match game.session_mut().presentation.owner_mut() {
         Ok(display) => display.state.controls.main_layers |= BG2_ENABLED,
         Err(_) => {
-            let value = game.slot_byte(MAIN_SCREEN_LAYERS) | BG2_ENABLED;
-            game.set_slot_byte(MAIN_SCREEN_LAYERS, value);
+            let value = game.physical_display_control_byte(DisplayField::MainLayers) | BG2_ENABLED;
+            game.store_physical_display_control_byte(DisplayField::MainLayers, value);
         }
     }
 }
@@ -500,7 +502,10 @@ fn enable_bg2<S: State + ?Sized>(game: &mut S) {
 pub(crate) fn frame<S: State + ?Sized>(game: &S) -> u16 {
     match game.session().presentation.owner() {
         Ok(display) => display.state.nmi.frame_word,
-        Err(_) => u16::from_le_bytes([game.slot_byte(0x5b6), game.slot_byte(0x5b7)]),
+        Err(_) => u16::from_le_bytes([
+            game.physical_display_control_byte(DisplayField::NmiFrameWordLow),
+            game.physical_display_control_byte(DisplayField::NmiFrameWordHigh),
+        ]),
     }
 }
 
