@@ -538,9 +538,9 @@ impl<'g> Runtime<'g> {
                 if valid {
                     // Publish compatibility bytes while keeping the same gameplay
                     // and private Display owner; no decode or identity transfer.
-                    self.game.ram().copy_spans(|ram| {
-                        encoding::encode(&state, |at, bytes| ram.copy_in(at, bytes))
-                    });
+                    self.game
+                        .ram()
+                        .copy_spans(|ram| encoding::encode_spans(&state, ram));
                     export_native_spawn(&state, self.game);
                     epoch = self.game.compatibility_write_epoch();
                 }
@@ -1340,7 +1340,7 @@ fn encode_session(guard: ExportIdentity<'_>) {
     guard
         .game
         .ram()
-        .copy_spans(|ram| encoding::encode(state, |at, bytes| ram.copy_in(at, bytes)));
+        .copy_spans(|ram| encoding::encode_spans(state, ram));
     export_native_spawn(state, guard.game);
     // Drop moves identity exactly once, after the byte/native publication.
 }

@@ -441,6 +441,41 @@ impl SpanCopy<'_> {
         }
     }
 }
+impl sm_game::session_encoding::Spans for &mut SpanCopy<'_> {
+    fn span(&mut self, at: usize, bytes: &[u8]) {
+        self.copy_in(at, bytes);
+    }
+    /// One pass for the run, with each span counted as `copy_in` counts it.
+    fn spans(&mut self, at: usize, bytes: &[u8], width: usize) {
+        assert!(width != 0, "span width");
+        let Some(end) = at
+            .checked_add(bytes.len())
+            .filter(|&end| end <= WorkRam::LEN)
+        else {
+            // A span past RAM stops the run where `copy_in` would.
+            for (index, chunk) in bytes.chunks(width).enumerate() {
+                self.copy_in(at + index * width, chunk);
+            }
+            return;
+        };
+        for classes in self.classes[at..end].chunks(width) {
+            self.writes += 1;
+            let classes = classes.iter().fold(0, |all, &class| all | class);
+            self.by_classes[usize::from(classes)] += 1;
+        }
+        for (cell, &byte) in self.ram.0.bytes[at..end].iter().zip(bytes) {
+            cell.set(byte);
+        }
+        if self.tracking && self.publications.tracked.any(at..end) {
+            let publications = &mut *self.publications;
+            for at in at..end {
+                if publications.tracked.contains(at) {
+                    publications.publish(at);
+                }
+            }
+        }
+    }
+}
 impl Drop for SpanCopy<'_> {
     fn drop(&mut self) {
         let ram = self.ram;
@@ -1642,11 +1677,8 @@ impl Game {
         // An encoding failure leaves the completed compatibility prefix and
         // prevents the prior owner from resuming against those changed bytes.
         self.poison_persistent_session();
-        self.ram.copy_spans(|ram| {
-            crate::game::session_encoding::encode(&session.gameplay, |at, bytes| {
-                ram.copy_in(at, bytes)
-            })
-        });
+        self.ram
+            .copy_spans(|ram| crate::game::session_encoding::encode_spans(&session.gameplay, ram));
         crate::game::session_runtime::export_native_spawn(&session.gameplay, self);
         self.samus.install(binding);
         self.actor_identity = None;
@@ -4526,6 +4558,62 @@ impl TrackedAddresses {
 }
 #[cfg(test)]
 mod tracked_addresses {
+    use super::WorkRam;
+    use sm_game::session_encoding::Spans;
+
+    fn epochs(ram: &WorkRam) -> [u64; 8] {
+        [
+            ram.1.get(),
+            ram.2.get(),
+            ram.3.get(),
+            ram.4.get(),
+            ram.5.get(),
+            ram.6.get(),
+            ram.8.get(),
+            ram.7.borrow().ordinal,
+        ]
+    }
+
+    /// Batched spans and runs leave RAM, every epoch and every publication
+    /// rank as the same spans through `copy_in` do.
+    #[test]
+    fn batched_spans_publish_as_copy_in_does() {
+        let (batched, single) = (WorkRam::new(), WorkRam::new());
+        for ram in [&batched, &single] {
+            ram.track_source_spans(&[0x9800..0x9810, 0xc406..0xc40a]);
+        }
+        let bytes: Vec<u8> = (0..0x60).map(|index| index as u8 ^ 0x5a).collect();
+        let runs = [
+            (0x9a0, 2),
+            (0x97f8, 2),
+            (0x9e0, 1),
+            (0xc400, 1),
+            (0x10002, 2),
+        ];
+        batched.copy_spans(|mut copy| {
+            copy.copy_in(0x60b, &[7]);
+            for &(at, width) in &runs {
+                copy.spans(at, &bytes, width);
+            }
+            copy.copy_in(0x9805, &[1, 2, 3]);
+        });
+        single.copy_in(0x60b, &[7]);
+        for &(at, width) in &runs {
+            for (index, chunk) in bytes.chunks(width).enumerate() {
+                single.copy_in(at + index * width, chunk);
+            }
+        }
+        single.copy_in(0x9805, &[1, 2, 3]);
+        assert_eq!(epochs(&batched), epochs(&single));
+        for at in 0..WorkRam::LEN {
+            assert_eq!(batched.read_byte(at), single.read_byte(at), "{at:#x}");
+            assert_eq!(
+                batched.source_publication(at),
+                single.source_publication(at)
+            );
+        }
+    }
+
     #[test]
     fn any_answers_as_a_scan_does() {
         let mut tracked = super::TrackedAddresses::default();

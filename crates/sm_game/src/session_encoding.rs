@@ -1074,6 +1074,18 @@ pub fn decode(bytes: &impl Fn(usize) -> u8, byte_len: usize, world: Arc<WorldBin
     s
 }
 pub fn visit(s: &Session, mut visit: impl FnMut(usize, u16)) {
+    visit_owned_words(s, &mut visit);
+    for (index, cell) in s.room.terrain.cells().iter().enumerate() {
+        visit(0x10002 + index * 2, cell.level);
+    }
+    for (index, tile) in s.room.terrain.tiles().iter().enumerate() {
+        for (corner, &value) in tile.iter().enumerate() {
+            visit(0xa000 + index * 8 + corner * 2, value);
+        }
+    }
+}
+/// `visit`'s words before the terrain's levels and tiles.
+fn visit_owned_words(s: &Session, mut visit: impl FnMut(usize, u16)) {
     let controls = crate::fx_encoding::session_controls(s);
     for field in crate::fx_state::Field::ALL {
         visit(crate::fx_encoding::address(field), field.get(&controls));
@@ -1207,32 +1219,78 @@ pub fn visit(s: &Session, mut visit: impl FnMut(usize, u16)) {
         visit(0xdaa + index * 4, ((value as u32) >> 16) as u16);
         visit(0xdac + index * 4, value as u16);
     }
-    for (index, cell) in s.room.terrain.cells().iter().enumerate() {
-        visit(0x10002 + index * 2, cell.level);
-    }
-    for (index, tile) in s.room.terrain.tiles().iter().enumerate() {
-        for (corner, &value) in tile.iter().enumerate() {
-            visit(0xa000 + index * 8 + corner * 2, value);
+}
+/// Where `encode` writes its spans.
+pub trait Spans {
+    fn span(&mut self, at: usize, bytes: &[u8]);
+    /// The spans of `width` bytes that tile `bytes` from `at` up, in order.
+    fn spans(&mut self, at: usize, bytes: &[u8], width: usize) {
+        for (index, chunk) in bytes.chunks(width).enumerate() {
+            self.span(at + index * width, chunk);
         }
     }
 }
-pub fn encode(s: &Session, mut span: impl FnMut(usize, &[u8])) {
-    span(0x60b, &[s.enemy_projectiles.spawn.angle]);
-    visit(s, |at, value| {
+impl<F: FnMut(usize, &[u8])> Spans for F {
+    fn span(&mut self, at: usize, bytes: &[u8]) {
+        self(at, bytes);
+    }
+}
+/// `bytes`' items as the spans of `width` bytes their `encode` writes, from
+/// `at` up, a buffer at a time.
+fn emit_spans<T: Copy, const N: usize>(
+    spans: &mut impl Spans,
+    at: usize,
+    items: &[T],
+    encode: impl Fn(T) -> [u8; N],
+    width: usize,
+) {
+    const ITEMS: usize = 256;
+    let mut buffer = [0u8; 2048];
+    for (index, chunk) in items.chunks(ITEMS).enumerate() {
+        let bytes = &mut buffer[..chunk.len() * N];
+        for (out, &item) in bytes.as_chunks_mut::<N>().0.iter_mut().zip(chunk) {
+            *out = encode(item);
+        }
+        spans.spans(at + index * ITEMS * N, bytes, width);
+    }
+}
+pub fn encode(s: &Session, span: impl FnMut(usize, &[u8])) {
+    encode_spans(s, span);
+}
+/// `encode` into a writer that may take runs of equal spans at once.
+pub fn encode_spans(s: &Session, mut spans: impl Spans) {
+    let span = &mut spans;
+    span.span(0x60b, &[s.enemy_projectiles.spawn.angle]);
+    visit_owned_words(s, |at, value| {
         let bytes = value.to_le_bytes();
         match at {
             // The odd menu-graphics tail visits its map-owner neighbor at
             // 0776 through projected_byte; that owner emits the full word.
-            0x775 => span(at, &bytes[..1]),
+            0x775 => span.span(at, &bytes[..1]),
             // Countdown's last visit repeats Y low from the preceding pair,
             // both through the countdown projection. Emit only its Y high.
-            0x94a => span(at + 1, &bytes[1..]),
-            _ => span(at, &bytes),
+            0x94a => span.span(at + 1, &bytes[1..]),
+            _ => span.span(at, &bytes),
         }
     });
-    for (index, cell) in s.room.terrain.cells().iter().enumerate() {
-        span(0x16402 + index, &[cell.behavior]);
-    }
+    // The terrain's words and bytes, as `visit` and one-byte spans would emit them.
+    let cells = s.room.terrain.cells();
+    emit_spans(span, 0x10002, cells, |cell| cell.level.to_le_bytes(), 2);
+    let tiles = s.room.terrain.tiles();
+    emit_spans(
+        span,
+        0xa000,
+        tiles,
+        |tile| {
+            let mut bytes = [0; 8];
+            for (out, value) in bytes.as_chunks_mut::<2>().0.iter_mut().zip(tile) {
+                *out = value.to_le_bytes();
+            }
+            bytes
+        },
+        2,
+    );
+    emit_spans(span, 0x16402, cells, |cell| [cell.behavior], 1);
     let controls = crate::fx_encoding::ControlReader::new(s);
     s.presentation
         .encode_projection(&mut |at: usize, bytes: &[u8]| {
@@ -1240,13 +1298,14 @@ pub fn encode(s: &Session, mut span: impl FnMut(usize, &[u8])) {
                 let current: Vec<_> = (at..at + bytes.len())
                     .map(|at| controls.control_byte(at))
                     .collect();
-                span(at, &current);
+                span.span(at, &current);
             } else {
-                span(at, bytes);
+                span.span(at, bytes);
             }
         });
-    s.control.encode_projection(&mut span);
-    crate::fx_encoding::encode_sources(s, span);
+    s.control
+        .encode_projection(|at: usize, bytes: &[u8]| span.span(at, bytes));
+    crate::fx_encoding::encode_sources(s, |at: usize, bytes: &[u8]| span.span(at, bytes));
 }
 pub fn projected_byte(s: &Session, at: usize) -> Option<u8> {
     if crate::fx_encoding::control_lane(at).is_some() {
