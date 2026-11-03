@@ -6,22 +6,35 @@
 //! movement functions are dispatched by the compat host, so their ids are
 //! unchanged.
 use crate::actors::boss_interaction as interaction;
-use crate::actors::boss_lease::BossLease;
+use crate::actors::boss_lease::{BossLease, BossState};
 use crate::actors::deaths::Deaths;
 use crate::actors::host::{BossEffects, Shot, Slopes};
 use crate::actors::slot_view::{SlotState, slot_view};
 use crate::constants::enemy_properties::{
     K_ENEMY_PROPS_DELETED, K_ENEMY_PROPS_INVISIBLE, K_ENEMY_PROPS_TANGIBLE,
 };
+use crate::enemy_projectiles::drops::DropSource;
 use crate::enemy_script::EnemyScript;
 use crate::menus::prelude::battle;
 use crate::menus::prelude::owned;
 use crate::records::Records;
 
 /// A lease on a game with the Torizos' effects.
-pub trait Lease: BossLease<Game: Ai> + crate::actors::boss_interaction::Access + SlotState {}
-impl<T: BossLease<Game: Ai> + crate::actors::boss_interaction::Access + SlotState + ?Sized> Lease
-    for T
+pub trait Lease:
+    BossLease<Game: Ai>
+    + crate::actors::boss_interaction::Access
+    + SlotState
+    + crate::progress::FlagHost
+    + crate::enemy_projectiles::host::Host
+{
+}
+impl<T> Lease for T where
+    T: BossLease<Game: Ai>
+        + crate::actors::boss_interaction::Access
+        + SlotState
+        + crate::progress::FlagHost
+        + crate::enemy_projectiles::host::Host
+        + ?Sized
 {
 }
 
@@ -125,7 +138,7 @@ pub fn walk<L: Lease>(
 /// Handle low-health initial drool ($AA:C620): in Crateria, now and then
 /// drool while health is low. Was `Torizo_C620`.
 pub fn drool_at_low_health<L: Lease>(k: u16, game: &mut L) {
-    if game.area() == CRATERIA && battle!(game.Random) & DROOL_CHANCE == 0 {
+    if BossState::area(game) == CRATERIA && battle!(game.Random) & DROOL_CHANCE == 0 {
         let health = Torizo::of(game, k).actor().health;
         if health != 0 && health < LOW_HEALTH {
             game.spawn_projectile(health, k, LOW_HEALTH_DROOL);
@@ -221,8 +234,6 @@ pub trait Ai: BossEffects + Deaths + Records + BossLease<Game = Self> {
     fn run_function(&mut self, address: u32);
     /// Wake Torizo `k` once the Bomb Torizo's chozo statue finishes crumbling.
     fn wake_when_statue_crumbles(&mut self, k: u16);
-    /// Boss bit `bit` of the current area.
-    fn boss_bit(&mut self, bit: u16) -> u16;
     fn set_boss_bit(&mut self, bit: u16);
     /// Load Torizo target palettes `palettes`.
     fn set_palette_targets(&mut self, palettes: Palettes);
@@ -519,9 +530,9 @@ fn walk_or_turn<L: Lease>(k: u16, game: &mut L, turn_left: u16, turn_right: u16)
         left != 0
     } {
         let x_velocity = Torizo::of(game, k).x_velocity();
-        // The read was made through the RAM image; the round trip stays.
+        // The read was made through the RAM image; its observation refresh stays.
         let mut fall = game
-            .foreign(|_| crate::actors::host::abs16(x_velocity))
+            .owned_step(|_| crate::actors::host::abs16(x_velocity))
             .wrapping_add(1);
         if fall >= 0x10 {
             fall = FALL_TOP_SPEED;
@@ -646,7 +657,7 @@ pub fn touch<L: Lease>(game: &mut L) {
 /// Norfair; the Bomb Torizo is hurt when unlocked and not flashing, and dies
 /// at no health. Was `Torizo_Shot`.
 pub fn shot<L: Lease>(game: &mut L) {
-    if game.area() != 0 {
+    if BossState::area(game) != 0 {
         golden_shot(game);
     } else {
         let k = game.current_enemy();
@@ -663,7 +674,7 @@ pub fn shot<L: Lease>(game: &mut L) {
 
 /// Enemy shot - torizo - stand up / sit down ($AA:C9C2). Was `Torizo_Func_8`.
 pub fn standing_shot<L: Lease>(game: &mut L) {
-    if game.area() != 0 {
+    if BossState::area(game) != 0 {
         golden_standing_shot(game);
     }
 }
@@ -738,11 +749,11 @@ pub fn golden_main_ai<L: Lease>(game: &mut L) {
 /// Bomb Torizo's haze. Was `Torizo_Init`.
 pub fn initialize<L: Lease>(game: &mut L) {
     let k = game.current_enemy();
-    if game.foreign(|game| game.boss_bit(TORIZO_DEAD)) & 1 != 0 {
+    if game.owned_step(|game| crate::progress::boss_defeated(game, TORIZO_DEAD)) {
         TorizoEdit::of(game, k).actor().properties |= K_ENEMY_PROPS_DELETED as u16;
         return;
     }
-    let torizo = (game.area() as i32 >> 1) as usize;
+    let torizo = (BossState::area(game) as i32 >> 1) as usize;
     let mut edit = TorizoEdit::of(game, k);
     let actor = edit.actor();
     actor.properties |= START_PROPERTIES[torizo];
@@ -767,7 +778,7 @@ pub fn initialize<L: Lease>(game: &mut L) {
     *edit.y_velocity() = LANDED_Y_VELOCITY;
     drop(edit);
     game.foreign(|game| game.initialize_palette_targets());
-    if game.area() != 0 {
+    if BossState::area(game) != 0 {
         game.foreign(|game| game.set_palette_targets(Palettes::GoldenStart));
         if crate::gameplay_word!(game.JOYPAD1_LASTKEYS) == DEBUG_KEYS {
             battle!(game.SamusHealth = 700);
@@ -846,13 +857,13 @@ pub fn defeated<L: Lease>(k: u16, game: &mut L) {
         game.set_boss_bit(TORIZO_DEAD);
         game.queue_music_delayed(ELEVATOR_MUSIC);
     });
-    if game.area() != 0 {
-        game.foreign(|game| {
-            game.scatter_enemy_drop(crate::enemy_projectiles::drops::DropSource::GoldenTorizo, k)
+    if BossState::area(game) != 0 {
+        game.owned_step(|game| {
+            crate::enemy_projectiles::drops::scatter(DropSource::GoldenTorizo, k, game)
         });
     } else {
-        game.foreign(|game| {
-            game.scatter_enemy_drop(crate::enemy_projectiles::drops::DropSource::BombTorizo, k)
+        game.owned_step(|game| {
+            crate::enemy_projectiles::drops::scatter(DropSource::BombTorizo, k, game)
         });
     }
 }
@@ -894,7 +905,7 @@ pub fn branch_if_faceless<L: Lease>(k: u16, jp: EnemyScript, game: &mut L) -> En
     if (Torizo::of(game, k).damage() & FACE_BLOWN_UP) != 0 {
         return EnemyScript::jump(jp.word(0));
     }
-    if game.area() != 0 {
+    if BossState::area(game) != 0 {
         EnemyScript::jump(jp.word(2))
     } else {
         jp.offset(2)
@@ -1119,13 +1130,13 @@ pub fn explosive_swipe<L: Lease>(jp: EnemyScript, game: &mut L) -> EnemyScript {
 /// Instruction - queue shot torizo sound effect ($AA:C610). Was
 /// `Torizo_Instr_17`.
 pub fn shot_sound<L: Lease>(game: &mut L) {
-    game.queue_sound(1, SHOT_SOUND, 6);
+    crate::effects::SoundEffects::queue_sound(game, 1, SHOT_SOUND, 6);
 }
 
 /// Instruction - queue torizo footsteps sound effect ($AA:C618). Was
 /// `Torizo_Instr_13`.
 pub fn footstep_sound<L: Lease>(game: &mut L) {
-    game.queue_sound(1, FOOTSTEP_SOUND, 6);
+    crate::effects::SoundEffects::queue_sound(game, 1, FOOTSTEP_SOUND, 6);
 }
 
 /// Instruction - go to [[Y]] if not hit ground ($AA:CACE). Was
@@ -1170,12 +1181,11 @@ pub fn spawn_egg<L: Lease>(game: &mut L) {
 /// Instruction - go to [[Y]] if Golden Torizo egg is active ($AA:D0F3). Was
 /// `Torizo_Instr_58`.
 pub fn branch_if_egg_active<L: Lease>(jp: EnemyScript, game: &mut L) -> EnemyScript {
-    let active = game.foreign(|game| {
-        crate::enemy_projectiles::table::with_slots(game, |slots| {
-            slots
-                .iter()
-                .any(|slot| slot.definition == projectile::GOLDEN_EGG)
-        })
+    let active = game.owned_step(|game| {
+        let slots = &game.session().enemy_projectiles.slots;
+        slots
+            .iter()
+            .any(|slot| slot.definition == projectile::GOLDEN_EGG)
     });
     if active {
         EnemyScript::jump(jp.word(0))
@@ -1205,18 +1215,18 @@ pub fn clear_stunned<L: Lease>(k: u16, game: &mut L) {
 /// Instruction - queue Golden Torizo egg released sound effect ($AA:D38F).
 /// Was `Torizo_Instr_56`.
 pub fn egg_released_sound<L: Lease>(game: &mut L) {
-    game.queue_sound(1, EGG_RELEASED_SOUND, 6);
+    crate::effects::SoundEffects::queue_sound(game, 1, EGG_RELEASED_SOUND, 6);
 }
 
 /// Instruction - queue laser sound effect ($AA:D397). Was `Torizo_Instr_60`.
 pub fn laser_sound<L: Lease>(game: &mut L) {
-    game.queue_sound(1, LASER_SOUND, 6);
+    crate::effects::SoundEffects::queue_sound(game, 1, LASER_SOUND, 6);
 }
 
 /// Instruction - queue torizo sonic boom sound effect ($AA:D39F). Was
 /// `Torizo_Instr_46`.
 pub fn sonic_boom_sound<L: Lease>(game: &mut L) {
-    game.queue_sound(1, SONIC_BOOM_SOUND, 6);
+    crate::effects::SoundEffects::queue_sound(game, 1, SONIC_BOOM_SOUND, 6);
 }
 
 /// Instruction - spawn Golden Torizo super missile ($AA:D3E0). Was
