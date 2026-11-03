@@ -123,20 +123,24 @@ pub fn apply<H: Host + ?Sized>(address: u32, game: &mut H) -> bool {
 // Camera effects keep their legacy publication order until layer state is owned.
 use crate::camera::set_layer1;
 use crate::player_collision::operations::Axis;
+use crate::player_position::PlayerWord;
 use crate::ram::word;
 use crate::ram_words as words;
-use crate::word_transfers;
 use camera::{auto_x, auto_y, trigger_down, trigger_left, trigger_right, trigger_up};
-// Native split motion reads low then high and writes low then high.
-fn add_native_motion<H: Host + ?Sized>(high: usize, low: usize, amount: u32, game: &mut H) {
-    let low_word = u16::from_ne_bytes([game.byte(low), game.byte(low + 1)]);
-    let high_word = u16::from_ne_bytes([game.byte(high), game.byte(high + 1)]);
-    let position = u32::from(low_word) | (u32::from(high_word) << 16);
-    let next = position.wrapping_add(amount);
-    word_transfers!(game, ascending, 1;
-        native(low) <- value(next as u16),
-        native(high) <- value((next >> 16) as u16),
-    );
+// Samus's fraction and whole position form one native split motion: native
+// loads of the fraction then the whole, stores likewise.
+fn add_native_motion<H: Host + ?Sized>(
+    whole: PlayerWord,
+    fraction: PlayerWord,
+    amount: u32,
+    game: &mut H,
+) {
+    let native = |word: u16| u16::from_ne_bytes(word.to_le_bytes());
+    let low = native(game.player_word(fraction));
+    let high = native(game.player_word(whole));
+    let next = (u32::from(low) | (u32::from(high) << 16)).wrapping_add(amount);
+    game.set_player_word(fraction, native(next as u16));
+    game.set_player_word(whole, native((next >> 16) as u16));
 }
 
 /// Samus's camera distance from layer 1 within which slow grapple scrolling
@@ -144,7 +148,7 @@ fn add_native_motion<H: Host + ?Sized>(high: usize, low: usize, amount: u32, gam
 const SLOW_SCROLL_WINDOW: [(u16, u16); 2] = [(0x60, 0xa0), (0x70, 0x90)];
 
 pub fn advance_camera<H: Host + ?Sized>(game: &mut H) {
-    if word!(game.SLOW_GRABBLE_SCROLLING_FLAG) != 0 {
+    if game.session().player.grapple_slow_scrolling != 0 {
         // Slow grapple scrolling steps the camera 3 px toward Samus.
         let player = [game.player_x(), game.player_y()];
         for axis in 0..2 {
@@ -240,15 +244,15 @@ fn follow_x<H: Host + ?Sized>(game: &mut H) {
         auto_x(game);
         return;
     }
-    let pushed = word!(game.KNOCKBACK_DIR) != 0
+    let pushed = game.session().player.transitions.knockback != 0
         || game.movement_type() == 16
-        || word!(game.SAMUS_X_ACCEL_MODE) == 1;
+        || game.session().player.contact.acceleration_mode == 1;
     let distances = if pushed != (game.facing() != 4) {
         &FACE_RIGHT_DISTANCES
     } else {
         &FACE_LEFT_DISTANCES
     };
-    let distance = distances[usize::from(word!(game.CAMERA_DISTANCE_INDEX) >> 1)];
+    let distance = distances[usize::from(game.session().room.camera.distance_index >> 1)];
     game.session_mut().room.camera.ideal_layer1[0] = game.player_x().wrapping_sub(distance);
     chase_ideal_layer_position!(
         game,
@@ -264,7 +268,7 @@ fn follow_y<H: Host + ?Sized>(game: &mut H) {
         auto_y(game);
         return;
     }
-    let scroller = if word!(game.SAMUS_Y_DIR) == 1 {
+    let scroller = if game.session().player.contact.y_direction == 1 {
         game.session().room.entry.scroll_down
     } else {
         game.session().room.entry.scroll_up
