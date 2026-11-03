@@ -9,7 +9,7 @@ use crate::actors::draygon_host::{
     ARMS, BANK, BODY, DELETE, Draygon, DraygonEdit, EYE, GRAPPLE_DROPPED, SIGN, TAIL, abs16,
     function, instruction_list as list,
 };
-use crate::actors::host::{ActorLease, BossEffects as _, Death, Shot};
+use crate::actors::host::{ActorLease, Death, Shot};
 use crate::actors::queries::angle_from_delta;
 
 use crate::actors::slot_view::store_byte;
@@ -236,7 +236,7 @@ pub fn drift_to_death_spot<L: Lease>(game: &mut L) {
     }
     game.owned_step(crate::sprite_effect_controllers::draygon_spawn_ring);
     *DraygonEdit::of(game, BODY).function() = function::DEATH_WAIT_FOR_EVIRS;
-    game.foreign(|game| game.queue_music_delayed(ELEVATOR_MUSIC));
+    crate::enemy_projectiles::host::Effects::queue_music(game, ELEVATOR_MUSIC);
     *DraygonEdit::of(game, BODY).function_timer() = EVIR_FRAMES;
     {
         let mut draygon = DraygonEdit::of(game, BODY);

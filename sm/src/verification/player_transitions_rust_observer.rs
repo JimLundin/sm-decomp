@@ -89,6 +89,13 @@ pub(crate) fn projected(name: &str, state: &Session, game: &Game) {
         "transitions.phase.2202" => 2202,
         _ => return,
     };
+    observe_session(event, state, game);
+}
+/// The RAM `state` exports over `game`'s, as event `event`.
+pub(crate) fn observe_session(event: u16, state: &Session, game: &Game) {
+    if !active() {
+        return;
+    }
     let mut ram = (0..game.ram().len())
         .map(|at| game.ram().read_byte(at))
         .collect::<Vec<u8>>();

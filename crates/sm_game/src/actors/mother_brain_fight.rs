@@ -24,7 +24,7 @@ use crate::actors::slot_view::{SlotMut, SlotRef, SlotState, slot_view};
 use crate::escape_typewriter;
 use crate::runtime_access::SessionRam;
 // The game's traits, for the calls made on it through `foreign`.
-use crate::actors::host::{ActorRuntime as _, BossEffects as _, Random as _};
+use crate::actors::host::{ActorRuntime as _, BossEffects as _};
 
 use crate::constants::bank_8d::*;
 use crate::constants::bank_86::*;
@@ -851,6 +851,8 @@ pub trait Lease:
     /// game: the external observations are refreshed on entry and on return,
     /// as `foreign` left them.
     fn owned_step<T>(&mut self, action: impl FnOnce(&mut Self) -> T) -> T;
+    /// QueueSound on `channel` on the lease, with the original's result.
+    fn queue_sound_with_result(&mut self, channel: usize, sound: u8, max_queued: u8) -> u16;
 }
 
 /// What the fight still reaches in the compatibility runtime.
@@ -2898,7 +2900,7 @@ pub fn decide_phase2_attack_strategy(game: &mut impl Lease) -> u8 {
     }
 }
 pub fn firing_bomb_decide_on_crouching(game: &mut impl Lease) {
-    if game.foreign(|game| game.next_random()) >= 0x8000 {
+    if game.next_random() >= 0x8000 {
         *BodyEdit::of(game, BODY_INDEX).function() = function::FIRING_BOMB_CROUCH;
         firing_bomb_crouch(game);
     } else {
@@ -3143,7 +3145,7 @@ crate::dispatch::callback_dispatch! {
             let v3: i32 = ((4u16).wrapping_mul(Brain::of(game, e).subfunction_timer())) as i32 >> 1;
             game.owned_step(|game| game.place_projectile_spawn(ESCAPE_DOOR_EXPLOSION_OFFSETS[v3 as usize], ESCAPE_DOOR_EXPLOSION_OFFSETS[(v3 + 1) as usize]));
             let mut v4: u16 = 3;
-            if game.foreign(|game| game.next_random()) < 0x4000 {
+            if game.next_random() < 0x4000 {
                 v4 = 12;
             }
             spawn_room_projectile(ADDR_K_EPROJ_DUST_CLOUD_EXPLOSION as u16, v4, game);
@@ -3536,8 +3538,7 @@ pub fn spawn_dust_cloud_at_offset(_k: u16, jp: EnemyScript, game: &mut impl Leas
     jp.offset(3)
 }
 pub fn spawn_hand_beam_projectile(_k: u16, jp: EnemyScript, game: &mut impl Lease) -> EnemyScript {
-    let spawn_parameter =
-        game.foreign(|game| game.queue_sound_result(1, sound::HAND_BEAM as u8, 6));
+    let spawn_parameter = game.queue_sound_with_result(1, sound::HAND_BEAM as u8, 6);
     game.owned_step(|game| {
         game.spawn_actor_eproj(
             spawn_parameter,

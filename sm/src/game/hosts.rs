@@ -243,12 +243,14 @@ impl sm_game::actors::kraid::Lease for crate::game::session_runtime::Runtime<'_>
             sm_game::actors::access::ActorKey::from_legacy(k),
         )
     }
-}
-
-impl sm_game::actors::kraid::Host for Game {
-    #[cfg(sm_verify_dll)]
     fn observe_kraid_flags(&mut self, step: u8) {
-        crate::kraid_flags_observer::observe(step, self);
+        // The observation refreshes as the former foreign call did.
+        self.owned_player_call(|runtime| {
+            #[cfg(sm_verify_dll)]
+            crate::kraid_flags_observer::observe_lease(step, runtime);
+            #[cfg(not(sm_verify_dll))]
+            let _ = (step, runtime);
+        });
     }
 }
 
@@ -414,7 +416,7 @@ impl sm_game::lease::Lease for crate::game::session_runtime::Runtime<'_> {
         });
     }
     fn native_music_delayed8(&mut self, track: u16) {
-        self.foreign(|game| crate::game::music::queue_music_delayed_8(track, game));
+        self.queue_music_request(track);
     }
     fn native_player_command(&mut self, command: u16) {
         self.owned_player_call(|runtime| {

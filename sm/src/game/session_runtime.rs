@@ -482,6 +482,42 @@ impl<'g> Runtime<'g> {
             result
         })
     }
+    /// NextRandom ($80:8111) on the lease: the Session's random number steps once. The
+    /// observations are refreshed on entry and on return, as the former foreign call left them.
+    pub(crate) fn next_random_number(&mut self) -> u16 {
+        self.owned_player_call(|runtime| {
+            let value = sm_game::random::next(runtime.session().timing.random_number);
+            runtime.session_mut().timing.random_number = value;
+            #[cfg(sm_verify_dll)]
+            crate::cpu_infra::player_transitions_composed::random_after_lease(runtime);
+            value
+        })
+    }
+    /// The audio request bytes ($7E:0617..0665) are RAM's alone while the Session's control is
+    /// Legacy: it projects none of them and no frame export layout writes them, so a request
+    /// the lease stores in RAM survives every export.
+    #[cfg(sm_verify_dll)]
+    pub(crate) fn assert_audio_requests_unexported(&self) {
+        const REQUESTS: std::ops::Range<usize> = 0x617..0x666;
+        let state = self.session();
+        if !matches!(state.control, sm_game::session_owners::Control::Legacy(_)) {
+            return;
+        }
+        assert!(
+            REQUESTS
+                .clone()
+                .all(|at| encoding::projected_byte(state, at).is_none()),
+            "a Legacy Session projects an audio request byte"
+        );
+        assert!(
+            self.game
+                .frame_session
+                .layouts
+                .iter()
+                .all(|(_, layout)| !layout.covers(REQUESTS)),
+            "an export layout writes an audio request byte"
+        );
+    }
     fn refresh_actor_observations(&mut self) {
         self.inputs.enemy_zero_health = self.native_word(0xF8C);
         self.inputs.current_enemy = self.word(0xE54);
@@ -932,15 +968,13 @@ impl Host for Runtime<'_> {
                     .expect("audio sound enqueue")
             });
         }
-        self.foreign(|g| {
-            if !matches!(
-                (bank, limit),
-                (1, 6 | 9 | 15) | (2, 6) | (3, 3 | 6 | 9 | 15)
-            ) {
-                unreachable!("unknown projectile sound queue");
-            }
-            crate::game::music::queue_sfx(usize::from(bank - 1), sound as u8, limit, g)
-        })
+        if !matches!(
+            (bank, limit),
+            (1, 6 | 9 | 15) | (2, 6) | (3, 3 | 6 | 9 | 15)
+        ) {
+            unreachable!("unknown projectile sound queue");
+        }
+        self.queue_sound_request(usize::from(bank - 1), sound as u8, limit)
     }
     fn player_step(&mut self, step: PlayerStep) {
         if matches!(step, PlayerStep::SuitIndex) {
@@ -2161,7 +2195,7 @@ impl sm_game::display_refresh::DisplayOwner for Runtime<'_> {
 impl sm_game::effects::SoundEffects for Runtime<'_> {
     fn queue_sound(&mut self, channel: usize, sound: u8, max_queued: u8) {
         // As Runtime's projectile sounds: an owned Display queues on the
-        // lease, otherwise the compat queue runs on the exported game.
+        // lease as before; otherwise the request goes to the RAM queue.
         if self.has_owned_display() {
             self.owned_call(|runtime| {
                 #[cfg(sm_verify_dll)]
@@ -2171,7 +2205,7 @@ impl sm_game::effects::SoundEffects for Runtime<'_> {
             });
             return;
         }
-        self.foreign(|game| crate::game::music::queue_sfx(channel, sound, max_queued, game));
+        self.queue_sound_request(channel, sound, max_queued);
     }
 }
 impl sm_game::cartridge::LoadedImage for Runtime<'_> {

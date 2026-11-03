@@ -6,10 +6,10 @@ use crate::actors::api::{
     self, Axis, DeathHandling, MovementResult::Blocked, ShotHandling, SlopePolicy,
 };
 use crate::actors::combat;
-use crate::actors::host::{ActorLease, LeaseActors, Random as _};
+use crate::actors::host::{ActorLease, LeaseActors};
 use crate::actors::slot_view::{SlotState, slot_view};
 use crate::controller_state::Word as Input;
-use crate::effects::SoundEffects as _;
+use crate::enemy_projectiles::host::Effects as _;
 use crate::enemy_script::EnemyScript;
 use crate::player_projectiles::content::{self, table};
 use crate::player_projectiles::{access::shot, host::Host as _};
@@ -411,7 +411,8 @@ fn negate_pair(runtime: &mut impl Lease, yard: u16, axis: Axis) {
     }
 }
 fn bounce_sound(runtime: &mut impl Lease) {
-    runtime.foreign(|game| game.queue_sound(1, 0x70, 3));
+    // SFX queue 2, at most 3 queued.
+    runtime.queue_sound(2, 3, 0x70);
 }
 /// Yard movement function - airborne ($A3:D1B3): fly, bouncing off walls, then land.
 pub fn airborne<H: LeaseActors + ?Sized>(raw: u16, game: &mut H) {
@@ -591,7 +592,7 @@ pub fn instruction<H: LeaseActors + ?Sized>(
         }
         _ => {
             let hiding = Yard::of(runtime, slot(key)).behaviour() == HIDING;
-            return if hiding || runtime.foreign(|game| game.next_random()) & 1 != 0 {
+            return if hiding || runtime.next_random() & 1 != 0 {
                 j.offset(-3)
             } else {
                 j

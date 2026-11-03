@@ -287,22 +287,16 @@ thread_local! { static MODE: std::cell::Cell<u8> = const { std::cell::Cell::new(
 fn expected_word(bytes: &mut [u8], at: usize, value: u16) {
     bytes[at..at + 2].copy_from_slice(&value.to_le_bytes());
 }
-fn word(game: &Game, at: usize) -> u16 {
-    {
-        let _ = &[(); 0x20000][at..at + 2];
-        let mut bytes = [0; 2];
-        game.ram().copy_out(at, &mut bytes);
-        u16::from_le_bytes(bytes)
-    }
-}
-/// Hook immediately after actual NextRandom publishes its result; dormant for all other captures.
-pub(crate) fn random_after(game: &mut Game) {
+/// Hook immediately after actual NextRandom publishes its result on the lease; dormant for
+/// all other captures. It reads and writes the lease's projection, as the RAM the former
+/// foreign call exported held it.
+pub(crate) fn random_after_lease(runtime: &mut crate::game::session_runtime::Runtime<'_>) {
     if MODE.with(|mode| mode.get()) != 1 {
         return;
     }
     assert!(
-        !game.actor_identity_is_with_session(),
-        "foreign effect must own RAM"
+        runtime.has_session_for_verification(),
+        "lease effect must hold the Session"
     );
     for (at, value) in [
         (0xaf6, 0x120),
@@ -313,17 +307,17 @@ pub(crate) fn random_after(game: &mut Game) {
         (0x5e5, 0x111),
     ] {
         assert_eq!(
-            word(game, at),
+            runtime.word(at),
             value,
             "actual bubble/random publication at {at:04x}"
         );
     }
-    observer::observe(3700, game);
-    put(game, 0xaf6, 0x3456);
-    put(game, 0xa2a, 0x37);
-    put(game, 0xa30, 0xffff);
+    observer::observe_session(3700, runtime.session(), runtime.samus_game());
+    for (at, value) in [(0xaf6, 0x3456), (0xa2a, 0x37), (0xa30, 0xffff)] {
+        runtime.write_word_le(value, at);
+    }
     MODE.with(|mode| mode.set(2));
-    observer::observe(3701, game);
+    observer::observe_session(3701, runtime.session(), runtime.samus_game());
 }
 unsafe fn invoke(game: &mut Game) {
     let mut runtime = crate::game::session_runtime::Runtime::new(game);

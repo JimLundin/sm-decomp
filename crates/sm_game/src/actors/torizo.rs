@@ -1163,7 +1163,7 @@ pub fn golden_palettes<L: Lease>(game: &mut L) {
 /// Instruction - start fight music and Golden Torizo belly palette FX
 /// ($AA:CAE2). Was `Torizo_Instr_42`.
 pub fn start_golden_fight<L: Lease>(k: u16, game: &mut L) {
-    game.foreign(|game| game.queue_music_delayed(FIGHT_MUSIC));
+    crate::enemy_projectiles::host::Effects::queue_music(game, FIGHT_MUSIC);
     let mut torizo = TorizoEdit::of(game, k);
     let actor = torizo.actor();
     actor.radius.x = 18;

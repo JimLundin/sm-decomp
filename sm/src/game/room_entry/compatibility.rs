@@ -213,10 +213,10 @@ impl EntryEffects for Runtime<'_> {
             SfxQueue::Two => 1,
             SfxQueue::Three => 2,
         };
-        self.foreign(|game| game.sfx_queue_is_empty(index))
+        self.sound_queue_empty(index)
     }
     fn queued_music(&mut self) -> u8 {
-        self.foreign(game::music::has_queued_music)
+        self.music_queued()
     }
     fn samus_command(&mut self, command: u16) {
         self.owned_player_call(|runtime| {

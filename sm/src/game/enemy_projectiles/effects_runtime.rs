@@ -4,7 +4,7 @@ use super::host::Effects;
 use crate::game::session_runtime::Runtime;
 impl Effects for Runtime<'_> {
     fn next_random(&mut self) -> u16 {
-        self.foreign(crate::game_state::Game::next_random)
+        self.next_random_number()
     }
     fn grapple_pickup_query(&mut self) -> u16 {
         // The command's former foreign entry ran it on a fresh nested lease.
@@ -27,7 +27,7 @@ impl Effects for Runtime<'_> {
         self.foreign(|game| super::legacy::ridley_offscreen(x, y, game))
     }
     fn queue_music(&mut self, track: u16) -> () {
-        self.foreign(|game| crate::game::music::queue_music_delayed_8(track, game))
+        self.queue_music_request(track);
     }
     fn convert_angle_to_xy(&mut self, angle: u16, amplitude: u16) -> sm_game::geometry::Vector32 {
         // The game read the $A0:B7EE sine table inside `foreign`; the
@@ -37,12 +37,10 @@ impl Effects for Runtime<'_> {
         })
     }
     fn queue_sound(&mut self, channel: u8, max: u8, sound: u16) {
-        self.foreign(|game| {
-            if !(1..=3).contains(&channel) || !matches!(max, 1 | 3 | 6 | 9 | 15) {
-                unreachable!("invalid projectile sound channel/limit");
-            }
-            crate::game::music::queue_sfx(usize::from(channel - 1), sound as u8, max, game);
-        });
+        if !(1..=3).contains(&channel) || !matches!(max, 1 | 3 | 6 | 9 | 15) {
+            unreachable!("invalid projectile sound channel/limit");
+        }
+        self.queue_sound_request(usize::from(channel - 1), sound as u8, max);
     }
     fn draw_spritemap(
         &mut self,

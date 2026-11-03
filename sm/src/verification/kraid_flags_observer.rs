@@ -14,6 +14,24 @@ pub fn observe(stage: u8, game: &Game) {
     observe_result(stage, 0xffff, game);
 }
 pub fn observe_result(stage: u8, result: u16, game: &Game) {
+    observe_with(stage, |out| case::state(out, stage, result, [0; 16], game));
+}
+/// `observe` on a lease: the RAM is the lease's Session exported over the game's, as the
+/// former foreign call's export left it.
+#[cfg(sm_verify_dll)]
+pub(crate) fn observe_lease(stage: u8, runtime: &crate::game::session_runtime::Runtime<'_>) {
+    let game = runtime.samus_game();
+    observe_with(stage, |out| {
+        let mut ram = (0..game.ram().len())
+            .map(|at| game.ram().read_byte(at))
+            .collect::<Vec<u8>>();
+        crate::game::session_encoding::encode(runtime.session(), |at, span| {
+            ram[at..at + span.len()].copy_from_slice(span)
+        });
+        case::state_with_ram(out, stage, 0xffff, [0; 16], &ram, game);
+    });
+}
+fn observe_with(stage: u8, state: impl FnOnce(&mut Vec<u8>)) {
     if stage == 2 {
         // Background fade completed; the following branch publishes the boss bit.
         crate::verify_probe::hit("boss.kraid.background_restored");
@@ -21,7 +39,7 @@ pub fn observe_result(stage: u8, result: u16, game: &Game) {
     CAPTURE.with(|c| {
         if let Some((out, next)) = c.borrow_mut().as_mut() {
             assert_eq!(stage, *next, "actual Kraid phase order");
-            case::state(out, stage, result, [0; 16], game);
+            state(out);
             *next += 1;
         }
     });

@@ -1641,7 +1641,7 @@ fn start_fight<L: Lease>(game: &mut L, k: u16) {
     game.start_wave(2, WAVE_PHASE_DELTA);
     part!(game, Mouth[MOUTH].wave_amplitude = INTRO_MAX_AMPLITUDE);
     part!(game, Eye[EYE].fade_complete = 0);
-    game.foreign(|game| game.queue_music_delayed(5));
+    crate::enemy_projectiles::host::Effects::queue_music(game, 5);
 }
 
 /// Picks the first figure-8 direction. Was `Phantoon_PickPatternForRound1`.

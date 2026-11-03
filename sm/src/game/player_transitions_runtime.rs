@@ -67,7 +67,7 @@ impl Effects for Runtime<'_> {
         crate::rtl::unreachable()
     }
     fn random_word(&mut self) -> u16 {
-        self.foreign(crate::game_state::Game::next_random)
+        self.next_random_number()
     }
     fn grapple_transition(&mut self, transition: GrappleTransition) {
         self.owned_call(|runtime| match transition {

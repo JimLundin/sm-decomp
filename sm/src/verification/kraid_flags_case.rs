@@ -53,10 +53,24 @@ pub fn record(output: &mut Vec<u8>, tag: u8, payload: &[u8]) {
     output.extend_from_slice(payload);
 }
 pub fn state(output: &mut Vec<u8>, stage: u8, result: u16, cpu: [u8; 16], game: &Game) {
+    let ram = (0..game.ram().len())
+        .map(|at| game.ram().read_byte(at))
+        .collect::<Vec<u8>>();
+    state_with_ram(output, stage, result, cpu, &ram, game);
+}
+/// `state`, with `ram` standing for the game's work RAM.
+pub fn state_with_ram(
+    output: &mut Vec<u8>,
+    stage: u8,
+    result: u16,
+    cpu: [u8; 16],
+    ram: &[u8],
+    game: &Game,
+) {
     let mut payload = vec![stage];
     payload.extend_from_slice(&result.to_le_bytes());
     payload.extend_from_slice(&cpu);
-    payload.extend((0..game.ram().len()).map(|at| game.ram().read_byte(at)));
+    payload.extend_from_slice(ram);
     payload.extend_from_slice(&game.g_sram.bytes(0..8192));
     record(output, 1, &payload);
 }
