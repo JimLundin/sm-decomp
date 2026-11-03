@@ -207,7 +207,7 @@ pub fn nintendo_logo<H: Host + ?Sized>(game: &mut H) -> u8 {
                 return yielded;
             }
             match stage {
-                2 => crate::session_cohort::with(game, |_, options: &mut OptionsMenu| {
+                2 => crate::menus::state::with(game, |_, options: &mut OptionsMenu| {
                     options.screen_index = LOGO_HOLD
                 }),
                 4 => {
@@ -240,7 +240,7 @@ pub fn nintendo_logo<H: Host + ?Sized>(game: &mut H) -> u8 {
             }
             2 | 3 => {
                 crate::probe::hit("coroutine.logo.hold");
-                let held = crate::session_cohort::with(game, |_, options: &mut OptionsMenu| {
+                let held = crate::menus::state::with(game, |_, options: &mut OptionsMenu| {
                     options.screen_index = options.screen_index.wrapping_sub(1);
                     options.screen_index
                 });
