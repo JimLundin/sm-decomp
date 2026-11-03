@@ -594,11 +594,14 @@ impl Room {
     /// the original's word store at the first cell.
     pub fn set_scroll_pair(&mut self, cell: usize, bytes: [u8; 2]) {
         for (offset, byte) in bytes.into_iter().enumerate() {
-            let at = cell + offset;
-            let mut word = self.scrolls[at / 2].to_le_bytes();
-            word[at % 2] = byte;
-            self.scrolls[at / 2] = u16::from_le_bytes(word);
+            self.set_scroll(cell + offset, byte);
         }
+    }
+    /// Store scroll cell `cell`'s colour byte.
+    pub fn set_scroll(&mut self, cell: usize, byte: u8) {
+        let mut word = self.scrolls[cell / 2].to_le_bytes();
+        word[cell % 2] = byte;
+        self.scrolls[cell / 2] = u16::from_le_bytes(word);
     }
     /// Main-code variable `index` as the original's native-order load reads it.
     pub fn main_native(&self, index: usize) -> u16 {

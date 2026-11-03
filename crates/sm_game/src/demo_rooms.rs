@@ -4,8 +4,7 @@ use crate::display::preparation::Field;
 use crate::imported::Imported;
 use crate::menus::menu_tilemap::native_record;
 use crate::menus::prelude::do_until;
-use crate::ram::RawRam as _;
-use crate::ram::word;
+use crate::runtime_access::with_session;
 use sm_data::cartridge::{RomImage, lorom_offset};
 use sm_data::demo_rooms::{
     DemoEntry, DemoScene, DemoScenes, DemoSets, SCENES_ADDRESS, SCENES_BYTES, SETS_ADDRESS,
@@ -50,7 +49,11 @@ fn scene<H: crate::menus::host::Host + ?Sized>(game: &H, address: u16) -> Option
 }
 
 pub fn reset<H: crate::menus::host::Host + ?Sized>(game: &mut H) -> u8 {
-    word! { game, 0; UNUSED_WORD_7E0DF8, UNUSED_WORD_7E0DFA, UNUSED_WORD_7E0DFC }
+    with_session(game, |session| {
+        session.player.turn_request = 0;
+        session.projectiles.preparation.aim_history = 0;
+        session.player.spare_0dfc = 0;
+    });
     crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
         flow.cinematic_function = 0x9b68
     });
@@ -98,9 +101,9 @@ pub fn play<H: crate::menus::host::Host + ?Sized>(
                     break 'done;
                 }
                 crate::sequence_word!(game.SUBSTATE = 0);
-                word!(game.MY_COUNTER = 90);
+                with_session(game, |session| session.messages.delay = 90);
             }
-            do_until! { word!(game.MY_COUNTER -= 1, reread) == 0;
+            do_until! { count_down(game) == 0;
                 let yielded: u8 = crate::display_refresh::wait(true, game);
                 if yielded != 0 {
                     game.demo_set_phase(1);
@@ -229,27 +232,54 @@ pub fn load<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
             flow.demo_scene = value
         })
     };
-    crate::word_transfers!(game, ascending, 4;
-        native(0xd830) <- value(u16::MAX),
-        native(0xd870) <- value(u16::MAX),
-        le(UNUSED_WORD_7ED8F0, 0) <- value(u16::MAX),
-        native(0xd908) <- value(u16::MAX),
-        native(0xd8f8) <- value(u16::MAX),
-        native(0xd900) <- value(u16::MAX),
-        native(0xd8b0) <- value(0),
-        native(0xd820) <- value(0),
-        native(0xd828) <- value(0),
-    );
-    crate::word_transfers!(game, ascending, 28;
-        native(0xd838) <- value(u16::MAX),
-        native(0xd878) <- value(u16::MAX),
-        native(0xd8b8) <- value(0),
-    );
+    // A demo's flags: every room object, item, station and map station used,
+    // no door opened, no event or boss.
+    with_session(game, |session| {
+        let flags = &mut session.gameplay_flags;
+        for flag in flags
+            .used_room_objects
+            .iter_mut()
+            .chain(&mut flags.collected_locations)
+            .chain(&mut flags.map_stations)
+            .chain(&mut flags.used_stations)
+        {
+            *flag = 0xff;
+        }
+        for flag in flags
+            .opened_doors
+            .iter_mut()
+            .chain(&mut flags.events)
+            .chain(&mut flags.bosses_by_area)
+        {
+            *flag = 0;
+        }
+    });
+    crate::word_transfers!(game, ascending, 4; le(UNUSED_WORD_7ED8F0, 0) <- value(u16::MAX));
     crate::word_transfers!(game, ascending, 768; le(EXPLORED_MAP_TILES_SAVED, 0) <- value(0));
-    word! { game, 0;
-        SAMUS_MAX_RESERVE_HEALTH, SAMUS_RESERVE_HEALTH, RESERVE_HEALTH_MODE,
-        LOADING_GAME_STATE, DEBUG_DISABLE_MINIMAP,
-    }
+    crate::gameplay_context::with_inventory(
+        game,
+        |_, inventory: &mut crate::inventory::Inventory| {
+            inventory.reserve_capacity = 0;
+            inventory.reserve_health = 0;
+            inventory.reserve_mode = 0;
+        },
+    );
+    crate::menus::state::with(
+        game,
+        |_, selection: &mut crate::menu_state::SaveSelection| {
+            selection.loading_game_state = 0;
+        },
+    );
+    with_session(game, |session| session.minimap.disabled = 0);
+}
+
+/// Count the demo's closing delay down a frame; the frames left.
+fn count_down<H: crate::menus::host::Host + ?Sized>(game: &mut H) -> u16 {
+    with_session(game, |session| {
+        let delay = &mut session.messages.delay;
+        *delay = delay.wrapping_sub(1);
+        *delay
+    })
 }
 
 pub fn finish_setup<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
@@ -269,7 +299,7 @@ pub fn finish_setup<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
 
 pub fn run_room_hook<H: crate::menus::host::Host + ?Sized>(address: u32, game: &mut H) {
     match address {
-        0x82891a => game.ram().write_byte(0xcd20 + 33, 0),
+        0x82891a => with_session(game, |session| session.room.set_scroll(33, 0)),
         0x828924 => {}
         0x828925 => {
             let [low, high] = 74u16.to_ne_bytes();
