@@ -39,6 +39,14 @@ impl sm_game::sprite_output::SpriteWords for Game {
         let at = projectile_sprite_address(slot);
         u16::from_ne_bytes([self.compatibility_byte(at), self.compatibility_byte(at + 1)])
     }
+    fn echo_frame(&self) -> u16 {
+        let game = self;
+        sm_game::frame_display_word!(game.NmiFrameWordPair)
+    }
+    fn samus_pose(&self) -> u16 {
+        let game = self;
+        sm_game::sequence_word!(game.SAMUS_POSE)
+    }
 }
 
 impl sm_game::sprite_output::MapHost for Game {

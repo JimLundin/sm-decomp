@@ -28,6 +28,10 @@ pub trait SpriteWords {
     fn sprite_camera(&self) -> [u16; 2];
     /// Native-order shot spritemap, preserving the full doubled slot identity.
     fn projectile_sprite_cursor(&self, slot: u16) -> u16;
+    /// The NMI frame word pair, which paces the crash echoes.
+    fn echo_frame(&self) -> u16;
+    /// Samus's pose, which sets the echoes' height.
+    fn samus_pose(&self) -> u16;
 }
 /// What sprite output reads and writes: named and raw work RAM, besides
 /// spritemap drawing.
@@ -177,13 +181,17 @@ impl<H: MapHost + ?Sized, C: Content<H>> crate::scene::samus::Host for NativeSam
         Ok(())
     }
 }
-pub fn echo<H: SpriteHost + ?Sized>(slot: u16, game: &mut H, content: &mut impl Content<H>) {
+pub fn echo<H: MapHost + SpriteWords + ?Sized>(
+    slot: u16,
+    game: &mut H,
+    content: &mut impl Content<H>,
+) {
     let index = usize::from(slot >> 1);
     let y = game.sprite_word(SpriteWord::EchoY(index));
     let image = content.image(game);
     let height = image.read(
         sm_data::cartridge::lorom_offset(0x91b629) as usize
-            + usize::from(crate::sequence_word!(game.SAMUS_POSE)) * 8
+            + usize::from(game.samus_pose()) * 8
             + 4,
     );
     let layer1 = game.sprite_camera();
@@ -203,8 +211,11 @@ pub fn echo<H: SpriteHost + ?Sized>(slot: u16, game: &mut H, content: &mut impl 
         }
     }
 }
-pub fn crash_echoes<H: SpriteHost + ?Sized>(game: &mut H, content: &mut impl Content<H>) {
-    if crate::frame_display_word!(game.NmiFrameWordPair) & 1 != 0 {
+pub fn crash_echoes<H: MapHost + SpriteWords + ?Sized>(
+    game: &mut H,
+    content: &mut impl Content<H>,
+) {
+    if game.echo_frame() & 1 != 0 {
         for index in [3, 2] {
             if game.sprite_word(SpriteWord::EchoSpeed(index)) != 0 {
                 echo((index * 2) as u16, game, content);

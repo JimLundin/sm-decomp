@@ -982,18 +982,13 @@ impl Host for Runtime<'_> {
     }
     fn draw(&mut self, drawing: Drawing) {
         use sm_game::sprite_output as output;
-        if matches!(drawing, Drawing::CrashEchoes) {
-            // The echoes read Samus's pose and the frame counter on the Game.
-            self.foreign(|g| output::crash_echoes(g, &mut output::Native));
-            return;
-        }
         self.draw_objects(|objects| match drawing {
             Drawing::Projectile { slot, x, y } => {
                 output::projectile(slot, (x, y), objects, &mut output::Native);
                 crate::verify_probe::hit("player_projectiles.draw.completed");
             }
             Drawing::Beam { sprite, x, y } => output::beam(sprite, (x, y), objects),
-            Drawing::CrashEchoes => unreachable!("drawn on the Game"),
+            Drawing::CrashEchoes => output::crash_echoes(objects, &mut output::Native),
             Drawing::GrappleSegment { x, y, tile } => output::grapple(objects, Some((x, y, tile))),
             Drawing::GrappleEnd => output::grapple(objects, None),
         });

@@ -144,6 +144,13 @@ impl sm_game::sprite_output::SpriteWords for LeaseDrawing<'_, '_> {
         self.0
             .native_word(crate::game::menu_host::projectile_sprite_address(slot))
     }
+    fn echo_frame(&self) -> u16 {
+        let runtime: &Runtime<'_> = self.0;
+        sm_game::frame_display_word!(runtime.NmiFrameWordPair)
+    }
+    fn samus_pose(&self) -> u16 {
+        self.0.session().player.pose
+    }
 }
 
 impl sm_game::sprite_output::MapHost for LeaseDrawing<'_, '_> {
