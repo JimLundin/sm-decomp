@@ -242,7 +242,7 @@ impl WorkRam {
         self.note_write();
         self.note_owned_write(at..at + 1);
         cell.set(value);
-        self.note_source_publication(at);
+        self.note_source_publications(at..at + 1, false);
     }
 
     pub fn len(&self) -> usize {
@@ -261,14 +261,14 @@ impl WorkRam {
             for offset in (0..count).rev() {
                 let byte = self.0.bytes[source.start + offset].get();
                 self.0.bytes[destination + offset].set(byte);
-                self.note_source_publication(destination + offset);
             }
+            self.note_source_publications(destination..destination + count, true);
         } else {
             for offset in 0..count {
                 let byte = self.0.bytes[source.start + offset].get();
                 self.0.bytes[destination + offset].set(byte);
-                self.note_source_publication(destination + offset);
             }
+            self.note_source_publications(destination..destination + count, false);
         }
     }
 
@@ -287,23 +287,22 @@ impl WorkRam {
             self.note_write();
             self.note_owned_write(at..end);
         }
-        for (offset, (cell, &byte)) in cells.iter().zip(input).enumerate() {
+        for (cell, &byte) in cells.iter().zip(input) {
             cell.set(byte);
-            self.note_source_publication(at + offset);
         }
+        self.note_source_publications(at..end, false);
     }
 
     pub fn fill(&self, range: Range<usize>, value: u8) {
-        let source_first = range.start;
         let cells = &self.0.bytes[range.clone()];
         if !cells.is_empty() {
             self.note_write();
-            self.note_owned_write(range);
+            self.note_owned_write(range.clone());
         }
-        for (offset, cell) in cells.iter().enumerate() {
+        for cell in cells {
             cell.set(value);
-            self.note_source_publication(source_first + offset);
         }
+        self.note_source_publications(range, false);
     }
 
     pub(crate) fn share_for_backend(&self) -> Self {
@@ -4402,9 +4401,96 @@ impl sm_game::fx_lighting::Access for Game {
 #[derive(Default)]
 struct SourcePublications {
     last: std::collections::BTreeMap<usize, Option<u64>>,
+    /// The keys of `last`, so a RAM write tests them without a map search.
+    tracked: TrackedAddresses,
     ordinal: u64,
     restore_depth: usize,
     native_depth: usize,
+}
+/// One bit per WRAM byte.
+struct TrackedAddresses(Box<[u64]>);
+impl Default for TrackedAddresses {
+    fn default() -> Self {
+        Self(vec![0; WorkRam::LEN / 64].into_boxed_slice())
+    }
+}
+impl TrackedAddresses {
+    fn insert(&mut self, at: usize) {
+        self.0[at / 64] |= 1 << (at % 64);
+    }
+    fn contains(&self, at: usize) -> bool {
+        self.0[at / 64] & (1 << (at % 64)) != 0
+    }
+    fn clear(&mut self) {
+        self.0.fill(0);
+    }
+    /// Whether any address in `range` is tracked; `range` lies in WRAM.
+    fn any(&self, range: Range<usize>) -> bool {
+        if range.is_empty() {
+            return false;
+        }
+        let (first, last) = (range.start / 64, (range.end - 1) / 64);
+        self.0[first..=last]
+            .iter()
+            .enumerate()
+            .any(|(index, &word)| {
+                let word_start = (first + index) * 64;
+                let low = range.start.saturating_sub(word_start);
+                let high = (range.end - word_start).min(64);
+                let mask = (u64::MAX >> (64 - (high - low))) << low;
+                word & mask != 0
+            })
+    }
+}
+#[cfg(test)]
+mod tracked_addresses {
+    #[test]
+    fn any_answers_as_a_scan_does() {
+        let mut tracked = super::TrackedAddresses::default();
+        let addresses = [0, 63, 64, 0x9800, 0x9fff, 0xc406, 0x1ffff];
+        for at in addresses {
+            tracked.insert(at);
+        }
+        for start in (0..0x20000).step_by(61) {
+            for length in [0, 1, 2, 3, 64, 65, 200, 0x900] {
+                let end = (start + length).min(0x20000);
+                let scanned = (start..end).any(|at| addresses.contains(&at));
+                assert_eq!(tracked.any(start..end), scanned, "{start:#x}..{end:#x}");
+                assert_eq!(scanned, (start..end).any(|at| tracked.contains(at)));
+            }
+        }
+    }
+}
+impl SourcePublications {
+    fn track(&mut self, at: usize) {
+        self.last.entry(at).or_insert(None);
+        self.tracked.insert(at);
+    }
+    fn retrack(&mut self) {
+        self.tracked.clear();
+        for &at in self.last.keys() {
+            self.tracked.insert(at);
+        }
+    }
+    /// Rank the write to tracked `at` latest.
+    fn publish(&mut self, at: usize) {
+        if self.ordinal == u64::MAX {
+            // Rebase ranks before rollover; the last writer must remain latest.
+            let mut ordered: Vec<_> = self
+                .last
+                .iter()
+                .filter_map(|(&at, &ordinal)| ordinal.map(|ordinal| (ordinal, at)))
+                .collect();
+            ordered.sort_unstable();
+            for (rank, &(_, at)) in ordered.iter().enumerate() {
+                self.last.insert(at, Some(u64::try_from(rank).unwrap() + 1));
+            }
+            self.ordinal = u64::try_from(ordered.len()).unwrap();
+        }
+        self.ordinal += 1;
+        let ordinal = self.ordinal;
+        self.last.insert(at, Some(ordinal));
+    }
 }
 #[derive(Clone)]
 pub(crate) struct SourcePublicationSnapshot {
@@ -4438,7 +4524,7 @@ impl WorkRam {
             let mut publications = self.7.borrow_mut();
             for at in spans.iter().flat_map(|span| span.clone()) {
                 assert!(at < Self::LEN, "source publication outside WRAM");
-                publications.last.entry(at).or_insert(None);
+                publications.track(at);
             }
         }
         self.7.borrow_mut().native_depth += 1;
@@ -4447,35 +4533,30 @@ impl WorkRam {
     pub(crate) fn track_source_spans(&self, spans: &[Range<usize>]) {
         let mut publications = self.7.borrow_mut();
         publications.last.clear();
+        publications.tracked.clear();
         publications.ordinal = 0;
         for at in spans.iter().flat_map(|span| span.clone()) {
             assert!(at < Self::LEN, "source publication outside WRAM");
-            publications.last.insert(at, None);
+            publications.track(at);
         }
     }
-    fn note_source_publication(&self, at: usize) {
+    /// Rank the writes to `range`, ascending or descending, as the latest
+    /// publications of the tracked source bytes among them.
+    fn note_source_publications(&self, range: Range<usize>, descending: bool) {
         let mut publications = self.7.borrow_mut();
-        if publications.restore_depth != 0 || !publications.last.contains_key(&at) {
+        if publications.restore_depth != 0 || !publications.tracked.any(range.clone()) {
             return;
         }
-        if publications.ordinal == u64::MAX {
-            // Rebase ranks before rollover; the last writer must remain latest.
-            let mut ordered: Vec<_> = publications
-                .last
-                .iter()
-                .filter_map(|(&at, &ordinal)| ordinal.map(|ordinal| (ordinal, at)))
-                .collect();
-            ordered.sort_unstable();
-            for (rank, &(_, at)) in ordered.iter().enumerate() {
-                publications
-                    .last
-                    .insert(at, Some(u64::try_from(rank).unwrap() + 1));
+        let mut publish = |at| {
+            if publications.tracked.contains(at) {
+                publications.publish(at);
             }
-            publications.ordinal = u64::try_from(ordered.len()).unwrap();
+        };
+        if descending {
+            range.rev().for_each(&mut publish);
+        } else {
+            range.for_each(&mut publish);
         }
-        publications.ordinal += 1;
-        let ordinal = publications.ordinal;
-        publications.last.insert(at, Some(ordinal));
     }
     pub(crate) fn source_publication(&self, at: usize) -> Option<u64> {
         self.7.borrow().last.get(&at).copied().flatten()
@@ -4490,6 +4571,7 @@ impl WorkRam {
     pub(crate) fn restore_source_publications(&self, source: &SourcePublicationSnapshot) {
         let mut publications = self.7.borrow_mut();
         publications.last.clone_from(&source.last);
+        publications.retrack();
         publications.ordinal = source.ordinal;
     }
     /// Restoration chooses a previously captured branch. The physical copy's
