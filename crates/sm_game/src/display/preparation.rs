@@ -7,6 +7,8 @@ use crate::scene::state::{DisplayState, NmiState};
 pub enum Field {
     Brightness,
     ObjectLayout,
+    ObjectAddressLow,
+    ObjectAddressHigh,
     Mode,
     FakeMode,
     Mosaic,
@@ -56,6 +58,7 @@ pub enum Field {
     AffineWords5High,
     NmiEnable,
     HdmaEnable,
+    MemorySelect,
     NmiPending,
     NmiFrameByte,
     NmiFrameWordLow,
@@ -67,6 +70,64 @@ pub enum Field {
     NmiAcknowledgment,
     CommittedFakeMode,
 }
+/// The register mirrors in their RAM order ($51..$86), from the brightness
+/// through the memory speed: the block the game-over screen saves.
+pub const MIRRORS: [Field; 54] = [
+    Field::Brightness,
+    Field::ObjectLayout,
+    Field::ObjectAddressLow,
+    Field::ObjectAddressHigh,
+    Field::Mode,
+    Field::FakeMode,
+    Field::Mosaic,
+    Field::Screens0,
+    Field::Screens1,
+    Field::Screens2,
+    Field::Background3Map,
+    Field::Screens3,
+    Field::Characters0,
+    Field::Characters1,
+    Field::AffineSelection,
+    Field::WindowSelection0,
+    Field::WindowSelection1,
+    Field::WindowSelection2,
+    Field::WindowPositions0,
+    Field::WindowPositions1,
+    Field::WindowPositions2,
+    Field::WindowPositions3,
+    Field::WindowLogic0,
+    Field::WindowLogic1,
+    Field::MainLayers,
+    Field::PreviousMainLayers,
+    Field::SubLayers,
+    Field::MainWindow,
+    Field::SubWindow,
+    Field::NextColorSelection,
+    Field::ColorSelection,
+    Field::PreviousColorSelection,
+    Field::NextColorMath,
+    Field::ColorMath,
+    Field::PreviousColorMath,
+    Field::FixedColor0,
+    Field::FixedColor1,
+    Field::FixedColor2,
+    Field::Geometry,
+    Field::AffineWords0Low,
+    Field::AffineWords0High,
+    Field::AffineWords1Low,
+    Field::AffineWords1High,
+    Field::AffineWords2Low,
+    Field::AffineWords2High,
+    Field::AffineWords3Low,
+    Field::AffineWords3High,
+    Field::AffineWords4Low,
+    Field::AffineWords4High,
+    Field::AffineWords5Low,
+    Field::AffineWords5High,
+    Field::NmiEnable,
+    Field::HdmaEnable,
+    Field::MemorySelect,
+];
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Word {
     PendingInterrupt,
@@ -84,6 +145,7 @@ pub enum Word {
 pub struct Controls {
     brightness: u8,
     object_layout: u8,
+    object_address: [u8; 2],
     mode: u8,
     fake_mode: u8,
     mosaic: u8,
@@ -110,6 +172,7 @@ pub struct Controls {
     affine_words: [u16; 6],
     nmi_enable: u8,
     hdma_enable: u8,
+    memory_select: u8,
     committed_fake_mode: u8,
 }
 #[derive(Clone, Debug, PartialEq)]
@@ -168,6 +231,10 @@ impl State {
         let controls = Controls {
             brightness: read(Field::Brightness),
             object_layout: read(Field::ObjectLayout),
+            object_address: [
+                read(Field::ObjectAddressLow),
+                read(Field::ObjectAddressHigh),
+            ],
             mode: read(Field::Mode),
             fake_mode: read(Field::FakeMode),
             mosaic: read(Field::Mosaic),
@@ -219,6 +286,7 @@ impl State {
             ],
             nmi_enable: read(Field::NmiEnable),
             hdma_enable: read(Field::HdmaEnable),
+            memory_select: read(Field::MemorySelect),
             committed_fake_mode: read(Field::CommittedFakeMode),
         };
         let nmi = NmiState {
@@ -259,6 +327,8 @@ impl State {
         match field {
             Field::Brightness => self.controls.brightness,
             Field::ObjectLayout => self.controls.object_layout,
+            Field::ObjectAddressLow => self.controls.object_address[0],
+            Field::ObjectAddressHigh => self.controls.object_address[1],
             Field::Mode => self.controls.mode,
             Field::FakeMode => self.controls.fake_mode,
             Field::Mosaic => self.controls.mosaic,
@@ -308,6 +378,7 @@ impl State {
             Field::AffineWords5High => self.controls.affine_words[5].to_le_bytes()[1],
             Field::NmiEnable => self.controls.nmi_enable,
             Field::HdmaEnable => self.controls.hdma_enable,
+            Field::MemorySelect => self.controls.memory_select,
             Field::NmiPending => self.nmi.pending,
             Field::NmiFrameByte => self.nmi.frame_byte,
             Field::NmiFrameWordLow => self.nmi.frame_word.to_le_bytes()[0],
@@ -324,6 +395,8 @@ impl State {
         match field {
             Field::Brightness => self.controls.brightness = value,
             Field::ObjectLayout => self.controls.object_layout = value,
+            Field::ObjectAddressLow => self.controls.object_address[0] = value,
+            Field::ObjectAddressHigh => self.controls.object_address[1] = value,
             Field::Mode => self.controls.mode = value,
             Field::FakeMode => self.controls.fake_mode = value,
             Field::Mosaic => self.controls.mosaic = value,
@@ -373,6 +446,7 @@ impl State {
             Field::AffineWords5High => replace_lane(&mut self.controls.affine_words[5], 1, value),
             Field::NmiEnable => self.controls.nmi_enable = value,
             Field::HdmaEnable => self.controls.hdma_enable = value,
+            Field::MemorySelect => self.controls.memory_select = value,
             Field::NmiPending => self.nmi.pending = value,
             Field::NmiFrameByte => self.nmi.frame_byte = value,
             Field::NmiFrameWordLow => replace_lane(&mut self.nmi.frame_word, 0, value),
@@ -426,6 +500,8 @@ pub fn display_byte(display: &DisplayState, field: Field) -> u8 {
     match field {
         Field::Brightness => display.controls.brightness,
         Field::ObjectLayout => display.controls.object_layout,
+        Field::ObjectAddressLow => display.controls.object_address[0],
+        Field::ObjectAddressHigh => display.controls.object_address[1],
         Field::Mode => display.controls.mode,
         Field::FakeMode => display.controls.fake_mode,
         Field::Mosaic => display.controls.mosaic,
@@ -475,6 +551,7 @@ pub fn display_byte(display: &DisplayState, field: Field) -> u8 {
         Field::AffineWords5High => display.controls.affine_words[5].to_le_bytes()[1],
         Field::NmiEnable => display.controls.nmi_enable,
         Field::HdmaEnable => display.controls.hdma_enable,
+        Field::MemorySelect => display.controls.memory_select,
         Field::NmiPending => display.nmi.pending,
         Field::NmiFrameByte => display.nmi.frame_byte,
         Field::NmiFrameWordLow => display.nmi.frame_word.to_le_bytes()[0],
@@ -491,6 +568,8 @@ pub fn set_display_byte(display: &mut DisplayState, field: Field, value: u8) {
     match field {
         Field::Brightness => display.controls.brightness = value,
         Field::ObjectLayout => display.controls.object_layout = value,
+        Field::ObjectAddressLow => display.controls.object_address[0] = value,
+        Field::ObjectAddressHigh => display.controls.object_address[1] = value,
         Field::Mode => display.controls.mode = value,
         Field::FakeMode => display.controls.fake_mode = value,
         Field::Mosaic => display.controls.mosaic = value,
@@ -540,6 +619,7 @@ pub fn set_display_byte(display: &mut DisplayState, field: Field, value: u8) {
         Field::AffineWords5High => replace_lane(&mut display.controls.affine_words[5], 1, value),
         Field::NmiEnable => display.controls.nmi_enable = value,
         Field::HdmaEnable => display.controls.hdma_enable = value,
+        Field::MemorySelect => display.controls.memory_select = value,
         Field::NmiPending => display.nmi.pending = value,
         Field::NmiFrameByte => display.nmi.frame_byte = value,
         Field::NmiFrameWordLow => replace_lane(&mut display.nmi.frame_word, 0, value),
@@ -804,4 +884,29 @@ macro_rules! frame_display_history {
             ),
         }
     };
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Every mirror decodes into, reads back from and stores into its own byte.
+    #[test]
+    fn mirrors_round_trip_every_byte() {
+        let seed = |field: Field| {
+            let index = MIRRORS.iter().position(|&mirror| mirror == field);
+            index.map_or(0xee, |index| u8::try_from(index).unwrap().wrapping_add(1))
+        };
+        let mut state = State::read(seed, |_| 0, |_| 0);
+        for (index, &field) in MIRRORS.iter().enumerate() {
+            assert_eq!(state.byte(field), seed(field), "{field:?} reads its mirror");
+            let value = u8::try_from(index).unwrap() | 0x80;
+            state.set_byte(field, value);
+            assert_eq!(state.byte(field), value, "{field:?} stores its mirror");
+            for &other in MIRRORS.iter().filter(|&&other| other != field) {
+                assert_ne!(state.byte(other), value, "{field:?} leaves {other:?}");
+            }
+            state.set_byte(field, seed(field));
+        }
+    }
 }

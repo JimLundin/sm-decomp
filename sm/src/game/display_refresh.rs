@@ -6,7 +6,16 @@ use crate::rtl::{DMAP1, MDMAEN, VMAIN, write_reg, write_reg_word};
 pub(crate) use sm_game::display::transfer::ScrollingLayout as ScrollingDmaLayout;
 use sm_game::display::video::Upload;
 use sm_game::display_refresh as refresh;
-pub(crate) use sm_game::display_refresh::{fade, native_word, set_blank, set_native_word, wait};
+pub(crate) use sm_game::display_refresh::{fade, set_blank, set_native_word, wait};
+
+/// The native-order word at RAM `offset` through Game's compatibility
+/// projection: the scrolling requests and the level data blocks.
+pub(crate) fn native_word(offset: usize, game: &Game) -> u16 {
+    u16::from_ne_bytes([
+        game.compatibility_byte(offset),
+        game.compatibility_byte(offset + 1),
+    ])
+}
 
 impl refresh::DisplayOwner for Game {
     fn write_owned_byte(&mut self, at: usize, value: u8) {

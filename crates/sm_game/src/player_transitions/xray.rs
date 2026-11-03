@@ -165,13 +165,33 @@ pub fn widen(demo: &mut super::demo::DemoInput) {
     }
 }
 
-/// Store word `index` of the X-ray and suit-pickup HDMA window table ($7E:9800).
-pub fn set_window_word<H: SessionRam + ?Sized>(h: &mut H, index: u16, value: u16) {
-    h.write_slice_le(0x9800 + usize::from(index) * 2, value);
+/// The window table's words: HDMA table 1 ($7E:9800..$7E:9BFF).
+const WINDOW_WORDS: usize = 0x200;
+
+/// Store word `index` of the X-ray and suit-pickup HDMA window table ($7E:9800),
+/// little-endian, wherever the table's bytes are held now.
+pub fn set_window_word<H: SessionRam + crate::fx_domain::Sources + ?Sized>(
+    h: &mut H,
+    index: u16,
+    value: u16,
+) {
+    let index = usize::from(index);
+    if index < WINDOW_WORDS {
+        h.store_buffer_word(
+            crate::scene::hdma_sources::LiveOwner::HdmaTable1,
+            2 * index,
+            crate::scene::state::WordOrder::Little,
+            value,
+        );
+    } else {
+        // LEGACY(original-overflow): a suit pickup edge count that runs its
+        // row offset past the table stores into the RAM after it.
+        crate::legacy_overflow::ram_write_slice_le(h, 0x9800 + index * 2, value);
+    }
 }
 
 /// Fill the window table with the closed window, last row first.
-pub fn clear_window(h: &mut (impl SessionRam + ?Sized)) {
+pub fn clear_window(h: &mut (impl SessionRam + crate::fx_domain::Sources + ?Sized)) {
     for row in (0..256).rev() {
         set_window_word(h, row, 255);
     }
@@ -240,7 +260,7 @@ pub fn handle_input(h: &mut (impl Host + SessionRam)) {
 }
 
 /// Start the scope if Samus can: freeze time, close the window, set up its HDMA.
-pub fn initialize(h: &mut (impl Host + SessionRam)) -> bool {
+pub fn initialize(h: &mut (impl Host + SessionRam + crate::fx_domain::Sources)) -> bool {
     if !request(h) {
         return false;
     }

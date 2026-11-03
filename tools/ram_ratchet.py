@@ -47,20 +47,20 @@ import cycle_report  # noqa: E402
 # union adds two files: 1842/99 becomes 2145/101. This is not the lower queued
 # batch-13 count; lower it only after that landing. Production remains advisory.
 BASELINE = {
-    "sm_game_ram_sites": 558,
-    "sm_game_coupled_files": 71,
+    "sm_game_ram_sites": 552,
+    "sm_game_coupled_files": 70,
     "production_lines": 173506,
     # Engine inventory (Jim, 2026-11-02): address-shaped access is RAM access.
     # First measured on main 0115740f5 (ROM record reads excluded). Address APIs and raw calls are enforced:
     # converting counted sites into them is not a retirement, and the address
     # decoding behind them slows every replay. The lexical unresolved-method and
     # legacy-engine measures are reported only.
-    "engine_ram_address_sites": 23,
+    "engine_ram_address_sites": 14,
     "engine_raw_ram_calls": 115,
-    "engine_unresolved_ram_methods": 988,
-    "legacy_engine_ram_sites": 524,
+    "engine_unresolved_ram_methods": 987,
+    "legacy_engine_ram_sites": 526,
     # Original-game overflow paths (LEGACY(original-overflow)), reported only.
-    "engine_legacy_overflow_sites": 56,
+    "engine_legacy_overflow_sites": 60,
 }
 ADVISORY = {"production_lines", "engine_unresolved_ram_methods", "legacy_engine_ram_sites", "engine_legacy_overflow_sites"}
 

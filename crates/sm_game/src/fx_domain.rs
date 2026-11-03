@@ -62,6 +62,22 @@ pub trait Sources {
     fn add_parallax_source(&mut self, selector: u16, delta: u32);
     fn source_byte(&self, owner: LiveOwner, offset: usize) -> u8;
     fn store_source_byte(&mut self, owner: LiveOwner, offset: usize, byte: u8);
+    /// Store `byte` at `offset` of the buffer `owner` starts in its fixed
+    /// home (`fx_encoding::source_address`), whoever holds that byte now: the
+    /// prepared FX sources, an owned presentation's live allocation, or, with
+    /// neither, the work RAM. Unlike `store_source_byte` this never requires a
+    /// source owner, as the original's stores into the window tables don't.
+    fn store_buffer_byte(&mut self, owner: LiveOwner, offset: usize, byte: u8);
+    /// `store_buffer_byte` for both bytes of `value` in `order`, first byte first.
+    fn store_buffer_word(&mut self, owner: LiveOwner, offset: usize, order: WordOrder, value: u16) {
+        let bytes = order.encode(value);
+        self.store_buffer_byte(owner, offset, bytes[0]);
+        self.store_buffer_byte(
+            owner,
+            offset.checked_add(1).expect("buffer offset overflow"),
+            bytes[1],
+        );
+    }
     fn store_source_word(&mut self, owner: LiveOwner, offset: usize, order: WordOrder, value: u16) {
         let bytes = order.encode(value);
         self.store_source_byte(owner, offset, bytes[0]);

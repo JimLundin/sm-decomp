@@ -234,7 +234,6 @@ pub fn advance(h: &mut impl Host) -> bool {
 }
 /// Load the demo's scene and Samus's demo setup, and the demo button layout.
 pub fn load_demo<H: SamusLease>(h: &mut H) {
-    use crate::ram::words as ram;
     let scene = crate::sequence_state::Access::sequence_flow(&*h).demo_scene;
     let set = crate::sequence_state::Access::sequence_flow(&*h).demo_set;
     load_data(h, set, scene);
@@ -264,14 +263,11 @@ pub fn load_demo<H: SamusLease>(h: &mut H) {
     }
     s.projectiles.preparation.aim_history = 0;
     h.words_stored();
-    // These words have no Session field.
-    for (field, value) in [
-        (ram::UNUSED_WORD_7E09E8, 1),
-        (ram::DEBUG_FLAG, 1),
-        (ram::MOONWALK_FLAG, 0),
-        (ram::UNUSED_WORD_7E0DF8, 0),
-        (ram::UNUSED_WORD_7E0DFC, 0),
-    ] {
-        h.write_slice_le(field, value);
-    }
+    let player = &mut h.session_mut().player;
+    player.spare_09e8 = 1;
+    player.debug_flag = 1;
+    player.moonwalk = 0;
+    player.turn_request = 0;
+    player.spare_0dfc = 0;
+    h.words_stored();
 }

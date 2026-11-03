@@ -1126,6 +1126,23 @@ fn player_spare_lanes() -> Vec<Lane> {
 }
 
 #[test]
+fn player_settings_round_trip_every_word() {
+    check_owner("player settings", &player_setting_lanes());
+}
+
+/// The moonwalk setting, the debug flag and $09E8, then the turn request and
+/// $0DFC: the words that new games, save loads and the demos set.
+fn player_setting_lanes() -> Vec<Lane> {
+    vec![
+        (0x09e4, 0, (|s, _| &mut s.player.moonwalk) as Field),
+        (0x09e6, 0, (|s, _| &mut s.player.debug_flag) as Field),
+        (0x09e8, 0, (|s, _| &mut s.player.spare_09e8) as Field),
+        (0x0df8, 0, (|s, _| &mut s.player.turn_request) as Field),
+        (0x0dfc, 0, (|s, _| &mut s.player.spare_0dfc) as Field),
+    ]
+}
+
+#[test]
 fn wavy_samus_round_trips_every_word() {
     check_owner("wavy Samus", &wavy_samus_lanes());
 }
@@ -1385,6 +1402,7 @@ fn all_owner_lanes() -> Vec<(&'static str, Vec<Lane>)> {
         ("Crocomire melt", crocomire_melt_lanes()),
         ("pause hooks", pause_hook_lanes()),
         ("player spare words", player_spare_lanes()),
+        ("player settings", player_setting_lanes()),
         ("wavy Samus", wavy_samus_lanes()),
         ("Work Robot palette", work_robot_palette_lanes()),
         ("room scrolls", room_scroll_lanes()),

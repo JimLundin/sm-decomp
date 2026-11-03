@@ -478,6 +478,8 @@ pub struct BackgroundState {
 pub struct DisplayControls {
     pub brightness: u8,
     pub object_layout: u8,
+    /// The object address mirrors (OAMADDL, OAMADDH), $53/$54.
+    pub object_address: [u8; 2],
     pub mode: u8,
     pub fake_mode: u8,
     pub mosaic: u8,
@@ -505,6 +507,8 @@ pub struct DisplayControls {
     pub affine_words: [u16; 6],
     pub nmi_enable: u8,
     pub hdma_enable: u8,
+    /// The memory speed mirror (MEMSEL), $86.
+    pub memory_select: u8,
     pub committed_fake_mode: u8,
 }
 #[derive(Clone, Copy, Debug, PartialEq)]

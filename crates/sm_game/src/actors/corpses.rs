@@ -14,8 +14,8 @@ use crate::actors::mother_brain_fight::random_number;
 use crate::actors::mother_brain_fight::{BANK, BANK_BASE, Host as _, Lease, State, cgram, sound};
 use crate::actors::mother_brain_fight::{
     add_spritemap_to_oam, bank_unreachable, corpse_rotting_finished, move_enemy_with_velocity,
-    native_word, queue_sfx2_max3, queue_sfx2_max6, set_enemy_instruction_list,
-    set_graphics_drawn_hook, set_native_word, spawn_room_projectile,
+    queue_sfx2_max3, queue_sfx2_max6, set_enemy_instruction_list, set_graphics_drawn_hook,
+    set_native_word, spawn_room_projectile,
 };
 use crate::actors::slot_view::{SlotState, slot_view};
 use crate::runtime_access::SessionRam;
@@ -783,6 +783,27 @@ pub fn corpse_pre_rot_delay(k: u16, j: u16, game: &mut impl CorpseState) {
 }
 pub use self::geemer_rotting as ripper_corpse_rotting;
 pub use self::geemer_rotting as skree_corpse_rotting;
+/// The rot tables' home: every corpse definition ($A9:DD58..$A9:DE17) puts
+/// its table in the actors' fourth extended block ($7E:9000..$7E:97DB), at
+/// $9000..$93FF or $9700..$97BF.
+const ROT_TABLES: usize = 0x9000;
+const ROT_TABLE_WORDS: usize = (0x97dc - ROT_TABLES) / 2;
+
+/// The rot table word at `at`, read in native order: the row's entry, then
+/// its delay two bytes on.
+fn rot_word(at: usize, game: &mut impl Lease) -> u16 {
+    let index = at.checked_sub(ROT_TABLES).filter(|offset| offset % 2 == 0);
+    match index.map(|offset| offset / 2) {
+        Some(index) if index < ROT_TABLE_WORDS => {
+            u16::from_ne_bytes(game.session().actors.extended.blocks[3][index].to_le_bytes())
+        }
+        _ => {
+            // LEGACY(original-overflow): a rot table cursor outside the
+            // block reads whatever RAM lies there, on the game as before.
+            game.foreign(|game| crate::legacy_overflow::ram_native_word(game, at))
+        }
+    }
+}
 pub fn process_corpse_rotting(k: u16, game: &mut impl Lease) -> u8 {
     *CorpseEdit::of(game, 0).active_height() = Corpse::of(game, k).height();
     *CorpseEdit::of(game, 0).active_last_row() = Corpse::of(game, k).last_row();
@@ -798,8 +819,8 @@ pub fn process_corpse_rotting(k: u16, game: &mut impl Lease) -> u8 {
         let v15: u16 = v4;
         let v5: usize = rot_entry_at as usize;
         let v6 = v5;
-        if (native_word(v5, game) as i16) >= 0 {
-            let v7: i16 = native_word(v5 + 2, game) as i16;
+        if (rot_word(v5, game) as i16) >= 0 {
+            let v7: i16 = rot_word(v5 + 2, game) as i16;
             if v7 != 0 {
                 let v8: i16 = (v7).wrapping_sub(1);
                 set_native_word(v5 + 2, v8 as u16, game);
@@ -813,7 +834,7 @@ pub fn process_corpse_rotting(k: u16, game: &mut impl Lease) -> u8 {
                             BANK_BASE | u32::from(Corpse::of(game, 0).active_row_offsets()),
                             game,
                         ),
-                        native_word(v6, game),
+                        rot_word(v6, game),
                         r18,
                         game,
                     );
@@ -826,11 +847,11 @@ pub fn process_corpse_rotting(k: u16, game: &mut impl Lease) -> u8 {
                         BANK_BASE | u32::from(Corpse::of(game, 0).active_row_offsets()),
                         game,
                     ),
-                    native_word(v11, game),
+                    rot_word(v11, game),
                     r18_0,
                     game,
                 );
-                let v12: u16 = (native_word(v11, game)).wrapping_add(2);
+                let v12: u16 = (rot_word(v11, game)).wrapping_add(2);
                 if v12 < Corpse::of(game, 0).active_last_row() {
                     set_native_word(v11, v12, game);
                 } else {

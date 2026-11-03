@@ -1260,6 +1260,9 @@ checkpoint_fields!(checkpoint_player, checkpoint_read_player, Player,
     body_position: checkpoint_point/checkpoint_read_point,
     pose: checkpoint_word/checkpoint_read_word, previous_health_for_flash: checkpoint_word/checkpoint_read_word,
     spare_0a5e: checkpoint_word/checkpoint_read_word,
+    moonwalk: checkpoint_word/checkpoint_read_word, debug_flag: checkpoint_word/checkpoint_read_word,
+    spare_09e8: checkpoint_word/checkpoint_read_word, turn_request: checkpoint_word/checkpoint_read_word,
+    spare_0dfc: checkpoint_word/checkpoint_read_word,
     top_sprite: checkpoint_word/checkpoint_read_word, bottom_sprite: checkpoint_word/checkpoint_read_word,
     scripted_movement_direction: checkpoint_word/checkpoint_read_word,
     crouch_transition_work: checkpoint_word/checkpoint_read_word,
@@ -1300,7 +1303,7 @@ impl Player {
         if metadata.identity.reference != metadata.reference.fingerprint {
             return Err("player checkpoint Reference identity mismatch".into());
         }
-        let mut bytes = Vec::from(b"SMPLAYER\x05".as_slice());
+        let mut bytes = Vec::from(b"SMPLAYER\x06".as_slice());
         let binding = observation_binding(metadata);
         bytes.extend_from_slice(&(binding.len() as u64).to_le_bytes());
         bytes.extend_from_slice(&binding);
@@ -1312,7 +1315,7 @@ impl Player {
         metadata: &DisplayStartMetadata,
     ) -> Result<Self, String> {
         let mut read = CheckpointReader(bytes);
-        if read.bytes(9)? != b"SMPLAYER\x05" {
+        if read.bytes(9)? != b"SMPLAYER\x06" {
             return Err("unsupported player checkpoint schema".into());
         }
         let size = usize::try_from(read.counter()?)

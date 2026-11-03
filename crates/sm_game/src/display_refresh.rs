@@ -761,13 +761,6 @@ pub fn queue_scrolling_tiles<H: crate::display::queued_tilemaps::Scrolling + ?Si
     );
 }
 
-pub fn native_word<H: CompatibilityRam + ?Sized>(offset: usize, game: &H) -> u16 {
-    u16::from_ne_bytes([
-        game.compatibility_byte(offset),
-        game.compatibility_byte(offset + 1),
-    ])
-}
-
 pub fn set_native_word<H: DisplayOwner + ?Sized>(offset: usize, value: u16, game: &mut H) {
     let bytes = value.to_ne_bytes();
     game.write_owned_byte(offset, bytes[0]);

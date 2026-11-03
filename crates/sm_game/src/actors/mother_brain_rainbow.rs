@@ -5,20 +5,24 @@
 //! which cycle the colour math backdrop through the rainbow.
 //!
 //! The beam window runs as one of Mother Brain's state steps: its slot words
-//! are the Session's typed slot state, and the tables are named RAM.
+//! are the Session's typed slot state, and the tables are stored through the
+//! FX buffers that hold them (`Sources::store_buffer_word`).
 use crate::actors::mother_brain::{
     BODY_INDEX, BRAIN_INDEX, Body, BodyEdit, Brain, beam_right_origin_x, set_beam_right_origin_x,
 };
 use crate::actors::mother_brain_fight::State;
 use crate::beam_windows::advance_window_edges;
 use crate::cartridge::LoadedImage;
+use crate::scene::hdma_sources::LiveOwner;
 use sm_data::beam_gradients::{ADDRESS as GRADIENTS, BeamGradients};
 use sm_data::mother_brain::{RAINBOW_ADDRESS, RainbowColors};
 
-/// $7E:9C00: the indirect HDMA header.
-const HEADER: isize = crate::ram::bytes::MOTHER_BRAIN_INDIRECT_HDMA as isize;
-/// $7E:9D00: the window table the header points into.
-const WINDOWS: isize = crate::ram::word_arrays::HDMA_TABLE_2 as isize;
+/// The indirect HDMA header's buffer: $7E:9C00, the liquid surface table's.
+const HEADER: LiveOwner = LiveOwner::LiquidSurface;
+/// The window table the header points into: HDMA table 2, $7E:9D00..$7E:9DFF.
+const WINDOWS: LiveOwner = LiveOwner::HdmaTable2;
+/// The window table's bytes.
+const WINDOW_BYTES: usize = 0x100;
 /// The beam is drawn between rows 20h and E8h.
 const TOP_ROW: u16 = 32;
 const BOTTOM_ROW: u16 = 232;
@@ -67,9 +71,27 @@ fn gradient(game: &mut impl Host, angle: isize) -> u16 {
     )
 }
 
-/// Store `value` natively at `at`.
-fn write(game: &mut impl Host, at: isize, value: u16) {
-    game.write_slice_native(usize::try_from(at).expect("beam window outside RAM"), value);
+/// Store `value` natively at byte `offset` of the indirect HDMA header.
+fn write_header(game: &mut impl Host, offset: usize, value: u16) {
+    game.store_buffer_word(HEADER, offset, crate::fx_domain::native_order(), value);
+}
+
+/// Store `value` natively at byte `offset` of the window table.
+fn write_row(game: &mut impl Host, offset: isize, value: u16) {
+    match usize::try_from(offset) {
+        Ok(offset) if offset < WINDOW_BYTES - 1 => {
+            game.store_buffer_word(WINDOWS, offset, crate::fx_domain::native_order(), value);
+        }
+        _ => {
+            // LEGACY(original-overflow): the rasterizers' rows run past the
+            // table's end ($7E:9DFF) into the window tables after it, and an
+            // origin above the top row runs them before its start.
+            let at = crate::fx_encoding::source_address(WINDOWS, 0)
+                .and_then(|base| base.checked_add_signed(offset))
+                .expect("beam window outside RAM");
+            crate::legacy_overflow::ram_write_slice(game, at, &value.to_ne_bytes());
+        }
+    }
 }
 
 /// Calculate Mother Brain rainbow beam HDMA tables ($AD:DE00): set the beam's
@@ -131,23 +153,23 @@ fn direction_bits(game: &mut impl Host) -> u16 {
 /// The indirect HDMA header for a beam drawn from the top: 10h blank rows,
 /// 10h more, F0h and F4h rows of the window table, ending at `tail`.
 fn write_downward_header(game: &mut impl Host, tail: u16) {
-    write(game, HEADER, 16);
-    write(game, HEADER + 1, 0x9c00);
-    write(game, HEADER + 3, 16);
-    write(game, HEADER + 4, 0x9c03);
-    write(game, HEADER + 6, 240);
-    write(game, HEADER + 7, 0x9d04);
-    write(game, HEADER + 9, 244);
-    write(game, HEADER + 10, tail);
-    write(game, HEADER + 12, 0);
+    write_header(game, 0, 16);
+    write_header(game, 1, 0x9c00);
+    write_header(game, 3, 16);
+    write_header(game, 4, 0x9c03);
+    write_header(game, 6, 240);
+    write_header(game, 7, 0x9d04);
+    write_header(game, 9, 244);
+    write_header(game, 10, tail);
+    write_header(game, 12, 0);
 }
 
 /// Rasterize a beam pointing right ($AD:DE7F-$AD:DF6D): the left edge up from the
 /// origin row, starting at `up_x`, and the right edge down from it, starting
 /// at `down_x`.
 fn rasterize_rightward(game: &mut impl Host, mut down_x: u16, mut up_x: u16) {
-    write(game, WINDOWS, EMPTY_ROW);
-    write(game, WINDOWS + 2, EMPTY_ROW);
+    write_row(game, 0, EMPTY_ROW);
+    write_row(game, 2, EMPTY_ROW);
     let down_step = gradient(
         game,
         Body::of(game, BODY_INDEX).beam_right_edge().to_le_bytes()[0] as isize,
@@ -157,9 +179,9 @@ fn rasterize_rightward(game: &mut impl Host, mut down_x: u16, mut up_x: u16) {
         Body::of(game, BODY_INDEX).beam_left_edge().to_le_bytes()[0] as isize,
     );
     let mut row = Body::of(game, BODY_INDEX).beam_right_origin_y();
-    let mut at = WINDOWS + 2 * (row as isize - 32 + 1);
-    write(game, at + 2, EMPTY_ROW);
-    write(game, at + 4, EMPTY_ROW);
+    let mut at = 2 * (row as isize - 32 + 1);
+    write_row(game, at + 2, EMPTY_ROW);
+    write_row(game, at + 4, EMPTY_ROW);
     let origin_at = at;
     // Upwards: the left edge until it runs off the screen, then empty rows.
     loop {
@@ -168,7 +190,7 @@ fn rasterize_rightward(game: &mut impl Host, mut down_x: u16, mut up_x: u16) {
             break;
         }
         up_x = edge;
-        write(game, at, u16::from(edge.to_ne_bytes()[1]) | 0xff00);
+        write_row(game, at, u16::from(edge.to_ne_bytes()[1]) | 0xff00);
         at -= 2;
         row = row.wrapping_sub(1);
         if row == TOP_ROW {
@@ -176,7 +198,7 @@ fn rasterize_rightward(game: &mut impl Host, mut down_x: u16, mut up_x: u16) {
         }
     }
     loop {
-        write(game, at, EMPTY_ROW);
+        write_row(game, at, EMPTY_ROW);
         at -= 2;
         row = row.wrapping_sub(1);
         if row == TOP_ROW {
@@ -192,7 +214,7 @@ fn rasterize_rightward(game: &mut impl Host, mut down_x: u16, mut up_x: u16) {
             break;
         }
         down_x = edge;
-        write(game, at, u16::from(edge.to_ne_bytes()[1]) | 0xff00);
+        write_row(game, at, u16::from(edge.to_ne_bytes()[1]) | 0xff00);
         at += 2;
         row = row.wrapping_add(1);
         if row == BOTTOM_ROW {
@@ -200,7 +222,7 @@ fn rasterize_rightward(game: &mut impl Host, mut down_x: u16, mut up_x: u16) {
         }
     }
     loop {
-        write(game, at, EMPTY_ROW);
+        write_row(game, at, EMPTY_ROW);
         at += 2;
         row = row.wrapping_add(1);
         if row == BOTTOM_ROW {
@@ -222,36 +244,28 @@ fn rasterize_upward(game: &mut impl Host) {
     let left = Body::of(game, BODY_INDEX).beam_left_origin_x();
     let right = beam_right_origin_x(game);
     rasterize_vertical(game, direction, left, right);
-    write(game, HEADER, 16);
-    write(game, HEADER + 1, 0x9d00);
-    write(game, HEADER + 3, 16);
-    write(game, HEADER + 4, 0x9d02);
+    write_header(game, 0, 16);
+    write_header(game, 1, 0x9d00);
+    write_header(game, 3, 16);
+    write_header(game, 4, 0x9d02);
     let rows = Body::of(game, BODY_INDEX)
         .beam_left_origin_y()
         .wrapping_sub(32);
     if rows >= 0x80 {
         let first = rows.wrapping_sub(127);
-        write(game, HEADER + 6, first | 0x80);
-        write(game, HEADER + 7, 0x9d04);
-        write(game, HEADER + 9, 255);
-        write(
-            game,
-            HEADER + 10,
-            first.wrapping_mul(2).wrapping_add(0x9d04),
-        );
-        write(game, HEADER + 12, 127);
-        write(
-            game,
-            HEADER + 13,
-            first.wrapping_mul(2).wrapping_add(0x9d04 + 254),
-        );
-        write(game, HEADER + 15, 0);
+        write_header(game, 6, first | 0x80);
+        write_header(game, 7, 0x9d04);
+        write_header(game, 9, 255);
+        write_header(game, 10, first.wrapping_mul(2).wrapping_add(0x9d04));
+        write_header(game, 12, 127);
+        write_header(game, 13, first.wrapping_mul(2).wrapping_add(0x9d04 + 254));
+        write_header(game, 15, 0);
     } else {
-        write(game, HEADER + 6, rows | 0x80);
-        write(game, HEADER + 7, 0x9d04);
-        write(game, HEADER + 9, 127);
-        write(game, HEADER + 10, rows.wrapping_mul(2).wrapping_add(0x9d04));
-        write(game, HEADER + 12, 0);
+        write_header(game, 6, rows | 0x80);
+        write_header(game, 7, 0x9d04);
+        write_header(game, 9, 127);
+        write_header(game, 10, rows.wrapping_mul(2).wrapping_add(0x9d04));
+        write_header(game, 12, 0);
     }
 }
 
@@ -262,8 +276,8 @@ fn rasterize_vertical(game: &mut impl Host, direction: Direction, left: u16, rig
     let down = matches!(direction, DownRight | Down | DownLeft);
     let add_left = matches!(direction, UpRight | DownRight);
     let add_right = matches!(direction, UpRight | Up | DownRight | Down);
-    write(game, WINDOWS, EMPTY_ROW);
-    write(game, WINDOWS + 2, EMPTY_ROW);
+    write_row(game, 0, EMPTY_ROW);
+    write_row(game, 2, EMPTY_ROW);
     // Going down the left edge is the beam's right edge.
     let left_edge = if down {
         Body::of(game, BODY_INDEX).beam_right_edge().to_le_bytes()[0]
@@ -281,9 +295,9 @@ fn rasterize_vertical(game: &mut impl Host, direction: Direction, left: u16, rig
     let mut at = if down {
         // The rows above the origin are empty.
         let mut remaining = row.wrapping_sub(32);
-        let mut at = WINDOWS + 4;
+        let mut at = 4;
         loop {
-            write(game, at, EMPTY_ROW);
+            write_row(game, at, EMPTY_ROW);
             at += 2;
             remaining = remaining.wrapping_sub(1);
             if remaining == 0 {
@@ -293,9 +307,9 @@ fn rasterize_vertical(game: &mut impl Host, direction: Direction, left: u16, rig
         row = Body::of(game, BODY_INDEX).beam_left_origin_y();
         at
     } else {
-        let at = WINDOWS + 2 * (row as isize - 32 + 1);
-        write(game, at + 2, EMPTY_ROW);
-        write(game, at + 4, EMPTY_ROW);
+        let at = 2 * (row as isize - 32 + 1);
+        write_row(game, at + 2, EMPTY_ROW);
+        write_row(game, at + 4, EMPTY_ROW);
         at
     };
     let mut edges = [u32::from(left), u32::from(right)];
@@ -310,7 +324,7 @@ fn rasterize_vertical(game: &mut impl Host, direction: Direction, left: u16, rig
         if packed == blank {
             packed = EMPTY_ROW;
         }
-        write(game, at, packed);
+        write_row(game, at, packed);
         at += step;
         row = if down {
             row.wrapping_add(1)
@@ -363,12 +377,12 @@ fn set_beam_blending(game: &mut impl Host) {
 pub fn initialize_hdma(game: &mut impl Host) {
     game.write_slice(BACKDROP, &[0x20, 0x47, 0x8f]);
     set_beam_blending(game);
-    game.set_byte(HEADER as usize, 0x64);
-    write(game, HEADER + 1, 0x9d00);
-    write(game, HEADER + 3, 0);
-    write(game, WINDOWS, 0);
-    write(game, WINDOWS + 2, 0x8020);
-    write(game, WINDOWS + 4, 0);
+    game.store_buffer_byte(HEADER, 0, 0x64);
+    write_header(game, 1, 0x9d00);
+    write_header(game, 3, 0);
+    write_row(game, 0, 0);
+    write_row(game, 2, 0x8020);
+    write_row(game, 4, 0);
     calculate_window(game);
 }
 

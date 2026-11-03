@@ -54,5 +54,5 @@ pub trait GameEffects {
     fn spawn_xray_scope_hdma(&mut self);
 }
 /// A Session lease the Samus rules run on.
-pub trait SamusLease: SessionView + Lease + GameEffects {}
-impl<T: SessionView + Lease + GameEffects> SamusLease for T {}
+pub trait SamusLease: SessionView + Lease + GameEffects + crate::fx_domain::Sources {}
+impl<T: SessionView + Lease + GameEffects + crate::fx_domain::Sources> SamusLease for T {}

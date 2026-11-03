@@ -2226,6 +2226,21 @@ impl sm_game::display::queued_tilemaps::BackgroundBlocks for Game {
     }
 }
 
+/// The level data through the compatibility projection.
+impl sm_game::room_state::LevelData for Game {
+    fn level_data_size(&self) -> u16 {
+        let at = sm_game::ram::words::RAM7_F_START;
+        u16::from_le_bytes([self.compatibility_byte(at), self.compatibility_byte(at + 1)])
+    }
+    fn level_word(&self, cell: usize) -> u16 {
+        let at = sm_game::ram::word_arrays::LEVEL_DATA + 2 * cell;
+        u16::from_le_bytes([self.compatibility_byte(at), self.compatibility_byte(at + 1)])
+    }
+    fn level_behavior(&self, cell: usize) -> u8 {
+        self.compatibility_byte(sm_game::ram::bytes::BTS + cell)
+    }
+}
+
 /// Game's projection: compatibility reads and RAM-image stores, as named RAM words use.
 impl sm_game::runtime_access::SessionRam for Game {
     fn byte(&self, at: usize) -> u8 {
@@ -3153,10 +3168,9 @@ impl sm_game::sequence_state::Access for Game {
     }
 }
 
-fn frame_display_ranges() -> [Range<usize>; 20] {
+fn frame_display_ranges() -> [Range<usize>; 19] {
     [
-        0x51..0x53,
-        0x55..0x86,
+        0x51..0x87,
         0x5b4..0x5bc,
         0x782..0x783,
         0x7ec..0x7ed,
@@ -3182,6 +3196,8 @@ pub(crate) fn frame_field_address(field: sm_game::display::preparation::Field) -
     match field {
         Field::Brightness => 0x51,
         Field::ObjectLayout => 0x52,
+        Field::ObjectAddressLow => 0x53,
+        Field::ObjectAddressHigh => 0x54,
         Field::Mode => 0x55,
         Field::FakeMode => 0x56,
         Field::Mosaic => 0x57,
@@ -3231,6 +3247,7 @@ pub(crate) fn frame_field_address(field: sm_game::display::preparation::Field) -
         Field::AffineWords5High => 0x83,
         Field::NmiEnable => 0x84,
         Field::HdmaEnable => 0x85,
+        Field::MemorySelect => 0x86,
         Field::NmiPending => 0x5b4,
         Field::NmiFrameByte => 0x5b5,
         Field::NmiFrameWordLow => 0x5b6,
@@ -4229,6 +4246,16 @@ impl sm_game::fx_domain::Sources for Game {
             .checked_add_signed(offset)
             .expect("source address outside RAM");
         self.store_fx_byte(at, byte);
+    }
+    // The RAM-image store at the buffer's home, as Game's `SessionRam::set_byte`.
+    fn store_buffer_byte(
+        &mut self,
+        owner: sm_game::scene::hdma_sources::LiveOwner,
+        offset: usize,
+        byte: u8,
+    ) {
+        let at = sm_game::fx_encoding::source_address(owner, offset).expect("FX buffer role");
+        self.ram().write_byte(at, byte);
     }
     fn add_parallax_source(&mut self, selector: u16, delta: u32) {
         let at = usize::from(selector);

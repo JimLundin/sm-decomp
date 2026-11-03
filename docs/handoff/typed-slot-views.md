@@ -77,3 +77,13 @@ Raw RAM accesses to the scroll cells still run on Game:
 Palette writes index `colors[i]`/`targets[i]` directly: work_robot, covern, face block
 and draygon. An out-of-range index would panic where the old code wrote into the next
 RAM block. Real palette indexes are always in range.
+
+## 2026-11-03 batch (PR after #164)
+
+New owners: Player `moonwalk`/`debug_flag`/`spare_09e8`/`turn_request`/`spare_0dfc` ($09E4..$09E8,
+$0DF8, $0DFC; SMPLAYER 6, input arms for $09E4/$0DF8) and display Fields `ObjectAddressLow/High`,
+`MemorySelect` ($53/$54/$86; SMDISPL 5). The X-ray window, Mother Brain's rainbow, the corpse rot
+tables and the cinematic $7F tilemap transfers read and store through their owners; out-of-range
+remnants go through `legacy_overflow` (60 sites). What remains of the 14: `legacy_overflow.rs`
+internals (11), `projection.rs`/`ram.rs` (the `CompatibilityRam` byte helpers Game serves from its
+RAM image). No engine call site outside these three files names a RAM address.

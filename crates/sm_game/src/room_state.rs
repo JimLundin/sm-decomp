@@ -9,6 +9,20 @@ use crate::runtime_access::SessionView;
 use crate::session_access::SessionAccess as _;
 use crate::word_transfers;
 
+/// The level data ($7F:0000..$7F:9601) as the host holds it: its size word,
+/// then the room terrain's cells (`Terrain::cells`), each cell's level word
+/// ($7F:0002 + 2 * cell) and behaviour byte ($7F:6402 + cell), while a Session
+/// is current, RAM otherwise. The intro and the credits decompress their
+/// tilemaps over it.
+pub trait LevelData {
+    /// The level data's size in bytes ($7F:0000), little-endian.
+    fn level_data_size(&self) -> u16;
+    /// Cell `cell`'s level word, little-endian.
+    fn level_word(&self, cell: usize) -> u16;
+    /// Cell `cell`'s behaviour byte.
+    fn level_behavior(&self, cell: usize) -> u8;
+}
+
 /// Named and raw work RAM, the loaded cartridge and its records, and the
 /// Samus pose command.
 pub trait Host:
