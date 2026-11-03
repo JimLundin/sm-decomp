@@ -8,6 +8,7 @@
 //! bank log's corpse rotting notes. The bank's dispatch ids are unchanged; the
 //! functions and their reads and writes keep the original order. Mother
 //! Brain's shared helpers come from `mother_brain_fight`.
+use crate::actors::boss_lease::bg2_staging;
 use crate::actors::host::{Death, Slopes};
 use crate::actors::mother_brain_fight::OwnedWord;
 use crate::actors::mother_brain_fight::random_number;
@@ -29,8 +30,6 @@ use crate::enemy_script::EnemyScript;
 use crate::menus::menu_tilemap::native_record;
 use crate::menus::prelude::do_until;
 use crate::palette_copies::copy_rom_colors_to_palette;
-use crate::ram::word;
-use crate::word_transfers;
 use crate::{corpse_tables, torizo_corpse_tables};
 use sm_data::cartridge::RomRecord;
 
@@ -530,14 +529,14 @@ macro_rules! queue_dead_torizo_tile_transfers {
 pub fn process_torizo_corpse_rotting_vram_transfers(game: &mut impl CorpseState) {
     let v1: u16 = DeadTorizo::of(game, 0).tile_frame().wrapping_add(1);
     *DeadTorizoEdit::of(game, 0).tile_frame() = v1;
-    let mut v3: u16 = word!(game.VRAM_WRITE_QUEUE_TAIL);
+    let mut v3: u16 = game.session().queued_tilemaps.tail;
     if v1 & 1 != 0 {
         queue_dead_torizo_tile_transfers!(game, torizo_corpse_tables::Frame::Odd, v3);
     } else {
         queue_dead_torizo_tile_transfers!(game, torizo_corpse_tables::Frame::Even, v3);
     }
     *DeadTorizoEdit::of(game, 0).sprite_tile_transfer() = 0;
-    word!(game.VRAM_WRITE_QUEUE_TAIL = v3);
+    set_vram_queue_tail(game, v3);
 }
 pub fn copy_line_of_sand_heap_tile_data(a: u16, game: &mut impl State) {
     let line = torizo_corpse_tables::sand_heap_line(game, a as isize);
@@ -935,7 +934,7 @@ pub fn initialize_enemy_corpse_rotting(k: u16, j: u16, game: &mut impl Lease) {
 pub fn process_corpse_rotting_vram_transfers(k: u16, game: &mut impl Lease) {
     let p = native_record(BANK_BASE | u32::from(k), game);
     let mut offset = 0;
-    let mut v1: u16 = word!(game.VRAM_WRITE_QUEUE_TAIL);
+    let mut v1: u16 = game.session().queued_tilemaps.tail;
     let mut v2: u16 = p.word(offset);
     do_until! { v2 == 0 ;
         let v3: usize = usize::try_from(0xd0i32 + v1 as i32).expect("VRAM entry outside RAM");
@@ -948,7 +947,12 @@ pub fn process_corpse_rotting_vram_transfers(k: u16, game: &mut impl Lease) {
         v2 = p.word(offset);
     }
     *CorpseEdit::of(game, 0).sprite_tile_transfer() = 0;
-    word!(game.VRAM_WRITE_QUEUE_TAIL = v1);
+    set_vram_queue_tail(game, v1);
+}
+/// Store the VRAM write queue's tail ($0330).
+fn set_vram_queue_tail(game: &mut (impl SlotState + ?Sized), tail: u16) {
+    game.session_mut().queued_tilemaps.tail = tail;
+    game.words_stored();
 }
 pub fn sidehopper_corpse_rottable_contact(game: &mut impl CorpseState) {
     corpse_contact_reaction(function::SIDEHOPPER_ROTTING, game);
@@ -1024,7 +1028,7 @@ fn transfer_corpse_tiles(
     }
 }
 pub fn initialize_torizo_corpse(game: &mut impl Corpses) {
-    word_transfers!(game, descending, 2048; le(TILEMAP_STUFF, 2047) <- value(0));
+    bg2_staging::fill(game, (0..bg2_staging::WORDS).rev(), 0);
     {
         let mut torizo = DeadTorizoEdit::of(game, 0);
         *torizo.function() = function::TORIZO_WAIT_FOR_SAMUS_COLLISION;
