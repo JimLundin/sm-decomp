@@ -458,6 +458,8 @@ macro_rules! scalar_words {
         $f(0x0d40,$($borrow)* $s.player.swing.start_animation_tiles);
         $f(0x0d16,$($borrow)* $s.player.swing.start.x);
         $f(0x0d18,$($borrow)* $s.player.swing.start.y);
+        $f(0x0d1a,$($borrow)* $s.player.swing.previous_start.x);
+        $f(0x0d1c,$($borrow)* $s.player.swing.previous_start.y);
         $f(0x0d26,$($borrow)* $s.player.swing.angular_velocity);
         $f(0x0d28,$($borrow)* $s.player.swing.angle_acceleration);
         $f(0x0d2a,$($borrow)* $s.player.swing.input_acceleration);
@@ -1589,6 +1591,8 @@ pub fn inputs_from_session(s: &Session, bytes: &impl Fn(usize) -> u8) -> Externa
             0xf436..=0xf437 => (0xf436, s.enemy_projectiles.drop_origin.y),
             0x9e4..=0x9e5 => (0x9e4, s.player.moonwalk),
             0xdf8..=0xdf9 => (0xdf8, s.player.turn_request),
+            0xd1a..=0xd1b => (0xd1a, s.player.swing.previous_start.x),
+            0xd1c..=0xd1d => (0xd1c, s.player.swing.previous_start.y),
             0x78..=0x7d | 0x80..=0x83 | 0x5b5..=0x5b7 => {
                 let Ok(owner) = s.presentation.owner() else {
                     return bytes(at);
@@ -1765,6 +1769,8 @@ mod player_lane_tests {
         (0xd40, |s| &mut s.player.swing.start_animation_tiles),
         (0xd16, |s| &mut s.player.swing.start.x),
         (0xd18, |s| &mut s.player.swing.start.y),
+        (0xd1a, |s| &mut s.player.swing.previous_start.x),
+        (0xd1c, |s| &mut s.player.swing.previous_start.y),
         (0xd26, |s| &mut s.player.swing.angular_velocity),
         (0xd28, |s| &mut s.player.swing.angle_acceleration),
         (0xd2a, |s| &mut s.player.swing.input_acceleration),

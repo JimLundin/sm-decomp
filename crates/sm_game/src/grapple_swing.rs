@@ -16,7 +16,6 @@ use crate::actors::host::abs16;
 
 use crate::projectile_geometry::SINE_COSINE;
 use crate::projectile_room::Axis;
-use crate::ram::word;
 
 /// What the grapple controller needs from the runtime besides named RAM,
 /// sound, the cartridge images and the owned-Session view.
@@ -66,6 +65,9 @@ pub struct SwingState {
     pub length_delta: u16,
     /// $0D16/$0D18: the beam's start position.
     pub start: crate::geometry::Point,
+    /// $0D1A/$0D1C: the beam's start position for the rope and the grapple
+    /// shot's feedback, which observe it as of the previous frame.
+    pub previous_start: crate::geometry::Point,
     /// $0D26: angular velocity, pi/8000h radians; positive is clockwise.
     pub angular_velocity: u16,
     /// $0D28: angular acceleration due to the swing's angle.
@@ -607,17 +609,15 @@ macro_rules! initialize_grapple_endpoints {
         $game.session_mut().player.grapple_origin_offset.y = origin.y.wrapping_sub($y_adjustment);
         $game.session_mut().player.grapple_endpoint.x = origin.x.wrapping_add($game.player_x());
         $game.session_mut().player.swing.start.x = $game.session().player.grapple_endpoint.x;
-        word!(
-            $game.X_POS_OF_START_OF_GRAPPLE_BEAM_PREVFRAME =
-                origin.previous_x.wrapping_add($game.player_x())
-        );
+        $game.session_mut().player.swing.previous_start.x =
+            origin.previous_x.wrapping_add($game.player_x());
+        $game.words_stored();
         $game.session_mut().player.grapple_endpoint.y =
             (origin.y as i32 + $game.player_y() as i32 - $y_adjustment as i32) as u16;
         $game.session_mut().player.swing.start.y = $game.session().player.grapple_endpoint.y;
-        word!(
-            $game.Y_POS_OF_START_OF_GRAPPLE_BEAM_PREVFRAME =
-                (origin.previous_y as i32 + $game.player_y() as i32 - $y_adjustment as i32) as u16
-        );
+        $game.session_mut().player.swing.previous_start.y =
+            (origin.previous_y as i32 + $game.player_y() as i32 - $y_adjustment as i32) as u16;
+        $game.words_stored();
     };
 }
 
@@ -672,16 +672,14 @@ macro_rules! restore_grapple_start_positions {
         let v1: i32 = $pose_offset as i32 >> 1;
         let origin = grapple_origins::origin($game, OriginSet::$set, v1 as isize);
         $game.session_mut().player.swing.start.x = origin.x.wrapping_add($game.player_x());
-        word!(
-            $game.X_POS_OF_START_OF_GRAPPLE_BEAM_PREVFRAME =
-                origin.previous_x.wrapping_add($game.player_x())
-        );
+        $game.session_mut().player.swing.previous_start.x =
+            origin.previous_x.wrapping_add($game.player_x());
+        $game.words_stored();
         $game.session_mut().player.swing.start.y =
             (origin.y as i32 + $game.player_y() as i32 - $y_adjustment as i32) as u16;
-        word!(
-            $game.Y_POS_OF_START_OF_GRAPPLE_BEAM_PREVFRAME =
-                (origin.previous_y as i32 + $game.player_y() as i32 - $y_adjustment as i32) as u16
-        );
+        $game.session_mut().player.swing.previous_start.y =
+            (origin.previous_y as i32 + $game.player_y() as i32 - $y_adjustment as i32) as u16;
+        $game.words_stored();
     };
 }
 
@@ -726,8 +724,14 @@ pub fn position_swing<H: Host + ?Sized>(game: &mut H) {
     } else {
         place_samus_relative_to_grapple_origin!(game, 0x9bc302, v2);
     }
-    word!(game.X_POS_OF_START_OF_GRAPPLE_BEAM_PREVFRAME = game.session().player.swing.start.x);
-    word!(game.Y_POS_OF_START_OF_GRAPPLE_BEAM_PREVFRAME = game.session().player.swing.start.y);
+    // The previous frame's start is the start just placed; each word refreshes
+    // the observations, as its projected store did.
+    let swing = &mut game.session_mut().player.swing;
+    swing.previous_start.x = swing.start.x;
+    game.words_stored();
+    let swing = &mut game.session_mut().player.swing;
+    swing.previous_start.y = swing.start.y;
+    game.words_stored();
     clamp_swing_position(game);
 }
 
@@ -742,15 +746,13 @@ pub fn position_anchored<H: Host + ?Sized>(game: &mut H) {
     let v0: i32 = game.session().player.grapple_direction as i32;
     let origin = grapple_origins::origin(game, OriginSet::Standard, v0 as isize);
     game.set_player_x((game.session().player.swing.start.x).wrapping_sub(origin.x));
-    word!(
-        game.X_POS_OF_START_OF_GRAPPLE_BEAM_PREVFRAME =
-            origin.previous_x.wrapping_add(game.player_x())
-    );
+    game.session_mut().player.swing.previous_start.x =
+        origin.previous_x.wrapping_add(game.player_x());
+    game.words_stored();
     game.set_player_y((game.session().player.swing.start.y).wrapping_sub(origin.y));
-    word!(
-        game.Y_POS_OF_START_OF_GRAPPLE_BEAM_PREVFRAME =
-            origin.previous_y.wrapping_add(game.player_y())
-    );
+    game.session_mut().player.swing.previous_start.y =
+        origin.previous_y.wrapping_add(game.player_y());
+    game.words_stored();
 }
 
 pub fn restore_start_positions<H: Host + ?Sized>(game: &mut H) {

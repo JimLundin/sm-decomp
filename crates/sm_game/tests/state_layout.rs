@@ -1183,6 +1183,28 @@ fn player_setting_lanes() -> Vec<Lane> {
 }
 
 #[test]
+fn grapple_previous_start_round_trips_every_word() {
+    check_owner("grapple previous start", &grapple_previous_start_lanes());
+}
+
+/// $0D1A/$0D1C, the beam's start as the rope and the grapple shot's feedback
+/// observe it.
+fn grapple_previous_start_lanes() -> Vec<Lane> {
+    vec![
+        (
+            0x0d1a,
+            0,
+            (|s, _| &mut s.player.swing.previous_start.x) as Field,
+        ),
+        (
+            0x0d1c,
+            0,
+            (|s, _| &mut s.player.swing.previous_start.y) as Field,
+        ),
+    ]
+}
+
+#[test]
 fn wavy_samus_round_trips_every_word() {
     check_owner("wavy Samus", &wavy_samus_lanes());
 }
@@ -1444,6 +1466,7 @@ fn all_owner_lanes() -> Vec<(&'static str, Vec<Lane>)> {
         ("pause hooks", pause_hook_lanes()),
         ("player spare words", player_spare_lanes()),
         ("player settings", player_setting_lanes()),
+        ("grapple previous start", grapple_previous_start_lanes()),
         ("wavy Samus", wavy_samus_lanes()),
         ("Work Robot palette", work_robot_palette_lanes()),
         ("room scrolls", room_scroll_lanes()),
