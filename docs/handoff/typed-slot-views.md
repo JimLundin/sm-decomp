@@ -2,7 +2,7 @@
 
 Branch `collab/typed-all` (PR #155) converts the address-API layer to typed Session
 fields. Engine address APIs (`ram_ratchet.py`, ROM record reads excluded) fall from
-5805 on main `0115740f5` to 91.
+5805 on main `0115740f5` to 63.
 
 ## Pattern
 
@@ -34,7 +34,7 @@ landed this way:
 - right border ($1874)
 - Work Robot palette ($D652..$D657)
 
-The resulting checkpoint formats are SMROOMS 9 and SMACTORS 8. Replays can't check
+The resulting checkpoint formats are SMROOMS 9 and SMACTORS 9 (the ending's star records add four spare-word owners). Replays can't check
 $1874, because the verifier masks $186E..$1886.
 
 The first scroll attempt diverged `boss-crocomire` at $CD24 (run 41561271426). Six
@@ -46,7 +46,7 @@ Raw RAM accesses to the scroll cells still run on Game:
 - `hdma_program.rs:297-298`
 - the boot WRAM clear
 
-## Remaining 91 sites, by blocker
+## Remaining 63 sites, by blocker
 
 1. **New Session owners, plus all of their writers.**
    - (Drop origin $F434/$F436 is now owned by `enemy_projectiles.drop_origin` (SMESHOT 3). The $3000..$6FFF tile buffer is owned by the presentation workspace; Kraid's `load_bg2` reads it typed.)
@@ -57,7 +57,6 @@ Raw RAM accesses to the scroll cells still run on Game:
    - Owning the presentation on the normal replay path is an architecture step.
 3. **Still on `Game`.**
    - The game-over menu: 11 sites. A cohort patch exists at `$TEMP/typed-hosts/game_over_cohort.patch` but raises `sm_game_ram_sites` by 3.
-   - Shooting stars (ending, menus host): 19 sites.
    - `beam_windows`/`calculate_xray_window`, which runs inside `foreign`.
    - Kraid's unpause coroutine.
    - `yapping_maw::appearance`: the verifier's sprite alias cases 117/118 run it on Game at off-table enemy 0xE0DA.
