@@ -259,10 +259,6 @@ impl sm_game::actors::mother_brain_fight::Host for Game {
         crate::rtl::report_unreachable(self)
     }
 
-    fn set_projectile_spawn_r22(&mut self, value: u16) {
-        self.eproj_spawn_r22 = value;
-    }
-
     fn spawn_wall_seal(&mut self) {
         crate::game::mother_brain_visuals::spawn_wall_seal(self);
     }

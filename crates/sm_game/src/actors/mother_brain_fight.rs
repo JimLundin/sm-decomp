@@ -865,8 +865,6 @@ pub trait Host:
 {
     /// The original's unreachable-state failure. Was `Unreachable`.
     fn bank_unreachable(&mut self) -> bool;
-    /// The spawn's extra parameter. Was `eproj_spawn_r22`.
-    fn set_projectile_spawn_r22(&mut self, value: u16);
     /// The wall seal's dust clouds and wall blocks.
     fn spawn_wall_seal(&mut self);
     fn drain_health_by_rainbow_beam(&mut self);
@@ -2593,9 +2591,9 @@ crate::dispatch::callback_dispatch! {
         *BrainEdit::of(game, e).neck_moving() = 0;
         let x = (Brain::of(game, e).actor().x.whole).wrapping_add(16);
         let y = (Brain::of(game, e).actor().y.whole).wrapping_add(4);
-        game.foreign(|game| {
-            game.set_projectile_spawn_r22(1);
-            crate::actors::host::BossEffects::set_projectile_spawn_point(game, x, y);
+        game.owned_step(|game| {
+            game.session_mut().enemy_projectiles.spawn.variant = 1;
+            game.place_projectile_spawn(x, y);
         });
         spawn_room_projectile(ADDR_STRU_86A17B as u16, 1, game);
     };
