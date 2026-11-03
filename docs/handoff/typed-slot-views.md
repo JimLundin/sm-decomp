@@ -124,3 +124,17 @@ save slots' $0A00/$D7C0/$CD52 block copies and the demo's $D8F0 words (no owners
 and tile buffer fills in `initialize_gameplay` (Game-hosted; `PaletteAccess` on Game opens a
 lease per word), the VRAM read queue tail, the audio upload flag (only `audio_word` reaches
 it), Samus's half requests on the logo screen, and the files the brief excluded.
+
+## Cohorts lane (2026-11-03, `collab/rs-cohorts`)
+
+No lease is opened that the copies did not open. The menu copies in the cinematics (the logo
+hold, the title and intro menu resets, the Ceres start's save selection) store through the menu
+owner (`menus::state::with`). The power bomb's ten explosion words ($0592, $0CE2..$0CF3) joined
+`SessionWords`, with write-class ranges on Game, so the explosion windows, the HDMA handler's
+frozen-time release and the intro's explosion origin go through `sequence_state::with_words`.
+Both owners commit through a lease only while the retained Session is current, as
+`session_cohort::store` did, and commit only the words a body changed. Left (11 copies): the
+cinematic frames' `Cinematic` copies, the fade planes ($2000..$2FFF), the palette buffer
+($C000..$C1FF) and Samus's shot words in the intro. They run on Game outside any lease, and no
+Game owner holds those words. They need the cinematic frame on a lease, or the Session kept
+authoritative for the whole tick (docs/PERFORMANCE.md step 2).
