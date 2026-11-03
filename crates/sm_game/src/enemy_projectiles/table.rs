@@ -238,13 +238,16 @@ where
 /// A slot past the table keeps the original's store to the word it names.
 pub fn free<H>(slot: u16, game: &mut H)
 where
-    H: WorkRamAccess + RuntimeAccess + ?Sized,
+    H: crate::session_access::SessionAccess + crate::runtime_access::SessionRam + ?Sized,
 {
     let index = usize::from(slot >> 1);
     if slot & 1 == 0 && index < SLOTS {
-        with_slots(game, |slots| slots[index].definition = 0);
+        game.session_mut().enemy_projectiles.slots[index].definition = 0;
     } else {
-        crate::projection::copy_into_image(game, 0x1997 + usize::from(slot), &0u16.to_ne_bytes());
+        // LEGACY(original-overflow): an odd or out-of-range projectile index
+        // clears whatever word lies at $7E:1997 + index.
+        let at = 0x1997 + usize::from(slot);
+        crate::legacy_overflow::ram_write_slice(game, at, &0u16.to_ne_bytes());
     }
 }
 

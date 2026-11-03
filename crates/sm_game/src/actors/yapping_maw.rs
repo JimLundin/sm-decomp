@@ -24,6 +24,7 @@ pub trait Lease:
     + crate::sprite_effect_host::Host
     + crate::enemy_projectiles::host::Host
     + crate::room_mechanisms::host::Effects
+    + crate::runtime_access::SessionRam
 {
 }
 impl<T> Lease for T where
@@ -33,6 +34,7 @@ impl<T> Lease for T where
         + crate::sprite_effect_host::Host
         + crate::enemy_projectiles::host::Host
         + crate::room_mechanisms::host::Effects
+        + crate::runtime_access::SessionRam
 {
 }
 
@@ -582,7 +584,7 @@ pub fn shot<L: Lease>(game: &mut L) {
     } else {
         for part in 0..4 {
             let projectile = YappingMaw::of(game, maw).segment_projectile(part);
-            game.foreign(|game| crate::enemy_projectiles::table::free(projectile, game));
+            game.owned_step(|game| crate::enemy_projectiles::table::free(projectile, game));
         }
         let handle = YappingMaw::of(game, maw).sprite_object();
         game.owned_step(|game| sprite_effect_controllers::retire(game, LegacySpriteHandle(handle)));
