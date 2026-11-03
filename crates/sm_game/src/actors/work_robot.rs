@@ -4,7 +4,7 @@
 use crate::actors::access::{AccessMode::Native, ActorAccess as _, ActorKey as Key};
 use crate::actors::api::{self, MovementResult::Blocked, ShotHandling, SlopePolicy};
 use crate::actors::combat;
-use crate::actors::host::{ActorLease, ActorRuntime as _, EnemyHost, LeaseActors};
+use crate::actors::host::{ActorLease, EnemyHost, LeaseActors};
 use crate::enemy_projectiles::host::Effects as _;
 use crate::enemy_script::EnemyScript;
 use crate::player_projectiles::content::table;
@@ -280,7 +280,11 @@ pub fn instruction<H: LeaseActors + ?Sized>(
             let delay = (runtime.session().timing.random_number & 0x1f) + 16;
             runtime.edit_actor(key, Native, |actor| actor.variables[1] = delay);
             let current = combat::current(runtime).byte_index();
-            runtime.foreign(|game| game.spawn_projectile(delay, current, definition));
+            crate::actors::boss_lease::BossLease::owned_step(runtime, |runtime| {
+                crate::enemy_projectiles::lifecycle::spawn_from_enemy(
+                    runtime, delay, current, definition,
+                )
+            });
             return EnemyScript::jump(next);
         }
         // Instruction - facing left or right - move forwards or backwards ($A8:CD09-$A8:D04B).
