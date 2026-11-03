@@ -14,7 +14,6 @@ use crate::actors::queries::angle_from_delta;
 use crate::actors::slot_view::store_byte;
 use crate::enemy_script::EnemyScript;
 use crate::menus::prelude::{battle, owned};
-use crate::ram::word;
 
 /// Colours 9-12 of BG1/2 palette 5, as palette words and in RAM at $7E:C000.
 const HEALTH_COLOURS: core::ops::Range<usize> = 89..93;
@@ -290,7 +289,7 @@ pub fn wait_for_evirs<L: Lease>(game: &mut L) {
     }
     if Draygon::of(game, BODY).function_timer() != 0 {
         // Moving left, the evirs also take $0E24, whatever was left there ($A5:A01C).
-        let bias = word!(game.REMOVED_VAR_E24);
+        let bias = game.session().actors.compatibility.scratch[1];
         game.foreign(|game| game.draygon_motion(bias));
     } else {
         *DraygonEdit::of(game, BODY).function() = function::DEATH_BURIED_BY_EVIRS;
@@ -301,7 +300,7 @@ pub fn wait_for_evirs<L: Lease>(game: &mut L) {
 /// Was `sink`.
 pub fn buried_by_evirs<L: Lease>(game: &mut L) {
     game.foreign(dying_smoke);
-    let bias = word!(game.REMOVED_VAR_E24);
+    let bias = game.session().actors.compatibility.scratch[1];
     game.foreign(|game| game.draygon_motion(bias));
     {
         let mut draygon = DraygonEdit::of(game, BODY);

@@ -11,7 +11,6 @@ use crate::actors::draygon_flight::{body_bubble, fire_wall_turret, move_horizont
 use crate::actors::draygon_host::{
     ARMS, BODY, Draygon, DraygonEdit, SIGN, abs16, function, instruction_list as list,
 };
-use crate::ram::word;
 
 /// $7E:9002: the swoop Y positions, one every 4 bytes, up to 800h bytes.
 const SWOOP_Y_POSITIONS: usize = 0x9002;
@@ -70,7 +69,9 @@ fn calculate_swoop_y_positions<L: Lease>(game: &mut L) {
         *draygon.swoop_duration() = index;
     }
     // The swoop's speed, last Y position and index stay in $0E22..$0E26.
-    word! {game; REMOVED_VAR_E22 = velocity; REMOVED_VAR_E24 = height; REMOVED_VAR_E26 = index;}
+    game.session_mut().actors.compatibility.scratch[..3]
+        .copy_from_slice(&[velocity, height, index]);
+    game.words_stored();
 }
 /// Draygon body function - swoop right ($A5:87F4) or left ($A5:89B3) - setup.
 /// Was `begin`.
@@ -87,7 +88,9 @@ pub fn swoop_setup<L: Lease>(right: bool, game: &mut L) {
                 .wrapping_sub(game.player_x()),
         );
         let speed = (u32::from(distance) << 16)
-            .checked_div(u32::from(word!(game.REMOVED_VAR_E26) >> 2))
+            .checked_div(u32::from(
+                game.session().actors.compatibility.scratch[2] >> 2,
+            ))
             .unwrap_or(0);
         {
             let mut draygon = DraygonEdit::of(game, BODY);
