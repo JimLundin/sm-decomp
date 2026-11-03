@@ -112,8 +112,6 @@ pub trait Host: crate::actors::mother_brain_fight::Host {
     /// Drain Samus's health while the baby Metroid is latched on. Was
     /// `drain_health_by_baby_metroid`.
     fn drain_health_by_baby_metroid(&mut self);
-    /// Mark a homing step for the verifier's probes.
-    fn homing_probe(&mut self);
 }
 
 /// A Mother Brain lease whose game is this module's host.
@@ -498,7 +496,7 @@ pub fn gradually_accelerate_towards_point(
     r26: u16,
     game: &mut impl Lease,
 ) {
-    game.foreign(|game| game.homing_probe());
+    game.owned_step(|_| crate::probe::hit("homing.metroid"));
     let divisor = GRADUAL_ACCELERATION_DIVISORS[j as usize] as u8;
     gradually_accelerate_horizontally(k, r18, u16::from(divisor), r26, game);
     let e = k;
