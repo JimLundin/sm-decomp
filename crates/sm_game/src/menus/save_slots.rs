@@ -60,9 +60,20 @@ pub fn save<H: Host + ?Sized>(slot: u16, game: &mut H) {
     game.observe_flags_save(0);
     crate::word_transfers!(game, descending, 48; le(PLAYER_DATA_SAVED, 47) <- native(0xa00));
     game.observe_flags_save(1);
-    crate::word_transfers!(game, ascending, 128;
-        le(EXPLORED_MAP_TILES_SAVED, crate::gameplay_context::navigation(game).area.wrapping_mul(256) >> 1)
-            <- native(0x7f7));
+    // The current area's explored map into its saved map, word by word.
+    let first = usize::from(
+        crate::gameplay_context::navigation(game)
+            .area
+            .wrapping_mul(256)
+            >> 1,
+    );
+    for index in 0..128 {
+        copy_map_word(
+            game,
+            Field::ExploredMap(index),
+            Field::SavedMap(first + index),
+        );
+    }
     game.observe_flags_save(2);
     transfer_map(Direction::Save, game);
     game.observe_flags_save(3);
@@ -104,7 +115,8 @@ pub fn load<H: Host + ?Sized>(slot: u16, game: &mut H) -> u8 {
 
 fn transfer_map<H: Host + ?Sized>(direction: Direction, game: &mut H) {
     if matches!(direction, Direction::Load) {
-        crate::word_transfers!(game, descending, 897; le(EXPLORED_MAP_TILES_SAVED, 896) <- value(0));
+        // Words 896 down to 0: every area's map but the last, and its first word.
+        clear_saved_maps(game, (0..=896).rev());
     }
     for area in 0..6 {
         let mut remaining = i32::from(
@@ -188,7 +200,30 @@ pub fn initialize<H: Host + ?Sized>(game: &mut H) {
         }
         flags.unused = [0; 8];
     });
-    crate::word_transfers!(game, ascending, 896; le(EXPLORED_MAP_TILES_SAVED, 0) <- value(0));
+    // A new game's explored maps: every area's but the last clear.
+    clear_saved_maps(game, 0..896);
+}
+
+/// Store zero to each word of the saved explored maps in `words`, in order.
+pub fn clear_saved_maps<H: crate::projection::Views + ?Sized>(
+    game: &mut H,
+    words: impl IntoIterator<Item = usize>,
+) {
+    for index in words {
+        game.set_view_word(Field::SavedMap(index), 0);
+    }
+}
+
+/// Copy one explored-map word, read then stored, between the current area's
+/// map and the saved maps. The original copies the words as the CPU holds
+/// them, so the stored word keeps the read word's native byte order.
+fn copy_map_word<H: crate::projection::Views + ?Sized>(
+    game: &mut H,
+    source: Field,
+    destination: Field,
+) {
+    let value = crate::word_transfers::stored_native(game.view_word(source));
+    game.set_view_word(destination, value);
 }
 
 pub fn record_completion<H: Host + ?Sized>(game: &mut H) {
@@ -220,7 +255,11 @@ fn area_map_words(area: u16) -> impl Iterator<Item = (usize, u16)> {
 /// used, into `selection`.
 pub fn load_area_map<H: Host + ?Sized>(selection: &mut SaveSelection, game: &mut H) {
     for (active, saved) in area_map_words(crate::gameplay_context::navigation(game).area) {
-        crate::word_transfers!(game, ascending, 1; native(0x7f7 + active * 2) <- le(EXPLORED_MAP_TILES_SAVED, saved));
+        copy_map_word(
+            game,
+            Field::SavedMap(usize::from(saved)),
+            Field::ExploredMap(active),
+        );
     }
     selection.has_area_map = u16::from(game.ram().read_byte(
         crate::ram::bytes::MAP_STATION_BYTE_ARRAY
@@ -230,7 +269,11 @@ pub fn load_area_map<H: Host + ?Sized>(selection: &mut SaveSelection, game: &mut
 
 pub fn save_area_map<H: Host + ?Sized>(game: &mut H) {
     for (active, saved) in area_map_words(crate::gameplay_context::navigation(game).area) {
-        crate::word_transfers!(game, ascending, 1; le(EXPLORED_MAP_TILES_SAVED, saved) <- native(0x7f7 + active * 2));
+        copy_map_word(
+            game,
+            Field::ExploredMap(active),
+            Field::SavedMap(usize::from(saved)),
+        );
     }
     if crate::menus::state::load::<SaveSelection, _>(game).has_area_map != 0 {
         // The area's map station byte; the word store's high byte keeps the

@@ -93,6 +93,13 @@ pub enum Field {
     Layer2(usize),
     Bg1Offset(usize),
     Bg2Scroll(usize),
+    /// Word `index` of the current area's explored map ($07F7 + 2 * index).
+    /// The Session holds it as bytes, so stores take the byte path.
+    ExploredMap(usize),
+    /// Word `index` of the explored maps kept for the save file ($CD52 +
+    /// 2 * index), 128 words per area. The Session holds them as bytes, so
+    /// stores take the byte path.
+    SavedMap(usize),
 }
 
 impl Field {
@@ -135,6 +142,8 @@ impl Field {
             Self::Layer2(axis) => words::LAYER2_X_POS + 2 * axis,
             Self::Bg1Offset(axis) => words::BG1_X_OFFSET + 2 * axis,
             Self::Bg2Scroll(axis) => words::BG2_X_SCROLL + 2 * axis,
+            Self::ExploredMap(index) => 0x7f7 + 2 * index,
+            Self::SavedMap(index) => crate::save_file::SAVED_MAPS + 2 * index,
         }
     }
 
@@ -195,6 +204,11 @@ impl Field {
             Self::Layer2(axis) => *room.camera.layer2.get(axis)?,
             Self::Bg1Offset(axis) => *room.camera.bg1_offset.get(axis)?,
             Self::Bg2Scroll(axis) => *room.camera.bg2_scroll.get(axis)?,
+            Self::ExploredMap(index) => {
+                let explored = &session.minimap.explored;
+                u16::from_le_bytes([*explored.get(2 * index)?, *explored.get(2 * index + 1)?])
+            }
+            Self::SavedMap(index) => session.saved_maps.word(index)?,
         })
     }
 
@@ -258,6 +272,7 @@ impl Field {
             Self::Layer2(axis) => session.room.camera.layer2.get_mut(axis)?,
             Self::Bg1Offset(axis) => session.room.camera.bg1_offset.get_mut(axis)?,
             Self::Bg2Scroll(axis) => session.room.camera.bg2_scroll.get_mut(axis)?,
+            Self::ExploredMap(_) | Self::SavedMap(_) => return None,
         })
     }
 }
@@ -875,6 +890,8 @@ mod tests {
             ]);
         }
         fields.extend((0..3).map(Field::PauseHook));
+        fields.extend((0..128).map(Field::ExploredMap));
+        fields.extend((0..1024).map(Field::SavedMap));
         fields
     }
 

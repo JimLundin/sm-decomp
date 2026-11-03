@@ -1651,6 +1651,45 @@ impl sm_game::sequence_state::Access for Projection {
     }
 }
 
+/// The saved explored maps own $CD52..$D551 byte by byte, 256 bytes per
+/// area; each store reaches only its own byte, and the projection, decode and
+/// encode agree with RAM.
+#[test]
+fn saved_maps_round_trip_every_byte() {
+    use sm_game::save_file::{SAVED_MAPS, SavedMaps};
+    const MAPS: std::ops::Range<usize> = SAVED_MAPS..SAVED_MAPS + SavedMaps::BYTES;
+    let base = session();
+    for at in MAPS {
+        let value = (at as u8) | 1;
+        let mut s = base.clone();
+        assert!(write_projected_byte(&mut s, at, value), "store {at:#x}");
+        let offset = at - MAPS.start;
+        assert_eq!(s.saved_maps.areas[offset / 256][offset % 256], value);
+        for other in at.saturating_sub(2)..at + 3 {
+            let expected = if other == at { value } else { 0 };
+            if MAPS.contains(&other) {
+                assert_eq!(
+                    projected_byte(&s, other),
+                    Some(expected),
+                    "storing {at:#x} -> projection {other:#x}"
+                );
+            }
+        }
+    }
+    for seed in [5, 0xcd52_d551] {
+        let ram = Random::ram(seed);
+        let s = decoded(&ram);
+        for (index, area) in s.saved_maps.areas.iter().enumerate() {
+            let start = MAPS.start + index * 256;
+            assert_eq!(area.as_slice(), &ram[start..start + 256], "area {index}");
+        }
+        let bytes = encoded(&s);
+        for at in MAPS {
+            assert_eq!(bytes.get(&at), Some(&ram[at]), "encode {at:#x}");
+        }
+    }
+}
+
 /// The gameplay flags own the unused bytes between the doors and the stations
 /// ($D8F0..$D8F7) byte by byte; each store reaches only its own byte.
 #[test]

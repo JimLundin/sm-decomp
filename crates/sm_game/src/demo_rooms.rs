@@ -255,7 +255,8 @@ pub fn load<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
         }
         flags.unused = [0xff; 8];
     });
-    crate::word_transfers!(game, ascending, 768; le(EXPLORED_MAP_TILES_SAVED, 0) <- value(0));
+    // A demo's explored maps: the first six areas' clear.
+    crate::menus::save_slots::clear_saved_maps(game, 0..768);
     crate::gameplay_context::with_inventory(
         game,
         |_, inventory: &mut crate::inventory::Inventory| {
