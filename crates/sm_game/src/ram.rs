@@ -865,7 +865,7 @@ ram_vars! {
 // is hoisted across ordered stores; update expressions create no closure.
 #[macro_export]
 macro_rules! ram_word {
-    // Compound arithmetic wraps at 16 bits; bits/shifts keep ordinary u16 operations.
+    // Compound arithmetic wraps at 16 bits; `&=` keeps the ordinary u16 operation.
     // Delegate destination capture, old load, RHS evaluation and store to the update arm.
     ($game:ident.$field:ident$([$index:expr])? &= $value:expr $(, $result:ident)? $(,)?) => {
         $crate::ram_word!($game.$field$([$index])?, |old| old & $value $(, $result)?)
@@ -876,34 +876,10 @@ macro_rules! ram_word {
     ($game:ident.$field:ident$([$index:expr])? -= $value:expr $(, $result:ident)? $(,)?) => {
         $crate::ram_word!($game.$field$([$index])?, |old| old.wrapping_sub($value) $(, $result)?)
     };
-    ($game:ident.$field:ident$([$index:expr])? >>= $value:expr $(, $result:ident)? $(,)?) => {
-        $crate::ram_word!($game.$field$([$index])?, |old| old >> $value $(, $result)?)
-    };
-    ($game:ident.$field:ident$([$index:expr])? ^= $value:expr $(, $result:ident)? $(,)?) => {
-        $crate::ram_word!($game.$field$([$index])?, |old| old ^ $value $(, $result)?)
-    };
-    ($game:ident.$field:ident$([$index:expr])? |= $value:expr $(, $result:ident)? $(,)?) => {
-        $crate::ram_word!($game.$field$([$index])?, |old| old | $value $(, $result)?)
-    };
-    // Explicit promoted operations retain their original RHS type and final u16 cast.
-    // Checked operations use ordinary Rust overflow/shift rules before truncation.
-    (bits_i32, $game:ident.$field:ident$([$index:expr])? |= $value:expr $(, $result:ident)? $(,)?) => {
-        $crate::ram_word!($game.$field$([$index])?, |old| ((old as i32) | $value) as u16 $(, $result)?)
-    };
-    (checked_i32, $game:ident.$field:ident$([$index:expr])? *= $value:expr $(, $result:ident)? $(,)?) => {
-        $crate::ram_word!($game.$field$([$index])?, |old| ((old as i32) * $value) as u16 $(, $result)?)
-    };
-    (checked_i32, $game:ident.$field:ident$([$index:expr])? += $value:expr $(, $result:ident)? $(,)?) => {
-        $crate::ram_word!($game.$field$([$index])?, |old| ((old as i32) + $value) as u16 $(, $result)?)
-    };
+    // The promoted subtraction retains its original i32 RHS and final u16 cast,
+    // using ordinary Rust overflow rules before truncation.
     (checked_i32, $game:ident.$field:ident$([$index:expr])? -= $value:expr $(, $result:ident)? $(,)?) => {
         $crate::ram_word!($game.$field$([$index])?, |old| ((old as i32) - $value) as u16 $(, $result)?)
-    };
-    (checked_i32, $game:ident.$field:ident$([$index:expr])? <<= $value:expr $(, $result:ident)? $(,)?) => {
-        $crate::ram_word!($game.$field$([$index])?, |old| ((old as i32) << $value) as u16 $(, $result)?)
-    };
-    (wrapping_u32, $game:ident.$field:ident$([$index:expr])? += $value:expr $(, $result:ident)? $(,)?) => {
-        $crate::ram_word!($game.$field$([$index])?, |old| (old as u32).wrapping_add($value) as u16 $(, $result)?)
     };
 
     ($game:ident.$field:ident[$index:expr]) => {
@@ -928,9 +904,6 @@ macro_rules! ram_word {
     };
     ($game:ident.$field:ident$([$index:expr])?, $method:ident($argument:expr $(,)?) $(, $result:ident)? $(,)?) => {
         $crate::ram_word!($game.$field$([$index])?, |word| word.$method($argument) $(, $result)?)
-    };
-    ($game:ident.$field:ident$([$index:expr])?, |$old:ident| { $value:expr } $(, $result:ident)? $(,)?) => {
-        $crate::ram_word!($game.$field$([$index])?, |$old| $value $(, $result)?)
     };
     ($game:ident.$field:ident[$index:expr], |$old:ident| $value:expr $(, $result:ident)? $(,)?) => {{
         let destination = $crate::ram_word!(@offset $field[$index]);
@@ -1033,73 +1006,6 @@ macro_rules! ram_slot {
         )
         .expect("enemy field outside RAM")
     };
-    (byte $game:ident, $layout:ident[$slot:expr] $(.$field:ident)+ [$lane:expr] = $value:expr) => {
-        match ($value, $crate::ram_slot!(@at $layout, $slot, $($field).+)) {
-            (value, at) => {
-                let value: ::core::primitive::u8 = value;
-                let at = ::core::primitive::usize::try_from(at as ::core::primitive::isize + ($lane) as ::core::primitive::isize)
-                    .expect("enemy field outside RAM");
-                $game.ram().write_byte(at, value);
-            }
-        }
-    };
-    (byte $game:ident, $layout:ident[$slot:expr] $(.$field:ident)+ [$lane:expr]) => {
-        match $crate::ram_slot!(@at $layout, $slot, $($field).+) {
-            at => {
-                let at = ::core::primitive::usize::try_from(
-                    at as ::core::primitive::isize + ($lane) as ::core::primitive::isize,
-                )
-                .expect("enemy field outside RAM");
-                $game.ram().read_byte(at)
-            },
-        }
-    };
-    // Split-word pairs, as `rtl::AddToHiLo`/`SetHiLo`: the value first, then low
-    // is read before high and written before high.
-    ($game:ident, $layout:ident[$slot:expr] $(.$prefix:ident)* ($hi:ident, $lo:ident) += $value:expr) => {
-        match $value {
-            value => {
-                let value: ::core::primitive::u32 = value;
-                let low = ::core::primitive::u32::from($crate::ram_slot!($game, $layout[$slot] $(.$prefix)* .$lo));
-                let high = ::core::primitive::u32::from($crate::ram_slot!($game, $layout[$slot] $(.$prefix)* .$hi));
-                let sum = (low | (high << 16)).wrapping_add(value);
-                $crate::ram_slot!($game, $layout[$slot] $(.$prefix)* .$lo = sum as ::core::primitive::u16);
-                $crate::ram_slot!($game, $layout[$slot] $(.$prefix)* .$hi = (sum >> 16) as ::core::primitive::u16);
-            }
-        }
-    };
-    ($game:ident, $layout:ident[$slot:expr] $(.$prefix:ident)* ($hi:ident, $lo:ident) = $value:expr) => {
-        match $value {
-            value => {
-                let value: ::core::primitive::u32 = value;
-                $crate::ram_slot!($game, $layout[$slot] $(.$prefix)* .$lo = value as ::core::primitive::u16);
-                $crate::ram_slot!($game, $layout[$slot] $(.$prefix)* .$hi = (value >> 16) as ::core::primitive::u16);
-            }
-        }
-    };
-    // Ordered word stores to several fields; the slot is re-evaluated per store.
-    ($game:ident, $layout:ident[$slot:expr] $(.$prefix:ident)*; $($stores:tt)+) => {
-        $crate::ram_slot!(@stores $game, $layout[$slot] ($($prefix)*); $($stores)+)
-    };
-    (@stores $game:ident, $layout:ident[$slot:expr] $prefix:tt; $($field:ident = $value:expr),+ $(,)?) => {
-        $($crate::ram_slot!(@store $game, $layout[$slot] $prefix $field = $value);)+
-    };
-    (@store $game:ident, $layout:ident[$slot:expr] ($($prefix:ident)*) $field:ident = $value:expr) => {
-        $crate::ram_slot!($game, $layout[$slot] $(.$prefix)* .$field = $value)
-    };
-    // Read-modify-write: the old word is read first, as the leading operand of
-    // the replaced `field = field OP ..` value was; the slot is evaluated once.
-    ($game:ident, $layout:ident[$slot:expr] $(.$field:ident)+, |$old:ident| $value:expr) => {
-        match $crate::ram_slot!(@at $layout, $slot, $($field).+) {
-            at => {
-                $crate::ram::word_field::<$layout>(|record| record $(.$field)+);
-                let $old = ::core::primitive::u16::from_ne_bytes([$game.ram().read_byte(at), $game.ram().read_byte(at + 1)]);
-                let bytes = ::core::primitive::u16::to_ne_bytes($value);
-                $game.ram().write_byte(at, bytes[0]);
-                $game.ram().write_byte(at + 1, bytes[1]);
-            }
-        }
-    };
     ($game:ident, $layout:ident[$slot:expr] $(.$field:ident)+ = $value:expr) => {
         match ($value, $crate::ram_slot!(@at $layout, $slot, $($field).+)) {
             (value, at) => {
@@ -1140,72 +1046,26 @@ macro_rules! ram_words {
 /// `RAM_VARS` by name.
 pub mod mirror {
     pub const INIDISP: usize = 0x51;
-    pub const OBSEL: usize = 0x52;
-    pub const BGMODE: usize = 0x55;
     pub const MOSAIC: usize = 0x57;
     pub const BG1SC: usize = 0x58;
     pub const BG2SC: usize = 0x59;
-    pub const BG3SC: usize = 0x5a;
-    pub const BG4SC: usize = 0x5c;
-    pub const BG12NBA: usize = 0x5d;
-    pub const BG34NBA: usize = 0x5e;
-    pub const M7SEL: usize = 0x5f;
-    pub const W12SEL: usize = 0x60;
-    pub const W34SEL: usize = 0x61;
-    pub const WOBJSEL: usize = 0x62;
-    pub const WH0: usize = 0x63;
-    pub const WH1: usize = 0x64;
-    pub const WH2: usize = 0x65;
-    pub const WH3: usize = 0x66;
-    pub const WBGLOG: usize = 0x67;
-    pub const WOBJLOG: usize = 0x68;
     pub const TM: usize = 0x69;
-    pub const TS: usize = 0x6b;
-    pub const TMW: usize = 0x6c;
-    pub const TSW: usize = 0x6d;
-    pub const CGWSEL: usize = 0x6f;
-    pub const CGADSUB: usize = 0x72;
     pub const COLDATA: usize = 0x74;
     pub const SETINI: usize = 0x77;
     pub const NMITIMEN: usize = 0x84;
-    pub const HDMAEN: usize = 0x85;
-    pub const MEMSEL: usize = 0x86;
 
     #[cfg(test)]
     #[test]
     fn match_the_named_ram_table() {
         for (addr, name) in [
             (INIDISP, "REG_INIDISP"),
-            (OBSEL, "REG_OBSEL"),
-            (BGMODE, "REG_BGMODE"),
             (MOSAIC, "REG_MOSAIC"),
             (BG1SC, "REG_BG1SC"),
             (BG2SC, "REG_BG2SC"),
-            (BG3SC, "REG_BG3SC"),
-            (BG4SC, "REG_BG4SC"),
-            (BG12NBA, "REG_BG12NBA"),
-            (BG34NBA, "REG_BG34NBA"),
-            (M7SEL, "REG_M7SEL"),
-            (W12SEL, "REG_W12SEL"),
-            (W34SEL, "REG_W34SEL"),
-            (WOBJSEL, "REG_WOBJSEL"),
-            (WH0, "REG_WH0"),
-            (WH1, "REG_WH1"),
-            (WH2, "REG_WH2"),
-            (WH3, "REG_WH3"),
-            (WBGLOG, "REG_WBGLOG"),
-            (WOBJLOG, "REG_WOBJLOG"),
             (TM, "REG_TM"),
-            (TS, "REG_TS"),
-            (TMW, "REG_TMW"),
-            (TSW, "REG_TSW"),
-            (CGWSEL, "REG_CGWSEL"),
-            (CGADSUB, "REG_CGADSUB"),
             (COLDATA, "REG_COLDATA"),
             (SETINI, "REG_SETINI"),
             (NMITIMEN, "REG_NMITIMEN"),
-            (HDMAEN, "REG_HDMAEN"),
-            (MEMSEL, "REG_MEMSEL"),
         ] {
             let row = super::RAM_VARS
                 .iter()
