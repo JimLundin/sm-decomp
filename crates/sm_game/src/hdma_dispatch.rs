@@ -2,7 +2,6 @@
 //! address the original dispatch matched maps to a named target, and an
 //! unknown address keeps the original unreachable failure.
 use crate::explosion_window::{self, Phase};
-use crate::hdma_effects::apply_leased;
 use crate::hdma_objects::{self, HdmaEffect};
 use crate::menus::host::Host;
 use crate::player_transitions::xray::BeamPhase;
@@ -180,8 +179,8 @@ pub const HDMA_PRE_ACTIONS: [(u32, HdmaPreAction); 59] = [
     (0x88_ecb6, HdmaPreAction::IntroWave),
 ];
 
-/// Run the indirect call at `address` for HDMA object `k`.
-fn hdma_call<H>(address: u32, k: u16, game: &mut H)
+/// Run the indirect call at `address` on the compatibility host.
+fn hdma_call<H>(address: u32, game: &mut H)
 where
     H: Host + explosion_window::Host + xray_background::Host + ?Sized,
 {
@@ -191,14 +190,15 @@ where
     };
     use HdmaCall::*;
     match target {
-        InitializeRainbowBeam => apply_leased(HdmaEffect::InitializeRainbowBeam, k, game),
         BeginPreFlash => explosion_window::begin_pre_flash(game),
         BeginPrescaledPreFlash => explosion_window::begin_prescaled_pre_flash(game),
         BeginExplosion => explosion_window::begin_explosion(game),
         BeginPrescaledExplosion => explosion_window::begin_prescaled_explosion(game),
-        FinishPowerBomb | FinishCrystalFlash | FreezeAndBackup => {
-            unreachable!("run_call runs {target:?}")
-        }
+        InitializeRainbowBeam
+        | FinishPowerBomb
+        | FinishCrystalFlash
+        | FreezeAndBackup
+        | InitializeSuitPickup => unreachable!("run_call runs {target:?}"),
         BeginCrystalFlash => explosion_window::begin_crystal_flash(game),
         Nothing => {}
         CaptureBg1Right => xray_background::capture_bg1_right(game),
@@ -208,7 +208,6 @@ where
         UploadLeft => xray_background::upload_left(game),
         UploadRight => xray_background::upload_right(game),
         SetBackdrop => xray_background::set_backdrop(game),
-        InitializeSuitPickup => apply_leased(HdmaEffect::InitializeSuitPickup, k, game),
     }
 }
 
@@ -229,7 +228,13 @@ where
         Some((_, HdmaCall::FinishCrystalFlash)) => it.with_object(index, |index, game| {
             explosion_window::finish_crystal_flash(index, slot, game)
         }),
-        _ => it.foreign(|game| hdma_call(address, slot, game)),
+        Some((_, HdmaCall::InitializeRainbowBeam)) => {
+            it.effect(HdmaEffect::InitializeRainbowBeam, slot)
+        }
+        Some((_, HdmaCall::InitializeSuitPickup)) => {
+            it.effect(HdmaEffect::InitializeSuitPickup, slot)
+        }
+        _ => it.foreign(|game| hdma_call(address, game)),
     }
 }
 
@@ -256,6 +261,10 @@ where
         it.unreachable();
         return;
     };
+    if let Some(effect) = pre_action_effect(target) {
+        it.effect(effect, slot);
+        return;
+    }
     use HdmaPreAction::*;
     match target {
         Nothing => {}
@@ -308,6 +317,33 @@ where
     }
 }
 
+/// The pre-instruction targets that are HDMA effects, which run on the lease.
+fn pre_action_effect(target: HdmaPreAction) -> Option<HdmaEffect> {
+    use HdmaPreAction::*;
+    Some(match target {
+        AdvanceXrayBackground => HdmaEffect::AdvanceXrayBackground,
+        XrayBeamInitial => HdmaEffect::AdvanceXrayBeam(BeamPhase::Initial),
+        XrayBeamWidening => HdmaEffect::AdvanceXrayBeam(BeamPhase::Widening),
+        XrayBeamFull => HdmaEffect::AdvanceXrayBeam(BeamPhase::Full),
+        BeginBrightHaze => HdmaEffect::BeginHaze { color: 0x80 },
+        BeginDimHaze => HdmaEffect::BeginHaze { color: 0x20 },
+        HazeFadingIn => HdmaEffect::AdvanceHaze(HazePhase::FadingIn),
+        HazeFadedIn => HdmaEffect::AdvanceHaze(HazePhase::FadedIn),
+        HazeFadingOut => HdmaEffect::AdvanceHaze(HazePhase::FadingOut),
+        DraygonLayer => HdmaEffect::SelectDraygonLayer,
+        SuitPickup => HdmaEffect::AdvanceSuitPickup { gravity: false },
+        GravitySuitPickup => HdmaEffect::AdvanceSuitPickup { gravity: true },
+        PhantoonLayer => HdmaEffect::SelectPhantoonLayer,
+        PhantoonWave => HdmaEffect::AdvanceWave(HdmaWave::Phantoon),
+        RainbowBeam => HdmaEffect::AdvanceRainbowBeam,
+        EyeBeamWidening => HdmaEffect::AdvanceEyeBeam(EyeBeamPhase::Widening),
+        EyeBeamFull => HdmaEffect::AdvanceEyeBeam(EyeBeamPhase::Full),
+        EyeBeamFading => HdmaEffect::AdvanceEyeBeam(EyeBeamPhase::Fading),
+        IntroWave => HdmaEffect::AdvanceWave(HdmaWave::Intro),
+        _ => return None,
+    })
+}
+
 /// A pre-instruction target that runs on the compatibility host.
 fn host_pre_action<H: DispatchHost + ?Sized>(target: HdmaPreAction, k: u16, game: &mut H) {
     use HdmaPreAction::*;
@@ -332,12 +368,27 @@ fn host_pre_action<H: DispatchHost + ?Sized>(target: HdmaPreAction, k: u16, game
         | PreFlashScaled
         | CrystalFlashScaled
         | PowerBombPrescaled
-        | PreFlashPrescaled => unreachable!("run_pre_action runs {target:?}"),
+        | PreFlashPrescaled
+        | AdvanceXrayBackground
+        | XrayBeamInitial
+        | XrayBeamWidening
+        | XrayBeamFull
+        | BeginBrightHaze
+        | BeginDimHaze
+        | HazeFadingIn
+        | HazeFadedIn
+        | HazeFadingOut
+        | DraygonLayer
+        | SuitPickup
+        | GravitySuitPickup
+        | PhantoonLayer
+        | PhantoonWave
+        | RainbowBeam
+        | EyeBeamWidening
+        | EyeBeamFull
+        | EyeBeamFading
+        | IntroWave => unreachable!("run_pre_action runs {target:?}"),
         SetupXrayBlending => xray_background::setup_blending(k, game),
-        AdvanceXrayBackground => apply_leased(HdmaEffect::AdvanceXrayBackground, k, game),
-        XrayBeamInitial => apply_leased(HdmaEffect::AdvanceXrayBeam(BeamPhase::Initial), k, game),
-        XrayBeamWidening => apply_leased(HdmaEffect::AdvanceXrayBeam(BeamPhase::Widening), k, game),
-        XrayBeamFull => apply_leased(HdmaEffect::AdvanceXrayBeam(BeamPhase::Full), k, game),
         RestoreRight => xray_background::restore_right(game),
         PowerBombBlending => explosion_window::set_power_bomb_blending(k, game),
         CrystalFlashBlending => explosion_window::set_crystal_flash_blending(k, game),
@@ -353,25 +404,8 @@ fn host_pre_action<H: DispatchHost + ?Sized>(target: HdmaPreAction, k: u16, game
             fx.blending = 44;
             game.publish_fx_controls(fx, &[crate::fx_state::Field::Blending]);
         }
-        BeginBrightHaze => apply_leased(HdmaEffect::BeginHaze { color: 0x80 }, k, game),
-        BeginDimHaze => apply_leased(HdmaEffect::BeginHaze { color: 0x20 }, k, game),
-        HazeFadingIn => apply_leased(HdmaEffect::AdvanceHaze(HazePhase::FadingIn), k, game),
-        HazeFadedIn => apply_leased(HdmaEffect::AdvanceHaze(HazePhase::FadedIn), k, game),
-        HazeFadingOut => apply_leased(HdmaEffect::AdvanceHaze(HazePhase::FadingOut), k, game),
-        DraygonLayer => apply_leased(HdmaEffect::SelectDraygonLayer, k, game),
-        SuitPickup => apply_leased(HdmaEffect::AdvanceSuitPickup { gravity: false }, k, game),
-        GravitySuitPickup => apply_leased(HdmaEffect::AdvanceSuitPickup { gravity: true }, k, game),
-        PhantoonLayer => apply_leased(HdmaEffect::SelectPhantoonLayer, k, game),
-        PhantoonWave => apply_leased(HdmaEffect::AdvanceWave(HdmaWave::Phantoon), k, game),
-        RainbowBeam => apply_leased(HdmaEffect::AdvanceRainbowBeam, k, game),
-        EyeBeamWidening => {
-            apply_leased(HdmaEffect::AdvanceEyeBeam(EyeBeamPhase::Widening), k, game)
-        }
-        EyeBeamFull => apply_leased(HdmaEffect::AdvanceEyeBeam(EyeBeamPhase::Full), k, game),
-        EyeBeamFading => apply_leased(HdmaEffect::AdvanceEyeBeam(EyeBeamPhase::Fading), k, game),
         TitleGradientBackdrop => hdma_objects::advance_title_gradient(true, game),
         TitleGradient => hdma_objects::advance_title_gradient(false, game),
         IntroCrossfade => hdma_objects::advance_intro_crossfade(game),
-        IntroWave => apply_leased(HdmaEffect::AdvanceWave(HdmaWave::Intro), k, game),
     }
 }

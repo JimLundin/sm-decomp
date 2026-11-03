@@ -14,6 +14,9 @@ pub trait HdmaLease:
     + crate::cartridge::NativeImage
     + HdmaTable
     + crate::diagnostics::Fatal
+    + crate::hdma_effects::HdmaEffects
+    + crate::actors::mother_brain_rainbow::Host
+    + crate::player_transitions::effects::SamusLease
 {
     type Game: DispatchHost + ?Sized;
     /// Run `action` on the compatibility host with the Session published.
@@ -49,6 +52,8 @@ pub(crate) trait Interpreter: HdmaTable {
     fn foreign<T>(&mut self, action: impl FnOnce(&mut Self::Game) -> T) -> T;
     /// The original's unreachable-state failure, reported by the lease.
     fn unreachable(&mut self);
+    /// Run HDMA effect `effect` for the object in byte slot `slot` on the lease.
+    fn effect(&mut self, effect: HdmaEffect, slot: u16);
     fn word(&self, at: usize) -> u16 {
         u16::from_le_bytes([self.byte(at), self.byte(at + 1)])
     }
@@ -95,13 +100,19 @@ impl<L: HdmaLease> Interpreter for Leased<L> {
         self.0.set_byte(at, value);
     }
     fn image(&self) -> RomImage {
-        self.0.native_image()
+        crate::cartridge::NativeImage::native_image(&self.0)
     }
     fn foreign<T>(&mut self, action: impl FnOnce(&mut L::Game) -> T) -> T {
         self.0.foreign(action)
     }
     fn unreachable(&mut self) {
-        self.0.unreachable()
+        crate::diagnostics::Fatal::unreachable(&mut self.0)
+    }
+    fn effect(&mut self, effect: HdmaEffect, slot: u16) {
+        // The nested lease the foreign call opened observed the inputs afresh,
+        // and the foreign return observed them again.
+        self.0
+            .owned_player_call(|lease| crate::hdma_effects::apply(effect, slot, lease));
     }
 }
 
@@ -302,15 +313,9 @@ fn execute<I: Interpreter>(handler: u16, index: usize, script: Script, it: &mut 
             it.set_byte(0xcd21, high);
             return script.advance(2);
         }
-        Command::InitializePhantoonWave => it.foreign(|game| {
-            crate::hdma_effects::apply_leased(HdmaEffect::InitializePhantoonWave, slot, game)
-        }),
-        Command::InitializeEyeBeam => it.foreign(|game| {
-            crate::hdma_effects::apply_leased(HdmaEffect::InitializeEyeBeam, slot, game)
-        }),
-        Command::ResetWave => {
-            it.foreign(|game| crate::hdma_effects::apply_leased(HdmaEffect::ResetWave, slot, game))
-        }
+        Command::InitializePhantoonWave => it.effect(HdmaEffect::InitializePhantoonWave, slot),
+        Command::InitializeEyeBeam => it.effect(HdmaEffect::InitializeEyeBeam, slot),
+        Command::ResetWave => it.effect(HdmaEffect::ResetWave, slot),
         Command::RestartTitleGradient => it.foreign(crate::hdma_objects::restart_title_gradient),
     }
     script
