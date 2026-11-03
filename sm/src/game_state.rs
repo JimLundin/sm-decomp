@@ -410,6 +410,15 @@ impl WorkRam {
         log.bytes.set(0);
         log.ranges.borrow_mut().clear();
     }
+    /// Open the log unless it is already open, keeping an open log's ranges; whether this
+    /// call opened it.
+    pub(crate) fn start_write_log(&self) -> bool {
+        if self.9.open.get() {
+            return false;
+        }
+        self.open_write_log();
+        true
+    }
     /// Stop the log: the ranges written since it opened, or `None` when it overflowed or
     /// was not open.
     pub(crate) fn close_write_log(&self) -> Option<Vec<Range<usize>>> {

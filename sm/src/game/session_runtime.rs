@@ -399,19 +399,29 @@ impl<'g> Runtime<'g> {
             .owner()
             .map(|owner| sm_game::fx_encoding::physical_source_spans(&owner.state))
             .unwrap_or_default();
+        // The exported Session stands for a decode of the RAM it leaves unless a Display
+        // owner travels with the call.
+        let mut exported = (!state.presentation.is_owned()).then(|| state.clone());
         export_session_for_foreign(state, mutation.game());
+        if exported.is_some() && !mutation.game().ram().start_write_log() {
+            exported = None;
+        }
         let _source_interval = mutation.game().ram().begin_source_interval(&spans);
         mutation.game().revoke_inventory_domain();
         mutation.game().revoke_menu_domain();
         mutation.game().revoke_fx_domain();
         mutation.game().revoke_scroll_domain();
         let result = action(mutation.game());
+        let written = exported
+            .is_some()
+            .then(|| mutation.game().ram().close_write_log())
+            .flatten();
         let payload = mutation.game().capture_samus_snapshot();
         let prepared = mutation
             .game()
             .prepare_samus_adoption(&payload)
             .expect("Samus resumption rejected");
-        let mut state = import_session_image(mutation.game());
+        let mut state = resume_session(exported, written, mutation.game());
         let presentation = mutation
             .game()
             .pop_foreign_presentation()
@@ -1160,6 +1170,29 @@ fn reuse_frame_session(game: &mut Game) -> Option<(Session, ExternalInputs)> {
     take_game_owners(&mut state, game);
     Some((state, inputs))
 }
+/// The Session a foreign call resumes: the Session it exported with the RAM bytes it wrote,
+/// when the log holds them; a decode of the RAM otherwise.
+fn resume_session(
+    exported: Option<Session>,
+    written: Option<Vec<std::ops::Range<usize>>>,
+    game: &mut Game,
+) -> Session {
+    let (Some(mut state), Some(written)) = (exported, written) else {
+        return import_session_image(game);
+    };
+    if !same_world(&state, game) {
+        return import_session_image(game);
+    }
+    take_written_bytes(&mut state, game, &written);
+    state.actor_identity = crate::game::actors::identity::ActorIdentityState::empty();
+    #[cfg(sm_verify_dll)]
+    player_normal_transfers::record(game, 1);
+    import_native_spawn(&mut state, game);
+    #[cfg(sm_verify_dll)]
+    assert_projects_ram(&state, game);
+    take_game_owners(&mut state, game);
+    state
+}
 fn same_world(state: &Session, game: &Game) -> bool {
     std::sync::Arc::ptr_eq(&state.world, game.world())
         && state.world.revision() == game.world().revision()
@@ -1175,7 +1208,7 @@ fn assert_projects_ram(state: &Session, game: &Game) {
     import_native_spawn(&mut fresh, game);
     assert!(
         fresh == *state,
-        "the kept frame Session differs from its RAM projection"
+        "a Session taken up without a decode differs from its RAM projection"
     );
 }
 /// The owners Game holds between leases, as an import takes them into the Session.
