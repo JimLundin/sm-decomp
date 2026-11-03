@@ -1744,7 +1744,13 @@ crate::dispatch::callback_dispatch! {
         *BodyEdit::of(game, e).function_timer() = v1;
         let mut v3: i16 = ((Brain::of(game, BRAIN_INDEX).actor().y.whole) as i16).wrapping_add((v1.to_ne_bytes()[1]) as i16);
         if (v3 as u16) >= 0xc4 {
-            game.foreign(|game| crate::actors::mother_brain_tubes::Host::start_earthquake(game, 2));
+            // The game's earthquake start: its type, a 20-frame timer and the
+            // quake sound, in that order.
+            game.owned_step(|game| {
+                game.set_owned(OwnedWord::EarthquakeType, 2);
+                game.set_owned(OwnedWord::EarthquakeTimer, 20);
+                queue_sfx2_max6(0x25, game);
+            });
             *BodyEdit::of(game, e).function() = function::PHASE_3_DEATH_LOAD_CORPSE_TILES;
             *BodyEdit::of(game, e).function_timer() = 256;
             v3 = 196;
