@@ -8,7 +8,7 @@ use crate::actors::host::{ActorLease, BossEffects, LeaseActors};
 use crate::actors::rio::{aim_velocity, bounce_horizontal, move_axis};
 use crate::actors::slot_view::{SlotMut, SlotRef, SlotState, slot_view};
 use crate::enemy_script::EnemyScript;
-use crate::ram::words as W;
+use crate::session_access::SessionAccess as _;
 
 /// A lease the Gerutas and Holtzes run on: their slots are the Session's.
 pub trait Lease: ActorLease + SlotState {}
@@ -56,7 +56,7 @@ pub fn instruction<H: LeaseActors>(address: u32, cursor: EnemyScript, game: &mut
         _ => unreachable!("unknown Rio animation command"),
     };
     let mut runtime = game.lease();
-    let k = runtime.word(W::CUR_ENEMY_INDEX);
+    let k = runtime.session().actors.controls.selected;
     store(&mut runtime, k, variable, value);
     cursor
 }
@@ -73,7 +73,7 @@ pub fn function<H: LeaseActors>(game: &mut H) -> u32 {
 /// Initialisation AI - enemies $D2FF and $D33F ($A2:C242, $A2:C6F3).
 pub fn initialize<H: LeaseActors>(holtz: bool, game: &mut H) {
     let mut runtime = game.lease();
-    let raw = runtime.word(W::CUR_ENEMY_INDEX);
+    let raw = runtime.session().actors.controls.selected;
     let key = Key::from_legacy(raw);
     store(&mut runtime, raw, FINISHED, 0);
     if !holtz {
@@ -134,8 +134,8 @@ pub fn idle<H: LeaseActors>(k: u16, holtz: bool, game: &mut H) {
     let key = Key::from_legacy(k);
     let h = usize::from(holtz);
     let distance = (api::player_delta(&runtime, key, Axis::X) as i16).wrapping_abs() as u16;
-    if (runtime.word(W::RANDOM_NUMBER) & 0x101) != 0 && distance < [0xc0, 0x70][h] {
-        let random = runtime.word(W::RANDOM_NUMBER);
+    if (runtime.session().timing.random_number & 0x101) != 0 && distance < [0xc0, 0x70][h] {
+        let random = runtime.session().timing.random_number;
         let index = [((random >> 1 & 2) >> 1) as isize, 0][h];
         let tables = [[0xa2c1c1, 0xa2c1c5], [0xa2c6ca, 0xa2c6ce]][h]; // swoop Y, X speeds
         aim_velocity(&mut runtime, key, 2 * h, tables, index);
@@ -185,7 +185,7 @@ fn set_function(runtime: &mut impl ActorLease, key: Key, function: u16) {
 /// Set geruta / holtz / squeept instruction list ($A2:C40D, $A2:C8A3, $A2:C012), cached
 /// `cache_offset` bytes into the enemy's extended words: restart only when it changes.
 pub fn set_instruction_list(runtime: &mut impl Lease, list: u16, cache_offset: usize) {
-    let raw = runtime.word(W::CUR_ENEMY_INDEX);
+    let raw = runtime.session().actors.controls.selected;
     let cache = cache_offset / 2;
     if SlotRef::of(runtime, raw).extended(cache) != list {
         store(runtime, raw, cache, list);
