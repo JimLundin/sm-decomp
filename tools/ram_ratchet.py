@@ -49,9 +49,13 @@ import cycle_report  # noqa: E402
 # Measurement-only rebaseline on 65ae1cb61 (2026-11-03): count the 119 register
 # writes in 6 files that store their WRAM display mirror ($51..$86) by RAM offset
 # through raw work RAM (313 becomes 432); the ratchet saw only one RawRam import.
+# Measurement-only rebaseline on 0c42fb292 (2026-11-04): count each raw work RAM
+# method call through `.ram()` (the engine inventory's raw_ram_call sites): 56
+# calls in 11 files (nine menu files, scrolling_sky, projection), which the
+# ratchet saw only as the menu prelude's RawRam import. 85/14 becomes 141/24.
 BASELINE = {
-    "sm_game_ram_sites": 85,
-    "sm_game_coupled_files": 14,
+    "sm_game_ram_sites": 141,
+    "sm_game_coupled_files": 24,
     "production_lines": 173506,
     # Engine inventory (Jim, 2026-11-02): address-shaped access is RAM access.
     # First measured on main 0115740f5 (ROM record reads excluded). Address APIs and raw calls are enforced:
