@@ -18,7 +18,8 @@ import pack  # noqa: E402
 JOB: dict[str, Any] = json.loads(os.environ["JOB"])
 TEMP = pathlib.Path(os.environ["RUNNER_TEMP"])
 SUMMARY = os.environ["GITHUB_STEP_SUMMARY"]
-WORKERS = int(os.environ.get("WORKERS") or os.cpu_count() or 1)
+# The planner sets each job's process count (pack.py); older plans used every core.
+WORKERS = int(JOB.get("workers") or os.environ.get("WORKERS") or os.cpu_count() or 1)
 LOCK_NAMES = re.compile(r"^(SEGMENT|PASS|FAIL|UNLOCKED|KNOWN|REGRESSION|Corpus|job |Verifier total|Lock|"
                         r"[A-Za-z0-9-]+: (lock |lockstep |free run |Free run|Free-run|@|no current|localization))")
 SUMMARY_NAMES = re.compile(r"^(PASS|FAIL|Corpus|RESULT|DOMAIN|DIAGNOSTIC|EXIT|"

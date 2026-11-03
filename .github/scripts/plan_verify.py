@@ -29,8 +29,6 @@ ROUTE = ".github/scripts/full_route.py"
 # the gate, and every state layout change rejects it. These rows run in full.
 LONG_PREFIX = 20000
 SHARD = ("kind", "seed_asset", "seed_sha256", "segments", "route", "inputs")
-# A gate job within this share of the longest builds its own verifier.
-FIRST = 0.9
 # One kind of work: its restore group ("corpus" or a route), its matrix mode and its row ids.
 Work = tuple[str, str, list[str]]
 
@@ -85,13 +83,16 @@ def packed(work: list[Work], by_id: dict[str, dict[str, Any]], assets: dict[str,
         for key, ids in merged.items():
             if key[0] == "corpus":
                 ids[:] = [name for name in ids if name in shard_of]
-    limit = pack.budget(((ids, mode) for (_, mode), ids in merged.items()), by_id)
+    limit, longest = pack.budget(((ids, mode) for (_, mode), ids in merged.items()), by_id)
     jobs: list[dict[str, Any]] = []
     for (group, mode), ids in merged.items():
-        for index, segments in enumerate(pack.pack(ids, by_id, mode, limit) if ids else []):
+        floors, rest = pack.floor(ids, by_id, mode, longest)
+        planned = [(segments, 2, True) for segments in floors]
+        planned += [(segments, pack.workers(mode), False) for segments in (pack.pack(rest, by_id, mode, limit) if rest else [])]
+        for index, (segments, count, first) in enumerate(planned):
             job: dict[str, Any] = dict(mode=mode, steps=sum(by_id[name].get("frames", 0) for name in segments),
-                                       seconds=round(pack.estimate(segments, by_id, mode)),
-                                       segments=" ".join(segments))
+                                       seconds=round(pack.estimate(segments, by_id, mode, count)),
+                                       workers=count, first=first, segments=" ".join(segments))
             if group == "corpus":
                 restores: dict[tuple[str, ...], dict[str, Any]] = {}
                 for name in segments:
@@ -181,10 +182,10 @@ def main() -> None:
             job["name"] = f"{job['name']}-{count}"
     movie = next(m for m in tomllib.load((ROOT / "movies/manifest.toml").open("rb"))["movies"]
                  if m["category"] == "any%")
-    # The gate's longest jobs set its wall time. They build their own verifier, so they
-    # queue for runners with verify-build instead of behind it (ci.yml verify-replay-first).
-    longest = max((job.get("seconds", 0) for job in jobs), default=0)
-    first = [job for job in jobs if scope == "gate" and longest and job.get("seconds", 0) >= FIRST * longest][:2]
+    # The gate's floor jobs (pack.floor) set its wall time. They build their own verifier,
+    # so they queue for runners with verify-build instead of behind it (ci.yml
+    # verify-replay-first). At most two, one per route today, bound the extra builds.
+    first = [job for job in jobs if scope == "gate" and job.get("first")][:2]
     rest = [job for job in jobs if job not in first]
     with open(os.environ["GITHUB_OUTPUT"], "a") as out:
         out.write(f"matrix={json.dumps({'include': rest})}\n")
