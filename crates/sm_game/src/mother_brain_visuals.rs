@@ -58,6 +58,9 @@ impl<T: Host + BossEffects + ?Sized> VisualsHost for T {}
 /// $A9:881D: Mother Brain body function - fake death - descent - initial pause.
 const FAKE_DEATH_DESCENT_INITIAL_PAUSE: u16 = 0x881d;
 
+/// The queue byte the drained fades' stray accent word lands on ($7E:017C).
+const STRAY_ACCENT: usize = 0x17c - 0xd0;
+
 /// Step fade `kind` to `frame`; returns 1 once its colour list ends.
 pub fn fade<H: PaletteHost + ?Sized>(kind: Fade, frame: u16, game: &mut H) -> u8 {
     let (table, colors) = match kind {
@@ -91,10 +94,13 @@ pub fn fade<H: PaletteHost + ?Sized>(kind: Fade, frame: u16, game: &mut H) -> u8
                 copy(BACK_LEG_LINE, tail, colors);
             } else {
                 copy(0x168, tail, 5);
-                // The original accent write targets $017c, outside the palette buffer.
+                // The original accent write targets $017c, outside the palette
+                // buffer: bytes $AC..$AD of the queued tilemaps' queue ($7E:00D0).
                 let address = (u32::from(PALETTE_BANK) << 16) | u32::from(tail.wrapping_add(10));
                 let accent = crate::menus::menu_tilemap::native_record(address, game).word(0);
-                game.write_slice_native(0x17c, accent);
+                let queue = &mut game.session_mut().queued_tilemaps.queue;
+                queue[STRAY_ACCENT..STRAY_ACCENT + 2].copy_from_slice(&accent.to_ne_bytes());
+                game.words_stored();
             }
         }
     }
