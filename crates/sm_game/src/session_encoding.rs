@@ -800,6 +800,7 @@ macro_rules! scalar_words {
         $f(0xd91a,$($borrow)* $s.room.loaded_items);
         $f(0xcea,$($borrow)* $s.room.power_bomb_radius);
         for index in 0..4 { $f(0x7e1+index*2,$($borrow)* $s.room.main_variables[index]); }
+        for index in 0..3 { $f(0x601+index*2,$($borrow)* $s.room.pause_hooks[index]); }
         camera_words!(($s.room.camera), $f, ($($borrow)*));
         flow_words!(($s.flow), $f, ($($borrow)*));
         menu_words!(($s.menu), $f, ($($borrow)*));

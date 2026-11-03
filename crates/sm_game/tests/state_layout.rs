@@ -1017,6 +1017,15 @@ fn crocomire_melt_lanes() -> Vec<Lane> {
 }
 
 #[test]
+fn pause_hooks_round_trip_every_word() {
+    check_owner("pause hooks", &pause_hook_lanes());
+}
+
+fn pause_hook_lanes() -> Vec<Lane> {
+    array(0x601, 2, 3, |s, index| &mut s.room.pause_hooks[index]).collect()
+}
+
+#[test]
 fn boss_ram_round_trips_every_word() {
     check_owner("boss RAM", &boss_ram_lanes());
 }
@@ -1225,6 +1234,7 @@ fn all_owner_lanes() -> Vec<(&'static str, Vec<Lane>)> {
         ("actor extended RAM", actor_extended_lanes()),
         ("actor speed scratch", actor_scratch_lanes()),
         ("Crocomire melt", crocomire_melt_lanes()),
+        ("pause hooks", pause_hook_lanes()),
         ("boss RAM", boss_ram_lanes()),
         ("message box", message_box_lanes()),
         ("BG2 staging", bg2_staging_lanes()),
