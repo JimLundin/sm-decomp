@@ -9,9 +9,7 @@
 //! routine here means moving its arm.
 use crate::actors::access::{AccessMode::LittleEndian, AccessMode::Native, ActorAccess as _};
 use crate::actors::gunship::Host as _;
-use crate::actors::host::{
-    ActorHost, ActorLease as _, ActorRuntime, Death, LeaseActors, LeaseScope, Shot,
-};
+use crate::actors::host::{ActorHost, ActorRuntime, Death, LeaseActors, LeaseScope, Shot};
 use crate::actors::{
     alcoon, bang, beetom, boyon, cacatac, choot, covern, crawlers, dragon, draygon_death,
     draygon_eye, draygon_flight, draygon_grab, elevator, evir, fire_pillar, flies, fune, geruta,
@@ -1065,14 +1063,17 @@ pub fn instruction<H: InstructionHost>(
         11139472 => crate::actors::baby_metroid_encounter::go_to_remorse(k, j),
         // Instruction - room loading interrupt command = Draygon's room - begin HUD drawing.
         10852501 | 10853514 => {
-            LeaseActors::lease(game)
-                .write_slice_le(crate::ram::words::ROOM_LOADING_IRQ_HANDLER, 12);
+            let mut lease = LeaseActors::lease(game);
+            lease.session_mut().room.entry.irq_policy = 12;
+            lease.words_stored();
             j
         }
         // Death quake sound timer = [[Y]] ($A5:E872) and queue sound [[Y]] ($A5:E895).
         10872946 => {
-            let at = crate::ram::words::BOSS_DEATH_QUAKE_SOUND_TIMER;
-            LeaseActors::lease(game).write_slice_le(at, j.word(0));
+            let mut lease = LeaseActors::lease(game);
+            // $7E:9000, the bosses' RAM's first word.
+            lease.session_mut().actors.extended.blocks[3][0] = j.word(0);
+            lease.words_stored();
             j.offset(1)
         }
         10872981 => {
