@@ -50,8 +50,8 @@ import cycle_report  # noqa: E402
 # writes in 6 files that store their WRAM display mirror ($51..$86) by RAM offset
 # through raw work RAM (313 becomes 432); the ratchet saw only one RawRam import.
 BASELINE = {
-    "sm_game_ram_sites": 99,
-    "sm_game_coupled_files": 17,
+    "sm_game_ram_sites": 88,
+    "sm_game_coupled_files": 15,
     "production_lines": 173506,
     # Engine inventory (Jim, 2026-11-02): address-shaped access is RAM access.
     # First measured on main 0115740f5 (ROM record reads excluded). Address APIs and raw calls are enforced:
@@ -59,7 +59,7 @@ BASELINE = {
     # decoding behind them slows every replay. The lexical unresolved-method and
     # legacy-engine measures are reported only.
     "engine_ram_address_sites": 11,
-    "engine_raw_ram_calls": 64,
+    "engine_raw_ram_calls": 56,
     "engine_unresolved_ram_methods": 981,
     "legacy_engine_ram_sites": 515,
     # Original-game overflow paths (LEGACY(original-overflow)), reported only.

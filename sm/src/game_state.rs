@@ -2693,6 +2693,34 @@ impl sm_game::room_state::LevelData for Game {
     fn level_behavior(&self, cell: usize) -> u8 {
         self.compatibility_byte(sm_game::ram::bytes::BTS + cell)
     }
+    /// The Game holds the level data as RAM, where the decompressor left it.
+    fn copy_level_planes(&mut self) {
+        let size = usize::from(sm_game::room_state::LevelData::level_data_size(self));
+        for (source, destination, count) in [
+            (0x10002 + size + size / 2, 0x19602, size),
+            (0x10002 + size, 0x16402, size / 2),
+        ] {
+            // Valid room arrays can overlap. Preserve their pre-copy contents;
+            // malformed extents retain the checked forward loop's write prefix.
+            if source < destination + count
+                && destination < source + count
+                && source + count <= 0x20000
+                && destination + count <= 0x20000
+            {
+                crate::verify_probe::hit(if destination == 0x19602 {
+                    "room.level.layer2_overlap"
+                } else {
+                    "room.level.bts_overlap"
+                });
+                self.ram().copy_within(source..source + count, destination);
+            } else {
+                for index in 0..count {
+                    self.ram()
+                        .write_byte(destination + index, self.ram().read_byte(source + index));
+                }
+            }
+        }
+    }
 }
 
 /// Game's projection: compatibility reads and RAM-image stores, as named RAM words use.
@@ -5248,6 +5276,19 @@ impl sm_game::presentation_workspace::Access for Game {
     fn screen_write_slice(&mut self, point: sm_game::presentation_workspace::Point, bytes: &[u8]) {
         let mut runtime = crate::game::session_runtime::Runtime::new(self);
         sm_game::presentation_workspace::Access::screen_write_slice(&mut runtime, point, bytes);
+    }
+    /// The Game holds the workspace as RAM: the fill stores its bytes there in
+    /// address order, with no lease, and the next lease re-adopts them.
+    fn screen_fill_native(
+        &mut self,
+        point: sm_game::presentation_workspace::Point,
+        words: usize,
+        value: u16,
+    ) {
+        let at = point.compatibility_address().expect("screen offset");
+        for (offset, byte) in value.to_ne_bytes().repeat(words).into_iter().enumerate() {
+            self.compatibility_write_byte(at + offset, byte);
+        }
     }
 }
 #[forbid(unsafe_code)]

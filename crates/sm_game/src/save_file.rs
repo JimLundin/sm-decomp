@@ -5,6 +5,50 @@
 /// The work RAM a save file holds: $7E:D7C0 up to $7E:DE1C.
 pub const PLAYER_BLOCK: core::ops::Range<usize> = 0xd7c0..0xde1c;
 
+/// Where the explored maps of every area are kept between saves ($7E:CD52).
+pub const SAVED_MAPS: usize = 0xcd52;
+
+/// The explored maps of every area, as the save file packs them ($7E:CD52..$D551):
+/// one 256-byte bitmap per area, laid out as the current area's explored map
+/// ($7E:07F7). Saving copies the current area's map in; loading a file clears
+/// them and unpacks the file's; a new game and the demos clear them.
+#[derive(Clone, Debug, PartialEq)]
+pub struct SavedMaps {
+    pub areas: [[u8; 256]; 8],
+}
+
+impl Default for SavedMaps {
+    fn default() -> Self {
+        Self {
+            areas: [[0; 256]; 8],
+        }
+    }
+}
+
+impl SavedMaps {
+    /// The bytes the maps take, from [`SAVED_MAPS`].
+    pub const BYTES: usize = 8 * 256;
+
+    /// Byte `offset` of the maps, from the first area's.
+    pub fn byte(&self, offset: usize) -> Option<u8> {
+        self.areas.get(offset / 256).map(|area| area[offset % 256])
+    }
+
+    pub fn byte_mut(&mut self, offset: usize) -> Option<&mut u8> {
+        self.areas
+            .get_mut(offset / 256)
+            .map(|area| &mut area[offset % 256])
+    }
+
+    /// Little-endian word `index` of the maps, from the first area's.
+    pub fn word(&self, index: usize) -> Option<u16> {
+        Some(u16::from_le_bytes([
+            self.byte(2 * index)?,
+            self.byte(2 * index + 1)?,
+        ]))
+    }
+}
+
 /// The SRAM header (SRAM map): per-slot checksums and their complements,
 /// mirrored near the end of SRAM, and the last selected slot.
 pub mod header {

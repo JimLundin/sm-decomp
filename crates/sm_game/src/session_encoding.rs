@@ -1024,6 +1024,18 @@ pub fn decode(bytes: &impl Fn(usize) -> u8, byte_len: usize, world: Arc<WorldBin
             *value = bytes(base + index);
         }
     }
+    {
+        use crate::save_file::{SAVED_MAPS, SavedMaps};
+        assert!(
+            SAVED_MAPS + SavedMaps::BYTES <= byte_len,
+            "short saved maps import"
+        );
+        for (index, area) in s.saved_maps.areas.iter_mut().enumerate() {
+            for (offset, value) in area.iter_mut().enumerate() {
+                *value = bytes(SAVED_MAPS + index * 256 + offset);
+            }
+        }
+    }
     s.enemy_projectiles.spawn.angle = bytes(0x60b);
     let load = |at: usize, value: &mut u16| *value = read(bytes, at);
     scalar_words!(s,load,(&mut));
@@ -1206,6 +1218,12 @@ fn visit_owned_words(s: &Session, mut visit: impl Words) {
     let mut emit = |at, word: &u16| visit.word(at, *word);
     botwoon_death_words!(s, emit, (&));
     visit.le_words(0x7f7, s.minimap.explored.as_chunks::<2>().0);
+    for (index, area) in s.saved_maps.areas.iter().enumerate() {
+        visit.le_words(
+            crate::save_file::SAVED_MAPS + index * 256,
+            area.as_chunks::<2>().0,
+        );
+    }
     crate::actors::codec::visit_common(s, |at, pairs| visit.le_words(at, pairs));
     macro_rules! emit_key {
         ($at:expr, $field:ident, $get:ident, $set:ident) => {
@@ -1341,6 +1359,12 @@ pub fn encode_spans(s: &Session, mut spans: impl Spans) {
         .encode_projection(|at: usize, bytes: &[u8]| span.span(at, bytes));
     crate::fx_encoding::encode_sources(s, |at: usize, bytes: &[u8]| span.span(at, bytes));
 }
+/// Byte `at`'s offset in the saved explored maps, when it is one of theirs.
+fn saved_map_offset(at: usize) -> Option<usize> {
+    use crate::save_file::{SAVED_MAPS, SavedMaps};
+    at.checked_sub(SAVED_MAPS)
+        .filter(|offset| *offset < SavedMaps::BYTES)
+}
 pub fn projected_byte(s: &Session, at: usize) -> Option<u8> {
     owned_byte(s, at).or_else(|| scalar_byte(s, at))
 }
@@ -1362,6 +1386,9 @@ fn owned_byte(s: &Session, at: usize) -> Option<u8> {
     }
     if (0x945..0x94c).contains(&at) {
         return Some(s.timing.countdown.byte(at - 0x945));
+    }
+    if let Some(offset) = saved_map_offset(at) {
+        return s.saved_maps.byte(offset);
     }
     if (0xd8f0..0xd8f8).contains(&at) {
         return Some(s.gameplay_flags.unused[at - 0xd8f0]);
@@ -1579,6 +1606,10 @@ pub fn write_projected_byte(s: &mut Session, at: usize, value: u8) -> bool {
             6 => c.y = (c.y & 0xff) | (u16::from(value) << 8),
             _ => unreachable!(),
         }
+        return true;
+    }
+    if let Some(offset) = saved_map_offset(at) {
+        *s.saved_maps.byte_mut(offset).expect("saved map byte") = value;
         return true;
     }
     if (0xd8f0..0xd8f8).contains(&at) {

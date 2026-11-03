@@ -139,6 +139,8 @@ pub struct Session {
     pub enemy_projectiles: EnemyProjectiles,
     pub player: Player,
     pub minimap: crate::player_update::state::State,
+    /// The explored maps of every area kept for the save file ($7E:CD52..$D551).
+    pub saved_maps: crate::save_file::SavedMaps,
     pub inventory: Inventory,
     pub mechanisms: Mechanisms,
     pub room: Room,
@@ -318,6 +320,7 @@ impl Session {
             enemy_projectiles: Default::default(),
             player: Default::default(),
             minimap: Default::default(),
+            saved_maps: Default::default(),
             inventory: Default::default(),
             mechanisms: Default::default(),
             feedback: Default::default(),
