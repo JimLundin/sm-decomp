@@ -791,6 +791,8 @@ macro_rules! scalar_words {
         $f(0xa6c,$($borrow)* $s.player.contact.movement_speed_table);
         room_geometry_words!(($s.room), $f, ($($borrow)*));
         $f(0x7b9,$($borrow)* $s.room.size_bytes);
+        $f(ram::IRQ_ENABLE_MODE7,$($borrow)* $s.room.mode7_irq);
+        $f(ram::HDMA_DATA_TABLE_IN_CERES,$($borrow)* $s.room.ceres_hdma_table);
         $f(0x197e,$($borrow)* $s.room.liquid_options);
         $f(0x1978,$($borrow)* $s.room.liquid_height);
         $f(0x197a,$($borrow)* $s.room.liquid_target);

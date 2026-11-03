@@ -25,7 +25,6 @@ use crate::menus::prelude::battle;
 use crate::menus::prelude::{display_scroll, owned};
 use crate::palette_copies::{copy_rom_colors_to_palette, copy_rom_colors_to_target_palette};
 use crate::projectile_geometry::SINE_COSINE;
-use crate::ram::word;
 use sm_data::cartridge::lorom_offset;
 
 /// A lease on a game with Ceres Ridley's effects: Ridley's.
@@ -725,7 +724,8 @@ pub fn self_destruct_activated<L: Lease + ?Sized>(game: &mut L) {
 /// Set up Ceres Ridley mode 7 ($A6:AA54). Was `CeresRidley_Func_27`.
 pub fn set_up_mode7<L: Lease + ?Sized>(game: &mut L) {
     crate::frame_display_byte!(game, Field::FakeMode => MODE7.byte());
-    word!(game.IRQ_ENABLE_MODE7 = 1);
+    game.session_mut().room.mode7_irq = 1;
+    game.words_stored();
     crate::frame_display_byte!(game, Field::AffineSelection => MODE7_TRANSPARENT_OVERFLOW.byte());
     {
         crate::frame_display_word!(game.AffineWords0Pair = 256);

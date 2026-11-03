@@ -547,6 +547,13 @@ pub struct Room {
     /// The Ceres status ($7E:093F): 0 normally, then the elevator room
     /// rotating (sign bit), the escape started and Ridley escaping.
     pub ceres_status: u16,
+    /// Whether the mode 7 interrupts run ($7E:0783): set entering Ceres's
+    /// elevator shaft and Ridley's mode 7 room, cleared leaving the shaft and
+    /// by the room's HDMA reset.
+    pub mode7_irq: u16,
+    /// The Ceres haze's HDMA data table word ($7E:07EB), which the haze
+    /// setup and its HDMA instruction store 9 to.
+    pub ceres_hdma_table: u16,
     /// The room main code's variables at $07E1..$07E9, as the little-endian
     /// words of the byte image. Rooms give them their own meanings.
     pub main_variables: [u16; 4],
@@ -682,6 +689,8 @@ impl Room {
             collision_detection_index: 0,
             slope_behavior: 0,
             ceres_status: 0,
+            mode7_irq: 0,
+            ceres_hdma_table: 0,
             main_variables: [0; 4],
             pause_hooks: [0; 3],
             scrolls: [0; 25],

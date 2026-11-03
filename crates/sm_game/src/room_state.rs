@@ -3,7 +3,6 @@ pub mod fx;
 use crate::enemy_projectiles::host::Effects;
 use crate::menu_state::SaveSelection;
 use crate::ram::RawRam as _;
-use crate::ram::word;
 use crate::room_mechanisms::creation::spawn_hardcoded;
 use crate::room_view::EffectWord;
 use crate::runtime_access::SessionView;
@@ -215,7 +214,9 @@ pub fn execute_setup_code<H: ScriptHost + ?Sized>(script: u16, game: &mut H) {
         0xc97b => {
             game.ram().write_byte(0x5d, 102);
             crate::room_visuals::initialize_room_haze(game);
-            word!(game.HDMA_DATA_TABLE_IN_CERES = 9);
+            crate::runtime_access::with_session(game, |session| {
+                session.room.ceres_hdma_table = 9;
+            });
         }
         0x91bb | 0x91bc | 0x91d3 | 0x91d4 | 0x91d5 | 0x91d6 | 0x91f4 | 0x91f5 | 0x91f6 | 0x91f7
         | 0xc8c7 | 0xc8d0 | 0xc8d1 | 0xc8d2 | 0xc8dc | 0xc91e => {}
@@ -286,17 +287,17 @@ pub fn execute_door_code<H: ScriptHost + ?Sized>(script: u16, game: &mut H) {
             {
                 crate::frame_display_word!(game.AffineWords4Pair = 128);
                 crate::frame_display_word!(game.AffineWords5Pair = 1008);
-                word!(game.IRQ_ENABLE_MODE7 = 1);
             }
             let mut runtime = game.runtime();
             let room = &mut runtime.session_mut().room;
+            room.mode7_irq = 1;
             room.main_variables[0] = 34;
             room.main_variables[1] = 60;
         }
         // From Ceres elevator shaft.
         0xe513 => {
             game.ram().write_byte(0x56, 9);
-            word!(game.IRQ_ENABLE_MODE7 = 0);
+            crate::runtime_access::with_session(game, |session| session.room.mode7_irq = 0);
         }
         _ => {
             if !crate::room_scrolls::apply(0x8f0000 | u32::from(script), &mut game.runtime()) {

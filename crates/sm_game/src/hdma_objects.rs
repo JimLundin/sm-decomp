@@ -266,7 +266,8 @@ where
         fx.effect_scroll[1] = fx_value;
         game.publish_fx_controls(fx, &[crate::fx_state::Field::EffectVertical]);
     };
-    word!(game.IRQ_ENABLE_MODE7 = 0);
+    game.session_mut().room.mode7_irq = 0;
+    game.words_stored();
     word!(game.CAMERA_DISTANCE_INDEX = 0);
     game.session_mut().mechanisms.statue_animation = 0;
     game.session_mut().mechanisms.statue_finished = 0;
