@@ -166,6 +166,8 @@ impl<'g> Runtime<'g> {
     pub fn new(game: &'g mut Game) -> Self {
         #[cfg(sm_verify_dll)]
         player_normal_transfers::record(game, 0);
+        #[cfg(sm_verify_dll)]
+        lease_counters::lease(game.foreign_presentation_active());
         if let Some(session) = game
             .lease_persistent_session()
             .expect("Session lease rejected")
@@ -179,6 +181,8 @@ impl<'g> Runtime<'g> {
             };
         }
         let (state, inputs) = reuse_frame_session(game).unwrap_or_else(|| {
+            #[cfg(sm_verify_dll)]
+            lease_counters::import();
             let state = import_session(game);
             (state, encoding::inputs(&|at| game.ram().read_byte(at)))
         });
@@ -387,6 +391,8 @@ impl<'g> Runtime<'g> {
         .expect("owned Samus publication");
     }
     pub fn foreign<R>(&mut self, action: impl FnOnce(&mut Game) -> R) -> R {
+        #[cfg(sm_verify_dll)]
+        lease_counters::foreign();
         assert!(self.persistent_is_current(), "Session lease is dirty");
         preflight_export(self.session(), self.game);
         let mut mutation = self.game.samus_mutation();
@@ -1102,26 +1108,48 @@ pub(crate) fn run_mechanisms(
     game: &mut Game,
     context: sm_game::room_mechanisms::host::CallerContext,
 ) -> u8 {
-    use sm_game::room_mechanisms::host::{CallerContext, Pass, RunResult};
-    let mut pass = match game.ram().read_byte(0x613) {
-        0 => Pass::Instructions,
-        1 => Pass::DisplayMessage,
-        other => Pass::Invalid(other),
-    };
+    let mut pass = mechanism_pass(game.ram().read_byte(0x613));
     let result = {
         let mut runtime = Runtime::new(game);
         sm_game::room_mechanisms::scheduler::advance(&mut runtime, &mut pass)
     };
+    let (resume, yielded) = mechanism_result(context, result);
+    game.compatibility_write_owned_byte(0x613, resume);
+    yielded
+}
+
+/// The gameplay pass's room mechanisms on the lease it holds: the pass byte
+/// ($7E:0613) is read and stored on the lease.
+pub(crate) fn run_mechanisms_in(
+    runtime: &mut Runtime<'_>,
+    context: sm_game::room_mechanisms::host::CallerContext,
+) -> u8 {
+    let mut pass = mechanism_pass(runtime.byte(0x613));
+    let result = sm_game::room_mechanisms::scheduler::advance(runtime, &mut pass);
+    let (resume, yielded) = mechanism_result(context, result);
+    runtime.set_byte(0x613, resume);
+    yielded
+}
+
+fn mechanism_pass(resume: u8) -> sm_game::room_mechanisms::host::Pass {
+    use sm_game::room_mechanisms::host::Pass;
+    match resume {
+        0 => Pass::Instructions,
+        1 => Pass::DisplayMessage,
+        other => Pass::Invalid(other),
+    }
+}
+
+/// The pass byte a run leaves and the value it yields.
+fn mechanism_result(
+    context: sm_game::room_mechanisms::host::CallerContext,
+    result: sm_game::room_mechanisms::host::RunResult,
+) -> (u8, u8) {
+    use sm_game::room_mechanisms::host::{CallerContext, RunResult};
     match context {
         CallerContext::Gameplay | CallerContext::DoorTransition => match result {
-            RunResult::Complete => {
-                game.compatibility_write_owned_byte(0x613, 0);
-                0
-            }
-            RunResult::Yield(value) => {
-                game.compatibility_write_owned_byte(0x613, 1);
-                value.get()
-            }
+            RunResult::Complete => (0, 0),
+            RunResult::Yield(value) => (1, value.get()),
         },
     }
 }
@@ -1190,6 +1218,8 @@ pub(crate) fn with_frame_session<R>(game: &mut Game, tick: impl FnOnce(&mut Game
     if let Some(kept) = game.frame_session.kept.as_mut() {
         kept.crossed = true;
     }
+    #[cfg(sm_verify_dll)]
+    lease_counters::tick();
     result
 }
 
@@ -2125,6 +2155,9 @@ pub(crate) mod player_minimap_boss;
 #[path = "../verification/player_minimap_edges.rs"]
 pub(crate) mod player_minimap_edges;
 
+#[cfg(sm_verify_dll)]
+#[path = "../verification/lease_counters.rs"]
+mod lease_counters;
 #[cfg(sm_verify_dll)]
 #[path = "../verification/player_normal_transfers.rs"]
 pub(crate) mod player_normal_transfers;

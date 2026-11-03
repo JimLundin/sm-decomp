@@ -50,8 +50,8 @@ fn contact<'a>(value: &'a mut Displacement<'_>) -> Contact<'a> {
 pub(crate) unsafe fn close_door(game: &mut Game) {
     creation::close_door(&mut Runtime::new(game));
 }
-pub(crate) unsafe fn run(game: &mut Game) -> u8 {
-    session_runtime::run_mechanisms(game, host::CallerContext::Gameplay)
+pub(crate) fn run(runtime: &mut Runtime<'_>) -> u8 {
+    session_runtime::run_mechanisms_in(runtime, host::CallerContext::Gameplay)
 }
 pub(crate) unsafe fn run_door(game: &mut Game) -> u8 {
     session_runtime::run_mechanisms(game, host::CallerContext::DoorTransition)

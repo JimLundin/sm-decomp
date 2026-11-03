@@ -117,11 +117,11 @@ impl Effects for Runtime<'_> {
     }
 }
 
-use crate::game_state::Game;
-
-pub(crate) fn set_player_radius(game: &mut Game) {
-    let pose_offset = usize::from(game.samus_pose()) * 8;
-    let radius = u16::from(game.read_rom_byte(0x91b629, pose_offset + 6));
-    game.ram().copy_in(0xb00, &radius.to_le_bytes());
-    game.ram().copy_in(0xafe, &5u16.to_le_bytes());
+/// Samus's collision radii for her pose, on the lease: the pose table's Y radius and an
+/// X radius of 5.
+pub(crate) fn set_player_radius(runtime: &mut Runtime<'_>) {
+    let pose_offset = usize::from(runtime.session().player.pose) * 8;
+    let radius = u16::from(runtime.rom_byte(0x91b629, pose_offset + 6));
+    runtime.write_slice(0xb00, &radius.to_le_bytes());
+    runtime.write_slice(0xafe, &5u16.to_le_bytes());
 }

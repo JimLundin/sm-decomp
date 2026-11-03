@@ -236,9 +236,10 @@ unsafe fn crystal_flash(id: u32, game: &mut Game) -> Vec<u8> {
             }
         }
     }
-    unsafe {
-        crate::game::session_runtime::advance_special_movement(0x90d6ce, game);
-    }
+    crate::game::session_runtime::advance_special_movement(
+        0x90d6ce,
+        &mut crate::game::session_runtime::Runtime::new(game),
+    );
     put(&mut expected_ram, w::SAMUS_INVINCIBILITY_TIMER, 0);
     put(&mut expected_ram, w::SAMUS_KNOCKBACK_TIMER, 0);
     assert_eq!(

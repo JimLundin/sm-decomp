@@ -103,11 +103,18 @@ pub trait Host:
 
     // Death phase.
     fn advance_low_health_warning(&mut self);
+}
 
-    // Gameplay pass.
+/// The gameplay pass phases the compatibility runtime runs on a lease the pass
+/// already holds.
+pub trait PassLease {
+    /// Samus's own projectiles against her: the bomb jump.
     fn player_projectiles_hit_samus(&mut self);
+    /// Samus's frame: the frame handler's beta and gamma work.
     fn advance_player(&mut self);
+    /// The room mechanisms' pass; nonzero when a message box suspends it.
     fn run_room_mechanisms(&mut self) -> u8;
+    /// The room's main code.
     fn advance_room(&mut self);
 }
 
@@ -811,90 +818,116 @@ fn pass<H: Host>(entry: Entry, game: &mut H) -> CoroutineRet {
 fn advance_gameplay<H: Host>(game: &mut H) -> CoroutineRet {
     crate::probe::hit("coroutine.gameplay");
     let resume = ResumePoint::read(game);
+    if resume == ResumePoint::Skip {
+        game.set_resume_point(ResumePoint::Start as u8);
+        return 0;
+    }
+    let mut completed = None;
     if resume == ResumePoint::Start {
-        actors::scheduling::select(&mut game.runtime());
-        palette_effects::advance(&mut game.runtime());
-        prepare_player_projectiles(game);
-        if crate::session_words::current(game).debug_disable_sprite_interact == 0 {
-            game.player_projectiles_hit_samus();
+        let mut lease = game.runtime();
+        begin_pass::<H>(&mut lease);
+        // Read the queue after enemy callbacks, even when they changed it this pass. Without
+        // a queued message box the rest of the pass runs on the same lease.
+        if lease.session().messages.queued == 0 {
+            completed = Some(continue_pass::<H>(&mut lease, true));
         }
-        actors::scheduling::advance_selected(&mut game.runtime());
     }
-    // Read the queue after enemy callbacks, even when they changed it this pass.
-    if resume == ResumePoint::EnemyMessage
-        || (resume == ResumePoint::Start
-            && crate::session_words::current(game).queued_message_box_index != 0)
-    {
-        let yielded = message_boxes::display(
-            crate::session_words::current(game).queued_message_box_index,
-            game,
-        );
-        if yielded != 0 {
-            game.set_resume_point(ResumePoint::EnemyMessage as u8);
-            return yielded;
+    let yielded = match completed {
+        Some(yielded) => yielded,
+        None => {
+            // An enemy's message box: queued this pass, or resumed.
+            let player = resume != ResumePoint::RoomObjects;
+            if player {
+                let yielded = message_boxes::display(
+                    crate::session_words::current(game).queued_message_box_index,
+                    game,
+                );
+                if yielded != 0 {
+                    game.set_resume_point(ResumePoint::EnemyMessage as u8);
+                    return yielded;
+                }
+                crate::sequence_state::with_words(
+                    game,
+                    |_, words: &mut crate::session_words::SessionWords| {
+                        words.queued_message_box_index = 0;
+                    },
+                );
+            }
+            continue_pass::<H>(&mut game.runtime(), player)
         }
-        crate::sequence_state::with_words(
-            game,
-            |_, words: &mut crate::session_words::SessionWords| {
-                words.queued_message_box_index = 0;
-            },
-        );
+    };
+    if yielded != 0 {
+        game.set_resume_point(ResumePoint::RoomObjects as u8);
+        return yielded;
     }
-    if matches!(resume, ResumePoint::Start | ResumePoint::EnemyMessage) {
-        game.advance_player();
-        enemy_projectiles::lifecycle::advance(&mut game.runtime());
-    }
-    if resume != ResumePoint::Skip {
-        let yielded = game.run_room_mechanisms();
-        if yielded != 0 {
-            game.set_resume_point(ResumePoint::RoomObjects as u8);
-            return yielded;
-        }
-        animated_tiles::advance(&mut game.runtime());
-        // This is a new read: earlier callbacks may change interaction policy.
-        if crate::session_words::current(game).debug_disable_sprite_interact == 0 {
-            enemy_projectiles::contact::enemy_projectiles_hit_samus(&mut game.runtime());
-            enemy_projectiles::contact::shoot_enemy_projectiles(&mut game.runtime());
-            actors::contacts::apply_power_bomb_to_enemies(&mut game.runtime());
-        }
-        advance_camera(&mut game.runtime());
-        let debug_scrolling_enabled: i32 = 0;
-        if debug_scrolling_enabled != 0 {
-            debug_position(&mut game.runtime());
-        }
-        actors::drawing::draw_scene(&mut game.runtime());
-        {
-            // The HUD reads Samus's owned values on the actor-tile lease.
-            let mut lease = game.runtime();
-            actors::staging::queue_actor_tiles(&mut lease);
-            hud::advance(&mut lease);
-        }
-        update_scrolls(&mut game.runtime());
-        game.advance_room();
-        finish_health_and_time(game);
-        finish_frame(game);
-    }
+    finish_health_and_time(game);
+    finish_frame(game);
     game.set_resume_point(ResumePoint::Start as u8);
+    0
+}
+
+/// The pass's first phases: actor selection, the palette effects, Samus's
+/// projectiles and the enemies.
+fn begin_pass<'a, H: Host + 'a>(lease: &mut H::Runtime<'a>) {
+    actors::scheduling::select(lease);
+    palette_effects::advance(lease);
+    prepare_player_projectiles(lease);
+    if lease.session().actors.diagnostics.sprite_contacts_disabled == 0 {
+        lease.player_projectiles_hit_samus();
+    }
+    actors::scheduling::advance_selected(lease);
+}
+
+/// The rest of the pass on one lease: Samus's frame and the enemy projectiles
+/// when `player`, the room mechanisms, and the animated tiles, contacts, camera,
+/// scene, HUD, scrolls and room code after them. Nonzero when the mechanisms
+/// yield.
+fn continue_pass<'a, H: Host + 'a>(lease: &mut H::Runtime<'a>, player: bool) -> CoroutineRet {
+    if player {
+        lease.advance_player();
+        enemy_projectiles::lifecycle::advance(lease);
+    }
+    let yielded = lease.run_room_mechanisms();
+    if yielded != 0 {
+        return yielded;
+    }
+    animated_tiles::advance(lease);
+    // This is a new read: earlier callbacks may change interaction policy.
+    if lease.session().actors.diagnostics.sprite_contacts_disabled == 0 {
+        enemy_projectiles::contact::enemy_projectiles_hit_samus(lease);
+        enemy_projectiles::contact::shoot_enemy_projectiles(lease);
+        actors::contacts::apply_power_bomb_to_enemies(lease);
+    }
+    advance_camera(lease);
+    let debug_scrolling_enabled: i32 = 0;
+    if debug_scrolling_enabled != 0 {
+        debug_position(lease);
+    }
+    actors::drawing::draw_scene(lease);
+    // The HUD reads Samus's owned values after the actor tiles.
+    actors::staging::queue_actor_tiles(lease);
+    hud::advance(lease);
+    update_scrolls(lease);
+    lease.advance_room();
     0
 }
 
 /// Prepare Samus's projectiles through the frame handler's entry: normal,
 /// demo, projectiles only or inactive.
-fn prepare_player_projectiles<H: Host>(game: &mut H) {
+fn prepare_player_projectiles(lease: &mut impl crate::runtime_access::PlayerLease) {
     use crate::session::PrepareEntry;
-    let mut runtime = game.runtime();
-    let handler = runtime.session().player.transitions.frame_alpha.to_raw();
+    let handler = lease.session().player.transitions.frame_alpha.to_raw();
     let entry = match 0x900000 | u32::from(handler) {
         0x90e695 => PrepareEntry::Normal,
         0x90e6c9 => PrepareEntry::Demo,
         0x90e713 => PrepareEntry::ProjectilesOnly,
         0x90e8cd => PrepareEntry::Inactive,
         _ => {
-            crate::player_projectiles::host::Host::unknown(&mut runtime);
+            crate::player_projectiles::host::Host::unknown(lease);
             return;
         }
     };
-    crate::player_projectiles::preparation::prepare(&mut runtime, entry);
+    crate::player_projectiles::preparation::prepare(lease, entry);
 }
 
 /// Upload the options screen tiles.

@@ -88,9 +88,9 @@ impl Effects for Runtime<'_> {
     }
 }
 
-pub(crate) fn ceres_movement(game: &mut crate::game_state::Game, action: fn(&mut Runtime<'_>)) {
-    let mut runtime = Runtime::new(game);
-    action(&mut runtime);
+/// Samus's Ceres push on the lease, then the escape countdown, which still draws on the game.
+pub(crate) fn ceres_movement(runtime: &mut Runtime<'_>, action: fn(&mut Runtime<'_>)) {
+    action(runtime);
     runtime.foreign(|game| {
         sm_game::escape_timer::advance(game);
         if crate::ram_map::word!(game.TIMER_STATUS) != 0 {
@@ -100,34 +100,27 @@ pub(crate) fn ceres_movement(game: &mut crate::game_state::Game, action: fn(&mut
 }
 
 use sm_game::explosion_window::spawn_crystal_flash;
-// Raw movement identities and uncovered callbacks remain at the compatibility boundary.
+// Raw movement identities remain at the compatibility boundary; the handlers run on the
+// lease Samus's frame holds.
 use {
     crate::game::{
-        music::queue_sfx3_max15,
         player_collision::operations as player_collision,
         player_movement::{self, forced, speed},
-        prelude::*,
-        session_runtime::Runtime as CollisionRuntime,
+        prelude::{K_MOVEMENT_TYPE_0E_TURNING_AROUND_ON_GROUND, abs16, word},
         visual_runtime::set_hdma_enabled,
     },
+    crate::game_state::Game,
+    sm_game::effects::SoundEffects,
     sm_game::projectile_initialization::Initialization,
+    sm_game::ram::CompatibilityRam,
 };
-pub fn samus_end_super_jump(game: &mut Game) -> u8 {
-    if word!(game.SAMUS_HEALTH).wrapping_sub(30) & 0x8000 == 0
-        && word!(game.SAMUS_COLLISION_FLAG) == 0
+fn samus_end_super_jump(runtime: &mut Runtime<'_>) -> u8 {
+    if word!(runtime.SAMUS_HEALTH).wrapping_sub(30) & 0x8000 == 0
+        && word!(runtime.SAMUS_COLLISION_FLAG) == 0
     {
         return 0;
     }
-    forced::end_shinespark(&mut Runtime::new(game))
-}
-crate::forward_calls! { pub fn (game: &mut Game);
-    samus_move_handler_shinespark_windup => forced::shinespark_windup(&mut Runtime::new(game));
-    samus_move_handler_shinespark_crash => forced::shinespark_crash(&mut Runtime::new(game));
-    samus_move_handler_shinespark_crash_0 => forced::expand_shinespark_crash(Runtime::new(game).session_mut());
-    samus_move_handler_shinespark_crash_1 => forced::rotate_shinespark_crash(Runtime::new(game).session_mut());
-    samus_move_handler_shinespark_crash_2 => forced::contract_shinespark_crash(Runtime::new(game).session_mut());
-    samus_move_handler_shinespark_crash_echo_circle => forced::wait_shinespark_crash(Runtime::new(game).session_mut());
-    samus_move_handler_shinespark_crash_finish => forced::finish_shinespark_crash(&mut Runtime::new(game));
+    forced::end_shinespark(runtime)
 }
 static KNOCKBACK_MOTION: [Option<fn(&mut Runtime<'_>)>; 6] = [
     None,
@@ -137,140 +130,145 @@ static KNOCKBACK_MOTION: [Option<fn(&mut Runtime<'_>)>; 6] = [
     Some(|h| forced::knockback_motion(h, true, speed::no_speed_y)),
     Some(|h| forced::knockback_motion(h, true, speed::no_speed_y)),
 ];
-crate::game::callback_dispatch! {
-    pub(crate) unsafe fn advance_special_movement(ea: u32, game: &mut Game) => ea;
-    call (game); default { report_unreachable(game); };
-    @functions [pub unsafe fn (game: &mut Game)];
-    [9475182] samus_move_handler_release_from_grapple [] {
-        if word!(game.SAMUS_Y_DIR) == 1 && (word!(game.SAMUS_Y_SPEED) & 0x8000) != 0 {
-            word! { game, 0; SAMUS_Y_SUBSPEED, SAMUS_Y_SPEED }
-            word! {game; SAMUS_Y_DIR = 2; SAMUS_MOVEMENT_HANDLER = ((0x90a337i32) as u16); }
-        }
-        word!(game.SAMUS_X_ACCEL_MODE = 2);
-        {
-            let mut runtime = Runtime::new(game);
-            let profile = player_movement::speed::grapple_speed_profile(&mut runtime);
-            let amount = player_movement::speed::base_speed(&mut runtime, profile);
-            let request = player_movement::speed::horizontal_air::<false>(&mut runtime, amount);
-            player_collision::horizontal_control(&mut runtime, request);
-            player_movement::speed::move_y_with_speed(&mut runtime);
-        }
-        if word!(game.INPUT_TO_POSE_CALC) != 0 {
-            word!(game.SAMUS_MOVEMENT_HANDLER = (0x90a337i32) as u16);
-        }
-    };
-    [9475275] samus_handle_movement_drained_crouching [] {
-        player_movement::speed::move_y_with_speed(&mut Runtime::new(game));
-        if word!(game.SAMUS_COLLISION_FLAG) != 0 {
-            word! {game; SAMUS_MOVEMENT_HANDLER = ((0x90a337i32) as u16);
-                SAMUS_ANIM_FRAME_TIMER = 8; SAMUS_ANIM_FRAME = 7; }
-            word! { game, 0; SAMUS_Y_SUBSPEED, SAMUS_Y_SPEED }
-        }
-    };
-    [9478967] samus_movement_handler_normal [] {
-        player_movement::advance_normal(&mut Runtime::new(game));
-    };
-    @functions [pub fn (game: &mut Game)];
-    [9492088] samus_move_handler_crystal_flash_start [] {
-        word!(game.SAMUS_Y_POS -= 2);
-        if (word!(game.TIMER_FOR_SHINESPARKS_STARTSTOP -= 1, reread) & 0x8000)
-            != 0
-        {
-            word! {game; SAMUS_ANIM_FRAME_TIMER = 3; SAMUS_ANIM_FRAME = 6; }
-            word_transfers!(game, ascending, 1; native(0xdf0) <- value(word!(game.SAMUS_Y_POS)));
-            word!(game.SAMUS_MOVEMENT_HANDLER = (0x90d6cei32) as u16);
-            word! { game, 0; SAMUS_INVINCIBILITY_TIMER, SAMUS_KNOCKBACK_TIMER }
-            queue_sfx3_max15(1, game);
-            word!(game.POWER_BOMB_FLAG = 0);
-            word!(game.POWER_BOMB_EXPLOSION_X_POS = word!(game.SAMUS_X_POS));
-            word!(game.POWER_BOMB_EXPLOSION_Y_POS = word!(game.SAMUS_Y_POS));
-            set_hdma_enabled(true, game);
-            spawn_crystal_flash(game);
-        }
-    };
-    @functions [pub unsafe fn (game: &mut Game)];
-    [9494328] samus_move_handler_knockback [] {
-        match KNOCKBACK_MOTION[usize::from(word!(game.KNOCKBACK_DIR))] {
-            Some(motion) => motion(&mut Runtime::new(game)),
-            None => crate::rtl::invalid_interrupt(game),
-        }
-        word!(game.INPUT_TO_POSE_CALC = 0);
-    };
-    @functions [pub fn (game: &mut Game)];
-    [9492315] k_samus_move_handler_crystal_flash_finish [] {
-        if word!(game.SAMUS_Y_POS) != u16::from_ne_bytes([game.ram().read_byte(0xdf0), game.ram().read_byte(0xdf1)]) {
-            word!(game.SAMUS_Y_POS += 1);
-        }
-        if game.ram().read_byte(0xa1f) == 0 {
-            word! {game; POWER_BOMB_FLAG = 0; SAMUS_SHINE_TIMER = -1i32 as u16;
-                SAMUS_MOVEMENT_HANDLER = ((0x90a337i32) as u16); }
-            if word!(game.SAMUS_INPUT_HANDLER) as i32 != 0x90e91d & 0xffff {
-                word!(game.SAMUS_INPUT_HANDLER = (0x90e913i32) as u16);
-                word! { game, 0; SAMUS_INVINCIBILITY_TIMER, SAMUS_KNOCKBACK_TIMER }
+
+/// Samus's special movement handler at `ea` ($90 bank), on the lease her frame holds.
+pub(crate) fn advance_special_movement(ea: u32, runtime: &mut Runtime<'_>) {
+    match ea {
+        0x90946e => release_from_grapple(runtime),
+        0x9094cb => drained_crouching(runtime),
+        0x90a337 => player_movement::advance_normal(runtime),
+        0x90d678 => crystal_flash_start(runtime),
+        0x90df38 => match KNOCKBACK_MOTION[usize::from(word!(runtime.KNOCKBACK_DIR))] {
+            Some(motion) => {
+                motion(runtime);
+                word!(runtime.INPUT_TO_POSE_CALC = 0);
+            }
+            None => crate::rtl::invalid_interrupt_failure(),
+        },
+        0x90d75b => crystal_flash_finish(runtime),
+        0x90e94f => xray(runtime),
+        0x90f04b => shinespark_projectile_response(runtime),
+        0x90f072 => {
+            if word!(runtime.SAMUS_SHINE_TIMER) == 0 {
+                word!(runtime.FRAME_HANDLER_ALFA = 0xe695);
+                word!(runtime.SAMUS_MOVEMENT_HANDLER = 0xa337);
             }
         }
-    };
-    [9496911] samus_movement_type_xray [] {
-        if game.ram().read_byte(0xa1f) as i32 != K_MOVEMENT_TYPE_0E_TURNING_AROUND_ON_GROUND as i32 {
-            word!(game.SAMUS_ANIM_FRAME_TIMER = 15);
-            let frame = player_movement::xray_animation_frame(game.ram().read_byte(0xa1e), || {
-                word!(game.XRAY_ANGLE)
-            });
-            word!(game.SAMUS_ANIM_FRAME = frame);
-        }
-    };
-    [9498699] samus_func25_shine_spark [] {
-        if word!(game.SAMUS_SHINE_TIMER) == 0 {
-            word!(game.SPECIAL_SAMUS_PALETTE_FRAME = 6);
-            word! { game, 1; SPECIAL_SAMUS_PALETTE_TIMER, DEMO_TIMER_COUNTER }
-            word! {game; TIMER_FOR_SHINE_TIMER = 10; SAMUS_SHINE_TIMER = 120;
-                SAMUS_MOVEMENT_HANDLER = ((0x90f072i32) as u16); }
-        }
-    };
-    [9498738] samus_move_handler_f072 [] {
-        if word!(game.SAMUS_SHINE_TIMER) == 0 {
-            word!(game.FRAME_HANDLER_ALFA = (0x90e695i32) as u16);
-            word!(game.SAMUS_MOVEMENT_HANDLER = (0x90a337i32) as u16);
-        }
-    };
-    @external {
-        9490536 => [samus_move_handler_shinespark_windup(game)];
-        9491270 => [samus_move_handler_shinespark_crash(game)];
-        9491331 => [samus_move_handler_shinespark_crash_0(game)];
-        9491350 => [samus_move_handler_shinespark_crash_1(game)];
-        9491404 => [samus_move_handler_shinespark_crash_2(game)];
-        9491443 => [samus_move_handler_shinespark_crash_echo_circle(game)];
-        9491469 => [samus_move_handler_shinespark_crash_finish(game)];
-        9490603 => [advance_shinespark(&[player_collision::Axis::Y], game)];
-        9490647 => [advance_shinespark(&[player_collision::Axis::X, player_collision::Axis::Y], game)];
-        9490694 => [advance_shinespark(&[player_collision::Axis::X], game)];
-        9494352 => [crate::rtl::invalid_interrupt(game)];
-        9494355 => [forced::knockback_motion(&mut Runtime::new(game), true, speed::move_y_with_speed)];
-        9494365 => [forced::knockback_motion(&mut Runtime::new(game), false, speed::move_y_with_speed)];
-        9494372 => [forced::knockback_motion(&mut Runtime::new(game), true, speed::no_speed_y)];
-        9492174 => [{
-            let mut runtime = Runtime::new(game);
+        0x90d068 => forced::shinespark_windup(runtime),
+        0x90d346 => forced::shinespark_crash(runtime),
+        0x90d383 => forced::expand_shinespark_crash(runtime.session_mut()),
+        0x90d396 => forced::rotate_shinespark_crash(runtime.session_mut()),
+        0x90d3cc => forced::contract_shinespark_crash(runtime.session_mut()),
+        0x90d3f3 => forced::wait_shinespark_crash(runtime.session_mut()),
+        0x90d40d => forced::finish_shinespark_crash(runtime),
+        0x90d0ab => advance_shinespark(&[player_collision::Axis::Y], runtime),
+        0x90d0d7 => advance_shinespark(
+            &[player_collision::Axis::X, player_collision::Axis::Y],
+            runtime,
+        ),
+        0x90d106 => advance_shinespark(&[player_collision::Axis::X], runtime),
+        0x90df50 => crate::rtl::invalid_interrupt_failure(),
+        0x90df53 => forced::knockback_motion(runtime, true, speed::move_y_with_speed),
+        0x90df5d => forced::knockback_motion(runtime, false, speed::move_y_with_speed),
+        0x90df64 => forced::knockback_motion(runtime, true, speed::no_speed_y),
+        0x90d6ce => {
             let frame = runtime.inputs().frame;
             forced::consume_crystal_flash(runtime.session_mut(), frame);
-        }];
-        9494565 => [forced::begin_bomb_jump(&mut Runtime::new(game))];
-        9494578 => [forced::advance_bomb_jump(&mut Runtime::new(game), |_| crate::rtl::invalid_interrupt_failure())];
-        9494653 => [forced::finish_bomb_jump(Runtime::new(game).session_mut())];
-        9496846 => [()];
+        }
+        0x90e025 => forced::begin_bomb_jump(runtime),
+        0x90e032 => forced::advance_bomb_jump(runtime, |_| crate::rtl::invalid_interrupt_failure()),
+        0x90e07d => forced::finish_bomb_jump(runtime.session_mut()),
+        0x90e90e => {}
+        _ => crate::rtl::unreachable(),
     }
 }
 
-unsafe fn advance_shinespark(axes: &[player_collision::Axis], game: &mut Game) {
-    word! {game; SAMUS_CONTACT_DAMAGE_INDEX = 2; SAMUS_HURT_FLASH_COUNTER = 8; }
-    player_movement::record_echo(&mut Runtime::new(game));
-    for &axis in axes {
-        player_collision::shinespark(&mut CollisionRuntime::new(game), axis);
+fn release_from_grapple(runtime: &mut Runtime<'_>) {
+    if word!(runtime.SAMUS_Y_DIR) == 1 && (word!(runtime.SAMUS_Y_SPEED) & 0x8000) != 0 {
+        word! { runtime, 0; SAMUS_Y_SUBSPEED, SAMUS_Y_SPEED }
+        word! {runtime; SAMUS_Y_DIR = 2; SAMUS_MOVEMENT_HANDLER = 0xa337; }
     }
-    samus_end_super_jump(game);
-    if word!(game.SAMUS_HEALTH) as i32 - 30i32 & 0x8000 == 0 && {
-        (word!(game.SAMUS_HEALTH -= 1, reread) & 0x8000) != 0
-    } {
-        word!(game.SAMUS_HEALTH = 0);
+    word!(runtime.SAMUS_X_ACCEL_MODE = 2);
+    let profile = player_movement::speed::grapple_speed_profile(runtime);
+    let amount = player_movement::speed::base_speed(runtime, profile);
+    let request = player_movement::speed::horizontal_air::<false>(runtime, amount);
+    player_collision::horizontal_control(runtime, request);
+    player_movement::speed::move_y_with_speed(runtime);
+    if word!(runtime.INPUT_TO_POSE_CALC) != 0 {
+        word!(runtime.SAMUS_MOVEMENT_HANDLER = 0xa337);
+    }
+}
+
+fn drained_crouching(runtime: &mut Runtime<'_>) {
+    player_movement::speed::move_y_with_speed(runtime);
+    if word!(runtime.SAMUS_COLLISION_FLAG) != 0 {
+        word! {runtime; SAMUS_MOVEMENT_HANDLER = 0xa337;
+        SAMUS_ANIM_FRAME_TIMER = 8; SAMUS_ANIM_FRAME = 7; }
+        word! { runtime, 0; SAMUS_Y_SUBSPEED, SAMUS_Y_SPEED }
+    }
+}
+
+fn crystal_flash_start(runtime: &mut Runtime<'_>) {
+    word!(runtime.SAMUS_Y_POS -= 2);
+    if (word!(runtime.TIMER_FOR_SHINESPARKS_STARTSTOP -= 1, reread) & 0x8000) != 0 {
+        word! {runtime; SAMUS_ANIM_FRAME_TIMER = 3; SAMUS_ANIM_FRAME = 6; }
+        let start = word!(runtime.SAMUS_Y_POS);
+        runtime.write_slice_native(0xdf0, start);
+        word!(runtime.SAMUS_MOVEMENT_HANDLER = 0xd6ce);
+        word! { runtime, 0; SAMUS_INVINCIBILITY_TIMER, SAMUS_KNOCKBACK_TIMER }
+        runtime.queue_sound(2, 1, 15);
+        word!(runtime.POWER_BOMB_FLAG = 0);
+        word!(runtime.POWER_BOMB_EXPLOSION_X_POS = word!(runtime.SAMUS_X_POS));
+        word!(runtime.POWER_BOMB_EXPLOSION_Y_POS = word!(runtime.SAMUS_Y_POS));
+        set_hdma_enabled(true, runtime);
+        // The HDMA objects still spawn on the game.
+        runtime.foreign(|game: &mut Game| spawn_crystal_flash(game));
+    }
+}
+
+fn crystal_flash_finish(runtime: &mut Runtime<'_>) {
+    if word!(runtime.SAMUS_Y_POS) != runtime.native_word(0xdf0) {
+        word!(runtime.SAMUS_Y_POS += 1);
+    }
+    if runtime.byte(0xa1f) == 0 {
+        word! {runtime; POWER_BOMB_FLAG = 0; SAMUS_SHINE_TIMER = 0xffff;
+        SAMUS_MOVEMENT_HANDLER = 0xa337; }
+        if word!(runtime.SAMUS_INPUT_HANDLER) != 0xe91d {
+            word!(runtime.SAMUS_INPUT_HANDLER = 0xe913);
+            word! { runtime, 0; SAMUS_INVINCIBILITY_TIMER, SAMUS_KNOCKBACK_TIMER }
+        }
+    }
+}
+
+fn xray(runtime: &mut Runtime<'_>) {
+    if u32::from(runtime.byte(0xa1f)) != K_MOVEMENT_TYPE_0E_TURNING_AROUND_ON_GROUND {
+        word!(runtime.SAMUS_ANIM_FRAME_TIMER = 15);
+        let facing = runtime.byte(0xa1e);
+        let frame = player_movement::xray_animation_frame(facing, || word!(runtime.XRAY_ANGLE));
+        word!(runtime.SAMUS_ANIM_FRAME = frame);
+    }
+}
+
+fn shinespark_projectile_response(runtime: &mut Runtime<'_>) {
+    if word!(runtime.SAMUS_SHINE_TIMER) == 0 {
+        word!(runtime.SPECIAL_SAMUS_PALETTE_FRAME = 6);
+        word! { runtime, 1; SPECIAL_SAMUS_PALETTE_TIMER, DEMO_TIMER_COUNTER }
+        word! {runtime; TIMER_FOR_SHINE_TIMER = 10; SAMUS_SHINE_TIMER = 120;
+        SAMUS_MOVEMENT_HANDLER = 0xf072; }
+    }
+}
+
+fn advance_shinespark(axes: &[player_collision::Axis], runtime: &mut Runtime<'_>) {
+    word! {runtime; SAMUS_CONTACT_DAMAGE_INDEX = 2; SAMUS_HURT_FLASH_COUNTER = 8; }
+    player_movement::record_echo(runtime);
+    for &axis in axes {
+        player_collision::shinespark(runtime, axis);
+    }
+    samus_end_super_jump(runtime);
+    if word!(runtime.SAMUS_HEALTH).wrapping_sub(30) & 0x8000 == 0
+        && (word!(runtime.SAMUS_HEALTH -= 1, reread) & 0x8000) != 0
+    {
+        word!(runtime.SAMUS_HEALTH = 0);
     }
 }
 

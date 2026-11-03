@@ -186,6 +186,10 @@ impl crate::game::session_runtime::Runtime<'_> {
     pub(crate) fn queue_music_request(&mut self, track: u16) {
         self.audio_request(|runtime| requests::queue_delayed_8(track, runtime));
     }
+    /// QueueMusic_DelayedY: queue `track` after `delay` frames.
+    pub(crate) fn queue_music_delayed(&mut self, track: u16, delay: u16) {
+        self.audio_request(|runtime| requests::queue_delayed(track, delay, runtime));
+    }
     /// QueueSound on `channel`, with the original's result.
     pub(crate) fn queue_sound_request(&mut self, channel: usize, sound: u8, max_queued: u8) -> u16 {
         self.audio_request(|runtime| {

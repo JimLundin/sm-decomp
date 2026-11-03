@@ -69,43 +69,6 @@ macro_rules! update_place {
     };
 }
 
-// Each instruction row declares Name [result] { effects }; [] keeps a full body.
-// A shared prefix runs inside each function, before its effects and result.
-// Only unsafe declarations authorize unsafe operations in their emitted bodies.
-macro_rules! instruction_callbacks {
-    ($visibility:vis unsafe fn $parameters:tt; @prefix $prefix:tt; $($name:ident $tail:tt $body:tt;)*) => {
-        $($crate::instruction_callbacks!(@function [$visibility unsafe fn $name $parameters] $prefix $tail $body);)*
-    };
-    ($visibility:vis fn $parameters:tt; @prefix $prefix:tt; $($name:ident $tail:tt $body:tt;)*) => {
-        $($crate::instruction_callbacks!(@function [$visibility fn $name $parameters] $prefix $tail $body);)*
-    };
-    ($visibility:vis unsafe fn $parameters:tt -> $result:ty; @prefix $prefix:tt; $($name:ident $tail:tt $body:tt;)*) => {
-        $($crate::instruction_callbacks!(@function [$visibility unsafe fn $name $parameters -> $result] $prefix $tail $body);)*
-    };
-    ($visibility:vis fn $parameters:tt -> $result:ty; @prefix $prefix:tt; $($name:ident $tail:tt $body:tt;)*) => {
-        $($crate::instruction_callbacks!(@function [$visibility fn $name $parameters -> $result] $prefix $tail $body);)*
-    };
-    ($visibility:vis unsafe fn $parameters:tt -> $result:ty; $($entries:tt)*) => {
-        $crate::instruction_callbacks!($visibility unsafe fn $parameters -> $result; @prefix {}; $($entries)*);
-    };
-    ($visibility:vis fn $parameters:tt -> $result:ty; $($entries:tt)*) => {
-        $crate::instruction_callbacks!($visibility fn $parameters -> $result; @prefix {}; $($entries)*);
-    };
-    (@function [$visibility:vis unsafe fn $($header:tt)*] {$($prefix:tt)*} [$tail:expr] {$($body:tt)*}) => {
-        $visibility unsafe fn $($header)* { #[allow(unused_unsafe)] unsafe { $($prefix)* $($body)* $tail } }
-    };
-    (@function [$visibility:vis unsafe fn $($header:tt)*] {$($prefix:tt)*} [] {$($body:tt)*}) => {
-        $visibility unsafe fn $($header)* { #[allow(unused_unsafe)] unsafe { $($prefix)* $($body)* } }
-    };
-    (@function [$($header:tt)*] {$($prefix:tt)*} [$tail:expr] {$($body:tt)*}) => {
-        $($header)* { $($prefix)* $($body)* $tail }
-    };
-    (@function [$($header:tt)*] {$($prefix:tt)*} [] {$($body:tt)*}) => {
-        $($header)* { $($prefix)* $($body)* }
-    };
-}
-pub(crate) use instruction_callbacks;
-
 // Declare forwarding wrappers with their original signatures and call order.
 // Unit wrappers retain a statement; value-returning wrappers retain a tail call.
 #[macro_export]
@@ -267,28 +230,18 @@ pub mod game {
     }
     pub(crate) use address_dispatch;
 
-    // A callback's optional address feeds its dispatcher while preserving named functions.
+    // A callback's address feeds its dispatcher; forwarded and external targets keep their names.
     macro_rules! callback_dispatch {
         (
             $(#[$metadata:meta])* $visibility:vis unsafe fn $name:ident $parameters:tt $(-> $result:ty)?
             => $selector:expr; $(setup { $($setup:tt)* })? call $arguments:tt; default $fallback:expr;
             $(@body $body_mode:ident;)?
             $(
-                @functions [$($header:tt)*]; $(@prefix {$($prefix:tt)*};)?
-                $($([$pattern:pat])? $callback:ident $tail:tt $body:tt;)*
-            )*
-            $(
                 @forward [$($forward_header:tt)*];
                 $($([$forward_pattern:pat])? $forward_callback:ident => $forward_call:expr;)*
             )*
             $(@external {$($external_pattern:pat => $target:tt $(::$path_tail:ident)*;)*})?
         ) => {
-            $(
-                $crate::instruction_callbacks! {
-                    $($header)*; @prefix {$($($prefix)*)?};
-                    $($callback $tail $body;)*
-                }
-            )*
             $(
                 $crate::forward_calls! {
                     $($forward_header)*; $($forward_callback => $forward_call;)*
@@ -299,7 +252,6 @@ pub mod game {
                 $crate::game::callback_dispatch!(@body [$($body_mode)?] {
                 $($($setup)*)?
                 match $selector {
-                    $($($($pattern => $crate::game::address_dispatch!(@call $arguments $callback),)?)*)*
                     $($($($forward_pattern => $crate::game::address_dispatch!(@call $arguments $forward_callback),)?)*)*
                     $($($external_pattern => $crate::game::address_dispatch!(@call $arguments $target $(::$path_tail)*),)*)?
                     _ => $fallback
@@ -312,21 +264,11 @@ pub mod game {
             => $selector:expr; $(setup { $($setup:tt)* })? call $arguments:tt; default $fallback:expr;
             $(@body $body_mode:ident;)?
             $(
-                @functions [$($header:tt)*]; $(@prefix {$($prefix:tt)*};)?
-                $($([$pattern:pat])? $callback:ident $tail:tt $body:tt;)*
-            )*
-            $(
                 @forward [$($forward_header:tt)*];
                 $($([$forward_pattern:pat])? $forward_callback:ident => $forward_call:expr;)*
             )*
             $(@external {$($external_pattern:pat => $target:tt $(::$path_tail:ident)*;)*})?
         ) => {
-            $(
-                $crate::instruction_callbacks! {
-                    $($header)*; @prefix {$($($prefix)*)?};
-                    $($callback $tail $body;)*
-                }
-            )*
             $(
                 $crate::forward_calls! {
                     $($forward_header)*; $($forward_callback => $forward_call;)*
@@ -337,7 +279,6 @@ pub mod game {
                 $crate::game::callback_dispatch!(@body [checked] {
                 $($($setup)*)?
                 match $selector {
-                    $($($($pattern => $crate::game::address_dispatch!(@call $arguments $callback),)?)*)*
                     $($($($forward_pattern => $crate::game::address_dispatch!(@call $arguments $forward_callback),)?)*)*
                     $($($external_pattern => $crate::game::address_dispatch!(@call $arguments $target $(::$path_tail)*),)*)?
                     _ => $fallback

@@ -777,7 +777,7 @@ pub(crate) fn capture_case(id: u32) -> Option<Vec<u8>> {
             _ => unreachable!(),
         }
     } else if id >= 99 {
-        prepare(&mut g);
+        prepare(&mut Runtime::new(&mut g));
         match id {
             99 | 100 => put(&mut g, 0xc86, 1),
             102 => put(&mut g, 0xc86, 16),
@@ -817,7 +817,7 @@ pub(crate) fn capture_case(id: u32) -> Option<Vec<u8>> {
             _ => unreachable!(),
         }
     } else {
-        prepare(&mut g);
+        prepare(&mut Runtime::new(&mut g));
         // Prove these cases reached their intended producers before retirement.
         let read = |a: usize| u16::from_le_bytes([g.ram().read_byte(a), g.ram().read_byte(a + 1)]);
         let (slot, motion, count) = if id <= 88 {
