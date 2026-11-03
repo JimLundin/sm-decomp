@@ -221,7 +221,6 @@ pub mod actors {
     pub mod roach;
     pub mod scene;
     pub mod scheduling;
-    pub mod session_slots;
     pub mod shaktool;
     pub mod shutters;
     pub mod sidehopper;

@@ -2518,7 +2518,8 @@ impl Runtime<'_> {
         {
             return sm_game::fx_domain::Sources::source_byte(self, owner, offset);
         }
-        sm_game::actors::session_slots::SlotAccess::slot_byte(self, at)
+        // LEGACY(original-overflow): a parallax selector outside the FX sources.
+        sm_game::legacy_overflow::slot_byte(self, at)
     }
     fn store_parallax_byte(&mut self, at: usize, byte: u8) {
         if let Some((owner, offset)) =
@@ -2527,7 +2528,8 @@ impl Runtime<'_> {
         {
             sm_game::fx_domain::Sources::store_source_byte(self, owner, offset, byte);
         } else {
-            sm_game::actors::session_slots::SlotAccess::set_slot_byte(self, at, byte);
+            // LEGACY(original-overflow): a parallax selector outside the FX sources.
+            sm_game::legacy_overflow::set_slot_byte(self, at, byte);
         }
     }
 }

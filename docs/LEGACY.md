@@ -139,7 +139,10 @@ projected bytes, which already own the neighbouring RAM). Each call site carries
 a `LEGACY(original-overflow)` comment; `tools/cycle_report.py` counts the calls
 as kind `legacy_overflow` and `tools/ram_ratchet.py` reports them as
 `engine_legacy_overflow_sites`. Where an index is in range, the site uses its
-typed owner and only the out-of-range branch goes through the module.
+typed owner and only the out-of-range branch goes through the module. Its
+`SlotBytes` trait is the slot paths' byte resolution (the actors' extended
+RAM from `Actors::extended` and every other byte through the projection on a
+lease, the RAM image on `Game`); it replaced the retired `SlotAccess`.
 
 | Family | Sites | What the original does | What a hardware-faithful typed replacement needs |
 | --- | --- | --- | --- |
@@ -153,6 +156,8 @@ typed owner and only the out-of-range branch goes through the module.
 | X-ray beam window rows | `beam_windows` (on-screen and off-screen positive rows, the anchor and reopened rows, the generic row writer) | the ROM wraps the 16-bit row offset before adding the table base, so row zero's anchor and reopened rows reach base + FFFEh (the next WRAM bank), and cleanup runs on signed offsets past either end of the 230-row table | a typed window table plus the RAM either side of it, or proof that the beam's start row never wraps |
 | Dachora's palette destination | `dachora::load_palette` | a palette index past the 8-entry destination table ($A7:F55F) reads a destination from the code after it; the 32 byte stores go there, below palette RAM or between its words | a typed palette with byte-granular stores into whatever the ROM-derived destination names, or proof that dachora's palette index stays in bits 9-11 |
 | Suit pickup's HDMA selector | `suit::advance_pickup` (the program step and timer stores) | the pickup's end adds 2 to the instruction list pointer ($7E:18CC + X) and stores the timer ($7E:18E4 + X) with X the selected object word ($7E:18B2); a selector whose word lies past the HDMA object table ($7E:195C) reaches the RAM after it | proof that the selector is only the object loop's even index below 12 while the pickup's pre-instruction runs (`hdma_program::run` is its only writer there), then the typed object words alone |
+| Boss interaction collections | `boss_interaction_runtime` (`boss_collection`, `set_boss_collection` fallbacks) | a widened index past its projectile or enemy collection reaches the neighbouring fields' RAM; the same fallback serves a dirty lease | per-collection proof that indexes stay in range, and the dirty-lease path on its typed owners |
+| FX parallax selectors | `session_runtime::Runtime::parallax_byte`, `store_parallax_byte` | the FX entry's parallax selector is a RAM address from ROM; one outside the FX source buffers names whatever RAM lies there | proof that every room's selectors name an FX source, or owners for the RAM they name |
 
 To retire a row: prove the index in range (then use the typed owner and delete
 the fallback) or give the Session an owner for the RAM the overflow reaches;

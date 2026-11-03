@@ -92,7 +92,7 @@ pub trait ActorRuntime {
 /// flags, music, PLMs and the original failure path.
 pub trait BossEffects:
     ActorHost
-    + crate::actors::session_slots::SlotAccess
+    + crate::legacy_overflow::SlotBytes
     + ActorRuntime
     + crate::effects::SoundEffects
     + crate::word_transfers::LoadedRom
@@ -160,7 +160,7 @@ pub fn sign_extend8(value: u16) -> u16 {
 
 /// What enemies that run on the host itself, without a lease, need of it.
 pub trait EnemyHost:
-    crate::actors::session_slots::SlotAccess
+    crate::legacy_overflow::SlotBytes
     + BossEffects
     + crate::records::Records
     + crate::actors::species::SpeciesHost
@@ -192,7 +192,7 @@ pub trait ActorLease:
     + crate::room_mechanisms::host::Effects
     + crate::player_position::PlayerPosition
     + crate::presentation_workspace::PaletteAccess
-    + crate::actors::session_slots::SessionSlots
+    + crate::legacy_overflow::SlotBytes
     + crate::player_projectiles::host::Host
     + crate::display::transfer::TilemapQueue
     + crate::ram::CompatibilityRam

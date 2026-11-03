@@ -2,7 +2,6 @@
 #![forbid(unsafe_code)]
 use super::Runtime;
 use sm_game::actors::boss_interaction::{self as interaction, Access, Array, Word};
-use sm_game::actors::session_slots::SlotAccess as _;
 
 fn address(word: Word) -> usize {
     match word {
@@ -102,7 +101,7 @@ impl Access for Runtime<'_> {
         if self.persistent_is_current() {
             return *interaction::control(self.session(), word);
         }
-        // The original SlotAccess byte view still serves a dirty lease.
+        // The projection still serves a dirty lease.
         let at = address(word);
         u16::from_le_bytes([self.byte(at), self.byte(at + 1)])
     }
@@ -127,14 +126,23 @@ impl Access for Runtime<'_> {
         }
         // Full widened indices keep their original neighbouring-field aliases.
         let at = collection_address(array, index);
-        u16::from_le_bytes([self.slot_byte(at), self.slot_byte(at + 1)])
+        // LEGACY(original-overflow): a dirty lease, or a widened index past its collection.
+        u16::from_le_bytes([
+            sm_game::legacy_overflow::slot_byte(self, at),
+            sm_game::legacy_overflow::slot_byte(self, at + 1),
+        ])
     }
     fn set_boss_collection(&mut self, array: Array, index: usize, value: u16) {
         for (lane, byte) in value.to_le_bytes().into_iter().enumerate() {
             if !self.persistent_is_current()
                 || interaction::collection(self.session(), array, index).is_none()
             {
-                self.set_slot_byte(collection_address(array, index) + lane, byte);
+                // LEGACY(original-overflow): a dirty lease, or a widened index past its collection.
+                sm_game::legacy_overflow::set_slot_byte(
+                    self,
+                    collection_address(array, index) + lane,
+                    byte,
+                );
                 continue;
             }
             let field = interaction::collection_mut(self.session_mut(), array, index)

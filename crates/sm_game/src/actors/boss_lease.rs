@@ -5,7 +5,7 @@
 //! # Design
 //!
 //! A species module writes its state steps against [`BossState`]: slot words
-//! through `session_slot!`, named RAM through `word!`, sounds, the cartridge
+//! through its slot view, named RAM through `word!`, sounds, the cartridge
 //! and records, Samus's position, the shared actor operations, plus the few
 //! effects every boss's frame uses. The game
 //! implements it over the RAM image, delegating to its existing effects, and
@@ -14,14 +14,14 @@
 //! called from either, and a main AI that opens one lease per frame keeps its
 //! steps there, grouping what still needs the game into `foreign` calls.
 use crate::actors::host::{Death, Shot};
-use crate::actors::session_slots::SlotAccess;
+use crate::legacy_overflow::SlotBytes;
 
 /// What a boss's state steps read, write and call.
 pub trait BossState:
     crate::fx_domain::Sources
     + crate::presentation_workspace::PaletteAccess
     + crate::display::preparation::Access
-    + SlotAccess
+    + SlotBytes
     + crate::ram::CompatibilityRam
     + crate::effects::SoundEffects
     + crate::cartridge::LoadedImage
@@ -127,7 +127,7 @@ pub mod bg2_staging {
     /// high, as the original's indexed store did.
     pub fn set_unbounded<H>(h: &mut H, index: usize, value: u16)
     where
-        H: SessionAccess + crate::actors::session_slots::SlotAccess + ?Sized,
+        H: SessionAccess + crate::legacy_overflow::SlotBytes + ?Sized,
     {
         if index < WORDS {
             set(h, index, value);

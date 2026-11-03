@@ -170,7 +170,6 @@ pub trait RuntimeHost:
     + crate::enemy_projectiles::host::Host
     + crate::room_mechanisms::host::Effects
     + botwoon_death::Host
-    + crate::actors::session_slots::SessionSlots
     + crate::actors::boss_interaction::Access
 {
 }

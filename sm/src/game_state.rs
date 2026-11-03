@@ -2223,16 +2223,9 @@ impl sm_game::runtime_access::SessionRam for Game {
     }
 }
 
-/// Slot words on the RAM image, native order, as `slot!` reads and stores them.
-impl sm_game::actors::session_slots::SlotAccess for Game {
-    fn slot_word(&self, at: usize) -> u16 {
-        u16::from_ne_bytes([self.ram().read_byte(at), self.ram().read_byte(at + 1)])
-    }
-    fn set_slot_word(&mut self, at: usize, value: u16) {
-        let bytes = value.to_ne_bytes();
-        self.ram().write_byte(at, bytes[0]);
-        self.ram().write_byte(at + 1, bytes[1]);
-    }
+// LEGACY(original-overflow): the overflow paths' bytes on the RAM image.
+/// The RAM image's bytes, as the overflow paths that run on `Game` reach them.
+impl sm_game::legacy_overflow::SlotBytes for Game {
     fn slot_byte(&self, at: usize) -> u8 {
         self.ram().read_byte(at)
     }
@@ -2242,7 +2235,7 @@ impl sm_game::actors::session_slots::SlotAccess for Game {
 }
 
 /// Actor records on the RAM image, through the actor codec in native order,
-/// as `SlotAccess` reads and stores their words here.
+/// as the RAM image holds their words.
 impl sm_game::actors::access::ActorImage for Game {
     fn actor_record(
         &self,
@@ -4486,13 +4479,13 @@ impl Game {
         if let Some((owner, offset)) = self.parallax_coordinate(at) {
             return sm_game::fx_domain::Sources::source_byte(self, owner, offset);
         }
-        sm_game::actors::session_slots::SlotAccess::slot_byte(self, at)
+        self.ram().read_byte(at)
     }
     fn store_parallax_byte(&mut self, at: usize, byte: u8) {
         if let Some((owner, offset)) = self.parallax_coordinate(at) {
             sm_game::fx_domain::Sources::store_source_byte(self, owner, offset, byte);
         } else {
-            sm_game::actors::session_slots::SlotAccess::set_slot_byte(self, at, byte);
+            self.ram().write_byte(at, byte);
         }
     }
 }

@@ -18,7 +18,6 @@ use crate::actors::deaths::Deaths as _;
 use crate::actors::host::BossEffects as _;
 use crate::actors::host::{Death, Shot, abs16, below};
 use crate::actors::ridley_tables::{set_pogo_speeds, set_tail_segments_from_list};
-use crate::actors::session_slots::SlotAccess;
 use crate::actors::slot_view::{SlotRef, SlotState, slot_view};
 use crate::carry::{adc, sbc};
 use crate::constants::enemy_properties::{
@@ -31,6 +30,7 @@ use crate::enemy_projectiles::shared_pre::{x_velocity_at_angle, y_velocity_at_an
 use crate::enemy_script::EnemyScript;
 use crate::geometry::Point;
 use crate::legacy_overflow;
+use crate::legacy_overflow::SlotBytes;
 use crate::menus::prelude::battle;
 use crate::menus::prelude::owned;
 use crate::palette_copies::copy_rom_colors_to_palette;
@@ -94,12 +94,12 @@ pub trait Host {
 /// What Ridley's state steps read and write: his slot on the lease's Session
 /// and the named RAM words.
 pub trait State:
-    SlotState + SlotAccess + crate::ram::CompatibilityRam + crate::actors::boss_interaction::Access
+    SlotState + SlotBytes + crate::ram::CompatibilityRam + crate::actors::boss_interaction::Access
 {
 }
 impl<T> State for T where
     T: SlotState
-        + SlotAccess
+        + SlotBytes
         + crate::ram::CompatibilityRam
         + crate::actors::boss_interaction::Access
         + ?Sized
