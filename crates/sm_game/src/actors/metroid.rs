@@ -8,7 +8,6 @@ use crate::actors::slot_view::{SlotState, slot_view};
 use crate::enemy_projectiles::host::Effects as _;
 use crate::enemy_script::EnemyScript;
 use crate::player_projectiles::{access::shot, content::table, host::Host as _};
-use crate::ram::words;
 use crate::session_access::SessionAccess as _;
 
 /// A lease the metroids run on: their slots are the Session's.
@@ -313,9 +312,11 @@ pub fn shot<H: LeaseActors + ?Sized>(game: &mut H) {
     if runtime.resolve_actor(key, Native).frozen != 0 {
         if matches!(kind & PROJECTILE_KIND, MISSILE | SUPER_MISSILE) {
             let x = runtime.resolve_actor(key, Native).x.whole;
-            runtime.write_slice_le(words::SPECIAL_DEATH_ITEM_DROP_X_ORIGIN_POS, x);
+            runtime.session_mut().enemy_projectiles.drop_origin.x = x;
+            runtime.words_stored();
             let y = runtime.resolve_actor(key, Native).y.whole;
-            runtime.write_slice_le(words::SPECIAL_DEATH_ITEM_DROP_Y_ORIGIN_POS, y);
+            runtime.session_mut().enemy_projectiles.drop_origin.y = y;
+            runtime.words_stored();
             combat::shot_reaction(runtime, ShotHandling::ReactionOnly);
             if runtime.resolve_actor(key, Native).health == 0 {
                 runtime.edit_actor(key, Native, |actor| actor.variables[1] = 0);

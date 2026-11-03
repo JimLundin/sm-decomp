@@ -883,6 +883,8 @@ macro_rules! scalar_words {
         $f(0x1993,$($borrow)* $s.enemy_projectiles.spawn.primary);
         $f(0x1995,$($borrow)* $s.enemy_projectiles.spawn.secondary);
         $f(ram::HEALTH_DROP_BIAS_FLAG,$($borrow)* $s.enemy_projectiles.drop_bias);
+        $f(ram::SPECIAL_DEATH_ITEM_DROP_X_ORIGIN_POS,$($borrow)* $s.enemy_projectiles.drop_origin.x);
+        $f(ram::SPECIAL_DEATH_ITEM_DROP_Y_ORIGIN_POS,$($borrow)* $s.enemy_projectiles.drop_origin.y);
         $f(ram::SAMUS_RESERVE_HEALTH,$($borrow)* $s.inventory.reserve_health);
         $f(ram::SAMUS_RESERVE_MISSILES,$($borrow)* $s.inventory.reserve_missiles);
         $f(ram::SAMUS_X_SPEED_DIVISOR,$($borrow)* $s.player.speed_divisor);
@@ -1572,6 +1574,8 @@ pub fn inputs_from_session(s: &Session, bytes: &impl Fn(usize) -> u8) -> Externa
             0x911..=0x912 => (0x911, s.room.camera.layer1[0]),
             0x915..=0x916 => (0x915, s.room.camera.layer1[1]),
             0x93f..=0x940 => (0x93f, s.room.ceres_status),
+            0xf434..=0xf435 => (0xf434, s.enemy_projectiles.drop_origin.x),
+            0xf436..=0xf437 => (0xf436, s.enemy_projectiles.drop_origin.y),
             0x78..=0x7d | 0x80..=0x83 | 0x5b5..=0x5b7 => {
                 let Ok(owner) = s.presentation.owner() else {
                     return bytes(at);

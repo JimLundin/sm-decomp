@@ -8,7 +8,7 @@ use crate::actors::slot_view::{SlotState, slot_view};
 use crate::enemy_projectiles::host::Effects;
 use crate::enemy_script::EnemyScript;
 use crate::player_projectiles::{access::shot, host::Host as _};
-use crate::ram::{CompatibilityRam, words as fields};
+use crate::ram::CompatibilityRam;
 use crate::session_access::SessionAccess;
 use sm_data::cartridge::RomRecord;
 
@@ -816,9 +816,11 @@ fn ready_to_divekick<G: Pirates + ?Sized>(game: &mut G) {
 fn damage<R: PirateLease>(runtime: &mut R) {
     let key = current(runtime);
     let x = runtime.resolve_actor(key, Native).x.whole;
-    runtime.write_word_le(x, fields::SPECIAL_DEATH_ITEM_DROP_X_ORIGIN_POS);
+    runtime.session_mut().enemy_projectiles.drop_origin.x = x;
+    runtime.words_stored();
     let y = runtime.resolve_actor(key, Native).y.whole;
-    runtime.write_word_le(y, fields::SPECIAL_DEATH_ITEM_DROP_Y_ORIGIN_POS);
+    runtime.session_mut().enemy_projectiles.drop_origin.y = y;
+    runtime.words_stored();
     combat::shot_reaction(runtime, api::ShotHandling::ReactionOnly);
     if runtime.resolve_actor(key, Native).health == 0 {
         let index = runtime.session().actors.controls.selected;

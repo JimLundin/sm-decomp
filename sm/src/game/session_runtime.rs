@@ -725,7 +725,7 @@ impl<'g> Runtime<'g> {
     pub(crate) fn set_byte(&mut self, at: usize, value: u8) {
         if (0xb1..0xc1).contains(&at) && self.persistent_is_current() && !self.display_owned() {
             self.game.set_scroll_byte(at, value);
-            self.inputs = encoding::inputs(&|lane| self.game.ram().read_byte(lane));
+            self.refresh_scroll_inputs();
             return;
         }
         if !self.persistent_is_current() {
@@ -760,6 +760,15 @@ impl<'g> Runtime<'g> {
                 .phase = sm_game::scene::state::DisplayPhase::Failed;
         }
         self.refresh_written_inputs();
+    }
+    /// The scroll stores' refresh while the Session is current: the external
+    /// observations as RAM holds them, except the drop origin, which the
+    /// Session owns and RAM holds only once it is published.
+    pub(crate) fn refresh_scroll_inputs(&mut self) {
+        self.inputs = encoding::inputs(&|lane| self.game.ram().read_byte(lane));
+        let origin = self.session().enemy_projectiles.drop_origin;
+        self.inputs.drop_origin_x = origin.x;
+        self.inputs.drop_origin_y = origin.y;
     }
     pub(crate) fn refresh_written_inputs(&mut self) {
         self.inputs =

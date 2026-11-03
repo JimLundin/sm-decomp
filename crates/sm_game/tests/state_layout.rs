@@ -794,6 +794,12 @@ fn enemy_projectile_lanes() -> Vec<Lane> {
         (ram::HEALTH_DROP_BIAS_FLAG, 0, |s, _| {
             &mut s.enemy_projectiles.drop_bias
         }),
+        (ram::SPECIAL_DEATH_ITEM_DROP_X_ORIGIN_POS, 0, |s, _| {
+            &mut s.enemy_projectiles.drop_origin.x
+        }),
+        (ram::SPECIAL_DEATH_ITEM_DROP_Y_ORIGIN_POS, 0, |s, _| {
+            &mut s.enemy_projectiles.drop_origin.y
+        }),
     ];
     lanes.extend(array(0x1997, 2, SLOTS, |s, i| {
         &mut s.enemy_projectiles.slots[i].definition

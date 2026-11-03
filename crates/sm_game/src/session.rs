@@ -798,6 +798,9 @@ pub struct EnemyProjectiles {
     pub selected: u16,
     pub spawn: SpawnContext,
     pub drop_bias: u16,
+    /// $7E:F434/$F436: where a special death scatters its drops from, as the
+    /// Metroid, Mini Kraid and the space pirates mark it before dying.
+    pub drop_origin: Point,
 }
 
 /// The game options the session reads.

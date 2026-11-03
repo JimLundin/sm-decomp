@@ -11,7 +11,6 @@ use crate::actors::slot_view::{SlotState, extended_var, slot_view};
 use crate::constants::enemy_properties::K_ENEMY_PROPS_DISABLE_SAMUS_COLL;
 use crate::enemy_projectiles::drops::DropSource;
 use crate::enemy_script::EnemyScript;
-use crate::ram::word;
 use core::mem::offset_of;
 
 /// A lease on a game with Mini Kraid's effects: the shared boss effects,
@@ -256,8 +255,12 @@ pub fn spit_right<L: Lease + ?Sized>(game: &mut L) {
 /// Where a death's drops start.
 fn mark_drop_origin<L: Lease + ?Sized>(game: &mut L) {
     let k = game.current_enemy();
-    word!(game.SPECIAL_DEATH_ITEM_DROP_X_ORIGIN_POS = MiniKraid::of(game, k).actor().x.whole);
-    word!(game.SPECIAL_DEATH_ITEM_DROP_Y_ORIGIN_POS = MiniKraid::of(game, k).actor().y.whole);
+    let x = MiniKraid::of(game, k).actor().x.whole;
+    game.session_mut().enemy_projectiles.drop_origin.x = x;
+    game.words_stored();
+    let y = MiniKraid::of(game, k).actor().y.whole;
+    game.session_mut().enemy_projectiles.drop_origin.y = y;
+    game.words_stored();
 }
 
 /// Touched by Samus. Was `FakeKraid_Touch`.
