@@ -1017,6 +1017,15 @@ fn crocomire_melt_lanes() -> Vec<Lane> {
 }
 
 #[test]
+fn room_scrolls_round_trip_every_word() {
+    check_owner("room scrolls", &room_scroll_lanes());
+}
+
+fn room_scroll_lanes() -> Vec<Lane> {
+    array(0xcd20, 2, 25, |s, index| &mut s.room.scrolls[index]).collect()
+}
+
+#[test]
 fn work_robot_palette_round_trips_every_word() {
     check_owner("Work Robot palette", &work_robot_palette_lanes());
 }
@@ -1243,6 +1252,7 @@ fn all_owner_lanes() -> Vec<(&'static str, Vec<Lane>)> {
         ("actor speed scratch", actor_scratch_lanes()),
         ("Crocomire melt", crocomire_melt_lanes()),
         ("Work Robot palette", work_robot_palette_lanes()),
+        ("room scrolls", room_scroll_lanes()),
         ("boss RAM", boss_ram_lanes()),
         ("message box", message_box_lanes()),
         ("BG2 staging", bg2_staging_lanes()),

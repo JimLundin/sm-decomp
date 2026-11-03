@@ -536,9 +536,22 @@ pub struct Room {
     /// The room main code's variables at $07E1..$07E9, as the little-endian
     /// words of the byte image. Rooms give them their own meanings.
     pub main_variables: [u16; 4],
+    /// The room's scroll cells ($7E:CD20..$7E:CD51), a colour byte per screen
+    /// (0 red, 1 blue, 2 green), as the little-endian words of the byte image.
+    pub scrolls: [u16; 25],
     pub camera: crate::camera::Camera,
 }
 impl Room {
+    /// Store `bytes` to scroll cells `cell` and `cell + 1`, first byte first, as
+    /// the original's word store at the first cell.
+    pub fn set_scroll_pair(&mut self, cell: usize, bytes: [u8; 2]) {
+        for (offset, byte) in bytes.into_iter().enumerate() {
+            let at = cell + offset;
+            let mut word = self.scrolls[at / 2].to_le_bytes();
+            word[at % 2] = byte;
+            self.scrolls[at / 2] = u16::from_le_bytes(word);
+        }
+    }
     /// Main-code variable `index` as the original's native-order load reads it.
     pub fn main_native(&self, index: usize) -> u16 {
         u16::from_ne_bytes(self.main_variables[index].to_le_bytes())
@@ -619,6 +632,7 @@ impl Room {
             slope_behavior: 0,
             ceres_status: 0,
             main_variables: [0; 4],
+            scrolls: [0; 25],
             camera: Default::default(),
         }
     }
