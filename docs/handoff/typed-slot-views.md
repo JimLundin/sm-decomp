@@ -2,7 +2,7 @@
 
 Branch `collab/typed-all` (PR #155) converts the address-API layer to typed Session
 fields. Engine address APIs (`ram_ratchet.py`, ROM record reads excluded) fall from
-5805 on main `0115740f5` to 95.
+5805 on main `0115740f5` to 91.
 
 ## Pattern
 
@@ -46,12 +46,12 @@ Raw RAM accesses to the scroll cells still run on Game:
 - `hdma_program.rs:297-298`
 - the boot WRAM clear
 
-## Remaining 95 sites, by blocker
+## Remaining 91 sites, by blocker
 
 1. **New Session owners, plus all of their writers.**
    - (Drop origin $F434/$F436 is now owned by `enemy_projectiles.drop_origin` (SMESHOT 3). The $3000..$6FFF tile buffer is owned by the presentation workspace; Kraid's `load_bg2` reads it typed.)
 2. **Legacy presentation.**
-   - OAM: `atmosphere`, `player_drawing`.
+   - (OAM $0370..$0591 is now owned by `LegacyPresentation::objects`, decoded and encoded at every lease boundary; cannon and atmosphere tiles store through it.)
    - $57/$69/$5B6, $71D..$722.
    - Phantoon's `set_mosaic`/`enable_bg2`/`frame`.
    - Owning the presentation on the normal replay path is an architecture step.

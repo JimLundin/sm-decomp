@@ -55,9 +55,9 @@ BASELINE = {
     # converting counted sites into them is not a retirement, and the address
     # decoding behind them slows every replay. The lexical unresolved-method and
     # legacy-engine measures are reported only.
-    "engine_ram_address_sites": 95,
+    "engine_ram_address_sites": 91,
     "engine_raw_ram_calls": 115,
-    "engine_unresolved_ram_methods": 1030,
+    "engine_unresolved_ram_methods": 1027,
     "legacy_engine_ram_sites": 529,
     # Original-game overflow paths (LEGACY(original-overflow)), reported only.
     "engine_legacy_overflow_sites": 49,
