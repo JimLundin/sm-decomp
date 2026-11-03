@@ -69,9 +69,9 @@ BASELINE = {
     # image; Session entries are leases opened from Game-hosted code. All three
     # reach zero when the Session drives the tick. Foreign calls and Game hosts
     # may not rise; lease moves can add entries, so those are reported.
-    "foreign_calls": 495,
+    "foreign_calls": 423,
     "game_host_impls": 98,  # SpriteHost split into MapHost + SpriteWords (same coupling)
-    "session_entries": 117,
+    "session_entries": 116,
 }
 ADVISORY = {"production_lines", "engine_unresolved_ram_methods", "legacy_engine_ram_sites",
             "engine_legacy_overflow_sites", "session_entries"}
