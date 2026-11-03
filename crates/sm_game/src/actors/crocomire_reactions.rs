@@ -22,7 +22,7 @@ use crate::display::transfer::{Source, TilemapUpload, queue_tilemap};
 use crate::enemy_script::EnemyScript;
 use crate::menus::prelude::battle;
 use crate::menus::prelude::{display_scroll, do_until, owned};
-use crate::ram::{checked_word, word, words as ram};
+use crate::ram::{checked_word, word};
 use sm_data::crocomire::{
     BRIDGE_DEBRIS_ADDRESS, FLESH_TILEMAP_ADDRESS, MELT_TILES, SCROLL_SPRITEMAP_ADDRESS,
     SKELETON_TILEMAP_ADDRESS, SPIKE_WALL_DESTINATION_ADDRESS, SPIKE_WALL_TILE_ADDRESS,
@@ -105,10 +105,11 @@ const CLEAR_INVISIBLE_WALL: u16 = 0xb753;
 const CREATE_INVISIBLE_WALL: u16 = 0xb757;
 /// $7E:9016: the death sequence's crumbling bridge index.
 const CRUMBLING_BRIDGE_INDEX: usize = 0x9016;
-/// $7E:069C-$7E:071D: the melting Y offsets, one per pixel column, and
-/// $7E:068C: the pixels to erase per column a frame.
+/// $7E:069C-$7E:071D: the melting Y offsets, one per pixel column.
 const MELTING_Y_OFFSETS: usize = 0x69c;
-const PIXELS_TO_ERASE: usize = 0x68c;
+/// $7E:068C: the pixels to erase per column a frame, the low byte of the
+/// melt's third word.
+const PIXELS_TO_ERASE: usize = 2;
 /// $7E:CAE0: Crocomire's BG2 Y scroll indirect HDMA table.
 const SCROLL_HDMA_TABLE: usize = 0xcae0;
 /// The scroll bytes at $7E:CD20, written a pair at a time: 0 is red, 1 blue.
@@ -660,7 +661,11 @@ fn load_melt_tilemap<L: Lease + ?Sized>(table: u32, game: &mut L) {
 /// Crocomire main AI - death sequence index 10h - hop 3 - load melting tilemap ($A4:9341). Was
 /// `prepare_flesh_tilemap`.
 pub fn hop_3_load_melting_tilemap<L: Lease + ?Sized>(game: &mut L) {
-    game.set_slot_byte(PIXELS_TO_ERASE, 48);
+    store_byte(
+        &mut game.session_mut().actors.crocomire_melt.words[PIXELS_TO_ERASE],
+        0,
+        48,
+    );
     battle!(game.MeltEraseTarget = 48);
     let e = game.current_enemy();
     next_death_step(e, game);
@@ -700,7 +705,11 @@ pub fn hop_6_load_melting_tilemap<L: Lease + ?Sized>(game: &mut L) {
     let e = game.current_enemy();
     next_death_step(e, game);
     CrocomireEdit::of(game, e).actor().instruction_delay = 1;
-    game.set_slot_byte(PIXELS_TO_ERASE, 48);
+    store_byte(
+        &mut game.session_mut().actors.crocomire_melt.words[PIXELS_TO_ERASE],
+        0,
+        48,
+    );
     battle!(game.MeltEraseTarget = 48);
     CrocomireEdit::of(game, e).actor().instruction = ADDR_K_CROCOMIRE_ILIST_BF7E as u16;
     bg2_staging::fill(game, 0..1024, 824);
@@ -1134,7 +1143,8 @@ fn erase_melt_columns<L: Lease + ?Sized>(game: &mut L, bug: u8) -> u16 {
     );
     let offset = x_offset(game, column);
     let height_at = MELTING_Y_OFFSETS + usize::from(offset);
-    let mut pixels = u16::from(game.slot_byte(PIXELS_TO_ERASE));
+    let mut pixels =
+        u16::from(game.session().actors.crocomire_melt.words[PIXELS_TO_ERASE].to_le_bytes()[0]);
     loop {
         // The Y offset is read as a word: the next column's low two bits reach
         // bit 14 of the tile offset.
@@ -1277,24 +1287,17 @@ pub fn hop_6_sinking<L: Lease + ?Sized>(game: &mut L) {
     }
 }
 
+/// The crumbling bridge index ($7E:9016): slot 0's word 11 of the fourth
+/// extended block.
+fn crumbling_bridge_index<L: Lease + ?Sized>(game: &L) -> u16 {
+    game.session().actors.extended.blocks[3][0xb]
+}
+
 /// Crocomire main AI - death sequence index 2 - falling ($A4:9136). Was `emit_melt_debris`.
 pub fn falling<L: Lease + ?Sized>(game: &mut L) {
-    let v0: u16 = u16::from_ne_bytes([
-        game.slot_byte(CRUMBLING_BRIDGE_INDEX),
-        game.slot_byte(CRUMBLING_BRIDGE_INDEX + 1),
-    ]);
-    if (u16::from_ne_bytes([
-        game.slot_byte(CRUMBLING_BRIDGE_INDEX),
-        game.slot_byte(CRUMBLING_BRIDGE_INDEX + 1),
-    ]) as i32
-        - 22i32)
-        & 0x8000
-        != 0
-    {
-        let v1: u16 = u16::from_ne_bytes([
-            game.slot_byte(CRUMBLING_BRIDGE_INDEX),
-            game.slot_byte(CRUMBLING_BRIDGE_INDEX + 1),
-        ]);
+    let v0: u16 = crumbling_bridge_index(game);
+    if (crumbling_bridge_index(game) as i32 - 22i32) & 0x8000 != 0 {
+        let v1: u16 = crumbling_bridge_index(game);
         checked_word!(game, CRUMBLING_BRIDGE_INDEX; += 2);
         let parameter = game
             .foreign(|game| game.crocomire_table_word(BRIDGE_DEBRIS_ADDRESS, (v0 >> 1) as isize));
@@ -1702,8 +1705,9 @@ pub fn instruction<L: Lease + ?Sized>(
         QUEUE_BIG_EXPLOSION => game.queue_sound(1, BIG_EXPLOSION_SOUND, 6),
         QUEUE_SKELETON_COLLAPSES => game.queue_sound(1, SKELETON_COLLAPSES_SOUND, 6),
         SHAKE_SCREEN => {
-            game.set_slot_word(ram::EARTHQUAKE_TYPE, 4);
-            game.set_slot_word(ram::EARTHQUAKE_TIMER, 5);
+            let feedback = &mut game.session_mut().feedback;
+            feedback.earthquake_kind = 4;
+            feedback.earthquake_timer = 5;
             game.queue_sound(1, SHAKE_SOUND, 6);
         }
         MOVE_LEFT_4PX | MOVE_LEFT_4PX_AND_SPAWN_DUST | MOVE_LEFT_4PX_AND_SPAWN_DUST_2 => {
