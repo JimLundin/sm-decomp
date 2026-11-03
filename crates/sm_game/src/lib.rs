@@ -59,6 +59,7 @@ pub mod item_pickups;
 pub mod launch_motion;
 pub mod layer_blending;
 pub mod lease;
+pub mod legacy_overflow;
 pub mod liquid;
 pub mod liquid_effects;
 pub mod liquid_surface;

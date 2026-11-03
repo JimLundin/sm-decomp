@@ -1,6 +1,7 @@
 //! HDMA window tables for the X-ray beam (Mother Brain's rainbow beam is in
 //! `actors::mother_brain_rainbow`, which shares the edge stepper).
 use crate::actors::session_slots::SlotAccess;
+use crate::legacy_overflow;
 use crate::menus::host::Host;
 use crate::menus::prelude::do_until;
 use crate::runtime_access::SessionRam;
@@ -14,6 +15,12 @@ const CLOSED: u16 = 255;
 
 /// The beam window's host: tables through the RAM projection and the
 /// cartridge reads.
+///
+/// LEGACY(original-overflow): the table stores below go through
+/// `legacy_overflow` because the ROM's row offsets leave the 230-row table:
+/// it wraps the 16-bit index before adding the table base (row zero's anchor
+/// and reopened rows reach base + FFFEh, in the following WRAM bank), and the
+/// cleanup passes run on signed offsets past either end.
 pub trait BeamHost: Host + SessionRam + SlotAccess {}
 impl<T: Host + SessionRam + SlotAccess + ?Sized> BeamHost for T {}
 
@@ -150,6 +157,7 @@ fn store_onscreen_positive_rows(
     let mut crossing = None;
     // The ROM uses the N flag after CPY #$01CC, including wrapped Y.
     let continues = |index: u16| index.wrapping_sub(TABLE_BYTES) & 0x8000 != 0;
+    // LEGACY(original-overflow): wrapped row offsets; see `BeamHost`.
     let at = |index: u16| base + usize::from(index);
     let mut index = start;
     do_until! { !continues(index);
@@ -159,13 +167,13 @@ fn store_onscreen_positive_rows(
             carry_row = index;
             crossing = Some(index);
             do_until! { !continues(index);
-                ram.write_slice_le(at(index), 0x00ff);
+                legacy_overflow::ram_write_slice_le(ram, at(index), 0x00ff);
                 index = index.wrapping_add(2);
             }
             break;
         }
         // The high-edge pass overwrites this word's high byte.
-        ram.write_slice_le(at(index), low_edge >> 8);
+        legacy_overflow::ram_write_slice_le(ram, at(index), low_edge >> 8);
         index = index.wrapping_add(2);
     }
     index = start.wrapping_add(1);
@@ -174,12 +182,12 @@ fn store_onscreen_positive_rows(
         high_edge = value;
         if carry {
             do_until! { !continues(index);
-                ram.set_byte(at(index), 0xff);
+                legacy_overflow::set_ram_byte(ram, at(index), 0xff);
                 index = index.wrapping_add(2);
             }
             break;
         }
-        ram.set_byte(at(index), (high_edge >> 8) as u8);
+        legacy_overflow::set_ram_byte(ram, at(index), (high_edge >> 8) as u8);
         index = index.wrapping_add(2);
         if !continues(index) {
             // The ROM reaches cleanup only when this edge carries.
@@ -189,7 +197,7 @@ fn store_onscreen_positive_rows(
     if carry_row != 0 {
         index = carry_row.wrapping_add(2);
         while continues(index) {
-            ram.write_slice_le(at(index), 0x00ff);
+            legacy_overflow::ram_write_slice_le(ram, at(index), 0x00ff);
             index = index.wrapping_add(2);
         }
     }
@@ -208,11 +216,12 @@ fn store_offscreen_positive_rows(ram: &mut (impl SessionRam + ?Sized), rows: Pos
     } = rows;
     // The ROM wraps the 16-bit index before adding the table base.
     // At start zero, cleanup can therefore reach the following WRAM bank.
+    // LEGACY(original-overflow): wrapped row offsets; see `BeamHost`.
     fn store(ram: &mut (impl SessionRam + ?Sized), at: usize, value: u16, high: bool) {
         if high {
-            ram.set_byte(at, value as u8);
+            legacy_overflow::set_ram_byte(ram, at, value as u8);
         } else {
-            ram.write_slice_le(at, value);
+            legacy_overflow::ram_write_slice_le(ram, at, value);
         }
     }
     /// Rasterize one edge; returns the row index the cleanup passes use.
@@ -267,12 +276,12 @@ fn store_offscreen_positive_rows(ram: &mut (impl SessionRam + ?Sized), rows: Pos
     let at = |index: i32| base + usize::from(index as u16);
     let mut index = low;
     do_until! { index < high;
-        ram.set_byte(at(index), 0);
+        legacy_overflow::set_ram_byte(ram, at(index), 0);
         index -= 2;
     }
     let mut index = high - 1;
     do_until! { index < 0;
-        ram.write_slice_le(at(index), CLOSED);
+        legacy_overflow::ram_write_slice_le(ram, at(index), CLOSED);
         index -= 2;
     }
 }
@@ -285,17 +294,18 @@ fn fill_onscreen_positive_table(
     rows: PositiveRows,
 ) -> Option<u16> {
     // Wrap the byte offset before adding the table base, including at row zero.
+    // LEGACY(original-overflow): wrapped row offsets; see `BeamHost`.
     let anchor = rows.base + usize::from(rows.start.wrapping_sub(2));
-    ram.write_slice(anchor, &[(rows.origin >> 8) as u8; 2]);
+    legacy_overflow::ram_write_slice(ram, anchor, &[(rows.origin >> 8) as u8; 2]);
     let crossing = store_onscreen_positive_rows(ram, rows);
     let mut index = rows.start.wrapping_sub(4);
     loop {
         // The ROM checks the first word even when the initial index is negative.
         let address = rows.base + usize::from(index);
-        if SessionRam::word(ram, address) == 0x00ff {
+        if legacy_overflow::ram_word(ram, address) == 0x00ff {
             return crossing;
         }
-        ram.write_slice_le(address, 0x00ff);
+        legacy_overflow::ram_write_slice_le(ram, address, 0x00ff);
         index = index.wrapping_sub(2);
         if index & 0x8000 != 0 {
             return crossing;
@@ -379,11 +389,12 @@ pub fn calculate_xray_window<H: BeamHost + ?Sized>(
     let up_start = position - if off_screen { 2 } else { 4 };
     let cleared = (!off_screen).then_some(0);
     // Generic rows retain signed offsets; positive-down helpers wrap their u16 offsets.
+    // LEGACY(original-overflow): offsets past either end; see `BeamHost`.
     let mut write = |offset: i32, value: u16| {
         let address = table
             .checked_add_signed(offset as isize)
             .expect("X-ray table offset");
-        game.write_slice(address, &value.to_ne_bytes());
+        legacy_overflow::ram_write_slice(game, address, &value.to_ne_bytes());
     };
     if matches!(direction, Horizontal) {
         let anchor = y.wrapping_sub(1).wrapping_mul(2);

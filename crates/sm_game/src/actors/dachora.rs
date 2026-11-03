@@ -5,6 +5,7 @@ use crate::actors::boss_lease::BossState;
 use crate::actors::slot_view::{SlotRef, SlotState};
 use crate::cartridge::native_record;
 use crate::cartridge::rom_table_word;
+use crate::legacy_overflow;
 
 /// $A7:F55F: the palette RAM address of each sprite palette, $7E:C100 + 20h * palette.
 const PALETTE_DESTINATIONS: u32 = 0xa7_f55f;
@@ -39,9 +40,12 @@ pub fn load_palette(
                 interaction::set_at(game, Array::PaletteBuffer, offset / 2 + word, colour);
             }
         }
+        // LEGACY(original-overflow): a palette index past the 8-entry
+        // destination table ($A7:F55F) reads a destination from the code
+        // after it, which the byte stores reach as the original's do.
         _ => {
             for i in 0..PALETTE_BYTES {
-                game.set_slot_byte(destination + i, source.byte(i));
+                legacy_overflow::set_slot_byte(game, destination + i, source.byte(i));
             }
         }
     }

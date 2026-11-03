@@ -4,6 +4,7 @@
 use crate::actors::access::{AccessMode::Native, ActorKey as Key};
 use crate::actors::host::ActorLease;
 use crate::actors::slot_view::{SlotState, slot_view};
+use crate::legacy_overflow;
 
 slot_view! {
     /// Covern's extended words: its hover centre and velocity (whole over sub
@@ -86,6 +87,13 @@ const MATERIALISED_KEEP: u16 = 0xfaff;
 /// enemy's index added, as the original's buggy reads did.
 const SAMUS_X_INDEXED: usize = 0xaf6;
 const SAMUS_Y_INDEXED: usize = 0xafa;
+
+/// LEGACY(original-overflow): Samus's position word at `base` + the enemy
+/// index: `LDA $0AF6,x`/`$0AFA,x` with X the enemy index read past Samus's
+/// position into the RAM after it (any word up to $7E:12BA).
+fn samus_indexed(runtime: &impl Lease, base: usize, index: u16) -> u16 {
+    legacy_overflow::lease_native_word(runtime, base + usize::from(index))
+}
 
 fn selected(runtime: &impl Lease) -> Key {
     Key::from_legacy(runtime.session().actors.controls.selected)
@@ -248,8 +256,10 @@ fn fade_from_white(runtime: &mut impl Lease) {
         *edit.zone_right() = x;
         *edit.previous_y_direction() = Y_DIRECTION_STEP;
     }
-    let y = runtime.lease_native_word(
-        SAMUS_Y_INDEXED + usize::from(runtime.session().actors.controls.selected),
+    let y = samus_indexed(
+        runtime,
+        SAMUS_Y_INDEXED,
+        runtime.session().actors.controls.selected,
     );
     let mut edit = CovernEdit::of(runtime, covern);
     *edit.previous_samus_y() = y;
@@ -301,8 +311,7 @@ fn ready_to_materialise(runtime: &mut impl Lease, key: Key) -> bool {
             .wrapping_sub(Covern::of(runtime, covern).zone_right() as i16)
             >= 0
         || {
-            let y =
-                runtime.lease_native_word(SAMUS_Y_INDEXED + usize::from(key.byte_index())) as i16;
+            let y = samus_indexed(runtime, SAMUS_Y_INDEXED, key.byte_index()) as i16;
             let zone = Covern::of(runtime, covern);
             y.wrapping_sub(zone.zone_top() as i16) < 0
                 || y.wrapping_sub(zone.zone_bottom() as i16) >= 0
@@ -377,13 +386,14 @@ fn awake(runtime: &mut impl Lease, key: Key) {
                     >> 1,
             )
         };
-        let x = OFFSETS[index].wrapping_add(
-            runtime.lease_native_word(SAMUS_X_INDEXED + usize::from(key.byte_index())),
-        );
+        let x =
+            OFFSETS[index].wrapping_add(samus_indexed(runtime, SAMUS_X_INDEXED, key.byte_index()));
         runtime.edit_actor(key, Native, |actor| actor.x.whole = x);
-        let y = OFFSETS[index + 1].wrapping_add(
-            runtime.lease_native_word(SAMUS_Y_INDEXED + usize::from(key.byte_index())),
-        );
+        let y = OFFSETS[index + 1].wrapping_add(samus_indexed(
+            runtime,
+            SAMUS_Y_INDEXED,
+            key.byte_index(),
+        ));
         runtime.edit_actor(key, Native, |actor| actor.y.whole = y);
     } else {
         for vertical in [false, true] {

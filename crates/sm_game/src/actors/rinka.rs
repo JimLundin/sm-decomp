@@ -4,11 +4,12 @@ use crate::actors::access::{AccessMode::Native, ActorAccess as _, ActorKey as Ke
 use crate::actors::api::{DeathHandling, DeathKind, ShotHandling, angle_from_delta};
 use crate::actors::combat;
 use crate::actors::host::{ActorLease, ActorRuntime as _, BossEffects as _, LeaseActors};
-use crate::actors::slot_view::{SlotState, slot_view};
+use crate::actors::slot_view::{SlotMut, SlotRef, SlotState, slot_view};
 use crate::actors::{population, scheduling};
 use crate::enemy_projectiles::shared_pre::{x_velocity_at_angle, y_velocity_at_angle};
 use crate::enemy_script::EnemyScript;
 use crate::geometry::Position;
+use crate::legacy_overflow;
 use crate::player_projectiles::content::table;
 use crate::session_access::SessionAccess as _;
 
@@ -56,8 +57,34 @@ const AVAILABILITY: usize = 0x87fe;
 fn spawn_word(runtime: &impl Lease, index: usize) -> u16 {
     table(runtime, SPAWNS, index as isize)
 }
+/// The spawn point availability word for availability index `id`
+/// ($7E:87FE + `id`): the spawn table's indexes 2..16h are words $7E:8800..$8814,
+/// slot 0's extended words `var_40`..`var_4a`.
+fn availability_var(id: u16) -> Option<usize> {
+    (id.is_multiple_of(2) && (2..=0x16).contains(&id)).then(|| 0x40 + usize::from(id - 2) / 2)
+}
 fn occupied(runtime: &impl Lease, id: u16) -> bool {
-    runtime.lease_native_word(AVAILABILITY + usize::from(id)) & 1 != 0
+    let word = match availability_var(id) {
+        // The native-order word the RAM bytes hold.
+        Some(var) => u16::from_ne_bytes(SlotRef::of(runtime, SHARED).extended(var).to_le_bytes()),
+        // LEGACY(original-overflow): an index outside the spawn table's (a
+        // rinka's stale availability index) reads $7E:87FE + index anyway.
+        None => legacy_overflow::lease_native_word(runtime, AVAILABILITY + usize::from(id)),
+    };
+    word & 1 != 0
+}
+/// Store the availability word for index `id`, then refresh the lease's
+/// observations, as the slice store did.
+fn set_availability(runtime: &mut impl Lease, id: u16, value: u16) {
+    match availability_var(id) {
+        Some(var) => {
+            *SlotMut::of(runtime, SHARED).extended(var) = u16::from_le_bytes(value.to_ne_bytes());
+            runtime.record_stored();
+        }
+        // LEGACY(original-overflow): an index outside the spawn table's (a
+        // rinka's stale availability index) stores to $7E:87FE + index anyway.
+        None => legacy_overflow::lease_write_native(runtime, AVAILABILITY + usize::from(id), value),
+    }
 }
 fn mother_brains(runtime: &impl Lease, key: Key) -> bool {
     runtime.resolve_actor(key, Native).parameters[0] != 0
@@ -94,7 +121,7 @@ fn select_spawn(runtime: &mut impl Lease, index: u16) {
         let id = saved_spawn(runtime, index);
         if !occupied(runtime, id) {
             runtime.edit_actor(key, Native, |actor| actor.variables[3] = id);
-            runtime.write_slice_native(AVAILABILITY + usize::from(id), u16::MAX);
+            set_availability(runtime, id, u16::MAX);
             return;
         }
     }
@@ -113,11 +140,11 @@ fn select_spawn(runtime: &mut impl Lease, index: u16) {
             let id = spawn_word(runtime, row + 2);
             // The visible choice publishes the availability before the actor's index.
             if visible {
-                runtime.write_slice_native(AVAILABILITY + usize::from(id), u16::MAX);
+                set_availability(runtime, id, u16::MAX);
             }
             runtime.edit_actor(key, Native, |actor| actor.variables[3] = id);
             if !visible {
-                runtime.write_slice_native(AVAILABILITY + usize::from(id), u16::MAX);
+                set_availability(runtime, id, u16::MAX);
             }
             return;
         }
@@ -165,7 +192,7 @@ fn release_spawn(runtime: &mut impl Lease, key: Key) {
     if mother_brains(runtime, key) {
         let id = runtime.resolve_actor(key, Native).variables[3];
         if id != 0 {
-            runtime.write_slice_native(AVAILABILITY + usize::from(id), 0);
+            set_availability(runtime, id, 0);
             runtime.edit_actor(key, Native, |actor| actor.variables[3] = 0);
         }
     }

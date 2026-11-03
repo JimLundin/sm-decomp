@@ -3,7 +3,9 @@
 use crate::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 use crate::actors::geruta::set_instruction_list;
 use crate::actors::host::{ActorLease, BossEffects, LeaseActors};
-use crate::actors::slot_view::slot_view;
+use crate::actors::slot_view::{SlotRef, slot_view};
+use crate::actors::state::Actor;
+use crate::legacy_overflow;
 use crate::player_projectiles::content::table;
 use crate::session_access::SessionAccess as _;
 
@@ -18,6 +20,8 @@ slot_view! {
 // Instruction lists rising and flipping / falling; functions.
 const RISING_LIST: u16 = 0xbe3c;
 const JUMP: u16 = 0xbf1a;
+/// The bytes of one enemy slot.
+const SLOT: u16 = 0x40;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum Flight {
@@ -49,22 +53,35 @@ pub fn set_animation_finished<H: LeaseActors>(game: &mut H) {
     *SqueeptEdit::of(&mut runtime, k).animation_finished() = 1;
 }
 
+/// Word `field` (at record byte `offset`) of the flame `k`'s main part, the
+/// slot before it.
+fn main_part(runtime: &impl ActorLease, k: u16, field: fn(&Actor) -> u16, offset: usize) -> u16 {
+    match k.checked_sub(SLOT) {
+        Some(main) => field(SlotRef::of(runtime, main).actor),
+        // LEGACY(original-overflow): a flame in slot 0 reads the 40h bytes
+        // before the enemy table ($7E:0F38 + offset), as the original's
+        // `LDA $0F38+offset,x` does.
+        None => legacy_overflow::lease_word(runtime, 0xf78 + offset + usize::from(k) - 0x40),
+    }
+}
+
 /// Squeept function - flame ($A2:BEDC): shown while the main part's Y velocity is negative.
 pub fn flame<H: LeaseActors>(k: u16, game: &mut H) {
     let mut runtime = game.lease();
     let key = Key::from_legacy(k);
-    let main = 0xe84 + (usize::from(k) >> 1) * 2; // + C8h health, DAh frozen, BAh Y
-    if runtime.word(main + 200) == 0 {
+    // The main part's health ($0F8C), frozen timer ($0F9E), Y velocity ($0FAC)
+    // and Y position ($0F7E).
+    if main_part(&runtime, k, |main| main.health, 0x14) == 0 {
         runtime.edit_actor(key, Native, |actor| actor.properties |= 0x200);
         return;
     }
-    let frozen = runtime.word(main + 218);
+    let frozen = main_part(&runtime, k, |main| main.frozen, 0x26);
     runtime.edit_actor(key, Native, |actor| actor.frozen = frozen);
-    if frozen != 0 || (runtime.word(0xf68 + (usize::from(k) >> 1) * 2 + 4) & 0x8000) == 0 {
+    if frozen != 0 || (main_part(&runtime, k, |main| main.variables[2], 0x34) & 0x8000) == 0 {
         runtime.edit_actor(key, Native, |actor| actor.properties |= 0x100);
     } else {
         runtime.edit_actor(key, Native, |actor| actor.properties &= !0x100);
-        let y = runtime.word(main + 186);
+        let y = main_part(&runtime, k, |main| main.y.whole, 0x06);
         runtime.edit_actor(key, Native, |actor| actor.y.whole = y);
     }
 }

@@ -10,6 +10,7 @@ use crate::actors::host::{ActorLease, LeaseActors};
 use crate::actors::slot_view::{SlotState, slot_view};
 use crate::enemy_script::EnemyScript;
 use crate::geometry::Point;
+use crate::legacy_overflow;
 use crate::player_projectiles::content::{self, table};
 use crate::ram::word_arrays;
 use crate::session_access::SessionAccess as _;
@@ -260,7 +261,13 @@ fn slope_x_velocity(runtime: &mut impl ActorLease) -> i32 {
     };
     api::select_block_at(runtime, point);
     let index = usize::from(runtime.session().room.collision_cursor);
-    if runtime.word(word_arrays::LEVEL_DATA + 2 * index) & BLOCK_TYPE == SLOPE_BLOCK
+    let block = match runtime.session().room.terrain.cells().get(index) {
+        Some(cell) => cell.level,
+        // LEGACY(original-overflow): a block index past the 3200h level-data
+        // cells reads $7F:0002 + 2 * index anyway.
+        None => legacy_overflow::lease_word(runtime, word_arrays::LEVEL_DATA + 2 * index),
+    };
+    if block & BLOCK_TYPE == SLOPE_BLOCK
         && runtime.lease_byte(BTS + usize::from(runtime.session().room.collision_cursor))
             & SLOPE_BTS_BITS
             >= FIRST_STEEP_SLOPE

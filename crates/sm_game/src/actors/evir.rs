@@ -7,7 +7,8 @@ use crate::actors::host::{ActorLease, BossEffects as _, LeaseActors};
 use crate::actors::layouts::EnemyLayout40;
 use crate::actors::slot_view::{SlotState, slot_view};
 use crate::enemy_script::EnemyScript;
-use crate::session_slot;
+use crate::legacy_overflow;
+use core::mem::offset_of;
 use sm_data::enemy_speeds::SpeedTable::Linear;
 
 /// A lease on a game whose slots are the Session's typed storage.
@@ -134,8 +135,10 @@ pub fn initialize(runtime: &mut impl Lease) {
         }
         // As in the source, the movement timer is half the second parameter's high byte of
         // the slot at the speed entry's byte offset, not this one's.
-        let timer =
-            session_slot!(byte runtime, EnemyLayout40[i32::from(2 * entry)].parameter_2[1]) >> 1;
+        // LEGACY(original-overflow): that offset (8 * entry, up to 7F8h) is any
+        // byte of the enemy table, not a slot's own parameter.
+        let at = 0x0f78 + offset_of!(EnemyLayout40, parameter_2) + 1 + usize::from(2 * entry);
+        let timer = legacy_overflow::slot_byte(runtime, at) >> 1;
         *EvirEdit::of(runtime, evir).movement_timer() = u16::from(timer);
     }
     let mut part = EvirEdit::of(runtime, evir);

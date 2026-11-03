@@ -4,6 +4,7 @@
 use crate::actors::draygon_host::Lease;
 use crate::actors::host::BossEffects as _;
 
+use crate::legacy_overflow;
 use crate::menus::prelude::{battle, owned};
 
 use crate::actors::draygon_flight::{body_bubble, fire_wall_turret, move_horizontally};
@@ -24,10 +25,13 @@ const ARMS_OUT_INDEX: u16 = 0x68;
 const RIGHT_END_X: i32 = 0x2a0;
 
 fn write_y_position<S: Lease>(index: u16, value: u16, game: &mut S) {
+    // LEGACY(original-overflow): the swoop table ($7E:9002, up to 800h bytes)
+    // runs past the shared boss block's end at $7E:97DC into the enemy
+    // projectile angles and beyond.
     let at = SWOOP_Y_POSITIONS + usize::from(index);
     let bytes = value.to_ne_bytes();
-    game.set_slot_byte(at, bytes[0]);
-    game.set_slot_byte(at + 1, bytes[1]);
+    legacy_overflow::set_slot_byte(game, at, bytes[0]);
+    legacy_overflow::set_slot_byte(game, at + 1, bytes[1]);
 }
 /// Calculate Draygon swoop Y positions ($A5:8817): fall with the swoop Y
 /// acceleration to the reset Y, then set the X speed that reaches Samus.
@@ -167,8 +171,14 @@ pub fn swoop<L: Lease>(right: bool, ascending: bool, game: &mut L) {
             actor.instruction_delay = 1;
         }
     }
+    // LEGACY(original-overflow): the swoop index (Draygon's function timer)
+    // reads the swoop table ($7E:9002) past $7E:97DC, and anywhere when the
+    // timer is not a swoop index.
     let at = SWOOP_Y_POSITIONS + usize::from(index);
-    let height = u16::from_ne_bytes([game.slot_byte(at), game.slot_byte(at + 1)]);
+    let height = u16::from_ne_bytes([
+        legacy_overflow::slot_byte(game, at),
+        legacy_overflow::slot_byte(game, at + 1),
+    ]);
     let k = game.current_enemy();
     DraygonEdit::of(game, k).actor().y.whole = height;
     // A broad selected slot can alias the body's index: reread after its Y store.

@@ -370,7 +370,20 @@ fn random_explosion<H: MainCodeHost>(mask: u16, on_tile: bool, h: &mut H) {
     if on_tile {
         let row = u16::from((y >> 4) as u8) * u16::from(h.session().room.width as u8);
         entry_x = row.wrapping_add(x >> 4).wrapping_mul(2);
-        if (h.native_word(0x10002 + usize::from(entry_x)) & 0x3ff) == 255 {
+        let block = match h
+            .session()
+            .room
+            .terrain
+            .cells()
+            .get(usize::from(entry_x / 2))
+        {
+            // The native-order word the RAM bytes hold.
+            Some(cell) => u16::from_ne_bytes(cell.level.to_le_bytes()),
+            // LEGACY(original-overflow): the random tile's block index past the
+            // 3200h level-data cells reads $7F:0002 + index anyway.
+            None => crate::legacy_overflow::ram_native_word(h, 0x10002 + usize::from(entry_x)),
+        };
+        if (block & 0x3ff) == 255 {
             return;
         }
     }

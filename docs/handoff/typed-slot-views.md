@@ -67,6 +67,7 @@ Raw RAM accesses to the scroll cells still run on Game:
    - Original reads and stores that run past their tables: Crocomire's `erase_melt_columns` (offsets reach $8xxx/$Cxxx/$10xxx) and melt column heights, covern $0AF6+k, rinka $87FE+id, draygon_sweep $9002+i past $97DC, the statues level block.
    - Level-data indexes that run past the cells.
    - A typed index would panic where RAM didn't, so these need a LEGACY entry or a bounded typed fallback.
+   - Done (2026-11-03): these go through `legacy_overflow` (`LEGACY(original-overflow)` in docs/LEGACY.md), typed where in range; cycle_report counts them as `legacy_overflow`.
 5. **Machinery.** `session_slots.rs`, `projection.rs` and `ram.rs`. Delete them once 1-4 are gone.
 6. **Counter noise.** `enemy_projectiles/content` (a `self` ROM record) and `menus/canvas` (a workspace `Point`) are not RAM.
 

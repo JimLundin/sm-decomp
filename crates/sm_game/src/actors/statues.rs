@@ -14,6 +14,7 @@ use crate::constants::enemy_properties::{
     K_ENEMY_PROPS_DISABLE_SAMUS_COLL, K_ENEMY_PROPS_PROCESSED_OFFSCREEN,
 };
 use crate::enemy_script::EnemyScript;
+use crate::legacy_overflow;
 use crate::ram::word;
 use crate::statue_tables;
 
@@ -268,8 +269,12 @@ pub fn spike_clearing_footstep<L: Lease + ?Sized>(
     game.select_block_at(x, y);
     // The block below the selected one.
     let index = word!(game.ROOM_WIDTH_IN_BLOCKS) as i32 + word!(game.CUR_BLOCK_INDEX) as i32;
-    let at = LEVEL_DATA + 2 * index as usize;
-    let block = game.slot_word(at);
+    let block = match game.session().room.terrain.cells().get(index as usize) {
+        Some(cell) => cell.level,
+        // LEGACY(original-overflow): block index + room width past the 3200h
+        // level-data cells ($7F:0002) reads the RAM after them.
+        None => legacy_overflow::slot_word(game, LEVEL_DATA + 2 * index as usize),
+    };
     if (block & 0xf000) == SPIKE_BLOCK {
         game.spawn_collision_plm(CLEAR_SPIKE_PLM);
         game.spawn_room_eproj(SPIKE_FOOTSTEPS, offset);

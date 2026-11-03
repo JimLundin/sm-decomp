@@ -132,7 +132,9 @@ pub mod bg2_staging {
         if index < WORDS {
             set(h, index, value);
         } else {
-            h.set_slot_word(0x2000 + 2 * index, value);
+            // LEGACY(original-overflow): Crocomire's melt cursor and tilemap
+            // index run past the 2048 staging words ($7E:2000..$2FFF).
+            crate::legacy_overflow::set_slot_word(h, 0x2000 + 2 * index, value);
         }
     }
     /// Store `value` to each word index in `words`, in its order.

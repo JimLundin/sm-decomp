@@ -21,6 +21,7 @@ use crate::constants::{
 use crate::display::preparation::Field;
 use crate::display::transfer::{Source, TilemapUpload, queue_tilemap};
 use crate::enemy_script::EnemyScript;
+use crate::legacy_overflow;
 use crate::menus::prelude::battle;
 use crate::menus::prelude::{display_scroll, do_until, owned};
 use crate::ram::{checked_word, word};
@@ -189,6 +190,8 @@ pub fn melt_down<L: Lease + ?Sized>(game: &mut L) {
     if (Crocomire::of(game, key).actor().y.whole as i32 - 280) & 0x8000 != 0 {
         let mut cursor = (8 * ((display_scroll!(game.Bg2V) as i32 + 288) & 0xfff8)) as u16;
         for _ in 0..32 {
+            // LEGACY(original-overflow): the cursor ($7E:2000 + scroll-derived
+            // offset) can pass the staging words; see `set_unbounded`.
             bg2_staging::set_unbounded(game, usize::from(cursor >> 1), 824);
             cursor = cursor.wrapping_add(2);
         }
@@ -650,6 +653,8 @@ fn load_melt_tilemap<L: Lease + ?Sized>(table: u32, game: &mut L) {
             break;
         }
         let tile = crate::cartridge::rom_table_word!(game, table, index as isize);
+        // LEGACY(original-overflow): the store runs until the ROM tilemap's
+        // terminator, unbounded by the staging words; see `set_unbounded`.
         bg2_staging::set_unbounded(
             game,
             usize::try_from(index + 32).expect("melt tile index"),
@@ -1155,20 +1160,26 @@ fn erase_melt_columns<L: Lease + ?Sized>(game: &mut L, bug: u8) -> u16 {
     let mut pixels =
         u16::from(game.session().actors.crocomire_melt.words[PIXELS_TO_ERASE].to_le_bytes()[0]);
     loop {
+        // LEGACY(original-overflow): the melting Y offsets ($7E:069C) indexed
+        // by an X offset read past its table, and the tile offset built from
+        // that height, reach any RAM ($8xxx, $Cxxx, $10xxx), not just the
+        // 49 column heights and the melting tiles buffer.
         // The Y offset is read as a word: the next column's low two bits reach
         // bit 14 of the tile offset.
-        let height = game.slot_word(height_at);
+        let height = legacy_overflow::slot_word(game, height_at);
         let tile = ((u16::from(offset) & 0xf8) << 2)
             .wrapping_add((height & 7) << 1)
             .wrapping_add((height & 0xfff8) << 6);
         for plane in [0, 1, 0x10, 0x11] {
             let at = MELTING_TILES_BUFFER + usize::from(tile) + plane;
-            game.set_slot_byte(at, game.slot_byte(at) & mask);
+            let pixels = legacy_overflow::slot_byte(game, at) & mask;
+            legacy_overflow::set_slot_byte(game, at, pixels);
         }
-        if game.slot_byte(height_at) == 48 {
+        if legacy_overflow::slot_byte(game, height_at) == 48 {
             break;
         }
-        game.set_slot_word(height_at, game.slot_word(height_at).wrapping_add(1));
+        let height = legacy_overflow::slot_word(game, height_at).wrapping_add(1);
+        legacy_overflow::set_slot_word(game, height_at, height);
         pixels = pixels.wrapping_sub(1);
         if pixels == 0 {
             break;
@@ -1195,7 +1206,9 @@ fn erase_melt_columns<L: Lease + ?Sized>(game: &mut L, bug: u8) -> u16 {
 fn data_bank_byte<L: Lease + ?Sized>(game: &L, address: u16, index: u16, bus: u8) -> u8 {
     let (offset, carry) = address.overflowing_add(index);
     match offset {
-        ..0x2000 => game.slot_byte(usize::from(offset)),
+        // LEGACY(original-overflow): the bus read reaches low RAM when the
+        // table index (with the XBA'd high byte) carries past the bank's ROM.
+        ..0x2000 => legacy_overflow::slot_byte(game, usize::from(offset)),
         0x8000.. => {
             let long = ((BANK + u32::from(carry)) << 16) | u32::from(offset);
             game.native_image()

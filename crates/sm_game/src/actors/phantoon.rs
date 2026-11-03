@@ -21,6 +21,7 @@ use crate::display::hdma_spawn::HdmaObjectDefinition;
 use crate::display::preparation::Field as DisplayField;
 use crate::display::transfer::{Source, TilemapUpload, queue_tilemap};
 use crate::enemy_projectiles::drops::DropSource;
+use crate::legacy_overflow;
 
 use crate::phantoon_tables::{self, Timer};
 
@@ -137,6 +138,9 @@ fields! {
     MouthSemiTransparency => 60, parameters[0];
     MouthShotRoll => 62, parameters[1];
 }
+/// The Session slot of part `slot`, when it is one. Phantoon's part offsets
+/// (an enemy index plus a part step) can name no slot: before slot 0, past
+/// slot 31 or between slots. (Big-endian hosts take the address path too.)
 fn part_index(slot: i32) -> Option<usize> {
     let slot = usize::try_from(slot).ok()?;
     (slot < 2048 && slot.is_multiple_of(64) && cfg!(target_endian = "little")).then_some(slot / 64)
@@ -147,19 +151,23 @@ fn part_address(slot: i32, field: Field) -> usize {
 pub(crate) fn part_get<S: State + ?Sized>(game: &S, slot: i32, field: Field) -> u16 {
     match part_index(slot) {
         Some(index) => field.get(&game.session().actors.slots[index]),
-        None => game.slot_word(part_address(slot, field)),
+        // LEGACY(original-overflow): an enemy index outside the slot table.
+        None => legacy_overflow::slot_word(game, part_address(slot, field)),
     }
 }
 pub(crate) fn part_set<S: State + ?Sized>(game: &mut S, slot: i32, field: Field, value: u16) {
     match part_index(slot) {
         Some(index) => field.set(&mut game.session_mut().actors.slots[index], value),
-        None => game.set_slot_word(part_address(slot, field), value),
+        // LEGACY(original-overflow): an enemy index outside the slot table.
+        None => legacy_overflow::set_slot_word(game, part_address(slot, field), value),
     }
 }
 pub(crate) fn part_byte<S: State + ?Sized>(game: &S, slot: i32, field: Field, lane: usize) -> u8 {
     match part_index(slot).filter(|_| lane < 2) {
         Some(index) => field.get(&game.session().actors.slots[index]).to_le_bytes()[lane],
-        None => game.slot_byte(part_address(slot, field) + lane),
+        // LEGACY(original-overflow): an enemy index outside the slot table,
+        // or a lane past the word.
+        None => legacy_overflow::slot_byte(game, part_address(slot, field) + lane),
     }
 }
 pub(crate) fn set_part_byte<S: State + ?Sized>(
@@ -176,7 +184,9 @@ pub(crate) fn set_part_byte<S: State + ?Sized>(
             bytes[lane] = value;
             field.set(actor, u16::from_le_bytes(bytes));
         }
-        None => game.set_slot_byte(part_address(slot, field) + lane, value),
+        // LEGACY(original-overflow): an enemy index outside the slot table,
+        // or a lane past the word.
+        None => legacy_overflow::set_slot_byte(game, part_address(slot, field) + lane, value),
     }
 }
 macro_rules! part {
@@ -468,9 +478,14 @@ const DEFEAT_PLM: u16 = 0xb78b;
 fn projectile_kind<S: State + ?Sized>(game: &S, index: u16) -> u16 {
     match game.session().projectiles.shots.get(usize::from(index)) {
         Some(shot) => shot.kind,
+        // LEGACY(original-overflow): a projectile index past the projectile
+        // types ($7E:0C18) reads the RAM after them.
         None => {
             let at = 0xc18 + 2 * usize::from(index);
-            u16::from_le_bytes([game.slot_byte(at), game.slot_byte(at + 1)])
+            u16::from_le_bytes([
+                legacy_overflow::slot_byte(game, at),
+                legacy_overflow::slot_byte(game, at + 1),
+            ])
         }
     }
 }
