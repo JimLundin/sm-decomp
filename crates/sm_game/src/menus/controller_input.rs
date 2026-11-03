@@ -5,7 +5,7 @@ use crate::constants::buttons::{
     K_BUTTON_A, K_BUTTON_B, K_BUTTON_DOWN, K_BUTTON_L, K_BUTTON_LEFT, K_BUTTON_R, K_BUTTON_RIGHT,
     K_BUTTON_SELECT, K_BUTTON_START, K_BUTTON_UP, K_BUTTON_X, K_BUTTON_Y,
 };
-use crate::ram::{checked_word as at, word};
+use crate::ram::word;
 
 fn repeat<H: Host + ?Sized>(offset: usize, sampled: u16, game: &mut H) {
     use crate::{controller_state::Word as Input, gameplay_context::Word};
@@ -120,7 +120,13 @@ fn debug_controls<H: Host + ?Sized>(game: &mut H) {
                     }
                 }
                 if (crate::gameplay_word!(game.JOYPAD_DBG_2) & 0x80) != 0 {
-                    at!(game, crate::ram::mirror::NMITIMEN; ^= 0x30);
+                    // The original toggles the interrupt enables with a word
+                    // store, rewriting the HDMA enable mirror after them.
+                    use crate::display::preparation::{Field, Store};
+                    let enables = game.display_control_byte(Field::NmiEnable) ^ 0x30;
+                    let hdma = game.display_control_byte(Field::HdmaEnable);
+                    game.store_display_control_byte(Field::NmiEnable, enables, Store::Named);
+                    game.store_display_control_byte(Field::HdmaEnable, hdma, Store::Named);
                 }
                 if (crate::gameplay_word!(game.JOYPAD_DBG_2) & 0x8000) != 0 {
                     let entering_swap =
