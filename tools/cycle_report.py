@@ -79,13 +79,8 @@ RAM_COUPLINGS = {
 COHORT_LABEL = "RAM-backed cohort copies (session_cohort::load/with/with_projected)"
 
 
-def cohort_sites(text: str) -> int:
-    """Count direct calls and imported module/function spellings once per site."""
-    # Comments and literals cannot execute a copy. Preserve newlines for uses.
-    text = re.sub(r'//[^\n]*|/\*.*?\*/|r(\#*)".*?"\1|"(?:\\.|[^"\\])*"',
-                  " ", text, flags=re.S)
-    modules = {"session_cohort"}
-    functions: set[str] = set()
+def use_bindings(text: str) -> list[tuple[str, str]]:
+    """Every (path, bound name) that a `use` declaration in text introduces."""
     imports: list[tuple[str, str]] = []
 
     def expand(tree: str, prefix: str = "") -> None:
@@ -112,6 +107,40 @@ def cohort_sites(text: str) -> int:
 
     for match in re.finditer(r"\buse\s+([^;]+);", text):
         expand(match.group(1))
+    return imports
+
+
+# The counted macros a `use ... as` may rename: an aliased call is the same site.
+MACRO_ALIASES = {
+    "named RAM words (word!/checked_word!/ram_word!)": ("word", "checked_word", "ram_word", "ram_checked_word"),
+    "raw enemy slots (slot!)": ("slot",),
+    "word transfers (word_transfers!)": ("word_transfers",),
+}
+
+
+def coupling_sites(label: str, text: str) -> int:
+    """Sites of one RAM coupling kind in text, counting renamed macro imports."""
+    if label == COHORT_LABEL:
+        return cohort_sites(text)
+    count = len(RAM_COUPLINGS[label].findall(text))
+    names = MACRO_ALIASES.get(label, ())
+    if names:
+        stripped = re.sub(r"//[^\n]*|/\*.*?\*/", " ", text, flags=re.S)
+        aliases = {name for path, name in use_bindings(stripped)
+                   if path.split("::")[-1] in names and name not in names}
+        for name in sorted(aliases):
+            count += len(re.findall(rf"(?<![\w:]){re.escape(name)}!\s*[({{]", stripped))
+    return count
+
+
+def cohort_sites(text: str) -> int:
+    """Count direct calls and imported module/function spellings once per site."""
+    # Comments and literals cannot execute a copy. Preserve newlines for uses.
+    text = re.sub(r'//[^\n]*|/\*.*?\*/|r(\#*)".*?"\1|"(?:\\.|[^"\\])*"',
+                  " ", text, flags=re.S)
+    modules = {"session_cohort"}
+    functions: set[str] = set()
+    imports = use_bindings(text)
     # Resolve alias chains, nested use trees, {self as ...}, and glob imports.
     changed = True
     while changed:
@@ -144,14 +173,12 @@ def sm_game_ram_couplings(source_root: str = os.path.join("crates", "sm_game", "
             if name.endswith(".rs"):
                 with open(os.path.join(root, name), encoding="utf-8", errors="replace") as source:
                     sources[os.path.join(root, name)] = source.read()
-    for label, pattern in RAM_COUPLINGS.items():
-        hits = {path: cohort_sites(text) if label == COHORT_LABEL else len(pattern.findall(text))
-                for path, text in sources.items()}
+    for label in RAM_COUPLINGS:
+        hits = {path: coupling_sites(label, text) for path, text in sources.items()}
         counts[label] = sum(hits.values())
         files[label] = sum(1 for n in hits.values() if n)
     coupled = sum(1 for text in sources.values()
-                  if cohort_sites(text) or any(p.search(text) for label, p in RAM_COUPLINGS.items()
-                                               if label != COHORT_LABEL))
+                  if any(coupling_sites(label, text) for label in RAM_COUPLINGS))
     return {"files": len(sources), "coupled_files": coupled, "sites": counts, "site_files": files}
 
 
