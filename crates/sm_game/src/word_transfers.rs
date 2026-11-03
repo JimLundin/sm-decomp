@@ -48,6 +48,22 @@ impl WordEndpoint<'_> {
     }
 }
 
+/// `N` words of the loaded cartridge from LoROM `address`, in native byte
+/// order, as the `rom` endpoint reads them.
+pub fn rom_words<const N: usize, H: LoadedRom + ?Sized>(host: &H, address: u32) -> [u16; N] {
+    let image = host.loaded_rom_image();
+    let base = usize::try_from(lorom_offset(address)).expect("LoROM offset");
+    std::array::from_fn(|index| {
+        image.table_word(base, isize::try_from(index).expect("ROM word index"))
+    })
+}
+
+/// The little-endian Session word holding the bytes of `value` stored in
+/// native byte order, as a `native` endpoint stores it.
+pub fn stored_native(value: u16) -> u16 {
+    u16::from_le_bytes(value.to_ne_bytes())
+}
+
 pub fn address(base: isize, displacement: isize) -> usize {
     base.checked_add(displacement).unwrap().try_into().unwrap()
 }

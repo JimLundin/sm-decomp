@@ -6,8 +6,8 @@ use crate::cinematic_state::{Array, Cinematic};
 use crate::display::preparation::Field;
 use crate::imported::Imported;
 use crate::presentation_workspace::{Point, Role};
-use crate::ram::RawRam as _;
-use crate::word_transfers::WordEndpoint;
+use crate::runtime_access::with_session;
+use crate::word_transfers::{WordEndpoint, rom_words, stored_native};
 
 use crate::cinematic::{
     advance_cinematic_fade, clear_cinematic_colors, compose_cinematic_palette,
@@ -44,9 +44,10 @@ fn load_japanese_line<H: crate::menus::host::Host + ?Sized>(address: u16, game: 
         // Finish each glyph copy before reading the next native source word.
         for (word_offset, row_offset) in [(0, 0), (2, 768)] {
             let target = 0x4000 + ((usize::from(destination) + row_offset) >> 1) * 2;
+            // The glyphs lie in the custom background blocks ($7F:A000..).
             let source = 0x1a000 + usize::from(record.word(cursor + word_offset));
             for byte in 0..16 {
-                let value = game.ram().read_byte(source + byte);
+                let value = crate::cinematic::decompressed_byte(game, source + byte);
                 game.screen_write_byte(Point::new(Role::Xray, target + byte - 0x4000), value);
             }
         }
@@ -294,8 +295,18 @@ pub fn wait_for_scene<H: crate::menus::host::Host + ?Sized>(
                     cine,
                     game,
                 );
-                crate::word_transfers!(game, ascending, 224; le(LEVEL_DATA, 0) <- rom(0x8cbec3, 0));
-                crate::word_transfers!(game, ascending, 256; native(0x16402) <- value(0));
+                // The Mother Brain page's background over the level data: its
+                // level words from $8C:BEC3, the first 512 behaviour bytes cleared.
+                let level: [u16; 224] = rom_words(game, 0x8cbec3);
+                with_session(game, |session| {
+                    let cells = session.room.terrain.cells_mut();
+                    for (cell, level) in cells.iter_mut().zip(level) {
+                        cell.level = level;
+                    }
+                    for cell in &mut cells[..512] {
+                        cell.behavior = 0;
+                    }
+                });
                 crate::sequence_state::with_words(
                     game,
                     |_, words: &mut crate::session_words::SessionWords| words.hud_item_index = 1,
@@ -314,7 +325,14 @@ pub fn wait_for_scene<H: crate::menus::host::Host + ?Sized>(
                     game,
                 );
                 *cine.intro_frame_counter() = 0;
-                crate::word_transfers!(game, ascending, 384; le(LEVEL_DATA, 0) <- rom(0x8cc083, 0));
+                // The page's background level words from $8C:C083.
+                let level: [u16; 384] = rom_words(game, 0x8cc083);
+                with_session(game, |session| {
+                    let cells = session.room.terrain.cells_mut();
+                    for (cell, level) in cells.iter_mut().zip(level) {
+                        cell.level = level;
+                    }
+                });
                 crate::sequence_state::with_words(
                     game,
                     |_, words: &mut crate::session_words::SessionWords| words.hud_item_index = 0,
@@ -356,7 +374,7 @@ pub fn wait_for_scene<H: crate::menus::host::Host + ?Sized>(
             Palette::Scientist => 0xb2d2,
         }
     });
-    crate::word_transfers!(game, ascending, 256; native(0x2200) <- rom(0x8ce3e9, 0));
+    load_page_palette(game);
     prepare_cinematic_palette_fade(game);
     for &(index, count) in palette.colors() {
         clear_cinematic_colors(index, count, game);
@@ -623,9 +641,21 @@ pub fn wait_for_final_page<H: crate::menus::host::Host + ?Sized>(
     }
 }
 
+/// Load the intro pages' palette ($8C:E3E9) into the palette fade's colour
+/// plane ($7E:2200), as native-order words.
+fn load_page_palette<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+    let colors: [u16; 256] = rom_words(game, 0x8ce3e9);
+    with_session(game, |session| {
+        let plane = &mut session.actors.extended.blocks[4][256..512];
+        for (word, color) in plane.iter_mut().zip(colors) {
+            *word = stored_native(color);
+        }
+    });
+}
+
 fn setup_page_palettes<H: crate::menus::host::Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     set_cinematic_blend(6, 17, 2, 0, game);
-    crate::word_transfers!(game, ascending, 256; native(0x2200) <- rom(0x8ce3e9, 0));
+    load_page_palette(game);
     prepare_cinematic_palette_fade(game);
     clear_cinematic_colors(0, 0x10, game);
     clear_cinematic_colors(0x60, 0x10, game);

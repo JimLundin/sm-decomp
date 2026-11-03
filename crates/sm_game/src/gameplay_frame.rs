@@ -368,11 +368,6 @@ fn frame<H: Host>(game: &mut H) -> CoroutineRet {
 /// The pause screen's palette ($B6:F000), which replaces the gameplay colours.
 const PAUSE_PALETTE: u32 = 0xb6f000;
 
-/// A Session palette word as the native-order RAM word a transfer stored.
-fn native_order(word: u16) -> u16 {
-    u16::from_le_bytes(word.to_ne_bytes())
-}
-
 /// Clear the projectile table words $198D..$1C1E: the table's flags, zoom,
 /// selection and spawn words and every slot's words through `behavior_c`.
 fn clear_projectile_table(table: &mut crate::session::EnemyProjectiles) {
@@ -531,7 +526,7 @@ fn initialize<H: Host>(game: &mut H) -> CoroutineRet {
         with_session(game, |session| {
             let visual = session.presentation.visual_mut();
             for (color, &target) in visual.colors.iter_mut().zip(&visual.targets) {
-                *color = native_order(target);
+                *color = crate::word_transfers::stored_native(target);
             }
         });
         if stage == 4 {
@@ -626,10 +621,7 @@ fn setup_pause<H: Host>(game: &mut H) -> CoroutineRet {
         let value = game.palette_word(false, index * 2);
         game.screen_write_word(Point::new(Role::Pause, (384 + index) * 2), value);
     }
-    let image = crate::word_transfers::LoadedRom::loaded_rom_image(&*game);
-    let base = usize::try_from(crate::word_transfers::lorom_offset(PAUSE_PALETTE)).unwrap();
-    let palette: [u16; 256] =
-        std::array::from_fn(|index| image.table_word(base, isize::try_from(index).unwrap()));
+    let palette: [u16; 256] = crate::word_transfers::rom_words(game, PAUSE_PALETTE);
     with_session(game, |session| {
         session.presentation.visual_mut().colors = palette
     });
