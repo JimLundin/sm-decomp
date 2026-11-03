@@ -272,8 +272,8 @@ impl<H: crate::visual_host::Host> crate::scene::atmosphere::AdvanceHost for Nati
     }
 }
 
-/// A session lease's view of the atmospheric tiles: slots from the Session,
-/// the OAM cursor, camera and entries through the lease's RAM projection.
+/// A session lease's view of the atmospheric tiles: slots, object entries and
+/// cursor from the Session, the camera through the lease's RAM projection.
 pub struct SessionTiles<'a, H>(pub &'a mut H);
 impl<H> crate::scene::atmosphere::Host for SessionTiles<'_, H>
 where
@@ -286,7 +286,7 @@ where
         Ok(self.0.atmospheric().slots[slot].frame_and_kind)
     }
     fn cursor(&mut self) -> Result<u16, Self::Error> {
-        Ok(self.0.word(0x590))
+        Ok(crate::sprite_drawing::object_cursor(self.0))
     }
     fn x(&mut self, slot: usize) -> Result<u16, Self::Error> {
         Ok(self.0.atmospheric().slots[slot].x)
@@ -301,11 +301,11 @@ where
         Ok(self.0.word(0x915))
     }
     fn write_x(&mut self, entry: usize, value: u8) -> Result<(), Self::Error> {
-        self.0.set_byte(0x370 + entry, value);
+        crate::sprite_drawing::store_object_byte(self.0, entry, value);
         Ok(())
     }
     fn write_y(&mut self, entry: usize, value: u8) -> Result<(), Self::Error> {
-        self.0.set_byte(0x371 + entry, value);
+        crate::sprite_drawing::store_object_byte(self.0, entry + 1, value);
         Ok(())
     }
     fn tile_pointer(&mut self, kind: u16) -> Result<u16, Self::Error> {
@@ -320,11 +320,11 @@ where
         Ok(self.0.legacy_native_record(0x90, address).native_word(0))
     }
     fn write_tile(&mut self, entry: usize, value: u16) -> Result<(), Self::Error> {
-        self.0.write_slice_native(0x372 + entry, value);
+        crate::sprite_drawing::store_object_native_word(self.0, entry + 2, value);
         Ok(())
     }
     fn publish_cursor(&mut self, value: u16) -> Result<(), Self::Error> {
-        self.0.write_word_le(value, 0x590);
+        crate::sprite_drawing::publish_object_cursor(self.0, value);
         Ok(())
     }
     fn written(&mut self) -> Result<(), Self::Error> {

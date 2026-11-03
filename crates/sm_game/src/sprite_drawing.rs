@@ -1,5 +1,8 @@
 //! Lazy spritemap geometry and access to the canonical object staging owner.
+use crate::runtime_access::SessionRam;
 use crate::scene::objects;
+use crate::session_access::SessionAccess;
+use crate::session_owners::OBJECTS;
 use sm_data::cartridge::RomImage;
 use std::convert::Infallible;
 
@@ -164,4 +167,51 @@ pub fn finish_frame<H: ObjectAccess + ?Sized>(game: &mut H) {
 }
 pub fn clear_high_table<H: ObjectAccess + ?Sized>(game: &mut H) {
     objects::clear_high_table(&mut SessionObjects(game)).unwrap();
+}
+
+/// The object cursor ($0590) as the CPU reads it, low byte first.
+pub fn object_cursor<H: SessionAccess + ?Sized>(host: &H) -> u16 {
+    let objects = host.session().presentation.objects();
+    u16::from_le_bytes(objects.native_order.encode(objects.cursor))
+}
+/// Publish the object cursor, low byte first.
+pub fn publish_object_cursor<H: SessionAccess + ?Sized>(host: &mut H, value: u16) {
+    let objects = host.session_mut().presentation.objects_mut();
+    objects.cursor = objects.native_order.decode(value.to_le_bytes());
+    host.words_stored();
+}
+/// Store `value` at `offset` from the first object entry. Past the cursor
+/// word, the store reaches the RAM after it, as the original's indexed store did.
+pub fn store_object_byte<H: SessionAccess + SessionRam + ?Sized>(
+    host: &mut H,
+    offset: usize,
+    value: u8,
+) {
+    let objects = host.session_mut().presentation.objects_mut();
+    if objects.write_byte(offset, value).is_ok() {
+        host.words_stored();
+    } else {
+        host.set_byte(OBJECTS.start + offset, value);
+    }
+}
+/// Store `value` in native byte order at `offset` from the first object entry.
+/// A word that does not lie within the objects and cursor keeps the original
+/// slice store, which checks its whole extent before storing either byte.
+pub fn store_object_native_word<H: SessionAccess + SessionRam + ?Sized>(
+    host: &mut H,
+    offset: usize,
+    value: u16,
+) {
+    let bytes = value.to_ne_bytes();
+    if offset + bytes.len() <= OBJECTS.len() {
+        let objects = host.session_mut().presentation.objects_mut();
+        for (lane, byte) in bytes.into_iter().enumerate() {
+            objects
+                .write_byte(offset + lane, byte)
+                .expect("object staging offset");
+        }
+        host.words_stored();
+    } else {
+        host.write_slice(OBJECTS.start + offset, &bytes);
+    }
 }

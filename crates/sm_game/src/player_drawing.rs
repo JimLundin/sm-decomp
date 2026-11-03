@@ -50,21 +50,24 @@ fn queue_cannon_tiles<H: Host>(runtime: &mut H, tiles: Tiles) {
 }
 
 fn cannon_tile<H: Host>(runtime: &mut H, x: u16, y: u16, body_y: u16, character: u16) {
-    let saved = runtime.word(0x590);
+    use crate::sprite_drawing::{
+        object_cursor, publish_object_cursor, store_object_byte, store_object_native_word,
+    };
+    let saved = object_cursor(runtime);
     let x = x
         .wrapping_add(runtime.session().player.x)
         .wrapping_sub(runtime.word(0x911));
     if x < 256 {
-        let entry = 0x370 + usize::from(runtime.word(0x590));
-        runtime.set_byte(entry, x as u8);
+        let entry = usize::from(object_cursor(runtime));
+        store_object_byte(runtime, entry, x as u8);
         let y = y
             .wrapping_add(runtime.session().player.y)
             .wrapping_sub(body_y)
             .wrapping_sub(runtime.word(0x915));
         if y < 256 {
-            runtime.set_byte(entry + 1, y as u8);
-            runtime.write_slice_native(entry + 2, character);
-            runtime.write_word_le(saved.wrapping_add(4), 0x590);
+            store_object_byte(runtime, entry + 1, y as u8);
+            store_object_native_word(runtime, entry + 2, character);
+            publish_object_cursor(runtime, saved.wrapping_add(4));
         }
     }
 }
