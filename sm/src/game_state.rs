@@ -3395,7 +3395,7 @@ impl sm_game::display_scroll::Access for Game {
     }
 }
 
-fn sequence_ranges() -> [Range<usize>; 27] {
+fn sequence_ranges() -> [Range<usize>; 37] {
     [
         0x5f5..0x5f7,
         0x911..0x913,
@@ -3424,6 +3424,16 @@ fn sequence_ranges() -> [Range<usize>; 27] {
         0x18aa..0x18ac,
         0xc400..0xc402,
         0x1f51..0x1f5b,
+        0x592..0x594,
+        0xce2..0xce4,
+        0xce4..0xce6,
+        0xce6..0xce8,
+        0xce8..0xcea,
+        0xcea..0xcec,
+        0xcec..0xcee,
+        0xcee..0xcf0,
+        0xcf0..0xcf2,
+        0xcf2..0xcf4,
     ]
 }
 

@@ -8,7 +8,6 @@ use crate::menus::prelude::do_until;
 use crate::player_movement::forced;
 use crate::ram::RawRam as _;
 use crate::scene::hdma_sources::LiveOwner;
-use crate::session_cohort;
 
 /// What the explosion windows need from the runtime besides RAM and sound.
 pub trait Host:
@@ -40,62 +39,57 @@ pub struct Explosion {
     pub radius: u16,
 }
 
-/// Visit the explosion words with their RAM addresses.
-fn explosion_words(
-    bomb: &mut crate::session::PowerBomb,
-    radius: &mut u16,
-    mut visit: impl FnMut(usize, &mut u16),
-) {
-    use crate::ram::words as ram;
-    visit(ram::POWER_BOMB_EXPLOSION_STATUS, &mut bomb.explosion_status);
-    visit(ram::POWER_BOMB_EXPLOSION_X_POS, &mut bomb.x);
-    visit(ram::POWER_BOMB_EXPLOSION_Y_POS, &mut bomb.y);
-    visit(
-        ram::POWER_BOMB_EXPLOSION_X_POS_PLUS_0X100,
-        &mut bomb.window_x,
-    );
-    visit(
-        ram::POWER_BOMB_EXPLOSION_Y_POS_RSUB_0X1FF,
-        &mut bomb.window_y,
-    );
-    visit(ram::POWER_BOMB_EXPLOSION_RADIUS, radius);
-    visit(
-        ram::POWER_BOMB_PRE_EXPLOSION_FLASH_RADIUS,
-        &mut bomb.pre_flash_radius,
-    );
-    visit(ram::POWER_BOMB_FLAG, &mut bomb.flag);
-    visit(
-        ram::POWER_BOMB_PRE_EXPLOSION_RADIUS_SPEED,
-        &mut bomb.radius_speed,
-    );
-    visit(
-        ram::PRE_SCALED_POWER_BOMB_EXPLOSION_SHAPE_DEF_PTR,
-        &mut bomb.shape_definition,
-    );
-}
-
-impl crate::session_cohort::Cohort for Explosion {
-    fn words(&mut self, visit: impl FnMut(usize, &mut u16)) {
-        explosion_words(&mut self.bomb, &mut self.radius, visit);
-    }
-    fn session_words(session: &mut crate::session::Session, visit: impl FnMut(usize, &mut u16)) {
-        explosion_words(
-            &mut session.projectiles.power_bomb,
-            &mut session.room.power_bomb_radius,
-            visit,
-        );
-    }
-    fn session_copy(session: &crate::session::Session) -> Self {
+impl Explosion {
+    /// The explosion words of `words`.
+    fn of(words: &crate::session_words::SessionWords) -> Self {
         Self {
-            bomb: session.projectiles.power_bomb.clone(),
-            radius: session.room.power_bomb_radius,
+            bomb: crate::session::PowerBomb {
+                flag: words.power_bomb_flag,
+                x: words.power_bomb_explosion_x_pos,
+                y: words.power_bomb_explosion_y_pos,
+                explosion_status: words.power_bomb_explosion_status,
+                window_x: words.power_bomb_explosion_window_x,
+                window_y: words.power_bomb_explosion_window_y,
+                pre_flash_radius: words.power_bomb_pre_explosion_flash_radius,
+                radius_speed: words.power_bomb_pre_explosion_radius_speed,
+                shape_definition: words.pre_scaled_power_bomb_explosion_shape_def_ptr,
+            },
+            radius: words.power_bomb_explosion_radius,
         }
     }
+    /// Store the explosion into `words`.
+    fn store(&self, words: &mut crate::session_words::SessionWords) {
+        let bomb = &self.bomb;
+        words.power_bomb_explosion_status = bomb.explosion_status;
+        words.power_bomb_explosion_x_pos = bomb.x;
+        words.power_bomb_explosion_y_pos = bomb.y;
+        words.power_bomb_explosion_window_x = bomb.window_x;
+        words.power_bomb_explosion_window_y = bomb.window_y;
+        words.power_bomb_explosion_radius = self.radius;
+        words.power_bomb_pre_explosion_flash_radius = bomb.pre_flash_radius;
+        words.power_bomb_flag = bomb.flag;
+        words.power_bomb_pre_explosion_radius_speed = bomb.radius_speed;
+        words.pre_scaled_power_bomb_explosion_shape_def_ptr = bomb.shape_definition;
+    }
 }
 
-/// The explosion words as the host's projection holds them.
-fn explosion<H: Host + ?Sized>(game: &H) -> Explosion {
-    session_cohort::load(game)
+/// The explosion words as the sequence owner holds them.
+pub fn explosion<H: crate::sequence_state::Access + ?Sized>(game: &H) -> Explosion {
+    Explosion::of(&crate::session_words::current(game))
+}
+
+/// Run `action` on the explosion words of the sequence owner's words, then
+/// store the ones it changed.
+pub fn with_explosion<H, T>(game: &mut H, action: impl FnOnce(&mut H, &mut Explosion) -> T) -> T
+where
+    H: crate::sequence_state::Access + ?Sized,
+{
+    crate::sequence_state::with_words(game, |game, words| {
+        let mut explosion = Explosion::of(words);
+        let result = action(game, &mut explosion);
+        explosion.store(words);
+        result
+    })
 }
 
 crate::typed_constants! { Consts88;
@@ -107,12 +101,12 @@ crate::typed_constants! { Consts89;
 
 pub fn spawn_power_bomb<H: Host + ?Sized>(game: &mut H) {
     if crate::session_words::current(game).time_is_frozen_flag != 0 {
-        session_cohort::with(game, |_, e: &mut Explosion| {
+        with_explosion(game, |_, e: &mut Explosion| {
             e.bomb.explosion_status = 0x4000
         });
     } else {
         game.queue_sound(0, 1_u8, 15);
-        session_cohort::with(game, |_, e: &mut Explosion| {
+        with_explosion(game, |_, e: &mut Explosion| {
             e.bomb.explosion_status = 0x8000
         });
         static UNK_888ABA: HdmaObjectDefinition = HdmaObjectDefinition::new(0x40, 0x28, 0x8ace_u16);
@@ -129,24 +123,24 @@ static POWER_BOMB_EXPLOSION_RADIUS_ACCEL: u16 = 0x30;
 pub fn begin_pre_flash<H: Host + ?Sized>(game: &mut H) {
     game.store_source_byte(LiveOwner::ExplosionOffscreen, 0, 255);
     game.store_source_byte(LiveOwner::ExplosionOffscreen, 1, 0);
-    session_cohort::with(game, |_, e: &mut Explosion| {
+    with_explosion(game, |_, e: &mut Explosion| {
         e.bomb.pre_flash_radius = 1024;
         e.bomb.radius_speed = POWER_BOMB_PRE_EXPLOSION_RADIUS_SPEED;
     });
 }
 pub fn begin_prescaled_pre_flash<H: Host + ?Sized>(game: &mut H) {
-    session_cohort::with(game, |_, e: &mut Explosion| {
+    with_explosion(game, |_, e: &mut Explosion| {
         e.bomb.shape_definition = ADDR_BYTE_889F06 as u16;
     });
 }
 pub fn begin_explosion<H: Host + ?Sized>(game: &mut H) {
-    session_cohort::with(game, |_, e: &mut Explosion| {
+    with_explosion(game, |_, e: &mut Explosion| {
         e.radius = 1024;
         e.bomb.radius_speed = POWER_BOMB_EXPLOSION_RADIUS_SPEED;
     });
 }
 pub fn begin_prescaled_explosion<H: Host + ?Sized>(game: &mut H) {
-    session_cohort::with(game, |_, e: &mut Explosion| {
+    with_explosion(game, |_, e: &mut Explosion| {
         e.bomb.shape_definition = ADDR_POWER_BOMB_EXPLOSION_SHAPE_DEF0 as u16;
     });
 }
@@ -183,7 +177,7 @@ pub fn finish_power_bomb<H: Host + ?Sized>(hdma_index: usize, v0: u16, game: &mu
     // A crystal flash starts on its own lease, after the position check.
     let crystal_flash =
         game.player_x() == bomb.x && game.player_y() == bomb.y && try_crystal_flash(game);
-    session_cohort::with(game, |_, e: &mut Explosion| {
+    with_explosion(game, |_, e: &mut Explosion| {
         if !crystal_flash {
             e.bomb.flag = 0;
         }
@@ -475,7 +469,7 @@ fn calculate_explosion_hdma_table_pointers<H: Host + ?Sized>(
 }
 
 pub fn spawn_crystal_flash<H: Host + ?Sized>(game: &mut H) {
-    session_cohort::with(game, |_, e: &mut Explosion| {
+    with_explosion(game, |_, e: &mut Explosion| {
         e.bomb.explosion_status = (0x888000i32) as u16;
     });
     static UNK_88A2B0: HdmaObjectDefinition = HdmaObjectDefinition::new(0x40, 0x28, 0xa2bd_u16);
@@ -488,7 +482,7 @@ pub fn begin_crystal_flash<H: Host + ?Sized>(game: &mut H) {
     game.queue_sound(0, 1_u8, 6);
 }
 pub fn finish_crystal_flash<H: Host + ?Sized>(hdma_index: usize, k: u16, game: &mut H) {
-    session_cohort::with(game, |_, e: &mut Explosion| {
+    with_explosion(game, |_, e: &mut Explosion| {
         e.bomb.flag = 0;
         e.bomb.explosion_status = 0;
         e.bomb.pre_flash_radius = 0;
@@ -606,7 +600,7 @@ pub fn update_scaled<H: Host + ?Sized>(hdma_index: usize, k: u16, phase: Phase, 
     if explosion(game).bomb.explosion_status & 0x8000 == 0 {
         return;
     }
-    session_cohort::with(game, |game, e: &mut Explosion| {
+    with_explosion(game, |game, e: &mut Explosion| {
         calculate_explosion_hdma_table_pointers(hdma_index, k, phase == Phase::PreFlash, e, game);
         let bottom = (mult8x8(
             (*phase.radius(e) >> 8) as u8,
@@ -658,7 +652,7 @@ pub fn update_prescaled<H: Host + ?Sized>(hdma_index: usize, k: u16, phase: Phas
     if explosion(game).bomb.explosion_status & 0x8000 == 0 {
         return;
     }
-    session_cohort::with(game, |game, e: &mut Explosion| {
+    with_explosion(game, |game, e: &mut Explosion| {
         calculate_explosion_hdma_table_pointers(hdma_index, k, phase == Phase::PreFlash, e, game);
         let shape = native_record(0x880000 | u32::from(e.bomb.shape_definition), game);
         let side = explosion_window_side(e);

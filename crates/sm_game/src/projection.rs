@@ -830,7 +830,6 @@ mod tests {
         check_layout::<crate::cinematic::FadePlanes>();
         check_layout::<crate::cinematic::PaletteBuffer>();
         check_layout::<crate::cinematic::ShotWords>();
-        check_layout::<crate::explosion_window::Explosion>();
         check_layout::<crate::menu_window_state::WindowState>();
         check_layout::<(
             crate::menu_state::OptionsMenu,
