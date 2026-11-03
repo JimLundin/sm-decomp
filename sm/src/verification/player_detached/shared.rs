@@ -25,6 +25,14 @@ use game::room_mechanisms as room;
 )]
 #[path = "../../ram_map.rs"]
 pub(crate) mod ram_map;
+#[allow(
+    unused_imports,
+    unused_macros,
+    dead_code,
+    reason = "ram_map re-exports these compatibility macros and their helper; this owned carrier calls none of them."
+)]
+#[path = "../../ram_words.rs"]
+pub(crate) mod ram_words;
 #[path = "../../rom.rs"]
 pub(crate) mod rom;
 #[path = "../../verify_probe.rs"]
