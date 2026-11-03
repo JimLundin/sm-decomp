@@ -27,32 +27,28 @@ Replays always run with Legacy presentation. `Presentation::Owned` comes only fr
 supplied or restored session start, which only verification cases reach. So OAM, the
 display mirrors, the NMI counter and the Samus-half pointers are plain RAM in replays.
 
-A new Session owner must also move every other writer of its bytes onto it. Owning
-the room scroll cells ($CD20..) made `boss-crocomire` diverge at $CD24 and
-`file-copy-clear` diverge at tick 837 (run 41561271426), because other writers still
-reach those bytes through RAM. The pause hook ($0601..$0606), right border ($1874)
-and Work Robot palette ($D652..$D657) owners have since been re-landed, with every
-writer accounted for. The resulting formats are SMROOMS 9 and SMACTORS 8.
-Replays can't check $1874 because the verifier masks $186E..$1886.
+A new Session owner must move every writer of its bytes onto it. Four owners have
+landed this way:
+- room scroll cells ($CD20..$CD51)
+- pause hooks ($0601..$0606)
+- right border ($1874)
+- Work Robot palette ($D652..$D657)
 
-Room scroll cells ($CD20..$CD51) are still not owned. All four failing rows were in
-the same Crocomire scene, first diverging at tick 837. Crocomire's `not_started`
-stores 0x0101 to cells 4-5 every frame, then 0x0100 once Samus X reaches 1312. RAM
-misses one flip of that cell for a frame, at both 837 and 2292.
+The resulting checkpoint formats are SMROOMS 9 and SMACTORS 8. Replays can't check
+$1874, because the verifier masks $186E..$1886.
 
-These accesses run outside the lease, as raw RAM on Game:
+The first scroll attempt diverged `boss-crocomire` at $CD24 (run 41561271426). Six
+Crocomire `word_transfers!` stores still used the cell indexes as RAM addresses. Once
+those stores were fixed, the four failing rows passed (run 41574730839).
+
+Raw RAM accesses to the scroll cells still run on Game:
 - `demo_rooms.rs:272`
 - `hdma_program.rs:297-298`
 - the boot WRAM clear
 
-Next step: a diagnostic CI run. Print Samus X and cell 4 around `not_started` for
-frames 835-839, and add a verify-only check that RAM $CD20..$CD52 equals
-`room.scrolls` at each lease export.
-
 ## Remaining 147 sites, by blocker
 
 1. **New Session owners, plus all of their writers.**
-   - Scroll cells (see above).
    - Drop origin $F434/$F436: `sm/src/game/scroll_runtime.rs:32` refreshes inputs from raw RAM while the Session is current.
    - Melt tiles at $4000..
 2. **Legacy presentation.**
