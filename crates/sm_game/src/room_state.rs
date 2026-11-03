@@ -9,7 +9,6 @@ use crate::room_view::EffectWord;
 use crate::runtime_access::SessionView;
 use crate::session::HookSlot;
 use crate::session_access::SessionAccess as _;
-use crate::word_transfers;
 
 /// The level data ($7F:0000..$7F:9601) as the host holds it: its size word,
 /// then the room terrain's cells (`Terrain::cells`), each cell's level word
@@ -168,10 +167,15 @@ pub fn execute_setup_code<H: ScriptHost + ?Sized>(script: u16, game: &mut H) {
         }
         // Set collected map.
         0xc90a => {
-            let at = 0xd908 + usize::from(crate::gameplay_context::navigation(game).area);
+            let area = usize::from(crate::gameplay_context::navigation(game).area);
+            let at = 0xd908 + area;
             let collected =
                 u16::from_ne_bytes([game.ram().read_byte(at), game.ram().read_byte(at + 1)]) | 1;
-            word_transfers!(game, ascending, 1; native(at) <- value(collected));
+            // The area's map station byte; the word store's high byte keeps the
+            // next area's.
+            crate::runtime_access::with_session(game, |session| {
+                session.gameplay_flags.map_stations[area] = collected.to_ne_bytes()[0];
+            });
             crate::menus::state::with(game, |_, selection: &mut SaveSelection| {
                 selection.has_area_map = collected;
             });
