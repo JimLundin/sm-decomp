@@ -2,6 +2,7 @@
 # Select and shard the corpus scenarios (every scenario but the route rooms)
 # with their exact seed/movie identities.
 import json, os, pathlib, sys, tomllib
+from typing import Any
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[2] / 'tools'))
 import scenario  # noqa: E402
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
@@ -19,11 +20,12 @@ if wanted:
     unknown = set(wanted) - known
     if unknown:
         raise SystemExit(f'unknown rows: {sorted(unknown)}')
-def seed_bundle(row):
+def seed_bundle(row: dict[str, Any]) -> tuple[str, str]:
     # The ci-data bundle with the row's private data, as scenarios/lock.toml pins it.
     return row['bundle'], bundles[row['bundle']]
 
-groups, skipped = {}, []
+groups: dict[tuple[bool, str, str], list[dict[str, Any]]] = {}
+skipped: list[tuple[str, str]] = []
 for r in rows:
     if wanted and r['id'] not in wanted:
         continue
@@ -46,12 +48,13 @@ if os.environ.get('ORACLE_SAMPLE') == '1':
         kind = 'seed' if 'seed' in row else ('route' if row['inputs'].startswith('corpus-') else 'captured')
         identity = seed_bundle(row)[0] if kind == 'seed' else row['inputs']
         groups.setdefault((True, kind, identity), []).append(row)
-def cost(kind, row):
+def cost(kind: str, row: dict[str, Any]) -> int:
     # Replay frames, plus, for a checkpoint row, the boot prefix it regenerates
     # when its checkpoint is rejected; that prefix replays about 5 times faster.
-    return row.get('frames', 0) + (row.get('start_frame', 0) // 5 if kind == 'checkpoint' else 0)
+    total: int = row.get('frames', 0) + (row.get('start_frame', 0) // 5 if kind == 'checkpoint' else 0)
+    return total
 
-def chunks(kind, members):
+def chunks(kind: str, members: list[dict[str, Any]]) -> list[list[dict[str, Any]]]:
     # A rejected configured checkpoint regenerates its own complete boot prefix,
     # so bound that cold work per row. Seed groups share only a seconds-long
     # bundle restore, so split one heavier than a twelfth of the corpus.
@@ -59,7 +62,8 @@ def chunks(kind, members):
         return [[r] for r in members]
     if kind != 'seed':
         return [members[i:i + 9] for i in range(0, len(members), 9)]
-    out, current = [], []
+    out: list[list[dict[str, Any]]] = []
+    current: list[dict[str, Any]] = []
     for r in members:
         if current and sum(m.get('frames', 0) for m in current) + r.get('frames', 0) > FRAME_CAP:
             out.append(current)
@@ -69,7 +73,7 @@ def chunks(kind, members):
 
 FRAME_CAP = sum(r.get('frames', 0) for (record, _, _), members in groups.items()
                 if not record for r in members) / 12
-shards = []
+shards: list[dict[str, Any]] = []
 for (record, kind, identity), members in sorted(groups.items()):
     members.sort(key=lambda r: r.get('start_frame', 0))
     for i, chunk in enumerate(chunks(kind, members)):

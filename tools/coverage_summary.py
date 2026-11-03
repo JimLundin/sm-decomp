@@ -15,10 +15,14 @@ only source locations and counts.
 """
 import collections, functools, json, os, re, subprocess, sys
 
+# Lines hit, lines, functions hit, functions.
+FileCounts = tuple[int, int, int, int]
+# (path, start line, name) -> (call count, size in lines).
+FunctionKey = tuple[str, int, str]
 SCOPES = ("crates/sm_game/src/", "sm/src/game/")
 
 
-def scope_of(path):
+def scope_of(path: str) -> str | None:
     path = os.path.normpath(path.replace("\\", "/")).replace("\\", "/")
     for scope in SCOPES:
         at = path.find(scope)
@@ -27,14 +31,17 @@ def scope_of(path):
     return None
 
 
-def demangle(name):
+def demangle(name: str) -> str:
     """Readable path for legacy Rust symbols (_ZN..E); other names unchanged."""
     match = re.match(r"_?_ZN(.*)E$", name)
     if not match:
         return name
-    body, parts = match.group(1), []
+    body = match.group(1)
+    parts: list[str] = []
     while body and body[0].isdigit():
-        length = re.match(r"\d+", body).group(0)
+        digits = re.match(r"\d+", body)
+        assert digits is not None  # body starts with a digit
+        length = digits.group(0)
         body = body[len(length):]
         part, body = body[:int(length)], body[int(length):]
         if not re.fullmatch(r"h[0-9a-f]{16}", part):
@@ -44,14 +51,14 @@ def demangle(name):
 
 
 @functools.cache
-def source_lines(path):
+def source_lines(path: str) -> list[str]:
     try:
         return open(path, encoding="utf-8").read().splitlines()
     except OSError:
         return []
 
 
-def source_name(path, line, fallback):
+def source_name(path: str, line: int, fallback: str) -> str:
     """Name generic instantiations by their source definition (v0 symbols are unreadable)."""
     for text in reversed(source_lines(path)[max(0, line - 4):line]):
         match = re.search(r"\bfn\s+(\w+)", text)
@@ -60,20 +67,21 @@ def source_name(path, line, fallback):
     return fallback
 
 
-def load(llvm_cov, profdata, obj, *others):
+def load(llvm_cov: str, profdata: str, obj: str,
+         *others: str) -> tuple[dict[str, FileCounts], dict[FunctionKey, tuple[int, int]]]:
     """Per-file (lines hit, lines, functions hit, functions) and per-function (count, size)."""
     extra = [argument for other in others for argument in ("-object", other)]
     exported = subprocess.run(
         [llvm_cov, "export", f"-instr-profile={profdata}", obj, *extra, "-skip-expansions"],
         check=True, capture_output=True, text=True).stdout
     data = json.loads(exported)["data"][0]
-    files = {}
+    files: dict[str, FileCounts] = {}
     for entry in data["files"]:
         path = scope_of(entry["filename"])
         if path is not None:
-            lines, functions = entry["summary"]["lines"], entry["summary"]["functions"]
-            files[path] = (lines["covered"], lines["count"], functions["covered"], functions["count"])
-    functions = {}
+            lines, summary = entry["summary"]["lines"], entry["summary"]["functions"]
+            files[path] = (lines["covered"], lines["count"], summary["covered"], summary["count"])
+    functions: dict[FunctionKey, tuple[int, int]] = {}
     for function in data["functions"]:
         path = next((p for p in map(scope_of, function["filenames"]) if p), None)
         if path is None:
@@ -87,7 +95,7 @@ def load(llvm_cov, profdata, obj, *others):
     return files, functions
 
 
-def load_union(llvm_cov, profdata, obj, *others):
+def load_union(llvm_cov: str, profdata: str, obj: str, *others: str) -> dict[str, FileCounts]:
     """Per-file (lines hit, lines, functions hit, functions) over several objects.
 
     The verifier executable (direct rustc, relative crate roots) and the Cargo-built
@@ -99,10 +107,10 @@ def load_union(llvm_cov, profdata, obj, *others):
     exported = subprocess.run(
         [llvm_cov, "export", "-format=lcov", f"-instr-profile={profdata}", obj, *extra],
         check=True, capture_output=True, text=True).stdout
-    lines = collections.defaultdict(dict)
-    starts = collections.defaultdict(dict)
-    names = {}
-    path = None
+    lines: collections.defaultdict[str, dict[int, bool]] = collections.defaultdict(dict)
+    starts: collections.defaultdict[str, dict[int, bool]] = collections.defaultdict(dict)
+    names: dict[str, int] = {}
+    path: str | None = None
     for record in exported.splitlines():
         kind, _, value = record.partition(":")
         if kind == "SF":
@@ -124,20 +132,20 @@ def load_union(llvm_cov, profdata, obj, *others):
             for path, hits in lines.items()}
 
 
-def percent(hit, total):
+def percent(hit: int, total: int) -> str:
     return f"{100 * hit / total:5.1f}%" if total else "  n/a"
 
 
-def totals(files):
+def totals(files: dict[str, FileCounts]) -> list[int]:
     """Lines hit, lines, functions hit, functions over `files`."""
     return [sum(value[i] for value in files.values()) for i in range(4)]
 
 
-def main():
+def main() -> None:
     arguments = sys.argv[1:]
-    options = {"--unit": None, "--combined": None}
-    objects = []
-    positional = []
+    options: dict[str, str | None] = {"--unit": None, "--combined": None}
+    objects: list[str] = []
+    positional: list[str] = []
     while arguments:
         argument = arguments.pop(0)
         if argument == "--unit-object":
@@ -151,7 +159,7 @@ def main():
     files, functions = load(llvm_cov, profdata, obj)
     if not files:
         raise SystemExit("no engine sources in the coverage mapping (were .lcovfun records linked?)")
-    modules = collections.defaultdict(lambda: [0, 0, 0, 0])
+    modules: collections.defaultdict[str, list[int]] = collections.defaultdict(lambda: [0, 0, 0, 0])
     for path, value in files.items():
         module = path.rsplit("/", 1)[0] if path.count("/") > 3 else path
         modules[module] = [a + b for a, b in zip(modules[module], value)]
@@ -167,9 +175,13 @@ def main():
         rfhit = sum(v[2] for v in route_files.values())
         out += [f"Full 100% route alone: lines {rhit}/{total} ({percent(rhit, total).strip()}); "
                 f"functions {rfhit}/{ftotal} ({percent(rfhit, ftotal).strip()}).", ""]
-    if options["--unit"]:
-        unit_files = load_union(llvm_cov, options["--unit"], *objects)
-        both = load_union(llvm_cov, options["--combined"], obj, *objects)
+    combined_modules: collections.defaultdict[str, list[int]] | None
+    if unit := options["--unit"]:
+        combined = options["--combined"]
+        if combined is None:  # llvm-cov would reject the missing profile otherwise
+            raise SystemExit("--unit needs --combined")
+        unit_files = load_union(llvm_cov, unit, *objects)
+        both = load_union(llvm_cov, combined, obj, *objects)
         uh, ut, ufh, uft = totals({path: value for path, value in unit_files.items()
                                    if path.startswith("crates/sm_game/")})
         ch, ct, cfh, cft = totals(both)
@@ -200,7 +212,7 @@ def main():
     if route:
         gained = {key: value for key, value in route_functions.items()
                   if value[0] and not functions.get(key, (0, 0))[0]}
-        by_file = collections.defaultdict(list)
+        by_file: collections.defaultdict[str, list[tuple[int, int, str, int]]] = collections.defaultdict(list)
         for (path, line, name), (count, size) in gained.items():
             by_file[path].append((size, line, name, count))
         out += ["", f"## Executed by the full route but never by the corpus ({len(gained)} functions)", "",
@@ -219,15 +231,15 @@ def main():
         out.append(f"- `{path}:{line}` {name} (~{size} lines){reached}")
     # Samus's movement, collision, weapons and grapple are authored as trick
     # rows, so list every cold function there, however small.
-    samus = collections.defaultdict(list)
+    samus: collections.defaultdict[str, list[tuple[int, str, int]]] = collections.defaultdict(list)
     for (path, line, name), size in cold.items():
         if re.search(r"/src/(player_|grapple|samus|projectile|launch_motion|liquid)", path):
             samus[path].append((line, name, size))
     out += ["", f"## Never-executed Samus functions in the corpus ({sum(map(len, samus.values()))})",
             "", "Movement, collision, weapons and grapple sources, by file.", ""]
-    for path, items in sorted(samus.items()):
+    for path, cold_items in sorted(samus.items()):
         out.append(f"- `{path}`")
-        for line, name, size in sorted(items):
+        for line, name, size in sorted(cold_items):
             reached = " (route executes)" if route and route_functions.get((path, line, name), (0, 0))[0] else ""
             out.append(f"  - `:{line}` {name} (~{size} lines){reached}")
     with open(output, "w", encoding="utf-8", newline="\n") as handle:

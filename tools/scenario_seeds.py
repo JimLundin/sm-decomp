@@ -61,9 +61,9 @@ PROTECTED = {0x0998, 0x079B, 0x05B6, 0x05D1, *range(0x0087, 0x008B)}
 @dataclass
 class Scenario:
     base: str
-    edits: dict = field(default_factory=dict)
+    edits: dict[str, int | str] = field(default_factory=dict)
     # Raw work-RAM words: {offset: value}.
-    words: dict = field(default_factory=dict)
+    words: dict[int, int] = field(default_factory=dict)
     note: str = ""
 
 
@@ -177,7 +177,7 @@ SCENARIOS = {
 }
 
 
-def resolve(name, value):
+def resolve(name: str, value: int | str) -> int:
     """A field's value as a word: numbers, or names of items, beams or the HUD item."""
     if isinstance(value, int):
         return value
@@ -193,8 +193,8 @@ def resolve(name, value):
     return sum(table[item] for item in value.split("+"))
 
 
-def planned_words(scenario):
-    words = {}
+def planned_words(scenario: Scenario) -> dict[int, int]:
+    words: dict[int, int] = {}
     for name, value in scenario.edits.items():
         if name not in FIELDS:
             raise ValueError(f"unknown field {name}")
@@ -208,7 +208,7 @@ def planned_words(scenario):
     return words
 
 
-def base_entries(base):
+def base_entries(base: str) -> tuple[Path, list[dict[str, str]]]:
     capture, index = base.split(":")
     directory = ROOT / "target/seeds" / capture
     with (directory / "rooms.csv").open(newline="") as stream:
@@ -218,7 +218,7 @@ def base_entries(base):
     return directory, rows
 
 
-def seed_digest(directory, prefix):
+def seed_digest(directory: Path, prefix: str) -> str:
     digest = hashlib.sha256()
     for region, size in REGIONS:
         data = (directory / f"{prefix}-{region}.bin").read_bytes()
@@ -229,7 +229,7 @@ def seed_digest(directory, prefix):
     return digest.hexdigest()
 
 
-def write(name):
+def write(name: str) -> None:
     scenario = SCENARIOS[name]
     words = planned_words(scenario)
     source, rows = base_entries(scenario.base)
@@ -257,7 +257,7 @@ def write(name):
     print(f"# {len(words)} edited words; wram: {target / (prefix + '-wram.bin')}")
 
 
-def show(name):
+def show(name: str) -> None:
     scenario = SCENARIOS[name]
     source, rows = base_entries(scenario.base)
     wram = (source / rows[0]["file"]).read_bytes()
@@ -267,7 +267,7 @@ def show(name):
         print(f"${offset:04X} {names.get(offset, 'word'):20} {before:#06x} -> {value:#06x}")
 
 
-def check():
+def check() -> None:
     for name, scenario in SCENARIOS.items():
         if not re.fullmatch(r"[a-z0-9-]+", name):
             raise SystemExit(f"{name}: scenario names are lowercase words joined by '-'")
@@ -277,7 +277,8 @@ def check():
             planned_words(scenario)
         except (ValueError, KeyError) as error:
             raise SystemExit(f"{name}: {error}")
-    for bad in ({"energy": 1, "x": "left"}, {"health": 1}):
+    invalid: tuple[dict[str, int | str], ...] = ({"energy": 1, "x": "left"}, {"health": 1})
+    for bad in invalid:
         try:
             planned_words(Scenario(base="x:1", edits=bad))
         except (ValueError, KeyError):
@@ -291,7 +292,7 @@ def check():
     print(f"{len(SCENARIOS)} scenarios check")
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     commands = parser.add_subparsers(dest="command", required=True)
     for command in ("write", "show"):

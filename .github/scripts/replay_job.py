@@ -7,12 +7,13 @@ together in one process, because they can reuse each other's checked prefixes.
 Raw verifier output stays private on the runner in the modes that filter it.
 """
 import concurrent.futures, json, os, pathlib, re, subprocess, sys, threading, urllib.request
+from typing import Any
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools"))
 import scenario  # noqa: E402
 
-JOB = json.loads(os.environ["JOB"])
+JOB: dict[str, Any] = json.loads(os.environ["JOB"])
 TEMP = pathlib.Path(os.environ["RUNNER_TEMP"])
 SUMMARY = os.environ["GITHUB_STEP_SUMMARY"]
 WORKERS = int(os.environ.get("WORKERS") or os.cpu_count() or 1)
@@ -22,7 +23,7 @@ SUMMARY_NAMES = re.compile(r"^(PASS|FAIL|Corpus|RESULT|DOMAIN|DIAGNOSTIC|EXIT|"
                            r"[A-Za-z0-9-]+: (lock |lockstep |free run |Free run|@))")
 # Only fixed diagnostic categories survive; raw exception text stays private.
 AUDIO_DIAGNOSTIC = re.compile(r'^DIAGNOSTIC stage=(post-replay|audio-trace-validation|post-replay-provenance|corpus-post-replay) category=(required-probes|required-facts|probe-follow-up|fact-follow-up|credits-fact|audio-output-completion|audio-footer-write|audio-footer-flush|checkpoint-origin-read|checkpoint-origin-changed|checkpoint-save|trace-read|trace-format|header-missing|header-provenance|footer-duplicate|output-stream|output-kind|footer-incomplete|output-counts|source-read|source-changed|rom-input-read|rom-input-changed|binary-read|binary-changed|inputs-changed|checkpoint-read|checkpoint-frame) tick=(unknown|[0-9]+)$')
-ROOM_LOGS = {
+ROOM_LOGS: dict[str, tuple[str, str, int | None]] = {
     "SM_CROSS_RENDER_LOG": ("Cross-renderer", "lines differ", 5),
     "SM_NATIVE_LINES_LOG": ("Native PPU lines", "differing lines or resyncs", None),
     "SM_HDMA_TABLE_LOG": ("HDMA tables", "frames differ from their frame-start table", None),
@@ -31,12 +32,12 @@ ROOM_LOGS = {
 print_lock = threading.Lock()
 
 
-def script(name, *arguments, **environment):
+def script(name: str, *arguments: str, **environment: str) -> None:
     subprocess.run([sys.executable, "-B", str(ROOT / ".github/scripts" / name), *arguments],
                    cwd=ROOT, check=True, env=dict(os.environ, **environment))
 
 
-def restore():
+def restore() -> None:
     if JOB["kinds"] == "room":
         bundle = TEMP / "chain.tar.gz.enc"
         urllib.request.urlretrieve(
@@ -50,7 +51,7 @@ def restore():
                    ROUTE=shard["route"], INPUTS=shard["inputs"])
 
 
-def rom_import():
+def rom_import() -> int:
     """A record that rejects the cartridge would leave the game on its old ROM reads.
 
     The log can hold ROM-derived values, so only pass/fail, the rejected record
@@ -68,12 +69,15 @@ def rom_import():
     return 1
 
 
-def partition(ids):
+def partition(ids: list[str]) -> list[list[str]]:
     """Split rows into balanced worker groups, keeping prefix rows together."""
     frames = {row["id"]: row for row in scenario.rows(ROOT)}
-    cost = lambda name: frames[name].get("frames", 1)
+    def cost(name: str) -> int:
+        count: int = frames[name].get("frames", 1)
+        return count
+
     prefixed = [name for name in ids if frames[name].get("start_frame", 0)]
-    groups = [[] for _ in range(max(1, min(WORKERS, len(ids))))]
+    groups: list[list[str]] = [[] for _ in range(max(1, min(WORKERS, len(ids))))]
     if prefixed:
         groups[0].extend(prefixed)
     for name in sorted(set(ids) - set(prefixed), key=lambda name: (-cost(name), name)):
@@ -81,7 +85,7 @@ def partition(ids):
     return [group for group in groups if group]
 
 
-def console_line(line, state, mode, audio):
+def console_line(line: str, state: dict[str, str], mode: str, audio: bool) -> str | None:
     """What this mode may print, or None. Audio traces and locks keep raw text private."""
     if mode == "lock":
         return line if LOCK_NAMES.match(line) else None
@@ -109,12 +113,12 @@ def console_line(line, state, mode, audio):
     return line if line.startswith("Corpus") else None
 
 
-def worker(index, group, mode, audio, summary):
+def worker(index: int, group: list[str], mode: str, audio: bool, summary: list[str]) -> int:
     arguments = [sys.executable, "tools/verify_dll.py", "rom/sm.smc", "--corpus", "scenarios", "--no-build", "--direct"]
     for name in group:
         arguments += ["--segment", name]
     environment = dict(os.environ)
-    logs = {}
+    logs: dict[str, pathlib.Path] = {}
     if mode == "lock":
         arguments += ["--mode", "check-lock", "--lock", "scenarios/lock.toml"]
     else:
@@ -133,10 +137,11 @@ def worker(index, group, mode, audio, summary):
                 environment[name] = str(logs[name])
     if JOB["kinds"] == "room":
         environment["FULL_ROUTE"] = JOB["route"]
-    state = {}
+    state: dict[str, str] = {}
     with (TEMP / f"replay-{index}.log").open("w", encoding="utf-8", errors="replace") as raw:
         process = subprocess.Popen(arguments, cwd=ROOT, env=environment, stdout=subprocess.PIPE,
                                    stderr=subprocess.STDOUT, text=True, encoding="utf-8", errors="replace")
+        assert process.stdout is not None  # stdout=PIPE
         for line in process.stdout:
             raw.write(line)
             shown = console_line(line.rstrip("\n"), state, mode, audio)
@@ -160,11 +165,11 @@ def worker(index, group, mode, audio, summary):
     return code
 
 
-def replay():
+def replay() -> int:
     mode, audio = JOB["mode"], bool(os.environ.get("AUDIO_TRACE"))
     groups = partition(JOB["segments"].split())
     print(f"job {JOB['name']}: {len(JOB['segments'].split())} rows in {len(groups)} processes", flush=True)
-    summary = []
+    summary: list[str] = []
     with concurrent.futures.ThreadPoolExecutor(len(groups)) as pool:
         codes = list(pool.map(lambda item: worker(item[0], item[1], mode, audio, summary), enumerate(groups)))
     with open(SUMMARY, "a") as out:
@@ -172,7 +177,7 @@ def replay():
     return 1 if any(codes) else 0
 
 
-def main():
+def main() -> int:
     restore()
     if JOB["mode"] == "rom-import":
         return rom_import()

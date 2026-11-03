@@ -1,10 +1,20 @@
 """Actor contract extension called from the existing detached mutation runner."""
+from collections.abc import Callable
 import os
+from pathlib import Path
 import re
 import shutil
+import subprocess
+
+# (relative path, anchor, replacement)
+Edit = tuple[str, str, str]
+# name, selected case or test, required assertion, exact production edits
+SuiteMutation = tuple[str, str, str, tuple[Edit, ...]]
+# mutations.run: command, timeout[, allow[, externs]]
+Runner = Callable[..., subprocess.CompletedProcess[str]]
 
 # name, fully-qualified selected Rust test, required assertion, exact production edits
-ACTOR_CONTRACT_MUTATIONS = (
+ACTOR_CONTRACT_MUTATIONS: tuple[SuiteMutation, ...] = (
     ("actor_room_keeps_old_obj_receipts",
      "game::actors::palette_checks::unrelated_rooms_can_reuse_a_row_but_only_its_current_resource_is_resident",
      "actor.palette.actor_clear_revokes_obj_receipts",
@@ -25,7 +35,7 @@ ACTOR_CONTRACT_MUTATIONS = (
      (("crates/sm_game/src/actors/media.rs", "(id, species.default_appearance).hash(&mut hash);", "id.hash(&mut hash);"),)),
 )
 
-def _build(source, work, name, run, edits=()):
+def _build(source: Path, work: Path, name: str, run: Runner, edits: tuple[Edit, ...] = ()) -> Path:
     from mutations import apply_edit, build_packages, mutant_crates
     copied = work / name / "src"
     shutil.copytree(source, copied)
@@ -36,13 +46,13 @@ def _build(source, work, name, run, edits=()):
     main = copied / "verification" / "player_detached" / "main.rs"
     binary = work / name / ("actor-contracts.exe" if os.name == "nt" else "actor-contracts")
     # Mutants may leave a variable or import unused; the baseline stays strict.
-    allow = ("-A", "unused") if edits else ()
+    allow: tuple[str, ...] = ("-A", "unused") if edits else ()
     built = run(["rustc", "--edition=2024", "-O", "--test", str(main), "-o", str(binary)], 180, allow, externs)
     if built.returncode != 0:
         raise RuntimeError(f"{name}: COMPILE ERROR; not a killed mutation\n{built.stderr}")
     return binary
 
-def check_actor_contracts(source, work, run):
+def check_actor_contracts(source: Path, work: Path, run: Runner) -> int:
     """Called under existing GitHub-only main guard; preserves all previous mutants."""
     if os.environ.get("GITHUB_ACTIONS") != "true":
         raise RuntimeError("actor mutation execution follows the existing GitHub-only runner policy")
@@ -75,7 +85,7 @@ def check_actor_contracts(source, work, run):
 
 
 # New collision contracts; the six existing actor contracts above stay unchanged.
-COLLISION_CONTRACT_MUTATIONS = (('collision_launch_recorded_twice',
+COLLISION_CONTRACT_MUTATIONS: tuple[SuiteMutation, ...] = (('collision_launch_recorded_twice',
   'game::player_collision_host::checks::unchecked_launch',
   'collision.owned.unchecked_launch_exact_once',
   (('crates/sm_game/src/player_collision/motion.rs',
@@ -135,7 +145,7 @@ COLLISION_TESTS = ('game::player_collision_host::checks::unchecked_launch',
  'game::player_collision_host::checks::terrain_cancellation_follows_position_and_launch')
 
 
-def check_collision_contracts(source, work, run):
+def check_collision_contracts(source: Path, work: Path, run: Runner) -> int:
     """Use the existing libtest build helper and require every named collision test."""
     if os.environ.get("GITHUB_ACTIONS") != "true":
         raise RuntimeError("collision mutation execution follows the existing GitHub-only runner policy")

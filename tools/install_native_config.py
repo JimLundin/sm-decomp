@@ -38,7 +38,7 @@ UTILITY_NAMES = """NextDelim StringEqualsNoCase StringStartsWithNoCase ReadWhole
     SplitKeyValue SkipPrefix StrSet""".split()
 
 
-def utility_source(source):
+def utility_source(source: str) -> str:
     selected = []
     for name in ["ToLower"] + UTILITY_NAMES:
         match = re.search(r"^(?:static inline )?[^\n]+\b" + name +
@@ -60,17 +60,17 @@ def utility_source(source):
     return re.sub(r"\b(?:" + "|".join(symbols) + r")\b", lambda m: symbols[m[0]], source)
 
 
-def rename_symbols(source):
+def rename_symbols(source: str) -> str:
     return re.sub(r"\b(?:" + "|".join(SYMBOLS) + r")\b", lambda m: SYMBOLS[m[0]], source)
 
 
-def replace(source, old, new):
+def replace(source: str, old: str, new: str) -> str:
     if source.count(old) != 1:
         raise ValueError(f"Pinned configuration patch no longer matches: {old}")
     return source.replace(old, new)
 
 
-def config_sources(source, header):
+def config_sources(source: str, header: str) -> tuple[str, str]:
     source = replace(source, '#include "features.h"\n', '')
     source = replace(source, '#include "util.h"', '#include "native_config.h"')
     header = replace(header, '  const char *language;\n', '')
@@ -122,7 +122,7 @@ def config_sources(source, header):
     return rename_symbols(source), rename_symbols(header)
 
 
-def write_stamp(root, path, prefix, inputs):
+def write_stamp(root: Path, path: Path, prefix: str, inputs: tuple[str, ...]) -> None:
     blobs = [(root / name).read_bytes() for name in inputs]
     declarations = [f"static const unsigned char {prefix}_source_{i}[] = {{" +
                     ",".join(str(byte) for byte in data) + "};" for i, data in enumerate(blobs)]
@@ -138,7 +138,7 @@ SHADER_INPUTS = ("crates/sm_app/src/platform/glsl_shader.rs", "sm/src/native_sha
                  "crates/sm_app/src/platform/opengl.rs", "sm/src/types.rs", "tools/install_native_config.py")
 
 
-def shader_source(source):
+def shader_source(source: str) -> str:
     # The published parser/render algorithms stay external. These substitutions
     # retain native resource scopes, diagnostics, initialization and conversions.
     source = source[source.index("static GlslPass *ParseConfigKeyPass"):]
@@ -255,7 +255,7 @@ def shader_source(source):
     return source
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--zig", required=True, type=Path)
     parser.add_argument("--target", required=True, choices=("x86_64-windows-gnu", "x86_64-linux-gnu"))

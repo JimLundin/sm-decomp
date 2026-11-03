@@ -37,8 +37,14 @@ import hashlib
 import itertools
 import re
 import sys
+from collections.abc import Callable, Iterable, Iterator, Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
+
+# A statement's tokens: words, and nested blocks (lists of statements). Their
+# shape is checked as the recipe runs, so a token stays loosely typed here.
+Statement = list[Any]
 
 BUTTONS = {"B": 0x8000, "Y": 0x4000, "Select": 0x2000, "Start": 0x1000, "Up": 0x0800,
            "Down": 0x0400, "Left": 0x0200, "Right": 0x0100, "A": 0x0080, "X": 0x0040,
@@ -48,12 +54,12 @@ OPPOSITE = {"Left": "Right", "Right": "Left", "Up": "Down", "Down": "Up"}
 JUMP, RUN, SHOOT = "A", "B", "X"
 
 
-def _walljump(toward, wait="10"):
+def _walljump(toward: str, wait: str = "10") -> str:
     away = OPPOSITE[toward]
     return f"{toward}+{JUMP} 12; {toward} 3; {away} 1; {away}+{JUMP} {wait}"
 
 
-def _mockball(direction, run="40", air="19"):
+def _mockball(direction: str, run: str = "40", air: str = "19") -> str:
     """Run, spin jump and, just before landing, morph without forward: Down
     aims down, a frame of jump alone keeps that pose (any other button would
     fall back and drop the extra run speed) and a fresh Down morphs. The ball
@@ -63,20 +69,20 @@ def _mockball(direction, run="40", air="19"):
             f"{RUN}+Down 1; {direction} 40")
 
 
-def _short_charge(direction, taps="4"):
+def _short_charge(direction: str, taps: str = "4") -> str:
     return f"repeat {taps} {{ {direction} 6; _ 2 }}; {direction}+{RUN} 60"
 
 
-def _charge_shot(direction="_", frames="70"):
+def _charge_shot(direction: str = "_", frames: str = "70") -> str:
     held = SHOOT if direction == "_" else f"{direction}+{SHOOT}"
     return f"{held} {frames}; _ 1"
 
 
-def _morph():
+def _morph() -> str:
     return "press Down 4; press Down 4"
 
 
-def _spark(direction):
+def _spark(direction: str) -> str:
     """Release a stored shinespark: straight up, or from a jump sideways or
     diagonally (holding the aim-up button R)."""
     turn = "Left 3; _ 10; " if "left" in direction else ""
@@ -87,26 +93,26 @@ def _spark(direction):
     return f"{turn}A 4; _ 8; {side}{aim}+A 10"
 
 
-def _toggle_twice():
+def _toggle_twice() -> str:
     return "press A; press A; press Down"
 
 
 # Named moves: each takes its arguments as words and returns language text.
-MOVES = {"walljump": _walljump, "mockball": _mockball, "short-charge": _short_charge,
+MOVES: dict[str, Callable[..., str]] = {"walljump": _walljump, "mockball": _mockball, "short-charge": _short_charge,
          "charge-shot": _charge_shot, "morph": _morph, "toggle-twice": _toggle_twice,
          "spark": _spark}
 
 
-def tokens(text):
+def tokens(text: str) -> Iterator[str]:
     for line in text.splitlines():
         line = line.split("#", 1)[0]
         yield from re.findall(r"[{};]|[^\s{};]+", line)
         yield ";"
 
 
-def statements(stream):
+def statements(stream: Iterator[str]) -> Iterator[Statement]:
     """Group tokens into statements; a block is a nested list of statements."""
-    current = []
+    current: Statement = []
     for token in stream:
         if token == ";":
             if current:
@@ -124,7 +130,7 @@ def statements(stream):
         yield current
 
 
-def word_of(buttons):
+def word_of(buttons: str) -> int:
     if buttons == "_":
         return 0
     try:
@@ -133,13 +139,13 @@ def word_of(buttons):
         raise ValueError(f"unknown button {error.args[0]!r} in {buttons!r}") from None
 
 
-def frames_of(text):
+def frames_of(text: str) -> int:
     if not text.isdigit():
         raise ValueError(f"frame count {text!r} is not a whole number")
     return int(text)
 
 
-def run(statement_list, params, depth=0):
+def run(statement_list: Iterable[Statement], params: Mapping[str, Any], depth: int = 0) -> Iterator[int]:
     if depth > 16:
         raise ValueError("moves nest too deeply")
     for statement in statement_list:
@@ -165,22 +171,22 @@ def run(statement_list, params, depth=0):
             raise ValueError(f"cannot read statement: {' '.join(map(str, statement))}")
 
 
-def substitute(token, params):
-    def value(match):
+def substitute(token: str, params: Mapping[str, Any]) -> str:
+    def value(match: re.Match[str]) -> str:
         if match[1] not in params:
             raise ValueError(f"recipe parameter ${match[1]} has no value")
         return str(params[match[1]])
     return re.sub(r"\$([a-z_]+)", value, token)
 
 
-def compile_recipe(text, params=None):
+def compile_recipe(text: str, params: Mapping[str, Any] | None = None) -> list[int]:
     return list(run(list(statements(tokens(text))), params or {}))
 
 
 @dataclass
 class Recipe:
     text: str
-    params: dict = field(default_factory=dict)
+    params: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -189,10 +195,10 @@ class Sweep:
     recipe: str
     row: str
     seed: str
-    values: dict
-    expect: list
+    values: dict[str, list[Any]]
+    expect: list[str]
     # Probes each variant must reach, keyed by its row suffix.
-    hits: dict = field(default_factory=dict)
+    hits: dict[str, list[str]] = field(default_factory=dict)
 
 
 RECIPES = {
@@ -425,11 +431,11 @@ PINNED = {
 }
 
 
-def encode(data):
+def encode(data: Iterable[int]) -> bytes:
     return "".join(f"{word:04X}\n" for word in data).encode()
 
 
-def read_prefix(path, frames):
+def read_prefix(path: Path | None, frames: int) -> list[int]:
     if frames == 0:
         return []
     if path is None:
@@ -440,12 +446,12 @@ def read_prefix(path, frames):
     return prefix
 
 
-def write(path, data):
+def write(path: Path, data: Iterable[int]) -> None:
     with path.open("xb") as stream:
         stream.write(encode(data))
 
 
-def seed_sha256(seed):
+def seed_sha256(seed: str) -> str:
     capture, index = seed.split(":")
     with open(Path(__file__).resolve().parents[1] / f"movies/room-seeds-{capture}.csv",
               newline="") as stream:
@@ -455,7 +461,7 @@ def seed_sha256(seed):
     raise ValueError(f"no recorded seed {seed}")
 
 
-def sweep(name, out_dir, prefix):
+def sweep(name: str, out_dir: Path, prefix: Path | None) -> None:
     plan = SWEEPS[name]
     keys = sorted(plan.values)
     for combination in itertools.product(*(plan.values[key] for key in keys)):
@@ -472,7 +478,7 @@ def sweep(name, out_dir, prefix):
               f"# python tools/scenario.py lock --pin {plan.row}-{suffix} seed={plan.seed} inputs={stem}.inputs")
 
 
-def check():
+def check() -> None:
     for name, digest in PINNED.items():
         recipe = RECIPES[name]
         actual = hashlib.sha256(encode(compile_recipe(recipe.text, recipe.params))).hexdigest()
@@ -501,7 +507,7 @@ def check():
     print(f"{len(PINNED)} pinned recipes and {len(cases)} language cases match")
 
 
-def main():
+def main() -> None:
     arguments = sys.argv[1:]
     if arguments and arguments[0] in RECIPES:
         arguments.insert(0, "write")

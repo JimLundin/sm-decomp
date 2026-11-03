@@ -13,15 +13,17 @@ import os
 import pathlib
 import re
 import sys
+from typing import Any
 
 RUNNING = re.compile(r"^\s*Running (unittests )?(\S+) \((?:.*[\\/])?deps[\\/]([A-Za-z0-9_]+)-[0-9a-f]+(?:\.exe)?\)")
 DOCTESTS = re.compile(r"^\s*Doc-tests (\S+)")
 RESULT = re.compile(r"^test result: (\w+)\. (\d+) passed; (\d+) failed; (\d+) ignored; (\d+) measured; (\d+) filtered out")
 
 
-def binaries(log):
+def binaries(log: str) -> list[tuple[str, tuple[str | Any, ...] | None]]:
     """(name, result) in log order; result is None if the binary gave none."""
-    current, found = None, []
+    current: str | None = None
+    found: list[tuple[str, tuple[str | Any, ...] | None]] = []
     for line in log.splitlines():
         running = RUNNING.match(line)
         doctests = DOCTESTS.match(line)
@@ -31,7 +33,7 @@ def binaries(log):
             if running:
                 unit, source, crate = running.groups()
                 current = f"{crate} (unit)" if unit else source.replace("\\", "/")
-            else:
+            elif doctests:
                 current = f"{doctests.group(1)} (doc)"
             continue
         result = RESULT.match(line)
@@ -43,12 +45,12 @@ def binaries(log):
     return found
 
 
-def main():
+def main() -> int:
     log_path, *packages = sys.argv[1:]
     log = pathlib.Path(log_path).read_text(encoding="utf-8", errors="replace")
     found = binaries(log)
     ran = {name for name, _ in found}
-    expected = []
+    expected: list[str] = []
     for package in packages:
         root = pathlib.Path(package)
         crate = root.name
@@ -57,7 +59,7 @@ def main():
         # Integration tests are reported by their path inside the package.
         expected += [f"tests/{path.name}" for path in sorted((root / "tests").glob("*.rs"))]
     rows = ["| Test binary | Result | Passed | Failed | Ignored | Filtered |", "| --- | --- | --- | --- | --- | --- |"]
-    failed = []
+    failed: list[str] = []
     for name, result in found:
         if result is None:
             rows.append(f"| `{name}` | **no result** | | | | |")

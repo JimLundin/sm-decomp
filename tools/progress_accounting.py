@@ -1,20 +1,72 @@
 #!/usr/bin/env python3
 """Count physical Rust and explicitly mapped superseded sections at a Git pin."""
 import argparse
-import importlib.util
+import re
 import json
 from pathlib import Path
 import subprocess
 import hashlib
 import sys
+from collections.abc import Callable
+from typing import Any
 
 sys.dont_write_bytecode = True
 
+# (kind, start, end) of one Rust code token.
+Token = tuple[str, int, int]
+Lexer = Callable[[str], list[Token]]
 
-def function(text, name, lexer):
+TOKEN = re.compile(r"""
+    (?P<ws>\s+)
+  | (?P<lc>//[^\n]*)
+  | (?P<bc>/\*)
+  | (?P<raw>b?r(?P<h>\#*)")
+  | (?P<str>b?"(?:\\.|[^"\\])*")
+  | (?P<chr>b?'(?:\\.[^']*|[^\\'])')
+  | (?P<life>'\w+)
+  | (?P<id>[A-Za-z_]\w*)
+  | (?P<p>.)
+""", re.X | re.S)
+
+
+def lex(s: str) -> list[Token]:
+    """Return (kind, start, end) for Rust code tokens, skipping comments, strings and chars."""
+    i, n = 0, len(s)
+    out: list[Token] = []
+    while i < n:
+        m = TOKEN.match(s, i)
+        assert m is not None  # the final alternative matches any character
+        if m.group("raw") is not None:
+            close = '"' + m.group("h")
+            j = s.find(close, m.end())
+            out.append(("str", i, j + len(close)))
+            i = j + len(close)
+            continue
+        if m.group("bc") is not None:
+            d, j = 1, i + 2
+            while j < n and d:
+                if s.startswith("/*", j):
+                    d += 1
+                    j += 2
+                elif s.startswith("*/", j):
+                    d -= 1
+                    j += 2
+                else:
+                    j += 1
+            i = j
+            continue
+        if m.group("ws") is None and m.group("lc") is None and m.group("life") is None:
+            kind = "id" if m.group("id") is not None else (
+                "str" if m.group("str") is not None else ("chr" if m.group("chr") is not None else "p"))
+            out.append((kind, i, m.end()))
+        i = m.end()
+    return out
+
+
+def function(text: str, name: str, lexer: Lexer) -> tuple[int, int, str] | None:
     tokens = lexer(text)
     words = [text[a:b] for _, a, b in tokens]
-    matches = []
+    matches: list[tuple[int, int, str]] = []
     for i in range(len(tokens) - 2):
         if words[i:i + 2] != ["fn", name]:
             continue
@@ -37,8 +89,11 @@ def function(text, name, lexer):
     return matches[0] if matches else None
 
 
-def discounts(kept, mapping, lexer):
-    covered, counted, results = set(), set(), []
+def discounts(kept: dict[str, str], mapping: dict[str, Any],
+              lexer: Lexer) -> tuple[int, int, int, list[dict[str, Any]]]:
+    covered: set[tuple[str, int]] = set()
+    counted: set[tuple[str, str]] = set()
+    results: list[dict[str, Any]] = []
     operations = signatures = 0
     for record in mapping["sections"]:
         for key in ("source_pin", "function", "replacement", "actual_callers", "proof", "retention_reason", "deletion_condition"):
@@ -66,7 +121,7 @@ def discounts(kept, mapping, lexer):
     return len(covered), operations, signatures, results
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--ref", default="HEAD")
     parser.add_argument("--superseded", type=Path)
@@ -80,6 +135,7 @@ def main():
     kept, totals = {}, dict(production=0, verification=0, legacy=0, unsafe_containing=0)
     rows = subprocess.check_output(["git", "ls-tree", "-r", "-z", pin, "sm/src", "crates"], cwd=repo).split(b"\0")
     with subprocess.Popen(["git", "cat-file", "--batch"], cwd=repo, stdin=subprocess.PIPE, stdout=subprocess.PIPE) as batch:
+        assert batch.stdin is not None and batch.stdout is not None  # both are pipes
         for row in filter(None, rows):
             meta, name = row.split(b"\t", 1)
             rel = name.decode()
@@ -100,10 +156,7 @@ def main():
                 kept[rel] = data.decode()
         batch.stdin.close()
         assert batch.wait() == 0
-    spec = importlib.util.spec_from_file_location("unsafe_lexer", repo / "tools/codemod/strip_unsafe_fixpoint.py")
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    covered, operations, signatures, results = discounts(kept, mapping, module.lex)
+    covered, operations, signatures, results = discounts(kept, mapping, lex)
     print(json.dumps({"commit": pin, "physical_production": totals["production"], "mapped_superseded_retained": covered,
                       "adjusted_implementation": totals["production"] - covered, "other_physical_counts": totals,
                       "mapped_retained_unsafe_operation_sites": operations, "mapped_retained_unsafe_signatures": signatures,

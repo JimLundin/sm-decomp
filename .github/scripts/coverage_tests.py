@@ -21,7 +21,7 @@ import sys
 PACKAGES = ["sm_data", "sm_game", "sm_runtime"]
 
 
-def main():
+def main() -> None:
     out = pathlib.Path(sys.argv[1]).resolve()
     (out / "bin").mkdir(parents=True, exist_ok=True)
     (out / "profiles").mkdir(parents=True, exist_ok=True)
@@ -31,7 +31,7 @@ def main():
         command += ["-p", package]
     build_environment = dict(os.environ)
     built = subprocess.run(command, check=True, stdout=subprocess.PIPE, text=True, env=build_environment).stdout
-    binaries = []
+    binaries: list[tuple[str, pathlib.Path, pathlib.Path]] = []
     for line in built.splitlines():
         if not line.startswith("{"):
             continue
@@ -40,17 +40,18 @@ def main():
             source = pathlib.Path(message["executable"])
             target = out / "bin" / source.name
             shutil.copy2(source, target)
-            package = pathlib.Path(message["manifest_path"]).parent
-            binaries.append((message["target"]["name"], target, package))
+            package_root = pathlib.Path(message["manifest_path"]).parent
+            binaries.append((message["target"]["name"], target, package_root))
     if not binaries:
         raise SystemExit("no test binaries were built")
-    failed, ran = [], []
-    for name, binary, package in binaries:
-        environment = dict(os.environ, CARGO_MANIFEST_DIR=str(package),
+    failed: list[str] = []
+    ran: list[str] = []
+    for name, binary, package_root in binaries:
+        environment = dict(os.environ, CARGO_MANIFEST_DIR=str(package_root),
                            LLVM_PROFILE_FILE=str(out / "profiles" / f"{name}-%p-%m.profraw"))
         print(f"== {name}", flush=True)
         try:
-            result = subprocess.run([str(binary)], cwd=package, env=environment)
+            result = subprocess.run([str(binary)], cwd=package_root, env=environment)
         except OSError as error:
             # A binary that cannot start is left out of the report.
             print(f"::warning::{binary.name} could not start: {error}", flush=True)
