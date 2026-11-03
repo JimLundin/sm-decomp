@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Restore and run one ci.yml Verify matrix job (JOB, as JSON).
+"""Restore and run one verify.yml matrix job (JOB, as JSON).
 
 Rows run in up to WORKERS verifier processes at once: one engine replay uses one
 core and each row starts from its own seed. Rows with a checkpoint prefix stay

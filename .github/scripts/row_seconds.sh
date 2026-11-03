@@ -11,6 +11,8 @@ for run in "$@"; do
   gh api "repos/$repo/actions/runs/$run/jobs?per_page=100" --paginate \
     --jq '.jobs[] | select(.conclusion == "success") | "\(.id) \(.name)"' |
   while read -r id name; do
+    # Called jobs are named "<caller job> / <job>" (ci.yml calls verify.yml).
+    name=${name##* / }
     case $name in
       lock-*) mode=lock ;;
       oracle-*|record-*|rom-import|verify*|Verify*|Quality|detached|desktop-check) continue ;;

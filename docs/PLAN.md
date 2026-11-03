@@ -33,14 +33,15 @@ may not raise `engine_ram_address_sites` or `engine_raw_ram_calls` in
 fields before it lands; see REVIEW's Phase 2 ratchets.
 
 Jim's CI direction (2026-11-02): verification runs on GitHub Actions, on Linux, through
-one workflow ([ci.yml](../.github/workflows/ci.yml) Verify). Pull requests gate on the
+one workflow ([verify.yml](../.github/workflows/verify.yml), called from ci.yml). Pull requests gate on the
 oracle digest lock plus lockstep for rows it cannot hold; full lockstep runs nightly. This
 replaces the 2026-10-27 stop on Linux. Local machines compile-check; they don't need
 a verifier build or replays. Push a slice once and let its gate finish unless fixing a
 failure. New commits supersede their branch's PR and push gates; nightly and dispatched runs finish.
-Jim's workflow direction (2026-11-03): CI is one workflow, `ci.yml`, in two parts: Quality
-(format, lints, ratchets, tests, dependency direction, the Windows desktop type-check) and
-Verify (replays). Unused workflows go; the nightly desktop link and mutant runs were removed,
+Jim's workflow direction (2026-11-03): CI has fixed-scope, delimited workflows that `ci.yml`
+composes. `ci.yml` alone holds triggers and has no steps; it calls `quality.yml` (format, lints,
+ratchets, tests, dependency direction, the Windows desktop type-check), `verify.yml` (replays,
+by `scope`) and `bench.yml` (replay speed against a base ref). Dispatch picks one `action`. Unused workflows go; the nightly desktop link and mutant runs were removed,
 and Quality still checks the mutation anchors. Verify skips replays when a pull request changes
 no replay-relevant file. Python is typed and type-checked in Quality. Avoid adding Python unless
 it is necessary: this is a Rust project.
