@@ -29,6 +29,8 @@ ROUTE = ".github/scripts/full_route.py"
 # the gate, and every state layout change rejects it. These rows run in full.
 LONG_PREFIX = 20000
 SHARD = ("kind", "seed_asset", "seed_sha256", "segments", "route", "inputs")
+# A gate job within this share of the longest builds its own verifier.
+FIRST = 0.9
 # One kind of work: its restore group ("corpus" or a route), its matrix mode and its row ids.
 Work = tuple[str, str, list[str]]
 
@@ -179,8 +181,14 @@ def main() -> None:
             job["name"] = f"{job['name']}-{count}"
     movie = next(m for m in tomllib.load((ROOT / "movies/manifest.toml").open("rb"))["movies"]
                  if m["category"] == "any%")
+    # The gate's longest jobs set its wall time. They build their own verifier, so they
+    # queue for runners with verify-build instead of behind it (ci.yml verify-replay-first).
+    longest = max((job.get("seconds", 0) for job in jobs), default=0)
+    first = [job for job in jobs if scope == "gate" and longest and job.get("seconds", 0) >= FIRST * longest][:2]
+    rest = [job for job in jobs if job not in first]
     with open(os.environ["GITHUB_OUTPUT"], "a") as out:
-        out.write(f"matrix={json.dumps({'include': jobs})}\n")
+        out.write(f"matrix={json.dumps({'include': rest})}\n")
+        out.write(f"first={json.dumps({'include': first})}\nfirst_count={len(first)}\n")
         out.write(f"movie_file={movie['file']}\nmovie_sha256={movie['sha256']}\n")
     with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as out:
         out.write(f"Scope {scope}: {len(jobs)} jobs\n\n")

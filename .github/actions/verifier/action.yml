@@ -1,0 +1,24 @@
+name: Headless verifier
+description: >
+  Build target/verify-host/sm_verify from this checkout, or reuse one built from the
+  same sources. The job sets RUSTFLAGS, CARGO_INCREMENTAL and CARGO_BUILD_JOBS.
+inputs:
+  flavour:
+    description: plain, or coverage for an instrumented build
+    default: plain
+runs:
+  using: composite
+  steps:
+    - uses: ./.github/actions/linux-native
+    - name: Reuse a verifier built from the same sources
+      # verify_dll.py still rebuilds unless the verifier's stamp matches these sources,
+      # the compiler/options and the actual native archive bytes.
+      uses: actions/cache@v4
+      with:
+        path: |
+          target/verify-dll
+          target/verify-host
+        key: verifier-${{ runner.os }}-${{ inputs.flavour }}-${{ hashFiles('crates/**', 'sm/**', 'Cargo.lock', 'rust-toolchain.toml', 'tools/verify_dll.py', 'tools/install_lakesnes.py', 'tools/install_native_*.py', '.github/actions/linux-native/action.yml') }}
+    - name: Build the verifier
+      shell: bash
+      run: python3 tools/verify_dll.py --build-only --direct
