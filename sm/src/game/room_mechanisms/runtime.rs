@@ -240,7 +240,7 @@ impl Effects for Runtime<'_> {
         self.set_byte(0xd908 + area, 255);
     }
     fn set_has_area_map(&mut self, value: u16) {
-        self.foreign(|game| game.set_has_area_map(value));
+        self.session_mut().menu_screens.save_selection.has_area_map = value;
     }
     fn mark_save_station(&mut self, station: u16) {
         self.write_slice_le(ram::LOAD_STATION_INDEX, station);

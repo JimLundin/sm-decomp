@@ -1340,8 +1340,6 @@ impl Game {
     ram_word_accessors! {
         write;
         set_samus_health_warning: 0xa6a;
-        /// has_area_map ($7E:0789 in ram_map).
-        set_has_area_map: 0x789;
         /// frame_handler_beta ($7E:0A44 in ram_map).
         set_frame_handler_beta: 0xa44;
         set_vram_write_queue_tail: 0x330;
