@@ -539,9 +539,43 @@ pub struct Room {
     /// The room's scroll cells ($7E:CD20..$7E:CD51), a colour byte per screen
     /// (0 red, 1 blue, 2 green), as the little-endian words of the byte image.
     pub scrolls: [u16; 25],
+    /// The pause and unpause hooks ($7E:0601..$7E:0606), the long pointers the
+    /// room's boss sets for the pause screen, as the little-endian words of the
+    /// byte image from $0601.
+    pub pause_hooks: [u16; 3],
     pub camera: crate::camera::Camera,
 }
+/// One of the room's pause hooks ([`Room::pause_hooks`]).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum HookSlot {
+    /// $0601: called entering the pause screen.
+    Pause,
+    /// $0604: called leaving it.
+    Unpause,
+}
 impl Room {
+    /// Store `hook`'s address bytes, first byte first, as the original's word
+    /// store at the hook.
+    pub fn set_hook_address(&mut self, hook: HookSlot, bytes: [u8; 2]) {
+        let at = Self::hook_offset(hook);
+        self.set_hook_byte(at, bytes[0]);
+        self.set_hook_byte(at + 1, bytes[1]);
+    }
+    /// Store `hook`'s bank byte.
+    pub fn set_hook_bank(&mut self, hook: HookSlot, bank: u8) {
+        self.set_hook_byte(Self::hook_offset(hook) + 2, bank);
+    }
+    fn hook_offset(hook: HookSlot) -> usize {
+        match hook {
+            HookSlot::Pause => 0,
+            HookSlot::Unpause => 3,
+        }
+    }
+    fn set_hook_byte(&mut self, offset: usize, byte: u8) {
+        let mut word = self.pause_hooks[offset / 2].to_le_bytes();
+        word[offset % 2] = byte;
+        self.pause_hooks[offset / 2] = u16::from_le_bytes(word);
+    }
     /// Store `bytes` to scroll cells `cell` and `cell + 1`, first byte first, as
     /// the original's word store at the first cell.
     pub fn set_scroll_pair(&mut self, cell: usize, bytes: [u8; 2]) {
@@ -633,6 +667,7 @@ impl Room {
             ceres_status: 0,
             main_variables: [0; 4],
             scrolls: [0; 25],
+            pause_hooks: [0; 3],
             camera: Default::default(),
         }
     }
