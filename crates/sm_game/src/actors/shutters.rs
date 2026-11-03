@@ -328,10 +328,9 @@ pub fn main_ai(kind: Kind, runtime: &mut impl Lease) {
     }
     let p = kind.motion();
     // The enemy Samus collides with as a solid enemy, in all four directions.
+    let colliding = runtime.session().actors.schedule.colliding;
     let collision = [3, 2, 1, 0]
-        .map(|direction| {
-            runtime.word(crate::ram::word_arrays::ENEMY_INDEX_COLLIDING_DIRS + 2 * direction)
-        })
+        .map(|direction| colliding[direction])
         .into_iter()
         .fold(0xffff, |all, index| all & index);
     let function = Mover::of(runtime, e).function();
