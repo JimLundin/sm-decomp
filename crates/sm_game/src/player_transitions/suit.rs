@@ -220,7 +220,9 @@ pub fn publish_colors(h: &mut (impl crate::runtime_access::SessionRam + ?Sized))
     }
 }
 /// Set up the suit pickup's window, blending and HDMA tables; copy its colours.
-pub fn initialize_hdma(h: &mut (impl crate::runtime_access::SessionRam + ?Sized)) {
+pub fn initialize_hdma(
+    h: &mut (impl crate::runtime_access::SessionRam + crate::session_access::SessionAccess + ?Sized),
+) {
     for (address, value) in [
         (0x69, 19),
         (0x6c, 19),
@@ -239,7 +241,13 @@ pub fn initialize_hdma(h: &mut (impl crate::runtime_access::SessionRam + ?Sized)
         h.write_slice_native(address, value as u16);
         h.set_byte(address + 2, (value >> 16) as u8);
     }
-    h.write_slice_le(crate::ram::words::XRAY_HDMA_TABLE_END, 0);
+    // $7E:0A91..$7E:0A92 (the X-ray HDMA table's end) are the high byte of
+    // the demo's filtered held input and the low byte of its filtered newly
+    // pressed input.
+    let preparation = &mut h.session_mut().projectiles.preparation;
+    crate::actors::slot_view::store_byte(&mut preparation.demo_filtered_held, 1, 0);
+    crate::actors::slot_view::store_byte(&mut preparation.demo_filtered_pressed, 0, 0);
+    h.words_stored();
 }
 /// Start a suit pickup: close the window, centre Samus and spawn its HDMA.
 pub fn begin_pickup<H: SamusLease>(h: &mut H, gravity: bool) {
@@ -272,7 +280,9 @@ pub fn advance_pickup<
     for (address, value) in [(0x76, 0x80), (0x75, 64), (0x74, 32)] {
         h.set_byte(address, value);
     }
-    h.write_slice_native(0xa88, 1);
+    // $7E:0A88, the HDMA pointer's low word, is the demo's enable word.
+    h.session_mut().player.demo.enabled = u16::from_le_bytes(1u16.to_ne_bytes());
+    h.words_stored();
     h.set_byte(0xa8a, 0x98);
     h.write_slice_native(0xa8b, 0);
     let s = h.session_mut();

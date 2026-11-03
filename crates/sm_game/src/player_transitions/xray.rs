@@ -4,7 +4,6 @@ use super::{
     state::{InputMode, MovementMode, PoseRequestWord},
 };
 use crate::player_transitions::effects::SamusLease;
-use crate::ram::words as ram;
 use crate::runtime_access::SessionRam;
 use crate::session_access::SessionAccess;
 use crate::{session::Session, visual_host::Record};
@@ -250,13 +249,23 @@ pub fn initialize(h: &mut (impl Host + SessionRam)) -> bool {
     h.session_mut().player.transitions.interruption = super::state::InterruptionAction::from_raw(5);
     clear_window(h);
     set_world_running(h.session_mut(), false);
-    h.write_slice_native(0xa88, 1);
+    // $7E:0A88, the HDMA pointer's low word, is the demo's enable word.
+    h.session_mut().player.demo.enabled = u16::from_le_bytes(1u16.to_ne_bytes());
+    h.words_stored();
     h.set_byte(0xa8a, 0x98);
     h.write_slice_native(0xa8b, 0);
     h.session_mut().player.demo.previous_held = 0x98c8;
-    h.write_slice_native(0xa8e, 0x9098);
+    // $7E:0A8E is the demo's previous newly pressed input.
+    h.session_mut().player.demo.previous_pressed = u16::from_le_bytes(0x9098u16.to_ne_bytes());
+    h.words_stored();
     h.set_byte(0xa90, 0x99);
-    h.write_slice_le(ram::XRAY_HDMA_TABLE_END, 0);
+    // $7E:0A91..$7E:0A92 (the X-ray HDMA table's end) are the high byte of
+    // the demo's filtered held input and the low byte of its filtered newly
+    // pressed input.
+    let preparation = &mut h.session_mut().projectiles.preparation;
+    crate::actors::slot_view::store_byte(&mut preparation.demo_filtered_held, 1, 0);
+    crate::actors::slot_view::store_byte(&mut preparation.demo_filtered_pressed, 0, 0);
+    h.words_stored();
     let demo = &mut h.session_mut().player.demo;
     demo.pre_action = 0;
     demo.delay = 0;
