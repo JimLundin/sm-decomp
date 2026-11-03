@@ -6,7 +6,6 @@ use crate::actors::kraid::{Part, PartEdit};
 use crate::actors::slot_view::SlotState;
 use crate::cartridge::native_record;
 use crate::constants::enemy_properties::K_ENEMY_PROPS_TANGIBLE;
-use crate::ram::word;
 
 const BANK: u8 = 0xa7;
 /// The entry of "Hitbox - Kraid lint" ($A7:92B5) after its count word: left,
@@ -36,7 +35,7 @@ pub fn lint_touch_samus(k: u16, game: &mut (impl BossState + SlotState + ?Sized)
     }
     let (samus_x, x_radius) = (
         i32::from(game.player_x()),
-        i32::from(word!(game.SAMUS_X_RADIUS)),
+        i32::from(game.session().player.contact.x_radius),
     );
     let left =
         (hitbox(LEFT, game) + i32::from(Part::of(game, k).actor().x.whole) - INSET) as u16 as i32;
@@ -47,7 +46,7 @@ pub fn lint_touch_samus(k: u16, game: &mut (impl BossState + SlotState + ?Sized)
         (hitbox(TOP, game) + i32::from(Part::of(game, k).actor().y.whole) + INSET) as u16 as i32;
     let (samus_y, y_radius) = (
         i32::from(game.player_y()),
-        i32::from(word!(game.SAMUS_Y_RADIUS)),
+        i32::from(game.session().player.contact.radius),
     );
     if (y_radius + samus_y - top) & SIGN != 0 {
         return;
@@ -57,12 +56,13 @@ pub fn lint_touch_samus(k: u16, game: &mut (impl BossState + SlotState + ?Sized)
     if (samus_y - y_radius - bottom) & SIGN == 0 {
         return;
     }
-    let mut push = (i32::from(word!(game.EXTRA_SAMUS_X_DISPLACEMENT))
+    let mut push = (i32::from(game.session().player.contact.external_x.whole)
         + !(x_radius + i32::from(MAX_PUSH))) as u16;
     if (push as i32 - i32::from(MAX_PUSH)) & SIGN == 0 {
         push = MAX_PUSH;
     }
-    word!(game.EXTRA_SAMUS_X_DISPLACEMENT = push);
+    game.session_mut().player.contact.external_x.whole = push;
+    game.words_stored();
     game.react_to_contact(Death::Finalize);
     PartEdit::of(game, k).actor().properties |= K_ENEMY_PROPS_TANGIBLE as u16;
 }
