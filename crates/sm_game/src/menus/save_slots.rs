@@ -2,7 +2,7 @@
 use super::prelude::*;
 use crate::imported::Imported;
 use crate::menu_state::SaveSelection;
-use crate::ram::word as game_word;
+use crate::projection::Field;
 use crate::save_file::{self, SaveHost};
 use sm_data::cartridge::{RomImage, lorom_offset};
 use sm_data::save_slots::{ADDRESS, BYTES, SaveSlots};
@@ -154,18 +154,24 @@ pub fn initialize<H: Host + ?Sized>(game: &mut H) {
         },
     );
     crate::sequence_word!(game.HUD_ITEM_INDEX = 0);
-    game_word! {game; BUTTON_CONFIG_UP = K_BUTTON_UP as u16; BUTTON_CONFIG_DOWN = K_BUTTON_DOWN as u16;
+    crate::gameplay_word! {game; BUTTON_CONFIG_UP = K_BUTTON_UP as u16; BUTTON_CONFIG_DOWN = K_BUTTON_DOWN as u16;
     BUTTON_CONFIG_LEFT = K_BUTTON_LEFT as u16; BUTTON_CONFIG_RIGHT = K_BUTTON_RIGHT as u16;
     BUTTON_CONFIG_JUMP_A = K_BUTTON_A as u16; BUTTON_CONFIG_RUN_B = K_BUTTON_B as u16;
     BUTTON_CONFIG_SHOOT_X = K_BUTTON_X as u16; BUTTON_CONFIG_ITEMCANCEL_Y = K_BUTTON_Y as u16;
     BUTTON_CONFIG_ITEMSWITCH = K_BUTTON_SELECT as u16;
     BUTTON_CONFIG_AIM_UP_R = K_BUTTON_R as u16; BUTTON_CONFIG_AIM_DOWN_L = K_BUTTON_L as u16; }
-    game_word! { game, 0;
+    crate::gameplay_word! { game, 0;
         GAME_TIME_FRAMES, GAME_TIME_SECONDS, GAME_TIME_MINUTES, GAME_TIME_HOURS,
     }
     crate::sequence_word!(game.JAPANESE_TEXT_FLAG = 0);
-    game_word! { game, 0; MOONWALK_FLAG, HUD_AUTO_CANCEL_FLAG }
-    game_word! { game, 1; DEBUG_FLAG, UNUSED_WORD_7E09E8 }
+    game.set_view_word(Field::Moonwalk, 0);
+    game.store_display_history_word(
+        crate::display::preparation::Word::HudAutoCancel,
+        0,
+        crate::display::preparation::Store::Named,
+    );
+    game.set_view_word(Field::DebugFlag, 1);
+    game.set_view_word(Field::Spare09E8, 1);
     // A new game's flags: every room object, item, door, station and map
     // station unused. The events and bosses keep their bytes.
     crate::runtime_access::with_session(game, |session| {

@@ -56,6 +56,12 @@ pub enum Field {
     ApuUploading,
     /// The random number generator's last result ($05E5).
     RandomNumber,
+    /// Samus's moonwalk setting ($09E4).
+    Moonwalk,
+    /// The debug flag ($09E6).
+    DebugFlag,
+    /// The spare word after the debug flag ($09E8).
+    Spare09E8,
 }
 
 impl Field {
@@ -81,6 +87,9 @@ impl Field {
             Self::UnpauseQueueTail => words::MY_COUNTER2,
             Self::ApuUploading => words::IS_UPLOADING_APU,
             Self::RandomNumber => words::RANDOM_NUMBER,
+            Self::Moonwalk => words::MOONWALK_FLAG,
+            Self::DebugFlag => words::DEBUG_FLAG,
+            Self::Spare09E8 => words::UNUSED_WORD_7E09E8,
         }
     }
 
@@ -128,6 +137,9 @@ impl Field {
                 crate::session_owners::Control::Legacy(_) => return None,
             },
             Self::RandomNumber => session.timing.random_number,
+            Self::Moonwalk => session.player.moonwalk,
+            Self::DebugFlag => session.player.debug_flag,
+            Self::Spare09E8 => session.player.spare_09e8,
         })
     }
 
@@ -176,6 +188,9 @@ impl Field {
             Self::UnpauseQueueTail => &mut session.room.unpause_queue_tail,
             Self::ApuUploading => return None,
             Self::RandomNumber => &mut session.timing.random_number,
+            Self::Moonwalk => &mut session.player.moonwalk,
+            Self::DebugFlag => &mut session.player.debug_flag,
+            Self::Spare09E8 => &mut session.player.spare_09e8,
         })
     }
 }
