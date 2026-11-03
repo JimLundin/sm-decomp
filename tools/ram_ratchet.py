@@ -47,8 +47,8 @@ import cycle_report  # noqa: E402
 # union adds two files: 1842/99 becomes 2145/101. This is not the lower queued
 # batch-13 count; lower it only after that landing. Production remains advisory.
 BASELINE = {
-    "sm_game_ram_sites": 350,
-    "sm_game_coupled_files": 58,
+    "sm_game_ram_sites": 313,
+    "sm_game_coupled_files": 52,
     "production_lines": 173506,
     # Engine inventory (Jim, 2026-11-02): address-shaped access is RAM access.
     # First measured on main 0115740f5 (ROM record reads excluded). Address APIs and raw calls are enforced:
