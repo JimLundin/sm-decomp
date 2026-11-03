@@ -818,9 +818,13 @@ fn advance_gameplay<H: Host>(game: &mut H) -> CoroutineRet {
     crate::probe::hit("coroutine.gameplay");
     let resume = ResumePoint::read(game);
     if resume == ResumePoint::Start {
-        actors::scheduling::select(&mut game.runtime());
-        palette_effects::advance(&mut game.runtime());
-        prepare_player_projectiles(game);
+        {
+            // Actor selection, the palette effects and Samus's projectiles run on one lease.
+            let mut lease = game.runtime();
+            actors::scheduling::select(&mut lease);
+            palette_effects::advance(&mut lease);
+            prepare_player_projectiles(&mut lease);
+        }
         if crate::session_words::current(game).debug_disable_sprite_interact == 0 {
             game.player_projectiles_hit_samus();
         }
@@ -888,21 +892,20 @@ fn advance_gameplay<H: Host>(game: &mut H) -> CoroutineRet {
 
 /// Prepare Samus's projectiles through the frame handler's entry: normal,
 /// demo, projectiles only or inactive.
-fn prepare_player_projectiles<H: Host>(game: &mut H) {
+fn prepare_player_projectiles(lease: &mut impl crate::runtime_access::PlayerLease) {
     use crate::session::PrepareEntry;
-    let mut runtime = game.runtime();
-    let handler = runtime.session().player.transitions.frame_alpha.to_raw();
+    let handler = lease.session().player.transitions.frame_alpha.to_raw();
     let entry = match 0x900000 | u32::from(handler) {
         0x90e695 => PrepareEntry::Normal,
         0x90e6c9 => PrepareEntry::Demo,
         0x90e713 => PrepareEntry::ProjectilesOnly,
         0x90e8cd => PrepareEntry::Inactive,
         _ => {
-            crate::player_projectiles::host::Host::unknown(&mut runtime);
+            crate::player_projectiles::host::Host::unknown(lease);
             return;
         }
     };
-    crate::player_projectiles::preparation::prepare(&mut runtime, entry);
+    crate::player_projectiles::preparation::prepare(lease, entry);
 }
 
 /// Upload the options screen tiles.
