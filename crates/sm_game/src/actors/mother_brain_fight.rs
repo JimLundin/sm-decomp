@@ -843,6 +843,7 @@ pub trait Lease:
     + crate::mother_brain_visuals::PaletteHost
     + crate::actors::effects::ActorHost
     + crate::enemy_projectiles::host::Host
+    + crate::player_update::effects::Host
 {
     type Game: Host + crate::hdma_objects::HdmaTable + SessionRam;
     fn foreign<T>(&mut self, action: impl FnOnce(&mut Self::Game) -> T) -> T;
@@ -2473,7 +2474,7 @@ pub fn body_phase1(game: &mut impl Lease) {
             *BodyEdit::of(game, BODY_INDEX).delete_turrets() = 1;
             *BodyEdit::of(game, BODY_INDEX).form() = 1;
             crate::probe::hit("mother-brain.form-1");
-            game.foreign(|game| game.disable_minimap_for_boss());
+            game.owned_step(crate::player_update::minimap::disable_for_boss);
             queue_music(music::SONG_1, game);
             crate::mother_brain_visuals::seal_wall(game);
         }
@@ -3357,22 +3358,22 @@ pub fn write_room_palette(j: u16, game: &mut impl State) {
 }
 /// The body's room palette instruction list pointer and timer ($7E:781C,
 /// $7E:781E). The original read and stored them through the RAM image, one
-/// foreign call each; the round trips stay.
+/// foreign call each; each keeps that call's observation refresh.
 fn room_palette_list(game: &mut impl Lease) -> u16 {
     let list = Body::of(game, BODY_INDEX).room_palette_list();
-    game.foreign(|_| list)
+    game.owned_step(|_| list)
 }
 fn room_palette_timer(game: &mut impl Lease) -> u16 {
     let timer = Body::of(game, BODY_INDEX).room_palette_timer();
-    game.foreign(|_| timer)
+    game.owned_step(|_| timer)
 }
 fn set_room_palette_list(game: &mut impl Lease, list: u16) {
     *BodyEdit::of(game, BODY_INDEX).room_palette_list() = list;
-    game.foreign(|_| ());
+    game.owned_step(|_| ());
 }
 fn set_room_palette_timer(game: &mut impl Lease, timer: u16) {
     *BodyEdit::of(game, BODY_INDEX).room_palette_timer() = timer;
-    game.foreign(|_| ());
+    game.owned_step(|_| ());
 }
 /// Run the body's room palette instruction list: the colours to write, or 0.
 pub fn handle_room_palette_instruction_list(game: &mut impl Lease) -> u16 {
