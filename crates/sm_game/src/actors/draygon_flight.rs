@@ -35,10 +35,8 @@ const INITIAL_SWOOP_Y_ACCELERATION: u16 = 0x18;
 /// $A5:A217: the target sprite palettes 1 and 2.
 const TARGET_PALETTES: u32 = 0xa5_a217;
 const PALETTE_7: u16 = 0xe00;
-/// $A5:9342: the enemy graphics drawn hook that sets the BG2 scroll.
+/// $A5:9342: the enemy graphics drawn hook ($7E:178C) that sets the BG2 scroll.
 const SET_BG2_SCROLL_HOOK: u16 = 0x9342;
-const GRAPHICS_DRAWN_HOOK: usize = 0x178c;
-const GRAPHICS_DRAWN_HOOK_BANK: usize = 0x178e;
 const BG2_TILEMAP_SIZE: u16 = 0x400;
 /// The BG2 scroll follows the body, 1C2h left and C0h up.
 const BG2_X_OFFSET: i32 = 0x1c2;
@@ -158,14 +156,21 @@ pub fn fight_intro<L: Lease>(first: bool, game: &mut L) {
 /// Initialisation AI - Draygon body ($A5:8687). Actor preparation and
 /// completion surround the existing synchronous HDMA install seam.
 pub fn initialize<L: Lease>(install_layers: impl FnOnce(&mut L), game: &mut L) {
-    crate::word_transfers!(game, descending, 25; le(TARGET_PALETTES, 168) <- rom(TARGET_PALETTES, 24));
+    // Colours 144..=168 of the target palettes, last first, in native order.
+    let colours: [u16; 25] = crate::word_transfers::rom_words(game, TARGET_PALETTES);
+    let targets = &mut game.session_mut().presentation.visual_mut().targets;
+    for (target, colour) in targets[144..=168].iter_mut().zip(colours).rev() {
+        *target = colour;
+    }
+    game.words_stored();
     bg2_staging::fill(game, (0..=2047).rev(), 824);
     let k = game.current_enemy();
     DraygonEdit::of(game, k).actor().palette = PALETTE_7;
     // The native bank word also clears byte178F before the address word is stored.
-    crate::word_transfers!(game, ascending, 1;
-        native(GRAPHICS_DRAWN_HOOK_BANK) <- value(u16::from(BANK)),
-        native(GRAPHICS_DRAWN_HOOK) <- value(SET_BG2_SCROLL_HOOK));
+    let hook = &mut game.session_mut().actors.drawing.hook_address;
+    hook[2..].copy_from_slice(&u16::from(BANK).to_ne_bytes());
+    hook[..2].copy_from_slice(&SET_BG2_SCROLL_HOOK.to_ne_bytes());
+    game.words_stored();
     battle!(game.FlagProcessAllEnemies = 0xffff);
     for (k, instruction) in [
         (BODY, list::BODY_LEFT_IDLE),
