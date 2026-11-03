@@ -7,7 +7,7 @@ use crate::actors::host::{ActorLease, ActorRuntime as _, LeaseActors, abs16};
 use crate::actors::slot_view::{SlotState, slot_view};
 use crate::enemy_projectiles::host::Effects as _;
 use crate::enemy_script::EnemyScript;
-use crate::ram::words as W;
+use crate::session_access::SessionAccess as _;
 
 /// A lease the alcoons run on: their slots are the Session's.
 pub trait Lease: ActorLease + SlotState {}
@@ -92,7 +92,7 @@ const FIREBALL: u16 = 0x9e90;
 const SIGN: u16 = 0x8000;
 
 fn selected(runtime: &impl Lease) -> Key {
-    Key::from_legacy(runtime.word(W::CUR_ENEMY_INDEX))
+    Key::from_legacy(runtime.session().actors.controls.selected)
 }
 fn face(runtime: &mut impl Lease, key: Key, left: u16, right: u16) {
     runtime.edit_actor(key, Native, |actor| {
@@ -342,7 +342,7 @@ pub fn instruction<H: LeaseActors + ?Sized>(
             runtime.edit_actor(key, Native, |actor| {
                 actor.variables[lane::FUNCTION] = function::EMERGED
             });
-            let count = runtime.word(W::RANDOM_NUMBER) & 3;
+            let count = runtime.session().timing.random_number & 3;
             *AlcoonEdit::of(runtime, alcoon).step_counter() = if count == 0 { 2 } else { count };
             return EnemyScript::jump(
                 if runtime.resolve_actor(key, Native).variables[lane::X_VELOCITY] & SIGN != 0 {
