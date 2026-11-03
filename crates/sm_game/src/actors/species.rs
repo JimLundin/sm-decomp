@@ -21,7 +21,6 @@ use crate::actors::{
 use crate::combat_rules::LatchMode;
 use crate::enemy_projectiles::host::Effects as _;
 use crate::enemy_script::EnemyScript;
-use crate::ram::word;
 use crate::session_access::SessionAccess as _;
 
 /// The failure every table shares.
@@ -870,7 +869,7 @@ pub fn torizo_pre_instruction<L: torizo::Lease>(ea: u32, k: u16, game: &mut L) {
 }
 
 pub fn pre_instruction<H: PreInstructionHost>(ea: u32, game: &mut H) {
-    let k: u16 = word!(game.CUR_ENEMY_INDEX);
+    let k = crate::actors::host::EnemyHost::current_enemy(game);
     if is_torizo_pre_instruction(ea) {
         game.with_lease(|runtime| torizo_pre_instruction(ea, k, runtime));
         return;
