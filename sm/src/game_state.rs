@@ -1471,6 +1471,14 @@ impl Game {
     pub fn compatibility_write_byte(&self, at: usize, byte: u8) {
         self.ram.write_byte(at, byte);
     }
+    /// Point the direct-page long pointer scratch at bank $00 `address`
+    /// ($00..$02), as the HUD leaves it; RAM stores like the native macros'.
+    pub(crate) fn point_pointer_scratch(&self, address: u16) {
+        let [low, high] = address.to_le_bytes();
+        for (at, byte) in [(0, low), (1, high), (2, 0)] {
+            self.ram.write_byte(at, byte);
+        }
+    }
     pub fn compatibility_write_owned_byte(&mut self, at: usize, byte: u8) {
         self.ram.read_byte(at); // Preserve the original byte bounds failure before mutation.
         if matches!(

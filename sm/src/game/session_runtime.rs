@@ -656,6 +656,21 @@ impl<'g> Runtime<'g> {
             self.write_word_le(value, at);
         }
     }
+    /// Point the direct-page long pointer scratch at bank $00 `address`, $03
+    /// unchanged: the Session's field while this lease is current, the
+    /// projected bytes $00..$02 otherwise. Refreshes the observations as the
+    /// byte stores did.
+    pub(crate) fn point_pointer_scratch(&mut self, address: u16) {
+        if self.persistent_is_current() {
+            self.session_mut().pointer_scratch.point_at(address);
+            self.refresh_written_inputs();
+        } else {
+            let [low, high] = address.to_le_bytes();
+            for (at, byte) in [(0, low), (1, high), (2, 0)] {
+                self.set_byte(at, byte);
+            }
+        }
+    }
     pub(crate) fn owned_player(
         &self,
         field: impl Fn(&sm_game::session::Player) -> u16,
