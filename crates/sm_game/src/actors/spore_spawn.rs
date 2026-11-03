@@ -13,7 +13,6 @@ use crate::enemy_script::EnemyScript;
 use crate::geometry::Vector32;
 use crate::menus::prelude::battle;
 use crate::menus::prelude::owned;
-use crate::ram::word_arrays;
 
 /// What Spore Spawn needs beyond the shared boss effects.
 pub trait Host: BossEffects {
@@ -148,10 +147,32 @@ pub fn set_function<L: Lease + ?Sized>(script: EnemyScript, game: &mut L) -> Ene
     script.offset(1)
 }
 
+/// Store 16 colours from the ROM palette at `address`, from its colour
+/// `source`, to the colours (or with `target` the target colours) from `first`.
+fn load_colours<L: Lease + ?Sized>(
+    game: &mut L,
+    target: bool,
+    first: usize,
+    address: u32,
+    source: usize,
+) {
+    for index in 0..16 {
+        let colour = crate::cartridge::rom_table_word!(game, address, (source + index) as isize);
+        let visual = game.session_mut().presentation.visual_mut();
+        let colours = if target {
+            &mut visual.targets
+        } else {
+            &mut visual.colors
+        };
+        colours[first + index] = colour;
+    }
+    game.words_stored();
+}
+
 /// Initialisation AI ($A5:EA2A): its palettes and stem; dead, it hangs closed
 /// off behind the ceiling, otherwise it rises for the intro.
 pub fn initialize<L: Lease + ?Sized>(game: &mut L) {
-    crate::word_transfers!(game, ascending, 16; le(TARGET_PALETTES, 240) <- rom(0xa5e359, 0));
+    load_colours(game, true, 240, 0xa5e359, 0);
     for part in 0..4 {
         let k = game.current_enemy();
         game.spawn_actor_eproj(part, k, STEM);
@@ -352,7 +373,11 @@ pub fn after_damage<L: Lease + ?Sized>(game: &mut L) {
         actor.ai_handlers = 0;
     }
     SporeEdit::of(game, k).actor().properties |= 0x400;
-    crate::word_transfers!(game, descending, 14; native(0x19b1) <- value(0));
+    // The first 14 enemy projectile IDs ($7E:1997).
+    for slot in game.session_mut().enemy_projectiles.slots[..14].iter_mut() {
+        slot.definition = 0;
+    }
+    game.words_stored();
     {
         let mut spore = SporeEdit::of(game, 0);
         let actor = spore.actor();
@@ -431,11 +456,10 @@ pub fn shot<L: Lease + ?Sized>(game: &mut L) {
 /// Instruction - fade the palettes, or with `target` the target palettes, to
 /// step [[Y]] ($A5:E8CA, $A5:E91C).
 pub fn fade<L: Lease + ?Sized>(target: bool, script: EnemyScript, game: &mut L) -> EnemyScript {
-    let cursor = script.word(0) >> 1;
-    let field = [word_arrays::PALETTE_BUFFER, word_arrays::TARGET_PALETTES][usize::from(target)];
-    crate::word_transfers!(game, ascending, 16; little(field + 144 * 2) <- rom(0xa5e3f9, cursor));
-    crate::word_transfers!(game, ascending, 16; little(field + 64 * 2) <- rom(0xa5e4f9, cursor));
-    crate::word_transfers!(game, ascending, 16; little(field + 112 * 2) <- rom(0xa5e5d9, cursor));
+    let cursor = usize::from(script.word(0) >> 1);
+    load_colours(game, target, 144, 0xa5e3f9, cursor);
+    load_colours(game, target, 64, 0xa5e4f9, cursor);
+    load_colours(game, target, 112, 0xa5e5d9, cursor);
     script.offset(1)
 }
 
