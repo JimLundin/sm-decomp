@@ -1236,6 +1236,31 @@ fn player_setting_lanes() -> Vec<Lane> {
 }
 
 #[test]
+fn player_block_tail_round_trips_every_word() {
+    check_owner("player block tail", &player_block_tail_lanes());
+}
+
+/// The HUD auto-cancel flag ($09EA) and the player block's ten spare words
+/// ($09EE..$0A01), which only save loads store.
+fn player_block_tail_lanes() -> Vec<Lane> {
+    let mut lanes = vec![(0x09ea, 0, (|s, _| &mut s.player.hud_auto_cancel) as Field)];
+    lanes.extend(array(0x09ee, 2, 10, |s, index| {
+        &mut s.player.spare_09ee[index]
+    }));
+    lanes
+}
+
+#[test]
+fn saved_player_round_trips_every_word() {
+    check_owner("saved player block", &saved_player_lanes());
+}
+
+/// The save's copy of the player block ($D7C0..$D81F), 48 words.
+fn saved_player_lanes() -> Vec<Lane> {
+    array(0xd7c0, 2, 48, |s, index| &mut s.saved_player.words[index]).collect()
+}
+
+#[test]
 fn grapple_previous_start_round_trips_every_word() {
     check_owner("grapple previous start", &grapple_previous_start_lanes());
 }
@@ -1520,6 +1545,8 @@ fn all_owner_lanes() -> Vec<(&'static str, Vec<Lane>)> {
         ("pause hooks", pause_hook_lanes()),
         ("player spare words", player_spare_lanes()),
         ("player settings", player_setting_lanes()),
+        ("player block tail", player_block_tail_lanes()),
+        ("saved player block", saved_player_lanes()),
         ("grapple previous start", grapple_previous_start_lanes()),
         ("wavy Samus", wavy_samus_lanes()),
         ("Work Robot palette", work_robot_palette_lanes()),

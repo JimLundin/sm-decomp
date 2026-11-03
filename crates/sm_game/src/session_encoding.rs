@@ -540,6 +540,13 @@ macro_rules! scalar_words {
         $f(ram::UNUSED_WORD_7E09E8,$($borrow)* $s.player.spare_09e8);
         $f(ram::UNUSED_WORD_7E0DF8,$($borrow)* $s.player.turn_request);
         $f(ram::UNUSED_WORD_7E0DFC,$($borrow)* $s.player.spare_0dfc);
+        $f(ram::HUD_AUTO_CANCEL_FLAG,$($borrow)* $s.player.hud_auto_cancel);
+        for index in 0..10 {
+            $f(0x9ee+index*2,$($borrow)* $s.player.spare_09ee[index]);
+        }
+        for index in 0..48 {
+            $f(crate::save_file::SAVED_PLAYER+index*2,$($borrow)* $s.saved_player.words[index]);
+        }
         $f(0xa7a,$($borrow)* $s.player.demo.pre_action);
         $f(0xa7c,$($borrow)* $s.player.demo.delay);
         $f(0xa7e,$($borrow)* $s.player.demo.program);
@@ -1825,6 +1832,7 @@ pub fn inputs_from_session(s: &Session, bytes: &impl Fn(usize) -> u8) -> Externa
             0xf434..=0xf435 => (0xf434, s.enemy_projectiles.drop_origin.x),
             0xf436..=0xf437 => (0xf436, s.enemy_projectiles.drop_origin.y),
             0x9e4..=0x9e5 => (0x9e4, s.player.moonwalk),
+            0x9ea..=0x9eb => (0x9ea, s.player.hud_auto_cancel),
             0xdf8..=0xdf9 => (0xdf8, s.player.turn_request),
             0xd1a..=0xd1b => (0xd1a, s.player.swing.previous_start.x),
             0xd1c..=0xd1d => (0xd1c, s.player.swing.previous_start.y),

@@ -3,7 +3,7 @@ use super::prelude::*;
 use crate::imported::Imported;
 use crate::menu_state::SaveSelection;
 use crate::projection::Field;
-use crate::save_file::{self, SaveHost};
+use crate::save_file::{self, PlayerWord, SaveHost};
 use sm_data::cartridge::{RomImage, lorom_offset};
 use sm_data::save_slots::{ADDRESS, BYTES, SaveSlots};
 
@@ -58,7 +58,10 @@ enum Direction {
 
 pub fn save<H: Host + ?Sized>(slot: u16, game: &mut H) {
     game.observe_flags_save(0);
-    crate::word_transfers!(game, descending, 48; le(PLAYER_DATA_SAVED, 47) <- native(0xa00));
+    // The player block into the save's copy, from its last word down.
+    for word in PlayerWord::ALL.into_iter().rev() {
+        copy_word(game, Field::Player(word), Field::SavedPlayer(word));
+    }
     game.observe_flags_save(1);
     // The current area's explored map into its saved map, word by word.
     let first = usize::from(
@@ -92,7 +95,10 @@ pub fn save<H: Host + ?Sized>(slot: u16, game: &mut H) {
 pub fn load<H: Host + ?Sized>(slot: u16, game: &mut H) -> u8 {
     let checksum = save_file::load(&mut SaveFile(game), slot);
     if save_file::checksum_matches(&SaveFile(game), slot, checksum) {
-        crate::word_transfers!(game, descending, 48; native(0xa00) <- le(PLAYER_DATA_SAVED, 47));
+        // The save's copy back into the player block, from its last word down.
+        for word in PlayerWord::ALL.into_iter().rev() {
+            copy_word(game, Field::SavedPlayer(word), Field::Player(word));
+        }
         transfer_map(Direction::Load, game);
         crate::menus::state::with(game, |game, selection: &mut SaveSelection| {
             selection.load_station = selection.save_station;
@@ -218,6 +224,16 @@ pub fn clear_saved_maps<H: crate::projection::Views + ?Sized>(
 /// map and the saved maps. The original copies the words as the CPU holds
 /// them, so the stored word keeps the read word's native byte order.
 fn copy_map_word<H: crate::projection::Views + ?Sized>(
+    game: &mut H,
+    source: Field,
+    destination: Field,
+) {
+    copy_word(game, source, destination);
+}
+
+/// Copy one word, read then stored, as the CPU holds it: the stored word
+/// keeps the read word's native byte order.
+fn copy_word<H: crate::projection::Views + ?Sized>(
     game: &mut H,
     source: Field,
     destination: Field,

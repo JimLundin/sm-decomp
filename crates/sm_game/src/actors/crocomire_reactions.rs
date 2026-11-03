@@ -860,7 +860,14 @@ pub fn load_melting_tiles<L: Lease>(game: &mut L) {
         i = i as u16 as i32 + 4;
     }
     battle!(game; MeltIndex = (i + 2) as u16; MeltSubindex = (i + 2) as u16;);
-    crate::word_transfers!(game, descending, 65; native(0x71c) <- value(0));
+    // The original clears the heights from X = 80h down, one word past the
+    // last ($A4:94A6, which should be 7Eh).
+    // LEGACY(original-overflow): the word at $7E:071C, past the 128 heights,
+    // whose high byte is Samus's top half request ($071D).
+    legacy_overflow::set_slot_word(game, MELTING_Y_OFFSETS + 0x80, 0);
+    // Then every column's height, from the last word down.
+    game.session_mut().actors.crocomire_melt.column_heights = [[0; 32]; 4];
+    game.words_stored();
 }
 
 /// Power bomb reaction - Crocomire ($A4:B992).
