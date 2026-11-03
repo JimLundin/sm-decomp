@@ -540,6 +540,7 @@ impl<'g> Runtime<'g> {
                         crate::game::actors::identity::ActorIdentityState::empty();
                     let epoch = self.game.compatibility_write_epoch();
                     self.game.frame_session.kept = Some((kept, self.inputs.clone(), epoch));
+                    self.game.ram().open_write_log();
                 }
             } else if self.game.actor_identity_is_with_session() {
                 // A rejected foreign call retains this Runtime's identity owner;
@@ -1059,9 +1060,9 @@ pub(crate) fn run_mechanisms(
     }
 }
 
-/// The Session a frame's last lease exported, kept while nothing has written the compatibility
-/// RAM since, so the frame's next lease borrows it rather than decoding the RAM again. Only a
-/// frame tick (`with_frame_session`) keeps one.
+/// The Session a frame's last lease exported, kept with a log of the RAM written since, so the
+/// frame's next lease borrows it and takes those bytes rather than decoding the RAM again. Only
+/// a frame tick (`with_frame_session`) keeps one.
 #[derive(Default)]
 pub(crate) struct FrameSession {
     active: bool,
@@ -1073,23 +1074,48 @@ pub(crate) fn with_frame_session<R>(game: &mut Game, tick: impl FnOnce(&mut Game
     game.frame_session.active = true;
     let result = tick(game);
     game.frame_session = FrameSession::default();
+    game.ram().close_write_log();
     result
 }
 
-/// The kept Session for a new lease, when the RAM, world and Samus state still admit it; it
-/// takes the native spawn fields and actor identity as an import would.
+/// Bring `state` up to the RAM bytes in `written`: each byte the Session projects and the RAM
+/// now holds differently goes in as a store of that byte would put it.
+fn take_written_bytes(state: &mut Session, game: &Game, written: &[std::ops::Range<usize>]) {
+    let ram = game.ram();
+    for at in written.iter().flat_map(Clone::clone) {
+        let value = ram.read_byte(at);
+        if encoding::projected_byte(state, at).is_some_and(|byte| byte != value) {
+            encoding::write_projected_byte(state, at, value);
+        }
+    }
+}
+/// The kept Session for a new lease, when the RAM log, world and Samus state still admit it;
+/// it takes the RAM written since its export, the native spawn fields and actor identity as an
+/// import would.
 fn reuse_frame_session(game: &mut Game) -> Option<(Session, ExternalInputs)> {
     if game.foreign_presentation_active() {
         return None;
     }
-    let (mut state, inputs, epoch) = game.frame_session.kept.take()?;
+    let (mut state, mut inputs, epoch) = game.frame_session.kept.take()?;
+    let written = game.ram().close_write_log();
     let same_world = std::sync::Arc::ptr_eq(&state.world, game.world())
         && state.world.revision() == game.world().revision();
-    if epoch != game.compatibility_write_epoch() || !same_world {
+    if !same_world {
         return None;
     }
+    let written = if epoch == game.compatibility_write_epoch() {
+        None
+    } else {
+        Some(written?)
+    };
     game.preflight_samus_runtime()
         .expect("Samus import rejected");
+    if let Some(written) = written {
+        // The RAM changed since the export: take the written bytes, as a decode would read
+        // them, and observe the inputs from the RAM as an import does.
+        take_written_bytes(&mut state, game, &written);
+        inputs = encoding::inputs(&|at| game.ram().read_byte(at));
+    }
     #[cfg(sm_verify_dll)]
     player_normal_transfers::record(game, 1);
     import_native_spawn(&mut state, game);
