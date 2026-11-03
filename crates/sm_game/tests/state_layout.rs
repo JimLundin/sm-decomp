@@ -1152,6 +1152,53 @@ fn crocomire_melt_lanes() -> Vec<Lane> {
 }
 
 #[test]
+fn crocomire_scroll_round_trips_every_word() {
+    check_owner("Crocomire scroll", &crocomire_scroll_lanes());
+}
+
+/// The scroll lines ($7E:CAF0..$7E:CCEF); the indirect table's bytes
+/// ($7E:CAE0..$7E:CAEF) are checked by `crocomire_scroll_indirect_round_trips`.
+fn crocomire_scroll_lanes() -> Vec<Lane> {
+    array(0xcaf0, 2, 256, |s, index| {
+        &mut s.actors.crocomire_scroll.lines[index]
+    })
+    .collect()
+}
+
+#[test]
+fn crocomire_scroll_indirect_round_trips() {
+    for index in 0..16 {
+        let at = 0xcae0 + index;
+        let value = 0x5a ^ u8::try_from(index).unwrap();
+        let mut s = session();
+        s.actors.crocomire_scroll.indirect[index] = value;
+        assert_eq!(
+            projected_byte(&s, at),
+            Some(value),
+            "field -> projection {at:#x}"
+        );
+        assert_eq!(
+            encoded(&s).get(&at).copied(),
+            Some(value),
+            "field -> encode {at:#x}"
+        );
+        let mut s = session();
+        assert!(write_projected_byte(&mut s, at, value), "store {at:#x}");
+        assert_eq!(
+            s.actors.crocomire_scroll.indirect[index], value,
+            "projection -> field {at:#x}"
+        );
+        let mut ram = vec![0u8; RAM];
+        ram[at] = value;
+        assert_eq!(
+            decoded(&ram).actors.crocomire_scroll.indirect[index],
+            value,
+            "RAM -> decode {at:#x}"
+        );
+    }
+}
+
+#[test]
 fn player_spare_words_round_trip_every_word() {
     check_owner("player spare words", &player_spare_lanes());
 }
@@ -1179,6 +1226,28 @@ fn player_setting_lanes() -> Vec<Lane> {
         (0x09e8, 0, (|s, _| &mut s.player.spare_09e8) as Field),
         (0x0df8, 0, (|s, _| &mut s.player.turn_request) as Field),
         (0x0dfc, 0, (|s, _| &mut s.player.spare_0dfc) as Field),
+    ]
+}
+
+#[test]
+fn grapple_previous_start_round_trips_every_word() {
+    check_owner("grapple previous start", &grapple_previous_start_lanes());
+}
+
+/// $0D1A/$0D1C, the beam's start as the rope and the grapple shot's feedback
+/// observe it.
+fn grapple_previous_start_lanes() -> Vec<Lane> {
+    vec![
+        (
+            0x0d1a,
+            0,
+            (|s, _| &mut s.player.swing.previous_start.x) as Field,
+        ),
+        (
+            0x0d1c,
+            0,
+            (|s, _| &mut s.player.swing.previous_start.y) as Field,
+        ),
     ]
 }
 
@@ -1441,9 +1510,11 @@ fn all_owner_lanes() -> Vec<(&'static str, Vec<Lane>)> {
         ("actor speed scratch", actor_scratch_lanes()),
         ("actor spare words", actor_spare_lanes()),
         ("Crocomire melt", crocomire_melt_lanes()),
+        ("Crocomire scroll", crocomire_scroll_lanes()),
         ("pause hooks", pause_hook_lanes()),
         ("player spare words", player_spare_lanes()),
         ("player settings", player_setting_lanes()),
+        ("grapple previous start", grapple_previous_start_lanes()),
         ("wavy Samus", wavy_samus_lanes()),
         ("Work Robot palette", work_robot_palette_lanes()),
         ("room scrolls", room_scroll_lanes()),

@@ -1,8 +1,8 @@
 //! Ridley's pogo speeds and tail data copies from bank $A6 ($A6:B90F, $A6:D3B4).
+use crate::actors::boss_lease::bg2_staging;
 use crate::actors::ridley::{RIDLEY, Ridley, RidleyEdit, set_tail_word};
 use crate::actors::slot_view::SlotState;
 use crate::cartridge::{NativeDiagnostics, native_record};
-use crate::ram::{CompatibilityRam, word};
 use crate::records::Records;
 
 const BANK: u8 = 0xa6;
@@ -20,22 +20,16 @@ const SIGN: u16 = 0x8000;
 /// accelerations for Ridley's acceleration index, then the Y velocity from
 /// its row and the X velocity, keeping its sign, from the other, each through
 /// its own native fetch. Was `Ridley_Func_29`.
-pub fn set_pogo_speeds(
-    game: &mut (impl CompatibilityRam + NativeDiagnostics + Records + SlotState + ?Sized),
-) {
-    let pick = (word!(game.RANDOM_NUMBER) & ROW_CHOICES) as isize;
+pub fn set_pogo_speeds(game: &mut (impl NativeDiagnostics + Records + SlotState + ?Sized)) {
+    let pick = (game.session().timing.random_number & ROW_CHOICES) as isize;
     let x_row = crate::actor_tables::word(game, |t| &t.ridley_x_velocities, pick);
     let y_row = crate::actor_tables::word(game, |t| &t.ridley_y_velocities, pick);
     let offset = (2 * (i32::from(Ridley::of(game, RIDLEY).acceleration_index()) + 2)) as u16;
     let step = (offset >> 1) as isize;
-    word!(
-        game.TILEMAP_STUFF[UPWARDS_ACCELERATION] =
-            crate::actor_tables::word(game, |t| &t.ridley_upwards, step)
-    );
-    word!(
-        game.TILEMAP_STUFF[DOWNWARDS_ACCELERATION] =
-            crate::actor_tables::word(game, |t| &t.ridley_downwards, step)
-    );
+    let upwards = crate::actor_tables::word(game, |t| &t.ridley_upwards, step);
+    bg2_staging::set(game, UPWARDS_ACCELERATION, upwards);
+    let downwards = crate::actor_tables::word(game, |t| &t.ridley_downwards, step);
+    bg2_staging::set(game, DOWNWARDS_ACCELERATION, downwards);
     *RidleyEdit::of(game, RIDLEY).y_velocity() =
         native_record(BANK, y_row, game).word(usize::from(offset));
     let speed = native_record(BANK, x_row, game).word(usize::from(offset));

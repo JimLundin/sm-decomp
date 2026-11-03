@@ -82,11 +82,12 @@ macro_rules! spawn_word {
 // extended RAM 7800..9000 is owned here except the five Botwoon death words
 // (801E, 8020, 803C, 8818, 883E), which keep their own cohort; the bosses'
 // RAM 9000..97DC is owned here too, and the angles 97DC..9800 stay with eproj.
-// The Work Robot's palette cycle D652..D658 is owned here, and so are the spare
+// Crocomire's scroll HDMA tables CAE0..CCF0 and the Work Robot's palette cycle
+// D652..D658 are owned here, and so are the spare
 // enemy-global words E0C..E12, E14, E2C..E40 and E42 the ending's stars use.
 // Lighting 1778..1784 stays with the canonical FX control owner; actor alias
 // readers/writers below resolve that provider without importing/emitting twice.
-const COMMON_RANGES: [(usize, usize); 32] = [
+const COMMON_RANGES: [(usize, usize); 33] = [
     (0x0688, 0x071c),
     (0x2000, 0x3000),
     (0x0e0c, 0x0e12),
@@ -116,6 +117,7 @@ const COMMON_RANGES: [(usize, usize); 32] = [
     (0x881a, 0x883e),
     (0x8840, 0x9000),
     (0x9000, 0x97dc),
+    (0xcae0, 0xccf0),
     (0xd652, 0xd658),
     (0xef5c, 0xef74),
     (0xef74, 0xef78),
@@ -135,6 +137,7 @@ macro_rules! common_word {
             at @ 0x2000..=0x2ffe => Some($($borrow)* $s.actors.extended.blocks[4 + (at - 0x2000) / 0x800]
                 [(at - 0x2000) % 0x800 / 2]),
             at @ 0x0688..=0x069a => Some($($borrow)* $s.actors.crocomire_melt.words[(at - 0x0688) / 2]),
+            at @ 0xcaf0..=0xccee => Some($($borrow)* $s.actors.crocomire_scroll.lines[(at - 0xcaf0) / 2]),
             0xd652 => Some($($borrow)* $s.actors.work_robot_palette.palette_index),
             0xd654 => Some($($borrow)* $s.actors.work_robot_palette.timer),
             0xd656 => Some($($borrow)* $s.actors.work_robot_palette.cursor),
@@ -206,6 +209,7 @@ macro_rules! common_byte {
             at @ 0x7000..=0x77ff if (at - 0x7000) % 64 >= 0x2e =>
                 Some($($borrow)* $s.actors.saved[(at - 0x7000) / 64].name[(at - 0x7000) % 64 - 0x2e]),
             at @ 0x069c..=0x071b => Some($($borrow)* $s.actors.crocomire_melt.column_heights[(at - 0x069c) / 32][(at - 0x069c) % 32]),
+            at @ 0xcae0..=0xcaef => Some($($borrow)* $s.actors.crocomire_scroll.indirect[at - 0xcae0]),
             at @ 0x0e5a..=0x0e79 => Some($($borrow)* $s.actors.staging.descriptor_prefix[at - 0x0e5a]),
             at @ 0x0e80..=0x0e83 => Some($($borrow)* $s.actors.staging.gap[at - 0x0e80]),
             at @ 0x1784..=0x178b => Some($($borrow)* $s.actors.compatibility.pre_hook[at - 0x1784]),

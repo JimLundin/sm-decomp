@@ -13,7 +13,6 @@ use crate::constants::enemy_properties::{
 use crate::display::transfer::{Source, TilemapUpload, queue_tilemap};
 use crate::enemy_script::EnemyScript;
 use crate::palette_copies::{copy_rom_colors_to_palette, copy_rom_colors_to_target_palette};
-use crate::ram::word;
 
 /// The lease the steam and doors run on, with what they still reach in the
 /// game. Their slots are the Session's.
@@ -306,13 +305,17 @@ pub fn door_main<L: Lease + ?Sized>(game: &mut L) {
 /// earthquake type replaces `earthquake`. Was `escape_rumble`.
 pub fn escape_rumble<L: Lease + ?Sized>(earthquake: u16, game: &mut L) {
     if crate::sequence_word!(game.CERES_STATUS) >= ESCAPE_STARTED
-        && word!(game.EARTHQUAKE_TIMER) == 0
+        && game.session().feedback.earthquake_timer == 0
     {
-        if (word!(game.RANDOM_NUMBER) & 0xfff) < 0x80 {
-            word! {game; EARTHQUAKE_TIMER = 4; EARTHQUAKE_TYPE = earthquake.wrapping_add(6); }
+        let (timer, kind) = if (game.session().timing.random_number & 0xfff) < 0x80 {
+            (4, earthquake.wrapping_add(6))
         } else {
-            word! {game; EARTHQUAKE_TIMER = 2; EARTHQUAKE_TYPE = earthquake; }
-        }
+            (2, earthquake)
+        };
+        let feedback = &mut game.session_mut().feedback;
+        feedback.earthquake_timer = timer;
+        feedback.earthquake_kind = kind;
+        game.words_stored();
     }
 }
 

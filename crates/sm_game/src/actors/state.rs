@@ -61,6 +61,7 @@ pub struct Actors {
     pub diagnostics: ActorDiagnostics,
     pub extended: ExtendedRam,
     pub crocomire_melt: CrocomireMelt,
+    pub crocomire_scroll: CrocomireScroll,
     pub work_robot_palette: WorkRobotPalette,
 }
 /// The Work Robot's palette cycle ($7E:D652..$7E:D657), as the little-endian
@@ -92,6 +93,22 @@ impl WorkRobotPalette {
 pub struct CrocomireMelt {
     pub words: [u16; 10],
     pub column_heights: [[u8; 32]; 4],
+}
+/// Crocomire's BG2 Y scroll HDMA tables ($7E:CAE0..$7E:CCEF), which its
+/// melting death sequence fills: the indirect table's bytes, then the scroll
+/// value of each line it points at ($7E:CAF0 + 2 * line).
+#[derive(Clone, Debug, PartialEq)]
+pub struct CrocomireScroll {
+    pub indirect: [u8; 16],
+    pub lines: [u16; 256],
+}
+impl Default for CrocomireScroll {
+    fn default() -> Self {
+        Self {
+            indirect: [0; 16],
+            lines: [0; 256],
+        }
+    }
 }
 /// The slots' extended RAM ($7E:7800..$7E:8FFF): three blocks of 32 words per
 /// slot, the original's `var_00`..`var_5f`, as the words of each block in RAM
@@ -248,6 +265,7 @@ impl Clone for Actors {
             diagnostics: self.diagnostics,
             extended: self.extended.clone(),
             crocomire_melt: self.crocomire_melt.clone(),
+            crocomire_scroll: self.crocomire_scroll.clone(),
             work_robot_palette: self.work_robot_palette,
         }
     }

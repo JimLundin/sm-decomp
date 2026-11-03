@@ -9,7 +9,6 @@ use crate::actors::boss_lease::BossLease;
 use crate::actors::host::{Axis, BossEffects, Slopes, below};
 use crate::actors::slot_view::{SlotState, slot_view};
 use crate::constants::enemy_properties::K_ENEMY_PROPS_DISABLE_SAMUS_COLL;
-use crate::ram::word;
 
 /// A lease on a game with the etecoons' effects.
 pub trait Lease: BossLease<Game: BossEffects> + SlotState {
@@ -126,7 +125,7 @@ fn set_run<L: Lease>(game: &mut L, k: u16, speed: u16) {
 /// Freezes the etecoon for 128 frames while a quake shakes the room. Was
 /// `Etecoon_Func_1`.
 fn freeze_if_quake<L: Lease>(game: &mut L, k: u16) {
-    if word!(game.EARTHQUAKE_TIMER) != 0 {
+    if game.session().feedback.earthquake_timer != 0 {
         *EtecoonEdit::of(game, k).route() =
             (Etecoon::of(game, k).route().to_le_bytes()[0] as u16) | 0x8000;
         EtecoonEdit::of(game, k).actor().instruction_delay = Etecoon::of(game, k)
@@ -149,8 +148,8 @@ fn move_vertically<L: Lease>(game: &mut L, k: u16) -> bool {
     let amount = (((Etecoon::of(game, k).y_speed() as u32) << 16)
         | Etecoon::of(game, k).y_subspeed() as u32) as i32;
     if below(Etecoon::of(game, k).y_speed(), 5) {
-        let gravity =
-            ((word!(game.SAMUS_Y_ACCEL) as u32) << 16) | word!(game.SAMUS_Y_SUBACCEL) as u32;
+        let acceleration = &game.session().player.contact.y_acceleration;
+        let gravity = (u32::from(acceleration.whole) << 16) | u32::from(acceleration.fraction);
         {
             let mut edit = EtecoonEdit::of(game, k);
             let sum = ((u32::from(*edit.y_speed()) << 16) | u32::from(*edit.y_subspeed()))
@@ -218,7 +217,7 @@ fn run_function<L: Lease>(game: &mut L, address: u16) {
 /// Waits, flexing when Samus comes near, then starts hopping. Was
 /// `Etecoon_Func_4`.
 pub fn initial<L: Lease>(game: &mut L, k: u16) {
-    if word!(game.DOOR_TRANSITION_FLAG_ENEMIES) == 0 {
+    if game.session().room.entry.enemy_interlock == 0 {
         if (Etecoon::of(game, k).timer() & 0x8000) == 0 {
             if timer_expired(game, k) {
                 EtecoonEdit::of(game, k).actor().instruction = list::HOPPING_FACING_LEFT;
