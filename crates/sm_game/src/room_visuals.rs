@@ -137,12 +137,13 @@ pub fn initialize_tourian_statue<H: crate::menus::host::Host + ?Sized>(game: &mu
             .set_scroll_pair(0, 514u16.to_ne_bytes());
     }
     game.store_display_control_byte(DisplayField::Screens1, 74, DisplayStore::Named);
-    crate::liquid::LiquidWords::set(game, |words| &mut words.liquid.rising, 0xc428);
-    crate::liquid::LiquidWords::set(
-        game,
-        |words| &mut words.liquid.surface.whole,
-        crate::liquid::LiquidWords::read(game).height,
-    );
+    {
+        let mut runtime = game.runtime();
+        let room = &mut runtime.session_mut().room;
+        room.liquid.rising = 0xc428;
+        room.liquid.surface.whole = room.liquid_height;
+        runtime.words_stored();
+    }
     game.spawn_hdma(0x88, &HdmaObjectDefinition::new(0x42, 0x11, 0xd856));
     game.spawn_hdma(0x88, &HdmaObjectDefinition::new(0x42, 0x10, 0xdcfa));
     spawn_bg3_scroll(game);
