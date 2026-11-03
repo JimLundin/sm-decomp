@@ -10,11 +10,24 @@ use crate::actors::slot_view::{SlotState, slot_view};
 
 /// A lease on a game with Draygon's effects.
 pub trait Lease:
-    BossLease<Game: Host> + crate::actors::boss_interaction::Access + SlotState
+    BossLease<Game: Host>
+    + crate::actors::boss_interaction::Access
+    + SlotState
+    + crate::progress::FlagHost
+    + crate::sprite_effect_host::Host
+    + crate::enemy_projectiles::host::Host
+    + crate::player_movement::effects::Host
 {
 }
 impl<T> Lease for T where
-    T: BossLease<Game: Host> + crate::actors::boss_interaction::Access + SlotState + ?Sized
+    T: BossLease<Game: Host>
+        + crate::actors::boss_interaction::Access
+        + SlotState
+        + crate::progress::FlagHost
+        + crate::sprite_effect_host::Host
+        + crate::enemy_projectiles::host::Host
+        + crate::player_movement::effects::Host
+        + ?Sized
 {
 }
 
@@ -24,11 +37,6 @@ pub trait Host: BossEffects + BossLease<Game = Self> {
     /// Draygon grabs Samus, facing `direction`.
     fn grab_samus(&mut self, direction: u16);
     fn release_samus(&mut self);
-    fn draygon_spawn_ring(&mut self);
-    /// Draygon's sprite motion with `horizontal_bias`.
-    fn draygon_motion(&mut self, horizontal_bias: u16);
-    /// Draygon's death drop for `area`.
-    fn scatter_draygon_drop(&mut self, area: u16);
 }
 
 slot_view! {

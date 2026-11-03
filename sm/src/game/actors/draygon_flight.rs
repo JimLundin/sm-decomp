@@ -2,7 +2,6 @@
 //! writes and runtime hooks come from here.
 #![forbid(unsafe_code)]
 use crate::game::actors::{api, combat};
-use crate::game::enemy_projectiles::scatter_drop;
 use crate::game::gameplay_flag_runtime;
 use crate::game::music::queue_music_delayed_8;
 use crate::game::player_movement::forced;
@@ -17,8 +16,6 @@ use core::mem::offset_of;
 use sm_game::actors::draygon_grab::{ENEMY_DEF_DAMAGE, ENEMY_DEF_HURT_AI_TIME};
 use sm_game::actors::draygon_host::Host;
 use sm_game::actors::host::BossEffects;
-use sm_game::enemy_projectiles::drops::DropSource;
-use sm_game::gameplay_flag_host::BossWordOrder;
 use sm_game::geometry::Vector32;
 
 const _: () = assert!(
@@ -75,18 +72,6 @@ impl Host for Game {
 
     fn release_samus(&mut self) {
         forced::release_from_draygon(&mut Runtime::new(self));
-    }
-
-    fn draygon_spawn_ring(&mut self) {
-        sprites::draygon_spawn_ring(self);
-    }
-
-    fn draygon_motion(&mut self, horizontal_bias: u16) {
-        sprites::draygon_motion(horizontal_bias, self);
-    }
-
-    fn scatter_draygon_drop(&mut self, area: u16) {
-        scatter_drop(DropSource::Draygon, area, self);
     }
 }
 
@@ -166,16 +151,8 @@ impl BossEffects for Game {
         damage_player(amount, self);
     }
 
-    fn retire_all_sprites(&mut self) {
-        sprites::retire_all(self);
-    }
-
     fn queue_music_delayed(&mut self, track: u16) {
         queue_music_delayed_8(track, self);
-    }
-
-    fn boss_word(&mut self, area: u16) -> u16 {
-        gameplay_flag_runtime::boss_word_at(area, BossWordOrder::Little, self)
     }
 
     fn set_boss_word(&mut self, area: u16, value: u16) {

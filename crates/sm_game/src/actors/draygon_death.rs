@@ -2,18 +2,22 @@
 //! $A5:9185-$A5:9701).
 //! Boss words remain native compatibility state; player and sprites use their owners.
 use crate::actors::boss_interaction as interaction;
+use crate::actors::boss_lease::{BossState, steps};
 use crate::actors::draygon_flight::{facing_animation, foam_at_mouth};
 use crate::actors::draygon_host::Lease;
 use crate::actors::draygon_host::{
-    ARMS, BANK, BODY, DELETE, Draygon, DraygonEdit, EYE, GRAPPLE_DROPPED, Host, SIGN, TAIL, abs16,
+    ARMS, BANK, BODY, DELETE, Draygon, DraygonEdit, EYE, GRAPPLE_DROPPED, SIGN, TAIL, abs16,
     function, instruction_list as list,
 };
 use crate::actors::host::{ActorLease, BossEffects as _, Death, Shot};
 use crate::actors::queries::angle_from_delta;
 
 use crate::actors::slot_view::store_byte;
+use crate::enemy_projectiles::drops::DropSource;
 use crate::enemy_script::EnemyScript;
+use crate::gameplay_flag_host::BossWordOrder;
 use crate::menus::prelude::{battle, owned};
+use crate::sprite_effect_state::{LegacySpriteDefinition, SpriteSpawn};
 
 /// Colours 9-12 of BG1/2 palette 5, as palette words and in RAM at $7E:C000.
 const HEALTH_COLOURS: core::ops::Range<usize> = 89..93;
@@ -165,7 +169,7 @@ pub fn reaction<L: Lease>(game: &mut L) {
     );
     *DraygonEdit::of(game, EYE).function() = function::NONE;
     *DraygonEdit::of(game, BODY).function() = function::DEATH_DRIFT_TO_DEATH_SPOT;
-    game.foreign(|game| game.release_samus());
+    game.owned_step(crate::player_movement::forced::release_from_draygon);
     battle!(game.SamusGrappleFlags = 0);
     let dx = DEATH_X.wrapping_sub(Draygon::of(game, BODY).actor().x.whole);
     let dy = DEATH_Y.wrapping_sub(Draygon::of(game, BODY).actor().y.whole);
@@ -230,7 +234,7 @@ pub fn drift_to_death_spot<L: Lease>(game: &mut L) {
     {
         return;
     }
-    game.foreign(|game| game.draygon_spawn_ring());
+    game.owned_step(crate::sprite_effect_controllers::draygon_spawn_ring);
     *DraygonEdit::of(game, BODY).function() = function::DEATH_WAIT_FOR_EVIRS;
     game.foreign(|game| game.queue_music_delayed(ELEVATOR_MUSIC));
     *DraygonEdit::of(game, BODY).function_timer() = EVIR_FRAMES;
@@ -247,10 +251,18 @@ pub fn drift_to_death_spot<L: Lease>(game: &mut L) {
     *DraygonEdit::of(game, EYE).function() = function::NONE;
 }
 /// Handle dying Draygon smoke ($A5:92EA): every 8 frames, a big dust cloud low in the room.
-fn dying_smoke<H: Host + ?Sized>(game: &mut H) {
+fn dying_smoke<L: Lease>(game: &mut L) {
     if game.frame() & 7 == 0 {
         let random = game.roll_random();
-        game.create_sprite((random & 0x7f) + 192, ((random >> 8) & 0x3f) + 400, 21, 0);
+        let spawn = SpriteSpawn {
+            position: crate::geometry::Point {
+                x: (random & 0x7f) + 192,
+                y: ((random >> 8) & 0x3f) + 400,
+            },
+            definition: LegacySpriteDefinition(21),
+            appearance: 0,
+        };
+        crate::sprite_objects::spawn(game, spawn);
     }
 }
 /// Instruction - spawn dying Draygon sprite object `kind` within 40h px ($A5:973F-$A5:9778).
@@ -259,7 +271,7 @@ pub fn spawn_dying_sprite<L: Lease>(kind: u16, script: EnemyScript, game: &mut L
     let [dx, dy] = [random, random >> 8].map(|value| (value & 0x7f).wrapping_sub(64));
     let x = Draygon::of(game, BODY).actor().x.whole.wrapping_add(dx);
     let y = Draygon::of(game, BODY).actor().y.whole.wrapping_add(dy);
-    game.foreign(|game| game.create_sprite(x, y, kind, 0));
+    steps::create_sprite(game, x, y, kind);
     script
 }
 /// Instruction - spawn Draygon goop - leftwards ($A5:9F7C) or rightwards ($A5:9FAE).
@@ -281,7 +293,7 @@ pub fn spawn_goop<L: Lease + ActorLease>(
 /// Draygon body function - death sequence - wait for evirs ($A5:9294). Was
 /// `ring`.
 pub fn wait_for_evirs<L: Lease>(game: &mut L) {
-    game.foreign(dying_smoke);
+    game.owned_step(dying_smoke);
     {
         let mut draygon = DraygonEdit::of(game, BODY);
         let old = draygon.function_timer();
@@ -290,7 +302,7 @@ pub fn wait_for_evirs<L: Lease>(game: &mut L) {
     if Draygon::of(game, BODY).function_timer() != 0 {
         // Moving left, the evirs also take $0E24, whatever was left there ($A5:A01C).
         let bias = game.session().actors.compatibility.scratch[1];
-        game.foreign(|game| game.draygon_motion(bias));
+        game.owned_step(|game| crate::sprite_effect_controllers::draygon_motion(game, bias));
     } else {
         *DraygonEdit::of(game, BODY).function() = function::DEATH_BURIED_BY_EVIRS;
     }
@@ -299,9 +311,9 @@ pub fn wait_for_evirs<L: Lease>(game: &mut L) {
 /// until buried, then delete Draygon, set its boss bit and drop its rewards.
 /// Was `sink`.
 pub fn buried_by_evirs<L: Lease>(game: &mut L) {
-    game.foreign(dying_smoke);
+    game.owned_step(dying_smoke);
     let bias = game.session().actors.compatibility.scratch[1];
-    game.foreign(|game| game.draygon_motion(bias));
+    game.owned_step(|game| crate::sprite_effect_controllers::draygon_motion(game, bias));
     {
         let mut draygon = DraygonEdit::of(game, BODY);
         let old = &mut draygon.actor().y.whole;
@@ -324,13 +336,13 @@ pub fn buried_by_evirs<L: Lease>(game: &mut L) {
         let properties = Draygon::of(game, BODY).actor().properties | DELETE;
         DraygonEdit::of(game, BODY).actor().properties = properties;
         DraygonEdit::of(game, EYE).actor().properties = properties;
-        let drop_index = game.area();
-        let area = game.area();
-        let bits = game.foreign(|game| game.boss_word(area));
-        game.foreign(|game| {
-            game.set_boss_word(area, bits | DRAYGON_DEAD);
-            game.scatter_draygon_drop(drop_index);
-            game.retire_all_sprites();
+        let drop_index = BossState::area(game);
+        let area = BossState::area(game);
+        let bits = steps::boss_word(game, area, BossWordOrder::Little);
+        game.owned_step(|game| {
+            crate::progress::set_boss_word_le(game, area, bits | DRAYGON_DEAD);
+            crate::enemy_projectiles::drops::scatter(DropSource::Draygon, drop_index, game);
+            crate::sprite_objects::retire_all(game.session_mut());
         });
     }
 }
