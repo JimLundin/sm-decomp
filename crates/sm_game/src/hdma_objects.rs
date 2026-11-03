@@ -166,6 +166,7 @@ where
     H: crate::ram::WorkRamAccess
         + crate::ram::CompatibilityRam
         + crate::runtime_access::RuntimeAccess
+        + crate::runtime_access::SessionRam
         + HdmaTable
         + ?Sized,
 {
@@ -173,7 +174,12 @@ where
     if index < crate::hdma::OBJECTS {
         crate::hdma_word!(game, index, Channels => 0);
     } else {
-        checked_word!(game.HDMA_OBJECT_CHANNELS_BITMASK[index] = 0);
+        // LEGACY(original-overflow): the word the slot names past the channel table.
+        crate::legacy_overflow::ram_write_word_le(
+            game,
+            crate::ram::word_arrays::HDMA_OBJECT_CHANNELS_BITMASK + 2 * index,
+            0,
+        );
     }
 }
 

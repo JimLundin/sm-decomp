@@ -18,7 +18,7 @@ use crate::display::registers::{
 use crate::display::sequence::{Registers, register_writes, write_register_and_mirror};
 use crate::display::transfer::{ScrollingLayout, TilemapQueue, setup_transfer};
 use crate::display::video::Upload;
-use crate::ram::{CompatibilityRam, RawRam, checked_word};
+use crate::ram::{CompatibilityRam, RawRam};
 use crate::scene::irq;
 use crate::scene::state::DisplayError;
 use crate::word_transfers;
@@ -57,6 +57,10 @@ pub trait Host:
     fn upload_animated_tiles(&mut self);
     fn process_mode7(&mut self);
     fn process_readbacks(&mut self);
+    /// The VRAM readback queue's tail ($7E:0360), the byte offset of its
+    /// next 9-byte record at $7E:0340.
+    fn readback_queue_tail(&self) -> u16;
+    fn set_readback_queue_tail(&mut self, tail: u16);
     fn flush_tilemaps(&mut self);
     /// Fill VRAM's low bytes with `fill` from address 0, resetting the
     /// address as one word or two bytes.
@@ -816,7 +820,7 @@ pub fn enqueue_readback<H: Host + ?Sized>(
     retain_mode: bool,
     game: &mut H,
 ) {
-    let tail = checked_word!(game.VRAM_READ_QUEUE_TAIL);
+    let tail = game.readback_queue_tail();
     let entry = 0x340 + usize::from(tail);
     let target =
         ((u16::from(game.ram().read_byte(register)) & 0xfc) << 8).wrapping_add(vram_offset);
@@ -829,5 +833,5 @@ pub fn enqueue_readback<H: Host + ?Sized>(
     write_readback_word(game, entry + 4, destination);
     write_readback_word(game, entry + 6, 126);
     write_readback_word(game, entry + 7, size);
-    checked_word!(game.VRAM_READ_QUEUE_TAIL = tail.wrapping_add(9));
+    game.set_readback_queue_tail(tail.wrapping_add(9));
 }

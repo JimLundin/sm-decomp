@@ -1298,6 +1298,16 @@ impl Presentation {
             }
         }
     }
+    /// Clear both of Samus's half upload requests ($071D..$0722): the top
+    /// and bottom flags, then the top and bottom descriptor pointers.
+    pub fn clear_samus_requests(&mut self) {
+        for index in 0..2 {
+            *self.samus_request_mut(index).0 = 0;
+        }
+        for index in 0..2 {
+            *self.samus_request_mut(index).1 = 0;
+        }
+    }
     /// Samus half `index`'s request flag and descriptor pointer, from the
     /// selected owner.
     pub fn samus_request_mut(&mut self, index: usize) -> (&mut u8, &mut u16) {

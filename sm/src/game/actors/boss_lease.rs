@@ -57,11 +57,11 @@ impl BossState for Game {
     }
     fn area(&self) -> u16 {
         let game = self;
-        sm_game::ram_word!(game.AREA_INDEX)
+        crate::ram_map::word!(game.AREA_INDEX)
     }
     fn frame(&self) -> u16 {
         let game = self;
-        sm_game::ram_word!(game.NMI_FRAME_COUNTER_WORD)
+        crate::ram_map::word!(game.NMI_FRAME_COUNTER_WORD)
     }
     fn scaled_cosine(&mut self, phase: u16, amplitude: u16) -> u16 {
         BossEffects::actor_cosine(self, phase, amplitude)

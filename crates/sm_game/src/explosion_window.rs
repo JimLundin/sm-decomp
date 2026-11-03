@@ -7,7 +7,6 @@ use crate::menus::menu_tilemap::native_record;
 use crate::menus::prelude::do_until;
 use crate::player_movement::forced;
 use crate::ram::RawRam as _;
-use crate::ram::word;
 use crate::scene::hdma_sources::LiveOwner;
 use crate::session_cohort;
 
@@ -22,6 +21,7 @@ pub trait Host:
     + crate::cartridge::NativeDiagnostics
     + crate::menus::host::MenuRuntime
     + crate::runtime_access::RuntimeAccess
+    + crate::runtime_access::SessionRam
     + crate::hdma_objects::HdmaTable
 {
     /// Enter the Crystal Flash pose transition on the owned Session.
@@ -191,7 +191,6 @@ pub fn finish_power_bomb<H: Host + ?Sized>(hdma_index: usize, v0: u16, game: &mu
         e.bomb.pre_flash_radius = 0;
         e.radius = 0;
     });
-    let v1: i32 = v0 as i32 >> 1;
     // The right half is the next hdma_index, which stays on the host.
     crate::hdma_word!(game, hdma_index, Channels => 0);
     let next = usize::from(v0 >> 1) + 1;
@@ -205,7 +204,12 @@ pub fn finish_power_bomb<H: Host + ?Sized>(hdma_index: usize, v0: u16, game: &mu
             crate::fx_domain::native_order(),
         );
     } else {
-        word!(game.HDMA_OBJECT_CHANNELS_BITMASK[(v1 + 1)] = 0);
+        // LEGACY(original-overflow): the last object's right half is past the table.
+        crate::legacy_overflow::ram_write_word_le(
+            game,
+            crate::ram::word_arrays::HDMA_OBJECT_CHANNELS_BITMASK + 2 * next,
+            0,
+        );
     }
     game.player_command(0x1e);
 }
@@ -461,10 +465,12 @@ fn calculate_explosion_hdma_table_pointers<H: Host + ?Sized>(
             crate::fx_domain::native_order(),
         );
     } else {
-        word! { game;
-            HDMA_OBJECT_TABLE_POINTERS[((k as i32 >> 1) + 1)] =
-                offset.wrapping_add(ADDR_INDIRECT_HDMA_TABLE_POWER_BOMB_EXPLODE_RIGHT as u16);
-        }
+        // LEGACY(original-overflow): the last object's right half is past the table.
+        crate::legacy_overflow::ram_write_word_le(
+            game,
+            crate::ram::word_arrays::HDMA_OBJECT_TABLE_POINTERS + 2 * next,
+            offset.wrapping_add(ADDR_INDIRECT_HDMA_TABLE_POWER_BOMB_EXPLODE_RIGHT as u16),
+        );
     }
 }
 
@@ -501,7 +507,12 @@ pub fn finish_crystal_flash<H: Host + ?Sized>(hdma_index: usize, k: u16, game: &
             crate::fx_domain::native_order(),
         );
     } else {
-        word!(game.HDMA_OBJECT_CHANNELS_BITMASK[(k as i32 >> 1) + 1] = 0);
+        // LEGACY(original-overflow): the last object's right half is past the table.
+        crate::legacy_overflow::ram_write_word_le(
+            game,
+            crate::ram::word_arrays::HDMA_OBJECT_CHANNELS_BITMASK + 2 * next,
+            0,
+        );
     }
 }
 pub fn set_crystal_flash_blending<H: Host + ?Sized>(_k: u16, game: &mut H) {

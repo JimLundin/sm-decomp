@@ -23,7 +23,7 @@ use crate::menus::{
 };
 use crate::palette_effects::{execution as palette_effects, fading};
 use crate::presentation_workspace::{Point, Role};
-use crate::ram::{RawRam, word};
+use crate::ram::RawRam;
 use crate::room_entry::api::{ArrivalRequest, EntrySignal, StartSite};
 use crate::room_entry::content::LoadMode;
 use crate::room_scrolls::{advance_camera, debug_position, fill_viewport, update_scrolls};
@@ -299,10 +299,8 @@ fn frame<H: Host>(game: &mut H) -> CoroutineRet {
             game.update_hdma();
             game.advance_random();
             sprite_drawing::clear_high_table(game);
-            word! { game, 0;
-                OAM_NEXT_PTR, NMI_COPY_SAMUS_HALVES, NMI_COPY_SAMUS_TOP_HALF_SRC,
-                NMI_COPY_SAMUS_BOTTOM_HALF_SRC,
-            }
+            sprite_drawing::reset_cursor(game);
+            with_session(game, |session| session.presentation.clear_samus_requests());
             st = crate::gameplay_word!(game.GAME_STATE) as i32 + 10;
             game.ram().write_byte(0x611, st as u8);
         }
