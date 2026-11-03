@@ -722,6 +722,9 @@ macro_rules! scalar_words {
         $f(0x5eb,$($borrow)* $s.multiply_scratch.right);
         $f(0x0,$($borrow)* $s.pointer_scratch.address);
         $f(0x2,$($borrow)* $s.pointer_scratch.bank);
+        $f(ram::WAVY_SAMUS_ENABLED,$($borrow)* $s.wavy_samus.enabled);
+        $f(0xd9e,$($borrow)* $s.wavy_samus.amplitude);
+        $f(ram::LOOP_COUNTER_TRANSFER_ENEMIES_TO_VRAM,$($borrow)* $s.wavy_samus.speed);
         $f(0xa20,$($borrow)* $s.player.history.previous.pose);
         $f(0xa22,$($borrow)* $s.player.history.previous.movement_and_facing);
         $f(0xa26,$($borrow)* $s.player.history.last_different.movement_and_facing);

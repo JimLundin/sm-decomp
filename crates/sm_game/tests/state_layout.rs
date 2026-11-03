@@ -1126,6 +1126,19 @@ fn player_spare_lanes() -> Vec<Lane> {
 }
 
 #[test]
+fn wavy_samus_round_trips_every_word() {
+    check_owner("wavy Samus", &wavy_samus_lanes());
+}
+
+fn wavy_samus_lanes() -> Vec<Lane> {
+    vec![
+        (0x0d9c, 0, (|s, _| &mut s.wavy_samus.enabled) as Field),
+        (0x0d9e, 0, (|s, _| &mut s.wavy_samus.amplitude) as Field),
+        (0x0da0, 0, (|s, _| &mut s.wavy_samus.speed) as Field),
+    ]
+}
+
+#[test]
 fn pause_hooks_round_trip_every_word() {
     check_owner("pause hooks", &pause_hook_lanes());
 }
@@ -1372,6 +1385,7 @@ fn all_owner_lanes() -> Vec<(&'static str, Vec<Lane>)> {
         ("Crocomire melt", crocomire_melt_lanes()),
         ("pause hooks", pause_hook_lanes()),
         ("player spare words", player_spare_lanes()),
+        ("wavy Samus", wavy_samus_lanes()),
         ("Work Robot palette", work_robot_palette_lanes()),
         ("room scrolls", room_scroll_lanes()),
         ("boss RAM", boss_ram_lanes()),

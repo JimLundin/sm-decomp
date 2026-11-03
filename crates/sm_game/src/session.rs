@@ -153,6 +153,7 @@ pub struct Session {
     pub shared_sequence: crate::player_collision::state::SequenceWorkspace,
     pub multiply_scratch: crate::player_collision::state::MultiplyScratch,
     pub pointer_scratch: PointerScratch,
+    pub wavy_samus: WavySamus,
 }
 impl Session {
     pub fn publish_workspace_byte(
@@ -327,6 +328,7 @@ impl Session {
             shared_sequence: Default::default(),
             multiply_scratch: Default::default(),
             pointer_scratch: Default::default(),
+            wavy_samus: Default::default(),
         }
     }
 }
@@ -747,6 +749,18 @@ impl PointerScratch {
         self.address = address;
         self.bank &= 0xff00;
     }
+}
+
+/// The ending's wavy Samus ($0D9C..$0DA1): whether the intro wave HDMA object
+/// waves its BG3 rows, the wave's amplitude, little-endian, and its phase
+/// speed.
+#[derive(Clone, Copy, Default, Debug, PartialEq)]
+pub struct WavySamus {
+    pub enabled: u16,
+    pub amplitude: u16,
+    /// $0DA0, which the room-entry coroutine also counts its actor tile
+    /// transfers down in.
+    pub speed: u16,
 }
 
 #[derive(Clone, Copy, Default, Debug, PartialEq)]
