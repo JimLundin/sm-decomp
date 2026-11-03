@@ -6,6 +6,13 @@
 //!       ORACLE_SAMPLE=1, COVER_ROUTES=1 and, to pin the oracle sample's
 //!       three-hour slot, ORACLE_SLOT. It appends the matrix to GITHUB_OUTPUT
 //!       and its summary to GITHUB_STEP_SUMMARY (stdout when unset).
+//!   sm_pipeline relevant
+//!       read a `git diff --name-only` listing on stdin, print the files that
+//!       can affect a replay, and exit 0 only when there are none.
+//!   sm_pipeline test-summary LOG PACKAGE_DIR...
+//!       print the per-binary table of a `cargo test` log (and append it to
+//!       GITHUB_STEP_SUMMARY when set), and exit 1 when a binary failed, gave
+//!       no result, or was expected from a package's sources and did not run.
 //!
 //! It needs only the standard library, so CI builds it in seconds with
 //! `rustc --edition=2024 -O crates/sm_tools/src/bin/sm_pipeline/main.rs`.
@@ -15,16 +22,22 @@ mod corpus;
 mod json;
 mod pack;
 mod plan;
+mod relevant;
 mod route;
 mod scenario;
+mod test_summary;
 mod toml;
 
 #[cfg(test)]
 mod plan_golden;
 
-use std::io::Write as _;
-use std::path::PathBuf;
+use std::io::{Read as _, Write as _};
+use std::path::{Path, PathBuf};
 use std::process::ExitCode;
+
+const USAGE: &str = "usage: sm_pipeline plan [--root DIR]
+       sm_pipeline relevant < LISTING
+       sm_pipeline test-summary LOG PACKAGE_DIR...";
 
 /// An environment variable, empty when unset.
 fn variable(name: &str) -> String {
@@ -50,15 +63,20 @@ fn settings() -> Result<plan::Settings, String> {
     })
 }
 
+/// Append to a file.
+fn append_to(path: &Path, text: &str) -> Result<(), String> {
+    std::fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(path)
+        .and_then(|mut file| file.write_all(text.as_bytes()))
+        .map_err(|error| format!("{}: {error}", path.display()))
+}
+
 /// Append to the file a GitHub variable names, or print when it is unset.
 fn append(variable_name: &str, text: &str) -> Result<(), String> {
     match std::env::var_os(variable_name) {
-        Some(path) => std::fs::OpenOptions::new()
-            .create(true)
-            .append(true)
-            .open(&path)
-            .and_then(|mut file| file.write_all(text.as_bytes()))
-            .map_err(|error| format!("{variable_name}: {error}")),
+        Some(path) => append_to(Path::new(&path), text),
         None => {
             print!("{text}");
             Ok(())
@@ -66,34 +84,73 @@ fn append(variable_name: &str, text: &str) -> Result<(), String> {
     }
 }
 
-fn run() -> Result<(), String> {
-    let mut arguments = std::env::args().skip(1);
-    let command = arguments.next().unwrap_or_default();
+fn plan_command(arguments: &[String]) -> Result<ExitCode, String> {
     let mut root = PathBuf::from(".");
+    let mut arguments = arguments.iter();
     while let Some(argument) = arguments.next() {
         match argument.as_str() {
             "--root" => root = arguments.next().ok_or("--root needs a directory")?.into(),
             _ => return Err(format!("unknown argument {argument}")),
         }
     }
+    let planned = plan::plan(&root, &settings()?)?;
+    append("GITHUB_OUTPUT", &planned.output)?;
+    append("GITHUB_STEP_SUMMARY", &planned.summary)?;
+    print!("{}", planned.log);
+    Ok(ExitCode::SUCCESS)
+}
+
+fn relevant_command() -> Result<ExitCode, String> {
+    let mut listing = String::new();
+    std::io::stdin()
+        .read_to_string(&mut listing)
+        .map_err(|error| format!("stdin: {error}"))?;
+    let relevant = relevant::relevant(&listing);
+    for path in &relevant {
+        println!("replay-relevant: {path}");
+    }
+    Ok(if relevant.is_empty() {
+        ExitCode::SUCCESS
+    } else {
+        ExitCode::FAILURE
+    })
+}
+
+fn test_summary_command(arguments: &[String]) -> Result<ExitCode, String> {
+    let (log, directories) = arguments.split_first().ok_or(USAGE)?;
+    let bytes = std::fs::read(log).map_err(|error| format!("{log}: {error}"))?;
+    let packages = directories
+        .iter()
+        .map(|directory| test_summary::Package::read(Path::new(directory)))
+        .collect::<Result<Vec<_>, _>>()?;
+    let summary = test_summary::summarise(&String::from_utf8_lossy(&bytes), &packages);
+    println!("{}", summary.report);
+    let step_summary = variable("GITHUB_STEP_SUMMARY");
+    if !step_summary.is_empty() {
+        append_to(Path::new(&step_summary), &format!("{}\n", summary.report))?;
+    }
+    eprint!("{}", summary.diagnostics());
+    Ok(if summary.passed() {
+        ExitCode::SUCCESS
+    } else {
+        ExitCode::FAILURE
+    })
+}
+
+fn run() -> Result<ExitCode, String> {
+    let arguments: Vec<String> = std::env::args().skip(1).collect();
+    let (command, rest) = arguments.split_first().ok_or(USAGE)?;
     match command.as_str() {
-        "plan" => {
-            let planned = plan::plan(&root, &settings()?)?;
-            append("GITHUB_OUTPUT", &planned.output)?;
-            append("GITHUB_STEP_SUMMARY", &planned.summary)?;
-            print!("{}", planned.log);
-            Ok(())
-        }
-        _ => Err("usage: sm_pipeline plan [--root DIR]".into()),
+        "plan" => plan_command(rest),
+        "relevant" if rest.is_empty() => relevant_command(),
+        "test-summary" => test_summary_command(rest),
+        _ => Err(USAGE.into()),
     }
 }
 
 fn main() -> ExitCode {
-    match run() {
-        Ok(()) => ExitCode::SUCCESS,
-        Err(error) => {
-            eprintln!("{error}");
-            ExitCode::FAILURE
-        }
-    }
+    run().unwrap_or_else(|error| {
+        eprintln!("{error}");
+        ExitCode::FAILURE
+    })
 }

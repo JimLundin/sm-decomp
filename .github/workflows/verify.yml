@@ -3,7 +3,7 @@ name: Verify
 # Verify: the replay pipeline. One plan, one verifier build, the replay matrix, coverage
 # when asked, and one result. Scope gate replays every locked scenario engine-only against
 # the oracle lock, lockstep for what the lock cannot hold, and the ROM import check; a pull
-# request that changes no replay-relevant file skips it (.github/scripts/replay_relevant.py).
+# request that changes no replay-relevant file skips it (sm_pipeline relevant).
 # Scope full adds lockstep of the whole corpus and both routes, and stops if a scheduled run
 # already passed this commit. Scope rows runs chosen rows; scope coverage reports what the
 # corpus never executes. See crates/sm_tools/src/bin/sm_pipeline/plan.rs.
@@ -64,6 +64,9 @@ jobs:
       movie_sha256: ${{ steps.plan.outputs.movie_sha256 }}
     steps:
       - uses: actions/checkout@v4
+      # The pipeline tool (crates/sm_tools/src/bin/sm_pipeline) needs only the standard library.
+      - name: Build sm_pipeline
+        run: rustc --edition=2024 -O -o "$RUNNER_TEMP/sm_pipeline" crates/sm_tools/src/bin/sm_pipeline/main.rs
       # A scheduled run stops when an earlier scheduled run passed this commit.
       - id: passed
         env:
@@ -76,21 +79,45 @@ jobs:
             if [ "$passed" -gt 0 ]; then skip=true; fi
           fi
           echo "skip=$skip" | tee -a "$GITHUB_OUTPUT"
-      # A pull request that changes only docs, skills or measurement tools replays nothing.
+      # A pull request that changes only docs, skills or measurement tools replays nothing:
+      # it skips when every file it changes against its base, or against a recent head that
+      # passed Verify on its branch, is irrelevant. A comparison that cannot be fetched
+      # counts as relevant. Scheduled and dispatched runs never skip here.
       - id: relevant
         env:
           GH_TOKEN: ${{ github.token }}
           WORKFLOW: ci.yml
-        run: python3 -B .github/scripts/replay_relevant.py
+        run: |
+          skip=false
+          reason="not a pull request"
+          if [ "$GITHUB_EVENT_NAME" = pull_request ]; then
+            reason="replay-relevant files changed"
+            head=$(jq -r .pull_request.head.sha "$GITHUB_EVENT_PATH")
+            branch=$(jq -r .pull_request.head.ref "$GITHUB_EVENT_PATH")
+            base=$(jq -r .pull_request.base.sha "$GITHUB_EVENT_PATH")
+            passed=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/$WORKFLOW/runs?event=pull_request&status=success&branch=$branch&per_page=5" --jq '.workflow_runs[].head_sha' || true)
+            for since in $base $passed; do
+              if git fetch --quiet --depth=1 origin "$since" "$head" \
+                && files=$(git diff --name-only "$since" "$head") \
+                && "$RUNNER_TEMP/sm_pipeline" relevant <<<"$files"; then
+                skip=true
+                reason="only non-replay files changed since ${since:0:12}: $(paste -sd ' ' <<<"$files")"
+                break
+              fi
+            done
+          fi
+          echo "skip=$skip" >> "$GITHUB_OUTPUT"
+          echo "skip=$skip: $reason"
       - id: plan
         env:
           ORACLE: ${{ inputs.oracle }}
           SELECTED: ${{ inputs.segments }}
           ORACLE_SAMPLE: ${{ inputs.oracle_sample && '1' || '' }}
           COVER_ROUTES: ${{ inputs.cover_routes && '1' || '' }}
-        # The Rust planner (crates/sm_tools/src/bin/sm_pipeline). Its golden plans test
-        # (plan_golden.rs) holds it to the plans the deleted plan_verify.py wrote.
-        run: rustc --edition=2024 -O -o "$RUNNER_TEMP/sm_pipeline" crates/sm_tools/src/bin/sm_pipeline/main.rs && "$RUNNER_TEMP/sm_pipeline" plan
+        # The Rust planner. Its golden plans test (plan_golden.rs) holds it to the plans
+        # the deleted plan_verify.py wrote.
+        run: |
+          "$RUNNER_TEMP/sm_pipeline" plan
 
   verify-build:
     needs: verify-plan

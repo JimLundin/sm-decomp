@@ -148,6 +148,22 @@ its check has passed in CI, and the check is deleted with it.
    (a unit test over the pattern table, plus a one-off comparison script in
    CI); `test-summary` reproduces the Markdown table byte for byte from the
    `test.log` of recent Quality runs, and fails on the same missing binaries.
+   *Done:* `relevant.rs` holds the pattern table (its two script entries
+   renamed to relevant.rs and test_summary.rs) and a `fnmatchcase` matcher;
+   its test requires replay_relevant.py's verdict on all 618 files (596 the
+   last 50 merged pull requests, #123 to #179, changed, and 22 more edge cases)
+   and on each of the 50 pull requests (5 skip). verify-plan's `relevant` step
+   is shell around it (`jq` on the event, `gh api --jq` for passed heads,
+   `git fetch` and `git diff --name-only` piped in); a stub run of that shell
+   covered skip by base, skip by a passed head, no skip, an unfetchable base
+   and an empty diff. `test_summary.rs` reads the log as Python's text mode
+   and `splitlines` do and matches the three patterns by hand; its test holds
+   the stdout, stderr and verdict test_summary.py gave on the test.log of
+   three Quality runs (41687356099 passing; 41619370268 and 41457358300
+   failing, each table checked against the run's own), and on four derived
+   logs (an unbuilt tests/*.rs, a binary cut off before its result, Windows
+   executable paths, CRLF). Quality runs `sm_pipeline test-summary`.
+   replay_relevant.py and test_summary.py are deleted.
 4. **`lock-check`** (exposes what `plan` already ports; removes the Quality
    need for scenario.py `lock --check`). *Proof:* the equivalence test
    already requires the same locked set; add negative cases (a stale entry,
