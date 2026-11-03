@@ -11,6 +11,7 @@ pub struct RomRecords {
     pub shaktool_tables: crate::shaktool_tables::ImportedShaktool,
     pub statue_tables: crate::statue_tables::ImportedStatues,
     pub torizo_tables: crate::torizo_tables::ImportedTorizos,
+    pub botwoon_tables: crate::botwoon_tables::ImportedBotwoon,
     pub corpse_tables: crate::corpse_tables::ImportedCorpses,
     pub torizo_corpse_tables: crate::torizo_corpse_tables::ImportedTorizoCorpse,
     pub baby_metroid_tables: crate::baby_metroid_tables::ImportedBabyMetroid,

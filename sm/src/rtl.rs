@@ -96,20 +96,6 @@ macro_rules! register_writes {
 }
 pub(crate) use register_writes;
 
-/// Capture the shared image before evaluating a table's signed word index.
-/// Borrow only the ROM field: index expressions can mutate Game or retain RAM pointers.
-macro_rules! rom_table_word {
-    ($game:ident, $address:expr, $index:expr $(,)?) => {
-        $game
-            .loaded_rom
-            .as_ref()
-            .expect("ROM must be loaded")
-            .clone()
-            .table_word($crate::rtl::lorom_offset($address) as usize, $index)
-    };
-}
-pub(crate) use rom_table_word;
-
 use crate::c_library::{fprintf, memcpy, printf, sprintf, stderr};
 use crate::cpu_infra::rtl_update_snes_patch_for_bugfix;
 use crate::game_state::Game;

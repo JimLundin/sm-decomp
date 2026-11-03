@@ -335,6 +335,7 @@ pub mod room_mechanisms {
     pub mod setup;
 }
 pub mod baby_metroid_tables;
+pub mod botwoon_tables;
 pub mod ceres_door_data;
 pub mod ceres_elevator;
 pub mod ceres_ridley_tables;

@@ -4,21 +4,41 @@
 use crate::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 use crate::actors::api::{DeathHandling, ShotHandling};
 use crate::actors::boss_interaction as interaction;
-use crate::actors::boss_lease::BossLease;
+use crate::actors::boss_lease::{BossLease, steps};
 use crate::actors::botwoon_death;
 use crate::actors::host::BossEffects as _;
 
 use crate::actors::slot_view::{SlotState, slot_view};
 use crate::actors::{combat, queries};
 use crate::constants::{bank_86::*, enemy_properties::*};
+use crate::enemy_projectiles::attachments_fire_arc_botwoon as history;
+use crate::enemy_projectiles::drops::DropSource;
 use crate::enemy_script::EnemyScript;
-use sm_data::botwoon_holes::Hole;
-use sm_data::botwoon_speeds::BotwoonSpeed;
 use sm_data::enemy_speeds::SpeedTable;
 
 /// A lease on a game with Botwoon's effects.
-pub trait Lease: BossLease<Game: Effects> + ActorAccess + SlotState {}
-impl<T: BossLease<Game: Effects> + ActorAccess + SlotState + ?Sized> Lease for T {}
+pub trait Lease:
+    BossLease<Game: Effects>
+    + ActorAccess
+    + SlotState
+    + crate::records::Records
+    + crate::progress::FlagHost
+    + crate::room_mechanisms::host::Host
+    + crate::sprite_effect_host::Host
+    + crate::enemy_projectiles::host::Host
+{
+}
+impl<T> Lease for T where
+    T: BossLease<Game: Effects>
+        + ActorAccess
+        + SlotState
+        + crate::records::Records
+        + crate::progress::FlagHost
+        + crate::room_mechanisms::host::Host
+        + crate::sprite_effect_host::Host
+        + crate::enemy_projectiles::host::Host
+{
+}
 
 slot_view! {
     /// Botwoon's slot: a head or body part's functions, history and timers.
@@ -143,24 +163,11 @@ const SPIT_SPEEDS: [u16; 3] = [2, 3, 4];
 /// Angles are measured from the top, clockwise; 40h less is the maths angle.
 const QUARTER_TURN: u8 = 0x40;
 
-/// The retained imported tables, boss flags, passage, drop and body-history
-/// effects. Botwoon's actor state and head dispatch stay on the lease.
+/// The boss flag store behind the death music. Botwoon's actor state, tables,
+/// passage, drop and body history run on the lease.
 pub trait Effects: crate::actors::host::BossEffects {
-    /// The speed level whose two words start at word `index` of $B3:94BB.
-    fn botwoon_speed_level(&self, index: isize) -> BotwoonSpeed;
-    /// The hole whose four words start at word `index` of $B3:949B.
-    fn botwoon_hole(&self, index: isize) -> Hole;
     /// Set boss bit `mask` for the current area.
     fn set_boss_bit(&mut self, mask: u16);
-    /// The boss byte for `area`.
-    fn boss_byte(&mut self, area: u16) -> u8;
-    fn open_passage(&mut self);
-    /// Botwoon's death drop for `area`.
-    fn scatter_botwoon_drop(&mut self, area: u16);
-    fn record_botwoon_head(&mut self);
-    fn follow_botwoon_history(&mut self);
-    fn orient_botwoon_body(&mut self);
-    fn advance_botwoon_history(&mut self);
 }
 
 /// Botwoon's state and reactions run on the scheduler's lease.
@@ -176,13 +183,13 @@ pub trait RuntimeHost:
 impl<T> RuntimeHost for T where
     T: crate::actors::host::ActorLease
         + BossLease<Game = <T as crate::actors::host::ActorLease>::Game>
-        + SlotState
+        + Lease
         + crate::actors::boss_interaction::Access
         + ?Sized
 {
 }
 
-fn initialize_living<L: Lease + ?Sized>(e: u16, game: &mut L) {
+fn initialize_living<L: Lease>(e: u16, game: &mut L) {
     *BotwoonEdit::of(game, e).body_projectile_index() = BODY_PROJECTILES;
     loop {
         let k = game.current_enemy();
@@ -203,7 +210,7 @@ fn initialize_living<L: Lease + ?Sized>(e: u16, game: &mut L) {
         }
     }
     BotwoonEdit::of(game, e).actor().instruction = HIDE;
-    let initial = game.foreign(|game| game.botwoon_speed_level(0));
+    let initial = game.owned_step(|game| crate::botwoon_tables::speed_level(game, 0));
     {
         let mut botwoon = BotwoonEdit::of(game, e);
         *botwoon.instruction_list() = HIDE;
@@ -289,7 +296,7 @@ fn initial<R: RuntimeHost>(game: &mut R) {
 }
 /// Botwoon function - go through hole ($B3:989D), leaving it: set up moving
 /// around ($B3:98EC) or spitting ($B3:9913). Was `select_attack`.
-pub fn leave_hole<L: Lease + ?Sized>(e: u16, game: &mut L) -> bool {
+pub fn leave_hole<L: Lease>(e: u16, game: &mut L) -> bool {
     if Botwoon::of(game, e).going_through_hole() == 0 {
         return false;
     }
@@ -328,7 +335,7 @@ pub fn leave_hole<L: Lease + ?Sized>(e: u16, game: &mut L) -> bool {
 }
 /// Botwoon function - moving around ($B3:99A4): once at a hole, go through it.
 /// Was `resume_chase`.
-pub fn moving_around<L: Lease + ?Sized>(e: u16, game: &mut L) -> bool {
+pub fn moving_around<L: Lease>(e: u16, game: &mut L) -> bool {
     if Botwoon::of(game, e).going_through_hole() == 0 {
         return false;
     }
@@ -389,7 +396,7 @@ fn pre_death_delay<R: RuntimeHost>(game: &mut R) {
     }
 }
 /// Botwoon function - death sequence - falling to ground ($B3:9A5E). Was `fall`.
-pub fn fall_to_ground<L: Lease + ?Sized>(game: &mut L) {
+pub fn fall_to_ground<L: Lease>(game: &mut L) {
     let e = game.current_enemy();
     let index = ((8 * i32::from(Botwoon::of(game, e).falling_y_speed_index().to_le_bytes()[1]))
         >> 1) as isize;
@@ -420,12 +427,12 @@ pub fn fall_to_ground<L: Lease + ?Sized>(game: &mut L) {
             ADDR_K_EPROJ_DUST_CLOUD_EXPLOSION as u16,
             DUST_CLOUD_PARAMETER,
         );
-        game.queue_sound(1, SMALL_EXPLOSION, 6);
+        crate::effects::SoundEffects::queue_sound(game, 1, SMALL_EXPLOSION, 6);
         BotwoonEdit::of(game, e).actor().properties |= LANDED_PROPERTIES;
     }
 }
 /// Botwoon function - death sequence - crumbling wall ($B3:9AF9). Was `rubble`.
-pub fn crumbling_wall<L: Lease + ?Sized>(k: u16, game: &mut L) {
+pub fn crumbling_wall<L: Lease>(k: u16, game: &mut L) {
     let e = k;
     if (i32::from(Botwoon::of(game, e).death_counter()) - CRUMBLE_END) & SIGN != 0 {
         if (i32::from(Botwoon::of(game, e).death_counter()) - CRUMBLE_START) & SIGN == 0 {
@@ -438,8 +445,8 @@ pub fn crumbling_wall<L: Lease + ?Sized>(k: u16, game: &mut L) {
                 let y = (i32::from(Botwoon::of(game, e).death_counter())
                     + i32::from(game.roll_random() & 0x1f)
                     - 8) as u16;
-                game.foreign(|game| game.create_sprite(x, y, LARGE_EXPLOSION, WALL_SPRITE_PALETTE));
-                game.queue_sound(1, SMALL_EXPLOSION, 6);
+                steps::create_sprite_appearing(game, x, y, LARGE_EXPLOSION, WALL_SPRITE_PALETTE);
+                crate::effects::SoundEffects::queue_sound(game, 1, SMALL_EXPLOSION, 6);
             }
             let dust = (Botwoon::of(game, e).wall_smoke_timer() as i16).wrapping_sub(1);
             *BotwoonEdit::of(game, e).wall_smoke_timer() = dust as u16;
@@ -450,7 +457,7 @@ pub fn crumbling_wall<L: Lease + ?Sized>(k: u16, game: &mut L) {
                     let y = (i32::from(Botwoon::of(game, e).death_counter())
                         + (i32::from(game.roll_random() & 0x1f) - 8))
                         as u16;
-                    game.foreign(|game| game.create_sprite(x, y, SMOKE, WALL_SPRITE_PALETTE));
+                    steps::create_sprite_appearing(game, x, y, SMOKE, WALL_SPRITE_PALETTE);
                 }
             }
         }
@@ -499,7 +506,7 @@ pub fn contact<R: RuntimeHost>(power_bomb: bool, h: &mut R) {
 }
 /// Choose Botwoon movement path ($B3:9933), setting its speed ($B3:995D) by
 /// health.
-fn choose_movement_path<L: Lease + ?Sized>(k: u16, game: &mut L) {
+fn choose_movement_path<L: Lease>(k: u16, game: &mut L) {
     let e = k;
     if Botwoon::of(game, e).head_hidden() == 0 {
         *BotwoonEdit::of(game, e).speed_table_index() = 0;
@@ -512,7 +519,7 @@ fn choose_movement_path<L: Lease + ?Sized>(k: u16, game: &mut L) {
             };
             *BotwoonEdit::of(game, e).speed_table_index() = speed;
             let index = (4u16.wrapping_mul(Botwoon::of(game, e).speed_table_index()) >> 1) as isize;
-            let level = game.foreign(|game| game.botwoon_speed_level(index));
+            let level = game.owned_step(|game| crate::botwoon_tables::speed_level(game, index));
             {
                 let mut botwoon = BotwoonEdit::of(game, e);
                 *botwoon.speed() = level.speed;
@@ -541,10 +548,10 @@ fn clamp_delta(value: u16) -> u16 {
 }
 /// Botwoon movement function - move directly toward target hole ($B3:9BB7),
 /// from the offsets to it ($B3:9BF8). Was `seek_hole`.
-pub fn move_toward_target_hole<L: Lease + ?Sized>(game: &mut L) {
+pub fn move_toward_target_hole<L: Lease>(game: &mut L) {
     let e = game.current_enemy();
     let index = (Botwoon::of(game, e).target_hole() >> 1) as isize;
-    let target = game.foreign(|game| game.botwoon_hole(index));
+    let target = game.owned_step(|game| crate::botwoon_tables::hole(game, index));
     let x = clamp_delta(
         (i32::from(target.left) + 4 - i32::from(Botwoon::of(game, e).actor().x.whole)) as u16,
     );
@@ -566,7 +573,7 @@ pub fn move_toward_target_hole<L: Lease + ?Sized>(game: &mut L) {
     }
 }
 /// Move Botwoon according to speed and angle to target hole ($B3:9C48).
-fn move_by_angle<L: Lease + ?Sized>(game: &mut L) {
+fn move_by_angle<L: Lease>(game: &mut L) {
     let e = game.current_enemy();
     let phase = Botwoon::of(game, e).target_hole_angle();
     let amplitude = Botwoon::of(game, e).speed();
@@ -578,7 +585,7 @@ fn move_by_angle<L: Lease + ?Sized>(game: &mut L) {
 }
 /// Botwoon movement function - start moving Botwoon according to movement data
 /// ($B3:E250). Was `load_path`.
-pub fn start_moving_by_movement_data<L: Lease + ?Sized>(game: &mut L) {
+pub fn start_moving_by_movement_data<L: Lease>(game: &mut L) {
     let e = game.current_enemy();
     {
         let mut botwoon = BotwoonEdit::of(game, e);
@@ -611,7 +618,7 @@ pub fn start_moving_by_movement_data<L: Lease + ?Sized>(game: &mut L) {
 /// Botwoon movement function - move Botwoon according to movement data
 /// ($B3:E28C), one step per pixel of speed, until the data ends. Was
 /// `advance_path`.
-pub fn move_by_movement_data<L: Lease + ?Sized>(game: &mut L) {
+pub fn move_by_movement_data<L: Lease>(game: &mut L) {
     let e = game.current_enemy();
     let mut delta = [0u16; 2];
     let mut remaining = i32::from(Botwoon::of(game, e).speed());
@@ -663,7 +670,7 @@ pub fn move_by_movement_data<L: Lease + ?Sized>(game: &mut L) {
     }
 }
 /// Start the head's instruction list `instruction`.
-fn set_instruction_list<L: Lease + ?Sized>(e: u16, instruction: u16, game: &mut L) {
+fn set_instruction_list<L: Lease>(e: u16, instruction: u16, game: &mut L) {
     BotwoonEdit::of(game, e).actor().instruction = instruction;
     *BotwoonEdit::of(game, e).instruction_list() = instruction;
     {
@@ -676,7 +683,7 @@ fn set_instruction_list<L: Lease + ?Sized>(e: u16, instruction: u16, game: &mut 
 /// Botwoon head function - moving around ($B3:9DC0): hide or face along the
 /// head's motion over the last 4 frames, then shift the position history. Was
 /// `animate_motion`.
-pub fn head_moving_around<L: Lease + ?Sized>(game: &mut L) {
+pub fn head_moving_around<L: Lease>(game: &mut L) {
     let e = game.current_enemy();
     let x = Botwoon::of(game, e)
         .actor()
@@ -715,7 +722,7 @@ pub fn head_moving_around<L: Lease + ?Sized>(game: &mut L) {
 }
 /// Botwoon head function - spitting - set angle and show ($B3:9E7D): aim at
 /// Samus, then spit 5 or 3; returns that head function. Was `aim_spit`.
-pub fn head_set_spit_angle<L: Lease + ?Sized>(game: &mut L) -> u32 {
+pub fn head_set_spit_angle<L: Lease>(game: &mut L) -> u32 {
     let e = game.current_enemy();
     BotwoonEdit::of(game, e).actor().layer = SHOWN_LAYER;
     let actor = game.current_enemy();
@@ -737,7 +744,7 @@ pub fn head_set_spit_angle<L: Lease + ?Sized>(game: &mut L) -> u32 {
 }
 /// Botwoon head function - spitting - spawn 5 ($B3:9EE0, `wide`, once the
 /// spitting flag is set) or 3 ($B3:9F34) spit projectiles. Was `spit`.
-pub fn head_spit<L: Lease + ?Sized>(wide: bool, game: &mut L) {
+pub fn head_spit<L: Lease>(wide: bool, game: &mut L) {
     let e = game.current_enemy();
     if wide && Botwoon::of(game, e).spitting() == 0 {
         return;
@@ -760,7 +767,7 @@ pub fn head_spit<L: Lease + ?Sized>(wide: bool, game: &mut L) {
     *BotwoonEdit::of(game, target).head_function() = head_function::SPITTING_COOLDOWN;
 }
 /// Botwoon head function - spitting - cooldown ($B3:9F7A). Was `wait_spit`.
-pub fn head_cooldown<L: Lease + ?Sized>(k: u16, game: &mut L) {
+pub fn head_cooldown<L: Lease>(k: u16, game: &mut L) {
     let e = k;
     let delay = (Botwoon::of(game, e).spit_timer() as i16).wrapping_sub(1);
     *BotwoonEdit::of(game, e).spit_timer() = delay as u16;
@@ -774,13 +781,13 @@ pub fn head_cooldown<L: Lease + ?Sized>(k: u16, game: &mut L) {
 }
 /// Botwoon / hole collision detection ($B3:9F93): entering a hole toggles the
 /// head between hidden and shown. Was `detect_portal`.
-pub fn hole_collision<L: Lease + ?Sized>(k: u16, game: &mut L) {
+pub fn hole_collision<L: Lease>(k: u16, game: &mut L) {
     let e = game.current_enemy();
     if Botwoon::of(game, k).hole_collision_disabled() != 0 {
         return;
     }
     for index in [12, 8, 4, 0] {
-        let hole = game.foreign(|game| game.botwoon_hole(index));
+        let hole = game.owned_step(|game| crate::botwoon_tables::hole(game, index));
         let bounds = [hole.left, hole.right, hole.top, hole.bottom];
         if (0..4).all(|offset| {
             let coordinate = if offset < 2 {
@@ -805,7 +812,7 @@ pub fn hole_collision<L: Lease + ?Sized>(k: u16, game: &mut L) {
     }
 }
 /// Instruction - enemy radius = `x` x `y` ($B3:94C7, $B3:94D7, $B3:94E7).
-pub fn set_hitbox<L: Lease + ?Sized>(x: u16, y: u16, j: EnemyScript, game: &mut L) -> EnemyScript {
+pub fn set_hitbox<L: Lease>(x: u16, y: u16, j: EnemyScript, game: &mut L) -> EnemyScript {
     let e = game.current_enemy();
     {
         let mut botwoon = BotwoonEdit::of(game, e);
@@ -816,19 +823,25 @@ pub fn set_hitbox<L: Lease + ?Sized>(x: u16, y: u16, j: EnemyScript, game: &mut 
     j
 }
 /// Instruction - set Botwoon spitting flag ($B3:9567).
-pub fn set_spitting<L: Lease + ?Sized>(j: EnemyScript, game: &mut L) -> EnemyScript {
+pub fn set_spitting<L: Lease>(j: EnemyScript, game: &mut L) -> EnemyScript {
     let e = game.current_enemy();
     *BotwoonEdit::of(game, e).spitting() = 1;
     j
 }
 
 /// Initialisation AI - Botwoon ($B3:9583): once dead, clear its wall.
-pub fn initialize<L: Lease + ?Sized>(game: &mut L) {
+pub fn initialize<L: Lease>(game: &mut L) {
     let e = game.current_enemy();
-    if u16::from(game.foreign(|game| game.boss_byte(MARIDIA))) & BOTWOON_DEAD != 0 {
-        game.foreign(|game| {
-            game.spawn_plm(WALL_BLOCK.0, WALL_BLOCK.1, CLEAR_WALL);
-            game.open_passage();
+    let boss = game.owned_step(|game| crate::progress::boss_byte_at(game, MARIDIA));
+    if u16::from(boss) & BOTWOON_DEAD != 0 {
+        game.owned_step(|game| {
+            crate::room_mechanisms::creation::spawn_hardcoded_in(
+                game,
+                WALL_BLOCK.0,
+                WALL_BLOCK.1,
+                CLEAR_WALL,
+            );
+            crate::room_mechanisms::rules::crumbling_wall::open_passage(game);
         });
         BotwoonEdit::of(game, e).actor().instruction = HIDE;
         BotwoonEdit::of(game, e).actor().properties |= K_ENEMY_PROPS_DELETED as u16;
@@ -875,10 +888,15 @@ pub fn main_ai<R: RuntimeHost>(runtime: &mut R) {
                     actor.variables[3] = function::DEATH_CRUMBLING_WALL
                 });
                 let k = runtime.selected_actor().byte_index();
-                runtime.foreign(|game| {
+                runtime.owned_step(|game| {
                     // Spawn Botwoon item drops and start crumbling wall ($B3:9ADD).
-                    game.spawn_plm(WALL_BLOCK.0, WALL_BLOCK.1, CRUMBLE_WALL);
-                    game.scatter_botwoon_drop(k);
+                    crate::room_mechanisms::creation::spawn_hardcoded_in(
+                        game,
+                        WALL_BLOCK.0,
+                        WALL_BLOCK.1,
+                        CRUMBLE_WALL,
+                    );
+                    crate::enemy_projectiles::drops::scatter(DropSource::Botwoon, k, game);
                 });
                 {
                     let mut botwoon = BotwoonEdit::of(runtime, k);
@@ -897,7 +915,7 @@ pub fn main_ai<R: RuntimeHost>(runtime: &mut R) {
 }
 /// Run the movement function, then the head's, carrying the body along the
 /// position history.
-fn step_body<L: Lease + ?Sized>(e: u16, game: &mut L) {
+fn step_body<L: Lease>(e: u16, game: &mut L) {
     match Botwoon::of(game, e).movement_function() {
         movement_function::MOVE_TOWARD_TARGET_HOLE => move_toward_target_hole(game),
         movement_function::MOVE_BY_MOVEMENT_DATA => move_by_movement_data(game),
@@ -906,20 +924,20 @@ fn step_body<L: Lease + ?Sized>(e: u16, game: &mut L) {
             game.foreign(|game| game.unreachable());
         }
     }
-    game.foreign(|game| {
-        game.record_botwoon_head();
-        game.follow_botwoon_history();
+    game.owned_step(|game| {
+        history::record_botwoon_head(game);
+        history::follow_botwoon_history(game);
     });
     let address = (BANK << 16) | u32::from(Botwoon::of(game, e).head_function());
     pre_instruction(address, game.current_enemy(), game);
-    game.foreign(|game| {
-        game.orient_botwoon_body();
-        game.advance_botwoon_history();
+    game.owned_step(|game| {
+        history::orient_botwoon_body(game);
+        history::advance_botwoon_history(game);
     });
 }
 
 /// Run the head callback, including the immediate spawn after aiming.
-pub fn pre_instruction<L: Lease + ?Sized>(address: u32, k: u16, game: &mut L) {
+pub fn pre_instruction<L: Lease>(address: u32, k: u16, game: &mut L) {
     match address {
         11763835 => (),
         11767039 => crate::actors::gamet::settle(game),
