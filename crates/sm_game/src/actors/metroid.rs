@@ -7,8 +7,8 @@ use crate::actors::scheduling;
 use crate::actors::slot_view::{SlotState, slot_view};
 use crate::enemy_projectiles::host::Effects as _;
 use crate::enemy_script::EnemyScript;
-use crate::player_projectiles::content::table;
-use crate::ram::{word_arrays, words};
+use crate::player_projectiles::{access::shot, content::table, host::Host as _};
+use crate::ram::words;
 use crate::session_access::SessionAccess as _;
 
 /// A lease the metroids run on: their slots are the Session's.
@@ -214,8 +214,8 @@ fn recoil(runtime: &mut impl Lease, contact: bool, target_y: u16) {
         let target = match (contact, axis) {
             (true, 0) => runtime.session().player.x,
             (true, _) => target_y,
-            (false, 0) => runtime.word(word_arrays::PROJECTILE_X_POS),
-            (false, _) => runtime.word(word_arrays::PROJECTILE_Y_POS),
+            (false, 0) => runtime.session().projectiles.shots[0].x,
+            (false, _) => runtime.session().projectiles.shots[0].y,
         };
         let actor = runtime.resolve_actor(key, Native);
         let difference = [actor.x.whole, actor.y.whole][axis].wrapping_sub(target) as i16;
@@ -236,7 +236,7 @@ fn recoil(runtime: &mut impl Lease, contact: bool, target_y: u16) {
 }
 /// Deal metroid contact damage to Samus ($A3:EECE): a health point as the subhealth wraps.
 fn drain(runtime: &mut impl Lease, metroid: u16) {
-    let suits = runtime.word(words::EQUIPPED_ITEMS);
+    let suits = runtime.session().inventory.equipment.active;
     let amount = DRAINS[usize::from(suits & 0x20 == 0) + usize::from(suits & 0x21 == 0)];
     let previous = Metroid::of(runtime, metroid).samus_subhealth();
     let subhealth = previous.wrapping_sub(amount);
@@ -252,15 +252,15 @@ pub fn touch<H: LeaseActors + ?Sized>(game: &mut H) {
     let metroid = combat::current(runtime).byte_index();
     let target_y = runtime.session().player.y.wrapping_sub(8);
     let index = runtime.resolve_actor(key, Native).pre_instruction;
-    if runtime.word(words::SAMUS_CONTACT_DAMAGE_INDEX) != 0 {
+    if runtime.session().player.contact.contact_attack != 0 {
         if index != LATCHED_ONTO_SAMUS {
             recoil(runtime, true, target_y);
         }
         return;
     }
     if index != BOMBED_OFF_SAMUS {
-        if runtime.word(words::RANDOM_ENEMY_COUNTER) & 7 == 7
-            && runtime.word(words::SAMUS_HEALTH).wrapping_sub(30) & 0x8000 == 0
+        if runtime.session().actors.controls.phase_counter & 7 == 7
+            && runtime.session().inventory.health.current.wrapping_sub(30) & 0x8000 == 0
         {
             runtime.queue_sound(3, 6, 0x2d); // Health tick.
         }
@@ -302,8 +302,12 @@ pub fn power_bomb<H: LeaseActors + ?Sized>(game: &mut H) {
 /// Enemy shot - metroid ($A3:EF07): shattered, bombed off Samus, or recoil and freeze.
 pub fn shot<H: LeaseActors + ?Sized>(game: &mut H) {
     let runtime = &mut game.lease();
-    let projectile = usize::from(runtime.session().room.collision_detection_index);
-    let kind = runtime.word(word_arrays::PROJECTILE_TYPE + 2 * projectile);
+    let projectile = runtime
+        .session()
+        .room
+        .collision_detection_index
+        .wrapping_mul(2);
+    let kind = shot!(runtime, projectile, kind);
     let key = combat::current(runtime);
     let metroid = combat::current(runtime).byte_index();
     if runtime.resolve_actor(key, Native).frozen != 0 {
@@ -332,9 +336,9 @@ pub fn shot<H: LeaseActors + ?Sized>(game: &mut H) {
         }
     } else {
         recoil(runtime, false, 0);
-        if runtime.word(word_arrays::PROJECTILE_TYPE + 2 * projectile) & 2 != 0 {
+        if shot!(runtime, projectile, kind) & 2 != 0 {
             runtime.queue_sound(3, 6, 0xa); // Ice beam: enemy frozen.
-            let damage = runtime.word(word_arrays::PROJECTILE_DAMAGE + 2 * projectile);
+            let damage = shot!(runtime, projectile, damage);
             let threshold = Metroid::of(runtime, metroid).freeze_threshold();
             runtime.edit_actor(key, Native, |actor| actor.flash = 4);
             let threshold_left = threshold.saturating_sub(damage);
