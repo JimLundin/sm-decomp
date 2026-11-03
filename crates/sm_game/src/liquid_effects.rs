@@ -7,19 +7,31 @@ use crate::scene::state::WordOrder;
 
 pub const WATER_WAVE: [i16; 16] = [0, 1, 1, 0, 0, -1, -1, 0, 0, 1, 1, 0, 0, -1, -1, 0];
 
+/// Start a lava or acid liquid: it idles, its surface at
+/// the base height. The room's FX initialisation runs this on its lease, then
+/// [`initialize_lava`] or [`initialize_acid`] on the game.
+pub fn start_hot(room: &mut crate::session::Room) {
+    room.liquid.rising = crate::liquid::rising::HOT_IDLE;
+    room.liquid.lava_acid.whole = room.liquid_height;
+}
+/// Start water: it idles, its surface at the base height. Returns
+/// whether the liquid options ask for the background wave, which
+/// [`initialize_water`] then spawns.
+pub fn start_water(room: &mut crate::session::Room) -> bool {
+    room.liquid.rising = crate::liquid::rising::WATER_IDLE;
+    room.liquid.surface.whole = room.liquid_height;
+    room.liquid_options & 2 != 0
+}
+
+/// Spawn the lava's HDMA objects and animated tiles, after [`start_hot`].
 pub fn initialize_lava<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     initialize_hot(ADDR_K_ANIMTILES_LAVA as u16, game);
 }
+/// Spawn the acid's HDMA objects and animated tiles, after [`start_hot`].
 pub fn initialize_acid<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     initialize_hot(ADDR_K_ANIMTILES_ACID as u16, game);
 }
 fn initialize_hot<H: crate::menus::host::Host + ?Sized>(tiles: u16, game: &mut H) {
-    crate::liquid::LiquidWords::set(game, |words| &mut words.liquid.rising, 0xb343);
-    crate::liquid::LiquidWords::set(
-        game,
-        |words| &mut words.liquid.lava_acid.whole,
-        crate::liquid::LiquidWords::read(game).height,
-    );
     static SURFACE: HdmaObjectDefinition = HdmaObjectDefinition::new(0x42, 0x12, 0xc3e1);
     static BACKGROUND: HdmaObjectDefinition = HdmaObjectDefinition::new(0x42, 0x10, 0xc3f0);
     game.spawn_hdma(0x88, &SURFACE);
@@ -27,17 +39,13 @@ fn initialize_hot<H: crate::menus::host::Host + ?Sized>(tiles: u16, game: &mut H
     crate::hdma_objects::spawn_bg3_scroll(game);
     crate::animated_tiles::execution::leased::spawn(tiles, game);
 }
-pub fn initialize_water<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    crate::liquid::LiquidWords::set(game, |words| &mut words.liquid.rising, 0xc428);
-    crate::liquid::LiquidWords::set(
-        game,
-        |words| &mut words.liquid.surface.whole,
-        crate::liquid::LiquidWords::read(game).height,
-    );
+/// Spawn the water's HDMA objects after [`start_water`]: its surface, and its
+/// background wave when `background` is set.
+pub fn initialize_water<H: crate::menus::host::Host + ?Sized>(background: bool, game: &mut H) {
     static SURFACE: HdmaObjectDefinition = HdmaObjectDefinition::new(0x42, 0x11, 0xd856);
     static BACKGROUND: HdmaObjectDefinition = HdmaObjectDefinition::new(0x42, 0xf, 0xd847);
     game.spawn_hdma(0x88, &SURFACE);
-    if crate::liquid::LiquidWords::read(game).options & 2 != 0 {
+    if background {
         game.spawn_hdma(0x88, &BACKGROUND);
     }
     crate::hdma_objects::spawn_bg3_scroll(game);

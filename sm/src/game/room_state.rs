@@ -79,11 +79,25 @@ use sm_game::room_state::fx::Initializer;
 impl sm_game::room_state::fx::FxHost for Runtime<'_> {
     fn initialize_fx(&mut self, initializer: Initializer) {
         use crate::game::visual_runtime::*;
+        use sm_game::session_access::SessionAccess as _;
         use sm_game::{liquid_effects, scrolling_sky};
+        // A liquid starts on the Session; its HDMA objects then spawn on the game.
+        let mut water_background = false;
+        match initializer {
+            Initializer::Lava | Initializer::Acid => {
+                liquid_effects::start_hot(&mut self.session_mut().room);
+                self.words_stored();
+            }
+            Initializer::Water => {
+                water_background = liquid_effects::start_water(&mut self.session_mut().room);
+                self.words_stored();
+            }
+            _ => {}
+        }
         self.foreign(|game| match initializer {
             Initializer::Lava => liquid_effects::initialize_lava(game),
             Initializer::Acid => liquid_effects::initialize_acid(game),
-            Initializer::Water => liquid_effects::initialize_water(game),
+            Initializer::Water => liquid_effects::initialize_water(water_background, game),
             Initializer::Weather(weather) => initialize_weather(weather, game),
             Initializer::Land => scrolling_sky::initialize_land(game),
             Initializer::BandedSky => scrolling_sky::initialize_banded_sky(game),
