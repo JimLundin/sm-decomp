@@ -153,3 +153,19 @@ tile buffer fills in `initialize_gameplay` and `queue_fx_clear` (the workspace's
 don't cover a plain fill), the $07B4..$0997 clear in the gameplay frame, the options fade's
 $198D..$19BC clear (no typed keys), Crocomire's melt tile copies and $069C..$071D clear, and
 the cohort lane's `cinematic.rs` and `ending_screens.rs` transfers.
+
+## Residuals lane (2026-11-03, `collab/rs-resid2`)
+
+New `projection::Field` keys: `SpawnArgument` ($16), `MovementAndFacing` ($0A1E),
+`PauseHook(index)` ($0601..), `Layer2ScrollX/Y` ($091B/$091C, byte path for stores),
+`SuitRedGreen`/`CrystalFlashDelay` ($0DF0/$0DF2), `LiquidOptions`, `LiquidSurface`, and the
+camera's `Layer1`/`Layer2`/`Bg1Offset`/`Bg2Scroll(axis)`. `ContinuationAccess` gained the
+secondary ($0613) and outer ($0611) continuations, the message continuation read and the
+frame start's $0612..$0615 clear; Game stores them as RAM, as the callers did.
+`display_refresh::Host::store_readback_byte` stores the VRAM readback records, and
+`enqueue_readback` takes its mirror as a display field. No new lease is opened. Left: the
+save slots' $0A00/$D7C0/$CD52 copies and the demo's $CD52 clear (no owner for the saved
+player block or the saved maps), the demo stop's $077C..$0997 clear, Crocomire's melt copies
+and $069C..$071D clear (the clear overlaps the Samus half requests), the tile buffer fills,
+`copy_level_planes` (a raw copy inside the level buffer), the liquid RAM bridge, and the menu
+prelude's `RawRam` re-export, which a dozen menu files rely on.
