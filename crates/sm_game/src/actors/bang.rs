@@ -10,7 +10,6 @@ use crate::enemy_projectiles::host::ShotMember;
 use crate::enemy_script::EnemyScript;
 use crate::player_projectiles::content::{self, table};
 use crate::player_projectiles::motion;
-use crate::ram::words as W;
 use crate::shot;
 
 /// A lease on a game whose slots are the Session's typed storage.
@@ -216,7 +215,8 @@ fn core(runtime: &mut impl Lease) {
 /// charged beam with the bang's damage; the death animation: a small explosion, or
 /// with five projectiles out already, the Samus-contact death.
 fn fire_charged_beam(runtime: &mut impl Lease, direction: u16) -> u16 {
-    runtime.write_slice_le(W::REMOVED_ENEMY_RIGHT_BORDER_COLLISION, direction);
+    runtime.session_mut().actors.compatibility.right_border = direction;
+    runtime.words_stored();
     if runtime.session().projectiles.count.wrapping_sub(5) & SIGN == 0 {
         return 1;
     }
