@@ -540,6 +540,9 @@ pub struct Room {
     /// room's boss sets for the pause screen, as the little-endian words of the
     /// byte image from $0601.
     pub pause_hooks: [u16; 3],
+    /// The room's scroll cells ($7E:CD20..$7E:CD51), a colour byte per screen
+    /// (0 red, 1 blue, 2 green), as the little-endian words of the byte image.
+    pub scrolls: [u16; 25],
     pub camera: crate::camera::Camera,
 }
 /// One of the room's pause hooks ([`Room::pause_hooks`]).
@@ -572,6 +575,16 @@ impl Room {
         let mut word = self.pause_hooks[offset / 2].to_le_bytes();
         word[offset % 2] = byte;
         self.pause_hooks[offset / 2] = u16::from_le_bytes(word);
+    }
+    /// Store `bytes` to scroll cells `cell` and `cell + 1`, first byte first, as
+    /// the original's word store at the first cell.
+    pub fn set_scroll_pair(&mut self, cell: usize, bytes: [u8; 2]) {
+        for (offset, byte) in bytes.into_iter().enumerate() {
+            let at = cell + offset;
+            let mut word = self.scrolls[at / 2].to_le_bytes();
+            word[at % 2] = byte;
+            self.scrolls[at / 2] = u16::from_le_bytes(word);
+        }
     }
     /// Main-code variable `index` as the original's native-order load reads it.
     pub fn main_native(&self, index: usize) -> u16 {
@@ -654,6 +667,7 @@ impl Room {
             ceres_status: 0,
             main_variables: [0; 4],
             pause_hooks: [0; 3],
+            scrolls: [0; 25],
             camera: Default::default(),
         }
     }

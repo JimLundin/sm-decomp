@@ -2128,6 +2128,7 @@ checkpoint_fields!(checkpoint_room, checkpoint_read_room, Room,
     enemy_processing_stage: checkpoint_word/checkpoint_read_word, collision_detection_index: checkpoint_word/checkpoint_read_word,
     slope_behavior: checkpoint_word/checkpoint_read_word, ceres_status: checkpoint_word/checkpoint_read_word,
     main_variables: checkpoint_words/audio_words, pause_hooks: checkpoint_words/audio_words,
+    scrolls: checkpoint_words/audio_words,
     camera: checkpoint_camera/checkpoint_read_camera);
 checkpoint_fields!(checkpoint_camera, checkpoint_read_camera, crate::camera::Camera,
     layer1_block: checkpoint_words/audio_words, layer2_block: checkpoint_words/audio_words,
