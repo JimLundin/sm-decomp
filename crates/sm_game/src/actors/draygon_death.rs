@@ -11,20 +11,21 @@ use crate::actors::draygon_host::{
 use crate::actors::host::{ActorLease, BossEffects as _, Death, Shot};
 use crate::actors::queries::angle_from_delta;
 
+use crate::actors::slot_view::store_byte;
 use crate::enemy_script::EnemyScript;
 use crate::menus::prelude::{boss, owned};
-use crate::ram::{word, words::EPROJ_INIT_PARAM_2};
+use crate::ram::word;
 
 /// Colours 9-12 of BG1/2 palette 5, as palette words and in RAM at $7E:C000.
 const HEALTH_COLOURS: core::ops::Range<usize> = 89..93;
-const PALETTE_RAM: usize = 0xc000;
 /// The hurt AI's palettes: BG1/2 palette 5 and sprite palette 7, which flash
 /// to $A5:A297.
 const BG_PALETTE_5: u16 = 0xa277;
 const SPRITE_PALETTE_7: u16 = 0xa1f7;
 const FLASH_PALETTE: u16 = 0xa297;
-const BG_PALETTE_5_RAM: usize = 0xc0a0;
-const SPRITE_PALETTE_7_RAM: usize = 0xc1e0;
+/// Their first colours in palette RAM ($7E:C0A0, $7E:C1E0).
+const BG_PALETTE_5_COLOUR: usize = 80;
+const SPRITE_PALETTE_7_COLOUR: usize = 240;
 const PALETTE_BYTES: usize = 32;
 /// Flash timer bit 1 flashes.
 const FLASHING: u16 = 2;
@@ -57,10 +58,8 @@ pub fn write_health_palette<L: Lease>(native: bool, game: &mut L) {
         let value =
             crate::actor_tables::word(game, |t| &t.draygon_health_palettes, (cursor >> 1) as isize);
         if native {
-            let bytes = value.to_ne_bytes();
-            let at = PALETTE_RAM + index * 2;
-            game.set_slot_byte(at, bytes[0]);
-            game.set_slot_byte(at + 1, bytes[1]);
+            game.session_mut().presentation.visual_mut().colors[index] =
+                u16::from_le_bytes(value.to_ne_bytes());
         } else {
             boss_ram::set_at(game, boss_ram::Array::PaletteBuffer, index, value);
         }
@@ -77,18 +76,19 @@ fn copy_hurt_palette<L: Lease>(default: u16, target: usize, game: &mut L) {
     let record = crate::cartridge::native_record(BANK, palette, game);
     for offset in 0..PALETTE_BYTES {
         let byte = record.byte(offset);
-        game.set_slot_byte(target + offset, byte);
+        let colours = &mut game.session_mut().presentation.visual_mut().colors;
+        store_byte(&mut colours[target + offset / 2], offset % 2, byte);
     }
 }
 /// Hurt AI - Draygon ($A5:954D): flash the palettes and, while grappled,
 /// drain health. Was `hurt`.
 pub fn hurt_ai<L: Lease>(game: &mut L) {
-    copy_hurt_palette(BG_PALETTE_5, BG_PALETTE_5_RAM, game);
+    copy_hurt_palette(BG_PALETTE_5, BG_PALETTE_5_COLOUR, game);
     let k = game.current_enemy();
     if Draygon::of(game, k).actor().flash & FLASHING == 0 {
         write_health_palette(false, game);
     }
-    copy_hurt_palette(SPRITE_PALETTE_7, SPRITE_PALETTE_7_RAM, game);
+    copy_hurt_palette(SPRITE_PALETTE_7, SPRITE_PALETTE_7_COLOUR, game);
     if boss!(game.SamusGrappleFlags) & GRAPPLE_FLAG != 0
         && Draygon::of(game, BODY).actor().frame & GRAPPLE_FRAMES == 0
     {
@@ -274,7 +274,7 @@ pub fn spawn_goop<L: Lease + ActorLease>(
     let y = Draygon::of(game, BODY).actor().y.whole.wrapping_sub(16);
     game.place_projectile_spawn(x, y);
     let angle = (game.roll_random() & 0x3f) + if right { 192 } else { 128 };
-    game.write_slice_le(EPROJ_INIT_PARAM_2, angle);
+    game.session_mut().enemy_projectiles.spawn.secondary = angle;
     let enemy = game.current_enemy();
     game.spawn_actor_eproj(2, enemy, 0x8e50);
     script
