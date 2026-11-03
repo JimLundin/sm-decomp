@@ -124,7 +124,6 @@ pub fn apply<H: Host + ?Sized>(address: u32, game: &mut H) -> bool {
 use crate::camera::set_layer1;
 use crate::player_collision::operations::Axis;
 use crate::player_position::PlayerWord;
-use crate::ram::word;
 use camera::{auto_x, auto_y, trigger_down, trigger_left, trigger_right, trigger_up};
 // Samus's fraction and whole position form one native split motion: native
 // loads of the fraction then the whole, stores likewise.
@@ -281,7 +280,8 @@ pub fn fill_viewport<H: Host + ?Sized>(game: &mut H) {
     let screens = (i32::from(game.display_control_byte(Field::Screens0))
         - i32::from(game.display_control_byte(Field::Screens1)))
         << 8;
-    word!(game.SIZE_OF_BG2 = (screens & 0xf800) as u16);
+    game.session_mut().room.background_size = (screens & 0xf800) as u16;
+    game.words_stored();
     calculate_blocks(game);
     for _ in 0..17 {
         let camera = game.session().room.camera;
