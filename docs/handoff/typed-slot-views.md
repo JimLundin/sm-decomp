@@ -169,3 +169,27 @@ player block or the saved maps), the demo stop's $077C..$0997 clear, Crocomire's
 and $069C..$071D clear (the clear overlaps the Samus half requests), the tile buffer fills,
 `copy_level_planes` (a raw copy inside the level buffer), the liquid RAM bridge, and the menu
 prelude's `RawRam` re-export, which a dozen menu files rely on.
+
+## Saves lane (2026-11-03, `collab/rs-saves`)
+
+New owner: `Session::saved_maps` (`save_file::SavedMaps`, $CD52..$D551, eight 256-byte
+area maps, SMAUXGS 16). New `projection::Field` keys, all stored through the byte path:
+`SavedMap(index)`, `ExploredMap(index)` ($07F7) and `MapStations(index)` ($D908 + index).
+The save, load, new-game and demo map copies and clears go through them. The map packing
+in `transfer_map` ($D91C..) and the boot clear stay raw RAM on Game, re-adopted at the
+next lease. `presentation_workspace::Access::screen_fill_native` fills the tile buffer
+(Game stores RAM, no lease). `LevelData::copy_level_planes` moves the level split onto
+the level owner (Game's RAM). No new lease is opened.
+
+Left:
+- The saved player block. The two $09A2..$0A01 <-> $D7C0..$D81F copies need a
+  typed record built from about ten owners: inventory, bindings, selected weapon, game
+  time, options, player flags and HUD auto-cancel. $09EA and $09EE..$0A01 have no owner
+  yet, and $D7C0..$D81F has none either.
+- The demo stop's $077C..$0997 clear. It spans about thirty owners and needs a per-owner
+  audit.
+- Crocomire's $069C..$071C melting heights. They have no owner, and the data-bank reads
+  and the `legacy_overflow` path reach them by address. $071D is the first Samus half
+  request.
+- The melt copies, whose destinations come from a ROM table.
+- The menu prelude's `RawRam` re-export. Nine menu files still call `.ram()`.
