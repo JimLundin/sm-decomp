@@ -69,10 +69,6 @@ impl Host for Game {
     fn grab_samus(&mut self, direction: u16) {
         forced::grab_by_draygon(direction, &mut Runtime::new(self));
     }
-
-    fn release_samus(&mut self) {
-        forced::release_from_draygon(&mut Runtime::new(self));
-    }
 }
 
 impl BossEffects for Game {

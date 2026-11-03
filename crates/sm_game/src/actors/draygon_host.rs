@@ -17,6 +17,8 @@ pub trait Lease:
     + crate::sprite_effect_host::Host
     + crate::enemy_projectiles::host::Host
     + crate::player_movement::effects::Host
+    + crate::player_projectiles::host::Host
+    + crate::cartridge::NativeDiagnostics
 {
 }
 impl<T> Lease for T where
@@ -27,6 +29,8 @@ impl<T> Lease for T where
         + crate::sprite_effect_host::Host
         + crate::enemy_projectiles::host::Host
         + crate::player_movement::effects::Host
+        + crate::player_projectiles::host::Host
+        + crate::cartridge::NativeDiagnostics
         + ?Sized
 {
 }
@@ -36,7 +40,6 @@ pub trait Host: BossEffects + BossLease<Game = Self> {
     fn draygon_trajectory(&mut self);
     /// Draygon grabs Samus, facing `direction`.
     fn grab_samus(&mut self, direction: u16);
-    fn release_samus(&mut self);
 }
 
 slot_view! {

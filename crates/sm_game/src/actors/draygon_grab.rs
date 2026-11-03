@@ -325,7 +325,7 @@ pub fn move_samus_with_draygon<S: Lease>(k: u16, game: &mut S) {
 /// `release`.
 pub fn flail_tail_and_fly_straight_up<L: Lease>(game: &mut L) {
     crate::probe::hit("draygon_grab.flail_tail_and_fly_straight_up");
-    game.foreign(|game| game.release_samus());
+    game.owned_step(crate::player_movement::forced::release_from_draygon);
     battle!(game.SamusGrappleFlags = 0);
     *DraygonEdit::of(game, BODY).function() = function::FLY_STRAIGHT_UP;
     DraygonEdit::of(game, BODY).actor().properties &= !INTANGIBLE;
@@ -359,14 +359,14 @@ pub fn fly_straight_up<S: Lease>(game: &mut S) {
 pub fn tail_whip_hit<L: Lease>(script: EnemyScript, game: &mut L) -> EnemyScript {
     *DraygonEdit::of(game, BODY).swoop_y_acceleration() = INITIAL_SWOOP_Y_ACCELERATION;
     let definition = Draygon::of(game, BODY).actor().definition;
-    game.foreign(|game| {
-        let amount = game.legacy_native_record(ENEMY_DEF_BANK, definition);
-        let amount = game.suit_damage(amount.word(ENEMY_DEF_DAMAGE));
-        game.damage_player(amount);
+    game.owned_step(|game| {
+        let record = crate::cartridge::native_record(ENEMY_DEF_BANK, definition, game);
+        let amount = crate::actors::combat::suit_damage(game, record.word(ENEMY_DEF_DAMAGE));
+        crate::samus_periodic_damage::contact(game, amount);
     });
     battle!(game; EarthquakeTimer = EARTHQUAKE_FRAMES; EarthquakeType = EARTHQUAKE_BG1_VERTICAL_3PX;);
     let x = game.player_x();
     let y = game.player_y().wrapping_add(DUST_CLOUD_Y);
-    game.foreign(|game| game.create_sprite(x, y, DUST_CLOUD, 0));
+    crate::actors::boss_lease::steps::create_sprite(game, x, y, DUST_CLOUD);
     script
 }
