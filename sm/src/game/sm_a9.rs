@@ -259,22 +259,8 @@ impl sm_game::actors::mother_brain_fight::Host for Game {
         crate::rtl::report_unreachable(self)
     }
 
-    fn spawn_legacy_population(&mut self, bank: u8, population: u16) -> u16 {
-        crate::game::actors::population::spawn_legacy(
-            &mut crate::game::session_runtime::Runtime::new(self),
-            bank,
-            population,
-        )
-    }
-
     fn set_projectile_spawn_r22(&mut self, value: u16) {
         self.eproj_spawn_r22 = value;
-    }
-
-    fn create_dud(&mut self) {
-        crate::game::actors::combat::create_dud(&mut crate::game::session_runtime::Runtime::new(
-            self,
-        ));
     }
 
     fn spawn_wall_seal(&mut self) {

@@ -864,12 +864,8 @@ pub trait Host:
 {
     /// The original's unreachable-state failure. Was `Unreachable`.
     fn bank_unreachable(&mut self) -> bool;
-    /// Spawn a population from bank `bank`, in one actor lease.
-    fn spawn_legacy_population(&mut self, bank: u8, population: u16) -> u16;
     /// The spawn's extra parameter. Was `eproj_spawn_r22`.
     fn set_projectile_spawn_r22(&mut self, value: u16);
-    /// A dud shot reaction, in one actor lease.
-    fn create_dud(&mut self);
     /// The wall seal's dust clouds and wall blocks.
     fn spawn_wall_seal(&mut self);
     fn drain_health_by_rainbow_beam(&mut self);
@@ -1027,13 +1023,12 @@ crate::dispatch::callback_dispatch! {
         handle_fake_death_explosions(game);
     };
     [11110729] wait_then_spawn_tubes_falling_enemy_0 [] {
-        let free = game.foreign(|game| {
-            crate::enemy_projectiles::table::with_slots(game, |slots| {
-                slots.iter().filter(|slot| slot.definition == 0).count()
-            })
+        let free = game.owned_step(|game| {
+            let slots = &game.session().enemy_projectiles.slots;
+            slots.iter().filter(|slot| slot.definition == 0).count()
         });
         if free >= 4 {
-            game.foreign(|game| game.spawn_legacy_population(BANK, ADDR_STRU_A98AE5 as u16));
+            game.owned_step(|game| crate::actors::population::spawn_legacy(game, BANK, ADDR_STRU_A98AE5 as u16));
             *BrainEdit::of(game, BRAIN_INDEX).subfunction() = function::TUBES_CLEAR_BOTTOM_LEFT_TUBE;
         }
     };
@@ -2130,11 +2125,11 @@ crate::dispatch::callback_dispatch! {
         *BrainEdit::of(game, e).subfunction() = function::TUBES_CLEAR_CEILING_BLOCK_COLUMN_6;
     };
     [11110887] spawn_tubes_falling_enemy_1 {
-        game.foreign(|game| game.spawn_legacy_population(BANK, ADDR_STRU_A98AF5 as u16));
+        game.owned_step(|game| crate::actors::population::spawn_legacy(game, BANK, ADDR_STRU_A98AF5 as u16));
         *BrainEdit::of(game, e).subfunction() = function::TUBES_CLEAR_BOTTOM_RIGHT_TUBE;
     };
     [11110927] spawn_tubes_falling_enemy_2 {
-        game.foreign(|game| game.spawn_legacy_population(BANK, ADDR_STRU_A98B05 as u16));
+        game.owned_step(|game| crate::actors::population::spawn_legacy(game, BANK, ADDR_STRU_A98B05 as u16));
         *BrainEdit::of(game, e).subfunction() = function::TUBES_CLEAR_BOTTOM_MIDDLE_LEFT_TUBE;
     };
     [11110967] spawn_top_middle_left_tube_falling {
@@ -2156,11 +2151,11 @@ crate::dispatch::callback_dispatch! {
         *BrainEdit::of(game, e).subfunction() = function::TUBES_CLEAR_CEILING_TUBE_COLUMN_8;
     };
     [11111067] spawn_tubes_falling_enemy_3 {
-        ({ let (bank, population) = (BANK, TUBES_FALLING_ENEMY_3); game.foreign(|game| game.spawn_legacy_population(bank, population)) });
+        ({ let (bank, population) = (BANK, TUBES_FALLING_ENEMY_3); game.owned_step(|game| crate::actors::population::spawn_legacy(game, bank, population)) });
         *BrainEdit::of(game, e).subfunction() = function::TUBES_CLEAR_BOTTOM_MIDDLE_RIGHT_TUBE;
     };
     [11111107] spawn_tubes_falling_enemy_4 {
-        game.foreign(|game| game.spawn_legacy_population(BANK, ADDR_STRU_A98B25 as u16));
+        game.owned_step(|game| crate::actors::population::spawn_legacy(game, BANK, ADDR_STRU_A98B25 as u16));
         *BrainEdit::of(game, e).subfunction() = function::TUBES_CLEAR_BOTTOM_MIDDLE_TUBES;
     };
     @countdown [pub fn (game: &mut impl Lease)];
@@ -3014,7 +3009,7 @@ pub fn write_phase2_death_palette(game: &mut impl Lease) {
 pub fn spawn_baby_metroid_in_cutscene(game: &mut impl Lease) {
     *BrainEdit::of(game, BRAIN_INDEX).baby_metroid() = {
         let (bank, population) = (BANK, ADDR_STRU_A9BE28 as u16);
-        game.foreign(|game| game.spawn_legacy_population(bank, population))
+        game.owned_step(|game| crate::actors::population::spawn_legacy(game, bank, population))
     };
 }
 crate::dispatch::callback_dispatch! {
