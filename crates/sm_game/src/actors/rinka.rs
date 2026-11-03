@@ -10,7 +10,7 @@ use crate::enemy_projectiles::shared_pre::{x_velocity_at_angle, y_velocity_at_an
 use crate::enemy_script::EnemyScript;
 use crate::geometry::Position;
 use crate::player_projectiles::content::table;
-use crate::ram::words;
+use crate::session_access::SessionAccess as _;
 
 /// Rinka functions, in its first actor word; its second and third are its X and Y
 /// velocities, its fourth its spawn point availability index, and its pre-instruction
@@ -47,11 +47,11 @@ fn set_counter(runtime: &mut impl Lease, count: u16) {
     runtime.record_stored();
 }
 /// $A2:B75B: Mother Brain's room spawn X, Y and availability index, 11 rows; $7E:87FE:
-/// the spawn point availability words; $7E:7020: each enemy's spawn position.
+/// the spawn point availability words. Each enemy's spawn position ($7E:7020) is
+/// its spawn record's.
 const SPAWNS: u32 = 0xa2_b75b;
 const SPAWN_ROWS: usize = 33;
 const AVAILABILITY: usize = 0x87fe;
-const SPAWN_POSITION: usize = 0x7020;
 
 fn spawn_word(runtime: &impl Lease, index: usize) -> u16 {
     table(runtime, SPAWNS, index as isize)
@@ -64,10 +64,7 @@ fn mother_brains(runtime: &impl Lease, key: Key) -> bool {
 }
 /// Check if position is on screen ($A2:B8FF), as the source does: the Y sign twice.
 fn outside_spawn_view(runtime: &impl Lease, x: u16, y: u16) -> bool {
-    let (left, top) = (
-        runtime.word(words::LAYER1_X_POS),
-        runtime.word(words::LAYER1_Y_POS),
-    );
+    let [left, top] = runtime.session().room.camera.layer1;
     y & 0x8000 != 0
         || (y.wrapping_sub(top) as i16) < 0
         || y.wrapping_sub(top).wrapping_sub(224) & 0x8000 == 0
@@ -77,10 +74,10 @@ fn outside_spawn_view(runtime: &impl Lease, x: u16, y: u16) -> bool {
 }
 /// Get availability index of enemy spawn position ($A2:B79D).
 fn saved_spawn(runtime: &impl Lease, index: u16) -> u16 {
-    let saved = SPAWN_POSITION + usize::from(index);
+    let key = Key::from_legacy(index);
     for row in (0..SPAWN_ROWS).step_by(3) {
-        if spawn_word(runtime, row) == runtime.lease_native_word(saved)
-            && spawn_word(runtime, row + 1) == runtime.lease_native_word(saved + 2)
+        if spawn_word(runtime, row) == runtime.resolve_spawn(key, Native).position.x
+            && spawn_word(runtime, row + 1) == runtime.resolve_spawn(key, Native).position.y
         {
             return spawn_word(runtime, row + 2);
         }
@@ -91,11 +88,8 @@ fn saved_spawn(runtime: &impl Lease, index: u16) -> u16 {
 /// the first free on screen, else the first free.
 fn select_spawn(runtime: &mut impl Lease, index: u16) {
     let key = Key::from_legacy(index);
-    let saved = SPAWN_POSITION + usize::from(index);
-    let (x, y) = (
-        runtime.lease_native_word(saved),
-        runtime.lease_native_word(saved + 2),
-    );
+    let position = runtime.resolve_spawn(key, Native).position;
+    let (x, y) = (position.x, position.y);
     if !outside_spawn_view(runtime, x, y) {
         let id = saved_spawn(runtime, index);
         if !occupied(runtime, id) {
@@ -112,9 +106,9 @@ fn select_spawn(runtime: &mut impl Lease, index: u16) {
             {
                 continue;
             }
-            runtime.write_slice_native(saved, x);
+            runtime.edit_spawn(key, Native, |spawn| spawn.position.x = x);
             runtime.edit_actor(key, Native, |actor| actor.x.whole = x);
-            runtime.write_slice_native(saved + 2, y);
+            runtime.edit_spawn(key, Native, |spawn| spawn.position.y = y);
             runtime.edit_actor(key, Native, |actor| actor.y.whole = y);
             let id = spawn_word(runtime, row + 2);
             // The visible choice publishes the availability before the actor's index.
@@ -152,10 +146,9 @@ fn respawn(runtime: &mut impl Lease, index: u16) {
     if mother_brains(runtime, key) {
         select_spawn(runtime, index);
     }
-    let saved = SPAWN_POSITION + usize::from(index);
-    let x = runtime.lease_native_word(saved);
+    let x = runtime.resolve_spawn(key, Native).position.x;
     runtime.edit_actor(key, Native, |actor| actor.x.whole = x);
-    let y = runtime.lease_native_word(saved + 2);
+    let y = runtime.resolve_spawn(key, Native).position.y;
     runtime.edit_actor(key, Native, |actor| actor.y.whole = y);
     reset(runtime, key);
 }
@@ -181,12 +174,9 @@ fn release_spawn(runtime: &mut impl Lease, key: Key) {
 fn off_screen(runtime: &impl Lease, key: Key) -> bool {
     let actor = runtime.resolve_actor(key, Native);
     let (x, y) = (actor.x.whole, actor.y.whole);
-    let top = y
-        .wrapping_add(16)
-        .wrapping_sub(runtime.word(words::LAYER1_Y_POS));
-    let left = x
-        .wrapping_add(16)
-        .wrapping_sub(runtime.word(words::LAYER1_X_POS));
+    let [camera_x, camera_y] = runtime.session().room.camera.layer1;
+    let top = y.wrapping_add(16).wrapping_sub(camera_y);
+    let left = x.wrapping_add(16).wrapping_sub(camera_x);
     let on_screen = y & 0x8000 == 0
         && top & 0x8000 == 0
         && top.wrapping_sub(256) & 0x8000 != 0
@@ -309,10 +299,14 @@ pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) -> bool {
                     };
                 });
                 let x = runtime
-                    .word(words::SAMUS_X_POS)
+                    .session()
+                    .player
+                    .x
                     .wrapping_sub(runtime.resolve_actor(key, Native).x.whole);
                 let y = runtime
-                    .word(words::SAMUS_Y_POS)
+                    .session()
+                    .player
+                    .y
                     .wrapping_sub(runtime.resolve_actor(key, Native).y.whole);
                 let angle = (-(i32::from(angle_from_delta(x, y)) + 0x80)) as u8 as u16;
                 runtime.edit_actor(key, Native, |actor| {
