@@ -83,8 +83,22 @@ pub fn spawn_hdma<H: crate::menus::host::Host + ?Sized>(
     crate::menus::host::MenuRuntime::spawn_hdma(game, bank, args)
 }
 
+/// The HDMA object allocator's host: the object table, and the DMA channel
+/// registers a new object's definition sets.
+pub trait Allocator: HdmaTable {
+    /// Write the DMA control and target registers at `register`, control first.
+    fn write_channel_control(&mut self, register: u16, control: u16);
+}
+impl<T: crate::menus::host::MenuRuntime + HdmaTable + ?Sized> Allocator for T {
+    fn write_channel_control(&mut self, register: u16, control: u16) {
+        let [low, high] = control.to_le_bytes();
+        self.write_dma_register(register, low);
+        self.write_dma_register(register + 1, high);
+    }
+}
+
 /// The host's HDMA spawn on the owned table.
-pub fn spawn_hdma_owned<H: crate::menus::host::Host + ?Sized>(
+pub fn spawn_hdma_owned<H: Allocator + ?Sized>(
     bank: u8,
     args: &HdmaObjectDefinition,
     game: &mut H,
@@ -93,7 +107,7 @@ pub fn spawn_hdma_owned<H: crate::menus::host::Host + ?Sized>(
     spawn_hdma_words(bank, |index| words[index], game)
 }
 
-pub fn spawn_hdma_words<H: crate::menus::host::Host + ?Sized>(
+pub fn spawn_hdma_words<H: Allocator + ?Sized>(
     bank: u8,
     read_word: impl Fn(usize) -> u16,
     game: &mut H,
@@ -117,7 +131,7 @@ pub trait HdmaTable {
 /// definition, then its channel's DMA control and target registers once
 /// the table is published. Returns the byte slot, or `u16::MAX` when every
 /// object is busy.
-fn place_hdma<H: crate::menus::host::Host + ?Sized>(
+fn place_hdma<H: Allocator + ?Sized>(
     slot: Option<usize>,
     bank: u8,
     read_word: impl Fn(usize) -> u16,
@@ -140,10 +154,7 @@ fn place_hdma<H: crate::menus::host::Host + ?Sized>(
     crate::hdma_word!(game, slot, D => 0);
     crate::hdma_word!(game, slot, Channels => 4 << slot);
     crate::hdma_word!(game, slot, BankSlot => (u16::from(bank) << 8) | channel(slot));
-    let control = read_word(0);
-    let register = DMAP0 as u16 + channel(slot);
-    game.write_dma_register(register, control as u8);
-    game.write_dma_register(register + 1, (control >> 8) as u8);
+    game.write_channel_control(DMAP0 as u16 + channel(slot), read_word(0));
     2 * slot as u16
 }
 

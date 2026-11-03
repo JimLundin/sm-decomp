@@ -45,7 +45,7 @@ pub trait Lease:
     + crate::progress::FlagHost
     + crate::enemy_projectiles::host::Host
     + Tables
-    + crate::hdma_objects::HdmaTable
+    + crate::hdma_objects::Allocator
     + crate::runtime_access::SessionRam
 {
 }
@@ -59,7 +59,7 @@ impl<T> Lease for T where
         + crate::progress::FlagHost
         + crate::enemy_projectiles::host::Host
         + Tables
-        + crate::hdma_objects::HdmaTable
+        + crate::hdma_objects::Allocator
         + crate::runtime_access::SessionRam
 {
 }
@@ -1625,7 +1625,7 @@ pub fn main_ai<L: Lease>(game: &mut L) {
     if let Some(request) = execute_phase(game) {
         crate::effects::SoundEffects::queue_sound(game, 1, request as u16 as u8, 6);
         prepare_scroll_hdma(game);
-        let object = game.foreign(|game| crate::hdma_objects::spawn_hdma(0xa4, &DEFINITION, game));
+        let object = crate::hdma_objects::spawn_hdma_owned(0xa4, &DEFINITION, game);
         *CrocomireEdit::of(game, 0).melting_hdma_object() = object;
     }
     samus_collision(game);

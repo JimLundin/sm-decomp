@@ -224,7 +224,7 @@ impl sm_game::actors::phantoon::Lease for crate::game::session_runtime::Runtime<
         self.foreign(|game| crate::game::session_runtime::run_a7_function(address, game));
     }
     fn spawn_hdma(&mut self, bank: u8, args: &sm_game::display::hdma_spawn::HdmaObjectDefinition) {
-        self.foreign(|game| crate::game::visual_runtime::spawn_hdma(bank, args, game));
+        sm_game::hdma_objects::spawn_hdma_owned(bank, args, self);
     }
     fn start_wave(&mut self, direction: u16, speed: u16) {
         self.foreign(|game| {

@@ -2186,6 +2186,14 @@ impl Registers for Runtime<'_> {
         self.foreign(|game| Registers::read_register(game, register))
     }
 }
+// The channel registers are the game's backend; the object table is the lease's.
+impl sm_game::hdma_objects::Allocator for Runtime<'_> {
+    fn write_channel_control(&mut self, register: u16, control: u16) {
+        self.foreign(|game| {
+            sm_game::hdma_objects::Allocator::write_channel_control(game, register, control)
+        });
+    }
+}
 // The lease's projection stores display mirrors in the owned display state.
 impl sm_game::display_refresh::DisplayOwner for Runtime<'_> {
     fn write_owned_byte(&mut self, at: usize, value: u8) {

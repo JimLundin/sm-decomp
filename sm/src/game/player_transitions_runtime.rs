@@ -104,7 +104,7 @@ impl Runtime<'_> {
 }
 impl GameEffects for Runtime<'_> {
     fn spawn_hdma_object(&mut self, definition: &crate::types::HdmaObjectDefinition) {
-        self.foreign(|game| crate::game::visual_runtime::spawn_hdma(0x91, definition, game));
+        sm_game::hdma_objects::spawn_hdma_owned(0x91, definition, self);
     }
     fn update_beam_graphics(&mut self) {
         self.foreign(crate::game::visual_runtime::update_beam_tiles_and_palette);
@@ -122,17 +122,15 @@ impl GameEffects for Runtime<'_> {
         }
     }
     fn spawn_xray_scope_hdma(&mut self) {
-        self.foreign(|game| {
-            let image = game.capture_native_rom_binding();
-            let table = crate::rom::lorom_offset(0x91caf2) as usize;
-            crate::game::visual_runtime::spawn_hdma_words(
-                0x91,
-                |index| {
-                    let image = image.as_ref().expect("native ROM must be registered");
-                    image.table_word(table, index as isize)
-                },
-                game,
-            )
-        });
+        let image = self.samus_game().capture_native_rom_binding();
+        let table = crate::rom::lorom_offset(0x91caf2) as usize;
+        sm_game::hdma_objects::spawn_hdma_words(
+            0x91,
+            |index| {
+                let image = image.as_ref().expect("native ROM must be registered");
+                image.table_word(table, index as isize)
+            },
+            self,
+        );
     }
 }
