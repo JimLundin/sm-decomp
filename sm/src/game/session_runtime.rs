@@ -44,43 +44,6 @@ pub(crate) fn native_record(bank: u8, cursor: u16, game: &mut Game) -> RomRecord
 }
 
 #[forbid(unsafe_code)]
-fn draw_trail(game: &mut Game, pair: usize, right: bool, frozen: bool) {
-    let ram = game.ram();
-    let read = |at| encoding::read(&|at| ram.read_byte(at), at);
-    let saved = read(0x590);
-    if (saved as i16).wrapping_sub(512) >= 0 {
-        return;
-    }
-    let (timer, x_field, y_field, tile_field) = if right {
-        (0xd67c, 0xd754, 0xd79c, 0xd70c)
-    } else {
-        (0xd658, 0xd730, 0xd778, 0xd6e8)
-    };
-    if frozen && read(timer + 2 * pair) == 0 {
-        return;
-    }
-    crate::verify_probe::hit(match (frozen, right) {
-        (true, false) => "trails.draw.frozen_left",
-        (true, true) => "trails.draw.frozen_right",
-        (false, false) => "trails.draw.active_left",
-        (false, true) => "trails.draw.active_right",
-    });
-    let x = read(x_field + 2 * pair).wrapping_sub(read(0x911));
-    if x & 0xff00 == 0 {
-        let entry = 0x370 + usize::from(read(0x590));
-        game.ram().copy_in(entry, &x.to_ne_bytes());
-        // Preserve rereads after each overlapping native OAM store.
-        let y = read(y_field + 2 * pair).wrapping_sub(read(0x915));
-        if y & 0xff00 == 0 {
-            game.ram().copy_in(entry + 1, &y.to_ne_bytes());
-            let tile = read(tile_field + 2 * pair);
-            game.ram().copy_in(entry + 2, &tile.to_ne_bytes());
-            game.ram()
-                .copy_in(0x590, &saved.wrapping_add(4).to_le_bytes());
-        }
-    }
-}
-
 #[cfg(sm_verify_dll)]
 #[path = "../verification/actor_movement_runtime_observer.rs"]
 mod actor_movement_runtime_observer;
@@ -1031,7 +994,7 @@ impl Host for Runtime<'_> {
         });
     }
     fn draw_trail(&mut self, pair: usize, right: bool, frozen: bool) {
-        self.foreign(|g| draw_trail(g, pair, right, frozen));
+        self.draw_objects(|drawing| drawing.draw_trail(pair, right, frozen));
     }
     fn invalid_damage(&mut self) {
         self.foreign(|g| crate::rtl::invalid_interrupt(g));

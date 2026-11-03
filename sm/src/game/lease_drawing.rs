@@ -43,6 +43,55 @@ impl LeaseDrawing<'_, '_> {
     }
 }
 
+impl LeaseDrawing<'_, '_> {
+    /// Draw trail `pair`'s left or right object at the object cursor.
+    pub(crate) fn draw_trail(&mut self, pair: usize, right: bool, frozen: bool) {
+        let saved = self.0.object_little_word(544);
+        if (saved as i16).wrapping_sub(512) >= 0 {
+            return;
+        }
+        let (timer, x_field, y_field, tile_field) = if right {
+            (0xd67c, 0xd754, 0xd79c, 0xd70c)
+        } else {
+            (0xd658, 0xd730, 0xd778, 0xd6e8)
+        };
+        if frozen && self.0.word(timer + 2 * pair) == 0 {
+            return;
+        }
+        crate::verify_probe::hit(match (frozen, right) {
+            (true, false) => "trails.draw.frozen_left",
+            (true, true) => "trails.draw.frozen_right",
+            (false, false) => "trails.draw.active_left",
+            (false, true) => "trails.draw.active_right",
+        });
+        let x = self
+            .0
+            .word(x_field + 2 * pair)
+            .wrapping_sub(self.0.word(0x911));
+        if x & 0xff00 == 0 {
+            // The cursor is below 512, so the entry's four bytes are objects.
+            let entry = usize::from(saved);
+            self.store_bytes(entry, &x.to_ne_bytes());
+            // The original rereads after each overlapping native store.
+            let y = self
+                .0
+                .word(y_field + 2 * pair)
+                .wrapping_sub(self.0.word(0x915));
+            if y & 0xff00 == 0 {
+                self.store_bytes(entry + 1, &y.to_ne_bytes());
+                let tile = self.0.word(tile_field + 2 * pair);
+                self.store_bytes(entry + 2, &tile.to_ne_bytes());
+                self.store_bytes(544, &saved.wrapping_add(4).to_le_bytes());
+            }
+        }
+    }
+    fn store_bytes(&mut self, offset: usize, bytes: &[u8]) {
+        for (lane, &value) in bytes.iter().enumerate() {
+            self.store(offset + lane, value);
+        }
+    }
+}
+
 impl sm_game::cartridge::LoadedImage for LeaseDrawing<'_, '_> {
     fn loaded_image(&self) -> &crate::rom::RomImage {
         sm_game::cartridge::LoadedImage::loaded_image(&*self.0)
