@@ -4,7 +4,6 @@
 use crate::actors::boss_lease::BossState;
 use crate::actors::host::{Axis, abs16};
 use crate::actors::slot_view::{SlotState, slot_view};
-use crate::ram::word;
 
 /// What the face block needs: a boss's state, which holds its glow colours,
 /// whose slots are the Session's.
@@ -53,9 +52,14 @@ fn set_hook(game: &mut (impl Host + ?Sized), hook: u16) {
     game.session_mut().actors.drawing.hook_address[..2].copy_from_slice(&hook.to_le_bytes());
 }
 
+/// Store one of the drawn hook's variables ($7E:1794).
+fn set_hook_word(game: &mut (impl Host + ?Sized), index: usize, value: u16) {
+    game.session_mut().actors.drawing.hook_work[index] = value;
+    game.words_stored();
+}
 fn publish_palette(block: u16, game: &mut (impl Host + ?Sized)) {
     let palette = FaceBlock::of(game, block).actor().palette;
-    word!(game.VARIABLES_FOR_ENEMY_GRAPHICS_DRAWN_HOOK[HOOK_PALETTE] = (palette >> 4) & 0xff);
+    set_hook_word(game, HOOK_PALETTE, (palette >> 4) & 0xff);
 }
 fn within_range(block: u16, delta: u16, game: &mut (impl Host + ?Sized)) -> bool {
     (abs16(delta) as i16).wrapping_sub(FaceBlock::of(game, block).range() as i16) < 0
@@ -72,7 +76,7 @@ pub fn initialize(game: &mut (impl Host + ?Sized)) {
     set_hook(game, hook);
     game.session_mut().actors.drawing.hook_address[2..].copy_from_slice(&BANK.to_le_bytes());
     publish_palette(block, game);
-    word!(game.VARIABLES_FOR_ENEMY_GRAPHICS_DRAWN_HOOK[HOOK_TIMER] = CYCLE_FRAMES);
+    set_hook_word(game, HOOK_TIMER, CYCLE_FRAMES);
     let mut edit = FaceBlockEdit::of(game, block);
     let old = *edit.direction_to_not_turn();
     *edit.direction_to_not_turn() = (old & 1) << 15;
@@ -112,26 +116,25 @@ pub fn main_ai(game: &mut (impl Host + ?Sized)) {
             edit.actor().instruction_delay = 1;
         }
         *FaceBlockEdit::of(game, block).activated() = 1;
-        word!(game.VARIABLES_FOR_ENEMY_GRAPHICS_DRAWN_HOOK[HOOK_TIMER] = CYCLE_FRAMES);
+        set_hook_word(game, HOOK_TIMER, CYCLE_FRAMES);
     }
 }
 /// Enemy graphics drawn hook - blue Brinstar face block - periodically cycle
 /// between palettes ($A8:E86E): every 16 frames, show the next glow colours.
 /// Was `palette`.
 pub fn cycle_palette(game: &mut (impl Host + ?Sized)) {
-    if word!(game.DOOR_TRANSITION_FLAG_ENEMIES) != 0
-        || word!(
-            game.VARIABLES_FOR_ENEMY_GRAPHICS_DRAWN_HOOK[HOOK_TIMER] -= 1,
-            reread
-        ) != 0
-    {
+    if game.session().room.entry.enemy_interlock != 0 {
         return;
     }
-    word!(game.VARIABLES_FOR_ENEMY_GRAPHICS_DRAWN_HOOK[HOOK_TIMER] = CYCLE_FRAMES);
-    let mut destination = word!(game.VARIABLES_FOR_ENEMY_GRAPHICS_DRAWN_HOOK[HOOK_PALETTE]);
-    let mut source = 8u16.wrapping_mul(word!(
-        game.VARIABLES_FOR_ENEMY_GRAPHICS_DRAWN_HOOK[HOOK_COLOUR_SET]
-    ));
+    let timer = game.session().actors.drawing.hook_work[HOOK_TIMER].wrapping_sub(1);
+    set_hook_word(game, HOOK_TIMER, timer);
+    if timer != 0 {
+        return;
+    }
+    set_hook_word(game, HOOK_TIMER, CYCLE_FRAMES);
+    let hook_work = game.session().actors.drawing.hook_work;
+    let mut destination = hook_work[HOOK_PALETTE];
+    let mut source = 8u16.wrapping_mul(hook_work[HOOK_COLOUR_SET]);
     for _ in 0..COLOURS {
         let color = crate::enemy_lists::face_block_glow_colour(game, (source >> 1) as isize);
         let at = FIRST_GLOW_COLOUR + usize::from(destination >> 1);
@@ -140,10 +143,6 @@ pub fn cycle_palette(game: &mut (impl Host + ?Sized)) {
         destination = destination.wrapping_add(2);
     }
     // The legacy phase increment reads physical byte zero, even on a big-endian host.
-    word!(
-        game.VARIABLES_FOR_ENEMY_GRAPHICS_DRAWN_HOOK[HOOK_COLOUR_SET] =
-            (u16::from(game.session().actors.drawing.hook_work[HOOK_COLOUR_SET].to_le_bytes()[0])
-                + 1)
-                & COLOUR_SETS
-    );
+    let phase = game.session().actors.drawing.hook_work[HOOK_COLOUR_SET].to_le_bytes()[0];
+    set_hook_word(game, HOOK_COLOUR_SET, (u16::from(phase) + 1) & COLOUR_SETS);
 }
