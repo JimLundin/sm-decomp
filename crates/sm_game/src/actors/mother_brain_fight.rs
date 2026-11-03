@@ -10,6 +10,7 @@
 //! keep the original order. What still lives in the compatibility runtime is
 //! reached through [`Host`], with the original names kept on the forwarding
 //! helpers at the end of this module.
+use crate::actors::boss_lease::bg2_staging;
 use crate::actors::corpses;
 use crate::actors::host::abs16;
 use crate::actors::mother_brain::{BODY_INDEX, BRAIN_INDEX, Body, BodyEdit, Brain, BrainEdit};
@@ -35,7 +36,6 @@ use crate::enemy_script::EnemyScript;
 use crate::menus::menu_tilemap::native_record;
 use crate::mother_brain_tables;
 use crate::palette_copies::{copy_rom_colors_to_palette, copy_rom_colors_to_target_palette};
-use crate::word_transfers;
 
 slot_view! {
     /// The slot `move_enemy_with_velocity` moves: its X and Y velocities
@@ -1193,7 +1193,7 @@ crate::dispatch::callback_dispatch! {
             *BodyEdit::of(game, BODY_INDEX).grey_transition() = v2;
             if crate::mother_brain_visuals::fade(Fade::ToBlack, (v2).wrapping_sub(1), game) & 1 != 0 {
                 game.set_owned(OwnedWord::Bg2TilemapSize, 710);
-                word_transfers!(game, descending, 356; le(TILEMAP_STUFF, 355) <- value(824));
+                bg2_staging::fill(game, (0..356).rev(), 824);
                 game.set_owned(OwnedWord::Bg2TilemapPending, 1);
                 BodyEdit::of(game, BODY_INDEX).actor().properties = Body::of(game, BODY_INDEX).actor().properties & 0xdeff | 0x100;
                 {
@@ -2699,7 +2699,7 @@ pub fn add_spritemap_to_oam(j: u16, r18: u16, r20: u16, r22: u16, game: &mut imp
         image: source.image,
         offset: source.base,
     };
-    let layer1 = crate::camera::current(game).layer1;
+    let layer1 = game.session().room.camera.layer1;
     game.draw_room_spritemap(
         &map,
         (r18, r20),
@@ -3117,7 +3117,7 @@ crate::dispatch::callback_dispatch! {
         }
         let v6: i32 = (flash_timer as i32 & 6) >> 1;
         let r18: u16 = (Brain::of(game, e).actor().x.whole).wrapping_add((SHAKE_X_OFFSETS[v6 as usize]) as u16);
-        if ((r18 as i32 + 32 - crate::camera::current(game).layer1[0] as i32) as i16) >= 0 {
+        if ((r18 as i32 + 32 - game.session().room.camera.layer1[0] as i32) as i16) >= 0 {
             let r20: u16 = (Brain::of(game, e).actor().y.whole).wrapping_add((SHAKE_Y_OFFSETS[v6 as usize]) as u16);
             add_spritemap_to_oam(v2, r18, r20, r22, game);
         }
@@ -3420,7 +3420,7 @@ pub fn set_up_brain_palette_for_laser(game: &mut impl State) {
 
 // Mother Brain's AI and instruction entries, forwarded from the bank's dispatch.
 pub fn initialize_body(game: &mut impl Lease) {
-    word_transfers!(game, descending, 2048; le(TILEMAP_STUFF, 2047) <- value(824));
+    bg2_staging::fill(game, (0..2048).rev(), 824);
     set_body_instruction_list(ADDR_K_MOTHER_BRAIN_ILIST_9C13 as u16, game);
     BodyEdit::of(game, BODY_INDEX).actor().tile = 0;
     BodyEdit::of(game, BODY_INDEX).actor().properties =
