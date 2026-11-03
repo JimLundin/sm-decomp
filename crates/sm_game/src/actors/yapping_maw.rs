@@ -23,8 +23,10 @@ slot_view! {
     /// and current length, target angle and the angle the maths uses, its base,
     /// origin and scratch positions; Samus's grabbed offsets, the instruction
     /// list index, intangibility timer and off-screen flag; the segment index,
-    /// initial palette and the base's sprite object and appearance. The body
-    /// segments' arrays are below.
+    /// initial palette and the base's sprite object and appearance; whether it
+    /// aims down and grabs Samus ($7E:801E and $7E:8020 in slot 0, Botwoon's
+    /// death words there, which the view serves). The body segments' arrays are
+    /// below.
     YappingMaw, YappingMawEdit {
         record: [
             function = var_a, angle = var_b, subangle = var_c, angular_speed_index = var_d,
@@ -36,7 +38,8 @@ slot_view! {
             length = var_09, target_angle = var_0a, maths_target_angle = var_0b, base_x = var_0c,
             base_y = var_0d, origin_x = var_0e, origin_y = var_0f, scratch_x = var_10,
             scratch_y = var_11, samus_x_offset = var_32, samus_y_offset = var_33,
-            instruction_list_index = var_34, intangibility_timer = var_35, off_screen = var_36,
+            aiming_down = var_2f, grabbing_samus = var_30, instruction_list_index = var_34,
+            intangibility_timer = var_35, off_screen = var_36,
             segment_index = var_44, initial_palette = var_45, sprite_object = var_46,
             sprite_appearance = var_47,
         ],
@@ -83,10 +86,8 @@ impl<H: SlotState + ?Sized> YappingMawEdit<'_, H> {
 }
 
 part_view! {
-    /// Yapping Maw's view of its slot by RAM address, for `aiming_down` and
-    /// `grabbing_samus` ($7E:801E and $7E:8020 in slot 0), which are Botwoon's
-    /// death words when the maw is in slot 0 and so have no slot view, and for
-    /// [`appearance`], which still runs on the game.
+    /// Yapping Maw's view of its slot by RAM address, for [`appearance`], which
+    /// still runs on the game.
     Maw: EnemyLayout104 {
         words: [
             function, angle, subangle, angular_speed_index, cooldown_timer, proximity, parameter_1,
@@ -213,7 +214,7 @@ pub fn initialize<L: Lease>(game: &mut L) {
             *edit.segment_offset(word) = 0;
         }
     }
-    session_slot!(game, Maw[i32::from(maw)].grabbing_samus = 0);
+    *YappingMawEdit::of(game, maw).grabbing_samus() = 0;
     let mut edit = YappingMawEdit::of(game, maw);
     let proximity = *edit.parameter_1();
     *edit.proximity() = proximity;
@@ -320,10 +321,7 @@ fn attack<L: Lease>(write_operand: &mut impl FnMut(u8, &mut L), game: &mut L) {
         *edit.maths_target_angle() = direction;
         direction
     };
-    session_slot!(
-        game,
-        Maw[i32::from(maw)].aiming_down = u16::from(direction >= STRAIGHT)
-    );
+    *YappingMawEdit::of(game, maw).aiming_down() = u16::from(direction >= STRAIGHT);
     let origin = game.current_enemy();
     let length = YappingMaw::of(game, origin).length();
     let x = project(64, length, write_operand, game);
@@ -399,7 +397,7 @@ fn move_samus_with_pincers<L: Lease>(game: &mut L) {
 fn attacking<L: Lease>(write_operand: &mut impl FnMut(u8, &mut L), game: &mut L) {
     let maw = game.current_enemy();
     let step = YappingMaw::of(game, maw).angle() >> 2;
-    let positive = session_slot!(game, Maw[i32::from(maw)].aiming_down) != 0;
+    let positive = YappingMaw::of(game, maw).aiming_down() != 0;
     {
         let mut edit = YappingMawEdit::of(game, maw);
         for part in 0..4 {
@@ -497,14 +495,14 @@ fn attacking<L: Lease>(write_operand: &mut impl FnMut(u8, &mut L), game: &mut L)
             return;
         }
     }
-    if session_slot!(game, Maw[i32::from(maw)].grabbing_samus) != 0 {
+    if YappingMaw::of(game, maw).grabbing_samus() != 0 {
         move_samus_with_pincers(game);
     }
 }
 /// Yapping maw function - cooldown ($A8:A68A). Was `release_player`.
 fn cooldown<L: Lease>(game: &mut L) {
     let maw = game.current_enemy();
-    if session_slot!(game, Maw[i32::from(maw)].grabbing_samus) != 0 {
+    if YappingMaw::of(game, maw).grabbing_samus() != 0 {
         move_samus_with_pincers(game);
     }
     let timer = {
@@ -515,7 +513,7 @@ fn cooldown<L: Lease>(game: &mut L) {
     };
     if timer & SIGN != 0 && word!(game.SAMUS_INPUT_HANDLER) != DEMO_INPUT {
         word!(game.SAMUS_INPUT_HANDLER = NORMAL_INPUT);
-        session_slot!(game, Maw[i32::from(maw)].grabbing_samus = 0);
+        *YappingMawEdit::of(game, maw).grabbing_samus() = 0;
         let mut edit = YappingMawEdit::of(game, maw);
         *edit.intangibility_timer() = INTANGIBLE_FRAMES;
         *edit.cooldown_timer() = COOLDOWN_FRAMES;
@@ -552,10 +550,10 @@ pub fn update_segments<L: Lease>(game: &mut L) {
 pub fn touch<L: Lease>(game: &mut L) {
     let maw = game.current_enemy();
     if YappingMaw::of(game, maw).intangibility_timer() & SIGN != 0
-        && session_slot!(game, Maw[i32::from(maw)].grabbing_samus) == 0
+        && YappingMaw::of(game, maw).grabbing_samus() == 0
     {
         *YappingMawEdit::of(game, maw).intangibility_timer() = 0;
-        session_slot!(game, Maw[i32::from(maw)].grabbing_samus = 1);
+        *YappingMawEdit::of(game, maw).grabbing_samus() = 1;
         word!(game.SAMUS_INPUT_HANDLER = GRABBED_INPUT);
     }
 }
@@ -578,7 +576,7 @@ pub fn shot<L: Lease>(game: &mut L) {
             if word!(game.SAMUS_INPUT_HANDLER) != DEMO_INPUT {
                 word!(game.SAMUS_INPUT_HANDLER = NORMAL_INPUT);
             }
-            session_slot!(game, Maw[i32::from(maw)].grabbing_samus = 0);
+            *YappingMawEdit::of(game, maw).grabbing_samus() = 0;
         }
     } else {
         for part in 0..4 {
@@ -590,7 +588,8 @@ pub fn shot<L: Lease>(game: &mut L) {
         if word!(game.SAMUS_INPUT_HANDLER) != DEMO_INPUT {
             word!(game.SAMUS_INPUT_HANDLER = NORMAL_INPUT);
         }
-        session_slot!(game, Maw[game.current_enemy() as i32].grabbing_samus = 0);
+        let maw = game.current_enemy();
+        *YappingMawEdit::of(game, maw).grabbing_samus() = 0;
     }
 }
 /// Frozen AI - Yapping Maw ($A8:A835).
