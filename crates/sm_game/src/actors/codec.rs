@@ -257,8 +257,17 @@ pub fn write_projected_byte(s: &mut Session, at: usize, value: u8) -> bool {
 }
 
 /// Whether both bytes of the word at `at` project from one word field: `at`
-/// is even and neither byte is a control lane or a byte field.
-fn is_whole_word(s: &Session, at: usize) -> bool {
+/// is even and neither byte is a control lane or a byte field. The byte
+/// fields' addresses are fixed, so one table built once answers.
+fn is_whole_word(at: usize) -> bool {
+    static WHOLE: std::sync::OnceLock<Box<[bool]>> = std::sync::OnceLock::new();
+    let whole = WHOLE.get_or_init(|| {
+        let s = Session::with_world(crate::room_entry::world::WorldBinding::canonical_legacy());
+        (0..0x20000).map(|at| searched_whole_word(&s, at)).collect()
+    });
+    whole.get(at).copied().unwrap_or(false)
+}
+fn searched_whole_word(s: &Session, at: usize) -> bool {
     at.is_multiple_of(2)
         && !(0x1778..0x1784).contains(&at)
         && !(0x1778..0x1784).contains(&(at + 1))
@@ -276,7 +285,7 @@ pub fn import_common(s: &mut Session, bytes: &impl Fn(usize) -> u8, byte_len: us
         let mut at = start;
         while at < end {
             if at + 1 < end
-                && is_whole_word(s, at)
+                && is_whole_word(at)
                 && let Some(word) = common_word!(s, at, (&mut))
             {
                 *word = u16::from_le_bytes([bytes(at), bytes(at + 1)]);
@@ -294,7 +303,7 @@ pub fn import_common(s: &mut Session, bytes: &impl Fn(usize) -> u8, byte_len: us
 pub fn visit_common(s: &Session, mut visit: impl FnMut(usize, u16)) {
     for (start, end) in COMMON_RANGES {
         for at in (start..end).step_by(2) {
-            let whole = is_whole_word(s, at)
+            let whole = is_whole_word(at)
                 .then(|| common_word!(s, at, (&)).copied())
                 .flatten();
             let word = whole.unwrap_or_else(|| {
@@ -437,6 +446,16 @@ mod word_paths {
 
     fn pattern(at: usize) -> u8 {
         (at.wrapping_mul(7) ^ (at >> 8)) as u8
+    }
+
+    /// The whole-word table answers as the byte-field match does, for any Session.
+    #[test]
+    fn the_whole_word_table_answers_as_the_match_does() {
+        let mut s = Session::with_world(WorldBinding::canonical_legacy());
+        import_common(&mut s, &pattern, COMMON_END);
+        for at in 0..0x20000 {
+            assert_eq!(is_whole_word(at), searched_whole_word(&s, at), "{at:#x}");
+        }
     }
 
     /// The word paths of import_common and visit_common store and emit what
