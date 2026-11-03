@@ -76,6 +76,12 @@ pub enum Field {
     /// does not hold, reads it too.
     Layer2ScrollX,
     Layer2ScrollY,
+    /// Samus's palette's suit colour word ($0DF0), which the ending reuses
+    /// for the time's minutes digit.
+    SuitRedGreen,
+    /// Samus's palette's crystal flash delay ($0DF2), which the ending reuses
+    /// for the time's minute units digit.
+    CrystalFlashDelay,
 }
 
 impl Field {
@@ -109,6 +115,8 @@ impl Field {
             Self::PauseHook(index) => 0x601 + 2 * index,
             Self::Layer2ScrollX => 0x91b,
             Self::Layer2ScrollY => 0x91c,
+            Self::SuitRedGreen => 0xdf0,
+            Self::CrystalFlashDelay => 0xdf2,
         }
     }
 
@@ -164,6 +172,8 @@ impl Field {
             Self::PauseHook(index) => *room.pause_hooks.get(index)?,
             Self::Layer2ScrollX => u16::from_le_bytes([entry.layer2_x, entry.layer2_y]),
             Self::Layer2ScrollY => return None,
+            Self::SuitRedGreen => session.presentation.palette().suit_red_green,
+            Self::CrystalFlashDelay => session.presentation.palette().crystal_flash_delay,
         })
     }
 
@@ -219,6 +229,8 @@ impl Field {
             Self::MovementAndFacing => &mut session.player.movement_and_facing,
             Self::PauseHook(index) => session.room.pause_hooks.get_mut(index)?,
             Self::Layer2ScrollX | Self::Layer2ScrollY => return None,
+            Self::SuitRedGreen => &mut session.presentation.palette_mut().suit_red_green,
+            Self::CrystalFlashDelay => &mut session.presentation.palette_mut().crystal_flash_delay,
         })
     }
 }
@@ -822,6 +834,8 @@ mod tests {
             Field::MovementAndFacing,
             Field::Layer2ScrollX,
             Field::Layer2ScrollY,
+            Field::SuitRedGreen,
+            Field::CrystalFlashDelay,
         ]);
         fields.extend((0..3).map(Field::PauseHook));
         fields
