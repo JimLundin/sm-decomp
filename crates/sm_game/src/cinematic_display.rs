@@ -5,7 +5,6 @@ use crate::cinematic_objects::draw_cinematic_sprites;
 use crate::cinematic_state::Cinematic;
 use crate::display::control::{Brightness, Layers, MainWindowMask, SubScreen};
 use crate::display::preparation::Field;
-use crate::menu_state::OptionsMenu;
 use crate::menus::prelude::display_scroll;
 use crate::presentation_workspace::{Point, Role};
 use crate::word_transfers::WordEndpoint;
@@ -163,27 +162,33 @@ pub fn configure_cinematic_display<H: crate::menus::host::Host + ?Sized>(
     match display {
         Title => {
             crate::sprite_drawing::reset_cursor(game);
-            crate::session_cohort::with(game, |_, options: &mut OptionsMenu| {
-                options.menu_option_index = 0
-            });
+            crate::session_part::update(
+                game,
+                |session| &mut session.menu_screens.options_menu,
+                |options| options.menu_option_index = 0,
+            );
             crate::screen_fade::store(game, 0, 0);
-            crate::session_cohort::with(game, |_, menu: &mut crate::menu_state::MenuState| {
-                menu.pausemenu_start_lr_pressed_highlight_timer = 0;
-                menu.pausemenu_lr_animation_timer = 0;
-                menu.pausemenu_item_selector_animation_timer = 0;
-                menu.pausemenu_reserve_tank_animation_timer = 0;
-                menu.unused_word_7e0731 = 0;
-                menu.unused_word_7e073d = 0;
-                menu.pausemenu_lr_animation_frame = 0;
-                menu.pausemenu_item_selector_animation_frame = 0;
-                menu.pausemenu_reserve_tank_animation_frame = 0;
-                menu.unused_word_7e0745 = 0;
-                menu.pausemenu_shoulder_button_highlight = 0;
-                menu.pausemenu_button_label_mode = 0;
-                menu.pausemenu_equipment_category_item = 0;
-                menu.pausemenu_reserve_tank_delay_ctr = 0;
-                menu.unused_word_7e0759 = 0;
-            });
+            crate::session_part::update(
+                game,
+                |session| &mut session.menu,
+                |menu| {
+                    menu.pausemenu_start_lr_pressed_highlight_timer = 0;
+                    menu.pausemenu_lr_animation_timer = 0;
+                    menu.pausemenu_item_selector_animation_timer = 0;
+                    menu.pausemenu_reserve_tank_animation_timer = 0;
+                    menu.unused_word_7e0731 = 0;
+                    menu.unused_word_7e073d = 0;
+                    menu.pausemenu_lr_animation_frame = 0;
+                    menu.pausemenu_item_selector_animation_frame = 0;
+                    menu.pausemenu_reserve_tank_animation_frame = 0;
+                    menu.unused_word_7e0745 = 0;
+                    menu.pausemenu_shoulder_button_highlight = 0;
+                    menu.pausemenu_button_label_mode = 0;
+                    menu.pausemenu_equipment_category_item = 0;
+                    menu.pausemenu_reserve_tank_delay_ctr = 0;
+                    menu.unused_word_7e0759 = 0;
+                },
+            );
             crate::gameplay_context::with_inventory(
                 game,
                 |_, inventory: &mut crate::inventory::Inventory| {

@@ -15,7 +15,6 @@ use crate::cinematic_state::Cinematic;
 use crate::display::preparation::Field;
 use crate::display::registers as reg;
 use crate::display_refresh::GraphicsAsset;
-use crate::menu_state::OptionsMenu;
 use crate::ram::mirror;
 use crate::ram::word;
 use crate::visual_state::CinematicFade;
@@ -209,9 +208,11 @@ pub fn nintendo_logo<H: Host + ?Sized>(game: &mut H) -> u8 {
                 return yielded;
             }
             match stage {
-                2 => crate::session_cohort::with(game, |_, options: &mut OptionsMenu| {
-                    options.screen_index = LOGO_HOLD
-                }),
+                2 => crate::session_part::update(
+                    game,
+                    |session| &mut session.menu_screens.options_menu,
+                    |options| options.screen_index = LOGO_HOLD,
+                ),
                 4 => {
                     crate::screen_fade::store(game, 1, 1);
                 }
@@ -242,10 +243,14 @@ pub fn nintendo_logo<H: Host + ?Sized>(game: &mut H) -> u8 {
             }
             2 | 3 => {
                 crate::probe::hit("coroutine.logo.hold");
-                let held = crate::session_cohort::with(game, |_, options: &mut OptionsMenu| {
-                    options.screen_index = options.screen_index.wrapping_sub(1);
-                    options.screen_index
-                });
+                let held = crate::session_part::update(
+                    game,
+                    |session| &mut session.menu_screens.options_menu,
+                    |options| {
+                        options.screen_index = options.screen_index.wrapping_sub(1);
+                        options.screen_index
+                    },
+                );
                 if held == 0 { 4 } else { 3 }
             }
             _ => {

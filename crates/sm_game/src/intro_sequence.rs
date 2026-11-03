@@ -19,8 +19,6 @@ use crate::cinematic_state::{Cinematic, Word};
 use crate::display::preparation::Field;
 use crate::display_refresh::GraphicsAsset;
 use crate::inventory;
-use crate::menu_state::OptionsMenu;
-use crate::menu_state::SaveSelection;
 use crate::menus::prelude::display_scroll;
 use crate::presentation_workspace::{Point, Role};
 use crate::ram::mirror;
@@ -474,13 +472,19 @@ pub fn ceres_flying_into_ceres<H: Host + ?Sized>(cine: &mut Cinematic, game: &mu
 /// Cinematic function - fly to Ceres - start game at Ceres ($8B:C100). Was
 /// `CinematicFunction_Intro_Func73`.
 pub fn start_game_at_ceres<H: Host + ?Sized>(game: &mut H) {
-    let slot = crate::session_cohort::with(game, |game, selection: &mut SaveSelection| {
-        selection.loading_game_state = SET_UP_NEW_GAME;
-        crate::gameplay_word!(game.GAME_STATE = SET_UP_NEW_GAME);
-        crate::gameplay_context::set_room(game, crate::room_view::Word::Area, CERES);
-        selection.load_station = 0;
-        selection.selected_slot
-    });
+    // The game state and area stores precede the selection's, as they did
+    // while the selection was held.
+    crate::gameplay_word!(game.GAME_STATE = SET_UP_NEW_GAME);
+    crate::gameplay_context::set_room(game, crate::room_view::Word::Area, CERES);
+    let slot = crate::session_part::update(
+        game,
+        |session| &mut session.menu_screens.save_selection,
+        |selection| {
+            selection.loading_game_state = SET_UP_NEW_GAME;
+            selection.load_station = 0;
+            selection.selected_slot
+        },
+    );
     crate::menus::save_slots::save(slot, game);
 }
 
@@ -674,12 +678,16 @@ pub fn boom_fade_out<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
             crate::frame_display_byte!(game, Field::MainWindow => 0);
             crate::frame_display_byte!(game, Field::SubWindow => 0);
             crate::frame_display_byte!(game, Field::Mode => 9);
-            crate::session_cohort::with(game, |_, options: &mut OptionsMenu| {
-                options.screen_index = 0
-            });
-            crate::session_cohort::with(game, |_, menu: &mut crate::menu_state::MenuState| {
-                menu.menu_index = 0
-            });
+            crate::session_part::update(
+                game,
+                |session| &mut session.menu_screens.options_menu,
+                |options| options.screen_index = 0,
+            );
+            crate::session_part::update(
+                game,
+                |session| &mut session.menu,
+                |menu| menu.menu_index = 0,
+            );
             for index in (8..=135).rev() {
                 *cine.bg_arr7(index) = 0;
             }
