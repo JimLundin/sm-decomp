@@ -6,11 +6,13 @@ use sm_game::session::Session;
 use sm_game::session_encoding::write_projected_byte;
 
 /// The RAM map's words for Samus's position and damage timers.
-const ADDRESSES: [(PlayerWord, usize); 10] = [
+const ADDRESSES: [(PlayerWord, usize); 12] = [
+    (PlayerWord::PeriodicDamage, 0xa50),
     (PlayerWord::X, 0xaf6),
     (PlayerWord::XFraction, 0xaf8),
     (PlayerWord::Y, 0xafa),
     (PlayerWord::YFraction, 0xafc),
+    (PlayerWord::YRadius, 0xb00),
     (PlayerWord::PreviousX, 0xb10),
     (PlayerWord::PreviousXFraction, 0xb12),
     (PlayerWord::PreviousY, 0xb14),
