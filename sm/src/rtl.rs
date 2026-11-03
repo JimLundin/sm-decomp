@@ -80,18 +80,18 @@ macro_rules! register_writes {
     (@write $game:ident; word($address:expr, $value:expr $(, $($tail:tt)*)?)) => {
         $crate::rtl::write_reg_word($address, $value, $game $(, $($tail)*)?)
     };
-    (@write $game:ident; mirror($address:expr, $value:expr, $offset:expr, $before:expr $(, $($tail:tt)*)?)) => {
-        $crate::rtl::write_register_and_mirror($address, $value, $offset, $before, $game $(, $($tail)*)?)
+    (@write $game:ident; mirror($address:expr, $value:expr, $mirror:expr, $before:expr $(, $($tail:tt)*)?)) => {
+        $crate::rtl::write_register_and_mirror($address, $value, $mirror, $before, $game $(, $($tail)*)?)
     };
     (@write $game:ident; show($display:expr $(,)?)) => {{
         use $crate::game::display_transfers::DisplayRegister as _;
         let display = $display;
         $crate::rtl::write_reg(display.register(), display.value(), $game)
     }};
-    (@write $game:ident; show_mirror($display:expr, $offset:expr, $before:expr $(,)?)) => {{
+    (@write $game:ident; show_mirror($display:expr, $mirror:expr, $before:expr $(,)?)) => {{
         use $crate::game::display_transfers::DisplayRegister as _;
         let display = $display;
-        $crate::rtl::write_register_and_mirror(display.register(), display.value(), $offset, $before, $game)
+        $crate::rtl::write_register_and_mirror(display.register(), display.value(), $mirror, $before, $game)
     }};
 }
 pub(crate) use register_writes;
@@ -1065,21 +1065,23 @@ pub(crate) unsafe fn rom_ptr_parts(addr: u32, host: &mut HostContext<'_>) -> *co
             .offset(crate::rtl::lorom_offset(addr))
     }
 }
-/// Preserve the setup sequence's explicit RAM mirror and bus-write order.
+/// Preserve the setup sequence's explicit display mirror and bus-write order;
+/// the mirror is a named display Field store, as the original's RAM store.
 pub(crate) unsafe fn write_register_and_mirror(
     register: u16,
     value: u8,
-    mirror: usize,
+    mirror: sm_game::display::preparation::Field,
     mirror_first: bool,
     game: &mut Game,
 ) {
+    use sm_game::display::preparation::{Access, Store};
     unsafe {
         if mirror_first {
-            game.ram().write_byte(mirror, value);
+            game.store_display_control_byte(mirror, value, Store::Named);
             write_reg(register, value, game);
         } else {
             write_reg(register, value, game);
-            game.ram().write_byte(mirror, value);
+            game.store_display_control_byte(mirror, value, Store::Named);
         }
     }
 }
