@@ -2,7 +2,6 @@
 use crate::enemy_script::{EnemyScript as Script, bank_base};
 use crate::hdma::{HdmaObjects, OBJECTS};
 use crate::hdma_dispatch::DispatchHost;
-use crate::hdma_objects::Bridged;
 use crate::hdma_objects::HdmaEffect;
 use crate::hdma_objects::HdmaTable;
 use crate::menus::host::Host;
@@ -15,6 +14,13 @@ pub trait HdmaLease:
     + crate::cartridge::NativeImage
     + HdmaTable
     + crate::diagnostics::Fatal
+    + crate::hdma_effects::HdmaEffects
+    + crate::actors::mother_brain_rainbow::Host
+    + crate::player_transitions::effects::SamusLease
+    + crate::liquid_effects::Host
+    + crate::progress::FlagHost
+    + crate::actors::boss_lease::BossState
+    + crate::fx_lighting::Access
 {
     type Game: DispatchHost + ?Sized;
     /// Run `action` on the compatibility host with the Session published.
@@ -36,11 +42,11 @@ pub trait LeaseHdma: crate::runtime_access::RuntimeAccess {
     type Lease<'a>: HdmaLease
     where
         Self: 'a;
-    /// One owned-Session view; open it only while `runtime_admissible`.
+    /// One owned-Session view for the frame's objects.
     fn hdma_lease(&mut self) -> Self::Lease<'_>;
 }
 
-/// What one interpreter frame needs from either the lease or the RAM copy.
+/// What one interpreter frame needs from the lease.
 pub(crate) trait Interpreter: HdmaTable {
     type Game: DispatchHost + ?Sized;
     /// Work RAM outside the object table.
@@ -48,9 +54,18 @@ pub(crate) trait Interpreter: HdmaTable {
     fn set_byte(&mut self, at: usize, value: u8);
     fn image(&self) -> RomImage;
     fn foreign<T>(&mut self, action: impl FnOnce(&mut Self::Game) -> T) -> T;
-    /// The original's unreachable-state failure: the lease's own, or the
-    /// game's on the RAM copy.
+    /// The original's unreachable-state failure, reported by the lease.
     fn unreachable(&mut self);
+    type Lease: HdmaLease<Game = Self::Game>;
+    /// Run `action` on the lease where a foreign call ran it on the game: the
+    /// foreign entry's preflight, with the inputs observed afresh on entry and
+    /// again on return.
+    fn on_lease<T>(&mut self, action: impl FnOnce(&mut Self::Lease) -> T) -> T;
+    /// Run HDMA effect `effect` for the object in byte slot `slot` on the
+    /// lease, where a nested lease inside a foreign call ran it.
+    fn effect(&mut self, effect: HdmaEffect, slot: u16) {
+        self.on_lease(|lease| crate::hdma_effects::apply(effect, slot, lease));
+    }
     fn word(&self, at: usize) -> u16 {
         u16::from_le_bytes([self.byte(at), self.byte(at + 1)])
     }
@@ -97,13 +112,17 @@ impl<L: HdmaLease> Interpreter for Leased<L> {
         self.0.set_byte(at, value);
     }
     fn image(&self) -> RomImage {
-        self.0.native_image()
+        crate::cartridge::NativeImage::native_image(&self.0)
     }
     fn foreign<T>(&mut self, action: impl FnOnce(&mut L::Game) -> T) -> T {
         self.0.foreign(action)
     }
     fn unreachable(&mut self) {
-        self.0.unreachable()
+        crate::diagnostics::Fatal::unreachable(&mut self.0)
+    }
+    type Lease = L;
+    fn on_lease<T>(&mut self, action: impl FnOnce(&mut L) -> T) -> T {
+        crate::lease::Lease::owned_player_call(&mut self.0, action)
     }
 }
 
@@ -139,13 +158,12 @@ pub(crate) fn table_words(objects: &mut HdmaObjects, mut each: impl FnMut(usize,
 
 /// Run every active object's program once, as the enabled branch of
 /// `update_hdma`.
+///
+/// The objects always run on the lease. A host that cannot open one cannot
+/// publish this frame's Session either, so no completed frame ran the RAM
+/// copy the interpreter once fell back to.
 pub fn run_objects<H: DispatchHost + LeaseHdma + ?Sized>(handler_carry: bool, game: &mut H) {
-    if game.runtime_admissible() {
-        run(&mut Leased(game.hdma_lease()), handler_carry);
-    } else {
-        let mut bridge = Bridged::load(game);
-        run(&mut bridge, handler_carry);
-    }
+    run(&mut Leased(game.hdma_lease()), handler_carry);
 }
 
 fn run<I: Interpreter>(it: &mut I, handler_carry: bool) {
@@ -290,8 +308,8 @@ fn execute<I: Interpreter>(handler: u16, index: usize, script: Script, it: &mut 
         Command::EventScroll => {
             crate::hdma_word!(it, index, C => 0);
             crate::hdma_word!(it, index, A => 0);
-            let opened =
-                it.foreign(|game| crate::progress::leased::event_has_happened(0xa, game)) != 0;
+            // The event flag ran on a nested lease of the game; it runs on this one.
+            let opened = it.on_lease(|lease| crate::progress::event_happened(lease, 0xa));
             let offset: u16 = if opened { 0xff10 } else { 0 };
             crate::hdma_word!(it, index, B => offset);
             let [low, high] = offset.to_ne_bytes();
@@ -305,15 +323,9 @@ fn execute<I: Interpreter>(handler: u16, index: usize, script: Script, it: &mut 
             it.set_byte(0xcd21, high);
             return script.advance(2);
         }
-        Command::InitializePhantoonWave => it.foreign(|game| {
-            crate::hdma_effects::apply_leased(HdmaEffect::InitializePhantoonWave, slot, game)
-        }),
-        Command::InitializeEyeBeam => it.foreign(|game| {
-            crate::hdma_effects::apply_leased(HdmaEffect::InitializeEyeBeam, slot, game)
-        }),
-        Command::ResetWave => {
-            it.foreign(|game| crate::hdma_effects::apply_leased(HdmaEffect::ResetWave, slot, game))
-        }
+        Command::InitializePhantoonWave => it.effect(HdmaEffect::InitializePhantoonWave, slot),
+        Command::InitializeEyeBeam => it.effect(HdmaEffect::InitializeEyeBeam, slot),
+        Command::ResetWave => it.effect(HdmaEffect::ResetWave, slot),
         Command::RestartTitleGradient => it.foreign(crate::hdma_objects::restart_title_gradient),
     }
     script

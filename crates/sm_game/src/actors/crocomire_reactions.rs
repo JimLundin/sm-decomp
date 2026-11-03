@@ -45,6 +45,8 @@ pub trait Lease:
     + crate::progress::FlagHost
     + crate::enemy_projectiles::host::Host
     + Tables
+    + crate::hdma_objects::Allocator
+    + crate::runtime_access::SessionRam
 {
 }
 impl<T> Lease for T where
@@ -57,6 +59,8 @@ impl<T> Lease for T where
         + crate::progress::FlagHost
         + crate::enemy_projectiles::host::Host
         + Tables
+        + crate::hdma_objects::Allocator
+        + crate::runtime_access::SessionRam
 {
 }
 
@@ -1180,7 +1184,7 @@ pub fn melting<L: Lease>(game: &mut L) {
     }
     battle!(game.MeltIndex = (i + 2) as u16);
     let object = Crocomire::of(game, e0).melting_hdma_object();
-    game.foreign(|game| crate::hdma_objects::free_hdma_object(object, game));
+    crate::hdma_objects::free_hdma_object(object, game);
 }
 
 /// Erase melting Crocomire pixel column ($A4:96C8). `bug` is the low byte of
@@ -1621,7 +1625,7 @@ pub fn main_ai<L: Lease>(game: &mut L) {
     if let Some(request) = execute_phase(game) {
         crate::effects::SoundEffects::queue_sound(game, 1, request as u16 as u8, 6);
         prepare_scroll_hdma(game);
-        let object = game.foreign(|game| crate::hdma_objects::spawn_hdma(0xa4, &DEFINITION, game));
+        let object = crate::hdma_objects::spawn_hdma_owned(0xa4, &DEFINITION, game);
         *CrocomireEdit::of(game, 0).melting_hdma_object() = object;
     }
     samus_collision(game);

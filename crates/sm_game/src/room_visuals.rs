@@ -53,7 +53,14 @@ pub fn initialize_fireflea_lighting<H: crate::menus::host::Host + ?Sized>(game: 
     crate::fx_lighting::finish_current(game);
 }
 
-pub fn advance_fireflea_lighting<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+pub fn advance_fireflea_lighting<H>(game: &mut H)
+where
+    H: crate::fx_domain::Controls
+        + crate::sequence_state::Access
+        + crate::fx_lighting::Access
+        + crate::display::preparation::Access
+        + ?Sized,
+{
     // Time is an external owner; preserve this callback's original sampling point.
     // Blending is published before the freeze read, as in the original routine.
     let mut fx = crate::fx_domain::Controls::fx_controls(game);
@@ -66,11 +73,26 @@ pub fn advance_fireflea_lighting<H: crate::menus::host::Host + ?Sized>(game: &mu
 /// The least earthquake timer a room shake sets.
 const EARTHQUAKE_TIMER: u16 = 0x20;
 
-pub fn shake_room_with_sound<H: crate::menus::host::Host + ?Sized>(
-    kind: u16,
-    handler_carry: bool,
-    game: &mut H,
-) {
+/// What the room shake with its earthquake sound needs.
+pub trait ShakeHost:
+    crate::fx_domain::Controls
+    + crate::effects::SoundEffects
+    + crate::hdma_objects::HdmaTable
+    + crate::projection::Views
+    + crate::gameplay_context::Access
+{
+}
+impl<T> ShakeHost for T where
+    T: crate::fx_domain::Controls
+        + crate::effects::SoundEffects
+        + crate::hdma_objects::HdmaTable
+        + crate::projection::Views
+        + crate::gameplay_context::Access
+        + ?Sized
+{
+}
+
+pub fn shake_room_with_sound<H: ShakeHost + ?Sized>(kind: u16, handler_carry: bool, game: &mut H) {
     static SOUNDS: [u16; 17] = [
         0x46, 1, 0x46, 3, 0x46, 2, 0x46, 1, 0x46, 1, 0x46, 2, 0x46, 2, 0x46, 1, 0x8000,
     ];
@@ -276,11 +298,14 @@ pub fn initialize_intro_wave<H: crate::menus::host::Host + ?Sized>(game: &mut H)
     spawn_hdma(0x88, &HdmaObjectDefinition::new(0x42, 0x11, 0xec8a), game);
 }
 
-pub fn scroll_weather<H: crate::menus::host::Host + ?Sized>(
-    slot: u16,
-    weather: Weather,
-    game: &mut H,
-) {
+pub fn scroll_weather<H>(slot: u16, weather: Weather, game: &mut H)
+where
+    H: crate::display::preparation::Access
+        + crate::fx_domain::Controls
+        + crate::sequence_state::Access
+        + crate::hdma_effects::HdmaEffects
+        + ?Sized,
+{
     game.store_display_control_byte(DisplayField::Background3Map, 92, DisplayStore::Named);
     {
         let fx_value = game.room_blending().liquid;
@@ -291,5 +316,6 @@ pub fn scroll_weather<H: crate::menus::host::Host + ?Sized>(
     if crate::sequence_word!(game.TIME_IS_FROZEN_FLAG) != 0 {
         return;
     }
-    crate::hdma_effects::apply_leased(HdmaEffect::ScrollWeather(weather), slot, game);
+    // The effect ran on a nested lease of the game; it runs on this one.
+    game.scroll_weather_layers(slot, weather);
 }

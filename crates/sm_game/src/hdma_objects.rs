@@ -7,7 +7,6 @@ use crate::display::sequence::Registers;
 use crate::display_refresh::DisplayOwner;
 use crate::imported::word as table_word;
 use crate::projection::Field;
-use crate::ram::RawRam as _;
 use crate::scene::hdma_sources::LiveOwner;
 use crate::scene::state::WordOrder;
 use crate::session::HookSlot;
@@ -84,8 +83,22 @@ pub fn spawn_hdma<H: crate::menus::host::Host + ?Sized>(
     crate::menus::host::MenuRuntime::spawn_hdma(game, bank, args)
 }
 
+/// The HDMA object allocator's host: the object table, and the DMA channel
+/// registers a new object's definition sets.
+pub trait Allocator: HdmaTable {
+    /// Write the DMA control and target registers at `register`, control first.
+    fn write_channel_control(&mut self, register: u16, control: u16);
+}
+impl<T: crate::menus::host::MenuRuntime + HdmaTable + ?Sized> Allocator for T {
+    fn write_channel_control(&mut self, register: u16, control: u16) {
+        let [low, high] = control.to_le_bytes();
+        self.write_dma_register(register, low);
+        self.write_dma_register(register + 1, high);
+    }
+}
+
 /// The host's HDMA spawn on the owned table.
-pub fn spawn_hdma_owned<H: crate::menus::host::Host + ?Sized>(
+pub fn spawn_hdma_owned<H: Allocator + ?Sized>(
     bank: u8,
     args: &HdmaObjectDefinition,
     game: &mut H,
@@ -94,7 +107,7 @@ pub fn spawn_hdma_owned<H: crate::menus::host::Host + ?Sized>(
     spawn_hdma_words(bank, |index| words[index], game)
 }
 
-pub fn spawn_hdma_words<H: crate::menus::host::Host + ?Sized>(
+pub fn spawn_hdma_words<H: Allocator + ?Sized>(
     bank: u8,
     read_word: impl Fn(usize) -> u16,
     game: &mut H,
@@ -118,7 +131,7 @@ pub trait HdmaTable {
 /// definition, then its channel's DMA control and target registers once
 /// the table is published. Returns the byte slot, or `u16::MAX` when every
 /// object is busy.
-fn place_hdma<H: crate::menus::host::Host + ?Sized>(
+fn place_hdma<H: Allocator + ?Sized>(
     slot: Option<usize>,
     bank: u8,
     read_word: impl Fn(usize) -> u16,
@@ -141,10 +154,7 @@ fn place_hdma<H: crate::menus::host::Host + ?Sized>(
     crate::hdma_word!(game, slot, D => 0);
     crate::hdma_word!(game, slot, Channels => 4 << slot);
     crate::hdma_word!(game, slot, BankSlot => (u16::from(bank) << 8) | channel(slot));
-    let control = read_word(0);
-    let register = DMAP0 as u16 + channel(slot);
-    game.write_dma_register(register, control as u8);
-    game.write_dma_register(register + 1, (control >> 8) as u8);
+    game.write_channel_control(DMAP0 as u16 + channel(slot), read_word(0));
     2 * slot as u16
 }
 
@@ -164,12 +174,7 @@ pub fn set_hdma_enabled<H: HdmaTable + ?Sized>(enabled: bool, game: &mut H) {
 /// `u16::MAX`) keeps the original's store to the word it names.
 pub fn free_hdma_object<H>(slot: u16, game: &mut H)
 where
-    H: crate::ram::WorkRamAccess
-        + crate::ram::CompatibilityRam
-        + crate::runtime_access::RuntimeAccess
-        + crate::runtime_access::SessionRam
-        + HdmaTable
-        + ?Sized,
+    H: crate::runtime_access::SessionRam + HdmaTable + ?Sized,
 {
     let index = usize::from(slot >> 1);
     if index < crate::hdma::OBJECTS {
@@ -407,18 +412,31 @@ pub(crate) fn refresh_title_gradient<H: crate::menus::host::Host + ?Sized>(game:
     }
 }
 
-pub fn advance_title_gradient<H: crate::menus::host::Host + ?Sized>(backdrop: bool, game: &mut H) {
-    if backdrop {
-        refresh_title_gradient(game);
-    }
+/// Refresh the title gradient's table from the zoom, then step its program.
+pub fn advance_title_gradient_backdrop<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+    refresh_title_gradient(game);
     if crate::sequence_state::Access::sequence_flow(&*game).cinematic_function == 0x9b68 {
         crate::hdma_effects::apply_leased(HdmaEffect::AdvanceProgram, 0, game);
     }
 }
 
-pub fn advance_intro_crossfade<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+/// Step the title gradient's program once the title's cinematic reaches it.
+pub fn advance_title_gradient<H>(game: &mut H)
+where
+    H: crate::sequence_state::Access + crate::hdma_effects::HdmaEffects + ?Sized,
+{
+    if crate::sequence_state::Access::sequence_flow(&*game).cinematic_function == 0x9b68 {
+        game.advance_hdma_program();
+    }
+}
+
+/// Step the intro crossfade's program once the cinematic asks for it.
+pub fn advance_intro_crossfade<H>(game: &mut H)
+where
+    H: crate::projection::Views + crate::hdma_effects::HdmaEffects + ?Sized,
+{
     if game.view_word(Field::Cinematic(CinematicWord::Var13)) == 1 {
-        crate::hdma_effects::apply_leased(HdmaEffect::AdvanceProgram, 0, game);
+        game.advance_hdma_program();
     }
 }
 
@@ -440,50 +458,6 @@ pub fn read_table<H: HdmaTable + ?Sized>(game: &H) -> crate::hdma::HdmaObjects {
         *word = game.hdma_word(key);
     });
     objects
-}
-
-/// Nonleased interpreter access; callbacks and words share the same host owner.
-pub(crate) struct Bridged<'a, H: ?Sized> {
-    game: &'a mut H,
-}
-
-impl<'a, H: ?Sized> Bridged<'a, H> {
-    pub(crate) fn load(game: &'a mut H) -> Self {
-        Self { game }
-    }
-}
-
-impl<H: HdmaTable + ?Sized> HdmaTable for Bridged<'_, H> {
-    fn hdma_word(&self, word: crate::hdma::Word) -> u16 {
-        self.game.hdma_word(word)
-    }
-    fn store_hdma_word(&mut self, word: crate::hdma::Word, value: u16, order: WordOrder) {
-        self.game.store_hdma_word(word, value, order);
-    }
-    fn store_hdma_byte(&mut self, word: crate::hdma::Word, high: bool, value: u8) {
-        self.game.store_hdma_byte(word, high, value);
-    }
-}
-
-impl<H: crate::hdma_dispatch::DispatchHost + ?Sized> crate::hdma_program::Interpreter
-    for Bridged<'_, H>
-{
-    type Game = H;
-    fn byte(&self, at: usize) -> u8 {
-        self.game.ram().read_byte(at)
-    }
-    fn set_byte(&mut self, at: usize, value: u8) {
-        self.game.ram().write_byte(at, value);
-    }
-    fn image(&self) -> sm_data::cartridge::RomImage {
-        self.game.native_image()
-    }
-    fn foreign<T>(&mut self, action: impl FnOnce(&mut H) -> T) -> T {
-        action(self.game)
-    }
-    fn unreachable(&mut self) {
-        self.game.rtl_unreachable();
-    }
 }
 
 pub(crate) fn write_channel_register<H: crate::menus::host::Host + ?Sized>(
