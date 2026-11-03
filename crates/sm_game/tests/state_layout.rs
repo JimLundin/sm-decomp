@@ -664,7 +664,8 @@ fn message_box_round_trips_every_word() {
 }
 
 /// The room's FX blending configurations, the Ceres status, the mode 7
-/// interrupt flag, the Ceres haze's HDMA table word and the size of BG2.
+/// interrupt flag, the Ceres haze's HDMA table word, the size of BG2 and
+/// Kraid's sinking unpause queue tail.
 fn room_state_lanes() -> Vec<Lane> {
     vec![
         (0x1982, 0, |s, _| &mut s.room.fx_blending),
@@ -674,6 +675,7 @@ fn room_state_lanes() -> Vec<Lane> {
         (0x0783, 0, |s, _| &mut s.room.mode7_irq),
         (0x07eb, 0, |s, _| &mut s.room.ceres_hdma_table),
         (0x098e, 0, |s, _| &mut s.room.background_size),
+        (0x0780, 0, |s, _| &mut s.room.unpause_queue_tail),
     ]
 }
 

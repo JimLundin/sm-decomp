@@ -46,6 +46,11 @@ pub enum Field {
     DoorTransition,
     /// The current room's header pointer.
     RoomHeader,
+    /// The message box's delay ($077E), which Kraid's sinking unpause hook
+    /// also counts its erased rows in.
+    MessageDelay,
+    /// Where Kraid's sinking unpause hook queues its row erasures ($0780).
+    UnpauseQueueTail,
 }
 
 impl Field {
@@ -67,6 +72,8 @@ impl Field {
             Self::CurrentCre => words::CRE_BITSET,
             Self::DoorTransition => words::DOOR_TRANSITION_FLAG,
             Self::RoomHeader => words::ROOM_PTR,
+            Self::MessageDelay => words::MY_COUNTER,
+            Self::UnpauseQueueTail => words::MY_COUNTER2,
         }
     }
 
@@ -107,6 +114,8 @@ impl Field {
             Self::CurrentCre => entry.cre,
             Self::DoorTransition => entry.completion,
             Self::RoomHeader => session.world.room_key(&entry.room),
+            Self::MessageDelay => session.messages.delay,
+            Self::UnpauseQueueTail => room.unpause_queue_tail,
         })
     }
 
@@ -150,6 +159,8 @@ impl Field {
             Self::CurrentCre => &mut session.room.entry.cre,
             Self::DoorTransition => &mut session.room.entry.completion,
             Self::RoomHeader => return None,
+            Self::MessageDelay => &mut session.messages.delay,
+            Self::UnpauseQueueTail => &mut session.room.unpause_queue_tail,
         })
     }
 }

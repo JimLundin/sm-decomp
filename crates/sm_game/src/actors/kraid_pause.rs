@@ -9,8 +9,8 @@
 use crate::actors::access::{ActorImage, ActorKey};
 use crate::actors::kraid_sinking;
 use crate::display_refresh::{GraphicsAsset, enqueue_readback, set_blank, wait};
+use crate::projection::Field;
 use crate::ram::RawRam as _;
-use crate::ram::word;
 
 /// What the hooks need: the display refresh and actor RAM.
 pub trait Host:
@@ -127,7 +127,9 @@ pub fn unpause_sinking<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
                 {
                     break 'done;
                 }
-                word! {game; MY_COUNTER = 0; MY_COUNTER2 = game.tilemap_queue_tail(); }
+                game.set_view_word(Field::MessageDelay, 0);
+                let tail = game.tilemap_queue_tail();
+                game.set_view_word(Field::UnpauseQueueTail, tail);
                 true
             }
             1 => false,
@@ -135,19 +137,16 @@ pub fn unpause_sinking<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
         };
         loop {
             if queue_transfer {
-                let row = kraid_sinking::sinking_row(usize::from(word!(game.MY_COUNTER)), game);
+                let erased = game.view_word(Field::MessageDelay);
+                let row = kraid_sinking::sinking_row(usize::from(erased), game);
                 if !(row.word(0) != 0xffff
                     && (kraid_y(game) as i16).wrapping_sub(row.word(0) as i16) >= 0)
                 {
                     break 'done;
                 }
                 let bg2_base = game.ram().read_byte(BG2_TILEMAP_BASE);
-                kraid_sinking::queue_row_clear(
-                    word!(game.MY_COUNTER2),
-                    row.word(2),
-                    bg2_base,
-                    game,
-                );
+                let tail = game.view_word(Field::UnpauseQueueTail);
+                kraid_sinking::queue_row_clear(tail, row.word(2), bg2_base, game);
             }
             let yielded = wait(true, game);
             if yielded != 0 {
@@ -155,7 +154,8 @@ pub fn unpause_sinking<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
                 game.ram().write_byte(HOOK_STATE, 1);
                 return yielded;
             }
-            word!(game.MY_COUNTER += 1);
+            let erased = game.view_word(Field::MessageDelay);
+            game.set_view_word(Field::MessageDelay, erased.wrapping_add(1));
             queue_transfer = true;
         }
     }
