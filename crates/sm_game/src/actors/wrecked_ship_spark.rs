@@ -21,6 +21,9 @@ const ALWAYS_ACTIVE: u16 = 0xe694;
 const INACTIVE: u16 = 0xe695;
 const ACTIVE: u16 = 0xe6b7;
 const EMIT_FALLING_SPARKS: u16 = 0xe6dc;
+/// $7E:0100, the word the spark ORs into its properties: 30h bytes into the
+/// VRAM write queue ($7E:00D0).
+const QUEUED_WORD: usize = 0x30;
 
 /// A lease on a game with the sparks' effects.
 pub trait Lease: BossLease<Game: BossEffects> + SlotState {}
@@ -56,7 +59,8 @@ pub fn initialize(game: &mut impl Lease) {
     }
     if game.area_boss_byte() & 1 == 0 {
         // As the source does: properties |= [$7E:0100], inside the VRAM write queue.
-        let queued = game.slot_word(0x100);
+        let queue = &game.session().queued_tilemaps.queue;
+        let queued = u16::from_le_bytes([queue[QUEUED_WORD], queue[QUEUED_WORD + 1]]);
         SparkEdit::of(game, k).actor().properties |= queued;
     }
 }
