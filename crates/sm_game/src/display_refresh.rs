@@ -18,7 +18,7 @@ use crate::display::registers::{
 use crate::display::sequence::{Registers, register_writes, write_register_and_mirror};
 use crate::display::transfer::{ScrollingLayout, TilemapQueue, setup_transfer};
 use crate::display::video::Upload;
-use crate::ram::{CompatibilityRam, RawRam, checked_word, word};
+use crate::ram::{CompatibilityRam, RawRam, checked_word};
 use crate::scene::irq;
 use crate::scene::state::DisplayError;
 use crate::word_transfers;
@@ -118,7 +118,7 @@ pub fn initialize_io_and_oam<H: Host + ?Sized>(brightness: Option<u8>, game: &mu
 }
 
 /// Gameplay display registers, cleared tilemaps and the common graphics.
-pub fn initialize_gameplay<H: Host + ?Sized>(game: &mut H) {
+pub fn initialize_gameplay<H: Host + crate::sprite_drawing::ObjectAccess + ?Sized>(game: &mut H) {
     initialize_io_and_oam(Some(0x80), game);
     register_writes! { game;
         show_mirror(BgMode::MODE1_BG3_PRIORITY, DisplayField::Mode, false); mirror(MOSAIC as u16, 0, DisplayField::Mosaic, false);
@@ -136,7 +136,7 @@ pub fn initialize_gameplay<H: Host + ?Sized>(game: &mut H) {
         mirror(CGADSUB as u16, 0, DisplayField::NextColorMath, false); show(FixedColor::all(0));
         show_mirror(ScreenSettings::STANDARD, DisplayField::Geometry, false);
     }
-    word!(game.OAM_NEXT_PTR = 0);
+    crate::sprite_drawing::reset_cursor(game);
     word_transfers!(game, ascending, 1023; native(0x3000) <- value(0));
     word_transfers!(game, ascending, 1023; native(0x4000) <- value(0x6f));
     word_transfers!(game, ascending, 127; native(0x4000) <- value(0x2c0f));
