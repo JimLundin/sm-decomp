@@ -208,6 +208,9 @@ impl crate::session_cohort::Cohort for Cinematic {
     fn session_words(session: &mut crate::session::Session, visit: impl FnMut(usize, &mut u16)) {
         crate::session::EnemyProjectiles::session_words(session, visit);
     }
+    fn session_copy(session: &crate::session::Session) -> Self {
+        Self(session.enemy_projectiles.clone())
+    }
 }
 
 impl Cinematic {

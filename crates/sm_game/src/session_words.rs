@@ -72,6 +72,9 @@ macro_rules! session_words {
                     }
                 })+
             }
+            fn session_copy(session: &Session) -> Self {
+                Self::from_session(session)
+            }
         }
     };
 }

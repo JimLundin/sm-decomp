@@ -41,6 +41,9 @@ impl Cohort for WindowState {
             }
         }
     }
+    fn session_copy(session: &crate::session::Session) -> Self {
+        decode(&|at| crate::fx_encoding::control_byte(session, at))
+    }
 }
 
 /// Alias byte lanes of the single canonical window owner, including odd words.

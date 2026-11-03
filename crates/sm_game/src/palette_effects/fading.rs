@@ -12,6 +12,15 @@ impl projection::Layout for PaletteFade {
         visit(0xc402, &mut self.duration);
         visit(0xc404, &mut self.cursor);
     }
+    fn session_copy(session: &crate::session::Session) -> Self {
+        session.presentation.visual().palette_fade
+    }
+    fn store_session(&mut self, session: &mut crate::session::Session, selected: &[bool]) -> bool {
+        let mut fade = Self::session_copy(session);
+        projection::copy_words(self, &mut fade, |index| selected[index]);
+        session.presentation.visual_mut().palette_fade = fade;
+        true
+    }
 }
 
 fn read_fade<H: RamHost + ?Sized>(game: &H) -> PaletteFade {

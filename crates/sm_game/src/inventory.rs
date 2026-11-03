@@ -23,7 +23,7 @@ pub use crate::item_pickups::{Inventory, Loadout, Supply};
 
 impl Inventory {
     /// The value of the word `word` names.
-    pub fn word(&self, word: Word) -> u16 {
+    pub fn get(&self, word: Word) -> u16 {
         match word {
             Word::EquippedItems => self.equipment.active,
             Word::CollectedItems => self.equipment.owned,
@@ -43,6 +43,29 @@ impl Inventory {
             Word::ReserveMissiles => self.reserve_missiles,
             Word::SubunitHealth => self.health_fraction,
             Word::HyperBeam => self.hyper_beam,
+        }
+    }
+    /// The field `word` names.
+    pub fn get_mut(&mut self, word: Word) -> &mut u16 {
+        match word {
+            Word::EquippedItems => &mut self.equipment.active,
+            Word::CollectedItems => &mut self.equipment.owned,
+            Word::EquippedBeams => &mut self.beams.active,
+            Word::CollectedBeams => &mut self.beams.owned,
+            Word::ReserveMode => &mut self.reserve_mode,
+            Word::Health => &mut self.health.current,
+            Word::MaxHealth => &mut self.health.maximum,
+            Word::Missiles => &mut self.ammunition[0].current,
+            Word::MaxMissiles => &mut self.ammunition[0].maximum,
+            Word::SuperMissiles => &mut self.ammunition[1].current,
+            Word::MaxSuperMissiles => &mut self.ammunition[1].maximum,
+            Word::PowerBombs => &mut self.ammunition[2].current,
+            Word::MaxPowerBombs => &mut self.ammunition[2].maximum,
+            Word::MaxReserveHealth => &mut self.reserve_capacity,
+            Word::ReserveHealth => &mut self.reserve_health,
+            Word::ReserveMissiles => &mut self.reserve_missiles,
+            Word::SubunitHealth => &mut self.health_fraction,
+            Word::HyperBeam => &mut self.hyper_beam,
         }
     }
 }
@@ -69,6 +92,9 @@ impl crate::session_cohort::Cohort for Inventory {
     }
     fn session_words(session: &mut crate::session::Session, visit: impl FnMut(usize, &mut u16)) {
         Self::words(&mut session.inventory, visit);
+    }
+    fn session_copy(session: &crate::session::Session) -> Self {
+        session.inventory.clone()
     }
 }
 

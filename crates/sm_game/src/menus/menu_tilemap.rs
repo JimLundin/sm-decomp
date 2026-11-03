@@ -593,13 +593,13 @@ pub fn equipment_icons<H: Host + ?Sized>(game: &mut H) {
             if hyper {
                 let source = crate::menu_lists::hyper_beam_tilemap(game, index as isize);
                 copy_native_tiles(destination, source, 10, game);
-            } else if crate::gameplay_context::inventory(game).word(collected)
+            } else if crate::gameplay_context::inventory(game).get(collected)
                 & crate::menu_lists::equipment_bit(game, masks, index as isize)
                 != 0
             {
                 let source = crate::menu_lists::equipment_tilemap(game, tiles, index as isize);
                 copy_native_tiles(destination, source, bytes, game);
-                if crate::gameplay_context::inventory(game).word(equipped)
+                if crate::gameplay_context::inventory(game).get(equipped)
                     & crate::menu_lists::equipment_bit(game, masks, index as isize)
                     == 0
                 {

@@ -225,7 +225,7 @@ impl<'g> Runtime<'g> {
             game,
         }
     }
-    fn persistent_is_current(&self) -> bool {
+    pub(crate) fn persistent_is_current(&self) -> bool {
         self.persistent_epoch.is_none_or(|epoch| {
             epoch == self.game.compatibility_write_epoch()
                 && self.game.preflight_samus_runtime().is_ok()

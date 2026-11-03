@@ -68,15 +68,35 @@ impl EnemyProjectiles {
             0x1995 => return Some(&mut self.spawn.secondary),
             _ => {}
         }
-        let (field, base) = SLOT_WORD_BASES
-            .into_iter()
-            .enumerate()
-            .find(|&(_, base)| (base..base + 2 * SLOTS).contains(&at))?;
-        let offset = at - base;
-        offset
-            .is_multiple_of(2)
-            .then(|| slot_word(&mut self.slots[offset / 2], field))
+        let (slot, field) = slot_location(at)?;
+        Some(slot_word(&mut self.slots[slot], field))
     }
+    /// The value of the table word at RAM address `at`, when the table has
+    /// one there; see [`Self::word_at`].
+    pub fn get(&self, at: usize) -> Option<u16> {
+        match at {
+            0x198d => return Some(self.flags),
+            0x198f => return Some(self.zoom),
+            0x1991 => return Some(self.selected),
+            0x1993 => return Some(self.spawn.primary),
+            0x1995 => return Some(self.spawn.secondary),
+            _ => {}
+        }
+        let (slot, field) = slot_location(at)?;
+        let mut slot = self.slots[slot];
+        Some(*slot_word(&mut slot, field))
+    }
+}
+
+/// The slot and the `SLOT_WORD_BASES` field of the slot word at RAM address
+/// `at`, when one starts there.
+fn slot_location(at: usize) -> Option<(usize, usize)> {
+    let (field, base) = SLOT_WORD_BASES
+        .into_iter()
+        .enumerate()
+        .find(|&(_, base)| (base..base + 2 * SLOTS).contains(&at))?;
+    let offset = at - base;
+    offset.is_multiple_of(2).then_some((offset / 2, field))
 }
 
 impl crate::session_cohort::Cohort for EnemyProjectiles {
@@ -90,6 +110,9 @@ impl crate::session_cohort::Cohort for EnemyProjectiles {
     }
     fn session_words(session: &mut crate::session::Session, visit: impl FnMut(usize, &mut u16)) {
         Self::words(&mut session.enemy_projectiles, visit);
+    }
+    fn session_copy(session: &crate::session::Session) -> Self {
+        session.enemy_projectiles.clone()
     }
 }
 
