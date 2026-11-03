@@ -17,6 +17,7 @@ use crate::enemy_projectiles::drops::DropSource;
 use crate::enemy_script::EnemyScript;
 use crate::menus::prelude::battle;
 use crate::menus::prelude::owned;
+use crate::presentation_workspace::PaletteAccess;
 use crate::records::Records;
 
 /// A lease on a game with the Torizos' effects.
@@ -28,6 +29,7 @@ pub trait Lease:
     + crate::enemy_projectiles::host::Host
     + crate::room_mechanisms::host::Host
     + crate::visual_host::Host
+    + PaletteAccess
 {
 }
 impl<T> Lease for T where
@@ -38,6 +40,7 @@ impl<T> Lease for T where
         + crate::enemy_projectiles::host::Host
         + crate::room_mechanisms::host::Host
         + crate::visual_host::Host
+        + PaletteAccess
         + ?Sized
 {
 }
@@ -232,31 +235,96 @@ pub fn golden_super_missile_reaction<L: Lease>(k: u16, j: u16, game: &mut L) {
 }
 
 /// What the Torizos' AI needs beyond the movement and drool host: the shared
-/// boss effects, deaths, their palettes and the compat dispatch.
+/// boss effects, deaths and the compat dispatch.
 pub trait Ai: BossEffects + Deaths + Records + BossLease<Game = Self> {
     /// Run the bank $AA movement function at `address` for the current Torizo.
     fn run_function(&mut self, address: u32);
-    /// Load Torizo target palettes `palettes`.
-    fn set_palette_targets(&mut self, palettes: Palettes);
-    /// Load the common Torizo target palettes.
-    fn initialize_palette_targets(&mut self);
-    /// Flash the Torizo's palettes white.
-    fn flash_palette(&mut self);
-    /// Restore the active Bomb Torizo palettes.
-    fn restore_palette(&mut self);
-    /// Golden Torizo's palettes for `health`.
-    fn health_palette(&mut self, health: u16);
     /// Spawn the Bomb Torizo room's haze.
     fn spawn_haze(&mut self);
 }
 
-/// The Torizo target palette pairs.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Palettes {
-    BombStart,
-    BombActive,
-    GoldenStart,
-    GoldenActive,
+/// The Torizos' sprite palettes: each pair is the high palette's sixteen
+/// colours, then the low palette's.
+pub mod palettes {
+    /// A high and a low sprite palette.
+    pub type Pair = [&'static [u16; 16]; 2];
+
+    const COMMON_LOW: [u16; 16] = [
+        0x3800, 0x3ff, 0x33b, 0x216, 0x113, 0x6b1e, 0x4a16, 0x3591, 0x20e9, 0x1580, 0x1580, 0x1580,
+        0x1580, 0x1580, 0x1580, 0x1580,
+    ];
+    const COMMON_HIGH: [u16; 16] = [
+        0x3800, 0x2df, 0x1d7, 0xac, 0x5a73, 0x41ad, 0x2d08, 0x1863, 0x1486, 0x145, 0x145, 0x145,
+        0x7fff, 0x145, 0x145, 0,
+    ];
+    const BOMB_START_LOW: [u16; 16] = [
+        0x3800, 0x679f, 0x5299, 0x252e, 0x14aa, 0x5efc, 0x4657, 0x35b2, 0x2d70, 0x5b7f, 0x3df8,
+        0x2d0e, 0x5f5f, 0x5e1a, 0x5d35, 0xc63,
+    ];
+    const BOMB_START_HIGH: [u16; 16] = [
+        0x3800, 0x4aba, 0x35b2, 0x847, 3, 0x4215, 0x2970, 0x18cb, 0x1089, 0x463a, 0x28b3, 0x1809,
+        0x6f7f, 0x51fd, 0x4113, 0xc63,
+    ];
+    const BOMB_ACTIVE_LOW: [u16; 16] = [
+        0x3800, 0x56ba, 0x41b2, 0x1447, 0x403, 0x4e15, 0x3570, 0x24cb, 0x1868, 0x6f7f, 0x51f8,
+        0x410e, 0x31f, 0x1da, 0xf5, 0xc63,
+    ];
+    const BOMB_ACTIVE_HIGH: [u16; 16] = [
+        0x3800, 0x4215, 0x2d0d, 2, 0, 0x3970, 0x20cb, 0xc26, 0x403, 0x463a, 0x28b3, 0x1809, 0x6f7f,
+        0x51fd, 0x4113, 0xc63,
+    ];
+    const GOLDEN_START_LOW: [u16; 16] = [
+        0x3800, 0x6ab5, 0x49b0, 0x1c45, 0xc01, 0x5613, 0x416d, 0x2cc9, 0x2066, 0x5714, 0x31cc,
+        0x14e3, 0x5630, 0x3569, 0x1883, 0xc66,
+    ];
+    const GOLDEN_START_HIGH: [u16; 16] = [
+        0x3800, 0x5610, 0x350b, 0x800, 0, 0x416e, 0x2cc8, 0x1823, 0xc01, 0x6a31, 0x4caa, 0x2406,
+        0x7f7b, 0x75f4, 0x4d10, 0xc63,
+    ];
+    const GOLDEN_ACTIVE_LOW: [u16; 16] = [
+        0x3800, 0x4bbe, 0x6b9, 0xa8, 0, 0x173a, 0x276, 0x1f2, 0x14d, 0x73e0, 0x4f20, 0x2a20,
+        0x7fe0, 0x5aa0, 0x5920, 0x43,
+    ];
+    const GOLDEN_ACTIVE_HIGH: [u16; 16] = [
+        0x3800, 0x3719, 0x214, 3, 0, 0x295, 0x1d1, 0x14d, 0xa8, 0x4b40, 0x25e0, 0xe0, 0x6b40,
+        0x4600, 0x4480, 0,
+    ];
+    const WHITE: [u16; 16] = [0x7fff; 16];
+
+    /// The common target palettes, loaded at sprite palettes 7 and 3.
+    pub const COMMON: Pair = [&COMMON_HIGH, &COMMON_LOW];
+    pub const BOMB_START: Pair = [&BOMB_START_HIGH, &BOMB_START_LOW];
+    pub const BOMB_ACTIVE: Pair = [&BOMB_ACTIVE_HIGH, &BOMB_ACTIVE_LOW];
+    pub const GOLDEN_START: Pair = [&GOLDEN_START_HIGH, &GOLDEN_START_LOW];
+    pub const GOLDEN_ACTIVE: Pair = [&GOLDEN_ACTIVE_HIGH, &GOLDEN_ACTIVE_LOW];
+    /// The hurt flash.
+    pub const FLASH: Pair = [&WHITE, &WHITE];
+}
+
+/// The colour indexes of the Torizo's sprite palettes 5 and 4 (high, low).
+const TORIZO_PALETTES: [usize; 2] = [160, 144];
+/// The colour indexes of sprite palettes 7 and 3, the common targets.
+const COMMON_PALETTES: [usize; 2] = [240, 176];
+
+/// Store `pair` at the colour indexes `starts` of the current colours, or of
+/// the targets, from the last colour down, high then low, as the original's
+/// loops stored them.
+fn write_palettes<L: PaletteAccess + ?Sized>(
+    game: &mut L,
+    target: bool,
+    pair: palettes::Pair,
+    starts: [usize; 2],
+) {
+    let [high, low] = pair;
+    for (index, (&high, &low)) in high.iter().zip(low).enumerate().rev() {
+        game.palette_write_word(target, 2 * (starts[0] + index), high);
+        game.palette_write_word(target, 2 * (starts[1] + index), low);
+    }
+}
+
+/// Load the target palettes `pair` on the lease.
+fn set_palette_targets<L: Lease>(game: &mut L, pair: palettes::Pair) {
+    game.owned_step(|game| write_palettes(game, true, pair, TORIZO_PALETTES));
 }
 
 /// Bank $AA Torizo functions, stored in `function`.
@@ -622,11 +690,12 @@ pub fn jumping_or_falling<L: Lease>(k: u16, game: &mut L) {
 pub fn hurt<L: Lease>(game: &mut L) {
     let k = game.current_enemy();
     drool_at_low_health(k, game);
-    if Torizo::of(game, game.current_enemy()).actor().flash & 1 != 0 {
-        game.foreign(|game| game.flash_palette());
+    let pair = if Torizo::of(game, game.current_enemy()).actor().flash & 1 != 0 {
+        palettes::FLASH
     } else {
-        game.foreign(|game| game.restore_palette());
-    }
+        palettes::BOMB_ACTIVE
+    };
+    game.owned_step(|game| write_palettes(game, false, pair, TORIZO_PALETTES));
 }
 
 /// Hurt AI - Golden Torizo ($AA:D3BA). Was `GoldTorizo_Hurt`.
@@ -634,7 +703,7 @@ pub fn golden_hurt<L: Lease>(game: &mut L) {
     let k = game.current_enemy();
     drool_at_low_health(k, game);
     if Torizo::of(game, game.current_enemy()).actor().flash & 1 != 0 {
-        game.foreign(|game| game.flash_palette());
+        game.owned_step(|game| write_palettes(game, false, palettes::FLASH, TORIZO_PALETTES));
     } else {
         health_palette(game.current_enemy(), game);
     }
@@ -644,7 +713,18 @@ pub fn golden_hurt<L: Lease>(game: &mut L) {
 /// `Torizo_Func_11`.
 fn health_palette<L: Lease>(k: u16, game: &mut L) {
     let health = Torizo::of(game, k).actor().health;
-    game.foreign(|game| game.health_palette(health));
+    // Eight-colour bands of the $84:8032/$84:8132 tables, by the health's high byte.
+    let band = isize::from((health.to_le_bytes()[1] & 0x78).min(0x38)) * 2;
+    game.owned_step(|game| {
+        for index in (0..16).rev() {
+            let [high, low] = [true, false].map(|high| {
+                crate::gameplay_tables::torizo_palette_colour(game, high, band + index)
+            });
+            let index = index.unsigned_abs();
+            game.palette_write_word(false, 2 * (TORIZO_PALETTES[0] + index), high);
+            game.palette_write_word(false, 2 * (TORIZO_PALETTES[1] + index), low);
+        }
+    });
 }
 
 /// Enemy touch - torizos ($AA:C977). Was `GoldTorizo_Touch`.
@@ -776,9 +856,9 @@ pub fn initialize<L: Lease>(game: &mut L) {
     *edit.x_velocity() = 0;
     *edit.y_velocity() = LANDED_Y_VELOCITY;
     drop(edit);
-    game.foreign(|game| game.initialize_palette_targets());
+    game.owned_step(|game| write_palettes(game, true, palettes::COMMON, COMMON_PALETTES));
     if BossState::area(game) != 0 {
-        game.foreign(|game| game.set_palette_targets(Palettes::GoldenStart));
+        set_palette_targets(game, palettes::GOLDEN_START);
         if crate::gameplay_word!(game.JOYPAD1_LASTKEYS) == DEBUG_KEYS {
             battle!(game.SamusHealth = 700);
             battle!(game.SamusMaxHealth = 700);
@@ -796,10 +876,8 @@ pub fn initialize<L: Lease>(game: &mut L) {
             battle!(game.CollectedBeams = 4111);
         }
     } else {
-        game.foreign(|game| {
-            game.set_palette_targets(Palettes::BombStart);
-            game.spawn_haze();
-        });
+        set_palette_targets(game, palettes::BOMB_START);
+        game.foreign(|game| game.spawn_haze());
     }
 }
 
@@ -877,7 +955,7 @@ pub fn advance_colour_change<L: Lease>(game: &mut L) {
 /// Instruction - set up palette transition to normal torizo ($AA:B94D). Was
 /// `Torizo_Instr_5`.
 pub fn fade_to_active<L: Lease>(game: &mut L) {
-    game.foreign(|game| game.set_palette_targets(Palettes::BombActive));
+    set_palette_targets(game, palettes::BOMB_ACTIVE);
 }
 
 /// Instruction - start fight music and Bomb Torizo belly palette FX
@@ -1150,7 +1228,7 @@ pub fn branch_if_airborne<L: Lease>(k: u16, jp: EnemyScript, game: &mut L) -> En
 /// Instruction - load Golden Torizo palettes ($AA:CADE). Was
 /// `Torizo_Instr_41`.
 pub fn golden_palettes<L: Lease>(game: &mut L) {
-    game.foreign(|game| game.set_palette_targets(Palettes::GoldenActive));
+    set_palette_targets(game, palettes::GOLDEN_ACTIVE);
 }
 
 /// Instruction - start fight music and Golden Torizo belly palette FX

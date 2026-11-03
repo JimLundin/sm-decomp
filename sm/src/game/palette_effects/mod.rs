@@ -1,8 +1,7 @@
 //! Palette effects using the shared gameplay Session and runtime.
-pub(crate) use sm_game::palette_effects::execution;
-pub(crate) mod torizo;
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
+pub(crate) use sm_game::palette_effects::execution;
 
 pub(crate) use execution::leased::{advance, clear, set_enabled, spawn};
 

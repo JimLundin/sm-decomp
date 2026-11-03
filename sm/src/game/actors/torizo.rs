@@ -29,33 +29,6 @@ impl Ai for Game {
         crate::game::session_runtime::run_aa_function(address, self);
     }
 
-    fn set_palette_targets(&mut self, palettes: Palettes) {
-        use crate::game::palette_effects::torizo;
-        let pair = match palettes {
-            Palettes::BombStart => torizo::BOMB_START,
-            Palettes::BombActive => torizo::BOMB_ACTIVE,
-            Palettes::GoldenStart => torizo::GOLDEN_START,
-            Palettes::GoldenActive => torizo::GOLDEN_ACTIVE,
-        };
-        torizo::set_targets(pair, self);
-    }
-
-    fn initialize_palette_targets(&mut self) {
-        crate::game::palette_effects::torizo::initialize_targets(self);
-    }
-
-    fn flash_palette(&mut self) {
-        crate::game::palette_effects::torizo::flash_current(self);
-    }
-
-    fn restore_palette(&mut self) {
-        crate::game::palette_effects::torizo::restore_current(self);
-    }
-
-    fn health_palette(&mut self, health: u16) {
-        crate::game::palette_effects::torizo::health_current(health, self);
-    }
-
     fn spawn_haze(&mut self) {
         crate::game::visual_runtime::initialize_bomb_torizo_haze(self);
     }
