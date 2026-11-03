@@ -3,7 +3,7 @@ pub mod fx;
 use crate::enemy_projectiles::host::Effects;
 use crate::menu_state::SaveSelection;
 use crate::ram::RawRam as _;
-use crate::ram::{checked_word, word, words as fields};
+use crate::ram::{checked_word, word};
 use crate::room_mechanisms::creation::spawn_hardcoded;
 use crate::runtime_access::SessionView;
 use crate::session_access::SessionAccess as _;
@@ -253,7 +253,7 @@ pub fn execute_door_code<H: ScriptHost + ?Sized>(script: u16, game: &mut H) {
 /// What the room main code needs beyond the owned-Session view: the Samus
 /// pose command, the imported Ceres rotation table, and the sprite object,
 /// sky, projectile and cutscene effects of the compatibility runtime.
-pub trait MainCodeHost: SessionView {
+pub trait MainCodeHost: SessionView + crate::display::preparation::Access {
     fn command_player(&mut self, command: u16);
     fn ceres_rotation_step(&mut self, word: isize) -> sm_data::ceres_elevator::RotationStep;
     /// Create sprite object `kind` at (`x`, `y`) ($B4:BC26).
@@ -355,7 +355,9 @@ pub fn execute_main_code<H: MainCodeHost>(script: u16, h: &mut H) {
 /// ($8F:C131, `on_tile`) or on every fourth frame ($8F:C183), then at
 /// ([$12], [$14]) ($8F:C1A9).
 fn random_explosion<H: MainCodeHost>(mask: u16, on_tile: bool, h: &mut H) {
-    if h.session().timing.time_frozen != 0 || (h.word(fields::NMI_FRAME_COUNTER_WORD) & mask) != 0 {
+    if h.session().timing.time_frozen != 0
+        || (crate::frame_display_word!(h.NmiFrameWordPair) & mask) != 0
+    {
         return;
     }
     let random = h.next_random();
@@ -432,10 +434,13 @@ pub fn advance_ceres_elevator<H: MainCodeHost + ?Sized>(h: &mut H) {
             let step_word = 6u16.wrapping_mul(room.main_native(0)) >> 1;
             let step = h.ceres_rotation_step(step_word as isize);
             h.session_mut().room.set_main_native(1, step.frames);
-            h.write_word_le(step.mode7_b, fields::REG_M7B);
-            h.write_word_le(-(h.word(fields::REG_M7B) as i32) as u16, fields::REG_M7C);
-            h.write_word_le(step.mode7_a, fields::REG_M7A);
-            h.write_word_le(h.word(fields::REG_M7A), fields::REG_M7D);
+            // The Mode 7 matrix: B, C = -B, A, then D = A.
+            crate::frame_display_word!(h.AffineWords1Pair = step.mode7_b);
+            let b = crate::frame_display_word!(h.AffineWords1Pair);
+            crate::frame_display_word!(h.AffineWords2Pair = b.wrapping_neg());
+            crate::frame_display_word!(h.AffineWords0Pair = step.mode7_a);
+            let a = crate::frame_display_word!(h.AffineWords0Pair);
+            crate::frame_display_word!(h.AffineWords3Pair = a);
             let index = h.session().room.main_native(0);
             let next = if (index as i16) < 0 {
                 if index == 0x8001 {
