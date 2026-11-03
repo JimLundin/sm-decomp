@@ -20,8 +20,10 @@ pub trait Host:
     + crate::display_scroll::Access
     + crate::hdma_objects::HdmaTable
 {
-    /// Build the eye beam's window table outside the session view.
-    fn calculate_xray_window(&mut self, window: crate::beam_windows::XrayWindow);
+    /// Build the eye beam's window table outside the session view; returns
+    /// the $0D1E word the view stores
+    /// (see [`crate::beam_windows::calculate_xray_window`]).
+    fn calculate_xray_window(&mut self, window: crate::beam_windows::XrayWindow) -> Option<u16>;
 }
 
 fn high(word: u16) -> u8 {
@@ -449,7 +451,7 @@ pub trait HdmaEffects: Host {
         let width = crate::hdma_word!(&*self, usize::from(slot >> 1), C);
         let y = actor.y.whole.wrapping_sub(self.inputs().camera_y);
         let x = actor.x.whole.wrapping_sub(self.inputs().camera_x);
-        self.calculate_xray_window(crate::beam_windows::XrayWindow {
+        let crossing = self.calculate_xray_window(crate::beam_windows::XrayWindow {
             x,
             y,
             angle,
@@ -457,6 +459,9 @@ pub trait HdmaEffects: Host {
             off_screen: x >= 256,
             table: 0x9100,
         });
+        if let Some(row) = crossing {
+            self.session_mut().player.grapple_extension_compatibility.x = row;
+        }
         let colors = colors(usize::from(slot >> 1), &*self);
         for (target, color) in (0x74..).zip(colors) {
             self.set_byte(target, color);

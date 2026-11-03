@@ -115,8 +115,8 @@ impl GameEffects for Runtime<'_> {
     fn update_beam_graphics(&mut self) {
         self.foreign(crate::game::visual_runtime::update_beam_tiles_and_palette);
     }
-    fn draw_xray_window_table(&mut self, window: sm_game::beam_windows::XrayWindow) {
-        self.foreign(|game| sm_game::beam_windows::calculate_xray_window(window, game));
+    fn draw_xray_window_table(&mut self, window: sm_game::beam_windows::XrayWindow) -> Option<u16> {
+        self.foreign(|game| sm_game::beam_windows::calculate_xray_window(window, game))
     }
     fn restore_xray_background(&mut self, step: XrayRestore) {
         use crate::game::xray_background::{finish_restore, restore_left, restore_right};

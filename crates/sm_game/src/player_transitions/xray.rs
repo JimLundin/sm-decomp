@@ -307,7 +307,9 @@ pub fn draw_window<H: SamusLease>(h: &mut H) {
         off_screen,
         table: 0x9800,
     };
-    h.draw_xray_window_table(window);
+    if let Some(row) = h.draw_xray_window_table(window) {
+        h.session_mut().player.grapple_extension_compatibility.x = row;
+    }
 }
 /// The X-ray background step: blend, then the beam's or the restore's stage.
 pub fn advance_background<
