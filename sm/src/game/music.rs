@@ -220,4 +220,22 @@ impl crate::game::session_runtime::Runtime<'_> {
     pub(crate) fn sound_queue_empty(&mut self, channel: usize) -> bool {
         self.audio_request(|runtime| requests::sound_queue_empty(channel, runtime))
     }
+    /// The frame's sound effect advance on the lease: the queues step on the Session's
+    /// audio owner, and each sound goes out through the cue port as it is sent.
+    pub(crate) fn advance_sound_requests(&mut self) {
+        #[cfg(sm_verify_dll)]
+        self.assert_audio_requests_owned();
+        requests::advance_sound_effects(self, |channel, value, meaning, runtime| {
+            runtime.emit_cue(
+                crate::native_audio::sound_cue(
+                    channel,
+                    sm_data::OriginalSoundEffect(value),
+                    meaning,
+                ),
+                sm_data::CuePhase::GameplaySound,
+            );
+            Ok(())
+        })
+        .expect("audio sound advance");
+    }
 }

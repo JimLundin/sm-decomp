@@ -524,6 +524,26 @@ A decision (D3).
     samus_death and menus on Game.
   - Speed: PERFORMANCE target 3.
 - **Rows.** The full PR Verify set, plus a dispatched nightly full route before landing.
+- **First slice (lane `tick-s9`, on `tick-s6`).** Not yet landed.
+  - A main gameplay frame (state 8, its pass from the start) holds one lease from the
+    random number step to the frame's end: the random step, the sprite table resets, the
+    Samus request clear, the game state read, the pass, health and time, the frame timers,
+    the resume point, the sound effect advance, the sprite finish, the joypad filter word
+    and the continuation check. An enemy's message box splits it in two, as before.
+  - `finish_health_and_time` and `finish_frame` run on the pass's last lease in every pass
+    state (`gameplay_rules::Host` is now a lease bound). Their own leases go: the frame
+    counter's, the quake's enemy shake and the pose command on death.
+  - The sound effects leave through a cue port on the lease (`Runtime::emit_cue`); the APU
+    side reads only the upload flags from RAM there, which verify builds check against the
+    lease's audio owner.
+  - Leases on a plain main gameplay frame with HDMA running: 4 to 2 (the HDMA
+    interpreter's and the frame's). With a message box: 5 to 3. `foreign_calls` stays at
+    168: none of the moved code had a foreign wrapper. `session_entries` 100 to 99.
+  - Left: `handle_music_queue` (step 4) opens `update_hdma` on Game, before any lease;
+    the next lease (the HDMA interpreter's) opens after the explosion spawn and FX
+    publication on Game, so joining needs stage 5 or a reorder. The NMI and its
+    `NmiPending` store stay on Game (stage 10). Other pass states, resumed passes and the
+    demo's pass still end the frame on Game.
 
 ### Stage 10: NMI and settlement inside the tick
 
