@@ -28,7 +28,6 @@ use crate::room_entry::content::LoadMode;
 use crate::room_scrolls::{advance_camera, debug_position, fill_viewport, update_scrolls};
 use crate::runtime_access::RuntimeAccess;
 use crate::session_access::SessionAccess;
-use crate::session_cohort;
 use crate::word_transfers;
 use crate::{escape_timer, hud, message_boxes, samus_death, sprite_drawing};
 
@@ -899,9 +898,11 @@ fn finish_pass<H: Host>(entry: Entry, game: &mut H) {
                     crate::screen_fade::store(game, 0, 0);
                     word_transfers!(game, descending, 128; le(EPROJ_Y_SUBPOS, 142) <- value(0));
                     crate::gameplay_word!(game.GAME_STATE += 1);
-                    session_cohort::with(game, |_, e: &mut crate::explosion_window::Explosion| {
-                        e.bomb.explosion_status = 0;
-                    });
+                    crate::session_part::update(
+                        game,
+                        |session| &mut session.projectiles.power_bomb.explosion_status,
+                        |status| *status = 0,
+                    );
                     cancel_sound_effects(game, 15);
                     crate::music_requests::queue_delayed_8(0, game);
                     crate::music_requests::queue_delayed_8(0xff39, game);

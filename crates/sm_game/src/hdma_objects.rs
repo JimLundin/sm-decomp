@@ -339,15 +339,16 @@ where
 {
     game.handle_music_queue();
     if crate::sequence_word!(game.TIME_IS_FROZEN_FLAG) == 0
-        && crate::session_cohort::load::<crate::explosion_window::Explosion, _>(game)
-            .bomb
-            .explosion_status
-            & 0x4000
+        && crate::session_part::get(game, |session| {
+            &session.projectiles.power_bomb.explosion_status
+        }) & 0x4000
             != 0
     {
-        crate::session_cohort::with(game, |_, e: &mut crate::explosion_window::Explosion| {
-            e.bomb.explosion_status = 0x8000;
-        });
+        crate::session_part::update(
+            game,
+            |session| &mut session.projectiles.power_bomb.explosion_status,
+            |status| *status = 0x8000,
+        );
         spawn_hdma(0x88, &HdmaObjectDefinition::new(0x40, 0x28, 0x8ace), game);
         spawn_hdma(0x88, &HdmaObjectDefinition::new(0x40, 0x29, 0x8b80), game);
     }

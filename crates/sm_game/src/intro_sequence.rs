@@ -583,11 +583,12 @@ pub fn boom_explosions<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     } else {
         let x = crate::frame_display_word!(game.AffineWords4Pair).wrapping_sub(*cine.x());
         let y = crate::frame_display_word!(game.AffineWords5Pair).wrapping_sub(*cine.y());
-        crate::session_cohort::with(
+        crate::session_part::update(
             game,
-            |_, explosion: &mut crate::explosion_window::Explosion| {
-                explosion.bomb.x = x;
-                explosion.bomb.y = y;
+            |session| &mut session.projectiles.power_bomb,
+            |bomb| {
+                bomb.x = x;
+                bomb.y = y;
             },
         );
         crate::hdma_objects::set_hdma_enabled(true, game);

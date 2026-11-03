@@ -997,7 +997,18 @@ impl Host for Runtime<'_> {
         self.foreign(|g| crate::game::visual_runtime::set_hdma_enabled(true, g));
     }
     fn spawn_power_bomb(&mut self) {
-        self.foreign(|g| sm_game::explosion_window::spawn_power_bomb(g));
+        use sm_game::explosion_window as window;
+        // The status is this lease's Session word; the expanding explosion's
+        // sound and window objects stay on the host, which re-adopts it.
+        let status = window::starting_status(self.session().timing.time_frozen);
+        let bomb = &mut self.session_mut().projectiles.power_bomb;
+        let changed = bomb.explosion_status != status;
+        bomb.explosion_status = status;
+        if status & 0x8000 != 0 {
+            self.foreign(|g| window::spawn_power_bomb_objects(g));
+        } else if changed {
+            self.refresh_player_observations();
+        }
     }
     fn spawn_mechanism(&mut self, header: u16) {
         let mut contact = sm_game::room_mechanisms::host::Contact::Absent;
