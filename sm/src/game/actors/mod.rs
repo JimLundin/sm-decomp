@@ -32,7 +32,6 @@ pub(in crate::game) mod media_runtime;
 pub(in crate::game) mod mother_brain_effects;
 #[cfg(sm_verify_dll)]
 pub(in crate::game) use sm_game::actors::movement;
-pub(in crate::game) mod part_hitboxes;
 pub(in crate::game) mod phantoon_actions;
 pub(in crate::game) use sm_game::actors::population;
 pub(in crate::game) use sm_game::actors::queries;

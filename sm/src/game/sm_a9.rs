@@ -290,25 +290,6 @@ impl sm_game::actors::mother_brain_fight::Host for Game {
         crate::game::display_refresh::set_native_word(offset, value, self);
     }
 
-    fn samus_contact(
-        &mut self,
-        boxes: u16,
-        x: u16,
-        y: u16,
-    ) -> sm_game::actors::mother_brain_fight::Contact {
-        use crate::game::actors::part_hitboxes::Contact as Part;
-        use sm_game::actors::mother_brain_fight::Contact;
-        match crate::game::actors::part_hitboxes::samus_contact(boxes, x, y, self) {
-            Part::None => Contact::None,
-            Part::Pushed => Contact::Pushed,
-            Part::Hurt => Contact::Hurt,
-        }
-    }
-
-    fn dead_torizo_contact(&mut self) -> bool {
-        actors::part_hitboxes::dead_torizo_contact(self)
-    }
-
     fn move_samus_horizontally_towards_wall(&mut self, amount: u16) -> u8 {
         crate::game::sm_a9::move_samus_horizontally_towards_wall(amount, self)
     }

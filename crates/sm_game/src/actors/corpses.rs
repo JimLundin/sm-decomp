@@ -12,7 +12,7 @@ use crate::actors::access::ActorKey;
 use crate::actors::boss_lease::bg2_staging;
 use crate::actors::mother_brain_fight::OwnedWord;
 use crate::actors::mother_brain_fight::random_number;
-use crate::actors::mother_brain_fight::{BANK, BANK_BASE, Host as _, Lease, State, cgram, sound};
+use crate::actors::mother_brain_fight::{BANK, BANK_BASE, Lease, State, cgram, sound};
 use crate::actors::mother_brain_fight::{
     add_spritemap_to_oam, bank_unreachable, corpse_rotting_finished, move_enemy_with_velocity,
     queue_sfx2_max3, queue_sfx2_max6, set_enemy_instruction_list, set_graphics_drawn_hook,
@@ -1069,7 +1069,7 @@ pub fn initialize_torizo_corpse(game: &mut impl Corpses) {
 /// Main AI - Torizo corpse.
 pub fn torizo_corpse_main_ai(game: &mut impl Corpses) {
     if DeadTorizo::of(game, 0).actor().properties & K_ENEMY_PROPS_TANGIBLE as u16 == 0
-        && game.foreign(|game| game.dead_torizo_contact())
+        && game.owned_step(crate::actors::part_hitboxes::dead_torizo_contact)
     {
         torizo_corpse_touch_or_shot(game);
     }

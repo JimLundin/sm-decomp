@@ -206,6 +206,7 @@ pub mod actors {
     pub mod multiviola;
     pub mod oum;
     pub mod overlap;
+    pub mod part_hitboxes;
     pub mod phantoon;
     pub mod phantoon_actions;
     pub mod phantoon_motion;

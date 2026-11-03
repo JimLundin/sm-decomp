@@ -884,9 +884,6 @@ pub trait Host:
     fn player_mother_brain(&mut self, command: u16);
     fn load_fx_entry(&mut self, index: u16);
     fn set_native_word(&mut self, offset: usize, value: u16);
-    fn samus_contact(&mut self, boxes: u16, x: u16, y: u16) -> Contact;
-    /// Whether Samus touches one of the dead Torizo's hitboxes.
-    fn dead_torizo_contact(&mut self) -> bool;
     fn move_samus_horizontally_towards_wall(&mut self, amount: u16) -> u8;
     fn move_samus_vertically_towards_ceiling_floor(&mut self, amount: u16) -> u8;
     /// Start the corpse rotting of slot `k` from `definition`. Was
@@ -922,7 +919,6 @@ on_game! {
     spawn_rising_hdma() -> u16 => spawn_rising_hdma;
     player_mother_brain(command: u16) => player_mother_brain;
     load_fx_entry(index: u16) => load_fx_entry;
-    samus_contact(boxes: u16, x: u16, y: u16) -> Contact => samus_contact;
     move_samus_horizontally_towards_wall(amount: u16) -> u8 => move_samus_horizontally_towards_wall;
     move_samus_vertically_towards_ceiling_floor(amount: u16) -> u8 => move_samus_vertically_towards_ceiling_floor;
     add_glass_hits(slot: usize, amount: u16) => add_glass_hits;
@@ -2810,7 +2806,7 @@ pub fn samus_collision_detection(game: &mut impl Lease) {
 }
 pub fn part_samus_collision_detection(k: u16, r18: u16, r20: u16, game: &mut impl Lease) -> u8 {
     use crate::actors::mother_brain_fight::Contact;
-    match samus_contact(k, r18, r20, game) {
+    match game.owned_step(|game| crate::actors::part_hitboxes::samus_contact(k, r18, r20, game)) {
         Contact::None => 0,
         Contact::Pushed => 1,
         Contact::Hurt => {
