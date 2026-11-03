@@ -60,7 +60,7 @@ BASELINE = {
     "engine_unresolved_ram_methods": 981,
     "legacy_engine_ram_sites": 526,
     # Original-game overflow paths (LEGACY(original-overflow)), reported only.
-    "engine_legacy_overflow_sites": 60,
+    "engine_legacy_overflow_sites": 61,
     # The Game boundary (Jim, 2026-11-03): each foreign call is a full Session
     # export and re-import; Game host impls are host traits served from the RAM
     # image; Session entries are leases opened from Game-hosted code. All three
