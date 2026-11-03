@@ -266,6 +266,11 @@ const DEATH_PALETTE: u32 = 0xa7_b4f3;
 const RISING_PALETTE: u32 = 0xa7_aaa6;
 /// Bank $B9 compressed BG2 graphics and tilemap.
 const BG2_TILES: u32 = 0xb9_fa38;
+/// $7E:4000: where the BG2 tiles decompress, in the presentation workspace's
+/// shared bytes ($7E:3000..$7E:6FFF), which the Session owns in every
+/// presentation.
+const BG2_TILES_RAM: usize = 0x4000;
+const BG2_TILES_SHARED: usize = BG2_TILES_RAM - crate::presentation_workspace::FIRST;
 const BG2_TILEMAP: u32 = 0xb9_fe3e;
 /// Bank $86 enemy projectiles.
 const DUST_CLOUD: u16 = 0xe509;
@@ -340,8 +345,11 @@ fn set_hook_bank<S: SlotState + ?Sized>(game: &mut S, hook: HookSlot) {
     game.words_stored();
 }
 
-fn native_word<S: BossState + ?Sized>(game: &S, at: usize) -> u16 {
-    u16::from_ne_bytes([game.slot_byte(at), game.slot_byte(at + 1)])
+/// Decompressed BG2 tile word `index` ($7E:4000 + 2 * `index`), in native order.
+fn bg2_tile_word<S: SlotState + ?Sized>(game: &S, index: usize) -> u16 {
+    let shared = game.session().presentation.workspace().shared_bytes();
+    let at = BG2_TILES_SHARED + 2 * index;
+    u16::from_ne_bytes([shared[at], shared[at + 1]])
 }
 
 /// Appends a VRAM write queue entry: `size` bytes from `bank:source` to the
@@ -410,7 +418,7 @@ fn hide_as_dead<L: Lease + ?Sized>(game: &mut L) {
 /// Decompresses BG2's graphics and tilemap and sets the tilemap's priority
 /// with `priority`. Was `Kraid_SetupGfxWithTilePrioClear`.
 fn load_bg2<S: BossState + SlotState + ?Sized>(game: &mut S, priority: u16) {
-    game.decompress_into_ram(BG2_TILES, 0x4000);
+    game.decompress_into_ram(BG2_TILES, BG2_TILES_RAM);
     game.decompress_into_ram(BG2_TILEMAP, 0x2000);
     *BodyEdit::of(game, BODY).hurt_frame() = 0;
     *BodyEdit::of(game, BODY).hurt_frame_timer() = 0;
@@ -423,7 +431,7 @@ fn load_bg2<S: BossState + SlotState + ?Sized>(game: &mut S, priority: u16) {
     }
     game.words_stored();
     for v2 in 0u16..1024 {
-        let value = priority & native_word(game, 0x4000 + v2 as usize * 2);
+        let value = priority & bg2_tile_word(game, usize::from(v2));
         bg2_staging::set(game, usize::from(v2), value);
     }
 }
