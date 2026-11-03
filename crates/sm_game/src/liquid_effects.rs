@@ -356,7 +356,7 @@ pub fn water_background<H: crate::menus::host::Host + ?Sized>(hdma_index: usize,
     }
     let height = table_height(
         game.view_word(crate::projection::Field::LiquidSurface),
-        game.view_word(crate::projection::Field::Layer1Y),
+        game.view_word(crate::projection::Field::Layer1(1)),
         true,
     );
     crate::hdma_word!(game, hdma_index, Table => 3 * ((height ^ 0x1ff) & 0x3ff) + 0xcf46);

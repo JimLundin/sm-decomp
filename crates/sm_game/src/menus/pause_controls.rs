@@ -171,11 +171,16 @@ pub fn draw_unpause<H: crate::menus::host::Host + ?Sized>(menu: &mut MenuState, 
 }
 
 pub fn resume<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    let camera = crate::camera::current(game);
-    display_scroll!(game.Bg1H = camera.bg1_offset[0].wrapping_add(camera.layer1[0]));
-    display_scroll!(game.Bg1V = camera.bg1_offset[1].wrapping_add(camera.layer1[1]));
-    display_scroll!(game.Bg2H = camera.bg2_scroll[0].wrapping_add(camera.layer2[0]));
-    display_scroll!(game.Bg2V = camera.bg2_scroll[1].wrapping_add(camera.layer2[1]));
+    let camera = |game: &H, offset: fn(usize) -> Field, layer: fn(usize) -> Field, axis| {
+        game.view_word(offset(axis))
+            .wrapping_add(game.view_word(layer(axis)))
+    };
+    let bg1 = [0, 1].map(|axis| camera(game, Field::Bg1Offset, Field::Layer1, axis));
+    let bg2 = [0, 1].map(|axis| camera(game, Field::Bg2Scroll, Field::Layer2, axis));
+    display_scroll!(game.Bg1H = bg1[0]);
+    display_scroll!(game.Bg1V = bg1[1]);
+    display_scroll!(game.Bg2H = bg2[0]);
+    display_scroll!(game.Bg2V = bg2[1]);
     game.update_beam_tiles_and_palette();
     // Palette timer/frame and pause_screen_mode survive this ordered reset.
     game.reset_pause_menu();

@@ -87,8 +87,12 @@ pub enum Field {
     LiquidOptions,
     /// The liquid surface's whole height ($195E).
     LiquidSurface,
-    /// The camera's layer 1 y position ($0915).
-    Layer1Y,
+    /// The camera's layer 1 and layer 2 positions ($0911, $0917), BG1's
+    /// offsets ($091D) and BG2's scrolls ($0921) on `axis` (0 = x, 1 = y).
+    Layer1(usize),
+    Layer2(usize),
+    Bg1Offset(usize),
+    Bg2Scroll(usize),
 }
 
 impl Field {
@@ -126,7 +130,11 @@ impl Field {
             Self::CrystalFlashDelay => 0xdf2,
             Self::LiquidOptions => 0x197e,
             Self::LiquidSurface => 0x195e,
-            Self::Layer1Y => words::LAYER1_Y_POS,
+            // Layer 1's whole positions interleave with their fractions.
+            Self::Layer1(axis) => words::LAYER1_X_POS + 4 * axis,
+            Self::Layer2(axis) => words::LAYER2_X_POS + 2 * axis,
+            Self::Bg1Offset(axis) => words::BG1_X_OFFSET + 2 * axis,
+            Self::Bg2Scroll(axis) => words::BG2_X_SCROLL + 2 * axis,
         }
     }
 
@@ -186,7 +194,10 @@ impl Field {
             Self::CrystalFlashDelay => session.presentation.palette().crystal_flash_delay,
             Self::LiquidOptions => room.liquid_options,
             Self::LiquidSurface => room.liquid.surface.whole,
-            Self::Layer1Y => room.camera.layer1[1],
+            Self::Layer1(axis) => *room.camera.layer1.get(axis)?,
+            Self::Layer2(axis) => *room.camera.layer2.get(axis)?,
+            Self::Bg1Offset(axis) => *room.camera.bg1_offset.get(axis)?,
+            Self::Bg2Scroll(axis) => *room.camera.bg2_scroll.get(axis)?,
         })
     }
 
@@ -246,7 +257,10 @@ impl Field {
             Self::CrystalFlashDelay => &mut session.presentation.palette_mut().crystal_flash_delay,
             Self::LiquidOptions => &mut session.room.liquid_options,
             Self::LiquidSurface => &mut session.room.liquid.surface.whole,
-            Self::Layer1Y => &mut session.room.camera.layer1[1],
+            Self::Layer1(axis) => session.room.camera.layer1.get_mut(axis)?,
+            Self::Layer2(axis) => session.room.camera.layer2.get_mut(axis)?,
+            Self::Bg1Offset(axis) => session.room.camera.bg1_offset.get_mut(axis)?,
+            Self::Bg2Scroll(axis) => session.room.camera.bg2_scroll.get_mut(axis)?,
         })
     }
 }
@@ -854,8 +868,15 @@ mod tests {
             Field::CrystalFlashDelay,
             Field::LiquidOptions,
             Field::LiquidSurface,
-            Field::Layer1Y,
         ]);
+        for axis in 0..2 {
+            fields.extend([
+                Field::Layer1(axis),
+                Field::Layer2(axis),
+                Field::Bg1Offset(axis),
+                Field::Bg2Scroll(axis),
+            ]);
+        }
         fields.extend((0..3).map(Field::PauseHook));
         fields
     }
