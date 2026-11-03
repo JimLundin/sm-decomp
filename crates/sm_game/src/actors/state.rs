@@ -61,6 +61,30 @@ pub struct Actors {
     pub diagnostics: ActorDiagnostics,
     pub extended: ExtendedRam,
     pub crocomire_melt: CrocomireMelt,
+    pub work_robot_palette: WorkRobotPalette,
+}
+/// The Work Robot's palette cycle ($7E:D652..$7E:D657), as the little-endian
+/// words of the byte image.
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub struct WorkRobotPalette {
+    /// $D652: the robot's palette index (`work_robot_palanim_palindex`); its high
+    /// byte selects the palette line.
+    pub palette_index: u16,
+    /// $D654: frames until the next colours (`work_robot_palanim_timer`).
+    pub timer: u16,
+    /// $D656: the cycle's byte cursor (`work_robot_palanim_table_index`) and
+    /// the byte above it, which the original loads and stores as one word.
+    pub cursor: u16,
+}
+impl WorkRobotPalette {
+    /// The cursor as the original's native-order load reads it.
+    pub fn cursor_native(&self) -> u16 {
+        u16::from_ne_bytes(self.cursor.to_le_bytes())
+    }
+    /// Store the cursor as the original's native-order store.
+    pub fn set_cursor_native(&mut self, value: u16) {
+        self.cursor = u16::from_le_bytes(value.to_ne_bytes());
+    }
 }
 /// Crocomire's melt ($7E:0688..$7E:071B): the words of
 /// `crocomire_reactions::melt::Word` by address, then each pixel column's height.
@@ -217,6 +241,7 @@ impl Clone for Actors {
             diagnostics: self.diagnostics,
             extended: self.extended.clone(),
             crocomire_melt: self.crocomire_melt.clone(),
+            work_robot_palette: self.work_robot_palette,
         }
     }
 }

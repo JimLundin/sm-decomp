@@ -8,7 +8,6 @@ use crate::actors::host::{ActorLease, ActorRuntime as _, EnemyHost, LeaseActors}
 use crate::enemy_projectiles::host::Effects as _;
 use crate::enemy_script::EnemyScript;
 use crate::player_projectiles::content::table;
-use crate::ram::words as W;
 use crate::session_access::SessionAccess as _;
 
 /// The palette cycle ($A8:CC67): four colours then a duration, ended by -1.
@@ -16,8 +15,6 @@ const PALETTE: [i16; 31] = [
     0x1f, 0x18, 0xf, 8, 0x40, 0x18, 0xf, 8, 0x1f, 0x10, 0xf, 8, 0x1f, 0x18, 0x10, 8, 0x1f, 0x18,
     0xf, 0x40, 0xf, 8, 0x1f, 0x18, 0x10, 0x18, 0xf, 8, 0x1f, 0x10, -1,
 ];
-/// $7E:D656: the palette cycle cursor (`work_robot_palanim_table_index`).
-const PALETTE_CURSOR: usize = 0xd656;
 /// $A8:CC67: the drawn hook, the palette cycle.
 const PALETTE_CYCLE_HOOK: u16 = 0xcc67;
 const BANK: u8 = 0xa8;
@@ -44,26 +41,34 @@ fn cooldown(runtime: &mut impl ActorLease) {
 /// Enemy graphics drawn hook - work robot - periodically cycle between palettes ($A8:CC67).
 pub fn palette(runtime: &mut impl ActorLease) {
     let door = runtime.session().room.entry.enemy_interlock != 0;
-    if door || runtime.word(W::WORK_ROBOT_PALANIM_TIMER) == 0 {
+    if door || runtime.session().actors.work_robot_palette.timer == 0 {
         return;
     }
-    let remaining = runtime.word(W::WORK_ROBOT_PALANIM_TIMER).wrapping_sub(1);
-    runtime.write_slice_le(W::WORK_ROBOT_PALANIM_TIMER, remaining);
-    if runtime.word(W::WORK_ROBOT_PALANIM_TIMER) != 0 {
+    let remaining = runtime
+        .session()
+        .actors
+        .work_robot_palette
+        .timer
+        .wrapping_sub(1);
+    runtime.session_mut().actors.work_robot_palette.timer = remaining;
+    runtime.words_stored();
+    if runtime.session().actors.work_robot_palette.timer != 0 {
         return;
     }
-    let mut cursor = runtime.lease_native_word(PALETTE_CURSOR);
+    let mut cursor = runtime.session().actors.work_robot_palette.cursor_native();
     while PALETTE[usize::from(cursor >> 1)] < 0 {
         cursor = 0;
     }
     let index = usize::from(cursor >> 1);
-    let line = usize::from(runtime.word(W::WORK_ROBOT_PALANIM_PALINDEX) >> 8) * 8;
+    let line = usize::from(runtime.session().actors.work_robot_palette.palette_index >> 8) * 8;
     for i in 0..4 {
         let colour = PALETTE[index + i] as u16;
         runtime.session_mut().presentation.visual_mut().colors[line + COLOURS + i] = colour;
     }
-    runtime.write_slice_le(W::WORK_ROBOT_PALANIM_TIMER, PALETTE[index + 4] as u16);
-    runtime.write_slice_native(PALETTE_CURSOR, cursor.wrapping_add(10));
+    let cycle = &mut runtime.session_mut().actors.work_robot_palette;
+    cycle.timer = PALETTE[index + 4] as u16;
+    cycle.set_cursor_native(cursor.wrapping_add(10));
+    runtime.words_stored();
 }
 /// Initialisation AI - work robot ($A8:CB77), or deactivated while the power is off.
 pub fn initialize<H: LeaseActors + EnemyHost + ?Sized>(game: &mut H) {
@@ -82,11 +87,18 @@ pub fn initialize<H: LeaseActors + EnemyHost + ?Sized>(game: &mut H) {
         actor.instruction = 0xc6e5;
         actor.variables[0] = 0xfe00;
     });
-    runtime.write_slice_le(W::WORK_ROBOT_PALANIM_TIMER, 1);
-    runtime.write_slice_native(PALETTE_CURSOR, 0);
+    let cycle = &mut runtime.session_mut().actors.work_robot_palette;
+    cycle.timer = 1;
+    cycle.set_cursor_native(0);
+    runtime.words_stored();
     runtime.edit_actor(key, Native, |actor| actor.variables[1] = 0);
     let palette = runtime.resolve_actor(key, Native).palette;
-    runtime.write_slice_le(W::WORK_ROBOT_PALANIM_PALINDEX, palette);
+    runtime
+        .session_mut()
+        .actors
+        .work_robot_palette
+        .palette_index = palette;
+    runtime.words_stored();
 }
 /// Initialisation AI - work robot deactivated ($A8:CBCC).
 pub fn initialize_deactivated<H: LeaseActors + ?Sized>(game: &mut H) {
@@ -105,12 +117,13 @@ pub fn initialize_deactivated<H: LeaseActors + ?Sized>(game: &mut H) {
         actor.instruction_delay = 1;
         actor.timer = 0;
     });
-    runtime.write_slice_le(W::WORK_ROBOT_PALANIM_TIMER, 0);
+    runtime.session_mut().actors.work_robot_palette.timer = 0;
+    runtime.words_stored();
     runtime.edit_actor(key, Native, |actor| {
         actor.variables[4] = 0;
         actor.pre_instruction = 1;
     });
-    let line = usize::from(runtime.word(W::WORK_ROBOT_PALANIM_PALINDEX) >> 8) * 8;
+    let line = usize::from(runtime.session().actors.work_robot_palette.palette_index >> 8) * 8;
     for i in COLOURS..COLOURS + 4 {
         runtime.session_mut().presentation.visual_mut().colors[line + i] = 10;
     }

@@ -1031,6 +1031,23 @@ fn pause_hook_lanes() -> Vec<Lane> {
 }
 
 #[test]
+fn work_robot_palette_round_trips_every_word() {
+    check_owner("Work Robot palette", &work_robot_palette_lanes());
+}
+
+fn work_robot_palette_lanes() -> Vec<Lane> {
+    array(0xd652, 2, 3, |s, index| {
+        let palette = &mut s.actors.work_robot_palette;
+        match index {
+            0 => &mut palette.palette_index,
+            1 => &mut palette.timer,
+            _ => &mut palette.cursor,
+        }
+    })
+    .collect()
+}
+
+#[test]
 fn boss_ram_round_trips_every_word() {
     check_owner("boss RAM", &boss_ram_lanes());
 }
@@ -1240,6 +1257,7 @@ fn all_owner_lanes() -> Vec<(&'static str, Vec<Lane>)> {
         ("actor speed scratch", actor_scratch_lanes()),
         ("Crocomire melt", crocomire_melt_lanes()),
         ("pause hooks", pause_hook_lanes()),
+        ("Work Robot palette", work_robot_palette_lanes()),
         ("boss RAM", boss_ram_lanes()),
         ("message box", message_box_lanes()),
         ("BG2 staging", bg2_staging_lanes()),
