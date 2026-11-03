@@ -82,6 +82,13 @@ pub enum Field {
     /// Samus's palette's crystal flash delay ($0DF2), which the ending reuses
     /// for the time's minute units digit.
     CrystalFlashDelay,
+    /// The liquid's options ($197E): bit 1 waves the surface, bits 1..2
+    /// animate the background.
+    LiquidOptions,
+    /// The liquid surface's whole height ($195E).
+    LiquidSurface,
+    /// The camera's layer 1 y position ($0915).
+    Layer1Y,
 }
 
 impl Field {
@@ -117,6 +124,9 @@ impl Field {
             Self::Layer2ScrollY => 0x91c,
             Self::SuitRedGreen => 0xdf0,
             Self::CrystalFlashDelay => 0xdf2,
+            Self::LiquidOptions => 0x197e,
+            Self::LiquidSurface => 0x195e,
+            Self::Layer1Y => words::LAYER1_Y_POS,
         }
     }
 
@@ -174,6 +184,9 @@ impl Field {
             Self::Layer2ScrollY => return None,
             Self::SuitRedGreen => session.presentation.palette().suit_red_green,
             Self::CrystalFlashDelay => session.presentation.palette().crystal_flash_delay,
+            Self::LiquidOptions => room.liquid_options,
+            Self::LiquidSurface => room.liquid.surface.whole,
+            Self::Layer1Y => room.camera.layer1[1],
         })
     }
 
@@ -231,6 +244,9 @@ impl Field {
             Self::Layer2ScrollX | Self::Layer2ScrollY => return None,
             Self::SuitRedGreen => &mut session.presentation.palette_mut().suit_red_green,
             Self::CrystalFlashDelay => &mut session.presentation.palette_mut().crystal_flash_delay,
+            Self::LiquidOptions => &mut session.room.liquid_options,
+            Self::LiquidSurface => &mut session.room.liquid.surface.whole,
+            Self::Layer1Y => &mut session.room.camera.layer1[1],
         })
     }
 }
@@ -836,6 +852,9 @@ mod tests {
             Field::Layer2ScrollY,
             Field::SuitRedGreen,
             Field::CrystalFlashDelay,
+            Field::LiquidOptions,
+            Field::LiquidSurface,
+            Field::Layer1Y,
         ]);
         fields.extend((0..3).map(Field::PauseHook));
         fields

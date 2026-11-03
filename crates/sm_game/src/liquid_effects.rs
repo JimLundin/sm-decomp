@@ -296,8 +296,8 @@ pub fn lava_background<H: crate::menus::host::Host + ?Sized>(hdma_index: usize, 
         crate::menus::prelude::display_scroll!(game.Bg2V),
     );
     let active = crate::sequence_word!(game.TIME_IS_FROZEN_FLAG) == 0
-        && crate::liquid::LiquidWords::read(game).options & 6 != 0;
-    let horizontal = active && crate::liquid::LiquidWords::read(game).options & 2 == 0;
+        && game.view_word(crate::projection::Field::LiquidOptions) & 6 != 0;
+    let horizontal = active && game.view_word(crate::projection::Field::LiquidOptions) & 2 == 0;
     use crate::display::video::{Axis, Background, Command, ScrollOffset};
     // The slot's low byte is its channel's register offset, the channel times 16.
     let [offset, _] = crate::hdma_word!(game, hdma_index, BankSlot).to_le_bytes();
@@ -348,15 +348,15 @@ pub fn water_background<H: crate::menus::host::Host + ?Sized>(hdma_index: usize,
     );
     if crate::sequence_word!(game.TIME_IS_FROZEN_FLAG) != 0 {
         water_flat(game);
-    } else if crate::liquid::LiquidWords::read(game).options & 2 == 0 {
+    } else if game.view_word(crate::projection::Field::LiquidOptions) & 2 == 0 {
         crate::hdma_word!(game, hdma_index, Channels => 0);
         water_flat(game);
     } else {
         water_wave(hdma_index, game);
     }
     let height = table_height(
-        crate::liquid::LiquidWords::read(game).liquid.surface.whole,
-        crate::camera::current(game).layer1[1],
+        game.view_word(crate::projection::Field::LiquidSurface),
+        game.view_word(crate::projection::Field::Layer1Y),
         true,
     );
     crate::hdma_word!(game, hdma_index, Table => 3 * ((height ^ 0x1ff) & 0x3ff) + 0xcf46);
