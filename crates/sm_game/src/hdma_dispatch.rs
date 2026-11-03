@@ -296,6 +296,8 @@ where
         SkyParallax => it.on_lease(scrolling_sky::update_parallax),
         AdvanceSkyParallax => it.on_lease(scrolling_sky::advance_parallax),
         FirefleaLighting => it.on_lease(room_visuals::advance_fireflea_lighting),
+        TitleGradient => it.on_lease(hdma_objects::advance_title_gradient),
+        IntroCrossfade => it.on_lease(hdma_objects::advance_intro_crossfade),
         Rain | Spores | Fog => {
             let weather = match target {
                 Rain => Weather::Rain,
@@ -432,11 +434,11 @@ fn host_pre_action<H: DispatchHost + ?Sized>(target: HdmaPreAction, game: &mut H
         | Rain
         | Spores
         | Fog
-        | StatueBlending => unreachable!("run_pre_action runs {target:?}"),
+        | StatueBlending
+        | TitleGradient
+        | IntroCrossfade => unreachable!("run_pre_action runs {target:?}"),
         RestoreRight => xray_background::restore_right(game),
         SkyVerticalScroll => scrolling_sky::update_vertical_scroll(game),
-        TitleGradientBackdrop => hdma_objects::advance_title_gradient(true, game),
-        TitleGradient => hdma_objects::advance_title_gradient(false, game),
-        IntroCrossfade => hdma_objects::advance_intro_crossfade(game),
+        TitleGradientBackdrop => hdma_objects::advance_title_gradient_backdrop(game),
     }
 }

@@ -412,18 +412,31 @@ pub(crate) fn refresh_title_gradient<H: crate::menus::host::Host + ?Sized>(game:
     }
 }
 
-pub fn advance_title_gradient<H: crate::menus::host::Host + ?Sized>(backdrop: bool, game: &mut H) {
-    if backdrop {
-        refresh_title_gradient(game);
-    }
+/// Refresh the title gradient's table from the zoom, then step its program.
+pub fn advance_title_gradient_backdrop<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+    refresh_title_gradient(game);
     if crate::sequence_state::Access::sequence_flow(&*game).cinematic_function == 0x9b68 {
         crate::hdma_effects::apply_leased(HdmaEffect::AdvanceProgram, 0, game);
     }
 }
 
-pub fn advance_intro_crossfade<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+/// Step the title gradient's program once the title's cinematic reaches it.
+pub fn advance_title_gradient<H>(game: &mut H)
+where
+    H: crate::sequence_state::Access + crate::hdma_effects::HdmaEffects + ?Sized,
+{
+    if crate::sequence_state::Access::sequence_flow(&*game).cinematic_function == 0x9b68 {
+        game.advance_hdma_program();
+    }
+}
+
+/// Step the intro crossfade's program once the cinematic asks for it.
+pub fn advance_intro_crossfade<H>(game: &mut H)
+where
+    H: crate::projection::Views + crate::hdma_effects::HdmaEffects + ?Sized,
+{
     if game.view_word(Field::Cinematic(CinematicWord::Var13)) == 1 {
-        crate::hdma_effects::apply_leased(HdmaEffect::AdvanceProgram, 0, game);
+        game.advance_hdma_program();
     }
 }
 
