@@ -8,7 +8,6 @@
 //! `phantoon_motion` and `phantoon_actions`.
 use crate::actors::api::PlayerDirection;
 use crate::actors::boss_lease::{BossLease, BossState};
-use crate::actors::host::BossEffects as _;
 use crate::actors::host::{Death, Shot, below};
 
 use crate::actors::{phantoon_actions, phantoon_motion};
@@ -1563,10 +1562,8 @@ pub fn dead<L: Lease>(game: &mut L, k: u16) {
                 );
                 crate::progress::set_boss_word_le(game, area, bits | 1);
             });
-            game.foreign(|game| {
-                game.spawn_plm(0, 0x6, DEFEAT_PLM);
-                game.queue_music_delayed(3);
-            });
+            crate::actors::boss_lease::steps::spawn_plm(game, 0, 0x6, DEFEAT_PLM);
+            crate::enemy_projectiles::host::Effects::queue_music(game, 3);
         }
     }
 }
