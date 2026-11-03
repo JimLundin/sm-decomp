@@ -103,9 +103,6 @@ pub trait Host:
 
     // Death phase.
     fn advance_low_health_warning(&mut self);
-
-    // Gameplay pass.
-    fn advance_room(&mut self);
 }
 
 /// The gameplay pass phases the compatibility runtime runs on a lease the pass
@@ -117,6 +114,8 @@ pub trait PassLease {
     fn advance_player(&mut self);
     /// The room mechanisms' pass; nonzero when a message box suspends it.
     fn run_room_mechanisms(&mut self) -> u8;
+    /// The room's main code.
+    fn advance_room(&mut self);
 }
 
 #[derive(Clone, Copy)]
@@ -883,8 +882,8 @@ fn advance_gameplay<H: Host>(game: &mut H) -> CoroutineRet {
             actors::staging::queue_actor_tiles(&mut lease);
             hud::advance(&mut lease);
             update_scrolls(&mut lease);
+            lease.advance_room();
         }
-        game.advance_room();
         finish_health_and_time(game);
         finish_frame(game);
     }
