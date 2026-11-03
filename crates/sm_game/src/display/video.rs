@@ -327,6 +327,19 @@ pub enum Command {
         source: Source,
         bytes: u16,
     },
+    /// Point the work RAM port at `address`: its low, middle and high bytes,
+    /// the high byte whole (its ignored bits included), as the original wrote.
+    WramPort {
+        address: u32,
+    },
+    /// Point the VRAM port at word `address` with one 16-bit store.
+    VramAddress(u16),
+    /// One byte into VRAM through the data port: the word's high byte when
+    /// `high`, else its low byte.
+    VramData {
+        high: bool,
+        value: u8,
+    },
     /// Two bytes into OAM through the data port.
     ObjectBytes([u8; 2]),
     /// Clear the I/O port, the multiplier's and divider's inputs and the

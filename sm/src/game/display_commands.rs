@@ -8,9 +8,9 @@ use crate::rtl::{
     A1B1, A1T1L, A2A1H, A2A1L, BBAD0, BBAD1, BG1HOFS, BG1SC, BG12NBA, BG34NBA, BGMODE, CGADD,
     CGADSUB, CGDATA, CGWSEL, COLDATA, DAS1H, DAS1L, DAS10, DMAP1, HDMAEN, HTIMEH, HTIMEL, INIDISP,
     M7A, M7SEL, MDMAEN, MEMSEL, MOSAIC, NMITIMEN, NTRL1, OAMADDH, OAMADDL, OAMDATA, OBSEL, RDVRAML,
-    SETINI, TM, TMW, TS, TSW, VMADDH, VMADDL, VMAIN, VTIMEH, VTIMEL, W12SEL, W34SEL, WBGLOG, WH0,
-    WH1, WH2, WH3, WOBJLOG, WOBJSEL, WRDIVB, WRDIVH, WRDIVL, WRIO, WRMPYA, WRMPYB, read_reg,
-    read_reg_word, write_reg, write_reg_word,
+    SETINI, TM, TMW, TS, TSW, VMADDH, VMADDL, VMAIN, VMDATAH, VMDATAL, VTIMEH, VTIMEL, W12SEL,
+    W34SEL, WBGLOG, WH0, WH1, WH2, WH3, WMADDH, WMADDL, WMADDM, WOBJLOG, WOBJSEL, WRDIVB, WRDIVH,
+    WRDIVL, WRIO, WRMPYA, WRMPYB, read_reg, read_reg_word, write_reg, write_reg_word,
 };
 use sm_game::display::control::Brightness;
 use sm_game::display::transfer::Source;
@@ -206,6 +206,16 @@ pub(crate) fn apply(producer: &'static str, command: Command, game: &mut Game) {
             word(A1T1L, source.address, game);
             byte(A1B1, source.bank, game);
             byte(MDMAEN, 2, game);
+        }
+        Command::WramPort { address } => {
+            let [low, middle, high, _] = address.to_le_bytes();
+            byte(WMADDL, low, game);
+            byte(WMADDM, middle, game);
+            byte(WMADDH, high, game);
+        }
+        Command::VramAddress(address) => word(VMADDL, address, game),
+        Command::VramData { high, value } => {
+            byte(if high { VMDATAH } else { VMDATAL }, value, game)
         }
         Command::ObjectBytes(bytes) => {
             for value in bytes {

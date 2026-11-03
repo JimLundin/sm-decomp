@@ -7,8 +7,8 @@ use crate::display::preparation::Field as DisplayField;
 use crate::display::registers::{
     A1B0, A1T0L, BG1HOFS, BG1SC, BG2SC, BG3SC, BG4SC, BG12NBA, BG34NBA, BGMODE, CGADD, CGADSUB,
     CGWSEL, COLDATA, DAS0L, DMAP0, HDMAEN, HTIMEL, INIDISP, M7A, M7SEL, MDMAEN, MOSAIC, NMITIMEN,
-    OAMADDL, OBSEL, RDVRAML, SETINI, TM, TMW, TS, TSW, VMADDH, VMADDL, VMAIN, VMDATAL, VTIMEL,
-    W12SEL, W34SEL, WBGLOG, WH0, WH1, WH2, WH3, WMADDH, WMADDL, WMADDM, WOBJLOG, WOBJSEL,
+    OAMADDL, OBSEL, RDVRAML, SETINI, TM, TMW, TS, TSW, VTIMEL, W12SEL, W34SEL, WBGLOG, WH0, WH1,
+    WH2, WH3, WOBJLOG, WOBJSEL,
 };
 use crate::display::sequence::{Registers, register_writes};
 use crate::display::transfer::{ScrollingLayout, TilemapQueue, setup_transfer};
@@ -837,6 +837,9 @@ pub fn run<H: Host + ?Sized>(game: &mut H) {
         .expect("native display refresh adapter cannot return an error");
 }
 
+/// The producer name of the graphics loads' and decompression's commands.
+const GRAPHICS: &str = "graphics load";
+
 // Graphics loads keep source, destination, then transfer size together.
 // Decompression uses RAM offsets; VRAM uses word addresses. WRAM transfers
 // retain all three destination-register bytes, including ignored bank bits.
@@ -880,19 +883,17 @@ impl GraphicsAsset {
                 ([0, 0x19], source, size, Some((destination, 0x80)))
             }
             Self::WramBytes(source, destination, size) => {
-                register_writes! { game;
-                    byte(WMADDL as u16, destination as u8);
-                    byte(WMADDM as u16, (destination >> 8) as u8);
-                    byte(WMADDH as u16, (destination >> 16) as u8);
-                }
+                game.apply(
+                    GRAPHICS,
+                    Command::WramPort {
+                        address: destination,
+                    },
+                );
                 ([0, 0x80], source, size, None)
             }
         };
-        if let Some((destination, vmain)) = vram {
-            register_writes! { game;
-                byte(VMADDL as u16, destination as u8); byte(VMADDH as u16, (destination >> 8) as u8);
-                byte(VMAIN as u16, vmain);
-            }
+        if let Some((address, step)) = vram {
+            game.apply(GRAPHICS, Command::VramPort { address, step });
         }
         // The old packed descriptor read its adjacent mode/register bytes natively.
         setup_transfer(u16::from_ne_bytes(mode), source, size, game);
@@ -918,14 +919,15 @@ impl<H: Host + ?Sized> decompression::Output for DecompressionVram<'_, '_, H> {
     fn write(&mut self, position: i32, value: u8, back_reference: bool) {
         if back_reference {
             self.game
-                .write_register_word(VMADDL as u16, (position >> 1) as u16);
+                .apply(GRAPHICS, Command::VramAddress((position >> 1) as u16));
         }
-        self.game
-            .write_register((VMDATAL as i32 + (position & 1)) as u16, value);
+        let high = position & 1 != 0;
+        self.game.apply(GRAPHICS, Command::VramData { high, value });
     }
 }
 fn read_ppu_byte<H: Host + ?Sized>(addr: u16, game: &mut H) -> u8 {
-    game.write_register_word(VMADDL as u16, addr >> 1);
+    game.apply(GRAPHICS, Command::VramAddress(addr >> 1));
+    // The prefetch read, then the word.
     game.read_register_word(RDVRAML as u16);
     let data: u16 = game.read_register_word(RDVRAML as u16);
     (if addr & 1 != 0 {
