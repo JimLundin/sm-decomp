@@ -392,6 +392,7 @@ pub mod game {
     pub(crate) mod rom_vram_entries;
 
     pub(crate) mod boot;
+    pub(crate) mod display_commands;
     pub(crate) mod display_refresh;
     pub(crate) mod display_transfers;
     pub(crate) mod hosts;
