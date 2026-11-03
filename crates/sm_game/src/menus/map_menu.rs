@@ -117,7 +117,7 @@ fn prepare<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H, _: &mut MenuScr
     menu_tilemap::upload(
         menu_tilemap::MENU_TILEMAP_BYTES,
         menu_tilemap::MENU_TILEMAP_SOURCE,
-        1,
+        crate::display::preparation::Field::Screens1,
         true,
         game,
     );
@@ -155,7 +155,7 @@ fn load_foreground<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H, _: &mut
     menu_tilemap::upload(
         2048,
         0x810000 | ADDR_K_AREA_SELECT_FOREGROUND_TILEMAP,
-        0,
+        crate::display::preparation::Field::Screens0,
         true,
         game,
     );
@@ -178,7 +178,7 @@ fn load_background<H: Host + ?Sized>(j: u16, game: &mut H) {
             | u32::from(
                 (2048 * i32::from(j) + ADDR_K_AREA_SELECT_BACKGROUND_TILEMAPS as i32) as u16,
             ),
-        2,
+        crate::display::preparation::Field::Screens2,
         false,
         game,
     );
@@ -314,7 +314,13 @@ fn open_area_window<H: Host + ?Sized>(
             true,
             game,
         );
-        menu_tilemap::upload(2048, 0x7e4000, 1, false, game);
+        menu_tilemap::upload(
+            2048,
+            0x7e4000,
+            crate::display::preparation::Field::Screens1,
+            false,
+            game,
+        );
     }
 }
 fn choose_area<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H, screens: &mut MenuScreens) {
@@ -551,7 +557,13 @@ fn begin_room_window<H: Host + ?Sized>(
     game.store_buffer_byte(super::menu_window::WINDOW_1_TABLE, 9, 0);
     game.store_buffer_byte(super::menu_window::WINDOW_2_TABLE, 9, 0);
     menu_tilemap::area_label(game);
-    menu_tilemap::upload(512, 0x7e4000, 1, false, game);
+    menu_tilemap::upload(
+        512,
+        0x7e4000,
+        crate::display::preparation::Field::Screens1,
+        false,
+        game,
+    );
     let mut window = game.window_state();
     window.timer = WINDOW_TIMERS[crate::gameplay_context::navigation(game).area as usize];
     game.publish_window(window, &[Field::Timer]);
@@ -802,7 +814,13 @@ fn clear_room<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H, _: &mut Menu
     game.screen_apply(|workspace| {
         super::canvas::fill_native(workspace, Point::new(Role::Pause, 0x7fe), 1024, true, 15)
     });
-    menu_tilemap::upload(2048, 0x7e3000, 0, true, game);
+    menu_tilemap::upload(
+        2048,
+        0x7e3000,
+        crate::display::preparation::Field::Screens0,
+        true,
+        game,
+    );
     menu.menu_index = menu.menu_index.wrapping_add(1);
 }
 fn restore_area<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H, _: &mut MenuScreens) {
@@ -1422,7 +1440,13 @@ fn draw_room_map<H: Host + ?Sized>(game: &mut H) {
     );
     display_scroll!(game.Bg1V = -40i16 as u16);
     render_map(MapScreen::FileSelect, game);
-    menu_tilemap::upload(4096, 0x7e3000, 0, false, game);
+    menu_tilemap::upload(
+        4096,
+        0x7e3000,
+        crate::display::preparation::Field::Screens0,
+        false,
+        game,
+    );
 }
 
 // The nine-entry union tables capture their native image before checking the index.

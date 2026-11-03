@@ -48,9 +48,6 @@ fn restart_missile<H: Host + ?Sized>(game: &mut H) {
     });
 }
 
-/// The MOSAIC mirror and the BG1SC mirror after it, read as one word.
-const MOSAIC: usize = crate::ram::mirror::MOSAIC;
-
 static BIT_SHL: [u8; 3] = [1, 2, 4];
 
 /// Requires a live, exclusively accessed backend for screen and graphics transitions.
@@ -662,7 +659,7 @@ fn load_background<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
     menu_tilemap::upload(
         menu_tilemap::MENU_TILEMAP_BYTES,
         menu_tilemap::MENU_TILEMAP_SOURCE,
-        1,
+        crate::display::preparation::Field::Screens1,
         true,
         game,
     );
@@ -741,10 +738,11 @@ fn choose_main<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
                 file_select(game, |menu| *menu.helmet_animation_timer(helmet) = 1);
             } else {
                 // A slot past the third names a word past the helmets.
-                set_native_word(
-                    crate::ram::words::SLOT_A_HELMET_ANIMATION_TIMER + 2 * helmet,
-                    1,
+                // LEGACY(original-overflow): a helmet timer past the three slots.
+                crate::legacy_overflow::ram_write_slice(
                     game,
+                    crate::ram::words::SLOT_A_HELMET_ANIMATION_TIMER + 2 * helmet,
+                    &1u16.to_ne_bytes(),
                 );
             }
             game.sram().set_word(header::LAST_SLOT, selected);
@@ -766,13 +764,13 @@ fn choose_main<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
             if selected == 3 {
                 game.queue_sound(0, 0x37_u8, 6);
                 menu.menu_index = menu.menu_index.wrapping_add(1);
-                set_native_word(MOSAIC, native_word(MOSAIC, game) & 0xff0c | 3, game);
+                set_mosaic_word(mosaic_word(game) & 0xff0c | 3, game);
             } else {
                 if selected == 4 {
                     game.queue_sound(0, 0x37_u8, 6);
                     menu.menu_index = menu.menu_index.wrapping_add(15);
-                    selection = (i32::from(native_word(MOSAIC, game)) & 0xff0c | 3) as i16;
-                    set_native_word(MOSAIC, selection as u16, game);
+                    selection = (i32::from(mosaic_word(game)) & 0xff0c | 3) as i16;
+                    set_mosaic_word(selection as u16, game);
                 }
                 if selection == 5 {
                     menu.menu_index = 33;
@@ -784,18 +782,25 @@ fn choose_main<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H) {
     crate::sprite_output::file_menu_cursor(selected_slot(game), game);
 }
 
-fn native_word<H: Host + ?Sized>(offset: usize, game: &H) -> u16 {
+/// The MOSAIC mirror and the BG1SC mirror after it, read as one word.
+fn mosaic_word<H: Host + ?Sized>(game: &H) -> u16 {
+    use crate::display::preparation::Field;
     u16::from_ne_bytes([
-        game.ram().read_byte(offset),
-        game.ram().read_byte(offset + 1),
+        game.physical_display_control_byte(Field::Mosaic),
+        game.physical_display_control_byte(Field::Screens0),
     ])
 }
 
+/// Store `value` to the MOSAIC mirror and the BG1SC mirror, low byte first.
+fn set_mosaic_word<H: Host + ?Sized>(value: u16, game: &mut H) {
+    use crate::display::preparation::Field;
+    let [mosaic, screens] = value.to_ne_bytes();
+    game.store_physical_display_control_byte(Field::Mosaic, mosaic);
+    game.store_physical_display_control_byte(Field::Screens0, screens);
+}
+
+/// Store `value` to the pause screen's tilemap word at work RAM `offset`
+/// ($7E:3000..).
 fn set_native_word<H: Host + ?Sized>(offset: usize, value: u16, game: &mut H) {
-    if (0x3000..0x7000).contains(&offset) {
-        game.screen_write_native_slice(Point::new(Role::Pause, offset - 0x3000), value);
-    } else {
-        // Full native addresses include the MOSAIC register-address alias at2106.
-        game.ram().copy_in(offset, &value.to_ne_bytes());
-    }
+    game.screen_write_native_slice(Point::new(Role::Pause, offset - 0x3000), value);
 }

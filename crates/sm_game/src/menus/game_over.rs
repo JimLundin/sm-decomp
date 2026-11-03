@@ -108,7 +108,7 @@ fn draw_menu<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     menu_tilemap::upload(
         menu_tilemap::MENU_TILEMAP_BYTES,
         menu_tilemap::MENU_TILEMAP_SOURCE,
-        0,
+        crate::display::preparation::Field::Screens0,
         true,
         game,
     );
