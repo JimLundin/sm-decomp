@@ -303,6 +303,7 @@ RAM_INVENTORY_RULES = {
     "ram_view": "Existing named RAM/view call patterns; may project owned fields at runtime",
     "cohort_copy": "session_cohort load/with/with_projected calls, including file-local import aliases",
     "address_api": "SessionRam/SlotAccess/native-order methods, .word/.byte with imported RAM selector namespace, and session_slot macro; may use typed storage, never added to raw calls",
+    "rom_read": "native_word/word read through a let-bound or chained ROM record/table producer; ROM content, not RAM",
     "unresolved_method": "word/byte/read/write/copy method without explicit raw receiver or known address API spelling",
     "backend_reference": "Game/raw/interface/native/compat symbols and import aliases; references, not calls",
 }
@@ -468,6 +469,13 @@ def inventory_sites(text):
     raw_methods = {"read_byte", "write_byte", "copy_in", "copy_out", "fill", "copy_within"}
     address_methods = {"native_word", "lease_native_word", "write_word_le", "write_word_native", "write_slice_le", "write_slice_native", "slot_word", "set_slot_word", "slot_byte", "set_slot_byte", "compatibility_byte", "compatibility_write_byte", "projected_slot_byte", "store_projected_slot_byte"}
     generic = {"word", "byte", "set_byte", "read_byte", "write_byte", "read_word", "write_word", "write_slice", "copy_in", "copy_out", "copy_within"}
+    # ROM content: reads through a record or table a ROM producer returned,
+    # bound by a simple let or chained directly. Reads only; parameters and
+    # other receivers stay address APIs.
+    rom_producer = r"\b\w*(?:record|table|_tiles|coordinate|exploration_mask)\w*\s*\("
+    rom_receivers = {match.group(1) for match in re.finditer(r"\blet\s+(?:mut\s+)?(\w+)\s*=\s*([^;]+);", calls)
+                     if re.search(rom_producer, match.group(2))}
+    rom_chain = re.compile(r"\b\w*(?:record|table|_tiles|coordinate|exploration_mask)\w*\s*\((?:[^()]|\([^()]*\))*\)\s*$")
     for match in re.finditer(r"\.\s*(\w+)\s*\(", calls):
         method = match.group(1)
         if method not in raw_methods | address_methods | generic:
@@ -476,7 +484,11 @@ def inventory_sites(text):
         raw = re.search(r"\.ram\s*\(\s*\)\s*$", prefix)
         receiver = re.search(r"\b(\w+)\s*$", prefix)
         raw = bool(raw or (receiver and receiver.group(1) in ram_receivers))
-        if raw and method in raw_methods:
+        rom = method in ("native_word", "word") and not raw and (
+            (receiver and receiver.group(1) in rom_receivers) or rom_chain.search(prefix))
+        if rom:
+            kind = "rom_read"
+        elif raw and method in raw_methods:
             kind = "raw_ram_call"
         elif method in address_methods or (method in ("word", "byte", "set_byte", "write_slice") and any(re.match(r"\s*" + re.escape(name) + r"\s*::", calls[match.end():]) for name in ram_namespaces)):
             kind = "address_api"
