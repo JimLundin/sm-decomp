@@ -6,7 +6,7 @@ core and each row starts from its own seed. Rows with a checkpoint prefix stay
 together in one process, because they can reuse each other's checked prefixes.
 Raw verifier output stays private on the runner in the modes that filter it.
 """
-import concurrent.futures, json, os, pathlib, re, subprocess, sys, threading, urllib.request
+import concurrent.futures, json, os, pathlib, re, subprocess, sys, threading
 from typing import Any
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
@@ -42,8 +42,11 @@ def script(name: str, *arguments: str, **environment: str) -> None:
 def restore() -> None:
     if JOB["kinds"] == "room":
         bundle = TEMP / "chain.tar.gz.enc"
-        urllib.request.urlretrieve(
-            f"https://github.com/JimLundin/sm-decomp/releases/download/ci-data/{JOB['asset']}", bundle)
+        # Retry transient release download failures; full_route.py checks the pinned SHA-256.
+        subprocess.run(["curl", "--fail", "--silent", "--show-error", "--location", "--retry", "4",
+                        "--retry-all-errors", "--output", str(bundle),
+                        f"https://github.com/JimLundin/sm-decomp/releases/download/ci-data/{JOB['asset']}"],
+                       check=True)
         script("full_route.py", "restore", str(bundle), FULL_ROUTE=JOB["route"])
     elif "shards" in JOB:
         # One seed bundle or movie route per shard, restored in turn.

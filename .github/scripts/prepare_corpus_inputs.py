@@ -5,7 +5,10 @@ if os.environ['KIND'] != 'route':
     bundle = pathlib.Path(os.environ['RUNNER_TEMP']) / 'seeds-v1.tar.gz.enc'
     asset, digest = os.environ['SEED_ASSET'], os.environ['SEED_SHA256']
     url = 'https://github.com/JimLundin/sm-decomp/releases/download/ci-data/' + asset
-    urllib.request.urlretrieve(url, bundle)
+    # A release download can fail transiently (HTTP 503 in run 41638757665); the pinned
+    # SHA-256 check in ci_seed_data.py still rejects anything wrong.
+    subprocess.run(['curl', '--fail', '--silent', '--show-error', '--location', '--retry', '4',
+                    '--retry-all-errors', '--output', str(bundle), url], check=True)
     command = [sys.executable, 'tools/ci_seed_data.py', 'restore', str(bundle),
                '--sha256', digest, '--runtime-only']
     for row in os.environ['SEGMENTS'].split():
