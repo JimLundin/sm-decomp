@@ -4,6 +4,7 @@ use crate::actors::boss_lease::BossState;
 use crate::actors::kraid::Body;
 use crate::actors::slot_view::SlotState;
 use crate::cartridge::{NativeDiagnostics, native_record};
+use crate::display::preparation::Field;
 use crate::display::transfer::{TILEMAP_QUEUE, TilemapQueue};
 use sm_data::cartridge::RomRecord;
 
@@ -24,7 +25,7 @@ const BLANK_TILEMAP: u16 = 0x2fc0;
 const BLANK_TILEMAP_BANK: u8 = 0x7e;
 const QUEUE_ENTRY_BYTES: u16 = 7;
 /// $7E:0059, the BG2 tilemap base and size register (`reg_BG2SC`).
-const BG2_TILEMAP_BASE: usize = 0x59;
+const BG2_TILEMAP_BASE: Field = Field::Screens1;
 const BASE_BITS: i32 = 0xfc;
 
 /// Row `index` of the sinking Kraid table.
@@ -79,7 +80,7 @@ pub fn handle_sinking(game: &mut (impl BossState + SlotState + ?Sized)) -> Optio
         if i32::from(y) == i32::from(Body::of(game, 0).actor().y.whole) {
             if row.word(ROW_TILEMAP) & NO_CLEAR == 0 {
                 let tail = game.tilemap_queue_tail();
-                let bg2_base = game.slot_byte(BG2_TILEMAP_BASE);
+                let bg2_base = game.display_control_byte(BG2_TILEMAP_BASE);
                 queue_row_clear(tail, row.word(ROW_TILEMAP), bg2_base, game);
             }
             return Some(u32::from(BANK) << 16 | u32::from(row.word(ROW_ROUTINE)));

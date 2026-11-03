@@ -23,6 +23,7 @@ use crate::cartridge::native_record;
 use crate::constants::enemy_properties::{
     K_ENEMY_PROPS_DELETED, K_ENEMY_PROPS_INVISIBLE, K_ENEMY_PROPS_TANGIBLE,
 };
+use crate::display::preparation::Field;
 use crate::display::transfer::{Source, TilemapUpload, queue_tilemap};
 use crate::enemy_projectiles::drops::DropSource;
 use crate::kraid_tables;
@@ -297,12 +298,15 @@ const UNPAUSE_ALIVE: u16 = 0xc24e;
 const UNPAUSE_SINKING: u16 = 0xc2a0;
 const UNPAUSE_DEAD: u16 = 0xc1fb;
 const PAUSE: u16 = 0xc325;
-/// RAM: the pause and unpause hook pointers, the BG tilemap base mirrors,
-/// the camera scroll limits and the blank BG2 tile.
+/// RAM: the pause and unpause hook pointers, the camera scroll limits and the
+/// blank BG2 tile.
 const UNPAUSE_HOOK: usize = 0x604;
 const PAUSE_HOOK: usize = 0x601;
-const BG2_TILEMAP_BASE: usize = 0x59;
-const BG3_TILEMAP_BASE: usize = 0x5d;
+/// The display mirrors Kraid's uploads address VRAM by: the BG2 tilemap base
+/// and size ($7E:0059, `reg_BG2SC`) and the BG1/BG2 character bases ($7E:005D,
+/// `reg_BG12NBA`).
+const BG2_TILEMAP_BASE: Field = Field::Screens1;
+const BG3_TILEMAP_BASE: Field = Field::Characters0;
 const SCROLL_LIMITS: usize = 0xcd20;
 const BLANK_BG2_TILE: u16 = 824;
 /// The lint fly left at 3.5 pixels a frame; the foot moves 3 or 4.
@@ -362,7 +366,7 @@ fn queue_vram<L: Lease + ?Sized>(
 /// The room BG through the BG3 tilemap: Kraid's room background.
 fn queue_room_bg<L: Lease + ?Sized>(game: &mut L) {
     queue_vram(game, 512, animation::ROOM_BG, BANK, |game| {
-        (((game.slot_byte(BG3_TILEMAP_BASE) as i32 & 0xf) << 8) + 16128) as u16
+        (((game.display_control_byte(BG3_TILEMAP_BASE) as i32 & 0xf) << 8) + 16128) as u16
     });
 }
 
@@ -516,7 +520,7 @@ fn execute_script<L: Lease + ?Sized>(game: &mut L) -> u16 {
                 *BodyEdit::of(game, BODY).script() = script.wrapping_add(8);
                 let tilemap: u16 = record.word(2);
                 queue_vram(game, 704, tilemap, BANK, |game| {
-                    ((game.slot_byte(BG2_TILEMAP_BASE) as i32 & 0xfc) << 8) as u16
+                    ((game.display_control_byte(BG2_TILEMAP_BASE) as i32 & 0xfc) << 8) as u16
                 });
                 return 1;
             }
@@ -908,14 +912,14 @@ fn handle_sinking<L: Lease + ?Sized>(game: &mut L) {
 /// Queues BG2's tilemap top half. Was `Kraid_UpdateBg2TilemapTopHalf`.
 fn queue_bg2_top<L: Lease + ?Sized>(game: &mut L) {
     queue_vram(game, 2048, 0x2000, 126, |game| {
-        ((game.slot_byte(BG2_TILEMAP_BASE) as i32 & 0xfc) << 8) as u16
+        ((game.display_control_byte(BG2_TILEMAP_BASE) as i32 & 0xfc) << 8) as u16
     });
 }
 
 /// Queues BG2's tilemap bottom half. Was `Kraid_UpdateBG2TilemapBottomHalf`.
 fn queue_bg2_bottom<L: Lease + ?Sized>(game: &mut L) {
     queue_vram(game, 2048, 0x2800, 126, |game| {
-        (((game.slot_byte(BG2_TILEMAP_BASE) as i32 & 0xfc) << 8) + 2048) as u16
+        (((game.display_control_byte(BG2_TILEMAP_BASE) as i32 & 0xfc) << 8) + 2048) as u16
     });
 }
 
@@ -1420,7 +1424,7 @@ fn death_fade_out<L: Lease + ?Sized>(game: &mut L) {
             crate::word_transfers!(game, (4), 128; xray(0) <- value(0), xray(1) <- value(0));
         });
         queue_vram(game, 512, 0x4000, 126, |game| {
-            (((game.slot_byte(BG3_TILEMAP_BASE) as i32 & 0xf) << 8) + 16128) as u16
+            (((game.display_control_byte(BG3_TILEMAP_BASE) as i32 & 0xf) << 8) + 16128) as u16
         });
     }
 }
@@ -1490,7 +1494,7 @@ pub fn sink_through_floor<L: Lease + ?Sized>(game: &mut L) {
 
 /// Was `Kraid_FadeInBg_ClearBg2TilemapTopHalf`.
 fn fade_in_clear_bg2_top<L: Lease + ?Sized>(game: &mut L) {
-    game.set_slot_byte(BG2_TILEMAP_BASE, 72);
+    crate::frame_display_byte!(game, BG2_TILEMAP_BASE => 72);
     bg2_staging::fill(game, (0..=1023).rev(), BLANK_BG2_TILE);
     queue_vram(game, 1024, 0x2000, 126, |_| 18432);
     *BodyEdit::of(game, BODY).function() = function::FADE_IN_CLEAR_BG2_BOTTOM;
@@ -1960,7 +1964,7 @@ pub fn initialize<L: Lease + ?Sized>(game: &mut L) {
         game.foreign(|game| game.spawn_plm(0x5, 0x1b, CLEAR_SPIKES_PLM));
         *BodyEdit::of(game, BODY).function() = function::FADE_IN_CLEAR_BG2_TOP;
     } else {
-        game.set_slot_byte(BG2_TILEMAP_BASE, 67);
+        crate::frame_display_byte!(game, BG2_TILEMAP_BASE => 67);
         battle!(game.CameraDistance = 2);
         set_native_word(game, SCROLL_LIMITS, 0);
         set_native_word(game, SCROLL_LIMITS + 2, 1);
