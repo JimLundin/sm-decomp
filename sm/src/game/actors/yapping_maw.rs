@@ -1,7 +1,7 @@
 //! Yapping Maw runs in `sm_game::actors::yapping_maw`; its Samus control and
 //! visibility come from here.
 #![forbid(unsafe_code)]
-use crate::game::session_runtime::{Runtime, player_command, write_multiplicand};
+use crate::game::session_runtime::{Runtime, write_multiplicand};
 use crate::game_state::Game;
 pub(crate) use sm_game::actors::yapping_maw::*;
 
@@ -28,10 +28,6 @@ pub(crate) fn run_main_ai(runtime: &mut Runtime<'_>) {
 }
 
 impl Host for Game {
-    fn command_player(&mut self, command: u16) {
-        player_command(command, self);
-    }
-
     fn update_maw_visibility(&mut self, actor: i32) {
         Runtime::new(self).update_maw_visibility(actor);
     }

@@ -3,7 +3,7 @@
 //! pad are three consecutive slots.
 #![forbid(unsafe_code)]
 use crate::actors::combat;
-use crate::actors::host::{ActorLease, ActorRuntime as _, BossEffects as _, sign_extend8};
+use crate::actors::host::{ActorLease, ActorRuntime as _, sign_extend8};
 use crate::actors::slot_view::{SlotState, slot_index, slot_view};
 use crate::display::transfer::{Source, TilemapUpload, queue_tilemap};
 use crate::geometry::Position;
@@ -342,7 +342,7 @@ fn idle(rt: &mut impl Lease, index: u16) {
             rt.set_previous_player_x(x);
         }
         rt.face_player_forward();
-        rt.foreign(|game| game.command_player(0x1a));
+        crate::room_mechanisms::host::Effects::player_control(rt, 0x1a);
         rt.session_mut().room.entry.elevator_status = 0;
         let y = Gunship::of(rt, top).actor().y.whole.wrapping_sub(1);
         GunshipEdit::of(rt, part(index, PAD)).actor().y.whole = y;
@@ -391,7 +391,7 @@ fn refill(rt: &mut impl Lease, index: u16) {
         let palette = session.presentation.palette_mut();
         palette.suit_red_green = 0;
         palette.crystal_flash_delay = 0;
-        rt.foreign(|game| game.command_player(0xa));
+        crate::room_mechanisms::host::Effects::player_control(rt, 0xa);
         return;
     }
     for resource in [

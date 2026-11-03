@@ -2,7 +2,7 @@
 //! $A3:94D6-$A3:95F5); its status lives with the room entry state.
 use crate::actors::access::{AccessMode::Native, ActorAccess};
 use crate::actors::combat;
-use crate::actors::host::{ActorLease, BossEffects as _, LeaseActors};
+use crate::actors::host::{ActorLease, LeaseActors};
 use crate::enemy_projectiles::host::Effects as _;
 use crate::session_access::SessionAccess as _;
 
@@ -95,7 +95,10 @@ pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
         if buttons & runtime.inputs().pressed != 0 {
             runtime.queue_sound(3, 6, ELEVATOR_SOUND);
             runtime.queue_sound(1, 6, SPIN_JUMP_END);
-            runtime.foreign(|game| game.command_player(SET_UP_FOR_ELEVATOR));
+            crate::room_mechanisms::host::Effects::player_control(
+                &mut runtime,
+                SET_UP_FOR_ELEVATOR,
+            );
             crate::actors::boss_lease::BossLease::owned_step(
                 &mut runtime,
                 crate::player_projectiles::motion::reset,
@@ -134,7 +137,7 @@ pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
         runtime.edit_actor(key, Native, |actor| {
             actor.y.whole = actor.variables[TARGET_Y]
         });
-        runtime.foreign(|game| game.command_player(UNLOCK_FACING_FORWARD));
+        crate::room_mechanisms::host::Effects::player_control(&mut runtime, UNLOCK_FACING_FORWARD);
     }
     place_samus(&mut runtime);
 }
