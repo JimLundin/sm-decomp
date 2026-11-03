@@ -6,7 +6,7 @@ use crate::actors::combat::current;
 use crate::actors::host::{ActorLease, ActorRuntime as _, LeaseActors};
 use crate::enemy_projectiles::host::Effects as _;
 use crate::player_projectiles::content::table;
-use crate::ram::words as W;
+use crate::session_access::SessionAccess as _;
 
 const WAIT_FOR_SAMUS_TO_GET_NEAR: u16 = 0xb596;
 const SHOOT_ROCK: u16 = 0xb5b2;
@@ -24,7 +24,8 @@ pub fn initialize(runtime: &mut impl ActorLease) {
         actor.restart_animation(0xb51a);
         actor.variables[0] = WAIT_FOR_SAMUS_TO_GET_NEAR;
     });
-    runtime.write_slice_le(W::RANDOM_NUMBER, 0x11);
+    runtime.session_mut().timing.random_number = 0x11;
+    runtime.words_stored();
 }
 
 /// Main AI ($A2:B58F): Samus within 40h px, a random rock ($A2:B550/30), random cooldown ($A2:B520).
@@ -41,9 +42,9 @@ pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
         }
         SHOOT_ROCK => {
             let x_velocity = random_entry(&mut runtime, 0xa2_b550, 0x1e);
-            runtime.write_slice_le(W::EPROJ_INIT_PARAM_2, x_velocity);
+            runtime.session_mut().enemy_projectiles.spawn.secondary = x_velocity;
             let y_speed_index = random_entry(&mut runtime, 0xa2_b530, 0x1e);
-            let k = runtime.word(W::CUR_ENEMY_INDEX);
+            let k = runtime.session().actors.controls.selected;
             runtime.foreign(|game| game.spawn_projectile(y_speed_index, k, 0xbd5a));
             let key = current(&runtime);
             runtime.edit_actor(key, Native, |actor| actor.variables[0] = COOLDOWN);
