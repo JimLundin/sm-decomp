@@ -8,7 +8,6 @@ use crate::actors::host::Slopes;
 use crate::actors::slot_view::{SlotState, slot_view};
 use crate::constants::enemy_properties::*;
 use crate::enemy_script::EnemyScript;
-use crate::ram::word;
 use sm_data::escape_etecoons::EscapeEtecoon;
 
 /// What the escape critters need beyond a boss's state; their slots are the
@@ -197,7 +196,7 @@ pub fn go_to_if(
     let jump = if critters_escaped {
         game.event_happened(CRITTERS_ESCAPED)
     } else {
-        word!(game.LAVA_ACID_Y_POS) < LOW_TIDE_ACID_Y
+        game.session().room.liquid.lava_acid.whole < LOW_TIDE_ACID_Y
     };
     if jump {
         EnemyScript::jump(script.word(0))
