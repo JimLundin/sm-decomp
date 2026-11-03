@@ -298,8 +298,7 @@ const UNPAUSE_ALIVE: u16 = 0xc24e;
 const UNPAUSE_SINKING: u16 = 0xc2a0;
 const UNPAUSE_DEAD: u16 = 0xc1fb;
 const PAUSE: u16 = 0xc325;
-/// RAM: the pause and unpause hook pointers, the camera scroll limits and the
-/// blank BG2 tile.
+/// RAM: the pause and unpause hook pointers and the blank BG2 tile.
 const UNPAUSE_HOOK: usize = 0x604;
 const PAUSE_HOOK: usize = 0x601;
 /// The display mirrors Kraid's uploads address VRAM by: the BG2 tilemap base
@@ -307,7 +306,6 @@ const PAUSE_HOOK: usize = 0x601;
 /// `reg_BG12NBA`).
 const BG2_TILEMAP_BASE: Field = Field::Screens1;
 const BG3_TILEMAP_BASE: Field = Field::Characters0;
-const SCROLL_LIMITS: usize = 0xcd20;
 const BLANK_BG2_TILE: u16 = 824;
 /// The lint fly left at 3.5 pixels a frame; the foot moves 3 or 4.
 const LINT_SPEED: i32 = (3 << 16) | 0x8000;
@@ -1060,8 +1058,10 @@ pub fn run_function<L: Lease + ?Sized>(game: &mut L, function: u16) {
         function::ATTACK_WITH_MOUTH_OPEN => attack_with_mouth_open(game),
         function::GETS_BIG_RELEASE_CAMERA => {
             *BodyEdit::of(game, BODY).function() = function::GETS_BIG_BREAK_CEILING;
-            set_native_word(game, SCROLL_LIMITS, 514);
-            set_native_word(game, SCROLL_LIMITS + 2, 257);
+            let room = &mut game.session_mut().room;
+            room.set_scroll_pair(0, 514u16.to_ne_bytes());
+            room.set_scroll_pair(2, 257u16.to_ne_bytes());
+            game.words_stored();
             *BodyEdit::of(game, BODY).min_eject_y() = 164;
         }
         function::FOOT_WALK_BACKWARDS => {
@@ -1966,8 +1966,10 @@ pub fn initialize<L: Lease + ?Sized>(game: &mut L) {
     } else {
         crate::frame_display_byte!(game, BG2_TILEMAP_BASE => 67);
         battle!(game.CameraDistance = 2);
-        set_native_word(game, SCROLL_LIMITS, 0);
-        set_native_word(game, SCROLL_LIMITS + 2, 1);
+        let room = &mut game.session_mut().room;
+        room.set_scroll_pair(0, 0u16.to_ne_bytes());
+        room.set_scroll_pair(2, 1u16.to_ne_bytes());
+        game.words_stored();
         *BodyEdit::of(game, BODY).min_eject_y() = 324;
         let mut eighth: u16 = Body::of(game, BODY).actor().health >> 3;
         let step: u16 = eighth;
