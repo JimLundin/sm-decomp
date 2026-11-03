@@ -3,6 +3,7 @@
 //! unknown address keeps the original unreachable failure.
 use crate::explosion_window::{self, Phase};
 use crate::hdma_objects::{self, HdmaEffect};
+use crate::hdma_program::HdmaLease as _;
 use crate::menus::host::Host;
 use crate::player_transitions::xray::BeamPhase;
 use crate::visual_state::{EyeBeamPhase, HazePhase, HdmaWave, TourianStatuePhase, Weather};
@@ -268,16 +269,22 @@ where
     use HdmaPreAction::*;
     match target {
         Nothing => {}
-        LavaSurface => it.with_object(index, |index, game| {
-            liquid_effects::lava_surface(index, handler_carry, game)
+        LavaSurface => {
+            it.on_lease(|lease| liquid_effects::lava_surface(index, handler_carry, lease))
+        }
+        LavaBackground => it.on_lease(|lease| {
+            liquid_effects::lava_background(index, lease, |lease, command| {
+                lease.foreign(|game| {
+                    crate::display::video::Video::apply(game, "lava background", command)
+                })
+            })
         }),
-        LavaBackground => it.with_object(index, liquid_effects::lava_background),
-        WaterSurface => it.with_object(index, |index, game| {
-            liquid_effects::water_surface(index, handler_carry, game)
-        }),
-        WaterBackground => it.with_object(index, liquid_effects::water_background),
-        WaterWave => it.with_object(index, liquid_effects::water_wave),
-        WaterFlat => it.foreign(liquid_effects::water_flat),
+        WaterSurface => {
+            it.on_lease(|lease| liquid_effects::water_surface(index, handler_carry, lease))
+        }
+        WaterBackground => it.on_lease(|lease| liquid_effects::water_background(index, lease)),
+        WaterWave => it.on_lease(|lease| liquid_effects::water_wave(index, lease)),
+        WaterFlat => it.on_lease(liquid_effects::water_flat),
         RestoreLeft => it.with_object(index, xray_background::restore_left),
         FinishRestore => it.with_object(index, xray_background::finish_restore),
         SkyHorizontalScroll => it.with_object(index, scrolling_sky::update_horizontal_scroll),

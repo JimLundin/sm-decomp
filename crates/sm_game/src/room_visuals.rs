@@ -66,11 +66,26 @@ pub fn advance_fireflea_lighting<H: crate::menus::host::Host + ?Sized>(game: &mu
 /// The least earthquake timer a room shake sets.
 const EARTHQUAKE_TIMER: u16 = 0x20;
 
-pub fn shake_room_with_sound<H: crate::menus::host::Host + ?Sized>(
-    kind: u16,
-    handler_carry: bool,
-    game: &mut H,
-) {
+/// What the room shake with its earthquake sound needs.
+pub trait ShakeHost:
+    crate::fx_domain::Controls
+    + crate::effects::SoundEffects
+    + crate::hdma_objects::HdmaTable
+    + crate::projection::Views
+    + crate::gameplay_context::Access
+{
+}
+impl<T> ShakeHost for T where
+    T: crate::fx_domain::Controls
+        + crate::effects::SoundEffects
+        + crate::hdma_objects::HdmaTable
+        + crate::projection::Views
+        + crate::gameplay_context::Access
+        + ?Sized
+{
+}
+
+pub fn shake_room_with_sound<H: ShakeHost + ?Sized>(kind: u16, handler_carry: bool, game: &mut H) {
     static SOUNDS: [u16; 17] = [
         0x46, 1, 0x46, 3, 0x46, 2, 0x46, 1, 0x46, 1, 0x46, 2, 0x46, 2, 0x46, 1, 0x8000,
     ];

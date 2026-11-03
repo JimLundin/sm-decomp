@@ -17,6 +17,7 @@ pub trait HdmaLease:
     + crate::hdma_effects::HdmaEffects
     + crate::actors::mother_brain_rainbow::Host
     + crate::player_transitions::effects::SamusLease
+    + crate::liquid_effects::Host
 {
     type Game: DispatchHost + ?Sized;
     /// Run `action` on the compatibility host with the Session published.
@@ -52,8 +53,16 @@ pub(crate) trait Interpreter: HdmaTable {
     fn foreign<T>(&mut self, action: impl FnOnce(&mut Self::Game) -> T) -> T;
     /// The original's unreachable-state failure, reported by the lease.
     fn unreachable(&mut self);
-    /// Run HDMA effect `effect` for the object in byte slot `slot` on the lease.
-    fn effect(&mut self, effect: HdmaEffect, slot: u16);
+    type Lease: HdmaLease<Game = Self::Game>;
+    /// Run `action` on the lease where a foreign call ran it on the game: the
+    /// foreign entry's preflight, with the inputs observed afresh on entry and
+    /// again on return.
+    fn on_lease<T>(&mut self, action: impl FnOnce(&mut Self::Lease) -> T) -> T;
+    /// Run HDMA effect `effect` for the object in byte slot `slot` on the
+    /// lease, where a nested lease inside a foreign call ran it.
+    fn effect(&mut self, effect: HdmaEffect, slot: u16) {
+        self.on_lease(|lease| crate::hdma_effects::apply(effect, slot, lease));
+    }
     fn word(&self, at: usize) -> u16 {
         u16::from_le_bytes([self.byte(at), self.byte(at + 1)])
     }
@@ -108,11 +117,9 @@ impl<L: HdmaLease> Interpreter for Leased<L> {
     fn unreachable(&mut self) {
         crate::diagnostics::Fatal::unreachable(&mut self.0)
     }
-    fn effect(&mut self, effect: HdmaEffect, slot: u16) {
-        // The nested lease the foreign call opened observed the inputs afresh,
-        // and the foreign return observed them again.
-        self.0
-            .owned_player_call(|lease| crate::hdma_effects::apply(effect, slot, lease));
+    type Lease = L;
+    fn on_lease<T>(&mut self, action: impl FnOnce(&mut L) -> T) -> T {
+        crate::lease::Lease::owned_player_call(&mut self.0, action)
     }
 }
 

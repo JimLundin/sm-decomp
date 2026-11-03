@@ -7,6 +7,30 @@ use crate::scene::state::WordOrder;
 
 pub const WATER_WAVE: [i16; 16] = [0, 1, 1, 0, 0, -1, -1, 0, 0, 1, 1, 0, 0, -1, -1, 0];
 
+/// What the liquid surface and background pre-instructions run on: the
+/// HDMA interpreter's lease.
+pub trait Host:
+    crate::room_visuals::ShakeHost
+    + crate::fx_domain::Sources
+    + crate::sequence_state::Access
+    + crate::session_access::SessionAccess
+    + crate::display_scroll::Access
+    + crate::records::Records
+    + crate::diagnostics::Fatal
+{
+}
+impl<T> Host for T where
+    T: crate::room_visuals::ShakeHost
+        + crate::fx_domain::Sources
+        + crate::sequence_state::Access
+        + crate::session_access::SessionAccess
+        + crate::display_scroll::Access
+        + crate::records::Records
+        + crate::diagnostics::Fatal
+        + ?Sized
+{
+}
+
 /// Start a lava or acid liquid: it idles, its surface at
 /// the base height. The room's FX initialisation runs this on its lease, then
 /// [`initialize_lava`] or [`initialize_acid`] on the game.
@@ -51,26 +75,29 @@ pub fn initialize_water<H: crate::menus::host::Host + ?Sized>(background: bool, 
     crate::hdma_objects::spawn_bg3_scroll(game);
 }
 
-/// One frame of the liquid's motion, tide and surface under one Session lease;
-/// the room shake and an unknown handler's report follow once it is published.
-/// Neither touches liquid state, so their order relative to it is unchanged.
-/// Returns the liquid words and the camera as the step left them: the rest of
-/// the surface's frame stores neither.
-fn step_liquid<H: crate::menus::host::Host + ?Sized>(
+/// One frame of the liquid's motion, tide and surface on the Session's room;
+/// the room shake follows, and an unknown handler ends the run. The shake does
+/// not touch liquid state, so its order relative to it is unchanged. Returns
+/// the liquid words and the camera as the step left them: the rest of the
+/// surface's frame stores neither.
+fn step_liquid<H: Host + ?Sized>(
     game: &mut H,
     surface: crate::liquid::Surface,
     handler_carry: bool,
 ) -> Stepped {
-    let (effects, mut stepped) = with_liquid(game, |words| crate::liquid::step(words, surface));
+    let room = &mut game.session_mut().room;
+    let mut words = crate::liquid::LiquidWords::of(room);
+    let effects = crate::liquid::step(&mut words, surface);
+    words.store(room);
+    let stepped = Stepped {
+        words,
+        camera: room.camera,
+    };
     if effects.shake {
         crate::room_visuals::shake_room_with_sound(21, handler_carry, game);
     }
     if effects.unknown_handler {
-        game.rtl_unreachable();
-        ((), stepped) = with_liquid(game, |words| {
-            crate::liquid::advance_tide(words);
-            crate::liquid::place_surface(words, surface);
-        });
+        game.unreachable();
     }
     stepped
 }
@@ -81,32 +108,9 @@ struct Stepped {
     camera: crate::camera::Camera,
 }
 
-/// Run `update` on the liquid words: on the owned Room under one lease, or on
-/// the RAM bridge when a lease is not admissible. Both store the same bytes.
-fn with_liquid<H, R>(
-    game: &mut H,
-    update: impl FnOnce(&mut crate::liquid::LiquidWords) -> R,
-) -> (R, Stepped)
-where
-    H: crate::menus::host::Host + ?Sized,
-{
-    use crate::liquid::LiquidWords;
-    use crate::session_access::SessionAccess;
-    if game.runtime_admissible() {
-        let mut runtime = game.runtime();
-        let room = &mut runtime.session_mut().room;
-        let mut words = LiquidWords::of(room);
-        let result = update(&mut words);
-        words.store(room);
-        let camera = room.camera;
-        (result, Stepped { words, camera })
-    } else {
-        let mut words = LiquidWords::read(game);
-        let result = update(&mut words);
-        words.write(game);
-        let camera = crate::camera::current(game);
-        (result, Stepped { words, camera })
-    }
+/// The liquid words as the Session's room holds them.
+fn liquid_words<H: Host + ?Sized>(game: &H) -> crate::liquid::LiquidWords {
+    crate::liquid::LiquidWords::of(&game.session().room)
 }
 fn surface_scroll(position: u16, camera: u16) -> u16 {
     let relative = (position as i16).wrapping_sub(camera as i16);
@@ -136,11 +140,7 @@ fn table_height(position: u16, camera: u16, water: bool) -> u16 {
 }
 
 static LAVA_SOUND_EFFECTS: [u8; 8] = [0x12, 0x13, 0x14, 0x12, 0x13, 0x14, 0x12, 0x13];
-pub fn lava_surface<H: crate::menus::host::Host + ?Sized>(
-    hdma_index: usize,
-    handler_carry: bool,
-    game: &mut H,
-) {
+pub fn lava_surface<H: Host + ?Sized>(hdma_index: usize, handler_carry: bool, game: &mut H) {
     {
         let fx_value = game.room_blending().liquid;
         let mut fx = game.fx_controls();
@@ -185,11 +185,7 @@ pub fn lava_surface<H: crate::menus::host::Host + ?Sized>(
         crate::hdma_word!(game, hdma_index, Table => (3 * (((v8 as i32 ^ 0x1ff) + 1) & 0x3ff) + 0xb62a) as u16);
     }
 }
-pub fn water_surface<H: crate::menus::host::Host + ?Sized>(
-    hdma_index: usize,
-    handler_carry: bool,
-    game: &mut H,
-) {
+pub fn water_surface<H: Host + ?Sized>(hdma_index: usize, handler_carry: bool, game: &mut H) {
     {
         let fx_value = game.room_blending().liquid;
         let mut fx = game.fx_controls();
@@ -239,7 +235,7 @@ enum Wave {
     LavaVertical,
     Water,
 }
-fn fill_wave<H: crate::menus::host::Host + ?Sized>(hdma_index: usize, wave: Wave, game: &mut H) {
+fn fill_wave<H: Host + ?Sized>(hdma_index: usize, wave: Wave, game: &mut H) {
     crate::hdma_word!(game, hdma_index, B => crate::hdma_word!(game, hdma_index, B).wrapping_sub(1));
     if crate::hdma_word!(game, hdma_index, B) == 0 {
         crate::hdma_word!(game, hdma_index, B => if matches!(wave, Wave::LavaVertical) {
@@ -288,16 +284,22 @@ fn fill_wave<H: crate::menus::host::Host + ?Sized>(hdma_index: usize, wave: Wave
         sample = sample.wrapping_sub(2) & 0x1e;
     }
 }
-pub fn lava_background<H: crate::menus::host::Host + ?Sized>(hdma_index: usize, game: &mut H) {
+/// The lava background's HDMA table; `apply` applies its scroll target
+/// command, which the compatibility host's registers still carry.
+pub fn lava_background<H: Host + ?Sized>(
+    hdma_index: usize,
+    game: &mut H,
+    apply: impl FnOnce(&mut H, crate::display::video::Command),
+) {
     game.store_source_word(
         LiveOwner::LiquidSurface,
         0x44,
         WordOrder::Little,
         crate::menus::prelude::display_scroll!(game.Bg2V),
     );
-    let active = crate::sequence_word!(game.TIME_IS_FROZEN_FLAG) == 0
-        && game.view_word(crate::projection::Field::LiquidOptions) & 6 != 0;
-    let horizontal = active && game.view_word(crate::projection::Field::LiquidOptions) & 2 == 0;
+    let active =
+        crate::sequence_word!(game.TIME_IS_FROZEN_FLAG) == 0 && liquid_words(game).options & 6 != 0;
+    let horizontal = active && liquid_words(game).options & 2 == 0;
     use crate::display::video::{Axis, Background, Command, ScrollOffset};
     // The slot's low byte is its channel's register offset, the channel times 16.
     let [offset, _] = crate::hdma_word!(game, hdma_index, BankSlot).to_le_bytes();
@@ -309,8 +311,8 @@ pub fn lava_background<H: crate::menus::host::Host + ?Sized>(hdma_index: usize, 
             Axis::Vertical
         },
     };
-    game.apply(
-        "lava background",
+    apply(
+        game,
         Command::HdmaScrollTarget {
             channel: offset >> 4,
             scroll,
@@ -339,7 +341,7 @@ pub fn lava_background<H: crate::menus::host::Host + ?Sized>(hdma_index: usize, 
     }
     crate::hdma_word!(game, hdma_index, Table => 3 * (crate::menus::prelude::display_scroll!(game.Bg2V) & 0xf) + 0xc0b1);
 }
-pub fn water_background<H: crate::menus::host::Host + ?Sized>(hdma_index: usize, game: &mut H) {
+pub fn water_background<H: Host + ?Sized>(hdma_index: usize, game: &mut H) {
     game.store_source_word(
         LiveOwner::LiquidSurface,
         0x44,
@@ -348,23 +350,23 @@ pub fn water_background<H: crate::menus::host::Host + ?Sized>(hdma_index: usize,
     );
     if crate::sequence_word!(game.TIME_IS_FROZEN_FLAG) != 0 {
         water_flat(game);
-    } else if game.view_word(crate::projection::Field::LiquidOptions) & 2 == 0 {
+    } else if liquid_words(game).options & 2 == 0 {
         crate::hdma_word!(game, hdma_index, Channels => 0);
         water_flat(game);
     } else {
         water_wave(hdma_index, game);
     }
     let height = table_height(
-        game.view_word(crate::projection::Field::LiquidSurface),
-        game.view_word(crate::projection::Field::Layer1(1)),
+        liquid_words(game).liquid.surface.whole,
+        game.session().room.camera.layer1[1],
         true,
     );
     crate::hdma_word!(game, hdma_index, Table => 3 * ((height ^ 0x1ff) & 0x3ff) + 0xcf46);
 }
-pub fn water_wave<H: crate::menus::host::Host + ?Sized>(hdma_index: usize, game: &mut H) {
+pub fn water_wave<H: Host + ?Sized>(hdma_index: usize, game: &mut H) {
     fill_wave(hdma_index, Wave::Water, game);
 }
-pub fn water_flat<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+pub fn water_flat<H: Host + ?Sized>(game: &mut H) {
     let value = crate::menus::prelude::display_scroll!(game.Bg2H);
     // The native fill starts at the last water-wave entry and descends.
     for index in 0..16 {
