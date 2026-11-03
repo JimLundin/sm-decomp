@@ -146,9 +146,40 @@ impl Views for Runtime<'_> {
         T::decode(&|at| byte(self, at))
     }
     fn load_words(&self, words: &mut impl Layout) {
+        if self.persistent_is_current() {
+            #[cfg(sm_verify_dll)]
+            words.visit(|at, _| check_word(at));
+            sm_game::projection::load_session_words(words, self.session());
+            return;
+        }
         words.visit(|at, value| *value = word(self, at));
     }
-    fn store_words(&mut self, words: &mut impl Layout, select: impl FnMut(usize) -> bool) {
-        store_words(self, words, select);
+    fn store_words(&mut self, words: &mut impl Layout, mut select: impl FnMut(usize) -> bool) {
+        if !self.persistent_is_current() {
+            return store_words(self, words, select);
+        }
+        let mut selected = Vec::new();
+        words.visit(|_at, _| {
+            let store = select(selected.len());
+            #[cfg(sm_verify_dll)]
+            if store {
+                check_word(_at);
+            }
+            selected.push(store);
+        });
+        if words.store_session(self.session_mut(), &selected) {
+            if selected.contains(&true) {
+                self.refresh_written_inputs();
+            }
+        } else {
+            store_words(self, words, |index| selected[index]);
+        }
     }
+}
+
+/// The verify build's held-copy check for the word at `at`.
+#[cfg(sm_verify_dll)]
+fn check_word(at: usize) {
+    sm_game::session_cohort::check_not_held(at);
+    sm_game::session_cohort::check_not_held(at + 1);
 }

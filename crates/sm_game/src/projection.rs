@@ -248,16 +248,51 @@ fn fade_plane(blocks: &[[u16; 1024]; 6], index: usize) -> Option<u16> {
 }
 
 /// A group of words laid out in the projection, visited in order.
-pub trait Layout {
+pub trait Layout: Sized {
     /// Visit each word with where the projection encodes it.
     fn visit(&mut self, visit: impl FnMut(usize, &mut u16));
+    /// The group as `session` holds it: each word `visit` visits holds the
+    /// Session field the projection encodes there.
+    fn session_copy(session: &Session) -> Self;
+    /// Store the words `selected` marks, by visit index, to their Session
+    /// fields, as plain stores of each word's bytes do; false, storing
+    /// nothing, for a group whose words are not all plain Session fields.
+    fn store_session(&mut self, session: &mut Session, selected: &[bool]) -> bool {
+        let _ = (session, selected);
+        false
+    }
 }
 
-/// Every Session copy is laid out by its words.
+/// Every Session copy is laid out by its words. Their stores go through
+/// `session_cohort::store`, which stores a retained Session's fields
+/// directly on the compat game's lease.
 impl<C: crate::session_cohort::Cohort> Layout for C {
     fn visit(&mut self, visit: impl FnMut(usize, &mut u16)) {
         self.words(visit);
     }
+    fn session_copy(session: &Session) -> Self {
+        C::session_copy(session)
+    }
+}
+
+/// Copy into `to` each word of `from` that `selected` accepts, by visit
+/// index.
+pub fn copy_words<L: Layout>(from: &mut L, to: &mut L, selected: impl Fn(usize) -> bool) {
+    let mut values = Vec::new();
+    from.visit(|_, word| values.push(*word));
+    let mut index = 0;
+    to.visit(|_, word| {
+        if selected(index) {
+            *word = values[index];
+        }
+        index += 1;
+    });
+}
+
+/// Load each of `words` from the Session field the projection encodes it
+/// from.
+pub fn load_session_words<L: Layout>(words: &mut L, session: &Session) {
+    copy_words(&mut L::session_copy(session), words, |_| true);
 }
 
 /// A value `session_encoding` decodes from the projection, and the Session
@@ -712,6 +747,82 @@ mod tests {
             Field::RoomHeader,
         ]);
         fields
+    }
+
+    /// Each layout loaded from the Session is its projected words, and a
+    /// layout that stores its Session fields leaves the Session as the
+    /// projected byte stores of the words it selects do.
+    fn check_layout<L: Layout + Clone + Default + PartialEq + core::fmt::Debug>() {
+        let mut session = session();
+        let mut addresses = Vec::new();
+        L::default().visit(|at, _| addresses.push(at));
+        let value = |index: usize, salt: u16| {
+            0x2468u16.wrapping_add(salt.wrapping_mul(0x0705) ^ (index as u16).wrapping_mul(0x0b0b))
+        };
+        for (index, &at) in addresses.iter().enumerate() {
+            for (lane, byte) in value(index, 1).to_le_bytes().into_iter().enumerate() {
+                assert!(
+                    write_projected_byte(&mut session, at + lane, byte),
+                    "{at:#x}"
+                );
+            }
+        }
+        let mut direct = L::default();
+        load_session_words(&mut direct, &session);
+        let mut projected = L::default();
+        projected.visit(|at, word| *word = projected_word(&session, at));
+        assert_eq!(direct, projected, "loads");
+
+        let mut words = L::default();
+        let mut index = 0;
+        words.visit(|_, word| {
+            *word = value(index, 2);
+            index += 1;
+        });
+        let count = addresses.len();
+        let all = vec![true; count];
+        let alternate: Vec<bool> = (0..count).map(|index| index % 2 == 0).collect();
+        let last: Vec<bool> = (0..count).map(|index| index + 1 == count).collect();
+        for selected in [all, alternate, last, vec![false; count]] {
+            let mut direct = session.clone();
+            if !words.clone().store_session(&mut direct, &selected) {
+                assert_eq!(direct, session, "an unsupported store stores nothing");
+                continue;
+            }
+            let mut projected = session.clone();
+            let mut stored = words.clone();
+            let mut index = 0;
+            stored.visit(|at, word| {
+                if selected[index] {
+                    for (lane, byte) in word.to_le_bytes().into_iter().enumerate() {
+                        assert!(write_projected_byte(&mut projected, at + lane, byte));
+                    }
+                }
+                index += 1;
+            });
+            assert!(direct == projected, "stores {selected:?}");
+        }
+    }
+
+    #[test]
+    fn layouts_are_their_session_fields() {
+        check_layout::<crate::liquid::LiquidWords>();
+        check_layout::<crate::visual_state::PaletteFade>();
+        check_layout::<crate::flow::Flow>();
+        check_layout::<crate::inventory::Inventory>();
+        check_layout::<crate::menu_state::MenuState>();
+        check_layout::<crate::menu_state::MenuScreens>();
+        check_layout::<crate::session_words::SessionWords>();
+        check_layout::<crate::cinematic_state::Cinematic>();
+        check_layout::<crate::cinematic::FadePlanes>();
+        check_layout::<crate::cinematic::PaletteBuffer>();
+        check_layout::<crate::cinematic::ShotWords>();
+        check_layout::<crate::explosion_window::Explosion>();
+        check_layout::<crate::menu_window_state::WindowState>();
+        check_layout::<(
+            crate::menu_state::OptionsMenu,
+            crate::session_words::SessionWords,
+        )>();
     }
 
     /// Each decoded value copied from the Session is its projection's decode.

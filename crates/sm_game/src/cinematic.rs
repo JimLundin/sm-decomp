@@ -46,6 +46,14 @@ impl crate::session_cohort::Cohort for FadePlanes {
             visit(0x2000 + 2 * index, word);
         }
     }
+    fn session_copy(session: &crate::session::Session) -> Self {
+        let mut planes = Self::default();
+        let blocks = &session.actors.extended.blocks[4..6];
+        for (plane, word) in planes.0.iter_mut().zip(blocks.iter().flatten()) {
+            *plane = *word;
+        }
+        planes
+    }
 }
 
 /// Samus's projectiles' X positions and kinds ($7E:0B64, $7E:0C18), which
@@ -77,6 +85,13 @@ impl crate::session_cohort::Cohort for ShotWords {
             visit(0xc18 + 2 * index, &mut shot.kind);
         }
     }
+    fn session_copy(session: &crate::session::Session) -> Self {
+        let shots = &session.projectiles.shots;
+        Self {
+            x: shots.map(|shot| shot.x),
+            kind: shots.map(|shot| shot.kind),
+        }
+    }
 }
 
 /// The palette buffer $7E:C000..$7E:C1FF, the presentation's colours.
@@ -103,6 +118,9 @@ impl crate::session_cohort::Cohort for PaletteBuffer {
         for (index, word) in colors.iter_mut().enumerate() {
             visit(0xc000 + 2 * index, word);
         }
+    }
+    fn session_copy(session: &crate::session::Session) -> Self {
+        Self(session.presentation.visual().colors)
     }
 }
 

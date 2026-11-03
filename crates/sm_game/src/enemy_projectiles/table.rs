@@ -111,6 +111,9 @@ impl crate::session_cohort::Cohort for EnemyProjectiles {
     fn session_words(session: &mut crate::session::Session, visit: impl FnMut(usize, &mut u16)) {
         Self::words(&mut session.enemy_projectiles, visit);
     }
+    fn session_copy(session: &crate::session::Session) -> Self {
+        session.enemy_projectiles.clone()
+    }
 }
 
 /// The table's scalar words the projectile host and the file select menu

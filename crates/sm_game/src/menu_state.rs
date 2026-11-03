@@ -72,6 +72,9 @@ macro_rules! menu_state {
             fn session_words(session: &mut Session, visit: impl FnMut(usize, &mut u16)) {
                 <Self as Cohort>::words(&mut session.menu, visit);
             }
+            fn session_copy(session: &Session) -> Self {
+                session.menu.clone()
+            }
         }
 
         const _: () = {
@@ -154,6 +157,9 @@ impl Cohort for MenuScreens {
     fn session_words(session: &mut Session, visit: impl FnMut(usize, &mut u16)) {
         session.menu_screens.words(visit);
     }
+    fn session_copy(session: &Session) -> Self {
+        session.menu_screens.clone()
+    }
 }
 
 impl Cohort for MapScreenState {
@@ -187,6 +193,9 @@ impl Cohort for MapScreenState {
     fn session_words(session: &mut Session, visit: impl FnMut(usize, &mut u16)) {
         session.menu_screens.map.words(visit);
     }
+    fn session_copy(session: &Session) -> Self {
+        session.menu_screens.map.clone()
+    }
 }
 
 impl Cohort for SaveSelection {
@@ -204,6 +213,9 @@ impl Cohort for SaveSelection {
     fn session_words(session: &mut Session, visit: impl FnMut(usize, &mut u16)) {
         session.menu_screens.save_selection.words(visit);
     }
+    fn session_copy(session: &Session) -> Self {
+        session.menu_screens.save_selection.clone()
+    }
 }
 
 impl Cohort for OptionsMenu {
@@ -215,6 +227,9 @@ impl Cohort for OptionsMenu {
     fn session_words(session: &mut Session, visit: impl FnMut(usize, &mut u16)) {
         session.menu_screens.options_menu.words(visit);
     }
+    fn session_copy(session: &Session) -> Self {
+        session.menu_screens.options_menu.clone()
+    }
 }
 
 impl Cohort for DeathSequence {
@@ -225,6 +240,9 @@ impl Cohort for DeathSequence {
     }
     fn session_words(session: &mut Session, visit: impl FnMut(usize, &mut u16)) {
         session.menu_screens.death.words(visit);
+    }
+    fn session_copy(session: &Session) -> Self {
+        session.menu_screens.death.clone()
     }
 }
 

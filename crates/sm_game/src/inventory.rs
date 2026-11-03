@@ -93,6 +93,9 @@ impl crate::session_cohort::Cohort for Inventory {
     fn session_words(session: &mut crate::session::Session, visit: impl FnMut(usize, &mut u16)) {
         Self::words(&mut session.inventory, visit);
     }
+    fn session_copy(session: &crate::session::Session) -> Self {
+        session.inventory.clone()
+    }
 }
 
 /// An inventory word, by what it holds.

@@ -46,6 +46,9 @@ impl crate::session_cohort::Cohort for Flow {
     fn session_words(session: &mut crate::session::Session, visit: impl FnMut(usize, &mut u16)) {
         Self::words(&mut session.flow, visit);
     }
+    fn session_copy(session: &crate::session::Session) -> Self {
+        session.flow
+    }
 }
 
 /// The flow as the host's projection holds it.

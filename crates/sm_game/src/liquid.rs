@@ -185,6 +185,29 @@ impl crate::projection::Layout for LiquidWords {
             visit(at, word);
         }
     }
+    fn session_copy(session: &crate::session::Session) -> Self {
+        let room = &session.room;
+        Self {
+            height: room.liquid_height,
+            target: room.liquid_target,
+            velocity: room.liquid_velocity,
+            options: room.liquid_options,
+            delay: room.liquid_delay,
+            liquid: room.liquid,
+        }
+    }
+    fn store_session(&mut self, session: &mut crate::session::Session, selected: &[bool]) -> bool {
+        let mut words = Self::session_copy(session);
+        crate::projection::copy_words(self, &mut words, |index| selected[index]);
+        let room = &mut session.room;
+        room.liquid_height = words.height;
+        room.liquid_target = words.target;
+        room.liquid_velocity = words.velocity;
+        room.liquid_options = words.options;
+        room.liquid_delay = words.delay;
+        room.liquid = words.liquid;
+        true
+    }
 }
 
 /// The bank $88 handlers in `Liquid::rising`: lava and acid ("hot") liquids and

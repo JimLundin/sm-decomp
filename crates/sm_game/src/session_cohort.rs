@@ -26,6 +26,9 @@ pub trait Cohort: Clone + PartialEq + Default {
     /// Visit the group's words in `session`, in the order `words` visits the
     /// copy's.
     fn session_words(session: &mut Session, visit: impl FnMut(usize, &mut u16));
+    /// The group as `session` holds it: each word `words` visits holds the
+    /// value `session_words` visits at the same position.
+    fn session_copy(session: &Session) -> Self;
 }
 
 /// Two groups held together, in order.
@@ -37,6 +40,9 @@ impl<A: Cohort, B: Cohort> Cohort for (A, B) {
     fn session_words(session: &mut Session, mut visit: impl FnMut(usize, &mut u16)) {
         A::session_words(session, &mut visit);
         B::session_words(session, &mut visit);
+    }
+    fn session_copy(session: &Session) -> Self {
+        (A::session_copy(session), B::session_copy(session))
     }
 }
 

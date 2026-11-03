@@ -85,6 +85,12 @@ impl crate::session_cohort::Cohort for Explosion {
             visit,
         );
     }
+    fn session_copy(session: &crate::session::Session) -> Self {
+        Self {
+            bomb: session.projectiles.power_bomb.clone(),
+            radius: session.room.power_bomb_radius,
+        }
+    }
 }
 
 /// The explosion words as the host's projection holds them.
