@@ -126,7 +126,20 @@ First commands:
 | `FixedColor(FixedColor)` | ending space view (ending_sequence.rs) | COLDATA |
 | `WindowHdma(WindowHdma)` | map-menu window (menu_window.rs) | channel $43x0..$43xA: mode $40, B-bus port, table word and bank, indirect bank, then the cursor bytes cleared |
 
-The map menu's mirrored window and colour-math writes (map_menu.rs) need a typed window and
-colour-math control value whose register is not implied by its mirror field
-(`show_mirror(SubScreen, SubWindow)` mirrors TS into the sub window byte). That is the next
-command family.
+| `Control(Control)` with `apply_mirrored` | map-menu area window (map_menu.rs) | the control's register (TM, TS, TMW, TSW, W12SEL, W34SEL, WOBJSEL, CGWSEL, CGADSUB, HDMAEN), with its display mirror stored by sm_game before or after as before |
+
+A control's mirror field is named at the call, not implied by the control: the map menu
+mirrors TS into the sub window byte and TM into the main window byte, as the original does.
+
+### Left for the next slices
+
+- display/transfer.rs (`setup_transfer`, `copy_to_vram_now`): `copy_to_vram_now` writes VMAIN
+  as a byte after the channel and starts through `start_room_dma`, which may read prepared
+  room assets. It needs its own command, with the prepared-asset source in the encoder.
+- message_boxes, cinematic_display, the remaining controls in gameplay_frame, liquid_effects,
+  cinematic_states and room_state: the same `Control`/`FixedColor` commands cover most of
+  their writes once the enum gains their registers (BGMODE, Mode 7, scroll latches).
+- display_refresh's NMI writes and hdma_objects: still retirement step 1 (the Owned
+  presentation or native renderer as the authority), since the `Refresh` adapter is itself the
+  encoder of `scene::commit::RefreshHost`.
+- display/sequence.rs goes with its last caller.

@@ -4,9 +4,10 @@
 //! renderer is the authority (docs/handoff/owned-display-registers.md).
 use crate::game_state::Game;
 use crate::rtl::{
-    A1B1, A1T1L, COLDATA, DAS1L, DMAP1, MDMAEN, VMADDL, VMAIN, WH0, WH1, write_reg, write_reg_word,
+    A1B1, A1T1L, CGADSUB, CGWSEL, COLDATA, DAS1L, DMAP1, HDMAEN, MDMAEN, TM, TMW, TS, TSW, VMADDL,
+    VMAIN, W12SEL, W34SEL, WH0, WH1, WOBJSEL, write_reg, write_reg_word,
 };
-use sm_game::display::video::{Command, Upload, Video as _, WindowEdge, WindowHdma};
+use sm_game::display::video::{Command, Control, Upload, Video as _, WindowEdge, WindowHdma};
 
 /// VMAIN's increment-after-high-byte mode for a word step of `increment`.
 fn vram_increment_mode(increment: u16) -> u8 {
@@ -57,6 +58,22 @@ pub(crate) fn apply(producer: &'static str, command: Command, game: &mut Game) {
         // SAFETY: as for `TilesNow`.
         Command::FixedColor(color) => unsafe { write_reg(COLDATA as u16, color.byte(), game) },
         Command::WindowHdma(hdma) => window_hdma(hdma, game),
+        Command::Control(control) => {
+            let register = match control {
+                Control::MainScreen(_) => TM,
+                Control::SubScreen(_) => TS,
+                Control::MainWindowMask(_) => TMW,
+                Control::SubWindowMask(_) => TSW,
+                Control::WindowsBg1Bg2(_) => W12SEL,
+                Control::WindowsBg3Bg4(_) => W34SEL,
+                Control::WindowsSpritesColor(_) => WOBJSEL,
+                Control::ColorSelection(_) => CGWSEL,
+                Control::ColorMath(_) => CGADSUB,
+                Control::HdmaChannels(_) => HDMAEN,
+            };
+            // SAFETY: as for `TilesNow`.
+            unsafe { write_reg(register as u16, control.byte(), game) }
+        }
     }
 }
 

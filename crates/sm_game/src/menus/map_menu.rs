@@ -3,8 +3,9 @@ use super::menu_tilemap;
 use super::prelude::*;
 use super::save_slots::load_area_map;
 use crate::constants::{bank_81::*, bank_82::*};
-use crate::display::control::{Layers, MainScreen, MainWindowMask, SubScreen, SubWindowMask};
+use crate::display::control::Layers;
 use crate::display::preparation::Field as DisplayField;
+use crate::display::video::{Command, Control, apply_mirrored};
 use crate::imported::{Imported, grid_word, word as table_word};
 use crate::menu_state::set_menu_byte;
 use crate::menu_state::{MENU, MenuState, WORDS};
@@ -182,16 +183,42 @@ fn load_background<H: Host + ?Sized>(j: u16, game: &mut H) {
         game,
     );
 }
+/// The producer name of the area window's display commands.
+const WINDOW: &str = "map window";
+/// HDMA channels 2 and 3: the window edges.
+const WINDOW_CHANNELS: Control = Control::HdmaChannels(0xc);
+
+/// Apply each control, its display mirror stored first.
+fn show_mirrored<H: Host + ?Sized>(game: &mut H, controls: &[(Control, DisplayField)]) {
+    for &(control, mirror) in controls {
+        apply_mirrored(game, WINDOW, control, mirror, true);
+    }
+}
 fn begin_area_window<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H, _: &mut MenuScreens) {
     game.store_display_control_byte(
         crate::display::preparation::Field::SubLayers,
         crate::display::control::Layers::BG3.byte(),
         crate::display::preparation::Store::Owned,
     );
-    crate::display::sequence::register_writes! { game;
-        show_mirror(SubScreen(Layers::of(false, false, true, false, false)), DisplayField::SubWindow, false); show(SubWindowMask(Layers::of(false, false, true, false, false)));
-        mirror(CGWSEL as u16, 2, DisplayField::ColorSelection, true); mirror(CGADSUB as u16, 0x25, DisplayField::ColorMath, true);
-    }
+    // The subscreen's layers are mirrored into the sub window byte.
+    apply_mirrored(
+        game,
+        WINDOW,
+        Control::SubScreen(Layers::BG3),
+        DisplayField::SubWindow,
+        false,
+    );
+    game.apply(
+        WINDOW,
+        Command::Control(Control::SubWindowMask(Layers::BG3)),
+    );
+    show_mirrored(
+        game,
+        &[
+            (Control::ColorSelection(2), DisplayField::ColorSelection),
+            (Control::ColorMath(0x25), DisplayField::ColorMath),
+        ],
+    );
     game.store_display_control_byte(
         crate::display::preparation::Field::FixedColor2,
         0x80,
@@ -208,13 +235,7 @@ fn begin_area_window<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H, _: &m
         crate::display::preparation::Store::Owned,
     );
     super::menu_window::initialize(game);
-    crate::display::sequence::write_register_and_mirror(
-        game,
-        HDMAEN as u16,
-        0xc,
-        DisplayField::HdmaEnable,
-        true,
-    );
+    show_mirrored(game, &[(WINDOW_CHANNELS, DisplayField::HdmaEnable)]);
     configure_area_window(game);
     crate::hdma_objects::clear_hdma_flags(game);
     let index = (menu.menu_index as u8).wrapping_add(1);
@@ -226,11 +247,29 @@ fn configure_area_window<H: Host + ?Sized>(game: &mut H) {
         crate::display::control::Layers::BG1_BG2_SPRITES.byte(),
         crate::display::preparation::Store::Owned,
     );
-    crate::display::sequence::register_writes! { game;
-        show_mirror(MainScreen(Layers::of(true, true, false, false, true)), DisplayField::MainWindow, false); show(MainWindowMask(Layers::of(true, true, false, false, true)));
-        mirror(W12SEL as u16, 0x23, DisplayField::WindowSelection0, true); mirror(W34SEL as u16, 3, DisplayField::WindowSelection1, true);
-        mirror(WOBJSEL as u16, 0x23, DisplayField::WindowSelection2, true);
-    }
+    // The main screen's layers are mirrored into the main window byte.
+    apply_mirrored(
+        game,
+        WINDOW,
+        Control::MainScreen(Layers::BG1_BG2_SPRITES),
+        DisplayField::MainWindow,
+        false,
+    );
+    game.apply(
+        WINDOW,
+        Command::Control(Control::MainWindowMask(Layers::BG1_BG2_SPRITES)),
+    );
+    show_mirrored(
+        game,
+        &[
+            (Control::WindowsBg1Bg2(0x23), DisplayField::WindowSelection0),
+            (Control::WindowsBg3Bg4(3), DisplayField::WindowSelection1),
+            (
+                Control::WindowsSpritesColor(0x23),
+                DisplayField::WindowSelection2,
+            ),
+        ],
+    );
 }
 fn open_area_window<H: Host + ?Sized>(
     menu: &mut MenuState,
@@ -491,10 +530,18 @@ fn begin_room_window<H: Host + ?Sized>(
         crate::display::control::Layers::BG1_BG2_SPRITES.byte(),
         crate::display::preparation::Store::Owned,
     );
-    crate::display::sequence::register_writes! { game;
-        mirror(W12SEL as u16, 0x32, DisplayField::WindowSelection0, true); mirror(W34SEL as u16, 2, DisplayField::WindowSelection1, true);
-        mirror(CGADSUB as u16, 5, DisplayField::ColorMath, true); mirror(WOBJSEL as u16, 0x22, DisplayField::WindowSelection2, true);
-    }
+    show_mirrored(
+        game,
+        &[
+            (Control::WindowsBg1Bg2(0x32), DisplayField::WindowSelection0),
+            (Control::WindowsBg3Bg4(2), DisplayField::WindowSelection1),
+            (Control::ColorMath(5), DisplayField::ColorMath),
+            (
+                Control::WindowsSpritesColor(0x22),
+                DisplayField::WindowSelection2,
+            ),
+        ],
+    );
     game.store_display_control_byte(
         crate::display::preparation::Field::Characters0,
         48,
@@ -534,13 +581,7 @@ fn begin_room_window<H: Host + ?Sized>(
     );
     super::menu_window::load_velocities(crate::gameplay_context::navigation(game).area, game);
     super::menu_window::project(game);
-    crate::display::sequence::write_register_and_mirror(
-        game,
-        HDMAEN as u16,
-        0xc,
-        DisplayField::HdmaEnable,
-        true,
-    );
+    show_mirrored(game, &[(WINDOW_CHANNELS, DisplayField::HdmaEnable)]);
     menu.menu_index = menu.menu_index.wrapping_add(1);
     game.queue_sound(0, 0x3b_u8, 6);
 }
@@ -814,10 +855,14 @@ fn begin_return_window<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H, _: 
     );
     super::menu_window::project(game);
     menu.menu_index = menu.menu_index.wrapping_add(1);
-    crate::display::sequence::register_writes! { game;
-        mirror(HDMAEN as u16, 0xc, DisplayField::HdmaEnable, true); mirror(W12SEL as u16, 0x32, DisplayField::WindowSelection0, true);
-        mirror(W34SEL as u16, 2, DisplayField::WindowSelection1, true);
-    }
+    show_mirrored(
+        game,
+        &[
+            (WINDOW_CHANNELS, DisplayField::HdmaEnable),
+            (Control::WindowsBg1Bg2(0x32), DisplayField::WindowSelection0),
+            (Control::WindowsBg3Bg4(2), DisplayField::WindowSelection1),
+        ],
+    );
     game.store_display_control_byte(
         crate::display::preparation::Field::Characters0,
         48,
