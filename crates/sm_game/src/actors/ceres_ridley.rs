@@ -164,10 +164,8 @@ pub fn init<L: Lease + ?Sized>(game: &mut L) {
         game.foreign(|game| {
             copy_rom_colors_to_target_palette(0xa6, 0x140, ceres_data::NORFAIR_PALETTES, 0x20, game)
         });
-        crate::word_transfers!(game, ascending, 15;
-            le(TARGET_PALETTES, 113) <- value(0),
-            le(TARGET_PALETTES, 241) <- value(0),
-        );
+        clear_target_colours(game, 113);
+        clear_target_colours(game, 241);
     } else {
         RidleyEdit::of(game, RIDLEY).actor().x.whole = 186;
         RidleyEdit::of(game, RIDLEY).actor().y.whole = 169;
@@ -186,7 +184,7 @@ pub fn init<L: Lease + ?Sized>(game: &mut L) {
         game.foreign(|game| {
             copy_rom_colors_to_target_palette(0xa6, 0x140, ceres_data::CERES_PALETTES, 0x20, game)
         });
-        crate::word_transfers!(game, ascending, 15; le(TARGET_PALETTES, 241) <- value(0));
+        clear_target_colours(game, 241);
         *RidleyEdit::of(game, RIDLEY).baby_metroid_instruction() =
             ceres_instruction_list::BABY_METROID;
         *RidleyEdit::of(game, RIDLEY).baby_metroid_instruction_timer() = 1;
@@ -345,12 +343,19 @@ pub fn fade_in_eye<L: Lease + ?Sized>(game: &mut L) {
     } else {
         *RidleyEdit::of(game, RIDLEY).fade_index() = index.wrapping_add(1);
         let colour = 3 * isize::from(step);
-        word! { game;
-            PALETTE_BUFFER[252] = crate::ceres_ridley_tables::eye_fade(game, colour);
-            PALETTE_BUFFER[253] = crate::ceres_ridley_tables::eye_fade(game, colour + 1);
-            PALETTE_BUFFER[254] = crate::ceres_ridley_tables::eye_fade(game, colour + 2);
+        for (index, at) in (252..255).enumerate() {
+            let fade = crate::ceres_ridley_tables::eye_fade(game, colour + index as isize);
+            game.session_mut().presentation.visual_mut().colors[at] = fade;
         }
+        game.words_stored();
     }
+}
+
+/// Target colours `first..first + 15`, colours 1-15 of a palette, become black.
+fn clear_target_colours<L: Lease + ?Sized>(game: &mut L, first: usize) {
+    game.session_mut().presentation.visual_mut().targets[first..first + 15]
+        .copy_from_slice(&[0; 15]);
+    game.words_stored();
 }
 
 /// Ridley function - fade in body ($A6:A3DF): every other frame the next 11
@@ -367,7 +372,10 @@ pub fn fade_in_body<L: Lease + ?Sized>(game: &mut L) {
     let (mut first, mut second) = (145, 241);
     for _ in 0..11 {
         let colour = crate::ceres_ridley_tables::body_fade(game, (index >> 1) as isize);
-        word! {game; PALETTE_BUFFER[first] = colour; PALETTE_BUFFER[second] = colour; }
+        let colours = &mut game.session_mut().presentation.visual_mut().colors;
+        colours[first] = colour;
+        colours[second] = colour;
+        game.words_stored();
         index = index.wrapping_add(2);
         first += 1;
         second += 1;
