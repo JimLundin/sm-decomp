@@ -46,27 +46,39 @@ pub fn initialize_water<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
 /// One frame of the liquid's motion, tide and surface under one Session lease;
 /// the room shake and an unknown handler's report follow once it is published.
 /// Neither touches liquid state, so their order relative to it is unchanged.
+/// Returns the liquid words and the camera as the step left them: the rest of
+/// the surface's frame stores neither.
 fn step_liquid<H: crate::menus::host::Host + ?Sized>(
     game: &mut H,
     surface: crate::liquid::Surface,
     handler_carry: bool,
-) {
-    let effects = with_liquid(game, |words| crate::liquid::step(words, surface));
+) -> Stepped {
+    let (effects, mut stepped) = with_liquid(game, |words| crate::liquid::step(words, surface));
     if effects.shake {
         crate::room_visuals::shake_room_with_sound(21, handler_carry, game);
     }
     if effects.unknown_handler {
         game.rtl_unreachable();
-        with_liquid(game, |words| {
+        ((), stepped) = with_liquid(game, |words| {
             crate::liquid::advance_tide(words);
             crate::liquid::place_surface(words, surface);
         });
     }
+    stepped
+}
+
+/// The liquid words and the camera after a liquid step.
+struct Stepped {
+    words: crate::liquid::LiquidWords,
+    camera: crate::camera::Camera,
 }
 
 /// Run `update` on the liquid words: on the owned Room under one lease, or on
 /// the RAM bridge when a lease is not admissible. Both store the same bytes.
-fn with_liquid<H, R>(game: &mut H, update: impl FnOnce(&mut crate::liquid::LiquidWords) -> R) -> R
+fn with_liquid<H, R>(
+    game: &mut H,
+    update: impl FnOnce(&mut crate::liquid::LiquidWords) -> R,
+) -> (R, Stepped)
 where
     H: crate::menus::host::Host + ?Sized,
 {
@@ -78,12 +90,14 @@ where
         let mut words = LiquidWords::of(room);
         let result = update(&mut words);
         words.store(room);
-        result
+        let camera = room.camera;
+        (result, Stepped { words, camera })
     } else {
         let mut words = LiquidWords::read(game);
         let result = update(&mut words);
         words.write(game);
-        result
+        let camera = crate::camera::current(game);
+        (result, Stepped { words, camera })
     }
 }
 fn surface_scroll(position: u16, camera: u16) -> u16 {
@@ -126,7 +140,8 @@ pub fn lava_surface<H: crate::menus::host::Host + ?Sized>(
         game.publish_fx_controls(fx, &[crate::fx_state::Field::Blending]);
     };
     if crate::sequence_word!(game.TIME_IS_FROZEN_FLAG) == 0 {
-        step_liquid(game, crate::liquid::Surface::LavaAcid, handler_carry);
+        let Stepped { words, camera } =
+            step_liquid(game, crate::liquid::Surface::LavaAcid, handler_carry);
         {
             let fx_value = crate::menus::prelude::display_scroll!(game.Bg1H);
             let mut fx = game.fx_controls();
@@ -140,22 +155,9 @@ pub fn lava_surface<H: crate::menus::host::Host + ?Sized>(
             fx.effect_scroll[1] = fx_value;
             game.publish_fx_controls(fx, &[crate::fx_state::Field::EffectVertical]);
         };
-        let scroll = surface_scroll(
-            crate::liquid::LiquidWords::read(game)
-                .liquid
-                .lava_acid
-                .whole,
-            crate::camera::current(game).layer1[1],
-        );
+        let scroll = surface_scroll(words.liquid.lava_acid.whole, camera.layer1[1]);
         game.store_source_word(LiveOwner::LiquidSurface, 2, native_order(), scroll);
-        if crate::liquid::LiquidWords::read(game).liquid.kind == 2
-            && (crate::liquid::LiquidWords::read(game)
-                .liquid
-                .lava_acid
-                .whole
-                & 0x8000)
-                == 0
-        {
+        if words.liquid.kind == 2 && (words.liquid.lava_acid.whole & 0x8000) == 0 {
             let remaining = crate::hdma_word!(game, hdma_index, C);
             crate::hdma_word!(game, hdma_index, C => remaining.wrapping_sub(1));
             if remaining == 1 {
@@ -169,14 +171,7 @@ pub fn lava_surface<H: crate::menus::host::Host + ?Sized>(
             }
         }
         word!(game.RANDOM_NUMBER = u16::swap_bytes(word!(game.RANDOM_NUMBER)));
-        let v8 = table_height(
-            crate::liquid::LiquidWords::read(game)
-                .liquid
-                .lava_acid
-                .whole,
-            crate::camera::current(game).layer1[1],
-            false,
-        );
+        let v8 = table_height(words.liquid.lava_acid.whole, camera.layer1[1], false);
         crate::hdma_word!(game, hdma_index, Table => (3 * (((v8 as i32 ^ 0x1ff) + 1) & 0x3ff) + 0xb62a) as u16);
     }
 }
@@ -194,13 +189,10 @@ pub fn water_surface<H: crate::menus::host::Host + ?Sized>(
     if crate::sequence_word!(game.TIME_IS_FROZEN_FLAG) != 0 {
         return;
     }
-    step_liquid(game, crate::liquid::Surface::Water, handler_carry);
-    let layer1 = crate::camera::current(game).layer1;
+    let Stepped { words, camera } = step_liquid(game, crate::liquid::Surface::Water, handler_carry);
+    let layer1 = camera.layer1;
     {
-        let fx_value = surface_scroll(
-            crate::liquid::LiquidWords::read(game).liquid.surface.whole,
-            layer1[1],
-        );
+        let fx_value = surface_scroll(words.liquid.surface.whole, layer1[1]);
         let mut fx = game.fx_controls();
         fx.effect_scroll[1] = fx_value;
         game.publish_fx_controls(fx, &[crate::fx_state::Field::EffectVertical]);
@@ -224,14 +216,10 @@ pub fn water_surface<H: crate::menus::host::Host + ?Sized>(
         );
         v7 = ((v7 as i32 - 2i32) & 0x1e) as u8;
     }
-    if (crate::liquid::LiquidWords::read(game).options & 1) != 0 {
+    if (words.options & 1) != 0 {
         crate::hdma_word!(game, hdma_index, C => crate::hdma_word!(game, hdma_index, C).wrapping_add(64));
     }
-    let v9 = table_height(
-        crate::liquid::LiquidWords::read(game).liquid.surface.whole,
-        crate::camera::current(game).layer1[1],
-        true,
-    );
+    let v9 = table_height(words.liquid.surface.whole, layer1[1], true);
     crate::hdma_word!(game, hdma_index, Table => (3 * (((v9 as i32 ^ 0x1ff) + 1) & 0x3ff) + 0xc645) as u16);
 }
 
