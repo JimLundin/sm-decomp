@@ -97,6 +97,9 @@ jobs:
         run: |
           python3 sm/src/verification/player_detached/mutations.py --check-anchors
           python3 sm/src/verification/session_mutations.py --check-anchors
+      - name: Type-check the Python tooling
+        # pyproject.toml's [tool.mypy] sets strict mode and the files.
+        run: pipx run --spec mypy==2.4.1 mypy
       - name: Keep target packages independent of the emulator crate
         # sm_game and sm_runtime may depend only on sm_data, never on sm.
         run: |
