@@ -180,6 +180,8 @@ jobs:
     outputs:
       skip: ${{ (steps.passed.outputs.skip == 'true' || steps.relevant.outputs.skip == 'true') && 'true' || 'false' }}
       matrix: ${{ steps.plan.outputs.matrix }}
+      first: ${{ steps.plan.outputs.first }}
+      first_count: ${{ steps.plan.outputs.first_count }}
       movie_file: ${{ steps.plan.outputs.movie_file }}
       movie_sha256: ${{ steps.plan.outputs.movie_sha256 }}
     steps:
@@ -216,20 +218,11 @@ jobs:
       RUSTFLAGS: ${{ inputs.scope == 'coverage' && '-D warnings -C instrument-coverage -C link-dead-code' || '-D warnings' }}
     steps:
       - uses: actions/checkout@v4
-      - uses: ./.github/actions/linux-native
+      - uses: ./.github/actions/verifier
+        with:
+          flavour: ${{ inputs.scope == 'coverage' && 'coverage' || 'plain' }}
       - id: rust
         run: echo "version=$(rustc --version | cut -d' ' -f2)" >> "$GITHUB_OUTPUT"
-      - name: Reuse a verifier built from the same sources
-        # verify_dll.py still rebuilds unless the verifier's stamp matches these sources,
-        # the compiler/options and the actual native archive bytes.
-        uses: actions/cache@v4
-        with:
-          path: |
-            target/verify-dll
-            target/verify-host
-          key: verifier-${{ runner.os }}-${{ inputs.scope == 'coverage' && 'coverage' || 'plain' }}-${{ hashFiles('crates/**', 'sm/**', 'Cargo.lock', 'rust-toolchain.toml', 'tools/verify_dll.py', 'tools/install_lakesnes.py', 'tools/install_native_*.py', '.github/actions/linux-native/action.yml') }}
-      - name: Build the verifier
-        run: python3 tools/verify_dll.py --build-only --direct
       - name: Run the verifier's units
         if: inputs.scope != 'coverage'
         run: python3 tools/verify_dll.py --unit-tests --no-build --direct
@@ -269,24 +262,28 @@ jobs:
         with:
           name: verifier
       - run: tar -xf verifier.tar
-      - name: Cache the pinned movie download
+      - &movie
+        name: Cache the pinned movie download
         if: contains(matrix.kinds, 'route')
         uses: actions/cache@v4
         with:
           path: movies/${{ needs.verify-plan.outputs.movie_file }}
           key: ${{ runner.os }}-movie-${{ needs.verify-plan.outputs.movie_sha256 }}
-      - name: Fetch the encrypted ROM
+      - &rom
+        name: Fetch the encrypted ROM
         uses: actions/checkout@v4
         with:
           repository: JimLundin/ci-data
           ssh-key: ${{ secrets.SM_ROM_DEPLOY_KEY }}
           path: .ci-data
           persist-credentials: false
-      - name: Decrypt the ROM
+      - &decrypt
+        name: Decrypt the ROM
         env:
           SM_ROM_KEY: ${{ secrets.SM_ROM_KEY }}
         run: python3 -B .github/scripts/prepare_rom.py
-      - name: Restore and replay
+      - &replay
+        name: Restore and replay
         env:
           JOB: ${{ toJSON(matrix) }}
           ORACLE: ${{ inputs.oracle }}
@@ -300,6 +297,29 @@ jobs:
           path: profiles
           retention-days: 2
           if-no-files-found: warn
+
+  # The gate's longest jobs (plan_verify.py) set its wall time. Each builds its own
+  # verifier, so it queues for a runner alongside verify-build rather than after it.
+  verify-replay-first:
+    needs: verify-plan
+    if: needs.verify-plan.outputs.skip != 'true' && needs.verify-plan.outputs.first_count != '0'
+    runs-on: ubuntu-24.04
+    timeout-minutes: ${{ matrix.timeout }}
+    env:
+      CARGO_INCREMENTAL: '0'
+      CARGO_BUILD_JOBS: '4'
+      RUSTFLAGS: '-D warnings'
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.verify-plan.outputs.first) }}
+    name: ${{ matrix.name }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/verifier
+      - *movie
+      - *rom
+      - *decrypt
+      - *replay
 
   verify-coverage:
     needs: [verify-build, verify-replay]
@@ -330,7 +350,7 @@ jobs:
 
   verify:
     name: Verify result
-    needs: [verify-plan, verify-build, verify-replay, verify-coverage]
+    needs: [verify-plan, verify-build, verify-replay, verify-replay-first, verify-coverage]
     if: always() && needs.verify-plan.result != 'skipped'
     runs-on: ubuntu-24.04
     steps:
@@ -338,6 +358,7 @@ jobs:
         env:
           RESULTS: ${{ toJSON(needs) }}
           SKIP: ${{ needs.verify-plan.outputs.skip }}
+          FIRST: ${{ needs.verify-plan.outputs.first_count }}
         run: |
           python3 -B - <<'PY'
           import json, os
@@ -346,5 +367,6 @@ jobs:
           if os.environ['SKIP'] != 'true':
               assert needs['verify-build']['result'] == 'success'
               assert needs['verify-replay']['result'] == 'success'
+              if os.environ['FIRST'] != '0': assert needs['verify-replay-first']['result'] == 'success'
               if os.environ['SCOPE'] == 'coverage': assert needs['verify-coverage']['result'] == 'success'
           PY

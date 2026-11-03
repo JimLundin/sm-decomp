@@ -6,17 +6,20 @@ core and each row starts from its own seed. Rows with a checkpoint prefix stay
 together in one process, because they can reuse each other's checked prefixes.
 Raw verifier output stays private on the runner in the modes that filter it.
 """
-import concurrent.futures, json, os, pathlib, re, subprocess, sys, threading, urllib.request
+import concurrent.futures, json, os, pathlib, re, subprocess, sys, threading
 from typing import Any
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools"))
+sys.path.insert(0, str(ROOT / ".github/scripts"))
 import scenario  # noqa: E402
+import pack  # noqa: E402
 
 JOB: dict[str, Any] = json.loads(os.environ["JOB"])
 TEMP = pathlib.Path(os.environ["RUNNER_TEMP"])
 SUMMARY = os.environ["GITHUB_STEP_SUMMARY"]
-WORKERS = int(os.environ.get("WORKERS") or os.cpu_count() or 1)
+# The planner sets each job's process count (pack.py); older plans used every core.
+WORKERS = int(JOB.get("workers") or os.environ.get("WORKERS") or os.cpu_count() or 1)
 LOCK_NAMES = re.compile(r"^(SEGMENT|PASS|FAIL|UNLOCKED|KNOWN|REGRESSION|Corpus|job |Verifier total|Lock|"
                         r"[A-Za-z0-9-]+: (lock |lockstep |free run |Free run|Free-run|@|no current|localization))")
 SUMMARY_NAMES = re.compile(r"^(PASS|FAIL|Corpus|RESULT|DOMAIN|DIAGNOSTIC|EXIT|"
@@ -40,8 +43,11 @@ def script(name: str, *arguments: str, **environment: str) -> None:
 def restore() -> None:
     if JOB["kinds"] == "room":
         bundle = TEMP / "chain.tar.gz.enc"
-        urllib.request.urlretrieve(
-            f"https://github.com/JimLundin/sm-decomp/releases/download/ci-data/{JOB['asset']}", bundle)
+        # Retry transient release download failures; full_route.py checks the pinned SHA-256.
+        subprocess.run(["curl", "--fail", "--silent", "--show-error", "--location", "--retry", "4",
+                        "--retry-all-errors", "--output", str(bundle),
+                        f"https://github.com/JimLundin/sm-decomp/releases/download/ci-data/{JOB['asset']}"],
+                       check=True)
         script("full_route.py", "restore", str(bundle), FULL_ROUTE=JOB["route"])
     elif "shards" in JOB:
         # One seed bundle or movie route per shard, restored in turn.
@@ -70,19 +76,10 @@ def rom_import() -> int:
 
 
 def partition(ids: list[str]) -> list[list[str]]:
-    """Split rows into balanced worker groups, keeping prefix rows together."""
-    frames = {row["id"]: row for row in scenario.rows(ROOT)}
-    def cost(name: str) -> int:
-        count: int = frames[name].get("frames", 1)
-        return count
+    """Split rows into balanced worker groups by measured seconds, keeping prefix rows together.
 
-    prefixed = [name for name in ids if frames[name].get("start_frame", 0)]
-    groups: list[list[str]] = [[] for _ in range(max(1, min(WORKERS, len(ids))))]
-    if prefixed:
-        groups[0].extend(prefixed)
-    for name in sorted(set(ids) - set(prefixed), key=lambda name: (-cost(name), name)):
-        min(groups, key=lambda group: sum(cost(item) for item in group)).append(name)
-    return [group for group in groups if group]
+    The planner packed this job with the same split (pack.py)."""
+    return pack.partition(ids, {row["id"]: row for row in scenario.rows(ROOT)}, JOB["mode"], WORKERS)
 
 
 def console_line(line: str, state: dict[str, str], mode: str, audio: bool) -> str | None:
