@@ -61,8 +61,17 @@ BASELINE = {
     "legacy_engine_ram_sites": 526,
     # Original-game overflow paths (LEGACY(original-overflow)), reported only.
     "engine_legacy_overflow_sites": 60,
+    # The Game boundary (Jim, 2026-11-03): each foreign call is a full Session
+    # export and re-import; Game host impls are host traits served from the RAM
+    # image; Session entries are leases opened from Game-hosted code. All three
+    # reach zero when the Session drives the tick. Foreign calls and Game hosts
+    # may not rise; lease moves can add entries, so those are reported.
+    "foreign_calls": 507,
+    "game_host_impls": 96,
+    "session_entries": 117,
 }
-ADVISORY = {"production_lines", "engine_unresolved_ram_methods", "legacy_engine_ram_sites", "engine_legacy_overflow_sites"}
+ADVISORY = {"production_lines", "engine_unresolved_ram_methods", "legacy_engine_ram_sites",
+            "engine_legacy_overflow_sites", "session_entries"}
 
 
 CFG_TEST = re.compile(r"^\s*#\[cfg\(test\)\]\s*$")
@@ -166,6 +175,30 @@ def engine_inventory() -> dict[str, int]:
     }
 
 
+def game_boundary() -> dict[str, int]:
+    """Calls across the Game boundary: foreign calls (crates and sm/src), host
+    traits implemented for Game (sm/src), and leases opened from Game-hosted
+    sm_game code. Line comments are ignored."""
+    foreign = re.compile(r"\.foreign\s*\(")
+    host = re.compile(r"^\s*impl\b[^{;]*\bfor\s+Game\b")
+    entry = re.compile(r"\.runtime\s*\(\s*\)")
+    counts = {"foreign_calls": 0, "game_host_impls": 0, "session_entries": 0}
+    for top in ("crates", os.path.join("sm", "src")):
+        for root, _, names in os.walk(top):
+            for name in names:
+                if not name.endswith(".rs"):
+                    continue
+                path = os.path.join(root, name).replace("\\", "/")
+                with open(path, encoding="utf-8", errors="replace") as source:
+                    lines = [line.split("//", 1)[0] for line in source]
+                counts["foreign_calls"] += sum(len(foreign.findall(line)) for line in lines)
+                if path.startswith("sm/src/"):
+                    counts["game_host_impls"] += sum(1 for line in lines if host.match(line))
+                if path.startswith("crates/sm_game/src/"):
+                    counts["session_entries"] += sum(len(entry.findall(line)) for line in lines)
+    return counts
+
+
 def measure() -> dict[str, int]:
     ram = cycle_report.sm_game_ram_couplings()
     return {
@@ -173,6 +206,7 @@ def measure() -> dict[str, int]:
         "sm_game_coupled_files": ram["coupled_files"],
         "production_lines": production_lines(),
         **engine_inventory(),
+        **game_boundary(),
     }
 
 
