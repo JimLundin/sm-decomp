@@ -6,6 +6,7 @@ use crate::display::control::{
     BgMode, FixedColor, Layers, MainScreen, MainWindowMask, ScreenSettings, SubScreen,
     SubWindowMask,
 };
+use crate::display::preparation::Field as DisplayField;
 use crate::display::registers::{
     A1B0, A1B1, A1T0L, A1T1L, A2A1L, BBAD1, BG1HOFS, BG1SC, BG2SC, BG3SC, BG4SC, BG12NBA, BG34NBA,
     BGMODE, CGADD, CGADSUB, CGWSEL, COLDATA, DAS0L, DAS1H, DAS1L, DAS10, DMAP0, DMAP1, HDMAEN,
@@ -74,14 +75,14 @@ pub fn pause_graphics<H: Host + ?Sized>(paused: bool, game: &mut H) {
         (3, 0x51, 0x49, 0x5a)
     };
     register_writes! { game;
-        mirror(OBSEL as u16, objects, 0x52, false); show_mirror(BgMode::MODE1_BG3_PRIORITY, 0x55, false);
-        mirror(BG12NBA as u16, 0, 0x5d, true); mirror(BG34NBA as u16, 4, 0x5e, true);
-        mirror(BG1SC as u16, bg1, 0x58, true); mirror(BG2SC as u16, bg2, 0x59, true);
-        mirror(BG3SC as u16, bg3, 0x5a, true); mirror(BG4SC as u16, 0, 0x5c, true);
+        mirror(OBSEL as u16, objects, DisplayField::ObjectLayout, false); show_mirror(BgMode::MODE1_BG3_PRIORITY, DisplayField::Mode, false);
+        mirror(BG12NBA as u16, 0, DisplayField::Characters0, true); mirror(BG34NBA as u16, 4, DisplayField::Characters1, true);
+        mirror(BG1SC as u16, bg1, DisplayField::Screens0, true); mirror(BG2SC as u16, bg2, DisplayField::Screens1, true);
+        mirror(BG3SC as u16, bg3, DisplayField::Screens2, true); mirror(BG4SC as u16, 0, DisplayField::Screens3, true);
     }
     if paused {
         register_writes! { game;
-            show_mirror(MainScreen(Layers::of(true, true, true, false, true)), 0x69, false); mirror(MOSAIC as u16, 0, 0x57, false);
+            show_mirror(MainScreen(Layers::of(true, true, true, false, true)), DisplayField::MainLayers, false); mirror(MOSAIC as u16, 0, DisplayField::Mosaic, false);
         }
         for field in [
             crate::display::preparation::Field::FixedColor0,
@@ -97,21 +98,21 @@ pub fn pause_graphics<H: Host + ?Sized>(paused: bool, game: &mut H) {
 /// The ordered CPU I/O and OAM reset.
 pub fn initialize_io_and_oam<H: Host + ?Sized>(brightness: Option<u8>, game: &mut H) {
     register_writes! { game;
-        mirror(NMITIMEN as u16, 1, 0x84, false); byte(WRIO as u16, 0);
+        mirror(NMITIMEN as u16, 1, DisplayField::NmiEnable, false); byte(WRIO as u16, 0);
         byte(WRMPYA as u16, 0); byte(WRMPYB as u16, 0);
         byte(WRDIVL as u16, 0); byte(WRDIVH as u16, 0);
         byte(WRDIVB as u16, 0); byte(HTIMEL as u16, 0);
         byte(HTIMEH as u16, 0); byte(VTIMEL as u16, 0);
         byte(VTIMEH as u16, 0); byte(MDMAEN as u16, 0);
-        mirror(HDMAEN as u16, 0, 0x85, false); mirror(MEMSEL as u16, 1, 0x86, false);
+        mirror(HDMAEN as u16, 0, DisplayField::HdmaEnable, false); mirror(MEMSEL as u16, 1, DisplayField::MemorySelect, false);
     }
     if let Some(value) = brightness {
-        write_register_and_mirror(game, INIDISP as u16, value, 0x51, false);
+        write_register_and_mirror(game, INIDISP as u16, value, DisplayField::Brightness, false);
     }
     register_writes! { game;
-        mirror(OBSEL as u16, 3, 0x52, false);
-        mirror(OAMADDL as u16, 0, 0x53, false);
-        mirror(OAMADDH as u16, 0x80, 0x54, false);
+        mirror(OBSEL as u16, 3, DisplayField::ObjectLayout, false);
+        mirror(OAMADDL as u16, 0, DisplayField::ObjectAddressLow, false);
+        mirror(OAMADDH as u16, 0x80, DisplayField::ObjectAddressHigh, false);
         byte(OAMDATA as u16, 0); byte(OAMDATA as u16, 0);
     }
 }
@@ -120,20 +121,20 @@ pub fn initialize_io_and_oam<H: Host + ?Sized>(brightness: Option<u8>, game: &mu
 pub fn initialize_gameplay<H: Host + ?Sized>(game: &mut H) {
     initialize_io_and_oam(Some(0x80), game);
     register_writes! { game;
-        show_mirror(BgMode::MODE1_BG3_PRIORITY, 0x55, false); mirror(MOSAIC as u16, 0, 0x57, false);
-        mirror(BG12NBA as u16, 0, 0x5d, true); mirror(BG34NBA as u16, 4, 0x5e, true);
-        mirror(BG1SC as u16, 0x51, 0x58, true); mirror(BG2SC as u16, 0x49, 0x59, true);
-        mirror(BG3SC as u16, 0x5a, 0x5a, true); mirror(BG4SC as u16, 0, 0x5c, true);
-        byte(VMAIN as u16, 0); mirror(W12SEL as u16, 0, 0x60, false);
-        mirror(W12SEL as u16, 0, 0x60, false); mirror(W34SEL as u16, 0, 0x61, false);
-        mirror(WOBJSEL as u16, 0, 0x62, false); mirror(WH0 as u16, 0, 0x63, false);
-        mirror(WH1 as u16, 0, 0x64, false); mirror(WH2 as u16, 0, 0x65, false);
-        mirror(WH3 as u16, 0, 0x66, false); mirror(WBGLOG as u16, 0, 0x67, false);
-        mirror(WOBJLOG as u16, 0, 0x68, false); show_mirror(MainScreen(Layers::of(true, true, true, false, true)), 0x69, false);
-        show_mirror(MainWindowMask(Layers::NONE), 0x6c, false); show_mirror(SubScreen(Layers::NONE), 0x6b, false);
-        show_mirror(SubWindowMask(Layers::NONE), 0x6d, false); mirror(CGWSEL as u16, 0, 0x6e, false);
-        mirror(CGADSUB as u16, 0, 0x71, false); show(FixedColor::all(0));
-        show_mirror(ScreenSettings::STANDARD, 0x77, false);
+        show_mirror(BgMode::MODE1_BG3_PRIORITY, DisplayField::Mode, false); mirror(MOSAIC as u16, 0, DisplayField::Mosaic, false);
+        mirror(BG12NBA as u16, 0, DisplayField::Characters0, true); mirror(BG34NBA as u16, 4, DisplayField::Characters1, true);
+        mirror(BG1SC as u16, 0x51, DisplayField::Screens0, true); mirror(BG2SC as u16, 0x49, DisplayField::Screens1, true);
+        mirror(BG3SC as u16, 0x5a, DisplayField::Screens2, true); mirror(BG4SC as u16, 0, DisplayField::Screens3, true);
+        byte(VMAIN as u16, 0); mirror(W12SEL as u16, 0, DisplayField::WindowSelection0, false);
+        mirror(W12SEL as u16, 0, DisplayField::WindowSelection0, false); mirror(W34SEL as u16, 0, DisplayField::WindowSelection1, false);
+        mirror(WOBJSEL as u16, 0, DisplayField::WindowSelection2, false); mirror(WH0 as u16, 0, DisplayField::WindowPositions0, false);
+        mirror(WH1 as u16, 0, DisplayField::WindowPositions1, false); mirror(WH2 as u16, 0, DisplayField::WindowPositions2, false);
+        mirror(WH3 as u16, 0, DisplayField::WindowPositions3, false); mirror(WBGLOG as u16, 0, DisplayField::WindowLogic0, false);
+        mirror(WOBJLOG as u16, 0, DisplayField::WindowLogic1, false); show_mirror(MainScreen(Layers::of(true, true, true, false, true)), DisplayField::MainLayers, false);
+        show_mirror(MainWindowMask(Layers::NONE), DisplayField::MainWindow, false); show_mirror(SubScreen(Layers::NONE), DisplayField::SubLayers, false);
+        show_mirror(SubWindowMask(Layers::NONE), DisplayField::SubWindow, false); mirror(CGWSEL as u16, 0, DisplayField::NextColorSelection, false);
+        mirror(CGADSUB as u16, 0, DisplayField::NextColorMath, false); show(FixedColor::all(0));
+        show_mirror(ScreenSettings::STANDARD, DisplayField::Geometry, false);
     }
     word!(game.OAM_NEXT_PTR = 0);
     word_transfers!(game, ascending, 1023; native(0x3000) <- value(0));

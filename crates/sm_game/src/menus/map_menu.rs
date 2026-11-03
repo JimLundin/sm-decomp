@@ -4,6 +4,7 @@ use super::prelude::*;
 use super::save_slots::load_area_map;
 use crate::constants::{bank_81::*, bank_82::*};
 use crate::display::control::{Layers, MainScreen, MainWindowMask, SubScreen, SubWindowMask};
+use crate::display::preparation::Field as DisplayField;
 use crate::imported::{Imported, grid_word, word as table_word};
 use crate::menu_state::set_menu_byte;
 use crate::menu_state::{MENU, MenuState, WORDS};
@@ -188,8 +189,8 @@ fn begin_area_window<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H, _: &m
         crate::display::preparation::Store::Owned,
     );
     crate::display::sequence::register_writes! { game;
-        show_mirror(SubScreen(Layers::of(false, false, true, false, false)), 0x6d, false); show(SubWindowMask(Layers::of(false, false, true, false, false)));
-        mirror(CGWSEL as u16, 2, 0x6f, true); mirror(CGADSUB as u16, 0x25, 0x72, true);
+        show_mirror(SubScreen(Layers::of(false, false, true, false, false)), DisplayField::SubWindow, false); show(SubWindowMask(Layers::of(false, false, true, false, false)));
+        mirror(CGWSEL as u16, 2, DisplayField::ColorSelection, true); mirror(CGADSUB as u16, 0x25, DisplayField::ColorMath, true);
     }
     game.store_display_control_byte(
         crate::display::preparation::Field::FixedColor2,
@@ -207,7 +208,13 @@ fn begin_area_window<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H, _: &m
         crate::display::preparation::Store::Owned,
     );
     super::menu_window::initialize(game);
-    crate::display::sequence::write_register_and_mirror(game, HDMAEN as u16, 0xc, 0x85, true);
+    crate::display::sequence::write_register_and_mirror(
+        game,
+        HDMAEN as u16,
+        0xc,
+        DisplayField::HdmaEnable,
+        true,
+    );
     configure_area_window(game);
     crate::hdma_objects::clear_hdma_flags(game);
     let index = (menu.menu_index as u8).wrapping_add(1);
@@ -220,9 +227,9 @@ fn configure_area_window<H: Host + ?Sized>(game: &mut H) {
         crate::display::preparation::Store::Owned,
     );
     crate::display::sequence::register_writes! { game;
-        show_mirror(MainScreen(Layers::of(true, true, false, false, true)), 0x6c, false); show(MainWindowMask(Layers::of(true, true, false, false, true)));
-        mirror(W12SEL as u16, 0x23, 0x60, true); mirror(W34SEL as u16, 3, 0x61, true);
-        mirror(WOBJSEL as u16, 0x23, 0x62, true);
+        show_mirror(MainScreen(Layers::of(true, true, false, false, true)), DisplayField::MainWindow, false); show(MainWindowMask(Layers::of(true, true, false, false, true)));
+        mirror(W12SEL as u16, 0x23, DisplayField::WindowSelection0, true); mirror(W34SEL as u16, 3, DisplayField::WindowSelection1, true);
+        mirror(WOBJSEL as u16, 0x23, DisplayField::WindowSelection2, true);
     }
 }
 fn open_area_window<H: Host + ?Sized>(
@@ -485,8 +492,8 @@ fn begin_room_window<H: Host + ?Sized>(
         crate::display::preparation::Store::Owned,
     );
     crate::display::sequence::register_writes! { game;
-        mirror(W12SEL as u16, 0x32, 0x60, true); mirror(W34SEL as u16, 2, 0x61, true);
-        mirror(CGADSUB as u16, 5, 0x72, true); mirror(WOBJSEL as u16, 0x22, 0x62, true);
+        mirror(W12SEL as u16, 0x32, DisplayField::WindowSelection0, true); mirror(W34SEL as u16, 2, DisplayField::WindowSelection1, true);
+        mirror(CGADSUB as u16, 5, DisplayField::ColorMath, true); mirror(WOBJSEL as u16, 0x22, DisplayField::WindowSelection2, true);
     }
     game.store_display_control_byte(
         crate::display::preparation::Field::Characters0,
@@ -527,7 +534,13 @@ fn begin_room_window<H: Host + ?Sized>(
     );
     super::menu_window::load_velocities(crate::gameplay_context::navigation(game).area, game);
     super::menu_window::project(game);
-    crate::display::sequence::write_register_and_mirror(game, HDMAEN as u16, 0xc, 0x85, true);
+    crate::display::sequence::write_register_and_mirror(
+        game,
+        HDMAEN as u16,
+        0xc,
+        DisplayField::HdmaEnable,
+        true,
+    );
     menu.menu_index = menu.menu_index.wrapping_add(1);
     game.queue_sound(0, 0x3b_u8, 6);
 }
@@ -802,8 +815,8 @@ fn begin_return_window<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H, _: 
     super::menu_window::project(game);
     menu.menu_index = menu.menu_index.wrapping_add(1);
     crate::display::sequence::register_writes! { game;
-        mirror(HDMAEN as u16, 0xc, 0x85, true); mirror(W12SEL as u16, 0x32, 0x60, true);
-        mirror(W34SEL as u16, 2, 0x61, true);
+        mirror(HDMAEN as u16, 0xc, DisplayField::HdmaEnable, true); mirror(W12SEL as u16, 0x32, DisplayField::WindowSelection0, true);
+        mirror(W34SEL as u16, 2, DisplayField::WindowSelection1, true);
     }
     game.store_display_control_byte(
         crate::display::preparation::Field::Characters0,

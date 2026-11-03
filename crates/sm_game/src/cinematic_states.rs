@@ -16,7 +16,6 @@ use crate::display::preparation::Field;
 use crate::display::registers as reg;
 use crate::display_refresh::GraphicsAsset;
 use crate::menu_state::OptionsMenu;
-use crate::ram::mirror;
 use crate::ram::word;
 use crate::visual_state::CinematicFade;
 
@@ -138,7 +137,7 @@ pub fn nintendo_logo<H: Host + ?Sized>(game: &mut H) -> u8 {
             game,
             reg::INIDISP as u16,
             0x8f,
-            mirror::INIDISP,
+            Field::Brightness,
             false,
         );
         crate::sprite_drawing::reset_cursor(game);
@@ -149,10 +148,10 @@ pub fn nintendo_logo<H: Host + ?Sized>(game: &mut H) -> u8 {
         word!(game.NMI_COPY_SAMUS_BOTTOM_HALF_SRC = 0);
         crate::display_refresh::initialize_io_and_oam(None, game);
         crate::display::sequence::register_writes! { game;
-            mirror(reg::BGMODE as u16, 1, 0x55, false); mirror(reg::MOSAIC as u16, 0, 0x57, false);
-            mirror(reg::BG1SC as u16, 0, 0x58, false); mirror(reg::BG2SC as u16, 0, 0x59, false);
-            mirror(reg::BG3SC as u16, 0, 0x5a, false); mirror(reg::BG4SC as u16, 0, 0x5c, false);
-            mirror(reg::BG12NBA as u16, 0, 0x5d, false); mirror(reg::BG34NBA as u16, 0, 0x5e, false);
+            mirror(reg::BGMODE as u16, 1, Field::Mode, false); mirror(reg::MOSAIC as u16, 0, Field::Mosaic, false);
+            mirror(reg::BG1SC as u16, 0, Field::Screens0, false); mirror(reg::BG2SC as u16, 0, Field::Screens1, false);
+            mirror(reg::BG3SC as u16, 0, Field::Screens2, false); mirror(reg::BG4SC as u16, 0, Field::Screens3, false);
+            mirror(reg::BG12NBA as u16, 0, Field::Characters0, false); mirror(reg::BG34NBA as u16, 0, Field::Characters1, false);
             byte(reg::BG1HOFS as u16, 0); byte(reg::BG1HOFS as u16, 0);
             byte(reg::BG1VOFS as u16, 0); byte(reg::BG1VOFS as u16, 0);
             byte(reg::BG2HOFS as u16, 0); byte(reg::BG2HOFS as u16, 0);
@@ -161,25 +160,25 @@ pub fn nintendo_logo<H: Host + ?Sized>(game: &mut H) -> u8 {
             byte(reg::BG3VOFS as u16, 0); byte(reg::BG3VOFS as u16, 0);
             byte(reg::BG4HOFS as u16, 0); byte(reg::BG4HOFS as u16, 0);
             byte(reg::BG4VOFS as u16, 0); byte(reg::BG4VOFS as u16, 0);
-            byte(reg::VMAIN as u16, 0); mirror(reg::M7SEL as u16, 0, 0x5f, false);
+            byte(reg::VMAIN as u16, 0); mirror(reg::M7SEL as u16, 0, Field::AffineSelection, false);
             byte(reg::M7A as u16, 0); byte(reg::M7B as u16, 0);
             byte(reg::M7C as u16, 0); byte(reg::M7D as u16, 0);
             byte(reg::M7X as u16, 0); byte(reg::M7Y as u16, 0);
-            mirror(reg::W12SEL as u16, 0, 0x60, false); mirror(reg::W34SEL as u16, 0, 0x61, false);
-            mirror(reg::WOBJSEL as u16, 0, 0x62, false); mirror(reg::WH0 as u16, 0, 0x63, false);
-            mirror(reg::WH1 as u16, 0, 0x64, false); mirror(reg::WH2 as u16, 0, 0x65, false);
-            mirror(reg::WH3 as u16, 0, 0x66, false); mirror(reg::WBGLOG as u16, 0, 0x67, false);
-            mirror(reg::WOBJLOG as u16, 0, 0x68, false); mirror(reg::TM as u16, 0x10, 0x69, false);
-            mirror(reg::TMW as u16, 0, 0x6c, false); mirror(reg::TS as u16, 0, 0x6b, false);
-            mirror(reg::TSW as u16, 0, 0x6d, false); mirror(reg::CGWSEL as u16, 0, 0x6e, false);
-            mirror(reg::CGADSUB as u16, 0, 0x71, false); byte(reg::COLDATA as u16, 0xe0);
+            mirror(reg::W12SEL as u16, 0, Field::WindowSelection0, false); mirror(reg::W34SEL as u16, 0, Field::WindowSelection1, false);
+            mirror(reg::WOBJSEL as u16, 0, Field::WindowSelection2, false); mirror(reg::WH0 as u16, 0, Field::WindowPositions0, false);
+            mirror(reg::WH1 as u16, 0, Field::WindowPositions1, false); mirror(reg::WH2 as u16, 0, Field::WindowPositions2, false);
+            mirror(reg::WH3 as u16, 0, Field::WindowPositions3, false); mirror(reg::WBGLOG as u16, 0, Field::WindowLogic0, false);
+            mirror(reg::WOBJLOG as u16, 0, Field::WindowLogic1, false); mirror(reg::TM as u16, 0x10, Field::MainLayers, false);
+            mirror(reg::TMW as u16, 0, Field::MainWindow, false); mirror(reg::TS as u16, 0, Field::SubLayers, false);
+            mirror(reg::TSW as u16, 0, Field::SubWindow, false); mirror(reg::CGWSEL as u16, 0, Field::NextColorSelection, false);
+            mirror(reg::CGADSUB as u16, 0, Field::NextColorMath, false); byte(reg::COLDATA as u16, 0xe0);
         }
         set_fixed_color([32, 64, 0x80], game);
         crate::display::sequence::write_register_and_mirror(
             game,
             reg::SETINI as u16,
             0,
-            mirror::SETINI,
+            Field::Geometry,
             false,
         );
         GraphicsAsset::Decompress(0x9580d8, 0x15000).load(game);
@@ -220,7 +219,7 @@ pub fn nintendo_logo<H: Host + ?Sized>(game: &mut H) -> u8 {
                         game,
                         reg::INIDISP as u16,
                         0x8f,
-                        mirror::INIDISP,
+                        Field::Brightness,
                         false,
                     );
                     break;

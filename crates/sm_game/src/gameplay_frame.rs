@@ -8,6 +8,7 @@ use crate::animated_tiles::execution as animated_tiles;
 use crate::constants::game_states::*;
 use crate::constants::loading_game_states::*;
 use crate::demo_rooms;
+use crate::display::preparation::Field as DisplayField;
 use crate::display::registers::{HDMAEN, MDMAEN, VMADDH, VMADDL, VMAIN};
 use crate::display::sequence::{register_writes, write_register_and_mirror};
 use crate::display_refresh;
@@ -602,7 +603,7 @@ fn next_demo<H: Host>(game: &mut H) -> CoroutineRet {
 /// Pause phase: enter the pause screen.
 fn setup_pause<H: Host>(game: &mut H) -> CoroutineRet {
     crate::hdma_objects::set_hdma_enabled(false, game);
-    write_register_and_mirror(game, HDMAEN as u16, 0, 0x85, true);
+    write_register_and_mirror(game, HDMAEN as u16, 0, DisplayField::HdmaEnable, true);
     animated_tiles::set_enabled(game.runtime().session_mut(), false);
     display_refresh::capture_pause_background(game);
     match pause_controls::hook_address(true, game) {
@@ -892,7 +893,7 @@ fn prepare_player_projectiles<H: Host>(game: &mut H) {
 /// Upload the options screen tiles.
 fn upload_options_tiles<H: Host>(game: &mut H) {
     register_writes! { game;
-        mirror(VMADDL as u16, 0, 0x72, true); byte(VMADDH as u16, 0x58);
+        mirror(VMADDL as u16, 0, DisplayField::ColorMath, true); byte(VMADDH as u16, 0x58);
         byte(VMAIN as u16, 0x80);
     }
     crate::display::transfer::setup_transfer(u16::from_ne_bytes([1, 0x18]), 0x8edc00, 0x800, game);

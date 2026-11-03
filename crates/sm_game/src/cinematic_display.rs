@@ -40,27 +40,27 @@ pub fn configure_cinematic_display<H: crate::menus::host::Host + ?Sized>(
         0
     };
     crate::display::sequence::register_writes! { game;
-        show_mirror(Brightness::BLANK_DARK, 0x51, false); mirror(OBSEL as u16, sprites, 0x52, false);
-        mirror(BGMODE as u16, mode, 0x55, false); mirror(M7SEL as u16, selection, 0x5f, false);
+        show_mirror(Brightness::BLANK_DARK, Field::Brightness, false); mirror(OBSEL as u16, sprites, Field::ObjectLayout, false);
+        mirror(BGMODE as u16, mode, Field::Mode, false); mirror(M7SEL as u16, selection, Field::AffineSelection, false);
     }
     match display {
         Title | Station | Escape => {
             crate::frame_display_byte!(game, Field::Screens0 => 0);
             crate::display::sequence::register_writes! { game;
-                mirror(BG1SC as u16, 0, 0x59, false); mirror(BG2SC as u16, 0, 0x5a, false);
-                mirror(BG3SC as u16, 0, 0x5c, false); mirror(BG4SC as u16, 0, 0x5d, false);
-                mirror(BG12NBA as u16, 0, 0x5e, false); byte(BG34NBA as u16, 0);
+                mirror(BG1SC as u16, 0, Field::Screens1, false); mirror(BG2SC as u16, 0, Field::Screens2, false);
+                mirror(BG3SC as u16, 0, Field::Screens3, false); mirror(BG4SC as u16, 0, Field::Characters0, false);
+                mirror(BG12NBA as u16, 0, Field::Characters1, false); byte(BG34NBA as u16, 0);
             }
         }
         Intro => {
             crate::display::sequence::register_writes! { game;
-                mirror(BG1SC as u16, 0x50, 0x58, true); mirror(BG2SC as u16, 0x48, 0x59, true);
-                mirror(BG3SC as u16, 0x4c, 0x5a, true);
+                mirror(BG1SC as u16, 0x50, Field::Screens0, true); mirror(BG2SC as u16, 0x48, Field::Screens1, true);
+                mirror(BG3SC as u16, 0x4c, Field::Screens2, true);
             }
             crate::frame_display_byte!(game, Field::Screens3 => 0);
             crate::display::sequence::register_writes! { game;
-                mirror(BG4SC as u16, 0, 0x5d, false); byte(BG12NBA as u16, 0);
-                mirror(BG34NBA as u16, 4, 0x5e, true);
+                mirror(BG4SC as u16, 0, Field::Characters0, false); byte(BG12NBA as u16, 0);
+                mirror(BG34NBA as u16, 4, Field::Characters1, true);
             }
         }
         Landing => {
@@ -68,21 +68,21 @@ pub fn configure_cinematic_display<H: crate::menus::host::Host + ?Sized>(
                 game,
                 BG1SC as u16,
                 0x5c,
-                0x58,
+                Field::Screens0,
                 true,
             );
             crate::frame_display_byte!(game, Field::Screens1 => 0);
             crate::display::sequence::register_writes! { game;
-                mirror(BG2SC as u16, 0, 0x5a, false); mirror(BG3SC as u16, 0, 0x5c, false);
-                byte(BG4SC as u16, 0); mirror(BG12NBA as u16, 6, 0x5d, true);
-                mirror(BG34NBA as u16, 0, 0x5e, true);
+                mirror(BG2SC as u16, 0, Field::Screens2, false); mirror(BG3SC as u16, 0, Field::Screens3, false);
+                byte(BG4SC as u16, 0); mirror(BG12NBA as u16, 6, Field::Characters0, true);
+                mirror(BG34NBA as u16, 0, Field::Characters1, true);
             }
         }
         Credits => {
             crate::display::sequence::register_writes! { game;
-                mirror(BG1SC as u16, 0x48, 0x58, true); mirror(BG2SC as u16, 0x4c, 0x59, true);
-                mirror(BG3SC as u16, 0x24, 0x5a, true); mirror(BG4SC as u16, 0, 0x5c, true);
-                mirror(BG12NBA as u16, 0x54, 0x5d, true); mirror(BG34NBA as u16, 2, 0x5e, true);
+                mirror(BG1SC as u16, 0x48, Field::Screens0, true); mirror(BG2SC as u16, 0x4c, Field::Screens1, true);
+                mirror(BG3SC as u16, 0x24, Field::Screens2, true); mirror(BG4SC as u16, 0, Field::Screens3, true);
+                mirror(BG12NBA as u16, 0x54, Field::Characters0, true); mirror(BG34NBA as u16, 2, Field::Characters1, true);
             }
         }
     }
@@ -93,7 +93,7 @@ pub fn configure_cinematic_display<H: crate::menus::host::Host + ?Sized>(
         _ => 0x11,
     };
     crate::display::sequence::register_writes! { game;
-        mirror(TM as u16, layers, 0x69, false); show_mirror(SubScreen(Layers::NONE), 0x6b, false);
+        mirror(TM as u16, layers, Field::MainLayers, false); show_mirror(SubScreen(Layers::NONE), Field::SubLayers, false);
     }
     if tiled {
         for field in [
@@ -124,8 +124,8 @@ pub fn configure_cinematic_display<H: crate::menus::host::Host + ?Sized>(
         return;
     }
     crate::display::sequence::register_writes! { game;
-        show_mirror(MainWindowMask(Layers::NONE), 0x6c, false); byte(VMAIN as u16, 0);
-        mirror(CGWSEL as u16, 0, 0x6e, false); mirror(CGADSUB as u16, 0, 0x71, false);
+        show_mirror(MainWindowMask(Layers::NONE), Field::MainWindow, false); byte(VMAIN as u16, 0);
+        mirror(CGWSEL as u16, 0, Field::NextColorSelection, false); mirror(CGADSUB as u16, 0, Field::NextColorMath, false);
     }
     if escape {
         crate::frame_display_byte!(game, Field::ColorSelection => 0);
@@ -136,7 +136,13 @@ pub fn configure_cinematic_display<H: crate::menus::host::Host + ?Sized>(
         show(crate::display::control::FixedColor::all(0));
     }
     if display != Station {
-        crate::display::sequence::write_register_and_mirror(game, SETINI as u16, 0, 0x77, false);
+        crate::display::sequence::write_register_and_mirror(
+            game,
+            SETINI as u16,
+            0,
+            Field::Geometry,
+            false,
+        );
     }
     if !title {
         if !escape {
