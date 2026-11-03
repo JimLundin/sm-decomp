@@ -115,9 +115,8 @@ pub mod reaction {
     pub const SHOT: u32 = 0xa8_b40c;
 }
 
-/// $7E:178C, the enemy graphics drawn hook (a long pointer), and the hook
-/// Magdollite installs there: its palette cycle at $A8:B0B2.
-const GFX_DRAWN_HOOK: usize = 0x178c;
+/// The hook Magdollite installs as the enemy graphics drawn hook ($7E:178C,
+/// a long pointer): its palette cycle at $A8:B0B2.
 const PALETTE_CYCLE_HOOK: u16 = 0xb0b2;
 const AI_BANK: u16 = 0xa8;
 
@@ -273,8 +272,9 @@ pub fn initialize<L: Lease>(game: &mut L) {
         *edit.grow_subspeed() = grow_subspeed;
     }
     let part = current(game);
-    game.set_slot_word(GFX_DRAWN_HOOK, PALETTE_CYCLE_HOOK);
-    game.set_slot_word(GFX_DRAWN_HOOK + 2, AI_BANK);
+    let hook = &mut game.session_mut().actors.drawing.hook_address;
+    hook[..2].copy_from_slice(&PALETTE_CYCLE_HOOK.to_le_bytes());
+    hook[2..].copy_from_slice(&AI_BANK.to_le_bytes());
     let palette = Magdollite::of(game, part).actor().palette;
     word!(
         game.VARIABLES_FOR_ENEMY_GRAPHICS_DRAWN_HOOK[HOOK_PALETTE] =
