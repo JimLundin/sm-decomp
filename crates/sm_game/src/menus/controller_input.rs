@@ -316,12 +316,34 @@ pub fn reset_binding_choices<H: Host + ?Sized>(game: &mut H) {
     load_binding_choices(game);
 }
 
+/// The controller binding word at `address`, an entry of the binding
+/// address table ($82:F54A).
+fn binding_word(address: usize) -> crate::controller_state::Word {
+    use crate::controller_state::Word;
+    [
+        Word::ButtonConfigShootX,
+        Word::ButtonConfigJumpA,
+        Word::ButtonConfigRunB,
+        Word::ButtonConfigItemcancelY,
+        Word::ButtonConfigItemswitch,
+        Word::ButtonConfigAimDownL,
+        Word::ButtonConfigAimUpR,
+    ]
+    .into_iter()
+    .find(|word| word.address() == address)
+    .expect("binding address names a controller binding word")
+}
+
 pub fn store_binding_choices<H: Host + ?Sized>(game: &mut H) -> u8 {
     for index in 0..7 {
         let binding =
             BINDING_BUTTONS[bindings::get_at(game, Array::ControllerBindings, index) as usize];
-        let address = crate::menu_lists::binding_address(game, index);
-        crate::word_transfers!(game, ascending, 1; native(address) <- value(binding));
+        let address = usize::from(crate::menu_lists::binding_address(game, index));
+        crate::gameplay_context::Access::set_gameplay_word(
+            game,
+            crate::gameplay_context::Word::Input(binding_word(address)),
+            binding,
+        );
     }
     0
 }
