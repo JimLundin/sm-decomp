@@ -46,10 +46,6 @@ pub fn initialize_title_gradient<H: crate::menus::host::Host + ?Sized>(game: &mu
     game.spawn_hdma(0x88, &HdmaObjectDefinition::new(0, 0x31, 0xeb85));
 }
 
-pub fn darken_fireflea_room<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    crate::fx_lighting::darken_current(game);
-}
-
 pub fn initialize_fireflea_lighting<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     crate::fx_lighting::begin_current(game);
     game.spawn_hdma(0x88, &HdmaObjectDefinition::new(0x42, 0x11, 0xb0ac));
