@@ -844,10 +844,13 @@ pub fn set_invisible<L: Lease>(k: u16, game: &mut L) {
 /// Instruction - set up palette transition to black ($AA:B238). Was
 /// `Torizo_Instr_35`.
 pub fn fade_to_black<L: Lease>(game: &mut L) {
-    crate::word_transfers!(game, descending, 16;
-        le(TARGET_PALETTES, 175) <- value(0),
-        le(TARGET_PALETTES, 159) <- value(0),
-    );
+    // Target colours 160..=175 and 144..=159, last first, in pairs.
+    let targets = &mut game.session_mut().presentation.visual_mut().targets;
+    for index in (0..16).rev() {
+        targets[160 + index] = 0;
+        targets[144 + index] = 0;
+    }
+    game.words_stored();
 }
 
 /// Instruction - set boss bit, queue elevator music, spawn item drops
