@@ -6,7 +6,7 @@
 //! Was `CeresSteam_*` and `CeresDoor_*` in the original decompilation.
 use crate::actors::boss_lease::BossLease;
 use crate::actors::host::{BossEffects, Death, abs16};
-use crate::actors::slot_view::{SlotState, slot_view};
+use crate::actors::slot_view::{SlotState, slot_index, slot_view};
 use crate::constants::enemy_properties::{
     K_ENEMY_PROPS_DISABLE_SAMUS_COLL, K_ENEMY_PROPS_INVISIBLE, K_ENEMY_PROPS_TANGIBLE,
 };
@@ -88,11 +88,6 @@ const BIG_EXPLOSION_SOUND: u8 = 0x25;
 const RIDLEY_ESCAPING: u16 = 1;
 const ESCAPE_STARTED: u16 = 2;
 const ELEVATOR_ROTATING: u16 = 0x8000;
-/// The enemy spawn records ($7E:7000), 40h bytes per enemy, and their
-/// graphical offset words.
-const ENEMY_SPAWN_DATA: usize = 0x7000;
-const SPAWN_GRAPHICAL_X_OFFSET: usize = 0x10;
-const SPAWN_GRAPHICAL_Y_OFFSET: usize = 0x12;
 
 fn current<L: Lease + ?Sized>(game: &L) -> u16 {
     game.current_enemy()
@@ -212,11 +207,13 @@ pub fn steam_rotating_offset<L: Lease + ?Sized>(k: u16, game: &mut L) {
     };
     let crate::geometry::Point { x, y } =
         crate::cinematic::project_cinematic_point_reads(point, |at| game.slot_word(at));
-    let record = ENEMY_SPAWN_DATA + usize::from(game.current_enemy());
+    let record = slot_index(game.current_enemy());
     let x_offset = x.wrapping_sub(Steam::of(game, k).actor().x.whole);
-    store_word(game, record + SPAWN_GRAPHICAL_X_OFFSET, x_offset);
+    game.session_mut().actors.saved[record].draw_offset.x =
+        u16::from_le_bytes(x_offset.to_ne_bytes());
     let y_offset = y.wrapping_sub(Steam::of(game, k).actor().y.whole);
-    store_word(game, record + SPAWN_GRAPHICAL_Y_OFFSET, y_offset);
+    game.session_mut().actors.saved[record].draw_offset.y =
+        u16::from_le_bytes(y_offset.to_ne_bytes());
 }
 
 /// Instruction - decrement activation timer and go to [[Y]] if non-zero,
