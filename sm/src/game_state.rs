@@ -229,7 +229,44 @@ pub struct WorkRam(
     Rc<Cell<u64>>,
     Rc<std::cell::RefCell<SourcePublications>>,
     Rc<Cell<u64>>,
+    Rc<WriteLog>,
 );
+
+/// The RAM ranges written while a log is open, in write order, so a kept Session can take
+/// those bytes instead of decoding the whole RAM again. A log of more than `LIMIT` bytes
+/// overflows, and its reader decodes the RAM as before.
+#[derive(Default)]
+pub(crate) struct WriteLog {
+    open: Cell<bool>,
+    overflowed: Cell<bool>,
+    bytes: Cell<usize>,
+    ranges: std::cell::RefCell<Vec<Range<usize>>>,
+}
+impl WriteLog {
+    const LIMIT: usize = 4096;
+    fn note(&self, range: Range<usize>) {
+        if !self.open.get() || self.overflowed.get() || range.is_empty() {
+            return;
+        }
+        let mut ranges = self.ranges.borrow_mut();
+        if let Some(last) = ranges.last_mut() {
+            if last.start <= range.start && range.end <= last.end {
+                return;
+            }
+        }
+        let bytes = self.bytes.get() + range.len();
+        if bytes > Self::LIMIT {
+            self.overflowed.set(true);
+            ranges.clear();
+            return;
+        }
+        self.bytes.set(bytes);
+        match ranges.last_mut() {
+            Some(last) if last.end == range.start => last.end = range.end,
+            _ => ranges.push(range),
+        }
+    }
+}
 #[forbid(unsafe_code)]
 impl WorkRam {
     pub(crate) const LEN: usize = 0x20000;
@@ -246,6 +283,7 @@ impl WorkRam {
             Rc::new(Cell::new(0)),
             Rc::new(std::cell::RefCell::new(SourcePublications::default())),
             Rc::new(Cell::new(0)),
+            Rc::new(WriteLog::default()),
         )
     }
 
@@ -257,6 +295,7 @@ impl WorkRam {
         let cell = &self.0.bytes[at];
         self.note_write();
         self.note_owned_write(at..at + 1);
+        self.9.note(at..at + 1);
         cell.set(value);
         self.note_source_publications(at..at + 1, false);
     }
@@ -272,6 +311,7 @@ impl WorkRam {
         if count != 0 {
             self.note_write();
             self.note_owned_write(destination..destination + count);
+            self.9.note(destination..destination + count);
         }
         if destination > source.start {
             for offset in (0..count).rev() {
@@ -302,6 +342,7 @@ impl WorkRam {
         if !cells.is_empty() {
             self.note_write();
             self.note_owned_write(at..end);
+            self.9.note(at..end);
         }
         for (cell, &byte) in cells.iter().zip(input) {
             cell.set(byte);
@@ -314,6 +355,7 @@ impl WorkRam {
         if !cells.is_empty() {
             self.note_write();
             self.note_owned_write(range.clone());
+            self.9.note(range.clone());
         }
         for cell in cells {
             cell.set(value);
@@ -332,6 +374,7 @@ impl WorkRam {
             Rc::clone(&self.6),
             Rc::clone(&self.7),
             Rc::clone(&self.8),
+            Rc::clone(&self.9),
         )
     }
     /// Bump the epoch of every owned RAM group this write overlaps. Every RAM write
@@ -358,6 +401,31 @@ impl WorkRam {
     }
     fn note_write(&self) {
         self.1.set(self.1.get().wrapping_add(1));
+    }
+    /// Start logging the ranges written from here on, dropping any earlier log.
+    pub(crate) fn open_write_log(&self) {
+        let log = &self.9;
+        log.open.set(true);
+        log.overflowed.set(false);
+        log.bytes.set(0);
+        log.ranges.borrow_mut().clear();
+    }
+    /// Open the log unless it is already open, keeping an open log's ranges; whether this
+    /// call opened it.
+    pub(crate) fn start_write_log(&self) -> bool {
+        if self.9.open.get() {
+            return false;
+        }
+        self.open_write_log();
+        true
+    }
+    /// Stop the log: the ranges written since it opened, or `None` when it overflowed or
+    /// was not open.
+    pub(crate) fn close_write_log(&self) -> Option<Vec<Range<usize>>> {
+        let log = &self.9;
+        let open = log.open.replace(false);
+        let ranges = std::mem::take(&mut *log.ranges.borrow_mut());
+        (open && !log.overflowed.get()).then_some(ranges)
     }
     /// Copy many spans as that many `copy_in` calls would, with the same bytes,
     /// epochs and source publication ranks, taking the bookkeeping once.
@@ -425,6 +493,7 @@ impl SpanCopy<'_> {
             self.writes += 1;
             let classes = self.classes[at] | self.classes[at + 1];
             self.by_classes[usize::from(classes)] += 1;
+            self.ram.9.note(at..at + 2);
             self.ram.0.bytes[at].set(low);
             self.ram.0.bytes[at + 1].set(high);
             if self.tracking {
@@ -447,6 +516,7 @@ impl SpanCopy<'_> {
             .iter()
             .fold(0, |all, &class| all | class);
         self.by_classes[usize::from(classes)] += 1;
+        self.ram.9.note(at..end);
         for (cell, &byte) in cells.iter().zip(input) {
             cell.set(byte);
         }
@@ -479,6 +549,7 @@ impl sm_game::session_encoding::Spans for &mut SpanCopy<'_> {
         };
         let classes = &self.classes[at..end];
         self.writes += u64::try_from(classes.len().div_ceil(width)).expect("span count");
+        self.ram.9.note(at..end);
         // A span in no owned group adds to no group epoch.
         if classes.iter().any(|&class| class != 0) {
             for span in classes.chunks(width) {

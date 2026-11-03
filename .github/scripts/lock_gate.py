@@ -47,6 +47,9 @@ def oracle_sample(rows: list[dict[str, Any]], locked: Collection[str], slot: int
 
 
 def oracle_slot() -> int:
+    # ORACLE_SLOT pins the slot, as for comparing planners (sm_pipeline's equivalence test).
+    if os.environ.get("ORACLE_SLOT"):
+        return int(os.environ["ORACLE_SLOT"])
     return int(datetime.datetime.now(datetime.timezone.utc).timestamp()) // (3 * 60 * 60)
 
 
