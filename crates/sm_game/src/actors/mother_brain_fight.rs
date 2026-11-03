@@ -840,7 +840,7 @@ pub trait OwnedWords {
 pub trait Lease:
     State + escape_typewriter::Host + crate::mother_brain_visuals::PaletteHost
 {
-    type Game: Host + crate::hdma_objects::HdmaTable;
+    type Game: Host + crate::hdma_objects::HdmaTable + SessionRam;
     fn foreign<T>(&mut self, action: impl FnOnce(&mut Self::Game) -> T) -> T;
 }
 
@@ -878,7 +878,6 @@ pub trait Host:
     fn spawn_rising_hdma(&mut self) -> u16;
     fn player_mother_brain(&mut self, command: u16);
     fn load_fx_entry(&mut self, index: u16);
-    fn native_word(&mut self, offset: usize) -> u16;
     fn set_native_word(&mut self, offset: usize, value: u16);
     fn samus_contact(&mut self, boxes: u16, x: u16, y: u16) -> Contact;
     /// Whether Samus touches one of the dead Torizo's hitboxes.
@@ -910,7 +909,6 @@ on_game! {
     spawn_plm(block_x: u8, block_y: u8, header: u16) => spawn_plm;
     queue_music(track: u16) => queue_music_delayed;
     run_samus_command(command: u16) -> u16 => command_player;
-    native_word(offset: usize) -> u16 => native_word;
     set_native_word(offset: usize, value: u16) => set_native_word;
     set_boss_bit_for_current_area(mask: u16) => set_boss_bit_for_current_area;
     set_event_happened(event: u16) => set_event_happened;
