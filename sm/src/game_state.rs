@@ -230,7 +230,56 @@ pub struct WorkRam(
     Rc<std::cell::RefCell<SourcePublications>>,
     Rc<Cell<u64>>,
     Rc<WriteLog>,
+    Rc<DeferredExport>,
 );
+
+/// The span layout of one Session export: its runs of written bytes in write order and the
+/// counts its `SpanCopy` adds to the epochs. Every export of one `ExportShape` writes it.
+pub(crate) struct ExportLayout {
+    /// Spans that follow one another in write order, joined.
+    runs: Vec<Range<usize>>,
+    writes: u64,
+    owned_writes: [u64; WRITE_CLASSES.len()],
+    covered: std::cell::OnceCell<TrackedAddresses>,
+}
+impl PartialEq for ExportLayout {
+    fn eq(&self, other: &Self) -> bool {
+        self.runs == other.runs
+            && self.writes == other.writes
+            && self.owned_writes == other.owned_writes
+    }
+}
+impl ExportLayout {
+    /// The bytes the export writes.
+    fn covered(&self) -> &TrackedAddresses {
+        self.covered.get_or_init(|| {
+            let mut covered = TrackedAddresses::default();
+            for at in self.runs.iter().flat_map(Clone::clone) {
+                covered.insert(at);
+            }
+            covered
+        })
+    }
+}
+/// A frame Session export whose bookkeeping RAM has taken but whose bytes it has not: the
+/// first read or write of a byte it covers writes them, as the export would have.
+#[derive(Default)]
+pub(crate) struct DeferredExport {
+    armed: Cell<bool>,
+    state: std::cell::RefCell<Option<Deferred>>,
+}
+struct Deferred {
+    session: Box<sm_game::session::Session>,
+    layout: Rc<ExportLayout>,
+    /// Whether its bytes are in RAM.
+    written: bool,
+    /// The bytes reads took from the Session's projection, which writing the bytes checks.
+    served: Vec<(usize, u8)>,
+}
+impl Deferred {
+    /// How many byte reads the Session's projection answers before the bytes are written.
+    const SERVED: usize = 128;
+}
 
 /// The RAM ranges written while a log is open, in write order, so a kept Session can take
 /// those bytes instead of decoding the whole RAM again. A log of more than `LIMIT` bytes
@@ -284,14 +333,21 @@ impl WorkRam {
             Rc::new(std::cell::RefCell::new(SourcePublications::default())),
             Rc::new(Cell::new(0)),
             Rc::new(WriteLog::default()),
+            Rc::new(DeferredExport::default()),
         )
     }
 
     pub fn read_byte(&self, at: usize) -> u8 {
+        if self.10.armed.get()
+            && let Some(byte) = self.deferred_byte(at)
+        {
+            return byte;
+        }
         self.0.bytes[at].get()
     }
 
     pub fn write_byte(&self, at: usize, value: u8) {
+        self.settle(at..at + 1);
         let cell = &self.0.bytes[at];
         self.note_write();
         self.note_owned_write(at..at + 1);
@@ -308,6 +364,8 @@ impl WorkRam {
         // Check the entire source range, then the destination, before any store.
         let count = self.0.bytes[source.clone()].len();
         assert!(destination <= self.len() - count, "dest is out of bounds");
+        self.settle(source.clone());
+        self.settle(destination..destination + count);
         if count != 0 {
             self.note_write();
             self.note_owned_write(destination..destination + count);
@@ -330,6 +388,7 @@ impl WorkRam {
 
     pub fn copy_out(&self, at: usize, out: &mut [u8]) {
         let end = at.checked_add(out.len()).expect("RAM range overflow");
+        self.settle(at..end);
         let cells = &self.0.bytes[at..end];
         for (byte, cell) in out.iter_mut().zip(cells) {
             *byte = cell.get();
@@ -338,6 +397,7 @@ impl WorkRam {
 
     pub fn copy_in(&self, at: usize, input: &[u8]) {
         let end = at.checked_add(input.len()).expect("RAM range overflow");
+        self.settle(at..end);
         let cells = &self.0.bytes[at..end];
         if !cells.is_empty() {
             self.note_write();
@@ -351,6 +411,7 @@ impl WorkRam {
     }
 
     pub fn fill(&self, range: Range<usize>, value: u8) {
+        self.settle(range.clone());
         let cells = &self.0.bytes[range.clone()];
         if !cells.is_empty() {
             self.note_write();
@@ -375,6 +436,7 @@ impl WorkRam {
             Rc::clone(&self.7),
             Rc::clone(&self.8),
             Rc::clone(&self.9),
+            Rc::clone(&self.10),
         )
     }
     /// Bump the epoch of every owned RAM group this write overlaps. Every RAM write
@@ -430,17 +492,166 @@ impl WorkRam {
     /// Copy many spans as that many `copy_in` calls would, with the same bytes,
     /// epochs and source publication ranks, taking the bookkeeping once.
     pub fn copy_spans<R>(&self, copy: impl FnOnce(&mut SpanCopy<'_>) -> R) -> R {
+        self.settle_deferred();
+        copy(&mut self.span_copy(true, false))
+    }
+    /// `copy_spans`, with the layout the copy wrote.
+    pub(crate) fn copy_spans_recorded(&self, copy: impl FnOnce(&mut SpanCopy<'_>)) -> ExportLayout {
+        self.settle_deferred();
+        let mut writer = self.span_copy(true, true);
+        copy(&mut writer);
+        writer.layout()
+    }
+    fn span_copy(&self, account: bool, record: bool) -> SpanCopy<'_> {
         let publications = self.7.borrow_mut();
         // Nothing else reaches the map while the writer holds it, so neither changes.
-        let tracking = publications.restore_depth == 0 && !publications.last.is_empty();
-        copy(&mut SpanCopy {
+        let tracking = account && publications.restore_depth == 0 && !publications.last.is_empty();
+        SpanCopy {
             ram: self,
             classes: write_classes(),
             publications,
             tracking,
+            account,
+            runs: record.then(Vec::new),
             writes: 0,
             by_classes: [0; 1 << WRITE_CLASSES.len()],
-        })
+        }
+    }
+    /// Whether the write log is open.
+    pub(crate) fn write_log_open(&self) -> bool {
+        self.9.open.get()
+    }
+    /// Take an export's epochs and source publication ranks now, as `copy_spans` takes them
+    /// for `layout`'s spans, and write `session`'s bytes when RAM they cover is next read or
+    /// written. A deferred export of the same layout is overwritten unwritten; one of another
+    /// is written first. The write log must be closed.
+    pub(crate) fn defer_export(
+        &self,
+        session: sm_game::session::Session,
+        layout: &Rc<ExportLayout>,
+    ) {
+        assert!(
+            !self.write_log_open(),
+            "a deferred export with the write log open"
+        );
+        let overwritten = self.10.state.borrow().as_ref().is_some_and(|previous| {
+            // The new export writes every byte an unwritten one of its layout would have.
+            !previous.written && Rc::ptr_eq(&previous.layout, layout)
+        });
+        if !overwritten {
+            self.settle_deferred();
+        }
+        self.account(layout);
+        *self.10.state.borrow_mut() = Some(Deferred {
+            session: Box::new(session),
+            layout: Rc::clone(layout),
+            written: false,
+            served: Vec::new(),
+        });
+        self.10.armed.set(true);
+    }
+    /// The Session of the last deferred export as it was exported: a copy while its bytes are
+    /// deferred, otherwise taken.
+    pub(crate) fn take_deferred_session(&self) -> Option<sm_game::session::Session> {
+        let mut state = self.10.state.borrow_mut();
+        if state.as_ref()?.written {
+            return state.take().map(|deferred| *deferred.session);
+        }
+        state.as_ref().map(|deferred| (*deferred.session).clone())
+    }
+    /// Whether an export's bytes are deferred.
+    #[cfg(sm_verify_dll)]
+    pub(crate) fn export_deferred(&self) -> bool {
+        self.10.armed.get()
+    }
+    /// Forget the last deferred export's Session once its bytes are in RAM.
+    pub(crate) fn forget_written_export(&self) {
+        let mut state = self.10.state.borrow_mut();
+        if state.as_ref().is_some_and(|deferred| deferred.written) {
+            *state = None;
+        }
+    }
+    /// The bookkeeping `copy_spans` takes for `layout`'s spans, without their bytes.
+    fn account(&self, layout: &ExportLayout) {
+        self.1.set(self.1.get().wrapping_add(layout.writes));
+        for (class, &writes) in layout.owned_writes.iter().enumerate() {
+            if writes != 0 {
+                self.add_owned_writes(class, writes);
+            }
+        }
+        let mut publications = self.7.borrow_mut();
+        if publications.restore_depth == 0 && !publications.last.is_empty() {
+            for run in &layout.runs {
+                if publications.tracked.any(run.clone()) {
+                    for at in run.clone() {
+                        if publications.tracked.contains(at) {
+                            publications.publish(at);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    /// Write a deferred export's bytes before `range` is read or written.
+    #[inline]
+    fn settle(&self, range: Range<usize>) {
+        if self.10.armed.get() {
+            self.settle_range(range);
+        }
+    }
+    #[cold]
+    fn settle_range(&self, range: Range<usize>) {
+        let range = range.start.min(Self::LEN)..range.end.min(Self::LEN);
+        let covers = self
+            .10
+            .state
+            .borrow()
+            .as_ref()
+            .is_some_and(|deferred| deferred.layout.covered().any(range));
+        if covers {
+            self.settle_deferred();
+        }
+    }
+    /// A read of a byte a deferred export covers: the Session's projection of it, while it
+    /// has one and few reads have taken one; otherwise the export's bytes are written first.
+    #[cold]
+    fn deferred_byte(&self, at: usize) -> Option<u8> {
+        let mut state = self.10.state.borrow_mut();
+        let deferred = state.as_mut()?;
+        if at >= Self::LEN || !deferred.layout.covered().contains(at) {
+            return None;
+        }
+        if deferred.served.len() < Deferred::SERVED
+            && let Some(byte) = sm_game::session_encoding::projected_byte(&deferred.session, at)
+        {
+            deferred.served.push((at, byte));
+            return Some(byte);
+        }
+        drop(state);
+        self.settle_deferred();
+        None
+    }
+    /// Write a deferred export's bytes, as its export would have written them.
+    fn settle_deferred(&self) {
+        if !self.10.armed.replace(false) {
+            return;
+        }
+        let mut state = self.10.state.borrow_mut();
+        let deferred = state.as_mut().expect("deferred export");
+        let mut writer = self.span_copy(false, true);
+        sm_game::session_encoding::encode_spans(&deferred.session, &mut writer);
+        assert!(
+            writer.layout() == *deferred.layout,
+            "a deferred export wrote another layout than its shape's"
+        );
+        drop(writer);
+        for (at, byte) in deferred.served.drain(..) {
+            assert!(
+                self.0.bytes[at].get() == byte,
+                "a read before a deferred export's bytes took another byte than they hold"
+            );
+        }
+        deferred.written = true;
     }
     fn menu_epoch(&self) -> u64 {
         self.3.get()
@@ -479,11 +690,50 @@ pub struct SpanCopy<'r> {
     publications: std::cell::RefMut<'r, SourcePublications>,
     /// Whether any write can rank a source publication.
     tracking: bool,
+    /// Whether the copy takes the epochs and write log; a deferred export's bytes take none.
+    account: bool,
+    /// The spans written so far, joined into runs, when the copy records its layout.
+    runs: Option<Vec<Range<usize>>>,
     writes: u64,
     /// The writes counted by the set of owned groups each overlapped.
     by_classes: [u64; 1 << WRITE_CLASSES.len()],
 }
 impl SpanCopy<'_> {
+    /// Log and record a written span.
+    fn note(&mut self, range: Range<usize>) {
+        if self.account {
+            self.ram.9.note(range.clone());
+        }
+        if let Some(runs) = self.runs.as_mut()
+            && !range.is_empty()
+        {
+            match runs.last_mut() {
+                Some(last) if last.end == range.start => last.end = range.end,
+                _ => runs.push(range),
+            }
+        }
+    }
+    /// The writes counted in each owned group.
+    fn owned_writes(&self) -> [u64; WRITE_CLASSES.len()] {
+        let mut owned_writes = [0u64; WRITE_CLASSES.len()];
+        for (classes, &writes) in self.by_classes.iter().enumerate() {
+            for (class, &bit) in WRITE_CLASSES.iter().enumerate() {
+                if classes & usize::from(bit) != 0 {
+                    owned_writes[class] += writes;
+                }
+            }
+        }
+        owned_writes
+    }
+    /// The layout written so far; the copy must record it.
+    fn layout(&self) -> ExportLayout {
+        ExportLayout {
+            runs: self.runs.clone().expect("recorded spans"),
+            writes: self.writes,
+            owned_writes: self.owned_writes(),
+            covered: std::cell::OnceCell::new(),
+        }
+    }
     /// `WorkRam::copy_in`.
     pub fn copy_in(&mut self, at: usize, input: &[u8]) {
         // Most spans are one word: no slice walks and no length-generic copy.
@@ -493,7 +743,7 @@ impl SpanCopy<'_> {
             self.writes += 1;
             let classes = self.classes[at] | self.classes[at + 1];
             self.by_classes[usize::from(classes)] += 1;
-            self.ram.9.note(at..at + 2);
+            self.note(at..at + 2);
             self.ram.0.bytes[at].set(low);
             self.ram.0.bytes[at + 1].set(high);
             if self.tracking {
@@ -516,7 +766,7 @@ impl SpanCopy<'_> {
             .iter()
             .fold(0, |all, &class| all | class);
         self.by_classes[usize::from(classes)] += 1;
-        self.ram.9.note(at..end);
+        self.note(at..end);
         for (cell, &byte) in cells.iter().zip(input) {
             cell.set(byte);
         }
@@ -549,7 +799,7 @@ impl sm_game::session_encoding::Spans for &mut SpanCopy<'_> {
         };
         let classes = &self.classes[at..end];
         self.writes += u64::try_from(classes.len().div_ceil(width)).expect("span count");
-        self.ram.9.note(at..end);
+        self.note(at..end);
         // A span in no owned group adds to no group epoch.
         if classes.iter().any(|&class| class != 0) {
             for span in classes.chunks(width) {
@@ -572,16 +822,12 @@ impl sm_game::session_encoding::Spans for &mut SpanCopy<'_> {
 }
 impl Drop for SpanCopy<'_> {
     fn drop(&mut self) {
+        if !self.account {
+            return;
+        }
         let ram = self.ram;
         ram.1.set(ram.1.get().wrapping_add(self.writes));
-        let mut owned_writes = [0u64; WRITE_CLASSES.len()];
-        for (classes, &writes) in self.by_classes.iter().enumerate() {
-            for (class, &bit) in WRITE_CLASSES.iter().enumerate() {
-                if classes & usize::from(bit) != 0 {
-                    owned_writes[class] += writes;
-                }
-            }
-        }
+        let owned_writes = self.owned_writes();
         for (class, &writes) in owned_writes.iter().enumerate() {
             if writes != 0 {
                 ram.add_owned_writes(class, writes);
