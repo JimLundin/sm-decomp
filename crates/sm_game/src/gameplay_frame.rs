@@ -1009,9 +1009,13 @@ fn finish_pass<H: Host>(entry: Entry, game: &mut H) {
             with_session(game, |session| {
                 // Keep palette 6's sprite colours as the death sequence's targets.
                 let visual = session.presentation.visual_mut();
-                visual.targets[..192].fill(0);
-                visual.targets[208..].fill(0);
-                visual.targets[192..208].copy_from_slice(&visual.colors[192..208]);
+                for (index, target) in visual.targets.iter_mut().enumerate() {
+                    *target = if (192..208).contains(&index) {
+                        visual.colors[index]
+                    } else {
+                        0
+                    };
+                }
             });
             begin_death_sequence(game, 0);
             crate::sequence_state::with_words(
