@@ -127,7 +127,7 @@ pub fn unpause_sinking<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
                 {
                     break 'done;
                 }
-                word! {game; MY_COUNTER = 0; MY_COUNTER2 = word!(game.VRAM_WRITE_QUEUE_TAIL); }
+                word! {game; MY_COUNTER = 0; MY_COUNTER2 = game.tilemap_queue_tail(); }
                 true
             }
             1 => false,
