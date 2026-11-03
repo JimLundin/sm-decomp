@@ -62,6 +62,11 @@ pub enum Field {
     DebugFlag,
     /// The spare word after the debug flag ($09E8).
     Spare09E8,
+    /// The direct-page scratch word $16: the spawn argument, which the power
+    /// bomb window also passes its table offset through.
+    SpawnArgument,
+    /// Samus's movement type and facing ($0A1E): the facing in the low byte.
+    MovementAndFacing,
 }
 
 impl Field {
@@ -90,6 +95,8 @@ impl Field {
             Self::Moonwalk => words::MOONWALK_FLAG,
             Self::DebugFlag => words::DEBUG_FLAG,
             Self::Spare09E8 => words::UNUSED_WORD_7E09E8,
+            Self::SpawnArgument => 0x16,
+            Self::MovementAndFacing => crate::ram::bytes::SAMUS_POSE_X_DIR,
         }
     }
 
@@ -140,6 +147,8 @@ impl Field {
             Self::Moonwalk => session.player.moonwalk,
             Self::DebugFlag => session.player.debug_flag,
             Self::Spare09E8 => session.player.spare_09e8,
+            Self::SpawnArgument => session.spawn_scratch.argument,
+            Self::MovementAndFacing => session.player.movement_and_facing,
         })
     }
 
@@ -191,6 +200,8 @@ impl Field {
             Self::Moonwalk => &mut session.player.moonwalk,
             Self::DebugFlag => &mut session.player.debug_flag,
             Self::Spare09E8 => &mut session.player.spare_09e8,
+            Self::SpawnArgument => &mut session.spawn_scratch.argument,
+            Self::MovementAndFacing => &mut session.player.movement_and_facing,
         })
     }
 }
@@ -790,6 +801,8 @@ mod tests {
             Field::CurrentCre,
             Field::DoorTransition,
             Field::RoomHeader,
+            Field::SpawnArgument,
+            Field::MovementAndFacing,
         ]);
         fields
     }
