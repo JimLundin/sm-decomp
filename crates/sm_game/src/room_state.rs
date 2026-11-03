@@ -21,6 +21,11 @@ pub trait LevelData {
     fn level_word(&self, cell: usize) -> u16;
     /// Cell `cell`'s behaviour byte.
     fn level_behavior(&self, cell: usize) -> u8;
+    /// Split freshly decompressed level data into its planes: the layer-2
+    /// tiles that follow the level words and behaviour bytes move to
+    /// $7F:9602, then the behaviour bytes to $7F:6402, as the original copies
+    /// them (overlapping room arrays keep their pre-copy contents).
+    fn copy_level_planes(&mut self);
 }
 
 /// Named and raw work RAM, the loaded cartridge and its records, and the
@@ -45,34 +50,6 @@ impl<T> Host for T where
         + LevelData
         + ?Sized
 {
-}
-
-pub fn copy_level_planes<H: Host + ?Sized>(game: &mut H) {
-    let size = usize::from(game.level_data_size());
-    for (source, destination, count) in [
-        (0x10002 + size + size / 2, 0x19602, size),
-        (0x10002 + size, 0x16402, size / 2),
-    ] {
-        // Valid room arrays can overlap. Preserve their pre-copy contents;
-        // malformed extents retain the checked forward loop's write prefix.
-        if source < destination + count
-            && destination < source + count
-            && source + count <= 0x20000
-            && destination + count <= 0x20000
-        {
-            crate::probe::hit(if destination == 0x19602 {
-                "room.level.layer2_overlap"
-            } else {
-                "room.level.bts_overlap"
-            });
-            game.ram().copy_within(source..source + count, destination);
-        } else {
-            for index in 0..count {
-                game.ram()
-                    .write_byte(destination + index, game.ram().read_byte(source + index));
-            }
-        }
-    }
 }
 
 /// Load the sprite palettes into the target palettes: colours 208..224 from
@@ -212,7 +189,12 @@ pub fn execute_setup_code<H: ScriptHost + ?Sized>(script: u16, game: &mut H) {
         }
         0xc976 => crate::room_visuals::initialize_room_haze(game),
         0xc97b => {
-            game.ram().write_byte(0x5d, 102);
+            crate::display::preparation::Access::store_display_control_byte(
+                game,
+                crate::display::preparation::Field::Characters0,
+                102,
+                crate::display::preparation::Store::Named,
+            );
             crate::room_visuals::initialize_room_haze(game);
             crate::runtime_access::with_session(game, |session| {
                 session.room.ceres_hdma_table = 9;
@@ -274,7 +256,12 @@ pub fn execute_door_code<H: ScriptHost + ?Sized>(script: u16, game: &mut H) {
         }
         // To Ceres elevator shaft.
         0xe4e0 => {
-            game.ram().write_byte(0x56, 7);
+            crate::display::preparation::Access::store_display_control_byte(
+                game,
+                crate::display::preparation::Field::FakeMode,
+                7,
+                crate::display::preparation::Store::Named,
+            );
             game.apply(
                 "ceres elevator shaft",
                 crate::display::video::Command::Control(
@@ -301,7 +288,12 @@ pub fn execute_door_code<H: ScriptHost + ?Sized>(script: u16, game: &mut H) {
         }
         // From Ceres elevator shaft.
         0xe513 => {
-            game.ram().write_byte(0x56, 9);
+            crate::display::preparation::Access::store_display_control_byte(
+                game,
+                crate::display::preparation::Field::FakeMode,
+                9,
+                crate::display::preparation::Store::Named,
+            );
             crate::runtime_access::with_session(game, |session| session.room.mode7_irq = 0);
         }
         _ => {

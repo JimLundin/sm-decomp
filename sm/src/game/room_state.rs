@@ -28,7 +28,7 @@ pub(crate) fn unpause_draygon(game: &mut Game) -> crate::types::CoroutineRet {
 #[forbid(unsafe_code)]
 pub(crate) fn decompress_level(source: u32, game: &mut Game) {
     decompress_to_ram(source, 0x10000, game);
-    copy_level_planes(game);
+    sm_game::room_state::LevelData::copy_level_planes(game);
 }
 
 impl sm_game::room_state::EnemyGraphicsHost for Game {
@@ -38,7 +38,7 @@ impl sm_game::room_state::EnemyGraphicsHost for Game {
     }
 }
 
-pub(crate) use sm_game::room_state::{copy_level_planes, load_sprite_palettes};
+pub(crate) use sm_game::room_state::load_sprite_palettes;
 
 impl sm_game::room_state::MainCodeHost for Runtime<'_> {
     fn command_player(&mut self, command: u16) {

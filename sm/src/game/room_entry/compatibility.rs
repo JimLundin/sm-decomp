@@ -421,7 +421,7 @@ impl EntryEffects for Runtime<'_> {
                 .expect("selected Level stream is unavailable");
             self.foreign(|game| {
                 sm_game::decompression::decompress_prepared_table(&stream, 0x10000, game);
-                game::room_state::copy_level_planes(game);
+                sm_game::room_state::LevelData::copy_level_planes(game);
             });
         } else {
             let source = source.compatibility_address(&self.session().world);
