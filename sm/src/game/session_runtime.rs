@@ -2462,6 +2462,17 @@ impl sm_game::fx_domain::Sources for Runtime<'_> {
         let at = sm_game::fx_encoding::source_address(owner, offset).expect("FX source role");
         self.set_byte(at, byte);
     }
+    // The projected byte store at the buffer's home: the FX source owners
+    // claim it while one exists (`write_source_byte`), RAM otherwise.
+    fn store_buffer_byte(
+        &mut self,
+        owner: sm_game::scene::hdma_sources::LiveOwner,
+        offset: usize,
+        byte: u8,
+    ) {
+        let at = sm_game::fx_encoding::source_address(owner, offset).expect("FX buffer role");
+        self.set_byte(at, byte);
+    }
     fn add_parallax_source(&mut self, selector: u16, delta: u32) {
         let at = usize::from(selector);
         let low = u16::from_le_bytes([self.parallax_byte(at), self.parallax_byte(at + 1)]);

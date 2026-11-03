@@ -4232,6 +4232,16 @@ impl sm_game::fx_domain::Sources for Game {
             .expect("source address outside RAM");
         self.store_fx_byte(at, byte);
     }
+    // The RAM-image store at the buffer's home, as Game's `SessionRam::set_byte`.
+    fn store_buffer_byte(
+        &mut self,
+        owner: sm_game::scene::hdma_sources::LiveOwner,
+        offset: usize,
+        byte: u8,
+    ) {
+        let at = sm_game::fx_encoding::source_address(owner, offset).expect("FX buffer role");
+        self.ram().write_byte(at, byte);
+    }
     fn add_parallax_source(&mut self, selector: u16, delta: u32) {
         let at = usize::from(selector);
         let low = u16::from_ne_bytes([self.parallax_byte(at), self.parallax_byte(at + 1)]);
