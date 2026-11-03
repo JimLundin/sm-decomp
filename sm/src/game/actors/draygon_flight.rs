@@ -58,10 +58,6 @@ const _: () = {
 };
 
 impl Host for Game {
-    fn draygon_trajectory(&mut self) {
-        sprites::draygon_trajectory(self);
-    }
-
     fn grab_samus(&mut self, direction: u16) {
         forced::grab_by_draygon(direction, &mut Runtime::new(self));
     }
