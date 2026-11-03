@@ -16,7 +16,7 @@ use crate::display::registers::{
     WRDIVB, WRDIVH, WRDIVL, WRIO, WRMPYA, WRMPYB,
 };
 use crate::display::sequence::{Registers, register_writes, write_register_and_mirror};
-use crate::display::transfer::{ScrollingLayout, setup_transfer};
+use crate::display::transfer::{ScrollingLayout, TilemapQueue, setup_transfer};
 use crate::display::video::Upload;
 use crate::ram::{CompatibilityRam, RawRam, checked_word, word};
 use crate::scene::irq;
@@ -766,7 +766,7 @@ pub fn set_native_word<H: DisplayOwner + ?Sized>(offset: usize, value: u16, game
 }
 
 /// Publish a native queue record, evaluating each source after preceding stores.
-pub fn queue_native_transfer<H: CompatibilityRam + DisplayOwner + ?Sized>(
+pub fn queue_native_transfer<H: DisplayOwner + TilemapQueue + ?Sized>(
     mut cursor: u16,
     size: u16,
     source: impl FnOnce(&H) -> u16,
@@ -784,20 +784,20 @@ pub fn queue_native_transfer<H: CompatibilityRam + DisplayOwner + ?Sized>(
     let destination = destination(game);
     set_native_word(0xd0 + usize::from(cursor), destination, game);
     cursor = cursor.wrapping_add(2);
-    word!(game.VRAM_WRITE_QUEUE_TAIL = cursor);
+    game.set_tilemap_queue_tail(cursor);
     cursor
 }
 
-pub fn queue_fx_clear<H: CompatibilityRam + DisplayOwner + ?Sized>(game: &mut H) {
+pub fn queue_fx_clear<H: CompatibilityRam + DisplayOwner + TilemapQueue + ?Sized>(game: &mut H) {
     word_transfers!(game, descending, 1920; native(0x4efe) <- value(6222));
-    let tail = word!(game.VRAM_WRITE_QUEUE_TAIL);
-    let entry = 0xd0 + usize::from(word!(game.VRAM_WRITE_QUEUE_TAIL));
+    let tail = game.tilemap_queue_tail();
+    let entry = 0xd0 + usize::from(game.tilemap_queue_tail());
     set_native_word(entry, 3840, game);
     set_native_word(entry + 2, 0x4000, game);
     // The bank store is deliberately a native word, overlapping the destination low byte.
     set_native_word(entry + 4, 126, game);
     set_native_word(entry + 5, ADDR_UNK_605880 as u16, game);
-    word!(game.VRAM_WRITE_QUEUE_TAIL = tail.wrapping_add(7));
+    game.set_tilemap_queue_tail(tail.wrapping_add(7));
 }
 
 fn write_readback_word<H: Host + ?Sized>(game: &mut H, offset: usize, value: u16) {
