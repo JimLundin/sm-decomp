@@ -31,7 +31,7 @@ use crate::enemy_projectiles::shared_pre::{x_velocity_at_angle, y_velocity_at_an
 use crate::enemy_script::EnemyScript;
 use crate::geometry::Point;
 use crate::menus::prelude::battle;
-use crate::menus::prelude::{boss, owned};
+use crate::menus::prelude::owned;
 use crate::palette_copies::copy_rom_colors_to_palette;
 use crate::ram::RawRam as _;
 use crate::ram::word;
@@ -92,8 +92,18 @@ pub trait Host {
 
 /// What Ridley's state steps read and write: his slot on the lease's Session
 /// and the named RAM words.
-pub trait State: SlotState + SlotAccess + crate::ram::CompatibilityRam {}
-impl<T: SlotState + SlotAccess + crate::ram::CompatibilityRam + ?Sized> State for T {}
+pub trait State:
+    SlotState + SlotAccess + crate::ram::CompatibilityRam + crate::actors::boss_interaction::Access
+{
+}
+impl<T> State for T where
+    T: SlotState
+        + SlotAccess
+        + crate::ram::CompatibilityRam
+        + crate::actors::boss_interaction::Access
+        + ?Sized
+{
+}
 
 slot_view! {
     /// Ridley's slot, enemy 0, and his extended words, Norfair's and Ceres's.
@@ -1209,7 +1219,7 @@ pub fn move_samus_with_feet<L: Lease + ?Sized>(game: &mut L) {
     if let Some(offset) = settle_offset(Ridley::of(game, RIDLEY).grabbed_y_offset()) {
         *RidleyEdit::of(game, RIDLEY).grabbed_y_offset() = offset;
     }
-    boss!(game; SamusXPos = (Ridley::of(game, RIDLEY).grabbed_x_offset() as i32
+    battle!(game; SamusXPos = (Ridley::of(game, RIDLEY).grabbed_x_offset() as i32
             + Ridley::of(game, RIDLEY).actor().x.whole as i32
             + ridley_data::feet_x(game, Ridley::of(game, RIDLEY).facing() as isize) as i32)
             as u16; SamusYPos = (Ridley::of(game, RIDLEY).grabbed_y_offset() as i32
@@ -1486,7 +1496,7 @@ pub fn lunge_if_power_bomb<S: State + ?Sized>(game: &mut S) {
     let mode = Ridley::of(game, RIDLEY).fight_mode() as i16;
     if mode > 0
         && mode != 2
-        && boss!(game.PowerBombFlag) != 0
+        && battle!(game.PowerBombFlag) != 0
         && Ridley::of(game, RIDLEY).holding_samus() == 0
     {
         set_neutral_tail(game);
@@ -2011,7 +2021,7 @@ pub fn spawn_explosions<L: Lease + ?Sized>(game: &mut L) {
 /// without a palette change or door transition, the next of 16 glow steps.
 /// Was `Ridley_Func_61`.
 pub fn emergency_text_glow<L: Lease + ?Sized>(game: &mut L) {
-    if battle!(game.DoorTransitionEnemies) | boss!(game.PaletteChangeNum) == 0
+    if battle!(game.DoorTransitionEnemies) | battle!(game.PaletteChangeNum) == 0
         && (game.frame() & 3) == 0
     {
         let mut step = Ridley::of(game, RIDLEY)
@@ -2792,7 +2802,7 @@ pub fn health_palette<L: Lease + ?Sized>(game: &mut L) {
 pub fn load_health_palette<L: Lease + ?Sized>(index: u16, game: &mut L) {
     /// Ridley health-based palettes ($A6:E46A), 14 colours each.
     const HEALTH_PALETTES: u16 = 0xe46a;
-    if boss!(game.PaletteChangeNum) == 0 {
+    if battle!(game.PaletteChangeNum) == 0 {
         let colours = HEALTH_PALETTES.wrapping_add(index.wrapping_mul(28));
         copy_rom_colors_to_palette(0x1e2, 0xa6, colours, 0xe, game);
     }
@@ -2817,7 +2827,7 @@ pub fn ceres_health_palette<L: Lease + ?Sized>(game: &mut L) {
 pub fn hurt_flash<S: State + ?Sized>(game: &mut S) {
     let mut palette = 3584;
     if Ridley::of(game, RIDLEY).actor().flash >= 2
-        && ((boss!(game.RandomEnemyCounter) as i32 + 1) & 2) != 0
+        && ((battle!(game.RandomEnemyCounter) as i32 + 1) & 2) != 0
     {
         palette = 0;
     }
@@ -2973,7 +2983,7 @@ pub fn calculate_swoop_velocities<L: Lease + ?Sized>(
 /// top, 8 bottom). Was `Ridley_Func_112`.
 pub fn move_ridley<S: State + ?Sized>(game: &mut S) {
     *RidleyEdit::of(game, RIDLEY).hit_boundary() = 0;
-    let k = boss!(game.CurEnemyIndex);
+    let k = battle!(game.CurEnemyIndex);
     let carry = i32::from(Ridley::of(game, k).actor().x.fraction.to_le_bytes()[1])
         + i32::from(Ridley::of(game, k).x_velocity().to_le_bytes()[0]);
     set_high_byte(&mut RidleyEdit::of(game, k).actor().x.fraction, carry as u8);
@@ -3019,16 +3029,16 @@ pub fn move_ridley<S: State + ?Sized>(game: &mut S) {
 /// hitting the left wall at 280h or more, outside Norfair. Was
 /// `Ridley_Func_113`.
 pub fn ceres_earthquake<S: State + ?Sized>(k: u16, game: &mut S) {
-    if boss!(game.AreaIndex) != NORFAIR {
+    if battle!(game.AreaIndex) != NORFAIR {
         let speed =
             abs16(Ridley::of(game, k).x_velocity()).max(abs16(Ridley::of(game, k).y_velocity()));
         if speed >= 0x280 {
-            let kind = if boss!(game.AreaIndex) == NORFAIR {
+            let kind = if battle!(game.AreaIndex) == NORFAIR {
                 24
             } else {
                 33
             };
-            boss!(game; EarthquakeType = kind; EarthquakeTimer = 12;);
+            battle!(game; EarthquakeType = kind; EarthquakeTimer = 12;);
         }
     }
 }
@@ -3364,7 +3374,7 @@ pub fn tail_samus_collision<L: Lease + ?Sized>(game: &mut L) {
         });
         battle!(game.SamusInvincibilityTimer = 96);
         battle!(game.SamusKnockbackTimer = 5);
-        boss!(
+        battle!(
             game.KnockbackXDir =
                 ((battle!(game.SamusXPos) as i16)
                     .wrapping_sub(bg2_staging::get(game, tail::x(6)) as i16)

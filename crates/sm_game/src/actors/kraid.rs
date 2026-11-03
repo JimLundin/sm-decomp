@@ -27,7 +27,7 @@ use crate::display::transfer::{Source, TilemapUpload, queue_tilemap};
 use crate::enemy_projectiles::drops::DropSource;
 use crate::kraid_tables;
 use crate::menus::prelude::battle;
-use crate::menus::prelude::{boss, owned};
+use crate::menus::prelude::owned;
 use crate::palette_effects::fading::background6;
 use crate::ram::CompatibilityRam as _;
 use crate::ram::word;
@@ -422,7 +422,7 @@ fn draw_room_bg<L: Lease + ?Sized>(game: &mut L) {
     game.foreign(|game| {
         crate::word_transfers!(game, ascending, 16; le(TARGET_PALETTES, 96) <- rom(ROOM_BG_PALETTE, 0));
     });
-    boss!(game.PaletteChangeNum = 0);
+    battle!(game.PaletteChangeNum = 0);
     queue_room_bg(game);
 }
 

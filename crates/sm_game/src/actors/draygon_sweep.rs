@@ -4,7 +4,7 @@
 use crate::actors::draygon_host::Lease;
 use crate::actors::host::BossEffects as _;
 
-use crate::menus::prelude::{boss, owned};
+use crate::menus::prelude::{battle, owned};
 
 use crate::actors::draygon_flight::{body_bubble, fire_wall_turret, move_horizontally};
 use crate::actors::draygon_host::{
@@ -193,12 +193,12 @@ pub fn swoop<L: Lease>(right: bool, ascending: bool, game: &mut L) {
         move_horizontally(right, game);
     } else if right {
         *DraygonEdit::of(game, BODY).function_timer() = 0;
-        *DraygonEdit::of(game, BODY).function() = if boss!(game.Random) & 1 != 0 {
+        *DraygonEdit::of(game, BODY).function() = if battle!(game.Random) & 1 != 0 {
             function::SWOOP_LEFT_SETUP
         } else {
             function::GOOP_LEFT_SETUP
         };
-    } else if boss!(game.Random) & 1 != 0 {
+    } else if battle!(game.Random) & 1 != 0 {
         {
             let mut draygon = DraygonEdit::of(game, BODY);
             *draygon.function() = function::SWOOP_RIGHT_SETUP;

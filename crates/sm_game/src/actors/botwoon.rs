@@ -3,8 +3,8 @@
 //! Native-field compatibility retains independent body and callback epochs.
 use crate::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 use crate::actors::api::{DeathHandling, ShotHandling};
+use crate::actors::boss_interaction as interaction;
 use crate::actors::boss_lease::BossLease;
-use crate::actors::boss_lease::boss_ram;
 use crate::actors::botwoon_death;
 use crate::actors::host::BossEffects as _;
 
@@ -171,12 +171,14 @@ pub trait RuntimeHost:
     + crate::room_mechanisms::host::Effects
     + botwoon_death::Host
     + crate::actors::session_slots::SessionSlots
+    + crate::actors::boss_interaction::Access
 {
 }
 impl<T> RuntimeHost for T where
     T: crate::actors::host::ActorLease
         + BossLease<Game = <T as crate::actors::host::ActorLease>::Game>
         + SlotState
+        + crate::actors::boss_interaction::Access
         + ?Sized
 {
 }
@@ -257,9 +259,9 @@ fn health_palette<R: RuntimeHost>(game: &mut R) {
         let mut source = 16u16.wrapping_mul(Botwoon::of(game, e).health_palette_index());
         let mut target = Botwoon::of(game, e).palette_data_offset();
         loop {
-            boss_ram::set_at(
+            interaction::set_at(
                 game,
-                boss_ram::Array::PaletteBuffer,
+                interaction::Array::PaletteBuffer,
                 target >> 1,
                 crate::cartridge::rom_table_word!(game, HEALTH_PALETTES, (source >> 1) as isize),
             );

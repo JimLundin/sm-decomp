@@ -11,7 +11,7 @@ use crate::actors::host::{ActorLease, BossEffects as _};
 
 use crate::display::transfer::{Source, TilemapUpload, queue_tilemap};
 use crate::enemy_script::EnemyScript;
-use crate::menus::prelude::{boss, display_scroll, owned};
+use crate::menus::prelude::{battle, display_scroll, owned};
 
 /// Sprite object 3Dh: Draygon foaming at the mouth, 20h px ahead of and 10h
 /// px above the body.
@@ -166,7 +166,7 @@ pub fn initialize<L: Lease>(install_layers: impl FnOnce(&mut L), game: &mut L) {
     crate::word_transfers!(game, ascending, 1;
         native(GRAPHICS_DRAWN_HOOK_BANK) <- value(u16::from(BANK)),
         native(GRAPHICS_DRAWN_HOOK) <- value(SET_BG2_SCROLL_HOOK));
-    boss!(game.FlagProcessAllEnemies = 0xffff);
+    battle!(game.FlagProcessAllEnemies = 0xffff);
     for (k, instruction) in [
         (BODY, list::BODY_LEFT_IDLE),
         (EYE, list::EYE_LEFT_IDLE),
@@ -175,7 +175,7 @@ pub fn initialize<L: Lease>(install_layers: impl FnOnce(&mut L), game: &mut L) {
     ] {
         DraygonEdit::of(game, k).actor().instruction = instruction;
     }
-    boss!(game.EnemyTilemapSize = BG2_TILEMAP_SIZE);
+    battle!(game.EnemyTilemapSize = BG2_TILEMAP_SIZE);
     *DraygonEdit::of(game, k).function() = function::FIGHT_INTRO_INITIAL_DELAY;
     install_layers(game);
     *DraygonEdit::of(game, BODY).turret_5_destroyed() = 1;
@@ -422,9 +422,9 @@ pub fn goop_firing<S: Lease>(right: bool, game: &mut S) {
     if right {
         fire_wall_turret(game);
     }
-    if boss!(game.SamusXSpeedDivisor) == 0 {
+    if battle!(game.SamusXSpeedDivisor) == 0 {
         let mut leave = false;
-        if boss!(game.Random) & GOOP_CHANCE == 0 {
+        if battle!(game.Random) & GOOP_CHANCE == 0 {
             let remaining = Draygon::of(game, BODY).goop_counter().wrapping_sub(1);
             *DraygonEdit::of(game, BODY).goop_counter() = remaining;
             leave = remaining == 0;
@@ -450,7 +450,7 @@ pub fn goop_firing<S: Lease>(right: bool, game: &mut S) {
                 return;
             }
         }
-        if boss!(game.SamusXSpeedDivisor) == 0 {
+        if battle!(game.SamusXSpeedDivisor) == 0 {
             {
                 let mut draygon = DraygonEdit::of(game, ARMS);
                 let actor = draygon.actor();
@@ -475,7 +475,7 @@ pub fn goop_firing<S: Lease>(right: bool, game: &mut S) {
 /// until off-screen. Was `exit`.
 pub fn goop_move_until_off_screen<L: Lease>(right: bool, game: &mut L) {
     body_bubble(None, game);
-    if !right && boss!(game.SamusXSpeedDivisor) != 0 {
+    if !right && battle!(game.SamusXSpeedDivisor) != 0 {
         *DraygonEdit::of(game, BODY).function() = function::CHASE_SAMUS;
         return;
     }

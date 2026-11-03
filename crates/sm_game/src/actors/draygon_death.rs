@@ -1,7 +1,7 @@
 //! Draygon's hurt palettes, reactions and death sequence (bank
 //! $A5:9185-$A5:9701).
 //! Boss words remain native compatibility state; player and sprites use their owners.
-use crate::actors::boss_lease::boss_ram;
+use crate::actors::boss_interaction as interaction;
 use crate::actors::draygon_flight::{facing_animation, foam_at_mouth};
 use crate::actors::draygon_host::Lease;
 use crate::actors::draygon_host::{
@@ -13,7 +13,7 @@ use crate::actors::queries::angle_from_delta;
 
 use crate::actors::slot_view::store_byte;
 use crate::enemy_script::EnemyScript;
-use crate::menus::prelude::{boss, owned};
+use crate::menus::prelude::{battle, owned};
 use crate::ram::word;
 
 /// Colours 9-12 of BG1/2 palette 5, as palette words and in RAM at $7E:C000.
@@ -61,7 +61,7 @@ pub fn write_health_palette<L: Lease>(native: bool, game: &mut L) {
             game.session_mut().presentation.visual_mut().colors[index] =
                 u16::from_le_bytes(value.to_ne_bytes());
         } else {
-            boss_ram::set_at(game, boss_ram::Array::PaletteBuffer, index, value);
+            interaction::set_at(game, interaction::Array::PaletteBuffer, index, value);
         }
         cursor = cursor.wrapping_add(2);
     }
@@ -89,7 +89,7 @@ pub fn hurt_ai<L: Lease>(game: &mut L) {
         write_health_palette(false, game);
     }
     copy_hurt_palette(SPRITE_PALETTE_7, SPRITE_PALETTE_7_COLOUR, game);
-    if boss!(game.SamusGrappleFlags) & GRAPPLE_FLAG != 0
+    if battle!(game.SamusGrappleFlags) & GRAPPLE_FLAG != 0
         && Draygon::of(game, BODY).actor().frame & GRAPPLE_FRAMES == 0
     {
         let health = (Draygon::of(game, BODY).actor().health as i16)
@@ -151,7 +151,7 @@ pub fn reaction<L: Lease>(game: &mut L) {
         update_health_palette(game);
         return;
     }
-    boss!(game.GrappleBeamFunction = GRAPPLE_DROPPED);
+    battle!(game.GrappleBeamFunction = GRAPPLE_DROPPED);
     facing_animation(
         BODY,
         BODY,
@@ -167,7 +167,7 @@ pub fn reaction<L: Lease>(game: &mut L) {
     *DraygonEdit::of(game, EYE).function() = function::NONE;
     *DraygonEdit::of(game, BODY).function() = function::DEATH_DRIFT_TO_DEATH_SPOT;
     game.foreign(|game| game.release_samus());
-    boss!(game.SamusGrappleFlags = 0);
+    battle!(game.SamusGrappleFlags = 0);
     let dx = DEATH_X.wrapping_sub(Draygon::of(game, BODY).actor().x.whole);
     let dy = DEATH_Y.wrapping_sub(Draygon::of(game, BODY).actor().y.whole);
     *DraygonEdit::of(game, BODY).death_angle() =

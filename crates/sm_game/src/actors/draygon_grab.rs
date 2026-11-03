@@ -10,7 +10,7 @@ use crate::actors::draygon_host::{
 use crate::actors::host::BossEffects as _;
 use crate::actors::queries::angle_from_delta;
 
-use crate::menus::prelude::{boss, owned};
+use crate::menus::prelude::{battle, owned};
 
 use crate::enemy_script::EnemyScript;
 use crate::ram::word;
@@ -81,7 +81,7 @@ fn pursue<S: Lease>(dx: u16, dy: u16, game: &mut S) {
 }
 /// While the grapple is connected to a block, flash and run the hurt AI.
 fn hurt_by_grapple<S: Lease>(game: &mut S) -> bool {
-    if boss!(game.SamusGrappleFlags) & GRAPPLE_CONNECTED == 0 {
+    if battle!(game.SamusGrappleFlags) & GRAPPLE_CONNECTED == 0 {
         return false;
     }
     let definition = Draygon::of(game, BODY).actor().definition;
@@ -103,7 +103,7 @@ fn hold_offset<S: Lease>(k: u16, game: &mut S) -> u16 {
 /// unless the grapple repels Draygon. Was `acquire`.
 pub fn chase_samus<L: Lease>(game: &mut L) {
     fire_wall_turret(game);
-    if boss!(game.SamusXSpeedDivisor) == 0 {
+    if battle!(game.SamusXSpeedDivisor) == 0 {
         *DraygonEdit::of(game, BODY).function() = function::FLY_STRAIGHT_UP;
         return;
     }
@@ -171,7 +171,7 @@ pub fn chase_samus<L: Lease>(game: &mut L) {
 /// Draygon body function - repelled by grapple ($A5:8F10). Was `cancel_grapple`.
 pub fn repelled_by_grapple<S: Lease>(game: &mut S) {
     crate::probe::hit("draygon_grab.repelled_by_grapple");
-    boss!(game.GrappleBeamFunction = GRAPPLE_DROPPED);
+    battle!(game.GrappleBeamFunction = GRAPPLE_DROPPED);
     *DraygonEdit::of(game, BODY).function() = function::FLAIL_TAIL_AND_FLY_STRAIGHT_UP;
 }
 /// Draygon body function - grabbed Samus - moving to target position
@@ -216,7 +216,7 @@ pub fn rising_spiral<L: Lease>(k: u16, game: &mut L) {
     if hurt_by_grapple(game) {
         return;
     }
-    if boss!(game.Random) as u8 == 0 {
+    if battle!(game.Random) as u8 == 0 {
         {
             let mut draygon = DraygonEdit::of(game, BODY);
             *draygon.tail_whip_timer() = TAIL_WHIP_FRAMES;
@@ -314,8 +314,8 @@ pub fn move_samus_with_draygon<S: Lease>(k: u16, game: &mut S) {
     game.set_player_x(Draygon::of(game, BODY).actor().x.whole.wrapping_add(dx));
     game.set_player_y(Draygon::of(game, BODY).actor().y.whole.wrapping_add(HOLD_Y));
     crate::player_position::correct_previous_position(game);
-    if boss!(game.SamusGrappleFlags) & SAMUS_RELEASED != 0 {
-        boss!(game.SamusGrappleFlags = 0);
+    if battle!(game.SamusGrappleFlags) & SAMUS_RELEASED != 0 {
+        battle!(game.SamusGrappleFlags = 0);
         *DraygonEdit::of(game, BODY).function() = function::FLY_STRAIGHT_UP;
     }
 }
@@ -324,7 +324,7 @@ pub fn move_samus_with_draygon<S: Lease>(k: u16, game: &mut S) {
 pub fn flail_tail_and_fly_straight_up<L: Lease>(game: &mut L) {
     crate::probe::hit("draygon_grab.flail_tail_and_fly_straight_up");
     game.foreign(|game| game.release_samus());
-    boss!(game.SamusGrappleFlags = 0);
+    battle!(game.SamusGrappleFlags = 0);
     *DraygonEdit::of(game, BODY).function() = function::FLY_STRAIGHT_UP;
     DraygonEdit::of(game, BODY).actor().properties &= !INTANGIBLE;
     facing_animation(
@@ -362,7 +362,7 @@ pub fn tail_whip_hit<L: Lease>(script: EnemyScript, game: &mut L) -> EnemyScript
         let amount = game.suit_damage(amount.word(ENEMY_DEF_DAMAGE));
         game.damage_player(amount);
     });
-    boss!(game; EarthquakeTimer = EARTHQUAKE_FRAMES; EarthquakeType = EARTHQUAKE_BG1_VERTICAL_3PX;);
+    battle!(game; EarthquakeTimer = EARTHQUAKE_FRAMES; EarthquakeType = EARTHQUAKE_BG1_VERTICAL_3PX;);
     let x = game.player_x();
     let y = game.player_y().wrapping_add(DUST_CLOUD_Y);
     game.foreign(|game| game.create_sprite(x, y, DUST_CLOUD, 0));

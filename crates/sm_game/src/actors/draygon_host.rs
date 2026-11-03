@@ -9,8 +9,14 @@ pub use crate::actors::host::abs16;
 use crate::actors::slot_view::{SlotState, slot_view};
 
 /// A lease on a game with Draygon's effects.
-pub trait Lease: BossLease<Game: Host> + SlotState {}
-impl<T: BossLease<Game: Host> + SlotState + ?Sized> Lease for T {}
+pub trait Lease:
+    BossLease<Game: Host> + crate::actors::boss_interaction::Access + SlotState
+{
+}
+impl<T> Lease for T where
+    T: BossLease<Game: Host> + crate::actors::boss_interaction::Access + SlotState + ?Sized
+{
+}
 
 pub trait Host: BossEffects + BossLease<Game = Self> {
     fn draygon_spawn_trails(&mut self);

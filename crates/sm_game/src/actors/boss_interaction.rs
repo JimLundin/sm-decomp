@@ -1,8 +1,8 @@
 //! Boss interactions on the scheduler's existing Session owner.
 //! Named controls belong to their actual actor, player, room and inventory
 //! owners. This facet stores no duplicate state and introduces no admission.
-//! Physical Game callbacks retain boss_ram; dirty and off-table aliases remain
-//! explicit compatibility capabilities in the scheduler adapter.
+//! Dirty and off-table aliases remain explicit compatibility capabilities in
+//! the scheduler adapter.
 #![forbid(unsafe_code)]
 use crate::session::Session;
 
@@ -84,6 +84,7 @@ pub enum Word {
     MeltUnread,
     MeltMaxY,
     MeltIndex,
+    PaletteChangeNum,
 }
 pub fn control(session: &Session, word: Word) -> &u16 {
     match word {
@@ -163,6 +164,7 @@ pub fn control(session: &Session, word: Word) -> &u16 {
         Word::MeltUnread => &session.actors.crocomire_melt.words[7],
         Word::MeltMaxY => &session.actors.crocomire_melt.words[8],
         Word::MeltIndex => &session.actors.crocomire_melt.words[9],
+        Word::PaletteChangeNum => &session.presentation.visual().palette_fade.step,
     }
 }
 pub fn control_mut(session: &mut Session, word: Word) -> &mut u16 {
@@ -243,6 +245,7 @@ pub fn control_mut(session: &mut Session, word: Word) -> &mut u16 {
         Word::MeltUnread => &mut session.actors.crocomire_melt.words[7],
         Word::MeltMaxY => &mut session.actors.crocomire_melt.words[8],
         Word::MeltIndex => &mut session.actors.crocomire_melt.words[9],
+        Word::PaletteChangeNum => &mut session.presentation.visual_mut().palette_fade.step,
     }
 }
 

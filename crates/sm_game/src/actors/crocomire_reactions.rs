@@ -187,7 +187,7 @@ pub fn melt_down<L: Lease + ?Sized>(game: &mut L) {
     if (Crocomire::of(game, key).actor().y.whole as i32 - 280) & 0x8000 != 0 {
         let mut cursor = (8 * ((display_scroll!(game.Bg2V) as i32 + 288) & 0xfff8)) as u16;
         for _ in 0..32 {
-            bg2_staging::set(game, usize::from(cursor >> 1), 824);
+            bg2_staging::set_unbounded(game, usize::from(cursor >> 1), 824);
             cursor = cursor.wrapping_add(2);
         }
         battle!(game.EnemyTilemapPending = 1);
@@ -648,7 +648,7 @@ fn load_melt_tilemap<L: Lease + ?Sized>(table: u32, game: &mut L) {
             break;
         }
         let tile = crate::cartridge::rom_table_word!(game, table, index as isize);
-        bg2_staging::set(
+        bg2_staging::set_unbounded(
             game,
             usize::try_from(index + 32).expect("melt tile index"),
             tile,
