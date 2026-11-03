@@ -10,7 +10,11 @@ use crate::visual_host::Source;
 /// The session lease the frame draws on; the effects below leave the lease,
 /// export the Session to the compatibility host, and resume.
 pub trait Host:
-    SessionRam + crate::visual_host::Host + samus_drawing::Authority + crate::lease::Lease
+    SessionRam
+    + crate::visual_host::Host
+    + samus_drawing::Authority
+    + crate::lease::Lease
+    + crate::display::queued_tilemaps::QueueAccess
 {
     /// The charge flare and grapple flare, on the compatibility host.
     fn draw_flare(&mut self);
@@ -30,8 +34,8 @@ fn queue_cannon_tiles<H: Host>(runtime: &mut H, tiles: Tiles) {
         Tiles::Beam(_) => (256, 0x6300),
         Tiles::Cannon(_) => (32, 0x61f0),
     };
-    let saved = runtime.word(0x330);
-    runtime.write_slice_native(0xd0 + usize::from(saved), size);
+    let saved = runtime.queue_tail();
+    runtime.queue_native_word(saved, size);
     // Size publication precedes source acquisition and every source read.
     let source = match tiles {
         Tiles::Beam(index) => runtime
@@ -39,10 +43,10 @@ fn queue_cannon_tiles<H: Host>(runtime: &mut H, tiles: Tiles) {
             .word(usize::from(index) * 2),
         Tiles::Cannon(pointer) => runtime.legacy_native_record(0x90, pointer).word(0),
     };
-    runtime.write_slice_native(0xd0 + usize::from(saved.wrapping_add(2)), source);
+    runtime.queue_native_word(saved.wrapping_add(2), source);
     runtime.set_byte(0xd0 + usize::from(saved.wrapping_add(4)), 0x9a);
-    runtime.write_slice_native(0xd0 + usize::from(saved.wrapping_add(5)), destination);
-    runtime.write_word_le(saved.wrapping_add(7), 0x330);
+    runtime.queue_native_word(saved.wrapping_add(5), destination);
+    runtime.store_queue_tail(saved.wrapping_add(7));
 }
 
 fn cannon_tile<H: Host>(runtime: &mut H, x: u16, y: u16, body_y: u16, character: u16) {
