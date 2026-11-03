@@ -818,8 +818,9 @@ fn rot_word(at: usize, game: &mut impl Lease) -> u16 {
         }
         _ => {
             // LEGACY(original-overflow): a rot table cursor outside the
-            // block reads whatever RAM lies there, on the game as before.
-            game.foreign(|game| crate::legacy_overflow::ram_native_word(game, at))
+            // block reads whatever RAM lies there, through the lease's
+            // projection.
+            game.owned_step(|game| crate::legacy_overflow::ram_native_word(game, at))
         }
     }
 }
