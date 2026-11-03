@@ -37,7 +37,8 @@ impl Content for Runtime<'_> {
             .table_word(crate::rtl::lorom_offset(0x86846b) as usize, word_index)
     }
     fn fire_arc_sine_sample(&mut self, phase: u8) -> u8 {
-        self.foreign(|game| game.read_rom_byte(0xa0b143, usize::from(phase)))
+        // A ROM read; the foreign call's observation refresh stays.
+        self.owned_player_call(|runtime| runtime.rom_byte(0xa0b143, usize::from(phase)))
     }
 }
 fn enemy_base(member: EnemyMember) -> usize {

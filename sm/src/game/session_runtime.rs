@@ -828,6 +828,15 @@ impl<'g> Runtime<'g> {
     pub(crate) fn native_image(&self) -> RomImage {
         self.game.capture_native_rom()
     }
+    /// The loaded ROM's byte at LoROM `address` plus `offset`, with the game's checks.
+    pub(crate) fn rom_byte(&self, address: u32, offset: usize) -> u8 {
+        self.game.read_rom_byte(address, offset)
+    }
+    /// The loaded ROM's little-endian word at LoROM `address` plus `offset`, with
+    /// the game's checks.
+    pub(crate) fn rom_word(&self, address: u32, offset: usize) -> u16 {
+        self.game.read_rom_word(address, offset)
+    }
     /// A word of the 32-bit speed table read the way native_image readers did.
     pub(crate) fn native_speed32(&self, offset: usize) -> u32 {
         let native = self.game.capture_native_rom();
