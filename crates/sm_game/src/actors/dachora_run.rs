@@ -77,8 +77,14 @@ use crate::actors::host::below;
 use instruction_list as list;
 
 /// A lease on a game with the dachora's effects.
-pub trait Lease: BossLease<Game: BossEffects> + SlotState {}
-impl<T: BossLease<Game: BossEffects> + SlotState + ?Sized> Lease for T {}
+pub trait Lease:
+    BossLease<Game: BossEffects> + crate::actors::boss_interaction::Access + SlotState
+{
+}
+impl<T> Lease for T where
+    T: BossLease<Game: BossEffects> + crate::actors::boss_interaction::Access + SlotState + ?Sized
+{
+}
 
 /// The dachora constants at $A7:F4C9: how near Samus must be, the blink,
 /// the shinespark charge, the echo interval and lifetime, the top running
