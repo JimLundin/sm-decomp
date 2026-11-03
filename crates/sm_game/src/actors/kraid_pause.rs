@@ -6,9 +6,8 @@
 //! Was `UnpauseHook_Kraid_*`, `Kraid_UnpauseHook_IsSinking`,
 //! `Kraid_TransferTopHalfToVram` and `PauseHook_Kraid` in the original
 //! decompilation.
+use crate::actors::access::{ActorImage, ActorKey};
 use crate::actors::kraid_sinking;
-use crate::actors::layouts::KraidLayout;
-use crate::actors::session_slots::session_slot;
 use crate::display_refresh::{GraphicsAsset, enqueue_readback, set_blank, wait};
 use crate::ram::RawRam as _;
 use crate::ram::word;
@@ -17,14 +16,14 @@ use crate::ram::word;
 pub trait Host:
     crate::display_refresh::Host
     + crate::actors::host::ActorHost
-    + crate::actors::session_slots::SlotAccess
+    + ActorImage
     + crate::display::transfer::TilemapQueue
 {
 }
 impl<
     T: crate::display_refresh::Host
         + crate::actors::host::ActorHost
-        + crate::actors::session_slots::SlotAccess
+        + ActorImage
         + crate::display::transfer::TilemapQueue
         + ?Sized,
 > Host for T
@@ -122,7 +121,7 @@ pub fn unpause_sinking<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
                     return yielded;
                 }
                 load_kraid_tiles(game);
-                if (session_slot!(game, KraidLayout[0].base.y_pos) as i16)
+                if (kraid_y(game) as i16)
                     .wrapping_sub(kraid_sinking::sinking_row(0, game).word(0) as i16)
                     < 0
                 {
@@ -138,9 +137,7 @@ pub fn unpause_sinking<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
             if queue_transfer {
                 let row = kraid_sinking::sinking_row(usize::from(word!(game.MY_COUNTER)), game);
                 if !(row.word(0) != 0xffff
-                    && (session_slot!(game, KraidLayout[0].base.y_pos) as i16)
-                        .wrapping_sub(row.word(0) as i16)
-                        >= 0)
+                    && (kraid_y(game) as i16).wrapping_sub(row.word(0) as i16) >= 0)
                 {
                     break 'done;
                 }
@@ -165,6 +162,11 @@ pub fn unpause_sinking<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
     // The last forced-blank wait ($A7:C31F) leaves the screen blank.
     crate::probe::hit("kraid_pause.sinking_last_wait");
     blank_and_wait(true, 4, game)
+}
+
+/// Kraid's y position: his record is the first enemy's.
+fn kraid_y<H: Host + ?Sized>(game: &H) -> u16 {
+    game.actor_record(ActorKey::from_legacy(0)).y.whole
 }
 
 /// Pause hook - Kraid ($A7:C325): read his BG2 tiles back to $7E:5000. Was

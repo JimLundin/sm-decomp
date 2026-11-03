@@ -478,6 +478,13 @@ fn queue_body_tiles<A: Authority>(h: &mut A) {
 }
 
 struct TileHost<'a, A>(&'a mut A);
+/// The Samus request slot of `half`: 0 top ($071D/$071F), 1 bottom ($071E/$0721).
+fn half_index(half: Half) -> usize {
+    match half {
+        Half::Top => 0,
+        Half::Bottom => 1,
+    }
+}
 impl<A: Authority> samus_position_tiles::TileHost for TileHost<'_, A> {
     type Error = Infallible;
     type Table = RoleTable;
@@ -516,23 +523,23 @@ impl<A: Authority> samus_position_tiles::TileHost for TileHost<'_, A> {
             .captured_role(Role::TileDefinition, Registration::Native, record))
     }
     fn request_word(&mut self, half: Half, pointer: u16) -> Result<(), Self::Error> {
-        self.0.write_word_le(
-            pointer,
-            match half {
-                Half::Top => 0x71f,
-                Half::Bottom => 0x721,
-            },
-        );
+        *self
+            .0
+            .session_mut()
+            .presentation
+            .samus_request_mut(half_index(half))
+            .1 = pointer;
+        self.0.words_stored();
         Ok(())
     }
     fn request_flag(&mut self, half: Half) -> Result<(), Self::Error> {
-        self.0.set_byte(
-            match half {
-                Half::Top => 0x71d,
-                Half::Bottom => 0x71e,
-            },
-            1,
-        );
+        *self
+            .0
+            .session_mut()
+            .presentation
+            .samus_request_mut(half_index(half))
+            .0 = 1;
+        self.0.words_stored();
         Ok(())
     }
     fn request_written(&mut self, half: Half, pointer: u16) -> Result<(), Self::Error> {

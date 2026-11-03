@@ -1,6 +1,6 @@
 //! Game-over choices and transitions over the shared menu presentation.
 use super::prelude::*;
-use crate::actors::layouts::EnemyBase;
+use crate::actors::access::{ActorKey, edit_image_actor};
 use crate::constants::bank_81::{
     ADDR_K_MENU_TILEMAP_FIND_METROID_LARVA, ADDR_K_MENU_TILEMAP_GAME_OVER,
     ADDR_K_MENU_TILEMAP_NO_GO_TO_TITLE, ADDR_K_MENU_TILEMAP_TRY_AGAIN,
@@ -11,7 +11,6 @@ use crate::menu_state::MenuState;
 use crate::menu_state::SaveSelection;
 use crate::menus::menu_tilemap;
 use crate::menus::save_slots;
-use crate::session_slot;
 
 /// Requires a live, exclusively accessed graphics backend and native ROM allocation
 /// covering the referenced menu text, baby animation and save-map records.
@@ -181,7 +180,7 @@ fn choose<H: crate::menus::host::Host + ?Sized>(menu: &mut MenuState, game: &mut
             selection.map_area_index ^= 1;
         });
     } else if game.observed_inputs().pressed & K_BUTTON_A as u16 != 0 {
-        session_slot!(game, EnemyBase[0].instruction_timer = 180);
+        edit_image_actor(game, BABY, |baby| baby.instruction_delay = 180);
         let selection = crate::menus::state::load::<SaveSelection, _>(game);
         if selection.map_area_index != 0 {
             menu.menu_index = 7;
@@ -234,15 +233,21 @@ fn fade_to_title<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     }
 }
 
-/// The menu reuses the first enemy record; it remains the only animation state.
+/// The baby's record: the menu reuses the first enemy's, which remains the
+/// only animation state.
+const BABY: ActorKey = ActorKey::from_legacy(0);
+
+/// The baby's animation, on its record's instruction and instruction delay.
 fn animate_baby<H: crate::menus::host::Host + ?Sized>(game: &mut H, invalid: impl FnOnce(&mut H)) {
-    let mut timer = session_slot!(game, EnemyBase[0].instruction_timer);
+    let mut timer = game.actor_record(BABY).instruction_delay;
     if timer == 0 {
         timer = start_baby(0xbc27, 10, game);
     }
     loop {
-        let cursor = session_slot!(game, EnemyBase[0].current_instruction);
-        session_slot!(game, EnemyBase[0].instruction_timer = timer.wrapping_sub(1));
+        let cursor = game.actor_record(BABY).instruction;
+        edit_image_actor(game, BABY, |baby| {
+            baby.instruction_delay = timer.wrapping_sub(1);
+        });
         if timer != 1 {
             draw_baby(cursor, game);
             return;
@@ -263,17 +268,18 @@ fn animate_baby<H: crate::menus::host::Host + ?Sized>(game: &mut H, invalid: imp
                     }
                 };
                 game.queue_sound(2, (sound) as u8, 6);
-                let at = session_slot!(game, EnemyBase[0].current_instruction);
+                let at = game.actor_record(BABY).instruction;
                 (baby_record(at, game).word(8), 8)
             };
-            session_slot!(game, EnemyBase[0].instruction_timer = duration);
-            session_slot!(game, EnemyBase[0].current_instruction, |at| at
-                .wrapping_add(bytes));
+            edit_image_actor(game, BABY, |baby| baby.instruction_delay = duration);
+            edit_image_actor(game, BABY, |baby| {
+                baby.instruction = baby.instruction.wrapping_add(bytes);
+            });
             if duration != 0xffff {
                 let at = if ordinary {
                     cursor.wrapping_add(6)
                 } else {
-                    session_slot!(game, EnemyBase[0].current_instruction)
+                    game.actor_record(BABY).instruction
                 };
                 draw_baby(at, game);
                 return;
@@ -284,7 +290,10 @@ fn animate_baby<H: crate::menus::host::Host + ?Sized>(game: &mut H, invalid: imp
 }
 
 fn start_baby<H: crate::menus::host::Host + ?Sized>(cursor: u16, timer: u16, game: &mut H) -> u16 {
-    session_slot!(game, EnemyBase[0]; current_instruction = cursor, instruction_timer = timer);
+    edit_image_actor(game, BABY, |baby| {
+        baby.instruction = cursor;
+        baby.instruction_delay = timer;
+    });
     timer
 }
 

@@ -1,7 +1,7 @@
 //! Actual candidate bridges and maintained bank-controller callers; shared frozen fixtures.
 use super::sprite_effect_cases::{self, Operation};
 use crate::{
-    game::{actors::yapping_maw, sprite_effect_runtime as pool},
+    game::{actors::yapping_maw, session_runtime::Runtime, sprite_effect_runtime as pool},
     game_state::Game,
 };
 pub(crate) fn capture_case(id: u32) -> Option<Vec<u8>> {
@@ -29,7 +29,7 @@ fn run(operation: Operation, game: &mut Game) -> u16 {
         Operation::MetroidHurt => sm_game::actors::metroid::hurt(game),
         Operation::MetroidMain => sm_game::actors::metroid::main_ai(game),
         Operation::MetroidFrozen => sm_game::actors::metroid::frozen(game),
-        Operation::MawAppearance => yapping_maw::appearance(game),
+        Operation::MawAppearance => yapping_maw::appearance(&mut Runtime::new(game)),
         Operation::DraygonMotion(parameter) => pool::draygon_motion(parameter, game),
         Operation::DraygonStart => pool::draygon_spawn_ring(game),
         Operation::DraygonFour => pool::draygon_spawn_trails(game),

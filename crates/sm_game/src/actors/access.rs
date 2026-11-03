@@ -62,6 +62,32 @@ pub trait ActorAccess: SessionAccess {
         edit: impl for<'edit> FnOnce(&'edit mut Actor) -> R,
     ) -> R;
 }
+
+/// A host whose actor records are its RAM image's, not a Session's: the
+/// compatibility game between leases, where the image is the records' owner.
+/// Each record is decoded and stored through the actor codec in native order,
+/// as a lease imports and exports it.
+pub trait ActorImage {
+    /// The record of the actor at `key`.
+    fn actor_record(&self, key: ActorKey) -> Actor;
+    /// Store the fields of `edited` that differ from `original` to the record
+    /// at `key`, a word (low byte first) or byte at a time in record order.
+    fn store_actor_record(&mut self, key: ActorKey, original: &Actor, edited: &Actor);
+}
+
+/// Edit the record of the actor at `key` in the host's image; the changed
+/// fields are stored when `edit` returns.
+pub fn edit_image_actor<H: ActorImage + ?Sized, R>(
+    host: &mut H,
+    key: ActorKey,
+    edit: impl FnOnce(&mut Actor) -> R,
+) -> R {
+    let original = host.actor_record(key);
+    let mut edited = original.duplicate_for_storage();
+    let result = edit(&mut edited);
+    host.store_actor_record(key, &original, &edited);
+    result
+}
 /// Writes one compatibility RAM byte through the host.
 type WriteByte<H> = fn(&mut H, usize, u8);
 /// Commits an edited projection, given its original and edited values.

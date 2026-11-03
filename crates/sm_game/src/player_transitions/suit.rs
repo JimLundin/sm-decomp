@@ -303,14 +303,17 @@ pub fn advance_pickup<
         let value = h.hdma_word(word).wrapping_add(2);
         h.store_hdma_word(word, value, crate::scene::state::WordOrder::Little);
     } else {
-        // This full identity is outside the common owner, as in the original.
-        h.write_slice_le(program, h.word(program).wrapping_add(2));
+        // LEGACY(original-overflow): a selector past the HDMA object table
+        // increments whatever RAM word lies at the list pointers + selector.
+        let value = crate::legacy_overflow::ram_word(h, program).wrapping_add(2);
+        crate::legacy_overflow::ram_write_slice_le(h, program, value);
     }
     let timer = arrays::HDMA_OBJECT_INSTRUCTION_TIMERS + offset;
     if let Some(word) = crate::hdma::Word::at_address(timer) {
         h.store_hdma_word(word, 1, crate::scene::state::WordOrder::Little);
     } else {
-        h.write_slice_le(timer, 1);
+        // LEGACY(original-overflow): as above, at the instruction timers + selector.
+        crate::legacy_overflow::ram_write_slice_le(h, timer, 1);
     }
     h.native_player_command(0xb);
 }

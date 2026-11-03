@@ -1016,6 +1016,90 @@ fn actor_scratch_lanes() -> Vec<Lane> {
 }
 
 #[test]
+fn actor_spare_words_round_trip_every_word() {
+    check_owner("actor spare words", &actor_spare_lanes());
+}
+
+/// The enemy globals' spare words, which only the ending's stars use.
+fn actor_spare_lanes() -> Vec<Lane> {
+    array(0x0e0c, 2, 3, |s, index| {
+        &mut s.actors.compatibility.spare_0e0c[index]
+    })
+    .chain([(
+        0x0e14,
+        0,
+        (|s, _| &mut s.actors.compatibility.spare_0e14) as Field,
+    )])
+    .chain(array(0x0e2c, 2, 10, |s, index| {
+        &mut s.actors.compatibility.spare_0e2c[index]
+    }))
+    .chain([(
+        0x0e42,
+        0,
+        (|s, _| &mut s.actors.compatibility.spare_0e42) as Field,
+    )])
+    .collect()
+}
+
+/// The ending's star records name the bytes the star routines stored to,
+/// $7E:0E0C + 16 * star + 2 * field, in both directions, and a store to one
+/// star word changes no other byte of the block.
+#[test]
+fn star_records_map_their_original_bytes() {
+    use sm_game::shooting_star_motion::{Field, STARS, StarRecords};
+    const BLOCK: std::ops::Range<usize> = 0x0e0c..0x108c;
+    let mut s = session();
+    let base: Vec<Option<u8>> = BLOCK.map(|at| projected_byte(&s, at)).collect();
+    assert!(base.iter().all(Option::is_some), "every star byte is owned");
+    let mut claimed = BTreeSet::new();
+    for star in 0..STARS {
+        for (index, field) in Field::ALL.into_iter().enumerate() {
+            let at = BLOCK.start + 16 * star + 2 * index;
+            assert!(claimed.insert(at), "star {star} {field:?} repeats {at:#x}");
+            let before = StarRecords(&mut s).get(star, field);
+            assert_eq!(
+                Some(before),
+                projected_word(&s, at),
+                "{at:#x}: view -> projection"
+            );
+            let value = u16::try_from(at).unwrap() ^ 0xa5c3;
+
+            StarRecords(&mut s).set(star, field, value);
+            assert_eq!(
+                projected_word(&s, at),
+                Some(value),
+                "{at:#x}: view -> projection"
+            );
+            for (other, &byte) in BLOCK.zip(&base) {
+                if other != at && other != at + 1 {
+                    assert_eq!(
+                        projected_byte(&s, other),
+                        byte,
+                        "storing {at:#x} changed {other:#x}"
+                    );
+                }
+            }
+            StarRecords(&mut s).set(star, field, before);
+
+            let [low, high] = value.to_le_bytes();
+            assert!(write_projected_byte(&mut s, at, low), "store {at:#x}");
+            assert!(
+                write_projected_byte(&mut s, at + 1, high),
+                "store {:#x}",
+                at + 1
+            );
+            assert_eq!(
+                StarRecords(&mut s).get(star, field),
+                value,
+                "{at:#x}: projection -> view"
+            );
+            StarRecords(&mut s).set(star, field, before);
+        }
+    }
+    assert_eq!(2 * claimed.len(), BLOCK.len());
+}
+
+#[test]
 fn crocomire_melt_round_trips_every_word() {
     check_owner("Crocomire melt", &crocomire_melt_lanes());
 }
@@ -1270,6 +1354,7 @@ fn all_owner_lanes() -> Vec<(&'static str, Vec<Lane>)> {
         ("HDMA objects", hdma_object_lanes()),
         ("actor extended RAM", actor_extended_lanes()),
         ("actor speed scratch", actor_scratch_lanes()),
+        ("actor spare words", actor_spare_lanes()),
         ("Crocomire melt", crocomire_melt_lanes()),
         ("pause hooks", pause_hook_lanes()),
         ("Work Robot palette", work_robot_palette_lanes()),
@@ -1434,6 +1519,48 @@ fn legacy_objects_round_trip_every_byte() {
         );
         let bytes = encoded(&s);
         for at in OBJECTS {
+            assert_eq!(bytes.get(&at), Some(&ram[at]), "encode {at:#x}");
+            assert_eq!(projected_byte(&s, at), Some(ram[at]), "projection {at:#x}");
+        }
+    }
+}
+
+/// The Legacy presentation owns Samus's half upload requests byte by byte:
+/// the two flags, then the two little-endian descriptor pointers.
+#[test]
+fn legacy_samus_requests_round_trip_every_byte() {
+    const REQUESTS: std::ops::Range<usize> = 0x71d..0x723;
+    assert_eq!(REQUESTS, sm_game::session_owners::SAMUS_REQUESTS);
+    let base = session();
+    assert!(!base.presentation.is_owned());
+    for at in REQUESTS {
+        let value = (at as u8) | 1;
+        let mut s = base.clone();
+        assert!(write_projected_byte(&mut s, at, value), "store {at:#x}");
+        for other in REQUESTS {
+            let expected = if other == at { value } else { 0 };
+            assert_eq!(
+                projected_byte(&s, other),
+                Some(expected),
+                "storing {at:#x} -> projection {other:#x}"
+            );
+        }
+    }
+    for seed in [7, 0x5a3e_0071] {
+        let ram = Random::ram(seed);
+        let s = decoded(&ram);
+        for index in 0..2 {
+            let request = s.presentation.samus_request(index);
+            assert_eq!(request.enabled, ram[0x71d + index], "flag {index}");
+            let pointer = 0x71f + 2 * index;
+            assert_eq!(
+                request.pointer,
+                u16::from_le_bytes([ram[pointer], ram[pointer + 1]]),
+                "pointer {index}"
+            );
+        }
+        let bytes = encoded(&s);
+        for at in REQUESTS {
             assert_eq!(bytes.get(&at), Some(&ram[at]), "encode {at:#x}");
             assert_eq!(projected_byte(&s, at), Some(ram[at]), "projection {at:#x}");
         }

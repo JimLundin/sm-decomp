@@ -18,8 +18,8 @@ use crate::actors::deaths::Deaths as _;
 use crate::actors::host::BossEffects as _;
 use crate::actors::host::{Death, Shot, abs16, below};
 use crate::actors::ridley_tables::{set_pogo_speeds, set_tail_segments_from_list};
-use crate::actors::session_slots::{SlotAccess, session_slot};
-use crate::actors::slot_view::{SlotState, slot_view};
+use crate::actors::session_slots::SlotAccess;
+use crate::actors::slot_view::{SlotRef, SlotState, slot_view};
 use crate::carry::{adc, sbc};
 use crate::constants::enemy_properties::{
     K_ENEMY_PROPS_DELETED, K_ENEMY_PROPS_INVISIBLE, K_ENEMY_PROPS_TANGIBLE,
@@ -30,6 +30,7 @@ use crate::enemy_projectiles::drops::DropSource;
 use crate::enemy_projectiles::shared_pre::{x_velocity_at_angle, y_velocity_at_angle};
 use crate::enemy_script::EnemyScript;
 use crate::geometry::Point;
+use crate::legacy_overflow;
 use crate::menus::prelude::battle;
 use crate::menus::prelude::owned;
 use crate::palette_copies::copy_rom_colors_to_palette;
@@ -2755,15 +2756,16 @@ pub fn flip_tail<L: Lease + ?Sized>(game: &mut L) {
 }
 
 /// The damage deal suit-adjusted enemy damage to Samus ($A6:D453) deals: the
-/// current enemy's contact damage, from its definition. Mother Brain shares it,
-/// and its fight still runs on the RAM image, so the definition is read by slot
-/// address.
-pub fn contact_damage(game: &mut (impl BossState + ?Sized)) -> u16 {
-    use crate::actors::layouts::EnemyLayout8;
-    let definition = session_slot!(
-        game,
-        EnemyLayout8[i32::from(game.current_enemy())].base.enemy_ptr
-    );
+/// current enemy's contact damage, from its definition. Mother Brain shares it.
+pub fn contact_damage(game: &mut (impl BossState + SlotState + ?Sized)) -> u16 {
+    let enemy = game.current_enemy();
+    let definition = if usize::from(enemy) < 32 * 64 && enemy.is_multiple_of(64) {
+        SlotRef::of(game, enemy).actor.definition
+    } else {
+        // LEGACY(original-overflow): an enemy index that is not a slot reads
+        // the RAM at $7E:0F78 + index, as the original's `LDA $0F78,x` does.
+        legacy_overflow::slot_word(game, 0xf78 + usize::from(enemy))
+    };
     crate::cartridge::native_record(ENEMY_DEFINITION_BANK, definition, game)
         .word(ENEMY_DEFINITION_DAMAGE)
 }

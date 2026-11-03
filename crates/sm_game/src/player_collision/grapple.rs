@@ -238,26 +238,29 @@ pub fn react_beam(
         }
     }
 }
-/// $0D82..$0D8F, the grapple beam collision temporaries; extension keeps its
-/// X and Y quarter velocities in the first eight bytes.
-const COLLISION_TEMPORARIES: usize = 0xd82;
-/// Firing the beam clears the collision temporaries ($9B:C651).
-pub fn clear_temporaries(h: &mut impl crate::runtime_access::SessionRam) {
-    h.write_slice(COLLISION_TEMPORARIES, &[0; 14]);
+/// Firing the beam clears the collision temporaries ($9B:C651): $0D82..$0D8F,
+/// the saved button configuration words, whose first four hold extension's
+/// X and Y quarter velocities.
+pub fn clear_temporaries(h: &mut impl crate::session_access::SessionAccess) {
+    h.session_mut().game_loop.saved_bindings = [0; 7];
+    h.words_stored();
 }
 /// Four signed fixed-point substeps; each setup callback can change the next one.
-/// $94:A85B's quarter velocity: it stores `velocity` at `at + 1`, rotates the
-/// two words at `at` right twice (carry chained between them, so the stale
-/// bytes at `at` and `at + 3` shift in), then sign-extends a negative velocity.
-/// The words stay in RAM for the next extension; returns the 32-bit step.
+/// $94:A85B's quarter velocity: it stores `velocity` one byte into the word
+/// pair from `first` on, rotates the two words right twice (carry chained
+/// between them, so the stale low byte of the first and high byte of the
+/// second shift in), then sign-extends a negative velocity. The pair is the
+/// saved button configuration words at $7E:0D82 (X) and $7E:0D86 (Y), which
+/// keep it for the next extension; returns the 32-bit step.
 fn quarter_velocity(
-    h: &mut impl crate::runtime_access::SessionRam,
-    at: usize,
+    h: &mut impl crate::session_access::SessionAccess,
+    first: usize,
     velocity: u16,
 ) -> u32 {
+    let words = &h.session().game_loop.saved_bindings;
     let [velocity_low, velocity_high] = velocity.to_le_bytes();
-    let mut low = u16::from_le_bytes([h.byte(at), velocity_low]);
-    let mut high = u16::from_le_bytes([velocity_high, h.byte(at + 3)]);
+    let mut low = u16::from_le_bytes([words[first].to_le_bytes()[0], velocity_low]);
+    let mut high = u16::from_le_bytes([velocity_high, words[first + 1].to_le_bytes()[1]]);
     let mut carry = false;
     for _ in 0..2 {
         for word in [&mut high, &mut low] {
@@ -269,8 +272,10 @@ fn quarter_velocity(
     if velocity & 0x8000 != 0 {
         high |= 0xffc0;
     }
-    h.write_word_le(low, at);
-    h.write_word_le(high, at + 2);
+    let words = &mut h.session_mut().game_loop.saved_bindings;
+    words[first] = low;
+    words[first + 1] = high;
+    h.words_stored();
     (u32::from(high) << 16) | u32::from(low)
 }
 pub fn extend_beam(
@@ -283,8 +288,8 @@ pub fn extend_beam(
 ) -> u8 {
     let velocity = h.session().player.grapple_velocity;
     let velocity = [
-        quarter_velocity(h, COLLISION_TEMPORARIES, velocity.x),
-        quarter_velocity(h, COLLISION_TEMPORARIES + 4, velocity.y),
+        quarter_velocity(h, 0, velocity.x),
+        quarter_velocity(h, 2, velocity.y),
     ];
     let mut result = 0;
     for _ in 0..4 {

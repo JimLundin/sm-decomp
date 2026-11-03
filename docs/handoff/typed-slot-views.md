@@ -2,7 +2,7 @@
 
 Branch `collab/typed-all` (PR #155) converts the address-API layer to typed Session
 fields. Engine address APIs (`ram_ratchet.py`, ROM record reads excluded) fall from
-5805 on main `0115740f5` to 91.
+5805 on main `0115740f5` to 36.
 
 ## Pattern
 
@@ -25,7 +25,7 @@ Everything else is `[exact]`.
 
 Replays always run with Legacy presentation. `Presentation::Owned` comes only from a
 supplied or restored session start, which only verification cases reach. So OAM, the
-display mirrors, the NMI counter and the Samus-half pointers are plain RAM in replays.
+display mirrors and the NMI counter are plain RAM in replays.
 
 A new Session owner must move every writer of its bytes onto it. Four owners have
 landed this way:
@@ -34,7 +34,7 @@ landed this way:
 - right border ($1874)
 - Work Robot palette ($D652..$D657)
 
-The resulting checkpoint formats are SMROOMS 9 and SMACTORS 8. Replays can't check
+The resulting checkpoint formats are SMROOMS 9 and SMACTORS 9 (the ending's star records add four spare-word owners). Replays can't check
 $1874, because the verifier masks $186E..$1886.
 
 The first scroll attempt diverged `boss-crocomire` at $CD24 (run 41561271426). Six
@@ -46,22 +46,20 @@ Raw RAM accesses to the scroll cells still run on Game:
 - `hdma_program.rs:297-298`
 - the boot WRAM clear
 
-## Remaining 91 sites, by blocker
+## Remaining 36 sites, by blocker
 
 1. **New Session owners, plus all of their writers.**
    - (Drop origin $F434/$F436 is now owned by `enemy_projectiles.drop_origin` (SMESHOT 3). The $3000..$6FFF tile buffer is owned by the presentation workspace; Kraid's `load_bg2` reads it typed.)
 2. **Legacy presentation.**
    - (OAM $0370..$0591 is now owned by `LegacyPresentation::objects`, decoded and encoded at every lease boundary; cannon and atmosphere tiles store through it.)
-   - $57/$69/$5B6, $71D..$722.
+   - $57/$69/$5B6. (The Samus half requests $071D..$0722 are now owned by `LegacyPresentation::samus_requests`, decoded and encoded at every lease boundary.)
    - Phantoon's `set_mosaic`/`enable_bg2`/`frame`.
    - Owning the presentation on the normal replay path is an architecture step.
 3. **Still on `Game`.**
    - The game-over menu: 11 sites. A cohort patch exists at `$TEMP/typed-hosts/game_over_cohort.patch` but raises `sm_game_ram_sites` by 3.
-   - Shooting stars (ending, menus host): 19 sites.
    - `beam_windows`/`calculate_xray_window`, which runs inside `foreign`.
-   - Kraid's unpause coroutine.
-   - `yapping_maw::appearance`: the verifier's sprite alias cases 117/118 run it on Game at off-table enemy 0xE0DA.
-   - `ridley` 1 and `demo_rooms`/`hud`: hosts that `Game` also implements.
+   - `hud` (direct-page digit pointer $00..$02, no owner), `options_settings` (decompressed screens at $7F:C000.., no owner), the game-over `prepare` display mirrors ($53/$54/$86 have no display Field).
+   - Game-side routines that touch enemy 0 (the game-over baby, demo rooms, Kraid's unpause) read and store a typed `Actor` through `ActorImage`, which `Game` implements over RAM in sm/.
 4. **Address-indexed by design.**
    - Out-of-range fallbacks: Phantoon's part and shot fallbacks, `visual_host` handles, `bg2_staging::set_unbounded` for Crocomire's melt cursor.
    - Original reads and stores that run past their tables: Crocomire's `erase_melt_columns` (offsets reach $8xxx/$Cxxx/$10xxx) and melt column heights, covern $0AF6+k, rinka $87FE+id, draygon_sweep $9002+i past $97DC, the statues level block.

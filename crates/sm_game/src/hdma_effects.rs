@@ -86,22 +86,43 @@ fn advance_program<H: crate::hdma_objects::HdmaTable + ?Sized>(index: usize, gam
     crate::hdma_word!(game, index, InstructionTimer => 1);
 }
 
+/// A wave pair's indirect table ($7E:9000 or $7E:0D82, 14 bytes): two entries
+/// of a 192-line count and a long pointer, 6 bytes apart, the second half's
+/// pointers and the terminator. Built store by store in the original's
+/// publication order (high half, low word, alternate pointer), each store
+/// overwriting the previous one's bytes.
+fn wave_pair_table(primary: u16) -> [u8; 14] {
+    let mut table = [0; 14];
+    let mut store = |at: usize, bytes: &[u8]| table[at..at + bytes.len()].copy_from_slice(bytes);
+    let source = (0xc00000 | u32::from(primary)).to_ne_bytes();
+    store(0, &192u16.to_le_bytes());
+    store(6, &192u16.to_le_bytes());
+    for at in [1, 7] {
+        store(at + 2, &source[2..]);
+        store(at, &primary.to_ne_bytes());
+        store(at + 3, &primary.wrapping_add(128).to_le_bytes());
+    }
+    store(12, &0u16.to_le_bytes());
+    table
+}
+
 pub trait HdmaEffects: Host {
     fn current_hdma_index(&self) -> usize {
         usize::from(self.hdma_word(crate::hdma::Word::Selected) >> 1)
     }
 
-    fn initialize_wave_pair(&mut self, base: usize, primary: u16) {
-        let source = (0xc00000 | u32::from(primary)).to_ne_bytes();
-        self.write_slice_le(base, 192);
-        self.write_slice_le(base + 6, 192);
-        for at in [base + 1, base + 7] {
-            // Keep high-half, low-word, alternate-pointer publication order.
-            self.write_slice(at + 2, &source[2..]);
-            self.write_slice_native(at, primary);
-            self.write_slice_le(at + 3, primary.wrapping_add(128));
+    fn initialize_wave_pair(&mut self, table: crate::hdma_objects::WaveTable, primary: u16) {
+        let bytes = wave_pair_table(primary);
+        match table {
+            crate::hdma_objects::WaveTable::Phantoon => store_shared_bytes(self, 0, &bytes),
+            crate::hdma_objects::WaveTable::Intro => {
+                let words = &mut self.session_mut().game_loop.saved_bindings;
+                for (word, pair) in words.iter_mut().zip(bytes.as_chunks::<2>().0) {
+                    *word = u16::from_le_bytes(*pair);
+                }
+                self.words_stored();
+            }
         }
-        self.write_slice_le(base + 12, 0);
     }
 
     fn reset_hdma_wave(&mut self, slot: u16) {
@@ -119,7 +140,7 @@ pub trait HdmaEffects: Host {
         let mode = self.resolve_actor(motion, Native).parameters[0];
         self.edit_actor(controller, Native, |actor| actor.parameters[0] = mode);
         if self.resolve_actor(motion, Native).parameters[0] & 1 != 0 {
-            self.initialize_wave_pair(0x9000, 0x9100);
+            self.initialize_wave_pair(crate::hdma_objects::WaveTable::Phantoon, 0x9100);
         } else {
             // The narrow wave's indirect table at $7E:9000, store by store.
             for at in [0x00, 0x06, 0x0c, 0x0f, 0x12, 0x15] {
@@ -595,7 +616,7 @@ where
         InitializePhantoonWave => h.initialize_phantoon_wave(slot),
         InitializeEyeBeam => h.initialize_eye_beam(slot),
         ResetWave => h.reset_hdma_wave(slot),
-        InitializeWavePair { base, primary } => h.initialize_wave_pair(base, primary),
+        InitializeWavePair { table, primary } => h.initialize_wave_pair(table, primary),
         SetPhantoonMotion { direction, speed } => h.set_phantoon_motion(direction, speed),
         ScrollWeather(weather) => h.scroll_weather_layers(slot, weather),
         BeginHaze { color } => h.begin_haze(slot, color),
