@@ -842,6 +842,10 @@ pub trait Lease:
 {
     type Game: Host + crate::hdma_objects::HdmaTable + SessionRam;
     fn foreign<T>(&mut self, action: impl FnOnce(&mut Self::Game) -> T) -> T;
+    /// Run `action` on the lease itself where a `foreign` call ran it on the
+    /// game: the external observations are refreshed on entry and on return,
+    /// as `foreign` left them.
+    fn owned_step<T>(&mut self, action: impl FnOnce(&mut Self) -> T) -> T;
 }
 
 /// What the fight still reaches in the compatibility runtime.
@@ -988,7 +992,7 @@ pub fn corpse_rotting_finished(game: &mut impl Lease) {
         + (random_number(game) as i32 & 0x1f)
         - 16i32) as u16;
     let y = (Brain::of(game, BRAIN_INDEX).actor().y.whole).wrapping_add(16);
-    game.foreign(|game| crate::actors::host::BossEffects::set_projectile_spawn_point(game, x, y));
+    game.owned_step(|game| game.place_projectile_spawn(x, y));
     spawn_room_projectile(ADDR_K_EPROJ_DUST_CLOUD_EXPLOSION as u16, 0xa, game);
     if (game.owned(OwnedWord::RandomEnemyCounter) & 7) == 0 {
         queue_sfx2_max3(sound::LAVA_ACID_DAMAGE, game);
@@ -1687,7 +1691,7 @@ crate::dispatch::callback_dispatch! {
             *BodyEdit::of(game, e).fake_death_explosion_index() = v2 as u16;
             let v3: i32 = ((4u16).wrapping_mul((v2) as u16)) as i32 >> 1;
             let explosion = mother_brain_tables::fake_death_explosion(game, (v3 >> 1) as isize);
-            game.foreign(|game| crate::actors::host::BossEffects::set_projectile_spawn_point(game, explosion.x, explosion.y));
+            game.owned_step(|game| game.place_projectile_spawn(explosion.x, explosion.y));
             let v4: u16 = (if random_number(game) < 0x4000 {
                 12
             } else {
@@ -1912,7 +1916,7 @@ crate::dispatch::callback_dispatch! {
             *BodyEdit::of(game, e).explosion_timer() = 8;
             *BodyEdit::of(game, e).cooldown() = Body::of(game, e).cooldown().wrapping_add(1);
             let v2: i32 = Body::of(game, e).cooldown() as i32 & 7;
-            game.foreign(|game| crate::actors::host::BossEffects::set_projectile_spawn_point(game, RAINBOW_BEAM_EXPLOSION_X[v2 as usize] as u16, RAINBOW_BEAM_EXPLOSION_Y[v2 as usize] as u16));
+            game.owned_step(|game| game.place_projectile_spawn(RAINBOW_BEAM_EXPLOSION_X[v2 as usize] as u16, RAINBOW_BEAM_EXPLOSION_Y[v2 as usize] as u16));
             spawn_room_projectile(
                 ADDR_K_EPROJ_MOTHER_BRAIN_RAINBOW_BEAM_EXPLOSION as u16,
                 RAINBOW_BEAM_EXPLOSION_Y[v2 as usize] as u16,
@@ -2108,12 +2112,12 @@ crate::dispatch::callback_dispatch! {
     }
     when (Brain::of(game, e).subfunction_timer() & 0x8000) != 0;
     [11110787] spawn_top_right_tube_falling {
-        game.foreign(|game| crate::actors::host::BossEffects::set_projectile_spawn_point(game, 152, 47));
+        game.owned_step(|game| game.place_projectile_spawn(152, 47));
         spawn_room_projectile(TOP_RIGHT_TUBE_FALLING_PROJECTILE, 0x2f, game);
         *BrainEdit::of(game, e).subfunction() = -30304i32 as u16;
     };
     [11110837] spawn_top_left_tube_falling {
-        game.foreign(|game| crate::actors::host::BossEffects::set_projectile_spawn_point(game, 104, 47));
+        game.owned_step(|game| game.place_projectile_spawn(104, 47));
         spawn_room_projectile(
             ADDR_K_EPROJ_MOTHER_BRAIN_TUBE_FALLING_TOP_LEFT as u16,
             0x2f,
@@ -2130,7 +2134,7 @@ crate::dispatch::callback_dispatch! {
         *BrainEdit::of(game, e).subfunction() = function::TUBES_CLEAR_BOTTOM_MIDDLE_LEFT_TUBE;
     };
     [11110967] spawn_top_middle_left_tube_falling {
-        game.foreign(|game| crate::actors::host::BossEffects::set_projectile_spawn_point(game, 120, 59));
+        game.owned_step(|game| game.place_projectile_spawn(120, 59));
         spawn_room_projectile(
             ADDR_K_EPROJ_MOTHER_BRAIN_TUBE_FALLING_TOP_MIDDLE_LEFT as u16,
             0x3b,
@@ -2139,7 +2143,7 @@ crate::dispatch::callback_dispatch! {
         *BrainEdit::of(game, e).subfunction() = function::TUBES_CLEAR_CEILING_TUBE_COLUMN_7;
     };
     [11111017] spawn_top_middle_right_tube_falling {
-        game.foreign(|game| crate::actors::host::BossEffects::set_projectile_spawn_point(game, 136, 59));
+        game.owned_step(|game| game.place_projectile_spawn(136, 59));
         spawn_room_projectile(
             ADDR_K_EPROJ_MOTHER_BRAIN_TUBE_FALLING_TOP_MIDDLE_RIGHT as u16,
             0x3b,
@@ -3078,7 +3082,7 @@ crate::dispatch::callback_dispatch! {
             *BrainEdit::of(game, e).subfunction_timer() = 7;
         }
         let x = FAKE_DEATH_EXPLOSION_X[Brain::of(game, e).subfunction_timer() as usize];
-        game.foreign(|game| crate::actors::host::BossEffects::set_projectile_spawn_point(game, x, 212));
+        game.owned_step(|game| game.place_projectile_spawn(x, 212));
         spawn_room_projectile(
             ADDR_K_EPROJ_DUST_CLOUD_EXPLOSION as u16,
             FAKE_DEATH_EXPLOSION_TYPES[(((random_number(game)) & (0x100u16)) >> 8) as usize] as u16,
@@ -3133,7 +3137,7 @@ crate::dispatch::callback_dispatch! {
                 *BrainEdit::of(game, e).subfunction_timer() = 3;
             }
             let v3: i32 = ((4u16).wrapping_mul(Brain::of(game, e).subfunction_timer())) as i32 >> 1;
-            game.foreign(|game| crate::actors::host::BossEffects::set_projectile_spawn_point(game, ESCAPE_DOOR_EXPLOSION_OFFSETS[v3 as usize], ESCAPE_DOOR_EXPLOSION_OFFSETS[(v3 + 1) as usize]));
+            game.owned_step(|game| game.place_projectile_spawn(ESCAPE_DOOR_EXPLOSION_OFFSETS[v3 as usize], ESCAPE_DOOR_EXPLOSION_OFFSETS[(v3 + 1) as usize]));
             let mut v4: u16 = 3;
             if game.foreign(|game| game.next_random()) < 0x4000 {
                 v4 = 12;

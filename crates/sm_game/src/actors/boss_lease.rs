@@ -88,6 +88,10 @@ pub trait BossState:
 pub trait BossLease: BossState {
     type Game: ?Sized;
     fn foreign<T>(&mut self, action: impl FnOnce(&mut Self::Game) -> T) -> T;
+    /// Run `action` on the lease itself where a `foreign` call ran it on the
+    /// game: the external observations are refreshed on entry, as the game's
+    /// RAM was current there, and on return, as `foreign` re-imported them.
+    fn owned_step<T>(&mut self, action: impl FnOnce(&mut Self) -> T) -> T;
 }
 
 /// The BG2 tilemap staging RAM ($7E:2000..$7E:2FFF) by word index: the
