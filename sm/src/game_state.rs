@@ -886,10 +886,6 @@ pub struct Game {
     /// Imported from `loaded_rom` by `register_rom`; see game::beam_windows.
     /// Imported from `loaded_rom` by `register_rom`; see game::actors::escape_critters.
     pub(crate) escape_etecoons: crate::game::actors::escape_critters::ImportedTables,
-    /// Imported from `loaded_rom` by `register_rom`; see game::actors::botwoon.
-    pub(crate) botwoon_speeds: Option<crate::game::actors::botwoon::ImportedSpeeds>,
-    /// Imported from `loaded_rom` by `register_rom`; see game::actors::botwoon.
-    pub(crate) botwoon_holes: Option<crate::game::actors::botwoon::ImportedHoles>,
     /// Imported from `loaded_rom` by `register_rom`; see sm_game::intro_pages.
     pub(crate) intro_palette: Option<sm_game::intro_pages::ImportedIntroPalette>,
     /// Imported from `loaded_rom` by `register_rom`; see sm_game::menus::menu_tilemap.
@@ -1463,8 +1459,7 @@ impl Game {
         self.escape_etecoons = crate::game::actors::escape_critters::import(image);
         self.records.flame_rain = sm_game::phantoon_tables::import(image);
         self.records.phantoon_timers = sm_game::phantoon_tables::import_timers(image);
-        self.botwoon_speeds = crate::game::actors::botwoon::import_speeds(image);
-        self.botwoon_holes = crate::game::actors::botwoon::import_holes(image);
+        self.records.botwoon_tables = sm_game::botwoon_tables::import(image);
         self.intro_palette = sm_game::intro_pages::import_intro_palette(image);
         self.area_select_palettes = sm_game::menus::menu_tilemap::import_area_palettes(image);
         self.records.ceres_ridley_tables = sm_game::ceres_ridley_tables::import(image);
@@ -1620,8 +1615,6 @@ impl Game {
             save_slots: None,
             demo_sets: None,
             demo_scenes: None,
-            botwoon_speeds: None,
-            botwoon_holes: None,
             intro_palette: None,
             area_select_palettes: None,
             visual_tables: Default::default(),

@@ -96,7 +96,10 @@ pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
             runtime.queue_sound(3, 6, ELEVATOR_SOUND);
             runtime.queue_sound(1, 6, SPIN_JUMP_END);
             runtime.foreign(|game| game.command_player(SET_UP_FOR_ELEVATOR));
-            runtime.foreign(|game| game.reset_player_projectiles());
+            crate::actors::boss_lease::BossLease::owned_step(
+                &mut runtime,
+                crate::player_projectiles::motion::reset,
+            );
             place_samus(&mut runtime);
             let entry = &mut runtime.session_mut().room.entry;
             entry.elevator_status = entry.elevator_status.wrapping_add(1);

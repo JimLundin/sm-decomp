@@ -8,8 +8,8 @@
 //! bank log's corpse rotting notes. The bank's dispatch ids are unchanged; the
 //! functions and their reads and writes keep the original order. Mother
 //! Brain's shared helpers come from `mother_brain_fight`.
+use crate::actors::access::ActorKey;
 use crate::actors::boss_lease::bg2_staging;
-use crate::actors::host::{Death, Slopes};
 use crate::actors::mother_brain_fight::OwnedWord;
 use crate::actors::mother_brain_fight::random_number;
 use crate::actors::mother_brain_fight::{BANK, BANK_BASE, Host as _, Lease, State, cgram, sound};
@@ -19,9 +19,9 @@ use crate::actors::mother_brain_fight::{
     set_native_word, spawn_room_projectile,
 };
 use crate::actors::slot_view::{SlotState, slot_view};
+use crate::actors::{api, combat};
 use crate::runtime_access::SessionRam;
 // The game's traits, for the calls made on it through `foreign`.
-use crate::actors::host::ActorRuntime as _;
 
 use crate::constants::bank_86::*;
 use crate::constants::bank_a9::*;
@@ -170,8 +170,18 @@ slot_view! {
 }
 
 /// A lease the corpse-only routines run on: its slots are the Session's.
-pub trait Corpses: Lease + SlotState {}
-impl<T: Lease + SlotState + ?Sized> Corpses for T {}
+pub trait Corpses:
+    Lease + SlotState + crate::room_mechanisms::host::Host + crate::room_mechanisms::host::Effects
+{
+}
+impl<T> Corpses for T where
+    T: Lease
+        + SlotState
+        + crate::room_mechanisms::host::Host
+        + crate::room_mechanisms::host::Effects
+        + ?Sized
+{
+}
 /// The state the corpse-only reactions run on: its slots are the Session's.
 pub trait CorpseState: State + SlotState {}
 impl<T: State + SlotState + ?Sized> CorpseState for T {}
@@ -420,7 +430,7 @@ crate::dispatch::instruction_callbacks! {
     torizo_corpse_rotting_finished [] {
         {
             let (x, y) = (((random_number(game) as i32 & 0x1f) + 272) as u16, 188);
-            game.foreign(|game| crate::actors::host::BossEffects::set_projectile_spawn_point(game, x, y));
+            game.owned_step(|game| game.place_projectile_spawn(x, y));
         }
         spawn_room_projectile(ADDR_K_EPROJ_DUST_CLOUD_EXPLOSION as u16, 0xa, game);
         if (game.owned(OwnedWord::RandomEnemyCounter) & 7) == 0 {
@@ -433,7 +443,7 @@ crate::dispatch::instruction_callbacks! {
             let x_pos = Corpse::of(game, k).actor().x.whole;
             let x = (x_pos as i32 + (random_number(game) as i32 & 0x1a) - 14i32) as u16;
             let y = Corpse::of(game, k).actor().y.whole.wrapping_add(16);
-            game.foreign(|game| crate::actors::host::BossEffects::set_projectile_spawn_point(game, x, y));
+            game.owned_step(|game| game.place_projectile_spawn(x, y));
         }
         spawn_room_projectile(ADDR_K_EPROJ_DUST_CLOUD_EXPLOSION as u16, 0xa, game);
         if (game.owned(OwnedWord::RandomEnemyCounter) & 7) == 0 {
@@ -752,7 +762,10 @@ pub fn sidehopper_corpse_movement(k: u16, game: &mut impl Corpses) -> u8 {
     } else {
         {
             let (actor, amount) = (k, (v3 as i16 as i32) << 8);
-            game.foreign(|game| game.move_vertical(actor, amount)) as u8
+            game.owned_step(|game| {
+                api::move_vertical(game, ActorKey::from_legacy(actor), amount)
+                    == api::MovementResult::Blocked
+            }) as u8
         }
     }
 }
@@ -762,7 +775,14 @@ pub fn sidehopper_corpse_horizontal_movement(k: u16, a: u16, game: &mut impl Cor
     } else {
         {
             let (actor, amount) = (k, (a as i16 as i32) << 8);
-            game.foreign(|game| game.move_horizontal(actor, amount, Slopes::Ignore)) as u8
+            game.owned_step(|game| {
+                api::move_horizontal(
+                    game,
+                    ActorKey::from_legacy(actor),
+                    amount,
+                    api::SlopePolicy::Ignore,
+                ) == api::MovementResult::Blocked
+            }) as u8
         };
     };
 }
@@ -1166,7 +1186,7 @@ pub fn sidehopper_corpse_shot(game: &mut impl CorpseState) {
 }
 pub fn sidehopper_corpse_touch(game: &mut impl Corpses) {
     if DeadMonster::of(game, game.current_enemy()).drained_palette_index() < 8 {
-        game.foreign(|game| game.contact_reaction(Death::LeavePending));
+        game.owned_step(|game| combat::contact_reaction(game, api::DeathHandling::LeavePending));
     } else {
         sidehopper_corpse_rottable_contact(game);
     };

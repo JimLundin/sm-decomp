@@ -513,7 +513,7 @@ crate::dispatch::callback_dispatch! {
                 .wrapping_add(offsets.table_word(v4 as isize));
             let y = (BabyMetroidInCutscene::of(game, e).actor().y.whole)
                 .wrapping_add(offsets.table_word((v4 + 1) as isize));
-            game.foreign(|game| crate::actors::host::BossEffects::set_projectile_spawn_point(game, x, y));
+            game.owned_step(|game| game.place_projectile_spawn(x, y));
             spawn_room_projectile(ADDR_K_EPROJ_DUST_CLOUD_EXPLOSION as u16, 3, game);
             queue_sfx3_max3(sound::EXPLODING, game);
         } else {
@@ -616,9 +616,7 @@ pub fn spawn_dust_cloud_at_brain_offset(xd: u16, yd: u16, game: &mut impl Lease)
             ((Brain::of(game, e).actor().x.whole).wrapping_add(xd)),
             ((Brain::of(game, e).actor().y.whole).wrapping_add(yd)),
         );
-        game.foreign(|game| {
-            crate::actors::host::BossEffects::set_projectile_spawn_point(game, x, y)
-        });
+        game.owned_step(|game| game.place_projectile_spawn(x, y));
     }
     spawn_room_projectile(ADDR_K_EPROJ_DUST_CLOUD_EXPLOSION as u16, 9, game);
 }

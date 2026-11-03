@@ -10,6 +10,7 @@ use crate::enemy_script::EnemyScript;
 use crate::player_projectiles::{access::shot, host::Host as _};
 use crate::ram::CompatibilityRam;
 use crate::session_access::SessionAccess;
+use crate::sprite_effect_state::{LegacySpriteDefinition, SpriteSpawn};
 use sm_data::cartridge::RomRecord;
 
 /// Byte offset of an enemy definition's vulnerability table pointer.
@@ -28,6 +29,8 @@ pub trait PirateLease:
     + crate::room_mechanisms::host::Host
     + crate::room_mechanisms::host::Effects
     + crate::player_projectiles::host::Host
+    + crate::sprite_effect_host::Host
+    + crate::records::Records
     + SlotState
 {
     type Game: Pirates + ?Sized;
@@ -35,6 +38,9 @@ pub trait PirateLease:
     fn word(&self, at: usize) -> u16;
     fn write_word_le(&mut self, value: u16, at: usize);
     fn foreign<T>(&mut self, action: impl FnOnce(&mut Self::Game) -> T) -> T;
+    /// Run `action` on this lease where a `foreign` call ran it on the game:
+    /// the external observations are refreshed on entry and on return.
+    fn owned_step<T>(&mut self, action: impl FnOnce(&mut Self) -> T) -> T;
     /// The actor content record at `bank:address`, as the original actor read.
     fn actor_legacy_record(&mut self, bank: u8, address: u16) -> RomRecord;
     /// The native record at `bank:address`, with the original diagnostic.
@@ -48,20 +54,26 @@ pub trait Pirates: CompatibilityRam + crate::records::Records {
         Self: 'a;
     /// Open one lease, as one original `Runtime::new`.
     fn lease(&mut self) -> Self::Lease<'_>;
-    fn actor_sine(&mut self, phase: u16, amplitude: u16) -> u16;
-    fn actor_cosine(&mut self, phase: u16, amplitude: u16) -> u16;
-    fn create_sprite(&mut self, x: u16, y: u16, kind: u16, appearance: u16) -> u16;
     /// Fire a pirate laser from (`x`, `y`): the spawn point, its facing and
     /// the room-graphics laser projectile, in that order.
     fn fire_laser(&mut self, x: u16, y: u16, right: bool);
     /// Spawn projectile `parameter` from the current enemy within the
     /// rectangle at (`x`, `y`), after setting the rectangle.
     fn spawn_in_rect(&mut self, x: u16, y: u16, width: u16, height: u16, parameter: u16);
-    /// The Lower Norfair pirates' special item drop for enemy `index`.
-    fn scatter_pirate_drop(&mut self, index: u16);
-    fn reflect_player_projectile(&mut self, index: u16);
     /// Copy the ninja pirates' palette into the sprite palette buffer.
     fn load_ninja_palette(&mut self);
+}
+
+/// The high word of `amplitude` times the sine of `phase`.
+fn actor_sine<R: PirateLease>(runtime: &mut R, phase: u16, amplitude: u16) -> u16 {
+    let angle = u16::from(phase.wrapping_add(0x80) as u8);
+    (crate::actors::queries::sine_product(runtime, amplitude, angle) >> 16) as u16
+}
+
+/// The high word of `amplitude` times the cosine of `phase`.
+fn actor_cosine<R: PirateLease>(runtime: &mut R, phase: u16, amplitude: u16) -> u16 {
+    let angle = u16::from(phase.wrapping_add(64) as u8);
+    (crate::actors::queries::sine_product(runtime, amplitude, angle) >> 16) as u16
 }
 
 /// Instruction lists in bank $B2, named after the bank log.
@@ -341,7 +353,7 @@ fn wall_jump<G: Pirates + ?Sized>(right: bool, game: &mut G) {
         actor.pre_instruction,
         actor.parameters[1] >> 1,
     );
-    let dx = runtime.foreign(|game| game.actor_sine(phase, radius));
+    let dx = runtime.owned_step(|runtime| actor_sine(runtime, phase, radius));
     runtime.edit_actor(key, Native, |actor| actor.x.whole = origin.wrapping_add(dx));
     let actor = runtime.resolve_actor(key, Native);
     let (origin, phase, radius) = (
@@ -349,7 +361,7 @@ fn wall_jump<G: Pirates + ?Sized>(right: bool, game: &mut G) {
         actor.pre_instruction,
         actor.parameters[1] >> 2,
     );
-    let dy = runtime.foreign(|game| game.actor_cosine(phase, radius));
+    let dy = runtime.owned_step(|runtime| actor_cosine(runtime, phase, radius));
     runtime.edit_actor(key, Native, |actor| actor.y.whole = origin.wrapping_sub(dy));
     let phase = runtime
         .resolve_actor(key, Native)
@@ -525,7 +537,14 @@ fn landing_dust<R: PirateLease>(runtime: &mut R, key: Key) {
             actor.x.whole.wrapping_add(dx),
             actor.y.whole.wrapping_add(28),
         );
-        runtime.foreign(|game| game.create_sprite(x, y, 10, 0));
+        runtime.owned_step(|runtime| {
+            let spawn = SpriteSpawn {
+                position: crate::geometry::Point { x, y },
+                definition: LegacySpriteDefinition(10),
+                appearance: 0,
+            };
+            crate::sprite_objects::spawn(runtime, spawn);
+        });
     }
 }
 
@@ -805,8 +824,9 @@ fn ready_to_divekick<G: Pirates + ?Sized>(game: &mut G) {
         } else {
             0
         };
-    let instruction = runtime
-        .foreign(|game| crate::gameplay_tables::pirate_instruction_list(game, choice as isize));
+    let instruction = runtime.owned_step(|runtime| {
+        crate::gameplay_tables::pirate_instruction_list(runtime, choice as isize)
+    });
     runtime.edit_actor(key, Native, |actor| {
         actor.instruction = instruction;
         actor.instruction_delay = 1;
@@ -830,7 +850,13 @@ fn damage<R: PirateLease>(runtime: &mut R) {
         });
         combat::die(runtime, api::DeathKind::Normal { animation: 4 });
         if drop_items {
-            runtime.foreign(|game| game.scatter_pirate_drop(index));
+            runtime.owned_step(|runtime| {
+                crate::enemy_projectiles::drops::scatter(
+                    crate::enemy_projectiles::drops::DropSource::LowerNorfairPirate,
+                    index,
+                    runtime,
+                );
+            });
         }
     }
 }
@@ -920,7 +946,9 @@ fn reflect_shot<R: PirateLease>(runtime: &mut R) {
         _ => 5,
     };
     shot!(runtime, reflection_index, direction = direction; PrefixLe);
-    runtime.foreign(|game| game.reflect_player_projectile(reflection_index));
+    runtime.owned_step(|runtime| {
+        crate::player_projectiles::motion::reflect(runtime, reflection_index)
+    });
     runtime.queue_sound(2, 6, 0x66);
 }
 

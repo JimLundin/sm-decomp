@@ -2,7 +2,6 @@
 //! writes and runtime hooks come from here.
 #![forbid(unsafe_code)]
 use crate::game::actors::{api, combat};
-use crate::game::enemy_projectiles::scatter_drop;
 use crate::game::gameplay_flag_runtime;
 use crate::game::music::queue_music_delayed_8;
 use crate::game::player_movement::forced;
@@ -17,11 +16,7 @@ use core::mem::offset_of;
 use sm_game::actors::draygon_grab::{ENEMY_DEF_DAMAGE, ENEMY_DEF_HURT_AI_TIME};
 use sm_game::actors::draygon_host::Host;
 use sm_game::actors::host::BossEffects;
-use sm_game::enemy_projectiles::drops::DropSource;
-use sm_game::gameplay_flag_host::BossWordOrder;
 use sm_game::geometry::Vector32;
-use sm_game::sprite_effect_controllers as controllers;
-use sm_game::sprite_effect_state::{LegacySpriteHandle as Handle, LegacySpriteProgram};
 
 const _: () = assert!(
     offset_of!(EnemyDef, hurt_ai_time) == ENEMY_DEF_HURT_AI_TIME
@@ -63,32 +58,12 @@ const _: () = {
 };
 
 impl Host for Game {
-    fn draygon_spawn_trails(&mut self) {
-        sprites::draygon_spawn_trails(self);
-    }
-
     fn draygon_trajectory(&mut self) {
         sprites::draygon_trajectory(self);
     }
 
     fn grab_samus(&mut self, direction: u16) {
         forced::grab_by_draygon(direction, &mut Runtime::new(self));
-    }
-
-    fn release_samus(&mut self) {
-        forced::release_from_draygon(&mut Runtime::new(self));
-    }
-
-    fn draygon_spawn_ring(&mut self) {
-        sprites::draygon_spawn_ring(self);
-    }
-
-    fn draygon_motion(&mut self, horizontal_bias: u16) {
-        sprites::draygon_motion(horizontal_bias, self);
-    }
-
-    fn scatter_draygon_drop(&mut self, area: u16) {
-        scatter_drop(DropSource::Draygon, area, self);
     }
 }
 
@@ -97,40 +72,8 @@ impl BossEffects for Game {
         sprites::create_sprite(x, y, kind, appearance, self)
     }
 
-    fn freeze_sprite_attachment(&mut self, handle: u16, appearance: u16, program: u16) {
-        let (handle, program) = (Handle(handle), LegacySpriteProgram(program));
-        controllers::freeze_attachment(&mut Runtime::new(self), handle, appearance, program);
-    }
-
-    fn flash_sprite_attachment(&mut self, handle: u16, appearance: u16) {
-        controllers::flash_attachment(&mut Runtime::new(self), Handle(handle), appearance);
-    }
-
-    fn attach_sprite(&mut self, handle: u16, enemy: u16, appearance: u16) {
-        controllers::attach_actor(&mut Runtime::new(self), Handle(handle), enemy, appearance);
-    }
-
-    fn retire_sprite_natively(&mut self, handle: u16) {
-        controllers::retire_native(&mut Runtime::new(self), Handle(handle));
-    }
-
-    fn scatter_metroid_drop(&mut self, handle: u16) {
-        scatter_drop(DropSource::Metroid, handle, self);
-    }
-
     fn set_projectile_spawn_point(&mut self, x: u16, y: u16) {
         self.eproj_spawn_pt = Point16U { x, y };
-    }
-
-    fn write_native_words(&mut self, writes: &[(usize, u16)]) {
-        let mut runtime = Runtime::new(self);
-        for &(at, value) in writes {
-            runtime.write_slice_native(at, value);
-        }
-    }
-
-    fn disable_minimap_for_boss(&mut self) {
-        sm_game::player_update::minimap::disable_for_boss(&mut Runtime::new(self));
     }
 
     fn actor_cosine(&mut self, phase: u16, amplitude: u16) -> u16 {
@@ -173,10 +116,6 @@ impl BossEffects for Game {
         player_command(command, self)
     }
 
-    fn reset_player_projectiles(&mut self) {
-        crate::game::player_projectiles::reset(self);
-    }
-
     fn correct_previous_position(&mut self) {
         correct_previous_position(self);
     }
@@ -189,16 +128,8 @@ impl BossEffects for Game {
         damage_player(amount, self);
     }
 
-    fn retire_all_sprites(&mut self) {
-        sprites::retire_all(self);
-    }
-
     fn queue_music_delayed(&mut self, track: u16) {
         queue_music_delayed_8(track, self);
-    }
-
-    fn boss_word(&mut self, area: u16) -> u16 {
-        gameplay_flag_runtime::boss_word_at(area, BossWordOrder::Little, self)
     }
 
     fn set_boss_word(&mut self, area: u16, value: u16) {

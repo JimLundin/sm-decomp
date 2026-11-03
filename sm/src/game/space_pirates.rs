@@ -1,16 +1,14 @@
 //! Space pirates run in `sm_game::actors::space_pirates`; the game side of
 //! their hosts lives here.
 #![forbid(unsafe_code)]
-use crate::game::enemy_projectiles::{scatter_drop, spawn_with_enemy_gfx, spawn_with_room_gfx};
-use crate::game::session_runtime::{Runtime, actor_cosine, actor_sine};
-use crate::game::sprite_effect_runtime::create_sprite;
+use crate::game::enemy_projectiles::{spawn_with_enemy_gfx, spawn_with_room_gfx};
+use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
 use crate::ram_map::word;
 use crate::rom::RomRecord;
 use crate::types::{EnemyDef, Point16U, Rect16U, Vulnerability};
 use core::mem::offset_of;
 pub(crate) use sm_game::actors::space_pirates::*;
-use sm_game::enemy_projectiles::drops::DropSource;
 
 const _: () = {
     assert!(offset_of!(EnemyDef, vulnerability_ptr) == DEFINITION_VULNERABILITY);
@@ -23,18 +21,6 @@ impl Pirates for Game {
 
     fn lease(&mut self) -> Runtime<'_> {
         Runtime::new(self)
-    }
-
-    fn actor_sine(&mut self, phase: u16, amplitude: u16) -> u16 {
-        actor_sine(phase, amplitude, self)
-    }
-
-    fn actor_cosine(&mut self, phase: u16, amplitude: u16) -> u16 {
-        actor_cosine(phase, amplitude, self)
-    }
-
-    fn create_sprite(&mut self, x: u16, y: u16, kind: u16, appearance: u16) -> u16 {
-        create_sprite(x, y, kind, appearance, self)
     }
 
     fn fire_laser(&mut self, x: u16, y: u16, right: bool) {
@@ -51,14 +37,6 @@ impl Pirates for Game {
             h: height,
         };
         spawn_with_enemy_gfx(parameter, word!(self.CUR_ENEMY_INDEX), 0xa189, self);
-    }
-
-    fn scatter_pirate_drop(&mut self, index: u16) {
-        scatter_drop(DropSource::LowerNorfairPirate, index, self);
-    }
-
-    fn reflect_player_projectile(&mut self, index: u16) {
-        crate::game::player_projectiles::reflect(index, self);
     }
 
     fn load_ninja_palette(&mut self) {
@@ -80,6 +58,10 @@ impl PirateLease for Runtime<'_> {
 
     fn foreign<T>(&mut self, action: impl FnOnce(&mut Game) -> T) -> T {
         Runtime::foreign(self, action)
+    }
+
+    fn owned_step<T>(&mut self, action: impl FnOnce(&mut Self) -> T) -> T {
+        self.owned_player_call(action)
     }
 
     fn actor_legacy_record(&mut self, bank: u8, address: u16) -> RomRecord {

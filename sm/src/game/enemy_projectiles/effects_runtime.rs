@@ -30,8 +30,10 @@ impl Effects for Runtime<'_> {
         self.foreign(|game| crate::game::music::queue_music_delayed_8(track, game))
     }
     fn convert_angle_to_xy(&mut self, angle: u16, amplitude: u16) -> sm_game::geometry::Vector32 {
-        self.foreign(|game| {
-            crate::game::session_runtime::actor_direction_vector(angle, amplitude, game)
+        // The game read the $A0:B7EE sine table inside `foreign`; the
+        // lease reads it in an owned call, keeping the observation refresh.
+        self.owned_player_call(|runtime| {
+            sm_game::actors::boss_lease::BossState::direction_step(runtime, angle, amplitude)
         })
     }
     fn queue_sound(&mut self, channel: u8, max: u8, sound: u16) {

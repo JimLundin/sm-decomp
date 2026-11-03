@@ -115,15 +115,30 @@ pub mod steps {
     where
         L: BossLease + crate::sprite_effect_host::Host,
     {
+        create_sprite_appearing(game, x, y, selector, 0);
+    }
+
+    /// Create sprite object `selector` at (`x`, `y`) with `appearance`; its
+    /// handle, FFFFh when every slot is in use.
+    pub fn create_sprite_appearing<L>(
+        game: &mut L,
+        x: u16,
+        y: u16,
+        selector: u16,
+        appearance: u16,
+    ) -> u16
+    where
+        L: BossLease + crate::sprite_effect_host::Host,
+    {
         use crate::sprite_effect_state::{LegacySpriteDefinition, SpriteSpawn};
         game.owned_step(|game| {
             let spawn = SpriteSpawn {
                 position: crate::geometry::Point { x, y },
                 definition: LegacySpriteDefinition(selector),
-                appearance: 0,
+                appearance,
             };
-            crate::sprite_objects::spawn(game, spawn);
-        });
+            crate::sprite_objects::legacy_result(crate::sprite_objects::spawn(game, spawn)).0
+        })
     }
 
     /// The boss word of `area` in `order`.

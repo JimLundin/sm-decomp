@@ -58,12 +58,12 @@ const GLOW_PALETTE_WORD: u16 = 0x158;
 /// The sound of a shot striking a zebetite.
 const HIT_SOUND: u8 = 9;
 
-fn current<L: Lease + ?Sized>(game: &L) -> u16 {
+fn current<L: Lease>(game: &L) -> u16 {
     game.current_enemy()
 }
 
 /// Places the next zebetite from the destroyed count. Was `Zebetites_Init`.
-pub fn initialize<L: Lease + ?Sized>(game: &mut L) {
+pub fn initialize<L: Lease>(game: &mut L) {
     let me = current(game);
     {
         let mut zebetite = ZebetiteEdit::of(game, me);
@@ -105,7 +105,7 @@ pub fn initialize<L: Lease + ?Sized>(game: &mut L) {
 }
 
 /// Stills the earthquake shake and runs the current state. Was `Zebetites_Main`.
-pub fn main_ai<L: Lease + ?Sized>(game: &mut L) {
+pub fn main_ai<L: Lease>(game: &mut L) {
     if game.session().feedback.earthquake_timer == 0 {
         let me = current(game);
         ZebetiteEdit::of(game, me).actor().shake = 0;
@@ -121,7 +121,7 @@ pub fn main_ai<L: Lease + ?Sized>(game: &mut L) {
 }
 
 /// A pair's first zebetite spawns the second and links them. Was `Zebetites_Func_1`.
-fn spawn_partner<L: Lease + ?Sized>(game: &mut L, k: u16) {
+fn spawn_partner<L: Lease>(game: &mut L, k: u16) {
     if (Zebetite::of(game, k).pair() & 0x8000) != 0 {
         let partner = game.spawn_population(0xa6, PARTNER);
         *ZebetiteEdit::of(game, partner).partner() = k;
@@ -132,7 +132,7 @@ fn spawn_partner<L: Lease + ?Sized>(game: &mut L, k: u16) {
 }
 
 /// Waits for the door transition to finish. Was `Zebetites_Func_2`.
-fn wait_for_door<L: Lease + ?Sized>(game: &mut L, k: u16) {
+fn wait_for_door<L: Lease>(game: &mut L, k: u16) {
     if game.session().room.entry.elevator_interlock == 0 {
         *ZebetiteEdit::of(game, k).state() = state::ACTIVE;
         run(game);
@@ -141,7 +141,7 @@ fn wait_for_door<L: Lease + ?Sized>(game: &mut L, k: u16) {
 
 /// Glows, shows its health stage and regrows; once destroyed, counts itself
 /// and makes way for the next zebetite. Was `Zebetites_Func_3`.
-fn run<L: Lease + ?Sized>(game: &mut L) {
+fn run<L: Lease>(game: &mut L) {
     glow(game);
     show_health_stage(game);
     let me = current(game);
@@ -163,13 +163,13 @@ fn run<L: Lease + ?Sized>(game: &mut L) {
     }
 }
 
-fn die<L: Lease + ?Sized>(game: &mut L) {
-    game.foreign(|game| game.normal_death(0));
+fn die<L: Lease>(game: &mut L) {
+    crate::actors::boss_lease::steps::normal_death(game, 0);
 }
 
 /// Adds this zebetite to the destroyed count in the event flags. Was
 /// `Zebetites_Func_6`/`Zebetites_Func_7`.
-fn count_destroyed<L: Lease + ?Sized>(game: &mut L) {
+fn count_destroyed<L: Lease>(game: &mut L) {
     let me = current(game);
     let destroyed = {
         let mut zebetite = ZebetiteEdit::of(game, me);
@@ -188,7 +188,7 @@ fn count_destroyed<L: Lease + ?Sized>(game: &mut L) {
 
 /// Shows the animation for the current health: five stages from full to
 /// almost destroyed. Was `Zebetites_Func_5`.
-fn show_health_stage<L: Lease + ?Sized>(game: &mut L) {
+fn show_health_stage<L: Lease>(game: &mut L) {
     let mut stage: u16 = 0;
     let me = current(game);
     let health = Zebetite::of(game, me).actor().health;
@@ -213,7 +213,7 @@ fn show_health_stage<L: Lease + ?Sized>(game: &mut L) {
 
 /// Advances the shared glow one frame, when no palette change is pending and
 /// this is a pair's first zebetite. Was `Zebetites_Func_4`.
-fn glow<L: Lease + ?Sized>(game: &mut L) {
+fn glow<L: Lease>(game: &mut L) {
     if crate::sequence_word!(game.PALETTE_CHANGE_NUM) == 0
         && Zebetite::of(game, current(game)).second_of_pair() == 0
     {
@@ -235,12 +235,12 @@ fn glow<L: Lease + ?Sized>(game: &mut L) {
 }
 
 /// Touched by Samus. Was `Zebetites_Touch`.
-pub fn touch<L: Lease + ?Sized>(game: &mut L) {
+pub fn touch<L: Lease>(game: &mut L) {
     game.react_to_contact(Death::LeavePending);
 }
 
 /// Hit by a shot: a pair shares its health and flash. Was `Zebetites_Shot`.
-pub fn shot<L: Lease + ?Sized>(game: &mut L) {
+pub fn shot<L: Lease>(game: &mut L) {
     game.queue_sound(2, HIT_SOUND, 6);
     game.react_to_shot(Shot::ReactionOnly);
     let me = Zebetite::of(game, current(game));

@@ -9,7 +9,7 @@
 //! `roar_before_flying`) and `init` serve both fights.
 #![forbid(unsafe_code)]
 use crate::actors::boss_interaction as interaction;
-use crate::actors::boss_lease::bg2_staging;
+use crate::actors::boss_lease::{BossState, bg2_staging};
 use crate::actors::host::BossEffects as _;
 use crate::actors::host::{abs16, below};
 use crate::actors::ridley::{
@@ -122,8 +122,8 @@ const ESCAPE_STARTED: u16 = 2;
 
 /// Initialisation AI - enemy $E13F/$E17F (Ridley) ($A6:A0F5), for both fights;
 /// a defeated Ridley is deleted. Was `CeresRidley_Init`.
-pub fn init<L: Lease + ?Sized>(game: &mut L) {
-    let area = game.area();
+pub fn init<L: Lease>(game: &mut L) {
+    let area = BossState::area(game);
     if (game.boss_byte(area) & 1) != 0 {
         RidleyEdit::of(game, RIDLEY).actor().properties |= K_ENEMY_PROPS_TANGIBLE as u16
             | K_ENEMY_PROPS_DELETED as u16
@@ -131,7 +131,7 @@ pub fn init<L: Lease + ?Sized>(game: &mut L) {
         return;
     }
     bg2_staging::fill(game, (0..=2047).rev(), 0);
-    game.foreign(|game| game.disable_minimap_for_boss());
+    game.owned_step(crate::player_update::minimap::disable_for_boss);
     *RidleyEdit::of(game, RIDLEY).parameter_1() = 0;
     *RidleyEdit::of(game, RIDLEY).parameter_2() = 0;
     ridley::set_instruction_list(ceres_instruction_list::INITIAL, game);
@@ -145,7 +145,7 @@ pub fn init<L: Lease + ?Sized>(game: &mut L) {
     ridley::initialise_ribs(game);
     RidleyEdit::of(game, RIDLEY).actor().properties |=
         K_ENEMY_PROPS_BLOCK_PLASMA_BEAM as u16 | K_ENEMY_PROPS_TANGIBLE as u16;
-    if game.area() == NORFAIR {
+    if BossState::area(game) == NORFAIR {
         RidleyEdit::of(game, RIDLEY).actor().x.whole = 96;
         RidleyEdit::of(game, RIDLEY).actor().y.whole = 394;
         *RidleyEdit::of(game, RIDLEY).function() = ceres_function::INITIAL;
@@ -160,7 +160,7 @@ pub fn init<L: Lease + ?Sized>(game: &mut L) {
         *RidleyEdit::of(game, RIDLEY).max_x() = 224;
         *RidleyEdit::of(game, RIDLEY).facing() = FACING_RIGHT;
         *RidleyEdit::of(game, RIDLEY).tail_damage() = 120;
-        game.foreign(|game| {
+        game.owned_step(|game| {
             copy_rom_colors_to_target_palette(0xa6, 0x140, ceres_data::NORFAIR_PALETTES, 0x20, game)
         });
         clear_target_colours(game, 113);
@@ -180,7 +180,7 @@ pub fn init<L: Lease + ?Sized>(game: &mut L) {
         *RidleyEdit::of(game, RIDLEY).max_y() = 176;
         *RidleyEdit::of(game, RIDLEY).min_x() = 40;
         *RidleyEdit::of(game, RIDLEY).max_x() = 224;
-        game.foreign(|game| {
+        game.owned_step(|game| {
             copy_rom_colors_to_target_palette(0xa6, 0x140, ceres_data::CERES_PALETTES, 0x20, game)
         });
         clear_target_colours(game, 241);
@@ -196,7 +196,7 @@ pub fn init<L: Lease + ?Sized>(game: &mut L) {
 /// Main AI - enemy $E13F (Ceres Ridley) ($A6:A288): immortal; until the
 /// getaway it moves, animates and draws as Norfair Ridley does. Was
 /// `CeresRidley_Main`.
-pub fn main<L: Lease + ?Sized>(game: &mut L) {
+pub fn main<L: Lease>(game: &mut L) {
     // The state steps, the function, the tail, drawing, ribs and baby metroid
     // run on the lease.
     RidleyEdit::of(game, RIDLEY).actor().health = 0x7fff;
@@ -223,7 +223,7 @@ pub fn main<L: Lease + ?Sized>(game: &mut L) {
 
 /// Run the bank $A6 Ridley function `function`, Ceres Ridley's or Norfair
 /// Ridley's, on this lease. Was `CallRidleyFunc`.
-pub fn run_function<L: Lease + ?Sized>(game: &mut L, function: u16) {
+pub fn run_function<L: Lease>(game: &mut L, function: u16) {
     if !run_ceres_function(game, function) && !ridley::run_ridley_function(game, function) {
         game.foreign(|game| game.unreachable());
     }
@@ -231,7 +231,7 @@ pub fn run_function<L: Lease + ?Sized>(game: &mut L, function: u16) {
 
 /// Run Ceres Ridley's bank $A6 function `function`; false when it is not one
 /// of his.
-fn run_ceres_function<L: Lease + ?Sized>(game: &mut L, function: u16) -> bool {
+fn run_ceres_function<L: Lease>(game: &mut L, function: u16) -> bool {
     use ceres_function as f;
     match function {
         f::TRANSITION_TO_FLYING => transition_to_flying(game),
@@ -267,7 +267,7 @@ fn run_ceres_function<L: Lease + ?Sized>(game: &mut L, function: u16) -> bool {
 
 /// Randomly update Ridley tail curliness ($A6:A2BD): the ideal inter-segment
 /// angle, 8 to 17h, one frame in 256. Was `CeresRidley_Func_1`.
-pub fn randomize_tail_curliness<L: Lease + ?Sized>(game: &mut L) {
+pub fn randomize_tail_curliness<L: Lease>(game: &mut L) {
     if battle!(game.Random) >= 0xff00 {
         bg2_staging::set(
             game,
@@ -279,7 +279,7 @@ pub fn randomize_tail_curliness<L: Lease + ?Sized>(game: &mut L) {
 
 /// Hurt AI - enemy $E13F (Ceres Ridley) ($A6:A2D3): flash and draw. Was
 /// `CeresRidley_Hurt`.
-pub fn hurt<L: Lease + ?Sized>(game: &mut L) {
+pub fn hurt<L: Lease>(game: &mut L) {
     ridley::hurt_flash(game);
     ridley::draw_tail(game);
     ridley::draw_wings(game);
@@ -287,31 +287,35 @@ pub fn hurt<L: Lease + ?Sized>(game: &mut L) {
 }
 
 /// Ridley function - transition to flying ($A6:A354). Was `CeresRidley_Func_2`.
-pub fn transition_to_flying<L: Lease + ?Sized>(game: &mut L) {
+pub fn transition_to_flying<L: Lease>(game: &mut L) {
     *RidleyEdit::of(game, RIDLEY).x_velocity() = 0;
     *RidleyEdit::of(game, RIDLEY).y_velocity() = 0;
 }
 
 /// Ridley function - initial ($A6:A35B): after the door transition, wait to
 /// fade in, shorter in Norfair. Was `CeresRidley_Func_3`.
-pub fn initial<L: Lease + ?Sized>(game: &mut L) {
+pub fn initial<L: Lease>(game: &mut L) {
     if battle!(game.DoorTransitionEnemies) == 0 {
         *RidleyEdit::of(game, RIDLEY).function() = ceres_function::WAIT_TO_FADE_IN;
-        let wait = if game.area() == NORFAIR { 170 } else { 512 };
+        let wait = if BossState::area(game) == NORFAIR {
+            170
+        } else {
+            512
+        };
         *RidleyEdit::of(game, RIDLEY).function_timer() = wait;
         wait_to_fade_in(game);
     }
 }
 
 /// Count down the function timer; true once it is negative.
-fn timer_expired<L: Lease + ?Sized>(game: &mut L) -> bool {
+fn timer_expired<L: Lease>(game: &mut L) -> bool {
     *RidleyEdit::of(game, RIDLEY).function_timer() =
         Ridley::of(game, RIDLEY).function_timer().wrapping_sub(1);
     (Ridley::of(game, RIDLEY).function_timer() & 0x8000) != 0
 }
 
 /// Ridley function - wait to fade in ($A6:A377). Was `CeresRidley_A377`.
-pub fn wait_to_fade_in<L: Lease + ?Sized>(game: &mut L) {
+pub fn wait_to_fade_in<L: Lease>(game: &mut L) {
     if timer_expired(game) {
         *RidleyEdit::of(game, RIDLEY).function() = ceres_function::FADE_IN_EYE;
         *RidleyEdit::of(game, RIDLEY).fade_index() = 0;
@@ -321,7 +325,7 @@ pub fn wait_to_fade_in<L: Lease + ?Sized>(game: &mut L) {
 
 /// Ridley function - fade in eye ($A6:A389): every 256th frame the next step
 /// of the eye colours, then the body. Was `CeresRidley_Func_4`.
-pub fn fade_in_eye<L: Lease + ?Sized>(game: &mut L) {
+pub fn fade_in_eye<L: Lease>(game: &mut L) {
     if (Ridley::of(game, RIDLEY).fade_index() & 0x8000) != 0 {
         return;
     }
@@ -332,8 +336,7 @@ pub fn fade_in_eye<L: Lease + ?Sized>(game: &mut L) {
         return;
     }
     *RidleyEdit::of(game, RIDLEY).function_timer() = 0;
-    let step = game
-        .native_image()
+    let step = crate::cartridge::NativeImage::native_image(game)
         .read(lorom_offset(EYE_FADE_STEPS) as usize + usize::from(index));
     if step == 0xff {
         *RidleyEdit::of(game, RIDLEY).fade_index() = 0;
@@ -351,7 +354,7 @@ pub fn fade_in_eye<L: Lease + ?Sized>(game: &mut L) {
 }
 
 /// Target colours `first..first + 15`, colours 1-15 of a palette, become black.
-fn clear_target_colours<L: Lease + ?Sized>(game: &mut L, first: usize) {
+fn clear_target_colours<L: Lease>(game: &mut L, first: usize) {
     game.session_mut().presentation.visual_mut().targets[first..first + 15]
         .copy_from_slice(&[0; 15]);
     game.words_stored();
@@ -360,7 +363,7 @@ fn clear_target_colours<L: Lease + ?Sized>(game: &mut L, first: usize) {
 /// Ridley function - fade in body ($A6:A3DF): every other frame the next 11
 /// body colours, into sprite palettes 1 and 7; then tangible and waiting to
 /// roar. Was `CeresRidley_Func_5`.
-pub fn fade_in_body<L: Lease + ?Sized>(game: &mut L) {
+pub fn fade_in_body<L: Lease>(game: &mut L) {
     *RidleyEdit::of(game, RIDLEY).function_timer() =
         Ridley::of(game, RIDLEY).function_timer().wrapping_add(1);
     if Ridley::of(game, RIDLEY).function_timer() < 2 {
@@ -380,7 +383,7 @@ pub fn fade_in_body<L: Lease + ?Sized>(game: &mut L) {
         second += 1;
     }
     if index >= 0x160 {
-        if game.area() == NORFAIR {
+        if BossState::area(game) == NORFAIR {
             RidleyEdit::of(game, RIDLEY).actor().layer = 2;
         }
         RidleyEdit::of(game, RIDLEY).actor().properties &= !(K_ENEMY_PROPS_TANGIBLE as u16);
@@ -395,12 +398,12 @@ pub fn fade_in_body<L: Lease + ?Sized>(game: &mut L) {
 
 /// Ridley function - wait to roar ($A6:A455): the fight intro roar, longer in
 /// Ceres. Was `CeresRidley_Func_6`.
-pub fn wait_to_roar<L: Lease + ?Sized>(game: &mut L) {
+pub fn wait_to_roar<L: Lease>(game: &mut L) {
     if timer_expired(game) {
         ridley::set_instruction_list(ceres_instruction_list::FIGHT_INTRO_ROAR, game);
         *RidleyEdit::of(game, RIDLEY).function_timer() = 0;
         *RidleyEdit::of(game, RIDLEY).function() = ceres_function::ROAR_BEFORE_FLYING;
-        if game.area() != NORFAIR {
+        if BossState::area(game) != NORFAIR {
             *RidleyEdit::of(game, RIDLEY).function_timer() = 252;
         }
     }
@@ -408,11 +411,11 @@ pub fn wait_to_roar<L: Lease + ?Sized>(game: &mut L) {
 
 /// Ridley function - roar before fly ($A6:A478): in Norfair the background
 /// fades in and the lava rises first. Was `CeresRidley_Func_7`.
-pub fn roar_before_flying<L: Lease + ?Sized>(game: &mut L) {
+pub fn roar_before_flying<L: Lease>(game: &mut L) {
     if !timer_expired(game) {
         return;
     }
-    if game.area() == NORFAIR {
+    if BossState::area(game) == NORFAIR {
         *RidleyEdit::of(game, RIDLEY).function_timer() = 2;
         let step = Ridley::of(game, RIDLEY).fade_index().wrapping_add(1);
         *RidleyEdit::of(game, RIDLEY).fade_index() = step;
@@ -432,18 +435,18 @@ pub fn roar_before_flying<L: Lease + ?Sized>(game: &mut L) {
 
 /// Fade in Ridley room background ($A6:A4D6) by step `step`; true once done.
 /// Was `CeresRidley_Func_8`.
-pub fn fade_in_background<L: Lease + ?Sized>(step: u16, game: &mut L) -> bool {
+pub fn fade_in_background<L: Lease>(step: u16, game: &mut L) -> bool {
     let colours = crate::ceres_ridley_tables::background_fade(game, step as isize);
     if colours == 0 {
         return true;
     }
-    game.foreign(|game| copy_rom_colors_to_palette(0xe2, 0xa6, colours, 0xe, game));
+    game.owned_step(|game| copy_rom_colors_to_palette(0xe2, 0xa6, colours, 0xe, game));
     false
 }
 
 /// Ridley function - liftoff - accelerating ($A6:A6AF). Was
 /// `CeresRidley_Func_9`.
-pub fn liftoff_accelerating<L: Lease + ?Sized>(game: &mut L) {
+pub fn liftoff_accelerating<L: Lease>(game: &mut L) {
     *RidleyEdit::of(game, RIDLEY).y_velocity() =
         Ridley::of(game, RIDLEY).y_velocity().wrapping_sub(16);
     if below(Ridley::of(game, RIDLEY).actor().y.whole, 112) {
@@ -454,7 +457,7 @@ pub fn liftoff_accelerating<L: Lease + ?Sized>(game: &mut L) {
 
 /// Ridley function - liftoff - decelerating ($A6:A6C8). Was
 /// `CeresRidley_Func_10`.
-pub fn liftoff_decelerating<L: Lease + ?Sized>(game: &mut L) {
+pub fn liftoff_decelerating<L: Lease>(game: &mut L) {
     *RidleyEdit::of(game, RIDLEY).y_velocity() =
         Ridley::of(game, RIDLEY).y_velocity().wrapping_add(20);
     if below(Ridley::of(game, RIDLEY).actor().y.whole, 80) {
@@ -466,7 +469,7 @@ pub fn liftoff_decelerating<L: Lease + ?Sized>(game: &mut L) {
 /// Ridley function - hovering ($A6:A6E8): after 64h hits the fake retreat,
 /// when Samus is below 30 health the real one, otherwise a random attack once
 /// in position or after 7Ch frames. Was `CeresRidley_Func_11`.
-pub fn hovering<L: Lease + ?Sized>(game: &mut L) {
+pub fn hovering<L: Lease>(game: &mut L) {
     if Ridley::of(game, RIDLEY).hit_counter() >= 0x64 {
         *RidleyEdit::of(game, RIDLEY).fight_mode() = 0;
         *RidleyEdit::of(game, RIDLEY).function() = function::FAKE_RETREAT_MOVE_TO_POSITION;
@@ -489,7 +492,7 @@ pub fn hovering<L: Lease + ?Sized>(game: &mut L) {
 
 /// Ceres Ridley hovering movement ($A6:A763): towards (C0h, 64h); false once
 /// there. Was `CeresRidley_Func_12`.
-pub fn hovering_movement<L: Lease + ?Sized>(game: &mut L) -> bool {
+pub fn hovering_movement<L: Lease>(game: &mut L) -> bool {
     let rect = Rect {
         x: 192,
         y: 100,
@@ -502,7 +505,7 @@ pub fn hovering_movement<L: Lease + ?Sized>(game: &mut L) -> bool {
 
 /// Ridley function - shoot fireballs - move to position ($A6:A782): rise with
 /// at least 80h speed, then shoot from the top. Was `CeresRidley_Func_13`.
-pub fn fireballs_move_to_position<L: Lease + ?Sized>(game: &mut L) {
+pub fn fireballs_move_to_position<L: Lease>(game: &mut L) {
     crate::probe::hit("ceres_ridley.fireballs_move_to_position");
     let mut speed = abs16(Ridley::of(game, RIDLEY).y_velocity());
     if speed < 0x80 {
@@ -535,7 +538,7 @@ pub fn fireballs_move_to_position<L: Lease + ?Sized>(game: &mut L) {
 
 /// Ridley function - shoot fireballs - shooting ($A6:A7F9): jitter around the
 /// shooting spot, then hover. Was `CeresRidley_A7F9`.
-pub fn fireballs_shooting<L: Lease + ?Sized>(game: &mut L) {
+pub fn fireballs_shooting<L: Lease>(game: &mut L) {
     let jitter = if battle!(game.Random) & 0x8000 != 0 {
         -(battle!(game.Random) as i32 & 7)
     } else {
@@ -554,7 +557,7 @@ pub fn fireballs_shooting<L: Lease + ?Sized>(game: &mut L) {
 }
 
 /// Ridley function - lunge - setup ($A6:A83C). Was `CeresRidley_Func_14`.
-pub fn lunge_setup<L: Lease + ?Sized>(game: &mut L) {
+pub fn lunge_setup<L: Lease>(game: &mut L) {
     ridley::set_instruction_list(ceres_instruction_list::LUNGE, game);
     *RidleyEdit::of(game, RIDLEY).function() = ceres_function::LUNGE;
     *RidleyEdit::of(game, RIDLEY).function_timer() = 64;
@@ -564,7 +567,7 @@ pub fn lunge_setup<L: Lease + ?Sized>(game: &mut L) {
 /// Ridley function - lunge - main ($A6:A84E): at Samus, 44h px above her and
 /// no higher than 40h, until there or the timer runs out. Was
 /// `CeresRidley_Func_15`.
-pub fn lunge<L: Lease + ?Sized>(game: &mut L) {
+pub fn lunge<L: Lease>(game: &mut L) {
     let x = game.player_x();
     let mut y = game.player_y().wrapping_sub(68);
     if below(game.player_y(), 132) {
@@ -585,7 +588,7 @@ pub fn lunge<L: Lease + ?Sized>(game: &mut L) {
 
 /// Ridley function - swoop - setup ($A6:A88D), without idle tail whips. Was
 /// `CeresRidley_Func_16`.
-pub fn swoop_setup<L: Lease + ?Sized>(game: &mut L) {
+pub fn swoop_setup<L: Lease>(game: &mut L) {
     *RidleyEdit::of(game, RIDLEY).function() = ceres_function::SWOOP_MOVE_TO_POSITION;
     *RidleyEdit::of(game, RIDLEY).function_timer() = 10;
     *RidleyEdit::of(game, RIDLEY).swoop_angle() = 0;
@@ -595,7 +598,7 @@ pub fn swoop_setup<L: Lease + ?Sized>(game: &mut L) {
 
 /// Ridley function - swoop - move to position ($A6:A8A4). Was
 /// `CeresRidley_Func_17`.
-pub fn swoop_move_to_position<L: Lease + ?Sized>(game: &mut L) {
+pub fn swoop_move_to_position<L: Lease>(game: &mut L) {
     ridley::ceres_accelerate(0, 1, 192, 80, game);
     if below(Ridley::of(game, RIDLEY).actor().y.whole, 96) {
         *RidleyEdit::of(game, RIDLEY).function() = ceres_function::SWOOP_AIMING_DOWN;
@@ -606,7 +609,7 @@ pub fn swoop_move_to_position<L: Lease + ?Sized>(game: &mut L) {
 
 /// One swoop stage: steer, and on the timer running out take `next` for
 /// `frames` frames.
-fn swoop_stage<L: Lease + ?Sized>(
+fn swoop_stage<L: Lease>(
     game: &mut L,
     angle_step: i32,
     target_angle: i32,
@@ -624,13 +627,13 @@ fn swoop_stage<L: Lease + ?Sized>(
 
 /// Ridley function - swoop - descending - aiming down ($A6:A8D4). Was
 /// `CeresRidley_Func_18`.
-pub fn swoop_aiming_down<L: Lease + ?Sized>(game: &mut L) {
+pub fn swoop_aiming_down<L: Lease>(game: &mut L) {
     swoop_stage(game, -32, -1024, ceres_function::SWOOP_AIMING_LEFT, 36);
 }
 
 /// Ridley function - swoop - descending - aiming left ($A6:A8F8), with a tail
 /// whip. Was `CeresRidley_Func_19`.
-pub fn swoop_aiming_left<L: Lease + ?Sized>(game: &mut L) {
+pub fn swoop_aiming_left<L: Lease>(game: &mut L) {
     if swoop_stage(game, -512, -16384, ceres_function::SWOOP_AIMING_UP, 28) {
         bg2_staging::set(game, tail::WHIP_REQUEST, 1);
     }
@@ -638,7 +641,7 @@ pub fn swoop_aiming_left<L: Lease + ?Sized>(game: &mut L) {
 
 /// Ridley function - swoop - ascending - aiming up ($A6:A923). Was
 /// `CeresRidley_Func_20`.
-pub fn swoop_aiming_up<L: Lease + ?Sized>(game: &mut L) {
+pub fn swoop_aiming_up<L: Lease>(game: &mut L) {
     swoop_stage(
         game,
         -512,
@@ -650,7 +653,7 @@ pub fn swoop_aiming_up<L: Lease + ?Sized>(game: &mut L) {
 
 /// Ridley function - swoop - ascending - aiming up faster ($A6:A947): back to
 /// hovering, with idle tail whips again. Was `CeresRidley_Func_21`.
-pub fn swoop_aiming_up_faster<L: Lease + ?Sized>(game: &mut L) {
+pub fn swoop_aiming_up_faster<L: Lease>(game: &mut L) {
     ridley::calculate_swoop_velocities(-768i32 as u16, -30720i32 as u16, 768, game);
     if timer_expired(game) {
         *RidleyEdit::of(game, RIDLEY).function() = ceres_function::HOVERING;
@@ -661,7 +664,7 @@ pub fn swoop_aiming_up_faster<L: Lease + ?Sized>(game: &mut L) {
 
 /// Ridley function - real retreat - rising ($A6:A971): off the top with the
 /// baby metroid. Was `CeresRidley_Func_22`.
-pub fn real_retreat_rising<L: Lease + ?Sized>(game: &mut L) {
+pub fn real_retreat_rising<L: Lease>(game: &mut L) {
     *RidleyEdit::of(game, RIDLEY).min_y() = -192i32 as u16;
     ridley::ceres_accelerate(0, 1, 192, -128i32 as u16, game);
     if (Ridley::of(game, RIDLEY).actor().y.whole as i32 + 128) & 0x8000 != 0 {
@@ -670,7 +673,7 @@ pub fn real_retreat_rising<L: Lease + ?Sized>(game: &mut L) {
 }
 
 /// The end of the real retreat's rise ($A6:A994). Was `CeresRidley_A994`.
-pub fn real_retreat_risen<L: Lease + ?Sized>(game: &mut L) {
+pub fn real_retreat_risen<L: Lease>(game: &mut L) {
     *RidleyEdit::of(game, RIDLEY).function() = ceres_function::WRITE_PALETTES_AND_SPAWN_WALLS;
     *RidleyEdit::of(game, RIDLEY).function_timer() = 64;
     write_palettes_and_spawn_walls(game);
@@ -678,14 +681,14 @@ pub fn real_retreat_risen<L: Lease + ?Sized>(game: &mut L) {
 
 /// Ridley function - real retreat - write palettes and spawn walls ($A6:A9A0).
 /// Was `CeresRidley_Func_23`.
-pub fn write_palettes_and_spawn_walls<L: Lease + ?Sized>(game: &mut L) {
+pub fn write_palettes_and_spawn_walls<L: Lease>(game: &mut L) {
     if timer_expired(game) {
         spawn_getaway_walls(game);
         *RidleyEdit::of(game, RIDLEY).x_velocity() = 0;
         *RidleyEdit::of(game, RIDLEY).y_velocity() = 0;
         bg2_staging::set(game, tail::FUNCTION, 0);
         *RidleyEdit::of(game, RIDLEY).function() = ceres_function::SET_UP_GETAWAY;
-        game.foreign(|game| {
+        game.owned_step(|game| {
             copy_rom_colors_to_palette(0xa2, 0xa6, ceres_data::RETREAT_SPRITE_PALETTE, 0xf, game);
             copy_rom_colors_to_palette(0x42, 0xa6, ceres_data::RETREAT_BACKGROUND_PALETTE, 8, game);
             copy_rom_colors_to_palette(
@@ -701,7 +704,7 @@ pub fn write_palettes_and_spawn_walls<L: Lease + ?Sized>(game: &mut L) {
 
 /// Ridley function - real retreat - set up getaway cutscene ($A6:AA11). Was
 /// `CeresRidley_Func_24`.
-pub fn set_up_getaway<L: Lease + ?Sized>(game: &mut L) {
+pub fn set_up_getaway<L: Lease>(game: &mut L) {
     *RidleyEdit::of(game, RIDLEY).function() = ceres_function::GETAWAY;
     battle!(game.CeresStatus = RIDLEY_ESCAPING);
     set_up_mode7(game);
@@ -709,7 +712,7 @@ pub fn set_up_getaway<L: Lease + ?Sized>(game: &mut L) {
 
 /// Spawn walls during Ceres Ridley getaway cutscene ($A6:AA20). Was
 /// `CeresRidley_Func_25`.
-pub fn spawn_getaway_walls<L: Lease + ?Sized>(game: &mut L) {
+pub fn spawn_getaway_walls<L: Lease>(game: &mut L) {
     for population in ceres_data::GETAWAY_WALLS {
         game.spawn_population(0xa6, population);
     }
@@ -717,12 +720,12 @@ pub fn spawn_getaway_walls<L: Lease + ?Sized>(game: &mut L) {
 
 /// Ridley function - real retreat - activated self destruct sequence
 /// ($A6:AA50): the emergency text glows. Was `CeresRidley_Func_26`.
-pub fn self_destruct_activated<L: Lease + ?Sized>(game: &mut L) {
+pub fn self_destruct_activated<L: Lease>(game: &mut L) {
     ridley::emergency_text_glow(game);
 }
 
 /// Set up Ceres Ridley mode 7 ($A6:AA54). Was `CeresRidley_Func_27`.
-pub fn set_up_mode7<L: Lease + ?Sized>(game: &mut L) {
+pub fn set_up_mode7<L: Lease>(game: &mut L) {
     crate::frame_display_byte!(game, Field::FakeMode => MODE7.byte());
     game.session_mut().room.mode7_irq = 1;
     game.words_stored();
@@ -750,7 +753,7 @@ pub fn set_up_mode7<L: Lease + ?Sized>(game: &mut L) {
 
 /// Handle Ceres Ridley getaway cutscene if active ($A6:AAAF). Was
 /// `HandleCeresRidleyGetawayCutscene`.
-pub fn handle_getaway_if_active<L: Lease + ?Sized>(game: &mut L) {
+pub fn handle_getaway_if_active<L: Lease>(game: &mut L) {
     if Ridley::of(game, RIDLEY).getaway_finished() == 0 {
         handle_getaway(game);
     }
@@ -759,7 +762,7 @@ pub fn handle_getaway_if_active<L: Lease + ?Sized>(game: &mut L) {
 /// Handle Ceres Ridley getaway cutscene ($A6:AABD): Ridley flies off in mode 7
 /// along the zoom and velocity tables; the push and quake start at 208, and
 /// the self destruct sequence when the table ends. Was `CeresRidley_Func_28`.
-pub fn handle_getaway<L: Lease + ?Sized>(game: &mut L) {
+pub fn handle_getaway<L: Lease>(game: &mut L) {
     let index = Ridley::of(game, RIDLEY).getaway_index();
     *RidleyEdit::of(game, RIDLEY).getaway_index() = index.wrapping_add(2);
     if index == 0 {
@@ -808,7 +811,7 @@ pub fn handle_getaway<L: Lease + ?Sized>(game: &mut L) {
 
 /// Set Ceres Ridley mode 7 rotation matrix ($A6:AB5F): rotation by the high
 /// byte of the mode 7 angle, scaled by the zoom. Was `CeresRidley_Func_29`.
-pub fn set_mode7_rotation<L: Lease + ?Sized>(game: &mut L) {
+pub fn set_mode7_rotation<L: Lease>(game: &mut L) {
     let angle = u16::from(Ridley::of(game, RIDLEY).swoop_angle().to_le_bytes()[1]);
     {
         crate::frame_display_word!(
@@ -856,7 +859,7 @@ fn signed_scale(a: u16, b: u16) -> u16 {
 
 /// Animate Ceres Ridley mode 7 baby metroid ($A6:ACBC): four frames, one
 /// every fourth frame. Was `CeresRidley_Func_33`.
-pub fn animate_mode7_baby_metroid<L: Lease + ?Sized>(game: &mut L) {
+pub fn animate_mode7_baby_metroid<L: Lease>(game: &mut L) {
     if (game.frame() & 3) == 0 {
         let frame = Ridley::of(game, RIDLEY)
             .baby_metroid_frame()
@@ -870,7 +873,7 @@ pub fn animate_mode7_baby_metroid<L: Lease + ?Sized>(game: &mut L) {
 
 /// Animate Ceres Ridley mode 7 wings ($A6:AD27): two frames, one every
 /// eighth frame. Was `CeresRidley_Func_34`.
-pub fn animate_mode7_wings<L: Lease + ?Sized>(game: &mut L) {
+pub fn animate_mode7_wings<L: Lease>(game: &mut L) {
     if (game.frame() & 7) == 0 {
         let frame = Ridley::of(game, RIDLEY).mode7_wings_frame().wrapping_add(1) & 1;
         *RidleyEdit::of(game, RIDLEY).mode7_wings_frame() = frame;
@@ -881,14 +884,14 @@ pub fn animate_mode7_wings<L: Lease + ?Sized>(game: &mut L) {
 
 /// Set Ceres Ridley palette according to zoom level ($A6:B0EF): the palette
 /// by the zoom's high byte. Was `CeresRidley_Func_35`.
-pub fn palette_by_zoom<L: Lease + ?Sized>(zoom: u16, game: &mut L) {
+pub fn palette_by_zoom<L: Lease>(zoom: u16, game: &mut L) {
     let colours = ZOOM_PALETTES.wrapping_add(32 * u16::from(zoom.to_ne_bytes()[1]));
-    game.foreign(|game| copy_rom_colors_to_palette(0xa2, 0xa6, colours, 0xf, game));
+    game.owned_step(|game| copy_rom_colors_to_palette(0xa2, 0xa6, colours, 0xf, game));
 }
 
 /// Ridley function - real retreat - activating self destruct sequence
 /// ($A6:C04E): the sequence step in the function timer. Was `Ridley_Func_54`.
-pub fn self_destruct_activating<L: Lease + ?Sized>(game: &mut L) {
+pub fn self_destruct_activating<L: Lease>(game: &mut L) {
     match Ridley::of(game, RIDLEY).function_timer() {
         0 => load_text_colours(game),
         2 => load_escape_timer_tiles(game),
@@ -902,7 +905,7 @@ pub fn self_destruct_activating<L: Lease + ?Sized>(game: &mut L) {
 }
 
 /// The next self destruct sequence step.
-fn next_step<L: Lease + ?Sized>(game: &mut L) {
+fn next_step<L: Lease>(game: &mut L) {
     for _ in 0..2 {
         *RidleyEdit::of(game, RIDLEY).function_timer() =
             Ridley::of(game, RIDLEY).function_timer().wrapping_add(1);
@@ -911,7 +914,7 @@ fn next_step<L: Lease + ?Sized>(game: &mut L) {
 
 /// Self destruct sequence function index 0 - load text colours ($A6:C062).
 /// Was `Ridley_Func_55`.
-pub fn load_text_colours<L: Lease + ?Sized>(game: &mut L) {
+pub fn load_text_colours<L: Lease>(game: &mut L) {
     interaction::set_at(
         game,
         interaction::Array::PaletteBuffer,
@@ -944,7 +947,7 @@ pub fn load_text_colours<L: Lease + ?Sized>(game: &mut L) {
 
 /// Self destruct sequence function index 2 - loading escape timer sprite
 /// tiles ($A6:C08E). Was `Ridley_C08E`.
-pub fn load_escape_timer_tiles<L: Lease + ?Sized>(game: &mut L) {
+pub fn load_escape_timer_tiles<L: Lease>(game: &mut L) {
     if game.queue_escape_timer_tiles() {
         // The Ceres escape timer BG1/2 tile transfer entries ($A6:C4FE).
         *RidleyEdit::of(game, RIDLEY).fade_index() = 0xc4fe;
@@ -955,7 +958,7 @@ pub fn load_escape_timer_tiles<L: Lease + ?Sized>(game: &mut L) {
 
 /// Self destruct sequence function index 4 - loading Ceres escape timer BG1/2
 /// tiles ($A6:C09F). Was `Ridley_C09F`.
-pub fn load_escape_background_tiles<L: Lease + ?Sized>(game: &mut L) {
+pub fn load_escape_background_tiles<L: Lease>(game: &mut L) {
     if game.queue_escape_timer_tiles() {
         next_step(game);
         game.queue_getaway_tiles();
@@ -967,7 +970,7 @@ pub fn load_escape_background_tiles<L: Lease + ?Sized>(game: &mut L) {
 /// Self destruct sequence function index 6 - "emergency" text appears
 /// ($A6:C0BB): then the Japanese text, or straight to typing. Was
 /// `Ridley_Func_56`.
-pub fn emergency_text_appears<L: Lease + ?Sized>(game: &mut L) {
+pub fn emergency_text_appears<L: Lease>(game: &mut L) {
     ridley::emergency_text_glow(game);
     let timer = Ridley::of(game, RIDLEY).fade_index();
     *RidleyEdit::of(game, RIDLEY).fade_index() = timer.wrapping_sub(1);
@@ -988,7 +991,7 @@ pub fn emergency_text_appears<L: Lease + ?Sized>(game: &mut L) {
 
 /// Self destruct sequence function index 8 - Japanese text appears ($A6:C0F5).
 /// Was `Ridley_Func_57`.
-pub fn japanese_text_appears<L: Lease + ?Sized>(game: &mut L) {
+pub fn japanese_text_appears<L: Lease>(game: &mut L) {
     let timer = Ridley::of(game, RIDLEY).fade_index();
     *RidleyEdit::of(game, RIDLEY).fade_index() = timer.wrapping_sub(1);
     if timer == 1 {
@@ -1000,7 +1003,7 @@ pub fn japanese_text_appears<L: Lease + ?Sized>(game: &mut L) {
 
 /// Self destruct sequence function index Ah - typing "self destruct sequence"
 /// text ($A6:C104). Was `Ridley_C104`.
-pub fn type_self_destruct_text<L: Lease + ?Sized>(game: &mut L) {
+pub fn type_self_destruct_text<L: Lease>(game: &mut L) {
     ridley::emergency_text_glow(game);
     if crate::escape_typewriter::handle_text(game, ESCAPE_TEXT_TILES) {
         next_step(game);
@@ -1010,7 +1013,7 @@ pub fn type_self_destruct_text<L: Lease + ?Sized>(game: &mut L) {
 /// Self destruct sequence function index Ch - start escape sequence
 /// ($A6:C117): the timer starts and Ceres's boss is marked defeated. Was
 /// `Ridley_Func_58`.
-pub fn start_escape<L: Lease + ?Sized>(game: &mut L) {
+pub fn start_escape<L: Lease>(game: &mut L) {
     ridley::emergency_text_glow(game);
     transition_to_flying(game);
     *RidleyEdit::of(game, RIDLEY).function_timer() = 0;

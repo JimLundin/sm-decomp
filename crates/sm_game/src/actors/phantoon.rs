@@ -8,7 +8,6 @@
 //! `phantoon_motion` and `phantoon_actions`.
 use crate::actors::api::PlayerDirection;
 use crate::actors::boss_lease::{BossLease, BossState};
-use crate::actors::deaths::Deaths as _;
 use crate::actors::host::BossEffects as _;
 use crate::actors::host::{Death, Shot, below};
 
@@ -33,6 +32,8 @@ pub trait State: BossState + crate::session_access::SessionAccess {
 pub trait Lease:
     State
     + crate::progress::FlagHost
+    + crate::room_mechanisms::host::Host
+    + crate::enemy_projectiles::host::Host
     + BossLease<Game: crate::actors::host::BossEffects + crate::actors::deaths::Deaths>
 {
     fn run_foreign_function(&mut self, address: u32);
@@ -56,7 +57,7 @@ pub enum Callback {
     PreInstruction { function: u16, actor: u16 },
     Instruction { address: u32, actor: u16 },
 }
-pub fn callback<L: Lease + ?Sized>(game: &mut L, callback: Callback) {
+pub fn callback<L: Lease>(game: &mut L, callback: Callback) {
     match callback {
         Callback::Initialize => initialize(game),
         Callback::InitializePart => initialize_part(game),
@@ -583,7 +584,7 @@ pub fn materialisation_sound<S: State + ?Sized>(game: &mut S) {
         game,
         game.session().actors.extended.blocks[3][25] as isize,
     );
-    game.queue_sound(1, sound as u8, 6);
+    crate::effects::SoundEffects::queue_sound(game, 1, sound as u8, 6);
     let mut next: u16 = (game.session().actors.extended.blocks[3][25]).wrapping_add(1);
     if !below(game.session().actors.extended.blocks[3][25], 2) {
         next = 0;
@@ -981,7 +982,7 @@ pub fn initialize_part<S: State + ?Sized>(game: &mut S) {
 
 /// Runs the current function; the body carries the other parts and BG2.
 /// Was `Phantoon_Main`.
-pub fn main_ai<L: Lease + ?Sized>(game: &mut L) {
+pub fn main_ai<L: Lease>(game: &mut L) {
     // The bank $A7 function runs on the lease, the effects that need the
     // game in grouped foreign calls. The main AI's debug toggle ($A7:CF0C)
     // stores to ROM, which the cartridge ignores, so it has no effect.
@@ -1016,11 +1017,11 @@ pub fn main_ai<L: Lease + ?Sized>(game: &mut L) {
 /// Run the bank $A7 function `function` for the current part, as the bank's
 /// pre-instruction dispatch does: Phantoon's on this lease, any other on the
 /// game.
-fn run_function_on<L: Lease + ?Sized>(game: &mut L, function: u16) {
+fn run_function_on<L: Lease>(game: &mut L, function: u16) {
     let k = game.current_enemy();
     run_function_at(game, function, k);
 }
-fn run_function_at<L: Lease + ?Sized>(game: &mut L, function: u16, k: u16) {
+fn run_function_at<L: Lease>(game: &mut L, function: u16, k: u16) {
     match function {
         function::NOTHING => game.owned(|_| ()),
         function::WAVY_FADE_IN => wavy_fade_in(game, k),
@@ -1109,7 +1110,7 @@ pub fn shot<S: State + ?Sized>(game: &mut S) {
     let mut health: u16 = part!(game, Body[me].base.health);
     game.react_to_shot(Shot::ReactionOnly);
     if part!(game, Body[me].base.health) == 0 {
-        game.queue_sound(1, HIT_SOUND, 6);
+        crate::effects::SoundEffects::queue_sound(game, 1, HIT_SOUND, 6);
         part!(game, Tentacles[TENTACLES].hurt_flash = 1);
         part!(game, Body[BODY].base.properties, |old| old
             | (K_ENEMY_PROPS_TANGIBLE as u16));
@@ -1117,7 +1118,7 @@ pub fn shot<S: State + ?Sized>(game: &mut S) {
         return;
     }
     if (part!(game, Body[me].base.ai_handler_bits) & 2) != 0 {
-        game.queue_sound(1, HIT_SOUND, 6);
+        crate::effects::SoundEffects::queue_sound(game, 1, HIT_SOUND, 6);
         let function: u16 = part!(game, Body[me].function);
         'react_to_hit: {
             let initial_hit = function == function::EYE_FOLLOWS_SAMUS
@@ -1405,7 +1406,7 @@ pub fn enraged<S: State + ?Sized>(game: &mut S, k: u16) {
                 game.spawn_actor_eproj(flame | 0x200, k, phantoon_actions::DESTROYABLE_FLAMES);
             }
         }
-        game.queue_sound(2, ENRAGED_FLAMES_SOUND, 6);
+        crate::effects::SoundEffects::queue_sound(game, 2, ENRAGED_FLAMES_SOUND, 6);
         let volleys: u16 = (part!(game, Eye[EYE].fade_complete)).wrapping_add(1);
         part!(game, Eye[EYE].fade_complete = volleys);
         if below(volleys, 8) {
@@ -1469,7 +1470,7 @@ pub fn dying_fade_in_out<S: State + ?Sized>(game: &mut S, k: u16) {
 }
 
 /// Starts the dying wave and cry. Was `Phantoon_WavyDyingPhantoonAndCry`.
-pub fn wavy_dying_cry<L: Lease + ?Sized>(game: &mut L, k: u16) {
+pub fn wavy_dying_cry<L: Lease>(game: &mut L, k: u16) {
     game.start_wave(1, WAVE_PHASE_DELTA);
     part!(game, Mouth[MOUTH].wave_amplitude = 0);
     part!(game, Body[k as i32].function = function::DYING_FADE_OUT);
@@ -1483,7 +1484,7 @@ pub fn wavy_dying_cry<L: Lease + ?Sized>(game: &mut L, k: u16) {
     part!(game, Eye[EYE].base.properties = hidden);
     part!(game, Tentacles[TENTACLES].base.properties = hidden);
     part!(game, Mouth[MOUTH].base.properties = hidden);
-    game.queue_sound(1, DYING_CRY, 6);
+    crate::effects::SoundEffects::queue_sound(game, 1, DYING_CRY, 6);
 }
 
 /// Brightens the screen in steps while the wave grows, then fades out. Was
@@ -1536,7 +1537,7 @@ pub fn almost_dead<S: State + ?Sized>(game: &mut S, k: u16) {
 
 /// Fades the room to its powered-on colours, then dies: the drop, the boss
 /// flag, the door PLM and the music. Was `Phantoon_Dead`.
-pub fn dead<L: Lease + ?Sized>(game: &mut L, k: u16) {
+pub fn dead<L: Lease>(game: &mut L, k: u16) {
     let me = k as i32;
     if part!(game, Body[me].timer) != 0 {
         part!(game, Body[me].timer, |old| old.wrapping_sub(1));
@@ -1544,7 +1545,9 @@ pub fn dead<L: Lease + ?Sized>(game: &mut L, k: u16) {
         part!(game, Eye[EYE].fade_steps = 12);
         if fade_step_toward_powered_on(game) & 1 != 0 {
             enable_bg2(game);
-            game.foreign(|game| game.scatter_enemy_drop(DropSource::Phantoon, k));
+            game.owned_step(|game| {
+                crate::enemy_projectiles::drops::scatter(DropSource::Phantoon, k, game);
+            });
             let deleted: u16 =
                 (part!(game, Body[BODY].base.properties)) | (K_ENEMY_PROPS_DELETED as u16);
             part!(game, Body[BODY].base.properties = deleted);
@@ -1578,7 +1581,7 @@ pub fn become_solid_and_swoop<S: State + ?Sized>(game: &mut S, k: u16) {
 
 /// The countdown functions: each runs its step when the body's timer runs
 /// out. Was the `@countdown` group of `DispatchEnemyPreInstr`.
-pub fn countdown<L: Lease + ?Sized>(game: &mut L, k: u16, function: u16) {
+pub fn countdown<L: Lease>(game: &mut L, k: u16, function: u16) {
     if !timer_expired(game, k) {
         return;
     }
@@ -1609,9 +1612,9 @@ pub fn countdown<L: Lease + ?Sized>(game: &mut L, k: u16, function: u16) {
 }
 
 /// One of the eight opening flames. Was `Phantoon_Spawn8FireballsInCircleAtStart`.
-fn spawn_starting_flame<L: Lease + ?Sized>(game: &mut L, k: u16) {
+fn spawn_starting_flame<L: Lease>(game: &mut L, k: u16) {
     game.spawn_actor_eproj(part!(game, Body[BODY].movement_index), k, STARTING_FLAMES);
-    game.queue_sound(2, STARTING_FLAME_SOUND, 6);
+    crate::effects::SoundEffects::queue_sound(game, 2, STARTING_FLAME_SOUND, 6);
     part!(game, Body[k as i32].timer = 30);
     let flames: u16 = (part!(game, Body[BODY].movement_index)).wrapping_add(1);
     part!(game, Body[BODY].movement_index = flames);
@@ -1623,13 +1626,13 @@ fn spawn_starting_flame<L: Lease + ?Sized>(game: &mut L, k: u16) {
             Body[k as i32].function = function::WAIT_BEFORE_SPINNING_FLAMES
         );
         part!(game, Body[k as i32].timer = 30);
-        game.foreign(|game| game.spawn_plm(0, 0x6, FIGHT_START_PLM));
+        crate::actors::boss_lease::steps::spawn_plm(game, 0, 0x6, FIGHT_START_PLM);
     }
 }
 
 /// The opening flames fly off and the wavy fade-in starts the fight. Was
 /// `Phantoon_SpawnFireballsBeforeFight`.
-fn start_fight<L: Lease + ?Sized>(game: &mut L, k: u16) {
+fn start_fight<L: Lease>(game: &mut L, k: u16) {
     part!(game, Body[k as i32].speed_subpixel = 0);
     game.session_mut().room.fx_layer_flags |= HIDE_BG2;
     part!(game, Body[k as i32].function = function::WAVY_FADE_IN);
@@ -1720,9 +1723,9 @@ fn death_explosion<S: State + ?Sized>(game: &mut S, k: u16) {
     let kind: u16 = explosion(game, 2) as u16;
     game.spawn_room_eproj(DUST_CLOUD, kind);
     if kind == 29 {
-        game.queue_sound(1, BIG_EXPLOSION_SOUND, 6);
+        crate::effects::SoundEffects::queue_sound(game, 1, BIG_EXPLOSION_SOUND, 6);
     } else {
-        game.queue_sound(1, SMALL_EXPLOSION_SOUND, 6);
+        crate::effects::SoundEffects::queue_sound(game, 1, SMALL_EXPLOSION_SOUND, 6);
     }
     part!(game, Body[k as i32].timer = explosion(game, 3) as u16);
     let next: u16 = (part!(game, Tentacles[TENTACLES].explosion)).wrapping_add(1);

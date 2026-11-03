@@ -53,13 +53,7 @@ impl<T> B3Host for T where
 
 /// What the contact reactions need beyond their actors' own hosts.
 pub trait TouchHost:
-    SpeciesHost
-    + ActorRuntime
-    + LeaseActors
-    + space_pirates::Pirates
-    + torizo::Ai
-    + phantoon::Dispatch
-    + spore_spawn::Host
+    SpeciesHost + ActorRuntime + LeaseActors + space_pirates::Pirates + torizo::Ai + phantoon::Dispatch
 {
 }
 
@@ -91,13 +85,7 @@ pub enum NativeShot {
 
 /// What the shot reactions need beyond their actors' own hosts.
 pub trait ShotHost:
-    SpeciesHost
-    + ActorRuntime
-    + LeaseActors
-    + space_pirates::Pirates
-    + torizo::Ai
-    + phantoon::Dispatch
-    + spore_spawn::Host
+    SpeciesHost + ActorRuntime + LeaseActors + space_pirates::Pirates + torizo::Ai + phantoon::Dispatch
 {
     fn native_shot(&mut self, shot: NativeShot);
 }
@@ -164,7 +152,6 @@ pub trait AiHost:
     + PreInstructionHost
     + crate::actors::host::EnemyHost
     + crate::effects::SoundEffects
-    + spore_spawn::Host
 {
     /// An AI routine whose arm is still in the compatibility table.
     fn native_ai(&mut self, ea: u32);
@@ -991,7 +978,6 @@ pub trait InstructionHost:
     + phantoon::Dispatch
     + crate::actors::host::EnemyHost
     + crate::effects::SoundEffects
-    + spore_spawn::Host
 {
     /// An instruction whose arm is still in the compatibility table.
     fn native_instruction(&mut self, ea: u32, k: u16, j: EnemyScript) -> EnemyScript;

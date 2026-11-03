@@ -13,7 +13,9 @@ use core::mem::offset_of;
 use sm_data::enemy_speeds::SpeedTable;
 
 /// A lease on a game with the fire arc's effects.
-pub trait Lease: BossLease<Game: BossEffects> + SlotState {
+pub trait Lease:
+    BossLease<Game: BossEffects> + SlotState + crate::sprite_effect_host::Host
+{
     /// Fire arc function - active ($A6:9682): advance the orbit, whose
     /// projectiles run in the host. Was `NuclearWaffle_Func_2`.
     fn advance_orbit(&mut self);
@@ -70,7 +72,7 @@ impl<H: SlotState + ?Sized> FireArcEdit<'_, H> {
 /// Store fire arc `k`'s rising then falling explosion angle. Slot 0's
 /// `var_30` and `var_2f` ($7E:8020 and $7E:801E) are the Session's Botwoon
 /// death words, which the codec projects those bytes to.
-fn set_explosion_angles<L: Lease + ?Sized>(game: &mut L, k: u16, rising: u16, falling: u16) {
+fn set_explosion_angles<L: Lease>(game: &mut L, k: u16, rising: u16, falling: u16) {
     if k == 0 {
         let death = &mut game.session_mut().botwoon_death;
         death.active = rising;
@@ -106,7 +108,7 @@ const EXPLOSION_ANGLES: [u16; 4] = [0x180, 0x100, 0x100, 0x180];
 /// bytes are the speed, radius, direction and inactive time; the body's
 /// projectiles and sprite objects spawn at the arc's start. Was
 /// `NuclearWaffle_Init`.
-pub fn initialize<L: Lease + ?Sized>(game: &mut L) {
+pub fn initialize<L: Lease>(game: &mut L) {
     crate::probe::hit("fire_arc.initialize");
     let k = game.current_enemy();
     FireArcEdit::of(game, k).actor().instruction = INSTRUCTION_LIST;
@@ -174,7 +176,13 @@ pub fn initialize<L: Lease + ?Sized>(game: &mut L) {
         *FireArcEdit::of(game, k).graphics() = graphics;
         let x = FireArc::of(game, k).actor().x.whole;
         let y = FireArc::of(game, k).actor().y.whole;
-        let sprite = game.foreign(|game| game.create_sprite(x, y, BODY_SPRITE, graphics));
+        let sprite = crate::actors::boss_lease::steps::create_sprite_appearing(
+            game,
+            x,
+            y,
+            BODY_SPRITE,
+            graphics,
+        );
         // The sprite object words are indexed by the body index's bytes.
         let index = FireArc::of(game, k).body_index();
         *FireArcEdit::of(game, k).sprite_object_at(index) = sprite;
@@ -187,7 +195,7 @@ pub fn initialize<L: Lease + ?Sized>(game: &mut L) {
 }
 
 /// Main AI - enemy $E0BF (fire arc) ($A6:960E). Was `NuclearWaffle_Main`.
-pub fn main_ai<L: Lease + ?Sized>(game: &mut L) {
+pub fn main_ai<L: Lease>(game: &mut L) {
     let k = game.current_enemy();
     match FireArc::of(game, k).function() {
         function::INACTIVE => inactive(game),
@@ -199,7 +207,7 @@ pub fn main_ai<L: Lease + ?Sized>(game: &mut L) {
 /// Fire arc function - inactive ($A6:9615): when the inactive timer runs out,
 /// swing from the start angle with every explosion cleared, and keep running
 /// off-screen. Was `NuclearWaffle_Func_1`.
-pub fn inactive<L: Lease + ?Sized>(game: &mut L) {
+pub fn inactive<L: Lease>(game: &mut L) {
     let k = game.current_enemy();
     *FireArcEdit::of(game, k).inactive_timer() =
         FireArc::of(game, k).inactive_timer().wrapping_sub(1);
@@ -220,7 +228,7 @@ pub fn inactive<L: Lease + ?Sized>(game: &mut L) {
 
 /// Initialisation AI - enemy $E03F (spike platform bottom) ($A6:8B85): 12px
 /// below the top half, the enemy before it. Was `SpikeyPlatform2ndEnemy_Init`.
-pub fn initialize_spike_platform_bottom<L: Lease + ?Sized>(game: &mut L) {
+pub fn initialize_spike_platform_bottom<L: Lease>(game: &mut L) {
     let k = game.current_enemy();
     PlatformEdit::of(game, k).actor().x.whole = Platform::of(game, k - 0x40).actor().x.whole;
     PlatformEdit::of(game, k).actor().y.whole = Platform::of(game, k - 0x40)

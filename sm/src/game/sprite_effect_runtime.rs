@@ -11,8 +11,7 @@ use {
         sprite_effect_controllers as controllers,
         sprite_effect_host::{self, SpriteMember},
         sprite_effect_state::{
-            LegacySpriteDefinition, LegacySpriteHandle, LegacySpriteWordIndex, SpriteDraw,
-            SpriteSpawn,
+            LegacySpriteDefinition, LegacySpriteWordIndex, SpriteDraw, SpriteSpawn,
         },
         sprite_objects,
     },
@@ -114,17 +113,6 @@ pub(crate) fn clear_sprites(game: &mut Game) {
 }
 pub(crate) fn retire_all(game: &mut Game) {
     sprite_objects::retire_all(Runtime::new(game).session_mut());
-}
-pub(crate) fn retire(handle: u16, game: &mut Game) {
-    controllers::retire(&mut Runtime::new(game), LegacySpriteHandle(handle));
-}
-pub(crate) fn maw_appearance(handle: u16, appearance: u16, enemy: u16, game: &mut Game) {
-    controllers::maw_appearance(
-        &mut Runtime::new(game),
-        LegacySpriteHandle(handle),
-        appearance,
-        enemy,
-    );
 }
 pub(crate) fn draygon_motion(horizontal_bias: u16, game: &mut Game) {
     controllers::draygon_motion(&mut Runtime::new(game), horizontal_bias);
