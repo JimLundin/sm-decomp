@@ -514,18 +514,23 @@ impl<'g> Runtime<'g> {
         );
     }
     /// The cue port: deliver `cue` to the APU at its original call point, with the lease
-    /// open. The APU side reads only the upload flags ($0617, $0618) from RAM. Only an upload
-    /// writes them, to RAM, and it leaves them clear, so RAM and the Session's audio owner
-    /// hold the same flags.
+    /// open. Of the audio requests, the APU side reads only the upload flags ($0617, $0618),
+    /// from RAM. Only an upload writes them, to RAM, and it leaves them clear, so RAM and the
+    /// Session's audio owner hold the same flags; verify builds check that the APU side
+    /// decides on the flags the lease holds.
     pub(crate) fn emit_cue(
         &mut self,
         cue: crate::native_audio::CompatibilityCue<'_>,
         phase: sm_data::CuePhase,
     ) {
         #[cfg(sm_verify_dll)]
-        for at in [0x617, 0x618] {
+        {
+            let control = &self.session().control;
+            let uploading = [0x617, 0x618]
+                .into_iter()
+                .any(|at| control.projected_byte(at).expect("audio upload flag") != 0);
             assert!(
-                self.session().control.projected_byte(at) == Some(self.game.ram().read_byte(at)),
+                self.game.uploading_apu() == uploading,
                 "the lease's audio upload flags differ from RAM at a cue"
             );
         }
