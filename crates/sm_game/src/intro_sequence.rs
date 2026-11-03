@@ -23,7 +23,6 @@ use crate::menu_state::OptionsMenu;
 use crate::menu_state::SaveSelection;
 use crate::menus::prelude::display_scroll;
 use crate::presentation_workspace::{Point, Role};
-use crate::ram::mirror;
 use crate::visual_state::CinematicDisplay;
 use crate::word_transfers::WordEndpoint;
 
@@ -300,7 +299,7 @@ pub fn set_up_text_page_1<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) 
         game,
         crate::display::registers::TM as u16,
         0x16,
-        mirror::TM,
+        Field::MainLayers,
         false,
     );
     clear_cinematic_background(0x2f, cine, game);

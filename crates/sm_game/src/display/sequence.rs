@@ -1,6 +1,6 @@
 //! Ordered register writes: the trait a host performs them through and the
 //! `register_writes!` sequence over it.
-use crate::ram::RawRam as _;
+use crate::display::preparation::{Access, Field, Store};
 
 /// Register writes in the order the caller makes them.
 pub trait Registers {
@@ -10,21 +10,22 @@ pub trait Registers {
     fn read_register(&mut self, register: u16) -> u8;
 }
 
-/// Write `value` to `register` and its RAM mirror at `mirror`, mirror first
-/// when `mirror_first`.
+/// Write `value` to `register` and store it in the display's `mirror` field
+/// (a named store, as the original's RAM store), mirror first when
+/// `mirror_first`.
 pub fn write_register_and_mirror(
-    host: &mut (impl Registers + crate::ram::WorkRamAccess + ?Sized),
+    host: &mut (impl Registers + Access + ?Sized),
     register: u16,
     value: u8,
-    mirror: usize,
+    mirror: Field,
     mirror_first: bool,
 ) {
     if mirror_first {
-        host.ram().write_byte(mirror, value);
+        host.store_display_control_byte(mirror, value, Store::Named);
         host.write_register(register, value);
     } else {
         host.write_register(register, value);
-        host.ram().write_byte(mirror, value);
+        host.store_display_control_byte(mirror, value, Store::Named);
     }
 }
 
@@ -44,8 +45,8 @@ macro_rules! register_sequence {
         let (address, value) = ($address, $value);
         $crate::display::sequence::Registers::write_register_word(&mut *$game, address, value)
     }};
-    (@write $game:ident; mirror($address:expr, $value:expr, $offset:expr, $before:expr $(,)?)) => {
-        $crate::display::sequence::write_register_and_mirror(&mut *$game, $address, $value, $offset, $before)
+    (@write $game:ident; mirror($address:expr, $value:expr, $mirror:expr, $before:expr $(,)?)) => {
+        $crate::display::sequence::write_register_and_mirror(&mut *$game, $address, $value, $mirror, $before)
     };
     (@write $game:ident; show($display:expr $(,)?)) => {{
         let display = $display;
@@ -55,13 +56,13 @@ macro_rules! register_sequence {
             $crate::display::control::DisplayRegister::value(&display),
         )
     }};
-    (@write $game:ident; show_mirror($display:expr, $offset:expr, $before:expr $(,)?)) => {{
+    (@write $game:ident; show_mirror($display:expr, $mirror:expr, $before:expr $(,)?)) => {{
         let display = $display;
         $crate::display::sequence::write_register_and_mirror(
             &mut *$game,
             $crate::display::control::DisplayRegister::register(&display),
             $crate::display::control::DisplayRegister::value(&display),
-            $offset,
+            $mirror,
             $before,
         )
     }};

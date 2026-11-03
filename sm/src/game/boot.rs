@@ -11,6 +11,7 @@ use sm_game::display::control::{
     BgMode, Brightness, FixedColor, Layers, MainScreen, MainWindowMask, Mode7Settings, SubScreen,
     SubWindowMask,
 };
+use sm_game::display::preparation::Field as DisplayField;
 use sm_game::menus::save_slots;
 use sm_game::sprite_drawing::{clear_high_table, finish_frame};
 
@@ -29,7 +30,13 @@ pub(crate) unsafe fn resume(game: &mut Game) -> u8 {
         // Callbacks may change RAM; dispatch uses the captured resume byte.
         let resume = game.ram().read_byte(0x611);
         if resume == 1 {
-            crate::rtl::write_register_and_mirror(MEMSEL as u16, 1, 0x86, false, game);
+            crate::rtl::write_register_and_mirror(
+                MEMSEL as u16,
+                1,
+                DisplayField::MemorySelect,
+                false,
+                game,
+            );
             clear_work_ram(0x2000, game);
         }
         if matches!(resume, 1 | 2) {
@@ -47,7 +54,13 @@ pub(crate) unsafe fn resume(game: &mut Game) -> u8 {
             );
             crate::game::display_transfers::set_brightness(Brightness::BLANK_FULL, game);
             clear_work_ram(0x10000, game);
-            crate::rtl::write_register_and_mirror(NMITIMEN as u16, 0, 0x84, false, game);
+            crate::rtl::write_register_and_mirror(
+                NMITIMEN as u16,
+                0,
+                DisplayField::NmiEnable,
+                false,
+                game,
+            );
             game.ram().write_byte(0x51, 0x8f);
             initialize_registers(game);
             for target in [0x3000, 0x4000, 0x6000] {
@@ -87,10 +100,10 @@ unsafe fn initialize_registers(game: &mut Game) {
     unsafe {
         crate::game::display_refresh::initialize_io_and_oam(Some(0x8f), game);
         crate::rtl::register_writes! { game;
-            show_mirror(BgMode::MODE1_BG3_PRIORITY, 0x55, false); mirror(MOSAIC as u16, 0, 0x57, false);
-            mirror(BG1SC as u16, 0x40, 0x58, false); mirror(BG2SC as u16, 0x44, 0x59, false);
-            mirror(BG3SC as u16, 0x48, 0x5a, false); mirror(BG4SC as u16, 0, 0x5c, false);
-            mirror(BG12NBA as u16, 0, 0x5d, false); mirror(BG34NBA as u16, 5, 0x5e, false);
+            show_mirror(BgMode::MODE1_BG3_PRIORITY, DisplayField::Mode, false); mirror(MOSAIC as u16, 0, DisplayField::Mosaic, false);
+            mirror(BG1SC as u16, 0x40, DisplayField::Screens0, false); mirror(BG2SC as u16, 0x44, DisplayField::Screens1, false);
+            mirror(BG3SC as u16, 0x48, DisplayField::Screens2, false); mirror(BG4SC as u16, 0, DisplayField::Screens3, false);
+            mirror(BG12NBA as u16, 0, DisplayField::Characters0, false); mirror(BG34NBA as u16, 5, DisplayField::Characters1, false);
             byte(BG1HOFS as u16, 0); byte(BG1HOFS as u16, 0);
             byte(BG1VOFS as u16, 0); byte(BG1VOFS as u16, 0);
             byte(BG2HOFS as u16, 0); byte(BG2HOFS as u16, 0);
@@ -99,21 +112,21 @@ unsafe fn initialize_registers(game: &mut Game) {
             byte(BG3VOFS as u16, 0); byte(BG3VOFS as u16, 0);
             byte(BG4HOFS as u16, 0); byte(BG4HOFS as u16, 0);
             byte(BG4VOFS as u16, 0); byte(BG4VOFS as u16, 0);
-            byte(VMAIN as u16, 0); show_mirror(Mode7Settings::WRAP, 0x5f, false);
+            byte(VMAIN as u16, 0); show_mirror(Mode7Settings::WRAP, DisplayField::AffineSelection, false);
             byte(M7A as u16, 0); byte(M7B as u16, 0);
             byte(M7C as u16, 0); byte(M7D as u16, 0);
             byte(M7X as u16, 0); byte(M7Y as u16, 0);
-            mirror(W12SEL as u16, 0, 0x60, false); mirror(W34SEL as u16, 0, 0x61, false);
-            mirror(WOBJSEL as u16, 0, 0x62, false); mirror(WH0 as u16, 0, 0x63, false);
+            mirror(W12SEL as u16, 0, DisplayField::WindowSelection0, false); mirror(W34SEL as u16, 0, DisplayField::WindowSelection1, false);
+            mirror(WOBJSEL as u16, 0, DisplayField::WindowSelection2, false); mirror(WH0 as u16, 0, DisplayField::WindowPositions0, false);
             byte(WH1 as u16, 0xf8);
         }
         game.ram().write_byte(0x64, 0xf8);
         crate::rtl::register_writes! { game;
-            mirror(WH2 as u16, 0, 0x65, false); mirror(WH3 as u16, 0, 0x66, false);
-            mirror(WBGLOG as u16, 0, 0x67, false); mirror(WOBJLOG as u16, 0, 0x68, false);
-            show_mirror(MainScreen(Layers::of(true, false, false, false, true)), 0x69, false); show_mirror(MainWindowMask(Layers::of(true, false, false, false, true)), 0x6c, false);
-            show_mirror(SubScreen(Layers::of(false, true, false, false, false)), 0x6b, false); show_mirror(SubWindowMask(Layers::of(false, true, false, false, false)), 0x6d, false);
-            mirror(CGWSEL as u16, 2, 0x6e, false); byte(CGADSUB as u16, 0xa1);
+            mirror(WH2 as u16, 0, DisplayField::WindowPositions2, false); mirror(WH3 as u16, 0, DisplayField::WindowPositions3, false);
+            mirror(WBGLOG as u16, 0, DisplayField::WindowLogic0, false); mirror(WOBJLOG as u16, 0, DisplayField::WindowLogic1, false);
+            show_mirror(MainScreen(Layers::of(true, false, false, false, true)), DisplayField::MainLayers, false); show_mirror(MainWindowMask(Layers::of(true, false, false, false, true)), DisplayField::MainWindow, false);
+            show_mirror(SubScreen(Layers::of(false, true, false, false, false)), DisplayField::SubLayers, false); show_mirror(SubWindowMask(Layers::of(false, true, false, false, false)), DisplayField::SubWindow, false);
+            mirror(CGWSEL as u16, 2, DisplayField::NextColorSelection, false); byte(CGADSUB as u16, 0xa1);
         }
         game.ram().write_byte(0x71, 0xa1);
         let blue = FixedColor::blue(0);
@@ -128,6 +141,12 @@ unsafe fn initialize_registers(game: &mut Game) {
         let red = FixedColor::red(0);
         crate::game::display_transfers::set_fixed_color(&[red], game);
         game.ram().write_byte(0x76, red.byte());
-        crate::rtl::write_register_and_mirror(SETINI as u16, 0, 0x77, false, game);
+        crate::rtl::write_register_and_mirror(
+            SETINI as u16,
+            0,
+            DisplayField::Geometry,
+            false,
+            game,
+        );
     }
 }
