@@ -254,7 +254,7 @@ crate::game::callback_dispatch! {
             forced::consume_crystal_flash(runtime.session_mut(), frame);
         }];
         9494565 => [forced::begin_bomb_jump(&mut Runtime::new(game))];
-        9494578 => [forced::advance_bomb_jump(&mut Runtime::new(game), |h| h.foreign(|game| crate::rtl::invalid_interrupt(game)))];
+        9494578 => [forced::advance_bomb_jump(&mut Runtime::new(game), |_| crate::rtl::invalid_interrupt_failure())];
         9494653 => [forced::finish_bomb_jump(Runtime::new(game).session_mut())];
         9496846 => [()];
     }

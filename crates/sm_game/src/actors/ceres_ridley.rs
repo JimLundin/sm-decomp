@@ -265,7 +265,7 @@ pub fn main<L: Lease>(game: &mut L) {
 /// Ridley's, on this lease. Was `CallRidleyFunc`.
 pub fn run_function<L: Lease>(game: &mut L, function: u16) {
     if !run_ceres_function(game, function) && !ridley::run_ridley_function(game, function) {
-        game.foreign(|game| game.unreachable());
+        game.unreachable();
     }
 }
 
@@ -940,7 +940,7 @@ pub fn self_destruct_activating<L: Lease>(game: &mut L) {
         8 => japanese_text_appears(game),
         10 => type_self_destruct_text(game),
         12 => start_escape(game),
-        _ => game.foreign(|game| game.unreachable()),
+        _ => game.unreachable(),
     }
 }
 

@@ -122,7 +122,7 @@ pub fn main_ai<L: Lease + ?Sized>(game: &mut L) {
         state::BOUNCE_FALL => bounce_fall(game),
         state::ROLL => roll(game),
         state::STOPPED => {}
-        _ => game.foreign(|game| game.unreachable()),
+        _ => game.unreachable(),
     }
 }
 

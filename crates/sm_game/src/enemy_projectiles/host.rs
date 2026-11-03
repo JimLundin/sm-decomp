@@ -186,7 +186,7 @@ pub trait SpeciesActors {
     fn botwoon_history_y(&self, cursor: u16) -> u16;
     fn set_botwoon_history_y(&mut self, cursor: u16, value: u16);
 }
-pub trait Effects {
+pub trait Effects: crate::diagnostics::Fatal {
     fn next_random(&mut self) -> u16;
     fn grapple_pickup_query(&mut self) -> u16;
     fn resume_player_after_elevator(&mut self) -> u16;
@@ -196,7 +196,6 @@ pub trait Effects {
     fn queue_music(&mut self, track: u16) -> ();
     fn convert_angle_to_xy(&mut self, angle: u16, amplitude: u16) -> Vector32;
     fn queue_sound(&mut self, channel: u8, max: u8, sound: u16);
-    fn unreachable(&mut self);
     fn draw_spritemap(
         &mut self,
         offscreen: bool,

@@ -550,10 +550,7 @@ pub fn dispatch(ea: u32, k: u16, script: &EnemyScript, h: &mut impl Host) -> Ene
             script.advance(0)
         }
         NOP => script.advance(0),
-        _ => {
-            h.unreachable();
-            EnemyScript::Stop
-        }
+        _ => h.unreachable(),
     };
     h.probe("eproj.command.executed");
     result

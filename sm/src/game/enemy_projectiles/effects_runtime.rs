@@ -44,9 +44,6 @@ impl Effects for Runtime<'_> {
             crate::game::music::queue_sfx(usize::from(channel - 1), sound as u8, max, game);
         });
     }
-    fn unreachable(&mut self) {
-        self.foreign(super::legacy::unreachable);
-    }
     fn draw_spritemap(
         &mut self,
         offscreen: bool,

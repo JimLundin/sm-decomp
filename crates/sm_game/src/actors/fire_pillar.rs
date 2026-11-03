@@ -3,7 +3,7 @@
 #![forbid(unsafe_code)]
 use crate::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 use crate::actors::host::{ActorLease, BossEffects, LeaseActors};
-use crate::enemy_projectiles::host::Effects as _;
+use crate::diagnostics::Fatal as _;
 use crate::enemy_script::EnemyScript;
 
 const INVISIBLE: u16 = 0x0100;
@@ -95,10 +95,7 @@ pub fn instruction<H: LeaseActors + BossEffects>(
         0xa68e2d..=0xa68fbd if (ea - 0xa68e2d).is_multiple_of(20) => {
             (ea - 0xa68e2d) as usize / 20 + 1
         }
-        _ => {
-            game.lease().unreachable();
-            return EnemyScript::Stop;
-        }
+        _ => game.lease().unreachable(),
     };
     let mut runtime = game.lease();
     let (graphics, column) = parts(&runtime);

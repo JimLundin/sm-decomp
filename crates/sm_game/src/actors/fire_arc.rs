@@ -200,7 +200,7 @@ pub fn main_ai<L: Lease>(game: &mut L) {
     match FireArc::of(game, k).function() {
         function::INACTIVE => inactive(game),
         function::ACTIVE => game.advance_orbit(),
-        _ => game.foreign(|game| game.unreachable()),
+        _ => game.unreachable(),
     }
 }
 

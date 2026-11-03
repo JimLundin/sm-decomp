@@ -253,7 +253,7 @@ pub fn main_ai<L: Lease>(game: &mut L) {
         function::ORBIT => orbit(k, game),
         function::BEGIN_RETURN => begin_return(game),
         function::FINISH_RETURN => finish_return(game),
-        _ => game.foreign(|game| game.unreachable()),
+        _ => game.unreachable(),
     }
 }
 

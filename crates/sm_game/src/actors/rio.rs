@@ -158,7 +158,7 @@ pub fn main_ai<H: LeaseActors + BossEffects + Random + ?Sized>(game: &mut H) {
         }
         _ => {
             drop(runtime);
-            return game.unreachable();
+            game.unreachable();
         }
     }
     drop(runtime);

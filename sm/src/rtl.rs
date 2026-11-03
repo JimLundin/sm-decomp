@@ -912,10 +912,24 @@ pub unsafe fn rtl_save_load(cmd: i32, slot: i32, native_game: &mut Game) {
     }
 }
 pub fn invalid_interrupt(_game: &mut Game) {
-    unreachable_failure(true)
+    invalid_interrupt_failure()
 }
 pub fn report_unreachable(_game: &mut Game) -> bool {
+    unreachable()
+}
+/// The original's unreachable-state failure. It reads no game state, so a
+/// Session lease reports it without publishing the Session first.
+pub fn unreachable() -> ! {
     unreachable_failure(false)
+}
+/// The original's invalid-interrupt failure, which reads no game state.
+pub fn invalid_interrupt_failure() -> ! {
+    unreachable_failure(true)
+}
+impl sm_game::diagnostics::Fatal for crate::game::session_runtime::Runtime<'_> {
+    fn unreachable(&mut self) -> ! {
+        unreachable()
+    }
 }
 // Only these fixed static diagnostics cross the native assertion boundary.
 // No caller-provided pointers or backend allocations are accessed.

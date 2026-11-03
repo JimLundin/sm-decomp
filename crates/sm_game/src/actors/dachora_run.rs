@@ -154,7 +154,7 @@ pub fn main_ai<L: Lease>(game: &mut L) {
         function::SHINESPARKING => shinesparking(game, k),
         function::FALLING => falling(game, k),
         function::ECHO => echo(game, k),
-        _ => game.foreign(|game| game.unreachable()),
+        _ => game.unreachable(),
     }
 }
 

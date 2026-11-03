@@ -280,7 +280,7 @@ pub fn run(game: &mut impl Lease, mut function: u16, k: u16) {
             *part.function_timer() = 32;
         }
         BALLOON => return,
-        _ => return game.foreign(|game| game.unreachable()),
+        _ => game.unreachable(),
     }
     place_balloon(game, body);
 }

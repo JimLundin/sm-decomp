@@ -5,6 +5,7 @@ use crate::actors::access::{AccessMode::Native, ActorAccess as _, ActorKey as Ke
 use crate::actors::api::{self, MovementResult::Blocked, ShotHandling, SlopePolicy};
 use crate::actors::combat;
 use crate::actors::host::{ActorLease, EnemyHost, LeaseActors};
+use crate::diagnostics::Fatal as _;
 use crate::enemy_projectiles::host::Effects as _;
 use crate::enemy_script::EnemyScript;
 use crate::player_projectiles::content::table;
@@ -302,10 +303,7 @@ pub fn instruction<H: LeaseActors + ?Sized>(
             };
             return walk(runtime, j, motion, instructions, restore_y_first);
         }
-        _ => {
-            runtime.unreachable();
-            return EnemyScript::Stop;
-        }
+        _ => runtime.unreachable(),
     }
     j
 }

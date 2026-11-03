@@ -1041,10 +1041,10 @@ impl Host for Runtime<'_> {
         self.draw_objects(|drawing| drawing.draw_trail(pair, right, frozen));
     }
     fn invalid_damage(&mut self) {
-        self.foreign(|g| crate::rtl::invalid_interrupt(g));
+        crate::rtl::invalid_interrupt_failure()
     }
     fn unknown(&mut self) -> bool {
-        self.foreign(|g| crate::rtl::report_unreachable(g))
+        crate::rtl::unreachable()
     }
     fn room_level(&self, cell: u16) -> u16 {
         self.word(0x10002 + usize::from(cell) * 2)
@@ -1975,7 +1975,7 @@ impl Runtime<'_> {
         }
     }
     pub(crate) fn actor_assertion_legacy(&mut self, drawing: bool) {
-        self.foreign(|_game| legacy_assertion(drawing));
+        legacy_assertion(drawing)
     }
 }
 
@@ -2253,7 +2253,7 @@ impl<'g> sm_game::grapple_swing::Host for Runtime<'g> {
         action(self)
     }
     fn grapple_unreachable(&mut self) -> bool {
-        self.foreign(|game| sm_game::menus::host::MenuRuntime::rtl_unreachable(game))
+        crate::rtl::unreachable()
     }
     fn grapple_pose_command(&mut self, command: u16) -> u16 {
         // The command runs on this lease; no export, nested lease or re-import.

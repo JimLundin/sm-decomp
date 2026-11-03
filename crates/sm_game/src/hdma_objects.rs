@@ -481,6 +481,9 @@ impl<H: crate::hdma_dispatch::DispatchHost + ?Sized> crate::hdma_program::Interp
     fn foreign<T>(&mut self, action: impl FnOnce(&mut H) -> T) -> T {
         action(self.game)
     }
+    fn unreachable(&mut self) {
+        self.game.rtl_unreachable();
+    }
 }
 
 pub(crate) fn write_channel_register<H: crate::menus::host::Host + ?Sized>(

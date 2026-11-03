@@ -132,8 +132,8 @@ impl BossEffects for Game {
         gameplay_flag_runtime::set_boss_word_le(area, value, self);
     }
 
-    fn unreachable(&mut self) {
-        crate::game::animated_tiles::native::unreachable(self);
+    fn unreachable(&mut self) -> ! {
+        crate::rtl::unreachable()
     }
 
     fn spawn_plm(&mut self, block_x: u8, block_y: u8, header: u16) {

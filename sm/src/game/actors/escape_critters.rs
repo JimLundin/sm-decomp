@@ -49,6 +49,6 @@ impl Host for Runtime<'_> {
     }
 
     fn unknown_function(&mut self) {
-        self.foreign(|game| crate::rtl::report_unreachable(game));
+        crate::rtl::unreachable()
     }
 }

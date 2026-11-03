@@ -5,6 +5,7 @@ use crate::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 use crate::actors::api::{self, Axis, MovementResult};
 use crate::actors::combat;
 use crate::actors::slot_view::{SlotState, slot_view};
+use crate::diagnostics::Fatal as _;
 use crate::enemy_projectiles::host::Effects;
 use crate::enemy_script::EnemyScript;
 use crate::player_projectiles::{access::shot, host::Host as _};
@@ -1175,10 +1176,7 @@ pub fn dispatch_instruction<G: Pirates + ?Sized>(
         instruction::PREPARE_WALL_JUMP_RIGHT | instruction::PREPARE_WALL_JUMP_LEFT => {
             prepare_wall_jump(ea == instruction::PREPARE_WALL_JUMP_RIGHT, script, game)
         }
-        _ => {
-            game.lease().unreachable();
-            EnemyScript::Stop
-        }
+        _ => game.lease().unreachable(),
     }
 }
 

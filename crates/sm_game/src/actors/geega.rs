@@ -36,7 +36,7 @@ pub fn main_ai<H: Lease + ?Sized>(game: &mut H) {
         11767997 => fly(false, game),
         11768154 => turn(true, game),
         11768280 => turn(false, game),
-        _ => game.foreign(|game| game.unreachable()),
+        _ => game.unreachable(),
     }
 }
 

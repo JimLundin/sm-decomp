@@ -130,8 +130,9 @@ pub trait BossEffects:
     fn queue_music_delayed(&mut self, track: u16);
     /// Store the boss word for `area`, little-endian.
     fn set_boss_word(&mut self, area: u16, value: u16);
-    /// The original unknown-address failure.
-    fn unreachable(&mut self);
+    /// The original unknown-address failure, which is the host's
+    /// [`Fatal`](crate::diagnostics::Fatal) failure.
+    fn unreachable(&mut self) -> !;
     /// Spawn the PLM with `header` at block (`block_x`, `block_y`).
     fn spawn_plm(&mut self, block_x: u8, block_y: u8, header: u16);
 }

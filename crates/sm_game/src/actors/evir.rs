@@ -325,7 +325,7 @@ pub fn react(address: u32, runtime: &mut impl Lease) {
         routine::SHOT => combat::contact_reaction(runtime, Finalize),
         routine::POWER_BOMB => combat::power_bomb_reaction(runtime, Finalize),
         routine::TOUCH => combat::shot_reaction(runtime, ShotHandling::Finalize),
-        _ => return runtime.unreachable(),
+        _ => runtime.unreachable(),
     }
     let evir = combat::current(runtime).byte_index();
     let (arms, projectile) = (evir + SLOT, evir + 2 * SLOT);
@@ -371,10 +371,7 @@ pub fn instruction(address: u32, script: EnemyScript, runtime: &mut impl Lease) 
             *part.moving() = 0;
             *part.function() = function::PROJECTILE_IDLE;
         }
-        _ => {
-            runtime.unreachable();
-            return EnemyScript::Stop;
-        }
+        _ => runtime.unreachable(),
     }
     script
 }

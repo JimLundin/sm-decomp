@@ -409,7 +409,7 @@ pub fn execute_main_code<H: MainCodeHost>(script: u16, h: &mut H) {
         }
         0xe8cd => shake_crocomire(h),
         0xe950 => shake_ridley(h),
-        _ => Effects::unreachable(h),
+        _ => crate::diagnostics::Fatal::unreachable(h),
     }
 }
 

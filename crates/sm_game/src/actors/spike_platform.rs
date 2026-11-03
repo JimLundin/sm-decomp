@@ -4,6 +4,7 @@
 use crate::actors::combat;
 use crate::actors::host::{ActorLease, LeaseActors, abs16};
 use crate::actors::slot_view::{SlotState, slot_view};
+use crate::diagnostics::Fatal as _;
 use crate::enemy_projectiles::host::Effects as _;
 use sm_data::enemy_speeds::SpeedTable;
 

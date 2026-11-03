@@ -4,6 +4,7 @@ use crate::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 use crate::actors::api::{Axis, player_within};
 use crate::actors::host::{ActorLease, ActorRuntime as _, LeaseActors};
 use crate::actors::slot_view::{SlotState, slot_view};
+use crate::diagnostics::Fatal as _;
 use crate::enemy_projectiles::host::Effects as _;
 use crate::enemy_script::EnemyScript;
 use crate::session_access::SessionAccess as _;
@@ -190,10 +191,7 @@ pub fn instruction<H: LeaseActors + ?Sized>(
                 }
             });
         }
-        _ => {
-            runtime.unreachable();
-            return EnemyScript::Stop;
-        }
+        _ => runtime.unreachable(),
     }
     script
 }
