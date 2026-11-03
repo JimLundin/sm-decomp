@@ -172,6 +172,9 @@ pub struct ActorCompatibility {
     pub debug_enemy_index: u16,
     pub log_index: u16,
     pub scratch: [u16; 5],
+    /// $7E:1874, the removed spritemap collision's right border word, which
+    /// the bang still stores its beam direction to.
+    pub right_border: u16,
 }
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct ActorDiagnostics {

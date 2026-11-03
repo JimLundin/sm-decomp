@@ -22,6 +22,7 @@ pub fn assert_numeric_checkpoint(metadata: &DisplayStartMetadata) {
     expected.schedule.colliding[3] = 0x8000;
     expected.compatibility.pre_hook[7] = 0x7f;
     expected.compatibility.scratch[2] = 0x024a;
+    expected.compatibility.right_border = 0x0302;
     expected.crocomire_melt.column_heights[3][31] = 0x30;
     expected.work_robot_palette.cursor = 0x0a14;
     expected.extended.blocks[3][0x3ed] = 0x9abc;

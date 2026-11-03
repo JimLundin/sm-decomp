@@ -368,7 +368,8 @@ numeric_checkpoint!(
     post_hook,
     debug_enemy_index,
     log_index,
-    scratch
+    scratch,
+    right_border
 );
 numeric_checkpoint!(
     ActorDiagnostics,
@@ -417,7 +418,7 @@ impl ActorsCheckpoint for Actors {
         if metadata.identity.reference != metadata.reference.fingerprint {
             return Err("actor numeric checkpoint Reference identity mismatch".into());
         }
-        let mut bytes = Vec::from(b"SMACTORS\x07".as_slice());
+        let mut bytes = Vec::from(b"SMACTORS\x08".as_slice());
         let binding = crate::checkpoint_binding::observation_binding(metadata);
         bytes.extend_from_slice(&(binding.len() as u64).to_le_bytes());
         bytes.extend_from_slice(&binding);
@@ -429,7 +430,7 @@ impl ActorsCheckpoint for Actors {
         metadata: &DisplayStartMetadata,
     ) -> Result<Self, String> {
         let mut read = CheckpointReader(bytes);
-        if read.bytes(9)? != b"SMACTORS\x07" {
+        if read.bytes(9)? != b"SMACTORS\x08" {
             return Err("unsupported actor numeric checkpoint schema".into());
         }
         let size = usize::try_from(read.counter()?)
