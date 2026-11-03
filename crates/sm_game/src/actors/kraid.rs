@@ -32,7 +32,6 @@ use crate::menus::prelude::owned;
 use crate::palette_effects::fading::background6;
 use crate::ram::CompatibilityRam as _;
 use crate::ram::word;
-use crate::session::HookSlot;
 use core::mem::offset_of;
 use sm_data::cartridge::RomRecord;
 
@@ -299,12 +298,16 @@ const UNPAUSE_ALIVE: u16 = 0xc24e;
 const UNPAUSE_SINKING: u16 = 0xc2a0;
 const UNPAUSE_DEAD: u16 = 0xc1fb;
 const PAUSE: u16 = 0xc325;
+/// RAM: the pause and unpause hook pointers, the camera scroll limits and the
+/// blank BG2 tile.
+const UNPAUSE_HOOK: usize = 0x604;
+const PAUSE_HOOK: usize = 0x601;
 /// The display mirrors Kraid's uploads address VRAM by: the BG2 tilemap base
 /// and size ($7E:0059, `reg_BG2SC`) and the BG1/BG2 character bases ($7E:005D,
 /// `reg_BG12NBA`).
 const BG2_TILEMAP_BASE: Field = Field::Screens1;
 const BG3_TILEMAP_BASE: Field = Field::Characters0;
-/// The blank BG2 tile.
+const SCROLL_LIMITS: usize = 0xcd20;
 const BLANK_BG2_TILE: u16 = 824;
 /// The lint fly left at 3.5 pixels a frame; the foot moves 3 or 4.
 const LINT_SPEED: i32 = (3 << 16) | 0x8000;
@@ -325,19 +328,10 @@ fn kraid_record<S: BossState + ?Sized>(address: u16, game: &mut S) -> RomRecord 
     native_record(BANK, address, game)
 }
 
-/// Store `value` to `hook`'s address in native byte order, as the original's
-/// native word store, then refresh the observations as the projected store did.
-fn set_hook_address<S: SlotState + ?Sized>(game: &mut S, hook: HookSlot, value: u16) {
-    game.session_mut()
-        .room
-        .set_hook_address(hook, value.to_ne_bytes());
-    game.words_stored();
-}
-
-/// Store `hook`'s bank, then refresh the observations.
-fn set_hook_bank<S: SlotState + ?Sized>(game: &mut S, hook: HookSlot) {
-    game.session_mut().room.set_hook_bank(hook, BANK);
-    game.words_stored();
+fn set_native_word<S: BossState + ?Sized>(game: &mut S, at: usize, value: u16) {
+    let bytes = u16::to_ne_bytes(value);
+    game.set_slot_byte(at, bytes[0]);
+    game.set_slot_byte(at + 1, bytes[1]);
 }
 
 fn native_word<S: BossState + ?Sized>(game: &S, at: usize) -> u16 {
@@ -416,12 +410,10 @@ fn load_bg2<S: BossState + SlotState + ?Sized>(game: &mut S, priority: u16) {
     *BodyEdit::of(game, BODY).hurt_frame_timer() = 0;
     for v1 in (0u16..1536).step_by(2) {
         let value = bg2_staging::get(game, usize::from(v1 >> 1)) & 0xdfff;
-        // BG2 staging word 1024 + v1 / 2 ($7E:2800..$7E:2DFF), in native order.
-        let index = usize::from(v1 >> 1) + 1024;
-        game.session_mut().actors.extended.blocks[4 + index / 1024][index % 1024] =
-            u16::from_le_bytes(value.to_ne_bytes());
+        let at = usize::try_from(0x2000 + (((v1 as i32 >> 1) + 1024) as isize) * 2)
+            .expect("native word outside RAM");
+        set_native_word(game, at, value);
     }
-    game.words_stored();
     for v2 in 0u16..1024 {
         let value = priority & native_word(game, 0x4000 + v2 as usize * 2);
         bg2_staging::set(game, usize::from(v2), value);
@@ -668,10 +660,9 @@ fn hurt_flash<S: BossState + SlotState + ?Sized>(game: &mut S) {
     let mut colour: u16 = 0;
     loop {
         let value = kraid_tables::sprite_color(game, (source >> 1) as usize);
-        // Sprite palette 7's colour colour / 2 ($7E:C1E0..$7E:C1FF), in native order.
-        game.session_mut().presentation.visual_mut().colors[usize::from(colour >> 1) + 240] =
-            u16::from_le_bytes(value.to_ne_bytes());
-        game.words_stored();
+        let at = usize::try_from(0xc000 + (((colour as i32 >> 1) + 240) as isize) * 2)
+            .expect("native word outside RAM");
+        set_native_word(game, at, value);
         colour = colour.wrapping_add(2);
         source = source.wrapping_add(2);
         if (colour as i16).wrapping_sub(32) >= 0 {
@@ -1001,7 +992,7 @@ pub fn run_function<L: Lease + ?Sized>(game: &mut L, function: u16) {
             *BodyEdit::of(game, BODY).function() = function::FADE_IN_LOAD_BG3_TILES_1;
         }
         function::FADE_IN_LOAD_BG3_TILES_1 => {
-            set_hook_address(game, HookSlot::Unpause, UNPAUSE_DEAD);
+            set_native_word(game, UNPAUSE_HOOK, UNPAUSE_DEAD);
             crate::probe::hit("kraid.dead_hook");
             *BodyEdit::of(game, BODY).function() = function::FADE_IN_LOAD_BG3_TILES_2;
             queue_vram(game, 1024, 0xb200, 154, |_| 0x4000);
@@ -1069,10 +1060,8 @@ pub fn run_function<L: Lease + ?Sized>(game: &mut L, function: u16) {
         function::ATTACK_WITH_MOUTH_OPEN => attack_with_mouth_open(game),
         function::GETS_BIG_RELEASE_CAMERA => {
             *BodyEdit::of(game, BODY).function() = function::GETS_BIG_BREAK_CEILING;
-            let room = &mut game.session_mut().room;
-            room.set_scroll_pair(0, 514u16.to_ne_bytes());
-            room.set_scroll_pair(2, 257u16.to_ne_bytes());
-            game.words_stored();
+            set_native_word(game, SCROLL_LIMITS, 514);
+            set_native_word(game, SCROLL_LIMITS + 2, 257);
             *BodyEdit::of(game, BODY).min_eject_y() = 164;
         }
         function::FOOT_WALK_BACKWARDS => {
@@ -1455,8 +1444,8 @@ fn death_bg2_top_half<L: Lease + ?Sized>(game: &mut L) {
 /// last animations. Was `Kraid_Death_UpdateBG2TilemapBottomHalf`.
 fn death_bg2_bottom_half<L: Lease + ?Sized>(game: &mut L) {
     process_script(game);
-    set_hook_bank(game, HookSlot::Unpause);
-    set_hook_address(game, HookSlot::Unpause, UNPAUSE_SINKING);
+    game.set_slot_byte(UNPAUSE_HOOK + 2, BANK);
+    set_native_word(game, UNPAUSE_HOOK, UNPAUSE_SINKING);
     crate::probe::hit("kraid.sinking_hook");
     *BodyEdit::of(game, BODY).function() = function::DEATH_SINK_THROUGH_FLOOR;
     battle!(game.QuakeSoundTimer = 43);
@@ -1960,10 +1949,10 @@ pub fn shot<L: Lease + ?Sized>(game: &mut L) {
 /// Sets up the room: the hooks, and either the empty room for a dead Kraid or
 /// his health eighths, BG2 and the rise. Was `Kraid_Init`.
 pub fn initialize<L: Lease + ?Sized>(game: &mut L) {
-    set_hook_bank(game, HookSlot::Unpause);
-    set_hook_bank(game, HookSlot::Pause);
-    set_hook_address(game, HookSlot::Unpause, UNPAUSE_ALIVE);
-    set_hook_address(game, HookSlot::Pause, PAUSE);
+    game.set_slot_byte(UNPAUSE_HOOK + 2, BANK);
+    game.set_slot_byte(PAUSE_HOOK + 2, BANK);
+    set_native_word(game, UNPAUSE_HOOK, UNPAUSE_ALIVE);
+    set_native_word(game, PAUSE_HOOK, PAUSE);
     if is_dead(game) != 0 {
         game.foreign(|game| {
             crate::word_transfers!(game, ascending, 16; le(TARGET_PALETTES, 96) <- rom(ROOM_BG_PALETTE, 0));
@@ -1977,10 +1966,8 @@ pub fn initialize<L: Lease + ?Sized>(game: &mut L) {
     } else {
         crate::frame_display_byte!(game, BG2_TILEMAP_BASE => 67);
         battle!(game.CameraDistance = 2);
-        let room = &mut game.session_mut().room;
-        room.set_scroll_pair(0, 0u16.to_ne_bytes());
-        room.set_scroll_pair(2, 1u16.to_ne_bytes());
-        game.words_stored();
+        set_native_word(game, SCROLL_LIMITS, 0);
+        set_native_word(game, SCROLL_LIMITS + 2, 1);
         *BodyEdit::of(game, BODY).min_eject_y() = 324;
         let mut eighth: u16 = Body::of(game, BODY).actor().health >> 3;
         let step: u16 = eighth;

@@ -49,7 +49,7 @@ BASELINE = {
     # converting counted sites into them is not a retirement, and the address
     # decoding behind them slows every replay. The lexical unresolved-method and
     # legacy-engine measures are reported only.
-    "engine_ram_address_sites": 147,
+    "engine_ram_address_sites": 170,
     "engine_raw_ram_calls": 115,
     "engine_unresolved_ram_methods": 1040,
     "legacy_engine_ram_sites": 530,

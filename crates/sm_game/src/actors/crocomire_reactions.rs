@@ -113,12 +113,11 @@ const MELTING_Y_OFFSETS: usize = 0x69c;
 const PIXELS_TO_ERASE: usize = 2;
 /// $7E:CAE0: Crocomire's BG2 Y scroll indirect HDMA table.
 const SCROLL_HDMA_TABLE: usize = 0xcae0;
-/// The scroll cells ($7E:CD20 + cell, `room.scrolls`) the death sequence
-/// writes a pair at a time: 0 is red, 1 blue.
-const SCROLLS_0_1: usize = 0;
-const SCROLLS_2_3: usize = 2;
-const SCROLLS_3_4: usize = 3;
-const SCROLLS_4_5: usize = 4;
+/// The scroll bytes at $7E:CD20, written a pair at a time: 0 is red, 1 blue.
+const SCROLLS_0_1: usize = 0xcd20;
+const SCROLLS_2_3: usize = 0xcd22;
+const SCROLLS_3_4: usize = 0xcd23;
+const SCROLLS_4_5: usize = 0xcd24;
 /// Block rows of the invisible walls and of the bridge.
 const WALL_ROW: u8 = 3;
 const BRIDGE_ROW: u8 = 0xb;
@@ -1316,10 +1315,7 @@ pub fn behind_wall_wait_for_samus<L: Lease + ?Sized>(game: &mut L) {
         return;
     }
     game.foreign(|game| game.queue_music_delayed(5));
-    game.session_mut()
-        .room
-        .set_scroll_pair(SCROLLS_3_4, 256u16.to_le_bytes());
-    game.words_stored();
+    game.set_slot_word(SCROLLS_3_4, 256);
     game.foreign(|game| game.spawn_plm(0x30, WALL_ROW, CREATE_INVISIBLE_WALL));
     battle!(game.CameraDistance = 6);
     let runtime = &mut *game;
@@ -1480,10 +1476,8 @@ pub fn set_index_4e<L: Lease + ?Sized>(game: &mut L) {
 /// Crocomire main AI - death sequence index 4Ah - unlock camera ($A4:9B65). Was
 /// `open_skeleton_exit`.
 pub fn unlock_camera<L: Lease + ?Sized>(game: &mut L) {
-    let room = &mut game.session_mut().room;
-    room.set_scroll_pair(SCROLLS_0_1, 257u16.to_le_bytes());
-    room.set_scroll_pair(SCROLLS_2_3, 257u16.to_le_bytes());
-    game.words_stored();
+    game.set_slot_word(SCROLLS_0_1, 257);
+    game.set_slot_word(SCROLLS_2_3, 257);
     game.foreign(|game| game.spawn_plm(0x1e, WALL_ROW, CLEAR_INVISIBLE_WALL));
     advance_death_sequence(game);
 }

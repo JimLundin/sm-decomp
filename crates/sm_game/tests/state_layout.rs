@@ -1001,11 +1001,6 @@ fn actor_scratch_lanes() -> Vec<Lane> {
     array(0x0e22, 2, 5, |s, index| {
         &mut s.actors.compatibility.scratch[index]
     })
-    .chain([(
-        0x1874,
-        0,
-        (|s, _| &mut s.actors.compatibility.right_border) as Field,
-    )])
     .collect()
 }
 
@@ -1017,41 +1012,6 @@ fn crocomire_melt_round_trips_every_word() {
 fn crocomire_melt_lanes() -> Vec<Lane> {
     array(0x688, 2, 10, |s, index| {
         &mut s.actors.crocomire_melt.words[index]
-    })
-    .collect()
-}
-
-#[test]
-fn room_scrolls_round_trip_every_word() {
-    check_owner("room scrolls", &room_scroll_lanes());
-}
-
-fn room_scroll_lanes() -> Vec<Lane> {
-    array(0xcd20, 2, 25, |s, index| &mut s.room.scrolls[index]).collect()
-}
-
-#[test]
-fn pause_hooks_round_trip_every_word() {
-    check_owner("pause hooks", &pause_hook_lanes());
-}
-
-fn pause_hook_lanes() -> Vec<Lane> {
-    array(0x601, 2, 3, |s, index| &mut s.room.pause_hooks[index]).collect()
-}
-
-#[test]
-fn work_robot_palette_round_trips_every_word() {
-    check_owner("Work Robot palette", &work_robot_palette_lanes());
-}
-
-fn work_robot_palette_lanes() -> Vec<Lane> {
-    array(0xd652, 2, 3, |s, index| {
-        let palette = &mut s.actors.work_robot_palette;
-        match index {
-            0 => &mut palette.palette_index,
-            1 => &mut palette.timer,
-            _ => &mut palette.cursor,
-        }
     })
     .collect()
 }
@@ -1265,9 +1225,6 @@ fn all_owner_lanes() -> Vec<(&'static str, Vec<Lane>)> {
         ("actor extended RAM", actor_extended_lanes()),
         ("actor speed scratch", actor_scratch_lanes()),
         ("Crocomire melt", crocomire_melt_lanes()),
-        ("Work Robot palette", work_robot_palette_lanes()),
-        ("room scrolls", room_scroll_lanes()),
-        ("pause hooks", pause_hook_lanes()),
         ("boss RAM", boss_ram_lanes()),
         ("message box", message_box_lanes()),
         ("BG2 staging", bg2_staging_lanes()),

@@ -368,8 +368,7 @@ numeric_checkpoint!(
     post_hook,
     debug_enemy_index,
     log_index,
-    scratch,
-    right_border
+    scratch
 );
 numeric_checkpoint!(
     ActorDiagnostics,
@@ -395,11 +394,9 @@ numeric_checkpoint!(
     compatibility,
     extended,
     crocomire_melt,
-    work_robot_palette,
     diagnostics
 );
 numeric_checkpoint!(CrocomireMelt, words, column_heights);
-numeric_checkpoint!(WorkRobotPalette, palette_index, timer, cursor);
 numeric_checkpoint!(ExtendedRam, blocks);
 /// The actor table's numeric checkpoint, bound to its display start metadata.
 pub trait ActorsCheckpoint: Sized {
@@ -418,7 +415,7 @@ impl ActorsCheckpoint for Actors {
         if metadata.identity.reference != metadata.reference.fingerprint {
             return Err("actor numeric checkpoint Reference identity mismatch".into());
         }
-        let mut bytes = Vec::from(b"SMACTORS\x08".as_slice());
+        let mut bytes = Vec::from(b"SMACTORS\x06".as_slice());
         let binding = crate::checkpoint_binding::observation_binding(metadata);
         bytes.extend_from_slice(&(binding.len() as u64).to_le_bytes());
         bytes.extend_from_slice(&binding);
@@ -430,7 +427,7 @@ impl ActorsCheckpoint for Actors {
         metadata: &DisplayStartMetadata,
     ) -> Result<Self, String> {
         let mut read = CheckpointReader(bytes);
-        if read.bytes(9)? != b"SMACTORS\x08" {
+        if read.bytes(9)? != b"SMACTORS\x06" {
             return Err("unsupported actor numeric checkpoint schema".into());
         }
         let size = usize::try_from(read.counter()?)
