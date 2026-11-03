@@ -5,6 +5,218 @@
 /// The work RAM a save file holds: $7E:D7C0 up to $7E:DE1C.
 pub const PLAYER_BLOCK: core::ops::Range<usize> = 0xd7c0..0xde1c;
 
+/// Where the player block lives in work RAM ($7E:09A2..$0A01).
+pub const PLAYER: usize = 0x9a2;
+
+/// Where the save keeps its copy of the player block ($7E:D7C0..$D81F), the
+/// first 48 words of [`PLAYER_BLOCK`].
+pub const SAVED_PLAYER: usize = 0xd7c0;
+
+/// A word of the player block a save file keeps, in RAM order from $09A2.
+/// Saving copies the block into [`SavedPlayer`] and loading copies it back,
+/// each from the last word down to the first.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum PlayerWord {
+    EquippedItems,
+    CollectedItems,
+    EquippedBeams,
+    CollectedBeams,
+    /// The d-pad bindings ($09AA..$09B0), which the game loop holds.
+    BindingUp,
+    BindingDown,
+    BindingLeft,
+    BindingRight,
+    /// The button bindings ($09B2..$09BE), which the control's input
+    /// history holds.
+    BindingShoot,
+    BindingJump,
+    BindingRun,
+    BindingItemCancel,
+    BindingItemSwitch,
+    BindingAimDown,
+    BindingAimUp,
+    ReserveMode,
+    Health,
+    MaxHealth,
+    Missiles,
+    MaxMissiles,
+    SuperMissiles,
+    MaxSuperMissiles,
+    PowerBombs,
+    MaxPowerBombs,
+    /// The HUD's selected weapon ($09D2).
+    SelectedWeapon,
+    MaxReserveHealth,
+    ReserveHealth,
+    ReserveMissiles,
+    GameTimeFrames,
+    GameTimeSeconds,
+    GameTimeMinutes,
+    GameTimeHours,
+    JapaneseText,
+    Moonwalk,
+    DebugFlag,
+    Spare09E8,
+    /// The HUD auto-cancel flag ($09EA), which a shot reset observes.
+    HudAutoCancel,
+    /// The frame display's auto-cancel word ($09EC).
+    HudAutoCancelDisplay,
+    /// The ten words no routine reads ($09EE..$0A01).
+    Spare09EE,
+    Spare09F0,
+    Spare09F2,
+    Spare09F4,
+    Spare09F6,
+    Spare09F8,
+    Spare09FA,
+    Spare09FC,
+    Spare09FE,
+    Spare0A00,
+}
+
+impl PlayerWord {
+    /// Every word, in RAM order.
+    pub const ALL: [Self; 48] = [
+        Self::EquippedItems,
+        Self::CollectedItems,
+        Self::EquippedBeams,
+        Self::CollectedBeams,
+        Self::BindingUp,
+        Self::BindingDown,
+        Self::BindingLeft,
+        Self::BindingRight,
+        Self::BindingShoot,
+        Self::BindingJump,
+        Self::BindingRun,
+        Self::BindingItemCancel,
+        Self::BindingItemSwitch,
+        Self::BindingAimDown,
+        Self::BindingAimUp,
+        Self::ReserveMode,
+        Self::Health,
+        Self::MaxHealth,
+        Self::Missiles,
+        Self::MaxMissiles,
+        Self::SuperMissiles,
+        Self::MaxSuperMissiles,
+        Self::PowerBombs,
+        Self::MaxPowerBombs,
+        Self::SelectedWeapon,
+        Self::MaxReserveHealth,
+        Self::ReserveHealth,
+        Self::ReserveMissiles,
+        Self::GameTimeFrames,
+        Self::GameTimeSeconds,
+        Self::GameTimeMinutes,
+        Self::GameTimeHours,
+        Self::JapaneseText,
+        Self::Moonwalk,
+        Self::DebugFlag,
+        Self::Spare09E8,
+        Self::HudAutoCancel,
+        Self::HudAutoCancelDisplay,
+        Self::Spare09EE,
+        Self::Spare09F0,
+        Self::Spare09F2,
+        Self::Spare09F4,
+        Self::Spare09F6,
+        Self::Spare09F8,
+        Self::Spare09FA,
+        Self::Spare09FC,
+        Self::Spare09FE,
+        Self::Spare0A00,
+    ];
+
+    /// The word's position in the block.
+    pub fn index(self) -> usize {
+        self as usize
+    }
+
+    /// The inventory word this is, if it is one.
+    pub fn inventory(self) -> Option<crate::inventory::Word> {
+        use crate::inventory::Word as I;
+        Some(match self {
+            Self::EquippedItems => I::EquippedItems,
+            Self::CollectedItems => I::CollectedItems,
+            Self::EquippedBeams => I::EquippedBeams,
+            Self::CollectedBeams => I::CollectedBeams,
+            Self::ReserveMode => I::ReserveMode,
+            Self::Health => I::Health,
+            Self::MaxHealth => I::MaxHealth,
+            Self::Missiles => I::Missiles,
+            Self::MaxMissiles => I::MaxMissiles,
+            Self::SuperMissiles => I::SuperMissiles,
+            Self::MaxSuperMissiles => I::MaxSuperMissiles,
+            Self::PowerBombs => I::PowerBombs,
+            Self::MaxPowerBombs => I::MaxPowerBombs,
+            Self::MaxReserveHealth => I::MaxReserveHealth,
+            Self::ReserveHealth => I::ReserveHealth,
+            Self::ReserveMissiles => I::ReserveMissiles,
+            _ => return None,
+        })
+    }
+
+    /// The game loop's word this is, if it is one: the d-pad bindings and
+    /// the game time.
+    pub fn game_loop(self) -> Option<crate::game_loop::Word> {
+        use crate::game_loop::Word as G;
+        Some(match self {
+            Self::BindingUp => G::ButtonConfigUp,
+            Self::BindingDown => G::ButtonConfigDown,
+            Self::BindingLeft => G::ButtonConfigLeft,
+            Self::BindingRight => G::ButtonConfigRight,
+            Self::GameTimeFrames => G::GameTimeFrames,
+            Self::GameTimeSeconds => G::GameTimeSeconds,
+            Self::GameTimeMinutes => G::GameTimeMinutes,
+            Self::GameTimeHours => G::GameTimeHours,
+            _ => return None,
+        })
+    }
+
+    /// The control's binding word this is, if it is one.
+    pub fn binding(self) -> Option<crate::controller_state::Word> {
+        use crate::controller_state::Word as C;
+        Some(match self {
+            Self::BindingShoot => C::ButtonConfigShootX,
+            Self::BindingJump => C::ButtonConfigJumpA,
+            Self::BindingRun => C::ButtonConfigRunB,
+            Self::BindingItemCancel => C::ButtonConfigItemcancelY,
+            Self::BindingItemSwitch => C::ButtonConfigItemswitch,
+            Self::BindingAimDown => C::ButtonConfigAimDownL,
+            Self::BindingAimUp => C::ButtonConfigAimUpR,
+            _ => return None,
+        })
+    }
+
+    /// The spare word this is, by its position from $09EE, if it is one.
+    pub fn spare(self) -> Option<usize> {
+        self.index().checked_sub(Self::Spare09EE.index())
+    }
+}
+
+/// The save's copy of the player block ($7E:D7C0..$D81F), word by word in
+/// [`PlayerWord`] order: the words a save file keeps first.
+#[derive(Clone, Debug, PartialEq)]
+pub struct SavedPlayer {
+    pub words: [u16; 48],
+}
+
+impl Default for SavedPlayer {
+    fn default() -> Self {
+        Self { words: [0; 48] }
+    }
+}
+
+impl SavedPlayer {
+    pub fn get(&self, word: PlayerWord) -> u16 {
+        self.words[word.index()]
+    }
+
+    pub fn get_mut(&mut self, word: PlayerWord) -> &mut u16 {
+        &mut self.words[word.index()]
+    }
+}
+
 /// Where the explored maps of every area are kept between saves ($7E:CD52).
 pub const SAVED_MAPS: usize = 0xcd52;
 

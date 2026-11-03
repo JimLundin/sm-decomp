@@ -37,6 +37,7 @@ pub struct AuxiliaryGameplayCheckpoint {
     pub sprite_compatibility: crate::sprite_effect_state::SpriteCompatibilityTails,
     pub minimap: crate::player_update::state::State,
     pub saved_maps: crate::save_file::SavedMaps,
+    pub saved_player: crate::save_file::SavedPlayer,
     pub inventory: crate::item_pickups::Inventory,
     pub mechanisms: crate::session::Mechanisms,
     pub feedback: crate::session::Feedback,
@@ -1264,6 +1265,7 @@ checkpoint_fields!(checkpoint_player, checkpoint_read_player, Player,
     moonwalk: checkpoint_word/checkpoint_read_word, debug_flag: checkpoint_word/checkpoint_read_word,
     spare_09e8: checkpoint_word/checkpoint_read_word, turn_request: checkpoint_word/checkpoint_read_word,
     spare_0dfc: checkpoint_word/checkpoint_read_word,
+    hud_auto_cancel: checkpoint_word/checkpoint_read_word, spare_09ee: checkpoint_words/audio_words,
     top_sprite: checkpoint_word/checkpoint_read_word, bottom_sprite: checkpoint_word/checkpoint_read_word,
     scripted_movement_direction: checkpoint_word/checkpoint_read_word,
     crouch_transition_work: checkpoint_word/checkpoint_read_word,
@@ -1305,7 +1307,7 @@ impl Player {
         if metadata.identity.reference != metadata.reference.fingerprint {
             return Err("player checkpoint Reference identity mismatch".into());
         }
-        let mut bytes = Vec::from(b"SMPLAYER\x07".as_slice());
+        let mut bytes = Vec::from(b"SMPLAYER\x08".as_slice());
         let binding = observation_binding(metadata);
         bytes.extend_from_slice(&(binding.len() as u64).to_le_bytes());
         bytes.extend_from_slice(&binding);
@@ -1317,7 +1319,7 @@ impl Player {
         metadata: &DisplayStartMetadata,
     ) -> Result<Self, String> {
         let mut read = CheckpointReader(bytes);
-        if read.bytes(9)? != b"SMPLAYER\x07" {
+        if read.bytes(9)? != b"SMPLAYER\x08" {
             return Err("unsupported player checkpoint schema".into());
         }
         let size = usize::try_from(read.counter()?)
@@ -1456,6 +1458,8 @@ fn checkpoint_minimap_tiles(bytes: &mut Vec<u8>, values: &[[u16; 5]; 3]) {
 fn checkpoint_read_minimap_tiles(read: &mut CheckpointReader<'_>) -> Result<[[u16; 5]; 3], String> {
     Ok([audio_words(read)?, audio_words(read)?, audio_words(read)?])
 }
+checkpoint_fields!(checkpoint_saved_player, checkpoint_read_saved_player, crate::save_file::SavedPlayer,
+    words: checkpoint_words/audio_words);
 fn checkpoint_saved_maps(bytes: &mut Vec<u8>, value: &crate::save_file::SavedMaps) {
     for area in &value.areas {
         checkpoint_bytes(bytes, area);
@@ -1626,7 +1630,7 @@ macro_rules! checkpoint_auxiliary {
                     return Err("auxiliary gameplay checkpoint Reference identity mismatch".into());
                 }
                 if !self.menu_window.is_initialized() { return Err("unsupplied map-menu window checkpoint".into()); }
-                let mut bytes = Vec::from(b"SMAUXGS\x10".as_slice());
+                let mut bytes = Vec::from(b"SMAUXGS\x11".as_slice());
                 let binding = observation_binding(metadata);
                 bytes.extend_from_slice(&(binding.len() as u64).to_le_bytes());
                 bytes.extend_from_slice(&binding);
@@ -1635,7 +1639,7 @@ macro_rules! checkpoint_auxiliary {
             }
             pub fn decode_auxiliary_checkpoint(bytes: &[u8], metadata: &DisplayStartMetadata) -> Result<AuxiliaryGameplayCheckpoint, String> {
                 let mut read = CheckpointReader(bytes);
-                if read.bytes(8)? != b"SMAUXGS\x10" { return Err("unsupported auxiliary gameplay checkpoint schema".into()); }
+                if read.bytes(8)? != b"SMAUXGS\x11" { return Err("unsupported auxiliary gameplay checkpoint schema".into()); }
                 let size = usize::try_from(read.counter()?).map_err(|_| "auxiliary gameplay checkpoint binding length overflow")?;
                 if metadata.identity.reference != metadata.reference.fingerprint || read.bytes(size)? != observation_binding(metadata) {
                     return Err("auxiliary gameplay checkpoint source identity or Reference changed".into());
@@ -1750,6 +1754,7 @@ checkpoint_auxiliary!(
     sprite_compatibility: checkpoint_sprite_tails/checkpoint_read_sprite_tails,
     minimap: checkpoint_minimap/checkpoint_read_minimap,
     saved_maps: checkpoint_saved_maps/checkpoint_read_saved_maps,
+    saved_player: checkpoint_saved_player/checkpoint_read_saved_player,
     inventory: checkpoint_inventory/checkpoint_read_inventory,
     mechanisms: checkpoint_mechanisms/checkpoint_read_mechanisms,
     feedback: checkpoint_feedback/checkpoint_read_feedback,
@@ -2379,6 +2384,7 @@ impl NumericGameplayCheckpoint {
             sprite_compatibility,
             minimap,
             saved_maps,
+            saved_player,
             inventory,
             mechanisms,
             feedback,
@@ -2417,6 +2423,7 @@ impl NumericGameplayCheckpoint {
             player: self.player,
             minimap,
             saved_maps,
+            saved_player,
             inventory,
             mechanisms,
             room: self.room,

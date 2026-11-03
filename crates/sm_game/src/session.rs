@@ -141,6 +141,8 @@ pub struct Session {
     pub minimap: crate::player_update::state::State,
     /// The explored maps of every area kept for the save file ($7E:CD52..$D551).
     pub saved_maps: crate::save_file::SavedMaps,
+    /// The save's copy of the player block ($7E:D7C0..$D81F).
+    pub saved_player: crate::save_file::SavedPlayer,
     pub inventory: Inventory,
     pub mechanisms: Mechanisms,
     pub room: Room,
@@ -321,6 +323,7 @@ impl Session {
             player: Default::default(),
             minimap: Default::default(),
             saved_maps: Default::default(),
+            saved_player: Default::default(),
             inventory: Default::default(),
             mechanisms: Default::default(),
             feedback: Default::default(),
@@ -390,6 +393,12 @@ pub struct Player {
     pub turn_request: u16,
     /// $0DFC, a word that the demos clear; nothing reads it.
     pub spare_0dfc: u16,
+    /// $09EA, the HUD auto-cancel flag, which a shot reset observes; only
+    /// save loads store it.
+    pub hud_auto_cancel: u16,
+    /// $09EE..$0A01, the player block's last ten words, which only save
+    /// loads store and nothing reads.
+    pub spare_09ee: [u16; 10],
     pub top_sprite: u16,
     pub bottom_sprite: u16,
     pub scripted_movement_direction: u16,

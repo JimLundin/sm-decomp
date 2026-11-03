@@ -104,6 +104,14 @@ pub enum Field {
     /// area's byte, then the next area's. The Session holds the bytes, so
     /// stores take the byte path; past the last area the byte path answers.
     MapStations(usize),
+    /// A word of the player block ($09A2..$0A01), from the owner that holds
+    /// it: the inventory, the bindings, the selected weapon, the game time,
+    /// the options and the player's settings. The frame display's
+    /// auto-cancel word ($09EC) and the control's bindings store through
+    /// the byte path.
+    Player(PlayerWord),
+    /// A word of the save's copy of the player block ($D7C0..$D81F).
+    SavedPlayer(PlayerWord),
 }
 
 impl Field {
@@ -149,6 +157,8 @@ impl Field {
             Self::ExploredMap(index) => 0x7f7 + 2 * index,
             Self::SavedMap(index) => crate::save_file::SAVED_MAPS + 2 * index,
             Self::MapStations(index) => crate::ram::bytes::MAP_STATION_BYTE_ARRAY + index,
+            Self::Player(word) => crate::save_file::PLAYER + 2 * word.index(),
+            Self::SavedPlayer(word) => crate::save_file::SAVED_PLAYER + 2 * word.index(),
         }
     }
 
@@ -218,6 +228,8 @@ impl Field {
                 let stations = &session.gameplay_flags.map_stations;
                 u16::from_le_bytes([*stations.get(index)?, *stations.get(index + 1)?])
             }
+            Self::Player(word) => return player_word(session, word),
+            Self::SavedPlayer(word) => session.saved_player.get(word),
         })
     }
 
@@ -282,12 +294,68 @@ impl Field {
             Self::Bg1Offset(axis) => session.room.camera.bg1_offset.get_mut(axis)?,
             Self::Bg2Scroll(axis) => session.room.camera.bg2_scroll.get_mut(axis)?,
             Self::ExploredMap(_) | Self::SavedMap(_) | Self::MapStations(_) => return None,
+            Self::Player(word) => return player_word_mut(session, word),
+            Self::SavedPlayer(word) => session.saved_player.get_mut(word),
         })
     }
 }
 
+/// Player block `word` as its owner holds it. The frame display's
+/// auto-cancel word has no plain Session word; the host's projection
+/// resolves it.
+fn player_word(session: &Session, word: PlayerWord) -> Option<u16> {
+    if let Some(item) = word.inventory() {
+        return Some(session.inventory.get(item));
+    }
+    if let Some(loop_word) = word.game_loop() {
+        return Some(*loop_word.get(&session.game_loop));
+    }
+    if let Some(binding) = word.binding() {
+        return Some(*binding.get(&session.control));
+    }
+    if let Some(spare) = word.spare() {
+        return Some(session.player.spare_09ee[spare]);
+    }
+    let player = &session.player;
+    Some(match word {
+        PlayerWord::SelectedWeapon => session.projectiles.controls.selected_weapon,
+        PlayerWord::JapaneseText => session.options.japanese_text,
+        PlayerWord::Moonwalk => player.moonwalk,
+        PlayerWord::DebugFlag => player.debug_flag,
+        PlayerWord::Spare09E8 => player.spare_09e8,
+        PlayerWord::HudAutoCancel => player.hud_auto_cancel,
+        _ => return None,
+    })
+}
+
+/// Player block `word`'s Session field, for a store. The control's
+/// bindings keep the control's byte path, and the frame display's
+/// auto-cancel word the presentation's.
+fn player_word_mut(session: &mut Session, word: PlayerWord) -> Option<&mut u16> {
+    if let Some(item) = word.inventory() {
+        return Some(session.inventory.get_mut(item));
+    }
+    if let Some(loop_word) = word.game_loop() {
+        return Some(loop_word.get_mut(&mut session.game_loop));
+    }
+    if let Some(spare) = word.spare() {
+        return Some(&mut session.player.spare_09ee[spare]);
+    }
+    let player = &mut session.player;
+    Some(match word {
+        PlayerWord::SelectedWeapon => &mut session.projectiles.controls.selected_weapon,
+        PlayerWord::JapaneseText => &mut session.options.japanese_text,
+        PlayerWord::Moonwalk => &mut player.moonwalk,
+        PlayerWord::DebugFlag => &mut player.debug_flag,
+        PlayerWord::Spare09E8 => &mut player.spare_09e8,
+        PlayerWord::HudAutoCancel => &mut player.hud_auto_cancel,
+        _ => return None,
+    })
+}
+
 use crate::cinematic_state::{Array as CinematicArray, Word as CinematicWord};
 use crate::room_view::{EffectWord, Word as RoomWord};
+use crate::save_file::PlayerWord;
 use crate::session::Session;
 
 /// Cinematic `word`'s Session field: a named word outside the enemy
@@ -902,6 +970,8 @@ mod tests {
         fields.extend((0..128).map(Field::ExploredMap));
         fields.extend((0..1024).map(Field::SavedMap));
         fields.extend((0..7).map(Field::MapStations));
+        fields.extend(PlayerWord::ALL.map(Field::Player));
+        fields.extend(PlayerWord::ALL.map(Field::SavedPlayer));
         fields
     }
 
