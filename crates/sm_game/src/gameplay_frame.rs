@@ -888,10 +888,10 @@ fn advance_gameplay<H: Host>(game: &mut H) -> CoroutineRet {
         game.set_resume_point(ResumePoint::Start as u8);
         return 0;
     }
-    if resume == ResumePoint::Start {
-        if let Some(yielded) = pass_from_start::<H>(&mut game.runtime(), false) {
-            return yielded;
-        }
+    if resume == ResumePoint::Start
+        && let Some(yielded) = pass_from_start::<H>(&mut game.runtime(), false)
+    {
+        return yielded;
     }
     pass_after_message(resume, false, game)
 }
