@@ -1,6 +1,6 @@
 //! HUD icons, resource counters and their ordered tilemap upload.
-use crate::display::registers::{MDMAEN, VMADDL, VMAIN};
-use crate::display::transfer::setup_transfer;
+use crate::display::transfer::Source;
+use crate::display::video::Command;
 use crate::menus::menu_tilemap::native_record;
 
 /// The Session-owned player and inventory values the HUD shows. `sm` reads the
@@ -43,13 +43,10 @@ pub trait HudFrameHost:
 }
 
 /// What the whole HUD reads and writes: the frame step's host, plus raw RAM
-/// and the registers its initial upload uses.
-pub trait HudHost:
-    HudFrameHost + crate::ram::RamHost + crate::display::sequence::Registers
-{
-}
+/// and the video host its initial upload uses.
+pub trait HudHost: HudFrameHost + crate::ram::RamHost + crate::display::video::Video {}
 impl<T> HudHost for T where
-    T: HudFrameHost + crate::ram::RamHost + crate::display::sequence::Registers + ?Sized
+    T: HudFrameHost + crate::ram::RamHost + crate::display::video::Video + ?Sized
 {
 }
 
@@ -60,7 +57,10 @@ const HEALTH_DIGITS: u32 = 0x80_9dbf;
 /// $80:998B: the AUTO reserve tiles; the second set, six words on, is empty.
 const RESERVE_TILES: u32 = 0x80_998b;
 /// $80:988B: the HUD's top-row tiles, uploaded once at initialisation.
-const TOP_ROW_TILES: u32 = 0x80_988b;
+const TOP_ROW_TILES: Source = Source {
+    address: 0x988b,
+    bank: 0x80,
+};
 const TOP_ROW_BYTES: u16 = 0x40;
 /// Item icon tilemap offsets (bytes), from missiles to X-ray.
 const ITEM_OFFSETS: [u16; 5] = [0x14, 0x1c, 0x22, 0x28, 0x2e];
@@ -71,8 +71,6 @@ const TILEMAP_BYTES: u16 = 192;
 /// The VRAM word address of the HUD's second row, where the queued copy lands.
 const TILEMAP_QUEUED_VRAM: u16 = TILEMAP_VRAM + 0x20;
 const WORK_RAM_BANK: u16 = 0x7e;
-/// VMAIN: increment after writing the high byte.
-const VRAM_INCREMENT_AFTER_HIGH: u16 = 0x80;
 
 /// BG3 tilemap entry bits.
 const PRIORITY: u16 = 0x2000;
@@ -205,16 +203,15 @@ pub fn install<H: HudHost + ?Sized>(item: Item, game: &mut H) {
 
 /// Requires initialized display/DMA hardware and the native HUD definitions.
 pub fn initialize<H: HudHost + ?Sized>(game: &mut H) {
-    crate::display::sequence::register_writes! { game;
-        word(VMADDL as u16, TILEMAP_VRAM); word(VMAIN as u16, VRAM_INCREMENT_AFTER_HIGH);
-    }
-    setup_transfer(
-        u16::from_ne_bytes([1, 0x18]),
-        TOP_ROW_TILES,
-        TOP_ROW_BYTES,
-        game,
+    game.apply(
+        "hud",
+        Command::TilesNow {
+            address: TILEMAP_VRAM,
+            increment: 1,
+            source: TOP_ROW_TILES,
+            bytes: TOP_ROW_BYTES,
+        },
     );
-    game.write_register(MDMAEN as u16, 2);
     for (index, &value) in INITIAL_TILES.iter().enumerate() {
         crate::frame_display_word!(game.HudTiles[index] = value);
     }
