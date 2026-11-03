@@ -29,9 +29,10 @@ must run once in a fresh Python process per case. Outputs contain ROM-derived
 RAM; save them locally outside the repo. Their SPCR1 framing is documented by
 the parser rather than being confused with SPOR1 CPU-register framing.
 
-Run `compare_samus_palette_oracle.py REFERENCE_DIR CANDIDATE_DIR` on the existing
+`compare_samus_palette_oracle.py REFERENCE_DIR CANDIDATE_DIR` (removed 2026-11-03;
+restore it from `0660ed533`) ran on the
 oracle-results-1 directory and29 candidate captures named0.bin..28.bin. The
-script checks frozen reference hashes, exact ordered semantic events and four
+script checked frozen reference hashes, exact ordered semantic events and four
 131072-byte phase snapshots. Only reviewed stack1FEB..2000 and charge scratch
 24..26 for cases21..24 are excluded from equality; candidate must preserve entry
 bytes there. Oracle values are retained in the report. No other ignored bytes.

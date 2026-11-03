@@ -177,11 +177,10 @@ python tools/movie_inputs.py movies/super-metroid-100-4010.lsmv movies/seed-cred
 ```
 
 Golden Torizo uses the original five-port Snes9x recording, snapshot and pinned
-live/history proofs. [`convert_snapshot.py`](../tools/convert_snapshot.py) checks
-them before conversion; its command is:
+live/history proofs. Its seed was converted once by `tools/convert_snapshot.py`,
+removed on 2026-11-03 (restore it from `0660ed533` to reconvert); the import is:
 
 ```sh
-python tools/convert_snapshot.py target/seeds/golden-input-phase/snes9x.state target/seeds/golden-reconverted --live target/seeds/golden-input-phase/snes9x.live.json --history target/seeds/golden-input-phase/snes9x.history.json --rom rom/sm.smc
 python tools/movie_inputs.py 'JXQ - Super Metroid 100% TAS v2.smv' movies/seed-golden-torizo.inputs --rom rom/sm.smc --snes9x-capture target/seeds/golden-input-phase/snes9x.json --snes9x-capture-sha256 77069a8768cd1519e321163253a7804bdecd691f48f2ea33ce4eaf0f466715bd --seed target/seeds/golden-reconverted/0001-B283-wram.bin --frames 1207
 ```
 

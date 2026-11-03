@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Count physical Rust and explicitly mapped superseded sections at a Git pin."""
 import argparse
-import importlib.util
+import re
 import json
 from pathlib import Path
 import subprocess
@@ -9,6 +9,50 @@ import hashlib
 import sys
 
 sys.dont_write_bytecode = True
+
+TOKEN = re.compile(r"""
+    (?P<ws>\s+)
+  | (?P<lc>//[^\n]*)
+  | (?P<bc>/\*)
+  | (?P<raw>b?r(?P<h>\#*)")
+  | (?P<str>b?"(?:\\.|[^"\\])*")
+  | (?P<chr>b?'(?:\\.[^']*|[^\\'])')
+  | (?P<life>'\w+)
+  | (?P<id>[A-Za-z_]\w*)
+  | (?P<p>.)
+""", re.X | re.S)
+
+
+def lex(s):
+    """Return (kind, start, end) for Rust code tokens, skipping comments, strings and chars."""
+    i, n, out = 0, len(s), []
+    while i < n:
+        m = TOKEN.match(s, i)
+        if m.group("raw") is not None:
+            close = '"' + m.group("h")
+            j = s.find(close, m.end())
+            out.append(("str", i, j + len(close)))
+            i = j + len(close)
+            continue
+        if m.group("bc") is not None:
+            d, j = 1, i + 2
+            while j < n and d:
+                if s.startswith("/*", j):
+                    d += 1
+                    j += 2
+                elif s.startswith("*/", j):
+                    d -= 1
+                    j += 2
+                else:
+                    j += 1
+            i = j
+            continue
+        if m.group("ws") is None and m.group("lc") is None and m.group("life") is None:
+            kind = "id" if m.group("id") is not None else (
+                "str" if m.group("str") is not None else ("chr" if m.group("chr") is not None else "p"))
+            out.append((kind, i, m.end()))
+        i = m.end()
+    return out
 
 
 def function(text, name, lexer):
@@ -100,10 +144,7 @@ def main():
                 kept[rel] = data.decode()
         batch.stdin.close()
         assert batch.wait() == 0
-    spec = importlib.util.spec_from_file_location("unsafe_lexer", repo / "tools/codemod/strip_unsafe_fixpoint.py")
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    covered, operations, signatures, results = discounts(kept, mapping, module.lex)
+    covered, operations, signatures, results = discounts(kept, mapping, lex)
     print(json.dumps({"commit": pin, "physical_production": totals["production"], "mapped_superseded_retained": covered,
                       "adjusted_implementation": totals["production"] - covered, "other_physical_counts": totals,
                       "mapped_retained_unsafe_operation_sites": operations, "mapped_retained_unsafe_signatures": signatures,
