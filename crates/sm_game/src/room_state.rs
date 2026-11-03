@@ -3,9 +3,11 @@ pub mod fx;
 use crate::enemy_projectiles::host::Effects;
 use crate::menu_state::SaveSelection;
 use crate::ram::RawRam as _;
-use crate::ram::{checked_word, word};
+use crate::ram::word;
 use crate::room_mechanisms::creation::spawn_hardcoded;
+use crate::room_view::EffectWord;
 use crate::runtime_access::SessionView;
+use crate::session::HookSlot;
 use crate::session_access::SessionAccess as _;
 use crate::word_transfers;
 
@@ -32,6 +34,7 @@ pub trait Host:
     + crate::word_transfers::LoadedRom
     + crate::records::Records
     + crate::menus::host::MenuRuntime
+    + LevelData
 {
 }
 impl<T> Host for T where
@@ -41,12 +44,13 @@ impl<T> Host for T where
         + crate::word_transfers::LoadedRom
         + crate::records::Records
         + crate::menus::host::MenuRuntime
+        + LevelData
         + ?Sized
 {
 }
 
 pub fn copy_level_planes<H: Host + ?Sized>(game: &mut H) {
-    let size = usize::from(checked_word!(game.RAM7_F_START));
+    let size = usize::from(game.level_data_size());
     for (source, destination, count) in [
         (0x10002 + size + size / 2, 0x19602, size),
         (0x10002 + size, 0x16402, size / 2),
@@ -73,10 +77,37 @@ pub fn copy_level_planes<H: Host + ?Sized>(game: &mut H) {
     }
 }
 
+/// Load the sprite palettes into the target palettes: colours 208..224 from
+/// bank $9A, colours 224..240 from the current palette, and colours 128..144
+/// (the beam's) from $9A:FC00.
 pub fn load_sprite_palettes<H: Host + ?Sized>(game: &mut H) {
-    word_transfers!(game, descending, 16; le(TARGET_PALETTES, 223) <- rom(0x9a8000, 223));
-    word_transfers!(game, descending, 16; native(0xc3de) <- native(0xc1de));
-    word_transfers!(game, descending, 16; native(0xc31e) <- rom(0x9afc00, 15));
+    use sm_data::cartridge::lorom_offset;
+    let rom = game.loaded_rom_image();
+    // The ROM words load in native order, as the original's word copies did.
+    let rom_word = |address: u32, index: usize| {
+        let base = usize::try_from(lorom_offset(address)).expect("LoROM offset");
+        rom.table_word(base, isize::try_from(index).expect("palette index"))
+    };
+    let mut runtime = game.runtime();
+    let visual = runtime.session_mut().presentation.visual_mut();
+    // Each copy runs from its last word down, as the original's did.
+    for index in (208..224).rev() {
+        visual.targets[index] = rom_word(0x9a8000, index);
+    }
+    for index in (224..240).rev() {
+        visual.targets[index] = visual.colors[index];
+    }
+    // The beam palette's bytes copy unchanged: its words keep their RAM byte order.
+    for index in (0..16).rev() {
+        let word = rom_word(0x9afc00, index);
+        visual.targets[128 + index] = u16::from_le_bytes(word.to_ne_bytes());
+    }
+}
+
+/// Start earthquake `kind` with a timer that never runs out.
+fn start_earthquake<H: ScriptHost + ?Sized>(kind: u16, game: &mut H) {
+    crate::gameplay_context::set_effect(game, EffectWord::EarthquakeKind, kind);
+    crate::gameplay_context::set_effect(game, EffectWord::EarthquakeTimer, u16::MAX);
 }
 
 /// What room setup and door ASM need: the menus' runtime and the owned Session.
@@ -92,14 +123,14 @@ pub fn execute_setup_code<H: ScriptHost + ?Sized>(script: u16, game: &mut H) {
         // Clear Crateria mainstreet escape passage if critters escaped and shake screen.
         0x9194 => {
             spawn_hardcoded(0x3d, 0xb, 0xbb30, game);
-            word! {game; EARTHQUAKE_TYPE = 24; EARTHQUAKE_TIMER = u16::MAX; }
+            start_earthquake(24, game);
         }
         // Make old Tourian escape shaft fake wall explode; spawn critters escape block.
         0x91a9 => spawn_hardcoded(0x10, 0x87, 0xb964, game),
         0x91b2 => spawn_hardcoded(0xf, 0xa, 0xb9ed, game),
         // Scrolling sky land, shake screen; scrolling sky land; ocean.
         0x91bd => {
-            word! {game; EARTHQUAKE_TYPE = 6; EARTHQUAKE_TIMER = u16::MAX; }
+            start_earthquake(6, game);
             scrolling_sky::initialize_land(game);
         }
         0x91c9 => scrolling_sky::initialize_land(game),
@@ -128,14 +159,16 @@ pub fn execute_setup_code<H: ScriptHost + ?Sized>(script: u16, game: &mut H) {
         0xc8d3 => spawn_hardcoded(0, 0, 0xb8eb, game),
         // Set pausing code for Draygon: native-order addresses, then the bank.
         0xc8dd => {
-            for (at, hook) in [(0x601, 0xc8f6), (0x604, 0xc8fc)] {
-                word_transfers!(game, ascending, 1; native(at) <- value(hook));
-                game.ram().write_byte(at + 2, 0x8f);
+            let mut runtime = game.runtime();
+            let room = &mut runtime.session_mut().room;
+            for (hook, address) in [(HookSlot::Pause, 0xc8f6u16), (HookSlot::Unpause, 0xc8fc)] {
+                room.set_hook_address(hook, address.to_ne_bytes());
+                room.set_hook_bank(hook, 0x8f);
             }
         }
         // Set collected map.
         0xc90a => {
-            let at = 0xd908 + usize::from(word!(game.AREA_INDEX));
+            let at = 0xd908 + usize::from(crate::gameplay_context::navigation(game).area);
             let collected =
                 u16::from_ne_bytes([game.ram().read_byte(at), game.ram().read_byte(at + 1)]) | 1;
             word_transfers!(game, ascending, 1; native(at) <- value(collected));
@@ -146,7 +179,7 @@ pub fn execute_setup_code<H: ScriptHost + ?Sized>(script: u16, game: &mut H) {
         // Set Zebes timebomb event and set light horizontal room shaking.
         0xc91f => {
             crate::progress::leased::mark_event(0xe, game);
-            word! {game; EARTHQUAKE_TYPE = 18; EARTHQUAKE_TIMER = u16::MAX; }
+            start_earthquake(18, game);
         }
         // Light horizontal shaking; rising acid and medium horizontal shaking.
         0xc933 | 0xc953 => {
@@ -156,18 +189,18 @@ pub fn execute_setup_code<H: ScriptHost + ?Sized>(script: u16, game: &mut H) {
             } else {
                 18
             };
-            word!(game.EARTHQUAKE_TYPE = kind);
+            crate::gameplay_context::set_effect(game, EffectWord::EarthquakeKind, kind);
             {
                 let mut runtime = game.runtime();
                 let room = &mut runtime.session_mut().room;
                 room.set_main_native(1, kind);
                 room.set_main_native(0, 0);
             }
-            word!(game.EARTHQUAKE_TIMER = u16::MAX);
+            crate::gameplay_context::set_effect(game, EffectWord::EarthquakeTimer, u16::MAX);
         }
         // Set medium horizontal room shaking.
         0xc946 => {
-            word! {game; EARTHQUAKE_TYPE = 21; EARTHQUAKE_TIMER = u16::MAX; }
+            start_earthquake(21, game);
         }
         // Ceres door to solid blocks, Ceres haze, BG1/2 tiles base and haze.
         0xc96e => {
@@ -225,7 +258,12 @@ pub fn execute_door_code<H: ScriptHost + ?Sized>(script: u16, game: &mut H) {
         // Reset elevatube on north / south exit.
         0xe301 | 0xe309 => {
             if script == 0xe309 {
-                word_transfers!(game, ascending, 1; native(0xcd20) <- value(514));
+                // Scroll cells 0 and 1, in native order.
+                let mut runtime = game.runtime();
+                runtime
+                    .session_mut()
+                    .room
+                    .set_scroll_pair(0, 514u16.to_ne_bytes());
             }
             game.player_command(1);
         }
@@ -606,13 +644,14 @@ pub trait EnemyGraphicsHost:
 /// Load enemy GFX to VRAM ($82:DFD1): each of the room's enemy tilesets
 /// (bank $B4) to its fixed VRAM slot, or packed from $7000 when the size's
 /// top bit is clear.
-pub fn load_enemy_graphics<H: EnemyGraphicsHost + ?Sized>(game: &mut H) {
+/// `tilesets` is the room state's enemy tileset list (`RoomEntry::enemy_tilesets_key`).
+pub fn load_enemy_graphics<H: EnemyGraphicsHost + ?Sized>(tilesets: u16, game: &mut H) {
     use crate::actors::content_records::EnemyDef;
     use core::mem::offset_of;
     // Enemy tileset entries ($B4): the enemy definition, then its VRAM slot.
     const ENEMY_DEF: usize = 0;
     const VRAM_DESTINATION: usize = 2;
-    let mut cursor = i32::from(checked_word!(game.ROOM_ENEMY_TILESETS_PTR));
+    let mut cursor = i32::from(tilesets);
     if cursor == 0 {
         return;
     }
