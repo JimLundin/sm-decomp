@@ -127,7 +127,7 @@ fn plans_as_plan_verify_py_does() {
     let room_one: Vec<String> = first_where(&|row| row.chain.as_deref() == Some("100"))
         .into_iter()
         .collect();
-    // Slots around 2026-11-03 and two neighbours, so the sample rotates.
+    // Three slots (one in 2026, its successor and the first), so the sample rotates.
     let slot = 165_000;
     let cases = [
         case("gate", Scope::Gate, Vec::new(), false, false, slot),
