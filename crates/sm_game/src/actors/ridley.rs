@@ -34,7 +34,6 @@ use crate::legacy_overflow::SlotBytes;
 use crate::menus::prelude::battle;
 use crate::menus::prelude::owned;
 use crate::palette_copies::copy_rom_colors_to_palette;
-use crate::ram::RawRam as _;
 use crate::session_access::SessionAccess;
 use crate::sprite_drawing::Clip;
 use crate::{ridley_data, ridley_explosion_data, sprite_output};
@@ -73,15 +72,19 @@ impl<T> Lease for T where
 }
 
 /// What Ridley's lease still reaches in the game: the shared boss effects,
-/// deaths and sprites.
+/// deaths and sprites, and the level data the tail's floor check reads.
 pub trait GameEffects:
-    crate::actors::host::BossEffects + crate::actors::deaths::Deaths + crate::sprite_output::SpriteHost
+    crate::actors::host::BossEffects
+    + crate::actors::deaths::Deaths
+    + crate::sprite_output::SpriteHost
+    + crate::room_state::LevelData
 {
 }
 impl<T> GameEffects for T where
     T: crate::actors::host::BossEffects
         + crate::actors::deaths::Deaths
         + crate::sprite_output::SpriteHost
+        + crate::room_state::LevelData
         + ?Sized
 {
 }
@@ -413,8 +416,6 @@ const SPIN_JUMPING: u8 = 3;
 fn samus_movement_type(game: &(impl SessionAccess + ?Sized)) -> u8 {
     game.session().player.movement_and_facing.to_le_bytes()[1]
 }
-/// The level data's block words ($7F:0002).
-const LEVEL_DATA: isize = 0x10002;
 /// The VRAM write queue.
 const VRAM_WRITE_QUEUE: usize = 0xd0;
 /// One VRAM write queue entry: size, long source, destination.
@@ -2835,13 +2836,14 @@ pub fn hurt_flash<S: State + ?Sized>(game: &mut S) {
 
 /// Check for collision with non-air block ($A6:D4F9): whether the level data
 /// block at (`x`, `y`) has a type. Was `ridley_offscreen`.
-pub fn solid_block_at<H: crate::ram::RamHost + ?Sized>(x: u16, y: u16, game: &mut H) -> bool {
+pub fn solid_block_at<H>(x: u16, y: u16, game: &mut H) -> bool
+where
+    H: crate::gameplay_context::Access + crate::room_state::LevelData + ?Sized,
+{
     let width = game.gameplay_word(crate::gameplay_context::Word::Width);
     let row = mult8x8((y >> 4) as u8, width as u8);
-    let at = usize::try_from(LEVEL_DATA + 2 * (row as i32 + (x as i32 >> 4)) as isize)
-        .expect("RAM address outside allocation");
-    let block = u16::from_ne_bytes([game.ram().read_byte(at), game.ram().read_byte(at + 1)]);
-    block & 0xf000 != 0
+    let cell = usize::from(row) + usize::from(x >> 4);
+    game.level_word(cell) & 0xf000 != 0
 }
 
 /// Ridley acceleration ($A6:D523): enemy `k` homes in on (`x`, `y`) with
