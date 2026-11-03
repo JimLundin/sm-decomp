@@ -838,7 +838,11 @@ pub trait OwnedWords {
 /// A lease on the game for one frame of an AI: the state steps run on it, and
 /// `foreign` runs the rest on the game it leases.
 pub trait Lease:
-    State + escape_typewriter::Host + crate::mother_brain_visuals::PaletteHost
+    State
+    + escape_typewriter::Host
+    + crate::mother_brain_visuals::PaletteHost
+    + crate::actors::effects::ActorHost
+    + crate::enemy_projectiles::host::Host
 {
     type Game: Host + crate::hdma_objects::HdmaTable + SessionRam;
     fn foreign<T>(&mut self, action: impl FnOnce(&mut Self::Game) -> T) -> T;
@@ -1493,7 +1497,7 @@ crate::dispatch::callback_dispatch! {
         }
     };
     [11124037] phase2_finish_samus_off_lower_health [] {
-        let v0: u16 = { let amount = 0x50; game.foreign(|game| game.suit_damage(amount)) };
+        let v0: u16 = { let amount = 0x50; game.owned_step(|game| crate::actors::combat::suit_damage(game, amount)) };
         if ((4 * v0 as i32 + 20 - game.owned(OwnedWord::SamusHealth) as i32) as i16) >= 0 {
             *BodyEdit::of(game, BODY_INDEX).function() = function::PHASE_2_FINISH_SAMUS_OFF_STAND_UP;
         } else if (random_number(game) & 0xfff) < 0xfa0 {
@@ -1502,7 +1506,7 @@ crate::dispatch::callback_dispatch! {
             }
         } else {
             let mut v1: u16;
-            if ((({ let amount = 0xa0; game.foreign(|game| game.suit_damage(amount)) }) as i32 + 20 - game.owned(OwnedWord::SamusHealth) as i32)
+            if ((({ let amount = 0xa0; game.owned_step(|game| crate::actors::combat::suit_damage(game, amount)) }) as i32 + 20 - game.owned(OwnedWord::SamusHealth) as i32)
                 as i16)
                 >= 0
                 || {
@@ -1767,9 +1771,9 @@ crate::dispatch::callback_dispatch! {
         if Body::of(game, e).form() != 0 {
             phase2_or_phase3_shot_reaction(game);
             if Body::of(game, e).form() == 1 {
-                game.foreign(|game| game.create_dud());
+                game.owned_step(crate::actors::combat::create_dud);
             } else {
-                game.foreign(|game| game.shot_reaction(crate::actors::host::Shot::ReactionOnly));
+                game.owned_step(|game| game.react_to_shot(crate::actors::host::Shot::ReactionOnly));
             }
         } else {
             let v1: u16 = (collided_shot_kind(game) >> 8) & 7;
@@ -1786,7 +1790,7 @@ crate::dispatch::callback_dispatch! {
                     v2 = 14;
                 }
                 BrainEdit::of(game, BRAIN_INDEX).actor().flash = v2 as u16;
-                game.foreign(|game| game.shot_reaction(crate::actors::host::Shot::ReactionOnly));
+                game.owned_step(|game| game.react_to_shot(crate::actors::host::Shot::ReactionOnly));
             }
         };
     };
@@ -3489,7 +3493,12 @@ pub fn body_main_ai(game: &mut impl Lease) {
     }
 }
 pub fn power_bomb_reaction(game: &mut impl Lease) {
-    game.foreign(|game| game.power_bomb_reaction(crate::actors::host::Death::LeavePending));
+    game.owned_step(|game| {
+        crate::actors::combat::power_bomb_reaction(
+            game,
+            crate::actors::api::DeathHandling::LeavePending,
+        )
+    });
     brain_main_ai(game);
 }
 /// Main AI - Mother Brain brain.
@@ -3503,7 +3512,7 @@ pub fn brain_main_ai(game: &mut impl Lease) {
     }
 }
 pub fn body_shot(game: &mut impl Lease) {
-    game.foreign(|game| game.create_dud());
+    game.owned_step(crate::actors::combat::create_dud);
 }
 pub fn brain_touch(game: &mut impl State) {
     if SessionRam::byte(game, crate::ram::bytes::SAMUS_MOVEMENT_TYPE) == 3 {
@@ -3521,9 +3530,7 @@ pub fn spawn_dust_cloud_at_offset(_k: u16, jp: EnemyScript, game: &mut impl Leas
             ((Body::of(game, BODY_INDEX).actor().x.whole).wrapping_add(jp.word(0))),
             ((Body::of(game, BODY_INDEX).actor().y.whole).wrapping_add(jp.word(2))),
         );
-        game.foreign(|game| {
-            crate::actors::host::BossEffects::set_projectile_spawn_point(game, x, y)
-        });
+        game.owned_step(|game| game.place_projectile_spawn(x, y));
     }
     spawn_room_projectile(ADDR_K_EPROJ_DUST_CLOUD_EXPLOSION as u16, jp.word(4), game);
     jp.offset(3)
@@ -3531,8 +3538,8 @@ pub fn spawn_dust_cloud_at_offset(_k: u16, jp: EnemyScript, game: &mut impl Leas
 pub fn spawn_hand_beam_projectile(_k: u16, jp: EnemyScript, game: &mut impl Lease) -> EnemyScript {
     let spawn_parameter =
         game.foreign(|game| game.queue_sound_result(1, sound::HAND_BEAM as u8, 6));
-    game.foreign(|game| {
-        game.spawn_projectile(
+    game.owned_step(|game| {
+        game.spawn_actor_eproj(
             spawn_parameter,
             0x40,
             ADDR_K_EPROJ_MOTHER_BRAIN_DEATH_BEAM_CHARGING as u16,
