@@ -1172,9 +1172,10 @@ pub fn visit(s: &Session, mut visit: impl FnMut(usize, u16)) {
             visit(base + index * 2, u16::from_le_bytes([pair[0], pair[1]]));
         }
     }
+    let controls = crate::fx_encoding::ControlReader::new(s);
     let mut emit = |at: usize, value: &u16| {
         if crate::fx_encoding::control_lane(at).is_some() {
-            let current = crate::fx_encoding::control_word(s, at);
+            let current = controls.control_word(at);
             visit(at, current);
         } else {
             visit(at, *value);
@@ -1211,11 +1212,12 @@ pub fn encode(s: &Session, mut span: impl FnMut(usize, &[u8])) {
     for (index, cell) in s.room.terrain.cells().iter().enumerate() {
         span(0x16402 + index, &[cell.behavior]);
     }
+    let controls = crate::fx_encoding::ControlReader::new(s);
     s.presentation
         .encode_projection(&mut |at: usize, bytes: &[u8]| {
             if crate::fx_encoding::control_lane(at).is_some() {
                 let current: Vec<_> = (at..at + bytes.len())
-                    .map(|at| crate::fx_encoding::control_byte(s, at))
+                    .map(|at| controls.control_byte(at))
                     .collect();
                 span(at, &current);
             } else {
