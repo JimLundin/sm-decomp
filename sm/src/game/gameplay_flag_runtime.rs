@@ -64,6 +64,6 @@ pub(crate) fn prepare_bit_access(bit: u16, game: &mut Game) -> u16 {
     )
 }
 pub(crate) use flags::leased::{
-    boss_byte_at, boss_word_at, check_boss_bit_for_cur_area, clear_event_happened,
-    event_has_happened, mark_event, set_boss_bits_for_current_area, set_boss_word_le,
+    boss_byte_at, check_boss_bit_for_cur_area, clear_event_happened, event_has_happened,
+    mark_event, set_boss_bits_for_current_area, set_boss_word_le,
 };

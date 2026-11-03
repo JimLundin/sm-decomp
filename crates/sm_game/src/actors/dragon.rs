@@ -182,7 +182,11 @@ pub fn step<H: LeaseActors>(k: u16, function: u16, game: &mut H) {
                     |dragon| dragon.current_list_index(),
                     u16::MAX,
                 );
-                runtime.foreign(|game| game.spawn_projectile(0xffff, k, 0xb5cb));
+                crate::actors::boss_lease::BossLease::owned_step(&mut runtime, |runtime| {
+                    crate::enemy_projectiles::lifecycle::spawn_from_enemy(
+                        runtime, 0xffff, k, 0xb5cb,
+                    )
+                });
                 runtime.queue_sound(2, 6, 0x61);
                 if tick(&mut runtime, key) == 1 {
                     let list = Dragon::of(&runtime, k).list_index().wrapping_sub(4);

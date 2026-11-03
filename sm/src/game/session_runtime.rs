@@ -118,10 +118,12 @@ impl sm_game::actors::species::PreInstructionHost for Game {
 
 impl sm_game::actors::gunship::Host for Runtime<'_> {
     fn spawn_palette_effect(&mut self, definition: u16) {
-        self.foreign(|game| crate::game::palette_effects::spawn(definition, game));
+        self.owned_player_call(|runtime| {
+            crate::game::palette_effects::execution::spawn(runtime, definition)
+        });
     }
     fn face_player_forward(&mut self) {
-        self.foreign(player_face_forward);
+        self.owned_player_call(crate::game::player_transitions::equipment::face_forward);
     }
     fn event_happened(&mut self, event: u16) -> bool {
         self.owned_call(|runtime| sm_game::progress::event_happened(runtime, event))
@@ -826,6 +828,15 @@ impl<'g> Runtime<'g> {
     pub(crate) fn native_image(&self) -> RomImage {
         self.game.capture_native_rom()
     }
+    /// The loaded ROM's byte at LoROM `address` plus `offset`, with the game's checks.
+    pub(crate) fn rom_byte(&self, address: u32, offset: usize) -> u8 {
+        self.game.read_rom_byte(address, offset)
+    }
+    /// The loaded ROM's little-endian word at LoROM `address` plus `offset`, with
+    /// the game's checks.
+    pub(crate) fn rom_word(&self, address: u32, offset: usize) -> u16 {
+        self.game.read_rom_word(address, offset)
+    }
     /// A word of the 32-bit speed table read the way native_image readers did.
     pub(crate) fn native_speed32(&self, offset: usize) -> u32 {
         let native = self.game.capture_native_rom();
@@ -998,7 +1009,9 @@ impl Host for Runtime<'_> {
         }
     }
     fn enable_hdma(&mut self) {
-        self.foreign(|g| crate::game::visual_runtime::set_hdma_enabled(true, g));
+        self.owned_player_call(|runtime| {
+            crate::game::visual_runtime::set_hdma_enabled(true, runtime)
+        });
     }
     fn spawn_power_bomb(&mut self) {
         self.foreign(|g| sm_game::explosion_window::spawn_power_bomb(g));
@@ -2015,9 +2028,8 @@ pub(crate) use player_movement_runtime::{
 #[path = "player_transitions_runtime.rs"]
 mod player_transitions_runtime;
 pub(crate) use player_transitions_runtime::{
-    command as player_command, command_in as player_command_in, damage_player,
-    face_forward as player_face_forward, finish_player_frame, finish_xray,
-    initialize as initialize_player, mother_brain as player_mother_brain,
+    command as player_command, command_in as player_command_in, damage_player, finish_player_frame,
+    finish_xray, initialize as initialize_player, mother_brain as player_mother_brain,
 };
 #[path = "player_update_runtime.rs"]
 pub(crate) mod player_update_runtime;
@@ -2170,6 +2182,27 @@ impl sm_game::cartridge::LoadedImage for Runtime<'_> {
 impl sm_game::cartridge::NativeImage for Runtime<'_> {
     fn native_image(&self) -> crate::rom::RomImage {
         self.game.capture_native_rom()
+    }
+}
+// Magdollite's imported tables are the game's; reading them touches no RAM.
+impl sm_game::actors::magdollite::Host for Runtime<'_> {
+    fn magdollite_glow_colors(&self, source: isize) -> [u16; 4] {
+        self.game.magdollite_glow_colors(source)
+    }
+    fn magdollite_arm(&self, address: u32, index: isize) -> u16 {
+        self.game.magdollite_arm(address, index)
+    }
+    fn warn_lava_height(&mut self, value: i32) {
+        warn_lava_height(value);
+    }
+}
+// Crocomire's imported tables are the game's; reading them touches no RAM.
+impl sm_game::actors::crocomire_reactions::Tables for Runtime<'_> {
+    fn crocomire_table_word(&self, address: u32, index: isize) -> u16 {
+        crate::game::actors::crocomire_reactions::crocomire_table_word(self.game, address, index)
+    }
+    fn crocomire_melt_tilemap(&self, table: u32) -> Option<[u16; sm_data::crocomire::MELT_TILES]> {
+        crate::game::actors::crocomire_reactions::crocomire_melt_tilemap(self.game, table)
     }
 }
 impl sm_game::records::Records for Runtime<'_> {

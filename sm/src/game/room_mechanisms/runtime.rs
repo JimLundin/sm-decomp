@@ -169,8 +169,8 @@ impl Effects for Runtime<'_> {
         self.foreign(|game| sm_game::message_boxes::poll(request, game))
     }
     fn player_control(&mut self, operation: u16) {
-        self.foreign(|game| {
-            crate::game::session_runtime::player_command(operation, game);
+        self.owned_player_call(|runtime| {
+            crate::game::session_runtime::player_command_in(runtime, operation)
         });
     }
     fn face_forward(&mut self) {
@@ -240,7 +240,14 @@ impl Effects for Runtime<'_> {
         self.set_byte(0xd908 + area, 255);
     }
     fn set_has_area_map(&mut self, value: u16) {
-        self.foreign(|game| game.set_has_area_map(value));
+        // The foreign store's input refresh on return stays.
+        self.owned_player_call(|runtime| {
+            runtime
+                .session_mut()
+                .menu_screens
+                .save_selection
+                .has_area_map = value;
+        });
     }
     fn mark_save_station(&mut self, station: u16) {
         self.write_slice_le(ram::LOAD_STATION_INDEX, station);

@@ -3,7 +3,7 @@
 //! pad are three consecutive slots.
 #![forbid(unsafe_code)]
 use crate::actors::combat;
-use crate::actors::host::{ActorLease, ActorRuntime as _, BossEffects as _, sign_extend8};
+use crate::actors::host::{ActorLease, sign_extend8};
 use crate::actors::slot_view::{SlotState, slot_index, slot_view};
 use crate::display::transfer::{Source, TilemapUpload, queue_tilemap};
 use crate::geometry::Position;
@@ -12,8 +12,8 @@ use crate::player_position::PlayerWord;
 use crate::player_projectiles::content::{self, table};
 
 /// A lease on a game whose slots are the Session's typed storage.
-pub trait Lease: ActorLease + SlotState {}
-impl<T: ActorLease + SlotState + ?Sized> Lease for T {}
+pub trait Lease: ActorLease + SlotState + crate::actors::boss_lease::BossLease {}
+impl<T: ActorLease + SlotState + crate::actors::boss_lease::BossLease + ?Sized> Lease for T {}
 
 slot_view! {
     /// A gunship part's slot. Slot 0's `entrance_timer` times the entrance's opening and
@@ -127,7 +127,12 @@ fn advance_player(rt: &mut impl Lease, amount: i32) {
 fn entrance(rt: &mut impl Lease, index: u16, opening: bool) {
     set_instruction(rt, part(index, PAD), if opening { 0xa5be } else { 0xa5ee });
     *GunshipEdit::of(rt, 0).entrance_timer() = 144;
-    rt.queue_sound(3, 6, if opening { 0x14 } else { 0x15 });
+    crate::enemy_projectiles::host::Effects::queue_sound(
+        rt,
+        3,
+        6,
+        if opening { 0x14 } else { 0x15 },
+    );
 }
 fn save(rt: &mut impl Lease) {
     crate::probe::hit("gunship.save");
@@ -230,11 +235,12 @@ fn hover(rt: &mut impl Lease, index: u16) {
         return;
     }
     let row = usize::from(Gunship::of(rt, top).hover_frame().wrapping_mul(2));
-    let image = rt.native_image();
+    let image = crate::player_projectiles::host::Host::native_image(rt);
     let delay = u16::from(image.read(content::offset(HOVER) + row));
     *GunshipEdit::of(rt, top).hover_timer() = delay;
     let amount = sign_extend8(u16::from(
-        rt.native_image().read(content::offset(HOVER) + row + 1),
+        crate::player_projectiles::host::Host::native_image(rt)
+            .read(content::offset(HOVER) + row + 1),
     ));
     for slot in [TOP, BOTTOM_PART, PAD] {
         add_y(rt, part(index, slot), amount);
@@ -249,7 +255,7 @@ fn hover(rt: &mut impl Lease, index: u16) {
 pub fn main(rt: &mut impl Lease) -> u32 {
     let bottom = part(current(rt), BOTTOM_PART);
     if hover_expired(rt, bottom) {
-        rt.queue_sound(2, 6, 0x4d);
+        crate::enemy_projectiles::host::Effects::queue_sound(rt, 2, 6, 0x4d);
         *GunshipEdit::of(rt, bottom).hover_timer() = 70;
     }
     let top = current(rt);
@@ -342,7 +348,7 @@ fn idle(rt: &mut impl Lease, index: u16) {
             rt.set_previous_player_x(x);
         }
         rt.face_player_forward();
-        rt.foreign(|game| game.command_player(0x1a));
+        crate::room_mechanisms::host::Effects::player_control(rt, 0x1a);
         rt.session_mut().room.entry.elevator_status = 0;
         let y = Gunship::of(rt, top).actor().y.whole.wrapping_sub(1);
         GunshipEdit::of(rt, part(index, PAD)).actor().y.whole = y;
@@ -391,7 +397,7 @@ fn refill(rt: &mut impl Lease, index: u16) {
         let palette = session.presentation.palette_mut();
         palette.suit_red_green = 0;
         palette.crystal_flash_delay = 0;
-        rt.foreign(|game| game.command_player(0xa));
+        crate::room_mechanisms::host::Effects::player_control(rt, 0xa);
         return;
     }
     for resource in [
@@ -475,7 +481,9 @@ fn fire_up_engines(rt: &mut impl Lease, index: u16) {
         *GunshipEdit::of(rt, 0).entrance_timer() = 0;
     } else if counter == 64 {
         for parameter in (0..12).step_by(2) {
-            rt.foreign(|game| game.spawn_room_projectile(0xa379, parameter));
+            crate::actors::boss_lease::BossLease::owned_step(rt, |rt| {
+                crate::enemy_projectiles::lifecycle::spawn_room(rt, 0xa379, parameter)
+            });
         }
     }
 }

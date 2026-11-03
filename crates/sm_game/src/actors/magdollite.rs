@@ -13,8 +13,8 @@ use sm_data::enemy_speeds::SpeedTable;
 use sm_data::magdollite::{ARM_GROWTH_ADDRESS, ARM_INSTRUCTION_ADDRESS, ARM_Y_OFFSET_ADDRESS};
 
 /// A lease on a game with Magdollite's effects.
-pub trait Lease: BossLease<Game: Host + BossEffects> + SlotState {}
-impl<T: BossLease<Game: Host + BossEffects> + SlotState + ?Sized> Lease for T {}
+pub trait Lease: BossLease<Game: Host + BossEffects> + SlotState + Host {}
+impl<T: BossLease<Game: Host + BossEffects> + SlotState + Host + ?Sized> Lease for T {}
 
 /// What Magdollite needs beyond the shared actor operations: its tables.
 pub trait Host {
@@ -172,7 +172,7 @@ fn player_left<L: Lease>(game: &mut L) -> bool {
 }
 /// Arm step `index`'s field at `address`, from the game's table.
 fn arm_step<L: Lease>(game: &mut L, address: u32, index: isize) -> u16 {
-    game.foreign(|game| game.magdollite_arm(address, index))
+    game.owned_step(|game| game.magdollite_arm(address, index))
 }
 /// Start the part's requested animation if it isn't the one showing.
 fn animate<L: Lease>(game: &mut L) {
@@ -302,7 +302,7 @@ pub fn cycle_palette<L: Lease>(game: &mut L) {
     let frame = game.session().actors.drawing.hook_work[HOOK_FRAME].wrapping_add(1);
     set_hook_word(game, HOOK_FRAME, frame);
     let source = COLORS_PER_PALETTE * (frame & (GLOW_PALETTES - 1)) as isize;
-    let colors: [u16; 4] = game.foreign(|game| game.magdollite_glow_colors(source));
+    let colors: [u16; 4] = game.owned_step(|game| game.magdollite_glow_colors(source));
     let target = usize::from(game.session().actors.drawing.hook_work[HOOK_PALETTE] >> 1);
     let first = target + FIRST_GLOW_COLOR;
     game.session_mut().presentation.visual_mut().colors[first..first + colors.len()]
@@ -325,7 +325,7 @@ pub fn main_ai<L: Lease>(game: &mut L) {
         state::ARM_GROWING => {
             let (actor, diagnostic) = grow_arm(game);
             if let Some(value) = diagnostic {
-                game.foreign(|game| game.warn_lava_height(value));
+                game.owned_step(|game| game.warn_lava_height(value));
             }
             finish_arm_growth(actor, game);
         }

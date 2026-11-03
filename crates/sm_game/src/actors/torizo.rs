@@ -27,6 +27,7 @@ pub trait Lease:
     + crate::progress::FlagHost
     + crate::enemy_projectiles::host::Host
     + crate::room_mechanisms::host::Host
+    + crate::visual_host::Host
 {
 }
 impl<T> Lease for T where
@@ -36,6 +37,7 @@ impl<T> Lease for T where
         + crate::progress::FlagHost
         + crate::enemy_projectiles::host::Host
         + crate::room_mechanisms::host::Host
+        + crate::visual_host::Host
         + ?Sized
 {
 }
@@ -1167,7 +1169,7 @@ pub fn start_golden_fight<L: Lease>(k: u16, game: &mut L) {
     actor.radius.x = 18;
     actor.radius.y = 48;
     drop(torizo);
-    game.foreign(|game| game.spawn_palette_effect(GOLDEN_BELLY_GLOW));
+    game.owned_step(|game| crate::palette_effects::execution::spawn(game, GOLDEN_BELLY_GLOW));
 }
 
 /// Instruction - clear torizo caught super missile flag ($AA:CDD7). Was

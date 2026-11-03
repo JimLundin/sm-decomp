@@ -44,6 +44,7 @@ pub trait Lease:
     + crate::player_update::effects::Host
     + crate::progress::FlagHost
     + crate::enemy_projectiles::host::Host
+    + Tables
 {
 }
 impl<T> Lease for T where
@@ -55,12 +56,16 @@ impl<T> Lease for T where
         + crate::player_update::effects::Host
         + crate::progress::FlagHost
         + crate::enemy_projectiles::host::Host
+        + Tables
 {
 }
 
 /// What Crocomire needs beyond the shared boss effects: its imported tables,
 /// and the BG2 alignment.
-pub trait Host: BossEffects + crate::menus::host::Host {
+pub trait Host: BossEffects + crate::menus::host::Host {}
+
+/// Crocomire's tables in the cartridge, which the lease reads where the game did.
+pub trait Tables {
     /// The word at `index` of the Crocomire table at `address` (scroll
     /// spritemaps, spike wall tiles and destinations, bridge debris).
     fn crocomire_table_word(&self, address: u32, index: isize) -> u16;
@@ -358,7 +363,7 @@ pub fn update_background<L: Lease>(k: u16, game: &mut L) {
     let mut index = 32u16;
     let spritemap = loop {
         let candidate = Crocomire::of(game, 0).actor().spritemap;
-        let spritemap = game.foreign(|game| {
+        let spritemap = game.owned_step(|game| {
             game.crocomire_table_word(SCROLL_SPRITEMAP_ADDRESS, (index >> 1) as isize)
         });
         if candidate == spritemap {
@@ -701,7 +706,7 @@ pub fn queue_tilemap_upload<L: Lease>(size: u16, bg_mask: u8, game: &mut L) {
 fn load_melt_tilemap<L: Lease>(table: u32, game: &mut L) {
     // The tilemap serves its 256 tiles while the loaded image is the imported
     // allocation; otherwise the original loads scan for the $FFFF end.
-    if let Some(tiles) = game.foreign(|game| game.crocomire_melt_tilemap(table)) {
+    if let Some(tiles) = game.owned_step(|game| game.crocomire_melt_tilemap(table)) {
         for (index, tile) in tiles.into_iter().enumerate() {
             bg2_staging::set(game, index + 32, tile);
         }
@@ -1044,9 +1049,9 @@ pub fn behind_wall_no_more_rumbling<L: Lease>(game: &mut L) {
         let v3: i16 = battle!(game.MeltEraseTarget) as i16;
         let v4: i32 = battle!(game.MeltEraseTarget) as i32 >> 1;
         let tile =
-            game.foreign(|game| game.crocomire_table_word(SPIKE_WALL_TILE_ADDRESS, v4 as isize));
+            game.owned_step(|game| game.crocomire_table_word(SPIKE_WALL_TILE_ADDRESS, v4 as isize));
         if tile != 0xffff {
-            let address = game.foreign(|game| {
+            let address = game.owned_step(|game| {
                 game.crocomire_table_word(SPIKE_WALL_DESTINATION_ADDRESS, v4 as isize)
             });
             let vram_address = tile
@@ -1402,8 +1407,9 @@ pub fn falling<L: Lease>(game: &mut L) {
         let index = crumbling_bridge_index_mut(game);
         *index = index.wrapping_add(2);
         game.words_stored();
-        let parameter = game
-            .foreign(|game| game.crocomire_table_word(BRIDGE_DEBRIS_ADDRESS, (v0 >> 1) as isize));
+        let parameter = game.owned_step(|game| {
+            game.crocomire_table_word(BRIDGE_DEBRIS_ADDRESS, (v0 >> 1) as isize)
+        });
         game.spawn_projectile(parameter, v1, ADDR_STRU_868F9D as u16);
     }
     hop_1_2_sinking(game);

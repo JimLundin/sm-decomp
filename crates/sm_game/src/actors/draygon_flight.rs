@@ -4,7 +4,7 @@
 use crate::actors::boss_lease::bg2_staging;
 use crate::actors::draygon_host::Lease;
 use crate::actors::draygon_host::{
-    ARMS, BANK, BODY, Draygon, DraygonEdit, EYE, Host, INTANGIBLE, SIGN, TAIL, abs16, function,
+    ARMS, BANK, BODY, Draygon, DraygonEdit, EYE, INTANGIBLE, SIGN, TAIL, abs16, function,
     instruction_list as list,
 };
 use crate::actors::host::ActorLease;
@@ -125,7 +125,11 @@ pub fn fight_intro<L: Lease>(first: bool, game: &mut L) {
                 game.owned_step(crate::sprite_effect_controllers::draygon_spawn_trails);
             }
         } else {
-            game.foreign(|game| game.draygon_trajectory());
+            game.owned_step(|game| {
+                let cursor = Draygon::of(game, BODY).trajectory_cursor();
+                let next = crate::sprite_effect_controllers::draygon_trajectory(game, cursor);
+                *DraygonEdit::of(game, BODY).trajectory_cursor() = next;
+            });
         }
         {
             let mut draygon = DraygonEdit::of(game, BODY);

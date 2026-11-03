@@ -39,12 +39,52 @@ pub trait Host: ridley::Host + crate::display::preparation::Access {
     fn queue_mode7_transfer(&mut self, bank: u8, list: u16);
     /// Start Samus's Ceres getaway push.
     fn begin_ceres_push(&mut self);
-    /// Queue the next escape timer tile transfer; true once they are done.
-    fn queue_escape_timer_tiles(&mut self) -> bool;
-    /// Queue the Ceres getaway's tile transfer.
-    fn queue_getaway_tiles(&mut self);
-    /// Queue the Japanese "self destruct sequence" text tilemaps.
-    fn queue_escape_tile_table(&mut self);
+}
+
+/// The Ceres getaway's tile transfer record ($A6:C15D).
+const GETAWAY_TILES: u16 = 0xc15d;
+/// The Japanese "self destruct sequence" text's tilemap records ($A6:C3B8).
+const ESCAPE_TILE_TABLE: u16 = 0xc3b8;
+
+/// Queue the escape timer tile record at the fade index's cursor and advance it;
+/// true once the table is exhausted. Was `ProcessEscapeTimerTileTransfers`.
+fn queue_escape_timer_tiles<L: Lease>(game: &mut L) -> bool {
+    use crate::display::transfer::{TILEMAP_RECORD, push_tilemap_record};
+    let cursor = Ridley::of(game, RIDLEY).fade_index();
+    let entry = crate::cartridge::native_record(0xa6, cursor, game);
+    if entry.word(0) != 0 {
+        push_tilemap_record(game, &entry);
+        *RidleyEdit::of(game, RIDLEY).fade_index() = cursor.wrapping_add(TILEMAP_RECORD);
+        let next = crate::cartridge::native_record(0xa6, cursor.wrapping_add(TILEMAP_RECORD), game);
+        if next.word(0) != 0 {
+            return false;
+        }
+    }
+    true
+}
+
+/// Queue the Ceres getaway's tile transfer. Was `Ridley_Func_59`.
+fn queue_getaway_tiles<L: Lease>(game: &mut L) {
+    let entry = crate::cartridge::native_record(0xa6, GETAWAY_TILES, game);
+    crate::display::transfer::push_tilemap_record(game, &entry);
+}
+
+/// Queue every record of the self destruct text's table up to its zero size,
+/// then store the tail once. Was `Ridley_Func_62`.
+fn queue_escape_tile_table<L: Lease>(game: &mut L) {
+    use crate::display::transfer::{TILEMAP_RECORD, copy_tilemap_record};
+    let mut cursor = ESCAPE_TILE_TABLE;
+    let mut tail = usize::from(game.tilemap_queue_tail());
+    loop {
+        let entry = crate::cartridge::native_record(0xa6, cursor, game);
+        if entry.word(0) == 0 {
+            break;
+        }
+        copy_tilemap_record(game, &entry, tail);
+        cursor = cursor.wrapping_add(TILEMAP_RECORD);
+        tail += usize::from(TILEMAP_RECORD);
+    }
+    game.set_tilemap_queue_tail(tail as u16);
 }
 
 /// Bank $A6 Ceres Ridley functions, stored in the body's `function` word.
@@ -948,7 +988,7 @@ pub fn load_text_colours<L: Lease>(game: &mut L) {
 /// Self destruct sequence function index 2 - loading escape timer sprite
 /// tiles ($A6:C08E). Was `Ridley_C08E`.
 pub fn load_escape_timer_tiles<L: Lease>(game: &mut L) {
-    if game.queue_escape_timer_tiles() {
+    if game.owned_step(queue_escape_timer_tiles) {
         // The Ceres escape timer BG1/2 tile transfer entries ($A6:C4FE).
         *RidleyEdit::of(game, RIDLEY).fade_index() = 0xc4fe;
         next_step(game);
@@ -959,9 +999,9 @@ pub fn load_escape_timer_tiles<L: Lease>(game: &mut L) {
 /// Self destruct sequence function index 4 - loading Ceres escape timer BG1/2
 /// tiles ($A6:C09F). Was `Ridley_C09F`.
 pub fn load_escape_background_tiles<L: Lease>(game: &mut L) {
-    if game.queue_escape_timer_tiles() {
+    if game.owned_step(queue_escape_timer_tiles) {
         next_step(game);
-        game.queue_getaway_tiles();
+        game.owned_step(queue_getaway_tiles);
         *RidleyEdit::of(game, RIDLEY).fade_index() = 128;
         game.foreign(|game| game.queue_music_delayed(7));
     }
@@ -996,7 +1036,7 @@ pub fn japanese_text_appears<L: Lease>(game: &mut L) {
     *RidleyEdit::of(game, RIDLEY).fade_index() = timer.wrapping_sub(1);
     if timer == 1 {
         next_step(game);
-        game.queue_escape_tile_table();
+        game.owned_step(queue_escape_tile_table);
     }
     type_self_destruct_text(game);
 }

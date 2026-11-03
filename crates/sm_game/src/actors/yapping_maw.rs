@@ -23,6 +23,7 @@ pub trait Lease:
     + crate::actors::effects::ActorHost
     + crate::sprite_effect_host::Host
     + crate::enemy_projectiles::host::Host
+    + crate::room_mechanisms::host::Effects
 {
 }
 impl<T> Lease for T where
@@ -31,6 +32,7 @@ impl<T> Lease for T where
         + crate::actors::effects::ActorHost
         + crate::sprite_effect_host::Host
         + crate::enemy_projectiles::host::Host
+        + crate::room_mechanisms::host::Effects
 {
 }
 
@@ -167,8 +169,6 @@ const SIGN: u16 = 0x8000;
 
 /// What Yapping Maw needs beyond the shared actor operations.
 pub trait Host: crate::ram::WorkRamAccess + crate::runtime_access::RuntimeAccess {
-    /// Run Samus command `command`.
-    fn command_player(&mut self, command: u16);
     fn update_maw_visibility(&mut self, actor: i32);
 }
 
@@ -355,7 +355,7 @@ fn reorient_segment<L: Lease>(
 }
 /// Move Samus with yapping maw pincers ($A8:A665). Was `carry_player`.
 fn move_samus_with_pincers<L: Lease>(game: &mut L) {
-    game.foreign(|game| game.command_player(LOCK_SAMUS));
+    crate::room_mechanisms::host::Effects::player_control(game, LOCK_SAMUS);
     let maw = game.current_enemy();
     let view = YappingMaw::of(game, maw);
     let x = view.samus_x_offset().wrapping_add(view.actor().x.whole);

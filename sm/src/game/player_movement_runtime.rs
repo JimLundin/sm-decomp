@@ -72,7 +72,9 @@ impl Effects for Runtime<'_> {
         self.word(0x179c) != 0
     }
     fn initialize_shinespark_echo(&mut self, slot: u16) {
-        self.foreign(|game| initialize(slot, Initialization::Echo, game));
+        self.owned_player_call(|runtime| {
+            sm_game::player_projectiles::animation::initialize(runtime, slot, Initialization::Echo)
+        });
     }
     fn write_echo_coordinate(&mut self, axis: EchoAxis, index: usize, value: u16) {
         let base = match axis {
@@ -104,7 +106,6 @@ use {
         music::queue_sfx3_max15,
         player_collision::operations as player_collision,
         player_movement::{self, forced, speed},
-        player_projectiles::initialize,
         prelude::*,
         session_runtime::Runtime as CollisionRuntime,
         visual_runtime::set_hdma_enabled,

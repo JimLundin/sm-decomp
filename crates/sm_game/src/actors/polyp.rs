@@ -3,7 +3,7 @@
 use crate::actors::access::{AccessMode::Native, ActorAccess};
 use crate::actors::api::{self, Axis};
 use crate::actors::combat::current;
-use crate::actors::host::{ActorLease, ActorRuntime as _, LeaseActors};
+use crate::actors::host::{ActorLease, LeaseActors};
 use crate::enemy_projectiles::host::Effects as _;
 use crate::player_projectiles::content::table;
 use crate::session_access::SessionAccess as _;
@@ -45,7 +45,14 @@ pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
             runtime.session_mut().enemy_projectiles.spawn.secondary = x_velocity;
             let y_speed_index = random_entry(&mut runtime, 0xa2_b530, 0x1e);
             let k = runtime.session().actors.controls.selected;
-            runtime.foreign(|game| game.spawn_projectile(y_speed_index, k, 0xbd5a));
+            crate::actors::boss_lease::BossLease::owned_step(&mut runtime, |runtime| {
+                crate::enemy_projectiles::lifecycle::spawn_from_enemy(
+                    runtime,
+                    y_speed_index,
+                    k,
+                    0xbd5a,
+                )
+            });
             let key = current(&runtime);
             runtime.edit_actor(key, Native, |actor| actor.variables[0] = COOLDOWN);
             let cooldown = random_entry(&mut runtime, 0xa2_b520, 0xe);

@@ -2,7 +2,7 @@
 use crate::actors::access::{AccessMode::Native, ActorAccess as _};
 use crate::actors::api::{self, DeathHandling, DeathKind, ShotHandling, SlopePolicy};
 use crate::actors::combat;
-use crate::actors::host::{ActorLease, BossEffects as _, LeaseActors};
+use crate::actors::host::{ActorLease, LeaseActors};
 use crate::actors::scheduling;
 use crate::actors::slot_view::{SlotState, slot_view};
 use crate::enemy_projectiles::drops::DropSource;
@@ -312,7 +312,7 @@ pub fn touch<H: LeaseActors + ?Sized>(game: &mut H) {
         let near = dx.unsigned_abs() < 8
             && (actor.y.whole.wrapping_sub(target_y) as i16).unsigned_abs() < 8;
         if near {
-            runtime.foreign(|game| game.command_player(0x12));
+            crate::room_mechanisms::host::Effects::player_control(runtime, 0x12);
         }
         let next = [LATCH_ONTO_SAMUS, LATCHED_ONTO_SAMUS][usize::from(near)];
         runtime.edit_actor(key, Native, |actor| actor.pre_instruction = next);
@@ -337,7 +337,7 @@ pub fn power_bomb<H: LeaseActors + ?Sized>(game: &mut H) {
     let metroid = combat::current(runtime).byte_index();
     combat::power_bomb_reaction(runtime, DeathHandling::Finalize);
     if runtime.resolve_actor(key, Native).health == 0 {
-        runtime.foreign(|game| game.command_player(DISABLE_BLUE_FLASHING));
+        crate::room_mechanisms::host::Effects::player_control(runtime, DISABLE_BLUE_FLASHING);
         retire_sprites(runtime, metroid);
     }
 }
@@ -364,7 +364,10 @@ pub fn shot<H: LeaseActors + ?Sized>(game: &mut H) {
             if runtime.resolve_actor(key, Native).health == 0 {
                 runtime.edit_actor(key, Native, |actor| actor.variables[1] = 0);
                 combat::die(runtime, DeathKind::Normal { animation: 4 }); // Big explosion.
-                runtime.foreign(|game| game.command_player(DISABLE_BLUE_FLASHING));
+                crate::room_mechanisms::host::Effects::player_control(
+                    runtime,
+                    DISABLE_BLUE_FLASHING,
+                );
                 let handle = retire_sprites(runtime, metroid);
                 owned_step(runtime, |runtime| {
                     crate::enemy_projectiles::drops::scatter(DropSource::Metroid, handle, runtime);
@@ -378,7 +381,7 @@ pub fn shot<H: LeaseActors + ?Sized>(game: &mut H) {
                 actor.pre_instruction = BOMBED_OFF_SAMUS;
             });
             restart_animation(runtime, false);
-            runtime.foreign(|game| game.command_player(DISABLE_BLUE_FLASHING));
+            crate::room_mechanisms::host::Effects::player_control(runtime, DISABLE_BLUE_FLASHING);
         }
     } else {
         recoil(runtime, false, 0);

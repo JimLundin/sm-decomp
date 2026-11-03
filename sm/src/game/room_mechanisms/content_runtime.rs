@@ -53,7 +53,8 @@ impl Content for Runtime<'_> {
         }
     }
     fn definition_word(&mut self, location: ContentAddress, offset: usize) -> u16 {
-        self.foreign(|game| game.read_rom_word(address(location), offset))
+        // A ROM read; the foreign call's observation refresh stays.
+        self.owned_player_call(|runtime| runtime.rom_word(address(location), offset))
     }
     fn table_word(&self, table: ContentTable, index: isize) -> u16 {
         let (base, little) = match table {

@@ -38,7 +38,6 @@ impl<T> Lease for T where
 }
 
 pub trait Host: BossEffects + BossLease<Game = Self> {
-    fn draygon_trajectory(&mut self);
     /// Draygon grabs Samus, facing `direction`.
     fn grab_samus(&mut self, direction: u16);
 }
@@ -49,8 +48,8 @@ slot_view! {
     /// (times 4) and X speed, the reset positions, the goop counter and Y
     /// angle, the grab's spiral, the tail whip timer, the health palette, the
     /// swoop's Y acceleration, the facing, the death drift's speeds (which
-    /// nothing reads) and angle, the destroyed turrets and the graphics
-    /// displacement.
+    /// nothing reads) and angle, the destroyed turrets, the sprite trajectory's
+    /// cursor and the graphics displacement.
     Draygon, DraygonEdit {
         record: [
             function = var_a, function_timer = var_b, swoop_duration = var_c, x_speed = var_d,
@@ -65,6 +64,7 @@ slot_view! {
             facing_right = var_20, death_x_speed = var_28, death_x_subspeed = var_29,
             death_y_speed = var_2a, death_y_subspeed = var_2b, turret_2_destroyed = var_42,
             death_angle = var_43, turret_4_destroyed = var_44, turret_5_destroyed = var_45,
+            trajectory_cursor = var_46,
             graphics_x_displacement = var_5e, graphics_y_displacement = var_5f,
         ],
     }

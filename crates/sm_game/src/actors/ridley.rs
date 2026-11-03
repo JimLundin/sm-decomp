@@ -55,6 +55,7 @@ pub trait Lease:
     + crate::cartridge::NativeDiagnostics
     + crate::player_update::effects::Host
     + crate::player_projectiles::host::Host
+    + crate::room_mechanisms::host::Effects
 {
 }
 impl<T> Lease for T where
@@ -67,6 +68,7 @@ impl<T> Lease for T where
         + crate::cartridge::NativeDiagnostics
         + crate::player_update::effects::Host
         + crate::player_projectiles::host::Host
+        + crate::room_mechanisms::host::Effects
 {
 }
 
@@ -1414,7 +1416,7 @@ pub fn grab_samus<L: Lease>(game: &mut L) {
     set_grabbed_samus_offset(game);
     RidleyEdit::of(game, RIDLEY).actor().properties |= K_ENEMY_PROPS_TANGIBLE as u16;
     *RidleyEdit::of(game, RIDLEY).holding_samus() = 1;
-    game.foreign(|game| game.command_player(LOCK_SAMUS));
+    crate::room_mechanisms::host::Effects::player_control(game, LOCK_SAMUS);
     draw_feet(true, game);
 }
 
@@ -1427,7 +1429,7 @@ pub fn release_samus<L: Lease>(game: &mut L) {
         *RidleyEdit::of(game, RIDLEY).intangibility_timer() = timer;
     }
     *RidleyEdit::of(game, RIDLEY).holding_samus() = 0;
-    game.foreign(|game| game.command_player(UNLOCK_SAMUS));
+    crate::room_mechanisms::host::Effects::player_control(game, UNLOCK_SAMUS);
     draw_feet(false, game);
 }
 

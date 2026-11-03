@@ -150,10 +150,6 @@ impl baby_metroid_encounter::Host for Game {
     fn drain_health_by_baby_metroid(&mut self) {
         vitals::drain_health_by_baby_metroid(self);
     }
-
-    fn homing_probe(&mut self) {
-        crate::verify_probe::hit("homing.metroid");
-    }
 }
 
 impl baby_metroid_cutscene::Host for Game {

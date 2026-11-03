@@ -256,7 +256,7 @@ pub fn set_lowered_acid<L: Lease>(game: &mut L) {
 
 /// Instruction - unlock Samus ($AA:E43D). Was `Shaktool_Instr_10`.
 pub fn unlock_samus<L: Lease>(game: &mut L) {
-    game.foreign(|game| game.command_player(UNLOCK_SAMUS));
+    crate::room_mechanisms::host::Effects::player_control(game, UNLOCK_SAMUS);
 }
 
 /// Instruction - queue chozo grabs Samus sound effect ($AA:E57F). Was
@@ -314,7 +314,7 @@ pub fn movement<L: Lease>(game: &mut L, k: u16, jp: EnemyScript) -> EnemyScript 
 /// Instruction - release Samus and block slope access ($AA:E6F0). Was
 /// `Shaktool_Instr_14`.
 pub fn release_samus<L: Lease>(game: &mut L) {
-    game.foreign(|game| game.command_player(UNLOCK_SAMUS));
+    crate::room_mechanisms::host::Effects::player_control(game, UNLOCK_SAMUS);
     for (offset, value) in [(0, 0u16), (2, 0), (3, 0), (7, 1)] {
         game.session_mut()
             .room
