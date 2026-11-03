@@ -11,7 +11,7 @@
 //! `kraid_pause`.
 use crate::actors::boss_interaction as interaction;
 use crate::actors::boss_lease::bg2_staging;
-use crate::actors::boss_lease::{BossLease, BossState};
+use crate::actors::boss_lease::{BossLease, BossState, steps};
 use crate::actors::deaths::Deaths as _;
 use crate::actors::host::BossEffects as _;
 use crate::actors::host::{Death, Shot, Slopes, below};
@@ -26,6 +26,7 @@ use crate::constants::enemy_properties::{
 use crate::display::preparation::Field;
 use crate::display::transfer::{Source, TilemapUpload, queue_tilemap};
 use crate::enemy_projectiles::drops::DropSource;
+use crate::gameplay_flag_host::BossWordOrder;
 use crate::kraid_tables;
 use crate::menus::prelude::battle;
 use crate::menus::prelude::owned;
@@ -41,6 +42,7 @@ pub trait Lease:
     + crate::room_mechanisms::host::Host
     + crate::player_update::effects::Host
     + crate::progress::FlagHost
+    + crate::sprite_effect_host::Host
     + crate::actors::boss_interaction::Access
     + SlotState
 {
@@ -411,31 +413,10 @@ pub fn arm_shot<L: Lease>(game: &mut L, j: u16) {
     projectile_explosion(game, j);
 }
 
-/// The boss word of `area`, in native byte order.
-fn boss_word<L: Lease>(game: &L, area: u16) -> u16 {
-    crate::progress::boss_word_at(game, area, crate::gameplay_flag_host::BossWordOrder::Native)
-}
-
-/// Spawn the hardcoded PLM `header` at block (`block_x`, `block_y`), on the
-/// lease where the game opened one of its own.
-fn spawn_plm<L: Lease>(game: &mut L, block_x: u8, block_y: u8, header: u16) {
-    game.owned_step(|game| {
-        crate::room_mechanisms::creation::spawn_hardcoded_in(game, block_x, block_y, header);
-    });
-}
-
-/// Kill the current actor with the normal death `animation`, on the lease
-/// where the game opened one of its own.
-fn normal_death<L: Lease>(game: &mut L, animation: u16) {
-    game.owned_step(|game| {
-        game.kill_current(crate::actors::api::DeathKind::Normal { animation });
-    });
-}
-
 /// Whether Kraid's boss bit is set for this area. Was `Kraid_CheckIfDead`.
 pub fn is_dead<L: Lease>(game: &mut L) -> u16 {
     let area = BossState::area(game);
-    ((game.owned_step(|game| boss_word(game, area)) & 1) != 0) as u16
+    ((steps::boss_word(game, area, BossWordOrder::Native) & 1) != 0) as u16
 }
 
 /// Was `Kraid_SetEnemyPropsToDead`.
@@ -941,7 +922,7 @@ fn fire_fingernail<L: Lease>(game: &mut L, k: u16) {
 fn crumble<L: Lease>(game: &mut L, rock: u16, block_x: u8, plm: u16) {
     let k = game.current_enemy();
     game.spawn_projectile(rock, k, CEILING_ROCKS);
-    spawn_plm(game, block_x, 0x12, plm);
+    steps::spawn_plm(game, block_x, 0x12, plm);
 }
 
 fn sound_every_half_second<L: Lease>(game: &mut L) {
@@ -990,7 +971,7 @@ fn quake_rocks<L: Lease>(game: &mut L) {
     }
     let x: u16 = (Body::of(game, BODY).actor().x.whole).wrapping_add(offset);
     let y: u16 = (448 - ((battle!(game.Random) & 0x3f00) as i32 >> 8)) as u16;
-    game.foreign(|game| game.create_sprite(x, y, 21, 0));
+    steps::create_sprite(game, x, y, 21);
     let rocks: u16 = if (battle!(game.Random) & 0x10) != 0 {
         RISING_ROCKS_RIGHT
     } else {
@@ -1193,7 +1174,7 @@ fn break_ceiling<L: Lease>(game: &mut L) {
             game.spawn_projectile(rock, k, CEILING_ROCKS);
             let broken = (Body::of(game, BODY).function_timer() >> 1) as usize;
             if let Some(&(block_x, plm)) = CEILING_PLATFORMS.get(broken) {
-                spawn_plm(game, block_x, 0x12, plm);
+                steps::spawn_plm(game, block_x, 0x12, plm);
             }
             *BodyEdit::of(game, BODY).function_timer() =
                 Body::of(game, BODY).function_timer().wrapping_add(2);
@@ -1575,7 +1556,7 @@ pub fn fade_in_bg6<L: Lease>(game: &mut L) {
         game.foreign(|game| game.queue_music_delayed(3));
         game.foreign(|game| game.observe_kraid_flags(2));
         let area = BossState::area(game);
-        let bits: i16 = game.owned_step(|game| boss_word(game, area)) as i16;
+        let bits: i16 = steps::boss_word(game, area, BossWordOrder::Native) as i16;
         if (bits as u16 & 1) != 0 {
             *BodyEdit::of(game, BODY).function() = function::FADE_IN_DEAD_WAS_DEAD;
         } else {
@@ -1994,18 +1975,18 @@ fn death_init<L: Lease>(game: &mut L) {
         let saved: u16 = game.current_enemy();
         PartEdit::of(game, GOOD_FINGERNAIL).actor().properties &= !(0x4000);
         battle!(game.CurEnemyIndex = 384);
-        normal_death(game, 0x180);
+        steps::normal_death(game, 0x180);
         PartEdit::of(game, BAD_FINGERNAIL).actor().properties &= !(0x4000);
         battle!(game.CurEnemyIndex = 448);
-        normal_death(game, 0x1c0);
+        steps::normal_death(game, 0x1c0);
         battle!(game.CurEnemyIndex = 128);
-        normal_death(game, 0x80);
+        steps::normal_death(game, 0x80);
         battle!(game.CurEnemyIndex = 192);
-        normal_death(game, 0xc0);
+        steps::normal_death(game, 0xc0);
         battle!(game.CurEnemyIndex = 256);
-        normal_death(game, 0x100);
+        steps::normal_death(game, 0x100);
         battle!(game.CurEnemyIndex = saved);
-        spawn_plm(game, 0x5, 0x1b, DEATH_SPIKES_PLM);
+        steps::spawn_plm(game, 0x5, 0x1b, DEATH_SPIKES_PLM);
     }
 }
 
@@ -2041,8 +2022,8 @@ pub fn initialize<L: Lease>(game: &mut L) {
         bg2_staging::fill(game, (0..=1023).rev(), BLANK_BG2_TILE);
         *BodyEdit::of(game, BODY).unread_7804() = 0;
         queue_room_bg(game);
-        spawn_plm(game, 0x2, 0x12, CLEAR_CEILING_PLM);
-        spawn_plm(game, 0x5, 0x1b, CLEAR_SPIKES_PLM);
+        steps::spawn_plm(game, 0x2, 0x12, CLEAR_CEILING_PLM);
+        steps::spawn_plm(game, 0x5, 0x1b, CLEAR_SPIKES_PLM);
         *BodyEdit::of(game, BODY).function() = function::FADE_IN_CLEAR_BG2_TOP;
     } else {
         crate::frame_display_byte!(game, BG2_TILEMAP_BASE => 67);
@@ -2228,7 +2209,7 @@ pub fn fingernail_touch<L: Lease>(game: &mut L) {
     game.contact_reaction(Death::Finalize);
     // The death animation is the touch's leftover A: a living nail's health,
     // 10, taken as 0, or 0 for a nail the touch already killed.
-    normal_death(game, 0);
+    steps::normal_death(game, 0);
 }
 
 /// A fingernail's main: gone with Kraid, else its function. Was
