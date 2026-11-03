@@ -4,7 +4,6 @@ use crate::cinematic_state::{Array, Cinematic, Word};
 use crate::display::preparation::Field;
 use crate::ending_graphics::draw_cinematic_item_percentage;
 use crate::presentation_workspace::{Point, Role};
-use crate::ram::word;
 use crate::visual_state::CeresExplosion;
 use crate::word_transfers::WordEndpoint;
 use crate::{cinematic::*, ending_screens::*, intro_objects::*, title_screen::*};
@@ -756,7 +755,7 @@ fn draw_cinematic_background<H: crate::menus::host::Host + ?Sized>(
                 (width, i32::from(height))
             };
             let mut source = definition.wrapping_add(4);
-            let mut tail = word!(game.MODE7_VRAM_WRITE_QUEUE_TAIL);
+            let mut tail = game.mode7_queue_tail();
             loop {
                 for (field, value) in [
                     (0, 128),
@@ -784,7 +783,7 @@ fn draw_cinematic_background<H: crate::menus::host::Host + ?Sized>(
                     break;
                 }
             }
-            word!(game.MODE7_VRAM_WRITE_QUEUE_TAIL = tail);
+            game.set_mode7_queue_tail(tail);
         }
         _ => {
             game.rtl_unreachable();
