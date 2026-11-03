@@ -43,9 +43,7 @@ impl sm_game::room_visuals::StatueHost for crate::game_state::Game {
                 crate::ram_map::words::TOURIAN_ENTRANCE_STATUE_FINISHED,
                 0x8000,
             );
-            for (offset, byte) in blue.into_iter().enumerate() {
-                self.compatibility_write_byte(0xcd20 + offset, byte);
-            }
+            crate::projection::set_word(self, 0xcd20, u16::from_le_bytes(blue));
         }
     }
 }
