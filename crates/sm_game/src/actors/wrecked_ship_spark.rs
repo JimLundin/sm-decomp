@@ -63,12 +63,16 @@ pub fn initialize(game: &mut impl Lease) {
 /// Enemy shot - Wrecked Ship spark ($A8:E70E), as the blue Brinstar face block's ($A8:E91D):
 /// the collided projectile is not deleted.
 pub fn pass_shot<H: crate::actors::host::LeaseActors + ?Sized>(game: &mut H) {
-    use crate::actors::host::ActorLease as _;
-    use crate::ram::{word_arrays::PROJECTILE_DIR, words::COLLISION_DETECTION_INDEX};
+    use crate::player_projectiles::{access::shot, host::Host as _};
+    use crate::session_access::SessionAccess as _;
     let mut runtime = game.lease();
-    let at = PROJECTILE_DIR + 2 * usize::from(runtime.word(COLLISION_DETECTION_INDEX));
-    let direction = runtime.word(at) & !0x10;
-    runtime.write_slice_le(at, direction);
+    let raw = runtime
+        .session()
+        .room
+        .collision_detection_index
+        .wrapping_mul(2);
+    let direction = shot!(runtime, raw, direction) & !0x10;
+    shot!(runtime, raw, direction = direction; SliceLe);
 }
 /// Main AI - Wrecked Ship spark ($A8:E68E): its function when its timer runs out.
 pub fn main_ai(game: &mut impl Lease) {
