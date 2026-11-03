@@ -2,49 +2,66 @@
 
 Branch `collab/typed-all` (PR #155) converts the address-API layer to typed Session
 fields. Engine address APIs (`ram_ratchet.py`, ROM record reads excluded) fall from
-5805 on main `0115740f5` to 232.
+5805 on main `0115740f5` to 170.
 
 ## Pattern
 
-`crates/sm_game/src/actors/slot_view.rs`: `slot_view!` declares a family's record
-fields (`Actor` lanes) and extended words (`var_NN`). `Family::of(host, k)` reads;
-`FamilyEdit::of(host, k)` stores. A dropped edit that borrowed the record runs the
-Runtime's input refresh once, as the old per-byte projected stores did. Slot 0's
-Botwoon death words are served from `Session::botwoon_death`. Non-slot words use
-their Session fields, followed by `SessionAccess::words_stored()` where the old
-store refreshed inputs. Families' `Lease` traits require `SlotState`, which only
-`Runtime` implements.
+`crates/sm_game/src/actors/slot_view.rs`:
+- `slot_view!` declares a family's record fields (`Actor` lanes) and its extended words (`var_NN`).
+- `Family::of(host, k)` reads and `FamilyEdit::of(host, k)` stores.
+- A dropped edit that borrowed the record runs the Runtime's input refresh once, as the old per-byte projected stores did.
+- Slot 0's Botwoon death words are served from `Session::botwoon_death`.
+- Non-slot words use their Session fields. Where the old store refreshed inputs, the new one calls `SessionAccess::words_stored()` after it.
+- Families' `Lease` traits require `SlotState`, which only `Runtime` implements.
+- The `boss_ram` gateway is gone; callers use `boss_interaction`'s word map.
 
-Lease merges (write order changed): Mother Brain tube landing and unpause hook,
-Draygon (all routines on the lease). Everything else is `[exact]`.
+Commits that change write order:
+- Lease merges: the Mother Brain tube landing and unpause hook; Draygon, with all its routines now on the lease.
+- Record byte order: the Ceres elevator overlay.
 
-## Remaining 232 sites, by blocker
+Everything else is `[exact]`.
 
-1. **No owned Session representation.**
-   - HDMA wave/eye-beam/window tables at $9000-$9300 and $9800: `hdma_effects` 21, `beam_windows` 9, `xray_background`, `mother_brain_rainbow`.
-   - OAM $370-$592: `atmosphere`, `player_drawing`.
-   - Shooting-star records $0E0C-$108B over the actor slots: `shooting_star_motion` 19.
-   - Work Robot palette cycle $D652-$D657: 13.
-   - Pause/unpause hooks $0601-$0606, scroll bytes $CD20.., melt tiles $4000..: Kraid, Crocomire, statues.
-   - VRAM write queue $00D0/$0100, drop origin $F434/$F436.
-   - Each needs a Session field with encoding, checkpoint lane and layout test.
-2. **Owned only under an owned presentation.**
-   - Display mirrors $52/$59/$5D/$69, Mode 7 matrix, NMI counter, FX lanes $1984/$1986.
-   - These are Phantoon's 15 and some of Kraid's, Crocomire's and Ceres doors'.
-   - They need the presentation to be always owned, or owner-aware typed APIs for the legacy case.
+## Replays decide
+
+Replays always run with Legacy presentation. `Presentation::Owned` comes only from a
+supplied or restored session start, which only verification cases reach. So OAM, the
+display mirrors, the NMI counter and the Samus-half pointers are plain RAM in replays.
+
+A new Session owner must also move every other writer of its bytes onto it. Owning
+the room scroll cells ($CD20..) made `boss-crocomire` diverge at $CD24 and
+`file-copy-clear` diverge at tick 837 (run 41561271426), because other writers still
+reach those bytes through RAM. The scroll, pause hook ($0601..$0606), right border
+($1874) and Work Robot palette ($D652..$D657) owners were reverted for this reason.
+They return once their writers move too; the sm/src room and menu code is among them.
+
+## Remaining 170 sites, by blocker
+
+1. **New Session owners, plus all of their writers.**
+   - Scroll cells, pause hooks, right border and Work Robot palette (see above).
+   - Drop origin $F434/$F436: `sm/src/game/scroll_runtime.rs:32` refreshes inputs from raw RAM while the Session is current.
+   - Melt tiles at $4000..
+2. **Legacy presentation.**
+   - OAM: `atmosphere`, `player_drawing`.
+   - $57/$69/$5B6, $71D..$722.
+   - Phantoon's `set_mosaic`/`enable_bg2`/`frame`.
+   - Owning the presentation on the normal replay path is an architecture step.
 3. **Still on `Game`.**
-   - The game-over menu (menus host): 11 sites. A cohort patch exists at `$TEMP/typed-hosts/game_over_cohort.patch`, but it raises `sm_game_ram_sites` by 3.
-   - Kraid's unpause coroutine (`kraid_pause`): 2 sites.
-   - `gamet::settle`, `dachora::load_palette` and `yapping_maw::appearance` run on `BossState`/`BossLease`, which `Game` also implements.
-   - `calculate_xray_window` runs inside `foreign`.
-4. **Gateways.**
-   - `boss_lease::boss_ram`: about 80 words with mixed owners.
-   - `bg2_staging`: Crocomire's `melt_down` index can pass word 2047.
-   - `session_slots.rs` and `projection.rs` are the machinery itself; they are deleted once 1-3 are gone.
-5. **Address-indexed by design.** Out-of-range fallbacks (Phantoon), buggy original reads past tables (Crocomire, covern, rinka $87FE+id, draygon_sweep $9002+i, statues level block), and level-data indexes past the cells. A typed index panics where RAM didn't, so these need a LEGACY entry or a bounded typed fallback.
+   - The game-over menu: 11 sites. A cohort patch exists at `$TEMP/typed-hosts/game_over_cohort.patch` but raises `sm_game_ram_sites` by 3.
+   - Shooting stars (ending, menus host): 19 sites.
+   - `beam_windows`/`calculate_xray_window`, which runs inside `foreign`.
+   - Kraid's unpause coroutine.
+   - `yapping_maw::appearance`: the verifier's sprite alias cases 117/118 run it on Game at off-table enemy 0xE0DA.
+   - `ridley` 1 and `demo_rooms`/`hud`: hosts that `Game` also implements.
+4. **Address-indexed by design.**
+   - Out-of-range fallbacks: Phantoon's part and shot fallbacks, `visual_host` handles, `bg2_staging::set_unbounded` for Crocomire's melt cursor.
+   - Original reads that run past their tables: Crocomire melt columns, covern $0AF6+k, rinka $87FE+id, draygon_sweep $9002+i past $97DC, the statues level block.
+   - Level-data indexes that run past the cells.
+   - A typed index would panic where RAM didn't, so these need a LEGACY entry or a bounded typed fallback.
+5. **Machinery.** `session_slots.rs`, `projection.rs` and `ram.rs`. Delete them once 1-4 are gone.
+6. **Counter noise.** `enemy_projectiles/content` (a `self` ROM record) and `menus/canvas` (a workspace `Point`) are not RAM.
 
 ## Caveat
 
-Palette writes index `colors[i]`/`targets[i]` directly (work_robot, covern, face
-block, draygon). An out-of-range index would panic where the old code wrote the next
-RAM block; real palette indexes are in range.
+Palette writes index `colors[i]`/`targets[i]` directly: work_robot, covern, face block
+and draygon. An out-of-range index would panic where the old code wrote into the next
+RAM block. Real palette indexes are always in range.
