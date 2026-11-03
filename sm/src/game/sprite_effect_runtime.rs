@@ -45,25 +45,21 @@ impl sprite_effect_host::Aliases for Runtime<'_> {
 }
 impl sprite_effect_host::Effects for Runtime<'_> {
     fn submit_sprite(&mut self, request: SpriteDraw) {
-        self.foreign(|game| {
-            #[cfg(sm_verify_dll)]
-            crate::sprite_effect_observer::draw(
-                request.map.0,
-                request.position.x,
-                request.position.y,
-                request.palette,
-                request.base_tile,
-                game,
-            );
-            sprite_output::with_base_tile(
-                0xb4,
-                request.map.0,
-                (request.position.x, request.position.y),
-                request.palette,
-                request.base_tile,
-                Clip::None,
-                game,
-            );
+        let map = request.map.0;
+        let position = (request.position.x, request.position.y);
+        let (palette, tile) = (request.palette, request.base_tile);
+        #[cfg(sm_verify_dll)]
+        if crate::sprite_effect_observer::observing() {
+            // A sprite-effect case's observer stores into RAM before the draw.
+            self.foreign(|game| {
+                let (x, y) = position;
+                crate::sprite_effect_observer::draw(map, x, y, palette, tile, game);
+                sprite_output::with_base_tile(0xb4, map, position, palette, tile, Clip::None, game);
+            });
+            return;
+        }
+        self.draw_objects(|drawing| {
+            sprite_output::with_base_tile(0xb4, map, position, palette, tile, Clip::None, drawing);
         });
     }
     fn invalid_sprite_instruction(&mut self) {

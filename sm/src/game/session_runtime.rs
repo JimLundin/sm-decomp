@@ -1013,18 +1013,21 @@ impl Host for Runtime<'_> {
         );
     }
     fn draw(&mut self, drawing: Drawing) {
-        self.foreign(|g| {
-            use sm_game::sprite_output as output;
-            match drawing {
-                Drawing::Projectile { slot, x, y } => {
-                    output::projectile(slot, (x, y), g, &mut output::Native);
-                    crate::verify_probe::hit("player_projectiles.draw.completed");
-                }
-                Drawing::Beam { sprite, x, y } => output::beam(sprite, (x, y), g),
-                Drawing::CrashEchoes => output::crash_echoes(g, &mut output::Native),
-                Drawing::GrappleSegment { x, y, tile } => output::grapple(g, Some((x, y, tile))),
-                Drawing::GrappleEnd => output::grapple(g, None),
+        use sm_game::sprite_output as output;
+        if matches!(drawing, Drawing::CrashEchoes) {
+            // The echoes read Samus's pose and the frame counter on the Game.
+            self.foreign(|g| output::crash_echoes(g, &mut output::Native));
+            return;
+        }
+        self.draw_objects(|objects| match drawing {
+            Drawing::Projectile { slot, x, y } => {
+                output::projectile(slot, (x, y), objects, &mut output::Native);
+                crate::verify_probe::hit("player_projectiles.draw.completed");
             }
+            Drawing::Beam { sprite, x, y } => output::beam(sprite, (x, y), objects),
+            Drawing::CrashEchoes => unreachable!("drawn on the Game"),
+            Drawing::GrappleSegment { x, y, tile } => output::grapple(objects, Some((x, y, tile))),
+            Drawing::GrappleEnd => output::grapple(objects, None),
         });
     }
     fn draw_trail(&mut self, pair: usize, right: bool, frozen: bool) {
@@ -1733,7 +1736,7 @@ impl Runtime<'_> {
         base: bool,
         offscreen: bool,
     ) {
-        self.foreign(|game| {
+        self.draw_objects(|drawing| {
             use sm_game::sprite_drawing::Clip;
             let clip = if base {
                 Clip::None
@@ -1749,7 +1752,7 @@ impl Runtime<'_> {
                 palette,
                 tile,
                 clip,
-                game,
+                drawing,
             );
         });
     }
@@ -1804,13 +1807,13 @@ impl Runtime<'_> {
         base: bool,
         offscreen: bool,
     ) {
-        self.foreign(|game| {
+        self.draw_objects(|drawing| {
             use sm_game::sprite_drawing::Clip;
             use sm_game::sprite_output::{Native, sprite_map};
             if base && address == 0 {
                 return;
             }
-            let map = sprite_map(bank, address, game, &mut Native);
+            let map = sprite_map(bank, address, drawing, &mut Native);
             let clip = if base {
                 Clip::None
             } else if offscreen {
@@ -1822,12 +1825,14 @@ impl Runtime<'_> {
                 (x, y),
                 |entry| (entry.wrapping_add(tile) & 0xf1ff) | palette,
                 clip,
-                game,
+                drawing,
             );
         });
     }
 }
 
+#[path = "lease_drawing.rs"]
+mod lease_drawing;
 #[path = "player_collision_runtime.rs"]
 mod player_collision_runtime;
 pub(crate) use player_collision_runtime::set_player_radius;

@@ -25,7 +25,7 @@ pub(super) fn draw_spritemap(
     y: u16,
     tile: u16,
     graphics: u16,
-    game: &mut Game,
+    game: &mut impl sm_game::sprite_output::MapHost,
 ) {
     use sm_game::sprite_drawing::Clip;
     let clip = if offscreen {

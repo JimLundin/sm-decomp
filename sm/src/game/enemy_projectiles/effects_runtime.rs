@@ -49,9 +49,9 @@ impl Effects for Runtime<'_> {
         tile: u16,
         graphics: u16,
     ) {
-        self.foreign(|game| {
+        self.draw_objects(|drawing| {
             super::legacy::draw_spritemap(
-                offscreen, bank, map, position.x, position.y, tile, graphics, game,
+                offscreen, bank, map, position.x, position.y, tile, graphics, drawing,
             )
         });
         crate::verify_probe::hit("eproj.drawn");
