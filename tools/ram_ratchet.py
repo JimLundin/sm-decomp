@@ -71,7 +71,7 @@ BASELINE = {
     # may not rise; lease moves can add entries, so those are reported.
     "foreign_calls": 168,
     "game_host_impls": 95,  # SpriteHost split into MapHost + SpriteWords (same coupling)
-    "session_entries": 100,
+    "session_entries": 99,
     # Session word views keyed by RAM names (2026-11-03): sequence_word! and
     # gameplay_word! read and store typed Session-backed keys, not RAM, so
     # sm_game_ram_sites does not count them. They are still a word bag named
