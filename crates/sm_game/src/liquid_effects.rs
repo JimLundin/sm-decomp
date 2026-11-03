@@ -298,9 +298,23 @@ pub fn lava_background<H: crate::menus::host::Host + ?Sized>(hdma_index: usize, 
     let active = crate::sequence_word!(game.TIME_IS_FROZEN_FLAG) == 0
         && crate::liquid::LiquidWords::read(game).options & 6 != 0;
     let horizontal = active && crate::liquid::LiquidWords::read(game).options & 2 == 0;
-    game.write_register(
-        (crate::hdma_word!(game, hdma_index, BankSlot) & 0xff).wrapping_add(BBAD0 as u16),
-        if horizontal { 0xf } else { 0x10 },
+    use crate::display::video::{Axis, Background, Command, ScrollOffset};
+    // The slot's low byte is its channel's register offset, the channel times 16.
+    let [offset, _] = crate::hdma_word!(game, hdma_index, BankSlot).to_le_bytes();
+    let scroll = ScrollOffset {
+        background: Background::Bg2,
+        axis: if horizontal {
+            Axis::Horizontal
+        } else {
+            Axis::Vertical
+        },
+    };
+    game.apply(
+        "lava background",
+        Command::HdmaScrollTarget {
+            channel: offset >> 4,
+            scroll,
+        },
     );
     if active {
         fill_wave(
