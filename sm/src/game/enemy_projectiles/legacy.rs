@@ -2,10 +2,6 @@
 use crate::game::{actors, session_runtime::Runtime};
 use crate::game_state::Game;
 
-pub(super) fn call_player_code(code: u16, game: &mut Game) -> u16 {
-    crate::game::session_runtime::player_command(code, game)
-}
-
 pub(super) fn calculate_angle_from_xy(x: u16, y: u16, _game: &mut Game) -> u16 {
     crate::game::actors::api::angle_from_delta(x, y)
 }

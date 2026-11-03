@@ -929,19 +929,24 @@ impl Host for Runtime<'_> {
             self.owned_call(|runtime| sm_game::grapple_swing::update(runtime));
             return;
         }
-        self.foreign(|g| {
-            match step {
-                PlayerStep::Radius => set_player_radius(g),
-                PlayerStep::Input => unreachable!("input handled by shared owner"),
-                PlayerStep::SuitIndex => unreachable!("suit index handled by shared owner"),
-                PlayerStep::Acceleration => unreachable!("acceleration handled by shared owner"),
-                PlayerStep::InsideBlock => unreachable!("inside block handled by shared owner"),
-                PlayerStep::Grapple => unreachable!("grapple handled by shared owner"),
-                PlayerStep::Xray => unreachable!("X-ray handled by shared owner"),
-                PlayerStep::RestoreControl => {
-                    crate::game::session_runtime::player_command(0x14, g);
-                }
-            };
+        // Both former foreign steps keep its observation refresh.
+        self.owned_player_call(|runtime| match step {
+            PlayerStep::Radius => {
+                // SamusPoseParams has eight bytes, with y_radius at byte 6.
+                let pose_offset = usize::from(runtime.session().player.pose) * 8;
+                let radius = runtime.game.read_rom_byte(0x91b629, pose_offset + 6);
+                runtime.write_slice_le(0xb00, u16::from(radius));
+                runtime.write_slice_le(0xafe, 5);
+            }
+            PlayerStep::RestoreControl => {
+                player_transitions_runtime::command_in(runtime, 0x14);
+            }
+            PlayerStep::Input
+            | PlayerStep::SuitIndex
+            | PlayerStep::Acceleration
+            | PlayerStep::InsideBlock
+            | PlayerStep::Grapple
+            | PlayerStep::Xray => unreachable!("handled by shared owners"),
         });
     }
     fn palette(&mut self, effect: PaletteEffect) -> u8 {
@@ -1810,9 +1815,9 @@ pub(crate) use player_movement_runtime::{
 #[path = "player_transitions_runtime.rs"]
 mod player_transitions_runtime;
 pub(crate) use player_transitions_runtime::{
-    command as player_command, damage_player, face_forward as player_face_forward,
-    finish_player_frame, finish_xray, initialize as initialize_player,
-    mother_brain as player_mother_brain,
+    command as player_command, command_in as player_command_in, damage_player,
+    face_forward as player_face_forward, finish_player_frame, finish_xray,
+    initialize as initialize_player, mother_brain as player_mother_brain,
 };
 #[path = "player_update_runtime.rs"]
 pub(crate) mod player_update_runtime;
