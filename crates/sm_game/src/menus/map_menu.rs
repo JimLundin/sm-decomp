@@ -548,10 +548,8 @@ fn begin_room_window<H: Host + ?Sized>(
         crate::display::preparation::Store::Owned,
     );
     // Close both windows' middle line counts.
-    game.ram()
-        .write_byte(super::menu_window::ram::WINDOW_1_TABLE + 9, 0);
-    game.ram()
-        .write_byte(super::menu_window::ram::WINDOW_2_TABLE + 9, 0);
+    game.store_buffer_byte(super::menu_window::WINDOW_1_TABLE, 9, 0);
+    game.store_buffer_byte(super::menu_window::WINDOW_2_TABLE, 9, 0);
     menu_tilemap::area_label(game);
     menu_tilemap::upload(512, 0x7e4000, 1, false, game);
     let mut window = game.window_state();
@@ -874,10 +872,8 @@ fn begin_return_window<H: Host + ?Sized>(menu: &mut MenuState, game: &mut H, _: 
         crate::display::preparation::Store::Owned,
     );
     // Close both windows' middle line counts.
-    game.ram()
-        .write_byte(super::menu_window::ram::WINDOW_1_TABLE + 9, 0);
-    game.ram()
-        .write_byte(super::menu_window::ram::WINDOW_2_TABLE + 9, 0);
+    game.store_buffer_byte(super::menu_window::WINDOW_1_TABLE, 9, 0);
+    game.store_buffer_byte(super::menu_window::WINDOW_2_TABLE, 9, 0);
     display_scroll! { game, 0; Bg1V, Bg1H }
 }
 fn close_room_window<H: Host + ?Sized>(

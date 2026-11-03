@@ -2810,6 +2810,21 @@ impl sm_game::fx_domain::Sources for Runtime<'_> {
         let at = sm_game::fx_encoding::source_address(owner, offset).expect("FX buffer role");
         self.set_byte(at, byte);
     }
+    fn store_buffer_bytes(
+        &mut self,
+        owner: sm_game::scene::hdma_sources::LiveOwner,
+        offset: usize,
+        bytes: &[u8],
+    ) {
+        let at = sm_game::fx_encoding::source_address(owner, offset).expect("FX buffer role");
+        for (lane, &byte) in bytes.iter().enumerate() {
+            self.set_byte(at + lane, byte);
+        }
+    }
+    fn buffer_byte(&self, owner: sm_game::scene::hdma_sources::LiveOwner, offset: usize) -> u8 {
+        let at = sm_game::fx_encoding::source_address(owner, offset).expect("FX buffer role");
+        self.byte(at)
+    }
     fn add_parallax_source(&mut self, selector: u16, delta: u32) {
         let at = usize::from(selector);
         let low = u16::from_le_bytes([self.parallax_byte(at), self.parallax_byte(at + 1)]);

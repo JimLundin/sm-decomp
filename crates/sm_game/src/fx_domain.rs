@@ -68,6 +68,12 @@ pub trait Sources {
     /// neither, the work RAM. Unlike `store_source_byte` this never requires a
     /// source owner, as the original's stores into the window tables don't.
     fn store_buffer_byte(&mut self, owner: LiveOwner, offset: usize, byte: u8);
+    /// `store_buffer_byte` for each of `bytes` from `offset`, as one store.
+    fn store_buffer_bytes(&mut self, owner: LiveOwner, offset: usize, bytes: &[u8]);
+    /// Byte `offset` of the buffer `owner` starts in its fixed home, where
+    /// `store_buffer_byte` stores it; like those stores, it never requires a
+    /// source owner.
+    fn buffer_byte(&self, owner: LiveOwner, offset: usize) -> u8;
     /// `store_buffer_byte` for both bytes of `value` in `order`, first byte first.
     fn store_buffer_word(&mut self, owner: LiveOwner, offset: usize, order: WordOrder, value: u16) {
         let bytes = order.encode(value);
