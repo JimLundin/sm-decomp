@@ -85,6 +85,43 @@ pub struct AudioRequests {
     pub catalog: Arc<AudioRequestCatalog>,
     pub pending_mutation: bool,
 }
+/// The music queue under Legacy control ($0619..$0640, $064C, $07F3, $07F5):
+/// the numbers alone. Legacy records no meanings.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct LegacyMusic {
+    pub tracks: [u16; 8],
+    pub delays: [u16; 8],
+    pub write: u16,
+    pub read: u16,
+    pub entry: u16,
+    pub timer: u16,
+    pub current_track: u8,
+    pub data_index: u16,
+    pub track_index: u16,
+}
+/// One sound effect queue under Legacy control: its positions, state and
+/// sixteen queued sounds.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct LegacySound {
+    pub read: u8,
+    pub write: u8,
+    pub state: u8,
+    pub current: u8,
+    pub clear_delay: u8,
+    pub maximum_queued: u8,
+    pub queue: [u8; 16],
+}
+/// The audio request bytes under Legacy control, which an owned start keeps
+/// in its `AudioRequests`: the APU upload flag ($0617), the music queue, the
+/// three sound effect queues ($0643..$0685) and the sound handler's downtime
+/// ($0686). Every lease decodes them from RAM and every export encodes them.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct LegacyAudio {
+    pub uploading: u16,
+    pub music: LegacyMusic,
+    pub sounds: [LegacySound; 3],
+    pub downtime: u16,
+}
 macro_rules! audio_words {
     ($s:ident,$f:ident,($($borrow:tt)*)) => {
         $f(0x617,$($borrow)* $s.uploading);
@@ -117,49 +154,81 @@ macro_rules! audio_bytes {
         }
     };
 }
-impl AudioRequests {
+/// The numeric projection of the request bytes, shared by the owned requests
+/// and the Legacy control's: the same fields at the same addresses.
+macro_rules! audio_projection {
+    () => {
+        fn numeric_byte(&self, at: usize) -> Option<u8> {
+            let mut result = None;
+            let mut select_byte = |base: usize, byte: &u8| {
+                if base == at {
+                    result = Some(*byte);
+                }
+            };
+            audio_bytes!(self,select_byte,(&));
+            let mut select_word = |base: usize, word: &u16| {
+                if (base..base + 2).contains(&at) {
+                    result = Some(word.to_le_bytes()[at - base]);
+                }
+            };
+            audio_words!(self,select_word,(&));
+            result
+        }
+        fn write_numeric_byte(&mut self, at: usize, byte: u8) -> bool {
+            let mut found = false;
+            let mut select_byte = |base: usize, value: &mut u8| {
+                if base == at {
+                    *value = byte;
+                    found = true;
+                }
+            };
+            audio_bytes!(self,select_byte,(&mut));
+            let mut select_word = |base: usize, word: &mut u16| {
+                if (base..base + 2).contains(&at) {
+                    let mut bytes = word.to_le_bytes();
+                    bytes[at - base] = byte;
+                    *word = u16::from_le_bytes(bytes);
+                    found = true;
+                }
+            };
+            audio_words!(self,select_word,(&mut));
+            found
+        }
+        /// Every request byte, as `span` runs of one field each.
+        pub fn encode_projection(&self, mut span: impl FnMut(usize, &[u8])) {
+            let mut emit_byte = |at: usize, byte: &u8| span(at, &[*byte]);
+            audio_bytes!(self,emit_byte,(&));
+            let mut emit_word = |at: usize, word: &u16| span(at, &word.to_le_bytes());
+            audio_words!(self,emit_word,(&));
+        }
+    };
+}
+impl LegacyAudio {
+    audio_projection!();
     pub fn projected_byte(&self, at: usize) -> Option<u8> {
-        let mut result = None;
-        let mut select_byte = |base: usize, byte: &u8| {
-            if base == at {
-                result = Some(*byte);
-            }
-        };
-        audio_bytes!(self,select_byte,(&));
-        let mut select_word = |base: usize, word: &u16| {
-            if (base..base + 2).contains(&at) {
-                result = Some(word.to_le_bytes()[at - base]);
-            }
-        };
-        audio_words!(self,select_word,(&));
-        result
+        self.numeric_byte(at)
     }
     pub fn write_projected_byte(&mut self, at: usize, byte: u8) -> bool {
-        let mut found = false;
-        let mut select_byte = |base: usize, value: &mut u8| {
-            if base == at {
-                *value = byte;
-                found = true;
-            }
-        };
-        audio_bytes!(self,select_byte,(&mut));
-        let mut select_word = |base: usize, word: &mut u16| {
-            if (base..base + 2).contains(&at) {
-                let mut bytes = word.to_le_bytes();
-                bytes[at - base] = byte;
-                *word = u16::from_le_bytes(bytes);
-                found = true;
-            }
-        };
-        audio_words!(self,select_word,(&mut));
+        self.write_numeric_byte(at, byte)
+    }
+    /// Load every request byte from RAM, as a lease imports them.
+    pub fn import(&mut self, bytes: &impl Fn(usize) -> u8) {
+        let load_byte = |at: usize, byte: &mut u8| *byte = bytes(at);
+        audio_bytes!(self,load_byte,(&mut));
+        let load_word =
+            |at: usize, word: &mut u16| *word = u16::from_le_bytes([bytes(at), bytes(at + 1)]);
+        audio_words!(self,load_word,(&mut));
+    }
+}
+impl AudioRequests {
+    audio_projection!();
+    pub fn projected_byte(&self, at: usize) -> Option<u8> {
+        self.numeric_byte(at)
+    }
+    pub fn write_projected_byte(&mut self, at: usize, byte: u8) -> bool {
+        let found = self.write_numeric_byte(at, byte);
         self.pending_mutation |= found;
         found
-    }
-    pub fn encode_projection(&self, mut span: impl FnMut(usize, &[u8])) {
-        let mut emit_byte = |at: usize, byte: &u8| span(at, &[*byte]);
-        audio_bytes!(self,emit_byte,(&));
-        let mut emit_word = |at: usize, word: &u16| span(at, &word.to_le_bytes());
-        audio_words!(self,emit_word,(&));
     }
     pub fn validate(
         &self,
@@ -790,6 +859,20 @@ impl Control {
     pub fn legacy() -> Self {
         Self::Legacy(crate::controller_state::LegacyControl::default())
     }
+    /// Load the Legacy control's audio request bytes from RAM; an owned start
+    /// supplies its own requests.
+    pub fn import_legacy_audio(&mut self, bytes: &impl Fn(usize) -> u8) {
+        if let Self::Legacy(control) = self {
+            control.audio.import(bytes);
+        }
+    }
+    /// Whether an APU upload is under way ($0617), from the selected owner.
+    pub fn apu_uploading(&self) -> u16 {
+        match self {
+            Self::Legacy(control) => control.audio.uploading,
+            Self::Owned(control) => control.requests.uploading,
+        }
+    }
     pub fn primary(&self) -> &u8 {
         match self {
             Self::Legacy(value) => &value.primary,
@@ -839,8 +922,9 @@ impl Control {
         if at == 0x613 {
             return Some(*self.secondary());
         }
-        let Self::Owned(control) = self else {
-            return None;
+        let control = match self {
+            Self::Legacy(control) => return control.audio.projected_byte(at),
+            Self::Owned(control) => control,
         };
         if let Some(byte) = control.requests.projected_byte(at) {
             return Some(byte);
@@ -881,8 +965,9 @@ impl Control {
             *self.secondary_mut() = byte;
             return true;
         }
-        let Self::Owned(control) = self else {
-            return false;
+        let control = match self {
+            Self::Legacy(control) => return control.audio.write_projected_byte(at, byte),
+            Self::Owned(control) => control,
         };
         if control.requests.write_projected_byte(at, byte) {
             return true;
@@ -920,10 +1005,11 @@ impl Control {
         found
     }
     pub fn encode_projection(&self, mut span: impl FnMut(usize, &[u8])) {
-        if let Self::Legacy(_) = self {
+        if let Self::Legacy(control) = self {
             for word in crate::controller_state::Word::ALL {
                 span(word.address(), &word.get(self).to_le_bytes());
             }
+            control.audio.encode_projection(&mut span);
         }
         if let Self::Owned(control) = self {
             control.requests.encode_projection(&mut span);

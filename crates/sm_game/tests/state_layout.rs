@@ -1762,3 +1762,65 @@ fn legacy_samus_requests_round_trip_every_byte() {
         }
     }
 }
+
+/// The Legacy control owns the audio request bytes byte by byte: the APU
+/// upload flag, the music queue, the three sound effect queues, the sound
+/// handler's downtime and the music data and track indices.
+#[test]
+fn legacy_audio_requests_round_trip_every_byte() {
+    const REQUESTS: [std::ops::Range<usize>; 3] = [0x617..0x641, 0x643..0x688, 0x7f3..0x7f7];
+    let base = session();
+    assert!(matches!(
+        base.control,
+        sm_game::session_owners::Control::Legacy(_)
+    ));
+    let every = || REQUESTS.iter().flat_map(Clone::clone);
+    for at in every() {
+        let value = (at as u8) | 1;
+        let mut s = base.clone();
+        assert!(write_projected_byte(&mut s, at, value), "store {at:#x}");
+        for other in every() {
+            let expected = if other == at { value } else { 0 };
+            assert_eq!(
+                projected_byte(&s, other),
+                Some(expected),
+                "storing {at:#x} -> projection {other:#x}"
+            );
+        }
+    }
+    for seed in [7, 0x5a3e_0071] {
+        let ram = Random::ram(seed);
+        let s = decoded(&ram);
+        let sm_game::session_owners::Control::Legacy(control) = &s.control else {
+            panic!("decoded control is not Legacy");
+        };
+        let audio = &control.audio;
+        assert_eq!(audio.uploading, read(&ram, 0x617), "upload flag");
+        assert_eq!(audio.music.tracks[7], read(&ram, 0x627), "last track");
+        assert_eq!(audio.music.delays[0], read(&ram, 0x629), "first delay");
+        assert_eq!(audio.music.timer, read(&ram, 0x63f), "music timer");
+        assert_eq!(audio.music.current_track, ram[0x64c], "current track");
+        assert_eq!(audio.music.data_index, read(&ram, 0x7f3), "data index");
+        assert_eq!(audio.music.track_index, read(&ram, 0x7f5), "track index");
+        for (channel, sound) in audio.sounds.iter().enumerate() {
+            assert_eq!(sound.read, ram[0x643 + channel], "read {channel}");
+            assert_eq!(sound.write, ram[0x646 + channel], "write {channel}");
+            assert_eq!(
+                sound.maximum_queued,
+                ram[0x653 + channel],
+                "limit {channel}"
+            );
+            assert_eq!(
+                sound.queue[15],
+                ram[0x656 + 16 * channel + 15],
+                "queue {channel}"
+            );
+        }
+        assert_eq!(audio.downtime, read(&ram, 0x686), "downtime");
+        let bytes = encoded(&s);
+        for at in every() {
+            assert_eq!(bytes.get(&at), Some(&ram[at]), "encode {at:#x}");
+            assert_eq!(projected_byte(&s, at), Some(ram[at]), "projection {at:#x}");
+        }
+    }
+}

@@ -170,14 +170,15 @@ pub fn clear_sound_queues(game: &mut Game) {
 }
 
 /// The requests a lease queues on its own Session: the routines the foreign calls ran on the
-/// exported game, over the lease's audio host. In Legacy the request bytes are RAM's alone,
-/// so the stores go straight to RAM, as the foreign calls' did. Each refreshes the
-/// observations on entry and on return, as the foreign call left them.
+/// exported game, over the lease's audio host. The Session's control owns the request bytes
+/// in Legacy too, so the stores reach its owner, in the same order as before, and RAM takes
+/// them when the lease exports, before any APU-side read. Each refreshes the observations on
+/// entry and on return, as the foreign call left them.
 impl crate::game::session_runtime::Runtime<'_> {
     fn audio_request<R>(&mut self, request: impl FnOnce(&mut Self) -> R) -> R {
         self.owned_player_call(|runtime| {
             #[cfg(sm_verify_dll)]
-            runtime.assert_audio_requests_unexported();
+            runtime.assert_audio_requests_owned();
             request(runtime)
         })
     }

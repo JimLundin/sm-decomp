@@ -1035,6 +1035,7 @@ pub fn decode(bytes: &impl Fn(usize) -> u8, byte_len: usize, world: Arc<WorldBin
     for word in crate::controller_state::Word::ALL {
         *word.get_mut(&mut s.control) = read(bytes, word.address());
     }
+    s.control.import_legacy_audio(bytes);
     s.game_loop = crate::game_loop::GameLoop::initialized(
         0,
         Default::default(),
