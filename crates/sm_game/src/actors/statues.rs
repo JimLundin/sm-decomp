@@ -7,7 +7,7 @@
 //! `sub_AAE445`/`sub_AAE784` in the original decompilation. A chozo statue
 //! runs the bank $AA function in its `function` word, whose ids are the
 //! original's.
-use crate::actors::boss_lease::BossLease;
+use crate::actors::boss_lease::{BossLease, steps};
 use crate::actors::host::{BossEffects, Slopes, abs16};
 use crate::actors::slot_view::{SlotState, slot_view};
 use crate::constants::enemy_properties::{
@@ -15,10 +15,13 @@ use crate::constants::enemy_properties::{
 };
 use crate::enemy_script::EnemyScript;
 use crate::legacy_overflow;
+use crate::room_mechanisms::creation::spawn_hardcoded_in;
 use crate::statue_tables;
 
 /// A lease on a game with the statues' effects.
-pub trait Lease: BossLease<Game: BossEffects> + SlotState {
+pub trait Lease:
+    BossLease<Game: BossEffects> + SlotState + crate::room_mechanisms::host::Host
+{
     /// The boss word of `area`, in native byte order.
     fn boss_word_native(&mut self, area: u16) -> u16;
     /// Start the room's acid lowering.
@@ -126,7 +129,7 @@ const UNLOCK_SAMUS: u16 = 1;
 /// Initialisation AI - Tourian entrance statue ($AA:D7C8): the part's
 /// instruction list; the base also spawns the decoration, Ridley and
 /// Phantoon. Was `TourianEntranceStatue_Init`.
-pub fn initialize_tourian_statue<L: Lease + ?Sized>(game: &mut L) {
+pub fn initialize_tourian_statue<L: Lease>(game: &mut L) {
     let k = game.current_enemy();
     {
         let mut decoration = DecorationEdit::of(game, k);
@@ -150,7 +153,7 @@ pub fn initialize_tourian_statue<L: Lease + ?Sized>(game: &mut L) {
 }
 
 /// Target colours `first..first + count` from the ROM palette at `address`.
-fn load_target_colours<L: Lease + ?Sized>(game: &mut L, first: usize, address: u32, count: usize) {
+fn load_target_colours<L: Lease>(game: &mut L, first: usize, address: u32, count: usize) {
     for index in (0..count).rev() {
         let colour = crate::cartridge::rom_table_word!(game, address, index as isize);
         game.session_mut().presentation.visual_mut().targets[first + index] = colour;
@@ -159,7 +162,7 @@ fn load_target_colours<L: Lease + ?Sized>(game: &mut L, first: usize, address: u
 }
 
 /// Target colours from `first` become `colours`.
-fn set_target_colours<L: Lease + ?Sized>(game: &mut L, first: usize, colours: &[u16]) {
+fn set_target_colours<L: Lease>(game: &mut L, first: usize, colours: &[u16]) {
     game.session_mut().presentation.visual_mut().targets[first..first + colours.len()]
         .copy_from_slice(colours);
     game.words_stored();
@@ -167,13 +170,13 @@ fn set_target_colours<L: Lease + ?Sized>(game: &mut L, first: usize, colours: &[
 
 /// Initialisation AI - n00b tube cracks ($AA:E716): their palette. Was
 /// `N00bTubeCracks_Init`.
-pub fn initialize_tube_cracks<L: Lease + ?Sized>(game: &mut L) {
+pub fn initialize_tube_cracks<L: Lease>(game: &mut L) {
     load_target_colours(game, SPRITE_PALETTE_1, TUBE_CRACKS_PALETTE, 32);
 }
 
 /// Initialisation AI - chozo statue ($AA:E725): waits, with its variant's
 /// palettes and slope and spike blocks. Was `ChozoStatue_Init`.
-pub fn initialize_chozo_statue<L: Lease + ?Sized>(game: &mut L) {
+pub fn initialize_chozo_statue<L: Lease>(game: &mut L) {
     let k = game.current_enemy();
     {
         let mut statue = StatueEdit::of(game, k);
@@ -197,19 +200,19 @@ pub fn initialize_chozo_statue<L: Lease + ?Sized>(game: &mut L) {
     if variant != 0 {
         set_target_colours(game, SPRITE_PALETTE_2, &LOWER_NORFAIR_PALETTE_2);
         set_target_colours(game, SPRITE_PALETTE_1, &LOWER_NORFAIR_PALETTE_1);
-        game.foreign(|game| game.spawn_plm(0xc, 0x1d, LOWER_NORFAIR_SLOPE_PLM));
+        steps::spawn_plm(game, 0xc, 0x1d, LOWER_NORFAIR_SLOPE_PLM);
     } else {
         set_target_colours(game, SPRITE_PALETTE_2, &WRECKED_SHIP_PALETTE_2);
         set_target_colours(game, SPRITE_PALETTE_1, &WRECKED_SHIP_PALETTE_1);
-        game.foreign(|game| {
-            game.spawn_plm(0x4a, 0x17, WRECKED_SHIP_SPIKES_PLM);
-            game.spawn_plm(0x17, 0x1d, WRECKED_SHIP_SLOPE_PLM);
+        game.owned_step(|game| {
+            spawn_hardcoded_in(game, 0x4a, 0x17, WRECKED_SHIP_SPIKES_PLM);
+            spawn_hardcoded_in(game, 0x17, 0x1d, WRECKED_SHIP_SLOPE_PLM);
         });
     }
 }
 
 /// Main AI - chozo statue ($AA:E7A7): the function. Was `ChozoStatue_Main`.
-pub fn main_ai<L: Lease + ?Sized>(game: &mut L) {
+pub fn main_ai<L: Lease>(game: &mut L) {
     let k = game.current_enemy();
     match Statue::of(game, k).function() {
         function::LOWER_NORFAIR => lower_norfair(game, k),
@@ -221,7 +224,7 @@ pub fn main_ai<L: Lease + ?Sized>(game: &mut L) {
 
 /// Chozo statue function - Lower Norfair ($AA:E445): activated, it carries
 /// Samus down. Was `sub_AAE445`.
-pub fn lower_norfair<L: Lease + ?Sized>(game: &mut L, k: u16) {
+pub fn lower_norfair<L: Lease>(game: &mut L, k: u16) {
     if Statue::of(game, k).activated() != 0 {
         StatueEdit::of(game, k).actor().instruction = list::LOWER_NORFAIR_ACTIVATED;
         StatueEdit::of(game, k).actor().instruction_delay = 1;
@@ -230,8 +233,8 @@ pub fn lower_norfair<L: Lease + ?Sized>(game: &mut L, k: u16) {
 
 /// Chozo statue function - Wrecked Ship ($AA:E7AE): once Phantoon is dead and
 /// it is activated, it carries Samus across. Was `Shaktool_PreInstr_0`.
-pub fn wrecked_ship<L: Lease + ?Sized>(game: &mut L, k: u16) {
-    let area = game.area();
+pub fn wrecked_ship<L: Lease>(game: &mut L, k: u16) {
+    let area = crate::actors::boss_lease::BossState::area(game);
     if (game.boss_word_native(area) & 1) != 0 && Statue::of(game, k).activated() != 0 {
         StatueEdit::of(game, k).actor().instruction = list::WRECKED_SHIP_ACTIVATED;
         StatueEdit::of(game, k).actor().instruction_delay = 1;
@@ -242,40 +245,36 @@ pub fn wrecked_ship<L: Lease + ?Sized>(game: &mut L, k: u16) {
 }
 
 /// Instruction - start lowering acid ($AA:E429). Was `Shaktool_Instr_9`.
-pub fn start_lowering_acid<L: Lease + ?Sized>(game: &mut L) {
+pub fn start_lowering_acid<L: Lease>(game: &mut L) {
     game.start_lowering_acid();
 }
 
 /// Instruction - set lowered acid position ($AA:E436). Was `Shaktool_Instr_11`.
-pub fn set_lowered_acid<L: Lease + ?Sized>(game: &mut L) {
+pub fn set_lowered_acid<L: Lease>(game: &mut L) {
     game.lower_acid();
 }
 
 /// Instruction - unlock Samus ($AA:E43D). Was `Shaktool_Instr_10`.
-pub fn unlock_samus<L: Lease + ?Sized>(game: &mut L) {
+pub fn unlock_samus<L: Lease>(game: &mut L) {
     game.foreign(|game| game.command_player(UNLOCK_SAMUS));
 }
 
 /// Instruction - queue chozo grabs Samus sound effect ($AA:E57F). Was
 /// `Shaktool_Instr_8`.
-pub fn grab_sound<L: Lease + ?Sized>(game: &mut L) {
+pub fn grab_sound<L: Lease>(game: &mut L) {
     game.queue_sound(1, GRAB_SOUND, 6);
 }
 
 /// Instruction - queue chozo footsteps sound effect ($AA:E587). Was
 /// `Shaktool_Instr_13`.
-pub fn footstep_sound<L: Lease + ?Sized>(game: &mut L) {
+pub fn footstep_sound<L: Lease>(game: &mut L) {
     game.queue_sound(1, FOOTSTEP_SOUND, 6);
 }
 
 /// Instruction - spawn chozo spike clearing footstep enemy projectile with X
 /// offset [[Y]] ($AA:E58F): a spike block under the foot is cleared. Was
 /// `Shaktool_Instr_12`.
-pub fn spike_clearing_footstep<L: Lease + ?Sized>(
-    game: &mut L,
-    k: u16,
-    jp: EnemyScript,
-) -> EnemyScript {
+pub fn spike_clearing_footstep<L: Lease>(game: &mut L, k: u16, jp: EnemyScript) -> EnemyScript {
     let offset: u16 = jp.word(0);
     let x = (Statue::of(game, k).actor().x.whole).wrapping_add(offset);
     let y = (Statue::of(game, k).actor().y.whole).wrapping_add(28);
@@ -298,7 +297,7 @@ pub fn spike_clearing_footstep<L: Lease + ?Sized>(
 
 /// Instruction - chozo statue movement - index [[Y]] ($AA:E5D8): step the
 /// statue and carry Samus with it. Was `Shaktool_Instr_7`.
-pub fn movement<L: Lease + ?Sized>(game: &mut L, k: u16, jp: EnemyScript) -> EnemyScript {
+pub fn movement<L: Lease>(game: &mut L, k: u16, jp: EnemyScript) -> EnemyScript {
     *StatueEdit::of(game, k).movement() = jp.word(0);
     let step = statue_tables::movement(game, (Statue::of(game, k).movement() >> 1) as isize);
     game.move_horizontal(k, (step.x_velocity as i16 as i32) << 8, Slopes::Ignore);
@@ -314,7 +313,7 @@ pub fn movement<L: Lease + ?Sized>(game: &mut L, k: u16, jp: EnemyScript) -> Ene
 
 /// Instruction - release Samus and block slope access ($AA:E6F0). Was
 /// `Shaktool_Instr_14`.
-pub fn release_samus<L: Lease + ?Sized>(game: &mut L) {
+pub fn release_samus<L: Lease>(game: &mut L) {
     game.foreign(|game| game.command_player(UNLOCK_SAMUS));
     for (offset, value) in [(0, 0u16), (2, 0), (3, 0), (7, 1)] {
         game.session_mut()
@@ -322,7 +321,7 @@ pub fn release_samus<L: Lease + ?Sized>(game: &mut L) {
             .set_scroll_pair(RELEASE_LIMITS + offset, value.to_le_bytes());
     }
     game.words_stored();
-    game.foreign(|game| game.spawn_plm(0x17, 0x1d, WRECKED_SHIP_SLOPE_PLM));
+    steps::spawn_plm(game, 0x17, 0x1d, WRECKED_SHIP_SLOPE_PLM);
 }
 
 // The named bank $AA functions and instruction lists are the decompilation's.
