@@ -49,12 +49,12 @@ fn prepare<H: crate::menus::host::Host + ?Sized>(menu: &mut MenuState, game: &mu
         let color = game.palette_word(false, 2 * index);
         game.screen_write_native_word(Point::new(Role::Pause, 2 * (384 + index)), color);
     }
-    for index in 0..27 {
-        // Native device/control spill bytes remain an explicit readback boundary.
-        let address = 0x51 + 2 * index;
+    // The register mirrors ($51..$86) as 27 native-order words.
+    let mirrors = crate::display::preparation::MIRRORS;
+    for (index, &[low, high]) in mirrors.as_chunks::<2>().0.iter().enumerate() {
         let value = u16::from_ne_bytes([
-            game.compatibility_byte(address),
-            game.compatibility_byte(address + 1),
+            game.display_control_byte(low),
+            game.display_control_byte(high),
         ]);
         game.screen_write_native_word(Point::new(Role::Pause, 2 * (640 + index)), value);
     }

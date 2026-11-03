@@ -3153,10 +3153,9 @@ impl sm_game::sequence_state::Access for Game {
     }
 }
 
-fn frame_display_ranges() -> [Range<usize>; 20] {
+fn frame_display_ranges() -> [Range<usize>; 19] {
     [
-        0x51..0x53,
-        0x55..0x86,
+        0x51..0x87,
         0x5b4..0x5bc,
         0x782..0x783,
         0x7ec..0x7ed,
@@ -3182,6 +3181,8 @@ pub(crate) fn frame_field_address(field: sm_game::display::preparation::Field) -
     match field {
         Field::Brightness => 0x51,
         Field::ObjectLayout => 0x52,
+        Field::ObjectAddressLow => 0x53,
+        Field::ObjectAddressHigh => 0x54,
         Field::Mode => 0x55,
         Field::FakeMode => 0x56,
         Field::Mosaic => 0x57,
@@ -3231,6 +3232,7 @@ pub(crate) fn frame_field_address(field: sm_game::display::preparation::Field) -
         Field::AffineWords5High => 0x83,
         Field::NmiEnable => 0x84,
         Field::HdmaEnable => 0x85,
+        Field::MemorySelect => 0x86,
         Field::NmiPending => 0x5b4,
         Field::NmiFrameByte => 0x5b5,
         Field::NmiFrameWordLow => 0x5b6,

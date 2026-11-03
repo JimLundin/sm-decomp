@@ -3064,6 +3064,7 @@ fn scene_display_description(
         controls: ds::DisplayControls {
             brightness: 15,
             object_layout: 0,
+            object_address: [0; 2],
             mode: 1,
             fake_mode: 1,
             mosaic: 0,
@@ -3091,6 +3092,7 @@ fn scene_display_description(
             affine_words: [0; 6],
             nmi_enable: 0,
             hdma_enable: 0,
+            memory_select: 0,
             committed_fake_mode: 1,
         },
         hdma: ds::HdmaState {
@@ -6519,7 +6521,7 @@ fn scene_read_results_codec_and_reopen() {
     assert_eq!(captured.display.as_ref().unwrap().read_results, expected);
     scene_owner_unchanged(&display, &before, &metadata);
     let bytes = before.encode_checkpoint(&metadata, &requirements).unwrap();
-    assert_eq!(&bytes[..8], b"SMDISPL\x04");
+    assert_eq!(&bytes[..8], b"SMDISPL\x05");
     let decoded =
         sd::DisplayCheckpoint::decode_checkpoint(&bytes, media.clone(), &metadata, &requirements)
             .unwrap();

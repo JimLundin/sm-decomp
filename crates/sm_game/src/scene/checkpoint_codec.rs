@@ -874,6 +874,7 @@ record!(d::BackgroundState {
 record!(d::DisplayControls {
     brightness,
     object_layout,
+    object_address,
     mode,
     fake_mode,
     mosaic,
@@ -901,6 +902,7 @@ record!(d::DisplayControls {
     affine_words,
     nmi_enable,
     hdma_enable,
+    memory_select,
     committed_fake_mode
 });
 record!(d::HdmaBinding {
@@ -1297,7 +1299,7 @@ pub fn encode(
     required: &t::DisplayStartRequirements,
 ) -> Result<Vec<u8>, String> {
     let binding = binding(media, metadata, required)?;
-    let mut bytes = Vec::from(b"SMDISPL\x04".as_slice());
+    let mut bytes = Vec::from(b"SMDISPL\x05".as_slice());
     binding.put(&mut bytes);
     description.put(&mut bytes);
     resident.put(&mut bytes);
@@ -1314,7 +1316,7 @@ pub fn decode(
 ) -> Result<t::ValidatedDisplayStart, String> {
     let expected = binding(&media, metadata, required)?;
     let mut read = CheckpointReader(bytes);
-    if read.bytes(8)? != b"SMDISPL\x04" {
+    if read.bytes(8)? != b"SMDISPL\x05" {
         return Err("unsupported display checkpoint schema".into());
     }
     let binding_length = usize::get(&mut read)?;

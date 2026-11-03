@@ -982,6 +982,9 @@ macro_rules! display_bytes {
     ($s:ident,$f:ident,($($borrow:tt)*)) => {
         $f(0x51,$($borrow)* $s.controls.brightness);
         $f(0x52,$($borrow)* $s.controls.object_layout);
+        for index in 0..2 {
+            $f(0x53+index,$($borrow)* $s.controls.object_address[index]);
+        }
         $f(0x55,$($borrow)* $s.controls.mode);
         $f(0x56,$($borrow)* $s.controls.fake_mode);
         $f(0x57,$($borrow)* $s.controls.mosaic);
@@ -1015,6 +1018,7 @@ macro_rules! display_bytes {
         $f(0x77,$($borrow)* $s.controls.geometry);
         $f(0x84,$($borrow)* $s.controls.nmi_enable);
         $f(0x85,$($borrow)* $s.controls.hdma_enable);
+        $f(0x86,$($borrow)* $s.controls.memory_select);
         $f(0x7ec,$($borrow)* $s.controls.committed_fake_mode);
     };
 }
