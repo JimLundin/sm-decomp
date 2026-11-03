@@ -119,7 +119,8 @@ its check has passed in CI, and the check is deleted with it.
    without the oracle sample at three pinned slots (`ORACLE_SLOT`); rows for
    four selections (every fifth row, a mixed sample with long-prefix,
    checkpoint and any% rows, one corpus row, one room) and two that must fail
-   in both; coverage with and without routes. *Switch:* one line in ci.yml
+   in both; coverage with and without routes. All thirteen matched on
+   902d429d2 (run 41683753650, Quality, 73 s). *Switch:* one line in ci.yml
    verify-plan (below). *Deletes after the switch:* plan_verify.py and
    plan_corpus.py (307 lines), lock_gate.py `jobs`/`matrix`/`oracle_sample`,
    full_route.py `plan`/`jobs`/`job_list`. pack.py stays until step 6 (replay
