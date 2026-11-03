@@ -12,7 +12,6 @@
 use crate::actors::boss_interaction as interaction;
 use crate::actors::boss_lease::bg2_staging;
 use crate::actors::boss_lease::{BossLease, BossState, steps};
-use crate::actors::deaths::Deaths as _;
 use crate::actors::host::BossEffects as _;
 use crate::actors::host::{Death, Shot, Slopes, below};
 use crate::actors::layouts::EnemyLayout104;
@@ -43,6 +42,7 @@ pub trait Lease:
     + crate::player_update::effects::Host
     + crate::progress::FlagHost
     + crate::sprite_effect_host::Host
+    + crate::enemy_projectiles::host::Host
     + crate::actors::boss_interaction::Access
     + SlotState
 {
@@ -52,9 +52,6 @@ pub trait Lease:
 
 /// What Kraid needs of the game beyond the shared boss effects and deaths.
 pub trait Host: crate::actors::host::BossEffects + crate::actors::deaths::Deaths {
-    /// The boss word of `area`, in native byte order.
-    fn boss_word_native(&mut self, area: u16) -> u16;
-    fn set_boss_word_native(&mut self, area: u16, value: u16);
     /// A verifier observation point in the room-cleared fade.
     fn observe_kraid_flags(&mut self, _step: u8) {}
 }
@@ -549,8 +546,12 @@ fn execute_script<L: Lease>(game: &mut L) -> u16 {
         if record.word(0) != 0xffff {
             if (record.word(0) as i16).wrapping_add(1) < 0 {
                 match result {
-                    script_call::ROAR => game.queue_sound(1, ROAR_SOUND, 6),
-                    script_call::DYING_CRY => game.queue_sound(1, DYING_CRY_SOUND, 15),
+                    script_call::ROAR => {
+                        crate::effects::SoundEffects::queue_sound(game, 1, ROAR_SOUND, 6)
+                    }
+                    script_call::DYING_CRY => {
+                        crate::effects::SoundEffects::queue_sound(game, 1, DYING_CRY_SOUND, 15)
+                    }
                     _ => game.foreign(|game| game.unreachable()),
                 }
                 *BodyEdit::of(game, BODY).script() = Body::of(game, BODY).script().wrapping_add(2);
@@ -687,7 +688,7 @@ fn projectile_explosion<S: BossState + crate::actors::boss_interaction::Access +
             29
         }) as u16;
     game.spawn_room_eproj(DUST_CLOUD, kind);
-    game.queue_sound(0, EXPLOSION_SOUND, 6);
+    crate::effects::SoundEffects::queue_sound(game, 0, EXPLOSION_SOUND, 6);
 }
 
 /// Was `Kraid_HurtFlash_Handling`.
@@ -784,7 +785,7 @@ fn charge_lint<L: Lease>(game: &mut L, k: u16) {
     *PartEdit::of(game, k).function_timer() = Part::of(game, k).function_timer().wrapping_sub(1);
     if left == 1 {
         *PartEdit::of(game, k).function() = function::LINT_FIRE;
-        game.queue_sound(2, LINT_SOUND, 6);
+        crate::effects::SoundEffects::queue_sound(game, 2, LINT_SOUND, 6);
     }
 }
 
@@ -928,7 +929,7 @@ fn crumble<L: Lease>(game: &mut L, rock: u16, block_x: u8, plm: u16) {
 fn sound_every_half_second<L: Lease>(game: &mut L) {
     battle!(game.QuakeSoundTimer -= 1);
     if battle!(game.QuakeSoundTimer) == 0 {
-        game.queue_sound(2, ROCKS_SOUND, 6);
+        crate::effects::SoundEffects::queue_sound(game, 2, ROCKS_SOUND, 6);
         battle!(game.QuakeSoundTimer = 30);
     }
 }
@@ -1534,7 +1535,9 @@ pub fn sink_through_floor<L: Lease>(game: &mut L) {
         PartEdit::of(game, FOOT).actor().properties = hidden;
         *BodyEdit::of(game, BODY).function() = function::FADE_IN_CLEAR_BG2_TOP;
         battle!(game.CameraDistance = 0);
-        game.foreign(|game| game.scatter_enemy_drop(DropSource::Kraid, enemy_ptr));
+        game.owned_step(|game| {
+            crate::enemy_projectiles::drops::scatter(DropSource::Kraid, enemy_ptr, game)
+        });
         draw_room_bg(game);
     }
 }
@@ -1865,7 +1868,7 @@ fn attack_with_mouth_open<L: Lease>(game: &mut L) {
         );
         let k = (battle!(game.Random)) & 0xe;
         game.spawn_projectile(parameter, k, SPIT_ROCKS);
-        game.queue_sound(2, ROCKS_SOUND, 6);
+        crate::effects::SoundEffects::queue_sound(game, 2, ROCKS_SOUND, 6);
     }
 }
 
@@ -2261,7 +2264,7 @@ pub fn step_down_and_shake<L: Lease>(game: &mut L) {
 
 /// Instruction: the stomp. Was `Kraid_Instr_PlaySound_0x76`.
 pub fn stomp_sound<L: Lease>(game: &mut L) {
-    game.queue_sound(1, STOMP_SOUND, 6);
+    crate::effects::SoundEffects::queue_sound(game, 1, STOMP_SOUND, 6);
 }
 
 /// Instruction: Kraid steps back. Was `Kraid_Instr_XposMinus3`/`3b`.
