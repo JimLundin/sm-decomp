@@ -1,10 +1,5 @@
 //! Qualified legacy effects; these are not counted as unsafe elimination.
-use crate::game::{actors, session_runtime::Runtime};
 use crate::game_state::Game;
-
-pub(super) fn calculate_angle_from_xy(x: u16, y: u16, _game: &mut Game) -> u16 {
-    crate::game::actors::api::angle_from_delta(x, y)
-}
 
 pub(super) fn ridley_offscreen(x: u16, y: u16, game: &mut Game) -> u8 {
     u8::from(sm_game::actors::ridley::solid_block_at(x, y, game))
@@ -30,11 +25,4 @@ pub(super) fn draw_spritemap(
         Clip::Inside
     };
     sm_game::sprite_output::with_base_tile(bank, map, (x, y), graphics, tile, clip, game);
-}
-
-pub(super) fn respawn_enemy(index: u16, game: &mut Game) {
-    actors::population::respawn(
-        &mut Runtime::new(game),
-        actors::access::ActorKey::from_legacy(index),
-    );
 }
