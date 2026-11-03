@@ -51,6 +51,9 @@ pub enum Field {
     MessageDelay,
     /// Where Kraid's sinking unpause hook queues its row erasures ($0780).
     UnpauseQueueTail,
+    /// Whether an APU upload is under way ($0617), as the owned audio
+    /// requests hold it; with legacy control the byte path answers.
+    ApuUploading,
 }
 
 impl Field {
@@ -74,6 +77,7 @@ impl Field {
             Self::RoomHeader => words::ROOM_PTR,
             Self::MessageDelay => words::MY_COUNTER,
             Self::UnpauseQueueTail => words::MY_COUNTER2,
+            Self::ApuUploading => words::IS_UPLOADING_APU,
         }
     }
 
@@ -116,13 +120,18 @@ impl Field {
             Self::RoomHeader => session.world.room_key(&entry.room),
             Self::MessageDelay => session.messages.delay,
             Self::UnpauseQueueTail => room.unpause_queue_tail,
+            Self::ApuUploading => match &session.control {
+                crate::session_owners::Control::Owned(control) => control.requests.uploading,
+                crate::session_owners::Control::Legacy(_) => return None,
+            },
         })
     }
 
     /// The Session field that holds the word, for a store. `None` where the
     /// Session has no word there, and where it holds no plain word: the room
     /// header and the door exit, which the projection stores a byte at a
-    /// time through the world's keys, and the FX blending control lane.
+    /// time through the world's keys, the FX blending control lane, and the
+    /// APU upload flag, whose stores keep the audio owner's byte path.
     pub fn session_word_mut(self, session: &mut Session) -> Option<&mut u16> {
         Some(match self {
             Self::Flow(word) => session.flow.get_mut(word),
@@ -161,6 +170,7 @@ impl Field {
             Self::RoomHeader => return None,
             Self::MessageDelay => &mut session.messages.delay,
             Self::UnpauseQueueTail => &mut session.room.unpause_queue_tail,
+            Self::ApuUploading => return None,
         })
     }
 }
