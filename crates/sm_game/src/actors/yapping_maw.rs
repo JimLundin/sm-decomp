@@ -9,7 +9,7 @@ use crate::cartridge::rom_table_word;
 use crate::enemy_script::EnemyScript;
 use crate::geometry::Point;
 use crate::legacy_overflow;
-use crate::ram::word;
+use crate::player_transitions::state::InputMode;
 use core::mem::offset_of;
 use sm_data::enemy_speeds::SpeedTable;
 
@@ -140,10 +140,6 @@ const LEFT: u16 = 12;
 const STRAIGHT: u16 = 0x80;
 const SPEED_STEP: u16 = 8;
 const NEGATE_SPEED: u16 = 4;
-/// Samus pose input handlers: grabbed ($E90E), normal ($E913) and demo ($E91D).
-const GRABBED_INPUT: u16 = 0xe90e;
-const NORMAL_INPUT: u16 = 0xe913;
-const DEMO_INPUT: u16 = 0xe91d;
 /// Samus command 3: locked in place.
 const LOCK_SAMUS: u16 = 3;
 /// $7E:1997: the enemy projectile IDs.
@@ -479,13 +475,28 @@ fn cooldown<L: Lease>(game: &mut L) {
         *timer = timer.wrapping_sub(1);
         *timer
     };
-    if timer & SIGN != 0 && word!(game.SAMUS_INPUT_HANDLER) != DEMO_INPUT {
-        word!(game.SAMUS_INPUT_HANDLER = NORMAL_INPUT);
+    if timer & SIGN != 0 && !demo_input(game) {
+        set_input(game, InputMode::Normal);
         *YappingMawEdit::of(game, maw).grabbing_samus() = 0;
         let mut edit = YappingMawEdit::of(game, maw);
         *edit.intangibility_timer() = INTANGIBLE_FRAMES;
         *edit.cooldown_timer() = COOLDOWN_FRAMES;
         *edit.function() = function::NEUTRAL;
+    }
+}
+/// Whether Samus's input handler ($0A60) is the demo's ($E91D).
+fn demo_input<L: Lease>(game: &L) -> bool {
+    game.session().player.transitions.input_mode.to_raw() == InputMode::Demo.to_raw()
+}
+/// Store Samus's input handler ($0A60).
+fn set_input<L: Lease>(game: &mut L, mode: InputMode) {
+    game.session_mut().player.transitions.input_mode = mode;
+    game.words_stored();
+}
+/// Give Samus back the normal input handler ($E913) unless the demo drives her.
+fn release_input<L: Lease>(game: &mut L) {
+    if !demo_input(game) {
+        set_input(game, InputMode::Normal);
     }
 }
 /// Main AI - Yapping Maw ($A8:A211): run its function. False selects the
@@ -522,7 +533,8 @@ pub fn touch<L: Lease>(game: &mut L) {
     {
         *YappingMawEdit::of(game, maw).intangibility_timer() = 0;
         *YappingMawEdit::of(game, maw).grabbing_samus() = 1;
-        word!(game.SAMUS_INPUT_HANDLER = GRABBED_INPUT);
+        // The grabbed handler ($E90E) ignores the controller.
+        set_input(game, InputMode::Disabled);
     }
 }
 /// The base sprite object takes the maw's initial palette.
@@ -548,9 +560,7 @@ pub fn shot<L: Lease>(game: &mut L) {
     let maw = game.current_enemy();
     if YappingMaw::of(game, maw).actor().health != 0 {
         if YappingMaw::of(game, maw).actor().frozen != 0 {
-            if word!(game.SAMUS_INPUT_HANDLER) != DEMO_INPUT {
-                word!(game.SAMUS_INPUT_HANDLER = NORMAL_INPUT);
-            }
+            release_input(game);
             *YappingMawEdit::of(game, maw).grabbing_samus() = 0;
         }
     } else {
@@ -560,9 +570,7 @@ pub fn shot<L: Lease>(game: &mut L) {
         }
         let handle = YappingMaw::of(game, maw).sprite_object();
         game.foreign(|game| game.retire_sprite(handle));
-        if word!(game.SAMUS_INPUT_HANDLER) != DEMO_INPUT {
-            word!(game.SAMUS_INPUT_HANDLER = NORMAL_INPUT);
-        }
+        release_input(game);
         let maw = game.current_enemy();
         *YappingMawEdit::of(game, maw).grabbing_samus() = 0;
     }
