@@ -2184,6 +2184,18 @@ impl sm_game::cartridge::NativeImage for Runtime<'_> {
         self.game.capture_native_rom()
     }
 }
+// Magdollite's imported tables are the game's; reading them touches no RAM.
+impl sm_game::actors::magdollite::Host for Runtime<'_> {
+    fn magdollite_glow_colors(&self, source: isize) -> [u16; 4] {
+        self.game.magdollite_glow_colors(source)
+    }
+    fn magdollite_arm(&self, address: u32, index: isize) -> u16 {
+        self.game.magdollite_arm(address, index)
+    }
+    fn warn_lava_height(&mut self, value: i32) {
+        warn_lava_height(value);
+    }
+}
 // Crocomire's imported tables are the game's; reading them touches no RAM.
 impl sm_game::actors::crocomire_reactions::Tables for Runtime<'_> {
     fn crocomire_table_word(&self, address: u32, index: isize) -> u16 {
