@@ -1,7 +1,7 @@
 # Verification sharding investigation, 2026-11-01
 
 This is a dated record of the Windows workflows, since replaced by
-[verify.yml](../.github/workflows/verify.yml) and
+[ci.yml](../.github/workflows/ci.yml) Verify and
 [plan_verify.py](../.github/scripts/plan_verify.py).
 
 The published room chains already use the existing scenario runner and balanced

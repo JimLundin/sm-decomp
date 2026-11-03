@@ -47,7 +47,7 @@ reach that episode and its continuation checks pass.
 
 ## Oracle digest lock: scenarios kept on lockstep
 
-The engine-only gate (`verify.yml`) checks every seeded and boot corpus row
+The engine-only gate (`ci.yml` Verify) checks every seeded and boot corpus row
 and every route room against the faithful oracle's digest lock
 (`scenarios/lock.toml`). These scenarios are not locked; they stay on the patched
 lockstep corpus and route jobs until the cause is fixed. Each carries an

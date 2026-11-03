@@ -12,7 +12,7 @@ commits need no local verifier build.
 ## Run replays
 
 Push your branch as `verify/<name>` to run the whole gate on it. To run chosen rows:
-`gh workflow run verify.yml --ref <branch> -f scope=rows -f segments="ID ID"`,
+`gh workflow run ci.yml --ref <branch> -f scope=rows -f segments="ID ID"`,
 adding `-f oracle=faithful` for the unpatched game. `scope=full` adds lockstep of
 everything. The commands below also work locally if you have a ROM.
 

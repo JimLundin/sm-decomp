@@ -1,18 +1,68 @@
 name: CI
 
+# One workflow in two parts.
+#   Quality: formatting, lints, ratchets, tests and dependency direction. It runs on every
+#   pull request and push to main.
+#   Verify: replays. Pull requests and verify/** pushes run the gate: every locked scenario
+#   engine-only against the oracle lock, lockstep for what the lock cannot hold, and the ROM
+#   import check. A pull request that changes no replay-relevant file skips it
+#   (.github/scripts/replay_relevant.py). The nightly run adds lockstep of the whole corpus
+#   and both routes and a rotating faithful-oracle sample; it stops if this commit already
+#   passed. Dispatch runs any scope. Coverage reports what the corpus never executes.
+# See .github/scripts/plan_verify.py. The ROM is encrypted in the private ci-data
+# repository. ROM-derived files stay private, and fetching it needs secrets, so only
+# in-repo branches run it.
 on:
-  push:
-    branches: [main]
-    paths-ignore:
-      - docs/PLAN.md
   pull_request:
+  push:
+    branches: [main, 'verify/**']
+  schedule:
+    - cron: '17 2 * * *'
   workflow_dispatch:
+    inputs:
+      scope:
+        description: What to run
+        type: choice
+        options: [gate, full, rows, coverage]
+        default: gate
+      segments:
+        description: Space-separated row ids (scope rows)
+        required: false
+        default: ''
+      oracle:
+        description: Oracle for lockstep (patched = snesrev compatibility patches, faithful = original game logic)
+        type: choice
+        options: [patched, faithful]
+        default: patched
+      audio_trace:
+        description: Check each lockstep row's ordered Cue/port trace against the physical-audio oracle
+        type: boolean
+        default: false
+      oracle_sample:
+        description: With scope full, re-record a rotating sample of at least 30 faithful locks
+        type: boolean
+        default: false
+      cover_routes:
+        description: With scope coverage, also replay both routes instrumented
+        type: boolean
+        default: false
 
 permissions:
   contents: read
 
+# A new commit replaces its branch's run; nightly and dispatched runs finish.
+concurrency:
+  group: ci-${{ github.ref }}-${{ inputs.scope || github.event_name }}-${{ inputs.oracle || 'patched' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}
+
+env:
+  SCOPE: ${{ inputs.scope || (github.event_name == 'schedule' && 'full' || 'gate') }}
+
 jobs:
-  format:
+  # ---------------------------------------------------------------- Quality
+  quality:
+    name: Quality
+    if: github.event_name == 'push' || github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && inputs.scope == 'gate')
     runs-on: ubuntu-24.04
     permissions:
       contents: read
@@ -43,7 +93,7 @@ jobs:
         run: |
           python3 tools/authored_inputs.py check
           python3 tools/scenario_seeds.py check
-      - name: Keep every mutation anchor present (the mutants run nightly)
+      - name: Keep every mutation anchor present
         run: |
           python3 sm/src/verification/player_detached/mutations.py --check-anchors
           python3 sm/src/verification/session_mutations.py --check-anchors
@@ -83,10 +133,11 @@ jobs:
         run: |
           deleted=$(git diff --no-renames --diff-filter=D --name-only "$BEFORE" HEAD -- 'sm/src/game/sm_*.rs')
           if [ -n "$deleted" ]; then
-            gh workflow run verify.yml --repo "$GITHUB_REPOSITORY" --ref main -f scope=full
+            gh workflow run ci.yml --repo "$GITHUB_REPOSITORY" --ref main -f scope=full
           fi
 
   detached:
+    if: github.event_name == 'push' || github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && inputs.scope == 'gate')
     # Detached checks need no game backend, native libraries or ROM.
     runs-on: ubuntu-24.04
     timeout-minutes: 60
@@ -104,7 +155,8 @@ jobs:
           "$out/player-detached"
 
   desktop-check:
-    # The desktop links only for Windows; desktop.yml links it nightly.
+    if: github.event_name == 'push' || github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && inputs.scope == 'gate')
+    # The desktop links only for Windows; this type-checks that target from Linux.
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
@@ -114,3 +166,182 @@ jobs:
           rustup show
           rustup target add x86_64-pc-windows-gnu
           cargo check --locked --target x86_64-pc-windows-gnu -p sm_app
+
+  # ---------------------------------------------------------------- Verify
+  verify-plan:
+    if: github.event_name != 'push' || startsWith(github.ref, 'refs/heads/verify/')
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      skip: ${{ (steps.passed.outputs.skip == 'true' || steps.relevant.outputs.skip == 'true') && 'true' || 'false' }}
+      matrix: ${{ steps.plan.outputs.matrix }}
+      movie_file: ${{ steps.plan.outputs.movie_file }}
+      movie_sha256: ${{ steps.plan.outputs.movie_sha256 }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: passed
+        env:
+          GH_TOKEN: ${{ github.token }}
+          WORKFLOW: ci.yml
+        run: python3 .github/scripts/already_passed.py
+      # A pull request that changes only docs, skills or measurement tools replays nothing.
+      - id: relevant
+        env:
+          GH_TOKEN: ${{ github.token }}
+          WORKFLOW: ci.yml
+        run: python3 -B .github/scripts/replay_relevant.py
+      - id: plan
+        env:
+          ORACLE: ${{ inputs.oracle || 'patched' }}
+          SELECTED: ${{ inputs.segments }}
+          ORACLE_SAMPLE: ${{ (github.event_name == 'schedule' || inputs.oracle_sample) && '1' || '' }}
+          COVER_ROUTES: ${{ inputs.cover_routes && '1' || '' }}
+        run: python3 .github/scripts/plan_verify.py
+
+  verify-build:
+    needs: verify-plan
+    if: needs.verify-plan.outputs.skip != 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    outputs:
+      rust: ${{ steps.rust.outputs.version }}
+    env:
+      CARGO_INCREMENTAL: '0'
+      CARGO_BUILD_JOBS: '4'
+      RUSTFLAGS: ${{ inputs.scope == 'coverage' && '-D warnings -C instrument-coverage -C link-dead-code' || '-D warnings' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/linux-native
+      - id: rust
+        run: echo "version=$(rustc --version | cut -d' ' -f2)" >> "$GITHUB_OUTPUT"
+      - name: Reuse a verifier built from the same sources
+        # verify_dll.py still rebuilds unless the verifier's stamp matches these sources,
+        # the compiler/options and the actual native archive bytes.
+        uses: actions/cache@v4
+        with:
+          path: |
+            target/verify-dll
+            target/verify-host
+          key: verifier-${{ runner.os }}-${{ inputs.scope == 'coverage' && 'coverage' || 'plain' }}-${{ hashFiles('crates/**', 'sm/**', 'Cargo.lock', 'rust-toolchain.toml', 'tools/verify_dll.py', 'tools/install_lakesnes.py', 'tools/install_native_*.py', '.github/actions/linux-native/action.yml') }}
+      - name: Build the verifier
+        run: python3 tools/verify_dll.py --build-only --direct
+      - name: Run the verifier's units
+        if: inputs.scope != 'coverage'
+        run: python3 tools/verify_dll.py --unit-tests --no-build --direct
+      - name: Check the verifier's source guards and actor capabilities
+        if: inputs.scope != 'coverage'
+        run: python3 -B .github/scripts/check_actor_exports.py
+      - name: Run the target packages' tests instrumented
+        if: inputs.scope == 'coverage'
+        run: python3 -B .github/scripts/coverage_tests.py target/coverage-unit
+      - name: Package the verifier
+        # A tar keeps the executable bit, and the paths verify_dll.py expects.
+        run: |
+          test -x target/verify-host/sm_verify
+          files="target/verify-host/sm_verify"
+          if [ -d target/coverage-unit ]; then files="$files target/coverage-unit"; fi
+          tar -cf verifier.tar $files
+      - uses: actions/upload-artifact@v4
+        with:
+          name: verifier
+          path: verifier.tar
+          retention-days: 1
+
+  verify-replay:
+    needs: [verify-plan, verify-build]
+    if: needs.verify-plan.outputs.skip != 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: ${{ matrix.timeout }}
+    strategy:
+      fail-fast: false
+      # Other repositories share the account's 20 jobs; leave two for them and CI.
+      max-parallel: 18
+      matrix: ${{ fromJson(needs.verify-plan.outputs.matrix) }}
+    name: ${{ matrix.name }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: verifier
+      - run: tar -xf verifier.tar
+      - name: Cache the pinned movie download
+        if: contains(matrix.kinds, 'route')
+        uses: actions/cache@v4
+        with:
+          path: movies/${{ needs.verify-plan.outputs.movie_file }}
+          key: ${{ runner.os }}-movie-${{ needs.verify-plan.outputs.movie_sha256 }}
+      - name: Fetch the encrypted ROM
+        uses: actions/checkout@v4
+        with:
+          repository: JimLundin/ci-data
+          ssh-key: ${{ secrets.SM_ROM_DEPLOY_KEY }}
+          path: .ci-data
+          persist-credentials: false
+      - name: Decrypt the ROM
+        env:
+          SM_ROM_KEY: ${{ secrets.SM_ROM_KEY }}
+        run: python3 -B .github/scripts/prepare_rom.py
+      - name: Restore and replay
+        env:
+          JOB: ${{ toJSON(matrix) }}
+          ORACLE: ${{ inputs.oracle }}
+          AUDIO_TRACE: ${{ inputs.audio_trace && '1' || '' }}
+          LLVM_PROFILE_FILE: ${{ inputs.scope == 'coverage' && format('{0}/profiles/%p-%m.profraw', github.workspace) || '' }}
+        run: python3 -B .github/scripts/replay_job.py
+      - uses: actions/upload-artifact@v4
+        if: always() && inputs.scope == 'coverage'
+        with:
+          name: profiles-${{ matrix.kinds == 'room' && 'route-' || '' }}${{ strategy.job-index }}
+          path: profiles
+          retention-days: 2
+          if-no-files-found: warn
+
+  verify-coverage:
+    needs: [verify-build, verify-replay]
+    if: always() && inputs.scope == 'coverage' && needs.verify-build.result == 'success'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: verifier
+      - run: tar -xf verifier.tar
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: profiles-*
+          path: all-profiles
+          # One directory per job: jobs reuse process ids, so merged names would collide.
+          merge-multiple: false
+      - name: Merge the profiles and summarise engine coverage
+        env:
+          RUST_VERSION: ${{ needs.verify-build.outputs.rust }}
+        run: python3 -B .github/scripts/coverage_report.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage.md
+          retention-days: 30
+
+  verify:
+    name: Verify result
+    needs: [verify-plan, verify-build, verify-replay, verify-coverage]
+    if: always() && needs.verify-plan.result != 'skipped'
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Require every planned job to pass
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+          SKIP: ${{ needs.verify-plan.outputs.skip }}
+        run: |
+          python3 -B - <<'PY'
+          import json, os
+          needs = json.loads(os.environ['RESULTS'])
+          assert needs['verify-plan']['result'] == 'success'
+          if os.environ['SKIP'] != 'true':
+              assert needs['verify-build']['result'] == 'success'
+              assert needs['verify-replay']['result'] == 'success'
+              if os.environ['SCOPE'] == 'coverage': assert needs['verify-coverage']['result'] == 'success'
+          PY

@@ -119,7 +119,7 @@ arguments to the corpus run, so the routes record and check the same way.
 A scenario that stays on patched lockstep carries an `unlocked` note (its
 `docs/LEGACY.md` entry). `tools/scenario.py lock --check` fails on a stale lock: an
 entry whose start, inputs or budget changed, an entry for no scenario, or a
-lockable scenario neither locked nor `unlocked`. The `verify.yml` workflow's
+lockable scenario neither locked nor `unlocked`. The `ci.yml` Verify jobs'
 plan (`.github/scripts/lock_gate.py`) runs it, then the engine over every
 locked scenario on each pull request and push; its console carries ids, stream and
 field names, ticks and hashes only.
