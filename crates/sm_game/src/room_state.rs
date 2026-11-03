@@ -2,7 +2,6 @@
 pub mod fx;
 use crate::enemy_projectiles::host::Effects;
 use crate::menu_state::SaveSelection;
-use crate::ram::RawRam as _;
 use crate::room_mechanisms::creation::spawn_hardcoded;
 use crate::room_view::EffectWord;
 use crate::runtime_access::SessionView;
@@ -144,9 +143,10 @@ pub fn execute_setup_code<H: ScriptHost + ?Sized>(script: u16, game: &mut H) {
         // Set collected map.
         0xc90a => {
             let area = usize::from(crate::gameplay_context::navigation(game).area);
-            let at = 0xd908 + area;
-            let collected =
-                u16::from_ne_bytes([game.ram().read_byte(at), game.ram().read_byte(at + 1)]) | 1;
+            // The original reads the bytes as the CPU's word.
+            let collected = crate::word_transfers::stored_native(
+                game.view_word(crate::projection::Field::MapStations(area)),
+            ) | 1;
             // The area's map station byte; the word store's high byte keeps the
             // next area's.
             crate::runtime_access::with_session(game, |session| {

@@ -100,6 +100,10 @@ pub enum Field {
     /// 2 * index), 128 words per area. The Session holds them as bytes, so
     /// stores take the byte path.
     SavedMap(usize),
+    /// The word at area `index`'s map station byte ($D908 + index): the
+    /// area's byte, then the next area's. The Session holds the bytes, so
+    /// stores take the byte path; past the last area the byte path answers.
+    MapStations(usize),
 }
 
 impl Field {
@@ -144,6 +148,7 @@ impl Field {
             Self::Bg2Scroll(axis) => words::BG2_X_SCROLL + 2 * axis,
             Self::ExploredMap(index) => 0x7f7 + 2 * index,
             Self::SavedMap(index) => crate::save_file::SAVED_MAPS + 2 * index,
+            Self::MapStations(index) => crate::ram::bytes::MAP_STATION_BYTE_ARRAY + index,
         }
     }
 
@@ -209,6 +214,10 @@ impl Field {
                 u16::from_le_bytes([*explored.get(2 * index)?, *explored.get(2 * index + 1)?])
             }
             Self::SavedMap(index) => session.saved_maps.word(index)?,
+            Self::MapStations(index) => {
+                let stations = &session.gameplay_flags.map_stations;
+                u16::from_le_bytes([*stations.get(index)?, *stations.get(index + 1)?])
+            }
         })
     }
 
@@ -272,7 +281,7 @@ impl Field {
             Self::Layer2(axis) => session.room.camera.layer2.get_mut(axis)?,
             Self::Bg1Offset(axis) => session.room.camera.bg1_offset.get_mut(axis)?,
             Self::Bg2Scroll(axis) => session.room.camera.bg2_scroll.get_mut(axis)?,
-            Self::ExploredMap(_) | Self::SavedMap(_) => return None,
+            Self::ExploredMap(_) | Self::SavedMap(_) | Self::MapStations(_) => return None,
         })
     }
 }
@@ -892,6 +901,7 @@ mod tests {
         fields.extend((0..3).map(Field::PauseHook));
         fields.extend((0..128).map(Field::ExploredMap));
         fields.extend((0..1024).map(Field::SavedMap));
+        fields.extend((0..7).map(Field::MapStations));
         fields
     }
 
