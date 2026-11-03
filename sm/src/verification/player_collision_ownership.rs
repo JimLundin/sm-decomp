@@ -100,7 +100,7 @@ fn radius(g: &mut Game, out: &mut Vec<u8>) {
         .map(|at| g.ram().read_byte(at))
         .collect::<Vec<_>>();
     record(out, 0, 0, g);
-    crate::game::session_runtime::set_player_radius(g);
+    crate::game::session_runtime::set_player_radius(&mut Runtime::new(g));
     put(&mut expected, 0xafe, 5);
     put(&mut expected, 0xb00, 19);
     assert_ram(g, &expected, "collision.owner.radius.first_live_content");
@@ -109,8 +109,8 @@ fn radius(g: &mut Game, out: &mut Vec<u8>) {
     install_radius_image(g, pose, 31);
     {
         let mut rt = Runtime::new(g);
-        rt.foreign(crate::game::session_runtime::set_player_radius);
-        assert_eq!(rt.word(0xb00), 31, "collision.owner.radius.foreign_reload");
+        crate::game::session_runtime::set_player_radius(&mut rt);
+        assert_eq!(rt.word(0xb00), 31, "collision.owner.radius.lease_reload");
         assert_eq!(rt.word(0xafe), 5, "collision.owner.radius.x_reread");
     }
     put(&mut expected, 0xb00, 31);

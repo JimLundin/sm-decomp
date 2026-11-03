@@ -1,5 +1,4 @@
 //! Player-projectile lifecycle, producers, trails and charge feedback.
-use crate::game::session_encoding as encoding;
 pub(crate) use sm_game::player_projectiles::access;
 use sm_game::player_projectiles::animation;
 pub(crate) use sm_game::player_projectiles::content;
@@ -17,15 +16,13 @@ use host::Host;
 #[path = "../../verification/player_projectiles.rs"]
 pub(crate) mod checks;
 
-pub(crate) fn prepare(game: &mut Game) {
-    let address = 0x900000
-        | u32::from(encoding::read(
-            &|at| game.ram().read_byte(at),
-            crate::ram_map::words::FRAME_HANDLER_ALFA,
-        ));
-    prepare_entry(address, game);
+/// Prepare Samus's projectiles through the frame handler's entry, on the lease the
+/// caller holds.
+pub(crate) fn prepare(runtime: &mut Runtime<'_>) {
+    let address = 0x900000 | u32::from(runtime.word(crate::ram_map::words::FRAME_HANDLER_ALFA));
+    prepare_entry(address, runtime);
 }
-pub(crate) fn prepare_entry(address: u32, game: &mut Game) {
+pub(crate) fn prepare_entry(address: u32, runtime: &mut Runtime<'_>) {
     use state::PrepareEntry;
     let entry = match address {
         0x90e695 => PrepareEntry::Normal,
@@ -33,11 +30,11 @@ pub(crate) fn prepare_entry(address: u32, game: &mut Game) {
         0x90e713 => PrepareEntry::ProjectilesOnly,
         0x90e8cd => PrepareEntry::Inactive,
         _ => {
-            Runtime::new(game).unknown();
+            runtime.unknown();
             return;
         }
     };
-    preparation::prepare(&mut Runtime::new(game), entry);
+    preparation::prepare(runtime, entry);
 }
 pub(crate) fn update(game: &mut Game) {
     motion::advance_all(&mut Runtime::new(game));

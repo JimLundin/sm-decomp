@@ -558,13 +558,13 @@ pub(crate) fn capture(id: u32, grapple: impl FnOnce(&mut Game) -> u8) -> Option<
         5 => reset(&mut g),
         6 => clear(0, &mut g),
         7..=9 => update(&mut g),
-        10..=19 | 36 | 40..=43 => prepare(&mut g),
+        10..=19 | 36 | 40..=43 => prepare(&mut Runtime::new(&mut g)),
         20..=27 => flare(&mut g),
         28..=29 => grapple_flare(&mut g),
         30..=35 => update_trails(&mut g),
-        37 => prepare_entry(0x90e713, &mut g),
-        38 => prepare_entry(0x90e8cd, &mut g),
-        39 => prepare_entry(0x90e6c9, &mut g),
+        37 => prepare_entry(0x90e713, &mut Runtime::new(&mut g)),
+        38 => prepare_entry(0x90e8cd, &mut Runtime::new(&mut g)),
+        39 => prepare_entry(0x90e6c9, &mut Runtime::new(&mut g)),
         44..=50 | 80 | 81 => animation::advance(&mut Runtime::new(&mut g)),
         60 | 61 => {
             call_motion(if id == 60 { 0x90aef3 } else { 0x90dc9c }, 0, &mut g);

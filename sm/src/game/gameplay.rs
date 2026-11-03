@@ -10,6 +10,12 @@ use sm_game::room_entry::api::EntrySignal;
 
 pub(crate) use sm_game::gameplay_frame::{TickInput, tick};
 
+impl sm_game::gameplay_frame::PassLease for Runtime<'_> {
+    fn advance_player(&mut self) {
+        crate::game::session_runtime::player_update_runtime::advance_frame(self);
+    }
+}
+
 impl sm_game::gameplay_frame::Host for Game {
     fn latch_controller(&mut self, buttons: u16) {
         // The emulated joypad register reads the controller state bit-reversed.
@@ -119,9 +125,6 @@ impl sm_game::gameplay_frame::Host for Game {
 
     fn player_projectiles_hit_samus(&mut self) {
         unsafe { crate::game::projectile_contact::player_projectiles_hit_samus(self) }
-    }
-    fn advance_player(&mut self) {
-        crate::game::session_runtime::player_update_runtime::advance_frame(self);
     }
     fn run_room_mechanisms(&mut self) -> u8 {
         unsafe { crate::game::room_mechanisms::run(self) }

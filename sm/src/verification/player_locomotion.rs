@@ -519,9 +519,7 @@ fn atmosphere_seed(
 unsafe fn atmosphere_invoke(id: u32, g: &mut Game) {
     use crate::game::{player_transitions as transitions, session_runtime::Runtime};
     if id <= 4050 {
-        unsafe {
-            crate::game::session_runtime::advance_special_movement(0x90a337, g);
-        }
+        crate::game::session_runtime::advance_special_movement(0x90a337, &mut Runtime::new(g));
         assert_ne!(
             get(g, a::ATMOSPHERIC_GFX_FRAME_AND_TYPE),
             0,
@@ -633,7 +631,10 @@ unsafe fn invoke(id: u32, g: &mut Game) {
             atmosphere_invoke(id, g);
             return;
         }
-        crate::game::session_runtime::advance_special_movement(0x90a337, g);
+        crate::game::session_runtime::advance_special_movement(
+            0x90a337,
+            &mut crate::game::session_runtime::Runtime::new(g),
+        );
     }
 }
 pub unsafe fn capture(id: u32, original: &[u8], g: &mut Game) -> Result<Vec<u8>, String> {

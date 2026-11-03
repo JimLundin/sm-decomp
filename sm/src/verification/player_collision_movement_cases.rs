@@ -609,7 +609,10 @@ pub(crate) unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
                             &mut crate::game::session_runtime::Runtime::new(g),
                         );
                     }
-                    _ => crate::game::session_runtime::advance_special_movement(0x90946e, g),
+                    _ => crate::game::session_runtime::advance_special_movement(
+                        0x90946e,
+                        &mut crate::game::session_runtime::Runtime::new(g),
+                    ),
                 }
                 expect(
                     g,

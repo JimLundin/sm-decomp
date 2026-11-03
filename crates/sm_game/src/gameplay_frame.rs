@@ -106,9 +106,15 @@ pub trait Host:
 
     // Gameplay pass.
     fn player_projectiles_hit_samus(&mut self);
-    fn advance_player(&mut self);
     fn run_room_mechanisms(&mut self) -> u8;
     fn advance_room(&mut self);
+}
+
+/// The gameplay pass phases the compatibility runtime runs on a lease the pass
+/// already holds.
+pub trait PassLease {
+    /// Samus's frame: the frame handler's beta and gamma work.
+    fn advance_player(&mut self);
 }
 
 #[derive(Clone, Copy)]
@@ -841,8 +847,10 @@ fn advance_gameplay<H: Host>(game: &mut H) -> CoroutineRet {
         );
     }
     if matches!(resume, ResumePoint::Start | ResumePoint::EnemyMessage) {
-        game.advance_player();
-        enemy_projectiles::lifecycle::advance(&mut game.runtime());
+        // Samus's frame and the enemy projectiles run on one lease.
+        let mut lease = game.runtime();
+        lease.advance_player();
+        enemy_projectiles::lifecycle::advance(&mut lease);
     }
     if resume != ResumePoint::Skip {
         let yielded = game.run_room_mechanisms();

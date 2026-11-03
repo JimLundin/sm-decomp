@@ -261,8 +261,10 @@ impl sm_game::cinematic_host::Host for Game {
     }
 
     fn advance_intro_player(&mut self) {
-        crate::game::player_projectiles::prepare(self);
-        crate::game::session_runtime::player_update_runtime::advance_frame(self);
+        // Samus's projectiles and her frame run on one lease.
+        let mut runtime = crate::game::session_runtime::Runtime::new(self);
+        crate::game::player_projectiles::prepare(&mut runtime);
+        crate::game::session_runtime::player_update_runtime::advance_frame(&mut runtime);
     }
 
     fn native_assertion(
