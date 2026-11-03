@@ -2218,6 +2218,14 @@ impl sm_game::ram::RawRam for WorkRam {
     }
 }
 
+/// The custom background blocks through the compatibility projection.
+impl sm_game::display::queued_tilemaps::BackgroundBlocks for Game {
+    fn background_block(&self, index: usize) -> u16 {
+        let at = sm_game::ram::word_arrays::CUSTOM_BACKGROUND + 2 * index;
+        u16::from_le_bytes([self.compatibility_byte(at), self.compatibility_byte(at + 1)])
+    }
+}
+
 /// Game's projection: compatibility reads and RAM-image stores, as named RAM words use.
 impl sm_game::runtime_access::SessionRam for Game {
     fn byte(&self, at: usize) -> u8 {
