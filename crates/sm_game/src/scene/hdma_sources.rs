@@ -207,6 +207,32 @@ pub enum LiveOwner {
     ObjectVariable { object: u8, variable: HdmaVariable },
 }
 
+impl LiveOwner {
+    /// The owners without fields.
+    const SLOTS: usize = 15;
+    /// This owner's index among the owners without fields.
+    fn slot(self) -> Option<usize> {
+        Some(match self {
+            Self::MessageDescriptor => 0,
+            Self::MessageScanlines => 1,
+            Self::HdmaTable1 => 2,
+            Self::HdmaTable2 => 3,
+            Self::WindowLeft => 4,
+            Self::WindowRight => 5,
+            Self::SkyBg2 => 6,
+            Self::CrocomireBg2 => 7,
+            Self::LiquidSurface => 8,
+            Self::LiquidBackground => 9,
+            Self::SkyHorizontal => 10,
+            Self::SkyIndirect => 11,
+            Self::ExplosionLeft => 12,
+            Self::ExplosionRight => 13,
+            Self::ExplosionOffscreen => 14,
+            Self::ObjectVariable { .. } => return None,
+        })
+    }
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum HdmaVariable {
     A,
@@ -265,6 +291,10 @@ pub struct HdmaLiveRegion {
 pub struct HdmaLiveDescription {
     buffers: BTreeMap<LiveOwner, Vec<u8>>,
     regions: BTreeMap<LiveOwner, HdmaLiveRegion>,
+    /// `regions`' entries for the owners without fields, by `LiveOwner::slot`,
+    /// so a byte lookup needs no map search. `new` fills it once; `regions`
+    /// never changes after.
+    region_slots: [Option<HdmaLiveRegion>; LiveOwner::SLOTS],
     window_controls: Option<crate::fx_sources::WindowControlLayout>,
     native_origins: BTreeMap<(LiveOwner, usize), crate::fx_domain::SourceOrigin>,
 }
@@ -299,6 +329,7 @@ impl HdmaLiveDescription {
         let mut result = Self {
             buffers: BTreeMap::new(),
             regions: BTreeMap::new(),
+            region_slots: [None; LiveOwner::SLOTS],
             window_controls: None,
             native_origins: BTreeMap::new(),
         };
@@ -316,6 +347,9 @@ impl HdmaLiveDescription {
         for region in regions {
             if result.regions.insert(region.owner, region).is_some() {
                 return Err(DisplayError::Identity);
+            }
+            if let Some(slot) = region.owner.slot() {
+                result.region_slots[slot] = Some(region);
             }
         }
         result.validate()?;
@@ -884,7 +918,11 @@ impl HdmaLiveDescription {
         Ok(())
     }
     fn region(&self, owner: LiveOwner, offset: usize) -> Result<HdmaLiveRegion, DisplayError> {
-        let region = self.regions.get(&owner).ok_or(DisplayError::Source)?;
+        let region = match owner.slot() {
+            Some(slot) => self.region_slots[slot].as_ref(),
+            None => self.regions.get(&owner),
+        }
+        .ok_or(DisplayError::Source)?;
         if offset >= region.length {
             return Err(DisplayError::Alias { offset });
         }
@@ -1245,5 +1283,59 @@ impl SourceBinding {
             ContentKind::Program,
             state.common.enabled & 0x8000 != 0 && binding.channels as u8 != 0,
         )
+    }
+}
+
+#[cfg(test)]
+mod region_slots {
+    use super::*;
+
+    /// The slot table answers every owner as the region map does.
+    #[test]
+    fn region_slots_answer_as_the_region_map_does() {
+        let window = crate::menu_window_encoding::decode(&|_| 0);
+        let live = crate::fx_encoding::decode_sources(&|at| at as u8, &window);
+        let simple = [
+            LiveOwner::MessageDescriptor,
+            LiveOwner::MessageScanlines,
+            LiveOwner::HdmaTable1,
+            LiveOwner::HdmaTable2,
+            LiveOwner::WindowLeft,
+            LiveOwner::WindowRight,
+            LiveOwner::SkyBg2,
+            LiveOwner::CrocomireBg2,
+            LiveOwner::LiquidSurface,
+            LiveOwner::LiquidBackground,
+            LiveOwner::SkyHorizontal,
+            LiveOwner::SkyIndirect,
+            LiveOwner::ExplosionLeft,
+            LiveOwner::ExplosionRight,
+            LiveOwner::ExplosionOffscreen,
+        ];
+        let mut slots: Vec<_> = simple.iter().map(|owner| owner.slot().unwrap()).collect();
+        slots.sort_unstable();
+        assert_eq!(slots, (0..LiveOwner::SLOTS).collect::<Vec<_>>());
+        let object = LiveOwner::ObjectVariable {
+            object: 2,
+            variable: HdmaVariable::C,
+        };
+        assert_eq!(object.slot(), None);
+        for owner in simple.into_iter().chain([object]) {
+            if let Some(slot) = owner.slot() {
+                assert_eq!(live.region_slots[slot], live.regions.get(&owner).copied());
+            }
+            for offset in [0, 1, 0x45, 0x200, 0x400] {
+                let mapped = live
+                    .regions
+                    .get(&owner)
+                    .filter(|region| offset < region.length)
+                    .copied();
+                assert_eq!(
+                    live.region(owner, offset).ok(),
+                    mapped,
+                    "{owner:?} {offset}"
+                );
+            }
+        }
     }
 }
