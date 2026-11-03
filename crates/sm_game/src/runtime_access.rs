@@ -123,3 +123,17 @@ pub trait RuntimeAccess: crate::screen_fade::Owner {
         false
     }
 }
+
+/// Run `store` on the Session of a fresh runtime view, then refresh the view's
+/// observations as the projected word stores did; the view publishes the
+/// Session when it closes.
+pub fn with_session<H: RuntimeAccess + ?Sized, T>(
+    host: &mut H,
+    store: impl FnOnce(&mut crate::session::Session) -> T,
+) -> T {
+    use crate::session_access::SessionAccess as _;
+    let mut runtime = host.runtime();
+    let result = store(runtime.session_mut());
+    runtime.words_stored();
+    result
+}
