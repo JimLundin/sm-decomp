@@ -54,8 +54,16 @@ pub fn spawn_hardcoded<H>(x: u8, y: u8, header: u16, game: &mut H)
 where
     H: crate::runtime_access::RuntimeAccess + ?Sized,
 {
-    let source = SpawnSource::Hardcoded { x, y, header };
-    spawn(&mut game.runtime(), source, &mut Contact::Absent);
+    spawn_hardcoded_in(&mut game.runtime(), x, y, header);
+}
+/// Spawn the hardcoded PLM `header` at block (`x`, `y`) on the lease `c`
+/// already holds (SpawnHardcodedPlm).
+pub fn spawn_hardcoded_in(c: &mut impl Host, x: u8, y: u8, header: u16) {
+    spawn(
+        c,
+        SpawnSource::Hardcoded { x, y, header },
+        &mut Contact::Absent,
+    );
 }
 
 pub fn spawn(c: &mut impl Host, source: SpawnSource, displacement: &mut Contact<'_>) -> u8 {

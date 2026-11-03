@@ -38,6 +38,9 @@ use sm_data::cartridge::RomRecord;
 pub trait Lease:
     BossLease<Game: Host>
     + crate::session_access::SessionAccess
+    + crate::room_mechanisms::host::Host
+    + crate::player_update::effects::Host
+    + crate::progress::FlagHost
     + crate::actors::boss_interaction::Access
     + SlotState
 {
@@ -360,7 +363,7 @@ fn bg2_tile_word<S: SlotState + ?Sized>(game: &S, index: usize) -> u16 {
 
 /// Appends a VRAM write queue entry: `size` bytes from `bank:source` to the
 /// destination `destination` computes.
-fn queue_vram<L: Lease + ?Sized>(
+fn queue_vram<L: Lease>(
     game: &mut L,
     size: u16,
     source: u16,
@@ -384,14 +387,14 @@ fn queue_vram<L: Lease + ?Sized>(
 }
 
 /// The room BG through the BG3 tilemap: Kraid's room background.
-fn queue_room_bg<L: Lease + ?Sized>(game: &mut L) {
+fn queue_room_bg<L: Lease>(game: &mut L) {
     queue_vram(game, 512, animation::ROOM_BG, BANK, |game| {
         (((game.display_control_byte(BG3_TILEMAP_BASE) as i32 & 0xf) << 8) + 16128) as u16
     });
 }
 
 /// Contact with the arm or foot. Was `Kraid_Touch_ArmFoot`.
-pub fn touch_arm_or_foot<L: Lease + ?Sized>(game: &mut L) {
+pub fn touch_arm_or_foot<L: Lease>(game: &mut L) {
     game.contact_reaction(Death::Finalize);
 }
 
@@ -404,18 +407,39 @@ fn push_samus<S: BossState + crate::actors::boss_interaction::Access + ?Sized>(g
 /// The arm is shot: the projectile explodes and flies on, since the original's
 /// delete indexes by the explosion's ID left in Y and writes ROM ($A7:94BA).
 /// Was `Kraid_Arm_Shot`.
-pub fn arm_shot<L: Lease + ?Sized>(game: &mut L, j: u16) {
+pub fn arm_shot<L: Lease>(game: &mut L, j: u16) {
     projectile_explosion(game, j);
 }
 
+/// The boss word of `area`, in native byte order.
+fn boss_word<L: Lease>(game: &L, area: u16) -> u16 {
+    crate::progress::boss_word_at(game, area, crate::gameplay_flag_host::BossWordOrder::Native)
+}
+
+/// Spawn the hardcoded PLM `header` at block (`block_x`, `block_y`), on the
+/// lease where the game opened one of its own.
+fn spawn_plm<L: Lease>(game: &mut L, block_x: u8, block_y: u8, header: u16) {
+    game.owned_step(|game| {
+        crate::room_mechanisms::creation::spawn_hardcoded_in(game, block_x, block_y, header);
+    });
+}
+
+/// Kill the current actor with the normal death `animation`, on the lease
+/// where the game opened one of its own.
+fn normal_death<L: Lease>(game: &mut L, animation: u16) {
+    game.owned_step(|game| {
+        game.kill_current(crate::actors::api::DeathKind::Normal { animation });
+    });
+}
+
 /// Whether Kraid's boss bit is set for this area. Was `Kraid_CheckIfDead`.
-pub fn is_dead<L: Lease + ?Sized>(game: &mut L) -> u16 {
-    let area = game.area();
-    ((game.foreign(|game| game.boss_word_native(area)) & 1) != 0) as u16
+pub fn is_dead<L: Lease>(game: &mut L) -> u16 {
+    let area = BossState::area(game);
+    ((game.owned_step(|game| boss_word(game, area)) & 1) != 0) as u16
 }
 
 /// Was `Kraid_SetEnemyPropsToDead`.
-fn hide_as_dead<L: Lease + ?Sized>(game: &mut L) {
+fn hide_as_dead<L: Lease>(game: &mut L) {
     let k = game.current_enemy();
     PartEdit::of(game, k).actor().properties =
         Part::of(game, k).actor().properties & 0x50ff | 0x700;
@@ -443,12 +467,12 @@ fn load_bg2<S: BossState + SlotState + ?Sized>(game: &mut S, priority: u16) {
 }
 
 /// Colour `index` of the ROM palette at `address`, in native order.
-fn rom_colour<L: Lease + ?Sized>(game: &L, address: u32, index: usize) -> u16 {
+fn rom_colour<L: Lease>(game: &L, address: u32, index: usize) -> u16 {
     crate::cartridge::rom_table_word!(game, address, index as isize)
 }
 
 /// The room background palette becomes BG palette 6's target.
-fn load_room_bg_target<L: Lease + ?Sized>(game: &mut L) {
+fn load_room_bg_target<L: Lease>(game: &mut L) {
     for index in 0..PALETTE_COLOURS {
         let colour = rom_colour(game, ROOM_BG_PALETTE, index);
         game.session_mut().presentation.visual_mut().targets[BG_PALETTE_6 + index] = colour;
@@ -458,26 +482,26 @@ fn load_room_bg_target<L: Lease + ?Sized>(game: &mut L) {
 
 /// Fades in the room background palette and queues its tilemap. Was
 /// `Kraid_DrawRoomBg`.
-fn draw_room_bg<L: Lease + ?Sized>(game: &mut L) {
+fn draw_room_bg<L: Lease>(game: &mut L) {
     load_room_bg_target(game);
     battle!(game.PaletteChangeNum = 0);
     queue_room_bg(game);
 }
 
 /// Was `Kraid_GetsBig_Thinking_Setup`.
-fn start_growing_thinking<L: Lease + ?Sized>(game: &mut L) {
+fn start_growing_thinking<L: Lease>(game: &mut L) {
     *BodyEdit::of(game, BODY).function() = function::GETS_BIG_THINKING;
     place_lint_and_think(game);
 }
 
 /// Was `Kraid_Mainloop_Thinking_Setup`.
-fn start_thinking<L: Lease + ?Sized>(game: &mut L) {
+fn start_thinking<L: Lease>(game: &mut L) {
     *BodyEdit::of(game, BODY).function() = function::MAIN_LOOP_THINKING;
     place_lint_and_think(game);
 }
 
 /// Starts lint `k` waiting `timer` frames to fire. Was `Kraid_Lints_Enable`.
-fn enable_lint<L: Lease + ?Sized>(game: &mut L, k: u16, timer: u16) {
+fn enable_lint<L: Lease>(game: &mut L, k: u16, timer: u16) {
     *PartEdit::of(game, k).function_timer() = timer;
     *PartEdit::of(game, k).function() = function::ALIGN_TO_KRAID;
     *PartEdit::of(game, k).next_function() = function::LINT_PRODUCE;
@@ -486,7 +510,7 @@ fn enable_lint<L: Lease + ?Sized>(game: &mut L, k: u16, timer: u16) {
 
 /// Counts down the thinking timer, then opens the mouth. Was
 /// `advance_kraid_thinking_timer!`.
-fn advance_thinking<L: Lease + ?Sized>(game: &mut L, next: u16) {
+fn advance_thinking<L: Lease>(game: &mut L, next: u16) {
     let thinking: u16 = Body::of(game, BODY).thinking_timer();
     if thinking != 0 {
         let left: u16 = thinking.wrapping_sub(1);
@@ -502,7 +526,7 @@ fn advance_thinking<L: Lease + ?Sized>(game: &mut L, next: u16) {
 
 /// After the mouth closes: a hard hit makes the eye glow. Was
 /// `advance_kraid_mouth_hit_response!`.
-fn respond_to_mouth_hit<L: Lease + ?Sized>(game: &mut L) {
+fn respond_to_mouth_hit<L: Lease>(game: &mut L) {
     *BodyEdit::of(game, BODY).script_delay() = 90;
     let flags: u16 = Body::of(game, BODY).mouth_flags();
     if (flags & 4) != 0 && {
@@ -521,7 +545,7 @@ fn respond_to_mouth_hit<L: Lease + ?Sized>(game: &mut L) {
 
 /// Steps the body's script; returns its last instruction word, FFFFh at the
 /// end. Was `Kraid_ProcessKraidInstr`.
-fn process_script<L: Lease + ?Sized>(game: &mut L) -> u16 {
+fn process_script<L: Lease>(game: &mut L) -> u16 {
     let result: u16 = Body::of(game, BODY).script_delay();
     if result != 0 {
         let delay = Body::of(game, BODY).script_delay();
@@ -536,7 +560,7 @@ fn process_script<L: Lease + ?Sized>(game: &mut L) -> u16 {
 
 /// Runs script calls up to the next tilemap, which it queues. Was
 /// `Kraid_ExecuteInstr`.
-fn execute_script<L: Lease + ?Sized>(game: &mut L) -> u16 {
+fn execute_script<L: Lease>(game: &mut L) -> u16 {
     loop {
         let script: u16 = Body::of(game, BODY).script();
         let record = kraid_record(script, game);
@@ -746,13 +770,13 @@ fn health_palette<S: BossState + SlotState + crate::actors::boss_interaction::Ac
 }
 
 /// A lint's main: Samus contact, then its function. Was `KraidLintCommon_Main`.
-fn lint_main<L: Lease + ?Sized>(game: &mut L, k: u16) {
+fn lint_main<L: Lease>(game: &mut L, k: u16) {
     kraid_lint::lint_touch_samus(k, game);
     run_function(game, Part::of(game, k).function());
 }
 
 /// The lint slides out of Kraid's belly. Was `KraidLint_ProduceLint`.
-fn produce_lint<L: Lease + ?Sized>(game: &mut L, k: u16) {
+fn produce_lint<L: Lease>(game: &mut L, k: u16) {
     PartEdit::of(game, k).actor().properties &= 0xfaff;
     PartEdit::of(game, k).actor().x.whole = (Part::of(game, k).x_offset() as i32
         + Part::of(game, BODY).actor().x.whole as i32
@@ -766,7 +790,7 @@ fn produce_lint<L: Lease + ?Sized>(game: &mut L, k: u16) {
 }
 
 /// The lint flashes while it charges. Was `KraidLint_ChargeLint`.
-fn charge_lint<L: Lease + ?Sized>(game: &mut L, k: u16) {
+fn charge_lint<L: Lease>(game: &mut L, k: u16) {
     let mut palette: i16 = 0;
     if (Part::of(game, k).function_timer() & 1) != 0 {
         palette = 3584;
@@ -785,7 +809,7 @@ fn charge_lint<L: Lease + ?Sized>(game: &mut L, k: u16) {
 
 /// The lint flies left, carrying Samus if she stands on it. Was
 /// `KraidLint_FireLint`.
-fn fire_lint<L: Lease + ?Sized>(game: &mut L, k: u16) {
+fn fire_lint<L: Lease>(game: &mut L, k: u16) {
     {
         let value: u32 = -LINT_SPEED as u32;
         let mut edit = PartEdit::of(game, k);
@@ -818,7 +842,7 @@ fn fire_lint<L: Lease + ?Sized>(game: &mut L, k: u16) {
 
 /// A fingernail waits for the top lint to clear the screen's left. Was
 /// `KraidFingernail_WaitForLintXpos`.
-fn fingernail_wait_for_lint<L: Lease + ?Sized>(game: &mut L, k: u16) {
+fn fingernail_wait_for_lint<L: Lease>(game: &mut L, k: u16) {
     if !below(Part::of(game, TOP_LINT).actor().x.whole, 256) {
         *PartEdit::of(game, k).function() = Part::of(game, k).next_function();
         PartEdit::of(game, k).actor().properties &= 0xfaff;
@@ -827,7 +851,7 @@ fn fingernail_wait_for_lint<L: Lease + ?Sized>(game: &mut L, k: u16) {
 
 /// Counts down the part's timer, then runs its `next_function`. Was
 /// `KraidEnemy_HandleFunctionTimer`.
-fn handle_function_timer<L: Lease + ?Sized>(game: &mut L, k: u16) {
+fn handle_function_timer<L: Lease>(game: &mut L, k: u16) {
     if Part::of(game, k).function_timer() != 0 && {
         let left = Part::of(game, k).function_timer();
         *PartEdit::of(game, k).function_timer() =
@@ -839,14 +863,14 @@ fn handle_function_timer<L: Lease + ?Sized>(game: &mut L, k: u16) {
 }
 
 /// Keeps a lint at Kraid's belly. Was `Kraid_AlignEnemyToKraid`.
-fn align_to_kraid<L: Lease + ?Sized>(game: &mut L, k: u16) {
+fn align_to_kraid<L: Lease>(game: &mut L, k: u16) {
     let x: u16 = Part::of(game, BODY).actor().x.whole;
     PartEdit::of(game, k).actor().x.whole = x.wrapping_sub(Part::of(game, k).actor().radius.x);
     handle_function_timer(game, k);
 }
 
 /// Was `Kraid_SetWalkingBackwards`.
-fn walk_backwards<L: Lease + ?Sized>(game: &mut L, frames: u16, target: u16) {
+fn walk_backwards<L: Lease>(game: &mut L, frames: u16, target: u16) {
     *BodyEdit::of(game, BODY).target_x() = target;
     *PartEdit::of(game, FOOT).next_function() = frames;
     *PartEdit::of(game, FOOT).function() = function::FOOT_WALK_BACKWARDS;
@@ -855,7 +879,7 @@ fn walk_backwards<L: Lease + ?Sized>(game: &mut L, frames: u16, target: u16) {
 }
 
 /// Was `Kraid_SetWalkingForwards`.
-fn walk_forwards<L: Lease + ?Sized>(game: &mut L, frames: u16, target: u16) {
+fn walk_forwards<L: Lease>(game: &mut L, frames: u16, target: u16) {
     *BodyEdit::of(game, BODY).target_x() = target;
     *PartEdit::of(game, FOOT).next_function() = frames;
     *PartEdit::of(game, FOOT).function() = function::FOOT_WALK_FORWARD;
@@ -865,7 +889,7 @@ fn walk_forwards<L: Lease + ?Sized>(game: &mut L, frames: u16, target: u16) {
 
 /// The fingernail flies, bouncing off walls and Kraid. Was
 /// `KraidsFingernail_Fire`.
-fn fire_fingernail<L: Lease + ?Sized>(game: &mut L, k: u16) {
+fn fire_fingernail<L: Lease>(game: &mut L, k: u16) {
     let x_speed = (((Fingernail::of(game, k).x_speed() as u32) << 16)
         | Fingernail::of(game, k).x_subspeed() as u32) as i32;
     if game.move_horizontal(k, x_speed, Slopes::Ignore) {
@@ -914,13 +938,13 @@ fn fire_fingernail<L: Lease + ?Sized>(game: &mut L, k: u16) {
 }
 
 /// Spawns a ceiling rock from bank $A7 `crumble`'s column and its PLM.
-fn crumble<L: Lease + ?Sized>(game: &mut L, rock: u16, block_x: u8, plm: u16) {
+fn crumble<L: Lease>(game: &mut L, rock: u16, block_x: u8, plm: u16) {
     let k = game.current_enemy();
     game.spawn_projectile(rock, k, CEILING_ROCKS);
-    game.foreign(|game| game.spawn_plm(block_x, 0x12, plm));
+    spawn_plm(game, block_x, 0x12, plm);
 }
 
-fn sound_every_half_second<L: Lease + ?Sized>(game: &mut L) {
+fn sound_every_half_second<L: Lease>(game: &mut L) {
     battle!(game.QuakeSoundTimer -= 1);
     if battle!(game.QuakeSoundTimer) == 0 {
         game.queue_sound(2, ROCKS_SOUND, 6);
@@ -929,7 +953,7 @@ fn sound_every_half_second<L: Lease + ?Sized>(game: &mut L) {
 }
 
 /// Crumbles the ceiling platforms as Kraid sinks. Was `Kraid_HandleSinking`.
-fn handle_sinking<L: Lease + ?Sized>(game: &mut L) {
+fn handle_sinking<L: Lease>(game: &mut L) {
     if let Some(callback) = kraid_sinking::handle_sinking(game) {
         match callback {
             sinking::LEFT_PLATFORM_LEFT => crumble(game, 0x70, 0x7, CEILING_PLM_A7),
@@ -945,21 +969,21 @@ fn handle_sinking<L: Lease + ?Sized>(game: &mut L) {
 }
 
 /// Queues BG2's tilemap top half. Was `Kraid_UpdateBg2TilemapTopHalf`.
-fn queue_bg2_top<L: Lease + ?Sized>(game: &mut L) {
+fn queue_bg2_top<L: Lease>(game: &mut L) {
     queue_vram(game, 2048, 0x2000, 126, |game| {
         ((game.display_control_byte(BG2_TILEMAP_BASE) as i32 & 0xfc) << 8) as u16
     });
 }
 
 /// Queues BG2's tilemap bottom half. Was `Kraid_UpdateBG2TilemapBottomHalf`.
-fn queue_bg2_bottom<L: Lease + ?Sized>(game: &mut L) {
+fn queue_bg2_bottom<L: Lease>(game: &mut L) {
     queue_vram(game, 2048, 0x2800, 126, |game| {
         (((game.display_control_byte(BG2_TILEMAP_BASE) as i32 & 0xfc) << 8) + 2048) as u16
     });
 }
 
 /// Rocks and dust while Kraid rises. Was `Kraid_SpawnRandomQuakeProjs`.
-fn quake_rocks<L: Lease + ?Sized>(game: &mut L) {
+fn quake_rocks<L: Lease>(game: &mut L) {
     let mut offset: u16 = (battle!(game.Random)) & 0x3f;
     if (battle!(game.Random) & 2) == 0 {
         offset = !(offset as i32) as u16;
@@ -979,7 +1003,7 @@ fn quake_rocks<L: Lease + ?Sized>(game: &mut L) {
 
 /// Keeps Samus on the first screen while Kraid rises. Was
 /// `Kraid_RestrictSamusXtoFirstScreen_2`.
-fn restrict_samus_x<L: Lease + ?Sized>(game: &mut L) {
+fn restrict_samus_x<L: Lease>(game: &mut L) {
     if ((game.player_x()) as i16).wrapping_sub(256) >= 0 {
         game.set_player_x(256);
         game.set_previous_player_x(256);
@@ -987,7 +1011,7 @@ fn restrict_samus_x<L: Lease + ?Sized>(game: &mut L) {
 }
 
 /// Counts down the body's timer, spawning rocks every `interval + 1` frames.
-fn quake_until_timer<L: Lease + ?Sized>(game: &mut L, interval: u16, next: u16, next_timer: u16) {
+fn quake_until_timer<L: Lease>(game: &mut L, interval: u16, next: u16, next_timer: u16) {
     restrict_samus_x(game);
     let left: u16 = (Body::of(game, BODY).function_timer()).wrapping_sub(1);
     *BodyEdit::of(game, BODY).function_timer() = left;
@@ -1002,7 +1026,7 @@ fn quake_until_timer<L: Lease + ?Sized>(game: &mut L, interval: u16, next: u16, 
 }
 
 /// Runs a Kraid part's bank $A7 function. Was `CallKraidFunc`.
-pub fn run_function<L: Lease + ?Sized>(game: &mut L, function: u16) {
+pub fn run_function<L: Lease>(game: &mut L, function: u16) {
     let k: u16 = game.current_enemy();
     match function {
         function::GETS_BIG_BREAK_CEILING => break_ceiling(game),
@@ -1149,7 +1173,7 @@ pub fn run_function<L: Lease + ?Sized>(game: &mut L, function: u16) {
 
 /// Kraid grows, shaking, and breaks the ceiling platforms. Was
 /// `Kraid_GetsBig_BreakCeilingPlatforms`.
-fn break_ceiling<L: Lease + ?Sized>(game: &mut L) {
+fn break_ceiling<L: Lease>(game: &mut L) {
     if (game.frame() & 7) == 0 {
         quake_rocks(game);
     }
@@ -1169,7 +1193,7 @@ fn break_ceiling<L: Lease + ?Sized>(game: &mut L) {
             game.spawn_projectile(rock, k, CEILING_ROCKS);
             let broken = (Body::of(game, BODY).function_timer() >> 1) as usize;
             if let Some(&(block_x, plm)) = CEILING_PLATFORMS.get(broken) {
-                game.foreign(|game| game.spawn_plm(block_x, 0x12, plm));
+                spawn_plm(game, block_x, 0x12, plm);
             }
             *BodyEdit::of(game, BODY).function_timer() =
                 Body::of(game, BODY).function_timer().wrapping_add(2);
@@ -1181,7 +1205,7 @@ fn break_ceiling<L: Lease + ?Sized>(game: &mut L) {
 }
 
 /// Was `Kraid_GetsBig_SetBG2TilemapPrioBits`.
-fn set_bg2_priority<L: Lease + ?Sized>(game: &mut L) {
+fn set_bg2_priority<L: Lease>(game: &mut L) {
     for v0 in (0u16..4096).step_by(2) {
         let index = usize::from(v0 >> 1);
         bg2_staging::set(game, index, bg2_staging::get(game, index) | 0x2000);
@@ -1192,7 +1216,7 @@ fn set_bg2_priority<L: Lease + ?Sized>(game: &mut L) {
 }
 
 /// Was `Kraid_GetsBig_FinishUpdateBg2Tilemap`.
-fn finish_bg2_tilemap<L: Lease + ?Sized>(game: &mut L) {
+fn finish_bg2_tilemap<L: Lease>(game: &mut L) {
     *BodyEdit::of(game, BODY).function() = function::GETS_BIG_DRAW_ROOM_BG;
     PartEdit::of(game, FOOT).actor().instruction_delay = 1;
     PartEdit::of(game, FOOT).actor().instruction = animation::FOOT_STAND;
@@ -1206,7 +1230,7 @@ fn finish_bg2_tilemap<L: Lease + ?Sized>(game: &mut L) {
 }
 
 /// Fades in the room, then starts the fight. Was `Kraid_GetsBig_FadeInRoomBg`.
-fn fade_in_room_bg<L: Lease + ?Sized>(game: &mut L) {
+fn fade_in_room_bg<L: Lease>(game: &mut L) {
     if game.foreign(background6) & 1 != 0 {
         start_growing_thinking(game);
         enable_lint(game, TOP_LINT, LINT_TIMERS[0]);
@@ -1228,7 +1252,7 @@ fn fade_in_room_bg<L: Lease + ?Sized>(game: &mut L) {
 }
 
 /// The eye glows until fully lit, then fades back. Was `Kraid_Shot_GlowHisEye`.
-fn glow_eye<L: Lease + ?Sized>(game: &mut L) {
+fn glow_eye<L: Lease>(game: &mut L) {
     process_script(game);
     let mut lit: i16 = 0;
     for v0 in (226u16..232).step_by(2) {
@@ -1268,7 +1292,7 @@ fn glow_eye<L: Lease + ?Sized>(game: &mut L) {
 
 /// Counts down the part's timer, then runs `next_function` with the foot's walk. Was
 /// `KraidEnemy_DecrementEnemyFunctionTimer`.
-fn decrement_function_timer<L: Lease + ?Sized>(game: &mut L) {
+fn decrement_function_timer<L: Lease>(game: &mut L) {
     let k = game.current_enemy();
     if Part::of(game, k).function_timer() != 0 {
         let left = Part::of(game, k).function_timer();
@@ -1284,7 +1308,7 @@ fn decrement_function_timer<L: Lease + ?Sized>(game: &mut L) {
 
 /// When the walk ends, picks a new target and walks toward it. Was
 /// `KraidsFoot_SecondPhase_Thinking`.
-fn foot_second_phase_thinking<L: Lease + ?Sized>(game: &mut L) {
+fn foot_second_phase_thinking<L: Lease>(game: &mut L) {
     let left: u16 = (Part::of(game, FOOT).next_function()).wrapping_sub(1);
     *PartEdit::of(game, FOOT).next_function() = left;
     if left == 0 {
@@ -1320,7 +1344,7 @@ fn foot_second_phase_thinking<L: Lease + ?Sized>(game: &mut L) {
 
 /// Launches a fingernail on a random pattern, from Kraid or held back off
 /// screen. Was `KraidsFingernail_Init`.
-fn initialize_fingernail_attack<L: Lease + ?Sized>(game: &mut L) {
+fn initialize_fingernail_attack<L: Lease>(game: &mut L) {
     let mut direction: u16 = Fingernail::of(game, GOOD_FINGERNAIL).y_speed();
     if game.current_enemy() == 384 {
         direction = Fingernail::of(game, BAD_FINGERNAIL).y_speed();
@@ -1388,7 +1412,7 @@ fn initialize_fingernail_attack<L: Lease + ?Sized>(game: &mut L) {
 }
 
 /// Was `KraidsFoot_PrepareToLungeForward`.
-fn foot_prepare_lunge<L: Lease + ?Sized>(game: &mut L) {
+fn foot_prepare_lunge<L: Lease>(game: &mut L) {
     first_phase(game);
     if !below(
         Part::of(game, ARM).actor().instruction,
@@ -1404,7 +1428,7 @@ fn foot_prepare_lunge<L: Lease + ?Sized>(game: &mut L) {
 }
 
 /// Was `KraidsFoot_FirstPhase_LungeForward`.
-fn foot_lunge_forward<L: Lease + ?Sized>(game: &mut L) {
+fn foot_lunge_forward<L: Lease>(game: &mut L) {
     first_phase(game);
     if below(Body::of(game, BODY).actor().x.whole, 92) {
         BodyEdit::of(game, BODY).actor().x.whole = 92;
@@ -1424,7 +1448,7 @@ fn foot_lunge_forward<L: Lease + ?Sized>(game: &mut L) {
 }
 
 /// Was `KraidsFoot_FirstPhase_RetreatFromLunge`.
-fn foot_retreat_from_lunge<L: Lease + ?Sized>(game: &mut L) {
+fn foot_retreat_from_lunge<L: Lease>(game: &mut L) {
     first_phase(game);
     if !below(Body::of(game, BODY).actor().x.whole, 176) {
         BodyEdit::of(game, BODY).actor().x.whole = 176;
@@ -1450,7 +1474,7 @@ fn foot_retreat_from_lunge<L: Lease + ?Sized>(game: &mut L) {
 }
 
 /// Fades out the room, then queues the dying tilemap. Was `Kraid_Death_Fadeout`.
-fn death_fade_out<L: Lease + ?Sized>(game: &mut L) {
+fn death_fade_out<L: Lease>(game: &mut L) {
     process_script(game);
     if game.foreign(background6) & 1 != 0 {
         *BodyEdit::of(game, BODY).function() = function::DEATH_BG2_TOP_HALF;
@@ -1472,7 +1496,7 @@ fn death_fade_out<L: Lease + ?Sized>(game: &mut L) {
 }
 
 /// Was `Kraid_Death_UpdateBG2TilemapTopHalf`.
-fn death_bg2_top_half<L: Lease + ?Sized>(game: &mut L) {
+fn death_bg2_top_half<L: Lease>(game: &mut L) {
     process_script(game);
     *BodyEdit::of(game, BODY).function() = function::DEATH_BG2_BOTTOM_HALF;
     for lint in [TOP_LINT, MIDDLE_LINT, BOTTOM_LINT] {
@@ -1484,7 +1508,7 @@ fn death_bg2_top_half<L: Lease + ?Sized>(game: &mut L) {
 
 /// Starts sinking: the earthquake, the sinking unpause hook and the parts'
 /// last animations. Was `Kraid_Death_UpdateBG2TilemapBottomHalf`.
-fn death_bg2_bottom_half<L: Lease + ?Sized>(game: &mut L) {
+fn death_bg2_bottom_half<L: Lease>(game: &mut L) {
     process_script(game);
     set_hook_bank(game, HookSlot::Unpause);
     set_hook_address(game, HookSlot::Unpause, UNPAUSE_SINKING);
@@ -1504,7 +1528,7 @@ fn death_bg2_bottom_half<L: Lease + ?Sized>(game: &mut L) {
 
 /// Sinks a pixel a frame; once gone, drops items and cleans up. Was
 /// `Kraid_Death_SinkThroughFloor`.
-pub fn sink_through_floor<L: Lease + ?Sized>(game: &mut L) {
+pub fn sink_through_floor<L: Lease>(game: &mut L) {
     process_script(game);
     sound_every_half_second(game);
     handle_sinking(game);
@@ -1535,7 +1559,7 @@ pub fn sink_through_floor<L: Lease + ?Sized>(game: &mut L) {
 }
 
 /// Was `Kraid_FadeInBg_ClearBg2TilemapTopHalf`.
-fn fade_in_clear_bg2_top<L: Lease + ?Sized>(game: &mut L) {
+fn fade_in_clear_bg2_top<L: Lease>(game: &mut L) {
     crate::frame_display_byte!(game, BG2_TILEMAP_BASE => 72);
     bg2_staging::fill(game, (0..=1023).rev(), BLANK_BG2_TILE);
     queue_vram(game, 1024, 0x2000, 126, |_| 18432);
@@ -1544,19 +1568,21 @@ fn fade_in_clear_bg2_top<L: Lease + ?Sized>(game: &mut L) {
 
 /// Fades the room back in, then sets the boss bit once. Was
 /// `Kraid_FadeInBg_FadeInBp6`.
-pub fn fade_in_bg6<L: Lease + ?Sized>(game: &mut L) {
+pub fn fade_in_bg6<L: Lease>(game: &mut L) {
     game.foreign(|game| game.observe_kraid_flags(0));
     if game.foreign(background6) & 1 != 0 {
         game.foreign(|game| game.observe_kraid_flags(1));
         game.foreign(|game| game.queue_music_delayed(3));
         game.foreign(|game| game.observe_kraid_flags(2));
-        let area = game.area();
-        let bits: i16 = game.foreign(|game| game.boss_word_native(area)) as i16;
+        let area = BossState::area(game);
+        let bits: i16 = game.owned_step(|game| boss_word(game, area)) as i16;
         if (bits as u16 & 1) != 0 {
             *BodyEdit::of(game, BODY).function() = function::FADE_IN_DEAD_WAS_DEAD;
         } else {
-            let area = game.area();
-            game.foreign(|game| game.set_boss_word_native(area, (bits as u16) | 1));
+            let area = BossState::area(game);
+            game.owned_step(|game| {
+                crate::progress::set_boss_word_native(game, area, (bits as u16) | 1)
+            });
             *BodyEdit::of(game, BODY).function() = function::FADE_IN_DEAD_WAS_ALIVE;
         }
     }
@@ -1564,7 +1590,7 @@ pub fn fade_in_bg6<L: Lease + ?Sized>(game: &mut L) {
 }
 
 /// Kraid rises the rest of the way. Was `Kraid_Raise_Handler`.
-fn raise<L: Lease + ?Sized>(game: &mut L) {
+fn raise<L: Lease>(game: &mut L) {
     restrict_samus_x(game);
     if (battle!(game.EarthquakeTimer) & 5) == 0 {
         quake_rocks(game);
@@ -1597,7 +1623,7 @@ fn raise<L: Lease + ?Sized>(game: &mut L) {
 
 /// Places the lint by Kraid's height and picks a thinking time. Was
 /// `Kraid_SetLintYAndRandomThinkTimer`.
-fn place_lint_and_think<L: Lease + ?Sized>(game: &mut L) {
+fn place_lint_and_think<L: Lease>(game: &mut L) {
     PartEdit::of(game, TOP_LINT).actor().y.whole =
         (Body::of(game, BODY).actor().y.whole).wrapping_sub(20);
     PartEdit::of(game, MIDDLE_LINT).actor().y.whole =
@@ -1787,7 +1813,7 @@ fn palette<S: BossState + SlotState + crate::actors::boss_interaction::Access + 
 }
 
 /// Fades the eye back to its health colour. Was `Kraid_Shot_UnglowEye`.
-fn unglow_eye<L: Lease + ?Sized>(game: &mut L) {
+fn unglow_eye<L: Lease>(game: &mut L) {
     let mut eighth: u16 = 14;
     let health: u16 = Body::of(game, BODY).actor().health;
     while (health as i16)
@@ -1844,7 +1870,7 @@ fn unglow_eye<L: Lease + ?Sized>(game: &mut L) {
 
 /// Roars with the mouth open, spitting rocks when it is widest. Was
 /// `Kraid_Main_AttackWithMouthOpen`.
-fn attack_with_mouth_open<L: Lease + ?Sized>(game: &mut L) {
+fn attack_with_mouth_open<L: Lease>(game: &mut L) {
     if process_script(game) == 0xffff {
         start_thinking(game);
         respond_to_mouth_hit(game);
@@ -1865,7 +1891,7 @@ fn attack_with_mouth_open<L: Lease + ?Sized>(game: &mut L) {
 /// Walks back to the target, then stops: thinking again, or after `wait`
 /// frames the second phase. Was `KraidsFoot_SecondPhase_WalkingBackwards` and
 /// `KraidsFoot_SecondPhaseSetup_WalkToStartPt`.
-fn foot_walk_backwards<L: Lease + ?Sized>(game: &mut L, next: u16, wait: Option<(u16, u16)>) {
+fn foot_walk_backwards<L: Lease>(game: &mut L, next: u16, wait: Option<(u16, u16)>) {
     let target: u16 = Body::of(game, BODY).target_x();
     if target != Body::of(game, BODY).actor().x.whole {
         if (target as i16).wrapping_sub((Body::of(game, BODY).actor().x.whole) as i16) >= 0 {
@@ -1888,7 +1914,7 @@ fn foot_walk_backwards<L: Lease + ?Sized>(game: &mut L, next: u16, wait: Option<
 }
 
 /// Was `KraidsFoot_SecondPhase_WalkForward`.
-fn foot_walk_forward<L: Lease + ?Sized>(game: &mut L) {
+fn foot_walk_forward<L: Lease>(game: &mut L) {
     let target: u16 = Body::of(game, BODY).target_x();
     if (target as i16).wrapping_sub((Body::of(game, BODY).actor().x.whole) as i16) < 0 {
         if Part::of(game, FOOT).actor().instruction == animation::FOOT_WALK_FORWARD_END {
@@ -1908,7 +1934,7 @@ fn foot_walk_forward<L: Lease + ?Sized>(game: &mut L) {
 /// Below six eighths of his health, Kraid stands up for the second phase. Was
 /// `Kraid_HandleFirstPhase`.
 /// True when Kraid gets big this frame.
-fn first_phase<L: Lease + ?Sized>(game: &mut L) -> bool {
+fn first_phase<L: Lease>(game: &mut L) -> bool {
     let big = ((Body::of(game, BODY).actor().health) as i16)
         .wrapping_sub(Body::of(game, BODY).health_eighth(6) as i16)
         < 0;
@@ -1947,7 +1973,7 @@ fn first_phase<L: Lease + ?Sized>(game: &mut L) -> bool {
 
 /// Once the hurt flash ends: the dying palette, the parts die and the spikes
 /// clear. Was `Kraid_Death_Init`.
-fn death_init<L: Lease + ?Sized>(game: &mut L) {
+fn death_init<L: Lease>(game: &mut L) {
     if Body::of(game, BODY).hurt_frame() == 0 {
         game.session_mut().presentation.visual_mut().targets
             [BG_PALETTE_6..BG_PALETTE_6 + PALETTE_COLOURS]
@@ -1968,24 +1994,24 @@ fn death_init<L: Lease + ?Sized>(game: &mut L) {
         let saved: u16 = game.current_enemy();
         PartEdit::of(game, GOOD_FINGERNAIL).actor().properties &= !(0x4000);
         battle!(game.CurEnemyIndex = 384);
-        game.foreign(|game| game.normal_death(0x180));
+        normal_death(game, 0x180);
         PartEdit::of(game, BAD_FINGERNAIL).actor().properties &= !(0x4000);
         battle!(game.CurEnemyIndex = 448);
-        game.foreign(|game| game.normal_death(0x1c0));
+        normal_death(game, 0x1c0);
         battle!(game.CurEnemyIndex = 128);
-        game.foreign(|game| game.normal_death(0x80));
+        normal_death(game, 0x80);
         battle!(game.CurEnemyIndex = 192);
-        game.foreign(|game| game.normal_death(0xc0));
+        normal_death(game, 0xc0);
         battle!(game.CurEnemyIndex = 256);
-        game.foreign(|game| game.normal_death(0x100));
+        normal_death(game, 0x100);
         battle!(game.CurEnemyIndex = saved);
-        game.foreign(|game| game.spawn_plm(0x5, 0x1b, DEATH_SPIKES_PLM));
+        spawn_plm(game, 0x5, 0x1b, DEATH_SPIKES_PLM);
     }
 }
 
 /// Arm contact: Samus is pushed back and the bottom lint fires. Was
 /// `KraidsArm_Touch`.
-pub fn arm_touch<L: Lease + ?Sized>(game: &mut L) {
+pub fn arm_touch<L: Lease>(game: &mut L) {
     if battle!(game.SamusInvincibilityTimer) == 0 {
         push_samus(game);
         *PartEdit::of(game, BOTTOM_LINT).function() = function::LINT_FIRE;
@@ -1994,18 +2020,18 @@ pub fn arm_touch<L: Lease + ?Sized>(game: &mut L) {
 }
 
 /// Body contact. Was `Kraid_Touch`.
-pub fn touch<L: Lease + ?Sized>(game: &mut L) {
+pub fn touch<L: Lease>(game: &mut L) {
     game.contact_reaction(Death::LeavePending);
 }
 
 /// Body shot. Was `Kraid_Shot`.
-pub fn shot<L: Lease + ?Sized>(game: &mut L) {
+pub fn shot<L: Lease>(game: &mut L) {
     game.shot_reaction(Shot::Finalize);
 }
 
 /// Sets up the room: the hooks, and either the empty room for a dead Kraid or
 /// his health eighths, BG2 and the rise. Was `Kraid_Init`.
-pub fn initialize<L: Lease + ?Sized>(game: &mut L) {
+pub fn initialize<L: Lease>(game: &mut L) {
     set_hook_bank(game, HookSlot::Unpause);
     set_hook_bank(game, HookSlot::Pause);
     set_hook_address(game, HookSlot::Unpause, UNPAUSE_ALIVE);
@@ -2015,8 +2041,8 @@ pub fn initialize<L: Lease + ?Sized>(game: &mut L) {
         bg2_staging::fill(game, (0..=1023).rev(), BLANK_BG2_TILE);
         *BodyEdit::of(game, BODY).unread_7804() = 0;
         queue_room_bg(game);
-        game.foreign(|game| game.spawn_plm(0x2, 0x12, CLEAR_CEILING_PLM));
-        game.foreign(|game| game.spawn_plm(0x5, 0x1b, CLEAR_SPIKES_PLM));
+        spawn_plm(game, 0x2, 0x12, CLEAR_CEILING_PLM);
+        spawn_plm(game, 0x5, 0x1b, CLEAR_SPIKES_PLM);
         *BodyEdit::of(game, BODY).function() = function::FADE_IN_CLEAR_BG2_TOP;
     } else {
         crate::frame_display_byte!(game, BG2_TILEMAP_BASE => 67);
@@ -2053,7 +2079,7 @@ pub fn initialize<L: Lease + ?Sized>(game: &mut L) {
         *BodyEdit::of(game, BODY).function_timer() = 300;
         *BodyEdit::of(game, BODY).next_function() = function::RAISE_THROUGH_FLOOR;
         *BodyEdit::of(game, BODY).script_delay() = 64;
-        game.foreign(|game| game.disable_minimap_for_boss());
+        game.owned_step(crate::player_update::minimap::disable_for_boss);
         // The staging RAM stores the tile natively, as the original's does.
         let blank = u16::from_le_bytes(BLANK_BG2_TILE.to_ne_bytes());
         bg2_staging::fill(game, RISE_BLANK_WORDS.rev(), blank);
@@ -2068,7 +2094,7 @@ pub fn initialize<L: Lease + ?Sized>(game: &mut L) {
 }
 
 /// Was `KraidsArm_Init`.
-pub fn initialize_arm<L: Lease + ?Sized>(game: &mut L) {
+pub fn initialize_arm<L: Lease>(game: &mut L) {
     if is_dead(game) != 0 {
         hide_as_dead(game);
     } else {
@@ -2083,7 +2109,7 @@ pub fn initialize_arm<L: Lease + ?Sized>(game: &mut L) {
 
 /// Sets up lint `lint` hidden in the belly at `x_offset`. Was
 /// `KraidsTopLint_Init`, `KraidsMiddleLint_Init` and `KraidsBottomLint_Init`.
-pub fn initialize_lint<L: Lease + ?Sized>(game: &mut L, lint: u16) {
+pub fn initialize_lint<L: Lease>(game: &mut L, lint: u16) {
     if is_dead(game) != 0 {
         hide_as_dead(game);
     } else {
@@ -2104,7 +2130,7 @@ pub fn initialize_lint<L: Lease + ?Sized>(game: &mut L, lint: u16) {
 }
 
 /// Was `KraidsFoot_Init`.
-pub fn initialize_foot<L: Lease + ?Sized>(game: &mut L) {
+pub fn initialize_foot<L: Lease>(game: &mut L) {
     if is_dead(game) != 0 {
         hide_as_dead(game);
     } else {
@@ -2119,7 +2145,7 @@ pub fn initialize_foot<L: Lease + ?Sized>(game: &mut L) {
 
 /// Mouth and body shots, the palette, contact and BG2's scroll, then the
 /// body's function. Was `Kraid_Main`.
-pub fn main_ai<L: Lease + ?Sized>(game: &mut L) {
+pub fn main_ai<L: Lease>(game: &mut L) {
     // The shots, palette, contact, BG2 scroll and the body's function run on
     // the lease, what needs the game in foreign calls.
     mouth_shots(game);
@@ -2148,7 +2174,7 @@ pub fn main_ai<L: Lease + ?Sized>(game: &mut L) {
 }
 
 /// The arm follows the body and shows only on screen. Was `KraidsArm_Main`.
-pub fn arm_main<L: Lease + ?Sized>(game: &mut L) {
+pub fn arm_main<L: Lease>(game: &mut L) {
     let layer1_y = game.camera().layer1[1];
     let screen_bottom: u16 = layer1_y.wrapping_add(224);
     let y: u16 = (Body::of(game, BODY).actor().y.whole).wrapping_sub(44);
@@ -2172,13 +2198,13 @@ pub fn arm_main<L: Lease + ?Sized>(game: &mut L) {
 
 /// A lint's main AI. Was `KraidsTopLint_Main`, `KraidsMiddleLint_Main` and
 /// `KraidsBottomLint_Main`.
-pub fn lint_main_ai<L: Lease + ?Sized>(game: &mut L, lint: u16) {
+pub fn lint_main_ai<L: Lease>(game: &mut L, lint: u16) {
     PartEdit::of(game, lint).actor().instruction_delay = 0x7fff;
     lint_main(game, lint);
 }
 
 /// The foot follows the body and shows only on screen. Was `KraidsFoot_Main`.
-pub fn foot_main<L: Lease + ?Sized>(game: &mut L) {
+pub fn foot_main<L: Lease>(game: &mut L) {
     let copied = Part::of(game, BODY).actor().x.whole;
     PartEdit::of(game, FOOT).actor().x.whole = copied;
     let y: u16 = (Part::of(game, BODY).actor().y.whole).wrapping_add(100);
@@ -2198,16 +2224,16 @@ pub fn foot_main<L: Lease + ?Sized>(game: &mut L) {
 }
 
 /// A fingernail touched: it shatters. Was `KraidsGoodFingernail_Touch`.
-pub fn fingernail_touch<L: Lease + ?Sized>(game: &mut L) {
+pub fn fingernail_touch<L: Lease>(game: &mut L) {
     game.contact_reaction(Death::Finalize);
     // The death animation is the touch's leftover A: a living nail's health,
     // 10, taken as 0, or 0 for a nail the touch already killed.
-    game.foreign(|game| game.normal_death(0));
+    normal_death(game, 0);
 }
 
 /// A fingernail's main: gone with Kraid, else its function. Was
 /// `KraidsGoodFingernail_Main` and `KraidsBadFingernail_Main`.
-pub fn fingernail_main<L: Lease + ?Sized>(game: &mut L, nail: u16) {
+pub fn fingernail_main<L: Lease>(game: &mut L, nail: u16) {
     if below(Part::of(game, BODY).actor().health, 1) {
         PartEdit::of(game, nail).actor().properties = (Part::of(game, nail).actor().properties
             as i32
@@ -2219,13 +2245,13 @@ pub fn fingernail_main<L: Lease + ?Sized>(game: &mut L, nail: u16) {
 }
 
 /// Was `KraidsGoodFingernail_Init` and `KraidsBadFingernail_Init`.
-pub fn initialize_fingernail<L: Lease + ?Sized>(game: &mut L) {
+pub fn initialize_fingernail<L: Lease>(game: &mut L) {
     let k = game.current_enemy();
     kraid_fingernails::initialize(k, game);
 }
 
 /// Instruction: below five eighths of health the arm swipes. Was `Kraid_Instr_9`.
-pub fn arm_swipe_when_hurt<L: Lease + ?Sized>(game: &mut L) -> Option<u16> {
+pub fn arm_swipe_when_hurt<L: Lease>(game: &mut L) -> Option<u16> {
     if ((Body::of(game, BODY).actor().health) as i16)
         .wrapping_sub(Body::of(game, BODY).health_eighth(3) as i16)
         < 0
@@ -2240,25 +2266,25 @@ pub fn arm_swipe_when_hurt<L: Lease + ?Sized>(game: &mut L) -> Option<u16> {
 }
 
 /// Instruction: Kraid steps up a pixel. Was `Kraid_Instr_DecYpos`.
-pub fn step_up<L: Lease + ?Sized>(game: &mut L) {
+pub fn step_up<L: Lease>(game: &mut L) {
     BodyEdit::of(game, BODY).actor().y.whole = Body::of(game, BODY).actor().y.whole.wrapping_sub(1);
 }
 
 /// Instruction: Kraid steps down a pixel, shaking the room. Was
 /// `Kraid_Instr_IncrYpos_Shake`.
-pub fn step_down_and_shake<L: Lease + ?Sized>(game: &mut L) {
+pub fn step_down_and_shake<L: Lease>(game: &mut L) {
     BodyEdit::of(game, BODY).actor().y.whole = Body::of(game, BODY).actor().y.whole.wrapping_add(1);
     battle!(game.EarthquakeType = 1);
     battle!(game.EarthquakeTimer = 10);
 }
 
 /// Instruction: the stomp. Was `Kraid_Instr_PlaySound_0x76`.
-pub fn stomp_sound<L: Lease + ?Sized>(game: &mut L) {
+pub fn stomp_sound<L: Lease>(game: &mut L) {
     game.queue_sound(1, STOMP_SOUND, 6);
 }
 
 /// Instruction: Kraid steps back. Was `Kraid_Instr_XposMinus3`/`3b`.
-pub fn step_back<L: Lease + ?Sized>(game: &mut L) {
+pub fn step_back<L: Lease>(game: &mut L) {
     BodyEdit::of(game, BODY).actor().x.whole = Body::of(game, BODY)
         .actor()
         .x
@@ -2267,7 +2293,7 @@ pub fn step_back<L: Lease + ?Sized>(game: &mut L) {
 }
 
 /// Instruction: Kraid steps forward. Was `Kraid_Instr_XposPlus3`.
-pub fn step_forward<L: Lease + ?Sized>(game: &mut L) {
+pub fn step_forward<L: Lease>(game: &mut L) {
     BodyEdit::of(game, BODY).actor().x.whole = Body::of(game, BODY)
         .actor()
         .x
@@ -2277,7 +2303,7 @@ pub fn step_forward<L: Lease + ?Sized>(game: &mut L) {
 
 /// Instruction: Kraid lunges right until blocked, shaking the room. Was
 /// `Kraid_Instr_MoveHimRight`.
-pub fn lunge_right<L: Lease + ?Sized>(game: &mut L) {
+pub fn lunge_right<L: Lease>(game: &mut L) {
     if (below(Body::of(game, BODY).actor().x.whole, 320) || {
         let left: u16 = (Body::of(game, BODY).target_x()).wrapping_sub(1);
         *BodyEdit::of(game, BODY).target_x() = left;
