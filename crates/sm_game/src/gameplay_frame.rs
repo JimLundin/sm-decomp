@@ -62,7 +62,6 @@ pub enum UnpauseHook {
 pub trait Host:
     crate::menus::host::Host
     + crate::hud::HudHost
-    + crate::gameplay_rules::Host
     + crate::display_refresh::Host
     + crate::samus_death::Host
     + RuntimeAccess
@@ -107,7 +106,7 @@ pub trait Host:
 
 /// The gameplay pass phases the compatibility runtime runs on a lease the pass
 /// already holds.
-pub trait PassLease {
+pub trait PassLease: crate::gameplay_context::Access {
     /// Samus's own projectiles against her: the bomb jump.
     fn player_projectiles_hit_samus(&mut self);
     /// Samus's frame: the frame handler's beta and gamma work.
@@ -829,7 +828,7 @@ fn advance_gameplay<H: Host>(game: &mut H) -> CoroutineRet {
         // Read the queue after enemy callbacks, even when they changed it this pass. Without
         // a queued message box the rest of the pass runs on the same lease.
         if lease.session().messages.queued == 0 {
-            completed = Some(continue_pass::<H>(&mut lease, true));
+            completed = Some(complete_pass::<H>(&mut lease, true));
         }
     }
     let yielded = match completed {
@@ -853,17 +852,26 @@ fn advance_gameplay<H: Host>(game: &mut H) -> CoroutineRet {
                     },
                 );
             }
-            continue_pass::<H>(&mut game.runtime(), player)
+            complete_pass::<H>(&mut game.runtime(), player)
         }
     };
     if yielded != 0 {
         game.set_resume_point(ResumePoint::RoomObjects as u8);
         return yielded;
     }
-    finish_health_and_time(game);
-    finish_frame(game);
     game.set_resume_point(ResumePoint::Start as u8);
     0
+}
+
+/// The rest of the pass and, once it completes, the frame's health, time and
+/// timer bookkeeping, on one lease. Nonzero when the mechanisms yield.
+fn complete_pass<'a, H: Host + 'a>(lease: &mut H::Runtime<'a>, player: bool) -> CoroutineRet {
+    let yielded = continue_pass::<H>(lease, player);
+    if yielded == 0 {
+        finish_health_and_time(lease);
+        finish_frame(lease);
+    }
+    yielded
 }
 
 /// The pass's first phases: actor selection, the palette effects, Samus's
