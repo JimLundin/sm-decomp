@@ -279,7 +279,7 @@ fn snap_to_wall(x: u16) -> u16 {
 
 fn initialize_wall<G: Pirates + ?Sized>(game: &mut G) {
     let mut runtime = game.lease();
-    let index = runtime.word(0xe54);
+    let index = runtime.session().actors.controls.selected;
     let key = Key::from_legacy(index);
     runtime.edit_actor(key, Native, |actor| {
         actor.instruction = if actor.parameters[0] & 1 == 0 {
@@ -333,7 +333,7 @@ fn climb_wall<G: Pirates + ?Sized>(right: bool, game: &mut G) {
 
 fn wall_jump<G: Pirates + ?Sized>(right: bool, game: &mut G) {
     let mut runtime = game.lease();
-    let index = runtime.word(0xe54);
+    let index = runtime.session().actors.controls.selected;
     let key = Key::from_legacy(index);
     let actor = runtime.resolve_actor(key, Native);
     let (origin, phase, radius) = (
@@ -695,7 +695,7 @@ fn set_divekick_speed<G: Pirates + ?Sized>(index: u16, right: bool, game: &mut G
 
 fn initialize_ninja<G: Pirates + ?Sized>(game: &mut G) {
     let mut runtime = game.lease();
-    let index = runtime.word(0xe54);
+    let index = runtime.session().actors.controls.selected;
     let y = runtime.edit_actor(Key::from_legacy(index), Native, |actor| {
         let right = actor.parameters[0] & 1 != 0;
         actor.instruction = if right {
