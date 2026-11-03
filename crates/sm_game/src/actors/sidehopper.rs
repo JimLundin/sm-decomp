@@ -99,7 +99,8 @@ pub fn initial_hop_phase(height: u16, step: u16, image: RomImage) -> u16 {
 }
 /// Initialisation AI - sidehopper / desgeega / super variants ($A3:AB09).
 pub fn initialize(runtime: &mut impl Lease) {
-    runtime.write_slice_le(crate::ram::words::RANDOM_NUMBER, RANDOM_SEED);
+    runtime.session_mut().timing.random_number = RANDOM_SEED;
+    runtime.words_stored();
     runtime.next_random();
     let hopper = combat::current(runtime).byte_index();
     {
