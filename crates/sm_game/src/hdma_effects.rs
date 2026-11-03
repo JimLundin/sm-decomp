@@ -117,8 +117,8 @@ pub trait HdmaEffects: Host {
             crate::hdma_objects::WaveTable::Phantoon => store_shared_bytes(self, 0, &bytes),
             crate::hdma_objects::WaveTable::Intro => {
                 let words = &mut self.session_mut().game_loop.saved_bindings;
-                for (word, pair) in words.iter_mut().zip(bytes.chunks_exact(2)) {
-                    *word = u16::from_le_bytes([pair[0], pair[1]]);
+                for (word, pair) in words.iter_mut().zip(bytes.as_chunks::<2>().0) {
+                    *word = u16::from_le_bytes(*pair);
                 }
                 self.words_stored();
             }
