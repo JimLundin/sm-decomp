@@ -418,6 +418,25 @@ pub struct SpanCopy<'r> {
 impl SpanCopy<'_> {
     /// `WorkRam::copy_in`.
     pub fn copy_in(&mut self, at: usize, input: &[u8]) {
+        // Most spans are one word: no slice walks and no length-generic copy.
+        if let &[low, high] = input
+            && at < WorkRam::LEN - 1
+        {
+            self.writes += 1;
+            let classes = self.classes[at] | self.classes[at + 1];
+            self.by_classes[usize::from(classes)] += 1;
+            self.ram.0.bytes[at].set(low);
+            self.ram.0.bytes[at + 1].set(high);
+            if self.tracking {
+                let publications = &mut *self.publications;
+                for at in [at, at + 1] {
+                    if publications.tracked.contains(at) {
+                        publications.publish(at);
+                    }
+                }
+            }
+            return;
+        }
         let end = at.checked_add(input.len()).expect("RAM range overflow");
         let cells = &self.ram.0.bytes[at..end];
         if cells.is_empty() {
@@ -4596,6 +4615,8 @@ mod tracked_addresses {
                 copy.spans(at, &bytes, width);
             }
             copy.copy_in(0x9805, &[1, 2, 3]);
+            copy.copy_in(0x980f, &[4, 5]);
+            copy.copy_in(0x1fffe, &[6, 7]);
         });
         single.copy_in(0x60b, &[7]);
         for &(at, width) in &runs {
@@ -4604,6 +4625,8 @@ mod tracked_addresses {
             }
         }
         single.copy_in(0x9805, &[1, 2, 3]);
+        single.copy_in(0x980f, &[4, 5]);
+        single.copy_in(0x1fffe, &[6, 7]);
         assert_eq!(epochs(&batched), epochs(&single));
         for at in 0..WorkRam::LEN {
             assert_eq!(batched.read_byte(at), single.read_byte(at), "{at:#x}");
