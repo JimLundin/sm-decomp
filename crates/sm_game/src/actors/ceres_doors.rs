@@ -199,8 +199,7 @@ pub fn steam_rotating_offset<L: Lease + ?Sized>(k: u16, game: &mut L) {
         x: steam.x.whole,
         y: steam.y.whole,
     };
-    let crate::geometry::Point { x, y } =
-        crate::cinematic::project_cinematic_point_reads(point, |at| game.slot_word(at));
+    let crate::geometry::Point { x, y } = crate::cinematic::project_cinematic_point(point, &*game);
     let record = slot_index(game.current_enemy());
     let x_offset = x.wrapping_sub(Steam::of(game, k).actor().x.whole);
     game.session_mut().actors.saved[record].draw_offset.x =
