@@ -40,6 +40,14 @@ RAM_COUPLINGS = {
     "word transfers (word_transfers!)": re.compile(r"\bword_transfers!"),
     "register writes (register_writes!/write_register)": re.compile(r"\bregister_writes!|\bwrite_register(?:_word)?\("),
     "raw RAM hosts (RawRam/compatibility_byte)": re.compile(r"\bRawRam\b|\bcompatibility_(?:write_)?byte\b"),
+    # Each register write that also stores its WRAM display mirror ($51..$86) by
+    # RAM offset rather than by display Field: one raw mirror store per call.
+    # The mirror is the second-to-last argument, before the literal order flag.
+    "raw display mirror stores (mirror/show_mirror/write_register_and_mirror by offset)": re.compile(
+        r"(?<![\w$])(?:show_mirror|mirror|write_register_and_mirror)\s*\("
+        r"(?:(?:[^(),;{}]|\((?:[^()]|\([^()]*\))*\))*,)+"
+        r"(?![\w:\s]*Field::\w+\s*,)(?:[^(),;{}]|\((?:[^()]|\([^()]*\))*\))*,"
+        r"\s*(?:true|false)\s*,?\s*\)"),
     # The cinematic state view names its words by Session field, but each access
     # still reads and stores the host's projected RAM bytes; count its call sites.
     "cinematic state view (cinematic!/cinematic_state::)": re.compile(
