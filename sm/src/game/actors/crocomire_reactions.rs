@@ -79,27 +79,27 @@ pub(crate) fn import(image: &crate::rom::RomImage) -> ImportedTables {
 
 impl Host for Game {}
 
-impl Tables for Game {
-    fn crocomire_table_word(&self, address: u32, index: isize) -> u16 {
-        let tables = &self.crocomire;
-        match address {
-            SCROLL_SPRITEMAP_ADDRESS => table_word(&tables.scroll_spritemaps, self, address, index),
-            BRIDGE_DEBRIS_ADDRESS => table_word(&tables.bridge_debris, self, address, index),
-            SPIKE_WALL_TILE_ADDRESS => table_word(&tables.spike_wall_tiles, self, address, index),
-            SPIKE_WALL_DESTINATION_ADDRESS => {
-                table_word(&tables.spike_wall_destinations, self, address, index)
-            }
-            _ => unreachable!("Crocomire table {address:#x}"),
+/// The word at `index` of the game's Crocomire table at `address`.
+pub(crate) fn crocomire_table_word(game: &Game, address: u32, index: isize) -> u16 {
+    let tables = &game.crocomire;
+    match address {
+        SCROLL_SPRITEMAP_ADDRESS => table_word(&tables.scroll_spritemaps, game, address, index),
+        BRIDGE_DEBRIS_ADDRESS => table_word(&tables.bridge_debris, game, address, index),
+        SPIKE_WALL_TILE_ADDRESS => table_word(&tables.spike_wall_tiles, game, address, index),
+        SPIKE_WALL_DESTINATION_ADDRESS => {
+            table_word(&tables.spike_wall_destinations, game, address, index)
         }
+        _ => unreachable!("Crocomire table {address:#x}"),
     }
+}
 
-    fn crocomire_melt_tilemap(&self, table: u32) -> Option<[u16; MELT_TILES]> {
-        let rom = self.loaded_rom.as_ref().expect("ROM must be loaded");
-        let imported = match table {
-            FLESH_TILEMAP_ADDRESS => &self.crocomire.flesh_tilemap,
-            SKELETON_TILEMAP_ADDRESS => &self.crocomire.skeleton_tilemap,
-            _ => &None,
-        };
-        Imported::from(imported, rom).map(|tilemap| *tilemap.tiles())
-    }
+/// The game's melt tilemap at `table` while it is imported.
+pub(crate) fn crocomire_melt_tilemap(game: &Game, table: u32) -> Option<[u16; MELT_TILES]> {
+    let rom = game.loaded_rom.as_ref().expect("ROM must be loaded");
+    let imported = match table {
+        FLESH_TILEMAP_ADDRESS => &game.crocomire.flesh_tilemap,
+        SKELETON_TILEMAP_ADDRESS => &game.crocomire.skeleton_tilemap,
+        _ => &None,
+    };
+    Imported::from(imported, rom).map(|tilemap| *tilemap.tiles())
 }
