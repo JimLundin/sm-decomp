@@ -30,8 +30,6 @@ use crate::kraid_tables;
 use crate::menus::prelude::battle;
 use crate::menus::prelude::owned;
 use crate::palette_effects::fading::background6;
-use crate::ram::CompatibilityRam as _;
-use crate::ram::word;
 use crate::session::HookSlot;
 use core::mem::offset_of;
 use sm_data::cartridge::RomRecord;
@@ -272,6 +270,14 @@ const BG2_TILES: u32 = 0xb9_fa38;
 const BG2_TILES_RAM: usize = 0x4000;
 const BG2_TILES_SHARED: usize = BG2_TILES_RAM - crate::presentation_workspace::FIRST;
 const BG2_TILEMAP: u32 = 0xb9_fe3e;
+/// BG1/2 palette 6 ($7E:C0C0, target $7E:C2C0) and BG1/2 palette 7 ($7E:C0E0),
+/// and sprite palette 3's target ($7E:C360), by colour.
+const BG_PALETTE_6: usize = 0x60;
+const BG_PALETTE_7: usize = 0x70;
+const SPRITE_PALETTE_3: usize = 0xb0;
+const PALETTE_COLOURS: usize = 16;
+/// The staging words the rise blanks: the last 32 ($7E:2FC0..$7E:2FFF).
+const RISE_BLANK_WORDS: std::ops::Range<usize> = bg2_staging::WORDS - 32..bg2_staging::WORDS;
 /// Bank $86 enemy projectiles.
 const DUST_CLOUD: u16 = 0xe509;
 const SPIT_ROCKS: u16 = 0x9c45;
@@ -436,12 +442,24 @@ fn load_bg2<S: BossState + SlotState + ?Sized>(game: &mut S, priority: u16) {
     }
 }
 
+/// Colour `index` of the ROM palette at `address`, in native order.
+fn rom_colour<L: Lease + ?Sized>(game: &L, address: u32, index: usize) -> u16 {
+    crate::cartridge::rom_table_word!(game, address, index as isize)
+}
+
+/// The room background palette becomes BG palette 6's target.
+fn load_room_bg_target<L: Lease + ?Sized>(game: &mut L) {
+    for index in 0..PALETTE_COLOURS {
+        let colour = rom_colour(game, ROOM_BG_PALETTE, index);
+        game.session_mut().presentation.visual_mut().targets[BG_PALETTE_6 + index] = colour;
+    }
+    game.words_stored();
+}
+
 /// Fades in the room background palette and queues its tilemap. Was
 /// `Kraid_DrawRoomBg`.
 fn draw_room_bg<L: Lease + ?Sized>(game: &mut L) {
-    game.foreign(|game| {
-        crate::word_transfers!(game, ascending, 16; le(TARGET_PALETTES, 96) <- rom(ROOM_BG_PALETTE, 0));
-    });
+    load_room_bg_target(game);
     battle!(game.PaletteChangeNum = 0);
     queue_room_bg(game);
 }
@@ -1439,9 +1457,14 @@ fn death_fade_out<L: Lease + ?Sized>(game: &mut L) {
         *BodyEdit::of(game, BODY).hurt_frame_timer() = 1;
         *BodyEdit::of(game, BODY).hurt_frame() = 1;
         palette(game);
-        game.foreign(|game| {
-            crate::word_transfers!(game, (4), 128; xray(0) <- value(0), xray(1) <- value(0));
-        });
+        // The 512 bytes at $7E:4000 in the workspace's shared bytes.
+        game.session_mut()
+            .publish_workspace_slice(
+                crate::presentation_workspace::Point::physical(BG2_TILES_RAM),
+                &[0; 512],
+            )
+            .expect("shared workspace bytes");
+        game.words_stored();
         queue_vram(game, 512, 0x4000, 126, |game| {
             (((game.display_control_byte(BG3_TILEMAP_BASE) as i32 & 0xf) << 8) + 16128) as u16
         });
@@ -1786,12 +1809,24 @@ fn unglow_eye<L: Lease + ?Sized>(game: &mut L) {
         let s: i32 = source as i32 >> 1;
         if kraid_tables::bg_color(game, (s + 1) as usize) & 0x1f != part {
             fading = fading.wrapping_add(1);
-            word!(game.PALETTE_BUFFER[c], wrapping_sub(1));
+            let old = interaction::get_at(game, interaction::Array::PaletteBuffer, c);
+            interaction::set_at(
+                game,
+                interaction::Array::PaletteBuffer,
+                c,
+                old.wrapping_sub(1),
+            );
         }
         part = (interaction::get_at(game, interaction::Array::PaletteBuffer, c)) & 0x3e0;
         if kraid_tables::bg_color(game, (s + 1) as usize) & 0x3e0 != part {
             fading = fading.wrapping_add(1);
-            word!(game.PALETTE_BUFFER[c], wrapping_sub(32));
+            let old = interaction::get_at(game, interaction::Array::PaletteBuffer, c);
+            interaction::set_at(
+                game,
+                interaction::Array::PaletteBuffer,
+                c,
+                old.wrapping_sub(32),
+            );
         }
         colour = colour.wrapping_add(2);
         source = source.wrapping_add(2);
@@ -1914,12 +1949,15 @@ fn first_phase<L: Lease + ?Sized>(game: &mut L) -> bool {
 /// clear. Was `Kraid_Death_Init`.
 fn death_init<L: Lease + ?Sized>(game: &mut L) {
     if Body::of(game, BODY).hurt_frame() == 0 {
-        game.foreign(|game| {
-            crate::word_transfers!(game, ascending, 16; le(TARGET_PALETTES, 96) <- value(0));
-        });
-        game.foreign(|game| {
-            crate::word_transfers!(game, descending, 16; le(PALETTE_BUFFER, 127) <- rom(DEATH_PALETTE, 15));
-        });
+        game.session_mut().presentation.visual_mut().targets
+            [BG_PALETTE_6..BG_PALETTE_6 + PALETTE_COLOURS]
+            .copy_from_slice(&[0; PALETTE_COLOURS]);
+        game.words_stored();
+        for index in (0..PALETTE_COLOURS).rev() {
+            let colour = rom_colour(game, DEATH_PALETTE, index);
+            game.session_mut().presentation.visual_mut().colors[BG_PALETTE_7 + index] = colour;
+        }
+        game.words_stored();
         PartEdit::of(game, ARM).actor().instruction = animation::ARM_DYING;
         PartEdit::of(game, ARM).actor().instruction_delay = 1;
         *BodyEdit::of(game, BODY).function() = function::DEATH_FADE_OUT;
@@ -1973,9 +2011,7 @@ pub fn initialize<L: Lease + ?Sized>(game: &mut L) {
     set_hook_address(game, HookSlot::Unpause, UNPAUSE_ALIVE);
     set_hook_address(game, HookSlot::Pause, PAUSE);
     if is_dead(game) != 0 {
-        game.foreign(|game| {
-            crate::word_transfers!(game, ascending, 16; le(TARGET_PALETTES, 96) <- rom(ROOM_BG_PALETTE, 0));
-        });
+        load_room_bg_target(game);
         bg2_staging::fill(game, (0..=1023).rev(), BLANK_BG2_TILE);
         *BodyEdit::of(game, BODY).unread_7804() = 0;
         queue_room_bg(game);
@@ -2018,13 +2054,16 @@ pub fn initialize<L: Lease + ?Sized>(game: &mut L) {
         *BodyEdit::of(game, BODY).next_function() = function::RAISE_THROUGH_FLOOR;
         *BodyEdit::of(game, BODY).script_delay() = 64;
         game.foreign(|game| game.disable_minimap_for_boss());
-        game.foreign(|game| {
-            crate::word_transfers!(game, descending, 32; native(0x2ffe) <- value(BLANK_BG2_TILE));
-        });
+        // The staging RAM stores the tile natively, as the original's does.
+        let blank = u16::from_le_bytes(BLANK_BG2_TILE.to_ne_bytes());
+        bg2_staging::fill(game, RISE_BLANK_WORDS.rev(), blank);
         battle!(game.EarthquakeType = 5);
-        game.foreign(|game| {
-            crate::word_transfers!(game, ascending, 16; native(0xc360) <- rom(RISING_PALETTE, 0));
-        });
+        for index in 0..PALETTE_COLOURS {
+            // The palette RAM keeps the ROM's bytes, as the original's native copy does.
+            let colour = u16::from_le_bytes(rom_colour(game, RISING_PALETTE, index).to_ne_bytes());
+            game.session_mut().presentation.visual_mut().targets[SPRITE_PALETTE_3 + index] = colour;
+        }
+        game.words_stored();
     }
 }
 
