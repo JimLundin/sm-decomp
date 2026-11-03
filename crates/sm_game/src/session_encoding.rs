@@ -934,6 +934,27 @@ macro_rules! scalar_words {
     };
 }
 
+/// Whether a `scalar_words` lane covers `at`. The lanes' addresses are fixed,
+/// so one table answers for every Session before the lane search runs.
+fn is_scalar_lane(at: usize) -> bool {
+    static LANES: std::sync::OnceLock<Box<[u64]>> = std::sync::OnceLock::new();
+    let lanes = LANES.get_or_init(|| {
+        let s = Session::with_world(WorldBinding::canonical_legacy());
+        let mut lanes = vec![0u64; 0x20000 / 64];
+        let mut mark = |base: usize, _: &u16| {
+            for at in [base, base + 1] {
+                if let Some(word) = lanes.get_mut(at / 64) {
+                    *word |= 1 << (at % 64);
+                }
+            }
+        };
+        scalar_words!(s,mark,(&));
+        lanes.into_boxed_slice()
+    });
+    lanes
+        .get(at / 64)
+        .is_some_and(|word| word & (1 << (at % 64)) != 0)
+}
 pub fn read(bytes: &impl Fn(usize) -> u8, at: usize) -> u16 {
     u16::from_le_bytes([bytes(at), bytes(at + 1)])
 }
@@ -1348,6 +1369,9 @@ pub fn projected_byte(s: &Session, at: usize) -> Option<u8> {
         };
         return Some(((s.projectiles.launch.displacements[index] as u32) >> shift) as u8);
     }
+    if !is_scalar_lane(at) {
+        return None;
+    }
     let mut result = None;
     let mut select = |base: usize, value: &u16| {
         if at == base || at == base + 1 {
@@ -1532,6 +1556,9 @@ pub fn write_projected_byte(s: &mut Session, at: usize, value: u8) -> bool {
         s.projectiles.launch.displacements[index] =
             ((old & !(0xff << shift)) | (u32::from(value) << shift)) as i32;
         return true;
+    }
+    if !is_scalar_lane(at) {
+        return false;
     }
     let mut changed = false;
     let mut write = |base: usize, word: &mut u16| {
@@ -1730,7 +1757,7 @@ mod player_lane_tests {
     //! The grapple writes these words as named `Session::player` fields inside a
     //! lease, so the projection must serve each word from exactly that field: no
     //! earlier owner may claim the address, and writing it touches no other lane.
-    use super::{projected_byte, write_projected_byte};
+    use super::{arrays, projected_byte, ram, write_projected_byte};
     use crate::player_transitions::state::{
         DrawMode, HurtAction, InterruptionAction, MovementMode, PoseRequestWord,
     };
@@ -1851,6 +1878,25 @@ mod player_lane_tests {
             projected_byte(s, at)?,
             projected_byte(s, at + 1)?,
         ]))
+    }
+
+    /// The lane table holds exactly the addresses the lane search matches.
+    #[test]
+    fn the_scalar_lane_table_answers_as_the_search_does() {
+        let s = session();
+        let mut searched = std::collections::BTreeSet::new();
+        let mut mark = |base: usize, _: &u16| {
+            searched.insert(base);
+            searched.insert(base + 1);
+        };
+        scalar_words!(s,mark,(&));
+        for at in 0..0x20000 {
+            assert_eq!(
+                super::is_scalar_lane(at),
+                searched.contains(&at),
+                "address {at:#x}"
+            );
+        }
     }
 
     #[test]
