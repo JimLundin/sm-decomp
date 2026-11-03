@@ -5,11 +5,10 @@ use crate::actors::access::{AccessMode::Native, ActorAccess as _, ActorKey as Ke
 use crate::actors::api::{self, MovementResult::Blocked, ShotHandling, SlopePolicy};
 use crate::actors::combat;
 use crate::actors::host::{ActorLease, ActorRuntime as _, EnemyHost, LeaseActors};
-use crate::actors::session_slots::SlotAccess as _;
 use crate::enemy_projectiles::host::Effects as _;
 use crate::enemy_script::EnemyScript;
 use crate::player_projectiles::content::table;
-use crate::ram::{word_arrays as A, words as W};
+use crate::ram::words as W;
 use crate::session_access::SessionAccess as _;
 
 /// The palette cycle ($A8:CC67): four colours then a duration, ended by -1.
@@ -19,8 +18,9 @@ const PALETTE: [i16; 31] = [
 ];
 /// $7E:D656: the palette cycle cursor (`work_robot_palanim_table_index`).
 const PALETTE_CURSOR: usize = 0xd656;
-const GFX_DRAWN_HOOK: usize = 0x178c;
-const GFX_DRAWN_HOOK_BANK: usize = 0x178e;
+/// $A8:CC67: the drawn hook, the palette cycle.
+const PALETTE_CYCLE_HOOK: u16 = 0xcc67;
+const BANK: u8 = 0xa8;
 /// The robot's colours, 137 entries into its palette line.
 const COLOURS: usize = 137;
 
@@ -43,7 +43,7 @@ fn cooldown(runtime: &mut impl ActorLease) {
 }
 /// Enemy graphics drawn hook - work robot - periodically cycle between palettes ($A8:CC67).
 pub fn palette(runtime: &mut impl ActorLease) {
-    let door = runtime.word(W::DOOR_TRANSITION_FLAG_ENEMIES) != 0;
+    let door = runtime.session().room.entry.enemy_interlock != 0;
     if door || runtime.word(W::WORK_ROBOT_PALANIM_TIMER) == 0 {
         return;
     }
@@ -60,7 +60,7 @@ pub fn palette(runtime: &mut impl ActorLease) {
     let line = usize::from(runtime.word(W::WORK_ROBOT_PALANIM_PALINDEX) >> 8) * 8;
     for i in 0..4 {
         let colour = PALETTE[index + i] as u16;
-        runtime.write_slice_le(A::PALETTE_BUFFER + 2 * (line + COLOURS + i), colour);
+        runtime.session_mut().presentation.visual_mut().colors[line + COLOURS + i] = colour;
     }
     runtime.write_slice_le(W::WORK_ROBOT_PALANIM_TIMER, PALETTE[index + 4] as u16);
     runtime.write_slice_native(PALETTE_CURSOR, cursor.wrapping_add(10));
@@ -71,8 +71,9 @@ pub fn initialize<H: LeaseActors + EnemyHost + ?Sized>(game: &mut H) {
         return initialize_deactivated(game);
     }
     let runtime = &mut game.lease();
-    runtime.set_slot_byte(GFX_DRAWN_HOOK_BANK, 0xa8);
-    runtime.write_slice_native(GFX_DRAWN_HOOK, 0xcc67);
+    let hook = &mut runtime.session_mut().actors.drawing.hook_address;
+    hook[2] = BANK;
+    hook[..2].copy_from_slice(&PALETTE_CYCLE_HOOK.to_ne_bytes());
     let key = combat::current(runtime);
     runtime.edit_actor(key, Native, |actor| {
         actor.properties |= 0xa000;
@@ -111,7 +112,7 @@ pub fn initialize_deactivated<H: LeaseActors + ?Sized>(game: &mut H) {
     });
     let line = usize::from(runtime.word(W::WORK_ROBOT_PALANIM_PALINDEX) >> 8) * 8;
     for i in COLOURS..COLOURS + 4 {
-        runtime.write_slice_le(A::PALETTE_BUFFER + 2 * (line + i), 10);
+        runtime.session_mut().presentation.visual_mut().colors[line + i] = 10;
     }
 }
 /// Main AI - work robot ($A8:CC36): fall, accelerating.
@@ -134,8 +135,8 @@ pub fn main_ai(runtime: &mut impl ActorLease) {
 pub fn touch(runtime: &mut impl ActorLease) {
     let key = combat::current(runtime);
     let x = runtime.resolve_actor(key, Native).x.whole;
-    let left = (x as i16).wrapping_sub(runtime.word(W::SAMUS_X_POS) as i16) < 0;
-    runtime.write_slice_le(W::EXTRA_SAMUS_X_DISPLACEMENT, if left { 4 } else { 0xfffc });
+    let left = (x as i16).wrapping_sub(runtime.session().player.x as i16) < 0;
+    runtime.session_mut().player.contact.external_x.whole = if left { 4 } else { 0xfffc };
 }
 /// Enemy shot - work robot deactivated ($A8:D18D).
 pub fn shot_deactivated<H: LeaseActors + ?Sized>(game: &mut H) {
@@ -154,7 +155,7 @@ pub fn shot<H: LeaseActors + EnemyHost + ?Sized>(game: &mut H) {
     if actor.health == 0 {
         return;
     }
-    let left = (runtime.word(W::SAMUS_X_POS) as i16).wrapping_sub(actor.x.whole as i16) < 0;
+    let left = (runtime.session().player.x as i16).wrapping_sub(actor.x.whole as i16) < 0;
     let instruction = match (actor.variables[0] & 0x8000 != 0, left) {
         (true, false) => 0xc833,
         (true, true) => 0xc7bb,
@@ -184,8 +185,9 @@ fn walk(
         return EnemyScript::jump(wall);
     }
     if api::touches_player_from_above(runtime, key) {
-        runtime.write_slice_le(W::EXTRA_SAMUS_X_SUBDISPLACEMENT, 0);
-        runtime.write_slice_le(W::EXTRA_SAMUS_X_DISPLACEMENT, step as u16);
+        let external = &mut runtime.session_mut().player.contact.external_x;
+        external.fraction = 0;
+        external.whole = step as u16;
     }
     let Some(edge) = edge else {
         return script;
@@ -262,7 +264,7 @@ pub fn instruction<H: LeaseActors + ?Sized>(
                 cooldown(runtime);
                 return j;
             }
-            let delay = (runtime.word(W::RANDOM_NUMBER) & 0x1f) + 16;
+            let delay = (runtime.session().timing.random_number & 0x1f) + 16;
             runtime.edit_actor(key, Native, |actor| actor.variables[1] = delay);
             let current = combat::current(runtime).byte_index();
             runtime.foreign(|game| game.spawn_projectile(delay, current, definition));
