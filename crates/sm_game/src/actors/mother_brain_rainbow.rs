@@ -39,7 +39,11 @@ enum Direction {
 /// What the beam window reads beyond Mother Brain's state: the loaded
 /// cartridge's edge gradients, and the Session's HDMA objects.
 pub trait Host:
-    State + LoadedImage + crate::actors::slot_view::SlotState + crate::hdma_objects::HdmaTable
+    State
+    + LoadedImage
+    + crate::actors::slot_view::SlotState
+    + crate::hdma_objects::HdmaTable
+    + crate::fx_domain::Controls
 {
 }
 impl<
@@ -47,13 +51,11 @@ impl<
         + LoadedImage
         + crate::actors::slot_view::SlotState
         + crate::hdma_objects::HdmaTable
+        + crate::fx_domain::Controls
         + ?Sized,
 > Host for T
 {
 }
-
-/// $7E:186E: the beam's layer blending.
-const LAYER_BLENDING: usize = crate::ram::words::FX_LAYER_BLENDING_CONFIG_C;
 
 /// The edge gradient for `angle`: |tan(angle * pi / 80h)| * 100h ($91:C9D4).
 fn gradient(game: &mut impl Host, angle: isize) -> u16 {
@@ -348,12 +350,19 @@ const BEAM_BLENDING: u16 = 0x24;
 const DEATH_SEQUENCE_START: u16 = 0x13;
 const RESERVE_TANKS_AUTO: u16 = 0x1b;
 
+/// Select the beam's layer blending ($7E:1986, the FX blending).
+fn set_beam_blending(game: &mut impl Host) {
+    let mut fx = game.fx_controls();
+    fx.blending = BEAM_BLENDING;
+    game.publish_fx_controls(fx, &[crate::fx_state::Field::Blending]);
+}
+
 /// Initialise rainbow beam ($88:E767): a greenish blue backdrop, the beam's
 /// layer blending, the indirect header's first row and the first three
 /// window rows, then the window.
 pub fn initialize_hdma(game: &mut impl Host) {
     game.write_slice(BACKDROP, &[0x20, 0x47, 0x8f]);
-    game.write_word_le(BEAM_BLENDING, LAYER_BLENDING);
+    set_beam_blending(game);
     game.set_byte(HEADER as usize, 0x64);
     write(game, HEADER + 1, 0x9d00);
     write(game, HEADER + 3, 0);
@@ -375,7 +384,7 @@ pub fn advance_hdma(game: &mut impl Host) {
         );
         crate::hdma_word!(game, index, Channels => 0);
     } else {
-        game.write_word_le(BEAM_BLENDING, LAYER_BLENDING);
+        set_beam_blending(game);
         if game.session().game_loop.mode != RESERVE_TANKS_AUTO {
             calculate_window(game);
             set_backdrop_colour(game);
