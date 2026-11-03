@@ -63,7 +63,7 @@ pub struct Camera {
 /// lease: the owned Session's projection while one is installed, the byte
 /// image otherwise. It opens no lease.
 pub fn current<H: crate::ram::CompatibilityRam + ?Sized>(h: &H) -> Camera {
-    crate::session_encoding::camera(&crate::projection::reader(h))
+    crate::projection::Views::decode_view(h)
 }
 
 /// Store layer 1's whole position on `axis` (0 = x, 1 = y). The store is

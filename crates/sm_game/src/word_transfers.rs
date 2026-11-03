@@ -207,6 +207,33 @@ mod tests {
         fn compatibility_write_byte(&mut self, at: usize, value: u8) {
             self.0[at] = value;
         }
+        fn observed_inputs(&self) -> crate::external_inputs::ExternalInputs {
+            panic!("observations were not supplied")
+        }
+    }
+    impl crate::projection::Views for Ram {
+        fn view_word(&self, _: crate::projection::Field) -> u16 {
+            panic!("views were not supplied")
+        }
+        fn set_view_word(&mut self, _: crate::projection::Field, _: u16) {
+            panic!("views were not supplied")
+        }
+        fn set_view_low_byte(&mut self, _: crate::projection::Field, _: u8) {
+            panic!("views were not supplied")
+        }
+        fn decode_view<T: crate::projection::Decode>(&self) -> T {
+            panic!("views were not supplied")
+        }
+        fn load_words(&self, _: &mut impl crate::projection::Layout) {
+            panic!("views were not supplied")
+        }
+        fn store_words(
+            &mut self,
+            _: &mut impl crate::projection::Layout,
+            _: impl FnMut(usize) -> bool,
+        ) {
+            panic!("views were not supplied")
+        }
     }
 
     #[test]

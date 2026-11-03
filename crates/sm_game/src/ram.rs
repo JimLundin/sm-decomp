@@ -31,15 +31,16 @@ pub trait RamHost: CompatibilityRam + WorkRamAccess {}
 impl<T: CompatibilityRam + WorkRamAccess + ?Sized> RamHost for T {}
 
 pub trait CompatibilityRam:
-    crate::display_scroll::Access + crate::sequence_state::Access + crate::gameplay_context::Access
+    crate::display_scroll::Access
+    + crate::sequence_state::Access
+    + crate::gameplay_context::Access
+    + crate::projection::Views
 {
     fn compatibility_byte(&self, at: usize) -> u8;
     fn compatibility_write_byte(&mut self, at: usize, value: u8);
     /// The external observations (joypad keys, frame counter, camera...) as
     /// the host's projection holds them, as a lease's `inputs()`; no lease.
-    fn observed_inputs(&self) -> crate::external_inputs::ExternalInputs {
-        crate::session_encoding::inputs(&|at| self.compatibility_byte(at))
-    }
+    fn observed_inputs(&self) -> crate::external_inputs::ExternalInputs;
 }
 
 /// `Scalar`: the name is one value at `addr`. `Array`: the name is a pointer

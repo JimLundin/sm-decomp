@@ -1936,6 +1936,9 @@ impl sm_game::ram::CompatibilityRam for Runtime<'_> {
     fn compatibility_write_byte(&mut self, at: usize, value: u8) {
         Runtime::set_byte(self, at, value)
     }
+    fn observed_inputs(&self) -> sm_game::external_inputs::ExternalInputs {
+        crate::projection::observed_inputs(self)
+    }
 }
 // A register write may read or change RAM (DMA, the WRAM port), so each one
 // runs on the exported game and the lease re-imports what it left.

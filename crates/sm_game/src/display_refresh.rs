@@ -17,7 +17,6 @@ use crate::display::registers::{
 use crate::display::sequence::{Registers, register_writes, write_register_and_mirror};
 use crate::display::transfer::{ScrollingLayout, setup_transfer};
 use crate::display::video::Upload;
-use crate::ram::words;
 use crate::ram::{CompatibilityRam, RawRam, checked_word, word};
 use crate::scene::irq;
 use crate::scene::state::DisplayError;
@@ -316,12 +315,10 @@ impl<H: crate::display::preparation::Access + CompatibilityRam + ?Sized> irq::Co
             irq::Control::Enable => {
                 Place::Controls(Field::NmiEnable, Field::HdmaEnable).read(&*self.0)
             }
-            irq::Control::PreviousCre => {
-                crate::projection::word(&*self.0, words::PREVIOUS_CRE_BITSET)
-            }
-            irq::Control::CurrentCre => crate::projection::word(&*self.0, words::CRE_BITSET),
+            irq::Control::PreviousCre => self.0.view_word(crate::projection::Field::PreviousCre),
+            irq::Control::CurrentCre => self.0.view_word(crate::projection::Field::CurrentCre),
             irq::Control::TransitionFlag => {
-                crate::projection::word(&*self.0, words::DOOR_TRANSITION_FLAG)
+                self.0.view_word(crate::projection::Field::DoorTransition)
             }
         }
     }

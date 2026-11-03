@@ -177,9 +177,10 @@ MUTATIONS: tuple[Mutation, ...] = (
           "    let mut emit = |at: usize, value: &u16| {\n        if crate::fx_encoding::control_lane(at).is_some() {",
           "    let mut emit = |at: usize, value: &u16| {\n        if at == 0x0d00 { return; }\n        if crate::fx_encoding::control_lane(at).is_some() {",
           RANDOM_RAM),
-    shift("projection_stores_big_endian", "crates/sm_game/src/projection.rs",
-          "    for (lane, value) in value.to_le_bytes().into_iter().enumerate() {",
-          "    for (lane, value) in value.to_be_bytes().into_iter().enumerate() {", LITTLE_ENDIAN),
+    shift("flow_view_field_shifts", "crates/sm_game/src/projection.rs",
+          "            Self::Flow(word) => crate::session_encoding::FLOW + 2 * word as usize,",
+          "            Self::Flow(word) => crate::session_encoding::FLOW + 2 * word as usize + 2,",
+          LITTLE_ENDIAN),
     shift("shift_lava_observation", ENCODING,
           "        lava_y: w(0x1962),", "        lava_y: w(0x1964),", INPUTS),
     # $94's out-of-room level word read (D387): the long indexed read carries

@@ -34,7 +34,7 @@ impl sm_game::room_visuals::StatueHost for crate::game_state::Game {
         } else {
             // The suspended/dirty HDMA bridge retains byte order and does not
             // admit a semantic owner before its actual selected image is adopted.
-            sm_game::projection::set_word(
+            crate::projection::set_word(
                 self,
                 crate::ram_map::words::TOURIAN_ENTRANCE_STATUE_FINISHED,
                 0x8000,

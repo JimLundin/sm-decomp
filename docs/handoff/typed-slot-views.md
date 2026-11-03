@@ -69,7 +69,7 @@ Raw RAM accesses to the scroll cells still run on Game:
    - Level-data indexes that run past the cells.
    - A typed index would panic where RAM didn't, so these need a LEGACY entry or a bounded typed fallback.
    - Done (2026-11-03): these go through `legacy_overflow` (`LEGACY(original-overflow)` in docs/LEGACY.md), typed where in range; cycle_report counts them as `legacy_overflow`.
-5. **Machinery.** `session_slots.rs` is gone (`session_slot!`, `SlotAccess`, `SessionSlots`); overflow paths resolve through `legacy_overflow::SlotBytes`. `projection.rs`/`ram.rs` remain: the `CompatibilityRam` byte helpers behind ~30 views, which Game serves from its RAM image off a lease.
+5. **Machinery.** `session_slots.rs` is gone (`session_slot!`, `SlotAccess`, `SessionSlots`); overflow paths resolve through `legacy_overflow::SlotBytes`. The views' byte helpers moved to `sm/src/projection.rs`: sm_game's views now require `projection::Views` (a supertrait of `CompatibilityRam`), which names words by `Field` and groups by `Layout`/`Decode` (cohorts, liquid, palette fade, camera, flow, room). `sm` implements it for `Game` and the Runtime over their projected bytes, unchanged, and `observed_inputs` is a required method there. The `word!` macros still reach `compatibility_byte` (they count as RAM macros).
 6. **Counter noise.** `enemy_projectiles/content` (a `self` ROM record) and `menus/canvas` (a workspace `Point`) are not RAM.
 
 ## Caveat

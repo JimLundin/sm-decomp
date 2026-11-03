@@ -218,12 +218,12 @@ pub fn current<H: CompatibilityRam + ?Sized>(h: &H) -> Inventory {
 
 /// `word` as the host's projection holds it, low byte then high.
 pub fn get<H: CompatibilityRam + ?Sized>(h: &H, word: Word) -> u16 {
-    crate::projection::word(h, word.address())
+    h.view_word(crate::projection::Field::Inventory(word))
 }
 
 /// Store `value` to `word`, low byte then high, as the named word store did.
 pub fn set<H: CompatibilityRam + ?Sized>(h: &mut H, word: Word, value: u16) {
-    crate::projection::set_word(h, word.address(), value);
+    h.set_view_word(crate::projection::Field::Inventory(word), value);
 }
 
 /// Explicit compatibility adoption of the actual selected byte image.
