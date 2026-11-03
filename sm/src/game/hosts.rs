@@ -507,15 +507,15 @@ impl sm_game::hud::HudPlayer for Game {
     }
     fn selected_item(&self) -> u16 {
         let game = self;
-        sm_game::ram_word!(game.HUD_ITEM_INDEX)
+        crate::ram_map::word!(game.HUD_ITEM_INDEX)
     }
     fn automatic_item(&self) -> u16 {
         let game = self;
-        sm_game::ram_word!(game.SAMUS_AUTO_CANCEL_HUD_ITEM_INDEX)
+        crate::ram_map::word!(game.SAMUS_AUTO_CANCEL_HUD_ITEM_INDEX)
     }
     fn grapple_function(&self) -> u16 {
         let game = self;
-        sm_game::ram_word!(game.GRAPPLE_BEAM_FUNCTION)
+        crate::ram_map::word!(game.GRAPPLE_BEAM_FUNCTION)
     }
 }
 

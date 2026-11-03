@@ -457,6 +457,8 @@ pub mod cpu_infra;
 mod initial_state;
 /// Names for raw `g_ram` offsets, recovered from snesrev's variable macros.
 pub mod ram_map;
+/// Named RAM word and enemy-record access by those names.
+mod ram_words;
 /// Game runtime library: RAM, ROM access, save states, frame loop glue.
 pub mod rtl;
 /// Music/sound driver reimplementation.

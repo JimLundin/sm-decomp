@@ -983,44 +983,6 @@ macro_rules! ram_checked_word {
 /// `compatibility_byte`/`compatibility_write_byte` methods in scope.
 pub use crate::{ram_checked_word as checked_word, ram_word as word};
 
-// Checked enemy-record fields at RAM 0x0f78 + signed slot, replacing raw
-// `Get_X(slot) -> *mut` records (`slot!(game, Alias[slot].field)`). Like `word!`, each access copies Cell-backed RAM bytes
-// at the caller and forms no live u8 reference; native byte order matches the old
-// dereference. Writes evaluate the value before the slot and keep its temporaries
-// through the store. Word forms check at compile time that the field is a u16.
-#[macro_export]
-macro_rules! ram_slot {
-    (@at $layout:ident, $slot:expr, $($field:ident).+) => {
-        ::core::primitive::usize::try_from(
-            { let slot: ::core::primitive::i32 = $slot; slot as ::core::primitive::isize }
-                + 0x0f78
-                + ::core::mem::offset_of!($layout, $($field).+) as ::core::primitive::isize,
-        )
-        .expect("enemy field outside RAM")
-    };
-    ($game:ident, $layout:ident[$slot:expr] $(.$field:ident)+ = $value:expr) => {
-        match ($value, $crate::ram_slot!(@at $layout, $slot, $($field).+)) {
-            (value, at) => {
-                $crate::ram::word_field::<$layout>(|record| record $(.$field)+);
-                let bytes = ::core::primitive::u16::to_ne_bytes(value);
-                $game.ram().write_byte(at, bytes[0]);
-                $game.ram().write_byte(at + 1, bytes[1]);
-            }
-        }
-    };
-    ($game:ident, $layout:ident[$slot:expr] $(.$field:ident)+) => {
-        match $crate::ram_slot!(@at $layout, $slot, $($field).+) {
-            at => {
-                $crate::ram::word_field::<$layout>(|record| record $(.$field)+);
-                ::core::primitive::u16::from_ne_bytes([$game.ram().read_byte(at), $game.ram().read_byte(at + 1)])
-            }
-        }
-    };
-}
-pub use crate::ram_slot as slot;
-/// Compile-time proof that an enemy-record field is one u16 word.
-pub fn word_field<L>(_: fn(L) -> u16) {}
-
 /// The work RAM bytes that mirror PPU and CPU registers ($7E:0051..), written
 /// by game code and copied to the hardware during NMI. Each is checked against
 /// `RAM_VARS` by name.

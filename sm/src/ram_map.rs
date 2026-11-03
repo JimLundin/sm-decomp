@@ -6,7 +6,6 @@
 //! The verifier uses this table to name RAM mismatches. Use these names when
 //! replacing raw gameplay accesses (phase 3 of docs/PLAN.md).
 
+pub(crate) use crate::ram_words::{checked_word, slot, word};
 pub use sm_game::ram::{RAM_VARS, RamVar, Shape};
-pub(crate) use sm_game::ram::{checked_word, word, word_arrays, words};
-
-pub(crate) use sm_game::ram::slot;
+pub(crate) use sm_game::ram::{word_arrays, words};
