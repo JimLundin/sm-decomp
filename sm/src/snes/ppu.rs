@@ -238,27 +238,37 @@ pub(crate) unsafe fn ppu_run_line(ppu: *mut Ppu, line: i32, new_ppu: &bool) {
                 !(*ppu).forcedBlank && ppu_evaluate_sprites(ppu, line - 1i32) as i32 != 0;
             // EXTBG composition and enabled mosaic use the per-pixel path.
             let mosaic = (*ppu).mosaicSize > 1 && (*ppu).bgLayer.iter().any(|bg| bg.mosaicEnabled);
+            let draw = pixels_observed();
             if *new_ppu && !((*ppu).mode == 7 && (*ppu).m7extBg) && !mosaic {
-                ppu_draw_whole_line(ppu, line as u32);
-                #[cfg(sm_verify_dll)]
-                cross_render::check(ppu, line);
-                #[cfg(sm_verify_dll)]
-                native_line::check(ppu, line);
+                ppu_draw_whole_line(ppu, line as u32, draw);
+                if draw {
+                    #[cfg(sm_verify_dll)]
+                    cross_render::check(ppu, line);
+                    #[cfg(sm_verify_dll)]
+                    native_line::check(ppu, line);
+                }
             } else {
                 if (*ppu).mode as i32 == 7 {
                     ppu_calculate_mode7_starts(ppu, line);
                 }
-                for x in 0i32..256 {
-                    ppu_render_pixel::<false>(ppu, x, line, (0, 0));
+                if draw {
+                    for x in 0i32..256 {
+                        ppu_render_pixel(ppu, x, line);
+                    }
                 }
             }
         };
     }
 }
 
-unsafe fn ppu_draw_whole_line(ppu: *mut Ppu, y: u32) {
+/// The native line. Without `draw` it keeps the line's assertions and start
+/// faults and writes no pixels.
+unsafe fn ppu_draw_whole_line(ppu: *mut Ppu, y: u32, draw: bool) {
     unsafe {
         if (*ppu).forcedBlank {
+            if !draw {
+                return;
+            }
             let dst = (*ppu)
                 .renderBuffer
                 .offset(y.wrapping_sub(1).wrapping_mul((*ppu).renderPitch) as isize);
@@ -276,10 +286,13 @@ unsafe fn ppu_draw_whole_line(ppu: *mut Ppu, y: u32) {
                 }
             }
         }
+        // No PPU field changes within a line, so one configuration serves
+        // every pixel; only the separate render buffer is written.
+        let source = NativeRasterSource(ppu);
+        let config = ppu_line_config(ppu);
         let starts = if (*ppu).mode == 1 {
             (0, 0)
         } else {
-            let config = ppu_line_config(ppu);
             ppu_raster_result(raster::affine_start(
                 &config.affine,
                 &config.mosaic,
@@ -287,27 +300,28 @@ unsafe fn ppu_draw_whole_line(ppu: *mut Ppu, y: u32) {
                 raster::Quantization::Native,
             ))
         };
+        if !draw {
+            return;
+        }
+        let row = y.wrapping_sub(1).wrapping_mul((*ppu).renderPitch);
+        let left_right = i32::from((*ppu).extraLeftRight);
         for x in -i32::from((*ppu).extraLeftCur)..256 + i32::from((*ppu).extraRightCur) {
-            ppu_render_pixel::<true>(ppu, x, y as i32, starts);
+            let output = ppu_raster_result(raster::render_pixel(
+                &source, &config, &source, x, y as i32, starts,
+            ));
+            let offset = row.wrapping_add(((x + left_right) * 4) as u32);
+            core::ptr::copy_nonoverlapping(
+                output.as_ptr(),
+                (*ppu).renderBuffer.offset(offset as isize),
+                4,
+            );
         }
     }
 }
 
-unsafe fn ppu_get_pixel<const NATIVE: bool>(
-    ppu: *mut Ppu,
-    x: i32,
-    y: i32,
-    sub: bool,
-    starts: (u32, u32),
-) -> raster::LayerPixel {
+/// The reference backend's pixel; the native path is `raster::render_pixel`.
+unsafe fn ppu_get_pixel(ppu: *mut Ppu, x: i32, y: i32, sub: bool) -> raster::LayerPixel {
     unsafe {
-        if NATIVE {
-            let source = NativeRasterSource(ppu);
-            let config = ppu_line_config(ppu);
-            return ppu_raster_result(raster::native_pixel(
-                &source, &config, &source, x, y, sub, starts,
-            ));
-        }
         // Keep the reference backend query and its invalid-mode failure point.
         assert!((*ppu).mode < 10);
         let sprite = (*ppu).objBuffer.data[x as usize];
@@ -467,6 +481,25 @@ pub unsafe fn ppu_write(ppu: *mut Ppu, adr: u8, val: u8) {
 thread_local! {
     /// A synchronous Samus DMA interval; never stores video state or a live borrow.
     static SAMUS_VRAM_DMA: std::cell::Cell<Option<usize>> = const { std::cell::Cell::new(None) };
+    /// Whether anything reads this thread's rendered frames.
+    static PIXELS_OBSERVED: std::cell::Cell<bool> = const { std::cell::Cell::new(true) };
+}
+
+/// Say whether anything reads the rendered frames; on by default. With it off,
+/// each line keeps its register, brightness, sprite, Mode 7 start and fault
+/// effects and composes no pixels, so the render buffers keep what the host
+/// last put there.
+pub fn observe_pixels(observed: bool) {
+    PIXELS_OBSERVED.set(observed);
+}
+
+/// The verifier's line checks compare rendered pixels, so they keep them.
+fn pixels_observed() -> bool {
+    #[cfg(sm_verify_dll)]
+    if cross_render::interval() != 0 || native_line::enabled() {
+        return true;
+    }
+    PIXELS_OBSERVED.get()
 }
 
 /// The original DMA drain retains all bus reads, open-bus writes and channel effects.
@@ -791,16 +824,13 @@ pub fn ppu_get_current_render_scale(_ppu: *mut Ppu, _render_flags: u32) -> i32 {
     1
 }
 
-unsafe fn ppu_render_pixel<const NATIVE: bool>(ppu: *mut Ppu, x: i32, y: i32, starts: (u32, u32)) {
+/// The reference backend's pixel at `x`, written to the render buffer.
+unsafe fn ppu_render_pixel(ppu: *mut Ppu, x: i32, y: i32) {
     unsafe {
         let mut output = [0u8; 4];
         if !(*ppu).forcedBlank {
-            let main = ppu_get_pixel::<NATIVE>(ppu, x, y, false, starts);
-            let policy = if NATIVE {
-                raster::Quantization::Native
-            } else {
-                raster::Quantization::Reference
-            };
+            let main = ppu_get_pixel(ppu, x, y, false);
+            let policy = raster::Quantization::Reference;
             let (window, mut math) = {
                 let config = ppu_line_config(ppu);
                 (
@@ -814,9 +844,11 @@ unsafe fn ppu_render_pixel<const NATIVE: bool>(ppu: *mut Ppu, x: i32, y: i32, st
                 non_backdrop: false,
             };
             if ppu_raster_result(raster::needs_subscreen(&math, main, window, false))
-                || !NATIVE && ((*ppu).pseudoHires || (*ppu).mode == 5 || (*ppu).mode == 6)
+                || (*ppu).pseudoHires
+                || (*ppu).mode == 5
+                || (*ppu).mode == 6
             {
-                second = ppu_get_pixel::<NATIVE>(ppu, x, y, true, starts);
+                second = ppu_get_pixel(ppu, x, y, true);
             }
             // These inputs were read after the optional backend sub query.
             math.add_subscreen = (*ppu).addSubscreen;
@@ -1032,7 +1064,7 @@ mod native_line {
         });
     }
 
-    fn enabled() -> bool {
+    pub(super) fn enabled() -> bool {
         static ENABLED: OnceLock<bool> = OnceLock::new();
         *ENABLED.get_or_init(|| std::env::var_os("SM_NATIVE_LINES").is_some())
     }
@@ -1205,7 +1237,7 @@ mod cross_render {
 
     static FRAMES: AtomicU32 = AtomicU32::new(0);
 
-    fn interval() -> u32 {
+    pub(super) fn interval() -> u32 {
         static INTERVAL: OnceLock<u32> = OnceLock::new();
         *INTERVAL.get_or_init(|| {
             std::env::var("SM_CROSS_RENDER")
@@ -1236,7 +1268,7 @@ mod cross_render {
                 ppu_calculate_mode7_starts(ppu, line);
             }
             for x in 0..256 {
-                ppu_render_pixel::<false>(ppu, x, line, (0, 0));
+                ppu_render_pixel(ppu, x, line);
             }
             let row = core::slice::from_raw_parts_mut((*ppu).renderBuffer.add(start), 256 * 4);
             let differing: Vec<usize> = (0..256)

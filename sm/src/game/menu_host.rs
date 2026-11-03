@@ -3,30 +3,53 @@ use crate::game_state::Game;
 use sm_game::menus::host::{Host, MenuRuntime};
 use sm_game::save_file::SaveRam;
 
-impl sm_game::sprite_output::SpriteHost for Game {
+impl sm_game::sprite_output::SpriteHost for Game {}
+
+/// The RAM address of a sprite output word.
+pub(crate) fn sprite_word_address(word: sm_game::sprite_output::SpriteWord) -> usize {
+    use sm_game::sprite_output::SpriteWord::*;
+    match word {
+        EchoX(i) => 0xab0usize.checked_add(2 * i).expect("echo offset"),
+        EchoY(i) => 0xab8usize.checked_add(2 * i).expect("echo offset"),
+        EchoSpeed(i) => 0xac0usize.checked_add(2 * i).expect("echo offset"),
+        TopHalf => 0xac8,
+        BottomHalf => 0xaca,
+        GrappleEndX => 0xd08,
+        GrappleEndY => 0xd0c,
+    }
+}
+/// The layer 1 camera words sprite output reads.
+pub(crate) const SPRITE_CAMERA: [usize; 2] = [0x911, 0x915];
+/// The RAM address of shot `slot`'s spritemap pointer.
+pub(crate) fn projectile_sprite_address(slot: u16) -> usize {
+    0xcb8 + 2 * usize::from(slot >> 1)
+}
+
+impl sm_game::sprite_output::SpriteWords for Game {
     fn sprite_word(&self, word: sm_game::sprite_output::SpriteWord) -> u16 {
-        use sm_game::sprite_output::SpriteWord::*;
-        let at = match word {
-            EchoX(i) => 0xab0usize.checked_add(2 * i).expect("echo offset"),
-            EchoY(i) => 0xab8usize.checked_add(2 * i).expect("echo offset"),
-            EchoSpeed(i) => 0xac0usize.checked_add(2 * i).expect("echo offset"),
-            TopHalf => 0xac8,
-            BottomHalf => 0xaca,
-            GrappleEndX => 0xd08,
-            GrappleEndY => 0xd0c,
-        };
+        let at = sprite_word_address(word);
         u16::from_le_bytes([self.compatibility_byte(at), self.compatibility_byte(at + 1)])
     }
     fn sprite_camera(&self) -> [u16; 2] {
-        [0x911, 0x915].map(|at| {
+        SPRITE_CAMERA.map(|at| {
             u16::from_le_bytes([self.compatibility_byte(at), self.compatibility_byte(at + 1)])
         })
     }
     fn projectile_sprite_cursor(&self, slot: u16) -> u16 {
-        let at = 0xcb8 + 2 * usize::from(slot >> 1);
+        let at = projectile_sprite_address(slot);
         u16::from_ne_bytes([self.compatibility_byte(at), self.compatibility_byte(at + 1)])
     }
+    fn echo_frame(&self) -> u16 {
+        let game = self;
+        sm_game::frame_display_word!(game.NmiFrameWordPair)
+    }
+    fn samus_pose(&self) -> u16 {
+        let game = self;
+        sm_game::sequence_word!(game.SAMUS_POSE)
+    }
+}
 
+impl sm_game::sprite_output::MapHost for Game {
     fn warn_invalid_rom(&mut self, address: u32) {
         // SAFETY: a C-string literal and one integer argument, as the format expects.
         unsafe {

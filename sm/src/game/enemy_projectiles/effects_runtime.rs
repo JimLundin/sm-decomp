@@ -7,10 +7,15 @@ impl Effects for Runtime<'_> {
         self.foreign(crate::game_state::Game::next_random)
     }
     fn grapple_pickup_query(&mut self) -> u16 {
-        self.foreign(|game| super::legacy::call_player_code(0xd, game))
+        // The command's former foreign entry ran it on a fresh nested lease.
+        self.owned_player_call(|runtime| {
+            crate::game::session_runtime::player_command_in(runtime, 0xd)
+        })
     }
     fn resume_player_after_elevator(&mut self) -> u16 {
-        self.foreign(|game| super::legacy::call_player_code(0xe, game))
+        self.owned_player_call(|runtime| {
+            crate::game::session_runtime::player_command_in(runtime, 0xe)
+        })
     }
     fn calculate_angle_from_xy(&mut self, x: u16, y: u16) -> u16 {
         self.foreign(|game| super::legacy::calculate_angle_from_xy(x, y, game))
@@ -49,9 +54,9 @@ impl Effects for Runtime<'_> {
         tile: u16,
         graphics: u16,
     ) {
-        self.foreign(|game| {
+        self.draw_objects(|drawing| {
             super::legacy::draw_spritemap(
-                offscreen, bank, map, position.x, position.y, tile, graphics, game,
+                offscreen, bank, map, position.x, position.y, tile, graphics, drawing,
             )
         });
         crate::verify_probe::hit("eproj.drawn");

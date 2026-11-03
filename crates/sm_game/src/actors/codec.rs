@@ -256,25 +256,79 @@ pub fn write_projected_byte(s: &mut Session, at: usize, value: u8) -> bool {
     false
 }
 
+/// Whether both bytes of the word at `at` project from one word field: `at`
+/// is even and neither byte is a control lane or a byte field. The byte
+/// fields' addresses are fixed, so one table built once answers.
+fn is_whole_word(at: usize) -> bool {
+    static WHOLE: std::sync::OnceLock<Box<[bool]>> = std::sync::OnceLock::new();
+    let whole = WHOLE.get_or_init(|| {
+        let s = Session::with_world(crate::room_entry::world::WorldBinding::canonical_legacy());
+        (0..0x20000).map(|at| searched_whole_word(&s, at)).collect()
+    });
+    whole.get(at).copied().unwrap_or(false)
+}
+fn searched_whole_word(s: &Session, at: usize) -> bool {
+    at.is_multiple_of(2)
+        && !(0x1778..0x1784).contains(&at)
+        && !(0x1778..0x1784).contains(&(at + 1))
+        && common_byte!(s, at, (&)).is_none()
+        && common_byte!(s, at + 1, (&)).is_none()
+}
+
 /// Imports only new common fields after a whole-span preflight. No partial
 /// Session mutation on short input, and no identity/lifetime reconstruction.
+/// A word whose bytes share one field is stored at once, as its two byte
+/// stores would leave it.
 pub fn import_common(s: &mut Session, bytes: &impl Fn(usize) -> u8, byte_len: usize) {
     assert!(byte_len >= COMMON_END, "short actor common import");
     for (start, end) in COMMON_RANGES {
-        for at in start..end {
+        let mut at = start;
+        while at < end {
+            if at + 1 < end
+                && is_whole_word(at)
+                && let Some(word) = common_word!(s, at, (&mut))
+            {
+                *word = u16::from_le_bytes([bytes(at), bytes(at + 1)]);
+                at += 2;
+                continue;
+            }
             let written = write_projected_byte(s, at, bytes(at));
             debug_assert!(written, "missing actor common byte {at:x}");
+            at += 1;
         }
     }
 }
 
-/// Each new owned byte is emitted once, including raw byte-array pairs.
-pub fn visit_common(s: &Session, mut visit: impl FnMut(usize, u16)) {
+/// Each new owned byte is emitted once, including raw byte-array pairs, as
+/// runs of consecutive little-endian words in address order.
+pub fn visit_common(s: &Session, mut run: impl FnMut(usize, &[[u8; 2]])) {
+    const WORDS: usize = 256;
+    let mut buffer = [[0u8; 2]; WORDS];
     for (start, end) in COMMON_RANGES {
+        let mut first = start;
+        let mut count = 0;
         for at in (start..end).step_by(2) {
-            let low = projected_byte(s, at).expect("actor common low byte");
-            let high = projected_byte(s, at + 1).expect("actor common high byte");
-            visit(at, u16::from_le_bytes([low, high]));
+            let whole = is_whole_word(at)
+                .then(|| common_word!(s, at, (&)).copied())
+                .flatten();
+            buffer[count] = whole.map_or_else(
+                || {
+                    [
+                        projected_byte(s, at).expect("actor common low byte"),
+                        projected_byte(s, at + 1).expect("actor common high byte"),
+                    ]
+                },
+                u16::to_le_bytes,
+            );
+            count += 1;
+            if count == WORDS {
+                run(first, &buffer);
+                first = at + 2;
+                count = 0;
+            }
+        }
+        if count != 0 {
+            run(first, &buffer[..count]);
         }
     }
 }
@@ -401,3 +455,53 @@ pub fn write_spawn_changes<H: ?Sized>(
 
 // The supplied audio component extends this codec's explicit LE field encoding.
 // It shares the existing bounded checkpoint cursor, with no machine/RAM access.
+
+#[cfg(test)]
+mod word_paths {
+    use super::*;
+    use crate::room_entry::world::WorldBinding;
+
+    fn pattern(at: usize) -> u8 {
+        (at.wrapping_mul(7) ^ (at >> 8)) as u8
+    }
+
+    /// The whole-word table answers as the byte-field match does, for any Session.
+    #[test]
+    fn the_whole_word_table_answers_as_the_match_does() {
+        let mut s = Session::with_world(WorldBinding::canonical_legacy());
+        import_common(&mut s, &pattern, COMMON_END);
+        for at in 0..0x20000 {
+            assert_eq!(is_whole_word(at), searched_whole_word(&s, at), "{at:#x}");
+        }
+    }
+
+    /// The word paths of import_common and visit_common store and emit what
+    /// the byte-by-byte projection does.
+    #[test]
+    fn word_paths_match_the_byte_projection() {
+        let mut by_word = Session::with_world(WorldBinding::canonical_legacy());
+        import_common(&mut by_word, &pattern, COMMON_END);
+        let mut by_byte = Session::with_world(WorldBinding::canonical_legacy());
+        for (start, end) in COMMON_RANGES {
+            for at in start..end {
+                write_projected_byte(&mut by_byte, at, pattern(at));
+            }
+        }
+        assert!(by_word == by_byte, "import_common differs from byte stores");
+        let mut visited = Vec::new();
+        visit_common(&by_word, |at, pairs| {
+            for (index, &pair) in pairs.iter().enumerate() {
+                visited.push((at + index * 2, u16::from_le_bytes(pair)));
+            }
+        });
+        let mut expected = Vec::new();
+        for (start, end) in COMMON_RANGES {
+            for at in (start..end).step_by(2) {
+                let low = projected_byte(&by_word, at).unwrap();
+                let high = projected_byte(&by_word, at + 1).unwrap();
+                expected.push((at, u16::from_le_bytes([low, high])));
+            }
+        }
+        assert_eq!(visited, expected);
+    }
+}

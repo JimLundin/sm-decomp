@@ -77,6 +77,22 @@ const WRITE_CONTEXT: u8 = 1 << 4;
 const WRITE_SEQUENCE: u8 = 1 << 5;
 const WRITE_FX: u8 = 1 << 6;
 
+/// The owned RAM groups, in the order `SpanCopy` counts them.
+const WRITE_CLASSES: [u8; 7] = [
+    WRITE_INVENTORY,
+    WRITE_MENU,
+    WRITE_SCROLL,
+    WRITE_FRAME_DISPLAY,
+    WRITE_CONTEXT,
+    WRITE_SEQUENCE,
+    WRITE_FX,
+];
+/// The owned RAM groups a write of `range` overlaps.
+fn written_classes(range: Range<usize>) -> u8 {
+    write_classes()[range]
+        .iter()
+        .fold(0, |all, &class| all | class)
+}
 fn write_classes() -> &'static [u8; WorkRam::LEN] {
     static CLASSES: std::sync::OnceLock<Box<[u8; WorkRam::LEN]>> = std::sync::OnceLock::new();
     CLASSES.get_or_init(|| {
@@ -242,7 +258,7 @@ impl WorkRam {
         self.note_write();
         self.note_owned_write(at..at + 1);
         cell.set(value);
-        self.note_source_publication(at);
+        self.note_source_publications(at..at + 1, false);
     }
 
     pub fn len(&self) -> usize {
@@ -261,14 +277,14 @@ impl WorkRam {
             for offset in (0..count).rev() {
                 let byte = self.0.bytes[source.start + offset].get();
                 self.0.bytes[destination + offset].set(byte);
-                self.note_source_publication(destination + offset);
             }
+            self.note_source_publications(destination..destination + count, true);
         } else {
             for offset in 0..count {
                 let byte = self.0.bytes[source.start + offset].get();
                 self.0.bytes[destination + offset].set(byte);
-                self.note_source_publication(destination + offset);
             }
+            self.note_source_publications(destination..destination + count, false);
         }
     }
 
@@ -287,23 +303,22 @@ impl WorkRam {
             self.note_write();
             self.note_owned_write(at..end);
         }
-        for (offset, (cell, &byte)) in cells.iter().zip(input).enumerate() {
+        for (cell, &byte) in cells.iter().zip(input) {
             cell.set(byte);
-            self.note_source_publication(at + offset);
         }
+        self.note_source_publications(at..end, false);
     }
 
     pub fn fill(&self, range: Range<usize>, value: u8) {
-        let source_first = range.start;
         let cells = &self.0.bytes[range.clone()];
         if !cells.is_empty() {
             self.note_write();
-            self.note_owned_write(range);
+            self.note_owned_write(range.clone());
         }
-        for (offset, cell) in cells.iter().enumerate() {
+        for cell in cells {
             cell.set(value);
-            self.note_source_publication(source_first + offset);
         }
+        self.note_source_publications(range, false);
     }
 
     pub(crate) fn share_for_backend(&self) -> Self {
@@ -322,36 +337,42 @@ impl WorkRam {
     /// Bump the epoch of every owned RAM group this write overlaps. Every RAM write
     /// passes here, so the overlap test is one table lookup per written byte.
     fn note_owned_write(&self, range: Range<usize>) {
-        let classes = write_classes()[range]
-            .iter()
-            .fold(0, |all, &class| all | class);
-        if classes == 0 {
-            return;
+        let classes = written_classes(range);
+        for (class, &bit) in WRITE_CLASSES.iter().enumerate() {
+            if classes & bit != 0 {
+                self.add_owned_writes(class, 1);
+            }
         }
-        if classes & WRITE_INVENTORY != 0 {
-            self.2.set(self.2.get().wrapping_add(1));
-        }
-        if classes & WRITE_MENU != 0 {
-            self.3.set(self.3.get().wrapping_add(1));
-        }
-        if classes & WRITE_SCROLL != 0 {
-            self.4.set(self.4.get().wrapping_add(1));
-        }
-        if classes & WRITE_FRAME_DISPLAY != 0 {
-            self.6.set(self.6.get().wrapping_add(1));
-        }
-        if classes & WRITE_CONTEXT != 0 {
-            self.6.set(self.6.get().wrapping_add(1));
-        }
-        if classes & WRITE_SEQUENCE != 0 {
-            self.5.set(self.5.get().wrapping_add(1));
-        }
-        if classes & WRITE_FX != 0 {
-            self.8.set(self.8.get().wrapping_add(1));
-        }
+    }
+    /// Count `writes` overlapping the group `WRITE_CLASSES[class]` in its epoch.
+    fn add_owned_writes(&self, class: usize, writes: u64) {
+        let epoch = match WRITE_CLASSES[class] {
+            WRITE_INVENTORY => &self.2,
+            WRITE_MENU => &self.3,
+            WRITE_SCROLL => &self.4,
+            WRITE_FRAME_DISPLAY | WRITE_CONTEXT => &self.6,
+            WRITE_SEQUENCE => &self.5,
+            _ => &self.8,
+        };
+        epoch.set(epoch.get().wrapping_add(writes));
     }
     fn note_write(&self) {
         self.1.set(self.1.get().wrapping_add(1));
+    }
+    /// Copy many spans as that many `copy_in` calls would, with the same bytes,
+    /// epochs and source publication ranks, taking the bookkeeping once.
+    pub fn copy_spans<R>(&self, copy: impl FnOnce(&mut SpanCopy<'_>) -> R) -> R {
+        let publications = self.7.borrow_mut();
+        // Nothing else reaches the map while the writer holds it, so neither changes.
+        let tracking = publications.restore_depth == 0 && !publications.last.is_empty();
+        copy(&mut SpanCopy {
+            ram: self,
+            classes: write_classes(),
+            publications,
+            tracking,
+            writes: 0,
+            by_classes: [0; 1 << WRITE_CLASSES.len()],
+        })
     }
     fn menu_epoch(&self) -> u64 {
         self.3.get()
@@ -379,6 +400,122 @@ impl WorkRam {
     }
     fn write_epoch(&self) -> u64 {
         self.1.get()
+    }
+}
+
+/// `WorkRam::copy_spans`'s writer. The epochs take its counts when it drops,
+/// so they are current again before anything can read them.
+pub struct SpanCopy<'r> {
+    ram: &'r WorkRam,
+    classes: &'static [u8; WorkRam::LEN],
+    publications: std::cell::RefMut<'r, SourcePublications>,
+    /// Whether any write can rank a source publication.
+    tracking: bool,
+    writes: u64,
+    /// The writes counted by the set of owned groups each overlapped.
+    by_classes: [u64; 1 << WRITE_CLASSES.len()],
+}
+impl SpanCopy<'_> {
+    /// `WorkRam::copy_in`.
+    pub fn copy_in(&mut self, at: usize, input: &[u8]) {
+        // Most spans are one word: no slice walks and no length-generic copy.
+        if let &[low, high] = input
+            && at < WorkRam::LEN - 1
+        {
+            self.writes += 1;
+            let classes = self.classes[at] | self.classes[at + 1];
+            self.by_classes[usize::from(classes)] += 1;
+            self.ram.0.bytes[at].set(low);
+            self.ram.0.bytes[at + 1].set(high);
+            if self.tracking {
+                let publications = &mut *self.publications;
+                for at in [at, at + 1] {
+                    if publications.tracked.contains(at) {
+                        publications.publish(at);
+                    }
+                }
+            }
+            return;
+        }
+        let end = at.checked_add(input.len()).expect("RAM range overflow");
+        let cells = &self.ram.0.bytes[at..end];
+        if cells.is_empty() {
+            return;
+        }
+        self.writes += 1;
+        let classes = self.classes[at..end]
+            .iter()
+            .fold(0, |all, &class| all | class);
+        self.by_classes[usize::from(classes)] += 1;
+        for (cell, &byte) in cells.iter().zip(input) {
+            cell.set(byte);
+        }
+        if self.tracking && self.publications.tracked.any(at..end) {
+            let publications = &mut *self.publications;
+            for at in at..end {
+                if publications.tracked.contains(at) {
+                    publications.publish(at);
+                }
+            }
+        }
+    }
+}
+impl sm_game::session_encoding::Spans for &mut SpanCopy<'_> {
+    fn span(&mut self, at: usize, bytes: &[u8]) {
+        self.copy_in(at, bytes);
+    }
+    /// One pass for the run, with each span counted as `copy_in` counts it.
+    fn spans(&mut self, at: usize, bytes: &[u8], width: usize) {
+        assert!(width != 0, "span width");
+        let Some(end) = at
+            .checked_add(bytes.len())
+            .filter(|&end| end <= WorkRam::LEN)
+        else {
+            // A span past RAM stops the run where `copy_in` would.
+            for (index, chunk) in bytes.chunks(width).enumerate() {
+                self.copy_in(at + index * width, chunk);
+            }
+            return;
+        };
+        let classes = &self.classes[at..end];
+        self.writes += u64::try_from(classes.len().div_ceil(width)).expect("span count");
+        // A span in no owned group adds to no group epoch.
+        if classes.iter().any(|&class| class != 0) {
+            for span in classes.chunks(width) {
+                let classes = span.iter().fold(0, |all, &class| all | class);
+                self.by_classes[usize::from(classes)] += 1;
+            }
+        }
+        for (cell, &byte) in self.ram.0.bytes[at..end].iter().zip(bytes) {
+            cell.set(byte);
+        }
+        if self.tracking && self.publications.tracked.any(at..end) {
+            let publications = &mut *self.publications;
+            for at in at..end {
+                if publications.tracked.contains(at) {
+                    publications.publish(at);
+                }
+            }
+        }
+    }
+}
+impl Drop for SpanCopy<'_> {
+    fn drop(&mut self) {
+        let ram = self.ram;
+        ram.1.set(ram.1.get().wrapping_add(self.writes));
+        let mut owned_writes = [0u64; WRITE_CLASSES.len()];
+        for (classes, &writes) in self.by_classes.iter().enumerate() {
+            for (class, &bit) in WRITE_CLASSES.iter().enumerate() {
+                if classes & usize::from(bit) != 0 {
+                    owned_writes[class] += writes;
+                }
+            }
+        }
+        for (class, &writes) in owned_writes.iter().enumerate() {
+            if writes != 0 {
+                ram.add_owned_writes(class, writes);
+            }
+        }
     }
 }
 
@@ -1563,9 +1700,8 @@ impl Game {
         // An encoding failure leaves the completed compatibility prefix and
         // prevents the prior owner from resuming against those changed bytes.
         self.poison_persistent_session();
-        crate::game::session_encoding::encode(&session.gameplay, |at, bytes| {
-            self.ram.copy_in(at, bytes)
-        });
+        self.ram
+            .copy_spans(|ram| crate::game::session_encoding::encode_spans(&session.gameplay, ram));
         crate::game::session_runtime::export_native_spawn(&session.gameplay, self);
         self.samus.install(binding);
         self.actor_identity = None;
@@ -4402,9 +4538,156 @@ impl sm_game::fx_lighting::Access for Game {
 #[derive(Default)]
 struct SourcePublications {
     last: std::collections::BTreeMap<usize, Option<u64>>,
+    /// The keys of `last`, so a RAM write tests them without a map search.
+    tracked: TrackedAddresses,
     ordinal: u64,
     restore_depth: usize,
     native_depth: usize,
+}
+/// One bit per WRAM byte.
+struct TrackedAddresses(Box<[u64]>);
+impl Default for TrackedAddresses {
+    fn default() -> Self {
+        Self(vec![0; WorkRam::LEN / 64].into_boxed_slice())
+    }
+}
+impl TrackedAddresses {
+    fn insert(&mut self, at: usize) {
+        self.0[at / 64] |= 1 << (at % 64);
+    }
+    fn contains(&self, at: usize) -> bool {
+        self.0[at / 64] & (1 << (at % 64)) != 0
+    }
+    fn clear(&mut self) {
+        self.0.fill(0);
+    }
+    /// Whether any address in `range` is tracked; `range` lies in WRAM.
+    fn any(&self, range: Range<usize>) -> bool {
+        if range.is_empty() {
+            return false;
+        }
+        let (first, last) = (range.start / 64, (range.end - 1) / 64);
+        self.0[first..=last]
+            .iter()
+            .enumerate()
+            .any(|(index, &word)| {
+                let word_start = (first + index) * 64;
+                let low = range.start.saturating_sub(word_start);
+                let high = (range.end - word_start).min(64);
+                let mask = (u64::MAX >> (64 - (high - low))) << low;
+                word & mask != 0
+            })
+    }
+}
+#[cfg(test)]
+mod tracked_addresses {
+    use super::WorkRam;
+    use sm_game::session_encoding::Spans;
+
+    fn epochs(ram: &WorkRam) -> [u64; 8] {
+        [
+            ram.1.get(),
+            ram.2.get(),
+            ram.3.get(),
+            ram.4.get(),
+            ram.5.get(),
+            ram.6.get(),
+            ram.8.get(),
+            ram.7.borrow().ordinal,
+        ]
+    }
+
+    /// Batched spans and runs leave RAM, every epoch and every publication
+    /// rank as the same spans through `copy_in` do.
+    #[test]
+    fn batched_spans_publish_as_copy_in_does() {
+        let (batched, single) = (WorkRam::new(), WorkRam::new());
+        for ram in [&batched, &single] {
+            ram.track_source_spans(&[0x9800..0x9810, 0xc406..0xc40a]);
+        }
+        let bytes: Vec<u8> = (0..0x60).map(|index| index as u8 ^ 0x5a).collect();
+        let runs = [
+            (0x9a0, 2),
+            (0x97f8, 2),
+            (0x9e0, 1),
+            (0xc400, 1),
+            (0x10002, 2),
+        ];
+        batched.copy_spans(|mut copy| {
+            copy.copy_in(0x60b, &[7]);
+            for &(at, width) in &runs {
+                copy.spans(at, &bytes, width);
+            }
+            copy.copy_in(0x9805, &[1, 2, 3]);
+            copy.copy_in(0x980f, &[4, 5]);
+            copy.copy_in(0x1fffe, &[6, 7]);
+        });
+        single.copy_in(0x60b, &[7]);
+        for &(at, width) in &runs {
+            for (index, chunk) in bytes.chunks(width).enumerate() {
+                single.copy_in(at + index * width, chunk);
+            }
+        }
+        single.copy_in(0x9805, &[1, 2, 3]);
+        single.copy_in(0x980f, &[4, 5]);
+        single.copy_in(0x1fffe, &[6, 7]);
+        assert_eq!(epochs(&batched), epochs(&single));
+        for at in 0..WorkRam::LEN {
+            assert_eq!(batched.read_byte(at), single.read_byte(at), "{at:#x}");
+            assert_eq!(
+                batched.source_publication(at),
+                single.source_publication(at)
+            );
+        }
+    }
+
+    #[test]
+    fn any_answers_as_a_scan_does() {
+        let mut tracked = super::TrackedAddresses::default();
+        let addresses = [0, 63, 64, 0x9800, 0x9fff, 0xc406, 0x1ffff];
+        for at in addresses {
+            tracked.insert(at);
+        }
+        for start in (0..0x20000).step_by(61) {
+            for length in [0, 1, 2, 3, 64, 65, 200, 0x900] {
+                let end = (start + length).min(0x20000);
+                let scanned = (start..end).any(|at| addresses.contains(&at));
+                assert_eq!(tracked.any(start..end), scanned, "{start:#x}..{end:#x}");
+                assert_eq!(scanned, (start..end).any(|at| tracked.contains(at)));
+            }
+        }
+    }
+}
+impl SourcePublications {
+    fn track(&mut self, at: usize) {
+        self.last.entry(at).or_insert(None);
+        self.tracked.insert(at);
+    }
+    fn retrack(&mut self) {
+        self.tracked.clear();
+        for &at in self.last.keys() {
+            self.tracked.insert(at);
+        }
+    }
+    /// Rank the write to tracked `at` latest.
+    fn publish(&mut self, at: usize) {
+        if self.ordinal == u64::MAX {
+            // Rebase ranks before rollover; the last writer must remain latest.
+            let mut ordered: Vec<_> = self
+                .last
+                .iter()
+                .filter_map(|(&at, &ordinal)| ordinal.map(|ordinal| (ordinal, at)))
+                .collect();
+            ordered.sort_unstable();
+            for (rank, &(_, at)) in ordered.iter().enumerate() {
+                self.last.insert(at, Some(u64::try_from(rank).unwrap() + 1));
+            }
+            self.ordinal = u64::try_from(ordered.len()).unwrap();
+        }
+        self.ordinal += 1;
+        let ordinal = self.ordinal;
+        self.last.insert(at, Some(ordinal));
+    }
 }
 #[derive(Clone)]
 pub(crate) struct SourcePublicationSnapshot {
@@ -4438,7 +4721,7 @@ impl WorkRam {
             let mut publications = self.7.borrow_mut();
             for at in spans.iter().flat_map(|span| span.clone()) {
                 assert!(at < Self::LEN, "source publication outside WRAM");
-                publications.last.entry(at).or_insert(None);
+                publications.track(at);
             }
         }
         self.7.borrow_mut().native_depth += 1;
@@ -4447,35 +4730,30 @@ impl WorkRam {
     pub(crate) fn track_source_spans(&self, spans: &[Range<usize>]) {
         let mut publications = self.7.borrow_mut();
         publications.last.clear();
+        publications.tracked.clear();
         publications.ordinal = 0;
         for at in spans.iter().flat_map(|span| span.clone()) {
             assert!(at < Self::LEN, "source publication outside WRAM");
-            publications.last.insert(at, None);
+            publications.track(at);
         }
     }
-    fn note_source_publication(&self, at: usize) {
+    /// Rank the writes to `range`, ascending or descending, as the latest
+    /// publications of the tracked source bytes among them.
+    fn note_source_publications(&self, range: Range<usize>, descending: bool) {
         let mut publications = self.7.borrow_mut();
-        if publications.restore_depth != 0 || !publications.last.contains_key(&at) {
+        if publications.restore_depth != 0 || !publications.tracked.any(range.clone()) {
             return;
         }
-        if publications.ordinal == u64::MAX {
-            // Rebase ranks before rollover; the last writer must remain latest.
-            let mut ordered: Vec<_> = publications
-                .last
-                .iter()
-                .filter_map(|(&at, &ordinal)| ordinal.map(|ordinal| (ordinal, at)))
-                .collect();
-            ordered.sort_unstable();
-            for (rank, &(_, at)) in ordered.iter().enumerate() {
-                publications
-                    .last
-                    .insert(at, Some(u64::try_from(rank).unwrap() + 1));
+        let mut publish = |at| {
+            if publications.tracked.contains(at) {
+                publications.publish(at);
             }
-            publications.ordinal = u64::try_from(ordered.len()).unwrap();
+        };
+        if descending {
+            range.rev().for_each(&mut publish);
+        } else {
+            range.for_each(&mut publish);
         }
-        publications.ordinal += 1;
-        let ordinal = publications.ordinal;
-        publications.last.insert(at, Some(ordinal));
     }
     pub(crate) fn source_publication(&self, at: usize) -> Option<u64> {
         self.7.borrow().last.get(&at).copied().flatten()
@@ -4490,6 +4768,7 @@ impl WorkRam {
     pub(crate) fn restore_source_publications(&self, source: &SourcePublicationSnapshot) {
         let mut publications = self.7.borrow_mut();
         publications.last.clone_from(&source.last);
+        publications.retrack();
         publications.ordinal = source.ordinal;
     }
     /// Restoration chooses a previously captured branch. The physical copy's

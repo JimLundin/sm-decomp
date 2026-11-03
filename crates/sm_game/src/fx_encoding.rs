@@ -288,12 +288,7 @@ pub fn display_source_coordinate(
 }
 /// An optional source projection claims no bytes before either source owner exists.
 pub fn projected_source_byte(session: &crate::session::Session, at: usize) -> Option<u8> {
-    if session.fx_sources.is_none() && !session.presentation.is_owned() {
-        return None;
-    }
-    let (owner, offset) =
-        physical_source_coordinate(session, at).expect("prepared FX source resolution")?;
-    Some(session_source_byte(session, owner, offset).expect("prepared FX source projection"))
+    ControlReader::new(session).projected_source_byte(at)
 }
 pub fn write_source_byte(session: &mut crate::session::Session, at: usize, byte: u8) -> bool {
     if session.fx_sources.is_none() && !session.presentation.is_owned() {
@@ -310,11 +305,12 @@ pub fn write_source_byte(session: &mut crate::session::Session, at: usize, byte:
 }
 pub fn encode_sources(session: &crate::session::Session, mut span: impl FnMut(usize, &[u8])) {
     if session.fx_sources.is_some() {
+        let reader = ControlReader::new(session);
         for at in (0x9800..0xa000).chain(0xc406..0xc608) {
             if crate::menu_window_encoding::lane(at).is_some() {
                 continue;
             }
-            if let Some(byte) = projected_source_byte(session, at) {
+            if let Some(byte) = reader.projected_source_byte(at) {
                 span(at, &[byte]);
             }
         }
@@ -408,25 +404,7 @@ pub fn session_source_byte(
     owner: LiveOwner,
     offset: usize,
 ) -> Result<u8, crate::scene::state::DisplayError> {
-    let selected = if session.presentation.is_owned() && session.fx_sources.is_none() {
-        let display = &session.presentation.owner()?.state;
-        current_source_owner(
-            &display.hdma_live,
-            &display.workspace,
-            &display.hdma,
-            owner,
-            offset,
-        )?
-    } else {
-        selected_source_owner(
-            session_live(session)?,
-            session.presentation.workspace(),
-            &control_graph(session)?,
-            owner,
-            offset,
-        )?
-    };
-    owner_byte(session, selected)
+    ControlReader::new(session).source_byte(owner, offset)
 }
 pub fn store_session_source_byte(
     session: &mut crate::session::Session,
@@ -453,6 +431,15 @@ pub fn store_session_source_byte(
             selected,
         );
         Ok(())
+    } else if !session.presentation.is_owned() {
+        // The identity graph: the source's own owner, and no origins to forget.
+        let selected = source_owner(
+            session_live(session)?,
+            session.presentation.workspace(),
+            owner,
+            offset,
+        )?;
+        store_owner_byte(session, selected, byte)
     } else {
         let graph = control_graph(session)?;
         let selected = selected_source_owner(
@@ -1356,24 +1343,105 @@ fn forget_owner_origins(
     Ok(())
 }
 pub fn control_byte(session: &crate::session::Session, at: usize) -> u8 {
-    let lane = control_lane(at).expect("migrated control byte");
-    let selected = if session.presentation.is_owned() && session.fx_sources.is_none() {
-        let display = &session
-            .presentation
-            .owner()
-            .expect("current control display")
-            .state;
-        current_control_owner(&display.hdma_live, &display.workspace, &display.hdma, lane)
-            .expect("current control topology")
-    } else {
-        control_graph(session).expect("control topology")[lane]
-    };
-    owner_byte(session, selected).expect("control owner")
+    ControlReader::new(session).control_byte(at)
 }
 pub fn control_word(session: &crate::session::Session, at: usize) -> u16 {
-    let first = control_byte(session, at);
-    let second = control_byte(session, at + 1);
-    u16::from_le_bytes([first, second])
+    ControlReader::new(session).control_word(at)
+}
+
+/// Reads one unchanging Session's control and source bytes. A Session without
+/// an owned Display has the identity control graph, so none is built; an owned
+/// one builds its graph once, on first use, for every later read.
+pub struct ControlReader<'s> {
+    session: &'s crate::session::Session,
+    graph: std::cell::OnceCell<ControlGraph>,
+}
+impl<'s> ControlReader<'s> {
+    pub fn new(session: &'s crate::session::Session) -> Self {
+        Self {
+            session,
+            graph: std::cell::OnceCell::new(),
+        }
+    }
+    /// `control_graph`, or `None` for the identity graph of an unowned Display.
+    fn graph(&self) -> Result<Option<&ControlGraph>, crate::scene::state::DisplayError> {
+        if !self.session.presentation.is_owned() {
+            return Ok(None);
+        }
+        if let Some(graph) = self.graph.get() {
+            return Ok(Some(graph));
+        }
+        let graph = control_graph(self.session)?;
+        Ok(Some(self.graph.get_or_init(|| graph)))
+    }
+    pub fn control_byte(&self, at: usize) -> u8 {
+        let session = self.session;
+        let lane = control_lane(at).expect("migrated control byte");
+        let selected = if session.presentation.is_owned() && session.fx_sources.is_none() {
+            let display = &session
+                .presentation
+                .owner()
+                .expect("current control display")
+                .state;
+            current_control_owner(&display.hdma_live, &display.workspace, &display.hdma, lane)
+                .expect("current control topology")
+        } else {
+            self.graph()
+                .expect("control topology")
+                .map_or(ControlOwner::Scalar(lane), |graph| graph[lane])
+        };
+        owner_byte(session, selected).expect("control owner")
+    }
+    pub fn control_word(&self, at: usize) -> u16 {
+        let first = self.control_byte(at);
+        let second = self.control_byte(at + 1);
+        u16::from_le_bytes([first, second])
+    }
+    /// `projected_source_byte` through this reader's graph.
+    pub fn projected_source_byte(&self, at: usize) -> Option<u8> {
+        let session = self.session;
+        if session.fx_sources.is_none() && !session.presentation.is_owned() {
+            return None;
+        }
+        let (owner, offset) =
+            physical_source_coordinate(session, at).expect("prepared FX source resolution")?;
+        Some(
+            self.source_byte(owner, offset)
+                .expect("prepared FX source projection"),
+        )
+    }
+    /// `session_source_byte` through this reader's graph.
+    pub fn source_byte(
+        &self,
+        owner: LiveOwner,
+        offset: usize,
+    ) -> Result<u8, crate::scene::state::DisplayError> {
+        let session = self.session;
+        let selected = if session.presentation.is_owned() && session.fx_sources.is_none() {
+            let display = &session.presentation.owner()?.state;
+            current_source_owner(
+                &display.hdma_live,
+                &display.workspace,
+                &display.hdma,
+                owner,
+                offset,
+            )?
+        } else {
+            let live = session_live(session)?;
+            let graph = self.graph()?;
+            match source_owner(live, session.presentation.workspace(), owner, offset)? {
+                ControlOwner::Scalar(lane) => {
+                    graph.map_or(ControlOwner::Scalar(lane), |graph| graph[lane])
+                }
+                // source_owner returns a Source only once its window lane is ruled out.
+                ControlOwner::Source(owner, offset) => {
+                    return live.read_unbound_buffer(owner, offset);
+                }
+                selected => selected,
+            }
+        };
+        owner_byte(session, selected)
+    }
 }
 pub fn write_control_byte(session: &mut crate::session::Session, at: usize, byte: u8) {
     let lane = control_lane(at).expect("migrated control byte");
@@ -1398,6 +1466,9 @@ pub fn write_control_byte(session: &mut crate::session::Session, at: usize, byte
             &display.hdma,
             selected,
         );
+    } else if !session.presentation.is_owned() {
+        // The identity graph: the lane's own scalar, and no origins to forget.
+        store_owner_byte(session, ControlOwner::Scalar(lane), byte).expect("control publication");
     } else {
         let graph = control_graph(session).expect("control topology");
         store_owner_byte(session, graph[lane], byte).expect("control publication");
@@ -1444,26 +1515,31 @@ pub fn materialize_controls(
     Ok(())
 }
 pub fn session_controls(session: &crate::session::Session) -> FxState {
-    decode(&|at| control_byte(session, at))
+    let reader = ControlReader::new(session);
+    decode(&|at| reader.control_byte(at))
 }
 pub fn session_lighting(
     session: &crate::session::Session,
 ) -> crate::visual_state::FirefleaLighting {
-    decode_lighting(&|at| control_byte(session, at))
+    let reader = ControlReader::new(session);
+    decode_lighting(&|at| reader.control_byte(at))
 }
 pub fn session_room_blending(session: &crate::session::Session) -> crate::fx_domain::RoomBlending {
+    let reader = ControlReader::new(session);
     crate::fx_domain::RoomBlending {
-        primary: control_word(session, 0x1982),
-        liquid: control_word(session, 0x1984),
+        primary: reader.control_word(0x1982),
+        liquid: reader.control_word(0x1984),
     }
 }
 pub fn session_window(session: &crate::session::Session) -> crate::menu_window_state::WindowState {
-    crate::menu_window_encoding::decode(&|at| control_byte(session, at))
+    let reader = ControlReader::new(session);
+    crate::menu_window_encoding::decode(&|at| reader.control_byte(at))
 }
 pub fn session_common(session: &crate::session::Session) -> crate::hdma::HdmaObjects {
+    let reader = ControlReader::new(session);
     let mut common = crate::hdma::HdmaObjects::default();
     for at in (0x18b0..0x195c).step_by(2) {
-        *common_scalar_word_mut(&mut common, at) = control_word(session, at);
+        *common_scalar_word_mut(&mut common, at) = reader.control_word(at);
     }
     common
 }
@@ -1953,6 +2029,19 @@ mod control_lane_table {
         for at in (0..0x18b0).chain(0x195c..0x20000) {
             let searched = (0..76).find(|&lane| control_address(lane) == at);
             assert_eq!(control_lane(at), searched, "address {at:#x}");
+        }
+    }
+
+    /// `ControlReader` builds no graph without an owned Display: it is the identity.
+    #[test]
+    fn an_unowned_display_has_the_identity_control_graph() {
+        let session = crate::session::Session::with_world(
+            crate::room_entry::world::WorldBinding::canonical_legacy(),
+        );
+        assert!(!session.presentation.is_owned());
+        let graph = control_graph(&session).unwrap();
+        for (lane, &owner) in graph.iter().enumerate() {
+            assert_eq!(owner, ControlOwner::Scalar(lane));
         }
     }
 }

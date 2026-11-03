@@ -27,6 +27,11 @@ pub(crate) fn begin(id: u32) {
         });
     });
 }
+/// Whether a sprite-effect case is capturing; its draws run on the Game.
+#[cfg(sm_verify_dll)]
+pub(crate) fn observing() -> bool {
+    ACTIVE.with(|a| a.borrow().is_some())
+}
 pub(crate) fn finish() -> Vec<u8> {
     let captured = ACTIVE.with(|a| a.borrow_mut().take().unwrap());
     if captured.id >= 111 {

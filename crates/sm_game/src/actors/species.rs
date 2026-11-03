@@ -130,17 +130,16 @@ pub fn shot<H: ShotHost>(ea: u32, _j: u16, game: &mut H) {
 /// What the draw hooks need beyond their actors' own hosts.
 pub trait DrawHookHost: SpeciesHost + LeaseActors {}
 
+/// The draw hooks that return at once: $A0:804C, the room's default, and
+/// $A8:804C and $A9:8686.
+pub const EMPTY_DRAW_HOOKS: [u32; 3] = [10518604, 11042892, 11110278];
+
 /// An enemy species' graphics draw hook, keyed by its address.
 pub fn draw_hook<H: DrawHookHost>(ea: u32, game: &mut H) {
-    if lease_draw_hook(ea, game) {
+    if lease_draw_hook(ea, game) || EMPTY_DRAW_HOOKS.contains(&ea) {
         return;
     }
-    match ea {
-        10518604 => (),
-        11042892 => (),
-        11110278 => (),
-        _ => game.unknown_routine(),
-    }
+    game.unknown_routine();
 }
 
 /// A bank $B3 enemy pre-instruction, keyed by its address.

@@ -101,6 +101,12 @@ pub(super) fn finish_native() -> Vec<u16> {
     })
 }
 
+/// Whether a case traces native draw reads; only then do they reach the Game.
+#[cfg(sm_verify_dll)]
+pub(crate) fn native_read_traced() -> bool {
+    NATIVE.with(|state| state.borrow().is_some())
+}
+
 /// Runs immediately before real RomPtr at the existing foreign boundary.
 /// Allocation replacement is environmental input; no stream value is mocked.
 #[cfg(sm_verify_dll)]

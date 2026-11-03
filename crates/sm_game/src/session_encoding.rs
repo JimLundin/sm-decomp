@@ -934,6 +934,27 @@ macro_rules! scalar_words {
     };
 }
 
+/// Whether a `scalar_words` lane covers `at`. The lanes' addresses are fixed,
+/// so one table answers for every Session before the lane search runs.
+fn is_scalar_lane(at: usize) -> bool {
+    static LANES: std::sync::OnceLock<Box<[u64]>> = std::sync::OnceLock::new();
+    let lanes = LANES.get_or_init(|| {
+        let s = Session::with_world(WorldBinding::canonical_legacy());
+        let mut lanes = vec![0u64; 0x20000 / 64];
+        let mut mark = |base: usize, _: &u16| {
+            for at in [base, base + 1] {
+                if let Some(word) = lanes.get_mut(at / 64) {
+                    *word |= 1 << (at % 64);
+                }
+            }
+        };
+        scalar_words!(s,mark,(&));
+        lanes.into_boxed_slice()
+    });
+    lanes
+        .get(at / 64)
+        .is_some_and(|word| word & (1 << (at % 64)) != 0)
+}
 pub fn read(bytes: &impl Fn(usize) -> u8, at: usize) -> u16 {
     u16::from_le_bytes([bytes(at), bytes(at + 1)])
 }
@@ -1053,13 +1074,88 @@ pub fn decode(bytes: &impl Fn(usize) -> u8, byte_len: usize, world: Arc<WorldBin
     s
 }
 pub fn visit(s: &Session, mut visit: impl FnMut(usize, u16)) {
+    visit_owned_words(s, &mut visit);
+    for (index, cell) in s.room.terrain.cells().iter().enumerate() {
+        visit(0x10002 + index * 2, cell.level);
+    }
+    for (index, tile) in s.room.terrain.tiles().iter().enumerate() {
+        for (corner, &value) in tile.iter().enumerate() {
+            visit(0xa000 + index * 8 + corner * 2, value);
+        }
+    }
+}
+/// Where `visit_owned_words` sends its words. A run of consecutive words may
+/// go at once; by default each goes alone, in order.
+trait Words {
+    fn word(&mut self, at: usize, value: u16);
+    /// Little-endian words from `at` up.
+    fn le_words(&mut self, at: usize, pairs: &[[u8; 2]]) {
+        for (index, &pair) in pairs.iter().enumerate() {
+            self.word(at + index * 2, u16::from_le_bytes(pair));
+        }
+    }
+    /// Words from `at` up.
+    fn words(&mut self, at: usize, words: &[u16]) {
+        for (index, &word) in words.iter().enumerate() {
+            self.word(at + index * 2, word);
+        }
+    }
+}
+impl<F: FnMut(usize, u16)> Words for F {
+    fn word(&mut self, at: usize, value: u16) {
+        self(at, value);
+    }
+}
+/// `encode`'s words as spans, runs as one-word span runs.
+struct EncodeWords<'a, S: Spans>(&'a mut S);
+impl<S: Spans> EncodeWords<'_, S> {
+    /// Whether a run from `at` of `words` words holds a word `word` emits specially.
+    fn plain(at: usize, words: usize) -> bool {
+        let run = at..at + words * 2;
+        !run.contains(&0x775) && !run.contains(&0x94a)
+    }
+}
+impl<S: Spans> Words for EncodeWords<'_, S> {
+    fn word(&mut self, at: usize, value: u16) {
+        let bytes = value.to_le_bytes();
+        match at {
+            // The odd menu-graphics tail visits its map-owner neighbor at
+            // 0776 through projected_byte; that owner emits the full word.
+            0x775 => self.0.span(at, &bytes[..1]),
+            // Countdown's last visit repeats Y low from the preceding pair,
+            // both through the countdown projection. Emit only its Y high.
+            0x94a => self.0.span(at + 1, &bytes[1..]),
+            _ => self.0.span(at, &bytes),
+        }
+    }
+    fn le_words(&mut self, at: usize, pairs: &[[u8; 2]]) {
+        if Self::plain(at, pairs.len()) {
+            self.0.spans(at, pairs.as_flattened(), 2);
+        } else {
+            for (index, &pair) in pairs.iter().enumerate() {
+                self.word(at + index * 2, u16::from_le_bytes(pair));
+            }
+        }
+    }
+    fn words(&mut self, at: usize, words: &[u16]) {
+        if Self::plain(at, words.len()) {
+            emit_spans(self.0, at, words, u16::to_le_bytes, 2);
+        } else {
+            for (index, &word) in words.iter().enumerate() {
+                self.word(at + index * 2, word);
+            }
+        }
+    }
+}
+/// `visit`'s words before the terrain's levels and tiles.
+fn visit_owned_words(s: &Session, mut visit: impl Words) {
     let controls = crate::fx_encoding::session_controls(s);
     for field in crate::fx_state::Field::ALL {
-        visit(crate::fx_encoding::address(field), field.get(&controls));
+        visit.word(crate::fx_encoding::address(field), field.get(&controls));
     }
     let lighting = crate::fx_encoding::session_lighting(s);
     for field in crate::fx_lighting::Field::ALL {
-        visit(
+        visit.word(
             crate::fx_encoding::lighting_address(field),
             field.get(&lighting),
         );
@@ -1067,7 +1163,7 @@ pub fn visit(s: &Session, mut visit: impl FnMut(usize, u16)) {
     // The seven countdown bytes end at Y high; the last pair repeats Y low
     // rather than borrowing the unowned byte after the countdown.
     for at in [0x945, 0x947, 0x949, 0x94a] {
-        visit(
+        visit.word(
             at,
             u16::from_le_bytes([
                 projected_byte(s, at).expect("countdown"),
@@ -1081,33 +1177,14 @@ pub fn visit(s: &Session, mut visit: impl FnMut(usize, u16)) {
             projected_byte(s, at).expect("menu graphics"),
             projected_byte(s, at + 1).expect("menu graphics tail"),
         ];
-        visit(at, u16::from_le_bytes(pair));
+        visit.word(at, u16::from_le_bytes(pair));
     }
-    for (index, pair) in s
-        .presentation
-        .workspace()
-        .shared_bytes()
-        .as_chunks::<2>()
-        .0
-        .iter()
-        .enumerate()
-    {
-        visit(
-            crate::presentation_workspace::FIRST + index * 2,
-            u16::from_le_bytes(*pair),
-        );
-    }
-    for (index, pair) in s
-        .queued_tilemaps
-        .queue
-        .as_chunks::<2>()
-        .0
-        .iter()
-        .enumerate()
-    {
-        visit(0xd0 + index * 2, u16::from_le_bytes([pair[0], pair[1]]));
-    }
-    visit(0x330, s.queued_tilemaps.tail);
+    visit.le_words(
+        crate::presentation_workspace::FIRST,
+        s.presentation.workspace().shared_bytes().as_chunks::<2>().0,
+    );
+    visit.le_words(0xd0, s.queued_tilemaps.queue.as_chunks::<2>().0);
+    visit.word(0x330, s.queued_tilemaps.tail);
     for (index, &word) in s
         .queued_tilemaps
         .source_block
@@ -1115,35 +1192,29 @@ pub fn visit(s: &Session, mut visit: impl FnMut(usize, u16)) {
         .chain(&s.queued_tilemaps.destination_block)
         .enumerate()
     {
-        visit(0x990 + index * 2, word);
+        visit.word(0x990 + index * 2, word);
     }
-    for (index, &word) in s.queued_tilemaps.scrolling.iter().enumerate() {
-        visit(0xc8c8 + index * 2, word);
-    }
-    for (index, &word) in s.queued_tilemaps.background().iter().enumerate() {
-        visit(0x19602 + index * 2, word);
-    }
+    visit.words(0xc8c8, &s.queued_tilemaps.scrolling);
+    visit.words(0x19602, s.queued_tilemaps.background());
     // These signals formerly published immediately, before a fallible export.
-    let mut emit = |at, word: &u16| visit(at, *word);
+    let mut emit = |at, word: &u16| visit.word(at, *word);
     botwoon_death_words!(s, emit, (&));
-    for (index, pair) in s.minimap.explored.as_chunks::<2>().0.iter().enumerate() {
-        visit(0x7f7 + 2 * index, u16::from_le_bytes([pair[0], pair[1]]));
-    }
-    crate::actors::codec::visit_common(s, &mut visit);
+    visit.le_words(0x7f7, s.minimap.explored.as_chunks::<2>().0);
+    crate::actors::codec::visit_common(s, |at, pairs| visit.le_words(at, pairs));
     macro_rules! emit_key {
         ($at:expr, $field:ident, $get:ident, $set:ident) => {
-            visit($at, s.world.$get(&s.room.entry.$field));
+            visit.word($at, s.world.$get(&s.room.entry.$field));
         };
     }
     room_keys!(emit_key);
     macro_rules! emit_transition {
         ($at:expr, $field:expr, $ty:path) => {
-            visit($at, $field.to_raw());
+            visit.word($at, $field.to_raw());
         };
     }
     transition_words!(s, emit_transition);
     for at in (0x7bd..0x7c9).step_by(2) {
-        visit(
+        visit.word(
             at,
             u16::from_le_bytes([
                 projected_byte(s, at).unwrap(),
@@ -1151,11 +1222,11 @@ pub fn visit(s: &Session, mut visit: impl FnMut(usize, u16)) {
             ]),
         );
     }
-    visit(
+    visit.word(
         0x612,
         u16::from_le_bytes([*s.control.primary(), *s.control.secondary()]),
     );
-    visit(
+    visit.word(
         0x91b,
         u16::from_le_bytes([s.room.entry.layer2_x, s.room.entry.layer2_y]),
     );
@@ -1169,61 +1240,99 @@ pub fn visit(s: &Session, mut visit: impl FnMut(usize, u16)) {
         (0xd908, s.gameplay_flags.map_stations.as_slice()),
     ] {
         for (index, pair) in flags.as_chunks::<2>().0.iter().enumerate() {
-            visit(base + index * 2, u16::from_le_bytes([pair[0], pair[1]]));
+            visit.word(base + index * 2, u16::from_le_bytes([pair[0], pair[1]]));
         }
     }
+    let controls = crate::fx_encoding::ControlReader::new(s);
     let mut emit = |at: usize, value: &u16| {
         if crate::fx_encoding::control_lane(at).is_some() {
-            let current = crate::fx_encoding::control_word(s, at);
-            visit(at, current);
+            let current = controls.control_word(at);
+            visit.word(at, current);
         } else {
-            visit(at, *value);
+            visit.word(at, *value);
         }
     };
     scalar_words!(s,emit,(&));
     for (index, &value) in s.projectiles.launch.displacements.iter().enumerate() {
-        visit(0xdaa + index * 4, ((value as u32) >> 16) as u16);
-        visit(0xdac + index * 4, value as u16);
+        visit.word(0xdaa + index * 4, ((value as u32) >> 16) as u16);
+        visit.word(0xdac + index * 4, value as u16);
     }
-    for (index, cell) in s.room.terrain.cells().iter().enumerate() {
-        visit(0x10002 + index * 2, cell.level);
-    }
-    for (index, tile) in s.room.terrain.tiles().iter().enumerate() {
-        for (corner, &value) in tile.iter().enumerate() {
-            visit(0xa000 + index * 8 + corner * 2, value);
+}
+/// Where `encode` writes its spans.
+pub trait Spans {
+    fn span(&mut self, at: usize, bytes: &[u8]);
+    /// The spans of `width` bytes that tile `bytes` from `at` up, in order.
+    fn spans(&mut self, at: usize, bytes: &[u8], width: usize) {
+        for (index, chunk) in bytes.chunks(width).enumerate() {
+            self.span(at + index * width, chunk);
         }
     }
 }
-pub fn encode(s: &Session, mut span: impl FnMut(usize, &[u8])) {
-    span(0x60b, &[s.enemy_projectiles.spawn.angle]);
-    visit(s, |at, value| {
-        let bytes = value.to_le_bytes();
-        match at {
-            // The odd menu-graphics tail visits its map-owner neighbor at
-            // 0776 through projected_byte; that owner emits the full word.
-            0x775 => span(at, &bytes[..1]),
-            // Countdown's last visit repeats Y low from the preceding pair,
-            // both through the countdown projection. Emit only its Y high.
-            0x94a => span(at + 1, &bytes[1..]),
-            _ => span(at, &bytes),
-        }
-    });
-    for (index, cell) in s.room.terrain.cells().iter().enumerate() {
-        span(0x16402 + index, &[cell.behavior]);
+impl<F: FnMut(usize, &[u8])> Spans for F {
+    fn span(&mut self, at: usize, bytes: &[u8]) {
+        self(at, bytes);
     }
+}
+/// `bytes`' items as the spans of `width` bytes their `encode` writes, from
+/// `at` up, a buffer at a time.
+fn emit_spans<T: Copy, const N: usize>(
+    spans: &mut impl Spans,
+    at: usize,
+    items: &[T],
+    encode: impl Fn(T) -> [u8; N],
+    width: usize,
+) {
+    const ITEMS: usize = 256;
+    let mut buffer = [0u8; 2048];
+    for (index, chunk) in items.chunks(ITEMS).enumerate() {
+        let bytes = &mut buffer[..chunk.len() * N];
+        for (out, &item) in bytes.as_chunks_mut::<N>().0.iter_mut().zip(chunk) {
+            *out = encode(item);
+        }
+        spans.spans(at + index * ITEMS * N, bytes, width);
+    }
+}
+pub fn encode(s: &Session, span: impl FnMut(usize, &[u8])) {
+    encode_spans(s, span);
+}
+/// `encode` into a writer that may take runs of equal spans at once.
+pub fn encode_spans(s: &Session, mut spans: impl Spans) {
+    let span = &mut spans;
+    span.span(0x60b, &[s.enemy_projectiles.spawn.angle]);
+    visit_owned_words(s, EncodeWords(span));
+    // The terrain's words and bytes, as `visit` and one-byte spans would emit them.
+    let cells = s.room.terrain.cells();
+    emit_spans(span, 0x10002, cells, |cell| cell.level.to_le_bytes(), 2);
+    let tiles = s.room.terrain.tiles();
+    emit_spans(
+        span,
+        0xa000,
+        tiles,
+        |tile| {
+            let mut bytes = [0; 8];
+            for (out, value) in bytes.as_chunks_mut::<2>().0.iter_mut().zip(tile) {
+                *out = value.to_le_bytes();
+            }
+            bytes
+        },
+        2,
+    );
+    emit_spans(span, 0x16402, cells, |cell| [cell.behavior], 1);
+    let controls = crate::fx_encoding::ControlReader::new(s);
     s.presentation
         .encode_projection(&mut |at: usize, bytes: &[u8]| {
             if crate::fx_encoding::control_lane(at).is_some() {
                 let current: Vec<_> = (at..at + bytes.len())
-                    .map(|at| crate::fx_encoding::control_byte(s, at))
+                    .map(|at| controls.control_byte(at))
                     .collect();
-                span(at, &current);
+                span.span(at, &current);
             } else {
-                span(at, bytes);
+                span.span(at, bytes);
             }
         });
-    s.control.encode_projection(&mut span);
-    crate::fx_encoding::encode_sources(s, span);
+    s.control
+        .encode_projection(|at: usize, bytes: &[u8]| span.span(at, bytes));
+    crate::fx_encoding::encode_sources(s, |at: usize, bytes: &[u8]| span.span(at, bytes));
 }
 pub fn projected_byte(s: &Session, at: usize) -> Option<u8> {
     if crate::fx_encoding::control_lane(at).is_some() {
@@ -1345,6 +1454,9 @@ pub fn projected_byte(s: &Session, at: usize) -> Option<u8> {
             (lane - 2) * 8
         };
         return Some(((s.projectiles.launch.displacements[index] as u32) >> shift) as u8);
+    }
+    if !is_scalar_lane(at) {
+        return None;
     }
     let mut result = None;
     let mut select = |base: usize, value: &u16| {
@@ -1530,6 +1642,9 @@ pub fn write_projected_byte(s: &mut Session, at: usize, value: u8) -> bool {
         s.projectiles.launch.displacements[index] =
             ((old & !(0xff << shift)) | (u32::from(value) << shift)) as i32;
         return true;
+    }
+    if !is_scalar_lane(at) {
+        return false;
     }
     let mut changed = false;
     let mut write = |base: usize, word: &mut u16| {
@@ -1728,7 +1843,7 @@ mod player_lane_tests {
     //! The grapple writes these words as named `Session::player` fields inside a
     //! lease, so the projection must serve each word from exactly that field: no
     //! earlier owner may claim the address, and writing it touches no other lane.
-    use super::{projected_byte, write_projected_byte};
+    use super::{arrays, projected_byte, ram, write_projected_byte};
     use crate::player_transitions::state::{
         DrawMode, HurtAction, InterruptionAction, MovementMode, PoseRequestWord,
     };
@@ -1849,6 +1964,25 @@ mod player_lane_tests {
             projected_byte(s, at)?,
             projected_byte(s, at + 1)?,
         ]))
+    }
+
+    /// The lane table holds exactly the addresses the lane search matches.
+    #[test]
+    fn the_scalar_lane_table_answers_as_the_search_does() {
+        let s = session();
+        let mut searched = std::collections::BTreeSet::new();
+        let mut mark = |base: usize, _: &u16| {
+            searched.insert(base);
+            searched.insert(base + 1);
+        };
+        scalar_words!(s,mark,(&));
+        for at in 0..0x20000 {
+            assert_eq!(
+                super::is_scalar_lane(at),
+                searched.contains(&at),
+                "address {at:#x}"
+            );
+        }
     }
 
     #[test]

@@ -46,8 +46,13 @@ impl Cohort for WindowState {
     }
 }
 
+/// Every window field's bytes lie in this range.
+const LANES: core::ops::Range<usize> = 0x9e20..0x9e52;
 /// Alias byte lanes of the single canonical window owner, including odd words.
 pub fn lane(at: usize) -> Option<(Field, usize)> {
+    if !LANES.contains(&at) {
+        return None;
+    }
     Field::ALL.into_iter().find_map(|field| {
         let first = address(field);
         if (first..first + 2).contains(&at) {
@@ -70,4 +75,15 @@ pub fn write_byte(window: &mut WindowState, at: usize, value: u8) -> bool {
     bytes[lane] = value;
     *word = u16::from_le_bytes(bytes);
     true
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn every_window_lane_lies_in_the_lane_range() {
+        for field in super::Field::ALL {
+            let first = super::address(field);
+            assert!(super::LANES.contains(&first) && super::LANES.contains(&(first + 1)));
+        }
+    }
 }

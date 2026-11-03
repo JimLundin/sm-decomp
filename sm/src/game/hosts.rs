@@ -436,7 +436,9 @@ impl sm_game::lease::Lease for crate::game::session_runtime::Runtime<'_> {
     }
     fn native_samus_sprite(&mut self, index: u16, x: u16, y: u16) {
         use sm_game::sprite_output;
-        self.foreign(|game| sprite_output::samus(index, (x, y), game, &mut sprite_output::Native));
+        self.draw_objects(|drawing| {
+            sprite_output::samus(index, (x, y), drawing, &mut sprite_output::Native);
+        });
     }
     fn native_music_delayed8(&mut self, track: u16) {
         self.foreign(|game| crate::game::music::queue_music_delayed_8(track, game));
@@ -461,10 +463,10 @@ impl sm_game::lease::Lease for crate::game::session_runtime::Runtime<'_> {
 
 impl sm_game::player_drawing::Host for crate::game::session_runtime::Runtime<'_> {
     fn draw_flare(&mut self) {
-        self.foreign(crate::game::player_projectiles::flare);
+        self.owned_player_call(sm_game::player_projectiles::feedback::flare);
     }
     fn draw_grapple_flare(&mut self) {
-        self.foreign(crate::game::player_projectiles::grapple_flare);
+        self.owned_player_call(sm_game::player_projectiles::feedback::grapple_flare);
     }
     fn restore_grapple_start_positions(&mut self) {
         self.owned_call(|runtime| sm_game::grapple_swing::restore_start_positions(runtime));
@@ -476,7 +478,7 @@ impl sm_game::player_drawing::Host for crate::game::session_runtime::Runtime<'_>
         self.owned_player_call(|runtime| sm_game::grapple_rope::draw(runtime));
     }
     fn draw_projectiles(&mut self) {
-        self.foreign(crate::game::player_projectiles::draw_projectiles);
+        self.owned_player_call(sm_game::player_projectiles::presentation::draw_projectiles);
     }
     fn finish_player_frame(&mut self) {
         self.owned_call(crate::game::session_runtime::finish_player_frame);

@@ -44,43 +44,6 @@ pub(crate) fn native_record(bank: u8, cursor: u16, game: &mut Game) -> RomRecord
 }
 
 #[forbid(unsafe_code)]
-fn draw_trail(game: &mut Game, pair: usize, right: bool, frozen: bool) {
-    let ram = game.ram();
-    let read = |at| encoding::read(&|at| ram.read_byte(at), at);
-    let saved = read(0x590);
-    if (saved as i16).wrapping_sub(512) >= 0 {
-        return;
-    }
-    let (timer, x_field, y_field, tile_field) = if right {
-        (0xd67c, 0xd754, 0xd79c, 0xd70c)
-    } else {
-        (0xd658, 0xd730, 0xd778, 0xd6e8)
-    };
-    if frozen && read(timer + 2 * pair) == 0 {
-        return;
-    }
-    crate::verify_probe::hit(match (frozen, right) {
-        (true, false) => "trails.draw.frozen_left",
-        (true, true) => "trails.draw.frozen_right",
-        (false, false) => "trails.draw.active_left",
-        (false, true) => "trails.draw.active_right",
-    });
-    let x = read(x_field + 2 * pair).wrapping_sub(read(0x911));
-    if x & 0xff00 == 0 {
-        let entry = 0x370 + usize::from(read(0x590));
-        game.ram().copy_in(entry, &x.to_ne_bytes());
-        // Preserve rereads after each overlapping native OAM store.
-        let y = read(y_field + 2 * pair).wrapping_sub(read(0x915));
-        if y & 0xff00 == 0 {
-            game.ram().copy_in(entry + 1, &y.to_ne_bytes());
-            let tile = read(tile_field + 2 * pair);
-            game.ram().copy_in(entry + 2, &tile.to_ne_bytes());
-            game.ram()
-                .copy_in(0x590, &saved.wrapping_add(4).to_le_bytes());
-        }
-    }
-}
-
 #[cfg(sm_verify_dll)]
 #[path = "../verification/actor_movement_runtime_observer.rs"]
 mod actor_movement_runtime_observer;
@@ -538,7 +501,9 @@ impl<'g> Runtime<'g> {
                 if valid {
                     // Publish compatibility bytes while keeping the same gameplay
                     // and private Display owner; no decode or identity transfer.
-                    encoding::encode(&state, |at, bytes| self.game.ram().copy_in(at, bytes));
+                    self.game
+                        .ram()
+                        .copy_spans(|ram| encoding::encode_spans(&state, ram));
                     export_native_spawn(&state, self.game);
                     epoch = self.game.compatibility_write_epoch();
                 }
@@ -964,19 +929,24 @@ impl Host for Runtime<'_> {
             self.owned_call(|runtime| sm_game::grapple_swing::update(runtime));
             return;
         }
-        self.foreign(|g| {
-            match step {
-                PlayerStep::Radius => set_player_radius(g),
-                PlayerStep::Input => unreachable!("input handled by shared owner"),
-                PlayerStep::SuitIndex => unreachable!("suit index handled by shared owner"),
-                PlayerStep::Acceleration => unreachable!("acceleration handled by shared owner"),
-                PlayerStep::InsideBlock => unreachable!("inside block handled by shared owner"),
-                PlayerStep::Grapple => unreachable!("grapple handled by shared owner"),
-                PlayerStep::Xray => unreachable!("X-ray handled by shared owner"),
-                PlayerStep::RestoreControl => {
-                    crate::game::session_runtime::player_command(0x14, g);
-                }
-            };
+        // Both former foreign steps keep its observation refresh.
+        self.owned_player_call(|runtime| match step {
+            PlayerStep::Radius => {
+                // SamusPoseParams has eight bytes, with y_radius at byte 6.
+                let pose_offset = usize::from(runtime.session().player.pose) * 8;
+                let radius = runtime.game.read_rom_byte(0x91b629, pose_offset + 6);
+                runtime.write_slice_le(0xb00, u16::from(radius));
+                runtime.write_slice_le(0xafe, 5);
+            }
+            PlayerStep::RestoreControl => {
+                player_transitions_runtime::command_in(runtime, 0x14);
+            }
+            PlayerStep::Input
+            | PlayerStep::SuitIndex
+            | PlayerStep::Acceleration
+            | PlayerStep::InsideBlock
+            | PlayerStep::Grapple
+            | PlayerStep::Xray => unreachable!("handled by shared owners"),
         });
     }
     fn palette(&mut self, effect: PaletteEffect) -> u8 {
@@ -1011,22 +981,20 @@ impl Host for Runtime<'_> {
         );
     }
     fn draw(&mut self, drawing: Drawing) {
-        self.foreign(|g| {
-            use sm_game::sprite_output as output;
-            match drawing {
-                Drawing::Projectile { slot, x, y } => {
-                    output::projectile(slot, (x, y), g, &mut output::Native);
-                    crate::verify_probe::hit("player_projectiles.draw.completed");
-                }
-                Drawing::Beam { sprite, x, y } => output::beam(sprite, (x, y), g),
-                Drawing::CrashEchoes => output::crash_echoes(g, &mut output::Native),
-                Drawing::GrappleSegment { x, y, tile } => output::grapple(g, Some((x, y, tile))),
-                Drawing::GrappleEnd => output::grapple(g, None),
+        use sm_game::sprite_output as output;
+        self.draw_objects(|objects| match drawing {
+            Drawing::Projectile { slot, x, y } => {
+                output::projectile(slot, (x, y), objects, &mut output::Native);
+                crate::verify_probe::hit("player_projectiles.draw.completed");
             }
+            Drawing::Beam { sprite, x, y } => output::beam(sprite, (x, y), objects),
+            Drawing::CrashEchoes => output::crash_echoes(objects, &mut output::Native),
+            Drawing::GrappleSegment { x, y, tile } => output::grapple(objects, Some((x, y, tile))),
+            Drawing::GrappleEnd => output::grapple(objects, None),
         });
     }
     fn draw_trail(&mut self, pair: usize, right: bool, frozen: bool) {
-        self.foreign(|g| draw_trail(g, pair, right, frozen));
+        self.draw_objects(|drawing| drawing.draw_trail(pair, right, frozen));
     }
     fn invalid_damage(&mut self) {
         self.foreign(|g| crate::rtl::invalid_interrupt(g));
@@ -1335,7 +1303,10 @@ fn encode_session(guard: ExportIdentity<'_>) {
     #[cfg(sm_verify_dll)]
     player_normal_transfers::record(guard.game, 2);
     let state = guard.state.as_ref().expect("export owns Session");
-    encoding::encode(state, |at, bytes| guard.game.ram().copy_in(at, bytes));
+    guard
+        .game
+        .ram()
+        .copy_spans(|ram| encoding::encode_spans(state, ram));
     export_native_spawn(state, guard.game);
     // Drop moves identity exactly once, after the byte/native publication.
 }
@@ -1701,6 +1672,9 @@ impl Runtime<'_> {
             self.owned_call(actors::magdollite::cycle_palette);
         } else if routine == 11069550 {
             self.owned_call(sm_game::actors::blue_brinstar_face_block::cycle_palette);
+        } else if species::EMPTY_DRAW_HOOKS.contains(&routine) {
+            // Nothing to draw; keep the former foreign call's observation refresh.
+            self.owned_player_call(|_| ());
         } else if !self.bank_a9_routine(routine) && !species::lease_draw_hook(routine, self) {
             self.foreign(|game| species::draw_hook(routine, game));
         }
@@ -1728,7 +1702,7 @@ impl Runtime<'_> {
         base: bool,
         offscreen: bool,
     ) {
-        self.foreign(|game| {
+        self.draw_objects(|drawing| {
             use sm_game::sprite_drawing::Clip;
             let clip = if base {
                 Clip::None
@@ -1744,7 +1718,7 @@ impl Runtime<'_> {
                 palette,
                 tile,
                 clip,
-                game,
+                drawing,
             );
         });
     }
@@ -1799,13 +1773,13 @@ impl Runtime<'_> {
         base: bool,
         offscreen: bool,
     ) {
-        self.foreign(|game| {
+        self.draw_objects(|drawing| {
             use sm_game::sprite_drawing::Clip;
             use sm_game::sprite_output::{Native, sprite_map};
             if base && address == 0 {
                 return;
             }
-            let map = sprite_map(bank, address, game, &mut Native);
+            let map = sprite_map(bank, address, drawing, &mut Native);
             let clip = if base {
                 Clip::None
             } else if offscreen {
@@ -1817,12 +1791,14 @@ impl Runtime<'_> {
                 (x, y),
                 |entry| (entry.wrapping_add(tile) & 0xf1ff) | palette,
                 clip,
-                game,
+                drawing,
             );
         });
     }
 }
 
+#[path = "lease_drawing.rs"]
+mod lease_drawing;
 #[path = "player_collision_runtime.rs"]
 mod player_collision_runtime;
 pub(crate) use player_collision_runtime::set_player_radius;
@@ -1834,9 +1810,9 @@ pub(crate) use player_movement_runtime::{
 #[path = "player_transitions_runtime.rs"]
 mod player_transitions_runtime;
 pub(crate) use player_transitions_runtime::{
-    command as player_command, damage_player, face_forward as player_face_forward,
-    finish_player_frame, finish_xray, initialize as initialize_player,
-    mother_brain as player_mother_brain,
+    command as player_command, command_in as player_command_in, damage_player,
+    face_forward as player_face_forward, finish_player_frame, finish_xray,
+    initialize as initialize_player, mother_brain as player_mother_brain,
 };
 #[path = "player_update_runtime.rs"]
 pub(crate) mod player_update_runtime;

@@ -2,10 +2,6 @@
 use crate::game::{actors, session_runtime::Runtime};
 use crate::game_state::Game;
 
-pub(super) fn call_player_code(code: u16, game: &mut Game) -> u16 {
-    crate::game::session_runtime::player_command(code, game)
-}
-
 pub(super) fn calculate_angle_from_xy(x: u16, y: u16, _game: &mut Game) -> u16 {
     crate::game::actors::api::angle_from_delta(x, y)
 }
@@ -25,7 +21,7 @@ pub(super) fn draw_spritemap(
     y: u16,
     tile: u16,
     graphics: u16,
-    game: &mut Game,
+    game: &mut impl sm_game::sprite_output::MapHost,
 ) {
     use sm_game::sprite_drawing::Clip;
     let clip = if offscreen {

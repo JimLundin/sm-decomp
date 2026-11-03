@@ -13,10 +13,32 @@ pub enum SpriteWord {
     GrappleEndX,
     GrappleEndY,
 }
-/// What sprite output reads and writes: named and raw work RAM, the cartridge,
+/// What spritemap drawing reads and writes: the cartridge, the object owner,
 /// the original's invalid-ROM warning and its failure flag.
+pub trait MapHost: crate::cartridge::LoadedImage + crate::sprite_drawing::ObjectAccess {
+    /// Print the original "RomPtr - Invalid access" warning for `address`.
+    fn warn_invalid_rom(&mut self, address: u32);
+    /// Set the original's failure flag.
+    fn set_failure(&mut self);
+}
+/// The Samus echo, grapple end, shot spritemap and camera words sprite output reads.
+pub trait SpriteWords {
+    /// Read the canonical family owner; only real off-table aliases use compatibility.
+    fn sprite_word(&self, word: SpriteWord) -> u16;
+    fn sprite_camera(&self) -> [u16; 2];
+    /// Native-order shot spritemap, preserving the full doubled slot identity.
+    fn projectile_sprite_cursor(&self, slot: u16) -> u16;
+    /// The NMI frame word pair, which paces the crash echoes.
+    fn echo_frame(&self) -> u16;
+    /// Samus's pose, which sets the echoes' height.
+    fn samus_pose(&self) -> u16;
+}
+/// What sprite output reads and writes: named and raw work RAM, besides
+/// spritemap drawing.
 pub trait SpriteHost:
-    crate::display::preparation::Access
+    MapHost
+    + SpriteWords
+    + crate::display::preparation::Access
     + crate::ram::CompatibilityRam
     + crate::records::Records
     + crate::ram::WorkRamAccess
@@ -26,15 +48,6 @@ pub trait SpriteHost:
     + crate::sprite_drawing::ObjectAccess
     + crate::escape_countdown::Access
 {
-    /// Read the canonical family owner; only real off-table aliases use compatibility.
-    fn sprite_word(&self, word: SpriteWord) -> u16;
-    fn sprite_camera(&self) -> [u16; 2];
-    /// Native-order shot spritemap, preserving the full doubled slot identity.
-    fn projectile_sprite_cursor(&self, slot: u16) -> u16;
-    /// Print the original "RomPtr - Invalid access" warning for `address`.
-    fn warn_invalid_rom(&mut self, address: u32);
-    /// Set the original's failure flag.
-    fn set_failure(&mut self);
 }
 
 /// Image capture follows warnings, so a returning warning may replace the ROM.
@@ -43,7 +56,7 @@ pub trait Content<H: ?Sized> {
     fn warning(&mut self, address: u32, game: &mut H);
 }
 pub struct Native;
-impl<H: SpriteHost + ?Sized> Content<H> for Native {
+impl<H: MapHost + ?Sized> Content<H> for Native {
     fn image(&self, game: &H) -> RomImage {
         game.loaded_image().clone()
     }
@@ -52,7 +65,7 @@ impl<H: SpriteHost + ?Sized> Content<H> for Native {
     }
 }
 
-pub fn sprite_map<H: SpriteHost + ?Sized>(
+pub fn sprite_map<H: MapHost + ?Sized>(
     bank: u8,
     cursor: u16,
     game: &mut H,
@@ -68,7 +81,7 @@ pub fn sprite_map<H: SpriteHost + ?Sized>(
         offset: sm_data::cartridge::lorom_offset(address) as usize,
     }
 }
-pub fn projectile<H: SpriteHost + ?Sized>(
+pub fn projectile<H: MapHost + SpriteWords + ?Sized>(
     slot: u16,
     position: (u16, u16),
     game: &mut H,
@@ -77,7 +90,7 @@ pub fn projectile<H: SpriteHost + ?Sized>(
     let cursor = game.projectile_sprite_cursor(slot);
     sprite_map(0x93, cursor, game, content).draw(position, |tile| tile, Clip::None, game);
 }
-pub fn samus<H: SpriteHost + ?Sized>(
+pub fn samus<H: MapHost + ?Sized>(
     index: u16,
     position: (u16, u16),
     game: &mut H,
@@ -105,7 +118,7 @@ impl crate::scene::objects::Geometry for NativeSamusMap {
         Ok(crate::sprite_drawing::Geometry::tile(&self.0, record))
     }
 }
-impl<H: SpriteHost + ?Sized, C: Content<H>> crate::scene::objects::Host for NativeSamus<'_, H, C> {
+impl<H: MapHost + ?Sized, C: Content<H>> crate::scene::objects::Host for NativeSamus<'_, H, C> {
     type Error = std::convert::Infallible;
     fn read_native_word(&mut self, offset: usize) -> Result<u16, Self::Error> {
         crate::scene::objects::Host::read_native_word(
@@ -147,7 +160,7 @@ impl<H: SpriteHost + ?Sized, C: Content<H>> crate::scene::objects::Host for Nati
         )
     }
 }
-impl<H: SpriteHost + ?Sized, C: Content<H>> crate::scene::samus::Host for NativeSamus<'_, H, C> {
+impl<H: MapHost + ?Sized, C: Content<H>> crate::scene::samus::Host for NativeSamus<'_, H, C> {
     type Map = NativeSamusMap;
     fn table_word(&mut self, index: u16) -> Result<u16, Self::Error> {
         let base = sm_data::cartridge::lorom_offset(0x92808d) as usize;
@@ -168,13 +181,17 @@ impl<H: SpriteHost + ?Sized, C: Content<H>> crate::scene::samus::Host for Native
         Ok(())
     }
 }
-pub fn echo<H: SpriteHost + ?Sized>(slot: u16, game: &mut H, content: &mut impl Content<H>) {
+pub fn echo<H: MapHost + SpriteWords + ?Sized>(
+    slot: u16,
+    game: &mut H,
+    content: &mut impl Content<H>,
+) {
     let index = usize::from(slot >> 1);
     let y = game.sprite_word(SpriteWord::EchoY(index));
     let image = content.image(game);
     let height = image.read(
         sm_data::cartridge::lorom_offset(0x91b629) as usize
-            + usize::from(crate::sequence_word!(game.SAMUS_POSE)) * 8
+            + usize::from(game.samus_pose()) * 8
             + 4,
     );
     let layer1 = game.sprite_camera();
@@ -194,8 +211,11 @@ pub fn echo<H: SpriteHost + ?Sized>(slot: u16, game: &mut H, content: &mut impl 
         }
     }
 }
-pub fn crash_echoes<H: SpriteHost + ?Sized>(game: &mut H, content: &mut impl Content<H>) {
-    if crate::frame_display_word!(game.NmiFrameWordPair) & 1 != 0 {
+pub fn crash_echoes<H: MapHost + SpriteWords + ?Sized>(
+    game: &mut H,
+    content: &mut impl Content<H>,
+) {
+    if game.echo_frame() & 1 != 0 {
         for index in [3, 2] {
             if game.sprite_word(SpriteWord::EchoSpeed(index)) != 0 {
                 echo((index * 2) as u16, game, content);
@@ -205,7 +225,10 @@ pub fn crash_echoes<H: SpriteHost + ?Sized>(game: &mut H, content: &mut impl Con
 }
 
 /// Ordered native OAM stores; end coordinates and extension bits remain live aliases.
-pub fn grapple<H: SpriteHost + ?Sized>(game: &mut H, segment: Option<(u16, u16, u16)>) {
+pub fn grapple<H: SpriteWords + crate::sprite_drawing::ObjectAccess + ?Sized>(
+    game: &mut H,
+    segment: Option<(u16, u16, u16)>,
+) {
     let idx = game.object_little_word(544);
     let at = usize::from(idx);
     if let Some((x, y, tile)) = segment {
@@ -237,7 +260,7 @@ pub fn grapple<H: SpriteHost + ?Sized>(game: &mut H, segment: Option<(u16, u16, 
     game.object_write_byte(545, high);
 }
 
-pub fn paletted<H: SpriteHost + ?Sized>(
+pub fn paletted<H: MapHost + ?Sized>(
     bank: u8,
     address: u16,
     position: (u16, u16),
@@ -342,11 +365,15 @@ pub fn file_slot_cursor<H: SpriteHost + ?Sized>(exit_y: u16, game: &mut H) {
     });
 }
 
-pub fn beam<H: SpriteHost + ?Sized>(index: u16, position: (u16, u16), game: &mut H) {
+pub fn beam<H: MapHost + crate::records::Records + ?Sized>(
+    index: u16,
+    position: (u16, u16),
+    game: &mut H,
+) {
     let address = crate::menu_lists::beam_spritemap(game, index as isize);
     sprite_map(0x93, address, game, &mut Native).draw(position, |tile| tile, Clip::None, game);
 }
-pub fn with_base_tile<H: SpriteHost + ?Sized>(
+pub fn with_base_tile<H: MapHost + ?Sized>(
     bank: u8,
     address: u16,
     position: (u16, u16),
