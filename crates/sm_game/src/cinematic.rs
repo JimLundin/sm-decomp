@@ -473,7 +473,7 @@ const BACKGROUND_END: usize = 0x1fa02;
 /// blocks ($7F:9602..$7F:FA01). The credits rows come from $7F:0000..$7F:1FFF,
 /// the intro's Japanese text tiles from $7F:8290 and its background from
 /// $7F:9000..$7F:97FF, across the behaviour bytes and the background blocks.
-fn decompressed_byte<H: crate::menus::host::Host + ?Sized>(game: &H, at: usize) -> u8 {
+pub(crate) fn decompressed_byte<H: crate::menus::host::Host + ?Sized>(game: &H, at: usize) -> u8 {
     let lane = |word: u16, offset: usize| word.to_le_bytes()[offset % 2];
     match at {
         LEVEL_SIZE..LEVEL_WORDS => lane(game.level_data_size(), at - LEVEL_SIZE),

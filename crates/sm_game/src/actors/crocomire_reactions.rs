@@ -24,7 +24,7 @@ use crate::enemy_script::EnemyScript;
 use crate::legacy_overflow;
 use crate::menus::prelude::battle;
 use crate::menus::prelude::{display_scroll, do_until, owned};
-use crate::ram::{checked_word, word};
+use crate::ram::word;
 use sm_data::crocomire::{
     BRIDGE_DEBRIS_ADDRESS, FLESH_TILEMAP_ADDRESS, MELT_TILES, SCROLL_SPRITEMAP_ADDRESS,
     SKELETON_TILEMAP_ADDRESS, SPIKE_WALL_DESTINATION_ADDRESS, SPIKE_WALL_TILE_ADDRESS,
@@ -97,8 +97,13 @@ const PALETTE_TARGET_SPRITE_3: u32 = 0xa4_b8bd;
 const PALETTE_TARGET_SPRITE_6: u32 = 0xa4_b8dd;
 const PALETTE_SPRITE_4: u32 = 0xa4_b8fd;
 const PALETTE_SPRITE_6: u32 = 0xa4_b91d;
-/// $7E:C0EE: BG1/2 palette 7 colours 0-7.
-const BG_PALETTE_7_RAM: usize = 0xc0ee;
+/// BG1/2 palette 7 ($7E:C0E0), sprite palettes 4 and 6 ($7E:C120, $7E:C160)
+/// and target sprite palettes 3 and 6 ($7E:C340, $7E:C3A0), by colour.
+const BG_PALETTE_7: usize = 0x70;
+const SPRITE_PALETTE_4: usize = 0x90;
+const SPRITE_PALETTE_6: usize = 0xb0;
+const TARGET_SPRITE_PALETTE_3: usize = 0xa0;
+const TARGET_SPRITE_PALETTE_6: usize = 0xd0;
 /// Bank $84 PLMs: Crocomire's bridge and invisible walls.
 const CLEAR_BRIDGE: u16 = 0xb747;
 const CRUMBLE_BRIDGE_BLOCK: u16 = 0xb74b;
@@ -106,7 +111,6 @@ const CLEAR_BRIDGE_BLOCK: u16 = 0xb74f;
 const CLEAR_INVISIBLE_WALL: u16 = 0xb753;
 const CREATE_INVISIBLE_WALL: u16 = 0xb757;
 /// $7E:9016: the death sequence's crumbling bridge index.
-const CRUMBLING_BRIDGE_INDEX: usize = 0x9016;
 /// $7E:069C-$7E:071D: the melting Y offsets, one per pixel column.
 const MELTING_Y_OFFSETS: usize = 0x69c;
 /// $7E:068C: the pixels to erase per column a frame, the low byte of the
@@ -177,6 +181,22 @@ fn cap_byte(value: u8, limit: u8) -> u8 {
     } else {
         value
     }
+}
+/// Word `index` of the ROM table at `address`, in native order.
+fn rom_word<L: Lease + ?Sized>(game: &L, address: u32, index: usize) -> u16 {
+    game.loaded_image().table_word(
+        sm_data::cartridge::lorom_offset(address) as usize,
+        index as isize,
+    )
+}
+/// Colours `first..first + count` from the ROM palette at `address`, stored
+/// last colour first as the original's descending copy does.
+fn load_colours<L: Lease + ?Sized>(game: &mut L, first: usize, address: u32, count: usize) {
+    for index in (0..count).rev() {
+        let colour = rom_word(game, address, index);
+        game.session_mut().presentation.visual_mut().colors[first + index] = colour;
+    }
+    game.words_stored();
 }
 pub fn fill_scroll<L: Lease + ?Sized>(game: &mut L) {
     let scroll = display_scroll!(game.Bg2V);
@@ -350,9 +370,17 @@ pub fn update_palette<L: Lease + ?Sized>(game: &mut L) {
     if battle!(game.DoorTransitionEnemies) == 0 {
         if Crocomire::of(game, 0).actor().flash != 0 && (battle!(game.RandomEnemyCounter) & 2) != 0
         {
-            crate::word_transfers!(game, descending, 8; native(BG_PALETTE_7_RAM) <- value(0x7fff));
+            // The palette RAM stores these natively, as the original's do.
+            let white = u16::from_le_bytes(0x7fffu16.to_ne_bytes());
+            game.session_mut().presentation.visual_mut().colors[BG_PALETTE_7..BG_PALETTE_7 + 8]
+                .copy_from_slice(&[white; 8]);
+            game.words_stored();
         } else {
-            crate::word_transfers!(game, descending, 8; native(BG_PALETTE_7_RAM) <- rom(PALETTE_BG_7, 7));
+            for index in (0..8).rev() {
+                let colour = u16::from_le_bytes(rom_word(game, PALETTE_BG_7, index).to_ne_bytes());
+                game.session_mut().presentation.visual_mut().colors[BG_PALETTE_7 + index] = colour;
+            }
+            game.words_stored();
         }
     }
 }
@@ -378,7 +406,7 @@ pub fn behind_wall_rumbling<L: Lease + ?Sized>(game: &mut L) {
     if target == 0x8080 {
         set_wall_counter(game, 0x40, 0x8080);
         set_wall_counter(game, 0, 128);
-        crate::word_transfers!(game, descending, 16; le(PALETTE_BUFFER, 191) <- rom(PALETTE_SPRITE_6, 15));
+        load_colours(game, SPRITE_PALETTE_6, PALETTE_SPRITE_6, 16);
         game.edit_actor(Key::from_legacy(0), AccessMode::Native, |enemy| {
             enemy.variables[lane::DEATH_SEQUENCE_INDEX] =
                 enemy.variables[lane::DEATH_SEQUENCE_INDEX].wrapping_add(2);
@@ -698,10 +726,7 @@ pub fn hop_3_load_melting_tilemap<L: Lease + ?Sized>(game: &mut L) {
     CrocomireEdit::of(game, e1).actor().x.whole = Crocomire::of(game, e).actor().x.whole;
     CrocomireEdit::of(game, e1).actor().y.whole =
         (Crocomire::of(game, e).actor().y.whole).wrapping_add(16);
-    crate::word_transfers!(game, (4), 256;
-        le(TILEMAP_STUFF, 0) <- value(824),
-        le(TILEMAP_STUFF, 1) <- value(824),
-    );
+    bg2_staging::fill(game, 0..512, 824);
     load_melt_tilemap(FLESH_TILEMAP_ADDRESS, game);
 }
 
@@ -906,7 +931,8 @@ fn update_wall<L: Lease + ?Sized>(game: &mut L) {
                 *CrocomireEdit::of(game, key).unread_7802() = 0;
             }
             game.queue_sound(1, 0x3b, 6);
-            crate::word_transfers!(game, ascending, 1; native(CRUMBLING_BRIDGE_INDEX) <- value(0));
+            *crumbling_bridge_index_mut(game) = 0;
+            game.words_stored();
             game.foreign(|game| game.spawn_plm(0x4e, WALL_ROW, CREATE_INVISIBLE_WALL));
             {
                 let mut crocomire = CrocomireEdit::of(game, ek);
@@ -1032,7 +1058,7 @@ pub fn behind_wall_no_more_rumbling<L: Lease + ?Sized>(game: &mut L) {
             actor.instruction_delay = 1;
         }
         CrocomireEdit::of(game, e).actor().palette = 0;
-        crate::word_transfers!(game, descending, 16; le(PALETTE_BUFFER, 159) <- rom(PALETTE_SPRITE_4, 15));
+        load_colours(game, SPRITE_PALETTE_4, PALETTE_SPRITE_4, 16);
         game.foreign(|game| game.clear_enemy_projectiles());
         let mut v8: u16 = 8;
         for _ in 0..8 {
@@ -1282,10 +1308,17 @@ pub fn initialize<L: Lease + ?Sized>(game: &mut L) {
             .room
             .set_scroll_pair(SCROLLS_0_1, 0u16.to_ne_bytes());
         game.words_stored();
-        crate::word_transfers!(game, descending, 17;
-            le(TARGET_PALETTES, 176) <- rom(PALETTE_TARGET_SPRITE_3, 16),
-            le(TARGET_PALETTES, 224) <- rom(PALETTE_TARGET_SPRITE_6, 16),
-        );
+        // Seventeen words each, through the next palette's first colour.
+        for index in (0..17).rev() {
+            for (first, address) in [
+                (TARGET_SPRITE_PALETTE_3, PALETTE_TARGET_SPRITE_3),
+                (TARGET_SPRITE_PALETTE_6, PALETTE_TARGET_SPRITE_6),
+            ] {
+                let colour = rom_word(game, address, index);
+                game.session_mut().presentation.visual_mut().targets[first + index] = colour;
+            }
+        }
+        game.words_stored();
         *CrocomireEdit::of(game, e_0).fight_function() = 4;
         battle!(game; Unused179E = 16; EnemyTilemapSize = 1024;);
         battle!(game.CameraDistance = 2);
@@ -1326,13 +1359,18 @@ pub fn hop_6_sinking<L: Lease + ?Sized>(game: &mut L) {
 fn crumbling_bridge_index<L: Lease + ?Sized>(game: &L) -> u16 {
     game.session().actors.extended.blocks[3][0xb]
 }
+fn crumbling_bridge_index_mut<L: Lease + ?Sized>(game: &mut L) -> &mut u16 {
+    &mut game.session_mut().actors.extended.blocks[3][0xb]
+}
 
 /// Crocomire main AI - death sequence index 2 - falling ($A4:9136). Was `emit_melt_debris`.
 pub fn falling<L: Lease + ?Sized>(game: &mut L) {
     let v0: u16 = crumbling_bridge_index(game);
     if (crumbling_bridge_index(game) as i32 - 22i32) & 0x8000 != 0 {
         let v1: u16 = crumbling_bridge_index(game);
-        checked_word!(game, CRUMBLING_BRIDGE_INDEX; += 2);
+        let index = crumbling_bridge_index_mut(game);
+        *index = index.wrapping_add(2);
+        game.words_stored();
         let parameter = game
             .foreign(|game| game.crocomire_table_word(BRIDGE_DEBRIS_ADDRESS, (v0 >> 1) as isize));
         game.spawn_projectile(parameter, v1, ADDR_STRU_868F9D as u16);

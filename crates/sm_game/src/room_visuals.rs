@@ -18,6 +18,8 @@ pub trait StatueHost: crate::runtime_access::RuntimeAccess {
         *animation |= 0x10;
         *animation & 0x8000 == 0
     }
+    /// Mark the statue animation finished, then make scroll cells 0 and 1
+    /// blue (two bytes of 2, in native order).
     fn finish_statue_animation(&mut self);
 }
 
@@ -62,7 +64,7 @@ pub fn advance_fireflea_lighting<H: crate::menus::host::Host + ?Sized>(game: &mu
     let mut fx = crate::fx_domain::Controls::fx_controls(game);
     fx.blending = (fx.blending & 0xff00) | 0xc;
     crate::fx_domain::Controls::publish_fx_controls(game, fx, &[crate::fx_state::Field::Blending]);
-    let frozen = word!(game.TIME_IS_FROZEN_FLAG) != 0;
+    let frozen = crate::sequence_word!(game.TIME_IS_FROZEN_FLAG) != 0;
     crate::fx_lighting::advance_after_blending(game, frozen);
 }
 
@@ -127,15 +129,21 @@ pub fn shake_room_with_sound<H: crate::menus::host::Host + ?Sized>(
 pub fn initialize_tourian_statue<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     if crate::progress::leased::event_has_happened(0xa, game) & 1 != 0 {
         crate::room_mechanisms::creation::spawn_hardcoded(6, 12, 0xb777, game);
-        crate::word_transfers!(game, ascending, 1; native(0xcd20) <- value(514));
+        // Scroll cells 0 and 1, in native order.
+        let mut runtime = game.runtime();
+        runtime
+            .session_mut()
+            .room
+            .set_scroll_pair(0, 514u16.to_ne_bytes());
     }
     game.store_display_control_byte(DisplayField::Screens1, 74, DisplayStore::Named);
-    crate::liquid::LiquidWords::set(game, |words| &mut words.liquid.rising, 0xc428);
-    crate::liquid::LiquidWords::set(
-        game,
-        |words| &mut words.liquid.surface.whole,
-        crate::liquid::LiquidWords::read(game).height,
-    );
+    {
+        let mut runtime = game.runtime();
+        let room = &mut runtime.session_mut().room;
+        room.liquid.rising = 0xc428;
+        room.liquid.surface.whole = room.liquid_height;
+        runtime.words_stored();
+    }
     game.spawn_hdma(0x88, &HdmaObjectDefinition::new(0x42, 0x11, 0xd856));
     game.spawn_hdma(0x88, &HdmaObjectDefinition::new(0x42, 0x10, 0xdcfa));
     spawn_bg3_scroll(game);
@@ -196,11 +204,10 @@ pub fn advance_tourian_statue<H: crate::menus::host::Host + StatueHost + ?Sized>
         }
         Finished => {
             game.finish_statue_animation();
-            crate::word_transfers!(game, ascending, 1; native(0xcd20) <- value(514));
         }
     }
-    let scroll =
-        crate::camera::current(game).layer1[1].wrapping_add(crate::hdma_word!(game, hdma_index, B));
+    let scroll = crate::sequence_word!(game.LAYER1_Y_POS)
+        .wrapping_add(crate::hdma_word!(game, hdma_index, B));
     game.store_source_word(LiveOwner::WindowLeft, 0, native_order(), scroll);
 }
 
@@ -233,7 +240,11 @@ pub fn initialize_ceres_elevator<H: crate::menus::host::Host + ?Sized>(game: &mu
 
 pub fn initialize_draygon_layer<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     spawn_hdma(0x88, &HdmaObjectDefinition::new(0, 0x2c, 0xdf4f), game);
-    word!(game.ROOM_LOADING_IRQ_HANDLER = 12);
+    {
+        let mut runtime = game.runtime();
+        runtime.session_mut().room.entry.irq_policy = 12;
+        runtime.words_stored();
+    }
     spawn_bg3_scroll(game);
 }
 
@@ -251,9 +262,14 @@ pub fn initialize_phantoon_motion<H: crate::menus::host::Host + ?Sized>(
 }
 
 pub fn initialize_intro_wave<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    word!(game.WAVY_SAMUS_ENABLED = 1);
-    crate::word_transfers!(game, ascending, 1; native(0xd9e) <- value(0x4000));
-    word!(game.LOOP_COUNTER_TRANSFER_ENEMIES_TO_VRAM = 8);
+    {
+        let mut runtime = game.runtime();
+        let wave = &mut runtime.session_mut().wavy_samus;
+        wave.enabled = 1;
+        // The amplitude's store is native-order.
+        wave.amplitude = u16::from_le_bytes(0x4000u16.to_ne_bytes());
+        wave.speed = 8;
+    }
     crate::hdma_effects::apply_leased(
         HdmaEffect::InitializeWavePair {
             table: crate::hdma_objects::WaveTable::Intro,

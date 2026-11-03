@@ -1,7 +1,6 @@
 //! Camera limits and scroll-cell rules; live callers retain RAM authority.
 use super::Host;
 use crate::camera::set_layer1;
-use crate::ram::word;
 use crate::room_entry::content::Axis;
 
 // Multiplication uses the width's low byte. A column may include a full-word
@@ -39,7 +38,7 @@ pub fn auto_x<H: Host + ?Sized>(game: &mut H) {
         }
         let boundary = position & 0xff00;
         let next = previous
-            .wrapping_sub(word!(game.ABSOLUTE_MOVED_LAST_FRAME_X))
+            .wrapping_sub(game.session().player.camera_distance[0].whole)
             .wrapping_sub(2);
         if (next.wrapping_sub(boundary) as i16) < 0 {
             boundary
@@ -51,7 +50,7 @@ pub fn auto_x<H: Host + ?Sized>(game: &mut H) {
     } else {
         let boundary = (position & 0xff00).wrapping_add(256);
         let next = previous
-            .wrapping_add(word!(game.ABSOLUTE_MOVED_LAST_FRAME_X))
+            .wrapping_add(game.session().player.camera_distance[0].whole)
             .wrapping_add(2);
         if next >= boundary {
             boundary
@@ -97,7 +96,11 @@ pub fn trigger_right<H: Host + ?Sized>(game: &mut H) {
         set_layer1(
             game,
             0,
-            retreat_to_boundary(previous, word!(game.ABSOLUTE_MOVED_LAST_FRAME_X), boundary),
+            retreat_to_boundary(
+                previous,
+                game.session().player.camera_distance[0].whole,
+                boundary,
+            ),
         );
     }
 }
@@ -122,7 +125,7 @@ pub fn trigger_left<H: Host + ?Sized>(game: &mut H) {
     {
         let boundary = (position & 0xff00).wrapping_add(256);
         let next = previous
-            .wrapping_add(word!(game.ABSOLUTE_MOVED_LAST_FRAME_X))
+            .wrapping_add(game.session().player.camera_distance[0].whole)
             .wrapping_add(2);
         set_layer1(game, 0, next.min(boundary));
     }
@@ -162,7 +165,7 @@ pub fn auto_y<H: Host + ?Sized>(game: &mut H) {
     if camera_scroll_value(column, row, game) == 0 {
         let boundary = (position & 0xff00).wrapping_add(256);
         let next = previous
-            .wrapping_add(word!(game.ABSOLUTE_MOVED_LAST_FRAME_Y))
+            .wrapping_add(game.session().player.camera_distance[1].whole)
             .wrapping_add(2);
         let next = if next >= boundary {
             boundary
@@ -181,7 +184,7 @@ pub fn auto_y<H: Host + ?Sized>(game: &mut H) {
         let boundary = padding.wrapping_add(position & 0xff00);
         if boundary < position {
             let next = previous
-                .wrapping_sub(word!(game.ABSOLUTE_MOVED_LAST_FRAME_Y))
+                .wrapping_sub(game.session().player.camera_distance[1].whole)
                 .wrapping_sub(2);
             let next = if (next.wrapping_sub(boundary) as i16) < 0 {
                 boundary
@@ -233,7 +236,11 @@ pub fn trigger_down<H: Host + ?Sized>(game: &mut H) {
         set_layer1(
             game,
             1,
-            retreat_to_boundary(previous, word!(game.ABSOLUTE_MOVED_LAST_FRAME_Y), boundary),
+            retreat_to_boundary(
+                previous,
+                game.session().player.camera_distance[1].whole,
+                boundary,
+            ),
         );
     }
 }
@@ -258,7 +265,7 @@ pub fn trigger_up<H: Host + ?Sized>(game: &mut H) {
     {
         let boundary = (position & 0xff00).wrapping_add(256);
         let next = previous
-            .wrapping_add(word!(game.ABSOLUTE_MOVED_LAST_FRAME_Y))
+            .wrapping_add(game.session().player.camera_distance[1].whole)
             .wrapping_add(2);
         set_layer1(game, 1, next.min(boundary));
     }

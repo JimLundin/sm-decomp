@@ -1,8 +1,8 @@
 //! Per-frame gameplay bookkeeping: health and game time, screen shakes and
 //! frame timers, on named RAM.
 use crate::constants::game_states::*;
-use crate::ram::{checked_word, word, words as fields};
 use crate::runtime_access::RuntimeAccess;
+use crate::session_access::SessionAccess as _;
 
 /// Named RAM, the Samus pose command and the owned-Session view.
 pub trait Host:
@@ -102,7 +102,6 @@ pub fn finish_frame<H: Host + ?Sized>(game: &mut H) {
             crate::actors::scheduling::shake_active_enemies(&mut game.runtime());
         }
     }
-    word!(game.FRAME_COUNTER_EVERY_FRAME += 1);
     for timer in [
         crate::session_words::Word::SamusInvincibilityTimer,
         crate::session_words::Word::SamusKnockbackTimer,
@@ -112,10 +111,17 @@ pub fn finish_frame<H: Host + ?Sized>(game: &mut H) {
             crate::sequence_state::write(game, timer, remaining - 1);
         }
     }
-    let remaining = checked_word!(game, fields::PROJECTILE_INVINCIBILITY_TIMER;);
-    if remaining != 0 {
-        checked_word!(game, fields::PROJECTILE_INVINCIBILITY_TIMER; = remaining - 1);
+    // The frame counter, the projectile protection timer and the first
+    // interactive and active enemy entries are Session fields no other step
+    // here reads; they store on one lease.
+    let mut runtime = game.runtime();
+    let session = runtime.session_mut();
+    session.timing.frame_counter = session.timing.frame_counter.wrapping_add(1);
+    let protection = &mut session.projectiles.controls.protection;
+    if *protection != 0 {
+        *protection -= 1;
     }
-    word!(game.INTERACTIVE_ENEMY_INDEXES[0] = u16::MAX);
-    word!(game.ACTIVE_ENEMY_INDEXES[0] = u16::MAX);
+    session.actors.schedule.interactive[0] = u16::MAX;
+    session.actors.schedule.active[0] = u16::MAX;
+    runtime.words_stored();
 }

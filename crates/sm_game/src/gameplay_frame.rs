@@ -26,9 +26,8 @@ use crate::ram::{RawRam, word};
 use crate::room_entry::api::{ArrivalRequest, EntrySignal, StartSite};
 use crate::room_entry::content::LoadMode;
 use crate::room_scrolls::{advance_camera, debug_position, fill_viewport, update_scrolls};
-use crate::runtime_access::RuntimeAccess;
+use crate::runtime_access::{RuntimeAccess, with_session};
 use crate::session_access::SessionAccess;
-use crate::session_cohort;
 use crate::word_transfers;
 use crate::{escape_timer, hud, message_boxes, samus_death, sprite_drawing};
 
@@ -366,6 +365,58 @@ fn frame<H: Host>(game: &mut H) -> CoroutineRet {
     returned
 }
 
+/// The pause screen's palette ($B6:F000), which replaces the gameplay colours.
+const PAUSE_PALETTE: u32 = 0xb6f000;
+
+/// Clear the projectile table words $198D..$1C1E: the table's flags, zoom,
+/// selection and spawn words and every slot's words through `behavior_c`.
+fn clear_projectile_table(table: &mut crate::session::EnemyProjectiles) {
+    table.flags = 0;
+    table.zoom = 0;
+    table.selected = 0;
+    table.spawn.primary = 0;
+    table.spawn.secondary = 0;
+    for slot in &mut table.slots {
+        slot.definition = 0;
+        slot.graphics = 0;
+        slot.counter = 0;
+        slot.pre_action = 0;
+        slot.x.fraction = 0;
+        slot.x.whole = 0;
+        slot.y.fraction = 0;
+        clear_slot_motion(slot);
+        slot.spritemap = 0;
+        slot.delay = 0;
+        slot.radius = 0;
+        slot.properties = 0;
+        slot.behavior_c = 0;
+    }
+}
+
+/// Clear the projectile words $1A8D..$1B8C: the last three slots' vertical
+/// subpixels through the first seventeen slots' spritemaps.
+fn clear_projectile_motion(slots: &mut [crate::session::EnemyProjectile; 18]) {
+    for (index, slot) in slots.iter_mut().enumerate() {
+        if index >= 15 {
+            slot.y.fraction = 0;
+        }
+        clear_slot_motion(slot);
+        if index < 17 {
+            slot.spritemap = 0;
+        }
+    }
+}
+
+/// A slot's vertical position, velocity, behaviour words and program.
+fn clear_slot_motion(slot: &mut crate::session::EnemyProjectile) {
+    slot.y.whole = 0;
+    slot.velocity.x = 0;
+    slot.velocity.y = 0;
+    slot.behavior_a = 0;
+    slot.behavior_b = 0;
+    slot.program = 0;
+}
+
 /// The game state a soft-reset request leaves for the frame's end.
 const SOFT_RESET_REQUESTED: u16 = 0xffff;
 /// The frame resume byte that enters boot at the soft reset.
@@ -411,7 +462,10 @@ fn initialize<H: Host>(game: &mut H) -> CoroutineRet {
             return yielded;
         }
         hud::initialize(game);
-        word_transfers!(game, ascending, 16; native(0xc380) <- native(0xc180));
+        with_session(game, |session| {
+            let visual = session.presentation.visual_mut();
+            visual.targets[192..208].copy_from_slice(&visual.colors[192..208]);
+        });
         crate::screen_fade::store(game, 1, 1);
         crate::display_refresh::enable(true, game);
         enemy_projectiles::lifecycle::set_enabled(&mut game.runtime(), true);
@@ -432,7 +486,9 @@ fn initialize<H: Host>(game: &mut H) -> CoroutineRet {
         } else {
             4
         };
-        word!(game.LOOP_COUNTER_TRANSFER_ENEMIES_TO_VRAM = if stage == 3 { 15 } else { 6 });
+        with_session(game, |session| {
+            session.wavy_samus.speed = if stage == 3 { 15 } else { 6 };
+        });
     }
     if matches!(stage, 2..=4) {
         crate::probe::hit(match stage {
@@ -449,7 +505,12 @@ fn initialize<H: Host>(game: &mut H) -> CoroutineRet {
                 game.screen_set_primary(stage);
                 return yielded;
             }
-            if (word!(game.LOOP_COUNTER_TRANSFER_ENEMIES_TO_VRAM -= 1, reread) & 0x8000) != 0 {
+            let remaining = with_session(game, |session| {
+                let counter = &mut session.wavy_samus.speed;
+                *counter = counter.wrapping_sub(1);
+                *counter
+            });
+            if (remaining & 0x8000) != 0 {
                 break;
             }
             waiting = false;
@@ -462,12 +523,19 @@ fn initialize<H: Host>(game: &mut H) -> CoroutineRet {
         } else {
             crate::gameplay_word!(game.GAME_STATE += 1);
         }
-        word_transfers!(game, ascending, 256; native(0xc000) <- le(TARGET_PALETTES, 0));
+        with_session(game, |session| {
+            let visual = session.presentation.visual_mut();
+            for (color, &target) in visual.colors.iter_mut().zip(&visual.targets) {
+                *color = crate::word_transfers::stored_native(target);
+            }
+        });
         if stage == 4 {
             if u32::from(crate::menus::state::load::<SaveSelection, _>(game).loading_game_state)
                 == K_LOADING_GAME_STATE_1F_STARTING_AT_CERES
             {
-                word!(game.PALETTE_BUFFER[223] = 0);
+                with_session(game, |session| {
+                    session.presentation.visual_mut().colors[223] = 0;
+                });
                 game.player_command(8);
             } else {
                 game.player_command(9);
@@ -495,7 +563,9 @@ fn stop_demo<H: Host>(game: &mut H) -> CoroutineRet {
     }
     palette_effects::set_enabled(game.runtime().session_mut(), false);
     palette_effects::clear(game.runtime().session_mut());
-    word_transfers!(game, descending, 329; native(0x1c1d) <- value(0));
+    with_session(game, |session| {
+        clear_projectile_table(&mut session.enemy_projectiles)
+    });
     word_transfers!(game, descending, 270; native(0x996) <- value(0));
     display_refresh::reset_layer_mirrors(game);
     0
@@ -509,7 +579,8 @@ fn next_demo<H: Host>(game: &mut H) -> CoroutineRet {
         crate::gameplay_word!(game.GAME_STATE = K_GAME_STATE_40_TRANSITION_TO_DEMO as u16);
     } else if substate != 0 {
         game.load_title_sequence_graphics();
-        word!(game.EPROJ_X_POS[4] = 2);
+        // The title reuses slot 4's X position as its skip-to-title index.
+        crate::enemy_projectiles::table::with_slots(game, |slots| slots[4].x.whole = 2);
         crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
             flow.cinematic_function = 0x9a47
         });
@@ -550,7 +621,10 @@ fn setup_pause<H: Host>(game: &mut H) -> CoroutineRet {
         let value = game.palette_word(false, index * 2);
         game.screen_write_word(Point::new(Role::Pause, (384 + index) * 2), value);
     }
-    word_transfers!(game, ascending, 256; le(PALETTE_BUFFER, 0) <- rom(0xb6f000, 0));
+    let palette: [u16; 256] = crate::word_transfers::rom_words(game, PAUSE_PALETTE);
+    with_session(game, |session| {
+        session.presentation.visual_mut().colors = palette
+    });
     display_refresh::pause_graphics(true, game);
     crate::menus::state::with(game, |game, menu: &mut MenuState| {
         pause_controls::initialize(menu, game)
@@ -687,7 +761,7 @@ fn exit_time_up<H: Host>(game: &mut H) -> CoroutineRet {
                 options.screen_index = 0
             });
             crate::menus::state::with(game, |_, menu: &mut MenuState| menu.menu_index = 0);
-            word_transfers!(game, descending, 128; le(EPROJ_Y_SUBPOS, 142) <- value(0));
+            crate::enemy_projectiles::table::with_slots(game, clear_projectile_motion);
             crate::gameplay_word!(game.GAME_STATE = K_GAME_STATE_25_SAMUS_NO_HEALTH as u16);
         } else {
             crate::gameplay_word!(
@@ -897,10 +971,10 @@ fn finish_pass<H: Host>(entry: Entry, game: &mut H) {
                     finish_gameplay(true, game);
                     begin_death_sequence(game, 16);
                     crate::screen_fade::store(game, 0, 0);
-                    word_transfers!(game, descending, 128; le(EPROJ_Y_SUBPOS, 142) <- value(0));
+                    crate::enemy_projectiles::table::with_slots(game, clear_projectile_motion);
                     crate::gameplay_word!(game.GAME_STATE += 1);
-                    session_cohort::with(game, |_, e: &mut crate::explosion_window::Explosion| {
-                        e.bomb.explosion_status = 0;
+                    with_session(game, |session| {
+                        session.projectiles.power_bomb.explosion_status = 0;
                     });
                     cancel_sound_effects(game, 15);
                     crate::music_requests::queue_delayed_8(0, game);
@@ -922,9 +996,17 @@ fn finish_pass<H: Host>(entry: Entry, game: &mut H) {
                 let value = game.palette_word(false, index * 2);
                 game.screen_write_word(Point::new(Role::Pause, (384 + index) * 2), value);
             }
-            word_transfers!(game, descending, 192; le(TARGET_PALETTES, 191) <- value(0));
-            word_transfers!(game, descending, 48; le(TARGET_PALETTES, 255) <- value(0));
-            word_transfers!(game, descending, 16; le(TARGET_PALETTES, 207) <- le(PALETTE_BUFFER, 207));
+            with_session(game, |session| {
+                // Keep palette 6's sprite colours as the death sequence's targets.
+                let visual = session.presentation.visual_mut();
+                for (index, target) in visual.targets.iter_mut().enumerate() {
+                    *target = if (192..208).contains(&index) {
+                        visual.colors[index]
+                    } else {
+                        0
+                    };
+                }
+            });
             begin_death_sequence(game, 0);
             crate::sequence_state::with_words(
                 game,

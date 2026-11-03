@@ -2,11 +2,10 @@
 use crate::display_refresh::enqueue_readback;
 use crate::player_transitions::xray::BlendPhase;
 use crate::presentation_workspace::{Point, Role};
-use crate::ram::{RawRam, word};
-use crate::runtime_access::{RuntimeAccess, SessionView};
+use crate::ram::RawRam;
+use crate::runtime_access::{RuntimeAccess, SessionView, with_session};
 use crate::session_access::SessionAccess;
 use crate::visual_host::{Content, Record, Source};
-use crate::word_transfers;
 
 /// What X-ray needs besides the display host, sound and the native image:
 /// the blend mask and blending owned by the player view, and the original's
@@ -403,11 +402,30 @@ pub fn upload_right<H: Host + ?Sized>(game: &mut H) {
     if can_reveal_blocks(game) {
         upload_screen(0x4800, 1, game);
     }
-    for (at, value) in [(0xa88, 0x9800e4u32), (0xa8b, 0x98c8e4), (0xa8e, 0x999098)] {
-        word_transfers!(game, ascending, 1; native(at) <- value(value as u16));
-        game.ram().write_byte(at + 2, (value >> 16) as u8);
+    // The indirect HDMA table at $7E:0A88..$7E:0A90: three entries of a line
+    // count and a pointer, each stored as a native word and its bank byte.
+    // It overlays the demo's words from its enable word on and the low byte
+    // of its filtered held input.
+    let mut table = [0u8; 9];
+    for (at, value) in [(0, 0x9800e4u32), (3, 0x98c8e4), (6, 0x999098)] {
+        table[at..at + 2].copy_from_slice(&(value as u16).to_ne_bytes());
+        table[at + 2] = (value >> 16) as u8;
     }
-    word!(game.XRAY_HDMA_TABLE_END = 0);
+    let word = |at: usize| u16::from_le_bytes([table[at], table[at + 1]]);
+    with_session(game, |session| {
+        let demo = &mut session.player.demo;
+        demo.enabled = word(0);
+        demo.input_frames = word(2);
+        demo.previous_held = word(4);
+        demo.previous_pressed = word(6);
+        // $7E:0A91..$7E:0A92 (the X-ray HDMA table's end) are the high byte
+        // of the demo's filtered held input and the low byte of its filtered
+        // newly pressed input.
+        let preparation = &mut session.projectiles.preparation;
+        crate::actors::slot_view::store_byte(&mut preparation.demo_filtered_held, 0, table[8]);
+        crate::actors::slot_view::store_byte(&mut preparation.demo_filtered_held, 1, 0);
+        crate::actors::slot_view::store_byte(&mut preparation.demo_filtered_pressed, 0, 0);
+    });
     let angle = if game.facing() == 4 { 192 } else { 64 };
     stop_demo(angle, game);
 }
@@ -418,18 +436,15 @@ pub fn set_backdrop<H: Host + ?Sized>(game: &mut H) {
     set_backdrop_color(0xc63, game);
 }
 pub fn restore_left<H: Host + ?Sized>(hdma_index: usize, game: &mut H) {
-    word_transfers!(game, ascending, 1; native(0xa88) <- value(1));
-    game.ram().write_byte(0xa8a, 0x98);
-    word_transfers!(game, ascending, 1; native(0xa8b) <- value(0));
-    clear_previous_demo_input(game);
-    word!(game.HDMA_TABLE_1[0] = 255);
+    restore_hdma_table(game);
+    crate::player_transitions::xray::set_window_word(&mut game.runtime(), 0, 255);
     game.apply_xray_blending(BlendPhase::Restore);
     set_backdrop_color(0, game);
     crate::menus::prelude::display_scroll!(game.Bg2H = crate::hdma_word!(game, hdma_index, A));
     crate::menus::prelude::display_scroll!(game.Bg2V = crate::hdma_word!(game, hdma_index, B));
     game.ram()
         .write_byte(0x59, crate::hdma_word!(game, hdma_index, C) as u8);
-    if (word!(game.VRAM_WRITE_QUEUE_TAIL) as i16).wrapping_sub(240) < 0 {
+    if (game.queue_tail() as i16).wrapping_sub(240) < 0 {
         upload_screen(0x5000, 0, game);
         advance_stage(game);
     }
@@ -440,16 +455,24 @@ fn advance_stage<H: Host + ?Sized>(game: &mut H) {
     let demo = &mut runtime.session_mut().player.demo;
     demo.pre_action = demo.pre_action.wrapping_add(1);
 }
-/// Clear the demo's previous input and the controller backup after it.
-fn clear_previous_demo_input<H: Host + ?Sized>(game: &mut H) {
-    word!(game.DEMO_BACKUP_PREV_CONTROLLER_INPUT = 0);
-    let mut runtime = game.runtime();
-    let demo = &mut runtime.session_mut().player.demo;
-    (demo.previous_held, demo.previous_pressed) = (0, 0);
+/// Restore the indirect HDMA table's first entry over the demo's words and
+/// clear the demo's previous input and the controller backup after it.
+fn restore_hdma_table<H: Host + ?Sized>(game: &mut H) {
+    with_session(game, |session| {
+        // $7E:0A88, the HDMA pointer's low word, is the demo's enable word;
+        // the bank byte $98 at $7E:0A8A and the zero word after it are the
+        // demo's input frame count and the previous held input's low byte,
+        // which is cleared with the rest of the previous input.
+        let demo = &mut session.player.demo;
+        demo.enabled = u16::from_le_bytes(1u16.to_ne_bytes());
+        demo.input_frames = 0x98;
+        (demo.previous_held, demo.previous_pressed) = (0, 0);
+        session.projectiles.preparation.demo_filtered_held = 0;
+    });
 }
 pub fn restore_right<H: Host + ?Sized>(game: &mut H) {
     game.apply_xray_blending(BlendPhase::Restore);
-    if (word!(game.VRAM_WRITE_QUEUE_TAIL) as i16).wrapping_sub(240) < 0 {
+    if (game.queue_tail() as i16).wrapping_sub(240) < 0 {
         upload_screen(0x5800, 1, game);
         advance_stage(game);
     }
@@ -459,19 +482,16 @@ pub fn finish_restore<H: Host + ?Sized>(hdma_index: usize, game: &mut H) {
     if crate::sequence_word!(game.TIME_IS_FROZEN_FLAG) != 0 {
         crate::sequence_word!(game.TIME_IS_FROZEN_FLAG = 0);
         stop_demo(0, game);
-        word_transfers!(game, ascending, 1; native(0xa88) <- value(1));
-        game.ram().write_byte(0xa8a, 0x98);
-        word_transfers!(game, ascending, 1; native(0xa8b) <- value(0));
-        clear_previous_demo_input(game);
+        restore_hdma_table(game);
         game.finish_xray();
         crate::hdma_word!(game, hdma_index, Channels => 0);
         game.queue_sound(0, 0xa, 6);
-        if (crate::liquid::LiquidWords::read(game).liquid.kind as u8) != 36 {
+        if (game.runtime().session().room.liquid.kind as u8) != 36 {
             game.ram().write_byte(0x76, 0x80);
             game.ram().write_byte(0x75, 64);
             game.ram().write_byte(0x74, 32);
         }
-        word_transfers!(game, descending, 256; le(HDMA_TABLE_1, 255) <- value(0xff));
+        crate::player_transitions::xray::clear_window(&mut game.runtime());
         let mut runtime = game.runtime();
         let controls = &mut runtime.session_mut().projectiles.controls;
         if controls.automatic_weapon != 0 {

@@ -15,7 +15,6 @@ use crate::constants::enemy_properties::{
 };
 use crate::enemy_script::EnemyScript;
 use crate::legacy_overflow;
-use crate::ram::word;
 use crate::statue_tables;
 
 /// A lease on a game with the statues' effects.
@@ -79,6 +78,10 @@ use instruction_list as list;
 const TOURIAN_STATUE_PHANTOON_PALETTE: u32 = 0xaa_d765;
 const TOURIAN_STATUE_BASE_PALETTE: u32 = 0xaa_d785;
 const TUBE_CRACKS_PALETTE: u32 = 0xaa_e2dd;
+/// Sprite palettes 1, 2 and 7's first target colours ($7E:C320, $7E:C340, $7E:C3E0).
+const SPRITE_PALETTE_1: usize = 0x90;
+const SPRITE_PALETTE_2: usize = 0xa0;
+const SPRITE_PALETTE_7: usize = 0xf0;
 /// The chozo statue palettes, sprite palettes 1 and 2, as the original's
 /// copies of $AA:E31D-$AA:E39C.
 const WRECKED_SHIP_PALETTE_1: [u16; 16] = [
@@ -142,16 +145,30 @@ pub fn initialize_tourian_statue<L: Lease + ?Sized>(game: &mut L) {
         let ridley = game.spawn_room_eproj(RIDLEY, base);
         game.spawn_room_eproj(PHANTOON, ridley);
     }
-    crate::word_transfers!(game, descending, 16;
-        le(TARGET_PALETTES, 255) <- rom(TOURIAN_STATUE_BASE_PALETTE, 15),
-        le(TARGET_PALETTES, 175) <- rom(TOURIAN_STATUE_PHANTOON_PALETTE, 15),
-    );
+    load_target_colours(game, SPRITE_PALETTE_7, TOURIAN_STATUE_BASE_PALETTE, 16);
+    load_target_colours(game, SPRITE_PALETTE_2, TOURIAN_STATUE_PHANTOON_PALETTE, 16);
+}
+
+/// Target colours `first..first + count` from the ROM palette at `address`.
+fn load_target_colours<L: Lease + ?Sized>(game: &mut L, first: usize, address: u32, count: usize) {
+    for index in (0..count).rev() {
+        let colour = crate::cartridge::rom_table_word!(game, address, index as isize);
+        game.session_mut().presentation.visual_mut().targets[first + index] = colour;
+    }
+    game.words_stored();
+}
+
+/// Target colours from `first` become `colours`.
+fn set_target_colours<L: Lease + ?Sized>(game: &mut L, first: usize, colours: &[u16]) {
+    game.session_mut().presentation.visual_mut().targets[first..first + colours.len()]
+        .copy_from_slice(colours);
+    game.words_stored();
 }
 
 /// Initialisation AI - n00b tube cracks ($AA:E716): their palette. Was
 /// `N00bTubeCracks_Init`.
 pub fn initialize_tube_cracks<L: Lease + ?Sized>(game: &mut L) {
-    crate::word_transfers!(game, descending, 32; le(TARGET_PALETTES, 175) <- rom(TUBE_CRACKS_PALETTE, 31));
+    load_target_colours(game, SPRITE_PALETTE_1, TUBE_CRACKS_PALETTE, 32);
 }
 
 /// Initialisation AI - chozo statue ($AA:E725): waits, with its variant's
@@ -178,16 +195,12 @@ pub fn initialize_chozo_statue<L: Lease + ?Sized>(game: &mut L) {
     StatueEdit::of(game, k).actor().instruction =
         statue_tables::chozo_statue(game, (variant >> 1) as isize).instruction_list;
     if variant != 0 {
-        crate::word_transfers!(game, descending, 16;
-            le(TARGET_PALETTES, 175) <- table(LOWER_NORFAIR_PALETTE_2, 15),
-            le(TARGET_PALETTES, 159) <- table(LOWER_NORFAIR_PALETTE_1, 15),
-        );
+        set_target_colours(game, SPRITE_PALETTE_2, &LOWER_NORFAIR_PALETTE_2);
+        set_target_colours(game, SPRITE_PALETTE_1, &LOWER_NORFAIR_PALETTE_1);
         game.foreign(|game| game.spawn_plm(0xc, 0x1d, LOWER_NORFAIR_SLOPE_PLM));
     } else {
-        crate::word_transfers!(game, descending, 16;
-            le(TARGET_PALETTES, 175) <- table(WRECKED_SHIP_PALETTE_2, 15),
-            le(TARGET_PALETTES, 159) <- table(WRECKED_SHIP_PALETTE_1, 15),
-        );
+        set_target_colours(game, SPRITE_PALETTE_2, &WRECKED_SHIP_PALETTE_2);
+        set_target_colours(game, SPRITE_PALETTE_1, &WRECKED_SHIP_PALETTE_1);
         game.foreign(|game| {
             game.spawn_plm(0x4a, 0x17, WRECKED_SHIP_SPIKES_PLM);
             game.spawn_plm(0x17, 0x1d, WRECKED_SHIP_SLOPE_PLM);
@@ -268,7 +281,8 @@ pub fn spike_clearing_footstep<L: Lease + ?Sized>(
     let y = (Statue::of(game, k).actor().y.whole).wrapping_add(28);
     game.select_block_at(x, y);
     // The block below the selected one.
-    let index = word!(game.ROOM_WIDTH_IN_BLOCKS) as i32 + word!(game.CUR_BLOCK_INDEX) as i32;
+    let room = &game.session().room;
+    let index = i32::from(room.width) + i32::from(room.collision_cursor);
     let block = match game.session().room.terrain.cells().get(index as usize) {
         Some(cell) => cell.level,
         // LEGACY(original-overflow): block index + room width past the 3200h

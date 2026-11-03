@@ -29,8 +29,12 @@ use sm_game::visual_host::session_aliases as aliases;
 impl sm_game::room_visuals::StatueHost for crate::game_state::Game {
     fn finish_statue_animation(&mut self) {
         use sm_game::runtime_access::RuntimeAccess;
+        let blue = 514u16.to_ne_bytes();
         if self.runtime_admissible() {
-            self.runtime().session_mut().mechanisms.statue_finished = 0x8000;
+            let mut runtime = self.runtime();
+            let session = runtime.session_mut();
+            session.mechanisms.statue_finished = 0x8000;
+            session.room.set_scroll_pair(0, blue);
         } else {
             // The suspended/dirty HDMA bridge retains byte order and does not
             // admit a semantic owner before its actual selected image is adopted.
@@ -39,6 +43,7 @@ impl sm_game::room_visuals::StatueHost for crate::game_state::Game {
                 crate::ram_map::words::TOURIAN_ENTRANCE_STATUE_FINISHED,
                 0x8000,
             );
+            crate::projection::set_word(self, 0xcd20, u16::from_le_bytes(blue));
         }
     }
 }

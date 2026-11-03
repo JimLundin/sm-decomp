@@ -23,7 +23,8 @@ use crate::display_refresh::GraphicsAsset;
 use crate::intro_sequence::countdown;
 use crate::menus::prelude::display_scroll;
 use crate::presentation_workspace::{Point, Role};
-use crate::ram::word;
+use crate::runtime_access::with_session;
+use crate::session_access::SessionAccess as _;
 use crate::visual_state::{CinematicDisplay, CinematicFade, CinematicTilemap};
 use crate::word_transfers::WordEndpoint;
 
@@ -111,9 +112,11 @@ const GUNSHIP_GREY: [u16; 16] = [
     0, 0x6f7b, 0x4a52, 0x1ce7, 0, 0x5ad6, 0x4a52, 0x35ad, 0x2529, 0x7fff, 0x56b5, 0x294a, 0x4210,
     0x2d6b, 0x18c6, 0x7fff,
 ];
-/// $7F:4300: the Mode 7 tilemap fill.
-const MODE7_TILEMAP: usize = 0x14300;
-const MODE7_FILL: u16 = 0x8c8c;
+/// $7F:4300..$7F:7FFF: the Mode 7 tilemap fill over the level data, from
+/// cell 217Fh's level word through behaviour byte 1BFDh.
+const MODE7_FIRST_LEVEL: usize = 0x217f;
+const MODE7_BEHAVIORS: usize = 0x1bfe;
+const MODE7_FILL: u8 = 0x8c;
 /// $7E:C1FE, the icon palette's last colour.
 const ICON_PALETTE_END: usize = 0xc1fe;
 /// Songs, and the queueing delay before them.
@@ -169,7 +172,15 @@ pub fn setup<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
     GraphicsAsset::Decompress(0x988304, 0x18000).load(game);
     GraphicsAsset::Decompress(0x95a82f, 0x10000).load(game);
     GraphicsAsset::Decompress(0x96fe69, 0x14000).load(game);
-    crate::word_transfers!(game, ascending, 7808; native(MODE7_TILEMAP) <- value(MODE7_FILL));
+    with_session(game, |session| {
+        let cells = session.room.terrain.cells_mut();
+        for cell in &mut cells[MODE7_FIRST_LEVEL..] {
+            cell.level = u16::from_le_bytes([MODE7_FILL; 2]);
+        }
+        for cell in &mut cells[..MODE7_BEHAVIORS] {
+            cell.behavior = MODE7_FILL;
+        }
+    });
     GraphicsAsset::Decompress(0x98b5c1, 0x1e000).load(game);
     GraphicsAsset::Decompress(0x98b857, 0x1e800).load(game);
     GraphicsAsset::Decompress(0x98baed, 0x1f000).load(game);
@@ -273,8 +284,7 @@ pub fn scene_2_setup<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
         game,
     );
     // The palette copy and each initializer leave A for the next spawn.
-    let palette_tail =
-        crate::session_cohort::load::<crate::cinematic::PaletteBuffer, _>(game).0[255];
+    let palette_tail = game.runtime().session().presentation.visual().colors[255];
     sprites(cine, game, object::EXPLODING_ZEBES, palette_tail);
     sprites(cine, game, object::LAVA, 0x0e00);
     sprites(cine, game, object::PURPLE_GLOW, 0x0a00);
@@ -557,7 +567,12 @@ pub fn credits_setup<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
         words.layer1_y_pos = 0
     });
     crate::hdma_objects::set_hdma_enabled(true, game);
-    crate::word_transfers!(game, descending, 256; le(HDMA_TABLE_1, 255) <- value(0));
+    {
+        let mut runtime = game.runtime();
+        for row in (0..256).rev() {
+            crate::player_transitions::xray::set_window_word(&mut runtime, row, 0);
+        }
+    }
     crate::shooting_star_motion::initialize_shooting_stars(game);
     GraphicsAsset::Decompress(0x97eeff, 0x10000).load(game);
     clear_cinematic_background(0x7f, cine, game);
@@ -633,7 +648,7 @@ pub fn wavy_samus<H: Host + ?Sized>(cine: &mut Cinematic, game: &mut H) {
         crate::sequence_state::with_flow(game, |_, flow: &mut crate::flow::Flow| {
             flow.cinematic_function = function::DEER_FORCE
         });
-        word!(game.WAVY_SAMUS_ENABLED = 0);
+        with_session(game, |session| session.wavy_samus.enabled = 0);
     }
 }
 

@@ -41,8 +41,8 @@ The first scroll attempt diverged `boss-crocomire` at $CD24 (run 41561271426). S
 Crocomire `word_transfers!` stores still used the cell indexes as RAM addresses. Once
 those stores were fixed, the four failing rows passed (run 41574730839).
 
-Raw RAM accesses to the scroll cells still run on Game:
-- `demo_rooms.rs:272`
+Raw RAM accesses to the scroll cells still run on Game (the demo's first
+scene hook now stores `Room::set_scroll`):
 - `hdma_program.rs:297-298`
 - the boot WRAM clear
 

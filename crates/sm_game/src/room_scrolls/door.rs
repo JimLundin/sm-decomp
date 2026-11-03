@@ -2,7 +2,7 @@
 use super::Host;
 use super::{add_native_motion, calculate_blocks, calculate_scrolls, layer2_position, update_map};
 use crate::camera::{set_bg1_offset, set_layer1};
-use crate::ram::words as fields;
+use crate::player_position::PlayerWord;
 use crate::ram_words as words;
 use crate::room_entry::content::Axis;
 
@@ -133,7 +133,7 @@ pub fn horizontal<H: Host + ?Sized>(left: bool, game: &mut H) -> u8 {
         SAMUS_DOOR_TRANSITION_SUBSPEED
     );
     let speed = if left { -(speed as i32) as u32 } else { speed };
-    add_native_motion(fields::SAMUS_X_POS, fields::SAMUS_X_SUBPOS, speed, game);
+    add_native_motion(PlayerWord::X, PlayerWord::XFraction, speed, game);
     game.set_previous_player_x(game.player_x());
     let delta = if left { 0xfffc } else { 4 };
     set_layer1(
@@ -177,8 +177,8 @@ pub fn down<H: Host + ?Sized>(game: &mut H) -> u8 {
         first_vertical_frame(15, u16::MAX, game);
     } else if frame < 0x39 {
         add_native_motion(
-            fields::SAMUS_Y_POS,
-            fields::SAMUS_Y_SUBPOS,
+            PlayerWord::Y,
+            PlayerWord::YFraction,
             words!(
                 game.SAMUS_DOOR_TRANSITION_SPEED,
                 SAMUS_DOOR_TRANSITION_SUBSPEED
@@ -209,8 +209,8 @@ pub fn up<H: Host + ?Sized>(game: &mut H) -> u8 {
         first_vertical_frame(16, 1, game);
     } else {
         add_native_motion(
-            fields::SAMUS_Y_POS,
-            fields::SAMUS_Y_SUBPOS,
+            PlayerWord::Y,
+            PlayerWord::YFraction,
             -(words!(
                 i32,
                 game.SAMUS_DOOR_TRANSITION_SPEED,

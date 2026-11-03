@@ -2033,11 +2033,11 @@ pub fn emergency_text_glow<L: Lease + ?Sized>(game: &mut L) {
         }
         *RidleyEdit::of(game, RIDLEY).emergency_glow_index() = step;
         let colour = Ridley::of(game, RIDLEY).emergency_glow_index() as isize + 2 * step as isize;
-        word! { game;
-            PALETTE_BUFFER[97] = ridley_data::emergency_glow(game, colour);
-            PALETTE_BUFFER[98] = ridley_data::emergency_glow(game, colour + 1);
-            PALETTE_BUFFER[99] = ridley_data::emergency_glow(game, colour + 2);
+        for (index, at) in (97..100).enumerate() {
+            let glow = ridley_data::emergency_glow(game, colour + index as isize);
+            game.session_mut().presentation.visual_mut().colors[at] = glow;
         }
+        game.words_stored();
     }
 }
 
@@ -2552,7 +2552,8 @@ pub fn update_tail_segment_angle<L: Lease + ?Sized>(segment: usize, game: &mut L
             }
         };
         let Some(angle) = next else {
-            word! { game, 0; TILEMAP_STUFF[tail::active(segment)], TILEMAP_STUFF[tail::stagger_angle(segment)], }
+            bg2_staging::set(game, tail::active(segment), 0);
+            bg2_staging::set(game, tail::stagger_angle(segment), 0);
             bg2_staging::set(
                 game,
                 tail::direction(segment),
@@ -3268,7 +3269,7 @@ pub fn add_spritemap<L: Lease + ?Sized>(
 pub fn off_screen<S: State + ?Sized>(game: &mut S) -> bool {
     let y = Ridley::of(game, RIDLEY).actor().y.whole as i16;
     if y >= 0 {
-        let layer1 = crate::camera::current(game).layer1;
+        let layer1 = game.session().room.camera.layer1;
         let screen_y = (y as i32 + 32 - layer1[1] as i32) as i16;
         if screen_y >= 0 && below(screen_y as u16, 288) {
             let x = Ridley::of(game, RIDLEY).actor().x.whole as i16;
@@ -3296,7 +3297,8 @@ pub fn projectile_in_rect<L: Lease + ?Sized>(rect: Rect, game: &mut L) -> Option
             && ((kind.to_ne_bytes()[1] as i32 & 0xf) - 3) & 0x8000 != 0
             && projectile_overlaps(game, n, rect)
     })?;
-    word! {game; PROJECTILE_X_POS[n] = rect.x; PROJECTILE_Y_POS[n] = rect.y; }
+    interaction::set_at(game, interaction::Array::ProjectileXPos, n, rect.x);
+    interaction::set_at(game, interaction::Array::ProjectileYPos, n, rect.y);
     interaction::set_at(
         game,
         interaction::Array::ProjectileDir,
