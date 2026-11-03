@@ -168,6 +168,16 @@ its check has passed in CI, and the check is deleted with it.
    need for scenario.py `lock --check`). *Proof:* the equivalence test
    already requires the same locked set; add negative cases (a stale entry,
    a missing pin, an unlocked lockable row) that both must reject.
+   *Done:* `sm_pipeline lock-check [--root DIR]` prints scenario.py's line or
+   exits 1 naming every problem. `lock_golden.rs` holds scenario.py's verdict
+   and output over the plan fixture and six broken copies: a stale entry, a
+   missing pin of an unlocked row, a lockable row neither locked nor
+   unlocked, one both locked and unlocked, and a scenario removed under its
+   pin and entry, all with the same messages; and a missing pin of a locked
+   row, where scenario.py crashes (KeyError in `lock_key`) and Rust names the
+   problems, so both reject it. No CI step ran `lock --check` (verify-plan's
+   planner already checks the lock); the skills keep the Python command for
+   local use until people build sm_pipeline there.
 5. **`restore`** (prepare_corpus_inputs.py's seed half, ci_seed_data.py
    `restore`, full_route.py `restore`: about 250 lines of Python, about 400
    of Rust with SHA-256). Needs the scenario model only. *Proof:* a CI job

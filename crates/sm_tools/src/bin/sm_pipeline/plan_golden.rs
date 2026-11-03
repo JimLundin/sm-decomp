@@ -28,7 +28,7 @@ struct Golden {
 
 const CASES: &[Golden] = include!("fixture/cases.rs");
 
-fn fixture() -> PathBuf {
+pub fn fixture() -> PathBuf {
     Path::new(option_env!("CARGO_MANIFEST_DIR").unwrap_or("crates/sm_tools"))
         .join("src/bin/sm_pipeline/fixture")
 }

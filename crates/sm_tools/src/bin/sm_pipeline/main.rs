@@ -6,6 +6,11 @@
 //!       ORACLE_SAMPLE=1, COVER_ROUTES=1 and, to pin the oracle sample's
 //!       three-hour slot, ORACLE_SLOT. It appends the matrix to GITHUB_OUTPUT
 //!       and its summary to GITHUB_STEP_SUMMARY (stdout when unset).
+//!   sm_pipeline lock-check [--root DIR]
+//!       check the scenarios and their lock as `tools/scenario.py lock --check`
+//!       does: print the counts, or exit 1 naming every problem (a stale or
+//!       orphaned entry, a missing pin, a lockable row neither locked nor
+//!       `unlocked`).
 //!   sm_pipeline relevant
 //!       read a `git diff --name-only` listing on stdin, print the files that
 //!       can affect a replay, and exit 0 only when there are none.
@@ -29,6 +34,8 @@ mod test_summary;
 mod toml;
 
 #[cfg(test)]
+mod lock_golden;
+#[cfg(test)]
 mod plan_golden;
 
 use std::io::{Read as _, Write as _};
@@ -36,6 +43,7 @@ use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
 const USAGE: &str = "usage: sm_pipeline plan [--root DIR]
+       sm_pipeline lock-check [--root DIR]
        sm_pipeline relevant < LISTING
        sm_pipeline test-summary LOG PACKAGE_DIR...";
 
@@ -84,16 +92,17 @@ fn append(variable_name: &str, text: &str) -> Result<(), String> {
     }
 }
 
-fn plan_command(arguments: &[String]) -> Result<ExitCode, String> {
-    let mut root = PathBuf::from(".");
-    let mut arguments = arguments.iter();
-    while let Some(argument) = arguments.next() {
-        match argument.as_str() {
-            "--root" => root = arguments.next().ok_or("--root needs a directory")?.into(),
-            _ => return Err(format!("unknown argument {argument}")),
-        }
+/// The repository root an optional `--root DIR` names, `.` by default.
+fn root(arguments: &[String]) -> Result<PathBuf, String> {
+    match arguments {
+        [] => Ok(PathBuf::from(".")),
+        [flag, directory] if flag == "--root" => Ok(directory.into()),
+        _ => Err(USAGE.into()),
     }
-    let planned = plan::plan(&root, &settings()?)?;
+}
+
+fn plan_command(arguments: &[String]) -> Result<ExitCode, String> {
+    let planned = plan::plan(&root(arguments)?, &settings()?)?;
     append("GITHUB_OUTPUT", &planned.output)?;
     append("GITHUB_STEP_SUMMARY", &planned.summary)?;
     print!("{}", planned.log);
@@ -142,6 +151,10 @@ fn run() -> Result<ExitCode, String> {
     let (command, rest) = arguments.split_first().ok_or(USAGE)?;
     match command.as_str() {
         "plan" => plan_command(rest),
+        "lock-check" => {
+            println!("{}", scenario::lock_check(&root(rest)?)?);
+            Ok(ExitCode::SUCCESS)
+        }
         "relevant" if rest.is_empty() => relevant_command(),
         "test-summary" => test_summary_command(rest),
         _ => Err(USAGE.into()),
