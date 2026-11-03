@@ -1970,6 +1970,11 @@ impl sm_game::records::Records for Runtime<'_> {
         &self.game.records
     }
 }
+impl sm_game::shooting_star_motion::Lease for Runtime<'_> {
+    fn star_tiles(&self) -> &Option<sm_game::imported::Imported<sm_data::shooting_stars::Tiles>> {
+        &self.game.visual_tables.star_tiles
+    }
+}
 impl sm_game::mother_brain_visuals::PaletteHost for Runtime<'_> {
     fn mother_brain_visuals(&self) -> &sm_game::mother_brain_visuals::ImportedTables {
         &self.game.mother_brain_visuals

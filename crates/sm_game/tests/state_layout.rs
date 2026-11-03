@@ -1016,6 +1016,90 @@ fn actor_scratch_lanes() -> Vec<Lane> {
 }
 
 #[test]
+fn actor_spare_words_round_trip_every_word() {
+    check_owner("actor spare words", &actor_spare_lanes());
+}
+
+/// The enemy globals' spare words, which only the ending's stars use.
+fn actor_spare_lanes() -> Vec<Lane> {
+    array(0x0e0c, 2, 3, |s, index| {
+        &mut s.actors.compatibility.spare_0e0c[index]
+    })
+    .chain([(
+        0x0e14,
+        0,
+        (|s, _| &mut s.actors.compatibility.spare_0e14) as Field,
+    )])
+    .chain(array(0x0e2c, 2, 10, |s, index| {
+        &mut s.actors.compatibility.spare_0e2c[index]
+    }))
+    .chain([(
+        0x0e42,
+        0,
+        (|s, _| &mut s.actors.compatibility.spare_0e42) as Field,
+    )])
+    .collect()
+}
+
+/// The ending's star records name the bytes the star routines stored to,
+/// $7E:0E0C + 16 * star + 2 * field, in both directions, and a store to one
+/// star word changes no other byte of the block.
+#[test]
+fn star_records_map_their_original_bytes() {
+    use sm_game::shooting_star_motion::{Field, STARS, StarRecords};
+    const BLOCK: std::ops::Range<usize> = 0x0e0c..0x108c;
+    let mut s = session();
+    let base: Vec<Option<u8>> = BLOCK.map(|at| projected_byte(&s, at)).collect();
+    assert!(base.iter().all(Option::is_some), "every star byte is owned");
+    let mut claimed = BTreeSet::new();
+    for star in 0..STARS {
+        for (index, field) in Field::ALL.into_iter().enumerate() {
+            let at = BLOCK.start + 16 * star + 2 * index;
+            assert!(claimed.insert(at), "star {star} {field:?} repeats {at:#x}");
+            let before = StarRecords(&mut s).get(star, field);
+            assert_eq!(
+                Some(before),
+                projected_word(&s, at),
+                "{at:#x}: view -> projection"
+            );
+            let value = u16::try_from(at).unwrap() ^ 0xa5c3;
+
+            StarRecords(&mut s).set(star, field, value);
+            assert_eq!(
+                projected_word(&s, at),
+                Some(value),
+                "{at:#x}: view -> projection"
+            );
+            for (other, &byte) in BLOCK.zip(&base) {
+                if other != at && other != at + 1 {
+                    assert_eq!(
+                        projected_byte(&s, other),
+                        byte,
+                        "storing {at:#x} changed {other:#x}"
+                    );
+                }
+            }
+            StarRecords(&mut s).set(star, field, before);
+
+            let [low, high] = value.to_le_bytes();
+            assert!(write_projected_byte(&mut s, at, low), "store {at:#x}");
+            assert!(
+                write_projected_byte(&mut s, at + 1, high),
+                "store {:#x}",
+                at + 1
+            );
+            assert_eq!(
+                StarRecords(&mut s).get(star, field),
+                value,
+                "{at:#x}: projection -> view"
+            );
+            StarRecords(&mut s).set(star, field, before);
+        }
+    }
+    assert_eq!(2 * claimed.len(), BLOCK.len());
+}
+
+#[test]
 fn crocomire_melt_round_trips_every_word() {
     check_owner("Crocomire melt", &crocomire_melt_lanes());
 }
@@ -1270,6 +1354,7 @@ fn all_owner_lanes() -> Vec<(&'static str, Vec<Lane>)> {
         ("HDMA objects", hdma_object_lanes()),
         ("actor extended RAM", actor_extended_lanes()),
         ("actor speed scratch", actor_scratch_lanes()),
+        ("actor spare words", actor_spare_lanes()),
         ("Crocomire melt", crocomire_melt_lanes()),
         ("pause hooks", pause_hook_lanes()),
         ("Work Robot palette", work_robot_palette_lanes()),
