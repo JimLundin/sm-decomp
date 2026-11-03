@@ -5,8 +5,8 @@ use crate::actors::api::{self, Axis, ShotHandling};
 use crate::actors::combat;
 use crate::actors::host::ActorLease;
 use crate::actors::slot_view::{SlotState, slot_view};
+use crate::controller_state::Word as Input;
 use crate::player_projectiles::content::table;
-use crate::ram::words as W;
 use sm_data::enemy_speeds::SpeedTable::Linear;
 
 slot_view! {
@@ -338,7 +338,7 @@ pub fn main_ai(kind: Kind, runtime: &mut impl Lease) {
     if function != p.function(MovingNegative)
         && function != p.function(MovingPositive)
         && collision != 0xffff
-        && collision == runtime.word(W::CUR_ENEMY_INDEX)
+        && collision == runtime.session().actors.controls.selected
         && runtime.session().player.contact.contact_attack != 0
     {
         activate(runtime, p);
@@ -445,7 +445,7 @@ fn travel(runtime: &mut impl Lease, p: &Motion, positive: bool) {
 /// Eject Samus if pressing right or left ($A2:F356, $A2:F371).
 fn eject_samus(runtime: &mut impl Lease, right: bool) {
     let button = if right { 0x200 } else { 0x100 };
-    if (runtime.word(W::JOYPAD1_LASTKEYS) & button) != 0 {
+    if (*Input::Joypad1Lastkeys.get(&runtime.session().control) & button) != 0 {
         let contact = &mut runtime.session_mut().player.contact;
         contact.external_x.whole =
             contact
@@ -510,7 +510,7 @@ pub fn reaction(kind: Kind, event: Event, runtime: &mut impl Lease) {
                 .wrapping_sub(Mover::of(runtime, e).actor().x.whole as i16)
                 >= 0;
             let button = if right { 0x200 } else { 0x100 };
-            if (runtime.word(W::JOYPAD1_LASTKEYS) & button) != 0 {
+            if (*Input::Joypad1Lastkeys.get(&runtime.session().control) & button) != 0 {
                 let contact = &mut runtime.session_mut().player.contact;
                 (contact.external_x.whole, contact.external_y.fraction) =
                     (if right { 4 } else { -4i16 as u16 }, 0);
