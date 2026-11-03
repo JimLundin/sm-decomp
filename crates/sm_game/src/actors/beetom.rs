@@ -6,6 +6,7 @@ use crate::actors::host::{ActorLease, LeaseActors};
 use crate::actors::sidehopper::initial_hop_phase;
 use crate::actors::slot_view::{SlotState, slot_view};
 use crate::controller_state::Word as Input;
+use crate::diagnostics::Fatal as _;
 use crate::enemy_projectiles::host::Effects as _;
 use crate::player_projectiles::content::table;
 use crate::session_access::SessionAccess as _;

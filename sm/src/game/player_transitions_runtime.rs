@@ -64,7 +64,7 @@ pub(crate) fn command_in(runtime: &mut Runtime<'_>, a: u16) -> u16 {
 
 impl Effects for Runtime<'_> {
     fn invalid_demo_instruction(&mut self) -> u16 {
-        self.foreign(crate::game::animated_tiles::native::unreachable)
+        crate::rtl::unreachable()
     }
     fn random_word(&mut self) -> u16 {
         self.foreign(crate::game_state::Game::next_random)
@@ -76,9 +76,7 @@ impl Effects for Runtime<'_> {
         });
     }
     fn invalid_bounce(&mut self, _site: BounceFault, _value: u16) {
-        self.foreign(|game| {
-            crate::rtl::report_unreachable(game);
-        });
+        crate::rtl::unreachable()
     }
 }
 impl Host for Runtime<'_> {}

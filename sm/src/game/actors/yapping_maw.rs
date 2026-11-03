@@ -22,7 +22,7 @@ pub(crate) fn run_main_ai(runtime: &mut Runtime<'_>) {
         runtime.foreign(|game| write_multiplicand(operand, game));
     });
     if !known {
-        runtime.foreign(|game| crate::rtl::report_unreachable(game));
+        crate::rtl::unreachable();
     }
     update_segments(runtime);
 }

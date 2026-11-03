@@ -214,6 +214,11 @@ impl SpeciesActors for Composed {
         panic!("unprepared enemy operation: set_botwoon_history_y")
     }
 }
+impl sm_game::diagnostics::Fatal for Composed {
+    fn unreachable(&mut self) -> ! {
+        panic!("unprepared enemy operation: unreachable")
+    }
+}
 impl Effects for Composed {
     fn next_random(&mut self) -> u16 {
         self.events.push(Event::EnemyRandom);
@@ -253,9 +258,6 @@ impl Effects for Composed {
         if let Some(callback) = self.on_enemy_sound {
             callback(self);
         }
-    }
-    fn unreachable(&mut self) {
-        panic!("unprepared enemy operation: unreachable")
     }
     fn draw_spritemap(
         &mut self,

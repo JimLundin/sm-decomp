@@ -3,8 +3,9 @@
 use crate::actors::access::AccessMode::Native;
 use crate::actors::api::{self, DeathKind};
 use crate::actors::combat;
-use crate::actors::host::{ActorLease, BossEffects as _, LeaseActors, sign_extend8};
+use crate::actors::host::{ActorLease, LeaseActors, sign_extend8};
 use crate::actors::slot_view::{SlotState, slot_view};
+use crate::diagnostics::Fatal as _;
 use crate::enemy_projectiles::access::shot_word;
 use crate::enemy_projectiles::host::ShotMember;
 use crate::enemy_script::EnemyScript;
@@ -150,7 +151,7 @@ pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
         ai::ELECTRICITY => follow_core(runtime, bang + PART, ELECTRICITY_LISTS),
         ai::SHELL => follow_core(runtime, bang - PART, SHELL_LISTS),
         ai::CORE => core(runtime),
-        _ => runtime.foreign(|game| game.unreachable()),
+        _ => runtime.unreachable(),
     }
 }
 /// Bang AI - electricity ($A3:BB2B) or shell ($A3:BB4A): the core's growth level in
@@ -176,7 +177,7 @@ fn core(runtime: &mut impl Lease) {
         function::TARGET_SAMUS => target(runtime),
         function::ACCELERATING => move_bang(false, runtime),
         function::DECELERATING => move_bang(true, runtime),
-        _ => runtime.foreign(|game| game.unreachable()),
+        _ => runtime.unreachable(),
     }
     let x = Bang::of(runtime, bang).actor().x.whole;
     BangEdit::of(runtime, bang - PART).actor().x.whole = x;

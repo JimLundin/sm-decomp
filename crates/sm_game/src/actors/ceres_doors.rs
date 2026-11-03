@@ -186,7 +186,7 @@ pub fn steam_main<L: Lease + ?Sized>(game: &mut L) {
     match Steam::of(game, e).function() {
         steam_function::NONE => (),
         steam_function::CALCULATE_ROTATING_ELEVATOR_OFFSET => steam_rotating_offset(k, game),
-        _ => game.foreign(|game| game.unreachable()),
+        _ => game.unreachable(),
     }
 }
 
@@ -297,7 +297,7 @@ pub fn door_main<L: Lease + ?Sized>(game: &mut L) {
         door_function::ELEVATOR_DEFAULT => elevator_default(k, game),
         door_function::RUMBLING_AND_EXPLOSIONS => rumbling_and_explosions(k, game),
         door_function::ELEVATOR_ANIMATIONS => elevator_animations(game),
-        _ => game.foreign(|game| game.unreachable()),
+        _ => game.unreachable(),
     }
 }
 

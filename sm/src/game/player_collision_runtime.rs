@@ -113,9 +113,7 @@ impl Effects for Runtime<'_> {
     }
 
     fn invalid_clearance_flags(&mut self, _flags: u16) {
-        self.foreign(|game| {
-            crate::rtl::report_unreachable(game);
-        });
+        crate::rtl::unreachable()
     }
 }
 

@@ -552,7 +552,7 @@ fn execute_script<L: Lease>(game: &mut L) -> u16 {
                     script_call::DYING_CRY => {
                         crate::effects::SoundEffects::queue_sound(game, 1, DYING_CRY_SOUND, 15)
                     }
-                    _ => game.foreign(|game| game.unreachable()),
+                    _ => game.unreachable(),
                 }
                 *BodyEdit::of(game, BODY).script() = Body::of(game, BODY).script().wrapping_add(2);
             } else {
@@ -945,7 +945,7 @@ fn handle_sinking<L: Lease>(game: &mut L) {
             sinking::LEFT_PLATFORM_MIDDLE => crumble(game, 0x80, 0x8, CEILING_PLM_AF),
             sinking::RIGHT_PLATFORM_RIGHT => crumble(game, 0x100, 0x10, CEILING_PLM_AF),
             sinking::NOTHING => {}
-            _ => game.foreign(|game| game.unreachable()),
+            _ => game.unreachable(),
         }
     }
 }
@@ -1149,7 +1149,7 @@ pub fn run_function<L: Lease>(game: &mut L, function: u16) {
         }
         function::LINT_CHARGE => charge_lint(game, k),
         function::FOOT_IDLE | function::NOTHING => {}
-        _ => game.foreign(|game| game.unreachable()),
+        _ => game.unreachable(),
     }
 }
 

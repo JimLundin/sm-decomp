@@ -5,6 +5,7 @@ use crate::actors::api::{self, Axis, MovementResult::Blocked, SlopePolicy::Ignor
 use crate::actors::combat;
 use crate::actors::host::{ActorLease, LeaseActors};
 use crate::actors::slot_view::{SlotState, slot_view};
+use crate::diagnostics::Fatal as _;
 use crate::enemy_projectiles::host::Effects as _;
 use crate::enemy_script::EnemyScript;
 use crate::player_projectiles::content::{self, table};
@@ -276,7 +277,7 @@ pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
                 HOP
             }
         },
-        _ => return runtime.unreachable(),
+        _ => runtime.unreachable(),
     };
     *SidehopperEdit::of(runtime, hopper).function() = next;
 }

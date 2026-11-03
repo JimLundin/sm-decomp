@@ -11,8 +11,6 @@ use crate::actors::mother_brain_fight::Lease;
 use crate::actors::slot_view::slot_view;
 use crate::constants::enemy_properties::{K_ENEMY_PROPS_DELETED, K_ENEMY_PROPS_INVISIBLE};
 use crate::mother_brain_tables;
-// The game's traits, for the calls made on it through `foreign`.
-use crate::actors::host::BossEffects as _;
 
 /// What the falling tubes still reach in the compatibility runtime.
 pub trait Host {
@@ -93,7 +91,7 @@ pub fn main_ai(game: &mut impl Lease, k: u16) {
         function::FALL => fall(game, k),
         function::WAIT_TO_FALL => wait_to_fall(game, k),
         function::FALL_WITH_BRAIN => fall_with_brain(game, k),
-        _ => game.foreign(|game| game.unreachable()),
+        _ => game.unreachable(),
     }
 }
 

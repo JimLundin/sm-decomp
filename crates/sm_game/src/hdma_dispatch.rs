@@ -253,7 +253,7 @@ where
 {
     let slot = 2 * index as u16;
     let Some(&(_, target)) = HDMA_PRE_ACTIONS.iter().find(|(at, _)| *at == address) else {
-        it.foreign(crate::menus::host::MenuRuntime::rtl_unreachable);
+        it.unreachable();
         return;
     };
     use HdmaPreAction::*;

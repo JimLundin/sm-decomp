@@ -290,7 +290,7 @@ impl EntryEffects for Runtime<'_> {
         });
     }
     fn invalid_stage(&mut self, _full_address: u32) -> u8 {
-        self.foreign(|game| crate::rtl::report_unreachable(game) as u8)
+        crate::rtl::unreachable()
     }
     fn device_vram_address(&mut self, destination: VramDestination) {
         let value = destination.compatibility_word();

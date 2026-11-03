@@ -425,12 +425,10 @@ impl sm_game::lease::Lease for crate::game::session_runtime::Runtime<'_> {
         self.foreign(|game| crate::game::animated_tiles::native::upload(request, game));
     }
     fn native_unreachable(&mut self) {
-        self.foreign(|game| {
-            crate::rtl::report_unreachable(game);
-        });
+        crate::rtl::unreachable()
     }
     fn native_animation_unreachable(&mut self) -> u16 {
-        self.foreign(crate::game::animated_tiles::native::unreachable)
+        crate::rtl::unreachable()
     }
 }
 

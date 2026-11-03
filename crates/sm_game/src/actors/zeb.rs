@@ -32,7 +32,7 @@ pub fn main_ai<H: Lease>(game: &mut H) {
         11765987 => rise(k, game),
         11766044 => fly(k, game),
         11766142 => cooldown(k, game),
-        _ => game.foreign(|game| game.unreachable()),
+        _ => game.unreachable(),
     }
 }
 

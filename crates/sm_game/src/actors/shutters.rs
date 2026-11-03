@@ -256,7 +256,7 @@ pub fn main_ai(kind: Kind, runtime: &mut impl Lease) {
         &HORIZONTAL
     };
     let Some(phase) = p.phase(function) else {
-        return runtime.unreachable();
+        runtime.unreachable();
     };
     match phase {
         Initial | WaitForSamusToGetNear => {

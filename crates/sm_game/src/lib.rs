@@ -22,6 +22,7 @@ pub mod controller_state;
 pub mod credits;
 pub mod decompression;
 pub mod demo_rooms;
+pub mod diagnostics;
 pub mod dialogue;
 pub mod dialogue_ram;
 pub mod dispatch;

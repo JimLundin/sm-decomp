@@ -5,6 +5,7 @@ use crate::actors::api::{self, Axis};
 use crate::actors::combat::current;
 use crate::actors::host::{ActorLease, LeaseActors};
 use crate::enemy_projectiles::host::Effects as _;
+use crate::diagnostics::Fatal as _;
 use crate::player_projectiles::content::table;
 use crate::session_access::SessionAccess as _;
 

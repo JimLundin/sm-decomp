@@ -210,7 +210,7 @@ fn run_function<L: Lease>(game: &mut L, address: u16) {
         function::START_HOP_BOTTOM => start_hop_bottom(game, k),
         function::LOOK_AT_SAMUS => look_at_samus(game, k),
         function::LANDED_FROM_JUMP => landed_from_jump(game, k),
-        _ => game.foreign(|game| game.unreachable()),
+        _ => game.unreachable(),
     }
 }
 

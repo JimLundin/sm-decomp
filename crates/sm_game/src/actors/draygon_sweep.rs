@@ -2,7 +2,6 @@
 //! ascents, mirrored for each side (bank $A5:87F4-$A5:8B09).
 //! The native table remains authoritative and may alias other compatibility state.
 use crate::actors::draygon_host::Lease;
-use crate::actors::host::BossEffects as _;
 
 use crate::legacy_overflow;
 use crate::menus::prelude::{battle, owned};
@@ -46,7 +45,7 @@ fn calculate_swoop_y_positions<L: Lease>(game: &mut L) {
         write_y_position(index, next, game);
         index = index.wrapping_add(SWOOP_STEP);
         if index.wrapping_sub(SWOOP_TABLE_BYTES) & SIGN == 0 {
-            game.foreign(|game| game.unreachable());
+            game.unreachable();
         }
     }
     let distance = abs16(

@@ -1618,10 +1618,7 @@ fn run_baby_metroid_instruction<L: Lease>(game: &mut L, instruction: u16, argume
         baby_metroid_instruction::LOAD_PALETTE => baby_metroid_load_palette(arguments, game),
         baby_metroid_instruction::GOTO_IF_MOVING => baby_metroid_goto_if_moving(arguments, game),
         baby_metroid_instruction::GOTO => baby_metroid_goto(arguments, game),
-        _ => {
-            game.foreign(|game| game.unreachable());
-            0
-        }
+        _ => game.unreachable(),
     }
 }
 
@@ -1664,7 +1661,7 @@ pub fn run_baby_metroid_function<L: Lease>(game: &mut L) {
         baby_metroid_function::START_FALLING => baby_metroid_start_falling(game),
         baby_metroid_function::FALLING => baby_metroid_falling(game),
         baby_metroid_function::NOTHING => {}
-        _ => game.foreign(|game| game.unreachable()),
+        _ => game.unreachable(),
     }
 }
 
@@ -1939,7 +1936,7 @@ pub fn explosion_init<L: Lease>(game: &mut L) {
         18 => place_explosion(game, k, MOUTH_ADDRESS, -24),
         20 => place_explosion(game, k, TORSO_ADDRESS, 0),
         22 => place_explosion(game, k, HAND_ADDRESS, 7),
-        _ => game.foreign(|game| game.unreachable()),
+        _ => game.unreachable(),
     }
 }
 

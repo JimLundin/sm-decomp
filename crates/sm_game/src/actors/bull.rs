@@ -172,7 +172,7 @@ pub fn main_ai(game: &mut impl Lease) {
                 *edit.speed() = 0;
             }
         }
-        _ => game.foreign(|game| game.unreachable()),
+        _ => game.unreachable(),
     }
 }
 /// Enemy shot - bull: knocked away from the shot unless it hurt or was recently shot.

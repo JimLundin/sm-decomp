@@ -58,7 +58,7 @@ pub fn main_ai<L: BossLease<Game: BossEffects> + SlotState + ?Sized>(game: &mut 
         11767316 => fly(2, game),
         11767349 => fly(0, game),
         11767386 => start_flight(game),
-        _ => game.foreign(|game| game.unreachable()),
+        _ => game.unreachable(),
     }
     reset_offscreen(game);
 }

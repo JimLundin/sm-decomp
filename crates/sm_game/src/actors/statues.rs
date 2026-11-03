@@ -218,7 +218,7 @@ pub fn main_ai<L: Lease>(game: &mut L) {
         function::LOWER_NORFAIR => lower_norfair(game, k),
         function::WRECKED_SHIP => wrecked_ship(game, k),
         function::NOTHING | function::CLEARED | function::SCRIPTED => {}
-        _ => game.foreign(|game| game.unreachable()),
+        _ => game.unreachable(),
     }
 }
 

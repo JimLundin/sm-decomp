@@ -437,10 +437,10 @@ pub fn main_ai(game: &mut impl Lease) {
         FALLING => match Wings::of(game, k).falling_function() {
             DRIFTING_LEFT => drift(game, true),
             DRIFTING_RIGHT => drift(game, false),
-            _ => game.foreign(|game| game.unreachable()),
+            _ => game.unreachable(),
         },
         IDLE => (),
-        _ => game.foreign(|game| game.unreachable()),
+        _ => game.unreachable(),
     }
 }
 /// Ki-hunter function - winged - idle flying ($A8:F268): bob between its bounds and pace,
@@ -615,10 +615,7 @@ pub fn instruction(game: &mut impl Lease, ea: u32, k: u16, j: EnemyScript) -> En
             *KihunterEdit::of(game, current).function() = function;
         }
         0xa8_f6d2 | 0xa8_f6d8 => spit(game, if ea == 0xa8_f6d2 { 0xcf18 } else { 0xcf26 }),
-        _ => {
-            game.foreign(|game| game.unreachable());
-            return EnemyScript::Stop;
-        }
+        _ => game.unreachable(),
     }
     j
 }

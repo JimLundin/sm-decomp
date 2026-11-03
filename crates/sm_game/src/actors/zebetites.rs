@@ -116,7 +116,7 @@ pub fn main_ai<L: Lease>(game: &mut L) {
         state::SPAWN_PARTNER => spawn_partner(game, k),
         state::WAIT_FOR_DOOR => wait_for_door(game, k),
         state::ACTIVE => run(game),
-        _ => game.foreign(|game| game.unreachable()),
+        _ => game.unreachable(),
     }
 }
 

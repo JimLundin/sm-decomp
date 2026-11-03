@@ -71,7 +71,7 @@ pub fn callback<L: Lease>(game: &mut L, callback: Callback) {
             10997598 => phantoon_actions::spawn_casual_flame(actor, game),
             10997823 => open_eye(game),
             10997878 => pick_pattern(game),
-            _ => game.foreign(|game| game.unreachable()),
+            _ => game.unreachable(),
         },
     }
 }
@@ -1607,7 +1607,7 @@ pub fn countdown<L: Lease>(game: &mut L, k: u16, function: u16) {
             part!(game, Eye[EYE].fade_complete = 0);
         }
         function::DYING_EXPLOSIONS => death_explosion(game, k),
-        _ => game.foreign(|game| game.unreachable()),
+        _ => game.unreachable(),
     }
 }
 

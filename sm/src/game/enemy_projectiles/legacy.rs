@@ -5,9 +5,6 @@ pub(super) fn ridley_offscreen(x: u16, y: u16, game: &mut Game) -> u8 {
     u8::from(sm_game::actors::ridley::solid_block_at(x, y, game))
 }
 
-pub(super) fn unreachable(game: &mut Game) {
-    crate::rtl::report_unreachable(game);
-}
 pub(super) fn draw_spritemap(
     offscreen: bool,
     bank: u8,

@@ -85,7 +85,7 @@ pub fn main_ai(game: &mut impl Lease) {
     match function {
         ALWAYS_ACTIVE => return,
         INACTIVE | ACTIVE | EMIT_FALLING_SPARKS => (),
-        _ => return game.foreign(|game| game.unreachable()),
+        _ => game.unreachable(),
     }
     if Spark::of(game, k).function_timer() != 1 {
         let mut spark = SparkEdit::of(game, k);

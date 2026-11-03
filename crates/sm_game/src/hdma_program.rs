@@ -5,7 +5,7 @@ use crate::hdma_dispatch::DispatchHost;
 use crate::hdma_objects::Bridged;
 use crate::hdma_objects::HdmaEffect;
 use crate::hdma_objects::HdmaTable;
-use crate::menus::host::{Host, MenuRuntime as _};
+use crate::menus::host::Host;
 use sm_data::cartridge::RomImage;
 
 /// The owned-Session view the interpreter runs on.
@@ -14,6 +14,7 @@ pub trait HdmaLease:
     + crate::runtime_access::SessionRam
     + crate::cartridge::NativeImage
     + HdmaTable
+    + crate::diagnostics::Fatal
 {
     type Game: DispatchHost + ?Sized;
     /// Run `action` on the compatibility host with the Session published.
@@ -47,6 +48,9 @@ pub(crate) trait Interpreter: HdmaTable {
     fn set_byte(&mut self, at: usize, value: u8);
     fn image(&self) -> RomImage;
     fn foreign<T>(&mut self, action: impl FnOnce(&mut Self::Game) -> T) -> T;
+    /// The original's unreachable-state failure: the lease's own, or the
+    /// game's on the RAM copy.
+    fn unreachable(&mut self);
     fn word(&self, at: usize) -> u16 {
         u16::from_le_bytes([self.byte(at), self.byte(at + 1)])
     }
@@ -97,6 +101,9 @@ impl<L: HdmaLease> Interpreter for Leased<L> {
     }
     fn foreign<T>(&mut self, action: impl FnOnce(&mut L::Game) -> T) -> T {
         self.0.foreign(action)
+    }
+    fn unreachable(&mut self) {
+        self.0.unreachable()
     }
 }
 
@@ -200,7 +207,7 @@ fn execute<I: Interpreter>(handler: u16, index: usize, script: Script, it: &mut 
     use sm_data::hdma_programs::{ChannelRegister, Command};
     let slot = 2 * index as u16;
     let Some(command) = Command::decode(handler) else {
-        it.foreign(|game| game.rtl_unreachable());
+        it.unreachable();
         return Script::Stop;
     };
     match command {

@@ -15,6 +15,6 @@ const _: () = {
 
 impl Host for Runtime<'_> {
     fn unreachable(&mut self) {
-        self.foreign(|game| crate::rtl::report_unreachable(game));
+        crate::rtl::unreachable()
     }
 }

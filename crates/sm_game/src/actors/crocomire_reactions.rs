@@ -1876,10 +1876,7 @@ pub fn instruction<L: Lease>(ea: u32, k: u16, jp: EnemyScript, game: &mut L) -> 
                 game,
             );
         }
-        _ => {
-            game.foreign(|game| game.unreachable());
-            return EnemyScript::Stop;
-        }
+        _ => game.unreachable(),
     }
     jp
 }

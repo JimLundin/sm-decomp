@@ -908,7 +908,7 @@ pub fn main_ai<R: RuntimeHost>(runtime: &mut R) {
         }
         function::DEATH_CRUMBLING_WALL => crumbling_wall(k, runtime),
         _ => {
-            runtime.foreign(|game| game.unreachable());
+            runtime.unreachable();
         }
     }
     health_palette(runtime);
@@ -921,7 +921,7 @@ fn step_body<L: Lease>(e: u16, game: &mut L) {
         movement_function::MOVE_BY_MOVEMENT_DATA => move_by_movement_data(game),
         movement_function::START_MOVING_BY_MOVEMENT_DATA => start_moving_by_movement_data(game),
         _ => {
-            game.foreign(|game| game.unreachable());
+            game.unreachable();
         }
     }
     game.owned_step(|game| {
@@ -949,6 +949,6 @@ pub fn pre_instruction<L: Lease>(address: u32, k: u16, game: &mut L) {
         11771616 => head_spit(true, game),
         11771700 => head_spit(false, game),
         11771770 => head_cooldown(k, game),
-        _ => game.foreign(|game| game.unreachable()),
+        _ => game.unreachable(),
     }
 }

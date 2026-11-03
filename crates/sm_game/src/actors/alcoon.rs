@@ -5,6 +5,7 @@ use crate::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 use crate::actors::api::{self, MovementResult::Blocked, SlopePolicy};
 use crate::actors::host::{ActorLease, ActorRuntime as _, LeaseActors, abs16};
 use crate::actors::slot_view::{SlotState, slot_view};
+use crate::diagnostics::Fatal as _;
 use crate::enemy_projectiles::host::Effects as _;
 use crate::enemy_script::EnemyScript;
 use crate::session_access::SessionAccess as _;
@@ -378,10 +379,7 @@ pub fn instruction<H: LeaseActors + ?Sized>(
             let live = selected(runtime);
             api::snap_to_slopes(runtime, live);
         }
-        _ => {
-            runtime.unreachable();
-            return EnemyScript::Stop;
-        }
+        _ => runtime.unreachable(),
     }
     script
 }

@@ -7,8 +7,6 @@
 //! decompilation (bank $A9). The body's and the brain's slot words are the
 //! fields of `mother_brain`'s typed slot views.
 use crate::actors::mother_brain_fight::Lease;
-// The game's traits, for the calls made on it through `foreign`.
-use crate::actors::host::BossEffects as _;
 
 /// What the neck needs from the game: the PPU's hardware multiply, which the
 /// original drives through the Mode 7 registers.
@@ -199,13 +197,7 @@ fn move_lower_joint(game: &mut impl Lease) {
             }
             *BrainEdit::of(game, BRAIN_INDEX).lower_angle() = angle as u16;
         }
-        _ => {
-            game.foreign(|game| game.unreachable());
-            // The original hangs here after reporting the failure.
-            loop {
-                std::hint::spin_loop();
-            }
-        }
+        _ => game.unreachable(),
     }
 }
 
@@ -266,13 +258,7 @@ fn move_upper_joint(game: &mut impl Lease) {
             }
             *BrainEdit::of(game, BRAIN_INDEX).upper_angle() = angle;
         }
-        _ => {
-            game.foreign(|game| game.unreachable());
-            // The original hangs here after reporting the failure.
-            loop {
-                std::hint::spin_loop();
-            }
-        }
+        _ => game.unreachable(),
     }
 }
 
@@ -309,7 +295,7 @@ pub fn run_phase3(game: &mut impl Lease) {
         function::RECOIL_RECOVERY => phase3_recoil_recovery(game),
         function::SETUP_HYPER_BEAM_RECOIL => phase3_setup_hyper_beam_recoil(game),
         function::HYPER_BEAM_RECOIL => phase3_hyper_beam_recoil(game),
-        _ => game.foreign(|game| game.unreachable()),
+        _ => game.unreachable(),
     }
 }
 

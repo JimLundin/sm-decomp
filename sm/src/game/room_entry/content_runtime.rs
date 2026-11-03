@@ -114,8 +114,7 @@ impl EntryContent for Runtime<'_> {
         }
     }
     fn invalid_selector(&mut self, _address: u32) -> Option<SelectorCursor> {
-        let value = self.foreign(|game| crate::rtl::report_unreachable(game)) as u16;
-        (value != 0).then_some(SelectorCursor::Legacy(value))
+        crate::rtl::unreachable()
     }
     fn legacy_tileset(&mut self, index: u8) -> TilesetCapture {
         let image = self.loaded_image().expect("ROM must be loaded");

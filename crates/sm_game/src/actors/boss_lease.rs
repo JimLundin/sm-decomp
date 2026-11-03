@@ -85,7 +85,7 @@ pub trait BossState:
 
 /// A lease on a boss's game. The game is its own lease, whose `foreign` runs
 /// the action on itself, so steps written against a lease also run unleased.
-pub trait BossLease: BossState {
+pub trait BossLease: BossState + crate::diagnostics::Fatal {
     type Game: ?Sized;
     fn foreign<T>(&mut self, action: impl FnOnce(&mut Self::Game) -> T) -> T;
     /// Run `action` on the lease itself where a `foreign` call ran it on the

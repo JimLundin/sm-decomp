@@ -428,10 +428,7 @@ pub fn resolve_grapple<H: ActorHost + EprojHost>(
                 u16::from(h.session().player.movement_and_facing as u8 == 4);
             GrappleOutcome::Cancel
         }
-        GrappleReaction::Unrecognized(_) => {
-            h.unreachable();
-            GrappleOutcome::Attach
-        }
+        GrappleReaction::Unrecognized(_) => h.unreachable(),
     }
 }
 

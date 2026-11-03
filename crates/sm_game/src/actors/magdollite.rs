@@ -338,7 +338,7 @@ pub fn main_ai<L: Lease>(game: &mut L) {
         | state::HAND_THROW_AND_SHRINK
         | state::HAND_GROW_AND_THROW
         | state::HAND_FOLLOW_SHRINKING_ARM) => run_state(function, game),
-        _ => game.foreign(|game| game.unreachable()),
+        _ => game.unreachable(),
     }
 }
 /// The head's reaction to a power bomb, contact or shot, shared with the arm and hand.

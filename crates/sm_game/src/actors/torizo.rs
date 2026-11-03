@@ -411,7 +411,7 @@ pub fn run_torizo_function<L: Lease>(game: &mut L, function: u16, k: u16) {
         function::NORMAL_MOVEMENT => normal_movement(k, game),
         function::GOLDEN_WAKE_WHEN_SAMUS_BELOW_RIGHT => golden_wake(game),
         function::GOLDEN_NORMAL_MOVEMENT => golden_normal_movement(k, game),
-        _ => game.foreign(|game| game.unreachable()),
+        _ => game.unreachable(),
     }
 }
 
