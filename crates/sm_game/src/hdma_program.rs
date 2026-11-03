@@ -18,6 +18,7 @@ pub trait HdmaLease:
     + crate::actors::mother_brain_rainbow::Host
     + crate::player_transitions::effects::SamusLease
     + crate::liquid_effects::Host
+    + crate::progress::FlagHost
 {
     type Game: DispatchHost + ?Sized;
     /// Run `action` on the compatibility host with the Session published.
@@ -305,8 +306,8 @@ fn execute<I: Interpreter>(handler: u16, index: usize, script: Script, it: &mut 
         Command::EventScroll => {
             crate::hdma_word!(it, index, C => 0);
             crate::hdma_word!(it, index, A => 0);
-            let opened =
-                it.foreign(|game| crate::progress::leased::event_has_happened(0xa, game)) != 0;
+            // The event flag ran on a nested lease of the game; it runs on this one.
+            let opened = it.on_lease(|lease| crate::progress::event_happened(lease, 0xa));
             let offset: u16 = if opened { 0xff10 } else { 0 };
             crate::hdma_word!(it, index, B => offset);
             let [low, high] = offset.to_ne_bytes();
