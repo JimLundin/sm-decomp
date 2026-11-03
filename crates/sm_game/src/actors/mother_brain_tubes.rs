@@ -12,7 +12,7 @@ use crate::actors::slot_view::slot_view;
 use crate::constants::enemy_properties::{K_ENEMY_PROPS_DELETED, K_ENEMY_PROPS_INVISIBLE};
 use crate::mother_brain_tables;
 // The game's traits, for the calls made on it through `foreign`.
-use crate::actors::host::{ActorRuntime as _, BossEffects as _};
+use crate::actors::host::BossEffects as _;
 
 /// What the falling tubes still reach in the compatibility runtime.
 pub trait Host {
@@ -137,9 +137,9 @@ fn burst(game: &mut impl Lease, k: u16) {
     TubeEdit::of(game, k).actor().properties |= K_ENEMY_PROPS_DELETED as u16;
     let x = Tube::of(game, k).actor().x.whole;
     let y = Tube::of(game, k).actor().y.whole;
-    game.foreign(|game| {
-        game.set_projectile_spawn_point(x, y);
-        game.spawn_room_projectile(DUST_CLOUD, BURST_PARAMETER);
+    game.owned_step(|game| {
+        game.place_projectile_spawn(x, y);
+        game.spawn_room_eproj(DUST_CLOUD, BURST_PARAMETER);
     });
     crate::effects::SoundEffects::queue_sound(game, 1, BURST_SOUND, 3);
 }
@@ -196,9 +196,9 @@ fn puff_smoke(game: &mut impl Lease, k: u16) {
         .x
         .whole
         .wrapping_add(SMOKE_OFFSETS[index as usize]);
-    game.foreign(|game| {
-        game.set_projectile_spawn_point(x, SMOKE_Y);
-        game.spawn_room_projectile(DUST_CLOUD, SMOKE_PARAMETER);
+    game.owned_step(|game| {
+        game.place_projectile_spawn(x, SMOKE_Y);
+        game.spawn_room_eproj(DUST_CLOUD, SMOKE_PARAMETER);
     });
 }
 
