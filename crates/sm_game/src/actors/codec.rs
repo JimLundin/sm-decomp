@@ -84,7 +84,7 @@ macro_rules! spawn_word {
 // RAM 9000..97DC is owned here too, and the angles 97DC..9800 stay with eproj.
 // Lighting 1778..1784 stays with the canonical FX control owner; actor alias
 // readers/writers below resolve that provider without importing/emitting twice.
-const COMMON_RANGES: [(usize, usize); 26] = [
+const COMMON_RANGES: [(usize, usize); 27] = [
     (0x0688, 0x071c),
     (0x2000, 0x3000),
     (0x0e12, 0x0e14),
@@ -101,6 +101,7 @@ const COMMON_RANGES: [(usize, usize); 26] = [
     (0x1842, 0x1844),
     (0x1846, 0x184a),
     (0x185c, 0x186e),
+    (0x1874, 0x1876),
     (0x18ae, 0x18b0),
     (0x7000, 0x7800),
     (0x7800, 0x801e),
@@ -162,6 +163,7 @@ macro_rules! common_word {
             0x1866 => Some($($borrow)* $s.actors.diagnostics.population_key),
             0x1868 => Some($($borrow)* $s.actors.diagnostics.spawn.x),
             0x186a => Some($($borrow)* $s.actors.diagnostics.spawn.y),
+            0x1874 => Some($($borrow)* $s.actors.compatibility.right_border),
             0x18ae => Some($($borrow)* $s.actors.controls.projectile_contacts_disabled),
             0xef74 => Some($($borrow)* $s.actors.graphics.compatibility_write_position),
             0xef76 => Some($($borrow)* $s.actors.graphics.compatibility_next_tile),

@@ -1001,6 +1001,11 @@ fn actor_scratch_lanes() -> Vec<Lane> {
     array(0x0e22, 2, 5, |s, index| {
         &mut s.actors.compatibility.scratch[index]
     })
+    .chain([(
+        0x1874,
+        0,
+        (|s, _| &mut s.actors.compatibility.right_border) as Field,
+    )])
     .collect()
 }
 
