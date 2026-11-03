@@ -304,7 +304,7 @@ RAM_INVENTORY_RULES = {
     "cohort_copy": "session_cohort load/with/with_projected calls, including file-local import aliases",
     "address_api": "SessionRam/SlotAccess/native-order methods, .word/.byte with imported RAM selector namespace, and session_slot macro; may use typed storage, never added to raw calls",
     "legacy_overflow": "calls into crate::legacy_overflow (path or imported alias): original-game reads and stores past their tables, tagged LEGACY(original-overflow); the module's own internals count as their kinds",
-    "rom_read": "native_word/word read through a let-bound or chained ROM record/table producer, or a ?-propagated (fallible) native_word content read; not RAM",
+    "rom_read": "native_word/word read through a let-bound or chained ROM record/table producer, a binding typed as or produced as a content Record/RomRecord/RomImage, self in a file-local ROM-holding struct's impl, or a fallible native_word (?-propagated or a Result-returning fn's tail) content or display-staging read; not RAM",
     "unresolved_method": "word/byte/read/write/copy method without explicit raw receiver or known address API spelling",
     "backend_reference": "Game/raw/interface/native/compat symbols and import aliases; references, not calls",
 }
@@ -484,6 +484,42 @@ def inventory_sites(text):
     rom_receivers = {match.group(1) for match in re.finditer(r"\blet\s+(?:mut\s+)?(\w+)\s*=\s*([^;]+);", calls)
                      if re.search(rom_producer, match.group(2))}
     rom_chain = re.compile(r"\b\w*(?:record|table|_tiles|coordinate|exploration_mask)\w*\s*\((?:[^()]|\([^()]*\))*\)\s*$")
+    # Content-typed receivers. Every `Record` associated type in sm_game is
+    # bound by a content record trait implemented by RomRecord (or a
+    # verification record), so a binding declared as one of these types, or
+    # bound from a file-local function returning one, reads ROM content.
+    content_type = r"(?:<[^<>;{}()]*\bas\s+\w+(?:\s*::\s*\w+)*\s*>\s*::\s*Record|\bSelf\s*::\s*Record|\bRom(?:Record|Image)\b)"
+    content_fns = {match.group(1) for match in re.finditer(r"\bfn\s+(\w+)[^;{}]*?->\s*(?:Option\s*<\s*)?" + content_type, calls)}
+    # Producers declared in other files' content traits, returning Self::Record.
+    content_fns |= {"animation_program"}
+    rom_receivers |= {match.group(1) for match in re.finditer(r"\b(\w+)\s*:\s*&?\s*(?:mut\s+)?" + content_type, calls)}
+    for match in re.finditer(r"\b(?:let|if\s+let|while\s+let)\s+(?:Some\s*\(\s*)?(?:mut\s+)?(\w+)\s*\)?\s*=\s*(?:\w+\s*::\s*)*(\w+)\s*\(", calls):
+        if match.group(2) in content_fns:
+            rom_receivers.add(match.group(1))
+    # `self` inside an impl of a file-local struct holding a ROM image or record.
+    content_structs = {match.group(1) for match in re.finditer(r"\bstruct\s+(\w+)\s*(?:\{[^{}]*|\([^()]*)" + content_type, calls)}
+    content_impls = []
+    for match in re.finditer(r"\bimpl\b[^;{}]*?\b(\w+)\s*(?:<[^{};]*>)?\s*\{", calls):
+        if match.group(1) not in content_structs:
+            continue
+        depth, end = 1, match.end()
+        while end < len(calls) and depth:
+            depth += (calls[end] == "{") - (calls[end] == "}")
+            end += 1
+        content_impls.append((match.end(), end))
+
+    def result_tail(end):
+        # A call that is the tail of a function declared to return a Result
+        # returns that Result itself; RAM address APIs return a plain u16.
+        rest = calls[end:].lstrip()
+        if not rest.startswith("}"):
+            return False
+        depth, start = 1, len(calls) - len(rest) - 1
+        while start >= 0 and depth:
+            depth += (calls[start] == "}") - (calls[start] == "{")
+            start -= 1
+        head = re.split(r"[;{}]", calls[max(0, start - 400):start + 1])[-1]
+        return bool(re.search(r"\bfn\s+\w+[^;{}]*->\s*Result\s*<", head))
     for match in re.finditer(r"\.\s*(\w+)\s*\(", calls):
         method = match.group(1)
         if method not in raw_methods | address_methods | generic:
@@ -493,15 +529,17 @@ def inventory_sites(text):
         receiver = re.search(r"\b(\w+)\s*$", prefix)
         raw = bool(raw or (receiver and receiver.group(1) in ram_receivers))
         rom = method in ("native_word", "word") and not raw and (
-            (receiver and receiver.group(1) in rom_receivers) or rom_chain.search(prefix))
+            (receiver and receiver.group(1) in rom_receivers) or rom_chain.search(prefix)
+            or (re.search(r"(?<![.\w])self\s*$", prefix) and any(a <= match.start() < b for a, b in content_impls)))
         if method == "native_word" and not raw and not rom:
-            # RAM address APIs return a plain u16. A `?`-propagated read is a
+            # RAM address APIs return a plain u16. A `?`-propagated read, or
+            # one a Result-returning function returns as its tail, is a
             # fallible content or display-staging read, not RAM.
             depth, end = 1, match.end()
             while end < len(calls) and depth:
                 depth += {"(": 1, ")": -1}.get(calls[end], 0)
                 end += 1
-            rom = calls[end:end + 1] == "?"
+            rom = calls[end:end + 1] == "?" or result_tail(end)
         if rom:
             kind = "rom_read"
         elif raw and method in raw_methods:
