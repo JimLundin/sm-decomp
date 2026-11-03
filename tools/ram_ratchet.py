@@ -72,9 +72,14 @@ BASELINE = {
     "foreign_calls": 336,
     "game_host_impls": 97,  # SpriteHost split into MapHost + SpriteWords (same coupling)
     "session_entries": 116,
+    # Session word views keyed by RAM names (2026-11-03): sequence_word! and
+    # gameplay_word! read and store typed Session-backed keys, not RAM, so
+    # sm_game_ram_sites does not count them. They are still a word bag named
+    # after RAM words rather than domain fields; reported only.
+    "session_word_view_sites": 202,
 }
 ADVISORY = {"production_lines", "engine_unresolved_ram_methods", "legacy_engine_ram_sites",
-            "engine_legacy_overflow_sites", "session_entries"}
+            "engine_legacy_overflow_sites", "session_entries", "session_word_view_sites"}
 
 
 CFG_TEST = re.compile(r"^\s*#\[cfg\(test\)\]\s*$")
@@ -204,6 +209,20 @@ def game_boundary() -> dict[str, int]:
     return counts
 
 
+def session_word_view_sites() -> int:
+    """Call sites of the RAM-named Session word views in sm_game, outside
+    comments and the macros' own recursion."""
+    view = re.compile(r"(?<!\$crate::)\b(?:sequence_word|gameplay_word)!\s*[({]")
+    total = 0
+    for root, _, names in os.walk(os.path.join("crates", "sm_game", "src")):
+        for name in names:
+            if name.endswith(".rs"):
+                with open(os.path.join(root, name), encoding="utf-8", errors="replace") as source:
+                    text = re.sub(r"//[^\n]*|/\*.*?\*/", " ", source.read(), flags=re.S)
+                total += len(view.findall(text))
+    return total
+
+
 def measure() -> dict[str, int]:
     ram = cycle_report.sm_game_ram_couplings()
     return {
@@ -212,6 +231,7 @@ def measure() -> dict[str, int]:
         "production_lines": production_lines(),
         **engine_inventory(),
         **game_boundary(),
+        "session_word_view_sites": session_word_view_sites(),
     }
 
 
