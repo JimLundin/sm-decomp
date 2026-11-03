@@ -117,7 +117,7 @@ pub fn finish_frame<H: Host + ?Sized>(game: &mut H) {
     let mut runtime = game.runtime();
     let session = runtime.session_mut();
     session.timing.frame_counter = session.timing.frame_counter.wrapping_add(1);
-    let protection = &mut session.actors.controls.projectile_contacts_disabled;
+    let protection = &mut session.projectiles.controls.protection;
     if *protection != 0 {
         *protection -= 1;
     }
