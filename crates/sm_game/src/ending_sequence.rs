@@ -24,7 +24,6 @@ use crate::intro_sequence::countdown;
 use crate::menus::prelude::display_scroll;
 use crate::presentation_workspace::{Point, Role};
 use crate::runtime_access::with_session;
-use crate::session_access::SessionAccess as _;
 use crate::visual_state::{CinematicDisplay, CinematicFade, CinematicTilemap};
 use crate::word_transfers::WordEndpoint;
 
