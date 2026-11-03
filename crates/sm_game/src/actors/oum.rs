@@ -8,9 +8,9 @@ use crate::actors::combat;
 use crate::actors::host::{ActorLease, LeaseActors};
 use crate::actors::slot_view::{SlotState, slot_view};
 use crate::actors::species::{PreInstructionHost, SpeciesHost, pre_instruction};
+use crate::controller_state::Word as Input;
 use crate::enemy_script::EnemyScript;
 use crate::player_projectiles::content::table;
-use crate::ram::words;
 use sm_data::enemy_speeds::SpeedTable::Linear;
 
 /// A lease on a game whose slots are the Session's typed storage.
@@ -222,7 +222,7 @@ fn finish(runtime: &mut impl Lease, oum: u16) {
     if api::touches_player_from_above(runtime, combat::current(runtime)) {
         let y = Oum::of(runtime, oum).actor().y.whole;
         let moved = y.wrapping_sub(Oum::of(runtime, oum).previous_y());
-        runtime.write_slice_le(words::EXTRA_SAMUS_Y_DISPLACEMENT, moved);
+        runtime.session_mut().player.contact.external_y.whole = moved;
     }
     if Oum::of(runtime, oum).touching() == 0 {
         return;
@@ -231,10 +231,8 @@ fn finish(runtime: &mut impl Lease, oum: u16) {
     let moved = x.wrapping_sub(Oum::of(runtime, oum).previous_x()) as i16;
     let side = Oum::of(runtime, oum).samus_left() != 0;
     if (moved < 0) == side {
-        let carried = runtime
-            .word(words::EXTRA_SAMUS_X_DISPLACEMENT)
-            .wrapping_add(moved as u16);
-        runtime.write_slice_le(words::EXTRA_SAMUS_X_DISPLACEMENT, carried);
+        let displacement = &mut runtime.session_mut().player.contact.external_x.whole;
+        *displacement = displacement.wrapping_add(moved as u16);
     }
     if moved == 0 && (Oum::of(runtime, oum).direction() != 0) != side {
         return;
@@ -244,7 +242,7 @@ fn finish(runtime: &mut impl Lease, oum: u16) {
     } else {
         0x200
     }; // Right, left.
-    if runtime.word(words::JOYPAD1_LASTKEYS) & towards != 0 {
+    if *Input::Joypad1Lastkeys.get(&runtime.session().control) & towards != 0 {
         let x = Oum::of(runtime, oum).previous_x();
         let mut part = OumEdit::of(runtime, oum);
         *part.stop() = 1;
@@ -319,12 +317,10 @@ pub fn touch(hurts: bool, runtime: &mut impl Lease) {
     if !api::touches_player_from_above(runtime, combat::current(runtime)) {
         let oum = combat::current(runtime).byte_index();
         let x = Oum::of(runtime, oum).actor().x.whole;
-        let left = (runtime.word(words::SAMUS_X_POS).wrapping_sub(x) as i16) < 0;
+        let left = (runtime.session().player.x.wrapping_sub(x) as i16) < 0;
         let push = if left { 0xfffc } else { 4 };
-        let displacement = runtime
-            .word(words::EXTRA_SAMUS_X_DISPLACEMENT)
-            .wrapping_add(push);
-        runtime.write_slice_le(words::EXTRA_SAMUS_X_DISPLACEMENT, displacement);
+        let displacement = &mut runtime.session_mut().player.contact.external_x.whole;
+        *displacement = displacement.wrapping_add(push);
     }
 }
 /// Enemy shot - oum ($A2:D3B4).
