@@ -27,7 +27,7 @@
 //! and seed loads. The clears and the fill are raw stores outside a lease;
 //! a snapshot load is followed by a checked Session adoption, and a seed load
 //! runs under a reference import. The unpause reset clears the range with
-//! `word_transfers!` while no copy is held. No WRAM DMA, decompression, message
+//! an ordered word transfer while no copy is held. No WRAM DMA, decompression, message
 //! box clear or save file transfer reaches the range.
 
 use crate::ram::words as ram;

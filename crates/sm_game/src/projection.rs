@@ -62,6 +62,37 @@ pub enum Field {
     DebugFlag,
     /// The spare word after the debug flag ($09E8).
     Spare09E8,
+    /// The direct-page scratch word $16: the spawn argument, which the power
+    /// bomb window also passes its table offset through.
+    SpawnArgument,
+    /// Samus's movement type and facing ($0A1E): the facing in the low byte.
+    MovementAndFacing,
+    /// Word `index` of the room's pause hooks ($0601 + 2 * index): the pause
+    /// hook's long address, then the unpause hook's.
+    PauseHook(usize),
+    /// The words at the room's layer-2 scroll bytes ($091B x, $091C y),
+    /// each the byte in its low half. The Session holds them as bytes, so
+    /// stores take the byte path, and y's word, whose high byte the Session
+    /// does not hold, reads it too.
+    Layer2ScrollX,
+    Layer2ScrollY,
+    /// Samus's palette's suit colour word ($0DF0), which the ending reuses
+    /// for the time's minutes digit.
+    SuitRedGreen,
+    /// Samus's palette's crystal flash delay ($0DF2), which the ending reuses
+    /// for the time's minute units digit.
+    CrystalFlashDelay,
+    /// The liquid's options ($197E): bit 1 waves the surface, bits 1..2
+    /// animate the background.
+    LiquidOptions,
+    /// The liquid surface's whole height ($195E).
+    LiquidSurface,
+    /// The camera's layer 1 and layer 2 positions ($0911, $0917), BG1's
+    /// offsets ($091D) and BG2's scrolls ($0921) on `axis` (0 = x, 1 = y).
+    Layer1(usize),
+    Layer2(usize),
+    Bg1Offset(usize),
+    Bg2Scroll(usize),
 }
 
 impl Field {
@@ -90,6 +121,20 @@ impl Field {
             Self::Moonwalk => words::MOONWALK_FLAG,
             Self::DebugFlag => words::DEBUG_FLAG,
             Self::Spare09E8 => words::UNUSED_WORD_7E09E8,
+            Self::SpawnArgument => 0x16,
+            Self::MovementAndFacing => crate::ram::bytes::SAMUS_POSE_X_DIR,
+            Self::PauseHook(index) => 0x601 + 2 * index,
+            Self::Layer2ScrollX => 0x91b,
+            Self::Layer2ScrollY => 0x91c,
+            Self::SuitRedGreen => 0xdf0,
+            Self::CrystalFlashDelay => 0xdf2,
+            Self::LiquidOptions => 0x197e,
+            Self::LiquidSurface => 0x195e,
+            // Layer 1's whole positions interleave with their fractions.
+            Self::Layer1(axis) => words::LAYER1_X_POS + 4 * axis,
+            Self::Layer2(axis) => words::LAYER2_X_POS + 2 * axis,
+            Self::Bg1Offset(axis) => words::BG1_X_OFFSET + 2 * axis,
+            Self::Bg2Scroll(axis) => words::BG2_X_SCROLL + 2 * axis,
         }
     }
 
@@ -140,12 +185,25 @@ impl Field {
             Self::Moonwalk => session.player.moonwalk,
             Self::DebugFlag => session.player.debug_flag,
             Self::Spare09E8 => session.player.spare_09e8,
+            Self::SpawnArgument => session.spawn_scratch.argument,
+            Self::MovementAndFacing => session.player.movement_and_facing,
+            Self::PauseHook(index) => *room.pause_hooks.get(index)?,
+            Self::Layer2ScrollX => u16::from_le_bytes([entry.layer2_x, entry.layer2_y]),
+            Self::Layer2ScrollY => return None,
+            Self::SuitRedGreen => session.presentation.palette().suit_red_green,
+            Self::CrystalFlashDelay => session.presentation.palette().crystal_flash_delay,
+            Self::LiquidOptions => room.liquid_options,
+            Self::LiquidSurface => room.liquid.surface.whole,
+            Self::Layer1(axis) => *room.camera.layer1.get(axis)?,
+            Self::Layer2(axis) => *room.camera.layer2.get(axis)?,
+            Self::Bg1Offset(axis) => *room.camera.bg1_offset.get(axis)?,
+            Self::Bg2Scroll(axis) => *room.camera.bg2_scroll.get(axis)?,
         })
     }
 
     /// The Session field that holds the word, for a store. `None` where the
-    /// Session has no word there, and where it holds no plain word: the room
-    /// header and the door exit, which the projection stores a byte at a
+    /// Session has no word there, and where it holds no plain word: the
+    /// layer-2 scroll bytes, the room header and the door exit, which the projection stores a byte at a
     /// time through the world's keys, the FX blending control lane, and the
     /// APU upload flag, whose stores keep the audio owner's byte path.
     pub fn session_word_mut(self, session: &mut Session) -> Option<&mut u16> {
@@ -191,6 +249,18 @@ impl Field {
             Self::Moonwalk => &mut session.player.moonwalk,
             Self::DebugFlag => &mut session.player.debug_flag,
             Self::Spare09E8 => &mut session.player.spare_09e8,
+            Self::SpawnArgument => &mut session.spawn_scratch.argument,
+            Self::MovementAndFacing => &mut session.player.movement_and_facing,
+            Self::PauseHook(index) => session.room.pause_hooks.get_mut(index)?,
+            Self::Layer2ScrollX | Self::Layer2ScrollY => return None,
+            Self::SuitRedGreen => &mut session.presentation.palette_mut().suit_red_green,
+            Self::CrystalFlashDelay => &mut session.presentation.palette_mut().crystal_flash_delay,
+            Self::LiquidOptions => &mut session.room.liquid_options,
+            Self::LiquidSurface => &mut session.room.liquid.surface.whole,
+            Self::Layer1(axis) => session.room.camera.layer1.get_mut(axis)?,
+            Self::Layer2(axis) => session.room.camera.layer2.get_mut(axis)?,
+            Self::Bg1Offset(axis) => session.room.camera.bg1_offset.get_mut(axis)?,
+            Self::Bg2Scroll(axis) => session.room.camera.bg2_scroll.get_mut(axis)?,
         })
     }
 }
@@ -790,7 +860,24 @@ mod tests {
             Field::CurrentCre,
             Field::DoorTransition,
             Field::RoomHeader,
+            Field::SpawnArgument,
+            Field::MovementAndFacing,
+            Field::Layer2ScrollX,
+            Field::Layer2ScrollY,
+            Field::SuitRedGreen,
+            Field::CrystalFlashDelay,
+            Field::LiquidOptions,
+            Field::LiquidSurface,
         ]);
+        for axis in 0..2 {
+            fields.extend([
+                Field::Layer1(axis),
+                Field::Layer2(axis),
+                Field::Bg1Offset(axis),
+                Field::Bg2Scroll(axis),
+            ]);
+        }
+        fields.extend((0..3).map(Field::PauseHook));
         fields
     }
 

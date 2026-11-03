@@ -8,16 +8,19 @@
 //! decompilation.
 use crate::actors::access::{ActorImage, ActorKey};
 use crate::actors::kraid_sinking;
+use crate::display::preparation::Field as Display;
 use crate::display_refresh::{GraphicsAsset, enqueue_readback, set_blank, wait};
+use crate::presentation_workspace::ContinuationAccess;
 use crate::projection::Field;
-use crate::ram::RawRam as _;
 
-/// What the hooks need: the display refresh and actor RAM.
+/// What the hooks need: the display refresh, actor RAM and the hooks'
+/// coroutine state.
 pub trait Host:
     crate::display_refresh::Host
     + crate::actors::host::ActorHost
     + ActorImage
     + crate::display::transfer::TilemapQueue
+    + ContinuationAccess
 {
 }
 impl<
@@ -25,6 +28,7 @@ impl<
         + crate::actors::host::ActorHost
         + ActorImage
         + crate::display::transfer::TilemapQueue
+        + ContinuationAccess
         + ?Sized,
 > Host for T
 {
@@ -33,12 +37,16 @@ impl<
 type CoroutineRet = u8;
 
 /// The BG tilemap and tile base address register mirrors (BG2SC, BG12NBA).
-const BG2_TILEMAP_BASE: usize = 0x59;
-const BG12_TILES_BASE: usize = 0x5d;
-/// The hooks' coroutine state ($0613): 0 to start, else the NMI wait they
-/// resume at: 1 erasing rows, 2 the first forced-blank wait, 3 the wait after
-/// clearing it, 4 the sinking hook's last wait.
-const HOOK_STATE: usize = 0x613;
+const BG2_TILEMAP_BASE: Display = Display::Screens1;
+const BG12_TILES_BASE: Display = Display::Characters0;
+
+/// The hooks' coroutine state, the secondary continuation ($0613): 0 to
+/// start, else the NMI wait they resume at: 1 erasing rows, 2 the first
+/// forced-blank wait, 3 the wait after clearing it, 4 the sinking hook's last
+/// wait.
+fn hook_state<H: Host + ?Sized>(game: &H) -> u8 {
+    game.secondary_continuation()
+}
 /// Kraid's room background ($A7:A716) and the standard BG3 tiles ($9A:B200).
 const ROOM_BACKGROUND: u32 = 0xa7_a716;
 const STANDARD_BG3_TILES: u32 = 0x9a_b200;
@@ -50,13 +58,14 @@ const KRAID_TOP_HALF_TILEMAP: u32 = 0x7e_2000;
 /// standard BG3 tiles, then his top half. Was `UnpauseHook_Kraid_IsDead`.
 pub fn unpause_dead<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
     crate::probe::hit("kraid_pause.unpause_dead");
-    if game.ram().read_byte(HOOK_STATE) != 3 {
+    if hook_state(game) != 3 {
         let yielded = blank_and_wait(true, 2, game);
         if yielded != 0 {
             return yielded;
         }
-        let tiles =
-            ((16 * (game.ram().read_byte(BG12_TILES_BASE) as i32 & 0xf) + 63) as u8 as u16) << 8;
+        let tiles = ((16 * (game.display_control_byte(BG12_TILES_BASE) as i32 & 0xf) + 63) as u8
+            as u16)
+            << 8;
         GraphicsAsset::VramWords(ROOM_BACKGROUND, tiles, 0x200).load(game);
         GraphicsAsset::VramWords(STANDARD_BG3_TILES, 0x4000, 0x800).load(game);
     }
@@ -68,7 +77,7 @@ pub fn unpause_dead<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
 /// `UnpauseHook_Kraid_IsAlive`.
 pub fn unpause_alive<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
     crate::probe::hit("kraid_pause.unpause_alive");
-    if game.ram().read_byte(HOOK_STATE) != 3 {
+    if hook_state(game) != 3 {
         let yielded = blank_and_wait(true, 2, game);
         if yielded != 0 {
             return yielded;
@@ -82,17 +91,16 @@ pub fn unpause_alive<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
 /// first call yields at resume point `point`; the call that resumes after
 /// the NMI returns 0.
 fn blank_and_wait<H: Host + ?Sized>(blank: bool, point: u8, game: &mut H) -> CoroutineRet {
-    if game.ram().read_byte(HOOK_STATE) != point {
+    if hook_state(game) != point {
         set_blank(blank, game);
     }
     let yielded = wait(true, game);
-    game.ram()
-        .write_byte(HOOK_STATE, if yielded != 0 { point } else { 0 });
+    game.set_secondary_continuation(if yielded != 0 { point } else { 0 });
     yielded
 }
 
 fn load_kraid_tiles<H: Host + ?Sized>(game: &mut H) {
-    let tiles = (game.ram().read_byte(BG12_TILES_BASE).wrapping_add(62) as u16) << 8;
+    let tiles = (game.display_control_byte(BG12_TILES_BASE).wrapping_add(62) as u16) << 8;
     GraphicsAsset::VramWords(KRAID_TILES, tiles, 0x400).load(game);
 }
 
@@ -100,8 +108,8 @@ fn load_kraid_tiles<H: Host + ?Sized>(game: &mut H) {
 /// blank and wait for NMI. Was `Kraid_TransferTopHalfToVram`.
 pub fn transfer_top_half<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
     crate::probe::hit("kraid_pause.transfer_top_half");
-    if game.ram().read_byte(HOOK_STATE) != 3 {
-        let tilemap = ((game.ram().read_byte(BG2_TILEMAP_BASE) & 0xfc) as u16) << 8;
+    if hook_state(game) != 3 {
+        let tilemap = ((game.display_control_byte(BG2_TILEMAP_BASE) & 0xfc) as u16) << 8;
         GraphicsAsset::VramWords(KRAID_TOP_HALF_TILEMAP, tilemap, 0x800).load(game);
     }
     blank_and_wait(false, 3, game)
@@ -114,7 +122,7 @@ pub fn transfer_top_half<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
 pub fn unpause_sinking<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
     crate::probe::hit("kraid_pause.unpause_sinking");
     'done: {
-        let mut queue_transfer = match game.ram().read_byte(HOOK_STATE) {
+        let mut queue_transfer = match hook_state(game) {
             0 | 2 => {
                 let yielded = blank_and_wait(true, 2, game);
                 if yielded != 0 {
@@ -144,14 +152,14 @@ pub fn unpause_sinking<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
                 {
                     break 'done;
                 }
-                let bg2_base = game.ram().read_byte(BG2_TILEMAP_BASE);
+                let bg2_base = game.display_control_byte(BG2_TILEMAP_BASE);
                 let tail = game.view_word(Field::UnpauseQueueTail);
                 kraid_sinking::queue_row_clear(tail, row.word(2), bg2_base, game);
             }
             let yielded = wait(true, game);
             if yielded != 0 {
                 crate::probe::hit("kraid_pause.sinking_row_wait");
-                game.ram().write_byte(HOOK_STATE, 1);
+                game.set_secondary_continuation(1);
                 return yielded;
             }
             let erased = game.view_word(Field::MessageDelay);

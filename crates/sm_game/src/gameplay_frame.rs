@@ -24,7 +24,6 @@ use crate::menus::{
 };
 use crate::palette_effects::{execution as palette_effects, fading};
 use crate::presentation_workspace::{Point, Role};
-use crate::ram::RawRam;
 use crate::room_entry::api::{ArrivalRequest, EntrySignal, StartSite};
 use crate::room_entry::content::LoadMode;
 use crate::room_scrolls::{advance_camera, debug_position, fill_viewport, update_scrolls};
@@ -278,7 +277,7 @@ pub fn advance<H: Host>(entry: Entry, game: &mut H) -> CoroutineRet {
 fn frame<H: Host>(game: &mut H) -> CoroutineRet {
     game.begin_session_interval(game.resume_point() == 0);
     let returned = 'frame: {
-        let mut st: i32 = game.ram().read_byte(0x611) as i32;
+        let mut st: i32 = game.outer_continuation() as i32;
         let begin_frame: bool = if (1..=3).contains(&st) {
             let returned = game.resume_boot();
             if returned != 0 {
@@ -294,16 +293,14 @@ fn frame<H: Host>(game: &mut H) -> CoroutineRet {
             }
         };
         if begin_frame {
-            for offset in (0x612..0x616).rev() {
-                game.ram().write_byte(offset, 0);
-            }
+            game.clear_pass_continuations();
             game.update_hdma();
             game.advance_random();
             sprite_drawing::clear_high_table(game);
             sprite_drawing::reset_cursor(game);
             with_session(game, |session| session.presentation.clear_samus_requests());
             st = crate::gameplay_word!(game.GAME_STATE) as i32 + 10;
-            game.ram().write_byte(0x611, st as u8);
+            game.set_outer_continuation(st as u8);
         }
         let returned = match GAME_STATE_ENTRIES[usize::from((st - 10i32) as u16)] {
             Advance(entry) => advance(entry, game),
@@ -340,17 +337,22 @@ fn frame<H: Host>(game: &mut H) -> CoroutineRet {
         crate::gameplay_word!(
             game.JOYPAD1_INPUT_SAMUSFILTER = crate::gameplay_word!(game.JOYPAD1_LASTKEYS)
         );
-        let state = [0x612, 0x613, 0x614, 0x615].map(|at| game.ram().read_byte(at));
+        let state = [
+            game.resume_point(),
+            game.secondary_continuation(),
+            game.demo_phase(),
+            game.message_continuation(),
+        ];
         if state.iter().fold(0, |bits, byte| bits | byte) != 0 {
             game.report_broken_coroutine(state);
         }
         0
     };
     if returned == 0 {
-        game.ram().write_byte(0x5b4, 1);
+        game.store_display_control_byte(DisplayField::NmiPending, 1, Store::Named);
     }
     // A requested NMI ends the frame by latching the controller, as on hardware.
-    let requested = game.ram().read_byte(0x5b4) != 0;
+    let requested = game.display_control_byte(DisplayField::NmiPending) != 0;
     display_refresh::run(game);
     if requested {
         controller_input::sample_latched(game);
@@ -360,7 +362,7 @@ fn frame<H: Host>(game: &mut H) -> CoroutineRet {
     let reset = crate::gameplay_word!(game.GAME_STATE) == SOFT_RESET_REQUESTED;
     if returned == 0 || reset {
         let resume = if reset { RESUME_SOFT_RESET } else { 0 };
-        game.ram().write_byte(0x611, resume);
+        game.set_outer_continuation(resume);
     }
     returned
 }
@@ -880,19 +882,19 @@ fn advance_gameplay<H: Host>(game: &mut H) -> CoroutineRet {
 /// demo, projectiles only or inactive.
 fn prepare_player_projectiles<H: Host>(game: &mut H) {
     use crate::session::PrepareEntry;
-    let at = crate::ram::words::FRAME_HANDLER_ALFA;
-    let handler = u16::from_le_bytes([game.ram().read_byte(at), game.ram().read_byte(at + 1)]);
+    let mut runtime = game.runtime();
+    let handler = runtime.session().player.transitions.frame_alpha.to_raw();
     let entry = match 0x900000 | u32::from(handler) {
         0x90e695 => PrepareEntry::Normal,
         0x90e6c9 => PrepareEntry::Demo,
         0x90e713 => PrepareEntry::ProjectilesOnly,
         0x90e8cd => PrepareEntry::Inactive,
         _ => {
-            crate::player_projectiles::host::Host::unknown(&mut game.runtime());
+            crate::player_projectiles::host::Host::unknown(&mut runtime);
             return;
         }
     };
-    crate::player_projectiles::preparation::prepare(&mut game.runtime(), entry);
+    crate::player_projectiles::preparation::prepare(&mut runtime, entry);
 }
 
 /// Upload the options screen tiles.
@@ -1089,7 +1091,7 @@ fn finish_pass<H: Host>(entry: Entry, game: &mut H) {
         Entry::DemoStart => {
             game.update_hdma();
             crate::gameplay_word!(game.GAME_STATE += 1);
-            game.ram().write_byte(0x51, 15);
+            game.store_display_control_byte(DisplayField::Brightness, 15, Store::Named);
         }
         Entry::Frame
         | Entry::DemoStop

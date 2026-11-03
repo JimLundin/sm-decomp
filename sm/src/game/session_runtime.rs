@@ -2967,6 +2967,27 @@ impl sm_game::presentation_workspace::ContinuationAccess for Runtime<'_> {
     fn demo_set_phase(&mut self, value: u8) {
         self.set_byte(0x614, value);
     }
+    fn secondary_continuation(&self) -> u8 {
+        *self.session().control.secondary()
+    }
+    fn set_secondary_continuation(&mut self, value: u8) {
+        *self.session_mut().control.secondary_mut() = value;
+    }
+    fn outer_continuation(&self) -> u8 {
+        self.byte(0x611)
+    }
+    fn set_outer_continuation(&mut self, value: u8) {
+        self.set_byte(0x611, value);
+    }
+    fn message_continuation(&self) -> u8 {
+        self.byte(0x615)
+    }
+    fn clear_pass_continuations(&mut self) {
+        self.set_byte(0x615, 0);
+        self.set_byte(0x614, 0);
+        *self.session_mut().control.secondary_mut() = 0;
+        *self.session_mut().control.primary_mut() = 0;
+    }
 }
 
 #[forbid(unsafe_code)]

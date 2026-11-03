@@ -5,7 +5,7 @@ use crate::cinematic_objects::CinematicObjects;
 use crate::cinematic_state::{Cinematic, Word};
 use crate::display::preparation::Field;
 use crate::presentation_workspace::{Point, Role};
-use crate::ram::RawRam as _;
+use crate::projection::Field as View;
 use crate::visual_state::{CinematicTilemap, EndingGraphics};
 use crate::word_transfers::WordEndpoint;
 
@@ -454,9 +454,13 @@ pub fn prepare_ending_time<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
         words.suit_pickup_light_beam_pos = hours % 10;
     });
     let minutes = crate::gameplay_word!(game.GAME_TIME_MINUTES);
-    crate::word_transfers!(game, ascending, 1;
-        native(0xdf0) <- value(minutes / 10), native(0xdf2) <- value(minutes % 10),
-    );
+    // The minute digits are stored in native byte order.
+    for (field, digit) in [
+        (View::SuitRedGreen, minutes / 10),
+        (View::CrystalFlashDelay, minutes % 10),
+    ] {
+        game.set_view_word(field, crate::word_transfers::stored_native(digit));
+    }
 }
 
 pub fn initialize_ending_time_glyph<H: crate::menus::host::Host + ?Sized>(
@@ -466,13 +470,14 @@ pub fn initialize_ending_time_glyph<H: crate::menus::host::Host + ?Sized>(
     game: &mut H,
 ) {
     if glyph != 2 {
-        let at = 0xdec + 2 * usize::from(glyph - u8::from(glyph > 2));
-        let bytes = [game.ram().read_byte(at), game.ram().read_byte(at + 1)];
         // Hours are LE; minute digits retain native word order.
-        let digit = if glyph < 2 {
-            u16::from_le_bytes(bytes)
-        } else {
-            u16::from_ne_bytes(bytes)
+        let native = |field| u16::from_ne_bytes(game.view_word(field).to_le_bytes());
+        let digit = match glyph {
+            0 => game.sequence_words().substate,
+            1 => game.sequence_words().suit_pickup_light_beam_pos,
+            3 => native(View::SuitRedGreen),
+            4 => native(View::CrystalFlashDelay),
+            _ => unreachable!("the ending's time has five glyphs"),
         };
         *cine.spr_instruction_pointer(object >> 1) = cine
             .spr_instruction_pointer(object >> 1)

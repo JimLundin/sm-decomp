@@ -6,7 +6,6 @@ use crate::display_refresh::mult8x8;
 use crate::menus::menu_tilemap::native_record;
 use crate::menus::prelude::do_until;
 use crate::player_movement::forced;
-use crate::ram::RawRam as _;
 use crate::scene::hdma_sources::LiveOwner;
 
 /// What the explosion windows need from the runtime besides RAM and sound.
@@ -146,7 +145,6 @@ pub fn begin_prescaled_explosion<H: Host + ?Sized>(game: &mut H) {
 }
 // Rejection and pose publication precede Session admission, including import failures.
 pub fn try_crystal_flash<H: Host + ?Sized>(game: &mut H) -> bool {
-    use crate::ram::checked_word as word;
     let inventory = crate::gameplay_context::inventory(game);
     if !forced::crystal_flash_allowed(
         crate::gameplay_word!(game.GAME_STATE),
@@ -162,7 +160,7 @@ pub fn try_crystal_flash<H: Host + ?Sized>(game: &mut H) -> bool {
     ) {
         return false;
     }
-    let pose = if word!(game, 0xa1e;) as u8 == 4 {
+    let pose = if game.view_word(crate::projection::Field::MovementAndFacing) as u8 == 4 {
         0xd4
     } else {
         0xd3
@@ -426,7 +424,7 @@ fn calculate_explosion_hdma_table_pointers<H: Host + ?Sized>(
     if pre_explosion && (bomb.explosion_status & 0x8000) == 0 {
         return;
     }
-    let layer1 = crate::camera::current(game).layer1;
+    let layer1 = [0, 1].map(|axis| game.view_word(crate::projection::Field::Layer1(axis)));
     let x = (i32::from(bomb.x) - i32::from(layer1[0]) + 256) as u16;
     let y_offset = if x >= 0x300 {
         0
@@ -446,7 +444,7 @@ fn calculate_explosion_hdma_table_pointers<H: Host + ?Sized>(
     }
     // The table offset passes through the direct-page scratch word $16 ($88:8CB4).
     let offset = e.bomb.window_y.wrapping_mul(3);
-    game.ram().copy_in(0x16, &offset.to_le_bytes());
+    game.set_view_word(crate::projection::Field::SpawnArgument, offset);
     crate::hdma_word!(game, hdma_index, Table => offset.wrapping_add(ADDR_INDIRECT_HDMA_TABLE_POWER_BOMB_EXPLODE_LEFT as u16));
     let next = usize::from(k >> 1) + 1;
     if next < crate::hdma::OBJECTS {
