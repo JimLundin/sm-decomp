@@ -477,10 +477,14 @@ impl sm_game::session_encoding::Spans for &mut SpanCopy<'_> {
             }
             return;
         };
-        for classes in self.classes[at..end].chunks(width) {
-            self.writes += 1;
-            let classes = classes.iter().fold(0, |all, &class| all | class);
-            self.by_classes[usize::from(classes)] += 1;
+        let classes = &self.classes[at..end];
+        self.writes += u64::try_from(classes.len().div_ceil(width)).expect("span count");
+        // A span in no owned group adds to no group epoch.
+        if classes.iter().any(|&class| class != 0) {
+            for span in classes.chunks(width) {
+                let classes = span.iter().fold(0, |all, &class| all | class);
+                self.by_classes[usize::from(classes)] += 1;
+            }
         }
         for (cell, &byte) in self.ram.0.bytes[at..end].iter().zip(bytes) {
             cell.set(byte);
