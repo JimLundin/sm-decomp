@@ -238,27 +238,37 @@ pub(crate) unsafe fn ppu_run_line(ppu: *mut Ppu, line: i32, new_ppu: &bool) {
                 !(*ppu).forcedBlank && ppu_evaluate_sprites(ppu, line - 1i32) as i32 != 0;
             // EXTBG composition and enabled mosaic use the per-pixel path.
             let mosaic = (*ppu).mosaicSize > 1 && (*ppu).bgLayer.iter().any(|bg| bg.mosaicEnabled);
+            let draw = pixels_observed();
             if *new_ppu && !((*ppu).mode == 7 && (*ppu).m7extBg) && !mosaic {
-                ppu_draw_whole_line(ppu, line as u32);
-                #[cfg(sm_verify_dll)]
-                cross_render::check(ppu, line);
-                #[cfg(sm_verify_dll)]
-                native_line::check(ppu, line);
+                ppu_draw_whole_line(ppu, line as u32, draw);
+                if draw {
+                    #[cfg(sm_verify_dll)]
+                    cross_render::check(ppu, line);
+                    #[cfg(sm_verify_dll)]
+                    native_line::check(ppu, line);
+                }
             } else {
                 if (*ppu).mode as i32 == 7 {
                     ppu_calculate_mode7_starts(ppu, line);
                 }
-                for x in 0i32..256 {
-                    ppu_render_pixel(ppu, x, line);
+                if draw {
+                    for x in 0i32..256 {
+                        ppu_render_pixel(ppu, x, line);
+                    }
                 }
             }
         };
     }
 }
 
-unsafe fn ppu_draw_whole_line(ppu: *mut Ppu, y: u32) {
+/// The native line. Without `draw` it keeps the line's assertions and start
+/// faults and writes no pixels.
+unsafe fn ppu_draw_whole_line(ppu: *mut Ppu, y: u32, draw: bool) {
     unsafe {
         if (*ppu).forcedBlank {
+            if !draw {
+                return;
+            }
             let dst = (*ppu)
                 .renderBuffer
                 .offset(y.wrapping_sub(1).wrapping_mul((*ppu).renderPitch) as isize);
@@ -290,6 +300,9 @@ unsafe fn ppu_draw_whole_line(ppu: *mut Ppu, y: u32) {
                 raster::Quantization::Native,
             ))
         };
+        if !draw {
+            return;
+        }
         let row = y.wrapping_sub(1).wrapping_mul((*ppu).renderPitch);
         let left_right = i32::from((*ppu).extraLeftRight);
         for x in -i32::from((*ppu).extraLeftCur)..256 + i32::from((*ppu).extraRightCur) {
@@ -468,6 +481,25 @@ pub unsafe fn ppu_write(ppu: *mut Ppu, adr: u8, val: u8) {
 thread_local! {
     /// A synchronous Samus DMA interval; never stores video state or a live borrow.
     static SAMUS_VRAM_DMA: std::cell::Cell<Option<usize>> = const { std::cell::Cell::new(None) };
+    /// Whether anything reads this thread's rendered frames.
+    static PIXELS_OBSERVED: std::cell::Cell<bool> = const { std::cell::Cell::new(true) };
+}
+
+/// Say whether anything reads the rendered frames; on by default. With it off,
+/// each line keeps its register, brightness, sprite, Mode 7 start and fault
+/// effects and composes no pixels, so the render buffers keep what the host
+/// last put there.
+pub fn observe_pixels(observed: bool) {
+    PIXELS_OBSERVED.set(observed);
+}
+
+/// The verifier's line checks compare rendered pixels, so they keep them.
+fn pixels_observed() -> bool {
+    #[cfg(sm_verify_dll)]
+    if cross_render::interval() != 0 || native_line::enabled() {
+        return true;
+    }
+    PIXELS_OBSERVED.get()
 }
 
 /// The original DMA drain retains all bus reads, open-bus writes and channel effects.
@@ -1032,7 +1064,7 @@ mod native_line {
         });
     }
 
-    fn enabled() -> bool {
+    pub(super) fn enabled() -> bool {
         static ENABLED: OnceLock<bool> = OnceLock::new();
         *ENABLED.get_or_init(|| std::env::var_os("SM_NATIVE_LINES").is_some())
     }
@@ -1205,7 +1237,7 @@ mod cross_render {
 
     static FRAMES: AtomicU32 = AtomicU32::new(0);
 
-    fn interval() -> u32 {
+    pub(super) fn interval() -> u32 {
         static INTERVAL: OnceLock<u32> = OnceLock::new();
         *INTERVAL.get_or_init(|| {
             std::env::var("SM_CROSS_RENDER")

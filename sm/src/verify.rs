@@ -1475,6 +1475,15 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
                 None => None,
             };
         }
+        // An oracle-only checkpoint, or a single-side run that records and
+        // compares nothing, reads no rendered frame: its lines keep every
+        // register, sprite and interrupt effect and compose no pixels.
+        #[cfg(sm_verify_dll)]
+        sm::snes::ppu::observe_pixels(
+            game.observation
+                .as_ref()
+                .is_some_and(|observer| observer.observes_video()),
+        );
         let mut completed = 0;
         let mut hit_tail_complete = after_hits.is_none();
         let mut expectation_tail_complete = after_expectations.is_none();

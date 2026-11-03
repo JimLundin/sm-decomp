@@ -120,6 +120,18 @@ impl Observer {
         }
     }
 
+    /// Whether the run reads its rendered frames: the paired frame compares
+    /// them, and a single-side run's `video` stream reaches its trace, lock
+    /// entry or free run. A single-side run with none of those reads nothing.
+    pub fn observes_video(&self) -> bool {
+        match &self.mode {
+            Mode::Lockstep(_) => true,
+            Mode::Single(single) => {
+                single.trace.is_some() || single.lock.is_some() || single.free_run.is_some()
+            }
+        }
+    }
+
     /// The summary lines, which name no values, and for a free run the
     /// number of Ticks that failed it.
     pub fn finish(self) -> Result<(Vec<String>, Option<u64>), String> {
