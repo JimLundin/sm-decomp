@@ -77,6 +77,8 @@ pub trait QueueAccess {
     fn queue_tail(&self) -> u16;
     fn store_queue_tail(&mut self, value: u16);
     fn queue_native_word(&mut self, cursor: u16, value: u16);
+    /// Store `value` to the queue's byte at `cursor`, as a named byte store.
+    fn queue_byte(&mut self, cursor: u16, value: u8);
     fn queue_live_source(
         &mut self,
         address: u16,
