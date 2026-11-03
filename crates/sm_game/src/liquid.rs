@@ -179,6 +179,17 @@ impl LiquidWords {
     }
 }
 
+/// The liquid words as the Session's room holds them, for host code that
+/// updates them on one lease.
+impl crate::session_part::Part for LiquidWords {
+    fn of(session: &crate::session::Session) -> Self {
+        Self::of(&session.room)
+    }
+    fn store(&self, _before: &Self, session: &mut crate::session::Session) {
+        LiquidWords::store(self, &mut session.room);
+    }
+}
+
 impl crate::projection::Layout for LiquidWords {
     fn visit(&mut self, mut visit: impl FnMut(usize, &mut u16)) {
         for (at, word) in self.slots() {
