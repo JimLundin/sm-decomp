@@ -98,7 +98,10 @@ pub(crate) unsafe fn resume(game: &mut Game) -> u8 {
 
 unsafe fn initialize_registers(game: &mut Game) {
     unsafe {
-        crate::game::display_refresh::initialize_io_and_oam(Some(0x8f), game);
+        crate::game::display_refresh::initialize_io_and_oam(
+            Some(sm_game::display::control::Brightness::BLANK_FULL),
+            game,
+        );
         crate::rtl::register_writes! { game;
             show_mirror(BgMode::MODE1_BG3_PRIORITY, DisplayField::Mode, false); mirror(MOSAIC as u16, 0, DisplayField::Mosaic, false);
             mirror(BG1SC as u16, 0x40, DisplayField::Screens0, false); mirror(BG2SC as u16, 0x44, DisplayField::Screens1, false);

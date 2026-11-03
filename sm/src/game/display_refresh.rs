@@ -145,7 +145,10 @@ fn bus_byte(game: &Game, bank: u8, address: u16) -> u8 {
 }
 
 /// The ordered CPU I/O and OAM reset.
-pub(crate) fn initialize_io_and_oam(brightness: Option<u8>, game: &mut Game) {
+pub(crate) fn initialize_io_and_oam(
+    brightness: Option<sm_game::display::control::Brightness>,
+    game: &mut Game,
+) {
     refresh::initialize_io_and_oam(brightness, game);
 }
 

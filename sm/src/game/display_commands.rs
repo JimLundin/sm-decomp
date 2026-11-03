@@ -5,10 +5,12 @@
 use crate::game::room_entry::PreparedRoomAssets;
 use crate::game_state::Game;
 use crate::rtl::{
-    A1B1, A1T1L, A2A1H, BBAD0, BG1HOFS, BG1SC, BG12NBA, BG34NBA, BGMODE, CGADD, CGADSUB, CGDATA,
-    CGWSEL, COLDATA, DAS1L, DAS10, DMAP1, HDMAEN, INIDISP, M7A, M7SEL, MDMAEN, MOSAIC, OBSEL,
-    RDVRAML, SETINI, TM, TMW, TS, TSW, VMADDH, VMADDL, VMAIN, W12SEL, W34SEL, WBGLOG, WH0, WH1,
-    WH2, WH3, WOBJLOG, WOBJSEL, read_reg, read_reg_word, write_reg, write_reg_word,
+    A1B1, A1T1L, A2A1H, A2A1L, BBAD0, BBAD1, BG1HOFS, BG1SC, BG12NBA, BG34NBA, BGMODE, CGADD,
+    CGADSUB, CGDATA, CGWSEL, COLDATA, DAS1H, DAS1L, DAS10, DMAP1, HDMAEN, HTIMEH, HTIMEL, INIDISP,
+    M7A, M7SEL, MDMAEN, MEMSEL, MOSAIC, NMITIMEN, NTRL1, OAMADDH, OAMADDL, OAMDATA, OBSEL, RDVRAML,
+    SETINI, TM, TMW, TS, TSW, VMADDH, VMADDL, VMAIN, VTIMEH, VTIMEL, W12SEL, W34SEL, WBGLOG, WH0,
+    WH1, WH2, WH3, WOBJLOG, WOBJSEL, WRDIVB, WRDIVH, WRDIVL, WRIO, WRMPYA, WRMPYB, read_reg,
+    read_reg_word, write_reg, write_reg_word,
 };
 use sm_game::display::control::Brightness;
 use sm_game::display::transfer::Source;
@@ -91,6 +93,10 @@ fn control_register(control: Control) -> u32 {
         Control::WindowLogicBackgrounds(_) => WBGLOG,
         Control::WindowLogicSpritesColor(_) => WOBJLOG,
         Control::ScreenSettings(_) => SETINI,
+        Control::Interrupts(_) => NMITIMEN,
+        Control::MemorySpeed(_) => MEMSEL,
+        Control::ObjectAddressLow(_) => OAMADDL,
+        Control::ObjectAddressHigh(_) => OAMADDH,
     }
 }
 
@@ -161,6 +167,58 @@ pub(crate) fn apply(producer: &'static str, command: Command, game: &mut Game) {
             channel1_words(FROM_VRAM_DATA, destination, bytes, game);
             byte(VMAIN, STEP_AFTER_HIGH, game);
             byte(MDMAEN, 2, game);
+        }
+        Command::ReadVramNow {
+            address,
+            destination,
+            bytes,
+        } => {
+            let [mode, target] = FROM_VRAM_DATA.to_le_bytes();
+            word(VMADDL, address, game);
+            byte(VMAIN, STEP_AFTER_HIGH, game);
+            byte(DMAP1, mode, game);
+            byte(BBAD1, target, game);
+            word(A1T1L, destination.address, game);
+            byte(A1B1, destination.bank, game);
+            word(DAS1L, bytes, game);
+            byte(DAS10, 0, game);
+            word(A2A1L, 0, game);
+            byte(NTRL1, 0, game);
+            byte(MDMAEN, 2, game);
+        }
+        Command::VramPort { address, step } => {
+            let [low, high] = address.to_le_bytes();
+            byte(VMADDL, low, game);
+            byte(VMADDH, high, game);
+            byte(VMAIN, step, game);
+        }
+        Command::TilesThroughPort { source, bytes } => {
+            channel1(TO_VRAM_DATA, source, bytes, game);
+            byte(MDMAEN, 2, game);
+        }
+        Command::TilesThroughPortBytes { source, bytes } => {
+            let [mode, target] = TO_VRAM_DATA.to_le_bytes();
+            let [count_low, count_high] = bytes.to_le_bytes();
+            byte(DMAP1, mode, game);
+            byte(BBAD1, target, game);
+            byte(DAS1L, count_low, game);
+            byte(DAS1H, count_high, game);
+            word(A1T1L, source.address, game);
+            byte(A1B1, source.bank, game);
+            byte(MDMAEN, 2, game);
+        }
+        Command::ObjectBytes(bytes) => {
+            for value in bytes {
+                byte(OAMDATA, value, game);
+            }
+        }
+        Command::ClearCpuIo => {
+            for register in [
+                WRIO, WRMPYA, WRMPYB, WRDIVL, WRDIVH, WRDIVB, HTIMEL, HTIMEH, VTIMEL, VTIMEH,
+                MDMAEN,
+            ] {
+                byte(register, 0, game);
+            }
         }
         Command::FixedColor(color) => byte(COLDATA, color.byte(), game),
         Command::WindowHdma(hdma) => window_hdma(hdma, game),

@@ -2,22 +2,19 @@
 //! gameplay and pause display setup, graphics loads and tilemap queues.
 use crate::constants::bank_60::ADDR_UNK_605880;
 use crate::decompression::{self, decompress_to_ram};
-use crate::display::control::{
-    BgMode, FixedColor, Layers, MainScreen, MainWindowMask, ScreenSettings, SubScreen,
-    SubWindowMask,
-};
+use crate::display::control::{BgMode, FixedColor, Layers, ScreenSettings};
 use crate::display::preparation::Field as DisplayField;
 use crate::display::registers::{
-    A1B0, A1B1, A1T0L, A1T1L, A2A1L, BBAD1, BG1HOFS, BG1SC, BG2SC, BG3SC, BG4SC, BG12NBA, BG34NBA,
-    BGMODE, CGADD, CGADSUB, CGWSEL, COLDATA, DAS0L, DAS1H, DAS1L, DAS10, DMAP0, DMAP1, HDMAEN,
-    HTIMEH, HTIMEL, INIDISP, M7A, M7SEL, MDMAEN, MEMSEL, MOSAIC, NMITIMEN, NTRL1, OAMADDH, OAMADDL,
-    OAMDATA, OBSEL, RDVRAML, SETINI, TM, TMW, TS, TSW, VMADDH, VMADDL, VMAIN, VMDATAL, VTIMEH,
-    VTIMEL, W12SEL, W34SEL, WBGLOG, WH0, WH1, WH2, WH3, WMADDH, WMADDL, WMADDM, WOBJLOG, WOBJSEL,
-    WRDIVB, WRDIVH, WRDIVL, WRIO, WRMPYA, WRMPYB,
+    A1B0, A1T0L, BG1HOFS, BG1SC, BG2SC, BG3SC, BG4SC, BG12NBA, BG34NBA, BGMODE, CGADD, CGADSUB,
+    CGWSEL, COLDATA, DAS0L, DMAP0, HDMAEN, HTIMEL, INIDISP, M7A, M7SEL, MDMAEN, MOSAIC, NMITIMEN,
+    OAMADDL, OBSEL, RDVRAML, SETINI, TM, TMW, TS, TSW, VMADDH, VMADDL, VMAIN, VMDATAL, VTIMEL,
+    W12SEL, W34SEL, WBGLOG, WH0, WH1, WH2, WH3, WMADDH, WMADDL, WMADDM, WOBJLOG, WOBJSEL,
 };
-use crate::display::sequence::{Registers, register_writes, write_register_and_mirror};
+use crate::display::sequence::{Registers, register_writes};
 use crate::display::transfer::{ScrollingLayout, TilemapQueue, setup_transfer};
-use crate::display::video::Upload;
+use crate::display::video::{
+    Background, Command, Control, Mirror, Upload, apply_controls, apply_mirrored,
+};
 use crate::ram::{CompatibilityRam, RawRam};
 use crate::scene::irq;
 use crate::scene::state::DisplayError;
@@ -67,6 +64,13 @@ pub trait Host:
     fn fill_vram_low_bytes(&mut self, fill: u8, word_reset: bool);
 }
 
+/// The producer name of the pause screen's display commands.
+const PAUSE: &str = "pause display";
+/// The producer name of the display initialisation's commands.
+const INITIALISE: &str = "display initialisation";
+/// BG1, BG2, BG3 and the sprites: gameplay's main screen.
+const GAMEPLAY_LAYERS: Layers = Layers::of(true, true, true, false, true);
+
 /// Set the forced-blank mirror bit for the next display refresh.
 pub fn set_blank<H: Host + ?Sized>(blank: bool, game: &mut H) {
     crate::frame_display_byte!(game, crate::display::preparation::Field::Brightness => crate::display::preparation::Access::display_control_byte(&*game, crate::display::preparation::Field::Brightness) & 0x7f | if blank { 0x80 } else { 0 });
@@ -78,16 +82,56 @@ pub fn pause_graphics<H: Host + ?Sized>(paused: bool, game: &mut H) {
     } else {
         (3, 0x51, 0x49, 0x5a)
     };
-    register_writes! { game;
-        mirror(OBSEL as u16, objects, DisplayField::ObjectLayout, false); show_mirror(BgMode::MODE1_BG3_PRIORITY, DisplayField::Mode, false);
-        mirror(BG12NBA as u16, 0, DisplayField::Characters0, true); mirror(BG34NBA as u16, 4, DisplayField::Characters1, true);
-        mirror(BG1SC as u16, bg1, DisplayField::Screens0, true); mirror(BG2SC as u16, bg2, DisplayField::Screens1, true);
-        mirror(BG3SC as u16, bg3, DisplayField::Screens2, true); mirror(BG4SC as u16, 0, DisplayField::Screens3, true);
-    }
+    apply_controls(
+        game,
+        PAUSE,
+        &[
+            (
+                Control::ObjectLayout(objects),
+                Mirror::After(DisplayField::ObjectLayout),
+            ),
+            (
+                Control::BackgroundMode(BgMode::MODE1_BG3_PRIORITY.byte()),
+                Mirror::After(DisplayField::Mode),
+            ),
+            (
+                Control::CharactersBg1Bg2(0),
+                Mirror::Before(DisplayField::Characters0),
+            ),
+            (
+                Control::CharactersBg3Bg4(4),
+                Mirror::Before(DisplayField::Characters1),
+            ),
+            (
+                Control::Tilemap(Background::Bg1, bg1),
+                Mirror::Before(DisplayField::Screens0),
+            ),
+            (
+                Control::Tilemap(Background::Bg2, bg2),
+                Mirror::Before(DisplayField::Screens1),
+            ),
+            (
+                Control::Tilemap(Background::Bg3, bg3),
+                Mirror::Before(DisplayField::Screens2),
+            ),
+            (
+                Control::Tilemap(Background::Bg4, 0),
+                Mirror::Before(DisplayField::Screens3),
+            ),
+        ],
+    );
     if paused {
-        register_writes! { game;
-            show_mirror(MainScreen(Layers::of(true, true, true, false, true)), DisplayField::MainLayers, false); mirror(MOSAIC as u16, 0, DisplayField::Mosaic, false);
-        }
+        apply_controls(
+            game,
+            PAUSE,
+            &[
+                (
+                    Control::MainScreen(GAMEPLAY_LAYERS),
+                    Mirror::After(DisplayField::MainLayers),
+                ),
+                (Control::Mosaic(0), Mirror::After(DisplayField::Mosaic)),
+            ],
+        );
         for field in [
             crate::display::preparation::Field::FixedColor0,
             crate::display::preparation::Field::FixedColor1,
@@ -100,46 +144,174 @@ pub fn pause_graphics<H: Host + ?Sized>(paused: bool, game: &mut H) {
 }
 
 /// The ordered CPU I/O and OAM reset.
-pub fn initialize_io_and_oam<H: Host + ?Sized>(brightness: Option<u8>, game: &mut H) {
-    register_writes! { game;
-        mirror(NMITIMEN as u16, 1, DisplayField::NmiEnable, false); byte(WRIO as u16, 0);
-        byte(WRMPYA as u16, 0); byte(WRMPYB as u16, 0);
-        byte(WRDIVL as u16, 0); byte(WRDIVH as u16, 0);
-        byte(WRDIVB as u16, 0); byte(HTIMEL as u16, 0);
-        byte(HTIMEH as u16, 0); byte(VTIMEL as u16, 0);
-        byte(VTIMEH as u16, 0); byte(MDMAEN as u16, 0);
-        mirror(HDMAEN as u16, 0, DisplayField::HdmaEnable, false); mirror(MEMSEL as u16, 1, DisplayField::MemorySelect, false);
+pub fn initialize_io_and_oam<H: Host + ?Sized>(
+    brightness: Option<crate::display::control::Brightness>,
+    game: &mut H,
+) {
+    apply_mirrored(
+        game,
+        INITIALISE,
+        Control::Interrupts(1),
+        DisplayField::NmiEnable,
+        false,
+    );
+    game.apply(INITIALISE, Command::ClearCpuIo);
+    apply_controls(
+        game,
+        INITIALISE,
+        &[
+            (
+                Control::HdmaChannels(0),
+                Mirror::After(DisplayField::HdmaEnable),
+            ),
+            (
+                Control::MemorySpeed(1),
+                Mirror::After(DisplayField::MemorySelect),
+            ),
+        ],
+    );
+    if let Some(brightness) = brightness {
+        apply_mirrored(
+            game,
+            INITIALISE,
+            Control::Brightness(brightness),
+            DisplayField::Brightness,
+            false,
+        );
     }
-    if let Some(value) = brightness {
-        write_register_and_mirror(game, INIDISP as u16, value, DisplayField::Brightness, false);
-    }
-    register_writes! { game;
-        mirror(OBSEL as u16, 3, DisplayField::ObjectLayout, false);
-        mirror(OAMADDL as u16, 0, DisplayField::ObjectAddressLow, false);
-        mirror(OAMADDH as u16, 0x80, DisplayField::ObjectAddressHigh, false);
-        byte(OAMDATA as u16, 0); byte(OAMDATA as u16, 0);
-    }
+    apply_controls(
+        game,
+        INITIALISE,
+        &[
+            (
+                Control::ObjectLayout(3),
+                Mirror::After(DisplayField::ObjectLayout),
+            ),
+            (
+                Control::ObjectAddressLow(0),
+                Mirror::After(DisplayField::ObjectAddressLow),
+            ),
+            (
+                Control::ObjectAddressHigh(0x80),
+                Mirror::After(DisplayField::ObjectAddressHigh),
+            ),
+        ],
+    );
+    game.apply(INITIALISE, Command::ObjectBytes([0, 0]));
 }
 
 /// Gameplay display registers, cleared tilemaps and the common graphics.
 pub fn initialize_gameplay<H: Host + crate::sprite_drawing::ObjectAccess + ?Sized>(game: &mut H) {
-    initialize_io_and_oam(Some(0x80), game);
-    register_writes! { game;
-        show_mirror(BgMode::MODE1_BG3_PRIORITY, DisplayField::Mode, false); mirror(MOSAIC as u16, 0, DisplayField::Mosaic, false);
-        mirror(BG12NBA as u16, 0, DisplayField::Characters0, true); mirror(BG34NBA as u16, 4, DisplayField::Characters1, true);
-        mirror(BG1SC as u16, 0x51, DisplayField::Screens0, true); mirror(BG2SC as u16, 0x49, DisplayField::Screens1, true);
-        mirror(BG3SC as u16, 0x5a, DisplayField::Screens2, true); mirror(BG4SC as u16, 0, DisplayField::Screens3, true);
-        byte(VMAIN as u16, 0); mirror(W12SEL as u16, 0, DisplayField::WindowSelection0, false);
-        mirror(W12SEL as u16, 0, DisplayField::WindowSelection0, false); mirror(W34SEL as u16, 0, DisplayField::WindowSelection1, false);
-        mirror(WOBJSEL as u16, 0, DisplayField::WindowSelection2, false); mirror(WH0 as u16, 0, DisplayField::WindowPositions0, false);
-        mirror(WH1 as u16, 0, DisplayField::WindowPositions1, false); mirror(WH2 as u16, 0, DisplayField::WindowPositions2, false);
-        mirror(WH3 as u16, 0, DisplayField::WindowPositions3, false); mirror(WBGLOG as u16, 0, DisplayField::WindowLogic0, false);
-        mirror(WOBJLOG as u16, 0, DisplayField::WindowLogic1, false); show_mirror(MainScreen(Layers::of(true, true, true, false, true)), DisplayField::MainLayers, false);
-        show_mirror(MainWindowMask(Layers::NONE), DisplayField::MainWindow, false); show_mirror(SubScreen(Layers::NONE), DisplayField::SubLayers, false);
-        show_mirror(SubWindowMask(Layers::NONE), DisplayField::SubWindow, false); mirror(CGWSEL as u16, 0, DisplayField::NextColorSelection, false);
-        mirror(CGADSUB as u16, 0, DisplayField::NextColorMath, false); show(FixedColor::all(0));
-        show_mirror(ScreenSettings::STANDARD, DisplayField::Geometry, false);
-    }
+    initialize_io_and_oam(Some(crate::display::control::Brightness::BLANK_DARK), game);
+    // The original clears the BG1/BG2 window selection twice.
+    apply_controls(
+        game,
+        INITIALISE,
+        &[
+            (
+                Control::BackgroundMode(BgMode::MODE1_BG3_PRIORITY.byte()),
+                Mirror::After(DisplayField::Mode),
+            ),
+            (Control::Mosaic(0), Mirror::After(DisplayField::Mosaic)),
+            (
+                Control::CharactersBg1Bg2(0),
+                Mirror::Before(DisplayField::Characters0),
+            ),
+            (
+                Control::CharactersBg3Bg4(4),
+                Mirror::Before(DisplayField::Characters1),
+            ),
+            (
+                Control::Tilemap(Background::Bg1, 0x51),
+                Mirror::Before(DisplayField::Screens0),
+            ),
+            (
+                Control::Tilemap(Background::Bg2, 0x49),
+                Mirror::Before(DisplayField::Screens1),
+            ),
+            (
+                Control::Tilemap(Background::Bg3, 0x5a),
+                Mirror::Before(DisplayField::Screens2),
+            ),
+            (
+                Control::Tilemap(Background::Bg4, 0),
+                Mirror::Before(DisplayField::Screens3),
+            ),
+            (Control::VramStep(0), Mirror::None),
+            (
+                Control::WindowsBg1Bg2(0),
+                Mirror::After(DisplayField::WindowSelection0),
+            ),
+            (
+                Control::WindowsBg1Bg2(0),
+                Mirror::After(DisplayField::WindowSelection0),
+            ),
+            (
+                Control::WindowsBg3Bg4(0),
+                Mirror::After(DisplayField::WindowSelection1),
+            ),
+            (
+                Control::WindowsSpritesColor(0),
+                Mirror::After(DisplayField::WindowSelection2),
+            ),
+            (
+                Control::Window1Left(0),
+                Mirror::After(DisplayField::WindowPositions0),
+            ),
+            (
+                Control::Window1Right(0),
+                Mirror::After(DisplayField::WindowPositions1),
+            ),
+            (
+                Control::Window2Left(0),
+                Mirror::After(DisplayField::WindowPositions2),
+            ),
+            (
+                Control::Window2Right(0),
+                Mirror::After(DisplayField::WindowPositions3),
+            ),
+            (
+                Control::WindowLogicBackgrounds(0),
+                Mirror::After(DisplayField::WindowLogic0),
+            ),
+            (
+                Control::WindowLogicSpritesColor(0),
+                Mirror::After(DisplayField::WindowLogic1),
+            ),
+            (
+                Control::MainScreen(GAMEPLAY_LAYERS),
+                Mirror::After(DisplayField::MainLayers),
+            ),
+            (
+                Control::MainWindowMask(Layers::NONE),
+                Mirror::After(DisplayField::MainWindow),
+            ),
+            (
+                Control::SubScreen(Layers::NONE),
+                Mirror::After(DisplayField::SubLayers),
+            ),
+            (
+                Control::SubWindowMask(Layers::NONE),
+                Mirror::After(DisplayField::SubWindow),
+            ),
+            (
+                Control::ColorSelection(0),
+                Mirror::After(DisplayField::NextColorSelection),
+            ),
+            (
+                Control::ColorMath(0),
+                Mirror::After(DisplayField::NextColorMath),
+            ),
+        ],
+    );
+    game.apply(INITIALISE, Command::FixedColor(FixedColor::all(0)));
+    apply_mirrored(
+        game,
+        INITIALISE,
+        Control::ScreenSettings(ScreenSettings::STANDARD.byte()),
+        DisplayField::Geometry,
+        false,
+    );
     crate::sprite_drawing::reset_cursor(game);
     word_transfers!(game, ascending, 1023; native(0x3000) <- value(0));
     word_transfers!(game, ascending, 1023; native(0x4000) <- value(0x6f));
@@ -157,15 +329,25 @@ pub fn initialize_gameplay<H: Host + crate::sprite_drawing::ObjectAccess + ?Size
 
 /// Read the room's BG2 tilemap back into RAM for the pause screen.
 pub fn capture_pause_background<H: Host + ?Sized>(game: &mut H) {
-    register_writes! { game;
-        word(VMADDL as u16,
-        (u16::from(crate::display::preparation::Access::display_control_byte(&*game, crate::display::preparation::Field::Screens1) & 0xfc) << 8) | 1,); byte(VMAIN as u16, 0x80);
-        byte(DMAP1 as u16, 0x81); byte(BBAD1 as u16, 0x39);
-        word(A1T1L as u16, 0xdf5c); byte(A1B1 as u16, 0x7e);
-        word(DAS1L as u16, 0x1000); byte(DAS10 as u16, 0);
-        word(A2A1L as u16, 0); byte(NTRL1 as u16, 0);
-        byte(MDMAEN as u16, 2);
-    }
+    // The BG2 tilemap's base, one word in, as the original addresses it.
+    let address = (u16::from(
+        crate::display::preparation::Access::display_control_byte(
+            &*game,
+            crate::display::preparation::Field::Screens1,
+        ) & 0xfc,
+    ) << 8)
+        | 1;
+    game.apply(
+        PAUSE,
+        Command::ReadVramNow {
+            address,
+            destination: crate::display::transfer::Source {
+                address: 0xdf5c,
+                bank: 0x7e,
+            },
+            bytes: 0x1000,
+        },
+    );
 }
 
 pub fn load_pause_assets<H: Host + crate::menus::host::Host + ?Sized>(game: &mut H) {
@@ -188,27 +370,50 @@ pub fn upload_pause_map<H: Host + crate::menus::host::Host + ?Sized>(game: &mut 
             game.Bg1V = crate::menus::prelude::display_scroll!(game.Bg4V)
         );
     }
-    register_writes! { game;
-        byte(VMADDL as u16, 0); byte(VMADDH as u16, 0x30);
-        byte(VMAIN as u16, 0x80);
-    }
+    const STEP_AFTER_HIGH: u8 = 0x80;
+    game.apply(
+        PAUSE,
+        Command::VramPort {
+            address: 0x3000,
+            step: STEP_AFTER_HIGH,
+        },
+    );
     crate::menus::map_menu::render_map(crate::menus::map_menu::MapScreen::Pause, game);
-    setup_transfer(u16::from_ne_bytes([1, 0x18]), 0x7e4000, 0x1000, game);
-    register_writes! { game;
-        byte(MDMAEN as u16, 2); byte(VMADDL as u16, 0xaa);
-        byte(VMADDH as u16, 0x38); byte(VMAIN as u16, 0x80);
-        byte(DMAP1 as u16, 1); byte(BBAD1 as u16, 0x18);
-        byte(DAS1L as u16, 0x18); byte(DAS1H as u16, 0);
-    }
+    game.apply(
+        PAUSE,
+        Command::TilesThroughPort {
+            source: crate::display::transfer::Source {
+                address: 0x4000,
+                bank: 0x7e,
+            },
+            bytes: 0x1000,
+        },
+    );
+    game.apply(
+        PAUSE,
+        Command::VramPort {
+            address: 0x38aa,
+            step: STEP_AFTER_HIGH,
+        },
+    );
+    // The label is looked up before the channel's first byte, which the
+    // original wrote first: neither the lookup's ROM table nor the room's
+    // area can see a channel register.
     let mut area: u16 = room_area(game);
     if (room_area(game) as i32 - 7i32) & 0x8000 == 0 {
         area = 0;
     }
-    register_writes! { game;
-        word(A1T1L as u16,
-        crate::gameplay_tables::area_label(game, area as isize),); byte(A1B1 as u16, 0x82);
-        byte(MDMAEN as u16, 2);
-    }
+    let label = crate::gameplay_tables::area_label(game, area as isize);
+    game.apply(
+        PAUSE,
+        Command::TilesThroughPortBytes {
+            source: crate::display::transfer::Source {
+                address: label,
+                bank: 0x82,
+            },
+            bytes: 0x18,
+        },
+    );
 }
 
 fn room_area<H: crate::runtime_access::RuntimeAccess + ?Sized>(game: &mut H) -> u16 {

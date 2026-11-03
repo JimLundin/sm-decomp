@@ -162,6 +162,14 @@ pub enum Control {
     WindowLogicSpritesColor(u8),
     /// Interlace, overscan, pseudo-hires and external-sync flags.
     ScreenSettings(u8),
+    /// The NMI, the scanline IRQ's mode and joypad auto-read.
+    Interrupts(u8),
+    /// The fast ROM access speed.
+    MemorySpeed(u8),
+    /// The OAM address's low byte.
+    ObjectAddressLow(u8),
+    /// The OAM address's high byte: its high bit and sprite priority rotation.
+    ObjectAddressHigh(u8),
 }
 
 impl Control {
@@ -193,7 +201,11 @@ impl Control {
             | Self::Window2Right(bits)
             | Self::WindowLogicBackgrounds(bits)
             | Self::WindowLogicSpritesColor(bits)
-            | Self::ScreenSettings(bits) => bits,
+            | Self::ScreenSettings(bits)
+            | Self::Interrupts(bits)
+            | Self::MemorySpeed(bits)
+            | Self::ObjectAddressLow(bits)
+            | Self::ObjectAddressHigh(bits) => bits,
         }
     }
 }
@@ -285,6 +297,41 @@ pub enum Command {
         destination: Source,
         bytes: u16,
     },
+    /// Read `bytes` of VRAM from word `address` back to work RAM at
+    /// `destination` now, the pause screen's way: the VRAM port's address and
+    /// step, then the channel byte by byte (its source and count as words),
+    /// clearing its indirect bank, table address and line counter. There is
+    /// no prefetch read.
+    ReadVramNow {
+        address: u16,
+        destination: Source,
+        bytes: u16,
+    },
+    /// Point the VRAM port at word `address` with VMAIN byte `step`, byte by
+    /// byte: the address's low byte, its high byte, then the step.
+    VramPort {
+        address: u16,
+        step: u8,
+    },
+    /// Upload `bytes` from `source` through the VRAM port as already set:
+    /// channel 1's mode and target as a word, its source and count, then the
+    /// start.
+    TilesThroughPort {
+        source: Source,
+        bytes: u16,
+    },
+    /// As `TilesThroughPort`, channel 1 set byte by byte: its mode, target and
+    /// count first, then its source address (a word) and bank, then the
+    /// start, as the pause map's area label upload does.
+    TilesThroughPortBytes {
+        source: Source,
+        bytes: u16,
+    },
+    /// Two bytes into OAM through the data port.
+    ObjectBytes([u8; 2]),
+    /// Clear the I/O port, the multiplier's and divider's inputs and the
+    /// scanline IRQ's positions, and start no DMA, in register order.
+    ClearCpuIo,
     /// Two CGRAM colours from palette entry `index`, through the port.
     Colors {
         index: u8,
