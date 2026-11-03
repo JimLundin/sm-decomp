@@ -28,7 +28,7 @@ IRRELEVANT = [
     # Tests the Quality jobs already run: target-package integration tests (cargo
     # test) and the mutation lists, whose anchors Quality checks.
     # sm/src/verification/*.rs is the verifier itself and stays relevant.
-    # ci.yml itself is relevant: it defines the Verify jobs.
+    # The workflows are relevant: verify.yml defines the Verify jobs.
     "crates/*/tests/*",
     "sm/src/verification/*mutations.py",
     ".github/scripts/test_summary.py",

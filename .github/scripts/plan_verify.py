@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Plan one ci.yml Verify run as a single job matrix.
+"""Plan one verify.yml run as a single job matrix.
 
 SCOPE selects what runs:
   gate      every locked scenario engine-only against the oracle lock, lockstep
@@ -183,7 +183,7 @@ def main() -> None:
     movie = next(m for m in tomllib.load((ROOT / "movies/manifest.toml").open("rb"))["movies"]
                  if m["category"] == "any%")
     # The gate's floor jobs (pack.floor) set its wall time. They build their own verifier,
-    # so they queue for runners with verify-build instead of behind it (ci.yml
+    # so they queue for runners with verify-build instead of behind it (verify.yml
     # verify-replay-first). At most two, one per route today, bound the extra builds.
     first = [job for job in jobs if scope == "gate" and job.get("first")][:2]
     rest = [job for job in jobs if job not in first]

@@ -12,8 +12,8 @@ commits need no local verifier build.
 ## Run replays
 
 Push your branch as `verify/<name>` to run the whole gate on it. To run chosen rows:
-`gh workflow run ci.yml --ref <branch> -f scope=rows -f segments="ID ID"`,
-adding `-f oracle=faithful` for the unpatched game. `scope=full` adds lockstep of
+`gh workflow run ci.yml --ref <branch> -f action=rows -f segments="ID ID"`,
+adding `-f oracle=faithful` for the unpatched game. `action=full` adds lockstep of
 everything. The commands below also work locally if you have a ROM.
 
 ## The modes
@@ -63,6 +63,6 @@ result. Never commit the mutant.
 The gate runs every locked row in check-lock and lockstep for the rows the lock can't
 hold. The three long checkpoint rows are being reseeded from room seeds through
 the existing setup; until those genuine starts and inputs are qualified, their
-current cold-prefix versions remain in nightly full runs or `scope=rows`.
+current cold-prefix versions remain in nightly full runs or `action=rows`.
 
 Done when every row you listed passed and you have the counts for your report.

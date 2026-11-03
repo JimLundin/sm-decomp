@@ -1,0 +1,250 @@
+name: Verify
+
+# Verify: the replay pipeline. One plan, one verifier build, the replay matrix, coverage
+# when asked, and one result. Scope gate replays every locked scenario engine-only against
+# the oracle lock, lockstep for what the lock cannot hold, and the ROM import check; a pull
+# request that changes no replay-relevant file skips it (.github/scripts/replay_relevant.py).
+# Scope full adds lockstep of the whole corpus and both routes, and stops if a scheduled run
+# already passed this commit. Scope rows runs chosen rows; scope coverage reports what the
+# corpus never executes. See .github/scripts/plan_verify.py.
+# The ROM is encrypted in the private ci-data repository. ROM-derived files stay private,
+# and fetching it needs secrets, so only in-repo branches run it.
+# A called workflow sees its caller's github context: run lookups name ci.yml.
+on:
+  workflow_call:
+    inputs:
+      scope:
+        description: gate, full, rows or coverage
+        type: string
+        required: true
+      segments:
+        description: Space-separated row ids (scope rows)
+        type: string
+        default: ''
+      oracle:
+        description: Oracle for lockstep (patched = snesrev compatibility patches, faithful = original game logic)
+        type: string
+        default: patched
+      audio_trace:
+        description: Check each lockstep row's ordered Cue/port trace against the physical-audio oracle
+        type: boolean
+        default: false
+      oracle_sample:
+        description: With scope full, re-record a rotating sample of at least 30 faithful locks
+        type: boolean
+        default: false
+      cover_routes:
+        description: With scope coverage, also replay both routes instrumented
+        type: boolean
+        default: false
+    secrets:
+      SM_ROM_DEPLOY_KEY:
+        required: false
+      SM_ROM_KEY:
+        required: false
+
+permissions:
+  contents: read
+
+env:
+  SCOPE: ${{ inputs.scope }}
+
+jobs:
+  verify-plan:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      skip: ${{ (steps.passed.outputs.skip == 'true' || steps.relevant.outputs.skip == 'true') && 'true' || 'false' }}
+      matrix: ${{ steps.plan.outputs.matrix }}
+      first: ${{ steps.plan.outputs.first }}
+      first_count: ${{ steps.plan.outputs.first_count }}
+      movie_file: ${{ steps.plan.outputs.movie_file }}
+      movie_sha256: ${{ steps.plan.outputs.movie_sha256 }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: passed
+        env:
+          GH_TOKEN: ${{ github.token }}
+          WORKFLOW: ci.yml
+        run: python3 .github/scripts/already_passed.py
+      # A pull request that changes only docs, skills or measurement tools replays nothing.
+      - id: relevant
+        env:
+          GH_TOKEN: ${{ github.token }}
+          WORKFLOW: ci.yml
+        run: python3 -B .github/scripts/replay_relevant.py
+      - id: plan
+        env:
+          ORACLE: ${{ inputs.oracle }}
+          SELECTED: ${{ inputs.segments }}
+          ORACLE_SAMPLE: ${{ inputs.oracle_sample && '1' || '' }}
+          COVER_ROUTES: ${{ inputs.cover_routes && '1' || '' }}
+        run: python3 .github/scripts/plan_verify.py
+
+  verify-build:
+    needs: verify-plan
+    if: needs.verify-plan.outputs.skip != 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    outputs:
+      rust: ${{ steps.rust.outputs.version }}
+    env:
+      CARGO_INCREMENTAL: '0'
+      CARGO_BUILD_JOBS: '4'
+      RUSTFLAGS: ${{ inputs.scope == 'coverage' && '-D warnings -C instrument-coverage -C link-dead-code' || '-D warnings' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/verifier
+        with:
+          flavour: ${{ inputs.scope == 'coverage' && 'coverage' || 'plain' }}
+      - id: rust
+        run: echo "version=$(rustc --version | cut -d' ' -f2)" >> "$GITHUB_OUTPUT"
+      - name: Run the verifier's units
+        if: inputs.scope != 'coverage'
+        run: python3 tools/verify_dll.py --unit-tests --no-build --direct
+      - name: Check the verifier's source guards and actor capabilities
+        if: inputs.scope != 'coverage'
+        run: python3 -B .github/scripts/check_actor_exports.py
+      - name: Run the target packages' tests instrumented
+        if: inputs.scope == 'coverage'
+        run: python3 -B .github/scripts/coverage_tests.py target/coverage-unit
+      - name: Package the verifier
+        # A tar keeps the executable bit, and the paths verify_dll.py expects.
+        run: |
+          test -x target/verify-host/sm_verify
+          files="target/verify-host/sm_verify"
+          if [ -d target/coverage-unit ]; then files="$files target/coverage-unit"; fi
+          tar -cf verifier.tar $files
+      - uses: actions/upload-artifact@v4
+        with:
+          name: verifier
+          path: verifier.tar
+          retention-days: 1
+
+  verify-replay:
+    needs: [verify-plan, verify-build]
+    if: needs.verify-plan.outputs.skip != 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: ${{ matrix.timeout }}
+    strategy:
+      fail-fast: false
+      # Other repositories share the account's 20 jobs; leave two for them and CI.
+      max-parallel: 18
+      matrix: ${{ fromJson(needs.verify-plan.outputs.matrix) }}
+    name: ${{ matrix.name }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: verifier
+      - run: tar -xf verifier.tar
+      - &movie
+        name: Cache the pinned movie download
+        if: contains(matrix.kinds, 'route')
+        uses: actions/cache@v4
+        with:
+          path: movies/${{ needs.verify-plan.outputs.movie_file }}
+          key: ${{ runner.os }}-movie-${{ needs.verify-plan.outputs.movie_sha256 }}
+      - &rom
+        name: Fetch the encrypted ROM
+        uses: actions/checkout@v4
+        with:
+          repository: JimLundin/ci-data
+          ssh-key: ${{ secrets.SM_ROM_DEPLOY_KEY }}
+          path: .ci-data
+          persist-credentials: false
+      - &decrypt
+        name: Decrypt the ROM
+        env:
+          SM_ROM_KEY: ${{ secrets.SM_ROM_KEY }}
+        run: python3 -B .github/scripts/prepare_rom.py
+      - &replay
+        name: Restore and replay
+        env:
+          JOB: ${{ toJSON(matrix) }}
+          ORACLE: ${{ inputs.oracle }}
+          AUDIO_TRACE: ${{ inputs.audio_trace && '1' || '' }}
+          LLVM_PROFILE_FILE: ${{ inputs.scope == 'coverage' && format('{0}/profiles/%p-%m.profraw', github.workspace) || '' }}
+        run: python3 -B .github/scripts/replay_job.py
+      - uses: actions/upload-artifact@v4
+        if: always() && inputs.scope == 'coverage'
+        with:
+          name: profiles-${{ matrix.kinds == 'room' && 'route-' || '' }}${{ strategy.job-index }}
+          path: profiles
+          retention-days: 2
+          if-no-files-found: warn
+
+  # The gate's longest jobs (plan_verify.py) set its wall time. Each builds its own
+  # verifier, so it queues for a runner alongside verify-build rather than after it.
+  verify-replay-first:
+    needs: verify-plan
+    if: needs.verify-plan.outputs.skip != 'true' && needs.verify-plan.outputs.first_count != '0'
+    runs-on: ubuntu-24.04
+    timeout-minutes: ${{ matrix.timeout }}
+    env:
+      CARGO_INCREMENTAL: '0'
+      CARGO_BUILD_JOBS: '4'
+      RUSTFLAGS: '-D warnings'
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.verify-plan.outputs.first) }}
+    name: ${{ matrix.name }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/verifier
+      - *movie
+      - *rom
+      - *decrypt
+      - *replay
+
+  verify-coverage:
+    needs: [verify-build, verify-replay]
+    if: always() && inputs.scope == 'coverage' && needs.verify-build.result == 'success'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: verifier
+      - run: tar -xf verifier.tar
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: profiles-*
+          path: all-profiles
+          # One directory per job: jobs reuse process ids, so merged names would collide.
+          merge-multiple: false
+      - name: Merge the profiles and summarise engine coverage
+        env:
+          RUST_VERSION: ${{ needs.verify-build.outputs.rust }}
+        run: python3 -B .github/scripts/coverage_report.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage.md
+          retention-days: 30
+
+  verify:
+    name: Verify result
+    needs: [verify-plan, verify-build, verify-replay, verify-replay-first, verify-coverage]
+    if: always() && needs.verify-plan.result != 'skipped'
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Require every planned job to pass
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+          SKIP: ${{ needs.verify-plan.outputs.skip }}
+          FIRST: ${{ needs.verify-plan.outputs.first_count }}
+        run: |
+          python3 -B - <<'PY'
+          import json, os
+          needs = json.loads(os.environ['RESULTS'])
+          assert needs['verify-plan']['result'] == 'success'
+          if os.environ['SKIP'] != 'true':
+              assert needs['verify-build']['result'] == 'success'
+              assert needs['verify-replay']['result'] == 'success'
+              if os.environ['FIRST'] != '0': assert needs['verify-replay-first']['result'] == 'success'
+              if os.environ['SCOPE'] == 'coverage': assert needs['verify-coverage']['result'] == 'success'
+          PY

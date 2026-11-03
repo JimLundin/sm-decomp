@@ -27,7 +27,7 @@ from typing import Any
 
 # Processes per job: one per vCPU for lock checks, one per physical core for lockstep.
 WORKERS = {"lock": 4, "lockstep": 2}
-# ci.yml runs at most 18 replay jobs at once; the short lockstep route jobs and
+# verify.yml runs at most 18 replay jobs at once; the short lockstep route jobs and
 # rom-import fill in after the first to finish.
 RUNNERS = 17
 # A process of several rows is packed to this share of the budget: a margin for
@@ -37,7 +37,7 @@ FILL = 0.8
 FIRST = 0.9
 # Below this a job spends a large share of its time on setup.
 SHORTEST = 300.0
-# Leaves a margin under ci.yml's 60-minute job timeouts for estimate error.
+# Leaves a margin under verify.yml's 60-minute job timeouts for estimate error.
 LONGEST = 1800.0
 # Unmeasured rows: a row measured in the other mode takes about as long (lockstep
 # ran 0.76 times its lock check where both were measured); otherwise lock checks

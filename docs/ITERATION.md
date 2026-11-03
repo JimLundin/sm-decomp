@@ -35,7 +35,7 @@ The desktop game (`sm_app`) currently links only for Windows x86-64 with the GNU
 toolchain: the native desktop bridge relies on Windows' 32-bit `long`. The verifier
 also builds on Linux, which is where CI runs it
 ([the action](../.github/actions/linux-native/action.yml) has the steps). CI type-checks
-the desktop's Windows target from Linux on every pull request (ci.yml `desktop-check`); linking it
+the desktop's Windows target from Linux on every pull request (quality.yml `desktop-check`); linking it
 is local. You need:
 
 - the `stable-x86_64-pc-windows-gnu` Rust toolchain and a MinGW-w64 GCC linker;

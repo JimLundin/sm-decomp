@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Merge a ci.yml coverage run's profiles and write coverage.md."""
+"""Merge a verify.yml coverage run's profiles and write coverage.md."""
 import os, pathlib, subprocess, sys
 
 toolchain = os.environ["RUST_VERSION"]

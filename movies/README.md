@@ -101,15 +101,18 @@ CI decrypts the ROM from a private repository and keeps every ROM-derived file
 
 | Workflow | Runs | What it does |
 | --- | --- | --- |
-| [ci.yml](../.github/workflows/ci.yml) Quality | Every pull request and push to main | Format, progress reports, dependency direction, target-crate tests, detached composition checks and a type-check of the Windows desktop |
-| [ci.yml](../.github/workflows/ci.yml) Verify | Every pull request that changes a replay-relevant file and `verify/**` push (gate), nightly (full), on dispatch, and after a push to main that deletes a legacy bank file | One verifier build, then the oracle lock, lockstep for rows it cannot hold, the ROM import check, verifier units; full adds all lockstep; `scope=coverage` reports unexecuted code |
+| [ci.yml](../.github/workflows/ci.yml) | Every trigger | The only entry point: no steps of its own; it calls the workflows below per event |
+| [quality.yml](../.github/workflows/quality.yml) | Every pull request and push to main, dispatched `action=gate` | Format, progress reports, dependency direction, target-crate tests, detached composition checks and a type-check of the Windows desktop |
+| [verify.yml](../.github/workflows/verify.yml) | Every pull request that changes a replay-relevant file and `verify/**` push (gate), nightly (full), on dispatch, and after a push to main that deletes a legacy bank file | One verifier build, then the oracle lock, lockstep for rows it cannot hold, the ROM import check, verifier units; full adds all lockstep; `action=coverage` reports unexecuted code |
+| [bench.yml](../.github/workflows/bench.yml) | Dispatched `action=bench` | Check-lock replay speed of the branch against `base` (default main) on one runner; a ticks-per-second table in the step summary |
 
-To run selected rows on a branch, dispatch `ci.yml` with `scope=rows` and
-space-separated row IDs; unknown IDs fail. `scope=full` runs everything. A change lands after CI and Verify pass on its exact head.
+Called jobs report as `<caller job> / <job>`, for example `quality / Quality` and
+`verify / Verify result`. To run selected rows on a branch, dispatch `ci.yml` with
+`action=rows` and space-separated row IDs; unknown IDs fail. `action=full` runs everything. A change lands after CI and Verify pass on its exact head.
 
 ### ROM import check
 
-`ci.yml` restores the ROM and runs `cargo test -p sm_data --test rom_import`
+`verify.yml` restores the ROM and runs `cargo test -p sm_data --test rom_import`
 with `SM_ROM` set. The test imports every `sm_data` record from the real
 cartridge. A record that rejects it would leave the game on its old ROM reads,
 so replays would pass without exercising it. The log is filtered to pass/fail,
@@ -130,7 +133,7 @@ in parallel. Dispatch with `regenerate` to rebuild the boundary checkpoints.
 
 ### Coverage
 
-`ci.yml` with `scope=coverage` builds the verifier with `-C instrument-coverage`, runs the
+`ci.yml` with `action=coverage` builds the verifier with `-C instrument-coverage`, runs the
 selected rows (all by default), merges the profiles and summarises line and
 function coverage of `crates/sm_game` and `sm/src/game` with
 [coverage_summary.py](../tools/coverage_summary.py). The `coverage` artifact
