@@ -29,10 +29,8 @@ pub mod instruction_list {
     pub const FACING_FORWARD: u16 = 0xe828;
 }
 
-/// $7E:178C: the enemy graphics drawn hook, a long pointer: the palette cycle
+/// The enemy graphics drawn hook ($7E:178C), a long pointer: the palette cycle
 /// ($A8:E86E) once the morph ball is collected, else an RTL ($A8:804C).
-const GFX_DRAWN_HOOK: usize = 0x178c;
-const GFX_DRAWN_HOOK_BANK: usize = 0x178e;
 const PALETTE_CYCLE_HOOK: u16 = 0xe86e;
 const NO_HOOK: u16 = 0x804c;
 const BANK: u16 = 0xa8;
@@ -41,16 +39,19 @@ const BANK: u16 = 0xa8;
 const HOOK_PALETTE: usize = 0;
 const HOOK_COLOUR_SET: usize = 1;
 const HOOK_TIMER: usize = 2;
-/// $7E:1796, the colour set index's low byte.
-const HOOK_COLOUR_SET_LOW: usize = 0x1796;
 const CYCLE_FRAMES: u16 = 16;
 const COLOUR_SETS: u16 = 7;
 const COLOURS: usize = 4;
-/// Colours 9-12 of the enemy's palette start at $7E:C112.
-const FIRST_GLOW_COLOUR: usize = 0xc112;
+/// Colours 9-12 of the enemy's palette start at colour 137 ($7E:C112).
+const FIRST_GLOW_COLOUR: usize = 137;
 /// Collected items bit 2: the morph ball.
 const MORPH_BALL: u16 = 4;
 const SIGN: u16 = 0x8000;
+
+/// Store the drawn hook's address word.
+fn set_hook(game: &mut (impl Host + ?Sized), hook: u16) {
+    game.session_mut().actors.drawing.hook_address[..2].copy_from_slice(&hook.to_le_bytes());
+}
 
 fn publish_palette(block: u16, game: &mut (impl Host + ?Sized)) {
     let palette = FaceBlock::of(game, block).actor().palette;
@@ -68,8 +69,8 @@ pub fn initialize(game: &mut (impl Host + ?Sized)) {
     } else {
         PALETTE_CYCLE_HOOK
     };
-    game.set_slot_word(GFX_DRAWN_HOOK, hook);
-    game.set_slot_word(GFX_DRAWN_HOOK_BANK, BANK);
+    set_hook(game, hook);
+    game.session_mut().actors.drawing.hook_address[2..].copy_from_slice(&BANK.to_le_bytes());
     publish_palette(block, game);
     word!(game.VARIABLES_FOR_ENEMY_GRAPHICS_DRAWN_HOOK[HOOK_TIMER] = CYCLE_FRAMES);
     let mut edit = FaceBlockEdit::of(game, block);
@@ -82,7 +83,7 @@ pub fn main_ai(game: &mut (impl Host + ?Sized)) {
     if game.session().inventory.equipment.owned & MORPH_BALL == 0 {
         return;
     }
-    game.set_slot_word(GFX_DRAWN_HOOK, PALETTE_CYCLE_HOOK);
+    set_hook(game, PALETTE_CYCLE_HOOK);
     let block = game.current_enemy();
     publish_palette(block, game);
     if FaceBlock::of(game, block).activated() != 0 {
@@ -133,14 +134,16 @@ pub fn cycle_palette(game: &mut (impl Host + ?Sized)) {
     ));
     for _ in 0..COLOURS {
         let color = crate::enemy_lists::face_block_glow_colour(game, (source >> 1) as isize);
-        let at = FIRST_GLOW_COLOUR + usize::from(destination >> 1) * 2;
-        game.set_slot_word(at, color);
+        let at = FIRST_GLOW_COLOUR + usize::from(destination >> 1);
+        game.session_mut().presentation.visual_mut().colors[at] = color;
         source = source.wrapping_add(2);
         destination = destination.wrapping_add(2);
     }
     // The legacy phase increment reads physical byte zero, even on a big-endian host.
     word!(
         game.VARIABLES_FOR_ENEMY_GRAPHICS_DRAWN_HOOK[HOOK_COLOUR_SET] =
-            (u16::from(game.slot_byte(HOOK_COLOUR_SET_LOW)) + 1) & COLOUR_SETS
+            (u16::from(game.session().actors.drawing.hook_work[HOOK_COLOUR_SET].to_le_bytes()[0])
+                + 1)
+                & COLOUR_SETS
     );
 }
