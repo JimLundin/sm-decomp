@@ -57,7 +57,7 @@ BASELINE = {
     # legacy-engine measures are reported only.
     "engine_ram_address_sites": 11,
     "engine_raw_ram_calls": 115,
-    "engine_unresolved_ram_methods": 987,
+    "engine_unresolved_ram_methods": 985,
     "legacy_engine_ram_sites": 526,
     # Original-game overflow paths (LEGACY(original-overflow)), reported only.
     "engine_legacy_overflow_sites": 60,

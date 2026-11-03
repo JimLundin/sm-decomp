@@ -158,7 +158,7 @@ impl Cohort for MenuScreens {
         session.menu_screens.words(visit);
     }
     fn session_copy(session: &Session) -> Self {
-        session.menu_screens.clone()
+        session.menu_screens
     }
 }
 
@@ -194,7 +194,7 @@ impl Cohort for MapScreenState {
         session.menu_screens.map.words(visit);
     }
     fn session_copy(session: &Session) -> Self {
-        session.menu_screens.map.clone()
+        session.menu_screens.map
     }
 }
 
@@ -214,7 +214,7 @@ impl Cohort for SaveSelection {
         session.menu_screens.save_selection.words(visit);
     }
     fn session_copy(session: &Session) -> Self {
-        session.menu_screens.save_selection.clone()
+        session.menu_screens.save_selection
     }
 }
 
@@ -228,7 +228,7 @@ impl Cohort for OptionsMenu {
         session.menu_screens.options_menu.words(visit);
     }
     fn session_copy(session: &Session) -> Self {
-        session.menu_screens.options_menu.clone()
+        session.menu_screens.options_menu
     }
 }
 
@@ -242,7 +242,7 @@ impl Cohort for DeathSequence {
         session.menu_screens.death.words(visit);
     }
     fn session_copy(session: &Session) -> Self {
-        session.menu_screens.death.clone()
+        session.menu_screens.death
     }
 }
 

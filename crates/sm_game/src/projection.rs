@@ -5,10 +5,14 @@
 //! [`crate::session_cohort`] copies) gives code outside a lease typed access
 //! to Session-owned state. It names what it reads and stores by field
 //! ([`Field`]) or by layout ([`Layout`], [`Decode`]), and the host
-//! ([`Views`]) resolves them. The compatibility layer (`sm`) implements
-//! [`Views`] for the Runtime over its lease and for `Game` over the installed
-//! Session's projection or its RAM image. The byte layout stays with
-//! `session_encoding` and the views' layouts; the byte access stays in `sm`.
+//! ([`Views`]) resolves them. Each field, layout and decoded value also names
+//! its Session fields ([`Field::session_word`], [`Layout::session_copy`],
+//! [`Decode::from_session`]); the tests below prove they are the words the
+//! projection encodes. The compatibility layer (`sm`) implements [`Views`]
+//! for the Runtime, which reads and stores those Session fields while its
+//! lease is current, and for `Game` over the installed Session's projection
+//! or its RAM image. The byte layout stays with `session_encoding` and the
+//! views' layouts; the byte access stays in `sm`.
 //!
 //! The `image_*` helpers address the work RAM image directly, for a view that
 //! must not admit the owned Session (the enemy projectile table when no lease

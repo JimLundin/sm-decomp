@@ -1,11 +1,11 @@
 //! The compatibility hosts' projected bytes, behind sm_game's typed views.
 //!
 //! sm_game's views name what they read and store by field and layout
-//! (`sm_game::projection::Views`). Here the compat `Game` and the Runtime
-//! resolve them to their projected bytes: on a lease the Runtime's byte path
-//! (the Session while it is current), on `Game` the installed Session's
-//! projection or the RAM image. Words go low byte then high, as the named
-//! word accesses did.
+//! (`sm_game::projection::Views`). The Runtime resolves them to the Session
+//! fields they name while its lease is current, and otherwise (and for a word
+//! with no plain Session field) to its byte path; `Game` resolves them to its
+//! projected bytes, the installed Session's projection or the RAM image.
+//! Words go low byte then high, as the named word accesses did.
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
 use sm_game::external_inputs::ExternalInputs;
