@@ -438,6 +438,42 @@ A decision (D3).
   - Menus: `options-menu-tour`, `pause-menu-tour`, `options-menu-return-parameter`,
     `file-copy-clear`.
   - Saves: `save-memory`.
+- **Attempted out of order (lane `tick-s7`, on `6ab13f6fb`, after stages 1, 2 and 3a).**
+  Not landed. Ratchet then: `sm_game_ram_sites` 122, `foreign_calls` 183. The stage
+  needs stages 3b, 4, 5 and parts of 6 and 9 first:
+  - **No frame lease spans the dispatch.** The only lease before step 7 is step 6's
+    `with_session(clear_samus_requests)`, closed before `GAME_STATE` is read. Keeping it
+    open through `advance_native_state` would run the whole cinematic state on it.
+  - **The host.** The states are generic over `cinematic_host::Host` =
+    `menus::host::Host` + `display_refresh::Host`. `Runtime` lacks 16 of their
+    supertraits: `Mode7Queue`, `TilemapQueue`, `BackgroundBlocks`, `LevelData`,
+    `PlayerPosition`, `HudPlayer`, `WorkRamAccess`, `LoadedRom`, `Video`,
+    `DisplayRefresh`, `HdmaTable`, `SpriteHost`, `DecompressionHost`, `MenuRuntime`,
+    `ResetRequest`, `RuntimeAccess`, plus `ActorImage` (an excluded facade).
+  - **Hardware (stage 4).** `Registers for Runtime` is a `foreign` per write.
+    `Video::produced` reads WRAM for its uploads. `load_vram_words`,
+    `write_dma_register`, `disable_scanline_irq` and `advance_ending_tile_upload`
+    (Mode 7 DMA) have no lease path.
+  - **HDMA (stages 4 and 5).** The intro pages and `spawn_power_bomb` spawn HDMA
+    objects through `place_hdma`, which writes the channel registers on Game.
+    `MenuRuntime::run_hdma_objects` (`update_hdma`) opens `hdma_lease()`, so from a
+    lease it would be a `Runtime::new` inside `foreign`.
+  - **Samus (stage 6).** `advance_intro_player` (`player_projectiles::prepare` +
+    `player_update_runtime::advance_frame`) and `initialize_player` are Game-hosted.
+    `advance_frame` opens its own `Runtime::new` on every path, and also uses the
+    special-movement and gamma callback tables on Game.
+  - **Audio (stage 3b).** `MenuRuntime::handle_music_queue` runs on Game.
+  - **Nested `.runtime()` (stage 9).** The palette effects, the shooting stars and
+    `cinematic.rs` (3) open `game.runtime()` inside the frame. On a lease host,
+    `RuntimeAccess::runtime()` has to hand out the lease itself.
+  - **The split cohort.** `intro` copies the `Cinematic` twice around Samus's frame
+    because her frame reads the table as enemy projectiles. That split goes only when her
+    frame runs on the same lease.
+
+  Without these, the cinematic host on `Runtime` needs about 20 new `foreign`
+  delegations (`foreign_calls` is strict). Two of them (`run_hdma_objects` and
+  `advance_intro_player`) would open a lease inside `foreign`: the section 4 failure mode. A Game-held `Cinematic`, fade plane or palette owner would be a
+  second state owner outside the plan. A Game-side accessor would be an excluded facade.
 
 ### Stage 8: pause hooks, save slots and demo on owners
 
