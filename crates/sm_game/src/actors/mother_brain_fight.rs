@@ -844,6 +844,7 @@ pub trait Lease:
     + crate::actors::effects::ActorHost
     + crate::enemy_projectiles::host::Host
     + crate::player_update::effects::Host
+    + crate::player_projectiles::host::Host
     + crate::hdma_objects::HdmaTable
 {
     type Game: Host + crate::hdma_objects::HdmaTable + SessionRam;
@@ -2855,9 +2856,9 @@ pub(crate) fn collided_shot_kind(game: &impl State) -> u16 {
 /// the current enemy's contact damage. Was `Ridley_Func_98`.
 fn deal_contact_damage(game: &mut impl Lease) {
     let damage = crate::actors::ridley::contact_damage(game);
-    game.foreign(|game| {
-        let amount = game.suit_damage(damage);
-        game.damage_player(amount);
+    game.owned_step(|game| {
+        let amount = crate::actors::combat::suit_damage(game, damage);
+        crate::samus_periodic_damage::contact(game, amount);
     });
 }
 pub fn hurt_samus(game: &mut impl Lease) {
