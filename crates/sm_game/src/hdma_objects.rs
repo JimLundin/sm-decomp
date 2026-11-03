@@ -1,12 +1,13 @@
 //! HDMA objects: allocation, channel setup, the per-frame program interpreter and the room effect reset.
 use crate::cinematic::cinematic_native_record;
+use crate::cinematic_state::Word as CinematicWord;
 use crate::display::preparation::{Field as DisplayField, Store as DisplayStore};
 use crate::display::registers::{DMAP0, HDMAEN, MDMAEN};
 use crate::display::sequence::Registers;
 use crate::display_refresh::DisplayOwner;
 use crate::imported::word as table_word;
+use crate::projection::Field;
 use crate::ram::RawRam as _;
-use crate::ram::{checked_word, word};
 use crate::scene::hdma_sources::LiveOwner;
 use crate::scene::state::WordOrder;
 use crate::session::HookSlot;
@@ -394,7 +395,7 @@ pub(crate) fn refresh_title_gradient<H: crate::menus::host::Host + ?Sized>(game:
         &game.visual_tables().title_gradients,
         game,
         GRADIENT_ADDRESS,
-        ((word!(game.MODE7_ZOOM) & 0xf0) >> 4) as isize,
+        ((game.view_word(Field::Cinematic(CinematicWord::Mode7Zoom)) & 0xf0) >> 4) as isize,
     );
     for slot in 0usize.. {
         let value = cinematic_native_record::<0x8c>(cursor, game).word(0);
@@ -416,7 +417,7 @@ pub fn advance_title_gradient<H: crate::menus::host::Host + ?Sized>(backdrop: bo
 }
 
 pub fn advance_intro_crossfade<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    if checked_word!(game.EPROJ_X_POS[0]) == 1 {
+    if game.view_word(Field::Cinematic(CinematicWord::Var13)) == 1 {
         crate::hdma_effects::apply_leased(HdmaEffect::AdvanceProgram, 0, game);
     }
 }
