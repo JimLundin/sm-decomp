@@ -256,7 +256,7 @@ pub fn initialize_intro_wave<H: crate::menus::host::Host + ?Sized>(game: &mut H)
     word!(game.LOOP_COUNTER_TRANSFER_ENEMIES_TO_VRAM = 8);
     crate::hdma_effects::apply_leased(
         HdmaEffect::InitializeWavePair {
-            base: 0xd82,
+            table: crate::hdma_objects::WaveTable::Intro,
             primary: 0x9800,
         },
         0,

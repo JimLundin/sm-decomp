@@ -12,6 +12,16 @@ use crate::scene::state::WordOrder;
 use crate::session_access::SessionAccess;
 
 /// The HDMA effects whose state the host's session view projects.
+/// Where a wave pair's two-entry indirect HDMA table is built.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum WaveTable {
+    /// Phantoon's wide wave, at $7E:9000 in the bosses' shared block.
+    Phantoon,
+    /// The intro's wavy Samus, at $7E:0D82: the saved button configuration
+    /// words, which the original reuses for the table.
+    Intro,
+}
+
 #[derive(Clone, Copy)]
 pub enum HdmaEffect {
     /// Step the current object's program past its wait.
@@ -20,7 +30,7 @@ pub enum HdmaEffect {
     InitializeEyeBeam,
     ResetWave,
     InitializeWavePair {
-        base: usize,
+        table: WaveTable,
         primary: u16,
     },
     SetPhantoonMotion {
