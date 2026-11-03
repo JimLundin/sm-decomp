@@ -850,10 +850,10 @@ ram_vars! {
 
 // Named SNES word reads and stores for sm_game's remaining RAM callers; the
 // compatibility layer (sm/src/ram_words.rs) keeps the full interface.
-// `word!(game.field)` reads; `word!(game.field = value)` writes and arrays use
-// `field[index] = value`. `word!(game.field += value)` wraps at 16 bits.
-// Ordered stores of one literal use `(game, value; field, other[index])`;
-// different values use `(game; field = value; other[index] = next;)`.
+// `word!(game.field)` reads; `word!(game.field = value)` writes.
+// `word!(game.field += value)` wraps at 16 bits. Ordered stores of one literal
+// use `(game, value; field, other)`; different values use
+// `(game; field = value; other = next;)`.
 //
 // Checked byte places stay at the caller: borrowing the whole Game/RAM here
 // could invalidate retained raw enemy pointers. No reference escapes an access.
@@ -872,20 +872,14 @@ macro_rules! ram_word {
     ($game:ident.$field:ident) => {
         $crate::ram_word!(@read $game, $crate::ram::words::$field)
     };
-    ($game:ident.$field:ident[$index:expr] = $value:expr $(,)?) => {
-        $crate::ram_word!(@write $game,
-            $crate::ram::word_arrays::$field
-                .checked_add_signed(($index as isize).checked_mul(2).expect("word index overflow"))
-                .expect("word address outside RAM"), $value)
-    };
     ($game:ident.$field:ident = $value:expr $(,)?) => {
         $crate::ram_word!(@write $game, $crate::ram::words::$field, $value)
     };
-    ($game:ident; $($field:ident$([$index:expr])? = $value:expr;)+) => {
-        $($crate::ram_word!($game.$field$([$index])? = $value);)+
+    ($game:ident; $($field:ident = $value:expr;)+) => {
+        $($crate::ram_word!($game.$field = $value);)+
     };
-    ($game:ident, $value:literal; $($field:ident$([$index:expr])?),+ $(,)?) => {
-        $($crate::ram_word!($game.$field$([$index])? = $value);)+
+    ($game:ident, $value:literal; $($field:ident),+ $(,)?) => {
+        $($crate::ram_word!($game.$field = $value);)+
     };
     (@read $game:ident, $offset:expr) => {
         match $offset {
@@ -910,32 +904,19 @@ macro_rules! ram_word {
     };
 }
 
-// Checked word access for migrated callers that retain offsets, not pointers.
-// Byte places avoid borrowing the whole RAM array. Assignments evaluate the
-// value before the address.
-// This smaller interface retains its existing low-byte-first failure prefix.
+// Checked word reads for migrated callers that retain offsets, not pointers:
+// an array element or a raw offset. Byte places avoid borrowing the whole RAM
+// array. This smaller interface retains its existing low-byte-first failure prefix.
 #[macro_export]
 macro_rules! ram_checked_word {
     ($game:ident.$field:ident[$index:expr] $($tail:tt)*) => {
         $crate::ram_checked_word!($game,
             $crate::ram::word_arrays::$field.checked_add_signed(($index as isize).checked_mul(2).unwrap()).unwrap(); $($tail)*)
     };
-    ($game:ident.$field:ident $($tail:tt)*) => {
-        $crate::ram_checked_word!($game, $crate::ram::words::$field; $($tail)*)
-    };
     ($game:ident, $offset:expr;) => {{
         let offset: usize = $offset;
         u16::from_le_bytes([$game.compatibility_byte(offset), $game.compatibility_byte(offset + 1)])
     }};
-    ($game:ident, $offset:expr; = $value:expr) => {
-        match ($value, $offset) {
-            (value, offset) => {
-                let bytes = u16::to_le_bytes(value);
-                $game.compatibility_write_byte(offset, bytes[0]);
-                $game.compatibility_write_byte(offset + 1, bytes[1]);
-            }
-        }
-    };
 }
 
 /// Named word access through any `CompatibilityRam`; the receiver must have
