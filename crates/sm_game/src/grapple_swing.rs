@@ -859,7 +859,7 @@ pub fn start_firing<H: Host + ?Sized>(game: &mut H) {
     game.session_mut().player.transitions.draw_handler = DrawMode::Grapple;
     game.session_mut().player.transitions.grapple_walljump_timer = 0;
     game.with_lease(|lease| crate::samus_palette::write_beam_palette(lease, 2));
-    word!(game.PALETTE_BUFFER[223] = 32657);
+    game.session_mut().presentation.visual_mut().colors[223] = 32657;
     game.session_mut().player.grapple = (0x9bc703i32) as u16;
     game.queue_sound(0, 5_u8, 1);
     game.session_mut().projectiles.controls.charge = 1;
@@ -1041,6 +1041,7 @@ pub fn update_tiles<
         + crate::display_refresh::DisplayOwner
         + crate::player_position::PlayerFacts
         + crate::records::Records
+        + crate::display::queued_tilemaps::QueueAccess
         + TileAccess
         + ?Sized,
 >(
@@ -1060,7 +1061,7 @@ pub fn update_tiles<
         }
     }
     let cursor = crate::display_refresh::queue_native_transfer(
-        word!(game.VRAM_WRITE_QUEUE_TAIL),
+        game.queue_tail(),
         32,
         |game: &H| game.tile_word(Tiles),
         0x9a,
