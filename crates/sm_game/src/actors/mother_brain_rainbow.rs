@@ -52,8 +52,7 @@ impl<
 {
 }
 
-/// $7E:0998 and $7E:186E: the game state and the beam's layer blending.
-const GAME_STATE: usize = crate::ram::words::GAME_STATE;
+/// $7E:186E: the beam's layer blending.
 const LAYER_BLENDING: usize = crate::ram::words::FX_LAYER_BLENDING_CONFIG_C;
 
 /// The edge gradient for `angle`: |tan(angle * pi / 80h)| * 100h ($91:C9D4).
@@ -369,7 +368,7 @@ pub fn initialize_hdma(game: &mut impl Host) {
 /// blending and, outside the reserve tanks' refill, redraw the window and
 /// step the rainbow.
 pub fn advance_hdma(game: &mut impl Host) {
-    if game.word(GAME_STATE) == DEATH_SEQUENCE_START {
+    if game.session().game_loop.mode == DEATH_SEQUENCE_START {
         // Delete the HDMA object being run.
         let index = usize::from(
             crate::hdma_objects::HdmaTable::hdma_word(game, crate::hdma::Word::Selected) >> 1,
@@ -377,7 +376,7 @@ pub fn advance_hdma(game: &mut impl Host) {
         crate::hdma_word!(game, index, Channels => 0);
     } else {
         game.write_word_le(BEAM_BLENDING, LAYER_BLENDING);
-        if game.word(GAME_STATE) != RESERVE_TANKS_AUTO {
+        if game.session().game_loop.mode != RESERVE_TANKS_AUTO {
             calculate_window(game);
             set_backdrop_colour(game);
         }
