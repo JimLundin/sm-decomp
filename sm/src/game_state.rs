@@ -2241,6 +2241,37 @@ impl sm_game::actors::session_slots::SlotAccess for Game {
     }
 }
 
+/// Actor records on the RAM image, through the actor codec in native order,
+/// as `SlotAccess` reads and stores their words here.
+impl sm_game::actors::access::ActorImage for Game {
+    fn actor_record(
+        &self,
+        key: sm_game::actors::access::ActorKey,
+    ) -> sm_game::actors::state::Actor {
+        sm_game::actors::codec::read_actor(
+            self,
+            key,
+            sm_game::actors::access::AccessMode::Native,
+            |game, at| game.ram().read_byte(at),
+        )
+    }
+    fn store_actor_record(
+        &mut self,
+        key: sm_game::actors::access::ActorKey,
+        original: &sm_game::actors::state::Actor,
+        edited: &sm_game::actors::state::Actor,
+    ) {
+        sm_game::actors::codec::write_actor_changes(
+            self,
+            key,
+            sm_game::actors::access::AccessMode::Native,
+            original,
+            edited,
+            |game, at, value| game.ram().write_byte(at, value),
+        );
+    }
+}
+
 impl sm_game::ram::WorkRamAccess for Game {
     type Ram = WorkRam;
     fn ram(&self) -> &WorkRam {

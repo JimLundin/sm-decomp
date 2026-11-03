@@ -153,7 +153,7 @@ pub trait Host:
     + MenuRuntime
     + ResetRequest
     + crate::runtime_access::RuntimeAccess
-    + crate::actors::session_slots::SlotAccess
+    + crate::actors::access::ActorImage
 {
     type Sram: SaveRam + ?Sized;
     fn sram(&self) -> &Self::Sram;

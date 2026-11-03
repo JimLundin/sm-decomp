@@ -1,11 +1,11 @@
 //! Attract-mode playback, room selection, placement and delayed setup.
+use crate::actors::access::{ActorKey, edit_image_actor};
 use crate::display::preparation::Field;
 use crate::imported::Imported;
 use crate::menus::menu_tilemap::native_record;
-use crate::menus::prelude::{EnemyData, do_until};
+use crate::menus::prelude::do_until;
 use crate::ram::RawRam as _;
 use crate::ram::word;
-use crate::session_slot;
 use sm_data::cartridge::{RomImage, lorom_offset};
 use sm_data::demo_rooms::{
     DemoEntry, DemoScene, DemoScenes, DemoSets, SCENES_ADDRESS, SCENES_BYTES, SETS_ADDRESS,
@@ -276,7 +276,9 @@ pub fn run_room_hook<H: crate::menus::host::Host + ?Sized>(address: u32, game: &
             crate::frame_display_byte!(game, Field::Screens1 => low);
             crate::frame_display_byte!(game, Field::Screens2 => high);
         }
-        0x82892b => session_slot!(game, EnemyData[0].ai_preinstr = 60),
+        0x82892b => edit_image_actor(game, ActorKey::from_legacy(0), |actor| {
+            actor.pre_instruction = 60;
+        }),
         0x828932 => crate::progress::leased::set_boss_byte_at(1, 1, game),
         _ => {
             game.unreachable_native();
