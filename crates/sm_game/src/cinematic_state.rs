@@ -15,7 +15,7 @@
 //!
 //! **Consumers.** The cinematic game states (the title sequence, the intro
 //! and Ceres, the ending and credits) each hold a [`Cinematic`] copy of the
-//! table for their frame through [`crate::session_cohort::with`]: their
+//! table for their frame through [`crate::session_part::with`]: their
 //! functions, objects and pre-instructions read and store its fields by the
 //! RAM names, and the words they changed are stored back once the frame's
 //! work returns. The other owners' words the view names are still reached
@@ -197,7 +197,7 @@ pub enum Array {
 
 /// The cinematic words as a copy of the Session's enemy projectile table, by
 /// their RAM names, for cinematic code that holds the table for its call
-/// through [`crate::session_cohort::with`].
+/// through [`crate::session_part::with`].
 #[derive(Clone, Default, Debug, PartialEq)]
 pub struct Cinematic(pub crate::session::EnemyProjectiles);
 
@@ -210,6 +210,32 @@ impl crate::session_cohort::Cohort for Cinematic {
     }
     fn session_copy(session: &crate::session::Session) -> Self {
         Self(session.enemy_projectiles.clone())
+    }
+}
+
+/// The copy holds the whole projectile owner but stores only the table words
+/// it changed: the owner's other fields (the shooting stars' drop bias) are
+/// stored on their own leases while the table is held.
+impl crate::session_part::Part for Cinematic {
+    fn of(session: &crate::session::Session) -> Self {
+        Self(session.enemy_projectiles.clone())
+    }
+    fn store(&self, before: &Self, session: &mut crate::session::Session) {
+        use crate::session_cohort::Cohort as _;
+        let mut previous = Vec::new();
+        before.0.clone().words(|_, word| previous.push(*word));
+        let mut changes = Vec::new();
+        let mut index = 0;
+        self.0.clone().words(|_, word| {
+            changes.push((previous[index] != *word).then_some(*word));
+            index += 1;
+        });
+        let mut changes = changes.into_iter();
+        session.enemy_projectiles.words(|_, word| {
+            if let Some(Some(value)) = changes.next() {
+                *word = value;
+            }
+        });
     }
 }
 
