@@ -25,7 +25,7 @@ Everything else is `[exact]`.
 
 Replays always run with Legacy presentation. `Presentation::Owned` comes only from a
 supplied or restored session start, which only verification cases reach. So OAM, the
-display mirrors, the NMI counter and the Samus-half pointers are plain RAM in replays.
+display mirrors and the NMI counter are plain RAM in replays.
 
 A new Session owner must move every writer of its bytes onto it. Four owners have
 landed this way:
@@ -52,7 +52,7 @@ Raw RAM accesses to the scroll cells still run on Game:
    - (Drop origin $F434/$F436 is now owned by `enemy_projectiles.drop_origin` (SMESHOT 3). The $3000..$6FFF tile buffer is owned by the presentation workspace; Kraid's `load_bg2` reads it typed.)
 2. **Legacy presentation.**
    - (OAM $0370..$0591 is now owned by `LegacyPresentation::objects`, decoded and encoded at every lease boundary; cannon and atmosphere tiles store through it.)
-   - $57/$69/$5B6, $71D..$722.
+   - $57/$69/$5B6. (The Samus half requests $071D..$0722 are now owned by `LegacyPresentation::samus_requests`, decoded and encoded at every lease boundary.)
    - Phantoon's `set_mosaic`/`enable_bg2`/`frame`.
    - Owning the presentation on the normal replay path is an architecture step.
 3. **Still on `Game`.**

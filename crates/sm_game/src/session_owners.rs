@@ -960,9 +960,22 @@ pub struct LegacyPresentation {
     /// The object table, its high table and the cursor ($0370..$0591). Legacy
     /// staging records no authored publications.
     objects: crate::scene::state::ObjectStaging,
+    /// Samus's top and bottom half upload requests ($071D..$0722).
+    samus_requests: [SamusRequest; 2],
 }
 /// The object staging bytes, from the table's first entry through the cursor.
 pub const OBJECTS: std::ops::Range<usize> = 0x370..0x592;
+/// Samus's half upload requests: the top and bottom flags ($071D, $071E),
+/// then the top and bottom descriptor pointers ($071F, $0721).
+pub const SAMUS_REQUESTS: std::ops::Range<usize> = 0x71d..0x723;
+/// One Samus half's upload request under the Legacy presentation; an owned
+/// Display keeps it in its `SamusHalf`.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct SamusRequest {
+    pub enabled: u8,
+    /// The half's tile descriptor pointer (bank $92).
+    pub pointer: u16,
+}
 // These are byte/word views of the current Display owner, including odd aliases.
 // Semantic source bindings and request identities are never decoded from them.
 macro_rules! display_bytes {
@@ -1089,6 +1102,14 @@ impl Presentation {
         if OBJECTS.contains(&at) {
             return self.objects().byte(at - OBJECTS.start).ok();
         }
+        if SAMUS_REQUESTS.contains(&at) {
+            let offset = at - SAMUS_REQUESTS.start;
+            return Some(if offset < 2 {
+                self.samus_request(offset).enabled
+            } else {
+                self.samus_request((offset - 2) / 2).pointer.to_le_bytes()[offset % 2]
+            });
+        }
         let Self::Owned { display, .. } = self else {
             return None;
         };
@@ -1116,11 +1137,6 @@ impl Presentation {
             0x5b8..=0x5b9 => Some(state.nmi.including_lag.to_le_bytes()[at - 0x5b8]),
             0x5ba => Some(state.nmi.missed),
             0x5bb => Some(state.nmi.max_missed),
-            0x71d..=0x71e => Some(state.samus[at - 0x71d].enabled),
-            0x71f..=0x722 => {
-                let offset = at - 0x71f;
-                Some(state.samus[offset / 2].pointer.to_le_bytes()[offset % 2])
-            }
             0x782 => Some(state.nmi.acknowledgment),
             _ => None,
         }
@@ -1130,6 +1146,18 @@ impl Presentation {
             self.objects_mut()
                 .write_byte(at - OBJECTS.start, value)
                 .expect("object projection");
+            return true;
+        }
+        if SAMUS_REQUESTS.contains(&at) {
+            let offset = at - SAMUS_REQUESTS.start;
+            if offset < 2 {
+                *self.samus_request_mut(offset).0 = value;
+            } else {
+                let pointer = self.samus_request_mut((offset - 2) / 2).1;
+                let mut bytes = pointer.to_le_bytes();
+                bytes[offset % 2] = value;
+                *pointer = u16::from_le_bytes(bytes);
+            }
             return true;
         }
         let Self::Owned { display, .. } = self else {
@@ -1166,11 +1194,6 @@ impl Presentation {
             0x5b8..=0x5b9 => write_word(&mut state.nmi.including_lag, at - 0x5b8),
             0x5ba => state.nmi.missed = value,
             0x5bb => state.nmi.max_missed = value,
-            0x71d..=0x71e => state.samus[at - 0x71d].enabled = value,
-            0x71f..=0x722 => {
-                let offset = at - 0x71f;
-                write_word(&mut state.samus[offset / 2].pointer, offset % 2);
-            }
             0x782 => state.nmi.acknowledgment = value,
             _ => return false,
         }
@@ -1183,6 +1206,20 @@ impl Presentation {
             span(
                 OBJECTS.start + objects.bytes.len(),
                 &objects.native_order.encode(objects.cursor),
+            );
+            let [top, bottom] = state.samus_requests;
+            let [top_low, top_high] = top.pointer.to_le_bytes();
+            let [bottom_low, bottom_high] = bottom.pointer.to_le_bytes();
+            span(
+                SAMUS_REQUESTS.start,
+                &[
+                    top.enabled,
+                    bottom.enabled,
+                    top_low,
+                    top_high,
+                    bottom_low,
+                    bottom_high,
+                ],
             );
         }
         if let Self::Owned { display, .. } = self {
@@ -1219,12 +1256,20 @@ impl Presentation {
                 },
                 produced: Vec::new(),
             },
+            samus_requests: Default::default(),
         }))
     }
-    /// Load the Legacy object staging from RAM; an owned Display adopts its
-    /// own objects with the rest of its projection.
-    pub fn import_objects(&mut self, bytes: &impl Fn(usize) -> u8) {
+    /// Load the Legacy object staging and Samus half requests from RAM; an
+    /// owned Display adopts its own with the rest of its projection.
+    pub fn import_legacy_projection(&mut self, bytes: &impl Fn(usize) -> u8) {
         if let Self::Legacy(state) = self {
+            for (index, request) in state.samus_requests.iter_mut().enumerate() {
+                let pointer = SAMUS_REQUESTS.start + 2 + 2 * index;
+                *request = SamusRequest {
+                    enabled: bytes(SAMUS_REQUESTS.start + index),
+                    pointer: u16::from_le_bytes([bytes(pointer), bytes(pointer + 1)]),
+                };
+            }
             let objects = &mut state.objects;
             for (offset, byte) in objects.bytes.iter_mut().enumerate() {
                 *byte = bytes(OBJECTS.start + offset);
@@ -1233,6 +1278,34 @@ impl Presentation {
             objects.cursor = objects
                 .native_order
                 .decode([bytes(cursor), bytes(cursor + 1)]);
+        }
+    }
+    /// Samus half `index`'s upload request (0 top, 1 bottom), from the
+    /// selected owner.
+    pub fn samus_request(&self, index: usize) -> SamusRequest {
+        match self {
+            Self::Legacy(state) => state.samus_requests[index],
+            Self::Owned { display, .. } => {
+                let half = &display.owner().state.samus[index];
+                SamusRequest {
+                    enabled: half.enabled,
+                    pointer: half.pointer,
+                }
+            }
+        }
+    }
+    /// Samus half `index`'s request flag and descriptor pointer, from the
+    /// selected owner.
+    pub fn samus_request_mut(&mut self, index: usize) -> (&mut u8, &mut u16) {
+        match self {
+            Self::Legacy(state) => {
+                let request = &mut state.samus_requests[index];
+                (&mut request.enabled, &mut request.pointer)
+            }
+            Self::Owned { display, .. } => {
+                let half = &mut display.owner_mut().state.samus[index];
+                (&mut half.enabled, &mut half.pointer)
+            }
         }
     }
     /// The object table, its high table and the cursor, from the selected owner.

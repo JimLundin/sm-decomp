@@ -941,7 +941,7 @@ pub fn decode(bytes: &impl Fn(usize) -> u8, byte_len: usize, world: Arc<WorldBin
     assert!(byte_len >= 0x7000, "short presentation workspace import");
     *s.presentation.workspace_mut() =
         crate::presentation_workspace::Workspace::compatibility(bytes);
-    s.presentation.import_objects(bytes);
+    s.presentation.import_legacy_projection(bytes);
     assert!(0x8f7 <= byte_len, "short minimap import");
     for (index, value) in s.minimap.explored.iter_mut().enumerate() {
         *value = bytes(0x7f7 + index);

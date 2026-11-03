@@ -1439,3 +1439,45 @@ fn legacy_objects_round_trip_every_byte() {
         }
     }
 }
+
+/// The Legacy presentation owns Samus's half upload requests byte by byte:
+/// the two flags, then the two little-endian descriptor pointers.
+#[test]
+fn legacy_samus_requests_round_trip_every_byte() {
+    const REQUESTS: std::ops::Range<usize> = 0x71d..0x723;
+    assert_eq!(REQUESTS, sm_game::session_owners::SAMUS_REQUESTS);
+    let base = session();
+    assert!(!base.presentation.is_owned());
+    for at in REQUESTS {
+        let value = (at as u8) | 1;
+        let mut s = base.clone();
+        assert!(write_projected_byte(&mut s, at, value), "store {at:#x}");
+        for other in REQUESTS {
+            let expected = if other == at { value } else { 0 };
+            assert_eq!(
+                projected_byte(&s, other),
+                Some(expected),
+                "storing {at:#x} -> projection {other:#x}"
+            );
+        }
+    }
+    for seed in [7, 0x5a3e_0071] {
+        let ram = Random::ram(seed);
+        let s = decoded(&ram);
+        for index in 0..2 {
+            let request = s.presentation.samus_request(index);
+            assert_eq!(request.enabled, ram[0x71d + index], "flag {index}");
+            let pointer = 0x71f + 2 * index;
+            assert_eq!(
+                request.pointer,
+                u16::from_le_bytes([ram[pointer], ram[pointer + 1]]),
+                "pointer {index}"
+            );
+        }
+        let bytes = encoded(&s);
+        for at in REQUESTS {
+            assert_eq!(bytes.get(&at), Some(&ram[at]), "encode {at:#x}");
+            assert_eq!(projected_byte(&s, at), Some(ram[at]), "projection {at:#x}");
+        }
+    }
+}
