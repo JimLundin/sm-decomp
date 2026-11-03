@@ -3,12 +3,12 @@
 //! RAM words remain authoritative; operand writes run immediately through the caller.
 use crate::actors::boss_lease::BossLease;
 use crate::actors::host::{Shot, abs16};
-use crate::actors::layouts::{EnemyLayout104, part_view};
-use crate::actors::session_slots::session_slot;
+use crate::actors::layouts::EnemyLayout104;
 use crate::actors::slot_view::{SlotState, extended_var, slot_view};
 use crate::cartridge::rom_table_word;
 use crate::enemy_script::EnemyScript;
 use crate::geometry::Point;
+use crate::legacy_overflow;
 use crate::ram::word;
 use core::mem::offset_of;
 use sm_data::enemy_speeds::SpeedTable;
@@ -82,38 +82,6 @@ impl<H: SlotState + ?Sized> YappingMawEdit<'_, H> {
     /// Word `word` of the segments' velocities ([`axis_word`]).
     fn segment_velocity(&mut self, word: usize) -> &mut u16 {
         self.0.extended(SEGMENT_VELOCITIES + word)
-    }
-}
-
-part_view! {
-    /// Yapping Maw's view of its slot by RAM address, for [`appearance`], which
-    /// still runs on the game.
-    Maw: EnemyLayout104 {
-        words: [
-            function, angle, subangle, angular_speed_index, cooldown_timer, proximity, parameter_1,
-            parameter_2,
-        ],
-        pad1: [u8; 26696],
-        words: [
-            segment_x_offset, segment_y_offset, var_02, var_03, var_04, var_05, head_x_offset,
-            head_y_offset, target_length, length, target_angle, maths_target_angle, base_x, base_y,
-            origin_x, origin_y, scratch_x, scratch_y, var_12, var_13, var_14, var_15, var_16,
-            var_17, var_18, var_19, var_1a, var_1b, var_1c, var_1d, var_1e, var_1f,
-        ],
-        pad2: [u8; 1984],
-        words: [
-            var_20, segment_angle, var_22, var_23, var_24, var_25, var_26, segment_x_velocity,
-            segment_y_velocity, var_29, var_2a, var_2b, var_2c, var_2d, var_2e, aiming_down,
-            grabbing_samus, var_31, samus_x_offset, samus_y_offset, instruction_list_index,
-            intangibility_timer, off_screen, var_37, var_38, var_39, var_3a, var_3b, var_3c, var_3d,
-            var_3e, var_3f,
-        ],
-        pad3: [u8; 1984],
-        words: [
-            segment_projectile, var_41, var_42, var_43, segment_index, initial_palette,
-            sprite_object, sprite_appearance,
-        ],
-        _: [u16; 24],
     }
 }
 
@@ -557,14 +525,21 @@ pub fn touch<L: Lease>(game: &mut L) {
         word!(game.SAMUS_INPUT_HANDLER = GRABBED_INPUT);
     }
 }
-/// The base sprite object takes the maw's initial palette. It still runs on the
-/// game for the sprite effect verification case, so it reads its slot through
-/// [`session_slot!`] rather than the Session's view.
-pub fn appearance<L: BossLease<Game: Host>>(game: &mut L) {
-    let maw = game.current_enemy() as i32;
+/// The base sprite object takes the maw's initial palette.
+pub fn appearance<L: Lease>(game: &mut L) {
     let enemy = game.current_enemy();
-    let appearance = session_slot!(game, Maw[maw].initial_palette);
-    let handle = session_slot!(game, Maw[maw].sprite_object);
+    let (appearance, handle) = if usize::from(enemy) < 32 * 64 && enemy.is_multiple_of(64) {
+        let maw = YappingMaw::of(game, enemy);
+        (maw.initial_palette(), maw.sprite_object())
+    } else {
+        // LEGACY(original-overflow): an enemy index outside the slot table
+        // reads the RAM at $7E:0F78 + index + the word's offset.
+        let at = |offset| 0xf78 + usize::from(enemy) + offset;
+        (
+            legacy_overflow::slot_word(game, at(offset_of!(EnemyLayout104, var_45))),
+            legacy_overflow::slot_word(game, at(offset_of!(EnemyLayout104, var_46))),
+        )
+    };
     game.foreign(|game| game.maw_appearance(handle, appearance, enemy));
 }
 /// Enemy shot - Yapping Maw ($A8:A7BD).
