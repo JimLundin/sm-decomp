@@ -22,15 +22,15 @@
 //! and reads and writes these fields directly. Layer 1's whole position is
 //! also the external camera observation (`ExternalInputs::camera_x/_y`), so
 //! its stores go through [`set_layer1`] (and BG1's x offset, another
-//! observation, through [`set_bg1_offset`]), which publish through the view's
-//! byte path and refreshes that observation in the original order.
+//! observation, through [`set_bg1_offset`]), which store the field and then
+//! refresh the host's observations, as the byte path did after each byte.
 //! The remaining writers are compatibility code that still names the RAM
 //! words: bank code (cinematics, boss shakes, the demo loader, Ceres) and
 //! native CPU or DMA writes. They write the byte image outside a lease, or
 //! inside a lease's foreign call, which exports first and imports after, so
 //! no typed copy competes with them. Each moves onto these fields when its domain does; the projection
 //! can shrink once no reader or writer names the RAM words.
-use crate::runtime_access::SessionRam;
+use crate::session_access::SessionAccess;
 
 /// The camera's words; see the module documentation for the RAM layout.
 #[derive(Clone, Copy, Default, Debug, PartialEq, Eq)]
@@ -67,16 +67,14 @@ pub fn current<H: crate::ram::CompatibilityRam + ?Sized>(h: &H) -> Camera {
 }
 
 /// Store layer 1's whole position on `axis` (0 = x, 1 = y). The store is
-/// also the camera observation, so it publishes through the view's bytes.
-pub fn set_layer1(h: &mut (impl SessionRam + ?Sized), axis: usize, value: u16) {
-    h.write_word_le(value, LAYER1 + 4 * axis);
+/// also the camera observation, so the host's observations refresh after it.
+pub fn set_layer1(h: &mut (impl SessionAccess + ?Sized), axis: usize, value: u16) {
+    h.session_mut().room.camera.layer1[axis] = value;
+    h.words_stored();
 }
 
 /// Store BG1's offset on `axis`. The x offset is also an observation.
-pub fn set_bg1_offset(h: &mut (impl SessionRam + ?Sized), axis: usize, value: u16) {
-    h.write_word_le(value, BG1_OFFSET + 2 * axis);
+pub fn set_bg1_offset(h: &mut (impl SessionAccess + ?Sized), axis: usize, value: u16) {
+    h.session_mut().room.camera.bg1_offset[axis] = value;
+    h.words_stored();
 }
-
-/// RAM addresses of layer 1's whole x position and BG1's x offset.
-pub const LAYER1: usize = 0x911;
-pub const BG1_OFFSET: usize = 0x91d;
