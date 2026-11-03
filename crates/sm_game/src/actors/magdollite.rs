@@ -9,7 +9,6 @@ use crate::actors::host::{Axis, BossEffects, Death, Shot};
 use crate::actors::slot_view::{SlotState, slot_view};
 use crate::constants::enemy_properties::{K_ENEMY_PROPS_DELETED, K_ENEMY_PROPS_INVISIBLE};
 use crate::enemy_script::EnemyScript;
-use crate::ram::word;
 use sm_data::enemy_speeds::SpeedTable;
 use sm_data::magdollite::{ARM_GROWTH_ADDRESS, ARM_INSTRUCTION_ADDRESS, ARM_Y_OFFSET_ADDRESS};
 
@@ -276,32 +275,39 @@ pub fn initialize<L: Lease>(game: &mut L) {
     hook[..2].copy_from_slice(&PALETTE_CYCLE_HOOK.to_le_bytes());
     hook[2..].copy_from_slice(&AI_BANK.to_le_bytes());
     let palette = Magdollite::of(game, part).actor().palette;
-    word!(
-        game.VARIABLES_FOR_ENEMY_GRAPHICS_DRAWN_HOOK[HOOK_PALETTE] =
-            ((palette & SPRITE_PALETTE_BITS) >> 4) + SPRITE_PALETTES_BYTE
+    set_hook_word(
+        game,
+        HOOK_PALETTE,
+        ((palette & SPRITE_PALETTE_BITS) >> 4) + SPRITE_PALETTES_BYTE,
     );
-    word!(game.VARIABLES_FOR_ENEMY_GRAPHICS_DRAWN_HOOK[HOOK_TIMER] = PALETTE_CYCLE_FRAMES);
-    word!(game.VARIABLES_FOR_ENEMY_GRAPHICS_DRAWN_HOOK[HOOK_FRAME] = 0);
+    set_hook_word(game, HOOK_TIMER, PALETTE_CYCLE_FRAMES);
+    set_hook_word(game, HOOK_FRAME, 0);
+}
+/// Store one of the drawn hook's variables ($7E:1794).
+fn set_hook_word<L: Lease>(game: &mut L, index: usize, value: u16) {
+    game.session_mut().actors.drawing.hook_work[index] = value;
+    game.words_stored();
 }
 /// Graphics drawn hook ($A8:B0B2): every 8 frames, show the next glow palette.
 pub fn cycle_palette<L: Lease>(game: &mut L) {
-    if word!(game.DOOR_TRANSITION_FLAG_ENEMIES) != 0
-        || word!(
-            game.VARIABLES_FOR_ENEMY_GRAPHICS_DRAWN_HOOK[HOOK_TIMER] -= 1,
-            reread
-        ) != 0
-    {
+    if game.session().room.entry.enemy_interlock != 0 {
         return;
     }
-    word!(game.VARIABLES_FOR_ENEMY_GRAPHICS_DRAWN_HOOK[HOOK_TIMER] = PALETTE_CYCLE_FRAMES);
-    word!(game.VARIABLES_FOR_ENEMY_GRAPHICS_DRAWN_HOOK[HOOK_FRAME] += 1);
-    let frame = word!(game.VARIABLES_FOR_ENEMY_GRAPHICS_DRAWN_HOOK[HOOK_FRAME]);
+    let timer = game.session().actors.drawing.hook_work[HOOK_TIMER].wrapping_sub(1);
+    set_hook_word(game, HOOK_TIMER, timer);
+    if timer != 0 {
+        return;
+    }
+    set_hook_word(game, HOOK_TIMER, PALETTE_CYCLE_FRAMES);
+    let frame = game.session().actors.drawing.hook_work[HOOK_FRAME].wrapping_add(1);
+    set_hook_word(game, HOOK_FRAME, frame);
     let source = COLORS_PER_PALETTE * (frame & (GLOW_PALETTES - 1)) as isize;
     let colors: [u16; 4] = game.foreign(|game| game.magdollite_glow_colors(source));
-    let target = word!(game.VARIABLES_FOR_ENEMY_GRAPHICS_DRAWN_HOOK[HOOK_PALETTE]) as usize >> 1;
-    for (i, color) in colors.into_iter().enumerate() {
-        word!(game.PALETTE_BUFFER[target + FIRST_GLOW_COLOR + i] = color);
-    }
+    let target = usize::from(game.session().actors.drawing.hook_work[HOOK_PALETTE] >> 1);
+    let first = target + FIRST_GLOW_COLOR;
+    game.session_mut().presentation.visual_mut().colors[first..first + colors.len()]
+        .copy_from_slice(&colors);
+    game.words_stored();
 }
 /// Main AI ($A8:B10A): count down the part's cooldown and run its state
 /// function.
