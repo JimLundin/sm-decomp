@@ -69,7 +69,7 @@ Raw RAM accesses to the scroll cells still run on Game:
    - Level-data indexes that run past the cells.
    - A typed index would panic where RAM didn't, so these need a LEGACY entry or a bounded typed fallback.
    - Done (2026-11-03): these go through `legacy_overflow` (`LEGACY(original-overflow)` in docs/LEGACY.md), typed where in range; cycle_report counts them as `legacy_overflow`.
-5. **Machinery.** `session_slots.rs`, `projection.rs` and `ram.rs`. Delete them once 1-4 are gone.
+5. **Machinery.** `session_slots.rs` is gone (`session_slot!`, `SlotAccess`, `SessionSlots`); overflow paths resolve through `legacy_overflow::SlotBytes`. `projection.rs`/`ram.rs` remain: the `CompatibilityRam` byte helpers behind ~30 views, which Game serves from its RAM image off a lease.
 6. **Counter noise.** `enemy_projectiles/content` (a `self` ROM record) and `menus/canvas` (a workspace `Point`) are not RAM.
 
 ## Caveat
