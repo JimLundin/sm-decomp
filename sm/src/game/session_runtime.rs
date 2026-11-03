@@ -402,7 +402,7 @@ impl<'g> Runtime<'g> {
         // The exported Session stands for a decode of the RAM it leaves unless a Display
         // owner travels with the call.
         let mut exported = (!state.presentation.is_owned()).then(|| state.clone());
-        export_session_for_foreign(state, mutation.game());
+        export_session_for_foreign(state, exported.as_ref(), mutation.game());
         if exported.is_some() && !mutation.game().ram().start_write_log() {
             exported = None;
         }
@@ -1205,8 +1205,11 @@ fn resume_session(
     #[cfg(sm_verify_dll)]
     player_normal_transfers::record(game, 1);
     import_native_spawn(&mut state, game);
+    // A Session whose export never reached RAM is the very Session the call exported.
     #[cfg(sm_verify_dll)]
-    assert_projects_ram(&state, game);
+    if !game.ram().export_deferred() {
+        assert_projects_ram(&state, game);
+    }
     take_game_owners(&mut state, game);
     state
 }
@@ -1459,12 +1462,47 @@ fn export_frame_session(state: Session, exported: Session, game: &mut Game) -> O
     }
     Some(exported)
 }
-fn export_session_for_foreign(state: Session, game: &mut Game) {
-    encode_session(ExportIdentity {
+/// Export `state` for a foreign call. When the call resumes the copy `exported`, an export of
+/// a shape whose layout a frame export recorded is deferred as `export_frame_session` defers
+/// one.
+fn export_session_for_foreign(state: Session, exported: Option<&Session>, game: &mut Game) {
+    let layout = exported
+        .and_then(ExportShape::of)
+        .and_then(|shape| game.frame_session.layout(shape))
+        .filter(|_| !game.ram().write_log_open());
+    let guard = ExportIdentity {
         state: Some(state),
         game,
         carry_presentation: true,
-    });
+    };
+    let (Some(layout), Some(exported)) = (layout, exported) else {
+        encode_session(guard);
+        return;
+    };
+    // A kept frame Session that is the deferred one takes its copy before this export
+    // replaces it.
+    if guard
+        .game
+        .frame_session
+        .kept
+        .as_ref()
+        .is_some_and(|kept| kept.state.is_none())
+    {
+        let state = guard.game.ram().take_deferred_session();
+        if let Some(kept) = guard.game.frame_session.kept.as_mut() {
+            kept.state = state;
+        }
+    }
+    #[cfg(sm_verify_dll)]
+    player_normal_transfers::record(guard.game, 2);
+    let mut deferred = exported.clone();
+    deferred.actor_identity = crate::game::actors::identity::ActorIdentityState::empty();
+    guard.game.ram().defer_export(deferred, &layout);
+    export_native_spawn(
+        guard.state.as_ref().expect("export owns Session"),
+        guard.game,
+    );
+    // Drop moves identity exactly once, after the byte/native publication.
 }
 fn encode_session(guard: ExportIdentity<'_>) {
     #[cfg(sm_verify_dll)]
