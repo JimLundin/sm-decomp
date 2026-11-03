@@ -96,7 +96,7 @@ pub fn initialize(h: &mut impl effects::SamusLease) {
         FrameGammaMode::Disabled
     };
     h.session_mut().player.movement_handler = MovementMode::Normal;
-    h.write_slice_le(crate::ram::words::UNUSED_WORD_7E0A5E, (-2764i16) as u16);
+    h.session_mut().player.spare_0a5e = 0u16.wrapping_sub(2764);
     h.session_mut().player.previous_health_for_flash = 50;
     h.words_stored();
     h.session_mut().presentation.palette_mut().visor_timer = 1537;

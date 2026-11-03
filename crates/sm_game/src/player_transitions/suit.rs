@@ -237,14 +237,27 @@ pub fn initialize_hdma(
         h.set_byte(address, value);
     }
     publish_colors(h);
-    for (address, value) in [(0xa88, 0x9800e4u32), (0xa8b, 0x98c8e4), (0xa8e, 0x999098)] {
-        h.write_slice_native(address, value as u16);
-        h.set_byte(address + 2, (value >> 16) as u8);
+    // The indirect HDMA table at $7E:0A88..$7E:0A90: three entries of a line
+    // count and a pointer, each stored as a native word and its bank byte.
+    // It overlays the demo's words from its enable word on and the low byte
+    // of its filtered held input.
+    let mut table = [0u8; 9];
+    for (at, value) in [(0, 0x9800e4u32), (3, 0x98c8e4), (6, 0x999098)] {
+        table[at..at + 2].copy_from_slice(&(value as u16).to_ne_bytes());
+        table[at + 2] = (value >> 16) as u8;
     }
+    let word = |at: usize| u16::from_le_bytes([table[at], table[at + 1]]);
+    let s = h.session_mut();
+    let demo = &mut s.player.demo;
+    demo.enabled = word(0);
+    demo.input_frames = word(2);
+    demo.previous_held = word(4);
+    demo.previous_pressed = word(6);
     // $7E:0A91..$7E:0A92 (the X-ray HDMA table's end) are the high byte of
     // the demo's filtered held input and the low byte of its filtered newly
     // pressed input.
-    let preparation = &mut h.session_mut().projectiles.preparation;
+    let preparation = &mut s.projectiles.preparation;
+    crate::actors::slot_view::store_byte(&mut preparation.demo_filtered_held, 0, table[8]);
     crate::actors::slot_view::store_byte(&mut preparation.demo_filtered_held, 1, 0);
     crate::actors::slot_view::store_byte(&mut preparation.demo_filtered_pressed, 0, 0);
     h.words_stored();
@@ -281,10 +294,13 @@ pub fn advance_pickup<
         h.set_byte(address, value);
     }
     // $7E:0A88, the HDMA pointer's low word, is the demo's enable word.
-    h.session_mut().player.demo.enabled = u16::from_le_bytes(1u16.to_ne_bytes());
+    // The bank byte $98 at $7E:0A8A and the zero word after it: the demo's
+    // input frame count, and the previous held input's low byte, which is
+    // cleared below.
+    let demo = &mut h.session_mut().player.demo;
+    demo.enabled = u16::from_le_bytes(1u16.to_ne_bytes());
+    demo.input_frames = 0x98;
     h.words_stored();
-    h.set_byte(0xa8a, 0x98);
-    h.write_slice_native(0xa8b, 0);
     let s = h.session_mut();
     s.player.demo.previous_held = 0;
     s.player.demo.previous_pressed = 0;
