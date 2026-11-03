@@ -273,6 +273,12 @@ struct Deferred {
     layout: Rc<ExportLayout>,
     /// Whether its bytes are in RAM.
     written: bool,
+    /// The bytes reads took from the Session's projection, which writing the bytes checks.
+    served: Vec<(usize, u8)>,
+}
+impl Deferred {
+    /// How many byte reads the Session's projection answers before the bytes are written.
+    const SERVED: usize = 128;
 }
 
 /// The RAM ranges written while a log is open, in write order, so a kept Session can take
@@ -332,7 +338,11 @@ impl WorkRam {
     }
 
     pub fn read_byte(&self, at: usize) -> u8 {
-        self.settle(at..at + 1);
+        if self.10.armed.get()
+            && let Some(byte) = self.deferred_byte(at)
+        {
+            return byte;
+        }
         self.0.bytes[at].get()
     }
 
@@ -536,6 +546,7 @@ impl WorkRam {
             session: Box::new(session),
             layout: Rc::clone(layout),
             written: false,
+            served: Vec::new(),
         });
         self.10.armed.set(true);
     }
@@ -601,6 +612,25 @@ impl WorkRam {
             self.settle_deferred();
         }
     }
+    /// A read of a byte a deferred export covers: the Session's projection of it, while it
+    /// has one and few reads have taken one; otherwise the export's bytes are written first.
+    #[cold]
+    fn deferred_byte(&self, at: usize) -> Option<u8> {
+        let mut state = self.10.state.borrow_mut();
+        let deferred = state.as_mut()?;
+        if at >= Self::LEN || !deferred.layout.covered().contains(at) {
+            return None;
+        }
+        if deferred.served.len() < Deferred::SERVED
+            && let Some(byte) = sm_game::session_encoding::projected_byte(&deferred.session, at)
+        {
+            deferred.served.push((at, byte));
+            return Some(byte);
+        }
+        drop(state);
+        self.settle_deferred();
+        None
+    }
     /// Write a deferred export's bytes, as its export would have written them.
     fn settle_deferred(&self) {
         if !self.10.armed.replace(false) {
@@ -614,6 +644,13 @@ impl WorkRam {
             writer.layout() == *deferred.layout,
             "a deferred export wrote another layout than its shape's"
         );
+        drop(writer);
+        for (at, byte) in deferred.served.drain(..) {
+            assert!(
+                self.0.bytes[at].get() == byte,
+                "a read before a deferred export's bytes took another byte than they hold"
+            );
+        }
         deferred.written = true;
     }
     fn menu_epoch(&self) -> u64 {
