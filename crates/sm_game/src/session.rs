@@ -554,6 +554,10 @@ pub struct Room {
     /// The Ceres haze's HDMA data table word ($7E:07EB), which the haze
     /// setup and its HDMA instruction store 9 to.
     pub ceres_hdma_table: u16,
+    /// The size of BG2 ($7E:098E): the VRAM distance from BG2's tilemap to
+    /// BG1's, which filling the viewport sets and the scrolling tile updates
+    /// wrap their screens at.
+    pub background_size: u16,
     /// The room main code's variables at $07E1..$07E9, as the little-endian
     /// words of the byte image. Rooms give them their own meanings.
     pub main_variables: [u16; 4],
@@ -691,6 +695,7 @@ impl Room {
             ceres_status: 0,
             mode7_irq: 0,
             ceres_hdma_table: 0,
+            background_size: 0,
             main_variables: [0; 4],
             pause_hooks: [0; 3],
             scrolls: [0; 25],

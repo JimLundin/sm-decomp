@@ -9,6 +9,7 @@ use crate::ram::RawRam as _;
 use crate::ram::{checked_word, word};
 use crate::scene::hdma_sources::LiveOwner;
 use crate::scene::state::WordOrder;
+use crate::session::HookSlot;
 use crate::session_access::SessionAccess;
 
 /// The HDMA effects whose state the host's session view projects.
@@ -215,9 +216,20 @@ where
         + ?Sized,
 {
     use crate::display::registers::{WMADDH, WMADDL, WMADDM};
-    word! { game, 0; EARTHQUAKE_SFX_INDEX, EARTHQUAKE_SFX_TIMER }
+    {
+        let mut fx = game.fx_controls();
+        fx.earthquake_sound_index = 0;
+        fx.earthquake_sound_timer = 0;
+        game.publish_fx_controls(
+            fx,
+            &[
+                crate::fx_state::Field::EarthquakeSoundIndex,
+                crate::fx_state::Field::EarthquakeSoundTimer,
+            ],
+        );
+    }
     if matches!(
-        word!(game.ROOM_PTR),
+        game.session().room_key(),
         0x9804 | 0x96ba | 0xb32e | 0xb457 | 0xdd58 | 0xdede
     ) {
         {
@@ -227,7 +239,8 @@ where
             game.publish_fx_controls(fx, &[crate::fx_state::Field::EarthquakeSoundTimer]);
         };
     }
-    word!(game.DEBUG_DISABLE_MINIMAP = 0);
+    game.session_mut().minimap.disabled = 0;
+    game.words_stored();
     for channel in (0x20..0x80u16).step_by(0x10) {
         for register in [0, 1, 2, 3, 4, 5, 6, 8, 9] {
             let value = if register == 1 { 0x13 } else { 0 };
@@ -268,11 +281,13 @@ where
     };
     game.session_mut().room.mode7_irq = 0;
     game.words_stored();
-    word!(game.CAMERA_DISTANCE_INDEX = 0);
+    game.session_mut().room.camera.distance_index = 0;
+    game.words_stored();
     game.session_mut().mechanisms.statue_animation = 0;
     game.session_mut().mechanisms.statue_finished = 0;
     crate::gameplay_context::set_effect(game, crate::room_view::EffectWord::EarthquakeTimer, 0);
-    word!(game.PHANTOM_RELATED_LAYER_FLAG = 0);
+    game.session_mut().room.fx_layer_flags = 0;
+    game.words_stored();
     let session = game.session_mut();
     session.projectiles.power_bomb.explosion_status = 0;
     session.projectiles.power_bomb.flag = 0;
@@ -299,11 +314,15 @@ where
         crate::display_scroll::write(game, crate::display_scroll::Word::Bg3V, 0);
     }
     game.session_mut().room.camera.layer2 = [0, 0];
-    word!(game.ROOM_LOADING_IRQ_HANDLER = 0);
-    crate::word_transfers! { game, ascending, 1;
-        native(0x602) <- value(0x8800), native(0x605) <- value(0x8800),
-        native(0x601) <- value(0x83e1), native(0x604) <- value(0x83e1),
+    game.session_mut().room.entry.irq_policy = 0;
+    // Both pause hooks become $88:83E1: the bank and address high byte from
+    // $8800 a byte up, then the address.
+    let room = &mut game.session_mut().room;
+    for hook in [HookSlot::Pause, HookSlot::Unpause] {
+        room.set_hook_bank(hook, 0x88);
+        room.set_hook_address(hook, 0x83e1u16.to_le_bytes());
     }
+    game.words_stored();
     crate::display::sequence::register_writes! { game;
         byte(WMADDL as u16, 0xf0); byte(WMADDM as u16, 0xff);
         byte(WMADDH as u16, 1);

@@ -35,7 +35,6 @@ use crate::menus::prelude::battle;
 use crate::menus::prelude::owned;
 use crate::palette_copies::copy_rom_colors_to_palette;
 use crate::ram::RawRam as _;
-use crate::ram::word;
 use crate::session_access::SessionAccess;
 use crate::sprite_drawing::Clip;
 use crate::{ridley_data, ridley_explosion_data, sprite_output};
@@ -2840,7 +2839,8 @@ pub fn hurt_flash<S: State + ?Sized>(game: &mut S) {
 /// Check for collision with non-air block ($A6:D4F9): whether the level data
 /// block at (`x`, `y`) has a type. Was `ridley_offscreen`.
 pub fn solid_block_at<H: crate::ram::RamHost + ?Sized>(x: u16, y: u16, game: &mut H) -> bool {
-    let row = mult8x8((y >> 4) as u8, word!(game.ROOM_WIDTH_IN_BLOCKS) as u8);
+    let width = game.gameplay_word(crate::gameplay_context::Word::Width);
+    let row = mult8x8((y >> 4) as u8, width as u8);
     let at = usize::try_from(LEVEL_DATA + 2 * (row as i32 + (x as i32 >> 4)) as isize)
         .expect("RAM address outside allocation");
     let block = u16::from_ne_bytes([game.ram().read_byte(at), game.ram().read_byte(at + 1)]);

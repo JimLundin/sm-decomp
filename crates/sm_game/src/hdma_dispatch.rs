@@ -6,7 +6,6 @@ use crate::hdma_effects::apply_leased;
 use crate::hdma_objects::{self, HdmaEffect};
 use crate::menus::host::Host;
 use crate::player_transitions::xray::BeamPhase;
-use crate::ram::word;
 use crate::visual_state::{EyeBeamPhase, HazePhase, HdmaWave, TourianStatuePhase, Weather};
 use crate::{liquid_effects, room_visuals, scrolling_sky, xray_background};
 
@@ -349,7 +348,11 @@ fn host_pre_action<H: DispatchHost + ?Sized>(target: HdmaPreAction, k: u16, game
         Rain => room_visuals::scroll_weather(k, Weather::Rain, game),
         Spores => room_visuals::scroll_weather(k, Weather::Spores, game),
         Fog => room_visuals::scroll_weather(k, Weather::Fog, game),
-        StatueBlending => word!(game.FX_LAYER_BLENDING_CONFIG_C = 44),
+        StatueBlending => {
+            let mut fx = game.fx_controls();
+            fx.blending = 44;
+            game.publish_fx_controls(fx, &[crate::fx_state::Field::Blending]);
+        }
         BeginBrightHaze => apply_leased(HdmaEffect::BeginHaze { color: 0x80 }, k, game),
         BeginDimHaze => apply_leased(HdmaEffect::BeginHaze { color: 0x20 }, k, game),
         HazeFadingIn => apply_leased(HdmaEffect::AdvanceHaze(HazePhase::FadingIn), k, game),

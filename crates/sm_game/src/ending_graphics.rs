@@ -4,7 +4,6 @@ use crate::cinematic::cinematic_native_record;
 use crate::cinematic_state::Cinematic;
 use crate::imported::{Imported, grid_word, load, word as table_word};
 use crate::presentation_workspace::{Point, Role};
-use crate::ram::checked_word;
 use crate::visual_state::EndingGraphics;
 use crate::word_transfers::WordEndpoint;
 use sm_data::credits::{
@@ -130,8 +129,12 @@ pub fn draw_cinematic_item_percentage<H: crate::menus::host::Host + ?Sized>(game
             index,
         );
         game.assert_ram_pointer(address);
+        // The capacity table names the maximum health, ammunition and
+        // reserve words.
+        let capacity = crate::inventory::Word::from_address(usize::from(address))
+            .expect("capacity address names an inventory word");
         count = count.wrapping_add(snes_divide(
-            u16::from_le(checked_word!(game, usize::from(address);)),
+            crate::gameplay_context::inventory(game).get(capacity),
             table_word(
                 &game.visual_tables().capacity_divisors,
                 game,

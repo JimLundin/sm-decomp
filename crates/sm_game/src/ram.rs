@@ -850,8 +850,8 @@ ram_vars! {
 
 // Named SNES word reads, assignments and updates share one caller-side interface.
 // `word!(game.field)` reads; `word!(game.field = value)` writes. Arrays use
-// `field[index]`. Updates use `(game.field, method(argument), reread)` or an
-// expression `(game.field, |old| value)`; `reread` is optional. Ordered stores
+// `field[index]`. Updates use an expression `(game.field, |old| value)`, with
+// an optional `reread`. Ordered stores
 // of one literal use `(game, value; field, other[index])`; different values use
 // `(game; field = value; other[index] = next;)`.
 //
@@ -901,9 +901,6 @@ macro_rules! ram_word {
     };
     ($game:ident, $value:literal; $($field:ident$([$index:expr])?),+ $(,)?) => {
         $($crate::ram_word!($game.$field$([$index])? = $value);)+
-    };
-    ($game:ident.$field:ident$([$index:expr])?, $method:ident($argument:expr $(,)?) $(, $result:ident)? $(,)?) => {
-        $crate::ram_word!($game.$field$([$index])?, |word| word.$method($argument) $(, $result)?)
     };
     ($game:ident.$field:ident[$index:expr], |$old:ident| $value:expr $(, $result:ident)? $(,)?) => {{
         let destination = $crate::ram_word!(@offset $field[$index]);
@@ -980,11 +977,6 @@ macro_rules! ram_checked_word {
         let old = $crate::ram_checked_word!($game, offset;);
         $crate::ram_checked_word!($game, offset; = old.wrapping_add($value));
     }};
-    ($game:ident, $offset:expr; ^= $value:expr) => {{
-        let offset: usize = $offset;
-        let old = $crate::ram_checked_word!($game, offset;);
-        $crate::ram_checked_word!($game, offset; = old ^ $value);
-    }};
 }
 
 /// Named word access through any `CompatibilityRam`; the receiver must have
@@ -1028,18 +1020,6 @@ macro_rules! ram_slot {
 pub use crate::ram_slot as slot;
 /// Compile-time proof that an enemy-record field is one u16 word.
 pub fn word_field<L>(_: fn(L) -> u16) {}
-
-/// A 32-bit value split across a high and a low named word; the high word
-/// is read first. The `i32` form keeps the original signed casts.
-#[macro_export]
-macro_rules! ram_words {
-    (i32, $game:ident.$hi:ident, $lo:ident $(,)?) => {
-        (($crate::ram_word!($game.$hi) as i32) << 16i32) | ($crate::ram_word!($game.$lo) as i32)
-    };
-    ($game:ident.$hi:ident, $lo:ident $(,)?) => {
-        (($crate::ram_word!($game.$hi) as u32) << 16i32) | ($crate::ram_word!($game.$lo) as u32)
-    };
-}
 
 /// The work RAM bytes that mirror PPU and CPU registers ($7E:0051..), written
 /// by game code and copied to the hardware during NMI. Each is checked against

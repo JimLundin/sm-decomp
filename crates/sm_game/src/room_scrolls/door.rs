@@ -3,7 +3,6 @@ use super::Host;
 use super::{add_native_motion, calculate_blocks, calculate_scrolls, layer2_position, update_map};
 use crate::camera::{set_bg1_offset, set_layer1};
 use crate::player_position::PlayerWord;
-use crate::ram_words as words;
 use crate::room_entry::content::Axis;
 
 // Door steps retain native split-word and scrolling tilemap publication order.
@@ -126,12 +125,15 @@ pub fn fix_up<H: Host + ?Sized>(game: &mut H) {
     up(game);
 }
 
+/// Samus's 16.16 door transition speed ($092D, $092B), the whole word first.
+fn transition_speed<H: Host + ?Sized>(game: &H) -> u32 {
+    let entry = &game.session().room.entry;
+    (u32::from(entry.speed_whole) << 16) | u32::from(entry.speed_fraction)
+}
+
 pub fn horizontal<H: Host + ?Sized>(left: bool, game: &mut H) -> u8 {
     let frame = game.session().room.entry.frame;
-    let speed = words!(
-        game.SAMUS_DOOR_TRANSITION_SPEED,
-        SAMUS_DOOR_TRANSITION_SUBSPEED
-    );
+    let speed = transition_speed(game);
     let speed = if left { -(speed as i32) as u32 } else { speed };
     add_native_motion(PlayerWord::X, PlayerWord::XFraction, speed, game);
     game.set_previous_player_x(game.player_x());
@@ -179,10 +181,7 @@ pub fn down<H: Host + ?Sized>(game: &mut H) -> u8 {
         add_native_motion(
             PlayerWord::Y,
             PlayerWord::YFraction,
-            words!(
-                game.SAMUS_DOOR_TRANSITION_SPEED,
-                SAMUS_DOOR_TRANSITION_SUBSPEED
-            ),
+            transition_speed(game),
             game,
         );
         game.set_previous_player_y(game.player_y());
@@ -211,11 +210,7 @@ pub fn up<H: Host + ?Sized>(game: &mut H) -> u8 {
         add_native_motion(
             PlayerWord::Y,
             PlayerWord::YFraction,
-            -(words!(
-                i32,
-                game.SAMUS_DOOR_TRANSITION_SPEED,
-                SAMUS_DOOR_TRANSITION_SUBSPEED
-            )) as u32,
+            -(transition_speed(game) as i32) as u32,
             game,
         );
         game.set_previous_player_y(game.player_y());

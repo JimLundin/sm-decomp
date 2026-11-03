@@ -9,7 +9,6 @@ use crate::actors::host::{BossEffects, Death, Shot};
 use crate::actors::slot_view::{SlotState, slot_view};
 use crate::constants::enemy_properties::K_ENEMY_PROPS_DELETED;
 use crate::palette_copies::copy_rom_colors_to_palette;
-use crate::ram::word;
 use crate::zebetite_data;
 
 /// The lease the zebetites run on, with the room's event flags and spawning the
@@ -107,7 +106,7 @@ pub fn initialize<L: Lease + ?Sized>(game: &mut L) {
 
 /// Stills the earthquake shake and runs the current state. Was `Zebetites_Main`.
 pub fn main_ai<L: Lease + ?Sized>(game: &mut L) {
-    if word!(game.EARTHQUAKE_TIMER) == 0 {
+    if game.session().feedback.earthquake_timer == 0 {
         let me = current(game);
         ZebetiteEdit::of(game, me).actor().shake = 0;
     }
@@ -134,7 +133,7 @@ fn spawn_partner<L: Lease + ?Sized>(game: &mut L, k: u16) {
 
 /// Waits for the door transition to finish. Was `Zebetites_Func_2`.
 fn wait_for_door<L: Lease + ?Sized>(game: &mut L, k: u16) {
-    if word!(game.DOOR_TRANSITION_FLAG_ELEVATOR_ZEBETITES) == 0 {
+    if game.session().room.entry.elevator_interlock == 0 {
         *ZebetiteEdit::of(game, k).state() = state::ACTIVE;
         run(game);
     }

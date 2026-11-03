@@ -1044,6 +1044,7 @@ pub fn update_tiles<
         + crate::player_position::PlayerFacts
         + crate::records::Records
         + crate::display::queued_tilemaps::QueueAccess
+        + crate::display::transfer::TilemapQueue
         + TileAccess
         + ?Sized,
 >(

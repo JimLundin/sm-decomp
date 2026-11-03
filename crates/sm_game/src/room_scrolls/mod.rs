@@ -124,8 +124,6 @@ pub fn apply<H: Host + ?Sized>(address: u32, game: &mut H) -> bool {
 use crate::camera::set_layer1;
 use crate::player_collision::operations::Axis;
 use crate::player_position::PlayerWord;
-use crate::ram::word;
-use crate::ram_words as words;
 use camera::{auto_x, auto_y, trigger_down, trigger_left, trigger_right, trigger_up};
 // Samus's fraction and whole position form one native split motion: native
 // loads of the fraction then the whole, stores likewise.
@@ -210,19 +208,18 @@ fn add_layer1_motion<H: Host + ?Sized>(axis: usize, amount: u32, game: &mut H) {
 }
 
 macro_rules! chase_ideal_layer_position {
-    (
-        $game:ident, $axis:expr,
-        $movement:ident, $movement_fraction:ident, $scroll_negative:path,
-        $scroll_positive:path $(,)?
-    ) => {
+    ($game:ident, $axis:expr, $scroll_negative:path, $scroll_positive:path $(,)?) => {
         let camera = $game.session().room.camera;
         if camera.ideal_layer1[$axis] != camera.layer1[$axis] {
             let negative =
                 (camera.ideal_layer1[$axis] as i16).wrapping_sub(camera.layer1[$axis] as i16) < 0;
+            // How far Samus moved last frame on the axis ($0DA2.. 16.16).
+            let moved = &$game.session().player.camera_distance[$axis];
+            let moved = (u32::from(moved.whole) << 16) | u32::from(moved.fraction);
             let amount = if negative {
-                -(words!(i32, $game.$movement, $movement_fraction)) as u32
+                -(moved as i32) as u32
             } else {
-                words!($game.$movement, $movement_fraction)
+                moved
             };
             add_layer1_motion($axis, amount, $game);
             if negative {
@@ -254,14 +251,7 @@ fn follow_x<H: Host + ?Sized>(game: &mut H) {
     };
     let distance = distances[usize::from(game.session().room.camera.distance_index >> 1)];
     game.session_mut().room.camera.ideal_layer1[0] = game.player_x().wrapping_sub(distance);
-    chase_ideal_layer_position!(
-        game,
-        0,
-        ABSOLUTE_MOVED_LAST_FRAME_X,
-        ABSOLUTE_MOVED_LAST_FRAME_X_FRACT,
-        trigger_left,
-        trigger_right
-    );
+    chase_ideal_layer_position!(game, 0, trigger_left, trigger_right);
 }
 fn follow_y<H: Host + ?Sized>(game: &mut H) {
     if game.previous_player_y() == game.player_y() {
@@ -274,14 +264,7 @@ fn follow_y<H: Host + ?Sized>(game: &mut H) {
         game.session().room.entry.scroll_up
     };
     game.session_mut().room.camera.ideal_layer1[1] = game.player_y().wrapping_sub(scroller);
-    chase_ideal_layer_position!(
-        game,
-        1,
-        ABSOLUTE_MOVED_LAST_FRAME_Y,
-        ABSOLUTE_MOVED_LAST_FRAME_Y_FRACT,
-        trigger_up,
-        trigger_down
-    );
+    chase_ideal_layer_position!(game, 1, trigger_up, trigger_down);
 }
 
 /// Layer 2's scroll policy byte on `axis` (0 = x, 1 = y): 0 follows layer 1,
@@ -297,7 +280,8 @@ pub fn fill_viewport<H: Host + ?Sized>(game: &mut H) {
     let screens = (i32::from(game.display_control_byte(Field::Screens0))
         - i32::from(game.display_control_byte(Field::Screens1)))
         << 8;
-    word!(game.SIZE_OF_BG2 = (screens & 0xf800) as u16);
+    game.session_mut().room.background_size = (screens & 0xf800) as u16;
+    game.words_stored();
     calculate_blocks(game);
     for _ in 0..17 {
         let camera = game.session().room.camera;
