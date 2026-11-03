@@ -16,6 +16,36 @@ pub mod reserve_tanks;
 pub mod save_slots;
 pub mod state;
 
+/// The word a menu ROM table names by its work RAM address: the equipment
+/// screen's equipped words ($82:C03C), the special settings ($82:F0xx) and
+/// the controller bindings ($82:F54A), each a player block word.
+pub(crate) fn named_player_word<H: host::Host + ?Sized>(game: &H, address: u16) -> u16 {
+    use crate::projection::Field;
+    match crate::save_file::PlayerWord::named(address) {
+        Some(word) => game.view_word(Field::Player(word)),
+        // LEGACY(original-overflow): a table address outside the player block.
+        None => crate::legacy_overflow::ram_native_word(game, usize::from(address)),
+    }
+}
+
+/// Store `value` to the word a menu ROM table names by its work RAM address.
+pub(crate) fn set_named_player_word<H: host::Host + ?Sized>(
+    game: &mut H,
+    address: u16,
+    value: u16,
+) {
+    use crate::projection::Field;
+    match crate::save_file::PlayerWord::named(address) {
+        Some(word) => game.set_view_word(Field::Player(word), value),
+        // LEGACY(original-overflow): a table address outside the player block.
+        None => crate::legacy_overflow::ram_write_slice(
+            game,
+            usize::from(address),
+            &value.to_ne_bytes(),
+        ),
+    }
+}
+
 /// Whether the current menu state resumes after its forced-blank wait.
 pub fn resuming<H: host::Host + ?Sized>(game: &H) -> bool {
     game.screen_primary() != 0

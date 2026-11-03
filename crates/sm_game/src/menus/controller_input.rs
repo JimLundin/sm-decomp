@@ -302,11 +302,8 @@ const BINDING_BUTTONS: [u16; 9] = [
 
 pub fn load_binding_choices<H: Host + ?Sized>(game: &mut H) {
     for index in 0..7 {
-        let address = crate::menu_lists::binding_address(game, index) as usize;
-        let binding = u16::from_ne_bytes([
-            game.ram().read_byte(address),
-            game.ram().read_byte(address + 1),
-        ]);
+        let address = crate::menu_lists::binding_address(game, index);
+        let binding = super::named_player_word(game, address);
         let choice = BINDING_BUTTONS[..7]
             .iter()
             .position(|button| binding & button != 0)

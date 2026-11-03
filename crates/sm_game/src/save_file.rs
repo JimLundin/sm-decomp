@@ -127,6 +127,16 @@ impl PlayerWord {
         Self::Spare0A00,
     ];
 
+    /// The word a ROM table names by its work RAM address, if the address is
+    /// one of the block's words.
+    pub fn named(address: u16) -> Option<Self> {
+        let offset = usize::from(address).checked_sub(PLAYER)?;
+        if offset % 2 != 0 {
+            return None;
+        }
+        Self::ALL.get(offset / 2).copied()
+    }
+
     /// The word's position in the block.
     pub fn index(self) -> usize {
         self as usize
