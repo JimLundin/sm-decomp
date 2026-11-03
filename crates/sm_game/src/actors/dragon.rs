@@ -8,7 +8,7 @@ use crate::actors::slot_view::{SlotState, slot_view};
 use crate::enemy_projectiles::host::Effects as _;
 use crate::enemy_script::EnemyScript;
 use crate::player_projectiles::content::table as list_table;
-use crate::ram::words as W;
+use crate::session_access::SessionAccess as _;
 
 /// A lease the dragons run on: their slots are the Session's.
 pub trait Lease: ActorLease + SlotState {}
@@ -75,7 +75,7 @@ fn set_timer(runtime: &mut impl ActorLease, key: Key, timer: u16, function: u16)
 /// Initialisation AI - enemy $D4BF (dragon) ($A2:E606): parameter 1 non-zero for the wings.
 pub fn initialize<H: LeaseActors>(game: &mut H) {
     let mut runtime = game.lease();
-    let raw = runtime.word(W::CUR_ENEMY_INDEX);
+    let raw = runtime.session().actors.controls.selected;
     let key = Key::from_legacy(raw);
     store(&mut runtime, raw, |dragon| dragon.fire(), 0);
     let wings = runtime.resolve_actor(key, Native).parameters[0] != 0;
@@ -97,7 +97,7 @@ pub fn initialize<H: LeaseActors>(game: &mut H) {
 /// Instruction - set animation finished flag ($A2:E5FB): ready to fire.
 pub fn set_animation_finished<H: LeaseActors>(cursor: EnemyScript, game: &mut H) -> EnemyScript {
     let mut runtime = game.lease();
-    let k = runtime.word(W::CUR_ENEMY_INDEX);
+    let k = runtime.session().actors.controls.selected;
     store(&mut runtime, k, |dragon| dragon.fire(), 1);
     cursor
 }
@@ -112,7 +112,7 @@ pub fn react<H: LeaseActors + ActorRuntime>(ea: u32, game: &mut H) {
         _ => game.power_bomb_reaction(Death::Finalize),
     }
     let mut runtime = game.lease();
-    let k = runtime.word(W::CUR_ENEMY_INDEX);
+    let k = runtime.session().actors.controls.selected;
     let wings = k + 64;
     if Dragon::of(&runtime, k).actor().health != 0 {
         let shake = Dragon::of(&runtime, k).actor().shake;
