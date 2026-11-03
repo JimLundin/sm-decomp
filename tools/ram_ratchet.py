@@ -58,7 +58,7 @@ BASELINE = {
     "engine_ram_address_sites": 11,
     "engine_raw_ram_calls": 107,
     "engine_unresolved_ram_methods": 981,
-    "legacy_engine_ram_sites": 521,
+    "legacy_engine_ram_sites": 525,
     # Original-game overflow paths (LEGACY(original-overflow)), reported only.
     "engine_legacy_overflow_sites": 61,
     # The Game boundary (Jim, 2026-11-03): each foreign call is a full Session

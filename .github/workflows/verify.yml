@@ -81,7 +81,9 @@ jobs:
           SELECTED: ${{ inputs.segments }}
           ORACLE_SAMPLE: ${{ inputs.oracle_sample && '1' || '' }}
           COVER_ROUTES: ${{ inputs.cover_routes && '1' || '' }}
-        run: python3 .github/scripts/plan_verify.py
+        # The Rust planner (crates/sm_tools/src/bin/sm_pipeline). A Quality test keeps it
+        # byte-identical to plan_verify.py until the Python planner is deleted.
+        run: rustc --edition=2024 -O -o "$RUNNER_TEMP/sm_pipeline" crates/sm_tools/src/bin/sm_pipeline/main.rs && "$RUNNER_TEMP/sm_pipeline" plan
 
   verify-build:
     needs: verify-plan
