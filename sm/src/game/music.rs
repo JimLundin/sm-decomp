@@ -194,6 +194,12 @@ impl crate::game::session_runtime::Runtime<'_> {
             requests::queue_sfx(channel, sound, max_queued, runtime).expect("audio sound enqueue")
         })
     }
+    /// Reset the three sound effect queues' positions and states.
+    pub(crate) fn reset_sound_requests(&mut self) {
+        self.audio_request(|runtime| {
+            requests::reset_sound_queues(runtime).expect("audio sound queue reset")
+        });
+    }
     /// Clear the music queue.
     pub(crate) fn clear_music_requests(&mut self) {
         self.audio_request(|runtime| requests::clear_queue(runtime).expect("audio queue clear"));

@@ -72,16 +72,15 @@ impl EntryEffects for Runtime<'_> {
                 }
             }
             LeafEffect::DisableIrq => sm_game::display_refresh::disable_scanline_irq(self),
+            // The door sound goes to SFX queue 2, at most 15 queued.
+            LeafEffect::QueueDoorSound => {
+                self.queue_sound_request(1, 0x71, 15);
+            }
+            LeafEffect::ResetSoundQueues => self.reset_sound_requests(),
             _ => {
                 // The exported game holds the same key; read it from its Session field.
                 let tilesets = self.session().room.entry.enemy_tilesets_key;
                 self.foreign(|game| match effect {
-                    LeafEffect::QueueDoorSound => {
-                        game::music::queue_sfx2_max15(0x71, game);
-                    }
-                    LeafEffect::ResetSoundQueues => {
-                        game::music::clear_sound_queues(game);
-                    }
                     LeafEffect::ClearTransitionSounds => {
                         game::session_runtime::player_command(0x1d, game);
                     }
@@ -147,7 +146,9 @@ impl EntryEffects for Runtime<'_> {
                     | LeafEffect::DisableNmi
                     | LeafEffect::EnableIrq
                     | LeafEffect::WaitVblankEnableIrq
-                    | LeafEffect::DisableIrq => {
+                    | LeafEffect::DisableIrq
+                    | LeafEffect::QueueDoorSound
+                    | LeafEffect::ResetSoundQueues => {
                         unreachable!("leaf runs on the lease")
                     }
                 })
