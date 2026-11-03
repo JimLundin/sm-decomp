@@ -144,6 +144,7 @@ pub trait Host:
     + WorkRamAccess
     + LoadedRom
     + Registers
+    + crate::display::video::Video
     + SoundEffects
     + DisplayRefresh
     + crate::display_refresh::DisplayOwner

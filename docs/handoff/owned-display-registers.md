@@ -75,3 +75,71 @@ arms (sm_game's and rtl's) now take a `preparation::Field` and store it with
 `store_display_control_byte(.., Store::Named)`, the same RAM byte on Game. The ratchet counts
 any call whose mirror is still a RAM offset ("raw display mirror stores"); there are none.
 The register half of each call is still a register write.
+
+## Typed display commands (lane `owned-pres`, 2026-11-03)
+
+### How close the native renderer is
+
+- `sm_runtime::rendering` (the `native_line` check in `sm/src/snes/ppu.rs`) redraws every line
+  from its own `Registers`/`Ports`/`OwnedMemory` and compares it with the emulated PPU's line.
+  CI runs it on every room job of the nightly full route (`replay_job.py` sets
+  `SM_NATIVE_LINES=1` on `schedule`). Run 41424604620 (main 558131e72, 2026-11-02) passed with
+  no `native-lines.csv`: no differing line, no frame-start resync and no typed-producer
+  mismatch on the full route.
+- So the native renderer is byte-exact on replays today, but it is still fed by the same
+  `$21xx` port writes the emulated PPU takes (`native_line::write`), except for the typed
+  producers (Samus tiles, tilemaps, animated tiles), which feed it `Video::produced` uploads.
+- It is not yet the authority: the emulated PPU draws the frame, and DMA, HDMA and the IRQ
+  timing still read the emulated backend. Making it the authority is the step-5 work in
+  `v2-native-video.md`, and it is not one landable slice.
+
+### The slice: sm_game says what, the backend's encoder says how
+
+The target architecture (CONTRACTS "Original hardware register operations are expressed as
+the required gameplay or presentation behavior"; ARCHITECTURE "Focused GPU renderer": Scene
+records are "not SNES registers") puts register encoding outside the game. The migration
+policy keeps the emulated backend as the comparison path until replacement evidence exists.
+That allows this step, which keeps the emulated PPU as the authority:
+
+- sm_game names a display change as a typed value, `display::video::Command`, and hands it to
+  the `Video` host at the point the writes were made (`Video::apply`).
+- The emulated backend's encoder (`sm/src/game/display_commands.rs`, on `Game`) performs the
+  original's writes for that value synchronously, in the original's order and widths. Writes
+  are byte-identical and at the same time, so this is `[exact]`.
+- Where the command is an upload, the encoder brackets its writes with
+  `producing`/`produced`, so under `SM_NATIVE_LINES` the native PPU takes the typed upload in
+  place of the port writes, and a mismatch is logged as `typed,<producer>,<part>`. That is
+  retirement step 2 (a typed record checked against the emulated PPU) for the producer.
+- The commands reach `Game` through the existing `Video` impl, so no Game host impl, foreign
+  call or address API is added.
+
+This is not design 3's rename. The command is the record the native renderer consumes and the
+Owned presentation would apply; the register addresses, port widths and DMA channel numbers
+leave sm_game. Once the native renderer is the authority, the encoder becomes the emulated
+backend's adapter and goes with it.
+
+First commands:
+
+| Command | Producer | Encoding (in order) |
+| --- | --- | --- |
+| `TilesNow { address, increment, source, bytes }` | HUD initialisation (hud.rs) | VMADD word, VMAIN word (mode, address low byte), channel 1: DMAP word $1801, A1T word, A1B, DAS word; MDMAEN 2 |
+| `FixedColor(FixedColor)` | ending space view (ending_sequence.rs) | COLDATA |
+| `WindowHdma(WindowHdma)` | map-menu window (menu_window.rs) | channel $43x0..$43xA: mode $40, B-bus port, table word and bank, indirect bank, then the cursor bytes cleared |
+
+| `Control(Control)` with `apply_mirrored` | map-menu area window (map_menu.rs) | the control's register (TM, TS, TMW, TSW, W12SEL, W34SEL, WOBJSEL, CGWSEL, CGADSUB, HDMAEN), with its display mirror stored by sm_game before or after as before |
+
+A control's mirror field is named at the call, not implied by the control: the map menu
+mirrors TS into the sub window byte and TM into the main window byte, as the original does.
+
+### Left for the next slices
+
+- display/transfer.rs (`setup_transfer`, `copy_to_vram_now`): `copy_to_vram_now` writes VMAIN
+  as a byte after the channel and starts through `start_room_dma`, which may read prepared
+  room assets. It needs its own command, with the prepared-asset source in the encoder.
+- message_boxes, cinematic_display, the remaining controls in gameplay_frame, liquid_effects,
+  cinematic_states and room_state: the same `Control`/`FixedColor` commands cover most of
+  their writes once the enum gains their registers (BGMODE, Mode 7, scroll latches).
+- display_refresh's NMI writes and hdma_objects: still retirement step 1 (the Owned
+  presentation or native renderer as the authority), since the `Refresh` adapter is itself the
+  encoder of `scene::commit::RefreshHost`.
+- display/sequence.rs goes with its last caller.

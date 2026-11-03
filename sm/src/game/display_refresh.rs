@@ -117,6 +117,9 @@ impl sm_game::display::video::Video for Game {
             }
         });
     }
+    fn apply(&mut self, producer: &'static str, command: sm_game::display::video::Command) {
+        crate::game::display_commands::apply(producer, command, self);
+    }
 }
 
 /// A byte a DMA reads from the CPU bus: work RAM or the cartridge.

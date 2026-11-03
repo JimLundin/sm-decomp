@@ -132,6 +132,26 @@ session_words! {
     SamusKnockbackTimer = 0x18aa, SAMUS_KNOCKBACK_TIMER, samus_knockback_timer: |s| s.player.knockback_timer;
     /// The presentation's palette fade `step`.
     PaletteChangeNum = 0xc400, PALETTE_CHANGE_NUM, palette_change_num: |s| s.presentation.visual_mut().palette_fade.step;
+    /// `projectiles.power_bomb.explosion_status`.
+    PowerBombExplosionStatus = 0x0592, POWER_BOMB_EXPLOSION_STATUS, power_bomb_explosion_status: |s| s.projectiles.power_bomb.explosion_status;
+    /// `projectiles.power_bomb.x`.
+    PowerBombExplosionXPos = 0x0ce2, POWER_BOMB_EXPLOSION_X_POS, power_bomb_explosion_x_pos: |s| s.projectiles.power_bomb.x;
+    /// `projectiles.power_bomb.y`.
+    PowerBombExplosionYPos = 0x0ce4, POWER_BOMB_EXPLOSION_Y_POS, power_bomb_explosion_y_pos: |s| s.projectiles.power_bomb.y;
+    /// `projectiles.power_bomb.window_x`.
+    PowerBombExplosionWindowX = 0x0ce6, POWER_BOMB_EXPLOSION_X_POS_PLUS_0X100, power_bomb_explosion_window_x: |s| s.projectiles.power_bomb.window_x;
+    /// `projectiles.power_bomb.window_y`.
+    PowerBombExplosionWindowY = 0x0ce8, POWER_BOMB_EXPLOSION_Y_POS_RSUB_0X1FF, power_bomb_explosion_window_y: |s| s.projectiles.power_bomb.window_y;
+    /// `room.power_bomb_radius`.
+    PowerBombExplosionRadius = 0x0cea, POWER_BOMB_EXPLOSION_RADIUS, power_bomb_explosion_radius: |s| s.room.power_bomb_radius;
+    /// `projectiles.power_bomb.pre_flash_radius`.
+    PowerBombPreExplosionFlashRadius = 0x0cec, POWER_BOMB_PRE_EXPLOSION_FLASH_RADIUS, power_bomb_pre_explosion_flash_radius: |s| s.projectiles.power_bomb.pre_flash_radius;
+    /// `projectiles.power_bomb.flag`.
+    PowerBombFlag = 0x0cee, POWER_BOMB_FLAG, power_bomb_flag: |s| s.projectiles.power_bomb.flag;
+    /// `projectiles.power_bomb.radius_speed`.
+    PowerBombPreExplosionRadiusSpeed = 0x0cf0, POWER_BOMB_PRE_EXPLOSION_RADIUS_SPEED, power_bomb_pre_explosion_radius_speed: |s| s.projectiles.power_bomb.radius_speed;
+    /// `projectiles.power_bomb.shape_definition`.
+    PreScaledPowerBombExplosionShapeDefPtr = 0x0cf2, PRE_SCALED_POWER_BOMB_EXPLOSION_SHAPE_DEF_PTR, pre_scaled_power_bomb_explosion_shape_def_ptr: |s| s.projectiles.power_bomb.shape_definition;
 }
 
 /// The Session-owned words as the host's projection holds them.
@@ -168,6 +188,19 @@ impl SessionWords {
             samus_invincibility_timer: s.player.invincibility,
             samus_knockback_timer: s.player.knockback_timer,
             palette_change_num: s.presentation.visual().palette_fade.step,
+            power_bomb_explosion_status: s.projectiles.power_bomb.explosion_status,
+            power_bomb_explosion_x_pos: s.projectiles.power_bomb.x,
+            power_bomb_explosion_y_pos: s.projectiles.power_bomb.y,
+            power_bomb_explosion_window_x: s.projectiles.power_bomb.window_x,
+            power_bomb_explosion_window_y: s.projectiles.power_bomb.window_y,
+            power_bomb_explosion_radius: s.room.power_bomb_radius,
+            power_bomb_pre_explosion_flash_radius: s.projectiles.power_bomb.pre_flash_radius,
+            power_bomb_flag: s.projectiles.power_bomb.flag,
+            power_bomb_pre_explosion_radius_speed: s.projectiles.power_bomb.radius_speed,
+            pre_scaled_power_bomb_explosion_shape_def_ptr: s
+                .projectiles
+                .power_bomb
+                .shape_definition,
         }
     }
 }
@@ -252,6 +285,42 @@ impl SessionWords {
         }
         if self.palette_change_num != before.palette_change_num {
             changed.push((0xc400, self.palette_change_num));
+        }
+        if self.power_bomb_explosion_status != before.power_bomb_explosion_status {
+            changed.push((0x592, self.power_bomb_explosion_status));
+        }
+        if self.power_bomb_explosion_x_pos != before.power_bomb_explosion_x_pos {
+            changed.push((0xce2, self.power_bomb_explosion_x_pos));
+        }
+        if self.power_bomb_explosion_y_pos != before.power_bomb_explosion_y_pos {
+            changed.push((0xce4, self.power_bomb_explosion_y_pos));
+        }
+        if self.power_bomb_explosion_window_x != before.power_bomb_explosion_window_x {
+            changed.push((0xce6, self.power_bomb_explosion_window_x));
+        }
+        if self.power_bomb_explosion_window_y != before.power_bomb_explosion_window_y {
+            changed.push((0xce8, self.power_bomb_explosion_window_y));
+        }
+        if self.power_bomb_explosion_radius != before.power_bomb_explosion_radius {
+            changed.push((0xcea, self.power_bomb_explosion_radius));
+        }
+        if self.power_bomb_pre_explosion_flash_radius
+            != before.power_bomb_pre_explosion_flash_radius
+        {
+            changed.push((0xcec, self.power_bomb_pre_explosion_flash_radius));
+        }
+        if self.power_bomb_flag != before.power_bomb_flag {
+            changed.push((0xcee, self.power_bomb_flag));
+        }
+        if self.power_bomb_pre_explosion_radius_speed
+            != before.power_bomb_pre_explosion_radius_speed
+        {
+            changed.push((0xcf0, self.power_bomb_pre_explosion_radius_speed));
+        }
+        if self.pre_scaled_power_bomb_explosion_shape_def_ptr
+            != before.pre_scaled_power_bomb_explosion_shape_def_ptr
+        {
+            changed.push((0xcf2, self.pre_scaled_power_bomb_explosion_shape_def_ptr));
         }
         changed
     }
