@@ -110,8 +110,7 @@ pub trait HdmaEffects: Host {
 
     fn select_phantoon_layer(&mut self) {
         use crate::actors::access::AccessMode::Native;
-        use crate::ram::words as ram;
-        if self.word(ram::PHANTOM_RELATED_LAYER_FLAG) & 0x4000 != 0 {
+        if self.session().room.fx_layer_flags & 0x4000 != 0 {
             {
                 let mut fx = self.fx_controls();
                 fx.blending = 26;
@@ -431,13 +430,14 @@ pub trait HdmaEffects: Host {
 
     /// Scroll BG3 by the weather's phases and the camera, through the session view.
     fn scroll_weather_layers(&mut self, slot: u16, weather: Weather) {
-        use crate::ram::words as ram;
+        use crate::fx_state::Field::{EffectHorizontal, EffectVertical};
         let spores = matches!(weather, Weather::Spores);
         let rain = matches!(weather, Weather::Rain);
         // Each axis has a phase word (A and B, or C and D for spores) and
         // rain's camera history (E and F). Finish each axis, including the
         // history, before reading the next.
-        for (vertical, camera, output) in [(true, 1, ram::BG3_YPOS), (false, 0, ram::BG3_XPOS)] {
+        for (vertical, camera, output) in [(true, 1, EffectVertical), (false, 0, EffectHorizontal)]
+        {
             let hdma_index = usize::from(slot >> 1);
             let (phase, history) = match (spores, vertical) {
                 (false, true) => (
@@ -464,7 +464,9 @@ pub trait HdmaEffects: Host {
                 self.session().room.camera.layer1[camera]
             };
             let scroll = origin.wrapping_add(high(phase) as i8 as u16);
-            self.write_slice_le(output, scroll);
+            let mut fx = self.fx_controls();
+            *output.get_mut(&mut fx) = scroll;
+            self.publish_fx_controls(fx, &[output]);
             let delta = match (weather, vertical) {
                 (Weather::Rain, true) => 0u16.wrapping_sub(1536),
                 (_, true) => 0u16.wrapping_sub(64),
