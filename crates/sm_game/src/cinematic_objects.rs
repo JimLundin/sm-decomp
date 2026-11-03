@@ -766,8 +766,10 @@ fn draw_cinematic_background<H: crate::menus::host::Host + ?Sized>(
                     (6, destination),
                     (8, if columns { 2 } else { 0 }),
                 ] {
-                    let at = crate::display::transfer::MODE7_QUEUE + usize::from(tail) + field;
-                    game.write_slice_native(at, value);
+                    let offset = usize::from(tail) + field;
+                    for (lane, byte) in value.to_ne_bytes().into_iter().enumerate() {
+                        game.set_mode7_queue_byte(offset + lane, byte);
+                    }
                 }
                 tail = tail.wrapping_add(9);
                 source = source.wrapping_add(length);
