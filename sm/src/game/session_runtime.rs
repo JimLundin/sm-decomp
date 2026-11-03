@@ -493,29 +493,18 @@ impl<'g> Runtime<'g> {
             value
         })
     }
-    /// The audio request bytes ($7E:0617..0665) are RAM's alone while the Session's control is
-    /// Legacy: it projects none of them and no frame export layout writes them, so a request
-    /// the lease stores in RAM survives every export.
+    /// The audio request bytes ($7E:0617..0640, $0643..0687, $07F3..07F6) are the Session's on every
+    /// lease: its control projects each of them, so a request the lease queues reaches its
+    /// owner, and RAM takes it when the lease exports.
     #[cfg(sm_verify_dll)]
-    pub(crate) fn assert_audio_requests_unexported(&self) {
-        const REQUESTS: std::ops::Range<usize> = 0x617..0x666;
+    pub(crate) fn assert_audio_requests_owned(&self) {
         let state = self.session();
-        if !matches!(state.control, sm_game::session_owners::Control::Legacy(_)) {
-            return;
-        }
         assert!(
-            REQUESTS
-                .clone()
-                .all(|at| encoding::projected_byte(state, at).is_none()),
-            "a Legacy Session projects an audio request byte"
-        );
-        assert!(
-            self.game
-                .frame_session
-                .layouts
+            AUDIO_REQUESTS
                 .iter()
-                .all(|(_, layout)| !layout.covers(REQUESTS)),
-            "an export layout writes an audio request byte"
+                .flat_map(Clone::clone)
+                .all(|at| state.control.projected_byte(at).is_some()),
+            "the Session's control projects no audio request byte"
         );
     }
     fn refresh_actor_observations(&mut self) {
@@ -1137,6 +1126,33 @@ pub(crate) fn run_mechanisms(
     }
 }
 
+/// The audio request bytes: the APU upload flag and the music and sound queues, the sound
+/// handler's downtime, and the music data and track indices.
+#[cfg(sm_verify_dll)]
+const AUDIO_REQUESTS: [std::ops::Range<usize>; 3] = [0x617..0x641, 0x643..0x688, 0x7f3..0x7f7];
+/// The verifier's check at an APU-side read on Game, which took `byte` from RAM at audio
+/// request byte `at`: while the frame's kept Session is current with RAM, its audio owner
+/// holds that very byte.
+#[cfg(sm_verify_dll)]
+pub(crate) fn assert_kept_audio_matches(game: &Game, at: usize, byte: u8) {
+    let Some(KeptSession {
+        state: Some(state),
+        epoch,
+        ..
+    }) = game.frame_session.kept.as_ref()
+    else {
+        return;
+    };
+    if *epoch != game.compatibility_write_epoch()
+        || !AUDIO_REQUESTS.iter().any(|range| range.contains(&at))
+    {
+        return;
+    }
+    assert!(
+        state.control.projected_byte(at) == Some(byte),
+        "the kept Session's audio requests differ from RAM at an APU read"
+    );
+}
 /// The Session a frame tick's last lease exported, kept with a log of the RAM written since, so
 /// the next lease, in this tick or a later one, borrows it and takes those bytes rather than
 /// decoding the RAM again. Only a lease in a frame tick (`with_frame_session`) keeps one.

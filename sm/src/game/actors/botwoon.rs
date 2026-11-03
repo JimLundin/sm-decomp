@@ -1,8 +1,6 @@
-//! Botwoon runs in `sm_game::actors::botwoon`; its boss flag store comes from
-//! here, and its death signals run in the Runtime lease.
+//! Botwoon runs in `sm_game::actors::botwoon`, its boss flag store and death
+//! signals in the Runtime lease.
 #![forbid(unsafe_code)]
-use crate::game::gameplay_flag_runtime::set_boss_bits_for_current_area;
-use crate::game_state::Game;
 pub(crate) use sm_game::actors::botwoon::*;
 
 // The named bank $B3 functions are the ones `session_runtime` dispatches on.
@@ -22,9 +20,3 @@ const _: () = {
     assert!(at(h::SPITTING_SPAWN_5) == 11771616 && at(h::SPITTING_SPAWN_3) == 11771700);
     assert!(at(h::SPITTING_COOLDOWN) == 11771770);
 };
-
-impl Effects for Game {
-    fn set_boss_bit(&mut self, mask: u16) {
-        set_boss_bits_for_current_area(mask, self);
-    }
-}

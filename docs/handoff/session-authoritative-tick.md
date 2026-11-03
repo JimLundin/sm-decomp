@@ -337,6 +337,25 @@ A decision (D3).
 - **Delta.** `controller_input.rs`'s `IS_UPLOADING_APU` (−1), and the remaining audio
   `foreign` calls.
 - **Rows.** As 3a, plus `save-death-reload` and `samus-gunship-save` (music after a load).
+- **Done (lane `tick-s3b`, 2026-11-03).** D3 taken provisionally: cues stay immediate.
+  - `LegacyControl::audio` (`session_owners::LegacyAudio`) owns $0617..$0640,
+    $0643..$0687 and $07F3..$07F6. Every lease decodes it, every export encodes it, so the
+    lease's request stores reach the owner and RAM takes them at the export. The APU-side
+    readers on Game read RAM, which a deferred export serves or settles first. Game-side
+    writers (the music queue and sound advance, boot, the queue clears inside `foreign`,
+    the oracle restore) still store RAM outside leases, and the next lease takes them from
+    the write log or decodes. The Legacy control has no checkpoint, so no format bump.
+  - Verify builds assert, on every lease audio request, that the control projects every
+    request byte, and, at every APU-side read on Game, that a kept frame Session current
+    with RAM holds the byte RAM does.
+  - The mixed foreign calls of the Bomb Torizo (fight start, defeat), Botwoon, Crocomire
+    and Phantoon deaths, and the room entry's door sound and sound queue reset, run on the
+    lease (`foreign_calls` 183 to 178, `game_host_impls` 96 to 95).
+  - Left: `handle_music_queue` (step 4) and `advance_sound_effects` (step 8) run on Game
+    with no lease open; moving them needs a lease the frame already holds there (stage 6),
+    since a new mid-frame lease is ruled out. Ridley's death (`ridley.rs` drop scatter plus
+    music) needs the enemy projectile host on Ridley's lease, which makes its
+    `queue_sound` calls ambiguous between the two sound traits.
 
 ### Stage 4: the lease's hardware port
 

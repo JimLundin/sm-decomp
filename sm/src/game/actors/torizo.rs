@@ -29,10 +29,6 @@ impl Ai for Game {
         crate::game::session_runtime::run_aa_function(address, self);
     }
 
-    fn set_boss_bit(&mut self, bit: u16) {
-        crate::game::gameplay_flag_runtime::set_boss_bits_for_current_area(bit, self);
-    }
-
     fn set_palette_targets(&mut self, palettes: Palettes) {
         use crate::game::palette_effects::torizo;
         let pair = match palettes {
@@ -58,10 +54,6 @@ impl Ai for Game {
 
     fn health_palette(&mut self, health: u16) {
         crate::game::palette_effects::torizo::health_current(health, self);
-    }
-
-    fn spawn_palette_effect(&mut self, definition: u16) {
-        crate::game::palette_effects::spawn(definition, self);
     }
 
     fn spawn_haze(&mut self) {

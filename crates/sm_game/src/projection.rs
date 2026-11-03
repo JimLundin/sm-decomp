@@ -51,8 +51,8 @@ pub enum Field {
     MessageDelay,
     /// Where Kraid's sinking unpause hook queues its row erasures ($0780).
     UnpauseQueueTail,
-    /// Whether an APU upload is under way ($0617), as the owned audio
-    /// requests hold it; with legacy control the byte path answers.
+    /// Whether an APU upload is under way ($0617), as the control's audio
+    /// requests hold it.
     ApuUploading,
     /// The random number generator's last result ($05E5).
     RandomNumber,
@@ -177,10 +177,7 @@ impl Field {
             Self::RoomHeader => session.world.room_key(&entry.room),
             Self::MessageDelay => session.messages.delay,
             Self::UnpauseQueueTail => room.unpause_queue_tail,
-            Self::ApuUploading => match &session.control {
-                crate::session_owners::Control::Owned(control) => control.requests.uploading,
-                crate::session_owners::Control::Legacy(_) => return None,
-            },
+            Self::ApuUploading => session.control.apu_uploading(),
             Self::RandomNumber => session.timing.random_number,
             Self::Moonwalk => session.player.moonwalk,
             Self::DebugFlag => session.player.debug_flag,

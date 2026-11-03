@@ -260,11 +260,6 @@ impl ExportLayout {
             covered
         })
     }
-    /// Whether the export writes any byte of `range`.
-    #[cfg(sm_verify_dll)]
-    pub(crate) fn covers(&self, range: Range<usize>) -> bool {
-        self.covered().any(range)
-    }
 }
 /// A frame Session export whose bookkeeping RAM has taken but whose bytes it has not: the
 /// first read or write of a byte it covers writes them, as the export would have.
@@ -1285,7 +1280,13 @@ impl Game {
 
     /// APU upload flag at $7E:0617.
     pub fn uploading_apu(&self) -> bool {
-        self.compatibility_byte(0x617) != 0 || self.compatibility_byte(0x618) != 0
+        let set = |at: usize| {
+            let byte = self.compatibility_byte(at);
+            #[cfg(sm_verify_dll)]
+            crate::game::session_runtime::assert_kept_audio_matches(self, at, byte);
+            byte != 0
+        };
+        set(0x617) || set(0x618)
     }
 
     ram_word_accessors! {
@@ -1819,7 +1820,10 @@ impl GameOwner {
 
 impl persistent_session::AudioHost for Game {
     fn audio_byte(&self, at: usize) -> u8 {
-        self.compatibility_byte(at)
+        let byte = self.compatibility_byte(at);
+        #[cfg(sm_verify_dll)]
+        crate::game::session_runtime::assert_kept_audio_matches(self, at, byte);
+        byte
     }
     fn audio_store_byte(&mut self, at: usize, byte: u8) {
         self.compatibility_write_owned_byte(at, byte);

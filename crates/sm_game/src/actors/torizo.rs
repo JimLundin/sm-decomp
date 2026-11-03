@@ -236,7 +236,6 @@ pub fn golden_super_missile_reaction<L: Lease>(k: u16, j: u16, game: &mut L) {
 pub trait Ai: BossEffects + Deaths + Records + BossLease<Game = Self> {
     /// Run the bank $AA movement function at `address` for the current Torizo.
     fn run_function(&mut self, address: u32);
-    fn set_boss_bit(&mut self, bit: u16);
     /// Load Torizo target palettes `palettes`.
     fn set_palette_targets(&mut self, palettes: Palettes);
     /// Load the common Torizo target palettes.
@@ -247,8 +246,6 @@ pub trait Ai: BossEffects + Deaths + Records + BossLease<Game = Self> {
     fn restore_palette(&mut self);
     /// Golden Torizo's palettes for `health`.
     fn health_palette(&mut self, health: u16);
-    /// Spawn the palette effect `definition` from bank $8D.
-    fn spawn_palette_effect(&mut self, definition: u16);
     /// Spawn the Bomb Torizo room's haze.
     fn spawn_haze(&mut self);
 }
@@ -858,10 +855,8 @@ pub fn fade_to_black<L: Lease>(game: &mut L) {
 /// Instruction - set boss bit, queue elevator music, spawn item drops
 /// ($AA:B24D). Was `Torizo_Instr_38`.
 pub fn defeated<L: Lease>(k: u16, game: &mut L) {
-    game.foreign(|game| {
-        game.set_boss_bit(TORIZO_DEAD);
-        game.queue_music_delayed(ELEVATOR_MUSIC);
-    });
+    game.owned_step(|game| crate::progress::mark_boss_defeated(game, TORIZO_DEAD));
+    crate::enemy_projectiles::host::Effects::queue_music(game, ELEVATOR_MUSIC);
     if BossState::area(game) != 0 {
         game.owned_step(|game| {
             crate::enemy_projectiles::drops::scatter(DropSource::GoldenTorizo, k, game)
@@ -888,10 +883,8 @@ pub fn fade_to_active<L: Lease>(game: &mut L) {
 /// Instruction - start fight music and Bomb Torizo belly palette FX
 /// ($AA:B951). Was `Torizo_Instr_9`.
 pub fn start_fight<L: Lease>(game: &mut L) {
-    game.foreign(|game| {
-        game.queue_music_delayed(FIGHT_MUSIC);
-        game.spawn_palette_effect(BOMB_BELLY_GLOW);
-    });
+    crate::enemy_projectiles::host::Effects::queue_music(game, FIGHT_MUSIC);
+    game.owned_step(|game| crate::palette_effects::execution::spawn(game, BOMB_BELLY_GLOW));
 }
 
 /// Instruction - set animation lock ($AA:C2C9). Was `Torizo_Instr_2`.

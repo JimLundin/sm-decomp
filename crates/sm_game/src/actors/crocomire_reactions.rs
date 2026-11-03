@@ -1762,10 +1762,8 @@ fn mark_event_and_start_music<L: Lease>(game: &mut L) {
     battle!(game.CameraDistance = 0);
     let area = crate::actors::boss_lease::BossState::area(game);
     let bits = steps::boss_word(game, area, BossWordOrder::Little);
-    game.foreign(|game| {
-        game.set_boss_word(area, bits | 2);
-        game.queue_music_delayed(6);
-    });
+    game.owned_step(|game| crate::progress::set_boss_word_le(game, area, bits | 2));
+    crate::enemy_projectiles::host::Effects::queue_music(game, 6);
     spawn_dust(EnemyScript::Stop, 0xfff0, game);
     spawn_dust(EnemyScript::Stop, 0x10, game);
     advance_death_sequence(game);

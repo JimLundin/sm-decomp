@@ -57,6 +57,8 @@ pub struct LegacyControl {
     pub primary: u8,
     pub secondary: u8,
     pub input: ControllerState,
+    /// The audio request bytes, which an owned start keeps with its meanings.
+    pub audio: crate::session_owners::LegacyAudio,
 }
 /// Pure input edge/repeat transition for a validated controller port.
 pub fn repeat(port: &mut PortHistory, sampled: u16, first: u16, next: u16) {
