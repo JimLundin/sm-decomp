@@ -851,6 +851,8 @@ pub trait Lease:
     /// game: the external observations are refreshed on entry and on return,
     /// as `foreign` left them.
     fn owned_step<T>(&mut self, action: impl FnOnce(&mut Self) -> T) -> T;
+    /// QueueSound on `channel` on the lease, with the original's result.
+    fn queue_sound_with_result(&mut self, channel: usize, sound: u8, max_queued: u8) -> u16;
 }
 
 /// What the fight still reaches in the compatibility runtime.
@@ -3536,8 +3538,7 @@ pub fn spawn_dust_cloud_at_offset(_k: u16, jp: EnemyScript, game: &mut impl Leas
     jp.offset(3)
 }
 pub fn spawn_hand_beam_projectile(_k: u16, jp: EnemyScript, game: &mut impl Lease) -> EnemyScript {
-    let spawn_parameter =
-        game.foreign(|game| game.queue_sound_result(1, sound::HAND_BEAM as u8, 6));
+    let spawn_parameter = game.queue_sound_with_result(1, sound::HAND_BEAM as u8, 6);
     game.owned_step(|game| {
         game.spawn_actor_eproj(
             spawn_parameter,

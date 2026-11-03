@@ -44,11 +44,6 @@ pub(crate) fn reset_delays(game: &mut Game) {
 }
 
 #[forbid(unsafe_code)]
-pub(crate) fn clear_queue(game: &mut Game) {
-    requests::clear_queue(game).expect("audio queue clear");
-}
-
-#[forbid(unsafe_code)]
 fn room_track_changed(game: &Game) -> bool {
     checked_word!(game.GAME_STATE) < 40 && checked_word!(game.ROOM_MUSIC_TRACK_INDEX) != 0
         // The original packed comparison deliberately lets track bits overlap data bits.
@@ -172,4 +167,46 @@ pub(crate) fn advance_sound_effects(
 
 pub fn clear_sound_queues(game: &mut Game) {
     requests::reset_sound_queues(game).expect("audio sound queue reset");
+}
+
+/// The requests a lease queues on its own Session: the routines the foreign calls ran on the
+/// exported game, over the lease's audio host. In Legacy the request bytes are RAM's alone,
+/// so the stores go straight to RAM, as the foreign calls' did. Each refreshes the
+/// observations on entry and on return, as the foreign call left them.
+impl crate::game::session_runtime::Runtime<'_> {
+    fn audio_request<R>(&mut self, request: impl FnOnce(&mut Self) -> R) -> R {
+        self.owned_player_call(|runtime| {
+            #[cfg(sm_verify_dll)]
+            runtime.assert_audio_requests_unexported();
+            request(runtime)
+        })
+    }
+    /// QueueMusic_Delayed8.
+    pub(crate) fn queue_music_request(&mut self, track: u16) {
+        self.audio_request(|runtime| requests::queue_delayed_8(track, runtime));
+    }
+    /// QueueSound on `channel`, with the original's result.
+    pub(crate) fn queue_sound_request(&mut self, channel: usize, sound: u8, max_queued: u8) -> u16 {
+        self.audio_request(|runtime| {
+            #[cfg(sm_verify_dll)]
+            crate::game::visual_runtime::samus_observer::sound(channel, sound, max_queued);
+            requests::queue_sfx(channel, sound, max_queued, runtime).expect("audio sound enqueue")
+        })
+    }
+    /// Clear the music queue.
+    pub(crate) fn clear_music_requests(&mut self) {
+        self.audio_request(|runtime| requests::clear_queue(runtime).expect("audio queue clear"));
+    }
+    /// PlayRoomMusicTrackAfterAFrames.
+    pub(crate) fn queue_room_music_after(&mut self, delay: u16) {
+        self.audio_request(|runtime| requests::queue_room_track_after(delay, runtime));
+    }
+    /// Whether any music request is still delayed.
+    pub(crate) fn music_queued(&mut self) -> u8 {
+        self.audio_request(|runtime| requests::has_queued_music(runtime))
+    }
+    /// Whether sound queue `channel` is empty.
+    pub(crate) fn sound_queue_empty(&mut self, channel: usize) -> bool {
+        self.audio_request(|runtime| requests::sound_queue_empty(channel, runtime))
+    }
 }

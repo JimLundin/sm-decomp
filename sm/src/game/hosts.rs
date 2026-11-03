@@ -416,7 +416,7 @@ impl sm_game::lease::Lease for crate::game::session_runtime::Runtime<'_> {
         });
     }
     fn native_music_delayed8(&mut self, track: u16) {
-        self.foreign(|game| crate::game::music::queue_music_delayed_8(track, game));
+        self.queue_music_request(track);
     }
     fn native_player_command(&mut self, command: u16) {
         self.owned_player_call(|runtime| {

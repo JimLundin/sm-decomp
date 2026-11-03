@@ -229,7 +229,7 @@ pub fn init<L: Lease>(game: &mut L) {
         *RidleyEdit::of(game, RIDLEY).baby_metroid_instruction_timer() = 1;
         *RidleyEdit::of(game, RIDLEY).baby_metroid_function() = ridley::baby_metroid_function::HELD;
         *RidleyEdit::of(game, RIDLEY).wings_frame() = 5;
-        game.foreign(|game| game.queue_music_delayed(0));
+        crate::room_mechanisms::host::Effects::music(game, 0);
     }
 }
 
@@ -430,7 +430,7 @@ pub fn fade_in_body<L: Lease>(game: &mut L) {
         *RidleyEdit::of(game, RIDLEY).fade_index() = 0;
         *RidleyEdit::of(game, RIDLEY).function() = ceres_function::WAIT_TO_ROAR;
         *RidleyEdit::of(game, RIDLEY).function_timer() = 4;
-        game.foreign(|game| game.queue_music_delayed(5));
+        crate::room_mechanisms::host::Effects::music(game, 5);
     } else {
         *RidleyEdit::of(game, RIDLEY).fade_index() = index;
     }
@@ -1003,7 +1003,7 @@ pub fn load_escape_background_tiles<L: Lease>(game: &mut L) {
         next_step(game);
         game.owned_step(queue_getaway_tiles);
         *RidleyEdit::of(game, RIDLEY).fade_index() = 128;
-        game.foreign(|game| game.queue_music_delayed(7));
+        crate::room_mechanisms::host::Effects::music(game, 7);
     }
 }
 

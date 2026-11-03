@@ -85,6 +85,24 @@ pub fn queue_delayed(track: u16, delay: u16, host: &mut (impl AudioHost + ?Sized
     enqueue(track, delay, false, host).expect("audio enqueue");
 }
 
+/// PlayRoomMusicTrackAfterAFrames: outside the demos and the ending, queue no
+/// track after `delay` frames, then the current track ($07F5) after 8.
+pub fn queue_room_track_after(delay: u16, host: &mut (impl AudioHost + ?Sized)) {
+    if host.audio_word(0x998) < 40 {
+        queue_delayed(0, delay, host);
+        let track = host.audio_word(0x7f5);
+        queue_delayed_8(track, host);
+    }
+}
+
+/// Whether sound queue `channel` is empty: its write and read positions agree.
+pub fn sound_queue_empty(channel: usize, host: &(impl AudioHost + ?Sized)) -> bool {
+    host.audio_byte(0x646 + channel)
+        .wrapping_sub(host.audio_byte(0x643 + channel))
+        & 15
+        == 0
+}
+
 pub fn has_queued_music(host: &(impl AudioHost + ?Sized)) -> u8 {
     u8::from(
         (0..8)

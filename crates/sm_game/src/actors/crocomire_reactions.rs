@@ -1374,7 +1374,7 @@ pub fn hop_6_sinking<L: Lease>(game: &mut L) {
     melt_down(game);
     let e: u16 = 0;
     if Crocomire::of(game, e).death_sequence_index() == death::BEHIND_WALL_WAIT_FOR_SAMUS {
-        game.foreign(|game| game.queue_music_delayed(6));
+        crate::enemy_projectiles::host::Effects::queue_music(game, 6);
         *CrocomireEdit::of(game, e).death_sequence_index() = death::FLOWING_DOWN_THE_RIVER;
         CrocomireEdit::of(game, e).actor().instruction = ADDR_K_CROCOMIRE_ILIST_E1D2 as u16;
         game.session_mut()
@@ -1421,7 +1421,7 @@ pub fn behind_wall_wait_for_samus<L: Lease>(game: &mut L) {
     if (game.player_x() as i16).wrapping_sub(640) >= 0 {
         return;
     }
-    game.foreign(|game| game.queue_music_delayed(5));
+    crate::enemy_projectiles::host::Effects::queue_music(game, 5);
     game.session_mut()
         .room
         .set_scroll_pair(SCROLLS_3_4, 256u16.to_le_bytes());
@@ -1754,7 +1754,7 @@ fn walk<L: Lease>(k: u16, pixels: i32, game: &mut L) -> bool {
 /// Crocomire main AI - death sequence index 50h - mark event and start post-death music ($A4:9B86).
 /// Was `finish_death`.
 fn mark_event_and_start_music<L: Lease>(game: &mut L) {
-    game.foreign(|game| game.queue_music_delayed(6));
+    crate::enemy_projectiles::host::Effects::queue_music(game, 6);
     battle!(game.CameraDistance = 0);
     let area = crate::actors::boss_lease::BossState::area(game);
     let bits = steps::boss_word(game, area, BossWordOrder::Little);

@@ -1067,7 +1067,7 @@ pub fn run_function<L: Lease>(game: &mut L, function: u16) {
             *BodyEdit::of(game, BODY).function() = function::RAISE_QUAKE_EVERY_16;
             *BodyEdit::of(game, BODY).function_timer() = 120;
             battle!(game.EarthquakeTimer = 496);
-            game.foreign(|game| game.queue_music_delayed(5));
+            crate::enemy_projectiles::host::Effects::queue_music(game, 5);
             queue_bg2_bottom(game);
         }
         function::RAISE_QUAKE_EVERY_16 => {
@@ -1556,7 +1556,7 @@ pub fn fade_in_bg6<L: Lease>(game: &mut L) {
     game.observe_kraid_flags(0);
     if game.foreign(background6) & 1 != 0 {
         game.observe_kraid_flags(1);
-        game.foreign(|game| game.queue_music_delayed(3));
+        crate::enemy_projectiles::host::Effects::queue_music(game, 3);
         game.observe_kraid_flags(2);
         let area = BossState::area(game);
         let bits: i16 = steps::boss_word(game, area, BossWordOrder::Native) as i16;

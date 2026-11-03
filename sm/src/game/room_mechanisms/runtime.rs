@@ -135,21 +135,19 @@ impl ImportedAliases for Runtime<'_> {
 impl Host for Runtime<'_> {}
 impl Effects for Runtime<'_> {
     fn sound(&mut self, channel: SoundChannel, maximum: u8, cue: u16) {
-        self.foreign(|game| {
-            if !matches!(maximum, 1 | 3 | 6 | 9 | 15) {
-                unreachable!("mechanism sound limit");
-            }
-            crate::game::music::queue_sfx(channel as usize, cue as u8, maximum, game);
-        });
+        if !matches!(maximum, 1 | 3 | 6 | 9 | 15) {
+            unreachable!("mechanism sound limit");
+        }
+        self.queue_sound_request(channel as usize, cue as u8, maximum);
     }
     fn music(&mut self, track: u16) {
-        self.foreign(|game| crate::game::music::queue_music_delayed_8(track, game));
+        self.queue_music_request(track);
     }
     fn clear_music_queue(&mut self) {
-        self.foreign(crate::game::music::clear_queue);
+        self.clear_music_requests();
     }
     fn delayed_room_music(&mut self, frames: u16) {
-        self.foreign(|game| crate::game::music::play_room_music_track_after_aframes(frames, game));
+        self.queue_room_music_after(frames);
     }
     // The verifier's callback edge is unsafe; the plain build calls safe code.
     #[allow(unused_unsafe)]

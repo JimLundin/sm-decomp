@@ -188,6 +188,9 @@ impl sm_game::actors::mother_brain_fight::Lease for Runtime<'_> {
     fn owned_step<T>(&mut self, action: impl FnOnce(&mut Self) -> T) -> T {
         self.owned_player_call(action)
     }
+    fn queue_sound_with_result(&mut self, channel: usize, sound: u8, max_queued: u8) -> u16 {
+        self.queue_sound_request(channel, sound, max_queued)
+    }
 }
 use sm_game::actors::mother_brain_fight::OwnedWord;
 
