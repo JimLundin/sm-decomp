@@ -5249,6 +5249,19 @@ impl sm_game::presentation_workspace::Access for Game {
         let mut runtime = crate::game::session_runtime::Runtime::new(self);
         sm_game::presentation_workspace::Access::screen_write_slice(&mut runtime, point, bytes);
     }
+    /// The Game holds the workspace as RAM: the fill stores its bytes there in
+    /// address order, with no lease, and the next lease re-adopts them.
+    fn screen_fill_native(
+        &mut self,
+        point: sm_game::presentation_workspace::Point,
+        words: usize,
+        value: u16,
+    ) {
+        let at = point.compatibility_address().expect("screen offset");
+        for (offset, byte) in value.to_ne_bytes().repeat(words).into_iter().enumerate() {
+            self.compatibility_write_byte(at + offset, byte);
+        }
+    }
 }
 #[forbid(unsafe_code)]
 impl sm_game::presentation_workspace::PaletteAccess for Game {
